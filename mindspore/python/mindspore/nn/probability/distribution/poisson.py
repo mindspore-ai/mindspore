@@ -16,7 +16,6 @@
 import numpy as np
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
-import mindspore.nn as nn
 from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
@@ -154,8 +153,8 @@ class Poisson(Distribution):
         self.less = P.Less()
         self.equal = P.Equal()
         self.select = P.Select()
-        self.lgamma = nn.LGamma()
-        self.igamma = nn.IGamma()
+        self.lgamma = P.Lgamma()
+        self.igamma = P.Igamma()
         self.poisson = C.poisson
 
     @property

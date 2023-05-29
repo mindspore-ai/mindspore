@@ -189,9 +189,9 @@ class Gamma(Distribution):
         self.shape = P.Shape()
         self.select = P.Select()
         self.greater = P.Greater()
-        self.lgamma = nn.LGamma()
+        self.lgamma = P.Lgamma()
         self.digamma = nn.DiGamma()
-        self.igamma = nn.IGamma()
+        self.igamma = P.Igamma()
 
     def extend_repr(self):
         """Display instance object as string."""

@@ -78,11 +78,7 @@ def _compile_aot(file):
         cache_path = os.path.join(cache_path, "rank_" + str(get_rank()), "")
         os.makedirs(cache_path, exist_ok=True)
 
-    search_res = importlib.util.find_spec("mindspore")
-    if search_res is None:
-        raise RuntimeError("Cannot find mindspore module!")
-
-    res_path = search_res.origin
+    res_path = importlib.util.find_spec("mindspore").origin
     find_pos = res_path.find("__init__.py")
     if find_pos == -1:
         raise RuntimeError(
@@ -90,9 +86,8 @@ def _compile_aot(file):
     include_file = "-I{}include/api/".format(res_path[:find_pos])
 
     file_name = file.split('/')[-1]
-    file_folder = file[:file.rindex('/')]
     func_path = cache_path + file_name + ".so"
-    include_file = "{} -I{}".format(include_file, file_folder)
+    include_file = "{} -I{}".format(include_file, file[:file.rindex('/')])
 
     if func_path not in Custom.compiled_bin:
         Custom.compiled_bin.append(func_path)
@@ -112,13 +107,12 @@ def _compile_aot(file):
                 output = raw_output.split()
                 release_idx = output.index("release") + 1
                 release = output[release_idx].split(".")
-                version_major = release[0]
                 version_idx = release_idx + 1
                 version = output[version_idx].split(".")
                 version_middle = version[1] if len(version) > 1 else 0
                 version_minor = version[2] if len(version) > 2 else 0
 
-                return int(version_major), int(version_middle), int(version_minor)
+                return int(release[0]), int(version_middle), int(version_minor)
 
             v_major, v_mid, v_minor = _get_cuda_bare_metal_version()
             if v_major >= 11:
@@ -646,7 +640,7 @@ class Custom(ops.PrimitiveWithInfer):
             logger.info("The file of {} has already been checked good to be imported.".format(self.func_name))
             return file_path
 
-        if not file_path in Custom.tbe_path_failed:
+        if file_path not in Custom.tbe_path_failed:
             # As a single file might include multiply functions
             # we will not try the file path which already failed in previous trials
             try:
