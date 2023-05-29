@@ -15,6 +15,7 @@
 """ test use undefined variables for error reporting in control flow scenarios"""
 import pytest
 
+import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
@@ -119,3 +120,16 @@ def test_use_local_variable_in_def_while():
     with pytest.raises(UnboundLocalError) as err:
         net(Tensor([1], mstype.float32))
     assert "The local variable 'y'" in str(err.value)
+
+
+def test_function_args_same_name():
+    """
+    Feature: Parse function.
+    Description: Function argument has the same same as the function.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def f(f, x):
+        return f + x
+
+    assert f(1, 2) == 3

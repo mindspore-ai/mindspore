@@ -634,6 +634,7 @@ FunctionBlockPtr Parser::ParseDefFunction(const py::object &node, const Function
     function_name = cell_construct + cell_name_split + function_name;
     MS_LOG(DEBUG) << scope->name() << " func name:" << function_name;
   }
+  func_block->WriteVariable(function_name, NewValueNode(current_fg));
   MS_EXCEPTION_IF_NULL(current_fg->debug_info());
   current_fg->debug_info()->set_name(function_name);
   MS_EXCEPTION_IF_NULL(ast_);
@@ -658,8 +659,6 @@ FunctionBlockPtr Parser::ParseDefFunction(const py::object &node, const Function
   }
 
   // Save the function node to block
-  func_block->WriteVariable(function_name, NewValueNode(current_fg));
-
   py::object func_obj = python_adapter::GetPyObjAttr(node, "body");
   (void)ParseStatements(func_block, func_obj);
   if (current_fg->get_return() == nullptr) {
