@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test_list_extend """
+import os
 import numpy as np
 from mindspore import Tensor, jit, context
 
@@ -32,8 +33,10 @@ def test_list_extend_1():
         y = [5, 6, 7]
         x.extend(y)
         return x
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     out = list_net_1()
     assert np.all(out == [1, 2, 3, 4, 5, 6, 7])
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 def test_list_extend_2():
@@ -51,8 +54,10 @@ def test_list_extend_2():
         x.extend(y)
         x.extend(z)
         return x
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     out = list_net_2()
     assert np.all(out == [1, 2, 3, 4, ('bb', '2', 3), 20])
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 def test_list_extend_3():
@@ -72,9 +77,11 @@ def test_list_extend_3():
         x.extend(y)
         x.extend(z)
         return x
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     out = list_net_3()
     assert np.all(out == [1, 2, 3, 4, ('bb', '2', 3), 'Bob', 'a', ('Michael', 'Bob', '2'), \
         20, 4, Tensor(1), (1, 2), Tensor(1)])
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 def test_list_extend_4():
@@ -89,8 +96,10 @@ def test_list_extend_4():
         y = []
         x.extend(y)
         return x
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     out = list_net_4()
     assert np.all(out == [])
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 def test_list_extend_tuple():
@@ -106,5 +115,7 @@ def test_list_extend_tuple():
         x.extend(y)
         return x
 
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     out = func()
     assert np.all(out == [1, 2, 3, 4, 5, 6, 7])
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'

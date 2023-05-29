@@ -1337,6 +1337,10 @@ std::pair<py::object, bool> GraphExecutorPy::GetPyExecuteOutputFromAddress(const
 
 std::pair<py::object, bool> GraphExecutorPy::GetPyExecuteSequenceOutputFromAddress(const py::object &obj,
                                                                                    const BaseRef &value) const {
+  const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") == "1";
+  if (allow_inplace_ops && py::isinstance<py::list>(obj)) {
+    return {obj, true};
+  }
   bool has_real_node_address = false;
   py::object output = py::none();
   if (py::isinstance<py::tuple>(obj)) {

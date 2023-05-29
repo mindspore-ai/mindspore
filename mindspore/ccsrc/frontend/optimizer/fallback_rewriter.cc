@@ -29,6 +29,7 @@
 #include "mindspore/core/ops/core_ops.h"
 #include "pipeline/jit/debug/trace.h"
 #include "pipeline/jit/action.h"
+#include "pipeline/jit/parse/parse_base.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/operator/composite/composite.h"
 #include "include/common/utils/convert_utils_py.h"
@@ -913,6 +914,91 @@ class AfterOptARewriter : public BaseRewriter {
     return new_dict_node;
   }
 
+  AnfNodePtr GenerateTupleInput(const CNodePtr &node) const {
+    const auto &fg = node->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    const auto &inputs = node->inputs();
+    constexpr auto internal_element_str_prefix = "__internal_list_element_";
+    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+    std::stringstream script_buffer;
+    script_buffer << "(";
+    for (size_t i = 1; i < inputs.size(); ++i) {
+      if (IsValueNode<None>(inputs[i])) {
+        script_buffer << "None, ";
+        continue;
+      }
+      std::string cur_element = internal_element_str_prefix + std::to_string(i) + "_";
+      (void)key_value_names_list.emplace_back(NewValueNode(cur_element));
+      (void)key_value_list.emplace_back(inputs[i]);
+      script_buffer << cur_element << ", ";
+    }
+    script_buffer << ")";
+    const std::string &script = script_buffer.str();
+    const auto script_str = std::make_shared<StringImm>(script);
+    const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
+    const auto key_value_tuple = fg->NewCNode(key_value_list);
+    auto list_node =
+      fallback::CreatePyExecuteCNode(node, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
+    return list_node;
+  }
+
+  // MakeList(x1, x2, ...) --> PyExecute('[x1, x2, ...]', ...)
+  AnfNodePtr ConvertMakeList(const CNodePtr &node) const {
+    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime) {
+      return nullptr;
+    }
+    const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") == "1";
+    if (!allow_inplace_ops) {
+      return nullptr;
+    }
+
+    const auto &fg = node->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+
+    auto list_node_input = GenerateTupleInput(node);
+
+    py::list list_object = py::list();
+    const std::string list_obj_str_prefix = "__list_py_object_";
+    auto list_obj_id = fallback::GetPyObjectPtrStr(list_object);
+    MS_LOG(DEBUG) << "Current python object id: " << list_obj_id;
+    auto list_obj_str = list_obj_str_prefix + list_obj_id + "_";
+    fallback::SetPyObjectToLocalVariable(list_obj_str, list_object);
+
+    const auto list_key_input = "__internal_list_key__";
+    const auto list_value_input = "__internal_list_value__";
+    std::stringstream script_buffer;
+    script_buffer << "__import__('mindspore')._extends.parse._jit_fallback_generate_list(" << list_key_input << ", "
+                  << list_value_input << ")";
+    const std::string &script = script_buffer.str();
+    const auto script_str = std::make_shared<StringImm>(script);
+
+    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_names_list.emplace_back(NewValueNode(list_key_input));
+    (void)key_value_names_list.emplace_back(NewValueNode(list_value_input));
+    const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
+    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_list.emplace_back(NewValueNode(list_obj_str));
+    (void)key_value_list.emplace_back(list_node_input);
+    const auto key_value_tuple = fg->NewCNode(key_value_list);
+    auto res = fallback::CreatePyExecuteCNode(node, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
+
+    auto abs = node->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    auto list_abs = abs->cast<abstract::AbstractListPtr>();
+    MS_EXCEPTION_IF_NULL(list_abs);
+
+    res->set_debug_info(node->debug_info());
+    // Set real type and shape
+    fallback::SetRealType(res, list_abs->BuildType());
+    fallback::SetRealShape(res, list_abs->BuildShape());
+    fallback::SetPyListObject<AnfNode, py::list>(res, std::make_shared<py::list>(list_object));
+
+    MS_LOG(DEBUG) << "Convert make_list node to PyExecute node: " << res->DebugString();
+    return res;
+  }
+
   // raise(string, keys, values, io) --> PyExecute(string, keys, values, io)
   AnfNodePtr ConvertRaise(const CNodePtr &cnode) const {
     const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
@@ -1195,6 +1281,7 @@ class AfterOptARewriter : public BaseRewriter {
     {prim::kPrimCOOTensorGetDenseShape, &ThisClass::ConvertSparseGetAttrToTupleGetItem},
     {prim::kPrimDictGetItem, &ThisClass::ConvertDictGetItem},
     {prim::kPrimDictSetItem, &ThisClass::ConvertDictSetItem},
+    {prim::kPrimMakeList, &ThisClass::ConvertMakeList},
     {prim::kPrimMakeDict, &ThisClass::ConvertMakeDict},
     {prim::kPrimRaise, &ThisClass::ConvertRaise},
     {prim::kPrimScalarCast, &ThisClass::ConvertScalarCast},
@@ -1211,6 +1298,8 @@ class AfterOptARewriter : public BaseRewriter {
     std::vector<ValuePtr> none_value{str_value};
     const auto none_tuple = std::make_shared<ValueTuple>(none_value);
     auto none_tuple_node = NewValueNode(none_tuple);
+    AbstractBasePtrList abs_list{std::make_shared<abstract::AbstractScalar>(MakeValue("None"))};
+    none_tuple_node->set_abstract(std::make_shared<abstract::AbstractTuple>(abs_list));
 
     AnfNodePtr none_execute_node = fallback::CreatePyExecuteCNodeInOrder(
       func_graph, script_node, none_tuple_node, none_tuple_node, none_tuple_node->debug_info());
@@ -1227,9 +1316,20 @@ class AfterOptARewriter : public BaseRewriter {
     new_inputs.reserve(value_sequence->size());
     (void)new_inputs.emplace_back(NewValueNode(prim));
     bool changed = false;
-    for (const auto &v : value_sequence->value()) {
+    auto abs = value_node->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
+    MS_EXCEPTION_IF_NULL(abs_seq);
+    const auto &abs_seq_elements = abs_seq->elements();
+    const auto &value_sequence_values = value_sequence->value();
+    if (abs_seq_elements.size() != value_sequence_values.size()) {
+      MS_LOG(EXCEPTION) << "The size of value sequence should be same as the size of abstract sequence.";
+    }
+    for (size_t i = 0; i < value_sequence_values.size(); ++i) {
+      auto v = value_sequence_values[i];
       auto v_node = NewValueNode(v);
       v_node->set_debug_info(value_node->debug_info());
+      v_node->set_abstract(abs_seq_elements[i]);
       auto new_node = GetPyExecuteFromValue(fg, v_node, v, py_execute_input);
       new_node->set_debug_info(value_node->debug_info());
       (void)new_inputs.emplace_back(new_node);
@@ -1238,7 +1338,9 @@ class AfterOptARewriter : public BaseRewriter {
       }
     }
     if (changed) {
-      return fg->NewCNode(new_inputs);
+      auto ret = fg->NewCNode(new_inputs);
+      ret->set_abstract(value_node->abstract());
+      return ret;
     }
     return value_node;
   }
@@ -1247,7 +1349,8 @@ class AfterOptARewriter : public BaseRewriter {
     // Support convert type to PyExecute.
     const auto py_type = ValueToPyData(type);
     MS_LOG(DEBUG) << "py_type: " << py_type;
-    auto res = fallback::ConvertPyObjectToPyExecute(root_graph_, py::str(py_type).cast<std::string>(), py_type, node);
+    auto res =
+      fallback::ConvertPyObjectToPyExecute(root_graph_, py::str(py_type).cast<std::string>(), py_type, node, false);
     fallback::SetRealType(res, type);
     return res;
   }
@@ -1256,7 +1359,8 @@ class AfterOptARewriter : public BaseRewriter {
     // Support convert class type to PyExecute.
     const auto py_type = ValueToPyData(class_type);
     MS_LOG(DEBUG) << "py_type: " << py_type;
-    auto res = fallback::ConvertPyObjectToPyExecute(root_graph_, py::str(py_type).cast<std::string>(), py_type, node);
+    auto res =
+      fallback::ConvertPyObjectToPyExecute(root_graph_, py::str(py_type).cast<std::string>(), py_type, node, true);
     fallback::SetRealType(res, class_type);
     MS_LOG(DEBUG) << "res: " << res->DebugString();
     return res;
@@ -1287,12 +1391,16 @@ class AfterOptARewriter : public BaseRewriter {
                                            py_execute_input);
     }
     if (value->isa<ValueList>()) {
-      if (py_execute_input) {
-        return ValueListConvertPyExecute(fg, value_node, value);
-      } else {
-        return GetPyExecuteFromValueSequence(fg, value_node, value->cast<ValueSequencePtr>(), prim::kPrimMakeList,
-                                             py_execute_input);
+      const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") == "1";
+      if (!allow_inplace_ops) {
+        if (py_execute_input) {
+          return ValueListConvertPyExecute(fg, value_node, value);
+        } else {
+          return GetPyExecuteFromValueSequence(fg, value_node, value->cast<ValueSequencePtr>(), prim::kPrimMakeList,
+                                               py_execute_input);
+        }
       }
+      return RebuildValueList(fg, value_node);
     }
     if (value->isa<ValueDictionary>()) {
       return RebuildValueDict(fg, value_node, value->cast<ValueDictionaryPtr>());
@@ -1381,10 +1489,18 @@ class AfterOptARewriter : public BaseRewriter {
     const auto key_value_name_tuple = func_graph->NewCNode(key_value_names_list);
 
     // Pack the local parameters values, not support list, tuple, or dict.
+    auto abs_list = dyn_cast<abstract::AbstractList>(value_node->abstract());
+    MS_EXCEPTION_IF_NULL(abs_list);
+    const auto &abs_list_elements = abs_list->elements();
+    if (abs_list_elements.size() != values.size()) {
+      MS_LOG(EXCEPTION) << "The size of value list should be same as the size of abstract list.";
+    }
     std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
-    for (const auto &element : values) {
+    for (size_t i = 0; i < values.size(); ++i) {
+      auto element = values[i];
       auto element_vnode = NewValueNode(element);
       element_vnode->set_debug_info(value_node->debug_info());
+      element_vnode->set_abstract(abs_list_elements[i]);
       auto converted_element = GetPyExecuteFromValue(func_graph, element_vnode, element, true);
       converted_element->set_debug_info(value_node->debug_info());
       (void)key_value_list.emplace_back(converted_element);
@@ -1394,16 +1510,24 @@ class AfterOptARewriter : public BaseRewriter {
     // Build the new dict node.
     const auto list_value_node = fallback::CreatePyExecuteCNodeInOrder(
       func_graph, NewValueNode(script_str), key_value_name_tuple, key_value_tuple, value_node->debug_info());
+    list_value_node->set_abstract(value_node->abstract());
     MS_LOG(DEBUG) << "List value node convert to PyExecute node: " << list_value_node->DebugString();
     return list_value_node;
   }
 
   AnfNodePtr PackDictValue(const FuncGraphPtr &fg, const ValueNodePtr &value_node, const ValueDictionaryPtr &dict) {
     const auto &keys_values = dict->value();
+    auto abs_dict = dyn_cast<abstract::AbstractDictionary>(value_node->abstract());
+    const auto &abs_keys_values = abs_dict->elements();
+    if (keys_values.size() != abs_keys_values.size()) {
+      MS_LOG(INTERNAL_EXCEPTION) << "The size of value dict should be same as the size of abstract dict.";
+    }
     std::vector<AnfNodePtr> value_list{NewValueNode(prim::kPrimMakeTuple)};
-    for (const auto &key_value : keys_values) {
+    for (size_t i = 0; i < keys_values.size(); ++i) {
+      auto key_value = keys_values[i];
       auto new_vnode = NewValueNode(key_value.second);
       new_vnode->set_debug_info(value_node->debug_info());
+      new_vnode->set_abstract(abs_keys_values[i].second);
       auto iter_value = GetPyExecuteFromValue(fg, new_vnode, key_value.second, true);
       iter_value->set_debug_info(value_node->debug_info());
       (void)value_list.emplace_back(iter_value);
@@ -1436,6 +1560,31 @@ class AfterOptARewriter : public BaseRewriter {
     auto make_dict_node = ConstructNewDictNode(fg, make_key_tuple_node, make_value_tuple_node);
     make_dict_node->set_debug_info(value_node->debug_info());
     return make_dict_node;
+  }
+
+  AnfNodePtr RebuildValueList(const FuncGraphPtr &fg, const ValueNodePtr &value_node) {
+    MS_EXCEPTION_IF_NULL(fg);
+
+    auto abs = value_node->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    auto list_abs = abs->cast<abstract::AbstractListPtr>();
+    MS_EXCEPTION_IF_NULL(list_abs);
+
+    py::list list_object =
+      list_abs->has_list_py_obj() ? *(list_abs->list_py_obj<py::list>()) : ValueToPyData(abs->BuildValue());
+
+    // Generate PyExecute node: __list_object__
+    const std::string list_obj_str_prefix = "__list_py_object_";
+    auto list_obj_id = fallback::GetPyObjectPtrStr(list_object);
+    MS_LOG(DEBUG) << "Current python object id: " << list_obj_id;
+    auto list_obj_str = list_obj_str_prefix + list_obj_id + "_";
+    auto res = fallback::ConvertPyObjectToPyExecute(fg, list_obj_str, list_object, value_node, false);
+
+    // Set real type, shape and corresponding list python object.
+    fallback::SetRealType(res, list_abs->BuildType());
+    fallback::SetRealShape(res, list_abs->BuildShape());
+    fallback::SetPyListObject<AnfNode, py::list>(res, std::make_shared<py::list>(list_object));
+    return res;
   }
 
   AnfNodePtr ConvertInterpretedObjectValue(const ValueNodePtr &node, const parse::InterpretedObjectPtr &value) const {

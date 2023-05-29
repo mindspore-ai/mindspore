@@ -294,10 +294,9 @@ AbstractBasePtr MakeAbstract(const BaseShapePtr &base_shape, const TypePtr &type
   } else if (type->isa<Monad>()) {
     // Return monad abstract if it is monad type.
     return MakeMonadAbstract(type->cast<MonadTypePtr>());
-  } else {
-    MS_LOG(INTERNAL_EXCEPTION) << "Evaluator return invalid shape " << base_shape->ToString() << " or type. "
-                               << type->ToString();
   }
+  MS_LOG(INTERNAL_EXCEPTION) << "Evaluator return invalid shape " << base_shape->ToString() << " or type. "
+                             << type->ToString();
 }
 
 namespace {

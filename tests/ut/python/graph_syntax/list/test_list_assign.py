@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test enumerate"""
+import os
 import numpy as np
 import pytest
 import mindspore.nn as nn
@@ -610,6 +611,7 @@ def test_list_in_list_slice():
         a[index][start:stop:step] = b
         return convert_tuple(a)
 
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     a = [1, 2, [1, 2, 3, 4, 5, 6, 7], 8, 9]
     b = [1111, 2222]
     python_out = com_func3(a, b, 2, 1, None, 3)
@@ -624,6 +626,7 @@ def test_list_in_list_slice():
     context.set_context(mode=context.GRAPH_MODE)
     graph_out = convert_tuple(net(a, b, 2, 1, None, 3))
     assert graph_out == python_out
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '1'
 
 
 def test_list_slice_negative_step():
@@ -689,9 +692,11 @@ def test_list_slice_negetive_step():
         a[-1:-4:-1] = b[-1:-4:-1]
         return a
 
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     x = py_func()
     y = ms_func()
     assert x == y
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '1'
 
 
 def test_list_double_slice_assign_error():
@@ -732,7 +737,9 @@ def test_list_slice_only_with_step():
         a[::2] = b
         return a
 
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     assert ms_func() == py_func()
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 def test_list_assign_on_left():

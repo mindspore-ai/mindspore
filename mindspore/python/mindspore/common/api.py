@@ -80,7 +80,10 @@ def _convert_python_data(data):
     if isinstance(data, tuple):
         return tuple(_convert_python_data(x) for x in data)
     if isinstance(data, list):
-        return list(_convert_python_data(x) for x in data)
+        # Keep list object not change for inplace operation.
+        for i in range(len(data)):
+            data[i] = _convert_python_data(data[i])
+        return data
     if isinstance(data, dict):
         return dict((_convert_python_data(key), _convert_python_data(value)) for key, value in data.items())
     return data

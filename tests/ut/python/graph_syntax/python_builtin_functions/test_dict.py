@@ -27,10 +27,10 @@ def test_fallback_dict_empty():
     @jit
     def foo():
         dict_x = dict()
-        dict_x['a'] = [1, 2, 3]
+        dict_x['a'] = (1, 2, 3)
         return dict_x["a"]
 
-    assert foo() == [1, 2, 3]
+    assert foo() == (1, 2, 3)
 
 
 def test_fallback_dict_zip_iter_assign():

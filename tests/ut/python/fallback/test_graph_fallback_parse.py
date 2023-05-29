@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback """
+import os
 import math
 import pytest
 import numpy as np
@@ -135,6 +136,7 @@ def test_parse_tuple():
     Description: Test Interpret node in tuple in graph mode.
     Expectation: No exception.
     """
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
 
     class Network(nn.Cell):
         def construct(self):
@@ -145,6 +147,7 @@ def test_parse_tuple():
     net = Network()
     out = net()
     assert out[0].asnumpy() == 1 and out[1].asnumpy() == 2 and out[2].asnumpy() == 3
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 def test_parse_slice():
@@ -160,9 +163,11 @@ def test_parse_slice():
             y = x[Tensor([0]): Tensor([2])]
             return y
 
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     net = Network()
     out = net()
     assert out[0].asnumpy() == 11 and out[1].asnumpy() == 22
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 def test_list_count():

@@ -726,6 +726,16 @@ void PurifySequenceValueNode(const CNodePtr &cnode, size_t index, ProgramSpecial
   std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
   (void)sequence_nodes->emplace_back(AnfNodeWeakPtr(new_input));
   new_sequence_abs->set_sequence_nodes(sequence_nodes);
+  if constexpr (std::is_same<S, AbstractList>()) {
+    auto old_sequence_abs_list = old_sequence_abs->cast<AbstractListPtr>();
+    MS_EXCEPTION_IF_NULL(old_sequence_abs_list);
+    if (old_sequence_abs_list->has_list_py_obj()) {
+      MS_LOG(DEBUG) << "old AbstractList has python object, attach it to new AbstractList.";
+      auto list_obj = old_sequence_abs_list->list_py_obj<py::list>();
+      new_sequence_abs->set_list_py_obj(list_obj);
+    }
+  }
+
   new_input->set_abstract(new_sequence_abs);
 
   // Always reset tuple value node's use flags as non-use.
@@ -1251,6 +1261,11 @@ void UpdateInputsUserData(const CNodePtr &cnode, const std::vector<AnfNodePtr> &
       const auto &real_type = fallback::GetRealShape<AbstractBase, BaseShape>(old_input_abs);
       fallback::SetRealShape<AnfNode, BaseShape>(new_inputs[i], real_type);
     }
+    if (fallback::HasPyListObject(old_input_abs)) {
+      MS_LOG(DEBUG) << "Inherit python list object from old input abstract.";
+      auto list_py_obj = fallback::GetPyListObject<AbstractBase, py::list>(old_input_abs);
+      fallback::SetPyListObject<AbstractBase, py::list>(new_inputs[i]->abstract(), list_py_obj);
+    }
   }
 }
 }  // namespace
@@ -1347,7 +1362,6 @@ bool FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
 
   // Update inputs' user data from their abstracts to nodes.
   UpdateInputsUserData(cnode, new_inputs);
-
   // Set the updated inputs.
   cnode->set_inputs(new_inputs);
 
@@ -1357,6 +1371,7 @@ bool FuncGraphSpecializer::ProcessCNode(const CNodePtr &cnode) {
   if (enable_eliminate_unused_element && !enable_only_mark_unused_element) {
     EliminateUnusedSequenceItem(cnode);
   }
+
   // Only success processed node can be added to seen.
   specializer_->AddSeen(cnode);
   return true;

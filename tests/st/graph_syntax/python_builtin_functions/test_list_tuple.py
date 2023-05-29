@@ -145,3 +145,23 @@ def test_fallback_tuple_with_input_constant_tensor_2():
     assert np.allclose(out[0].asnumpy(), np.array([1, 2]))
     assert isinstance(out[1], Tensor)
     assert np.allclose(out[1].asnumpy(), np.array([3, 4]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_list_with_input_numpy_array():
+    """
+    Feature: JIT Fallback
+    Description: Test list() in graph mode with numpy aray.
+    Expectation: No exception.
+    """
+    @jit
+    def foo():
+        x = list(np.array([1, 2, 3]))
+        x.append(4)
+        return Tensor(x)
+    out = foo()
+    assert np.allclose(np.array([1, 2, 3, 4]), out.asnumpy())

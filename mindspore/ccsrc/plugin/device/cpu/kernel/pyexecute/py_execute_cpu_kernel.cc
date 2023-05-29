@@ -117,6 +117,38 @@ void TensorToRawMemory(const tensor::TensorPtr &tensor, const AddressPtr &addres
   }
 }
 
+void ScalarToRawMemory(const py::object &obj, const AddressPtr &address) {
+  if (py::isinstance<py::bool_>(obj)) {
+    bool data = py::cast<bool>(obj);
+    CHECK_RET_WITH_EXCEPT(memcpy_s(address->addr, address->size, &data, sizeof(bool)), EOK, "memcpy failed.");
+    return;
+  }
+  if (py::isinstance<py::int_>(obj)) {
+    int64_t data = py::cast<int64_t>(obj);
+    CHECK_RET_WITH_EXCEPT(memcpy_s(address->addr, address->size, &data, sizeof(int64_t)), EOK, "memcpy failed.");
+    return;
+  }
+  if (py::isinstance<py::float_>(obj)) {
+    double data = py::cast<double>(obj);
+    CHECK_RET_WITH_EXCEPT(memcpy_s(address->addr, address->size, &data, sizeof(double)), EOK, "memcpy failed.");
+    return;
+  }
+  MS_LOG(INTERNAL_EXCEPTION) << "Scalar to raw memory failed!";
+}
+
+void ListToRawMemory(const py::list &obj, const std::vector<AddressPtr> &outputs) {
+  // Do not consider nested scene yet.
+  // only consider the input is scalar and Tensor.
+  for (size_t i = 0; i < outputs.size(); ++i) {
+    auto element_obj = obj[i];
+    if (py::isinstance<tensor::Tensor>(element_obj)) {
+      TensorToRawMemory(element_obj.cast<tensor::TensorPtr>(), outputs[i]);
+    } else {
+      ScalarToRawMemory(element_obj, outputs[i]);
+    }
+  }
+}
+
 bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                    const std::vector<AddressPtr> &outputs) {
   MS_LOG(DEBUG) << "Launch PyExecute(), inputs.size: " << inputs.size() << ", outputs: " << outputs.size();
@@ -124,9 +156,7 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
     MS_LOG(ERROR) << "Py_IsInitialized failed.";
     return false;
   }
-  if (outputs.size() != 1) {
-    MS_LOG(EXCEPTION) << "The output num is 1, but got " << outputs.size();
-  }
+  MS_LOG(DEBUG) << "The output num is " << outputs.size();
   py::gil_scoped_acquire gil_acquire;
   const auto &input0_info = inputs_info_[0];
   const auto &input0_abstract = input0_info.abstract;
@@ -146,6 +176,12 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
     MS_LOG(DEBUG) << "Python *prebuilt* output type: " << output_type << ", output: " << output;
     if (py::isinstance<tensor::Tensor>(output)) {
       TensorToRawMemory(output.cast<tensor::TensorPtr>(), outputs[0]);
+    } else if (py::isinstance<py::list>(output)) {
+      auto output_list = py::list(output);
+      const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") == "1";
+      if (allow_inplace_ops && fallback::CheckListToMemory(output_list)) {
+        ListToRawMemory(py::list(output), outputs);
+      }
     }
     AttachPyOutputData(output);
     return true;

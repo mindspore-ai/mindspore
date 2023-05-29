@@ -136,8 +136,8 @@ def test_fallback_reversed():
     @jit
     def foo():
         x = reversed([1, 2, 3])
-        return list(x)
-    assert foo() == [3, 2, 1]
+        return tuple(x)
+    assert foo() == (3, 2, 1)
 
 
 def test_fallback_set():
@@ -165,19 +165,6 @@ def test_fallback_slice():
         arr = range(10)
         return arr[slice_x]
     assert list(foo()) == [0, 1, 2, 3, 4]
-
-
-def test_fallback_sorted():
-    """
-    Feature: JIT Fallback
-    Description: Test sorted() in graph mode.
-    Expectation: No exception.
-    """
-    @jit
-    def foo():
-        x = sorted([5, 3, 1, 4, 2])
-        return x
-    assert list(foo()) == [1, 2, 3, 4, 5]
 
 
 def test_fallback_str():

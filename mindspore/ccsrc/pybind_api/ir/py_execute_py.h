@@ -174,6 +174,20 @@ class PyExecuteInitializer {
         const auto &infer_shape = std::make_shared<abstract::Shape>(tensor->shape());
         return abstract::MakeAbstract(infer_shape, tensor->Dtype());
       }
+      const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") == "1";
+      if (allow_inplace_ops && py::isinstance<py::list>(output)) {
+        // Runtime can not handle real operator with nested output.
+        // Hence, the abstract should be AbstractAny for nested sequence.
+        ValuePtr converted_res = nullptr;
+        bool converted = parse::ConvertData(output, &converted_res);
+        if (converted) {
+          auto ret_list = converted_res->ToAbstract();
+          auto filter_ret_list = fallback::GenerateAbstractList(ret_list->BuildShape(), ret_list->BuildType(), false);
+          auto ret = std::make_shared<abstract::AbstractTuple>(filter_ret_list->elements());
+          MS_LOG(DEBUG) << "Result abstract is: " << ret->ToString();
+          return ret;
+        }
+      }
     } catch (const py::error_already_set &e) {
       auto error_type_name = py::cast<std::string>(python_adapter::GetPyObjAttr(e.type(), "__name__"));
       auto error_iter = exception_types_map.find(error_type_name);

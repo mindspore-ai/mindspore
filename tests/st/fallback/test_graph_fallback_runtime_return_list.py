@@ -581,3 +581,21 @@ def test_grad_for_graph_with_list_input():
                         [1.5, 1.5, 1.5]]).astype(np.float32)]
     assert np.allclose(output[0].asnumpy(), expect[0])
     assert np.allclose(output[1].asnumpy(), expect[1])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_sorted_return_list():
+    """
+    Feature: Return list in graph.
+    Description: Support calculate gradient for graph with list return.
+    Expectation: No exception.
+    """
+    @jit
+    def foo():
+        x = sorted((5, 3, 1, 4, 2))
+        return x
+    assert list(foo()) == [1, 2, 3, 4, 5]

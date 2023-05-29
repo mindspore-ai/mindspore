@@ -27,8 +27,11 @@
 #include "frontend/operator/ops.h"
 #include "utils/info.h"
 #include "utils/hash_set.h"
+#include "pipeline/jit/fallback.h"
 #include "pipeline/jit/debug/trace.h"
+#include "pipeline/jit/parse/parse_base.h"
 #include "include/common/utils/utils.h"
+#include "include/common/utils/python_adapter.h"
 
 namespace mindspore {
 namespace py = pybind11;
@@ -352,6 +355,12 @@ AnfNodePtr FunctionBlock::HandleNamespaceSymbol(const std::string &var_name) {
   AddGlobalPyParam(symbol_name, py_obj);
   MS_LOG(INFO) << "[" << func_graph()->ToString() << "] Added global python symbol: {" << symbol_name << " : "
                << py::str(py_obj) << "}";
+  // List object should be saved in user_data
+  if (py::isinstance<py::list>(py_obj)) {
+    MS_LOG(DEBUG) << "The global object is list, attach list object to node. The resolved node is: "
+                  << resolved_node->DebugString() << ", list python id: " << fallback::GetPyObjectPtrStr(py_obj);
+    fallback::SetPyListObject<AnfNode, py::list>(resolved_node, std::make_shared<py::list>(py::list(py_obj)));
+  }
   return resolved_node;
 }
 

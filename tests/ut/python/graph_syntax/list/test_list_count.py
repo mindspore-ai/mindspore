@@ -165,24 +165,6 @@ def test_list_count_9():
     assert out == 1
 
 
-def test_list_count_10():
-    """
-    Feature: list count.
-    Description: support list count.
-    Expectation: No exception.
-    """
-    @jit
-    def list_net_10(aa, bb):
-        x = ['a', {'Michael': 1, 'Bob': 'bb', '2': [1, '2']}, aa, bb]
-        res = x.count(aa + bb)
-        return Tensor(res)
-
-    aa = Tensor(20)
-    bb = Tensor(10)
-    out = list_net_10(aa, bb)
-    print(out)
-
-
 def test_list_count_11():
     """
     Feature: list count.

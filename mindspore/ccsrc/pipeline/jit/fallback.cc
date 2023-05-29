@@ -147,14 +147,18 @@ CNodePtr CreatePyExecuteCNodeInOrder(const AnfNodePtr &orig_node, const AnfNodeP
   return interpreted_cnode;
 }
 
-AnfNodePtr ConvertPyObjectToPyExecute(const FuncGraphPtr &fg, const std::string &key, const py::object value,
-                                      const AnfNodePtr &node) {
-  auto value_node_key = ConvertRealStrToUnicodeStr(key, 0);
-  // Set the value node into dict firstly.
+void SetPyObjectToLocalVariable(const std::string &key, const py::object &value) {
   py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
   constexpr auto set_local_variable = "set_local_variable";
-  MS_LOG(DEBUG) << set_local_variable << "([" << key << "]/" << value_node_key << ", " << value << ")";
-  (void)python_adapter::CallPyModFn(mod, set_local_variable, value_node_key, value);
+  MS_LOG(DEBUG) << set_local_variable << "([" << key << "]/" << key << ", " << value << ")";
+  (void)python_adapter::CallPyModFn(mod, set_local_variable, key, value);
+}
+
+AnfNodePtr ConvertPyObjectToPyExecute(const FuncGraphPtr &fg, const std::string &key, const py::object value,
+                                      const AnfNodePtr &node, bool replace) {
+  auto value_node_key = ConvertRealStrToUnicodeStr(key, 0);
+  // Set the value node into dict firstly.
+  SetPyObjectToLocalVariable(value_node_key, value);
 
   // Get the value node from the dict in IR.
   std::stringstream script_buffer;
@@ -171,7 +175,9 @@ AnfNodePtr ConvertPyObjectToPyExecute(const FuncGraphPtr &fg, const std::string 
   constexpr auto debug_recursive_level = 2;
   MS_LOG(DEBUG) << "original node: " << node->DebugString(debug_recursive_level)
                 << ", interpreted_cnode: " << interpreted_cnode->DebugString(debug_recursive_level);
-  fg->ReplaceInOrder(node, interpreted_cnode);
+  if (replace) {
+    fg->ReplaceInOrder(node, interpreted_cnode);
+  }
   return interpreted_cnode;
 }
 
@@ -180,7 +186,7 @@ AnfNodePtr ConvertInterpretedObjectToPyExecute(const FuncGraphPtr &fg, const Val
   if (interpreted_value == nullptr) {
     return nullptr;
   }
-  return ConvertPyObjectToPyExecute(fg, interpreted_value->name(), interpreted_value->obj(), node);
+  return ConvertPyObjectToPyExecute(fg, interpreted_value->name(), interpreted_value->obj(), node, true);
 }
 
 TypePtr GetJitAnnotationTypeFromComment(const AnfNodePtr &node, const FormatedVariableTypeFunc &format_type_func) {
@@ -467,6 +473,44 @@ bool ContainsSequenceAnyType(const AbstractBasePtr &abs) {
     }
   }
   return abs->isa<abstract::AbstractAny>();
+}
+
+void AttachListObjToAbs(const AbstractBasePtr &abs, const py::object &obj) {
+  // Nested attach list object to corresponding abstract list.
+  // Do not consider dictionary yet.
+  if (!abs->isa<abstract::AbstractSequence>()) {
+    return;
+  }
+  if (abs->isa<abstract::AbstractList>()) {
+    auto abs_list = abs->cast<abstract::AbstractListPtr>();
+    if (!py::isinstance<py::list>(obj)) {
+      MS_INTERNAL_EXCEPTION(TypeError) << "Object should be list but got: " << py::str(obj);
+    }
+    auto list_obj = py::list(obj);
+    abs_list->set_list_py_obj<py::list>(std::make_shared<py::list>(list_obj));
+    for (size_t i = 0; i < abs_list->size(); ++i) {
+      auto element_abs = abs_list->elements()[i];
+      auto element_obj = list_obj[i];
+      AttachListObjToAbs(element_abs, element_obj);
+    }
+    return;
+  }
+  auto abs_tuple = abs->cast<abstract::AbstractTuplePtr>();
+  if (!py::isinstance<py::tuple>(obj)) {
+    MS_INTERNAL_EXCEPTION(TypeError) << "Object should be tuple but got: " << py::str(obj);
+  }
+  auto tuple_obj = py::tuple(obj);
+  for (size_t i = 0; i < abs_tuple->size(); ++i) {
+    auto element_abs = abs_tuple->elements()[i];
+    auto element_obj = tuple_obj[i];
+    AttachListObjToAbs(element_abs, element_obj);
+  }
+}
+
+std::string GetPyObjectPtrStr(const py::object &obj) {
+  std::stringstream ss;
+  ss << obj.ptr();
+  return ss.str();
 }
 }  // namespace fallback
 

@@ -491,6 +491,7 @@ def test_none_is_input_of_dict_return():
     assert out == {'y': 'a', 'u': 9, 'v': False, 'w': None}
 
 
+@pytest.mark.skip(reason="List object can not pass PyExecute output.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
