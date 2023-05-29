@@ -146,7 +146,9 @@ mkdir -p $project_path/build_out
 #                                 default installation path. If user defines the installation path, please modify it.
 # Uncomment and modify it when you specified installation path of Compiler.
 if [[ -z "${ASCEND_TENSOR_COMPILER_INCLUDE}" ]]; then
-    if [[ -d "/usr/local/Ascend/compiler/include" ]];then
+    if [[ -d "$ASCEND_CUSTOM_PATH/compiler/include" ]];then
+        export ASCEND_TENSOR_COMPILER_INCLUDE=$ASCEND_CUSTOM_PATH/compiler/include
+    elif [[ -d "/usr/local/Ascend/compiler/include" ]];then
         export ASCEND_TENSOR_COMPILER_INCLUDE=/usr/local/Ascend/compiler/include
     else
         log "[ERROR] ENV ASCEND_TENSOR_COMPILER_INCLUDE is not set"
