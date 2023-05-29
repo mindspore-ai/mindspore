@@ -172,8 +172,8 @@ class AdaptiveAvgPool3D(Primitive):
     Refer to :func:`mindspore.ops.adaptive_avg_pool3d` for more details.
 
     Args:
-        - output_size (Union[int, tuple]) - Specify the size of output tensor. It
-          can be a single int or a tuple of three ints.
+        output_size (Union[int, tuple]): Specify the size of output tensor. It
+            can be a single int or a tuple of three ints.
 
     Inputs:
         - **x** (Tensor) - The input of AdaptiveAvgPool3D, which is a 5D or 4D tensor.
@@ -3119,8 +3119,8 @@ class MultiMarginLoss(Primitive):
           support float16, float32 or float64.
 
     Outputs:
-        Tensor, When `reduction` is "none", the shape is :math:`(N,)`.
-        Otherwise, it is a scalar. Has the same data type with `inputs`.
+        - **outputs** - (Tensor) - When `reduction` is "none", the shape is :math:`(N,)`.
+          Otherwise, it is a scalar. Has the same data type with `inputs`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3864,7 +3864,6 @@ class UpsampleTrilinear3D(Primitive):
             [1.5  1.75 2.25 2.5 ]
             [2.5  2.75 3.25 3.5 ]
             [3.   3.25 3.75 4.  ]]
-
            [[1.   1.25 1.75 2.  ]
             [1.5  1.75 2.25 2.5 ]
             [2.5  2.75 3.25 3.5 ]

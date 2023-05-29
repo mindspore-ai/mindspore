@@ -4600,6 +4600,9 @@ def ormqr(input, tau, other, left=True, transpose=False):
     Calculates the product of a matrix C(given by `other`) with dimensions (m, n) and a matrix Q which is represented
     using Householder reflectors (`input`, `tau`). Returns a Tensor.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         input (Tensor): Tensor of shape :math:`(*, mn, k)`, when `left` is True, mn equals to m,
             otherwise, mn equals to n. And `*` is zero or more batch dimensions.
@@ -9688,9 +9691,9 @@ def cholesky_solve(input, input2, upper=False):
         output = (input2 * input2^{T})^{{-1}}input
 
     Args:
-        input (Tensor) - Tensor of shape :math:`(*, N, M)`, indicating 2D or 3D matrices,
+        input (Tensor): Tensor of shape :math:`(*, N, M)`, indicating 2D or 3D matrices,
             with float32 or float64 data type.
-        input2 (Tensor) - Tensor of shape :math:`(*, N, N)`, indicating 2D or 3D square matrices composed of
+        input2 (Tensor): Tensor of shape :math:`(*, N, N)`, indicating 2D or 3D square matrices composed of
             upper or lower triangular Cholesky factor, with float32 or float64 data type.
             `input` and `input2` must have the same type.
         upper (bool, optional): A flag indicates whether to treat the Cholesky factor
