@@ -23,6 +23,7 @@
 #include "coder/opcoders/base/conv2d_base_coder.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 #include "base/float16.h"
+#include "wrapper/base/micro_parameter.h"
 
 namespace mindspore::lite::micro::nnacl {
 class Convolution1x1FP16Coder final : public Conv2DBaseCoder {
@@ -44,7 +45,7 @@ class Convolution1x1FP16Coder final : public Conv2DBaseCoder {
   int InitWeightBias(CoderContext *const context);
   int InitMatmulParam();
   void FreeTmpBuffer();
-  MatMulParameter *matmul_param_{nullptr};
+  MicroMatmulParameter *matmul_param_{nullptr};
   int row_tile_{C12NUM};
   int col_tile_{C8NUM};
   void *packed_weight_{nullptr};

@@ -21,6 +21,7 @@
 #include <stdbool.h>
 #include "nnacl/conv_parameter.h"
 #include "nnacl/matmul_parameter.h"
+#include "wrapper/base/micro_parameter.h"
 
 typedef struct {
   int32_t *input_sum_;     /* per-oc */
@@ -38,7 +39,7 @@ typedef struct {
   size_t thread_count_oc;
   size_t thread_stride_oc_;
   ConvParameter *conv_param_;
-  MatMulParameter *matmul_param_;
+  MicroMatmulParameter *matmul_param_;
   MATMUL_OPT_DP_FUNC matmul_func_;
   bool pre_trans_input_;
   bool support_optimize_;

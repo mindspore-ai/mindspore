@@ -34,9 +34,9 @@ int MatMulFP32Coder::InitShapeA() {
   for (int i = 0; i < a_shape_size - DIMENSION_2D; ++i) {
     batch *= a_shape.at(i);
   }
-  params_->batch = batch;
-  params_->row_ = params_->a_transpose_ ? a_shape.at(a_shape_size - 1) : a_shape.at(a_shape_size - DIMENSION_2D);
-  params_->deep_ = params_->a_transpose_ ? a_shape.at(a_shape_size - DIMENSION_2D) : a_shape.at(a_shape_size - 1);
+  params_.batch = batch;
+  params_.row_ = params_.a_transpose_ ? a_shape.at(a_shape_size - 1) : a_shape.at(a_shape_size - DIMENSION_2D);
+  params_.deep_ = params_.a_transpose_ ? a_shape.at(a_shape_size - DIMENSION_2D) : a_shape.at(a_shape_size - 1);
   return RET_OK;
 }
 
@@ -51,9 +51,9 @@ int MatMulFP32Coder::InitShapeB() {
   for (int i = 0; i < b_shape_size - DIMENSION_2D; ++i) {
     batch *= b_shape.at(i);
   }
-  params_->batch = batch;
-  params_->col_ = params_->b_transpose_ ? b_shape.at(b_shape_size - DIMENSION_2D) : b_shape.at(b_shape_size - 1);
-  params_->deep_ = params_->b_transpose_ ? b_shape.at(b_shape_size - 1) : b_shape.at(b_shape_size - DIMENSION_2D);
+  params_.batch = batch;
+  params_.col_ = params_.b_transpose_ ? b_shape.at(b_shape_size - DIMENSION_2D) : b_shape.at(b_shape_size - 1);
+  params_.deep_ = params_.b_transpose_ ? b_shape.at(b_shape_size - 1) : b_shape.at(b_shape_size - DIMENSION_2D);
   return RET_OK;
 }
 
@@ -65,7 +65,12 @@ int MatMulFP32Coder::ReSize() {
 }
 
 int MatMulFP32Coder::Prepare(CoderContext *const context) {
-  params_ = reinterpret_cast<MatMulParameter *>(parameter_);
+  MatMulParameter *matmul_param = reinterpret_cast<MatMulParameter *>(parameter_);
+  params_.act_type_ = matmul_param->act_type_;
+  params_.thread_num_ = matmul_param->op_parameter_.thread_num_;
+  params_.a_transpose_ = matmul_param->a_transpose_;
+  params_.b_transpose_ = matmul_param->b_transpose_;
+
   MS_CHECK_TRUE_RET(input_tensors_.size() >= kBiasIndex, RET_ERROR);
   filter_tensor_ = input_tensors_.at(kWeightIndex);
   MS_CHECK_PTR(filter_tensor_);
@@ -74,14 +79,14 @@ int MatMulFP32Coder::Prepare(CoderContext *const context) {
     MS_CHECK_PTR(bias_tensor_);
     MS_CHECK_PTR(bias_tensor_->data());
   }
-  params_->a_const_ = (input_tensor_->data() != nullptr);
-  params_->b_const_ = (filter_tensor_->data() != nullptr);
+  params_.a_const_ = (input_tensor_->data() != nullptr);
+  params_.b_const_ = (filter_tensor_->data() != nullptr);
   MatMulFP32BaseCoder::InitParameter();
-  if (params_->a_const_) {
+  if (params_.a_const_) {
     de_quant_flag_ = Dequant::GetInstance()->CheckDequantFlag(input_tensor_);
     MS_CHECK_RET_CODE(InitShapeA(), "MatMulFP32Coder init_shape_a failed");
   }
-  if (params_->b_const_) {
+  if (params_.b_const_) {
     de_quant_flag_ = Dequant::GetInstance()->CheckDequantFlag(filter_tensor_);
     MS_CHECK_RET_CODE(InitShapeB(), "MatMulFP32Coder init_shape_b failed");
   }

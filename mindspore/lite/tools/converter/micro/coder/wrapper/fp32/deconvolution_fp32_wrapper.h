@@ -20,6 +20,7 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/conv_parameter.h"
 #include "nnacl/matmul_parameter.h"
+#include "wrapper/base/micro_parameter.h"
 
 typedef struct {
   const float *packed_input_;
@@ -28,7 +29,7 @@ typedef struct {
   float *packed_output_;
   float *output_;
   float *tmp_buffer_;
-  const MatMulParameter *matmul_param_;
+  const MicroMatmulParameter *matmul_param_;
   const ConvParameter *conv_param_;
 } DeConvFp32Args;
 
@@ -37,7 +38,7 @@ extern "C" {
 #endif
 
 int DoDeconvFp32(const float *packed_input, const float *packed_weight, const float *packed_bias, float *packed_output,
-                 float *output, float *tmp_ori_buffer, const MatMulParameter *matmul_param,
+                 float *output, float *tmp_ori_buffer, const MicroMatmulParameter *matmul_param,
                  const ConvParameter *conv_param, int task_id);
 
 int DeConvFp32Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);

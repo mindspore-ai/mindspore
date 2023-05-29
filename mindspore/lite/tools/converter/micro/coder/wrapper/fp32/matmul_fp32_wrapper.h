@@ -18,13 +18,14 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_FP32_MATMUL_FP32_WRAPPER_H_
 #include <string.h>
 #include "nnacl/fp32/matmul_fp32.h"
+#include "wrapper/base/micro_parameter.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void InitMatrixA(const float *src_ptr, float *dst_ptr, const MatMulParameter *params_, bool is_vector_a);
+void InitMatrixA(const float *src_ptr, float *dst_ptr, const MicroMatmulParameter *params_, bool is_vector_a);
 
-void InitMatrixB(const float *src_ptr, float *dst_ptr, const MatMulParameter *params_, bool is_vector_a);
+void InitMatrixB(const float *src_ptr, float *dst_ptr, const MicroMatmulParameter *params_, bool is_vector_a);
 
 #ifdef __cplusplus
 }

@@ -26,6 +26,7 @@
 #include "nnacl/int8/arithmetic_int8.h"
 #include "nnacl/conv_parameter.h"
 #include "nnacl/matmul_parameter.h"
+#include "wrapper/base/micro_parameter.h"
 #include "nnacl/int8/concat_int8.h"
 #include "nnacl/int8/quantize.h"
 #include "nnacl/reshape_parameter.h"
@@ -42,7 +43,7 @@ class NNaclInt8Serializer : public Serializer {
   NNaclInt8Serializer() = default;
   ~NNaclInt8Serializer() override = default;
   void CodeStruct(const std::string &name, const ConvParameter &conv_parameter);
-  void CodeStruct(const std::string &name, const MatMulParameter &matmul_parameter);
+  void CodeStruct(const std::string &name, const MicroMatmulParameter &matmul_parameter);
   void CodeStruct(const std::string &name, const TransposeParameter &transpose_parameter);
   void CodeStruct(const std::string &name, const AddQuantParameter &add_quant_parameter);
   void CodeStruct(const std::string &name, const ArithmeticParameter &arithmetic_parameter);

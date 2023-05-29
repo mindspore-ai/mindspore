@@ -30,10 +30,10 @@ int MatMulFP16Coder::InitAShape() {
     batch *= a_shape.at(i);
   }
   a_batch_ = batch;
-  params_->batch = batch;
-  params_->row_ = params_->a_transpose_ ? a_shape[a_shape.size() - C1NUM] : a_shape[a_shape.size() - C2NUM];
-  params_->deep_ = params_->a_transpose_ ? a_shape[a_shape.size() - C2NUM] : a_shape[a_shape.size() - C1NUM];
-  params_->row_16_ = UP_ROUND(params_->row_, row_tile_);
+  params_.batch = batch;
+  params_.row_ = params_.a_transpose_ ? a_shape[a_shape.size() - C1NUM] : a_shape[a_shape.size() - C2NUM];
+  params_.deep_ = params_.a_transpose_ ? a_shape[a_shape.size() - C2NUM] : a_shape[a_shape.size() - C1NUM];
+  params_.row_16_ = UP_ROUND(params_.row_, row_tile_);
   return RET_OK;
 }
 
@@ -45,10 +45,10 @@ int MatMulFP16Coder::InitBShape() {
     batch *= b_shape[i];
   }
   b_batch_ = batch;
-  params_->batch = batch;
-  params_->col_ = params_->b_transpose_ ? b_shape[b_shape.size() - C2NUM] : b_shape[b_shape.size() - C1NUM];
-  params_->col_8_ = UP_ROUND(params_->col_, C8NUM);
-  params_->deep_ = params_->b_transpose_ ? b_shape[b_shape.size() - C1NUM] : b_shape[b_shape.size() - C2NUM];
+  params_.batch = batch;
+  params_.col_ = params_.b_transpose_ ? b_shape[b_shape.size() - C2NUM] : b_shape[b_shape.size() - C1NUM];
+  params_.col_8_ = UP_ROUND(params_.col_, C8NUM);
+  params_.deep_ = params_.b_transpose_ ? b_shape[b_shape.size() - C1NUM] : b_shape[b_shape.size() - C2NUM];
   return RET_OK;
 }
 
@@ -57,7 +57,9 @@ int MatMulFP16Coder::Prepare(CoderContext *const context) {
     MS_LOG(INFO) << "Input tensor data type is invalid";
     return RET_INPUT_PARAM_INVALID;
   }
-  params_ = reinterpret_cast<MatMulParameter *>(parameter_);
+  MatMulParameter *matmul_param = reinterpret_cast<MatMulParameter *>(parameter_);
+  params_.act_type_ = matmul_param->act_type_;
+  params_.thread_num_ = matmul_param->op_parameter_.thread_num_;
   MS_CHECK_TRUE_RET(input_tensors_.size() >= kBiasIndex, RET_ERROR);
   filter_tensor_ = input_tensors_.at(kWeightIndex);
   MS_CHECK_PTR(filter_tensor_);
@@ -66,8 +68,8 @@ int MatMulFP16Coder::Prepare(CoderContext *const context) {
     MS_CHECK_PTR(bias_tensor_);
     MS_CHECK_PTR(bias_tensor_->data());
   }
-  params_->a_const_ = (input_tensor_->data() != nullptr);
-  params_->b_const_ = (filter_tensor_->data() != nullptr);
+  params_.a_const_ = (input_tensor_->data() != nullptr);
+  params_.b_const_ = (filter_tensor_->data() != nullptr);
   MS_CHECK_RET_CODE(MatMulFP16BaseCoder::Prepare(context), "MatMulFP16Coder prepare failed");
   return RET_OK;
 }

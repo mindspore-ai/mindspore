@@ -65,7 +65,6 @@ function Run_x86_codegen() {
         weight_file=${model_file%.*}".caffemodel"
       fi
       output_file=$1"/"${model_name}
-      quant_type=""
       config_file=$6
       train_model="false"
       in_dtype="DEFAULT"
@@ -81,9 +80,9 @@ function Run_x86_codegen() {
         --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape=${spec_shapes}\
         --configFile=${config_file} --trainModel=${train_model} >> "$4"
       if [ $? = 0 ]; then
-          converter_result='converter_'${model_type}'_'${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
+          converter_result='converter_'${model_type}' '${model_name}' pass';echo ${converter_result} >> $5
       else
-          converter_result='converter_'${model_type}'_'${quant_type}' '${model_name}' failed';echo ${converter_result} >> $5
+          converter_result='converter_'${model_type}' '${model_name}' failed';echo ${converter_result} >> $5
           return 1;
       fi
 
@@ -100,7 +99,13 @@ function Run_x86_codegen() {
       # 1. build benchmark
       mkdir -p ${output_file}/build && cd ${output_file}/build || exit 1
       cmake -DPKG_PATH=${x86_path}/mindspore-lite-${version}-linux-x64 ${output_file} >> $4
-      make || return 1
+      make
+      if [ $? = 0 ]; then
+          run_result='x86_codegen_make '${model_name}' pass'; echo ${run_result} >> $5
+      else
+          run_result='x86_codegen_make '${model_name}' failed'; echo ${run_result} >> $5;
+          return 1;
+      fi
       # 2. run benchmark
       if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
         input_files=${models_path}/input_output/input/${model_name}.ms.bin
@@ -182,7 +187,6 @@ function Run_cortex_m_codegen() {
       cp -r ${STM32_DEMO_PATH}/stm32f767 $1/
       # output_file=$1"/stm32f767/"${model_name}
       output_file=$1"/stm32f767/gen_output"
-      quant_type=""
       config_file=$6
       spec_shapes=""
       train_model="false"
@@ -199,9 +203,9 @@ function Run_cortex_m_codegen() {
         --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape=${spec_shapes}\
         --configFile=${config_file} --trainModel=${train_model} >> "$4"
       if [ $? = 0 ]; then
-          converter_result='converter_'${model_type}'_'${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
+          converter_result='converter_'${model_type}' '${model_name}' pass';echo ${converter_result} >> $5
       else
-          converter_result='converter_'${model_type}'_'${quant_type}' '${model_name}' failed';echo ${converter_result} >> $5
+          converter_result='converter_'${model_type}' '${model_name}' failed';echo ${converter_result} >> $5
           return 1;
       fi
 
@@ -337,7 +341,6 @@ function Run_quant_codegen() {
       fi
 
       output_file=$1"/"${model_name}
-      quant_type=""
       train_model="false"
       in_dtype="DEFAULT"
       out_dtype="DEFAULT"
@@ -367,7 +370,13 @@ function Run_quant_codegen() {
       # 1. build benchmark
       mkdir -p ${output_file}/build && cd ${output_file}/build || exit 1
       cmake -DPKG_PATH=${x86_path}/mindspore-lite-${version}-linux-x64 ${output_file} >> $4
-      make || return 1
+      make
+      if [ $? = 0 ]; then
+          run_result='x86_codegen_make '${model_name}' pass'; echo ${run_result} >> $5
+      else
+          run_result='x86_codegen_make '${model_name}' failed'; echo ${run_result} >> $5;
+          return 1;
+      fi
       # 2. run benchmark
       input_files=""
       if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
@@ -475,7 +484,6 @@ function Run_arm_codegen() {
         weight_file=${model_file%.*}".caffemodel"
       fi
       output_file=$1"/"${model_name}
-      quant_type=""
       config_file=$8
       train_model="false"
       in_dtype="DEFAULT"
@@ -491,9 +499,9 @@ function Run_arm_codegen() {
         --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape=${spec_shapes}\
         --configFile=${config_file} --trainModel=${train_model} >> "$4"
       if [ $? = 0 ]; then
-          converter_result='converter_'${model_type}'_'${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
+          converter_result='converter_'${model_type}' '${model_name}' pass';echo ${converter_result} >> $5
       else
-          converter_result='converter_'${model_type}'_'${quant_type}' '${model_name}' failed';echo ${converter_result} >> $5
+          converter_result='converter_'${model_type}' '${model_name}' failed';echo ${converter_result} >> $5
           return 1;
       fi
 
