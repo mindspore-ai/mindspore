@@ -25,7 +25,16 @@
 
 namespace mindspore {
 namespace pynative {
+constexpr size_t kThreadNameThreshold = 15;
+
 AsyncQueue::~AsyncQueue() { WorkerJoin(); }
+
+void AsyncQueue::SetThreadName() const {
+// Set thread name for gdb debug
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
+  (void)pthread_setname_np(pthread_self(), name_.substr(0, kThreadNameThreshold).c_str());
+#endif
+}
 
 void AsyncQueue::WorkerLoop() {
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
@@ -36,6 +45,8 @@ void AsyncQueue::WorkerLoop() {
     (void)kill(this_pid, SIGTERM);
   });
 #endif
+
+  SetThreadName();
 
   while (true) {
     std::shared_ptr<AsyncTask> task;
