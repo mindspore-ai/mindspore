@@ -1420,7 +1420,7 @@ TypePtr AbstractAny::BuildType() const {
 TypePtr AbstractNegligible::BuildType() const {
   MS_EXCEPTION_IF_NULL(element_);
   TypePtr element_type = element_->BuildType();
-  return std::make_shared<AnyType>(element_type);
+  return std::make_shared<NegligibleType>(element_type);
 }
 
 TypePtr AbstractDictionary::BuildType() const {

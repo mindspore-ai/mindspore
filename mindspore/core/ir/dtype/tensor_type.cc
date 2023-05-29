@@ -125,6 +125,20 @@ std::string AnyType::DumpText() const {
   return "Any(Tensor)(" + element()->DumpText() + ")";
 }
 
+std::string NegligibleType::ToString() const {
+  if (element() == nullptr) {
+    return "Negligible(Tensor)";
+  }
+  return "Negligible(Tensor)[" + element()->ToString() + "]";
+}
+
+std::string NegligibleType::DumpText() const {
+  if (element() == nullptr) {
+    return "Negligible(Tensor)";
+  }
+  return "Negligible(Tensor)(" + element()->DumpText() + ")";
+}
+
 std::string SparseTensorType::ElementsDtypeStr(const StringType str_type) const {
   std::ostringstream oss;
   for (const TypePtr &elem : elements_) {
