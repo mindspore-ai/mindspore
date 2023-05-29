@@ -41,13 +41,11 @@ class CustomOMKernel : public Kernel {
   int ReSize() override { return kSuccess; }
 
  private:
-  int GetOMBuffer(void *buffer, size_t *buffer_size);
   int ConvertMSTensorToHiaiTensor();
   int ConvertHiaiTensorToMSTensor();
   int Build(void *modelData, size_t modelDataLength);
   int Predict();
   int InitIOTensors();
-  void UnloadOM() noexcept;
   std::string modelName_{"OmModel"};
   std::shared_ptr<hiai::IModelManager> manager_{nullptr};
   std::shared_ptr<hiai::IBuiltModel> builtModel_{nullptr};
