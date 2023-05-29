@@ -566,15 +566,9 @@ const AnfNodePtr DynamicGRUV2GradFission::Process(const FuncGraphPtr &func_graph
   std::vector<AnfNodePtr> dh_prev_outputs;
   CreateMultipleOutputsOfAnfNode(func_graph, gru_hidden_grad_nodes[kIndex0], kGRUV2HiddenGradCellOutputNum,
                                  &dh_prev_outputs);
-  std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple),
-                                               dwx_reduce_sum,
-                                               dwh_reduce_sum,
-                                               dbx_reduce_sum,
-                                               dbh_reduce_sum,
-                                               dxt_batch_matmul,
-                                               dh_prev_outputs[kIndex0]};
-  auto make_tuple = func_graph->NewCNode(make_tuple_inputs);
-  return make_tuple;
+  return CreateMakeTupleNode(func_graph,
+                             std::vector<AnfNodePtr>{dwx_reduce_sum, dwh_reduce_sum, dbx_reduce_sum, dbh_reduce_sum,
+                                                     dxt_batch_matmul, dh_prev_outputs[kIndex0]});
 }
 }  // namespace opt
 }  // namespace mindspore

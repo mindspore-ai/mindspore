@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,10 +122,8 @@ const AnfNodePtr BatchNormGradSplit::Process(const FuncGraphPtr &func_graph, con
                       << bn_reduce_grad_outputs.size() << trace::DumpSourceLines(node);
   }
 
-  std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple), bn_reduce_grad_outputs[0],
-                                               bn_update_grad_outputs[0], bn_update_grad_outputs[1]};
-  auto make_tuple = func_graph->NewCNode(make_tuple_inputs);
-  return make_tuple;
+  return CreateMakeTupleNode(func_graph, std::vector<AnfNodePtr>{bn_reduce_grad_outputs[0], bn_update_grad_outputs[0],
+                                                                 bn_update_grad_outputs[1]});
 }
 }  // namespace opt
 }  // namespace mindspore

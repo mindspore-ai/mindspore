@@ -47,6 +47,20 @@ void AscendKernelMod::UpdateOutputSizeList() {
   }
 }
 
+bool AscendKernelMod::IsOutputAllEmptyTensor() {
+  auto node = anf_node_.lock();
+  MS_EXCEPTION_IF_NULL(node);
+  for (size_t i = 0; i < output_size_list_.size(); ++i) {
+    auto output_shape = common::AnfAlgo::GetOutputInferShape(node, i);
+    if (output_shape.size() != 1 || output_shape[0] != 0) {
+      is_output_all_empty_tensor_ = false;
+      return false;
+    }
+  }
+  is_output_all_empty_tensor_ = true;
+  return true;
+}
+
 bool AscendKernelMod::IsNeedRetrieveOutputShape() {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);

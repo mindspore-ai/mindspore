@@ -125,11 +125,7 @@ const AnfNodePtr BatchNorm2BNInfer::Process(const FuncGraphPtr &graph, const Anf
     if (IsUsedByOthers(graph, cnode)) {
       return nullptr;
     } else {
-      std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple), bn_infer};
-      auto make_tuple = graph->NewCNode(make_tuple_inputs);
-      std::vector<AbstractBasePtr> abstract_list{bn_infer->abstract()};
-      make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
-      return make_tuple;
+      return CreateMakeTupleNode(graph, std::vector<AnfNodePtr>{bn_infer});
     }
   }
 }

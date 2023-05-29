@@ -21,6 +21,7 @@
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/kernel_info.h"
+#include "include/backend/optimizer/helper.h"
 #include "ir/primitive.h"
 #include "include/common/utils/utils.h"
 #include "utils/trace_base.h"
@@ -126,12 +127,9 @@ const AnfNodePtr LayerNormGradSplit::Process(const FuncGraphPtr &graph, const An
     MS_LOG(EXCEPTION) << "layer_norm_beta_gamma_outputs has wrong size" << trace::DumpSourceLines(node);
   }
 
-  std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple), layer_norm_x_backprop_outputs[0],
-                                               layer_norm_beta_gamma_backprop_outputs[0],
-                                               layer_norm_beta_gamma_backprop_outputs[1]};
-  auto make_tuple = graph->NewCNode(make_tuple_inputs);
-  MS_EXCEPTION_IF_NULL(make_tuple);
-  return make_tuple;
+  return CreateMakeTupleNode(
+    graph, std::vector<AnfNodePtr>{layer_norm_x_backprop_outputs[0], layer_norm_beta_gamma_backprop_outputs[0],
+                                   layer_norm_beta_gamma_backprop_outputs[1]});
 }
 }  // namespace opt
 }  // namespace mindspore

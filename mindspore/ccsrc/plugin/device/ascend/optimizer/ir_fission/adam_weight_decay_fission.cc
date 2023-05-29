@@ -20,6 +20,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "mindspore/core/ops/core_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/optimizer/helper.h"
 
 namespace mindspore {
 namespace opt {
@@ -139,13 +140,7 @@ const AnfNodePtr AdamWeightDecayFission::Process(const FuncGraphPtr &graph, cons
   // create v = next_v
   auto assign_3 = CreateNodeOfBinaryOp(graph, prim::kPrimAssign->name(), v_fp32, add_2);
 
-  std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple), assign_1, assign_2, assign_3};
-  auto make_tuple = graph->NewCNode(make_tuple_inputs);
-  MS_EXCEPTION_IF_NULL(make_tuple);
-  AbstractBasePtrList abstract_list{assign_1->abstract(), assign_2->abstract(), assign_3->abstract()};
-  make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
-
-  return make_tuple;
+  return CreateMakeTupleNode(graph, std::vector<AnfNodePtr>{assign_1, assign_2, assign_3});
 }
 }  // namespace opt
 }  // namespace mindspore

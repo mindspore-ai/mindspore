@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,16 +175,8 @@ const AnfNodePtr BatchNormGradInferFission::Process(const FuncGraphPtr &func_gra
                       << kBNTrainingUpdateGradOutputNum << ", but it is " << bn_training_update_grad_outputs.size()
                       << trace::DumpSourceLines(node);
   }
-  std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple), bn_infer_grad,
-                                               bn_training_update_grad_outputs[0], bn_training_update_grad_outputs[1]};
-  auto make_tuple = func_graph->NewCNode(make_tuple_inputs);
-  MS_EXCEPTION_IF_NULL(make_tuple);
-  std::vector<AbstractBasePtr> abstract_list;
-  for (size_t i = 1; i < make_tuple_inputs.size(); ++i) {
-    (void)abstract_list.emplace_back(make_tuple_inputs[i]->abstract());
-  }
-  make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
-  return make_tuple;
+  return CreateMakeTupleNode(func_graph, std::vector<AnfNodePtr>{bn_infer_grad, bn_training_update_grad_outputs[0],
+                                                                 bn_training_update_grad_outputs[1]});
 }
 }  // namespace opt
 }  // namespace mindspore

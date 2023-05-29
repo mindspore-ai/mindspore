@@ -21,6 +21,7 @@
 #include "mindspore/core/ops/core_ops.h"
 #include "include/backend/optimizer/optimizer.h"
 #include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/optimizer/helper.h"
 
 namespace mindspore {
 namespace opt {
@@ -264,11 +265,7 @@ const AnfNodePtr LambFissionGe::Process(const FuncGraphPtr &graph, const AnfNode
     common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, global_step_node.get());
 
     // For multiple load scenarios, MakeTuple needs to be executed as the input parameter of UpdateState
-    std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple), param_node, global_step_node};
-    auto make_tuple_node = NewCNode(make_tuple_inputs, graph);
-    MS_EXCEPTION_IF_NULL(make_tuple_node);
-    AbstractBasePtrList abstract_list{param_node->abstract(), global_step_node->abstract()};
-    make_tuple_node->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
+    auto make_tuple_node = CreateMakeTupleNode(graph, std::vector<AnfNodePtr>{param_node, global_step_node});
 
     // graph mode need umonad and update-state function to keep order
     update_state_load_node =

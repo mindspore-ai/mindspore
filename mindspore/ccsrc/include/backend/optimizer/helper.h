@@ -187,6 +187,9 @@ BACKEND_EXPORT void RemoveNopNode(session::KernelGraph *const graph);
 BACKEND_EXPORT CNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                               size_t output_idx);
 
+BACKEND_EXPORT CNodePtr CreateMakeTupleNode(const FuncGraphPtr &func_graph,
+                                            const std::vector<AnfNodePtr> &tuple_inputs);
+
 BACKEND_EXPORT ValueNodePtr CreateShapeValueNode(const FuncGraphPtr &func_graph, const std::vector<int64_t> &shape,
                                                  bool to_tensor = false);
 
