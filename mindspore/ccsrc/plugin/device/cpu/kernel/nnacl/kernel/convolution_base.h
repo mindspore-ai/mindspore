@@ -21,6 +21,8 @@
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 
+#define ConvMinBlock 1
+
 typedef struct ConvolutionBaseStruct {
   KernelBase base_;
   FormatC out_format_;
@@ -60,17 +62,15 @@ typedef struct ConvolutionBaseStruct {
   int stride_w_;
   int dilation_h_;
   int dilation_w_;
-  int pad_u_;
-  int pad_d_;
-  int pad_l_;
-  int pad_r_;
-  int group_;
-  int tile_num_;
-  int input_unit_;
-  int output_unit_;
-  int channel_multiplie_;
-  int output_padding_w_;
-  int output_padding_h_;
+  //  int pad_u_;
+  //  int pad_d_;
+  //  int pad_l_;
+  //  int pad_r_;
+  //  int group_;
+  //  int tile_num_;
+  //  int channel_multiplie_;
+  //  int output_padding_w_;
+  //  int output_padding_h_;
 } ConvolutionBaseStruct;
 
 int ConvBaseCheckResizeValid(ConvolutionBaseStruct *conv);

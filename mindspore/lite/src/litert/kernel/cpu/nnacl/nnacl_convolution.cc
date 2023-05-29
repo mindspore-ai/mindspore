@@ -19,6 +19,7 @@
 #include "src/litert/pack_weight_manager.h"
 #include "nnacl/nnacl_manager.h"
 #include "nnacl/kernel/convolution_base.h"
+#include "nnacl/conv_parameter.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
@@ -48,5 +49,16 @@ int ConvolutionKernel::Prepare() {
   return ReSize();
 }
 
-NNACL_KERNEL(PrimitiveType_Conv2DFusion, kNumberTypeFloat32, NNACLOpt<ConvolutionKernel>)
+NNACLKernel *NNACLConvolutionOpt(OpParameter *parameter, const std::vector<lite::Tensor *> &in,
+                                 const std::vector<lite::Tensor *> &out, const lite::InnerContext *ctx) {
+  reinterpret_cast<ConvParameter *>(parameter)->thread_num_ = ctx->thread_num_;
+  auto shape = out.front()->shape();
+  reinterpret_cast<ConvParameter *>(parameter)->dynamic_shape_ =
+    std::find(shape.begin(), shape.end(), -1) != shape.end();
+
+  auto *kernel = new (std::nothrow) ConvolutionKernel(parameter, in, out, ctx);
+  return kernel;
+}
+
+NNACL_KERNEL(PrimitiveType_Conv2DFusion, kNumberTypeFloat32, NNACLConvolutionOpt)
 }  // namespace mindspore::nnacl

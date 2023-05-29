@@ -15,9 +15,59 @@
  */
 
 #include "nnacl/kernel/convolution_winograd.h"
+#include "nnacl/kernel/convolution_winograd_base.h"
+#ifdef ENABLE_AVX
+#include "nnacl/kernel/convolution_winograd_avx.h"
+#endif
+#ifdef ENABLE_SSE
+#include "nnacl/kernel/convolution_winograd_sse.h"
+#endif
+#ifdef ENABLE_ARM64
+#include "nnacl/kernel/convolution_winograd_arm64.h"
+#endif
+#ifdef ENABLE_ARM32
+#include "nnacl/kernel/convolution_winograd_arm32.h"
+#endif
 
-ConvolutionBaseStruct *CreateConvolutionWinograd(ConvParameter *conv_param) {
-  ConvolutionWinogradStruct *conv_winograd = (ConvolutionWinogradStruct *)malloc(sizeof(ConvolutionWinogradStruct));
-  NNACL_MALLOC_CHECK_NULL_RETURN_NULL(conv_winograd);
-  return (ConvolutionBaseStruct *)conv_winograd;
+ConvolutionWinogradBaseStruct *SelectConvolutionWinograd(ConvParameter *conv_param) {
+  ConvolutionWinogradBaseStruct *kernel = NULL;
+
+#ifdef ENABLE_AVX
+  kernel = CreateConvWinogradAVX(conv_param);
+  if (kernel != NULL) {
+    return kernel;
+  }
+#endif
+
+#ifdef ENABLE_SSE
+  kernel = CreateConvWinogradSSE(conv_param);
+  if (kernel != NULL) {
+    return kernel;
+  }
+#endif
+
+#ifdef ENABLE_ARM64
+  kernel = CreateConvWinogradARM64(conv_param);
+  if (kernel != NULL) {
+    return kernel;
+  }
+#endif
+
+#ifdef ENABLE_ARM32
+  kernel = CreateConvWinogradARM32(conv_param);
+  if (kernel != NULL) {
+    return kernel;
+  }
+#endif
+
+  kernel = CreateConvWinogradBase(conv_param);
+  return kernel;
+}
+
+ConvolutionBaseStruct *CreateConvolutionWinograd(ConvParameter *conv_param, int out_unit) {
+  ConvolutionWinogradBaseStruct *kernel = SelectConvolutionWinograd(conv_param);
+  NNACL_MALLOC_CHECK_NULL_RETURN_NULL(kernel);
+
+  kernel->output_unit_ = out_unit;
+  return (ConvolutionBaseStruct *)kernel;
 }

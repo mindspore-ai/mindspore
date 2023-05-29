@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_KERNEL_CONVOLLUTION_WINOGRAD_H_
-#define NNACL_KERNEL_CONVOLLUTION_WINOGRAD_H_
+#ifndef NNACL_KERNEL_CONVOLLUTION_WINOGRAD_SSE_H_
+#define NNACL_KERNEL_CONVOLLUTION_WINOGRAD_SSE_H_
 
+#ifdef ENABLE_SSE
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 #include "nnacl/conv_parameter.h"
-#include "nnacl/kernel/convolution_base.h"
+#include "nnacl/kernel/convolution_winograd_base.h"
 
-typedef struct ConvolutionWinogradStruct {
-  ConvolutionBaseStruct conv_;
-} ConvolutionWinogradStruct;
+ConvolutionWinogradBaseStruct *CreateConvWinogradSSE(ConvParameter *conv_param);
+#endif
 
-ConvolutionBaseStruct *CreateConvolutionWinograd(ConvParameter *conv_param, int out_uint);
-
-#endif  // NNACL_KERNEL_CONVOLLUTION_WINOGRAD_H_
+#endif  // NNACL_KERNEL_CONVOLLUTION_WINOGRAD_SSE_H_
