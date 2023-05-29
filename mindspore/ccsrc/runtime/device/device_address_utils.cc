@@ -179,12 +179,15 @@ void DeviceAddressUtils::CreateDeviceAddressForTensorValue(const DeviceContext *
       return;
     }
     auto output_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
-    if (output_address != nullptr && output_address->GetDeviceType() == device_context->GetDeviceType()) {
-      // We need to set tensor->device_address to ValueNode even if the tensor is a forward_output tensor
-      // in PyNative Bprop graph. ValueNode device_address is necessary for GraphSchedule::Transform.
-      AnfAlgo::SetOutputAddr(std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address()), output_idx++,
-                             value_node.get());
-      continue;
+    if (output_address != nullptr) {
+      if (output_address->GetDeviceType() == device_context->GetDeviceType()) {
+        // We need to set tensor->device_address to ValueNode even if the tensor is a forward_output tensor
+        // in PyNative Bprop graph. ValueNode device_address is necessary for GraphSchedule::Transform.
+        AnfAlgo::SetOutputAddr(std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address()), output_idx++,
+                               value_node.get());
+        continue;
+      }
+      tensor->data_sync();
     }
 
     size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(value_node, output_idx);
