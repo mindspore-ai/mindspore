@@ -21,6 +21,7 @@
 #include <memory>
 #include <map>
 #include <string>
+#include <unordered_map>
 #include "utils/ms_utils.h"
 #include "include/backend/kernel_graph.h"
 #include "backend/common/session/session_basic.h"
@@ -39,7 +40,7 @@ struct ExecuteKernelInfo {
 using ExecuteKernelInfoList = std::vector<ExecuteKernelInfo>;
 
 struct OpCompilerInfo {
-  OpCompilerInfo(GraphInfo graph_info, GraphId graph_id, KernelGraphPtr graph,
+  OpCompilerInfo(mindspore::GraphInfo graph_info, GraphId graph_id, KernelGraphPtr graph,
                  std::vector<KernelWithIndex> graph_output_nodes, DeviceContext *device_context, bool need_erase)
       : graph_info_(std::move(graph_info)),
         graph_id_(graph_id),
@@ -48,7 +49,7 @@ struct OpCompilerInfo {
         device_context_(device_context),
         need_erase_(need_erase) {}
   ~OpCompilerInfo() = default;
-  GraphInfo graph_info_;
+  mindspore::GraphInfo graph_info_;
   GraphId graph_id_;
   KernelGraphPtr graph_;
   std::vector<KernelWithIndex> graph_output_nodes_;
@@ -76,7 +77,7 @@ class BACKEND_EXPORT OpCompiler {
 
   // Clear op cache in dynamic scenes.
   // Otherwise, the operator cache will keep growing, resulting in insufficient memory.
-  void ClearOpCache(const GraphInfo &graph_info);
+  void ClearOpCache(const mindspore::GraphInfo &graph_info);
 
   // Accumulate a certain number of operators,
   // and then compile the operators in parallel to improve compilation efficiency.
@@ -98,7 +99,7 @@ class BACKEND_EXPORT OpCompiler {
   void ConvertGraphToExecuteInfo(const OpCompilerInfoPtr &op_compiler_info);
   // All operators shared the same session.
   session::SessionPtr session_;
-  mindspore::HashMap<GraphInfo, OpCompilerInfoPtr> op_compiler_infos_;
+  mindspore::HashMap<mindspore::GraphInfo, OpCompilerInfoPtr> op_compiler_infos_;
 };
 }  // namespace pynative
 using OpCompilerInfoPtr = pynative::OpCompilerInfoPtr;

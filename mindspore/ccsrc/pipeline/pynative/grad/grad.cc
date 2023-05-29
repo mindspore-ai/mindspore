@@ -572,7 +572,7 @@ void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_i
     MS_LOG(DEBUG) << "Run custom bprop cell";
     auto fg = std::make_shared<FuncGraph>();
     top_cell()->set_fg(fg);
-    auto graph_info_cg = std::make_shared<GraphInfo>();
+    auto graph_info_cg = std::make_shared<PyNGraphInfo>();
     top_cell()->SetGraphInfoMap(fg, graph_info_cg);
     HandleInputArgsForTopCell(input_args_info, true);
     bprop_grad_stack_.push(std::make_pair(input_args_info->cell_id, false));
@@ -595,7 +595,7 @@ void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_i
   // Init kPynativeCellPtr with input parameters of top cell
   if (!top_cell()->is_init_kpynative()) {
     forward()->WaitForwardTask();
-    auto graph_info_cg = std::make_shared<GraphInfo>();
+    auto graph_info_cg = std::make_shared<PyNGraphInfo>();
     top_cell()->SetGraphInfoMap(curr_g(), graph_info_cg);
     HandleInputArgsForTopCell(input_args_info, false);
     top_cell()->set_need_compile_graph(true);

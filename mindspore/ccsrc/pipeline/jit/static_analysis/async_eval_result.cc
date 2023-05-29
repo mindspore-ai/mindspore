@@ -23,6 +23,9 @@
 
 namespace mindspore {
 namespace abstract {
+namespace {
+constexpr auto kStateStop = "Stop";
+}  // namespace
 thread_local std::string AnalysisSchedule::thread_id_ = "m";
 
 void AnalysisSchedule::Schedule() {
