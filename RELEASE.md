@@ -1530,8 +1530,8 @@ Contributions of any kind are welcome!
 
 - [STABLE] Support overwrite feature in MindRecord.
 - [STABLE] Log improvement and more friendly to users.
-- [BETA] Support new feature [Dataset Offload](https://www.mindspore.cn/tutorials/experts/en/master/dataset/dataset_offload.html) to speed up data processing by heterogeneous computing.
-- [BETA] Support new feature [Dataset Autotune](https://www.mindspore.cn/tutorials/experts/en/master/debug/auto_tune.html) to adjust parallelism of dataset pipeline automatically.
+- [BETA] Support new feature [Dataset Offload](https://www.mindspore.cn/docs/programming_guide/en/r1.6/enable_dataset_offload.html) to speed up data processing by heterogeneous computing.
+- [BETA] Support new feature [Dataset Autotune](https://www.mindspore.cn/docs/programming_guide/en/r1.6/enable_auto_tune.html) to adjust parallelism of dataset pipeline automatically.
 
 #### GraphKernel Fusion
 
