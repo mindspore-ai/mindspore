@@ -364,6 +364,18 @@ void SetPyExecuteCastAttr(const CNodePtr &cnode) {
     }
   }
 }
+
+void CheckNodeValid(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  // Check the joined any abstract.
+  const auto &node_abs = node->abstract();
+  if (node_abs != nullptr && node_abs->isa<abstract::AbstractJoinedAny>()) {
+    auto abs_joined_any = node_abs->cast<abstract::AbstractJoinedAnyPtr>();
+    if (abs_joined_any != nullptr) {
+      abs_joined_any->ThrowException();
+    }
+  }
+}
 }  // namespace
 
 const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph) {
@@ -458,6 +470,9 @@ void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
       if (node == nullptr || (!node->isa<CNode>())) {
         continue;
       }
+
+      CheckNodeValid(node);
+
       const auto &cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       // List name --> tuple name.
