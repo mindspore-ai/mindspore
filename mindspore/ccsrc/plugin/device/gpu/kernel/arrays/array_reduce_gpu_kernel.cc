@@ -42,10 +42,9 @@ constexpr size_t kDynamicAxisInputNum = 2;
 constexpr size_t kComplexFloatFlag = 1;
 constexpr size_t kComplexDoubleFlag = 2;
 constexpr size_t kComplexRate = 2;
-constexpr size_t k8Bit = 1;
-constexpr size_t k16Bit = 2;
-constexpr size_t k32Bit = 3;
-constexpr size_t k64Bit = 4;
+constexpr size_t kInt32Flag = 1;
+constexpr size_t kInt64Flag = 2;
+constexpr size_t kInt16Flag = 3;
 
 const std::map<std::string, cudnnReduceTensorOp_t> kReduceTypeMap = {
   {"ReduceMax", CUDNN_REDUCE_TENSOR_MAX},  {"ReduceMean", CUDNN_REDUCE_TENSOR_AVG},
@@ -91,20 +90,12 @@ std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayRed
   {REDUCE_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, double)},
   {REDUCE_REGISTER(kNumberTypeInt8, kNumberTypeInt32, int8_t)},
   {REDUCE_REGISTER(kNumberTypeInt8, kNumberTypeInt64, int8_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, uint8_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt8, kNumberTypeInt64, uint8_t)},
   {REDUCE_REGISTER(kNumberTypeInt16, kNumberTypeInt32, int16_t)},
   {REDUCE_REGISTER(kNumberTypeInt16, kNumberTypeInt64, int16_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt16, kNumberTypeInt32, uint16_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt16, kNumberTypeInt64, uint16_t)},
   {REDUCE_REGISTER(kNumberTypeInt32, kNumberTypeInt32, int32_t)},
   {REDUCE_REGISTER(kNumberTypeInt32, kNumberTypeInt64, int32_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt32, kNumberTypeInt32, uint32_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt32, kNumberTypeInt64, uint32_t)},
   {REDUCE_REGISTER(kNumberTypeInt64, kNumberTypeInt32, int64_t)},
   {REDUCE_REGISTER(kNumberTypeInt64, kNumberTypeInt64, int64_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt64, kNumberTypeInt32, uint64_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt64, kNumberTypeInt64, uint64_t)},
   {REDUCE_REGISTER(kNumberTypeComplex64, kNumberTypeInt32, Complex<float>)},
   {REDUCE_REGISTER(kNumberTypeComplex64, kNumberTypeInt64, Complex<float>)},
   {REDUCE_REGISTER(kNumberTypeComplex128, kNumberTypeInt32, Complex<double>)},
@@ -194,24 +185,18 @@ bool ArrayReduceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   } else if (type_id == kNumberTypeComplex128) {
     data_type_ = CUDNN_DATA_DOUBLE;
     complex_op_type = kComplexDoubleFlag;
-  } else if (type_id == kNumberTypeInt8 || type_id == kNumberTypeUInt8) {
-    data_type_ = CUDNN_DATA_FLOAT;
-    int_op_type = k8Bit;
-  } else if (type_id == kNumberTypeInt16 || type_id == kNumberTypeUInt16) {
-    data_type_ = CUDNN_DATA_FLOAT;
-    int_op_type = k16Bit;
-  } else if (type_id == kNumberTypeInt32 || type_id == kNumberTypeUInt32) {
-    data_type_ = CUDNN_DATA_FLOAT;
-    int_op_type = k32Bit;
-  } else if (type_id == kNumberTypeInt64 || type_id == kNumberTypeUInt64) {
+  } else if (type_id == kNumberTypeInt64) {
     data_type_ = CUDNN_DATA_DOUBLE;
-    int_op_type = k64Bit;
+    int_op_type = kInt64Flag;
+  } else if (type_id == kNumberTypeInt16) {
+    data_type_ = CUDNN_DATA_FLOAT;
+    int_op_type = kInt16Flag;
   } else {
     data_type_ = GetCudnnDataType(type_name);
   }
   if (data_type_ == CUDNN_DATA_INT32) {
     data_type_ = CUDNN_DATA_FLOAT;
-    int_op_type = k32Bit;
+    int_op_type = kInt32Flag;
   }
 
   auto kernel_ptr = std::dynamic_pointer_cast<ops::Reduce>(base_operator);
@@ -463,17 +448,15 @@ bool ArrayReduceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   T alpha = static_cast<T>(1.0f);
   T beta = static_cast<T>(0.0f);
   T *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 0);
-  if (int_op_type == k32Bit) {
-    LaunchIntKernel<float, T>(inputs, workspace, outputs, stream_ptr);
+  if (int_op_type == kInt32Flag) {
+    LaunchIntKernel<float, int32_t>(inputs, workspace, outputs, stream_ptr);
     return true;
-  } else if (int_op_type == k64Bit) {
-    LaunchIntKernel<double, T>(inputs, workspace, outputs, stream_ptr);
+  } else if (int_op_type == kInt64Flag) {
+    LaunchIntKernel<double, int64_t>(inputs, workspace, outputs, stream_ptr);
     return true;
-  } else if (int_op_type == k16Bit) {
-    LaunchIntKernel<float, T>(inputs, workspace, outputs, stream_ptr);
+  } else if (int_op_type == kInt16Flag) {
+    LaunchIntKernel<float, int16_t>(inputs, workspace, outputs, stream_ptr);
     return true;
-  } else if (int_op_type == k8Bit) {
-    LaunchIntKernel<float, T>(inputs, workspace, outputs, stream_ptr);
   }
   std::stringstream ss;
   ss << "For '" << kernel_name_ << "', cudnnReduceTensor failed.";
