@@ -207,6 +207,8 @@
 #include "plugin/device/ascend/hal/hardware/ge_utils.h"
 #include "plugin/device/ascend/optimizer/ge/getnext_for_ge.h"
 #include "plugin/device/ascend/optimizer/ge/add_depend_for_all_gather.h"
+#include "plugin/device/ascend/optimizer/ge/convert_data_depend_to_control_depend.h"
+#include "plugin/device/ascend/optimizer/ge/convert_condition_input_to_scalar.h"
 
 namespace mindspore {
 namespace opt {
@@ -390,7 +392,6 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   ir_fusion_pm->AddPass(std::make_shared<opt::MaxPoolGradWithArgmaxUnifyMindIR>());
   ir_fusion_pm->AddPass(std::make_shared<opt::SliceGradUnifyMindIR>());
   ir_fusion_pm->AddPass(std::make_shared<opt::StridedSliceGradUpdateInputNames>());
-  ir_fusion_pm->AddPass(std::make_shared<DropoutGenMaskFusion>());
   ir_fusion_pm->AddPass(std::make_shared<SeedAdapter>());
   ir_fusion_pm->AddPass(std::make_shared<AddStatusInputForRandomOperator>());
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
@@ -578,6 +579,36 @@ void AscendBackendOptimizeACL(const std::shared_ptr<session::KernelGraph> &kerne
 #endif
   PROF_END(ascend_backend_optimize_acl);
   MS_LOG(DEBUG) << "Status record: end ascend backend optimize acl pass. graph id: " << kernel_graph->graph_id();
+}
+
+void AscendBackendOptimizeGE(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_LOG(DEBUG) << "Status record: start ascend backend optimize ge pass. graph id: " << kernel_graph->graph_id();
+  PROF_START(ascend_backend_optimize_ge);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+#ifdef ENABLE_DUMP_IR
+  if (context_ptr->CanDump(kIntroductory)) {
+    std::string file_name = "hwopt_d_before_opt_ge_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph, true, kWholeStack);
+  }
+#endif
+  auto optimizer = std::make_shared<GraphOptimizer>();
+  auto opt_ge_pm = std::make_shared<PassManager>("opt_ge_pm");
+  opt_ge_pm->AddPass(std::make_shared<opt::AddDependForAllGather>());
+  opt_ge_pm->AddPass(std::make_shared<ConvertCondInputToScalar>());
+  opt_ge_pm->AddPass(std::make_shared<opt::ConvertDataDependToControlDepend>());
+  optimizer->AddPassManager(opt_ge_pm);
+  (void)optimizer->Optimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
+#ifdef ENABLE_DUMP_IR
+  if (context_ptr->CanDump(kIntroductory)) {
+    std::string file_name = "hwopt_d_end_opt_ge_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
+    DumpIR(file_name, kernel_graph, true, kWholeStack);
+  }
+#endif
+  PROF_END(ascend_backend_optimize_ge);
+  MS_LOG(DEBUG) << "Status record: end ascend backend optimize ge pass. graph id: " << kernel_graph->graph_id();
 }
 
 void AscendBackendOptimizeACLAfterKernelSelect(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
@@ -774,7 +805,6 @@ PassManagerPtr GetAscendUnifyMindIRPassManager() {
     } else {
       unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsSplitInfer>());
     }
-    unify_mindir_pm->AddPass(std::make_shared<opt::AddDependForAllGather>());
   } else if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
     unify_mindir_pm->AddPass(std::make_shared<opt::MomentumUnifyOutput>());
     unify_mindir_pm->AddPass(std::make_shared<opt::DropoutAndDropoutGradUnifyMindIR>());
@@ -812,6 +842,8 @@ PassManagerPtr GetAscendUnifyMindIRPassManager() {
   unify_mindir_pm->AddPass(std::make_shared<TensorScatterMinFission>());
   // just rename primitive name
   unify_mindir_pm->AddPass(std::make_shared<opt::AscendMindIROpAdapter>());
+
+  unify_mindir_pm->AddPass(std::make_shared<opt::DropoutGenMaskFusion>());
 
   return unify_mindir_pm;
 }

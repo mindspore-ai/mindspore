@@ -262,7 +262,7 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
   MS_EXCEPTION_IF_NULL(graph);
   KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
   MS_EXCEPTION_IF_NULL(kg);
-  AscendGraphOptimization::GetInstance().OptimizeACLGraph(kg);
+  AscendGraphOptimization::GetInstance().OptimizeGEGraph(kg);
   (void)BuildDFGraph(kg, GetParams(kg), false);
   SetDynamicShapeAttr(kg);
   AllocInputHostMemory(kg);
