@@ -57,6 +57,9 @@ void SetPyObjectToLocalVariable(const std::string &key, const py::object &value)
 AnfNodePtr ConvertPyObjectToPyExecute(const FuncGraphPtr &fg, const std::string &key, const py::object value,
                                       const AnfNodePtr &node, bool replace);
 AnfNodePtr ConvertInterpretedObjectToPyExecute(const FuncGraphPtr &fg, const ValuePtr &value, const AnfNodePtr &node);
+
+AnfNodePtr ConvertMsClassObjectToPyExecute(const FuncGraphPtr &fg, const ValuePtr &value, const AnfNodePtr &node);
+
 using FormatedVariableTypeFunc = std::function<TypePtr(const std::string &)>;
 
 TypePtr GetJitAnnotationTypeFromComment(const AnfNodePtr &node,

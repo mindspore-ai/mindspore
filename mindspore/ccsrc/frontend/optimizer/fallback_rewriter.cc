@@ -1383,6 +1383,9 @@ class AfterOptARewriter : public BaseRewriter {
         return ConvertClassTypeToPyExecute(value_node, class_type);
       }
     }
+    if (value->isa<parse::MsClassObject>()) {
+      return fallback::ConvertMsClassObjectToPyExecute(fg, value, value_node);
+    }
     if (value->isa<parse::InterpretedObject>()) {
       return fallback::ConvertInterpretedObjectToPyExecute(fg, value, value_node);
     }
@@ -1599,6 +1602,8 @@ class AfterOptARewriter : public BaseRewriter {
         return RebuildValueDict(root_graph_, value_node, value->cast<ValueDictionaryPtr>());
       } else if (value->isa<parse::InterpretedObject>()) {
         return ConvertInterpretedObjectValue(value_node, value->cast<parse::InterpretedObjectPtr>());
+      } else if (value->isa<parse::MsClassObject>()) {
+        return fallback::ConvertMsClassObjectToPyExecute(root_graph_, value, value_node);
       }
     }
     return nullptr;
