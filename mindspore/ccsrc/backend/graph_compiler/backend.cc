@@ -1200,7 +1200,7 @@ void MindRTBackend::UpdateOutputDynamic(const OpCompilerInfoPtr &op_compiler_inf
     MS_EXCEPTION_IF_NULL(output_address);
     TensorPtr output_tensor = CreateOutputTensorDynamic(item_with_index.first, item_with_index.second, output_address);
     MS_EXCEPTION_IF_NULL(output_tensor);
-    output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().Wait(); });
+    output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
     outputs->emplace_back(output_tensor);
   }
 }
