@@ -42,32 +42,11 @@ Descriptions of common data processing terms are as follows:
 
 The data transform operation can be executed in the data processing pipeline or in the eager mode:
 
-- Pipeline mode is generally used to process datasets. For examples, please refer to
+- Pipeline mode is generally used to process big datasets. Examples refer to
   `introduction to data processing pipeline <https://www.mindspore.cn/docs/en/master/api_python/
   mindspore.dataset.html#introduction-to-data-processing-pipeline>`_ .
-- Eager mode is generally used for scattered samples. Examples of image preprocessing are as follows:
-
-  .. code-block::
-
-      import numpy as np
-      import mindspore.dataset.vision as vision
-      from PIL import Image,ImageFont,ImageDraw
-
-      # draw circle
-      img = Image.new("RGB", (300, 300), (255, 255, 255))
-      draw = ImageDraw.Draw(img)
-      draw.ellipse(((0, 0), (100, 100)), fill=(255, 0, 0), outline=(255, 0, 0), width=5)
-      img.save("./1.jpg")
-      with open("./1.jpg", "rb") as f:
-          data = f.read()
-
-      data_decoded = vision.Decode()(data)
-      data_croped = vision.RandomCrop(size=(250, 250))(data_decoded)
-      data_resized = vision.Resize(size=(224, 224))(data_croped)
-      data_normalized = vision.Normalize(mean=[0.485 * 255, 0.456 * 255, 0.406 * 255],
-                                         std=[0.229 * 255, 0.224 * 255, 0.225 * 255])(data_resized)
-      data_hwc2chw = vision.HWC2CHW()(data_normalized)
-      print("data: {}, shape: {}".format(data_hwc2chw, data_hwc2chw.shape), flush=True)
+- Eager mode is more like a function call to process data. Examples refer to
+  `Lightweight Data Processing` <https://www.mindspore.cn/tutorials/en/master/advanced/dataset/eager.html>_ .
 """
 from . import c_transforms
 from . import py_transforms
