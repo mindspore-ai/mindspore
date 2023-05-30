@@ -1309,6 +1309,61 @@ def get_apply_adam_with_amsgrad_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.ApplyAdamWithAmsgradV2)
+def get_apply_adam_with_amsgrad_v2_rule(prim, axis_size):
+    """VmapRule for `ApplyAdamWithAmsgradV2` operation"""
+    if hasattr(prim, "batch_rank"):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+    prim_name = prim.name
+    batch_prim = _vmap_clone_prim(prim)
+    batch_prim.add_prim_attr("batch_rank", batch_rank)
+
+    def vmap_rule(var_bdim, m_bdim, v_bdim, vhat_bdim, beta1_power_bdim, beta2_power_bdim, lr_bdim, beta1_bdim,
+                  beta2_bdim, epsilon_bdim, grad_bdim, u_monad):
+        var, var_dim = var_bdim
+        m, m_dim = m_bdim
+        v, v_dim = v_bdim
+        vhat, vhat_dim = vhat_bdim
+        beta1_power, beta1_power_dim = beta1_power_bdim
+        beta2_power, beta2_power_dim = beta2_power_bdim
+        lr, lr_dim = lr_bdim
+        beta1, beta1_dim = beta1_bdim
+        beta2, beta2_dim = beta2_bdim
+        epsilon, epsilon_dim = epsilon_bdim
+        grad, grad_dim = grad_bdim
+
+        if var_dim is None:
+            if any(dim is not None for dim in [m_dim, v_dim, vhat_dim, beta1_power_dim,
+                                               beta2_power_dim, lr_dim, beta1_dim, beta2_dim, grad_dim]):
+                raise ValueError("The source axis of `var` is None, "
+                                 "but the source axis of `m/v/vhat/beta1_power/beta2_power/lr/beta1/beta2/grad` is not "
+                                 "None. The execution of operator `{}` cannot be guaranteed.".format(prim_name))
+            out_var, out_m, out_v, out_vhat = prim(var, m, v, vhat, beta1_power, beta2_power, lr, beta1, beta2, epsilon,
+                                                   grad, u_monad)
+            return (out_var, None), (out_m, None), (out_v, None), (out_vhat, None)
+
+        if any(dim != 0 for dim in [var_dim, m_dim, v_dim, vhat_dim]):
+            raise ValueError("For `{}`, the source axis of `var/m/v/vhat` must be 0, "
+                             "but get `var`: {}, `m`: {}, `v`: {}, `vhat`: {}".format(prim_name, var_dim,
+                                                                                      m_dim, v_dim, vhat_dim))
+
+        beta1_power = _bdim_at_front(beta1_power, beta1_power_dim, axis_size)
+        beta2_power = _bdim_at_front(beta2_power, beta2_power_dim, axis_size)
+        lr = _bdim_at_front(lr, lr_dim, axis_size)
+        beta1 = _bdim_at_front(beta1, beta1_dim, axis_size)
+        beta2 = _bdim_at_front(beta2, beta2_dim, axis_size)
+        epsilon = _bdim_at_front(epsilon, epsilon_dim, axis_size)
+        grad = _bdim_at_front(grad, grad_dim, axis_size)
+
+        out_var, out_m, out_v, out_vhat = batch_prim(var, m, v, vhat, beta1_power, beta2_power, lr, beta1, beta2,
+                                                     epsilon, grad, u_monad)
+        return (out_var, 0), (out_m, 0), (out_v, 0), (out_vhat, 0)
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(P.Adam)
 def get_adam_rule(prim, axis_size):
     """VmapRule for `Adam` operation"""
@@ -1748,6 +1803,7 @@ def get_max_pool_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.LayerNorm)
 def get_layernorm_vmap_rule(prim, axis_size):
     """VmapRule for `LayerNorm` operation."""
+
     @constexpr
     def process_attr_axis(prim_attr_axis):
         if prim_attr_axis < 0:
@@ -1794,6 +1850,7 @@ def get_layernorm_vmap_rule(prim, axis_size):
         output = F.add(F.mul(output_tmp, g), b)
 
         return (output, 0), (mean, 0), (var, 0)
+
     return vmap_rule
 
 
@@ -1828,6 +1885,7 @@ def get_grid_sampler_vmap_rule(prim, axis_size):
         return_shape = input_x_shape[:non_batch_dim_index] + out_shape[non_batch_dim_index:]
         out = F.reshape(out, return_shape)
         return out, 0
+
     return vmap_rule
 
 
@@ -1852,6 +1910,7 @@ def get_upsample_nearest_3d_vmap_rule(prim, axis_size):
         return_shape = x_shape[:cdhw_reverse_index] + out_shape[cdhw_reverse_index:]
         out = F.reshape(out, return_shape)
         return out, 0
+
     return vmap_rule
 
 
@@ -1889,6 +1948,7 @@ def get_sparse_apply_adagrad_vmap_rule(prim, axis_size):
 
         var, accum = batch_prim(var, accum, grad, indices, u_monad)
         return (var, 0), (accum, 0)
+
     return vmap_rule
 
 
@@ -1927,6 +1987,7 @@ def get_sparse_apply_ftrl_vmap_rule(prim, axis_size):
 
         var, accum, linear = batch_prim(var, accum, linear, grad, indices, u_monad)
         return (var, 0), (accum, 0), (linear, 0)
+
     return vmap_rule
 
 

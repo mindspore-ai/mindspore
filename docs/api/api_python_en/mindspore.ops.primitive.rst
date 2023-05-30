@@ -152,6 +152,7 @@ Optimizer
     mindspore.ops.ApplyAdagradDA
     mindspore.ops.ApplyAdagradV2
     mindspore.ops.ApplyAdaMax
+    mindspore.ops.ApplyAdamWithAmsgradV2
     mindspore.ops.ApplyAddSign
     mindspore.ops.ApplyCenteredRMSProp
     mindspore.ops.ApplyFtrl

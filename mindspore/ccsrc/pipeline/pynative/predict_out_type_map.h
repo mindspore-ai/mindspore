@@ -58,6 +58,7 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"ApplyAdagradDA", kTupleTensor3},
                                                        {"ApplyAdagradV2", kTupleTensor2},
                                                        {"ApplyAdamWithAmsgrad", kTupleTensor4},
+                                                       {"ApplyAdamWithAmsgradV2", kTupleTensor4},
                                                        {"ApplyAddSign", kTupleTensor2},
                                                        {"ApplyKerasMomentum", kTupleTensor2},
                                                        {"ApplyPowerSign", kTupleTensor2},

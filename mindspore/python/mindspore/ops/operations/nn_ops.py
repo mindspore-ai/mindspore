@@ -9335,6 +9335,129 @@ class ApplyAdamWithAmsgrad(Primitive):
         self.add_prim_attr("side_effect_mem", True)
 
 
+class ApplyAdamWithAmsgradV2(Primitive):
+    r"""
+    Update var according to the Adam algorithm.
+
+    .. math::
+        \begin{array}{l1} \\
+            lr_t:=learning\_rate*\sqrt{1-\beta_2^t}/(1-\beta_1^t) \\
+            m_t:=\beta_1*m_{t-1}+(1-\beta_1)*g \\
+            v_t:=\beta_2*v_{t-1}+(1-\beta_2)*g*g \\
+            \hat v_t:=\max(\hat v_{t-1}, v_t) \\
+            var:=var-lr_t*m_t/(\sqrt{\hat v_t}+\epsilon) \\
+        \end{array}
+
+    The inputs `var`, `m`, `v`, `vhat`, and `grad` are consistent with implicit type conversion rules,
+    which ensure that the data types are the same. If they have different data types, the lower precision data type
+    will be converted to the data type with relatively higher precision.
+
+    The inputs `beta1_power`, `beta1`, `beta2`, and `epsilon` are consistent with implicit type conversion rules,
+    which ensure that the data types are the same. If they have different data types, the lower precision data type
+    will be converted to the data type with relatively higher precision.
+
+    There is no implicit type conversion rule between `var` and `beta1_power`. The type conversion rules
+    for `var` and `beta1_power` are independent of each other.
+
+    Args:
+        use_locking (bool): If ``True`` , updating of the `var`, `m`, and `v` tensors will
+            be protected by a lock; Otherwise the behavior is undefined, but may exhibit less contention.
+            Default: ``False`` .
+
+    Inputs:
+        - **var** (Parameter) - Variable to be updated. The data type can be float16 or float32.
+        - **m** (Parameter) - The 1st moment vector in the updating formula,
+          the shape and data type value should be the same as `var`.
+        - **v** (Parameter) - The 2nd moment vector in the updating formula,
+          the shape and data type value should be the same as `var`.
+        - **vhat** (Parameter) - :math:`\hat v_t` in the updating formula,
+          the shape and data type value should be the same as `var`.
+        - **beta1_power** (Union[float, Tensor]) - :math:`beta_1^t(\beta_1^{t})` in the updating formula,
+          with float16 or float32 data type.
+        - **beta2_power** (Union[float, Tensor]) - :math:`beta_2^t(\beta_2^{t})` in the updating formula,
+          with float16 or float32 data type.
+        - **lr** (Union[float, Tensor]) - Learning rate, with float16 or float32 data type.
+        - **beta1** (Union[float, Tensor]): Exponential decay rate of the first moment.
+            The data type can be float16 or float32.
+        - **beta2** (Union[float, Tensor]): Exponential decay rate of the second moment.
+            The data type can be float16 or float32.
+        - **epsilon (Union[float, Tensor]): A value added to the denominator to ensure numerical stability.
+            The data type can be float16 or float32.
+        - **grad** (Tensor) - The gradient, has the same shape and data type as `var`.
+
+    Outputs:
+        Tuple of 4 Tensors, the updated parameters.
+
+        - **var** (Tensor) - The same shape and data type as `var`.
+        - **m** (Tensor) - The same shape and data type as `m`.
+        - **v** (Tensor) - The same shape and data type as `v`.
+        - **vhat** (Tensor) - The same shape and data type as `vhat`.
+
+    Raises:
+        TypeError: If `var`, `m`, `v`, `vhat` is not a Parameter.
+        TypeError: If dtype of `var`, `m`, `v`, `vhat`, `beta1_power`, `beta2_power`,
+            `lr`, `beta1` , `beta2` , `epsilon` or `grad` is not float32 or float16.
+        RuntimeError: If the data type of `var`, `m`, `v` , `vhat` and `grad` conversion of Parameter is not supported.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+    >>> import mindspore as ms
+    >>> import mindspore.ops as ops
+    >>> import mindspore.nn as nn
+    >>> from mindspore import dtype as mstype
+    >>> from mindspore import Tensor, Parameter
+    >>> import numpy as np
+    >>> class ApplyAdamWithAmsgradNet(nn.Cell):
+    ...     def __init__(self, use_locking=False):
+    ...         super(ApplyAdamWithAmsgradNet, self).__init__()
+    ...         self.apply_adam_with_amsgrad = ops.ApplyAdamWithAmsgradV2(use_locking)
+    ...         self.var = Parameter(Tensor(np.array([[0.2, 0.2], [0.2, 0.2]]).astype(np.float32)), name="var")
+    ...         self.m = Parameter(Tensor(np.array([[0.1, 0.2], [0.4, 0.3]]).astype(np.float32)), name="m")
+    ...         self.v = Parameter(Tensor(np.array([[0.2, 0.1], [0.3, 0.4]]).astype(np.float32)), name="v")
+    ...         self.vhat = Parameter(Tensor(np.array([[0.1, 0.2], [0.6, 0.2]]).astype(np.float32)), name="vhat")
+    ...         self.beta1 = 0.8
+    ...         self.beta2 = 0.999
+    ...         self.epsilon = 1e-8
+    ...         self.beta1_power = 0.9
+    ...         self.beta2_power = 0.999
+    ...         self.lr = 0.01
+    ...
+    ...     def construct(self, grad):
+    ...         out = self.apply_adam_with_amsgrad(self.var, self.m, self.v, self.vhat,
+    ...                                            self.beta1_power, self.beta2_power, self.lr, self.beta1, self.beta2,
+    ...                                            self.epsilon, grad)
+    ...         return out
+    >>> net = ApplyAdamWithAmsgradNet()
+    >>> grad = Tensor(np.array([[0.4, 0.2], [0.2, 0.3]]).astype(np.float32))
+    >>> output = net(grad)
+    >>> print(net.var.asnumpy())
+    [[0.19908068 0.1985858 ]
+    [0.19844867 0.19849943]]
+    """
+
+    __mindspore_signature__ = (
+        sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('m', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('v', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('vhat', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('beta1_power', dtype=sig.sig_dtype.T1),
+        sig.make_sig('beta2_power', dtype=sig.sig_dtype.T2),
+        sig.make_sig('lr', dtype=sig.sig_dtype.T3),
+        sig.make_sig('beta1', dtype=sig.sig_dtype.T1),
+        sig.make_sig('beta2', dtype=sig.sig_dtype.T1),
+        sig.make_sig('epsilon', dtype=sig.sig_dtype.T1),
+        sig.make_sig('grad', dtype=sig.sig_dtype.T)
+    )
+
+    @prim_attr_register
+    def __init__(self, use_locking=False):
+        """Initialize ApplyAdamWithAmsgradv2"""
+        validator.check_value_type("use_locking", use_locking, [bool], self.name)
+        self.add_prim_attr("side_effect_mem", True)
+
+
 class GridSampler3D(Primitive):
     """
     Given an input and a grid, the output is calculated using the input values

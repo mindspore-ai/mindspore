@@ -1149,6 +1149,7 @@ GVAR_DEF(PrimitivePtr, kPrimApplyAdagradD, std::make_shared<Primitive>("ApplyAda
 GVAR_DEF(PrimitivePtr, kPrimApplyAdadelta, std::make_shared<Primitive>("ApplyAdadelta"));
 GVAR_DEF(PrimitivePtr, kPrimApplyAdadeltaD, std::make_shared<Primitive>("ApplyAdadeltaD"));
 GVAR_DEF(PrimitivePtr, kPrimApplyAdamWithAmsgrad, std::make_shared<Primitive>("ApplyAdamWithAmsgrad"));
+GVAR_DEF(PrimitivePtr, kPrimApplyAdamWithAmsgradV2, std::make_shared<Primitive>("ApplyAdamWithAmsgradV2"));
 GVAR_DEF(PrimitivePtr, kPrimBNTrainingUpdate, std::make_shared<Primitive>("BNTrainingUpdate"));
 GVAR_DEF(PrimitivePtr, kPrimBNTrainingUpdateGrad, std::make_shared<Primitive>("BNTrainingUpdateGrad"));
 GVAR_DEF(PrimitivePtr, kPrimFractionalMaxPool, std::make_shared<Primitive>("FractionalMaxPool"));
