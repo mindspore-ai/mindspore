@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 
 #include <sys/stat.h>
 #include <string>
+#include <fstream>
 #include <optional>
 #include "mindspore/core/utils/ms_utils.h"
 #include "mindapi/base/macros.h"
@@ -30,6 +31,9 @@ class MS_CORE_API FileUtils {
  public:
   FileUtils() = default;
   ~FileUtils() = default;
+
+  static std::fstream *OpenFile(const std::string &file_path, std::ios_base::openmode open_mode);
+  static bool ParserPathAndModelName(const std::string &output_path, std::string *save_path, std::string *model_name);
 
   static std::optional<std::string> GetRealPath(const char *path);
   static void SplitDirAndFileName(const std::string &path, std::optional<std::string> *prefix_path,

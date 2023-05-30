@@ -387,26 +387,30 @@ void HandleNoUsedParameter(const FuncGraphPtr &root) {
 
   auto dev_num = g_device_manager->stage_device_num();
   auto parameters = root->parameters();
-  for (auto &parameter : parameters) {
-    if (IsUsedParameter(root, parameter, 0)) {
-      continue;
+  if (parameters.empty()) {
+    MS_LOG(INFO) << "Parameters is not in graph, thus no need to set parallel shape";
+  } else {
+    for (auto &parameter : parameters) {
+      if (IsUsedParameter(root, parameter, 0)) {
+        continue;
+      }
+      auto parameter_shape = GetNodeShape(parameter);
+      if (parameter_shape.empty()) {
+        continue;
+      }
+      Shape slice_shape = parameter_shape[0];
+      if (slice_shape.empty() || slice_shape[0] < dev_num) {
+        continue;
+      }
+      slice_shape[0] = slice_shape[0] / dev_num;
+      auto slice_shape_ptr = std::make_shared<abstract::Shape>(slice_shape);
+      auto abstract = parameter->abstract();
+      MS_EXCEPTION_IF_NULL(abstract);
+      auto abstract_cloned = abstract->Clone();
+      MS_EXCEPTION_IF_NULL(abstract_cloned);
+      abstract_cloned->set_shape(slice_shape_ptr);
+      parameter->set_abstract(abstract_cloned);
     }
-    auto parameter_shape = GetNodeShape(parameter);
-    if (parameter_shape.empty()) {
-      continue;
-    }
-    Shape slice_shape = parameter_shape[0];
-    if (slice_shape.empty() || slice_shape[0] < dev_num) {
-      continue;
-    }
-    slice_shape[0] = slice_shape[0] / dev_num;
-    auto slice_shape_ptr = std::make_shared<abstract::Shape>(slice_shape);
-    auto abstract = parameter->abstract();
-    MS_EXCEPTION_IF_NULL(abstract);
-    auto abstract_cloned = abstract->Clone();
-    MS_EXCEPTION_IF_NULL(abstract_cloned);
-    abstract_cloned->set_shape(slice_shape_ptr);
-    parameter->set_abstract(abstract_cloned);
   }
 }
 
@@ -490,6 +494,46 @@ void SliceParameterObj(const ParameterPtr &parameter, const TensorLayoutPtr &ten
                                      layout);
     }
   }
+}
+
+void SliceTensorObj(const ParameterPtr &parameter, const TensorLayoutPtr &tensor_layout) {
+  auto param = parameter->default_param();
+  MS_EXCEPTION_IF_NULL(param);
+  auto p_tensor = param->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(p_tensor);
+  if (p_tensor->DataSize() == 1) {
+    MS_LOG(INFO) << "The parameter's data size is 1, no need to layout.";
+    return;
+  }
+  if (tensor_layout == nullptr) {
+    MS_LOG(INFO) << "No need to layout parameter";
+    return;
+  }
+  // start get layout info
+  const auto &device_arrangement = tensor_layout->device_arrangement().array();
+  for (auto i : device_arrangement) std::cout << i << ' ';
+  const auto &tensor_map = tensor_layout->tensor_map().array();
+  auto slice_shape = tensor_layout->slice_shape().array();
+  int64_t field_size = tensor_layout->get_field_size();
+  bool uniform_split = tensor_layout->uniform_split();
+  if (uniform_split == 0) {
+    MS_LOG(ERROR) << "The load tensor only support uniform split now.";
+  }
+  std::string opt_shard_group = tensor_layout->opt_shard_group();
+  if (!opt_shard_group.empty()) {
+    slice_shape = tensor_layout->opt_shard_slice_shape();
+  }
+  py::tuple layout =
+    py::make_tuple(device_arrangement, tensor_map, slice_shape, field_size, uniform_split, opt_shard_group);
+
+  MS_LOG(INFO) << "origin p_tensor:" << p_tensor->name() << p_tensor->Size();
+  auto tensor_py = python_adapter::CastToPyObj(p_tensor);
+  // Call Python _slice_tensor Fn to slice python tensor obj
+  auto new_tensor_py = python_adapter::CallPyFn(SLICE_PARAMETER_FN_PATH, SLICE_TENSOR_FN_NAME, tensor_py, layout);
+  MS_LOG(INFO) << "Success Call Python _slice_parameter Fn to slice python parameter obj";
+  auto new_tensor = new_tensor_py.cast<tensor::TensorPtr>();
+  MS_LOG(INFO) << "new p_tensor:" << new_tensor->name() << new_tensor->Size();
+  parameter->set_default_param(new_tensor);
 }
 
 static void SliceCacheParameterObj(const ParameterPtr &parameter, const py::dict &layout_dict) {

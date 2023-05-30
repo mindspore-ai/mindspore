@@ -96,9 +96,15 @@ def _slice_parameter(parameter, phase, layout):
     new_param = parameter.init_data(layout, set_sliced=True)
     parameter = new_param
     graph_executor.updata_param_node_default_input(phase, {parameter.name: parameter})
-    if not parameter.sliced and (layout is not None):
+    if not parameter.sliced and (layout is not None) and (parameter.size != 1):
         new_tensor = _load_tensor_by_layout(parameter, layout)
         parameter.set_data(new_tensor, True)
+
+
+def _slice_tensor(tensor, layout):
+    """Slice python tensor obj according to the layout."""
+    new_tensor = _load_tensor_by_layout(tensor, layout)
+    return new_tensor
 
 
 def _init_optimizer_state(parameter, phase):
@@ -353,7 +359,7 @@ def _remove_repeated_slices(tensor_layout):
     tensor_map = tensor_layout[1]
     for dim in range(len(dev_mat)):
         if dim not in tensor_map:
-            dev_mat[-1-dim] = 1
+            dev_mat[-1 - dim] = 1
     new_tensor_layout[0] = dev_mat
     return new_tensor_layout
 

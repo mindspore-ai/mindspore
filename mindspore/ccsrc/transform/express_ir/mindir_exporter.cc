@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,174 +21,10 @@
 #include <functional>
 #include <fstream>
 
-#include "utils/hash_map.h"
-#include "ir/tensor.h"
-#include "ir/param_info.h"
-#include "ir/func_graph.h"
-#include "ir/quantization_param.h"
-#include "mindspore/core/ops/core_ops.h"
-#include "proto/mind_ir.pb.h"
-#include "utils/check_convert_utils.h"
 #include "include/common/debug/dump_proto.h"
-#include "utils/ms_utils.h"
-#include "include/common/utils/utils.h"
-#ifndef MINDIR_EXPORT_TENSOR_LAYOUT_CLIP
-#include "frontend/parallel/tensor_layout/tensor_layout.h"
-#endif
-#include "abstract/abstract_function.h"
-#include "mindspore/core/utils/file_utils.h"
-#include "ir/functor.h"
+#include "include/common/debug/anf_ir_dump.h"
 
 namespace mindspore {
-using FloatPtr = std::shared_ptr<Float>;
-using IntPtr = std::shared_ptr<Int>;
-using UIntPtr = std::shared_ptr<UInt>;
-using ComplexPtr = std::shared_ptr<Complex>;
-using ModelProtoPtr = std::shared_ptr<mind_ir::ModelProto>;
-
-// anf type to mindir type map
-static mindspore::HashMap<int, mind_ir::TensorProto_DataType> g_data_type_map = {
-  {kNumberTypeBool, mind_ir::TensorProto_DataType_BOOL},
-  {kNumberTypeInt8, mind_ir::TensorProto_DataType_INT8},
-  {kNumberTypeInt16, mind_ir::TensorProto_DataType_INT16},
-  {kNumberTypeInt, mind_ir::TensorProto_DataType_INT32},
-  {kNumberTypeInt32, mind_ir::TensorProto_DataType_INT32},
-  {kNumberTypeInt64, mind_ir::TensorProto_DataType_INT64},
-  {kNumberTypeUInt8, mind_ir::TensorProto_DataType_UINT8},
-  {kNumberTypeUInt16, mind_ir::TensorProto_DataType_UINT16},
-  {kNumberTypeUInt32, mind_ir::TensorProto_DataType_UINT32},
-  {kNumberTypeUInt64, mind_ir::TensorProto_DataType_UINT64},
-  {kNumberTypeFloat16, mind_ir::TensorProto_DataType_FLOAT16},
-  {kNumberTypeFloat, mind_ir::TensorProto_DataType_FLOAT},
-  {kNumberTypeFloat32, mind_ir::TensorProto_DataType_FLOAT},
-  {kNumberTypeFloat64, mind_ir::TensorProto_DataType_DOUBLE},
-  {kObjectTypeString, mind_ir::TensorProto_DataType_STRING},
-  {kNumberTypeComplex64, mind_ir::TensorProto_DataType_COMPLEX64},
-  {kNumberTypeComplex128, mind_ir::TensorProto_DataType_COMPLEX128}};
-
-static mindspore::HashMap<int, mind_ir::TensorProto_DataType> g_data_bits_int_map = {
-  {8, mind_ir::TensorProto_DataType_INT8},
-  {16, mind_ir::TensorProto_DataType_INT16},
-  {32, mind_ir::TensorProto_DataType_INT32},
-  {64, mind_ir::TensorProto_DataType_INT64},
-};
-
-static mindspore::HashMap<int, mind_ir::TensorProto_DataType> g_data_bits_uint_map = {
-  {8, mind_ir::TensorProto_DataType_UINT8},
-  {16, mind_ir::TensorProto_DataType_UINT16},
-  {32, mind_ir::TensorProto_DataType_UINT32},
-  {64, mind_ir::TensorProto_DataType_UINT64},
-};
-
-static mindspore::HashMap<int, mind_ir::TensorProto_DataType> g_data_bits_float_map = {
-  {16, mind_ir::TensorProto_DataType_FLOAT16},
-  {32, mind_ir::TensorProto_DataType_FLOAT},
-  {64, mind_ir::TensorProto_DataType_FLOAT64},
-};
-
-static mindspore::HashMap<int, mind_ir::TensorProto_DataType> g_data_bits_complex_map = {
-  {64, mind_ir::TensorProto_DataType_COMPLEX64},
-  {128, mind_ir::TensorProto_DataType_COMPLEX128},
-};
-
-static std::set<std::string> g_export_attr_blacklist = {kAttrDump};
-
-// Can build different builder according to format
-class IrExportBuilder;
-using IrExportBuilderPtr = std::shared_ptr<IrExportBuilder>;
-
-class IrExporter {
- public:
-  explicit IrExporter(IrExportBuilderPtr builder) : builder_(std::move(builder)) {}
-  virtual ~IrExporter() = default;
-  std::string GetDumpString(const FuncGraphPtr &func_graph);
-  ModelProtoPtr GetDumpProto(const FuncGraphPtr &func_graph, const FuncGraphPtr &param_layout_fg = nullptr);
-
- private:
-  IrExportBuilderPtr builder_;
-};
-using IrExporterPtr = std::shared_ptr<IrExporter>;
-
-class IrExportBuilder {
- public:
-  explicit IrExportBuilder(const bool &incremental = false)
-      : model_(std::make_shared<mind_ir::ModelProto>()), incremental_(incremental) {}
-  ~IrExportBuilder() = default;
-  std::string GetProtoString() const;
-  void BuildModelInfo();
-  bool BuildModel(const FuncGraphPtr &func_graph);
-  ModelProtoPtr Model() { return model_; }
-
-#ifndef MINDIR_EXPORT_TENSOR_LAYOUT_CLIP
-  void BuildLayout(const FuncGraphPtr &func_graph);
-#endif
-
-  bool BuildFuncGraph(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto);
-  bool BuildFuncGraphAttrs(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto);
-  bool BuildParameters(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto);
-  bool BuildNodes(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto);
-  bool BuildOutput(const CNodePtr &node, mind_ir::GraphProto *const graph_proto);
-  bool BuildCNode(const CNodePtr &node, mind_ir::GraphProto *const graph_proto);
-  bool BuildValueNode(const ValueNodePtr &node, const std::string &node_name, mind_ir::GraphProto *const graph_proto);
-  std::string BuildInputNode(const AnfNodePtr &node, mind_ir::GraphProto *const graph_proto);
-  bool BuildCNodeAttr(const CNodePtr &node, mind_ir::NodeProto *const node_proto);
-  bool SetValueInfoProto(const AnfNodePtr &node, mind_ir::ValueInfoProto *const value_proto);
-  bool SetParamToTensorProto(const ParameterPtr &param, mind_ir::TensorProto *const tensor_proto);
-  bool ConvertMapParameterToMapTensorProto(const ParameterPtr &map_parameter,
-                                           mind_ir::MapTensorProto *const map_tensor_proto);
-  bool ConvertAbstractMapTensorToAttrProto(const AbstractBasePtr &abstract, mind_ir::AttributeProto *const attr_proto);
-  bool SetTensorProto(const AbstractBasePtr &abstract, mind_ir::TensorProto *const tensor_proto);
-  bool SetCSRTensorToProto(const AbstractBasePtr &abstract, mind_ir::AttributeProto *const attr_proto);
-  bool SetCOOTensorToProto(const AbstractBasePtr &abstract, mind_ir::AttributeProto *const attr_proto);
-  bool SetAttributeProto(const AnfNodePtr &node, mind_ir::NodeProto *const node_proto);
-  bool ExportSequence(const abstract::AbstractSequencePtr &abs, mind_ir::AttributeProto *const attr_proto);
-  bool SetAbstractToNodeProto(const CNodePtr &node, mind_ir::NodeProto *const node_proto);
-  bool SetAbstractToNodeProto(const abstract::AbstractBasePtr &abstract, mind_ir::AttributeProto *const attr_proto);
-  bool SetValueToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
-  bool SetNamedValueToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) const;
-  bool SetTypeToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
-  bool SetScalarToAttributeProto_ir(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) const;
-  bool SetScalarToAttributeProtoForInt_ir(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) const;
-  bool SetScalarToAttributeProto_irs(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) const;
-  bool SetScalarToAttributeProtoForInt_irs(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto) const;
-  bool SetTypeToAttributeProto_irs(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
-  bool SetTensorToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
-  bool SetSequenceToAttributeProto(const ValueSequencePtr &value, mind_ir::AttributeProto *const attr_proto);
-  bool SetDictToAttributeProto(const ValueDictionaryPtr &value, mind_ir::AttributeProto *const attr_proto);
-  bool SetSeqElemToAttributeProto(const ValuePtr &value, mind_ir::AttributeProto *const attr_proto);
-  bool SetQuantizationParamToAttrProto(const std::shared_ptr<QuantizationParam> &quantization_param,
-                                       mind_ir::TensorProto_QuantParamProto *const quant_param_proto);
-  bool SetFunctorToAttrProto(const FunctorPtr &value, mind_ir::AttributeProto *const attr_proto);
-
-  mind_ir::TensorProto_DataType GetMindirDataType(TypeId type_id) const;
-  mind_ir::TensorProto_DataType GetMindirDataBitsIntType(int bits) const;
-  mind_ir::TensorProto_DataType GetMindirDataBitsFloatType(int bits) const;
-  mind_ir::TensorProto_DataType GetMindirDataBitsUIntType(int bits) const;
-  mind_ir::TensorProto_DataType GetMindirDataBitsComplexType(int bits) const;
-  std::string GetNodeName(const AnfNodePtr &node) const;
-  std::string GetUniqueNodeName(const AnfNodePtr &node);
-  std::string GetOpTypeName(const AnfNodePtr &node);
-  size_t GetUniqueID() { return ++unique_id_; }
-
- private:
-  bool SetAbstractFuncToAttributeProto(const abstract::AbstractBasePtr &abstract,
-                                       mind_ir::AttributeProto *const attr_proto);
-  bool ExportWeight(const ParameterPtr &param, const std::string &param_name, mind_ir::GraphProto *const graph_proto);
-  std::string GetPrimitiveUniqueName(const PrimitivePtr &primitive_ptr);
-  bool BuildPrimitives();
-
-  ModelProtoPtr model_;
-  mind_ir::NodeProto *last_node_{nullptr};
-  std::list<FuncGraphPtr> todo_;
-  std::map<AnfNodePtr, std::string> node_name_map_;
-  std::map<PrimitivePtr, std::string> primitive_name_map_;
-  std::set<std::string> nodeName_;
-  size_t unique_id_{0};
-  bool top_graph{true};
-  std::map<FuncGraphPtr, mind_ir::GraphProto *> graph_protos_;
-  bool incremental_{false};
-};
-
 bool IrExportBuilder::SetAbstractFuncToAttributeProto(const abstract::AbstractBasePtr &abstract,
                                                       mind_ir::AttributeProto *const attr_proto) {
   MS_EXCEPTION_IF_NULL(abstract);
@@ -1613,14 +1449,234 @@ bool DumpBinaryProto(const FuncGraphPtr &func_graph, const std::string &file_pat
                      const FuncGraphPtr &param_layout_fg) {
   auto exporter = std::make_shared<IrExporter>(std::make_shared<IrExportBuilder>());
   auto proto = exporter->GetDumpProto(func_graph, param_layout_fg);
+  MindIRExporter mindir_exporter;
   if (proto == nullptr) {
     MS_LOG(ERROR) << "Get binary proto for graph " << func_graph->ToString() << " failed.";
     return false;
   }
+  return mindir_exporter.SaveProtoToFile(proto.get(), file_path);
+}
 
-  auto realpath = Common::CreatePrefixPath(file_path, true);
+bool MindIRExporter::ParserPath(const std::string &output_path) {
+  if (!FileUtils::ParserPathAndModelName(output_path, &save_path_, &model_name_)) {
+    MS_LOG(ERROR) << "parser save path and model name from output_path failed.";
+    return false;
+  }
+#ifdef _WIN32
+  save_model_path_ = save_path_ + "\\" + model_name_ + ".mindir";
+#else
+  save_model_path_ = save_path_ + "/" + model_name_ + ".mindir";
+#endif
+  return true;
+}
+
+bool MindIRExporter::ExportProto(const FuncGraphPtr &func_graph, const std::string &file_path,
+                                 const FuncGraphPtr &param_layout_fg) {
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "func_graph is nullptr.";
+    return false;
+  }
+
+  if (!ParserPath(file_path)) {
+    MS_LOG(ERROR) << "parse path failed.";
+    return false;
+  }
+
+  // Serialize to protobuf using unique parameter name label.
+  common::SetEnv("MS_DEV_TRACE_LABEL_WITH_UNIQUE_ID", "1", 0);
+  // Do preprocess on func_graph and check conditions for saving together.
+  bool ret = PreProcSaveTogether(func_graph);
+  if (!ret) {
+    MS_LOG(ERROR) << "PreProcSaveTogether failed";
+    return ret;
+  }
+#ifdef ENABLE_DUMP_IR
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->CanDump(kIntroductory)) {
+    DumpIR("PreProcSaveTogether.ir", func_graph);
+  }
+#endif
+
+  if (save_together_) {
+    MS_LOG(INFO) << "SaveMindIRTogether";
+    ret = SaveMindIRTogether();
+  } else {
+    MS_LOG(INFO) << "SplitSave";
+    ret = SplitSave();
+  }
+  if (!ret) {
+    MS_LOG(ERROR) << "save mindir weight failed.";
+    return ret;
+  }
+  return true;
+}
+
+bool MindIRExporter::SaveMindIRTogether() {
+  for (auto &param_proto : *(model_proto_.mutable_graph()->mutable_parameter())) {
+    std::string proto_name = param_proto.name();
+    auto para = GetFgParaAccordingToProtoName(proto_name);
+    if (para == nullptr) {
+      return false;
+    }
+    if (!para->has_default()) {
+      continue;
+    }
+    auto data = para->default_param()->cast<tensor::TensorPtr>();
+    param_proto.clear_raw_data();
+    param_proto.set_raw_data(data->data_c(), static_cast<size_t>(data->data().nbytes()));
+  }
+  return SaveProtoToFile(&model_proto_, save_model_path_);
+}
+
+bool MindIRExporter::CreateParameterDir() {
+#ifdef _WIN32
+  dir_name_ = save_path_ + "\\" + model_name_ + "_variables";
+#else
+  dir_name_ = save_path_ + "/" + model_name_ + "_variables";
+#endif
+  fs_ = system::Env::GetFileSystem();
+  if (fs_ == nullptr) {
+    MS_LOG(ERROR) << "create file system failed.";
+    return false;
+  }
+
+  if (fs_->FileExist(dir_name_)) {
+    if (!DeleteDirRecursively(dir_name_)) {
+      return false;
+    }
+  }
+
+  if (!fs_->CreateDir(dir_name_)) {
+    MS_LOG(ERROR) << "create dir failed.";
+    return false;
+  }
+
+  ChangeFileMode(dir_name_, S_IWUSR | S_IRUSR | S_IXUSR);
+  return true;
+}
+
+bool DeleteDirRecursively(const std::string &dir_name) {
+  DIR *dir = opendir(dir_name.c_str());
+  dirent *dirent = nullptr;
+  std::vector<std::string> file_names{};
+  while ((dirent = readdir(dir)) != 0) {
+    if (strcmp(dirent->d_name, ".") != 0 && strcmp(dirent->d_name, "..") != 0) {
+      file_names.emplace_back(dirent->d_name);
+    }
+  }
+  for (auto &file_name : file_names) {
+    auto file_path = dir_name + "/" + file_name;
+    auto real_file_path = FileUtils::GetRealPath(file_path.c_str());
+    if (!real_file_path.has_value()) {
+      MS_LOG(ERROR) << "Cannot get pwd path";
+      return false;
+    }
+    auto result = unlink(real_file_path.value().c_str());
+    if (result != 0) {
+      closedir(dir);
+      MS_LOG(ERROR) << "Delete the file(" << real_file_path.value() << ") failed." << ErrnoToString(errno);
+      return false;
+    }
+  }
+  closedir(dir);
+  return true;
+}
+
+std::string MindIRExporter::CreateExternalPath(const std::string &external_file) {
+  dir_path_ = FileUtils::GetRealPath(dir_name_.c_str()).value();
+  std::string external_local_path{};
+#ifdef _WIN32
+  external_local_path = dir_path_ + "\\" + external_file;
+#else
+  external_local_path = dir_path_ + "/" + external_file;
+#endif
+  return external_local_path;
+}
+
+bool MindIRExporter::SplitSave() {
+  MS_LOG(DEBUG) << "Parameters in the net capacity exceeds 1G, save MindIR model and parameters separately.";
+  if (!CreateParameterDir()) {
+    MS_LOG(ERROR) << "create parameter dir failed.";
+    return false;
+  }
+
+  int index = 0;
+  std::string external_local = "data_" + std::to_string(index);
+  auto external_local_path = CreateExternalPath(external_local);
+  if (fs_->FileExist(external_local_path)) {
+    if (!fs_->DeleteFile(external_local_path)) {
+      MS_LOG(ERROR) << "delete file failed.";
+      return false;
+    }
+  }
+  int64_t parameter_size = 0;
+  int64_t offset = OFFSET;
+
+  data_fs_ = FileUtils::OpenFile(external_local_path, std::ios::out | std::ios::binary | std::ios::trunc);
+  if (data_fs_ == nullptr) {
+    MS_LOG(ERROR) << "Open " << external_local_path << " failed";
+    return false;
+  }
+  if (!ChangeParaDataFile(external_local)) {
+    MS_LOG(ERROR) << "change parameter data file failed.";
+    return false;
+  }
+
+  for (auto &param_proto : *(model_proto_.mutable_graph()->mutable_parameter())) {
+    std::string proto_name = param_proto.name();
+    auto para = GetFgParaAccordingToProtoName(proto_name);
+    if (para == nullptr) {
+      return false;
+    }
+    if (!para->has_default()) {
+      continue;
+    }
+    auto data = para->default_param()->cast<tensor::TensorPtr>();
+    int64_t data_length = static_cast<int64_t>(data->data().nbytes());
+    int64_t append_size = 0;
+    if (data_length % OFFSET != 0) {
+      append_size = OFFSET - (data_length % OFFSET);
+    }
+    parameter_size += ((append_size + data_length) / PARA_ROUND);
+    if (parameter_size > static_cast<int64_t>(TOTAL_SAVE)) {
+      index++;
+      external_local = "data_" + std::to_string(index);
+      data_fs_->close();
+      delete data_fs_;
+
+      if (!ChangeParaDataFile(external_local)) {
+        MS_LOG(ERROR) << "change parameter data file failed.";
+        return false;
+      }
+      parameter_size = OFFSET / PARA_ROUND;
+    }
+    std::string external_local_data = model_name_ + "_variables/" + external_local;
+    *(param_proto.mutable_external_data()->mutable_location()) = external_local_data;
+    param_proto.mutable_external_data()->set_length(data_length);
+    param_proto.mutable_external_data()->set_offset(offset);
+    data_fs_->write(static_cast<const char *>(data->data_c()), data_length);
+    auto append_data = new char[append_size];
+    if (append_data == nullptr) {
+      return false;
+    }
+    data_fs_->write(append_data, append_size);
+    offset += (data_length + append_size);
+    delete[] append_data;
+  }
+  std::string split_model_file_name = "";
+#ifdef _WIN32
+  split_model_file_name = save_path_ + "\\" + model_name_ + "_graph.mindir";
+#else
+  split_model_file_name = save_path_ + "/" + model_name_ + "_graph.mindir";
+#endif
+  return SaveProtoToFile(&model_proto_, split_model_file_name);
+}
+
+bool MindIRExporter::SaveProtoToFile(mind_ir::ModelProto *model_proto, const std::string &output_file) {
+  auto realpath = Common::CreatePrefixPath(output_file, true);
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path of file " << file_path << " failed.";
+    MS_LOG(ERROR) << "Get real path of file " << output_file << " failed.";
     return false;
   }
 
@@ -1631,13 +1687,193 @@ bool DumpBinaryProto(const FuncGraphPtr &func_graph, const std::string &file_pat
     return false;
   }
 
-  if (!proto->SerializeToOstream(&fout)) {
+  if (!model_proto->SerializeToOstream(&fout)) {
     MS_LOG(ERROR) << "Failed to write the mindir proto to file " << realpath.value();
     fout.close();
     return false;
   }
+
   fout.close();
   ChangeFileMode(realpath.value(), S_IRUSR);
   return true;
+}
+
+bool MindIRExporter::ChangeParaDataFile(const std::string &file) {
+  auto real_path = CreateExternalPath(file);
+  if (fs_->FileExist(real_path)) {
+    if (!fs_->DeleteFile(real_path)) {
+      MS_LOG(ERROR) << "delete file failed.";
+      return false;
+    }
+  }
+  ChangeFileMode(real_path, S_IWUSR);
+  data_fs_ = FileUtils::OpenFile(real_path, std::ios::app);
+  if (data_fs_ == nullptr) {
+    MS_LOG(ERROR) << "data_fs_ is nullptr.";
+    return false;
+  }
+  char front_info[OFFSET]{0};
+  front_info[0] = IsSystemLittleEndidan();
+  (void)data_fs_->write(front_info, OFFSET);
+  return true;
+}
+
+bool MindIRExporter::IsSystemLittleEndidan() const {
+  int check = 0x01;
+  auto address = reinterpret_cast<char *>(&check);
+  return *address == 0x01;
+}
+
+bool MindIRExporter::PreProcSaveTogether(const FuncGraphPtr &func_graph) {
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "func_graph is nullptr.";
+    return false;
+  }
+
+  if (!UpdateParamCount(func_graph)) {
+    MS_LOG(ERROR) << "Update parameter count failed.";
+    return false;
+  }
+
+  // Parse func_graph as model proto
+  std::string proto_string = GetBinaryProtoString(func_graph);
+  if (proto_string.empty()) {
+    MS_LOG(ERROR) << "parse proto string failed.";
+    return false;
+  }
+
+  if (!model_proto_.ParseFromString(proto_string)) {
+    MS_LOG(ERROR) << "parse model proto from string failed.";
+    return false;
+  }
+
+  if (!ParamDict(func_graph)) {
+    MS_LOG(ERROR) << "parse param form funcgraph failed.";
+    return false;
+  }
+
+  if (!IfSaveTogether(&save_together_)) {
+    MS_LOG(ERROR) << "error occur when check condition of saving together.";
+    return false;
+  }
+
+  return true;
+}
+
+bool MindIRExporter::IfSaveTogether(bool *save_together) {
+  size_t data_total = model_proto_.ByteSizeLong();
+  for (auto &param_proto : model_proto_.graph().parameter()) {
+    std::string proto_name = param_proto.name();
+    auto para = GetFgParaAccordingToProtoName(proto_name);
+    if (para == nullptr) {
+      return false;
+    }
+    if (!para->has_default()) {
+      continue;
+    }
+    auto tensor = std::dynamic_pointer_cast<tensor::Tensor>(para->default_param());
+    if (tensor == nullptr) {
+      MS_LOG(ERROR) << "param node default_param is not tensor.";
+      return false;
+    }
+    data_total += tensor->Size();
+  }
+  if (data_total > TOTAL_SAVE) {
+    *save_together = false;
+  } else {
+    *save_together = true;
+  }
+  return true;
+}
+
+std::shared_ptr<Parameter> MindIRExporter::GetFgParaAccordingToProtoName(const std::string &proto_name) {
+  auto beg_pos = proto_name.find_first_of(':') + 1;
+  if (beg_pos >= proto_name.size()) {
+    MS_LOG(ERROR) << "begin pos exceed proto name length.";
+    return nullptr;
+  }
+  auto name = proto_name.substr(beg_pos);
+  if (param_dict_.find(name) == param_dict_.end()) {
+    MS_LOG(ERROR) << "param proto name: " << name << " is not in param dict.";
+    return nullptr;
+  }
+  return param_dict_.at(name);
+}
+
+bool MindIRExporter::UpdateParamCount(const FuncGraphPtr &func_graph) {
+  auto fv_count = 0;
+  std::vector<AnfNodePtr> params;
+  std::vector<AnfNodePtr> reorder_param;
+  reorder_param.reserve(func_graph->parameters().size());
+  for (const auto &node : func_graph->parameters()) {
+    auto param_node = node->cast<ParameterPtr>();
+    MS_LOG(INFO) << "The parameters() in func graph should be all Parameter Node. " << node->DebugString();
+    if (param_node == nullptr) {
+      MS_LOG(ERROR) << "The parameters() in func graph should be all Parameter Node. but got " << node->DebugString();
+      return false;
+    }
+    if (param_node->has_default()) {
+      (void)params.emplace_back(param_node);
+      ++fv_count;
+      continue;
+    }
+    (void)reorder_param.emplace_back(param_node);
+  }
+
+  std::copy(params.begin(), params.end(), std::back_inserter(reorder_param));
+  func_graph->set_parameters(reorder_param);
+  func_graph->set_fv_param_count(fv_count);
+  return true;
+}
+
+bool MindIRExporter::ParamDict(const FuncGraphPtr &func_graph) {
+  std::set<FuncGraphPtr> all_func_graphs = {};
+  GetAllFuncGraphs(func_graph, &all_func_graphs);
+  for (auto &fg : all_func_graphs) {
+    for (auto &para : fg->parameters()) {
+      if (!para->isa<Parameter>()) {
+        MS_LOG(ERROR) << "fg parameters contains non-parameter type node.";
+        return false;
+      }
+      auto para_node = para->cast<ParameterPtr>();
+      param_dict_[para->ToString()] = para_node;
+    }
+  }
+  return true;
+}
+
+void GetAllFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs) {
+  MS_ASSERT(all_func_graphs != nullptr);
+  MS_ASSERT(func_graph != nullptr);
+  if (all_func_graphs->find(func_graph) == all_func_graphs->end()) {
+    all_func_graphs->insert(func_graph);
+  } else {
+    return;
+  }
+  auto nodes = TopoSort(func_graph->get_return());
+  for (auto &node : nodes) {
+    if (IsValueNode<FuncGraph>(node)) {
+      MS_ASSERT(node->cast<ValueNodePtr>() != nullptr);
+      MS_ASSERT(node->cast<ValueNodePtr>()->value() != nullptr);
+      MS_ASSERT((node->cast<ValueNodePtr>()->value())->cast<FuncGraphPtr>() != nullptr);
+      auto new_fg = (node->cast<ValueNodePtr>()->value())->cast<FuncGraphPtr>();
+      GetAllFuncGraphs(new_fg, all_func_graphs);
+    }
+    if (utils::isa<CNodePtr>(node)) {
+      auto cnode = node->cast<CNodePtr>();
+      MS_ASSERT(cnode != nullptr);
+      for (auto &input : cnode->inputs()) {
+        if (input->isa<ValueNode>()) {
+          if (IsValueNode<FuncGraph>(input)) {
+            MS_ASSERT(input->cast<ValueNodePtr>() != nullptr);
+            MS_ASSERT(input->cast<ValueNodePtr>()->value() != nullptr);
+            MS_ASSERT((input->cast<ValueNodePtr>()->value())->cast<FuncGraphPtr>() != nullptr);
+            auto new_fg = (input->cast<ValueNodePtr>()->value())->cast<FuncGraphPtr>();
+            GetAllFuncGraphs(new_fg, all_func_graphs);
+          }
+        }
+      }
+    }
+  }
 }
 }  // namespace mindspore
