@@ -39,7 +39,8 @@ def test_use_local_variable_in_if_true_branch():
     net = Net()
     with pytest.raises(UnboundLocalError) as err:
         net(Tensor([1], mstype.float32))
-    assert "The local variable 'y'" in str(err.value)
+    assert "The local variable 'y' is not defined in false branch, " \
+           "but defined in true branch." in str(err.value)
 
 
 def test_use_local_variable_in_if_false_branch():
@@ -59,7 +60,8 @@ def test_use_local_variable_in_if_false_branch():
     net = Net()
     with pytest.raises(UnboundLocalError) as err:
         net(Tensor([1], mstype.float32))
-    assert "The local variable 'y'" in str(err.value)
+    assert "The local variable 'y' is not defined in true branch, " \
+           "but defined in false branch." in str(err.value)
 
 
 def test_use_local_variable_in_while_body_branch():
@@ -77,7 +79,8 @@ def test_use_local_variable_in_while_body_branch():
     net = Net()
     with pytest.raises(UnboundLocalError) as err:
         net(Tensor([1], mstype.float32))
-    assert "The local variable 'y'" in str(err.value)
+    assert "The local variable 'y' defined in the 'while' loop body " \
+           "cannot be used outside of the loop body." in str(err.value)
 
 
 def test_use_local_variable_in_def_if():
@@ -98,7 +101,8 @@ def test_use_local_variable_in_def_if():
     net = Net()
     with pytest.raises(UnboundLocalError) as err:
         net(Tensor([1], mstype.float32))
-    assert "The local variable 'y'" in str(err.value)
+    assert "The local variable 'y' is not defined in false branch, " \
+           "but defined in true branch." in str(err.value)
 
 
 def test_use_local_variable_in_def_while():
@@ -119,7 +123,52 @@ def test_use_local_variable_in_def_while():
     net = Net()
     with pytest.raises(UnboundLocalError) as err:
         net(Tensor([1], mstype.float32))
-    assert "The local variable 'y'" in str(err.value)
+    assert "The local variable 'y' defined in the 'while' loop body " \
+           "cannot be used outside of the loop body." in str(err.value)
+
+
+def test_use_local_variable_in_while_with_nested_for():
+    """
+    Feature: use undefined variables in while with defined function.
+    Description: local variable 'y' referenced before assignment.
+    Expectation: Raises UnboundLocalError.
+    """
+    class Net(nn.Cell):
+        def construct(self, x):
+            for _ in range(3):
+                for _ in range(4):
+                    for _ in range(5):
+                        while x < 0:
+                            y = 0
+            return y
+
+    net = Net()
+    with pytest.raises(UnboundLocalError) as err:
+        net(Tensor([1], mstype.float32))
+    assert "The local variable 'y' defined in the 'for' loop body " \
+           "cannot be used outside of the loop body." in str(err.value)
+
+
+def test_use_local_variable_in_if_with_nested_for():
+    """
+    Feature: use undefined variables in while with defined function.
+    Description: local variable 'y' referenced before assignment.
+    Expectation: Raises UnboundLocalError.
+    """
+    class Net(nn.Cell):
+        def construct(self, x):
+            for _ in range(3):
+                for _ in range(4):
+                    for _ in range(5):
+                        if x < 0:
+                            y = 0
+            return y
+
+    net = Net()
+    with pytest.raises(UnboundLocalError) as err:
+        net(Tensor([1], mstype.float32))
+    assert "The local variable 'y' defined in the 'for' loop body " \
+           "cannot be used outside of the loop body." in str(err.value)
 
 
 def test_function_args_same_name():
