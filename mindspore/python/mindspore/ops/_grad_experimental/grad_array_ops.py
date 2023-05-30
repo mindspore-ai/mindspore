@@ -85,6 +85,7 @@ def get_bprop_masked_select(self):
 
     def bprop(input_data, mask, value, out, dout):
         mask = F.cast(mask, mstype.float32)
+        dout = F.cast(dout, mstype.float32)
         dinput = mul_op(dout, (1 - mask))
         dvalue = mul_op(dout, mask)
         dinput, dvalue = binop_grad_common(input_data, mask, dinput, dvalue)
