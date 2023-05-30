@@ -66,11 +66,12 @@ int ConvDwMallocWeightBiasData(ConvolutionBaseStruct *conv) {
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(pack_weight_size, sizeof(float), NNACL_ERR);
 
   if (!conv->base_.train_session_) {
-    NNACL_CHECK_FALSE(pack_weight_size * sizeof(float) > MALLOC_MAX_SIZE, NNACL_MALLOC_SIZE_INVALID);
+    NNACL_CHECK_MALLOC_SIZE(pack_weight_size * sizeof(float));
     conv->packed_weight_ = ConvBaseGetConvPackWeightData(conv, pack_weight_size * sizeof(float));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv->packed_weight_);
   }
-  NNACL_CHECK_FALSE(conv->output_c_ * sizeof(float) > MALLOC_MAX_SIZE, NNACL_MALLOC_SIZE_INVALID);
+
+  NNACL_CHECK_MALLOC_SIZE(conv->output_c_ * sizeof(float));
   if (conv->bias_data_ == NULL) {
     conv->bias_data_ = conv->base_.env_->alloc(conv->base_.env_->allocator_, conv->output_c_ * sizeof(float));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv->bias_data_);

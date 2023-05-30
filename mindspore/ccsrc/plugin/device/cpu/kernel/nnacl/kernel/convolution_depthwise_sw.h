@@ -25,6 +25,10 @@
 
 typedef struct ConvolutionDepthwiseSWStruct {
   ConvolutionBaseStruct conv_;
+  SlidingWindowParam sliding_;
+  float *packed_input_;
+  float *packed_output_;
+  bool need_align_;
 } ConvolutionDepthwiseSWStruct;
 
 KernelBase *CreateConvDwSW(ConvParameter *conv_param);

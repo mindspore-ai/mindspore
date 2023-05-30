@@ -31,7 +31,7 @@ int ConvDwIndirectMallocIndirectBuffer(ConvolutionDepthwiseIndirectStruct *conv_
   int step_h_2d = conv_dw->conv_.output_h_ * conv_dw->step_h_;
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_dw->conv_.output_b_, step_h_2d, NNACL_ERR);
   int buffer_size = conv_dw->conv_.output_b_ * step_h_2d;
-  NNACL_CHECK_FALSE(buffer_size * sizeof(float *) > MALLOC_MAX_SIZE, NNACL_MALLOC_BUFFER_FAILED);
+  NNACL_CHECK_MALLOC_SIZE(buffer_size * sizeof(float *));
   conv_dw->indirect_buffer_ = (float **)(malloc(buffer_size * sizeof(float *)));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_dw->indirect_buffer_);
   return NNACL_OK;
