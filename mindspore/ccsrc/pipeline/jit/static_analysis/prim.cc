@@ -2232,7 +2232,7 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
     } else {
       res = std::make_shared<AbstractTensor>(preset_type, shape);
     }
-  } else if (fallback::HasRealType(node)) {
+  } else if (fallback::HasRealType(node) && fallback::GetRealType<AnfNode, Type>(node)->isa<NegligibleType>()) {
     res = std::make_shared<AbstractNegligible>();
   } else {
     const auto any_abstract = std::make_shared<AbstractAny>();
