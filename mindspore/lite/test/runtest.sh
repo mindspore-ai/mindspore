@@ -59,6 +59,7 @@ echo 'run common ut tests'
 ./lite-test --gtest_filter=TestReduceFp32*
 ./lite-test --gtest_filter=TestFcFp32*
 ./lite-test --gtest_filter=TestConv1x1Fp32*
+./lite-test --gtest_filter=TestConvolutionFp32*
 ./lite-test --gtest_filter=TestDeConvolutionFp32*
 ./lite-test --gtest_filter=TestLogicalOrFp32*
 

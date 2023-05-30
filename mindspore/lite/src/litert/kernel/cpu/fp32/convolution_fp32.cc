@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#ifdef ENABLE_NNACL_KERNEL_LIB
 #include "src/litert/kernel/cpu/fp32/convolution_fp32.h"
 #include "src/litert/pack_weight_manager.h"
 #include "include/errorcode.h"
@@ -294,3 +295,4 @@ int ConvolutionCPUKernel::MallocWeightBiasData() {
   return RET_OK;
 }
 }  // namespace mindspore::kernel
+#endif
