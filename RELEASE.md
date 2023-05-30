@@ -879,7 +879,7 @@ Contributions of any kind are welcome!
 
 ### Major Features and Improvements
 
-### MindSpore Lite Cloud Inference
+#### MindSpore Lite Cloud Inference
 
 The original MindSpore Lite is mainly used for edge devices such as mobile phones and head units. Cloud inference is added to support scenarios with multiple backend hardware resources on the cloud, supports Ascend and NVIDIA GPU inference cards, and efficiently utilizes multi-core resources on the cloud.
 
