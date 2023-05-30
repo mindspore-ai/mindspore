@@ -1251,11 +1251,14 @@ def _fill_param_into_net(net, parameter_list):
         parameter_list (list): parameters list from ge callback.
     """
     parameter_dict = {}
-    for each_param in parameter_list:
-        param_name = each_param["name"]
-        if isinstance(each_param["data"], Parameter):
-            each_param["data"].init_data()
-        np_val = each_param["data"].asnumpy()
+    while parameter_list:
+        tmp_param = parameter_list.pop(0)
+        param_name = tmp_param["name"]
+        param_data = tmp_param["data"]
+        if isinstance(param_data, Parameter):
+            param_data.init_data()
+        np_val = param_data.asnumpy()
+
         if np_val.shape == (1,):
             parameter_dict[param_name] = Parameter(np_val, name=param_name)
         elif np_val.shape == ():
