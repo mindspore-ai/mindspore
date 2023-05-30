@@ -4488,9 +4488,30 @@ def gaussian_nll_loss(x, target, var, full=False, eps=1e-6, reduction='mean'):
 
 
 @_primexpr
-def _check_hinge_embedding_loss(shape, shape2, prim_name):
+def _check_hinge_embedding_loss(shape, shape2):
     if shape2 != shape:
-        raise ValueError(f"For '{prim_name}' the input tensor and the labels must have the same shape.")
+        raise ValueError(f"For 'HingeEmbeddingLoss' the input tensor and the labels must have the same shape.")
+
+
+@_primexpr
+def _check_hinge_embedding_loss_type(inputs_dtype, targets_dtype, inputs, targets, margin, reduction):
+    """Check hinge embedding loss type."""
+    if not isinstance(margin, (float, int)):
+        raise TypeError(f"For 'HingeEmbeddingLoss', 'margin' must be a float or int, but got {type(margin)}.")
+    if reduction not in ['none', 'mean', 'sum']:
+        raise ValueError(f"For 'HingeEmbeddingLoss', 'reduction' must be one of 'none', 'mean', 'sum',"
+                         f"but got {reduction}.")
+    if not isinstance(inputs, Tensor):
+        raise TypeError(f"For 'HingeEmbeddingLoss', the first input must be a Tensor, but got {type(inputs)}.")
+    if not isinstance(targets, Tensor):
+        raise TypeError(f"For 'HingeEmbeddingLoss', the second input must be a Tensor, but got {type(targets)}.")
+
+    if inputs_dtype not in mstype.float_type:
+        raise TypeError(f"For 'HingeEmbeddingLoss', the dtype of the first input must be float, but got "
+                        f"{inputs_dtype}.")
+    if targets_dtype not in mstype.float_type:
+        raise TypeError(f"For 'HingeEmbeddingLoss', the dtype of the second input must be float, but got "
+                        f"{targets_dtype}.")
 
 
 def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
@@ -4551,30 +4572,12 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
         >>> print(loss)
         0.16666666
     """
-    def _check(inputs_dtype):
-        targets_dtype = targets.dtype
-        if not isinstance(margin, (float, int)):
-            raise TypeError(f"For 'HingeEmbeddingLoss', 'margin' must be a float or int, but got {type(margin)}.")
-        if reduction not in ['none', 'mean', 'sum']:
-            raise ValueError(f"For 'HingeEmbeddingLoss', 'reduction' must be one of 'none', 'mean', 'sum',"
-                             f"but got {reduction}.")
-        if not isinstance(inputs, Tensor):
-            raise TypeError(f"For 'HingeEmbeddingLoss', the first input must be a Tensor, but got {type(inputs)}.")
-        if not isinstance(targets, Tensor):
-            raise TypeError(f"For 'HingeEmbeddingLoss', the second input must be a Tensor, but got {type(targets)}.")
-
-        if inputs_dtype not in mstype.float_type:
-            raise TypeError(f"For 'HingeEmbeddingLoss', the dtype of the first input must be float, but got "
-                            f"{inputs_dtype}.")
-        if targets_dtype not in mstype.float_type:
-            raise TypeError(f"For 'HingeEmbeddingLoss', the dtype of the second input must be float, but got "
-                            f"{targets_dtype}.")
-
     inputs_dtype = inputs.dtype
-    _check(inputs_dtype)
+    targets_dtype = targets.dtype
+    _check_hinge_embedding_loss_type(inputs_dtype, targets_dtype, inputs, targets, margin, reduction)
     _shape = inputs.shape
     _t_shape = targets.shape
-    _check_hinge_embedding_loss(_shape, _t_shape, 'HingeEmbeddingLoss')
+    _check_hinge_embedding_loss(_shape, _t_shape)
 
     min_val = Tensor(0, inputs_dtype)
     pos_index = targets > 0
