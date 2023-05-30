@@ -15,7 +15,7 @@
 
 import pytest
 import numpy as np
-from mindspore import Tensor, context, Parameter
+from mindspore import Tensor, context, Parameter, ms_class
 import mindspore.nn as nn
 import mindspore as ms
 
@@ -141,3 +141,69 @@ def test_fallback_isinstance_tuple():
     net = Net()
     out = net(x)
     assert out == 0
+
+
+@ms_class
+class NetIsinstanceClass:
+    def __init__(self):
+        self.number = 1
+
+    def add(self):
+        out = self.number + self.number
+        return out
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_isinstance_ms_class_type():
+    """
+    Feature: JIT Fallback
+    Description: Test isinstance() in fallback runtime
+    Expectation: No exception.
+    """
+
+    class IsinstanceNet1(nn.Cell):
+        def __init__(self, x):
+            super().__init__()
+            self.x = x
+
+        def construct(self):
+            output1 = isinstance(self.x, NetIsinstanceClass)
+            net = NetIsinstanceClass()
+            output2 = isinstance(net, NetIsinstanceClass)
+            return output1, output2
+
+    input_x_nparray = np.array([[2, 2], [2, 2]])
+    net_isinstance = IsinstanceNet1(input_x_nparray)
+    res = net_isinstance()
+    assert not res[0], res[1]
+
+
+@pytest.mark.skip(reason="No support yet.")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_isinstance_ms_class_type_tuple():
+    """
+    Feature: JIT Fallback
+    Description: Test isinstance() in fallback runtime
+    Expectation: No exception.
+    """
+
+    class IsinstanceNet2(nn.Cell):
+        def __init__(self, x):
+            super().__init__()
+            self.x = x
+
+        def construct(self):
+            return isinstance(self.x, (NetIsinstanceClass, int))
+
+    input_x_nparray = np.array([[2, 2], [2, 2]])
+    net_isinstance = IsinstanceNet2(input_x_nparray)
+    res = net_isinstance()
+    assert not res

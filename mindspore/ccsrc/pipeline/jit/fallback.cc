@@ -189,6 +189,14 @@ AnfNodePtr ConvertInterpretedObjectToPyExecute(const FuncGraphPtr &fg, const Val
   return ConvertPyObjectToPyExecute(fg, interpreted_value->name(), interpreted_value->obj(), node, true);
 }
 
+AnfNodePtr ConvertMsClassObjectToPyExecute(const FuncGraphPtr &fg, const ValuePtr &value, const AnfNodePtr &node) {
+  const auto &ms_class_value = dyn_cast<parse::MsClassObject>(value);
+  if (ms_class_value == nullptr) {
+    return nullptr;
+  }
+  return ConvertPyObjectToPyExecute(fg, ms_class_value->name(), ms_class_value->obj(), node, true);
+}
+
 TypePtr GetJitAnnotationTypeFromComment(const AnfNodePtr &node, const FormatedVariableTypeFunc &format_type_func) {
   const auto &debug_info = trace::GetSourceCodeDebugInfo(node->debug_info());
   const auto &location = debug_info->location();
