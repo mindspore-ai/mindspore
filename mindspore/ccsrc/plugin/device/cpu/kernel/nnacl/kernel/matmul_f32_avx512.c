@@ -194,7 +194,7 @@ void MatmulFp32Avx512_GetThreadCuttingPolicy(MatmulFp32Struct *matmul) {
       matmul->gemm_not_pack_fun_ = GemmIsNotPackOptimize;
     }
     matmul->parallel_run_ = matmul->parallel_run_by_gepdot_;
-  } else if (matmul->row_ == 1 && !matmul->b_const_) {
+  } else if (matmul->row_ == 1 && !matmul->b_const_ && matmul->col_ <= C128NUM) {
     MatmulFp32Avx512_BatchColThreadCut(matmul);
     if (matmul->deep_ == 1) {
       matmul->parallel_run_ = matmul->parallel_run_by_row1_deep1_gepdot_;
@@ -275,7 +275,7 @@ int MatmulFp32Avx512_InitParameter(MatmulFp32Struct *matmul) {
     matmul->matrix_a_.need_pack_ = param->a_transpose_ && matmul->row_ != 1;
     matmul->matrix_b_.need_pack_ = false;
     matmul->pack_opt_ = false;
-  } else if (matmul->row_ == 1 && !matmul->b_const_) {
+  } else if (matmul->row_ == 1 && !matmul->b_const_ && matmul->col_ <= C128NUM) {
     matmul->out_need_aligned_ = false;
     matmul->row_tile_ = 1;
     matmul->col_tile_ = 1;

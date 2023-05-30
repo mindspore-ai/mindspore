@@ -21,6 +21,7 @@
 
 #define BIAS_ADD_PER_UNIT_LOAD_NUM 2
 #define BIAS_ADD_PER_UNIT_STORE_NUM 1
+#define SPLIT_POINTS_SIZE 32
 
 typedef struct BiasAddStruct {
   KernelBase base_;
@@ -28,46 +29,35 @@ typedef struct BiasAddStruct {
   int64_t outer_num_;
   int64_t total_num_;
   bool batch_priority_;
-  int64_t *split_points_;
+  int64_t split_points_[SPLIT_POINTS_SIZE];
   int split_pionts_size_;
 } BiasAddStruct;
 
-int biasadd_release(struct KernelBase *self) {
-  BiasAddStruct *bias_add = (BiasAddStruct *)self;
-  NNACL_CHECK_NULL_RETURN_ERR(bias_add);
-  if (bias_add->split_points_ != NULL) {
-    bias_add->base_.env_->free(bias_add->base_.env_->allocator_, bias_add->split_points_);
-  }
-  return NNACL_OK;
-}
+int biasadd_release(struct KernelBase *self) { return NNACL_OK; }
 
 int ChooseBiasThreadCuttingStrategy(KernelBase *self) {
   BiasAddStruct *bias_add = (BiasAddStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(bias_add);
   self->thread_nr_ = self->update_thread_(TC_PTYPE(PrimType_BiasAdd), BIAS_ADD_PER_UNIT_LOAD_NUM,
                                           BIAS_ADD_PER_UNIT_STORE_NUM, bias_add->total_num_, self->thread_nr_);
+  if (self->thread_nr_ > SPLIT_POINTS_SIZE) {
+    self->thread_nr_ = SPLIT_POINTS_SIZE;
+  }
 
-  int64_t tmp_split_list[MAX_SPLIT_NUM];
   bias_add->split_pionts_size_ = 0;
   int64_t block_size = 1;
   block_size = bias_add->total_num_ / self->thread_nr_;
   int64_t remain_data = bias_add->total_num_ - block_size * self->thread_nr_;
   int64_t split_point = 0;
   while (split_point < bias_add->total_num_) {
-    tmp_split_list[bias_add->split_pionts_size_++] = split_point;
+    bias_add->split_points_[bias_add->split_pionts_size_++] = split_point;
     split_point += block_size;
     if (remain_data > 0) {
       ++split_point;
       --remain_data;
     }
   }
-
   self->thread_nr_ = bias_add->split_pionts_size_;
-  biasadd_release(self);
-  bias_add->split_points_ = self->env_->alloc(self->env_->allocator_, bias_add->split_pionts_size_ * sizeof(int64_t));
-  NNACL_CHECK_NULL_RETURN_ERR(bias_add->split_points_);
-  memcpy(bias_add->split_points_, tmp_split_list, bias_add->split_pionts_size_ * sizeof(int64_t));
-
   if (bias_add->inner_num_ >= C64NUM && block_size / bias_add->inner_num_ >= C6NUM) {
     bias_add->batch_priority_ = true;
   } else {
@@ -138,7 +128,6 @@ int biasadd_compute(struct KernelBase *self) {
 KernelBase *CreateBiasAdd(OpParameter *param, int data_type) {
   BiasAddStruct *bias_add = (BiasAddStruct *)malloc(sizeof(BiasAddStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(bias_add);
-  bias_add->split_points_ = NULL;
   bias_add->base_.prepare = biasadd_prepare;
   bias_add->base_.resize = biasadd_resize;
   bias_add->base_.release = biasadd_release;

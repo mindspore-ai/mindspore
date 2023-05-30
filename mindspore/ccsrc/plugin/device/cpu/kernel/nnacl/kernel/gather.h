@@ -20,6 +20,8 @@
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 
+#define GATHER_BLOCK_INFOS_SIZE 32
+
 typedef struct GatherBlockBoundaryInfo {
   int64_t begin_batch_;
   int64_t begin_index_;
@@ -36,7 +38,7 @@ typedef struct GatherStruct {
   int byte_inner_size_;
   int block_infos_size_;
   int *indices_data_;
-  GatherBlockBoundaryInfo *block_infos_;
+  GatherBlockBoundaryInfo block_infos_[GATHER_BLOCK_INFOS_SIZE];
 } GatherStruct;
 
 KernelBase *CreateGather(OpParameter *param, int data_type);
