@@ -202,9 +202,14 @@ std::vector<AnfNodePtr> GetFirstTargetInputs(const std::vector<CNodePtr> &origin
         if (recomputed_origin_nodes.find(input->cast<CNodePtr>()) != recomputed_origin_nodes.end()) {
           continue;
         }
+        if (target_nodes.find(input->cast<CNodePtr>()) != target_nodes.end()) {
+          continue;
+        }
         (void)first_target_inputs.emplace_back(input);
       }
-      break;
+      if (!first_target_inputs.empty()) {
+        break;
+      }
     }
   }
   return first_target_inputs;
