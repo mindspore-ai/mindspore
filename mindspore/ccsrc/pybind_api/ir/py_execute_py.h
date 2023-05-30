@@ -172,7 +172,7 @@ class PyExecuteInitializer {
       if (py::isinstance<tensor::Tensor>(output) || IsStubTensor(output)) {
         const auto &tensor = IsStubTensor(output) ? ConvertStubTensor(output) : output.cast<tensor::TensorPtr>();
         const auto &infer_shape = std::make_shared<abstract::Shape>(tensor->shape());
-        return abstract::MakeAbstract(infer_shape, tensor->Dtype());
+        return tensor->ToAbstract();
       }
       const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") == "1";
       if (allow_inplace_ops && py::isinstance<py::list>(output)) {

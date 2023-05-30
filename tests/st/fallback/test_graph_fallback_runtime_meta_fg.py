@@ -270,7 +270,6 @@ def test_fallback_compare_meta():
     assert not ret
 
 
-@pytest.mark.skip(reason="inferred as float64 but got int64 at the backend.")
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -361,7 +360,6 @@ def test_fallback_getitem_meta_2():
     assert ret == (2, 3)
 
 
-@pytest.mark.skip(reason="inferred as float64 but got int64 at the backend.")
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
