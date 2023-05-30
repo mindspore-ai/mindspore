@@ -483,6 +483,17 @@ py::array TensorPy::AsNumpy(const Tensor &tensor) {
   return py::array(py::dtype(info), info.shape, info.strides, info.ptr, owner);
 }
 
+void TensorPy::Offload(const Tensor &tensor) {
+  py::gil_scoped_release gil_release;
+  if (tensor.NeedWait()) {
+    tensor.Wait();
+  }
+  tensor.data_sync();
+
+  // Release device address of graph output tensor.
+  const_cast<Tensor &>(tensor).set_device_address(nullptr);
+}
+
 py::array TensorPy::AsNumpyOfSlice(const Tensor &tensor, const int32_t param_key, const int slice_index) {
   py::gil_scoped_acquire acquire;
   py::object owner = py::cast(tensor.data_ptr());
@@ -804,6 +815,7 @@ void RegMetaTensor(const py::module *m) {
     .def("data_sync", &Tensor::data_sync)
     .def("__str__", &Tensor::ToString)
     .def("__repr__", &Tensor::ToStringRepr)
+    .def("_offload", &TensorPy::Offload)
     .def(py::pickle(
       [](const Tensor &t) {  // __getstate__
         /* Return a tuple that fully encodes the state of the object */

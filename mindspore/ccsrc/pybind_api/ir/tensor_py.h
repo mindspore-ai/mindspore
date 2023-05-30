@@ -129,6 +129,8 @@ class TensorPy {
   static py::int_ GetPyNBytes(const Tensor &tensor);
 
   static void FlushFromCache(const Tensor &tensor);
+
+  static void Offload(const Tensor &tensor);
 };
 
 // CSRTensor python wrapper and adapter class.
