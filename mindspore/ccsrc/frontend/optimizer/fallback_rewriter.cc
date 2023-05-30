@@ -470,11 +470,19 @@ class BeforeOptARewriter : public BaseRewriter {
     std::vector<AnfNodePtr> new_inputs;
     new_inputs.reserve(elements.size() + 1);
     (void)new_inputs.emplace_back(NewValueNode(prim::kPrimMakeList));
+    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    bool convert_to_tuple = !allow_fallback_runtime || !is_dict_output_;
     for (size_t i = 0; i < elements.size(); ++i) {
       auto index_node = NewValueNode(static_cast<int64_t>(i));
       MS_EXCEPTION_IF_NULL(elements[i].first->BuildValue());
       auto key_node = NewValueNode(elements[i].first->BuildValue());
-      auto value_node = fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), input, index_node});
+      AnfNodePtr value_node;
+      if (convert_to_tuple) {
+        value_node = fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), input, index_node});
+      } else {
+        value_node =
+          fg->NewCNode({NewValueNode(prim::kPrimDictGetItem), input, NewValueNode(elements[i].first->BuildValue())});
+      }
       auto tuple_node = fg->NewCNode({NewValueNode(prim::kPrimMakeTuple), key_node, value_node});
       (void)new_inputs.emplace_back(tuple_node);
     }
@@ -594,7 +602,7 @@ class BeforeOptARewriter : public BaseRewriter {
   }
 
   // AbstractDictionary --> AbstractSequence.
-  static AbstractSequencePtr ConvertToAbstractSequence(const AbstractBasePtr &abs, size_t depth) {
+  AbstractSequencePtr ConvertToAbstractSequence(const AbstractBasePtr &abs, size_t depth) {
     if (depth > kMaxSeqRecursiveDepth) {
       MS_LOG(INTERNAL_EXCEPTION) << "List, tuple and dict nesting is not allowed more than " << kMaxSeqRecursiveDepth
                                  << " levels.";
@@ -634,8 +642,10 @@ class BeforeOptARewriter : public BaseRewriter {
       }
     }
     // AbstractDictionary --> AbstractTuple.
+    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    bool convert_to_tuple = !allow_fallback_runtime || !is_dict_output_;
     auto abs_dict = abs->cast<AbstractDictionaryPtr>();
-    if (abs_dict != nullptr) {
+    if (abs_dict != nullptr && convert_to_tuple) {
       const auto &dict_elements = abs_dict->elements();
       std::vector<AbstractBasePtr> elements;
       elements.reserve(dict_elements.size());

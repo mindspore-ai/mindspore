@@ -838,3 +838,30 @@ def test_return_nested_dict_with_parameter_constant4():
     net = Net()
     out = net()
     assert out == {'params': [net.x, net.y], 'a': 1, 'b': {'params': net.x, 'a': 2}}
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_return_dict_with_dict_items():
+    """
+    Feature: Return dict when using dict.items.
+    Description: Support dict return.
+    Expectation: No exception.
+    """
+
+    @ms.jit
+    def dict_net(x, y):
+        z = {'x': x, 'y': y}
+        t = ()
+        for _, v in z.items():
+            t += (v,)
+        out = {'a': t}
+        return out
+
+    x = Tensor([1], dtype=mstype.int64)
+    y = Tensor([2], dtype=mstype.int64)
+    out = dict_net(x, y)
+    assert out == {'a': (x, y)}
