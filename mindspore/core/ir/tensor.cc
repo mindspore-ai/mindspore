@@ -937,7 +937,7 @@ void Tensor::data_sync(bool need_wait) const {
   }
 
   std::vector<size_t> shape_tmp;
-  (void)std::transform(shape().begin(), shape().end(), std::back_inserter(shape_tmp), IntToSize);
+  (void)std::transform(shape().begin(), shape().end(), std::back_inserter(shape_tmp), LongToSize);
   auto size = abstract::ShapeSize(shape_tmp) * abstract::TypeIdSize(data_type());
   auto address = device_sync_;
   if (size != 0 && !address->SyncDeviceToHost(shape(), size, data_type(), data_c())) {
