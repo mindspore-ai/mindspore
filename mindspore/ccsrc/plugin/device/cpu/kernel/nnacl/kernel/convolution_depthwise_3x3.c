@@ -38,7 +38,7 @@ int ConvDw3x3Run(void *cdata, int task_id, float l, float r) {
 
   ConvParameter *conv_param = (ConvParameter *)conv_dw->conv_.base_.param_;
   NNACL_CHECK_NULL_RETURN_ERR(conv_param);
-  ConvDw3x3(conv_dw->output_ptr_, buffer, conv_dw->input_ptr_, (float *)conv_dw->conv_.pack_weight_,
+  ConvDw3x3(conv_dw->output_ptr_, buffer, conv_dw->input_ptr_, (float *)conv_dw->conv_.packed_weight_,
             (float *)conv_dw->conv_.bias_data_, conv_param, start_oh, end_oh);
   return NNACL_OK;
 }
@@ -46,7 +46,7 @@ int ConvDw3x3Run(void *cdata, int task_id, float l, float r) {
 void ConvDw3x3PackWeight(ConvolutionBaseStruct *conv) {
   void *origin_weight = (conv->base_.train_session_) ? conv->base_.in_[SECOND_INPUT]->data_ : conv->origin_weight_;
   NNACL_CHECK_NULL_RETURN_VOID(origin_weight);
-  PackWeightConvDw3x3Fp32((float *)origin_weight, (float *)conv->pack_weight_, conv->output_c_);
+  PackWeightConvDw3x3Fp32((float *)origin_weight, (float *)conv->packed_weight_, conv->output_c_);
 }
 
 int ConvDw3x3MallocWeightBiasData(ConvolutionBaseStruct *conv) {
@@ -56,7 +56,7 @@ int ConvDw3x3MallocWeightBiasData(ConvolutionBaseStruct *conv) {
       int pack_weight_size = c4 * C12NUM;
       NNACL_CHECK_MALLOC_SIZE(pack_weight_size * sizeof(float));
       conv->packed_weight_ = ConvBaseGetConvPackWeightData(conv, pack_weight_size * sizeof(float));
-      NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv->pack_weight_);
+      NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv->packed_weight_);
     }
   }
 

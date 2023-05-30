@@ -32,30 +32,26 @@ int ConvDwRun(void *cdata, int task_id, float l, float r) {
 
 #ifdef ENABLE_AVX512
   if (X86_Avx512_Support()) {
-    return ConvDwAVX512(conv_dw->output_ptr_, conv_dw->input_ptr_, (float *)conv_dw->conv_.pack_weight_,
+    return ConvDwAVX512(conv_dw->output_ptr_, conv_dw->input_ptr_, (float *)conv_dw->conv_.packed_weight_,
                         (float *)conv_dw->conv_.bias_data_, conv_param, task_id, &conv_dw->dw_param_);
   } else {
-    return ConvDwAVX(conv_dw->output_ptr_, conv_dw->input_ptr_, (float *)conv_dw->conv_.pack_weight_,
+    return ConvDwAVX(conv_dw->output_ptr_, conv_dw->input_ptr_, (float *)conv_dw->conv_.packed_weight_,
                      (float *)conv_dw->conv_.bias_data_, conv_param, task_id, &conv_dw->dw_param_);
   }
 #endif
 
 #ifdef ENABLE_AVX
-  return ConvDwAVX(conv_dw->output_ptr_, conv_dw->input_ptr_, (float *)conv_dw->conv_.pack_weight_,
+  return ConvDwAVX(conv_dw->output_ptr_, conv_dw->input_ptr_, (float *)conv_dw->conv_.packed_weight_,
                    (float *)conv_dw->conv_.bias_data_, conv_param, task_id, &conv_dw->dw_param_);
 #endif
 
-  return ConvDw(conv_dw->output_ptr_, conv_dw->input_ptr_, (float *)conv_dw->conv_.pack_weight_,
+  return ConvDw(conv_dw->output_ptr_, conv_dw->input_ptr_, (float *)conv_dw->conv_.packed_weight_,
                 (float *)conv_dw->conv_.bias_data_, conv_param, task_id);
 }
 
 void ConvDwPackWeight(ConvolutionBaseStruct *conv) {
-  TensorC *weight_tensor = conv->base_.in_[SECOND_INPUT];
-  NNACL_CHECK_NULL_RETURN_VOID(weight_tensor);
-  float *origin_weight = (conv->base_.train_session_) ? (float *)weight_tensor->data_ : (float *)conv->origin_weight_;
-  NNACL_CHECK_NULL_RETURN_VOID(origin_weight);
-  int kernel_plane = conv->kernel_h_ * conv->kernel_w_;
-  PackWeightKHWToHWKFp32(origin_weight, (float *)conv->pack_weight_, kernel_plane, conv->output_c_);
+  PackWeightKHWToHWKFp32((float *)conv->base_.in_[SECOND_INPUT]->data_, (float *)conv->packed_weight_,
+                         conv->kernel_h_ * conv->kernel_w_, conv->output_c_);
 }
 
 int ConvDwMallocWeightBiasData(ConvolutionBaseStruct *conv) {
@@ -207,6 +203,8 @@ int convolution_depthwise_release(KernelBase *self) {
 KernelBase *CreateConvDw(ConvParameter *conv) {
   ConvolutionDepthwiseStruct *conv_dw = (ConvolutionDepthwiseStruct *)malloc(sizeof(ConvolutionDepthwiseStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(conv_dw);
+  memset(conv_dw, 0, sizeof(ConvolutionDepthwiseStruct));
+
   conv_dw->conv_.pack_weight_ = ConvDwPackWeight;
   conv_dw->conv_.malloc_weight_bias_ = ConvDwMallocWeightBiasData;
   conv_dw->conv_.base_.prepare = convolution_depthwise_prepare;

@@ -39,18 +39,16 @@ int ConvBasePrepare(ConvolutionBaseStruct *conv) {
 
   TensorC *input = conv->base_.in_[FIRST_INPUT];
   NNACL_CHECK_NULL_RETURN_ERR(input);
-  TensorC *output = conv->base_.out_[OUTPUT_INDEX];
-  NNACL_CHECK_NULL_RETURN_ERR(output);
-
   NNACL_CHECK_FALSE(input->shape_size_ != DIMENSION_4D, NNACL_INPUT_TENSOR_ERROR);
-  NNACL_CHECK_FALSE(output->shape_size_ != DIMENSION_4D, NNACL_OUTPUT_TENSOR_ERROR);
-
   conv->input_b_ = GetBatch(input);
   conv->input_h_ = GetHeight(input);
   conv->input_w_ = GetWidth(input);
   conv->input_c_ = GetChannel(input);
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv->input_h_, conv->input_w_, NNACL_CONVOLUTION_INPUT_HW_OVERFLOW);
 
+  TensorC *output = conv->base_.out_[OUTPUT_INDEX];
+  NNACL_CHECK_NULL_RETURN_ERR(output);
+  NNACL_CHECK_FALSE(output->shape_size_ != DIMENSION_4D, NNACL_OUTPUT_TENSOR_ERROR);
   conv->output_b_ = GetBatch(output);
   conv->output_h_ = GetHeight(output);
   conv->output_w_ = GetWidth(output);
@@ -62,17 +60,6 @@ int ConvBasePrepare(ConvolutionBaseStruct *conv) {
   conv->kernel_h_ = GetHeight(filter);
   conv->kernel_w_ = GetWidth(filter);
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv->kernel_h_, conv->kernel_w_, NNACL_CONVOLUTION_KERNEL_HW_OVERFLOW);
-
-  ConvParameter *conv_param = (ConvParameter *)conv->base_.param_;
-  NNACL_CHECK_NULL_RETURN_ERR(conv_param);
-  conv->stride_h_ = conv_param->stride_h_;
-  conv->stride_w_ = conv_param->stride_w_;
-  conv->dilation_h_ = conv_param->dilation_h_;
-  conv->dilation_w_ = conv_param->dilation_w_;
-  conv->pad_u_ = conv_param->pad_u_;
-  conv->pad_d_ = conv_param->pad_d_;
-  conv->pad_l_ = conv_param->pad_l_;
-  conv->pad_r_ = conv_param->pad_r_;
 
   return NNACL_OK;
 }
@@ -93,10 +80,8 @@ int ConvBaseInitConvWeightBias(ConvolutionBaseStruct *conv) {
   if (conv->base_.train_session_) {
     ConvBaseUpdateOriginWeightAndBias(conv);
   }
-  TensorC *weight_tensor = conv->base_.in_[SECOND_INPUT];
-  NNACL_CHECK_NULL_RETURN_ERR(weight_tensor);
-  bool weight_infershape_done = CheckInferShapeDone(&weight_tensor, 1, NULL, 0);
-  if (!weight_infershape_done) {
+
+  if (!conv->infershape_done_) {
     return NNACL_OK;
   }
 
@@ -108,9 +93,9 @@ int ConvBaseInitConvWeightBias(ConvolutionBaseStruct *conv) {
   if (conv->base_.in_size_ == THREE_TENSOR) {
     TensorC *bias_tensor = conv->base_.in_[THIRD_INPUT];
     NNACL_CHECK_NULL_RETURN_ERR(bias_tensor);
-    NNACL_CHECK_NULL_RETURN_ERR(conv->origin_bias_);
+    NNACL_CHECK_NULL_RETURN_ERR(bias_tensor->data_);
     NNACL_CHECK_FALSE(GetSize(bias_tensor) == 0, NNACL_INPUT_TENSOR_ERROR);
-    memcpy(conv->bias_data_, conv->origin_bias_, GetSize(bias_tensor));
+    memcpy(conv->bias_data_, bias_tensor->data_, GetSize(bias_tensor));
   }
 
   if (!conv->base_.train_session_) {

@@ -185,10 +185,10 @@ int ConvWinoBaseRunImpl(ConvolutionBaseStruct *conv, int task_id) {
   NNACL_CHECK_NULL_RETURN_ERR(output_data);
 
   if (conv->use_batch_cut_flag_) {
-    ConvWinogardFp32CutByBatch(input_data, (float *)conv->pack_weight_, (float *)conv->bias_data_, output_data,
+    ConvWinogardFp32CutByBatch(input_data, (float *)conv->packed_weight_, (float *)conv->bias_data_, output_data,
                                winograd->tmp_buffer_address_list_, task_id, conv_param, winograd->transfer_functions_);
   } else {
-    ConvWinogardFp32(input_data, (float *)conv->pack_weight_, (float *)conv->bias_data_, output_data,
+    ConvWinogardFp32(input_data, (float *)conv->packed_weight_, (float *)conv->bias_data_, output_data,
                      winograd->tmp_buffer_address_list_, task_id, conv_param, winograd->transfer_functions_);
   }
 

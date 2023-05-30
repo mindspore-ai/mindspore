@@ -23,13 +23,12 @@
 #include "nnacl/conv_parameter.h"
 
 typedef struct ConvolutionDelegateStruct {
-  KernelBase base_;
-  ConvolutionBaseStruct *convolution_;
+  ConvolutionBaseStruct conv_;
   float *origin_weight_;
   float *origin_bias_;
   bool need_free_weight_;
   bool need_free_bias_;
-  bool infershape_done_;
+  ConvolutionBaseStruct *convolution_;
 } ConvolutionDelegateStruct;
 
 KernelBase *CreateConvlutionDelegate(ConvParameter *conv_param);
