@@ -53,7 +53,7 @@ def write_to_file(file_path, content=""):
         return False
 
     with os.fdopen(os.open(file_path, os.O_WRONLY | os.O_CREAT, \
-        stat.S_IWUSR | stat.S_IRUSR | stat.S_IRGRP), 'w') as file_handler:
+                           stat.S_IWUSR | stat.S_IRUSR | stat.S_IRGRP), 'w') as file_handler:
         file_handler.write(content)
     return True
 
@@ -297,7 +297,7 @@ def get_options_info(job_content):
     options["autoTilingMode"] = job_content["SocInfo"]["autoTilingMode"]
     options["op_impl_mode_list"] = job_content["SocInfo"]["op_impl_mode_list"]
     options["kernel_meta_temp_dir"] = job_content["SocInfo"]["kernel_meta_temp_dir"]
-    options["deterministic"] = job_content["SocInfo"]["deterministic"]
+    options["deterministic"] = "true" if job_content["SocInfo"]["deterministic"] else "false"
     options["status_check"] = job_content["SocInfo"]["status_check"]
     return options
 
