@@ -46,13 +46,13 @@ using TensorIdWithOpInfo = mindspore::HashMap<std::string, std::pair<std::string
 using OpInfoWithTensorObject = std::map<std::string, std::vector<std::pair<size_t, tensor::TensorPtr>>>;
 using CellIdWithBackwardHookOp = mindspore::HashMap<std::string, std::vector<AnfNodePtr>>;
 
-struct GraphInfo {
+struct PyNGraphInfo {
   OrderedMap<std::string, ParameterPtr> input_params;   // Hold input parameters
   OrderedMap<std::string, ParameterPtr> weight_params;  // Hold weights parameters
   // Hold op op output or combination of output
   mindspore::HashMap<std::string, std::pair<AnfNodePtr, std::vector<int64_t>>> node_map;
 };
-using GraphInfoPtr = std::shared_ptr<GraphInfo>;
+using GraphInfoPtr = std::shared_ptr<PyNGraphInfo>;
 
 class TopCellInfo {
  public:

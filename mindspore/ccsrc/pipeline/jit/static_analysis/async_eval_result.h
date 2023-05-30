@@ -111,7 +111,6 @@ class AnalysisSchedule {
   std::condition_variable activate_thread_cv_;
   std::list<AsyncInferTaskPtr> schedule_list_;
   std::set<std::string> activate_threads_;
-  const std::string kStateStop = "Stop";
   static thread_local std::string thread_id_;
 };
 
@@ -335,7 +334,7 @@ class AsyncInferTask {
     std::lock_guard<std::mutex> lock(lock_);
     return SizeToInt(ready_);
   }
-  std::string thread_id() const { return thread_id_; }
+  const std::string &thread_id() const { return thread_id_; }
 
   AbstractBasePtr GetResult() {
     StaticAnalysisException::Instance().CheckException();
