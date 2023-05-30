@@ -36,15 +36,13 @@ namespace irpass {
 class SwitchSimplify : public OptimizerCaller {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    static const auto support_fallback = common::GetEnv("MS_DEV_ENABLE_FALLBACK");
-    static const auto use_fallback = (support_fallback != "0");
     PatternNode<AnfNodePtr> cond, true_br, false_br;
     auto SwitchSimplLambda = [&node, &cond, &true_br, &false_br]() -> AnfNodePtr {
       auto value_ptr = GetValueNode(cond.GetNode(node));
       bool cond_value;
       if (value_ptr->isa<BoolImm>()) {
         cond_value = GetValue<bool>(value_ptr);
-      } else if (use_fallback && value_ptr->isa<parse::InterpretedObject>()) {
+      } else if (value_ptr->isa<parse::InterpretedObject>()) {
         // {prim::kPrimSwitch, InterpretObject: 'True', X, Y}
         // {prim::kPrimSwitch, InterpretObject: 'False', X, Y}
         auto interpreted_obj = value_ptr->cast<parse::InterpretedObjectPtr>();
@@ -65,11 +63,9 @@ class SwitchSimplify : public OptimizerCaller {
     };
 
     auto IsDeterminateCondition = [](const AnfNodePtr &node) -> bool {
-      static const auto support_fallback = common::GetEnv("MS_DEV_ENABLE_FALLBACK");
-      static const auto use_fallback = (support_fallback != "0");
       auto &abs = node->abstract();
       bool is_interpret_object = false;
-      if (use_fallback && abs != nullptr) {
+      if (abs != nullptr) {
         ValuePtr value = abs->BuildValue();
         MS_EXCEPTION_IF_NULL(value);
         is_interpret_object = value->isa<parse::InterpretedObject>();

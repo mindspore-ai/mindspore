@@ -547,22 +547,15 @@ ValuePtr ConvertOtherObj(const py::object &obj, bool forbid_reuse = false) {
   if (obj_type == RESOLVE_TYPE_CLASS_INSTANCE) {
     MS_LOG(INTERNAL_EXCEPTION) << "Fail to convert class instance: " << py::str(obj);
   }
-  // Start RESOLVE_TYPE_INVALID...
-  // The fallback feature is enabled in default.
-  // Not support change the flag during the process is alive.
-  static const auto use_fallback = (common::GetEnv("MS_DEV_ENABLE_FALLBACK") != "0");
-  if (use_fallback) {
-    if (obj_type == RESOLVE_TYPE_NUMPY_INT_NUMBER || obj_type == RESOLVE_TYPE_NUMPY_FLOAT_NUMBER ||
-        obj_type == RESOLVE_TYPE_NUMPY_BOOL_NUMBER) {
-      return ConvertConstantNumpyNumber(obj, obj_type);
-    }
-    auto res = std::make_shared<InterpretedObject>(obj, py::str(obj));
-    MS_EXCEPTION_IF_NULL(res);
-    MS_LOG(DEBUG) << "Get interpreted object: " << res->ToString();
-    return res;
+  // Start RESOLVE_TYPE_INVALID.
+  if (obj_type == RESOLVE_TYPE_NUMPY_INT_NUMBER || obj_type == RESOLVE_TYPE_NUMPY_FLOAT_NUMBER ||
+      obj_type == RESOLVE_TYPE_NUMPY_BOOL_NUMBER) {
+    return ConvertConstantNumpyNumber(obj, obj_type);
   }
-  MS_LOG(ERROR) << "Resolve type is invalid, obj: " << py::str(obj);
-  return nullptr;
+  auto res = std::make_shared<InterpretedObject>(obj, py::str(obj));
+  MS_EXCEPTION_IF_NULL(res);
+  MS_LOG(DEBUG) << "Get interpreted object: " << res->ToString();
+  return res;
 }
 
 template <typename T>

@@ -73,9 +73,6 @@ void FunctionBlock::WriteVariable(const std::string &var_name, const AnfNodePtr 
   MS_LOG(DEBUG) << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " write var `" << var_name << "` with node "
                 << node->DebugString();
   constexpr auto kRecursiveLevel = 2;
-  // The fallback feature is enabled in default.
-  // Not support change the flag during the process is alive.
-  static const auto use_fallback = (parser_.support_fallback() != "0");
   // a[::][::] = b will be translated to c = a[::] c[::] = b and the c is a no named variable.
   if (var_name.empty()) {
     MS_LOG(DEBUG) << "The node is " << node->DebugString(kRecursiveLevel)
@@ -107,10 +104,8 @@ void FunctionBlock::WriteVariable(const std::string &var_name, const AnfNodePtr 
     }
     iter->second = std::make_pair(node, false);
   }
-  if (use_fallback) {
-    if (!HasGlobalPyParam(var_name)) {
-      UpdateLocalPyParam(var_name, node);
-    }
+  if (!HasGlobalPyParam(var_name)) {
+    UpdateLocalPyParam(var_name, node);
   }
 }
 
@@ -174,16 +169,11 @@ std::pair<AnfNodePtr, bool> FunctionBlock::FindPredInterpretNode(const std::stri
 // Read variable from predecessors
 AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
   MS_LOG(DEBUG) << "Read begin, var: " << var_name << ", block: " << ToString();
-  // The fallback feature is enabled in default.
-  // Not support change the flag during the process is alive.
-  static const auto use_fallback = (parser_.support_fallback() != "0");
   // Get var node if it is found
   auto node = ReadLocalVariable(var_name);
   if (node != nullptr) {
-    if (use_fallback) {
-      if (!HasGlobalPyParam(var_name)) {
-        UpdateLocalPyParam(var_name, node);
-      }
+    if (!HasGlobalPyParam(var_name)) {
+      UpdateLocalPyParam(var_name, node);
     }
     return node;
   }
@@ -195,15 +185,12 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
       auto block = prev_blocks_[0];
       MS_EXCEPTION_IF_NULL(block);
       auto res = block->ReadVariable(var_name);
-      if (use_fallback) {
-        MS_LOG(DEBUG) << "Update global params of block: " << ToString()
-                      << ", with previous block: " << block->ToString()
-                      << ",\nCurrent: " << py::str(const_cast<py::dict &>(global_py_params()))
-                      << "\nInsert: " << py::str(const_cast<py::dict &>(block->global_py_params()));
-        UpdateGlobalPyParam(block->global_py_params());
-        if (!HasGlobalPyParam(var_name)) {
-          UpdateLocalPyParam(var_name, res);
-        }
+      MS_LOG(DEBUG) << "Update global params of block: " << ToString() << ", with previous block: " << block->ToString()
+                    << ",\nCurrent: " << py::str(const_cast<py::dict &>(global_py_params()))
+                    << "\nInsert: " << py::str(const_cast<py::dict &>(block->global_py_params()));
+      UpdateGlobalPyParam(block->global_py_params());
+      if (!HasGlobalPyParam(var_name)) {
+        UpdateLocalPyParam(var_name, res);
       }
       return res;
     } else if (prev_blocks_.empty()) {
@@ -226,19 +213,17 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
   MS_LOG(DEBUG) << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " generate phi node "
                 << phi_param->ToString() << " for " << var_name;
 
-  if (use_fallback) {
-    auto [pred_node, has_found] = FindPredInterpretNode(var_name);
-    if (pred_node != nullptr) {
-      phi_param->set_interpret(true);
-    } else if (!has_found) {
-      // If the current node is created as a phi node at the first time.(the var_name has not be found in pre blocks)
-      // need resolve to determine whether it needs to be marked with interpret.
-      auto resolve_node = MakeResolveSymbol(var_name);
-      CheckUndefinedSymbol(var_name, resolve_node);
-      MS_EXCEPTION_IF_NULL(resolve_node);
-      phi_param->set_interpret(resolve_node->interpret());
-      phi_param->set_interpret_internal_type(resolve_node->interpret_internal_type());
-    }
+  auto [pred_node, has_found] = FindPredInterpretNode(var_name);
+  if (pred_node != nullptr) {
+    phi_param->set_interpret(true);
+  } else if (!has_found) {
+    // If the current node is created as a phi node at the first time.(the var_name has not be found in pre blocks)
+    // need resolve to determine whether it needs to be marked with interpret.
+    auto resolve_node = MakeResolveSymbol(var_name);
+    CheckUndefinedSymbol(var_name, resolve_node);
+    MS_EXCEPTION_IF_NULL(resolve_node);
+    phi_param->set_interpret(resolve_node->interpret());
+    phi_param->set_interpret_internal_type(resolve_node->interpret_internal_type());
   }
 
   func_graph()->add_parameter(phi_param);
@@ -282,10 +267,7 @@ std::pair<AnfNodePtr, std::string> FunctionBlock::MakeResolveAstOp(const py::obj
 AnfNodePtr FunctionBlock::MakeResolveClassMemberOrSelf(const std::string &attr_or_self) {
   auto ast = parser_.ast();
   MS_EXCEPTION_IF_NULL(ast);
-  // The fallback feature is enabled in default.
-  // Not support change the flag during the process is alive.
-  static const auto use_fallback = (parser_.support_fallback() != "0");
-  if (use_fallback && !global_py_params().contains("self")) {
+  if (!global_py_params().contains("self")) {
     py::object self_namespace = ast->CallParseModFunction(PYTHON_MOD_GET_ATTR_NAMESPACE_SYMBOL, ast->obj());
     AddGlobalPyParam("self", self_namespace);
   }
@@ -338,10 +320,6 @@ AnfNodePtr FunctionBlock::HandleNamespaceSymbol(const std::string &var_name) {
   }
 
   // Handle global namespace info.
-  static const auto use_fallback = (parser_.support_fallback() != "0");
-  if (!use_fallback) {
-    return resolved_node;
-  }
   auto syntax_support = info[flag_index].cast<int32_t>();
   if (syntax_support != SYNTAX_SUPPORTED && syntax_support != SYNTAX_HYBRID_TYPE) {
     resolved_node->set_interpret(true);
@@ -367,9 +345,6 @@ AnfNodePtr FunctionBlock::HandleNamespaceSymbol(const std::string &var_name) {
 // Make a resolve node for symbol string
 AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &var_name) {
   MS_LOG(DEBUG) << "var_name: " << var_name << ", ast object type: " << parser_.ast()->target_type();
-  // The fallback feature is enabled in default.
-  // Not support change the flag during the process is alive.
-  static const auto use_fallback = (parser_.support_fallback() != "0");
 
   // Handle self. The prefix of var_name is "self".
   constexpr auto self_name = "self";
@@ -387,18 +362,14 @@ AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &var_name) {
       }
       auto bits_str = var_name.substr(start);
       auto resolve_node = MakeResolveClassMemberOrSelf(bits_str);
-      if (use_fallback) {
-        if (!HasGlobalPyParam(var_name)) {
-          UpdateLocalPyParam(var_name, resolve_node);
-        }
+      if (!HasGlobalPyParam(var_name)) {
+        UpdateLocalPyParam(var_name, resolve_node);
       }
       return resolve_node;
     } else if (var_name.size() == self_name_len) {  // 'self'
       auto resolve_node = MakeResolveClassMemberOrSelf(var_name);
-      if (use_fallback) {
-        if (!HasGlobalPyParam(var_name)) {
-          UpdateLocalPyParam(var_name, resolve_node);
-        }
+      if (!HasGlobalPyParam(var_name)) {
+        UpdateLocalPyParam(var_name, resolve_node);
       }
       return resolve_node;
     }
@@ -549,15 +520,12 @@ void FunctionBlock::CollectRemovablePhi(const ParameterPtr &phi) {
                   << " can be replaced with " << arg_node->DebugString();
     // Replace var with new one. This equal to statement in TR "v0 is immediately replaced by v1."
     WriteVariable(var_name, arg_node);
-    static const auto use_fallback = (parser_.support_fallback() != "0");
-    if (use_fallback) {
-      bool interpret_without_internal =
-        IsPrimitiveCNode(arg_node, prim::kPrimPyInterpret) && !arg_node->interpret_internal_type();
-      if (arg_node->interpret() || interpret_without_internal) {
-        phi->set_interpret(true);
-        if (arg_node->interpret_internal_type()) {
-          phi->set_interpret_internal_type(true);
-        }
+    bool interpret_without_internal =
+      IsPrimitiveCNode(arg_node, prim::kPrimPyInterpret) && !arg_node->interpret_internal_type();
+    if (arg_node->interpret() || interpret_without_internal) {
+      phi->set_interpret(true);
+      if (arg_node->interpret_internal_type()) {
+        phi->set_interpret_internal_type(true);
       }
     }
   }
