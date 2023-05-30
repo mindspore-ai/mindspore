@@ -27,7 +27,7 @@ int64_t Fp32CastGatherReduceInt64Fusion(float *output_data, const int64_t *input
 
   if (index < input_data_inner_size) {
     for (int i = outer_start; i < outer_end; i++) {
-      float *result = output_data + i * input_data_inner_size + index;
+      float *result = output_data + i * input_data_inner_size;
       int64_t indice0 = input_indices[i * inner_size];
       for (int k = index; k < input_data_inner_size; k++) {
         result[k] = input_data[indice0 * input_data_inner_size + k];
@@ -52,7 +52,7 @@ int64_t Fp32CastGatherReduceInt32Fusion(float *output_data, const int32_t *input
 
   if (index < input_data_inner_size) {
     for (int i = outer_start; i < outer_end; i++) {
-      float *result = output_data + i * input_data_inner_size + index;
+      float *result = output_data + i * input_data_inner_size;
       int32_t indice0 = input_indices[i * inner_size];
       for (int k = index; k < input_data_inner_size; k++) {
         result[k] = input_data[indice0 * input_data_inner_size + k];

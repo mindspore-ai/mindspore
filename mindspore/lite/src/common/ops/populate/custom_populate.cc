@@ -107,6 +107,15 @@ OpParameter *PopulateCustomParameter(const void *prim) {
     memset(param, 0, sizeof(OpParameter));
     param->type_ = PrimType_Inner_CastGatherReduceFusion;
     return reinterpret_cast<OpParameter *>(param);
+  } else if (type == "ReduceConcatFusion") {
+    auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+    if (param == nullptr) {
+      MS_LOG(ERROR) << "malloc ShapeParameter failed.";
+      return nullptr;
+    }
+    memset(param, 0, sizeof(OpParameter));
+    param->type_ = PrimType_Inner_ReduceConcatFusion;
+    return reinterpret_cast<OpParameter *>(param);
   } else {
     MS_LOG(ERROR) << "Unsupported custom type: " << type;
   }
