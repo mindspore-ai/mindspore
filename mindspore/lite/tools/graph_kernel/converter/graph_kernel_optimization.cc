@@ -18,6 +18,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <unordered_set>
 #include "ir/func_graph.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "include/backend/optimizer/graph_optimizer.h"
@@ -29,6 +30,7 @@
 #include "backend/common/graph_kernel/core/update_state_formatter.h"
 #include "backend/common/graph_kernel/core/transform_op_optimizer.h"
 
+#include "tools/graph_kernel/converter/akg/utils.h"
 #include "tools/graph_kernel/converter/kernel_builder.h"
 #include "tools/graph_kernel/converter/conv_tuning_expander.h"
 #include "tools/graph_kernel/converter/format_recognition.h"
@@ -120,6 +122,36 @@ GkPassManagerPtr GraphKernelOptimizer::BuildKernel() const {
   return pm;
 }
 
+std::unordered_set<std::string> CheckSupport() {
+  std::unordered_set<std::string> support_backend;
+#ifdef AKG_USE_LLVM
+  support_backend.emplace("CPU");
+#endif
+#if defined(AKG_USE_LLVM) && defined(AKG_USE_CUDA)
+  support_backend.emplace("GPU");
+#endif
+#ifdef AKG_ENABLE_D
+  support_backend.emplace("Ascend");
+#endif
+  return support_backend;
+}
+
+bool CheckAkg() {
+  std::ostringstream py_cmd;
+  py_cmd << kAddMSLiteAkg;
+  py_cmd << "from akg.ms import compilewithjsonname\n";
+  std::string cmd = "python -c \"" + py_cmd.str() + "\"";
+  auto ret = std::system(cmd.c_str());
+  if (WEXITSTATUS(ret) != 0) {
+    MS_LOG(WARNING)
+      << "Could not find akg in python, Graph Kernel fusion has been turned off. Please make sure you have "
+         "installed akg. process content is as follows:\n"
+      << cmd;
+    return false;
+  }
+  return true;
+}
+
 void GraphKernelOptimizer::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   if (converter_param_ == nullptr) {
@@ -128,8 +160,19 @@ void GraphKernelOptimizer::Run(const FuncGraphPtr &func_graph) {
   }
   const CallbackImplRegister callback_reg(
     [this]() { return std::static_pointer_cast<Callback>(std::make_shared<CallbackImpl>(converter_param_)); });
-
+  if (!CheckAkg()) {
+    return;
+  }
+  auto akg_support_backend = CheckSupport();
   auto device = Callback::Instance()->GetTargetFromContext();
+  if (akg_support_backend.find(device) == akg_support_backend.end()) {
+    MS_LOG(WARNING)
+      << "Graph Kernel fusion for" << device
+      << " backend is not enabled, Graph Kernel fusion has been turned off. Please check if you have set the "
+         "correct compilation options for "
+      << device << " backend.";
+    return;
+  }
   is_cpu = (device == "CPU");
   is_ascend = (device == "Ascend");
 

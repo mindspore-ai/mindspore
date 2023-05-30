@@ -23,8 +23,8 @@
 #include "utils/anf_utils.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/graph_kernel/core/tuning_splitter.h"
-#include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "tools/graph_kernel/converter/akg/akg_kernel_builder.h"
+#include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "tools/graph_kernel/converter/akg/utils.h"
 
 namespace mindspore::graphkernel {

@@ -234,18 +234,26 @@ build_akg() {
     cd ${BUILD_DIR}/akg
     mkdir -pv build
     cd build
-    CMAKE_ARGS="-DUSE_LLVM=ON -DUSE_RPC=ON -DENABLE_AKG=off"
-    if [[ "${DEBUG_MODE}" == "on" ]]; then
-        CMAKE_ARGS="${CMAKE_ARGS}  -DCMAKE_BUILD_TYPE=Debug -DUSE_AKG_LOG=1"
+    if [[ "X${DEBUG_MODE}" == "Xon" ]]; then
+        AKG_CMAKE_ARGS="${AKG_CMAKE_ARGS}  -DCMAKE_BUILD_TYPE=Debug -DUSE_AKG_LOG=1"
     fi
-    if [[ ("${MSLITE_ENABLE_ACL}" == "on") ]]; then
-        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_D=ON"
+    # check llvm version for akg
+    AKG_CMAKE_ARGS="${AKG_CMAKE_ARGS} -DUSE_RPC=ON "
+    USE_LLVM=`bash ${BASEPATH}/scripts/build/akg_find_llvm.sh`
+    if [[ "X$USE_LLVM" == "Xon" ]]; then
+        graph_kernel_cfg="-DAKG_USE_LLVM=ON ${graph_kernel_cfg}"
+        AKG_CMAKE_ARGS="${AKG_CMAKE_ARGS} -DUSE_LLVM=ON"
+        if [[ ("X${MSLITE_GPU_BACKEND}" == "Xtensorrt") && $1 == "x86_64" ]]; then
+            AKG_CMAKE_ARGS="${AKG_CMAKE_ARGS} -DUSE_CUDA=ON"
+            graph_kernel_cfg="-DAKG_USE_CUDA=ON ${graph_kernel_cfg}"
+        fi
     fi
-    if [[ ( ${MS_ENABLE_CUDA_DISTRIBUTION} == "on" ) && $1 == "x86_64" ]]; then
-        CMAKE_ARGS="${CMAKE_ARGS} -DUSE_CUDA=ON"
+    if [[ ("X${MSLITE_ENABLE_ACL}" == "Xon") ]]; then
+        AKG_CMAKE_ARGS="${AKG_CMAKE_ARGS} -DENABLE_D=ON"
+        graph_kernel_cfg="-DAKG_ENABLE_D=ON ${graph_kernel_cfg}"
     fi
-    echo "cmake ${CMAKE_ARGS}"
-    cmake -S ${AKG_DIR} ${CMAKE_ARGS} -B .
+    echo "cmake ${AKG_CMAKE_ARGS}"
+    cmake -S ${AKG_DIR} ${AKG_CMAKE_ARGS} -B .
     cmake --build . -j$THREAD_NUM
     cmake --install .
     cd ${BUILD_DIR}/akg
@@ -532,13 +540,14 @@ build_lite() {
     if [[ ("${local_lite_platform}" == "arm64" || "${local_lite_platform}" == "arm32") && "${TOOLCHAIN_NAME}" != "ohos" ]]; then
       echo "default link libc++_static.a, export MSLITE_ANDROID_STL=c++_shared to link libc++_shared.so"
     fi
-    if [[ ("X${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE}" != "Xon") && ("X${MSLITE_ENABLE_CLOUD_INFERENCE}" != "Xon") ]]; then
+    if [[ ("X${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE,,}" != "Xon") && ("X${MSLITE_ENABLE_CLOUD_INFERENCE,,}" != "Xon") ]]; then
       ENABLE_AKG="off"
     fi
     if [[ ( ("${local_lite_platform}" == "x86_64" && "${machine}" == "x86_64") || ("${local_lite_platform}" == "arm64" && ${machine} == "aarch64") ) && ("${ENABLE_AKG}" == "on") ]]; then
       akg_package_path=""
+      graph_kernel_cfg=""
       build_akg ${machine}
-      LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DAKG_PKG_PATH=${akg_package_path}"
+      LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} ${graph_kernel_cfg} -DAKG_PKG_PATH=${akg_package_path}"
     fi
     echo "cmake ${LITE_CMAKE_ARGS} ${BASEPATH}/mindspore/lite"
     cmake ${LITE_CMAKE_ARGS} "${BASEPATH}/mindspore/lite"
@@ -803,8 +812,8 @@ update_submodule()
   cd "${BASEPATH}/graphengine"
   git submodule update --init 910/metadef
   cd "${BASEPATH}"
-  if [[ ("X$ENABLE_AKG" = "Xon" && ("${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE}" == "on") || ("${MSLITE_ENABLE_CLOUD_INFERENCE}" == "on") ) ]]; then
-    if [[ ("${MSLITE_ENABLE_ACL}" == "on") ]]; then
+  if [[ ("X$ENABLE_AKG" = "Xon" && ("${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE,,}" == "on") || ("${MSLITE_ENABLE_CLOUD_INFERENCE,,}" == "on") ) ]]; then
+    if [[ ("${MSLITE_ENABLE_ACL,,}" == "on") ]]; then
       git submodule update --init akg
     else
       GIT_LFS_SKIP_SMUDGE=1 git submodule update --init akg

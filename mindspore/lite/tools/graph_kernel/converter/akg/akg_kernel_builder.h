@@ -25,13 +25,6 @@
 #include "kernel/akg/graph_kernel_json_generator.h"
 
 namespace mindspore::graphkernel {
-constexpr auto kTunedSign = "tuned_signature";
-constexpr auto kAddMSLiteAkg =
-  "try:\n"
-  "   import mindspore_lite.akg as akg\n"
-  "except Exception:\n"
-  "   import akg as akg\n";
-
 class AkgKernelBuilder {
  public:
   virtual bool CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) = 0;
