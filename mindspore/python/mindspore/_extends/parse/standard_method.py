@@ -33,7 +33,7 @@ from ...ops import functional as F
 from ...ops import operations as P
 from ...ops import composite
 from ...ops.operations import array_ops
-from ...ops.composite import tail, MultitypeFuncGraph, env_get, hyper_add, \
+from ...ops.composite import MultitypeFuncGraph, env_get, hyper_add, \
     zeros_like, ones_like, repeat_elements
 from ...ops.composite.multitype_ops import _constexpr_utils as const_utils
 from ...ops.composite.multitype_ops import _compile_utils as compile_utils
@@ -3565,7 +3565,7 @@ def triu(input, diagonal=0):
 
 def tuple_next(xs):
     """Next tuple."""
-    return xs[0], tail(xs)
+    return xs[0], xs[1:]
 
 
 def tuple_hasnext(xs):
@@ -3575,7 +3575,7 @@ def tuple_hasnext(xs):
 
 def list_next(xs):
     """Next list."""
-    return xs[0], tail(xs)
+    return xs[0], xs[1:]
 
 
 def list_hasnext(xs):
