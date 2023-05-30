@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test graph raise """
+import os
 import pytest
 import mindspore as ms
 import mindspore.nn as nn
@@ -624,12 +625,14 @@ def test_raise_with_variable_1():
             if x > 10:
                 raise ValueError(f"The input can not be {x}.")
 
+    os.environ["MS_DEV_FALLBACK_SUPPORT_LIST"] = "1"
     with pytest.raises(ValueError) as raise_info_9:
         net = RaiseNet()
         x = Tensor(11)
         res = net(x)
         print("res:", res)
     assert "The input can not be 11." in str(raise_info_9.value)
+    os.environ["MS_DEV_FALLBACK_SUPPORT_LIST"] = "0"
 
 
 @pytest.mark.level0

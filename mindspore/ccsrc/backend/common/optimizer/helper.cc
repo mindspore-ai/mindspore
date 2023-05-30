@@ -36,6 +36,7 @@
 #include "backend/operator/ops_backend_infer_function.h"
 #include "frontend/operator/ops_front_infer_function.h"
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
+#include "mindspore/ccsrc/plugin/device/cpu/kernel/pyexecute/py_execute_cpu_kernel.h"
 
 namespace mindspore {
 namespace opt {
@@ -840,15 +841,33 @@ AnfNodePtr HandleSexpVector(const BaseRef &sexp, const BaseRef &graph, Primitive
 }
 
 std::pair<AbstractBasePtr, size_t> RectifyAbstractFromStructuralAttr(const ValuePtr &value,
-                                                                     AbstractBasePtrList::const_iterator begin_iter,
-                                                                     AbstractBasePtrList::const_iterator end_iter) {
+                                                                     const AbstractBasePtrList &input_abstract,
+                                                                     const std::vector<size_t> &list_start_vec,
+                                                                     size_t input_index) {
   MS_EXCEPTION_IF_NULL(value);
+  auto begin_iter = input_abstract.begin() + input_index;
   if (value->isa<ValueSequence>()) {
     size_t offset = 0;
     std::vector<AbstractBasePtr> abs_list;
     auto seq_value = value->cast_ptr<ValueSequence>();
     for (size_t i = 0; i < seq_value->size(); ++i) {
-      auto [abs, offset_inner] = RectifyAbstractFromStructuralAttr((*seq_value)[i], begin_iter + offset, end_iter);
+      auto [abs, offset_inner] =
+        RectifyAbstractFromStructuralAttr((*seq_value)[i], input_abstract, list_start_vec, input_index + offset);
+      if (abs->isa<abstract::AbstractSequence>() &&
+          std::find(list_start_vec.begin(), list_start_vec.end(), input_index + offset) != list_start_vec.end()) {
+        auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
+        const auto &elements = abs_seq->elements();
+        bool is_nested = std::any_of(elements.begin(), elements.end(),
+                                     [](const AbstractBasePtr &abs) { return abs->isa<abstract::AbstractSequence>(); });
+        if (!is_nested) {
+          const auto &first_abs_in_list = input_abstract[input_index + offset];
+          if (!first_abs_in_list->has_user_data<kernel::PyExecuteOutputUserData>()) {
+            MS_LOG(INTERNAL_EXCEPTION) << "List input abstract PyExecuteOutputUserData not found.";
+          }
+          const auto &list_user_data = first_abs_in_list->user_data<kernel::PyExecuteOutputUserData>();
+          abs->set_user_data<kernel::PyExecuteOutputUserData>(list_user_data);
+        }
+      }
       (void)abs_list.emplace_back(abs);
       offset += offset_inner;
     }
@@ -885,7 +904,8 @@ AbstractBasePtr RectifyEmptyTupleAbstract(const ValuePtr &structural) {
 }
 
 AbstractBasePtrList RectifyAbstractFromTupleInputStructural(const ValuePtr &tuple_structural,
-                                                            const AbstractBasePtrList &input_abstract) {
+                                                            const AbstractBasePtrList &input_abstract,
+                                                            const ValuePtrList &list_start) {
   if (tuple_structural == nullptr) {
     return input_abstract;
   }
@@ -900,8 +920,10 @@ AbstractBasePtrList RectifyAbstractFromTupleInputStructural(const ValuePtr &tupl
       // The abstract size will be smaller than the attr of tuple input structural.
       (void)rectifyed_abs_list.emplace_back(RectifyEmptyTupleAbstract(item));
     }
-    auto [abs, offset] =
-      RectifyAbstractFromStructuralAttr(item, (input_abstract.begin() + input_index), (input_abstract.cend()));
+    std::vector<size_t> list_start_vec;
+    std::transform(list_start.begin(), list_start.end(), std::back_inserter(list_start_vec),
+                   [](const ValuePtr val) { return GetValue<size_t>(val); });
+    auto [abs, offset] = RectifyAbstractFromStructuralAttr(item, input_abstract, list_start_vec, input_index);
     input_index += offset;
     (void)rectifyed_abs_list.emplace_back(abs);
     MS_LOG(DEBUG) << "Rectify abs :" << item->ToString() << ", from structural " << abs->ToString();
@@ -960,7 +982,14 @@ AbstractBasePtrList RectifyAbstractFromDynamicInput(const PrimitivePtr &prim,
 AbstractBasePtrList RectifyAbstract(const PrimitivePtr &prim, const AbstractBasePtrList &input_abstract) {
   auto input_structural = prim->GetAttr(kAttrTupleInputStructural);
   if (input_structural != nullptr) {
-    return RectifyAbstractFromTupleInputStructural(input_structural, input_abstract);
+    if (prim->HasAttr(kAttrListStartIndex)) {
+      auto list_start_index = prim->GetAttr(kAttrListStartIndex);
+      MS_EXCEPTION_IF_NULL(list_start_index);
+      auto list_start_index_value = list_start_index->cast_ptr<ValueSequence>();
+      MS_EXCEPTION_IF_NULL(list_start_index_value);
+      return RectifyAbstractFromTupleInputStructural(input_structural, input_abstract, list_start_index_value->value());
+    }
+    return RectifyAbstractFromTupleInputStructural(input_structural, input_abstract, {});
   }
   return RectifyAbstractFromDynamicInput(prim, input_abstract);
 }

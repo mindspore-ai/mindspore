@@ -991,6 +991,7 @@ constexpr auto kAttrNodeName = "node_name";
 constexpr auto kAttrDynInput = "dynamic";
 constexpr auto kAttrDynInputSizes = "dyn_input_sizes";
 constexpr auto kAttrTupleInputStructural = "tuple_input_structural";
+constexpr auto kAttrListStartIndex = "list_start_index";
 constexpr auto kAttrSrcFormat = "src_format";
 constexpr auto kAttrDstFormat = "dst_format";
 constexpr auto kAttrMultiples = "multiples";
