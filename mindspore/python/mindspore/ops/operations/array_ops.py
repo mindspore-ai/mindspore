@@ -7374,7 +7374,7 @@ class TensorScatterElements(Primitive):
         - **data** (Tensor) - The target tensor. Its rank must be at least 1.
         - **indices** (Tensor) - The index to do scatter operation whose data type must be int32 or
           int64. It has the same rank as `data`. And accepted range is [-s, s) where s is the size along axis.
-        - **update** (Tensor) - The tensor doing the scatter operation with `data`,
+        - **updates** (Tensor) - The tensor doing the scatter operation with `data`,
           it has the same shape and type as `data`.
 
     Outputs:

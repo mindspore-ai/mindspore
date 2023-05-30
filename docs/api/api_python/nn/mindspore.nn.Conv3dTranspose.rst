@@ -1,7 +1,7 @@
 mindspore.nn.Conv3dTranspose
 =============================
 
-.. py:class:: mindspore.nn.Conv3dTranspose(in_channels, out_channels, kernel_size, stride=1, pad_mode='same', padding=0, dilation=1, group=1, output_padding=0, has_bias=False, weight_init='normal', bias_init='zeros', data_format='NCDHW')
+.. py:class:: mindspore.nn.Conv3dTranspose(in_channels, out_channels, kernel_size, stride=1, pad_mode='same', padding=0, dilation=1, group=1, output_padding=0, has_bias=False, weight_init=HeUniform(math.sqrt(5)), bias_init=None, data_format='NCDHW')
 
     计算三维转置卷积，可以视为Conv3d对输入求梯度，也称为反卷积（实际不是真正的反卷积）。
 

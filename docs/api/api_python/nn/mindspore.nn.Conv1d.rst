@@ -1,7 +1,7 @@
 mindspore.nn.Conv1d
 ======================
 
-.. py:class:: mindspore.nn.Conv1d(in_channels, out_channels, kernel_size, stride=1, pad_mode='same', padding=0, dilation=1, group=1, has_bias=False, weight_init='normal', bias_init='zeros')
+.. py:class:: mindspore.nn.Conv1d(in_channels, out_channels, kernel_size, stride=1, pad_mode='same', padding=0, dilation=1, group=1, has_bias=False, weight_init=HeUniform(math.sqrt(5)), bias_init=None)
 
     对输入Tensor计算一维卷积。该Tensor的shape通常为 :math:`(N, C_{in}, L_{in})` ，其中 :math:`N` 是batch size， :math:`C_{in}` 是空间维度，:math:`L_{in}` 是序列的长度。
     对于每个batch中的Tensor，其shape为 :math:`(C_{in}, L_{in})` ，公式定义如下：
