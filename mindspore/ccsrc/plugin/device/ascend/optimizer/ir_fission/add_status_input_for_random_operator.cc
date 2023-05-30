@@ -31,10 +31,11 @@ struct RandomNode {
   std::string code;
   size_t status0;
   size_t status1;
+  std::map<std::string, int64_t> seed_attr;
 };
 
 // key: code. value: ordered in index
-std::map<std::string, std::vector<RandomNode>> Deserialization(const std::string &proto_str, uint32_t graph_id) {
+std::map<std::string, std::vector<RandomNode>> Deserialization(const std::string &proto_str) {
   std::map<std::string, std::vector<RandomNode>> snap_map;
   mindspore::RandomNodeList proto_random_node_list;
   auto ret = proto_random_node_list.ParseFromString(proto_str);
@@ -43,23 +44,27 @@ std::map<std::string, std::vector<RandomNode>> Deserialization(const std::string
     return snap_map;
   }
   for (auto &proto_random_node : proto_random_node_list.nodes()) {
-    if (graph_id != proto_random_node.graph_id()) {
-      continue;
-    }
-    snap_map[proto_random_node.code()].emplace_back(RandomNode{
-      proto_random_node.name(), proto_random_node.code(), proto_random_node.status0(), proto_random_node.status1()});
+    snap_map[proto_random_node.code()].emplace_back(
+      RandomNode{proto_random_node.name(), proto_random_node.code(), proto_random_node.status0(),
+                 proto_random_node.status1(), [](const auto &protobuf_map) -> std::map<std::string, int64_t> {
+                   std::map<std::string, int64_t> ret;
+                   for (const auto &[key, value] : protobuf_map) {
+                     ret.emplace(key, value);
+                   }
+                   return ret;
+                 }(proto_random_node.seed_attr())});
   }
   return snap_map;
 }
 
-bool CheckMatch(const std::map<std::string, std::vector<AnfNodePtr>> &filter_map,
+bool CheckMatch(const std::map<std::string, std::vector<AnfNodePtr>> &random_node_in_cur_graph,
                 const std::map<std::string, std::vector<RandomNode>> &snap_map) {
-  if (filter_map.size() != snap_map.size()) {
-    MS_LOG(WARNING) << "filter_map size " << filter_map.size() << " and snap_map size " << snap_map.size()
+  if (random_node_in_cur_graph.size() > snap_map.size()) {
+    MS_LOG(WARNING) << "filter_map size " << random_node_in_cur_graph.size() << " and snap_map size " << snap_map.size()
                     << " not match.";
     return false;
   }
-  for (const auto &[key, filter_list] : filter_map) {
+  for (const auto &[key, filter_list] : random_node_in_cur_graph) {
     auto iter = snap_map.find(key);
     if (iter == snap_map.end()) {
       MS_LOG(WARNING) << "filter_map has key " << key << " but snap_map has not.";
@@ -110,20 +115,20 @@ std::map<std::string, std::vector<AnfNodePtr>> FilterRandomNodeFromToposortList(
   return random_node_filter_map;
 }
 
-std::pair<size_t, size_t> GetSnapStatus(const std::map<std::string, std::vector<RandomNode>> &snap_map,
-                                        const std::string &key, size_t index) {
+std::tuple<size_t, size_t, std::map<std::string, int64_t>> GetSnapStatus(
+  const std::map<std::string, std::vector<RandomNode>> &snap_map, const std::string &key, size_t index) {
   if (snap_map.empty()) {
-    return {0, 0};
+    return {0, 0, {}};
   }
   auto iter = snap_map.find(key);
   if (iter == snap_map.end()) {
-    return {0, 0};
+    return {0, 0, {}};
   }
   const auto &list = iter->second;
   if (list.size() <= index) {
-    return {0, 0};
+    return {0, 0, {}};
   }
-  return {list[index].status0, list[index].status1};
+  return {list[index].status0, list[index].status1, list[index].seed_attr};
 }
 
 ValueNodePtr CreateInput(const KernelGraphPtr &kg, size_t value) {
@@ -164,22 +169,39 @@ bool AddStatusInputForRandomOperator::Run(const FuncGraphPtr &graph) {
   if (graph->has_attr(kAttrRandomOpSnapShot)) {
     auto value = graph->get_attr(kAttrRandomOpSnapShot);
     MS_EXCEPTION_IF_NULL(value);
-    snap_map = Deserialization(GetValue<std::string>(value), kernel_graph->graph_id());
+    snap_map = Deserialization(GetValue<std::string>(value));
   }
 
   std::vector<AnfNodePtr> node_list = TopoSort(graph->get_return());
-  auto filter_map = FilterRandomNodeFromToposortList(node_list);
-  if (!snap_map.empty() && !CheckMatch(filter_map, snap_map)) {
+  auto random_node_in_cur_graph = FilterRandomNodeFromToposortList(node_list);
+  if (!snap_map.empty() && !CheckMatch(random_node_in_cur_graph, snap_map)) {
     MS_LOG(WARNING) << "Graph " << graph->ToString() << " attr " << kAttrRandomOpSnapShot
                     << " and actual nodes is not matched, this attr will be ignored.";
     snap_map = {};
   }
-  for (const auto &[k, v] : filter_map) {
+  for (const auto &[k, v] : random_node_in_cur_graph) {
     for (size_t i = 0; i < v.size(); ++i) {
       MS_EXCEPTION_IF_NULL(v[i]);
       auto cnode = v[i]->cast<CNodePtr>();
       std::string node_fullname = cnode->fullname_with_scope();
-      auto [s0, s1] = GetSnapStatus(snap_map, k, i);
+      auto [s0, s1, seed_attrs] = GetSnapStatus(snap_map, k, i);
+      for (const auto &[attr_name, attr_value] : seed_attrs) {
+        if (!common::AnfAlgo::HasNodeAttr(attr_name, cnode)) {
+          MS_LOG(EXCEPTION) << "Node " << cnode->fullname_with_scope() << " does not have attr " << attr_name
+                            << ", but read " << attr_value << " from checkpoint.";
+        }
+        int64_t value = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, attr_name);
+        if (value == 0) {
+          MS_LOG(EXCEPTION) << "Node " << cnode->fullname_with_scope() << " have attr " << attr_name << " value is "
+                            << value << ", in this case the randomness cannot be fixed.";
+        }
+        if (value != attr_value) {
+          MS_LOG(EXCEPTION)
+            << "Node " << cnode->fullname_with_scope() << " have attr " << attr_name << " value is " << value
+            << ", but read " << attr_value
+            << " from checkpoint. When loading the operators’ random state, please do not modify the network script.";
+        }
+      }
       cnode->add_input(CreateInput(kernel_graph, s0));
       cnode->add_input(CreateInput(kernel_graph, s1));
     }

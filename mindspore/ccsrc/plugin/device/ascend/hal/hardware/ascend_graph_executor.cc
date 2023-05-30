@@ -27,6 +27,7 @@
 #include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
 #include "plugin/device/ascend/optimizer/ir_fission/add_status_input_for_random_operator.h"
 #include "ir/anf.h"
+#include "kernel/oplib/oplib.h"
 #ifndef ENABLE_SECURITY
 #include "plugin/device/ascend/hal/profiler/memory_profiling.h"
 using mindspore::profiler::ascend::MemoryProfiling;
@@ -221,6 +222,35 @@ std::vector<T> GetParameterValue(const AnfNodePtr &node) {
   std::vector<T> result(addr->GetSize() / sizeof(T), 0);
   addr->SyncDeviceToHost(result.size() * sizeof(T), result.data());
   return result;
+}
+
+void GenSeedAttrsMap(const CNodePtr &node, RandomNode *random_node) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(random_node);
+  random_node->clear_seed_attr();
+  MS_EXCEPTION_IF_NULL(random_node->mutable_seed_attr());
+  auto &seed_attr = *(random_node->mutable_seed_attr());
+  auto cnode_name = common::AnfAlgo::GetCNodeName(node);
+  auto op_info = kernel::OpLib::FindOp(cnode_name, kernel::OpImplyType::kImplyAICPU);
+  MS_EXCEPTION_IF_NULL(op_info);
+  auto attrs = op_info->attrs_ptr();
+  for (const auto &attr : attrs) {
+    std::string attr_name = attr->name();
+    std::transform(attr_name.begin(), attr_name.end(), attr_name.begin(), ::tolower);
+    if (attr_name.find("seed") == std::string::npos) {
+      continue;
+    }
+    if (!common::AnfAlgo::HasNodeAttr(attr_name, node)) {
+      MS_LOG(EXCEPTION) << "Node(" << node->fullname_with_scope() << ") doesn't have attr(" << attr_name << ")."
+                        << trace::DumpSourceLines(node);
+    }
+    auto attr_value = common::AnfAlgo::GetNodeAttr<int64_t>(node, attr->name());
+    if (attr_value == 0) {
+      MS_LOG(WARNING) << "Node " << node->fullname_with_scope() << " have attr " << attr_name << " value is "
+                      << attr_value << ", in this case the randomness cannot be fixed.";
+    }
+    seed_attr[attr_name] = attr_value;
+  }
 }
 }  // namespace
 
@@ -441,6 +471,7 @@ std::string AscendGraphExecutor::GetRandomStatus(const std::vector<FuncGraphPtr>
       random_node->set_graph_id(graph_id);
       random_node->set_status0(status0_value[0]);
       random_node->set_status1(status1_value[0]);
+      GenSeedAttrsMap(cnode, random_node);
     }
   }
   MS_LOG(INFO) << "Random debug info: " << list.DebugString();
