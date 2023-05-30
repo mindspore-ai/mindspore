@@ -40,7 +40,7 @@ def _get_package_data():
     """ get package data"""
     pkg_data = [
         '__init__.py', '_checkparam.py', 'base_model.py', 'context.py', 'converter.py', 'model.py', 'tensor.py',
-        'lib/*.so*', '.commit_id', 'include/api/*', 'include/api/callback/*', 'include/api/metrics/*',
+        'lite_split.py', 'lib/*.so*', '.commit_id', 'include/api/*', 'include/api/callback/*', 'include/api/metrics/*',
         'include/mindapi/base/*', 'include/registry/converter_context.h', 'include/converter.h', 'custom_kernels/**'
     ]
     if os.getenv('MSLITE_ENABLE_CLOUD_INFERENCE') == "on":
