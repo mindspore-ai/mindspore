@@ -48,9 +48,9 @@ bool BpropExpander::Run(const CNodePtr &cnode) {
   return ret;
 }
 
-const std::vector<size_t> &BpropExpander::GetUnusedInputs(const CNodePtr &cnode) const {
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto name = AnfUtils::GetCNodeName(cnode);
+const std::vector<size_t> &BpropExpander::GetUnusedInputs(const PrimitivePtr &prim) const {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto name = prim->name();
   auto handle = GetBpropHandle(name);
   if (handle == nullptr) {
     MS_LOG(DEBUG) << "Bprop IRBuilder [" << name << "] is not registered in bprop expander.";

@@ -52,6 +52,8 @@ struct Common {
   static void ReplaceCNodeWithValueNode(const FuncGraphPtr &bprop_graph);
   static std::shared_ptr<PyNativeExecutor> GetPyNativeExecutor();
   static void StubNodeToValue(const FrontendOpRunInfoPtr &op_run_info);
+  static ValuePtr InitGradInfo(const ValuePtr &value, const TopCellInfoPtr &top_cell = nullptr,
+                               const TensorGradType &grad_type = TensorGradType::kConstant, size_t op_index = 0);
 };
 
 // Parser python

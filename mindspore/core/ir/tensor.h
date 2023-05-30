@@ -34,6 +34,7 @@
 #include "ir/device_event.h"
 #include "utils/os.h"
 #include "ir/quantization_param.h"
+#include "ir/meta_grad_data.h"
 
 // brief mindspore namespace.
 //
@@ -389,6 +390,7 @@ class MS_CORE_API Tensor : public MetaTensor {
     device_event_ = tensor.device_event_;
     lazy_callback_ = tensor.lazy_callback_;
     user_data_ = tensor.user_data_;
+    auto_grad_meta_data_ = tensor.auto_grad_meta_data_;
     compression_type_ = tensor.compression_type_;
     tensor_name_ = tensor.tensor_name_;
     adapter_flag_ = tensor.adapter_flag_;
@@ -761,6 +763,16 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \return The memory chunk pointer and offset, nullptr and 0 if no memory chunk exists.
   std::pair<void *, size_t> GetChunkOffset() const;
 
+  /// @brief Get Pynative auto_grad meta data.
+  /// @return Auto grad meta data
+  const AutoGradMetaDataPtr auto_grad_meta_data() const { return auto_grad_meta_data_; }
+
+  /// @brief Set Pynative auto_grad meta data.
+  /// @param auto_grad_meta_data
+  void set_auto_grad_meta_data(const AutoGradMetaDataPtr &auto_grad_meta_data) {
+    auto_grad_meta_data_ = auto_grad_meta_data;
+  }
+
   /// \brief Reset tensors data so that they are using contiguous memory chunks grouped by data type.
   ///
   /// \param[in] tensors The tensors to be processed.
@@ -866,6 +878,7 @@ class MS_CORE_API Tensor : public MetaTensor {
   std::shared_ptr<DeviceEvent> device_event_{nullptr};
   std::function<void(void)> lazy_callback_{nullptr};
   PinnedMemRegister *pin_mem_register_{nullptr};
+  AutoGradMetaDataPtr auto_grad_meta_data_{nullptr};
   TensorCompressionType compression_type_{kNoCompression};
   std::vector<std::shared_ptr<QuantizationParam>> quant_params_;
   std::string tensor_name_;

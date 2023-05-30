@@ -676,6 +676,7 @@ Tensor::Tensor(const Tensor &tensor)
       device_event_(tensor.device_event_),
       lazy_callback_(tensor.lazy_callback_),
       pin_mem_register_(tensor.pin_mem_register_),
+      auto_grad_meta_data_(tensor.auto_grad_meta_data_),
       compression_type_(tensor.compression_type_),
       tensor_name_(tensor.tensor_name_) {
   user_data_ = tensor.user_data_;
@@ -700,6 +701,7 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
       device_event_(tensor.device_event_),
       lazy_callback_(tensor.lazy_callback_),
       pin_mem_register_(tensor.pin_mem_register_),
+      auto_grad_meta_data_(tensor.auto_grad_meta_data_),
       compression_type_(tensor.compression_type_),
       tensor_name_(tensor.tensor_name_) {
   user_data_ = tensor.user_data_;

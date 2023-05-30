@@ -281,6 +281,7 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
   cast_run_info->base_op_run_info.next_input_index = index;
   cast_run_info->base_op_run_info.lazy_build = op_run_info->base_op_run_info.lazy_build;
   cast_run_info->base_op_run_info.use_dynamic_shape_process = op_run_info->base_op_run_info.use_dynamic_shape_process;
+  cast_run_info->cell_obj_id = op_run_info->cell_obj_id;
   (void)cast_run_info->input_value.emplace_back(v);
   (void)cast_run_info->input_value.emplace_back(GetDstType(type_id));
   cast_run_info->input_size = input_size;

@@ -16,6 +16,7 @@
 
 #include "pipeline/pynative/grad/bprop_task.h"
 #include "utils/log_adapter.h"
+#include "pybind_api/gil_scoped_long_running.h"
 namespace mindspore {
 namespace pynative {
 void BpropTask::Run() {

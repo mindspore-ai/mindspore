@@ -146,7 +146,13 @@ class TopCellInfo {
   void UpdateTopCellInfo(bool forward_already_run, bool need_compile_graph, bool vm_compile);
   void ClearDeviceMemory() const;
   void Clear();
-
+  inline void AddParamGradInfo(const tensor::TensorPtr &param, const AutoGradMetaDataPtr &auto_grad_meta_data) {
+    param_grad_info_[param->id()] = std::make_pair(param, auto_grad_meta_data);
+  }
+  void ClearParamGradInfo() { param_grad_info_.clear(); }
+  const OrderedMap<std::string, std::pair<tensor::TensorPtr, AutoGradMetaDataPtr>> &param_grad_info() const {
+    return param_grad_info_;
+  }
   inline bool use_dynamic_shape_process() const { return use_dynamic_shape_process_; }
   inline void set_use_dynamic_shape_process(bool use_dynamic_shape_process) {
     use_dynamic_shape_process_ = use_dynamic_shape_process;
@@ -188,6 +194,7 @@ class TopCellInfo {
   TensorIdWithOpInfo id_with_op_info_;
   OpInfoWithTensorObject op_info_with_tensor_object_;
   mindspore::HashMap<size_t, size_t> cnode_hash_with_op_index_;
+  OrderedMap<std::string, std::pair<tensor::TensorPtr, AutoGradMetaDataPtr>> param_grad_info_;
   bool use_dynamic_shape_process_{false};
 };
 using TopCellInfoPtr = std::shared_ptr<TopCellInfo>;

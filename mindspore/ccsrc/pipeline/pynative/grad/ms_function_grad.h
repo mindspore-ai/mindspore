@@ -42,9 +42,6 @@ class MsFunction {
   void GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
                            const FuncGraphPtr &primal_func_graph, const FuncGraphPtr &grad_graph,
                            const AnfNodePtr &added_node, const ValuePtr &added_out_v) const;
-  void AsyncKPynativeWithFProp(const GradExecutor *grad_executor,
-                               const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr,
-                               const autograd::GradParamPtr &grad_param) const;
   // Update device address of value node in grad graph by forward tensors.
   void RunReplace(const CNodePtr &added_make_tuple, const vector<ValuePtr> &total_output_tensors,
                   const FuncGraphPtr &grad_graph, bool is_dynamic_shape) const;
@@ -53,13 +50,16 @@ class MsFunction {
   // Make CNode for ms_function forward graph.
   void GetInputArgsNode(const FrontendOpRunInfoPtr &op_run_info, AnfNodePtrList *input_nodes,
                         const GradExecutor *grad_executor) const;
+  void SetWeights(const FrontendOpRunInfoPtr &op_run_info, const FuncGraphPtr &ms_func_graph) const;
   void GetWeightsNode(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
                       const FuncGraphPtr &ms_func_graph, AnfNodePtrList *input_nodes) const;
   void MakeCNodeForMsFunction(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
                               const FuncGraphPtr &ms_func_graph, CNodePtr *ms_function_cnode) const;
   // Make adjoint for ms_function fprop graph and connect it with previous op
-  CNodePtr MakeAdjointForMsFunction(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
-                                    const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph) const;
+  void MakeAdjointForMsFunction(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
+                                const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph) const;
+  void RecordForwardGraphForMsFunction(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
+                                       const FuncGraphPtr &ms_func_graph) const;
   void Reset();
 
   bool is_not_support_by_expander_{true};

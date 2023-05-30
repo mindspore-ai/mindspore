@@ -56,6 +56,12 @@ FrontendOpRunInfoPtr GetOpRunInfo(const py::object &out, const py::args &args, c
                                   bool modify_output, ValuePtr *added_out_v) {
   auto op_run_info = std::make_shared<FrontendOpRunInfo>();
   PyNativeAlgo::PyParser::ParseOpInputByPythonObj(op_run_info, args);
+  // Set input abs
+  op_run_info->input_abs.resize(op_run_info->input_size);
+  for (size_t i = 0; i < op_run_info->input_size; ++i) {
+    op_run_info->input_abs[i] =
+      PyNativeAlgo::Common::SetAbstractValueToAnyValue((op_run_info->input_value[i]->ToAbstract()));
+  }
   op_run_info->base_op_run_info.op_name = graph_phase;
   if (modify_output) {
     if (!py::isinstance<py::tuple>(out)) {
@@ -304,6 +310,27 @@ void MsFunction::GetInputArgsNode(const FrontendOpRunInfoPtr &op_run_info, AnfNo
   }
 }
 
+void MsFunction::SetWeights(const FrontendOpRunInfoPtr &op_run_info, const FuncGraphPtr &ms_func_graph) const {
+  // Get weights info of ms_function
+  MS_EXCEPTION_IF_NULL(ms_func_graph);
+  const auto &original_params = ms_func_graph->parameters();
+  size_t params_size = original_params.size();
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  for (size_t i = 0; i < params_size; ++i) {
+    if (i < op_run_info->input_size) {  // non-weights node.
+      continue;
+    }
+    // Must weight param
+    auto param = original_params[i]->cast<ParameterPtr>();
+    const auto tensor_value = PyNativeAlgo::Common::GetTensorFromParam(original_params[i]);
+    MS_EXCEPTION_IF_NULL(tensor_value);
+    (void)op_run_info->input_value.emplace_back(tensor_value);
+    (void)op_run_info->input_abs.emplace_back(param->abstract());
+    MS_LOG(DEBUG) << "Top graph set free parameter " << param->DebugString() << ". Its default value is "
+                  << tensor_value->ToString() << ". Its name is: " << param->name();
+  }
+}
+
 void MsFunction::GetWeightsNode(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
                                 const FuncGraphPtr &ms_func_graph, AnfNodePtrList *input_nodes) const {
   MS_EXCEPTION_IF_NULL(grad_executor);
@@ -312,15 +339,12 @@ void MsFunction::GetWeightsNode(const FrontendOpRunInfoPtr &op_run_info, const G
   const auto &graph_info = top_cell->graph_info_map().at(top_cell->fg());
   MS_EXCEPTION_IF_NULL(graph_info);
   // Get weights info of ms_function
-  auto manage = Manage(ms_func_graph, false);
   MS_EXCEPTION_IF_NULL(ms_func_graph);
   const auto &original_params = ms_func_graph->parameters();
   size_t params_size = original_params.size();
-  std::vector<AnfNodePtr> new_params;
   MS_EXCEPTION_IF_NULL(op_run_info);
   for (size_t i = 0; i < params_size; ++i) {
     if (i < op_run_info->input_size) {  // non-weights node.
-      (void)new_params.emplace_back(original_params[i]);
       continue;
     }
     // Must weight param
@@ -329,22 +353,16 @@ void MsFunction::GetWeightsNode(const FrontendOpRunInfoPtr &op_run_info, const G
     MS_EXCEPTION_IF_NULL(tensor_value);
     const auto it = graph_info->weight_params.find(tensor_value->id());
     if (it != graph_info->weight_params.end()) {
-      // Share same weight parameter in different ms_function call.
-      (void)manage->Replace(original_params[i], it->second);
       param = it->second;
     } else {
       top_cell->fg()->add_parameter(param);
       param->debug_info()->set_name(param->name());
       top_cell->SetParamNodeMapInGraphInfoMap(tensor_value->id(), param, true);
     }
-    (void)new_params.emplace_back(param);
     (void)input_nodes->emplace_back(param);
-    (void)op_run_info->input_value.emplace_back(tensor_value);
     MS_LOG(DEBUG) << "Top graph set free parameter " << param->DebugString() << ". Its default value is "
                   << tensor_value->ToString() << ". Its name is: " << param->name();
   }
-  ms_func_graph->set_parameters(new_params);
-  manage->Clear();
 }
 
 void MsFunction::MakeCNodeForMsFunction(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
@@ -366,22 +384,24 @@ void MsFunction::MakeCNodeForMsFunction(const FrontendOpRunInfoPtr &op_run_info,
   MS_LOG(DEBUG) << "Make ms function forward CNode: " << (*ms_function_cnode)->DebugString();
 }
 
-CNodePtr MsFunction::MakeAdjointForMsFunction(const FrontendOpRunInfoPtr &op_run_info,
-                                              const GradExecutor *grad_executor, const FuncGraphPtr &ms_func_graph,
-                                              const FuncGraphPtr &grad_graph) const {
+void MsFunction::MakeAdjointForMsFunction(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
+                                          const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(grad_executor);
-  CNodePtr ms_function_cnode = nullptr;
-  MakeCNodeForMsFunction(op_run_info, grad_executor, ms_func_graph, &ms_function_cnode);
-  MS_EXCEPTION_IF_NULL(ms_function_cnode);
-  const auto &top_cell = grad_executor->top_cell();
-  const auto &out_id = PyNativeAlgo::Common::GetIdByValue(op_run_info->out_value);
-  top_cell->SetNodeMapInGraphInfoMap(out_id, ms_function_cnode);
 
+  SetWeights(op_run_info, ms_func_graph);
+  RecordForwardGraphForMsFunction(op_run_info, grad_executor, ms_func_graph);
+  const auto &top_cell = grad_executor->top_cell();
   // Connect grad graph of ms_function to context.
+  std::vector<ValuePtr> inputs;
+  (void)std::transform(
+    op_run_info->input_value.begin(), op_run_info->input_value.end(), std::back_inserter(inputs),
+    [this, top_cell](const ValuePtr &value) { return PyNativeAlgo::Common::InitGradInfo(value, top_cell); });
+  ValuePtr cloned_out = PyNativeAlgo::Common::InitGradInfo(op_run_info->out_value, top_cell, TensorGradType::kOpOutput,
+                                                           top_cell->op_index());
   auto grad_param = std::make_shared<autograd::GradParam>(
-    ms_function_cnode, op_run_info->input_value, op_run_info->out_value, grad_graph,
-    !top_cell->is_high_order_top_cell(), grad_executor->use_dynamic_shape_process());
+    nullptr, inputs, op_run_info->input_abs, cloned_out, op_run_info->base_op_run_info.abstract, grad_graph,
+    ms_func_graph, !top_cell->is_high_order_top_cell(), grad_executor->use_dynamic_shape_process());
   grad_param->is_not_support_by_expander = is_not_support_by_expander_;
   grad_param->is_ms_function_graph = true;
   grad_param->graph_cache_key = op_run_info->op_info;
@@ -390,24 +410,23 @@ CNodePtr MsFunction::MakeAdjointForMsFunction(const FrontendOpRunInfoPtr &op_run
     grad_executor->async_executor()->Wait();
   }
   if (!top_cell->auto_grad_cell_ptr()->KPynativeWithFProp(grad_param)) {
-    MS_LOG(EXCEPTION) << "Failed to make adjoint for ms_function cnode, ms_function cnode info: "
-                      << ms_function_cnode->DebugString();
+    MS_LOG(EXCEPTION) << "Failed to make adjoint for ms_function cnode, ms_function cnode info: ";
   }
   top_cell->set_need_do_final_opt(true);
-  return ms_function_cnode;
 }
 
-void MsFunction::AsyncKPynativeWithFProp(const GradExecutor *grad_executor,
-                                         const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr,
-                                         const autograd::GradParamPtr &grad_param) const {
-  MS_EXCEPTION_IF_NULL(grad_executor);
-  const auto fn = [grad_param, auto_grad_cell_ptr]() {
-    MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr);
-    if (!auto_grad_cell_ptr->KPynativeWithFProp(grad_param)) {
-      MS_LOG(EXCEPTION) << "Failed to make adjoint for ms_function cnode";
-    }
-  };
-  grad_executor->async_executor()->Push(new (std::nothrow) BpropTask(fn));
+void MsFunction::RecordForwardGraphForMsFunction(const FrontendOpRunInfoPtr &op_run_info,
+                                                 const GradExecutor *grad_executor,
+                                                 const FuncGraphPtr &ms_func_graph) const {
+  int save_graphs = MsContext::GetInstance()->get_param<int>(MS_CTX_SAVE_GRAPHS_FLAG);
+  if (save_graphs) {
+    CNodePtr ms_function_cnode = nullptr;
+    MakeCNodeForMsFunction(op_run_info, grad_executor, ms_func_graph, &ms_function_cnode);
+    MS_EXCEPTION_IF_NULL(ms_function_cnode);
+    const auto &out_id = PyNativeAlgo::Common::GetIdByValue(op_run_info->out_value);
+    const auto &top_cell = grad_executor->top_cell();
+    top_cell->SetNodeMapInGraphInfoMap(out_id, ms_function_cnode);
+  }
 }
 
 void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
@@ -440,9 +459,14 @@ void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, co
     clone_grad_graph = BasicClone(grad_graph, true);
   }
   // Make Adjoint for grad graph
-  const auto &ms_function_cnode =
-    MakeAdjointForMsFunction(op_run_info, grad_executor, primal_func_graph, clone_grad_graph);
-  grad_executor->CheckGraphDynamic(ms_function_cnode, true, op_run_info->base_op_run_info.op_name);
+  MakeAdjointForMsFunction(op_run_info, grad_executor, primal_func_graph, clone_grad_graph);
+
+  auto node_info = std::make_shared<DynamicDetectNodeInfo>();
+  node_info->is_graph_node = true;
+  node_info->graph_phase = op_run_info->base_op_run_info.op_name;
+  node_info->input_abs = op_run_info->input_abs;
+  node_info->out_abs = op_run_info->base_op_run_info.abstract;
+  grad_executor->CheckGraphDynamic(op_run_info->input_value, node_info);
 }
 
 void MsFunction::Reset() {
@@ -469,7 +493,8 @@ FuncGraphPtr MsFunction::ProcessMsFunctionFuncGraph(const FuncGraphPtr &ms_func_
       continue;
     }
     MS_LOG(DEBUG) << "Get cnode " << cnode->DebugString();
-    const auto &unused_inputs = BpropExpander().GetUnusedInputs(cnode);
+    auto prim = GetCNodePrimitive(cnode);
+    const auto &unused_inputs = BpropExpander().GetUnusedInputs(prim);
     if (!unused_inputs.empty() && unused_inputs.back() == INT_MAX) {
       if (auto prim = GetCNodePrimitive(cnode);
           prim == nullptr || kExpanderWhiteList.find(prim->name()) == kExpanderWhiteList.end()) {

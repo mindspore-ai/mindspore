@@ -173,25 +173,25 @@ void ForwardExecutor::RunOpForwardAsyncImpl(const FrontendOpRunInfoPtr &op_run_i
   // 3.Run op with selected backend
   if (!op_run_info->output_get_by_infer_value) {
     GetOutput(op_run_info);
-  } else {
+  }
+
+  if (!op_run_info->grad_flag || op_run_info->output_get_by_infer_value) {
     if (op_run_info->stub_output != nullptr) {
       op_run_info->stub_output->SetValue(op_run_info->out_value);
     }
-  }
-
-  if (!op_run_info->grad_flag) {
-    MS_LOG(DEBUG) << "Grad flag is false";
+    MS_LOG(DEBUG) << "Grad flag: " << op_run_info->grad_flag
+                  << " output_get_by_infer_value: " << op_run_info->output_get_by_infer_value;
     return;
   }
 
-  // Const value no need do op grad
-  if (op_run_info->output_get_by_infer_value) {
-    return;
-  }
   // 4. Do op grad and record op info
   // If ms function is compile, op info will not be find in second training step
   if (!op_run_info->async_status.is_ms_function_compiling && op_run_info->async_status.custom_bprop_cell_count <= 0) {
     grad()->ProcessOpGradInfo(op_run_info);
+  } else {
+    if (op_run_info->stub_output != nullptr) {
+      op_run_info->stub_output->SetValue(op_run_info->out_value);
+    }
   }
 }
 
@@ -215,12 +215,9 @@ void ForwardExecutor::RunOpForward(const FrontendOpRunInfoPtr &op_run_info) {
   if (!op_run_info->output_get_by_infer_value) {
     GetOutput(op_run_info);
   }
-  if (!op_run_info->grad_flag) {
-    MS_LOG(DEBUG) << "Grad flag is false";
-    return;
-  }
-  // Const value no need do op grad
-  if (op_run_info->output_get_by_infer_value) {
+  if (!op_run_info->grad_flag || op_run_info->output_get_by_infer_value) {
+    MS_LOG(DEBUG) << "Grad flag: " << op_run_info->grad_flag
+                  << " output_get_by_infer_value: " << op_run_info->output_get_by_infer_value;
     return;
   }
 
@@ -294,7 +291,6 @@ void ForwardExecutor::GetOutput(const FrontendOpRunInfoPtr &op_run_info) {
     if (op_run_info->base_op_run_info.has_dynamic_output) {
       UpdateStubNodeAbs(op_run_info);
     }
-    op_run_info->stub_output->SetValue(op_run_info->out_value);
   }
   // Not use GetNext abs
   if (op_run_info->base_op_run_info.op_name != kGetNextOpName) {
