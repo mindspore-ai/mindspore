@@ -148,7 +148,19 @@ AbstractBasePtr ApplyAdamWithAmsgradV2Infer(const abstract::AnalysisEnginePtr &,
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
   auto infer_type = ApplyAdamWithAmsgradV2InferType(primitive, input_args);
   auto infer_shape = ApplyAdamWithAmsgradV2InferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
+  auto shape_tuple = infer_shape->cast_ptr<abstract::TupleShape>();
+  auto type_tuple = infer_type->cast_ptr<Tuple>();
+  AbstractBasePtrList ptr_list;
+  for (size_t it = 0; it < shape_tuple->size(); ++it) {
+    auto base_shape = (*shape_tuple)[it];
+    auto base_type = (*type_tuple)[it];
+    auto tensor_type = base_type->cast_ptr<TensorType>();
+    auto element = std::make_shared<abstract::AbstractScalar>(kValueAny, tensor_type->element());
+    auto tensor_it = std::make_shared<abstract::AbstractTensor>(element, base_shape);
+    ptr_list.push_back(tensor_it);
+  }
+  auto tuple = std::make_shared<abstract::AbstractTuple>(ptr_list);
+  return tuple;
 }
 
 // AG means auto generated
