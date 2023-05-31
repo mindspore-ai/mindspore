@@ -651,6 +651,9 @@ def custom(*args, **kwags):
     """Entrance for akg info compiling, will invoked by GE"""
     info_path = args[-2]
     kernel_name = args[-1]
+    if not isinstance(info_path, str):
+        # in this case, kernel_name is not passed by GE, skip compiling
+        return
     real_info_path = update_akg_info(args, kernel_name, info_path)
     my_env = os.environ
     my_env["MS_COMPILER_CACHE_PATH"] = get_current_build_config("kernel_meta_parent_dir")
