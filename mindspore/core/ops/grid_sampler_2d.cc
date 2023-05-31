@@ -122,6 +122,18 @@ bool GridSampler2D::get_align_corners() const {
   return GetValue<bool>(value_ptr);
 }
 
+void GridSampler2D::set_interpolation_mode(std::string interpolation_mode) {
+  (void)this->AddAttr("interpolation_mode", api::MakeValue(interpolation_mode));
+}
+
+void GridSampler2D::set_padding_mode(std::string padding_mode) {
+  (void)this->AddAttr(kPaddingMode, api::MakeValue(padding_mode));
+}
+
+void GridSampler2D::set_align_corners(bool align_corners) {
+  (void)this->AddAttr(kAlignCorners, api::MakeValue(align_corners));
+}
+
 // AG means auto generated
 class MIND_API AGGridSampler2DInfer : public abstract::OpInferBase {
  public:
