@@ -39,6 +39,7 @@ struct PyExecuteOutputUserData {
   py::object obj;
   constexpr static char key[] = "PyExecuteOutputUserData";
 };
+using PyExecuteOutputUserDataPtr = std::shared_ptr<PyExecuteOutputUserData>;
 
 class PyExecuteCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:

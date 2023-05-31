@@ -276,11 +276,6 @@ abstract::AbstractBasePtr MakeNewAbstract(const AnfNodePtr &input, const tensor:
   if (abs->isa<abstract::AbstractTensor>()) {
     new_abs = abs->Clone();
     new_abs->set_value(depended_value);
-    // Set user data for PyExecute infer.
-    if (input->has_user_data<kernel::PyExecuteOutputUserData>()) {
-      const auto &output_data = input->user_data<kernel::PyExecuteOutputUserData>();
-      new_abs->set_user_data<kernel::PyExecuteOutputUserData>(output_data);
-    }
   } else if (abs->isa<abstract::AbstractScalar>()) {
     new_abs = MakeNewAbstractByScalar(depended_value);
   } else if (AnfAlgo::IsRealSquenceOutput(input)) {
@@ -293,6 +288,11 @@ abstract::AbstractBasePtr MakeNewAbstract(const AnfNodePtr &input, const tensor:
     new_abs->set_value(depended_value);
   } else {
     MS_LOG(EXCEPTION) << "Unsupported abstract type:" << abs->ToString();
+  }
+  // Set user data for PyExecute infer.
+  if (input->has_user_data<kernel::PyExecuteOutputUserData>()) {
+    const auto &output_data = input->user_data<kernel::PyExecuteOutputUserData>();
+    new_abs->set_user_data<kernel::PyExecuteOutputUserData>(output_data);
   }
 
   return new_abs;
@@ -383,6 +383,8 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
   auto input_size = common::AnfAlgo::GetInputTensorNum(cnode);
   bool skip_nop_node = !context->get_param<bool>(MS_CTX_ENABLE_MINDRT);
   bool has_py_execute_data = false;
+  kernel::PyExecuteOutputUserDataPtr list_user_data = nullptr;
+  std::vector<size_t> list_start_index;
   for (size_t i = 0; i < input_size; i++) {
     auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, i, false);
     auto real_input = input_node_with_index.first;
@@ -403,6 +405,14 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
       auto updated_abs = MakeNewAbstract(real_input, depended_value, real_input_index);
       if (updated_abs->has_user_data<kernel::PyExecuteOutputUserData>()) {
         has_py_execute_data = true;
+        if (IsPrimitiveCNode(real_input, prim::kPrimPyExecute) &&
+            real_input->abstract()->isa<abstract::AbstractSequence>()) {
+          auto updated_abs_user_data = updated_abs->user_data<kernel::PyExecuteOutputUserData>();
+          if (list_user_data == nullptr || list_user_data != updated_abs_user_data) {
+            list_start_index.push_back(i);
+            list_user_data = updated_abs_user_data;
+          }
+        }
       }
       (void)args_spec_list.emplace_back(updated_abs);
     } else {
@@ -423,6 +433,7 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
   }
 
   if (auto primitive = GetValueNode<PrimitivePtr>(inputs[0])) {
+    primitive->AddAttr(kAttrListStartIndex, MakeValue(list_start_index));
     InferShapeForPrimitive(cnode, primitive, args_spec_list, has_py_execute_data);
   } else if (auto func_graph = GetValueNode<FuncGraphPtr>(inputs[0])) {
     InferShapeForGraph(cnode, func_graph, args_spec_list);
