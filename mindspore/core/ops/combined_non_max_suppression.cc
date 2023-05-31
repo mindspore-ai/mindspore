@@ -132,7 +132,6 @@ abstract::TupleShapePtr CombinedNonMaxSuppressionGetOutputShape(const PrimitiveP
     if (pad_per_class) {
       num_detection = std::min(max_total_size, max_output_size_per_class * static_cast<int32_t>(input1_shape[ksecond]));
     }
-    (void)primitive->AddAttr("per_detections", MakeValue(num_detection));
     int64_t bs = input0_shape[0];
     ShapeVector shape1 = {bs, num_detection, 4};
     ShapeVector shape2 = {bs, num_detection};

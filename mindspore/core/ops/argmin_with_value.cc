@@ -97,7 +97,6 @@ abstract::TupleShapePtr ArgMinWithValueInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION(ValueError) << "For ArgMinWithValue, axis must be in range [-x_rank, x_rank), but got " << axis
                              << " .";
   }
-  (void)primitive->AddAttr("dimension", MakeValue(axis));
   // Calculate all the shapes.
   auto cal_shape = [axis, keep_dims](ShapeVector &shape, const ShapeVector &x_shape) -> void {
     (void)shape.insert(shape.end(), x_shape.begin(), x_shape.end());

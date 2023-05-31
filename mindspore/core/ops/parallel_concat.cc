@@ -39,8 +39,6 @@ abstract::ShapePtr ParallelConcatInferShape(const PrimitivePtr &primitive,
   }
   (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, 1,
                                            prim_name);
-  (void)primitive->AddAttr("N", MakeValue(SizeToLong(elements.size())));
-  (void)primitive->AddAttr("inputNums", MakeValue(SizeToLong(elements.size())));
 
   for (size_t i = 0; i < elements.size(); ++i) {
     auto shape_map_i = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape());

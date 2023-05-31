@@ -33,7 +33,6 @@ class MIND_API PadV3 : public BaseOperator {
   PadV3() : BaseOperator(kNamePadV3) { InitIOName({"x", "paddings", "constant_values"}, {"y"}); }
   std::string get_mode() const;
   bool get_paddings_contiguous() const;
-  std::vector<int64_t> get_paddings() const;
 };
 MIND_API abstract::AbstractBasePtr PadV3Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                               const std::vector<abstract::AbstractBasePtr> &input_args);

@@ -140,12 +140,6 @@ AbstractBasePtr ResizeV2Infer(const abstract::AnalysisEnginePtr &, const Primiti
   auto coordinate_transformation_mode = primitive->GetAttr(kCoordinateTransformationMode);
   std::string coordinate_transformation_mode_str = GetValue<std::string>(coordinate_transformation_mode);
 
-  // Because of the restriction of AICPU framework, use "half_pixel" will cause conflict.
-  // So, use equivalent value "pytorch_half_pixel" instead.
-  if (coordinate_transformation_mode_str == "half_pixel") {
-    (void)primitive->AddAttr(kCoordinateTransformationMode, MakeValue("pytorch_half_pixel"));
-  }
-
   if (mode_str == "nearest" && coordinate_transformation_mode_str == "align_corners") {
     MS_EXCEPTION(ValueError) << "For 'ResizeV2', coordinate_transformation_mode must be 'half_pixel' "
                              << "when mode = 'nearest', but got " << coordinate_transformation_mode_str << ".";

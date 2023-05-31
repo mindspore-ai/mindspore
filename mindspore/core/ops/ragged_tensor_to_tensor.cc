@@ -96,7 +96,6 @@ BaseShapePtr RaggedTensorToTensorInferShape(const PrimitivePtr &primitive,
     (void)CheckAndConvertUtils::CheckInteger("dimension of row_partition_tensors[" + std::to_string(i) + "]",
                                              SizeToLong(tensori_dim), kEqual, 1, prim_name);
   }
-  (void)primitive->AddAttr("num_row_partition_tensors", MakeValue(SizeToLong(tensors_size)));
   return std::make_shared<abstract::Shape>(output_shape);
 }
 

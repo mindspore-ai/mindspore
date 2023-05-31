@@ -124,7 +124,6 @@ abstract::ShapePtr EuclideanNormInferShape(const PrimitivePtr &primitive,
     auto axes_value = input_args[kInputIndex1]->BuildValue();
     auto axes = CheckAndConvertUtils::CheckTensorIntValue("axes", axes_value, prim_name);
     CheckAndConvertUtils::CheckInRange("axes size", axes.size(), kIncludeLeft, {0, input_rank + 1}, prim_name);
-    (void)primitive->AddAttr("axes", MakeValue(axes));
     ReduceAxes(&output_shape, &axes, input_rank, keep_dims, primitive);
   } else {
     if (keep_dims) {
@@ -159,12 +158,6 @@ AbstractBasePtr EuclideanNormInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto type = EuclideanNormInferType(primitive, input_args);
   auto shape = EuclideanNormInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
-}
-
-// use to calculate size in kernel
-std::vector<int64_t> EuclideanNorm::get_axes() const {
-  auto value_ptr = GetAttr("axes");
-  return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
 void EuclideanNorm::Init(const bool keep_dims) { this->set_keep_dims(keep_dims); }

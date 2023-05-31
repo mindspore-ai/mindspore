@@ -27,6 +27,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/random_categorical.cuh"
 #include "mindspore/core/ops/random_categorical.h"
+#include "kernel/kernel_get_value.h"
 
 namespace mindspore {
 namespace kernel {
@@ -109,8 +110,16 @@ class RandomCategoricalGpuKernelMod : public NativeGpuKernelMod {
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
-    num_samples_ = kernel_ptr->get_num_sample();
-    seed_ = kernel_ptr->get_seed();
+
+    int64_t num_samples;
+    if (!TryGetIntValue(inputs, kIndex1, kernel_name_, &num_samples)) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', can't get num_samples value from input.";
+    }
+    num_samples_ = LongToSize(num_samples);
+
+    if (!TryGetIntValue(inputs, kIndex2, kernel_name_, &seed_)) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', can't get seed value from input.";
+    }
 
     auto logits_shape = inputs[0]->GetShapeVector();
     const size_t kLogitsShapeSize = 2;

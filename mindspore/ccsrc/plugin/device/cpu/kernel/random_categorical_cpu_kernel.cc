@@ -81,7 +81,6 @@ int RandomCategoricalCpuKernel::Resize(const BaseOperatorPtr &base_operator, con
   input_shape_ = inputs.at(0)->GetShapeVector();
   auto kernel_ptr = std::dynamic_pointer_cast<ops::RandomCategorical>(base_operator);
   MS_EXCEPTION_IF_NULL(kernel_ptr);
-  seed_ = kernel_ptr->get_seed();
   return KRET_OK;
 }
 
@@ -146,9 +145,10 @@ bool RandomCategoricalCpuKernel::LaunchKernel(const std::vector<kernel::AddressP
   MS_EXCEPTION_IF_NULL(inputs[1]);
   MS_EXCEPTION_IF_NULL(outputs[0]);
 
-  T1 *input_tensor = reinterpret_cast<T1 *>(inputs[0]->addr);
-  int num_sample = reinterpret_cast<int *>(inputs[1]->addr)[0];
-  T2 *output = reinterpret_cast<T2 *>(outputs[0]->addr);
+  T1 *input_tensor = reinterpret_cast<T1 *>(inputs[kIndex0]->addr);
+  int num_sample = reinterpret_cast<int *>(inputs[kIndex1]->addr)[0];
+  int seed = reinterpret_cast<int *>(inputs[kIndex2]->addr)[0];
+  T2 *output = reinterpret_cast<T2 *>(outputs[kIndex0]->addr);
 
   MS_EXCEPTION_IF_NULL(input_tensor);
   MS_EXCEPTION_IF_NULL(output);
@@ -159,7 +159,7 @@ bool RandomCategoricalCpuKernel::LaunchKernel(const std::vector<kernel::AddressP
   std::vector<T1> host_cdf(batch_size * num_classes);
   GetCdf(input_tensor, host_cdf.data(), batch_size, num_classes);
   std::uniform_real_distribution<> dist(0, 1);
-  rng_.seed(seed_);
+  rng_.seed(seed);
 
   std::vector<T1> host_rand(batch_size * num_sample);
   for (int j = 0; j < num_sample; j++) {

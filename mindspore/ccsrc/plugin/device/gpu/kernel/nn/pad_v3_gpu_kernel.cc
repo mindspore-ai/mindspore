@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/nn/pad_v3_gpu_kernel.h"
+#include "kernel/kernel_get_value.h"
 namespace mindspore {
 namespace kernel {
 namespace {
@@ -116,7 +117,32 @@ int PadV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   }
   auto kernel_ptr = std::dynamic_pointer_cast<ops::PadV3>(base_operator);
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, KRET_RESIZE_FAILED);
-  attr_ptr_->paddings = kernel_ptr->get_paddings();
+
+  std::vector<int64_t> paddings_arg;
+  std::vector<int64_t> paddings_val;
+  if (!TryGetIntValue(inputs, kIndex1, kernel_name_, &paddings_arg)) {
+    MS_LOG(EXCEPTION) << "Fot '" << kernel_name_ << "', can't get paddings value from input[1].";
+  }
+
+  int64_t paddings_size = SizeToLong(paddings_arg.size());
+  for (int64_t i = 0; i < paddings_size; ++i) {
+    paddings_val.push_back(int64_t(paddings_arg[LongToSize(i)]));
+  }
+
+  auto prim = base_operator->GetPrim();
+  MS_EXCEPTION_IF_NULL(prim);
+  if (!GetValue<bool>(prim->GetAttr("paddings_contiguous"))) {
+    constexpr int64_t nTwo = 2;
+    std::vector<int64_t> tmp = paddings_val;
+    for (int64_t i = 0; i < paddings_size; ++i) {
+      if (i % nTwo == 0) {
+        paddings_val[LongToSize(i)] = tmp[LongToSize(i) / nTwo];
+      } else {
+        paddings_val[LongToSize(i)] = tmp[LongToSize((i + paddings_size) / nTwo)];
+      }
+    }
+  }
+  attr_ptr_->paddings = paddings_val;
 
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;

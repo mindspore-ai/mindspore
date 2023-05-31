@@ -48,6 +48,52 @@
 namespace mindspore {
 namespace ops {
 namespace {
+int64_t GetNumSample(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  int64_t num_sample = -1;
+  const auto &nun_sample_arg = input_args[kInputIndex1];
+  if (nun_sample_arg->isa<abstract::AbstractScalar>()) {
+    auto num_sample_input_type = nun_sample_arg->BuildType();
+    auto value = nun_sample_arg->BuildValue();
+    if (value->isa<ValueAny>()) {
+      return num_sample;
+    }
+    if (num_sample_input_type->type_id() == kNumberTypeInt64) {
+      num_sample = GetValue<int64_t>(value);
+    } else if (num_sample_input_type->type_id() == kNumberTypeInt32) {
+      num_sample = GetValue<int32_t>(value);
+    } else {
+      MS_EXCEPTION(TypeError) << "For '" << prim->name() << "' second input build type is invalid:"
+                              << TypeIdToString(num_sample_input_type->type_id()) << ".";
+    }
+  } else if (nun_sample_arg->isa<abstract::AbstractTensor>()) {
+    auto num_sample_ptr = nun_sample_arg->cast<abstract::AbstractTensorPtr>();
+    MS_EXCEPTION_IF_NULL(num_sample_ptr);
+    auto num_sample_value_ptr = num_sample_ptr->BuildValue();
+    MS_EXCEPTION_IF_NULL(num_sample_value_ptr);
+    auto num_sample_tensor = num_sample_value_ptr->cast<tensor::TensorPtr>();
+    if (num_sample_tensor == nullptr) {
+      return num_sample;
+    }
+    MS_EXCEPTION_IF_ZERO("num_sample_tensor->ElementsNum()", num_sample_tensor->ElementsNum());
+    if (num_sample_tensor->data_type() == kNumberTypeInt64) {
+      num_sample = static_cast<int64_t *>(num_sample_tensor->data_c())[0];
+    } else if (num_sample_tensor->data_type() == kNumberTypeInt32) {
+      num_sample = static_cast<int32_t *>(num_sample_tensor->data_c())[0];
+    } else {
+      MS_EXCEPTION(TypeError) << "For '" << prim->name() << "' second input build type is invalid:"
+                              << TypeIdToString(num_sample_tensor->data_type()) << ".";
+    }
+  } else {
+    MS_EXCEPTION(TypeError) << "For '" << prim->name()
+                            << "', the second input type should be scalar or tensor, but got invalid abstract type:"
+                            << nun_sample_arg->type_name() << ".";
+  }
+  if (num_sample <= 0) {
+    MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', num_sample must greater than 0, but got " << num_sample;
+  }
+  return num_sample;
+}
+
 abstract::ShapePtr RandomCategoricalInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -67,104 +113,13 @@ abstract::ShapePtr RandomCategoricalInferShape(const PrimitivePtr &primitive,
   for (size_t i = 0; i < logits_shape.size() - 1; ++i) {
     output_shape.push_back(logits_shape.at(i));
   }
-  auto num_sample = primitive->GetAttr(kNumSample);
-  if (num_sample == nullptr) {
+  int64_t num_sample = GetNumSample(primitive, input_args);
+  if (num_sample == -1) {
     return logits_shape_ptr->cast<abstract::ShapePtr>();
   }
-  output_shape.push_back(GetValue<int64_t>(num_sample));
+  output_shape.push_back(num_sample);
   MS_LOG(INFO) << output_shape;
   return std::make_shared<abstract::Shape>(output_shape);
-}
-
-void AddNumSample(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  int64_t num_sample = -1;
-  const auto &nun_sample_arg = input_args[kInputIndex1];
-  if (nun_sample_arg->isa<abstract::AbstractScalar>()) {
-    auto num_sample_input_type = nun_sample_arg->BuildType();
-    auto value = nun_sample_arg->BuildValue();
-    if (value->isa<ValueAny>()) {
-      return;
-    }
-    if (num_sample_input_type->type_id() == kNumberTypeInt64) {
-      num_sample = GetValue<int64_t>(value);
-    } else if (num_sample_input_type->type_id() == kNumberTypeInt32) {
-      num_sample = GetValue<int32_t>(value);
-    } else {
-      MS_EXCEPTION(TypeError) << "For '" << prim->name() << "' second input build type is invalid:"
-                              << TypeIdToString(num_sample_input_type->type_id()) << ".";
-    }
-  } else if (nun_sample_arg->isa<abstract::AbstractTensor>()) {
-    auto num_sample_ptr = nun_sample_arg->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(num_sample_ptr);
-    auto num_sample_value_ptr = num_sample_ptr->BuildValue();
-    MS_EXCEPTION_IF_NULL(num_sample_value_ptr);
-    auto num_sample_tensor = num_sample_value_ptr->cast<tensor::TensorPtr>();
-    if (num_sample_tensor == nullptr) {
-      return;
-    }
-    MS_EXCEPTION_IF_ZERO("num_sample_tensor->ElementsNum()", num_sample_tensor->ElementsNum());
-    if (num_sample_tensor->data_type() == kNumberTypeInt64) {
-      num_sample = static_cast<int64_t *>(num_sample_tensor->data_c())[0];
-    } else if (num_sample_tensor->data_type() == kNumberTypeInt32) {
-      num_sample = static_cast<int32_t *>(num_sample_tensor->data_c())[0];
-    } else {
-      MS_EXCEPTION(TypeError) << "For '" << prim->name() << "' second input build type is invalid:"
-                              << TypeIdToString(num_sample_tensor->data_type()) << ".";
-    }
-  } else {
-    MS_EXCEPTION(TypeError) << "For '" << prim->name()
-                            << "', the second input type should be scalar or tensor, but got invalid abstract type:"
-                            << nun_sample_arg->type_name() << ".";
-  }
-  if (num_sample <= 0) {
-    MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', num_sample must greater than 0, but got " << num_sample;
-  }
-  prim->AddAttr(kNumSample, MakeValue(num_sample));
-}
-
-void AddSeed(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  int64_t seed = -1;
-  const auto &seed_arg = input_args[kInputIndex2];
-  if (seed_arg->isa<abstract::AbstractScalar>()) {
-    auto seed_input_type = seed_arg->BuildType();
-    auto value = seed_arg->BuildValue();
-    if (value->isa<ValueAny>()) {
-      return;
-    }
-    if (seed_input_type->type_id() == kNumberTypeInt64) {
-      seed = GetValue<int64_t>(value);
-    } else if (seed_input_type->type_id() == kNumberTypeInt32) {
-      seed = GetValue<int32_t>(value);
-    } else {
-      MS_EXCEPTION(TypeError) << "For '" << prim->name()
-                              << "' third input build type is invalid:" << TypeIdToString(seed_input_type->type_id())
-                              << ".";
-    }
-  } else if (seed_arg->isa<abstract::AbstractTensor>()) {
-    auto seed_ptr = seed_arg->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(seed_ptr);
-    auto seed_value_ptr = seed_ptr->BuildValue();
-    MS_EXCEPTION_IF_NULL(seed_value_ptr);
-    auto seed_tensor = seed_value_ptr->cast<tensor::TensorPtr>();
-    if (seed_tensor == nullptr) {
-      return;
-    }
-    MS_EXCEPTION_IF_ZERO("seed_tensor->ElementsNum()", seed_tensor->ElementsNum());
-    if (seed_tensor->data_type() == kNumberTypeInt64) {
-      seed = static_cast<int64_t *>(seed_tensor->data_c())[0];
-    } else if (seed_tensor->data_type() == kNumberTypeInt32) {
-      seed = static_cast<int32_t *>(seed_tensor->data_c())[0];
-    } else {
-      MS_EXCEPTION(TypeError) << "For '" << prim->name()
-                              << "' third input build type is invalid:" << TypeIdToString(seed_tensor->data_type())
-                              << ".";
-    }
-  } else {
-    MS_EXCEPTION(TypeError) << "For '" << prim->name()
-                            << "', the third input type should be scalar, but got invalid abstract type:"
-                            << seed_arg->type_name() << ".";
-  }
-  prim->AddAttr(kSeed, MakeValue(seed));
 }
 
 TypePtr RandomCategoricalInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -185,8 +140,6 @@ TypePtr RandomCategoricalInferType(const PrimitivePtr &prim, const std::vector<A
   }
   auto output_type = dtype_value->cast<TypePtr>();
   const std::set<TypePtr> valid_data_types = {kInt16, kInt32, kInt64};
-  AddNumSample(prim, input_args);
-  AddSeed(prim, input_args);
   return CheckAndConvertUtils::CheckSubClass("dtype", output_type, valid_data_types, prim_name);
 }
 }  // namespace
@@ -239,7 +192,7 @@ class MIND_API AGRandomCategoricalInfer : public abstract::OpInferBase {
     return RandomCategoricalInfer(engine, primitive, input_args);
   }
 
-  std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
+  std::set<int64_t> GetValueDependArgIndices() const override { return {1, 2}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(RandomCategorical, prim::kPrimRandomCategorical, AGRandomCategoricalInfer, false);

@@ -106,7 +106,6 @@ TuplePtr MaxPoolWithArgmaxV2InferType(const PrimitivePtr &prim, const std::vecto
       MS_LOG(WARNING) << "While running in Ascend, the attribute `argmax_type` of " << prim->name()
                       << " is disabled, DO NOT set it.";
     }
-    prim->set_attr(kArgmaxType, MakeValue(kAiCoreNumTypeInt32));
     argmax_dtype = std::make_shared<TensorType>(kUInt16);
   } else {
     auto target_max = GetValue<int64_t>(prim->GetAttr(kArgmaxType));

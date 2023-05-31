@@ -120,7 +120,6 @@ TypePtr RandomStandardNormalInferType(const PrimitivePtr &primitive, const std::
                             << "', input must be a Int, a tuple, or a Tensor with all Int elements, but got: "
                             << input_args[kInputIndex0]->ToString() << ".";
   }
-  (void)primitive->AddAttr(kOutputDType, MakeValue(std::make_shared<TensorType>(kFloat32)));
   return std::make_shared<TensorType>(kFloat32);
 }
 }  // namespace

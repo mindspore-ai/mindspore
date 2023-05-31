@@ -202,9 +202,6 @@ AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const Primitive
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputsNum = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
-  if (!primitive->HasAttr(kBatchDims)) {
-    (void)primitive->AddAttr("batch_dims", MakeValue(static_cast<int64_t>(0)));  // Add temporarily for ascend.
-  }
   auto infer_type = GatherInferType(primitive, input_args);
   auto infer_shape = GatherInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
