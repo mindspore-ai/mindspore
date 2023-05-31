@@ -15,11 +15,14 @@
  */
 
 #include <memory>
+#include <vector>
 
+#include "backend/common/graph_kernel/expanders/utils.h"
 #include "backend/common/graph_kernel/expanders/op_desc_registry.h"
-#include "tools/graph_kernel/converter/expanders/activation.h"
-#include "mindapi/base/types.h"
-#include "ir/dtype.h"
+#include "backend/common/graph_kernel/model/graph_builder.h"
+#include "ir/anf.h"
+#include "mindapi/base/shape_vector.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore::graphkernel::expanders {
 class ReduceMean : public OpDesc {

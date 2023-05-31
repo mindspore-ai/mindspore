@@ -16,22 +16,49 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_CONVERT_OP_INPUT_ATTR_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_CONVERT_OP_INPUT_ATTR_H_
-
+#include <memory>
 #include <string>
-#include <map>
-#include "mindspore/core/ops/core_ops.h"
+#include <unordered_map>
+
+#include "base/base.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
+#include "include/backend/optimizer/pass.h"
 #include "utils/hash_set.h"
 
 namespace mindspore::graphkernel {
 class ConvertOpUtils {
  public:
+  // This method can be deprecated in the future.
   static bool CanConvertInputToAttr(const AnfNodePtr &node);
+  // return true if the attribute is converted to input for this node, return false if no change for this node.
+  static bool ConvertAttrToInput(const AnfNodePtr &node);
   static bool ConstInputToAttr(const CNodePtr &cnode, const HashSet<size_t> &input_idx);
-  static void ConvertAttrToInput(const AnfNodePtr &node);
-  static std::map<std::string, HashSet<size_t>> &GetOpIndexInfo() { return op_idx_info_; }
-  static std::map<std::string, HashSet<size_t>> op_idx_info_;
+  static bool AddConstInputToAttr(const CNodePtr &cnode, const HashSet<size_t> &input_idx);
+  static bool NeedConvert(const std::string &prim_name) { return GetOpIndexInfo().count(prim_name) != 0; }
+  static bool NeedConvert(const std::string &prim_name, size_t index) {
+    auto iter = GetOpIndexInfo().find(prim_name);
+    return iter != GetOpIndexInfo().end() && iter->second.count(index) != 0;
+  }
+  static const HashSet<size_t> &GetIndices(const std::string &prim_name) {
+    auto iter = GetOpIndexInfo().find(prim_name);
+    return iter->second;
+  }
+
+ private:
+  static const std::unordered_map<std::string, HashSet<size_t>> &GetOpIndexInfo();
+};
+
+class GraphKernelInputToAttrConverter : public opt::Pass {
+ public:
+  GraphKernelInputToAttrConverter() : Pass("graph_kernel_input_to_attr_converter") {}
+  ~GraphKernelInputToAttrConverter() override = default;
+  bool Run(const FuncGraphPtr &func_graph) override;
+
+ private:
+  bool SetConstInputToAttr(const AnfNodePtr &graph_kernel_node) const;
+  bool EliminateConstInput(const AnfNodePtr &graph_kernel_node) const;
+  bool Process(const FuncGraphPtr &func_graph);
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_CONVERT_OP_INPUT_ATTR_H_

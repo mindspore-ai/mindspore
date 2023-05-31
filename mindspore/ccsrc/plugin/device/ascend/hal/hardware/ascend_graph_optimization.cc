@@ -648,12 +648,6 @@ void AscendGraphOptimization::SetOperatorInfo(const KernelGraphPtr &graph) {
       MS_LOG(DEBUG) << "Select ApplyKernel: " << node->DebugString();
     } else {
       auto f = [](const CNodePtr &n) {
-        // change the kernel to static-shape kernel name. it's a temporary solution.
-        if (IsOneOfPrimitiveCNode(n, {prim::kPrimReduceSum, prim::kPrimReduceMin, prim::kPrimReduceMax})) {
-          auto primitive = GetCNodePrimitive(n);
-          auto new_prim = std::make_shared<Primitive>(primitive->name() + "D", primitive->attrs());
-          n->set_input(0, NewValueNode(new_prim));
-        }
         auto res = device::ascend::SelectKernelInfoWithMsg(n);
         constexpr int one = 1;
         return std::get<one>(res).empty();

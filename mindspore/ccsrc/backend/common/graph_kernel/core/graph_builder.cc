@@ -250,42 +250,6 @@ void EliminateRedundantParameters(const FuncGraphPtr &func_graph, AnfNodePtrList
   *inputs = std::move(new_inputs);
 }
 
-bool RemoveNonScalarConstTensorFromParameter(const FuncGraphPtr &fg, AnfNodePtrList *inputs_ptr) {
-  auto params = fg->parameters();
-  mindspore::HashMap<AnfNodePtr, AnfNodePtr> param_const_map;
-  for (size_t i = 0; i < params.size(); i++) {
-    auto tensor = GetValueNode<tensor::TensorPtr>((*inputs_ptr)[i + 1]);
-    if (tensor == nullptr) {
-      continue;
-    }
-    // data is nullptr means uninitialized.
-    if (tensor->data().const_data() != nullptr) {
-      (void)param_const_map.emplace(params[i], (*inputs_ptr)[i + 1]);
-    }
-  }
-
-  if (param_const_map.empty()) {
-    return false;
-  }
-
-  auto mng = GkUtils::GetFuncGraphManager(fg);
-  for (const auto &iter : param_const_map) {
-    (void)mng->Replace(iter.first, iter.second);
-  }
-
-  std::vector<AnfNodePtr> new_params;
-  std::vector<AnfNodePtr> new_inputs{(*inputs_ptr)[0]};
-  for (size_t i = 0; i < params.size(); i++) {
-    if (param_const_map.count(params[i]) == 0) {
-      (void)new_params.emplace_back(params[i]);
-      (void)new_inputs.emplace_back((*inputs_ptr)[i + 1]);
-    }
-  }
-  *inputs_ptr = std::move(new_inputs);
-  fg->set_parameters(std::move(new_params));
-  return true;
-}
-
 std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> BuildGraphFromNodes(const AnfNodePtrList &nodes) {
   FuncGraphPtr fg = nullptr;
   {

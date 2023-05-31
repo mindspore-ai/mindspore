@@ -19,6 +19,10 @@
 #include <vector>
 #include <memory>
 #include <string>
+
+#include "ir/dtype.h"
+#include "ir/tensor.h"
+#include "mindapi/base/type_id.h"
 #include "backend/common/graph_kernel/model/lite_graph.h"
 
 namespace mindspore::graphkernel::inner {
@@ -58,17 +62,8 @@ class GraphBuilder : public LiteGraph::GraphBuilderBase {
   NodePtr IsInf(const NodePtr &input) const { return Emit("IsInf", {input}); }
   NodePtr IsNan(const NodePtr &input) const { return Emit("IsNan", {input}); }
   NodePtr StridedSlice(const NodePtr &input, const std::vector<int64_t> &begin, const std::vector<int64_t> &end,
-                       const std::vector<int64_t> &strides) const {
-    return Emit("StridedSlice", {input},
-                {{"begin", MakeValue(begin)},
-                 {"end", MakeValue(end)},
-                 {"strides", MakeValue(strides)},
-                 {"shrink_axis_mask", MakeValue(static_cast<int64_t>(0))},
-                 {"begin_mask", MakeValue(static_cast<int64_t>(0))},
-                 {"ellipsis_mask", MakeValue(static_cast<int64_t>(0))},
-                 {"new_axis_mask", MakeValue(static_cast<int64_t>(0))},
-                 {"end_mask", MakeValue(static_cast<int64_t>(0))}});
-  }
+                       const std::vector<int64_t> &strides) const;
+
   NodePtr TensorScatterAdd(const NodePtr &input, const NodePtr &indices, const NodePtr &update) const {
     return Emit("TensorScatterAdd", {input, indices, update});
   }
@@ -128,6 +123,11 @@ class GraphBuilder : public LiteGraph::GraphBuilderBase {
         MS_LOG(EXCEPTION) << "The input data type should be int, uint, float or bool, But Get :"
                           << TypeIdToString(type_id);
     }
+    return Value(const_input);
+  }
+
+  NodePtr Const(std::vector<int64_t> input) const {
+    auto const_input = std::make_shared<tensor::Tensor>(input);
     return Value(const_input);
   }
 

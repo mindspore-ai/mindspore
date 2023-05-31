@@ -13,40 +13,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "mindspore/ccsrc/backend/common/graph_kernel/core/convert_op_input_attr.h"
+#include "backend/common/graph_kernel/core/convert_op_input_attr.h"
 
 #include <vector>
 #include <memory>
-#include "mindspore/ccsrc/backend/common/graph_kernel/core/graph_kernel_callback.h"
-#include "mindspore/core/ops/core_ops.h"
+#include <unordered_map>
+
+#include "base/base.h"
+#include "ir/anf.h"
+#include "ir/graph_utils.h"
+#include "ops/core_ops.h"
 #include "ops/primitive_c.h"
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
 #include "utils/check_convert_utils.h"
+#include "include/common/utils/anfalgo.h"
+#include "backend/common/graph_kernel/core/graph_builder.h"
+#include "backend/common/graph_kernel/core/graph_kernel_callback.h"
 
 namespace mindspore::graphkernel {
-std::map<std::string, HashSet<size_t>> ConvertOpUtils::op_idx_info_ = {{prim::kPrimReshape->name(), {1}},
-                                                                       {prim::kPrimReduceMax->name(), {1}},
-                                                                       {prim::kPrimExpandDims->name(), {1}},
-                                                                       {prim::kPrimReduceMin->name(), {1}},
-                                                                       {prim::kPrimReduceSum->name(), {1}},
-                                                                       {prim::kPrimTranspose->name(), {1}},
-                                                                       {prim::kPrimTile->name(), {1}},
-                                                                       {prim::kPrimReduceMean->name(), {1}},
-                                                                       {prim::kPrimSlice->name(), {1, 2}},
-                                                                       {prim::kPrimStridedSlice->name(), {1, 2, 3}},
-                                                                       {prim::kPrimOneHot->name(), {1}},
-                                                                       {prim::kPrimReduceFusion->name(), {1}},
-                                                                       {prim::kPrimConstantOfShape->name(), {0}},
-                                                                       {prim::kPrimGather->name(), {2}},
-                                                                       {prim::kPrimTupleGetItem->name(), {1}},
-                                                                       {prim::kPrimUnsortedSegmentSum->name(), {2}},
-                                                                       {prim::kPrimCumSum->name(), {1}}};
+const std::unordered_map<std::string, HashSet<size_t>> &ConvertOpUtils::GetOpIndexInfo() {
+  static std::unordered_map<std::string, HashSet<size_t>> op_idx_info_ = {{prim::kPrimReshape->name(), {1}},
+                                                                          {prim::kPrimReduceMax->name(), {1}},
+                                                                          {prim::kPrimExpandDims->name(), {1}},
+                                                                          {prim::kPrimReduceMin->name(), {1}},
+                                                                          {prim::kPrimReduceSum->name(), {1}},
+                                                                          {prim::kPrimTranspose->name(), {1}},
+                                                                          {prim::kPrimTile->name(), {1}},
+                                                                          {prim::kPrimReduceMean->name(), {1}},
+                                                                          {prim::kPrimSlice->name(), {1, 2}},
+                                                                          {prim::kPrimStridedSlice->name(), {1, 2, 3}},
+                                                                          {prim::kPrimOneHot->name(), {1}},
+                                                                          {prim::kPrimReduceFusion->name(), {1}},
+                                                                          {prim::kPrimConstantOfShape->name(), {0}},
+                                                                          {prim::kPrimGather->name(), {2}},
+                                                                          {prim::kPrimTupleGetItem->name(), {1}},
+                                                                          {prim::kPrimUnsortedSegmentSum->name(), {2}},
+                                                                          {prim::kPrimCumSum->name(), {1}}};
+  return op_idx_info_;
+}
+
 bool ConvertOpUtils::CanConvertInputToAttr(const AnfNodePtr &node) {
   auto prim = GetCNodePrimitive(node);
   if (prim != nullptr) {
-    auto iter = op_idx_info_.find(prim->name());
-    if (iter != op_idx_info_.end()) {
+    const auto &op_index_info = GetOpIndexInfo();
+    auto iter = op_index_info.find(prim->name());
+    if (iter != op_index_info.end()) {
       auto inputs = node->cast<CNodePtr>()->inputs();
       for (const auto &i : iter->second) {
         if (i + 1 < inputs.size() && inputs[i + 1] != nullptr) {
@@ -69,15 +81,15 @@ bool ConvertOpUtils::CanConvertInputToAttr(const AnfNodePtr &node) {
   return true;
 }
 
-bool ConvertOpUtils::ConstInputToAttr(const CNodePtr &cnode, const HashSet<size_t> &input_idx) {
-  AnfNodePtrList new_inputs;
+bool ConvertOpUtils::AddConstInputToAttr(const CNodePtr &cnode, const HashSet<size_t> &input_idx) {
   auto primitive = GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
   primitive = primitive->Clone();
   MS_EXCEPTION_IF_NULL(primitive);
   auto input_names = primitive->GetAttr(kAttrInputNames);
   if (input_names == nullptr) {
-    if (op_idx_info_.find(primitive->name()) == op_idx_info_.end()) {
+    const auto &op_index_info = GetOpIndexInfo();
+    if (op_index_info.find(primitive->name()) == op_index_info.end()) {
       MS_LOG(INFO) << "input_names are nullptr in cnode[" + cnode->DebugString() + "]";
       return false;
     }
@@ -96,7 +108,6 @@ bool ConvertOpUtils::ConstInputToAttr(const CNodePtr &cnode, const HashSet<size_
   }
   auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
   auto inputs = cnode->inputs();
-  new_inputs.push_back(NewValueNode(primitive));
   for (size_t i = 0; i < inputs.size() - 1; ++i) {
     auto input_node = inputs[i + 1];
     MS_EXCEPTION_IF_NULL(input_node);
@@ -130,7 +141,22 @@ bool ConvertOpUtils::ConstInputToAttr(const CNodePtr &cnode, const HashSet<size_
         MS_LOG(DEBUG) << input_names_vec[i] << "'s Value is null!";
         return false;
       }
-    } else {
+    }
+  }
+  cnode->set_input(0, std::make_shared<ValueNode>(primitive));
+  return true;
+}
+
+bool ConvertOpUtils::ConstInputToAttr(const CNodePtr &cnode, const HashSet<size_t> &input_idx) {
+  AnfNodePtrList new_inputs;
+  auto primitive = GetCNodePrimitive(cnode);
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto inputs = cnode->inputs();
+  new_inputs.push_back(NewValueNode(primitive));
+  for (size_t i = 0; i < inputs.size() - 1; ++i) {
+    auto input_node = inputs[i + 1];
+    MS_EXCEPTION_IF_NULL(input_node);
+    if (input_idx.count(i) == 0) {
       new_inputs.push_back(inputs[i + 1]);
     }
   }
@@ -143,27 +169,28 @@ bool ConvertOpUtils::ConstInputToAttr(const CNodePtr &cnode, const HashSet<size_
   }
   return true;
 }
-void ConvertOpUtils::ConvertAttrToInput(const AnfNodePtr &node) {
+
+bool ConvertOpUtils::ConvertAttrToInput(const AnfNodePtr &node) {
+  bool changed = false;
 #ifndef MSLITE_ENABLE_GRAPH_KERNEL
   if (Callback::Instance()->GetTargetFromContext() == kAscendDevice) {
-    return;
+    return false;
   }
 #endif
   auto cnode = dyn_cast<CNode>(node);
   auto primitive = GetCNodePrimitive(cnode);
   if (primitive == nullptr) {
-    return;
+    return false;
   }
-  auto attr2input_map = ConvertOpUtils::GetOpIndexInfo();
-  if (attr2input_map.count(primitive->name()) != 0) {
+  if (ConvertOpUtils::NeedConvert(primitive->name())) {
+    changed = true;
     auto input_names = primitive->GetAttr(kAttrInputNames);
     AnfNodePtrList inputs = cnode->inputs();
     AnfNodePtrList new_inputs{inputs[0]};
     auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
-    auto attrs_map = attr2input_map[primitive->name()];
     size_t j = 1;
     for (size_t i = 0; i < input_names_vec.size(); ++i) {
-      if (attrs_map.count(i) != 0) {
+      if (ConvertOpUtils::NeedConvert(primitive->name(), i)) {
         auto value = primitive->GetAttr(input_names_vec[i]);
         ValueNodePtr value_node;
         // Adaptive for TupleGetItem, this op can not make attr to a tensor input.
@@ -195,5 +222,89 @@ void ConvertOpUtils::ConvertAttrToInput(const AnfNodePtr &node) {
     }
     cnode->set_inputs(new_inputs);
   }
+  return changed;
+}
+
+bool GraphKernelInputToAttrConverter::SetConstInputToAttr(const AnfNodePtr &graph_kernel_node) const {
+  bool changed = false;
+  auto gk_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(graph_kernel_node);
+  MS_EXCEPTION_IF_NULL(gk_graph);
+  auto todos = TopoSort(gk_graph->get_return());
+  for (const auto &n : todos) {
+    if (n == nullptr) {
+      continue;
+    }
+    auto node = n->cast<CNodePtr>();
+    if (node != nullptr) {
+      auto primitive = GetCNodePrimitive(node);
+      if (primitive == nullptr) {
+        continue;
+      }
+      if (ConvertOpUtils::NeedConvert(primitive->name())) {
+        auto indices = ConvertOpUtils::GetIndices(primitive->name());
+        (void)ConvertOpUtils::AddConstInputToAttr(node, indices);
+        changed = true;
+      }
+    }
+  }
+  return changed;
+}
+
+bool GraphKernelInputToAttrConverter::EliminateConstInput(const AnfNodePtr &graph_kernel_node) const {
+  bool changed = false;
+  auto gk_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(graph_kernel_node);
+  MS_EXCEPTION_IF_NULL(gk_graph);
+  auto todos = TopoSort(gk_graph->get_return());
+  for (const auto &n : todos) {
+    if (n == nullptr) {
+      continue;
+    }
+    auto node = n->cast<CNodePtr>();
+    if (node != nullptr) {
+      auto primitive = GetCNodePrimitive(node);
+      if (primitive == nullptr) {
+        continue;
+      }
+      if (ConvertOpUtils::NeedConvert(primitive->name())) {
+        auto indices = ConvertOpUtils::GetIndices(primitive->name());
+        (void)ConvertOpUtils::ConstInputToAttr(node, indices);
+        changed = true;
+      }
+    }
+  }
+  if (changed) {
+    // Redcuce nouesr inputs for new node
+    auto cnode = graph_kernel_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    auto inputs = cnode->inputs();
+    AnfNodePtrList fn_inputs{inputs};
+    EliminateRedundantParameters(gk_graph, &fn_inputs);
+    cnode->set_inputs(fn_inputs);
+  }
+  return changed;
+}
+
+bool GraphKernelInputToAttrConverter::Process(const FuncGraphPtr &func_graph) {
+  bool changed = false;
+  auto todos = TopoSort(func_graph->get_return());
+  for (auto iter = todos.crbegin(); iter != todos.crend(); ++iter) {
+    auto node = (*iter)->cast<CNodePtr>();
+    if (node != nullptr && AnfUtils::IsGraphKernel(node)) {
+      changed = SetConstInputToAttr(*iter) || changed;
+      (void)EliminateConstInput(*iter);
+    }
+  }
+  return changed;
+}
+
+bool GraphKernelInputToAttrConverter::Run(const FuncGraphPtr &func_graph) {
+  auto mng = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(mng);
+  bool changed = Process(func_graph);
+  if (changed) {
+    mng->RemoveRoots();
+    mng->KeepRoots({func_graph});
+  }
+  return changed;
 }
 }  // namespace mindspore::graphkernel

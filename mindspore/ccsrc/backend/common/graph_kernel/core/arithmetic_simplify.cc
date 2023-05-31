@@ -27,6 +27,7 @@
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "utils/anf_utils.h"
+#include "utils/check_convert_utils.h"
 #include "backend/common/graph_kernel/core/graph_builder.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
@@ -79,6 +80,13 @@ class PatternTree {
   PatternNodePtr BuildTree(const std::string &pattern_str);
   // traverse pattern tree, return order is topological order
   void DfsTraverse(const std::shared_ptr<PatternNodePtrList> &res, const PatternNodePtr &cur) const;
+  // For some patterns, the input parameters may change (e.g.: ReduceSum(ReduceSum(A,B),C)=ReduceSum(A,D)),
+  // in this case we need to compute the new axes(D), and update the parameter map.
+  virtual std::shared_ptr<ParaMap> UpdateParameters(const inner::NodePtr &origin_root,
+                                                    const std::shared_ptr<ParaMap> &para_to_ref) const {
+    (void)origin_root;
+    return para_to_ref;
+  }
   // leverage pattern tree node and lite node's mapping relation to build lite node graph from pattern tree's right
   // side
   inner::NodePtr AlterGraph(const std::shared_ptr<ParaMap> &para_to_ref, const std::shared_ptr<ConstMap> &const_to_ref,
@@ -173,7 +181,7 @@ PatternNodePtr PatternTree::BuildTree(const std::string &pattern_str) {
 inner::NType PatternNodeType(const std::string &n) {
   // return (Primitive， Parameter or Value)
   if (n.length() > 0 && n[n.length() - 1] >= '0' && n[n.length() - 1] <= '9') {
-    return inner::NType::Value;
+    return inner::NType::Tensor;
   } else if (n.length() == 1 && n[0] >= 'A' && n[0] <= 'Z') {
     return inner::NType::Parameter;
   } else {
@@ -205,8 +213,8 @@ bool CheckCurNode(const inner::NodePtr &tmp_node, const std::string &tmp_pattern
       }
       break;
     }
-    case inner::NType::Value: {
-      if (tmp_node->NodeType() != inner::NType::Value) {
+    case inner::NType::Tensor: {
+      if (tmp_node->NodeType() != inner::NType::Tensor) {
         return false;
       }
       auto node_value_str = std::static_pointer_cast<inner::ConstTensorNode>(tmp_node)->ToString();
@@ -367,11 +375,56 @@ inner::NodePtr PatternTree::AlterGraph(const std::shared_ptr<ParaMap> &para_to_r
   return alter_graph.back();
 }
 
-// Reduce(Reduce(A)) = Reduce(A)
+// Reduce(Reduce(A,B),C) = Reduce(A,D)
 class ExtraReduce1PatternTree : public PatternTree {
  public:
   explicit ExtraReduce1PatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
   ~ExtraReduce1PatternTree() = default;
+
+  std::shared_ptr<ParaMap> UpdateParameters(const inner::NodePtr &origin_root,
+                                            const std::shared_ptr<ParaMap> &para_to_ref) const override {
+    MS_EXCEPTION_IF_NULL(para_to_ref);
+    auto axes1_tensornode = std::dynamic_pointer_cast<inner::ConstTensorNode>((*para_to_ref)['B']);
+    MS_EXCEPTION_IF_NULL(axes1_tensornode);
+    auto axes2_tensornode = std::dynamic_pointer_cast<inner::ConstTensorNode>((*para_to_ref)['C']);
+    MS_EXCEPTION_IF_NULL(axes2_tensornode);
+    auto axes1 =
+      CheckAndConvertUtils::CheckTensorIntValue(axes1_tensornode->format, axes1_tensornode->data(), "Reduce");
+    auto axes2 =
+      CheckAndConvertUtils::CheckTensorIntValue(axes2_tensornode->format, axes2_tensornode->data(), "Reduce");
+    bool keep_dims = GetValue<bool>(origin_root->attrs().find("keep_dims")->second);
+    std::vector<int64_t> axes;
+    std::set<int64_t> axis_set;
+    if (keep_dims) {
+      for (auto &i : axes1) {
+        (void)axis_set.insert(i);
+      }
+      for (auto &i : axes2) {
+        (void)axis_set.insert(i);
+      }
+    } else {
+      std::set<int64_t> st(axes1.begin(), axes1.end());
+      mindspore::HashMap<int64_t, int64_t> mp;
+      int64_t shift = 0;
+      auto size = SizeToLong((*para_to_ref)['A']->shape.size());
+      for (int64_t n = 0; n < size; n++) {
+        if (st.find(n) != st.end()) {
+          shift++;
+        } else {
+          mp[n - shift] = n;
+        }
+      }
+      (void)std::for_each(axes1.begin(), axes1.end(), [&axis_set](auto &i) { (void)axis_set.insert(i); });
+      (void)std::for_each(axes2.begin(), axes2.end(), [&axis_set, &mp](auto &i) { (void)axis_set.insert(mp[i]); });
+    }
+    (void)std::copy(axis_set.begin(), axis_set.end(), std::back_inserter(axes));
+    inner::GraphBuilder gb("");
+    auto new_axes_tensornode = gb.Const(axes);
+    (*para_to_ref)['D'] = new_axes_tensornode;
+    para_to_ref->erase('B');
+    para_to_ref->erase('C');
+    return para_to_ref;
+  }
 
  protected:
   bool CheckAttributes(const inner::NodePtr &origin_root) const override {
@@ -380,41 +433,13 @@ class ExtraReduce1PatternTree : public PatternTree {
   }
   mindspore::HashMap<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &origin_root) override {
     auto attrs_map = PatternTree::SetAttributes(origin_root);
-    std::vector<int64_t> axis;
-    std::set<int64_t> axis_set;
-    auto first_reduce = origin_root->inputs()[0];
     bool keep_dims = GetValue<bool>(origin_root->attrs().find("keep_dims")->second);
-    if (keep_dims) {
-      for (auto &i : GetValue<std::vector<int64_t>>(origin_root->attrs().find("axis")->second)) {
-        (void)axis_set.insert(i);
-      }
-      for (auto &i : GetValue<std::vector<int64_t>>(first_reduce->attrs().find("axis")->second)) {
-        (void)axis_set.insert(i);
-      }
-    } else {
-      auto first_axis = GetValue<std::vector<int64_t>>(first_reduce->attrs().find("axis")->second);
-      auto second_axis = GetValue<std::vector<int64_t>>(origin_root->attrs().find("axis")->second);
-      std::set<int64_t> st(first_axis.begin(), first_axis.end());
-      mindspore::HashMap<int64_t, int64_t> mp;
-      int64_t shift = 0;
-      for (int64_t n = 0; n < SizeToLong(first_reduce->inputs()[0]->shape.size()); n++) {
-        if (st.find(n) != st.end()) {
-          shift++;
-        } else {
-          mp[n - shift] = n;
-        }
-      }
-      (void)std::for_each(first_axis.begin(), first_axis.end(), [&axis_set](auto &i) { (void)axis_set.insert(i); });
-      (void)std::for_each(second_axis.begin(), second_axis.end(),
-                          [&axis_set, &mp](auto &i) { (void)axis_set.insert(mp[i]); });
-    }
-    (void)std::copy(axis_set.begin(), axis_set.end(), std::back_inserter(axis));
-    attrs_map[this->rhs_root()] = {{"keep_dims", MakeValue(keep_dims)}, {"axis", MakeValue(axis)}};
+    attrs_map[this->rhs_root()] = {{"keep_dims", MakeValue(keep_dims)}};
     return attrs_map;
   }
 };
 
-// "ReduceSum(Neg(A))=Neg(ReduceSum(A))"
+// "ReduceSum(Neg(A),B)=Neg(ReduceSum(A,B))"
 class ExtraReduce2PatternTree : public PatternTree {
  public:
   explicit ExtraReduce2PatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
@@ -424,8 +449,7 @@ class ExtraReduce2PatternTree : public PatternTree {
   mindspore::HashMap<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &origin_root) override {
     auto attrs_map = PatternTree::SetAttributes(origin_root);
     bool keep_dims = GetValue<bool>(origin_root->attrs().find("keep_dims")->second);
-    auto axis = GetValue<std::vector<int64_t>>(origin_root->attrs().find("axis")->second);
-    attrs_map[this->rhs_root()->inputs()[0]] = {{"keep_dims", MakeValue(keep_dims)}, {"axis", MakeValue(axis)}};
+    attrs_map[this->rhs_root()->inputs()[0]] = {{"keep_dims", MakeValue(keep_dims)}};
     return attrs_map;
   }
 };
@@ -462,7 +486,7 @@ class LayoutTransform2PatternTree : public PatternTree {
   }
 };
 
-// Transpose(A)=Reshape(A)
+// Transpose(A,B)=Reshape(A,C)
 class TransposePatternTree : public PatternTree {
  public:
   explicit TransposePatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
@@ -471,7 +495,10 @@ class TransposePatternTree : public PatternTree {
  protected:
   bool CheckAttributes(const inner::NodePtr &origin_root) const override {
     auto input_shape = origin_root->input(0)->shape;
-    auto perm = GetValue<std::vector<int64_t>>(origin_root->attrs().find(kAttrPerm)->second);
+    auto perm_tensornode = std::dynamic_pointer_cast<inner::ConstTensorNode>(origin_root->input(1));
+    MS_EXCEPTION_IF_NULL(perm_tensornode);
+    auto perm =
+      CheckAndConvertUtils::CheckTensorIntValue(perm_tensornode->format, perm_tensornode->data(), "Transpose");
     if (perm.size() != input_shape.size()) {
       MS_LOG(DEBUG) << "The length of input shape " << input_shape << " and perm " << perm << " is not same";
       return false;
@@ -501,15 +528,24 @@ class TransposePatternTree : public PatternTree {
     return true;
   }
 
+  std::shared_ptr<ParaMap> UpdateParameters(const inner::NodePtr &origin_root,
+                                            const std::shared_ptr<ParaMap> &para_to_ref) const override {
+    inner::GraphBuilder gb("");
+    auto out_shape = origin_root->shape;
+    auto out_shape_tensornode = gb.Const(out_shape);
+    (*para_to_ref)['C'] = out_shape_tensornode;
+    para_to_ref->erase('B');
+    return para_to_ref;
+  }
+
   mindspore::HashMap<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &origin_root) override {
     auto attrs_map = PatternTree::SetAttributes(origin_root);
-    auto out_shape = origin_root->shape;
-    attrs_map[this->rhs_root()] = {{"shape", MakeValue(out_shape)}, {"format", MakeValue(origin_root->format)}};
+    attrs_map[this->rhs_root()] = {{"format", MakeValue(origin_root->format)}};
     return attrs_map;
   }
 };
 
-// Reshape(Reshape(A))=Reshape(A)
+// Reshape(Reshape(A,B),C)=Reshape(A,C)
 class ReshapePatternTree : public PatternTree {
  public:
   explicit ReshapePatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
@@ -518,9 +554,16 @@ class ReshapePatternTree : public PatternTree {
  protected:
   mindspore::HashMap<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &origin_root) override {
     auto attrs_map = PatternTree::SetAttributes(origin_root);
-    auto out_shape = origin_root->shape;
-    attrs_map[this->rhs_root()] = {{"shape", MakeValue(out_shape)}, {"format", MakeValue(origin_root->format)}};
+    attrs_map[this->rhs_root()] = {{"format", MakeValue(origin_root->format)}};
     return attrs_map;
+  }
+
+  std::shared_ptr<ParaMap> UpdateParameters(const inner::NodePtr &origin_root,
+                                            const std::shared_ptr<ParaMap> &para_to_ref) const override {
+    MS_EXCEPTION_IF_NULL(para_to_ref);
+    para_to_ref->erase('B');
+    (void)origin_root;
+    return para_to_ref;
   }
 };
 
@@ -621,23 +664,23 @@ static std::vector<Expression> expressions = {
   {52, "RealDiv(Neg(A),const1)=RealDiv(A,Neg(const1))", EXPR_PATTERN(PatternTree)},
   {53, "RealDiv(RealDiv(A,B),C)=RealDiv(A,Mul(B,C))", EXPR_PATTERN(PatternTree)},
   {54, "RealDiv(A,RealDiv(B,C))=RealDiv(Mul(A,C),B)", EXPR_PATTERN(PatternTree)},
-  // reduce1
-  {55, "ReduceSum(ReduceSum(A))=ReduceSum(A)", EXPR_PATTERN(ExtraReduce1PatternTree)},
-  {56, "ReduceMin(ReduceMin(A))=ReduceMin(A)", EXPR_PATTERN(ExtraReduce1PatternTree)},
-  {57, "ReduceMax(ReduceMax(A))=ReduceMax(A)", EXPR_PATTERN(ExtraReduce1PatternTree)},
-  // reduce2
-  {58, "ReduceSum(Neg(A))=Neg(ReduceSum(A))", EXPR_PATTERN(ExtraReduce2PatternTree)},
-  {59, "ReduceSum(RealDiv(A,const1))=RealDiv(ReduceSum(A),const1)", EXPR_PATTERN(ExtraReduce2PatternTree)},
-  {60, "ReduceSum(Mul(A,const1))=Mul(ReduceSum(A),const1)", EXPR_PATTERN(ExtraReduce2PatternTree)},
+  // reduce1, B, C, D are all axes input
+  {55, "ReduceSum(ReduceSum(A,B),C)=ReduceSum(A,D)", EXPR_PATTERN(ExtraReduce1PatternTree)},
+  {56, "ReduceMin(ReduceMin(A,B),C)=ReduceMin(A,D)", EXPR_PATTERN(ExtraReduce1PatternTree)},
+  {57, "ReduceMax(ReduceMax(A,B),C)=ReduceMax(A,D)", EXPR_PATTERN(ExtraReduce1PatternTree)},
+  // reduce2, B is axes input
+  {58, "ReduceSum(Neg(A),B)=Neg(ReduceSum(A,B))", EXPR_PATTERN(ExtraReduce2PatternTree)},
+  {59, "ReduceSum(RealDiv(A,const1),B)=RealDiv(ReduceSum(A,B),const1)", EXPR_PATTERN(ExtraReduce2PatternTree)},
+  {60, "ReduceSum(Mul(A,const1),B)=Mul(ReduceSum(A,B),const1)", EXPR_PATTERN(ExtraReduce2PatternTree)},
   {61, "CReal(Complex(A,B))=A", EXPR_PATTERN(PatternTree)},
   {62, "CImag(Complex(A,B))=B", EXPR_PATTERN(PatternTree)},
   // lite only
   {63, "LayoutTransform(LayoutTransform(A))=A", EXPR_PATTERN(LayoutTransform1PatternTree)},
   {64, "LayoutTransform(LayoutTransform(A))=LayoutTransform(A)", EXPR_PATTERN(LayoutTransform2PatternTree)},
   // transpose
-  {65, "Transpose(A)=Reshape(A)", EXPR_PATTERN(TransposePatternTree)},
+  {65, "Transpose(A,B)=Reshape(A,C)", EXPR_PATTERN(TransposePatternTree)},
   // reshape
-  {66, "Reshape(Reshape(A))=Reshape(A)", EXPR_PATTERN(ReshapePatternTree)},
+  {66, "Reshape(Reshape(A,B),C)=Reshape(A,C)", EXPR_PATTERN(ReshapePatternTree)},
 };
 
 mindspore::HashMap<std::string, std::vector<PatternTreePtr>> GetExpressions() {
@@ -692,6 +735,7 @@ bool ArithmeticSimplify::DoArithmeticTrans(const inner::LiteGraphPtr &litegraph)
           }
           // if no outside rely,then this is a successful match
           can_simplify = true;
+          para_to_ref = cur_pattern->UpdateParameters(*iter, para_to_ref);
           // get the new node to replace
           inner::NodePtr alter_graph_node = cur_pattern->AlterGraph(para_to_ref, const_to_ref, *iter);
           (*iter)->ReplaceWith(alter_graph_node);
@@ -732,13 +776,13 @@ bool ArithmeticSimplify::DoConstantFold(const inner::LiteGraphPtr &litegraph) {
 void ReorganizeEmptyGraph(const inner::LiteGraphPtr &litegraph) {
   auto &outputs = litegraph->GetOutputs();
   for (size_t i = 0; i < outputs.size(); i++) {
-    if (outputs[i]->NodeType() == inner::NType::Value) {
+    if (outputs[i]->NodeType() == inner::NType::Tensor) {
       inner::GraphBuilder gb;
-      auto op_ptr = gb.Emit("BroadcastTo", {outputs[i]}, {{"shape", MakeValue(outputs[i]->shape)}});
+      auto op_ptr = gb.BroadcastTo(outputs[i], outputs[i]->shape);
       litegraph->SetOutput(i, op_ptr);
     } else if (outputs[i]->NodeType() == inner::NType::Parameter) {
       inner::GraphBuilder gb;
-      auto op_ptr = gb.Emit("Reshape", {outputs[i]}, {{"shape", MakeValue(outputs[i]->shape)}});
+      auto op_ptr = gb.Reshape(outputs[i], outputs[i]->shape);
       litegraph->SetOutput(i, op_ptr);
     }
   }
@@ -747,11 +791,14 @@ void ReorganizeEmptyGraph(const inner::LiteGraphPtr &litegraph) {
 
 bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
   auto mng = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(mng);
   bool do_simplify = false;
   expressions_map_ = GetExpressions();
   for (auto node : func_graph->GetOrderedCnodes()) {
     if (AnfUtils::IsGraphKernel(node)) {
       auto sub_graph = GetCNodeFuncGraph(node);
+      auto cnode = node->cast<CNodePtr>();
+      AnfNodePtrList inputs = cnode->inputs();
       inner::LiteGraphPtr lg = GkUtils::AnfGraph2LiteGraph(sub_graph);
       bool find_pattern = true;
       bool change_anf_graph = false;
@@ -761,6 +808,7 @@ bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
         find_pattern = DoArithmeticTrans(lg) || find_pattern;
         change_anf_graph = change_anf_graph || find_pattern;
       }
+      AnfNodePtrList input_nodes{inputs.begin() + 1, inputs.end()};
       if (!change_anf_graph) {
         continue;
       }
@@ -769,10 +817,9 @@ bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
       if (new_funcgraph == nullptr) {
         continue;
       }
+      (void)ConvertNonscalarTensorToParameter(new_funcgraph, &input_nodes);
       new_funcgraph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, sub_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
-      auto cnode = node->cast<CNodePtr>();
-      AnfNodePtrList inputs(cnode->inputs().begin() + 1, cnode->inputs().end());
-      auto new_node = CreateNewFuseCNode(func_graph, new_funcgraph, inputs);
+      auto new_node = CreateNewFuseCNode(func_graph, new_funcgraph, input_nodes);
       (void)mng->Replace(node, new_node);
       mng->AddFuncGraph(new_funcgraph);
       do_simplify = true;

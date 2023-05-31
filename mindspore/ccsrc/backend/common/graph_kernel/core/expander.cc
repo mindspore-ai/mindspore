@@ -17,6 +17,7 @@
 #include "backend/common/graph_kernel/core/expander.h"
 
 #include <string>
+
 #include "utils/anf_utils.h"
 #include "backend/common/graph_kernel/core/graph_kernel_callback.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
@@ -48,14 +49,10 @@ CNodePtr ExpanderDecorator::QuickCloneCNode(const AnfNodePtr &node, bool clone_p
   return new_node;
 }
 
-AnfNodePtr InputToAttrDeco::Run(const AnfNodePtr &node) {
-  auto cnode = QuickCloneCNode(node, true);
-  auto all_op_index_info = ConvertOpUtils::GetOpIndexInfo();
-  auto iter = all_op_index_info.find(GetCNodePrimitive(node)->name());
-  if (iter != all_op_index_info.end()) {
-    auto ret = ConvertOpUtils::ConstInputToAttr(cnode, iter->second);
-    return ret ? decorated_->Run(cnode) : nullptr;
-  }
+AnfNodePtr DependValueDeco::Run(const AnfNodePtr &node) {
+  auto cnode = QuickCloneCNode(node);
+  MS_EXCEPTION_IF_NULL(cnode);
+  ConvertOpUtils::AddConstInputToAttr(cnode, input_idx_);
   return decorated_->Run(cnode);
 }
 

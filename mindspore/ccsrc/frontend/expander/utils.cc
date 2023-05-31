@@ -160,25 +160,11 @@ AnfNodePtr TryExpandCNodeFE(const AnfNodePtr &node) {
   if (!graphkernel::CanExpandFallback(node)) {
     return nullptr;
   }
-  using graphkernel::InputToAttrDeco;
   auto primitive = GetCNodePrimitive(node);
   if (primitive == nullptr) {
     return nullptr;
   }
   auto expander = graphkernel::GetExpander(node);
-  std::map<std::string, graphkernel::ExpanderCreatorFuncList> creators = {
-    {prim::kPrimExpandDims->name(), {InputToAttrDeco::Creator}},
-    {prim::kPrimReshape->name(), {InputToAttrDeco::Creator}},
-    {prim::kPrimReduceMean->name(), {InputToAttrDeco::Creator}},
-    {prim::kPrimGather->name(), {InputToAttrDeco::Creator}},
-    {kTileOpName, {InputToAttrDeco::Creator}},
-    {kSliceOpName, {InputToAttrDeco::Creator}},
-  };
-  const auto &iter = creators.find(GetCNodePrimitive(node)->name());
-  if (iter != creators.end()) {
-    expander = graphkernel::WrapExpander(expander, iter->second);
-  }
-  expander = graphkernel::AttrToInputDeco::Creator(expander);
   expander = PrimToPrimPyDecorator::Creator(expander);
   auto new_node = expander->Run(node);
   auto expand_fg = GetCNodeFuncGraph(new_node);

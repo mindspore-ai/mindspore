@@ -18,7 +18,6 @@
 from .addn import AddN
 from .batchnorm import BatchNorm
 from .batchnorm_grad import BatchNormGrad
-from .bias_add_grad import BiasAddGrad
 from .clip_by_norm_no_div_sum import ClipByNormNoDivSum
 from .conv2d import Conv2D
 from .complex import CAbs, CAdd, CDiv, CMul, CSub, CRealDiv
@@ -28,7 +27,6 @@ from .erfc import Erfc
 from .fused_adam import FusedAdam
 from .fused_adam_weight_decay import FusedAdamWeightDecay
 from .fused_mul_add import FusedMulAdd
-from .gather import Gather
 from .gelu_grad import GeLUGrad
 from .gkdropout import GkDropout
 from .identity import Identity

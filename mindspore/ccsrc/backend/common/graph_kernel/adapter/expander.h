@@ -73,16 +73,6 @@ class SetDynamicShapeAttrDeco : public ExpanderDecorator {
   AnfNodePtr Run(const AnfNodePtr &node) override;
 };
 
-class BACKEND_EXPORT AttrToInputDeco : public ExpanderDecorator {
- public:
-  explicit AttrToInputDeco(const ExpanderPtr &decorated) : ExpanderDecorator(decorated) {}
-  ~AttrToInputDeco() override = default;
-  static ExpanderPtr Creator(const ExpanderPtr &decorated) {
-    return std::static_pointer_cast<Expander>(std::make_shared<AttrToInputDeco>(decorated));
-  }
-  AnfNodePtr Run(const AnfNodePtr &node) override;
-};
-
 /**
  * Get the Expander which is used to expand a cnode to a funcgraph which composite same function with core ops.
  */

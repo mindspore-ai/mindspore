@@ -60,6 +60,8 @@
 #include "backend/common/graph_kernel/parallel_optimizer.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/common/graph_kernel/compact_tensor_liveness.h"
+#include "backend/common/graph_kernel/core/convert_op_input_attr.h"
+
 #ifdef ENABLE_AKG
 #include "backend/common/graph_kernel/graph_kernel_build.h"
 #endif
@@ -153,6 +155,8 @@ PassManagerPtr GraphKernelOptimizer::Split() const {
   std::vector<PrimitivePtr> duplicated_ops = {prim::kPrimReshape};
   pm->Add(std::make_shared<ShapeOpsSplitter>(duplicated_ops), OptLevel_1);
 
+  // add const inputs to attribute then eliminate those inputs for static kernels.
+  pm->Add(std::make_shared<GraphKernelInputToAttrConverter>(), OptLevel_1);
   // Split kernel according to costmodel
   pm->Add(std::make_shared<GraphKernelSplitterWithPy>(), OptLevel_1);
 

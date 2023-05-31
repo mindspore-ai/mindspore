@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "backend/common/graph_kernel/core/transform_op_optimizer.h"
+
 #include <algorithm>
 #include <vector>
 #include <queue>
@@ -23,9 +24,11 @@
 #include <string>
 #include <tuple>
 #include <functional>
+
 #include "ir/graph_utils.h"
 #include "utils/anf_utils.h"
 #include "backend/common/graph_kernel/model/lite_graph.h"
+#include "backend/common/graph_kernel/model/graph_builder.h"
 #include "backend/common/graph_kernel/model/op_register.h"
 #include "backend/common/graph_kernel/core/graph_builder.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
@@ -258,6 +261,8 @@ FormatType TransformOp::GetFormatType(const std::string &fmt) {
   return fmt == format_a_ ? FormatType::kFormatA : FormatType::kFormatB;
 }
 
+void TransformOp::SetInput(const NodePtr &node, const NodePtr &input_node) { node->SetInputs({input_node}); }
+
 bool TransformOpCreator::IsTransOp(const NodePtr &node) const {
   return node->NodeType() == NType::Primitive && node->As<PrimOp>()->op() == op_name_;
 }
@@ -291,10 +296,25 @@ class TransposeHandle : public TransformOp {
       return nullptr;
     }
     auto op = inner::OpRegistry::Instance().NewOp(op_);
-    op->SetAttr("perm", MakeValue(perm));
+    auto perm_tensor = std::make_shared<tensor::Tensor>(perm, kInt64);
+    node_to_input_tensor_map_[op] = perm_tensor;
     op->SetAttr(kAttrDstFormat, MakeValue(dst_format));
     return op;
   }
+
+  void SetInput(const NodePtr &node, const NodePtr &input_node) override {
+    inner::GraphBuilder gb;
+    auto iter = node_to_input_tensor_map_.find(node);
+    if (iter == node_to_input_tensor_map_.end()) {
+      MS_LOG(EXCEPTION) << "Can't find input valueptr for node: " << node->ToString();
+    }
+    auto perm_tensor = iter->second;
+    auto perm_node = gb.Value(perm_tensor);
+    node->SetInputs({input_node, perm_node});
+  }
+
+ private:
+  std::map<NodePtr, tensor::TensorPtr> node_to_input_tensor_map_;
 };
 
 class LayoutTransformHandle : public TransformOp {
@@ -335,8 +355,20 @@ class ReshapeHandle : public TransformOp {
     auto op = inner::OpRegistry::Instance().NewOp(op_);
     auto out_format = trans_type == TransOpType::kTransAB ? format_b_ : format_a_;
     auto out_shape = DecodeShape(out_format);
-    op->SetAttr("shape", MakeValue(out_shape));
+    auto shape_tensor = std::make_shared<tensor::Tensor>(out_shape, kInt64);
+    node_to_input_tensor_map_[op] = shape_tensor;
     return op;
+  }
+
+  void SetInput(const NodePtr &node, const NodePtr &input_node) override {
+    inner::GraphBuilder gb;
+    auto iter = node_to_input_tensor_map_.find(node);
+    if (iter == node_to_input_tensor_map_.end()) {
+      MS_LOG(EXCEPTION) << "Can't find input valueptr for node: " << node->ToString();
+    }
+    auto shape_tensor = iter->second;
+    auto shape_node = gb.Value(shape_tensor);
+    node->SetInputs({input_node, shape_node});
   }
 
  private:
@@ -362,6 +394,8 @@ class ReshapeHandle : public TransformOp {
     }
     return res;
   }
+
+  std::map<NodePtr, tensor::TensorPtr> node_to_input_tensor_map_;
 };
 
 constexpr int kOutputIndex = -1;
@@ -405,7 +439,7 @@ class Mutator {
     }
     // for trans op or format-flexible op, visit node bidirectionally.
     for (auto &input : node->inputs()) {
-      if (input->NodeType() != NType::Value) {
+      if (input->NodeType() != NType::Tensor && input->NodeType() != NType::Scalar) {
         VisitNode(input, kOutputIndex);
       }
     }
@@ -427,7 +461,7 @@ class Mutator {
       }
       if (node->NodeType() != NType::Parameter) {
         for (size_t i = 0; i < node->inputs().size(); i++) {
-          if (node->input(i)->NodeType() != NType::Value) {
+          if (node->input(i)->NodeType() != NType::Tensor && node->input(i)->NodeType() != NType::Scalar) {
             fmt_type[{node, i}] = op_handle_->GetFormatType(op_handle_->GetFormat(node->input(i)));
           }
         }
@@ -550,7 +584,7 @@ class Mutator {
         continue;
       }
       input_node->ReplaceWith(trans_op);
-      trans_op->SetInputs({input_node});
+      op_handle_->SetInput(trans_op, input_node);
       MS_LOG(DEBUG) << "Inserted " << trans_op->debug_name() << " after " << input_node->debug_name();
     }
 
@@ -571,7 +605,7 @@ class Mutator {
           continue;
         }
         trans_op_cache[insert_edge.from] = trans_op;
-        trans_op->SetInputs({node_from});
+        op_handle_->SetInput(trans_op, node_from);
       }
       auto trans_op = trans_op_cache[insert_edge.from];
       if (ori_node_[insert_edge.to].second >= 0) {
@@ -615,7 +649,8 @@ class Mutator {
     }
     // check the input and output formats are all the same, except ConstValue.
     for (auto &inp : node->inputs()) {
-      if (inp->NodeType() != NType::Value && op_handle_->GetFormat(inp) != op_handle_->GetFormat(node)) {
+      if (inp->NodeType() != NType::Tensor && inp->NodeType() != NType::Scalar &&
+          op_handle_->GetFormat(inp) != op_handle_->GetFormat(node)) {
         return false;
       }
     }
@@ -721,6 +756,7 @@ bool TransformOpOptimizer::Run(const FuncGraphPtr &func_graph) {
         new_funcgraph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, node_name);
         auto cnode = node->cast<CNodePtr>();
         AnfNodePtrList inputs(cnode->inputs().begin() + 1, cnode->inputs().end());
+        (void)ConvertNonscalarTensorToParameter(new_funcgraph, &inputs);
         auto new_node = CreateNewFuseCNode(func_graph, new_funcgraph, inputs);
         (void)mng->Replace(node, new_node);
         mng->AddFuncGraph(new_funcgraph);
