@@ -36,6 +36,7 @@ constexpr auto softmax_output_shape_size = 2;
 constexpr auto kAttrDepth = "depth";
 constexpr auto kAttrMultiples = "multiples";
 constexpr auto kIsFeatureMapInputList = "IsFeatureMapInputList";
+constexpr auto kShapeFromTensor = "shape_from_tensor";
 
 bool CheckMulInputShapeEqual(const CNodePtr &mul_node) {
   MS_EXCEPTION_IF_NULL(mul_node);
@@ -84,6 +85,7 @@ CNodePtr CreateReshape(const FuncGraphPtr &graph, const AnfNodePtr &input_node, 
   MS_EXCEPTION_IF_NULL(reshape_node);
   auto data_types = common::AnfAlgo::GetOutputInferDataType(input_node, 0UL);
   common::AnfAlgo::SetOutputInferTypeAndShape({data_types}, {shape}, reshape_node.get());
+  common::AnfAlgo::SetNodeAttr(kShapeFromTensor, MakeValue(true), reshape_node);
   return reshape_node;
 }
 void GetDepthAndBatchSizeFromSparseSoftmaxNode(const AnfNodePtr &sparse_softmax_node, int64_t *batch_size,
@@ -108,7 +110,8 @@ CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_
   int64_t batch_size;
   int64_t depth;
   GetDepthAndBatchSizeFromSparseSoftmaxNode(sparse_softmax_node, &batch_size, &depth);
-  ShapeVector shape = {batch_size};
+  auto is_dynamic = common::AnfAlgo::IsDynamicShape(sparse_softmax_node);
+  ShapeVector shape = is_dynamic ? ShapeVector{-1} : ShapeVector{batch_size};
 
   // Reshape multi-dim labels to 1D labels.
   auto reshape_node = CreateReshape(graph, sparse_softmax_node->input(kIndex2), shape, pass);
@@ -160,7 +163,8 @@ CNodePtr CreateSoftmaxCrossEntropyWithLogits(const FuncGraphPtr &graph, const CN
   int64_t batch_size;
   int64_t depth;
   GetDepthAndBatchSizeFromSparseSoftmaxNode(sparse_softmax_node, &batch_size, &depth);
-  ShapeVector shape = {batch_size, depth};
+  auto is_dynamic = common::AnfAlgo::IsDynamicShape(sparse_softmax_node);
+  ShapeVector shape = is_dynamic ? ShapeVector{-1, depth} : ShapeVector{batch_size, depth};
 
   // Reshape multi-dim logits to 2D logits.
   auto reshape_node = CreateReshape(graph, sparse_softmax_node->input(kIndex1), shape, pass);
@@ -605,7 +609,8 @@ const AnfNodePtr GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process(con
   int64_t batch_size;
   int64_t depth;
   GetDepthAndBatchSizeFromSparseSoftmaxNode(sparse_softmax_node, &batch_size, &depth);
-  ShapeVector shape = {batch_size, depth};
+  auto is_dynamic = common::AnfAlgo::IsDynamicShape(sparse_softmax_node);
+  ShapeVector shape = is_dynamic ? ShapeVector{-1, depth} : ShapeVector{batch_size, depth};
   common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {shape}, new_mul_node.get());
 
   auto logits_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 0UL);
@@ -726,7 +731,8 @@ const AnfNodePtr PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Pro
   int64_t batch_size;
   int64_t depth;
   opt::GetDepthAndBatchSizeFromSparseSoftmaxNode(sparse_softmax_node, &batch_size, &depth);
-  ShapeVector shape = {batch_size, depth};
+  auto is_dynamic = common::AnfAlgo::IsDynamicShape(sparse_softmax_node);
+  ShapeVector shape = is_dynamic ? ShapeVector{-1, depth} : ShapeVector{batch_size, depth};
   common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {shape}, new_mul_node.get());
 
   auto logits_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 0UL);
@@ -787,7 +793,8 @@ const AnfNodePtr PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2::P
   int64_t batch_size;
   int64_t depth;
   GetDepthAndBatchSizeFromSparseSoftmaxNode(sparse_softmax_node, &batch_size, &depth);
-  ShapeVector shape = {batch_size, depth};
+  auto is_dynamic = common::AnfAlgo::IsDynamicShape(sparse_softmax_node);
+  ShapeVector shape = is_dynamic ? ShapeVector{-1, depth} : ShapeVector{batch_size, depth};
   common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {shape}, new_mul_node.get());
 
   // Reshape 1D result to multi-dim result.

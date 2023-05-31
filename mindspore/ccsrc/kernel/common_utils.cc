@@ -1871,7 +1871,7 @@ Format GetFormatFromStrToEnum(const std::string &format_str) {
   if (iter != format_relation_map.end()) {
     return iter->second;
   }
-  MS_LOG(WARNING) << "The data format " << format_str << " can not be converted to enum.";
+  MS_LOG(DEBUG) << "The data format " << format_str << " can not be converted to enum.";
   return Format::DEFAULT_FORMAT;
 }
 

@@ -334,14 +334,6 @@ class _Context:
         if self.enable_debug_runtime and target == "CPU":
             self.set_backend_policy("vm")
 
-    def set_auto_tune_mode(self, tune_mode):
-        candidate = ["NO_TUNE", "RL", "GA", "RL,GA", "GA,RL"]
-        if tune_mode in candidate:
-            self.set_param(ms_ctx_param.auto_tune_mode, tune_mode)
-        else:
-            raise ValueError(f"For 'context.set_context', the argument 'auto_tune_mode' must be in "
-                             f"['NO_TUNE', 'RL', 'GA', 'RL,GA', 'GA,RL'], but got {tune_mode}.")
-
     def set_device_id(self, device_id):
         if device_id < 0 or device_id > 4095:
             raise ValueError(f"For 'context.set_context', the argument 'device_id' must be in range [0, 4095], "
@@ -464,7 +456,6 @@ class _Context:
         'save_graphs_path': set_save_graphs_path,
         'device_target': set_device_target,
         'device_id': set_device_id,
-        'auto_tune_mode': set_auto_tune_mode,
         'max_call_depth': set_max_call_depth,
         'profiling_options': set_profiling_options,
         'variable_memory_max_size': set_variable_memory_max_size,
@@ -827,7 +818,6 @@ def _check_target_specific_cfgs(device, arg_key):
         'enable_reduce_precision': ['Ascend'],
         'print_file_path': ['Ascend'],
         'variable_memory_max_size': ['Ascend'],
-        'auto_tune_mode': ['Ascend'],
         'max_device_memory': ['Ascend', 'GPU'],
         'mempool_block_size': ['GPU', 'Ascend'],
         'disable_format_transform': ['GPU'],
@@ -846,7 +836,7 @@ def _check_target_specific_cfgs(device, arg_key):
 
 
 @args_type_check(mode=int, precompile_only=bool, device_target=str, device_id=int, save_graphs=(bool, int),
-                 save_graphs_path=str, enable_dump=bool, auto_tune_mode=str,
+                 save_graphs_path=str, enable_dump=bool,
                  save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,
                  enable_auto_mixed_precision=bool, inter_op_parallel_num=int,
                  enable_graph_kernel=bool, reserve_class_name_in_scope=bool, check_bprop=bool,
@@ -911,8 +901,6 @@ def set_context(**kwargs):
     |                         |  graph_kernel_flags          |  Ascend/GPU                |
     |                         +------------------------------+----------------------------+
     |                         |  enable_reduce_precision     |  Ascend                    |
-    |                         +------------------------------+----------------------------+
-    |                         |  auto_tune_mode              |  Ascend                    |
     |                         +------------------------------+----------------------------+
     |                         |  check_bprop                 |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
@@ -1056,15 +1044,6 @@ def set_context(**kwargs):
         enable_reduce_precision (bool): Whether to enable precision reduction.
             If the operator does not support the user-specified precision, the precision will
             be changed automatically. Default: ``True`` .
-        auto_tune_mode (str): The mode of auto tune when op building, get the best tiling performance.
-            Default: ``NO_TUNE`` . The value must be in ['RL', 'GA', 'RL,GA'].
-
-            - RL: Reinforcement Learning tune.
-            - GA: Genetic Algorithm tune.
-            - RL,GA: When both RL and GA optimization are enabled, the tool automatically selects RL or GA based on
-              different types of operators in the network model. The sequence of RL and GA is not differentiated
-              (Automatic selection).
-
         check_bprop (bool): Whether to check back propagation nodes. The checking ensures that the shape and dtype
             of back propagation node outputs is the same as input parameters. Default: ``False`` .
         max_call_depth (int): Specify the maximum depth of function call. Must be positive integer. Default: ``1000`` .
@@ -1181,7 +1160,6 @@ def set_context(**kwargs):
         >>> ms.set_context(print_file_path="print.pb")
         >>> ms.set_context(max_call_depth=80)
         >>> ms.set_context(env_config_path="./env_config.json")
-        >>> ms.set_context(auto_tune_mode="GA,RL")
         >>> ms.set_context(grad_for_scalar=True)
         >>> ms.set_context(enable_compile_cache=True, compile_cache_path="./cache.ms")
         >>> ms.set_context(pynative_synchronize=True)
@@ -1201,7 +1179,7 @@ def set_context(**kwargs):
         ctx.set_device_target(kwargs['device_target'])
     device = ctx.get_param(ms_ctx_param.device_target)
     for key, value in kwargs.items():
-        if key == 'enable_sparse':
+        if key in ('enable_sparse', 'auto_tune_mode'):
             logger.warning(f"For 'context.set_context', '{key}' parameter is deprecated, "
                            "and will be removed in the next version.")
             continue

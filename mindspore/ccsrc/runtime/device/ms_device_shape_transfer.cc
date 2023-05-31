@@ -697,8 +697,12 @@ ShapeVector DeviceShapeTransfer::FRAC_NZDeviceShape(const ShapeVector &shape, co
     // For [1] and [1024] shape we can trait it as NZ shape
     return shape;
   }
-  if (shape.size() < kShape2dDims) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Format FRACTAL_NZ don't support shape with " << shape.size() << " dims";
+  if (shape.size() == 1) {
+    device_shape.push_back(DivCeil(shape[0], c0));
+    device_shape.push_back(1);
+    device_shape.push_back(kCubeSize);
+    device_shape.push_back(c0);
+    return device_shape;
   } else {
     const auto remove_dim = 2;
     (void)std::copy(shape.begin(), shape.end() - remove_dim, std::back_inserter(device_shape));

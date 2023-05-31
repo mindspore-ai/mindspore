@@ -536,7 +536,7 @@ bool OpInfoUtils::ParseAttrs(const nlohmann::json &item, const OpInfoPtr &op_inf
     for (auto iter_attr = attr_suffix.begin(); iter_attr != attr_suffix.end(); iter_attr++) {
       auto func = parse_attr_funcs.find(iter_attr.key());
       if (func == parse_attr_funcs.end()) {
-        MS_LOG(WARNING) << "Parse attr key: " << iter_attr.key() << " not found, json: " << attr_suffix.dump();
+        MS_LOG(INFO) << "Parse attr key: " << iter_attr.key() << " not found, json: " << attr_suffix.dump();
         continue;
       }
       if (!func->second(attr_suffix.at(iter_attr.key()), op_attr_ptr)) {
@@ -580,7 +580,7 @@ bool OpInfoUtils::ParseOpIOInfoImpl(const nlohmann::json &item, bool is_input, c
     for (auto iter = ret.begin(); iter != ret.end(); iter++) {
       auto func = parse_io_info_funcs.find(iter.key());
       if (func == parse_io_info_funcs.end()) {
-        MS_LOG(WARNING) << "Parse IO key: " << iter.key() << " not found, json: " << ret.dump();
+        MS_LOG(INFO) << "Parse IO key: " << iter.key() << " not found, json: " << ret.dump();
         continue;
       }
       if (!func->second(ret.at(iter.key()), op_io_info_ptr)) {

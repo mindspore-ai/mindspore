@@ -21,10 +21,8 @@
 #include "debug/tensor_load.h"
 #include "debug/debugger/proto_exporter.h"
 #endif
-#include "include/backend/debug/debugger/proto_exporter.h"
 #ifndef ENABLE_SECURITY
 #include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
-#include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "include/backend/distributed/collective/collective_manager.h"
 
 using mindspore::profiler::ascend::AscendProfiler;
@@ -34,6 +32,7 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 void AscendDeviceContext::Initialize() {
+  std::lock_guard<std::mutex> lock(init_mutex_);
   if (initialized_) {
     MS_EXCEPTION_IF_NULL(runtime_instance_);
     runtime_instance_->SetContext();

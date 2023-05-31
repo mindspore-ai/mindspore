@@ -21,11 +21,27 @@
 #include <algorithm>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
-#include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+namespace {
+constexpr auto kShapeFromTensor = "shape_from_tensor";
+constexpr size_t kSize2 = 2;
+
+ShapeVector UpdateOutputShape(const ShapeVector &x_shape, const ShapeVector &y_shape, const ShapeVector &output_shape) {
+  if (IsDynamicShape(y_shape)) {
+    ShapeVector ret = ShapeVector{std::accumulate(x_shape.begin(), x_shape.end(), 1, std::multiplies<int64_t>())};
+    if (y_shape.size() == kSize2) {
+      ret = ShapeVector{std::accumulate(x_shape.begin(), x_shape.end(), 1, std::multiplies<int64_t>()) / y_shape[1],
+                        y_shape[1]};
+    }
+    return ret;
+  }
+  return y_shape;
+}
+}  // namespace
+
 ShapeVector update_shape(const std::vector<int> &padding_axis_value, const ShapeVector &x_shape, ShapeVector shape) {
   // padding_axis_value is for the condition that the number of -1 in shape > 1, , but just paddingshape
   if (std::any_of(x_shape.begin(), x_shape.end(), [](const int &shape_i) { return shape_i < 0; })) {
@@ -93,6 +109,12 @@ class ReshapeInfer : public abstract::OpInferBase {
       auto value = input_y->BuildValue();
       MS_EXCEPTION_IF_NULL(value);
       output_shape = GetShapeValue(primitive, input_y);
+      if (primitive->HasAttr(kShapeFromTensor) && GetValue<bool>(primitive->GetAttr(kShapeFromTensor))) {
+        if (input_y->isa<abstract::AbstractTensor>() && value->isa<tensor::Tensor>()) {
+          auto y_shape = CheckAndConvertUtils::CheckTensorIntValue("y_shape", value, prim_name);
+          output_shape = UpdateOutputShape(x_shape, y_shape, output_shape);
+        }
+      }
 
       const int64_t kSelfComputedDim = -1;
       const int64_t kMaxSelfComputedDimCount = 1;
