@@ -17,6 +17,7 @@
 #ifndef NNACL_KERNEL_CONVOLLUTION_DEPTHWISE_3X3_H_
 #define NNACL_KERNEL_CONVOLLUTION_DEPTHWISE_3X3_H_
 
+#if defined(ENABLE_ARM) || (defined(ENABLE_SSE) && !defined(ENABLE_AVX))
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
@@ -25,8 +26,12 @@
 
 typedef struct ConvolutionDepthwise3x3Struct {
   ConvolutionBaseStruct conv_;
+  float *buffer_;
+  float *input_ptr_;
+  float *output_ptr_;
 } ConvolutionDepthwise3x3Struct;
 
 KernelBase *CreateConvDw3x3(ConvParameter *conv_param);
+#endif
 
 #endif  // NNACL_KERNEL_CONVOLLUTION_DEPTHWISE_3X3_H_

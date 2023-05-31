@@ -41,6 +41,6 @@ int convolution_sw_resize(KernelBase *self);
 int convolution_sw_release(KernelBase *self);
 void ConvSWPackWeight(ConvolutionBaseStruct *conv);
 int ConvSWMallocWeightBiasData(ConvolutionBaseStruct *conv);
-
 #endif
+
 #endif  // NNACL_KERNEL_CONVOLLUTION_SLIDEWINDOW_H_
