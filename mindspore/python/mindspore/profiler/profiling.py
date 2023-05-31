@@ -294,8 +294,9 @@ class Profiler:
             ...     # Profiler init.
             ...     profiler = Profiler()
             ...
-            ...     # Train Model or eval Model.
-            ...     net = Net()
+            ...     # Train Model or eval Model, taking LeNet5 as an example
+            ...     # Refer to https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            ...     net = LeNet5()
             ...     train(net)
             ...
             ...     # Profiler end

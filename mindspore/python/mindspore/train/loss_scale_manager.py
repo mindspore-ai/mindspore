@@ -61,7 +61,9 @@ class FixedLossScaleManager(LossScaleManager):
         >>> import mindspore as ms
         >>> from mindspore import amp, nn
         >>>
-        >>> net = Net()
+        >>> # Define the network structure of LeNet5. Refer to
+        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> net = LeNet5()
         >>> loss_scale = 1024.0
         >>> loss_scale_manager = amp.FixedLossScaleManager(loss_scale, False)
         >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9, loss_scale=loss_scale)
@@ -133,7 +135,9 @@ class DynamicLossScaleManager(LossScaleManager):
         >>> import mindspore as ms
         >>> from mindspore import amp, nn
         >>>
-        >>> net = Net()
+        >>> # Define the network structure of LeNet5. Refer to
+        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> net = LeNet5()
         >>> loss_scale_manager = amp.DynamicLossScaleManager()
         >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
         >>> model = ms.Model(net, loss_scale_manager=loss_scale_manager, optimizer=optim)
