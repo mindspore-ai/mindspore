@@ -39,6 +39,8 @@ class TensorTransform {
   std::vector<std::pair<std::string, std::vector<int64_t>>> TransformOperators(const Shapes &from, const Shapes &to,
                                                                                const RankList &dev_list,
                                                                                int64_t rank_id);
+  RedistributionOpListPtr OptimizeTensorRedistributionOperatorList(
+    const RedistributionOpListPtr &redistribution_op_list);
 
  private:
   TensorTransform();

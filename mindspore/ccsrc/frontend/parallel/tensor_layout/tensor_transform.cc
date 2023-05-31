@@ -28,6 +28,7 @@ const size_t kAllConcatSize = 3;
 const size_t kIndex0 = 0;
 const size_t kIndex1 = 1;
 const size_t kIndex2 = 2;
+const size_t kSize1 = 1;
 const size_t kSize2 = 2;
 const size_t kSize3 = 3;
 
@@ -57,7 +58,7 @@ std::pair<std::string, std::vector<int64_t>> TensorTransform::ExtractReshapeOp(c
   auto op_name = reshape_op_pair.first;
   auto op_params = reshape_op_pair.second.second;
   if (op_params.empty()) {
-    MS_LOG(EXCEPTION) << "The reshape has not contains dst_shape.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The reshape has not contains dst_shape.";
   }
   auto shape_value_ptr = op_params.front().first.second;
   auto dst_shape = GetValue<std::vector<int64_t>>(shape_value_ptr);
@@ -70,7 +71,7 @@ std::pair<std::string, std::vector<int64_t>> TensorTransform::ExtractAllGatherOp
   auto op_name = allgather_op_pair.first;
   auto op_attrs = allgather_op_pair.second.first;
   if (op_attrs.size() < kSize2) {
-    MS_LOG(EXCEPTION) << "The allgather has not contains group attrs.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The allgather has not contains group attrs.";
   }
   auto group_attr = op_attrs[1].second;
   auto group_ranks = GetValue<std::vector<int64_t>>(group_attr);
@@ -84,7 +85,7 @@ std::pair<std::string, std::vector<int64_t>> TensorTransform::ExtractSplitOp(con
   auto op_name = split_op_pair.first;
   auto op_attrs = split_op_pair.second.first;
   if (op_attrs.size() < kSize2) {
-    MS_LOG(EXCEPTION) << "The split has not contains output_num attrs.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The split has not contains output_num attrs.";
   }
   auto axis_attr = op_attrs[0].second;
   auto axis = GetValue<int64_t>(axis_attr);
@@ -99,7 +100,7 @@ std::pair<std::string, std::vector<int64_t>> TensorTransform::ExtractConcatOp(co
   auto op_name = concat_op_pair.first;
   auto op_attrs = concat_op_pair.second.first;
   if (op_attrs.size() < 1) {
-    MS_LOG(EXCEPTION) << "The concat has not contains axis attrs.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The concat has not contains axis attrs.";
   }
   auto axis_attr = op_attrs[0].second;
   auto axis = GetValue<int64_t>(axis_attr);
@@ -113,7 +114,7 @@ std::pair<std::string, std::vector<int64_t>> TensorTransform::ExtractStridedSlic
   auto op_name = slice_op_pair.first;
   auto op_params = slice_op_pair.second.second;
   if (op_params.size() < kSize3) {
-    MS_LOG(EXCEPTION) << "The stridedslice op has not contains begin/end/strides.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The stridedslice op has not contains begin/end/strides.";
   }
   auto begin_value_ptr = op_params[0].first.second;
   auto begin = GetValue<std::vector<int64_t>>(begin_value_ptr);
@@ -169,7 +170,7 @@ std::vector<std::pair<std::string, std::vector<int64_t>>> TensorTransform::Trans
   ParallelContext::GetInstance()->set_global_rank(rank_id);
   RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution_.InferTensorRedistributionOperatorList();
   if (redistribution_oplist_ptr->first.size() != redistribution_oplist_ptr->second.size()) {
-    MS_LOG(EXCEPTION) << "The redistribution op list size cannot match redistribution output info list size.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The redistribution op list size cannot match redistribution output info list size.";
   }
   auto operators_vector = redistribution_oplist_ptr->first;
   std::vector<std::pair<std::string, std::vector<int64_t>>> transform_op_list;
@@ -177,7 +178,7 @@ std::vector<std::pair<std::string, std::vector<int64_t>>> TensorTransform::Trans
     auto op_name = op_pair.first;
     auto it = transform_operator_.find(op_name);
     if (it == transform_operator_.end()) {
-      MS_LOG(EXCEPTION) << "The op:" << op_name << " is not a valid redistrbution op.";
+      MS_LOG(INTERNAL_EXCEPTION) << "The op:" << op_name << " is not a valid redistrbution op.";
     }
     transform_op_list.push_back(it->second(op_pair));
   }
@@ -185,6 +186,88 @@ std::vector<std::pair<std::string, std::vector<int64_t>>> TensorTransform::Trans
   ParallelContext::GetInstance()->set_do_transform(false);
   ParallelContext::GetInstance()->set_global_rank(origin_rank_id);
   return transform_op_list;
+}
+
+Operator ConstructReshapeOp(const std::vector<int64_t> &shape) {
+  OperatorAttrs attrs;
+  ValuePtr param_value = MakeValue(shape);
+  Attr param = std::make_pair(SHAPE, param_value);
+  OperatorParams params = {std::make_pair(param, 2)};
+  OperatorArgs args = std::make_pair(attrs, params);
+  return std::make_pair(RESHAPE, args);
+}
+
+RedistributionOpListPtr TensorTransform::OptimizeTensorRedistributionOperatorList(
+  const RedistributionOpListPtr &redistribution_op_list) {
+  // 1 operators_vector to transform_op_list
+  // 2 allgather->split->concat to allconcat
+  if ((redistribution_op_list->first).size() != (redistribution_op_list->second).size()) {
+    return redistribution_op_list;
+  }
+  auto operators_vector = redistribution_op_list->first;
+  std::vector<std::pair<std::string, std::vector<int64_t>>> transform_op_list;
+  for (auto op_pair : operators_vector) {
+    auto op_name = op_pair.first;
+    auto it = transform_operator_.find(op_name);
+    if (it == transform_operator_.end()) {
+      MS_LOG(WARNING) << "The op:" << op_name << " would not be optimized.";
+      return redistribution_op_list;
+    }
+    transform_op_list.push_back(it->second(op_pair));
+  }
+  OptimizeAllConcat(&transform_op_list);
+  size_t current_allgather_pos_in_origin_list = 0;
+  std::unordered_map<size_t, std::vector<int64_t>> left_reshape_op_list;
+  std::vector<size_t> allconcat_pos_list;
+  // 3 remove the dim which value is 1 for AllConcat
+  for (size_t i = 0; i < transform_op_list.size(); ++i) {
+    auto trans_op_pair = transform_op_list[i];
+    if (trans_op_pair.first != ALL_GATHER) {
+      current_allgather_pos_in_origin_list++;
+      continue;
+    }
+    auto axis = transform_op_list[i].second.back();
+    if (axis == 0) {
+      continue;
+    }
+
+    if ((i > 0 && transform_op_list[i - 1].first == RESHAPE) &&
+        (i < transform_op_list.size() - 1 && transform_op_list[i + 1].first == RESHAPE)) {
+      auto src_shape = transform_op_list[i - 1].second;
+      auto dst_shape = transform_op_list[i + 1].second;
+      auto new_axis = axis;
+      auto new_src_shape = src_shape;
+      for (int32_t j = axis - 1; j >= 0; --j) {
+        if (src_shape[j] != 1) {
+          continue;
+        }
+        new_src_shape.erase(new_src_shape.begin() + j);
+        new_axis -= 1;
+      }
+      MS_LOG(INFO) << "src_shape:" << src_shape << ", new_src_shape:" << new_src_shape << ", axis:" << axis
+                   << ", new_axis:" << new_axis;
+      if (new_axis != 0) {
+        continue;
+      }
+      left_reshape_op_list[current_allgather_pos_in_origin_list] = new_src_shape;
+      allconcat_pos_list.push_back(current_allgather_pos_in_origin_list);
+    }
+    current_allgather_pos_in_origin_list += kSize3;
+  }
+  // Insert reshape and adjust allgather-split-concat for redistribution_op_list
+  std::reverse(allconcat_pos_list.begin(), allconcat_pos_list.end());
+  for (auto pos : allconcat_pos_list) {
+    // erase split concat
+    redistribution_op_list->first.erase(redistribution_op_list->first.begin() + pos + kSize2);
+    redistribution_op_list->first.erase(redistribution_op_list->first.begin() + pos + kSize1);
+    redistribution_op_list->second.erase(redistribution_op_list->second.begin() + pos + kSize2);
+    redistribution_op_list->second.erase(redistribution_op_list->second.begin() + pos + kSize1);
+    // insert reshape before allgather
+    Operator left_reshape_op = ConstructReshapeOp(left_reshape_op_list[pos]);
+    redistribution_op_list->first.insert(redistribution_op_list->first.begin() + pos, left_reshape_op);
+    redistribution_op_list->second.insert(redistribution_op_list->second.begin() + pos, {false, 0});
+  }
+  return redistribution_op_list;
 }
 }  // namespace parallel
 }  // namespace mindspore
