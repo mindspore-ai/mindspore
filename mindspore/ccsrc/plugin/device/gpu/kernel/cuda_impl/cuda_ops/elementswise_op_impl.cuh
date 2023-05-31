@@ -31,6 +31,20 @@ constexpr uint kThreadsPerBlock = 256;
 constexpr uint kWaves = 32;
 constexpr uint kStride = 2;
 
+struct VectorizedConfig {
+  uint vec_nums;
+  uint tail_offset;
+  uint tail_nums;
+};
+
+inline VectorizedConfig GetVectorizedConfig(uint nums, uint vec_size) {
+  uint vec_nums = nums / vec_size;
+  uint tail_offset = vec_nums * vec_size;
+  uint tail_nums = nums - tail_offset;
+  VectorizedConfig config{vec_nums, tail_offset, tail_nums};
+  return config;
+}
+
 struct CudaConfig {
   int dev_{0};
   int sm_nums_{1};
@@ -129,7 +143,7 @@ bool IsAligned() {
 }
 
 template <uint vec_size, typename T, typename... Args>
-bool IsAligned(const T *ptr, const Args *...others) {
+bool IsAligned(const T *ptr, const Args *... others) {
   return reinterpret_cast<uintptr_t>(ptr) % sizeof(Vec<T, vec_size>) == 0 && IsAligned<vec_size, Args...>(others...);
 }
 
@@ -158,10 +172,19 @@ ApplyVec(const FunctorT &functor, const IN... in[vec_size]) {
   return ret;
 }
 
+template <uint vec_size, typename FunctorT, typename... Args>
+__device__ typename std::enable_if<CheckApply2<FunctorT>::value == false || vec_size % kStride != 0, void>::type
+GeneralApplyVec(const FunctorT &functor, Args... args[vec_size]) {
+#pragma unroll
+  for (uint j = 0; j < vec_size; ++j) {
+    functor((args + j)...);
+  }
+}
+
 template <uint vec_size, bool tail, typename Factory, typename OUT, typename... IN>
 __global__ void __launch_bounds__(kThreadsPerBlock)
-  DoApply(Factory factory, uint vec_nums, AlignVec<OUT, vec_size> *vec_out, const AlignVec<IN, vec_size> *...vec_in,
-          uint tail_nums, OUT *tail_out, const IN *...tail_in) {
+  DoApply(Factory factory, uint vec_nums, AlignVec<OUT, vec_size> *vec_out, const AlignVec<IN, vec_size> *... vec_in,
+          uint tail_nums, OUT *tail_out, const IN *... tail_in) {
   auto functor = factory();
   const uint global_tid = blockIdx.x * kThreadsPerBlock + threadIdx.x;
   for (uint i = global_tid; i < vec_nums; i += blockDim.x * gridDim.x) {
@@ -172,41 +195,84 @@ __global__ void __launch_bounds__(kThreadsPerBlock)
   }
 }
 
+template <uint vec_size, typename Factory, typename... Args>
+__global__ void __launch_bounds__(kThreadsPerBlock)
+  GeneralDoApply(Factory factory, uint vec_nums, AlignVec<Args, vec_size> *... vec_args, uint tail_nums,
+                 Args *... tail_args) {
+  auto functor = factory();
+  const uint global_tid = blockIdx.x * kThreadsPerBlock + threadIdx.x;
+  for (uint i = global_tid; i < vec_nums; i += blockDim.x * gridDim.x) {
+    GeneralApplyVec<vec_size, decltype(functor), Args...>(functor, (vec_args[i].elements_)...);
+  }
+  if (tail_nums > 0 && global_tid < tail_nums) {
+    functor((tail_args + global_tid)...);
+  }
+}
+
 template <uint vec_size, typename Factory, typename OUT, typename... IN>
-cudaError_t LaunchKernel(Factory factory, uint nums, OUT *out, const IN *...in, cudaStream_t stream) {
-  const uint vec_nums = nums / vec_size;
-  const uint tail_offset = vec_nums * vec_size;
-  const uint tail_nums = nums - tail_offset;
+cudaError_t LaunchKernel(Factory factory, uint nums, OUT *out, const IN *... in, cudaStream_t stream) {
+  VectorizedConfig vectorized_config = GetVectorizedConfig(nums, vec_size);
   CudaConfig config;
   cudaError_t err = GetCurrentConfig(&config);
   if (err != cudaSuccess) {
     return err;
   }
-  uint num_blocks = GetBestBlocks(vec_nums, config);
+  uint num_blocks = GetBestBlocks(vectorized_config.vec_nums, config);
   dim3 block{kThreadsPerBlock};
   dim3 grid{uint(num_blocks)};
-  if (tail_nums > 0) {
+  if (vectorized_config.tail_nums > 0) {
     auto func = DoApply<vec_size, true, Factory, OUT, IN...>;
-    func<<<grid, block, 0, stream>>>(factory, vec_nums, reinterpret_cast<AlignVec<OUT, vec_size> *>(out),
-                                    (reinterpret_cast<const AlignVec<IN, vec_size> *>(in))..., tail_nums,
-                                    out + tail_offset, (in + tail_offset)...);
+    func<<<grid, block, 0, stream>>>(
+      factory, vectorized_config.vec_nums, reinterpret_cast<AlignVec<OUT, vec_size> *>(out),
+      (reinterpret_cast<const AlignVec<IN, vec_size> *>(in))..., vectorized_config.tail_nums,
+      out + vectorized_config.tail_offset, (in + vectorized_config.tail_offset)...);
   } else {
     auto func = DoApply<vec_size, false, Factory, OUT, IN...>;
-    func<<<grid, block, 0, stream>>>(factory, vec_nums, reinterpret_cast<AlignVec<OUT, vec_size> *>(out),
-                                    (reinterpret_cast<const AlignVec<IN, vec_size> *>(in))..., tail_nums,
-                                    out + tail_offset, (in + tail_offset)...);
+    func<<<grid, block, 0, stream>>>(
+      factory, vectorized_config.vec_nums, reinterpret_cast<AlignVec<OUT, vec_size> *>(out),
+      (reinterpret_cast<const AlignVec<IN, vec_size> *>(in))..., vectorized_config.tail_nums,
+      out + vectorized_config.tail_offset, (in + vectorized_config.tail_offset)...);
   }
+  return cudaPeekAtLastError();
+}
+
+template <uint vec_size, typename Factory, typename... Args>
+cudaError_t LaunchKernel(Factory factory, uint nums, const Args *... args, cudaStream_t stream) {
+  VectorizedConfig vectorized_config = GetVectorizedConfig(nums, vec_size);
+  CudaConfig config;
+  cudaError_t err = GetCurrentConfig(&config);
+  if (err != cudaSuccess) {
+    return err;
+  }
+  uint num_blocks = GetBestBlocks(vectorized_config.vec_nums, config);
+  dim3 block{kThreadsPerBlock};
+  dim3 grid{uint(num_blocks)};
+  auto func = GeneralDoApply<vec_size, Factory, Args...>;
+  func<<<grid, block, 0, stream>>>(
+    factory, vectorized_config.vec_nums, (reinterpret_cast<AlignVec<Args, vec_size> *>(const_cast<Args *>(args)))...,
+    vectorized_config.tail_nums, (const_cast<Args *>(args) + vectorized_config.tail_offset)...);
   return cudaPeekAtLastError();
 }
 
 template <typename Factory, typename OUT, typename... IN>
 struct DoLaunch {
-  static cudaError_t Launch(Factory factory, uint n, OUT *out, const IN *...in, cudaStream_t stream) {
+  static cudaError_t Launch(Factory factory, uint n, OUT *out, const IN *... in, cudaStream_t stream) {
     constexpr uint max_pack_size = VecSize<OUT, IN...>();
     if (IsAligned<max_pack_size, OUT, IN...>(out, in...)) {
       return LaunchKernel<max_pack_size, Factory, OUT, IN...>(factory, n, out, in..., stream);
     }
     return LaunchKernel<1, Factory, OUT, IN...>(factory, n, out, in..., stream);
+  }
+};
+
+template <typename Factory, typename... Args>
+struct GeneralLaunch {
+  static cudaError_t Launch(Factory factory, uint n, const Args *... args, cudaStream_t stream) {
+    constexpr uint max_pack_size = VecSize<Args...>();
+    if (IsAligned<max_pack_size, Args...>(args...)) {
+      return LaunchKernel<max_pack_size, Factory, Args...>(factory, n, args..., stream);
+    }
+    return LaunchKernel<1, Factory, Args...>(factory, n, args..., stream);
   }
 };
 
@@ -252,6 +318,32 @@ template <typename FunctorT, typename OUT, typename IN, typename IN2, typename I
 inline cudaError_t Ternary(FunctorT functor, uint n, OUT *out, const IN *in, const IN2 *in2, const IN3 *in3,
                            cudaStream_t stream) {
   return TernaryTransit(TransitFactory<FunctorT>(functor), n, out, in, in2, in3, stream);
+}
+
+template <typename Factory, typename OUT, typename IN>
+inline cudaError_t UnaryInputBinaryOutputTransit(Factory factory, uint n, OUT *out, OUT *out2, const IN *in,
+                                                 cudaStream_t stream) {
+  return GeneralLaunch<Factory, OUT, OUT, IN>::Launch(factory, n, out, out2, in, stream);
+}
+
+// API elementwise for input: [in1], output: [out1, out2].
+template <typename FunctorT, typename OUT, typename IN>
+inline cudaError_t UnaryInputBinaryOutput(FunctorT functor, uint n, OUT *out, OUT *out2, const IN *in,
+                                          cudaStream_t stream) {
+  return UnaryInputBinaryOutputTransit(TransitFactory<FunctorT>(functor), n, out, out2, in, stream);
+}
+
+template <typename Factory, typename OUT, typename IN, typename IN2>
+inline cudaError_t BinaryInputTernaryOutputTransit(Factory factory, uint n, OUT *out, OUT *out2, OUT *out3,
+                                                   const IN *in, const IN2 *in2, cudaStream_t stream) {
+  return GeneralLaunch<Factory, OUT, OUT, OUT, IN, IN2>::Launch(factory, n, out, out2, out3, in, in2, stream);
+}
+
+// API elementwise for input: [in1, in2], output: [out1, out2, out3].
+template <typename FunctorT, typename OUT, typename IN, typename IN2>
+inline cudaError_t BinaryInputTernaryOutput(FunctorT functor, uint n, OUT *out, OUT *out2, OUT *out3, const IN *in,
+                                            const IN2 *in2, cudaStream_t stream) {
+  return BinaryInputTernaryOutputTransit(TransitFactory<FunctorT>(functor), n, out, out2, out3, in, in2, stream);
 }
 }  // namespace elementwise
 }  // namespace cuda

@@ -129,7 +129,7 @@ bool ClipByNormGpuKernelMod<T, S>::DoLaunch(const std::vector<AddressPtr> &input
   float *clip_norm_mul_output_addr = GetPossiblyNullDeviceAddress<float>(workspace, kIndex5);
   float *output_addr = GetDeviceAddress<float>(outputs, 0);
   // Running `cast(x)` to float32 data type
-  Cast(x_size_ / sizeof(T), x_addr, x_float_addr, reinterpret_cast<cudaStream_t>(stream_ptr), GET_CTX_DEVICE_ID);
+  Cast(x_size_ / sizeof(T), x_addr, x_float_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
   // Launch `cudnnReduceTensorNorm2` operator to achieve `L2_norm` calculation, keep_dims = true.
   if (all_match_) {
     AbsOp(x_size_ / sizeof(T), x_float_addr, l2norm_output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
@@ -157,8 +157,7 @@ bool ClipByNormGpuKernelMod<T, S>::DoLaunch(const std::vector<AddressPtr> &input
     is_broadcast, simplified_in0_shape, simplified_in1_shape, simplified_out_shape, x_float_addr, l2norm_output_addr,
     div_output_addr, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
   // Running `cast(clip_norm)` to the data type of `input_x`
-  Cast(clip_norm_size_ / sizeof(S), clip_norm_addr, clip_norm_float_addr, reinterpret_cast<cudaStream_t>(stream_ptr),
-       GET_CTX_DEVICE_ID);
+  Cast(clip_norm_size_ / sizeof(S), clip_norm_addr, clip_norm_float_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
   // Running '(x/l2_norm(x)) * clip_norm' and broadcast output shape to `input_x` shape
   if (clip_norm_need_broadcast_) {
     SimplifyBinaryBroadcastShape(l2_norm_ouths_shape_, clip_norm_rhs_shape_, l2_norm_ouths_shape_,

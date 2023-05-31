@@ -13,122 +13,182 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include <iostream>
 #include "momentum_impl.cuh"
 #include "include/cuda_fp16.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementswise_op_impl.cuh"
 
 template <typename T, typename S, typename G>
-__global__ void MomentumUpdateVariableKernel(const size_t size, T *variable, T *accumulation, const S *learning_rate,
-                                             const G *gradient, const S *momentum, bool use_nesterov) {
-  if (use_nesterov) {
-    for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (size); i += blockDim.x * gridDim.x) {
-      accumulation[i] = momentum[0] * accumulation[i] + gradient[i];
-      variable[i] -= gradient[i] * learning_rate[0] + accumulation[i] * momentum[0] * learning_rate[0];
-    }
-  } else {
-    for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (size); i += blockDim.x * gridDim.x) {
-      accumulation[i] = momentum[0] * accumulation[i] + gradient[i];
-      variable[i] -= learning_rate[0] * accumulation[i];
-    }
+struct MomentumUpdateVariableFunctor {
+  const S *learning_rate_;
+  const S *momentum_;
+  MomentumUpdateVariableFunctor(const S *learning_rate, const S *momentum) {
+    this->learning_rate_ = learning_rate;
+    this->momentum_ = momentum;
   }
-}
+  __device__ __forceinline__ void operator()(T *variable, T *accumulation, const G *gradient) const {
+    accumulation[0] = momentum_[0] * accumulation[0] + gradient[0];
+    variable[0] -= learning_rate_[0] * accumulation[0];
+  }
+};
+
+template <typename T, typename S, typename G>
+struct MomentumUpdateVariableWithNesterovFunctor {
+  const S *learning_rate_;
+  const S *momentum_;
+  MomentumUpdateVariableWithNesterovFunctor(const S *learning_rate, const S *momentum) {
+    this->learning_rate_ = learning_rate;
+    this->momentum_ = momentum;
+  }
+  __device__ __forceinline__ void operator()(T *variable, T *accumulation, const G *gradient) const {
+    accumulation[0] = momentum_[0] * accumulation[0] + gradient[0];
+    variable[0] -= gradient[0] * learning_rate_[0] + accumulation[0] * momentum_[0] * learning_rate_[0];
+  }
+};
+
 template <>
-__global__ void MomentumUpdateVariableKernel(const size_t size, half *variable, half *accumulation,
-                                             const float *learning_rate, const half *gradient, const float *momentum,
-                                             bool use_nesterov) {
-  if (use_nesterov) {
-    for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (size); i += blockDim.x * gridDim.x) {
-      accumulation[i] = __float2half(momentum[0]) * accumulation[i] + gradient[i];
-      variable[i] -= gradient[i] * __float2half(learning_rate[0]) +
-                     accumulation[i] * __float2half(momentum[0]) * __float2half(learning_rate[0]);
-    }
-  } else {
-    for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (size); i += blockDim.x * gridDim.x) {
-      accumulation[i] = __float2half(momentum[0]) * accumulation[i] + gradient[i];
-      variable[i] -= __float2half(learning_rate[0]) * accumulation[i];
-    }
+struct MomentumUpdateVariableFunctor<half, float, half> {
+  const float *learning_rate_;
+  const float *momentum_;
+  MomentumUpdateVariableFunctor(const float *learning_rate, const float *momentum) {
+    this->learning_rate_ = learning_rate;
+    this->momentum_ = momentum;
   }
-}
+  __device__ __forceinline__ void operator()(half *variable, half *accumulation, const half *gradient) const {
+    accumulation[0] = __float2half(momentum_[0]) * accumulation[0] + gradient[0];
+    variable[0] -= __float2half(learning_rate_[0]) * accumulation[0];
+  }
+};
+
 template <>
-__global__ void MomentumUpdateVariableKernel(const size_t size, float *variable, float *accumulation,
-                                             const float *learning_rate, const half *gradient, const float *momentum,
-                                             bool use_nesterov) {
-  if (use_nesterov) {
-    for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (size); i += blockDim.x * gridDim.x) {
-      accumulation[i] = momentum[0] * accumulation[i] + __half2float(gradient[i]);
-      variable[i] -= __half2float(gradient[i]) * learning_rate[0] + accumulation[i] * momentum[0] * learning_rate[0];
-    }
-  } else {
-    for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (size); i += blockDim.x * gridDim.x) {
-      accumulation[i] = momentum[0] * accumulation[i] + __half2float(gradient[i]);
-      variable[i] -= learning_rate[0] * accumulation[i];
-    }
+struct MomentumUpdateVariableWithNesterovFunctor<half, float, half> {
+  const float *learning_rate_;
+  const float *momentum_;
+  MomentumUpdateVariableWithNesterovFunctor(const float *learning_rate, const float *momentum) {
+    this->learning_rate_ = learning_rate;
+    this->momentum_ = momentum;
   }
-}
+  __device__ __forceinline__ void operator()(half *variable, half *accumulation, const half *gradient) const {
+    accumulation[0] = __float2half(momentum_[0]) * accumulation[0] + gradient[0];
+    variable[0] -= gradient[0] * __float2half(learning_rate_[0]) +
+                   accumulation[0] * __float2half(momentum_[0]) * __float2half(learning_rate_[0]);
+  }
+};
+
+template <>
+struct MomentumUpdateVariableFunctor<float, float, half> {
+  const float *learning_rate_;
+  const float *momentum_;
+  MomentumUpdateVariableFunctor(const float *learning_rate, const float *momentum) {
+    this->learning_rate_ = learning_rate;
+    this->momentum_ = momentum;
+  }
+  __device__ __forceinline__ void operator()(float *variable, float *accumulation, const half *gradient) const {
+    accumulation[0] = momentum_[0] * accumulation[0] + __half2float(gradient[0]);
+    variable[0] -= learning_rate_[0] * accumulation[0];
+  }
+};
+
+template <>
+struct MomentumUpdateVariableWithNesterovFunctor<float, float, half> {
+  const float *learning_rate_;
+  const float *momentum_;
+  MomentumUpdateVariableWithNesterovFunctor(const float *learning_rate, const float *momentum) {
+    this->learning_rate_ = learning_rate;
+    this->momentum_ = momentum;
+  }
+  __device__ __forceinline__ void operator()(float *variable, float *accumulation, const half *gradient) const {
+    accumulation[0] = momentum_[0] * accumulation[0] + __half2float(gradient[0]);
+    variable[0] -= __half2float(gradient[0]) * learning_rate_[0] + accumulation[0] * momentum_[0] * learning_rate_[0];
+  }
+};
+
+template <typename T, typename G>
+struct FusedMomentumWeightDecayScaleFunctor {
+  const T *learning_rate_;
+  const T *momentum_;
+  const T *weight_decay_;
+  const T *scale_;
+  FusedMomentumWeightDecayScaleFunctor(const T *learning_rate, const T *momentum, const T *weight_decay,
+                                       const T *scale) {
+    this->learning_rate_ = learning_rate;
+    this->momentum_ = momentum;
+    this->weight_decay_ = weight_decay;
+    this->scale_ = scale;
+  }
+  __device__ __forceinline__ void operator()(T *variable, T *accumulation, const G *gradient) const {
+    T grad = (variable[0] * weight_decay_[0] + static_cast<T>(gradient[0])) * scale_[0];
+    accumulation[0] = momentum_[0] * accumulation[0] + grad;
+    variable[0] -= learning_rate_[0] * accumulation[0];
+  }
+};
+
+template <typename T, typename G>
+struct FusedMomentumScaleFunctor {
+  const T *learning_rate_;
+  const T *momentum_;
+  const T *scale_;
+  FusedMomentumScaleFunctor(const T *learning_rate, const T *momentum, const T *scale) {
+    this->learning_rate_ = learning_rate;
+    this->momentum_ = momentum;
+    this->scale_ = scale;
+  }
+  __device__ __forceinline__ void operator()(T *variable, T *accumulation, const G *gradient) const {
+    accumulation[0] = momentum_[0] * accumulation[0] + static_cast<T>(gradient[0]) * scale_[0];
+    variable[0] -= learning_rate_[0] * accumulation[0];
+  }
+};
+
+template <typename T, typename G>
+struct FusedWeightDecayMomentumFunctor {
+  const T *learning_rate_;
+  const T *momentum_;
+  const T *weight_decay_;
+  FusedWeightDecayMomentumFunctor(const T *learning_rate, const T *momentum, const T *weight_decay) {
+    this->learning_rate_ = learning_rate;
+    this->momentum_ = momentum;
+    this->weight_decay_ = weight_decay;
+  }
+  __device__ __forceinline__ void operator()(T *variable, T *accumulation, const G *gradient) const {
+    T grad = variable[0] * weight_decay_[0] + static_cast<T>(gradient[0]);
+    accumulation[0] = momentum_[0] * accumulation[0] + grad;
+    variable[0] -= learning_rate_[0] * accumulation[0];
+  }
+};
+
 template <typename T, typename S, typename G>
 void MomentumUpdateVariable(const size_t size, T *variable, T *accumulation, const S *learning_rate, const G *gradient,
                             const S *momentum, bool use_nesterov, cudaStream_t cuda_stream) {
-  MomentumUpdateVariableKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
-    size, variable, accumulation, learning_rate, gradient, momentum, use_nesterov);
-}
-
-template <typename T, typename S>
-__global__ void FusedMomentumWeightDecayScaleKernel(const size_t element_num, T *weight_decay, T *scale, T *variable,
-                                                    T *accumulation, const T *learning_rate, const S *gradient,
-                                                    const T *momentum) {
-  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (element_num); i += blockDim.x * gridDim.x) {
-    T grad = (variable[i] * weight_decay[0] + static_cast<T>(gradient[i])) * scale[0];
-    accumulation[i] = momentum[0] * accumulation[i] + grad;
-    variable[i] -= learning_rate[0] * accumulation[i];
+  if (use_nesterov) {
+    MomentumUpdateVariableWithNesterovFunctor<T, S, G> functor{learning_rate, momentum};
+    cuda::elementwise::UnaryInputBinaryOutput(functor, (uint)(size), variable, accumulation, gradient, cuda_stream);
+  } else {
+    MomentumUpdateVariableFunctor<T, S, G> functor{learning_rate, momentum};
+    cuda::elementwise::UnaryInputBinaryOutput(functor, (uint)(size), variable, accumulation, gradient, cuda_stream);
   }
 }
 
-template <typename T, typename S>
-void FusedWeightDecayScaleMomentum(const size_t element_num, T *weight_decay, T *scale, T *variable, T *accumulation,
-                                   const T *learning_rate, const S *gradient, const T *momentum,
+template <typename T, typename G>
+void FusedWeightDecayScaleMomentum(const size_t size, T *weight_decay, T *scale, T *variable, T *accumulation,
+                                   const T *learning_rate, const G *gradient, const T *momentum,
                                    cudaStream_t cuda_stream) {
-  size_t thread_per_block = 256;
-  size_t block_per_grid = (element_num + thread_per_block - 1) / thread_per_block;
-  FusedMomentumWeightDecayScaleKernel<<<block_per_grid, thread_per_block, 0, cuda_stream>>>(
-    element_num, weight_decay, scale, variable, accumulation, learning_rate, gradient, momentum);
+  FusedMomentumWeightDecayScaleFunctor<T, G> functor{learning_rate, momentum, weight_decay, scale};
+  cuda::elementwise::UnaryInputBinaryOutput(functor, (uint)(size), variable, accumulation, gradient, cuda_stream);
 }
 
-template <typename T, typename S>
-__global__ void FusedMomentumScaleKernel(const size_t element_num, T *scale, T *variable, T *accumulation,
-                                         const T *learning_rate, const S *gradient, const T *momentum) {
-  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (element_num); i += blockDim.x * gridDim.x) {
-    accumulation[i] = momentum[0] * accumulation[i] + static_cast<T>(gradient[i]) * scale[0];
-    variable[i] -= learning_rate[0] * accumulation[i];
-  }
+template <typename T, typename G>
+void FusedScaleMomentum(const size_t size, T *scale, T *variable, T *accumulation, const T *learning_rate,
+                        const G *gradient, const T *momentum, cudaStream_t cuda_stream) {
+  FusedMomentumScaleFunctor<T, G> functor{learning_rate, momentum, scale};
+  cuda::elementwise::UnaryInputBinaryOutput(functor, (uint)(size), variable, accumulation, gradient, cuda_stream);
 }
 
-template <typename T, typename S>
-void FusedScaleMomentum(const size_t element_num, T *scale, T *variable, T *accumulation, const T *learning_rate,
-                        const S *gradient, const T *momentum, cudaStream_t cuda_stream) {
-  size_t thread_per_block = 256;
-  size_t block_per_grid = (element_num + thread_per_block - 1) / thread_per_block;
-  FusedMomentumScaleKernel<<<block_per_grid, thread_per_block, 0, cuda_stream>>>(
-    element_num, scale, variable, accumulation, learning_rate, gradient, momentum);
-}
-
-template <typename T, typename S>
-__global__ void FusedWeightDecayMomentumKernel(const size_t element_num, T *weight_decay, T *variable, T *accumulation,
-                                               const T *learning_rate, const S *gradient, const T *momentum) {
-  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (element_num); i += blockDim.x * gridDim.x) {
-    T grad = variable[i] * weight_decay[0] + static_cast<T>(gradient[i]);
-    accumulation[i] = momentum[0] * accumulation[i] + grad;
-    variable[i] -= learning_rate[0] * accumulation[i];
-  }
-}
-
-template <typename T, typename S>
-void FusedWeightDecayMomentum(const size_t element_num, T *weight_decay, T *variable, T *accumulation,
-                              const T *learning_rate, const S *gradient, const T *momentum, cudaStream_t cuda_stream) {
-  size_t thread_per_block = 256;
-  size_t block_per_grid = (element_num + thread_per_block - 1) / thread_per_block;
-  FusedWeightDecayMomentumKernel<<<block_per_grid, thread_per_block, 0, cuda_stream>>>(
-    element_num, weight_decay, variable, accumulation, learning_rate, gradient, momentum);
+template <typename T, typename G>
+void FusedWeightDecayMomentum(const size_t size, T *weight_decay, T *variable, T *accumulation, const T *learning_rate,
+                              const G *gradient, const T *momentum, cudaStream_t cuda_stream) {
+  FusedWeightDecayMomentumFunctor<T, G> functor{learning_rate, momentum, weight_decay};
+  cuda::elementwise::UnaryInputBinaryOutput(functor, (uint)(size), variable, accumulation, gradient, cuda_stream);
 }
 
 // CombineFusedScaleMomentum
@@ -212,8 +272,8 @@ template CUDA_LIB_EXPORT void MomentumUpdateVariable<uint32_t, uint32_t, uint32_
   const size_t size, uint32_t *variable, uint32_t *accumulation, const uint32_t *learning_rate,
   const uint32_t *gradient, const uint32_t *momentum, bool use_nesterov, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MomentumUpdateVariable<int32_t, int32_t, int32_t>(
-  const size_t size, int32_t *variable, int32_t *accumulation, const int32_t *learning_rate,
-  const int32_t *gradient, const int32_t *momentum, bool use_nesterov, cudaStream_t cuda_stream);
+  const size_t size, int32_t *variable, int32_t *accumulation, const int32_t *learning_rate, const int32_t *gradient,
+  const int32_t *momentum, bool use_nesterov, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MomentumUpdateVariable<int64_t, int64_t, int64_t>(
   const size_t size, int64_t *variable, int64_t *accumulation, const int64_t *learning_rate, const int64_t *gradient,
   const int64_t *momentum, bool use_nesterov, cudaStream_t cuda_stream);

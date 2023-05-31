@@ -370,12 +370,12 @@ void ArrayReduceGpuKernelMod::LaunchIntKernel(const std::vector<AddressPtr> &inp
   std::stringstream ss;
   ss << "For '" << kernel_name_ << "', cudnnReduceTensor failed.";
 
-  Cast(input_num, input_addr, casted_input, reinterpret_cast<cudaStream_t>(stream_ptr), GET_CTX_DEVICE_ID);
+  Cast(input_num, input_addr, casted_input, reinterpret_cast<cudaStream_t>(stream_ptr));
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
     cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, workspace_addr, workspace_size_, &alpha,
                       inputA_descriptor_, casted_input, &beta, outputC_descriptor_, output_before_cast),
     ss.str());
-  Cast(output_num, output_before_cast, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr), GET_CTX_DEVICE_ID);
+  Cast(output_num, output_before_cast, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
   device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(casted_input);
   device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(output_before_cast);
   return;
