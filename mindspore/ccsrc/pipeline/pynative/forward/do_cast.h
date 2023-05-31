@@ -56,9 +56,11 @@ class CastOperation {
                        const std::vector<SignatureEnumDType> &dtypes) const;
   void SetImplicitCast(const FrontendOpRunInfoPtr &op_run_info);
 
+  PrimitivePtr GetPrimByTypeId(const TypeId &type_id) const;
+
  private:
-  PrimitivePtr cast_prim_{nullptr};
   ImplicitCastCache implicit_cast_map_;
+  mutable mindspore::HashMap<TypeId, PrimitivePtr> type_prim_cache_;
 };
 using CastOperationPtr = std::shared_ptr<CastOperation>;
 }  // namespace pynative

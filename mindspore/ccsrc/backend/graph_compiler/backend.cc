@@ -539,11 +539,17 @@ TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index)
 
   return tensor;
 }
-TensorPtr CreateOutputTensorDynamicImpl(const AnfNodePtr &output_node, size_t output_index,
-                                        const std::shared_ptr<device::DeviceAddress> &address, const TypeId &type_id,
-                                        const ShapeVector &shape) {
-  auto tensor = std::make_shared<tensor::Tensor>(type_id, shape);
-  tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(output_node, output_index));
+TensorPtr CreateOutputTensorDynamicImpl(const OpCompilerInfoPtr &op_compiler_info, const AnfNodePtr &output_node,
+                                        size_t output_index, const std::shared_ptr<device::DeviceAddress> &address,
+                                        size_t idx_in_graph_outputs) {
+  MS_EXCEPTION_IF_NULL(output_node);
+  MS_EXCEPTION_IF_NULL(address);
+  MS_EXCEPTION_IF_NULL(op_compiler_info);
+
+  // Create host tensor, the output tensor should use the infer type, it will be handed correctly by tensor data sync
+  // when infer type is not equal to device type.
+  auto tensor = std::make_shared<tensor::Tensor>(address->type_id(), address->host_shape());
+  tensor->set_padding_type(op_compiler_info->graph_outputs_padding_type_[idx_in_graph_outputs]);
 
   // Put device tensor into host tensor.
   address->SetNodeIndex(output_node, output_index);
@@ -561,19 +567,16 @@ TensorPtr CreateOutputTensorDynamicImpl(const AnfNodePtr &output_node, size_t ou
   return tensor;
 }
 
-TensorPtr CreateOutputTensorDynamic(const AnfNodePtr &output_node, size_t output_index,
-                                    const std::shared_ptr<device::DeviceAddress> &address) {
+TensorPtr CreateOutputTensorDynamic(const OpCompilerInfoPtr &op_compiler_info, const AnfNodePtr &output_node,
+                                    size_t output_index, const std::shared_ptr<device::DeviceAddress> &address,
+                                    size_t idx_in_graph_outputs) {
   MS_EXCEPTION_IF_NULL(output_node);
   const auto &abstract = common::AnfAlgo::GetNodeAbstractByIndex(output_node, output_index);
   if (abstract != nullptr && abstract->isa<abstract::AbstractMapTensor>()) {
     return CreateOutputMapTensorDynamic(output_node, output_index, address);
   }
-  // Create host tensor, the output tensor should use the infer type, it will be handed correctly by tensor data sync
-  // when infer type is not equal to device type.
-  auto type_id = address->type_id();
-  const auto &shape = address->host_shape();
 
-  return CreateOutputTensorDynamicImpl(output_node, output_index, address, type_id, shape);
+  return CreateOutputTensorDynamicImpl(op_compiler_info, output_node, output_index, address, idx_in_graph_outputs);
 }
 }  // namespace
 
@@ -1111,15 +1114,10 @@ void MindRTBackend::RunOp(const session::BackendOpRunInfoPtr &op_run_info, Vecto
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   MS_LOG(DEBUG) << "Run Op " << op_run_info->base_op_run_info.op_name;
-  // Get the device context.
-  const auto &device_context =
-    device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
-  MS_EXCEPTION_IF_NULL(device_context);
-  device_context->Initialize();
 
   bool single_op_cache_hit = true;
   auto op_compiler_info =
-    pynative::OpCompiler::GetInstance().Compile(op_run_info, &single_op_cache_hit, device_context);
+    pynative::OpCompiler::GetInstance().Compile(op_run_info, &single_op_cache_hit, device_name_, device_id_);
   MS_EXCEPTION_IF_NULL(op_compiler_info);
   if (runtime::OpExecutor::GetInstance().ActorInQueue(op_compiler_info->graph_id_)) {
     WaitTaskFinish();
@@ -1140,16 +1138,11 @@ void MindRTBackend::RunOpDynamic(const session::BackendOpRunInfoPtr &op_run_info
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   MS_LOG(DEBUG) << "Run Op " << op_run_info->base_op_run_info.op_name;
-  // Get the device context.
-  const auto &device_context =
-    device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
-  MS_EXCEPTION_IF_NULL(device_context);
-  device_context->Initialize();
 
   // Single op graph compile
   bool single_op_cache_hit = true;
   auto op_compiler_info =
-    pynative::OpCompiler::GetInstance().Compile(op_run_info, &single_op_cache_hit, device_context);
+    pynative::OpCompiler::GetInstance().Compile(op_run_info, &single_op_cache_hit, device_name_, device_id_);
   MS_EXCEPTION_IF_NULL(op_compiler_info);
 
   RunOpImplDynamic(single_op_cache_hit, op_compiler_info, op_run_info, outputs);
@@ -1183,15 +1176,21 @@ void MindRTBackend::UpdateOutputDynamic(const OpCompilerInfoPtr &op_compiler_inf
   MS_EXCEPTION_IF_NULL(op_compiler_info);
   auto output_nodes = op_compiler_info->graph_output_nodes_;
   auto outputs_size = output_nodes.size();
+  if (op_compiler_info->graph_outputs_tensor_num_.size() != outputs_size) {
+    MS_LOG(EXCEPTION) << "The size of graph_outputs_tensor_num_:" << op_compiler_info->graph_outputs_tensor_num_.size()
+                      << " is not equal to outputs_size:" << outputs_size;
+  }
+
   for (size_t i = 0; i < outputs_size; ++i) {
     auto item_with_index = output_nodes[i];
     MS_EXCEPTION_IF_NULL(item_with_index.first);
-    if (AnfAlgo::GetOutputTensorNum(item_with_index.first) == 0) {
+    if (op_compiler_info->graph_outputs_tensor_num_[i] == 0) {
       continue;
     }
     auto output_address = device_address_list[i];
     MS_EXCEPTION_IF_NULL(output_address);
-    TensorPtr output_tensor = CreateOutputTensorDynamic(item_with_index.first, item_with_index.second, output_address);
+    TensorPtr output_tensor =
+      CreateOutputTensorDynamic(op_compiler_info, item_with_index.first, item_with_index.second, output_address, i);
     MS_EXCEPTION_IF_NULL(output_tensor);
     output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
     outputs->emplace_back(output_tensor);

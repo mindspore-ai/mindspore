@@ -54,6 +54,7 @@ struct Common {
   static void StubNodeToValue(const FrontendOpRunInfoPtr &op_run_info);
   static ValuePtr InitGradInfo(const ValuePtr &value, const TopCellInfoPtr &top_cell = nullptr,
                                const TensorGradType &grad_type = TensorGradType::kConstant, size_t op_index = 0);
+  static void GetConstInputToAttr(const FrontendOpRunInfoPtr &op_run_info);
 };
 
 // Parser python
@@ -82,10 +83,8 @@ struct DataConvert {
   static void ConvertTupleValueToTensor(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &value_seq,
                                         size_t index);
   static void ConvertValueToTensor(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, size_t index);
-  static bool NeedConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_run_info, const std::string &device_target,
-                                          mindspore::HashSet<size_t> *input_to_attr_ptr);
   static bool RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v,
-                                           size_t input_index, const mindspore::HashSet<size_t> &input_attrs);
+                                           size_t input_index);
 };
 };  // namespace PyNativeAlgo
 }  // namespace pynative

@@ -582,7 +582,7 @@ device::DeviceAddressPtr CreateTensorDeviceAddressWithTensorAndCachedInfo(
   auto format = cached_device_address->format();
   auto dtype = cached_device_address->type_id();
   auto shape = tensor->shape();
-  size_t tensor_size = GetTensorDeviceSize(node, shape, format, dtype, 0);
+  size_t tensor_size = GetTensorDeviceSize(device_context, node, shape, format, dtype, 0);
 
   auto new_device_address =
     device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, format, dtype, tensor->shape());
@@ -604,11 +604,11 @@ device::DeviceAddressPtr CreateTensorDeviceAddressWithTensorAndCachedInfo(
   return new_device_address;
 }
 
-void UpdateTensorCache(const device::DeviceAddressPtr &input_device_address,
+void UpdateTensorCache(const DeviceContext *device_context, const device::DeviceAddressPtr &input_device_address,
                        const device::DeviceAddressPtr &cached_device_address, const TensorPtr &tensor,
                        const AnfNodePtr &node) {
   auto format = cached_device_address->format();
-  auto size = GetTensorDeviceSize(node, tensor->shape(), format, cached_device_address->type_id(), 0);
+  auto size = GetTensorDeviceSize(device_context, node, tensor->shape(), format, cached_device_address->type_id(), 0);
   cached_device_address->SetSize(size);
   cached_device_address->set_host_shape(tensor->shape());
   cached_device_address->set_ptr(input_device_address->GetMutablePtr());
@@ -659,7 +659,7 @@ void UpdateInputInCompileInfo(const OpCompilerInfoPtr &op_compiler_info, const s
     }
     if (device_address != nullptr) {
       // Update cached input info by input tensor info
-      UpdateTensorCache(device_address, op_compiler_info->inputs_[i], input_tensor,
+      UpdateTensorCache(op_compiler_info->device_context_, device_address, op_compiler_info->inputs_[i], input_tensor,
                         op_compiler_info->graph_->inputs()[i]);
     } else {
       // Create new device address using tensor and cached device address

@@ -350,17 +350,21 @@ void UpdateOutputAddressForRef(const OpCompilerInfoPtr &op_compiler_info,
   }
 }
 
-size_t GetTensorDeviceSize(const AnfNodePtr &node, const ShapeVector &shape, std::string format, TypeId dtype,
-                           size_t output_index) {
+size_t GetTensorDeviceSize(const DeviceContext *device_context, const AnfNodePtr &node, const ShapeVector &shape,
+                           std::string format, TypeId dtype, size_t output_index) {
+  MS_EXCEPTION_IF_NULL(device_context);
   auto device_shape = shape;
-  if (device_shape.empty() && format != kOpFormat_DEFAULT) {
-    device_shape = trans::PaddingShape(device_shape, format, AnfAlgo::GetOutputReshapeType(node, output_index));
-    device_shape = trans::TransShapeToDevice(device_shape, format, node, output_index, dtype);
-  } else {
-    if (trans::IsNeedPadding(format, device_shape)) {
-      device_shape = trans::PaddingShape(device_shape, format, AnfAlgo::GetOutputReshapeType(node, output_index), node);
+  if (device_context->GetDeviceType() == device::DeviceType::kAscend) {
+    if (device_shape.empty() && format != kOpFormat_DEFAULT) {
+      device_shape = trans::PaddingShape(device_shape, format, AnfAlgo::GetOutputReshapeType(node, output_index));
+      device_shape = trans::TransShapeToDevice(device_shape, format, node, output_index, dtype);
+    } else {
+      if (trans::IsNeedPadding(format, device_shape)) {
+        device_shape =
+          trans::PaddingShape(device_shape, format, AnfAlgo::GetOutputReshapeType(node, output_index), node);
+      }
+      device_shape = trans::TransShapeToDevice(device_shape, format, node, output_index, dtype);
     }
-    device_shape = trans::TransShapeToDevice(device_shape, format, node, output_index, dtype);
   }
   size_t type_size = GetTypeByte(TypeIdToType(dtype));
   size_t tensor_size = type_size * SizeOf(device_shape);
@@ -407,7 +411,7 @@ vector<device::DeviceAddressPtr> DeviceAddressUtils::CreateGraphOutputDeviceAddr
       auto shape = shape_vector->shape();
       auto output_type = cache_output_address->type_id();
       auto output_format = cache_output_address->format();
-      auto address_size = GetTensorDeviceSize(output_node, shape, output_format, output_type, index);
+      auto address_size = GetTensorDeviceSize(device_context, output_node, shape, output_format, output_type, index);
       auto device_address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, address_size,
                                                                                      output_format, output_type, shape);
       MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(output_node)
