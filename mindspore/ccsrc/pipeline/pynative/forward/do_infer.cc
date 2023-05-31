@@ -100,7 +100,7 @@ void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) cons
   op_run_info->base_op_run_info.abstract = nullptr;
   auto eval_impl = GetPyNativePrimitiveInferImpl(prim);
   // Only cache the abstract when the primitive should call the python code.
-  if (GetOutputAbstractByCache(op_run_info)) {
+  if (!eval_impl.has_value() && GetOutputAbstractByCache(op_run_info)) {
     return;
   }
   // Cache miss to call the infer function
