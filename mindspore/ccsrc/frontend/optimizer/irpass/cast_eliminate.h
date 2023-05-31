@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_CAST_ELIMINATE_H_
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_CAST_ELIMINATE_H_
 
+#include <map>
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/optimizer.h"
@@ -46,10 +47,26 @@ class TwoCastEliminater : public AnfVisitor {
   void Reset() {
     x_ = nullptr;
     t_ = nullptr;
+    y_ = nullptr;
   }
 
  private:
-  AnfNodePtr x_{nullptr}, t_{nullptr};
+  bool CheckTypesIsIncreasingOrDecreasing();
+  bool CheckTwoTypes(const std::map<TypeId, int> &type_map, TypeId type1, TypeId type2) const;
+  bool CheckThreeTypes(const std::map<TypeId, int> &type_map, TypeId type1, TypeId type2, TypeId type3) const;
+  std::map<TypeId, int> int_map_ = {
+    {kNumberTypeInt, 0}, {kNumberTypeInt8, 1}, {kNumberTypeInt16, 2}, {kNumberTypeInt32, 3}, {kNumberTypeInt64, 4}};
+  std::map<TypeId, int> uint_map_ = {{kNumberTypeUInt, 0},
+                                     {kNumberTypeUInt8, 1},
+                                     {kNumberTypeUInt16, 2},
+                                     {kNumberTypeUInt32, 3},
+                                     {kNumberTypeUInt64, 4}};
+  std::map<TypeId, int> float_map_ = {{kNumberTypeFloat, 0},
+                                      {kNumberTypeFloat16, 1},
+                                      {kNumberTypeFloat32, 2},
+                                      {kNumberTypeFloat64, 3},
+                                      {kNumberTypeDouble, 4}};
+  AnfNodePtr x_{nullptr}, t_{nullptr}, y_{nullptr};
 };
 
 class CastEliminater : public OptimizerCaller {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -449,7 +449,7 @@ constexpr auto kAttrBins = "bins";
 constexpr auto kAttrMin = "min";
 constexpr auto kAttrMax = "max";
 constexpr auto kAttrIsAiCpuKernel = "is_AICPU_kernel";
-constexpr auto kIsBackendCast = "is_backed_cast";
+constexpr auto kIsBackendCast = "is_backend_cast";
 constexpr auto kAttrOutputNames = "output_names";
 constexpr auto kAttrAsync = "async";
 constexpr auto kAttrOffload = "offload";

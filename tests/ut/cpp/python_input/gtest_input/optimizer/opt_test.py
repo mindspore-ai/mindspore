@@ -488,22 +488,6 @@ def elim_two_reshape(tag):
     return fns[tag]
 
 
-def elim_two_cast(tag):
-    """ elim_two_cast """
-    fns = FnDict()
-    cast = P.Cast()
-
-    @fns
-    def before(x, a, b):
-        return cast(cast(x, a), b)
-
-    @fns
-    def after(x, a, b):
-        return cast(x, b)
-
-    return fns[tag]
-
-
 def test_elim_transpose(tag):
     """ test_elim_transpose """
     fns = FnDict()

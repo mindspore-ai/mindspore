@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,12 +86,74 @@ void CastSameTypeEliminater::Visit(const AnfNodePtr &node) {
   }
 }
 
+bool TwoCastEliminater::CheckTwoTypes(const std::map<TypeId, int> &type_map, TypeId type1, TypeId type2) const {
+  auto type1_iter = type_map.find(type1);
+  auto type2_iter = type_map.find(type2);
+  if (type1_iter != type_map.end() && type2_iter != type_map.end()) {
+    return type1_iter->second <= type2_iter->second;
+  }
+  return false;
+}
+
+bool TwoCastEliminater::CheckThreeTypes(const std::map<TypeId, int> &type_map, TypeId type1, TypeId type2,
+                                        TypeId type3) const {
+  auto type1_iter = type_map.find(type1);
+  auto type2_iter = type_map.find(type2);
+  auto type3_iter = type_map.find(type3);
+  if (type1_iter != type_map.end() && type2_iter != type_map.end() && type3_iter != type_map.end()) {
+    return type1_iter->second <= type2_iter->second && type2_iter->second <= type3_iter->second;
+  }
+  return false;
+}
+
+// {prim::kPrimCast, {prim::kPrimCast, X, Y}, T}  -> {prim::kPrimCast, X, T}
+// y_type == t_type or x_type <= y_type or x_type >= y_type >= t_type
+bool TwoCastEliminater::CheckTypesIsIncreasingOrDecreasing() {
+  auto x_type = x_->Type();
+  if (x_type->isa<TensorType>()) {
+    x_type = x_type->cast<TensorTypePtr>()->element();
+  }
+
+  auto y_type = GetValueNode<TypePtr>(y_);
+  MS_EXCEPTION_IF_NULL(y_type);
+  if (y_type->isa<TensorType>()) {
+    y_type = y_type->cast<TensorTypePtr>()->element();
+  }
+
+  auto t_type = GetValueNode<TypePtr>(t_);
+  MS_EXCEPTION_IF_NULL(t_type);
+  if (t_type->isa<TensorType>()) {
+    t_type = t_type->cast<TensorTypePtr>()->element();
+  }
+  auto x_type_id = x_type->type_id();
+  auto y_type_id = y_type->type_id();
+  auto t_type_id = t_type->type_id();
+  // y_type == t_type
+  if (y_type_id == t_type_id) {
+    return true;
+  }
+  // If the precision is increasing or decreasing, the cast can be eliminated.
+  // x_type <= y_type
+  bool increasing = CheckTwoTypes(int_map_, x_type_id, y_type_id) || CheckTwoTypes(uint_map_, x_type_id, y_type_id) ||
+                    CheckTwoTypes(float_map_, x_type_id, y_type_id);
+  if (increasing) {
+    return true;
+  }
+  //  x_type >= y_type >= t_type
+  return CheckThreeTypes(int_map_, t_type_id, y_type_id, x_type_id) ||
+         CheckThreeTypes(uint_map_, t_type_id, y_type_id, x_type_id) ||
+         CheckThreeTypes(float_map_, t_type_id, y_type_id, x_type_id);
+}
+
 // {prim::kPrimCast, {prim::kPrimCast, X, Y}, T}
 AnfNodePtr TwoCastEliminater::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
   Reset();
   AnfVisitor::Match(prim::kPrimCast, {IsCNode, IsNode})(node);
 
-  if (x_ != nullptr && t_ != nullptr) {
+  if (x_ == nullptr || t_ == nullptr || y_ == nullptr) {
+    return nullptr;
+  }
+  if (CheckTypesIsIncreasingOrDecreasing()) {
     auto cast_op = python_adapter::GetPyFn("mindspore.ops.operations", "Cast")();
     ValuePtr cast = parse::data_converter::PyDataToValue(cast_op);
     auto cnode = NewCNode({NewValueNode(cast), x_, t_}, node->func_graph());
@@ -106,10 +168,13 @@ void TwoCastEliminater::Visit(const AnfNodePtr &node) {
     auto cnode = node->cast<CNodePtr>();
     // {prim::kPrimCast, X, Y}
     constexpr size_t cast_size = 3;
+    constexpr size_t cast_data_index = 1;
+    constexpr size_t cast_type_index = 2;
     if (cnode->size() != cast_size) {
       return;
     }
-    x_ = cnode->input(1);
+    x_ = cnode->input(cast_data_index);
+    y_ = cnode->input(cast_type_index);
   } else {
     t_ = node;
   }
