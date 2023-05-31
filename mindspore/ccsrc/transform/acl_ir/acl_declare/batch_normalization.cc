@@ -21,25 +21,25 @@ namespace transform {
 REGISTER_ACL_OP(BNTrainingReduce).Input(0, {"NCHW"}, {}, "NCH");
 
 REGISTER_ACL_OP(BNTrainingUpdate)
-  .Input(0, {"NCHW"}, {}, "NCH")
-  .Input(1, {"NCHW"}, {})
-  .Input(2, {"NCHW"}, {})
+  .Input(0, {"NCHW"}, {"NC1HWC0"}, "NCH")
+  .Input(1, {"NCHW"}, {"NC1HWC0"})
+  .Input(2, {"NCHW"}, {"NC1HWC0"})
   .Input(3, {"NCHW"}, {"NC1HWC0"})
   .Input(4, {"NCHW"}, {"NC1HWC0"})
   .Input(5, {"NCHW"}, {"NC1HWC0"})
   .Input(6, {"NCHW"}, {"NC1HWC0"});
 
 REGISTER_ACL_OP(BNTrainingUpdateGrad)
-  .Input(0, {"NCHW"}, {}, "NCH")
-  .Input(1, {"NCHW"}, {}, "NCH")
-  .Input(2, {"NCHW"}, {})
-  .Input(3, {"NCHW"}, {});
+  .Input(0, {"NCHW"}, {"NC1HWC0"}, "NCH")
+  .Input(1, {"NCHW"}, {"NC1HWC0"}, "NCH")
+  .Input(2, {"NCHW"}, {"NC1HWC0"})
+  .Input(3, {"NCHW"}, {"NC1HWC0"});
 
 REGISTER_ACL_OP(BNTrainingReduceGrad)
-  .Input(0, {"NCHW"}, {}, "NCH")
-  .Input(1, {"NCHW"}, {}, "NCH")
-  .Input(2, {"NCHW"}, {})
-  .Input(3, {"NCHW"}, {})
+  .Input(0, {"NCHW"}, {"NC1HWC0"}, "NCH")
+  .Input(1, {"NCHW"}, {"NC1HWC0"}, "NCH")
+  .Input(2, {"NCHW"}, {"NC1HWC0"})
+  .Input(3, {"NCHW"}, {"NC1HWC0"})
   .Input(4, {"NCHW"}, {"NC1HWC0"})
   .Input(5, {"NCHW"}, {"NC1HWC0"})
   .Input(6, {"NCHW"}, {"NC1HWC0"});

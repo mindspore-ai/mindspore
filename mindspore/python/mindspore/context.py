@@ -133,6 +133,10 @@ class _ContextSwitchInfo(threading.local):
         self.context_stack.pop()
 
 
+def set_auto_tune_mode(tune_mode):
+    logger.warning(f"AutoTune has been abandoned and no longer takes effect, '{tune_mode}'")
+
+
 class _Context:
     """
     _Context is the environment in which operations are executed
@@ -311,14 +315,6 @@ class _Context:
         self.set_param(ms_ctx_param.device_target, target)
         if self.enable_debug_runtime and target == "CPU":
             self.set_backend_policy("vm")
-
-    def set_auto_tune_mode(self, tune_mode):
-        candidate = ["NO_TUNE", "RL", "GA", "RL,GA", "GA,RL"]
-        if tune_mode in candidate:
-            self.set_param(ms_ctx_param.auto_tune_mode, tune_mode)
-        else:
-            raise ValueError(f"For 'context.set_context', the argument 'auto_tune_mode' must be in "
-                             f"['NO_TUNE', 'RL', 'GA', 'RL,GA', 'GA,RL'], but got {tune_mode}.")
 
     def set_device_id(self, device_id):
         if device_id < 0 or device_id > 4095:
@@ -885,8 +881,6 @@ def set_context(**kwargs):
     |                         +------------------------------+----------------------------+
     |                         |  enable_reduce_precision     |  Ascend                    |
     |                         +------------------------------+----------------------------+
-    |                         |  auto_tune_mode              |  Ascend                    |
-    |                         +------------------------------+----------------------------+
     |                         |  check_bprop                 |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
     |                         |  max_call_depth              |  CPU/GPU/Ascend            |
@@ -1025,14 +1019,6 @@ def set_context(**kwargs):
         enable_reduce_precision (bool): Whether to enable precision reduction.
             If the operator does not support the user-specified precision, the precision will
             be changed automatically. Default: True.
-        auto_tune_mode (str): The mode of auto tune when op building, get the best tiling performance.
-            Default: NO_TUNE. The value must be in ['RL', 'GA', 'RL,GA'].
-
-            - RL: Reinforcement Learning tune.
-            - GA: Genetic Algorithm tune.
-            - RL,GA: When both RL and GA optimization are enabled, the tool automatically selects RL or GA based on
-              different types of operators in the network model. The sequence of RL and GA is not differentiated
-              (Automatic selection).
         check_bprop (bool): Whether to check back propagation nodes. The checking ensures that the shape and dtype
             of back propagation node outputs is the same as input parameters. Default: False.
         max_call_depth (int): Specify the maximum depth of function call. Must be positive integer. Default: 1000.
@@ -1131,7 +1117,6 @@ def set_context(**kwargs):
         >>> ms.set_context(print_file_path="print.pb")
         >>> ms.set_context(max_call_depth=80)
         >>> ms.set_context(env_config_path="./env_config.json")
-        >>> ms.set_context(auto_tune_mode="GA,RL")
         >>> ms.set_context(grad_for_scalar=True)
         >>> ms.set_context(enable_compile_cache=True, compile_cache_path="./cache.ms")
         >>> ms.set_context(pynative_synchronize=True)
