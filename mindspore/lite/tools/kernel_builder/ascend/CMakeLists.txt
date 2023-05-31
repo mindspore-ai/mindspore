@@ -61,9 +61,9 @@ message("RUN_TARGET ${RUN_TARGET}")
 
 add_custom_command(TARGET ${RUN_TARGET}
         PRE_BUILD
-        COMMAND mkdir -p ./makepkg/packages/${PROJECT_DIR}/op_impl/ai_core/tbe/mslite_impl
-        COMMAND mkdir -p ./makepkg/packages/${PROJECT_DIR}/op_impl/vector_core/tbe/mslite_impl
-        COMMAND mkdir -p ./makepkg/packages/${PROJECT_DIR}/op_impl/cpu/aicpu_kernel/impl
+        COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/makepkg/packages/${PROJECT_DIR}/op_impl/ai_core/tbe/mslite_impl
+        COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/makepkg/packages/${PROJECT_DIR}/op_impl/vector_core/tbe/mslite_impl
+        COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/makepkg/packages/${PROJECT_DIR}/op_impl/cpu/aicpu_kernel/impl
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/cmake/util/gen_impl_and_mrege_json.sh
                         ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
         COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/scripts/* ./makepkg/
