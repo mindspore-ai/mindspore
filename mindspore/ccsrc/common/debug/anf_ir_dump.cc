@@ -97,30 +97,30 @@ std::string GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_graph) {
                ->isa<prim::HyperMapPy>()) {  // This statement must before 'meta_graph->isa<prim::HyperMap>()'
     auto hyper_map = meta_func_graph->cast<prim::HyperMapPyPtr>();
     if (hyper_map->GetFnLeaf() != nullptr) {
-      oss << "{fn_leaf=" << GetMetaFuncGraphText(hyper_map->GetFnLeaf()) << "}";
+      oss << "{fn_leaf: " << GetMetaFuncGraphText(hyper_map->GetFnLeaf()) << "}";
     }
   } else if (meta_func_graph->isa<prim::HyperMap>()) {
     auto hyper_map = meta_func_graph->cast<prim::HyperMapPtr>();
     if (hyper_map->GetFnLeaf() != nullptr) {
-      oss << "{fn_leaf=" << GetMetaFuncGraphText(hyper_map->GetFnLeaf()) << "}";
+      oss << "{fn_leaf: " << GetMetaFuncGraphText(hyper_map->GetFnLeaf()) << "}";
     }
   } else if (meta_func_graph->isa<prim::MapPy>()) {  // This statement must before 'meta_graph->isa<prim::Map>()'
     auto map = meta_func_graph->cast<prim::MapPyPtr>();
     if (map->GetFnLeaf() != nullptr) {
-      oss << "{fn_leaf=" << GetMetaFuncGraphText(map->GetFnLeaf()) << "}";
+      oss << "{fn_leaf: " << GetMetaFuncGraphText(map->GetFnLeaf()) << "}";
     }
   } else if (meta_func_graph->isa<prim::Map>()) {
     auto map = meta_func_graph->cast<prim::MapPtr>();
     if (map->GetFnLeaf() != nullptr) {
-      oss << "{fn_leaf=" << GetMetaFuncGraphText(map->GetFnLeaf()) << "}";
+      oss << "{fn_leaf: " << GetMetaFuncGraphText(map->GetFnLeaf()) << "}";
     }
   } else if (meta_func_graph->isa<prim::GradOperation>()) {
     prim::GradOperationPtr grad_op = meta_func_graph->cast<prim::GradOperationPtr>();
-    oss << "{get_all=" << grad_op->get_all_ << ", get_by_list=" << grad_op->get_by_list_
-        << ", sens_param=" << grad_op->sens_param_ << "}";
+    oss << "{get_all: " << grad_op->get_all_ << ", get_by_list: " << grad_op->get_by_list_
+        << ", sens_param: " << grad_op->sens_param_ << "}";
   } else if (meta_func_graph->isa<prim::VmapGeneralRule>()) {
     prim::VmapGeneralRulePtr general_rule_fg = meta_func_graph->cast<prim::VmapGeneralRulePtr>();
-    oss << "{prim=" << general_rule_fg->prim_name() << ", axis_size=" << general_rule_fg->axis_size() << "}";
+    oss << "{prim: " << general_rule_fg->prim_name() << ", axis_size: " << general_rule_fg->axis_size() << "}";
   } else if (meta_func_graph->isa<expander::bprop::BpropMetaFuncGraph>()) {
     oss << "{" << meta_func_graph->name() << "}";
   } else if (Skip(meta_func_graph)) {
@@ -525,7 +525,7 @@ void DumpParamterInOperand(const AnfNodePtr &node, const AnfNodePtr &in,
   MS_EXCEPTION_IF_NULL(in);
   MS_EXCEPTION_IF_NULL(gsub);
   if (in->func_graph() == nullptr) {
-    MS_LOG(ERROR) << "Parameter should belong to a func graph. Check func graph: " << node->func_graph();
+    MS_LOG(INFO) << "Parameter should belong to a func graph. Check func graph: " << node->func_graph();
   }
   if (in->func_graph() != nullptr && in->func_graph() != node->func_graph()) {
     gsub->buffer << "$(@" << in->func_graph()->ToString() << ":";
