@@ -121,6 +121,8 @@ int convolution_sw1x1_release(KernelBase *self) {
     free(sw_1x1->matmul_);
     sw_1x1->matmul_ = NULL;
   }
+
+  ConvBaseRelease(&sw_1x1->conv_);
   return NNACL_OK;
 }
 

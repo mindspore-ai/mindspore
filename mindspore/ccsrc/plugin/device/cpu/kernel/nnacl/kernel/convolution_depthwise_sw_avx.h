@@ -14,23 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_KERNEL_CONVOLLUTION_DEPTHWISE_H_
-#define NNACL_KERNEL_CONVOLLUTION_DEPTHWISE_H_
+#ifndef NNACL_KERNEL_CONVOLLUTION_DEPTHWISE_SW_AVX_H_
+#define NNACL_KERNEL_CONVOLLUTION_DEPTHWISE_SW_AVX_H_
 
+#ifdef ENABLE_AVX
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 #include "nnacl/conv_parameter.h"
 #include "nnacl/kernel/convolution_base.h"
 
-typedef struct ConvolutionDepthwiseStruct {
+typedef struct ConvolutionDepthwiseSWAVXStruct {
   ConvolutionBaseStruct conv_;
-  ConvDwCalcParam dw_param_;
-  float *input_ptr_;
-  float *output_ptr_;
-} ConvolutionDepthwiseStruct;
+  SlidingWindowParam sliding_param_;
+  int oc_tile_;
+  float *packed_input_;
+  float *packed_output_;
+  bool input_need_align_;
+  bool output_need_align_;
+} ConvolutionDepthwiseSWAVXStruct;
 
-int convolution_depthwise_release(KernelBase *self);
-KernelBase *CreateConvDw(ConvParameter *conv);
+KernelBase *CreateConvDwSWAVX(ConvParameter *conv_param);
+#endif
 
-#endif  // NNACL_KERNEL_CONVOLLUTION_DEPTHWISE_H_
+#endif  // NNACL_KERNEL_CONVOLLUTION_DEPTHWISE_SW_AVX_H_
