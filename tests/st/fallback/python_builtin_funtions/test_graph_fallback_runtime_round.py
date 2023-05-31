@@ -20,7 +20,6 @@ from mindspore import context
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.skip(reason="No support yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -35,7 +34,7 @@ def test_round_cust_class():
 
     class GetattrClass():
         def __init__(self):
-            self.attr1 = 99.9
+            self.attr1 = 99.909
             self.attr2 = 1
 
         def method1(self, x):
@@ -47,8 +46,8 @@ def test_round_cust_class():
             self.cls = GetattrClass()
 
         def construct(self):
-            return round(self.cls.method1(self.cls.attr1))
+            return round(self.cls.method1(self.cls.attr1), 2), round(100.909, 2)
 
     net = GetattrClassNet()
     out = net()
-    assert out == 101
+    assert out[0] == 100.91, out[1] == 100.91

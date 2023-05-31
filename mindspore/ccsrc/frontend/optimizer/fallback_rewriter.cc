@@ -1522,13 +1522,8 @@ class AfterOptARewriter : public BaseRewriter {
     return slice_node;
   }
 
-  AnfNodePtr ConvertBuiltinCNodeToPyExecute(const CNodePtr &cnode) const {
-    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
-    if (!allow_fallback_runtime) {
-      return nullptr;
-    }
-    const auto &fg = cnode->func_graph();
-    MS_EXCEPTION_IF_NULL(fg);
+  // Only process the node that have a PyExecute node(the abstract is AbstractAny).
+  bool CheckInputsHasAnyType(const CNodePtr &cnode) const {
     bool exist_any_type = false;
     for (const auto &input : cnode->inputs()) {
       auto input_abs = input->abstract();
@@ -1537,37 +1532,24 @@ class AfterOptARewriter : public BaseRewriter {
         break;
       }
     }
-    // Only process the node that have a PyExecute node(the abstract is AbstractAny).
-    if (!exist_any_type) {
+    return exist_any_type;
+  }
+
+  AnfNodePtr ConvertIsInstance(const CNodePtr &cnode) const {
+    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime) {
+      return nullptr;
+    }
+    const auto &fg = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    if (!CheckInputsHasAnyType(cnode)) {
       return nullptr;
     }
     const auto &prim = GetValueNode<PrimitivePtr>(cnode->input(0));
     MS_EXCEPTION_IF_NULL(prim);
     string name = prim->name();
-    std::string script = name + "(";
-    std::string internal_arg;
-    size_t arg_nums = cnode->inputs().size() - 1;
-    vector<AnfNodePtr> keys_tuple_node_inputs{NewValueNode(prim::kPrimMakeTuple)};
-    vector<AnfNodePtr> values_tuple_node_inputs{NewValueNode(prim::kPrimMakeTuple)};
-    for (size_t index = 1; index < arg_nums; ++index) {
-      internal_arg = fallback::ConvertRealStrToUnicodeStr(name, index);
-      script = script + internal_arg + ", ";
-      auto key_node = NewValueNode(std::make_shared<StringImm>(internal_arg));
-      auto value_node = cnode->input(index);
-      (void)keys_tuple_node_inputs.emplace_back(key_node);
-      (void)values_tuple_node_inputs.emplace_back(value_node);
-    }
-    string last_input = fallback::ConvertRealStrToUnicodeStr(name, arg_nums);
-    script = script + last_input + ")";
-    (void)keys_tuple_node_inputs.emplace_back(NewValueNode(std::make_shared<StringImm>(last_input)));
-    (void)values_tuple_node_inputs.emplace_back(cnode->input(arg_nums));
-    auto script_node = NewValueNode(std::make_shared<StringImm>(script));
-    auto keys_tuple_node = fg->NewCNodeInOrder(keys_tuple_node_inputs);
-    auto values_tuple_node = fg->NewCNodeInOrder(values_tuple_node_inputs);
-    auto pyexecute_node =
-      fallback::CreatePyExecuteCNodeInOrder(fg, script_node, keys_tuple_node, values_tuple_node, cnode->debug_info());
+    auto pyexecute_node = fallback::ConvertCNodeToPyExecuteForPrim(cnode, name);
     MS_LOG(DEBUG) << "Convert: " << cnode->DebugString() << " -> " << pyexecute_node->DebugString();
-    pyexecute_node->set_debug_info(cnode->debug_info());
     return pyexecute_node;
   }
 
@@ -1639,7 +1621,7 @@ class AfterOptARewriter : public BaseRewriter {
     {prim::kPrimRaise, &ThisClass::ConvertRaise},
     {prim::kPrimScalarCast, &ThisClass::ConvertScalarCast},
     {prim::kPrimMakeSlice, &ThisClass::ConvertMakeSlice},
-    {prim::kPrimIsInstance, &ThisClass::ConvertBuiltinCNodeToPyExecute},
+    {prim::kPrimIsInstance, &ThisClass::ConvertIsInstance},
     {prim::kPrimJoinedStr, &ThisClass::ConvertJoinedStr}};
 
   // Convert ValueNode<None> to PyExecute("None", ("None"), ("None")).

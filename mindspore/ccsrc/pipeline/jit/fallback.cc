@@ -537,6 +537,39 @@ bool EnableFallbackList() {
   static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
   return allow_fallback_runtime && allow_inplace_ops;
 }
+
+// Convert some CNode to PyExectue, eg:
+// isinstance(xxx.asnumpy(), np.ndarray)  -- > PyExectue("isinstance(arg1, arg2)", local_keys, local_values)
+AnfNodePtr ConvertCNodeToPyExecuteForPrim(const CNodePtr &cnode, string name) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  const auto &fg = cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+  std::string script = name + "(";
+  std::string internal_arg;
+  size_t arg_nums = cnode->inputs().size() - 1;
+  std::vector<AnfNodePtr> keys_tuple_node_inputs{NewValueNode(prim::kPrimMakeTuple)};
+  std::vector<AnfNodePtr> values_tuple_node_inputs{NewValueNode(prim::kPrimMakeTuple)};
+  for (size_t index = 1; index < arg_nums; ++index) {
+    internal_arg = fallback::ConvertRealStrToUnicodeStr(name, index);
+    script = script + internal_arg + ", ";
+    auto key_node = NewValueNode(std::make_shared<StringImm>(internal_arg));
+    auto value_node = cnode->input(index);
+    (void)keys_tuple_node_inputs.emplace_back(key_node);
+    (void)values_tuple_node_inputs.emplace_back(value_node);
+  }
+  string last_input = fallback::ConvertRealStrToUnicodeStr(name, arg_nums);
+  script = script + last_input + ")";
+  (void)keys_tuple_node_inputs.emplace_back(NewValueNode(std::make_shared<StringImm>(last_input)));
+  (void)values_tuple_node_inputs.emplace_back(cnode->input(arg_nums));
+  auto script_node = NewValueNode(std::make_shared<StringImm>(script));
+  auto keys_tuple_node = fg->NewCNodeInOrder(keys_tuple_node_inputs);
+  auto values_tuple_node = fg->NewCNodeInOrder(values_tuple_node_inputs);
+  auto pyexecute_node =
+    fallback::CreatePyExecuteCNodeInOrder(fg, script_node, keys_tuple_node, values_tuple_node, cnode->debug_info());
+  MS_LOG(DEBUG) << "Convert: " << cnode->DebugString() << " -> " << pyexecute_node->DebugString();
+  pyexecute_node->set_debug_info(cnode->debug_info());
+  return pyexecute_node;
+}
 }  // namespace fallback
 
 namespace raiseutils {

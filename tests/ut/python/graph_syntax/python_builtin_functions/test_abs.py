@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 # ============================================================================
 """ test graph fallback """
 import math
+import pytest
 import numpy as np
 
 from mindspore import jit, context, Tensor, nn
@@ -158,3 +159,18 @@ def test_fallback_tensor_one_element():
         a = abs(Tensor(-1))
         return a
     assert foo() == 1
+
+
+def test_fallback_abs_with_input_x_not_number():
+    """
+    Feature: JIT Fallback
+    Description: Test abs() in graph mode with input x is not number.
+    Expectation: TypeError.
+    """
+    @jit
+    def foo():
+        x = abs([1, 2, 3])
+        return x
+    with pytest.raises(TypeError) as ex:
+        foo()
+    assert "bad operand type for abs(): 'list'" in str(ex.value)

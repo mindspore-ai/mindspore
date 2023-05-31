@@ -42,6 +42,7 @@
 #include "pipeline/jit/pipeline.h"
 #include "pipeline/jit/resource.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
+#include "pipeline/jit/static_analysis/builtin_prim.h"
 #include "include/common/fallback.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/convert_utils_py.h"
@@ -3309,6 +3310,12 @@ void InitPrimEvaluatorConstructors() {
   constructor[prim::kPrimWithExit] = std::make_shared<WithExitEvaluator>();
   constructor[prim::kPrimCond] = std::make_shared<CondEvaluator>();
 }
+
+void InitBuiltinPrimEvaluatorConstructors() {
+  PrimEvaluatorMap &constructor = PrimEvaluatorConstructors;
+  constructor[prim::kPrimInnerAbs] = std::make_shared<InnerAbsEvaluator>();
+  constructor[prim::kPrimInnerRound] = std::make_shared<InnerRoundEvaluator>();
+}
 }  // namespace
 
 void ClearPrimEvaluatorMap() {
@@ -3350,6 +3357,7 @@ PrimEvaluatorMap &GetPrimEvaluatorConstructors() {
   std::lock_guard<std::mutex> initLock(PrimEvaluatorConstructorMutex);
   if (constructor.empty()) {
     InitPrimEvaluatorConstructors();
+    InitBuiltinPrimEvaluatorConstructors();
   }
 
   return constructor;
