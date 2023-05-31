@@ -83,6 +83,36 @@ def test_fallback_add_meta_2():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+def test_fallback_aug_assign_meta():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class SubClass:
+        value1 = 1
+        value2 = 2
+
+    class InnerClass(nn.Cell):
+        def __init__(self, x):
+            super(InnerClass, self).__init__()
+            self.x = x
+
+        def construct(self, net_input):
+            net_input += self.x.value1
+            net_input -= self.x.value2
+            return net_input
+
+    net = InnerClass(SubClass())
+    ret = net(4)
+    assert ret == 3
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_fallback_add_meta_3():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -677,6 +707,30 @@ def test_fallback_meta_fg_not_support_type_less_equal():
     with pytest.raises(TypeError) as err:
         net()
     assert "'<=' not supported between" in str(err.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_meta_fg_not_support_type_aug_assign():
+    """
+    Feature: Support JIT Fallback runtime feature.
+    Description: Support JIT Fallback runtime feature.
+    Expectation: No exception.
+    """
+    class InnerClass(nn.Cell):
+        def construct(self):
+            x = Tensor(1)
+            y = None
+            x -= y
+            return x
+
+    net = InnerClass()
+    with pytest.raises(TypeError) as err:
+        net()
+    assert "For 'Sub', the 2th input var can not be implicitly converted" in str(err.value)
 
 
 @pytest.mark.level0

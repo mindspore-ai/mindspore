@@ -1951,6 +1951,12 @@ FunctionBlockPtr Parser::ParseAugAssign(const FunctionBlockPtr &block, const py:
   augassign_app = HandleInterpretForAugassign(block, augassign_app, op_object, target_object, value_object);
 
   WriteAssignVars(block, target_object, augassign_app);
+
+  // Generate expression script for binary operation node.
+  std::string left_str = GetExprStr(target_node, target_object);
+  std::string right_str = GetExprStr(value_node, value_object);
+  auto new_expr_src = fallback::GeneratePyExecuteScriptForBinOrComp(left_str, right_str, op_node_pair.second);
+  fallback::SetNodeExprSrc(augassign_app, new_expr_src);
   return block;
 }
 

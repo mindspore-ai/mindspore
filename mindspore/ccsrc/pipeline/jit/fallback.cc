@@ -357,12 +357,14 @@ AnfNodePtr GeneratePyExecuteNodeWithScriptSrc(const FuncGraphPtr &func_graph, co
   // Pack local parameters keys.
   auto input_str_list = GetPyExecuteInputFromUnicodeStr(script_str);
   if (input_str_list.empty()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Not found PyExecute input. script: " << script_str;
+    MS_LOG(ERROR) << "Not found PyExecute input. script: " << script_str;
+    return nullptr;
   }
   if (input_str_list.size() != node_inputs.size()) {
     if (script_str.find(kPyExecuteSlice) == string::npos) {
-      MS_LOG(EXCEPTION) << "Input string size is " << input_str_list.size()
-                        << " and input node size is: " << node_inputs.size() << ". Size not match.";
+      MS_LOG(ERROR) << "Input string size is " << input_str_list.size()
+                    << " and input node size is: " << node_inputs.size() << ". Size not match.";
+      return nullptr;
     }
     if (input_str_list.size() == 1 && types.size() > 1 && types[1]->isa<AnyType>()) {
       // The script is subscript, and slice input is PyExecute node.
