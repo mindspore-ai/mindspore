@@ -959,7 +959,7 @@ class AfterOptARewriter : public BaseRewriter {
     if (!allow_fallback_runtime) {
       return nullptr;
     }
-    const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") == "1";
+    static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
     if (!allow_inplace_ops) {
       return nullptr;
     }
@@ -1015,7 +1015,7 @@ class AfterOptARewriter : public BaseRewriter {
     if (!allow_fallback_runtime) {
       return nullptr;
     }
-    const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") == "1";
+    static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") == "1";
     if (!allow_inplace_ops) {
       return nullptr;
     }
@@ -1389,24 +1389,36 @@ class AfterOptARewriter : public BaseRewriter {
     (void)new_inputs.emplace_back(NewValueNode(prim));
     bool changed = false;
     auto abs = value_node->abstract();
-    MS_EXCEPTION_IF_NULL(abs);
-    auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
-    MS_EXCEPTION_IF_NULL(abs_seq);
-    const auto &abs_seq_elements = abs_seq->elements();
-    const auto &value_sequence_values = value_sequence->value();
-    if (abs_seq_elements.size() != value_sequence_values.size()) {
-      MS_LOG(EXCEPTION) << "The size of value sequence should be same as the size of abstract sequence.";
-    }
-    for (size_t i = 0; i < value_sequence_values.size(); ++i) {
-      auto v = value_sequence_values[i];
-      auto v_node = NewValueNode(v);
-      v_node->set_debug_info(value_node->debug_info());
-      v_node->set_abstract(abs_seq_elements[i]);
-      auto new_node = GetPyExecuteFromValue(fg, v_node, v, py_execute_input);
-      new_node->set_debug_info(value_node->debug_info());
-      (void)new_inputs.emplace_back(new_node);
-      if (new_node != v_node) {
-        changed = true;
+    if (abs == nullptr) {
+      for (const auto &v : value_sequence->value()) {
+        auto v_node = NewValueNode(v);
+        v_node->set_debug_info(value_node->debug_info());
+        auto new_node = GetPyExecuteFromValue(fg, v_node, v, py_execute_input);
+        new_node->set_debug_info(value_node->debug_info());
+        (void)new_inputs.emplace_back(new_node);
+        if (new_node != v_node) {
+          changed = true;
+        }
+      }
+    } else {
+      auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
+      MS_EXCEPTION_IF_NULL(abs_seq);
+      const auto &abs_seq_elements = abs_seq->elements();
+      const auto &value_sequence_values = value_sequence->value();
+      if (abs_seq_elements.size() != value_sequence_values.size()) {
+        MS_LOG(EXCEPTION) << "The size of value sequence should be same as the size of abstract sequence.";
+      }
+      for (size_t i = 0; i < value_sequence_values.size(); ++i) {
+        auto v = value_sequence_values[i];
+        auto v_node = NewValueNode(v);
+        v_node->set_debug_info(value_node->debug_info());
+        v_node->set_abstract(abs_seq_elements[i]);
+        auto new_node = GetPyExecuteFromValue(fg, v_node, v, py_execute_input);
+        new_node->set_debug_info(value_node->debug_info());
+        (void)new_inputs.emplace_back(new_node);
+        if (new_node != v_node) {
+          changed = true;
+        }
       }
     }
     if (changed) {
@@ -1466,7 +1478,7 @@ class AfterOptARewriter : public BaseRewriter {
                                            py_execute_input);
     }
     if (value->isa<ValueList>()) {
-      const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") == "1";
+      static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
       if (!allow_inplace_ops) {
         if (py_execute_input) {
           return ValueListConvertPyExecute(fg, value_node, value);
@@ -1647,7 +1659,7 @@ class AfterOptARewriter : public BaseRewriter {
     MS_EXCEPTION_IF_NULL(list_abs);
 
     py::list list_object =
-      list_abs->has_list_py_obj() ? *(list_abs->list_py_obj<py::list>()) : ValueToPyData(abs->BuildValue());
+      list_abs->has_list_py_obj() ? *(list_abs->list_py_obj<py::list>()) : ValueToPyData(value_node->value());
 
     // Generate PyExecute node: __list_object__
     const std::string list_obj_str_prefix = "__list_py_object_";
@@ -2003,10 +2015,9 @@ bool OrderPyExecuteAfterRewriter(const FuncGraphPtr &root, const pipeline::Resou
   auto manager = resource->manager();
   const auto &func_graphs_used_total = root->func_graphs_used_total();
   bool change = false;
-  if (!func_graphs_used_total.empty()) {
-    change =
-      std::all_of(func_graphs_used_total.cbegin(), func_graphs_used_total.cend(),
-                  [&manager](const FuncGraphPtr &func_graph) { return OrderPyExecuteCNode(func_graph, manager); });
+  for (const auto &fg : func_graphs_used_total) {
+    auto cur_change = OrderPyExecuteCNode(fg, manager);
+    change = change || cur_change;
   }
   change = change || OrderPyExecuteCNode(root, manager);
   if (change) {

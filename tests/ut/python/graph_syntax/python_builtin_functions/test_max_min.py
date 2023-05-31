@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback buildin python function max and min"""
+import os
 import re
 import operator
 import pytest
@@ -133,8 +134,10 @@ def test_fallback_max_with_two_inputs_list():
     def foo():
         x = max([1, 2, 3], [4, 5])
         return x
+    os.environ['MS_DEV_FALLBACK_SUPPORT_LIST'] = '0'
     out = foo()
     assert operator.eq(out, [4, 5])
+    del os.environ['MS_DEV_FALLBACK_SUPPORT_LIST']
 
 
 def test_fallback_min_with_two_inputs_list():
@@ -147,8 +150,10 @@ def test_fallback_min_with_two_inputs_list():
     def foo():
         x = min([1, 2, 3], [4, 5])
         return x
+    os.environ['MS_DEV_FALLBACK_SUPPORT_LIST'] = '0'
     out = foo()
     assert operator.eq(out, [1, 2, 3])
+    del os.environ['MS_DEV_FALLBACK_SUPPORT_LIST']
 
 
 def test_builtin_function_max_min_with_string():

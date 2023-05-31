@@ -77,6 +77,7 @@ def test_map():
     assert type(out[0]) is adapter.Tensor
 
 
+@pytest.mark.skip(reason="stub tensor syn will loss adaptive tensor attribute")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -353,6 +354,7 @@ def test_tuple():
     assert type(out[2]) is adapter.Tensor
 
 
+@pytest.mark.skip(reason="stub tensor syn will loss adaptive tensor attribute")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

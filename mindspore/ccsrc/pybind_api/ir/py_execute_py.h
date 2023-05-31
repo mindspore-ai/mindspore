@@ -174,7 +174,7 @@ class PyExecuteInitializer {
         const auto &infer_shape = std::make_shared<abstract::Shape>(tensor->shape());
         return abstract::MakeAbstract(infer_shape, tensor->Dtype());
       }
-      const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") == "1";
+      static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
       if (allow_inplace_ops && py::isinstance<py::list>(output)) {
         // Runtime can not handle real operator with nested output.
         // Hence, the abstract should be AbstractAny for nested sequence.
