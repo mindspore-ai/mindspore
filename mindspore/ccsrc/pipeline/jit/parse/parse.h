@@ -124,7 +124,6 @@ class Parser {
   FuncGraphPtr func_graph() const { return func_graph_; }
   ParseStatusCode errcode() const { return errcode_; }
   std::shared_ptr<ParseFunctionAst> ast() const { return ast_; }
-  const std::string &support_fallback() const { return support_fallback_; }
   // Get location info from the ast node.
   LocationPtr GetLocation(const py::object &node) const;
   static void InitParserEnvironment(const py::object &obj);
@@ -385,7 +384,6 @@ class Parser {
   std::map<std::string, ExprFunc> expr_method_map_;
   // Save current loops to support 'continue', 'break' statement.
   std::stack<Loop> loops_;
-  string support_fallback_;
 
   // The func graphs to transform tail call ir to independent call ir.
   // Contains: {former_graph, middle_graph}, latter_graph is no need.

@@ -115,10 +115,7 @@ abstract::AbstractBasePtr ClassType::ToAbstract() {
   auto abs_scalar =
     std::make_shared<abstract::AbstractScalar>(shared_from_base<ClassType>(), std::make_shared<TypeType>());
 
-  // The fallback feature is enabled in default.
-  // Not support change the flag during the process is alive.
-  static const auto use_fallback = (common::GetEnv("MS_DEV_ENABLE_FALLBACK") != "0");
-  if (use_fallback && !IsSupportedCreateInstanceType(obj())) {
+  if (!IsSupportedCreateInstanceType(obj())) {
     return abs_scalar;
   }
   AbstractBasePtrList args_abs_list = {abs_scalar};

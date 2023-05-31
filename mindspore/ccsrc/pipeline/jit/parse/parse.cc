@@ -71,10 +71,7 @@ FuncGraphPtr ParsePythonCode(const py::object &obj, const std::string &python_mo
 
 FuncGraphWeakPtr Parser::top_func_graph_ = FuncGraphWeakPtr();
 
-Parser::Parser(const std::shared_ptr<ParseFunctionAst> &ast)
-    : ast_(ast), errcode_(PARSE_SUCCESS), support_fallback_(common::GetEnv("MS_DEV_ENABLE_FALLBACK")) {
-  BuildMethodMap();
-}
+Parser::Parser(const std::shared_ptr<ParseFunctionAst> &ast) : ast_(ast), errcode_(PARSE_SUCCESS) { BuildMethodMap(); }
 
 void Parser::BuildMethodMap() {
   stmt_method_map_["Return"] = &Parser::ParseReturn;
@@ -930,22 +927,13 @@ void Parser::MakeConditionBlocks(const FunctionBlockPtr &pre_block, const Functi
   false_block->AddPrevBlock(pre_block);
   false_block->Mature();
 
-  static const auto use_fallback = (support_fallback() != "0");
-  if (use_fallback) {
-    true_block->UpdateGlobalPyParam(pre_block->global_py_params());
-    false_block->UpdateGlobalPyParam(pre_block->global_py_params());
-  }
+  true_block->UpdateGlobalPyParam(pre_block->global_py_params());
+  false_block->UpdateGlobalPyParam(pre_block->global_py_params());
 }
 
 AnfNodePtr Parser::HandelReturnExprNode(const FunctionBlockPtr &block, const AnfNodePtr &return_expr_node,
                                         const py::object &value_object) {
   MS_EXCEPTION_IF_NULL(return_expr_node);
-  // The fallback feature is enabled in default.
-  static const auto use_fallback = (support_fallback() != "0");
-  if (!use_fallback) {
-    return return_expr_node;
-  }
-
   // Handle the case of returning tuple.
   py::object obj = python_adapter::GetPyObjAttr(value_object, "elts");
   if (!py::isinstance<py::none>(obj)) {
@@ -1019,36 +1007,33 @@ AnfNodePtr Parser::ParseBinOp(const FunctionBlockPtr &block, const py::object &n
   // Handling % symbol in formatted string values by JIT Fallback.
   // The string AnfNode may be created by ParseJoinedStr or ParseStr.
   // For example, string % var, f"The string is: %s." % str  or "The number is: %d." % num
-  static const auto use_fallback = (support_fallback() != "0");
-  if (use_fallback) {
-    auto op_cnode = op_node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(op_cnode);
-    const size_t symbol_index = 2;
-    if (op_cnode->inputs().size() <= symbol_index) {
-      MS_LOG(EXCEPTION) << "Unexpected symbol node:" << op_node->DebugString();
-    }
-    auto mod_node = op_cnode->input(symbol_index);
-    auto symbol = GetValueNode<parse::SymbolPtr>(mod_node);
-    // Only support the pattern (string % xxx) by fallback.
-    if (symbol != nullptr && symbol->symbol() == "mod") {
-      if (IsPrimitiveCNode(left_node, prim::kPrimJoinedStr)) {
-        // left_node created by ParseJoinedStr
-        auto inputs = left_node->cast<CNodePtr>()->inputs();
-        if (inputs.size() <= 1) {
-          MS_LOG(INTERNAL_EXCEPTION) << "Unexpected maketuple node:" << left_node->DebugString();
-        }
-        auto str_node = inputs[1];
-        if (IsValueNode<StringImm>(str_node)) {
-          new_node->set_interpret(true);
-          auto new_interpret_node = HandleInterpret(block, new_node, node);
-          return new_interpret_node;
-        }
-      } else if (IsValueNode<StringImm>(left_node)) {
-        // left_node created by ParseStr
+  auto op_cnode = op_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(op_cnode);
+  const size_t symbol_index = 2;
+  if (op_cnode->inputs().size() <= symbol_index) {
+    MS_LOG(EXCEPTION) << "Unexpected symbol node:" << op_node->DebugString();
+  }
+  auto mod_node = op_cnode->input(symbol_index);
+  auto symbol = GetValueNode<parse::SymbolPtr>(mod_node);
+  // Only support the pattern (string % xxx) by fallback.
+  if (symbol != nullptr && symbol->symbol() == "mod") {
+    if (IsPrimitiveCNode(left_node, prim::kPrimJoinedStr)) {
+      // left_node created by ParseJoinedStr
+      auto inputs = left_node->cast<CNodePtr>()->inputs();
+      if (inputs.size() <= 1) {
+        MS_LOG(INTERNAL_EXCEPTION) << "Unexpected maketuple node:" << left_node->DebugString();
+      }
+      auto str_node = inputs[1];
+      if (IsValueNode<StringImm>(str_node)) {
         new_node->set_interpret(true);
         auto new_interpret_node = HandleInterpret(block, new_node, node);
         return new_interpret_node;
       }
+    } else if (IsValueNode<StringImm>(left_node)) {
+      // left_node created by ParseStr
+      new_node->set_interpret(true);
+      auto new_interpret_node = HandleInterpret(block, new_node, node);
+      return new_interpret_node;
     }
   }
 
@@ -1066,9 +1051,8 @@ AnfNodePtr Parser::ParseName(const FunctionBlockPtr &block, const py::object &no
   auto name_id = py::cast<std::string>(python_adapter::GetPyObjAttr(node, "id"));
   MS_LOG(DEBUG) << "The Name id is " << name_id;
   MS_EXCEPTION_IF_NULL(block);
-  static const auto use_fallback = (support_fallback() != "0");
   // The Tensor object will be parsed into an Interpret node. For example, Tensor(0).astype("int32")
-  if (block->IsGlobalVar(name_id) || (use_fallback && name_id == "Tensor")) {
+  if (block->IsGlobalVar(name_id) || name_id == "Tensor") {
     MS_LOG(DEBUG) << "name_id: " << name_id;
     AnfNodePtr res = block->MakeResolveSymbol(name_id);
     block->CheckUndefinedSymbol(name_id, res);
@@ -1230,7 +1214,7 @@ std::vector<AnfNodePtr> Parser::ParseRaiseCall(const FunctionBlockPtr &block, co
   if (py::isinstance<py::none>(function_ast_node)) {
     auto name = python_adapter::GetPyObjAttr(node, "id");
     auto name_id = py::cast<std::string>(name);
-    if (support_fallback() != "0" && block->CheckhasVariable(name_id)) {
+    if (block->CheckhasVariable(name_id)) {
       auto error_node = block->ReadVariable(name_id);
       block->CheckUndefinedSymbol(name_id, error_node);
       error_node = HandleInterpret(block, error_node, name);
@@ -1254,7 +1238,7 @@ std::vector<AnfNodePtr> Parser::ParseRaiseCall(const FunctionBlockPtr &block, co
     auto name_id = py::cast<std::string>(name);
     MS_LOG(DEBUG) << "The name of call node is: " << name_id;
     auto node_list = ParseException(block, args, name_id);
-    if (support_fallback() != "0" && block->CheckhasVariable(name_id)) {
+    if (block->CheckhasVariable(name_id)) {
       auto error_node = block->ReadVariable(name_id);
       block->CheckUndefinedSymbol(name_id, error_node);
       error_node = HandleInterpret(block, error_node, name);
@@ -1298,10 +1282,6 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
   ParseKeywordsInCall(block, node, &args_context);
 
   auto call_cnode = GenerateAnfNodeForCall(block, call_function_node, args_context);
-  static const auto use_fallback = (support_fallback() != "0");
-  if (!use_fallback) {
-    return call_cnode;
-  }
   UpdateInterpretForUserNode(call_cnode, call_function_node);
   MS_EXCEPTION_IF_NULL(call_cnode);
   MS_LOG(DEBUG) << "call_cnode: " << call_cnode->DebugString()
@@ -1356,9 +1336,8 @@ AnfNodePtr Parser::GenerateAnfNodeForCall(const FunctionBlockPtr &block, const A
     return MakeUnpackCall(block->func_graph(), call_function_node, args_context.packed_arguments);
   }
   // else there is no keyword arguments and starred, parsed as normal arguments without unpack
-  static const auto use_fallback = (support_fallback() != "0");
   const auto &group_arguments = args_context.group_arguments;
-  if (use_fallback && group_arguments.size() == 0 && IsPrimitiveCNode(call_function_node, prim::kPrimPyInterpret)) {
+  if (group_arguments.size() == 0 && IsPrimitiveCNode(call_function_node, prim::kPrimPyInterpret)) {
     // call Interpret node is invalid. Do not new call Interpret node.
     // %1 = Interpret_node
     // %2 = %1()
@@ -1455,9 +1434,7 @@ AnfNodePtr Parser::ProcessAttributeWithClassMember(const FunctionBlockPtr &block
   auto var_node = block->ReadVariable(var_name);
   block->CheckUndefinedSymbol(var_name, var_node);
   // Process numpy array, eg: self.x = np.array([1, 2])
-  // The fallback feature is enabled in default.
-  static const auto use_fallback = (support_fallback() != "0");
-  if (use_fallback && py::hasattr(ast()->obj(), attr_name.c_str()) && data_converter::IsNumpyArrayInstance(attr_obj)) {
+  if (py::hasattr(ast()->obj(), attr_name.c_str()) && data_converter::IsNumpyArrayInstance(attr_obj)) {
     var_node->set_interpret(true);
   }
   return var_node;
@@ -1502,8 +1479,6 @@ AnfNodePtr Parser::ParseNull(const FunctionBlockPtr &block, const py::object &va
 // Process call attributes of class type define, eg: x.y()
 AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast Attribute";
-  // The fallback feature is enabled in default.
-  static const auto use_fallback = (support_fallback() != "0");
   MS_EXCEPTION_IF_NULL(block->func_graph());
 
   // Process the get attr
@@ -1542,7 +1517,7 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
     MS_LOG(INTERNAL_EXCEPTION) << "Parse attribute failed";
   }
   // Process xxx.Tensor() and xxx is mindspore.
-  if (use_fallback && attr_str == "Tensor") {
+  if (attr_str == "Tensor") {
     auto res = ParseMsTensor(block, node, value_body, value_node);
     if (res != nullptr) {
       return res;
@@ -1557,15 +1532,13 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
   }
   // Create the apply node
   auto attr_cnode = block->func_graph()->NewCNodeInOrder({op_node, value_node, attr_node});
-  if (use_fallback) {
-    // Check whether it is constant, constant does not need interpret.
-    auto value_str = py::cast<std::string>(ast()->GetAstNodeText(value_body));
-    py::bool_ is_jit_supported_attr =
-      ast()->CallParserObjMethod(PYTHON_PARSE_IS_JIT_SUPPORTED_ATTRIBUTE, value_str, common::SafeCStr(attr_str));
-    auto is_supported = py::cast<bool>(is_jit_supported_attr);
-    if (!is_supported) {
-      UpdateInterpretForUserNode(attr_cnode, value_node);
-    }
+  // Check whether it is constant, constant does not need interpret.
+  auto value_str = py::cast<std::string>(ast()->GetAstNodeText(value_body));
+  py::bool_ is_jit_supported_attr =
+    ast()->CallParserObjMethod(PYTHON_PARSE_IS_JIT_SUPPORTED_ATTRIBUTE, value_str, common::SafeCStr(attr_str));
+  auto is_supported = py::cast<bool>(is_jit_supported_attr);
+  if (!is_supported) {
+    UpdateInterpretForUserNode(attr_cnode, value_node);
   }
   if (attr_str == "pop") {
     list_pop_target_obj_ = value_body;
@@ -1886,9 +1859,7 @@ AnfNodePtr Parser::HandleInterpretForAugassign(const FunctionBlockPtr &block, co
                                                const py::object &op_object, const py::object &target_object,
                                                const py::object &value_object) {
   MS_EXCEPTION_IF_NULL(augassign_node);
-  // The fallback feature is enabled in default.
-  static const auto use_fallback = (support_fallback() != "0");
-  if (!use_fallback || !augassign_node->interpret()) {
+  if (!augassign_node->interpret()) {
     return augassign_node;
   }
 
@@ -2038,7 +2009,6 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
     MS_EXCEPTION_IF_NULL(after_block->func_graph());
     after_block->func_graph()->set_flag(FUNC_GRAPH_FLAG_AFTER_BLOCK, true);
   }
-  static const auto use_fallback = (support_fallback() != "0");
   // Process the if-true branch
   std::pair<FunctionBlockPtr, FunctionBlockPtr> true_branch_graphs;
   py::object bodyNode = python_adapter::GetPyObjAttr(node, "body");
@@ -2052,9 +2022,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
     true_end->Jump(after_block, {});
     MS_LOG(DEBUG) << "The true_end block jump to after, true_block: " << true_block->ToString()
                   << ", true_end: " << true_end->ToString() << ", after: " << after_block->ToString();
-    if (use_fallback) {
-      after_block->UpdateGlobalPyParam(true_end->global_py_params());
-    }
+    after_block->UpdateGlobalPyParam(true_end->global_py_params());
   }
   // Process the orelse branch
   std::pair<FunctionBlockPtr, FunctionBlockPtr> false_branch_graphs;
@@ -2069,9 +2037,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
     false_end->Jump(after_block, {});
     MS_LOG(DEBUG) << "The false_end block jump to after, false_block: " << false_block->ToString()
                   << ", false_end: " << false_end->ToString() << ", after: " << after_block->ToString();
-    if (use_fallback) {
-      after_block->UpdateGlobalPyParam(false_end->global_py_params());
-    }
+    after_block->UpdateGlobalPyParam(false_end->global_py_params());
   }
 
   auto switch_app = block->ConditionalJump(bool_node, true_block, false_block);
@@ -2144,12 +2110,9 @@ FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::obj
   block->Jump(header_block, {});
 
   py::object test_node = python_adapter::GetPyObjAttr(node, "test");
-  static const auto use_fallback = (support_fallback() != "0");
-  if (use_fallback) {
-    header_block->UpdateGlobalPyParam(block->global_py_params());
-    body_block->UpdateGlobalPyParam(block->global_py_params());
-    after_block->UpdateGlobalPyParam(block->global_py_params());
-  }
+  header_block->UpdateGlobalPyParam(block->global_py_params());
+  body_block->UpdateGlobalPyParam(block->global_py_params());
+  after_block->UpdateGlobalPyParam(block->global_py_params());
   AnfNodePtr condition_node = ParseExprNode(header_block, test_node);
   condition_node = HandleInterpret(header_block, condition_node, test_node);
   AnfNodePtr while_condition_node = nullptr;
@@ -2311,11 +2274,8 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
     CNodePtr iterated_node = body_func_graph->NewCNodeInOrder({op_iter, iter_node});
     target_var = body_func_graph->NewCNodeInOrder({op_getitem, iterated_node, loop_var});
   }
-  static const auto use_fallback = (support_fallback() != "0");
-  if (use_fallback) {
-    header_block->UpdateGlobalPyParam(block->global_py_params());
-    body_block->UpdateGlobalPyParam(block->global_py_params());
-  }
+  header_block->UpdateGlobalPyParam(block->global_py_params());
+  body_block->UpdateGlobalPyParam(block->global_py_params());
   WriteAssignVars(body_block, target_node, target_var);
 
   // Create 'i = i + 1'
@@ -2338,9 +2298,7 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   after_block->AddPrevBlock(header_block);
   block->Jump(header_block, {NewValueNode(static_cast<int64_t>(0))});
   body_block->Mature();
-  if (use_fallback) {
-    after_block->UpdateGlobalPyParam(block->global_py_params());
-  }
+  after_block->UpdateGlobalPyParam(block->global_py_params());
 
   (void)header_block->ConditionalJump(cond_node, body_block, after_block);
 
@@ -2348,9 +2306,7 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   LoopContext loop_context{&loops_, header_block, loop_var_inc};
   py::object body_node = python_adapter::GetPyObjAttr(node, "body");
   FunctionBlockPtr after_body_block = ParseStatements(body_block, body_node);
-  if (use_fallback) {
-    after_body_block->UpdateGlobalPyParam(block->global_py_params());
-  }
+  after_body_block->UpdateGlobalPyParam(block->global_py_params());
   if (after_body_block->func_graph()->get_return() == nullptr) {
     after_body_block->Jump(header_block, {loop_var_inc});
   }
@@ -2404,11 +2360,8 @@ FunctionBlockPtr Parser::ParseForRepeat(const FunctionBlockPtr &block, const py:
   AnfNodePtr body_getitem = body_block->MakeResolveOperation(NAMED_PRIMITIVE_GETITEM);
   CNodePtr target_var = body_func_graph->NewCNodeInOrder({body_getitem, header_iter_param, loop_var});
 
-  static const auto use_fallback = (support_fallback() != "0");
-  if (use_fallback) {
-    header_block->UpdateGlobalPyParam(block->global_py_params());
-    body_block->UpdateGlobalPyParam(block->global_py_params());
-  }
+  header_block->UpdateGlobalPyParam(block->global_py_params());
+  body_block->UpdateGlobalPyParam(block->global_py_params());
 
   // Get variable name of 'x' in statement 'for x in xs'
   py::object target_node = python_adapter::GetPyObjAttr(node, "target");
@@ -2434,9 +2387,7 @@ FunctionBlockPtr Parser::ParseForRepeat(const FunctionBlockPtr &block, const py:
   after_block->AddPrevBlock(header_block);
   block->Jump(header_block, {iter_node, NewValueNode(static_cast<int64_t>(0))});
   body_block->Mature();
-  if (use_fallback) {
-    after_block->UpdateGlobalPyParam(block->global_py_params());
-  }
+  after_block->UpdateGlobalPyParam(block->global_py_params());
   (void)header_block->ConditionalJump(cond_node, body_block, after_block);
 
   // Generate the body of the for statement
@@ -2447,17 +2398,13 @@ FunctionBlockPtr Parser::ParseForRepeat(const FunctionBlockPtr &block, const py:
   rolled_body_block->Mature();
   body_block->Jump(rolled_body_block, {});
   auto rolled_body_call = dyn_cast<CNode>(body_block->func_graph()->output());
-  if (use_fallback) {
-    rolled_body_block->UpdateGlobalPyParam(block->global_py_params());
-  }
+  rolled_body_block->UpdateGlobalPyParam(block->global_py_params());
 
   // Parse loop body statements with loop context.
   LoopContext loop_context{&loops_, header_block, loop_var_inc};
   py::object body_node = python_adapter::GetPyObjAttr(node, "body");
   FunctionBlockPtr after_body_block = ParseStatements(rolled_body_block, body_node);
-  if (use_fallback) {
-    after_body_block->UpdateGlobalPyParam(block->global_py_params());
-  }
+  after_body_block->UpdateGlobalPyParam(block->global_py_params());
   MS_LOG(DEBUG) << "Finish rolled block, after_body_block: " << after_body_block->ToString()
                 << ", rolled_body_block: " << rolled_body_block->ToString();
   if (after_body_block->func_graph()->get_return() == nullptr) {
@@ -2971,12 +2918,6 @@ void Parser::WriteAssignVars(const FunctionBlockPtr &block, const py::object &ta
 }
 
 void Parser::UpdateInterpretForUserNode(const AnfNodePtr &user_node, const AnfNodePtr &node) const {
-  // The fallback feature is enabled in default.
-  static const auto use_fallback = (support_fallback() != "0");
-  if (!use_fallback) {
-    return;
-  }
-
   MS_EXCEPTION_IF_NULL(user_node);
   MS_EXCEPTION_IF_NULL(node);
   // Do not handle user node with internal type such as Tensor.abs().
@@ -3015,11 +2956,8 @@ bool Parser::IsScriptInParams(const std::string &script_text, const py::dict &gl
 
 AnfNodePtr Parser::HandleInterpret(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
                                    const py::object &value_object) {
-  // The fallback feature is enabled in default.
-  // Not support change the flag during the process is alive.
-  static const auto use_fallback = (support_fallback() != "0");
   MS_EXCEPTION_IF_NULL(value_node);
-  if (!use_fallback || !value_node->interpret()) {
+  if (!value_node->interpret()) {
     return value_node;
   }
   const auto script_text = py::cast<std::string>(ast()->GetAstNodeText(value_object));

@@ -212,11 +212,6 @@ def get_bprop_method_of_class(obj, parse_method=None):
     return method
 
 
-# The fallback feature is enabled in default.
-# Not support change the flag during the process is alive.
-support_fallback_ = os.getenv('MS_DEV_ENABLE_FALLBACK')
-
-
 def resolve_symbol(namespace, symbol):
     """
     Resolve a symbol.
@@ -240,14 +235,6 @@ def resolve_symbol(namespace, symbol):
             return resolve_
         if getattr(resolve_, "__hash__") is None:
             return resolve_
-
-        # Raise a proper error if not using JIT Fallback feature.
-        if support_fallback_ == '0':
-            # Raise NotImplementedError when parsing the numpy methods, but not the numpy constant.
-            if namespace.name == "numpy" and \
-                isinstance(resolve_, (types.FunctionType, types.MethodType, types.ModuleType)):
-                raise NotImplementedError("Mindspore does not support to use the numpy methods " \
-                                          "within the construct() or @jit decorated function in graph mode.")
 
         # If need trope the obj
         convert_map = _convert_map()
@@ -365,14 +352,7 @@ def get_obj_type(obj):
     elif _is_numpy_bool_number(obj):
         obj_type = RESOLVE_TYPE_NUMPY_BOOL_NUMBER
     else:
-        # Raise a proper error if not using Fallback feature.
-        if support_fallback_ != '0':
-            obj_type = RESOLVE_TYPE_INVALID
-        else:
-            # Here for ndarray, just print its shape (in case of the array to large and print many data in screen)
-            is_ndarray = type(obj).__name__ == 'ndarray' and hasattr(obj, 'shape')
-            raise TypeError(f"Not support for this object with type '{type(obj)}' and "
-                            f"{'shape' if is_ndarray else 'value'} '{obj.shape if is_ndarray else obj}'.")
+        obj_type = RESOLVE_TYPE_INVALID
     return obj_type
 
 
@@ -804,8 +784,7 @@ def eval_script(exp_str, params):
         res = eval(exp_str, global_params, local_params)
         res = _convert_stub_tensor(res)
     except Exception as e:
-        error_info = f"When eval '{exp_str}' by using JIT Fallback feature, an error occurred: " + str(e) + \
-            ". You can try to turn off JIT Fallback feature by 'export MS_DEV_ENABLE_FALLBACK=0'."
+        error_info = f"When eval '{exp_str}' by using JIT Fallback feature, an error occurred: " + str(e)
         logger.debug(error_info)
         raise e
 
