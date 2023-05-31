@@ -114,6 +114,7 @@ bool PadV3GradCpuKernelMod::GetPaddings(const std::vector<AddressPtr> &inputs) {
   }
 
   // get parallelSliceNum_
+  parallelSliceNum_ = 1;
   for (int64_t i = 0; i < input_dim_ - paddings_num_ / k2Num; i++) {
     parallelSliceNum_ *= input_shape_[i];
   }
