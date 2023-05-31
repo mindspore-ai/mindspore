@@ -1174,7 +1174,8 @@ void SearchSubGraph::DoOnlineFusion() {
 
 void SearchSubGraph::DoSplitReduceConcatFusionPass() {
   auto &device_list = context_->device_list_;
-  if (device_list.size() != 1 || device_list.front().device_type_ != DT_CPU) {
+  if (device_list.size() != 1 || device_list.front().device_type_ != DT_CPU ||
+      device_list.front().device_info_.cpu_device_info_.enable_float16_) {
     return;
   }
   node_list_ = model_->graph_.all_nodes_;
@@ -1190,7 +1191,8 @@ void SearchSubGraph::DoSplitReduceConcatFusionPass() {
 
 void SearchSubGraph::DoReduceConcatFusionPass() {
   auto &device_list = context_->device_list_;
-  if (device_list.size() != 1 || device_list.front().device_type_ != DT_CPU) {
+  if (device_list.size() != 1 || device_list.front().device_type_ != DT_CPU ||
+      device_list.front().device_info_.cpu_device_info_.enable_float16_) {
     return;
   }
   node_list_ = model_->graph_.all_nodes_;
@@ -1206,7 +1208,8 @@ void SearchSubGraph::DoReduceConcatFusionPass() {
 
 void SearchSubGraph::DoCastGatherReduceFusionPass() {
   auto &device_list = context_->device_list_;
-  if (device_list.size() != 1 || device_list.front().device_type_ != DT_CPU) {
+  if (device_list.size() != 1 || device_list.front().device_type_ != DT_CPU ||
+      device_list.front().device_info_.cpu_device_info_.enable_float16_) {
     return;
   }
   node_list_ = model_->graph_.all_nodes_;
