@@ -31,6 +31,7 @@ from mindspore.ops import functional as F
 from mindspore.ops.operations._inner_ops import DynamicBroadcastTo
 from mindspore.ops.operations._sequence_ops import TupleToTensor
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
+from mindspore.ops.operations._sequence_ops import TensorToList
 
 from mindspore.ops.operations.array_ops import (
     UniqueConsecutive,
@@ -6928,7 +6929,7 @@ def repeat_interleave(input, repeats, axis=None):
     Args:
         input (Tensor): The tensor to repeat values for. Must be of type: float16,
             float32, int8, uint8, int16, int32, or int64.
-        repeats (int): The number of times to repeat, must be positive.
+        repeats (Union[int, tuple, list, Tensor]): The number of times to repeat, must be positive.
         axis (int, optional): The axis along which to repeat, Default: ``None``. if dims is None,
             the input Tensor will be flattened and the output will alse be flattened.
 
@@ -6952,7 +6953,10 @@ def repeat_interleave(input, repeats, axis=None):
     if axis is None:
         input = input.reshape(-1)
         axis = 0
-    return repeat_elements(input, repeats, axis)
+    if isinstance(repeats, Tensor):
+        repeats = TensorToList()(repeats)
+    output = input.repeat(repeats, axis)
+    return output
 
 
 def repeat_elements(x, rep, axis=0):
