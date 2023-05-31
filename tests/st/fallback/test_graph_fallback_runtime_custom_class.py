@@ -387,3 +387,63 @@ def test_parser_fallback_nested_class_outer_grad():
     net = NestedNet()
     output = ops.grad(net)(mutable(x), y)
     assert output == 0
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_create_custom_class_default():
+    """
+    Feature: Create custom class instance.
+    Description: Graph syntax getattr support create custom class instance.
+    Expectation: No exception.
+    """
+    class InnerNet:
+        def __init__(self):
+            self.number = 2
+
+        def act(self, x, y):
+            return self.number * (x + y)
+
+    class Net(ms.nn.Cell):
+        def construct(self, x, y):
+            out = InnerNet().act(x, y)
+            return out
+
+    x = ms.Tensor(1)
+    y = ms.Tensor(2)
+    net = Net()
+    out = net(x, y)
+    assert out == 6
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_create_custom_class_args():
+    """
+    Feature: Create custom class instance.
+    Description: Graph syntax getattr support create custom class instance.
+    Expectation: No exception.
+    """
+    class InnerNet:
+        def __init__(self, number):
+            self.number = number
+
+        def act(self, x, y):
+            return self.number * (x + y)
+
+    class Net(ms.nn.Cell):
+        def construct(self, x, y):
+            out = InnerNet(x).act(x, y)
+            return out
+
+    x = ms.Tensor(2)
+    y = ms.Tensor(4)
+    net = Net()
+    out = net(x, y)
+    assert out == 12

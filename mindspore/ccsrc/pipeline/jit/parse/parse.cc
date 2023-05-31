@@ -634,14 +634,15 @@ FunctionBlockPtr Parser::ParseDefFunction(const py::object &node, const Function
     function_name = cell_construct + cell_name_split + function_name;
     MS_LOG(DEBUG) << scope->name() << " func name:" << function_name;
   }
+  // Save the function node to block
   func_block->WriteVariable(function_name, NewValueNode(current_fg));
   MS_EXCEPTION_IF_NULL(current_fg->debug_info());
   current_fg->debug_info()->set_name(function_name);
-  MS_EXCEPTION_IF_NULL(ast_);
   py::list deco_list = node.attr("decorator_list");
   if (!deco_list.empty()) {
     current_fg->debug_info()->set_deco_location(GetLocation(deco_list));
   }
+  MS_EXCEPTION_IF_NULL(ast_);
   bool set_flag = UpdateFuncGraphFlags(ast_->function(), current_fg);
   if (!ast_->obj().is(ast_->function())) {
     set_flag = set_flag && UpdateFuncGraphFlags(ast_->obj(), current_fg);
@@ -658,7 +659,6 @@ FunctionBlockPtr Parser::ParseDefFunction(const py::object &node, const Function
     UpdateTopFuncGraph(func_block->func_graph());
   }
 
-  // Save the function node to block
   py::object func_obj = python_adapter::GetPyObjAttr(node, "body");
   (void)ParseStatements(func_block, func_obj);
   if (current_fg->get_return() == nullptr) {
