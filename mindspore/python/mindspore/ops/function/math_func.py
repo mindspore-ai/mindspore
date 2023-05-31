@@ -4706,6 +4706,9 @@ def ormqr(input, tau, other, left=True, transpose=False):
     Calculates the product of a matrix C(given by `other`) with dimensions (m, n) and a matrix Q which is represented
     using Householder reflectors (`input`, `tau`). Returns a Tensor.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         input (Tensor): Tensor of shape :math:`(*, mn, k)`, when `left` is True, mn equals to m,
             otherwise, mn equals to n. And `*` is zero or more batch dimensions.

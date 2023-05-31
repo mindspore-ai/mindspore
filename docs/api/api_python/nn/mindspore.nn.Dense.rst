@@ -1,7 +1,7 @@
 mindspore.nn.Dense
 ===================
 
-.. py:class:: mindspore.nn.Dense(in_channels, out_channels, weight_init='normal', bias_init='zeros', has_bias=True, activation=None)
+.. py:class:: mindspore.nn.Dense(in_channels, out_channels, weight_init=HeUniform(math.sqrt(5)), bias_init=None, has_bias=True, activation=None)
 
     全连接层。
 

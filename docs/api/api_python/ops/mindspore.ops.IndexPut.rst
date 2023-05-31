@@ -16,7 +16,7 @@ mindspore.ops.IndexPut
           `indices` 中的tensor的秩应为1-D，`indices` 中tensor的size应小于 `x1` 的秩，indices中的tensor应是可广播的。
 
     输出：
-        Tensor, 其数据类型和shape与  `x1`相同。
+        Tensor, 其数据类型和shape与  `x1` 相同。
 
     异常：
         - **TypeError** - 如果 `x1` 的dtype与 `x2` 的dtype不同。

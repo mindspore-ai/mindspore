@@ -1,7 +1,7 @@
 mindspore.nn.Conv3d
 =============================
 
-.. py:class:: mindspore.nn.Conv3d(in_channels, out_channels, kernel_size, stride=1, pad_mode='same', padding=0, dilation=1, group=1, has_bias=False, weight_init='normal', bias_init='zeros', data_format='NCDHW')
+.. py:class:: mindspore.nn.Conv3d(in_channels, out_channels, kernel_size, stride=1, pad_mode='same', padding=0, dilation=1, group=1, has_bias=False, weight_init=HeUniform(math.sqrt(5)), bias_init=None, data_format='NCDHW')
 
     对输入Tensor计算三维卷积。该Tensor的shape通常为 :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` ，其中 :math:`N` 为batch size， :math:`C_{in}` 是空间维度。:math:`D_{in}, H_{in}, W_{in}` 分别为特征层的深度、高度和宽度。对于每个batch中的Tensor，其shape为 :math:`(C_{in}, D_{in}, H_{in}, W_{in})` ，公式定义如下：
 
