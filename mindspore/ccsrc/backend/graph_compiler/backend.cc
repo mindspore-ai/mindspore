@@ -997,11 +997,7 @@ void MindRTBackend::DispatchOpTaskDynamic(bool single_op_cache_hit, VectorRef *o
   auto future = promise.get_future();
 
   auto &op_executor = runtime::OpExecutor::GetInstance();
-  if (!single_op_cache_hit) {
-    op_executor.PushOpBuildTask(std::make_shared<pynative::BackendOpBuildTask>(run_op_context, std::move(promise)));
-  } else {
-    promise.set_value(true);
-  }
+  promise.set_value(true);
   op_executor.PushOpRunTask(std::make_shared<pynative::BackendOpRunTask>(
     run_op_context, [this](const std::shared_ptr<pynative::OpTaskContext> &ctx) { OpRunCallbackDynamic(ctx); },
     std::move(future)));
@@ -1074,12 +1070,14 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   MS_EXCEPTION_IF_NULL(outputs);
 
-  bool is_dynamic_shape =
-    op_run_info->base_op_run_info.has_dynamic_output || op_run_info->base_op_run_info.use_dynamic_shape_process;
-
+  bool is_dynamic_shape = op_run_info->base_op_run_info.has_dynamic_output;
   auto async_exec_disabled = is_dynamic_shape || !op_run_info->base_op_run_info.lazy_build ||
                              OpInBlackList(op_run_info) || GetExecutionMode() == kGraphMode ||
                              EnablePyNativeSyncRunning();
+  auto device_context = op_compiler_info->device_context_;
+  if (!single_op_cache_hit) {
+    CompileSingleOpGraph(op_compiler_info->graph_, device_context, true);
+  }
   if (!async_exec_disabled) {
     MS_LOG(DEBUG) << "Async exec enabled, op: " << op_run_info->base_op_run_info.op_name;
     // Create graph output device address
@@ -1094,11 +1092,6 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
   auto &op_executor = runtime::OpExecutor::GetInstance();
   if (!op_executor.RunQueueEmpty()) {
     WaitTaskFinish();
-  }
-
-  auto device_context = op_compiler_info->device_context_;
-  if (!single_op_cache_hit) {
-    CompileSingleOpGraph(op_compiler_info->graph_, device_context, true);
   }
 
   std::vector<device::DeviceAddressPtr> device_address_list;
