@@ -20,6 +20,7 @@
 #include "third_party/securec/include/securec.h"
 #include "mindspore/lite/src/common/mutable_tensor_impl.h"
 #include "mindspore/lite/python/src/tensor_numpy_impl.h"
+#include "mindspore/core/ir/api_tensor_impl.h"
 
 #include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"
@@ -29,9 +30,10 @@
 
 namespace mindspore::lite {
 namespace py = pybind11;
+using MSTensorPtr = std::shared_ptr<MSTensor>;
 
-py::buffer_info GetPyBufferInfo(const MSTensor &tensor);
-bool SetTensorNumpyData(MSTensor *tensor, const py::array &input);
+py::buffer_info GetPyBufferInfo(const MSTensorPtr &tensor);
+bool SetTensorNumpyData(const MSTensorPtr &tensor, const py::array &input);
 
 void TensorPyBind(const py::module &m) {
   (void)py::enum_<DataType>(m, "DataType")
@@ -76,6 +78,7 @@ void TensorPyBind(const py::module &m) {
     .value("NDHWC", Format::NDHWC)
     .value("NC8HW8", Format::NC8HW8);
 
+  (void)py::class_<MSTensor::Impl, std::shared_ptr<MSTensor::Impl>>(m, "TensorImpl_");
   (void)py::class_<MSTensor, std::shared_ptr<MSTensor>>(m, "TensorBind")
     .def(py::init<>())
     .def("set_tensor_name", [](MSTensor &tensor, const std::string &name) { tensor.SetTensorName(name); })
@@ -90,25 +93,27 @@ void TensorPyBind(const py::module &m) {
     .def("get_data_size", &MSTensor::DataSize)
     .def("set_data", &MSTensor::SetData)
     .def("get_data", &MSTensor::MutableData)
-    .def("is_null", [](const MSTensor &tensor) { return tensor == nullptr; })
+    .def("is_null", [](const MSTensorPtr &tensor) { return tensor == nullptr; })
     .def("set_data_from_numpy",
-         [](MSTensor &tensor, const py::array &input) { return SetTensorNumpyData(&tensor, input); })
-    .def("get_data_to_numpy", [](MSTensor &tensor) -> py::array {
+         [](const MSTensorPtr &tensor, const py::array &input) { return SetTensorNumpyData(tensor, input); })
+    .def("get_data_to_numpy", [](const MSTensorPtr &tensor) -> py::array {
+      if (tensor == nullptr) {
+        MS_LOG(ERROR) << "Tensor object cannot be nullptr";
+        return py::array();
+      }
       auto info = GetPyBufferInfo(tensor);
-      py::object self = py::cast(&tensor);
+      py::object self = py::cast(tensor->impl());
       return py::array(py::dtype(info), info.shape, info.strides, info.ptr, self);
     });
 }
 
-MSTensor create_tensor() {
+MSTensorPtr create_tensor() {
   auto tensor = mindspore::MSTensor::CreateTensor("", DataType::kNumberTypeFloat32, {}, nullptr, 0);
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "create tensor failed.";
     return {};
   }
-  auto copy_tensor = *tensor;
-  delete tensor;
-  return copy_tensor;
+  return MSTensorPtr(tensor);
 }
 
 std::string GetPyTypeFormat(DataType data_type) {
@@ -150,16 +155,12 @@ bool IsCContiguous(const py::array &input) {
   return (flags & pybind11::detail::npy_api::NPY_ARRAY_C_CONTIGUOUS_) != 0;
 }
 
-bool SetTensorNumpyData(MSTensor *tensor_ptr, const py::array &input) {
+bool SetTensorNumpyData(const MSTensorPtr &tensor_ptr, const py::array &input) {
   auto &tensor = *tensor_ptr;
   // Check format.
   if (!IsCContiguous(input)) {
-    PyArrayObject *darray = PyArray_GETCONTIGUOUS(reinterpret_cast<PyArrayObject *>(input.ptr()));
-    void *data = PyArray_DATA(darray);
-    auto tensor_data = tensor.MutableData();
-    memcpy_s(tensor_data, tensor.DataSize(), data, tensor.DataSize());
-    Py_DECREF(darray);
-    return true;
+    MS_LOG(ERROR) << "Numpy array is not C Contiguous";
+    return false;
   }
   auto py_buffer_info = input.request();
   auto py_data_type = TensorNumpyImpl::GetDataType(py_buffer_info);
@@ -179,17 +180,18 @@ bool SetTensorNumpyData(MSTensor *tensor_ptr, const py::array &input) {
   return true;
 }
 
-py::buffer_info GetPyBufferInfo(const MSTensor &tensor) {
-  ssize_t item_size = tensor.DataSize() / tensor.ElementNum();
-  std::string format = GetPyTypeFormat(tensor.DataType());
-  ssize_t ndim = tensor.Shape().size();
-  std::vector<ssize_t> shape(tensor.Shape().begin(), tensor.Shape().end());
+py::buffer_info GetPyBufferInfo(const MSTensorPtr &tensor) {
+  ssize_t item_size = tensor->DataSize() / tensor->ElementNum();
+  std::string format = GetPyTypeFormat(tensor->DataType());
+  auto lite_shape = tensor->Shape();
+  ssize_t ndim = lite_shape.size();
+  std::vector<ssize_t> shape(lite_shape.begin(), lite_shape.end());
   std::vector<ssize_t> strides(ndim);
   ssize_t element_num = 1;
   for (int i = ndim - 1; i >= 0; i--) {
     strides[i] = element_num * item_size;
     element_num *= shape[i];
   }
-  return py::buffer_info{const_cast<MSTensor &>(tensor).MutableData(), item_size, format, ndim, shape, strides};
+  return py::buffer_info{tensor->MutableData(), item_size, format, ndim, shape, strides};
 }
 }  // namespace mindspore::lite
