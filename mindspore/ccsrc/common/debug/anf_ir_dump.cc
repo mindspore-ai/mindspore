@@ -264,8 +264,9 @@ std::string GetValueText(const FuncGraphPtr &func_graph, const ValuePtr &value,
   }
   if (CanUseDumpText(value)) {
     return value->DumpText();
+  } else {
+    return GetOtherValueText(value);
   }
-  return GetOtherValueText(value);
 }
 
 void PrintTupleNodeUsedFlags(std::ostringstream &buffer, const abstract::AbstractSequencePtr &sequence_abs) {
@@ -500,7 +501,11 @@ void DumpOperator(const AnfNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
   } else if (op->isa<ValueNode>()) {
     auto value = GetValueNode(op);
     if (value != nullptr) {
-      gsub->buffer << value->ToString();
+      if (value->isa<Primitive>()) {
+        gsub->buffer << value->ToString();
+      } else {
+        gsub->buffer << GetValueText(node->func_graph(), value, gsub);
+      }
     }
   } else {
     // It's Parameter.
@@ -623,7 +628,11 @@ void DumpAttrs(const mindspore::HashMap<std::string, ValuePtr> &attrs, const std
     if (attr.second == nullptr) {
       gsub->buffer << "null";
     } else {
-      gsub->buffer << attr.second->ToString();
+      if (CanUseDumpText(attr.second)) {
+        gsub->buffer << attr.second->DumpText();
+      } else {
+        gsub->buffer << attr.second->ToString();
+      }
     }
   }
 }
@@ -824,14 +833,9 @@ void DumpCNode(const CNodePtr &node, const FuncGraphPtr &sub_graph, const Ordere
   // Print operands
   DumpOperands(node, para_map, gsub);
 
+  // Print operator attrs
   AnfNodePtr op = node->input(0);
-  if (op->isa<ValueNode>()) {
-    auto value = GetValueNode(op);
-    if (value != nullptr) {
-      auto value_string = GetValueText(node->func_graph(), value, gsub);
-      gsub->buffer << value_string;
-    }
-  }
+  DumpOperateAttrs(op, gsub);
 
   // Print cnode attrs
   DumpCNodeAttrs(node, gsub);
