@@ -328,7 +328,7 @@ class MS_CORE_API PartialAbstractClosure final : public AbstractFuncAtom {
  private:
   AbstractFuncAtomPtr fn_;
   AbstractBasePtrList args_abs_list_;
-  // The CNode which this PartialAbstractClosure evaluated from.
+  // The ANFNode which this PartialAbstractClosure evaluated from.
   AnfNodeWeakPtr node_;
 };
 using PartialAbstractClosurePtr = std::shared_ptr<PartialAbstractClosure>;

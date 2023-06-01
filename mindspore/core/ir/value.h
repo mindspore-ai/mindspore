@@ -285,6 +285,10 @@ class MS_CORE_API KeywordArg : public Value {
   ///
   /// \return The hash value.
   std::size_t hash() const override;
+  /// \brief Get key of the KeywordArg object.
+  ///
+  /// \return The key of the KeywordArg object.
+  std::string get_key() const { return key_; }
   /// \brief Get value of the KeywordArg object.
   ///
   /// \return The value of the KeywordArg object.

@@ -493,6 +493,19 @@ py::dict AbstractDictionaryToPython(const AbstractBasePtr &abs_base) {
   return dic;
 }
 
+py::object AbstractKWArgsToPython(const AbstractBasePtr &abs_base) {
+  MS_EXCEPTION_IF_NULL(abs_base);
+  auto abs_keyword_arg = abs_base->cast_ptr<abstract::AbstractKeywordArg>();
+  MS_EXCEPTION_IF_NULL(abs_keyword_arg);
+  auto args_abs = abs_keyword_arg->get_arg();
+  auto args_obj = BuildPyObject(args_abs->BuildValue());
+  // if the args is none but the type is not none means the input is a variable.
+  if (!args_abs->isa<AbstractNone>() && py::isinstance<py::none>(args_obj)) {
+    return py::none();
+  }
+  return BuildPyObject(abs_base->BuildValue());
+}
+
 py::object AbstractListValueToPython(const AbstractList *list_abs) {
   MS_EXCEPTION_IF_NULL(list_abs);
   if (list_abs->dynamic_len()) {
@@ -687,16 +700,6 @@ void UnknownAbstract(const AbstractBasePtr &abs_base) {
     MS_EXCEPTION(TypeError) << "Unsupported parameter " << (value_desc.empty() ? "type" : value_desc)
                             << " for python primitive." << abs_base->ToString();
   }
-  if (abs_base->isa<AbstractKeywordArg>()) {
-    std::stringstream ss;
-    ss << "For example: \n";
-    ss << "x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32)) \n";
-    ss << "reduce_sum = ops.ReduceSum(True) \n";
-    ss << "output = reduce_sum(x, 2)";
-    ss << "#Try to use reduce_sum(x, 2) instead of reduce_sum(x, axis=2). ";
-    MS_EXCEPTION(TypeError) << "Only supported positional parameter type for python primitive, "
-                            << "but got keyword parameter type. " << ss.str();
-  }
   MS_EXCEPTION(TypeError) << "Unsupported parameter type for python primitive, the parameter value is "
                           << value->ToString();
 }
@@ -784,6 +787,10 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base, bool only_conv
     dic[ATTR_SHAPE] = py::none();
     dic[ATTR_DTYPE] = abs_base->BuildType();
     dic[ATTR_VALUE] = py::none();
+  } else if (abs_base->isa<AbstractKeywordArg>()) {
+    dic[ATTR_SHAPE] = py::none();
+    dic[ATTR_DTYPE] = abs_base->BuildType();
+    dic[ATTR_VALUE] = AbstractKWArgsToPython(abs_base);
   } else {
     UnknownAbstract(abs_base);
   }

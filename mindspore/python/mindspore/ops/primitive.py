@@ -25,7 +25,7 @@ from mindspore.parallel._ps_context import _is_ps_mode, _is_role_sched
 from mindspore.common.parameter import Parameter
 from mindspore.common.api import _pynative_executor
 from mindspore.common._stub_tensor import _convert_stub
-from mindspore._c_expression import Primitive_, prim_type
+from mindspore._c_expression import Primitive_, prim_type, typing
 from mindspore import _checkparam as Validator
 from mindspore.ops import signature as sig
 
@@ -746,6 +746,8 @@ def _check_contains_variable(item_dtype, item_value):
             if _check_contains_variable(item_dtype[i], element):
                 return True
     elif isinstance(item_value, dict):
+        if isinstance(item_dtype, typing.Keyword):
+            return item_value is None
         for i in range(len(item_value)):
             if _check_contains_variable(item_dtype[i], list(item_value.keys())[i]):
                 return True
