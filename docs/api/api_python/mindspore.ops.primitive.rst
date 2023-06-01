@@ -3,6 +3,10 @@ mindspore.ops.primitive
 
 可用于Cell的构造函数的算子。
 
+算子级并行过程各算子的使用约束详见 `算子级并行使用约束 <https://www.mindspore.cn/docs/zh-CN/master/note/operator_list_parallel.html>`_ 。
+
+模块导入方法如下：
+
 .. code-block::
 
     import mindspore.ops as ops
