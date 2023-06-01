@@ -30,6 +30,8 @@ class UpsampleNearest3dCpuKernel : public CpuKernel {
 
   template <typename T>
   uint32_t UpsampleNearest3dCompute(const CpuKernelContext &ctx);
+
+  std::vector<int64_t> none_list;
 };
 }  // namespace aicpu
 #endif

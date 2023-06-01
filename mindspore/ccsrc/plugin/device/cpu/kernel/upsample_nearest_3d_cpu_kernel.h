@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <memory>
 #include <map>
+#include <utility>
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "kernel/common_utils.h"
@@ -40,19 +41,27 @@ class UpsampleNearest3DCpuKernelMod : public NativeCpuKernelMod {
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  void ComputeNearestIndex(int64_t *const indices, int64_t stride, int64_t input_szie, int64_t output_size,
+                           double scale);
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-
-  TypeId in_type_{kTypeUnknown};
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
+  using KernelRunFunc = std::function<bool(UpsampleNearest3DCpuKernelMod *, const std::vector<AddressPtr> &,
+                                           const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+  KernelRunFunc kernel_func_;
+  static std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list_;
   std::vector<int64_t> x_shape_;
   std::vector<int64_t> y_shape_;
-  std::vector<float> attr_scales_;
+  std::vector<float> scales_;
+  std::vector<int64_t> none_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

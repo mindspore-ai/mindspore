@@ -33,6 +33,7 @@ class UpsampleNearest3dGradCpuKernel : public CpuKernel {
 
   template <typename T, typename S>
   void InnerCompute(int64_t c, const T *grad_output_data, S *grad_input_ptr);
+
   int64_t input_depth;
   int64_t input_height;
   int64_t input_width;
@@ -43,8 +44,7 @@ class UpsampleNearest3dGradCpuKernel : public CpuKernel {
   int64_t input_slice_size;
 
   std::vector<float> scales;
-  std::vector<int64_t> output_size;
-  std::vector<int64_t> input_size;
+  std::vector<int64_t> none_list;
   std::vector<int64_t> grads_input_shape;
   std::vector<int64_t> grads_output_shape;
 };

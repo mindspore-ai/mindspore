@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_UPSAMLE_TRILINEAR_3D_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_UPSAMLE_TRILINEAR_3D_CPU_KERNEL_H_
 
+#include <utility>
 #include <algorithm>
 #include <map>
 #include <memory>
@@ -40,20 +41,54 @@ class UpsampleTrilinear3DCpuKernelMod : public NativeCpuKernelMod {
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  template <typename T, typename AccT>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  template <typename T>
+  struct WeightsAndIndices {
+    void operator()(int64_t *const input_index0, int64_t *const input_index1, T *const lambda_0, T *const lambda_1) {
+      *input_index0 = id0;
+      *input_index1 = id1;
+      *lambda_0 = lambda0;
+      *lambda_1 = lambda1;
+    }
+    void Step(const int64_t stride) {
+      id0 *= stride;
+      id1 *= stride;
+    }
+    int64_t id0;
+    int64_t id1;
+    T lambda0;
+    T lambda1;
+  };
 
-  TypeId in_type_{kTypeUnknown};
+  template <typename S>
+  void ComputeWeightsAndIndices(WeightsAndIndices<S> *const wi, S scale, int64_t out_idx, int64_t input_size,
+                                int64_t output_size, int64_t stride);
+
+  template <typename S>
+  void ComputeHelper(WeightsAndIndices<S> *const helper, S scale, int64_t input_size, int64_t output_size,
+                     int64_t stride);
+
+  template <typename T, typename S>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
+  using KernelRunFunc = std::function<bool(UpsampleTrilinear3DCpuKernelMod *, const std::vector<AddressPtr> &,
+                                           const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list_;
+  KernelRunFunc kernel_func_;
+
+  TypeId x_type_{kTypeUnknown};
   std::vector<int64_t> x_shape_;
   std::vector<int64_t> y_shape_;
-  std::vector<float> attr_scales_;
-  bool attr_align_corners_{false};
+  std::vector<double> scales_{};
+  std::vector<int64_t> none_list_{};
+  bool align_corners_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

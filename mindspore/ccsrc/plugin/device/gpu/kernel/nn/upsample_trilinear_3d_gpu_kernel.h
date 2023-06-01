@@ -33,9 +33,6 @@ class UpsampleTrilinear3DGpuKernelMod : public NativeGpuKernelMod {
   ~UpsampleTrilinear3DGpuKernelMod() override = default;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
-    if (is_null_input_) {
-      return true;
-    }
     cuda_stream_ = cuda_stream;
     return kernel_func_(this, inputs, workspace, outputs);
   }
@@ -49,34 +46,26 @@ class UpsampleTrilinear3DGpuKernelMod : public NativeGpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  template <typename F>
-  void CheckDims(string check_dim_name, int expected_size, std::vector<F> check_vector);
-  void ResetResource() noexcept;
-  float ScalingD(const size_t in_size, const size_t out_size, bool align_corners);
-  float ScalingS(float scale_value, int idx, const size_t out_size);
-  template <typename T>
+  template <typename T, typename S>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
   using UpsampleTrilinear3DFunc = std::function<bool(UpsampleTrilinear3DGpuKernelMod *, const std::vector<AddressPtr> &,
                                                      const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
-  bool GetUpsampleTrilinear3DAttr(const BaseOperatorPtr &base_operator);
-
-  void *cuda_stream_{nullptr};
-  bool is_null_input_{false};
-  bool align_corners_{};
-  size_t t_size_{0};
-  size_t n_{};
-  size_t c_{};
-  size_t input_d_{};
-  size_t input_h_{};
-  size_t input_w_{};
-  size_t output_d_{};
-  size_t output_h_{};
-  size_t output_w_{};
-  std::vector<int64_t> out_spatial_size_me_;
-  std::vector<float> scale_factors_;
   UpsampleTrilinear3DFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, UpsampleTrilinear3DFunc>> func_list_;
+  void *cuda_stream_{nullptr};
+
+  bool align_corners_{};
+  int64_t n_{};
+  int64_t c_{};
+  int64_t input_d_{};
+  int64_t input_h_{};
+  int64_t input_w_{};
+  int64_t output_d_{};
+  int64_t output_h_{};
+  int64_t output_w_{};
+  std::vector<double> scales_{0., 0., 0.};
+  std::vector<int64_t> none_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

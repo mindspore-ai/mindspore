@@ -29,14 +29,42 @@ class UpsampleTrilinear3dGradCpuKernel : public CpuKernel {
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
+  template <typename T>
+  struct WeightsAndIndices {
+    void operator()(int64_t *const input_index0, int64_t *const input_index1, T *const lambda_0, T *const lambda_1) {
+      *input_index0 = id0;
+      *input_index1 = id1;
+      *lambda_0 = lambda0;
+      *lambda_1 = lambda1;
+    }
+    void Step(const int64_t stride) {
+      id0 *= stride;
+      id1 *= stride;
+    }
+    int64_t id0;
+    int64_t id1;
+    T lambda0;
+    T lambda1;
+  };
+  template <typename S>
+  void ComputeWeightsAndIndices(WeightsAndIndices<S> &wi, S scale, int64_t out_idx, int64_t input_size,
+                                int64_t output_size, int64_t stride);
+
+  template <typename S>
+  void ComputeHelper(const CpuKernelContext &ctx, std::vector<WeightsAndIndices<S>> &helper, S scale,
+                     int64_t input_size, int64_t output_size, int64_t stride);
+
   uint32_t UpsampleTrilinear3dGradParamCheck(CpuKernelContext &ctx);
 
   template <typename T, typename S>
   uint32_t UpsampleTrilinear3dGradCompute(const CpuKernelContext &ctx);
 
-  template <typename T, typename S>
-  void InnerCompute(int64_t c_idx, const T *grad_output_ptr, S *grad_input_ptr);
+  template <typename T, typename S, typename R>
+  uint32_t RealCompute(const CpuKernelContext &ctx, T *const grad_output_ptr, R *const grad_input_ptr);
 
+  int64_t FetchBlockSize(const CpuKernelContext &ctx, const int64_t parallel_num, const int64_t cost);
+
+  int64_t channels;
   int64_t input_depth;
   int64_t input_height;
   int64_t input_width;
@@ -46,9 +74,8 @@ class UpsampleTrilinear3dGradCpuKernel : public CpuKernel {
   int64_t output_slice_size;
   int64_t input_slice_size;
   std::vector<float> scales;
+  std::vector<int64_t> none_list;
   bool align_corners = false;
-  std::vector<int64_t> input_size;
-  std::vector<int64_t> output_size;
 };
 }  // namespace aicpu
 #endif

@@ -16,11 +16,13 @@
 
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UPSAMPLE_TRILINEAR_3D_IMPL_CUH_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UPSAMPLE_TRILINEAR_3D_IMPL_CUH_
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
-template <typename T>
-CUDA_LIB_EXPORT void CalUpsampleTrilinear3D(const T *input, const size_t n, const size_t c, const size_t in_d,
-                                            const size_t in_h, const size_t in_w, const size_t out_d,
-                                            const size_t out_h, const size_t out_w, const float d_scale,
-                                            const float h_scale, const float w_scale, const bool align_corner,
-                                            T *output, cudaStream_t cuda_stream);
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
+
+template <typename T, typename S>
+CUDA_LIB_EXPORT cudaError_t CalUpsampleTrilinear3D(const T *input, const int n, const int c, const int in_d,
+                                                   const int in_h, const int in_w, const int out_d, const int out_h,
+                                                   const int out_w, const S d_scale, const S h_scale, const S w_scale,
+                                                   const bool align_corners, T *output, const uint32_t device_id,
+                                                   cudaStream_t cuda_stream);
+
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UPSAMPLE_TRILINEAR_3D_IMPL_CUH_

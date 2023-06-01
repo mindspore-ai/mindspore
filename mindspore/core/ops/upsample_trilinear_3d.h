@@ -30,10 +30,8 @@ constexpr auto kNameUpsampleTrilinear3D = "UpsampleTrilinear3D";
 class MIND_API UpsampleTrilinear3D : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(UpsampleTrilinear3D);
-  UpsampleTrilinear3D() : BaseOperator(kNameUpsampleTrilinear3D) { InitIOName({"x"}, {"y"}); }
+  UpsampleTrilinear3D() : BaseOperator(kNameUpsampleTrilinear3D) { InitIOName({"x", "output_size", "scales"}, {"y"}); }
   bool get_align_corners() const;
-  std::vector<int64_t> get_output_size_attr() const;
-  std::vector<float> get_scales_attr() const;
 };
 using PrimUpsampleTrilinear3D = std::shared_ptr<UpsampleTrilinear3D>;
 }  // namespace ops

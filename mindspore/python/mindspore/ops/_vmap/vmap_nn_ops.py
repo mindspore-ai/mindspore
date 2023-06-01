@@ -1895,19 +1895,28 @@ def get_upsample_nearest_3d_vmap_rule(prim, axis_size):
     """VmapRule for `UpsampleNearest3D` and `UpsampleTrilinear3D`."""
     cdhw_reverse_index = -4
 
-    def vmap_rule(x_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+    def vmap_rule(x_bdim, size_bdim, scales_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, size_bdim,
+                                                      scales_bdim)
         if is_all_none:
             return result
 
         x, x_dim = x_bdim
         x = _bdim_at_front(x, x_dim, axis_size)
+        size, size_dim = size_bdim
+        scales, scales_dim = scales_bdim
+        if size_dim is not None or scales_dim is not None:
+            _raise_value_error(
+                "The source axis of `output_size` and `scales` must be None, but got {0} and {1}."
+                .format(size_dim, scales_dim))
+
         x_shape = F.shape(x)
         input_shape = (-1,) + x_shape[cdhw_reverse_index:]
         x = F.reshape(x, input_shape)
-        out = prim(x)
+        out = prim(x, size, scales)
         out_shape = F.shape(out)
-        return_shape = x_shape[:cdhw_reverse_index] + out_shape[cdhw_reverse_index:]
+        return_shape = x_shape[:cdhw_reverse_index] + out_shape[
+            cdhw_reverse_index:]
         out = F.reshape(out, return_shape)
         return out, 0
 

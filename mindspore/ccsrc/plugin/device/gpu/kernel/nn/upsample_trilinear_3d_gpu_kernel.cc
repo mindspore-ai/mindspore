@@ -30,95 +30,29 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr int kInputsNum = 1;
+const float kValueZero = 0.;
+constexpr int kInputsNum = 2;
 constexpr int kOutputsNum = 1;
 }  // namespace
-void UpsampleTrilinear3DGpuKernelMod::ResetResource() noexcept {
-  n_ = 0;
-  c_ = 0;
-  input_d_ = 0;
-  input_h_ = 0;
-  input_w_ = 0;
-  output_d_ = 0;
-  output_h_ = 0;
-  output_w_ = 0;
-  scale_factors_.clear();
-  input_size_list_.clear();
-  output_size_list_.clear();
-  workspace_size_list_.clear();
-}
-
-template <typename F>
-void UpsampleTrilinear3DGpuKernelMod::CheckDims(string check_dim_name, int expected_size, std::vector<F> check_vector) {
-  int dim_size = check_vector.size();
-  if (dim_size != expected_size) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', " << check_dim_name << " size is " << dim_size << " should be"
-                      << expected_size << ".";
-  }
-  for (int i = 0; i < dim_size; i++) {
-    if (check_vector[i] <= 0) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', " << check_dim_name << " dimension " << i
-                        << " value is <= 0. ";
-    }
-  }
-}
-
-float UpsampleTrilinear3DGpuKernelMod::ScalingD(const size_t in_size, const size_t out_size, bool align_corners) {
-  // for input/output size
-  if (out_size > 1) {
-    return align_corners ? (in_size - 1) / static_cast<float>(out_size - 1) : in_size / static_cast<float>(out_size);
-  } else {
-    return static_cast<float>(0.0);
-  }
-}
-
-float UpsampleTrilinear3DGpuKernelMod::ScalingS(float scale_value, int idx, const size_t out_size) {
-  // for scale factors
-  if (out_size > 1) {
-    if (scale_value <= 0.0f) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', "
-                        << "scales "
-                        << "dimension " << idx << " value is <= 0.";
-    } else {
-      return static_cast<float>(1.0 / scale_value);
-    }
-  } else {
-    return static_cast<float>(0.0);
-  }
-}
-
-bool UpsampleTrilinear3DGpuKernelMod::GetUpsampleTrilinear3DAttr(const BaseOperatorPtr &base_operator) {
-  if (kernel_name_ != prim::kPrimUpsampleTrilinear3D->name()) {
-    MS_LOG(ERROR) << "For '" << prim::kPrimUpsampleTrilinear3D->name()
-                  << "' , it's kernel name must be equal to UpsampleTrilinear3D, but got " << kernel_name_;
-    return false;
-  }
-  auto kernel_ptr = std::make_shared<ops::UpsampleTrilinear3D>(base_operator->GetPrim());
-  align_corners_ = kernel_ptr->get_align_corners();
-  out_spatial_size_me_ = kernel_ptr->get_output_size_attr();
-  scale_factors_ = kernel_ptr->get_scales_attr();
-  return true;
-}
-
 bool UpsampleTrilinear3DGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                            const std::vector<KernelTensorPtr> &inputs,
                                            const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
+  auto kernel_ptr = std::make_shared<ops::UpsampleTrilinear3D>(base_operator->GetPrim());
+  align_corners_ = kernel_ptr->get_align_corners();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
     return false;
   }
-  t_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).dtype);
   kernel_func_ = func_list_[index].second;
-  return GetUpsampleTrilinear3DAttr(base_operator);
+  return true;
 }
 
 int UpsampleTrilinear3DGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
@@ -128,16 +62,8 @@ int UpsampleTrilinear3DGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  ResetResource();
   std::vector<int64_t> input_shape = inputs[kIndex0]->GetShapeVector();
-  size_t input_size = std::accumulate(input_shape.begin(), input_shape.end(), t_size_, std::multiplies<size_t>());
-  string error_type = "input_dim";
-  int exp_shape_size = kIndex5;
-  CheckDims(error_type, exp_shape_size, input_shape);
   std::vector<int64_t> output_shape = outputs[kIndex0]->GetShapeVector();
-  size_t output_size = std::accumulate(output_shape.begin(), output_shape.end(), t_size_, std::multiplies<size_t>());
-  error_type = "output_dim";
-  CheckDims(error_type, exp_shape_size, input_shape);
   n_ = input_shape[kIndex0];
   c_ = input_shape[kIndex1];
   input_d_ = input_shape[kIndex2];
@@ -146,44 +72,72 @@ int UpsampleTrilinear3DGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   output_d_ = output_shape[kIndex2];
   output_h_ = output_shape[kIndex3];
   output_w_ = output_shape[kIndex4];
-  exp_shape_size = kIndex3;
-  if (!out_spatial_size_me_.empty() || align_corners_ == true) {
-    scale_factors_.push_back(ScalingD(input_d_, output_d_, align_corners_));
-    scale_factors_.push_back(ScalingD(input_h_, output_h_, align_corners_));
-    scale_factors_.push_back(ScalingD(input_w_, output_w_, align_corners_));
-  } else {
-    scale_factors_.push_back(ScalingS(scale_factors_[kIndex0], kIndex0, output_d_));
-    scale_factors_.push_back(ScalingS(scale_factors_[kIndex1], kIndex1, output_h_));
-    scale_factors_.push_back(ScalingS(scale_factors_[kIndex2], kIndex2, output_w_));
+  none_list_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(kAttrNoneList));
+  if (none_list_.size() != kIndex1) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', only one of output_size or scales should be specified.";
   }
-  input_size_list_.push_back(input_size);
-  output_size_list_.push_back(output_size);
   return KRET_OK;
 }
 
-template <typename T>
+template <typename T, typename S>
 bool UpsampleTrilinear3DGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                    const std::vector<AddressPtr> &workspace,
                                                    const std::vector<AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
+  if (none_list_[kIndex0] == static_cast<int64_t>(kIndex2)) {
+    scales_ = std::vector<double>(kIndex3, static_cast<double>(kValueZero));
+  } else {
+    std::vector<float> tmp{kIndex3, kValueZero};
+    auto scales_device = GetDeviceAddress<float>(inputs, kIndex1);
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(reinterpret_cast<void *>(tmp.data()), reinterpret_cast<void *>(scales_device),
+                      input_size_list_[kIndex1], cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(cuda_stream_)),
+      "For '" << kernel_name_ << "', "
+              << "cudaMemcpy input 'scales' to host failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaDeviceSynchronize(), "cudaDeviceSyncFailed - " + kernel_name_);
+    for (size_t i = 0; i < kIndex3; ++i) {
+      scales_[i] = static_cast<double>(tmp[i]);
+    }
+  }
+
+  const S depth_scale = AreaPixelComputeScale<S>(input_d_, output_d_, align_corners_, scales_[kIndex0]);
+  const S height_scale = AreaPixelComputeScale<S>(input_h_, output_h_, align_corners_, scales_[kIndex1]);
+  const S width_scale = AreaPixelComputeScale<S>(input_w_, output_w_, align_corners_, scales_[kIndex2]);
+
   auto input = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
   auto output = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
-  CalUpsampleTrilinear3D(input, n_, c_, input_d_, input_h_, input_w_, output_d_, output_h_, output_w_,
-                         scale_factors_[kIndex0], scale_factors_[kIndex1], scale_factors_[kIndex2], align_corners_,
-                         output, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = CalUpsampleTrilinear3D<T, S>(input, n_, c_, input_d_, input_h_, input_w_, output_d_, output_h_,
+                                             output_w_, depth_scale, height_scale, width_scale, align_corners_, output,
+                                             device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
   return true;
 }
 
+#define UpsampleTrilinear3D_GPU_KERNEL_REG(M_S, M_T, S, T)                               \
+  KernelAttr().AddInputAttr(M_S).AddInputAttr(kObjectTypeTuple, M_T).AddOutputAttr(M_S), \
+    &UpsampleTrilinear3DGpuKernelMod::LaunchKernel<S, T>
+
 std::vector<std::pair<KernelAttr, UpsampleTrilinear3DGpuKernelMod::UpsampleTrilinear3DFunc>>
   UpsampleTrilinear3DGpuKernelMod::func_list_ = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-     &UpsampleTrilinear3DGpuKernelMod::LaunchKernel<half>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-     &UpsampleTrilinear3DGpuKernelMod::LaunchKernel<float>}};
+    {UpsampleTrilinear3D_GPU_KERNEL_REG(kNumberTypeFloat16, kNumberTypeInt32, half, float)},
+    {UpsampleTrilinear3D_GPU_KERNEL_REG(kNumberTypeFloat32, kNumberTypeInt32, float, float)},
+    {UpsampleTrilinear3D_GPU_KERNEL_REG(kNumberTypeFloat64, kNumberTypeInt32, double, double)},
+    {UpsampleTrilinear3D_GPU_KERNEL_REG(kNumberTypeFloat16, kNumberTypeInt64, half, float)},
+    {UpsampleTrilinear3D_GPU_KERNEL_REG(kNumberTypeFloat32, kNumberTypeInt64, float, float)},
+    {UpsampleTrilinear3D_GPU_KERNEL_REG(kNumberTypeFloat64, kNumberTypeInt64, double, double)},
+    {UpsampleTrilinear3D_GPU_KERNEL_REG(kNumberTypeFloat16, kNumberTypeFloat32, half, float)},
+    {UpsampleTrilinear3D_GPU_KERNEL_REG(kNumberTypeFloat32, kNumberTypeFloat32, float, float)},
+    {UpsampleTrilinear3D_GPU_KERNEL_REG(kNumberTypeFloat64, kNumberTypeFloat32, double, double)},
+};
+
 std::vector<KernelAttr> UpsampleTrilinear3DGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
                        [](const std::pair<KernelAttr, UpsampleTrilinear3DFunc> &pair) { return pair.first; });
   return support_list;
 }
+
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, UpsampleTrilinear3D, UpsampleTrilinear3DGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

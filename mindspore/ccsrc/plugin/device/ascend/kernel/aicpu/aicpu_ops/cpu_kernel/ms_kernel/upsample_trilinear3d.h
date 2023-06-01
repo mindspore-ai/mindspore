@@ -47,8 +47,8 @@ class UpsampleTrilinear3dCpuKernel : public CpuKernel {
   int64_t output_slice_size;
   int64_t input_slice_size;
   bool align_corners = false;
-  std::vector<float> scales;
-  std::vector<int64_t> output_size;
+  std::vector<float> scales{0., 0., 0.};
+  std::vector<int64_t> none_list;
 };
 }  // namespace aicpu
 #endif

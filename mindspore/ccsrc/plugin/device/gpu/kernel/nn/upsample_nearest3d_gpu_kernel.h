@@ -33,9 +33,6 @@ class UpsampleNearest3dGpuKernelMod : public NativeGpuKernelMod {
   ~UpsampleNearest3dGpuKernelMod() override = default;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
-    if (is_null_input_) {
-      return true;
-    }
     cuda_stream_ = cuda_stream;
     return kernel_func_(this, inputs, workspace, outputs);
   }
@@ -52,24 +49,16 @@ class UpsampleNearest3dGpuKernelMod : public NativeGpuKernelMod {
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
-
   using UpsampleNearest3dFunc = std::function<bool(UpsampleNearest3dGpuKernelMod *, const std::vector<AddressPtr> &,
                                                    const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
-
-  bool GetUpsampleNearest3dAttr(const BaseOperatorPtr &base_operator);
-
-  float Scaling(const size_t in_size, const size_t out_size, int idx);
-
-  float Scaling(const float scale_value, int idx);
-
-  void *cuda_stream_{nullptr};
-  bool is_null_input_{false};
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> output_shape_;
-  std::vector<int64_t> output_volumetric_size_;
-  std::vector<float> scale_factors_;
   UpsampleNearest3dFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, UpsampleNearest3dFunc>> func_list_;
+
+  void *cuda_stream_{nullptr};
+  std::vector<int32_t> input_shape_{};
+  std::vector<int32_t> output_shape_{};
+  std::vector<float> scale_factors_{0., 0., 0.};
+  std::vector<int64_t> none_list_{};
 };
 }  // namespace kernel
 }  // namespace mindspore

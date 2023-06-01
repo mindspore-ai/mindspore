@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_UPSAMLE_NEAREST_3D_GRAD_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_UPSAMLE_NEAREST_3D_GRAD_CPU_KERNEL_H_
 
+#include <utility>
 #include <algorithm>
 #include <memory>
 #include <unordered_map>
@@ -42,19 +43,27 @@ class UpsampleNearest3DGradCpuKernelMod : public NativeCpuKernelMod {
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  void ComputeNearestIndex(int64_t *const indices, int64_t stride, int64_t input_szie, int64_t output_size,
+                           double scale);
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-
-  TypeId in_type_{kTypeUnknown};
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
+  using KernelRunFunc = std::function<bool(UpsampleNearest3DGradCpuKernelMod *, const std::vector<AddressPtr> &,
+                                           const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+  KernelRunFunc kernel_func_;
+  static std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list_;
   std::vector<int64_t> input_shape_;
   std::vector<int64_t> output_shape_;
-  std::vector<float> attr_scales_;
+  std::vector<int64_t> none_list_;
+  std::vector<double> scales_;
 };
 }  // namespace kernel
 }  // namespace mindspore

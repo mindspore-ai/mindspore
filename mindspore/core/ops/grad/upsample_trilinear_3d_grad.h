@@ -31,16 +31,11 @@ constexpr auto kNameUpsampleTrilinear3DGrad = "UpsampleTrilinear3DGrad";
 class MIND_API UpsampleTrilinear3DGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(UpsampleTrilinear3DGrad);
-  UpsampleTrilinear3DGrad() : BaseOperator(kNameUpsampleTrilinear3DGrad) { InitIOName({"grad"}, {"dx"}); }
+  UpsampleTrilinear3DGrad() : BaseOperator(kNameUpsampleTrilinear3DGrad) {
+    InitIOName({"dy", "input_size", "output_size", "scales"}, {"dx"});
+  }
   bool get_align_corners() const;
-  std::vector<int64_t> get_out_spatial_size() const;
-  std::vector<int64_t> get_grad_spatial_size() const;
-  std::vector<float> get_scale_factors() const;
 };
-
-MIND_API abstract::AbstractBasePtr UpsampleTrilinear3DGradInfer(
-  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-  const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimUpsampleTrilinear3DGrad = std::shared_ptr<UpsampleTrilinear3DGrad>;
 }  // namespace ops
 }  // namespace mindspore

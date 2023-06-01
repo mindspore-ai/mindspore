@@ -316,6 +316,10 @@ class MS_CORE_API CheckAndConvertUtils {
   static void CheckSummaryParam(const AbstractBasePtr &name, const AbstractBasePtr &value,
                                 const std::string &class_name);
   static void CheckMode(const std::string &class_name);
+  static std::vector<double> CheckTensorFloatValue(const std::string &type_name, const ValuePtr &value,
+                                                   const std::string &prim_name);
+  static std::vector<double> CheckListOrTupleFloat(const std::string &arg_name, const ValuePtr &attr,
+                                                   const std::string &prim_name);
   static std::vector<int64_t> CheckIntOrTupleInt(const std::string &arg_name, const ValuePtr &attr,
                                                  const std::string &prim_name);
   static std::vector<int64_t> CheckTupleInt(const std::string &arg_name, const ValuePtr &attr,

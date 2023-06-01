@@ -1947,23 +1947,23 @@ class UpsampleNearest3DGrad(Primitive):
     """
     Upsample the 3-D gradient data  with the nearest neighbor interpolation algorithm.
 
-    Args:
-        input_size (listInt): An required listInt. contain 5 elements: [min_batch, channels, depth, height, width].
+    Inputs:
+        - **dy** (Tensor) - Tensor of shape [N, C, D, H, W], Must be one of the following types:
+            float16, float32, float64.
+        - **input_size** (listInt): An required listInt, which contain 5 elements:
+            [min_batch, channels, depth, height, width].
             Must: input_size[0] == grad_output_tensor_size[0], input_size[1] == grad_output_tensor_size[1].
-        output_size (listInt): An optional listInt. Defaults to none.
+        - **output_size** (listInt): An optional listInt. Defaults to none.
             contain 3 elements: depth, height, width. The number of elements of 'output_size' should
-            be the same as the rank of input 'grad_output'. Only one of 'scales' and 'output_size' can be specified.
+            be the same as the rank of input 'grad_output'.
+            Only one of 'scales' and 'output_size' can be specified.
             Must: grad_output_tensor_size[2] == floor(input_size[2] * scales[0]) == output_size[0]
             grad_output_tensor_size[3] == floor(input_size[3] * scales[1]) == output_size[1]
             grad_output_tensor_size[4] == floor(input_size[4] * scales[2]) == output_size[2].
-        scales (listFloat): An optional listFloat. Defaults to none.
+        - **scales** (listFloat): An optional listFloat. Defaults to none.
             The scale array along each dimension, contain 3 elements: scale_depth, scale_height, scale_width.
             The number of elements of 'scales' should be the same as the rank of input 'grad_output'.
             One of 'scales' and 'output_size' MUST be specified and it is an error if both are specified.
-
-    Inputs:
-        - **grad_output** (Tensor) - Tensor of shape [N, C, D, H, W], Must be one of the following types:
-          float16, float32, float64.
 
     Outputs:
         Tensor, A 5-D tensor. Has the same type as input grad_output, shape depends on x and output_size/scales.
@@ -1972,31 +1972,21 @@ class UpsampleNearest3DGrad(Primitive):
         TypeError: If `input_size` is not listInt.
         TypeError: When `output_size` is not none and `output_size` is not listInt.
         TypeError: When `scales` is not none and `scales` is not listFloat.
-        TypeError: If dtype of `x` is not int [float16, float32, float64].
+        TypeError: If dtype of `dy` is not int [float16, float32, float64].
         ValueError: If any value of `input_size` is negative.
         ValueError: If any value of `output_size` is negative.
         ValueError: If any value of `scales` is negative.
-        ValueError: If shape of `x` is not 5D.
+        ValueError: If shape of `dy` is not 5D.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
     @prim_attr_register
-    def __init__(self, input_size, output_size=None, scales=None):
+    def __init__(self):
         """Initialize UpsampleNearest3DGrad."""
-        self.init_prim_io_names(inputs=['grad_output'], outputs=['y'])
-        validator.check_value_type("input_size", input_size, [list, tuple], self.name)
-        validator.check_positive_int_sequence(input_size, "input_size", self.name)
-        if output_size is not None:
-            validator.check_value_type("output_size", output_size, [list, tuple], self.name)
-            validator.check_positive_int_sequence(output_size, "output_size", self.name)
-        else:
-            self.add_prim_attr("output_size", [])
-        if scales is not None:
-            validator.check_value_type("scales", scales, [list, tuple], self.name)
-            validator.check_positive_float_sequence(scales, "scales", self.name)
-        else:
-            self.add_prim_attr("scales", [])
+        self.init_prim_io_names(
+            inputs=['dy', 'input_size', 'output_size', 'scales'],
+            outputs=['dx'])
 
 
 class ROIAlignGrad(Primitive):
@@ -2988,27 +2978,29 @@ class UpsampleTrilinear3DGrad(Primitive):
     r"""
     Upsample the 3-D gradient data with trilinear interpolation algorithm.
 
+    Note:
+        One of `scales` and `output_size` must be specified and it is an error if both are specified.
+
     Args:
-        input_size (Union[tuple[int], list[int]]): An required listInt.
-            contain 5 elements: [batch, channels, depth, height, width]. Must:
-            input_size[0] == grad_output_tensor_size[0]
-            input_size[1] == grad_output_tensor_size[1].
-        output_size (Union[tuple[int], list[int]]): An optional listInt. Defaults to none.
-            contain 3 elements: depth, height, width. The number of elements of 'output_size' should
-            be the same as the rank of input 'grad_output'.
-            Only one of 'scales' and 'output_size' can be specified. Must:
-            grad_output_tensor_size[2] == floor(input_size[2] * scales[0]) == output_size[0]
-            grad_output_tensor_size[3] == floor(input_size[3] * scales[1]) == output_size[1]
-            grad_output_tensor_size[4] == floor(input_size[4] * scales[2]) == output_size[2].
-        scales (Union[tuple[float], list[float]]): An optional listFloat. Defaults to none.
-            The scale array along each dimension, contain 3 elements: scale_depth, scale_height, scale_width.
-            The number of elements of 'scales' should be the same as the rank of input 'grad_output'.
-            One of 'scales' and 'output_size' MUST be specified and it is an error if both are specified.
         align_corners (bool): An optional bool. Defaults to false.
 
     Inputs:
-        - **grad_output** (Tensor) - A 5-D input tensor [N, C, D, H, W].
-          Must be one of the following types: [float16, float32, float64].
+        - **dy** (Tensor) - Tensor of shape [N, C, D, H, W]. Must be one of the following types:
+          float16, float32, float64.
+        - **input_size** (Union[tuple[int], list[int]]): An required listInt which contains 5 elements:
+          [batch, channels, depth, height, width]. Must:
+          input_size[0] == grad_output_tensor_size[0]
+          input_size[1] == grad_output_tensor_size[1].
+        - **output_size** (Union[tuple[int], list[int]]): An optional listInt. Defaults to none.
+          contain 3 elements: depth, height, width. The number of elements of 'output_size' should
+          be the same as the rank of input 'grad_output'. Must:
+          grad_output_tensor_size[2] == floor(input_size[2] * scales[0]) == output_size[0]
+          grad_output_tensor_size[3] == floor(input_size[3] * scales[1]) == output_size[1]
+          grad_output_tensor_size[4] == floor(input_size[4] * scales[2]) == output_size[2].
+        - **scales** (Union[tuple[float], list[float]]): An optional listFloat. Defaults to none.
+          The scale array along each dimension, contain 3 elements: scale_depth, scale_height, scale_width.
+          The number of elements of 'scales' should be the same as the rank of input 'grad_output'.
+          One of 'scales' and 'output_size' MUST be specified and it is an error if both are specified.
 
     Outputs:
         backprops Tensor - A Tensor with shape depends on intput_size and output_size/scales.
@@ -3034,31 +3026,12 @@ class UpsampleTrilinear3DGrad(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
     """
     @prim_attr_register
-    def __init__(self, input_size, output_size=None, scales=None, align_corners=False):
+    def __init__(self, align_corners=False):
         """Initialize UpsampleTrilinear3DGrad."""
-        self.init_prim_io_names(inputs=['grad_output'], outputs=['y'])
-        self.input_size = input_size
-        self.output_size = [] if output_size is None else output_size
-        self.scales = [] if scales is None else scales
+        self.init_prim_io_names(
+            inputs=['dy', 'input_size', 'output_size', 'scales'],
+            outputs=['dx'])
         self.align_corners = align_corners
-
-        validator.check_value_type("input_size", self.input_size, [list, tuple], self.name)
-        validator.check_equal_int(len(self.input_size), 5, "the dimension of input_size", self.name)
-        validator.check_value_type("output_size", self.output_size, [list, tuple], self.name)
-        validator.check_value_type("scales", self.scales, [list, tuple], self.name)
-        validator.check_bool(self.align_corners, self.name)
-        if len(self.output_size) == 3:
-            validator.check_positive_int_sequence(self.output_size, "output_size", self.name)
-        if len(self.scales) == 3:
-            validator.check_positive_float_sequence(self.scales, "scales", self.name)
-        if self.output_size == []:
-            validator.check_equal_int(len(self.scales), 3, 'size of scales', self.name)
-        if self.scales == []:
-            validator.check_equal_int(len(self.output_size), 3, 'size of output_size', self.name)
-
-        self.add_prim_attr('input_size', self.input_size)
-        self.add_prim_attr('output_size', self.output_size)
-        self.add_prim_attr('scales', self.scales)
         self.add_prim_attr('align_corners', self.align_corners)
 
 
@@ -3609,11 +3582,13 @@ class ResizeBicubicGrad(Primitive):
         original_image_shape = list(original_image['shape'])
         # get value
         if grads['value'] is None:
-            raise ValueError(f"For '{self.name}', the 'grads' cannot be None,\
-                            but got {grads['value']}.")
+            raise ValueError(
+                f"For '{self.name}', the 'grads' cannot be None, but got {grads['value']}."
+            )
         if original_image['value'] is None:
-            raise ValueError(f"For '{self.name}', the 'original_image' cannot be None,\
-                                but got {original_image['value']}.")
+            raise ValueError(
+                f"For '{self.name}', the 'original_image' cannot be None, but got {original_image['value']}."
+            )
         # get dtype
         grads_dtype = grads['dtype']
         original_image_dtype = original_image['dtype']

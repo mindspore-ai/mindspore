@@ -1960,8 +1960,9 @@ def test_up_sample_nearest_3d():
     x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
                .reshape([1, 1, 2, 2, 4]), mstype.float32)
     output_size = [3, 4, 5]
-    net = ops.UpsampleNearest3D(output_size=output_size)
-    grad_compile_(x, net)
+    net = Net(ops.UpsampleNearest3D())
+    grad = GradNet(net)
+    grad.compile(x, output_size, None)
 
 
 def test_upsample_trilinear_3d():
@@ -1970,8 +1971,11 @@ def test_upsample_trilinear_3d():
     Description: Compile the backward graph for the upsample_trilinear_3D.
     Expectation: Load the bprop mindir successfully.
     """
-    op = ops.UpsampleTrilinear3D(output_size=[4, 64, 48])
-    grad_compile_(Tensor(input_data=np.random.randn(2, 3, 4, 512, 256)), op)
+    x = Tensor(input_data=np.random.randn(2, 3, 4, 512, 256))
+    output_size = [4, 64, 48]
+    net = Net(ops.UpsampleTrilinear3D())
+    grad = GradNet(net)
+    grad.compile(x, output_size, None)
 
 
 def test_add():
