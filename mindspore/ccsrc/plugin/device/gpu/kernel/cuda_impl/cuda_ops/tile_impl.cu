@@ -64,9 +64,9 @@ template CUDA_LIB_EXPORT void CalTile<Complex<float>>(const size_t output_size, 
                                                       const size_t *output_shape, const Complex<float> *input,
                                                       Complex<float> *output, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalTile<Complex<double>>(const size_t output_size, const size_t input_size,
-                                                       const size_t shape_size, const size_t *input_shape,
-                                                       const size_t *output_shape, const Complex<double> *input,
-                                                       Complex<double> *output, cudaStream_t cuda_stream);
+                                                      const size_t shape_size, const size_t *input_shape,
+                                                      const size_t *output_shape, const Complex<double> *input,
+                                                      Complex<double> *output, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalTile<double>(const size_t output_size, const size_t input_size,
                                               const size_t shape_size, const size_t *input_shape,
                                               const size_t *output_shape, const double *input, double *output,
@@ -81,10 +81,9 @@ template CUDA_LIB_EXPORT void CalTile<int16_t>(const size_t output_size, const s
                                                const size_t shape_size, const size_t *input_shape,
                                                const size_t *output_shape, const int16_t *input, int16_t *output,
                                                cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTile<int32_t>(const size_t output_size, const size_t input_size,
-                                               const size_t shape_size, const size_t *input_shape,
-                                               const size_t *output_shape, const int32_t *input, int32_t *output,
-                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalTile<int>(const size_t output_size, const size_t input_size, const size_t shape_size,
+                                           const size_t *input_shape, const size_t *output_shape, const int *input,
+                                           int *output, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalTile<int64_t>(const size_t output_size, const size_t input_size,
                                                const size_t shape_size, const size_t *input_shape,
                                                const size_t *output_shape, const int64_t *input, int64_t *output,
