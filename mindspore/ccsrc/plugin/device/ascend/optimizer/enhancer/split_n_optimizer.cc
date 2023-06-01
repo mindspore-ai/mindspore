@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ KernelWithIndex VisitSplitKernel(const AnfNodePtr &anf_node, size_t index) {
       return VisitSplitKernel(node, 0);
     } else if (IsPrimitive(input0, prim::kPrimTupleGetItem)) {
       if (cnode->inputs().size() != kTupleGetItemInputSize) {
-        MS_LOG(EXCEPTION) << "The node tuple_get_item must have 2 inputs!";
+        MS_LOG(INTERNAL_EXCEPTION) << "The node tuple_get_item must have 2 inputs!";
       }
       auto input2 = cnode->input(kInputNodeOutputIndexInTupleGetItem);
       MS_EXCEPTION_IF_NULL(input2);
@@ -85,7 +85,7 @@ KernelWithIndex VisitSplitKernel(const AnfNodePtr &anf_node, size_t index) {
       return std::make_pair(anf_node, index);
     }
   } else {
-    MS_LOG(EXCEPTION) << "The input is invalid";
+    MS_LOG(INTERNAL_EXCEPTION) << "The input is invalid";
   }
 }
 

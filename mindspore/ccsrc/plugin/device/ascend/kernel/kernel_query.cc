@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,7 +163,7 @@ abstract::AbstractBasePtr GenerateAbsByOpInfer(const PrimitivePtr &primitive, co
   MS_EXCEPTION_IF_NULL(primitive);
   auto found = abstract::GetPrimitiveInferImpl(primitive);
   if (!found.has_value()) {
-    MS_LOG(EXCEPTION) << primitive->name() << " infer is not registered.";
+    MS_LOG(INTERNAL_EXCEPTION) << primitive->name() << " infer is not registered.";
   }
 
   std::vector<AbstractBasePtr> input_args;

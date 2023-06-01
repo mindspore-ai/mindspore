@@ -183,7 +183,7 @@ const std::vector<size_t> &HcclKernel::GetInputSizeList() const {
 void HcclKernel::CalLoopSize() {
   auto anf_node = anf_node_.lock();
   if (!anf_node) {
-    MS_LOG(EXCEPTION) << "anf_node pointer is expired.";
+    MS_LOG(INTERNAL_EXCEPTION) << "anf_node pointer is expired.";
   }
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
@@ -253,15 +253,15 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
                                              const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
   auto anf_node = anf_node_.lock();
   if (!anf_node) {
-    MS_LOG(EXCEPTION) << "anf_node pointer is expired.";
+    MS_LOG(INTERNAL_EXCEPTION) << "anf_node pointer is expired.";
   }
   std::string hccl_type = common::AnfAlgo::GetCNodeName(anf_node);
   if (hccl_type == kReceiveOpName || hccl_type == kMuxReceiveOpName) {
     if (outputs.empty()) {
-      MS_LOG(EXCEPTION) << "Outputs is empty";
+      MS_LOG(INTERNAL_EXCEPTION) << "Outputs is empty";
     }
   } else if (inputs.empty() || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "Inputs or outputs is empty";
+    MS_LOG(INTERNAL_EXCEPTION) << "Inputs or outputs is empty";
   }
   stream_id_ = stream_id;
   void *input_data_addr = nullptr;
@@ -273,7 +273,7 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
   auto output_data_addr = outputs.at(0)->addr;
   std::vector<uint8_t> private_def;
   if (hccl_data_type_list_.empty()) {
-    MS_LOG(EXCEPTION) << "Hccl data type list is empty";
+    MS_LOG(INTERNAL_EXCEPTION) << "Hccl data type list is empty";
   }
   HcclDataType data_type = hccl_data_type_list_[0];
   std::vector<hccl::HcclTaskInfo> task_info;
@@ -349,7 +349,7 @@ bool HcclKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << "The anfnode is not a cnode.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The anfnode is not a cnode.";
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
@@ -401,18 +401,18 @@ bool HcclKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector
 void HcclKernel::UpdateOutputSizeList() {
   auto anf_node = anf_node_.lock();
   if (!anf_node) {
-    MS_LOG(EXCEPTION) << "anf_node pointer is expired.";
+    MS_LOG(INTERNAL_EXCEPTION) << "anf_node pointer is expired.";
   }
   size_t size = 0;
   hccl_kernel_output_shape_list_.clear();
   mutable_output_size_list_.clear();
   if (!HcomUtil::GetKernelOutputShape(anf_node, &hccl_kernel_output_shape_list_)) {
-    MS_LOG(EXCEPTION) << "GetKernelOutputShape fail!";
+    MS_LOG(INTERNAL_EXCEPTION) << "GetKernelOutputShape fail!";
   }
 
   for (ulong i = 0; i < loop_size_; ++i) {
     if (!HcomUtil::GetHcclOpSize(hccl_data_type_list_[0], hccl_kernel_output_shape_list_[i], &size)) {
-      MS_LOG(EXCEPTION) << "GetHcclOpOutputSize failed";
+      MS_LOG(INTERNAL_EXCEPTION) << "GetHcclOpOutputSize failed";
     }
     mutable_output_size_list_.push_back(size);
   }

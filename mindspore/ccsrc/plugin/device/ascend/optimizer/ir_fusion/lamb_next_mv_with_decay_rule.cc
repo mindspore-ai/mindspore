@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,8 @@ const AnfNodePtr LambNextMVWithDecayRule::Process(const FuncGraphPtr &func_graph
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   if (manager->node_users().find(mul4) == manager->node_users().end()) {
-    MS_LOG(EXCEPTION) << "The Mul4 should be used by at least another node input." << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "The Mul4 should be used by at least another node input."
+                               << trace::DumpSourceLines(node);
   }
   AnfNodeIndexSet mul4_outputs = manager->node_users()[mul4];
   auto iter = std::find_if(mul4_outputs.begin(), mul4_outputs.end(),

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1023,7 +1023,7 @@ void AscendStreamAssign::ClassifyNodeByGroupAndGraph(const std::vector<CNodePtr>
   for (auto cur_cnode_ptr : hcom_list) {
     MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
     if (!IsHcom(cur_cnode_ptr)) {
-      MS_LOG(EXCEPTION) << "Node is not hcom node, it's " << cur_cnode_ptr->fullname_with_scope();
+      MS_LOG(INTERNAL_EXCEPTION) << "Node is not hcom node, it's " << cur_cnode_ptr->fullname_with_scope();
     }
     auto group_name = GetHcomGroup(cur_cnode_ptr);
     auto hcom_graph_id = AnfAlgo::GetGraphId(cur_cnode_ptr.get());
@@ -1084,7 +1084,7 @@ void AscendStreamAssign::ClassifyNodeByGraph(const std::vector<CNodePtr> indepen
   for (auto cur_cnode_ptr : indepent_list) {
     MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
     if (!AnfAlgo::IsIndependentNode(cur_cnode_ptr)) {
-      MS_LOG(EXCEPTION) << "Node is not independent node, it's " << cur_cnode_ptr->fullname_with_scope();
+      MS_LOG(INTERNAL_EXCEPTION) << "Node is not independent node, it's " << cur_cnode_ptr->fullname_with_scope();
     }
     auto independent_graph_id = AnfAlgo::GetGraphId(cur_cnode_ptr.get());
     auto it = graph_nodes_map->find(independent_graph_id);
@@ -1466,7 +1466,7 @@ void AscendStreamAssign::InsertStreamActiveForIndependent(const NotNull<KernelGr
     auto cur_stream_id = AnfAlgo::GetStreamId(cur_cnode_ptr);
     auto it = std::find(streams.begin(), streams.end(), cur_stream_id);
     if (it == streams.end()) {
-      MS_LOG(EXCEPTION) << "Can't find independent stream id:" << cur_stream_id;
+      MS_LOG(INTERNAL_EXCEPTION) << "Can't find independent stream id:" << cur_stream_id;
     } else if (it == streams.end() - 1) {
       (void)std::copy(exe_orders.begin() + static_cast<std::vector<CNodePtr>::difference_type>(i + 1), exe_orders.end(),
                       std::back_inserter(update_cnode_list));
@@ -1611,7 +1611,7 @@ void AscendStreamAssign::InsertRecvForNotLoopSink(const NotNull<KernelGraphPtr> 
     stream_id = AnfAlgo::GetStreamId(*iter);
   }
   if (stream_id == UINT32_MAX) {
-    MS_LOG(EXCEPTION) << "Can not find compute node in graph " << graph_id;
+    MS_LOG(INTERNAL_EXCEPTION) << "Can not find compute node in graph " << graph_id;
   }
 
   for (auto iter = cnodes->end() - 1; iter >= cnodes->begin(); --iter) {
@@ -1790,7 +1790,8 @@ vector<CNodePtr> AscendStreamAssign::GetLastInputCnode(const NotNull<KernelGraph
     auto stream_id = AnfAlgo::GetStreamId(cur_input);
     auto cur_index = GetIndexByKey(graph_ptr, cur_input.get());
     if (cur_index == UINT32_MAX) {
-      MS_LOG(EXCEPTION) << "The input node:" << common::AnfAlgo::GetCNodeName(cur_input) << " is not found in graph";
+      MS_LOG(INTERNAL_EXCEPTION) << "The input node:" << common::AnfAlgo::GetCNodeName(cur_input)
+                                 << " is not found in graph";
     }
     std::map<uint32_t, std::pair<CNodePtr, uint32_t>>::const_iterator it = result.find(stream_id);
     if (it == result.cend()) {
@@ -2032,7 +2033,7 @@ void AscendStreamAssign::InsertEventBetweenHcom(
   auto cnode_ptr_list = graph_ptr->execution_order();
   uint32_t cur_event_id = resource_manager.ApplyNewEvent();
   if (hcom_index.empty()) {
-    MS_LOG(EXCEPTION) << "Hcom stream number is empty";
+    MS_LOG(INTERNAL_EXCEPTION) << "Hcom stream number is empty";
   }
   size_t first_stream_last_index = hcom_index[0].second.back();
   size_t last_stream_first_index = hcom_index.back().second.front();
@@ -2241,7 +2242,7 @@ uint32_t AscendStreamAssign::GetMaxIndexTarget(const NotNull<KernelGraphPtr> &gr
   for (const auto &key : std::as_const(independent_targets_)) {
     auto index = GetIndexByKey(graph_ptr, key);
     if (index == UINT32_MAX) {
-      MS_LOG(EXCEPTION) << "graph has no correspond key";
+      MS_LOG(INTERNAL_EXCEPTION) << "graph has no correspond key";
     }
     (void)indices.emplace(index);
   }
@@ -2366,7 +2367,8 @@ void AscendStreamAssign::CheckStreamAssign(const NotNull<KernelGraphPtr> &graph_
     MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
     uint32_t stream_id = AnfAlgo::GetStreamId(cur_cnode_ptr);
     if (stream_id == kInvalidStreamId) {
-      MS_LOG(EXCEPTION) << "Node:" << common::AnfAlgo::GetCNodeName(cur_cnode_ptr) << "had not been assigned stream";
+      MS_LOG(INTERNAL_EXCEPTION) << "Node:" << common::AnfAlgo::GetCNodeName(cur_cnode_ptr)
+                                 << "had not been assigned stream";
     }
 
     (void)streams.emplace(stream_id);
@@ -2426,19 +2428,20 @@ void AscendStreamAssign::CheckEventAssign(const NotNull<KernelGraphPtr> &graph_p
     }
     uint32_t assigned_event_num = resource_manager.cur_event_num();
     if ((max_event_id != assigned_event_num - 1) || (event_map.size() != assigned_event_num)) {
-      MS_LOG(EXCEPTION) << "Event should be consecutive, however, assigned event num is: " << assigned_event_num
-                        << ", max event id:" << max_event_id << ", event map is:" << event_map;
+      MS_LOG(INTERNAL_EXCEPTION) << "Event should be consecutive, however, assigned event num is: "
+                                 << assigned_event_num << ", max event id:" << max_event_id
+                                 << ", event map is:" << event_map;
     }
     for (const auto &item : std::as_const(event_map)) {
       constexpr auto pair_size = 2;
       if (item.second.size() != pair_size) {
-        MS_LOG(EXCEPTION) << "Send/recv should be in pair and share one event id, invalid event id is:" << item.first
-                          << ", event size is:" << item.second.size();
+        MS_LOG(INTERNAL_EXCEPTION) << "Send/recv should be in pair and share one event id, invalid event id is:"
+                                   << item.first << ", event size is:" << item.second.size();
       }
       auto first_name = common::AnfAlgo::GetCNodeName(item.second[0]);
       auto second_name = common::AnfAlgo::GetCNodeName(item.second[1]);
       if (!(first_name == kSendOpName && second_name == kRecvOpName)) {
-        MS_LOG(EXCEPTION) << "Send should be before recv, invalid event id is:" << item.first;
+        MS_LOG(INTERNAL_EXCEPTION) << "Send should be before recv, invalid event id is:" << item.first;
       }
     }
   }
@@ -2705,7 +2708,7 @@ void AscendStreamAssign::GetStreamActiveStreamRelation(const NotNull<KernelGraph
 
   auto orders = graph_ptr->execution_order();
   if (index >= orders.size()) {
-    MS_LOG(EXCEPTION) << "Invalid index.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Invalid index.";
   }
   auto cur_cnode = orders[index];
   auto cur_stream_id = AnfAlgo::GetStreamId(cur_cnode);
@@ -2714,7 +2717,7 @@ void AscendStreamAssign::GetStreamActiveStreamRelation(const NotNull<KernelGraph
   if (kind == kHead) {
     uint32_t active_current_stream_id = GetStreamByActivedStream(cur_stream_id);
     if (active_current_stream_id == kInvalidStreamId) {
-      MS_LOG(EXCEPTION) << "No stream to active streamactive stream: " << cur_stream_id;
+      MS_LOG(INTERNAL_EXCEPTION) << "No stream to active streamactive stream: " << cur_stream_id;
     }
 
     for (const auto &item : active_list) {
@@ -2763,13 +2766,14 @@ void AscendStreamAssign::GetStreamActiveStreamRelation(const NotNull<KernelGraph
 StreamActiveKind AscendStreamAssign::GetStreamActiveKind(const NotNull<KernelGraphPtr> &graph_ptr, size_t index) {
   auto exe_orders = graph_ptr->execution_order();
   if (index >= exe_orders.size()) {
-    MS_LOG(EXCEPTION) << "Invalid op index:" << index;
+    MS_LOG(INTERNAL_EXCEPTION) << "Invalid op index:" << index;
   }
 
   auto cur_cnode = exe_orders[index];
   auto cur_stream_id = AnfAlgo::GetStreamId(cur_cnode);
   if (common::AnfAlgo::GetCNodeName(cur_cnode) != kStreamActiveOpName) {
-    MS_LOG(EXCEPTION) << "Current node name [" << common::AnfAlgo::GetCNodeName(cur_cnode) << "] is not StreamActive.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Current node name [" << common::AnfAlgo::GetCNodeName(cur_cnode)
+                               << "] is not StreamActive.";
   }
 
   if (index == 0) {
@@ -3098,7 +3102,7 @@ void AscendStreamAssign::InsertEventForOverflowInGraph(const NotNull<KernelGraph
   auto npu_get_iter = std::find_if(execution_order.begin(), execution_order.end(),
                                    [&](const auto &node) { return node == npu_get_node; });
   if (npu_get_iter == execution_order.end()) {
-    MS_LOG(EXCEPTION) << "Can not find node in execution order, node: " << npu_get_node->fullname_with_scope();
+    MS_LOG(INTERNAL_EXCEPTION) << "Can not find node in execution order, node: " << npu_get_node->fullname_with_scope();
   }
   for (auto event_id : event_ids) {
     CNodePtr recv_cnode = CreateRecvApplyKernel(graph_ptr, event_id, AnfAlgo::GetStreamId(*npu_get_iter));

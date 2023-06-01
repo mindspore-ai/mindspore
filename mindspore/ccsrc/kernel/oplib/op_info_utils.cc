@@ -608,8 +608,8 @@ void OpInfoUtils::UpdateInputOrders(const OpInfoPtr &op_info_ptr) {
   auto graph_idx_to_kernel_idx = orders.value();
   std::vector<std::shared_ptr<OpIOInfo>> tmp = op_info_ptr->inputs_ptr();
   if (tmp.size() != graph_idx_to_kernel_idx.size()) {
-    MS_LOG(EXCEPTION) << "Op input size not equal order size, (" << tmp.size() << ", " << graph_idx_to_kernel_idx.size()
-                      << ")";
+    MS_LOG(INTERNAL_EXCEPTION) << "Op input size not equal order size, (" << tmp.size() << ", "
+                               << graph_idx_to_kernel_idx.size() << ")";
   }
   for (size_t i = 0; i < graph_idx_to_kernel_idx.size(); ++i) {
     tmp[i] = op_info_ptr->inputs_ptr().at(graph_idx_to_kernel_idx[i]);

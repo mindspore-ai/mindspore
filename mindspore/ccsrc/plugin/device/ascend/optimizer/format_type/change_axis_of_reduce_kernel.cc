@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,12 +42,12 @@ const int64_t kAxisDim = 4;
 void SafeCheckFunction(const CNodePtr &cnode, const std::vector<int64_t> &reduce_axis) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (reduce_axis.empty()) {
-    MS_LOG(EXCEPTION) << "The node " << cnode->DebugString() << "'s reduce axis got a empty vector"
-                      << trace::DumpSourceLines(cnode);
+    MS_LOG(INTERNAL_EXCEPTION) << "The node " << cnode->DebugString() << "'s reduce axis got a empty vector"
+                               << trace::DumpSourceLines(cnode);
   }
   if (common::AnfAlgo::GetInputTensorNum(cnode) != 1 || AnfAlgo::GetOutputTensorNum(cnode) != 1) {
-    MS_LOG(EXCEPTION) << "The kind of reduce node [" << cnode->DebugString()
-                      << "] is not single input or single output." << trace::DumpSourceLines(cnode);
+    MS_LOG(INTERNAL_EXCEPTION) << "The kind of reduce node [" << cnode->DebugString()
+                               << "] is not single input or single output." << trace::DumpSourceLines(cnode);
   }
   for (auto elem : reduce_axis) {
     if (elem > kAxisDim) {
@@ -75,8 +75,8 @@ void ConvertReduceAttrFraczAnd6HD(const CNodePtr &cnode) {
   SafeCheckFunction(cnode, axis);
   auto format = AnfAlgo::GetInputFormat(cnode, 0);
   if (format != kOpFormat_FRAC_Z && format != kOpFormat_C1HWNCoC0) {
-    MS_LOG(EXCEPTION) << "The node [" << cnode->DebugString() << "] format " << format
-                      << " is not needed to change the axis";
+    MS_LOG(INTERNAL_EXCEPTION) << "The node [" << cnode->DebugString() << "] format " << format
+                               << " is not needed to change the axis";
   }
   for (auto elem : axis) {
     switch (elem) {

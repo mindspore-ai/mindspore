@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,15 +37,15 @@ bool StreamSwitchKernel::Init(const AnfNodePtr &anf_node) {
   auto primitive = common::AnfAlgo::GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);
   if (!common::AnfAlgo::HasNodeAttr(kAttrSwitchCondition, anf_node->cast<CNodePtr>())) {
-    MS_LOG(EXCEPTION) << "StreamSwitchKernel has no attr kAttrSwitchCondition";
+    MS_LOG(INTERNAL_EXCEPTION) << "StreamSwitchKernel has no attr kAttrSwitchCondition";
   }
   cond_ = tagRtCondition(GetValue<int>(primitive->GetAttr(kAttrSwitchCondition)));
   if (!common::AnfAlgo::HasNodeAttr(kAttrTrueBranchStream, anf_node->cast<CNodePtr>())) {
-    MS_LOG(EXCEPTION) << "StreamSwitchKernel has no attr kAttrTrueBranchStream";
+    MS_LOG(INTERNAL_EXCEPTION) << "StreamSwitchKernel has no attr kAttrTrueBranchStream";
   }
   true_stream_index_ = GetValue<uint32_t>(primitive->GetAttr(kAttrTrueBranchStream));
   if (!common::AnfAlgo::HasNodeAttr(kAttrDataType, anf_node->cast<CNodePtr>())) {
-    MS_LOG(EXCEPTION) << "StreamSwitchKernel has no attr kAttrDataType";
+    MS_LOG(INTERNAL_EXCEPTION) << "StreamSwitchKernel has no attr kAttrDataType";
   }
   data_type_ = tagRtSwitchDataType(GetValue<int>(primitive->GetAttr(kAttrDataType)));
   MS_LOG(INFO) << "cond_:" << static_cast<int>(cond_) << ", true_stream_index_:" << true_stream_index_
@@ -84,7 +84,7 @@ std::vector<TaskInfoPtr> StreamSwitchKernel::GenTask(const std::vector<AddressPt
                                                      uint32_t stream_id) {
   MS_LOG(INFO) << "StreamSwitchKernel GenTask start";
   if (inputs.size() != kStreamSwitchInputSize) {
-    MS_LOG(EXCEPTION) << "stream switch inputs size is " << inputs.size() << ", is not two";
+    MS_LOG(INTERNAL_EXCEPTION) << "stream switch inputs size is " << inputs.size() << ", is not two";
   }
   stream_id_ = stream_id;
   MS_EXCEPTION_IF_NULL(inputs[0]);

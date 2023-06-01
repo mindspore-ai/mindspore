@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -248,7 +248,7 @@ bool NodePass::ProcessFastPass(const FuncGraphPtr &func_graph, const FuncGraphIn
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(func_graph_index);
   if (!func_graph_index->has_gen_index()) {
-    MS_LOG(EXCEPTION) << "ProcessFastPass Error, func graph has not gen index, pass name: " << name();
+    MS_LOG(INTERNAL_EXCEPTION) << "ProcessFastPass Error, func graph has not gen index, pass name: " << name();
   }
   auto src_pattern_root_name = GetPatternRootPrimitiveName();
   FuncGraphManagerPtr manager = func_graph->manager();

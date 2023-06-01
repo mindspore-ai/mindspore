@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -454,8 +454,8 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateHConcat(const FuncGraphPtr &func_graph
   std::vector<AnfNodePtr> splitv_outputs;
   CreateMultipleOutputsOfAnfNode(func_graph, splitv, kSplitVOutputNum, &splitv_outputs);
   if (splitv_outputs.size() != kSplitVOutputNum) {
-    MS_LOG(EXCEPTION) << "Create outputs of node " << splitv->DebugString() << " failed"
-                      << trace::DumpSourceLines(dynamic_rnn_grad_cnode);
+    MS_LOG(INTERNAL_EXCEPTION) << "Create outputs of node " << splitv->DebugString() << " failed"
+                               << trace::DumpSourceLines(dynamic_rnn_grad_cnode);
   }
   auto origin_input4 = dynamic_rnn_grad_cnode->input(kIndex5);
   auto origin_input4_shape = common::AnfAlgo::GetOutputInferShape(origin_input4, 0);

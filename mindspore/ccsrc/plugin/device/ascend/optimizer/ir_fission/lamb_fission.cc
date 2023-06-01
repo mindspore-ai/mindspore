@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,9 +126,9 @@ AnfNodePtr CreateLambApplyOptimizerAssignNode(const FuncGraphPtr &graph, const s
   std::vector<AnfNodePtr> lamb_assign_outputs;
   CreateMultipleOutputsOfAnfNode(graph, new_node, kLambApplyOptimizerAssignOutputNum, &lamb_assign_outputs);
   if (lamb_assign_outputs.size() != kLambApplyOptimizerAssignOutputNum) {
-    MS_LOG(EXCEPTION) << "The input tensor size[" << lamb_assign_outputs.size()
-                      << "] of node [" + new_node->DebugString() + "] is not equal to "
-                      << kLambApplyOptimizerAssignOutputNum << trace::DumpSourceLines(new_node);
+    MS_LOG(INTERNAL_EXCEPTION) << "The input tensor size[" << lamb_assign_outputs.size()
+                               << "] of node [" + new_node->DebugString() + "] is not equal to "
+                               << kLambApplyOptimizerAssignOutputNum << trace::DumpSourceLines(new_node);
   }
   return lamb_assign_outputs[kLambApplyOptimizerAssignUpdateIndex];
 }
@@ -189,9 +189,9 @@ const AnfNodePtr LambFission::Process(const FuncGraphPtr &graph, const AnfNodePt
   MS_EXCEPTION_IF_NULL(lamb_cnode);
   auto real_input_num = common::AnfAlgo::GetInputNum(lamb_cnode);
   if (real_input_num < kLambInputNum) {
-    MS_LOG(EXCEPTION) << "The input tensor size[" << real_input_num
-                      << "] of node [" + lamb_cnode->DebugString() + "] is not equal to " << kLambInputNum
-                      << trace::DumpSourceLines(lamb_cnode);
+    MS_LOG(INTERNAL_EXCEPTION) << "The input tensor size[" << real_input_num
+                               << "] of node [" + lamb_cnode->DebugString() + "] is not equal to " << kLambInputNum
+                               << trace::DumpSourceLines(lamb_cnode);
   }
 
   bool is_exist_umonad_node = false;

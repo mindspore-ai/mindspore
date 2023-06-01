@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,8 +60,9 @@ void BatchNormGradSplit::CreateOutputsOfReduceGrad(const FuncGraphPtr &graph, co
   const auto &bn_grad_inputs = bn_grad_node->inputs();
   CheckCNodeInputSize(bn_grad_node, kBNGradInputTensorNum);
   if (bn_update_grad_outputs.size() != kBNTrainingUpdateGradOutputNum) {
-    MS_LOG(EXCEPTION) << "Outputs of BNTrainingReduceGrad has wrong size, should be " << kBNTrainingUpdateGradOutputNum
-                      << ", but got " << bn_update_grad_outputs.size() << trace::DumpSourceLines(bn_grad_node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Outputs of BNTrainingReduceGrad has wrong size, should be "
+                               << kBNTrainingUpdateGradOutputNum << ", but got " << bn_update_grad_outputs.size()
+                               << trace::DumpSourceLines(bn_grad_node);
   }
   std::vector<AnfNodePtr> bn_reduce_grad_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingReduceGradOpName)),
@@ -111,15 +112,16 @@ const AnfNodePtr BatchNormGradSplit::Process(const FuncGraphPtr &func_graph, con
   std::vector<AnfNodePtr> bn_update_grad_outputs;
   CreateOutputsOfUpdateGrad(func_graph, cnode, &bn_update_grad_outputs);
   if (bn_update_grad_outputs.size() != kBNTrainingUpdateGradOutputNum) {
-    MS_LOG(EXCEPTION) << "Outputs of bn_update_grad has wrong size, should be " << kBNTrainingUpdateGradOutputNum
-                      << ", but got " << bn_update_grad_outputs.size() << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Outputs of bn_update_grad has wrong size, should be "
+                               << kBNTrainingUpdateGradOutputNum << ", but got " << bn_update_grad_outputs.size()
+                               << trace::DumpSourceLines(node);
   }
 
   std::vector<AnfNodePtr> bn_reduce_grad_outputs;
   CreateOutputsOfReduceGrad(func_graph, cnode, bn_update_grad_outputs, &bn_reduce_grad_outputs);
   if (bn_reduce_grad_outputs.size() != kSingleOutputNum) {
-    MS_LOG(EXCEPTION) << "Outputs of bn_reduce_grad has wrong size, should be " << kSingleOutputNum << ", but got "
-                      << bn_reduce_grad_outputs.size() << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Outputs of bn_reduce_grad has wrong size, should be " << kSingleOutputNum
+                               << ", but got " << bn_reduce_grad_outputs.size() << trace::DumpSourceLines(node);
   }
 
   std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple), bn_reduce_grad_outputs[0],

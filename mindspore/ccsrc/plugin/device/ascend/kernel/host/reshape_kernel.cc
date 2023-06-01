@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -164,7 +164,7 @@ void ReshapeKernelMod::Execute(const std::vector<AddressPtr> &inputs, const std:
   MS_EXCEPTION_IF_NULL(cnode);
 
   if (inputs.empty() || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "Inputs or outputs address of Reshape kernel is empty";
+    MS_LOG(INTERNAL_EXCEPTION) << "Inputs or outputs address of Reshape kernel is empty";
   }
   auto address_x = inputs[0]->addr;
   MS_EXCEPTION_IF_NULL(address_x);

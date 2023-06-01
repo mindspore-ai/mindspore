@@ -31,7 +31,7 @@ AnfNodePtr GetFirstNextUsers(const FuncGraphPtr &graph, const AnfNodePtr &input,
   auto &node_users = manager->node_users();
   auto iter = node_users.find(input);
   if (iter == node_users.end()) {
-    MS_LOG(EXCEPTION) << "node has no output in manager." << trace::DumpSourceLines(input);
+    MS_LOG(INTERNAL_EXCEPTION) << "node has no output in manager." << trace::DumpSourceLines(input);
   }
   auto user_items = iter->second;
   auto min_index = all_nodes.size();

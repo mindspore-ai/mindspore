@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ abstract::BaseShapePtr InferTransposeOutputShape(const abstract::BaseShapePtr &s
   auto shapeptr = shape->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shapeptr);
   if (shapeptr->shape().size() != perm.size()) {
-    MS_LOG(EXCEPTION) << "Length of input shape and perm must be same, bug got input shape: " << shape
-                      << ", perm: " << perm;
+    MS_LOG(INTERNAL_EXCEPTION) << "Length of input shape and perm must be same, bug got input shape: " << shape
+                               << ", perm: " << perm;
   }
   ShapeVector in_shape = shapeptr->shape();
   ShapeVector out_shape;
@@ -135,7 +135,8 @@ AnfNodePtr InsertTranspose(const FuncGraphPtr &func_graph, const CNodePtr &node,
   MS_EXCEPTION_IF_NULL(node);
   int64_t axis_pos = axis < 0 ? (SizeToLong(in_shape.size()) + axis) : axis;
   if (axis_pos < 0 || axis_pos >= SizeToLong(in_shape.size())) {
-    MS_LOG(EXCEPTION) << "Axis attr value [" << axis << "] of node " << node->fullname_with_scope() << " is invalid";
+    MS_LOG(INTERNAL_EXCEPTION) << "Axis attr value [" << axis << "] of node " << node->fullname_with_scope()
+                               << " is invalid";
   }
   std::vector<int64_t> perm(in_shape.size(), 0);
   int64_t i = 0;

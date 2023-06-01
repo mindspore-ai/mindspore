@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,8 +64,8 @@ AnfNodePtr BuildMaxPoolWithArgmax(const PatternMap &m, const AnfNodePtr &) {
   auto maxpool_with_argmax = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(maxpool_with_argmax);
   if (common::AnfAlgo::IsDynamicShape(maxpool_with_argmax)) {
-    MS_LOG(EXCEPTION) << "MaxPoolWithArgmax don't support dynamic shape, node: "
-                      << maxpool_with_argmax->fullname_with_scope();
+    MS_LOG(INTERNAL_EXCEPTION) << "MaxPoolWithArgmax don't support dynamic shape, node: "
+                               << maxpool_with_argmax->fullname_with_scope();
   }
 
   TypeId argmax_dtype = kNumberTypeUInt16;
@@ -73,8 +73,9 @@ AnfNodePtr BuildMaxPoolWithArgmax(const PatternMap &m, const AnfNodePtr &) {
   auto output_shape = common::AnfAlgo::GetOutputInferShape(maxpool_with_argmax, 0UL);
   auto argmax_shape = output_shape;
   if (argmax_shape.size() != kMaxPoolWithArgmaxShape || ksize.size() != kMaxPoolWithArgmaxShape) {
-    MS_LOG(EXCEPTION) << "Argmax or kernel_size's shape dim should be equal to 4, but got argmax dim: "
-                      << argmax_shape.size() << ", kernel_size dim: " << ksize.size() << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Argmax or kernel_size's shape dim should be equal to 4, but got argmax dim: "
+                               << argmax_shape.size() << ", kernel_size dim: " << ksize.size()
+                               << trace::DumpSourceLines(node);
   }
   argmax_shape[kDim2] = ksize[kDim1] * ksize[kDim2];
   argmax_shape[kDim3] =
@@ -92,8 +93,8 @@ AnfNodePtr BuildMaxPoolGradWithArgmax(const PatternMap &m, const AnfNodePtr &) {
   auto maxpool_grad_with_argmax = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(maxpool_grad_with_argmax);
   if (common::AnfAlgo::IsDynamicShape(maxpool_grad_with_argmax)) {
-    MS_LOG(EXCEPTION) << "MaxPoolGradWithArgmax don't support dynamic shape, node: "
-                      << maxpool_grad_with_argmax->fullname_with_scope();
+    MS_LOG(INTERNAL_EXCEPTION) << "MaxPoolGradWithArgmax don't support dynamic shape, node: "
+                               << maxpool_grad_with_argmax->fullname_with_scope();
   }
   auto tuple_getitem0_anf = GetMaxPoolWithArgmax(maxpool_grad_with_argmax);
   MS_EXCEPTION_IF_NULL(tuple_getitem0_anf);
@@ -102,8 +103,9 @@ AnfNodePtr BuildMaxPoolGradWithArgmax(const PatternMap &m, const AnfNodePtr &) {
   auto ksize = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(maxpool_grad_with_argmax, kAttrKernelSize);
   auto argmax_shape = common::AnfAlgo::GetOutputInferShape(tuple_getitem0_anf, 0UL);
   if (argmax_shape.size() != kMaxPoolWithArgmaxShape || ksize.size() != kMaxPoolWithArgmaxShape) {
-    MS_LOG(EXCEPTION) << "Argmax or kernel_size's shape dim should be equal to 4, but got argmax dim: "
-                      << argmax_shape.size() << ", kernel_size dim: " << ksize.size() << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Argmax or kernel_size's shape dim should be equal to 4, but got argmax dim: "
+                               << argmax_shape.size() << ", kernel_size dim: " << ksize.size()
+                               << trace::DumpSourceLines(node);
   }
   argmax_shape[kDim3] =
     (argmax_shape[kDim2] * argmax_shape[kDim3] + SizeToLong(kAlignBytes) - 1) / SizeToLong(kAlignBytes) + 1;

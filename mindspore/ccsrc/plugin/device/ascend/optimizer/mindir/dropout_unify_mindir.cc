@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,11 +70,11 @@ ValueNodePtr CreateKeepPorbValueNode(const FuncGraphPtr &func_graph, const AnfNo
   MS_EXCEPTION_IF_NULL(cnode);
   // Step1: get keep_prob
   if (!common::AnfAlgo::HasNodeAttr(kAttrKeepProb, cnode)) {
-    MS_LOG(EXCEPTION) << "Dropout node does not have attr: keep_prob." << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Dropout node does not have attr: keep_prob." << trace::DumpSourceLines(node);
   }
   if (common::AnfAlgo::GetCNodeName(cnode) == kDropoutOpName) {
     if (!common::AnfAlgo::HasNodeAttr(kAttrSeed0, cnode) || !common::AnfAlgo::HasNodeAttr(kAttrSeed1, cnode)) {
-      MS_LOG(EXCEPTION) << "Dropout node does not have attr: seed0 or seed1." << trace::DumpSourceLines(node);
+      MS_LOG(INTERNAL_EXCEPTION) << "Dropout node does not have attr: seed0 or seed1." << trace::DumpSourceLines(node);
     }
   }
   auto keep_prob = common::AnfAlgo::GetNodeAttr<float>(node, kAttrKeepProb);
@@ -371,7 +371,8 @@ AnfNodePtr BuildDropoutDoMask(const PatternMap &m, const AnfNodePtr &) {
       MS_EXCEPTION_IF_NULL(sequence_abstract_ptr);
       // Dropout's outputs only have two elements.
       if (sequence_abstract_ptr->size() != kIndex2) {
-        MS_LOG(EXCEPTION) << "Dropout's outputs have more than two elements, " << sequence_abstract_ptr->size();
+        MS_LOG(INTERNAL_EXCEPTION) << "Dropout's outputs have more than two elements, "
+                                   << sequence_abstract_ptr->size();
       }
       abstract::AbstractBasePtrList abs{};
       abs.push_back(sequence_abstract_ptr->elements()[0]);
@@ -457,7 +458,7 @@ const AnfNodePtr DropoutAndDropoutGradUnifyMindIR::Process(const FuncGraphPtr &f
 
   // CreateDropoutDoMask-backward
   if (equiv->find(grad_input_) == equiv->end()) {
-    MS_LOG(EXCEPTION) << "Can not find grad_input in this pattern.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Can not find grad_input in this pattern.";
   }
   auto dropout_grad_input = utils::cast<AnfNodePtr>((*equiv)[grad_input_]);
   auto do_mask_abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(inputx_type_id), input_shape);

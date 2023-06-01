@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,7 +140,7 @@ CNodePtr NewCNode(const CNodePtr &cnode, const KernelGraphPtr &fg, const std::ve
 CNodePtr CheckAnfNodeIfCNodeAndInputSize(const AnfNodePtr &node, size_t input_size) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << "The node is expected to be a cnode";
+    MS_LOG(INTERNAL_EXCEPTION) << "The node is expected to be a cnode";
   }
   auto cnode = node->cast<CNodePtr>();
   CheckCNodeInputSize(cnode, input_size);
@@ -543,7 +543,7 @@ std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedListByOu
   MS_EXCEPTION_IF_NULL(manager);
   auto iter = manager->node_users().find(node);
   if (iter == manager->node_users().end()) {
-    MS_LOG(EXCEPTION) << "node has no output in manager";
+    MS_LOG(INTERNAL_EXCEPTION) << "node has no output in manager";
   }
   auto output_info_list = iter->second;
   for (const auto &output_info : output_info_list) {
@@ -560,7 +560,7 @@ std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedListByOu
     } else {
       auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(output_info.first, IntToSize(output_info.second - 1));
       if (kernel_with_index.first.get() != node.get()) {
-        MS_LOG(EXCEPTION) << "Get used node failed for op[" << common::AnfAlgo::GetCNodeName(node) << "]";
+        MS_LOG(INTERNAL_EXCEPTION) << "Get used node failed for op[" << common::AnfAlgo::GetCNodeName(node) << "]";
       }
       used_output_index = kernel_with_index.second;
     }
@@ -725,26 +725,26 @@ bool AnfEqual(const BaseRef &a, const BaseRef &b) {
     } else if (a_node->isa<ValueNode>() && b_node->isa<ValueNode>()) {
       auto a_value_node_ptr = a_node->cast<ValueNodePtr>();
       if (a_value_node_ptr == nullptr) {
-        MS_LOG(EXCEPTION) << "Cast value node ptr fail.";
+        MS_LOG(INTERNAL_EXCEPTION) << "Cast value node ptr fail.";
       }
       auto a_value_ptr = a_value_node_ptr->value();
       if (a_value_ptr == nullptr) {
-        MS_LOG(EXCEPTION) << "Value ptr is nullptr.";
+        MS_LOG(INTERNAL_EXCEPTION) << "Value ptr is nullptr.";
       }
 
       auto b_value_node_ptr = b_node->cast<ValueNodePtr>();
       if (b_value_node_ptr == nullptr) {
-        MS_LOG(EXCEPTION) << "Cast value node ptr fail.";
+        MS_LOG(INTERNAL_EXCEPTION) << "Cast value node ptr fail.";
       }
       auto b_value_ptr = b_value_node_ptr->value();
       if (b_value_ptr == nullptr) {
-        MS_LOG(EXCEPTION) << "Value ptr is nullptr.";
+        MS_LOG(INTERNAL_EXCEPTION) << "Value ptr is nullptr.";
       }
       if (a_value_ptr->isa<tensor::Tensor>() && b_value_ptr->isa<tensor::Tensor>()) {
         auto a_tensor_ptr = a_value_ptr->cast<tensor::TensorPtr>();
         auto b_tensor_ptr = b_value_ptr->cast<tensor::TensorPtr>();
         if (a_tensor_ptr == nullptr || b_tensor_ptr == nullptr) {
-          MS_LOG(EXCEPTION) << "Cast value node ptr fail.";
+          MS_LOG(INTERNAL_EXCEPTION) << "Cast value node ptr fail.";
         }
         return a_tensor_ptr->ValueEqual(*b_tensor_ptr);
       } else {
@@ -1015,7 +1015,7 @@ AnfNodePtr SexpToNode(const BaseRef &sexp, const BaseRef &graph, PrimitiveVarMap
   }
   auto value_node = CreateValueNodeWithSexp(sexp, primitive_vars);
   if (value_node == nullptr) {
-    MS_LOG(EXCEPTION) << "Sexp cannot converted, sexp: " + sexp.ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Sexp cannot converted, sexp: " + sexp.ToString();
   }
   return value_node;
 }
@@ -1041,14 +1041,14 @@ AnfNodePtr GetAnfNodeByVar(const EquivPtr &equiv, const VarPtr &var_node) {
   }
   auto res = utils::cast<AnfNodePtr>(iter->second);
   if (res == nullptr) {
-    MS_LOG(EXCEPTION) << "Cast fail! Maybe var is not a anf node";
+    MS_LOG(INTERNAL_EXCEPTION) << "Cast fail! Maybe var is not a anf node";
   }
   return res;
 }
 
 int64_t GetGetitemIndex(const AnfNodePtr &getitem) {
   if (!getitem->isa<CNode>() || IsPrimitive(getitem, prim::kPrimTupleGetItem)) {
-    MS_LOG(EXCEPTION) << "Expect TupleGetItem, but got " << getitem->DebugString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Expect TupleGetItem, but got " << getitem->DebugString();
   }
   auto vnode = GetValueNode(getitem->cast<CNodePtr>()->input(kInputNodeOutputIndexInTupleGetItem));
   return GetValue<int64_t>(vnode);

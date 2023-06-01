@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,7 +111,7 @@ const AnfNodePtr SquareSumFusion::Process(const FuncGraphPtr &graph, const AnfNo
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   if (manager->node_users().find(square_anf) == manager->node_users().end()) {
-    MS_LOG(EXCEPTION) << "Square node has no output in NodeUsersMap" << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Square node has no output in NodeUsersMap" << trace::DumpSourceLines(node);
   }
   AnfNodePtr ret_node = nullptr;
   if (manager->node_users()[square_anf].size() == 1) {
@@ -122,7 +122,7 @@ const AnfNodePtr SquareSumFusion::Process(const FuncGraphPtr &graph, const AnfNo
     std::vector<AnfNodePtr> square_sumv2_outputs;
     CreateMultipleOutputsOfAnfNode(graph, square_sumv2, kSquareSumv2OutputNum, &square_sumv2_outputs);
     if (square_sumv2_outputs.size() != kSquareSumv2OutputNum) {
-      MS_LOG(EXCEPTION) << "make SquareSumV2 outputs fail" << trace::DumpSourceLines(square_sumv2);
+      MS_LOG(INTERNAL_EXCEPTION) << "make SquareSumV2 outputs fail" << trace::DumpSourceLines(square_sumv2);
     }
     (void)manager->Replace(square, square_sumv2_outputs[1]);
     ret_node = square_sumv2_outputs[0];

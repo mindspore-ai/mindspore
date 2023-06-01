@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -364,7 +364,7 @@ std::vector<T> PaddingShapeTo5dDefault(const std::vector<T> &shape, const AnfNod
       break;
     default:
       auto node_info = (node != nullptr) ? ". Node: " + node->fullname_with_scope() : " .";
-      MS_LOG(EXCEPTION) << "Unexpected shape :" << shape << node_info;
+      MS_LOG(INTERNAL_EXCEPTION) << "Unexpected shape :" << shape << node_info;
   }
   return shape_5d;
 }
@@ -394,7 +394,7 @@ std::vector<T> PaddingShapeTo4dDefault(const std::vector<T> &shape, const AnfNod
       return shape;
     default:
       auto node_info = (node != nullptr) ? ". Node: " + node->fullname_with_scope() : " .";
-      MS_LOG(EXCEPTION) << "Unexpected shape : " << shape << node_info;
+      MS_LOG(INTERNAL_EXCEPTION) << "Unexpected shape : " << shape << node_info;
   }
   return shape_4d;
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,14 +86,14 @@ void TaskGenerator::LaunchAddrCleanAkgKernel(const CNodePtr &anf_node_ptr, Addre
     MS_EXCEPTION_IF_NULL(manager);
     auto &node_users = manager->node_users();
     if (node_users[anf_node_ptr].empty()) {
-      MS_LOG(EXCEPTION) << "Node users of " << anf_node_ptr->ToString() << " is empty.";
+      MS_LOG(INTERNAL_EXCEPTION) << "Node users of " << anf_node_ptr->ToString() << " is empty.";
     }
     auto depend_node = node_users[anf_node_ptr].pop().first;
     if (!IsPrimitiveCNode(depend_node, prim::kPrimDepend)) {
-      MS_LOG(EXCEPTION) << "Checking Depend node failed";
+      MS_LOG(INTERNAL_EXCEPTION) << "Checking Depend node failed";
     }
     if (node_users[depend_node].empty()) {
-      MS_LOG(EXCEPTION) << "Node users of " << depend_node->ToString() << " is empty.";
+      MS_LOG(INTERNAL_EXCEPTION) << "Node users of " << depend_node->ToString() << " is empty.";
     }
     auto post_node = node_users[depend_node].pop().first;
     for (auto index : clean_output_indexs) {
@@ -155,8 +155,8 @@ void TaskGenerator::LaunchAddrCleanKernel(const CNodePtr &anf_node_ptr, AddressP
   }
   auto clear_mems = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(anf_node_ptr, kAttrSizes);
   if (kernel_inputs->size() != clear_mems.size()) {
-    MS_LOG(EXCEPTION) << "AtomicAddClean kernel inputs size not equal clear memory size, kernel inputs size:"
-                      << kernel_inputs->size() << ",clean mem size" << clear_mems.size();
+    MS_LOG(INTERNAL_EXCEPTION) << "AtomicAddClean kernel inputs size not equal clear memory size, kernel inputs size:"
+                               << kernel_inputs->size() << ",clean mem size" << clear_mems.size();
   }
 }
 

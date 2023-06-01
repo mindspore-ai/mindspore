@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ void CreateOutputShapeAndTypeId(const CNodePtr &origin_cnode, int64_t split_dim,
   }
   size_t split_dim_unsigned = LongToSize(split_dim);
   if (split_dim_unsigned >= output_shape.size()) {
-    MS_LOG(EXCEPTION) << "Error split dim: " << split_dim << trace::DumpSourceLines(origin_cnode);
+    MS_LOG(INTERNAL_EXCEPTION) << "Error split dim: " << split_dim << trace::DumpSourceLines(origin_cnode);
   }
   TypeId type_id = common::AnfAlgo::GetOutputInferDataType(origin_cnode, 0);
   for (size_t i = 0; i < size_splits_new.size(); ++i) {
@@ -83,7 +83,7 @@ void SetAttrAndAbstractForBaseSplitv(const CNodePtr &origin_cnode, const CNodePt
     split_dim += SizeToLong(output_shape.size());
   }
   if (split_dim < 0) {
-    MS_LOG(EXCEPTION) << "Error split dim: " << split_dim << trace::DumpSourceLines(origin_cnode);
+    MS_LOG(INTERNAL_EXCEPTION) << "Error split dim: " << split_dim << trace::DumpSourceLines(origin_cnode);
   }
   auto split_dim_l = LongToSize(split_dim);
   auto num_split_l = LongToSize(num_split);
@@ -119,9 +119,9 @@ AnfNodePtr SplitFission::DoFission(const FuncGraphPtr &func_graph, const CNodePt
 
   auto size_splits = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrSizeSplits);
   if (size_splits.size() != LongToSize(num_split)) {
-    MS_LOG(EXCEPTION) << "The size of size_splits should be equal to num_split[" << num_split << "], but got "
-                      << size_splits.size() << ", node: " << cnode->fullname_with_scope()
-                      << trace::DumpSourceLines(cnode);
+    MS_LOG(INTERNAL_EXCEPTION) << "The size of size_splits should be equal to num_split[" << num_split << "], but got "
+                               << size_splits.size() << ", node: " << cnode->fullname_with_scope()
+                               << trace::DumpSourceLines(cnode);
   }
 
   // Create make_tuple input to create a make_tuple for replacing the old Split node.

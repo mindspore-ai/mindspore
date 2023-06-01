@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ void AllToAllvCalcParam::CalcOpParam() {
     auto ms_shape = AnfAlgo::GetInputDeviceShape(cnode, i);
     auto type_size = abstract::TypeIdSize(AnfAlgo::GetInputDeviceDataType(cnode, i));
     if (type_size == 0) {
-      MS_LOG(EXCEPTION) << "Invalid type_size 0 of node: " << cnode->fullname_with_scope();
+      MS_LOG(INTERNAL_EXCEPTION) << "Invalid type_size 0 of node: " << cnode->fullname_with_scope();
     }
     size_t origin_mem_size = type_size * SizeOf(ms_shape);
     size_t aligned_mem_size = device::MemoryManager::GetCommonAlignSize(origin_mem_size);
@@ -81,7 +81,7 @@ void AllToAllvCalcParam::CalcOpParam() {
     auto ms_shape = AnfAlgo::GetOutputDeviceShape(cnode, i);
     auto type_size = abstract::TypeIdSize(AnfAlgo::GetOutputDeviceDataType(cnode, i));
     if (type_size == 0) {
-      MS_LOG(EXCEPTION) << "Invalid type_size 0 of node: " << cnode->fullname_with_scope();
+      MS_LOG(INTERNAL_EXCEPTION) << "Invalid type_size 0 of node: " << cnode->fullname_with_scope();
     }
     size_t origin_mem_size = type_size * SizeOf(ms_shape);
     size_t aligned_mem_size = device::MemoryManager::GetCommonAlignSize(origin_mem_size);
@@ -99,8 +99,8 @@ void AllToAllvCalcParam::CalcMemOffset(const std::vector<size_t> &mem_sizes, con
   MS_EXCEPTION_IF_NULL(cnode);
   auto rank_ids = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, rank_ids_attr);
   if (mem_sizes.size() != rank_ids.size() || real_sizes.size() != rank_ids.size()) {
-    MS_LOG(EXCEPTION) << "Invalid addr num " << mem_sizes.size() << " and " << real_sizes.size()
-                      << " must be equal to rank ids size " << rank_ids.size();
+    MS_LOG(INTERNAL_EXCEPTION) << "Invalid addr num " << mem_sizes.size() << " and " << real_sizes.size()
+                               << " must be equal to rank ids size " << rank_ids.size();
   }
 
   if (!IsInTheOrder(rank_ids)) {

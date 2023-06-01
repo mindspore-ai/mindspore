@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ int64_t windowed_output_size(const AnfNodePtr &node, int64_t input_size, int64_t
   *pad_before = 0;
   *pad_after = 0;
   if (stride == 0) {
-    MS_LOG(EXCEPTION) << "The stride of AvgPoolGrad should not be 0." << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "The stride of AvgPoolGrad should not be 0." << trace::DumpSourceLines(node);
   }
   if (pad_mode == PadMode::VALID) {
     output = (input_size - ksize + stride) / stride;
@@ -72,8 +72,8 @@ int64_t windowed_output_size(const AnfNodePtr &node, int64_t input_size, int64_t
     *pad_before = pad_need / 2;
     *pad_after = pad_need - *pad_before;
   } else {
-    MS_LOG(EXCEPTION) << "The pad mode of AvgPoolGrad should be SAME or VALID, but got PAD."
-                      << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "The pad mode of AvgPoolGrad should be SAME or VALID, but got PAD."
+                               << trace::DumpSourceLines(node);
   }
   return output;
 }
@@ -88,7 +88,7 @@ std::vector<std::vector<float>> GetAssistInputMatrix(const AnfNodePtr &node, con
   // number of input that associate with output element.
   std::vector<std::vector<float>> assist_input_matrix;
   if (x_shape.size() < kShapeDimNum) {
-    MS_LOG(EXCEPTION) << "The dim of x_shape should not be less than 4" << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "The dim of x_shape should not be less than 4" << trace::DumpSourceLines(node);
   }
   std::vector<int64_t> in_shape_after_padding_2d = {x_shape[kDim2] + pad_top + pad_bottom,
                                                     x_shape[kDim3] + pad_left + pad_right};
@@ -117,9 +117,9 @@ ValueNodePtr CreateMeanMatrixValueNode(const FuncGraphPtr &func_graph, const Anf
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   if (x_shape.size() != kShapeDimNum || k_size.size() != kShapeDimNum || stride.size() != kShapeDimNum) {
-    MS_LOG(EXCEPTION) << "The dim of x_shape, kernel_size and strides of AvgPoolGrad should be 4, but got x_shape:"
-                      << x_shape << ", kernel_size:" << k_size << ", strides:" << stride
-                      << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION)
+      << "The dim of x_shape, kernel_size and strides of AvgPoolGrad should be 4, but got x_shape:" << x_shape
+      << ", kernel_size:" << k_size << ", strides:" << stride << trace::DumpSourceLines(node);
   }
   int64_t pad_top;
   int64_t pad_bottom;
@@ -176,8 +176,8 @@ ValueNodePtr CreateKernelMatrixValueNode(const FuncGraphPtr &func_graph, const A
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   if (x_shape.size() != kShapeDimNum || k_size.size() != kShapeDimNum) {
-    MS_LOG(EXCEPTION) << "The dim of x_shape and kernel_size of AvgPoolGrad should be 4, but got x_shape:" << x_shape
-                      << ", kernel_size:" << k_size << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "The dim of x_shape and kernel_size of AvgPoolGrad should be 4, but got x_shape:"
+                               << x_shape << ", kernel_size:" << k_size << trace::DumpSourceLines(node);
   }
   std::vector<int64_t> kernel_shape = {1, x_shape[kDim1], k_size[kDim2], k_size[kDim3]};
   auto data_size = std::accumulate(kernel_shape.begin(), kernel_shape.end(), int64_t(1), std::multiplies<int64_t>());

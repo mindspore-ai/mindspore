@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
       MS_EXCEPTION_IF_NULL(manager);
       manager->AddFuncGraph(func_graph);
       if (!manager->Replace(transdata_node, new_node)) {
-        MS_LOG(EXCEPTION) << "For DynamicGRUV2, manager replace node failed";
+        MS_LOG(INTERNAL_EXCEPTION) << "For DynamicGRUV2, manager replace node failed";
       }
     }
   }

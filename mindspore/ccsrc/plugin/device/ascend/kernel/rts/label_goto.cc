@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ bool LabelGotoKernel::Init(const AnfNodePtr &anf_node) {
   MS_LOG(INFO) << "LabelGotoKernel init";
   auto cnode = anf_node->cast<CNodePtr>();
   if (!common::AnfAlgo::HasNodeAttr(kAttrLabelIndex, cnode)) {
-    MS_LOG(EXCEPTION) << "LabelGotoKernel has no attr label_index";
+    MS_LOG(INTERNAL_EXCEPTION) << "LabelGotoKernel has no attr label_index";
   }
   auto primitive = common::AnfAlgo::GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);

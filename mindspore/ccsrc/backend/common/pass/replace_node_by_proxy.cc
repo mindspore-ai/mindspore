@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ bool ReplaceNodeByProxy::Run(const FuncGraphPtr &func_graph) {
       AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info, proxy_node.get());
 
       if (!manager->Replace(cnode, proxy_node)) {
-        MS_LOG(EXCEPTION) << "Replace node by proxy node failed.";
+        MS_LOG(INTERNAL_EXCEPTION) << "Replace node by proxy node failed.";
       }
     }
   }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,14 +103,15 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const AnfNodePtr &concat, con
   auto format_iter = std::find_if(inputs_device_format.begin(), inputs_device_format.end(),
                                   [&](const auto &format) { return format != (*cmp_format); });
   if (format_iter != inputs_device_format.end()) {
-    MS_LOG(EXCEPTION) << "Input format is not same, value: " << (*format_iter) << ", need format: " << (*cmp_format);
+    MS_LOG(INTERNAL_EXCEPTION) << "Input format is not same, value: " << (*format_iter)
+                               << ", need format: " << (*cmp_format);
   }
   auto cmp_dtype = inputs_device_type.begin();
   auto dtype_iter = std::find_if(inputs_device_type.begin(), inputs_device_type.end(),
                                  [&](const auto &dtype) { return dtype != (*cmp_dtype); });
   if (dtype_iter != inputs_device_type.end()) {
-    MS_LOG(EXCEPTION) << "Input dtype is not same, value: " << TypeIdLabel(*dtype_iter)
-                      << ", need dtype: " << TypeIdLabel(*cmp_dtype);
+    MS_LOG(INTERNAL_EXCEPTION) << "Input dtype is not same, value: " << TypeIdLabel(*dtype_iter)
+                               << ", need dtype: " << TypeIdLabel(*cmp_dtype);
   }
   (void)outputs_device_format.emplace_back(*cmp_format);
   (void)outputs_device_type.emplace_back(*cmp_dtype);

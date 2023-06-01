@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,11 +59,12 @@ bool NeedUpdate(const CNodePtr &conv2d, ShapeVector in_shape, ShapeVector out_sh
   int64_t data_format;
   bool result = CheckAndConvertUtils::GetDataFormatEnumValue(data_format_ptr, &data_format);
   if (!result || data_format != Format::NCHW) {
-    MS_LOG(EXCEPTION) << "Conv2D only supports NCHW when group > 1" << trace::DumpSourceLines(conv2d);
+    MS_LOG(INTERNAL_EXCEPTION) << "Conv2D only supports NCHW when group > 1" << trace::DumpSourceLines(conv2d);
   }
   if (in_shape.size() != kConv2DAxisNum || out_shape.size() != kConv2DAxisNum) {
-    MS_LOG(EXCEPTION) << "Conv2D's input and output should have 4 axis, but got input axis num: " << in_shape.size()
-                      << "output axis num: " << out_shape.size() << trace::DumpSourceLines(conv2d);
+    MS_LOG(INTERNAL_EXCEPTION) << "Conv2D's input and output should have 4 axis, but got input axis num: "
+                               << in_shape.size() << "output axis num: " << out_shape.size()
+                               << trace::DumpSourceLines(conv2d);
   }
   auto in_channel = in_shape[kDim1];
   auto out_channel = out_shape[kDim1];
@@ -89,8 +90,8 @@ CNodePtr CreateTranspose(const FuncGraphPtr &graph, const CNodePtr &conv2d, cons
     auto types = {common::AnfAlgo::GetOutputInferDataType(input_node, 0UL)};
     auto out_shape = common::AnfAlgo::GetOutputInferShape(input_node, 0UL);
     if (out_shape.size() != kConv2DAxisNum) {
-      MS_LOG(EXCEPTION) << "Conv2D's output axis number should be " << kConv2DAxisNum << ", but got "
-                        << out_shape.size() << trace::DumpSourceLines(conv2d);
+      MS_LOG(INTERNAL_EXCEPTION) << "Conv2D's output axis number should be " << kConv2DAxisNum << ", but got "
+                                 << out_shape.size() << trace::DumpSourceLines(conv2d);
     }
     std::swap(out_shape[kDim0], out_shape[kDim1]);
     auto shapes = {out_shape};
@@ -241,8 +242,9 @@ const AnfNodePtr Conv2DBackpropInputUnifyMindIR::Process(const FuncGraphPtr &gra
   auto input_size = AnfUtils::GetInputTensorNum(conv2d_backin);
   // In pynative mode, input_sizes input will be convert to attr if Conv2DBackpropInput is a forward op.
   if (input_size != kConv2DBackpropInputNum && input_size != kConv2DBackpropInputNum - 1) {
-    MS_LOG(EXCEPTION) << "Conv2DBackpropInput's input number should be " << kConv2DBackpropInputNum << " or "
-                      << (kConv2DBackpropInputNum - 1) << ", but got " << input_size << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Conv2DBackpropInput's input number should be " << kConv2DBackpropInputNum << " or "
+                               << (kConv2DBackpropInputNum - 1) << ", but got " << input_size
+                               << trace::DumpSourceLines(node);
   }
   auto transpose = CreateTranspose(graph, conv2d_backin, conv2d_backin->input(kIndex2), true, *this);
   auto depth_conv_backin = CreateDepthwiseConv2DBackpropInput(graph, conv2d_backin, transpose);
@@ -255,8 +257,9 @@ CNodePtr Conv2DBackpropFilterUnifyMindIR::CreateDepthwiseConv2DBackpropFilter(co
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(conv2d_backfil);
   if (AnfUtils::GetInputTensorNum(conv2d_backfil) != kConv2DBackpropInputNum) {
-    MS_LOG(EXCEPTION) << "Conv2DBackpropFilter's input number should be " << kConv2DBackpropInputNum << ", but got "
-                      << AnfUtils::GetInputTensorNum(conv2d_backfil) << trace::DumpSourceLines(conv2d_backfil);
+    MS_LOG(INTERNAL_EXCEPTION) << "Conv2DBackpropFilter's input number should be " << kConv2DBackpropInputNum
+                               << ", but got " << AnfUtils::GetInputTensorNum(conv2d_backfil)
+                               << trace::DumpSourceLines(conv2d_backfil);
   }
   auto filter_size_node = conv2d_backfil->input(kIndex3);
   MS_EXCEPTION_IF_NULL(filter_size_node);
@@ -264,8 +267,8 @@ CNodePtr Conv2DBackpropFilterUnifyMindIR::CreateDepthwiseConv2DBackpropFilter(co
   MS_EXCEPTION_IF_NULL(filter_size_vnode);
   auto filter_size = GetValue<std::vector<int64_t>>(filter_size_vnode->value());
   if (filter_size.size() < kConv2DFilterSize) {
-    MS_LOG(EXCEPTION) << "Filter size input of node[" << conv2d_backfil->fullname_with_scope()
-                      << "] should be 4-D, but got " << filter_size;
+    MS_LOG(INTERNAL_EXCEPTION) << "Filter size input of node[" << conv2d_backfil->fullname_with_scope()
+                               << "] should be 4-D, but got " << filter_size;
   }
   std::swap(filter_size[0], filter_size[1]);
   auto new_filter_size_vnode = CreateShapeValueNode(graph, filter_size);
@@ -280,8 +283,8 @@ CNodePtr Conv2DBackpropFilterUnifyMindIR::CreateDepthwiseConv2DBackpropFilter(co
   auto types = {common::AnfAlgo::GetOutputInferDataType(conv2d_backfil, 0UL)};
   auto out_shape = common::AnfAlgo::GetOutputInferShape(conv2d_backfil, 0UL);
   if (out_shape.size() != kConv2DAxisNum) {
-    MS_LOG(EXCEPTION) << "Conv2DBackpropFilter's output axis number should be " << kConv2DAxisNum << ", but got "
-                      << out_shape.size() << trace::DumpSourceLines(conv2d_backfil);
+    MS_LOG(INTERNAL_EXCEPTION) << "Conv2DBackpropFilter's output axis number should be " << kConv2DAxisNum
+                               << ", but got " << out_shape.size() << trace::DumpSourceLines(conv2d_backfil);
   }
   std::swap(out_shape[0], out_shape[1]);
   auto shapes = {out_shape};

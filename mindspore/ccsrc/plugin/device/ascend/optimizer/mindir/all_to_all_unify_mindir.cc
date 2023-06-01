@@ -36,8 +36,8 @@ void ChangePrimitiveToAllToAllV(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(neighbor_exchange);
 
   if (neighbor_exchange->size() == kCNodePrimitiveIdx) {
-    MS_LOG(EXCEPTION) << "Inputs should not be empty for cnode " << node->DebugString()
-                      << trace::DumpSourceLines(neighbor_exchange);
+    MS_LOG(INTERNAL_EXCEPTION) << "Inputs should not be empty for cnode " << node->DebugString()
+                               << trace::DumpSourceLines(neighbor_exchange);
   }
 
   auto prim = GetValueNode<PrimitivePtr>(neighbor_exchange->input(kCNodePrimitiveIdx));
@@ -73,13 +73,13 @@ CNodePtr AllToAllUnifyMindIR::CreateSplitNode(const FuncGraphPtr &graph, const C
   auto shape = common::AnfAlgo::GetOutputInferShape(all_to_all_input, 0);
   auto shape_size = SizeToLong(shape.size());
   if (split_dim >= shape_size || split_dim < -shape_size) {
-    MS_LOG(EXCEPTION) << "Invalid split dim " << split_dim << " is over the shape size " << shape.size()
-                      << trace::DumpSourceLines(all_to_all);
+    MS_LOG(INTERNAL_EXCEPTION) << "Invalid split dim " << split_dim << " is over the shape size " << shape.size()
+                               << trace::DumpSourceLines(all_to_all);
   }
   size_t split_idx = split_dim < 0 ? LongToSize(split_dim + shape_size) : LongToSize(split_dim);
   if (split_count == 0 || shape[split_idx] % split_count != 0) {
-    MS_LOG(EXCEPTION) << "Invalid split count " << split_count << " cannot be divisible by shape[" << split_idx
-                      << "] = " << shape[split_idx] << trace::DumpSourceLines(all_to_all);
+    MS_LOG(INTERNAL_EXCEPTION) << "Invalid split count " << split_count << " cannot be divisible by shape[" << split_idx
+                               << "] = " << shape[split_idx] << trace::DumpSourceLines(all_to_all);
   }
   shape[split_idx] /= split_count;
   std::vector<TypeId> dtypes(split_count, dtype);
@@ -108,8 +108,8 @@ CNodePtr AllToAllUnifyMindIR::CreateAllToAllvNode(const FuncGraphPtr &graph, con
   std::vector<AnfNodePtr> split_outputs;
   CreateMultipleOutputsOfAnfNode(graph, split, static_cast<size_t>(split_count), &split_outputs);
   if (split_outputs.empty()) {
-    MS_LOG(EXCEPTION) << "The node " << split->DebugString() << " should have at least one output, but got 0."
-                      << trace::DumpSourceLines(split);
+    MS_LOG(INTERNAL_EXCEPTION) << "The node " << split->DebugString() << " should have at least one output, but got 0."
+                               << trace::DumpSourceLines(split);
   }
   std::vector<AnfNodePtr> all_to_all_v_input = {NewValueNode(std::make_shared<Primitive>(kAllToAllvOpName))};
   (void)all_to_all_v_input.insert(all_to_all_v_input.end(), split_outputs.begin(), split_outputs.end());
@@ -152,8 +152,9 @@ CNodePtr AllToAllUnifyMindIR::CreateConcatNode(const FuncGraphPtr &graph, const 
   std::vector<AnfNodePtr> all_to_all_v_outputs;
   CreateMultipleOutputsOfAnfNode(graph, all_to_all_v, static_cast<size_t>(split_count), &all_to_all_v_outputs);
   if (all_to_all_v_outputs.empty()) {
-    MS_LOG(EXCEPTION) << "The node " << all_to_all_v->DebugString() << " should have at least one output, but got 0."
-                      << trace::DumpSourceLines(all_to_all_v);
+    MS_LOG(INTERNAL_EXCEPTION) << "The node " << all_to_all_v->DebugString()
+                               << " should have at least one output, but got 0."
+                               << trace::DumpSourceLines(all_to_all_v);
   }
   std::vector<AnfNodePtr> concat_input = {NewValueNode(std::make_shared<Primitive>(kConcatDOpName))};
   (void)concat_input.insert(concat_input.end(), all_to_all_v_outputs.begin(), all_to_all_v_outputs.end());
@@ -162,8 +163,8 @@ CNodePtr AllToAllUnifyMindIR::CreateConcatNode(const FuncGraphPtr &graph, const 
   auto single_shape = common::AnfAlgo::GetOutputInferShape(all_to_all_v_outputs[0], 0);
   auto shape_size = SizeToLong(single_shape.size());
   if (concat_dim >= shape_size || concat_dim < -shape_size) {
-    MS_LOG(EXCEPTION) << "Invalid concat dim " << concat_dim << " is greater than shape size " << single_shape.size()
-                      << trace::DumpSourceLines(all_to_all);
+    MS_LOG(INTERNAL_EXCEPTION) << "Invalid concat dim " << concat_dim << " is greater than shape size "
+                               << single_shape.size() << trace::DumpSourceLines(all_to_all);
   }
   size_t concat_idx = concat_dim < 0 ? LongToSize(concat_dim + shape_size) : LongToSize(concat_dim);
   single_shape[concat_idx] *= split_count;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ const AnfNodePtr GetnextTensorMoveElimination::Process(const FuncGraphPtr &graph
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   if (manager->node_users().find(tensor_move_node) == manager->node_users().end()) {
-    MS_LOG(EXCEPTION) << "tensor move has no output in manager";
+    MS_LOG(INTERNAL_EXCEPTION) << "tensor move has no output in manager";
   }
   auto next_nodes = manager->node_users()[tensor_move_node];
   if (next_nodes.size() > 1) {

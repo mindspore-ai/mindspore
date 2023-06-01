@@ -78,7 +78,7 @@ const AnfNodePtr ResizeLinear1DFission::Process(const FuncGraphPtr &func_graph, 
   }
 
   if (!common::AnfAlgo::HasNodeAttr("coordinate_transformation_mode", resize_linear1d)) {
-    MS_LOG(EXCEPTION) << "ResizeLinear1D need to set coordinate_transformation_mode attribute.";
+    MS_LOG(INTERNAL_EXCEPTION) << "ResizeLinear1D need to set coordinate_transformation_mode attribute.";
   }
 
   const auto ori_inputs = resize_linear1d->inputs();
@@ -146,7 +146,7 @@ const AnfNodePtr ResizeLinear1DGradFission::Process(const FuncGraphPtr &func_gra
   }
 
   if (!common::AnfAlgo::HasNodeAttr("coordinate_transformation_mode", resize_linear1d_grad)) {
-    MS_LOG(EXCEPTION) << "ResizeLinear1DGrad need to set coordinate_transformation_mode attribute.";
+    MS_LOG(INTERNAL_EXCEPTION) << "ResizeLinear1DGrad need to set coordinate_transformation_mode attribute.";
   }
 
   const auto ori_inputs = resize_linear1d_grad->inputs();

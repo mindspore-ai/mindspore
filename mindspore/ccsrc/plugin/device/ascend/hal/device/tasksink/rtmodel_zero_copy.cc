@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -241,8 +241,8 @@ void CheckZeroCopyTaskValid(const session::KernelGraph &graph,
       if (device_address != nullptr && device_address->GetPtr() == nullptr &&
           node_to_offset.find(std::pair(kernel, i + input_num)) == node_to_offset.end()) {
         DumpDeviceAddressInGraph(graph);
-        MS_LOG(EXCEPTION) << "Failed to generate zero copy task for kernel:" << kernel->fullname_with_scope()
-                          << " output index:" << i << " in graph:" << graph.ToString();
+        MS_LOG(INTERNAL_EXCEPTION) << "Failed to generate zero copy task for kernel:" << kernel->fullname_with_scope()
+                                   << " output index:" << i << " in graph:" << graph.ToString();
       }
     }
 
@@ -256,8 +256,8 @@ void CheckZeroCopyTaskValid(const session::KernelGraph &graph,
       if (device_address != nullptr && device_address->GetPtr() == nullptr &&
           node_to_offset.find(std::pair(kernel, i)) == node_to_offset.end()) {
         DumpDeviceAddressInGraph(graph);
-        MS_LOG(EXCEPTION) << "Failed to generate zero copy task for kernel:" << kernel->fullname_with_scope()
-                          << " input index:" << i << " in graph:" << graph.ToString();
+        MS_LOG(INTERNAL_EXCEPTION) << "Failed to generate zero copy task for kernel:" << kernel->fullname_with_scope()
+                                   << " input index:" << i << " in graph:" << graph.ToString();
       }
     }
   }
@@ -268,7 +268,7 @@ void *ParameterZeroCopyTask::GetAddressPtr() {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<Parameter>()) {
-    MS_LOG(EXCEPTION) << "Not a parameter node " << node->DebugString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Not a parameter node " << node->DebugString();
   }
   auto kernel_info = dynamic_cast<KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
@@ -283,7 +283,7 @@ void *ValueNodeZeroCopyTask::GetAddressPtr() {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<ValueNode>()) {
-    MS_LOG(EXCEPTION) << "Not a ValueNode " << node->DebugString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Not a ValueNode " << node->DebugString();
   }
 
   auto value_node = node->cast<ValueNodePtr>();
@@ -300,13 +300,13 @@ void *CNodeZeroCopyTask::GetAddressPtr() {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << "Not a CNode " << node->DebugString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Not a CNode " << node->DebugString();
   }
   auto node_device_address = AnfAlgo::GetMutableOutputAddr(node, output_index_, false);
   MS_EXCEPTION_IF_NULL(node_device_address);
   if (node_device_address->GetMutablePtr() == nullptr) {
-    MS_LOG(EXCEPTION) << "Empty ptr in device address:" << node_device_address
-                      << " for node:" << node->fullname_with_scope() << " index:" << output_index_;
+    MS_LOG(INTERNAL_EXCEPTION) << "Empty ptr in device address:" << node_device_address
+                               << " for node:" << node->fullname_with_scope() << " index:" << output_index_;
   }
   MS_LOG(DEBUG) << "Get ptr:" << node_device_address->GetMutablePtr() << " for device address:" << node_device_address
                 << " in node:" << node->fullname_with_scope();
@@ -530,7 +530,7 @@ bool RtModelZeroCopy::GenerateZeroCopyTaskForSubGraphSink(const session::KernelG
     auto op_name = node->UniqueName();
     auto task_iter = op_name_to_task.find(op_name);
     if (task_iter == op_name_to_task.end()) {
-      MS_LOG(EXCEPTION) << "Cannot found task of op " << op_name;
+      MS_LOG(INTERNAL_EXCEPTION) << "Cannot found task of op " << op_name;
     }
     auto task = task_iter->second;
     MS_EXCEPTION_IF_NULL(task);
@@ -572,7 +572,7 @@ bool RtModelZeroCopy::GenerateZeroCopyTasks(const session::KernelGraph &graph) {
     auto op_name = node->UniqueName();
     auto iter = op_name_to_task.find(op_name);
     if (iter == op_name_to_task.end()) {
-      MS_LOG(EXCEPTION) << "Cannot found task of op " << op_name;
+      MS_LOG(INTERNAL_EXCEPTION) << "Cannot found task of op " << op_name;
     }
 
     auto task = iter->second;

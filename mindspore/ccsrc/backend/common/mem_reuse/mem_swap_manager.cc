@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -249,8 +249,8 @@ void MemSwapManager::SaveUserKernelTopoOrder() {
       auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(user_kernel, IntToSize(node_pair.second - 1));
       auto &output_idx = kernel_with_index.second;
       if (kernel_with_index.first.get() != kernel.get()) {
-        MS_LOG(EXCEPTION) << "Save user kernel topo order failed for op[" << common::AnfAlgo::GetCNodeName(kernel)
-                          << "]";
+        MS_LOG(INTERNAL_EXCEPTION) << "Save user kernel topo order failed for op["
+                                   << common::AnfAlgo::GetCNodeName(kernel) << "]";
       }
       kernel_exec_info.node_users_map_[output_idx].push_back(user_kernel_topo_sort);
     }
@@ -297,7 +297,8 @@ void MemSwapManager::AddSwapInfo() {
       MemSwapInfo mem_swap_in_info = {SwapKind::kHostToDevice, kernel_exec_info.topo_order_, output_idx,
                                       swap_out_order};
       if (swap_in_order <= swap_out_order) {
-        MS_LOG(EXCEPTION) << "Select swap in point failed for op[" << common::AnfAlgo::GetCNodeName(kernel) << "]";
+        MS_LOG(INTERNAL_EXCEPTION) << "Select swap in point failed for op[" << common::AnfAlgo::GetCNodeName(kernel)
+                                   << "]";
       }
       AddKernelMemSwapInfo(execution_order_[swap_in_order], mem_swap_in_info);
     }
@@ -466,7 +467,7 @@ size_t MemSwapManager::BestSwapInPerformPos(const AnfNodePtr &trigger_kernel, co
 
 void MemSwapManager::MoveSwapInfoPos(size_t dest_pos, size_t src_pos, const MemSwapInfo &mem_swap_info) {
   if (dest_pos == src_pos) {
-    MS_LOG(EXCEPTION) << "destination pos can not equal source pos";
+    MS_LOG(INTERNAL_EXCEPTION) << "destination pos can not equal source pos";
   }
   auto dest_kernel = QueryKernelByTopoOrder(dest_pos);
   auto src_kernel = QueryKernelByTopoOrder(src_pos);
@@ -603,7 +604,7 @@ void MemSwapManager::AssignHostMemory() {
       auto &host_addr = host_addr_pair.second.first;
       auto ret = AllocHostPinnedMem(host_addr.size, &host_addr.addr);
       if (!ret) {
-        MS_LOG(EXCEPTION) << "Alloc host pinned memory[" << host_addr.size << "] failed.";
+        MS_LOG(INTERNAL_EXCEPTION) << "Alloc host pinned memory[" << host_addr.size << "] failed.";
       }
       host_addrs_list_.push_back(host_addr);
     }

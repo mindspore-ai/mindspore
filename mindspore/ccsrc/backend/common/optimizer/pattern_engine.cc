@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -258,7 +258,7 @@ EquivPtr PatternEngine::Match(const BaseRef &pattern, const BaseRef &expr, const
   BaseRef expr_ref = expr;
 
   if (equiv == nullptr) {
-    MS_LOG(EXCEPTION) << "Equiv pointer is null";
+    MS_LOG(INTERNAL_EXCEPTION) << "Equiv pointer is null";
   }
 
   MS_LOG(DEBUG) << "Pattern ref " + pattern_ref.ToString() + ", expr ref" + expr_ref.ToString();

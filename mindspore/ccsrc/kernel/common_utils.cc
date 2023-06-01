@@ -60,7 +60,7 @@ abstract::BaseShapePtr GetValidShapeFromAbstract(const abstract::AbstractBasePtr
   } else if (abs->isa<abstract::AbstractScalar>()) {
     res_shape = std::make_shared<abstract::Shape>(ShapeVector{});
   } else {
-    MS_EXCEPTION(TypeError) << "The abstract must be a Scalar or Tensor, but got " << abs->ToString();
+    MS_INTERNAL_EXCEPTION(TypeError) << "The abstract must be a Scalar or Tensor, but got " << abs->ToString();
   }
   return res_shape;
 }
@@ -195,8 +195,8 @@ std::pair<MatrixDiag::Alignment, MatrixDiag::Alignment> GetAlignments(const std:
 
   auto alignment_iter = AlignmentMap.find(alignment);
   if (alignment_iter == AlignmentMap.end()) {
-    MS_LOG(EXCEPTION) << "For  current kernel, input alignment is invalid: " << alignment
-                      << ". please limit it to {RIGHT_LEFT, LEFT_RIGHT, RIGHT_RIGHT, LEFT_LEFT}";
+    MS_LOG(INTERNAL_EXCEPTION) << "For  current kernel, input alignment is invalid: " << alignment
+                               << ". please limit it to {RIGHT_LEFT, LEFT_RIGHT, RIGHT_RIGHT, LEFT_LEFT}";
   }
   return alignment_iter->second;
 }
@@ -525,7 +525,7 @@ bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpIn
   }
   if (inputs.size() > 0) {
     if (inputs[0] == nullptr) {
-      MS_LOG(EXCEPTION) << "Inputs[0] is nullptr. Op name: " << op_name;
+      MS_LOG(INTERNAL_EXCEPTION) << "Inputs[0] is nullptr. Op name: " << op_name;
     }
     size_t kernel_info_cnt = inputs[0]->dtypes().size();
     for (size_t j = 0; j < kernel_info_cnt; j++) {
@@ -549,7 +549,7 @@ bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpIn
     }
   } else if (outputs.size() > 0) {
     if (outputs[0] == nullptr) {
-      MS_LOG(EXCEPTION) << "Outputs[0] is nullptr. Op name: " << op_name;
+      MS_LOG(INTERNAL_EXCEPTION) << "Outputs[0] is nullptr. Op name: " << op_name;
     }
     size_t kernel_info_cnt = outputs[0]->dtypes().size();
     for (size_t j = 0; j < kernel_info_cnt; j++) {
@@ -737,8 +737,8 @@ bool IsWeightBoundary(const AnfNodePtr &node) {
 
 std::vector<int64_t> GetReduceAttrAxis(const CNodePtr &cnode) {
   if (common::AnfAlgo::GetInputTensorNum(cnode) != 1 || AnfAlgo::GetOutputElementNum(cnode) != 1) {
-    MS_LOG(EXCEPTION) << "The reduce node [" << cnode->DebugString() << "] is not single input or single output."
-                      << trace::DumpSourceLines(cnode);
+    MS_LOG(INTERNAL_EXCEPTION) << "The reduce node [" << cnode->DebugString()
+                               << "] is not single input or single output." << trace::DumpSourceLines(cnode);
   }
   auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
@@ -2006,7 +2006,7 @@ void SetInputsByConstInputs(const CNodePtr &node, std::map<uint32_t, tensor::Ten
       MS_EXCEPTION_IF_NULL(inputs_tensor_map);
       auto ret2 = inputs_tensor_map->try_emplace(i, out_tensor);
       if (!ret2.second) {
-        MS_LOG(EXCEPTION) << "Insert map failed.";
+        MS_LOG(INTERNAL_EXCEPTION) << "Insert map failed.";
       }
     }
   }

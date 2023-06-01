@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,7 +130,7 @@ std::vector<TaskInfoPtr> HcomAllToAllKernel::GenTask(const std::vector<AddressPt
                                                      const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
   auto anf_node = anf_node_.lock();
   if (!anf_node) {
-    MS_LOG(EXCEPTION) << "anf_node pointer is expired.";
+    MS_LOG(INTERNAL_EXCEPTION) << "anf_node pointer is expired.";
   }
 
   stream_id_ = stream_id;

@@ -216,7 +216,7 @@ class BuildAssistConst {
     fe::PlatformInfo platform_info;
     fe::OptionalInfo optional_info;
     if (fe::PlatformInfoManager::Instance().GetPlatformInfoWithOutSocVersion(platform_info, optional_info) != 0) {
-      MS_LOG(EXCEPTION) << "Get platform info failed in BuildAssistConst.";
+      MS_LOG(INTERNAL_EXCEPTION) << "Get platform info failed in BuildAssistConst.";
     }
     auto cnode = m_topk->cast<CNodePtr>();
     auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);

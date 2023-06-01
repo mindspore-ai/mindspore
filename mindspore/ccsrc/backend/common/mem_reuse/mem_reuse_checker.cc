@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -291,7 +291,7 @@ void MemReuseChecker::ExportNormalTensorIR(std::ofstream &ofs) {
       ofs << iter_ref->second << "C"
           << "\n";
     } else {
-      MS_LOG(EXCEPTION) << "can not find refs for output";
+      MS_LOG(INTERNAL_EXCEPTION) << "can not find refs for output";
     }
     ou_idx++;
   }
@@ -424,7 +424,7 @@ void MemReuseChecker::CheckNormalIR(const session::KernelGraph *graph) {
         auto iter = ptr_refs_.find(in);
         (iter->second)++;
       } else {
-        MS_LOG(EXCEPTION) << "ptr_refs is not equal to ptr_idx";
+        MS_LOG(INTERNAL_EXCEPTION) << "ptr_refs is not equal to ptr_idx";
       }
     }
   }

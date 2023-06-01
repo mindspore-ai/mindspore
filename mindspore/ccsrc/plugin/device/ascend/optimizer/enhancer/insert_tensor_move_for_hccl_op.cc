@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ bool IsNodeOutPutUsedByOtherRealKernel(const FuncGraphPtr &graph, const AnfNodeP
   auto &node_users = manager->node_users();
   auto iter = node_users.find(input);
   if (iter == node_users.end()) {
-    MS_LOG(EXCEPTION) << "node has no output in manager." << trace::DumpSourceLines(input);
+    MS_LOG(INTERNAL_EXCEPTION) << "node has no output in manager." << trace::DumpSourceLines(input);
   }
   auto user_items = iter->second;
   if (user_items.size() == 1) {

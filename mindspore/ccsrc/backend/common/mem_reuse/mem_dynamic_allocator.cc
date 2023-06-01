@@ -100,7 +100,7 @@ std::vector<DeviceMemPtr> DynamicMemPoolBestFit::AllocContinuousTensorMem(const 
   const auto &iter = mem_block->block_all_mem_buf_map_.find(device_addr);
   if (iter == mem_block->block_all_mem_buf_map_.end()) {
     DumpDynamicMemPoolDebugInfo();
-    MS_LOG(EXCEPTION) << "Can't find the device address[" << device_addr << "].";
+    MS_LOG(INTERNAL_EXCEPTION) << "Can't find the device address[" << device_addr << "].";
   }
   auto mem_buf = iter->second;
   MS_EXCEPTION_IF_NULL(mem_buf);
@@ -371,7 +371,7 @@ void DynamicMemPoolBestFit::CombineMemBuf(const DynamicMemBlockPtr &mem_block, c
   const auto &iter = mem_block->block_all_mem_buf_map_.find(device_addr);
   if (iter == mem_block->block_all_mem_buf_map_.end()) {
     DumpDynamicMemPoolDebugInfo();
-    MS_LOG(EXCEPTION) << "Can't find the device address[" << device_addr << "].";
+    MS_LOG(INTERNAL_EXCEPTION) << "Can't find the device address[" << device_addr << "].";
   }
   auto mem_buf = iter->second;
   MS_EXCEPTION_IF_NULL(mem_buf);

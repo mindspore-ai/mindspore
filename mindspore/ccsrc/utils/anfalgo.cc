@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -166,8 +166,8 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) 
     if (IsOneOfPrimitiveCNode(output_with_index.first, expand_prims)) {
       auto output_vector = GetAllOutputWithIndexInner(output_with_index.first);
       if (output_vector.size() <= output_with_index.second) {
-        MS_LOG(EXCEPTION) << "Invalid index:" << output_with_index.second
-                          << " for outputs of node:" << output_with_index.first->DebugString();
+        MS_LOG(INTERNAL_EXCEPTION) << "Invalid index:" << output_with_index.second
+                                   << " for outputs of node:" << output_with_index.first->DebugString();
       }
       (void)ret.emplace_back(output_vector[output_with_index.second]);
       continue;
@@ -214,7 +214,7 @@ bool IsNodeDynamicShape(const AnfNodePtr &node) {
 AnfNodePtr AnfAlgo::GetTupleGetItemRealInput(const CNodePtr &tuple_get_item) {
   MS_EXCEPTION_IF_NULL(tuple_get_item);
   if (tuple_get_item->size() != kTupleGetItemInputSize) {
-    MS_LOG(EXCEPTION) << "The node tuple_get_item must have 2 inputs!";
+    MS_LOG(INTERNAL_EXCEPTION) << "The node tuple_get_item must have 2 inputs!";
   }
   return tuple_get_item->input(kRealInputNodeIndexInTupleGetItem);
 }
@@ -222,7 +222,7 @@ AnfNodePtr AnfAlgo::GetTupleGetItemRealInput(const CNodePtr &tuple_get_item) {
 size_t AnfAlgo::GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item) {
   MS_EXCEPTION_IF_NULL(tuple_get_item);
   if (tuple_get_item->size() != kTupleGetItemInputSize) {
-    MS_LOG(EXCEPTION) << "The node tuple_get_item must have 2 inputs!";
+    MS_LOG(INTERNAL_EXCEPTION) << "The node tuple_get_item must have 2 inputs!";
   }
   auto output_index_value_node = tuple_get_item->input(kInputNodeOutputIndexInTupleGetItem);
   MS_EXCEPTION_IF_NULL(output_index_value_node);
@@ -269,11 +269,11 @@ KernelWithIndex AnfAlgo::VisitKernelWithReturnType(const AnfNodePtr &anf_node, s
       const std::vector<AnfNodePtr> &make_tuple_inputs = make_tuple->inputs();
       size_t make_tuple_input_index = item_with_index_tmp.second + 1;
       if (make_tuple_input_index >= make_tuple_inputs.size()) {
-        MS_LOG(EXCEPTION) << "Index[" << make_tuple_input_index << "] out of range[" << make_tuple_inputs.size()
-                          << "].\nPlease check node: " << cnode->DebugString()
-                          << ".\nLine: " << trace::GetDebugInfo(cnode->debug_info())
-                          << ".\nAnd check node: " << make_tuple->DebugString()
-                          << ".\nLine: " << trace::GetDebugInfo(make_tuple->debug_info()) << ".";
+        MS_LOG(INTERNAL_EXCEPTION) << "Index[" << make_tuple_input_index << "] out of range["
+                                   << make_tuple_inputs.size() << "].\nPlease check node: " << cnode->DebugString()
+                                   << ".\nLine: " << trace::GetDebugInfo(cnode->debug_info())
+                                   << ".\nAnd check node: " << make_tuple->DebugString()
+                                   << ".\nLine: " << trace::GetDebugInfo(make_tuple->debug_info()) << ".";
       }
       return VisitKernelWithReturnType(make_tuple_inputs[make_tuple_input_index], index, skip_nop_node, return_types);
     }
@@ -289,8 +289,8 @@ KernelWithIndex AnfAlgo::VisitKernelWithReturnType(const AnfNodePtr &anf_node, s
         MS_EXCEPTION_IF_NULL(tuple_abstract);
         auto sub_abstracts = tuple_abstract->elements();
         if (sub_abstracts.size() <= GetTupleGetItemOutIndex(cnode)) {
-          MS_LOG(EXCEPTION) << "Invalid index:" << GetTupleGetItemOutIndex(cnode)
-                            << " for abstract:" << abs->ToString();
+          MS_LOG(INTERNAL_EXCEPTION) << "Invalid index:" << GetTupleGetItemOutIndex(cnode)
+                                     << " for abstract:" << abs->ToString();
         }
         for (size_t i = 0; i < GetTupleGetItemOutIndex(cnode); ++i) {
           MS_EXCEPTION_IF_NULL(sub_abstracts[i]);
@@ -474,8 +474,8 @@ void AnfAlgo::CopyNodeAttr(const std::string &old_key, const std::string &new_ke
   MS_EXCEPTION_IF_NULL(from);
   MS_EXCEPTION_IF_NULL(to);
   if (!from->isa<CNode>() || !to->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << "Only cnode has attr, but this from_anf is " << from->DebugString() << " ,to_node is "
-                      << to->DebugString() << trace::DumpSourceLines(from);
+    MS_LOG(INTERNAL_EXCEPTION) << "Only cnode has attr, but this from_anf is " << from->DebugString() << " ,to_node is "
+                               << to->DebugString() << trace::DumpSourceLines(from);
   }
   auto from_primitive = AnfAlgo::GetCNodePrimitive(from);
   MS_EXCEPTION_IF_NULL(from_primitive);
@@ -488,8 +488,8 @@ void AnfAlgo::CopyNodeAttrs(const AnfNodePtr &from, const AnfNodePtr &to) {
   MS_EXCEPTION_IF_NULL(from);
   MS_EXCEPTION_IF_NULL(to);
   if (!from->isa<CNode>() || !to->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << "Only cnode has attr, but this from_anf is " << from->DebugString() << ",to_node is "
-                      << from->DebugString() << trace::DumpSourceLines(from);
+    MS_LOG(INTERNAL_EXCEPTION) << "Only cnode has attr, but this from_anf is " << from->DebugString() << ",to_node is "
+                               << from->DebugString() << trace::DumpSourceLines(from);
   }
   auto from_primitive = AnfAlgo::GetCNodePrimitive(from);
   MS_EXCEPTION_IF_NULL(from_primitive);
@@ -506,7 +506,8 @@ void AnfAlgo::CopyNodeAttrs(const AnfNodePtr &from, const AnfNodePtr &to) {
 void AnfAlgo::EraseNodeAttr(const std::string &key, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << "Only cnode has attr, but this anf is " << node->DebugString() << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Only cnode has attr, but this anf is " << node->DebugString()
+                               << trace::DumpSourceLines(node);
   }
   // single op cnode.
   auto primitive = AnfAlgo::GetCNodePrimitive(node);
@@ -541,7 +542,7 @@ size_t AnfAlgo::GetInputNum(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   size_t input_num = cnode->size();
   if (input_num == 0) {
-    MS_LOG(EXCEPTION) << "Cnode inputs size can't be zero." << trace::DumpSourceLines(cnode);
+    MS_LOG(INTERNAL_EXCEPTION) << "Cnode inputs size can't be zero." << trace::DumpSourceLines(cnode);
   }
   return input_num - 1;
 }
@@ -553,7 +554,8 @@ size_t AnfAlgo::GetInputTensorNum(const AnfNodePtr &node) {
 
 bool AnfAlgo::IsPrevNodeHasTupleGetItem(const AnfNodePtr &anf_node, size_t input_idx, bool skip_nop_node) {
   if (!anf_node->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << anf_node->DebugString() << "anf_node is not CNode." << trace::DumpSourceLines(anf_node);
+    MS_LOG(INTERNAL_EXCEPTION) << anf_node->DebugString() << "anf_node is not CNode."
+                               << trace::DumpSourceLines(anf_node);
   }
   auto input_node = AnfAlgo::GetInputNode(anf_node->cast<CNodePtr>(), input_idx);
   MS_EXCEPTION_IF_NULL(input_node);
@@ -567,7 +569,8 @@ bool AnfAlgo::IsPrevNodeHasTupleGetItem(const AnfNodePtr &anf_node, size_t input
 KernelWithIndex AnfAlgo::GetPrevNodeOutput(const AnfNodePtr &anf_node, size_t input_idx, bool skip_nop_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   if (!anf_node->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << anf_node->DebugString() << "anf_node is not CNode." << trace::DumpSourceLines(anf_node);
+    MS_LOG(INTERNAL_EXCEPTION) << anf_node->DebugString() << "anf_node is not CNode."
+                               << trace::DumpSourceLines(anf_node);
   }
   auto kernel_info = anf_node->kernel_info();
   if (kernel_info) {
@@ -648,8 +651,8 @@ ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const abstract:
   MS_EXCEPTION_IF_NULL(base_shape);
   if (base_shape->isa<abstract::Shape>()) {
     if (output_idx != 0) {
-      MS_LOG(EXCEPTION) << "The node " << node->DebugString() << "is a single output node but got index [" << output_idx
-                        << trace::DumpSourceLines(node);
+      MS_LOG(INTERNAL_EXCEPTION) << "The node " << node->DebugString() << "is a single output node but got index ["
+                                 << output_idx << trace::DumpSourceLines(node);
     }
 
     return GetShape(base_shape);
@@ -679,8 +682,8 @@ ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const abstract:
       return shape_vector;
     }
     if (output_idx >= tuple_shape->size()) {
-      MS_LOG(EXCEPTION) << "Output index " << output_idx << "is larger than output number " << tuple_shape->size()
-                        << node->DebugString() << trace::DumpSourceLines(node);
+      MS_LOG(INTERNAL_EXCEPTION) << "Output index " << output_idx << "is larger than output number "
+                                 << tuple_shape->size() << node->DebugString() << trace::DumpSourceLines(node);
     }
     auto b_shp = (*tuple_shape)[output_idx];
     if (b_shp->isa<abstract::Shape>()) {
@@ -698,10 +701,10 @@ ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const abstract:
       const auto &base_seq_shape = GetDynamicSequenceShape(node, output_idx);
       return GetOutputInferShape(node, base_seq_shape, 0);
     } else {
-      MS_LOG(EXCEPTION) << "The output type of ApplyKernel index:" << output_idx
-                        << " should be a NoShape , ArrayShape or a TupleShape, but it is " << base_shape->ToString()
-                        << "node :" << node->DebugString() << "." << trace::DumpSourceLines(node)
-                        << " dst shape:" << b_shp->ToString();
+      MS_LOG(INTERNAL_EXCEPTION) << "The output type of ApplyKernel index:" << output_idx
+                                 << " should be a NoShape , ArrayShape or a TupleShape, but it is "
+                                 << base_shape->ToString() << "node :" << node->DebugString() << "."
+                                 << trace::DumpSourceLines(node) << " dst shape:" << b_shp->ToString();
     }
   } else if (base_shape->isa<abstract::NoShape>()) {
     return ShapeVector();
@@ -709,8 +712,9 @@ ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const abstract:
     const auto &base_seq_shape = GetDynamicSequenceShape(node, output_idx);
     return GetOutputInferShape(node, base_seq_shape, 0);
   }
-  MS_LOG(EXCEPTION) << "The output type of ApplyKernel should be a NoShape , ArrayShape or a TupleShape, but it is "
-                    << base_shape->ToString() << " node : " << node->DebugString() << trace::DumpSourceLines(node);
+  MS_LOG(INTERNAL_EXCEPTION)
+    << "The output type of ApplyKernel should be a NoShape , ArrayShape or a TupleShape, but it is "
+    << base_shape->ToString() << " node : " << node->DebugString() << trace::DumpSourceLines(node);
 }
 
 ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, size_t output_idx, bool is_real_squence_output) {
@@ -749,7 +753,8 @@ TypeId AnfAlgo::GetOutputInferDataType(const TypePtr &type, size_t output_idx) {
     }
     MS_EXCEPTION_IF_NULL(tuple_ptr);
     if (output_idx >= tuple_ptr->size()) {
-      MS_LOG(EXCEPTION) << "Output index " << output_idx << " must be less than output number " << tuple_ptr->size();
+      MS_LOG(INTERNAL_EXCEPTION) << "Output index " << output_idx << " must be less than output number "
+                                 << tuple_ptr->size();
     }
     type_ptr = (*tuple_ptr)[output_idx];
     MS_EXCEPTION_IF_NULL(type_ptr);
@@ -778,7 +783,8 @@ TypeId AnfAlgo::GetOutputInferDataType(const TypePtr &type, size_t output_idx) {
     }
     MS_EXCEPTION_IF_NULL(list_ptr);
     if (output_idx >= list_ptr->size()) {
-      MS_LOG(EXCEPTION) << "Output index " << output_idx << " must be less than output number " << list_ptr->size();
+      MS_LOG(INTERNAL_EXCEPTION) << "Output index " << output_idx << " must be less than output number "
+                                 << list_ptr->size();
     }
     type_ptr = (*list_ptr)[output_idx];
     MS_EXCEPTION_IF_NULL(type_ptr);
@@ -805,7 +811,7 @@ TypeId AnfAlgo::GetOutputInferDataType(const AnfNodePtr &node, size_t output_idx
   MS_EXCEPTION_IF_NULL(node);
   if (IsCallNode(node)) {
     if (node->abstract() == nullptr) {
-      MS_LOG(EXCEPTION) << "Empty abstract of call node:" << node->DebugString();
+      MS_LOG(INTERNAL_EXCEPTION) << "Empty abstract of call node:" << node->DebugString();
     }
     const auto &abs = common::AnfAlgo::FetchAbstractByIndex(node->abstract(), output_idx);
     MS_EXCEPTION_IF_NULL(abs);
@@ -839,8 +845,8 @@ void AnfAlgo::SetOutputTypeAndDetailShape(const std::vector<TypeId> &types,
     node_name = GetCNodeName(node_ptr);
   }
   if (types.size() != shapes.size()) {
-    MS_LOG(EXCEPTION) << "Types size " << types.size() << "should be same with shapes size " << shapes.size()
-                      << " for node " << node->fullname_with_scope() << "." << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Types size " << types.size() << "should be same with shapes size " << shapes.size()
+                               << " for node " << node->fullname_with_scope() << "." << trace::DumpSourceLines(node);
   }
 
   auto tuple_node = kNodeTupleOutSet.find(node_name);
@@ -904,7 +910,7 @@ void AnfAlgo::SetScalarTupleOutputInferType(const std::vector<TypeId> &types, co
         ((!sequence_abs->dynamic_len()) && sequence_abs->size() > 0 && sequence_abs->elements()[0] != nullptr &&
          sequence_abs->elements()[0]->isa<AbstractTensor>())) {
       if (shapes.empty()) {
-        MS_LOG(EXCEPTION) << "Invalid shape for node:" << node->fullname_with_scope();
+        MS_LOG(INTERNAL_EXCEPTION) << "Invalid shape for node:" << node->fullname_with_scope();
       }
       for (size_t i = 0; i < types.size(); ++i) {
         ShapeVector shape = shapes[0];
@@ -940,8 +946,8 @@ void AnfAlgo::SetOutputInferTypeAndShape(const std::vector<TypeId> &types, const
   }
   MS_EXCEPTION_IF_NULL(node_ptr);
   if (types.size() != shapes.size()) {
-    MS_LOG(EXCEPTION) << "Types size " << types.size() << "should be same with shapes size " << shapes.size() << "."
-                      << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Types size " << types.size() << "should be same with shapes size " << shapes.size()
+                               << "." << trace::DumpSourceLines(node);
   }
   auto abstract_ptr = node_ptr->abstract();
 
@@ -1050,9 +1056,9 @@ AnfNodePtr AnfAlgo::GetInputNode(const CNodePtr &node, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
   auto get_input_index = index + 1;
   if (get_input_index >= node->inputs().size()) {
-    MS_LOG(EXCEPTION) << "Input index size " << get_input_index << ", but the node input size just "
-                      << node->inputs().size() << ". node: " << node->DebugString() << "."
-                      << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Input index size " << get_input_index << ", but the node input size just "
+                               << node->inputs().size() << ". node: " << node->DebugString() << "."
+                               << trace::DumpSourceLines(node);
   }
   // input 0 is primitive node
   return node->input(get_input_index);
@@ -1214,8 +1220,8 @@ FuncGraphPtr AnfAlgo::GetValueNodeFuncGraph(const AnfNodePtr &node) {
 bool AnfAlgo::IsSwitchCall(const CNodePtr &call_node) {
   MS_EXCEPTION_IF_NULL(call_node);
   if (!CheckPrimitiveType(call_node, prim::kPrimCall)) {
-    MS_LOG(EXCEPTION) << "Call node should be a 'call', but is a " << call_node->DebugString() << "."
-                      << trace::DumpSourceLines(call_node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Call node should be a 'call', but is a " << call_node->DebugString() << "."
+                               << trace::DumpSourceLines(call_node);
   }
   auto input1 = call_node->input(1);
   MS_EXCEPTION_IF_NULL(input1);
@@ -1224,8 +1230,8 @@ bool AnfAlgo::IsSwitchCall(const CNodePtr &call_node) {
   } else if (input1->isa<CNode>() && AnfAlgo::CheckPrimitiveType(input1, prim::kPrimSwitch)) {
     return true;
   }
-  MS_LOG(EXCEPTION) << "Unexpected input1 of call node,input1:" << input1->DebugString() << "."
-                    << trace::DumpSourceLines(call_node);
+  MS_LOG(INTERNAL_EXCEPTION) << "Unexpected input1 of call node,input1:" << input1->DebugString() << "."
+                             << trace::DumpSourceLines(call_node);
 }
 
 bool AnfAlgo::IsScalarInput(const CNodePtr &cnode, size_t index) {
@@ -1367,8 +1373,8 @@ TypeId AnfAlgo::GetCNodeOutputPrecision(const AnfNodePtr &node) {
     } else if (output_type_str == "float32") {
       except_type = kNumberTypeFloat32;
     } else {
-      MS_LOG(EXCEPTION) << "The fix precision must be float16 or float32, but got " << output_type_str << "."
-                        << trace::DumpSourceLines(node);
+      MS_LOG(INTERNAL_EXCEPTION) << "The fix precision must be float16 or float32, but got " << output_type_str << "."
+                                 << trace::DumpSourceLines(node);
     }
   }
 
@@ -1378,13 +1384,13 @@ TypeId AnfAlgo::GetCNodeOutputPrecision(const AnfNodePtr &node) {
 TypeId AnfAlgo::GetPrevNodeOutputPrecision(const AnfNodePtr &node, size_t input_idx) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << node->DebugString() << ", input node is not CNode." << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << node->DebugString() << ", input node is not CNode." << trace::DumpSourceLines(node);
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (input_idx + 1 >= cnode->inputs().size()) {
-    MS_LOG(EXCEPTION) << "Input index " << input_idx << " is larger than input number " << GetInputTensorNum(cnode)
-                      << "." << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Input index " << input_idx << " is larger than input number "
+                               << GetInputTensorNum(cnode) << "." << trace::DumpSourceLines(node);
   }
   auto input_node = cnode->input(input_idx + 1);
   MS_EXCEPTION_IF_NULL(input_node);
@@ -1398,7 +1404,7 @@ TypeId AnfAlgo::GetPrevNodeOutputPrecision(const AnfNodePtr &node, size_t input_
 bool AnfAlgo::IsCondControlKernel(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (node->inputs().empty()) {
-    MS_LOG(EXCEPTION) << "Illegal null input of cnode." << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Illegal null input of cnode." << trace::DumpSourceLines(node);
   }
   auto input = node->input(kAnfPrimitiveIndex);
   return IsPrimitive(input, prim::kPrimLabelGoto) || IsPrimitive(input, prim::kPrimLabelSwitch);
@@ -1478,7 +1484,7 @@ bool AnfAlgo::IsDynamicRankNode(const AnfNodePtr &node) {
 bool AnfAlgo::IsInputAnchorDynamicRank(const AnfNodePtr &node, size_t idx) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << "Only cnode has inputs, node: " << node->fullname_with_scope();
+    MS_LOG(INTERNAL_EXCEPTION) << "Only cnode has inputs, node: " << node->fullname_with_scope();
   }
   const auto &in_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, idx);
   if (mindspore::IsDynamicRank(in_shape)) {
@@ -1554,7 +1560,7 @@ static ShapeVector GetShapeFromSequenceShape(const abstract::SequenceShapePtr &s
   MS_EXCEPTION_IF_NULL(sequeue_shape_ptr);
   auto shape_list = sequeue_shape_ptr->shape();
   if (index >= shape_list.size()) {
-    MS_LOG(EXCEPTION) << "Output Index:" << index << " >= " << shape_list.size();
+    MS_LOG(INTERNAL_EXCEPTION) << "Output Index:" << index << " >= " << shape_list.size();
   }
 
   auto shape = shape_list[index];
@@ -1563,7 +1569,7 @@ static ShapeVector GetShapeFromSequenceShape(const abstract::SequenceShapePtr &s
     // For scalar in sequeue case.
     return {};
   } else if (!shape->isa<abstract::Shape>()) {
-    MS_LOG(EXCEPTION) << "Invalid Shape Type(" << shape->ToString() << ") In Shape List";
+    MS_LOG(INTERNAL_EXCEPTION) << "Invalid Shape Type(" << shape->ToString() << ") In Shape List";
   }
 
   auto shape_ptr = shape->cast<abstract::ShapePtr>();
@@ -1583,7 +1589,7 @@ ShapeVector AnfAlgo::GetOutputMaxShape(const AnfNodePtr &anf_node, size_t index)
   } else if (shape->isa<abstract::NoShape>()) {
     return {};
   } else {
-    MS_LOG(EXCEPTION) << "Invalid shape type." << trace::DumpSourceLines(anf_node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Invalid shape type." << trace::DumpSourceLines(anf_node);
   }
 }
 
@@ -1657,8 +1663,8 @@ void AnfAlgo::GetAllFatherRealNode(const AnfNodePtr &anf_node, std::vector<AnfNo
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (cnode->inputs().empty()) {
-    MS_LOG(EXCEPTION) << "Illegal null input of cnode(%s)" << anf_node->DebugString() << "."
-                      << trace::DumpSourceLines(cnode);
+    MS_LOG(INTERNAL_EXCEPTION) << "Illegal null input of cnode(%s)" << anf_node->DebugString() << "."
+                               << trace::DumpSourceLines(cnode);
   }
   auto input0 = cnode->input(0);
   if (IsPrimitive(input0, prim::kPrimMakeTuple)) {
@@ -1667,12 +1673,12 @@ void AnfAlgo::GetAllFatherRealNode(const AnfNodePtr &anf_node, std::vector<AnfNo
     }
   } else if (IsPrimitive(input0, prim::kPrimTupleGetItem)) {
     if (cnode->inputs().size() != kTupleGetItemInputSize) {
-      MS_LOG(EXCEPTION) << "The node tuple_get_item must have 2 inputs!";
+      MS_LOG(INTERNAL_EXCEPTION) << "The node tuple_get_item must have 2 inputs!";
     }
     GetAllFatherRealNode(cnode->input(kRealInputNodeIndexInTupleGetItem), result, visited);
   } else if (IsPrimitive(input0, prim::kPrimDepend)) {
     if (cnode->inputs().size() != kDependInputSize) {
-      MS_LOG(EXCEPTION) << "Depend node must have 2 inputs!" << trace::DumpSourceLines(cnode);
+      MS_LOG(INTERNAL_EXCEPTION) << "Depend node must have 2 inputs!" << trace::DumpSourceLines(cnode);
     }
     GetAllFatherRealNode(cnode->input(kRealInputIndexInDepend), result, visited);
     GetAllFatherRealNode(cnode->input(kDependAttachNodeIndex), result, visited);
@@ -1823,8 +1829,8 @@ int64_t AnfAlgo::GetAttrGroups(const AnfNodePtr &node, size_t index) {
     if (HasNodeAttr(kAttrFracZGroupIdx, cnode)) {
       auto fz_group_idx = GetNodeAttr<std::vector<int64_t>>(cnode, kAttrFracZGroupIdx);
       if (index >= fz_group_idx.size()) {
-        MS_LOG(EXCEPTION) << "Index out of range, attr fracz_group_idx of node[" << node->fullname_with_scope()
-                          << "] only have " << fz_group_idx.size() << " numbers, but get index " << index;
+        MS_LOG(INTERNAL_EXCEPTION) << "Index out of range, attr fracz_group_idx of node[" << node->fullname_with_scope()
+                                   << "] only have " << fz_group_idx.size() << " numbers, but get index " << index;
       }
       return fz_group_idx[index];
     } else if (HasNodeAttr(kAttrFracZGroup, cnode)) {
@@ -1943,7 +1949,8 @@ TypeId AnfAlgo::GetSparseTypeIdAt(const AnfNodePtr &node, size_t idx) {
     }
     return abs_sparse->GetShapeTypeIdAt(idx - shape_idx);
   }
-  MS_LOG(EXCEPTION) << "Expect AbstractCSRTensor or AbstractCOOTensor, but got " << node->abstract()->ToString();
+  MS_LOG(INTERNAL_EXCEPTION) << "Expect AbstractCSRTensor or AbstractCOOTensor, but got "
+                             << node->abstract()->ToString();
 }
 
 std::string AnfAlgo::GetTensorValueString(const tensor::TensorPtr &tensor) {
@@ -1991,7 +1998,7 @@ std::string AnfAlgo::GetTensorValueString(const tensor::TensorPtr &tensor) {
   } else if (dtype->type_id() == kNumberTypeFloat || dtype->type_id() == kNumberTypeFloat32) {
     fn(reinterpret_cast<float *>(tensor->data_c()));
   } else {
-    MS_LOG(EXCEPTION) << "The dtype of the constant input is " << dtype->ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "The dtype of the constant input is " << dtype->ToString();
   }
   return buf.str();
 }
@@ -2114,32 +2121,36 @@ abstract::BaseShapePtr AnfAlgo::GetDynamicSequenceShape(const AnfNodePtr &node, 
     MS_LOG(INFO) << "node:" << node->fullname_with_scope() << " index:" << output_idx
                  << " abs:" << node->abstract()->ToString();
     if (!node->abstract()->isa<abstract::AbstractSequence>()) {
-      MS_LOG(EXCEPTION) << "Not sequence abstract in node:" << node->DebugString() << " for dynamic sequence shape.";
+      MS_LOG(INTERNAL_EXCEPTION) << "Not sequence abstract in node:" << node->DebugString()
+                                 << " for dynamic sequence shape.";
     }
     const auto &top_sequence_abs = node->abstract()->cast<abstract::AbstractSequencePtr>();
     MS_EXCEPTION_IF_NULL(top_sequence_abs);
     if (output_idx >= top_sequence_abs->elements().size()) {
-      MS_LOG(EXCEPTION) << "Invalid index:" << output_idx << " for abs:" << top_sequence_abs->ToString()
-                        << "node:" << node->fullname_with_scope();
+      MS_LOG(INTERNAL_EXCEPTION) << "Invalid index:" << output_idx << " for abs:" << top_sequence_abs->ToString()
+                                 << "node:" << node->fullname_with_scope();
     }
     const auto &sub_abs = top_sequence_abs->elements()[output_idx];
     MS_EXCEPTION_IF_NULL(sub_abs);
     if (!sub_abs->isa<abstract::AbstractSequence>()) {
-      MS_LOG(EXCEPTION) << "Not sequence abstract in node:" << node->DebugString() << " for dynamic sequence shape.";
+      MS_LOG(INTERNAL_EXCEPTION) << "Not sequence abstract in node:" << node->DebugString()
+                                 << " for dynamic sequence shape.";
     }
     sequence_abs = sub_abs->cast<abstract::AbstractSequencePtr>();
   } else {
     if (node->abstract() == nullptr) {
-      MS_LOG(EXCEPTION) << "Empty abstract in node:" << node->DebugString() << " for dynamic sequence shape.";
+      MS_LOG(INTERNAL_EXCEPTION) << "Empty abstract in node:" << node->DebugString() << " for dynamic sequence shape.";
     }
     if (!node->abstract()->isa<abstract::AbstractSequence>()) {
-      MS_LOG(EXCEPTION) << "Not sequence abstract in node:" << node->DebugString() << " for dynamic sequence shape.";
+      MS_LOG(INTERNAL_EXCEPTION) << "Not sequence abstract in node:" << node->DebugString()
+                                 << " for dynamic sequence shape.";
     }
     sequence_abs = node->abstract()->cast<abstract::AbstractSequencePtr>();
   }
   MS_EXCEPTION_IF_NULL(sequence_abs);
   if (!sequence_abs->dynamic_len()) {
-    MS_LOG(EXCEPTION) << "Not dynamic abstract in node:" << node->DebugString() << " for dynamic sequence shape.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Not dynamic abstract in node:" << node->DebugString()
+                               << " for dynamic sequence shape.";
   }
   const auto &element_abs = sequence_abs->dynamic_len_element_abs();
   if (element_abs == nullptr) {
@@ -2154,7 +2165,7 @@ abstract::AbstractBasePtr AnfAlgo::FetchAbstractByIndex(const AbstractBasePtr &a
   MS_EXCEPTION_IF_NULL(abstract);
   if (!abstract->isa<abstract::AbstractSequence>() || abstract->cast<abstract::AbstractSequencePtr>()->dynamic_len()) {
     if (index != 0) {
-      MS_LOG(EXCEPTION) << "Invalid abstract index:" << index << " for abstract:" << abstract->ToString();
+      MS_LOG(INTERNAL_EXCEPTION) << "Invalid abstract index:" << index << " for abstract:" << abstract->ToString();
     }
     return abstract;
   }
@@ -2171,7 +2182,7 @@ abstract::AbstractBasePtr AnfAlgo::FetchAbstractByIndex(const AbstractBasePtr &a
     }
     return FetchAbstractByIndex(sub_abstract, real_index);
   }
-  MS_LOG(EXCEPTION) << "Invalid abstract index:" << index << " for abstract:" << abstract->ToString();
+  MS_LOG(INTERNAL_EXCEPTION) << "Invalid abstract index:" << index << " for abstract:" << abstract->ToString();
 }
 }  // namespace common
 }  // namespace mindspore

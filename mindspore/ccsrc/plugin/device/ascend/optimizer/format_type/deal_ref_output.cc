@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,8 +85,8 @@ void DealRefOutput::AddRefPairToKernelGraph(const FuncGraphPtr &func_graph, cons
   auto final_ref = (final_node == get_item ? cnode : final_node);
   session::AnfWithOutIndex final_pair = std::make_pair(final_ref, final_index);
   if (kernel_graph->IsInRefOutputMap(final_pair)) {
-    MS_LOG(EXCEPTION) << "Ref_pair is already in ref map, node is " << final_ref->DebugString() << ", index is "
-                      << final_index;
+    MS_LOG(INTERNAL_EXCEPTION) << "Ref_pair is already in ref map, node is " << final_ref->DebugString()
+                               << ", index is " << final_index;
   }
   MS_LOG(DEBUG) << "Add Ref pair, final {node ptr " << final_pair.first.get() << " , info is "
                 << final_pair.first->DebugString() << " , index is " << final_pair.second << "}, origin {node ptr "
@@ -220,8 +220,8 @@ AnfNodePtr DealRefOutput::DealRefSingleOutput(const FuncGraphPtr &func_graph, co
   }
   auto ref_info = *(ref_infos.begin());
   if (ref_info.second > cnode->inputs().size()) {
-    MS_LOG(EXCEPTION) << "Ref op has wrong inputs: op inputs num is " << cnode->inputs().size() << ", ref info is "
-                      << ref_info.second;
+    MS_LOG(INTERNAL_EXCEPTION) << "Ref op has wrong inputs: op inputs num is " << cnode->inputs().size()
+                               << ", ref info is " << ref_info.second;
   }
   return AddAdditionalToRefOutput(func_graph, cnode, ref_info.first, ref_info.second, nullptr);
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ const AnfNodePtr ConvertDataTypeForCNodeInput(const AnfNodePtr &node, size_t inp
     MS_EXCEPTION_IF_NULL(manager);
     manager->SetEdge(node, SizeToInt(input_idx), cast);
   } else {
-    MS_LOG(EXCEPTION) << "Invalid data type: " << infer_type;
+    MS_LOG(INTERNAL_EXCEPTION) << "Invalid data type: " << infer_type;
   }
   return node;
 }
@@ -111,8 +111,8 @@ const AnfNodePtr ConvertResizeNearestNeighborXDtype::Process(const FuncGraphPtr 
       } else if (elem->isa<Int32Imm>()) {
         (void)values.emplace_back(MakeValue(GetValue<int32_t>(elem)));
       } else {
-        MS_LOG(EXCEPTION) << "Convert int64 to int32 failed for wrong value type. node: " << node->DebugString()
-                          << ", value type: " << elem->type_name();
+        MS_LOG(INTERNAL_EXCEPTION) << "Convert int64 to int32 failed for wrong value type. node: "
+                                   << node->DebugString() << ", value type: " << elem->type_name();
       }
     }
     auto new_tuple = std::make_shared<ValueTuple>(values);
@@ -120,7 +120,7 @@ const AnfNodePtr ConvertResizeNearestNeighborXDtype::Process(const FuncGraphPtr 
     new_value_node->set_abstract(new_tuple->ToAbstract());
     cnode->set_input(kIndex2, new_value_node);
   } else {
-    MS_LOG(EXCEPTION) << "Node: " << node->DebugString() << " second input is not tuple type.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Node: " << node->DebugString() << " second input is not tuple type.";
   }
   return node;
 }

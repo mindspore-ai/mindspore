@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -600,7 +600,7 @@ void KernelGraph::FrontBackendMapAdd(const AnfNodePtr &front_anf, const AnfNodeP
   MS_EXCEPTION_IF_NULL(front_anf);
   MS_EXCEPTION_IF_NULL(backend_anf);
   if (front_backend_anf_map_.find(front_anf) != front_backend_anf_map_.end()) {
-    MS_LOG(EXCEPTION) << "Anf " << front_anf->DebugString() << " has been exist in the front_backend_anf_map_";
+    MS_LOG(INTERNAL_EXCEPTION) << "Anf " << front_anf->DebugString() << " has been exist in the front_backend_anf_map_";
   }
   front_backend_anf_map_[front_anf] = backend_anf;
   if (backend_front_anf_map_.find(backend_anf) != backend_front_anf_map_.end()) {
@@ -616,7 +616,8 @@ void KernelGraph::FrontBackendMapAdd(const AnfNodePtr &front_anf, const AnfNodeP
     auto attr_input = front_node->input(kAnfPrimitiveIndex);
     MS_EXCEPTION_IF_NULL(attr_input);
     if (!attr_input->isa<CNode>()) {
-      MS_LOG(EXCEPTION) << "Kernel " << backend_anf->DebugString() << "has been exist in the backend_front_anf_map_";
+      MS_LOG(INTERNAL_EXCEPTION) << "Kernel " << backend_anf->DebugString()
+                                 << "has been exist in the backend_front_anf_map_";
     }
   }
   backend_front_anf_map_[backend_anf] = front_anf;
@@ -637,7 +638,7 @@ void KernelGraph::FrontBackendlMapUpdate(const AnfNodePtr &old_backend_anf, cons
   auto front_anf = bf_iter->second;
   auto fb_iter = front_backend_anf_map_.find(front_anf);
   if (fb_iter == front_backend_anf_map_.end()) {
-    MS_LOG(EXCEPTION) << "Anf is not exist in the map ,old " << old_backend_anf->DebugString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Anf is not exist in the map ,old " << old_backend_anf->DebugString();
   }
   fb_iter->second = new_backend_anf;
   // Delete old kernel, should be called before add new item to map.
@@ -706,8 +707,8 @@ AnfWithOutIndex KernelGraph::GetRefNodeRecursive(const AnfWithOutIndex &out_pair
 
 void KernelGraph::AddRefCorrespondPairs(const AnfWithOutIndex &final_pair, const AnfWithOutIndex &origin_pair) {
   if (IsInRefOutputMap(final_pair)) {
-    MS_LOG(EXCEPTION) << "Out_pair is already in RefOutputMap, node is " << final_pair.first->DebugString()
-                      << ", index is " << final_pair.second;
+    MS_LOG(INTERNAL_EXCEPTION) << "Out_pair is already in RefOutputMap, node is " << final_pair.first->DebugString()
+                               << ", index is " << final_pair.second;
   }
   (void)ref_out_in_map_.emplace(final_pair, origin_pair);
 }

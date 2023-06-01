@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ AnfNodePtr MatmulBiasaddFusion::CreateMatmulWithBias(const FuncGraphPtr &graph, 
                                                      const EquivPtr &equiv) const {
   auto matmul = GetAnfNodeByVar(equiv, matmul_var_);
   if (matmul == nullptr || !matmul->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << "Get CNode MatMul failed!" << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Get CNode MatMul failed!" << trace::DumpSourceLines(node);
   }
 
   // If there is a side-effect operator in the fusion, do not merge

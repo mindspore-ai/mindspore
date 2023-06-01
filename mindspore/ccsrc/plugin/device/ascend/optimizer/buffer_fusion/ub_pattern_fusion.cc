@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -311,12 +311,12 @@ bool TupleGetitemNodeCompare(const AnfNodePtr &node1, const AnfNodePtr &node2) {
   MS_EXCEPTION_IF_NULL(getitem1);
   MS_EXCEPTION_IF_NULL(getitem2);
   if (getitem1->size() < kTupleGetItemInputSize) {
-    MS_LOG(EXCEPTION) << "Node's input size less than " << kTupleGetItemInputSize << ", getitem1["
-                      << getitem1->DebugString() << "]";
+    MS_LOG(INTERNAL_EXCEPTION) << "Node's input size less than " << kTupleGetItemInputSize << ", getitem1["
+                               << getitem1->DebugString() << "]";
   }
   if (getitem2->size() < kTupleGetItemInputSize) {
-    MS_LOG(EXCEPTION) << "Node's input size less than " << kTupleGetItemInputSize << ", getitem1["
-                      << getitem2->DebugString() << "]";
+    MS_LOG(INTERNAL_EXCEPTION) << "Node's input size less than " << kTupleGetItemInputSize << ", getitem1["
+                               << getitem2->DebugString() << "]";
   }
   auto output_idx1 = GetValue<int64_t>(GetValueNode(getitem1->input(kIndex2)));
   auto output_idx2 = GetValue<int64_t>(GetValueNode(getitem2->input(kIndex2)));

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,25 +83,25 @@ std::vector<ValueNodePtr> ConvertAttrToValueNode(const std::shared_ptr<kernel::O
   // Get seed to create value node
   auto attrs = op_info->attrs_ptr();
   if (attrs.empty()) {
-    MS_LOG(EXCEPTION) << "Node(" << cnode->DebugString() << ") doesn't have any attrs."
-                      << trace::DumpSourceLines(cnode);
+    MS_LOG(INTERNAL_EXCEPTION) << "Node(" << cnode->DebugString() << ") doesn't have any attrs."
+                               << trace::DumpSourceLines(cnode);
   }
   for (const auto &attr : attrs) {
     if (!common::AnfAlgo::HasNodeAttr(attr->name(), cnode)) {
-      MS_LOG(EXCEPTION) << "Node(" << cnode->DebugString() << ") doesn't have attr(" << attr->name() << ")."
-                        << trace::DumpSourceLines(cnode);
+      MS_LOG(INTERNAL_EXCEPTION) << "Node(" << cnode->DebugString() << ") doesn't have attr(" << attr->name() << ")."
+                                 << trace::DumpSourceLines(cnode);
     }
     auto attr_value = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, attr->name());
     auto value_node = CreateValueNode(attr_value);
     if (value_node == nullptr) {
-      MS_LOG(EXCEPTION) << "Create value node error, node: " << cnode->DebugString() << ", seed value: " << attr_value
-                        << trace::DumpSourceLines(cnode);
+      MS_LOG(INTERNAL_EXCEPTION) << "Create value node error, node: " << cnode->DebugString()
+                                 << ", seed value: " << attr_value << trace::DumpSourceLines(cnode);
     }
     (void)ret.emplace_back(value_node);
   }
   if (ret.empty()) {
-    MS_LOG(EXCEPTION) << "Node(" << cnode->DebugString() << ") doesn't have any matched attrs."
-                      << trace::DumpSourceLines(cnode);
+    MS_LOG(INTERNAL_EXCEPTION) << "Node(" << cnode->DebugString() << ") doesn't have any matched attrs."
+                               << trace::DumpSourceLines(cnode);
   }
   return ret;
 }
@@ -132,7 +132,8 @@ const AnfNodePtr SeedAdapter::Process(const FuncGraphPtr &func_graph, const AnfN
   // 1. convert attr seed to value node
   auto op_info = kernel::OpLib::FindOp(cnode_type, kernel::OpImplyType::kImplyAICPU);
   if (!op_info) {
-    MS_LOG(EXCEPTION) << "Find op info failed, node type: " << cnode_type << ", node debug: " << cnode->DebugString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Find op info failed, node type: " << cnode_type
+                               << ", node debug: " << cnode->DebugString();
   }
   auto value_nodes = ConvertAttrToValueNode(op_info, cnode);
   for (auto &value_node : value_nodes) {
