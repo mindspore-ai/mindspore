@@ -1232,7 +1232,6 @@ REG_BPROP_BUILDER("BatchToSpaceND").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(i
 REG_BPROP_BUILDER("BroadcastTo").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
-  auto broadcast_shape = ib->GetAttr<ShapeVector>("shape");
 
   auto x_shape = ib->GetShape(x);
   auto dout_shape = ib->GetShape(dout);
@@ -1246,7 +1245,7 @@ REG_BPROP_BUILDER("BroadcastTo").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) 
 
   NodePtr dx;
   if (!input_dynamic) {
-    auto tuple_out = BroadcastGradientArgs(broadcast_shape, x_shape);
+    auto tuple_out = BroadcastGradientArgs(dout_shape, x_shape);
     MS_EXCEPTION_IF_CHECK_FAIL(!tuple_out.empty(), "BroadcastGradientArgs out should not be empty!");
     auto reduction_axes = tuple_out[kIndex1];
     NodePtr reduced_grad;
