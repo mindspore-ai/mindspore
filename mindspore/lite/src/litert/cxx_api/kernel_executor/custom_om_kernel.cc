@@ -30,17 +30,15 @@ const auto kFloat32 = DataType::kNumberTypeFloat32;
 const int MODEL_MAX_RUN_TIME_MS = 100;
 
 int CustomOMKernel::Prepare() {
-  char *OMModelBuffer;
-  size_t OMModelBufferSize;
-  auto ret = GetOMBuffer(OMModelBuffer, &OMModelBufferSize);
-  if (ret != kSuccess) {
-    MS_LOG(ERROR) << "Parse OMModelBuffer failed.";
+  if (inputs_.empty()) {
+    MS_LOG(ERROR) << "inputs_ is null.";
+    return kLiteNullptr;
   }
-  ret = Build(OMModelBuffer, OMModelBufferSize);
+  auto ret = Build(inputs_.back().MutableData(), inputs_.back().DataSize());
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Build OMModelBuffer failed.";
+    return kLiteError;
   }
-  delete[] OMModelBuffer;
   return kSuccess;
 }
 
@@ -58,27 +56,6 @@ int CustomOMKernel::Execute() {
   ret = ConvertHiaiTensorToMSTensor();
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "ConvertHiaiTensorToMSTensor failed.";
-    return kLiteError;
-  }
-  UnloadOM();
-  return kSuccess;
-}
-
-int CustomOMKernel::GetOMBuffer(void *buffer, size_t *buffer_size) {
-  if (inputs_.empty()) {
-    MS_LOG(ERROR) << "inputs_ is null.";
-    return kLiteNullptr;
-  }
-  auto OMTensor = inputs_.back();
-  *buffer_size = OMTensor.DataSize();
-  buffer = new (std::nothrow) char[*buffer_size];
-  if (buffer == nullptr) {
-    MS_LOG(ERROR) << "Create buffer failed.";
-    return kLiteNullptr;
-  }
-  auto ret = memcpy_s(buffer, *buffer_size, OMTensor.Data().get(), OMTensor.DataSize());
-  if (ret != EOK) {
-    MS_LOG(ERROR) << "memcpy_s error, errorno=" << ret;
     return kLiteError;
   }
   return kSuccess;
@@ -163,6 +140,7 @@ int CustomOMKernel::Build(void *modelData, size_t modelDataLength) {
   ret = InitIOTensors();
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "InitIOTensors failed.";
+    return kLiteError;
   }
   return kSuccess;
 }
@@ -203,17 +181,10 @@ int CustomOMKernel::InitIOTensors() {
     std::vector<int64_t> shapes;
     std::transform(outputTensorDesc.dims.begin(), outputTensorDesc.dims.end(), std::back_inserter(shapes),
                    [](const int32_t t) { return static_cast<int64_t>(t); });
+    outputs_.at(i).SetDataType(kFloat32);
     outputs_.at(i).SetShape(shapes);
   }
   return kSuccess;
-}
-
-void CustomOMKernel::UnloadOM() noexcept {
-  if (manager_ != nullptr) {
-    manager_->DeInit();
-  }
-  hiai_inputs_.clear();
-  hiai_outputs_.clear();
 }
 
 std::shared_ptr<Kernel> CustomOMKernelCreator(const std::vector<MSTensor> &inputs, const std::vector<MSTensor> &outputs,
