@@ -21,6 +21,7 @@
 #include <memory>
 
 #include "include/backend/distributed/rpc/rpc_server_base.h"
+#include "distributed/rpc/tcp/tcp_comm.h"
 #include "utils/ms_utils.h"
 #include "include/backend/visible.h"
 

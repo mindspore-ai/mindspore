@@ -68,5 +68,7 @@ HcclResult HcclAdapter::HcclAllToAll(void *, void *, hccl::HcclAllToAllVParams, 
                                      HcclComm) const {
   return HCCL_SUCCESS;
 }
+
+bool HcclAdapter::UseHcclCM() const { return false; }
 }  // namespace hccl
 }  // namespace mindspore

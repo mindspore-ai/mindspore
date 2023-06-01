@@ -92,6 +92,9 @@ class HcclAdapter {
   HcclResult HcclExecEnqueueOp(const ::HcomOperation &op_info, const HExecCallBack &callback) const;
   HcclResult HcclExecAllToAllv(const ::HcomAllToAllVParams &params, const HExecCallBack &callback) const;
 
+  // Return whether using CM to initialize HCCL.
+  bool UseHcclCM() const;
+
  private:
   HcclAdapter() = default;
   ~HcclAdapter() = default;

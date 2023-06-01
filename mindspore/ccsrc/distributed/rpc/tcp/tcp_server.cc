@@ -15,7 +15,6 @@
  */
 
 #include "include/backend/distributed/rpc/tcp/tcp_server.h"
-#include "distributed/rpc/tcp/tcp_comm.h"
 
 namespace mindspore {
 namespace distributed {

@@ -183,7 +183,10 @@ bool ComputeGraphNode::Register() {
     return false;
   }
   reg_msg.set_host_name(std::string(host_name));
-  reg_msg.set_host_ip(hb_client_->GetClientIPByDstUrl(server_url));
+
+  // Set client ip address.
+  client_ip_ = hb_client_->GetClientIPByDstUrl(server_url);
+  reg_msg.set_host_ip(client_ip_);
 
   std::string content = reg_msg.SerializeAsString();
   auto message = CreateMessage(server_url, MessageName::kRegistration, content);
@@ -519,6 +522,8 @@ std::vector<std::string> ComputeGraphNode::GetHostNames(const std::string &role)
 void ComputeGraphNode::set_abnormal_callback(std::shared_ptr<std::function<void(void)>> abnormal_callback) {
   abnormal_callback_ = abnormal_callback;
 }
+
+const std::string &ComputeGraphNode::client_ip() const { return client_ip_; }
 
 std::shared_ptr<std::string> ComputeGraphNode::RetrieveMessageFromMSN(const std::string &msg_name,
                                                                       const std::string &msg_body, uint32_t timeout) {
