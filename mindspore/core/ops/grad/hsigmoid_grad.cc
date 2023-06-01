@@ -37,26 +37,14 @@
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
+#include "ops/grad/elewise_grad_infer_shape.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr HSigmoidGradInferShape(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
-                                           primitive->name());
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  auto grads_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  if (IsDynamicRank(grads_shape) || IsDynamicRank(input_x_shape)) {
-    return std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
-  }
-  CheckAndConvertUtils::Check("grads_shape", grads_shape, kEqual, input_x_shape, primitive->name(), ValueError);
-  return std::make_shared<abstract::Shape>(input_x_shape);
+  return mindspore::ElewiseGradInferShape(primitive, input_args);
 }
 
 TypePtr HSigmoidGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

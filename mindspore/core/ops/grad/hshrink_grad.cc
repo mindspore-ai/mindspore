@@ -38,6 +38,7 @@
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
+#include "ops/grad/elewise_grad_infer_shape.h"
 
 namespace mindspore {
 namespace ops {
@@ -54,16 +55,7 @@ float HShrinkGrad::get_lambd() const {
 namespace {
 abstract::ShapePtr HShrinkGradInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
-                                           primitive->name());
-  auto prim_name = primitive->name();
-  auto gradients_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto features_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-
-  CheckAndConvertUtils::Check("gradients_shape", gradients_shape, kEqual, features_shape, prim_name, TypeError);
-  return std::make_shared<abstract::Shape>(gradients_shape);
+  return mindspore::ElewiseGradInferShape(primitive, input_args);
 }
 
 TypePtr HShrinkGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
