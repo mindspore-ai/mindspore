@@ -149,11 +149,22 @@ bool ParallelThreadPoolManager::GetEnableSharedThreadPool(std::string runner_id)
 void ParallelThreadPoolManager::ActivatePool(const std::string &runner_id, int model_id) {
 #ifndef MS_COMPILE_IOS
   std::shared_lock<std::shared_mutex> l(pool_manager_mutex_);
-  auto &pool = runner_id_pools_[runner_id][model_id];
-  pool->UseThreadPool(1);
-  auto &workers = pool_workers_[pool];
-  for (auto &worker : workers) {
-    worker->ActivateByOtherPoolTask();
+  auto runner_id_pools_iter = runner_id_pools_.find(runner_id);
+  if (runner_id_pools_iter == runner_id_pools_.end()) {
+    return;
+  }
+  auto &runner_id_pools = runner_id_pools_iter->second;
+  if (static_cast<size_t>(model_id) < runner_id_pools.size()) {
+    auto &pool = runner_id_pools_iter->second[model_id];
+    pool->UseThreadPool(1);
+
+    auto pool_workers_iter = pool_workers_.find(pool);
+    if (pool_workers_iter != pool_workers_.end()) {
+      auto &workers = pool_workers_iter->second;
+      for (auto &worker : workers) {
+        worker->ActivateByOtherPoolTask();
+      }
+    }
   }
 #endif
 }
@@ -161,23 +172,46 @@ void ParallelThreadPoolManager::ActivatePool(const std::string &runner_id, int m
 void ParallelThreadPoolManager::SetFreePool(const std::string &runner_id, int model_id) {
 #ifndef MS_COMPILE_IOS
   std::shared_lock<std::shared_mutex> l(pool_manager_mutex_);
-  auto &pool = runner_id_pools_[runner_id][model_id];
-  pool->UseThreadPool(-1);
+  auto runner_id_pools_iter = runner_id_pools_.find(runner_id);
+  if (runner_id_pools_iter == runner_id_pools_.end()) {
+    return;
+  }
+  auto &runner_id_pools = runner_id_pools_iter->second;
+  if (static_cast<size_t>(model_id) < runner_id_pools.size()) {
+    auto &pool = runner_id_pools_iter->second[model_id];
+    pool->UseThreadPool(-1);
+  }
 #endif
 }
 
 ParallelThreadPool *ParallelThreadPoolManager::GetIdleThreadPool(const std::string &runner_id, ParallelTask *task) {
 #ifndef MS_COMPILE_IOS
   std::shared_lock<std::shared_mutex> l(pool_manager_mutex_);
-  if (!has_idle_pool_[runner_id]) {
+  auto has_idle_pool_iter = has_idle_pool_.find(runner_id);
+  if (has_idle_pool_iter == has_idle_pool_.end() || !(has_idle_pool_iter->second)) {
     return nullptr;
   }
-  auto &all_pools = runner_id_pools_[runner_id];
+
+  auto runner_id_pools_iter = runner_id_pools_.find(runner_id);
+  if (runner_id_pools_iter == runner_id_pools_.end()) {
+    return nullptr;
+  }
+  auto &all_pools = runner_id_pools_iter->second;
   for (int pool_index = all_pools.size() - 1; pool_index >= 0; pool_index--) {
     auto &pool = all_pools[pool_index];
     if (pool->IsIdlePool()) {
-      auto &workers = pool_workers_[pool];
-      for (size_t i = 0; i < workers.size() - remaining_thread_num_[runner_id]; i++) {
+      auto pool_workers_iter = pool_workers_.find(pool);
+      if (pool_workers_iter == pool_workers_.end()) {
+        pool->UseThreadPool(-1);
+        continue;
+      }
+      auto &workers = pool_workers_iter->second;
+      auto remaining_thread_num_iter = remaining_thread_num_.find(runner_id);
+      if (remaining_thread_num_iter == remaining_thread_num_.end()) {
+        pool->UseThreadPool(-1);
+        continue;
+      }
+      for (size_t i = 0; i < workers.size() - remaining_thread_num_iter->second; i++) {
         workers[i]->ActivateByOtherPoolTask(task);
       }
       return pool;
