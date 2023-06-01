@@ -31,20 +31,21 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
-#define CHECK_OP_RET_WITH_EXCEPT(expression, message)                                            \
-  do {                                                                                           \
-    bool success = (expression);                                                                 \
-    if (!success) {                                                                              \
-      MS_LOG(EXCEPTION) << "#dmsg#Op Error:#dmsg#" << message << " | Error Number: " << success; \
-    }                                                                                            \
+#define CHECK_OP_RET_WITH_EXCEPT(expression, message)                                                     \
+  do {                                                                                                    \
+    bool success = (expression);                                                                          \
+    if (!success) {                                                                                       \
+      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Op Error:#dmsg#" << message << " | Error Number: " << success; \
+    }                                                                                                     \
   } while (0);
 
-#define CHECK_OP_RET_WITH_EXCEPT_TRANCE(node, expression, message)                                             \
-  do {                                                                                                         \
-    bool success = (expression);                                                                               \
-    if (!success) {                                                                                            \
-      MS_LOG(EXCEPTION) << "#dmsg#Op Error:#dmsg#" << message << " | " << trace::DumpSourceLines(node.lock()); \
-    }                                                                                                          \
+#define CHECK_OP_RET_WITH_EXCEPT_TRANCE(node, expression, message)              \
+  do {                                                                          \
+    bool success = (expression);                                                \
+    if (!success) {                                                             \
+      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Op Error:#dmsg#" << message << " | " \
+                                 << trace::DumpSourceLines(node.lock());        \
+    }                                                                           \
   } while (0);
 
 #define CHECK_OP_RET_WITH_ERROR(expression, message)                              \

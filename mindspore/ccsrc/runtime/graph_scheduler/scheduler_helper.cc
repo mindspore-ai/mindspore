@@ -237,7 +237,7 @@ void SchedulerHelper::AddDataArrow(AbstractActor *const from_actor, AbstractActo
   if (to_actor->type() == KernelTransformType::kKernelActor) {
     auto to_kernel_actor = dynamic_cast<KernelActor *>(to_actor);
     if (to_kernel_actor->inputs_continuous_memory() && (from_actor->type() != KernelTransformType::kKernelActor)) {
-      MS_LOG(EXCEPTION)
+      MS_LOG(INTERNAL_EXCEPTION)
         << "#dmsg#Runtime error info:#dmsg#The continuous memory input is not from the inside subgraph, to actor: "
         << to_actor->GetAID().Name() << ", to input index: " << to_input_index
         << ", from actor: " << from_actor->GetAID().Name() << ", from output index: " << from_output_index;
@@ -296,7 +296,8 @@ void SchedulerHelper::AddResultArrow(AbstractActor *const from_actor, OutputActo
   }
 
   if (!AnfAlgo::OutputAddrExist(from_kernel, from_output_index, false)) {
-    MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#" << from_kernel->DebugString() << " device address not exit";
+    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#" << from_kernel->DebugString()
+                               << " device address does not exist";
   }
   auto device_tensor = AnfAlgo::GetMutableOutputAddr(from_kernel, from_output_index, false);
   MS_EXCEPTION_IF_NULL(device_tensor);
@@ -308,7 +309,7 @@ void SchedulerHelper::AddResultArrow(AbstractActor *const from_actor, OutputActo
 
   // Set the device contexts of to_actor.
   if (output_position >= to_actor->device_contexts_.size()) {
-    MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The output position is out of range.";
+    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The output position is out of range.";
   }
   auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
     {device_tensor->device_name(), device_tensor->device_id()});
@@ -327,8 +328,9 @@ void SchedulerHelper::AddControlArrow(AbstractActor *const from_actor, AbstractA
   if (iter != from_actor->output_control_arrows_.end()) {
     // The stack actor can only link the single control arrow.
     if (to_actor->type_ == KernelTransformType::kStackActor) {
-      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The control arrow between " << from_actor->GetAID().Name()
-                        << " and " << to_actor->GetAID().Name() << " is repeat.";
+      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The control arrow between "
+                                 << from_actor->GetAID().Name() << " and " << to_actor->GetAID().Name()
+                                 << " is repeated.";
     }
     return;
   }
@@ -425,9 +427,9 @@ void SchedulerHelper::AddFormalParameterDeviceTensor(ControlActor *const from_ac
       ((base_shape->isa<abstract::Shape>() && base_shape->IsDynamic()) ||
        base_shape->isa<abstract::DynamicSequenceShape>())) {
     if (from_index >= from_actor->backend_parameters_.size()) {
-      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid from index:" << from_index
-                        << " for actor:" << from_actor->GetAID()
-                        << " vector size:" << from_actor->backend_parameters_.size();
+      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid from index:" << from_index
+                                 << " for actor:" << from_actor->GetAID()
+                                 << " vector size:" << from_actor->backend_parameters_.size();
     }
     MS_LOG(INFO) << "Add dynamic shape backend parameter:" << input_node->DebugString() << " index:" << from_index
                  << " for actor:" << from_actor->GetAID();
@@ -485,9 +487,9 @@ void SchedulerHelper::ConvertDataArrowToControlArrow(AbstractActor *const from_a
     }
   }
   if (to_actor_erase == false) {
-    MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Erase no input data arrow, from actor:"
-                      << from_actor->GetAID().Name() << ", to actor:" << to_actor->GetAID().Name()
-                      << ", data arrow index:" << data_arrow_index;
+    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Erase no input data arrow, from actor:"
+                               << from_actor->GetAID().Name() << ", to actor:" << to_actor->GetAID().Name()
+                               << ", data arrow index:" << data_arrow_index;
   }
 
   // Recalculate the ref count of converted node.
@@ -568,7 +570,7 @@ bool SchedulerHelper::CheckDependency(const std::vector<AbstractActorPtr> &outpu
 
 FusionActorPtr SchedulerHelper::BuildFusionActor(const std::vector<AbstractActorPtr> &actors) {
   if (actors.size() <= 1) {
-    MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The fusion actor size must be greater than 1.";
+    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The fusion actor size must be greater than 1.";
   }
 
   std::string fusion_actor_name = std::to_string(++fusion_actor_index_) + kFusionActorNameSuffix;
@@ -653,8 +655,8 @@ void SchedulerHelper::AddMemorySign(AbstractActor *const from_actor, AbstractAct
   AddSomasInfo(from_actor);
   AddSomasInfo(to_actor);
 
-  auto from_graph = FecthKernelGraphByActor(from_actor);
-  auto to_graph = FecthKernelGraphByActor(to_actor);
+  auto from_graph = FetchKernelGraphByActor(from_actor);
+  auto to_graph = FetchKernelGraphByActor(to_actor);
   // Add the memory alloc and free sign at the boundary of the graph.
   if ((from_graph != nullptr) && (to_graph != nullptr)) {
     // The same graph no need insert the memory actor.
@@ -670,7 +672,7 @@ void SchedulerHelper::AddMemorySign(AbstractActor *const from_actor, AbstractAct
   }
 }
 
-KernelGraphPtr SchedulerHelper::FecthKernelGraphByActor(AbstractActor *const actor) {
+KernelGraphPtr SchedulerHelper::FetchKernelGraphByActor(AbstractActor *const actor) {
   MS_EXCEPTION_IF_NULL(actor);
   AnfNode *from_kernel = nullptr;
   if (actor->type() == KernelTransformType::kKernelActor) {
@@ -703,8 +705,8 @@ KernelGraphPtr SchedulerHelper::FecthKernelGraphByActor(AbstractActor *const act
   }
   auto graph = AnfAlgo::FetchKernelGraph(from_kernel);
   if (graph == nullptr) {
-    MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#No association graph for node: "
-                      << from_kernel->fullname_with_scope();
+    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#No associated graph for node: "
+                               << from_kernel->fullname_with_scope();
   }
 
   return graph;
@@ -753,8 +755,8 @@ void SchedulerHelper::AddSomasInfo(AbstractActor *const actor) {
   MS_EXCEPTION_IF_NULL(kernel_actor->kernel());
   auto graph = AnfAlgo::FetchKernelGraph(kernel_actor->kernel().get());
   if (graph == nullptr) {
-    MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#No association graph for node: "
-                      << kernel_actor->kernel()->fullname_with_scope();
+    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#No associated graph for node: "
+                               << kernel_actor->kernel()->fullname_with_scope();
   }
   // Somas is not work for this graph.
   if (graph->somas_whole_block_size() == 0) {
@@ -784,8 +786,9 @@ void CheckKernelActorValid(const std::vector<KernelActorPtr> &kernel_actors) {
         continue;
       }
       if (exit_actor_name != arrow->to_op_id_.Name()) {
-        MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Kernel actor:" << kernel_actor->GetAID()
-                          << " link to two exit actor:" << exit_actor_name << " and:" << arrow->to_op_id_.Name();
+        MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Kernel actor:" << kernel_actor->GetAID()
+                                   << " link to two exit actor:" << exit_actor_name
+                                   << " and:" << arrow->to_op_id_.Name();
       }
     }
   }
@@ -845,8 +848,8 @@ void CheckControlActorValid(const ActorSet *actor_set) {
         if (((*device_tensors.begin())->format() != (*iter)->format()) ||
             ((*device_tensors.begin())->GetDeviceType() != (*iter)->GetDeviceType()) ||
             ((*device_tensors.begin())->type_id() != (*iter)->type_id())) {
-          MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#" << control_actor->GetAID().Name()
-                            << " does not support the ref node formal parameters that are different format.";
+          MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#" << control_actor->GetAID().Name()
+                                     << " does not support the ref node formal parameters with different format.";
         }
       }
     }
@@ -855,8 +858,8 @@ void CheckControlActorValid(const ActorSet *actor_set) {
       auto &device_tensors = ref_formal_parameter_device_tensor.second;
       for (auto iter = device_tensors.begin(); iter != device_tensors.end(); ++iter) {
         if ((*device_tensors.begin())->type_id() != (*iter)->type_id()) {
-          MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#" << control_actor->GetAID().Name()
-                            << " does not support the ref formal parameters that are different type.";
+          MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#" << control_actor->GetAID().Name()
+                                     << " does not support the ref formal parameters with different type.";
         }
       }
     }
@@ -865,7 +868,7 @@ void CheckControlActorValid(const ActorSet *actor_set) {
   for (const auto &exit_actor : actor_set->control_actors_->exit_actors_) {
     MS_EXCEPTION_IF_NULL(exit_actor);
     if (CheckExitActorInvalid(exit_actor)) {
-      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid exit actor:" << exit_actor->GetAID();
+      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid exit actor:" << exit_actor->GetAID();
     }
   }
 
@@ -896,21 +899,21 @@ void SchedulerHelper::CheckActorValid(const ActorSet *actor_set) {
 
     if ((actor->input_datas_num_ != actor->input_data_arrow_aids_.size()) ||
         (actor->input_controls_num_ != actor->input_control_arrow_aids_.size())) {
-      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The input num of " << actor->GetAID().Name()
-                        << " is wrong, expect data num: " << actor->input_datas_num_
-                        << ", actual data num: " << actor->input_data_arrow_aids_.size()
-                        << ", expect control num: " << actor->input_controls_num_
-                        << ", actual control num: " << actor->input_control_arrow_aids_.size();
+      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The input num of " << actor->GetAID().Name()
+                                 << " is wrong, expect data num: " << actor->input_datas_num_
+                                 << ", actual data num: " << actor->input_data_arrow_aids_.size()
+                                 << ", expect control num: " << actor->input_controls_num_
+                                 << ", actual control num: " << actor->input_control_arrow_aids_.size();
     }
 
     if ((actor->type_ != KernelTransformType::kOutputActor) && (actor->type_ != KernelTransformType::kCustomActor) &&
         (actor->output_data_arrows_.size() == 0) && (actor->output_control_arrows_.size() == 0)) {
-      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#" << actor->GetAID().Name() << " has no user.";
+      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#" << actor->GetAID().Name() << " has no user.";
     }
     if ((actor->type_ != KernelTransformType::kDataPrepareActor) &&
         (actor->type_ != KernelTransformType::kCustomActor) && (actor->input_datas_num_ == 0) &&
         (actor->input_controls_num_ == 0)) {
-      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#" << actor->GetAID().Name() << " has no source.";
+      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#" << actor->GetAID().Name() << " has no source.";
     }
 
     // Check the input of kernel actors and copy actors.
@@ -927,10 +930,10 @@ void SchedulerHelper::CheckActorValid(const ActorSet *actor_set) {
       auto input_data_num = actor->input_datas_num_;
       auto device_tensor_store_num = actor->device_tensor_store_keys_.size();
       if (input_data_num + device_tensor_store_num != expect_input_num) {
-        MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The input building of " << actor->GetAID().Name()
-                          << " is wrong, input data num: " << input_data_num
-                          << ", device tensor store num: " << device_tensor_store_num
-                          << ", total input num: " << expect_input_num;
+        MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The input building of " << actor->GetAID().Name()
+                                   << " is wrong, input data num: " << input_data_num
+                                   << ", device tensor store num: " << device_tensor_store_num
+                                   << ", total input num: " << expect_input_num;
       }
     }
   }
@@ -939,7 +942,7 @@ void SchedulerHelper::CheckActorValid(const ActorSet *actor_set) {
   auto output_actor = actor_set->output_actor_;
   MS_EXCEPTION_IF_NULL(output_actor);
   if (output_actor->input_datas_num_ + output_actor->device_tensor_store_keys_.size() != output_actor->outputs_num()) {
-    MS_LOG(EXCEPTION)
+    MS_LOG(INTERNAL_EXCEPTION)
       << "#dmsg#Runtime error info:#dmsg#The outputs num of output actor is wrong, the total outputs num: "
       << output_actor->outputs_num() << ", the input data arrows num: " << output_actor->input_datas_num_
       << ", the device tensor store num: " << output_actor->device_tensor_store_keys_.size();

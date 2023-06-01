@@ -39,7 +39,7 @@ std::string GetActorName(const AnfNodePtr &node) {
 std::string GetStackActorNameByExitName(const std::string &exit_name) {
   size_t pos = exit_name.find(kExitActorNameSuffix);
   if (pos == std::string::npos) {
-    MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid exit actor name:" << exit_name;
+    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid exit actor name:" << exit_name;
   }
 
   return exit_name.substr(0, pos) + kStackActorNameSuffix;
@@ -74,13 +74,14 @@ bool IsControlArrowExistForCallNode(const AnfNodePtr &node, const AbstractActor 
   MS_EXCEPTION_IF_NULL(to_actor);
   MS_EXCEPTION_IF_NULL(parser);
   if (!common::AnfAlgo::IsCallNode(node)) {
-    MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid call node:" << node->DebugString();
+    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid call node:" << node->DebugString();
   }
   int branch_id = parser->FetchBranchIDByCallNode(node);
 
   const auto &func_graphs = parser->FetchFuncGraphbyCallNode(node);
   if (func_graphs.empty()) {
-    MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Failed to get funcgraph by call node:" << node->DebugString();
+    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Failed to get funcgraph by call node:"
+                               << node->DebugString();
   }
   MS_EXCEPTION_IF_NULL(*(func_graphs.begin()));
   auto actor_name = (*(func_graphs.begin()))->ToString() + kExitActorNameSuffix;
@@ -238,8 +239,8 @@ std::vector<GatherActorPtr> ControlNodeScheduler::BuildGatherActor(const GraphCo
       // Fetch device contexts for gather actor.
       const auto &iter = parser->control_node_to_device_contexts_.find(control_node);
       if (iter == parser->control_node_to_device_contexts_.end()) {
-        MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Failed to get device contexts for node:"
-                          << control_node->DebugString();
+        MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Failed to get device contexts for node:"
+                                   << control_node->DebugString();
       }
       gather_actor->device_contexts_ = iter->second;
     }
@@ -299,7 +300,7 @@ std::vector<EntranceActorPtr> ControlNodeScheduler::BuildEntranceActor(
       auto context_iter = parser->func_graph_to_device_contexts_.find(func_graph);
       if (context_iter == parser->func_graph_to_device_contexts_.end() ||
           context_iter->second.size() < formal_parameters.size()) {
-        MS_LOG(EXCEPTION)
+        MS_LOG(INTERNAL_EXCEPTION)
           << "#dmsg#Runtime error info:#dmsg#Invalid device contexts for funcgraph:" << func_graph->ToString()
           << " parameter num:" << formal_parameters.size() << " device contexts num:"
           << (context_iter == parser->func_graph_to_device_contexts_.end() ? 0 : context_iter->second.size());
@@ -341,8 +342,8 @@ std::vector<ExitActorPtr> ControlNodeScheduler::BuildExitActor(const GraphCompil
       auto context_iter = parser->control_node_to_device_contexts_.find(control_node);
       if (context_iter == parser->control_node_to_device_contexts_.end() ||
           context_iter->second.size() != parameters.size()) {
-        MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Failed to get device contexts for funcgraph:"
-                          << func_graph->ToString();
+        MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Failed to get device contexts for funcgraph:"
+                                   << func_graph->ToString();
       }
       exit_actor->device_contexts_ = context_iter->second;
       (void)exit_actors.emplace_back(exit_actor);
@@ -351,8 +352,9 @@ std::vector<ExitActorPtr> ControlNodeScheduler::BuildExitActor(const GraphCompil
   }
 
   if (graph_compiler_info.graphs_.size() != graph_compiler_info.device_contexts_.size()) {
-    MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid graphs num:" << graph_compiler_info.graphs_.size()
-                      << " and contexts num:" << graph_compiler_info.device_contexts_.size();
+    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid graphs num:"
+                               << graph_compiler_info.graphs_.size()
+                               << " and contexts num:" << graph_compiler_info.device_contexts_.size();
   }
 
   // 2. Replace the device address in the kernel actor when calling funcgraph, that is to say in the data exchange
@@ -420,8 +422,8 @@ std::vector<StackActorPtr> ControlNodeScheduler::BuildStackActor(const GraphComp
       MS_EXCEPTION_IF_NULL(from_node);
       auto iter = parser->node_to_level_.find(from_node);
       if (iter == parser->node_to_level_.end()) {
-        MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Failed to get level by from node:"
-                          << from_node->DebugString() << " in graph:" << kernel_graph_group_info->group_name_;
+        MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Failed to get level by from node:"
+                                   << from_node->DebugString() << " in graph:" << kernel_graph_group_info->group_name_;
       }
       if (iter->second == kernel_graph_group_info->level_ && (!parser->IsRootGraphPersistentDeviceTensor(from_node))) {
         (void)formal_parameters.emplace_back(node_with_context.first);
@@ -475,28 +477,28 @@ void ControlNodeScheduler::BuildStackActorForControlNode(const GraphCompilerInfo
                common::AnfAlgo::IsCallNode(need_stack_control_node)) {
       control_actor_name = GetActorName(need_stack_control_node);
     } else {
-      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid control node:"
-                        << need_stack_control_node->DebugString();
+      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid control node:"
+                                 << need_stack_control_node->DebugString();
     }
 
     auto iter = parser->node_to_level_.find(need_stack_control_node);
     if (iter == parser->node_to_level_.end()) {
-      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Failed to get level for need stack control node:"
-                        << need_stack_control_node->DebugString();
+      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Failed to get level for need stack control node:"
+                                 << need_stack_control_node->DebugString();
     }
     size_t control_node_level = iter->second;
 
     auto actor = FetchActor(control_actor_name);
     if (actor == nullptr) {
-      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid actor name:" << control_actor_name;
+      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid actor name:" << control_actor_name;
     }
     auto control_actor = dynamic_cast<ControlActor *>(actor);
     MS_EXCEPTION_IF_NULL(control_actor);
     if (control_actor->formal_parameters_.size() > control_actor->device_contexts_.size()) {
-      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid device context size:"
-                        << control_actor->device_contexts_.size()
-                        << " and formal parameter size:" << control_actor->formal_parameters_.size()
-                        << " for actor:" << control_actor->GetAID();
+      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid device context size:"
+                                 << control_actor->device_contexts_.size()
+                                 << " and formal parameter size:" << control_actor->formal_parameters_.size()
+                                 << " for actor:" << control_actor->GetAID();
     }
 
     // Collect formal parameters and device contexts, skip the value nodes.
@@ -510,9 +512,9 @@ void ControlNodeScheduler::BuildStackActorForControlNode(const GraphCompilerInfo
 
       iter = parser->node_to_level_.find(parameter.first);
       if (iter == parser->node_to_level_.end()) {
-        MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Failed to get level for formal parameter:"
-                          << parameter.first->DebugString()
-                          << " for need stack control node:" << need_stack_control_node->DebugString();
+        MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Failed to get level for formal parameter:"
+                                   << parameter.first->DebugString()
+                                   << " for need stack control node:" << need_stack_control_node->DebugString();
       }
 
       if (control_node_level == iter->second && (!parser->IsRootGraphPersistentDeviceTensor(parameter.first))) {
@@ -900,8 +902,9 @@ void ControlNodeScheduler::LinkArrowByValueNode(const AnfNodePtr &value_node, Co
       if (!value->isa<ValueTuple>() && from_index > 0) {
         from_index = 0;
       } else {
-        MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid output address index:" << from_index
-                          << " for value node:" << value_node->DebugString() << " to actor:" << to_actor->GetAID();
+        MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid output address index:" << from_index
+                                   << " for value node:" << value_node->DebugString()
+                                   << " to actor:" << to_actor->GetAID();
       }
     }
     to_actor->local_device_tensors_[to_index] = AnfAlgo::GetMutableOutputAddr(value_node, from_index, false).get();
@@ -1133,7 +1136,7 @@ void ControlNodeScheduler::LinkControlArrowForControlActor(ActorSet *const actor
       kernel_graph = std::dynamic_pointer_cast<KernelGraph>(copy_actor->from_kernel_->func_graph());
     }
     if (kernel_graph == nullptr) {
-      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid copy actor:" << copy_actor->GetAID().Name();
+      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid copy actor:" << copy_actor->GetAID().Name();
     }
     auto exit_actor_name = parser->FetchGroupNameByKernelGraph(kernel_graph) + kExitActorNameSuffix;
     auto exit_actor = FetchActor(exit_actor_name);
@@ -1329,8 +1332,8 @@ void ControlNodeScheduler::LinkControlArrowByAutoMonad(ControlActor *to_actor, c
       int branch_id = parser->FetchBranchIDByCallNode(depend_node);
       const auto &func_graphs = parser->FetchFuncGraphbyCallNode(depend_node);
       if (func_graphs.empty()) {
-        MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Failed to get funcgraph by call node:"
-                          << depend_node->DebugString();
+        MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Failed to get funcgraph by call node:"
+                                   << depend_node->DebugString();
       }
       for (const auto &func_graph : func_graphs) {
         MS_EXCEPTION_IF_NULL(func_graph);
@@ -1348,8 +1351,8 @@ void ControlNodeScheduler::LinkControlArrowByAutoMonad(ControlActor *to_actor, c
       SchedulerHelper::AddControlArrow(from_actor, to_actor);
     } else {
       if (graph == nullptr) {
-        MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Failed to find actor for node:"
-                          << depend_node->DebugString();
+        MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Failed to find actor for node:"
+                                   << depend_node->DebugString();
       }
       from_actor = FetchActor(parser->FetchGroupNameByKernelGraph(graph) + kExitActorNameSuffix);
       MS_EXCEPTION_IF_NULL(from_actor);
@@ -1692,12 +1695,12 @@ void ControlNodeScheduler::LinkDataArrowForOutputActor(ActorSet *const actor_set
   auto control_node_to_device_contexts = parser->control_node_to_device_contexts_;
   auto iter = control_node_to_device_contexts.find(return_node);
   if (iter == control_node_to_device_contexts.end()) {
-    MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Failed to find device contexts for node:"
-                      << return_node->DebugString();
+    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Failed to find device contexts for node:"
+                               << return_node->DebugString();
   }
   if (iter->second.size() != to_actor->device_contexts().size()) {
-    MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid context size, need:"
-                      << to_actor->device_contexts().size() << " current:" << iter->second.size();
+    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid context size, need:"
+                               << to_actor->device_contexts().size() << " current:" << iter->second.size();
   }
   to_actor->device_contexts_ = iter->second;
 }

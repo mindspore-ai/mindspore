@@ -102,8 +102,8 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
         new_factory = false;
       }
       if (!gpu_kernel_mod) {
-        MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Build gpu kernel op[" << kernel->fullname_with_scope()
-                          << "] failed";
+        MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Build gpu kernel op["
+                                   << kernel->fullname_with_scope() << "] failed";
       }
       MS_EXCEPTION_IF_NULL(kernel);
 
@@ -120,8 +120,8 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
           old_gpu_kernel_mod->SetGpuRefMapToKernelInfo(kernel);
         }
         if (!old_gpu_kernel_mod->Init(kernel)) {
-          MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize gpu kernel op["
-                            << kernel->fullname_with_scope() << "] failed.";
+          MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Initialize gpu kernel op["
+                                     << kernel->fullname_with_scope() << "] failed.";
         }
         session::AnfRuntimeAlgorithm::SetKernelMod(old_gpu_kernel_mod, kernel.get());
       } else {
