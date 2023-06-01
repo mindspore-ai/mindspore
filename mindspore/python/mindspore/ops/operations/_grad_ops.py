@@ -1947,39 +1947,27 @@ class UpsampleNearest3DGrad(Primitive):
     """
     Upsample the 3-D gradient data  with the nearest neighbor interpolation algorithm.
 
+    Note:
+        Only one of 'scales' and 'output_size' can be specified, and it is an error if both are specified.
+
     Inputs:
         - **dy** (Tensor) - Tensor of shape [N, C, D, H, W], Must be one of the following types:
             float16, float32, float64.
         - **input_size** (listInt): An required listInt, which contain 5 elements:
             [min_batch, channels, depth, height, width].
-            Must: input_size[0] == grad_output_tensor_size[0], input_size[1] == grad_output_tensor_size[1].
-        - **output_size** (listInt): An optional listInt. Defaults to none.
-            contain 3 elements: depth, height, width. The number of elements of 'output_size' should
-            be the same as the rank of input 'grad_output'.
-            Only one of 'scales' and 'output_size' can be specified.
-            Must: grad_output_tensor_size[2] == floor(input_size[2] * scales[0]) == output_size[0]
-            grad_output_tensor_size[3] == floor(input_size[3] * scales[1]) == output_size[1]
-            grad_output_tensor_size[4] == floor(input_size[4] * scales[2]) == output_size[2].
-        - **scales** (listFloat): An optional listFloat. Defaults to none.
+            Must: input_size[0] == dy_tensor_size[0], input_size[1] == dy_tensor_size[1].
+        - **output_size** (listInt): An optional listInt. Default: ``None``.
+            It contains 3 elements: depth, height, width, whose elements should be the same as `dy`.
+            Must:
+            dy_tensor_size[2] == floor(input_size[2] * scales[0]) == output_size[0],
+            dy_tensor_size[3] == floor(input_size[3] * scales[1]) == output_size[1],
+            dy_tensor_size[4] == floor(input_size[4] * scales[2]) == output_size[2].
+        - **scales** (listFloat): An optional listFloat. Default: ``None``.
             The scale array along each dimension, contain 3 elements: scale_depth, scale_height, scale_width.
-            The number of elements of 'scales' should be the same as the rank of input 'grad_output'.
-            One of 'scales' and 'output_size' MUST be specified and it is an error if both are specified.
+            The number of elements of 'scales' should be the same as the rank of `dy`.
 
     Outputs:
-        Tensor, A 5-D tensor. Has the same type as input grad_output, shape depends on x and output_size/scales.
-
-    Raises:
-        TypeError: If `input_size` is not listInt.
-        TypeError: When `output_size` is not none and `output_size` is not listInt.
-        TypeError: When `scales` is not none and `scales` is not listFloat.
-        TypeError: If dtype of `dy` is not int [float16, float32, float64].
-        ValueError: If any value of `input_size` is negative.
-        ValueError: If any value of `output_size` is negative.
-        ValueError: If any value of `scales` is negative.
-        ValueError: If shape of `dy` is not 5D.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        - **dx**- (Tensor) - A 5-D tensor. Has the same type as `dy`, shape depends on `input_size`.
     """
     @prim_attr_register
     def __init__(self):
@@ -2979,51 +2967,29 @@ class UpsampleTrilinear3DGrad(Primitive):
     Upsample the 3-D gradient data with trilinear interpolation algorithm.
 
     Note:
-        One of `scales` and `output_size` must be specified and it is an error if both are specified.
+        One of 'scales' and 'output_size' must be specified. And it is an error if both are specified.
 
     Args:
-        align_corners (bool): An optional bool. Defaults to false.
+        align_corners (bool): An optional bool. Default: ``False``.
 
     Inputs:
         - **dy** (Tensor) - Tensor of shape [N, C, D, H, W]. Must be one of the following types:
           float16, float32, float64.
         - **input_size** (Union[tuple[int], list[int]]): An required listInt which contains 5 elements:
           [batch, channels, depth, height, width]. Must:
-          input_size[0] == grad_output_tensor_size[0]
-          input_size[1] == grad_output_tensor_size[1].
-        - **output_size** (Union[tuple[int], list[int]]): An optional listInt. Defaults to none.
-          contain 3 elements: depth, height, width. The number of elements of 'output_size' should
-          be the same as the rank of input 'grad_output'. Must:
-          grad_output_tensor_size[2] == floor(input_size[2] * scales[0]) == output_size[0]
-          grad_output_tensor_size[3] == floor(input_size[3] * scales[1]) == output_size[1]
-          grad_output_tensor_size[4] == floor(input_size[4] * scales[2]) == output_size[2].
-        - **scales** (Union[tuple[float], list[float]]): An optional listFloat. Defaults to none.
+          input_size[0] == dy_tensor_size[0]
+          input_size[1] == dy_tensor_size[1].
+        - **output_size** (Union[tuple[int], list[int]]): An optional listInt. Default: ``None``.
+          It contains 3 elements: depth, height, width, whose elements should be the same as `dy`. Must:
+          dy_tensor_size[2] == floor(input_size[2] * scales[0]) == output_size[0]
+          dy_tensor_size[3] == floor(input_size[3] * scales[1]) == output_size[1]
+          dy_tensor_size[4] == floor(input_size[4] * scales[2]) == output_size[2].
+        - **scales** (Union[tuple[float], list[float]]): An optional listFloat. Default: ``None``.
           The scale array along each dimension, contain 3 elements: scale_depth, scale_height, scale_width.
-          The number of elements of 'scales' should be the same as the rank of input 'grad_output'.
-          One of 'scales' and 'output_size' MUST be specified and it is an error if both are specified.
+          The number of elements of 'scales' should be the same as the rank of input `dy`.
 
     Outputs:
-        backprops Tensor - A Tensor with shape depends on intput_size and output_size/scales.
-            Must be one of the following types: [float16, float32, float64].
-
-    Raises:
-        TypeError: If dtype of `x` is not int [float16, float32, float64].
-        TypeError: If `input_size` is not list[int] or tuple[int].
-        TypeError: When `output_size` is not none and `output_size` is not list[int] or tuple[int].
-        TypeError: When `scales` is not none and `scales` is not list[float] or tuple[float].
-        TypeError: If type of `align_corners` is not bool.
-        ValueError: If any value of `output_size` is negative or zero when `output_size` is not empty.
-        ValueError: If any value of `scales` is negative or zero when `scales` is not empty.
-        ValueError: If shape of `x` is not 5D.
-        ValueError: If none of `scales` and `output_size` is specified or both specified.
-        ValueError: If size of `scales` is not equal 3 when `scales` is specified.
-        ValueError: If size of `output_size` is not equal 3 when `output_size` is specified.
-        TypeError: If `input_size` is not Union[tuple[int], list[int]].
-        ValueError: If any value of `input_size` is negative.
-        ValueError: If elements number of `input_size` is not 5.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        - **dx** (Tensor) - A Tensor with shape depending on intput_size, and its' dtype is the same as `dy`.
     """
     @prim_attr_register
     def __init__(self, align_corners=False):

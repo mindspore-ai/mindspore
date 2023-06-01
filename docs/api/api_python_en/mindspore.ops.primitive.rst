@@ -212,6 +212,8 @@ Image Processing
     mindspore.ops.NMSWithMask
     mindspore.ops.ResizeBilinearV2
     mindspore.ops.ROIAlign
+    mindspore.ops.UpsampleNearest3D
+    mindspore.ops.UpsampleTrilinear3D
 
 Text Processing
 ^^^^^^^^^^^^^^^
