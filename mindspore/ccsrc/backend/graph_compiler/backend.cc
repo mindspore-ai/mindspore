@@ -541,7 +541,7 @@ void RunControlOperator(const std::shared_ptr<GraphCompiler> &graph_compiler,
 
 void UpdateOutputAbstract(const VectorRef &outputs, const session::BackendOpRunInfoPtr &op_run_info) {
   auto output_size = outputs.size();
-  if (output_size == 1) {
+  if (output_size == 1 && op_run_info->base_op_run_info.op_name != kGetNextOpName) {
     auto output_tensor = utils::cast<tensor::TensorPtr>(outputs[0]);
     MS_EXCEPTION_IF_NULL(output_tensor);
     op_run_info->base_op_run_info.abstract = output_tensor->ToAbstract();
