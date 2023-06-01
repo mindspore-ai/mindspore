@@ -594,10 +594,14 @@ device::DeviceAddressPtr CreateTensorDeviceAddressWithTensorAndCachedInfo(
                       << ", alloc size: " << new_device_address->GetSize() << "B.";
   }
 
-  if (!new_device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(node, 0), tensor_size, dtype,
-                                            tensor->data_c(), tensor->device_info().host_format_)) {
-    MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
+  auto &ignore_list = op_compiler_info->ignore_host_to_device_inputs_;
+  if (ignore_list.empty() || ignore_list.find(cached_device_address) == ignore_list.end()) {
+    if (!new_device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(node, 0), tensor_size, dtype,
+                                              tensor->data_c(), tensor->device_info().host_format_)) {
+      MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
+    }
   }
+
   cached_device_address->set_ptr(new_device_address->GetMutablePtr());
   cached_device_address->set_host_shape(new_device_address->host_shape());
   cached_device_address->SetSize(new_device_address->GetSize());
