@@ -9367,11 +9367,11 @@ class ApplyAdamWithAmsgradV2(Primitive):
           with float16 or float32 data type.
         - **lr** (Union[float, Tensor]) - Learning rate, with float16 or float32 data type.
         - **beta1** (Union[float, Tensor]): Exponential decay rate of the first moment.
-            The data type can be float16 or float32.
+          The data type can be float16 or float32.
         - **beta2** (Union[float, Tensor]): Exponential decay rate of the second moment.
-            The data type can be float16 or float32.
+          The data type can be float16 or float32.
         - **epsilon (Union[float, Tensor]): A value added to the denominator to ensure numerical stability.
-            The data type can be float16 or float32.
+          The data type can be float16 or float32.
         - **grad** (Tensor) - The gradient, has the same shape and data type as `var`.
 
     Outputs:
