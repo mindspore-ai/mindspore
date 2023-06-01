@@ -27,7 +27,7 @@ void LiteInferPyBind(const py::module &m);
 #endif
 void ModelParallelRunnerPyBind(const py::module &m);
 void TensorPyBind(const py::module &m);
-MSTensor create_tensor();
+std::shared_ptr<MSTensor> create_tensor();
 
 PYBIND11_MODULE(_c_lite_wrapper, m) {
   m.doc() = "MindSpore Lite";

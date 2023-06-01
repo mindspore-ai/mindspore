@@ -15,12 +15,14 @@
  */
 #include "include/api/model.h"
 #include "include/api/model_parallel_runner.h"
+#include "src/common/log_adapter.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
 #include "pybind11/functional.h"
 
 namespace mindspore::lite {
 namespace py = pybind11;
+using MSTensorPtr = std::shared_ptr<MSTensor>;
 
 std::vector<std::shared_ptr<Model>> BuildMultiModels(const std::string &model_path, const std::string &inc_model_path,
                                                      ModelType model_type, const std::shared_ptr<Context> &context,
@@ -28,12 +30,62 @@ std::vector<std::shared_ptr<Model>> BuildMultiModels(const std::string &model_pa
   return Model::Build(model_path, inc_model_path, model_type, context, config_file);
 }
 
-std::vector<MSTensor> PyPredict(Model *model, const std::vector<MSTensor> &inputs) {
+std::vector<MSTensorPtr> MSTensorToMSTensorPtr(const std::vector<MSTensor> &tensors) {
+  std::vector<MSTensorPtr> tensors_ptr;
+  std::transform(tensors.begin(), tensors.end(), std::back_inserter(tensors_ptr),
+                 [](auto &item) { return std::make_shared<MSTensor>(item); });
+  return tensors_ptr;
+}
+
+std::vector<MSTensor> MSTensorPtrToMSTensor(const std::vector<MSTensorPtr> &tensors_ptr) {
+  std::vector<MSTensor> tensors;
+  for (auto &item : tensors_ptr) {
+    if (item == nullptr) {
+      MS_LOG(ERROR) << "Tensor object cannot be nullptr";
+      return {};
+    }
+    tensors.push_back(*item);
+  }
+  return tensors;
+}
+
+std::vector<MSTensorPtr> PyModelPredict(Model *model, const std::vector<MSTensorPtr> &inputs_ptr) {
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "Model object cannot be nullptr";
+    return {};
+  }
+  std::vector<MSTensor> inputs = MSTensorPtrToMSTensor(inputs_ptr);
   std::vector<MSTensor> outputs;
   if (!model->Predict(inputs, &outputs).IsOk()) {
     return {};
   }
-  return outputs;
+  return MSTensorToMSTensorPtr(outputs);
+}
+
+Status PyModelResize(Model *model, const std::vector<MSTensorPtr> &inputs_ptr,
+                     const std::vector<std::vector<int64_t>> &new_shapes) {
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "Model object cannot be nullptr";
+    return kLiteError;
+  }
+  auto inputs = MSTensorPtrToMSTensor(inputs_ptr);
+  return model->Resize(inputs, new_shapes);
+}
+
+std::vector<MSTensorPtr> PyModelGetInputs(Model *model) {
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "Model object cannot be nullptr";
+    return {};
+  }
+  return MSTensorToMSTensorPtr(model->GetInputs());
+}
+
+std::vector<MSTensorPtr> PyModelGetOutputs(Model *model) {
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "Model object cannot be nullptr";
+    return {};
+  }
+  return MSTensorToMSTensorPtr(model->GetOutputs());
 }
 
 void ModelPyBind(const py::module &m) {
@@ -89,15 +141,48 @@ void ModelPyBind(const py::module &m) {
          py::overload_cast<const std::string &, ModelType, const std::shared_ptr<Context> &, const Key &,
                            const std::string &, const std::string &>(&Model::Build))
     .def("load_config", py::overload_cast<const std::string &>(&Model::LoadConfig))
-    .def("resize", &Model::Resize)
-    .def("predict", &PyPredict, py::call_guard<py::gil_scoped_release>())
-    .def("get_inputs", &Model::GetInputs)
-    .def("get_outputs", &Model::GetOutputs)
+    .def("resize", &PyModelResize)
+    .def("predict", &PyModelPredict, py::call_guard<py::gil_scoped_release>())
+    .def("get_inputs", &PyModelGetInputs)
+    .def("get_outputs", &PyModelGetOutputs)
     .def("get_input_by_tensor_name",
          [](Model &model, const std::string &tensor_name) { return model.GetInputByTensorName(tensor_name); })
     .def("get_output_by_tensor_name",
          [](Model &model, const std::string &tensor_name) { return model.GetOutputByTensorName(tensor_name); });
 }
+
+#ifdef PARALLEL_INFERENCE
+std::vector<MSTensorPtr> PyModelParallelRunnerPredict(ModelParallelRunner *model,
+                                                      const std::vector<MSTensorPtr> &inputs_ptr,
+                                                      const MSKernelCallBack &before = nullptr,
+                                                      const MSKernelCallBack &after = nullptr) {
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "Model object cannot be nullptr";
+    return {};
+  }
+  std::vector<MSTensor> inputs = MSTensorPtrToMSTensor(inputs_ptr);
+  std::vector<MSTensor> outputs;
+  if (!model->Predict(inputs, &outputs, before, after).IsOk()) {
+    return {};
+  }
+  return MSTensorToMSTensorPtr(outputs);
+}
+std::vector<MSTensorPtr> PyModelParallelRunnerGetInputs(ModelParallelRunner *model) {
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "Model object cannot be nullptr";
+    return {};
+  }
+  return MSTensorToMSTensorPtr(model->GetInputs());
+}
+
+std::vector<MSTensorPtr> PyModelParallelRunnerGetOutputs(ModelParallelRunner *model) {
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "Model object cannot be nullptr";
+    return {};
+  }
+  return MSTensorToMSTensorPtr(model->GetOutputs());
+}
+#endif
 
 void ModelParallelRunnerPyBind(const py::module &m) {
 #ifdef PARALLEL_INFERENCE
@@ -136,20 +221,9 @@ void ModelParallelRunnerPyBind(const py::module &m) {
     .def(py::init<>())
     .def("init",
          py::overload_cast<const std::string &, const std::shared_ptr<RunnerConfig> &>(&ModelParallelRunner::Init))
-    .def("get_inputs", &ModelParallelRunner::GetInputs)
-    .def("get_outputs", &ModelParallelRunner::GetOutputs)
-    .def("predict", [](ModelParallelRunner &runner, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
-                       const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr) {
-      {
-        py::gil_scoped_release release;
-        auto status = runner.Predict(inputs, outputs, before, after);
-        if (status != kSuccess) {
-          std::vector<MSTensor> empty;
-          return empty;
-        }
-        return *outputs;
-      }
-    });
+    .def("get_inputs", &PyModelParallelRunnerGetInputs)
+    .def("get_outputs", &PyModelParallelRunnerGetOutputs)
+    .def("predict", &PyModelParallelRunnerPredict, py::call_guard<py::gil_scoped_release>());
 #endif
 }
 }  // namespace mindspore::lite
