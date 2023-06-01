@@ -27,12 +27,14 @@ extern "C" {
 
 static inline int Fp32CastGatherReduceInt64Fusion@SIMD_INSTRUCTION@(int index, float *output_data, const int64_t *input_indices, const float *input_data,
                                                           int32_t inner_size, int32_t input_data_inner_size, int32_t outer_start,
-                                                          int32_t outer_end) {
+                                                          int32_t outer_end, int32_t input_data_axis_size) {
   for (int block_max_size = input_data_inner_size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     for (int i = outer_start; i < outer_end; i++) {
       SIMD_F32 result = SIMD_SET0_F32;
       for (int j = 0; j < inner_size; j++) {
         int64_t indice = input_indices[i * inner_size + j];
+        indice = (indice < 0 ? indice + input_data_axis_size : indice);
+        indice = (indice < 0 || indice >= input_data_axis_size) ? 0 : indice;
         result = SIMD_ADD_F32(result, SIMD_LD_F32(input_data + indice * input_data_inner_size + index));
       }
       SIMD_ST_F32(output_data + i * input_data_inner_size + index, result);
@@ -44,12 +46,14 @@ static inline int Fp32CastGatherReduceInt64Fusion@SIMD_INSTRUCTION@(int index, f
 
 static inline int Fp32CastGatherReduceInt32Fusion@SIMD_INSTRUCTION@(int index, float *output_data, const int32_t *input_indices, const float *input_data,
                                                           int32_t inner_size, int32_t input_data_inner_size, int32_t outer_start,
-                                                          int32_t outer_end) {
+                                                          int32_t outer_end, int32_t input_data_axis_size) {
   for (int block_max_size = input_data_inner_size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     for (int i = outer_start; i < outer_end; i++) {
       SIMD_F32 result = SIMD_SET0_F32;
       for (int j = 0; j < inner_size; j++) {
         int32_t indice = input_indices[i * inner_size + j];
+        indice = (indice < 0 ? indice + input_data_axis_size : indice);
+        indice = (indice < 0 || indice >= input_data_axis_size) ? 0 : indice;
         result = SIMD_ADD_F32(result, SIMD_LD_F32(input_data + indice * input_data_inner_size + index));
       }
       SIMD_ST_F32(output_data + i * input_data_inner_size + index, result);
