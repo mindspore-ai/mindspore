@@ -304,6 +304,9 @@ constexpr auto kInSequence = "InSequence";
 constexpr auto kSequenceAddN = "SequenceAddN";
 constexpr auto kSequenceConcat = "SequenceConcat";
 
+// Sequence inplace operation
+constexpr auto kListInplaceAppend = "ListInplaceAppend";
+
 // NN
 constexpr auto kFractionalMaxPoolWithFixedKsize = "FractionalMaxPoolWithFixedKsize";
 constexpr auto kFractionalMaxPoolGradWithFixedKsize = "FractionalMaxPoolGradWithFixedKsize";
@@ -1674,6 +1677,9 @@ GVAR_DEF(PrimitivePtr, kPrimSequenceMin, std::make_shared<Primitive>(kSequenceMi
 GVAR_DEF(PrimitivePtr, kPrimInSequence, std::make_shared<Primitive>(kInSequence));
 GVAR_DEF(PrimitivePtr, kPrimSequenceAddN, std::make_shared<Primitive>(kSequenceAddN));
 GVAR_DEF(PrimitivePtr, kPrimSequenceConcat, std::make_shared<Primitive>(kSequenceConcat));
+
+// List inplace operation
+GVAR_DEF(PrimitivePtr, kPrimListInplaceAppend, std::make_shared<Primitive>(kListInplaceAppend));
 
 // Other miscellaneous
 GVAR_DEF(PrimitivePtr, kPrimSampleDistortedBoundingBoxV2, std::make_shared<Primitive>(kSampleDistortedBoundingBoxV2));

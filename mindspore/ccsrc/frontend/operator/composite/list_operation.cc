@@ -38,6 +38,17 @@ FuncGraphPtr ListAppend::GenerateFuncGraph(const abstract::AbstractBasePtrList &
   ret->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   ret->debug_info()->set_name("append");
   AnfNodePtr arg0_node = ret->add_parameter();
+  AnfNodePtr arg1_node = ret->add_parameter();
+  const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") == "1";
+  if (allow_inplace_ops) {
+    MS_LOG(DEBUG) << "Enable inplace operation, convert list append to InplaceListAppend ops.";
+    AnfNodePtrList list_inplace_append_inputs = {NewValueNode(prim::kPrimListInplaceAppend), arg0_node, arg1_node};
+    auto list_inplace_append_node = ret->NewCNode(list_inplace_append_inputs);
+    list_inplace_append_node->set_has_side_effect_node(true);
+    ret->set_output(list_inplace_append_node);
+    ret->set_has_side_effect_node(true);
+    return ret;
+  }
 
   std::vector<AnfNodePtr> elems;
   elems.push_back(NewValueNode(prim::kPrimMakeList));
@@ -45,7 +56,6 @@ FuncGraphPtr ListAppend::GenerateFuncGraph(const abstract::AbstractBasePtrList &
   for (size_t i = 0; i < arg0_length; ++i) {
     elems.push_back(ret->NewCNode({NewValueNode(prim::kPrimListGetItem), arg0_node, NewValueNode(SizeToLong(i))}));
   }
-  AnfNodePtr arg1_node = ret->add_parameter();
   elems.push_back(arg1_node);
 
   ret->set_output(ret->NewCNode(elems));

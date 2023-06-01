@@ -1009,6 +1009,67 @@ class AfterOptARewriter : public BaseRewriter {
     return res;
   }
 
+  // MakeList(x1, x2, ...) --> PyExecute('[x1, x2, ...]', ...)
+  AnfNodePtr ConvertListInplaceAppend(const CNodePtr &node) const {
+    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime) {
+      return nullptr;
+    }
+    const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") == "1";
+    if (!allow_inplace_ops) {
+      return nullptr;
+    }
+
+    const auto &fg = node->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    constexpr auto internal_list_input = "__internal_list_input__";
+    constexpr auto internal_target_input = "__internal_target_input__";
+    std::stringstream script_buffer;
+    script_buffer << "__import__('mindspore').common._utils._jit_fallback_list_inplace_append(" << internal_list_input
+                  << ", " << internal_target_input << ")";
+    const std::string &script = script_buffer.str();
+    const auto script_str = std::make_shared<StringImm>(script);
+    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_names_list.emplace_back(NewValueNode(internal_list_input));
+    (void)key_value_names_list.emplace_back(NewValueNode(internal_target_input));
+    const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
+
+    const auto &node_inputs = node->inputs();
+    constexpr size_t node_inputs_size = 3;
+    if (node_inputs.size() != node_inputs_size) {
+      MS_LOG(EXCEPTION) << "The size of input to ListInplaceAppend should be " << node_inputs_size << " but got "
+                        << node_inputs.size();
+    }
+    constexpr size_t node_list_index = 1;
+    constexpr size_t node_target_index = 2;
+    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_list.emplace_back(node_inputs[node_list_index]);
+    (void)key_value_list.emplace_back(node_inputs[node_target_index]);
+    const auto key_value_tuple = fg->NewCNode(key_value_list);
+
+    auto res = fallback::CreatePyExecuteCNode(node, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
+
+    res->set_debug_info(node->debug_info());
+    auto abs = node->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    auto list_abs = abs->cast<abstract::AbstractListPtr>();
+    MS_EXCEPTION_IF_NULL(list_abs);
+
+    if (!list_abs->has_list_py_obj()) {
+      MS_LOG(ERROR) << "ListInplaceAppend abstract has no python object.";
+    }
+    py::list list_object =
+      list_abs->has_list_py_obj() ? *(list_abs->list_py_obj<py::list>()) : ValueToPyData(abs->BuildValue());
+
+    // Set real type and shape
+    fallback::SetRealType(res, list_abs->BuildType());
+    fallback::SetRealShape(res, list_abs->BuildShape());
+    fallback::SetPyListObject<AnfNode, py::list>(res, std::make_shared<py::list>(list_object));
+
+    MS_LOG(DEBUG) << "Convert list inplace append node to PyExecute node: " << res->DebugString();
+    return res;
+  }
+
   // raise(string, keys, values, io) --> PyExecute(string, keys, values, io)
   AnfNodePtr ConvertRaise(const CNodePtr &cnode) const {
     const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
@@ -1292,6 +1353,7 @@ class AfterOptARewriter : public BaseRewriter {
     {prim::kPrimDictGetItem, &ThisClass::ConvertDictGetItem},
     {prim::kPrimDictSetItem, &ThisClass::ConvertDictSetItem},
     {prim::kPrimMakeList, &ThisClass::ConvertMakeList},
+    {prim::kPrimListInplaceAppend, &ThisClass::ConvertListInplaceAppend},
     {prim::kPrimMakeDict, &ThisClass::ConvertMakeDict},
     {prim::kPrimRaise, &ThisClass::ConvertRaise},
     {prim::kPrimScalarCast, &ThisClass::ConvertScalarCast},
@@ -1427,7 +1489,8 @@ class AfterOptARewriter : public BaseRewriter {
     if (!allow_fallback_runtime) {
       return;
     }
-    if (AnfUtils::IsRealKernel(cnode) && !IsPrimitiveCNode(cnode, prim::kPrimPyExecute)) {
+    if (AnfUtils::IsRealKernel(cnode) && !IsPrimitiveCNode(cnode, prim::kPrimPyExecute) &&
+        !IsPrimitiveCNode(cnode, prim::kPrimListInplaceAppend)) {
       return;
     }
     const auto &inputs = cnode->inputs();

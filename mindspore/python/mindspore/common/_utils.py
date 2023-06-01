@@ -98,3 +98,9 @@ def _jit_fallback_setattr(class_obj, attr_name, target_obj):
     """Set attr for object and return the object for jit fallback."""
     setattr(class_obj, attr_name, target_obj)
     return target_obj
+
+
+def _jit_fallback_list_inplace_append(list_obj, target_obj):
+    """Inplace append target_obj to list_obj for jit fallback."""
+    list_obj.append(target_obj)
+    return list_obj

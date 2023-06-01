@@ -34,7 +34,7 @@ Primitive::Primitive(const std::string &name, bool is_base, const PrimType prim_
       has_signature_(false),
       record_evaluate_add_attr_(false),
       const_prim_(false),
-      inplace_prim_(),
+      inplace_prim_(inplace_prim),
       id_(MakeId()) {}
 
 Primitive::Primitive(const std::string &name, const mindspore::HashMap<std::string, ValuePtr> &attrs, bool inplace_prim)
@@ -45,7 +45,7 @@ Primitive::Primitive(const std::string &name, const mindspore::HashMap<std::stri
       has_signature_(false),
       record_evaluate_add_attr_(false),
       const_prim_(false),
-      inplace_prim_(),
+      inplace_prim_(inplace_prim),
       id_(MakeId()) {}
 
 Primitive::Primitive(const Primitive &prim)
