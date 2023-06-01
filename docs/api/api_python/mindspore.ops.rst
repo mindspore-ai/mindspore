@@ -422,6 +422,7 @@ Reduction函数
     mindspore.ops.pinv
     mindspore.ops.svd
     mindspore.ops.tensor_dot
+    mindspore.ops.vecdot
     mindspore.ops.logdet
     mindspore.ops.slogdet
     mindspore.ops.qr
