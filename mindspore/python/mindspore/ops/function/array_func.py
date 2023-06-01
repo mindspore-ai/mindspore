@@ -4801,6 +4801,43 @@ def is_tensor(obj):
     return isinstance(obj, Tensor)
 
 
+def is_nonzero(input):
+    """
+    Determine whether the input Tensor contains 0 or False. The input can only be a single element.
+
+    Args:
+        input (Tensor): the input tensor.
+
+    Returns:
+        Bool, returns False if the input Tensor contains a unit element of 0 or a single element of False,
+        otherwise returns True.
+
+    Raises:
+        TypeError: If `input` is not Tensor.
+        ValueError: If the element number of `input` is not equal to 1.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> import mindspore.ops as ops
+        >>> x1 = ms.Tensor([[[False]]])
+        >>> x2 = ms.Tensor([[3.5]])
+        >>> out1 = ops.is_nonzero(x1)
+        False
+        >>> out2 = ops.is_nonzero(x2)
+        True
+    """
+    if not isinstance(input, Tensor):
+        raise TypeError(f'For is_nonzero, the input must be a Tensor, but got {type(input)}.')
+    if input.numel() != 1:
+        raise ValueError(f"For is_nonzero, the numel of input must be 1, but got {input.numel()}.")
+    out = ops.squeeze(input)
+    return bool(out)
+
+
 def scalar_cast(input_x, input_y):
     """
     Casts the input scalar to another type.
@@ -7220,6 +7257,7 @@ __all__ = [
     'tril',
     'triu',
     'nonzero',
+    'is_nonzero',
     'matrix_diag',
     'matrix_diag_part',
     'matrix_set_diag',

@@ -7036,6 +7036,16 @@ def vstack(inputs):
     return out
 
 
+def row_stack(tensors):
+    """
+    Alias for :func:`mindspore.ops.vstack` .
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    return vstack(tensors)
+
+
 def combinations(x, r=2, with_replacement=False):
     r"""
     Returns all r-length subsequences of input Tensor.
@@ -11746,6 +11756,7 @@ __all__ = [
     'atleast_3d',
     'view_as_real',
     'vstack',
+    'row_stack',
     'var',
     'var_mean',
     'std_mean',

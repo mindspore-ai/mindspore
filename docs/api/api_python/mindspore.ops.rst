@@ -539,6 +539,7 @@ Array操作
     mindspore.ops.inplace_index_add
     mindspore.ops.inplace_sub
     mindspore.ops.inplace_update
+    mindspore.ops.is_nonzero
     mindspore.ops.masked_fill
     mindspore.ops.masked_select
     mindspore.ops.meshgrid
@@ -559,6 +560,7 @@ Array操作
     mindspore.ops.reverse
     mindspore.ops.reverse_sequence
     mindspore.ops.roll
+    mindspore.ops.row_stack
     mindspore.ops.scatter
     mindspore.ops.scatter_nd
     mindspore.ops.select
