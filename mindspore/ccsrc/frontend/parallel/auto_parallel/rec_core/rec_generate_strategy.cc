@@ -356,6 +356,53 @@ Strategies PrepareSoftMax(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
   return strategies;
 }
 
+Strategies PrepareLayerNorm(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                            Dimensions basic_stra) {
+  Strategies strategies;
+  strategies.push_back(basic_stra);
+  std::vector<int64_t> axis_list;
+  string axis_name = AXIS;
+
+  auto iter = ops[iter_ops]->attrs().find(axis_name);
+  if (iter != ops[iter_ops]->attrs().end()) {
+    MS_EXCEPTION_IF_NULL(iter->second);
+    if (iter->second->isa<Int64Imm>()) {
+      axis_list.push_back(iter->second->cast<Int64ImmPtr>()->value());
+    } else if (iter->second->isa<ValueTuple>()) {
+      ValueTuplePtr value_tuple = iter->second->cast<ValueTuplePtr>();
+      if (value_tuple == nullptr) {
+        MS_LOG(EXCEPTION) << ops[iter_ops]->name() << ": The value_tuple is nullptr.";
+      }
+
+      std::vector<ValuePtr> value_vector = value_tuple->value();
+      (void)std::transform(value_vector.begin(), value_vector.end(), std::back_inserter(axis_list),
+                           [](const ValuePtr &value) { return static_cast<int64_t>(GetValue<int64_t>(value)); });
+    } else {
+      MS_LOG(EXCEPTION) << ops[iter_ops]->name() << ": The value of axis is not int64_t or tuple int64_t.";
+    }
+  } else {
+    axis_list.push_back(-1);
+  }
+
+  for (auto &axis : axis_list) {
+    if (axis < 0) {
+      int64_t input_dim = SizeToLong(ops[iter_ops]->inputs_tensor_info()[0].shape().size());
+      axis = input_dim + axis;
+    }
+    if (axis >= SizeToLong(strategies[0].size()) || axis < 0) {
+      MS_LOG(EXCEPTION) << ops[iter_ops]->name() << ": axis value is out of range.";
+    }
+    if (strategies[0][LongToSize(axis)] != 1) {
+      strategies[0][LongToSize(axis)] = 1;
+      MS_LOG(INFO) << ops[iter_ops]->name() << ": adjust strategy to 1 on axis " << axis;
+    }
+  }
+  Dimensions d = {1};
+  strategies.push_back(d);
+  strategies.push_back(d);
+  return strategies;
+}
+
 Strategies PrepareOneHot(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s) {
   Strategies strategies;
 
@@ -1236,6 +1283,9 @@ Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<Oper
   }
   if (ops[iter_ops]->type() == FLATTEN) {
     return PrepareDataParallel(ops, iter_ops);
+  }
+  if (ops[iter_ops]->type() == LAYER_NORM) {
+    return PrepareLayerNorm(ops, iter_ops, basic_stra);
   }
   if (type == BATCH_MATMUL) {
     return PrepareBatchMatMul(ops, iter_ops, basic_stra);
