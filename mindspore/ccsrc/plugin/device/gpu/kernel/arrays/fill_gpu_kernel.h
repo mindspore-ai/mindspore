@@ -44,6 +44,7 @@ class FillGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<Fil
   }
 
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kShapeIndex_}; }
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
@@ -58,6 +59,7 @@ class FillGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<Fil
 
   TypeId x_type_id_;
   size_t input_elements_{0};
+  static constexpr size_t kShapeIndex_{0};
   void *cuda_stream_{nullptr};
 };
 }  // namespace kernel
