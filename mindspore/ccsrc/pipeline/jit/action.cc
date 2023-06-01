@@ -550,6 +550,34 @@ void ReplaceWithReusingGraph(const FuncGraphPtr &reusing_graph, const FuncGraphP
   MS_LOG(DEBUG) << "The original graph's new out: " << out->DebugString();
   origin_graph->erase_flag(FUNC_GRAPH_FLAG_NO_INLINE);
 }
+
+void SetCalledSubGraphMixedPrecisionFlag(const FuncGraphPtr &func_graph) {
+  std::set<FuncGraphPtr> has_mixed_precision_fp16_flag_set;
+  std::set<FuncGraphPtr> has_mixed_precision_fp32_flag_set;
+  // Find the first subgraph which has mixed precision flag.
+  for (auto &item : func_graph->func_graphs_used()) {
+    if (item.first->has_flag(GRAPH_FLAG_MIX_PRECISION_FP16)) {
+      (void)has_mixed_precision_fp16_flag_set.insert(item.first);
+      break;
+    }
+    if (item.first->has_flag(GRAPH_FLAG_MIX_PRECISION_FP32)) {
+      (void)has_mixed_precision_fp32_flag_set.insert(item.first);
+      break;
+    }
+  }
+
+  // Add mixed precision flag to new subgraph which call subgraph in set.
+  for (auto &fg : has_mixed_precision_fp16_flag_set) {
+    for (auto sub_fg : fg->func_graphs_used_total()) {
+      sub_fg->set_flag(GRAPH_FLAG_MIX_PRECISION_FP16, true);
+    }
+  }
+  for (auto &fg : has_mixed_precision_fp32_flag_set) {
+    for (auto sub_fg : fg->func_graphs_used_total()) {
+      sub_fg->set_flag(GRAPH_FLAG_MIX_PRECISION_FP32, true);
+    }
+  }
+}
 }  // namespace
 
 // Make the reusable cell to be the reusable function graph.
@@ -600,6 +628,19 @@ bool SymbolResolveAction(const ResourcePtr &resource) {
     }
   }
   return ret;
+}
+
+bool SetMixedPrecisionAction(const ResourcePtr &resource) {
+  if (resource->manager() == nullptr) {
+    MS_LOG(EXCEPTION) << "SetMixedPrecisionAction error, manager is null";
+  }
+  auto func_graph = resource->func_graph();
+  if (func_graph == nullptr) {
+    MS_LOG(EXCEPTION) << "SetMixedPrecisionAction error, graph is null";
+  }
+  SetCalledSubGraphMixedPrecisionFlag(func_graph);
+  MS_LOG(DEBUG) << "Finish set mixed Precision flag in subgraph. ";
+  return true;
 }
 
 bool AutoMonadAction(const ResourcePtr &resource) {
@@ -1448,6 +1489,13 @@ static std::vector<ActionItem> CommonPipeline() {
 
   // Resolve the python func
   (void)actions.emplace_back(std::make_pair("symbol_resolve", SymbolResolveAction));
+
+  // Notice: Temporary solution, to be implemented using Python Rewriter in the future.
+  // Set mixed Precision flag in subgraph.
+  static bool enable_set_mixed_precision_flag = (common::GetEnv("MS_DEV_AMP_ENABLE_ALL_FG") == "1");
+  if (enable_set_mixed_precision_flag) {
+    (void)actions.emplace_back(std::make_pair("set_mixed_precision_flag", SetMixedPrecisionAction));
+  }
 
   auto parallel_context = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel_context);
