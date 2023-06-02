@@ -763,6 +763,20 @@ def scatter(self, axis, index, src):
     return F.scatter(self, axis, index, src)
 
 
+def slice_scatter(input, src, axis=0, start=None, end=None, step=1):
+    r"""
+    Embeds the src into the input Tensor according to `axis`.
+    """
+    return F.slice_scatter(input, src, axis, start, end, step)
+
+
+def select_scatter(input, src, axis, index):
+    r"""
+    On the specified dimension `axis` of `input` , `src` is scattered into `input` on the specified `index` of `input` .
+    """
+    return F.select_scatter(input, src, axis, index)
+
+
 def swapaxes(input, axis0, axis1):
     """
     Interchange two axes of a tensor.

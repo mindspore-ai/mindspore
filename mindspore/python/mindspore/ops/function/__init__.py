@@ -64,6 +64,8 @@ from .array_func import (
     tensor_slice,
     strided_slice,
     slice,
+    slice_scatter,
+    select_scatter,
     scalar_to_array,
     scalar_to_tensor,
     tuple_to_array,

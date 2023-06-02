@@ -394,7 +394,7 @@ def hamming_window(window_length, periodic=True, alpha=0.54, beta=0.46, *, dtype
     """
     if not isinstance(window_length, int):
         raise TypeError(f"For array function 'hamming_window', 'window_length' must be int, but got" \
-            f" {type(window_length)}.")
+                        f" {type(window_length)}.")
     if window_length < 0:
         raise ValueError(f"For array function 'hamming_window', 'window_length' must be non negative number.")
     if not isinstance(periodic, bool):
@@ -1634,6 +1634,7 @@ def flatten(input, order='C', *, start_dim=1, end_dim=-1):
         >>> print(output.shape)
         (1, 24)
     """
+
     def check_axis_valid(axis, ndim):
         if axis < -ndim or axis >= ndim:
             raise ValueError("'start_dim' or 'end_dim' out of range.")
@@ -3869,6 +3870,127 @@ def scatter(input, axis, index, src):
     return F.tensor_scatter_elements(input_x=input, indices=index, updates=src, axis=axis)
 
 
+def _get_slice_scatter_const(x_shape, axis, start, end, step):
+    r"""
+    Calculate the rank of input, embedded dimensions and index.
+    """
+    x_rank = len(x_shape)
+    axis = axis if axis >= 0 else axis + x_rank
+    start = start if start is not None else 0
+    start = start if start >= 0 else start + x_rank
+    end = end if end is not None else x_shape[axis]
+    end = end if end >= 0 else end + x_rank
+    end = end if end < x_shape[axis] else x_shape[axis]
+    index = list(builtins.range(start, end, step))
+    return x_rank, index, axis
+
+
+def slice_scatter(input, src, axis=0, start=None, end=None, step=1):
+    r"""
+    Slice the input Tensor in the specified dimension and overlay the slice results with the source Tensor.
+    The `input` is sliced along the specified dimension. The start position of the slice is `start` ,
+    the end position is `end` , and the step size is `step` .
+    Then the slicing result is overwritten with `src` to get the output Tensor.
+
+    Args:
+        input (Tensor): The target Tensor.
+        src (Tensor): The source Tensor.
+        axis (int, optional): The dimension of `input` to be sliced. Default: ``0`` .
+        start (int, optional): The start index to slice in the specified dimension.
+            Default: ``None``, `start` is ``0`` .
+        end (int, optional): The end index to slice in the specified dimension.
+            Default: ``None``, `end` is the length of `input` in the specified dimension.
+        step (int, optional): Step size. Default: ``1``, the distance from the next slice element is ``1`` .
+
+    Returns:
+        Tensor after embedding, has the same shape and type as `input` .
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+        TypeError: If `src` is not a Tensor.
+        TypeError: If `axis` or `step` is not an integer.
+        TypeError: If `start` or `end` is not ``None`` or an integer.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> a = ms.ops.zeros((4, 6))
+        >>> b = ms.ops.ones((4, 3))
+        >>> output = ms.ops.slice_scatter(a, b, axis=1, start=0, end=5, step=2)
+        >>> print(output)
+        [[1. 0. 1. 0. 1. 0.]
+         [1. 0. 1. 0. 1. 0.]
+         [1. 0. 1. 0. 1. 0.]
+         [1. 0. 1. 0. 1. 0.]]
+    """
+    input_shape = input.shape
+    input_rank, index, axis = _get_slice_scatter_const(input_shape, axis, start, end, step)
+
+    src_shape = src.shape
+    index_shape = input_shape[:axis] + (len(index),) + input_shape[axis + 1:]
+    index_tensor = ms.Tensor(index)
+    for _ in builtins.range(axis):
+        index_tensor = index_tensor.expand_dims(0)
+
+    if index_shape == src_shape:
+        for _ in builtins.range(input_rank - axis - 1):
+            index_tensor = index_tensor.expand_dims(-1)
+        index_tensor = index_tensor.broadcast_to(src.shape)
+        return tensor_scatter_elements(input, axis=axis, indices=index_tensor, updates=src)
+
+    for _ in builtins.range(axis):
+        src = src.expand_dims(0)
+    if axis == input_rank - 1:
+        src = src.broadcast_to(input.shape[0:axis] + src_shape)
+    else:
+        for _ in builtins.range(len(src_shape)):
+            index_tensor = index_tensor.expand_dims(-1)
+        src = src.broadcast_to(input.shape[0:axis] + (len(index),) + src_shape)
+    index_tensor = index_tensor.broadcast_to(src.shape)
+    output = tensor_scatter_elements(input, axis=axis, indices=index_tensor, updates=src)
+    return output
+
+
+def select_scatter(input, src, axis, index):
+    r"""
+    On the specified dimension `axis` of `input` , `src` is scattered into `input` on the specified `index` of `input` .
+
+    Args:
+        input (Tensor): The target Tensor.
+        src (Tensor): The source Tensor.
+        axis (int): The dimension of `input` to be embedded.
+        index (int): The location of scattering on the specified dimension.
+
+    Returns:
+        Tensor after embedding, has the same shape and type as `input` .
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+        TypeError: If `src` is not a Tensor.
+        TypeError: If `axis` or `index` is not an integer.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> a = ms.ops.zeros((2, 3, 3))
+        >>> b = ms.ops.ones((2, 3))
+        >>> output = ms.ops.select_scatter(a, b, axis=1, index=1)
+        >>> print(output)
+        [[[0. 0. 0.]
+          [1. 1. 1.]
+          [0. 0. 0.]]
+         [[0. 0. 0.]
+          [1. 1. 1.]
+          [0. 0. 0.]]]
+    """
+    src = src.expand_dims(axis=axis)
+    return slice_scatter(input, src, axis, start=index, end=index + 1)
+
+
 def space_to_batch_nd(input_x, block_size, paddings):
     r"""
     Divides a tensor's spatial dimensions into blocks and combines the block sizes with the original batch.
@@ -5410,7 +5532,7 @@ def tril(input, diagonal=0): # pylint: disable=redefined-outer-name
     return tril_(input)
 
 
-def triu(input, diagonal=0): # pylint: disable=redefined-outer-name
+def triu(input, diagonal=0):  # pylint: disable=redefined-outer-name
     r"""
     Returns the upper triangle part of 'input' (elements that contain the diagonal and below),
     and set the other elements to zeros.
@@ -7258,6 +7380,7 @@ def deepcopy(input_x):
     _deepcopy = _get_cache_prim(P.Identity)()
     return _deepcopy(input_x)
 
+
 __all__ = [
     'unique',
     'unique_with_pad',
@@ -7293,6 +7416,8 @@ __all__ = [
     'tensor_slice',
     'strided_slice',
     'slice',
+    'slice_scatter',
+    'select_scatter',
     'cat',
     'concat',
     'stack',
