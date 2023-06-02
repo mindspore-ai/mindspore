@@ -3283,7 +3283,8 @@ def sort(input_x, axis=-1, descending=False):
     Args:
         input_x(Tensor): The input tensor to sort.
             The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-        axis (int, optional): The dimension to sort along. Default: ``-1`` .
+        axis (int, optional): The dimension to sort along. Default: ``-1``, means the last dimension.
+            The Ascend backend only supports sorting the last dimension.
         descending (bool, optional): Controls the sort order. If `descending` is True, the elements
             are sorted in descending order, or else sorted in ascending order. Default: ``False`` .
 
@@ -3329,7 +3330,8 @@ def argsort(input, axis=-1, descending=False):
 
     Args:
         input(Tensor): The input tensor to sort.
-        axis (int): The axis to sort along. Default: ``-1`` , means the last axis
+        axis (int): The axis to sort along. Default: ``-1`` , means the last dimension.
+            The Ascend backend only supports sorting the last dimension.
         descending (bool): The sort order. If `descending` is True then the elements
             are sorted in descending order by value. Otherwise sort in ascending order. Default: ``False`` .
 
