@@ -285,9 +285,6 @@ ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t index) {
       MS_LOG(EXCEPTION) << " The node[ " << node->DebugString() << "]'s cannot convert ";
     }
     host_shape = tensor->shape();
-    if (host_shape.empty()) {
-      host_shape.push_back(1);
-    }
   } else {
     host_shape = common::AnfAlgo::GetOutputInferShape(node, index);
   }

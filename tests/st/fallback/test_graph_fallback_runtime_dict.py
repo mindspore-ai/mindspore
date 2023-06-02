@@ -865,3 +865,23 @@ def test_return_dict_with_dict_items():
     y = Tensor([2], dtype=mstype.int64)
     out = dict_net(x, y)
     assert out == {'a': (x, y)}
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_return_dict_with_empty_shape_tensor():
+    """
+    Feature: Return dict which contains tensor with empty shape.
+    Description: Support dict return.
+    Expectation: No exception.
+    """
+
+    @ms.jit
+    def dict_net():
+        return {'a': Tensor(2)}
+
+    out = dict_net()
+    assert out['a'].shape == ()
