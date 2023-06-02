@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 #include "ops/resize_linear_1d.h"
-
 #include <set>
 #include <string>
 #include <algorithm>
-
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -32,7 +30,6 @@
 #include "ir/dtype/tensor_type.h"
 #include "ir/dtype/type.h"
 #include "ir/primitive.h"
-#include "ir/tensor.h"
 #include "mindapi/base/shape_vector.h"
 #include "mindapi/base/shared_ptr.h"
 #include "mindapi/ir/value.h"

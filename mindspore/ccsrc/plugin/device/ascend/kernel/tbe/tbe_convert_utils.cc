@@ -15,14 +15,10 @@
  */
 
 #include "plugin/device/ascend/kernel/tbe/tbe_convert_utils.h"
-
 #include <unordered_map>
 #include <map>
 #include <string>
-
 #include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {

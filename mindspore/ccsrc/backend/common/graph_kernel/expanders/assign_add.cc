@@ -16,9 +16,7 @@
 
 #include <memory>
 #include <vector>
-
 #include "backend/common/graph_kernel/expanders/op_desc_registry.h"
-#include "ir/dtype.h"
 
 namespace mindspore::graphkernel::expanders {
 class AssignAdd : public OpDesc {

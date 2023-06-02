@@ -16,7 +16,6 @@
 
 #include "plugin/device/ascend/kernel/hccl/hcom_util.h"
 #include <memory>
-#include "kernel/common_utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/ms_context.h"

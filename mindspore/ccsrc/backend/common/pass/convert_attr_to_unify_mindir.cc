@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 #include "backend/common/pass/convert_attr_to_unify_mindir.h"
-
 #include <string>
 #include "utils/check_convert_utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace opt {

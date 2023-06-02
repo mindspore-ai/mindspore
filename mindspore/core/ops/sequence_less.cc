@@ -17,14 +17,12 @@
 #include <memory>
 #include <string>
 #include <algorithm>
-
 #include "ops/tuple_le.h"
 #include "ops/tuple_lt.h"
 #include "ops/list_le.h"
 #include "ops/list_lt.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
-#include "include/common/utils/utils.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {

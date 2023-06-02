@@ -19,7 +19,6 @@
 #include <functional>
 #include "mindspore/core/ops/grad/relu_grad_v2.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "utils/ms_utils.h"
 
 namespace mindspore::kernel {
 constexpr auto kReluGradV2 = "ReluGradV2";

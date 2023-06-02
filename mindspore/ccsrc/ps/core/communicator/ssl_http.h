@@ -24,11 +24,9 @@
 #include <assert.h>
 #include <openssl/pkcs12.h>
 #include <openssl/bio.h>
-
 #include <iostream>
 #include <string>
 #include <memory>
-
 #include "utils/log_adapter.h"
 #include "ps/core/comm_util.h"
 #include "include/backend/distributed/ps/constants.h"

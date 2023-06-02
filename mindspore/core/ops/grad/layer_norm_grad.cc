@@ -15,9 +15,7 @@
  */
 
 #include "ops/grad/layer_norm_grad.h"
-
 #include <memory>
-
 #include "utils/check_convert_utils.h"
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
@@ -34,7 +32,6 @@
 #include "ops/primitive_c.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
-#include "utils/shape_utils.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {

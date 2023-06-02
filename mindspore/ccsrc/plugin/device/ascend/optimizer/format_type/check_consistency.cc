@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/format_type/check_consistency.h"
-
 #include <string>
 #include <memory>
 #include <vector>
-
 #include "include/common/utils/utils.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace opt {

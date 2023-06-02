@@ -15,11 +15,9 @@
  */
 
 #include "plugin/device/cpu/kernel/mkldnn/conv_grad_input_cpu_kernel.h"
-
 #include <string>
 #include <map>
 #include <algorithm>
-#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {

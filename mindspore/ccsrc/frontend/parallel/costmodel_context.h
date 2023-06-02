@@ -20,7 +20,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 

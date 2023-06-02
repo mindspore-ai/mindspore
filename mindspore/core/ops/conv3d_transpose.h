@@ -18,7 +18,6 @@
 #define MINDSPORE_CORE_OPS_CONV3D_TRANSPOSE_H_
 #include <vector>
 #include <memory>
-
 #include "ops/base_operator.h"
 #include "abstract/ops/op_infer.h"
 #include "mindapi/base/types.h"

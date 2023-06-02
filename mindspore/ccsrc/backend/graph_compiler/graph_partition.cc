@@ -15,7 +15,6 @@
  */
 
 #include "backend/graph_compiler/graph_partition.h"
-
 #include <string>
 #include <utility>
 #include <map>
@@ -24,7 +23,6 @@
 #include <set>
 #include <algorithm>
 #include "mindspore/core/ops/core_ops.h"
-#include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/ms_context.h"
 #include "utils/anf_utils.h"

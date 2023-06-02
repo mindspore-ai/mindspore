@@ -15,12 +15,9 @@
  */
 
 #include "plugin/device/ascend/hal/device/ascend_stream_assign.h"
-
 #include <algorithm>
 #include <utility>
 #include <unordered_set>
-
-#include "ir/manager.h"
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
 #include "include/common/utils/parallel_context.h"

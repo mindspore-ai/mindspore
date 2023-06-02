@@ -18,7 +18,6 @@
 #include <string>
 #include <memory>
 #include <map>
-
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "ir/anf.h"

@@ -18,7 +18,6 @@
 #include <map>
 #include <functional>
 #include <algorithm>
-#include "utils/ms_utils.h"
 #include "mindspore/core/ops/apply_ftrl.h"
 #include "ops/apply_ftrl.h"
 

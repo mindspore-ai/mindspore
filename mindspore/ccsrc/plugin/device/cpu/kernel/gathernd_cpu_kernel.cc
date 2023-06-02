@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {

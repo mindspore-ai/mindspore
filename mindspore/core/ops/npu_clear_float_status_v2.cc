@@ -17,10 +17,8 @@
 #include <map>
 #include <set>
 #include <string>
-
 #include "ops/npu_clear_float_status_v2.h"
 #include "ops/op_utils.h"
-#include "abstract/param_validator.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"

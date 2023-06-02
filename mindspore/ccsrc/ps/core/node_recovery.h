@@ -22,7 +22,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-
 #include "ps/core/recovery_base.h"
 #include "include/backend/distributed/ps/constants.h"
 #include "utils/log_adapter.h"

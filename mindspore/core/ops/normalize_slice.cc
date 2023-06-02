@@ -15,15 +15,12 @@
  */
 
 #include "ops/normalize_slice.h"
-
 #include <vector>
 #include <string>
 #include <algorithm>
 #include <memory>
-
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
-#include "include/common/utils/utils.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {

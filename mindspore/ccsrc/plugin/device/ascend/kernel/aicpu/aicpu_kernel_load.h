@@ -20,7 +20,6 @@
 #include <string>
 #include <map>
 #include <vector>
-
 #include "runtime/base.h"
 #include "base/base.h"
 #include "ir/anf.h"

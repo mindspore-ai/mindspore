@@ -22,7 +22,6 @@
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "mindspore/core/ops/core_ops.h"
-#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace opt {

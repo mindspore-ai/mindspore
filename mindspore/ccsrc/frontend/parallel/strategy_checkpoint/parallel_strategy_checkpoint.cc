@@ -15,12 +15,9 @@
  */
 
 #include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
-
 #include <fstream>
 #include <vector>
 #include <utility>
-#include "include/common/utils/utils.h"
-#include "utils/ms_utils.h"
 #include "include/common/utils/convert_utils.h"
 #include "utils/log_adapter.h"
 #include "include/common/debug/common.h"

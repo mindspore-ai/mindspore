@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
-
 #include <algorithm>
 #include <memory>
 #include <vector>
@@ -23,8 +22,6 @@
 #include <set>
 #include <unordered_set>
 #include <unordered_map>
-
-#include "ops/core_ops.h"
 #include "utils/anf_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/ms_context.h"

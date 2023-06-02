@@ -14,11 +14,8 @@
  * limitations under the License.
  */
 #include "backend/common/pass/convert_tuple_input_to_dynamic_input.h"
-
 #include <memory>
-
 #include "include/backend/optimizer/helper.h"
-#include "include/common/utils/anfalgo.h"
 #include "include/backend/anf_runtime_algorithm.h"
 
 namespace mindspore {

@@ -15,7 +15,6 @@
  */
 #include "backend/common/pass/erase_visit_attr.h"
 #include <memory>
-#include "kernel/common_utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/optimizer/helper.h"

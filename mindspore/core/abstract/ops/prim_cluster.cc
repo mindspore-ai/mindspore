@@ -19,7 +19,6 @@
 #include "abstract/param_validator.h"
 #include "abstract/utils.h"
 #include "utils/check_convert_utils.h"
-#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace abstract {

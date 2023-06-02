@@ -20,7 +20,6 @@
 #include <vector>
 #include <utility>
 #include <string>
-
 #include "include/backend/optimizer/optimizer.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

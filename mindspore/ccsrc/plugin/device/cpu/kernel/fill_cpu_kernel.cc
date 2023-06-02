@@ -22,7 +22,6 @@
 #include "mindspore/core/ops/fill.h"
 #include "plugin/device/cpu/kernel/fill_cpu_kernel.h"
 #include "include/common/utils/utils.h"
-#include "ir/dtype/number.h"
 
 namespace mindspore {
 namespace kernel {

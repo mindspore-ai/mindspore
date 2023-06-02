@@ -18,7 +18,6 @@
 #include <memory>
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "include/common/utils/utils.h"
 #include "mindspore/core/ops/core_ops.h"
 #include "include/backend/kernel_info.h"
 #include "include/backend/optimizer/helper.h"

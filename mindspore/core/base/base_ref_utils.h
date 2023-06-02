@@ -16,7 +16,6 @@
 #ifndef MINDSPORE_CORE_BASE_BASE_REF_UTILS_H
 #define MINDSPORE_CORE_BASE_BASE_REF_UTILS_H
 #include <vector>
-
 #include "ir/tensor.h"
 #include "base/base_ref.h"
 

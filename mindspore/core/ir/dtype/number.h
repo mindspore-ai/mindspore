@@ -21,7 +21,6 @@
 #include <memory>
 #include <sstream>
 #include <string>
-
 #include "utils/hash_map.h"
 #include "base/base.h"
 #include "ir/named.h"

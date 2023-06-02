@@ -16,7 +16,6 @@
 
 #include "plugin/device/ascend/kernel/akg/akg_ascend_kernel_build.h"
 #include <memory>
-#include "ir/dtype.h"
 #include "ir/func_graph.h"
 #include "kernel/common_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_utils.h"

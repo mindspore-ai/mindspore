@@ -20,7 +20,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-
 #include "utils/info.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"

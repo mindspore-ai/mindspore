@@ -19,7 +19,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "ir/primitive.h"

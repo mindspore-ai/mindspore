@@ -20,7 +20,6 @@
 #include "utils/log_adapter.h"
 #include "include/common/debug/common.h"
 #include "utils/ms_context.h"
-#include "utils/convert_utils_base.h"
 
 namespace {
 #ifdef ENABLE_DUMP_IR

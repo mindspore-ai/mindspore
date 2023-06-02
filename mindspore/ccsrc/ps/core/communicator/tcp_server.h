@@ -23,7 +23,6 @@
 #include <event2/listener.h>
 #include <event2/thread.h>
 #include <event2/bufferevent_ssl.h>
-
 #include <exception>
 #include <functional>
 #include <iostream>
@@ -34,7 +33,6 @@
 #include <vector>
 #include <thread>
 #include <atomic>
-
 #include "ps/core/communicator/tcp_message_handler.h"
 #include "ps/core/communicator/ssl_wrapper.h"
 #include "ps/core/cluster_config.h"

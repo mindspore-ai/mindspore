@@ -24,7 +24,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
 #include "frontend/parallel/device.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/group_manager.h"

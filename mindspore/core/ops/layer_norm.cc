@@ -15,12 +15,10 @@
  */
 
 #include "ops/layer_norm.h"
-
 #include <memory>
 #include <set>
 #include <string>
 #include <vector>
-
 #include "abstract/abstract_value.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -30,9 +28,7 @@
 #include "abstract/utils.h"
 #include "base/base.h"
 #include "ir/anf.h"
-#include "ir/dtype.h"
 #include "ir/dtype/number.h"
-#include "ir/dtype/tensor_type.h"
 #include "ir/dtype/type.h"
 #include "ir/primitive.h"
 #include "mindapi/base/shape_vector.h"

@@ -15,14 +15,12 @@
  */
 
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_kernel_select.h"
-
 #include <memory>
 #include <set>
 #include <utility>
 #include <vector>
 #include <iterator>
 #include <algorithm>
-#include "kernel/common_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_convert_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/single_tbe_json_creator.h"

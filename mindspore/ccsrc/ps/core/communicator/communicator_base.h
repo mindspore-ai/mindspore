@@ -22,7 +22,6 @@
 #include <unordered_map>
 #include <functional>
 #include <thread>
-
 #include "ps/core/communicator/message_handler.h"
 #include "utils/log_adapter.h"
 #include "ps/core/communicator/http_message_handler.h"

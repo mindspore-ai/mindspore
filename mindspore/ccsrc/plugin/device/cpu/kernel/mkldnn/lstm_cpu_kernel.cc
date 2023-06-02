@@ -16,7 +16,6 @@
 
 #include "plugin/device/cpu/kernel/mkldnn/lstm_cpu_kernel.h"
 #include <string>
-#include "utils/ms_utils.h"
 #include "mindspore/core/ops/lstm.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 namespace mindspore {

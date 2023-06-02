@@ -20,7 +20,6 @@
 #include <map>
 #include <complex>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "ir/primitive.h"
 #include "kernel/common_utils.h"
 
 namespace mindspore {

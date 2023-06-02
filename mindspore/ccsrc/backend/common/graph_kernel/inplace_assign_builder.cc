@@ -15,7 +15,6 @@
  */
 
 #include "backend/common/graph_kernel/inplace_assign_builder.h"
-
 #include <algorithm>
 #include <memory>
 #include <utility>
@@ -24,12 +23,9 @@
 #include <map>
 #include <vector>
 #include "mindspore/core/ops/core_ops.h"
-#include "ir/tensor.h"
 #include "include/common/utils/utils.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "utils/log_adapter.h"
-#include "kernel/kernel.h"
-#include "kernel/common_utils.h"
 #include "backend/common/graph_kernel/graph_kernel_helper.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 

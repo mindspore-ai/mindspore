@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 #include "include/backend/optimizer/optimizer.h"
-
 #include <memory>
 #include <string>
 #include <vector>
 #include <utility>
-
 #include "include/backend/optimizer/pass_manager.h"
 #include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "ir/manager.h"
 
 namespace mindspore {
 namespace opt {

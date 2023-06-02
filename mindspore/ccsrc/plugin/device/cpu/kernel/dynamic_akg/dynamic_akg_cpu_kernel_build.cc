@@ -19,7 +19,6 @@
 #include <vector>
 #include "kernel/common_utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
 #include "plugin/device/cpu/kernel/akg/akg_cpu_kernel_build.h"
 #include "plugin/device/cpu/kernel/dynamic_akg/dynamic_akg_cpu_kernel_build.h"
 #include "plugin/device/cpu/kernel/dynamic_akg/dynamic_akg_cpu_kernel_mod.h"

@@ -15,13 +15,10 @@
  */
 
 #include "plugin/device/cpu/kernel/tensor_copy_cpu_kernel.h"
-
 #include <algorithm>
 #include <complex>
 #include <functional>
 #include <map>
-
-#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {

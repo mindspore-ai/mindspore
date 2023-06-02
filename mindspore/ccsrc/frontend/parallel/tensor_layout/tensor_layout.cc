@@ -17,7 +17,6 @@
 #include "frontend/parallel/tensor_layout/tensor_layout.h"
 #include <iostream>
 #include <utility>
-#include "utils/ms_utils.h"
 #include "ir/value.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/status.h"

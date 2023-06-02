@@ -21,7 +21,6 @@
 #include <vector>
 #include <memory>
 #include <string>
-
 #include "base/base.h"
 #include "ir/param_info.h"
 #include "ir/dtype.h"

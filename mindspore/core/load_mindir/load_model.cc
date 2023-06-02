@@ -25,7 +25,6 @@
 #include <stack>
 #include <utility>
 #include <nlohmann/json.hpp>
-
 #include "load_mindir/load_model.h"
 #include "utils/crypto.h"
 #include "utils/os.h"
@@ -39,7 +38,6 @@
 #include "abstract/ops/primitive_infer_map.h"
 #include "utils/hash_map.h"
 #include "utils/log_adapter.h"
-#include "utils/shape_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/ms_utils_secure.h"
 #include "abstract/abstract_function.h"

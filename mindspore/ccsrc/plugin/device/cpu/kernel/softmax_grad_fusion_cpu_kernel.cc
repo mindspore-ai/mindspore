@@ -19,7 +19,6 @@
 #include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/softmax_grad_fusion_fp32.h"
-#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace kernel {

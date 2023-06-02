@@ -15,12 +15,9 @@
  */
 
 #include "ir/func_graph_cloner.h"
-
 #include <algorithm>
 #include <set>
-
 #include "ir/manager.h"
-#include "ir/param_info.h"
 #include "abstract/abstract_function.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"

@@ -19,7 +19,6 @@
 #include <vector>
 #include <string>
 #include "mindspore/core/ops/core_ops.h"
-#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace opt {

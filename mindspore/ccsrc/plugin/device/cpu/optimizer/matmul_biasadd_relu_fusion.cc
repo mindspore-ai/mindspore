@@ -15,14 +15,12 @@
  */
 
 #include "plugin/device/cpu/optimizer/matmul_biasadd_relu_fusion.h"
-
 #include <memory>
 #include <string>
 #include <vector>
 #include <utility>
 #include <algorithm>
 #include "include/backend/optimizer/helper.h"
-#include "kernel/kernel_build_info.h"
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "include/backend/anf_runtime_algorithm.h"
@@ -30,7 +28,6 @@
 #include "include/backend/kernel_graph.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
-#include "kernel/common_utils.h"
 #include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {

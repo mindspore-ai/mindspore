@@ -20,7 +20,6 @@
 #include <memory>
 #include <string>
 #include <sstream>
-
 #include "utils/log_adapter.h"
 
 namespace mindspore {

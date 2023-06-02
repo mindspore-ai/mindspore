@@ -17,7 +17,6 @@
 #include "plugin/device/cpu/hal/profiler/cpu_profiling.h"
 #include "plugin/device/cpu/hal/profiler/cpu_data_saver.h"
 #include "utils/log_adapter.h"
-#include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {

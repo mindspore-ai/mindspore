@@ -15,11 +15,9 @@
  */
 
 #include "ops/sequence_addn.h"
-
 #include <vector>
 #include <string>
 #include <memory>
-
 #include "utils/check_convert_utils.h"
 #include "abstract/abstract_value.h"
 #include "abstract/ops/op_infer.h"
@@ -29,7 +27,6 @@
 #include "ir/primitive.h"
 #include "ops/core_ops.h"
 #include "ops/primitive_c.h"
-#include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
 

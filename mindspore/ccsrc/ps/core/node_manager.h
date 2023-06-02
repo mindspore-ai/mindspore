@@ -32,7 +32,6 @@
 #include <unordered_set>
 #include <deque>
 #include <algorithm>
-
 #include "ps/core/node.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils_base.h"

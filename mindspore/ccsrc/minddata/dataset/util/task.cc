@@ -15,7 +15,6 @@
  */
 #include "minddata/dataset/util/task.h"
 #include "utils/os.h"
-#include "utils/ms_utils.h"
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/task_manager.h"
 #if defined(__ANDROID__) || defined(ANDROID)

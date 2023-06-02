@@ -18,12 +18,10 @@
 #include <memory>
 #include <string>
 #include <algorithm>
-
 #include "ops/op_utils.h"
 #include "ops/tuple_greater.h"
 #include "ops/list_greater.h"
 #include "utils/check_convert_utils.h"
-#include "include/common/utils/utils.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {

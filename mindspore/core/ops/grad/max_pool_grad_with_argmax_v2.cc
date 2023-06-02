@@ -15,12 +15,10 @@
  */
 
 #include "ops/grad/max_pool_grad_with_argmax_v2.h"
-
 #include <algorithm>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
-#include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "mindapi/ir/type.h"
 

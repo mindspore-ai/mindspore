@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_OPTIMIZE_GRADIENTS_ALLREDUCE_OVERLAP_H_
 #include <string>
 #include <memory>
-
 #include "include/backend/optimizer/pass.h"
 #include "ir/func_graph.h"
 #include "ir/anf.h"

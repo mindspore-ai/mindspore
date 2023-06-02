@@ -18,10 +18,8 @@
 #include <memory>
 #include <string>
 #include "kernel/oplib/oplib.h"
-#include "kernel/common_utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace kernel {

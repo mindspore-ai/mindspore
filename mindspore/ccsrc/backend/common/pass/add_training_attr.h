@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_ADD_TRAINING_ATTR_H
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_ADD_TRAINING_ATTR_H
 #include <string>
-
 #include "ir/anf.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/backend/optimizer/optimizer.h"

@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/kernel/acl/acl_kernel_build.h"
-
-#include "ir/dtype.h"
 #include "plugin/device/ascend/kernel/acl/acl_kernel_mod.h"
 #include "include/backend/anf_runtime_algorithm.h"
 

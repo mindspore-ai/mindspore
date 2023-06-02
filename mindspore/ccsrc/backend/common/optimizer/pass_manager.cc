@@ -16,7 +16,6 @@
 #include "include/backend/optimizer/pass_manager.h"
 #include <deque>
 #include <string>
-#include "ir/anf.h"
 #include "utils/ms_context.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "backend/common/optimizer/cache_manager.h"

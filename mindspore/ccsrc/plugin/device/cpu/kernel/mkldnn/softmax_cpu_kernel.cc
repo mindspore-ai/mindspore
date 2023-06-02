@@ -17,7 +17,6 @@
 #include "plugin/device/cpu/kernel/mkldnn/softmax_cpu_kernel.h"
 #include <algorithm>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "utils/ms_utils.h"
 #include "mindspore/core/ops/softmax.h"
 
 namespace mindspore {

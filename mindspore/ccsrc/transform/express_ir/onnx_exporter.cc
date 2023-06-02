@@ -20,10 +20,8 @@
 #include <memory>
 #include <utility>
 #include <vector>
-
 #include "mindspore/core/ops/core_ops.h"
 #include "ir/func_graph.h"
-#include "ir/param_info.h"
 #include "ir/tensor.h"
 #include "proto/onnx.pb.h"
 #include "utils/check_convert_utils.h"

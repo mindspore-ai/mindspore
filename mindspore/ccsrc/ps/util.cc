@@ -20,7 +20,6 @@
 #include "utils/hash_map.h"
 #include "include/backend/distributed/ps/constants.h"
 #include "include/backend/distributed/ps/ps_context.h"
-#include "utils/ms_utils.h"
 #include "distributed/persistent/data.h"
 
 namespace mindspore {

@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 #include "backend/common/graph_kernel/rewrite_output_shape.h"
-
 #include <vector>
 #include <memory>
-#include "ir/scalar.h"
 #include "backend/common/graph_kernel/graph_kernel_helper.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

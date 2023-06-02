@@ -18,7 +18,6 @@
 #include <sys/shm.h>
 #include <fcntl.h>
 #include <unistd.h>
-
 #include <chrono>
 #include <algorithm>
 #include <map>
@@ -28,7 +27,6 @@
 #include <utility>
 #include <vector>
 #include <iostream>
-#include "ir/dtype.h"
 #include "ir/func_graph.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "kernel/common_utils.h"

@@ -15,7 +15,6 @@
  */
 
 #include "backend/common/graph_kernel/add_atomic_clean.h"
-
 #include <algorithm>
 #include <functional>
 #include <map>
@@ -26,7 +25,6 @@
 #include <string>
 #include <vector>
 #include "mindspore/core/ops/core_ops.h"
-#include "ir/tensor.h"
 #include "include/common/utils/utils.h"
 #include "utils/log_adapter.h"
 #include "kernel/kernel.h"

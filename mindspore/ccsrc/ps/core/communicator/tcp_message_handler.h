@@ -22,7 +22,6 @@
 #include <string>
 #include <memory>
 #include <vector>
-
 #include "utils/log_adapter.h"
 #include "ps/core/communicator/message.h"
 #include "proto/comm.pb.h"

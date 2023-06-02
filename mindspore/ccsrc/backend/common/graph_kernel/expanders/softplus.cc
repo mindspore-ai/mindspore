@@ -17,9 +17,7 @@
 #include <memory>
 #include <vector>
 #include <limits>
-
 #include "backend/common/graph_kernel/expanders/op_desc_registry.h"
-#include "ir/dtype.h"
 
 namespace mindspore::graphkernel::expanders {
 class Softplus : public OpDesc {

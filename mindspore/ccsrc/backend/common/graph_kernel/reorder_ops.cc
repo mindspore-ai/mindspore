@@ -20,7 +20,6 @@
 #include <string>
 #include "utils/hash_set.h"
 #include "mindspore/core/ops/core_ops.h"
-#include "include/common/utils/utils.h"
 #include "utils/log_adapter.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

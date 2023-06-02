@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "kernel/oplib/oplib.h"
-
 #include <memory>
 #include <map>
 #include <utility>
@@ -22,7 +21,6 @@
 #include "kernel/oplib/op_info_keys.h"
 #include "kernel/oplib/opinfo.h"
 #include "utils/log_adapter.h"
-#include "utils/overload.h"
 #include "utils/ms_context.h"
 #include "kernel/oplib/super_bar.h"
 #include "utils/file_utils.h"

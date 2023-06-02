@@ -25,7 +25,6 @@
 #include <unordered_map>
 #include "base/base.h"
 #include "ir/named.h"
-
 #include "ir/dtype/type.h"
 #include "ir/dtype/number.h"
 #include "ir/dtype/container.h"

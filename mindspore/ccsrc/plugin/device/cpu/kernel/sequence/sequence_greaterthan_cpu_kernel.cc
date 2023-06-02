@@ -19,7 +19,6 @@
 #include <utility>
 #include <complex>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "utils/ms_utils.h"
 #include "include/common/thread_pool.h"
 
 namespace mindspore {

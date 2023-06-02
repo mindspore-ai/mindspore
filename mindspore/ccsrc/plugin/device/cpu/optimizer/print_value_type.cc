@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "plugin/device/cpu/optimizer/print_value_type.h"
-
 #include <memory>
 #include <vector>
 #include <string>
@@ -22,7 +21,6 @@
 #include <algorithm>
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "ir/primitive.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/optimizer/helper.h"
 
