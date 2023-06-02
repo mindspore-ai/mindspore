@@ -845,6 +845,30 @@ def test_return_nested_dict_with_parameter_constant4():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+def test_return_dict_with_dict_values():
+    """
+    Feature: Return dict when using dict.values.
+    Description: Support dict return.
+    Expectation: No exception.
+    """
+
+    @ms.jit
+    def dict_net(x):
+        d = {'a': x, 'b': 2}
+        v = d.values()
+        z = v[0]
+        return {'x': z}
+
+    x = Tensor([1], dtype=mstype.int64)
+    out = dict_net(x)
+    assert out['x'] == x
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_return_dict_with_dict_items():
     """
     Feature: Return dict when using dict.items.
