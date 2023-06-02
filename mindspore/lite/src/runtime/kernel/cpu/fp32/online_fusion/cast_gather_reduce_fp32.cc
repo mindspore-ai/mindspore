@@ -38,6 +38,7 @@ int CastGatherReduceFusionCPUKernel::ReSize() { return RET_OK; }
 
 int CastGatherReduceFusionCPUKernel::DoCastGatherReduceFusion(int task_id) {
   auto input_data_shape = in_tensors_.at(0)->shape();
+  auto input_data_axis_size_ = input_data_shape[0];
   auto input_data_inner_size_ = input_data_shape[1];
   auto input_data = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
 
@@ -53,11 +54,13 @@ int CastGatherReduceFusionCPUKernel::DoCastGatherReduceFusion(int task_id) {
 
   if (in_tensors_.at(1)->data_type() == TypeId::kNumberTypeInt64) {
     Fp32CastGatherReduceInt64Fusion(output_data, reinterpret_cast<int64_t *>(in_tensors_.at(1)->MutableData()),
-                                    input_data, inner_size_, input_data_inner_size_, outer_start, outer_end);
+                                    input_data, inner_size_, input_data_inner_size_, outer_start, outer_end,
+                                    input_data_axis_size_);
   } else if (in_tensors_.at(1)->data_type() == TypeId::kNumberTypeInt32 ||
              in_tensors_.at(1)->data_type() == TypeId::kNumberTypeInt) {
     Fp32CastGatherReduceInt32Fusion(output_data, reinterpret_cast<int32_t *>(in_tensors_.at(1)->MutableData()),
-                                    input_data, inner_size_, input_data_inner_size_, outer_start, outer_end);
+                                    input_data, inner_size_, input_data_inner_size_, outer_start, outer_end,
+                                    input_data_axis_size_);
   } else {
     MS_LOG(ERROR) << "Dont support data type is : " << in_tensors_.at(1)->data_type();
     return RET_ERROR;

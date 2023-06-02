@@ -25,11 +25,11 @@ extern "C" {
 
 int64_t Fp32CastGatherReduceInt64Fusion(float *output_data, const int64_t *input_indices, const float *input_data,
                                         int32_t inner_size, int32_t input_data_inner_size, int32_t outer_start,
-                                        int32_t outer_end);
+                                        int32_t outer_end, int32_t input_data_axis_size);
 
 int64_t Fp32CastGatherReduceInt32Fusion(float *output_data, const int32_t *input_indices, const float *input_data,
                                         int32_t inner_size, int32_t input_data_inner_size, int32_t outer_start,
-                                        int32_t outer_end);
+                                        int32_t outer_end, int32_t input_data_axis_size);
 #ifdef __cplusplus
 }
 #endif

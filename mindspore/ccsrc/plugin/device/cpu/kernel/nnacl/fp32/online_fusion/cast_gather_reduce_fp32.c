@@ -20,20 +20,24 @@
 
 int64_t Fp32CastGatherReduceInt64Fusion(float *output_data, const int64_t *input_indices, const float *input_data,
                                         int32_t inner_size, int32_t input_data_inner_size, int32_t outer_start,
-                                        int32_t outer_end) {
+                                        int32_t outer_end, int32_t input_data_axis_size) {
   int index = 0;
   SIMD_RUN_NO_SCALAR(Fp32CastGatherReduceInt64Fusion, index, output_data, input_indices, input_data, inner_size,
-                     input_data_inner_size, outer_start, outer_end);
+                     input_data_inner_size, outer_start, outer_end, input_data_axis_size);
 
   if (index < input_data_inner_size) {
     for (int i = outer_start; i < outer_end; i++) {
       float *result = output_data + i * input_data_inner_size;
       int64_t indice0 = input_indices[i * inner_size];
+      indice0 = (indice0 < 0 ? indice0 + input_data_axis_size : indice0);
+      indice0 = (indice0 < 0 || indice0 >= input_data_axis_size) ? 0 : indice0;
       for (int k = index; k < input_data_inner_size; k++) {
         result[k] = input_data[indice0 * input_data_inner_size + k];
       }
       for (int j = 1; j < inner_size; j++) {
         int64_t indice = input_indices[i * inner_size + j];
+        indice = (indice < 0 ? indice + input_data_axis_size : indice);
+        indice = (indice < 0 || indice >= input_data_axis_size) ? 0 : indice;
         for (int k = index; k < input_data_inner_size; k++) {
           result[k] += input_data[indice * input_data_inner_size + k];
         }
@@ -45,20 +49,24 @@ int64_t Fp32CastGatherReduceInt64Fusion(float *output_data, const int64_t *input
 
 int64_t Fp32CastGatherReduceInt32Fusion(float *output_data, const int32_t *input_indices, const float *input_data,
                                         int32_t inner_size, int32_t input_data_inner_size, int32_t outer_start,
-                                        int32_t outer_end) {
+                                        int32_t outer_end, int32_t input_data_axis_size) {
   int index = 0;
   SIMD_RUN_NO_SCALAR(Fp32CastGatherReduceInt32Fusion, index, output_data, input_indices, input_data, inner_size,
-                     input_data_inner_size, outer_start, outer_end);
+                     input_data_inner_size, outer_start, outer_end, input_data_axis_size);
 
   if (index < input_data_inner_size) {
     for (int i = outer_start; i < outer_end; i++) {
       float *result = output_data + i * input_data_inner_size;
       int32_t indice0 = input_indices[i * inner_size];
+      indice0 = (indice0 < 0 ? indice0 + input_data_axis_size : indice0);
+      indice0 = (indice0 < 0 || indice0 >= input_data_axis_size) ? 0 : indice0;
       for (int k = index; k < input_data_inner_size; k++) {
         result[k] = input_data[indice0 * input_data_inner_size + k];
       }
       for (int j = 1; j < inner_size; j++) {
         int32_t indice = input_indices[i * inner_size + j];
+        indice = (indice < 0 ? indice + input_data_axis_size : indice);
+        indice = (indice < 0 || indice >= input_data_axis_size) ? 0 : indice;
         for (int k = index; k < input_data_inner_size; k++) {
           result[k] += input_data[indice * input_data_inner_size + k];
         }
