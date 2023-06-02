@@ -253,6 +253,7 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
   FuncGraphPtr func_graph = FuncGraphReuseManager::GetInstance()->GetSharedFuncGraph(config_info_);
   if (func_graph != nullptr) {
     MS_LOG(INFO) << "the model buffer is the same as the last time. we can directly use the cached function graph.";
+    std::unique_lock<std::shared_mutex> build_lock(g_model_converter_lock);
     return session_->CompileGraph(func_graph, nullptr, 0, &graph_id_);
   }
 
