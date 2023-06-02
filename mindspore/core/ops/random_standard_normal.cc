@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 #include "ops/random_standard_normal.h"
+#include <memory>
 #include <set>
 #include <string>
-#include <memory>
-#include "ops/standard_normal.h"
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/random_ops.h"
+#include "ops/op_utils.h"
+#include "ops/standard_normal.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

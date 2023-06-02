@@ -18,7 +18,7 @@
 #include <memory>
 
 #include "extendrt/kernel/cpu/less_test_kernel_mod.h"
-
+#include "mindspore/core/ops/comparison_ops.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore::kernel {

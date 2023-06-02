@@ -15,6 +15,7 @@
  */
 #include <memory>
 #include "tools/optimizer/graph/eliminate_redundant_cast_pass.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "tools/optimizer/graph/infershape_pass.h"
 
 namespace mindspore::opt {

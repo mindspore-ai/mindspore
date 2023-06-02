@@ -20,6 +20,8 @@
 #include <set>
 
 #include "frontend/optimizer/optimizer.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "frontend/optimizer/anf_visitor.h"
 
 namespace mindspore::opt::irpass {

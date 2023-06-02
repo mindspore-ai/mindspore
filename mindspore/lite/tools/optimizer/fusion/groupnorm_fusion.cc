@@ -19,6 +19,9 @@
 #include <algorithm>
 #include <vector>
 #include <memory>
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "ops/fusion/groupnorm_fusion.h"
 #include "include/common/utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"

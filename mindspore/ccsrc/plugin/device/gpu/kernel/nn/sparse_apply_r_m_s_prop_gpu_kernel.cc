@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "plugin/device/gpu/kernel/nn/sparse_apply_r_m_s_prop_gpu_kernel.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "kernel/common_utils.h"
 #include "mindspore/core/ops/sparse_apply_r_m_s_prop.h"
 

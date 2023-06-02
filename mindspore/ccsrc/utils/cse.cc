@@ -21,13 +21,13 @@
 #include <vector>
 #include <set>
 
+#include "mindspore/core/ops/framework_ops.h"
 #include "ir/anf.h"
 #include "utils/hash_map.h"
 #include "abstract/abstract_function.h"
 #include "utils/flags.h"
 #include "include/common/utils/utils.h"
 #include "utils/anf_utils.h"
-#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 /* namespace to support opt */

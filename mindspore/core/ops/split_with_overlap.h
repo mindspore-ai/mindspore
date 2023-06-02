@@ -16,8 +16,8 @@
 
 #ifndef MINDSPORE_CORE_OPS_SPLIT_WITH_OVERLAP_H_
 #define MINDSPORE_CORE_OPS_SPLIT_WITH_OVERLAP_H_
-#include <vector>
 #include <memory>
+#include <vector>
 #include "ops/base_operator.h"
 
 namespace mindspore {

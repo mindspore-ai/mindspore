@@ -17,10 +17,10 @@
 #ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_ELEWISE_CALCULATION_OPS_DECLARE_H_
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_ELEWISE_CALCULATION_OPS_DECLARE_H_
 
-#include "utils/hash_map.h"
+#include "inc/ops/bitwise_ops.h"
+#include "inc/ops/elewise_calculation_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
-#include "ops/elewise_calculation_ops.h"
-#include "ops/bitwise_ops.h"
+#include "utils/hash_map.h"
 
 DECLARE_OP_ADAPTER(ClipByValue)
 DECLARE_OP_USE_OUTPUT(ClipByValue)

@@ -17,6 +17,9 @@
 #include "frontend/optimizer/ad/pynative_dfunctor.h"
 
 #include <memory>
+#include "mindspore/core/ops/structure_ops.h"
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ir/func_graph_cloner.h"
 
 namespace mindspore {

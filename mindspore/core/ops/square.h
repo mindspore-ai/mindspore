@@ -17,11 +17,11 @@
 #ifndef MINDSPORE_CORE_OPS_SQUARE_H_
 #define MINDSPORE_CORE_OPS_SQUARE_H_
 #include <memory>
-#include <vector>
 #include <set>
+#include <vector>
 
-#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

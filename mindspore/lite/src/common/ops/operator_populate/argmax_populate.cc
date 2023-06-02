@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/common/ops/operator_populate/operator_populate_register.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "nnacl/arg_min_max_parameter.h"
 #include "ops/arg_max.h"
 using mindspore::ops::kAxis;

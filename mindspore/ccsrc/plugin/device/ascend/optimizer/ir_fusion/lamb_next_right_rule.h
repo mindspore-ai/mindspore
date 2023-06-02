@@ -18,6 +18,7 @@
 
 #include <memory>
 #include "include/backend/optimizer/optimizer.h"
+#include "mindspore/core/ops/math_ops.h"
 #include "include/common/utils/utils.h"
 
 namespace mindspore {

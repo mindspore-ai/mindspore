@@ -16,13 +16,11 @@
 
 #ifndef MINDSPORE_CORE_OPS_UNRAVELINDEX_H_
 #define MINDSPORE_CORE_OPS_UNRAVELINDEX_H_
-#include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
+#include <vector>
 #include "ops/base_operator.h"
 #include "ops/op_utils.h"
-#include "mindapi/base/types.h"
-#include "abstract/abstract_value.h"
+#include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {

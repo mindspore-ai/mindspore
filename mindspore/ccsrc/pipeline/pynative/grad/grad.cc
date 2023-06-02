@@ -16,6 +16,8 @@
 
 #include "pipeline/pynative/grad/grad.h"
 #include <algorithm>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "pipeline/pynative/grad/top_cell.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "pipeline/pynative/pynative_cache.h"

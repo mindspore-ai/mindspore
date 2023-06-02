@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_HCOM_OPS_DECLARE_H_
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_HCOM_OPS_DECLARE_H_
 
-#include "utils/hash_map.h"
+#include "inc/ops/hcom_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
-#include "ops/hcom_ops.h"
+#include "utils/hash_map.h"
 
 DECLARE_OP_ADAPTER(HcomReduceScatter)
 DECLARE_OP_USE_OUTPUT(HcomReduceScatter)

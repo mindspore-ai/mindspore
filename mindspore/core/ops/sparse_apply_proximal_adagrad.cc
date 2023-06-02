@@ -15,13 +15,14 @@
  */
 
 #include <algorithm>
-#include <set>
 #include <map>
+#include <set>
 
-#include "ops/sparse_apply_proximal_adagrad.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "ops/op_name.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "ops/op_name.h"
+#include "ops/sparse_apply_proximal_adagrad.h"
 
 namespace mindspore {
 namespace ops {

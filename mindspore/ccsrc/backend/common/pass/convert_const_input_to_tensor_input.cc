@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 #include "backend/common/pass/convert_const_input_to_tensor_input.h"
-#include <vector>
 #include <memory>
 #include <set>
-#include "ir/graph_utils.h"
-#include "include/backend/optimizer/helper.h"
+#include <vector>
+
 #include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
 #include "include/backend/kernel_graph.h"
+#include "include/backend/optimizer/helper.h"
+#include "include/common/utils/anfalgo.h"
+#include "ir/graph_utils.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
 
 namespace mindspore {
 namespace opt {

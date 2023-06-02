@@ -15,8 +15,8 @@
  */
 
 #include "plugin/device/gpu/kernel/arrays/broadcast_to_gpu_kernel.h"
-#include "plugin/device/gpu/kernel/math/broadcast_public.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+#include "plugin/device/gpu/kernel/math/broadcast_public.h"
 
 namespace mindspore {
 namespace kernel {

@@ -16,6 +16,8 @@
 #include "tools/converter/parser/tflite/tflite_inputs_adjust.h"
 #include <vector>
 #include <memory>
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "ops/batch_to_space.h"
 #include "ops/batch_to_space_nd.h"
 #include "ops/fusion/arg_max_fusion.h"

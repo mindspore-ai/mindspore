@@ -15,6 +15,7 @@
  */
 #include "plugin/device/ascend/optimizer/ir_fission/transdata_split.h"
 #include <set>
+#include "mindspore/core/ops/array_ops.h"
 #include "include/common/debug/anf_ir_dump.h"
 
 namespace mindspore {

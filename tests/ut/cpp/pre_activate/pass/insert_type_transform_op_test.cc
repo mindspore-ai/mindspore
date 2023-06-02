@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "common/backend_common_test.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/arithmetic_ops.h"
 #include "ir/anf.h"
 #include "ir/tensor.h"
 #include "include/common/debug/anf_ir_dump.h"

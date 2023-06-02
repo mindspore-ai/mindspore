@@ -20,6 +20,7 @@
 #include <string>
 #include <algorithm>
 #include <memory>
+#include "mindspore/core/ops/nn_ops.h"
 #include "include/curand.h"
 #include "mindspore/core/ops/dropout_nd.h"
 #include "abstract/utils.h"

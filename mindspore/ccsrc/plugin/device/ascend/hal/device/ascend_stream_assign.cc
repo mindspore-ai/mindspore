@@ -16,21 +16,23 @@
 
 #include "plugin/device/ascend/hal/device/ascend_stream_assign.h"
 #include <algorithm>
-#include <utility>
 #include <unordered_set>
-#include "utils/ms_context.h"
-#include "utils/ms_utils.h"
-#include "include/common/utils/parallel_context.h"
+#include <utility>
 #include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/debug/profiler/profiling.h"
+#include "include/backend/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
-#include "plugin/device/ascend/hal/device/kernel_adjust.h"
+#include "include/common/utils/parallel_context.h"
+#include "include/common/utils/utils.h"
+#include "kernel/oplib/oplib.h"
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/model_runner.h"
+#include "plugin/device/ascend/hal/device/kernel_adjust.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
-#include "include/backend/optimizer/helper.h"
-#include "kernel/oplib/oplib.h"
-#include "include/common/utils/utils.h"
-#include "include/backend/debug/profiler/profiling.h"
+#include "utils/ms_context.h"
+#include "utils/ms_utils.h"
 
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/stream_exec_order_recorder.h"

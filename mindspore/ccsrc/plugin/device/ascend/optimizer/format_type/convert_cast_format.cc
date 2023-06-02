@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 
+#include "mindspore/core/ops/array_ops.h"
 #include "utils/hash_map.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 
+#include "mindspore/core/ops/sequence_ops.h"
 #include "ir/value.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "frontend/parallel/graph_util/generate_graph.h"

@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/unsorted_segment_arithmetic_cpu_kernel.h"
 #include <complex>
+#include "mindspore/core/ops/array_ops.h"
 
 namespace mindspore {
 namespace kernel {

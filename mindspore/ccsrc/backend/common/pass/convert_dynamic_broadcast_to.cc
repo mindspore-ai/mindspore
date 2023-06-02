@@ -16,6 +16,7 @@
 
 #include <memory>
 #include "backend/common/pass/convert_dynamic_broadcast_to.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "ir/anf.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/optimizer/helper.h"

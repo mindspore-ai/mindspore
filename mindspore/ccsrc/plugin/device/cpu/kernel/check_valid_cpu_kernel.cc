@@ -18,6 +18,7 @@
 #include <functional>
 #include <algorithm>
 #include <utility>
+#include "mindspore/core/ops/framework_ops.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {

@@ -15,9 +15,10 @@
  */
 
 #include "plugin/device/gpu/kernel/math/broadcast_grad_grad_gpu_kernel.h"
-#include <memory>
 #include <algorithm>
 #include <functional>
+#include <memory>
+#include "mindspore/core/ops/math_ops.h"
 
 namespace mindspore {
 namespace kernel {

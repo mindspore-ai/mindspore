@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/hal/device/tasksink/task_generator.h"
 
 #include <runtime/rt.h>
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/task_stream.h"

@@ -19,6 +19,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include "mindspore/core/ops/lite_ops.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "mindspore/lite/include/errorcode.h"
 #include "ops/op_utils.h"

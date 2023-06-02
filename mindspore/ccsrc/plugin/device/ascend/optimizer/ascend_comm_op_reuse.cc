@@ -15,6 +15,10 @@
  */
 #include <cstdlib>
 #include "include/backend/optimizer/helper.h"
+#include "mindspore/core/ops/structure_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "include/common/utils/anfalgo.h"

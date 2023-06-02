@@ -23,12 +23,12 @@
 #include <functional>
 #include <unordered_map>
 
+#include "mindspore/core/ops/sequence_ops.h"
 #include "utils/hash_map.h"
 #include "ops/primitive_c.h"
 #include "ir/manager.h"
 #include "abstract/utils.h"
 #include "kernel/common_utils.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "base/base_ref_utils.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "include/common/utils/config_manager.h"

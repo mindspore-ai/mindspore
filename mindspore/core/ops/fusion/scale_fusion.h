@@ -16,8 +16,8 @@
 
 #ifndef MINDSPORE_CORE_OPS_SCALE_FUSION_H_
 #define MINDSPORE_CORE_OPS_SCALE_FUSION_H_
-#include "ops/scale.h"
 #include "mindapi/base/types.h"
+#include "ops/scale.h"
 
 namespace mindspore {
 namespace ops {

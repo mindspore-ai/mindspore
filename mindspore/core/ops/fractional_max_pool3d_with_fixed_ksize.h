@@ -17,12 +17,12 @@
 #ifndef MINDSPORE_CORE_OPS_FRACTIONAL_MAX_POOL_3D_WITH_FIXED_KSIZE_H_
 #define MINDSPORE_CORE_OPS_FRACTIONAL_MAX_POOL_3D_WITH_FIXED_KSIZE_H_
 #include <map>
-#include <vector>
-#include <string>
 #include <memory>
+#include <string>
+#include <vector>
 
-#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

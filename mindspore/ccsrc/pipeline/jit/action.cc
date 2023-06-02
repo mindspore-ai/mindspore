@@ -24,6 +24,8 @@
 #include <algorithm>
 #include <functional>
 
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ir/anf.h"
 #include "ir/func_graph_cloner.h"
 #include "ir/param_info.h"

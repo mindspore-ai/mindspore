@@ -15,8 +15,8 @@
  */
 
 #include "ops/return.h"
-#include "ops/primitive_c.h"
 #include "mindapi/src/helper.h"
+#include "ops/primitive_c.h"
 
 namespace mindspore {
 namespace ops {

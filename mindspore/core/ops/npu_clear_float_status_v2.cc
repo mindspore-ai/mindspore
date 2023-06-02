@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
+#include "ops/npu_clear_float_status_v2.h"
 #include <map>
 #include <set>
 #include <string>
-#include "ops/npu_clear_float_status_v2.h"
+#include "mindspore/core/ops/other_ops.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -59,6 +60,7 @@ TypePtr NPUClearFloatStatusV2InferType(const PrimitivePtr &primitive, const std:
   return kInt32;
 }
 }  // namespace
+
 MIND_API_OPERATOR_IMPL(NPUClearFloatStatusV2, BaseOperator);
 AbstractBasePtr NPUClearFloatStatusV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {

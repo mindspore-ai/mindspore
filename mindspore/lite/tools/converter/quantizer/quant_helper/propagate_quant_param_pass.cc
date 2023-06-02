@@ -21,13 +21,16 @@
 #include <list>
 #include <map>
 #include <algorithm>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "src/common/log_adapter.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/common/node_util.h"
 #include "tools/lite_exporter/fetch_content.h"
 #include "tools/optimizer/common/format_utils.h"
-#include "ops/core_ops.h"
 
 namespace mindspore::lite::quant {
 namespace {

@@ -15,6 +15,7 @@
  */
 #include "plugin/device/ascend/optimizer/ir_fusion/lamb_next_mv_with_decay_rule.h"
 #include <utility>
+#include "mindspore/core/ops/math_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "frontend/optimizer/opt.h"

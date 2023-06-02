@@ -25,9 +25,9 @@
 #include <utility>
 
 #include "ir/visitor.h"
+#include "mindspore/core/ops/math_ops.h"
 #include "ir/func_graph.h"
 #include "utils/shape_utils.h"
-#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 ///

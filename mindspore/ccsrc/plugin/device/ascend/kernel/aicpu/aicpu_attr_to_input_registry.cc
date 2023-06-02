@@ -16,8 +16,10 @@
 
 #include "plugin/device/ascend/kernel/aicpu/aicpu_attr_to_input_registry.h"
 
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "include/common/utils/anfalgo.h"
-#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace kernel {

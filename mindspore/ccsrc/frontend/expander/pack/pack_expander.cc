@@ -17,6 +17,7 @@
 
 #include <utility>
 #include <algorithm>
+#include "mindspore/core/ops/sequence_ops.h"
 #include "ir/tensor.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "pipeline/jit/parse/data_converter.h"

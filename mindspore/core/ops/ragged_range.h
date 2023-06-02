@@ -16,14 +16,14 @@
 
 #ifndef MINDSPORE_CORE_OPS_RAGGEDRANGE_H_
 #define MINDSPORE_CORE_OPS_RAGGEDRANGE_H_
-#include <functional>
 #include <algorithm>
+#include <functional>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
-#include <set>
-#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

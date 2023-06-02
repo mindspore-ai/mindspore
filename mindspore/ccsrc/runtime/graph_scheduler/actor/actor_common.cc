@@ -16,6 +16,7 @@
 
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include <memory>
+#include "mindspore/core/ops/framework_ops.h"
 #include "runtime/graph_scheduler/device_tensor_store.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/anfalgo.h"

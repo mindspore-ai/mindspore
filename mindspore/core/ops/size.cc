@@ -15,9 +15,13 @@
  */
 
 #include "ops/size.h"
-#include "utils/check_convert_utils.h"
-#include "ops/op_utils.h"
+
+#include <vector>
+
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

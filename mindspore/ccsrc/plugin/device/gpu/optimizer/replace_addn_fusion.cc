@@ -15,6 +15,8 @@
  */
 #include "plugin/device/gpu/optimizer/replace_addn_fusion.h"
 #include <vector>
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
 #include "include/common/utils/utils.h"

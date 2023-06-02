@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <memory>
 #include <complex>
+#include "mindspore/core/ops/structure_ops.h"
 #include "mindspore/core/ops/vmap_assign.h"
 #include "abstract/utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/pack.cuh"

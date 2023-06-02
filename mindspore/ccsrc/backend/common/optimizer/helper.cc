@@ -21,12 +21,15 @@
 #include <map>
 #include <set>
 #include <deque>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "utils/hash_set.h"
 #include "include/common/utils/utils.h"
 #include "base/base_ref.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "utils/ms_utils.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/backend/kernel_info.h"

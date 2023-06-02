@@ -20,8 +20,8 @@
 #include <string>
 #include <list>
 
+#include "mindspore/core/ops/other_ops.h"
 #include "utils/hash_set.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "base/base_ref_utils.h"
 #include "ir/tensor.h"
 #include "ir/anf.h"

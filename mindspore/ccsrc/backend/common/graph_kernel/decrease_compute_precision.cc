@@ -18,8 +18,11 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "mindspore/core/ops/core_ops.h"
 #include "include/backend/optimizer/helper.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/graph_kernel/graph_kernel_helper.h"

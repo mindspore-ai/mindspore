@@ -16,6 +16,9 @@
 
 #define USE_DEPRECATED_API
 #include "tools/optimizer/graph/infershape_pass.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "tools/common/node_util.h"
 #include "tools/common/tensor_util.h"
 #include "nnacl/op_base.h"

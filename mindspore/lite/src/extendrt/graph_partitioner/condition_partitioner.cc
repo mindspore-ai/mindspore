@@ -24,8 +24,10 @@
 
 #include "extendrt/graph_partitioner/condition_partitioner.h"
 
+#include "mindspore/core/ops/structure_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "utils/ms_context.h"
-#include "ops/core_ops.h"
 
 namespace mindspore {
 std::vector<GraphSegmentPtr> ConditionPartitioner::Partition(const FuncGraphPtr &graph, bool *multi_target) {

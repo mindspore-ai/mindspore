@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_KERNEL_CONSTANTS_H_
 #include <map>
 #include <string>
+#include "mindspore/core/ops/framework_ops.h"
 
 namespace mindspore {
 namespace kernel {

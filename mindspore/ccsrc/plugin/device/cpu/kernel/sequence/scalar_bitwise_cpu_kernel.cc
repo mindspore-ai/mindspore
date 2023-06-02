@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <utility>
 #include <complex>
+#include "mindspore/core/ops/arithmetic_ops.h"
 #include "include/common/thread_pool.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "mindspore/core/ops/op_utils.h"

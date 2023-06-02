@@ -15,6 +15,10 @@
  */
 
 #include "common/common_test.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ir/param_info.h"
 #include "frontend/operator/ops.h"
 #include "include/backend/kernel_graph.h"

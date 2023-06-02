@@ -15,12 +15,12 @@
  */
 
 #include "c_api/include/graph.h"
+#include "mindspore/core/ops/sequence_ops.h"
 #include "c_api/src/helper.h"
 #include "c_api/src/common.h"
 #include "c_api/src/utils.h"
 #include "c_api/src/pass.h"
 #include "base/base.h"
-#include "ops/core_ops.h"
 #include "ir/func_graph.h"
 #include "ir/anf.h"
 #include "ir/func_graph_cloner.h"

@@ -15,8 +15,8 @@
  */
 
 #include "transform/graph_ir/op_declare/nn_batch_norm_ops_declare.h"
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace mindspore::transform {
 // BatchNorm

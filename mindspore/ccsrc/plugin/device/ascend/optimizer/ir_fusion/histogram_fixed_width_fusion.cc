@@ -18,6 +18,7 @@
 
 #include <memory>
 
+#include "mindspore/core/ops/structure_ops.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/convert_utils.h"
 

@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "utils/hash_map.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "utils/hash_set.h"
 #include "ir/func_graph.h"
 #include "ir/func_graph_cloner.h"

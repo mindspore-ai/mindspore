@@ -18,6 +18,7 @@
 #include "tools/optimizer/fusion/matmul_mul_fusion.h"
 #include <memory>
 #include <vector>
+#include "mindspore/core/ops/lite_ops.h"
 #include "ops/fusion/mat_mul_fusion.h"
 #include "ops/fusion/mul_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"

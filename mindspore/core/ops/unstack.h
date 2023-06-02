@@ -17,14 +17,14 @@
 #ifndef MINDSPORE_CORE_OPS_UNSTACK_H_
 #define MINDSPORE_CORE_OPS_UNSTACK_H_
 
-#include <map>
-#include <vector>
-#include <string>
-#include <memory>
 #include <algorithm>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 
-#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

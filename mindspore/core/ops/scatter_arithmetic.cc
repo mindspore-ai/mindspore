@@ -18,16 +18,17 @@
 #include <map>
 #include <set>
 #include <string>
-#include "ops/scatter_add.h"
-#include "ops/scatter_update.h"
-#include "ops/scatter_min.h"
-#include "ops/scatter_max.h"
-#include "ops/scatter_div.h"
-#include "ops/scatter_mul.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "ops/op_utils.h"
+#include "ops/scatter_add.h"
+#include "ops/scatter_div.h"
+#include "ops/scatter_max.h"
+#include "ops/scatter_min.h"
+#include "ops/scatter_mul.h"
+#include "ops/scatter_update.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

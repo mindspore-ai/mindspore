@@ -16,9 +16,9 @@
  */
 
 #include "ops/use_past_embedding.h"
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
 #include "mindapi/src/helper.h"
+#include "ops/op_utils.h"
+#include "ops/primitive_c.h"
 
 namespace mindspore::ops {
 MIND_API_OPERATOR_IMPL(UsePastEmbedding, BaseOperator);

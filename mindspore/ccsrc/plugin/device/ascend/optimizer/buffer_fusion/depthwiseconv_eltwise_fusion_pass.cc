@@ -15,10 +15,13 @@
  */
 #include "plugin/device/ascend/optimizer/buffer_fusion/depthwiseconv_eltwise_fusion_pass.h"
 
+#include "mindspore/core/ops/conv_pool_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "kernel/kernel_fusion.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "utils/ms_context.h"
 #include "plugin/device/ascend/optimizer/fusion_id_allocator.h"
 #include "plugin/device/ascend/hal/common/platform_info_util.h"

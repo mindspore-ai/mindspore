@@ -17,12 +17,13 @@
 
 #include "ops/encoder_layer.h"
 
-#include "ops/primitive_c.h"
 #include "mindapi/base/shared_ptr.h"
 #include "mindapi/ir/value.h"
-#include "ops/op_name.h"
-#include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "ops/op_name.h"
+#include "ops/primitive_c.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore::ops {
 MIND_API_OPERATOR_IMPL(EncoderLayer, BaseOperator);

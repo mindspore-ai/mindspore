@@ -19,13 +19,14 @@
 #include <utility>
 
 #include "abstract/abstract_value.h"
-#include "ir/anf.h"
-#include "ir/dtype.h"
 #include "abstract/dshape.h"
 #include "abstract/param_validator.h"
 #include "frontend/operator/cc_implementations.h"
 #include "frontend/optimizer/opt.h"
 #include "include/common/pybind_api/api_register.h"
+#include "ir/anf.h"
+#include "ir/dtype.h"
+#include "mindspore/core/utils/flags.h"
 
 namespace mindspore {
 // namespace to support composite operators definition
@@ -382,9 +383,7 @@ void RaiseExceptionForConvertRefDtype(const ValuePtr &func, const std::string &r
     buffer << " so data type ";
   }
   MS_EXCEPTION(TypeError) << "Data type conversion of 'Parameter' is not supported," << buffer.str() << ref_type
-                          << ", which cannot be converted to data type " << target_type << " automatically.\n"
-                          << "For more details, please refer at "
-                          << "https://www.mindspore.cn/docs/zh-CN/master/note/operator_list_implicit.html.";
+                          << ", which cannot be converted to data type " << target_type << " automatically.\n";
 }
 void RaiseExceptionForCheckParameter(const std::string &func_name, size_t i, const std::string &source_type) {
   MS_EXCEPTION(TypeError) << "Function " << func_name << "'s input " << i << " should be a Parameter, but "

@@ -19,6 +19,8 @@
 #include <memory>
 #include <deque>
 #include <unordered_set>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/errorcode.h"
 #include "tools/converter/ops/ops_def.h"
 #include "nnacl/op_base.h"

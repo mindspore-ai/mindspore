@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 #include "backend/common/graph_kernel/rewrite_output_shape.h"
-#include <vector>
 #include <memory>
+#include <vector>
 #include "backend/common/graph_kernel/graph_kernel_helper.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "mindspore/core/ops/sequence_ops.h"
 
 namespace mindspore::graphkernel {
 bool SaveOutputShape::Run(const FuncGraphPtr &func_graph) {

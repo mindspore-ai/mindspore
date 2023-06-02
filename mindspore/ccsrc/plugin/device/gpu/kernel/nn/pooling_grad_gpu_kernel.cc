@@ -17,6 +17,7 @@
 #include "plugin/device/gpu/kernel/nn/pooling_grad_gpu_kernel.h"
 #include <functional>
 #include <memory>
+#include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/grad/pool_grad.h"
 #include "mindspore/core/ops/grad/avg_pool_3d_grad.h"
 #include "mindspore/core/ops/grad/max_pool_3d_grad.h"

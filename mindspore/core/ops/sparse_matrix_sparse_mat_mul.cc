@@ -21,8 +21,10 @@
 #include <set>
 #include <string>
 
-#include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/sparse_ops.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

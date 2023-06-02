@@ -20,6 +20,8 @@
 #include <memory>
 #include <algorithm>
 #include <string>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ir/func_graph.h"
 #include "abstract/abstract_function.h"
 #include "abstract/abstract_value.h"

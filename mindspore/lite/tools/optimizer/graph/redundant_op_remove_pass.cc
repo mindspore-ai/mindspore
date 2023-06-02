@@ -20,6 +20,11 @@
 #include <vector>
 #include <utility>
 #include <algorithm>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/errorcode.h"
 #include "tools/lite_exporter/fetch_content.h"
 #include "ops/make_tuple.h"

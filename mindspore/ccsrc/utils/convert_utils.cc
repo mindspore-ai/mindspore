@@ -15,18 +15,20 @@
  */
 
 #include "include/common/utils/convert_utils.h"
-#include <vector>
-#include <string>
-#include <memory>
 #include <algorithm>
-#include <utility>
 #include <cfloat>
 #include <cmath>
-#include "ir/value.h"
-#include "ir/tensor.h"
-#include "utils/ms_context.h"
-#include "utils/anf_utils.h"
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "include/common/utils/utils.h"
+#include "ir/tensor.h"
+#include "ir/value.h"
+#include "mindspore/core/ops/sparse_ops.h"
+#include "utils/anf_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 bool ValueToBool(const ValuePtr &v, bool *value) {

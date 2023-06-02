@@ -16,11 +16,10 @@
 
 #ifndef MINDSPORE_CORE_OPS_FUSION_MAT_MUL_FUSION_H_
 #define MINDSPORE_CORE_OPS_FUSION_MAT_MUL_FUSION_H_
-#include <vector>
 #include <memory>
-#include "ops/mat_mul.h"
-#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "ops/base_operator.h"
+#include "ops/mat_mul.h"
 
 namespace mindspore {
 namespace ops {

@@ -18,6 +18,7 @@
 #include <set>
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/image_ops.h"
 
 namespace mindspore {
 namespace ops {

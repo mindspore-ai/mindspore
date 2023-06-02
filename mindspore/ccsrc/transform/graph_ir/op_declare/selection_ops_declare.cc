@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-#include <vector>
 #include "transform/graph_ir/op_declare/selection_ops_declare.h"
+#include <vector>
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
 
 namespace mindspore::transform {
 // CumulativeLogsumexp

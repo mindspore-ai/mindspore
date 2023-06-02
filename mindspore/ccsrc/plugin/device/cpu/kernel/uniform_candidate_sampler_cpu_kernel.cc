@@ -20,9 +20,9 @@
 #include <memory>
 #include <random>
 #include <sstream>
+#include "mindspore/core/ops/random_ops.h"
 #include "abstract/utils.h"
 #include "mindspore/core/ops/uniform_candidate_sampler.h"
-#include "mindspore/core/ops/core_ops.h"
 namespace mindspore {
 namespace kernel {
 namespace {

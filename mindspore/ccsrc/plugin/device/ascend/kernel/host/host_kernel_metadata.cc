@@ -17,9 +17,9 @@
 #include "plugin/device/ascend/kernel/host/host_kernel_metadata.h"
 #include <memory>
 #include <string>
-#include "kernel/oplib/oplib.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "kernel/oplib/oplib.h"
 
 namespace mindspore {
 namespace kernel {

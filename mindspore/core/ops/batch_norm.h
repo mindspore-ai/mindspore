@@ -17,11 +17,11 @@
 #ifndef MINDSPORE_CORE_OPS_BATCH_NORMAL_H_
 #define MINDSPORE_CORE_OPS_BATCH_NORMAL_H_
 #include <map>
-#include <vector>
 #include <memory>
 #include <string>
-#include "ops/base_operator.h"
+#include <vector>
 #include "mindapi/base/format.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

@@ -19,6 +19,9 @@
 #include <vector>
 #include <map>
 
+#include "mindspore/core/ops/sparse_tensor_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "backend/graph_compiler/transform.h"
 #include "ir/anf.h"
 #include "utils/log_adapter.h"

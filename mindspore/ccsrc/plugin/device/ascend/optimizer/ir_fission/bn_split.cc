@@ -20,6 +20,7 @@
 #include <string>
 #include <limits>
 
+#include "mindspore/core/ops/nn_ops.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "include/backend/optimizer/helper.h"

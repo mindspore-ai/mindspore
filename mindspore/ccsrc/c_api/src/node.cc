@@ -15,12 +15,12 @@
  */
 
 #include "c_api/include/node.h"
+#include "mindspore/core/ops/sequence_ops.h"
 #include "c_api/include/attribute.h"
 #include "c_api/src/helper.h"
 #include "c_api/src/common.h"
 #include "c_api/src/utils.h"
 #include "base/base.h"
-#include "ops/core_ops.h"
 #include "ir/param_info.h"
 #include "ir/anf.h"
 #include "ir/scope.h"

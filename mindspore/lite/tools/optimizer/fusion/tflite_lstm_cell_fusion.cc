@@ -19,6 +19,10 @@
 #include <memory>
 #include <algorithm>
 #include <functional>
+#include "mindspore/core/ops/structure_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/comparison_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ops/lstm.h"
 #include "ops/squeeze.h"
 #include "ops/tuple_get_item.h"

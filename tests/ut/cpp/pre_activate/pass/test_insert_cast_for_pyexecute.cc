@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "common/backend_common_test.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "frontend/operator/ops.h"
 #include "ir/tensor.h"
 #include "ir/manager.h"

@@ -17,6 +17,7 @@
 #include "plugin/device/gpu/optimizer/remove_redundant_format_transform.h"
 #include <memory>
 #include <vector>
+#include "mindspore/core/ops/array_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"

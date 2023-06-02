@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/hal/hardware/ascend_graph_executor.h"
 #include <unordered_map>
 #include <algorithm>
+#include "mindspore/core/ops/other_ops.h"
 #include "include/common/utils/utils.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "include/backend/kernel_graph.h"

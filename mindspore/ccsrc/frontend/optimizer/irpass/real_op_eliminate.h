@@ -18,6 +18,8 @@
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_REAL_OP_ELIMINATE_H_
 
 #include "frontend/optimizer/anf_visitor.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/optimizer.h"
 

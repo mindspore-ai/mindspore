@@ -17,12 +17,13 @@
 #include <memory>
 #include <vector>
 #include <set>
+#include "mindspore/core/ops/conv_pool_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
 #include "include/common/utils/utils.h"
 #include "utils/trace_base.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "abstract/abstract_value.h"
 #include "include/backend/optimizer/helper.h"
 #include "plugin/device/ascend/hal/common/platform_info_util.h"

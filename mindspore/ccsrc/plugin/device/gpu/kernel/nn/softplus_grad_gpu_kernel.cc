@@ -15,10 +15,11 @@
  */
 
 #include "plugin/device/gpu/kernel/nn/softplus_grad_gpu_kernel.h"
-#include <functional>
-#include <utility>
 #include <algorithm>
+#include <functional>
 #include <memory>
+#include <utility>
+#include "mindspore/core/ops/nn_ops.h"
 
 namespace mindspore {
 namespace kernel {

@@ -18,9 +18,16 @@
 #include <algorithm>
 #include <map>
 #include <set>
+#include "mindspore/core/ops/structure_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/arithmetic_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "include/common/utils/utils.h"
 #include "utils/shape_utils.h"
 #include "utils/trace_base.h"

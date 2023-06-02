@@ -19,6 +19,7 @@
 #include <utility>
 #include <algorithm>
 #include <memory>
+#include "mindspore/core/ops/framework_ops.h"
 #include "mindspore/core/ops/check_valid.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/check_valid_impl.cuh"
 

@@ -17,6 +17,8 @@
 #include <memory>
 #include <deque>
 #include <vector>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "backend/common/session/session_factory.h"
 #include "include/backend/optimizer/optimizer.h"
 #ifdef ENABLE_D

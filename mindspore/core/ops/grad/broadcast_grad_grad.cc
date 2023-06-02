@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-#include <vector>
 #include <set>
-#include "ops/op_utils.h"
-#include "ops/grad/minimum_grad_grad.h"
-#include "ops/grad/maximum_grad_grad.h"
-#include "utils/check_convert_utils.h"
+#include <vector>
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "ops/grad/maximum_grad_grad.h"
+#include "ops/grad/minimum_grad_grad.h"
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

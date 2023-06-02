@@ -19,20 +19,21 @@
 #include <algorithm>
 #include <functional>
 #include <memory>
+#include <numeric>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
-#include <unordered_map>
-#include <numeric>
 
-#include "ir/tensor.h"
-#include "ir/value.h"
 #include "frontend/parallel/auto_parallel/edge_costmodel.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "frontend/parallel/step_parallel_utils.h"
-#include "include/common/utils/parallel_context.h"
-#include "utils/log_adapter.h"
 #include "include/common/debug/anf_dump_utils.h"
+#include "include/common/utils/parallel_context.h"
+#include "ir/tensor.h"
+#include "ir/value.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace parallel {
@@ -482,7 +483,8 @@ void AddCommOpParamFlag(const CNodePtr &comm_node) {
 
 Operator CreateAllGatherOp(const std::string &group) {
   OperatorName operator_name = ALL_GATHER;
-  ValuePtr attr0_value = MakeValue(group);  // group
+  // group
+  ValuePtr attr0_value = MakeValue(group);
   Attr attr0 = std::make_pair(GROUP, attr0_value);
   OperatorAttrs operator_attrs;
   operator_attrs.push_back(attr0);
@@ -500,11 +502,14 @@ Operator CreateMiniStepAllGatherOp(const std::string &group) {
   bool mean_flag = ParallelContext::GetInstance()->gradients_mean();
 
   OperatorName operator_name = MINI_STEP_ALL_GATHER;
-  ValuePtr attr0_value = MakeValue(group);  // group
+  // group
+  ValuePtr attr0_value = MakeValue(group);
   Attr attr0 = std::make_pair(GROUP, attr0_value);
-  ValuePtr attr1_value = MakeValue(grad_accumulation_step);  // grad_accumulation_step
+  // grad_accumulation_step
+  ValuePtr attr1_value = MakeValue(grad_accumulation_step);
   Attr attr1 = std::make_pair(GRAD_ACCUMULATION_STEP, attr1_value);
-  ValuePtr attr2_value = MakeValue(mean_flag);  // mean_flag
+  // mean_flag
+  ValuePtr attr2_value = MakeValue(mean_flag);
   Attr attr2 = std::make_pair(MEAN_FLAG, attr2_value);
   OperatorAttrs operator_attrs;
   operator_attrs.push_back(attr0);
@@ -522,9 +527,11 @@ Operator CreateMiniStepAllGatherOp(const std::string &group) {
 Operator CreateMicroStepAllGatherOp(const std::string &group) {
   bool mean_flag = ParallelContext::GetInstance()->gradients_mean();
   OperatorName operator_name = MICRO_STEP_ALL_GATHER;
-  ValuePtr attr0_value = MakeValue(group);  // group
+  // group
+  ValuePtr attr0_value = MakeValue(group);
   Attr attr0 = std::make_pair(GROUP, attr0_value);
-  ValuePtr attr1_value = MakeValue(mean_flag);  // mean_flag
+  // mean_flag
+  ValuePtr attr1_value = MakeValue(mean_flag);
   Attr attr1 = std::make_pair(MEAN_FLAG, attr1_value);
   OperatorAttrs operator_attrs;
   operator_attrs.push_back(attr0);

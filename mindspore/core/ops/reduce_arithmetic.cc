@@ -13,21 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <memory>
+#include <set>
+#include <string>
+#include "abstract/ops/op_infer.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "ops/op_utils.h"
 #include "ops/reduce_all.h"
 #include "ops/reduce_any.h"
 #include "ops/reduce_max.h"
-#include "ops/reduce_min.h"
-#include "ops/reduce_sum.h"
-#include "ops/reduce_prod.h"
 #include "ops/reduce_mean.h"
-#include <string>
-#include <set>
-#include <memory>
-#include "ops/op_utils.h"
-#include "abstract/ops/op_infer.h"
+#include "ops/reduce_min.h"
+#include "ops/reduce_prod.h"
+#include "ops/reduce_sum.h"
 #include "utils/check_convert_utils.h"
-#include "abstract/ops/primitive_infer_map.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

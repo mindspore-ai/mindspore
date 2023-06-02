@@ -16,6 +16,7 @@
 
 #include "plugin/device/ascend/optimizer/enhancer/getnext_tensor_move_elimination.h"
 #include <memory>
+#include "mindspore/core/ops/sequence_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "frontend/optimizer/opt.h"

@@ -20,6 +20,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include "mindspore/core/ops/conv_pool_ops.h"
 #include "ops/op_utils.h"
 #include "ops/batch_norm.h"
 #include "ops/elu.h"

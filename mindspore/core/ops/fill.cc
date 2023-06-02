@@ -16,20 +16,22 @@
 
 #include "ops/fill.h"
 
+#include <complex>
+#include <map>
 #include <memory>
 #include <set>
 #include <string>
 #include <vector>
-#include <map>
-#include <complex>
 
 #include "abstract/abstract_value.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "include/common/utils/utils.h"
+#include "mindapi/src/helper.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/math_ops.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/tensor_construct_utils.h"
-#include "abstract/ops/primitive_infer_map.h"
-#include "mindapi/src/helper.h"
-#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace ops {

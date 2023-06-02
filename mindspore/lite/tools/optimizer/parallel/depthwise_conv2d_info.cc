@@ -21,6 +21,8 @@
 #include <string>
 #include <algorithm>
 #include <utility>
+#include "mindspore/core/ops/conv_pool_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
 #include "nnacl/op_base.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"

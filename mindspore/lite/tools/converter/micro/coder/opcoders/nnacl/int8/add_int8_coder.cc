@@ -17,12 +17,13 @@
 #include "coder/opcoders/nnacl/int8/add_int8_coder.h"
 #include <algorithm>
 #include <type_traits>
-#include "nnacl/int8/quantize.h"
 #include "coder/log.h"
-#include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
 #include "coder/opcoders/file_collector.h"
 #include "coder/opcoders/parallel.h"
+#include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
 #include "coder/utils/common.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "nnacl/int8/quantize.h"
 
 using mindspore::schema::PrimitiveType_AddFusion;
 

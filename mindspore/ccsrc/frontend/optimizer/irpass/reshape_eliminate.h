@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "ir/func_graph.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "frontend/optimizer/optimizer_caller.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/operator/ops.h"

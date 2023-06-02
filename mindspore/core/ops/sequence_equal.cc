@@ -14,23 +14,19 @@
  * limitations under the License.
  */
 
-#include <vector>
+#include <algorithm>
 #include <memory>
 #include <string>
-#include <algorithm>
-#include "ops/tuple_equal.h"
+#include "mindapi/src/helper.h"
 #include "ops/list_equal.h"
 #include "ops/op_utils.h"
+#include "ops/tuple_equal.h"
 #include "utils/check_convert_utils.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
 AbstractBasePtr SequenceEqualInferInner(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const int64_t input_num = 2;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

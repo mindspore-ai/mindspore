@@ -23,6 +23,12 @@
 #include <unordered_map>
 #include <utility>
 #include <functional>
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/mkldnn/eltwise_cpu_kernel.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/activation_fp32.h"

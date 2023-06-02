@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-#include <set>
 #include <map>
+#include <memory>
+#include <set>
 #include <string>
 #include <vector>
-#include <memory>
 
-#include "ops/sparse_segment_sqrt_n_with_num_segments.h"
 #include "abstract/dshape.h"
-#include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "ops/op_name.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/sparse_ops.h"
+#include "ops/op_name.h"
+#include "ops/sparse_segment_sqrt_n_with_num_segments.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

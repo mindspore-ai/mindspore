@@ -16,11 +16,11 @@
 
 #ifndef MINDSPORE_CORE_OPS_CONV2D_BACKPROP_FILTER_FUSION_H_
 #define MINDSPORE_CORE_OPS_CONV2D_BACKPROP_FILTER_FUSION_H_
-#include <vector>
 #include <memory>
+#include <vector>
 
-#include "ops/grad/conv2d_backprop_filter.h"
 #include "mindapi/base/types.h"
+#include "ops/grad/conv2d_backprop_filter.h"
 
 namespace mindspore {
 namespace ops {

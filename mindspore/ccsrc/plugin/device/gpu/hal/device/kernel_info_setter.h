@@ -23,6 +23,10 @@
 #include <memory>
 #include <map>
 #include "ir/anf.h"
+#include "mindspore/core/ops/conv_pool_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "ir/dtype.h"
 #include "include/common/utils/utils.h"
 #include "kernel/kernel.h"
@@ -30,7 +34,6 @@
 #include "kernel/graph_kernel_info.h"
 #include "include/backend/kernel_graph.h"
 #include "kernel/common_utils.h"
-#include "ops/core_ops.h"
 #include "utils/ms_context.h"
 #include "include/backend/visible.h"
 

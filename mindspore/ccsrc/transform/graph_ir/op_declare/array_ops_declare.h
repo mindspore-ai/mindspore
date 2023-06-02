@@ -17,10 +17,10 @@
 #ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_ARRAY_OPS_DECLARE_H_
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_ARRAY_OPS_DECLARE_H_
 
-#include "utils/hash_map.h"
+#include "inc/ops/array_ops.h"
+#include "inc/ops/selection_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
-#include "ops/array_ops.h"
-#include "ops/selection_ops.h"
+#include "utils/hash_map.h"
 
 DECLARE_OP_ADAPTER(Shape)
 DECLARE_OP_USE_OUTPUT(Shape)

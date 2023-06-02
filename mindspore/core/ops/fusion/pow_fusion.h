@@ -16,8 +16,8 @@
 
 #ifndef MINDSPORE_CORE_OPS_POW_FUSION_H_
 #define MINDSPORE_CORE_OPS_POW_FUSION_H_
-#include "ops/pow.h"
 #include "mindapi/base/types.h"
+#include "ops/pow.h"
 
 namespace mindspore {
 namespace ops {

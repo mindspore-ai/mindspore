@@ -19,6 +19,7 @@
 #include <vector>
 #include <algorithm>
 #include "tools/optimizer/common/helper.h"
+#include "mindspore/core/ops/sequence_ops.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {

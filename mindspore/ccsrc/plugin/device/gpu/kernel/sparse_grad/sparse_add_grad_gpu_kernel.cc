@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <functional>
 #include <memory>
+#include "mindspore/core/ops/sparse_ops.h"
 #include "mindspore/core/ops/grad/sparse_add_grad.h"
 
 namespace mindspore {

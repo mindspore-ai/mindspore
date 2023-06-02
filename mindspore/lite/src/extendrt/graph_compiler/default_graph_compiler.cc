@@ -14,21 +14,23 @@
  * limitations under the License.
  */
 
-#include <unordered_map>
 #include <algorithm>
+#include <unordered_map>
 
+#include "abstract/abstract_value.h"
+#include "backend/graph_compiler/graph_partition.h"
+#include "base/base_ref.h"
+#include "extendrt/execution_plan.h"
+#include "extendrt/graph_compiler/anfnode_tensor_adapter.h"
 #include "extendrt/graph_compiler/default_graph_compiler.h"
 #include "extendrt/graph_compiler/factory.h"
-#include "extendrt/execution_plan.h"
 #include "extendrt/mock/lite_runtime/converters.h"
-#include "backend/graph_compiler/graph_partition.h"
-#include "ops/core_ops.h"
-#include "ops/op_name.h"
 #include "extendrt/utils/func_graph_utils.h"
 #include "ir/manager.h"
-#include "base/base_ref.h"
-#include "abstract/abstract_value.h"
-#include "extendrt/graph_compiler/anfnode_tensor_adapter.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "ops/op_name.h"
 #include "src/extendrt/graph_compiler/compile_result_builder.h"
 #include "tools/optimizer/common/gllo_utils.h"
 

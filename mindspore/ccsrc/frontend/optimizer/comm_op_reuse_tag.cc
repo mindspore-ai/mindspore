@@ -19,8 +19,8 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include "mindspore/core/ops/other_ops.h"
 #include "ir/func_graph.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/device_manager.h"
 #include "include/common/utils/parallel_context.h"

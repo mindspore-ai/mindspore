@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <map>
 #include <chrono>
+#include "mindspore/core/ops/sequence_ops.h"
 #include "include/common/debug/anf_dump_utils.h"
 #include "plugin/device/gpu/hal/device/gpu_device_address.h"
 #include "plugin/device/gpu/hal/device/cuda_driver.h"

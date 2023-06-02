@@ -15,14 +15,15 @@
  */
 #include "ops/identity.h"
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

@@ -22,9 +22,10 @@
 #include <set>
 #include <string>
 #include <vector>
-#include "ops/op_utils.h"
-#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "mindspore/core/ops/sparse_ops.h"
+#include "ops/base_operator.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {

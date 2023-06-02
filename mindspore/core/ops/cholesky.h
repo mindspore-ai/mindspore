@@ -18,12 +18,12 @@
 #define MINDSPORE_CORE_OPS_CHOLESKY_H_
 
 #include <map>
-#include <set>
 #include <memory>
+#include <set>
 #include <vector>
 
-#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

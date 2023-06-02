@@ -15,6 +15,8 @@
  */
 
 #include "tools/converter/quantizer/dynamic_quantizer.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
 #include "tools/converter/quantizer/insert_quant_node_manager.h"
 

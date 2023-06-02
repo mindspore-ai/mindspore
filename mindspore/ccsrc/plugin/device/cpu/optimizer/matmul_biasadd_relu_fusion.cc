@@ -15,20 +15,22 @@
  */
 
 #include "plugin/device/cpu/optimizer/matmul_biasadd_relu_fusion.h"
+#include <algorithm>
 #include <memory>
 #include <string>
-#include <vector>
 #include <utility>
-#include <algorithm>
-#include "include/backend/optimizer/helper.h"
-#include "plugin/factory/ms_factory.h"
-#include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include <vector>
 #include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
 #include "include/backend/kernel_graph.h"
+#include "include/backend/optimizer/helper.h"
+#include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
+#include "kernel/common_utils.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include "plugin/factory/ms_factory.h"
 #include "utils/ms_context.h"
-#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace opt {

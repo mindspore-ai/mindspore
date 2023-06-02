@@ -18,6 +18,8 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "src/common/log_util.h"

@@ -18,6 +18,7 @@
 #include <unordered_map>
 #include <vector>
 #include <memory>
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "frontend/expander/pack/pack_expander.h"
 #include "utils/ms_context.h"

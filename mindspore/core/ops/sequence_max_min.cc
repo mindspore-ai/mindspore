@@ -15,13 +15,14 @@
  */
 
 #include "ops/sequence_max_min.h"
-#include <vector>
+#include <algorithm>
 #include <memory>
 #include <string>
-#include <algorithm>
+#include <vector>
+#include "mindapi/src/helper.h"
+#include "mindspore/core/ops/sequence_ops.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

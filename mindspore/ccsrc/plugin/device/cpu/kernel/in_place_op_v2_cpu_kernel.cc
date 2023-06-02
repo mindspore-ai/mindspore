@@ -15,12 +15,13 @@
  */
 
 #include "plugin/device/cpu/kernel/in_place_op_v2_cpu_kernel.h"
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <string>
-#include <algorithm>
 #include <unordered_map>
 #include <unordered_set>
+#include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/inplace_update_v2.h"
 
 namespace mindspore {

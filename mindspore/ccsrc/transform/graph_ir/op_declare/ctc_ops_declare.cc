@@ -16,6 +16,7 @@
 
 #include "transform/graph_ir/op_declare/ctc_ops_declare.h"
 #include <string>
+#include "mindspore/core/ops/nn_ops.h"
 
 namespace mindspore::transform {
 // CTCLoss

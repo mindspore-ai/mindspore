@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <vector>
 
+#include "mindspore/core/ops/sequence_ops.h"
 #include "abstract/abstract_value.h"
 #include "ir/anf.h"
 #include "abstract/dshape.h"

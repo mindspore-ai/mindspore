@@ -15,15 +15,19 @@
  */
 
 #include "ops/sigmoid_cross_entropy_with_logits.h"
+
 #include <map>
 #include <set>
+#include <utility>
 #include <vector>
 
-#include "utils/check_convert_utils.h"
 #include "abstract/ops/op_infer.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "ops/op_name.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "ops/op_name.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

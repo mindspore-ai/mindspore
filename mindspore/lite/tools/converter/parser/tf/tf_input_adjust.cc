@@ -15,9 +15,9 @@
  */
 
 #include "tools/converter/parser/tf/tf_input_adjust.h"
+#include "mindspore/core/ops/lite_ops.h"
 #include "include/errorcode.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "ops/core_ops.h"
 
 namespace mindspore {
 namespace lite {

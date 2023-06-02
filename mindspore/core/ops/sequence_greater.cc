@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-#include <vector>
+#include <algorithm>
 #include <memory>
 #include <string>
-#include <algorithm>
+
+#include "mindapi/src/helper.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "ops/list_greater.h"
 #include "ops/op_utils.h"
 #include "ops/tuple_greater.h"
-#include "ops/list_greater.h"
 #include "utils/check_convert_utils.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

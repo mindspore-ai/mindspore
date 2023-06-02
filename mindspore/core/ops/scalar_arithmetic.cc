@@ -14,27 +14,29 @@
  * limitations under the License.
  */
 
-#include <vector>
-#include <string>
 #include <memory>
+#include <string>
+#include <vector>
 
-#include "ops/op_utils.h"
 #include "abstract/ops/op_infer.h"
-#include "utils/check_convert_utils.h"
 #include "include/common/utils/utils.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/arithmetic_ops.h"
+#include "mindspore/core/ops/comparison_ops.h"
+#include "ops/op_utils.h"
 #include "ops/scalar_add.h"
-#include "ops/scalar_sub.h"
-#include "ops/scalar_mul.h"
 #include "ops/scalar_div.h"
-#include "ops/scalar_floordiv.h"
-#include "ops/scalar_mod.h"
-#include "ops/scalar_pow.h"
 #include "ops/scalar_eq.h"
-#include "ops/scalar_lt.h"
+#include "ops/scalar_floordiv.h"
+#include "ops/scalar_ge.h"
 #include "ops/scalar_gt.h"
 #include "ops/scalar_le.h"
-#include "ops/scalar_ge.h"
+#include "ops/scalar_lt.h"
+#include "ops/scalar_mod.h"
+#include "ops/scalar_mul.h"
+#include "ops/scalar_pow.h"
+#include "ops/scalar_sub.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

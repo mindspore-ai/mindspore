@@ -16,14 +16,15 @@
 
 #include "ops/sparse_apply_momentum.h"
 
-#include <set>
 #include <map>
+#include <set>
 #include <string>
 #include <utility>
 
 #include "abstract/ops/primitive_infer_map.h"
-#include "ops/op_utils.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {

@@ -19,6 +19,8 @@
 #include <map>
 #include <memory>
 #include <vector>
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "tools/common/tensor_util.h"
 #include "nnacl/op_base.h"
 #include "ops/op_utils.h"

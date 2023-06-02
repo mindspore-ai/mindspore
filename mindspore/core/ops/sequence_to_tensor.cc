@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <vector>
-#include <string>
 #include <memory>
 #include <set>
+#include <string>
+#include <vector>
 
-#include "ops/list_to_tensor.h"
-#include "ops/tuple_to_tensor.h"
-#include "utils/check_convert_utils.h"
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
 #include "abstract/ops/op_infer.h"
@@ -32,12 +29,16 @@
 #include "ir/dtype/type.h"
 #include "ir/primitive.h"
 #include "mindapi/base/shape_vector.h"
+#include "mindapi/src/helper.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
 #include "ops/base_operator.h"
-#include "ops/core_ops.h"
+#include "ops/list_to_tensor.h"
 #include "ops/primitive_c.h"
+#include "ops/tuple_to_tensor.h"
+#include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

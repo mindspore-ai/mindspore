@@ -17,6 +17,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include "mindspore/core/ops/lite_ops.h"
 #include "ops/reshape.h"
 #include "ops/primitive_c.h"
 #include "tools/common/tensor_util.h"

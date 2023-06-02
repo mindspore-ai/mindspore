@@ -24,6 +24,8 @@
 #include <set>
 #include <functional>
 #include <deque>
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "abstract/abstract_value.h"
 #include "tools/common/graph_util.h"
 #include "tools/lite_exporter/anf_exporter.h"

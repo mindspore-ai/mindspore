@@ -16,12 +16,12 @@
 
 #ifndef MINDSPORE_CORE_OPS_SPARSE_TO_DENSE_V2_H_
 #define MINDSPORE_CORE_OPS_SPARSE_TO_DENSE_V2_H_
-#include <vector>
+#include <map>
 #include <memory>
 #include <string>
-#include <map>
-#include "ops/base_operator.h"
+#include <vector>
 #include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

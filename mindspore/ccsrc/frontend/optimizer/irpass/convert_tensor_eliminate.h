@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_CONVERT_TENSOR_ELIMINATE_H_
 
 #include "frontend/optimizer/anf_visitor.h"
+#include "mindspore/core/ops/structure_ops.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/optimizer.h"
 #include "pipeline/jit/static_analysis/prim.h"

@@ -22,6 +22,7 @@
 #include <vector>
 #include <memory>
 #include "include/backend/optimizer/pass.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "tools/converter/ops/ops_def.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "include/registry/converter_context.h"

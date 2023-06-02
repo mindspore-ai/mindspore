@@ -21,6 +21,7 @@
 #include <string>
 #include <utility>
 #include <limits>
+#include "mindspore/core/ops/array_ops.h"
 #include "include/common/thread_pool.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "kernel/common_utils.h"

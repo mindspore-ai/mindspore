@@ -20,6 +20,9 @@
 #include <deque>
 #include <set>
 #include <map>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "tools/common/graph_util.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
@@ -34,7 +37,6 @@
 #include "ops/transpose.h"
 #include "ops/standard_normal.h"
 #include "ops/tuple_get_item.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "cxx_api/model/acl/model_converter.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "src/common/utils.h"

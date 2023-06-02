@@ -14,21 +14,24 @@
  * limitations under the License.
  */
 
-#include <memory>
-#include <list>
-#include <set>
-#include <queue>
-#include <algorithm>
 #include "frontend/parallel/graph_util/pipeline_split_utils.h"
-#include "frontend/parallel/graph_util/generate_graph.h"
-#include "mindspore/core/ops/core_ops.h"
-#include "ir/value.h"
-#include "frontend/parallel/ops_info/ops_utils.h"
+#include <algorithm>
+#include <list>
+#include <memory>
+#include <queue>
+#include <set>
 #include "frontend/parallel/device_manager.h"
-#include "include/common/utils/parallel_context.h"
+#include "frontend/parallel/graph_util/generate_graph.h"
+#include "frontend/parallel/graph_util/node_info.h"
+#include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
-#include "frontend/parallel/graph_util/node_info.h"
+#include "include/common/utils/parallel_context.h"
+#include "ir/value.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
 #include "utils/parallel_node_check.h"
 
 namespace mindspore {

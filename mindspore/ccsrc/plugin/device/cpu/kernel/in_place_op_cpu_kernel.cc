@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include <unordered_set>
+#include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/inplace_add.h"
 #include "mindspore/core/ops/inplace_sub.h"
 #include "mindspore/core/ops/inplace_update.h"

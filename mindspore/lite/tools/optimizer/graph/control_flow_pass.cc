@@ -19,6 +19,9 @@
 #include <vector>
 #include <memory>
 #include <algorithm>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ops/switch.h"
 #include "ops/fusion/partial_fusion.h"
 #include "include/errorcode.h"

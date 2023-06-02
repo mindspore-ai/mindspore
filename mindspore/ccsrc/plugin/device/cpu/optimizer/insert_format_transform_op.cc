@@ -20,6 +20,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "utils/hash_set.h"
 #include "kernel/kernel_build_info.h"
 #include "include/backend/anf_runtime_algorithm.h"

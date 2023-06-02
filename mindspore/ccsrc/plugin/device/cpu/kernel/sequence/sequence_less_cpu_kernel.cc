@@ -19,6 +19,7 @@
 #include <utility>
 #include <complex>
 #include <unordered_map>
+#include "mindspore/core/ops/sequence_ops.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "include/common/thread_pool.h"
 

@@ -16,6 +16,9 @@
 
 #include "backend/common/pass/gradients_allreduce_depend_last_send.h"
 #include <algorithm>
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/parallel_context.h"
 

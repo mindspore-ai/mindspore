@@ -18,8 +18,8 @@
 #define MINDSPORE_CORE_OPS_CONV2D_FUSION_H_
 #include <vector>
 
-#include "ops/conv2d.h"
 #include "mindapi/base/types.h"
+#include "ops/conv2d.h"
 
 namespace mindspore {
 namespace ops {

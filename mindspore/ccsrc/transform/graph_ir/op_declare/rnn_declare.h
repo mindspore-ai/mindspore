@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_RNN_DECLARE_H_
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_RNN_DECLARE_H_
 
-#include "utils/hash_map.h"
-#include "ops/rnn.h"
+#include "inc/ops/rnn.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
+#include "utils/hash_map.h"
 
 DECLARE_OP_ADAPTER(BasicLSTMCell)
 DECLARE_OP_USE_OUTPUT(BasicLSTMCell)

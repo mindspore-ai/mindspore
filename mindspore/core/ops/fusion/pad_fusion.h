@@ -16,8 +16,8 @@
 
 #ifndef MINDSPORE_CORE_OPS_PAD_FUSION_H_
 #define MINDSPORE_CORE_OPS_PAD_FUSION_H_
-#include "ops/pad.h"
 #include "mindapi/base/types.h"
+#include "ops/pad.h"
 
 namespace mindspore {
 namespace ops {

@@ -16,6 +16,8 @@
 
 #include "transform/graph_ir/op_declare/random_ops_declare.h"
 
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/random_ops.h"
 namespace mindspore::transform {
 // DropOutGenMask
 INPUT_MAP(DropOutGenMask) = {{1, INPUT_DESC(shape)}, {2, INPUT_DESC(prob)}};

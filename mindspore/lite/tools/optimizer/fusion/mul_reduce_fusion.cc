@@ -21,6 +21,8 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/lite_exporter/fetch_content.h"
 #include "ops/fusion/mat_mul_fusion.h"

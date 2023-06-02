@@ -17,17 +17,17 @@
 #include "ops/sparse_gather_v2.h"
 #include <set>
 #include <vector>
-#include "ops/gather_comm.h"
-#include "ops/gather.h"
 #include "abstract/abstract_value.h"
 #include "abstract/ops/op_infer.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "base/base.h"
 #include "ir/anf.h"
-#include "ops/core_ops.h"
+#include "mindapi/src/helper.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "ops/gather.h"
+#include "ops/gather_comm.h"
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

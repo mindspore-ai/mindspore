@@ -16,12 +16,15 @@
 #include "backend/common/pass/eliminate_redundant_op.h"
 #include <memory>
 #include <utility>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "utils/hash_map.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/optimizer/helper.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "kernel/common_utils.h"
 
 namespace mindspore {

@@ -16,15 +16,16 @@
 
 #include "ops/bias_add.h"
 #include <map>
+#include <memory>
+#include <set>
 #include <string>
 #include <vector>
-#include <set>
-#include <memory>
+#include "abstract/ops/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
+#include "mindspore/core/ops/nn_ops.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
-#include "abstract/ops/primitive_infer_map.h"
 #include "utils/ms_context.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

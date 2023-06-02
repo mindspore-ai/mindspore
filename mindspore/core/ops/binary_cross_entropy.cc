@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-#include <string>
 #include <algorithm>
+#include <map>
 #include <memory>
 #include <set>
+#include <string>
 #include <vector>
-#include <map>
 
-#include "ops/binary_cross_entropy.h"
-#include "utils/check_convert_utils.h"
-#include "abstract/ops/primitive_infer_map.h"
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
 #include "abstract/ops/op_infer.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include "base/base.h"
 #include "ir/anf.h"
 #include "ir/dtype/number.h"
@@ -34,11 +32,13 @@
 #include "ir/value.h"
 #include "mindapi/base/shared_ptr.h"
 #include "mindapi/ir/value.h"
-#include "ops/core_ops.h"
+#include "mindapi/src/helper.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "ops/binary_cross_entropy.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
+#include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

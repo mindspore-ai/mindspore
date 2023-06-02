@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-#include <set>
 #include <map>
-#include <string>
 #include <memory>
+#include <set>
+#include <string>
 
-#include "ops/sparse_softmax_cross_entropy_with_logits.h"
-#include "utils/check_convert_utils.h"
 #include "abstract/ops/op_infer.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "ops/op_name.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "ops/op_name.h"
+#include "ops/sparse_softmax_cross_entropy_with_logits.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

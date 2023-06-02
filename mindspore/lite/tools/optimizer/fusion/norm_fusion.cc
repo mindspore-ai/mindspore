@@ -18,6 +18,9 @@
 #include "tools/optimizer/fusion/norm_fusion.h"
 #include <algorithm>
 #include <memory>
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "ops/fusion/layer_norm_fusion.h"
 #include "ops/fusion/reduce_fusion.h"
 #include "mindspore/core/ops/instance_norm.h"

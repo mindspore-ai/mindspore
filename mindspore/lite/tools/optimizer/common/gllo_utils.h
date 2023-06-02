@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 #include "ops/primitive_c.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "src/common/utils.h"

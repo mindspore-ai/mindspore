@@ -21,6 +21,7 @@
 #include <memory>
 #include <set>
 #include <map>
+#include "mindspore/core/ops/conv_pool_ops.h"
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_compile.h"
 #include "plugin/device/ascend/kernel/akg/akg_ascend_kernel_build.h"

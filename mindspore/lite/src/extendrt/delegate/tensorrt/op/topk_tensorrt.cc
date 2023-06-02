@@ -16,6 +16,7 @@
 
 #include <unordered_map>
 #include "src/extendrt/delegate/tensorrt/op/topk_tensorrt.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "ops/fusion/arg_max_fusion.h"
 #include "ops/fusion/arg_min_fusion.h"
 #include "ops/fusion/topk_fusion.h"

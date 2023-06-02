@@ -16,12 +16,12 @@
 
 #ifndef MINDSPORE_CORE_OPS_EYE_H_
 #define MINDSPORE_CORE_OPS_EYE_H_
-#include <vector>
 #include <memory>
+#include <vector>
+#include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
-#include "ops/base_operator.h"
-#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {

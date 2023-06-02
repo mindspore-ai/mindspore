@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/log1p_cpu_kernel.h"
 #include <cmath>
+#include "mindspore/core/ops/math_ops.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {

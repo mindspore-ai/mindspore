@@ -20,6 +20,8 @@
 #include <string>
 #include <map>
 #include "tools/common/graph_util.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "tools/converter/offline_packing_optimizer.h"
 #include "tools/converter/quantizer/quant_param_holder.h"
 #include "src/common/primitive_t_utils.h"

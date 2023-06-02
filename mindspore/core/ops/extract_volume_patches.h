@@ -17,13 +17,13 @@
 #ifndef MINDSPORE_CORE_OPS_EXTRACT_VOLUME_PATCHES_H_
 #define MINDSPORE_CORE_OPS_EXTRACT_VOLUME_PATCHES_H_
 #include <map>
-#include <set>
-#include <vector>
 #include <memory>
+#include <set>
 #include <string>
+#include <vector>
 #include "ir/anf.h"
-#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

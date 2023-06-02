@@ -15,16 +15,17 @@
  */
 #include "backend/common/pass/common_subexpression_elimination.h"
 
-#include <memory>
-#include <vector>
 #include <map>
+#include <memory>
 #include <utility>
+#include <vector>
 #include "include/backend/kernel_info.h"
-#include "mindspore/core/ops/core_ops.h"
-#include "utils/ms_context.h"
-#include "include/common/utils/utils.h"
-#include "include/common/utils/anfalgo.h"
 #include "include/backend/optimizer/helper.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace opt {

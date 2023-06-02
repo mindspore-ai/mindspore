@@ -18,6 +18,7 @@
 #include "tools/optimizer/fusion/conv_conv_fusion.h"
 #include <memory>
 #include <vector>
+#include "mindspore/core/ops/lite_ops.h"
 #include "tools/common/tensor_util.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"

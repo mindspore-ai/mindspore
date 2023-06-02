@@ -16,6 +16,7 @@
 #include <string>
 #include <memory>
 #include "ir/anf.h"
+#include "mindspore/core/ops/structure_ops.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/irpass/bprop_mindir/reslove_primitive_attr.h"

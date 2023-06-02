@@ -15,11 +15,11 @@
  */
 #include "plugin/device/ascend/optimizer/buffer_fusion/reduce_eltwise_fusion_pass.h"
 #include <vector>
+#include "mindspore/core/ops/framework_ops.h"
 #include "kernel/kernel_fusion.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "utils/ms_context.h"
 #include "plugin/device/ascend/optimizer/fusion_id_allocator.h"
 #include "include/backend/optimizer/helper.h"

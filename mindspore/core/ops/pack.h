@@ -17,13 +17,13 @@
 #ifndef MINDSPORE_CORE_OPS_PACK_H_
 #define MINDSPORE_CORE_OPS_PACK_H_
 
-#include <map>
-#include <string>
-#include <memory>
 #include <algorithm>
+#include <map>
+#include <memory>
+#include <string>
 
-#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

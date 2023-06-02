@@ -16,14 +16,16 @@
 
 #include "ops/softmax_cross_entropy_with_logits.h"
 
-#include <set>
 #include <map>
+#include <set>
+#include <utility>
 #include <vector>
 
-#include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "ops/op_name.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "ops/op_name.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

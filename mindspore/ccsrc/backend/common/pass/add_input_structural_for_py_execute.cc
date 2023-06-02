@@ -19,6 +19,7 @@
 #include <memory>
 #include <vector>
 
+#include "mindspore/core/ops/framework_ops.h"
 #include "utils/hash_set.h"
 #include "backend/common/pass/const_input_to_attr.h"
 #include "include/common/utils/anfalgo.h"

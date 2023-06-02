@@ -23,6 +23,10 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ops/crop.h"
 #include "src/common/utils.h"
 #include "ops/fusion/activation.h"

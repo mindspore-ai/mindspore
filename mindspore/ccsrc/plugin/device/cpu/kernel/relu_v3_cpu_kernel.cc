@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/relu_v3_cpu_kernel.h"
 #include <algorithm>
 #include <functional>
+#include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "mindspore/core/ops/relu_v3.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 

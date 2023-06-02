@@ -16,6 +16,17 @@
 
 #include "abstract/ops/infer_functions.h"
 #include "abstract/ops/primitive_infer_map.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/conv_pool_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/image_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/sparse_tensor_ops.h"
+#include "mindspore/core/ops/structure_ops.h"
 namespace mindspore {
 namespace abstract {
 // using R = PrimitiveEvalImplMap::mapped_type;

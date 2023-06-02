@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include "mindspore/core/ops/framework_ops.h"
 #include "ops/adam.h"
 #include "ops/apply_momentum.h"
 #include "ops/fusion/conv2d_fusion.h"

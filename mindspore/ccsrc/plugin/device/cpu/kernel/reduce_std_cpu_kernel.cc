@@ -18,6 +18,7 @@
 #include <memory>
 #include <algorithm>
 #include <utility>
+#include "mindspore/core/ops/math_ops.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "nnacl/fp32/reduce_fp32.h"
 #include "mindspore/core/ops/reduce_std.h"

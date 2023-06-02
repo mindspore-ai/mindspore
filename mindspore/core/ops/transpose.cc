@@ -15,15 +15,16 @@
  */
 
 #include "ops/transpose.h"
-#include <vector>
-#include <string>
-#include <set>
-#include <memory>
 #include <algorithm>
+#include <memory>
+#include <set>
+#include <string>
+#include <vector>
+#include "include/common/utils/utils.h"
+#include "mindapi/src/helper.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
-#include "mindapi/src/helper.h"
-#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace ops {

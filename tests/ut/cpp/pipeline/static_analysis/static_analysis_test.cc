@@ -16,19 +16,20 @@
 #include <iostream>
 #include <memory>
 
-#include "pipeline/jit/static_analysis/prim.h"
-#include "pipeline/static_analysis/helper.h"
 #include "common/common_test.h"
 #include "common/py_func_graph_fetcher.h"
+#include "frontend/operator/ops.h"
+#include "include/common/debug/draw.h"
 #include "ir/manager.h"
 #include "ir/tensor.h"
-#include "frontend/operator/ops.h"
-#include "pipeline/jit/parse/parse.h"
+#include "mindspore/core/ops/arithmetic_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "pipeline/jit/parse/data_converter.h"
+#include "pipeline/jit/parse/parse.h"
 #include "pipeline/jit/resource.h"
-#include "include/common/debug/draw.h"
+#include "pipeline/jit/static_analysis/prim.h"
+#include "pipeline/static_analysis/helper.h"
 #include "utils/log_adapter.h"
-#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace abstract {
@@ -395,7 +396,6 @@ TEST_F(TestInferUniform, test_inferred_scalar_add) {
   ASSERT_TRUE(*(abs_base_got->GetTypeTrack()) == *(abstract_v1->GetTypeTrack()));
   ASSERT_TRUE(abs_base_got->GetTypeTrack()->type_id() == kNumberTypeInt64);
 }
-
 
 class TestGraphEval : public UT::Common {
  public:

@@ -15,7 +15,8 @@
  */
 #include "backend/common/graph_kernel/raise_reduction_precision.h"
 #include <memory>
-#include "mindspore/core/ops/core_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/optimizer/helper.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"

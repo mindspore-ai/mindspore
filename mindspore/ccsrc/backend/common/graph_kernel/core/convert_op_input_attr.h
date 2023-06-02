@@ -16,14 +16,15 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_CONVERT_OP_INPUT_ATTR_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_CONVERT_OP_INPUT_ATTR_H_
+
 #include <memory>
 #include <string>
 #include <unordered_map>
 
 #include "base/base.h"
+#include "include/backend/optimizer/pass.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
-#include "include/backend/optimizer/pass.h"
 #include "utils/hash_set.h"
 
 namespace mindspore::graphkernel {

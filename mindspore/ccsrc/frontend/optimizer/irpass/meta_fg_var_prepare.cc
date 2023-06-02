@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <memory>
 
+#include "mindspore/core/ops/sequence_ops.h"
 #include "utils/hash_map.h"
 #include "frontend/operator/composite/composite.h"
 #include "frontend/operator/ops.h"

@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 #include "ops/scatter_sub.h"
-#include <set>
 #include <map>
+#include <set>
 #include <string>
 #include "abstract/ops/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

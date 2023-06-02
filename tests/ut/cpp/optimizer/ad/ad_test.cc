@@ -17,6 +17,11 @@
 #include <unordered_map>
 
 #include "frontend/optimizer/ad/grad.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/comparison_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/arithmetic_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "common/common_test.h"
 #include "common/py_func_graph_fetcher.h"
 #include "ir/manager.h"

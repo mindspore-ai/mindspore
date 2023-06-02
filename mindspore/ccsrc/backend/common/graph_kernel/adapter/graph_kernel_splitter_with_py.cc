@@ -23,6 +23,7 @@
 #include <map>
 #include <set>
 #include <nlohmann/json.hpp>
+#include "mindspore/core/ops/sequence_ops.h"
 #include "utils/hash_map.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/python_adapter.h"

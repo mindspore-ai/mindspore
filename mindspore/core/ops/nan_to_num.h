@@ -16,11 +16,11 @@
 
 #ifndef MINDSPORE_CORE_OPS_NAN_TO_NUM_H_
 #define MINDSPORE_CORE_OPS_NAN_TO_NUM_H_
-#include <vector>
 #include <memory>
-#include "ops/base_operator.h"
-#include "mindapi/base/types.h"
+#include <vector>
 #include "include/common/utils/utils.h"
+#include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

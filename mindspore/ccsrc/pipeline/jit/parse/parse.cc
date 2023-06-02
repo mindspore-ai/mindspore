@@ -24,6 +24,9 @@
 #include <sstream>
 #include <algorithm>
 #include <stack>
+#include "mindspore/core/ops/structure_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "utils/hash_map.h"
 #include "pipeline/jit/fallback.h"
 #include "pipeline/jit/parse/resolve.h"

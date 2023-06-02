@@ -15,20 +15,21 @@
  */
 
 #include "plugin/device/cpu/optimizer/insert_cast_cpu.h"
+#include <algorithm>
 #include <memory>
 #include <string>
-#include <vector>
 #include <utility>
-#include <algorithm>
-#include "include/backend/optimizer/helper.h"
-#include "plugin/factory/ms_factory.h"
-#include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include <vector>
 #include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
 #include "include/backend/kernel_graph.h"
-#include "utils/ms_context.h"
+#include "include/backend/optimizer/helper.h"
+#include "include/common/utils/anfalgo.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/device/cpu/optimizer/cpu_pass_utils.h"
-#include "mindspore/core/ops/core_ops.h"
+#include "plugin/factory/ms_factory.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace opt {

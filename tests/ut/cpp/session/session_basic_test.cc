@@ -15,6 +15,7 @@
  */
 
 #include "common/common_test.h"
+#include "mindspore/core/ops/math_ops.h"
 #include "frontend/operator/ops.h"
 #include "plugin/device/ascend/hal/hardware/ascend_session.h"
 #include "include/backend/kernel_graph.h"

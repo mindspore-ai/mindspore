@@ -17,6 +17,7 @@
 #include "tools/converter/adapter/acl/mapper/matmul_fusion_mapper.h"
 #include <memory>
 #include <vector>
+#include "mindspore/core/ops/math_ops.h"
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "tools/converter/adapter/acl/common/utils.h"

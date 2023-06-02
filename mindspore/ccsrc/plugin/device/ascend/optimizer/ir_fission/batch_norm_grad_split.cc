@@ -18,6 +18,7 @@
 #include <vector>
 #include <memory>
 
+#include "mindspore/core/ops/sequence_ops.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "include/backend/optimizer/helper.h"

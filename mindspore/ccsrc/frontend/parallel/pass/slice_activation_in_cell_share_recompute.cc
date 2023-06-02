@@ -15,15 +15,16 @@
  */
 
 #include "frontend/parallel/pass/slice_activation_in_cell_share_recompute.h"
-#include <memory>
 #include <list>
-#include <vector>
+#include <memory>
 #include <string>
-#include "mindspore/core/ops/core_ops.h"
-#include "include/common/utils/utils.h"
-#include "frontend/parallel/tensor_layout/construct_operator.h"
-#include "frontend/parallel/step_parallel_utils.h"
+#include <vector>
 #include "frontend/parallel/step_parallel.h"
+#include "frontend/parallel/step_parallel_utils.h"
+#include "frontend/parallel/tensor_layout/construct_operator.h"
+#include "include/common/utils/utils.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 
 namespace mindspore {
 namespace parallel {

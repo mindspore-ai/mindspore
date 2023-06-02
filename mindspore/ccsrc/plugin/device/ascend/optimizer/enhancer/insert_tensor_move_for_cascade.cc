@@ -15,6 +15,7 @@
  */
 #include "plugin/device/ascend/optimizer/enhancer/insert_tensor_move_for_cascade.h"
 #include <vector>
+#include "mindspore/core/ops/sequence_ops.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

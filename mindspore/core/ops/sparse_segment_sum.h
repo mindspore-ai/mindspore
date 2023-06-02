@@ -16,13 +16,13 @@
 
 #ifndef MINDSPORE_CORE_OPS_SPARSE_SEGMENT_SUM_H_
 #define MINDSPORE_CORE_OPS_SPARSE_SEGMENT_SUM_H_
-#include <set>
 #include <map>
+#include <memory>
+#include <set>
 #include <string>
 #include <vector>
-#include <memory>
-#include "ops/base_operator.h"
 #include "abstract/abstract_value.h"
+#include "ops/base_operator.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {

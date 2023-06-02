@@ -17,15 +17,16 @@
 #include "ir/func_graph_cloner.h"
 #include <algorithm>
 #include <set>
-#include "ir/manager.h"
+
 #include "abstract/abstract_function.h"
+#include "ir/graph_utils.h"
+#include "ir/manager.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
-#include "utils/profile.h"
 #include "utils/ms_context.h"
-#include "ir/graph_utils.h"
 #include "utils/parallel_node_check.h"
-#include "mindspore/core/ops/core_ops.h"
+#include "utils/profile.h"
 #include "utils/trace_base.h"
 
 // namespace to support intermediate representation definition

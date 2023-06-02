@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <complex>
 #include "plugin/device/cpu/kernel/segment_max_min_cpu_kernel.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {

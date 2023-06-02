@@ -18,6 +18,9 @@
 #include "tools/optimizer/fusion/tensor_dot_fusion.h"
 #include <memory>
 #include <vector>
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ops/op_utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/lite_exporter/fetch_content.h"

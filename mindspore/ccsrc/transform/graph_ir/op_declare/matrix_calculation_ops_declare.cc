@@ -16,6 +16,7 @@
 
 #include "transform/graph_ir/op_declare/matrix_calculation_ops_declare.h"
 #include <string>
+#include "mindspore/core/ops/math_ops.h"
 
 namespace mindspore::transform {
 // TensorScatterUpdate

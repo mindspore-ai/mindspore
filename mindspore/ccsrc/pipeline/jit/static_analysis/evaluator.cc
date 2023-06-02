@@ -19,6 +19,8 @@
 #include <algorithm>
 #include <utility>
 
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "utils/hash_set.h"
 #include "ir/func_graph_cloner.h"
 #include "abstract/utils.h"
@@ -26,7 +28,6 @@
 #include "utils/ms_context.h"
 #include "pipeline/jit/static_analysis/stack_frame.h"
 #include "pipeline/jit/static_analysis/async_eval_result.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "frontend/expander/bprop/bprop_meta_func_graph.h"
 #include "frontend/operator/composite/unpack_call.h"
 #include "frontend/optimizer/ad/dfunctor.h"

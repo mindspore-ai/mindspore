@@ -17,8 +17,8 @@
 #ifndef MINDSPORE_CORE_OPS_IS_FINITE_H_
 #define MINDSPORE_CORE_OPS_IS_FINITE_H_
 
-#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

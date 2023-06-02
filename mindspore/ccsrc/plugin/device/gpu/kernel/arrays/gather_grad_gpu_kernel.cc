@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/arrays/gather_grad_gpu_kernel.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/hal/device/gpu_device_address.h"
 

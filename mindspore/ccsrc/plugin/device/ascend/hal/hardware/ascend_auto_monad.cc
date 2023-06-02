@@ -25,9 +25,14 @@
 #include <utility>
 #include <memory>
 #include <algorithm>
+#include "mindspore/core/ops/structure_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "utils/ms_context.h"
 #include "utils/ordered_map.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "pipeline/jit/base.h"
 #include "include/backend/anf_runtime_algorithm.h"

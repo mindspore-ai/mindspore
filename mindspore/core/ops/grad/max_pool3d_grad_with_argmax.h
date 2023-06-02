@@ -21,8 +21,8 @@
 #include <set>
 #include <string>
 #include <vector>
-#include "utils/check_convert_utils.h"
 #include "ops/base_operator.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

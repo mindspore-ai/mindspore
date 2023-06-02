@@ -15,6 +15,7 @@
  */
 
 #include "transform/graph_ir/op_declare/cluster_ops_declare.h"
+#include "mindspore/core/ops/other_ops.h"
 
 namespace mindspore::transform {
 // KMeansCentroids

@@ -22,6 +22,8 @@
 #include <set>
 #include <string>
 #include <vector>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/backend/optimizer/optimizer.h"
 #include "include/errorcode.h"
 #include "ir/func_graph.h"

@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 #include "backend/common/graph_kernel/floatstatus_addn_fusion.h"
-#include <vector>
-#include <string>
-#include <memory>
 #include <algorithm>
+#include <memory>
+#include <string>
 #include <unordered_set>
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "backend/common/graph_kernel/graph_kernel_flags.h"
-#include "backend/common/graph_kernel/graph_kernel_helper.h"
+#include <vector>
 #include "backend/common/graph_kernel/adapter/expander.h"
 #include "backend/common/graph_kernel/core/graph_builder.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
+#include "backend/common/graph_kernel/graph_kernel_flags.h"
+#include "backend/common/graph_kernel/graph_kernel_helper.h"
+#include "include/backend/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
 
 namespace mindspore::graphkernel {
 namespace {

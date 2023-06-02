@@ -22,7 +22,8 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include "mindspore/core/ops/core_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/common/utils/utils.h"
 #include "frontend/parallel/tensor_layout/construct_operator.h"
 #include "frontend/parallel/step_parallel.h"

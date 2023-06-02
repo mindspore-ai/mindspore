@@ -17,6 +17,7 @@
 #include "tools/converter/quantizer/quant_helper/quant_node_pass.h"
 #include <memory>
 #include <functional>
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/errorcode.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/quantizer/quantize_util.h"

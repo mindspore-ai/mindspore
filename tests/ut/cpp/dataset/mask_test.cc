@@ -16,6 +16,7 @@
 #include <memory>
 #include <string>
 #include "minddata/dataset/core/client.h"
+#include "mindspore/core/ops/comparison_ops.h"
 #include "common/common.h"
 #include "gtest/gtest.h"
 #include "securec.h"

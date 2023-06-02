@@ -22,6 +22,11 @@
 #include <mutex>
 #include <string>
 
+#include "mindspore/core/ops/structure_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ir/manager.h"
 #include "ir/dtype.h"
 #include "pipeline/jit/static_analysis/prim.h"

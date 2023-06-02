@@ -18,6 +18,7 @@
 
 #include "tools/optimizer/fusion/add_activation_fusion.h"
 #include <memory>
+#include "mindspore/core/ops/lite_ops.h"
 #include "ops/fusion/activation.h"
 #include "ops/fusion/add_fusion.h"
 #include "include/common/utils/utils.h"

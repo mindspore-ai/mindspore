@@ -15,23 +15,24 @@
  */
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <sstream>
-#include <utility>
 #include <unordered_map>
-#include <algorithm>
+#include <utility>
 
-#include "ir/anf.h"
-#include "ops/core_ops.h"
+#include "backend/common/graph_kernel/core/convert_op_input_attr.h"
+#include "backend/common/graph_kernel/graph_kernel_flags.h"
+#include "backend/common/graph_kernel/model/graph_builder.h"
+#include "backend/common/graph_kernel/model/node.h"
+#include "backend/common/graph_kernel/model/op_node.h"
+#include "mindspore/core/ops/conv_pool_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "runtime/hardware/device_context_manager.h"
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
-#include "backend/common/graph_kernel/model/op_node.h"
-#include "backend/common/graph_kernel/model/node.h"
-#include "backend/common/graph_kernel/model/graph_builder.h"
-#include "backend/common/graph_kernel/graph_kernel_flags.h"
-#include "runtime/hardware/device_context_manager.h"
-#include "backend/common/graph_kernel/core/convert_op_input_attr.h"
 
 namespace mindspore::graphkernel {
 std::string GkUtils::ExtractGraphKernelName(const AnfNodePtrList &nodes, const std::string &prefix,

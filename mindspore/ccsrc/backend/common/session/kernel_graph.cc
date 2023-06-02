@@ -15,22 +15,26 @@
  */
 #include "include/backend/kernel_graph.h"
 #include <algorithm>
+#include <exception>
 #include <queue>
 #include <set>
-#include <exception>
-#include "utils/hash_set.h"
-#include "mindspore/core/ops/core_ops.h"
-#include "include/common/utils/utils.h"
-#include "utils/check_convert_utils.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/kernel_info.h"
-#include "kernel/kernel_build_info.h"
-#include "runtime/device/kernel_runtime_manager.h"
-#include "kernel/common_utils.h"
-#include "include/backend/optimizer/helper.h"
-#include "utils/anf_utils.h"
 #include "backend/common/session/exec_order_builder.h"
+#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/kernel_info.h"
+#include "include/backend/optimizer/helper.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
+#include "kernel/common_utils.h"
+#include "kernel/kernel_build_info.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "runtime/device/kernel_runtime_manager.h"
+#include "utils/anf_utils.h"
+#include "utils/check_convert_utils.h"
+#include "utils/hash_set.h"
 
 namespace mindspore {
 namespace session {

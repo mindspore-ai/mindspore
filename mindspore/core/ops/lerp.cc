@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
+#include "ops/lerp.h"
+#include <algorithm>
 #include <map>
 #include <string>
-#include <algorithm>
-#include "ops/lerp.h"
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

@@ -15,6 +15,7 @@
  */
 #include "plugin/device/ascend/optimizer/buffer_fusion/fusion_base_pass.h"
 #include <memory>
+#include "mindspore/core/ops/framework_ops.h"
 #include "utils/ms_context.h"
 #include "plugin/device/ascend/optimizer/fusion_id_allocator.h"
 #include "include/backend/anf_runtime_algorithm.h"

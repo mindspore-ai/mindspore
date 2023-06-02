@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 #include "ops/mish.h"
-#include <string>
 #include <algorithm>
+#include <string>
 #include <vector>
-#include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "utils/check_convert_utils.h"
 namespace mindspore {
 namespace ops {
 namespace {

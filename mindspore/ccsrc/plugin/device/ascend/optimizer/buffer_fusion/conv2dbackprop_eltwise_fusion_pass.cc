@@ -17,9 +17,10 @@
 #include <unordered_set>
 #include <set>
 #include <string>
+#include "mindspore/core/ops/conv_pool_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "utils/ms_context.h"
 #include "plugin/device/ascend/optimizer/fusion_id_allocator.h"
 #include "plugin/device/ascend/hal/common/platform_info_util.h"

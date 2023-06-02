@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-#include <set>
 #include "ops/flatten.h"
-#include "utils/check_convert_utils.h"
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
+#include <set>
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "ops/op_utils.h"
+#include "ops/primitive_c.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

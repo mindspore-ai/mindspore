@@ -18,8 +18,8 @@
 #define MINDSPORE_CORE_OPS_CONV2D_TRANSPOSE_FUSION_H_
 #include <vector>
 
-#include "ops/conv2d_transpose.h"
 #include "mindapi/base/types.h"
+#include "ops/conv2d_transpose.h"
 
 namespace mindspore {
 namespace ops {

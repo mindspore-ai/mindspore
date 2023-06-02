@@ -23,6 +23,8 @@
 #include <vector>
 #include <memory>
 
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "frontend/operator/ops.h"
 #include "ir/manager.h"
 #include "ir/func_graph_cloner.h"

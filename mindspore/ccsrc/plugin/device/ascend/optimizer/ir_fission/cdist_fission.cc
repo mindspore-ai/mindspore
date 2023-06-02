@@ -17,6 +17,8 @@
 #include <algorithm>
 #include <memory>
 #include <vector>
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "backend/operator/ops_backend_infer_function.h"
 #include "include/common/utils/anfalgo.h"

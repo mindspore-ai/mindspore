@@ -17,8 +17,8 @@
 #ifndef MINDSPORE_CORE_OPS_SETSIZE_H_
 #define MINDSPORE_CORE_OPS_SETSIZE_H_
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 #include "mindapi/base/types.h"
 #include "ops/base_operator.h"

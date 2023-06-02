@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "include/transform/graph_ir/utils.h"
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "transform/graph_ir/convert.h"
 #include "transform/graph_ir/op_adapter_map.h"
 #include "transform/graph_ir/op_adapter_util.h"

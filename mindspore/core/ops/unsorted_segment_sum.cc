@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 #include "ops/unsorted_segment_sum.h"
-#include <string>
 #include <algorithm>
+#include <map>
 #include <memory>
 #include <set>
-#include <map>
-#include <vector>
+#include <string>
 #include <utility>
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
+#include <vector>
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "ops/op_utils.h"
 #include "ops/unsorted_segment_arithmetic.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

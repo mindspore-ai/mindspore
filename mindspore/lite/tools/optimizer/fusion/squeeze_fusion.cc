@@ -17,6 +17,9 @@
 #define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/squeeze_fusion.h"
 #include <memory>
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "schema/inner/model_generated.h"
 #include "ops/squeeze.h"
 #include "ops/unsqueeze.h"

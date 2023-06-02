@@ -19,6 +19,8 @@
 #include <vector>
 #include <string>
 #include <regex>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/backend/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
 

@@ -24,7 +24,8 @@
 #include <map>
 #include <tuple>
 #include "ir/func_graph.h"
-#include "ops/core_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/math_ops.h"
 #include "ops/shape_calc.h"
 #include "ir/functor.h"
 #include "include/common/utils/utils.h"

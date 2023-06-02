@@ -21,22 +21,22 @@
 #include <tuple>
 #include <utility>
 
-#include "base/base.h"
-#include "utils/hash_set.h"
-#include "kernel/common_utils.h"
-#include "kernel/graph_kernel/graph_kernel_json_generator.h"
-#include "kernel/graph_kernel/akg/akg_kernel_json_decoder.h"
-#include "kernel/kernel.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
 #include "backend/common/graph_kernel/adapter/fake_abstract_shape.h"
 #include "backend/common/graph_kernel/core/graph_builder.h"
-#include "ir/anf.h"
-#include "ir/func_graph_cloner.h"
-#include "ir/func_graph.h"
-#include "include/common/utils/python_adapter.h"
-#include "pipeline/jit/action.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
+#include "base/base.h"
+#include "include/backend/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/python_adapter.h"
+#include "ir/func_graph.h"
+#include "ir/func_graph_cloner.h"
+#include "kernel/common_utils.h"
+#include "kernel/graph_kernel/akg/akg_kernel_json_decoder.h"
+#include "kernel/graph_kernel/graph_kernel_json_generator.h"
+#include "kernel/kernel.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "pipeline/jit/action.h"
+#include "utils/hash_set.h"
 
 namespace mindspore::graphkernel {
 namespace {

@@ -17,6 +17,7 @@
 
 #include <memory>
 
+#include "mindspore/core/ops/nn_ops.h"
 #include "ir/graph_utils.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/parallel_context.h"

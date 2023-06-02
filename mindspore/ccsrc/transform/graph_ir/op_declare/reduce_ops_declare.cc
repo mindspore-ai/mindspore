@@ -16,6 +16,8 @@
 
 #include "transform/graph_ir/op_declare/reduce_ops_declare.h"
 #include <vector>
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/math_ops.h"
 
 namespace mindspore::transform {
 // BNTrainingReduce

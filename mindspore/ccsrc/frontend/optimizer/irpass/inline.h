@@ -22,6 +22,7 @@
 #include <algorithm>
 
 #include "utils/hash_map.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "frontend/optimizer/irpass.h"
 #include "include/common/utils/parallel_context.h"
 #include "frontend/optimizer/optimizer.h"

@@ -16,13 +16,13 @@
 #ifndef MINDSPORE_CORE_OPS_SHAPE_CALC_H_
 #define MINDSPORE_CORE_OPS_SHAPE_CALC_H_
 
-#include <vector>
 #include <memory>
-#include "ir/anf.h"
-#include "ops/base_operator.h"
-#include "mindapi/base/macros.h"
-#include "ir/functor.h"
+#include <vector>
 #include "include/common/utils/utils.h"
+#include "ir/anf.h"
+#include "ir/functor.h"
+#include "mindapi/base/macros.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

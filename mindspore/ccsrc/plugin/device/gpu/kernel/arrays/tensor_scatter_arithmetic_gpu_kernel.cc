@@ -17,6 +17,7 @@
 #include "plugin/device/gpu/kernel/arrays/tensor_scatter_arithmetic_gpu_kernel.h"
 #include <functional>
 #include "mindspore/core/abstract/utils.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/base_operator.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 

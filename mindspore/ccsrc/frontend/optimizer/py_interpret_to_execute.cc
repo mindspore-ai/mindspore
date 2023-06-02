@@ -21,6 +21,8 @@
 #include <utility>
 #include <unordered_map>
 
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "abstract/abstract_function.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/utils.h"

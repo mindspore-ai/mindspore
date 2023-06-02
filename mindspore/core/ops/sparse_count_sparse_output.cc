@@ -18,11 +18,9 @@
 #include <set>
 #include <vector>
 
-#include "utils/check_convert_utils.h"
-#include "abstract/ops/primitive_infer_map.h"
-#include "ops/sparse_count_sparse_output.h"
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include "abstract/param_validator.h"
 #include "base/base.h"
 #include "include/common/utils/utils.h"
@@ -32,11 +30,13 @@
 #include "mindapi/base/shape_vector.h"
 #include "mindapi/base/shared_ptr.h"
 #include "mindapi/ir/value.h"
-#include "ops/core_ops.h"
+#include "mindapi/src/helper.h"
+#include "mindspore/core/ops/sparse_ops.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
+#include "ops/sparse_count_sparse_output.h"
+#include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

@@ -16,8 +16,8 @@
 
 #ifndef MINDSPORE_CORE_OPS_ARGMIN_FUSION_H_
 #define MINDSPORE_CORE_OPS_ARGMIN_FUSION_H_
-#include <vector>
 #include <memory>
+#include <vector>
 
 #include "ops/arg_min.h"
 

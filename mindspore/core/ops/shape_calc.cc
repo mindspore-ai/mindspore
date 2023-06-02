@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 #include "ops/shape_calc.h"
-#include <vector>
-#include <string>
-#include <unordered_set>
 #include <algorithm>
 #include <memory>
+#include <string>
+#include <unordered_set>
+#include <vector>
+#include "abstract/ops/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/hash_set.h"
-#include "abstract/ops/primitive_infer_map.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

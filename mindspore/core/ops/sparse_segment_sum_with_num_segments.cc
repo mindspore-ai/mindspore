@@ -17,10 +17,11 @@
 #include <map>
 #include <set>
 
-#include "ops/sparse_segment_sum_with_num_segments.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "ops/op_name.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/sparse_ops.h"
+#include "ops/op_name.h"
+#include "ops/sparse_segment_sum_with_num_segments.h"
 
 namespace mindspore {
 namespace ops {

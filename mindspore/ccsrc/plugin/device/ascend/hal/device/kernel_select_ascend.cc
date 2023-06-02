@@ -26,6 +26,11 @@
 #include <tuple>
 #include <algorithm>
 #include <functional>
+#include "mindspore/core/ops/conv_pool_ops.h"
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "plugin/device/ascend/kernel/kernel_query.h"
 #include "kernel/oplib/oplib.h"
 #include "kernel/oplib/super_bar.h"

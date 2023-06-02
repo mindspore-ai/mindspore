@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 #include "plugin/device/gpu/hal/device/gpu_kernel_build.h"
-#include <string>
-#include <memory>
 #include <map>
+#include <memory>
+#include <string>
 #include "kernel/kernel.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
 #ifndef _MSC_VER
 #include "plugin/device/gpu/kernel/akg/akg_gpu_kernel_build.h"
 #endif
-#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "kernel/common_utils.h"
+#include "backend/common/session/kernel_build_client.h"
 #include "frontend/operator/ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "backend/common/session/kernel_build_client.h"
+#include "kernel/common_utils.h"
 #include "plugin/device/gpu/hal/device/cuda_env_checker.h"
+#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 namespace mindspore {
 namespace device {
 namespace gpu {

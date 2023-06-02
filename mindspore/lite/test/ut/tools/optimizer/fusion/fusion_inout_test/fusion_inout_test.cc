@@ -17,13 +17,14 @@
 #define USE_DEPRECATED_API
 #include "test/ut/tools/optimizer/fusion/fusion_inout_test/fusion_inout_test.h"
 #include <memory>
-#include "src/common/log_adapter.h"
-#include "tools/common/tensor_util.h"
+#include "ir/func_graph.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "ops/fusion/conv2d_fusion.h"
 #include "ops/make_tuple.h"
 #include "ops/return.h"
-#include "ir/func_graph.h"
-#include "ops/fusion/conv2d_fusion.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
+#include "src/common/log_adapter.h"
+#include "tools/common/tensor_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore {

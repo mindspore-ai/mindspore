@@ -15,15 +15,14 @@
  */
 #include "ops/dropout_do_mask.h"
 
+#include <memory>
 #include <set>
 #include <vector>
-#include <memory>
 
-#include "utils/check_convert_utils.h"
-#include "abstract/ops/primitive_infer_map.h"
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
 #include "abstract/ops/op_infer.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include "abstract/utils.h"
 #include "base/base.h"
 #include "base/float16.h"
@@ -33,12 +32,13 @@
 #include "ir/scalar.h"
 #include "ir/tensor.h"
 #include "mindapi/base/type_id.h"
-#include "ops/core_ops.h"
+#include "mindapi/src/helper.h"
+#include "mindspore/core/ops/nn_ops.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
+#include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

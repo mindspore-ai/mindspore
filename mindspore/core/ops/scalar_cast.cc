@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-#include <vector>
-#include <string>
-#include <set>
-#include <memory>
 #include "ops/scalar_cast.h"
-#include "ops/op_utils.h"
+#include <memory>
+#include <set>
+#include <string>
+#include <vector>
 #include "abstract/ops/op_infer.h"
-#include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/arithmetic_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

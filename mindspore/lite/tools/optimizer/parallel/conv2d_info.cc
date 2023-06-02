@@ -20,6 +20,8 @@
 #include <vector>
 #include <string>
 #include <numeric>
+#include "mindspore/core/ops/conv_pool_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "ops/split_with_overlap.h"
 #include "tools/optimizer/common/gllo_utils.h"

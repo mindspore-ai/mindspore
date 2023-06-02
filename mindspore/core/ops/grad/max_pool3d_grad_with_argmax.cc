@@ -16,8 +16,8 @@
 
 #include "ops/grad/max_pool3d_grad_with_argmax.h"
 
-#include <map>
 #include <algorithm>
+#include <map>
 #include <set>
 #include <utility>
 
@@ -32,14 +32,14 @@
 #include "ir/primitive.h"
 #include "mindapi/base/shared_ptr.h"
 #include "mindapi/ir/value.h"
-#include "ops/core_ops.h"
+#include "mindapi/src/helper.h"
+#include "mindspore/core/ops/conv_pool_ops.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

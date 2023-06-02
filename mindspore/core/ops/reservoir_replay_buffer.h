@@ -19,10 +19,10 @@
 #include <memory>
 #include <vector>
 
-#include "ops/base_operator.h"
+#include "ir/dtype/type.h"
 #include "mindapi/base/types.h"
 #include "mindapi/ir/common.h"
-#include "ir/dtype/type.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

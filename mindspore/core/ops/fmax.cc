@@ -15,13 +15,14 @@
  */
 
 #include "ops/fmax.h"
-#include <string>
 #include <memory>
 #include <set>
-#include "abstract/ops/op_infer.h"
+#include <string>
 #include "abstract/dshape.h"
-#include "ops/op_utils.h"
+#include "abstract/ops/op_infer.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {

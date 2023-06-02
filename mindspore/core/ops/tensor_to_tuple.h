@@ -16,8 +16,8 @@
 
 #ifndef MINDSPORE_CORE_OPS_TENSOR_TO_TUPLE_H_
 #define MINDSPORE_CORE_OPS_TENSOR_TO_TUPLE_H_
+#include "mindspore/core/ops/sequence_ops.h"
 #include "ops/base_operator.h"
-#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace ops {

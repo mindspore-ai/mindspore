@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <string>
+#include "mindspore/core/ops/array_ops.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 
 namespace mindspore {

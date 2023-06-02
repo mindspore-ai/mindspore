@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 #include "ops/ragged_tensor_to_tensor.h"
+#include <algorithm>
+#include <functional>
+#include <map>
+#include <memory>
+#include <set>
 #include <string>
 #include <vector>
-#include <memory>
-#include <map>
-#include <functional>
-#include <algorithm>
-#include <set>
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/sparse_ops.h"
 
 namespace mindspore {
 namespace ops {

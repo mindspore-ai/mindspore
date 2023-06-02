@@ -18,11 +18,11 @@
 #define MINDSPORE_CORE_OPS_ADDER_FUSION_H_
 
 #include <map>
-#include <vector>
-#include <string>
 #include <memory>
-#include "ops/adder.h"
+#include <string>
+#include <vector>
 #include "mindapi/base/types.h"
+#include "ops/adder.h"
 
 namespace mindspore {
 namespace ops {

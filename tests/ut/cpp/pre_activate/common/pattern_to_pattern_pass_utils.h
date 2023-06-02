@@ -20,7 +20,6 @@
 #include <vector>
 #include <memory>
 #include "common/common_test.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "ir/anf.h"
 #include "ir/value.h"
 #include "include/common/utils/utils.h"

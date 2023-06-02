@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <functional>
 #include <memory>
+#include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "mindspore/core/ops/grad/fast_gelu_grad.h"
 
 namespace mindspore {

@@ -17,13 +17,13 @@
 #include <string>
 #include "common/common_test.h"
 
+#include "mindspore/core/ops/arithmetic_ops.h"
 #include "utils/log_adapter.h"
 #include "pipeline/jit/validator.h"
 #include "pipeline/jit/parse/parse.h"
 #include "ir/manager.h"
 #include "pipeline/jit/static_analysis/prim.h"
 #include "frontend/operator/ops.h"
-#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace validator {

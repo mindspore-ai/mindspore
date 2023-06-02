@@ -17,11 +17,12 @@
 #ifndef MINDSPORE_CORE_OPS_ADAPTIVEMAXPOOL2D_H_
 #define MINDSPORE_CORE_OPS_ADAPTIVEMAXPOOL2D_H_
 
-#include <vector>
 #include <string>
+#include <vector>
 
-#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "mindspore/core/ops/conv_pool_ops.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

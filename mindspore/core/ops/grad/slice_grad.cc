@@ -16,9 +16,10 @@
 
 #include "ops/grad/slice_grad.h"
 #include <set>
-#include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

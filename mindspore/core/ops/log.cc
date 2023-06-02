@@ -15,17 +15,18 @@
  */
 
 #include "ops/log.h"
-#include <string>
-#include <vector>
-#include <set>
+#include <cmath>
+#include <complex>
 #include <map>
 #include <memory>
-#include <complex>
-#include <cmath>
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
+#include <set>
+#include <string>
+#include <vector>
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

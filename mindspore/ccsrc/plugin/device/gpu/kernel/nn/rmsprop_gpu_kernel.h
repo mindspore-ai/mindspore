@@ -22,6 +22,7 @@
 #include <map>
 #include <memory>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/rmsprop_impl.cuh"
 #include "mindspore/core/ops/apply_rms_prop.h"

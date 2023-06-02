@@ -19,6 +19,9 @@
 #include <string>
 #include <vector>
 
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/conv_pool_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "utils/hash_set.h"
 #include "include/backend/optimizer/helper.h"
 #include "include/backend/anf_runtime_algorithm.h"

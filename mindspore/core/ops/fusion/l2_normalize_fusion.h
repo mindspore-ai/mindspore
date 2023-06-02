@@ -18,8 +18,8 @@
 #define MINDSPORE_CORE_OPS_L2_NORMALIZE_FUSION_H_
 #include <vector>
 
-#include "ops/l2_normalize.h"
 #include "mindapi/base/types.h"
+#include "ops/l2_normalize.h"
 
 namespace mindspore {
 namespace ops {

@@ -21,6 +21,7 @@
 #include <string>
 #include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include "mindspore/core/ops/random_ops.h"
 #include "plugin/factory/ms_factory.h"
 #include "kernel/common_utils.h"
 

@@ -16,10 +16,16 @@
 #include "backend/common/pass/const_input_to_attr.h"
 
 #include <vector>
+#include "mindspore/core/ops/sparse_ops.h"
+#include "mindspore/core/ops/conv_pool_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/image_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "utils/anf_utils.h"
 #include "include/common/utils/utils.h"
 #include "utils/log_adapter.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "include/backend/optimizer/helper.h"
 
 namespace mindspore {

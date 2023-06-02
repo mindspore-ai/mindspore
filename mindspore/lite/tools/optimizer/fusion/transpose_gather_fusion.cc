@@ -18,6 +18,7 @@
 #include "tools/optimizer/fusion/transpose_gather_fusion.h"
 #include <algorithm>
 #include <set>
+#include "mindspore/core/ops/array_ops.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/common/format_utils.h"
 #include "tools/lite_exporter/fetch_content.h"

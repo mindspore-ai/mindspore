@@ -15,6 +15,8 @@
  */
 
 #include "ir/func_graph_cloner.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "frontend/optimizer/ad/prim_bprop_optimizer.h"
 #include "pipeline/jit/pass.h"
 

@@ -19,6 +19,7 @@
 #include <memory>
 #include <set>
 #include <vector>
+#include "mindspore/core/ops/sequence_ops.h"
 #include "kernel/common_utils.h"
 #include "backend/common/graph_kernel/graph_kernel_helper.h"
 

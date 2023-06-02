@@ -15,14 +15,17 @@
  */
 #include <memory>
 
+#include "abstract/abstract_function.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "common/common_test.h"
-#include "ir/anf.h"
-#include "ir/value.h"
 #include "frontend/operator/composite/composite.h"
 #include "frontend/operator/ops.h"
-#include "pipeline/jit/static_analysis/prim.h"
-#include "abstract/abstract_function.h"
+#include "ir/anf.h"
+#include "ir/value.h"
 #include "pipeline/jit/debug/trace.h"
+#include "pipeline/jit/static_analysis/prim.h"
 
 namespace mindspore {
 using Shape = abstract::Shape;
@@ -107,9 +110,8 @@ TEST_F(TestComposite, test_TupleSlice_arg_two_numbers) {
     engine_->Run(tupleSliceGraphPtr, args_spec_list);
     FAIL() << "Excepted exception :Args type is wrong";
   } catch (std::runtime_error const &err) {
-    ASSERT_TRUE(
-      std::string(err.what()).find("For 'TupleSlice', the number of input should be 2, but got 3") !=
-      std::string::npos);
+    ASSERT_TRUE(std::string(err.what()).find("For 'TupleSlice', the number of input should be 2, but got 3") !=
+                std::string::npos);
   } catch (...) {
     FAIL() << "Excepted exception :Args type is wrong";
   }

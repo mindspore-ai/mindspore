@@ -16,13 +16,14 @@
 
 #include "ops/sparse_matrix_softmax.h"
 
-#include <vector>
-#include <string>
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "abstract/ops/primitive_infer_map.h"
 #include "abstract/param_validator.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/sparse_ops.h"
 #include "ops/op_name.h"
 #include "utils/check_convert_utils.h"
 

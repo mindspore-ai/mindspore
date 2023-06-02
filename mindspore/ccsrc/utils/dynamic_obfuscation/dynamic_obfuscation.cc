@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 #include "include/common/utils/dynamic_obfuscation/dynamic_obfuscation.h"
-#include <cstdlib>
 #include <algorithm>
+#include <cstdlib>
+#include <functional>
 #include <map>
 #include <memory>
-#include <functional>
 #include <random>
-#include "include/common/utils/dynamic_obfuscation/registry_opaque_predicate.h"
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/comparison_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/common/debug/anf_ir_dump.h"
-#include "utils/info.h"
+#include "include/common/utils/dynamic_obfuscation/registry_opaque_predicate.h"
 #include "include/common/utils/utils.h"
 #include "ir/anf.h"
 #include "ir/tensor.h"
-#include "ops/core_ops.h"
+#include "utils/info.h"
 
 namespace mindspore {
 namespace {

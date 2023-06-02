@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_MINDIR_REG_ASCEND_VM_OP_ADAPTATION_INFO_H_
 
 #include "include/backend/optimizer/op_adaptation_info_factory.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "plugin/device/ascend/optimizer/mindir/reg_ascend_vm_op_adaptation_funcs.h"
 #include "include/common/utils/utils.h"
 

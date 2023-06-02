@@ -17,8 +17,10 @@
 #include "ops/resize_v2.h"
 #include <set>
 #include <vector>
-#include "ops/op_utils.h"
+#include "include/common/utils/utils.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/image_ops.h"
+#include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {

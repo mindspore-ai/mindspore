@@ -16,6 +16,8 @@
 
 #include "plugin/device/gpu/optimizer/clip_by_norm_fission.h"
 #include <algorithm>
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "ir/anf.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/optimizer/helper.h"

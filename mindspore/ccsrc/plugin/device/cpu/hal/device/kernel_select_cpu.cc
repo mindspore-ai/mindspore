@@ -20,6 +20,11 @@
 #include <algorithm>
 #include <set>
 #include <unordered_set>
+#include "mindspore/core/ops/sparse_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/arithmetic_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "kernel/oplib/oplib.h"
@@ -29,7 +34,6 @@
 #include "utils/trace_base.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/utils.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "mindspore/core/ops/op_name.h"
 
 namespace mindspore {

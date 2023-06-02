@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <utility>
 #include <string>
+#include "mindspore/core/ops/sequence_ops.h"
 #include "utils/hash_map.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"

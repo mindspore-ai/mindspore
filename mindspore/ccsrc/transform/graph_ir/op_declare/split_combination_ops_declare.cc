@@ -16,6 +16,7 @@
 
 #include "transform/graph_ir/op_declare/split_combination_ops_declare.h"
 #include <vector>
+#include "mindspore/core/ops/array_ops.h"
 
 namespace mindspore::transform {
 // SplitD

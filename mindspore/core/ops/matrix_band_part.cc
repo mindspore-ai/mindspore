@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 #include "ops/matrix_band_part.h"
-#include <string>
 #include <algorithm>
+#include <set>
+#include <string>
 #include <vector>
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {

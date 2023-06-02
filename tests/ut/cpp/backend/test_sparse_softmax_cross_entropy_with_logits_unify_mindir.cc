@@ -15,6 +15,7 @@
  */
 #include <memory>
 #include "backend/graph_optimizer_test_framework.h"
+#include "mindspore/core/ops/sequence_ops.h"
 #include "common/common_test.h"
 #include "plugin/device/ascend/optimizer/mindir/sparse_softmax_cross_entropy_with_logits_unify_mindir.h"
 #include "include/common/utils/anfalgo.h"

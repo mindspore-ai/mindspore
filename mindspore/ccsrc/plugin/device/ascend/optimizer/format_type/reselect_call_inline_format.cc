@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/ascend/optimizer/format_type/reselect_call_inline_format.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 
 namespace mindspore {

@@ -18,6 +18,7 @@
 #include "tools/optimizer/fusion/fullconnected_fusion.h"
 #include <memory>
 #include <vector>
+#include "mindspore/core/ops/nn_ops.h"
 #include "tools/common/tensor_util.h"
 #include "ops/fusion/full_connection.h"
 #include "tools/optimizer/common/gllo_utils.h"

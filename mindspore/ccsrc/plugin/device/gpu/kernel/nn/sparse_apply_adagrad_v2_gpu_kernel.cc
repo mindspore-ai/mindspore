@@ -15,6 +15,7 @@
  */
 
 #include "mindspore/core/ops/sparse_apply_adagrad_v2.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "plugin/device/gpu/kernel/nn/sparse_apply_adagrad_v2_gpu_kernel.h"
 
 namespace mindspore {

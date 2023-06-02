@@ -18,6 +18,7 @@
 #include "tools/optimizer/fusion/strided_slice_fusion.h"
 #include <memory>
 #include <vector>
+#include "mindspore/core/ops/array_ops.h"
 #include "tools/optimizer/fusion/strided_slice_checker.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/lite_exporter/fetch_content.h"

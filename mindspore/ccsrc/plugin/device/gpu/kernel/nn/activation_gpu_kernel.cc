@@ -16,6 +16,8 @@
 
 #include "plugin/device/gpu/kernel/nn/activation_gpu_kernel.h"
 #include <memory>
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/math_ops.h"
 #include "ops/elu.h"
 namespace mindspore {
 namespace kernel {

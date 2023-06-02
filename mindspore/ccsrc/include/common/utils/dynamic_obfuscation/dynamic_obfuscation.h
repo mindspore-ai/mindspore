@@ -23,9 +23,12 @@
 #include <stack>
 #include <set>
 #include "load_mindir/load_model.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
 #include "include/common/visible.h"
 #include "include/common/utils/utils.h"
-#include "ops/core_ops.h"
 
 namespace mindspore {
 enum struct ObfCase : unsigned int { NotObfNode, OneInputNoWeightNode, OneInputWithWeightNode };

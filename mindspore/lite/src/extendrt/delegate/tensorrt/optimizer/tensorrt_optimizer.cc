@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 #include "extendrt/delegate/tensorrt/optimizer/tensorrt_optimizer.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "include/common/utils/anfalgo.h"
 

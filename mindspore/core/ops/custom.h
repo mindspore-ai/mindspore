@@ -16,10 +16,10 @@
 
 #ifndef MINDSPORE_CORE_OPS_CUSTOM_H_
 #define MINDSPORE_CORE_OPS_CUSTOM_H_
-#include <string>
-#include <vector>
 #include <map>
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "ops/base_operator.h"
 

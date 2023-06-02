@@ -29,6 +29,7 @@
 #include <deque>
 
 #include "utils/hash_map.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "pybind11/pybind11.h"
 
 #include "ir/anf.h"

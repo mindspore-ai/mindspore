@@ -19,6 +19,7 @@
 
 #include <map>
 #include "frontend/optimizer/anf_visitor.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/optimizer.h"
 

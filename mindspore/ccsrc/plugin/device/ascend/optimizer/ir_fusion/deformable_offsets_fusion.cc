@@ -17,6 +17,7 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
+#include "mindspore/core/ops/nn_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "include/common/utils/anfalgo.h"

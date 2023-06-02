@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-#include "common/common_test.h"
-#include "abstract/abstract_function.h"
 #include "runtime/graph_scheduler/scheduler_helper.h"
+#include "abstract/abstract_function.h"
+#include "common/common_test.h"
+#include "mindspore/core/ops/comparison_ops.h"
 
 namespace mindspore {
 namespace runtime {

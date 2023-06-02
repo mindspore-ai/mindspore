@@ -16,6 +16,8 @@
 
 #include "backend/common/pass/adjust_depend_for_parallel_optimizer_recompute_all_gather.h"
 #include <algorithm>
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {

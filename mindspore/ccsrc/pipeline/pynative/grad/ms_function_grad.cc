@@ -16,6 +16,7 @@
 
 #include "pipeline/pynative/grad/ms_function_grad.h"
 #include <utility>
+#include "mindspore/core/ops/sequence_ops.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/parallel_context.h"

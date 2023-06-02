@@ -16,8 +16,8 @@
 
 #ifndef MINDSPORE_CORE_OPS_SUB_FUSION_H_
 #define MINDSPORE_CORE_OPS_SUB_FUSION_H_
-#include "ops/sub.h"
 #include "mindapi/base/types.h"
+#include "ops/sub.h"
 
 namespace mindspore {
 namespace ops {

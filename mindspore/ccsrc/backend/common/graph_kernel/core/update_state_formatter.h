@@ -19,6 +19,7 @@
 
 #include <vector>
 #include "include/backend/optimizer/pass.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ir/func_graph.h"
 
 namespace mindspore::graphkernel {

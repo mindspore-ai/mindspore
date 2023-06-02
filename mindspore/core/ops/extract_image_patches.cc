@@ -19,25 +19,26 @@
 #include <map>
 #include <set>
 
-#include "ir/dtype/number.h"
-#include "utils/check_convert_utils.h"
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
 #include "abstract/ops/op_infer.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "base/base.h"
 #include "ir/anf.h"
+#include "ir/dtype/number.h"
 #include "ir/primitive.h"
 #include "ir/value.h"
 #include "mindapi/base/shared_ptr.h"
 #include "mindapi/ir/value.h"
-#include "ops/core_ops.h"
+#include "mindapi/src/helper.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/math_ops.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
+#include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

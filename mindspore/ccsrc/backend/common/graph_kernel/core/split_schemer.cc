@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 #include "backend/common/graph_kernel/core/split_schemer.h"
-#include "ops/core_ops.h"
-
+#include "mindspore/core/ops/sequence_ops.h"
 namespace mindspore::graphkernel {
 bool SplitSchemer::NeedInline(size_t group_id) const {
   if (group_id >= need_inline_.size()) {

@@ -16,9 +16,9 @@
 
 #ifndef MINDSPORE_CORE_OPS_GEQRF_H_
 #define MINDSPORE_CORE_OPS_GEQRF_H_
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 #include "ops/base_operator.h"
 
 namespace mindspore {

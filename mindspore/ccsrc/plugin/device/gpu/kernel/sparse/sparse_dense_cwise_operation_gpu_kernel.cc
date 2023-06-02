@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "mindspore/core/abstract/utils.h"
+#include "mindspore/core/ops/sparse_ops.h"
 #include "mindspore/core/ops/base_operator.h"
 #include "mindspore/core/ops/sparse_dense_cwise_add.h"
 #include "mindspore/core/ops/sparse_dense_cwise_div.h"

@@ -18,6 +18,7 @@
 #include <memory>
 #include <utility>
 #include <algorithm>
+#include "mindspore/core/ops/array_ops.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "include/common/utils/stub_tensor.h"
 

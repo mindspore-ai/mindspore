@@ -16,9 +16,10 @@
 
 #include "plugin/device/gpu/kernel/sequence/sequence_addn_gpu_kernel.h"
 #include <algorithm>
-#include <utility>
 #include <complex>
 #include <functional>
+#include <utility>
+#include "mindspore/core/ops/math_ops.h"
 
 namespace mindspore {
 namespace kernel {

@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <memory>
 #include <vector>
+#include "mindspore/core/ops/lite_ops.h"
 #include "nnacl/op_base.h"
 #include "ops/fusion/add_fusion.h"
 #include "ops/fusion/mul_fusion.h"

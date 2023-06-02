@@ -16,9 +16,12 @@
 
 #include <set>
 #include <string>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 
 #include "utils/parallel_node_check.h"
-#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 // clang-format off

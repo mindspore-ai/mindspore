@@ -18,6 +18,7 @@
 
 #include <memory>
 #include "include/backend/optimizer/optimizer.h"
+#include "mindspore/core/ops/lite_ops.h"
 
 namespace mindspore {
 namespace opt {

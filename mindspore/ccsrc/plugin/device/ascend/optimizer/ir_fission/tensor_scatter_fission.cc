@@ -18,10 +18,10 @@
 #include <vector>
 #include <memory>
 
+#include "mindspore/core/ops/array_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
-#include "ops/core_ops.h"
 #include "include/backend/optimizer/helper.h"
 #include "utils/trace_base.h"
 

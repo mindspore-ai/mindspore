@@ -21,6 +21,8 @@
 #include <string>
 #include <algorithm>
 
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "utils/hash_map.h"
 #include "ir/func_graph_cloner.h"
 #include "pipeline/jit/parse/parse_base.h"

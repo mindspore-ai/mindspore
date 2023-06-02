@@ -23,12 +23,14 @@
 #include <vector>
 #include <queue>
 
+#include "mindspore/core/ops/structure_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "utils/hash_map.h"
 #include "ir/func_graph.h"
 #include "ir/primitive.h"
 #include "utils/ms_context.h"
 #include "utils/anf_utils.h"
-#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 const AbstractBasePtr &AnfNode::abstract() const {

@@ -17,6 +17,7 @@
 #include <memory>
 
 #include "common/common_test.h"
+#include "mindspore/core/ops/arithmetic_ops.h"
 #include "common/py_func_graph_fetcher.h"
 
 #include "ir/manager.h"
@@ -27,7 +28,6 @@
 #include "ir/graph_utils.h"
 #include "utils/misc.h"
 #include "include/common/debug/draw.h"
-#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace abstract {

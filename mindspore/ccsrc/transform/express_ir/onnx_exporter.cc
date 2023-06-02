@@ -20,9 +20,19 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include "mindspore/core/ops/core_ops.h"
+
 #include "ir/func_graph.h"
+#include "ir/param_info.h"
 #include "ir/tensor.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/comparison_ops.h"
+#include "mindspore/core/ops/conv_pool_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/image_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
 #include "proto/onnx.pb.h"
 #include "utils/check_convert_utils.h"
 #include "utils/hash_map.h"

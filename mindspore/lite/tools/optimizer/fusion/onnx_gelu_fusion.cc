@@ -17,6 +17,7 @@
 #define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/onnx_gelu_fusion.h"
 #include <unordered_map>
+#include "mindspore/core/ops/lite_ops.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {
