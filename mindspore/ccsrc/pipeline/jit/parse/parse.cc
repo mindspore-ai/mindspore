@@ -2597,8 +2597,14 @@ AnfNodePtr Parser::ParseListCompIfs(const FunctionBlockPtr &list_body_block, con
   AnfNodePtr elt_node = ParseExprNode(list_body_block, elt_obj);
   // Append the element.
   MS_EXCEPTION_IF_NULL(list_body_block->func_graph());
-  auto new_list = list_body_block->func_graph()->NewCNodeInOrder(
-    {NewValueNode(std::make_shared<prim::ListAppend>("ListAppend")), list_param, elt_node});
+  std::vector<AnfNodePtr> list_vec;
+  AnfNodePtr make_list_op = list_body_block->MakeResolveOperation(NAMED_PRIMITIVE_MAKELIST);
+  list_vec.emplace_back(make_list_op);
+  list_vec.emplace_back(elt_node);
+  CNodePtr list_app = list_body_block->func_graph()->NewCNodeInOrder(std::move(list_vec));
+  std::string add_module_name = "mindspore.ops.composite.multitype_ops.add_impl";
+  ValuePtr add_op = prim::GetPythonOps("add", add_module_name);
+  CNodePtr new_list = list_body_block->func_graph()->NewCNodeInOrder({NewValueNode(add_op), list_param, list_app});
   // Return new list in true branch graph.
   if_true_block->func_graph()->set_output(new_list);
 
