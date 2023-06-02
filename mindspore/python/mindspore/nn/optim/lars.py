@@ -108,7 +108,9 @@ class LARS(Optimizer):
         >>> import mindspore as ms
         >>> from mindspore import nn
         >>>
-        >>> net = Net()
+        >>> # Define the network structure of LeNet5. Refer to
+        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> net = LeNet5()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> opt = nn.Momentum(net.trainable_params(), 0.1, 0.9)
         >>> opt_lars = nn.LARS(opt, epsilon=1e-08, coefficient=0.02)
