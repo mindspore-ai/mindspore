@@ -34,6 +34,7 @@ class AscendGraphOptimization {
   }
 
   void OptimizeGraph(const KernelGraphPtr &graph);
+  void OptimizeGEGraph(const KernelGraphPtr &graph);
   void OptimizeACLGraph(const KernelGraphPtr &graph);
   void OptimizeACLGraphAfterKernelSelect(const KernelGraphPtr &graph);
   void OptimizeSingleOpGraph(const KernelGraphPtr &graph);

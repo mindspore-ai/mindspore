@@ -236,6 +236,25 @@ void AscendGraphOptimization::OptimizeACLGraph(const KernelGraphPtr &graph) {
   MS_LOG(DEBUG) << "Status record: end optimize acl graph. graph id: " << graph->graph_id();
 }
 
+void AscendGraphOptimization::OptimizeGEGraph(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_LOG(DEBUG) << "Status record: start optimize ge graph. graph id: " << graph->graph_id();
+  // empty graph dont entry to backend
+  if (graph->execution_order().empty()) {
+    MS_LOG(DEBUG) << graph->ToString() << " is empty graph.";
+    AnfAlgo::InsertMakeTupleForOutput(NOT_NULL(graph));
+    graph->set_executable(false);
+    MS_LOG(DEBUG) << "Status record: end optimize ge graph. graph id: " << graph->graph_id();
+  }
+  opt::AscendBackendOptimizeACL(graph);
+  opt::AscendBackendOptimizeGE(graph);
+
+  memo_.clear();
+  // clear and reset graph_manager_ after optimization
+  graph_manager_ = MakeManager();
+  MS_LOG(DEBUG) << "Status record: end optimize ge graph. graph id: " << graph->graph_id();
+}
+
 void AscendGraphOptimization::OptimizeACLGraphAfterKernelSelect(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(DEBUG) << "Status record: start optimize acl graph after kernel select. graph id: " << graph->graph_id();
