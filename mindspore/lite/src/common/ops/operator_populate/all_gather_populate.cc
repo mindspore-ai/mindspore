@@ -40,7 +40,13 @@ OpParameter *PopulateAllGatherOpParameter(const BaseOperatorPtr &base_operator) 
     free(param);
     return nullptr;
   }
-  (void)memcpy(param->group_, group.c_str(), group.size());
+  auto ret = memcpy_s(param->group_, group.size(), group.c_str(), group.size());
+  if (ret != EOK) {
+    MS_LOG(ERROR) << "Failed to copy data, memcpy_s errorno: " << ret;
+    free(param);
+    return nullptr;
+  }
+
   param->rank_size_ = op->get_rank_size();
   return reinterpret_cast<OpParameter *>(param);
 }
