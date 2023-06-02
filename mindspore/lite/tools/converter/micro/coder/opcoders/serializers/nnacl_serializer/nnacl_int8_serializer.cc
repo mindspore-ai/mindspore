@@ -61,14 +61,16 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const ConvParamete
     conv_parameter.channel_multiplie_, conv_parameter.output_padding_w_, conv_parameter.output_padding_h_);
 }
 
-void NNaclInt8Serializer::CodeStruct(const std::string &name, const MatMulParameter &matmul_parameter) {
-  CodeBaseStruct<false>(
-    "MatMulParameter", name, matmul_parameter.op_parameter_, matmul_parameter.has_bias_, matmul_parameter.row_,
-    matmul_parameter.col_, matmul_parameter.row_4_, matmul_parameter.row_6_, matmul_parameter.row_12_,
-    matmul_parameter.row_16_, matmul_parameter.row_align_, matmul_parameter.col_4_, matmul_parameter.col_8_,
-    matmul_parameter.col_align_, matmul_parameter.deep_, matmul_parameter.deep_4_, matmul_parameter.deep_16_,
-    matmul_parameter.deep_align_, matmul_parameter.batch, matmul_parameter.a_transpose_, matmul_parameter.b_transpose_,
-    matmul_parameter.a_const_, matmul_parameter.b_const_, matmul_parameter.act_type_);
+void NNaclInt8Serializer::CodeStruct(const std::string &name, const MicroMatmulParameter &micro_matmul_parameter) {
+  CodeBaseStruct<false>("MicroMatmulParameter", name, micro_matmul_parameter.act_type_,
+                        micro_matmul_parameter.thread_num_, micro_matmul_parameter.row_, micro_matmul_parameter.col_,
+                        micro_matmul_parameter.row_4_, micro_matmul_parameter.row_6_, micro_matmul_parameter.row_12_,
+                        micro_matmul_parameter.row_16_, micro_matmul_parameter.row_align_,
+                        micro_matmul_parameter.col_4_, micro_matmul_parameter.col_8_, micro_matmul_parameter.col_align_,
+                        micro_matmul_parameter.deep_, micro_matmul_parameter.deep_4_, micro_matmul_parameter.deep_16_,
+                        micro_matmul_parameter.deep_align_, micro_matmul_parameter.batch,
+                        micro_matmul_parameter.a_transpose_, micro_matmul_parameter.b_transpose_,
+                        micro_matmul_parameter.a_const_, micro_matmul_parameter.b_const_);
 }
 
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const TransposeParameter &transpose_parameter) {

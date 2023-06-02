@@ -33,7 +33,7 @@ int Convolution1x1FP16Coder::Prepare(CoderContext *const context) {
   }
 
   if (matmul_param_ == nullptr) {
-    matmul_param_ = new (std::nothrow) MatMulParameter();
+    matmul_param_ = new (std::nothrow) MicroMatmulParameter();
     if (matmul_param_ == nullptr) {
       MS_LOG(ERROR) << "Init matmul_param_ failed.";
       return RET_ERROR;
@@ -153,6 +153,7 @@ void Convolution1x1FP16Coder::CollectFilesForFunc(CoderContext *const context) {
             "nnacl/op_base.h",
             "nnacl/fp16/conv_fp16.h",
             "nnacl/base/conv1x1_base.h",
+            "wrapper/base/micro_parameter.h",
           },
           {
             "common_func.c",

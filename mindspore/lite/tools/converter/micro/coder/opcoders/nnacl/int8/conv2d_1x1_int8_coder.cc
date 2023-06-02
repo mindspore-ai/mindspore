@@ -27,7 +27,7 @@
 
 namespace mindspore::lite::micro::nnacl {
 int Conv2D1x1Int8Coder::Prepare(CoderContext *const context) {
-  matmul_param_ = new (std::nothrow) MatMulParameter();
+  matmul_param_ = new (std::nothrow) MicroMatmulParameter();
   MS_CHECK_PTR(matmul_param_);
   MS_CHECK_RET_CODE(Conv2DBaseCoder::Init(), "Init failed");
   MS_CHECK_RET_CODE(Conv2DBaseCoder::SetQuantParam(), "SetQuantParam failed");
@@ -47,6 +47,7 @@ int Conv2D1x1Int8Coder::DoCode(CoderContext *const context) {
           {
             "wrapper/int8/conv1x1_init_int8_wrapper.h",
             "wrapper/int8/conv1x1_run_int8_wrapper.h",
+            "wrapper/base/micro_parameter.h",
             "nnacl/common_func.h",
             "nnacl/base/conv1x1_base.h",
             "nnacl/int8/matmul_int8.h",

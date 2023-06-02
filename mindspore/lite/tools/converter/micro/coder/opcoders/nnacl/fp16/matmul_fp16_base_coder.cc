@@ -29,7 +29,7 @@ int MatMulFP16BaseCoder::InitBufferForBias() {
   if (bias_ptr_) {
     return RET_OK;
   }
-  bias_pack_ptr_size_ = static_cast<size_t>(params_->col_align_ * DataTypeSize(data_type_));
+  bias_pack_ptr_size_ = static_cast<size_t>(params_.col_align_ * DataTypeSize(data_type_));
   if (input_tensors_.size() == C3NUM) {
     bias_ptr_ =
       allocator_->Malloc(data_type_, kOnlineSize, kOnlinePackWeight, bias_tensor_->tensor_name() + "_online_pack");
@@ -45,8 +45,8 @@ int MatMulFP16BaseCoder::InitBufferA() {
   if (a_pack_ptr_ != nullptr || vec_matmul_) {
     return RET_OK;
   }
-  a_pack_ptr_size_ = static_cast<size_t>(a_batch_ * params_->row_align_ * params_->deep_ * DataTypeSize(data_type_));
-  if (params_->a_const_) {
+  a_pack_ptr_size_ = static_cast<size_t>(a_batch_ * params_.row_align_ * params_.deep_ * DataTypeSize(data_type_));
+  if (params_.a_const_) {
     a_pack_ptr_ = allocator_->GetSharedWeightAddr(input_tensor_);
     if (a_pack_ptr_ == nullptr) {
       a_pack_ptr_ =
@@ -64,7 +64,7 @@ int MatMulFP16BaseCoder::InitBufferA() {
 
 int MatMulFP16BaseCoder::InitBufferB() {
   if (target_ != kARM64) {
-    if (vec_matmul_ && params_->b_transpose_) {
+    if (vec_matmul_ && params_.b_transpose_) {
       return RET_OK;
     }
   }
@@ -93,46 +93,44 @@ std::string MatMulFP16BaseCoder::InitMatrixA(NNaclFp32Serializer *const code, NN
   }
   std::string input_a_str = allocator_->GetRuntimeAddr(input_tensor_);
   std::string input_a_pack_str = allocator_->GetRuntimeAddr(static_cast<float16 *>(a_pack_ptr_));
-  if (params_->a_const_) {
+  if (params_.a_const_) {
     init_code->CodeBufferOffsetExpression(a_pack_ptr_, context->weight_name(), context->weight_offset_name(),
                                           context->weight_size_name(), a_pack_ptr_size_);
     *w_buf = *w_buf + a_pack_ptr_size_;
   }
-  NNaclFp32Serializer &pack_code = params_->a_const_ ? *init_code : *code;
+  NNaclFp32Serializer &pack_code = params_.a_const_ ? *init_code : *code;
   if (a_batch_ == 1) {
-    if (params_->a_transpose_) {
+    if (params_.a_transpose_) {
       if (target_ == kARM64) {
-        pack_code.CodeFunction("RowMajor2RowNMajorFp16", input_a_str, input_a_pack_str, params_->deep_, params_->row_);
+        pack_code.CodeFunction("RowMajor2RowNMajorFp16", input_a_str, input_a_pack_str, params_.deep_, params_.row_);
       } else {
-        pack_code.CodeFunction("RowMajor2Row12MajorFp16", input_a_str, input_a_pack_str, params_->deep_, params_->row_,
+        pack_code.CodeFunction("RowMajor2Row12MajorFp16", input_a_str, input_a_pack_str, params_.deep_, params_.row_,
                                false);
       }
     } else {
       if (target_ == kARM64) {
-        pack_code.CodeFunction("RowMajor2ColNMajorFp16", input_a_str, input_a_pack_str, params_->row_, params_->deep_);
+        pack_code.CodeFunction("RowMajor2ColNMajorFp16", input_a_str, input_a_pack_str, params_.row_, params_.deep_);
       } else {
-        pack_code.CodeFunction("RowMajor2Col12MajorFp16", input_a_str, input_a_pack_str, params_->row_, params_->deep_,
+        pack_code.CodeFunction("RowMajor2Col12MajorFp16", input_a_str, input_a_pack_str, params_.row_, params_.deep_,
                                false);
       }
     }
   } else {
     pack_code << "  for (int i = 0; i < " << a_batch_ << "; i++) {\n"
-              << "    float16_t *src = " << input_a_str << " + i * " << params_->deep_ * params_->row_ << ";\n"
-              << "    float16_t *dst = " << input_a_pack_str << " + i * " << params_->deep_ * params_->row_align_
+              << "    float16_t *src = " << input_a_str << " + i * " << params_.deep_ * params_.row_ << ";\n"
+              << "    float16_t *dst = " << input_a_pack_str << " + i * " << params_.deep_ * params_.row_align_
               << ";\n";
-    if (params_->a_transpose_) {
+    if (params_.a_transpose_) {
       if (target_ == kARM64) {
-        pack_code << "    RowMajor2RowNMajorFp16(src, dst, " << params_->deep_ << ", " << params_->row_ << ");\n";
+        pack_code << "    RowMajor2RowNMajorFp16(src, dst, " << params_.deep_ << ", " << params_.row_ << ");\n";
       } else {
-        pack_code << "    RowMajor2Row12MajorFp16(src, dst, " << params_->deep_ << ", " << params_->row_
-                  << ", false);\n";
+        pack_code << "    RowMajor2Row12MajorFp16(src, dst, " << params_.deep_ << ", " << params_.row_ << ", false);\n";
       }
     } else {
       if (target_ == kARM64) {
-        pack_code << "    RowMajor2ColNMajorFp16(src, dst, " << params_->row_ << ", " << params_->deep_ << ");\n";
+        pack_code << "    RowMajor2ColNMajorFp16(src, dst, " << params_.row_ << ", " << params_.deep_ << ");\n";
       } else {
-        pack_code << "    RowMajor2Col12MajorFp16(src, dst, " << params_->row_ << ", " << params_->deep_
-                  << ", false);\n";
+        pack_code << "    RowMajor2Col12MajorFp16(src, dst, " << params_.row_ << ", " << params_.deep_ << ", false);\n";
       }
     }
     pack_code << "  }\n";
@@ -142,28 +140,28 @@ std::string MatMulFP16BaseCoder::InitMatrixA(NNaclFp32Serializer *const code, NN
 
 std::string MatMulFP16BaseCoder::InitMatrixB(NNaclFp32Serializer *const code, NNaclFp32Serializer *const init_code,
                                              CoderContext *const context, size_t *w_buf) {
-  bool not_pack = target_ != kARM64 && vec_matmul_ && params_->b_transpose_;
+  bool not_pack = target_ != kARM64 && vec_matmul_ && params_.b_transpose_;
   if (not_pack) {
     return allocator_->GetRuntimeAddr(filter_tensor_, filter_tensor_->IsConst());
   }
   std::string input_b_str = allocator_->GetRuntimeAddr(filter_tensor_);
   std::string input_b_pack_str = allocator_->GetRuntimeAddr(static_cast<float16 *>(b_pack_ptr_));
-  if (params_->b_const_) {
+  if (params_.b_const_) {
     init_code->CodeBufferOffsetExpression(b_pack_ptr_, context->weight_name(), context->weight_offset_name(),
                                           context->weight_size_name(), b_pack_ptr_size_);
     *w_buf = *w_buf + b_pack_ptr_size_;
   }
-  NNaclFp32Serializer &pack_code = params_->b_const_ ? *init_code : *code;
+  NNaclFp32Serializer &pack_code = params_.b_const_ ? *init_code : *code;
   if (target_ != kARM64) {
     if (vec_matmul_) {
       if (b_batch_ == 1) {
-        pack_code.CodeFunction("RowMajor2ColMajorFp16", input_b_str, input_b_pack_str, params_->deep_, params_->col_,
+        pack_code.CodeFunction("RowMajor2ColMajorFp16", input_b_str, input_b_pack_str, params_.deep_, params_.col_,
                                false);
       } else {
         pack_code << "  for (int i = 0; i < " << b_batch_ << "; i++) {\n"
-                  << "    float16_t *src = " << input_b_str << " + i * " << params_->deep_ * params_->col_ << ";\n"
-                  << "    float16_t *dst = " << input_b_pack_str << " + i * " << params_->deep_ * params_->col_ << ";\n"
-                  << "    RowMajor2ColMajorFp16(src, dst, " << params_->deep_ << ", " << params_->col_ << ", false);\n"
+                  << "    float16_t *src = " << input_b_str << " + i * " << params_.deep_ * params_.col_ << ";\n"
+                  << "    float16_t *dst = " << input_b_pack_str << " + i * " << params_.deep_ * params_.col_ << ";\n"
+                  << "    RowMajor2ColMajorFp16(src, dst, " << params_.deep_ << ", " << params_.col_ << ", false);\n"
                   << "  }\n";
       }
       return input_b_pack_str;
@@ -171,22 +169,22 @@ std::string MatMulFP16BaseCoder::InitMatrixB(NNaclFp32Serializer *const code, NN
   }
 
   if (b_batch_ == 1) {
-    if (params_->b_transpose_) {
-      pack_code.CodeFunction("RowMajor2Col8MajorFp16", input_b_str, input_b_pack_str, params_->col_, params_->deep_,
+    if (params_.b_transpose_) {
+      pack_code.CodeFunction("RowMajor2Col8MajorFp16", input_b_str, input_b_pack_str, params_.col_, params_.deep_,
                              false);
     } else {
-      pack_code.CodeFunction("RowMajor2Row8MajorFp16", input_b_str, input_b_pack_str, params_->deep_, params_->col_,
+      pack_code.CodeFunction("RowMajor2Row8MajorFp16", input_b_str, input_b_pack_str, params_.deep_, params_.col_,
                              false);
     }
   } else {
     pack_code << "  for (int i = 0; i < " << b_batch_ << "; i++) {\n"
-              << "    float16_t *src = " << input_b_str << " + i * " << params_->deep_ * params_->col_ << ";\n"
-              << "    float16_t *dst = " << input_b_pack_str << " + i * " << params_->deep_ * params_->col_align_
+              << "    float16_t *src = " << input_b_str << " + i * " << params_.deep_ * params_.col_ << ";\n"
+              << "    float16_t *dst = " << input_b_pack_str << " + i * " << params_.deep_ * params_.col_align_
               << ";\n";
-    if (params_->b_transpose_) {
-      pack_code << "    RowMajor2Col8MajorFp16(src, dst, " << params_->col_ << ", " << params_->deep_ << ", false);\n";
+    if (params_.b_transpose_) {
+      pack_code << "    RowMajor2Col8MajorFp16(src, dst, " << params_.col_ << ", " << params_.deep_ << ", false);\n";
     } else {
-      pack_code << "    RowMajor2Row8MajorFp16(src, dst, " << params_->deep_ << ", " << params_->col_ << ", false);\n";
+      pack_code << "    RowMajor2Row8MajorFp16(src, dst, " << params_.deep_ << ", " << params_.col_ << ", false);\n";
     }
     pack_code << "  }\n";
   }
@@ -207,15 +205,15 @@ int MatMulFP16BaseCoder::Prepare(CoderContext *const context) {
   MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "init A-metrics' info failed");
   ret = InitBShape();
   MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "init B-metrics' info failed");
-  if (params_->row_ == 1) {
+  if (params_.row_ == 1) {
     vec_matmul_ = true;
   }
   if (vec_matmul_) {
-    params_->row_align_ = 1;
-    params_->col_align_ = (target_ == kARM64) ? UP_ROUND(params_->col_, C8NUM) : params_->col_;
+    params_.row_align_ = 1;
+    params_.col_align_ = (target_ == kARM64) ? UP_ROUND(params_.col_, C8NUM) : params_.col_;
   } else {
-    params_->row_align_ = UP_ROUND(params_->row_, row_tile_);
-    params_->col_align_ = UP_ROUND(params_->col_, C8NUM);
+    params_.row_align_ = UP_ROUND(params_.row_, row_tile_);
+    params_.col_align_ = UP_ROUND(params_.col_, C8NUM);
   }
   MS_CHECK_RET_CODE(InitBufferA(), "InitBufferA failed");
   MS_CHECK_RET_CODE(InitBufferB(), "InitBufferB failed");
@@ -263,23 +261,23 @@ int MatMulFP16BaseCoder::DoCode(CoderContext *const context) {
   auto input_a_str = InitMatrixA(&code, &init_code, context, &w_buf_size);
   auto input_b_str = InitMatrixB(&code, &init_code, context, &w_buf_size);
   auto output_str = allocator_->GetRuntimeAddr(output_tensor_);
-  code << "    for (int i = 0; i < " << params_->batch << "; ++i) {\n";
+  code << "    for (int i = 0; i < " << params_.batch << "; ++i) {\n";
   if (vec_matmul_) {
-    code << "      const float16_t *batch_a_ptr = " << input_a_str << " + i * " << params_->deep_ << ";\n";
+    code << "      const float16_t *batch_a_ptr = " << input_a_str << " + i * " << params_.deep_ << ";\n";
     code << "      const float16_t *batch_b_ptr = " << input_b_str << " + i * "
-         << params_->deep_ * (target_ == kARM64 ? params_->col_align_ : params_->col_) << ";\n";
-    code << "      float16_t *batch_c_ptr = " << output_str << " + i * " << params_->row_ * params_->col_ << ";\n  ";
+         << params_.deep_ * (target_ == kARM64 ? params_.col_align_ : params_.col_) << ";\n";
+    code << "      float16_t *batch_c_ptr = " << output_str << " + i * " << params_.row_ * params_.col_ << ";\n  ";
     code.CodeFunction(target_ == kARM64 ? "VecMatmulFp16" : "MatVecMulFp16", "batch_a_ptr", "batch_b_ptr",
-                      "batch_c_ptr", bias_str, params_->act_type_, params_->deep_, params_->col_);
+                      "batch_c_ptr", bias_str, params_.act_type_, params_.deep_, params_.col_);
   } else {
-    code << "      const float16_t *batch_a_ptr = " << input_a_str << " + i * " << params_->row_align_ * params_->deep_
+    code << "      const float16_t *batch_a_ptr = " << input_a_str << " + i * " << params_.row_align_ * params_.deep_
          << ";\n";
-    code << "      const float16_t *batch_b_ptr = " << input_b_str << " + i * " << params_->deep_ * params_->col_align_
+    code << "      const float16_t *batch_b_ptr = " << input_b_str << " + i * " << params_.deep_ * params_.col_align_
          << ";\n";
-    code << "      float16_t *batch_c_ptr = " << output_str << " + i * " << params_->row_ * params_->col_ << ";\n  ";
+    code << "      float16_t *batch_c_ptr = " << output_str << " + i * " << params_.row_ * params_.col_ << ";\n  ";
     code.CodeFunction(target_ == kARM64 ? "MatmulBaseFp16Neon" : "MatMulFp16", "batch_a_ptr", "batch_b_ptr",
-                      "batch_c_ptr", bias_str, params_->act_type_, params_->deep_, params_->row_, params_->col_,
-                      params_->col_, OutType_Nhwc);
+                      "batch_c_ptr", bias_str, params_.act_type_, params_.deep_, params_.row_, params_.col_,
+                      params_.col_, OutType_Nhwc);
   }
   code << "  }\n";
   context->AppendInitWeightSizeCode(w_buf_size);

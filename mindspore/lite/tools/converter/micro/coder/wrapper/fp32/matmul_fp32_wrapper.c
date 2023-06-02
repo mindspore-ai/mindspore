@@ -16,7 +16,8 @@
 
 #include "wrapper/fp32/matmul_fp32_wrapper.h"
 #include "nnacl/fp32/pack_fp32.h"
-void InitMatrixA(const float *src_ptr, float *dst_ptr, const MatMulParameter *params_, bool is_vector_a) {
+
+void InitMatrixA(const float *src_ptr, float *dst_ptr, const MicroMatmulParameter *params_, bool is_vector_a) {
   if (is_vector_a) {
     memcpy(dst_ptr, src_ptr, (size_t)(params_->batch * params_->deep_) * sizeof(float));
     return;
@@ -32,7 +33,7 @@ void InitMatrixA(const float *src_ptr, float *dst_ptr, const MatMulParameter *pa
   }
 }
 
-void InitMatrixB(const float *src_ptr, float *dst_ptr, const MatMulParameter *params_, bool is_vector_a) {
+void InitMatrixB(const float *src_ptr, float *dst_ptr, const MicroMatmulParameter *params_, bool is_vector_a) {
   if (is_vector_a) {
     if (params_->b_transpose_) {
       memcpy(dst_ptr, src_ptr, (size_t)(params_->batch * params_->col_ * params_->deep_) * sizeof(float));

@@ -45,7 +45,7 @@ class DeConvolutionFP32Coder : public Conv2DBaseCoder {
   virtual int InitRunBuf();
   int InitParam();
 
-  MatMulParameter matmul_param_{};
+  MicroMatmulParameter matmul_param_{};
   size_t pack_output_size_{0};
   size_t tmp_buffer_size_{0};
   size_t pack_input_size_{0};

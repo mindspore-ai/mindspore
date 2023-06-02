@@ -155,6 +155,7 @@ void DeConvolutionFP32Coder::CollectFilesForFunc(CoderContext *const context) {
             "nnacl/fp32/matmul_fp32.h",
             "nnacl/conv_parameter.h",
             "nnacl/matmul_parameter.h",
+            "wrapper/base/micro_parameter.h",
             "nnacl/op_base.h",
           },
           {

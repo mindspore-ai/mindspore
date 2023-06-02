@@ -19,7 +19,7 @@
 #include "nnacl/fp32/matmul_fp32.h"
 
 int DoDeconvFp32(const float *packed_input, const float *packed_weight, const float *packed_bias, float *packed_output,
-                 float *output, float *tmp_ori_buffer, const MatMulParameter *matmul_param,
+                 float *output, float *tmp_ori_buffer, const MicroMatmulParameter *matmul_param,
                  const ConvParameter *conv_param, int task_id) {
   int thread_count = MSMIN(conv_param->thread_num_, UP_DIV(conv_param->output_channel_, C8NUM));
   int thread_stride = UP_DIV(UP_DIV(conv_param->output_channel_, C8NUM), thread_count);
@@ -55,7 +55,7 @@ int DoDeconvFp32(const float *packed_input, const float *packed_weight, const fl
 
 int DeConvFp32Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   DeConvFp32Args *args = (DeConvFp32Args *)cdata;
-  const MatMulParameter *matmul_param = args->matmul_param_;
+  const MicroMatmulParameter *matmul_param = args->matmul_param_;
   const ConvParameter *conv_param = args->conv_param_;
   const float *packed_input = args->packed_input_;
   const float *packed_weight = args->packed_weight_;

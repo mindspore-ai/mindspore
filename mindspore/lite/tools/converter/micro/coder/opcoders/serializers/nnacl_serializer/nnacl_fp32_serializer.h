@@ -24,6 +24,7 @@
 #include "nnacl/fp32/arithmetic_fp32.h"
 #include "nnacl/conv_parameter.h"
 #include "nnacl/matmul_parameter.h"
+#include "wrapper/base/micro_parameter.h"
 #include "nnacl/scale_parameter.h"
 #include "nnacl/slice_parameter.h"
 #include "nnacl/split_parameter.h"
@@ -60,7 +61,7 @@ class NNaclFp32Serializer : public Serializer {
   void CodeStruct(const std::string &name, const InstanceNormParameter &param);
   void CodeStruct(const std::string &name, const ArithmeticParameter &arithmetic_parameter);
   void CodeStruct(const std::string &name, const ConvParameter &conv_parameter);
-  void CodeStruct(const std::string &name, const MatMulParameter &mat_mul_parameter);
+  void CodeStruct(const std::string &name, const MicroMatmulParameter &micro_matmul_parameter);
   void CodeStruct(const std::string &name, const LstmParameter &lstm_parameter);
   void CodeStruct(const std::string &name, const ScaleParameter &scale_parameter);
   void CodeStruct(const std::string &name, const SliceParameter &slice_parameter);

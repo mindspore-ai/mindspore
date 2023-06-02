@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include "nnacl/conv_parameter.h"
+#include "wrapper/base/micro_parameter.h"
 
 namespace mindspore::lite::micro::nnacl {
 class Conv2D1x1Int8Coder final : public Conv2DBaseCoder {
@@ -57,7 +58,7 @@ class Conv2D1x1Int8Coder final : public Conv2DBaseCoder {
   int8_t *input_ptr_{nullptr};
   int8_t *output_ptr_{nullptr};
   size_t input_sum_size_{0};
-  MatMulParameter *matmul_param_{nullptr};
+  MicroMatmulParameter *matmul_param_{nullptr};
   std::string matmul_func_;
   bool pre_trans_input_{false};
   bool support_optimize_{false};

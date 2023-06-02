@@ -107,6 +107,7 @@ void DeConvolutionFP16Coder::CollectFilesForFunc(CoderContext *const context) {
             "nnacl/conv_parameter.h",
             "nnacl/common_func.h",
             "nnacl/matmul_parameter.h",
+            "wrapper/base/micro_parameter.h",
             "nnacl/op_base.h",
           },
           {

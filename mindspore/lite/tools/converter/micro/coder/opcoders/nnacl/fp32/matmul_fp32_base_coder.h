@@ -20,6 +20,7 @@
 #include <vector>
 #include "coder/opcoders/op_coder.h"
 #include "nnacl/matmul_parameter.h"
+#include "wrapper/base/micro_parameter.h"
 
 namespace mindspore::lite::micro::nnacl {
 class MatMulFP32BaseCoder : public OperatorCoder {
@@ -52,7 +53,7 @@ class MatMulFP32BaseCoder : public OperatorCoder {
  protected:
   Tensor *filter_tensor_{nullptr};
   Tensor *bias_tensor_{nullptr};
-  MatMulParameter *params_{nullptr};
+  MicroMatmulParameter params_;
   void *a_pack_ptr_ = nullptr;
   void *b_pack_ptr_ = nullptr;
   void *bias_ptr_{nullptr};
