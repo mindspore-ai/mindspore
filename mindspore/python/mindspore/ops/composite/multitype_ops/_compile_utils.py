@@ -1078,13 +1078,36 @@ def tensor_setitem_by_number(self, index, value):
     return tensor_setitem_by_number_with_sequence(self, index, value)
 
 
+class _TensorIndexSetitem(base.TensorIndexSetitem_):
+    """
+    Getting item of Tensor.
+
+    Args:
+        data (Tensor): A tuple to be sliced.
+        index: Index of tensor.
+
+    Returns:
+        Type is the same as the element type of data.
+    """
+
+    def __init__(self, name):
+        """Initialize _TensorIndexGetitem."""
+        base.TensorIndexSetitem_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+_tensor_index_setitem = _TensorIndexSetitem('tensor_index_setitem')
+
+
 def tensor_setitem_by_slice(self, index, value):
-    index = convert_variable_to_tensor_slice(index)
-    if isinstance(value, (int, float, bool)):
-        return tensor_setitem_by_slice_with_number(self, index, value)
-    if isinstance(value, Tensor):
-        return tensor_setitem_by_slice_with_tensor(self, index, value)
-    return tensor_setitem_by_slice_with_sequence(self, index, value)
+    indices, value_shape, start, stop, step, value = _tensor_index_setitem(
+        self, index, value)
+    value = F.broadcast_to(value, value_shape)
+    if not const_utils.is_ascend() and step == 1:
+        return copy_slice(self, value, start, stop, step)
+    return F.tensor_scatter_update(self, indices, value)
 
 
 def tensor_setitem_by_ellipsis(self, index, value):

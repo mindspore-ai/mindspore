@@ -38,9 +38,26 @@ namespace mindspore {
 namespace prim {
 enum class IndexHandleLevel { kHandleByConstFold, kHandleByFunc };
 
-class TensorIndexGetitem : public MetaFuncGraph {
+class TensorIndex : public MetaFuncGraph {
  public:
-  explicit TensorIndexGetitem(const std::string &name) : MetaFuncGraph(name) {}
+  explicit TensorIndex(const std::string &name) : MetaFuncGraph(name) {}
+  ~TensorIndex() override = default;
+
+ protected:
+  AnfNodePtr NormalizeSliceInfo(const AnfNodePtr &data_node, const AnfNodePtr &index_node,
+                                const IndexHandleLevel &index_handle_level,
+                                const abstract::AbstractSlicePtr &abs_slice_ptr, bool *empty);
+  AnfNodePtrList NormalizeSlice(const AbstractBasePtrList &slice_info_abs, const AnfNodePtr &shape_node,
+                                const AnfNodePtr &index_node);
+  IndexHandleLevel PreHandleIndex(const AbstractBasePtr &data, const abstract::AbstractSlicePtr &abs_slice);
+
+  FuncGraphPtr res_graph_;
+  ShapeVector data_shape_;
+};
+
+class TensorIndexGetitem : public TensorIndex {
+ public:
+  explicit TensorIndexGetitem(const std::string &name) : TensorIndex(name) {}
   ~TensorIndexGetitem() override = default;
   MS_DECLARE_PARENT(TensorIndexGetitem, MetaFuncGraph)
   FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
@@ -49,14 +66,24 @@ class TensorIndexGetitem : public MetaFuncGraph {
   }
 
  private:
-  AnfNodePtrList NormalizeSlice(const AbstractBasePtrList &slice_info_abs, const AnfNodePtr &shape_node,
-                                const AnfNodePtr &index_node);
   void GetItemBySlice(const AnfNodePtr &data_node, const AnfNodePtr &index_node, const AbstractBasePtr &data,
                       const abstract::AbstractSlicePtr &abs_slice_ptr);
-  IndexHandleLevel PreHandleIndex(const AbstractBasePtr &data, const abstract::AbstractSlicePtr &abs_slice);
+};
 
-  FuncGraphPtr res_graph_;
-  ShapeVector data_shape_;
+class TensorIndexSetitem : public TensorIndex {
+ public:
+  explicit TensorIndexSetitem(const std::string &name) : TensorIndex(name) {}
+  ~TensorIndexSetitem() override = default;
+  MS_DECLARE_PARENT(TensorIndexSetitem, MetaFuncGraph)
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  friend bool operator==(const TensorIndexSetitem &lhs, const TensorIndexSetitem &rhs) {
+    return lhs.name_ == rhs.name_;
+  }
+
+ private:
+  void SetItemBySlice(const AnfNodePtr &data_node, const AnfNodePtr &index_node, const AnfNodePtr &value_node,
+                      const AbstractBasePtr &data, const abstract::AbstractSlicePtr &abs_slice_ptr,
+                      const AbstractBasePtr &value);
 };
 
 const int64_t kIndexMax = std::numeric_limits<int64_t>::max();
