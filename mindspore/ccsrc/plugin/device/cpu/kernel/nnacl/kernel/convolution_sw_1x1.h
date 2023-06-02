@@ -17,6 +17,7 @@
 #ifndef NNACL_KERNEL_CONVOLLUTION_SW_1X1_H_
 #define NNACL_KERNEL_CONVOLLUTION_SW_1X1_H_
 
+#ifdef ENABLE_AVX
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
@@ -31,5 +32,5 @@ typedef struct ConvolutionSW1x1Struct {
 } ConvolutionSW1x1Struct;
 
 ConvolutionBaseStruct *CreateConvolutionSW1x1(ConvParameter *conv_param);
-
+#endif
 #endif  // NNACL_KERNEL_CONVOLLUTION_SW_1X1_H_

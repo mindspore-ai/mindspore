@@ -66,11 +66,6 @@ typedef struct ConvolutionBaseStruct {
   int pad_d_;
   int pad_l_;
   int pad_r_;
-  //  int group_;
-  //  int tile_num_;
-  //  int channel_multiplie_;
-  //  int output_padding_w_;
-  //  int output_padding_h_;
 } ConvolutionBaseStruct;
 
 void ConvBaseRelease(ConvolutionBaseStruct *conv);

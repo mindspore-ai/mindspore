@@ -69,8 +69,6 @@ typedef struct MatmulFp32Struct {
   int split_points_[SPLIT_COUNT];
 
   float *output_data_;
-  float *conv1x1_origin_bias_;
-  float *conv1x1_origin_weight_;
   float *pack_b_src_;
   float *pack_b_dst_;
 

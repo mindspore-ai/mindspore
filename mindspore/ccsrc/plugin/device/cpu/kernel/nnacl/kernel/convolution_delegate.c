@@ -117,7 +117,7 @@ void ConvolutionDelegateSetInputOutputShapeInfo(ConvolutionDelegateStruct *convo
   NNACL_CHECK_NULL_RETURN_VOID(conv_param);
   TensorC *input = convolution_delegate->conv_.base_.in_[FIRST_INPUT];
   NNACL_CHECK_NULL_RETURN_VOID(input);
-  TensorC *output = convolution_delegate->conv_.base_.out_[SECOND_INPUT];
+  TensorC *output = convolution_delegate->conv_.base_.out_[OUTPUT_INDEX];
   NNACL_CHECK_NULL_RETURN_VOID(output);
 
   conv_param->input_batch_ = GetBatch(input);
@@ -157,6 +157,7 @@ ConvolutionBaseStruct *ConvolutionDelegateConvNC4KernelSelect(ConvolutionDelegat
 ConvolutionBaseStruct *ConvolutionDelegateConvNHWCKernelSelect(ConvolutionDelegateStruct *convolution_delegate) {
   ConvParameter *conv_param = (ConvParameter *)convolution_delegate->conv_.base_.param_;
   NNACL_CHECK_NULL_RETURN_NULL(conv_param);
+  return CreateConvolutionIm2Col(&convolution_delegate->conv_.base_, conv_param);
 
   ConvolutionBaseStruct *conv = NULL;
 
@@ -216,6 +217,7 @@ ConvolutionBaseStruct *ConvolutionDelegateConvolutionSelect(ConvolutionDelegateS
   conv->origin_weight_ = convolution_delegate->origin_weight_;
   conv->origin_bias_ = convolution_delegate->origin_bias_;
 
+  PassConvParam(conv, (ConvParameter *)conv->base_.param_);
   int ret = conv->base_.prepare(&conv->base_);
   if (ret != NNACL_OK) {
     conv->base_.release(&conv->base_);

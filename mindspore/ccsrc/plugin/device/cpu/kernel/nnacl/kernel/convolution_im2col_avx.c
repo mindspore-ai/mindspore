@@ -139,6 +139,7 @@ ConvolutionBaseStruct *CreateConvIm2ColAVX(ConvParameter *conv_param) {
 
   conv_im2col->init_tmp_buffer_ = ConvIm2ColAVXInitTmpBuffer;
 
+  conv_im2col->conv_.malloc_weight_bias_ = ConvIm2ColBaseMallocWeightBiasData;
   conv_im2col->conv_.init_global_variable_ = ConvIm2ColAVXInitGlobalVariable;
   conv_im2col->conv_.run_impl_ = ConvIm2ColAVXRunImpl;
   conv_im2col->conv_.pack_weight_ = ConvIm2ColBasePackWeight;

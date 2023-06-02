@@ -49,16 +49,17 @@ typedef struct MatMulParameter {
   // Primitive parameter
   OpParameter op_parameter_;
   bool has_bias_;
+  bool use_axis_;
+  bool a_transpose_; /* false :  row-major  */
+  bool b_transpose_; /* true  :  col-major  */
+  ActType act_type_;
 
   // other parameter
   int row_;
   int col_;
   int row_4_;
-  int row_6_;
-  int row_12_;
   int row_16_;
   int row_align_;
-  int col_4_;
   int col_8_;
   int col_align_;
   int deep_;
@@ -66,12 +67,8 @@ typedef struct MatMulParameter {
   int deep_16_;
   int deep_align_;
   int batch;
-  bool a_transpose_; /* false :  row-major  */
-  bool b_transpose_; /* true  :  col-major  */
   bool a_const_;
   bool b_const_;
-  ActType act_type_;
-  bool use_axis_;
   int axis_;
   MatmulType matmul_type_;
 } MatMulParameter;
