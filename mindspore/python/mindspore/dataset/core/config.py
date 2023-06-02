@@ -614,8 +614,6 @@ def get_enable_shared_mem():
     # For Windows and MacOS we forbid shared mem function temporarily
     enable_shared_mem = _config.get_enable_shared_mem()
     if enable_shared_mem and platform.system().lower() in {"windows", "darwin"}:
-        logger.warning(
-            "For Windows and MacOS we forbid shared mem function temporarily.")
         _config.set_enable_shared_mem(False)
         return False
     return enable_shared_mem
