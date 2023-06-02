@@ -103,6 +103,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/optimizer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/export_model.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/optimizer_manager.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/session/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/graph_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/meta_graph_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/node_util.cc
