@@ -29,9 +29,9 @@ typedef struct ArithmeticParameter {
   size_t ndim_;
   int activation_type_;
   int in_shape0_[ARITHMETIC_SUPPORT_DIMS_NUM];
-  int in_elements_num0_;
+  int64_t in_elements_num0_;
   int in_shape1_[ARITHMETIC_SUPPORT_DIMS_NUM];
-  int in_elements_num1_;
+  int64_t in_elements_num1_;
 
   int out_shape_[ARITHMETIC_SUPPORT_DIMS_NUM];
   int out_elements_num_;

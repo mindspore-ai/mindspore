@@ -112,8 +112,8 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
       (void)output_shape_.insert(output_shape_.begin(), 1);
     }
     output_size_ = SizeOf(output_shape_);
-    op_para_.in_elements_num0_ = SizeToInt(SizeOf(input_shape1_));
-    op_para_.in_elements_num1_ = SizeToInt(SizeOf(input_shape2_));
+    op_para_.in_elements_num0_ = SizeToLong(SizeOf(input_shape1_));
+    op_para_.in_elements_num1_ = SizeToLong(SizeOf(input_shape2_));
     size_t l = input_shape1_.size();
     if (l < output_shape_.size()) {
       for (size_t i = 0; i < output_shape_.size() - l; ++i) {
