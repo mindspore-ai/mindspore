@@ -1549,7 +1549,7 @@ void GradExecutor::ClearRes() {
 }
 
 void GradExecutor::AsyncClearTopCell() {
-  for (const auto need_gc_top_cell : need_gc_top_cell_list_) {
+  for (const auto &need_gc_top_cell : need_gc_top_cell_list_) {
     auto task = [need_gc_top_cell]() { need_gc_top_cell->Clear(); };
     async_executor_->Push(new (std::nothrow) BpropTask(std::move(task)));
   }
