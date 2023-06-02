@@ -78,10 +78,34 @@ def tensor(input_data=None, dtype=None, shape=None, init=None, internal=False, c
     """
     Create a new Tensor in Cell.construct() or function decorated by @jit.
 
-    In graph mode, different from the Tensor class, MindSpore would create a new Tensor object at runtime dynamically,
+    In graph mode, MindSpore would create a new Tensor object at runtime dynamically,
     based on the `dtype` argument.
 
+    Please refer to `Creating and Using Tensor
+    <https://www.mindspore.cn/docs/en/master/design/dynamic_graph_and_static_graph.html#creating-and-using-tensor>`_ .
+
+    The difference between it and the Tensor class is that it adds
+    `Annotation
+    <https://www.mindspore.cn/docs/en/master/design/dynamic_graph_and_static_graph.html?#annotation-marking>`_
+    which can prevent the generation of AnyType compared to the Tensor class.
+
     The arguments and return values are the same as the Tensor class. Also see: :class:`mindspore.Tensor`.
+    internally to indicate the type of the Tensor currently being created,
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore as ms
+        >>> from mindspore import jit, tensor
+        >>> @jit
+        ... def func(x):
+        ...    return tensor(x.asnumpy(), dtype=ms.float32)
+        >>> x = tensor([1, 2, 3])
+        >>> y = func(x)
+        >>> print(y)
+        [1. 2. 3.]
     """
     return Tensor(input_data, dtype, shape, init, internal, const_arg)  # @jit.typing: () -> tensor_type[{dtype}]
 
