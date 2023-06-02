@@ -618,6 +618,8 @@ Parameter操作算子
 通信算子
 ----------------
 
+在分布式训练中进行数据传输涉及通信操作，详情请参考 `分布式集合通信原语 <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/ops/communicate_ops.html>`_ 。
+
 注意，以下列表中的接口需要先配置好通信环境变量。
 
 针对Ascend设备，用户需要准备rank表，设置rank_id和device_id，详见 `Ascend指导文档 \

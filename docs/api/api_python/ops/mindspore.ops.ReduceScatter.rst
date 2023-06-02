@@ -3,7 +3,7 @@ mindspore.ops.ReduceScatter
 
 .. py:class:: mindspore.ops.ReduceScatter(op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP)
 
-    规约并且分发指定通信组中的张量。更多细节请参考 `分布式集合通信原语 - ReduceScatter <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/communicate_ops.html#reducescatter>`_ 。
+    规约并且分发指定通信组中的张量。
 
     .. note::
         在集合的所有过程中，Tensor必须具有相同的shape和格式。
@@ -28,3 +28,7 @@ mindspore.ops.ReduceScatter
         .. include:: mindspore.ops.comm_note.rst
         
         该样例需要在2卡环境下运行。
+    
+    教程样例：
+        - `分布式集合通信原语 - ReduceScatter
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/ops/communicate_ops.html#ReduceScatter>`_

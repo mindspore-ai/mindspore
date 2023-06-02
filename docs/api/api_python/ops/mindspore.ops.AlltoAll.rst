@@ -13,7 +13,7 @@ mindspore.ops.AlltoAll
     .. note::
         聚合阶段，所有进程中的Tensor必须具有相同的shape和格式。
 
-        要求全连接配网方式，每台设备具有相同的vlan id，ip和mask在同一子网，请查看 `详细信息 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/communicate_ops.html#注意事项>`_ 。
+        要求全连接配网方式，每台设备具有相同的vlan id，ip和mask在同一子网，请查看 `详细信息 <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/ops/communicate_ops.html#注意事项>`_ 。
 
     参数：
         - **split_count** (int) - 在每个进程上，将块（blocks）拆分为 `split_count` 个。
@@ -40,3 +40,7 @@ mindspore.ops.AlltoAll
         .. include:: mindspore.ops.comm_note.rst
 
         该样例需要在8卡环境下运行。
+    
+    教程样例：
+        - `分布式集合通信原语 - AlltoAll
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/ops/communicate_ops.html#AlltoAll>`_
