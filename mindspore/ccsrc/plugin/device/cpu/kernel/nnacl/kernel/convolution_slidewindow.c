@@ -125,8 +125,8 @@ int ConvSWMallocWeightBiasData(ConvolutionBaseStruct *conv) {
   int oc_block_num = UP_DIV(output_channel, conv_sw->oc_tile_);
   int pack_weight_size = oc_block_num * conv_sw->oc_tile_ * input_channel * kernel_plane;
   if (!conv_sw->conv_.base_.train_session_) {
-    conv_sw->conv_.pack_weight_ = ConvBaseGetConvPackWeightData(conv, pack_weight_size * sizeof(float));
-    NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_sw->conv_.pack_weight_);
+    conv_sw->conv_.packed_weight_ = ConvBaseGetConvPackWeightData(conv, pack_weight_size * sizeof(float));
+    NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_sw->conv_.packed_weight_);
   }
 
   if (conv_sw->conv_.base_.in_size_ == THREE_TENSOR) {

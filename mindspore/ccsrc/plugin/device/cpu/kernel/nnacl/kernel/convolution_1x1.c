@@ -121,11 +121,11 @@ void Conv1x1PackWeight(ConvolutionBaseStruct *conv) {
   NNACL_CHECK_NULL_RETURN_VOID(origin_weight);
 
 #ifdef ENABLE_AVX
-  RowMajor2Col16Major((float *)origin_weight, (float *)conv->pack_weight_, output_channel, input_channel);
+  RowMajor2Col16Major((float *)origin_weight, (float *)conv->packed_weight_, output_channel, input_channel);
 #elif defined(ENABLE_ARM32)
-  RowMajor2Col4Major((float *)origin_weight, (float *)conv->pack_weight_, output_channel, input_channel);
+  RowMajor2Col4Major((float *)origin_weight, (float *)conv->packed_weight_, output_channel, input_channel);
 #else
-  RowMajor2Col8Major((float *)origin_weight, (float *)conv->pack_weight_, output_channel, input_channel);
+  RowMajor2Col8Major((float *)origin_weight, (float *)conv->packed_weight_, output_channel, input_channel);
 #endif
 }
 
@@ -141,7 +141,7 @@ int Conv1x1MallocWeightBiasData(ConvolutionBaseStruct *conv) {
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(input_channel, UP_ROUND(output_channel, conv_1x1->col_tile_), NNACL_ERR);
   int size = input_channel * UP_ROUND(output_channel, conv_1x1->col_tile_) * sizeof(float);
   if (!conv->base_.train_session_) {
-    conv->pack_weight_ = ConvBaseGetConvPackWeightData(conv, size);
+    conv->packed_weight_ = ConvBaseGetConvPackWeightData(conv, size);
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv->packed_weight_);
   }
 
@@ -364,8 +364,8 @@ ConvolutionBaseStruct *CreateConvolution1x1(ConvParameter *conv_param) {
   conv1x1->conv_.malloc_weight_bias_ = Conv1x1MallocWeightBiasData;
   conv1x1->conv_.pack_weight_ = Conv1x1PackWeight;
 
-  conv1x1->conv_.base_.resize = convolution_1x1_prepare;
-  conv1x1->conv_.base_.prepare = convolution_1x1_resize;
+  conv1x1->conv_.base_.resize = convolution_1x1_resize;
+  conv1x1->conv_.base_.prepare = convolution_1x1_prepare;
   conv1x1->conv_.base_.release = convolution_1x1_release;
   conv1x1->conv_.base_.compute = convolution_1x1_compute;
 

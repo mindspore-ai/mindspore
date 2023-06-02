@@ -24,8 +24,8 @@ int ConvDwSWMallocWeightBiasData(ConvolutionBaseStruct *conv) {
   int pack_weight_size = C4NUM * OC4 * conv->kernel_h_ * conv->kernel_w_;
   if (!conv->base_.train_session_) {
     NNACL_CHECK_MALLOC_SIZE(pack_weight_size * sizeof(float));
-    conv->pack_weight_ = ConvBaseGetConvPackWeightData(conv, pack_weight_size * sizeof(float));
-    NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv->pack_weight_);
+    conv->packed_weight_ = ConvBaseGetConvPackWeightData(conv, pack_weight_size * sizeof(float));
+    NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv->packed_weight_);
   }
 
   int malloc_size = NNACL_MAX(conv->output_c_, C4NUM * OC4);

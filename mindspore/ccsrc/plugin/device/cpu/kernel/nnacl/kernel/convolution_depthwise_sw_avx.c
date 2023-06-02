@@ -57,8 +57,8 @@ void ConvDwSWAVXPackWeight(ConvolutionBaseStruct *conv) {
   void *origin_weight = conv->base_.train_session_ ? conv->base_.in_[SECOND_INPUT]->data_ : conv->origin_weight_;
   NNACL_CHECK_NULL_RETURN_VOID(origin_weight);
 
-  PackNHWCToNXHWCXFp32(conv->kernel_h_, conv->kernel_w_, conv->output_c_, oc_algin, conv->input_c_,
-                       (float *)conv->packed_weight_, (float *)conv->origin_weight_);
+  PackNHWCToNXHWCXFp32(conv->kernel_h_, conv->kernel_w_, conv->output_c_, oc_algin, 1, (float *)conv->packed_weight_,
+                       (float *)conv->origin_weight_);
 }
 
 int ConvDwSWAVXMallocWeightBiasData(ConvolutionBaseStruct *conv) {
@@ -206,7 +206,7 @@ KernelBase *CreateConvDwSWAVX(ConvParameter *conv_param) {
     (ConvolutionDepthwiseSWAVXStruct *)malloc(sizeof(ConvolutionDepthwiseSWAVXStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(conv_dw);
 
-  conv_dw->conv_.packed_weight_ = ConvDwSWAVXPackWeight;
+  conv_dw->conv_.pack_weight_ = ConvDwSWAVXPackWeight;
   conv_dw->conv_.malloc_weight_bias_ = ConvDwSWAVXMallocWeightBiasData;
 
   conv_dw->conv_.base_.prepare = convolution_depthwise_sw_avx_prepare;

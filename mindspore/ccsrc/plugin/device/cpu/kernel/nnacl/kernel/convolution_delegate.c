@@ -38,6 +38,21 @@
 
 #define MaxDwConvSWSize 32
 
+void PassConvParam(ConvolutionBaseStruct *conv, ConvParameter *conv_param) {
+  conv->stride_h_ = conv_param->stride_h_;
+  conv->stride_w_ = conv_param->stride_w_;
+  conv->dilation_h_ = conv_param->dilation_h_;
+  conv->dilation_w_ = conv_param->dilation_w_;
+  conv->pad_u_ = conv_param->pad_u_;
+  conv->pad_d_ = conv_param->pad_d_;
+  conv->pad_l_ = conv_param->pad_l_;
+  conv->pad_r_ = conv_param->pad_r_;
+  conv->input_c_ = conv_param->input_channel_;
+  conv->output_c_ = conv_param->output_channel_;
+  conv->kernel_h_ = conv_param->kernel_h_;
+  conv->kernel_w_ = conv_param->kernel_w_;
+}
+
 float *ConvolutionDelegateCopyData(const TensorC *tensor) {
   NNACL_CHECK_NULL_RETURN_NULL(tensor);
   NNACL_CHECK_NULL_RETURN_NULL(tensor->data_);
@@ -50,37 +65,38 @@ float *ConvolutionDelegateCopyData(const TensorC *tensor) {
 }
 
 int ConvolutionDelegateGetWeightData(ConvolutionDelegateStruct *convolution_delegate) {
-  if (convolution_delegate->base_.in_[SECOND_INPUT]->data_ == NULL) {
+  if (convolution_delegate->conv_.base_.in_[SECOND_INPUT]->data_ == NULL) {
     return NNACL_OK;
   }
-  if (convolution_delegate->infershape_done_) {
-    convolution_delegate->origin_weight_ = convolution_delegate->base_.in_[SECOND_INPUT]->data_;
+  if (convolution_delegate->conv_.infershape_done_) {
+    convolution_delegate->origin_weight_ = convolution_delegate->conv_.base_.in_[SECOND_INPUT]->data_;
     NNACL_CHECK_NULL_RETURN_ERR(convolution_delegate->origin_weight_);
     convolution_delegate->need_free_weight_ = false;
     return NNACL_OK;
   }
-  convolution_delegate->origin_weight_ = ConvolutionDelegateCopyData(convolution_delegate->base_.in_[SECOND_INPUT]);
+  convolution_delegate->origin_weight_ =
+    ConvolutionDelegateCopyData(convolution_delegate->conv_.base_.in_[SECOND_INPUT]);
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(convolution_delegate->origin_weight_);
   convolution_delegate->need_free_weight_ = true;
   return NNACL_OK;
 }
 
 int ConvolutionDelegateGetBiasData(ConvolutionDelegateStruct *convolution_delegate) {
-  if (convolution_delegate->base_.in_size_ != THREE_TENSOR) {
+  if (convolution_delegate->conv_.base_.in_size_ != THREE_TENSOR) {
     convolution_delegate->origin_bias_ = NULL;
     convolution_delegate->need_free_bias_ = false;
     return NNACL_OK;
   }
 
-  if (convolution_delegate->infershape_done_) {
-    NNACL_CHECK_NULL_RETURN_ERR(convolution_delegate->base_.in_[THIRD_INPUT]);
-    convolution_delegate->origin_bias_ = convolution_delegate->base_.in_[THIRD_INPUT]->data_;
+  if (convolution_delegate->conv_.infershape_done_) {
+    NNACL_CHECK_NULL_RETURN_ERR(convolution_delegate->conv_.base_.in_[THIRD_INPUT]);
+    convolution_delegate->origin_bias_ = convolution_delegate->conv_.base_.in_[THIRD_INPUT]->data_;
     NNACL_CHECK_NULL_RETURN_ERR(convolution_delegate->origin_bias_);
     convolution_delegate->need_free_bias_ = false;
     return NNACL_OK;
   }
 
-  convolution_delegate->origin_bias_ = ConvolutionDelegateCopyData(convolution_delegate->base_.in_[THIRD_INPUT]);
+  convolution_delegate->origin_bias_ = ConvolutionDelegateCopyData(convolution_delegate->conv_.base_.in_[THIRD_INPUT]);
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(convolution_delegate->origin_bias_);
   convolution_delegate->need_free_bias_ = true;
   return NNACL_OK;
@@ -97,11 +113,11 @@ int ConvolutionDelegateGetWeightAndBias(ConvolutionDelegateStruct *convolution_d
 
 void ConvolutionDelegateSetInputOutputShapeInfo(ConvolutionDelegateStruct *convolution_delegate) {
   NNACL_CHECK_NULL_RETURN_VOID(convolution_delegate);
-  ConvParameter *conv_param = (ConvParameter *)convolution_delegate->base_.param_;
+  ConvParameter *conv_param = (ConvParameter *)convolution_delegate->conv_.base_.param_;
   NNACL_CHECK_NULL_RETURN_VOID(conv_param);
-  TensorC *input = convolution_delegate->base_.in_[FIRST_INPUT];
+  TensorC *input = convolution_delegate->conv_.base_.in_[FIRST_INPUT];
   NNACL_CHECK_NULL_RETURN_VOID(input);
-  TensorC *output = convolution_delegate->base_.out_[SECOND_INPUT];
+  TensorC *output = convolution_delegate->conv_.base_.out_[SECOND_INPUT];
   NNACL_CHECK_NULL_RETURN_VOID(output);
 
   conv_param->input_batch_ = GetBatch(input);
@@ -120,7 +136,7 @@ ConvolutionBaseStruct *ConvolutionDelegateConvNC4KernelSelect(ConvolutionDelegat
    * arm64: conv1x1 conv_Im2col support nc4
    * Avx: conv_Im2col support nc4
    * */
-  ConvParameter *conv_param = (ConvParameter *)convolution_delegate->base_.param_;
+  ConvParameter *conv_param = (ConvParameter *)convolution_delegate->conv_.base_.param_;
   NNACL_CHECK_NULL_RETURN_NULL(conv_param);
 
 #ifdef ENABLE_ARM64
@@ -131,7 +147,7 @@ ConvolutionBaseStruct *ConvolutionDelegateConvNC4KernelSelect(ConvolutionDelegat
 #endif
 
 #if defined(ENABLE_ARM64) || defined(ENABLE_AVX)
-  ConvolutionBaseStruct *conv_im2col = CreateConvolutionIm2Col(&convolution_delegate->base_, conv_param);
+  ConvolutionBaseStruct *conv_im2col = CreateConvolutionIm2Col(&convolution_delegate->conv_.base_, conv_param);
   return conv_im2col;
 #endif
 
@@ -139,7 +155,7 @@ ConvolutionBaseStruct *ConvolutionDelegateConvNC4KernelSelect(ConvolutionDelegat
 }
 
 ConvolutionBaseStruct *ConvolutionDelegateConvNHWCKernelSelect(ConvolutionDelegateStruct *convolution_delegate) {
-  ConvParameter *conv_param = (ConvParameter *)convolution_delegate->base_.param_;
+  ConvParameter *conv_param = (ConvParameter *)convolution_delegate->conv_.base_.param_;
   NNACL_CHECK_NULL_RETURN_NULL(conv_param);
 
   ConvolutionBaseStruct *conv = NULL;
@@ -163,7 +179,7 @@ ConvolutionBaseStruct *ConvolutionDelegateConvNHWCKernelSelect(ConvolutionDelega
     if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1) {
       conv = CreateConvolution1x1(conv_param);
     } else {
-      conv = CreateConvolutionIm2Col(&convolution_delegate->base_, conv_param);
+      conv = CreateConvolutionIm2Col(&convolution_delegate->conv_.base_, conv_param);
     }
   }
   return conv;
@@ -171,7 +187,7 @@ ConvolutionBaseStruct *ConvolutionDelegateConvNHWCKernelSelect(ConvolutionDelega
 
 ConvolutionBaseStruct *ConvolutionDelegateConvolutionSelect(ConvolutionDelegateStruct *convolution_delegate) {
   ConvolutionBaseStruct *conv;
-  if (convolution_delegate->base_.out_[OUTPUT_INDEX]->format_ == Format_NC4HW4) {
+  if (convolution_delegate->conv_.base_.out_[OUTPUT_INDEX]->format_ == Format_NC4HW4) {
     conv = ConvolutionDelegateConvNC4KernelSelect(convolution_delegate);
   } else {
     conv = ConvolutionDelegateConvNHWCKernelSelect(convolution_delegate);
@@ -180,16 +196,25 @@ ConvolutionBaseStruct *ConvolutionDelegateConvolutionSelect(ConvolutionDelegateS
     return NULL;
   }
 
-  conv->base_.infershape = convolution_delegate->base_.infershape;
-  conv->base_.env_ = convolution_delegate->base_.env_;
-  conv->base_.param_ = convolution_delegate->base_.param_;
-  conv->base_.thread_nr_ = convolution_delegate->base_.thread_nr_;
-  conv->base_.train_session_ = convolution_delegate->base_.train_session_;
-  conv->base_.in_ = convolution_delegate->base_.in_;
-  conv->base_.in_size_ = convolution_delegate->base_.in_size_;
-  conv->base_.out_ = convolution_delegate->base_.out_;
-  conv->base_.out_size_ = convolution_delegate->base_.out_size_;
-  conv->base_.update_thread_ = convolution_delegate->base_.update_thread_;
+  conv->base_.infershape = convolution_delegate->conv_.base_.infershape;
+  conv->base_.env_ = convolution_delegate->conv_.base_.env_;
+  conv->base_.param_ = convolution_delegate->conv_.base_.param_;
+  conv->base_.thread_nr_ = convolution_delegate->conv_.base_.thread_nr_;
+  conv->base_.train_session_ = convolution_delegate->conv_.base_.train_session_;
+  conv->base_.in_ = convolution_delegate->conv_.base_.in_;
+  conv->base_.in_size_ = convolution_delegate->conv_.base_.in_size_;
+  conv->base_.out_ = convolution_delegate->conv_.base_.out_;
+  conv->base_.out_size_ = convolution_delegate->conv_.base_.out_size_;
+  conv->base_.update_thread_ = convolution_delegate->conv_.base_.update_thread_;
+
+  conv->infershape_done_ = convolution_delegate->conv_.infershape_done_;
+  conv->pack_weight_manager_ = convolution_delegate->conv_.pack_weight_manager_;
+  conv->get_pack_data_by_sharing_weight_ = convolution_delegate->conv_.get_pack_data_by_sharing_weight_;
+  conv->free_by_sharing_weight_ = convolution_delegate->conv_.free_by_sharing_weight_;
+  conv->is_sharing_pack_ = convolution_delegate->conv_.is_sharing_pack_;
+
+  conv->origin_weight_ = convolution_delegate->origin_weight_;
+  conv->origin_bias_ = convolution_delegate->origin_bias_;
 
   int ret = conv->base_.prepare(&conv->base_);
   if (ret != NNACL_OK) {
@@ -245,8 +270,6 @@ int convolution_delegate_prepare(struct KernelBase *self) {
                       self->in_[THIRD_INPUT]->data_type_ != kNumberTypeFloat32,
                     NNACL_CONVOLUTION_BIAS_DATATYPE_INVALID);
 
-  convolution_delegate->infershape_done_ = CheckInferShapeDone(self->in_, self->in_size_, self->out_, self->out_size_);
-
   return ConvolutionDelegateGetWeightAndBias(convolution_delegate);
 }
 
@@ -267,7 +290,7 @@ int convolution_delegate_compute(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(convolution_delegate);
   NNACL_CHECK_NULL_RETURN_ERR(convolution_delegate->convolution_);
 
-  convolution_delegate->convolution_->base_.workspace_ = convolution_delegate->base_.workspace_;
+  convolution_delegate->convolution_->base_.workspace_ = convolution_delegate->conv_.base_.workspace_;
   return convolution_delegate->convolution_->base_.compute(&convolution_delegate->convolution_->base_);
 }
 
@@ -276,16 +299,15 @@ KernelBase *CreateConvlutionDelegate(ConvParameter *conv_param) {
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(delegate);
   memset(delegate, 0, sizeof(ConvolutionDelegateStruct));
 
-  delegate->base_.prepare = convolution_delegate_prepare;
-  delegate->base_.resize = convolution_delegate_resize;
-  delegate->base_.release = convolution_delegate_release;
-  delegate->base_.compute = convolution_delegate_compute;
+  delegate->conv_.base_.prepare = convolution_delegate_prepare;
+  delegate->conv_.base_.resize = convolution_delegate_resize;
+  delegate->conv_.base_.release = convolution_delegate_release;
+  delegate->conv_.base_.compute = convolution_delegate_compute;
   return (KernelBase *)delegate;
 }
 
 KernelBase *CreateConvolutionDepthwise(ConvParameter *conv_param) {
   NNACL_CHECK_NULL_RETURN_NULL(conv_param);
-
   KernelBase *kernel = NULL;
 
   if (conv_param->dynamic_shape_) {
@@ -321,7 +343,7 @@ KernelBase *CreateConvolutionDepthwise(ConvParameter *conv_param) {
 #endif
 
   if (conv_param->input_channel_ < MaxDwConvSWSize) {
-    CreateConvDwSW(conv_param);
+    kernel = CreateConvDwSW(conv_param);
     if (kernel != NULL) {
       return kernel;
     }
@@ -341,6 +363,7 @@ KernelBase *CreateConv2DFusion(OpParameter *param, int data_type) {
   } else {
     kernel = CreateGroupConvolution(conv_param);
   }
+  PassConvParam((ConvolutionBaseStruct *)kernel, conv_param);
   return kernel;
 }
 
