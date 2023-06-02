@@ -17,8 +17,8 @@ Interfaces for parser module in c++.
 """
 
 from __future__ import  absolute_import
-from .parser import (Parser, create_instance, is_supported_create_instance_type, generate_scope, get_dtype,
-                     get_bprop_method_of_class, get_class_instance_type, get_class_member_namespace_symbol,
+from .parser import (Parser, create_instance, is_supported_create_instance_type, generate_scope, get_attr_from_object,
+                     get_bprop_method_of_class, get_class_instance_type, get_class_member_namespace_symbol, get_dtype,
                      create_slice_obj, get_obj_id, get_module_namespace, get_obj_type, get_object_key, resolve_symbol,
                      get_ast_type, get_node_type, get_args, get_args_default_values, get_ast_namespace_symbol,
                      get_operation_symbol, get_operation_namespace_symbol, get_parse_method_of_class, get_scope_name,
@@ -30,7 +30,7 @@ from .parser import (Parser, create_instance, is_supported_create_instance_type,
                      get_adapter_tensor_attr, get_local_variable, set_local_variable, get_obj_defined_from_obj_type,
                      is_from_third_party_library, _jit_fallback_generate_list)
 
-__all__ = ['Parser', 'create_instance', 'is_supported_create_instance_type', 'generate_scope',
+__all__ = ['Parser', 'create_instance', 'is_supported_create_instance_type', 'generate_scope', 'get_attr_from_object',
            'get_bprop_method_of_class', 'get_class_instance_type', 'get_class_member_namespace_symbol',
            'create_slice_obj', 'get_obj_id', 'get_module_namespace', 'get_obj_type', 'get_object_key',
            'get_ast_type', 'get_node_type', 'get_args', 'get_args_default_values', 'get_ast_namespace_symbol',

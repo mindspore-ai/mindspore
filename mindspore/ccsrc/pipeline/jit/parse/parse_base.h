@@ -75,6 +75,7 @@ const char PYTHON_MOD_GET_MODULE_NAMESPACE[] = "get_module_namespace";
 const char PYTHON_MOD_GET_ATTR_NAMESPACE_SYMBOL[] = "get_class_attr_namespace_symbol";
 const char PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL[] = "get_class_member_namespace_symbol";
 const char PYTHON_MOD_GET_OBJ_DEFINED[] = "get_obj_defined_from_obj_type";
+const char PYTHON_MOD_GET_ATTR_FROM_OBJ[] = "get_attr_from_object";
 const char PYTHON_MOD_GET_PARSE_METHOD[] = "get_parse_method_of_class";
 const char PYTHON_MOD_GET_BPROP_METHOD[] = "get_bprop_method_of_class";
 const char PYTHON_MOD_GET_OBJECT_DESCRIPTION[] = "get_object_description";
@@ -189,6 +190,8 @@ enum ResolveType : int64_t {
   RESOLVE_TYPE_NUMPY_INT_NUMBER = 6,    // Resolve numpy number int type.
   RESOLVE_TYPE_NUMPY_FLOAT_NUMBER = 7,  // Resolve numpy number float type.
   RESOLVE_TYPE_NUMPY_BOOL_NUMBER = 8,   // Resolve numpy bool number.
+  RESOLVE_TYPE_TUPLE = 9,               // Resolve builtin tuple type.
+  RESOLVE_TYPE_LIST = 10,               // Resolve builtin list type.
   RESOLVE_TYPE_INVALID = 0xFF           // Resolve invalid.
 };
 
