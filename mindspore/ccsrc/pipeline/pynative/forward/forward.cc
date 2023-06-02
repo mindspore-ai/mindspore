@@ -26,6 +26,7 @@
 #include "include/common/utils/python_fallback_running.h"
 #include "backend/graph_compiler/transform.h"
 #include "utils/ms_context.h"
+#include "mindrt/include/fork_utils.h"
 #include "pipeline/pynative/forward/forward_task.h"
 #include "pipeline/pynative/predict_out_type_map.h"
 #include "include/common/utils/stub_tensor.h"
@@ -302,6 +303,10 @@ void ForwardExecutor::Init() {
     frontend_queue_->Wait();
     backend_queue_->Wait();
   });
+  // If the fork occurs, device resources need to be released in child process.
+  ForkUtils::GetInstance().RegisterCallbacks(this, static_cast<void (ForwardExecutor::*)()>(nullptr),
+                                             static_cast<void (ForwardExecutor::*)()>(nullptr),
+                                             &ForwardExecutor::ReinitAfterFork);
 }
 
 bool ForwardExecutor::EnablePipeline(const std::string &op_name) const {
@@ -771,6 +776,21 @@ void ForwardExecutor::ClearRes() {
   infer_operation()->ClearPrimAbsList();
   infer_operation()->ClearConstFlagPrimCache();
   std::stack<CellPtr>().swap(forward_cell_stack_);
+  mindrt_backends_.clear();
+  ForkUtils::GetInstance().DeregCallbacks(this);
+}
+
+void ForwardExecutor::ReinitAfterFork() {
+  MS_LOG(INFO) << "fork event detected in child process, ForwardExecutor resources will be reinitialized.";
+  // reset ms context after fork
+  MsContext::GetInstance()->ResetContext();
+  // clear op cache after fork
+  OpCompiler::GetInstance().ClearAllCache();
+  // clear backend caches
+  for (const auto &item : mindrt_backends_) {
+    MS_EXCEPTION_IF_NULL(item.second);
+    item.second->ClearOpExecutorResource();
+  }
   mindrt_backends_.clear();
 }
 }  // namespace pynative

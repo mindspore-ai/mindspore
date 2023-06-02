@@ -19,6 +19,9 @@
 #endif
 #include "thread/threadpool.h"
 #include "thread/core_affinity.h"
+#if !defined(_WIN32) && !defined(BUILD_LITE)
+#include "include/fork_utils.h"
+#endif
 
 namespace mindspore {
 std::mutex ThreadPool::create_thread_pool_muntex_;
@@ -28,7 +31,7 @@ Worker::~Worker() {
     std::lock_guard<std::mutex> _l(mutex_);
     alive_ = false;
   }
-  cond_var_.notify_one();
+  cond_var_->notify_one();
 
   bool terminate = false;
   int count = 0;
@@ -40,14 +43,26 @@ Worker::~Worker() {
     }
   }
 
-  if (thread_.joinable()) {
-    thread_.join();
+  if (thread_->joinable()) {
+    thread_->join();
   }
   pool_ = nullptr;
   local_task_queue_ = nullptr;
 }
 
-void Worker::CreateThread() { thread_ = std::thread(&Worker::Run, this); }
+void Worker::CreateThread() { thread_ = std::make_unique<std::thread>(&Worker::Run, this); }
+
+void Worker::ReinitAfterFork() {
+  THREAD_INFO("worker %ld recreate thread after fork in child process", worker_id_);
+  if (cond_var_ != nullptr) {
+    cond_var_.release();
+    cond_var_ = std::make_unique<std::condition_variable>();
+  }
+  if (thread_ != nullptr) {
+    thread_.release();
+    CreateThread();
+  }
+}
 
 void Worker::SetAffinity() {
 #ifdef _WIN32
@@ -178,7 +193,7 @@ void Worker::YieldAndDeactive() {
 
 void Worker::WaitUntilActive() {
   std::unique_lock<std::mutex> _l(mutex_);
-  cond_var_.wait(_l, [&] { return status_ == kThreadBusy || active_num_ > 0 || !alive_; });
+  cond_var_->wait(_l, [&] { return status_ == kThreadBusy || active_num_ > 0 || !alive_; });
   if (active_num_ > 0) {
     active_num_--;
   }
@@ -213,7 +228,7 @@ void Worker::Active(std::vector<TaskSplit> *task_list, int task_id_start, int ta
     }
     status_ = kThreadBusy;
   }
-  cond_var_.notify_one();
+  cond_var_->notify_one();
 }
 
 void Worker::Active() {
@@ -225,12 +240,20 @@ void Worker::Active() {
     active_num_++;
     status_ = kThreadBusy;
   }
-  cond_var_.notify_one();
+  cond_var_->notify_one();
 }
 
 bool Worker::available() {
   int expected = kThreadIdle;
   return status_.compare_exchange_strong(expected, kThreadHeld);
+}
+
+ThreadPool::ThreadPool() {
+#if !defined(_WIN32) && !defined(BUILD_LITE)
+  ForkUtils::GetInstance().RegisterCallbacks(this, static_cast<void (ThreadPool::*)()>(nullptr),
+                                             static_cast<void (ThreadPool::*)()>(nullptr),
+                                             &ThreadPool::ReinitAfterFork);
+#endif
 }
 
 ThreadPool::~ThreadPool() {
@@ -249,6 +272,9 @@ ThreadPool::~ThreadPool() {
     task_queue->Clean();
   }
   task_queues_.clear();
+#if !defined(_WIN32) && !defined(BUILD_LITE)
+  ForkUtils::GetInstance().DeregCallbacks(this);
+#endif
   THREAD_INFO("destruct success");
 }
 
@@ -535,5 +561,12 @@ void ThreadPool::SetWorkerIdMap() {
     worker_ids_[thread_id] = i;
   }
   return;
+}
+
+void ThreadPool::ReinitAfterFork() {
+  THREAD_INFO("fork event detected in child process, workers' threads will be recreated.");
+  for (auto &worker : workers_) {
+    worker->ReinitAfterFork();
+  }
 }
 }  // namespace mindspore

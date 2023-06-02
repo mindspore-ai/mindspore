@@ -98,6 +98,7 @@ class ForwardExecutor {
   bool IsVmOp(const std::string &op_name) const;
   std::string GetCurrentCellObjId() const;
   std::string GetCurrentDeviceTarget(const PrimitivePtr &op_prim) const;
+  void ReinitAfterFork();
 
  private:
   void ReInit();

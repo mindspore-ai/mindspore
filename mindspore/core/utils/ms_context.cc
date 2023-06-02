@@ -444,6 +444,20 @@ void MsContext::CheckReadStatus(MsCtxParam param, const T &value) const {
   }
 #endif
 }
+
+// Reset ms context. Only called in child process after fork occurs.
+void MsContext::ResetContext() {
+  MS_LOG(DEBUG) << "Reset context.";
+  // configs can be modified again.
+  params_read_status_ = std::vector<bool>(
+    static_cast<size_t>(MsCtxParam::NUM_BOOL_PARAMS + MsCtxParam::NUM_UINT32_PARAMS + MsCtxParam::NUM_INT_PARAMS +
+                        MsCtxParam::NUM_FLOAT_PARAMS + MsCtxParam::NUM_STRING_PARAMS),
+    false);
+  // set device_target to 'CPU' as default.
+  MS_LOG(INFO) << "Process " << getpid() << " config changed: 'device_target' is reset to 'CPU'.";
+  SetDeviceTargetFromUser("CPU");
+}
+
 template MS_CORE_API void MsContext::CheckReadStatus<bool>(MsCtxParam, const bool &) const;
 template MS_CORE_API void MsContext::CheckReadStatus<uint32_t>(MsCtxParam, const uint32_t &) const;
 template MS_CORE_API void MsContext::CheckReadStatus<int>(MsCtxParam, const int &) const;

@@ -51,8 +51,7 @@ enum kThreadWaitLevel : int {
 // Create a new thread to execute the tasks in the queue sequentially.
 class BACKEND_EXPORT AsyncQueue {
  public:
-  explicit AsyncQueue(std::string name, kThreadWaitLevel wait_level)
-      : name_(std::move(name)), wait_level_(wait_level) {}
+  explicit AsyncQueue(std::string name, kThreadWaitLevel wait_level);
   virtual ~AsyncQueue();
 
   // Add task to the end of the queue.
@@ -73,13 +72,16 @@ class BACKEND_EXPORT AsyncQueue {
   // Thread join before the process exit.
   virtual void WorkerJoin();
 
+  // Reinit resources after fork occurs.
+  virtual void ReinitAfterFork();
+
  protected:
   virtual void WorkerLoop();
   void SetThreadName() const;
 
-  std::shared_ptr<std::thread> worker_{nullptr};
+  std::unique_ptr<std::thread> worker_{nullptr};
   std::mutex task_mutex_;
-  std::condition_variable task_cond_var_;
+  std::unique_ptr<std::condition_variable> task_cond_var_{nullptr};
   std::string name_;
   kThreadWaitLevel wait_level_;
   inline static std::unordered_map<std::thread::id, kThreadWaitLevel> thread_id_to_wait_level_;
@@ -103,6 +105,7 @@ class BACKEND_EXPORT AsyncHqueue final : public AsyncQueue {
   void Wait() override;
   bool Empty() override;
   void WorkerJoin() override;
+  void ReinitAfterFork() override;
 
  private:
   void WorkerLoop() override;
