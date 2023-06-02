@@ -955,12 +955,7 @@ class AfterOptARewriter : public BaseRewriter {
 
   // MakeList(x1, x2, ...) --> PyExecute('[x1, x2, ...]', ...)
   AnfNodePtr ConvertMakeList(const CNodePtr &node) const {
-    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
-    if (!allow_fallback_runtime) {
-      return nullptr;
-    }
-    static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
-    if (!allow_inplace_ops) {
+    if (!fallback::EnableFallbackList()) {
       return nullptr;
     }
 
@@ -1009,7 +1004,7 @@ class AfterOptARewriter : public BaseRewriter {
     return res;
   }
 
-  // MakeList(x1, x2, ...) --> PyExecute('[x1, x2, ...]', ...)
+  // x.append(y) --> PyExecute(_jit_fallback_list_inplace_append(x, y))
   AnfNodePtr ConvertListInplaceAppend(const CNodePtr &node) const {
     const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
     if (!allow_fallback_runtime) {
@@ -1067,6 +1062,287 @@ class AfterOptARewriter : public BaseRewriter {
     fallback::SetPyListObject<AnfNode, py::list>(res, std::make_shared<py::list>(list_object));
 
     MS_LOG(DEBUG) << "Convert list inplace append node to PyExecute node: " << res->DebugString();
+    return res;
+  }
+
+  // x.extend(y) --> PyExecute(_jit_fallback_list_inplace_extend(x, y))
+  AnfNodePtr ConvertListInplaceExtend(const CNodePtr &node) const {
+    if (!fallback::EnableFallbackList()) {
+      return nullptr;
+    }
+
+    const auto &fg = node->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    constexpr auto internal_list_input = "__internal_list_input__";
+    constexpr auto internal_target_input = "__internal_target_input__";
+    std::stringstream script_buffer;
+    script_buffer << "__import__('mindspore').common._utils._jit_fallback_list_inplace_extend(" << internal_list_input
+                  << ", " << internal_target_input << ")";
+    const std::string &script = script_buffer.str();
+    const auto script_str = std::make_shared<StringImm>(script);
+    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_names_list.emplace_back(NewValueNode(internal_list_input));
+    (void)key_value_names_list.emplace_back(NewValueNode(internal_target_input));
+    const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
+
+    const auto &node_inputs = node->inputs();
+    constexpr size_t node_inputs_size = 3;
+    if (node_inputs.size() != node_inputs_size) {
+      MS_LOG(EXCEPTION) << "The size of input to ListInplaceExtend should be " << node_inputs_size << " but got "
+                        << node_inputs.size();
+    }
+    constexpr size_t node_list_index = 1;
+    constexpr size_t node_target_index = 2;
+    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_list.emplace_back(node_inputs[node_list_index]);
+    (void)key_value_list.emplace_back(node_inputs[node_target_index]);
+    const auto key_value_tuple = fg->NewCNode(key_value_list);
+
+    auto res = fallback::CreatePyExecuteCNode(node, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
+
+    res->set_debug_info(node->debug_info());
+    auto abs = node->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    auto list_abs = abs->cast<abstract::AbstractListPtr>();
+    MS_EXCEPTION_IF_NULL(list_abs);
+
+    if (!list_abs->has_list_py_obj()) {
+      MS_LOG(ERROR) << "ListInplaceExtend abstract has no python object.";
+    }
+    py::list list_object =
+      list_abs->has_list_py_obj() ? *(list_abs->list_py_obj<py::list>()) : ValueToPyData(abs->BuildValue());
+
+    // Set real type and shape
+    fallback::SetRealType(res, list_abs->BuildType());
+    fallback::SetRealShape(res, list_abs->BuildShape());
+    fallback::SetPyListObject<AnfNode, py::list>(res, std::make_shared<py::list>(list_object));
+
+    MS_LOG(DEBUG) << "Convert list inplace append node to PyExecute node: " << res->DebugString();
+    return res;
+  }
+
+  // x.insert(index, y) --> PyExecute(_jit_fallback_list_inplace_insert(x, index, y))
+  AnfNodePtr ConvertListInplaceInsert(const CNodePtr &node) const {
+    if (!fallback::EnableFallbackList()) {
+      return nullptr;
+    }
+
+    const auto &fg = node->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    constexpr auto internal_list_input = "__internal_list_input__";
+    constexpr auto internal_index_input = "__internal_index_input__";
+    constexpr auto internal_target_input = "__internal_target_input__";
+    std::stringstream script_buffer;
+    script_buffer << "__import__('mindspore').common._utils._jit_fallback_list_inplace_insert(" << internal_list_input
+                  << ", " << internal_index_input << ", " << internal_target_input << ")";
+    const std::string &script = script_buffer.str();
+    const auto script_str = std::make_shared<StringImm>(script);
+    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_names_list.emplace_back(NewValueNode(internal_list_input));
+    (void)key_value_names_list.emplace_back(NewValueNode(internal_index_input));
+    (void)key_value_names_list.emplace_back(NewValueNode(internal_target_input));
+    const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
+
+    const auto &node_inputs = node->inputs();
+    constexpr size_t node_inputs_size = 4;
+    if (node_inputs.size() != node_inputs_size) {
+      MS_LOG(EXCEPTION) << "The size of input to ListInplaceInsert should be " << node_inputs_size << " but got "
+                        << node_inputs.size();
+    }
+    constexpr size_t node_list_index = 1;
+    constexpr size_t node_index_index = 2;
+    constexpr size_t node_target_index = 3;
+    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_list.emplace_back(node_inputs[node_list_index]);
+    (void)key_value_list.emplace_back(node_inputs[node_index_index]);
+    (void)key_value_list.emplace_back(node_inputs[node_target_index]);
+    const auto key_value_tuple = fg->NewCNode(key_value_list);
+
+    auto res = fallback::CreatePyExecuteCNode(node, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
+
+    res->set_debug_info(node->debug_info());
+    auto abs = node->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    auto list_abs = abs->cast<abstract::AbstractListPtr>();
+    MS_EXCEPTION_IF_NULL(list_abs);
+
+    if (!list_abs->has_list_py_obj()) {
+      MS_LOG(ERROR) << "ListInplaceInsert abstract has no python object.";
+    }
+    py::list list_object =
+      list_abs->has_list_py_obj() ? *(list_abs->list_py_obj<py::list>()) : ValueToPyData(abs->BuildValue());
+
+    // Set real type and shape
+    fallback::SetRealType(res, list_abs->BuildType());
+    fallback::SetRealShape(res, list_abs->BuildShape());
+    fallback::SetPyListObject<AnfNode, py::list>(res, std::make_shared<py::list>(list_object));
+
+    MS_LOG(DEBUG) << "Convert list inplace insert node to PyExecute node: " << res->DebugString();
+    return res;
+  }
+
+  // x.pop(index) --> PyExecute(_jit_fallback_list_inplace_pop(x, index, y))
+  AnfNodePtr ConvertListInplacePop(const CNodePtr &node) const {
+    if (!fallback::EnableFallbackList()) {
+      return nullptr;
+    }
+
+    const auto &fg = node->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    constexpr auto internal_list_input = "__internal_list_input__";
+    constexpr auto internal_index_input = "__internal_index_input__";
+    std::stringstream script_buffer;
+    script_buffer << "__import__('mindspore').common._utils._jit_fallback_list_inplace_pop(" << internal_list_input
+                  << ", " << internal_index_input << ")";
+    const std::string &script = script_buffer.str();
+    const auto script_str = std::make_shared<StringImm>(script);
+    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_names_list.emplace_back(NewValueNode(internal_list_input));
+    (void)key_value_names_list.emplace_back(NewValueNode(internal_index_input));
+    const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
+
+    const auto &node_inputs = node->inputs();
+    constexpr size_t node_inputs_size = 3;
+    if (node_inputs.size() != node_inputs_size) {
+      MS_LOG(EXCEPTION) << "The size of input to ListInplacePop should be " << node_inputs_size << " but got "
+                        << node_inputs.size();
+    }
+    constexpr size_t node_list_index = 1;
+    constexpr size_t node_index_index = 2;
+    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_list.emplace_back(node_inputs[node_list_index]);
+    (void)key_value_list.emplace_back(node_inputs[node_index_index]);
+    const auto key_value_tuple = fg->NewCNode(key_value_list);
+
+    auto res = fallback::CreatePyExecuteCNode(node, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
+
+    res->set_debug_info(node->debug_info());
+    auto abs = node->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    auto list_abs = abs->cast<abstract::AbstractListPtr>();
+    MS_EXCEPTION_IF_NULL(list_abs);
+
+    if (!list_abs->has_list_py_obj()) {
+      MS_LOG(ERROR) << "ListInplacePop abstract has no python object.";
+    }
+    py::list list_object =
+      list_abs->has_list_py_obj() ? *(list_abs->list_py_obj<py::list>()) : ValueToPyData(abs->BuildValue());
+
+    // Set real type and shape
+    fallback::SetRealType(res, list_abs->BuildType());
+    fallback::SetRealShape(res, list_abs->BuildShape());
+    fallback::SetPyListObject<AnfNode, py::list>(res, std::make_shared<py::list>(list_object));
+
+    MS_LOG(DEBUG) << "Convert list inplace pop node to PyExecute node: " << res->DebugString();
+    return res;
+  }
+
+  // x.reverse() --> PyExecute(_jit_fallback_list_inplace_reverse(x))
+  AnfNodePtr ConvertListInplaceReverse(const CNodePtr &node) const {
+    if (!fallback::EnableFallbackList()) {
+      return nullptr;
+    }
+
+    const auto &fg = node->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    constexpr auto internal_list_input = "__internal_list_input__";
+    std::stringstream script_buffer;
+    script_buffer << "__import__('mindspore').common._utils._jit_fallback_list_inplace_reverse(" << internal_list_input
+                  << ")";
+    const std::string &script = script_buffer.str();
+    const auto script_str = std::make_shared<StringImm>(script);
+    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_names_list.emplace_back(NewValueNode(internal_list_input));
+    const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
+
+    const auto &node_inputs = node->inputs();
+    constexpr size_t node_inputs_size = 2;
+    if (node_inputs.size() != node_inputs_size) {
+      MS_LOG(EXCEPTION) << "The size of input to ListInplaceAppend should be " << node_inputs_size << " but got "
+                        << node_inputs.size();
+    }
+    constexpr size_t node_list_index = 1;
+    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_list.emplace_back(node_inputs[node_list_index]);
+    const auto key_value_tuple = fg->NewCNode(key_value_list);
+
+    auto res = fallback::CreatePyExecuteCNode(node, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
+
+    res->set_debug_info(node->debug_info());
+    auto abs = node->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    auto list_abs = abs->cast<abstract::AbstractListPtr>();
+    MS_EXCEPTION_IF_NULL(list_abs);
+
+    if (!list_abs->has_list_py_obj()) {
+      MS_LOG(ERROR) << "ListInplaceReverse abstract has no python object.";
+    }
+    py::list list_object =
+      list_abs->has_list_py_obj() ? *(list_abs->list_py_obj<py::list>()) : ValueToPyData(abs->BuildValue());
+
+    // Set real type and shape
+    fallback::SetRealType(res, list_abs->BuildType());
+    fallback::SetRealShape(res, list_abs->BuildShape());
+    fallback::SetPyListObject<AnfNode, py::list>(res, std::make_shared<py::list>(list_object));
+
+    MS_LOG(DEBUG) << "Convert list inplace reverse node to PyExecute node: " << res->DebugString();
+    return res;
+  }
+
+  // x.clear() --> PyExecute(_jit_fallback_list_inplace_clear(x))
+  AnfNodePtr ConvertListInplaceClear(const CNodePtr &node) const {
+    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime) {
+      return nullptr;
+    }
+    static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") == "1";
+    if (!allow_inplace_ops) {
+      return nullptr;
+    }
+
+    const auto &fg = node->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    constexpr auto internal_list_input = "__internal_list_input__";
+    std::stringstream script_buffer;
+    script_buffer << "__import__('mindspore').common._utils._jit_fallback_list_inplace_clear(" << internal_list_input
+                  << ")";
+    const std::string &script = script_buffer.str();
+    const auto script_str = std::make_shared<StringImm>(script);
+    std::vector<AnfNodePtr> key_value_names_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_names_list.emplace_back(NewValueNode(internal_list_input));
+    const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
+
+    const auto &node_inputs = node->inputs();
+    constexpr size_t node_inputs_size = 2;
+    if (node_inputs.size() != node_inputs_size) {
+      MS_LOG(EXCEPTION) << "The size of input to ListInplaceClear should be " << node_inputs_size << " but got "
+                        << node_inputs.size();
+    }
+    constexpr size_t node_list_index = 1;
+    std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)key_value_list.emplace_back(node_inputs[node_list_index]);
+    const auto key_value_tuple = fg->NewCNode(key_value_list);
+
+    auto res = fallback::CreatePyExecuteCNode(node, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
+
+    res->set_debug_info(node->debug_info());
+    auto abs = node->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    auto list_abs = abs->cast<abstract::AbstractListPtr>();
+    MS_EXCEPTION_IF_NULL(list_abs);
+
+    if (!list_abs->has_list_py_obj()) {
+      MS_LOG(ERROR) << "ListInplaceAppend abstract has no python object.";
+    }
+    py::list list_object =
+      list_abs->has_list_py_obj() ? *(list_abs->list_py_obj<py::list>()) : ValueToPyData(abs->BuildValue());
+
+    // Set real type and shape
+    fallback::SetRealType(res, list_abs->BuildType());
+    fallback::SetRealShape(res, list_abs->BuildShape());
+    fallback::SetPyListObject<AnfNode, py::list>(res, std::make_shared<py::list>(list_object));
+
+    MS_LOG(DEBUG) << "Convert list inplace clear node to PyExecute node: " << res->DebugString();
     return res;
   }
 
@@ -1354,6 +1630,11 @@ class AfterOptARewriter : public BaseRewriter {
     {prim::kPrimDictSetItem, &ThisClass::ConvertDictSetItem},
     {prim::kPrimMakeList, &ThisClass::ConvertMakeList},
     {prim::kPrimListInplaceAppend, &ThisClass::ConvertListInplaceAppend},
+    {prim::kPrimListInplaceExtend, &ThisClass::ConvertListInplaceExtend},
+    {prim::kPrimListInplaceInsert, &ThisClass::ConvertListInplaceInsert},
+    {prim::kPrimListInplacePop, &ThisClass::ConvertListInplacePop},
+    {prim::kPrimListInplaceReverse, &ThisClass::ConvertListInplaceReverse},
+    {prim::kPrimListInplaceClear, &ThisClass::ConvertListInplaceClear},
     {prim::kPrimMakeDict, &ThisClass::ConvertMakeDict},
     {prim::kPrimRaise, &ThisClass::ConvertRaise},
     {prim::kPrimScalarCast, &ThisClass::ConvertScalarCast},
@@ -1478,8 +1759,7 @@ class AfterOptARewriter : public BaseRewriter {
                                            py_execute_input);
     }
     if (value->isa<ValueList>()) {
-      static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
-      if (!allow_inplace_ops) {
+      if (!fallback::EnableFallbackList()) {
         if (py_execute_input) {
           return ValueListConvertPyExecute(fg, value_node, value);
         } else {
@@ -1501,8 +1781,11 @@ class AfterOptARewriter : public BaseRewriter {
     if (!allow_fallback_runtime) {
       return;
     }
-    if (AnfUtils::IsRealKernel(cnode) && !IsPrimitiveCNode(cnode, prim::kPrimPyExecute) &&
-        !IsPrimitiveCNode(cnode, prim::kPrimListInplaceAppend)) {
+    const PrimitiveSet convert_prim_set{
+      prim::kPrimPyExecute,         prim::kPrimListInplaceAppend, prim::kPrimListInplaceReverse,
+      prim::kPrimListInplaceExtend, prim::kPrimListInplaceInsert, prim::kPrimListInplacePop,
+    };
+    if (AnfUtils::IsRealKernel(cnode) && !IsOneOfPrimitiveCNode(cnode, convert_prim_set)) {
       return;
     }
     const auto &inputs = cnode->inputs();

@@ -128,7 +128,7 @@ def get_bprop_tuple_setitem(self):
 
 
 @bprop_getters.register("list_setitem")
-def get_bprop_lsit_setitem(self):
+def get_bprop_list_setitem(self):
     """Generate bprop for TupleSetItem and ListSetItem"""
 
     def bprop(x, idx, value, out, dout):
@@ -136,6 +136,46 @@ def get_bprop_lsit_setitem(self):
         d_value = dout[idx]
         d_idx = 0
         return (d_x, zeros_like(d_idx), d_value)
+
+    return bprop
+
+
+@bprop_getters.register("ListInplaceReverse")
+def get_bprop_list_inplace_reverse(self):
+    """Generate bprop for list inplace reverse"""
+
+    def bprop(x, out, dout):
+        return (zeros_like(x),)
+
+    return bprop
+
+
+@bprop_getters.register("ListInplaceExtend")
+def get_bprop_list_inplace_extend(self):
+    """Generate bprop for list inplace extend"""
+
+    def bprop(x, y, out, dout):
+        return (zeros_like(x), zeros_like(y))
+
+    return bprop
+
+
+@bprop_getters.register("ListInplaceInsert")
+def get_bprop_list_inplace_insert(self):
+    """Generate bprop for list inplace insert"""
+
+    def bprop(x, index, target, out, dout):
+        return (zeros_like(x), zeros_like(index), zeros_like(target))
+
+    return bprop
+
+
+@bprop_getters.register("ListInplacePop")
+def get_bprop_list_inplace_pop(self):
+    """Generate bprop for list inplace pop"""
+
+    def bprop(x, index, out, dout):
+        return (zeros_like(x), zeros_like(index))
 
     return bprop
 

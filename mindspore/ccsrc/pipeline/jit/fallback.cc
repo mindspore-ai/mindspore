@@ -26,6 +26,7 @@
 #include "include/common/utils/python_adapter.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "utils/log_adapter.h"
+#include "utils/ms_context.h"
 #include "utils/interpret_node_recorder.h"
 #include "ops/core_ops.h"
 #include "pipeline/jit/debug/trace.h"
@@ -521,6 +522,12 @@ std::string GetPyObjectPtrStr(const py::object &obj) {
   std::stringstream ss;
   ss << obj.ptr();
   return ss.str();
+}
+
+bool EnableFallbackList() {
+  static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+  static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
+  return allow_fallback_runtime && allow_inplace_ops;
 }
 }  // namespace fallback
 

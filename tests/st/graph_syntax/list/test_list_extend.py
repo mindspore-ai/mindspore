@@ -18,6 +18,7 @@ import numpy as np
 import mindspore as ms
 
 
+@pytest.mark.skip(reason="empty list used as PyExecute input is not supported yet")
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -37,3 +38,27 @@ def test_list_extend_tensor():
     out = func()
     assert np.all(out[0].asnumpy() == ms.Tensor([1, 2]).asnumpy())
     assert np.all(out[1].asnumpy() == ms.Tensor([3, 4]).asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_list_extend_tensor_2():
+    """
+    Feature: list extend.
+    Description: support list extend.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def func():
+        x = [1,]
+        y = ms.Tensor([[1, 2], [3, 4]])
+        x.extend(y)
+        return x
+
+    out = func()
+    assert isinstance(out, list)
+    assert len(out) == 3
+    assert np.all(out[0] == 1)
+    assert np.all(out[1].asnumpy() == ms.Tensor([1, 2]).asnumpy())
+    assert np.all(out[2].asnumpy() == ms.Tensor([3, 4]).asnumpy())

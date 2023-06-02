@@ -102,5 +102,59 @@ def _jit_fallback_setattr(class_obj, attr_name, target_obj):
 
 def _jit_fallback_list_inplace_append(list_obj, target_obj):
     """Inplace append target_obj to list_obj for jit fallback."""
+    # When input list is empty list, it will be converted to tuple.
+    # This will be removed after empty list problem is solved.
+    if isinstance(list_obj, tuple) and not list_obj == 0:
+        list_obj = []
     list_obj.append(target_obj)
+    return list_obj
+
+
+def _jit_fallback_list_inplace_extend(list_obj, target_obj):
+    """Inplace extend target_obj to list_obj for jit fallback."""
+    # When input list is empty list, it will be converted to tuple.
+    # This will be removed after empty list problem is solved.
+    if isinstance(list_obj, tuple) and not list_obj == 0:
+        list_obj = []
+    list_obj.extend(target_obj)
+    return list_obj
+
+
+def _jit_fallback_list_inplace_insert(list_obj, index, target_obj):
+    """Inplace insert target_obj to list_obj at position index for jit fallback."""
+    # When input list is empty list, it will be converted to tuple.
+    # This will be removed after empty list problem is solved.
+    if isinstance(list_obj, tuple) and not list_obj == 0:
+        list_obj = []
+    list_obj.insert(index, target_obj)
+    return list_obj
+
+
+def _jit_fallback_list_inplace_pop(list_obj, index):
+    """Inplace pop list_obj element at position index for jit fallback."""
+    # When input list is empty list, it will be converted to tuple.
+    # This will be removed after empty list problem is solved.
+    if isinstance(list_obj, tuple) and not list_obj == 0:
+        list_obj = []
+    list_obj.pop(index)
+    return list_obj
+
+
+def _jit_fallback_list_inplace_reverse(list_obj):
+    """Inplace reverse list_obj for jit fallback."""
+    # When input list is empty list, it will be converted to tuple.
+    # This will be removed after empty list problem is solved.
+    if isinstance(list_obj, tuple) and not list_obj == 0:
+        list_obj = []
+    list_obj.reverse()
+    return list_obj
+
+
+def _jit_fallback_list_inplace_clear(list_obj):
+    """Inplace clear list_obj for jit fallback."""
+    # When input list is empty list, it will be converted to tuple.
+    # This will be removed after empty list problem is solved.
+    if isinstance(list_obj, tuple) and not list_obj == 0:
+        list_obj = []
+    list_obj.clear()
     return list_obj
