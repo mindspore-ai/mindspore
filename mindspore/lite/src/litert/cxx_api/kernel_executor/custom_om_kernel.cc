@@ -66,7 +66,7 @@ int CustomOMKernel::ConvertMSTensorToHiaiTensor() {
     MS_LOG(INFO) << "Don't set inputTensors";
     return kSuccess;
   }
-  if (hiai_inputs_.size() != inputs_.size()) {
+  if (hiai_inputs_.size() != inputs_.size() - 1) {
     MS_LOG(ERROR) << "inputs_ and hiai_inputs_ have different size.";
     return kLiteError;
   }
