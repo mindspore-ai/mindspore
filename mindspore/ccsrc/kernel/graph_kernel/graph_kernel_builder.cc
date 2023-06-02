@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "kernel/akg/akg_kernel_build.h"
+#include "kernel/graph_kernel/graph_kernel_builder.h"
 
 #include <sys/shm.h>
 #include <fcntl.h>
@@ -32,7 +32,7 @@
 #include "ir/func_graph.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "kernel/common_utils.h"
-#include "kernel/akg/graph_kernel_json_generator.h"
+#include "kernel/graph_kernel/graph_kernel_json_generator.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/debug/common.h"
@@ -61,7 +61,7 @@ inline std::string GetErrorInfo() {
 #endif
 }
 
-bool AkgKernelPool::LockMng::TryLock() const {
+bool KernelPool::LockMng::TryLock() const {
   // Try to lock trial times. Return errno if lock unsuccessfully
   uint32_t trial = 2000;
   const uint32_t sleep_time_us = 5000;
@@ -82,19 +82,19 @@ bool AkgKernelPool::LockMng::TryLock() const {
     return false;
   }
 
-  MS_LOG(INFO) << "AkgKernelBuild successfully acquire lock called at " << calling_position_;
+  MS_LOG(INFO) << "KernelBuild successfully acquire lock called at " << calling_position_;
   return true;
 }
 
-void AkgKernelPool::LockMng::Unlock() const noexcept {
+void KernelPool::LockMng::Unlock() const noexcept {
   auto ret = lockf(fd_, F_ULOCK, 0);
   if (ret == -1) {
     MS_LOG(ERROR) << "Failed to release the lock, error msg:" << GetErrorInfo();
   }
-  MS_LOG(INFO) << "AkgKernelBuild successfully release lock called at " << calling_position_;
+  MS_LOG(INFO) << "KernelBuild successfully release lock called at " << calling_position_;
 }
 
-std::string AkgKernelPool::GetTmpKeyPath() const {
+std::string KernelPool::GetTmpKeyPath() const {
   std::string config_path = MsContext::GetInstance()->get_param<std::string>(MS_CTX_COMPILE_CACHE_PATH);
   if (config_path.empty()) {
     config_path = common::GetEnv(kCOMPILER_CACHE_PATH);
@@ -116,7 +116,7 @@ std::string AkgKernelPool::GetTmpKeyPath() const {
   return real_path.value();
 }
 
-void *AkgKernelPool::CreateSharedMem(const std::string &path) {
+void *KernelPool::CreateSharedMem(const std::string &path) {
   is_creator_ = false;
 
   auto hash_id = std::hash<std::string>()(path);
@@ -156,8 +156,8 @@ void *AkgKernelPool::CreateSharedMem(const std::string &path) {
     MS_LOG(ERROR) << "Failed to acquire lock.";
     return nullptr;
   }
-
-  shm_id_ = shmget(key_id, mem_size, IPC_CREAT | IPC_EXCL | 0600);
+  const int kShmFlg = IPC_CREAT | IPC_EXCL | 0600;
+  shm_id_ = shmget(key_id, mem_size, kShmFlg);
   if (shm_id_ == -1) {
     if (errno == EEXIST) {
       MS_LOG(INFO) << "akg_build_tmp.key already exist.";
@@ -185,7 +185,7 @@ void *AkgKernelPool::CreateSharedMem(const std::string &path) {
   return local_addr;
 }
 
-int32_t AkgKernelPool::Init(const std::vector<JsonNodePair> &build_args) {
+int32_t KernelPool::Init(const std::vector<JsonNodePair> &build_args) {
   auto cp = GetTmpKeyPath();
   if (cp.empty()) {
     return -1;
@@ -207,14 +207,14 @@ int32_t AkgKernelPool::Init(const std::vector<JsonNodePair> &build_args) {
 
   auto ret = AddKernels(build_args);
   if (ret != 0) {
-    MS_LOG(ERROR) << "AkgKernelPool AddKernels failed.";
+    MS_LOG(ERROR) << "KernelPool AddKernels failed.";
     return -1;
   }
 
   return 0;
 }
 
-int32_t AkgKernelPool::Release() const {
+int32_t KernelPool::Release() const {
   {
     ACQUIRE_LOCK;
     if (!lock.locked_) {
@@ -256,7 +256,7 @@ int32_t AkgKernelPool::Release() const {
   return 0;
 }
 
-int32_t AkgKernelPool::AddKernels(const std::vector<JsonNodePair> &build_args) {
+int32_t KernelPool::AddKernels(const std::vector<JsonNodePair> &build_args) {
   ACQUIRE_LOCK;
   if (!lock.locked_) {
     MS_LOG(ERROR) << "Failed to acquire lock.";
@@ -305,7 +305,7 @@ int32_t AkgKernelPool::AddKernels(const std::vector<JsonNodePair> &build_args) {
   return 0;
 }
 
-int32_t AkgKernelPool::FetchKernels(std::set<size_t> *out) {
+int32_t KernelPool::FetchKernels(std::set<size_t> *out) {
   ACQUIRE_LOCK;
   if (!lock.locked_) {
     MS_LOG(ERROR) << "Failed to acquire lock.";
@@ -334,7 +334,7 @@ int32_t AkgKernelPool::FetchKernels(std::set<size_t> *out) {
   return 0;
 }
 
-int32_t AkgKernelPool::UpdateAndWait(const std::set<size_t> &ids) {
+int32_t KernelPool::UpdateAndWait(const std::set<size_t> &ids) {
   if (!ids.empty()) {
     ACQUIRE_LOCK;
     if (!lock.locked_) {
@@ -358,14 +358,14 @@ int32_t AkgKernelPool::UpdateAndWait(const std::set<size_t> &ids) {
 
   auto ret = Wait();
   if (ret != 0) {
-    MS_LOG(ERROR) << "AkgKernelPool Wait failed.";
+    MS_LOG(ERROR) << "KernelPool Wait failed.";
     return -1;
   }
 
   return 0;
 }
 
-int32_t AkgKernelPool::Wait() const {
+int32_t KernelPool::Wait() const {
   // wait until all the kernels which belong to this process finish compiling
   uint32_t trials = 1000;
   const uint32_t sleep_time_us = 1000000;
@@ -394,17 +394,17 @@ int32_t AkgKernelPool::Wait() const {
   return -1;
 }
 
-KernelPackPtr AkgKernelBuilder::AkgSearchCache(const std::string &kernel_name) {
+KernelPackPtr GraphKernelBuilder::SearchKernelCache(const std::string &kernel_name) {
   auto processor = GetStrProcessorFromContext();
   return SearchCache(kernel_name, processor);
 }
 
-KernelPackPtr AkgKernelBuilder::AkgInsertCache(const std::string &kernel_name) {
+KernelPackPtr GraphKernelBuilder::InsertKernelCache(const std::string &kernel_name) {
   auto processor = GetStrProcessorFromContext();
   return InsertCache(kernel_name, processor);
 }
 
-std::vector<JsonNodePair> AkgKernelBuilder::GetNotCachedKernels(const std::vector<JsonNodePair> &build_args) {
+std::vector<JsonNodePair> GraphKernelBuilder::GetNotCachedKernels(const std::vector<JsonNodePair> &build_args) {
   LoadCache();
   std::unordered_set<std::string> kernel_name_set;
   std::vector<JsonNodePair> new_build_args;
@@ -412,11 +412,11 @@ std::vector<JsonNodePair> AkgKernelBuilder::GetNotCachedKernels(const std::vecto
     MS_EXCEPTION_IF_NULL(anf_node);
     auto kernel_name = json_generator.kernel_name();
 
-    auto cached_kernel_pack = AkgSearchCache(kernel_name);
+    auto cached_kernel_pack = SearchKernelCache(kernel_name);
     if (cached_kernel_pack != nullptr) {
       MS_LOG(DEBUG) << "Use cached kernel, kernel_name[" << kernel_name << "], fullname_with_scope["
                     << anf_node->fullname_with_scope() << "].";
-      AkgSetKernelMod(cached_kernel_pack, json_generator, anf_node);
+      SetKernelMod(cached_kernel_pack, json_generator, anf_node);
       continue;
     }
 
@@ -430,25 +430,25 @@ std::vector<JsonNodePair> AkgKernelBuilder::GetNotCachedKernels(const std::vecto
   return new_build_args;
 }
 
-bool AkgKernelBuilder::InsertToCache(const std::vector<JsonNodePair> &build_args) {
+bool GraphKernelBuilder::InsertToCache(const std::vector<JsonNodePair> &build_args) {
   for (const auto &[json_generator, anf_node] : build_args) {
     auto kernel_name = json_generator.kernel_name();
-    auto new_kernel_pack = AkgInsertCache(kernel_name);
+    auto new_kernel_pack = InsertKernelCache(kernel_name);
     if (new_kernel_pack == nullptr) {
       MS_LOG(ERROR) << "Insert to cache failed, kernel_name[" << kernel_name << "], fullname_with_scope["
                     << anf_node->fullname_with_scope() << "].";
       return false;
     }
-    AkgSetKernelMod(new_kernel_pack, json_generator, anf_node);
-    MS_LOG(DEBUG) << "Akg compile " << kernel_name << " kernel and insert cache successfully!";
+    SetKernelMod(new_kernel_pack, json_generator, anf_node);
+    MS_LOG(DEBUG) << "Kernel compiler compile " << kernel_name << " kernel and insert cache successfully!";
   }
   return true;
 }
 
-bool AkgKernelBuilder::HandleRepeatNodes() {
+bool GraphKernelBuilder::HandleRepeatNodes() {
   for (const auto &[json_generator, anf_node] : repeat_nodes_) {
     auto kernel_name = json_generator.kernel_name();
-    auto cached_kernel_pack = AkgSearchCache(kernel_name);
+    auto cached_kernel_pack = SearchKernelCache(kernel_name);
     if (cached_kernel_pack == nullptr) {
       MS_LOG(ERROR) << "Kernel is not found in cache, kernel_name[" << kernel_name << "], fullname_with_scope["
                     << anf_node->fullname_with_scope() << "].";
@@ -456,13 +456,13 @@ bool AkgKernelBuilder::HandleRepeatNodes() {
     }
     MS_LOG(DEBUG) << "Use the cached kernel found in cache, kernel_name[" << kernel_name << "], fullname_with_scope["
                   << anf_node->fullname_with_scope() << "].";
-    AkgSetKernelMod(cached_kernel_pack, json_generator, anf_node);
+    SetKernelMod(cached_kernel_pack, json_generator, anf_node);
   }
   return true;
 }
 
-std::vector<std::string> AkgKernelBuilder::GetKernelJsonsByHashId(const std::vector<JsonNodePair> &build_args,
-                                                                  const std::set<size_t> &fetched_ids) {
+std::vector<std::string> GraphKernelBuilder::GetKernelJsonsByHashId(const std::vector<JsonNodePair> &build_args,
+                                                                    const std::set<size_t> &fetched_ids) {
   std::vector<std::string> jsons;
   for (const auto &[json_generator, anf_node] : build_args) {
     MS_EXCEPTION_IF_NULL(anf_node);
@@ -472,102 +472,13 @@ std::vector<std::string> AkgKernelBuilder::GetKernelJsonsByHashId(const std::vec
       continue;
     }
     auto kernel_json = json_generator.kernel_json_str();
-    AkgSaveJsonInfo(kernel_name, kernel_json);
+    SaveJsonInfo(kernel_name, kernel_json);
     jsons.push_back(kernel_json);
   }
   return jsons;
 }
 
-bool AkgKernelBuilder::ParallelBuild(const std::vector<JsonNodePair> &build_args) {
-  struct timeval start_time, end_time;
-  (void)gettimeofday(&start_time, nullptr);
-  MS_LOG(INFO) << "Akg start parallel build. kernel count: " << build_args.size();
-
-  AkgKernelPool kp;
-  auto ret = kp.Init(build_args);
-  if (ret != 0) {
-    MS_LOG(ERROR) << "AkgKernelPool init failed.";
-    return false;
-  }
-
-  std::set<size_t> fetched_ids;
-  ret = kp.FetchKernels(&fetched_ids);
-  if (ret != 0) {
-    MS_LOG(ERROR) << "AkgKernelPool FetchKernels failed.";
-    return false;
-  }
-
-  if (!fetched_ids.empty()) {
-    auto jsons = GetKernelJsonsByHashId(build_args, fetched_ids);
-
-    auto client = GetClient();
-    MS_EXCEPTION_IF_NULL(client);
-    if (!client->AkgStart(PROCESS_NUM, TIME_OUT)) {
-      MS_LOG(ERROR) << "Akg start failed.";
-      return false;
-    }
-    auto attrs = CollectBuildAttrs();
-    if (!attrs.empty() && !client->AkgSendAttr(attrs)) {
-      MS_LOG(ERROR) << "Akg send attr failed.";
-      return false;
-    }
-    if (!client->AkgSendData(jsons)) {
-      MS_LOG(ERROR) << "Akg send data failed.";
-      return false;
-    }
-    if (!client->AkgWait()) {
-      MS_LOG(ERROR) << "Akg compile failed.";
-      return false;
-    }
-  }
-
-  ret = kp.UpdateAndWait(fetched_ids);
-  if (ret != 0) {
-    MS_LOG(ERROR) << "AkgKernelPool UpdateAndWait failed.";
-    return false;
-  }
-
-  if (kp.Release() != 0) {
-    MS_LOG(ERROR) << "AkgKernelPool release failed.";
-    return false;
-  }
-
-  (void)gettimeofday(&end_time, nullptr);
-  const uint64_t kUSecondInSecond = 1000000;
-  uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
-  cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
-  MS_LOG(INFO) << "Akg kernel build time: " << cost << " us.";
-
-  return true;
-}
-
-bool AkgKernelBuilder::AkgOpParallelBuild(const std::vector<JsonNodePair> &build_args) {
-  repeat_nodes_.clear();
-  auto new_build_args = GetNotCachedKernels(build_args);
-  if (new_build_args.empty()) {
-    return true;
-  }
-
-  build_attrs_[kLogLevel] = "ERROR";
-  if (!ParallelBuild(new_build_args)) {
-    return false;
-  }
-
-  // All unique done here, cache them and set kernel.
-  if (!InsertToCache(build_args)) {
-    MS_LOG(ERROR) << "Insert cache failed.";
-    return false;
-  }
-
-  if (!HandleRepeatNodes()) {
-    MS_LOG(ERROR) << "Handle repeat nodes failed.";
-    return false;
-  }
-
-  return true;
-}
-
-void AkgKernelBuilder::LoadCache() {
+void GraphKernelBuilder::LoadCache() {
   static bool has_load = false;
   if (has_load) {
     return;
@@ -602,65 +513,7 @@ void AkgKernelBuilder::LoadCache() {
   return;
 }
 
-bool AkgKernelBuilder::AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
-  std::vector<JsonNodePair> json_and_node;
-  for (const auto &anf_node : anf_nodes) {
-    MS_EXCEPTION_IF_NULL(anf_node);
-    // Node already has kernel mod, no need to process it.
-    if (AnfAlgo::GetKernelMod(anf_node) != nullptr) {
-      continue;
-    }
-    graphkernel::DumpOption option;
-    option.get_target_info = true;
-    GraphKernelJsonGenerator graph_kernel_json_generator(option);
-    auto cnode = anf_node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    bool is_custom_node = IsPrimitiveCNode(cnode, prim::kPrimCustom) || IsAKGSparseOP(cnode);
-    // Graph kernel node and Custom node need to generate composite json
-    if (common::AnfAlgo::IsGraphKernel(cnode) || is_custom_node) {
-      FuncGraphPtr func_graph = is_custom_node ? cnode->func_graph() : common::AnfAlgo::GetCNodeFuncGraphPtr(cnode);
-      MS_EXCEPTION_IF_NULL(func_graph);
-      auto mng = func_graph->manager();
-      if (mng == nullptr) {
-        mng = Manage(func_graph, true);
-        func_graph->set_manager(mng);
-      }
-      if (is_custom_node) {
-        // in this case, the cnode is a CustomOp (no matter whether graph kernel mode is enabled or not)
-        // generate the fused json for the single kernel cnode
-        if (!graph_kernel_json_generator.CollectFusedJsonWithSingleKernel(cnode)) {
-          MS_EXCEPTION(UnknownError) << "Collect op info failed. op[" << anf_node->fullname_with_scope() << "].";
-        }
-      } else {
-        // in this case, the cnode is a IsGraphKernel when graph kernel mode is enabled
-        // generate the fused json for the graph kernel subgraph
-        std::vector<AnfNodePtr> node_list, input_list, output_list;
-        GetValidKernelNodes(func_graph, &node_list, &input_list, &output_list);
-        if (!graph_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list)) {
-          MS_EXCEPTION(UnknownError) << "Collect op info failed. op[" << anf_node->fullname_with_scope() << "].";
-        }
-      }
-    } else {
-      if (!graph_kernel_json_generator.CollectJson(anf_node)) {
-        MS_EXCEPTION(UnknownError) << "Collect op info failed. op[" << anf_node->fullname_with_scope() << "].";
-      }
-    }
-    (void)json_and_node.emplace_back(std::move(graph_kernel_json_generator), anf_node);
-  }
-
-  if (json_and_node.empty()) {
-    MS_LOG(INFO) << "There is no akg kernel to be compiled.";
-    return true;
-  }
-
-  bool res = AkgOpParallelBuild(json_and_node);
-  if (!res) {
-    MS_LOG(ERROR) << "Akg build kernel failed.";
-  }
-  return true;
-}
-
-std::string AkgKernelBuilder::CollectBuildAttrs() {
+std::string GraphKernelBuilder::CollectBuildAttrs() {
   auto &flags = graphkernel::GraphKernelFlags::GetInstance();
   if (!flags.enable_vectorization) {
     build_attrs_["enable_vectorization"] = flags.enable_vectorization;

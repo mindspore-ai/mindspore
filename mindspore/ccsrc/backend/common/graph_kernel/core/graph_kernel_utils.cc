@@ -146,19 +146,20 @@ bool GkUtils::IsKeepBasicNode(const AnfNodePtr &node) {
   if (prim->HasAttr("primitive_target") && GetValue<std::string>(prim->GetAttr("primitive_target")) != target) {
     return true;
   }
-  if (GraphKernelFlags::GetInstance().kernel_generator != "Bisheng") {
-    // dynamic shape nodes is not supported yet.
+  if (!GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion) {
+    // dynamic shape nodes is disabled with enable_dynamic_shape_fusion to be false.
     if (common::AnfAlgo::IsDynamicShape(node)) {
       return true;
     }
-    // the "skip" is used by inplace node.
-    // the kAttrIsInternalOutputNopNode is used by internal output of KernelGraph.
-    const std::vector<std::string> exclude_bool_attrs = {"skip", kAttrIsInternalOutputNopNode};
-    if (std::any_of(exclude_bool_attrs.cbegin(), exclude_bool_attrs.cend(), [&prim](const std::string &attr_name) {
-          return prim->HasAttr(attr_name) && GetValue<bool>(prim->GetAttr(attr_name));
-        })) {
-      return true;
-    }
+  }
+
+  // the "skip" is used by inplace node.
+  // the kAttrIsInternalOutputNopNode is used by internal output of KernelGraph.
+  const std::vector<std::string> exclude_bool_attrs = {"skip", kAttrIsInternalOutputNopNode};
+  if (std::any_of(exclude_bool_attrs.cbegin(), exclude_bool_attrs.cend(), [&prim](const std::string &attr_name) {
+        return prim->HasAttr(attr_name) && GetValue<bool>(prim->GetAttr(attr_name));
+      })) {
+    return true;
   }
 
   // If node contain attribute in contagious_attrs, it have to keep basic no matter what the value is.

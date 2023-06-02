@@ -150,7 +150,7 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
   }
 #ifndef _MSC_VER
   kernel::AkgGpuKernelBuilder akg_gpu_kernel_builder;
-  (void)akg_gpu_kernel_builder.AkgKernelParallelBuild(akg_nodes);
+  (void)akg_gpu_kernel_builder.SingleOpParallelBuild(akg_nodes);
 #endif
 }
 }  // namespace gpu

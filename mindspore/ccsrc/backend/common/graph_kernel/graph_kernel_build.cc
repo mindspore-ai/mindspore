@@ -23,11 +23,11 @@
 #include <unordered_set>
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/anf_runtime_algorithm.h"
-#include "kernel/akg/graph_kernel_json_generator.h"
+#include "kernel/graph_kernel/graph_kernel_json_generator.h"
 #include "backend/common/graph_kernel/graph_kernel_helper.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
-#include "kernel/akg/akg_kernel_build_manager.h"
+#include "kernel/graph_kernel/graph_kernel_builder_manager.h"
 
 namespace mindspore::graphkernel {
 namespace {
@@ -121,20 +121,12 @@ void GraphKernelBuild::Init() {
   }
 
   // Init AkgKernelBuilder.
-  if (Callback::Instance()->GetTargetFromContext() == kGPUDevice) {
-    kernel_builder_ = kernel::AkgKernelBuildManager::Instance().GetAkgKernelBuilder(kGPUDevice);
-  } else if (Callback::Instance()->GetTargetFromContext() == kAscendDevice) {
-    kernel_builder_ = kernel::AkgKernelBuildManager::Instance().GetAkgKernelBuilder(kAscendDevice);
-  } else {
-    const auto kernel_generator = GraphKernelFlags::GetInstance().kernel_generator;
-    if (kernel_generator == "AKG") {
-      kernel_builder_ = kernel::AkgKernelBuildManager::Instance().GetAkgKernelBuilder(kCPUDevice);
-    } else if (kernel_generator == "BISHENG") {
-      kernel_builder_ = kernel::AkgKernelBuildManager::Instance().GetAkgKernelBuilder(kernel_generator);
-    } else {
-      MS_EXCEPTION(UnknownError) << "Kernel generator only supports AKG and BISHENG but got " << kernel_generator
-                                 << ".";
-    }
+  auto device_type = Callback::Instance()->GetTargetFromContext();
+  bool is_dynamic = GraphKernelFlags::GetInstance().enable_dynamic_shape_fusion;
+  kernel_builder_ = kernel::GraphKernelBuildManager::Instance().GetGraphKernelBuilder(device_type, is_dynamic);
+  if (kernel_builder_ == nullptr) {
+    MS_EXCEPTION(UnknownError) << "Can't find corresponding kernel builder for device: " << device_type
+                               << ", and enable_dynamic_shape_fusion flag to be: " << is_dynamic << " .";
   }
 }
 
@@ -219,7 +211,7 @@ std::vector<kernel::JsonNodePair> GraphKernelBuild::CollectNotCachedNodes(
     const auto &kernel_name = json_generator.kernel_name();
     // Skip node that already has cache.
     if (kernel_pack_.find(kernel_name) != kernel_pack_.end()) {
-      kernel_builder_->AkgSetKernelMod(kernel_pack_[kernel_name], json_generator, node);
+      kernel_builder_->SetKernelMod(kernel_pack_[kernel_name], json_generator, node);
       MS_LOG(DEBUG) << "Set cached kernel for node [" << node->fullname_with_scope() << "] with kernel name ["
                     << kernel_name << "]";
       continue;
@@ -232,13 +224,14 @@ std::vector<kernel::JsonNodePair> GraphKernelBuild::CollectNotCachedNodes(
       continue;
     }
     kernel_json.close();
-    // For GPU and CPU, we need to insert json path to bin_map_(KernelMeta) first, otherwise AkgSearchCache will fail.
+    // For GPU and CPU, we need to insert json path to bin_map_(KernelMeta) first, otherwise SearchKernelCache will
+    // fail.
     (void)bin_map_->Insert(kernel_name, json_path);
-    auto cached_kernel_pack = kernel_builder_->AkgSearchCache(kernel_name);
+    auto cached_kernel_pack = kernel_builder_->SearchKernelCache(kernel_name);
     // Node cache found.
     if (cached_kernel_pack != nullptr) {
       kernel_pack_[kernel_name] = cached_kernel_pack;
-      kernel_builder_->AkgSetKernelMod(cached_kernel_pack, json_generator, node);
+      kernel_builder_->SetKernelMod(cached_kernel_pack, json_generator, node);
       MS_LOG(DEBUG) << "Set cached kernel for node [" << node->fullname_with_scope() << "] with kernel name ["
                     << kernel_name << "]";
       continue;
@@ -252,7 +245,8 @@ std::vector<kernel::JsonNodePair> GraphKernelBuild::CollectNotCachedNodes(
 void GraphKernelBuild::ParallelBuild(const std::vector<kernel::JsonNodePair> &nodes) {
   std::vector<kernel::JsonNodePair> uniq_nodes;
   std::unordered_set<std::string> kernel_names;
-  // AkgKernelBuilder::ParallelBuild can not process duplicate nodes, so we need to filter these nodes first.
+  // GraphKernelBuildKernelBuilder::ParallelBuild can not process duplicate nodes, so we need to filter these nodes
+  // first.
   for (const auto &[json_generator, node] : nodes) {
     const auto &kernel_name = json_generator.kernel_name();
     if (kernel_names.find(kernel_name) == kernel_names.end()) {

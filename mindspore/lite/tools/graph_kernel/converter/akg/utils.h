@@ -20,7 +20,7 @@
 #include <map>
 #include <set>
 #include "utils/anf_utils.h"
-#include "kernel/akg/graph_kernel_json_generator.h"
+#include "kernel/graph_kernel/graph_kernel_json_generator.h"
 
 constexpr auto kAkgKernelSo = "akgkernels.so";
 namespace mindspore::graphkernel {

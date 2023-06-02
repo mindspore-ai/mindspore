@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "kernel/akg/graph_kernel_json_generator.h"
+#include "kernel/graph_kernel/graph_kernel_json_generator.h"
 
 #include <set>
 #include <functional>
@@ -163,13 +163,10 @@ class OpInfoExtractor {
     auto op_info = std::make_shared<OpInfo>();
     op_info->set_op_name(AnfUtils::GetCNodeName(cnode_));
     const auto &flags = GraphKernelFlags::GetInstance();
-    if (flags.kernel_generator == "AKG") {
-      op_info->set_imply_type(OpImplyType::kImplyAKG);
-    } else if (flags.kernel_generator == "MLIR") {
-      op_info->set_imply_type(OpImplyType::kImplyMLIR);
+    if (flags.enable_dynamic_shape_fusion) {
+      op_info->set_imply_type(OpImplyType::kImplyDynamicAKG);
     } else {
-      MS_LOG(EXCEPTION) << "For the operator " << anf_node->fullname_with_scope() << ", the kernel generator "
-                        << flags.kernel_generator << " is not supported!";
+      op_info->set_imply_type(OpImplyType::kImplyAKG);
     }
     ExtractInputs(op_info);
     ExtractOutputs(op_info);
@@ -627,13 +624,10 @@ OpInfoPtr GraphKernelJsonGenerator::ExtractOpInfo(const AnfNodePtr &anf_node) co
     OpImplyType imply_type;
     const auto &flags = GraphKernelFlags::GetInstance();
 
-    if (flags.kernel_generator == "AKG") {
-      imply_type = OpImplyType::kImplyAKG;
-    } else if (flags.kernel_generator == "MLIR") {
-      imply_type = OpImplyType::kImplyMLIR;
+    if (flags.enable_dynamic_shape_fusion) {
+      imply_type = OpImplyType::kImplyDynamicAKG;
     } else {
-      MS_LOG(EXCEPTION) << "For the operator " << anf_node->fullname_with_scope() << ", the kernel generator "
-                        << flags.kernel_generator << " is not supported!";
+      imply_type = OpImplyType::kImplyAKG;
     }
     return kernel::OpLib::FindOp(AnfUtils::GetCNodeName(anf_node), imply_type);
 #endif

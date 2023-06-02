@@ -23,7 +23,7 @@
 #include <memory>
 #include <utility>
 #include "include/common/utils/python_adapter.h"
-#include "kernel/akg/graph_kernel_json_generator.h"
+#include "kernel/graph_kernel/graph_kernel_json_generator.h"
 #include "backend/common/graph_kernel/split_umonad.h"
 #include "backend/common/graph_kernel/substitute_dropout.h"
 #include "backend/common/graph_kernel/graph_kernel_helper.h"

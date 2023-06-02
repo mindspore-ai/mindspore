@@ -17,8 +17,8 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_CPU_AKG_CPU_KERNEL_BUILD_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_CPU_AKG_CPU_KERNEL_BUILD_H_
 #include <string>
-#include "kernel/akg/akg_kernel_build.h"
-#include "kernel/akg/akg_kernel_build_manager.h"
+#include "kernel/graph_kernel/akg/akg_kernel_build.h"
+#include "kernel/graph_kernel/graph_kernel_builder_manager.h"
 #include "base/base.h"
 
 namespace mindspore {
@@ -29,11 +29,11 @@ class AkgCpuKernelBuilder : public AkgKernelBuilder {
   ~AkgCpuKernelBuilder() = default;
 
   kernel::KernelBuildClient *GetClient() override { return &(kernel::AkgKernelBuildClient::Instance()); }
-  void AkgSetKernelMod(const KernelPackPtr &kernel_pack, const GraphKernelJsonGenerator &json_generator,
-                       const AnfNodePtr &anf_node) override;
-  void AkgSaveJsonInfo(const string &kernel_name, const string &kernel_json) override;
+  void SetKernelMod(const KernelPackPtr &kernel_pack, const GraphKernelJsonGenerator &json_generator,
+                    const AnfNodePtr &anf_node) override;
+  void SaveJsonInfo(const string &kernel_name, const string &kernel_json) override;
 };
-REG_AKG_KERNEL_BUILDER(kCPUDevice, AkgCpuKernelBuilder);
+REG_GRAPH_KERNEL_BUILDER(kCPUDevice, false, AkgCpuKernelBuilder);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_CPU_AKG_CPU_KERNEL_BUILD_H_

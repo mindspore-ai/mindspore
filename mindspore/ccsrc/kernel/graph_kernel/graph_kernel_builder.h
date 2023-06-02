@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2023 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_AKG_KERNEL_BUILD_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_AKG_KERNEL_BUILD_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GRAPH_KERNEL_BUILD_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GRAPH_KERNEL_BUILD_H_
 
 #include <string>
 #include <utility>
@@ -26,43 +26,43 @@
 #include "ir/anf.h"
 #include "kernel/kernel.h"
 #include "backend/common/session/kernel_build_client.h"
-#include "kernel/akg/graph_kernel_json_generator.h"
+#include "kernel/graph_kernel/graph_kernel_json_generator.h"
 
 namespace mindspore {
 namespace kernel {
 using graphkernel::GraphKernelJsonGenerator;
 using JsonNodePair = std::pair<GraphKernelJsonGenerator, AnfNodePtr>;
 
-class BACKEND_EXPORT AkgKernelBuilder {
+class BACKEND_EXPORT GraphKernelBuilder {
  public:
-  AkgKernelBuilder() = default;
-  virtual ~AkgKernelBuilder() = default;
+  GraphKernelBuilder() = default;
+  virtual ~GraphKernelBuilder() = default;
+
+  virtual KernelPackPtr SearchKernelCache(const std::string &kernel_name);
+  virtual KernelPackPtr InsertKernelCache(const std::string &kernel_name);
+  virtual void LoadCache();
 
   virtual KernelBuildClient *GetClient() = 0;
-  virtual KernelPackPtr AkgSearchCache(const std::string &kernel_name);
-  virtual KernelPackPtr AkgInsertCache(const std::string &kernel_name);
-  virtual void AkgSetKernelMod(const KernelPackPtr &kernel_pack, const GraphKernelJsonGenerator &json_generator,
-                               const AnfNodePtr &anf_node) = 0;
-  virtual void AkgSaveJsonInfo(const string &kernel_name, const string &kernel_json) = 0;
-  virtual void LoadCache();
-  bool AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf_nodes);
+  virtual void SetKernelMod(const KernelPackPtr &kernel_pack, const GraphKernelJsonGenerator &json_generator,
+                            const AnfNodePtr &anf_node) = 0;
+  virtual void SaveJsonInfo(const string &kernel_name, const string &kernel_json) = 0;
+  virtual bool SingleOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) = 0;
+  virtual bool ParallelBuild(const std::vector<JsonNodePair> &build_args) = 0;
 
-  virtual bool ParallelBuild(const std::vector<JsonNodePair> &build_args);
-
- private:
-  std::vector<JsonNodePair> GetNotCachedKernels(const std::vector<JsonNodePair> &build_args);
+ protected:
   std::vector<std::string> GetKernelJsonsByHashId(const std::vector<JsonNodePair> &build_args,
                                                   const std::set<size_t> &fetched_ids);
+  std::vector<JsonNodePair> GetNotCachedKernels(const std::vector<JsonNodePair> &build_args);
+
   bool InsertToCache(const std::vector<JsonNodePair> &build_args);
   bool HandleRepeatNodes();
-  bool AkgOpParallelBuild(const std::vector<JsonNodePair> &build_args);
 
   std::vector<JsonNodePair> repeat_nodes_;
   nlohmann::json build_attrs_;
   std::string CollectBuildAttrs();
 };
 
-class AkgKernelPool {
+class KernelPool {
  public:
   class LockMng {
    public:
@@ -88,8 +88,8 @@ class AkgKernelPool {
     std::string calling_position_;
   };
 
-  AkgKernelPool() = default;
-  virtual ~AkgKernelPool() {
+  KernelPool() = default;
+  virtual ~KernelPool() {
     // Close key file
     if (fd_ != -1) {
       (void)close(fd_);
@@ -106,7 +106,7 @@ class AkgKernelPool {
   // allocate memory for todo_list, doing_list, done_list
   constexpr inline static size_t kListNum_{3};
 
-  constexpr inline static auto kKeyName_ = "./akg_build_tmp.key";
+  constexpr inline static auto kKeyName_ = "./kernel_build_tmp.key";
 
   constexpr inline static int32_t kToDoIdx_ = 0;
   constexpr inline static int32_t kDoingIdx_ = 1;
@@ -151,4 +151,4 @@ class AkgKernelPool {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_AKG_KERNEL_BUILD_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GRAPH_KERNEL_BUILD_H_

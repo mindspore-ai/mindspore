@@ -318,6 +318,7 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   reg.AddFlag("enable_debug_mode", &enable_debug_mode);
   reg.AddFlag("enable_lite_conv_tuning", &enable_lite_conv_tuning);
   reg.AddFlag("enable_vectorization", &enable_vectorization);
+  reg.AddFlag("enable_dynamic_shape_fusion", &enable_dynamic_shape_fusion);
 
   // Integer flags
   reg.AddFlag("reduce_fuse_depth", &reduce_fuse_depth);
@@ -365,6 +366,7 @@ std::string GraphKernelFlags::DumpAllFlags() const {
   json["enable_debug_mode"] = enable_debug_mode;
   json["enable_lite_conv_tuning"] = enable_lite_conv_tuning;
   json["enable_vectorization"] = enable_vectorization;
+  json["enable_dynamic_shape_fusion"] = enable_dynamic_shape_fusion;
 
   json["opt_level"] = opt_level;
   json["fusion_ops_level"] = fusion_ops_level;

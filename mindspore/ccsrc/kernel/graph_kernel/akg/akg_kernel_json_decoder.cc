@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "kernel/akg/akg_kernel_json_decoder.h"
+#include "kernel/graph_kernel/akg/akg_kernel_json_decoder.h"
 
 #include <memory>
-#include "kernel/akg/graph_kernel_json_generator.h"
+#include "kernel/graph_kernel/graph_kernel_json_generator.h"
 #include "kernel/common_utils.h"
 #include "backend/common/graph_kernel/adapter/fake_abstract_shape.h"
 #include "include/backend/anf_runtime_algorithm.h"
@@ -298,7 +298,8 @@ class CNodeDecoder {
     builder->SetOutputsDeviceType(std::vector<TypeId>{StringToTypeId(value_json[kJsonKeyDataType])});
     AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), value_node.get());
     func_graph->AddValueNode(value_node);
-    MS_LOG(DEBUG) << "decode value node success, " << value_node->DebugString(2);
+    const int kDebugLevel = 2;
+    MS_LOG(DEBUG) << "decode value node success, " << value_node->DebugString(kDebugLevel);
     return value_node;
   }
 
@@ -356,7 +357,8 @@ AnfNodePtr AkgKernelJsonDecoder::DecodeOutput(const std::vector<nlohmann::json> 
     outputs.push_back(nodes_map_[name]);
     output_abstract_list.push_back(outputs.back()->abstract());
   }
-  if (outputs.size() == 2) {
+  const int kDualOutputs = 2;
+  if (outputs.size() == kDualOutputs) {
     func_graph->set_output(outputs[1]);
   } else {
     auto output = func_graph->NewCNode(outputs);

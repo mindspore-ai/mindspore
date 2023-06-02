@@ -27,14 +27,14 @@
 #include "utils/ms_utils.h"
 #include "utils/file_utils.h"
 #include "mindspore/ccsrc/include/common/debug/common.h"
-#include "plugin/device/cpu/kernel/bisheng/bisheng_cpu_kernel_mod.h"
+#include "plugin/device/cpu/kernel/dynamic_akg/dynamic_akg_cpu_kernel_mod.h"
 
 namespace mindspore {
 namespace kernel {
-class BishengParallelLaunch {
+class DynamicAkgParallelLaunch {
  public:
-  using BishengParallelLambda = int (*)(int task_id, int num_task, void *cdata);
-  static int BishengLaunchFunc(BishengParallelLambda flambda, void *cdata, int) {
+  using DynamicAkgParallelLambda = int (*)(int task_id, int num_task, void *cdata);
+  static int DynamicAkgLaunchFunc(DynamicAkgParallelLambda flambda, void *cdata, int) {
     auto nthreads = omp_get_max_threads();
 #pragma omp parallel num_threads(nthreads)
     { flambda(omp_get_thread_num(), nthreads, cdata); }
@@ -42,20 +42,20 @@ class BishengParallelLaunch {
   }
 };
 
-struct BishengCallBack {
-  int (*parallel_launch_func)(BishengParallelLaunch::BishengParallelLambda, void *, int);
+struct DynamicAkgCallBack {
+  int (*parallel_launch_func)(DynamicAkgParallelLaunch::DynamicAkgParallelLambda, void *, int);
   void *(*malloc_func)(size_t);
   void (*free_func)(void *);
   void *extend_data = nullptr;
 
-  BishengCallBack()
-      : parallel_launch_func(&BishengParallelLaunch::BishengLaunchFunc), malloc_func(&malloc), free_func(&free) {}
-  ~BishengCallBack() = default;
+  DynamicAkgCallBack()
+      : parallel_launch_func(&DynamicAkgParallelLaunch::DynamicAkgLaunchFunc), malloc_func(&malloc), free_func(&free) {}
+  ~DynamicAkgCallBack() = default;
 };
 
-BishengCpuKernelManagerPtr BishengCpuKernelMod::kernel_manager_ = std::make_shared<BishengCpuKernelManager>();
+DynamicAkgCpuKernelManagerPtr DynamicAkgCpuKernelMod::kernel_manager_ = std::make_shared<DynamicAkgCpuKernelManager>();
 
-BishengCpuKernelManager::~BishengCpuKernelManager() {
+DynamicAkgCpuKernelManager::~DynamicAkgCpuKernelManager() {
   for (auto &cpu_func_pair : cpu_func_map_) {
     if (cpu_func_pair.second.second != nullptr) {
       (void)dlclose(cpu_func_pair.second.second);
@@ -63,7 +63,7 @@ BishengCpuKernelManager::~BishengCpuKernelManager() {
   }
 }
 
-void *BishengCpuKernelManager::SearchFunc(const std::string &kernel_name) const {
+void *DynamicAkgCpuKernelManager::SearchFunc(const std::string &kernel_name) const {
   auto iter = cpu_func_map_.find(kernel_name);
   if (iter == cpu_func_map_.end()) {
     return nullptr;
@@ -72,12 +72,12 @@ void *BishengCpuKernelManager::SearchFunc(const std::string &kernel_name) const 
   }
 }
 
-void *BishengCpuKernelManager::SearchFuncWithSharedLock(const std::string &kernel_name) const {
+void *DynamicAkgCpuKernelManager::SearchFuncWithSharedLock(const std::string &kernel_name) const {
   std::shared_lock lock(mutex_);
   return SearchFunc(kernel_name);
 }
 
-void *BishengCpuKernelManager::GetFunction(const std::string &kernel_name) {
+void *DynamicAkgCpuKernelManager::GetFunction(const std::string &kernel_name) {
   if (auto func = SearchFuncWithSharedLock(kernel_name); func != nullptr) {
     return func;
   }
@@ -97,11 +97,11 @@ void *BishengCpuKernelManager::GetFunction(const std::string &kernel_name) {
     fn = kernel_name;
   }
   auto config_path = GetCompilerCachePath();
-  auto fn_so = config_path + std::string(kBishengKernelMeta);
-  (void)fn_so.append(fn + "_bisheng.so");
+  auto fn_so = config_path + std::string(kAkgKernelMeta);
+  (void)fn_so.append(fn + "_dyn.so");
 
   if (!Common::FileExists(fn_so)) {
-    MS_EXCEPTION(UnknownError) << "Get Bisheng kernel failed, kernel path is[" << fn_so << "].";
+    MS_EXCEPTION(UnknownError) << "Get Dynamic AKG kernel failed, kernel path is[" << fn_so << "].";
   }
 
   auto realfile = FileUtils::GetRealPath(fn_so.c_str());
@@ -124,23 +124,26 @@ void *BishengCpuKernelManager::GetFunction(const std::string &kernel_name) {
   return launch_func;
 }
 
-BishengCpuKernelMod::BishengCpuKernelMod(const std::string &kernel_name) {
+DynamicAkgCpuKernelMod::DynamicAkgCpuKernelMod(const std::string &kernel_name) {
   kernel_name_ = kernel_name;
   launch_func_ = kernel_manager_->GetFunction(kernel_name_);
 }
 
-bool BishengCpuKernelMod::Init(const BaseOperatorPtr & /* base_operator */, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs) {
+bool DynamicAkgCpuKernelMod::Init(const BaseOperatorPtr & /* base_operator */,
+                                  const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs) {
   this->inputs_ = inputs;
   this->outputs_ = outputs;
   MS_LOG(INFO) << "input is dynamic or not: " << is_dynamic_;
   return true;
 }
 
-int BishengCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int DynamicAkgCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs,
+                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  MS_LOG(DEBUG) << "Start resize for DynamicAkgCpuKernelMod.";
   int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+
   ndims_.clear();
   shape_list_.clear();
   for (size_t i = 0; i < inputs.size(); i++) {
@@ -154,11 +157,12 @@ int BishengCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
     (void)shape_list_.emplace_back(out_shape);
     ndims_.push_back(SizeToInt(out_shape.size()));
   }
+  MS_LOG(DEBUG) << "Done resize for DynamicAkgCpuKernelMod.";
   return ret;
 }
 
-bool BishengCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                 const std::vector<AddressPtr> &outputs, void *) {
+bool DynamicAkgCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                    const std::vector<AddressPtr> &outputs, void *) {
   if (launch_func_ == nullptr) {
     MS_LOG(ERROR) << "GetFunction failed. kernel: " << kernel_name_;
     return false;
@@ -191,13 +195,13 @@ bool BishengCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
     (void)std::transform(std::begin(arg_size_vec), std::end(arg_size_vec), std::back_inserter(arg_size_list),
                          [](auto &v) { return reinterpret_cast<void *>(&v[0]); });
 
-    using BishengCpuDynKernelFunction = void (*)(void *, void *);
-    reinterpret_cast<BishengCpuDynKernelFunction>(launch_func_)(reinterpret_cast<void *>(runtimeargs.data()),
+    using DynamicAkgCpuKernelFunction = void (*)(void *, void *);
+    reinterpret_cast<DynamicAkgCpuKernelFunction>(launch_func_)(reinterpret_cast<void *>(runtimeargs.data()),
                                                                 reinterpret_cast<void *>(arg_size_list.data()));
   } else {
     MS_LOG(INFO) << "The kernel mod deals with static shape inputs.";
-    using BishengCpuKernelFunction = void (*)(void *);
-    reinterpret_cast<BishengCpuKernelFunction>(launch_func_)(reinterpret_cast<void *>(runtimeargs.data()));
+    using StaticAkgCpuKernelFunction = void (*)(void *);
+    reinterpret_cast<StaticAkgCpuKernelFunction>(launch_func_)(reinterpret_cast<void *>(runtimeargs.data()));
   }
 
   return true;
