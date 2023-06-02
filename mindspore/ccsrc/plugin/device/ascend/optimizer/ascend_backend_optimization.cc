@@ -521,6 +521,21 @@ void AscendAfterInlineOptimization(const std::shared_ptr<session::KernelGraph> &
   after_inline_pm->AddPass(std::make_shared<DropoutGenMaskFusion>());
   after_inline_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
   after_inline_pm->AddPass(std::make_shared<EliminateRedundantOp>());
+  static const auto graph_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
+  static const auto graph_reuse = (graph_reuse_env == "1" || graph_reuse_env == "2");
+  if (graph_reuse) {
+    after_inline_pm->AddPass(std::make_shared<OptimizeGradientsAllReduceOverlap>());
+    after_inline_pm->AddPass(std::make_shared<AllReduceFusion>());
+    after_inline_pm->AddPass(std::make_shared<AdjustDependForParallelOptimizerRecomputeAllGather>());
+    after_inline_pm->AddPass(std::make_shared<AllGatherFusion>());
+    after_inline_pm->AddPass(std::make_shared<ConcatOutputsForAllGather>());
+    after_inline_pm->AddPass(std::make_shared<InsertDependForAllGather>());
+    after_inline_pm->AddPass(std::make_shared<ReduceScatterFusion>());
+    after_inline_pm->AddPass(std::make_shared<SplitInputsForReduceScatter>());
+    after_inline_pm->AddPass(std::make_shared<BroadcastFusion>());
+    after_inline_pm->AddPass(std::make_shared<InsertTensorMoveForCascade>());
+    after_inline_pm->AddPass(std::make_shared<GradientsAllReduceDependLastSend>());
+  }
   optimizer->AddPassManager(after_inline_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
@@ -548,17 +563,21 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   auto other_pm = std::make_shared<PassManager>("other_pm");
   other_pm->AddPass(std::make_shared<SendFusion>());
   other_pm->AddPass(std::make_shared<RecvFusion>());
-  other_pm->AddPass(std::make_shared<OptimizeGradientsAllReduceOverlap>());
-  other_pm->AddPass(std::make_shared<AllReduceFusion>());
-  other_pm->AddPass(std::make_shared<AdjustDependForParallelOptimizerRecomputeAllGather>());
-  other_pm->AddPass(std::make_shared<AllGatherFusion>());
-  other_pm->AddPass(std::make_shared<ConcatOutputsForAllGather>());
-  other_pm->AddPass(std::make_shared<InsertDependForAllGather>());
-  other_pm->AddPass(std::make_shared<ReduceScatterFusion>());
-  other_pm->AddPass(std::make_shared<SplitInputsForReduceScatter>());
-  other_pm->AddPass(std::make_shared<BroadcastFusion>());
-  other_pm->AddPass(std::make_shared<InsertTensorMoveForCascade>());
-  other_pm->AddPass(std::make_shared<GradientsAllReduceDependLastSend>());
+  static const auto graph_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
+  static const auto graph_reuse = (graph_reuse_env == "1" || graph_reuse_env == "2");
+  if (!graph_reuse) {
+    other_pm->AddPass(std::make_shared<OptimizeGradientsAllReduceOverlap>());
+    other_pm->AddPass(std::make_shared<AllReduceFusion>());
+    other_pm->AddPass(std::make_shared<AdjustDependForParallelOptimizerRecomputeAllGather>());
+    other_pm->AddPass(std::make_shared<AllGatherFusion>());
+    other_pm->AddPass(std::make_shared<ConcatOutputsForAllGather>());
+    other_pm->AddPass(std::make_shared<InsertDependForAllGather>());
+    other_pm->AddPass(std::make_shared<ReduceScatterFusion>());
+    other_pm->AddPass(std::make_shared<SplitInputsForReduceScatter>());
+    other_pm->AddPass(std::make_shared<BroadcastFusion>());
+    other_pm->AddPass(std::make_shared<InsertTensorMoveForCascade>());
+    other_pm->AddPass(std::make_shared<GradientsAllReduceDependLastSend>());
+  }
   other_pm->AddPass(std::make_shared<ParameterTransOpFusion>());
   other_pm->AddPass(std::make_shared<RefreshParameterFormat>());
   other_pm->AddPass(std::make_shared<SplitOpOptimizer>());

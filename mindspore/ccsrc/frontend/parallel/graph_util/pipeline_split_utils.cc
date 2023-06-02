@@ -157,7 +157,8 @@ bool IsSourceUsedByMirror(const CNodePtr &node, const NodeUsersMap &node_user_ma
 void InsertVirtualAssignAdd(const std::pair<AnfNodePtr, int> &node_user, const FuncGraphManagerPtr &manager,
                             const AnfNodePtr &accu_parameter, const NodeUsersMap &node_user_map) {
   auto cnode = node_user.first->cast<CNodePtr>();
-  if (IsPrimitiveCNode(cnode, prim::kPrimReceive) || !cnode->in_forward_flag()) {
+  if (IsPrimitiveCNode(cnode, prim::kPrimReceive) || IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) ||
+      !cnode->in_forward_flag()) {
     return;
   }
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
@@ -236,6 +237,63 @@ AnfNodePtr FindGradAccuParameter(const std::vector<AnfNodePtr> &parameters, cons
   return nullptr;
 }
 
+// If the graph likes the followings:
+// 1. MicroStepAllGather->MirrorMicro->load, we need to visit the param after the load
+std::vector<std::pair<AnfNodePtr, int>> FindNextNode(const std::pair<AnfNodePtr, int> &node_ptr) {
+  MS_EXCEPTION_IF_NULL(node_ptr.first->func_graph());
+  MS_EXCEPTION_IF_NULL(node_ptr.first->func_graph()->manager());
+  auto node_users_map = node_ptr.first->func_graph()->manager()->node_users();
+  std::vector<std::pair<AnfNodePtr, int>> to_be_visited_set;
+  if (!IsPrimitiveCNode(node_ptr.first, prim::kPrimMirrorMicroStep) &&
+      !IsPrimitiveCNode(node_ptr.first, prim::kPrimMicroStepAllGather) &&
+      !IsPrimitiveCNode(node_ptr.first, prim::kPrimLoad)) {
+    (void)to_be_visited_set.emplace_back(node_ptr);
+    return to_be_visited_set;
+  }
+  auto node_set = node_users_map[node_ptr.first];
+  std::queue<std::pair<std::shared_ptr<AnfNode>, int>> visited;
+  for (auto &node_user : node_set) {
+    visited.push(node_user);
+  }
+  while (visited.size() >= 1) {
+    auto node = visited.front();
+    visited.pop();
+    if (!IsPrimitiveCNode(node.first, prim::kPrimMirrorMicroStep) &&
+        !IsPrimitiveCNode(node.first, prim::kPrimMicroStepAllGather) &&
+        !IsPrimitiveCNode(node.first, prim::kPrimLoad)) {
+      (void)to_be_visited_set.emplace_back(node);
+    } else {
+      auto next_node_set = node_users_map[node.first];
+      for (auto &node_user : next_node_set) {
+        visited.push(node_user);
+      }
+    }
+  }
+  return to_be_visited_set;
+}
+
+std::set<std::pair<AnfNodePtr, int>> FuncNodeUsersSet(const AnfNodePtr &parameter) {
+  MS_EXCEPTION_IF_NULL(parameter->func_graph());
+  MS_EXCEPTION_IF_NULL(parameter->func_graph()->manager());
+  auto node_users_map = parameter->func_graph()->manager()->node_users();
+  auto node_users = node_users_map[parameter];
+  std::set<std::pair<AnfNodePtr, int>> all_node_users;
+  for (auto &n_pair : node_users) {
+    auto users_skip_virtual_nodes = FindNextNode(n_pair);
+    for (const auto &node_pair : users_skip_virtual_nodes) {
+      auto func_node_users = FuncGraphNodeUsers(node_pair);
+      if (func_node_users.empty()) {
+        all_node_users.insert(node_pair);
+        continue;
+      }
+      for (const auto &func_node_user : func_node_users) {
+        all_node_users.insert(func_node_user);
+      }
+    }
+  }
+  return all_node_users;
+}
+
 void HandleReceiveParam(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes) {
   auto parameters = root->parameters();
   auto node_users_map = root->manager()->node_users();
@@ -253,8 +311,8 @@ void HandleReceiveParam(const FuncGraphPtr &root, const std::vector<AnfNodePtr> 
     if (!accu_parameter) {
       continue;
     }
-    auto node_users = node_users_map[node];
-    for (auto &temp_user : node_users) {
+    std::set<std::pair<AnfNodePtr, int>> all_node_users = FuncNodeUsersSet(node);
+    for (auto &temp_user : all_node_users) {
       auto temp_node = temp_user.first;
       // Micro virtual operator might be inserted after cast
       if (IsPrimitiveCNode(temp_node, prim::kPrimCast)) {
@@ -274,37 +332,6 @@ void HandleReceiveParam(const FuncGraphPtr &root, const std::vector<AnfNodePtr> 
   }
 }
 
-// If the graph likes the followings:
-// 1. MicroStepAllGather->MirrorMicro->load, we need to visit the param after the load
-std::vector<std::pair<AnfNodePtr, int>> FindNextNode(const std::pair<AnfNodePtr, int> &node_ptr,
-                                                     const NodeUsersMap &node_users_map) {
-  std::vector<std::pair<AnfNodePtr, int>> to_be_visited_set;
-  if (!IsPrimitiveCNode(node_ptr.first, prim::kPrimMirrorMicroStep) &&
-      !IsPrimitiveCNode(node_ptr.first, prim::kPrimMicroStepAllGather)) {
-    (void)to_be_visited_set.emplace_back(node_ptr);
-    return to_be_visited_set;
-  }
-  auto node_set = node_users_map.at(node_ptr.first);
-  std::queue<std::pair<std::shared_ptr<AnfNode>, int>> visited;
-  for (auto &node_user : node_set) {
-    visited.push(node_user);
-  }
-  while (visited.size() >= 1) {
-    auto node = visited.front();
-    visited.pop();
-    if (!IsPrimitiveCNode(node.first, prim::kPrimMirrorMicroStep) &&
-        !IsPrimitiveCNode(node.first, prim::kPrimMicroStepAllGather)) {
-      (void)to_be_visited_set.emplace_back(node);
-    } else {
-      auto next_node_set = node_users_map.at(node.first);
-      for (auto &node_user : next_node_set) {
-        visited.push(node_user);
-      }
-    }
-  }
-  return to_be_visited_set;
-}
-
 void AddVirtualAssignAdd(const FuncGraphPtr &root) {
   auto parameters = root->parameters();
   auto node_users_map = root->manager()->node_users();
@@ -314,14 +341,14 @@ void AddVirtualAssignAdd(const FuncGraphPtr &root) {
     if (!accu_parameter) {
       continue;
     }
-    auto node_users = node_users_map[parameter];
-    for (auto &temp_user : node_users) {
+    std::set<std::pair<AnfNodePtr, int>> all_node_users = FuncNodeUsersSet(parameter);
+    for (auto &temp_user : all_node_users) {
       // Micro virtual operator might be inserted after cast
       auto temp_node = temp_user;
       if (IsPrimitiveCNode(temp_node.first, prim::kPrimCast)) {
         temp_node = *node_users_map[temp_node.first].begin();
       }
-      auto node_set = FindNextNode(temp_node, node_users_map);
+      auto node_set = FindNextNode(temp_node);
       for (auto &node_user : node_set) {
         InsertVirtualAssignAdd(node_user, root->manager(), accu_parameter, node_users_map);
       }
@@ -603,7 +630,7 @@ void LastStageEndNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphM
     auto prim = GetCNodePrimitive(node);
     if (prim && prim->HasAttr(PIPELINE_END)) {
       for (size_t i = 0; i < cnode->inputs().size(); ++i) {
-        auto temp_node = cnode->input(i);
+        auto temp_node = GetRealKernelNode(cnode->input(i), -1, nullptr).first;
         if (!temp_node->isa<CNode>()) {
           continue;
         }
