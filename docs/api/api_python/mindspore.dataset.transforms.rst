@@ -89,30 +89,14 @@ API样例中常用的导入模块如下：
 
 数据增强操作可以放入数据处理Pipeline中执行，也可以Eager模式执行：
 
-- Pipeline模式一般用于处理数据集，示例可参考 `数据处理Pipeline介绍 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.html#数据处理pipeline介绍>`_ 。
-- Eager模式一般用于零散样本，图像预处理举例如下：
+- Pipeline模式用于流式处理大型数据集，示例可参考 `数据处理Pipeline介绍 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.html#数据处理pipeline介绍>`_ 。
+- Eager模式用于函数调用方式处理样本，示例可参考 `轻量化数据处理 <https://www.mindspore.cn/tutorials/zh-CN/master/advanced/dataset/eager.html>`_ 。
 
-  .. code-block::
+样例库
+^^^^^^
 
-      import numpy as np
-      import mindspore.dataset.vision as vision
-      from PIL import Image,ImageFont,ImageDraw
-
-      # 画圆形
-      img = Image.new("RGB", (300, 300), (255, 255, 255))
-      draw = ImageDraw.Draw(img)
-      draw.ellipse(((0, 0), (100, 100)), fill=(255, 0, 0), outline=(255, 0, 0), width=5)
-      img.save("./1.jpg")
-      with open("./1.jpg", "rb") as f:
-          data = f.read()
-
-      data_decoded = vision.Decode()(data)
-      data_croped = vision.RandomCrop(size=(250, 250))(data_decoded)
-      data_resized = vision.Resize(size=(224, 224))(data_croped)
-      data_normalized = vision.Normalize(mean=[0.485 * 255, 0.456 * 255, 0.406 * 255],
-                                         std=[0.229 * 255, 0.224 * 255, 0.225 * 255])(data_resized)
-      data_hwc2chw = vision.HWC2CHW()(data_normalized)
-      print("data: {}, shape: {}".format(data_hwc2chw, data_hwc2chw.shape), flush=True)
+快速上手使用视觉类变换的API，跳转参考 `Illustration of vision transforms <https://www.mindspore.cn/mindspore/docs/zh-CN/master/api_python/dataset_vision/vision_gallery.html>`_ 。
+此指南中展示了典型的API用法，以及输入输出结果。
 
 变换
 ^^^^^
@@ -251,36 +235,14 @@ API样例中常用的导入模块如下：
 
 数据增强操作可以放入数据处理Pipeline中执行，也可以Eager模式执行：
 
-- Pipeline模式一般用于处理数据集，示例可参考 `数据处理Pipeline介绍 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.html#数据处理pipeline介绍>`_ 。
-- Eager模式一般用于零散样本，文本预处理举例如下：
+- Pipeline模式用于流式处理大型数据集，示例可参考 `数据处理Pipeline介绍 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.html#数据处理pipeline介绍>`_ 。
+- Eager模式用于函数调用方式处理样本，示例可参考 `轻量化数据处理 <https://www.mindspore.cn/tutorials/zh-CN/master/advanced/dataset/eager.html>`_ 。
 
-  .. code-block::
+样例库
+^^^^^^
 
-      from mindspore.dataset import text
-      from mindspore.dataset.text import NormalizeForm
-
-      # 构造词汇表
-      vocab_list = {"床": 1, "前": 2, "明": 3, "月": 4, "光": 5, "疑": 6,
-                    "是": 7, "地": 8, "上": 9, "霜": 10, "举": 11, "头": 12,
-                    "望": 13, "低": 14, "思": 15, "故": 16, "乡": 17, "繁": 18,
-                    "體": 19, "字": 20, "嘿": 21, "哈": 22, "大": 23, "笑": 24,
-                    "嘻": 25, "UNK": 26}
-      vocab = text.Vocab.from_dict(vocab_list)
-      tokenizer_op = text.BertTokenizer(vocab=vocab, suffix_indicator='##', max_bytes_per_token=100,
-                                        unknown_token='[UNK]', lower_case=False, keep_whitespace=False,
-                                        normalization_form=NormalizeForm.NONE, preserve_unused_token=True,
-                                        with_offsets=False)
-      # 分词
-      tokens = tokenizer_op("床前明月光，疑是地上霜，举头望明月，低头思故乡。")
-      print("token: {}".format(tokens), flush=True)
-
-      # 根据单词查找id
-      ids = vocab.tokens_to_ids(tokens)
-      print("token to id: {}".format(ids), flush=True)
-
-      # 根据id查找单词
-      tokens_from_ids = vocab.ids_to_tokens([15, 3, 7])
-      print("token to id: {}".format(tokens_from_ids), flush=True)
+快速上手使用文本变换的API，跳转参考 `Illustration of text transforms <https://www.mindspore.cn/mindspore/docs/zh-CN/master/api_python/dataset_text/text_gallery.html>`_ 。
+此指南中展示了典型的API用法，以及输入输出结果。
 
 变换
 ^^^^^
@@ -343,24 +305,14 @@ API样例中常用的导入模块如下：
 
 数据增强操作可以放入数据处理Pipeline中执行，也可以Eager模式执行：
 
-- Pipeline模式一般用于处理数据集，示例可参考 `数据处理Pipeline介绍 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.html#数据处理pipeline介绍>`_ 。
-- Eager模式一般用于零散样本，音频预处理举例如下：
+- Pipeline模式用于流式处理大型数据集，示例可参考 `数据处理Pipeline介绍 <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.html#数据处理pipeline介绍>`_ 。
+- Eager模式用于函数调用方式处理样本，示例可参考 `轻量化数据处理 <https://www.mindspore.cn/tutorials/zh-CN/master/advanced/dataset/eager.html>`_ 。
 
-  .. code-block::
+样例库
+^^^^^^
 
-      import numpy as np
-      import mindspore.dataset.audio as audio
-      from mindspore.dataset.audio import ResampleMethod
-
-      # 音频输入
-      waveform = np.random.random([1, 30])
-
-      # 增强操作
-      resample_op = audio.Resample(orig_freq=48000, new_freq=16000,
-                                   resample_method=ResampleMethod.SINC_INTERPOLATION,
-                                   lowpass_filter_width=6, rolloff=0.99, beta=None)
-      waveform_resampled = resample_op(waveform)
-      print("waveform reampled: {}".format(waveform_resampled), flush=True)
+快速上手使用音频变换的API，跳转参考 `Illustration of audio transforms <https://www.mindspore.cn/mindspore/docs/zh-CN/master/api_python/dataset_audio/audio_gallery.html>`_ 。
+此指南中展示了典型的API用法，以及输入输出结果。
 
 变换
 ^^^^^

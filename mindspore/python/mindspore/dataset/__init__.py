@@ -69,49 +69,13 @@ The specific steps are as follows:
 - Iterator: Finally, the user can use the dataset object method `create_dict_iterator` to create an
   iterator, which can output the preprocessed data cyclically.
 
-The data processing pipeline example is as follows. Please refer to
-`datasets_example.py <https://gitee.com/mindspore/mindspore/tree/master/docs/api/api_python_en/datasets_example.py>`_
-for complete example.
+Quick start of Dataset Pipeline
+-------------------------------
 
-.. code-block::
+For a quick start of using Dataset Pipeline, download `Load & Process Data With Dataset Pipeline
+<https://www.mindspore.cn/mindspore/docs/zh-CN/master/api_python/dataset/dataset_gallery.html>`_
+to local and run in sequence.
 
-    import numpy as np
-    import mindspore as ms
-    import mindspore.dataset as ds
-    import mindspore.dataset.vision as vision
-    import mindspore.dataset.transforms as transforms
-
-    # construct data and label
-    data1 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
-    data2 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
-    data3 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
-    data4 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
-
-    label = [1, 2, 3, 4]
-
-    # load the data and label by NumpySlicesDataset
-    dataset = ds.NumpySlicesDataset(([data1, data2, data3, data4], label), ["data", "label"])
-
-    # apply the transform to data
-    dataset = dataset.map(operations=vision.RandomCrop(size=(250, 250)), input_columns="data")
-    dataset = dataset.map(operations=vision.Resize(size=(224, 224)), input_columns="data")
-    dataset = dataset.map(operations=vision.Normalize(mean=[0.485 * 255, 0.456 * 255, 0.406 * 255],
-                                                      std=[0.229 * 255, 0.224 * 255, 0.225 * 255]),
-                          input_columns="data")
-    dataset = dataset.map(operations=vision.HWC2CHW(), input_columns="data")
-
-    # apply the transform to label
-    dataset = dataset.map(operations=transforms.TypeCast(ms.int32), input_columns="label")
-
-    # batch
-    dataset = dataset.batch(batch_size=2)
-
-    # create iterator
-    epochs = 2
-    ds_iter = dataset.create_dict_iterator(output_numpy=True, num_epochs=epochs)
-    for _ in range(epochs):
-        for item in ds_iter:
-            print("item: {}".format(item), flush=True)
 """
 
 from .core import config

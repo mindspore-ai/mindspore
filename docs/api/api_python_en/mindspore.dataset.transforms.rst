@@ -43,6 +43,12 @@ Vision
 
 .. automodule:: mindspore.dataset.vision
 
+Example Gallery
+^^^^^^^^^^^^^^^^
+
+Example gallery of using vision transform APIs, jump to 'Load & Process Data With Dataset Pipeline'<https://www.mindspore.cn/mindspore/docs/zh-CN/master/api_python/dataset_vision/vision_gallery.html>`_.
+This guide presents various transforms and input/output results.
+
 Transforms
 ^^^^^^^^^^^
 
@@ -160,6 +166,12 @@ Text
 
 .. automodule:: mindspore.dataset.text
 
+Example Gallery
+^^^^^^^^^^^^^^^^
+
+Example gallery of using vision transform APIs, jump to 'Illustration of text transforms'<https://www.mindspore.cn/mindspore/docs/zh-CN/master/api_python/dataset_text/text_gallery.html>`_.
+This guide presents various transforms and input/output results.
+
 Transforms
 ^^^^^^^^^^^
 
@@ -218,6 +230,12 @@ Audio
 ------
 
 .. automodule:: mindspore.dataset.audio
+
+Example Gallery
+^^^^^^^^^^^^^^^^
+
+Example gallery of using vision transform APIs, jump to 'Illustration of audio transforms'<https://www.mindspore.cn/mindspore/docs/zh-CN/master/api_python/dataset_audio/audio_gallery.html>`_.
+This guide presents various transforms and input/output results.
 
 Transforms
 ^^^^^^^^^^^

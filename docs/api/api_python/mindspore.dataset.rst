@@ -48,48 +48,10 @@ mindspore.dataset
 - 迭代器（create_dict_iterator）：最后用户通过数据集对象方法 `create_dict_iterator` 来创建迭代器，
   可以将预处理完成的数据循环输出。
 
-数据处理Pipeline示例如下，完整示例请参考
-`datasets_example.py <https://gitee.com/mindspore/mindspore/blob/master/docs/api/api_python/datasets_example.py>`_ ：
+数据处理Pipeline快速上手
+----------------------
 
-.. code-block:: python
-
-    import numpy as np
-    import mindspore as ms
-    import mindspore.dataset as ds
-    import mindspore.dataset.vision as vision
-    import mindspore.dataset.transforms as transforms
-
-    # 构造图像和标签
-    data1 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
-    data2 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
-    data3 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
-    data4 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
-
-    label = [1, 2, 3, 4]
-
-    # 加载数据集
-    dataset = ds.NumpySlicesDataset(([data1, data2, data3, data4], label), ["data", "label"])
-
-    # 对data数据增强
-    dataset = dataset.map(operations=vision.RandomCrop(size=(250, 250)), input_columns="data")
-    dataset = dataset.map(operations=vision.Resize(size=(224, 224)), input_columns="data")
-    dataset = dataset.map(operations=vision.Normalize(mean=[0.485 * 255, 0.456 * 255, 0.406 * 255],
-                                                      std=[0.229 * 255, 0.224 * 255, 0.225 * 255]),
-                          input_columns="data")
-    dataset = dataset.map(operations=vision.HWC2CHW(), input_columns="data")
-
-    # 对label变换类型
-    dataset = dataset.map(operations=transforms.TypeCast(ms.int32), input_columns="label")
-
-    # batch操作
-    dataset = dataset.batch(batch_size=2)
-
-    # 创建迭代器
-    epochs = 2
-    ds_iter = dataset.create_dict_iterator(output_numpy=True, num_epochs=epochs)
-    for _ in range(epochs):
-        for item in ds_iter:
-            print("item: {}".format(item), flush=True)
+如何快速使用Dataset Pipeline，可以将 `Load & Process Data With Dataset Pipeline <https://www.mindspore.cn/mindspore/docs/zh-CN/master/api_python/dataset/dataset_gallery.html>`_ 下载到本地，按照顺序执行并观察输出结果。
 
 视觉
 -----

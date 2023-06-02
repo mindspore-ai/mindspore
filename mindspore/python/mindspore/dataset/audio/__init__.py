@@ -39,26 +39,11 @@ Descriptions of common data processing terms are as follows:
 
 The data transform operation can be executed in the data processing pipeline or in the eager mode:
 
-- Pipeline mode is generally used to process datasets. For examples, please refer to
+- Pipeline mode is generally used to process big datasets. Examples refer to
   `introduction to data processing pipeline <https://www.mindspore.cn/docs/en/master/api_python/
   mindspore.dataset.html#introduction-to-data-processing-pipeline>`_ .
-- Eager mode is generally used for scattered samples. Examples of audio preprocessing are as follows:
-
-  .. code-block::
-
-      import numpy as np
-      import mindspore.dataset.audio as audio
-      from mindspore.dataset.audio import ResampleMethod
-
-      # audio sample
-      waveform = np.random.random([1, 30])
-
-      # transform
-      resample_op = audio.Resample(orig_freq=48000, new_freq=16000,
-                                   resample_method=ResampleMethod.SINC_INTERPOLATION,
-                                   lowpass_filter_width=6, rolloff=0.99, beta=None)
-      waveform_resampled = resample_op(waveform)
-      print("waveform reampled: {}".format(waveform_resampled), flush=True)
+- Eager mode is more like a function call to process data. Examples refer to
+  `Lightweight Data Processing` <https://www.mindspore.cn/tutorials/en/master/advanced/dataset/eager.html>_ .
 """
 from __future__ import absolute_import
 

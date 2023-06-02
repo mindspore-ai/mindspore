@@ -777,6 +777,7 @@ class RandomOrder(PyTensorOperation):
 
     Examples:
         >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as vision
         >>> import mindspore.dataset.transforms as transforms
         >>> from mindspore.dataset.transforms import Compose
         >>>
