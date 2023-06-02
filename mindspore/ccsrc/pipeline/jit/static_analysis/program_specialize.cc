@@ -359,11 +359,12 @@ void ProgramSpecializer::SpecializeCNodeInput0FuncGraph() {
     }
     auto &input0 = node->cast_ptr<CNode>()->input(0);
     MS_EXCEPTION_IF_NULL(input0);
-    if (IsValueNode<FuncGraph>(input0)) {
+    if (IsValueNode<FuncGraph>(input0) || IsValueNode<Primitive>(input0)) {
       continue;
     }
     MS_EXCEPTION_IF_NULL(node);
     const auto &old_abs = input0->abstract();
+    MS_EXCEPTION_IF_NULL(old_abs);
     if (!(old_abs->isa<FuncGraphAbstractClosure>() || old_abs->isa<MetaFuncGraphAbstractClosure>() ||
           old_abs->isa<AbstractFuncUnion>() || old_abs->isa<PartialAbstractClosure>())) {
       continue;

@@ -1432,6 +1432,13 @@ static std::string SetParallelShape(const AnfNodePtr &parameter, const std::pair
   ParameterPtr parameter_ptr = parameter->cast<ParameterPtr>();
   MS_EXCEPTION_IF_NULL(parameter_ptr);
   parameter_ptr->set_user_data<TensorLayout>(std::make_shared<TensorLayout>(tensor_layout));
+  if (ParallelContext::GetInstance()->direct_split() && parameter_ptr->has_default()) {
+    auto layout = parameter_ptr->user_data<TensorLayout>();
+    MS_LOG(INFO) << "parameter: " << parameter->ToString() << parameter->Shape()->ToString()
+                 << "parameter_ptr->default_param()" << parameter_ptr->default_param() << "LAYOUT"
+                 << layout->ToString();
+    SliceTensorObj(parameter_ptr, layout);
+  }
   return opt_shard_group;
 }
 
@@ -2687,13 +2694,21 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   }
 #endif
   MS_EXCEPTION_IF_NULL(root);
-  MS_EXCEPTION_IF_NULL(optimizer);
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
   HandleDataParallel();
-  pipeline::ResourceBasePtr res = optimizer->resource();
-  MS_EXCEPTION_IF_NULL(res);
-  FuncGraphManagerPtr manager = res->manager();
+  FuncGraphManagerPtr manager;
+  pipeline::ResourceBasePtr res;
+  if (optimizer == nullptr) {
+    manager = root->manager();
+    res = std::make_shared<pipeline::Resource>();
+    res->set_manager(manager);
+  } else {
+    res = optimizer->resource();
+    MS_EXCEPTION_IF_NULL(res);
+    manager = res->manager();
+  }
+
   MS_EXCEPTION_IF_NULL(manager);
   auto pipeline_stages = ParallelContext::GetInstance()->pipeline_stage_split_num();
   if (IsTraining(manager)) {

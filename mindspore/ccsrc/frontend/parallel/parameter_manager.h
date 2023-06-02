@@ -41,6 +41,7 @@ constexpr char CLONED_OBJ[] = "cloned_obj";
 constexpr char SLICE_PARAMETER_FN_PATH[] = "mindspore.parallel._utils";
 constexpr char SLICE_PARAMETER_FN_NAME[] = "_slice_parameter";
 constexpr char INIT_OPTIMIZER_STATE_FN[] = "_init_optimizer_state";
+constexpr char SLICE_TENSOR_FN_NAME[] = "_slice_tensor";
 
 using RefKeyPair = std::pair<AnfNodePtr, std::vector<AnfNodePtr>>;
 using ParameterUsersInfo = std::pair<std::string, std::pair<AnfNodePtr, AnfNodeIndexSet>>;
@@ -54,6 +55,7 @@ void HandleFullySplitParameters(const FuncGraphPtr &root);
 void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root);
 void HandleAdaFactorOpt(const FuncGraphPtr &root);
 void AutoParallelPostProcess(const FuncGraphPtr &root);
+void SliceTensorObj(const ParameterPtr &parameter, const TensorLayoutPtr &tensor_layout);
 // Init the parameters for graph which not specified by shard under PyNative mode.
 void InitPynativeNoShardParams(const FuncGraphPtr &root);
 void InitCompileCacheParams(const pipeline::ResourcePtr &resource);

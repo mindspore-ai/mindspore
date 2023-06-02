@@ -177,6 +177,9 @@ class COMMON_EXPORT ParallelContext {
   }
   bool dataset_repeat_dim_right() const { return dataset_repeat_dim_right_; }
 
+  void set_direct_split(const bool direct_split) { direct_split_ = direct_split; }
+  bool direct_split() const { return direct_split_; }
+
   void Reset();
   void ParallelParameterContextRestoreShape(const FuncGraphPtr &func_graph, const ParameterPtr &param_node,
                                             const AbstractBasePtr &ptr) const;
@@ -244,6 +247,7 @@ class COMMON_EXPORT ParallelContext {
   bool do_transform_ = false;
   bool stra_file_only_trainable_params_ = true;
   std::string fusion_mode_;
+  bool direct_split_ = false;
 };
 }  // namespace mindspore::parallel
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_PARALLEL_CONTEXT_H_

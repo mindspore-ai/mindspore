@@ -115,7 +115,7 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
   // control whether use model_parallel mode
   std::string strategy_search_mode = ParallelContext::GetInstance()->strategy_search_mode();
   bool is_skip = IsSkipAutoParallel(root, strategy_search_mode, is_pre_action);
-  if (is_skip) {
+  if (is_skip && !ParallelContext::GetInstance()->direct_split()) {
     return changes;
   }
   MS_LOG(INFO) << "search_mode: " << strategy_search_mode;

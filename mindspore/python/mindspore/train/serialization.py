@@ -60,7 +60,8 @@ from mindspore.parallel._utils import _infer_rank_list, _remove_repeated_slices,
 from mindspore.parallel._parallel_serialization import _convert_to_list, _convert_to_layout, _build_searched_strategy, \
     _restore_group_info_list
 from mindspore.train._utils import read_proto
-from mindspore._c_expression import load_mindir, _encrypt, _decrypt, _is_cipher_file, dynamic_obfuscate_mindir
+from mindspore._c_expression import load_mindir, _encrypt, _decrypt, _is_cipher_file, dynamic_obfuscate_mindir, \
+    split_mindir
 from ..ops.operations._opaque_predicate_registry import add_opaque_predicate, clean_funcs
 
 tensor_to_ms_type = {"Int8": mstype.int8, "UInt8": mstype.uint8, "Int16": mstype.int16, "UInt16": mstype.uint16,
@@ -638,6 +639,52 @@ def load(file_name, **kwargs):
                                "can check whether the values of the arguments 'dec_key' and 'dec_mode'"
                                " are the same as when exported MindIR file, or check the file integrity.")
         raise RuntimeError("Load MindIR failed.")
+    return graph
+
+
+def export_split_mindir(file_name):
+    """
+    Auto Split MindIR.
+
+    The returned object can be executed by a `GraphCell`, see class :class:`mindspore.nn.GraphCell` for more details.
+
+    Args:
+        file_name (str): MindIR file name.
+
+    Raises:
+        ValueError: MindIR file does not exist or `file_name` is not a string.
+        RuntimeError: Failed to split MindIR file.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> from mindspore.communication import init
+        >>> context.set_context(mode=context.GRAPH_MODE)
+        >>>
+        >>> init(backend_name="hccl")
+        >>> ms.export_split_mindir("net.mindir")
+
+    """
+    if not isinstance(file_name, str):
+        raise ValueError("For 'Split MindIR', the argument 'file_name' must be string, but "
+                         "got {}.".format(type(file_name)))
+    if not file_name.endswith(".mindir"):
+        raise ValueError("For 'Split MindIR', the argument 'file_name'(MindIR file) should end with '.mindir', "
+                         "please input the correct 'file_name'.")
+    if not os.path.exists(file_name):
+        raise ValueError("For 'Split MindIR', the argument 'file_name'(MindIR file) does not exist, "
+                         "please check whether the 'file_name' is correct.")
+    file_name = os.path.abspath(file_name)
+
+    logger.info("Execute the process of export and split mindir.")
+
+    graph = split_mindir(file_name)
+
+    if graph is None:
+        if _is_cipher_file(file_name):
+            raise RuntimeError("Export and split MindIR failed. The file may be encrypted and decrypt failed, you "
+                               "can check whether the values of the arguments 'dec_key' and 'dec_mode'"
+                               " are the same as when exported MindIR file, or check the file integrity.")
+        raise RuntimeError("Export and split MindIR failed.")
     return graph
 
 
