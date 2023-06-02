@@ -1323,6 +1323,7 @@ py::object GradExecutor::RunGradGraph() {
   auto out_abs = cur_run_bprop_graph->output()->abstract();
   MakeNestedCnode(top_input_args_info_->has_custom_bprop, top_input_args_info_->input_arg_value_vec,
                   cur_run_bprop_graph, out_value);
+  top_input_args_info_ = nullptr;
   return BaseRefToPyData(out_value, out_abs);
 }
 
