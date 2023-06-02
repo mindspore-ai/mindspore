@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,12 @@ CNodePtr GetRealPrevCNode(const AnfNodePtr &node, size_t index, std::vector<Kern
 bool TransOpEliminateCondition(const CNodePtr &, const CNodePtr &) { return true; }
 
 bool CastEliminateCondition(const CNodePtr &node1, const CNodePtr &node2) {
-  return HasSymmetricalKernelInfo(node1, node2);
+  // Only process Cast nodes which inserted by backend.
+  if (common::AnfAlgo::GetBooleanAttr(node1, kIsBackendCast) &&
+      common::AnfAlgo::GetBooleanAttr(node2, kIsBackendCast)) {
+    return HasSymmetricalKernelInfo(node1, node2);
+  }
+  return false;
 }
 
 bool TransDataOpEliminateCondition(const CNodePtr &node1, const CNodePtr &node2) {

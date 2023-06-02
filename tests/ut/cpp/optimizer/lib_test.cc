@@ -237,14 +237,6 @@ TEST_F(TestOptLib, elim_two_reshape) {
   ASSERT_TRUE(CheckOpt(before, after, patterns));
 }
 
-TEST_F(TestOptLib, elim_two_cast) {
-  FuncGraphPtr before = getPyFun.CallAndParseRet("elim_two_cast", "before");
-  FuncGraphPtr after = getPyFun.CallAndParseRet("elim_two_cast", "after");
-
-  auto patterns = std::vector<SubstitutionPtr>({irpass.cast_eliminate_});
-  ASSERT_TRUE(CheckOpt(before, after, patterns));
-}
-
 TEST_F(TestOptLib, test_elim_transpose) {
   FuncGraphPtr before = getPyFun.CallAndParseRet("test_elim_transpose", "before");
   FuncGraphPtr after = getPyFun.CallAndParseRet("test_elim_transpose", "after");
