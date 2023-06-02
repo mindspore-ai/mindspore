@@ -3825,41 +3825,41 @@ class UpsampleTrilinear3D(Primitive):
     using trilinear upscaling algorithm.
 
     Note:
-        One of `scales` and `output_size` must be specified and it is an error if both are specified.
+        One of `scales` and `output_size` must be specified. And it is an error if both are specified.
 
     Args:
-        align_corners (bool, optional): An optional bool. Defaults to false.
-            If True, the input and output tensors are aligned by the center points of their corner pixels,
+        align_corners (bool, optional): An optional bool. Default: ``False``.
+            If ``True``, the input and output tensors are aligned by the center points of their corner pixels,
             preserving the values at the corner pixels.
             If ``False`` , the input and output tensors are aligned by the corner points of their corner pixels,
             and the interpolation use edge value padding for out of boundary values.
 
     Inputs:
-        - **x** (Tensor) - 5D tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.
-          Must be one of the following types: [float16, float32, float64].
+        - **x** (Tensor) - 5D tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`. Supporting types:
+          [float16, float32, float64].
         - **output_size** (Union[tuple[int], list[int]]):  A tuple or list of 3 int elements
-          :math:`(output\_depth, output\_height, output\_width)`. Defaults to None.
+          :math:`(output\_depth, output\_height, output\_width)`. Default: ``None``.
         - **scales** (Union[tuple[float], list[float]]): A tuple or list of 3 float
-          elements :math:`(scale\_depth, scale\_height, scale\_width)`. Defaults to None.
+          elements :math:`(scale\_depth, scale\_height, scale\_width)`. Default: ``None``.
 
     Outputs:
-        - **y** (Tensor) - Upsampled output with the same data type as `x`.
-          Tensor of shape :math:`(N, C, D_{out}, H_{out}, W_{out})`.
+        - **y** (Tensor) - Upsampled output with the same data type as `x`, whose shape is
+          :math:`(N, C, D_{out}, H_{out}, W_{out})`.
 
     Raises:
-        TypeError: When `output_size` is not None and `output_size` is not list[int] or tuple[int].
-        TypeError: When `scales` is not None and `scales` is not list[float] or tuple[float].
+        TypeError: When `output_size` is not ``None`` and `output_size` is not list[int] or tuple[int].
+        TypeError: When `scales` is not ``None`` and `scales` is not list[float] or tuple[float].
         TypeError: If dtype of `x` is not in [float16, float32, float64].
         TypeError: If type of `align_corners` is not bool.
-        ValueError: If any value of `output_size` is negative when `output_size` is not empty.
-        ValueError: If any value of `scales` is negative when `scales` is not empty.
+        ValueError: If any value of `output_size` is negative when `output_size` is not ``None``.
+        ValueError: If any value of `scales` is negative when `scales` is not ``None``.
         ValueError: If shape of `x` is not 5D.
         ValueError: If none of `scales` and `output_size` is specified or both specified.
         ValueError: If size of `scales` is not equal 3 when `scales` is specified.
         ValueError: If size of `output_size` is not equal 3 when `output_size` is specified.
 
     Supported Platforms:
-
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> net = ops.UpsampleTrilinear3D()
@@ -10177,33 +10177,33 @@ class UpsampleNearest3D(Primitive):
     This operator scale up the volumetric input with specified `output_size` or `scales` factors, using nearest
     neighbor algorithm.
 
-    One of `output_size` or `scales` must be given, and cannot specify both.
+    One of `output_size` or `scales` must be given, and can not be specified both.
 
     Inputs:
-        - **x** (Tensor) - 5D tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`. Must be one of the
-            following types: [float16, float32, float64].
+        - **x** (Tensor) - 5D tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.
+          Supporting types: [float16, float32, float64].
         - **output_size** (Union[tuple[int], list[int]]): A tuple or list of int specifying the output volumetric size.
-            Default: None.
+            Default: ``None``.
         - **scales** (Union[tuple[float], list[float]]): A tuple or list of float specifying the upsampling factors.
-            Default: None.
+            Default: ``None``.
 
     Outputs:
-        - **y** (Tensor) - Upsampled output with the same data type as `x`.
-            Tensor of shape :math:`(N, C, D_{out}, H_{out}, W_{out})`.
+        - **y** (Tensor) - Upsampled output with the same type as `x` , whose shape is
+          :math:`(N, C, D_{out}, H_{out}, W_{out})`.
 
     Raises:
-        TypeError: When `output_size` is not None and `output_size` is not list[int] or tuple[int].
-        TypeError: When `scales` is not None and `scales` is not list[float] or tuple[float].
-        TypeError: If dtype of `x` is not int [float16, float32, float64].
-        ValueError: If any value of `output_size` is negative when `output_size` is not empty.
-        ValueError: If any value of `scales` is negative when `scales` is not empty.
+        TypeError: When `output_size` is not ``None`` and `output_size` is not list[int] or tuple[int].
+        TypeError: When `scales` is not ``None`` and `scales` is not list[float] or tuple[float].
+        TypeError: If dtype of `x` is not int [uint8, float16, float32, float64].
+        ValueError: If any value of `output_size` is negative when `output_size` is not ``None``.
+        ValueError: If any value of `scales` is negative when `scales` is not ``None``.
         ValueError: If shape of `x` is not 5D.
         ValueError: If none of `scales` and `output_size` is specified or both specified.
         ValueError: If size of `scales` is not equal 3 when `scales` is specified.
         ValueError: If size of `output_size` is not equal 3 when `output_size` is specified.
 
     Supported Platforms:
-
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
