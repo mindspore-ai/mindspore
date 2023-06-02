@@ -42,6 +42,9 @@ from mindspore.ops.operations import _inner_ops as inner
 from mindspore.parallel.shard import Shard
 from mindspore._check_jit_forbidden_api import jit_forbidden_register
 from mindspore.common._decorator import deprecated
+from mindspore._checkparam import is_pack_tensor
+from mindspore._c_expression import PackExpander
+from mindspore.ops._packfunc import _convert_tensor
 
 
 def _check_args(args):
@@ -617,6 +620,9 @@ class Cell(Cell_):
             bound_arguments.apply_defaults()
             args = bound_arguments.args
             kwargs = bound_arguments.kwargs
+
+        if args and is_pack_tensor(args[0]):
+            return self._run_packfunc(*args, **kwargs)
 
         # Run in Graph mode.
         if os.getenv("MS_JIT") != '0' and context._get_mode() == context.GRAPH_MODE:
@@ -2260,6 +2266,20 @@ class Cell(Cell_):
                     raise ValueError(
                         f"The {index + 1}th input of 'set_inputs' or tuple(list) in 'set_inputs' must be the same with "
                         f"network's input, but got set_inputs: {set_input} and network's input: {net_input}.")
+
+    def _run_packfunc(self, *args, **kwargs):
+        """ Run Packed Cell in Pack."""
+        args = self.auto_cast_inputs(args)
+        if hasattr(self, "bprop"):
+            expander = PackExpander.get_instance()
+            args = expander.begin_graph(self, *args)
+            args = [_convert_tensor(a) for a in args]
+            output = self._run_construct(args, kwargs)
+            ret = expander.end_graph(output)
+            output = _convert_tensor(ret)
+        else:
+            output = self._run_construct(args, kwargs)
+        return output
 
 
 class GraphCell(Cell):

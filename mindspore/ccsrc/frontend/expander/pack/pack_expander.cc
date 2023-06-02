@@ -60,6 +60,8 @@ bool IsTensorSequence(const py::object &arg) {
   return false;
 }
 
+inline int GetExecutionMode() { return MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE); }
+
 std::pair<AbstractBasePtr, ValuePtr> InferShapeAndValue(const PrimitivePtr &prim, const AbstractBasePtrList abs_list,
                                                         const bool &need_infer_value) {
   auto found = abstract::GetFrontendPrimitiveInferImpl(prim);
@@ -129,20 +131,46 @@ py::object PackNode::GetValue() const {
 
 py::object PackExpander::BeginGraph(const abstract::AbstractBasePtrList &inputs) {
   py::tuple outputs(inputs.size());
-  graph_ = std::make_shared<FuncGraph>();
+  auto graph = std::make_shared<FuncGraph>();
+  graphs_.push(graph);
   for (size_t i = 0; i < inputs.size(); ++i) {
     outputs[i] = ConvertAbstractToParameter(inputs[i]);
   }
   return outputs;
 }
 
+py::object PackExpander::BeginFuncGraph(const py::object &obj, const py::args &inputs) {
+  auto up_graph = graphs_.top();
+  auto graph = std::make_shared<FuncGraph>();
+  graphs_.push(graph);
+  AnfNodePtrList node_inputs = {NewValueNode(graph)};
+  auto args = py::cast<py::tuple>(inputs);
+  py::tuple outputs(inputs.size());
+  for (size_t i = 0; i < args.size(); ++i) {
+    auto node = ConvertInput(args[i]);
+    MS_EXCEPTION_IF_NULL(node);
+    node_inputs.emplace_back(node);
+    outputs[i] = ConvertAbstractToParameter(node->abstract()->Clone());
+  }
+  auto node = up_graph->NewCNodeInOrder(node_inputs);
+  func_graph_node_.push(node);
+  return outputs;
+}
+
 FuncGraphPtr PackExpander::EndGraph(const py::object &output) {
   auto node = ConvertInput(output);
   MS_EXCEPTION_IF_NULL(node);
-  graph_->set_output(node);
-  auto graph = graph_;
-  graph_.reset();
+  auto graph = graphs_.top();
+  graphs_.pop();
+  graph->set_output(node);
   return graph;
+}
+
+py::object PackExpander::EndFuncGraph(const py::object &output) {
+  auto func_node = func_graph_node_.top();
+  func_graph_node_.pop();
+  func_node->set_abstract(EndGraph(output)->output()->abstract());
+  return ConvertCNodeToPython(func_node);
 }
 
 py::object PackExpander::ConvertCNodeToPython(const AnfNodePtr &node) const {
@@ -166,22 +194,31 @@ py::object PackExpander::ConvertCNodeToPython(const AnfNodePtr &node) const {
 }
 
 py::object PackExpander::ConvertAbstractToParameter(const AbstractBasePtr &abs) const {
-  if (IsHasValue(abs->BuildValue())) {
-    auto val = abs->BuildValue();
-    graph_->AddNode(NewValueNode(val));
+  auto val = abs->BuildValue();
+  if (IsHasValue(val)) {
+    if (GetExecutionMode() == kGraphMode) {
+      auto param = graphs_.top()->add_parameter();
+      param->set_abstract(abs);
+    }
     return ValueToPyData(val);
   } else if (abs->isa<abstract::AbstractSequence>()) {
-    size_t len = abs->cast<abstract::AbstractSequencePtr>()->size();
-    py::tuple tuple_node(len);
-    for (size_t i = 0; i < len; ++i) {
-      tuple_node[i] = ConvertAbstractToParameter(abs->cast<abstract::AbstractSequencePtr>()->elements()[i]);
+    auto abs_seq = abs->cast<abstract::AbstractSequencePtr>()->elements();
+    py::tuple tuple_node(abs_seq.size());
+    for (size_t i = 0; i < abs_seq.size(); ++i) {
+      tuple_node[i] = ConvertAbstractToParameter(abs_seq[i]);
     }
     return tuple_node;
+  } else if (abs->isa<abstract::AbstractNone>()) {
+    if (GetExecutionMode() == kGraphMode) {
+      auto param = graphs_.top()->add_parameter();
+      param->set_abstract(abs);
+    }
+    return py::none();
   } else {
     if (!abs->isa<abstract::AbstractTensor>()) {
-      MS_LOG(WARNING) << "input should be Tensor, but get " << abs->ToString();
+      MS_LOG(WARNING) << "Input should be Tensor, but get " << abs->ToString() << ".";
     }
-    auto param = graph_->add_parameter();
+    auto param = graphs_.top()->add_parameter();
     param->set_abstract(abs);
     auto ret = std::make_shared<PackNode>(param);
     return py::cast(ret);
@@ -189,7 +226,7 @@ py::object PackExpander::ConvertAbstractToParameter(const AbstractBasePtr &abs) 
 }
 
 py::object PackExpander::Emit(const py::object &prim, const py::args &inputs) const {
-  MS_EXCEPTION_IF_NULL(graph_);
+  MS_EXCEPTION_IF_NULL(graphs_.top());
   auto prim_py = std::make_shared<PrimitivePy>(prim);
   AnfNodePtrList cnode_inputs;
   for (size_t i = 0; i < inputs.size(); ++i) {
@@ -222,7 +259,7 @@ AnfNodePtr PackExpander::CNodeInfer(const CNodePtr &cnode) const {
   }
   auto [infer_res, val] = InferShapeAndValue(prim, abs_list, need_infer_value);
   if (IsHasValue(val)) {
-    graph_->DropNode(cnode);
+    graphs_.top()->DropNode(cnode);
     auto node = NewValueNode(val);
     node->set_abstract(val->ToAbstract());
     return node;
@@ -234,7 +271,7 @@ AnfNodePtr PackExpander::CNodeInfer(const CNodePtr &cnode) const {
 AnfNodePtr PackExpander::EmitCNode(const PrimitivePtr &prim, const AnfNodePtrList &cnode_inputs) const {
   AbstractBasePtrList abs_list;
   (void)std::transform(cnode_inputs.cbegin(), cnode_inputs.cend(), std::back_inserter(abs_list), GetAbstract);
-  auto node = mindspore::prim::GenerateCNode(graph_, prim->name(), prim, abs_list, cnode_inputs);
+  auto node = mindspore::prim::GenerateCNode(graphs_.top(), prim->name(), prim, abs_list, cnode_inputs);
   auto cnode = node->cast<CNodePtr>();
   node = CNodeInfer(cnode);
   return node;
@@ -270,13 +307,15 @@ AnfNodePtr PackExpander::ConvertInput(const py::object &arg) const {
 
 void RegPackExpanderPy(const py::module *m) {
   (void)py::class_<PackNode, std::shared_ptr<PackNode>>(*m, "PackNode")
-    .def("get_shape", &PackNode::GetShape, "get value")
-    .def("get_dtype", &PackNode::GetDtype, "get value")
+    .def("get_shape", &PackNode::GetShape, "get shape")
+    .def("get_dtype", &PackNode::GetDtype, "get dtype")
     .def("get_value", &PackNode::GetValue, "get value");
 
   (void)py::class_<PackExpander, std::shared_ptr<PackExpander>>(*m, "PackExpander")
     .def_static("get_instance", &PackExpander::Instance, "PackExpander get_instance.")
-    .def("emit", &PackExpander::Emit, "emit op in current graph");
+    .def("emit", &PackExpander::Emit, "emit op in current graph")
+    .def("begin_graph", &PackExpander::BeginFuncGraph, "begin graph in current graph")
+    .def("end_graph", &PackExpander::EndFuncGraph, "end graph in current graph");
 }
 }  // namespace expander
 }  // namespace mindspore
