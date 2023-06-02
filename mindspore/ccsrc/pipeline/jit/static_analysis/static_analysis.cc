@@ -217,6 +217,44 @@ void BuildPossibleSpecs(const AbstractBasePtr &first_result,
   }
 }
 
+EvalResultPtr ConvertToPyExecuteCall(const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
+  constexpr auto internal_callable_obj_str = "__internal_callable_obj__";
+  std::stringstream script_buffer;
+  script_buffer << internal_callable_obj_str << "(";
+
+  std::vector<ValuePtr> key_list;
+  const auto callable_obj_name_str = std::make_shared<StringImm>(internal_callable_obj_str);
+  (void)key_list.emplace_back(callable_obj_name_str);
+  constexpr auto internal_callable_input_str = "__internal_callable_obj_input__";
+  const auto &inputs = cnode->inputs();
+  for (size_t i = 1; i < inputs.size(); ++i) {
+    std::stringstream key_input_buffer;
+    key_input_buffer << internal_callable_input_str << i;
+    (void)key_list.emplace_back(std::make_shared<StringImm>(key_input_buffer.str()));
+    script_buffer << key_input_buffer.str();
+    if (i < inputs.size() - 1) {
+      script_buffer << ", ";
+    }
+  }
+  script_buffer << ")";
+  const auto key_tuple = std::make_shared<ValueTuple>(key_list);
+  const auto script_call_str = std::make_shared<StringImm>(script_buffer.str());
+
+  std::vector<AnfNodePtr> value_list{NewValueNode(prim::kPrimMakeTuple)};
+  (void)std::copy(inputs.begin(), inputs.end(), std::back_inserter(value_list));
+  auto fg = cnode->func_graph();
+  const auto value_tuple_node = fg->NewCNode(value_list);
+
+  const auto obj_call_node =
+    fallback::CreatePyExecuteCNode(cnode, NewValueNode(script_call_str), NewValueNode(key_tuple), value_tuple_node);
+  constexpr auto recursive_level = 2;
+  MS_LOG(DEBUG) << "Created obj_call_node: " << obj_call_node->DebugString(recursive_level);
+  AnalysisEnginePtr eng = conf->engine();
+  MS_EXCEPTION_IF_NULL(eng);
+  AnfNodeConfigPtr fn_conf = eng->MakeConfig(obj_call_node, conf->context(), conf->func_graph());
+  return eng->ForwardConfig(conf, fn_conf, false);
+}
+
 EvalResultPtr ConvertClassToFunc(const CNodePtr &cnode, const AbstractBasePtr &abs, const AnfNodeConfigPtr &conf) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(abs);
@@ -228,6 +266,10 @@ EvalResultPtr ConvertClassToFunc(const CNodePtr &cnode, const AbstractBasePtr &a
   py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
   auto py_fn = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_CONVERT_CLASS_TO_FUNCTION, py::str(class_name));
   if (py::isinstance<py::none>(py_fn)) {
+    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax);
+    if (allow_fallback_runtime) {
+      return ConvertToPyExecuteCall(cnode, conf);
+    }
     MS_LOG(ERROR) << "Can not cast to a AbstractFunction from " << abs->ToString() << ".";
     MS_LOG(ERROR) << "It's called at: " << cnode->DebugString();
     MS_EXCEPTION(ValueError) << "Can not call " << class_name << " to create python object in graph mode. "
@@ -561,43 +603,7 @@ EvalResultPtr AnalysisEngine::InterpretedNodeCall(const CNodePtr &cnode, const A
   }
 
   // Forward getattr CNode call to py_execute CNode.
-  constexpr auto internal_getattr_callable_obj_str = "__internal_getattr_callable_obj__";
-  std::stringstream script_buffer;
-  script_buffer << internal_getattr_callable_obj_str << "(";
-
-  std::vector<ValuePtr> key_list;
-  const auto callable_obj_name_str = std::make_shared<StringImm>(internal_getattr_callable_obj_str);
-  (void)key_list.emplace_back(callable_obj_name_str);
-  constexpr auto internal_getattr_callable_input_str = "__internal_getattr_callable_obj_input__";
-  for (size_t i = 1; i < inputs.size(); ++i) {
-    std::stringstream key_input_buffer;
-    key_input_buffer << internal_getattr_callable_input_str << i;
-    (void)key_list.emplace_back(std::make_shared<StringImm>(key_input_buffer.str()));
-    script_buffer << key_input_buffer.str();
-    if (i < inputs.size() - 1) {
-      script_buffer << ", ";
-    }
-  }
-  script_buffer << ")";
-  const auto key_tuple = std::make_shared<ValueTuple>(key_list);
-  const auto script_call_str = std::make_shared<StringImm>(script_buffer.str());
-
-  std::vector<AnfNodePtr> value_list{NewValueNode(prim::kPrimMakeTuple)};
-  (void)value_list.emplace_back(func_node);
-  for (size_t i = 1; i < inputs.size(); ++i) {
-    const auto &input = inputs[i];
-    (void)value_list.emplace_back(input);
-  }
-  auto fg = cnode->func_graph();
-  const auto value_tuple_node = fg->NewCNode(value_list);
-
-  const auto getattr_obj_call_node =
-    fallback::CreatePyExecuteCNode(cnode, NewValueNode(script_call_str), NewValueNode(key_tuple), value_tuple_node);
-  MS_LOG(DEBUG) << "Created getattr_obj_call_node: " << getattr_obj_call_node->DebugString(recursive_level);
-  AnalysisEnginePtr eng = conf->engine();
-  MS_EXCEPTION_IF_NULL(eng);
-  AnfNodeConfigPtr fn_conf = eng->MakeConfig(getattr_obj_call_node, conf->context(), conf->func_graph());
-  return eng->ForwardConfig(conf, fn_conf, false);
+  return ConvertToPyExecuteCall(cnode, conf);
 }
 
 AbstractBasePtr AnalysisEngine::GetCNodeOperatorAbstract(const CNodePtr &cnode, const AnalysisContextPtr &context,

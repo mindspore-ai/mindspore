@@ -102,6 +102,8 @@ void FunctionBlock::WriteVariable(const std::string &var_name, const AnfNodePtr 
                    << ", Line: " << trace::GetDebugInfo(hidden_node->debug_info(), "", kSourceLineTipDiscard);
       AddIsolatedNode(hidden_node);
     }
+    MS_LOG(INFO) << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " update var `" << var_name
+                 << "` with node " << node->DebugString();
     iter->second = std::make_pair(node, false);
   }
   if (!HasGlobalPyParam(var_name)) {
