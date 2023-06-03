@@ -39,7 +39,7 @@ FuncGraphPtr ListAppend::GenerateFuncGraph(const abstract::AbstractBasePtrList &
   ret->debug_info()->set_name("append");
   AnfNodePtr arg0_node = ret->add_parameter();
   AnfNodePtr arg1_node = ret->add_parameter();
-  const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") == "1";
+  static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") == "1";
   if (allow_inplace_ops) {
     MS_LOG(DEBUG) << "Enable inplace operation, convert list append to InplaceListAppend ops.";
     AnfNodePtrList list_inplace_append_inputs = {NewValueNode(prim::kPrimListInplaceAppend), arg0_node, arg1_node};

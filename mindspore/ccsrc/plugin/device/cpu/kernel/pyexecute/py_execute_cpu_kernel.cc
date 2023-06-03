@@ -178,7 +178,7 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
       TensorToRawMemory(output.cast<tensor::TensorPtr>(), outputs[0]);
     } else if (py::isinstance<py::list>(output)) {
       auto output_list = py::list(output);
-      const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") == "1";
+      static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
       if (allow_inplace_ops && fallback::CheckListToMemory(output_list)) {
         ListToRawMemory(py::list(output), outputs);
       }

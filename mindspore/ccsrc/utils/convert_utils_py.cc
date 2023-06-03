@@ -599,7 +599,7 @@ py::object VectorRefToPyData(const VectorRef &value_list, const AbstractBasePtr 
   }
   if (abs->isa<abstract::AbstractList>()) {
     auto abs_list = abs->cast<abstract::AbstractListPtr>();
-    const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") == "1";
+    static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
     if (allow_inplace_ops && abs_list->has_list_py_obj()) {
       MS_LOG(DEBUG) << "Current abstract list has python object, directly return the abstract.";
       auto py_list_func = *(abs_list->list_py_obj<py::list>());

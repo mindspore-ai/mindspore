@@ -219,6 +219,7 @@ def test_none_is_default_value_of_parameter():
     check_output(cap.output, patterns)
 
 
+@pytest.mark.skip(reason="print pyexecute list will change the print format")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

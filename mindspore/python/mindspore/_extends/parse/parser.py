@@ -837,6 +837,8 @@ def get_local_variable(name):
 def _jit_fallback_generate_list(key_name, list_value):
     "Generate list object."
     list_obj = get_local_variable(key_name)
+    # Need to clear current object, in case the same make_list is called multiple times.
+    list_obj.clear()
     list_obj.extend(list_value)
     return list_obj
 
