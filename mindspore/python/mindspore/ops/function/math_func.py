@@ -8095,7 +8095,7 @@ def gumbel_softmax(logits, tau=1, hard=False, dim=-1):
         index = y_soft.argmax(axis=dim)
         y_hard = _get_cache_prim(P.OneHot)(dim)(index, sample_shape[dim], Tensor(1, logits_dtype),
                                                 Tensor(0, logits_dtype))
-        ret = y_hard - ops.stop_gradient(y_soft) + y_soft
+        ret = ops.stop_gradient(y_hard - y_soft) + y_soft
     else:
         ret = y_soft
     return ret
