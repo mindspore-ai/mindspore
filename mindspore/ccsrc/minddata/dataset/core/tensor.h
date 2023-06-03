@@ -782,16 +782,16 @@ class DATASET_API Tensor {
   /// \return Status
   Status CopyLastDimAt(const std::shared_ptr<Tensor> &src, const std::vector<dsize_t> &index);
 
+  /// Get the starting memory address for the data of the tensor.  This potentially
+  /// drives an allocation if the data is null.
+  /// \return unsigned char*
+  unsigned char *GetMutableBuffer() { return data_; }
+
  protected:
   /// Allocate memory for the tensor using the data_allocator
   /// \param[in] length number of bytes to be allocated
   /// \return Error Status
   Status AllocateBuffer(const dsize_t &length);
-
-  /// Get the starting memory address for the data of the tensor.  This potentially
-  /// drives an allocation if the data is null.
-  /// \return unsigned char*
-  unsigned char *GetMutableBuffer() { return data_; }
 
   /// A function that prints Tensor recursively, first called by print
   /// \param[in] out

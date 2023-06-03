@@ -87,7 +87,6 @@ mindspore::MSTensor DatasetOpTesting::ReadFileToTensor(const std::string &file) 
 // Helper function to create a batch op
 std::shared_ptr<mindspore::dataset::BatchOp> DatasetOpTesting::Batch(int32_t batch_size, bool drop,
                                                                      mindspore::dataset::PadInfo pad_map) {
-  /*
   std::shared_ptr<mindspore::dataset::ConfigManager> cfg = mindspore::dataset::GlobalContext::config_manager();
   int32_t num_workers = cfg->num_parallel_workers();
   int32_t op_connector_size = cfg->op_connector_size();
@@ -101,13 +100,8 @@ std::shared_ptr<mindspore::dataset::BatchOp> DatasetOpTesting::Batch(int32_t bat
   }
   std::shared_ptr<mindspore::dataset::BatchOp> op =
     std::make_shared<mindspore::dataset::BatchOp>(batch_size, drop, pad, op_connector_size, num_workers, input_columns,
-  output_columns, batch_size_func, batch_map_func, pad_map); return op;
-  */
-  Status rc;
-  std::shared_ptr<mindspore::dataset::BatchOp> op;
-  rc = mindspore::dataset::BatchOp::Builder(batch_size).SetDrop(drop).SetPaddingMap(pad_map).Build(&op);
-  EXPECT_TRUE(rc.IsOk());
-  return std::move(op);
+                                                  output_columns, batch_size_func, batch_map_func, pad_map);
+  return op;
 }
 
 std::shared_ptr<mindspore::dataset::RepeatOp> DatasetOpTesting::Repeat(int repeat_cnt) {
@@ -224,10 +218,10 @@ MSTensorVec Predicate3(MSTensorVec in) {
 
 cv::Mat BGRToRGB(const cv::Mat &img) {
   cv::Mat image(img.rows, img.cols, CV_8UC3);
-  for (int i=0; i<img.rows; ++i) {
+  for (int i = 0; i < img.rows; ++i) {
     auto p1 = img.ptr<cv::Vec3b>(i);
     auto p2 = image.ptr<cv::Vec3b>(i);
-    for (int j=0; j<img.cols; ++j) {
+    for (int j = 0; j < img.cols; ++j) {
       p2[j][2] = p1[j][0];
       p2[j][1] = p1[j][1];
       p2[j][0] = p1[j][2];
