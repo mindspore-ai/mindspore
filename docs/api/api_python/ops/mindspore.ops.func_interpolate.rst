@@ -9,7 +9,7 @@ mindspore.ops.interpolate
         - **input** (Tensor) - 被调整大小的Tensor。输入向量必须为三维，四维或五维，shape为 :math:`(N, C, [optional D], [optional H], W)` ，数据类型为float。
         - **size** (Union[int, tuple[int], list[int]], 可选) - 目标大小。如果 `size` 为tuple或list，那么其长度应该和 `input` 去掉 `N, C` 的维度相同。 `size` 和 `scale_factor` 同时只能指定一个。默认值： ``None`` 。
         - **scale_factor** (Union[float, tuple[float], list[float]]，可选) - 每个维度的缩放系数。如果 `scale_factor` 为tuple或list，那么其长度应该和 `input` 去掉 `N, C` 的维度相同。 `size` 和 `scale_factor` 同时只能指定一个。默认值： ``None`` 。
-        - **mode** (str) - 采样算法。以下采样方式的一种，'nearest'(三维和四维)， 'linear' (仅三维)，'bilinear' (仅四维)，'bicubic' (仅四维)，'area'，'nearest-exact'(三维和四维)。默认值： ``"nearest"`` 。
+        - **mode** (str) - 采样算法。以下采样方式的一种，'nearest'， 'linear' (仅三维)，'bilinear' (仅四维)，'trilinear'(仅五维)，'bicubic' (仅四维)，'area'，'nearest-exact'(三维和四维)。默认值： ``"nearest"`` 。
         - **align_corners** (bool) - 如果为True，缩放比例系数使用 :math:`(new\_height - 1) / (height - 1)` 计算，此种方式调整的数据与原始数据边角对齐。如果为False，缩放系数通过 :math:`new\_height / height` 计算。默认值： ``None`` 。
 
           .. code-block::
@@ -32,6 +32,8 @@ mindspore.ops.interpolate
     +---------------+-----------+---------------+--------------+----------------+
     |               | 4         | \-            | ×            | Ascend,GPU,CPU |
     +---------------+-----------+---------------+--------------+----------------+
+    |               | 5         | \-            | √            | Ascend,GPU,CPU |
+    +---------------+-----------+---------------+--------------+----------------+
     | linear        | 3         | √             | ×            | Ascend,GPU,CPU |
     +---------------+-----------+---------------+--------------+----------------+
     | bilinear      | 4         | √             | ×            | Ascend,GPU,CPU |
@@ -47,6 +49,8 @@ mindspore.ops.interpolate
     | nearest-exact | 3         | \-            | ×            | Ascend,CPU     |
     +---------------+-----------+---------------+--------------+----------------+
     |               | 4         | \-            | ×            | Ascend,CPU     |
+    +---------------+-----------+---------------+--------------+----------------+
+    | trilinear     | 5         | √             | √            | Ascend,GPU,CPU |
     +---------------+-----------+---------------+--------------+----------------+
 
     - `-` 表示无此参数。
