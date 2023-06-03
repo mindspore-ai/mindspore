@@ -766,8 +766,8 @@ void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph & /* 
       continue;
     }
     auto full_scope_name = node->fullname_with_scope();
-    MS_LOG(ERROR) << "Dump node (" << full_scope_name << ") task error input/output data to: " << path
-                  << trace::DumpSourceLines(node, false);
+    MS_LOG(WARNING) << "Dump task error infos (input/output's value) for node:[" << full_scope_name
+                    << "], save path: " << path << ", " << trace::DumpSourceLines(node, false);
 
     // full_scope_name: Default/GetNext-op1
     std::string lower_full_scope_name(full_scope_name.length(), ' ');
