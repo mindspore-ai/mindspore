@@ -477,6 +477,8 @@ class Tensor:
         """
         if not isinstance(numpy_obj, numpy.ndarray):
             raise TypeError(f"numpy_obj must be numpy.ndarray, but got {type(numpy_obj)}.")
+        if not numpy_obj.flags['FORC']:
+            numpy_obj = numpy.ascontiguousarray(numpy_obj)
         data_type_map = {
             numpy.bool_: DataType.BOOL,
             numpy.int8: DataType.INT8,
