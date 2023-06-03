@@ -130,13 +130,21 @@ mindspore_lite_whl=$(ls ${CUR_DIR}/../../../output/*.whl)
 if [[ -f "${mindspore_lite_whl}" || "$MSLITE_ENABLE_SERVER_INFERENCE" == on ]]; then
   # prepare model and inputdata for Python-API ut test
   if [ ! -e mobilenetv2.ms ]; then
-    MODEL_DOWNLOAD_URL="https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms"
-    wget -c -O mobilenetv2.ms --no-check-certificate ${MODEL_DOWNLOAD_URL}
+    if [[ -e "${SHARE_LITE_DATASET_PATH}/quick_start/mobilenetv2.ms" ]]; then
+        cp ${SHARE_LITE_DATASET_PATH}/quick_start/mobilenetv2.ms ./mobilenetv2.ms || exit 1
+    else
+        MODEL_DOWNLOAD_URL="https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms"
+        wget -c -O mobilenetv2.ms --no-check-certificate ${MODEL_DOWNLOAD_URL}
+    fi
   fi
 
   if [ ! -e mobilenetv2.ms.bin ]; then
-    BIN_DOWNLOAD_URL="https://download.mindspore.cn/model_zoo/official/lite/quick_start/micro/mobilenetv2.tar.gz"
-    wget -c --no-check-certificate ${BIN_DOWNLOAD_URL}
+    if [[ -e "${SHARE_LITE_DATASET_PATH}/quick_start/micro/mobilenetv2.tar.gz" ]]; then
+        cp ${SHARE_LITE_DATASET_PATH}/quick_start/micro/mobilenetv2.tar.gz ./mobilenetv2.tar.gz || exit 1
+    else
+        BIN_DOWNLOAD_URL="https://download.mindspore.cn/model_zoo/official/lite/quick_start/micro/mobilenetv2.tar.gz"
+        wget -c --no-check-certificate ${BIN_DOWNLOAD_URL}
+    fi
     tar -zxf mobilenetv2.tar.gz
     cp mobilenetv2/*.tflite ./mobilenetv2.tflite
     cp mobilenetv2/*.ms.out ./mobilenetv2.ms.out
