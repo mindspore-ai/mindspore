@@ -234,13 +234,18 @@ void AsyncHqueue::WorkerLoop() {
 }
 
 void AsyncHqueue::Init() {
-  if (tasks_.Init(kTaskQueueSize) != true) {
+  if (!tasks_.Init(kTaskQueueSize)) {
     MS_LOG(EXCEPTION) << "Init task queue failed.";
   }
   worker_ = std::make_shared<std::thread>(&AsyncHqueue::WorkerLoop, this);
 }
 
 void AsyncHqueue::Push(AsyncTask *task) {
+  // For process fork will cause thread confusion
+  if (!init_) {
+    Init();
+    init_ = true;
+  }
   while (!tasks_.Enqueue(task)) {
   }
   if (UNLIKELY(status_.load() == kThreadIdle)) {
@@ -250,6 +255,9 @@ void AsyncHqueue::Push(AsyncTask *task) {
 }
 
 void AsyncHqueue::Wait() {
+  if (worker_ == nullptr) {
+    return;
+  }
   while (status_.load() == kThreadBusy) {
   }
 }
@@ -257,6 +265,9 @@ void AsyncHqueue::Wait() {
 bool AsyncHqueue::Empty() { return tasks_.Empty(); }
 
 void AsyncHqueue::WorkerJoin() {
+  if (worker_ == nullptr) {
+    return;
+  }
   Wait();
   {
     std::lock_guard<std::mutex> lock(task_mutex_);

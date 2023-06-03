@@ -114,8 +114,8 @@ class TopCellInfo {
     MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr_);
     return auto_grad_cell_ptr_;
   }
-  void set_auto_grad_cell_ptr(const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr) {
-    auto_grad_cell_ptr_ = auto_grad_cell_ptr;
+  void set_auto_grad_cell_ptr(autograd::AutoGradCellImplPtr &&auto_grad_cell_ptr) {
+    auto_grad_cell_ptr_ = std::move(auto_grad_cell_ptr);
   }
   inline const TensorIdWithOpInfo &id_with_op_info() const { return id_with_op_info_; }
   void SetIdWithOpInfo(const ValuePtr &v, const std::string &op_info, size_t out_index);

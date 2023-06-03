@@ -97,7 +97,6 @@ class GradExecutor {
     return top_input_args_info_;
   }
 
-  inline bool need_renormalize() const { return need_renormalize_; }
   inline void set_top_cell(TopCellInfoPtr top_cell) { top_cell_ = std::move(top_cell); }
   inline bool grad_flag() const { return grad_flag_; }
   inline void set_grad_flag(bool flag) { grad_flag_ = flag; }
@@ -166,18 +165,12 @@ class GradExecutor {
   void SetGradOrder(const std::string &obj_id);
   void SaveOutputNodeMap(const std::string &obj_id, const FrontendOpRunInfoPtr &op_run_info,
                          const CNodePtr &cnode) const;
-  void DoOpGrad(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &op_out) const;
-  void GradPynativeOp(const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr,
-                      const autograd::GradParamPtr &grad_param) const;
-  void AsyncGradPynativeOp(const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr,
-                           const autograd::GradParamPtr &grad_param) const;
-  void AsyncUpdateOutputNodeOfTopCell(const ValuePtr &cloned_value) const;
+  void DoOpGrad(const FrontendOpRunInfoPtr &op_run_info) const;
   AnfNodePtr GetRealInputNodeBySkipHook(const AnfNodePtr &input_node) const;
   void SetBpropGraphJitLevel(const py::object &obj) const;
   void ClearGlobalRes() const;
   void ClearGradRes();
   std::string GetAlreadyRunCellId(const std::string &cell_id) const;
-  bool FreeUselessTensors(const PrimitivePtr &prim, const ValuePtrList &inputs, const ValuePtr &output) const;
 
   // Higher derivative
   inline bool IsNestedGrad() const { return grad_order_ > 1; }
@@ -237,13 +230,12 @@ class GradExecutor {
   void SaveDynamicDetectNodeInfoInFirstTime(const ValuePtrList &inputs, const DynamicDetectNodeInfoPtr &node,
                                             size_t node_idx) const;
   bool IsGraphDynamic(const ValuePtrList &inputs, const DynamicDetectNodeInfoPtr &node, size_t node_idx) const;
-  NodeInfoPtr BuildNodeInfo();
   bool init_{false};
   bool grad_flag_{false};
   bool grad_is_running_{false};
   bool need_renormalize_{false};
   bool eliminate_forward_{true};
-  mutable bool is_cell_id_in_dynamic_detect_nodes_map_{false};
+  bool save_graphs_{false};
   size_t custom_bprop_cell_count_{0};
   size_t obj_order_{0};
   // If grad_order=1, indicate first derivative; grad_order=2, indicate second derivative; ...

@@ -55,6 +55,9 @@ const mindspore::HashSet<std::string> kExpanderWhiteList{
 FrontendOpRunInfoPtr GetOpRunInfo(const py::object &out, const py::args &args, const std::string &graph_phase,
                                   bool modify_output, ValuePtr *added_out_v) {
   auto op_run_info = std::make_shared<FrontendOpRunInfo>();
+  op_run_info->grad_flag = true;
+  op_run_info->is_ms_function_input = true;
+  op_run_info->base_op_run_info.op_name = graph_phase;
   PyNativeAlgo::PyParser::ParseOpInputByPythonObj(op_run_info, args);
   // Set input abs
   op_run_info->input_abs.resize(op_run_info->input_size);
@@ -62,7 +65,6 @@ FrontendOpRunInfoPtr GetOpRunInfo(const py::object &out, const py::args &args, c
     op_run_info->input_abs[i] =
       PyNativeAlgo::Common::SetAbstractValueToAnyValue((op_run_info->input_value[i]->ToAbstract()));
   }
-  op_run_info->base_op_run_info.op_name = graph_phase;
   if (modify_output) {
     if (!py::isinstance<py::tuple>(out)) {
       MS_LOG(EXCEPTION) << "The output value of ms_function func graph should be a tuple.";
@@ -82,7 +84,6 @@ FrontendOpRunInfoPtr GetOpRunInfo(const py::object &out, const py::args &args, c
 
   op_run_info->base_op_run_info.abstract =
     PyNativeAlgo::Common::SetAbstractValueToAnyValue(op_run_info->out_value->ToAbstract());
-  op_run_info->grad_flag = true;
   return op_run_info;
 }
 
@@ -146,16 +147,21 @@ void ModifyOutputNode(const FuncGraphPtr &func_graph) {
   func_graph->ClearUsedForwardNodes();
 }
 
-bool IsRealOp(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  const auto &prim = GetCNodePrimitive(node);
-  if (prim == nullptr) {
-    MS_LOG(EXCEPTION) << "Should be primitive, but: " << node->DebugString();
-  }
+bool IsRealOp(const PrimitivePtr &prim) {
+  MS_EXCEPTION_IF_NULL(prim);
   return kNotRealOP.find(prim->name()) == kNotRealOP.end();
 }
 
-void GetUsedCNodeInBpropGraph(const CNodePtr &cnode, const std::vector<size_t> &unused_inputs,
+bool IsRealOp(const AnfNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  const auto &prim = GetCNodePrimitive(cnode);
+  if (prim == nullptr) {
+    return false;
+  }
+  return IsRealOp(prim);
+}
+
+void GetUsedCNodeInBpropGraph(const CNodePtr &cnode, const mindspore::HashSet<size_t> &unused_inputs,
                               AnfNodePtrList *node_list) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(node_list);
@@ -165,8 +171,7 @@ void GetUsedCNodeInBpropGraph(const CNodePtr &cnode, const std::vector<size_t> &
   // So, A can also replace by its output
   size_t input_num = cnode->size() - 1;
   for (size_t i = 0; i < input_num; ++i) {
-    if (std::find(unused_inputs.begin(), unused_inputs.end(), i) != unused_inputs.end() &&
-        cnode->input(i + 1)->isa<CNode>()) {
+    if (unused_inputs.find(i) != unused_inputs.end() && cnode->input(i + 1)->isa<CNode>()) {
       // Input used by bprop graph, and it is a cnode have produce real output
       const auto &input_c = cnode->input(i + 1)->cast<CNodePtr>();
       if (IsPrimitive(input_c, prim::kPrimMakeTuple)) {
@@ -184,7 +189,7 @@ void GetUsedCNodeInBpropGraph(const CNodePtr &cnode, const std::vector<size_t> &
     }
   }
   // Check output used in single op bprop graph
-  if (std::find(unused_inputs.begin(), unused_inputs.end(), cnode->size()) == unused_inputs.end()) {
+  if (unused_inputs.find(cnode->size()) == unused_inputs.end()) {
     (void)node_list->emplace_back(cnode);
   }
 }
@@ -310,7 +315,8 @@ void MsFunction::GetInputArgsNode(const FrontendOpRunInfoPtr &op_run_info, AnfNo
   }
 }
 
-void MsFunction::SetWeights(const FrontendOpRunInfoPtr &op_run_info, const FuncGraphPtr &ms_func_graph) const {
+void MsFunction::SetWeights(const FrontendOpRunInfoPtr &op_run_info, const FuncGraphPtr &ms_func_graph,
+                            const TopCellInfoPtr &top_cell) const {
   // Get weights info of ms_function
   MS_EXCEPTION_IF_NULL(ms_func_graph);
   const auto &original_params = ms_func_graph->parameters();
@@ -318,6 +324,18 @@ void MsFunction::SetWeights(const FrontendOpRunInfoPtr &op_run_info, const FuncG
   MS_EXCEPTION_IF_NULL(op_run_info);
   for (size_t i = 0; i < params_size; ++i) {
     if (i < op_run_info->input_size) {  // non-weights node.
+      if (op_run_info->input_value[i]->isa<tensor::Tensor>()) {
+        auto t = op_run_info->input_value[i]->cast<tensor::TensorPtr>();
+        const auto &auto_grad_meta_data = t->auto_grad_meta_data();
+        // Maybe have constant tensor input
+        if (auto_grad_meta_data == nullptr) {
+          op_run_info->input_value_grad_type[i] = PyNativeAlgo::Common::SetTensorGradInfo(t, top_cell);
+        } else {
+          op_run_info->input_value_grad_type[i] = auto_grad_meta_data->grad_type();
+        }
+      } else {
+        MS_LOG(EXCEPTION) << "Get no tensor input " << op_run_info->input_value[i]->ToString();
+      }
       continue;
     }
     // Must weight param
@@ -325,6 +343,8 @@ void MsFunction::SetWeights(const FrontendOpRunInfoPtr &op_run_info, const FuncG
     const auto tensor_value = PyNativeAlgo::Common::GetTensorFromParam(original_params[i]);
     MS_EXCEPTION_IF_NULL(tensor_value);
     (void)op_run_info->input_value.emplace_back(tensor_value);
+    (void)op_run_info->input_value_grad_type.emplace_back(
+      PyNativeAlgo::Common::SetTensorGradInfo(tensor_value, top_cell));
     (void)op_run_info->input_abs.emplace_back(param->abstract());
     MS_LOG(DEBUG) << "Top graph set free parameter " << param->DebugString() << ". Its default value is "
                   << tensor_value->ToString() << ". Its name is: " << param->name();
@@ -389,22 +409,19 @@ void MsFunction::MakeAdjointForMsFunction(const FrontendOpRunInfoPtr &op_run_inf
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(grad_executor);
 
-  SetWeights(op_run_info, ms_func_graph);
-  RecordForwardGraphForMsFunction(op_run_info, grad_executor, ms_func_graph);
   const auto &top_cell = grad_executor->top_cell();
+  SetWeights(op_run_info, ms_func_graph, top_cell);
+  RecordForwardGraphForMsFunction(op_run_info, grad_executor, ms_func_graph);
   // Connect grad graph of ms_function to context.
-  std::vector<ValuePtr> inputs;
-  (void)std::transform(
-    op_run_info->input_value.begin(), op_run_info->input_value.end(), std::back_inserter(inputs),
-    [this, top_cell](const ValuePtr &value) { return PyNativeAlgo::Common::InitGradInfo(value, top_cell); });
-  ValuePtr cloned_out = PyNativeAlgo::Common::InitGradInfo(op_run_info->out_value, top_cell, TensorGradType::kOpOutput,
-                                                           top_cell->op_index());
+  (void)PyNativeAlgo::Common::SetValueGradInfo(op_run_info->out_value, top_cell, TensorGradType::kOpOutput);
   auto grad_param = std::make_shared<autograd::GradParam>(
-    nullptr, inputs, op_run_info->input_abs, cloned_out, op_run_info->base_op_run_info.abstract, grad_graph,
-    ms_func_graph, !top_cell->is_high_order_top_cell(), grad_executor->use_dynamic_shape_process());
+    nullptr, op_run_info->input_value, op_run_info->input_abs, op_run_info->out_value,
+    op_run_info->base_op_run_info.abstract, grad_graph, ms_func_graph, !top_cell->is_high_order_top_cell(),
+    grad_executor->use_dynamic_shape_process());
   grad_param->is_not_support_by_expander = is_not_support_by_expander_;
   grad_param->is_ms_function_graph = true;
   grad_param->graph_cache_key = op_run_info->op_info;
+  grad_param->op_args_grad_type = op_run_info->input_value_grad_type;
   {
     py::gil_scoped_release gil_release;
     grad_executor->async_executor()->Wait();
@@ -489,18 +506,19 @@ FuncGraphPtr MsFunction::ProcessMsFunctionFuncGraph(const FuncGraphPtr &ms_func_
     }
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    if (!IsRealOp(cnode)) {
+    const auto &prim = GetCNodePrimitive(cnode);
+    if (prim == nullptr) {
+      MS_LOG(EXCEPTION) << "Should be primitive, but: " << node->DebugString();
+    }
+    if (!IsRealOp(prim)) {
       continue;
     }
     MS_LOG(DEBUG) << "Get cnode " << cnode->DebugString();
-    auto prim = GetCNodePrimitive(cnode);
-    const auto &unused_inputs = BpropExpander().GetUnusedInputs(prim);
-    if (!unused_inputs.empty() && unused_inputs.back() == INT_MAX) {
-      if (auto prim = GetCNodePrimitive(cnode);
-          prim == nullptr || kExpanderWhiteList.find(prim->name()) == kExpanderWhiteList.end()) {
-        MS_LOG(DEBUG) << "Prim is not support by expander";
-        return nullptr;
-      }
+    const auto &unused_inputs = BpropExpander().GetUnusedInputs(prim->name());
+    if (!unused_inputs.empty() && unused_inputs.find(INT_MAX) != unused_inputs.end() &&
+        kExpanderWhiteList.find(prim->name()) == kExpanderWhiteList.end()) {
+      MS_LOG(DEBUG) << "Prim " << prim->name() << " is not support by expander";
+      return nullptr;
     }
     GetUsedCNodeInBpropGraph(cnode, unused_inputs, &node_list);
   }
@@ -510,11 +528,9 @@ FuncGraphPtr MsFunction::ProcessMsFunctionFuncGraph(const FuncGraphPtr &ms_func_
   }
   for (const auto &cn : node_list) {
     auto out = pynative::PyNativeAlgo::Common::CreatOutputTensorValueByAbstract(cn->abstract());
-    auto v_node = NewValueNode(out);
-    v_node->set_abstract(cn->abstract());
     const auto &c_node = cn->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(c_node);
-    c_node->set_forward(v_node, "");
+    c_node->set_forward(PyNativeAlgo::Common::CreateValueNodeByValue(out, cn->abstract()), "");
   }
   auto clone_graph = BasicClone(ms_func_graph);
   ms_func_graph->set_used_forward_nodes(node_list);

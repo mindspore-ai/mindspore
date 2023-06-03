@@ -73,7 +73,7 @@ class BACKEND_EXPORT AsyncQueue {
 };
 using AsyncQueuePtr = std::shared_ptr<AsyncQueue>;
 
-class BACKEND_EXPORT AsyncHqueue : public AsyncQueue {
+class BACKEND_EXPORT AsyncHqueue final : public AsyncQueue {
  public:
   AsyncHqueue() = default;
   ~AsyncHqueue() override;

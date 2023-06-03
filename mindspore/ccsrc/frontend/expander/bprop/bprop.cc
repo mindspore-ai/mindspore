@@ -48,13 +48,11 @@ bool BpropExpander::Run(const CNodePtr &cnode) {
   return ret;
 }
 
-const std::vector<size_t> &BpropExpander::GetUnusedInputs(const PrimitivePtr &prim) const {
-  MS_EXCEPTION_IF_NULL(prim);
-  auto name = prim->name();
-  auto handle = GetBpropHandle(name);
+const mindspore::HashSet<size_t> &BpropExpander::GetUnusedInputs(const string &op_name) const {
+  auto handle = GetBpropHandle(op_name);
   if (handle == nullptr) {
-    MS_LOG(DEBUG) << "Bprop IRBuilder [" << name << "] is not registered in bprop expander.";
-    static const std::vector<size_t> no_handle{INT_MAX};
+    MS_LOG(DEBUG) << "Bprop IRBuilder [" << op_name << "] is not registered in bprop expander.";
+    static const mindspore::HashSet<size_t> no_handle{INT_MAX};
     return no_handle;
   }
   return handle->unused_inputs;

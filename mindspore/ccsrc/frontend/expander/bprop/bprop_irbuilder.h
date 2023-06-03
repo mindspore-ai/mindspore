@@ -35,7 +35,7 @@ class BpropIRBuilder;
 using BpropIRBuilderFunc = std::function<NodePtrList(const BpropIRBuilder *)>;
 struct BpropHandle {
   BpropIRBuilderFunc func;
-  std::vector<size_t> unused_inputs;
+  mindspore::HashSet<size_t> unused_inputs;
 };
 
 class BpropIRBuilder : public Emitter {
@@ -111,7 +111,7 @@ class BpropIRBuilderFactory {
   }
 
   void RegBuilder(const std::string &name, const BpropIRBuilderFunc &func) const { registry()[name].func = func; }
-  void RegUnusedInputs(const std::string &name, const std::vector<size_t> &unused) const {
+  void RegUnusedInputs(const std::string &name, const mindspore::HashSet<size_t> &unused) const {
     registry()[name].unused_inputs = unused;
   }
 
