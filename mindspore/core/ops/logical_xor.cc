@@ -40,10 +40,18 @@ TypePtr LogicalXorInferType(const PrimitivePtr &prim, const std::vector<Abstract
   const std::basic_string<char> kBool = "Tensor[Bool]";
   std::ostringstream buffer;
   buffer << "For primitive[LogicalXor], the input argument[x, y, ] must be a type of {Tensor[Bool], }, but got ";
-  if (x_dtype->ToString() != kBool) {
+  string x_dtype_str = x_dtype->ToString();
+  string y_dtype_str = y_dtype->ToString();
+  if (!x_dtype->isa<TensorType>()) {
+    x_dtype_str = "Tensor" + x_dtype_str + "]";
+  }
+  if (!y_dtype->isa<TensorType>()) {
+    y_dtype_str = "Tensor" + y_dtype_str + "]";
+  }
+  if (x_dtype_str != kBool) {
     MS_EXCEPTION(TypeError) << buffer.str() << x_dtype->ToString() << ".";
   }
-  if (y_dtype->ToString() != kBool) {
+  if (y_dtype_str != kBool) {
     MS_EXCEPTION(TypeError) << buffer.str() << y_dtype->ToString() << ".";
   }
   return x_dtype;
