@@ -16,7 +16,7 @@
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/relu_grad_v2_impl.cuh"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementswise_op_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/elementswise_pub_impl.cuh"
 constexpr uint kThreadsPerBlock = cuda::elementwise::kThreadsPerBlock;
 
 enum : unsigned { warp_size = 32, log_wap_size = 5 };

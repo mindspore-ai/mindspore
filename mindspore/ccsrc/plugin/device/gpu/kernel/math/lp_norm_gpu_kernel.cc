@@ -24,8 +24,8 @@
 #include "kernel/common_utils.h"
 #include "mindspore/core/ops/lp_norm.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/lp_norm_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/unary_op_impl.cuh"
-
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/eltwise_ops_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/eltwise_ops_type.cuh"
 namespace mindspore {
 namespace kernel {
 bool LpNormGpuKernelMod::GetLpNormAttr(const BaseOperatorPtr &base_operator) {
@@ -135,7 +135,8 @@ bool LpNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   auto input = GetDeviceAddress<T>(inputs, kIndex0);
   auto output = GetDeviceAddress<T>(outputs, kIndex0);
   if (is_scalar_input_) {
-    Abs(input, output, outputs.at(kIndex0)->size, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    UnaryOpsCudaFunc<ElwiseOpType::kAbs, T, T>(outputs.at(kIndex0)->size / sizeof(T), input, output,
+                                               reinterpret_cast<cudaStream_t>(cuda_stream_));
     return true;
   }
   auto device_input_shape = GetDeviceAddress<size_t>(workspace, kIndex0);

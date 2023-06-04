@@ -17,8 +17,8 @@
 #include <limits>
 #include "include/cuda_fp16.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementswise_op_impl.cuh"
-constexpr uint kThreadsPerBlock = cuda::elementwise::kThreadsPerBlock;
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/elementswise_pub_impl.cuh"
+constexpr size_t kThreadsPerBlock = 256;
 
 template <typename T>
 inline __device__ T trigamma(const T input) {
@@ -318,13 +318,11 @@ __global__ void CalPolygammaKernel(size_t num_count, const T1 *a, const T2 *inpu
 template <typename T1, typename T2>
 void CalPolygamma(const size_t num_count, const T1 *a, const T2 *input, T2 *output, const uint32_t &device_id,
                   cudaStream_t cuda_stream) {
-  constexpr uint vec_size = cuda::elementwise::VecSize<T2>();
-  const auto block_x = uint(kThreadsPerBlock);
-  const uint elements_per_block = kThreadsPerBlock * vec_size;
-  const auto grid_x = uint(UP_DIV(num_count, elements_per_block));
-  dim3 block{block_x};
-  dim3 grid{grid_x};
-  CalPolygammaKernel<vec_size, T1, T2><<<grid, block, 0, cuda_stream>>>(num_count, a, input, output);
+  constexpr size_t vec_size = cuda::elementwise::VecSize<T2>();
+  const size_t block_x = kThreadsPerBlock < num_count ? kThreadsPerBlock : num_count;
+  const size_t elements_per_block = kThreadsPerBlock * vec_size;
+  const size_t grid_x = UP_DIV(num_count, elements_per_block);
+  CalPolygammaKernel<vec_size, T1, T2><<<grid_x, block_x, 0, cuda_stream>>>(num_count, a, input, output);
 }
 
 template CUDA_LIB_EXPORT void CalPolygamma(const size_t num_count, const int32_t *a, const float *input,

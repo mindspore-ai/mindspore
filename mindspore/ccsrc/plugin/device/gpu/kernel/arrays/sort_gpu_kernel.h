@@ -29,7 +29,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/topk_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise_op_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/eltwise_ops_impl.cuh"
 #include "plugin/device/gpu/kernel/arrays/fast_sort_gpu_kernel.h"
 
 namespace mindspore {
@@ -77,10 +77,10 @@ class SortGpuKernelMod : public NativeGpuKernelMod {
     if (axis_ < 0) {
       axis_ += input_rank_;
     }
-    if ((size_t)axis_ >= input_rank_) {
+    if (static_cast<size_t>(axis_) >= input_rank_) {
       MS_LOG(ERROR) << "For '" << kernel_name << "', the value of 'axis' must be less than the dimension of input"
                     << ", but got the dimension of input: " << input_rank_
-                    << ", got the value of 'axis': " << (size_t)axis_;
+                    << ", got the value of 'axis': " << static_cast<size_t>(axis_);
       return KRET_RESIZE_FAILED;
     }
 
