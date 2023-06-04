@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GPU_COMBINE_MOMENTUM_FUSION_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GPU_COMBINE_MOMENTUM_FUSION_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GPU_COMBINE_OPTIMIZER_FUSION_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GPU_COMBINE_OPTIMIZER_FUSION_H_
 
 #include <memory>
 #include <string>
@@ -23,12 +23,12 @@
 
 namespace mindspore {
 namespace opt {
-class CombineMomentumFusion : public Pass {
+class CombineOptimizerFusion : public Pass {
  public:
-  explicit CombineMomentumFusion(const std::string &name) : Pass("combine_momentum") {}
-  ~CombineMomentumFusion() override = default;
+  explicit CombineOptimizerFusion(const std::string &name) : Pass(kCombineOptimizerOpName) {}
+  ~CombineOptimizerFusion() override = default;
   bool Run(const FuncGraphPtr &graph) override;
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GPU_COMBINE_MOMENTUM_FUSION_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GPU_COMBINE_OPTIMIZER_FUSION_H_
