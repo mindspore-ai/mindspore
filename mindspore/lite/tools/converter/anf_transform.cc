@@ -769,6 +769,16 @@ STATUS AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, const std
     MS_LOG(ERROR) << "Do Quantize failed.";
     return RET_ERROR;
   }
+
+#ifdef MSLITE_ENABLE_GRAPH_KERNEL
+  if (param->device.find("Ascend") == std::string::npos) {
+    if (GraphKernelOptimize(old_graph, param) != RET_OK) {
+      MS_LOG(ERROR) << "Do graphkernel optimization failed.";
+      return RET_ERROR;
+    }
+  }
+#endif
+
   status = DoFormatForMindIR(old_graph, param);
   if (status != RET_OK) {
     return RET_ERROR;
@@ -837,15 +847,6 @@ STATUS AnfTransform::Transform(const FuncGraphPtr &main_graph, const std::shared
     MS_LOG(ERROR) << "optimizer failed.";
     return RET_NULL_PTR;
   }
-
-#ifdef MSLITE_ENABLE_GRAPH_KERNEL
-  if (param->device.find("Ascend") == std::string::npos) {
-    if (GraphKernelOptimize(main_graph, param) != RET_OK) {
-      MS_LOG(ERROR) << "Run graphkernel optimization failed.";
-      return RET_NULL_PTR;
-    }
-  }
-#endif
 
   return RET_OK;
 }

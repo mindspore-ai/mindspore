@@ -30,8 +30,8 @@ class ConvTuningExpander : public GraphKernelExpanderLite {
   std::vector<PrimitivePtr> InitOpList() override;
 };
 
-bool InvalidConvAttr(const std::vector<int64_t> &kernel_size, const std::vector<int64_t> &stride,
-                     const std::vector<int64_t> &dilation);
+bool InvalidConvAttr(const std::vector<int64_t> &kernel_size, const std::vector<int64_t> &pad,
+                     const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation);
 }  // namespace mindspore::graphkernel
 
 #endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_CONV_TUNING_EXPANDER_H_

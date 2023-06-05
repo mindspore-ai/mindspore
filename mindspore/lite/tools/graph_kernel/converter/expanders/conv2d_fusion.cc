@@ -27,9 +27,10 @@ class CheckValidAttr : public Validator {
  public:
   bool Check(const OpDesc &e) override {
     const auto kernel_size = GetValue<std::vector<int64_t>>(e.Attrs().find("kernel_size")->second);
+    const auto pad = GetValue<std::vector<int64_t>>(e.Attrs().find("pad")->second);
     const auto stride = GetValue<std::vector<int64_t>>(e.Attrs().find("stride")->second);
     const auto dilation = GetValue<std::vector<int64_t>>(e.Attrs().find("dilation")->second);
-    if (InvalidConvAttr(kernel_size, stride, dilation)) {
+    if (InvalidConvAttr(kernel_size, pad, stride, dilation)) {
       return false;
     }
     return true;
