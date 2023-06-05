@@ -81,7 +81,7 @@ std::string GetGraphParamString(const FuncGraphPtr &graph, const abstract::Abstr
 }
 
 void DumpInferStack(std::ostringstream &oss) {
-  auto &graph_stack = GetCurrentGraphEvalStack();
+  auto graph_stack = GetCurrentGraphEvalStack();
   if (graph_stack.empty()) {
     return;
   }
@@ -436,12 +436,11 @@ void TraceGraphEvalEnter(const abstract::AnalysisContextPtr &context, const abst
 }
 
 void TraceGraphEvalLeave(const abstract::AnalysisContextPtr &context) {
-  // The stack maybe empty in multiple thread.
-  if (graph_infer_stack.empty()) {
-    return;
-  }
   if (context == nullptr) {
-    MS_LOG(INTERNAL_EXCEPTION) << "The context is null, or call stack is empty.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The context is null.";
+  }
+  if (graph_infer_stack.empty()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "The call stack is empty.";
   }
   if (context != graph_infer_stack.back().first) {
     MS_LOG(INTERNAL_EXCEPTION) << "Different context: " << context->func_graph()->ToString() << ", "
