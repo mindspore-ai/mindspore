@@ -33,6 +33,7 @@ function Convert() {
         input_format=`echo ${model_info} | awk -F ';' '{print $4}'`
         extra_info=`echo ${model_info} | awk -F ';' '{print $5}'`
         input_data_type=`echo ${model_info} | awk -F ';' '{print $6}'`
+        infix_str=`echo ${model_info} | awk -F ';' '{print $7}'`
         input_num=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $1}'`
         input_names=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $2}'`
         model_type=${model_name##*.}
@@ -185,26 +186,28 @@ function Convert() {
         if [ $? = 0 ]; then
             converter_result='converter '${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
             local model_size
-            if [ "${save_type}"x == "MINDIR"x ]; then
-              model_size=`ls ${output_file}.mindir  -l|awk -F ' ' '{print $5}'`
-            else
-              model_size=`ls ${output_file}.ms  -l|awk -F ' ' '{print $5}'`
+            if [[ ${infix_str} != "" ]]; then
+              output_file=${output_file}${infix_str}
             fi
+            if [ "${save_type}"x == "MINDIR"x ]; then
+              output_file=${output_file}".mindir"
+              model_size=`ls ${output_file}  -l|awk -F ' ' '{print $5}'`
+            else
+              output_file=${output_file}".ms"
+              model_size=`ls ${output_file}  -l|awk -F ' ' '{print $5}'`
+            fi
+            echo "${output_file} output size: ${model_size}."
             let calib_final_size=${calib_size}+50
             if [[ -n ${calib_size} ]];then
               if [ ${model_size} -gt ${calib_final_size} ]; then
-                echo "${output_file}.ms " model size is " ${model_size} " and calib size is " ${calib_size}"
-                converter_result='compare_size '${model_type}''${quant_type}' '${output_file##*/}.ms' failed';echo ${converter_result} >> $5
-                if [ "${save_type}"x == "MINDIR"x ]; then
-                  rm -rf ${output_file}.mindir
-                else
-                  rm -rf ${output_file}.ms
-                fi
+                echo "${output_file} " model size is " ${model_size} " and calib size is " ${calib_size}"
+                converter_result='compare_size '${model_type}''${quant_type}' '${output_file##*/}' failed';echo ${converter_result} >> $5
+                rm -rf ${output_file}
                 if [[ $6 != "ON" ]]; then
                   fail=1
                 fi
               else
-                converter_result='compare_size '${model_type}''${quant_type}' '${output_file##*/}.ms' pass';echo ${converter_result} >> $5
+                converter_result='compare_size '${model_type}''${quant_type}' '${output_file##*/}' pass';echo ${converter_result} >> $5
               fi
             fi
         else
@@ -280,6 +283,7 @@ function Run_Benchmark() {
       input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
       spec_threads=`echo ${model_info} | awk -F ';' '{print $4}'`
       extra_info=`echo ${model_info} | awk -F ';' '{print $5}'`
+      infix_str=`echo ${model_info} | awk -F ';' '{print $7}'`
       input_num=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $1}'`
       input_names=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $2}'`
       # adjust threads
@@ -325,6 +329,9 @@ function Run_Benchmark() {
       elif [[ ${cfg_file_name} =~ "_compatibility" && ${spec_acc_limit} == "" ]]; then
         benchmark_mode="loop"
       fi
+      if [[ ${infix_str} != "" ]]; then
+        infix=${infix}${infix_str}
+      fi
       if [[ ${cfg_file_name} =~ "_cloud_ms" ]]; then
         model_file=$2"/${model_name}${infix}.ms"
         ms_model_type="MindIR_Lite"
@@ -344,7 +351,7 @@ function Run_Benchmark() {
       if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
         if [[ ${cfg_file_name} =~ "_cloud" ]]; then
           input_files=${data_path}'input/'${model_name}'.bin'
-        else 
+        else
           input_files=${data_path}'input/'${model_name}'.ms.bin'
         fi
       else
