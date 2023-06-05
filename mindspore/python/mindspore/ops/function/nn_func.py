@@ -2157,7 +2157,7 @@ def interpolate(input,
             after removing the first two dimensions N, C.
             One and only one of size and scale_factor can be set to None. Default: ``None`` .
         mode (str): The sampling algorithm.
-            One of 'nearest'(3D and 4D), 'linear' (3D only), 'bilinear' (4D only), 'bicubic' (4D only),
+            One of 'nearest', 'linear' (3D only), 'bilinear' (4D only), 'trilinear' (5D only), 'bicubic' (4D only),
             'area', 'nearest-exact'(3D and 4D). Default: ``"nearest"`` .
         align_corners (bool): If True, rescale input by :math:`(new\_height - 1) / (height - 1)`, which exactly
             aligns the corners of data and resized data. If False, rescale by :math:`new\_height / height`.
