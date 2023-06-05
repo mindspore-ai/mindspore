@@ -249,7 +249,7 @@ int ApplyNewAxisMask(StridedSliceTransferBuffer *transfer_buffer, StridedSlicePa
 void ApplyBeginMask(StridedSliceTransferBuffer *transfer_buffer) {
   for (int i = 0; i < transfer_buffer->ndim_; i++) {
     if (transfer_buffer->begins_mask_[i]) {
-      transfer_buffer->begins_[i] = 0;
+      transfer_buffer->begins_[i] = transfer_buffer->strides_[i] > 0 ? 0 : -1;
     }
   }
 }
@@ -260,7 +260,7 @@ int ApplyEndMask(StridedSliceTransferBuffer *transfer_buffer, const int *in_shap
       if ((size_t)i >= in_shape_size) {
         return NNACL_ERR;
       }
-      transfer_buffer->ends_[i] = in_shape[i];
+      transfer_buffer->ends_[i] = transfer_buffer->strides_[i] > 0 ? in_shape[i] : -1 - in_shape[i];
     }
   }
   return NNACL_OK;
@@ -456,6 +456,7 @@ int StridedSliceInferShape(const TensorC *const *inputs, size_t inputs_size, Ten
     output_shape[i] = (transfer_buffer.ends_[i] - transfer_buffer.begins_[i] + transfer_buffer.strides_[i] +
                        (transfer_buffer.strides_[i] < 0 ? 1 : -1)) /
                       transfer_buffer.strides_[i];
+    output_shape[i] = output_shape[i] > 0 ? output_shape[i] : 0;
   }
   ApplyShrinkMask(&transfer_buffer, output_shape, &output_shape_size);
   SetShapeArray(outputs[0], output_shape, output_shape_size);
