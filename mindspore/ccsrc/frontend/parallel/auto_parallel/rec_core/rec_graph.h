@@ -79,6 +79,8 @@ class Graph {
     std::vector<size_t> node_out;
     // Nodes that point to this node via auxliary edges
     std::vector<size_t> node_in_aux;
+    // Input indices of the nodes that point to this node via auxliary edges
+    std::vector<size_t> node_in_aux_idx;
 
     // Node Type Info: Application or Constant. Defined in enum <InfoType> .
     InfoType info;
