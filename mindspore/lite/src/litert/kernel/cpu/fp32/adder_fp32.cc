@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#ifdef ENABLE_NNACL_KERNEL_LIB
 #include "src/litert/kernel/cpu/fp32/adder_fp32.h"
 #include "src/litert/kernel_registry.h"
 #include "include/errorcode.h"
@@ -153,3 +154,4 @@ int AdderCPUKernel::Run() {
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_AdderFusion, LiteKernelCreator<AdderCPUKernel>)
 }  // namespace mindspore::kernel
+#endif
