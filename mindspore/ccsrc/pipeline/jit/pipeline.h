@@ -155,6 +155,10 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   // If enable compile cache, get the compile cache resource.
   void InitCompileCacheInfo(const ResourcePtr &resource, const std::string &phase);
 
+#ifdef WITH_BACKEND
+  void GeFirstInitParams();
+#endif
+
   bool CompileInner(const py::object &source, const py::tuple &args, const py::dict &kwargs, const py::object &phase,
                     bool use_vm);
   py::object RunInner(const py::tuple &args, const py::object &phase);
