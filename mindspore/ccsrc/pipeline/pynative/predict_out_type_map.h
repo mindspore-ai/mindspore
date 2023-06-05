@@ -102,6 +102,7 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"Custom", kTypeAny},
                                                        {"DSDGrad", kTupleTensor3},
                                                        {"DeformableOffsetsGrad", kTupleTensor2},
+                                                       {"DenseGrad", kTupleTensor3},
                                                        {"DenseToCSRSparseMatrix", kTupleTensor5},
                                                        {"DenseToDenseSetOperation", kTupleTensor3},
                                                        {"DenseToSparseSetOperation", kTupleTensor3},

@@ -1189,6 +1189,8 @@ GVAR_DEF(PrimitivePtr, kPrimSparseApplyProximalGradientDescent,
          std::make_shared<Primitive>(kSparseApplyProximalGradientDescent));
 GVAR_DEF(PrimitivePtr, kPrimAdaptiveMaxPool3DGrad, std::make_shared<Primitive>("AdaptiveMaxPool3DGrad"));
 GVAR_DEF(PrimitivePtr, kPrimChannelShuffle, std::make_shared<Primitive>(kChannelShuffle));
+GVAR_DEF(PrimitivePtr, kPrimDense, std::make_shared<Primitive>("Dense"));
+GVAR_DEF(PrimitivePtr, kPrimDenseGrad, std::make_shared<Primitive>("DenseGrad"));
 
 // Comm ops
 GVAR_DEF(PrimitivePtr, kPrimMirror, std::make_shared<Primitive>("_MirrorOperator"));

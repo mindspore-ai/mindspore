@@ -10864,3 +10864,52 @@ class MaxPoolWithArgmaxV2(Primitive):
         self.add_prim_attr("pads", self.pads)
         self.add_prim_attr("dilation", self.dilation)
         self.add_prim_attr("ceil_mode", self.ceil_mode)
+
+
+class Dense(Primitive):
+    r"""
+    The dense connected fusion operator.
+
+    Applies dense connected operator for the input. The implement of the operation is as:
+
+    .. math::
+        \text{output} = \text{x} * \text{w} + \text{b},
+
+    where :math:`x` is the input tensor, :math:`\text{w}` is a weight matrix with the same data type as the :math:`x` ,
+    and :math:`\text{b}` is a bias vector with the same data type as the :math:`x` (only if has_bias is True).
+
+    Args:
+        has_bias (bool): Specifies whether the layer uses a bias vector :math:`\text{b}`. Default: True.
+
+    Inputs:
+        - **x** (Union[Tensor, Parameter]) - The input tensor with data type of float16, float32 or float64.
+        - **w** (Union[Tensor, Parameter]) - The weight tensor with data type of float16, float32 or float64.
+        - **b** (Union[Tensor, Parameter]) - The bias tensor with data type of float16, float32 or float64.
+
+    Outputs:
+        Tensor of shape :math:`(*x.shape[:-1], w.shape[0])`.
+
+    Raises:
+        TypeError: If `has_bias` is not a bool.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> from mindspore.ops.operations import nn_ops
+        >>> x = Tensor(np.random.random((4, 5, 6, 7)).astype(np.float32))
+        >>> weight = Parameter(np.random.random((6, 7)).astype(np.float32))
+        >>> bias = Parameter(np.random.random((6,)).astype(np.float32))
+        >>> dense = nn_ops.Dense()
+        >>> output = dense(x, weight, bias)
+        >>> print(output.shape)
+        (4, 5, 6, 6)
+    """
+
+    @prim_attr_register
+    def __init__(self, has_bias=True):
+        """Initialize Dense."""
+        self.init_prim_io_names(inputs=['x', 'w', 'b'], outputs=["output"])
+        self.has_bias = has_bias
+        self.has_bias = validator.check_bool(has_bias, "has_bias", "Dense")
+        self.add_prim_attr("has_bias", self.has_bias)
