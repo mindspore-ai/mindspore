@@ -295,6 +295,19 @@ inline cudaError_t BinaryInputTernaryOutput(FunctorT functor, uint n, OUT *out, 
                                             const IN2 *in2, cudaStream_t stream) {
   return BinaryInputTernaryOutputTransit(TransitFactory<FunctorT>(functor), n, out, out2, out3, in, in2, stream);
 }
+
+template <typename Factory, typename OUT, typename IN>
+inline cudaError_t UnaryInputUnaryOutputTransit(Factory factory, uint n, OUT *out, const IN *in,
+                                                 cudaStream_t stream) {
+  return GeneralLaunch<Factory, OUT, IN>::Launch(factory, n, out, in, stream);
+}
+
+// API elementwise for input: [in1], output: [out1].
+template <typename FunctorT, typename OUT, typename IN>
+inline cudaError_t UnaryInputUnaryOutput(FunctorT functor, uint n, OUT *out, const IN *in,
+                                          cudaStream_t stream) {
+  return UnaryInputUnaryOutputTransit(TransitFactory<FunctorT>(functor), n, out, in, stream);
+}
 }  // namespace elementwise
 }  // namespace cuda
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ELEMENTWISE_UTILS_IMPL_CUH_

@@ -44,9 +44,6 @@ class BCEWithLogitsLossKernelMod : public NativeGpuKernelMod {
 
  protected:
   void InitWorkSpaceSizeLists() {
-    workspace_size_list_.push_back(input_shape_.size() * sizeof(size_t));
-    workspace_size_list_.push_back(weight_shape_.size() * sizeof(size_t));
-    workspace_size_list_.push_back(pos_weight_shape_.size() * sizeof(size_t));
     // extra space for holding extra array shape of input, for broadcasted
     // weight and pos_weight
     workspace_size_list_.push_back(input_size_ * type_id_size_);

@@ -88,25 +88,10 @@ bool BCEWithLogitsLossKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   T *target = GetDeviceAddress<T>(inputs, kIndex1);
   T *weight = GetDeviceAddress<T>(inputs, kIndex2);
   T *pos_weight = GetDeviceAddress<T>(inputs, kIndex3);
-  size_t *input_shape = GetDeviceAddress<size_t>(workspace, kIndex0);
-  size_t *weight_shape = GetDeviceAddress<size_t>(workspace, kIndex1);
-  size_t *pos_weight_shape = GetDeviceAddress<size_t>(workspace, kIndex2);
-  T *shape_broadcasted = GetDeviceAddress<T>(workspace, kIndex3);
+  T *shape_broadcasted = GetDeviceAddress<T>(workspace, kIndex0);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(input_shape, &input_shape_[0], input_shape_.size() * sizeof(size_t), cudaMemcpyHostToDevice,
-                    reinterpret_cast<cudaStream_t>(stream_ptr)),
-    kernel_name_ + " cudaMemcpyAsync input_shape_ failed");
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(weight_shape, &weight_shape_[0], weight_shape_.size() * sizeof(size_t), cudaMemcpyHostToDevice,
-                    reinterpret_cast<cudaStream_t>(stream_ptr)),
-    kernel_name_ + " cudaMemcpyAsync weight_shape_ failed");
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(pos_weight_shape, &pos_weight_shape_[0], pos_weight_shape_.size() * sizeof(size_t),
-                    cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-    kernel_name_ + " cudaMemcpyAsync pos_weight_shape_ failed");
-  CalBCEWithLogitsLoss(input_size_, predict, target, input_shape, input_shape_.size(), weight, weight_shape,
-                       weight_need_broadcast_, pos_weight, pos_weight_shape, pos_weight_need_broadcast_,
+  CalBCEWithLogitsLoss(input_size_, predict, target, input_shape_, input_shape_.size(), weight, weight_shape_,
+                       weight_need_broadcast_, pos_weight, pos_weight_shape_, pos_weight_need_broadcast_,
                        shape_broadcasted, output, reinterpret_cast<cudaStream_t>(stream_ptr));
   return true;
 }
