@@ -15,7 +15,7 @@ mindspore.ops.isnan
     其中 :math:`Nan` 表示的不是number。
 
     参数：
-        - **x** (Tensor) - IsNan的输入。
+        - **x** (Tensor) - 输入Tensor。
 
     返回：
         Tensor，输出的shape与输入相同，数据类型为bool。

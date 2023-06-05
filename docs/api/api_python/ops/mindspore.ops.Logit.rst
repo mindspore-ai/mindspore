@@ -14,7 +14,7 @@ mindspore.ops.Logit
         - **eps** (float, 可选) - epsilon值。输入的数值界限被定义[eps, 1-eps]。默认值： ``-1.0`` 。
 
     输入：
-        - **x** (Tensor) - Tensor输入。
+        - **x** (Tensor) - Tensor输入，其数据类型为float16、float32或float64。
 
     输出：
         Tensor，具有与 `x` 相同的shape。

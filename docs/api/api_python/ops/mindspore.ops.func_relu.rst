@@ -14,11 +14,10 @@ mindspore.ops.relu
         一般来说，与 `ReLUV2` 相比，此算子更常用。且 `ReLUV2` 会多输出一个掩码。
 
     参数：
-        - **input** (Tensor) - relu的输入，shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度，
-          其数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_。
+        - **input** (Tensor) - 输入Tensor，其数据类型为数值型。
 
     返回：
-        shape为 :math:`(N, *)` 的Tensor，数据类型和shape与 `input` 相同。
+        Tensor，其shape和数据类型与输入一致。
 
     异常：
         - **TypeError** - `input` 的数据类型不是数值型。

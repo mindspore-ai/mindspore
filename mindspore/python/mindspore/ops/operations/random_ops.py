@@ -146,6 +146,7 @@ class StandardNormal(Primitive):
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
+          Supported dtypes: int32, int64.
 
     Outputs:
         Tensor. The shape is the same as the input `shape`. The dtype is float32.
@@ -698,6 +699,7 @@ class UniformReal(Primitive):
 
     Inputs:
         - **shape** (Union[tuple, Tensor]) - The shape of tensor to be generated. Only constant value is allowed.
+          Supported dtypes: int16, int32, int64.
 
     Outputs:
         Tensor. The shape that the input 'shape' denotes. The dtype is float32.

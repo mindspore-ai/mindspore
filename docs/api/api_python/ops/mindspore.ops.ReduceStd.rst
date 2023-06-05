@@ -11,7 +11,7 @@ mindspore.ops.ReduceStd
         - **keep_dims** (bool，可选) - 是否保持输入与输出Tensor维度一致。如果为 ``True`` ，保留 `axis` 指定的维度，但其尺寸变为1。如果为Fasle，不保留这些维度。默认值： ``False`` 。
 
     输入：
-        - **input_x** (Tensor[Number]) - 输入Tensor。其数据类型为Number，shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。
+        - **input_x** (Tensor[Number]) - 输入Tensor。shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。支持的数据类型：float16、float32。
 
     输出：
         Tuple (output_std, output_mean)，分别为标准差和均值。

@@ -303,8 +303,8 @@ class Add(_MathBinaryOp):
 
 class Addcdiv(Primitive):
     r"""
-    Performs the element-wise division of tensor `x1` by tensor `x2`,
-    multiply the result by the scalar `value` and add it to `input_data`.
+    Adds the element-wise division of `x1` by `x2`, multiplied by `value` to `input_data`.
+    It computes the following operation:
 
     .. math::
         y[i] = input\_data[i] + value[i] * (x1[i] / x2[i])
@@ -350,8 +350,8 @@ class Addcdiv(Primitive):
 
 class Addcmul(Primitive):
     r"""
-    Performs the element-wise product of tensor `x1` and tensor `x2`,
-    multiply the result by the scalar `value` and add it to `input_data`.
+    Adds the element-wise product of `x1` by `x2`, multiplied by `value` to `input_data`.
+    It computes the following operation:
 
     .. math::
         output[i] = input\_data[i] + value[i] * (x1[i] * x2[i])
@@ -1526,7 +1526,7 @@ class LpNorm(Primitive):
         epsilon(float, optional): A value added to the denominator for numerical stability. Default: ``1e-12`` .
 
     Inputs:
-        - **input** (Tensor) - Input tensor.
+        - **input** (Tensor) - Input tensor of type float16, float32.
 
     Outputs:
         Tensor, has the same dtype as `input`, its shape depends on `axis`. For example, if the shape of input
@@ -1869,8 +1869,7 @@ class AddN(Primitive):
 
     Inputs:
         - **x** (Union(tuple[Tensor], list[Tensor])) - A tuple or list composed of Tensor, the data type is
-          `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
+          boolean or numeric.
 
     Outputs:
         Tensor, has the same shape and dtype as each Tensor of `x`.
@@ -1990,6 +1989,10 @@ class Neg(Primitive):
         >>> output = neg(x)
         >>> print(output)
         [-1.  -2.   1.  -2.   0.   3.5]
+        >>> x = Tensor(2.1+2j, mindspore.complex64)
+        >>> output = neg(x)
+        >>> print(output)
+        (-2.1-2j)
     """
 
     @prim_attr_register
@@ -2421,10 +2424,10 @@ class Square(Primitive):
         out_{i} = (x_{i})^2
 
     Inputs:
-        - **x** (Tensor) - The input tensor with a dtype of Number, its rank must be in [0, 7] inclusive.
+        - **x** (Tensor) - The input tensor.
 
     Outputs:
-        Tensor, has the same shape and dtype as the `x`.
+        Tensor, has the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -2453,19 +2456,14 @@ class Rsqrt(Primitive):
     r"""
     Computes reciprocal of square root of input tensor element-wise.
 
-    .. math::
-
-        out_{i} =  \frac{1}{\sqrt{x_{i}}}
+    Refer to :func:`mindspore.ops.rsqrt` for more details.
 
     Inputs:
-        - **x** (Tensor) - The input of Rsqrt. Its rank must be in [0, 7] inclusive and
-          each element must be a non-negative number.
+        - **x** (Tensor) - The input Tensor, each element must be a non-negative,
+          if an element is negative, the calculation result is nan.
 
     Outputs:
         Tensor, has the same type and shape as `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2499,8 +2497,7 @@ class Sqrt(Primitive):
         out_{i} =  \sqrt{x_{i}}
 
     Inputs:
-        - **x** (Tensor) - The input tensor with a dtype of Number, the shape is :math:`(N, *)`
-          where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor) - The input tensor.
 
     Outputs:
         Tensor, has the same shape and data type as the `x`.
@@ -2520,6 +2517,10 @@ class Sqrt(Primitive):
         >>> output = sqrt(x)
         >>> print(output)
         [1. 2. 3.]
+        >>> x = Tensor(2.1+2j, mindspore.complex64)
+        >>> output = sqrt(x)
+        >>> print(output)
+        (1.5811388+0.6324555j)
     """
 
     @prim_attr_register
@@ -2538,7 +2539,6 @@ class Reciprocal(PrimitiveWithCheck):
 
     Inputs:
         - **x** (Tensor) - The input tensor.
-          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape as the `x`.
@@ -2558,6 +2558,11 @@ class Reciprocal(PrimitiveWithCheck):
         >>> output = reciprocal(x)
         >>> print(output)
         [1.   0.5  0.25]
+        >>> x = Tensor(2.1+2j, mindspore.float32)
+        >>> reciprocal = ops.Reciprocal()
+        >>> output = reciprocal(x)
+        >>> print(output)
+        (0.24970272-0.23781213j)
     """
 
     @prim_attr_register
@@ -2684,7 +2689,7 @@ class Logit(Primitive):
         eps (float, optional): The epsilon. The input clamp bound is defined as [eps, 1-eps]. Default: ``-1.0`` .
 
     Inputs:
-        - **x** (Tensor) - The input tensor.
+        - **x** (Tensor) - The input tensor of type float16, float32 or float64.
 
     Outputs:
         Tensor, with the same shape and dtype as the `x`.
@@ -2719,7 +2724,7 @@ class ReduceStd(Primitive):
         axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce.
             Default: ``()`` , reduce all dimensions. Only constant value is allowed.
             Let `r` be rank of `input_x`, it should be in the range :math:`[-r,r)`.
-        unbiased (bool, optional):  Whether to use Bessel’s correction.
+        unbiased (bool, optional):  Whether to use Bessel's correction.
             If ``True`` , will use the Bessel correction unbiased estimation.
             If ``False`` , will through the biased estimation to calculate the standard deviation.
             Default: ``True`` .
@@ -2729,8 +2734,9 @@ class ReduceStd(Primitive):
             Default: ``Fasle`` .
 
     Inputs:
-        - **input_x** (Tensor[Number]) - The input Tensor, it has dtype Number with shape
+        - **input_x** (Tensor[Number]) - The input Tensor with shape
           :math:`(N, *)` where :math:`*` means any number of additional dimensions.
+          Supported dtypes: float16, float32.
 
     Outputs:
         Tuple(output_std, output_mean) containing the standard deviation and mean.
@@ -3086,6 +3092,10 @@ class Log(Primitive):
         >>> output = log(x)
         >>> print(output)
         [0.        0.6931472 1.3862944]
+        >>> x = Tensor(2.1+2j, mindspore.complex64)
+        >>> output = log(x)
+        >>> print(output)
+        (1.0647107+0.7610128j)
     """
 
     @prim_attr_register
@@ -3106,7 +3116,6 @@ class Log1p(Primitive):
 
     Inputs:
         - **x** (Tensor) - The input tensor. The value must be greater than -1.
-          With float16 or float32 data type.
 
     Outputs:
         Tensor, has the same shape as the `x`.
@@ -3123,6 +3132,10 @@ class Log1p(Primitive):
         >>> output = log1p(x)
         >>> print(output)
         [0.6931472 1.0986123 1.609438 ]
+        >>> x = Tensor(2.1+2j, mindspore.complex64)
+        >>> output = log1p(x)
+        >>> print(output)
+        (1.3054024+0.57296616j)
     """
 
     @prim_attr_register
@@ -3228,7 +3241,8 @@ class Erf(Primitive):
     Refer to :func:`mindspore.ops.erf` for more details.
 
     Inputs:
-        - **x** (Tensor) - Input Tensor of Gaussian error function.
+        - **x** (Tensor) - Input Tensor of Gaussian error function. Its data type
+          must be float16 float32 or float64.
 
     Outputs:
         Tensor, has the same shape and dtype as the `x`.
@@ -3260,7 +3274,7 @@ class Erfc(Primitive):
     Refer to :func:`mindspore.ops.erfc` for more details.
 
     Inputs:
-        - **x** (Tensor) - The input tensor.
+        - **x** (Tensor) - The input tensor with a dtype of float16, float32 or float64.
 
     Outputs:
         Tensor, has the same shape and dtype as `x`.
@@ -3845,7 +3859,8 @@ class Floor(Primitive):
     Refer to :func:`mindspore.ops.floor` for more details.
 
     Inputs:
-        - **x** (Tensor) - The input tensor.
+        - **x** (Tensor) - The input tensor, its data type must be float16,
+          float32 or float64.
 
     Outputs:
         Tensor, has the same shape as `x`.
@@ -3916,8 +3931,7 @@ class Ceil(PrimitiveWithInfer):
     Refer to :func:`mindspore.ops.ceil` for more details.
 
     Inputs:
-        - **x** (Tensor) - The input tensor. Its element data type must be float16 or float32.
-          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor) - The input tensor with a dtype of float16 or float32.
 
     Outputs:
         Tensor, has the same shape as `x`.
@@ -3934,6 +3948,10 @@ class Ceil(PrimitiveWithInfer):
         >>> output = ceil_op(x)
         >>> print(output)
         [ 2.  3. -1.]
+        >>> x = Tensor(2.1, mindspore.float32)
+        >>> output = ceil_op(x)
+        >>> print(output)
+        3.0
     """
 
     @prim_attr_register
@@ -4085,9 +4103,7 @@ class Acosh(Primitive):
     Refer to :func:`mindspore.ops.acosh` for more details.
 
     Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          Input value must be in range [1, inf].
+        - **x** (Tensor) - The input Tensor. Input value must be in range [1, inf].
 
     Outputs:
         Tensor, has the same shape and type as `x`.
@@ -4104,6 +4120,10 @@ class Acosh(Primitive):
         >>> output = acosh(x)
         >>> print(output)
         [0.        0.9624237 1.7627472 5.298292 ]
+        >>> x = Tensor(2.6)
+        >>> output = acosh(x)
+        >>> print(output)
+        1.609438
     """
 
     @prim_attr_register
@@ -4119,8 +4139,7 @@ class Cosh(Primitive):
     Refer to :func:`mindspore.ops.cosh` for more details.
 
     Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor) - The input Tensor.
 
     Outputs:
         Tensor, has the same shape and dtype as `x`.
@@ -4137,6 +4156,9 @@ class Cosh(Primitive):
         >>> output = cosh(x)
         >>> print(output)
         [1.0289385 1.364684 1.048436 1.0040528]
+        >>> x = Tensor(2.1, mindspore.float32)
+        >>> print(output)
+        4.144313
     """
 
     @prim_attr_register
@@ -4151,8 +4173,7 @@ class Asinh(Primitive):
     Refer to :func:`mindspore.ops.asinh` for more details.
 
     Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        - **x** (Tensor) - The input Tensor, its rank should be less than 8.
 
     Outputs:
         Tensor, has the same shape and type as `x`.
@@ -4169,6 +4190,10 @@ class Asinh(Primitive):
         >>> output = asinh(x)
         >>> print(output)
         [-2.3124382  1.1947632  1.8184465  5.298342 ]
+        >>> x = Tensor(2.5-2j, mindspore.complex128)
+        >>> output = asinh(x)
+        >>> print(output)
+        (1.8629147540260123-0.651363391978073j)
     """
 
     @prim_attr_register
@@ -4752,8 +4777,7 @@ class LogicalNot(Primitive):
     Refer to :func:`mindspore.ops.logical_not` for more details.
 
     Inputs:
-        - **x** (Tensor) - The input tensor.
-          :math:`(N,*)` where :math:`*` means any number of additional dimensions.
+        - **x** (Tensor) - The input tensor, the dtype must be bool.
 
     Outputs:
         Tensor, the shape is the same as the `x`, and the dtype is bool.
@@ -4932,7 +4956,6 @@ class IsNan(Primitive):
 
     Inputs:
         - **x** (Tensor) - The input tensor.
-          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape of input, and the dtype is bool.
@@ -4949,6 +4972,10 @@ class IsNan(Primitive):
         >>> output = is_nan(x)
         >>> print(output)
         [ True False False]
+        >>> x = Tensor(2.1, mindspore.float64)
+        >>> output = is_nan(x)
+        >>> print(output)
+        False
     """
 
     @prim_attr_register
@@ -4965,7 +4992,6 @@ class IsInf(Primitive):
 
     Inputs:
         - **x** (Tensor) - The input tensor.
-          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape of input, and the dtype is bool.
@@ -4982,6 +5008,10 @@ class IsInf(Primitive):
         >>> output = is_inf(x)
         >>> print(output)
         [False False True]
+        >>> x = Tensor(2.1, mindspore.float64)
+        >>> output = is_inf(x)
+        >>> print(output)
+        False
     """
 
     @prim_attr_register
@@ -5387,8 +5417,7 @@ class Cos(Primitive):
     Refer to :func:`mindspore.ops.cos` for more details.
 
     Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor) - The input Tensor.
 
     Outputs:
         Tensor, has the same shape as `x`.
@@ -5419,8 +5448,7 @@ class ACos(Primitive):
     Refer to :func:`mindspore.ops.acos` for more details.
 
     Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor) - The input Tensor.
 
     Outputs:
         Tensor, has the same shape and dtype as `x`.
@@ -5437,6 +5465,10 @@ class ACos(Primitive):
         >>> output = acos(x)
         >>> print(output)
         [0.737726  1.5307857 1.2661036 0.9764105]
+        >>> x = Tensor(0.5)
+        >>> output = acos(x)
+        >>> print(output)
+        1.0471978
     """
 
     @prim_attr_register
@@ -5472,14 +5504,15 @@ class Sin(Primitive):
 
 class Asin(Primitive):
     r"""
-    Computes arcsine of input tensors element-wise.
+    Computes arcsine of input tensor element-wise.
 
     Refer to :func:`mindspore.ops.asin` for more details.
 
+    Note:
+        Complex64 and complex128 are not supported on Ascend currently.
+
     Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          The data type should be one of the following types: float16, float32, float64.
+        - **x** (Tensor) - The input Tensor.
 
     Outputs:
         Tensor, has the same shape and dtype as `x`.
@@ -5496,6 +5529,10 @@ class Asin(Primitive):
         >>> output = asin(x)
         >>> print(output)
         [0.8330704  0.04001067 0.30469266 0.5943858 ]
+        >>> x = Tensor(0.12)
+        >>> output = asin(x)
+        >>> print(output)
+        0.12028988
     """
 
     @prim_attr_register
@@ -5594,8 +5631,7 @@ class Abs(Primitive):
     Refer to :func:`mindspore.ops.abs` for more details.
 
     Inputs:
-        - **x** (Tensor) - The input tensor. The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor) - The input tensor.
 
     Outputs:
         Tensor, has the same shape as the `x`.
@@ -5612,6 +5648,10 @@ class Abs(Primitive):
         >>> output = abs(x)
         >>> print(output)
         [1. 1. 0.]
+        >>> x = Tensor(3.6)
+        >>> output = abs(x)
+        >>> print(output)
+        3.6
     """
 
     @prim_attr_register
@@ -5630,8 +5670,7 @@ class Sign(Primitive):
         1, &if\ x > 0\end{cases}
 
     Inputs:
-        - **x** (Tensor) - The input tensor.
-          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor) - The input tensor of any dimension.
 
     Outputs:
         Tensor, has the same shape and dtype as the `x`.
@@ -5714,6 +5753,10 @@ class Tan(Primitive):
         >>> output = tan(x)
         >>> print(output)
         [-1.5574081 0. 1.5574081]
+        >>> x = Tensor(2.1+2j, mindspore.complex64)
+        >>> output = tan(x)
+        >>> print(output)
+        (-0.032499686+1.0175982j)
     """
 
     @prim_attr_register
@@ -5729,9 +5772,10 @@ class Atan(Primitive):
     Refer to :func:`mindspore.ops.atan` for more details.
 
     Inputs:
-        - **x** (Tensor): The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          The data type should be one of the following types: float16, float32.
+        - **x** (Tensor): The input Tensor. Supported dtypes:
+
+          - Ascend: float16, float32.
+          - GPU/CPU: float16, float32, float64, complex64, complex128.
 
     Outputs:
         A Tensor, has the same type as the input.
@@ -5766,8 +5810,7 @@ class Atanh(Primitive):
     Refer to :func:`mindspore.ops.atanh` for more details.
 
     Inputs:
-        - **x** (Tensor): The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor): The input Tensor.
 
     Outputs:
         A Tensor, has the same type as the input.
@@ -5784,6 +5827,10 @@ class Atanh(Primitive):
         >>> output = atanh(x)
         >>> print(output)
         [ 0.         -0.54930615]
+        >>> x = Tensor(-2.1+1.0j, mindspore.complex128)
+        >>> output = atanh(x)
+        >>> print(output)
+        (-0.3922011092740576+1.3579098575159307j)
     """
 
     @prim_attr_register
@@ -6568,6 +6615,9 @@ class MatrixInverse(Primitive):
         The parameter 'adjoint' is only supporting ``False``  right now, because complex number is not supported at
         present.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         adjoint (bool) : An optional bool. Default: ``False`` .
 
@@ -6699,7 +6749,7 @@ class LogMatrixDeterminant(Primitive):
 
     Inputs:
         - **x** (Tensor) - A matrix to be calculated. The matrix must be at least two dimensions, and the last two
-          dimensions must be the same size. Supported dtypes: loat32, float64, complex64 and complex128.
+          dimensions must be the same size. Supported dtypes: float32, float64, complex64 and complex128.
 
     Outputs:
         - **sign** (Tensor) - The signs of the log determinants. The shape is `x_shape[:-2]`, the dtype is same as `x`.
@@ -6837,19 +6887,13 @@ class Erfinv(Primitive):
     r"""
     Computes the inverse error function of input. The inverse error function is defined in the range (-1, 1).
 
-    The formula is defined as:
-
-    .. math::
-                                erfinv(erf(x)) = x
+    Refer to :func:`mindspore.ops.erfinv` for more details.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor to compute to, with data type float32, float16 or float64.
+        - **input_x** (Tensor) - The input tensor to compute with, with data type float16, float32 or float64.
 
     Outputs:
         Tensor, has the same shape and dtype as `input_x`.
-
-    Raises:
-        TypeError: If dtype of `input_x` is not float16, float32 or float64.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6961,7 +7005,7 @@ class Real(Primitive):
     If input is real, it is returned unchanged.
 
     Inputs:
-        - **input** (Tensor) - The input tensor to compute to.
+        - **input** (Tensor) - The input tensor to compute with.
 
     Outputs:
         Tensor, the shape is the same as the input.
@@ -7034,7 +7078,7 @@ class Imag(Primitive):
     If input is real, it is returned zeros.
 
     Inputs:
-        - **input** (Tensor) - The input tensor to compute to.
+        - **input** (Tensor) - The input tensor.
 
     Outputs:
         Tensor, the shape is the same as the input.
@@ -7651,6 +7695,10 @@ class Lgamma(Primitive):
         >>> output = lgamma(x)
         >>> print(output)
         [0.5723649 0.8854049 9.549267 ]
+        >>> x = Tensor(2.1, mindspore.float32)
+        >>> output = lgamma(x)
+        >>> print(output)
+        0.045437694
     """
 
     @prim_attr_register
@@ -7892,7 +7940,7 @@ class RaggedRange(Primitive):
 
 class Trace(Primitive):
     """
-    Returns a new tensor that is the sum of the input trace.
+    Computes the sum of the diagonal elements in a 2-D matrix.
 
     Note:
         Input must be matrix, and complex number is not supported at present.
@@ -7956,7 +8004,7 @@ class Median(Primitive):
         ignore_nan (bool, optional): Whether to ignore the NaN values in input Tensor. Default: ``False`` .
 
     Inputs:
-        - **x** (Tensor) - A Tensor to calculate median with. Supported dtype:int16, int32, int64, float32 or float64.
+        - **x** (Tensor) - A Tensor to calculate median with.
 
     Outputs:
         - **y** (Tensor) - Median, has the same dtype as the `x`.
@@ -7969,7 +8017,6 @@ class Median(Primitive):
         - **indices** (Tensor) - Indices, Has the same shape as the `y`, with dtype int64.
 
     Raises:
-        TypeError: If dtype of `x` is not one of the following: int16, int32, int64, float32, float64.
         TypeError: If input `x` is not a Tensor.
         TypeError: If `global_median` , `keep_dims` or `ignore_nan` is assigned a nonboolean value.
         TypeError: If `axis` is not int.
@@ -8448,6 +8495,7 @@ class FFTWithSize(Primitive):
 
     Inputs:
         - **x** (Tensor) - The dimension of the input tensor must be greater than or equal to signal_ndim.
+          Supported types: float32, float64.
 
     Outputs:
         A tensor containing the complex-to-complex, real-to-complex or complex-to-real Fourier transform result.

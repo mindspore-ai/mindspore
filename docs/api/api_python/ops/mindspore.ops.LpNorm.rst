@@ -15,7 +15,7 @@ mindspore.ops.LpNorm
         - **epsilon** (float，可选) - 添加到分母上的值，以确保数值稳定性。默认值： ``1e-12`` 。
 
     输入：
-        - **input** (Tensor) - 输入Tensor。
+        - **input** (Tensor) - 输入Tensor，数据类型为float16或float32。
 
     输出：
         Tensor，数据类型与 `input` 一致，其shape由 `axis` 决定。如果输入shape为 :math:`(2, 3, 4)` ， `axis` 为 :math:`[0, 1]` ，则输出shape为 :math:`(4,)` 。

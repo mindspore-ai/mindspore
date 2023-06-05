@@ -8,7 +8,10 @@ mindspore.ops.Atan
     更多细节请参考 :func:`mindspore.ops.atan` 。
 
     输入：
-        - **x** (Tensor): 输入Tensor，shape: :math:`(N,*)` ，其中 :math:`*` 表示任何数量的附加维度。其轶应小于8。数据类型可为以下类型：float16或float32。
+        - **x** (Tensor): 输入Tensor，支持数据类型：
+
+          - Ascend: float16、float32。
+          - GPU/CPU: float16、float32、float64、complex64、complex128。
 
     输出：
         Tensor，shape和dtype与输入 `x` 相同。

@@ -9,11 +9,10 @@ mindspore.ops.expm1
         out_i = e^{x_i} - 1
 
     参数：
-        - **input** (Tensor) - 数据类型为float16或float32的Tensor。
+        - **input** (Tensor) - 输入Tensor。
 
     返回：
         Tensor，shape与 `input` 相同。
 
     异常：
         - **TypeError** - 如果 `input` 不是Tensor。
-        - **TypeError** - 如果 `input` 的数据类型既不是float16也不是float32。

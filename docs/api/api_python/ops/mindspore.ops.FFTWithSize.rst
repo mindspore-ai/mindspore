@@ -58,7 +58,7 @@ mindspore.ops.FFTWithSize
           - 除了最后一个维度外， `signal_sizes` 的维度与输入shape完全相同： :math:`signal_sizes[:-1]=x.shape[:-1]` 。
  
     输入：
-        - **x** (Tensor) - 输入Tensor的维数必须大于或等于 `signal_ndim` 。
+        - **x** (Tensor) - 输入Tensor的维数必须大于或等于 `signal_ndim` 。支持类型为：float32、float64。
 
     输出：
         Tensor，表示复数到复数、实数到复数或复数到实数傅里叶变换的结果。

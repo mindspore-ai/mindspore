@@ -9,13 +9,10 @@ mindspore.ops.log1p
         out_i = {log_e}(input_i + 1)
 
     参数：
-        - **input** (Tensor) - 输入Tensor。数据类型为float16或float32。
-          该值必须大于-1。
-          shape： :math:`(N,*)` 其中 :math:`*` 表示任何数量的附加维度。
+        - **input** (Tensor) - 输入Tensor。其值必须大于-1。
 
     返回：
         Tensor，与 `input` 的shape相同。
 
     异常：
         - **TypeError** - `input` 不是Tensor。
-        - **TypeError** - `input` 的数据类型非float16或float32。

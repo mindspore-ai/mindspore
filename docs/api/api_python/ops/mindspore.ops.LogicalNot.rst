@@ -8,7 +8,7 @@
     详情请查看 :func:`mindspore.ops.logical_not` 。
 
     输入：
-        - **x** (Tensor) - 输入Tensor。 :math:`(N,*)` ，其中 :math:`*` 表示任意数量的附加维度。
+        - **x** (Tensor) - 输入Tensor，数据类型必须为bool。
 
     输出：
         Tensor，shape与 `x` 相同，数据类型为bool。

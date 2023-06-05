@@ -45,8 +45,8 @@ class Geqrf(Primitive):
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If the dtype of `x` is neither float32, float64, complex64, complex128.
-        ValueError: If `x` dimension is less than 2
+        TypeError: If the dtype of `x` is not float32, float64, complex64 or complex128.
+        ValueError: If dimension of `x` is less than 2.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

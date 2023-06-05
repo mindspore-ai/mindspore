@@ -9,7 +9,7 @@ mindspore.ops.logical_not
         out_{i} = \neg input_{i}
 
     参数：
-        - **input** (Tensor) - 输入Tensor。 :math:`(N,*)` ，其中 :math:`*` 表示任意数量的附加维度。
+        - **input** (Tensor) - 输入Tensor，数据类型必须为bool。
 
     返回：
         Tensor，shape与 `input` 相同，数据类型为bool。

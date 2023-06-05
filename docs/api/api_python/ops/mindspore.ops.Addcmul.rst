@@ -3,7 +3,7 @@ mindspore.ops.Addcmul
 
 .. py:class:: mindspore.ops.Addcmul
 
-    执行Tensor `x1` 与Tensor `x2` 的逐元素乘积，将结果乘以标量值 `value` ，并将其添加到 `input_data` 中。
+    将 `x1` 和 `x2` 的逐元素相乘的结果乘以 `value` ，并将其添加到 `input_data` 中。计算操作如下：
 
     .. math::
         output[i] = input\_data[i] + value[i] * (x1[i] * x2[i])

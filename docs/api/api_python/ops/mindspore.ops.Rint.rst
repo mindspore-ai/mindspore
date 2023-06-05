@@ -6,7 +6,7 @@ mindspore.ops.Rint
     逐元素计算最接近输入数据的整数。
 
     输入：
-        - **input_x** (Tensor) - 待计算的Tensor，数据必须是float16、float32或者float64。shape为 :math:`(N,*)` ，其中 :math:`*` 表示任意数量的附加维度。
+        - **input_x** (Tensor) - 任意维度输入Tensor，数据必须是float16、float32或者float64。
 
     输出：
         Tensor，shape和数据类型与 `input_x` 相同。

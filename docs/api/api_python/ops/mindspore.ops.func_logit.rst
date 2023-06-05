@@ -18,7 +18,7 @@ mindspore.ops.logit
         \end{align}
 
     参数：
-        - **input** (Tensor) - Tensor输入。
+        - **input** (Tensor) - Tensor输入，其数据类型为float16、float32或float64。
         - **eps** (float, 可选) - epsilon值。当eps不为 ``None`` 时，输入的数值界限被定义[eps, 1-eps]，否则，输入的数值不进行数值截断。
           默认值： ``None`` 。
 

@@ -1214,7 +1214,7 @@ def dropout(input, p=0.5, training=True, seed=None):
     here is opposite to that in :class:`mindspore.ops.Dropout` and :class:`mindspore.nn.Dropout`.
 
     Args:
-        input (Tensor): The input of Dropout, a Tensor of any shape with data type of float16 or float32.
+        input (Tensor): TThe input Tensor of shape :math:`(*, N)`, with data type of float16, float32 or float64.
         p (float, optional): The dropping rate, between 0 and 1, e.g. p = 0.1,
             means dropping out 10% of input units. Default: ``0.5`` .
         training (bool): Apply dropout if is True. Default: ``True``.
@@ -1226,7 +1226,7 @@ def dropout(input, p=0.5, training=True, seed=None):
 
     Raises:
         TypeError: If `p` is not a float.
-        TypeError: If dtype of `input` is neither float16 nor float32.
+        TypeError: If dtype of `input` is not float16, float32 or float64.
         TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
@@ -2054,7 +2054,7 @@ def hardswish(x):
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not supported.
+        TypeError: If dtype of `x` is not int or float.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3257,12 +3257,10 @@ def relu(input):
         output one more Mask.
 
     Args:
-        input (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+        input (Tensor): Input Tensor of numeric types.
 
     Returns:
-        Tensor of shape :math:`(N, *)`, with the same dtype and shape as the `input`.
+        Tensor, has the same dtype and shape as `input_x`.
 
     Raises:
         TypeError: If dtype of `input` is not a number.
@@ -3293,7 +3291,7 @@ def relu6(x):
     It returns :math:`\min(\max(0,x), 6)` element-wise.
 
     Args:
-        x (Tensor): Tensor of shape :math:`(N, *)` with float16 or float32 data type.
+        x (Tensor): Input Tensor of float16 or float32 data type.
 
     Returns:
         Tensor, with the same dtype and shape as the `x`.
@@ -4011,6 +4009,7 @@ def log_softmax(logits, axis=-1):
         TypeError: If `axis` is not an int.
         TypeError: If dtype of `logits` is neither float16 nor float32.
         ValueError: If `axis` is not in range [-len(logits.shape), len(logits.shape)).
+        ValueError: If dimension of `logits` is less than 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4087,14 +4086,13 @@ def mish(x):
     <https://arxiv.org/abs/1908.08681>`_.
 
     Args:
-        x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-            additional dimensions, with float16 or float32 data type.
+        x (Tensor): The input Tensor with float16, float32 or float64 data type.
 
     Returns:
         Tensor, with the same type and shape as the `x`.
 
     Raises:
-        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4105,6 +4103,10 @@ def mish(x):
         >>> print(output)
         [[-3.0340147e-01  3.9974129e+00 -2.68311895e-03]
          [ 1.9439590e+00  -3.3576239e-02 8.99999990e+00]]
+        >>> input_x = Tensor(2.1, mindspore.float32)
+        >>> output = ops.mish(input_x)
+        >>> print(output)
+        2.050599
     """
     return mish_(x)
 
@@ -5133,14 +5135,14 @@ def hardsigmoid(input):
     where :math:`x_i` is an element of the input Tensor.
 
     Args:
-        input (Tensor): Hard Sigmoid input, with float16, float32 or float64 data type.
+        input (Tensor): The input Tensor.
 
     Returns:
         A Tensor whose dtype and shape are the same as `input`.
 
     Raises:
         TypeError: If `input` is not a Tensor.
-        TypeError: If dtype of `input` is not float16, float32 or float64.
+        TypeError: If dtype of `input` is not int or float.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

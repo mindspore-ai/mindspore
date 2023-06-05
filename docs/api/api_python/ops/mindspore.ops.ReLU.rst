@@ -8,8 +8,7 @@ mindspore.ops.ReLU
     更多参考详见 :func:`mindspore.ops.relu`。
 
     输入：
-        - **input_x** (Tensor) - 输入Tensor，shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度，
-          其数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_。
+        - **input_x** (Tensor) - 输入Tensor，其数据类型为数值型。
 
     输出：
-        shape为 :math:`(N, *)` 的Tensor，数据类型和shape与 `input_x` 相同。
+        Tensor，其shape和数据类型与输入一致。
