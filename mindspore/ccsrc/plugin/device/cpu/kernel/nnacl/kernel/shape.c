@@ -28,7 +28,6 @@ int shape_prepare(struct KernelBase *self) {
 int shape_compute(struct KernelBase *self) {
   TensorC *in = self->in_[FIRST_INPUT];
   NNACL_CHECK_NULL_RETURN_ERR(in);
-  NNACL_CHECK_NULL_RETURN_ERR(in->data_);
   TensorC *out = self->out_[OUTPUT_INDEX];
   NNACL_CHECK_NULL_RETURN_ERR(out);
   NNACL_CHECK_NULL_RETURN_ERR(out->data_);
