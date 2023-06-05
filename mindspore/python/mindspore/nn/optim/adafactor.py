@@ -330,7 +330,6 @@ class AdaFactor(Optimizer):
         self.weight_decay = trans_to_tensor(weight_decay)
         self.weight_decay_flag = bool(weight_decay)
 
-        self.step = Parameter(Tensor(0, dtype=mstype.float32), name="train_step")
         self.scale_parameter = scale_parameter
         self.relative_step = relative_step
         self.warmup_init = warmup_init
@@ -408,8 +407,7 @@ class AdaFactor(Optimizer):
     def construct(self, gradients):
         gradients = self.flatten_gradients(gradients)
         lr = self.get_lr()
-        F.assign_add(self.step, 1)
-        step = self.step
+        step = F.assign_add(self.step, 1)
         if self.scale_lr and self.relative_step:
             if self.warmup_init:
                 min_step = 1e-6 * step
