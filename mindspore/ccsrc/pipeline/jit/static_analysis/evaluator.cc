@@ -1092,7 +1092,7 @@ EvalResultPtr VirtualEvaluator::Eval(AnalysisEnginePtr, const AbstractBasePtrLis
     MS_LOG(INTERNAL_EXCEPTION) << "Arguments mismatch, parameters no: " << args_abs_list_.size()
                                << ", arguments no: " << args_abs_list.size();
   }
-  const auto args_abs_list_size = args_abs_list.size() - 1;
+  const auto sense_param_index = args_abs_list.size() - 1;
   bool sense_param_flag = false;
   if (this->bound_node()->isa<CNode>()) {
     sense_param_flag = this->bound_node()->cast<CNodePtr>()->HasAttr("sens_param_");
@@ -1107,7 +1107,7 @@ EvalResultPtr VirtualEvaluator::Eval(AnalysisEnginePtr, const AbstractBasePtrLis
                    << "]: " << args_abs_list[i]->ToString();
       SetSequenceElementsUseFlagsRecursively(args_abs_list[i], true);
     }
-    if (i == args_abs_list_size && sense_param_flag) {
+    if (i == sense_param_index && sense_param_flag) {
       const auto &sense_shape = args_abs_list[i]->BuildShape();
       MS_EXCEPTION_IF_NULL(sense_shape);
       if (sense_shape->IsDynamic()) {

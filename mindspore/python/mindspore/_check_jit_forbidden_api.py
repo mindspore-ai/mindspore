@@ -96,6 +96,8 @@ def is_invalid_or_jit_forbidden_method(obj, obj_type, attr):
     if not hasattr(obj, attr):
         raise AttributeError(f"'{obj_type}' object has no attribute '{attr}'")
     method = getattr(obj, attr)
+    if not hasattr(method, "__module__"):
+        return False
     method_info = method.__module__ + '.' + method.__qualname__
     return method_info in _jit_forbidden_method
 
