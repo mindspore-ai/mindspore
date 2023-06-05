@@ -60,7 +60,7 @@ class ImageNetToMR:
         >>> imagenet_dir = "/path/to/imagenet/train"
         >>> mindrecord_file = "/path/to/mindrecord/file"
         >>> imagenet_to_mr = ImageNetToMR(map_file, imagenet_dir, mindrecord_file, 8)
-        >>> imagenet_to_mr.transform()
+        >>> status = imagenet_to_mr.transform()
     """
 
     def __init__(self, map_file, image_dir, destination, partition_number=1):

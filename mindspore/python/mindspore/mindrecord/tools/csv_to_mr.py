@@ -51,7 +51,7 @@ class CsvToMR:
         >>> csv_file = "/path/to/csv/file"
         >>> mindrecord_file = "/path/to/mindrecord/file"
         >>> csv_to_mr = CsvToMR(csv_file, mindrecord_file)
-        >>> csv_to_mr.transform()
+        >>> status = csv_to_mr.transform()
     """
 
     def __init__(self, source, destination, columns_list=None, partition_number=1):

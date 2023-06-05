@@ -73,10 +73,10 @@
            * - int64
              - [-1] / [-1, 32, 32] / [3, 224, 224]
              - numpy.ndarray类型
-           * - bytes
+           * - float32
              - [-1] / [-1, 32, 32] / [3, 224, 224]
              - numpy.ndarray类型
-           * - bytes
+           * - float64
              - [-1] / [-1, 32, 32] / [3, 224, 224]
              - numpy.ndarray类型
 

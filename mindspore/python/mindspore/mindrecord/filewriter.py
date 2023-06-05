@@ -57,14 +57,14 @@ class FileWriter:
         >>>
         >>> writer = FileWriter(file_name="test.mindrecord", shard_num=1, overwrite=True)
         >>> schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"}, "data": {"type": "bytes"}}
-        >>> writer.add_schema(schema_json, "test_schema")
+        >>> schema_id = writer.add_schema(schema_json, "test_schema")
         >>> indexes = ["file_name", "label"]
-        >>> writer.add_index(indexes)
+        >>> status = writer.add_index(indexes)
         >>> for i in range(10):
         ...     data = [{"file_name": str(i) + ".jpg", "label": i,
         ...              "data": b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff"}]
-        ...     writer.write_raw_data(data)
-        >>> writer.commit()
+        ...     status = writer.write_raw_data(data)
+        >>> status = writer.commit()
     """
 
     def __init__(self, file_name, shard_num=1, overwrite=False):
@@ -143,8 +143,8 @@ class FileWriter:
             >>> for i in range(9):
             ...     data = [{"file_name": str(i+1) + ".jpg", "label": i,
             ...              "data": b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff"}]
-            ...     write_append.write_raw_data(data)
-            >>> write_append.commit()
+            ...     status = write_append.write_raw_data(data)
+            >>> status = write_append.commit()
         """
         if platform.system().lower() == "windows":
             file_name = file_name.replace("\\", "/")
@@ -209,10 +209,10 @@ class FileWriter:
            * - int64
              - [-1] / [-1, 32, 32] / [3, 224, 224]
              - numpy ndarray
-           * - bytes
+           * - float32
              - [-1] / [-1, 32, 32] / [3, 224, 224]
              - numpy ndarray
-           * - bytes
+           * - float64
              - [-1] / [-1, 32, 32] / [3, 224, 224]
              - numpy ndarray
 
