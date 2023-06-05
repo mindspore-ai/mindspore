@@ -38,7 +38,7 @@ The data transform operation can be executed in the data processing pipeline or 
   `introduction to data processing pipeline <https://www.mindspore.cn/docs/en/master/api_python/
   mindspore.dataset.html#introduction-to-data-processing-pipeline>`_ .
 - Eager mode is more like a function call to process data. Examples refer to
-  `Lightweight Data Processing` <https://www.mindspore.cn/tutorials/en/master/advanced/dataset/eager.html>_ .
+  `Lightweight Data Processing <https://www.mindspore.cn/tutorials/en/master/advanced/dataset/eager.html>`_ .
 """
 import platform
 
