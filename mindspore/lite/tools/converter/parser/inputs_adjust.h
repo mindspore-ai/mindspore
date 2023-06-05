@@ -31,6 +31,8 @@ class InputAdjust {
 
   STATUS AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int input_num,
                         const std::string &attr_name, int flag);
+  STATUS ConvertInputToAttrForSqueeze(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+  STATUS AdjustOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   bool Run(const FuncGraphPtr &func_graph);
 };
 }  // namespace mindspore::lite
