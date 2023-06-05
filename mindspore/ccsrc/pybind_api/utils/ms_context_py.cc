@@ -108,7 +108,12 @@ void RegMsContext(const py::module *m) {
     .value("disable_format_transform", MsCtxParam::MS_CTX_DISABLE_FORMAT_TRANSFORM)
     .value("memory_offload", MsCtxParam::MS_CTX_ENABLE_MEM_OFFLOAD)
     .value("memory_optimize_level", MsCtxParam::MS_CTX_MEMORY_OPTIMIZE_LEVEL)
-    .value("op_timeout", MsCtxParam::MS_CTX_OP_TIMEOUT);
+    .value("op_timeout", MsCtxParam::MS_CTX_OP_TIMEOUT)
+    .value("recompute_comm_overlap", MsCtxParam::MS_CTX_RECOMPUTE_COMM_OVERLAP)
+    .value("matmul_grad_comm_overlap", MsCtxParam::MS_CTX_GRAD_COMM_OVERLAP)
+    .value("enable_task_opt", MsCtxParam::MS_CTX_ENABLE_TASK_OPT)
+    .value("interleaved_matmul_comm", MsCtxParam::MS_CTX_INTERLEAVED_MATMUL_COMM)
+    .value("interleaved_layernorm_comm", MsCtxParam::MS_CTX_INTERLEAVED_LAYERNORM_COMM);
   (void)py::class_<mindspore::MsContext, std::shared_ptr<mindspore::MsContext>>(*m, "MSContext")
     .def_static("get_instance", &mindspore::MsContext::GetInstance, "Get ms context instance.")
     .def("get_param", &mindspore::MsCtxGetParameter, "Get value of specified parameter.")

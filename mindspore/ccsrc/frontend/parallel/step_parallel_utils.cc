@@ -1058,7 +1058,7 @@ std::vector<std::pair<AnfNodePtr, int>> GetOutputNodesWithFilter(const AnfNodePt
   std::queue<AnfNodePtr> anf_queue;
   anf_queue.push(node);
   while (!anf_queue.empty()) {
-    auto queue_end = anf_queue.back();
+    auto queue_end = anf_queue.front();
     anf_queue.pop();
     auto user_set = manager->node_users()[queue_end];
     for (auto &pair : user_set) {

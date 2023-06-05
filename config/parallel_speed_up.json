@@ -1,0 +1,7 @@
+{
+  "recompute_comm_overlap": false,
+  "matmul_grad_comm_overlap": false,
+  "enable_task_opt": false,
+  "interleaved_matmul_comm": false,
+  "interleaved_layernorm_comm": false
+}
