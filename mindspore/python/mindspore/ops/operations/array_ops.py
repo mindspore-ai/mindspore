@@ -5894,6 +5894,7 @@ class Sort(Primitive):
 
     Args:
         axis (int): The dimension to sort along. Default: -1.
+            The Ascend backend only supports sorting the last dimension.
         descending (bool): Controls the sorting order. If descending is True then the elements
             are sorted in descending order by value. Default: False.
 
