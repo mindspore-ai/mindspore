@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,10 @@ bool SchemaTensorWrapper::Init(const schema::Tensor &tensor, const SCHEMA_VERSIO
   this->length_ = static_cast<size_t>(external_data->length());
   this->data_ =
     ReadFileSegment(base_path + external_data->location()->str(), external_data->offset(), external_data->length());
+  if (this->length_ > 0 && this->data_ == nullptr) {
+    MS_LOG(ERROR) << "Read tensor data from msw file failed";
+    return false;
+  }
   this->if_own_data_ = true;
   return true;
 }
