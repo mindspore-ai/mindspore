@@ -398,6 +398,7 @@ Linear Algebraic Functions
     mindspore.ops.batch_dot
     mindspore.ops.dot
     mindspore.ops.eig
+    mindspore.ops.eigvals
     mindspore.ops.inner
     mindspore.ops.inverse
     mindspore.ops.geqrf

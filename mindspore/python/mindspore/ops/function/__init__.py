@@ -528,6 +528,7 @@ from .nn_func import (
 )
 from .linalg_func import (
     eig,
+    eigvals,
     geqrf,
     svd,
     pinv,
