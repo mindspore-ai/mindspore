@@ -19,11 +19,9 @@
 #include "ops/primitive_c.h"
 #include "nnacl/op_base.h"
 #include "ops/core_ops.h"
-#include "ops/op_name.h"
 
 namespace mindspore::lite {
 namespace {
-constexpr int kBuildInputFlagZero = 0;
 constexpr int kBuildInputFlagTwo = 2;
 constexpr int kBuildInputFlagThree = 3;
 constexpr int kBuildInputFlagFour = 4;
@@ -103,91 +101,6 @@ STATUS InputAdjust::AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePt
   return lite::RET_OK;
 }
 
-STATUS InputAdjust::ConvertInputToAttrForSqueeze(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
-  auto cnode_input0 = cnode->input(kBuildInputFlagZero);
-  MS_CHECK_TRUE_MSG(cnode_input0 != nullptr, RET_ERROR, "cnode input 0 should not be nullptr");
-  auto cnode_input2 = cnode->input(kBuildInputFlagTwo);
-  MS_CHECK_TRUE_MSG(cnode_input2 != nullptr, RET_ERROR, "cnode input 2 should not be nullptr");
-  auto anf_node = cnode_input2->cast<CNodePtr>();
-  MS_CHECK_TRUE_MSG(anf_node != nullptr, RET_ERROR, "input2 is not cnode.");
-  auto value_node = anf_node->input(kBuildInputFlagZero)->cast<ValueNodePtr>();
-  MS_CHECK_TRUE_MSG(value_node != nullptr, RET_ERROR, "input 2 is not value node .");
-  auto value_ptr = value_node->value();
-  MS_CHECK_TRUE_MSG(value_ptr != nullptr, RET_ERROR, "input 2 value node has no value.");
-  auto primitive_c = value_ptr->cast<PrimitiveCPtr>();
-  MS_CHECK_TRUE_MSG(primitive_c != nullptr, RET_ERROR, "input 2 is not primitive_c.");
-  auto tensor_info = primitive_c->GetAttr("const_data");
-  MS_CHECK_TRUE_MSG(tensor_info != nullptr, RET_ERROR, "input 2 constant cnode has no data.");
-  auto tensor_info_ptr = tensor_info->cast<tensor::TensorPtr>();
-  MS_CHECK_TRUE_MSG(tensor_info_ptr != nullptr, RET_ERROR, "input 2 valueptr is not tensor::Tensorptr.");
-  MS_CHECK_TRUE_MSG(tensor_info_ptr->data_c() != nullptr, RET_ERROR, "data is nullptr.");
-  std::vector<int64_t> axis;
-  if ((tensor_info_ptr->data_type() == kNumberTypeInt) || (tensor_info_ptr->data_type() == kNumberTypeInt32)) {
-    auto data_ptr = static_cast<int *>(tensor_info_ptr->data_c());
-    axis = std::vector<int64_t>(data_ptr, data_ptr + tensor_info_ptr->DataSize());
-  } else if (tensor_info_ptr->data_type() == kNumberTypeInt64) {
-    auto data_ptr = static_cast<int64_t *>(tensor_info_ptr->data_c());
-    axis = std::vector<int64_t>(data_ptr, data_ptr + tensor_info_ptr->DataSize());
-  } else {
-    MS_LOG(ERROR) << "datatype should be int or int32 or int64";
-    return RET_ERROR;
-  }
-  auto anf_node0 = cnode_input0->cast<ValueNodePtr>();
-  MS_CHECK_TRUE_MSG(anf_node0 != nullptr, RET_ERROR, "constant input0 is not valuenode.");
-  value_ptr = anf_node0->value();
-  MS_CHECK_TRUE_MSG(value_ptr != nullptr, RET_ERROR, "input 0 value node has no value.");
-  primitive_c = value_ptr->cast<PrimitiveCPtr>();
-  MS_CHECK_TRUE_MSG(primitive_c != nullptr, RET_ERROR, "input 0 value is not primitive_c.");
-  (void)primitive_c->AddAttr(ops::kAxis, MakeValue(axis));
-  std::vector<AnfNodePtr> new_inputs = {cnode->input(0), cnode->input(1)};
-  cnode->set_inputs(new_inputs);
-  opt::UpdateManager(func_graph);
-  return lite::RET_OK;
-}
-
-STATUS InputAdjust::AdjustOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
-  STATUS status = lite::RET_OK;
-  if (opt::CheckPrimitiveType(cnode, prim::kPrimSqueeze) && cnode->inputs().size() == kBuildInputFlagThree) {
-    MS_LOG(INFO) << "Adjust Squeeze";
-    status = ConvertInputToAttrForSqueeze(func_graph, cnode);
-  } else if (opt::CheckPrimitiveType(cnode, prim::kPrimTranspose)) {
-    MS_LOG(INFO) << "Adjust Transpose";
-    status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "perm", kBuildInputFlagTwo);
-  } else if (opt::CheckPrimitiveType(cnode, prim::kPrimReshape)) {
-    MS_LOG(INFO) << "Adjust Reshape";
-    status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "shape", kBuildInputFlagTwo);
-  } else if (opt::CheckPrimitiveType(cnode, prim::kPrimGather)) {
-    MS_LOG(INFO) << "Adjust Gather";
-    status = AddAttrToInput(func_graph, cnode, opt::kInputIndexThree, "axis", 1);
-  } else if (opt::CheckPrimitiveType(cnode, prim::kPrimCast)) {
-    MS_LOG(INFO) << "Adjust Cast";
-    status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "to", 1);
-  } else if (opt::CheckPrimitiveType(cnode, prim::kPrimTopKFusion)) {
-    MS_LOG(INFO) << "Adjust TopKFusion";
-    status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "k", 1);
-  } else if (opt::CheckPrimitiveType(cnode, prim::kPrimTileFusion)) {
-    MS_LOG(INFO) << "Adjust TileFusion";
-    status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "multiples", kBuildInputFlagTwo);
-  } else if (opt::CheckPrimitiveType(cnode, prim::kPrimReduceFusion)) {
-    MS_LOG(INFO) << "Adjust ReduceFusion";
-    status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "axes", kBuildInputFlagTwo);
-  } else if (opt::CheckPrimitiveType(cnode, prim::kPrimPad) || opt::CheckPrimitiveType(cnode, prim::kPrimPadFusion)) {
-    MS_LOG(INFO) << "Adjust PadFusion";
-    status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "paddings", kBuildInputFlagThree);
-  } else if (opt::CheckPrimitiveType(cnode, prim::kPrimPowFusion)) {
-    MS_LOG(INFO) << "Adjust PowFuison";
-    status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "power", kBuildInputFlagFour);
-  } else if (opt::CheckPrimitiveType(cnode, prim::kPrimResize)) {
-    MS_LOG(INFO) << "Adjust Resize";
-    // only one of zoom_factor and scale is valid.
-    status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "zoom_factor", 1);
-    status = (status != lite::RET_NO_CHANGE)
-               ? status
-               : AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "scale", kBuildInputFlagFive);
-  }
-  return status;
-}
-
 bool InputAdjust::Run(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   auto manager = Manage(func_graph, true);
@@ -202,7 +115,41 @@ bool InputAdjust::Run(const FuncGraphPtr &func_graph) {
     if (cnode == nullptr) {
       continue;
     }
-    status = AdjustOp(func_graph, cnode);
+    if (opt::CheckPrimitiveType(node, prim::kPrimTranspose)) {
+      MS_LOG(INFO) << "Adjust Transpose";
+      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "perm", kBuildInputFlagTwo);
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimReshape)) {
+      MS_LOG(INFO) << "Adjust Reshape";
+      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "shape", kBuildInputFlagTwo);
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimGather)) {
+      MS_LOG(INFO) << "Adjust Gather";
+      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexThree, "axis", 1);
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimCast)) {
+      MS_LOG(INFO) << "Adjust Cast";
+      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "to", 1);
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimTopKFusion)) {
+      MS_LOG(INFO) << "Adjust TopKFusion";
+      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "k", 1);
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimTileFusion)) {
+      MS_LOG(INFO) << "Adjust TileFusion";
+      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "multiples", kBuildInputFlagTwo);
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimReduceFusion)) {
+      MS_LOG(INFO) << "Adjust ReduceFusion";
+      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "axes", kBuildInputFlagTwo);
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimPad) || opt::CheckPrimitiveType(node, prim::kPrimPadFusion)) {
+      MS_LOG(INFO) << "Adjust PadFusion";
+      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "paddings", kBuildInputFlagThree);
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimPowFusion)) {
+      MS_LOG(INFO) << "Adjust PowFuison";
+      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "power", kBuildInputFlagFour);
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimResize)) {
+      MS_LOG(INFO) << "Adjust Resize";
+      // only one of zoom_factor and scale is valid.
+      status = AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "zoom_factor", 1);
+      status = (status != lite::RET_NO_CHANGE)
+                 ? status
+                 : AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "scale", kBuildInputFlagFive);
+    }
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
       MS_LOG(ERROR) << "adjust input pass is failed.";
       return false;
