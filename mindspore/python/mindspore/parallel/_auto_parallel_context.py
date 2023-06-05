@@ -14,6 +14,7 @@
 # ============================================================================
 """Context of auto parallel"""
 from __future__ import absolute_import
+import json
 import os
 import threading
 from mindspore import context
@@ -848,6 +849,33 @@ class _AutoParallelContext:
             raise TypeError('optimizer_weight_shard_aggregated_save is invalid type')
         self._context_handle.set_optimizer_weight_shard_aggregated_save(optimizer_weight_shard_aggregated_save)
 
+    def set_speedup_config_path(self, speedup_config_path):
+        """"Check and set speedup config for auto parallel."""
+        speedup_config_path = os.path.realpath(speedup_config_path)
+        if not os.path.isfile(speedup_config_path):
+            raise ValueError("For 'context.set_auto_parallel_context', "
+                             "the 'speedup_config_path' file %r is not exists, "
+                             "please check whether 'speedup_config_path' is correct." % speedup_config_path)
+        try:
+            with open(speedup_config_path, 'r') as f:
+                speedup_config = json.load(f)
+                speedup_config_key_list = {"recompute_comm_overlap", "matmul_grad_comm_overlap", "enable_task_opt",
+                                           "interleaved_matmul_comm", "interleaved_layernorm_comm"}
+                for k, v in speedup_config.items():
+                    if not isinstance(k, str):
+                        raise TypeError("key {} is not a str".format(k))
+                    if k not in speedup_config_key_list:
+                        raise ValueError("key {} should be one of 'recompute_comm_overlap', 'matmul_grad_comm_overlap',"
+                                         " 'enable_task_opt'.".format(k))
+                    if not isinstance(v, bool):
+                        raise TypeError("value {} is not a bool".format(v))
+                self._context_handle.set_speedup_config(speedup_config)
+        except (TypeError, ValueError) as exo:
+            raise ValueError(str(exo) + "\nFor 'context.set_auto_parallel_context', "
+                                        "open or load the 'speedup_config_path' file {} "
+                                        "failed, please check whether 'speedup_config_path' is json file and correct, "
+                                        "or may not have permission to read it.".format(speedup_config_path))
+
     def get_optimizer_weight_shard_aggregated_save(self):
         """Get optimizer_weight_shard_size."""
         self.check_context_handle()
@@ -974,6 +1002,7 @@ class _AutoParallelContext:
 
 
 
+
 _AUTO_PARALLEL_CONTEXT = None
 
 
@@ -1015,6 +1044,7 @@ _set_auto_parallel_context_func_map = {
     "optimizer_weight_shard_aggregated_save": auto_parallel_context().set_optimizer_weight_shard_aggregated_save,
     "sharding_propagation": auto_parallel_context().set_sharding_propagation,
     "enable_alltoall": auto_parallel_context().set_enable_alltoall,
+    "speedup_config_path": auto_parallel_context().set_speedup_config_path,
     "comm_fusion": auto_parallel_context().set_comm_fusion}
 
 

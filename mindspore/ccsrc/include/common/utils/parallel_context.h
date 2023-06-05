@@ -19,6 +19,7 @@
 
 #include <cstdint>
 #include <map>
+#include <unordered_map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -189,6 +190,9 @@ class COMMON_EXPORT ParallelContext {
   void set_pipeline_micro_size(const size_t);
   size_t pipeline_micro_size() const { return pipeline_micro_size_; }
 
+  void set_speedup_config(const std::unordered_map<std::string, bool> speedup_config);
+  std::unordered_map<std::string, bool> speedup_config() const { return speedup_config_; }
+
   void set_do_transform(const bool);
   bool do_transform() const { return do_transform_; }
 
@@ -222,6 +226,7 @@ class COMMON_EXPORT ParallelContext {
   bool enable_reduce_scatter_fusion_;
   std::map<std::string, std::vector<uint32_t>> all_reduce_fusion_split_indices_;
   std::map<std::string, std::vector<uint32_t>> all_reduce_fusion_split_sizes_;
+  std::unordered_map<std::string, bool> speedup_config_;
   std::string strategy_ckpt_load_file_;
   std::string strategy_ckpt_save_file_;
   std::string group_ckpt_save_file_;
