@@ -209,6 +209,7 @@
 #include "plugin/device/ascend/optimizer/ge/add_depend_for_all_gather.h"
 #include "plugin/device/ascend/optimizer/ge/convert_data_depend_to_control_depend.h"
 #include "plugin/device/ascend/optimizer/ge/convert_condition_input_to_scalar.h"
+#include "plugin/device/ascend/optimizer/ge/maketuple_depend_remover.h"
 
 namespace mindspore {
 namespace opt {
@@ -598,6 +599,7 @@ void AscendBackendOptimizeGE(const std::shared_ptr<session::KernelGraph> &kernel
   opt_ge_pm->AddPass(std::make_shared<opt::AddDependForAllGather>());
   opt_ge_pm->AddPass(std::make_shared<ConvertCondInputToScalar>());
   opt_ge_pm->AddPass(std::make_shared<opt::ConvertDataDependToControlDepend>());
+  opt_ge_pm->AddPass(std::make_shared<opt::MakeTupleDependRemover>());
   optimizer->AddPassManager(opt_ge_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
