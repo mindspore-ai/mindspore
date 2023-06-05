@@ -18,6 +18,7 @@
 #include "nnacl/kernel/activation.h"
 #include "nnacl/kernel/arithmetic.h"
 #include "nnacl/kernel/arithmetic_compare.h"
+#include "nnacl/kernel/arithmetic_self.h"
 #include "nnacl/kernel/biasadd.h"
 #include "nnacl/kernel/clip.h"
 #include "nnacl/kernel/concat.h"
@@ -46,16 +47,21 @@
 
 void init_vs_kernels_f16(KernelCreator **creators) {
 #ifdef ENABLE_FP16
+  creators[PrimType_Abs][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_Activation][REGIST_DT(kNumberTypeFloat16)] = CreateActivation;
   creators[PrimType_AddFusion][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
+  creators[PrimType_Ceil][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_Concat][REGIST_DT(kNumberTypeFloat16)] = CreateConcatF16;
+  creators[PrimType_Cos][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_DivFusion][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_Eltwise][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
+  creators[PrimType_Erf][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_Equal][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticCompareF16;
   creators[PrimType_ExpandDims][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
   creators[PrimType_Fill][REGIST_DT(kNumberTypeFloat16)] = CreateFill;
   creators[PrimType_Flatten][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
   creators[PrimType_FlattenGrad][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
+  creators[PrimType_Floor][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_FloorMod][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_FloorDiv][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_Gather][REGIST_DT(kNumberTypeFloat16)] = CreateGather;
@@ -66,13 +72,19 @@ void init_vs_kernels_f16(KernelCreator **creators) {
   creators[PrimType_LessEqual][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticCompareF16;
   creators[PrimType_LogicalAnd][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_LogicalOr][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
+  creators[PrimType_Log][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
+  creators[PrimType_LogicalNot][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_Maximum][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
+  creators[PrimType_Neg][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_Minimum][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_MulFusion][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_NotEqual][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticCompareF16;
   creators[PrimType_Reshape][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
   creators[PrimType_RealDiv][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_ReduceFusion][REGIST_DT(kNumberTypeFloat16)] = CreateReduceF16;
+  creators[PrimType_Rsqrt][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
+  creators[PrimType_Round][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
+  creators[PrimType_Reciprocal][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_Shape][REGIST_DT(kNumberTypeFloat16)] = CreateShape;
   creators[PrimType_Softmax][REGIST_DT(kNumberTypeFloat16)] = CreateSoftmax;
   creators[PrimType_Stack][REGIST_DT(kNumberTypeFloat16)] = CreateStackF16;
@@ -80,6 +92,9 @@ void init_vs_kernels_f16(KernelCreator **creators) {
   creators[PrimType_Squeeze][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
   creators[PrimType_SubFusion][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_SquaredDifference][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
+  creators[PrimType_Sin][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
+  creators[PrimType_Square][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
+  creators[PrimType_Sqrt][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_TileFusion][REGIST_DT(kNumberTypeFloat16)] = CreateTile;
   creators[PrimType_Transpose][REGIST_DT(kNumberTypeFloat16)] = CreateTranspose;
   creators[PrimType_Unsqueeze][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
@@ -87,12 +102,16 @@ void init_vs_kernels_f16(KernelCreator **creators) {
 }
 
 void init_vs_kernels_a(KernelCreator **creators) {
+  creators[PrimType_Abs][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
+  creators[PrimType_Abs][REGIST_DT(kNumberTypeInt32)] = CreateArithmeticSelf;
   creators[PrimType_Activation][REGIST_DT(kNumberTypeFloat32)] = CreateActivation;
   creators[PrimType_Activation][REGIST_DT(kNumberTypeUInt32)] = CreateActivation;
   creators[PrimType_AddFusion][REGIST_DT(kNumberTypeBool)] = CreateArithmetic;
   creators[PrimType_AddFusion][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
   creators[PrimType_AddFusion][REGIST_DT(kNumberTypeInt32)] = CreateArithmetic;
   creators[PrimType_BiasAdd][REGIST_DT(kNumberTypeFloat32)] = CreateBiasAdd;
+  creators[PrimType_Ceil][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
+  creators[PrimType_Cos][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
   creators[PrimType_Clip][REGIST_DT(kNumberTypeFloat)] = CreateClip;
   creators[PrimType_Clip][REGIST_DT(kNumberTypeFloat32)] = CreateClip;
   creators[PrimType_Clip][REGIST_DT(kNumberTypeInt)] = CreateClip;
@@ -105,6 +124,7 @@ void init_vs_kernels_a(KernelCreator **creators) {
   creators[PrimType_Eltwise][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
   creators[PrimType_Equal][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticCompare;
   creators[PrimType_Equal][REGIST_DT(kNumberTypeInt32)] = CreateArithmeticCompare;
+  creators[PrimType_Erf][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
   creators[PrimType_ExpFusion][REGIST_DT(kNumberTypeFloat32)] = CreateExp;
   creators[PrimType_ExpandDims][REGIST_DT(kNumberTypeInt32)] = CreateReshape;
   creators[PrimType_ExpandDims][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;
@@ -113,13 +133,14 @@ void init_vs_kernels_a(KernelCreator **creators) {
   creators[PrimType_Fill][REGIST_DT(kNumberTypeBool)] = CreateFill;
   creators[PrimType_Fill][REGIST_DT(kNumberTypeInt32)] = CreateFill;
   creators[PrimType_Fill][REGIST_DT(kNumberTypeFloat32)] = CreateFill;
+  creators[PrimType_Flatten][REGIST_DT(kNumberTypeInt32)] = CreateReshape;
+  creators[PrimType_Flatten][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;
+  creators[PrimType_FlattenGrad][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;
+  creators[PrimType_Floor][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
   creators[PrimType_FloorDiv][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
   creators[PrimType_FloorDiv][REGIST_DT(kNumberTypeInt32)] = CreateArithmetic;
   creators[PrimType_FloorMod][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
   creators[PrimType_FloorMod][REGIST_DT(kNumberTypeInt32)] = CreateArithmetic;
-  creators[PrimType_Flatten][REGIST_DT(kNumberTypeInt32)] = CreateReshape;
-  creators[PrimType_Flatten][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;
-  creators[PrimType_FlattenGrad][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;
   creators[PrimType_FullConnection][REGIST_DT(kNumberTypeFloat32)] = CreateFullconnection;
   creators[PrimType_Gather][REGIST_DT(kNumberTypeFloat32)] = CreateGather;
   creators[PrimType_Gather][REGIST_DT(kNumberTypeInt32)] = CreateGather;
@@ -134,6 +155,7 @@ void init_vs_kernels_a(KernelCreator **creators) {
 }
 
 void init_vs_kernels_i(KernelCreator **creators) {
+  creators[PrimType_IsFinite][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
   creators[PrimType_Less][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticCompare;
   creators[PrimType_Less][REGIST_DT(kNumberTypeInt32)] = CreateArithmeticCompare;
   creators[PrimType_LessEqual][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticCompare;
@@ -143,6 +165,10 @@ void init_vs_kernels_i(KernelCreator **creators) {
   creators[PrimType_LogicalAnd][REGIST_DT(kNumberTypeInt32)] = CreateArithmetic;
   creators[PrimType_LogicalOr][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
   creators[PrimType_LogicalOr][REGIST_DT(kNumberTypeBool)] = CreateArithmetic;
+  creators[PrimType_Log][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
+  creators[PrimType_Log1p][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
+  creators[PrimType_LogicalNot][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
+  creators[PrimType_LogicalNot][REGIST_DT(kNumberTypeBool)] = CreateArithmeticSelf;
   creators[PrimType_Maximum][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
   creators[PrimType_Maximum][REGIST_DT(kNumberTypeInt32)] = CreateArithmetic;
   creators[PrimType_MatMulFusion][REGIST_DT(kNumberTypeFloat32)] = CreateMatmul;
@@ -152,6 +178,8 @@ void init_vs_kernels_i(KernelCreator **creators) {
   creators[PrimType_MulFusion][REGIST_DT(kNumberTypeInt32)] = CreateArithmetic;
   creators[PrimType_Minimum][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
   creators[PrimType_Minimum][REGIST_DT(kNumberTypeInt32)] = CreateArithmetic;
+  creators[PrimType_Neg][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
+  creators[PrimType_Neg][REGIST_DT(kNumberTypeInt32)] = CreateArithmeticSelf;
   creators[PrimType_NotEqual][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticCompare;
   creators[PrimType_NotEqual][REGIST_DT(kNumberTypeInt32)] = CreateArithmeticCompare;
   creators[PrimType_NotEqual][REGIST_DT(kNumberTypeInt64)] = CreateArithmeticCompare;
@@ -165,6 +193,9 @@ void init_vs_kernels_r(KernelCreator **creators) {
   creators[PrimType_ReduceFusion][REGIST_DT(kNumberTypeBool)] = CreateReduce;
   creators[PrimType_ReduceFusion][REGIST_DT(kNumberTypeInt32)] = CreateReduce;
   creators[PrimType_ReduceFusion][REGIST_DT(kNumberTypeFloat32)] = CreateReduce;
+  creators[PrimType_Reciprocal][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
+  creators[PrimType_Round][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
+  creators[PrimType_Rsqrt][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
   creators[PrimType_Shape][REGIST_DT(kNumberTypeInt32)] = CreateShape;
   creators[PrimType_Shape][REGIST_DT(kNumberTypeBool)] = CreateShape;
   creators[PrimType_Shape][REGIST_DT(kNumberTypeFloat32)] = CreateShape;
@@ -179,6 +210,9 @@ void init_vs_kernels_r(KernelCreator **creators) {
   creators[PrimType_StridedSlice][REGIST_DT(kNumberTypeInt64)] = CreateStridedSlice;
   creators[PrimType_StridedSlice][REGIST_DT(kNumberTypeInt32)] = CreateStridedSlice;
   creators[PrimType_StridedSlice][REGIST_DT(kNumberTypeInt8)] = CreateStridedSlice;
+  creators[PrimType_Square][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
+  creators[PrimType_Sqrt][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
+  creators[PrimType_Sin][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
   creators[PrimType_SubFusion][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
   creators[PrimType_SubFusion][REGIST_DT(kNumberTypeInt32)] = CreateArithmetic;
   creators[PrimType_Squeeze][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;
