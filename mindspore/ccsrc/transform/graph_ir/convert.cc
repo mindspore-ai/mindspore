@@ -399,7 +399,7 @@ void DfGraphConvertor::SetupParamInitSubGraph(const TensorOrderMap &tensors,
   }
 
   // set up init sub graph
-  bool is_eval_after_train = common::GetEnv("MS_GE_TRAIN") == "1" && phase_prefix_ == "eval";
+  bool is_eval_after_train = common::GetEnv("MS_GE_TRAIN") == "1" && phase_prefix_ != "train";
   if (init_input->size() != 0 && !is_eval_after_train) {
     // init sub graph needs no input
     MS_LOG(INFO) << "Build data init subgraph.";
@@ -1434,6 +1434,9 @@ void DfGraphConvertor::SetGraphInputs(std::vector<Operator> *inputs) {
       MS_LOG(EXCEPTION) << "Can not find the GetNext node in graph in sink_mode, please check.";
     }
     inputs->push_back(*input);
+
+    MS_EXCEPTION_IF_NULL(anf_graph_);
+    anf_graph_->set_flag(kGraphFlagHasGetNext, true);
   } else {
     auto params = anf_graph_->parameters();
     int index = 0;

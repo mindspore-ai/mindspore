@@ -55,6 +55,7 @@ enum class GraphType { kNormal, kCond, kBody, kAfter, kBranch };
 enum class DfsVisitFlag { kUnVisited, kVisiting, kVisited };
 constexpr char kFuncGraphTypeName[] = "FuncGraph";
 constexpr char kKernelGraphTypeName[] = "KernelGraph";
+constexpr char kGraphFlagHasGetNext[] = "graph_has_getnext";
 
 class GeOpConvertor {
  public:
@@ -86,7 +87,7 @@ class DfGraphConvertor {
     MS_EXCEPTION_IF_NULL(anf_graph);
     auto env_ge = mindspore::common::GetEnv("MS_ENABLE_GE");
     auto env_training = mindspore::common::GetEnv("MS_GE_TRAIN");
-    if (env_ge == "1" && (env_training == "1" || phase_prefix == "eval")) {
+    if (env_ge == "1" && env_training == "1") {
       training_ = true;
     } else {
       training_ = anf_graph->has_flag("training");

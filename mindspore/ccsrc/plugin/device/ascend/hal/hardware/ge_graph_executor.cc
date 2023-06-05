@@ -376,6 +376,12 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
     UpdateOutputNodeShape(output_node, idx, me_types[i], actual_shapes);
   }
 
+  if (graph->has_flag(transform::kGraphFlagHasGetNext)) {
+    MS_LOG(DEBUG) << "Reset ConfigManager, graph: " << graph_name;
+    ConfigManager::GetInstance().ResetConfig();
+    ConfigManager::GetInstance().ResetIterNum();
+  }
+
   MS_LOG(DEBUG) << "GE run graph end.";
   return true;
 }
