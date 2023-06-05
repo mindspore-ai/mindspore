@@ -56,7 +56,6 @@ class InplaceIndexAddCpuKernelMod : public NativeCpuKernelMod, public MatchKerne
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
-  BaseOperatorPtr base_operator_;
   std::vector<int64_t> var_shape;
   std::vector<int64_t> updates_shape;
   std::vector<int64_t> indices_shape;

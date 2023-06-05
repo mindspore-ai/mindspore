@@ -51,7 +51,6 @@ void TensorArrayStackCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   } else {
     value_size_ = ele_size_ * LongToSize(size);
   }
-  is_need_retrieve_output_shape_ = true;
 }
 
 void TensorArrayStackCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {

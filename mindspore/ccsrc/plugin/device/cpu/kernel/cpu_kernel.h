@@ -146,11 +146,7 @@ class BACKEND_EXPORT NativeCpuKernelMod : public CpuKernelMod {
     return Launch(inputs, workspace, outputs);
   }
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                      const std::vector<AddressPtr> &outputs);
-  virtual bool Launch(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-                      const std::vector<AddressPtr> &workspace) {
-    return false;
-  }
+                      const std::vector<AddressPtr> &outputs) = 0;
 
   // Must be called before Init.
   void SetThreadPool(ThreadPool *pool) { pool_ = pool; }

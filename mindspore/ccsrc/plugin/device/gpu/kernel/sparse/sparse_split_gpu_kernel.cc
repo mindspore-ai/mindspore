@@ -62,7 +62,6 @@ int SparseSplitGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseSplit>(base_operator);
   num_split = kernel_ptr->get_num_split();
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
-    outputs_ = outputs;
     auto input_indices_shape = inputs[kIndex1]->GetShapeVector();
     auto out_shape = outputs.at(kIndex2)->GetShapeVector();
     auto out_size = std::accumulate(out_shape.begin(), out_shape.end(), 1, std::multiplies<int64_t>());
@@ -186,7 +185,7 @@ bool SparseSplitGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   return true;
 }
 
-void SparseSplitGpuKernelMod::SyncData() {
+void SparseSplitGpuKernelMod::SyncOutputShape() {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream), "SparseSplit cudaStreamSynchronized failed");
   for (size_t i = 0; i < num_split; i++) {
     outputs_[i]->SetShapeVector(ShapeVector({h_blocks[i], Kindex2}));                                  // indices

@@ -59,7 +59,7 @@ bool TensorArrayStackKernelMod::Init(const CNodePtr &kernel_node) {
   return true;
 }
 
-void TensorArrayStackKernelMod::SyncData() {
+void TensorArrayStackKernelMod::SyncOutputShape() {
   CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                              "TensorArrayStack cudaStreamSynchronized failed");
   TensorArrayPtr tensors_ = TensorArrayMgr::GetInstance().GetTensorArray(handle_);
@@ -68,7 +68,8 @@ void TensorArrayStackKernelMod::SyncData() {
   auto shape = shapes_;
   shape.insert(shape.begin(), tensor_size);
   MS_LOG(DEBUG) << "After postexecute, the real shape of TensorArrayStack is " << shape;
-  common::AnfAlgo::SetOutputInferTypeAndShape({type_->type_id()}, {Convert2Long(shape)}, kernel_node_.lock().get());
+  // common::AnfAlgo::SetOutputInferTypeAndShape({type_->type_id()}, {Convert2Long(shape)}, kernel_node_.lock().get());
+  outputs_[0]->SetShapeVector(Convert2Long(shape));
 }
 
 void TensorArrayStackKernelMod::ResetResource() noexcept {

@@ -67,9 +67,6 @@ class BatchNormGradCpuKernelMod : public MKLCpuKernelMod {
   enum input_list_ { Y_BACKPROP, X, SCALE, SAVE_MEAN, SAVE_VARIANCE, RESERVE };
   enum workspace_list_ { SCALE_BIAS, DIFF_SCALE_BIAS };
   enum output_list_ { DX, DSCALE, DBIAS };
-  BaseOperatorPtr base_operator_{nullptr};
-  std::vector<KernelTensorPtr> inputs_{};
-  std::vector<KernelTensorPtr> outputs_{};
   std::map<uint32_t, tensor::TensorPtr> inputs_on_host_{};
 };
 }  // namespace kernel

@@ -179,17 +179,15 @@ bool DatasetIteratorKernelMod::Launch(const std::vector<AddressPtr> &, const std
   return true;
 }
 
-void DatasetIteratorKernelMod::SyncData() {
-  if (dynamic_shape_) {
-    return;
-  }
+void DatasetIteratorKernelMod::SyncOutputShape() {
   std::vector<ShapeVector> shapes;
+  size_t idx = 0;
   for (const auto &item : output_data_) {
     ShapeVector shape;
     std::transform(item.shapes.begin(), item.shapes.end(), std::back_inserter(shape), LongToSize);
     shapes.push_back(shape);
+    outputs_[idx++]->SetShapeVector(shape);
   }
-  common::AnfAlgo::SetOutputInferTypeAndShape(types_, shapes, kernel_node_.lock().get());
 }
 }  // namespace kernel
 }  // namespace mindspore

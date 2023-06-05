@@ -131,7 +131,6 @@ int NonMaxSuppressionV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator
       return KRET_UNKNOWN_SHAPE;
     }
   }
-  outputs_ = outputs;
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   std::vector<int64_t> inp_shape1 = inputs[0]->GetShapeVector();
@@ -155,7 +154,7 @@ int NonMaxSuppressionV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   return KRET_OK;
 }
 
-void NonMaxSuppressionV3GpuKernelMod::SyncData() {
+void NonMaxSuppressionV3GpuKernelMod::SyncOutputShape() {
   std::vector<int64_t> shape = {-1};
   auto dyn_out = helper_ptr_->GetOutputTensorInfo();
   shape[0] = dyn_out.shapes[0][0];

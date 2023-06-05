@@ -120,11 +120,10 @@ int AclKernelMod::GetOutputInfo(const BaseOperatorPtr &base_operator, const std:
   return ret;
 }
 
-int AclKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                         const std::vector<KernelTensorPtr> &outputs,
+int AclKernelMod::Resize(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
                          const std::map<uint32_t, tensor::TensorPtr> &inputs_on_host) {
   int ret = KRET_OK;
-  primitive_ptr_ = base_operator->GetPrim();
+  primitive_ptr_ = op_->GetPrim();
   MS_ERROR_IF_NULL(primitive_ptr_);
   kernel_name_ = primitive_ptr_->name();
 
@@ -139,7 +138,7 @@ int AclKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector
   ms_attr_str_.clear();
 
   GetInputInfo(inputs);
-  ret = GetOutputInfo(base_operator, outputs);
+  ret = GetOutputInfo(op_, outputs);
 
   inputs_on_host_ = inputs_on_host;
   return ret;
@@ -215,7 +214,7 @@ std::vector<TaskInfoPtr> AclKernelMod::GenTask(const std::vector<AddressPtr> &, 
   return {};
 }
 
-void AclKernelMod::SyncData() {
+void AclKernelMod::SyncOutputShape() {
   MS_EXCEPTION_IF_NULL(converter_);
   std::vector<std::vector<int64_t>> output_shape = converter_->SyncData();
   for (size_t i = 0; i < output_shape.size(); ++i) {

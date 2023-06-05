@@ -151,7 +151,6 @@ bool ListDiffGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
     return false;
   }
   is_need_retrieve_output_shape_ = true;
-  outputs_ = outputs;
   helper_ptr_ = kernel_attr[index].second(kernel_name_, device_id_);
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For 'ListDiff' got empty inputs or outputs, which is invalid.";
@@ -176,11 +175,10 @@ int ListDiffGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   helper_ptr_->CalMemSize(input_shapes, output_shapes);
   ResetResource();
   InitSizeLists();
-  outputs_ = outputs;
   return KRET_OK;
 }
 
-void ListDiffGpuKernelMod::SyncData() {
+void ListDiffGpuKernelMod::SyncOutputShape() {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                      "cudaStreamSynchronized failed");
   size_t output_num = outputs_.size();

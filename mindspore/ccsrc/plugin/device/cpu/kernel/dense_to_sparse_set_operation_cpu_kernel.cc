@@ -255,7 +255,7 @@ void DenseToSparseSetOperationCpuKernelMod::ApplySetOperation(const std::set<T> 
   }
 }
 
-void DenseToSparseSetOperationCpuKernelMod::SyncData() {
+void DenseToSparseSetOperationCpuKernelMod::SyncOutputShape() {
   outputs_[kOutput1]->SetShapeVector(infer_shape_[kOutput1]);
   outputs_[kOutput2]->SetShapeVector(infer_shape_[kOutput2]);
   outputs_[kOutput3]->SetShapeVector(infer_shape_[kOutput3]);
@@ -319,7 +319,6 @@ int DenseToSparseSetOperationCpuKernelMod::Resize(const BaseOperatorPtr &base_op
     shape1_ = inputs.at(kInputX1)->GetShapeVector();
     set2_nums_ = SizeToLong(inputs.at(kInputX2Values)->GetShapeVector()[0]);
     set2_dim_ = SizeToLong(shape1_.size());
-    outputs_ = outputs;
   }
   return KRET_OK;
 }

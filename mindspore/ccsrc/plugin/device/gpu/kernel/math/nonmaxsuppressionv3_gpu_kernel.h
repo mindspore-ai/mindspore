@@ -46,13 +46,11 @@ class NonMaxSuppressionV3GpuKernelMod : public NativeGpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  protected:
-  void SyncData() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
+  void SyncOutputShape() override;
 
  private:
   std::unique_ptr<cukernel::GpuKernelHelperBase> helper_ptr_{nullptr};
   std::shared_ptr<cukernel::NonMaxSuppressionV3Attr> attr_ptr_{nullptr};
-  std::vector<KernelTensorPtr> outputs_ = {};
 };
 }  // namespace kernel
 }  // namespace mindspore

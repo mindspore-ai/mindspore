@@ -37,8 +37,6 @@ bool GammaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   kernel_name_ = kernel_ptr->name();
   seed_ = kernel_ptr->get_seed();
   seed2_ = kernel_ptr->get_seed2();
-
-  outputs_ = outputs;
   output_shape_ = outputs[0]->GetShapeVector();
   alpha_shape_ = inputs[1]->GetShapeVector();
   alpha_dtype_ = inputs[1]->GetDtype();

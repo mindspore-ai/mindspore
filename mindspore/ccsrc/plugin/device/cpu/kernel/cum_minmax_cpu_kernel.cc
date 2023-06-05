@@ -73,7 +73,6 @@ bool CumMinMaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   if (!is_match) {
     MS_LOG(EXCEPTION) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
   }
-  base_operator_ = base_operator;
   kernel_func_ = func_list_[cum_op_type_][index].second;
   switch (cum_op_type_) {
     case CUMMIN: {
@@ -102,7 +101,7 @@ int CumMinMaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   }
   auto input_shape = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
   auto rank = SizeToLong(input_shape.size());
-  auto axis_input = GetValue<int64_t>(base_operator_->GetAttr(AXIS));
+  auto axis_input = GetValue<int64_t>(op_->GetAttr(AXIS));
   auto axis = axis_input < 0 ? LongToSize(axis_input + rank) : LongToSize(axis_input);
   outer_size_ = inner_size_ = axis_size_ = 1;
   for (size_t i = 0; i < input_shape.size(); i++) {

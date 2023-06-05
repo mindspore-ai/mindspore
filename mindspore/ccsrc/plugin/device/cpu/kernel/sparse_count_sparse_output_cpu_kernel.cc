@@ -98,7 +98,6 @@ bool SparseCountSparseOutputCpuKernelMod::Init(const BaseOperatorPtr &base_opera
                   << ", but got " << inputs.size();
     return false;
   }
-  outputs_ = outputs;
   size_t output_num = outputs.size();
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kSparseCountSparseOutputOutputsNum, kernel_name_);
 

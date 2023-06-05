@@ -62,7 +62,6 @@ int MaskedSelectCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   if (ret != KRET_OK && ret != KRET_UNKNOWN_OUT_SHAPE) {
     return ret;
   }
-  outputs_ = outputs;
   input_shape_a_ = inputs[kIndex0]->GetShapeVector();
   input_shape_b_ = inputs[kIndex1]->GetShapeVector();
   output_shape_ = CPUKernelUtils::GetBroadcastShape(input_shape_a_, input_shape_b_);
@@ -100,7 +99,7 @@ bool MaskedSelectCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   return true;
 }
 
-void MaskedSelectCpuKernelMod::SyncData() {
+void MaskedSelectCpuKernelMod::SyncOutputShape() {
   std::vector<int64_t> new_output_shape = {SizeToLong(real_output_size_)};
   outputs_[kIndex0]->SetShapeVector(new_output_shape);
 }

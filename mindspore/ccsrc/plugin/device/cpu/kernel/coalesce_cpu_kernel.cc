@@ -39,7 +39,7 @@ bool CoalesceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
   return true;
 }
 
-void CoalesceCpuKernelMod::SyncData() {
+void CoalesceCpuKernelMod::SyncOutputShape() {
   ShapeVector dims;
   (void)dims.emplace_back(SizeToLong(shape_size_));
   (void)dims.emplace_back(SizeToLong(jump) + 1);
@@ -67,9 +67,6 @@ int CoalesceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_UNKNOWN_OUT_SHAPE && ret != KRET_OK) {
     return ret;
   }
-
-  outputs_ = outputs;
-
   auto indices_shape = inputs.at(kIndex0)->GetShapeVector();
   y_shape_shape_ = inputs.at(kIndex2)->GetShapeVector();
 

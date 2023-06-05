@@ -137,9 +137,6 @@ int PoolingGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   size_t dst_space =
     std::accumulate(dst_shape_.begin(), dst_shape_.end(), size_t(1), std::multiplies<size_t>()) * sizeof(float);
   workspace_size_list_.push_back(dst_space);
-  base_operator_ = base_operator;
-  inputs_ = inputs;
-  outputs_ = outputs;
   inputs_on_host_ = inputsOnHost;
   return KRET_OK;
 }
@@ -275,11 +272,11 @@ bool PoolingGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
                                      const std::vector<kernel::AddressPtr> &workspace,
                                      const std::vector<kernel::AddressPtr> &outputs) {
   // From CPUKernelExecutor::LaunchKernel
-  if (!Init(base_operator_, inputs_, outputs_)) {
+  if (!Init(op_, inputs_, outputs_)) {
     MS_LOG(ERROR) << "Re-init PoolingGradCpuKernelMod while launching failed";
     return false;
   }
-  auto resize_ret = Resize(base_operator_, inputs_, outputs_, inputs_on_host_);
+  auto resize_ret = Resize(op_, inputs_, outputs_, inputs_on_host_);
   if (resize_ret != KRET_OK) {
     MS_LOG(ERROR) << "Resize PoolingGradCpuKernelMod while launching failed: " << resize_ret;
     return false;

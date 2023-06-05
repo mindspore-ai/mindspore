@@ -45,7 +45,7 @@ int ShapeMulCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   }
   input_shape_ = inputs.at(kIndex0)->GetShapeVector();
   if (input_shape_.size() != 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input_shape size must be 1, but got " << input_shapes_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input_shape size must be 1, but got " << GetShapes(inputs);
   }
   return KRET_OK;
 }

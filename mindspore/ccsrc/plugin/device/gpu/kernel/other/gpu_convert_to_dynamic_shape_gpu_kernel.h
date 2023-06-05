@@ -66,7 +66,6 @@ class GpuConvertToDynamicShapeGpuKernelMod : public NativeGpuKernelMod {
     if (ret != KRET_OK && ret != KRET_UNKNOWN_OUT_SHAPE) {
       return ret;
     }
-    outputs_ = outputs;
     input_shape_ = inputs[0]->GetShapeVector();
     outputs_[0]->SetShapeVector(input_shape_);
     input_size_ = 1;
@@ -85,8 +84,6 @@ class GpuConvertToDynamicShapeGpuKernelMod : public NativeGpuKernelMod {
     output_size_list_.clear();
   }
 
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
-
  protected:
   void InitSizeLists() {
     input_size_list_.clear();
@@ -99,7 +96,6 @@ class GpuConvertToDynamicShapeGpuKernelMod : public NativeGpuKernelMod {
   void *cuda_stream_ptr_;
   ShapeVector input_shape_;
   int64_t input_size_;
-  std::vector<KernelTensorPtr> outputs_{};
 };
 }  // namespace kernel
 }  // namespace mindspore

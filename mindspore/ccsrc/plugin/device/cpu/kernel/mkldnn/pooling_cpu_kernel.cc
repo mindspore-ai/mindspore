@@ -123,9 +123,6 @@ int PoolingCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   AddArgument(DNNL_ARG_SRC, src_desc);
   AddArgument(DNNL_ARG_DST, dst_desc);
 
-  base_operator_ = base_operator;
-  inputs_ = inputs;
-  outputs_ = outputs;
   inputs_on_host_ = inputsOnHost;
   return KRET_OK;
 }
@@ -238,11 +235,11 @@ bool PoolingCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, 
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPoolingOutputsNum, kernel_name_);
 
   // From CPUKernelExecutor::LaunchKernel
-  if (!Init(base_operator_, inputs_, outputs_)) {
+  if (!Init(op_, inputs_, outputs_)) {
     MS_LOG(ERROR) << "Re-init PoolingCpuKernelMod while launching failed";
     return false;
   }
-  auto resize_ret = Resize(base_operator_, inputs_, outputs_, inputs_on_host_);
+  auto resize_ret = Resize(op_, inputs_, outputs_, inputs_on_host_);
   if (resize_ret != KRET_OK) {
     MS_LOG(ERROR) << "Resize PoolingCpuKernelMod while launching failed: " << resize_ret;
     return false;

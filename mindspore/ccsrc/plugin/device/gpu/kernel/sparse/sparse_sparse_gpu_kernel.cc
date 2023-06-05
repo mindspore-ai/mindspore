@@ -63,7 +63,6 @@ int SparseSparseGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     }
   }
   ResetResource();
-  outputs_ = outputs;
   auto a_indices_shape = inputs.at(kSparseSparseIndex0)->GetShapeVector();
   auto a_values_shape = inputs.at(kSparseSparseIndex1)->GetShapeVector();
   auto dense_shape = inputs.at(kSparseSparseIndex2)->GetShapeVector();
@@ -168,7 +167,7 @@ bool SparseSparseGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   return true;
 }
 
-void SparseSparseGpuKernelMod::SyncData() {
+void SparseSparseGpuKernelMod::SyncOutputShape() {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_),
                                      "For SparseSparseOperators, cudaStreamSynchronize failed.");
   std::vector<int64_t> sum_indices_shape = {real_output_size_, static_cast<int64_t>(rank_)};

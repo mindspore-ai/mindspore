@@ -45,15 +45,13 @@ class SparseSparseMinimumCpuKernelMod : public NativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override;
 
  protected:
-  void SyncData() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
+  void SyncOutputShape() override;
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
-  std::vector<KernelTensorPtr> outputs_{};
   TypeId dtype_{kTypeUnknown};
   TypeId itype_{kTypeUnknown};
   int64_t indice_size_;

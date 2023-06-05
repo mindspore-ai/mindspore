@@ -53,7 +53,6 @@ bool RenormCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
     MS_LOG(ERROR) << "Renorm does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  base_operator_ = base_operator;
   kernel_func_ = func_list_[index].second;
 
   return true;
@@ -68,8 +67,8 @@ int RenormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
     return ret;
   }
   x_shape_ = inputs[kIndex0]->GetShapeVector();
-  axis_ = GetValue<int64_t>(base_operator_->GetAttr("dim"));
-  p_ = GetValue<float>(base_operator_->GetAttr("p"));
+  axis_ = GetValue<int64_t>(op_->GetAttr("dim"));
+  p_ = GetValue<float>(op_->GetAttr("p"));
   max_norm_ = GetValue<float>(base_operator->GetAttr("maxnorm"));
   return 0;
 }

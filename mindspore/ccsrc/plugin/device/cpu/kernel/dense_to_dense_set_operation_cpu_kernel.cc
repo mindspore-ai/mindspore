@@ -169,7 +169,6 @@ int DenseToDenseSetOperationCpuKernelMod::Resize(const BaseOperatorPtr &base_ope
   if (ret != KRET_OK && ret != KRET_UNKNOWN_OUT_SHAPE) {
     return ret;
   }
-  outputs_ = outputs;
   x1_shape_ = inputs[kInputX1]->GetDeviceShapeAdaptively();
   x2_shape_ = inputs[kInputX2]->GetDeviceShapeAdaptively();
   return KRET_OK;
@@ -272,7 +271,7 @@ bool DenseToDenseSetOperationCpuKernelMod::LaunchKernel(const std::vector<kernel
   return PopulateOutput<T>(inputs, outputs, group_shape, res_num, &res_sets_map);
 }
 
-void DenseToDenseSetOperationCpuKernelMod::SyncData() {
+void DenseToDenseSetOperationCpuKernelMod::SyncOutputShape() {
   for (uint32_t i = 0; i < real_infer_shape_.size(); i++) {
     outputs_[i]->SetShapeVector(real_infer_shape_[i]);
   }

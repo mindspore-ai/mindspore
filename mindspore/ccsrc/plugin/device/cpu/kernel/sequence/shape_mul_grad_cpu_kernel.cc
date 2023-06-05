@@ -47,7 +47,7 @@ int ShapeMulGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   auto dout_shape = inputs.at(kIndex1)->GetShapeVector();
   auto output_shape = outputs.at(kIndex0)->GetShapeVector();
   if (input_shape_.size() != 1 || !dout_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input_shape size must be 1, but got " << input_shapes_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input_shape size must be 1, but got " << GetShapes(inputs);
   }
   if (!IsSameShape(input_shape_, output_shape)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_

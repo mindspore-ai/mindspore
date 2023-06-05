@@ -44,7 +44,6 @@ int SparseSliceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
-    outputs_ = outputs;
     auto input_indices_shape = inputs[kIndex0]->GetShapeVector();
     auto out_shape = outputs.at(kIndex2)->GetShapeVector();
     auto out_size = std::accumulate(out_shape.begin(), out_shape.end(), 1, std::multiplies<int64_t>());
@@ -104,7 +103,7 @@ bool SparseSliceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   return true;
 }
 
-void SparseSliceGpuKernelMod::SyncData() {
+void SparseSliceGpuKernelMod::SyncOutputShape() {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream), "SparseSlice cudaStreamSynchronized failed");
   outputs_[kIndex0]->SetShapeVector(ShapeVector({real_output_size, static_cast<int64_t>(num_dim_)}));
   outputs_[kIndex1]->SetShapeVector(ShapeVector({real_output_size}));

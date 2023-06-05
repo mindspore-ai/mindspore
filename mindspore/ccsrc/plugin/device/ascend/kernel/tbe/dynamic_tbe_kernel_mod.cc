@@ -66,9 +66,9 @@ DynamicTbeKernelMod::~DynamicTbeKernelMod() {
   }
 }
 
-void DynamicTbeKernelMod::SyncData() {
+void DynamicTbeKernelMod::SyncOutputShape() {
   if (need_skip_execute_) {
-    AscendKernelMod::SyncData();
+    AscendKernelMod::SyncOutputShape();
   }
 }
 

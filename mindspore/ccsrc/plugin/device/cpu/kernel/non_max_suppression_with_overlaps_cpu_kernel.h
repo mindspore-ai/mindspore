@@ -40,13 +40,11 @@ class NonMaxSuppressionWithOverlapsCpuKernelMod : public NativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override;
 
  protected:
-  void SyncData() override;
+  void SyncOutputShape() override;
   std::vector<KernelAttr> GetOpSupport() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
  private:
   int num_boxes_{0};
-  std::vector<KernelTensorPtr> outputs_{};
   int64_t real_output_size_{0};  // Dynamic shape related.
 };
 };  // namespace kernel

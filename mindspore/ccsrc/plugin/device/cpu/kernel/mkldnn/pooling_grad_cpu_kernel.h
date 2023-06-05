@@ -107,9 +107,6 @@ class PoolingGradCpuKernelMod : public MKLCpuKernelMod {
   std::string pad_mode_;
   std::vector<int64_t> kernel_include_nc_{};
   std::vector<int64_t> strides_include_nc_{};
-  BaseOperatorPtr base_operator_{nullptr};
-  std::vector<KernelTensorPtr> inputs_{};
-  std::vector<KernelTensorPtr> outputs_{};
   std::map<uint32_t, tensor::TensorPtr> inputs_on_host_{};
 
   void ComputeMaxValueIndex(void *src, void *dst, void *work_array);

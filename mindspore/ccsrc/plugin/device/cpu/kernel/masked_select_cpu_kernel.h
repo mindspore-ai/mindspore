@@ -46,8 +46,7 @@ class MaskedSelectCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  protected:
-  void SyncData() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
+  void SyncOutputShape() override;
 
  private:
   template <typename T>
@@ -60,7 +59,6 @@ class MaskedSelectCpuKernelMod : public NativeCpuKernelMod {
   std::vector<int64_t> input_shape_a_;
   std::vector<int64_t> input_shape_b_;
   std::vector<int64_t> output_shape_;
-  std::vector<KernelTensorPtr> outputs_{};
   size_t tensor_size_;
   size_t real_output_size_;
 };

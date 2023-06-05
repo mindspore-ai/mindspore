@@ -26,7 +26,6 @@
 #include "proto/graph.pb.h"
 
 using mindspore::converter::kFmkTypeTf;
-using PrimitiveCPtr = std::shared_ptr<mindspore::ops::PrimitiveC>;
 namespace mindspore {
 namespace converter {
 class AddNodeParser : public NodeParser {

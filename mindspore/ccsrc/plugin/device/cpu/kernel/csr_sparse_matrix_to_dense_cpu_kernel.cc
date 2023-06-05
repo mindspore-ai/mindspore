@@ -115,7 +115,7 @@ bool CSRSparseMatrixToDenseCpuKernelMod::Launch(const std::vector<kernel::Addres
   return true;
 }
 
-void CSRSparseMatrixToDenseCpuKernelMod::SyncData() { outputs_[kIndex0]->SetShapeVector(y_dims_); }
+void CSRSparseMatrixToDenseCpuKernelMod::SyncOutputShape() { outputs_[kIndex0]->SetShapeVector(y_dims_); }
 
 template <typename indiceT, typename valueT>
 void CSRSparseMatrixToDenseCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,

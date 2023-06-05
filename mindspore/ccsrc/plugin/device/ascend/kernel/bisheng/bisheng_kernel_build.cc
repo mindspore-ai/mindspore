@@ -71,11 +71,12 @@ KernelModPtr BiShengOpBuild(const AnfNodePtr &anf_node) {
   auto inputs_tensor_map = std::map<uint32_t, tensor::TensorPtr>();
   SetInputsByConstInputs(cnode, &inputs_tensor_map);
   SetInputsByDependMap(inputs_tensor_map, &args.inputs);
-  if (!kernel_mod->Init(args.op, args.inputs, args.outputs)) {
+  auto op = CreateOperatorByCNode(cnode);
+  if (!kernel_mod->Init_(op, args.inputs, args.outputs)) {
     MS_LOG(EXCEPTION) << "Initialize bisheng kernel op[" << cnode->fullname_with_scope() << "] failed.";
   }
   if (!IfNeedSkipResize(cnode)) {
-    if (kernel_mod->Resize(args.op, args.inputs, args.outputs, inputs_tensor_map) == KRET_RESIZE_FAILED) {
+    if (kernel_mod->Resize(args.inputs, args.outputs, inputs_tensor_map) == KRET_RESIZE_FAILED) {
       MS_LOG(EXCEPTION) << "Bisheng kernel op[" << cnode->fullname_with_scope() << "] Resize failed.";
     }
   }

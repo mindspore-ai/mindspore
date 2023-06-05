@@ -51,14 +51,14 @@ class DynamicBroadcastGradientArgsCpuKernelMod : public NativeCpuKernelMod,
 
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
-  std::vector<KernelTensorPtr> GetOutputs() override {
+  void SyncOutputShape() override {
     ShapeVector r0_shape{SizeToLong(r0_size_)};
     ShapeVector r1_shape{SizeToLong(r1_size_)};
 
     outputs_[0]->SetShapeVector(r0_shape);
     outputs_[1]->SetShapeVector(r1_shape);
 
-    return outputs_;
+    return;
   }
 
  protected:
@@ -68,7 +68,6 @@ class DynamicBroadcastGradientArgsCpuKernelMod : public NativeCpuKernelMod,
 
   size_t r0_size_;
   size_t r1_size_;
-  std::vector<KernelTensorPtr> outputs_;
   bool is_null_input0_{false};
   bool is_null_input1_{false};
 };

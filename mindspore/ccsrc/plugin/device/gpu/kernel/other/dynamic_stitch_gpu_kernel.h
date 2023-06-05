@@ -37,7 +37,7 @@ class DynamicStitchKernelMod : public DeprecatedNativeGpuKernelMod {
   constexpr static size_t kDivNum2 = 2;
 
  protected:
-  void SyncData() override;
+  void SyncOutputShape() override;
   void InitSizeLists() override;
 
  private:

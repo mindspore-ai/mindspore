@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "plugin/device/cpu/kernel/sparse_sparse_minimum_cpu_kernel.h"
-#include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include <utility>
 #include "Eigen/Core"
+#include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
@@ -77,7 +77,6 @@ int SparseSparseMinimumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   }
   input_size_list_.clear();
   output_size_list_.clear();
-  outputs_ = outputs;
   auto x1_indice_shape = inputs.at(kIndex0)->GetShapeVector();
   auto x2_indice_shape = inputs.at(kIndex3)->GetShapeVector();
   x1_nnz_ = x1_indice_shape[0];
@@ -192,7 +191,7 @@ void SparseSparseMinimumCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
   }
 }
 
-void SparseSparseMinimumCpuKernelMod::SyncData() {
+void SparseSparseMinimumCpuKernelMod::SyncOutputShape() {
   std::vector<int64_t> dims;
   (void)dims.emplace_back(y_nnz_);
   (void)dims.emplace_back(num_dims_);

@@ -66,8 +66,7 @@ class NMSWithOverlapsFwdGpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
   NMSWithOverlapsFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, NMSWithOverlapsFunc>> func_list_;
-  void SyncData() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
+  void SyncOutputShape() override;
 
  private:
   void ResetResource();
@@ -79,7 +78,6 @@ class NMSWithOverlapsFwdGpuKernelMod : public NativeGpuKernelMod {
   // default values
   size_t ceil_power_2;
   size_t data_unit_size_; /* size of T */
-  std::vector<KernelTensorPtr> outputs_ = {};
 };
 }  // namespace kernel
 }  // namespace mindspore

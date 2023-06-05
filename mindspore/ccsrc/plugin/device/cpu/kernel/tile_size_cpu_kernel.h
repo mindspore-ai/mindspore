@@ -33,23 +33,22 @@ class TileSizeCpuKernelMod : public NativeCpuKernelMod {
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
-  bool Launch(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-              const std::vector<AddressPtr> &workspace) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs) override;
 
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost);
 
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::KernelTensorPtr> &inputs,
-                    const std::vector<kernel::KernelTensorPtr> &outputs,
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,
                     const std::vector<kernel::AddressPtr> &workspace) const;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
   using TileSizeFunc =
-    std::function<bool(TileSizeCpuKernelMod *, const std::vector<kernel::KernelTensorPtr> &,
-                       const std::vector<kernel::KernelTensorPtr> &, const std::vector<kernel::AddressPtr> &)>;
+    std::function<bool(TileSizeCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
 
   static std::vector<std::pair<KernelAttr, TileSizeFunc>> func_list_;
   TileSizeFunc kernel_func_;

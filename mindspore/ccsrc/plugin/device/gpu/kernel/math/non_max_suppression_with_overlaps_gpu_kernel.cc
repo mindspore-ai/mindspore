@@ -146,7 +146,6 @@ int NMSWithOverlapsFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     }
   }
   ResetResource();
-  outputs_ = outputs;
   std::vector<size_t> shape = std::vector<size_t>(inputs[kIndex0]->GetDeviceShapeAdaptively().begin(),
                                                   inputs[kIndex0]->GetDeviceShapeAdaptively().end());
   is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
@@ -198,7 +197,7 @@ bool NMSWithOverlapsFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   return true;
 }
 
-void NMSWithOverlapsFwdGpuKernelMod::SyncData() {
+void NMSWithOverlapsFwdGpuKernelMod::SyncOutputShape() {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                      "cudaStreamSynchronized failed");
 

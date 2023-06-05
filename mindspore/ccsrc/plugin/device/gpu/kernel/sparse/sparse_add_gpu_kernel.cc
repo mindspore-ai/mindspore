@@ -97,7 +97,6 @@ int SparseAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &) {
   ResetResource();
-  outputs_ = outputs;
   auto a_indices_shape = inputs.at(kSparseAddIndex0)->GetShapeVector();
   auto a_values_shape = inputs.at(kSparseAddIndex1)->GetShapeVector();
   auto dense_shape = inputs.at(kSparseAddIndex2)->GetShapeVector();
@@ -252,7 +251,7 @@ bool SparseAddGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
       &SparseAddGpuKernelMod::LaunchKernel<index_type, value_type, thr_type>                                        \
   }
 
-void SparseAddGpuKernelMod::SyncData() {
+void SparseAddGpuKernelMod::SyncOutputShape() {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_),
                                      "For SparseAdd cudaStreamSynchronized failed.");
   std::vector<int64_t> sum_indices_shape = {real_output_size_, static_cast<int32_t>(rank_)};

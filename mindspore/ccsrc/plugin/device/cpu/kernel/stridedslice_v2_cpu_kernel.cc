@@ -419,7 +419,6 @@ void FillEmptyDimsST(const BaseOperatorPtr &base_operator, std::vector<T> *begin
 bool StridedSliceV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                       const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
-  base_operator_ = base_operator;
   kernel_name_ = base_operator->name();
 
   if (inputs.size() != kStridedSliceV2InputsNum && inputs.size() != kStridedSliceV2DynamicInputsNum) {
@@ -643,7 +642,7 @@ void StridedSliceV2CpuKernelMod::StridedSliceV2LaunchDynamicType(const std::vect
   std::vector<T> end{end_ptr, end_ptr + end_shape_[0]};
   std::vector<T> stride{strides_ptr, strides_ptr + stride_shape_[0]};
   slice_len = begin.size();
-  InitSliceParam<T>(base_operator_, &begin, &end, &stride);
+  InitSliceParam<T>(op_, &begin, &end, &stride);
 }
 
 void StridedSliceV2CpuKernelMod::StridedSliceV2LaunchCal(const std::vector<kernel::AddressPtr> &inputs,

@@ -63,9 +63,8 @@ class SparseFillEmptyRowsGpuKernelMod : public NativeGpuKernelMod {
   template <typename S>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
-  void SyncData() override;
+  void SyncOutputShape() override;
   std::vector<KernelAttr> GetOpSupport() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
  private:
   using SparseFillEmptyRowsFunc = std::function<bool(SparseFillEmptyRowsGpuKernelMod *, const std::vector<AddressPtr> &,
@@ -96,7 +95,6 @@ class SparseFillEmptyRowsGpuKernelMod : public NativeGpuKernelMod {
   std::vector<int64_t> output_values_shapes_;
   std::vector<int64_t> output_empty_row_indicator_shape_;
   std::vector<int64_t> output_reverse_index_map_shape_;
-  std::vector<KernelTensorPtr> outputs_{};
 };
 }  // namespace kernel
 }  // namespace mindspore

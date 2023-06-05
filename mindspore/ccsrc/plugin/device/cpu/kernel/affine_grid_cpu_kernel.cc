@@ -70,7 +70,6 @@ int AffineGridCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   }
   output_size_dims_ = inputs[1]->GetDeviceShapeAdaptively();
   output_type_ = outputs[0]->GetDtype();
-  outputs_ = outputs;
   return KRET_OK;
 }
 

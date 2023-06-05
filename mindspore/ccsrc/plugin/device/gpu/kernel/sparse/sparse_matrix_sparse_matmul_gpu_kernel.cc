@@ -103,14 +103,6 @@ bool SparseMatrixSparseMatMulGpuKernelMod::Init(const BaseOperatorPtr &base_oper
   return true;
 }
 
-int SparseMatrixSparseMatMulGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                                 const std::vector<KernelTensorPtr> &inputs,
-                                                 const std::vector<KernelTensorPtr> &outputs,
-                                                 const std::map<uint32_t, tensor::TensorPtr> &) {
-  outputs_ = outputs;
-  return 0;
-}
-
 void SparseMatrixSparseMatMulGpuKernelMod::Compute(
   cusparseHandle_t handle, cusparseMatDescr_t desc, csrgemm2Info_t info, const int m, const int n, const int k,
   mindspore::utils::Complex<double> *A_val, const int *const A_colind, const int *const A_rowptr, const int A_nnz,
@@ -434,7 +426,7 @@ bool SparseMatrixSparseMatMulGpuKernelMod::LaunchKernel(const std::vector<Addres
   return true;
 }
 
-void SparseMatrixSparseMatMulGpuKernelMod::SyncData() {
+void SparseMatrixSparseMatMulGpuKernelMod::SyncOutputShape() {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(stream),
                                      "SparseMatrixSparseMatMul cudaStreamSynchronized failed");
   std::vector<int64_t> output2_shape = {

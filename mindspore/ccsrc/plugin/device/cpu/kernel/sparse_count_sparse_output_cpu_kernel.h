@@ -41,8 +41,6 @@ class SparseCountSparseOutputCpuKernelMod : public NativeCpuKernelMod {
     const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
-
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -68,7 +66,6 @@ class SparseCountSparseOutputCpuKernelMod : public NativeCpuKernelMod {
   size_t values_size_{0};
   static std::vector<std::pair<KernelAttr, SparseCountSparseOutputFunc>> func_list_;
   std::vector<TypeId> types_;
-  std::vector<KernelTensorPtr> outputs_ = {};
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -134,7 +134,8 @@ std::tuple<kernel::KernelModPtr, kernel::KernelArgs> SingleOpInferSession::Build
   };
 
   kernel::KernelArgs args;
-  if (!FuncGraphUtils::GetCNodeOperator(cnode, &args.op)) {
+  BaseOperatorPtr op;
+  if (!FuncGraphUtils::GetCNodeOperator(cnode, &op)) {
     MS_LOG(ERROR) << "Failed to create operator for cnode " << cnode->fullname_with_scope();
     return std::make_tuple(nullptr, kernel::KernelArgs{});
   }
@@ -169,16 +170,16 @@ std::tuple<kernel::KernelModPtr, kernel::KernelArgs> SingleOpInferSession::Build
     }
     args.outputs.push_back(kernel_tensor);
   }
-  SetCustomAscendOpAttrs(args.op);
-  auto ret = kernel_mod->Init(args.op, args.inputs, args.outputs);
+  SetCustomAscendOpAttrs(op);
+  auto ret = kernel_mod->Init_(op, args.inputs, args.outputs);
   MS_LOG(INFO) << "SingleOpInferSession::Kernels ret " << ret;
   if (!ret) {
     MS_LOG(ERROR) << "kernel init failed " << kernel_name;
     return std::make_tuple(nullptr, kernel::KernelArgs{});
   }
   // remove const input, OM graph data input
-  args.inputs = kernel_mod->GetInputKernelTensor();
-  args.outputs = kernel_mod->RetrieveOutputShape();
+  args.inputs = kernel_mod->GetInputs();
+  args.outputs = kernel_mod->GetOutputs();
   return std::make_tuple(kernel_mod, args);
 }
 
@@ -409,7 +410,8 @@ Status SingleOpInferSession::OnNewInputShapes(const std::vector<ShapeVector> &ne
     return kSuccess;
   }
   MS_LOG(INFO) << "SingleOpInferSession::Resize";
-  if (kernel_mod_->Resize(kernel_args_.op, kernel_args_.inputs, kernel_args_.outputs) != kSuccess) {
+
+  if (kernel_mod_->Resize(kernel_args_.inputs, kernel_args_.outputs) != kSuccess) {
     MS_LOG(ERROR) << "Failed to resize custom ascend kernel";
     return kLiteError;
   }

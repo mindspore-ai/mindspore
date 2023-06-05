@@ -413,9 +413,13 @@ std::string AnfRuntimeAlgorithm::GetOriginDataFormat(const AnfNodePtr &node) {
                       << "#node [" << node->DebugString() << "]" << trace::DumpSourceLines(node);
   }
   auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
-  MS_EXCEPTION_IF_NULL(kernel_info);
+  if (kernel_info == nullptr) {
+    return kOpFormat_DEFAULT;
+  }
   auto build_info = kernel_info->select_kernel_build_info();
-  MS_EXCEPTION_IF_NULL(build_info);
+  if (build_info == nullptr) {
+    return kOpFormat_DEFAULT;
+  }
   auto format = build_info->GetOriginDataFormat();
   return format;
 }

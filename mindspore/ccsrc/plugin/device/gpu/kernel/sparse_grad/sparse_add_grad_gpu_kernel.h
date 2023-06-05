@@ -52,13 +52,11 @@ class SparseAddGradGpuKernelMod : public NativeGpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  protected:
-  void SyncData() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
+  void SyncOutputShape() override;
 
  private:
   std::unique_ptr<cukernel::GpuKernelHelperBase> helper_ptr_{nullptr};
   std::string kernel_type_;
-  std::vector<KernelTensorPtr> outputs_{};
   cudaStream_t cuda_stream_;
   int64_t dx1_size_ = 0;
   int64_t dx2_size_ = 0;

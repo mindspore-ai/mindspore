@@ -43,9 +43,8 @@ class SparseAddGpuKernelMod : public NativeGpuKernelMod {
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
  protected:
-  void SyncData() override;
+  void SyncOutputShape() override;
   std::vector<KernelAttr> GetOpSupport() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
  private:
   void ResetResource() noexcept;
@@ -75,7 +74,6 @@ class SparseAddGpuKernelMod : public NativeGpuKernelMod {
   std::vector<size_t> dense_shape_{};
   std::vector<size_t> b_indices_shape_{};
   std::vector<size_t> b_values_shape_{};
-  std::vector<KernelTensorPtr> outputs_{};
   size_t rank_ = 0;
 };
 }  // namespace kernel

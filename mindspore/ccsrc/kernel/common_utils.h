@@ -436,7 +436,6 @@ BACKEND_EXPORT KernelAttr GetKernelAttrFromNode(const AnfNodePtr &kernel_node);
 BACKEND_EXPORT bool IsFoldKernelBuildInfo(const KernelBuildInfoPtr &kernel_build_info);
 
 struct KernelArgs {
-  BaseOperatorPtr op;
   std::vector<KernelTensorPtr> inputs;
   std::vector<KernelTensorPtr> outputs;
   std::map<uint32_t, tensor::TensorPtr> depend_tensor_map;  // dynamic shape kernel may need this map
@@ -444,7 +443,7 @@ struct KernelArgs {
   constexpr static char key[] = "KernelArgs";
 };
 BACKEND_EXPORT KernelArgs AbstractArgsFromCNode(const CNodePtr &cnode, bool is_without_operator = false);
-
+BACKEND_EXPORT BaseOperatorPtr CreateOperatorByCNode(const CNodePtr &cnode);
 BACKEND_EXPORT KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensorPtr> &inputs,
                                                    const std::vector<KernelTensorPtr> &outputs);
 void SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<KernelAttr> &apply_kernel_attrs);

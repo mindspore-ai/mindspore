@@ -34,7 +34,10 @@ constexpr uint64_t kOverflowAddrSize = 512;
 class AscendKernelMod : public KernelMod {
  public:
   AscendKernelMod() = default;
-  explicit AscendKernelMod(const AnfNodePtr &anf_node_ptr) : KernelMod(), anf_node_(anf_node_ptr) {}
+  explicit AscendKernelMod(const AnfNodePtr &anf_node_ptr) : KernelMod(), anf_node_(anf_node_ptr) {
+    auto node = anf_node_ptr->cast<CNodePtr>();
+    op_ = CreateOperatorByCNode(node);
+  }
   virtual std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                                            const std::vector<AddressPtr> &, uint32_t) = 0;
   uint32_t block_dim() const { return block_dim_; }

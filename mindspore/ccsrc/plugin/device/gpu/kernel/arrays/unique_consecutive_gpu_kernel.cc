@@ -88,10 +88,9 @@ ValuePtr GetBaseOperatorAttr(const BaseOperatorPtr &op, const std::string &key) 
 void UniqueConsecutiveGpuKernelMod::InitUniqueConsecutiveAttrs(const BaseOperatorPtr &base_operator,
                                                                const std::vector<KernelTensorPtr> &inputs) {
   // Get attrs from primitive.
-  base_operator_ = base_operator;
-  auto attr_idx = GetBaseOperatorAttr(base_operator_, "return_idx");
-  auto attr_counts = GetBaseOperatorAttr(base_operator_, "return_counts");
-  auto attr_axis = GetBaseOperatorAttr(base_operator_, "axis");
+  auto attr_idx = GetBaseOperatorAttr(base_operator, "return_idx");
+  auto attr_counts = GetBaseOperatorAttr(base_operator, "return_counts");
+  auto attr_axis = GetBaseOperatorAttr(base_operator, "axis");
   return_idx_ = GetValue<bool>(attr_idx);
   return_counts_ = GetValue<bool>(attr_counts);
   constexpr int64_t kAxisIsNone = 1000;
@@ -108,8 +107,6 @@ bool UniqueConsecutiveGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                          const std::vector<KernelTensorPtr> &outputs) {
   InitUniqueConsecutiveAttrs(base_operator, inputs);
   // Initialize.
-  inputs_ = inputs;
-  outputs_ = outputs;
   auto [is_match, index] = MatchKernelAttr(GetKernelAttrFromTensors(inputs, outputs), GetOpSupport());
   if (!is_match) {
     return false;
@@ -138,9 +135,6 @@ int UniqueConsecutiveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 
   DestroyResource();
   ResetResource();
-  base_operator_ = base_operator;
-  inputs_ = inputs;
-  outputs_ = outputs;
 
   auto input_shape = inputs[0]->GetDeviceShapeAdaptively();
   int64_t dims = SizeToLong(input_shape.size());
@@ -150,7 +144,7 @@ int UniqueConsecutiveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   }
   if (!is_flattend_) {
     if (axis_ < -dims || axis_ >= dims) {
-      MS_LOG(EXCEPTION) << "For '" << base_operator_->name() << "', the 'axis' must be in the range [-" << dims << ","
+      MS_LOG(EXCEPTION) << "For '" << base_operator->name() << "', the 'axis' must be in the range [-" << dims << ","
                         << dims << "), but got " << axis_ << ".";
     }
     axis_ = axis_ >= 0 ? axis_ : axis_ + dims;
@@ -178,7 +172,7 @@ int UniqueConsecutiveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return 0;
 }
 
-void UniqueConsecutiveGpuKernelMod::SyncData() {
+void UniqueConsecutiveGpuKernelMod::SyncOutputShape() {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                      "cudaStreamSynchronized failed");
   size_t output_num = outputs_.size();

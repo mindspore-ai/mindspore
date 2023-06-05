@@ -78,7 +78,7 @@ bool MaskedSelectGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     return false;
   }
 
-  is_need_retrieve_output_shape_ = true;  // MaskedSelect is a dynamic shape operator.
+  // is_need_retrieve_output_shape_ = true;  // MaskedSelect is a dynamic shape operator.
   kernel_func_ = func_list_[index].second;
   input_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   mask_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex1).dtype);
@@ -109,8 +109,6 @@ int MaskedSelectGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     return ret;
   }
   ResetResource();
-  outputs_ = outputs;
-
   auto x_shape = inputs[kIndex0]->GetShapeVector();
   auto y_shape = inputs[kIndex1]->GetShapeVector();
   auto it_x = std::find_if(x_shape.begin(), x_shape.end(), [](int64_t sh) { return sh <= 0; });

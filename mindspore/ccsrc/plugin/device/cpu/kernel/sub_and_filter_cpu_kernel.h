@@ -57,19 +57,17 @@ class SubAndFilterCpuKernelMod : public NativeCpuKernelMod {
   }
 
  protected:
-  void SyncData() override;
+  void SyncOutputShape() override;
   void ResetResource() noexcept {
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; };
 
  private:
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
-  std::vector<KernelTensorPtr> outputs_ = {};
   int64_t out_size_;
   size_t batch_size_{1};
   TypeId x_dtype_{kTypeUnknown};

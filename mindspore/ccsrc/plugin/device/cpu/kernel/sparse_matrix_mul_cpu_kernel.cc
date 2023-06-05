@@ -44,7 +44,6 @@ using KernelRunFunc = SparseMatrixMulCpuKernelMod::KernelRunFunc;
 }  // namespace
 bool SparseMatrixMulCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                        const std::vector<KernelTensorPtr> &outputs) {
-  outputs_ = outputs;
   auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseMatrixMul>(base_operator);
   kernel_name_ = kernel_ptr->name();
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {

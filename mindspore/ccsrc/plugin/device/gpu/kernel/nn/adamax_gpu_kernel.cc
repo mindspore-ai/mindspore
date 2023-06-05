@@ -113,7 +113,6 @@ bool AdamaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   g_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex8).dtype);
 
   InOutputResize(base_operator, inputs, outputs);
-  outputs_ = outputs;
   return true;
 }
 
@@ -122,7 +121,6 @@ int AdamaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
                                const std::map<uint32_t, tensor::TensorPtr> &) {
   InOutputResize(base_operator, inputs, outputs);
   kernel_ptr_ = base_operator;
-  outputs_ = outputs;
   return KRET_OK;
 }
 

@@ -57,8 +57,7 @@ class UniqueGpuKernelMod : public NativeGpuKernelMod {
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
  protected:
-  void SyncData() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
+  void SyncOutputShape() override;
 
   void ResetResource() noexcept {
     is_null_input_ = false;
@@ -82,9 +81,6 @@ class UniqueGpuKernelMod : public NativeGpuKernelMod {
   std::optional<bool> is_input_dynamic_shape_ = {};
   bool is_null_input_;
   void *stream_ptr_;
-  BaseOperatorPtr base_operator_ = nullptr;
-  std::vector<KernelTensorPtr> inputs_ = {};
-  std::vector<KernelTensorPtr> outputs_ = {};
   size_t batch_rank_{0};
 };
 }  // namespace kernel

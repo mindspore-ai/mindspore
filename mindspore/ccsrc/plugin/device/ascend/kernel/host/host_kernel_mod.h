@@ -37,7 +37,7 @@ class HostKernelMod : public AscendKernelMod {
   enum KernelModType GetKernelModType() const override { return KernelModType::HostKernelMod; }
 
  protected:
-  void SyncData() override{};
+  void SyncOutputShape() override{};
   std::string op_name_;
 };
 

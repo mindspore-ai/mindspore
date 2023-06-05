@@ -190,8 +190,6 @@ int DynamicBroadcastGradientArgsGpuKernelMod::Resize(const BaseOperatorPtr &base
   auto input_1_shape = inputs[1]->GetShapeVector();
   is_null_input0_ = CHECK_NULL_INPUT(input_0_shape);
   is_null_input1_ = CHECK_NULL_INPUT(input_1_shape);
-  outputs_ = outputs;
-
   return static_cast<int>(KRET_OK);
 }
 

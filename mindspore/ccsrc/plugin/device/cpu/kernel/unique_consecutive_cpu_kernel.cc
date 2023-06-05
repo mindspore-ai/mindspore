@@ -146,7 +146,6 @@ void OutputYSet(const std::vector<int64_t> &y_shape_, const std::vector<int64_t>
 bool UniqueConsecutiveCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                          const std::vector<KernelTensorPtr> &inputs,
                                          const std::vector<KernelTensorPtr> &outputs) {
-  outputs_ = outputs;
   auto kernel_ptr = std::dynamic_pointer_cast<ops::UniqueConsecutive>(base_operator);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast UniqueConsecutive ops failed!";
@@ -174,7 +173,6 @@ int UniqueConsecutiveCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                           const std::vector<KernelTensorPtr> &inputs,
                                           const std::vector<KernelTensorPtr> &outputs,
                                           const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  outputs_ = outputs;
   auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
   input_shape_ = inputs[0]->GetShapeVector();
   int64_t input_size = SizeToLong(input_shape_.size());

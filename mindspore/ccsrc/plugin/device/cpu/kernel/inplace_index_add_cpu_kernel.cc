@@ -45,8 +45,6 @@ bool InplaceIndexAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
     return false;
   }
 
-  base_operator_ = base_operator;
-
   return true;
 }
 
@@ -61,7 +59,7 @@ int InplaceIndexAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   var_shape = inputs[kIndex0]->GetShapeVector();
   updates_shape = inputs[kIndex2]->GetShapeVector();
   indices_shape = inputs[kIndex1]->GetShapeVector();
-  axis_ = GetValue<int64_t>(base_operator_->GetAttr(AXIS));
+  axis_ = GetValue<int64_t>(op_->GetAttr(AXIS));
   return KRET_OK;
 }
 

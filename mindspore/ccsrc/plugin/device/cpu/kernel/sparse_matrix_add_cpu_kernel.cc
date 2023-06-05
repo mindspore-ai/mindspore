@@ -19,6 +19,7 @@
 #include <utility>
 #include <set>
 #include <map>
+#include <string>
 #include "include/common/thread_pool.h"
 #include "mindspore/core/ops/sparse_matrix_add.h"
 
@@ -49,7 +50,6 @@ using KernelRunFunc = SparseMatrixAddCpuKernelMod::KernelRunFunc;
 }  // namespace
 bool SparseMatrixAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                        const std::vector<KernelTensorPtr> &outputs) {
-  outputs_ = outputs;
   auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseMatrixAdd>(base_operator);
   MS_EXCEPTION_IF_NULL(kernel_ptr);
   kernel_name_ = kernel_ptr->name();

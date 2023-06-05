@@ -226,7 +226,6 @@ int SparseCrossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     return ret;
   }
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
-    outputs_ = outputs;
     if (input_size_list_.size() < kInputsNum) {
       MS_LOG(ERROR) << "For SparseCross, the number of inputs list should be greater" << kInputsNum << ", but got "
                     << input_size_list_.size() << ".";
@@ -237,7 +236,7 @@ int SparseCrossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   return KRET_OK;
 }
 
-void SparseCrossCpuKernelMod::SyncData() {
+void SparseCrossCpuKernelMod::SyncOutputShape() {
   int64_t kSparseTensorRank = 2;
   outputs_[kIndex0]->SetShapeVector(ShapeVector({indices_row_, kSparseTensorRank}));
   outputs_[kIndex1]->SetShapeVector(ShapeVector({indices_row_}));

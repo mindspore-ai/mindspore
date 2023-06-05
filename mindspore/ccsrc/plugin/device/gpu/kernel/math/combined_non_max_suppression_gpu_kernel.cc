@@ -78,7 +78,6 @@ int CombinedNonMaxSuppressionGpuKernelMod::Resize(const BaseOperatorPtr &base_op
     }
   }
   ResetResource();
-  outputs_ = outputs;
   std::vector<size_t> input0_shape = std::vector<size_t>(inputs[kIndex0]->GetDeviceShapeAdaptively().begin(),
                                                          inputs[kIndex0]->GetDeviceShapeAdaptively().end());
   std::vector<size_t> input1_shape = std::vector<size_t>(inputs[kIndex1]->GetDeviceShapeAdaptively().begin(),
@@ -126,7 +125,7 @@ bool CombinedNonMaxSuppressionGpuKernelMod::LaunchKernel(const std::vector<Addre
   return true;
 }
 
-void CombinedNonMaxSuppressionGpuKernelMod::SyncData() {
+void CombinedNonMaxSuppressionGpuKernelMod::SyncOutputShape() {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "cudaStreamSynchronized failed");
   std::vector<int64_t> shape0 = {batch_size_, per_detections_, DimSize4};
   std::vector<int64_t> shape1 = {batch_size_, per_detections_};

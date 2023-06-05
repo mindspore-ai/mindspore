@@ -59,7 +59,6 @@ class NoRepeatNGramCpuKernelMod : public NativeCpuKernelMod {
 
   static std::vector<std::pair<KernelAttr, NoRepeatNGramFunc>> func_list_;
   NoRepeatNGramFunc kernel_func_{nullptr};
-  BaseOperatorPtr base_operator_;
   std::vector<int64_t> state_seq_shape_;
   std::vector<int64_t> log_probs_shape_;
   int64_t ngram_size_{1};

@@ -61,7 +61,6 @@ int SparseSliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
   if (ret == KRET_UNKNOWN_OUT_SHAPE) {
-    outputs_ = outputs;
     const auto input_indices_shape = inputs[kIndex0]->GetShapeVector();
     const auto input_values_shape = inputs[kIndex1]->GetShapeVector();
     const auto input_shape_shape = inputs[kIndex2]->GetShapeVector();
@@ -121,7 +120,7 @@ int SparseSliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   return ret;
 }
 
-void SparseSliceCpuKernelMod::SyncData() {
+void SparseSliceCpuKernelMod::SyncOutputShape() {
   outputs_[0]->SetShapeVector(ShapeVector({slice_nnz_, rank_}));
   outputs_[1]->SetShapeVector(ShapeVector({slice_nnz_}));
   outputs_[kIndex2]->SetShapeVector(ShapeVector({rank_}));

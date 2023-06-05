@@ -32,7 +32,6 @@ constexpr size_t kScaleShiftNum = 2;
 bool BatchNormGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                      const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
-  base_operator_ = base_operator;
   auto kernel_ptr = std::dynamic_pointer_cast<ops::BatchNormGrad>(base_operator);
   if (!kernel_ptr) {
     MS_LOG(ERROR) << "cast BatchNormGrad ops failed!";
@@ -101,8 +100,6 @@ int BatchNormGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   AddArgument(DNNL_ARG_DIFF_SCALE_SHIFT, scale_bias_desc);
 
   InitWorkspaceSize(inputs);
-  inputs_ = inputs;
-  outputs_ = outputs;
   inputs_on_host_ = inputsOnHost;
   return KRET_OK;
 }
@@ -124,11 +121,11 @@ bool BatchNormGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBatchNormGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBatchNormGradOutputsNum, kernel_name_);
   // From CPUKernelExecutor::LaunchKernel
-  if (!Init(base_operator_, inputs_, outputs_)) {
+  if (!Init(op_, inputs_, outputs_)) {
     MS_LOG(ERROR) << "Re-init BatchNormGradCpuKernelMod while launching failed";
     return false;
   }
-  auto resize_ret = Resize(base_operator_, inputs_, outputs_, inputs_on_host_);
+  auto resize_ret = Resize(op_, inputs_, outputs_, inputs_on_host_);
   if (resize_ret != KRET_OK) {
     MS_LOG(ERROR) << "Resize BatchNormGradCpuKernelMod while launching failed: " << resize_ret;
     return false;

@@ -44,7 +44,6 @@ bool BatchNormCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     MS_LOG(EXCEPTION) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
   }
 
-  base_operator_ = base_operator;
   is_train_ = kernel_ptr->get_is_training();
   momentum_ = kernel_ptr->get_momentum();
   epsilon_ = kernel_ptr->get_epsilon();
@@ -92,8 +91,6 @@ int BatchNormCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   AddArgument(DNNL_ARG_DST, x_desc);
 
   InitWorkspaceSize(inputs);
-  inputs_ = inputs;
-  outputs_ = outputs;
   inputs_on_host_ = inputsOnHost;
   return KRET_OK;
 }
@@ -111,11 +108,11 @@ bool BatchNormCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBatchNormInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBatchNormOutputsNum, kernel_name_);
   // From CPUKernelExecutor::LaunchKernel
-  if (!Init(base_operator_, inputs_, outputs_)) {
+  if (!Init(op_, inputs_, outputs_)) {
     MS_LOG(ERROR) << "Re-init BatchNormCpuKernelMod while launching failed";
     return false;
   }
-  auto resize_ret = Resize(base_operator_, inputs_, outputs_, inputs_on_host_);
+  auto resize_ret = Resize(op_, inputs_, outputs_, inputs_on_host_);
   if (resize_ret != KRET_OK) {
     MS_LOG(ERROR) << "Resize BatchNormCpuKernelMod while launching failed: " << resize_ret;
     return false;

@@ -58,7 +58,6 @@ class CumMinMaxCpuKernelMod : public NativeCpuKernelMod {
                                                  const std::vector<kernel::AddressPtr> &)>;
   static std::map<CumOpType, std::vector<std::pair<KernelAttr, CumMinMaxLaunchFunc>>> func_list_;
   CumMinMaxLaunchFunc kernel_func_;
-  BaseOperatorPtr base_operator_;
   CumOpType cum_op_type_;
   int64_t axis_{0};
   size_t inner_size_{1};

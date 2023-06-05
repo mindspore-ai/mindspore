@@ -71,7 +71,6 @@ class StridedSliceCpuKernelMod : public NativeCpuKernelMod {
   int outer_{1};
   int cal_num_per_thread_{1};
   bool parallel_{false};
-  BaseOperatorPtr base_operator_{nullptr};
   ParallelStrategy parallel_strategy_{kOnSplitAxis};
   ShapeVector input_shape_;
   ShapeVector output_shape_;

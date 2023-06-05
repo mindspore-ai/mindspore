@@ -116,7 +116,6 @@ class RangeGpuKernelMod : public NativeGpuKernelMod {
     auto kernel_ptr = std::make_shared<ops::Range>(base_operator->GetPrim());
 
     max_output_length_ = kernel_ptr->get_maxlen();
-    outputs_ = outputs;
     is_need_retrieve_output_shape_ = true;
     return true;
   }
@@ -134,7 +133,7 @@ class RangeGpuKernelMod : public NativeGpuKernelMod {
   }
 
  protected:
-  void SyncData() override {
+  void SyncOutputShape() override {
     // required synchronize for UpdateOp
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                        "cudaStreamSynchronize failed");
@@ -142,13 +141,10 @@ class RangeGpuKernelMod : public NativeGpuKernelMod {
     outputs_[0]->SetShapeVector(output_shape);
   }
 
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
-
  private:
   void *stream_ptr_;
   int64_t output_shape_;
   int64_t max_output_length_;
-  std::vector<KernelTensorPtr> outputs_{};
 };
 }  // namespace kernel
 }  // namespace mindspore

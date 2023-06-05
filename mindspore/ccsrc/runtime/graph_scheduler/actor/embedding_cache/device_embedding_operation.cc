@@ -233,7 +233,7 @@ bool DeviceEmbeddingOperation::InferOpShape(const CNodePtr &kernel) {
 
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  if (kernel::KRET_OK != kernel_mod->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map)) {
+  if (kernel::KRET_OK != kernel_mod->Resize(args->inputs, args->outputs, args->depend_tensor_map)) {
     MS_LOG(ERROR) << "Kernel " << kernel->fullname_with_scope() << " resize failed.";
     return false;
   }

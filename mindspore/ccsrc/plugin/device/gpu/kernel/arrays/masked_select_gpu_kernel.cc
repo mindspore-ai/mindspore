@@ -102,8 +102,6 @@ int MaskedSelectGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
                                      const std::vector<KernelTensorPtr> &outputs,
                                      const std::map<uint32_t, tensor::TensorPtr> &) {
   ResetResource();
-  outputs_ = outputs;
-
   auto x_shape = inputs[kIndex0]->GetShapeVector();
   auto y_shape = inputs[kIndex1]->GetShapeVector();
   auto it_x = std::find_if(x_shape.begin(), x_shape.end(), [](int64_t sh) { return sh <= 0; });
@@ -203,7 +201,7 @@ bool MaskedSelectGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   return true;
 }
 
-void MaskedSelectGpuKernelMod::SyncData() {
+void MaskedSelectGpuKernelMod::SyncOutputShape() {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "MaskedSelect cudaStreamSynchronize failed");
   std::vector<int64_t> new_output_shape = {SizeToLong(real_output_size_)};
   outputs_[kIndex0]->SetShapeVector(new_output_shape);

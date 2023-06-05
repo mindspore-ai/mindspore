@@ -110,7 +110,6 @@ class SparseMatrixAddGpuKernel : public NativeGpuKernelMod {
     if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK && ret != KRET_UNKNOWN_OUT_SHAPE) {
       return ret;
     }
-    outputs_ = outputs;
     output_size_list_.clear();
     output_size_list_.emplace_back(input_size_list_[InputList::X1_DENSE_SHAPE]);
     output_size_list_.emplace_back(input_size_list_[InputList::X1_BATCH_POINTER]);
@@ -163,7 +162,7 @@ class SparseMatrixAddGpuKernel : public NativeGpuKernelMod {
   }
 
  protected:
-  void SyncData() override {
+  void SyncOutputShape() override {
     std::vector<ShapeVector> shapes = {
       {SizeToLong(x1_dense_shape_host_.size())},                              // dense shape
       {SizeToLong(y_batch_pointer_host_.size())},                             // batch pointer
@@ -175,7 +174,6 @@ class SparseMatrixAddGpuKernel : public NativeGpuKernelMod {
       outputs_[i]->SetShapeVector(shapes[i]);
     }
   }
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
  private:
   void ParseKernelParam(const std::vector<AddressPtr> &inputs, cudaStream_t stream) {
@@ -302,8 +300,6 @@ class SparseMatrixAddGpuKernel : public NativeGpuKernelMod {
                         x2_descr_, x2_nnz, x2_value, x2_row, x2_col, y_descr_, y_value, y_row, y_col, buffer);
     }
   }
-
-  std::vector<KernelTensorPtr> outputs_;
 
   TypeId type_id_{kTypeUnknown};
   cusparseHandle_t handle_{nullptr};

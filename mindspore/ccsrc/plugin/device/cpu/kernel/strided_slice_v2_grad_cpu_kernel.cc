@@ -373,7 +373,6 @@ bool StridedSliceV2GradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                           const std::vector<KernelTensorPtr> &inputs,
                                           const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
-  base_operator_ = base_operator;
   kernel_name_ = base_operator->name();
 
   if (inputs.empty()) {
@@ -403,9 +402,9 @@ int StridedSliceV2GradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   }
 
   ClearVectors();
-  begin_shape_ = inputs_[kIndex1]->GetShapeVector();
-  end_shape_ = inputs_[kIndex2]->GetShapeVector();
-  stride_shape_ = inputs_[kIndex3]->GetShapeVector();
+  begin_shape_ = inputs[kIndex1]->GetShapeVector();
+  end_shape_ = inputs[kIndex2]->GetShapeVector();
+  stride_shape_ = inputs[kIndex3]->GetShapeVector();
   input_shape_ = inputs[kIndex4]->GetShapeVector();
   output_shape_ = outputs[kIndex0]->GetShapeVector();
 
@@ -489,7 +488,7 @@ void StridedSliceV2GradCpuKernelMod::InitParams(const std::vector<kernel::Addres
   shape_dim_output = SizeToInt(output_shape_.size());
   slice_len = SizeToInt(begin.size());
   FillEmptyDimsSTGrad<T>(&begin, &end, &strides, &input_shape_, &output_shape_);
-  ParseStrideSliceGradMasksST<T>(base_operator_, &begin, &end, &strides, &input_shape_, output_shape_, shape_dim_output,
+  ParseStrideSliceGradMasksST<T>(op_, &begin, &end, &strides, &input_shape_, output_shape_, shape_dim_output,
                                  slice_len);
   FillEmptyDimsSTGrad<T>(&begin, &end, &strides, &input_shape_, &output_shape_);
   (void)std::transform(begin.begin(), begin.end(), std::back_inserter(begin_), [](const T &value) { return value; });

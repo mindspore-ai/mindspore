@@ -43,8 +43,7 @@ class CSRSparseMatrixToDenseCpuKernelMod : public NativeCpuKernelMod {
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
-  void SyncData() override;
+  void SyncOutputShape() override;
 
  private:
   template <typename valueT, typename indiceT>
@@ -55,7 +54,6 @@ class CSRSparseMatrixToDenseCpuKernelMod : public NativeCpuKernelMod {
   size_t num_cols_{0};
   TypeId values_type{kTypeUnknown};
   TypeId indices_type{kTypeUnknown};
-  std::vector<KernelTensorPtr> outputs_{};
   std::vector<int64_t> y_dims_;
 };
 }  // namespace kernel

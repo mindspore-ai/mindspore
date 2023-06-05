@@ -142,7 +142,7 @@ bool FractionalAvgPoolGradCpuKernelMod::FractionalAvgPoolGradLaunch(const std::v
   return true;
 }
 
-void FractionalAvgPoolGradCpuKernelMod::SyncData() { outputs_[kIndex0]->SetShapeVector(out_shape_); }
+void FractionalAvgPoolGradCpuKernelMod::SyncOutputShape() { outputs_[kIndex0]->SetShapeVector(out_shape_); }
 
 template <typename T>
 void FractionalAvgPoolGradCpuKernelMod::FractionalAvgPoolGradCompute(

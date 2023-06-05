@@ -47,9 +47,6 @@ class GammaCpuKernelMod : public NativeCpuKernelMod {
 
   std::vector<KernelAttr> GetOpSupport() override;
 
- protected:
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; };
-
  private:
   template <typename T>
   void Generate(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
@@ -65,7 +62,6 @@ class GammaCpuKernelMod : public NativeCpuKernelMod {
   TypeId alpha_dtype_{kTypeUnknown};
 
   random::GuardedPhiloxRandom generator_;
-  std::vector<KernelTensorPtr> outputs_{};
 };
 }  // namespace kernel
 }  // namespace mindspore

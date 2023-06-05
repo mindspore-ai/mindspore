@@ -205,8 +205,8 @@ bool IndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
   }
 
   if (index_mismatch) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the indices are out of range with input_shape: " << input_shapes_
-                  << ".";
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the indices are out of range with input_shape: " << GetShapes(inputs_) << ".";
     return false;
   }
 

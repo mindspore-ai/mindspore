@@ -46,7 +46,6 @@ class MaskedSelectGradGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
  private:
   void ResetResource() noexcept;
@@ -72,7 +71,6 @@ class MaskedSelectGradGpuKernelMod : public NativeGpuKernelMod {
   std::vector<size_t> input_shape_ = {1, 1, 1, 1, 1, 1, 1};
   std::vector<size_t> mask_shape_ = {1, 1, 1, 1, 1, 1, 1};
   std::vector<size_t> broadcast_shape_ = {1, 1, 1, 1, 1, 1, 1};
-  std::vector<KernelTensorPtr> outputs_{};
 };
 }  // namespace kernel
 }  // namespace mindspore
