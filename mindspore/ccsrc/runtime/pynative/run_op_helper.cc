@@ -596,8 +596,8 @@ device::DeviceAddressPtr CreateTensorDeviceAddressWithTensorAndCachedInfo(
 
   auto &ignore_list = op_compiler_info->ignore_host_to_device_inputs_;
   if (ignore_list.empty() || ignore_list.find(cached_device_address) == ignore_list.end()) {
-    if (!new_device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(node, 0), tensor_size, dtype,
-                                              tensor->data_c(), tensor->device_info().host_format_)) {
+    if (!new_device_address->SyncHostToDevice(shape, tensor_size, dtype, tensor->data_c(),
+                                              tensor->device_info().host_format_)) {
       MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
     }
   }
