@@ -22,16 +22,11 @@
 #include "tools/graph_kernel/converter/akg/akg_kernel_builder.h"
 
 namespace mindspore::graphkernel {
-constexpr size_t PROCESS_LIMIT = 8;
-constexpr size_t TIME_OUT = 100;
-
 class CpuKernelBuilder : public AkgKernelBuilder {
  public:
   bool CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) override;
   AnfNodePtr CreateCustomOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode) override;
   bool GenerateAkgKernelNodes(const FuncGraphPtr &func_graph, ParameterPtr *param_ptr) override;
 };
-
-bool CompileJsonsInList(const std::string &dir_path, const std::vector<std::string> &json_list);
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_CPU_KERNEL_BUILDER_H_

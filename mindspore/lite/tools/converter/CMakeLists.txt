@@ -56,6 +56,22 @@ if(ENABLE_GPU)
 endif()
 
 if(MSLITE_ENABLE_GRAPH_KERNEL)
+
+    if(AKG_USE_LLVM)
+        add_compile_definitions(AKG_USE_LLVM)
+        message(STATUS "Converter support Graph Kernel CPU backend")
+    endif()
+
+    if(AKG_ENABLE_D)
+        add_compile_definitions(AKG_ENABLE_D)
+        message(STATUS "Converter support Graph Kernel Ascend backend")
+    endif()
+
+    if(AKG_USE_CUDA)
+        add_compile_definitions(AKG_USE_CUDA)
+        message(STATUS "Converter support Graph Kernel Cuda backend")
+    endif()
+
     add_compile_definitions(MSLITE_ENABLE_GRAPH_KERNEL)
     file(GLOB_RECURSE GRAPH_KERNEL_SRC
             ${TOOLS_DIR}/graph_kernel/common/*.cc

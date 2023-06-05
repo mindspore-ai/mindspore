@@ -45,10 +45,14 @@ AkgKernelBuilderPtr GetAkgBuilder(const std::string &target) {
 
 bool KernelBuilder::Run(const FuncGraphPtr &func_graph) {
   auto node_list = GkUtils::GetGraphKernelNodes(func_graph);
+  auto device_type = Callback::Instance()->GetTargetFromContext();
   if (node_list.empty()) {
+    MS_LOG(WARNING)
+      << "No GraphKernel nodes found in the func_graph, possibly because the input model file does not have any "
+         "operators that can be fused or the model has inputs with dynamic shapes.";
     return false;
   }
-  auto builder = GetAkgBuilder(Callback::Instance()->GetTargetFromContext());
+  auto builder = GetAkgBuilder(device_type);
   if (!builder->CompileJsonsInAnfnodes(node_list)) {
     MS_LOG(EXCEPTION) << "Graph kernel compile fail";
   }
@@ -56,7 +60,7 @@ bool KernelBuilder::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(manager);
   ParameterPtr akg_node = nullptr;
   RETURN_IF_FALSE_WITH_LOG(builder->GenerateAkgKernelNodes(func_graph, &akg_node),
-                           "Graph kernel generate akg kernel failed.");
+                           "KernelBuilder generate AkgKernel node failed.");
   for (auto &node : node_list) {
     auto cnode = node->cast<CNodePtr>();
     auto custom_cnode = builder->CreateCustomOp(func_graph, cnode);

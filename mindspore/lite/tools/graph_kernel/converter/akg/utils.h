@@ -19,11 +19,21 @@
 #include <string>
 #include <map>
 #include <set>
+#include <vector>
 #include "utils/anf_utils.h"
 #include "kernel/graph_kernel/graph_kernel_json_generator.h"
 
 constexpr auto kAkgKernelSo = "akgkernels.so";
 namespace mindspore::graphkernel {
+constexpr size_t PROCESS_LIMIT = 8;
+constexpr size_t TIME_OUT = 100;
+constexpr auto kTunedSign = "tuned_signature";
+constexpr auto kAddMSLiteAkg =
+  "try:\n"
+  "   import mindspore_lite.akg as akg\n"
+  "except Exception:\n"
+  "   import akg as akg\n";
+
 std::string SaveNodesInfo(const AnfNodePtrList &nodes, const std::string &dir, const DumpOption &option,
                           std::map<AnfNodePtr, std::string> *node_kernel, std::set<std::string> *kernel_names);
 std::string GetCNodeDynamicInputIndex(const CNodePtr &cnode);
@@ -32,5 +42,8 @@ std::string GetCNodeOutputShapeStr(const CNodePtr &cnode);
 std::string GetCNodeOutputTypeStr(const CNodePtr &cnode);
 std::string GetCNodeOutputFormatStr(const CNodePtr &cnode);
 ParameterPtr CreateAkgKernelParameter(const FuncGraphPtr &func_graph, const std::string &path);
+bool CompileJsonsInList(const std::string &dir_path, const std::vector<std::string> &json_list);
+void ExcludeTunedObj(const std::string &dir_path, std::set<std::string> *kernel_names,
+                     std::map<AnfNodePtr, std::string> *node_kernel);
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_UTILS_H_
