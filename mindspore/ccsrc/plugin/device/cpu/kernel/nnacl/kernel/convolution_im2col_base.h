@@ -37,6 +37,7 @@ typedef struct ConvolutionIm2ColBaseStruct {
   int (*init_tmp_buffer_)(struct ConvolutionIm2ColBaseStruct *conv_im2col);
 } ConvolutionIm2ColBaseStruct;
 
+int ConvIm2ColBaseMallocWeightBiasData(ConvolutionBaseStruct *conv);
 int ConvIm2ColBaseInitTmpBuffer(ConvolutionIm2ColBaseStruct *conv_im2col);
 int ConvIm2ColBaseImpl(void *cdata, int task_id, float l, float r);
 void ConvIm2ColBaseFreeTmpBuffer(ConvolutionIm2ColBaseStruct *conv_im2col);

@@ -14,36 +14,37 @@
  * limitations under the License.
  */
 
+#ifdef ENABLE_AVX
 #include "nnacl/kernel/convolution_sw_1x1.h"
 #include "nnacl/kernel/matmul_f32_base.h"
 
 int ConvSW1x1Prepare(ConvolutionSW1x1Struct *sw_1x1) {
-  MatMulParameter *matmul_param = (MatMulParameter *)sw_1x1->matmul_->base_.param_;
-  NNACL_CHECK_NULL_RETURN_ERR(matmul_param);
+  MatmulFp32Struct *matmul = (MatmulFp32Struct *)sw_1x1->matmul_;
+  NNACL_CHECK_NULL_RETURN_ERR(matmul);
 
-  if (sw_1x1->conv_.infershape_done_ || matmul_param->a_const_) {
+  if (sw_1x1->conv_.infershape_done_ || matmul->a_const_) {
     TensorC *input_tensor = sw_1x1->conv_.base_.in_[FIRST_INPUT];
-    matmul_param->row_ = GetBatch(input_tensor) * GetHeight(input_tensor) * GetWidth(input_tensor);
-    matmul_param->deep_ = GetChannel(input_tensor);
+    matmul->row_ = GetBatch(input_tensor) * GetHeight(input_tensor) * GetWidth(input_tensor);
+    matmul->deep_ = GetChannel(input_tensor);
   }
 
-  if (sw_1x1->conv_.infershape_done_ || matmul_param->b_const_) {
+  if (sw_1x1->conv_.infershape_done_ || matmul->b_const_) {
     TensorC *weight_tensor = sw_1x1->conv_.base_.in_[SECOND_INPUT];
-    matmul_param->col_ = GetBatch(weight_tensor);
-    matmul_param->deep_ = GetChannel(weight_tensor);
+    matmul->col_ = GetBatch(weight_tensor);
+    matmul->deep_ = GetChannel(weight_tensor);
   }
 
-  sw_1x1->matmul_->a_batch_ = 1;
-  sw_1x1->matmul_->b_batch_ = 1;
-  matmul_param->batch = 1;
+  matmul->a_batch_ = 1;
+  matmul->b_batch_ = 1;
+  matmul->batch_ = 1;
 
   int ret = MatmulFP32Base_MallocBatchOffset(sw_1x1->matmul_);
   if (ret != NNACL_OK) {
     return ret;
   }
 
-  matmul_param->a_transpose_ = false;
-  matmul_param->b_transpose_ = true;
+  ((MatMulParameter *)matmul->base_.param_)->a_transpose_ = false;
+  ((MatMulParameter *)matmul->base_.param_)->b_transpose_ = true;
 
   return sw_1x1->matmul_->base_.prepare(&sw_1x1->matmul_->base_);
 }
@@ -102,9 +103,11 @@ int convolution_sw1x1_prepare(KernelBase *self) {
   sw_1x1->matmul_->base_.out_ = self->out_;
   sw_1x1->matmul_->base_.out_size_ = self->out_size_;
   sw_1x1->matmul_->base_.workspace_ = self->workspace_;
+  sw_1x1->matmul_->base_.train_session_ = self->train_session_;
+  sw_1x1->matmul_->base_.thread_nr_ = self->thread_nr_;
+  sw_1x1->matmul_->base_.env_ = self->env_;
 
-  ConvSW1x1Prepare(sw_1x1);
-  return sw_1x1->matmul_->base_.prepare(&sw_1x1->matmul_->base_);
+  return ConvSW1x1Prepare(sw_1x1);
 }
 
 int convolution_sw1x1_release(KernelBase *self) {
@@ -155,3 +158,4 @@ ConvolutionBaseStruct *CreateConvolutionSW1x1(ConvParameter *conv_param) {
   sw_1x1->matmul_ = (MatmulFp32Struct *)matmul;
   return (ConvolutionBaseStruct *)sw_1x1;
 }
+#endif

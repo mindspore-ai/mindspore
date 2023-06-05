@@ -44,6 +44,28 @@ int ConvIm2ColBaseRunImpl(ConvolutionBaseStruct *conv, int task_id) {
   return NNACL_OK;
 }
 
+int ConvIm2ColBaseMallocWeightBiasData(ConvolutionBaseStruct *conv) {
+  ConvolutionIm2ColBaseStruct *conv_im2col = (ConvolutionIm2ColBaseStruct *)conv;
+  NNACL_CHECK_NULL_RETURN_ERR(conv_im2col);
+
+  size_t oc_block_num = UP_ROUND(conv->output_c_, conv_im2col->oc_tile_);
+  size_t kernel_plane = conv->kernel_h_ * conv->kernel_w_;
+  size_t pack_weight_size = oc_block_num * conv->input_c_ * kernel_plane;
+  if (!conv->base_.train_session_) {
+    NNACL_CHECK_MALLOC_SIZE(pack_weight_size * sizeof(float));
+    conv->packed_weight_ = ConvBaseGetConvPackWeightData(conv, pack_weight_size * sizeof(float));
+    NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv->packed_weight_);
+  }
+
+  if (conv->bias_data_ == NULL) {
+    NNACL_CHECK_MALLOC_SIZE(oc_block_num * sizeof(float));
+    conv->bias_data_ = conv->base_.env_->alloc(conv->base_.env_->allocator_, oc_block_num * sizeof(float));
+    NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv->bias_data_);
+  }
+  memset(conv->bias_data_, 0, oc_block_num * sizeof(float));
+  return NNACL_OK;
+}
+
 int ConvIm2ColBaseUpdateThreadNumProcess(KernelBase *self, int32_t kernel_type, int64_t per_unit_load_num,
                                          int64_t per_unit_store_num, int64_t unit_num) {
   ConvolutionIm2ColBaseStruct *conv_im2col = (ConvolutionIm2ColBaseStruct *)self;
@@ -213,6 +235,7 @@ ConvolutionBaseStruct *CreateConvIm2ColBase(ConvParameter *conv_param) {
 
   conv_im2col->init_tmp_buffer_ = ConvIm2ColBaseInitTmpBuffer;
 
+  conv_im2col->conv_.malloc_weight_bias_ = ConvIm2ColBaseMallocWeightBiasData;
   conv_im2col->conv_.run_impl_ = ConvIm2ColBaseRunImpl;
   conv_im2col->conv_.pack_weight_ = ConvIm2ColBasePackWeight;
   conv_im2col->conv_.init_global_variable_ = ConvIm2ColBaseInitGlobalVariable;

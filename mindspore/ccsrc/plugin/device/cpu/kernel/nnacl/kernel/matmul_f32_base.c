@@ -165,10 +165,8 @@ int MatmulFp32Base_PackMatrixAImpl(MatmulFp32Struct *matmul) {
 int MatmulFp32Base_PackMatrixBImpl(MatmulFp32Struct *matmul) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
 
-  float *origin_data = matmul->conv1x1_origin_weight_ != NULL ? matmul->conv1x1_origin_weight_
-                                                              : (float *)(matmul->base_.in_[SECOND_INPUT]->data_);
-  float *src_ptr = matmul->matrix_b_.has_origin_ ? matmul->matrix_b_.origin_ptr_ : origin_data;
-
+  float *src_ptr =
+    matmul->matrix_b_.has_origin_ ? matmul->matrix_b_.origin_ptr_ : (float *)matmul->base_.in_[SECOND_INPUT]->data_;
   NNACL_CHECK_TRUE_RET(src_ptr != NULL, NNACL_ERR);
   NNACL_CHECK_TRUE_RET(matmul->matrix_b_.pack_ptr_ != NULL, NNACL_ERR);
   NNACL_CHECK_TRUE_RET(matmul->matrix_b_pack_fun_ != NULL, NNACL_ERR);
@@ -430,10 +428,7 @@ int MatmulFp32Base_PackBiasMatrix(MatmulFp32Struct *matmul) {
     return NNACL_OK;
   }
   TensorC *bias_tensor = matmul->base_.in_[THIRD_INPUT];
-  float *bias_src =
-    matmul->matrix_c_.has_origin_
-      ? matmul->matrix_c_.origin_ptr_
-      : (matmul->conv1x1_origin_bias_ != NULL ? matmul->conv1x1_origin_bias_ : (float *)(bias_tensor->data_));
+  float *bias_src = matmul->matrix_c_.has_origin_ ? matmul->matrix_c_.origin_ptr_ : (float *)bias_tensor->data_;
   NNACL_CHECK_NULL_RETURN_ERR(bias_src);
 
   int bias_num = GetElementNum(bias_tensor);
@@ -664,7 +659,6 @@ KernelBase *CreateMatmulFp32Base() {
   matmul->a_const_ = false;
   matmul->b_const_ = false;
   matmul->out_need_aligned_ = false;
-  matmul->conv1x1_origin_bias_ = NULL;
   matmul->a_offset_ = NULL;
   matmul->b_offset_ = NULL;
   matmul->model_thread_nr_ = -1;

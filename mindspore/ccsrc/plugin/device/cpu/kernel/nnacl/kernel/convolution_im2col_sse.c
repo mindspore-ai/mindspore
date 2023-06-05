@@ -31,6 +31,7 @@ ConvolutionBaseStruct *CreateConvIm2ColSSE(ConvParameter *conv_param) {
 
   conv_im2col->init_tmp_buffer_ = ConvIm2ColBaseInitTmpBuffer;
 
+  conv_im2col->conv_.malloc_weight_bias_ = ConvIm2ColBaseMallocWeightBiasData;
   conv_im2col->conv_.run_impl_ = ConvIm2ColBaseRunImpl;
   conv_im2col->conv_.pack_weight_ = ConvIm2ColBasePackWeight;
   conv_im2col->conv_.init_global_variable_ = ConvIm2ColSSEInitGlobalVariable;
