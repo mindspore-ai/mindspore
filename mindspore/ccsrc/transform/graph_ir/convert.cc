@@ -43,6 +43,8 @@
 #include "ops/data_flow_ops.h"
 #include "transform/graph_ir/op_adapter.h"
 #include "transform/graph_ir/op_adapter_desc.h"
+#include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
+#include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 
 namespace mindspore {
 namespace transform {
@@ -2753,7 +2755,36 @@ void DfGraphConvertor::ConvertAllReduce(const CNodePtr &node) {
 
   (void)op->SetAttr("fusion_id", fusion_id);
   (void)op->SetAttr("fusion", fusion);
+  AddCommAttrForHcclNode(node, op);
   op_cache_[node.get()] = op;
+}
+
+void DfGraphConvertor::ConvertHcclNode(const CNodePtr &node) {
+  OpAdapterPtr adpt = FindAdapter(node, training_);
+  if (adpt == nullptr) {
+    return;
+  }
+  auto op = adpt->generate(node);
+  MS_EXCEPTION_IF_NULL(op);
+  AddCommAttrForHcclNode(node, op);
+  op_cache_[node.get()] = op;
+}
+
+void DfGraphConvertor::AddCommAttrForHcclNode(const CNodePtr &node, const OperatorPtr &converted_op) {
+#ifdef ENABLE_D
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(converted_op);
+  if (!common::AnfAlgo::HasNodeAttr(kAttrGroup, node)) {
+    MS_LOG(WARNING) << "Node " << node->fullname_with_scope() << " does not have attr " << kAttrGroup << " skip.";
+    return;
+  }
+  std::string group = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrGroup);
+  auto comm = device::ascend::AscendCollectiveCommLib::GetInstance().HcclCommunicator(group);
+  if (common::UseHostCollective() && !hccl::HcclAdapter::GetInstance().UseHcclCM()) {
+    MS_EXCEPTION_IF_NULL(comm);
+    converted_op->SetAttr("comm", reinterpret_cast<int64_t>(comm));
+  }
+#endif
 }
 
 void DfGraphConvertor::ConvertConv2D(const CNodePtr &node) {
@@ -2877,7 +2908,14 @@ bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) 
       {prim::kPrimConv2DBackpropFilter->name(), &DfGraphConvertor::ConvertConv2D},
       // Add attr 'N' to DynamicStitch
       {prim::kPrimDynamicStitch->name(), &DfGraphConvertor::ConvertDynamicStitch},
+      // Convert hccl op for comm handle
       {prim::kPrimAllReduce->name(), &DfGraphConvertor::ConvertAllReduce},
+      {prim::kPrimAllGather->name(), &DfGraphConvertor::ConvertHcclNode},
+      {prim::kPrimBroadcast->name(), &DfGraphConvertor::ConvertHcclNode},
+      {prim::kPrimReduceScatter->name(), &DfGraphConvertor::ConvertHcclNode},
+      {prim::kPrimSend->name(), &DfGraphConvertor::ConvertHcclNode},
+      {prim::kPrimReceive->name(), &DfGraphConvertor::ConvertHcclNode},
+      {prim::kPrimAllToAllv->name(), &DfGraphConvertor::ConvertHcclNode},
     };
 
   if (const auto it = auxiliary_node_converters.find(name); it != auxiliary_node_converters.cend()) {

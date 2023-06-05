@@ -309,11 +309,14 @@ void GeDeviceContext::SetHcclOptions(const std::shared_ptr<MsContext> &inst_cont
   auto env_rank_id = common::GetEnv("RANK_ID");
   auto env_device_id = std::to_string(inst_context->get_param<uint32_t>(MS_CTX_DEVICE_ID));
   auto env_cluster_info = common::GetEnv("HELP_CLUSTER");
-  if (!(env_table_file.empty() || env_rank_id.empty()) || !(env_cluster_info.empty() || env_rank_id.empty())) {
+  if (!(env_table_file.empty() || env_rank_id.empty()) || !(env_cluster_info.empty() || env_rank_id.empty()) ||
+      hccl::HcclAdapter::GetInstance().UseHcclCM()) {
     MS_LOG(INFO) << "Initialize Ge for distribute parameter";
     if (!env_table_file.empty()) {
       MS_LOG(INFO) << "Use hccl, make sure hccl lib is set in OPTION_EXEC_EXTERN_PLUGIN_PATH.";
       (*ge_options)["ge.exec.rankTableFile"] = env_table_file;
+    } else if (hccl::HcclAdapter::GetInstance().UseHcclCM()) {
+      hccl::HcclAdapter::AddCMEnvToHcclOption(ge_options);
     }
     auto env_hccl_flag = common::GetEnv("HCCL_FLAG");
     if (!env_hccl_flag.empty()) {
