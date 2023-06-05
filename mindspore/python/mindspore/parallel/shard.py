@@ -162,8 +162,6 @@ def shard(fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascen
         set the parallel mode in `set_auto_parallel_context` to "auto_parallel"
         and the search mode to "sharding_propagation".
         If the input contain Parameter, its strategy should be set in `in_strategy`.
-        For more details about shard, please refer to `Functional Operator Sharding
-        <https://www.mindspore.cn/tutorials/experts/en/master/parallel/pynative_shard_function_parallel.html>`_.
 
     Args:
         fn (Union[Cell, Function]): Function to be executed in parallel.
@@ -222,6 +220,10 @@ def shard(fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascen
         >>> output = shard(test_shard, in_strategy=((2, 1), (2, 1)))(x, y)
         >>> print(output.shape)
         (32, 10)
+
+    Tutorial Examples:
+        - `Functional Operator Sharding
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/mindspore/pynative_shard_function_parallel.html>`_
     """
     if not isinstance(fn, (ms.nn.Cell)):
         logger.warning("'fn' is not a mindspore.nn.Cell, and its definition cannot involve Parameter; "

@@ -171,6 +171,11 @@ class AllReduce(Primitive):
         >>> print(output)
         [[2. 2. 2. 2. 2. 2. 2. 2.]
          [2. 2. 2. 2. 2. 2. 2. 2.]]
+
+    Tutorial Examples:
+        - `Distributed Set Communication Primitives - AllReduce
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#AllReduce>`_
+
     """
 
     @prim_attr_register
@@ -255,6 +260,11 @@ class AllGather(PrimitiveWithInfer):
          [1. 1. 1. 1. 1. 1. 1. 1.]
          [1. 1. 1. 1. 1. 1. 1. 1.]
          [1. 1. 1. 1. 1. 1. 1. 1.]]
+
+    Tutorial Examples:
+        - `Distributed Set Communication Primitives - AllGather
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#AllGather>`_
+
     """
 
     @prim_attr_register
@@ -409,8 +419,6 @@ class _HostAllGather(PrimitiveWithInfer):
 class ReduceScatter(Primitive):
     r"""
     Reduces and scatters tensors from the specified communication group.
-    For more details about it, please refer to `Distributed Set Communication Primitives - ReduceScatter \
-    <https://www.mindspore.cn/tutorials/experts/en/master/parallel/communicate_ops.html#reducescatter>`_ .
 
     Note:
         The tensors must have the same shape and format in all processes of the collection.
@@ -475,6 +483,11 @@ class ReduceScatter(Primitive):
          [2. 2. 2. 2. 2. 2. 2. 2.]
          [2. 2. 2. 2. 2. 2. 2. 2.]
          [2. 2. 2. 2. 2. 2. 2. 2.]]
+
+    Tutorial Examples:
+        - `Distributed Set Communication Primitives - ReduceScatter
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#ReduceScatter>`_
+
     """
 
     @prim_attr_register
@@ -607,6 +620,11 @@ class Broadcast(PrimitiveWithInfer):
         (Tensor(shape[2,4], dtype=Int32, value=
         [[1, 1, 1, 1],
          [1, 1, 1, 1]]),)
+
+    Tutorial Examples:
+        - `Distributed Set Communication Primitives - Broadcast
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#Broadcast>`_
+
     """
 
     @prim_attr_register
@@ -699,7 +717,7 @@ class NeighborExchange(Primitive):
 
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
         in the same subnet, please check the `details \
-        <https://www.mindspore.cn/tutorials/experts/en/master/parallel/communicate_ops.html#notes>`_.
+        <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#notes>`_.
 
     Args:
         send_rank_ids (list(int)): Ranks which the data is sent to.
@@ -745,6 +763,11 @@ class NeighborExchange(Primitive):
         >>> output = net(input_x)
         >>> print(output)
         [[2. 2.], [2. 2.]]
+
+    Tutorial Examples:
+        - `Distributed Set Communication Primitives - NeighborExchange
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#NeighborExchange>`_
+
     """
 
     @prim_attr_register
@@ -776,7 +799,7 @@ class AlltoAll(PrimitiveWithInfer):
     Note:
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
         in the same subnet, please check the `details \
-        <https://www.mindspore.cn/tutorials/experts/en/master/parallel/communicate_ops.html#notes>`_.
+        <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#notes>`_.
 
     Args:
         split_count (int): On each process, divide blocks into split_count number.
@@ -839,6 +862,11 @@ class AlltoAll(PrimitiveWithInfer):
         >>> output = net(input_x)
         >>> print(output)
         [[[[0. 1. 2. 3. 4. 5. 6. 7.]]]]
+
+    Tutorial Examples:
+        - `Distributed Set Communication Primitives - AlltoAll
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#AlltoAll>`_
+
     """
 
     @prim_attr_register
@@ -879,15 +907,13 @@ class NeighborExchangeV2(Primitive):
     NeighborExchangeV2 is a collective communication operation.
 
     NeighborExchangeV2 sends data from the local rank to ranks in the `send_rank_ids`,
-    as while receive data from `recv_rank_ids`. Please refer to
-    `Distributed Set Communication Primitives - NeighborExchangeV2 \
-    <https://www.mindspore.cn/tutorials/experts/en/master/parallel/communicate_ops.html#neighborexchangev2>`_
-    to learn about how the data is exchanged between neighborhood devices.
+    as while receive data from `recv_rank_ids`. Please refer to the tutorial examples
+    below to learn about how the data is exchanged between neighborhood devices.
 
     Note:
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
         in the same subnet, please check the `details \
-        <https://www.mindspore.cn/tutorials/experts/en/master/parallel/communicate_ops.html#notes>`_.
+        <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#notes>`_.
 
     Args:
         send_rank_ids (list(int)): Ranks which the data is sent to. 8 rank_ids represents 8 directions, if one
@@ -960,6 +986,11 @@ class NeighborExchangeV2(Primitive):
         >>> output = net(input_x)
         >>> print(output)
         [[[[1. 1.], [1. 1.], [2. 2.]]]]
+
+    Tutorial Examples:
+        - `Distributed Set Communication Primitives - NeighborExchangeV2
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/ops/communicate_ops.html#NeighborExchangeV2>`_
+
     """
 
     @prim_attr_register
