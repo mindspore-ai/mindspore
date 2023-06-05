@@ -23,7 +23,7 @@ from mindspore.common import dtype as mstype
 
 class Net(nn.Cell):
     def construct(self, x, y, dim):
-        output = ops.vecdot(x, y, dim=dim)
+        output = ops.vecdot(x, y, axis=dim)
         return output
 
 
