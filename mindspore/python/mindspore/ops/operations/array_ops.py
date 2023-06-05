@@ -6316,7 +6316,8 @@ class Sort(Primitive):
         Using Float32 might cause loss of accuracy.
 
     Args:
-        axis (int): The dimension to sort along. Default: ``-1`` .
+        axis (int): The dimension to sort along. Default: ``-1``, means the last dimension.
+            The Ascend backend only supports sorting the last dimension.
         descending (bool): Controls the sort order. If descending is ``True`` then the elements
             are sorted in descending order by value. Default: ``False`` .
 
