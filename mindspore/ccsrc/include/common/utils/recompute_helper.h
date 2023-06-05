@@ -70,6 +70,7 @@ COMMON_EXPORT void GetOriginRecomputeAndTargetNodes(const FuncGraphManagerPtr &m
                                                     mindspore::HashSet<CNodePtr> *target_nodes);
 
 COMMON_EXPORT std::vector<AnfNodePtr> GetFirstTargetInputs(const std::vector<CNodePtr> &origin_nodes_topological,
+                                                           const mindspore::HashSet<CNodePtr> &max_recomputed_sub_graph,
                                                            const mindspore::HashSet<CNodePtr> &recomputed_origin_nodes,
                                                            const mindspore::HashSet<CNodePtr> &target_nodes);
 
