@@ -46,7 +46,7 @@ Vision
 Example Gallery
 ^^^^^^^^^^^^^^^^
 
-Example gallery of using vision transform APIs, jump to `Load & Process Data With Dataset Pipeline <https://www.mindspore.cn/docs/zh-CN/master/api_python/dataset_vision/vision_gallery.html>`_.
+Example gallery of using vision transform APIs, jump to `Load & Process Data With Dataset Pipeline <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_.
 This guide presents various transforms and input/output results.
 
 Transforms
@@ -169,7 +169,7 @@ Text
 Example Gallery
 ^^^^^^^^^^^^^^^^
 
-Example gallery of using vision transform APIs, jump to `Illustration of text transforms <https://www.mindspore.cn/docs/zh-CN/master/api_python/dataset_text/text_gallery.html>`_.
+Example gallery of using vision transform APIs, jump to `Illustration of text transforms <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_.
 This guide presents various transforms and input/output results.
 
 Transforms
@@ -234,7 +234,7 @@ Audio
 Example Gallery
 ^^^^^^^^^^^^^^^^
 
-Example gallery of using vision transform APIs, jump to `Illustration of audio transforms <https://www.mindspore.cn/docs/zh-CN/master/api_python/dataset_audio/audio_gallery.html>`_.
+Example gallery of using vision transform APIs, jump to `Illustration of audio transforms <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_.
 This guide presents various transforms and input/output results.
 
 Transforms

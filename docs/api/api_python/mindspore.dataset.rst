@@ -51,7 +51,7 @@ mindspore.dataset
 数据处理Pipeline快速上手
 ----------------------
 
-如何快速使用Dataset Pipeline，可以将 `Load & Process Data With Dataset Pipeline <https://www.mindspore.cn/docs/zh-CN/master/api_python/dataset/dataset_gallery.html>`_ 下载到本地，按照顺序执行并观察输出结果。
+如何快速使用Dataset Pipeline，可以将 `Load & Process Data With Dataset Pipeline <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_ 下载到本地，按照顺序执行并观察输出结果。
 
 视觉
 -----

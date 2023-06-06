@@ -73,7 +73,7 @@ Quick start of Dataset Pipeline
 -------------------------------
 
 For a quick start of using Dataset Pipeline, download `Load & Process Data With Dataset Pipeline
-<https://www.mindspore.cn/docs/zh-CN/master/api_python/dataset/dataset_gallery.html>`_
+<https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 to local and run in sequence.
 
 """
