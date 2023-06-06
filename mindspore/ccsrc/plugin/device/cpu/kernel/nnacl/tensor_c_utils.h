@@ -37,6 +37,7 @@ void SetChannel(TensorC *tensor, int channel);
 int GetElementNum(const TensorC *tensor);
 int GetSize(const TensorC *tensor);
 int GetDimensionSize(const TensorC *tensor, const size_t index);
+bool IsShapeSame(const TensorC *tensor1, const TensorC *tensor2);
 bool IsConst(const TensorC *tensor);
 
 #ifdef __cplusplus

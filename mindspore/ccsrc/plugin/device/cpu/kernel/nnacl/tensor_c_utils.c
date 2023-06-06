@@ -422,6 +422,18 @@ int GetDimensionSize(const TensorC *tensor, const size_t index) {
   return dim_size;
 }
 
+bool IsShapeSame(const TensorC *tensor1, const TensorC *tensor2) {
+  if (tensor1->shape_size_ != tensor2->shape_size_) {
+    return false;
+  }
+  for (size_t i = 0; i < tensor1->shape_size_; i++) {
+    if (tensor1->shape_[i] != tensor2->shape_[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 bool IsConst(const TensorC *tensor) {
   return (tensor->category_ == ConstTensor || tensor->category_ == ConstScalar) && tensor->data_ != NULL;
 }
