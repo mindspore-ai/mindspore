@@ -90,7 +90,8 @@ bool BackendCSE::CheckEqualKernelBuildInfo(const AnfNodePtr &main, const AnfNode
   MS_EXCEPTION_IF_NULL(node);
   if (main->isa<CNode>()) {
     auto main_name = common::AnfAlgo::GetCNodeName(main);
-    if (main_name == prim::kPrimTensorMove->name() || main_name == prim::kPrimMemCpyAsync->name()) {
+    if (main_name == prim::kPrimTensorMove->name() || main_name == prim::kPrimMemCpyAsync->name() ||
+        main_name == prim::kPrimDropOutDoMask->name()) {
       return false;
     }
   }
