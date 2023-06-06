@@ -35,7 +35,7 @@ void DynamicAkgCpuKernelBuilder::SetCpuKernelModByName(const string &kernel_name
 
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto args = kernel::AbstractArgsFromCNode(cnode, true);
+  auto args = kernel::AbstractArgsFromCNode(cnode);
   bool is_dynamic_kernel =
     std::any_of(args.inputs.begin(), args.inputs.end(), [](KernelTensorPtr item) { return item->IsDynamicShape(); }) ||
     std::any_of(args.outputs.begin(), args.outputs.end(), [](KernelTensorPtr item) { return item->IsDynamicShape(); });

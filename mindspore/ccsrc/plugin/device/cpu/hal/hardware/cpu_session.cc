@@ -382,7 +382,7 @@ void CPUSession::BuildKernel(const KernelGraph *kernel_graph) const {
 
     // This branch would be removed When KernelMode rectification is complete
     auto discard_cpu_kernel_mod = std::dynamic_pointer_cast<kernel::DeprecatedNativeCpuKernelMod>(cpu_kernel_mod);
-    auto args = kernel::AbstractArgsFromCNode(kernel_node, discard_cpu_kernel_mod != nullptr);
+    auto args = kernel::AbstractArgsFromCNode(kernel_node);
     // inputs_tensor_map is ops's valueDepend input. if this input is const_value tensor,
     // we will put this tensor in args.inputs.data_.
     auto inputs_tensor_map = std::map<uint32_t, tensor::TensorPtr>();

@@ -172,6 +172,7 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static void InferShape(const CNodePtr &node, std::map<uint32_t, tensor::TensorPtr> *depend_tensors = nullptr);
   static ShapeVector GetInputDeviceShapeAdaptively(const AnfNodePtr &anf_node, size_t index);
   static ShapeVector GetOutputDeviceShapeAdaptively(const AnfNodePtr &anf_node, size_t index);
+  static ShapeVector GetDeviceShapeAdaptively(const ShapeVector &shape);
   static KernelGraphPtr FetchKernelGraph(const AnfNode *node);
   static AnfNodePtr FetchFrontNodeByBackendNode(const AnfNodePtr &backend_node, const KernelGraph &graph);
   static void InsertMakeTupleForOutput(const NotNull<KernelGraphPtr> &root_graph);

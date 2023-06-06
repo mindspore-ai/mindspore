@@ -1270,6 +1270,16 @@ ShapeVector AnfRuntimeAlgorithm::GetOutputDeviceShapeAdaptively(const AnfNodePtr
   return device_shape;
 }
 
+ShapeVector AnfRuntimeAlgorithm::GetDeviceShapeAdaptively(const ShapeVector &shape) {
+  auto device_shape = shape;
+  // Initialize GPUKernel with max shape to fit 'InitDynamicOutputKernelRef()' for memory reuse.
+  if (IsDynamic(device_shape)) {
+    GetDefaultShape(&device_shape);
+  }
+
+  return device_shape;
+}
+
 KernelGraphPtr AnfRuntimeAlgorithm::FetchKernelGraph(const AnfNode *node) {
   MS_EXCEPTION_IF_NULL(node);
   const auto &func_graph = node->func_graph();

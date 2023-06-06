@@ -37,6 +37,7 @@
 #include "kernel/kernel_build_info.h"
 #include "ops/base_operator.h"
 #include "ops/strided_slice.h"
+#include "include/backend/device_address.h"
 
 namespace mindspore {
 namespace kernel {
@@ -442,7 +443,10 @@ struct KernelArgs {
   // cppcheck-suppress unusedStructMember
   constexpr static char key[] = "KernelArgs";
 };
-BACKEND_EXPORT KernelArgs AbstractArgsFromCNode(const CNodePtr &cnode, bool is_without_operator = false);
+BACKEND_EXPORT KernelArgs AbstractArgsFromCNode(const CNodePtr &cnode);
+BACKEND_EXPORT KernelArgs AbstractArgsFromDeviceAddress(
+  KernelMod *const kernel_mod, const std::vector<device::DeviceAddressPtr> &inputs_device_address,
+  const std::vector<device::DeviceAddressPtr> &outputs_device_address, const AbstractBasePtr &abstract);
 BACKEND_EXPORT BaseOperatorPtr CreateOperatorByCNode(const CNodePtr &cnode);
 BACKEND_EXPORT KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensorPtr> &inputs,
                                                    const std::vector<KernelTensorPtr> &outputs);

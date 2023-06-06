@@ -18,20 +18,22 @@
 #define MINDSPORE_CCSRC_BACKEND_COMMON_OPTIMIZER_DYNAMIC_SHAPE_DYNAMIC_SHAPE_HELPER_H
 
 #include <vector>
+#include <memory>
 
 #include "ir/anf.h"
 #include "utils/ms_utils.h"
 #include "include/backend/optimizer/optimizer.h"
 #include "include/backend/optimizer/helper.h"
 #include "runtime/pynative/op_compiler.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore::opt::dynamic_shape {
 bool IsRealCNode(const BaseRef &n);
 void InferOp(const CNodePtr &node, void *args = nullptr);
-void InferOp(const CNodePtr &cnode, const pynative::ExecuteKernelInfo &execute_kernel,
-             const std::vector<tensor::TensorPtr> &input_tensors);
-void SetOpArgs(const CNodePtr &cnode, const std::vector<device::DeviceAddressPtr> &device_address_list,
-               const std::vector<tensor::TensorPtr> &input_tensors);
+kernel::KernelArgs InferOp(const CNodePtr &cnode, const pynative::ExecuteKernelInfo &execute_kernel,
+                           const std::vector<tensor::TensorPtr> &input_tensors);
+kernel::KernelArgs SetOpArgs(const CNodePtr &cnode, const pynative::ExecuteKernelInfo &execute_kernel,
+                             const std::vector<tensor::TensorPtr> &input_tensors);
 AnfNodePtr GenInferNode(const AnfNodePtr &node);
 AnfNodePtr GenInitNode(const AnfNodePtr &node);
 

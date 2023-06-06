@@ -261,6 +261,12 @@ class BACKEND_EXPORT KernelTensor {
  public:
   KernelTensor() = default;
   ~KernelTensor() = default;
+  KernelTensor(const KernelTensor &copy_tensor) {
+    meta_type_ = copy_tensor.meta_type_;
+    meta_ = copy_tensor.meta_;
+    data_ = copy_tensor.data_;
+    host_data_ = copy_tensor.host_data_;
+  }
 
   bool IsDynamicShape() const;
   size_t GetSizeInBytes() const;
