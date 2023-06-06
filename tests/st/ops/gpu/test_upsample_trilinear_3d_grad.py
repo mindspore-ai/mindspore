@@ -275,7 +275,8 @@ def test_vmap_upsample_trilinear_3d_grad():
                        [[[[[8.4, 8.700001], [9.299999, 9.599999]],
                           [[10.425001, 10.725],
                            [11.325, 11.625001]]]]]]).astype(np.float32)
-    out_vmap = F.vmap(net, in_axes=(0))(input_tensor, input_shape, [2, 3, 3],
-                                        None)
+    out_vmap = F.vmap(net,
+                      in_axes=(0, None, None, None))(input_tensor, input_shape,
+                                                     [2, 3, 3], None)
     error = np.ones(shape=expect.shape) * 1.0e-6
     assert np.all(abs(out_vmap.asnumpy() - expect) < error)

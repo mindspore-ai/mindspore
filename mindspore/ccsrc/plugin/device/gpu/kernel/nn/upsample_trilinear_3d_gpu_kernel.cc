@@ -16,12 +16,12 @@
 
 #include "plugin/device/gpu/kernel/nn/upsample_trilinear_3d_gpu_kernel.h"
 #include <algorithm>
-#include <vector>
-#include <memory>
+#include <functional>
 #include <map>
+#include <memory>
 #include <string>
 #include <utility>
-#include <functional>
+#include <vector>
 #include "abstract/utils.h"
 #include "kernel/common_utils.h"
 #include "mindspore/core/ops/upsample_trilinear_3d.h"
@@ -114,8 +114,8 @@ bool UpsampleTrilinear3DGpuKernelMod::LaunchKernel(const std::vector<AddressPtr>
   return true;
 }
 
-#define UpsampleTrilinear3D_GPU_KERNEL_REG(M_S, M_T, S, T)                               \
-  KernelAttr().AddInputAttr(M_S).AddInputAttr(kObjectTypeTuple, M_T).AddOutputAttr(M_S), \
+#define UpsampleTrilinear3D_GPU_KERNEL_REG(M_S, M_T, S, T)             \
+  KernelAttr().AddInputAttr(M_S).AddInputAttr(M_T).AddOutputAttr(M_S), \
     &UpsampleTrilinear3DGpuKernelMod::LaunchKernel<S, T>
 
 std::vector<std::pair<KernelAttr, UpsampleTrilinear3DGpuKernelMod::UpsampleTrilinear3DFunc>>

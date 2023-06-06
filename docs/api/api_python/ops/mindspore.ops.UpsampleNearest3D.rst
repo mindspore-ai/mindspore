@@ -21,8 +21,8 @@ mindspore.ops.UpsampleNearest3D
         - **TypeError** - 当 `output_size` 不是 ``None`` 并且 `output_size` 不是list[int]或tuple[int]。
         - **TypeError** - 当 `scales` 不是 ``None`` 并且 `scales` 不是list[float]或tuple[float]。
         - **TypeError** - `x` 的数据类型不是uint8、float16、float32或float64。
-        - **ValueError** - `output_size` 不为 ``None`` 时含有负数值。
-        - **ValueError** - `scales` 不为 ``None`` 时含有负数值。
+        - **ValueError** - `output_size` 不为 ``None`` 时含有负数或0。
+        - **ValueError** - `scales` 不为 ``None`` 时含有负数或0。
         - **ValueError** - `x` 维度不为5。
         - **ValueError** - `scales` 和 `output_size` 同时被指定或都不被指定。
         - **ValueError** - `scales` 被指定时其含有的元素个数不为3。

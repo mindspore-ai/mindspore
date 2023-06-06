@@ -15,7 +15,7 @@ mindspore.ops.UpsampleTrilinear3D
 
     输入：
         - **x** (Tensor) - Shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 的五维Tensor。支持的数据类型：[float16, float32, float64]。
-        - **output_size** (Union[tuple[int], list[int]]) - 包含3个int的元组或列表。元素分别为 :math:`(output\_depth, output\_height, output\_width)` 。只能指定 `output_size` 和 `scales` 中的一个值。默认值： ``None``。
+        - **output_size** (Union[tuple[int], list[int]]) - 包含3个int的元组或列表。元素分别为 :math:`(output\_depth, output\_height, output\_width)` 。默认值： ``None``。
         - **scales** (Union[tuple[float], list[float]]) - 包含3个float的元组或列表。元素分别为 :math:`(scale\_depth, scale\_height, scale\_width)` 。 默认值： ``None``。
 
     输出：
@@ -26,8 +26,8 @@ mindspore.ops.UpsampleTrilinear3D
         - **TypeError** - 当 `scales` 不是 ``None`` 并且 `scales` 不是list[float]或tuple[float]。
         - **TypeError** - `x` 的数据类型不是float16、float32或float64。
         - **TypeError** - `align_corners` 的数据类型不是bool。
-        - **ValueError** - `output_size` 不为 ``None`` 时含有负数值。
-        - **ValueError** - `scales` 不为 ``None`` 时含有负数值。
+        - **ValueError** - `output_size` 不为 ``None`` 时含有负数或0。
+        - **ValueError** - `scales` 不为 ``None`` 时含有负数或0。
         - **ValueError** - `x` 维度不为5。
         - **ValueError** - `scales` 和 `output_size` 同时被指定或都不被指定。
         - **ValueError** - `scales` 被指定时其含有的元素个数不为3。
