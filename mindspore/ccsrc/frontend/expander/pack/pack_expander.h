@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_FRONTEND_EXPANDER_PACK_EXPANDER_H_
 
 #include <memory>
+#include <stack>
 #include "pybind11/pybind11.h"
 #include "pybind_api/ir/primitive_py.h"
 #include "ir/anf.h"
@@ -56,6 +57,8 @@ class PackExpander {
 
   py::object BeginGraph(const abstract::AbstractBasePtrList &inputs);
   FuncGraphPtr EndGraph(const py::object &output);
+  py::object BeginFuncGraph(const py::object &obj, const py::args &inputs);
+  py::object EndFuncGraph(const py::object &output);
 
   py::object Emit(const py::object &prim, const py::args &inputs) const;
 
@@ -66,7 +69,8 @@ class PackExpander {
   py::object ConvertCNodeToPython(const AnfNodePtr &node) const;
   py::object ConvertAbstractToParameter(const AbstractBasePtr &abs) const;
 
-  FuncGraphPtr graph_{nullptr};
+  std::stack<FuncGraphPtr> graphs_;
+  std::stack<AnfNodePtr> func_graph_node_;
 };
 
 void RegPackExpanderPy(const py::module *m);

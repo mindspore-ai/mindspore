@@ -31,12 +31,16 @@ class _PackTensor(StubTensor):
             self.parent_tensor_.__setitem__(self.index_of_parent_, self)
         return self
 
+    def __pack__(self):
+        """For parse check."""
+
     def stub_sync(self):
         """subclass hook for Tensor"""
         if self.tensor is None:
             val = self.stub.get_value()
             if val is None:
-                raise Exception("In construct PackFunc, PackTensor has no real value.")
+                raise Exception(
+                    "In construct PackFunc, PackTensor has no real value.")
             self.tensor = Tensor(val, internal=True)
             if hasattr(self, "member_cache"):
                 for k, v in self.member_cache.items():
@@ -57,15 +61,21 @@ class PackFunc(Primitive):
 
     expander = PackExpander.get_instance()
 
-    def __init__(self, fun, unique_key):
+    def __init__(self, fun, unique_key, **kwarg):
         super(PackFunc, self).__init__(self.__class__.__name__)
         self.func = fun
         self.add_prim_attr("unique_key", unique_key)
+        self.kwarg = kwarg
+
+    def __call__(self, *args):
+        if _RunOpHook.current and _RunOpHook.current.hook is PackFunc._trace_run_op:
+            return self.func(*args, **self.kwarg)
+        return super().__call__(*args)
 
     def __expand__(self, args):
         with _RunOpHook(PackFunc._trace_run_op):
             fun_args = [_convert_tensor(a) for a in args]
-            ret = self.func(*fun_args)
+            ret = self.func(*fun_args, **self.kwarg)
         return ret
 
     @staticmethod
@@ -74,29 +84,17 @@ class PackFunc(Primitive):
         return _convert_tensor(ret)
 
 
-_PACK_EXECUTING = False
-
-
 def pack(fn):
     """Create an pack func from a python function"""
-    pack_func = PackFunc(fn, id(fn))
 
     @functools.wraps(fn)
-    def _pack_wrap(*args):
-        global _PACK_EXECUTING
-        if _PACK_EXECUTING:
-            return fn(*args)
-        _PACK_EXECUTING = True
-        try:
-            if args and not isinstance(args[0], Tensor) and hasattr(args[0], fn.__name__):
-                obj = args[0]
-                res = PackFunc(lambda *args_: fn(obj, *args_),
-                               id(fn))(*args[1:])
-            else:
-                res = pack_func(*args)
-        finally:
-            _PACK_EXECUTING = False
+    def _pack_wrap(*args, **kwarg):
+        if args and not isinstance(args[0], Tensor) and hasattr(args[0], fn.__name__):
+            obj = args[0]
+            res = PackFunc(
+                lambda *args_, **kwarg_: fn(obj, *args_, **kwarg_), id(fn), **kwarg)(*args[1:])
+        else:
+            res = PackFunc(fn, id(fn), **kwarg)(*args)
         return res
-    _pack_wrap.fn = fn
-    _pack_wrap.is_pack = True
+    _pack_wrap.pack_fn = fn
     return _pack_wrap

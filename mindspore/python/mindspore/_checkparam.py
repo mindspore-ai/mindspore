@@ -27,7 +27,6 @@ from mindspore import context
 from mindspore import log as logger
 from mindspore.common import dtype as mstype
 from mindspore._c_expression import Tensor as Tensor_
-from mindspore._c_expression import PackNode
 
 
 EQ = 1  # ==
@@ -945,7 +944,7 @@ def is_stub_tensor(tensor):
 
 
 def is_pack_tensor(tensor):
-    return is_stub_tensor(tensor) and isinstance(getattr(tensor, "stub"), PackNode)
+    return hasattr(tensor, "__pack__")
 
 
 def expanded_shape(ndim, axis_size, axis):
