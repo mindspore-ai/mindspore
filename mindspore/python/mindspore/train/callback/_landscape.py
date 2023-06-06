@@ -186,11 +186,12 @@ class SummaryLandscape:
         >>> if __name__ == '__main__':
         ...     # If the device_target is Ascend, set the device_target to "Ascend"
         ...     ms.set_context(mode=ms.GRAPH_MODE, device_target="GPU")
-        ...     mnist_dataset_dir = '/path/to/mnist_dataset_directory'
-        ...     # The detail of create_dataset method shown in models.research.cv.lenet.src.dataset.py
-        ...     ds_train = create_dataset(mnist_dataset_dir, 32)
-        ...     # The detail of LeNet5 shown in models.research.cv.lenet.src.lenet.py
-        ...     network = LeNet5(10)
+        ...     # Create the dataset taking MNIST as an example. Refer to
+        ...     # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/mnist.py
+        ...     ds_train = create_dataset()
+        ...     # Define the network structure of LeNet5. Refer to
+        ...     # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/lenet.py
+        ...     network = LeNet5()
         ...     net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         ...     net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)
         ...     model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
@@ -208,12 +209,15 @@ class SummaryLandscape:
         ...
         ...     # Simple usage for visualization landscape:
         ...     def callback_fn():
-        ...         network = LeNet5(10)
+        ...         # Define the network structure of LeNet5. Refer to
+        ...         # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/lenet.py
+        ...         network = LeNet5()
         ...         net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         ...         metrics = {"Loss": Loss()}
         ...         model = Model(network, net_loss, metrics=metrics)
-        ...         mnist_dataset_dir = '/path/to/mnist_dataset_directory'
-        ...         ds_eval = create_dataset(mnist_dataset_dir, 32)
+        ...         # Create the dataset taking MNIST as an example. Refer to
+        ...         # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/mnist.py
+        ...         ds_eval = create_dataset()
         ...         return model, network, ds_eval, metrics
         ...
         ...     summary_landscape = SummaryLandscape('./summary/lenet_interval_1')
