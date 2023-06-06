@@ -483,31 +483,6 @@ void UpdateOutputAbstract(const VectorRef &outputs, const session::BackendOpRunI
   op_run_info->base_op_run_info.abstract = std::make_shared<abstract::AbstractTuple>(elements);
 }
 
-TensorPtr CreateOutputMapTensorDynamic(const AnfNodePtr &output_node, size_t output_index,
-                                       const std::shared_ptr<device::DeviceAddress> &address) {
-  const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
-  MS_EXCEPTION_IF_NULL(device_tensor);
-  const auto &user_data = device_tensor->user_data();
-  MS_EXCEPTION_IF_NULL(user_data);
-  const auto &user_data_type = user_data->get<UserDataType>(kUserDataType);
-  MS_EXCEPTION_IF_NULL(user_data_type);
-  if (*user_data_type == UserDataType::kUserTypeHashTable) {
-    auto shape_vector = user_data->get<ShapeVector>(kHashTableShapeVector);
-    auto key_type = user_data->get<TypeId>(kHashTableKeyType);
-    auto value_type = user_data->get<TypeId>(kHashTableValueType);
-    auto default_value = user_data->get<Value>(kHashTableDefaultValue);
-    MS_EXCEPTION_IF_NULL(shape_vector);
-    MS_EXCEPTION_IF_NULL(key_type);
-    MS_EXCEPTION_IF_NULL(value_type);
-    MS_EXCEPTION_IF_NULL(default_value);
-    auto map_tensor = std::make_shared<tensor::MapTensor>(*key_type, *value_type, *shape_vector, default_value);
-    map_tensor->set_device_address(address);
-    return map_tensor;
-  }
-  MS_LOG(WARNING) << "Invalid user data type:" << *user_data_type;
-  return nullptr;
-}
-
 TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index) {
   MS_EXCEPTION_IF_NULL(output_node);
   const auto &abstract = common::AnfAlgo::GetNodeAbstractByIndex(output_node, output_index);
@@ -566,18 +541,6 @@ TensorPtr CreateOutputTensorDynamicImpl(const OpCompilerInfoPtr &op_compiler_inf
     tensor->data_sync(false);
   }
   return tensor;
-}
-
-TensorPtr CreateOutputTensorDynamic(const OpCompilerInfoPtr &op_compiler_info, const AnfNodePtr &output_node,
-                                    size_t output_index, const std::shared_ptr<device::DeviceAddress> &address,
-                                    size_t idx_in_graph_outputs) {
-  MS_EXCEPTION_IF_NULL(output_node);
-  const auto &abstract = common::AnfAlgo::GetNodeAbstractByIndex(output_node, output_index);
-  if (abstract != nullptr && abstract->isa<abstract::AbstractMapTensor>()) {
-    return CreateOutputMapTensorDynamic(output_node, output_index, address);
-  }
-
-  return CreateOutputTensorDynamicImpl(op_compiler_info, output_node, output_index, address, idx_in_graph_outputs);
 }
 }  // namespace
 
@@ -1191,7 +1154,7 @@ void MindRTBackend::UpdateOutputDynamic(const OpCompilerInfoPtr &op_compiler_inf
     auto output_address = device_address_list[i];
     MS_EXCEPTION_IF_NULL(output_address);
     TensorPtr output_tensor =
-      CreateOutputTensorDynamic(op_compiler_info, item_with_index.first, item_with_index.second, output_address, i);
+      CreateOutputTensorDynamicImpl(op_compiler_info, item_with_index.first, item_with_index.second, output_address, i);
     MS_EXCEPTION_IF_NULL(output_tensor);
     output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
     outputs->emplace_back(output_tensor);

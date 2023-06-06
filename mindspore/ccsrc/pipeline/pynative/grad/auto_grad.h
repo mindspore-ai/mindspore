@@ -46,7 +46,7 @@ struct GradAttr {
 struct GradParam {
   GradParam(const PrimitivePtr &prim, const ValuePtrList &op_args, const abstract::AbstractBasePtrList &input_abs,
             const ValuePtr &out, const AbstractBasePtr &out_abs, const std::vector<TensorGradType> &op_args_grad_type,
-            bool grad_by_value, bool use_dynamic_shape_process)
+            bool grad_by_value, bool use_dynamic_shape_process, const CNodePtr &cnode = nullptr)
       : prim(prim),
         op_args(op_args),
         input_abs(input_abs),
@@ -54,7 +54,8 @@ struct GradParam {
         out_abs(out_abs),
         op_args_grad_type(op_args_grad_type),
         grad_by_value(grad_by_value),
-        use_dynamic_shape_process(use_dynamic_shape_process) {
+        use_dynamic_shape_process(use_dynamic_shape_process),
+        cnode(cnode) {
     input_size = op_args.size();
   }
 
@@ -89,6 +90,8 @@ struct GradParam {
   FuncGraphPtr source_fg;
   // Op forward output used in bprop graph
   std::string graph_cache_key;
+  // Used for pyexecute
+  CNodePtr cnode;
 };
 using GradParamPtr = std::shared_ptr<GradParam>;
 

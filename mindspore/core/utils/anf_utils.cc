@@ -44,10 +44,15 @@ class AbstractMutexManager {
   }
 
   void Close() {
+    std::lock_guard<std::recursive_mutex> lock(mu_);
     is_valid_ = false;
     mu_for_nodes_.clear();
   }
-  void Open() { is_valid_ = true; }
+
+  void Open() {
+    std::lock_guard<std::recursive_mutex> lock(mu_);
+    is_valid_ = true;
+  }
 
  private:
   mindspore::HashMap<const AnfNode *, std::recursive_mutex> mu_for_nodes_;
