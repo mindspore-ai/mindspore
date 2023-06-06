@@ -639,6 +639,35 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
   return SUCCESS;
 }
 
+void PreProcessPreCastForSP(const OperatorInfoPtr &prev_op_info, const OperatorInfoPtr &node_op_info,
+                            const CNodePtr &cnode, const CNodePtr &prev_cnode, const EdgePtr edge_ptr,
+                            size_t input_index) {
+  if (IsPrimitiveCNode(cnode, prim::kPrimMatMul) && input_index == INDEX_TWO) {
+    prev_op_info->set_repeated_num_in_dev_matrix_right(false);
+    prev_op_info->ClearStrategyCost();
+    (void)prev_op_info->GenerateStrategies(0);
+  }
+  if ((configured_stra_ops_.find(node_op_info) != configured_stra_ops_.end())) {
+    const auto next_op_stra = configured_stra_ops_[node_op_info];
+    if (edge_ptr->InitEdgeCost() != SUCCESS) {
+      MS_LOG(EXCEPTION) << "Edge cost initialization failed";
+    }
+    const auto cast_stra = edge_ptr->GetPrevOpStrategyByNextOpStrategyWithMiniComm(next_op_stra);
+    if (cast_stra == nullptr) {
+      MS_LOG(EXCEPTION) << "No available strategy for: " << prev_op_info->name();
+    }
+    prev_op_info->ClearStrategyCost();
+    if (prev_op_info->SetCostUnderStrategy(cast_stra) != SUCCESS) {
+      MS_LOG(EXCEPTION) << "Failure: operator " << prev_op_info->name() << " SetCostUnderStrategy failed";
+    }
+    if (edge_ptr->InitEdgeCost() != SUCCESS) {
+      MS_LOG(EXCEPTION) << "Edge cost re-initialization failed.";
+    }
+    MS_LOG(INFO) << "Set strategy for: " << prev_op_info->name() << " under the strategy of: " << node_op_info->name();
+    (void)configured_stra_ops_.emplace(prev_op_info, cast_stra);
+  }
+}
+
 void CreateEdgeBetweenTwoOps(const OperatorInfoPtr &prev_op_info, const OperatorInfoPtr &node_op_info,
                              const CNodePtr &cnode, const CNodePtr &prev_cnode, const PrimitivePtr &prim,
                              const PrimitivePtr &prev_prim, size_t output_index, size_t input_index,
@@ -676,25 +705,8 @@ void CreateEdgeBetweenTwoOps(const OperatorInfoPtr &prev_op_info, const Operator
   node_op_info->AddPrevEdge(edge_ptr);
   prev_op_info->AddSuccEdge(edge_ptr);
   entire_costgraph->AddEdge(prev_op_info, node_op_info, edge_ptr);
-  if (use_sp && (prev_prim->name() == CAST) &&
-      (configured_stra_ops_.find(node_op_info) != configured_stra_ops_.end())) {
-    const auto next_op_stra = configured_stra_ops_[node_op_info];
-    if (edge_ptr->InitEdgeCost() != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Edge cost initialization failed";
-    }
-    const auto cast_stra = edge_ptr->GetPrevOpStrategyByNextOpStrategyWithMiniComm(next_op_stra);
-    if (cast_stra == nullptr) {
-      MS_LOG(EXCEPTION) << "No available strategy for: " << prev_op_info->name();
-    }
-    prev_op_info->ClearStrategyCost();
-    if (prev_op_info->SetCostUnderStrategy(cast_stra) != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Failure: operator " << prev_op_info->name() << " SetCostUnderStrategy failed";
-    }
-    if (edge_ptr->InitEdgeCost() != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Edge cost re-initialization failed.";
-    }
-    MS_LOG(INFO) << "Set strategy for: " << prev_op_info->name() << " under the strategy of: " << node_op_info->name();
-    (void)configured_stra_ops_.emplace(prev_op_info, cast_stra);
+  if (use_sp && prev_prim->name() == CAST) {
+    PreProcessPreCastForSP(prev_op_info, node_op_info, cnode, prev_cnode, edge_ptr, input_index);
   }
   MS_LOG(INFO) << "Successfully adding the edge between " << prev_op_info->name() << " and " << node_op_info->name();
   (*edge_count)++;
@@ -933,6 +945,11 @@ void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
       auto target_cnode = target.first->cast<CNodePtr>();
       auto input_index = target.second;
       auto target_op_info = target_cnode->user_data<OperatorInfo>();
+      if (!target_op_info->repeated_num_in_dev_matrix_right() && tmp_identity_ptr->repeated_num_in_dev_matrix_right()) {
+        tmp_identity_ptr->set_repeated_num_in_dev_matrix_right(false);
+        tmp_identity_ptr->ClearStrategyCost();
+        (void)tmp_identity_ptr->GenerateStrategies(0);
+      }
 
       std::string edge_name = std::string(IDENTITY_INFO) + OPERATOR_TO_OPERATOR_CONNECTOR + target_op_info->name();
       // If the edge between these two operators already has been added, then the edge will not be added again.
