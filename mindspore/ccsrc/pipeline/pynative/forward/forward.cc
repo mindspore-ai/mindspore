@@ -227,14 +227,12 @@ void ForwardExecutor::RunOpForwardAsyncImpl(const FrontendOpRunInfoPtr &op_run_i
 }
 
 void ForwardExecutor::RunOpForwardAsync(const FrontendOpRunInfoPtr &op_run_info) {
-  Init();
   auto forward_task = std::make_shared<ForwardTask>(
     [this](const FrontendOpRunInfoPtr &op_run_info) { RunOpForwardAsyncImpl(op_run_info); }, op_run_info);
   forward_queue_->Push(forward_task);
 }
 
 void ForwardExecutor::RunOpForward(const FrontendOpRunInfoPtr &op_run_info) {
-  Init();
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_LOG(DEBUG) << "RunOp name: " << op_run_info->base_op_run_info.op_name;
   PyNativeAlgo::Common::StubNodeToValue(op_run_info);
@@ -259,10 +257,11 @@ void ForwardExecutor::RunOpForward(const FrontendOpRunInfoPtr &op_run_info) {
   }
 }
 
-FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args, bool stub) const {
+FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args, bool stub) {
   if (args.size() != static_cast<size_t>(RunOpArgsEnum::PY_ARGS_NUM)) {
     MS_LOG(EXCEPTION) << "Three args are needed by RunOp";
   }
+  Init();
   const auto &op_run_info = std::make_shared<FrontendOpRunInfo>();
   // Used for async run
   op_run_info->base_op_run_info.op_name = args[static_cast<size_t>(RunOpArgsEnum::PY_NAME)].cast<std::string>();
