@@ -142,6 +142,8 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   // Push the local embedding cache that requires evict to the remote.
   bool PushEmbeddingsToRemote(int32_t param_key, const int *ids, size_t ids_num, const float *embeddings,
                               size_t embeddings_len);
+  bool DoPushEmbeddingsToRemote(int32_t param_key, const int *ids, size_t ids_num, const float *embeddings,
+                                size_t embeddings_len);
 
   // In a multi-server scenario, the embeddings need to be segmented, and each server saves the embeddings of
   // different feature id ranges. Therefore, when the local side performs the push or pull embeddings operation, the

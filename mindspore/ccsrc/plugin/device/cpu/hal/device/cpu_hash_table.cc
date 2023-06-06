@@ -271,47 +271,19 @@ bool CPUHashTable<Key, Value>::Import(const DataLenPair &input_data) {
   MS_ERROR_IF_NULL(host_values);
 
   size_t keys_len = input_keys.second;
-  size_t values_len = input_values.second;
   if (keys_len == 0) {
     return true;
   }
 
-  // 2. Allocate temp buffer to keys and values
-  Key *device_keys = static_cast<Key *>(AllocateMemory(keys_len));  // Allocate memory on the heap for keys on the CPU
-  if (device_keys == nullptr) {                                     // Check if the allocation was successful
-    return false;                                                   // return false to indicate failure
-  }
-
-  Value *device_values = static_cast<Value *>(AllocateMemory(values_len));
-  if (device_values == nullptr) {
-    free(device_keys);
-    return false;
-  }
-
-  // 3. Copy input keys and values to device.
-  auto ret = memcpy_s(device_keys, keys_len, host_keys, keys_len);
-  if (ret != EOK) {
-    MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
-    return false;
-  }
-  ret = memcpy_s(device_values, values_len, host_values, values_len);
-  if (ret != EOK) {
-    MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
-    return false;
-  }
-
-  // 4. Insert input keys and values to hash table.
+  Key *device_keys = static_cast<Key *>(host_keys);
+  Value *device_values = static_cast<Value *>(host_values);
   Status *statuses = new Status[keys_len];
   (void)std::fill_n(statuses, keys_len, Status::kUnchanged);
   if (!Insert(device_keys, keys_len / sizeof(Key), device_values, statuses, nullptr)) {
-    FreeMemory(device_keys);
-    FreeMemory(device_values);
     MS_LOG(ERROR) << "Insert keys and values failed.";
+    delete[] statuses;
     return false;
   }
-  // If insertion succeeded, free memory for keys and values
-  FreeMemory(device_keys);
-  FreeMemory(device_values);
 
   input_data_list.clear();  // Clear the list of input tensors
   delete[] statuses;

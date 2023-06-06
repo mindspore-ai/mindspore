@@ -16,6 +16,7 @@
 
 #include "include/backend/distributed/embedding_cache/embedding_cache_utils.h"
 #include <algorithm>
+#include <thread>
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
@@ -225,6 +226,197 @@ void EmbeddingCacheTableManager::DumpHashTables() const {
                  << ", device cache size:" << cache_vocab_size << ", host cache size:" << host_cache_vocab_size
                  << ", device cache address:" << item.second.address.addr
                  << ", host cache address:" << item.second.host_address.get();
+  }
+}
+
+int32_t EmbeddingCacheTableManager::StoreWarmUpPtr(const int32_t param_key, const tensor::TensorPtr &tensor_ptr) {
+  return StoreWarmUpPtr(param_key, nullptr, tensor_ptr, nullptr);
+}
+
+int32_t EmbeddingCacheTableManager::StoreWarmUpPtr(const int32_t param_key, const tensor::TensorPtr &key_ptr,
+                                                   const tensor::TensorPtr &value_ptr,
+                                                   const tensor::TensorPtr &status_ptr) {
+  MS_LOG(INFO) << "Enter store warm up ptr, param_key : " << param_key << ".";
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  std::unique_lock<std::mutex> lock(host_cache_mutex_);
+  auto ret = host_cache_ptrs_.find(param_key);
+  if (ret != host_cache_ptrs_.end()) {
+    MS_LOG(WARNING) << "Store warm up ptr duplicate, id : " << param_key << ".";
+  }
+  (void)host_cache_ptrs_.try_emplace(param_key, key_ptr, value_ptr, status_ptr);
+  MS_LOG(INFO) << "Exit store warm up ptr, host cache ptrs size : " << host_cache_ptrs_.size()
+               << ", hash tables size : " << hash_tables_.size() << ".";
+  return 0;
+}
+
+const HashTableInfo *EmbeddingCacheTableManager::FindHashTablesByParamKey(const int param_key) {
+  const auto &iter = std::find_if(hash_tables_.begin(), hash_tables_.end(),
+                                  [this, param_key](const auto &data) { return data.second.param_key_ == param_key; });
+  return iter != hash_tables_.end() ? &(iter->second) : nullptr;
+}
+
+void EmbeddingCacheTableManager::WarmUpHostCacheSync(const int32_t batch_count) {
+  MS_LOG(INFO) << "Enter warm up host cache sync, batch_count : " << batch_count << ".";
+  auto cache_ptr_size = host_cache_ptrs_.size();
+  auto hash_table_size = hash_tables_.size();
+  if (cache_ptr_size != hash_table_size) {
+    MS_LOG(WARNING) << "Host cache ptrs size : " << cache_ptr_size
+                    << " is not equal to hash table size : " << hash_table_size
+                    << ", will skip wam up host cache sync.";
+    std::unique_lock<std::mutex> lock(host_cache_mutex_);
+    host_cache_promise_->set_value(false);
+    lock.unlock();
+    host_cache_ptrs_.clear();
+    return;
+  }
+
+  for (auto &item : host_cache_ptrs_) {
+    WarmUpHostCacheItemBatch(batch_count, item);
+  }
+  std::unique_lock<std::mutex> lock(host_cache_mutex_);
+  host_cache_promise_->set_value(true);
+  lock.unlock();
+  host_cache_ptrs_.clear();
+  MS_LOG(INFO) << "Exit warm up host cache sync.";
+}
+
+void EmbeddingCacheTableManager::WarmUpHostCacheAsync(const int32_t batch_count) {
+  MS_LOG(DEBUG) << "Enter warm up host cache async, batch_count : " << batch_count << ".";
+  std::unique_lock<std::mutex> lock(host_cache_mutex_);
+  if (host_cache_promise_ != nullptr) {
+    lock.unlock();
+    MS_LOG(WARNING) << "Host cache promise is not null, cache sync has already done.";
+    return;
+  }
+  host_cache_promise_ = std::make_shared<std::promise<bool>>();
+  lock.unlock();
+  std::thread([this, batch_count]() { WarmUpHostCacheSync(batch_count); }).detach();
+  MS_LOG(DEBUG) << "Exit warm up host cache async.";
+}
+
+std::pair<std::shared_ptr<std::future<bool>>, bool> EmbeddingCacheTableManager::GetWarmUpHostCacheAsyncStatus() {
+  MS_LOG(DEBUG) << "Enter get warm up host cache async status.";
+  std::unique_lock<std::mutex> lock(host_cache_mutex_);
+  if (host_cache_promise_ == nullptr) {
+    return std::make_pair(nullptr, false);
+  }
+  return std::make_pair(std::make_shared<std::future<bool>>(host_cache_promise_->get_future()), true);
+}
+
+bool EmbeddingCacheTableManager::WaitForWarmUpHostCacheComplete() {
+  MS_LOG(DEBUG) << "Enter wait for warm up host cache complete.";
+  const int32_t batch_count = 4;
+  WarmUpHostCacheAsync(batch_count);
+  const auto &[complete_future, status] = GetWarmUpHostCacheAsyncStatus();
+  return status ? complete_future->get() : status;
+}
+
+tensor::TensorPtr generate_key_tensor_ptr(tensor::TensorPtr tensor_ptr) {
+  auto &vec = tensor_ptr->shape();
+  auto cel_num = static_cast<int>(vec[0]);
+  std::vector<int32_t> key_vec(cel_num);
+  for (auto i = 0; i != cel_num; i++) {
+    key_vec[i] = i;
+  }
+  return std::make_shared<tensor::Tensor>(key_vec);
+}
+
+void EmbeddingCacheTableManager::WarmUpHostCacheItemBatch(const int32_t batch_count, const WarmUpCacheMapEntry &entry) {
+  MS_LOG(DEBUG) << "Enter warm up host cache item batch.";
+  auto key_ptr = std::get<0>(entry.second);
+  auto value_ptr = std::get<1>(entry.second);
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  // Key tensor may be nullptr since we stored single value tensor.
+  if (key_ptr == nullptr) {
+    MS_LOG(INFO) << "key_ptr is nullptr, generate key tensor.";
+    key_ptr = generate_key_tensor_ptr(value_ptr);
+  }
+  auto &vec = key_ptr->shape();
+  auto l_len = static_cast<int>(vec[0]);
+  const int32_t default_batch_count = 1;
+  const int validate_batch_count = batch_count < default_batch_count ? default_batch_count : batch_count;
+  int batch_size = l_len / validate_batch_count;
+  if (l_len % validate_batch_count != 0) {
+    batch_size++;
+  }
+  if (embedding_host_cache_ == nullptr) {
+    MS_LOG(WARNING) << "Embedding host cache of manager is nullptr, will skip warm up.";
+    return;
+  }
+
+  auto embedding_hash_map = embedding_host_cache_->host_hash_map_;
+  if (embedding_hash_map == nullptr) {
+    MS_LOG(WARNING) << "Embedding hash map of embedding host cache is nullptr, will skip warm up.";
+    return;
+  }
+
+  auto hash_table_info_ptr = FindHashTablesByParamKey(entry.first);
+  if (hash_table_info_ptr == nullptr) {
+    MS_LOG(WARNING) << "Hash table info is nullptr, will skip warm up.";
+    return;
+  }
+
+  size_t host_length = (hash_table_info_ptr->host_cache_vocab_size * hash_table_info_ptr->embedding_size) << 2;
+  auto &value_shape = value_ptr->shape();
+  size_t value_len = 0;
+  std::for_each(value_shape.begin() + 1, value_shape.end(), [&](int n) { value_len += n; });
+  MS_EXCEPTION_IF_NULL(value_ptr->data_ptr());
+  value_len *= value_ptr->data_ptr()->itemsize();
+  size_t value_expected_len = value_len * (value_shape[0] + 1);
+  MS_EXCEPTION_IF_CHECK_FAIL(value_expected_len <= host_length, "Size of value tensor is overflow.");
+
+  for (int i = 0; i < l_len; i += batch_size) {
+    WarmUpHostCacheItem(embedding_hash_map, hash_table_info_ptr, entry, i, std::min(i + batch_size, l_len), value_len);
+  }
+  MS_LOG(DEBUG) << "Exit warm up host cache item batch.";
+}
+
+void EmbeddingCacheTableManager::WarmUpHostCacheItem(const std::shared_ptr<EmbeddingHashMap> &embedding_hash_map,
+                                                     const HashTableInfo *hash_table_info_ptr,
+                                                     const WarmUpCacheMapEntry &entry, const int start, const int end,
+                                                     const size_t value_len) {
+  // Value type is float, bit num is 2
+  const int shift_bit_num = 2;
+  if (hash_table_info_ptr->embedding_size != (value_len >> shift_bit_num)) {
+    MS_LOG(WARNING) << "Hash table info embedding_size : " << hash_table_info_ptr->embedding_size
+                    << " is not equal to value_len : " << value_len << ".";
+    return;
+  }
+
+  auto key_ptr = std::get<0>(entry.second);
+  auto key_data_ptr = key_ptr->data_ptr();
+  for (ssize_t i = start; i != end; i++) {
+    auto key_data_type = key_ptr->data_type();
+    int64_t key = 0;
+    switch (key_data_type) {
+      case TypeId::kNumberTypeInt32:
+      case TypeId::kNumberTypeUInt32: {
+        auto int_ptr = static_cast<int *>(key_ptr->data_c());
+        key = *(int_ptr + i);
+      } break;
+      case TypeId::kNumberTypeInt64:
+      case TypeId::kNumberTypeUInt64: {
+        auto int64_ptr = static_cast<int64_t *>(key_ptr->data_c());
+        key = *(int64_ptr + i);
+      } break;
+      default:
+        MS_LOG(WARNING) << "Invalid key_data_type : " << key_data_type << ".";
+        return;
+    }
+
+    int id = embedding_hash_map->GetOrInsertDataUnsafe(static_cast<int>(key));
+    if (id == INVALID_INDEX_VALUE) {
+      MS_LOG(WARNING) << "Embedding hash map is full, exit warm up process.";
+      break;
+    }
+
+    size_t offset = id * value_len;
+    // size_t host_length = hash_table_info_ptr->host_length << shift_bit_num;
+    auto host_address = hash_table_info_ptr->host_address.get();
+    auto des_ptr = reinterpret_cast<uint8_t *>(host_address);
+    auto value_data_ptr = std::get<1>(entry.second)->data_c();
+    auto src_ptr = reinterpret_cast<uint8_t *>(value_data_ptr);
+    memcpy_s(des_ptr + offset, value_len, src_ptr + i * value_len, value_len);
   }
 }
 

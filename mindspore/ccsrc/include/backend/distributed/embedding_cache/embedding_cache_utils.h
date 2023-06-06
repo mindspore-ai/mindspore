@@ -17,9 +17,11 @@
 #ifndef MINDSPORE_CCSRC_DISTRIBUTED_EMBEDDING_CACHE_EMBEDDING_CHCHE_UTILS_H_
 #define MINDSPORE_CCSRC_DISTRIBUTED_EMBEDDING_CACHE_EMBEDDING_CHCHE_UTILS_H_
 
+#include <future>
 #include <map>
 #include <string>
 #include <memory>
+#include <tuple>
 #include <utility>
 #include "kernel/kernel.h"
 #include "runtime/hardware/device_context.h"
@@ -124,6 +126,9 @@ struct EmbeddingCacheStatisticsInfo {
 // cache size, host cache size, etc., and can allocate memory for the embedding cache table.
 class BACKEND_EXPORT EmbeddingCacheTableManager {
  public:
+  using WarmUpCacheMapValue = std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr>;
+  using WarmUpCacheMapEntry = std::pair<int32_t, WarmUpCacheMapValue>;
+  using WarmUpCacheMap = std::map<int32_t, WarmUpCacheMapValue>;
   static EmbeddingCacheTableManager &GetInstance();
 
   // Initialize the EmbeddingCacheTableManager.
@@ -181,6 +186,33 @@ class BACKEND_EXPORT EmbeddingCacheTableManager {
 
   void DumpHashTables() const;
 
+  bool checkpoint_load_status() const { return checkpoint_load_status_; }
+
+  void set_checkpoint_load_status(bool checkpoint_load_status) { checkpoint_load_status_ = checkpoint_load_status; }
+
+  int32_t StoreWarmUpPtr(const int32_t param_key, const tensor::TensorPtr &tensor_ptr);
+
+  int32_t StoreWarmUpPtr(const int32_t param_key, const tensor::TensorPtr &key_ptr, const tensor::TensorPtr &value_ptr,
+                         const tensor::TensorPtr &status_ptr);
+
+  void WarmUpHostCacheAsync(const int32_t batch_count);
+
+  std::pair<std::shared_ptr<std::future<bool>>, bool> GetWarmUpHostCacheAsyncStatus();
+
+  bool WaitForWarmUpHostCacheComplete();
+
+  const HashTableInfo *FindHashTablesByParamKey(const int param_key);
+
+  const WarmUpCacheMap &host_cache_ptrs() { return host_cache_ptrs_; }
+
+  std::map<std::string, HashTableInfo> &hash_tables() { return hash_tables_; }
+
+  std::shared_ptr<EmbeddingHostCache> &embedding_host_cache() { return embedding_host_cache_; }
+
+  void set_embedding_host_cache(std::shared_ptr<EmbeddingHostCache> embedding_host_cache_ptr) {
+    embedding_host_cache_ = embedding_host_cache_ptr;
+  }
+
  private:
   EmbeddingCacheTableManager() = default;
   ~EmbeddingCacheTableManager() = default;
@@ -188,6 +220,22 @@ class BACKEND_EXPORT EmbeddingCacheTableManager {
 
   // Get embedding table slice bound info on each worker in a multi-worker automatic parallel scenario.
   void GetEmbeddingTableSliceBound();
+
+  void WarmUpHostCacheItemBatch(const int32_t thread_count, const WarmUpCacheMapEntry &entry);
+
+  void WarmUpHostCacheItem(const std::shared_ptr<EmbeddingHashMap> &embedding_hash_map,
+                           const HashTableInfo *hash_table_info_ptr, const WarmUpCacheMapEntry &entry, const int start,
+                           const int end, const size_t value_len);
+
+  void WarmUpHostCacheSync(const int32_t batch_count);
+
+  std::atomic<bool> checkpoint_load_status_{false};
+
+  WarmUpCacheMap host_cache_ptrs_;
+
+  std::mutex host_cache_mutex_;
+
+  std::shared_ptr<std::promise<bool>> host_cache_promise_{nullptr};
 
   // The hash tables records information such as the dimension, memory address, and cache size of the embedding table
   // with the embedding cache enabled.

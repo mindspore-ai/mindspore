@@ -57,6 +57,8 @@ class BACKEND_EXPORT EmbeddingHashMap {
   int ParseData(const int id, int *const swap_out_index, int *const swap_out_ids, const size_t data_step,
                 const size_t graph_running_step, size_t *const swap_out_size, bool *const need_wait_graph);
 
+  int GetOrInsertDataUnsafe(const int key);
+
   // Get the global step of a element in hash map.
   size_t hash_step(const int hash_index) const;
   // Set the global step of a element in hash map.
@@ -74,6 +76,10 @@ class BACKEND_EXPORT EmbeddingHashMap {
   // Find the insertion position (index) in the hash map for an id.
   int FindInsertionPos(const size_t data_step, const size_t graph_running_step, bool *const need_swap,
                        bool *const need_wait_graph);
+
+  int InsertDataUnsafe(const int key);
+
+  int FindPosUnsafe(const int key);
 
   // Statistics on the usage of hash map capacity.
   size_t hash_count_;

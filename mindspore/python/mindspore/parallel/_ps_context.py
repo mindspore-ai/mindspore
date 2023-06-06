@@ -228,3 +228,15 @@ def _enable_distributed_mindrt():
     This method is used to distinguish from old distributed training mode.
     '''
     return ps_context().enable_distributed_mindrt()
+
+
+def _set_checkpoint_load_status(status):
+    return ps_context().set_checkpoint_load_status(status)
+
+
+def _store_warm_up_ptr_by_tensor(param_key, tensor):
+    return ps_context().store_warm_up_ptr_by_tensor(param_key, tensor)
+
+
+def _store_warm_up_ptr_by_tensor_list(param_key, key_tensor, value_tensor, status_tensor):
+    return ps_context().store_warm_up_ptr_by_tensor_list(param_key, key_tensor, value_tensor, status_tensor)

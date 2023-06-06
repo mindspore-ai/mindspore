@@ -79,6 +79,33 @@ int EmbeddingHashMap::ParseData(const int id, int *const swap_out_index, int *co
   return hash_index;
 }
 
+int EmbeddingHashMap::GetOrInsertDataUnsafe(const int key) {
+  if (auto it = hash_id_to_index_.find(key); it != hash_id_to_index_.end()) {
+    return it->second;
+  }
+  return InsertDataUnsafe(key);
+}
+
+int EmbeddingHashMap::InsertDataUnsafe(const int key) {
+  auto hash_index = FindPosUnsafe(key);
+  if (hash_index == INVALID_INDEX_VALUE) {
+    MS_LOG(WARNING) << "Insert data unsafe failed as map is full.";
+    return hash_index;
+  }
+  // Remove hash_count_++.
+  (void)hash_id_to_index_.emplace(key, hash_index);
+  hash_map_elements_[hash_index].set_id(key);
+  hash_map_elements_[hash_index].set_step(1);
+  return hash_index;
+}
+
+int EmbeddingHashMap::FindPosUnsafe(const int key) {
+  if (current_pos_ >= hash_capacity_) {
+    return INVALID_INDEX_VALUE;
+  }
+  return ++current_pos_;
+}
+
 int EmbeddingHashMap::FindInsertionPos(const size_t, const size_t graph_running_step, bool *const need_swap,
                                        bool *const need_wait_graph) {
   MS_EXCEPTION_IF_NULL(need_swap);
