@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-#include "ops/list_inplace_append.h"
+#include "ops/list_inplace_pop.h"
 
 #include <vector>
 #include <string>
+#include <memory>
 
 #include "utils/check_convert_utils.h"
 #include "abstract/abstract_value.h"
@@ -33,28 +34,51 @@
 
 namespace mindspore {
 namespace ops {
-AbstractBasePtr ListInplaceAppendInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<AbstractBasePtr> &input_args) {
+AbstractBasePtr ListInplacePopInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const auto &prim_name = primitive->name();
   constexpr size_t input_len = 2;
   constexpr size_t data_index = 0;
-  constexpr size_t target_index = 1;
+  constexpr size_t index_index = 1;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_len, prim_name);
   auto data_abs = dyn_cast<abstract::AbstractList>(input_args[data_index]);
   MS_EXCEPTION_IF_NULL(data_abs);
-  auto target_abs = input_args[target_index];
+  auto index_abs = input_args[index_index];
+
+  if (data_abs->dynamic_len()) {
+    MS_EXCEPTION(TypeError) << "The first input to " << prim_name << " can not be dynamic length sequence.";
+  }
+
+  // Check index input, must satisfy:
+  //   1. index input must be constant.
+  //   2. index input must be int64 scalar.
+  auto index_abs_value = index_abs->BuildValue();
+  if (index_abs_value == kValueAny) {
+    MS_EXCEPTION(ValueError) << "The second input to " << prim_name << " must be constant scalar but got variable.";
+  }
+  if (!utils::isa<int64_t>(index_abs_value)) {
+    MS_EXCEPTION(TypeError) << "The second input to " << prim_name << " must be int scalar but got "
+                            << index_abs_value->type_name();
+  }
+  int64_t index_value = GetValue<int64_t>(index_abs_value);
+  int64_t seq_len = SizeToLong(data_abs->size());
+  if (index_value >= seq_len || index_value < -1 * seq_len) {
+    MS_EXCEPTION(IndexError) << "The pop index out of range.";
+  }
+  int64_t pop_pos = index_value < 0 ? index_value + seq_len : index_value;
 
   abstract::AbstractListPtr ret;
-  if (data_abs->dynamic_len()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "ListInplaceAppend do not support dynamic length list input.";
-  }
   const auto &elements = data_abs->elements();
   abstract::AbstractBasePtrList new_elements;
-  for (auto element : elements) {
+  for (auto i = 0; i < pop_pos; ++i) {
+    const auto &element = elements[i];
     (void)new_elements.emplace_back(element);
   }
-  (void)new_elements.emplace_back(target_abs);
+  for (auto i = pop_pos + 1; i < seq_len; ++i) {
+    const auto &element = elements[i];
+    (void)new_elements.emplace_back(element);
+  }
   ret = std::make_shared<abstract::AbstractList>(new_elements);
 
   if (!data_abs->has_list_py_obj()) {
@@ -66,7 +90,7 @@ AbstractBasePtr ListInplaceAppendInfer(const abstract::AnalysisEnginePtr &, cons
 
   return ret;
 }
-MIND_API_OPERATOR_IMPL(ListInplaceAppend, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(ListInplaceAppend, prim::kPrimListInplaceAppend, ListInplaceAppendInfer, nullptr, true);
+MIND_API_OPERATOR_IMPL(ListInplacePop, BaseOperator);
+REGISTER_PRIMITIVE_EVAL_IMPL(ListInplacePop, prim::kPrimListInplacePop, ListInplacePopInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

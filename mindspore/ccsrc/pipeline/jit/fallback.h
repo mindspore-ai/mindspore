@@ -140,6 +140,8 @@ std::shared_ptr<U> GetPyListObject(const std::shared_ptr<T> &owner) {
 }
 
 std::string GetPyObjectPtrStr(const py::object &obj);
+
+bool EnableFallbackList();
 }  // namespace fallback
 
 namespace raiseutils {

@@ -306,6 +306,11 @@ constexpr auto kSequenceConcat = "SequenceConcat";
 
 // Sequence inplace operation
 constexpr auto kListInplaceAppend = "ListInplaceAppend";
+constexpr auto kListInplaceClear = "ListInplaceClear";
+constexpr auto kListInplaceReverse = "ListInplaceReverse";
+constexpr auto kListInplaceExtend = "ListInplaceExtend";
+constexpr auto kListInplaceInsert = "ListInplaceInsert";
+constexpr auto kListInplacePop = "ListInplacePop";
 
 // NN
 constexpr auto kFractionalMaxPoolWithFixedKsize = "FractionalMaxPoolWithFixedKsize";
@@ -1682,6 +1687,25 @@ GVAR_DEF(PrimitivePtr, kPrimSequenceConcat, std::make_shared<Primitive>(kSequenc
 
 // List inplace operation
 GVAR_DEF(PrimitivePtr, kPrimListInplaceAppend, std::make_shared<Primitive>(kListInplaceAppend));
+GVAR_DEF(PrimitivePtr, kPrimListInplaceClear,
+         std::make_shared<Primitive>(kListInplaceClear,
+                                     mindspore::HashMap<std::string, ValuePtr>({{std::string(GRAPH_FLAG_SIDE_EFFECT_IO),
+                                                                                 MakeValue(true)}})));
+GVAR_DEF(PrimitivePtr, kPrimListInplaceReverse,
+         std::make_shared<Primitive>(kListInplaceReverse,
+                                     mindspore::HashMap<std::string, ValuePtr>({{std::string(GRAPH_FLAG_SIDE_EFFECT_IO),
+                                                                                 MakeValue(true)}})));
+GVAR_DEF(PrimitivePtr, kPrimListInplaceExtend,
+         std::make_shared<Primitive>(kListInplaceExtend,
+                                     mindspore::HashMap<std::string, ValuePtr>({{std::string(GRAPH_FLAG_SIDE_EFFECT_IO),
+                                                                                 MakeValue(true)}})));
+GVAR_DEF(PrimitivePtr, kPrimListInplaceInsert,
+         std::make_shared<Primitive>(kListInplaceInsert,
+                                     mindspore::HashMap<std::string, ValuePtr>({{std::string(GRAPH_FLAG_SIDE_EFFECT_IO),
+                                                                                 MakeValue(true)}})));
+GVAR_DEF(PrimitivePtr, kPrimListInplacePop,
+         std::make_shared<Primitive>(kListInplacePop, mindspore::HashMap<std::string, ValuePtr>(
+                                                        {{std::string(GRAPH_FLAG_SIDE_EFFECT_IO), MakeValue(true)}})));
 
 // Other miscellaneous
 GVAR_DEF(PrimitivePtr, kPrimSampleDistortedBoundingBoxV2, std::make_shared<Primitive>(kSampleDistortedBoundingBoxV2));

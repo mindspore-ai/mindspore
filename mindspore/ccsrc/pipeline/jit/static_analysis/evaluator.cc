@@ -593,6 +593,9 @@ FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, cons
   (void)meta_func_graph_->GetChecker("check_infer_inputs").Execute(args_abs_list);
 
   MS_EXCEPTION_IF_NULL(meta_func_graph_);
+  if (scope_ != nullptr) {
+    meta_func_graph_->set_scope_name(scope_->name());
+  }
   FuncGraphPtr generated_func_graph;
   if (this->bound_node() != nullptr) {
     auto node_debug_info = bound_node()->debug_info();

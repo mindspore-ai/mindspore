@@ -1568,6 +1568,10 @@ AnfNodePtr FuncGraphSpecializer::BuildPossibleValueNode(const AnfNodePtr &origin
     if (IsPrimitiveCNode(origin_node, prim::kPrimDepend)) {
       return nullptr;
     }
+    // Keep primitive 'ListInplaceClear' not to be optimized
+    if (IsPrimitiveCNode(origin_node, prim::kPrimListInplaceClear)) {
+      return nullptr;
+    }
     // Keep primitive 'PyExecute' not to be optimized
     if (IsPrimitiveCNode(origin_node, prim::kPrimPyExecute)) {
       return nullptr;

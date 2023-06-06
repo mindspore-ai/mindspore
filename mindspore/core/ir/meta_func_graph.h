@@ -85,6 +85,9 @@ class MS_CORE_API MetaFuncGraph : public FuncGraphBase {
 
   void set_node_expr_src(const std::string &node_expr_src) { node_expr_src_ = node_expr_src; }
 
+  void set_scope_name(const std::string &scope_name) { scope_name_ = scope_name; }
+  std::string scope_name() { return scope_name_; }
+
  protected:
   template <typename Derived>
   std::shared_ptr<Derived> shared_from_base() {
@@ -95,6 +98,7 @@ class MS_CORE_API MetaFuncGraph : public FuncGraphBase {
   std::vector<Signature> signatures_;
   TypeListMap<FuncGraphPtr> cache_;
   std::string node_expr_src_ = "";
+  std::string scope_name_ = "";
 
  private:
   DebugInfoPtr debug_info_{nullptr};
