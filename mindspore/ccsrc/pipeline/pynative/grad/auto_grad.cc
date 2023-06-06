@@ -1268,6 +1268,7 @@ void AutoGradCellImpl::SetSensAndWeights(const AnfNodePtrList &weights, bool has
   for (const auto &weight : weights) {
     TraceGuard trace_guard(std::make_shared<TraceCopy>(weight->debug_info()));
     auto t = pynative::PyNativeAlgo::Common::GetTensorFromParam(weight);
+    MS_EXCEPTION_IF_NULL(t);
     (void)need_grad_weights_.emplace(t->id());
     auto p = ad_param()->tape_->add_parameter();
     auto param = weight->cast<ParameterPtr>();
