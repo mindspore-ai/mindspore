@@ -1153,23 +1153,10 @@ EvalResultPtr AnalysisEngine::ProcessEvalResults(const AbstractBasePtrList &out_
     return std::make_shared<EvalResult>(std::make_shared<AbstractAny>(), std::make_shared<AttrValueMap>());
   }
 
-  // Skip Negligible
-  AbstractBasePtrList skip_ignore_abs_list;
-  for (const auto &index : out_abs_list) {
-    if (!index->isa<AbstractNegligible>()) {
-      (void)skip_ignore_abs_list.emplace_back(index);
-    }
-  }
-
-  // If all abstracts is Negligible.
-  if (skip_ignore_abs_list.empty()) {
-    return std::make_shared<EvalResult>(out_abs_list[0], std::make_shared<AttrValueMap>());
-  }
-
-  AbstractBasePtr last_out_abs = skip_ignore_abs_list[0];
-  AbstractBasePtr joined_abs = skip_ignore_abs_list[0];
-  for (size_t i = 1; i < skip_ignore_abs_list.size(); ++i) {
-    const auto &abs = skip_ignore_abs_list[i];
+  AbstractBasePtr last_out_abs = out_abs_list[0];
+  AbstractBasePtr joined_abs = out_abs_list[0];
+  for (size_t i = 1; i < out_abs_list.size(); ++i) {
+    const auto &abs = out_abs_list[i];
     MS_EXCEPTION_IF_NULL(abs);
     try {
       MS_LOG(DEBUG) << "Join node: " << node->DebugString() << ", " << joined_abs->ToString() << ", and "

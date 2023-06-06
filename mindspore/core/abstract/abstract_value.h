@@ -853,7 +853,13 @@ class MS_CORE_API AbstractNegligible : public AbstractAny {
 
   AbstractBasePtr Join(const AbstractBasePtr &other) override {
     MS_EXCEPTION_IF_NULL(other);
-    return Clone();
+    if (other->isa<AbstractScalar>()) {
+      const auto &value_other = other->GetValueTrack();
+      if (!value_other->isa<ValueAny>()) {
+        return std::make_shared<AbstractAny>();
+      }
+    }
+    return other;
   }
 
   AbstractBasePtr Broaden() const override { return Clone(); }

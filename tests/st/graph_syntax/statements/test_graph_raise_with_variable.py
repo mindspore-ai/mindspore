@@ -1116,17 +1116,17 @@ def test_raise_join_in_control_flow_2():
     Expectation: No exception.
     """
     @jit
-    def foo(x, y, w, z):
-        out = w
+    def foo(x, y):
+        out = x
         if y > x:
-            out = w + z
+            out = x + y
         elif x == y:
             raise ValueError("The input should not be ", y)
         return out
 
     x = Tensor([1], dtype=mstype.int32)
     y = Tensor([2], dtype=mstype.int32)
-    res = foo(x, y, 1, 2)
+    res = foo(x, y)
     assert res == 3
 
 
@@ -1152,6 +1152,11 @@ class CellInList(nn.Cell):
         return self.cell_list[index](x)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_cell_in_list():
     """
     Feature: graph raise.
@@ -1159,10 +1164,59 @@ def test_cell_in_list():
     Expectation: No exception.
     """
     net = CellInList()
-    x = Tensor(np.ones((1, 1, 224, 224)), mstype.float32)
+    x = Tensor(np.ones((1, 1, 224, 224)), mstype.float64)
     idx = Tensor(0, mstype.int32)
     out = net(idx, x)
     relu_func = nn.ReLU()
     true_value = relu_func(x)
     ret = np.allclose(out.asnumpy(), true_value.asnumpy())
     assert ret
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_raise_constant_folding():
+    """
+    Feature: graph raise.
+    Description: Test raise join in control flow.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x):
+        if x > 10:
+            raise ValueError(f"The input can not be {x}.")
+        return 1.0
+
+    with pytest.raises(ValueError) as raise_info_constant:
+        x = Tensor(11)
+        res = foo(x)
+        print("res:", res)
+    assert "The input can not be 11." in str(raise_info_constant.value)
+
+
+@pytest.mark.skip(reason='Not support int64 yet')
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_raise_constant_folding_int64():
+    """
+    Feature: graph raise.
+    Description: Test raise join in control flow.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x):
+        if x > 10:
+            raise ValueError(f"The input can not be {x}.")
+        return 1
+
+    with pytest.raises(ValueError) as raise_info_constant_int64:
+        x = Tensor(11)
+        res = foo(x)
+        print("res:", res)
+    assert "The input can not be 11." in str(raise_info_constant_int64.value)
