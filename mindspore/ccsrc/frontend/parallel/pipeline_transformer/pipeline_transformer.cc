@@ -910,7 +910,7 @@ AnfNodePtr PipelineTransformer::InsertReceive(const FuncGraphPtr &graph, const A
     node->set_abstract(abstract_clone);
     node->set_user_data<TensorLayout>(std::make_shared<TensorLayout>(tensor_layout));
     auto actual_param = RefParameterToActualParameter(node);
-    if (!actual_param) {
+    if (actual_param) {
       actual_param->set_user_data<TensorLayout>(std::make_shared<TensorLayout>(tensor_layout));
       auto actual_param_abstract = actual_param->abstract()->Clone();
       actual_param_abstract->set_shape(parallel_shape);

@@ -388,6 +388,7 @@ void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &m
       if (temp != make_tuple_index && make_tuple_index != -1) {
         continue;
       }
+      temp = make_tuple_index != -1 ? -1 : temp;
       RedistributionNextNode(use_cnode, manager, node_users_map, temp, -1, next_nodes);
       continue;
     }
@@ -397,9 +398,10 @@ void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &m
       for (auto &fg_use : fg_map) {
         auto fg_node = fg_use.first->first->cast<CNodePtr>();
         constexpr int SWITCH_LAST_INPUT_INDEX = 3;
-        if (IsWhileGraph(fg, fg_node->func_graph()) && fg_use.first->second == SWITCH_LAST_INPUT_INDEX) {
-          RedistributionNextNode(fg_node, manager, node_users_map, get_item_index, make_tuple_index, next_nodes);
+        if (IsWhileGraph(fg, fg) && fg_use.first->second != SWITCH_LAST_INPUT_INDEX) {
+          continue;
         }
+        RedistributionNextNode(fg_node, manager, node_users_map, get_item_index, make_tuple_index, next_nodes);
       }
     }
     // depend, auto monad and control flow op don't need to jump over
@@ -418,20 +420,7 @@ void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &m
 void RedistributionPreNode(const CNodePtr &cnode, const FuncGraphManagerPtr &manager,
                            std::vector<AnfNodePtr> *pre_nodes) {
   if (IsValueNode<FuncGraph>(cnode->input(0))) {
-    auto fg = GetValueNode<FuncGraphPtr>(cnode->input(0));
-    auto pre_node = GetRealKernelNode(fg->output(), -1, nullptr).first;
-    if (!pre_node) {
-      return;
-    }
-    auto pre_cnode = pre_node->cast<CNodePtr>();
-    if (!pre_cnode) {
-      return;
-    }
-    if (IsParallelCareNode(pre_cnode) && pre_cnode->has_user_data<OperatorInfo>()) {
-      pre_nodes->push_back(pre_cnode);
-    } else {
-      RedistributionPreNode(pre_cnode, pre_cnode->func_graph()->manager(), pre_nodes);
-    }
+    return;
   }
   if (IsControlFlowNode(cnode)) {
     auto switch_cnode = cnode->input(0)->cast<CNodePtr>();
