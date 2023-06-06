@@ -75,7 +75,15 @@ std::string ConvertUnicodeStrToRealStr(const std::string &target) {
       break;
     }
     if (cur_str.substr(0, std::strlen(kHexPrefix)) == kHexPrefix) {
-      script_buffer << char(std::stoi(cur_str, nullptr, base_16));
+      try {
+        script_buffer << char(std::stol(cur_str, nullptr, base_16));
+      } catch (std::invalid_argument &) {
+        MS_LOG(ERROR) << "Invalid argument";
+      } catch (std::out_of_range) {
+        MS_LOG(ERROR) << "Out of range";
+      } catch (...) {
+        MS_LOG(ERROR) << "Other unexpected error";
+      }
     } else {
       script_buffer << cur_str;
     }
