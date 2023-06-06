@@ -52,10 +52,15 @@ constexpr uint32_t kMaxCommonNodeNumPerStream = 350;
 constexpr uint32_t kTaskNumPerHcomNode = 300;
 constexpr uint32_t kTaskNumPerWorldHcomNode = 350;
 constexpr uint32_t kTaskNumPerSameServerHcomNode = 125;
-std::unordered_map<std::string, std::unordered_map<size_t, uint32_t>> kTaskNumPerSameServerContinuesHcomNodeMap = {
-  {prim::kPrimAllGather->name(), {{kSizeTwo, 19}, {kSizeFour, 21}, {kSizeEight, 55}}},
-  {prim::kPrimReduceScatter->name(), {{kSizeTwo, 20}, {kSizeFour, 38}, {kSizeEight, 62}}},
-  {prim::kPrimAllReduce->name(), {{kSizeTwo, 29}, {kSizeFour, 49}, {kSizeEight, 107}}}};
+constexpr uint32_t kTaskNumPerAllReduceNodeWithContinuousGroupSize2 = 30;
+constexpr uint32_t kTaskNumPerAllReduceNodeWithContinuousGroupSize4 = 59;
+constexpr uint32_t kTaskNumPerAllReduceNodeWithContinuousGroupSize8 = 107;
+constexpr uint32_t kTaskNumPerAllGatherNodeWithContinuousGroupSize2 = 20;
+constexpr uint32_t kTaskNumPerAllGatherNodeWithContinuousGroupSize4 = 31;
+constexpr uint32_t kTaskNumPerAllGatherNodeWithContinuousGroupSize8 = 55;
+constexpr uint32_t kTaskNumPerReduceScatterNodeWithContinuousGroupSize2 = 21;
+constexpr uint32_t kTaskNumPerReduceScatterNodeWithContinuousGroupSize4 = 48;
+constexpr uint32_t kTaskNumPerReduceScatterNodeWithContinuousGroupSize8 = 62;
 constexpr uint32_t kTaskNumPerHcomSendRecvNode = 15;
 constexpr uint32_t kTaskNumPerCommonNode = 3;
 
@@ -213,6 +218,49 @@ void AssignStreamWithDefaultStream(const KernelGraphPtr &graph) {
     AnfAlgo::SetStreamId(kDefaultStreamIndex, node.get());
   }
 }
+
+uint32_t GetHcomTaskNumInSameServer(const CNodePtr &cnode, const std::vector<uint32_t> &rank_ids) {
+  uint32_t task_num = kTaskNumPerSameServerHcomNode;
+  auto speedup_config = parallel::ParallelContext::GetInstance()->speedup_config();
+  if (speedup_config.find("enable_task_opt") == speedup_config.end() || !speedup_config["enable_task_opt"]) {
+    return task_num;
+  }
+
+  static std::unordered_map<std::string, std::unordered_map<size_t, uint32_t>>
+    kTaskNumPerSameServerContinuesHcomNodeMap = {{prim::kPrimAllGather->name(),
+                                                  {{kSizeTwo, kTaskNumPerAllGatherNodeWithContinuousGroupSize2},
+                                                   {kSizeFour, kTaskNumPerAllGatherNodeWithContinuousGroupSize4},
+                                                   {kSizeEight, kTaskNumPerAllGatherNodeWithContinuousGroupSize8}}},
+                                                 {prim::kPrimReduceScatter->name(),
+                                                  {{kSizeTwo, kTaskNumPerReduceScatterNodeWithContinuousGroupSize2},
+                                                   {kSizeFour, kTaskNumPerReduceScatterNodeWithContinuousGroupSize4},
+                                                   {kSizeEight, kTaskNumPerReduceScatterNodeWithContinuousGroupSize8}}},
+                                                 {prim::kPrimAllReduce->name(),
+                                                  {{kSizeTwo, kTaskNumPerAllReduceNodeWithContinuousGroupSize2},
+                                                   {kSizeFour, kTaskNumPerAllReduceNodeWithContinuousGroupSize4},
+                                                   {kSizeEight, kTaskNumPerAllReduceNodeWithContinuousGroupSize8}}}};
+
+  auto prim = GetCNodePrimitive(cnode);
+  MS_EXCEPTION_IF_NULL(prim);
+  auto prim_name = prim->name();
+  auto group_size = rank_ids.size();
+  if (IsContinuousGroup(rank_ids) &&
+      kTaskNumPerSameServerContinuesHcomNodeMap.find(prim_name) != kTaskNumPerSameServerContinuesHcomNodeMap.end() &&
+      kTaskNumPerSameServerContinuesHcomNodeMap[prim_name].find(group_size) !=
+        kTaskNumPerSameServerContinuesHcomNodeMap[prim_name].end()) {
+    auto redundancy_str = common::GetEnv("MS_DEV_REDUNDANCY_TASK_NUM");
+    size_t redundancy = 0;
+    if (!redundancy_str.empty()) {
+      std::stringstream stream;
+      stream << redundancy_str;
+      stream >> redundancy;
+    }
+    task_num = kTaskNumPerSameServerContinuesHcomNodeMap[prim_name][group_size] + redundancy;
+    MS_LOG(DEBUG) << "Reserve " << task_num << " task for " << cnode->fullname_with_scope() << ", comm group is "
+                  << rank_ids;
+  }
+  return task_num;
+}
 }  // namespace
 
 uint32_t AscendStreamAssign::GetHcomTaskNum(const CNodePtr &cnode) {
@@ -242,32 +290,7 @@ uint32_t AscendStreamAssign::GetHcomTaskNum(const CNodePtr &cnode) {
   }
 
   if (IsSameServer(rank_ids)) {
-    auto prim = GetCNodePrimitive(cnode);
-    MS_EXCEPTION_IF_NULL(prim);
-    auto is_enable_task_opt = common::GetEnv("MS_ENABLE_TASK_OPT") == "1";
-    if (is_enable_task_opt) {
-      auto prim_name = prim->name();
-      auto group_size = rank_ids.size();
-      if (IsContinuousGroup(rank_ids) &&
-          kTaskNumPerSameServerContinuesHcomNodeMap.find(prim_name) !=
-            kTaskNumPerSameServerContinuesHcomNodeMap.end() &&
-          kTaskNumPerSameServerContinuesHcomNodeMap[prim_name].find(group_size) !=
-            kTaskNumPerSameServerContinuesHcomNodeMap[prim_name].end()) {
-        auto redundancy_str = common::GetEnv("MS_REDUNDANCY_TASK_NUM");
-        size_t redundancy = 0;
-        if (!redundancy_str.empty()) {
-          std::stringstream stream;
-          stream << redundancy_str;
-          stream >> redundancy;
-          MS_LOG(INFO) << "[Task debug info]Apply redundancy task num: " << redundancy;
-        }
-        size_t task_num = kTaskNumPerSameServerContinuesHcomNodeMap[prim_name][group_size] + redundancy;
-        MS_LOG(INFO) << "[Task debug info]Reserve " << task_num << " task for " << cnode->fullname_with_scope()
-                     << ", comm group is " << rank_ids;
-        return task_num;
-      }
-    }
-    return kTaskNumPerSameServerHcomNode;
+    return GetHcomTaskNumInSameServer(cnode, rank_ids);
   } else if (rank_ids.size() == static_cast<size_t>(device_num) && device_num >= kDeviceNumThreshold) {
     return kTaskNumPerWorldHcomNode;
   }
