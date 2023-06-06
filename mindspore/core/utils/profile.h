@@ -232,6 +232,8 @@ class MS_CORE_API ProcessStatus {
   static ProcessStatus &GetInstance();
   // Get current process status by a key. Only useful for Linux.
   int64_t GetMemoryCost(const std::string &key) const;
+  // Get current process status by a key, such as Pid, PPid. Only useful for Linux.
+  int64_t GetKeyValue(const std::string &key) const;
   // Start to record memory increase info. It must be used with RecordEnd().
   // If previous record not end, the next record will have indent when printed.
   void RecordStart(const std::string &step_name);

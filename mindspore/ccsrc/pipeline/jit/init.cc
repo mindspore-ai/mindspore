@@ -72,6 +72,8 @@ using PSContext = mindspore::ps::PSContext;
 using CollectiveManager = mindspore::distributed::collective::CollectiveManager;
 using RecoveryContext = mindspore::distributed::recovery::RecoveryContext;
 
+constexpr int PROFILER_RECORD_STAMP = 2;
+
 #ifndef ENABLE_SECURITY
 namespace mindspore {
 namespace profiler {
@@ -91,7 +93,18 @@ void RegProfiler(const py::module *m) {
 void RegProfilerManager(const py::module *m) {
   (void)py::class_<ProfilerManager, std::shared_ptr<ProfilerManager>>(*m, "ProfilerManager")
     .def_static("get_instance", &ProfilerManager::GetInstance, "ProfilerManager get_instance.")
-    .def("dynamic_status", &ProfilerManager::GetNetDynamicShapeStatus, "dynamic_status");
+    .def("dynamic_status", &ProfilerManager::GetNetDynamicShapeStatus, "dynamic_status")
+    .def("set_profile_framework", &ProfilerManager::SetProfileFramework, py::arg("profile_framework"));
+}
+
+// level: 0, for developer user, 1, for general user;
+// profile_framework: 0, all host info, 1, host memory, 2, host time;
+// start_end: 0, start flag, 1, end flag, 2, no distinguish start and end.
+// Default parameter for host profile meaning: for developer user, collect both time and memory, record timestamp.
+void RegHostProfile(py::module *m) {
+  m->def("_collect_host_info", &CollectHostInfo, py::arg("module_name"), py::arg("event"), py::arg("stage"),
+         py::arg("level") = py::int_(0), py::arg("profile_framework") = py::int_(0),
+         py::arg("start_end") = py::int_(PROFILER_RECORD_STAMP), py::arg("custom_info") = py::dict());
 }
 }  // namespace profiler
 }  // namespace mindspore
@@ -122,6 +135,7 @@ void RegModule(py::module *m) {
 #ifndef ENABLE_SECURITY
   mindspore::profiler::RegProfilerManager(m);
   mindspore::profiler::RegProfiler(m);
+  mindspore::profiler::RegHostProfile(m);
 #endif
 #ifdef _MSC_VER
   mindspore::abstract::RegPrimitiveFrontEval();
