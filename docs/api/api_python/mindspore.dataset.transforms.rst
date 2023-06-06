@@ -95,7 +95,7 @@ API样例中常用的导入模块如下：
 样例库
 ^^^^^^
 
-快速上手使用视觉类变换的API，跳转参考 `Illustration of vision transforms <https://www.mindspore.cn/docs/zh-CN/master/api_python/dataset_vision/vision_gallery.html>`_ 。
+快速上手使用视觉类变换的API，跳转参考 `Illustration of vision transforms <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_ 。
 此指南中展示了典型的API用法，以及输入输出结果。
 
 变换
@@ -241,7 +241,7 @@ API样例中常用的导入模块如下：
 样例库
 ^^^^^^
 
-快速上手使用文本变换的API，跳转参考 `Illustration of text transforms <https://www.mindspore.cn/docs/zh-CN/master/api_python/dataset_text/text_gallery.html>`_ 。
+快速上手使用文本变换的API，跳转参考 `Illustration of text transforms <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_ 。
 此指南中展示了典型的API用法，以及输入输出结果。
 
 变换
@@ -311,7 +311,7 @@ API样例中常用的导入模块如下：
 样例库
 ^^^^^^
 
-快速上手使用音频变换的API，跳转参考 `Illustration of audio transforms <https://www.mindspore.cn/docs/zh-CN/master/api_python/dataset_audio/audio_gallery.html>`_ 。
+快速上手使用音频变换的API，跳转参考 `Illustration of audio transforms <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_ 。
 此指南中展示了典型的API用法，以及输入输出结果。
 
 变换
