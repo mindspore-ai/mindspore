@@ -654,8 +654,7 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
     if (val->isa<parse::InterpretedObject>()) {
       MS_LOG(ERROR) << "Do not support " << val << " as a function.\n"
                     << "If it is a function from a module outside the project root directory and it needs to be run as "
-                    << "a static computation graph, try adding the '@jit' decorator or setting the path "
-                    << "where the module is located: 'export MS_DEV_JIT_DIR=module1_path,module2_path,...'";
+                    << "a static computation graph, try setting: 'export MS_JIT_MODULES=module1_name,module2_name,...'";
     }
   }
 
