@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ TypePtr MaskedScatterInferType(const PrimitivePtr &prim, const std::vector<Abstr
   auto op_name = prim->name();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("mask", input_args[1]->BuildType(), {kBool}, op_name);
   std::set<TypePtr> valid_types;
-  valid_types = {kFloat16, kFloat32, kFloat64, kUInt8, kInt8, kInt16, kInt32, kInt64};
+  valid_types = {kFloat16, kFloat32, kFloat64, kUInt8, kInt8, kInt16, kInt32, kInt64, kBool};
   auto x_type = input_args[kInputIndex0]->BuildType();
   auto updates_type = input_args[kInputIndex2]->BuildType();
   std::map<std::string, TypePtr> types;

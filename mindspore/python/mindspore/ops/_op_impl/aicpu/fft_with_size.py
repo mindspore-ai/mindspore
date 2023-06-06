@@ -26,6 +26,12 @@ fft_with_size_op_info = AiCPURegOp("FFTWithSize") \
     .attr("norm", "str") \
     .attr("onesided", "bool") \
     .attr("real", "bool") \
+    .dtype_format(DataType.BOOL_Default, DataType.C64_Default) \
+    .dtype_format(DataType.U8_Default, DataType.C64_Default) \
+    .dtype_format(DataType.I8_Default, DataType.C64_Default) \
+    .dtype_format(DataType.I16_Default, DataType.C64_Default) \
+    .dtype_format(DataType.I32_Default, DataType.C64_Default) \
+    .dtype_format(DataType.I64_Default, DataType.C64_Default) \
     .dtype_format(DataType.C64_Default, DataType.C64_Default) \
     .dtype_format(DataType.C128_Default, DataType.C128_Default) \
     .dtype_format(DataType.F32_Default, DataType.C64_Default) \

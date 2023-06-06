@@ -260,11 +260,12 @@ bool FFTWithSizeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
     } else {
       FFTWITHSIZE_SWITCH_DIM_CALCULATE(T1, T2, false, true);
     }
-  } else {                                                                              // rfft and irfft
-    if constexpr (std::is_same<T1, float>::value || std::is_same<T1, double>::value) {  // rfft
-      FFTWITHSIZE_SWITCH_DIM_CALCULATE(T1, T2, true, false);
-    } else {  // irfft
+  } else {  // rfft and irfft
+    if constexpr (std::is_same<T1, std::complex<float>>::value ||
+                  std::is_same<T1, std::complex<double>>::value) {  // irfft
       FFTWITHSIZE_SWITCH_DIM_CALCULATE(T1, T2, true, true);
+    } else {  // rfft
+      FFTWITHSIZE_SWITCH_DIM_CALCULATE(T1, T2, true, false);
     }
   }
   return true;
@@ -282,7 +283,19 @@ std::vector<std::pair<KernelAttr, FFTWithSizeCpuKernelMod::FFTWithSizeFunc>> FFT
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeComplex128),
    &FFTWithSizeCpuKernelMod::LaunchKernel<double, std::complex<double>>},
   {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeFloat64),
-   &FFTWithSizeCpuKernelMod::LaunchKernel<std::complex<double>, double>}};
+   &FFTWithSizeCpuKernelMod::LaunchKernel<std::complex<double>, double>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeComplex64),
+   &FFTWithSizeCpuKernelMod::LaunchKernel<uint8_t, std::complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeComplex64),
+   &FFTWithSizeCpuKernelMod::LaunchKernel<int8_t, std::complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeComplex64),
+   &FFTWithSizeCpuKernelMod::LaunchKernel<int16_t, std::complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex64),
+   &FFTWithSizeCpuKernelMod::LaunchKernel<int32_t, std::complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+   &FFTWithSizeCpuKernelMod::LaunchKernel<int64_t, std::complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeComplex64),
+   &FFTWithSizeCpuKernelMod::LaunchKernel<bool, std::complex<float>>}};
 
 std::vector<KernelAttr> FFTWithSizeCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

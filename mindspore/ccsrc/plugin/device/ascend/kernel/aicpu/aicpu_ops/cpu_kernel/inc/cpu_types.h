@@ -7,6 +7,7 @@
 #define CPU_KERNEL_TYPES_H
 
 #include <map>
+#include <set>
 
 namespace aicpu {
 #ifdef VISIBILITY
@@ -56,6 +57,11 @@ AICPU_VISIBILITY inline int GetSizeByDataType(DataType dataType) {
     return -1;
   }
   return iter->second;
+}
+
+AICPU_VISIBILITY inline bool IsUnsignedType(DataType dataType) {
+  static const std::set<DataType> unsigned_types{DT_UINT8, DT_UINT16, DT_UINT32, DT_UINT64};
+  return unsigned_types.count(dataType) > 0;
 }
 
 enum Format {

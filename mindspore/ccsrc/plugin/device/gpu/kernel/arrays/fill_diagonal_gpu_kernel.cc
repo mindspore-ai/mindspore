@@ -46,6 +46,11 @@ bool FillDiagonalGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   fill_value_ = kernel_ptr_->get_fill_value();
   wrap_ = kernel_ptr_->get_wrap();
 
+  if (IsOneOfUnsignedType(inputs.at(0)->GetDtype()) && fill_value_ < 0) {
+    MS_LOG(ERROR) << "For " << kernel_name_ << ", [file_value] should be non_negative for input of unsigned type.";
+    return false;
+  }
+
   return true;
 }
 
@@ -110,8 +115,18 @@ bool FillDiagonalGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
 }
 
 std::vector<std::pair<KernelAttr, FillDiagonalGpuKernelMod::FillDiagonalFunc>> FillDiagonalGpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+   &FillDiagonalGpuKernelMod::LaunchKernel<half>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
    &FillDiagonalGpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   &FillDiagonalGpuKernelMod::LaunchKernel<double>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+   &FillDiagonalGpuKernelMod::LaunchKernel<uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+   &FillDiagonalGpuKernelMod::LaunchKernel<int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+   &FillDiagonalGpuKernelMod::LaunchKernel<int16_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
    &FillDiagonalGpuKernelMod::LaunchKernel<int32_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),

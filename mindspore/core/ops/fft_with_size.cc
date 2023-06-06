@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <set>
+#include <unordered_map>
 
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
@@ -72,6 +73,20 @@ std::vector<int64_t> FFTWithSize::get_signal_sizes() const {
 }
 
 namespace {
+const std::unordered_map<TypePtr, TypePtr> kRfftTypes{
+  {kFloat32, kComplex64}, {kFloat64, kComplex128}, {kUInt8, kComplex64}, {kInt8, kComplex64},
+  {kInt16, kComplex64},   {kInt32, kComplex64},    {kInt64, kComplex64}, {kBool, kComplex64}};
+
+const std::unordered_map<TypePtr, TypePtr> kFftTypes{{kComplex64, kComplex64}, {kComplex128, kComplex128}};
+
+const std::unordered_map<TypePtr, TypePtr> kIrfftTypes{{kComplex64, kFloat32}, {kComplex128, kFloat64}};
+
+std::set<TypePtr> get_input_types(std::unordered_map<TypePtr, TypePtr> types) {
+  std::set<TypePtr> keys;
+  for (const auto &t : types) keys.insert(t.first);
+  return keys;
+}
+
 abstract::ShapePtr FFTWithSizeInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
@@ -156,10 +171,8 @@ abstract::ShapePtr FFTWithSizeInferShape(const PrimitivePtr &primitive,
 TypePtr FFTWithSizeInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::string prim_name = prim->name();
   CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  auto input_type = input_args[kInputIndex0]->BuildType();
+  auto input_type = TypeIdToType(input_args[kInputIndex0]->BuildType()->cast<TensorTypePtr>()->element()->type_id());
   MS_EXCEPTION_IF_NULL(input_type);
-  const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_type, valid_types, prim_name);
   auto real_attr = prim->GetAttr("real");
   auto inverse_attr = prim->GetAttr("inverse");
   if (inverse_attr == nullptr) {
@@ -172,36 +185,21 @@ TypePtr FFTWithSizeInferType(const PrimitivePtr &prim, const std::vector<Abstrac
   }
   auto real = GetValue<bool>(real_attr);
   auto inverse = GetValue<bool>(inverse_attr);
-  auto out_type = input_type;
+  TypePtr out_type{nullptr};
   if (real) {
     if (!inverse) {
-      if (*(input_type->cast<TensorTypePtr>()->element()) == *(kFloat32)) {
-        out_type->cast<TensorTypePtr>()->set_element(kComplex64);
-      } else if (*(input_type->cast<TensorTypePtr>()->element()) == *(kFloat64)) {
-        out_type->cast<TensorTypePtr>()->set_element(kComplex128);
-      } else {
-        MS_EXCEPTION(TypeError) << "For '" << prim_name << "', "
-                                << "RFFT requires float32 or float64 inputs, but got "
-                                << *(input_type->cast<TensorTypePtr>()->element()) << ".";
-      }
+      auto valid_types = get_input_types(kRfftTypes);
+      (void)CheckAndConvertUtils::CheckTypeValid("x in rfft mode", input_type, valid_types, prim_name);
+      out_type = kRfftTypes.at(input_type);
     } else {
-      if (*(input_type->cast<TensorTypePtr>()->element()) == *(kComplex64)) {
-        out_type->cast<TensorTypePtr>()->set_element(kFloat32);
-      } else if (*(input_type->cast<TensorTypePtr>()->element()) == *(kComplex128)) {
-        out_type->cast<TensorTypePtr>()->set_element(kFloat64);
-      } else {
-        MS_EXCEPTION(TypeError) << "For '" << prim_name << "', "
-                                << "IRFFT requires complex64 or complex128 inputs, but got "
-                                << *(input_type->cast<TensorTypePtr>()->element()) << ".";
-      }
+      auto valid_types = get_input_types(kIrfftTypes);
+      (void)CheckAndConvertUtils::CheckTypeValid("x in irfft mode", input_type, valid_types, prim_name);
+      out_type = kIrfftTypes.at(input_type);
     }
   } else {
-    if (*(input_type->cast<TensorTypePtr>()->element()) != *(kComplex64) &&
-        *(input_type->cast<TensorTypePtr>()->element()) != *(kComplex128)) {
-      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', "
-                              << "FFT/IFFT requires complex64 or complex128 inputs, but got "
-                              << *(input_type->cast<TensorTypePtr>()->element()) << ".";
-    }
+    auto valid_types = get_input_types(kFftTypes);
+    (void)CheckAndConvertUtils::CheckTypeValid("x in fft/ifft mode", input_type, valid_types, prim_name);
+    out_type = kFftTypes.at(input_type);
   }
   return out_type;
 }

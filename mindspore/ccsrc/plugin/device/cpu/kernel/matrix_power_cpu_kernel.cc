@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
+#include "mindspore/core/ops/matrix_power.h"
+
+#include <functional>
 #include "Eigen/Core"
 #include "Eigen/LU"
-#include "mindspore/core/ops/matrix_power.h"
 #include "plugin/device/cpu/kernel/matrix_power_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
@@ -55,10 +57,20 @@ bool MatrixPowerCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
                                      const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputSize, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputSize, kernel_name_);
-  if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernel<float16>(inputs, outputs);
+  if (dtype_ == kNumberTypeFloat64) {
+    LaunchKernel<double>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeUInt8) {
+    LaunchKernel<uint8_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeInt8) {
+    LaunchKernel<int8_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeInt16) {
+    LaunchKernel<int16_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeInt32) {
+    LaunchKernel<int32_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeInt64) {
+    LaunchKernel<int64_t>(inputs, outputs);
   } else {
     MS_LOG(ERROR) << "Data type is " << TypeIdLabel(dtype_) << " which is not supported.";
     return false;
@@ -67,46 +79,65 @@ bool MatrixPowerCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
 }
 
 template <typename T>
+using Matrix = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+
+template <typename T>
 void MatrixPowerCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                            const std::vector<kernel::AddressPtr> &outputs) {
   T *x_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  MS_EXCEPTION_IF_NULL(x_addr);
   T *y_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  MS_EXCEPTION_IF_NULL(y_addr);
-  size_t batch = output_shape_[0];
-  size_t dim = output_shape_[1];
-  size_t matrix_size = dim * dim;
-  std::vector<std::vector<float>> temp_x(batch, std::vector<float>(matrix_size));
-  std::vector<std::vector<float>> temp_y(batch, std::vector<float>(matrix_size));
+  size_t batch = std::accumulate(output_shape_.begin(), output_shape_.end() - 2, 1, std::multiplies<int64_t>());
+  size_t dim = output_shape_.back();
 
-  for (size_t i = 0; i < batch; i++) {
-    int64_t n = power_;
-    for (size_t j = 0; j < matrix_size; j++) {
-      temp_x[i][j] = static_cast<float>(x_addr[i * matrix_size + j]);
-    }
-    Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>> eigen_input(temp_x[i].data(), dim, dim);
-    Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>> eigen_output(temp_y[i].data(), dim, dim);
-    if (power_ < 0) {
-      n = -n;
-      Eigen::FullPivLU<Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>>> lu(eigen_input);
-      if (!(lu.isInvertible())) {
-        MS_EXCEPTION(ValueError) << "For MatrixPower, the " << i << "-th matrix is singular"
-                                 << ", but got n is negative.";
+  std::function<void(size_t, size_t)> task;
+  if constexpr (!std::is_integral_v<T>) {
+    task = [&](size_t start, size_t end) {
+      for (size_t i = start; i < end; i++) {
+        int64_t n = power_;
+        size_t offset = i * dim * dim;
+        Matrix<T> eigen_input = Eigen::Map<Matrix<T>>(x_addr + offset, dim, dim);
+        if (n < 0) {
+          n = -n;
+          Eigen::FullPivLU<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> LU(eigen_input);
+          if (!(LU.isInvertible())) {
+            MS_EXCEPTION(ValueError) << "For MatrixPower, negative power can not apply to singular matrix.";
+          }
+          eigen_input = LU.inverse();
+        }
+        Eigen::Map<Matrix<T>> eigen_output(y_addr + offset, dim, dim);
+        (void)eigen_output.setIdentity();
+        while (n > 0) {
+          if (n % kNumber2 == 1) {
+            eigen_output = eigen_output * eigen_input;
+          }
+          n = n / kNumber2;
+          eigen_input = eigen_input * eigen_input;
+        }
       }
-      eigen_input = lu.inverse();
-    }
-    (void)eigen_output.setIdentity();
-    while (n > 0) {
-      if (n % kNumber2 == 1) {
-        eigen_output = eigen_output * eigen_input;
+    };
+  } else {
+    task = [&](size_t start, size_t end) {
+      for (size_t i = start; i < end; i++) {
+        int64_t n = power_;
+        size_t offset = i * dim * dim;
+        Matrix<T> eigen_input = Eigen::Map<Matrix<T>>(x_addr + offset, dim, dim);
+        if (n < 0) {
+          MS_EXCEPTION(ValueError) << "For MatrixPower, n < 0 is not supported for input of integer type.";
+        }
+        Eigen::Map<Matrix<T>> eigen_output(y_addr + offset, dim, dim);
+        (void)eigen_output.setIdentity();
+        while (n > 0) {
+          if (n % kNumber2 == 1) {
+            eigen_output = eigen_output * eigen_input;
+          }
+          n = n / kNumber2;
+          eigen_input = eigen_input * eigen_input;
+        }
       }
-      n = n / kNumber2;
-      eigen_input = eigen_input * eigen_input;
-    }
-    for (size_t j = 0; j < matrix_size; j++) {
-      y_addr[i * matrix_size + j] = static_cast<T>(temp_y[i][j]);
-    }
+    };
   }
+
+  ParallelLaunchAutoSearch(task, batch, this, &parallel_search_info_);
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MatrixPower, MatrixPowerCpuKernelMod);

@@ -22,6 +22,7 @@ masked_scatter_op_info = AiCPURegOp("MaskedScatter") \
     .input(1, "mask", "required") \
     .input(2, "updates", "required") \
     .output(0, "y", "required") \
+    .dtype_format(DataType.BOOL_Default, DataType.BOOL_Default, DataType.BOOL_Default, DataType.BOOL_Default) \
     .dtype_format(DataType.U8_Default, DataType.BOOL_Default, DataType.U8_Default, DataType.U8_Default) \
     .dtype_format(DataType.I8_Default, DataType.BOOL_Default, DataType.I8_Default, DataType.I8_Default) \
     .dtype_format(DataType.I16_Default, DataType.BOOL_Default, DataType.I16_Default, DataType.I16_Default) \

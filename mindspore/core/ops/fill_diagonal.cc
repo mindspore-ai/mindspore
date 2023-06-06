@@ -68,7 +68,7 @@ abstract::ShapePtr FillDiagonalInferShape(const PrimitivePtr &, const std::vecto
 }
 
 TypePtr FillDiagonalInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypePtr> valid_types = {kFloat32, kInt32, kInt64};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kUInt8, kInt8, kInt16, kInt32, kInt64};
   auto x_dtype =
     CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->BuildType(), valid_types, primitive->name());
   return std::make_shared<TensorType>(x_dtype);

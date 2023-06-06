@@ -32,6 +32,7 @@
 #include "mindspore/core/ops/math_ops.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
+#include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
 
@@ -39,31 +40,35 @@ namespace mindspore {
 namespace ops {
 namespace {
 constexpr auto kExponent = "n";
+constexpr size_t kMatrixPowerInputMinRank = 2;
+constexpr int64_t kLastSecond = -2;
 
 TypePtr MatrixPowerInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  auto prim_name = prim->name();
+  const std::set<TypePtr> valid_types = {kUInt8, kInt8, kInt16, kInt32, kInt64, kFloat32, kFloat64};
   auto x_type = input_args[0]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim->name());
+  auto n_value = GetValue<int64_t>(prim->GetAttr(kExponent));
+  auto elem_type = TypeIdToType(x_type->cast<TensorTypePtr>()->element()->type_id());
+  if (n_value < 0 && (elem_type == kFloat16 || common_integral_types.count(elem_type) > 0)) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name << ", integral types are not supported for n < 0.";
+  }
   return x_type;
 }
 
 abstract::ShapePtr MatrixPowerInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  const constexpr int64_t x_shape_size = 3;
-  const constexpr int64_t x_shape_two = 2;
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(x_shape);
   }
-  if (x_shape.size() != x_shape_size) {
-    MS_EXCEPTION(ValueError) << "For MatrixPower, x should be a 3-D tensor"
-                             << ", but got x is a " << x_shape.size() << "-D tensor.";
-  }
-  if (!IsDynamic(x_shape) && x_shape[1] != x_shape[x_shape_two]) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name << ", sizes of dim[1] and dim[2] of x should be the same"
-                             << ", but size of dim[1] of got x is " << x_shape[1] << ", size of dim[2] of got x is "
-                             << x_shape[x_shape_two] << ".";
+  (void)CheckAndConvertUtils::CheckInteger("x's rank", x_shape.size(), kGreaterEqual, kMatrixPowerInputMinRank,
+                                           prim_name);
+  if (!IsDynamic(x_shape) && x_shape.back() != x_shape.end()[kLastSecond]) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name << ", dim[-1] and dim[-2] of x should be the same"
+                             << ", but got dim[-1]: " << x_shape.back()
+                             << " and dim[-2]: " << x_shape.end()[kLastSecond] << ".";
   }
   return std::make_shared<abstract::Shape>(x_shape);
 }
