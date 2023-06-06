@@ -213,18 +213,16 @@ class ConvertModelUtils:
             ``Ascend`` ``GPU``
 
         Examples:
-            .. note::
-                Before running the following example, you need to customize the network Net and
-                dataset preparation function create_dataset. Refer to
-                `Building a Network <https://www.mindspore.cn/tutorials/en/r2.0/beginner/model.html>`_
-                and `Dataset <https://www.mindspore.cn/tutorials/en/r2.0/beginner/dataset.html>`_ .
-
             >>> import mindspore as ms
             >>> from mindspore import nn
             >>> from mindspore import Tensor
             >>> from mindspore.nn import thor
             >>>
-            >>> net = Net()
+            >>> # Define the network structure of LeNet5. Refer to
+            >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/lenet.py
+            >>> net = LeNet5()
+            >>> # Create the dataset taking MNIST as an example. Refer to
+            >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/mnist.py
             >>> dataset = create_dataset()
             >>> temp = Tensor([4e-4, 1e-4, 1e-5, 1e-5], mstype.float32)
             >>> opt = thor(net, learning_rate=temp, damping=temp, momentum=0.9, loss_scale=128, frequency=4)

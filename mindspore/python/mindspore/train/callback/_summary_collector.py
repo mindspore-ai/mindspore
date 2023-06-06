@@ -184,9 +184,11 @@ class SummaryCollector(Callback):
         ...     # If the device_target is GPU, set the device_target to "GPU"
         ...     ms.set_context(mode=ms.GRAPH_MODE, device_target="Ascend")
         ...     mnist_dataset_dir = '/path/to/mnist_dataset_directory'
-        ...     # The detail of create_dataset method shown in models.research.cv.lenet.src.dataset.py
-        ...     ds_train = create_dataset(mnist_dataset_dir, 32)
-        ...     # The detail of LeNet5 shown in models.research.cv.lenet.src.lenet.py
+        ...     # Create the dataset taking MNIST as an example. Refer to
+        ...     # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/mnist.py
+        ...     ds_train = create_dataset()
+        ...     # Define the network structure of LeNet5. Refer to
+        ...     # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/lenet.py
         ...     network = LeNet5(10)
         ...     net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         ...     net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)

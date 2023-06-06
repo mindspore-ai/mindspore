@@ -133,7 +133,9 @@ class BoostTrainOneStepCell(TrainOneStepCell):
 
     Examples:
         >>> from mindspore import boost
-        >>> net = Net()
+        >>> # Define the network structure of LeNet5. Refer to
+        >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/lenet.py
+        >>> net = LeNet5()
         >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits()
         >>> optim = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
         >>> #1) Using the WithLossCell existing provide

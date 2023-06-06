@@ -38,21 +38,18 @@ class LossMonitor(Callback):
         ValueError: If per_print_times is not an integer or less than zero.
 
     Examples:
-        .. note::
-            Before running the following example, you need to customize the network LeNet5 and
-            dataset preparation function create_dataset. Refer to
-            `Building a Network <https://www.mindspore.cn/tutorials/en/r2.0/beginner/model.html>`_
-            and `Dataset <https://www.mindspore.cn/tutorials/en/r2.0/beginner/dataset.html>`_ .
-
         >>> from mindspore import nn
         >>> from mindspore.train import Model, LossMonitor
         >>>
+        >>> # Define the network structure of LeNet5. Refer to
+        >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         >>> optim = nn.Momentum(net.trainable_params(), 0.01, 0.9)
         >>> model = Model(net, loss_fn=loss, optimizer=optim)
-        >>> data_path = './MNIST_Data'
-        >>> dataset = create_dataset(data_path)
+        >>> # Create the dataset taking MNIST as an example. Refer to
+        >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/mnist.py
+        >>> dataset = create_dataset()
         >>> loss_monitor = LossMonitor()
         >>> model.train(10, dataset, callbacks=loss_monitor)
     """
