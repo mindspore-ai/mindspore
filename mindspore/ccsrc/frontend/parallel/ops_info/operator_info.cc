@@ -191,6 +191,7 @@ void OperatorInfo::ResetQueueMember() {
   inputs_tensor_map_.clear();
   outputs_tensor_map_.clear();
   dev_matrix_shape_.clear();
+  out_dev_matrix_shape_.clear();
   forward_op_.clear();
   mirror_ops_.clear();
   sub_ops_.clear();
