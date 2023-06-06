@@ -303,6 +303,7 @@ constexpr auto kSequenceMin = "SequenceMin";
 constexpr auto kInSequence = "InSequence";
 constexpr auto kSequenceAddN = "SequenceAddN";
 constexpr auto kSequenceConcat = "SequenceConcat";
+constexpr auto kSequenceStack = "SequenceStack";
 
 // Sequence inplace operation
 constexpr auto kListInplaceAppend = "ListInplaceAppend";
@@ -1679,6 +1680,7 @@ GVAR_DEF(PrimitivePtr, kPrimSequenceMin, std::make_shared<Primitive>(kSequenceMi
 GVAR_DEF(PrimitivePtr, kPrimInSequence, std::make_shared<Primitive>(kInSequence));
 GVAR_DEF(PrimitivePtr, kPrimSequenceAddN, std::make_shared<Primitive>(kSequenceAddN));
 GVAR_DEF(PrimitivePtr, kPrimSequenceConcat, std::make_shared<Primitive>(kSequenceConcat));
+GVAR_DEF(PrimitivePtr, kPrimSequenceStack, std::make_shared<Primitive>(kSequenceStack));
 
 // List inplace operation
 GVAR_DEF(PrimitivePtr, kPrimListInplaceAppend, std::make_shared<Primitive>(kListInplaceAppend));

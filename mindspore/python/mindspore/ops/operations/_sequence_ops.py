@@ -820,6 +820,38 @@ class SequenceAddN(Primitive):
         self.init_prim_io_names(inputs=["inputs"], outputs=["sum"])
 
 
+class SequenceStack(Primitive):
+    r"""
+    Support sequence stack operation.
+
+    .. note::
+        This it is only for internal used.
+
+    Args:
+        axis (Int):  Dimension to stack. Default: ``0`` .
+            Negative values wrap around. The range is [-(R+1), R+1).
+
+    Inputs:
+        - **input_x** (Union[tuple, list]) - A Tuple or list of Tensor objects with the same shape and type.
+
+    Outputs:
+        Tensor. A stacked Tensor with the same type as `input_x`.
+
+    Raises:
+        TypeError: The 'sequence' is not list or tuple.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self, axis=0):
+        """Initialize Stack"""
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+        validator.check_value_type("axis", axis, [int], self.name)
+        self.axis = axis
+
+
 class SequenceConcat(Primitive):
     r"""
     Support sequence Concat operation.
