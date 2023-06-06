@@ -24,7 +24,7 @@ typedef struct {
   float *output_;
   float *scale_;
   float *offset_;
-  const ScaleParameter *scale_param_;
+  const ScaleStruct *scale_param_;
 } ScaleFp32Args;
 
 #ifdef __cplusplus

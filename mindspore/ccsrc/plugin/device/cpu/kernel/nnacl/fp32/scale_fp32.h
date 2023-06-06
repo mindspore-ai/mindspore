@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_SCALE_FP32_H_
-#define MINDSPORE_NNACL_SCALE_FP32_H_
+#ifndef NNACL_FP32_SCALE_FP32_H_
+#define NNACL_FP32_SCALE_FP32_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/scale_parameter.h"
+#include "nnacl/kernel/scale.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
 void DoScale(const float *in_data, float *out_data, const float *scale, const float *offset, int task_id,
-             const ScaleParameter *scale_param);
+             const ScaleStruct *scale_param);
 void DoScaleRelu(const float *in_data, float *out_data, const float *scale, const float *offset, int task_id,
-                 const ScaleParameter *scale_param);
+                 const ScaleStruct *scale_param);
 void DoScaleRelu6(const float *in_data, float *out_data, const float *scale, const float *offset, int task_id,
-                  const ScaleParameter *scale_param);
+                  const ScaleStruct *scale_param);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_SCALE_FP32_H_
+#endif  // NNACL_FP32_SCALE_FP32_H_

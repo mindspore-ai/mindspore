@@ -91,10 +91,9 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const MicroMatmulP
                         micro_matmul_parameter.a_const_, micro_matmul_parameter.b_const_);
 }
 
-void NNaclFp32Serializer::CodeStruct(const std::string &name, const ScaleParameter &scale_parameter) {
-  CodeBaseStruct("ScaleParameter", name, scale_parameter.op_parameter_, scale_parameter.axis_,
-                 scale_parameter.activation_type_, scale_parameter.outer_size_, scale_parameter.axis_size_,
-                 scale_parameter.inner_size_, scale_parameter.const_scale_, scale_parameter.const_offset_);
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const ScaleStruct &scale_struct) {
+  CodeBaseStruct<false>("ScaleStruct", name, "{}", scale_struct.axis_, scale_struct.data_type_, scale_struct.axis_size_,
+                        scale_struct.outer_size_, scale_struct.inner_size_);
 }
 
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const SliceParameter &slice_parameter) {

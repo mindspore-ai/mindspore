@@ -20,7 +20,7 @@
 
 int DoScaleReluRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   ScaleFp32Args *args = (ScaleFp32Args *)cdata;
-  const ScaleParameter *scale_param = args->scale_param_;
-  DoScaleRelu(args->input_, args->output_, args->scale_, args->offset_, task_id, scale_param);
+  const ScaleStruct *scale_struct = args->scale_param_;
+  DoScaleRelu(args->input_, args->output_, args->scale_, args->offset_, task_id, scale_struct);
   return NNACL_OK;
 }

@@ -19,7 +19,7 @@
 
 #ifdef ENABLE_NEON
 int16x4_t ClacSumHalfWordMul2(int32x4_t scaled_input0, int32x4_t scaled_input1, int32x4_t left_shift_out_vec,
-                              int32x4_t output_multiplier_vec, const ScaleParameter *scale_param) {
+                              int32x4_t output_multiplier_vec, const ScaleQuantParameter *scale_param) {
   int32x4_t input_scale = vmulq_s32(scaled_input0, scaled_input1);
   int32x4_t raw_sum = RoundingDivideByPOTInt32x4(
     SaturatingRoundingDoublingHighMulInt32x4(vmulq_s32(input_scale, left_shift_out_vec), output_multiplier_vec),
@@ -31,7 +31,7 @@ int16x4_t ClacSumHalfWordMul2(int32x4_t scaled_input0, int32x4_t scaled_input1, 
 }
 
 int16x4_t ClacSumHalfWordMul3(int32x4_t scaled_input0, int32x4_t scaled_input1, int32x4_t scaled_input2,
-                              const ScaleParameter *scale_param) {
+                              const ScaleQuantParameter *scale_param) {
   int32x4_t output_multiplier_vec = vdupq_n_s32(scale_param->scale_mul_arg_.multiplier_);
   int32x4_t output_multiplier_vec2 = vdupq_n_s32(scale_param->offset_mul_arg_.multiplier_);
   int32x4_t left_shift_out_vec = vdupq_n_s32(1 << (size_t)(scale_param->scale_mul_arg_.left_shift_));
@@ -51,7 +51,7 @@ int16x4_t ClacSumHalfWordMul3(int32x4_t scaled_input0, int32x4_t scaled_input1, 
 }
 #endif
 
-void DoScaleInt8(const int8_t *in_data, int8_t *out_data, const int8_t *scale, const ScaleParameter *scale_param,
+void DoScaleInt8(const int8_t *in_data, int8_t *out_data, const int8_t *scale, const ScaleQuantParameter *scale_param,
                  int real_dst_count) {
   int index = 0;
 #ifdef ENABLE_NEON
@@ -105,7 +105,7 @@ void DoScaleInt8(const int8_t *in_data, int8_t *out_data, const int8_t *scale, c
 }
 
 void DoScaleWithBiasInt8(const int8_t *in_data, int8_t *out_data, const int8_t *scale, const int8_t *offset,
-                         const ScaleParameter *scale_param, int real_dst_count) {
+                         const ScaleQuantParameter *scale_param, int real_dst_count) {
   int index = 0;
 #ifdef ENABLE_NEON
   for (; index <= real_dst_count - 8; index += 8) {

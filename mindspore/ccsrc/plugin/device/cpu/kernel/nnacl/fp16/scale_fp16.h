@@ -14,24 +14,25 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_SCALE_FP16_H_
-#define NNACL_SCALE_FP16_H_
+#ifndef NNACL_FP16_SCALE_FP16_H_
+#define NNACL_FP16_SCALE_FP16_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
 #include "nnacl/scale_parameter.h"
+#include "nnacl/kernel/scale.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 void DoScaleFp16(const float16_t *in_data, float16_t *out_data, const float16_t *scale, const float16_t *offset,
-                 int task_id, const ScaleParameter *scale_param);
+                 int task_id, const ScaleStruct *scale_param);
 void Fp16DoScaleRelu(const float16_t *in_data, float16_t *out_data, const float16_t *scale, const float16_t *offset,
-                     int task_id, const ScaleParameter *scale_param);
+                     int task_id, const ScaleStruct *scale_param);
 void DoScaleRelu6Fp16(const float16_t *in_data, float16_t *out_data, const float16_t *scale, const float16_t *offset,
-                      int task_id, const ScaleParameter *scale_param);
+                      int task_id, const ScaleStruct *scale_param);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  //  NNACL_SCALE_FP16_H_
+#endif  // NNACL_FP16_SCALE_FP16_H_

@@ -45,7 +45,7 @@ class FusedBatchnormCPUKernel : public BatchnormCPUKernel {
   void *offset_ = nullptr;
   bool trained_ = false;
   bool is_scale_ = false;
-  ScaleParameter *scale_param_ = nullptr;
+  ScaleStruct *scale_param_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

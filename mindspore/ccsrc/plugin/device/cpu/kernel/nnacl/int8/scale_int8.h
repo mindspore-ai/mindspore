@@ -24,10 +24,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void DoScaleInt8(const int8_t *in_data, int8_t *out_data, const int8_t *scale, const ScaleParameter *scale_param,
+void DoScaleInt8(const int8_t *in_data, int8_t *out_data, const int8_t *scale, const ScaleQuantParameter *scale_param,
                  int real_dst_count);
 void DoScaleWithBiasInt8(const int8_t *in_data, int8_t *out_data, const int8_t *scale, const int8_t *offset,
-                         const ScaleParameter *scale_param, int real_dst_count);
+                         const ScaleQuantParameter *scale_param, int real_dst_count);
 #ifdef __cplusplus
 }
 #endif
