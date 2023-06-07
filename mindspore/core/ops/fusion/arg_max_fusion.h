@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,9 +69,6 @@ class MIND_API ArgMaxFusion : public Argmax {
   /// \return the number of maximum value along with axis.
   int64_t get_top_k() const;
 };
-abstract::AbstractBasePtr ArgMaxFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const std::vector<abstract::AbstractBasePtr> &input_args);
-using PrimArgMaxFusion = std::shared_ptr<ArgMaxFusion>;
 }  // namespace ops
 }  // namespace mindspore
 

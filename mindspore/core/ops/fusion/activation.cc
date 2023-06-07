@@ -15,13 +15,20 @@
  */
 
 #include "ops/fusion/activation.h"
-
+#include <vector>
 #include "mindapi/base/shared_ptr.h"
 #include "mindapi/ir/value.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
+#include "utils/check_convert_utils.h"
+#include "abstract/ops/op_infer.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "base/base.h"
+#include "ir/anf.h"
+#include "ops/core_ops.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace ops {
@@ -72,6 +79,25 @@ void Activation::Init(const float alpha, const float min_val, const float max_va
   this->set_activation_type(activation_type);
   this->set_approximate(approximate);
 }
-REGISTER_PRIMITIVE_C(kNameActivation, Activation);
+
+class ActivationInfer : public abstract::OpInferBase {
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(primitive);
+    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 1,
+                                             primitive->name());
+    MS_EXCEPTION_IF_NULL(input_args[0]);
+    return input_args[0]->BuildShape();
+  }
+
+  TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(prim);
+    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 1, prim->name());
+    MS_EXCEPTION_IF_NULL(input_args[0]);
+    return input_args[0]->BuildType();
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(Activation, prim::kPrimActivation, ActivationInfer, false);
 }  // namespace ops
 }  // namespace mindspore

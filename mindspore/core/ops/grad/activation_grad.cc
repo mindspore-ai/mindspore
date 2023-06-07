@@ -15,12 +15,16 @@
  */
 
 #include "ops/grad/activation_grad.h"
+#include <vector>
 #include "mindapi/base/shared_ptr.h"
 #include "mindapi/ir/value.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
+#include "utils/check_convert_utils.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "ops/grad/elewise_grad_infer_shape.h"
 
 namespace mindspore {
 namespace ops {
@@ -48,6 +52,22 @@ float ActivationGrad::get_alpha() const {
   MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<float>(value_ptr);
 }
-REGISTER_PRIMITIVE_C(kNameActivationGrad, ActivationGrad);
+
+class ActivationGradInfer : public abstract::OpInferBase {
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return ElewiseGradInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(prim);
+    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, kSize2,
+                                             prim->name());
+    MS_EXCEPTION_IF_NULL(input_args[0]);
+    return input_args[0]->BuildType();
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(ActivationGrad, prim::kPrimActivationGrad, ActivationGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

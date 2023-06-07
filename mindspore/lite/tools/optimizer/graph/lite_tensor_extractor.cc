@@ -295,29 +295,40 @@ int LiteTensorExtractor::GetCNodeInputAbstractLists(const CNodePtr &cnode, Abstr
   abs_list->reserve(cnode->size());
   for (size_t index = 1; index < cnode->size(); index++) {
     auto node = cnode->input(index);
-    auto abs = node->abstract();
-    if (abs == nullptr) {
-      if (node->isa<ValueNode>()) {
-        abs = node->cast<ValueNodePtr>()->value()->ToAbstract();
-      } else {
-        MS_LOG(ERROR) << "abstract is nullptr.";
-        cnode->set_inputs(origin_inputs);
-        return RET_ERROR;
+    AbstractBasePtr abstract = nullptr;
+    if (utils::isa<CNodePtr>(node)) {
+      abstract = opt::GetCNodeInputAbstract(cnode, index)->Clone();
+    } else {
+      auto abs = node->abstract();
+      if (abs == nullptr) {
+        if (utils::isa<ValueNodePtr>(node)) {
+          abs = node->cast<ValueNodePtr>()->value()->ToAbstract();
+        } else {
+          MS_LOG(ERROR) << "abstract is nullptr.";
+          cnode->set_inputs(origin_inputs);
+          return RET_ERROR;
+        }
       }
+      abstract = abs->Clone();
+    }
+    if (abstract == nullptr) {
+      MS_LOG(ERROR) << "CNode " << cnode->fullname_with_scope() << " get nullptr input abstract.";
+      cnode->set_inputs(origin_inputs);
+      return RET_ERROR;
     }
 
     // change Lite dynamic shape {-1} to core/ops dynamic rank {-2}, will be removed after calling core/infer
-    auto new_abs = abs->Clone();
     ShapeVector shape;
-    if (opt::FetchShapeFromAbstract(new_abs, &shape) != RET_OK) {
+    if (opt::FetchShapeFromAbstract(abstract, &shape) != RET_OK) {
       MS_LOG(ERROR) << "FetchShapeFromAbstract failed.";
+      cnode->set_inputs(origin_inputs);
       return RET_ERROR;
     }
     if (IsDynamic(shape)) {
       auto dynamic_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
-      new_abs->set_shape(dynamic_shape);
+      abstract->set_shape(dynamic_shape);
     }
-    abs_list->push_back(new_abs);
+    abs_list->push_back(abstract);
   }
   cnode->set_inputs(origin_inputs);
   return RET_OK;
