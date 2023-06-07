@@ -394,6 +394,7 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Address
       MS_LOG(ERROR) << "Memory copy failed for kernel " << kernel->fullname_with_scope();
       return false;
     }
+    kernel_type = RT_KERNEL;
   } else {
     MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
     bool ret = kernel_mod->Launch(inputs, workspace, outputs, stream);
