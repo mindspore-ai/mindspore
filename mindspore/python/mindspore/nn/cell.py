@@ -156,6 +156,8 @@ class Cell(Cell_):
         self._jit_config_dict = dict()
         self.grad_ops_label = False
         self.to_float_fp16 = False
+        self.ge_init = False
+        self.ge_sync_data = False
 
     def __getstate__(self):
         base = Cell_.__getstate__(self)
@@ -949,7 +951,7 @@ class Cell(Cell_):
             Object, the result of executing.
         """
         self.compile(*args, **kwargs)
-
+        self.add_flags(ge_sync_data=False)
         new_args = _get_args_for_run(self, args, kwargs)
         return _cell_graph_executor(self, *new_args, phase=self.phase)
 
@@ -963,7 +965,8 @@ class Cell(Cell_):
         logger.warning("'auto_parallel_compile_and_run' function is deprecated.")
 
     def exec_checkpoint_graph(self):
-        """Executes saving checkpoint graph operation."""
+        """Executes GE saving checkpoint graph operation."""
+        self.add_flags(ge_sync_data=True)
         _cell_graph_executor(self, phase='save')
 
     def insert_param_to_cell(self, param_name, param, check_name_contain_dot=True):
