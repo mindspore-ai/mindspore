@@ -52,7 +52,6 @@ from .argmin_with_value import _argmin_with_value_aicpu
 from .avgpool_v1 import _avgpool_v1_aicpu
 from .avgpool_grad_v1 import _avgpool_grad_v1_aicpu
 from .matrix_solve import _matrix_solve_aicpu
-from .matrix_logarithm import _matrix_logarithm_aicpu
 from .betainc import _betainc_aicpu
 from .bartlett_window import _bartlett_window_aicpu
 from .batch_norm_grad_grad import _batch_norm_grad_grad_aicpu
@@ -140,9 +139,7 @@ from .not_equal import _not_equal_aicpu
 from .poisson import _poisson_aicpu
 from .update_cache import _update_cache_aicpu
 from .upper_bound import _upper_bound_aicpu
-from .upsample_nearest_3d import _upsample_nearest_3d_aicpu
 from .upsample_nearest_3d_grad import _upsample_nearest_3d_grad_aicpu
-from .upsample_trilinear_3d import _upsample_trilinear_3d_aicpu
 from .upsample_trilinear_3d_grad import _upsample_trilinear_3d_grad_aicpu
 from .cache_swap_table import _cache_swap_table_aicpu
 from .uniform import _uniform_aicpu
@@ -180,7 +177,6 @@ from .stack_push_pop import _stack_push_aicpu
 from .stack_push_pop import _stack_pop_aicpu
 from .asinh import _asinh_aicpu
 from .stack_push_pop import _stack_destroy_aicpu
-from .matrix_exp import _matrix_exp_aicpu
 from .matrix_diag_v3 import _matrix_diag_v3_aicpu
 from .matrix_diag_part_v3 import _matrix_diag_part_v3_aicpu
 from .tan import _tan_aicpu
@@ -207,7 +203,6 @@ from .environ_destroy_all import _environ_destroy_all_aicpu
 from .cross import _cross_aicpu
 from .check_numerics import _check_numerics_aicpu
 from .cumsum import _cumsum_aicpu
-from .cummax import _cummax_aicpu
 from .round import _round_aicpu
 from .stft import _stft_aicpu
 from .floor_div import _floor_div_aicpu
@@ -315,7 +310,6 @@ from .cumulative_logsumexp import _cumulative_logsumexp_aicpu
 from .sparse_segment_sqrt_n import _sparse_segment_sqrt_n_aicpu
 from .scale_and_translate import _scale_and_translate_aicpu
 from .quant_dtype_cast import _quant_dtype_cast_aicpu
-from .quantile import _quantile_aicpu
 from .fse_decode import _fse_decode_aicpu
 from .dense_to_csr_sparse_matrix import _dense_to_csr_sparse_matrix_aicpu
 from .dense_to_sparse_set_operation import _dense_to_sparse_set_operation_aicpu
@@ -326,7 +320,6 @@ from .bias_add import _bias_add_aicpu
 from .bias_add_grad import _bias_add_grad_aicpu
 from .eig import _eig_aicpu
 from .eye import _eye_aicpu
-from .fmin import _fmin_aicpu
 from .fractional_avg_pool import _fractional_avg_pool_aicpu
 from .fractional_avg_pool_grad import _fractional_avg_pool_grad_aicpu
 from .fractional_max_pool import _fractional_max_pool_aicpu

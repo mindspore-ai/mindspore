@@ -6,14 +6,14 @@ mindspore.ops.IndexPut
     根据 `indices` 中的下标值，使用 `x2` 中的数值替换 `x1` 中的相应元素的值。
 
     参数：
-        - **accumulate** (int) - 如果 `accumulate` 被设置为 ``1`` ， `x2` 中的元素被累加到 `x1` 的相应元素上；
-          如果为 ``0``，用 `x2` 中的元素取代 `x2` 的相应元素。默认值: ``0`` 。
+        - **accumulate** (int) - 如果 `accumulate` 被设置为1 ， `x2` 中的元素被累加到 `x1` 的相应元素上；
+          如果为 ``0``，用 `x2` 中的元素取代 `x2` 的相应元素。默认值: 0。
 
     输入：
         - **x1** (Tensor) - 被执行替换操作的Tensor, 维度大于等于1。
         - **x2** (Tensor) - 数据类型和 `x1` 一致的一维的Tensor。如果其size为1，则shape将被广播为 `x1` 的shape。
         - **indices** (tuple[Tensor], list[Tensor]) - 元素类型是int32或者int64, 用于对 `x1` 中的元素进行索引。
-          `indices` 中的tensor的秩应为1-D，`indices` 中tensor的size应小于 `x1` 的秩，indices中的tensor应是可广播的。
+          `indices` 中的tensor的秩应为1-D， `indices` 中tensor的size应小于 `x1` 的秩，indices中的tensor应是可广播的。
 
     输出：
         Tensor, 其数据类型和shape与 `x1` 相同。

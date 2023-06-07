@@ -998,6 +998,10 @@ class Gather(Primitive):
 
     Refer to :func:`mindspore.ops.gather` for more details.
 
+    Args:
+        batch_dims (int, optional): Specifies the number of batch dimensions.
+            It must be less than or equal to the rank of `input_indices`. Default: ``0`` .
+
     Inputs:
         - **input_params** (Tensor) - The original Tensor. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
         - **input_indices** (Tensor) - Index tensor to be sliced, the shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
@@ -2060,8 +2064,8 @@ class Argmax(Primitive):
 
     Args:
         axis (int): Axis where the Argmax operation applies to. Default: -1.
-        output_type (:class:`mindspore.dtype`): An optional data type of `mindspore.dtype.int32`.
-            Default: `mindspore.dtype.int32`.
+        output_type (:class:`mindspore.dtype`): An optional data type of mstype.int32.
+            Default: mstype.int32.
 
     Inputs:
         - **input_x** (Tensor) - Input tensor. :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
@@ -6021,12 +6025,13 @@ class Meshgrid(PrimitiveWithInfer):
     Refer to :func:`mindspore.ops.meshgrid` for more details.
 
     Args:
-        indexing (str, optional): Cartesian ('xy', default) or
+        indexing (str, optional): Cartesian ('xy') or
             matrix ('ij') indexing of output. Valid options: xy' or 'ij'. In the 2-D case with
             inputs of length `M` and `N`, the outputs are of shape `(N, M)`
             for 'xy' indexing and `(M, N)` for 'ij' indexing. In the 3-D
             case with inputs of length `M`, `N` and `P`, outputs are of shape
-            `(N, M, P)` for 'xy' indexing and `(M, N, P)` for 'ij' indexing.
+            :math:`(N, M, P)` for 'xy' indexing and :math:`(M, N, P)` for 'ij' indexing.
+            Default: 'xy'.
 
     Inputs:
         - **input** (Union[tuple]) - A Tuple of N 1-D Tensor objects.
@@ -6509,7 +6514,7 @@ class Range(PrimitiveWithCheck):
 
     Args:
         maxlen (int, optional): Memory that can fit `maxlen` many elements
-            will be allocated for the output. Optional, must be positive, defaults to 1000000.
+            will be allocated for the output. Optional, must be positive. Default: 1000000.
             If the output has more than `maxlen` elements, a runtime error
             will occur.
 
@@ -7840,8 +7845,8 @@ class LogSpace(Primitive):
         TypeError: If `input` is not a Tensor.
         TypeError: If `steps` is not an int.
         TypeError: If `base` is not an int.
-        TypeError: If `dtype` is not mindspore.float16, mindspore.float32 or
-            mindspore.float64.
+        TypeError: If `dtype` is not mstype.float16, mstype.float32 or
+            mstype.float64.
         ValueError: If `steps` is not a non-negative integer.
         ValueError: If `base` is not a non-negative integer.
 
@@ -7849,9 +7854,9 @@ class LogSpace(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> logspace = ops.LogSpace(steps = 10, base = 10, dtype=mindspore.float32)
-        >>> start = Tensor(1, mindspore.float32)
-        >>> end = Tensor(10, mindspore.float32)
+        >>> logspace = ops.LogSpace(steps = 10, base = 10, dtype=mstype.float32)
+        >>> start = Tensor(1, mstype.float32)
+        >>> end = Tensor(10, mstype.float32)
         >>> output = logspace(start, end)
         >>> print(output)
         [1.e+01 1.e+02 1.e+03 1.e+04 1.e+05 1.e+06 1.e+07 1.e+08 1.e+09 1.e+10]

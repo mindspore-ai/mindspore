@@ -6678,7 +6678,7 @@ def triu_indices(row, col, offset=0, *, dtype=mstype.int64):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> output = ops.triu_indices(4, 4, 2, mindspore.int64)
+        >>> output = ops.triu_indices(4, 4, 2, dtype=mindspore.int64)
         >>> print(output)
         [[0 0 1]
          [2 3 3]]
