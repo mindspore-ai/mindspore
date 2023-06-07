@@ -18,6 +18,7 @@
 #include "nnacl/tensor_c.h"
 #include "nnacl/op_base.h"
 #include "nnacl/fp32/bias_add.h"
+#include "nnacl/kernel/base_kernel.h"
 
 #define BIAS_ADD_PER_UNIT_LOAD_NUM 2
 #define BIAS_ADD_PER_UNIT_STORE_NUM 1
@@ -32,8 +33,6 @@ typedef struct BiasAddStruct {
   int64_t split_points_[SPLIT_POINTS_SIZE];
   int split_pionts_size_;
 } BiasAddStruct;
-
-int biasadd_release(struct KernelBase *self) { return NNACL_OK; }
 
 int ChooseBiasThreadCuttingStrategy(KernelBase *self) {
   BiasAddStruct *bias_add = (BiasAddStruct *)self;
@@ -86,12 +85,6 @@ int BiasRun(void *cdata, int task_id, float l, float r) {
   return NNACL_OK;
 }
 
-int biasadd_prepare(struct KernelBase *self) {
-  NNACL_CHECK_FALSE(self->in_size_ < C2NUM, NNACL_ERR);
-  NNACL_CHECK_FALSE(self->out_size_ < C1NUM, NNACL_ERR);
-  return NNACL_OK;
-}
-
 int biasadd_resize(struct KernelBase *self) {
   BiasAddStruct *bias_add = (BiasAddStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(bias_add);
@@ -128,9 +121,9 @@ int biasadd_compute(struct KernelBase *self) {
 KernelBase *CreateBiasAdd(OpParameter *param, int data_type) {
   BiasAddStruct *bias_add = (BiasAddStruct *)malloc(sizeof(BiasAddStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(bias_add);
-  bias_add->base_.prepare = biasadd_prepare;
+  bias_add->base_.prepare = base_kernel_prepare_two_input;
   bias_add->base_.resize = biasadd_resize;
-  bias_add->base_.release = biasadd_release;
+  bias_add->base_.release = base_kernel_release;
   bias_add->base_.compute = biasadd_compute;
   return (KernelBase *)bias_add;
 }

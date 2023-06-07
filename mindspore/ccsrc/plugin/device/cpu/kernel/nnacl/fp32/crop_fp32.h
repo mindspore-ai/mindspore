@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_FP32_CROP_H_
-#define MINDSPORE_NNACL_FP32_CROP_H_
+
+#ifndef NNACL_FP32_CROP_FP32_H_
+#define NNACL_FP32_CROP_FP32_H_
 #include "nnacl/op_base.h"
 #include "nnacl/crop_parameter.h"
-
-#define CROP_OFFSET_MAX_SIZE 4
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 void Crop4D(const float *input, float *output, const int *in_shape, const int *out_shape,
-            const CropParameter *crop_param, int thread_id);
+            const CropParameter *crop_param, int thread_id, int thread_num);
 void Crop4DNoParallel(const float *input, float *output, const int *in_shape, const int *out_shape,
                       const CropParameter *crop_param);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP32_CROP_H_
+#endif  // NNACL_FP32_CROP_FP32_H_

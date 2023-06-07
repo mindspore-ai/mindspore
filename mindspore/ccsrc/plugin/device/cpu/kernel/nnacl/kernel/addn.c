@@ -16,6 +16,7 @@
 
 #include "nnacl/kernel/addn.h"
 #include "nnacl/fp32/add_fp32.h"
+#include "nnacl/kernel/base_kernel.h"
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/arithmetic_fp16.h"
 #endif
@@ -79,17 +80,6 @@ int AddNComputeNoParallel(AddNStruct *addn) {
   return NNACL_OK;
 }
 
-int addn_prepare(struct KernelBase *self) {
-  NNACL_CHECK_FALSE(self->in_size_ < TWO_TENSOR, NNACL_INPUT_TENSOR_ERROR);
-  NNACL_CHECK_FALSE(self->out_size_ < ONE_TENSOR, NNACL_OUTPUT_TENSOR_ERROR);
-  NNACL_CHECK_NULL_RETURN_ERR(self->in_[FIRST_INPUT]);
-  NNACL_CHECK_NULL_RETURN_ERR(self->in_[SECOND_INPUT]);
-  NNACL_CHECK_NULL_RETURN_ERR(self->out_[OUTPUT_INDEX]);
-  return NNACL_OK;
-}
-
-int addn_release(struct KernelBase *self) { return NNACL_OK; }
-
 int addn_resize(struct KernelBase *self) {
   AddNStruct *addn = (AddNStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(addn);
@@ -142,9 +132,9 @@ KernelBase *CreateAddN(OpParameter *param, int data_type) {
   AddNStruct *addn = (AddNStruct *)malloc(sizeof(AddNStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(addn);
   addn->data_type_ = data_type;
-  addn->base_.prepare = addn_prepare;
+  addn->base_.prepare = base_kernel_prepare_two_input;
   addn->base_.resize = addn_resize;
-  addn->base_.release = addn_release;
+  addn->base_.release = base_kernel_release;
   addn->base_.compute = addn_compute;
   return (KernelBase *)addn;
 }

@@ -16,6 +16,7 @@
 
 #include "nnacl/kernel/arithmetic_self.h"
 #include "nnacl/fp32/arithmetic_self_fp32.h"
+#include "nnacl/kernel/base_kernel.h"
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/arithmetic_self_fp16.h"
 #endif
@@ -146,8 +147,6 @@ int arithmetic_self_prepare(KernelBase *self) {
   return NNACL_OK;
 }
 
-int arithmetic_self_release(KernelBase *self) { return NNACL_OK; }
-
 KernelBase *CreateArithmeticSelf(OpParameter *param, int data_type) {
   ArithmeticSelfStruct *arithmetic_self = (ArithmeticSelfStruct *)malloc(sizeof(ArithmeticSelfStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(arithmetic_self);
@@ -156,7 +155,7 @@ KernelBase *CreateArithmeticSelf(OpParameter *param, int data_type) {
   arithmetic_self->op_type_ = param->type_;
   arithmetic_self->base_.prepare = arithmetic_self_prepare;
   arithmetic_self->base_.resize = arithmetic_self_resize;
-  arithmetic_self->base_.release = arithmetic_self_release;
+  arithmetic_self->base_.release = base_kernel_release;
   arithmetic_self->base_.compute = arithmetic_self_compute;
   return (KernelBase *)arithmetic_self;
 }

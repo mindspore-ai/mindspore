@@ -20,30 +20,9 @@
 
 #include "nnacl/crop_parameter.h"
 
-void Fp16Crop(const float16_t *input, float16_t *output, int task_id, const CropParameter *para) {
-  NNACL_CHECK_ZERO_RETURN(para->thread_count_);
-  int input_dim = para->input_dim_;
-  switch (input_dim) {
-    case 1:
-      Fp16Crop1D(input, output, task_id, para);
-      break;
-    case 2:
-      Fp16Crop2D(input, output, task_id, para);
-      break;
-    case 3:
-      Fp16Crop3D(input, output, task_id, para);
-      break;
-    case 4:
-      Fp16Crop4D(input, output, task_id, para);
-      break;
-    default:
-      break;
-  }
-}
-
-void Fp16Crop1D(const float16_t *input, float16_t *output, int task_id, const CropParameter *para) {
-  const int out_batch = para->out_shape_[0];
-  const int thread_count = para->thread_count_;
+void Fp16Crop1D(const float16_t *input, float16_t *output, int *out_shape, int64_t *in_offset, int task_id,
+                int thread_count) {
+  const int out_batch = out_shape[0];
   int64_t task_id_stride = thread_count > 1 ? UP_DIV(out_batch, thread_count) : out_batch;
   if (task_id_stride <= 0) {
     return;
@@ -52,17 +31,18 @@ void Fp16Crop1D(const float16_t *input, float16_t *output, int task_id, const Cr
   if (n >= out_batch) {
     return;
   }
-  const float16_t *in_ptr = input + n + para->in_offset_[0];
+  const float16_t *in_ptr = input + n + in_offset[0];
   float16_t *out_ptr = output + n;
   int64_t out_dist_stride = MSMIN(out_batch - task_id * task_id_stride, task_id_stride);
   memcpy(out_ptr, in_ptr, sizeof(float16_t) * out_dist_stride);
 }
 
-void Fp16Crop2D(const float16_t *input, float16_t *output, int task_id, const CropParameter *para) {
-  const int in_height = para->in_shape_[1];
-  const int out_batch = para->out_shape_[0];
-  const int out_height = para->out_shape_[1];
-  const int thread_count = para->thread_count_;
+void Fp16Crop2D(const float16_t *input, float16_t *output, int *in_shape, int *out_shape, int64_t *in_offset,
+                int task_id, int thread_count) {
+  const int in_height = in_shape[1];
+  const int out_batch = out_shape[0];
+  const int out_height = out_shape[1];
+
   int64_t task_id_stride = thread_count > 1 ? UP_DIV(out_height, thread_count) : out_height;
   if (task_id_stride <= 0) {
     return;
@@ -73,22 +53,22 @@ void Fp16Crop2D(const float16_t *input, float16_t *output, int task_id, const Cr
     if (h >= out_height) {
       return;
     }
-    const float16_t *in_ptr = input + (n + para->in_offset_[0]) * in_height + h + para->in_offset_[1];
+    const float16_t *in_ptr = input + (n + in_offset[0]) * in_height + h + in_offset[1];
     float16_t *out_ptr = output + n * out_height + h;
     int64_t out_dist_stride = MSMIN(out_height - task_id * task_id_stride, task_id_stride);
     memcpy(out_ptr, in_ptr, sizeof(float16_t) * out_dist_stride);
   }
 }
 
-void Fp16Crop3D(const float16_t *input, float16_t *output, int task_id, const CropParameter *para) {
-  const int in_height = para->in_shape_[1];
-  const int in_width = para->in_shape_[2];
+void Fp16Crop3D(const float16_t *input, float16_t *output, int *in_shape, int *out_shape, int64_t *in_offset,
+                int task_id, int thread_count) {
+  const int in_height = in_shape[1];
+  const int in_width = in_shape[2];
 
-  const int out_batch = para->out_shape_[0];
-  const int out_height = para->out_shape_[1];
-  const int out_width = para->out_shape_[2];
+  const int out_batch = out_shape[0];
+  const int out_height = out_shape[1];
+  const int out_width = out_shape[2];
 
-  const int thread_count = para->thread_count_;
   int64_t task_id_stride = thread_count > 1 ? UP_DIV(out_height, thread_count) : out_height;
   if (task_id_stride <= 0) {
     return;
@@ -107,24 +87,24 @@ void Fp16Crop3D(const float16_t *input, float16_t *output, int task_id, const Cr
         break;
       }
       const float16_t *in_ptr =
-        input + (n + para->in_offset_[0]) * in_stride_n + (h + para->in_offset_[1]) * in_stride_h + para->in_offset_[2];
+        input + (n + in_offset[0]) * in_stride_n + (h + in_offset[1]) * in_stride_h + in_offset[2];
       float16_t *out_ptr = output + n * out_stride_n + h * out_stride_h;
       memcpy(out_ptr, in_ptr, sizeof(float16_t) * out_width);
     }
   }
 }
 
-void Fp16Crop4D(const float16_t *input, float16_t *output, int task_id, const CropParameter *para) {
-  const int in_height = para->in_shape_[1];
-  const int in_width = para->in_shape_[2];
-  const int in_channel = para->in_shape_[3];
+void Fp16Crop4D(const float16_t *input, float16_t *output, int *in_shape, int *out_shape, int64_t *in_offset,
+                int task_id, int thread_count) {
+  const int in_height = in_shape[1];
+  const int in_width = in_shape[2];
+  const int in_channel = in_shape[3];
 
-  const int out_batch = para->out_shape_[0];
-  const int out_height = para->out_shape_[1];
-  const int out_width = para->out_shape_[2];
-  const int out_channel = para->out_shape_[3];
+  const int out_batch = out_shape[0];
+  const int out_height = out_shape[1];
+  const int out_width = out_shape[2];
+  const int out_channel = out_shape[3];
 
-  const int thread_count = para->thread_count_;
   int64_t task_id_stride = thread_count > 1 ? UP_DIV(out_height, thread_count) : out_height;
   if (task_id_stride <= 0) {
     return;
@@ -145,12 +125,31 @@ void Fp16Crop4D(const float16_t *input, float16_t *output, int task_id, const Cr
         break;
       }
       for (int w = 0; w < out_width; w++) {
-        const float16_t *in_ptr = input + (n + para->in_offset_[0]) * in_stride_n +
-                                  (h + para->in_offset_[1]) * in_stride_h + (w + para->in_offset_[2]) * in_stride_w +
-                                  para->in_offset_[3];
+        const float16_t *in_ptr = input + (n + in_offset[0]) * in_stride_n + (h + in_offset[1]) * in_stride_h +
+                                  (w + in_offset[2]) * in_stride_w + in_offset[3];
         float16_t *out_ptr = output + n * out_stride_n + h * out_stride_h + w * out_stride_w;
         memcpy(out_ptr, in_ptr, sizeof(float16_t) * out_channel);
       }
     }
+  }
+}
+
+void Fp16Crop(const float16_t *input, float16_t *output, int *in_shape, int *out_shape, int64_t *in_offset,
+              int input_dim, int task_id, int thread_num) {
+  switch (input_dim) {
+    case 1:
+      Fp16Crop1D(input, output, out_shape, in_offset, task_id, thread_num);
+      break;
+    case 2:
+      Fp16Crop2D(input, output, in_shape, out_shape, in_offset, task_id, thread_num);
+      break;
+    case 3:
+      Fp16Crop3D(input, output, in_shape, out_shape, in_offset, task_id, thread_num);
+      break;
+    case 4:
+      Fp16Crop4D(input, output, in_shape, out_shape, in_offset, task_id, thread_num);
+      break;
+    default:
+      break;
   }
 }

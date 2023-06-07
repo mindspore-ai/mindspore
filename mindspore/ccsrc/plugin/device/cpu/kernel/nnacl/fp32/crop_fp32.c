@@ -31,7 +31,7 @@ void Pad4DOffset(const CropParameter *crop_param, int64_t *offset, int length) {
 }
 
 void Crop4D(const float *input, float *output, const int *in_shape, const int *out_shape,
-            const CropParameter *crop_param, int thread_id) {
+            const CropParameter *crop_param, int thread_id, int thread_num) {
   int64_t offset_pad[DIMENSION_4D] = {0};
   Pad4DOffset(crop_param, offset_pad, DIMENSION_4D);
   int out_shape1 = out_shape[1];
@@ -44,10 +44,8 @@ void Crop4D(const float *input, float *output, const int *in_shape, const int *o
   size_t in_stride1 = in_stride2 * in_shape[2];
   size_t in_stride0 = in_stride1 * in_shape[1];
   size_t copy_size = out_shape3 * sizeof(float);
-  if (crop_param->op_parameter_.thread_num_ == 0) {
-    return;
-  }
-  size_t count_per_thread = UP_DIV(out_shape1, crop_param->op_parameter_.thread_num_);
+
+  size_t count_per_thread = UP_DIV(out_shape1, thread_num);
   size_t thread_stride = thread_id * count_per_thread;
   for (int i = 0; i < out_shape[0]; ++i) {
     size_t out_offset0 = i * out_stride0;

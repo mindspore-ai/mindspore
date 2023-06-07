@@ -1,5 +1,6 @@
+
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +15,18 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_INT8_CROP_INT8_H_
-#define NNACL_INT8_CROP_INT8_H_
+#ifndef NNACL_KERNEL_TRIU_H_
+#define NNACL_KERNEL_TRIU_H_
+
 #include "nnacl/op_base.h"
-#include "nnacl/crop_parameter.h"
+#include "nnacl/tensor_c.h"
+#include "nnacl/kernel.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-void Int8Crop(const int8_t *input, int8_t *output, int *input_shape, int *output_shape, int64_t *in_offset,
-              int input_dim, int task_id, int thread_count, const CropQuantArg *quant);
-#ifdef __cplusplus
-}
-#endif
+typedef struct TriuStruct {
+  KernelBase base_;
+  int64_t k_;
+} TriuStruct;
 
-#endif  // NNACL_INT8_CROP_INT8_H_
+KernelBase *CreateTriu(OpParameter *param, int data_type);
+
+#endif  // NNACL_KERNEL_TRIU_H_

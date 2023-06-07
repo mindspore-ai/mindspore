@@ -20,6 +20,7 @@
 #include "nnacl/op_base.h"
 #include "nnacl/fp32/strided_slice_fp32.h"
 #include "nnacl/kernel/reshape.h"
+#include "nnacl/kernel/base_kernel.h"
 
 #define MinStridedSlicePerThread 16384
 
@@ -215,15 +216,6 @@ void StridedSliceInitFastRunParam(StridedSliceStruct *strided_slice) {
       : UP_DIV(strided_slice->outer_, strided_slice->base_.thread_nr_);
 }
 
-int strided_slice_release(KernelBase *self) { return NNACL_OK; }
-
-int strided_slice_prepare(KernelBase *self) {
-  NNACL_CHECK_NULL_RETURN_ERR(self);
-  NNACL_CHECK_FALSE(self->in_size_ < ONE_TENSOR, NNACL_ERR);
-  NNACL_CHECK_FALSE(self->out_size_ < ONE_TENSOR, NNACL_ERR);
-  return NNACL_OK;
-}
-
 int strided_slice_resize(KernelBase *self) {
   StridedSliceStruct *strided_slice = (StridedSliceStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(strided_slice);
@@ -270,8 +262,8 @@ KernelBase *CreateStridedSlice(OpParameter *param, int data_type) {
   StridedSliceStruct *strided_slice = (StridedSliceStruct *)malloc(sizeof(StridedSliceStruct));
   NNACL_CHECK_NULL_RETURN_NULL(strided_slice);
   strided_slice->data_type_ = data_type;
-  strided_slice->base_.release = strided_slice_release;
-  strided_slice->base_.prepare = strided_slice_prepare;
+  strided_slice->base_.release = base_kernel_release;
+  strided_slice->base_.prepare = base_kernel_prepare_one_input;
   strided_slice->base_.resize = strided_slice_resize;
   strided_slice->base_.compute = strided_slice_compute;
   return (KernelBase *)strided_slice;

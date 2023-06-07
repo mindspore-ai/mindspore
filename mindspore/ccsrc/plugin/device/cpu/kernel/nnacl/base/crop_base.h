@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_INT8_CROP_INT8_H_
-#define NNACL_INT8_CROP_INT8_H_
+#ifndef MINDSPORE_NNACL_BASE_CROP_BASE_H_
+#define MINDSPORE_NNACL_BASE_CROP_BASE_H_
+
 #include "nnacl/op_base.h"
 #include "nnacl/crop_parameter.h"
+
+#define CROP_OFFSET_MAX_SIZE 4
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Int8Crop(const int8_t *input, int8_t *output, int *input_shape, int *output_shape, int64_t *in_offset,
-              int input_dim, int task_id, int thread_count, const CropQuantArg *quant);
+
+int CropPadOffset(int input_dim, CropParameter *crop_para, int64_t *in_offset);
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // NNACL_INT8_CROP_INT8_H_
+#endif  // MINDSPORE_NNACL_BASE_CROP_BASE_H_

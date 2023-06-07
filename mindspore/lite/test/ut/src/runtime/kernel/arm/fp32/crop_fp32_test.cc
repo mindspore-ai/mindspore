@@ -16,7 +16,8 @@
 #include "common/common_test.h"
 #include "nnacl/fp32/crop_fp32.h"
 #include "src/litert/tensor_category.h"
-#include "mindspore/lite/src/litert/kernel/cpu/fp32/crop_fp32.h"
+#include "src/litert/lite_kernel.h"
+#include "nnacl/nnacl_manager.h"
 
 namespace mindspore {
 class CropTestFp32 : public mindspore::CommonTest {
@@ -38,7 +39,7 @@ TEST_F(CropTestFp32, CropTest1) {
   crop_param.offset_[1] = 1;
   crop_param.offset_[2] = 1;
   crop_param.op_parameter_.thread_num_ = 1;
-  Crop4D(input, output, in_shape, out_shape, &crop_param, 0);
+  Crop4D(input, output, in_shape, out_shape, &crop_param, 0, crop_param.op_parameter_.thread_num_);
   for (int i = 0; i < kOutSize; ++i) {
     std::cout << output[i] << " ";
   }
@@ -61,7 +62,7 @@ TEST_F(CropTestFp32, CropTest2) {
   crop_param.offset_[2] = 0;
   crop_param.offset_[3] = 0;
   crop_param.op_parameter_.thread_num_ = 1;
-  Crop4D(input, output, in_shape, out_shape, &crop_param, 0);
+  Crop4D(input, output, in_shape, out_shape, &crop_param, 0, crop_param.op_parameter_.thread_num_);
   for (int i = 0; i < kOutSize; ++i) {
     std::cout << output[i] << " ";
   }
@@ -81,7 +82,7 @@ TEST_F(CropTestFp32, CropTest3) {
   crop_param.axis_ = 3;
   crop_param.offset_[0] = 1;
   crop_param.op_parameter_.thread_num_ = 1;
-  Crop4D(input, output, in_shape, out_shape, &crop_param, 0);
+  Crop4D(input, output, in_shape, out_shape, &crop_param, 0, crop_param.op_parameter_.thread_num_);
   for (int i = 0; i < kOutSize; ++i) {
     std::cout << output[i] << " ";
   }
@@ -101,8 +102,8 @@ TEST_F(CropTestFp32, CropTest4) {
   crop_param.axis_ = 3;
   crop_param.offset_[0] = 1;
   crop_param.op_parameter_.thread_num_ = 2;
-  Crop4D(input, output, in_shape, out_shape, &crop_param, 0);
-  Crop4D(input, output, in_shape, out_shape, &crop_param, 1);
+  Crop4D(input, output, in_shape, out_shape, &crop_param, 0, crop_param.op_parameter_.thread_num_);
+  Crop4D(input, output, in_shape, out_shape, &crop_param, 1, crop_param.op_parameter_.thread_num_);
   for (int i = 0; i < kOutSize; ++i) {
     std::cout << output[i] << " ";
   }
@@ -186,8 +187,8 @@ TEST_F(CropTestFp32, CropTest8) {
   crop_param.offset_[1] = 1;
   crop_param.offset_[2] = 1;
   crop_param.op_parameter_.thread_num_ = 2;
-  Crop4D(input, output, in_shape, out_shape, &crop_param, 0);
-  Crop4D(input, output, in_shape, out_shape, &crop_param, 1);
+  Crop4D(input, output, in_shape, out_shape, &crop_param, 0, crop_param.op_parameter_.thread_num_);
+  Crop4D(input, output, in_shape, out_shape, &crop_param, 1, crop_param.op_parameter_.thread_num_);
   for (float i : output) {
     std::cout << i << " ";
   }
@@ -212,8 +213,8 @@ TEST_F(CropTestFp32, CropTest9) {
   crop_param.offset_[1] = 1;
   crop_param.offset_[2] = 1;
   crop_param.op_parameter_.thread_num_ = 2;
-  Crop4D(input, output, in_shape, out_shape, &crop_param, 0);
-  Crop4D(input, output, in_shape, out_shape, &crop_param, 1);
+  Crop4D(input, output, in_shape, out_shape, &crop_param, 0, crop_param.op_parameter_.thread_num_);
+  Crop4D(input, output, in_shape, out_shape, &crop_param, 1, crop_param.op_parameter_.thread_num_);
   for (float i : output) {
     std::cout << i << " ";
   }
@@ -236,8 +237,8 @@ TEST_F(CropTestFp32, CropTest10) {
   crop_param.offset_[0] = 0;
   crop_param.offset_[1] = 0;
   crop_param.op_parameter_.thread_num_ = 2;
-  Crop4D(input, output, in_shape, out_shape, &crop_param, 1);
-  Crop4D(input, output, in_shape, out_shape, &crop_param, 0);
+  Crop4D(input, output, in_shape, out_shape, &crop_param, 1, crop_param.op_parameter_.thread_num_);
+  Crop4D(input, output, in_shape, out_shape, &crop_param, 0, crop_param.op_parameter_.thread_num_);
   for (float i : output) {
     std::cout << i << " ";
   }
@@ -271,12 +272,22 @@ TEST_F(CropTestFp32, CropTest11) {
   ctx->thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   CropParameter crop_param;
+  OpParameter *param = &crop_param.op_parameter_;
+  param->type_ = schema::PrimitiveType_Crop;
+  param->thread_num_ = ctx->thread_num_;
   crop_param.axis_ = 2;
   crop_param.offset_[0] = 0;
   crop_param.offset_[1] = 0;
-  auto kernel = new kernel::CropCPUKernel(reinterpret_cast<OpParameter *>(&crop_param), inputs, outputs, ctx);
-  kernel->Prepare();
-  kernel->Run();
+  crop_param.offset_size_ = 2;
+
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, param->type_};
+  auto kernel = nnacl::NNACLKernelRegistry(param, inputs, outputs, ctx, desc);
+
+  int ret = kernel->Prepare();
+  EXPECT_EQ(0, ret);
+
+  ret = kernel->Run();
+  EXPECT_EQ(0, ret);
 
   auto *output = reinterpret_cast<float *>(outputs[0]->MutableData());
   for (int i = 0; i < kOutSize; ++i) {
@@ -291,6 +302,7 @@ TEST_F(CropTestFp32, CropTest11) {
   for (unsigned int i = 0; i < outputs.size(); i++) {
     delete outputs[i];
   }
+  kernel->set_parameter(nullptr);
   delete kernel;
 }
 }  // namespace mindspore

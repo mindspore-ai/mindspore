@@ -18,6 +18,7 @@
 #include "nnacl/fp32/transpose_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"
 #include "nnacl/tensor_c.h"
+#include "nnacl/kernel/base_kernel.h"
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/pack_fp16.h"
 #include "nnacl/fp16/transpose_fp16.h"
@@ -269,8 +270,6 @@ int transpose_compute(struct KernelBase *self) {
   return self->env_->parallel_launch(self->env_->thread_pool_, TransposeImpl, self, self->thread_nr_);
 }
 
-int transpose_release(struct KernelBase *self) { return NNACL_OK; }
-
 int transpose_resize(struct KernelBase *self) {
   TransposeStruct *transpose = (TransposeStruct *)self;
   int ret = ResetTransposeStatus(transpose);
@@ -308,20 +307,14 @@ int transpose_resize(struct KernelBase *self) {
   return NNACL_OK;
 }
 
-int transpose_prepare(struct KernelBase *self) {
-  NNACL_CHECK_FALSE(self->in_size_ < ONE_TENSOR, NNACL_TENSOR_SIZE_INVALID);
-  NNACL_CHECK_FALSE(self->out_size_ < ONE_TENSOR, NNACL_TENSOR_SIZE_INVALID);
-  return NNACL_OK;
-}
-
 KernelBase *CreateTranspose(OpParameter *param, int data_type) {
   TransposeStruct *transpose = (TransposeStruct *)malloc(sizeof(TransposeStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(transpose);
   transpose->nhwc2nchw_ = PackNHWCToNCHWFp32;
   transpose->optimize_ = TransposeDimsFp32;
   transpose->compute_ = DoTransposeFp32;
-  transpose->base_.release = transpose_release;
-  transpose->base_.prepare = transpose_prepare;
+  transpose->base_.release = base_kernel_release;
+  transpose->base_.prepare = base_kernel_prepare_one_input;
   transpose->base_.resize = transpose_resize;
   transpose->base_.compute = transpose_compute;
 #ifdef ENABLE_FP16
