@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_BINARY_CROSS_ENTROPY_H_
-#define MINDSPORE_NNACL_BINARY_CROSS_ENTROPY_H_
+#ifndef NNACL_BINARY_CROSS_ENTROPY_H_
+#define NNACL_BINARY_CROSS_ENTROPY_H_
 
 #include "nnacl/op_base.h"
 
@@ -33,4 +33,4 @@ void BinaryCrossEntropy(const int input_size, const int reduction, const float *
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_NNACL_BINARY_CROSS_ENTROPY_H_
+#endif  // NNACL_BINARY_CROSS_ENTROPY_H_

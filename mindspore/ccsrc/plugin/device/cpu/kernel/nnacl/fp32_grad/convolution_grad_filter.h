@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP32_GRAD_CONVOLUTION_GRAD_FILTER_H_
-#define MINDSPORE_NNACL_FP32_GRAD_CONVOLUTION_GRAD_FILTER_H_
+#ifndef NNACL_FP32_GRAD_CONVOLUTION_GRAD_FILTER_H_
+#define NNACL_FP32_GRAD_CONVOLUTION_GRAD_FILTER_H_
 
 #include <stddef.h>
 #include "nnacl/conv_parameter.h"
@@ -29,4 +29,4 @@ int ConvDwFilterGrad(const float *x, const float *dy, float *dw, int start, int 
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP32_GRAD_CONVOLUTION_GRAD_FILTER_H_
+#endif  // NNACL_FP32_GRAD_CONVOLUTION_GRAD_FILTER_H_

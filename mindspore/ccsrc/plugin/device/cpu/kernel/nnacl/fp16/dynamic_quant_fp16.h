@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_INT8_DYNAMIC_QUANT_FP16_H_
-#define MINDSPORE_NNACL_INT8_DYNAMIC_QUANT_FP16_H_
+#ifndef NNACL_INT8_DYNAMIC_QUANT_FP16_H_
+#define NNACL_INT8_DYNAMIC_QUANT_FP16_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/power_parameter.h"
@@ -33,4 +33,4 @@ void CalculateMinMaxCount8Fp16(const float16_t *data, int count_8, float16_t *re
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_INT8_DYNAMIC_QUANT_FP16_H_
+#endif  //  NNACL_INT8_DYNAMIC_QUANT_FP16_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP32_GRAD_MAXPOOL_GRAD_GARD_H_
-#define MINDSPORE_NNACL_FP32_GRAD_MAXPOOL_GRAD_GARD_H_
+#ifndef NNACL_FP32_GRAD_MAXPOOL_GRAD_GARD_H_
+#define NNACL_FP32_GRAD_MAXPOOL_GRAD_GARD_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/pooling_parameter.h"
@@ -32,4 +32,4 @@ int MaxPool3DGradGrad(const float *input, const float *grad, float *output, size
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP32_GRAD_MAXPOOL_GRAD_GARD_H_
+#endif  // NNACL_FP32_GRAD_MAXPOOL_GRAD_GARD_H_

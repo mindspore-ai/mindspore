@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_RAGGED_RANGE_FP16_H_
-#define MINDSPORE_NNACL_RAGGED_RANGE_FP16_H_
+#ifndef NNACL_FP16_RAGGED_RANGE_FP16_H_
+#define NNACL_FP16_RAGGED_RANGE_FP16_H_
 
 #include <math.h>
 #include "nnacl/op_base.h"
@@ -31,4 +31,4 @@ void RaggedRangeFp16(const float16_t *starts, const float16_t *limits, const flo
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_RAGGED_RANGE_FP16_H_
+#endif  //   NNACL_FP16_RAGGED_RANGE_FP16_H_

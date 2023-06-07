@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_FP16_GRAD_ACTIVATION_GRAD_FP16_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_FP16_GRAD_ACTIVATION_GRAD_FP16_H_
+#ifndef NNACL_FP16_GRAD_ACTIVATION_GRAD_FP16_H_
+#define NNACL_FP16_GRAD_ACTIVATION_GRAD_FP16_H_
 
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
@@ -41,4 +41,4 @@ int GeluFp16Grad(const float16_t *src0, const float16_t *src1, int length, float
 }
 #endif
 
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_FP16_GRAD_ACTIVATION_GRAD_FP16_H_
+#endif  // NNACL_FP16_GRAD_ACTIVATION_GRAD_FP16_H_

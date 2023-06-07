@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP32_SMOOTH_L1_LOSS_PARAMETER_H_
-#define MINDSPORE_NNACL_FP32_SMOOTH_L1_LOSS_PARAMETER_H_
+#ifndef NNACL_FP32_SMOOTH_L1_LOSS_PARAMETER_H_
+#define NNACL_FP32_SMOOTH_L1_LOSS_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -24,4 +24,4 @@ typedef struct {
   float beta_;
 } SmoothL1LossParameter;
 
-#endif  // MINDSPORE_NNACL_FP32_SMOOTH_L1_LOSS_PARAMETER_H_
+#endif  // NNACL_FP32_SMOOTH_L1_LOSS_PARAMETER_H_

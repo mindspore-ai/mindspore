@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP32_GRAD_REDUCE_GRAD_H_
-#define MINDSPORE_NNACL_FP32_GRAD_REDUCE_GRAD_H_
+#ifndef NNACL_FP32_GRAD_REDUCE_GRAD_H_
+#define NNACL_FP32_GRAD_REDUCE_GRAD_H_
 
 #include <stddef.h>
 
@@ -27,4 +27,4 @@ void ReduceSumByAxes(const float *input, const int *input_dims, float *output, c
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_NNACL_FP32_GRAD_REDUCE_GRAD_H_
+#endif  // NNACL_FP32_GRAD_REDUCE_GRAD_H_

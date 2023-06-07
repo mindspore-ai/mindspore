@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP16_WINOGRAD_UTILS_H_
-#define MINDSPORE_NNACL_FP16_WINOGRAD_UTILS_H_
+#ifndef NNACL_FP16_WINOGRAD_UTILS_H_
+#define NNACL_FP16_WINOGRAD_UTILS_H_
 
 #include "nnacl/conv_parameter.h"
 #include "nnacl/op_base.h"
@@ -568,4 +568,4 @@ void CheckIfUseWinogradFp16(bool *use_winograd, int *output_unit, const ConvPara
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP16_WINOGRAD_UTILS_H_
+#endif  //  NNACL_FP16_WINOGRAD_UTILS_H_

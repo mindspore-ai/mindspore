@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_FP32_GRAD_UTILS_H_
-#define MINDSPORE_NNACL_FP32_GRAD_UTILS_H_
+#ifndef NNACL_FP32_GRAD_UTILS_H_
+#define NNACL_FP32_GRAD_UTILS_H_
 
 #include "nnacl/op_base.h"
 
@@ -69,4 +69,4 @@ static inline int NextIndex(int num_dims, const int *dims, int *current) {
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP32_GRAD_UTILS_H_
+#endif  // NNACL_FP32_GRAD_UTILS_H_

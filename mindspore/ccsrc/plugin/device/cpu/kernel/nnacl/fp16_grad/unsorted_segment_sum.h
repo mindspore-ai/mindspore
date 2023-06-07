@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP16_GRAD_UNSORTED_SEGMENT_SUM_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP16_GRAD_UNSORTED_SEGMENT_SUM_H_
+#ifndef NNACL_FP16_GRAD_UNSORTED_SEGMENT_SUM_H_
+#define NNACL_FP16_GRAD_UNSORTED_SEGMENT_SUM_H_
 
 #include "nnacl/op_base.h"
 
@@ -28,4 +28,4 @@ int UnsortedSegmentSumFp16(const float16_t *input, int unit_num, int input_dim1,
 #ifdef __cplusplus
 }
 #endif
-#endif  //  MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP16_GRAD_UNSORTED_SEGMENT_SUM_H_
+#endif  //  NNACL_FP16_GRAD_UNSORTED_SEGMENT_SUM_H_

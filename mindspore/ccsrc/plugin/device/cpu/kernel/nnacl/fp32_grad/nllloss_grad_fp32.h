@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_NNACL_FP32_NLLLOSS_GRAD_H_
-#define MINDSPORE_LITE_NNACL_FP32_NLLLOSS_GRAD_H_
+#ifndef LITE_NNACL_FP32_NLLLOSS_GRAD_H_
+#define LITE_NNACL_FP32_NLLLOSS_GRAD_H_
 
 #include "nnacl/nllloss_parameter.h"
 
@@ -28,4 +28,4 @@ int NLLLossGrad(const float *logits, const float *loss_grad, const int *labels, 
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_FP32_NLLLOSS_GRAD_H_
+#endif  // LITE_NNACL_FP32_NLLLOSS_GRAD_H_

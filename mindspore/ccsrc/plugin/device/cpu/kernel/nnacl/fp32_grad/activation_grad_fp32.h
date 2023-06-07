@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_FP32_GRAD_ACTIVATION_GRAD_FP32_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_FP32_GRAD_ACTIVATION_GRAD_FP32_H_
+#ifndef NNACL_FP32_GRAD_ACTIVATION_GRAD_FP32_H_
+#define NNACL_FP32_GRAD_ACTIVATION_GRAD_FP32_H_
 
 #include <math.h>
 #include "nnacl/op_base.h"
@@ -46,4 +46,4 @@ int SoftShrinkGrad(const float *src0, const float *src1, int length, float *dst,
 }
 #endif
 
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_FP32_GRAD_ACTIVATION_GRAD_FP32_H_
+#endif  // NNACL_FP32_GRAD_ACTIVATION_GRAD_FP32_H_

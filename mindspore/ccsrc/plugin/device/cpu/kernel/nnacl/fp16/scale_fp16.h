@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_SCALE_FP16_H_
-#define MINDSPORE_NNACL_SCALE_FP16_H_
+#ifndef NNACL_SCALE_FP16_H_
+#define NNACL_SCALE_FP16_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
@@ -34,4 +34,4 @@ void DoScaleRelu6Fp16(const float16_t *in_data, float16_t *out_data, const float
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_SCALE_FP16_H_
+#endif  //  NNACL_SCALE_FP16_H_

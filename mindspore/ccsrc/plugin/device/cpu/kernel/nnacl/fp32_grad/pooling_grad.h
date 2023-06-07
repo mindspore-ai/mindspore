@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP32_GRAD_POOLING_GRAD_H_
-#define MINDSPORE_NNACL_FP32_GRAD_POOLING_GRAD_H_
+#ifndef NNACL_FP32_GRAD_POOLING_GRAD_H_
+#define NNACL_FP32_GRAD_POOLING_GRAD_H_
 
 #include "nnacl/fp32/pooling_fp32.h"
 
@@ -29,4 +29,4 @@ void MaxPoolingGrad(const float *input_ptr, const float *dy_ptr, float *output_p
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP32_GRAD_POOLING_GRAD_H_
+#endif  // NNACL_FP32_GRAD_POOLING_GRAD_H_

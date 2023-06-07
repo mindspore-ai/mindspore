@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP16_GRAD_RESIZE_GRAD_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP16_GRAD_RESIZE_GRAD_H_
+#ifndef NNACL_FP16_GRAD_RESIZE_GRAD_H_
+#define NNACL_FP16_GRAD_RESIZE_GRAD_H_
 
 #include "nnacl/op_base.h"
 
@@ -42,4 +42,4 @@ int ResizeBiLinearFp16Grad(float16_t *in_addr, float16_t *out_addr, int batch_si
 #ifdef __cplusplus
 }
 #endif
-#endif  //  MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP16_GRAD_RESIZE_GRAD_H_
+#endif  //  NNACL_FP16_GRAD_RESIZE_GRAD_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP32_GRAD_CONVOLUTION_GRAD_INPUT_H_
-#define MINDSPORE_NNACL_FP32_GRAD_CONVOLUTION_GRAD_INPUT_H_
+#ifndef NNACL_FP32_GRAD_CONVOLUTION_GRAD_INPUT_H_
+#define NNACL_FP32_GRAD_CONVOLUTION_GRAD_INPUT_H_
 
 #include <stddef.h>
 #include "nnacl/conv_parameter.h"
@@ -30,4 +30,4 @@ int ConvDwInputGradFp16(const float16_t *dy, const float16_t *w, float16_t *dx, 
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP32_GRAD_CONVOLUTION_GRAD_INPUT_H_
+#endif  // NNACL_FP32_GRAD_CONVOLUTION_GRAD_INPUT_H_

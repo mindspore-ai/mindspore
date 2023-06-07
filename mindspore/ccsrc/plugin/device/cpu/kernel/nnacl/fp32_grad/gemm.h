@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP32_GRAD_GEMM_H_
-#define MINDSPORE_NNACL_FP32_GRAD_GEMM_H_
+#ifndef NNACL_FP32_GRAD_GEMM_H_
+#define NNACL_FP32_GRAD_GEMM_H_
 
 #include <stdlib.h>
 #include "nnacl/op_base.h"
@@ -42,4 +42,4 @@ void AddMatrix(const float *v1, float *v2, float beta, int row, int col, int str
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP32_GRAD_GEMM_H_
+#endif  // NNACL_FP32_GRAD_GEMM_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP16_SOFTMAX_FP16_H_
-#define MINDSPORE_NNACL_FP16_SOFTMAX_FP16_H_
+#ifndef NNACL_FP16_SOFTMAX_FP16_H_
+#define NNACL_FP16_SOFTMAX_FP16_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
@@ -32,4 +32,4 @@ void SoftmaxLastAxisFp16(const float16_t *src, float16_t *dst, int batch, int ch
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP16_SOFTMAX_FP16_H_
+#endif  //  NNACL_FP16_SOFTMAX_FP16_H_

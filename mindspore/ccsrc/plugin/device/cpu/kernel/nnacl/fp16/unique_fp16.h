@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_FP16_UNIQUE_FP16_H
-#define MINDSPORE_NNACL_FP16_UNIQUE_FP16_H
+#ifndef NNACL_FP16_UNIQUE_FP16_H
+#define NNACL_FP16_UNIQUE_FP16_H
 
 #include "nnacl/op_base.h"
 
@@ -26,4 +26,4 @@ void UniqueFp16(const float16_t *input, int input_len, float16_t *output0, int *
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP16_UNIQUE_FP16_H
+#endif  //  NNACL_FP16_UNIQUE_FP16_H

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_FP16_ARITHMETIC_FP16_H_
-#define MINDSPORE_NNACL_FP16_ARITHMETIC_FP16_H_
+#ifndef NNACL_FP16_ARITHMETIC_FP16_H_
+#define NNACL_FP16_ARITHMETIC_FP16_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
@@ -121,4 +121,4 @@ int ElementGreaterEqualFp16(const float16_t *input0, const float16_t *input1, ui
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP16_ARITHMETIC_FP16_H_
+#endif  //  NNACL_FP16_ARITHMETIC_FP16_H_

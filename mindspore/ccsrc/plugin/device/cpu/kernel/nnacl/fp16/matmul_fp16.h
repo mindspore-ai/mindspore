@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP16_MATMUL_H_
-#define MINDSPORE_NNACL_FP16_MATMUL_H_
+#ifndef NNACL_FP16_MATMUL_FP16_H_
+#define NNACL_FP16_MATMUL_FP16_H_
 
 #include <float.h>
 #include <string.h>
@@ -118,4 +118,4 @@ void RowMajor2ColMajorFp16(const void *src, float16_t *dst, int row, int col, bo
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP16_MATMUL_H_
+#endif  //  NNACL_FP16_MATMUL_FP16_H_

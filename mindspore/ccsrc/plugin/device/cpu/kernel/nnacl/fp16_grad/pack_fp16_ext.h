@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP16_GRAD_PACK_FP16_EXT_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP16_GRAD_PACK_FP16_EXT_H_
+#ifndef NNACL_FP16_GRAD_PACK_FP16_EXT_H_
+#define NNACL_FP16_GRAD_PACK_FP16_EXT_H_
 
 #include <stddef.h>
 #include "nnacl/conv_parameter.h"
@@ -34,4 +34,4 @@ void RollingCol2ImPackUnitFp16(const float16_t *data_col, float16_t *data_im, co
 }
 #endif
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP16_GRAD_PACK_FP16_EXT_H_
+#endif  // NNACL_FP16_GRAD_PACK_FP16_EXT_H_

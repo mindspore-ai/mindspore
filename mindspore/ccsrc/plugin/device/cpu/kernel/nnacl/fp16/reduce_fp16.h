@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP16_REDUCE_FP16_H_
-#define MINDSPORE_NNACL_FP16_REDUCE_FP16_H_
+#ifndef NNACL_FP16_REDUCE_FP16_H_
+#define NNACL_FP16_REDUCE_FP16_H_
 #include "nnacl/op_base.h"
 #include "nnacl/reduce_parameter.h"
 
@@ -38,4 +38,4 @@ int ReduceL2NormFp16(int outer_size, int inner_size, int axis_size, const float1
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP16_REDUCE_FP16_H_
+#endif  //  NNACL_FP16_REDUCE_FP16_H_

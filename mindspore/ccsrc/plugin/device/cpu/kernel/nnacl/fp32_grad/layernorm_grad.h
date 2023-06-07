@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_FP32_GRAD_LAYERNORM_GRAD_H_
-#define MINDSPORE_NNACL_FP32_GRAD_LAYERNORM_GRAD_H_
+#ifndef NNACL_FP32_GRAD_LAYERNORM_GRAD_H_
+#define NNACL_FP32_GRAD_LAYERNORM_GRAD_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,4 +26,4 @@ int LayerNormGrad(const float *x, const float *dy, const float *var, const float
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_NNACL_FP32_GRAD_LAYERNORM_GRAD_H_
+#endif  // NNACL_FP32_GRAD_LAYERNORM_GRAD_H_

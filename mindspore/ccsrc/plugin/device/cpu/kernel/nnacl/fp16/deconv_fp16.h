@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP16_DECONV_FP16_H_
-#define MINDSPORE_NNACL_FP16_DECONV_FP16_H_
+#ifndef NNACL_FP16_DECONV_FP16_H_
+#define NNACL_FP16_DECONV_FP16_H_
 
 #include <arm_neon.h>
 #include <string.h>
@@ -33,4 +33,4 @@ int DeConvPostFp16(const float16_t *src, float16_t *tmp, const float16_t *bias, 
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_NNACL_FP16_DECONV_FP16_H_
+#endif  //  NNACL_FP16_DECONV_FP16_H_

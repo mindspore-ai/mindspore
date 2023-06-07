@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_FP16_GRAD_ARITHMETHIC_SELF_GRAD_H_
-#define MINDSPORE_NNACL_FP16_GRAD_ARITHMETHIC_SELF_GRAD_H_
+#ifndef NNACL_FP16_GRAD_ARITHMETHIC_SELF_GRAD_H_
+#define NNACL_FP16_GRAD_ARITHMETHIC_SELF_GRAD_H_
 
 #ifdef ENABLE_NEON
 #include <arm_neon.h>

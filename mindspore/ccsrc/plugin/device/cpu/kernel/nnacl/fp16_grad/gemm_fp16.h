@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP16_GRAD_GEMM_FP16_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP16_GRAD_GEMM_FP16_H_
+#ifndef NNACL_FP16_GRAD_GEMM_FP16_H_
+#define NNACL_FP16_GRAD_GEMM_FP16_H_
 
 #include <stdlib.h>
 #include "nnacl/op_base.h"
@@ -43,4 +43,4 @@ void AddMatrixFp16(const float16_t *v1, float16_t *v2, float16_t beta, int row, 
 }
 #endif
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP16_GRAD_GEMM_FP16_H_
+#endif  // NNACL_FP16_GRAD_GEMM_FP16_H_

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_FP16_ARG_MIN_MAX_H_
-#define MINDSPORE_NNACL_FP16_ARG_MIN_MAX_H_
+#ifndef NNACL_FP16_ARG_MIN_MAX_FP16_H_
+#define NNACL_FP16_ARG_MIN_MAX_FP16_H_
 
 #include <float.h>
 #include "nnacl/arg_min_max_parameter.h"
@@ -29,4 +29,4 @@ void ArgMinMaxFp16(const float16_t *input, void *output, float16_t *output_value
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP16_ARG_MIN_MAX_H_
+#endif  //  NNACL_FP16_ARG_MIN_MAX_FP16_H_

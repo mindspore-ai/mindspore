@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP16_GRAD_POOLING_GRAD_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP16_GRAD_POOLING_GRAD_H_
+#ifndef NNACL_FP16_GRAD_POOLING_GRAD_H_
+#define NNACL_FP16_GRAD_POOLING_GRAD_H_
 
 #include "nnacl/fp16/pooling_fp16.h"
 
@@ -29,4 +29,4 @@ void MaxPoolingFp16Grad(const float16_t *input_ptr, const float16_t *dy_ptr, flo
 }
 #endif
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP16_GRAD_POOLING_GRAD_H_
+#endif  // NNACL_FP16_GRAD_POOLING_GRAD_H_

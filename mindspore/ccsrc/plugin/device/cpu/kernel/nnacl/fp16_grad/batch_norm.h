@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP16_GRAD_BATCH_NORM_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP16_GRAD_BATCH_NORM_H_
+#ifndef NNACL_FP16_GRAD_BATCH_NORM_H_
+#define NNACL_FP16_GRAD_BATCH_NORM_H_
 
 #include "nnacl/op_base.h"
 
@@ -37,4 +37,4 @@ void backwardP2Fp16(const float16_t *in, const float16_t *yt, const float16_t *m
 }
 #endif
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP16_GRAD_BATCH_NORM_H_
+#endif  // NNACL_FP16_GRAD_BATCH_NORM_H_

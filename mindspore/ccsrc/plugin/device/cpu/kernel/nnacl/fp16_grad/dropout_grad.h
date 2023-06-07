@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP16_GRAD_DROPOUT_GRAD_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP16_GRAD_DROPOUT_GRAD_H_
+#ifndef NNACL_FP16_GRAD_DROPOUT_GRAD_H_
+#define NNACL_FP16_GRAD_DROPOUT_GRAD_H_
 
 #include "nnacl/op_base.h"
 
@@ -29,4 +29,4 @@ void DropoutFp16Grad(const float16_t *yt_ptr, const float16_t *mask, float16_t *
 }
 #endif
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP16_GRAD_DROPOUT_GRAD_H_
+#endif  // NNACL_FP16_GRAD_DROPOUT_GRAD_H_

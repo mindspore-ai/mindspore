@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP16_WINOGRAD_TRANSFORM_FP16_H_
-#define MINDSPORE_NNACL_FP16_WINOGRAD_TRANSFORM_FP16_H_
+#ifndef NNACL_FP16_WINOGRAD_TRANSFORM_FP16_H_
+#define NNACL_FP16_WINOGRAD_TRANSFORM_FP16_H_
 
 #include <arm_neon.h>
 #include <string.h>
@@ -54,4 +54,4 @@ int WinogradWeightTransformFp16(const float16_t *weight_data, float16_t *winogra
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP16_WINOGRAD_TRANSFORM_FP16_H_
+#endif  //  NNACL_FP16_WINOGRAD_TRANSFORM_FP16_H_

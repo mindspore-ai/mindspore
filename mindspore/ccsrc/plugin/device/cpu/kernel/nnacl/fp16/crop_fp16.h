@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP16_CROP_FP16_H_
-#define MINDSPORE_NNACL_FP16_CROP_FP16_H_
+#ifndef NNACL_FP16_CROP_FP16_H_
+#define NNACL_FP16_CROP_FP16_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/crop_parameter.h"
@@ -32,4 +32,4 @@ void Fp16Crop4D(const float16_t *input, float16_t *output, int task_id, const Cr
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP16_CROP_FP16_H_
+#endif  //  NNACL_FP16_CROP_FP16_H_
