@@ -752,7 +752,7 @@ AnfNodePtr RefParameterToActualParameter(const AnfNodePtr &node) {
   }
   size_t curr_param_index = curr_param_iter - sub_graph_parameters.begin();
   for (const auto &node_pair : call_cnodes_map) {
-    if (!node_pair.first->first->isa<CNode>() || node_pair.second > 0) {
+    if (!node_pair.first->first->isa<CNode>() || node_pair.first->second > 0) {
       continue;
     }
     auto cnode = node_pair.first->first->cast<CNodePtr>();
