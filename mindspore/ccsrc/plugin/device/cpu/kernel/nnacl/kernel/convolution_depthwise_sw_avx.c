@@ -20,8 +20,10 @@
 #include "nnacl/fp32/pack_fp32.h"
 
 int ConvDwSWAVXInitPackedInputOutput(ConvolutionDepthwiseSWAVXStruct *conv_dw) {
-  if (conv_dw->conv_.input_c_ % conv_dw->oc_tile_ != 0) {
-    conv_dw->input_need_align_ = true;
+  conv_dw->input_need_align_ = (conv_dw->conv_.input_c_ % conv_dw->oc_tile_ != 0);
+  conv_dw->output_need_align_ = (conv_dw->conv_.output_c_ % conv_dw->oc_tile_ != 0);
+
+  if (conv_dw->input_need_align_) {
     int ic_algin = UP_DIV(conv_dw->conv_.input_c_, conv_dw->oc_tile_);
     int input_hw = conv_dw->conv_.input_h_ * conv_dw->conv_.input_w_;
     NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_dw->conv_.input_b_, input_hw, NNACL_ERR);
@@ -33,8 +35,7 @@ int ConvDwSWAVXInitPackedInputOutput(ConvolutionDepthwiseSWAVXStruct *conv_dw) {
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_dw->packed_input_);
   }
 
-  if (conv_dw->conv_.output_c_ % conv_dw->oc_tile_ != 0) {
-    conv_dw->output_need_align_ = true;
+  if (conv_dw->output_need_align_) {
     int oc_algin = UP_DIV(conv_dw->conv_.output_c_, conv_dw->oc_tile_);
     int output_hw = conv_dw->conv_.output_h_ * conv_dw->conv_.output_w_;
     NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_dw->conv_.output_b_, output_hw, NNACL_ERR);
@@ -99,10 +100,12 @@ void ConvDwSWAVXFreePackedInputOutput(ConvolutionDepthwiseSWAVXStruct *conv_dw) 
   if (conv_dw->input_need_align_) {
     conv_dw->conv_.base_.env_->free(conv_dw->conv_.base_.env_->allocator_, conv_dw->packed_input_);
     conv_dw->packed_input_ = NULL;
+    conv_dw->input_need_align_ = false;
   }
   if (conv_dw->output_need_align_) {
     conv_dw->conv_.base_.env_->free(conv_dw->conv_.base_.env_->allocator_, conv_dw->packed_output_);
     conv_dw->packed_output_ = NULL;
+    conv_dw->output_need_align_ = false;
   }
 }
 
@@ -205,6 +208,7 @@ KernelBase *CreateConvDwSWAVX(ConvParameter *conv_param) {
   ConvolutionDepthwiseSWAVXStruct *conv_dw =
     (ConvolutionDepthwiseSWAVXStruct *)malloc(sizeof(ConvolutionDepthwiseSWAVXStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(conv_dw);
+  memset(conv_dw, 0, sizeof(ConvolutionDepthwiseSWAVXStruct));
 
   conv_dw->conv_.pack_weight_ = ConvDwSWAVXPackWeight;
   conv_dw->conv_.malloc_weight_bias_ = ConvDwSWAVXMallocWeightBiasData;
