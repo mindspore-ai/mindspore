@@ -2013,7 +2013,7 @@ static inline bool OrderPyExecuteCNode(const FuncGraphPtr &graph, const FuncGrap
 
 bool OrderPyExecuteAfterRewriter(const FuncGraphPtr &root, const pipeline::ResourcePtr &resource) {
   auto manager = resource->manager();
-  const auto &func_graphs_used_total = root->func_graphs_used_total();
+  const auto func_graphs_used_total = root->func_graphs_used_total();
   bool change = false;
   for (const auto &fg : func_graphs_used_total) {
     auto cur_change = OrderPyExecuteCNode(fg, manager);
