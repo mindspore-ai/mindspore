@@ -3878,7 +3878,6 @@ class UpsampleTrilinear3D(Primitive):
             [1.5  1.75 2.25 2.5 ]
             [2.5  2.75 3.25 3.5 ]
             [3.   3.25 3.75 4.  ]]
-
            [[1.   1.25 1.75 2.  ]
             [1.5  1.75 2.25 2.5 ]
             [2.5  2.75 3.25 3.5 ]
@@ -9366,11 +9365,11 @@ class ApplyAdamWithAmsgradV2(Primitive):
         - **beta2_power** (Union[float, Tensor]) - :math:`beta_2^t(\beta_2^{t})` in the updating formula,
           with float16 or float32 data type.
         - **lr** (Union[float, Tensor]) - Learning rate, with float16 or float32 data type.
-        - **beta1** (Union[float, Tensor]): Exponential decay rate of the first moment.
+        - **beta1** (Union[float, Tensor]) - Exponential decay rate of the first moment.
           The data type can be float16 or float32.
-        - **beta2** (Union[float, Tensor]): Exponential decay rate of the second moment.
+        - **beta2** (Union[float, Tensor]) - Exponential decay rate of the second moment.
           The data type can be float16 or float32.
-        - **epsilon (Union[float, Tensor]): A value added to the denominator to ensure numerical stability.
+        - **epsilon (Union[float, Tensor]) - A value added to the denominator to ensure numerical stability.
           The data type can be float16 or float32.
         - **grad** (Tensor) - The gradient, has the same shape and data type as `var`.
 
@@ -10183,9 +10182,9 @@ class UpsampleNearest3D(Primitive):
         - **x** (Tensor) - 5D tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.
           Supporting types: [float16, float32, float64].
         - **output_size** (Union[tuple[int], list[int]]): A tuple or list of int specifying the output volumetric size.
-            Default: ``None``.
+          Default: ``None``.
         - **scales** (Union[tuple[float], list[float]]): A tuple or list of float specifying the upsampling factors.
-            Default: ``None``.
+          Default: ``None``.
 
     Outputs:
         - **y** (Tensor) - Upsampled output with the same type as `x` , whose shape is

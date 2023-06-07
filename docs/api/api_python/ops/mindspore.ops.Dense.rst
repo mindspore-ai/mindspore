@@ -1,7 +1,7 @@
-mindspore.nn.Dense
+mindspore.ops.Dense
 ===================
 
-.. py:class:: mindspore.nn.Dense(in_channels, out_channels, weight_init='normal', bias_init='zeros', has_bias=True, activation=None)
+.. py:class:: mindspore.ops.Dense(in_channels, out_channels, weight_init='normal', bias_init='zeros', has_bias=True, activation=None)
 
     全连接融合算子。
 

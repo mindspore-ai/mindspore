@@ -391,8 +391,10 @@ class ReLU(Cell):
     It returns element-wise :math:`\max(0, x)`. Specially, the neurons with the negative output
     will be suppressed and the active neurons will stay the same.
 
-    The picture about ReLU looks like this `ReLU <https://en.wikipedia.org/wiki/
-    Activation_function#/media/File:Activation_rectified_linear.svg>`_ .
+    ReLU Activation Function Graph:
+
+    .. image:: images/relu.png
+        :align: center
 
     Inputs:
         - **x** (Tensor) - The input of ReLU is a Tensor of any dimension. The data type is `number <https://www.mind
