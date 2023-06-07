@@ -22,6 +22,7 @@ namespace py = pybind11;
 void ContextPyBind(const py::module &m);
 void ConverterPyBind(const py::module &m);
 void ModelPyBind(const py::module &m);
+void ModelGroupPyBind(const py::module &m);
 void ModelParallelRunnerPyBind(const py::module &m);
 void TensorPyBind(const py::module &m);
 std::shared_ptr<MSTensor> create_tensor();
@@ -33,6 +34,7 @@ PYBIND11_MODULE(_c_lite_wrapper, m) {
   ConverterPyBind(m);
 #endif
   ModelPyBind(m);
+  ModelGroupPyBind(m);
   ModelParallelRunnerPyBind(m);
   TensorPyBind(m);
   m.def("create_tensor", &create_tensor);

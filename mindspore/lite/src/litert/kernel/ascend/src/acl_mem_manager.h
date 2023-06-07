@@ -29,8 +29,8 @@ namespace acl {
 using mindspore::lite::STATUS;
 
 struct AclModelMemInfo {
-  void *mem_addr;
-  size_t mem_size;
+  void *mem_addr = nullptr;
+  size_t mem_size = 0;
 };
 
 class AclMemManager {

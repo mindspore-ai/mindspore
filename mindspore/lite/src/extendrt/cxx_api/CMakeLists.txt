@@ -48,6 +48,8 @@ set(MSLIB_INFER_SRC ${CMAKE_CURRENT_SOURCE_DIR}/types.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/graph/graph_data.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/model/model.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/model/model_impl.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/model/model_group.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/model/model_group_impl.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/model_pool/predict_task_queue.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/model_pool/model_worker.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/model_pool/model_pool.cc

@@ -48,12 +48,7 @@ struct AclTensorInfo {
 class ModelProcess {
  public:
   explicit ModelProcess(const AclModelOptionsPtr &options) : options_(options) {}
-  ~ModelProcess() {
-    if (dynamic_dims_ != nullptr) {
-      delete[] dynamic_dims_;
-      dynamic_dims_ = nullptr;
-    }
-  }
+  ~ModelProcess();
 
   bool Load(const void *om_data, size_t om_data_size);
   bool UnLoad();
@@ -122,6 +117,8 @@ class ModelProcess {
   bool is_dynamic_input_ = false;
   bool is_dynamic_resize_input_ = false;
   aclmdlIODims *dynamic_dims_ = nullptr;
+  void *weight_ptr_ = nullptr;
+  bool is_sharing_workspace_ = false;
 };
 }  // namespace acl
 }  // namespace mindspore::kernel

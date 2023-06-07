@@ -81,7 +81,8 @@ Status SingleOpInferSession::Init(const std::shared_ptr<Context> &context) {
 }
 
 void SingleOpInferSession::SetCustomAscendOpAttrs(const kernel::BaseOperatorPtr &op) {
-  if (config_infos_.find(lite::kAscendContextSection) == config_infos_.end()) {
+  if (config_infos_.find(lite::kAscendContextSection) == config_infos_.end() &&
+      config_infos_.find("inner_common") == config_infos_.end()) {
     MS_LOG(DEBUG) << "There is no ascend context info in config infos.";
     return;
   }
@@ -96,6 +97,20 @@ void SingleOpInferSession::SetCustomAscendOpAttrs(const kernel::BaseOperatorPtr 
     MS_LOG(ERROR) << "Get prim from custom op failed.";
     return;
   }
+  auto share_mem = config_infos_["inner_common"];
+  if (share_mem.find("inner_calc_workspace_size") != share_mem.end()) {
+    auto value = share_mem["inner_calc_workspace_size"];
+    is_multi_model_sharing_mem_prepare_ = value == "true" ? true : false;
+    dst_prim->AddAttr("inner_calc_workspace_size", MakeValue(is_multi_model_sharing_mem_prepare_));
+    MS_LOG(INFO) << "inner_calc_workspace_size: " << is_multi_model_sharing_mem_prepare_;
+  }
+  if (share_mem.find("inner_sharing_workspace") != share_mem.end()) {
+    auto value = share_mem["inner_sharing_workspace"];
+    bool is_inner_sharing_workspace = value == "true" ? true : false;
+    dst_prim->AddAttr("inner_sharing_workspace", MakeValue(is_inner_sharing_workspace));
+    MS_LOG(INFO) << "is_inner_sharing_workspace: " << is_inner_sharing_workspace;
+  }
+
   auto ascend_context = config_infos_[lite::kAscendContextSection];
   std::string profiling_path;
   if (ascend_context.find(lite::kProfilingPathKey) != ascend_context.end()) {
@@ -174,6 +189,10 @@ Status SingleOpInferSession::BuildCustomAscendKernel(const CNodePtr &cnode) {
   if (!ret) {
     MS_LOG(ERROR) << "kernel init failed " << kernel_name;
     return mindspore::kLiteError;
+  }
+  if (is_multi_model_sharing_mem_prepare_) {
+    MS_LOG(INFO) << "is multi model sharing mem prepare";
+    return kSuccess;
   }
   // remove const input, OM graph data input
   args.inputs = kernel_mod->GetInputKernelTensor();
@@ -254,6 +273,10 @@ Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph, const void *data, 
       MS_LOG(ERROR) << "Failed to Build custom ascend kernel";
       return ret;
     }
+  }
+  if (is_multi_model_sharing_mem_prepare_) {
+    MS_LOG(INFO) << "is multi model sharing mem prepare";
+    return kSuccess;
   }
   auto ret = InitInputOutputInfos(graph);
   if (ret != kSuccess) {

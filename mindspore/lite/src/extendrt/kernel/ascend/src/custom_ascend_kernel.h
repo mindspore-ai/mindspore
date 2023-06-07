@@ -66,6 +66,7 @@ class CustomAscendKernelMod : public kernel::KernelMod {
   AclModelOptionsPtr acl_options_;
   ModelInferPtr model_infer_;
   size_t input_data_idx_;
+  bool is_multi_model_sharing_mem_prepare_ = false;
 };
 }  // namespace acl
 }  // namespace mindspore::kernel
