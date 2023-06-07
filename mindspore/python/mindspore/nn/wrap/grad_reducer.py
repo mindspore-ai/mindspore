@@ -326,9 +326,7 @@ class DistributedGradReducer(Cell):
         >>> import numpy as np
         >>> import mindspore as ms
         >>> from mindspore.communication import init
-        >>> from mindspore import ops
-        >>> from mindspore import Parameter, Tensor
-        >>> from mindspore import nn
+        >>> from mindspore import Parameter, Tensor, ops, nn
         >>>
         >>> ms.set_context(mode=ms.GRAPH_MODE)
         >>> init()

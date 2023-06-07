@@ -192,7 +192,7 @@ class Momentum(Optimizer):
         >>> # The final parameters order in which the optimizer will be followed is the value of 'order_params'.
         >>>
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> model = ms.Model(net, loss_fn=loss, optimizer=optim, metrics=None)
+        >>> model = ms.train.Model(net, loss_fn=loss, optimizer=optim, metrics=None)
     """
     @opt_init_args_register
     def __init__(self, params, learning_rate, momentum, weight_decay=0.0, loss_scale=1.0, use_nesterov=False):

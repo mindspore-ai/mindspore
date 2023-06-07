@@ -81,6 +81,10 @@ class LossBase(Cell):
             x (Tensor): Tensor of any shape.
 
         Examples:
+            >>> import mindspore
+            >>> from mindspore import ops, Tensor, nn
+            >>> import numpy as np
+            >>>
             >>> class Net(nn.LossBase):
             ...     def __init__(self, reduction='mean'):
             ...         super(Net, self).__init__(reduction)
@@ -124,6 +128,10 @@ class LossBase(Cell):
             Return the weighted loss.
 
         Examples:
+            >>> import mindspore
+            >>> from mindspore import ops, Tensor, nn
+            >>> import numpy as np
+            >>>
             >>> class Net(nn.LossBase):
             ...     def __init__(self, reduction='mean'):
             ...         super(Net, self).__init__(reduction)
@@ -226,6 +234,9 @@ class L1Loss(LossBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> # Case 1: logits.shape = labels.shape = (3,)
         >>> loss = nn.L1Loss()
         >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
@@ -293,6 +304,9 @@ class MSELoss(LossBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> # Case 1: logits.shape = labels.shape = (3,)
         >>> loss = nn.MSELoss()
         >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
@@ -350,6 +364,9 @@ class RMSELoss(LossBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> # Case 1: logits.shape = labels.shape = (3,)
         >>> loss = nn.RMSELoss()
         >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
@@ -426,6 +443,9 @@ class MAELoss(LossBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> # Case 1: logits.shape = labels.shape = (3,)
         >>> loss = nn.MAELoss()
         >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
@@ -496,9 +516,7 @@ class MarginRankingLoss(LossBase):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.nn as nn
-        >>> import mindspore.ops as ops
-        >>> from mindspore.ops import Tensor
+        >>> from mindspore import Tensor, nn, ops
         >>> import numpy as np
         >>> loss1 = nn.MarginRankingLoss(reduction='none')
         >>> loss2 = nn.MarginRankingLoss(reduction='mean')
@@ -589,6 +607,9 @@ class SmoothL1Loss(LossBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> loss = nn.SmoothL1Loss()
         >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> labels = Tensor(np.array([1, 2, 2]), mindspore.float32)
@@ -643,6 +664,9 @@ class SoftMarginLoss(LossBase):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> loss = nn.SoftMarginLoss()
         >>> logits = Tensor(np.array([[0.3, 0.7], [0.5, 0.5]]), mindspore.float32)
         >>> labels = Tensor(np.array([[-1, 1], [1, -1]]), mindspore.float32)
@@ -708,6 +732,9 @@ class SoftmaxCrossEntropyWithLogits(LossBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> # case 1: sparse=True
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
         >>> logits = Tensor(np.array([[3, 5, 6, 9, 12, 33, 42, 12, 32, 72]]), mindspore.float32)
@@ -790,9 +817,12 @@ class DiceLoss(LossBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> loss = nn.DiceLoss(smooth=1e-5)
-        >>> logits = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]), mstype.float32)
-        >>> labels = Tensor(np.array([[0, 1], [1, 0], [0, 1]]), mstype.float32)
+        >>> logits = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]), mindspore.float32)
+        >>> labels = Tensor(np.array([[0, 1], [1, 0], [0, 1]]), mindspore.float32)
         >>> output = loss(logits, labels)
         >>> print(output)
         0.38596618
@@ -884,9 +914,12 @@ class MultiClassDiceLoss(LossBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> loss = nn.MultiClassDiceLoss(weights=None, ignore_indiex=None, activation="softmax")
-        >>> logits = Tensor(np.array([[0.2, 0.5, 0.7], [0.3, 0.1, 0.5], [0.9, 0.6, 0.3]]), mstype.float32)
-        >>> labels = Tensor(np.array([[0, 1, 0], [1, 0, 0], [0, 0, 1]]), mstype.float32)
+        >>> logits = Tensor(np.array([[0.2, 0.5, 0.7], [0.3, 0.1, 0.5], [0.9, 0.6, 0.3]]), mindspore.float32)
+        >>> labels = Tensor(np.array([[0, 1, 0], [1, 0, 0], [0, 0, 1]]), mindspore.float32)
         >>> output = loss(logits, labels)
         >>> print(output)
         0.54958105
@@ -975,6 +1008,9 @@ class SampledSoftmaxLoss(LossBase):
         ``GPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> mindspore.set_seed(1)
         >>> loss = nn.SampledSoftmaxLoss(num_sampled=4, num_classes=7, num_true=1)
         >>> weights = Tensor(np.random.randint(0, 9, [7, 10]), mindspore.float32)
@@ -1220,6 +1256,8 @@ class TripletMarginWithDistanceLoss(LossBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
         >>> x = Tensor([[0.3, 0.7], [0.5, 0.5]])
         >>> positive = Tensor([[0.4, 0.6], [0.4, 0.6]])
         >>> negative = Tensor([[0.2, 0.9], [0.3, 0.7]])
@@ -1315,8 +1353,10 @@ class PoissonNLLLoss(LossBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor([[0.3, 0.7], [0.5, 0.5]])
-        >>> target = Tensor([[1.0, 2.0], [3.0, 4.0]])
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
+        >>> x = ms.Tensor([[0.3, 0.7], [0.5, 0.5]])
+        >>> target = ms.Tensor([[1.0, 2.0], [3.0, 4.0]])
         >>> loss = nn.PoissonNLLLoss()
         >>> output = loss(x, target)
         >>> print(output.asnumpy())
@@ -1398,8 +1438,10 @@ class MultiLabelSoftMarginLoss(LossBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor([[0.3, 0.6, 0.6], [0.9, 0.4, 0.2]])
-        >>> target = Tensor([[0.0, 0.0, 1.0], [0.0, 0.0, 1.0]])
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
+        >>> x = ms.Tensor([[0.3, 0.6, 0.6], [0.9, 0.4, 0.2]])
+        >>> target = ms.Tensor([[0.0, 0.0, 1.0], [0.0, 0.0, 1.0]])
         >>> loss = nn.MultiLabelSoftMarginLoss(reduction='mean')
         >>> out = loss(x, target)
         >>> print(out.asnumpy())
@@ -1472,8 +1514,11 @@ class MultiMarginLoss(LossBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.ones(shape=[3, 3]), mindspore.float32)
-        >>> target = Tensor(np.array([1, 2, 1]), mindspore.int64)
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> x = ms.Tensor(np.ones(shape=[3, 3]), ms.float32)
+        >>> target = ms.Tensor(np.array([1, 2, 1]), ms.int64)
         >>> loss = nn.MultiMarginLoss()
         >>> output = loss(x, target)
         >>> print(output)
@@ -1552,10 +1597,13 @@ class BCELoss(LossBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> weight = Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 3.3, 2.2]]), mindspore.float32)
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> weight = ms.Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 3.3, 2.2]]), ms.float32)
         >>> loss = nn.BCELoss(weight=weight, reduction='mean')
-        >>> logits = Tensor(np.array([[0.1, 0.2, 0.3], [0.5, 0.7, 0.9]]), mindspore.float32)
-        >>> labels = Tensor(np.array([[0, 1, 0], [0, 0, 1]]), mindspore.float32)
+        >>> logits = ms.Tensor(np.array([[0.1, 0.2, 0.3], [0.5, 0.7, 0.9]]), ms.float32)
+        >>> labels = ms.Tensor(np.array([[0, 1, 0], [0, 0, 1]]), ms.float32)
         >>> output = loss(logits, labels)
         >>> print(output)
         1.8952923
@@ -1626,9 +1674,12 @@ class CosineEmbeddingLoss(LossBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> logits_x1 = Tensor(np.array([[0.3, 0.8], [0.4, 0.3]]), mindspore.float32)
-        >>> logits_x2 = Tensor(np.array([[0.4, 1.2], [-0.4, -0.9]]), mindspore.float32)
-        >>> labels = Tensor(np.array([1, -1]), mindspore.int32)
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> logits_x1 = ms.Tensor(np.array([[0.3, 0.8], [0.4, 0.3]]), ms.float32)
+        >>> logits_x2 = ms.Tensor(np.array([[0.4, 1.2], [-0.4, -0.9]]), ms.float32)
+        >>> labels = ms.Tensor(np.array([1, -1]), ms.int32)
         >>> cosine_embedding_loss = nn.CosineEmbeddingLoss()
         >>> output = cosine_embedding_loss(logits_x1, logits_x2, labels)
         >>> print(output)
@@ -1717,9 +1768,12 @@ class MultilabelMarginLoss(LossBase):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
        >>> loss = nn.MultilabelMarginLoss()
-       >>> x = Tensor(np.array([[0.1, 0.2, 0.4, 0.8], [0.2, 0.3, 0.5, 0.7]]), mindspore.float32)
-       >>> target = Tensor(np.array([[1, 2, 0, 3], [2, 3, -1, 1]]), mindspore.int32)
+       >>> x = ms.Tensor(np.array([[0.1, 0.2, 0.4, 0.8], [0.2, 0.3, 0.5, 0.7]]), ms.float32)
+       >>> target = ms.Tensor(np.array([[1, 2, 0, 3], [2, 3, -1, 1]]), ms.int32)
        >>> output = loss(x, target)
        >>> print(output)
        0.325
@@ -1789,8 +1843,11 @@ class BCEWithLogitsLoss(LossBase):
         ``Ascend``  ``GPU``  ``CPU``
 
     Examples:
-        >>> logits = Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]).astype(np.float32))
-        >>> labels = Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]).astype(np.float32))
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> logits = ms.Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]).astype(np.float32))
+        >>> labels = ms.Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]).astype(np.float32))
         >>> loss = nn.BCEWithLogitsLoss()
         >>> output = loss(logits, labels)
         >>> print(output)
@@ -1905,8 +1962,10 @@ class FocalLoss(LossBase):
         ``Ascend``
 
     Examples:
-        >>> logits = Tensor([[0.8, 1.4], [0.5, 0.9], [1.2, 0.9]], mstype.float32)
-        >>> labels = Tensor([[1], [1], [0]], mstype.int32)
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
+        >>> logits = ms.Tensor([[0.8, 1.4], [0.5, 0.9], [1.2, 0.9]], ms.float32)
+        >>> labels = ms.Tensor([[1], [1], [0]], ms.int32)
         >>> focalloss = nn.FocalLoss(weight=Tensor([1, 2]), gamma=2.0, reduction='mean')
         >>> output = focalloss(logits, labels)
         >>> print(output)
@@ -2029,20 +2088,20 @@ class HuberLoss(LossBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, nn
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
         >>> import numpy as np
         >>> # Case 1: logits.shape = labels.shape = (3,)
         >>> loss = nn.HuberLoss()
-        >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
-        >>> labels = Tensor(np.array([1, 2, 2]), mindspore.float32)
+        >>> logits = ms.Tensor(np.array([1, 2, 3]), ms.float32)
+        >>> labels = ms.Tensor(np.array([1, 2, 2]), ms.float32)
         >>> output = loss(logits, labels)
         >>> print(output)
         0.16666667
         >>> # Case 2: logits.shape = (3,), labels.shape = (2, 3)
         >>> loss = nn.HuberLoss(reduction="none")
-        >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
-        >>> labels = Tensor(np.array([[1, 1, 1], [1, 2, 2]]), mindspore.float32)
+        >>> logits = ms.Tensor(np.array([1, 2, 3]), ms.float32)
+        >>> labels = ms.Tensor(np.array([[1, 1, 1], [1, 2, 2]]), ms.float32)
         >>> output = loss(logits, labels)
         >>> print(output)
         [[0.  0.5 1.5]
@@ -2124,10 +2183,13 @@ class TripletMarginLoss(LossBase):
         ``GPU``
 
     Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
         >>> loss = nn.TripletMarginLoss()
-        >>> x = Tensor(np.array([[0.3, 0.7], [0.5, 0.5]]), mindspore.float32)
-        >>> positive = Tensor(np.array([[0.4, 0.6], [0.4, 0.6]]), mindspore.float32)
-        >>> negative = Tensor(np.array([[0.2, 0.9], [0.3, 0.7]]), mindspore.float32)
+        >>> x = ms.Tensor(np.array([[0.3, 0.7], [0.5, 0.5]]), ms.float32)
+        >>> positive = ms.Tensor(np.array([[0.4, 0.6], [0.4, 0.6]]), ms.float32)
+        >>> negative = ms.Tensor(np.array([[0.2, 0.9], [0.3, 0.7]]), ms.float32)
         >>> output = loss(x, positive, negative)
         >>> print(output)
         0.8881968
@@ -2216,8 +2278,11 @@ class NLLLoss(LossBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> logits = mindspore.Tensor(np.random.randn(3, 5), mindspore.float32)
-        >>> labels = mindspore.Tensor(np.array([1, 0, 4]), mindspore.int32)
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> logits = ms.Tensor(np.random.randn(3, 5), ms.float32)
+        >>> labels = ms.Tensor(np.array([1, 0, 4]), ms.int32)
         >>> loss = nn.NLLLoss()
         >>> output = loss(logits, labels)
     """
@@ -2361,15 +2426,17 @@ class CrossEntropyLoss(LossBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
         >>> # Case 1: Indices labels
-        >>> inputs = mindspore.Tensor(np.random.randn(3, 5), mindspore.float32)
-        >>> target = mindspore.Tensor(np.array([1, 0, 4]), mindspore.int32)
+        >>> inputs = ms.Tensor(np.random.randn(3, 5), ms.float32)
+        >>> target = ms.Tensor(np.array([1, 0, 4]), ms.int32)
         >>> loss = nn.CrossEntropyLoss()
         >>> output = loss(inputs, target)
         >>> # Case 2: Probability labels
-        >>> inputs = mindspore.Tensor(np.random.randn(3, 5), mindspore.float32)
-        >>> target = mindspore.Tensor(np.random.randn(3, 5), mindspore.float32)
+        >>> inputs = ms.Tensor(np.random.randn(3, 5), ms.float32)
+        >>> target = ms.Tensor(np.random.randn(3, 5), ms.float32)
         >>> loss = nn.CrossEntropyLoss()
         >>> output = loss(inputs, target)
     """
@@ -2457,8 +2524,11 @@ class KLDivLoss(LossBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> logits = Tensor(np.array([0.2, 0.7, 0.1]), mindspore.float32)
-        >>> labels = Tensor(np.array([0., 1., 0.]), mindspore.float32)
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> logits = ms.Tensor(np.array([0.2, 0.7, 0.1]), ms.float32)
+        >>> labels = ms.Tensor(np.array([0., 1., 0.]), ms.float32)
         >>> loss = nn.KLDivLoss(reduction='mean')
         >>> output = loss(logits, labels)
         >>> print(output)
@@ -2527,34 +2597,33 @@ class CTCLoss(LossBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
         >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore import dtype as mstype
-        >>> from mindspore.nn.loss import CTCLoss
         >>> T = 5      # Input sequence length
         >>> C = 2      # Number of classes
         >>> N = 2      # Batch size
         >>> S = 3      # Target sequence length of longest target in batch (padding length)
         >>> S_min = 2  # Minimum target length, for demonstration purposes
         >>> arr = np.arange(T*N*C).reshape((T, N, C))
-        >>> ms_input = Tensor(arr, dtype=mstype.float32)
+        >>> ms_input = ms.Tensor(arr, dtype=ms.float32)
         >>> input_lengths = np.full(shape=(N), fill_value=T)
-        >>> input_lengths = Tensor(input_lengths, dtype=mstype.int32)
+        >>> input_lengths = ms.Tensor(input_lengths, dtype=ms.int32)
         >>> target_lengths = np.full(shape=(N), fill_value=S_min)
-        >>> target_lengths = Tensor(target_lengths, dtype=mstype.int32)
+        >>> target_lengths = ms.Tensor(target_lengths, dtype=ms.int32)
         >>> target = np.random.randint(1, C, size=(N, S))
-        >>> target = Tensor(target, dtype=mstype.int32)
-        >>> ctc_loss = CTCLoss(blank=0, reduction='none', zero_infinity=False)
+        >>> target = ms.Tensor(target, dtype=ms.int32)
+        >>> ctc_loss = nn.CTCLoss(blank=0, reduction='none', zero_infinity=False)
         >>> loss = ctc_loss(ms_input, target, input_lengths, target_lengths)
         >>> print(loss)
         [-45.79497  -55.794968]
         >>> arr = np.arange(T*C).reshape((T, C))
-        >>> ms_input = Tensor(arr, dtype=mstype.float32)
-        >>> input_lengths = Tensor([T], dtype=mstype.int32)
-        >>> target_lengths = Tensor([S_min], dtype=mstype.int32)
+        >>> ms_input = ms.Tensor(arr, dtype=ms.float32)
+        >>> input_lengths = ms.Tensor([T], dtype=ms.int32)
+        >>> target_lengths = ms.Tensor([S_min], dtype=ms.int32)
         >>> target = np.random.randint(1, C, size=(S_min,))
-        >>> target = Tensor(target, dtype=mstype.int32)
-        >>> ctc_loss = CTCLoss(blank=0, reduction='none', zero_infinity=False)
+        >>> target = ms.Tensor(target, dtype=ms.int32)
+        >>> ctc_loss = nn.CTCLoss(blank=0, reduction='none', zero_infinity=False)
         >>> loss = ctc_loss(ms_input, target, input_lengths, target_lengths)
         >>> print(loss)
         -25.794968
@@ -2630,16 +2699,15 @@ class GaussianNLLLoss(LossBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor
+        >>> import mindspore as ms
         >>> import mindspore.nn as nn
-        >>> import mindspore.common.dtype as mstype
+        >>> import numpy as np
         >>> arr1 = np.arange(8).reshape((4, 2))
         >>> arr2 = np.array([2, 3, 1, 4, 6, 4, 4, 9]).reshape((4, 2))
-        >>> logits = Tensor(arr1, mstype.float32)
-        >>> labels = Tensor(arr2, mstype.float32)
+        >>> logits = ms.Tensor(arr1, ms.float32)
+        >>> labels = ms.Tensor(arr2, ms.float32)
         >>> loss = nn.GaussianNLLLoss(reduction='mean')
-        >>> var = Tensor(np.ones((4, 1)), mstype.float32)
+        >>> var = ms.Tensor(np.ones((4, 1)), ms.float32)
         >>> output = loss(logits, labels, var)
         >>> print(output)
         1.4374993
@@ -2716,14 +2784,13 @@ class HingeEmbeddingLoss(LossBase):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor
+        >>> import mindspore as ms
         >>> import mindspore.nn as nn
-        >>> import mindspore.common.dtype as mstype
+        >>> import numpy as np
         >>> arr1 = np.array([0.9, -1.2, 2, 0.8, 3.9, 2, 1, 0, -1]).reshape((3, 3))
         >>> arr2 = np.array([1, 1, -1, 1, -1, 1, -1, 1, 1]).reshape((3, 3))
-        >>> logits = Tensor(arr1, mstype.float32)
-        >>> labels = Tensor(arr2, mstype.float32)
+        >>> logits = ms.Tensor(arr1, ms.float32)
+        >>> labels = ms.Tensor(arr2, ms.float32)
         >>> loss = nn.HingeEmbeddingLoss(reduction='mean')
         >>> output = loss(logits, labels)
         >>> print(output)

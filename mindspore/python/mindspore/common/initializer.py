@@ -764,7 +764,8 @@ def initializer(init, shape=None, dtype=mstype.float32):
         init (Union[Tensor, str, Initializer, numbers.Number]): Initialize value.
 
             - `str`: The `init` should be the alias of the class inheriting from `Initializer` and the corresponding
-              class will be called in practice. The value of 'init' can be "normal", "ones" or "zeros", etc.
+              class will be called in practice. The value of `init` can be ``"normal"``, ``"ones"`` or
+              ``"zeros"``, etc.
 
             - `Initializer`: The `init` should be the class inheriting from `Initializer` to initialize tensor.
 

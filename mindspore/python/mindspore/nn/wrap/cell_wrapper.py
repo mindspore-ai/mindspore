@@ -95,6 +95,9 @@ class WithLossCell(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore as ms
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> # Define the network structure of LeNet5. Refer to
         >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
@@ -161,6 +164,8 @@ class WithGradCell(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore as ms
+        >>> from mindspore import nn
         >>> # Defined a network without loss function, taking LeNet5 as an example.
         >>> # Refer to https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
@@ -235,7 +240,8 @@ class ForwardValueAndGrad(Cell):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor, nn, common, ops, ParameterTuple, Parameter
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn, ops, ParameterTuple, Parameter
         >>>
         >>> class Net(nn.Cell):
         ...    def __init__(self):
@@ -329,6 +335,7 @@ class TrainOneStepCell(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.nn as nn
         >>> # Define the network structure of LeNet5. Refer to
         >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
@@ -339,7 +346,7 @@ class TrainOneStepCell(Cell):
         >>> train_net = nn.TrainOneStepCell(loss_net, optim)
         >>>
         >>> #2) Using user-defined WithLossCell
-        >>> class MyWithLossCell(Cell):
+        >>> class MyWithLossCell(nn.Cell):
         ...    def __init__(self, backbone, loss_fn):
         ...        super(MyWithLossCell, self).__init__(auto_prefix=False)
         ...        self._backbone = backbone
@@ -538,10 +545,11 @@ class MicroBatchInterleaved(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import mindspore.nn as nn
         >>> # Define the network structure of LeNet5. Refer to
         >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
-        >>> net = MicroBatchInterleaved(net, 2)
+        >>> net = nn.MicroBatchInterleaved(net, 2)
     """
     def __init__(self, network, interleave_num=2):
         super(MicroBatchInterleaved, self).__init__(auto_prefix=False)
@@ -586,10 +594,11 @@ class PipelineCell(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import mindspore.nn as nn
         >>> # Define the network structure of LeNet5. Refer to
         >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
-        >>> net = PipelineCell(net, 4)
+        >>> net = nn.PipelineCell(net, 4)
     """
     def __init__(self, network, micro_size):
         super(PipelineCell, self).__init__(auto_prefix=False)
@@ -667,10 +676,11 @@ class VirtualDatasetCellTriple(Cell):
         backbone (Cell): The target network to wrap.
 
     Examples:
+        >>> import mindspore.nn as nn
         >>> # Define the network structure of LeNet5. Refer to
         >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
-        >>> net = VirtualDatasetCellTriple(net)
+        >>> net = nn.VirtualDatasetCellTriple(net)
     """
 
     def __init__(self, backbone):
@@ -710,6 +720,7 @@ class WithEvalCell(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.nn as nn
         >>> # Define a forward network without loss function, taking LeNet5 as an example.
         >>> # Refer to https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()

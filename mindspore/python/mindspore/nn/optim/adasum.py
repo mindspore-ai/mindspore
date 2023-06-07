@@ -442,14 +442,14 @@ class AdaSumByGradWrapCell(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import mindspore as ms
         >>> from mindspore import nn
-        >>> from mindspore.nn import AdaSumByGradWrapCell
         >>> # Define the network structure of LeNet5. Refer to
         >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
-        >>> optim = AdaSumByGradWrapCell(nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9))
+        >>> optim = nn.AdaSumByGradWrapCell(nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9))
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
+        >>> model = ms.train.Model(net, loss_fn=loss, optimizer=optim, metrics=None)
     """
     def __init__(self, optimizer):
         super(AdaSumByGradWrapCell, self).__init__(auto_prefix=False)
@@ -511,15 +511,15 @@ class AdaSumByDeltaWeightWrapCell(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import mindspore as ms
         >>> from mindspore import nn
-        >>> from mindspore.nn import AdaSumByDeltaWeightWrapCell
         >>> # Define the network structure of LeNet5. Refer to
         >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
-        >>> optim = AdaSumByDeltaWeightWrapCell(nn.Momentum(params=net.trainable_params(),
+        >>> optim = nn.AdaSumByDeltaWeightWrapCell(nn.Momentum(params=net.trainable_params(),
         ...                                                 learning_rate=0.1, momentum=0.9))
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
+        >>> model = ms.train.Model(net, loss_fn=loss, optimizer=optim, metrics=None)
     """
     def __init__(self, optimizer):
         super(AdaSumByDeltaWeightWrapCell, self).__init__(auto_prefix=False)

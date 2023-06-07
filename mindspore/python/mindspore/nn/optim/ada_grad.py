@@ -162,8 +162,8 @@ class Adagrad(Optimizer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore as ms
-        >>> from mindspore import nn
+        >>> import mindspore
+        >>> import mindspore.nn as nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
         >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
