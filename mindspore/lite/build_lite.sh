@@ -540,7 +540,7 @@ build_lite() {
     if [[ ("${local_lite_platform}" == "arm64" || "${local_lite_platform}" == "arm32") && "${TOOLCHAIN_NAME}" != "ohos" ]]; then
       echo "default link libc++_static.a, export MSLITE_ANDROID_STL=c++_shared to link libc++_shared.so"
     fi
-    if [[ ("X${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE,,}" != "Xon") && ("X${MSLITE_ENABLE_CLOUD_INFERENCE,,}" != "Xon") ]]; then
+    if [[ ("X${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE}" != "Xon") && ("X${MSLITE_ENABLE_CLOUD_INFERENCE}" != "Xon") ]]; then
       ENABLE_AKG="off"
     fi
     if [[ ( ("${local_lite_platform}" == "x86_64" && "${machine}" == "x86_64") || ("${local_lite_platform}" == "arm64" && ${machine} == "aarch64") ) && ("${ENABLE_AKG}" == "on") ]]; then
@@ -812,8 +812,8 @@ update_submodule()
   cd "${BASEPATH}/graphengine"
   git submodule update --init 910/metadef
   cd "${BASEPATH}"
-  if [[ ("X$ENABLE_AKG" = "Xon" && ("${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE,,}" == "on") || ("${MSLITE_ENABLE_CLOUD_INFERENCE,,}" == "on") ) ]]; then
-    if [[ ("${MSLITE_ENABLE_ACL,,}" == "on") ]]; then
+  if [[ ("X$ENABLE_AKG" == "Xon" && ("${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE}" == "on") || ("${MSLITE_ENABLE_CLOUD_INFERENCE}" == "on")) ]]; then
+    if [[ ("${MSLITE_ENABLE_ACL}" == "on") ]]; then
       git submodule update --init akg
     else
       GIT_LFS_SKIP_SMUDGE=1 git submodule update --init akg
