@@ -156,6 +156,12 @@ void GeDeviceContext::SetAscendConfig(const std::shared_ptr<MsContext> &ms_conte
   } else {
     MS_LOG(INFO) << "The default value of jit_compile is set by CANN.";
   }
+
+  if (auto atomic_clean_policy = ms_context_ptr->get_param<std::string>(MS_CTX_ATOMIC_CLEAN_POLICY);
+      !atomic_clean_policy.empty()) {
+    (*ge_options)["ge.exec.atomicCleanPolicy"] = atomic_clean_policy;
+    MS_LOG(INFO) << "Set GE atomic clean policy to " << atomic_clean_policy << ".";
+  }
 }
 
 void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_ptr,
@@ -164,10 +170,6 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   MS_EXCEPTION_IF_NULL(ge_options);
 
   (*ge_options)["device_id"] = "0";
-  auto env_atomic_clean_policy = common::GetEnv("MS_GE_ATOMIC_CLEAN_POLICY");
-  if (!env_atomic_clean_policy.empty()) {
-    (*ge_options)["ge.exec.atomicCleanPolicy"] = env_atomic_clean_policy;
-  }
   // set up dump options
   auto dump_env = common::GetEnv(kMindsporeDumpConfig);
   if (!dump_env.empty()) {

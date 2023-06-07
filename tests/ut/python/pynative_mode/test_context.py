@@ -112,6 +112,8 @@ def test_ascend_config():
     with pytest.raises(ValueError):
         context.set_context(jit_compile=True)
     with pytest.raises(ValueError):
+        context.set_context(atomic_clean_policy=0)
+    with pytest.raises(ValueError):
         context.set_context(ascend_config={"precision_mode": "xxx"})
     with pytest.raises(ValueError):
         context.set_context(ascend_config={"xxxx": 1})
@@ -120,8 +122,13 @@ def test_ascend_config():
     with pytest.raises(ValueError):
         context.set_context(ascend_config={"jit_compile": 2})
     with pytest.raises(ValueError):
+        context.set_context(ascend_config={"atomic_clean_policy": "xxx"})
+    with pytest.raises(ValueError):
+        context.set_context(ascend_config={"atomic_clean_policy": 3})
+    with pytest.raises(ValueError):
         context.set_context(ascend_config={"precision_mode": 2})
-    context.set_context.__wrapped__(ascend_config={"precision_mode": "force_fp16", "jit_compile": True})
+    context.set_context.__wrapped__(ascend_config={
+        "precision_mode": "force_fp16", "jit_compile": True, "atomic_clean_policy": 1})
 
 
 def test_print_file_path():

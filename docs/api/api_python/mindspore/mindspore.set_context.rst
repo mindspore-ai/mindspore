@@ -97,7 +97,7 @@ mindspore.set_context
           - 1：运行时会输出图编译过程中生成的一些中间文件。
           - True或2：生成更多后端流程相关的ir文件。
           - 3：生成可视化计算图和更多详细的前端ir图。
-          
+
           当 `save_graphs` 属性设为 ``1`` 、 ``2`` 、 ``3`` 或者 ``True`` 时， `save_graphs_path` 属性用于设置中间编译图的存储路径。默认情况下，计算图保存在当前目录下。
         - **save_graphs_path** (str) - 表示保存计算图的路径。默认值："."。如果指定的目录不存在，系统将自动创建该目录。在分布式训练中，图形将被保存到 `save_graphs_path/rank_${rank_id}/` 目录下。 `rank_id` 为集群中当前设备的ID。
         - **enable_dump** (bool) - 此参数已弃用，将在下一版本中删除。
@@ -170,7 +170,7 @@ mindspore.set_context
           - ON：开启memory offload功能。在Ascend硬件平台，未设置环境变量“GRAPH_OP_RUN=1”时本参数不生效；设置memory_optimize_level='O1'时本参数不生效。
           - OFF：关闭memory offload功能。
         - **ascend_config** (dict) - 设置Ascend硬件平台专用的参数，默认不设置。当前只仅支持在Ascend910B硬件平台设置，其他平台不生效。
-          precision_mode和jit_compile参数的默认值属于实验性质参数，将来可能会发生变化。
+          precision_mode、jit_compile和atomic_clean_policy参数的默认值属于实验性质参数，将来可能会发生变化。
 
           - **precision_mode** (str): 混合精度模式设置，Ascend910B硬件平台训练默认值：以CANN设置的默认值为准。推理网络默认值： ``force_fp16`` 。其值范围如下：
 
@@ -186,9 +186,13 @@ mindspore.set_context
             - allow_mix_precision_bf16: 自动混合精度，针对全网算子，按照内置的优化策略，自动将部分算子的精度降低到bfloat16。
 
           - **jit_compile** (bool): 表示是否选择在线编译。默认值：以CANN设置的默认值为准。当设置为 ``False`` 时，优先选择系统中已经编译好的算子二进制文件，提升编译性能。
+          - **atomic_clean_policy** (int): 表示清理网络中atomic算子占用的内存的策略。默认值：以CANN设置的默认值为准。
+
+            - 0：集中清理网络中所有atomic算子占用的内存。
+            - 1：不集中清理内存，对网络中每一个atomic算子进行单独清零。当网络中内存超限时，可以尝试此种清理方式，但可能会导致一定的性能损耗。
         - **jit_syntax_level** (int) - 当通过GRAPH_MODE或者@jit装饰器触发图编译时，此选项用于设置JIT语法支持级别。
           其值必须在[STRICT(``0``)，COMPATIBLE(``1``)，LAX(``2``)]范围内，默认值为LAX(``2``)。全部级别都支持所有后端。
-		  
+
           - STRICT(``0``): 仅支持基础语法，且执行性能最佳。
           - COMPATIBLE(``1``): 除支持基础语法外，还支持更多语法，如dict，list和scalar的操作等。
           - LAX(``2``): 最大程度地兼容Python所有语法。执行性能可能会受影响，不是最佳。

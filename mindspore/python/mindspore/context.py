@@ -267,28 +267,32 @@ class _Context:
                 - precision_mode (str): "force_fp16", "allow_fp32_to_fp16", "allow_mix_precision",
                             "must_keep_origin_dtype", "force_fp32", "force_lowerprecision", "allow_fp32_to_bf16",
                             "allow_fp32_to_lowprecision", "allow_mix_precision_fp16" and "allow_mix_precision_bf16".
+
+                - jit_compile (bool): ``False`` and ``True``.
+
+                - atomic_clean_policy (int): ``0`` and ``1``.
         """
 
         ascend_cfgs = {'precision_mode': ["force_fp16", "allow_fp32_to_fp16", "allow_mix_precision",
                                           "must_keep_origin_dtype", "force_fp32", "force_lowerprecision",
                                           "allow_fp32_to_bf16", "allow_fp32_to_lowprecision",
                                           "allow_mix_precision_fp16", "allow_mix_precision_bf16"],
-                       'jit_compile': [True, False]}
-        for ascend_key in ascend_config:
+                       'jit_compile': [True, False],
+                       'atomic_clean_policy': [0, 1]}
+        for ascend_key, ascend_value in ascend_config.items():
             if ascend_key not in ascend_cfgs:
                 raise ValueError(f"For 'context.set_context', the key of argument 'ascend_config' must be one of "
                                  f"{ascend_cfgs}, but got {ascend_key}.")
             supported_modes = ascend_cfgs.get(ascend_key)
-            if ascend_config[ascend_key] not in supported_modes:
+            if ascend_value not in supported_modes:
                 raise ValueError(f"For 'ascend_config', the value of argument {ascend_key} must be one of "
-                                 f"{supported_modes}, but got {ascend_config[ascend_key]}.")
+                                 f"{supported_modes}, but got {ascend_value}.")
             if ascend_key == 'precision_mode':
-                self.set_param(ms_ctx_param.precision_mode, ascend_config[ascend_key])
+                self.set_param(ms_ctx_param.precision_mode, ascend_value)
             if ascend_key == 'jit_compile':
-                if ascend_config[ascend_key] is True:
-                    self.set_param(ms_ctx_param.jit_compile, "1")
-                else:
-                    self.set_param(ms_ctx_param.jit_compile, "0")
+                self.set_param(ms_ctx_param.jit_compile, "1" if ascend_value else "0")
+            if ascend_key == 'atomic_clean_policy':
+                self.set_param(ms_ctx_param.atomic_clean_policy, str(ascend_value))
 
     def set_backend_policy(self, policy):
         success = self._context_handle.set_backend_policy(policy)
@@ -1102,9 +1106,9 @@ def set_context(**kwargs):
               memory_optimize_level is set 'O1'.
             - OFF: Turn off the memory Offload function.
         ascend_config (dict): Set the parameters specific to Ascend hardware platform. It is not set by default.
-            Currently, only setting `precision_mode` and `jit_compile` are supported on Ascend910B hardware platform.
-            The default value of `precision_mode` and `jit_compile` are experimental parameters, may change
-            in the future.
+            Currently, only setting `precision_mode`, `jit_compile` and `atomic_clean_policy` are supported on
+            Ascend910B hardware platform. The default value of `precision_mode`, `jit_compile` and
+            `atomic_clean_policy` are experimental parameters, may change in the future.
 
             - precision_mode (str): Mixed precision mode setting, on Ascend910B hardware platform, the default
               value of training network is based on the value of CANN, and the default value of inference network
@@ -1141,6 +1145,14 @@ def set_context(**kwargs):
             - LAX(``2``): Compatible with all Python syntax as much as possible. However, execution performance may be
               affected and not optimal.
 
+            - atomic_clean_policy (int): The policy for cleaning memory occupied by atomic operators in the network
+              The default value is based on CANN.
+
+              - 0: The memory occupied by all atomic operators in the network is cleaned centrally.
+              - 1: Memory is not cleaned centrally and each atomic operator in the network is cleaned separately.
+                When the memory of the network exceeds the limit, you may try this cleaning policy, but it may cause
+                performance loss.
+
     Raises:
         ValueError: If input key is not an attribute in context.
 
@@ -1173,6 +1185,7 @@ def set_context(**kwargs):
         >>> ms.set_context(memory_offload='ON')
         >>> ms.set_context(deterministic='ON')
         >>> ms.set_context(ascend_config={"precision_mode": "force_fp16", "jit_compile": True})
+        >>> ms.set_context(ascend_config={"precision_mode": "force_fp16", "atomic_clean_policy": 1})
         >>> ms.set_context(jit_syntax_level=ms.STRICT)
     """
     ctx = _context()
@@ -1189,7 +1202,7 @@ def set_context(**kwargs):
             logger.warning(f"For 'context.set_context', '{key}' parameter is deprecated. "
                            "For details, please see the interface parameter API comments")
             continue
-        if key in ('precision_mode', 'jit_compile'):
+        if key in ('precision_mode', 'jit_compile', 'atomic_clean_policy'):
             raise ValueError(f"Please set '{key}' through parameter ascend_config")
         if key == 'save_graphs':
             if value is True:
