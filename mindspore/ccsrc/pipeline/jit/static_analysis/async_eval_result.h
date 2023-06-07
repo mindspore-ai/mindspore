@@ -99,8 +99,7 @@ class AnalysisSchedule {
   void Schedule();
   void SetNextReady();
   void Start() {
-    auto thread = std::thread([this] { Schedule(); });
-    thread.detach();
+    dispatcher_ = std::make_shared<std::thread>([this] { Schedule(); });
   }
   AnalysisSchedule() { Start(); }
   std::atomic<int> infer_thread_count_{0};
@@ -112,6 +111,7 @@ class AnalysisSchedule {
   std::list<AsyncInferTaskPtr> schedule_list_;
   std::set<std::string> activate_threads_;
   static thread_local std::string thread_id_;
+  std::shared_ptr<std::thread> dispatcher_;
 };
 
 template <typename KeyType, typename ValueType, typename CacheType>

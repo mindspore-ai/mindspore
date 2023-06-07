@@ -90,6 +90,13 @@ void AnalysisSchedule::HandleException(const std::exception &ex) {
 void AnalysisSchedule::Stop() {
   AsyncInferTaskPtr stop_task = AsyncInferTask::MakeShared(std::make_shared<AsyncAbstract>(), kStateStop);
   Add2Schedule(stop_task);
+  if (dispatcher_ != nullptr && dispatcher_->joinable()) {
+    try {
+      dispatcher_->join();
+    } catch (const std::exception &e) {
+      MS_LOG(WARNING) << " Analysis schedule thread join exception:" << e.what();
+    }
+  }
   MS_LOG(DEBUG) << "Set analysis schedule to stop";
 }
 
