@@ -1,4 +1,4 @@
-# Copyright 2021-2022 Huawei Technologies Co., Ltd
+# Copyright 2021-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -204,38 +204,6 @@ class BufferAppend(PrimitiveWithInfer):
         self.add_prim_attr('side_effect_mem', True)
         if context.get_context('device_target') == "Ascend":
             self.add_prim_attr('device_target', "CPU")
-
-    def infer_shape(self, data_shape, exp_shape, count_shape, head_shape):
-        validator.check_equal_int(len(data_shape), len(exp_shape), "exp elements", self.name)
-        exp_batch = 1
-        if len(data_shape[0]) == len(exp_shape[0]):
-            exp_batch = exp_shape[0][0]
-            for i in range(len(data_shape)):
-                if len(data_shape[i]) != len(exp_shape[i]):
-                    raise ValueError(f"For '{self.name}', the dimension of {i}th 'exp_shape' must be equal to "
-                                     f"the dimension of {i}th 'data_shape', but got the {i}th 'exp_shape': "
-                                     f"{exp_shape[i]}, the {i}th 'data_shape': {data_shape[i]}.")
-                if data_shape[i][0] < exp_shape[i][0]:
-                    raise ValueError(f"For '{self.name}', the first dimension of {i}th 'data_shape' must be greater "
-                                     f"than or equal to the first dimension of {i}th 'exp_shape', but got the {i}th "
-                                     f"'exp_shape': {exp_shape[i]}, the {i}th 'data_shape': {data_shape[i]}.")
-        else:
-            for i in range(len(data_shape)):
-                if data_shape[i][1:] != exp_shape[i]:
-                    raise ValueError(f"For '{self.name}', the {i}th 'exp_shape' must be equal to the {i}th 'data_shape'"
-                                     f"which excepts the first dimension. but got the {i}th 'exp_shape': "
-                                     f"{exp_shape[i]}, the {i}th 'data_shape': {data_shape[i]}.")
-        self.add_prim_attr('exp_batch', exp_batch)
-        return count_shape
-
-    def infer_dtype(self, data_type, exp_type, count_type, head_type):
-        for i in range(len(data_type)):
-            if data_type[i] != exp_type[i]:
-                raise TypeError(f"For '{self.name}', each tensor in 'exp' must has the same type with 'data', but got "
-                                f"'data_type': {data_type}, 'exp_type': {exp_type}.")
-        validator.check_type_name("count type", count_type, (mstype.int32), self.name)
-        validator.check_type_name("head type", head_type, (mstype.int32), self.name)
-        return count_type
 
 
 class BufferGetItem(PrimitiveWithInfer):

@@ -522,6 +522,8 @@ constexpr auto kCond = "Cond";
 constexpr auto kPackFunc = "PackFunc";
 constexpr auto kIsInstance = "isinstance";
 
+constexpr auto kBufferAppend = "BufferAppend";
+
 GVAR_DEF(PrimitivePtr, kPrimExtractGlimpse, std::make_shared<Primitive>(kExtractGlimpse));
 //
 // Here list all primitives used in backend or some special primitives used by core.
@@ -1882,6 +1884,7 @@ GVAR_DEF(PrimitivePtr, kPrimReservoirReplayBufferPush, std::make_shared<Primitiv
 GVAR_DEF(PrimitivePtr, kPrimReservoirReplayBufferSample, std::make_shared<Primitive>("ReservoirReplayBufferSample"));
 GVAR_DEF(PrimitivePtr, kPrimReservoirReplayBufferDestroy, std::make_shared<Primitive>("ReservoirReplayBufferDestroy"));
 GVAR_DEF(PrimitivePtr, kPrimOCRDetectionPreHandle, std::make_shared<Primitive>("OCRDetectionPreHandle"));
+GVAR_DEF(PrimitivePtr, kPrimBufferAppend, std::make_shared<Primitive>(kBufferAppend));
 
 // Real tuple and list ops.
 GVAR_DEF(PrimitivePtr, kPrimTupleToTensor, std::make_shared<Primitive>(kTupleToTensor));
