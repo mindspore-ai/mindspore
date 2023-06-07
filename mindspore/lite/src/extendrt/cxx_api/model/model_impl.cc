@@ -303,7 +303,7 @@ Status ModelImpl::Build(const FuncGraphPtr &func_graph, const std::shared_ptr<Co
     MS_LOG(ERROR) << "Create session failed.";
     return kLiteError;
   }
-  auto ret = session_->Init(model_context);
+  auto ret = session_->Init(model_context, config_info_);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Init session failed.";
     return ret;

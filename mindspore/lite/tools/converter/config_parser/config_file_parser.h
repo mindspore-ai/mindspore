@@ -61,6 +61,8 @@ struct WeightQuantString {
   std::string update_mindir;
   std::string max_segments;  // Define how many segments to use for parallel FSE
                              // It's recommended to use the max number of cores of your device
+  std::string per_channel;
+  std::string bias_correction;
 };
 
 struct FullQuantString {

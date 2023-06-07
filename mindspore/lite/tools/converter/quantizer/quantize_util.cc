@@ -31,6 +31,7 @@
 #include "tools/common/tensor_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "ops/fusion/mat_mul_fusion.h"
+#include "ops/batch_matmul.h"
 #include "ops/fusion/conv2d_transpose_fusion.h"
 #include "ops/gather.h"
 #include "ops/op_utils.h"
@@ -481,7 +482,8 @@ int GetGatherPreferredDim(const CNodePtr &cnode) {
 int GetPreferredDim(const CNodePtr &cnode, int input_index, const std::vector<int> &dims) {
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   CHECK_NULL_RETURN(primitive);
-  if (primitive->name() == ops::kNameMatMulFusion || primitive->name() == ops::kNameMatMul) {
+  if (primitive->name() == ops::kNameMatMulFusion || primitive->name() == ops::kNameMatMul ||
+      primitive->name() == ops::kNameBatchMatMul) {
     return GetMatMulPreferredDim(primitive, input_index, dims);
   } else if (primitive->name() == ops::kNameConv2dTransposeFusion) {
     return GetDeConvPreferredDim(primitive, dims);

@@ -277,6 +277,16 @@ int QuantParamParser::ParseWeightQuant(const WeightQuantString &weight_quant_str
     MS_LOG(ERROR) << "INPUT ILLEGAL: decode_threads should be a number.";
     return RET_INPUT_PARAM_INVALID;
   }
+  if (!weight_quant_string.per_channel.empty() &&
+      !ConvertBool(weight_quant_string.per_channel, &weight_quant->per_channel)) {
+    MS_LOG(ERROR) << "INPUT ILLEGAL: per_channel should be true or false.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+  if (!weight_quant_string.bias_correction.empty() &&
+      !ConvertBool(weight_quant_string.bias_correction, &weight_quant->bias_correction)) {
+    MS_LOG(ERROR) << "INPUT ILLEGAL: bias_correction should be true or false.";
+    return RET_INPUT_PARAM_INVALID;
+  }
   return RET_OK;
 }
 

@@ -139,6 +139,8 @@ struct WeightQuantParam {
   DequantStrategy dequant_strategy = DEFAULT;
   bool update_mindir = true;
   int max_segments = 1;
+  bool per_channel = true;
+  bool bias_correction = true;
 };
 
 struct MixedBitWeightQuantParam {
