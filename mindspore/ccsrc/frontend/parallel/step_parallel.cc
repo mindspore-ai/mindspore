@@ -225,6 +225,8 @@ static void InsertNode(const Operator &op, const CNodePtr &node, size_t index, c
   new_node_prim->set_attr("keep_value_node_input", MakeValue(true));
   if (instance_name.find(NOT_RECOMPUTE) != std::string::npos) {
     new_node_prim->set_attr("recompute", MakeValue(false));
+  } else if (instance_name.find(RECOMPUTE) != std::string::npos) {
+    new_node_prim->set_attr("recompute", MakeValue(true));
   }
   new_node->set_scope(scope);
   node_input[0]->set_scope(scope);
@@ -263,6 +265,8 @@ static CNodePtr ReplaceNode(const Operator &op, const AnfNodePtr &pre_node, cons
   new_node_prim->set_attr("keep_value_node_input", MakeValue(true));
   if (instance_name.find(NOT_RECOMPUTE) != std::string::npos) {
     new_node_prim->set_attr("recompute", MakeValue(false));
+  } else if (instance_name.find(RECOMPUTE) != std::string::npos) {
+    new_node_prim->set_attr("recompute", MakeValue(true));
   }
   new_node->set_scope(scope);
   node_input[0]->set_scope(scope);
@@ -366,14 +370,14 @@ static void InsertRedistribution(const RedistributionOpListPtr &redistribution_o
     if (prim_out != nullptr && prim_in != nullptr) {
       auto prim_out_attr = prim_out->attrs();
       auto prim_in_attr = prim_in->attrs();
-      if (((prim_out_attr.find(RECOMPUTE_COMM_OP) != prim_out_attr.end() &&
-            !GetValue<bool>(prim_out_attr[RECOMPUTE_COMM_OP])) ||
-           (prim_in_attr.find(RECOMPUTE_COMM_OP) != prim_in_attr.end() &&
-            !GetValue<bool>(prim_in_attr[RECOMPUTE_COMM_OP]))) &&
-          COMMUNICATION_OPS.find(op_name) != COMMUNICATION_OPS.end()) {
-        MS_LOG(INFO) << "The redistribution node would not be recomputed.";
-        instance_name = instance_name + "_" + NOT_RECOMPUTE;
+      std::string recompute_str = "";
+      if (prim_out_attr.find(RECOMPUTE_COMM_OP) != prim_out_attr.end()) {
+        recompute_str = GetValue<bool>(prim_out_attr[RECOMPUTE_COMM_OP]) ? RECOMPUTE : NOT_RECOMPUTE;
       }
+      if (recompute_str.empty() && prim_in_attr.find(RECOMPUTE_COMM_OP) != prim_in_attr.end()) {
+        recompute_str = GetValue<bool>(prim_in_attr[RECOMPUTE_COMM_OP]) ? RECOMPUTE : NOT_RECOMPUTE;
+      }
+      instance_name = instance_name + "_" + recompute_str;
     }
     InsertNode(op, node, LongToSize(pos), target_node, func_graph, instance_name);
     if ((redistribution_oplist_ptr->second)[index].first) {
