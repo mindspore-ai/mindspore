@@ -10832,7 +10832,7 @@ class MaxPoolWithArgmaxV2(Primitive):
         >>> output_tensor, argmax = maxpool_arg_v2_op(x)
         >>> print(output_tensor.shape)
         (20, 16, 24, 31)
-        >>> pirnt(argmax.shape)
+        >>> print(argmax.shape)
         (20, 16, 24, 31)
     """
 
