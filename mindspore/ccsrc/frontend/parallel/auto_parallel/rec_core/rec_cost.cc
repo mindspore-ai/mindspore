@@ -72,6 +72,16 @@ double CostRedis(const Graph::NodeType &node,
           CostRedisWithAdjacentNode(node_name_to_strategy, mode, i_strategy, i_node, output_tensor, is_search_forward);
       }
     }
+
+    // Calculate the Redis Cost of node_in_aux
+    for (size_t i_node = 0; i_node < node.node_in_aux.size(); i_node++) {
+      if (graph.nodes[node.node_in_aux[i_node]].name == node_name_to_strategy[i_strategy].first) {
+        bool is_search_forward = true;
+        size_t index = node.node_in_aux_idx[i_node];
+        cost_redis +=
+          CostRedisWithAdjacentNode(node_name_to_strategy, mode, i_strategy, index, input_tensor, is_search_forward);
+      }
+    }
   }
 
   return cost_redis;

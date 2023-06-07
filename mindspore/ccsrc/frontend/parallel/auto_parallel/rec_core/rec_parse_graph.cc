@@ -368,6 +368,10 @@ void EliminateAuxOutgoingInput(size_t node_index, const std::shared_ptr<Graph> &
         find(graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.begin(),
              graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.end(), graph->nodes[node_index].node_in[0]);
       if (exist_in_outgoing_auxinputs != graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.end()) {
+        size_t index_remove_node = LongToSize(std::distance(
+          graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.begin(), exist_in_outgoing_auxinputs));
+        (void)graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux_idx.erase(
+          graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux_idx.begin() + index_remove_node);
         (void)graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.erase(exist_in_outgoing_auxinputs);
       }
       outgoing_inputs->at(LongToSize(std::distance(outgoing_inputs->begin(), it))) =
@@ -377,6 +381,8 @@ void EliminateAuxOutgoingInput(size_t node_index, const std::shared_ptr<Graph> &
                                            graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.end(),
                                            graph->nodes[node_index].node_in[j]);
         if (exist_in_outgoing_auxinputs == graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.end()) {
+          size_t index_aux = LongToSize(std::distance(outgoing_inputs->begin(), it));
+          graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux_idx.push_back(index_aux);
           graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.push_back(graph->nodes[node_index].node_in[j]);
         }
       }
@@ -385,6 +391,8 @@ void EliminateAuxOutgoingInput(size_t node_index, const std::shared_ptr<Graph> &
                                            graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.end(),
                                            graph->nodes[node_index].node_in_aux[j]);
         if (exist_in_outgoing_auxinputs == graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.end()) {
+          size_t index_aux = LongToSize(std::distance(outgoing_inputs->begin(), it));
+          graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux_idx.push_back(index_aux);
           graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.push_back(
             graph->nodes[node_index].node_in_aux[j]);
         }
@@ -397,27 +405,38 @@ void EliminateAuxOutgoingInput(size_t node_index, const std::shared_ptr<Graph> &
 
 void EliminateAuxOutgoingAuxInput(size_t node_index, const std::shared_ptr<Graph> &graph, size_t i) {
   auto *outgoing_auxinputs = &graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux;
+  auto *outgoing_auxinputs_index = &graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux_idx;
   auto it = find(outgoing_auxinputs->begin(), outgoing_auxinputs->end(), node_index);
+  size_t index_entree = LongToSize(std::distance(outgoing_auxinputs->begin(), it));
   if (it != outgoing_auxinputs->end()) {
     if (graph->nodes[node_index].node_in.size() > 0) {
       auto exist_in_outgoing_inputs =
         find(graph->nodes[graph->nodes[node_index].node_out[i]].node_in.begin(),
              graph->nodes[graph->nodes[node_index].node_out[i]].node_in.end(), graph->nodes[node_index].node_in[0]);
       if (exist_in_outgoing_inputs != graph->nodes[graph->nodes[node_index].node_out[i]].node_in.end()) {
+        index_entree = LongToSize(std::distance(outgoing_auxinputs->begin(), it));
+        (void)outgoing_auxinputs_index->erase(outgoing_auxinputs_index->begin() + index_entree);
         (void)outgoing_auxinputs->erase(it);
       } else {
         outgoing_auxinputs->at(LongToSize(std::distance(outgoing_auxinputs->begin(), it))) =
           graph->nodes[node_index].node_in[0];
+        index_entree = LongToSize(std::distance(
+          outgoing_auxinputs->begin(),
+          find(outgoing_auxinputs->begin(), outgoing_auxinputs->end(), graph->nodes[node_index].node_in[0])));
       }
       for (size_t j = 1; j < graph->nodes[node_index].node_in.size(); j++) {
         exist_in_outgoing_inputs =
           find(graph->nodes[graph->nodes[node_index].node_out[i]].node_in.begin(),
                graph->nodes[graph->nodes[node_index].node_out[i]].node_in.end(), graph->nodes[node_index].node_in[j]);
         if (exist_in_outgoing_inputs != graph->nodes[graph->nodes[node_index].node_out[i]].node_in.end()) {
-          (void)outgoing_auxinputs->erase(
-            find(outgoing_auxinputs->begin(), outgoing_auxinputs->end(), graph->nodes[node_index].node_in[j]));
+          auto iter_j =
+            find(outgoing_auxinputs->begin(), outgoing_auxinputs->end(), graph->nodes[node_index].node_in[j]);
+          size_t index_remove = LongToSize(std::distance(outgoing_auxinputs->begin(), iter_j));
+          (void)outgoing_auxinputs_index->erase(outgoing_auxinputs_index->begin() + index_remove);
+          (void)outgoing_auxinputs->erase(iter_j);
         } else {
           outgoing_auxinputs->push_back(graph->nodes[node_index].node_in[j]);
+          outgoing_auxinputs_index->push_back(outgoing_auxinputs_index->at(index_entree));
         }
       }
       for (size_t j = 0; j < graph->nodes[node_index].node_in_aux.size(); j++) {
@@ -425,13 +444,18 @@ void EliminateAuxOutgoingAuxInput(size_t node_index, const std::shared_ptr<Graph
                                         graph->nodes[graph->nodes[node_index].node_out[i]].node_in.end(),
                                         graph->nodes[node_index].node_in_aux[j]);
         if (exist_in_outgoing_inputs != graph->nodes[graph->nodes[node_index].node_out[i]].node_in.end()) {
-          (void)outgoing_auxinputs->erase(
-            find(outgoing_auxinputs->begin(), outgoing_auxinputs->end(), graph->nodes[node_index].node_in_aux[j]));
+          auto iter_aux_j =
+            find(outgoing_auxinputs->begin(), outgoing_auxinputs->end(), graph->nodes[node_index].node_in_aux[j]);
+          size_t index_remove = LongToSize(std::distance(outgoing_auxinputs->begin(), iter_aux_j));
+          (void)outgoing_auxinputs_index->erase(outgoing_auxinputs_index->begin() + index_remove);
+          (void)outgoing_auxinputs->erase(iter_aux_j);
         } else {
           outgoing_auxinputs->push_back(graph->nodes[node_index].node_in_aux[j]);
+          outgoing_auxinputs_index->push_back(outgoing_auxinputs_index->at(index_entree));
         }
       }
     } else {
+      (void)outgoing_auxinputs_index->erase(outgoing_auxinputs_index->begin() + index_entree);
       (void)outgoing_auxinputs->erase(it);
     }
   }
