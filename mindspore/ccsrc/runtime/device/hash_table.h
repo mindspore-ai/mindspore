@@ -47,6 +47,12 @@ class HashTable {
   // Insert elements with specific keys. If key exists, update the value of the key.
   virtual bool Insert(const Key *keys, size_t key_num, const Value *value, void *stream) = 0;
 
+  // Insert elements with status for specific keys. If key exists, update the value and status of the key.
+  virtual bool Insert(const Key *keys, size_t key_num, const Value *value, HashTableElementStatus *status,
+                      void *stream) {
+    return true;
+  }
+
   // Erase elements with specific keys.
   virtual bool Erase(const Key *keys, size_t key_num, void *stream) = 0;
 
