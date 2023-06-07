@@ -380,8 +380,8 @@ void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
       kernel::Factory<kernel::NativeCpuKernelMod>::Instance().Create(kernel_name);
 
     if (cpu_kernel == nullptr) {
-      MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Build cpu operator[" << node->fullname_with_scope()
-                        << "] failed";
+      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#Build cpu operator[" << node->fullname_with_scope()
+                                 << "] failed";
     }
 
     // This branch would be removed When KernelMode rectification is complete
@@ -409,8 +409,8 @@ void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
       }
       if (!kernel::IfNeedSkipResize(node)) {
         if (cpu_kernel->Resize(args.inputs, args.outputs, inputs_tensor_map) == kernel::KRET_RESIZE_FAILED) {
-          MS_LOG(EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#CPU kernel op [" << node->fullname_with_scope()
-                            << "] Resize failed.";
+          MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Kernel build failed:#dmsg#CPU kernel op [" << node->fullname_with_scope()
+                                     << "] resize failed.";
         }
       }
 

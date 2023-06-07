@@ -2020,15 +2020,15 @@ void SetScalarToTensor(const std::vector<ValuePtr> &values, const tensor::Tensor
   for (size_t i = 0; i < values.size(); ++i) {
     // Check mem size.
     if (SizeToLong(abstract::TypeIdSize(tensor_type_id) * (i + 1)) > tensor->data().nbytes()) {
-      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Value size:" << values.size() << " type:" << tensor_type_id
-                        << " out of range:" << tensor->data().nbytes();
+      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Value size:" << values.size()
+                                 << " type:" << tensor_type_id << " out of range:" << tensor->data().nbytes();
     }
     const auto &value = values[i];
     MS_EXCEPTION_IF_NULL(value);
     // Check value type.
     if (value->type()->type_id() != tensor_type_id) {
-      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid value type:" << value->type()->type_id()
-                        << " for value:" << value->ToString() << " dst type:" << tensor_type_id;
+      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid value type:" << value->type()->type_id()
+                                 << " for value:" << value->ToString() << " dst type:" << tensor_type_id;
     }
     if (tensor_type_id == TypeId::kNumberTypeInt8) {
       (reinterpret_cast<int8_t *>(dst_ptr))[i] = GetValue<int8_t>(value);
@@ -2053,8 +2053,8 @@ void SetScalarToTensor(const std::vector<ValuePtr> &values, const tensor::Tensor
     } else if (tensor_type_id == TypeId::kNumberTypeUInt64) {
       (reinterpret_cast<uint64_t *>(dst_ptr))[i] = GetValue<uint64_t>(value);
     } else {
-      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid tuple type:" << tensor_type_id
-                        << " for scalar to tensor.";
+      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid tuple type:" << tensor_type_id
+                                 << " for scalar to tensor.";
     }
   }
 }
@@ -2066,7 +2066,7 @@ void SetScalarToTensor(const std::vector<ValuePtr> &values, const tensor::Tensor
 tensor::TensorPtr AnfRuntimeAlgorithm::SequenceToTensor(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
   if (!value->isa<ValueSequence>()) {
-    MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid sequence value:" << value->ToString();
+    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid sequence value:" << value->ToString();
   }
 
   const auto &sequence_value = value->cast<ValueSequencePtr>();
@@ -2091,7 +2091,8 @@ tensor::TensorPtr AnfRuntimeAlgorithm::SequenceToTensor(const ValuePtr &value) {
   if (values[0]->isa<tensor::Tensor>()) {
     MS_LOG(DEBUG) << "Check dynamic tuple tensor";
     if (!CheckValidTensorTuple(values)) {
-      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid dynamic sequence tuple:" << value->ToString();
+      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid dynamic sequence tuple:"
+                                 << value->ToString();
     }
     const auto &tensor = values[0]->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
@@ -2115,8 +2116,8 @@ tensor::TensorPtr AnfRuntimeAlgorithm::SequenceToTensor(const ValuePtr &value) {
       auto ret = memcpy_s((reinterpret_cast<char *>(dst_ptr)) + i * size,
                           static_cast<size_t>(new_tensor->data().nbytes()), src_tensor->data_c(), size);
       if (ret != EOK) {
-        MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Failed to copy data into tensor, memcpy_s errorno: "
-                          << ret;
+        MS_LOG(INTERNAL_EXCEPTION)
+          << "#dmsg#Runtime error info:#dmsg#Failed to copy data into tensor, memcpy_s errorno: " << ret;
       }
     }
     const auto &element_shapes = std::vector<abstract::BaseShapePtr>(values.size(), single_shape);

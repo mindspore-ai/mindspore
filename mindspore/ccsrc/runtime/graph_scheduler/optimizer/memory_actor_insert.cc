@@ -32,7 +32,7 @@ bool MemoryActorInsert::MatchPattern(const AbstractActor *actor) const {
 
 void MemoryActorInsert::Process(ActorSet *const actor_set, AbstractActor *const actor) {
   MS_EXCEPTION_IF_NULL(actor);
-  auto graph = SchedulerHelper::FecthKernelGraphByActor(actor);
+  auto graph = SchedulerHelper::FetchKernelGraphByActor(actor);
   MS_EXCEPTION_IF_NULL(graph);
   auto somas_info = graph->MutableSomasInfo();
   MS_EXCEPTION_IF_NULL(somas_info);

@@ -52,14 +52,14 @@ void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs,
   if (node != nullptr && node->abstract() != nullptr && common::AnfAlgo::IsDynamicSequence(node)) {
     MS_LOG(DEBUG) << "node:" << node->fullname_with_scope() << " abs:" << node->abstract()->ToString();
     if (!utils::isa<ValuePtr>(arg)) {
-      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid input for dynamic sequence node:"
-                        << node->DebugString();
+      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid input for dynamic sequence node:"
+                                 << node->DebugString();
     }
     auto value = utils::cast<ValuePtr>(arg);
     MS_EXCEPTION_IF_NULL(value);
     if (!value->isa<ValueSequence>()) {
-      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid value:" << value->ToString()
-                        << " for dynamic sequence node:" << node->DebugString();
+      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Invalid value:" << value->ToString()
+                                 << " for dynamic sequence node:" << node->DebugString();
     }
     const auto &tensor = AnfAlgo::SequenceToTensor(value);
     inputs->push_back(tensor);
@@ -134,9 +134,9 @@ void FlattenValue(const BaseRef &arg, ValuePtrList *flatted_value) {
       (void)flatted_value->emplace_back(csr_tensor->GetTensorAt(i));
     }
   } else {
-    MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The value input to flatten should only contains be sequence "
-                         "or dictionary, but it is "
-                      << arg.ToString();
+    MS_LOG(INTERNAL_EXCEPTION)
+      << "#dmsg#Runtime error info:#dmsg#The value input to flatten should be sequence or dictionary, but it is "
+      << arg.ToString();
   }
 }
 
@@ -177,8 +177,8 @@ void PushTupleTensor(const VectorRef &args, const std::vector<AnfNodePtr> &param
   }
 
   if (index >= flatten_value.size()) {
-    MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Index out of flatten_value range, index value is " << index
-                      << " and flatten_value size is " << flatten_value.size() << ".";
+    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Index out of flatten_value range, index value is "
+                               << index << " and flatten_value size is " << flatten_value.size() << ".";
   }
   const auto &input = flatten_value[index];
   MS_EXCEPTION_IF_NULL(input);
@@ -295,7 +295,7 @@ namespace {
 int64_t GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item) {
   MS_EXCEPTION_IF_NULL(tuple_get_item);
   if (tuple_get_item->size() != kTupleGetItemInputSize) {
-    MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The node tuple_get_item must have 2 inputs!";
+    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The node tuple_get_item must have 2 inputs!";
   }
   auto output_index_value_node = tuple_get_item->input(kInputNodeOutputIndexInTupleGetItem);
   MS_EXCEPTION_IF_NULL(output_index_value_node);
@@ -545,7 +545,7 @@ void MindRTBackendBase::CompileGraph(const GraphSegmentPtr &segment, device::Run
   MS_EXCEPTION_IF_NULL(segment);
   // Compile the normal nodes, which doesn't contain the cut node.
   if (segment->nodes_.size() == 0) {
-    MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The segments size is 0.";
+    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The segments size is 0.";
   }
   if (!segment->is_cut_) {
     MS_EXCEPTION_IF_NULL(segment->nodes_[0]);
@@ -664,8 +664,8 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &graph_output, const Vec
     MS_EXCEPTION_IF_NULL(func_graph);
     auto params = func_graph->parameters();
     if (args.size() != params.size()) {
-      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Input size " << args.size()
-                        << " not equal to graph input size " << params.size();
+      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Input size " << args.size()
+                                 << " is not equal to graph input size " << params.size();
     }
 
     auto it = std::find(params.begin(), params.end(), graph_output);
@@ -736,7 +736,7 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
   // Fetch the graph compiler info.
   const auto &graph_iter = actor_to_graph_compiler_info_.find(actor_info);
   if (graph_iter == actor_to_graph_compiler_info_.end()) {
-    MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Can't find the graph compiler info.";
+    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Can't find the graph compiler info.";
   }
   MS_EXCEPTION_IF_NULL(graph_iter->second);
   const auto &graph_compiler_info = *(graph_iter->second);
@@ -799,8 +799,8 @@ BaseRef MindRTBackendBase::ConstructOutputByAbstract(const abstract::AbstractBas
 
   size_t outputs_num = common::AnfAlgo::GetOutputNumByAbstract(abstract);
   if (*output_position + outputs_num > output_tensors.size()) {
-    MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The output position is out of range: " << *output_position
-                      << " need:" << outputs_num << " total:" << output_tensors.size();
+    MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The output position is out of range: "
+                               << *output_position << " need:" << outputs_num << " total:" << output_tensors.size();
   }
 
   if (!abstract->isa<abstract::AbstractSequence>()) {
@@ -885,16 +885,16 @@ void MindRTBackendBase::ConstructOutputByTupleTensor(tensor::TensorPtr output_te
                         << split_device_tensor->GetSize() << "B.";
     }
     if (copy_offset_size + split_tensor_size > tensor_device_size) {
-      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The copy size is out of range, copy size:"
-                        << split_tensor_size << ", copy offset size:" << copy_offset_size
-                        << ", total size:" << tensor_device_size;
+      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The copy size is out of range, copy size:"
+                                 << split_tensor_size << ", copy offset size:" << copy_offset_size
+                                 << ", total size:" << tensor_device_size;
     }
     if (!split_device_tensor->SyncDeviceToDevice(split_tensor_shape, split_tensor_size, device_tensor->type_id(),
                                                  AddressOffset(tensor_device_ptr, copy_offset_size),
                                                  device_tensor->format())) {
-      MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Sync device to device failed, device type:"
-                        << split_device_tensor->GetDeviceType() << ", copy size:" << split_tensor_size
-                        << ", output node: Split tuple outputs.";
+      MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#Sync device to device failed, device type:"
+                                 << split_device_tensor->GetDeviceType() << ", copy size:" << split_tensor_size
+                                 << ", output node: Split tuple outputs.";
     }
     copy_offset_size += split_tensor_size;
 
@@ -1009,7 +1009,8 @@ void MindRTBackendBase::ConstructOutputs(const AnfNodePtr &output_node,
     VectorRef output_tuple;
     for (size_t i = 0; i < outputs_num; ++i) {
       if (*output_position >= output_tensors.size()) {
-        MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The output position is out of range: " << *output_position;
+        MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The output position is out of range: "
+                                   << *output_position;
       }
       auto &output_tensor = output_tensors[*output_position];
       MS_EXCEPTION_IF_NULL(output_tensor);
@@ -1027,7 +1028,8 @@ void MindRTBackendBase::ConstructOutputs(const AnfNodePtr &output_node,
   } else {
     for (size_t i = 0; i < outputs_num; ++i) {
       if (*output_position >= output_tensors.size()) {
-        MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The output position is out of range: " << *output_position;
+        MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#The output position is out of range: "
+                                   << *output_position;
       }
       outputs->emplace_back(output_tensors[*output_position]);
       ++(*output_position);

@@ -534,7 +534,7 @@ void DeviceAddressUtils::UpdateDeviceAddress(const session::AnfWithOutIndex &cur
         const auto &backoff_info = AnfAlgo::GetKernelSelectBackoffInfo(cur_pair.first);
         MS_EXCEPTION(backoff_info.second) << "#umsg#Kernel select failed:#umsg#" << backoff_info.second;
       } else {
-        MS_LOG(EXCEPTION) << "#dmsg#Runtime error info:#dmsg#" << error_info;
+        MS_LOG(INTERNAL_EXCEPTION) << "#dmsg#Runtime error info:#dmsg#" << error_info;
       }
     }
     MS_LOG(INFO) << "Update device address: ref origin kernel is " << origin_pair.first->fullname_with_scope()

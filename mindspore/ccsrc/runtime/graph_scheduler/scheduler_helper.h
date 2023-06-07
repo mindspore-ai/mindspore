@@ -89,7 +89,7 @@ class SchedulerHelper {
 
   // The interface of integration of dynamic and static memory.
   static void AddMemorySign(AbstractActor *const from_actor, AbstractActor *const to_actor);
-  static KernelGraphPtr FecthKernelGraphByActor(AbstractActor *const actor);
+  static KernelGraphPtr FetchKernelGraphByActor(AbstractActor *const actor);
   // Add the memory alloc sign for the head kernel actor of graph.
   static void AddMemoryAllocSign(AbstractActor *const from_actor, AbstractActor *const to_actor,
                                  const KernelGraphPtr &to_graph);
