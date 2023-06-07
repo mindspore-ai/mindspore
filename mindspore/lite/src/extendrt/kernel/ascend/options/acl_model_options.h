@@ -31,6 +31,8 @@ struct AclModelOptions {
   int32_t device_id;
   std::string dump_path;
   std::string profiling_path;
+  bool multi_model_sharing_mem_prepare = false;
+  bool multi_model_sharing_mem = false;
 
   AclModelOptions() : device_id(0) {}
 };

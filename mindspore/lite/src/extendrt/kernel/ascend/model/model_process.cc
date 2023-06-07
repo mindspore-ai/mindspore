@@ -22,6 +22,7 @@
 #include "common/log_adapter.h"
 #include "src/common/utils.h"
 #include "src/common/log_util.h"
+#include "src/litert/kernel/ascend/src/acl_mem_manager.h"
 
 namespace mindspore::kernel {
 namespace acl {
@@ -56,6 +57,15 @@ static std::string ShapeToString(const std::vector<int64_t> &shape) {
   }
   result += "]";
   return result;
+}
+
+ModelProcess::~ModelProcess() {
+  if (dynamic_dims_ != nullptr) {
+    delete[] dynamic_dims_;
+    dynamic_dims_ = nullptr;
+  }
+  aclrtFree(weight_ptr_);
+  weight_ptr_ = nullptr;
 }
 
 bool ModelProcess::PreInitModelResource() {
@@ -390,7 +400,7 @@ bool ModelProcess::CreateDataBuffer(void **data_mem_buffer, size_t buffer_size, 
       return false;
     }
     if (!is_run_on_device_) {
-      ret = aclrtMalloc(data_mem_buffer, buffer_size, ACL_MEM_MALLOC_NORMAL_ONLY);
+      ret = aclrtMalloc(data_mem_buffer, buffer_size, ACL_MEM_MALLOC_HUGE_FIRST);
       if (ret != ACL_ERROR_NONE) {
         MS_LOG(ERROR) << "Malloc device buffer failed , buffer size " << buffer_size;
         return false;
@@ -474,10 +484,49 @@ bool ModelProcess::Load(const void *om_data, size_t om_data_size) {
   }
   MS_LOG(INFO) << "Start load model model.";
   // model load model
-  auto acl_ret = aclmdlLoadFromMem(om_data, om_data_size, &model_id_);
-  if (acl_ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "Call aclmdlLoadFromMem failed, ret = " << acl_ret;
-    return false;
+  size_t work_size = 0;
+  size_t weight_size = 0;
+  MS_LOG(INFO) << "multi_model_sharing_mem_prepare: " << options_->multi_model_sharing_mem_prepare;
+  MS_LOG(INFO) << "multi_model_sharing_mem: " << options_->multi_model_sharing_mem;
+  if (options_->multi_model_sharing_mem_prepare) {
+    auto acl_ret = aclmdlQuerySizeFromMem(om_data, om_data_size, &work_size, &weight_size);
+    if (acl_ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Call aclmdlQuerySizeFromMem failed, ret = " << acl_ret;
+      return false;
+    }
+    MS_LOG(INFO) << "work_size: " << work_size << " weight_size: " << weight_size;
+    AclMemManager::GetInstance().UpdateWorkspace(work_size, weight_size);
+    return true;
+  } else if (options_->multi_model_sharing_mem) {
+    auto acl_ret = aclmdlQuerySizeFromMem(om_data, om_data_size, &work_size, &weight_size);
+    if (acl_ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Call aclmdlQuerySizeFromMem failed, ret = " << acl_ret;
+      return false;
+    }
+    AclModelMemInfo acl_work_mem_info;
+    auto ret = AclMemManager::GetInstance().GetModelWorkMem(&acl_work_mem_info);
+    if (ret != lite::RET_OK) {
+      MS_LOG(ERROR) << "Get work mem failed.";
+      return ret;
+    }
+    acl_ret = aclrtMalloc(&weight_ptr_, weight_size, ACL_MEM_MALLOC_HUGE_FIRST);
+    if (acl_ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "aclrtMalloc failed, error_ret = " << acl_ret;
+      return false;
+    }
+    acl_ret = aclmdlLoadFromMemWithMem(om_data, om_data_size, &model_id_, acl_work_mem_info.mem_addr, work_size,
+                                       weight_ptr_, weight_size);
+    if (acl_ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Call aclmdlLoadFromMemWithMem failed, ret = " << acl_ret;
+      return lite::RET_ERROR;
+    }
+    is_sharing_workspace_ = true;
+  } else {
+    auto acl_ret = aclmdlLoadFromMem(om_data, om_data_size, &model_id_);
+    if (acl_ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Call aclmdlLoadFromMem failed, ret = " << acl_ret;
+      return false;
+    }
   }
   // model init model resource
   if (!PreInitModelResource()) {
@@ -922,6 +971,7 @@ bool ModelProcess::ResetDynamicOutputTensor(const std::vector<KernelTensorPtr> &
 
 bool ModelProcess::PredictFromHost(const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs) {
+  MS_LOG(INFO) << "Execute model start..";
   if (!loaded_) {
     MS_LOG(ERROR) << "Model has not been loaded";
     return false;
@@ -941,7 +991,15 @@ bool ModelProcess::PredictFromHost(const std::vector<KernelTensorPtr> &inputs,
     struct timeval start_time;
     struct timeval end_time;
     (void)gettimeofday(&start_time, nullptr);
+    if (is_sharing_workspace_) {
+      MS_LOG(DEBUG) << "Need to lock before aclmdlExecute.";
+      AclMemManager::GetInstance().Lock();
+    }
     acl_ret = aclmdlExecute(model_id_, inputs_, outputs_);
+    if (is_sharing_workspace_) {
+      MS_LOG(DEBUG) << "Need to lock before aclmdlExecute.";
+      AclMemManager::GetInstance().Unlock();
+    }
     (void)gettimeofday(&end_time, nullptr);
     constexpr uint64_t kUSecondInSecond = 1000000;
     uint64_t cost =
@@ -949,7 +1007,15 @@ bool ModelProcess::PredictFromHost(const std::vector<KernelTensorPtr> &inputs,
       (kUSecondInSecond * static_cast<uint64_t>(start_time.tv_sec) + static_cast<uint64_t>(start_time.tv_usec));
     MS_LOG(INFO) << "Model execute in " << cost << " us";
   } else {
+    if (is_sharing_workspace_) {
+      MS_LOG(DEBUG) << "Need to lock before aclmdlExecute.";
+      AclMemManager::GetInstance().Lock();
+    }
     acl_ret = aclmdlExecute(model_id_, inputs_, outputs_);
+    if (is_sharing_workspace_) {
+      MS_LOG(DEBUG) << "Need to lock before aclmdlExecute.";
+      AclMemManager::GetInstance().Unlock();
+    }
   }
   if (acl_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Execute Model Failed, ret = " << acl_ret;

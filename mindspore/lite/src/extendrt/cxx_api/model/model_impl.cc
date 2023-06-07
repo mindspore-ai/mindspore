@@ -33,6 +33,7 @@
 #include "src/common/common.h"
 #include "src/extendrt/delegate/plugin/tensorrt_executor_plugin.h"
 #include "src/extendrt/kernel/ascend/plugin/ascend_kernel_plugin.h"
+#include "src/extendrt/model_manager.h"
 
 namespace mindspore {
 namespace {
@@ -97,6 +98,35 @@ ConverterPlugin::ConverterFunc ConverterPlugin::GetConverterFuncInner() {
 #endif
 }
 
+bool ModelImpl::IsEnableModelSharing(const std::string &model_path) {
+  const std::set<std::string> &model_path_set = ModelManager::GetInstance().GetModelPath();
+  return model_path_set.find(model_path) != model_path_set.end();
+}
+
+bool ModelImpl::IsEnableModelSharing(const std::pair<const void *, size_t> &model_buff) {
+  const std::set<std::pair<const void *, size_t>> &model_buff_set = ModelManager::GetInstance().GetModelBuff();
+  return (model_buff_set.find(model_buff) != model_buff_set.end());
+}
+
+Status ModelImpl::UpdateSharingWorkspaceConfig(const void *model_buff, size_t model_size,
+                                               const std::string &model_path) {
+  bool model_sharing_flag = false;
+  if (!model_path.empty()) {
+    model_sharing_flag = IsEnableModelSharing(model_path);
+  } else {
+    model_sharing_flag = IsEnableModelSharing(std::make_pair(model_buff, model_size));
+  }
+  if (model_sharing_flag) {
+    MS_LOG(INFO) << "model_sharing_flag: " << model_sharing_flag;
+    auto ret = UpdateConfig("inner_common", std::make_pair("inner_sharing_workspace", "true"));
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "UpdateConfig failed.";
+      return ret;
+    }
+  }
+  return kSuccess;
+}
+
 Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, ModelType model_type,
                                     const std::shared_ptr<Context> &model_context, const std::string &model_path) {
   if (model_buff == nullptr) {
@@ -113,9 +143,11 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
     MS_LOG(ERROR) << "Model has been called Build";
     return kLiteError;
   }
-  if (model_context == nullptr) {
-    MS_LOG(ERROR) << "Invalid context pointers.";
-    return kLiteNullptr;
+  MS_CHECK_TRUE_MSG(model_context != nullptr, kLiteNullptr, "Invalid context pointers.");
+  auto status = UpdateSharingWorkspaceConfig(model_buff, model_size, model_path);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "UpdateSharingWorkspaceConfig failed.";
+    return kLiteError;
   }
   auto mindir_path = GetConfig(lite::kConfigModelFileSection, lite::kConfigMindIRPathKey);
   std::string weight_path = "./";

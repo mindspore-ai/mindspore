@@ -62,6 +62,7 @@ class SingleOpInferSession : public InferSession {
   kernel::KernelModPtr kernel_mod_ = nullptr;
   kernel::KernelArgs kernel_args_;
   ConfigInfos config_infos_;
+  bool is_multi_model_sharing_mem_prepare_ = false;
 };
 }  // namespace mindspore
 
