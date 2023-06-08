@@ -1683,7 +1683,7 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
         ValueError: If the third dimension size of `_random_samples` is not 3.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
@@ -3159,7 +3159,7 @@ def pad(input_x, padding, mode='constant', value=None):
         ValueError: If mode is not "constant" and value not None.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
@@ -4168,6 +4168,9 @@ def margin_ranking_loss(input1, input2, target, margin=0.0, reduction='mean'):
     MarginRankingLoss creates a criterion that measures the loss.
 
     For details, please refer to :class:`mindspore.nn.MarginRankingLoss`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
     """
     margin = _check_value_type("margin", margin, [float], "margin_ranking_loss")
     _check_is_tensor('input1', input1, "margin_ranking_loss")

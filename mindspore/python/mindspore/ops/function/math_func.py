@@ -2243,7 +2243,10 @@ def xlogy(input, other):
 
 def arccosh(input):
     r"""
-    For details, please refer to :func:`mindspore.ops.acosh`.
+    Alias for :func:`mindspore.ops.acosh`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
     """
     return acosh_(input)
 
@@ -2260,14 +2263,20 @@ def arcsin(x):
 
 def arctan(input):
     r"""
-    For details, please refer to :func:`mindspore.ops.atan`.
+    Alias for :func:`mindspore.ops.atan`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
     """
     return atan_(input)
 
 
 def arctan2(input, other):
     r"""
-    For details, please refer to :func:`mindspore.ops.atan2`.
+    Alias for :func:`mindspore.ops.atan2`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
     """
     _atan2 = _get_cache_prim(P.Atan2)()
     return _atan2(input, other)
@@ -2970,7 +2979,7 @@ def inverse(input):
         ValueError: If the dimension of `input` is less than 2.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor([[1., 2.], [3., 4.]], mstype.float32)
@@ -7888,7 +7897,7 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
         ValueError: If any elements of `dim` is out of range.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
@@ -10959,7 +10968,7 @@ def matrix_power(input, n):
         ValueError: If `n` is negative but got input `input` has singular matrices.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> input = Tensor([[[0, 1], [-1, 0]], [[1, 0], [0, -1]]], dtype=ms.float32)
