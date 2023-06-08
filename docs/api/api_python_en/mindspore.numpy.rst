@@ -254,6 +254,7 @@ Array operations focus on tensor manipulation.
     mindspore.numpy.append
     mindspore.numpy.apply_along_axis
     mindspore.numpy.apply_over_axes
+    mindspore.numpy.argwhere
     mindspore.numpy.array_split
     mindspore.numpy.array_str
     mindspore.numpy.atleast_1d
@@ -272,6 +273,7 @@ Array operations focus on tensor manipulation.
     mindspore.numpy.flipud
     mindspore.numpy.hsplit
     mindspore.numpy.hstack
+    mindspore.numpy.intersect1d
     mindspore.numpy.moveaxis
     mindspore.numpy.piecewise
     mindspore.numpy.ravel
@@ -281,6 +283,7 @@ Array operations focus on tensor manipulation.
     mindspore.numpy.rollaxis
     mindspore.numpy.rot90
     mindspore.numpy.select
+    mindspore.numpy.setdiff1d
     mindspore.numpy.size
     mindspore.numpy.split
     mindspore.numpy.squeeze
