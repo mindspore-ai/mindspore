@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP16_CONV_DEPTHWISE_FP16_H_
-#define MINDSPORE_NNACL_FP16_CONV_DEPTHWISE_FP16_H_
+#ifndef NNACL_FP16_CONV_DEPTHWISE_FP16_H_
+#define NNACL_FP16_CONV_DEPTHWISE_FP16_H_
 
 #include "nnacl/conv_parameter.h"
 #include "nnacl/fp32/conv_depthwise_fp32.h"
@@ -62,4 +62,4 @@ void ConvDw3x3Fp16(float16_t *output_data, float16_t *buffer, const float16_t *i
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP16_CONV_DEPTHWISE_FP16_H_
+#endif  //  NNACL_FP16_CONV_DEPTHWISE_FP16_H_

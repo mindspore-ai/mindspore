@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP32_MATMUL_SPARSE_X1_H_
-#define MINDSPORE_NNACL_FP32_MATMUL_SPARSE_X1_H_
+#ifndef NNACL_FP32_MATMUL_SPARSE_X1_H_
+#define NNACL_FP32_MATMUL_SPARSE_X1_H_
 
 #include <float.h>
 #include <string.h>
@@ -38,4 +38,4 @@ void MatMulSparse8x8(const float *a, const float *b, const uint32_t *nnz, const 
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_NNACL_FP32_MATMUL_SPARSE_X1_H_
+#endif  // NNACL_FP32_MATMUL_SPARSE_X1_H_

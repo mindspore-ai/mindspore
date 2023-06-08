@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP32_GRAD_SOFTMAX_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP32_GRAD_SOFTMAX_H_
+#ifndef NNACL_FP32_GRAD_SOFTMAX_H_
+#define NNACL_FP32_GRAD_SOFTMAX_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,4 +30,4 @@ void SoftMaxP2(const float *input_ptr, float *output_ptr, const float *sum_data,
 }
 #endif
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP32_GRAD_SOFTMAX_H_
+#endif  // NNACL_FP32_GRAD_SOFTMAX_H_

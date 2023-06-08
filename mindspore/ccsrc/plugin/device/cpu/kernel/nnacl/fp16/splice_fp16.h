@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP16_SPLICE_FP16_H_
-#define MINDSPORE_NNACL_FP16_SPLICE_FP16_H_
+#ifndef NNACL_FP16_SPLICE_FP16_H_
+#define NNACL_FP16_SPLICE_FP16_H_
 #include <string.h>
 #include "nnacl/splice_parameter.h"
 #ifdef __cplusplus
@@ -28,4 +28,4 @@ void SpliceFp16(const float16_t *src_data, int src_row, int src_col, const Splic
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_NNACL_FP16_SPLICE_FP16_H_
+#endif  //  NNACL_FP16_SPLICE_FP16_H_

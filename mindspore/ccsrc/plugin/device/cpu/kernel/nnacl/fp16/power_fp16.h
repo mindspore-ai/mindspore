@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP16_POWER_FP16_H_
-#define MINDSPORE_NNACL_FP16_POWER_FP16_H_
+#ifndef NNACL_FP16_POWER_FP16_H_
+#define NNACL_FP16_POWER_FP16_H_
 
 #include <math.h>
 #include "nnacl/op_base.h"
@@ -61,4 +61,4 @@ void PowerBroadCastFp16(const float16_t *input, const float16_t *exponent, float
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP16_POWER_FP16_H_
+#endif  //  NNACL_FP16_POWER_FP16_H_

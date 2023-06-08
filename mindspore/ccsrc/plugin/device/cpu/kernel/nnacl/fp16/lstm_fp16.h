@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP16_LSTM_H_
-#define MINDSPORE_NNACL_FP16_LSTM_H_
+#ifndef NNACL_FP16_LSTM_FP16_H_
+#define NNACL_FP16_LSTM_FP16_H_
 
 #include "nnacl/lstm_parameter.h"
 #ifdef __cplusplus
@@ -46,4 +46,4 @@ void LstmFp16(float16_t *output, const float16_t *input, const float16_t *weight
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP16_LSTM_H_
+#endif  //  NNACL_FP16_LSTM_FP16_H_

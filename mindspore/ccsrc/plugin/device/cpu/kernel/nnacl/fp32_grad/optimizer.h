@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP32_GRAD_OPTIMIZER_H_
-#define MINDSPORE_NNACL_FP32_GRAD_OPTIMIZER_H_
+#ifndef NNACL_FP32_GRAD_OPTIMIZER_H_
+#define NNACL_FP32_GRAD_OPTIMIZER_H_
 
 #include "nnacl/op_base.h"
 
@@ -37,4 +37,4 @@ typedef struct {
   bool use_nesterov_;
 } AdamParameter;
 
-#endif  // MINDSPORE_NNACL_FP32_GRAD_OPTIMIZER_H_
+#endif  // NNACL_FP32_GRAD_OPTIMIZER_H_

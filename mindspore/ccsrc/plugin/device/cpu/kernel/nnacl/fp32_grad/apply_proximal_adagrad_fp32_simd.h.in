@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_FP32_APPLY_PROXIMAL_ADAGRAD_@SIMD_INSTRUCTION@_H_
-#define MINDSPORE_NNACL_FP32_APPLY_PROXIMAL_ADAGRAD_@SIMD_INSTRUCTION@_H_
+#ifndef NNACL_FP32_APPLY_PROXIMAL_ADAGRAD_@SIMD_INSTRUCTION@_H_
+#define NNACL_FP32_APPLY_PROXIMAL_ADAGRAD_@SIMD_INSTRUCTION@_H_
 
 #include "nnacl/intrinsics/ms_simd_instructions.h"
 #include "nnacl/intrinsics/ms_simd_@SIMD_INSTRUCTION_LOWER@_instructions.h"

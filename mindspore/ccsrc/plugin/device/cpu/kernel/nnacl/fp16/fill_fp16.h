@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef NNACL_FILL_FP16_H_
-#define NNACL_FILL_FP16_H_
+#ifndef NNACL_FP16_FILL_FP16_H_
+#define NNACL_FP16_FILL_FP16_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/errorcode.h"
@@ -31,4 +31,4 @@ int FillFp16(float16_t *output, int size, float16_t data);
 }
 #endif
 
-#endif  // NNACL_FILL_FP16_H_
+#endif  // NNACL_FP16_FILL_FP16_H_

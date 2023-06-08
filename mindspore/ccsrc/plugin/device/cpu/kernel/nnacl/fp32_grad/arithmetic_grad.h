@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_FP32_GRAD_ARITHMETIC_GRAD_H_
-#define MINDSPORE_NNACL_FP32_GRAD_ARITHMETIC_GRAD_H_
+#ifndef NNACL_FP32_GRAD_ARITHMETIC_GRAD_H_
+#define NNACL_FP32_GRAD_ARITHMETIC_GRAD_H_
 
 #include "nnacl/op_base.h"
 
@@ -35,4 +35,4 @@ int ElementRsqrtGrad(const float *in1, const float *in2, float *out, const int e
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP32_GRAD_ARITHMETIC_GRAD_H_
+#endif  // NNACL_FP32_GRAD_ARITHMETIC_GRAD_H_

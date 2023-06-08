@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP32_GRAD_RESIZE_GRAD_H_
-#define MINDSPORE_NNACL_FP32_GRAD_RESIZE_GRAD_H_
+#ifndef NNACL_FP32_GRAD_RESIZE_GRAD_H_
+#define NNACL_FP32_GRAD_RESIZE_GRAD_H_
 
 #include "nnacl/fp32_grad/resize_grad_parameter.h"
 
@@ -30,4 +30,4 @@ int ResizeBiLinearGrad(const float *in_addr, float *out_addr, int batch_size, in
 #ifdef __cplusplus
 }
 #endif
-#endif  //  MINDSPORE_NNACL_FP32_GRAD_RESIZE_GRAD_H_
+#endif  //  NNACL_FP32_GRAD_RESIZE_GRAD_H_

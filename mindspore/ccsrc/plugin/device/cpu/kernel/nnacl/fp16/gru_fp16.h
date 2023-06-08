@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_FP16_GRU_H_
-#define MINDSPORE_NNACL_FP16_GRU_H_
+#ifndef NNACL_FP16_GRU_H_
+#define NNACL_FP16_GRU_H_
 #include "nnacl/gru_parameter.h"
 
 #ifdef __cplusplus
@@ -27,4 +27,4 @@ void GruFp16(float16_t *output, const float16_t *input, const float16_t *weight_
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP16_GRU_H_
+#endif  //  NNACL_FP16_GRU_H_

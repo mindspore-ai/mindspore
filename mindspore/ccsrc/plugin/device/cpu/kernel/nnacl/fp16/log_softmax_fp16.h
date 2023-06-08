@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_NNACL_FP16_LOG_SOFTMAX_FP16_H_
-#define MINDSPORE_LITE_NNACL_FP16_LOG_SOFTMAX_FP16_H_
+#ifndef NNACL_FP16_LOG_SOFTMAX_FP16_H_
+#define NNACL_FP16_LOG_SOFTMAX_FP16_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/softmax_parameter.h"
@@ -32,4 +32,4 @@ void LogSoftmaxFp16(const float16_t *input_ptr, float16_t *output_ptr, float16_t
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_FP16_SOFTMAX_FP16_H_
+#endif  //  NNACL_FP16_LOG_SOFTMAX_FP16_H_

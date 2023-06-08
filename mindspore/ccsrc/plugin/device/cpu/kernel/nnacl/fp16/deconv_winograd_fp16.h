@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP16_DECONV_WINOGRAD_FP16_H_
-#define MINDSPORE_NNACL_FP16_DECONV_WINOGRAD_FP16_H_
+#ifndef NNACL_FP16_DECONV_WINOGRAD_FP16_H_
+#define NNACL_FP16_DECONV_WINOGRAD_FP16_H_
 
 #include "nnacl/fp16/winograd_transform_fp16.h"
 
@@ -45,4 +45,4 @@ void WinogradTransRightFp16(const float16_t *S, const float16_t *B, float16_t *M
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP16_DECONV_WINOGRAD_FP16_H_
+#endif  //  NNACL_FP16_DECONV_WINOGRAD_FP16_H_

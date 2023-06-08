@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP16_GRAD_STRIDED_SLICE_GRAD_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP16_GRAD_STRIDED_SLICE_GRAD_H_
+#ifndef NNACL_FP16_GRAD_STRIDED_SLICE_GRAD_H_
+#define NNACL_FP16_GRAD_STRIDED_SLICE_GRAD_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/strided_slice_parameter.h"
@@ -28,4 +28,4 @@ int DoStridedSliceFp16Grad(const float16_t *inputs, float16_t *output, const int
 }
 #endif
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP16_GRAD_STRIDED_SLICE_GRAD_H_
+#endif  // NNACL_FP16_GRAD_STRIDED_SLICE_GRAD_H_

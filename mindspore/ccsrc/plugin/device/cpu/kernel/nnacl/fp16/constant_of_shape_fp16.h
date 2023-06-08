@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_FP16_CONSTANT_OF_SHAPE_FP16_H_
-#define MINDSPORE_NNACL_FP16_CONSTANT_OF_SHAPE_FP16_H_
+#ifndef NNACL_FP16_CONSTANT_OF_SHAPE_FP16_H_
+#define NNACL_FP16_CONSTANT_OF_SHAPE_FP16_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/errorcode.h"
@@ -35,4 +35,4 @@ inline int ConstantOfShapeFp16(float16_t *output, int start, int end, float16_t 
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP16_CONSTANT_OF_SHAPE_FP16_H_
+#endif  //  NNACL_FP16_CONSTANT_OF_SHAPE_FP16_H_

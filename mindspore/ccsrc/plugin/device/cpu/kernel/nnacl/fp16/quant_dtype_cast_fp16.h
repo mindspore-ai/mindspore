@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP16_QUANTDTYPECAST_FP16_H_
-#define MINDSPORE_NNACL_FP16_QUANTDTYPECAST_FP16_H_
+#ifndef NNACL_FP16_QUANTDTYPECAST_FP16_H_
+#define NNACL_FP16_QUANTDTYPECAST_FP16_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
@@ -32,4 +32,4 @@ int DoQuantizeFp16ToUInt8(const float16_t *real_values, uint8_t *quant_values, f
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_INT8_QUANTDTYPECAST_H_
+#endif  //  NNACL_INT8_QUANTDTYPECAST_H_

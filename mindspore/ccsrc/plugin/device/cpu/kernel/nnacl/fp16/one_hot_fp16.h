@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP16_ONE_HOT_H_
-#define MINDSPORE_NNACL_FP16_ONE_HOT_H_
+#ifndef NNACL_FP16_ONE_HOT_FP16_H_
+#define NNACL_FP16_ONE_HOT_FP16_H_
 
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
@@ -32,4 +32,4 @@ int OneHotToFp16(const int *indices, float16_t on_value, float16_t off_value, fl
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP16_ONE_HOT_H_
+#endif  //  NNACL_FP16_ONE_HOT_FP16_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP32_GRAD_SOFTMAX_GRAD_H_
-#define MINDSPORE_NNACL_FP32_GRAD_SOFTMAX_GRAD_H_
+#ifndef NNACL_FP32_GRAD_SOFTMAX_GRAD_H_
+#define NNACL_FP32_GRAD_SOFTMAX_GRAD_H_
 
 #include "nnacl/fp32/softmax_fp32.h"
 #include "nnacl/fp32_grad/softmax_crossentropy_parameter.h"
@@ -30,4 +30,4 @@ void SoftmaxGrad(const float *input_ptr, const float *yt_ptr, float *output_ptr,
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP32_GRAD_SOFTMAX_GRAD_H_
+#endif  // NNACL_FP32_GRAD_SOFTMAX_GRAD_H_

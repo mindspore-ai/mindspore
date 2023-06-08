@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_FP16_CUSTOM_GRU_FP16_H_
-#define MINDSPORE_NNACL_FP16_CUSTOM_GRU_FP16_H_
+#ifndef NNACL_FP16_CUSTOM_GRU_FP16_H_
+#define NNACL_FP16_CUSTOM_GRU_FP16_H_
 #ifdef ENABLE_ARM64
 #include "nnacl/custom_gru_parameter.h"
 
@@ -29,4 +29,4 @@ void CustomGruFp16(float16_t *output, const float16_t *input, const float16_t *w
 #endif
 
 #endif
-#endif  // MINDSPORE_NNACL_FP16_CUSTOM_GRU_FP16_H_
+#endif  //  NNACL_FP16_CUSTOM_GRU_FP16_H_

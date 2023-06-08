@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_FP16_EXP_FP16_H_
-#define MINDSPORE_NNACL_FP16_EXP_FP16_H_
+#ifndef NNACL_FP16_EXP_FP16_H_
+#define NNACL_FP16_EXP_FP16_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/kernel/exp.h"
@@ -58,4 +58,4 @@ static inline void single_exp_fp16(float16_t src, float16_t *dst) {
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP16_EXP_FP16_H_
+#endif  //  NNACL_FP16_EXP_FP16_H_

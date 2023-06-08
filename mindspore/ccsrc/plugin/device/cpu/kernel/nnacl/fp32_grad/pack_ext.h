@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP32_GRAD_PACK_EXT_H_
-#define MINDSPORE_NNACL_FP32_GRAD_PACK_EXT_H_
+#ifndef NNACL_FP32_GRAD_PACK_EXT_H_
+#define NNACL_FP32_GRAD_PACK_EXT_H_
 
 #include <stddef.h>
 #include "nnacl/conv_parameter.h"
@@ -36,4 +36,4 @@ void rolling_col2im_hwc(const float *data_col, float *data_im, const ConvParamet
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP32_GRAD_PACK_EXT_H_
+#endif  // NNACL_FP32_GRAD_PACK_EXT_H_

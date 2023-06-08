@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_FP32_APPLY_PROXIMAL_ADAGRAD_H_
-#define MINDSPORE_NNACL_FP32_APPLY_PROXIMAL_ADAGRAD_H_
+#ifndef NNACL_FP32_APPLY_PROXIMAL_ADAGRAD_H_
+#define NNACL_FP32_APPLY_PROXIMAL_ADAGRAD_H_
 
 #include "nnacl/op_base.h"
 
@@ -28,4 +28,4 @@ void ApplyProximalAdagradOpt(float *var, float *accum, float lr, float l1, float
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP32_APPLY_PROXIMAL_ADAGRAD_H_
+#endif  // NNACL_FP32_APPLY_PROXIMAL_ADAGRAD_H_
