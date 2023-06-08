@@ -173,9 +173,7 @@ cudaError_t BinaryWithBroadcast(BinaryFunc<OP, In0_t, In1_t, Out_t> func, Scalar
                                 const size_t out_num, const std::vector<int64_t> &in0_shape,
                                 const std::vector<int64_t> &in1_shape, const std::vector<int64_t> &out_shape,
                                 In0_t *in0, In1_t *in1, Out_t *out, size_t device_id, cudaStream_t cuda_stream) {
-  cudaDeviceProp prop;
-  cudaGetDeviceProperties(&prop, device_id);
-  size_t vec_thread_num = prop.multiProcessorCount * 8 * 32;
+  size_t vec_thread_num = 8 * 8 * 32;
   const size_t dim_size = out_shape.size();
   constexpr size_t vec_num = VecSize<In0_t, In1_t, Out_t>();
   size_t total_threads = out_num / out_shape.back();
