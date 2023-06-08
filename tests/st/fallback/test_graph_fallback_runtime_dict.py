@@ -251,7 +251,7 @@ def fc_with_initialize(input_channels, out_channels):
     return ms.nn.Dense(input_channels, out_channels, "ones", "ones")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
