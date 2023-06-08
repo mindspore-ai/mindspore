@@ -965,6 +965,12 @@ ModelPoolConfig ModelPool::Init(const std::shared_ptr<RunnerConfig> &runner_conf
       }
     }
   }
+  // update context device id
+  auto ret = ParseDeviceIds(runner_config, &model_pool_config);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "ParseDeviceIds failed.";
+    return model_pool_config;
+  }
   // create task queue for model pool
   predict_task_queue_ = std::make_shared<PredictTaskQueue>();
   if (predict_task_queue_ == nullptr) {
@@ -1156,5 +1162,38 @@ ModelPool::~ModelPool() {
     tasks_ = nullptr;
   }
   MS_LOG(INFO) << "free model pool done.";
+}
+
+Status ModelPool::ParseDeviceIds(const std::shared_ptr<RunnerConfig> &runner_config,
+                                 ModelPoolConfig *model_pool_config) {
+  if (runner_config == nullptr) {
+    MS_LOG(INFO) << "runner config is nullptr.";
+    return kSuccess;
+  }
+  if (model_pool_config == nullptr) {
+    MS_LOG(ERROR) << "model pool config is nullptr.";
+    return kLiteNullptr;
+  }
+  auto device_ids = runner_config->GetDeviceIds();
+  if (!device_ids.empty()) {
+    for (auto &config : *model_pool_config) {
+      auto id = device_ids[config->worker_id % device_ids.size()];
+      if (config->context == nullptr) {
+        MS_LOG(ERROR) << "context is nullptr.";
+        return kLiteNullptr;
+      }
+      auto device_infos = config->context->MutableDeviceInfo();
+      for (auto &device_info : device_infos) {
+        if (device_info->GetDeviceType() == kAscend) {
+          device_info->Cast<AscendDeviceInfo>()->SetDeviceID(id);
+        } else if (device_info->GetDeviceType() == kGPU) {
+          device_info->Cast<GPUDeviceInfo>()->SetDeviceID(id);
+        } else {
+          MS_LOG(WARNING) << "Device is not Ascend or GPU can't set device id.";
+        }
+      }
+    }
+  }
+  return kSuccess;
 }
 }  // namespace mindspore

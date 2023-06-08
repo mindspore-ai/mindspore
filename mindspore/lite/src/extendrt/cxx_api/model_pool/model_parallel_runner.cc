@@ -114,6 +114,22 @@ std::map<std::vector<char>, std::map<std::vector<char>, std::vector<char>>> Runn
   return MapMapStringToChar(data_->config_info);
 }
 
+void RunnerConfig::SetDeviceIds(const std::vector<uint32_t> &device_ids) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Runner config data is nullptr.";
+    return;
+  }
+  data_->device_ids = device_ids;
+}
+
+std::vector<uint32_t> RunnerConfig::GetDeviceIds() const {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Runner config data is nullptr.";
+    return {};
+  }
+  return data_->device_ids;
+}
+
 ModelParallelRunner::ModelParallelRunner() {}
 
 ModelParallelRunner::~ModelParallelRunner() {}

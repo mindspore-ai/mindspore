@@ -16,6 +16,8 @@
 
 package com.mindspore.config;
 import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.logging.Logger;
 
 /**
  * Configuration for ModelParallelRunner.
@@ -23,6 +25,7 @@ import java.util.HashMap;
  * @since v1.6
  */
 public class RunnerConfig {
+    private static final Logger LOGGER = Logger.getLogger(RunnerConfig.class.toString());
     static {
         MindsporeLite.init();
     }
@@ -105,6 +108,36 @@ public class RunnerConfig {
     }
 
     /**
+     * Set device id list
+     *
+     * @param deviceIdList The device id list.
+     */
+    public void setDeviceIds(ArrayList<Integer> deviceIds) {
+        int len = deviceIds.size();
+        if (len == 0) {
+            LOGGER.severe("deviceIds is empty.");
+            return;
+        }
+        int[] deviceIdsArray = new int[len];
+        for (int i = 0; i < len; i++) {
+            int deviceId = deviceIds.get(i);
+            if (deviceId < 0) {
+                LOGGER.severe("deviceIds contain nagetive number.");
+                return;
+            }
+            deviceIdsArray[i] = deviceId;
+        }
+        setDeviceIds(runnerConfigPtr, deviceIdsArray);
+    }
+
+    /**
+     * @return Get device id list
+     */
+    public ArrayList<Integer> getDeviceIds() {
+        return getDeviceIds(runnerConfigPtr);
+    }
+
+    /**
      * Fre RunnerConfig pointer.
      */
     public void free() {
@@ -123,6 +156,10 @@ public class RunnerConfig {
     private native void setConfigPath(long runnerConfigPtr, String config_path);
 
     private native String getConfigPath(long runnerConfigPtr);
+
+    private native void setDeviceIds(long runnerConfigPtr, int[] deviceIds);
+
+    private native ArrayList<Integer> getDeviceIds(long runnerConfigPtr);
 
     private native boolean free(long runnerConfigPtr);
 }

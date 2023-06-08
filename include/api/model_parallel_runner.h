@@ -72,6 +72,17 @@ class MS_API RunnerConfig {
   /// \return The current config path.
   inline std::string GetConfigPath() const;
 
+  /// \brief Set the device id list at runtime, make the model run on different npu/gpu devices. Only valid for
+  /// ModelParallelRunner.
+  ///
+  /// \param[in] device_ids The device id list at runtime.
+  void SetDeviceIds(const std::vector<uint32_t> &device_ids);
+
+  /// \brief Get the device id list at runtime. Only valid for ModelParallelRunner.
+  ///
+  /// \return The device id list.
+  std::vector<uint32_t> GetDeviceIds() const;
+
  private:
   void SetConfigInfo(const std::vector<char> &section, const std::map<std::vector<char>, std::vector<char>> &config);
   std::map<std::vector<char>, std::map<std::vector<char>, std::vector<char>>> GetConfigInfoChar() const;
