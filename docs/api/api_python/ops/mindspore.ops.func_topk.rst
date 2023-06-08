@@ -17,8 +17,11 @@ mindspore.ops.topk
 
     如果两个比较的元素相同，则优先返回索引值较小的元素。
 
+    .. note::
+        Ascend/CPU设备支持除bool和复数类型意外的所有类型，GPU目前只支持float16和float32类型。
+
     参数：
-        - **input** (Tensor) - 需计算的输入，数据类型必须为float16、float32或int32。
+        - **input** (Tensor) - 需计算的输入。
         - **k** (int) - 指定计算最大或最小元素的数量，必须为常量。
         - **dim** (int, 可选) - 需要排序的维度。默认值： ``None`` 。
         - **largest** (bool, 可选) - 如果为 ``False`` ，则会返回前k个最小值。默认值： ``True`` 。
@@ -34,4 +37,3 @@ mindspore.ops.topk
         - **TypeError** - 如果 `sorted` 不是bool。
         - **TypeError** - 如果 `input` 不是Tensor。
         - **TypeError** - 如果 `k` 不是int。
-        - **TypeError** - 如果 `input` 的数据类型不是以下之一：float16、float32或int32。

@@ -17,7 +17,7 @@ mindspore.ops.GridSampler3D
           默认值为 ``False`` 。
 
     输入：
-        - **input_x** (Tensor) - 5-D输入Tensor，shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})`。数据类型为float32或float64。
+        - **input_x** (Tensor) - 5-D输入Tensor，shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})`。数据类型为float16、float32或float64。
         - **grid** (Tensor) - 5-D Tensor，shape为 :math:`(N, D_{out}, H_{out}, W_{out}, 3)`。数据类型与 `input_x` 保持一致。
 
     输出：

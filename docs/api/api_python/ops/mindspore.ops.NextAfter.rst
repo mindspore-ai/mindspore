@@ -17,8 +17,8 @@ mindspore.ops.NextAfter
         这是一个实验性API，后续可能修改或删除。
 
     输入：
-        - **x1** (Tensor) - 支持数据类型为float32和float64。其shape为 :math:`(N,*)` ，其中 :math:`*` 为任意数量的额外维度。
-        - **x2** (Tensor) - 支持数据类型为float32和float64。其shape为 :math:`(N,*)` ，其中 :math:`*` 为任意数量的额外维度。
+        - **x1** (Tensor) - 任意维度的输入Tensor，支持数据类型为float32和float64。
+        - **x2** (Tensor) - 任意维度的输入Tensor，支持数据类型为float32和float64。
 
     输出：
         Tensor，shape和数据类型与 `x1` 相同。

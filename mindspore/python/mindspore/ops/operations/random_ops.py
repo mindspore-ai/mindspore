@@ -825,9 +825,9 @@ class Multinomial(Primitive):
         but must be non-negative, finite and have a non-zero sum.
 
     Args:
-        seed (int): Random seed, must be non-negative. Default: ``0`` .
-        seed2 (int): Random seed2, must be non-negative. Default: ``0`` .
-        dtype(dtype): The type of output, must be mstype.int32 or mstype.int64. Default: mstype.int32.
+        seed (int, optional): Random seed, must be non-negative. Default: ``0`` .
+        seed2 (int, optional): Random seed2, must be non-negative. Default: ``0`` .
+        dtype(dtype, optional): The type of output, must be mstype.int32 or mstype.int64. Default: mstype.int32.
 
     Inputs:
         - **x** (Tensor) - the input tensor containing the cumsum of probabilities, must be 1 or 2

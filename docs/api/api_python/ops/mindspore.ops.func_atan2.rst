@@ -12,8 +12,8 @@ mindspore.ops.atan2
         - 参数 `input` 和 `other` 中至少有一个为Tensor。
 
     参数：
-        - **input** (Tensor, Number.number) - 输入Tensor或常数，shape: :math:`(N,*)` ，其中 :math:`*` 表示任何数量的附加维度。
-        - **other** (Tensor, Number.number) - 输入Tensor或常数，shape应能在广播后与 `input` 相同，或 `input` 的shape在广播后与 `other` 相同。
+        - **input** (Tensor, Number.number) - 输入Tensor或常数。
+        - **other** (Tensor, Number.number) - 输入Tensor或常数，shape与 `input` 相同，或能与 `input` 的shape广播。
 
     返回：
         Tensor或常数，与广播后的输入shape相同，和 `input` 数据类型相同。

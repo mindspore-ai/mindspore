@@ -37,7 +37,7 @@ mindspore.ops.Im2Col
           - 如果是2个整数，则 :math:`pad\_height = pads[0]`, :math:`pad\_width = pads[1]` 。
 
     输入：
-        - **x** (Tensor) - 输入Tensor，只支持4-D Tensor(1个batch的图像Tensor)。支持所有的实数类型。
+        - **x** (Tensor) - 输入Tensor，只支持4-D Tensor(1个batch的图像Tensor)。
 
     输出：
         Tensor，一个4-D Tensor，与输入 `x` 的数据类型相同。

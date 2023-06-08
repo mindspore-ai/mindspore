@@ -31,7 +31,7 @@
         - **data_format** (str) - 输入和输出的数据格式。目前仅支持'NCDHW'。默认值： ``"NCDHW"`` 。
 
     输入：
-        - **x** (Tensor) - shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 的Tensor。数据类型为float16和float32。
+        - **x** (Tensor) - shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 的Tensor。数据类型为float16、float32和float64。
 
     输出：
         Tensor，其shape为 :math:`(N, C, D_{out}, H_{out}, W_{out})` ，数据类型与 `x` 相同。

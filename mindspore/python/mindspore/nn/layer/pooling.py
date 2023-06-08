@@ -819,7 +819,7 @@ class AvgPool3d(_PoolNd):
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})` or
           :math:`(C, D_{in}, H_{in}, W_{in})`.
-          Currently support float16 and float32 data type.
+          Currently support float16, float32 and float64 data type.
 
     Outputs:
         Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})` or

@@ -15,7 +15,7 @@ mindspore.ops.CumProd
         - **reverse** (bool) - 如果为 ``True`` ，则沿 `axis` 反转结果。默认值： ``False`` 。
 
     输入：
-        - **x** (Tensor[Number]) - 输入Tensor，shape: :math:`(N,*)` ，其中 :math:`*` 表示任何数量的附加维度。其秩应小于8。
+        - **x** (Tensor[Number]) - 输入Tensor。
         - **axis** (int) - 沿此方向计算累计积。仅支持常量值。
 
     输出：

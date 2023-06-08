@@ -12,8 +12,8 @@
         - **reduction** (str，可选) - 对输出应用特定的规约方法：可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` 。默认值： ``'none'`` 。
 
     输入：
-        - **logits** (Tensor) - shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。数据类型支持float16或float32。
-        - **labels** (Tensor) - shape： :math:`(N, *)` ，与 `logits` 的shape和数据类型相同。
+        - **logits** (Tensor) - 任意维度输入Tensor。数据类型支持float16、float32或float64。
+        - **labels** (Tensor) - 真实值。shape和数据类型 与 `logits` 相同。
 
     输出：
         Tensor，损失值，与 `logits` 的shape和数据类型相同。

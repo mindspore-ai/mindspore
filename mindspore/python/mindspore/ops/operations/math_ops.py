@@ -187,6 +187,14 @@ class Add(_MathBinaryOp):
 
     Refer to :func:`mindspore.ops.add` for more details.
 
+    Note:
+        - One of the two inputs must be a Tensor, when the two inputs have different shapes,
+          they must be able to broadcast to a common shape.
+        - The two inputs can not be bool type at the same time,
+          [True, Tensor(True, mindspore.bool_), Tensor(np.array([True]), mindspore.bool_)] are all considered bool type.
+        - The two inputs comply with the implicit type conversion rules to make the data types
+          consistent.
+
     Inputs:
         - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
           a bool or a tensor whose data type is
@@ -222,6 +230,32 @@ class Add(_MathBinaryOp):
         >>> # and the output is the data format of higher precision float32.
         >>> print(output.dtype)
         Float32
+        >>> # case 3: one of x and y is a bool scalar
+        >>> add = ops.Add()
+        >>> x = True
+        >>> y = Tensor(np.array([4, 5, 6]).astype(np.float32))
+        >>> output = add(x, y)
+        >>> print(output)
+        [5. 6. 7.]
+        >>> # case 4: one of x and y is a bool Tensor
+        >>> add = ops.Add()
+        >>> x = Tensor(np.array([True, False, True]), mindspore.bool_)
+        >>> y = Tensor(np.array([4, 5, 6]).astype(np.float32))
+        >>> output = add(x, y)
+        >>> print(output)
+        [5. 5. 7.]
+        >>> # case 5: x and y are both of bool type, an Exception is raised
+        >>> add = ops.Add()
+        >>> x = Tensor(np.array([True, False, True]), mindspore.bool_)
+        >>> y = Tensor(np.array([True, False, True]), mindspore.bool_)
+        >>> output = add(x, y)
+        TypeError
+        >>> # case 6: none of x and y is Tensor, an Exception is raised
+        >>> add = ops.Add()
+        >>> x = 1.0
+        >>> y = 1.0
+        >>> output = add(x, y)
+        TypeError
     """
 
     @staticmethod
@@ -627,8 +661,7 @@ class ReduceMean(_Reduce):
                           If ``False`` , don't keep these dimensions. Default: ``False`` .
 
     Inputs:
-        - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
-          :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        - **x** (Tensor[Number]) - The input tensor.
         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: ``()`` , reduce all
           dimensions. Only constant value is allowed. Must be in the range [-r, r).
 
@@ -783,8 +816,7 @@ class ReduceSum(PrimitiveWithCheck):
                           If ``False`` , do reduce. Default: ``False`` .
 
     Inputs:
-         - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
-           :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+         - **x** (Tensor[Number]) - The input tensor.
          - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: ``()`` , reduce all
            dimensions when skip_mode is ``False`` . Only constant value is allowed. Must be in the range [-rank(`x`),
            rank(`x`)).
@@ -902,7 +934,6 @@ class ReduceAll(_Reduce):
 
     Inputs:
         - **x** (Tensor[bool]) - The input tensor. The dtype of the tensor to be reduced is bool.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: ``()`` , reduce all
           dimensions. Only constant value is allowed. Must be in the range [-rank(x), rank(x)).
 
@@ -942,6 +973,12 @@ class ReduceAll(_Reduce):
         >>> print(output)
         [[False]
         [ True]]
+        >>> # case 4: input is a scalar.
+        >>> x = Tensor(True)
+        >>> op = ops.ReduceAll()
+        >>> output = op(x)
+        >>> print(output)
+        True
     """
 
 
@@ -957,7 +994,6 @@ class ReduceAny(_Reduce):
 
     Inputs:
         - **x** (Tensor[bool]) - The input tensor. The dtype of the tensor to be reduced is bool.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: ``()`` , reduce all
           dimensions. Only constant value is allowed. Must be in the range [-rank(x), rank(x)).
 
@@ -997,6 +1033,12 @@ class ReduceAny(_Reduce):
         >>> print(output)
         [[True]
         [ True]]
+        >>> # case 4: input is a scalar.
+        >>> x = Tensor(True)
+        >>> op = ops.ReduceAny()
+        >>> output = op(x)
+        >>> print(output)
+        True
     """
 
 
@@ -1011,8 +1053,7 @@ class ReduceMax(_Reduce):
                           If ``False`` , don't keep these dimensions. Default: ``False`` .
 
     Inputs:
-         - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
-           :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+         - **x** (Tensor[Number]) - The input tensor.
          - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: ``()`` , reduce all
            dimensions. Only constant value is allowed. Must be in the range [-r, r).
 
@@ -1095,8 +1136,7 @@ class ReduceMin(_Reduce):
                           If ``False`` , don't keep these dimensions. Default: ``False`` .
 
     Inputs:
-        - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
-          :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        - **x** (Tensor[Number]) - The input tensor.
         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: ``()`` , reduce all
           dimensions. Only constant value is allowed. Must be in the range [-r, r).
 
@@ -1218,8 +1258,7 @@ class ReduceProd(_Reduce):
                           If ``False`` , don't keep these dimensions. Default: ``False`` .
 
     Inputs:
-        - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
-          :math:`(N, *)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        - **x** (Tensor[Number]) - The input tensor.
         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: ``()`` , reduce all
           dimensions. Only constant value is allowed. Must be in the range [-r, r).
 
@@ -1304,7 +1343,6 @@ class CumProd(Primitive):
 
     Inputs:
         - **x** (Tensor[Number]) - The input tensor.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         - **axis** (int) - The dimensions to compute the cumulative product.
           Only constant value is allowed.
 
@@ -2143,6 +2181,14 @@ class Sub(_MathBinaryOp):
 
     Refer to :func:`mindspore.ops.sub` for more details.
 
+    Note:
+        - One of the two inputs must be a Tensor, when the two inputs have different shapes,
+          they must be able to broadcast to a common shape.
+        - The two inputs can not be bool type at the same time,
+          [True, Tensor(True, mindspore.bool_), Tensor(np.array([True]), mindspore.bool_)] are all considered bool type.
+        - The two inputs comply with the implicit type conversion rules to make the data types
+          consistent.
+
     Inputs:
         - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
           a bool or a tensor whose data type is
@@ -2183,6 +2229,14 @@ class Mul(_MathBinaryOp):
     Multiplies two tensors element-wise.
 
     Refer to :func:`mindspore.ops.mul` for more details.
+
+    Note:
+        - One of the two inputs must be a Tensor, when the two inputs have different shapes,
+          they must be able to broadcast to a common shape.
+        - The two inputs can not be bool type at the same time,
+          [True, Tensor(True, mindspore.bool_), Tensor(np.array([True]), mindspore.bool_)] are all considered bool type.
+        - The two inputs comply with the implicit type conversion rules to make the data types
+          consistent.
 
     Inputs:
         - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
@@ -2647,10 +2701,6 @@ class Einsum(Primitive):
     dimensions specified notation based on the Einstein summation convention(Einsum).
     You can use this operator to perform diagonal/reducesum/transpose/matmul/mul/inner product operations, etc.
 
-    The inputs must be a tuple of tensors.
-    When the inputs are only one tensor, you can input (tensor, )
-    dtypes of them should be float16/float32/float64.
-
     Args:
         equation (str): An attribute, represent the operation you want to do.
             the value can contain only letters([a-z][A-Z]), commas(,), ellipsis(...),
@@ -2661,7 +2711,10 @@ class Einsum(Primitive):
             and the right of it indicates the desired output dimension.
 
     Inputs:
-        - **x** (Tuple) - input tensor used for calculation. the data type of the tensor must be the same.
+        - **x** () - Input tensor used for calculation.
+          The inputs must be a tuple/list of Tensors.
+          When the inputs are only one tensor, you can input (tensor, ).
+          Dtypes of them should be float16/float32/float64 and dtype of the tensor(s) must be the same.
 
     Outputs:
         Tensor, the shape of it can be obtained from the equation,
@@ -2669,6 +2722,7 @@ class Einsum(Primitive):
 
     Raises:
         TypeError: If equation itself is invalid, or the equation does not match the input tensor.
+        TypeError: If dtype of the input Tensors are not the same or dtype is not float16, float32 or float64.
 
     Supported Platforms:
         ``GPU``
@@ -3023,6 +3077,12 @@ class Hypot(Primitive):
         >>> y = hypot_(x1, x2)
         >>> print(y)
         [ 5. 13. 25.]
+        >>> x1 = Tensor(2.1, mindspore.float32)
+        >>> x2 = Tensor(2.1, mindspore.float32)
+        >>> hypot_ = ops.Hypot()
+        >>> y = hypot_(x1, x2)
+        >>> print(y)
+        2.9698484
     """
 
     __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
@@ -3140,6 +3200,16 @@ class Minimum(_MathBinaryOp):
 
     Refer to :func:`mindspore.ops.minimum` for more details.
 
+    Inputs:
+        - **x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool.
+
+    Outputs:
+        Tensor, the shape is the same as the one after broadcasting,
+        and the data type is the one with higher precision or higher digits among the two inputs.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -3247,16 +3317,15 @@ class Div(_MathBinaryOp):
     r"""
     Computes the quotient of dividing the first input tensor by the second input tensor element-wise.
 
-    .. math::
-
-        out_{i} = \frac{x_i}{y_i}
+    Refer to :func:`mindspore.ops.div` for more details.
 
     Note:
-        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-        - The inputs must be two tensors or one tensor and one scalar.
-        - When the inputs are two tensors,
-          dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
-        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
+        - One of the two inputs must be a Tensor, when the two inputs have different shapes,
+          they must be able to broadcast to a common shape.
+        - The two inputs can not be bool type at the same time,
+          [True, Tensor(True, mindspore.bool_), Tensor(np.array([True]), mindspore.bool_)] are all considered bool type.
+        - The two inputs comply with the implicit type conversion rules to make the data types
+          consistent.
 
     Inputs:
         - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
@@ -3270,10 +3339,6 @@ class Div(_MathBinaryOp):
     Outputs:
         Tensor, the shape is the same as the one of the input `x` , `y` after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
-
-    Raises:
-        TypeError: If neither `x` nor `y` is a Tensor.
-        TypeError: If data types of `x` and `y` are both Tensor with bool\_.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3481,6 +3546,12 @@ class FloorDiv(Primitive):
         >>> output = floor_div(x, y)
         >>> print(output)
         [ 0  1 -1]
+        >>> x = Tensor(2.0, mindspore.float32)
+        >>> y = Tensor(2.0, mindspore.float32)
+        >>> floor_div = ops.FloorDiv()
+        >>> output = floor_div(x, y)
+        >>> print(output)
+        1.0
     """
     __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
 
@@ -3681,6 +3752,16 @@ class FloorMod(Primitive):
     Computes the remainder of division element-wise, and it's a flooring divide.
 
     Refer to :func:`mindspore.ops.floor_mod` for more details.
+
+    Inputs:
+        - **x** (Union[Tensor, Number, bool]) - The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **y** (Union[Tensor, Number, bool]) -  The second input is a number or
+          a bool when the first input is a tensor, or it can be a tensor whose data type is number or bool.
+
+    Outputs:
+        Tensor, the shape is the same as the one after broadcasting,
+        and the data type is the one with higher precision of the two inputs.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4413,6 +4494,15 @@ class Less(PrimitiveWithCheck):
 
     Refer to :func:`mindspore.ops.less` for more details.
 
+    Inputs:
+        - **x** (Union[Tensor, Number, bool]) -  The first input is a number or
+          a bool or a tensor whose data type is number or bool.
+        - **y** (Union[Tensor, Number, bool]) - The second input is a number or
+          a bool when the first input is a tensor, or it can be a tensor whose data type is number or bool.
+
+    Outputs:
+        Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -4538,6 +4628,21 @@ class LogicalAnd(_LogicBinaryOp):
         >>> output = logical_and(x, y)
         >>> print(output)
         [ True False False]
+        >>> x = Tensor(1, mindspore.bool_)
+        >>> y = Tensor(0, mindspore.bool_)
+        >>> output = ops.LogicalAnd()(x, y)
+        >>> print(output)
+        False
+        >>> x = True
+        >>> y = Tensor(0, mindspore.bool_)
+        >>> output = ops.LogicalAnd()(x, y)
+        >>> print(output)
+        False
+        >>> x = True
+        >>> y = Tensor(np.array([True, False]), mindspore.bool_)
+        >>> output = ops.LogicalAnd()(x, y)
+        >>> print(output)
+        [True, False]
     """
 
 
@@ -4566,6 +4671,21 @@ class LogicalOr(_LogicBinaryOp):
         >>> output = logical_or(x, y)
         >>> print(output)
         [ True  True  True]
+        >>> x = Tensor(1, mindspore.bool_)
+        >>> y = Tensor(0, mindspore.bool_)
+        >>> output = ops.LogicalOr()(x, y)
+        >>> print(output)
+        True
+        >>> x = True
+        >>> y = Tensor(0, mindspore.bool_)
+        >>> output = ops.LogicalOr()(x, y)
+        >>> print(output)
+        True
+        >>> x = True
+        >>> y = Tensor(np.array([True, False]), mindspore.bool_)
+        >>> output = ops.LogicalOr()(x, y)
+        >>> print(output)
+        [True, True]
     """
 
 
@@ -4597,6 +4717,21 @@ class LogicalXor(Primitive):
         >>> output = logical_xor(x, y)
         >>> print(output)
         [ False True True]
+        >>> x = Tensor(1, mindspore.bool_)
+        >>> y = Tensor(0, mindspore.bool_)
+        >>> output = ops.LogicalXor()(x, y)
+        >>> print(output)
+        True
+        >>> x = True
+        >>> y = Tensor(0, mindspore.bool_)
+        >>> output = ops.LogicalXor()(x, y)
+        >>> print(output)
+        True
+        >>> x = True
+        >>> y = Tensor(np.array([True, False]), mindspore.bool_)
+        >>> output = ops.LogicalXor()(x, y)
+        >>> print(output)
+        [False, True]
     """
 
     @prim_attr_register
@@ -5441,12 +5576,12 @@ class Atan2(_MathBinaryOp):
     Refer to :func:`mindspore.ops.atan2` for more details.
 
     Inputs:
-        - **x** (Tensor) - The input tensor.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-        - **y** (Tensor) - The input tensor. It has the same shape with `x`.
+        - **x** (Tensor, Number.number) - The input tensor or scalar.
+        - **y** (Tensor, Number.number) - The input tensor or scalar. It has the same shape with `x` or
+          its shape is able to broadcast with `x`.
 
     Outputs:
-        Tensor, the shape is the same as the one after broadcasting,and the data type is same as `x`.
+        Tensor, the shape is the same as the one after broadcasting, and the data type is same as `x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6779,6 +6914,12 @@ class Igamma(Primitive):
         >>> output = igamma(a, x)
         >>> print (output)
         [0.593994  0.35276785  0.21486944  0.13337152]
+        >>> a = Tensor(2.1, mindspore.float32)
+        >>> x = Tensor(2.1, mindspore.float32)
+        >>> igamma = ops.Igamma()
+        >>> output = igamma(a, x)
+        >>> print (output)
+        0.5917439
     """
 
     @prim_attr_register
@@ -6810,6 +6951,12 @@ class Igammac(Primitive):
         >>> output = igammac(a, x)
         >>> print (output)
         [0.40600586 0.6472318  0.7851304  0.8666283 ]
+        >>> a = Tensor(2.1, mindspore.float32)
+        >>> x = Tensor(2.1, mindspore.float32)
+        >>> igammac = ops.Igammac()
+        >>> output = igammac(a, x)
+        >>> print (output)
+        0.40825662
     """
 
     @prim_attr_register
@@ -7592,9 +7739,6 @@ class Zeta(Primitive):
     .. math::
         \zeta \left ( x,q \right )=  \textstyle \sum_{n=0} ^ {\infty} \left ( q+n\right )^{-x}
 
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
     Inputs:
         - **x** (Tensor) - A Tensor, types: float32, float64.
         - **q** (Tensor) - A Tensor, must have the same shape and type as `x`.
@@ -7642,7 +7786,6 @@ class Bernoulli(Primitive):
 
     Inputs:
         - **x** (Tensor) - Input Tensor.
-          Data type must be int8, uint8, int16, int32, int64, bool, float32 or float64.
         - **p** (Union[Tensor, float], optional) - Success probability, representing the probability of
           setting 1 for the corresponding position of the current Tensor. It has the same shape as `x`,
           the value of `p` must be in the range `[0, 1]`. Default: ``0.5`` .
@@ -8057,10 +8200,8 @@ class Polar(Primitive):
     Refer to :func:`mindspore.ops.polar` for more details.
 
     Inputs:
-        - **abs** (Tensor) - Radial distance. The shape of tensor is
-          :math:`(N,*)` where :math:`N` means the batchsize of the input tensor,
-          :math:`*` means, any number of additional dimensions.
-          Must be one of the following types: float32, float64.
+        - **abs** (Tensor) - Radial distance. Tensor of any dimension,
+          must be one of the following types: float32, float64.
 
         - **angle** (Tensor) - Polar angle. It has the same shape and dtype as `abs`.
 
@@ -8077,6 +8218,11 @@ class Polar(Primitive):
         >>> output = polar(x1, x2)
         >>> print(output)
         [-0.9899925 +0.14112001j -1.30728724-1.51360499j]
+        >>> x1 = Tensor(2.1, mindspore.float32)
+        >>> x1 = Tensor(2.1, mindspore.float32)
+        >>> output = polar(x1, x2)
+        >>> print(output)
+        (-1.0601766+1.8127397j)
     """
 
     @prim_attr_register
@@ -8090,7 +8236,8 @@ class NextAfter(Primitive):
     Returns the next representable floating-point value after `x1` towards `x2` element-wise.
 
     Say there are two float32 numbers :math:`a, b`, and let the
-    representable delta of float32 datatype is :math:`eps`. If :math:`a < b`,
+    representable delta of float32 data type is :math:`eps`.
+    If :math:`a < b`,
     then the next representable of :math:`a` towards :math:`b` is :math:`a+eps`,
     If :math:`a > b`,
     the next representable of :math:`a` towards :math:`b` is :math:`a-eps`.
@@ -8103,12 +8250,10 @@ class NextAfter(Primitive):
         This is an experimental API that is subject to change or deletion.
 
     Inputs:
-        - **x1** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **x1** (Tensor) - The input Tensor of any dimension.
           Must be one of the following types: float32, float64.
 
-        - **x2** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **x2** (Tensor) - The input Tensor of any dimension.
           Must be one of the following types: float32, float64.
 
     Outputs:

@@ -9,7 +9,7 @@ mindspore.ops.expand
         将 `-1` 作为维度的 `size` 意味着不更改该维度的大小。张量也可以扩展到更大的维度，新的维度会附加在前面。对于新的维度，`size` 不能设置为-1。
 
     参数：
-        - **input_x** (Tensor) - 输入Tensor，shape为 :math:`(x_1, x_2, ..., x_R)` 。
+        - **input_x** (Tensor) - 输入待扩展Tensor。
         - **size** (Tensor) - `input_x` 扩展后的shape。
 
     返回：

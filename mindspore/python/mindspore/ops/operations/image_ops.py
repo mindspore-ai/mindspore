@@ -670,7 +670,7 @@ class ResizeLinear1D(Primitive):
 
     Inputs:
         - **x** (Tensor) - A 3-D tensor which to resize, with shape [batch, channel, width]. Must be one of the
-          following types: uint8, int8, int16, int32, int64, float16, float32, double.
+          following types: float16, float32, float64.
         - **size** (Union[Tuple[int], List[int], Tensor[int]]): describes the new width of `x` .
           A tuple or list or 1-D tensor with only one int element :math:`(new\_width)`.
 
@@ -890,7 +890,6 @@ class ResizeArea(Primitive):
     Inputs:
         - **images** (Tensor) -  Input images must be a 4-D tensor with shape
           which is :math:`(batch, channels, height, width)`. The format must be "NHWC".
-          Types allowed: int8, int16, int32, int64, float16, float32, float64, uint8, uint16.
         - **size** (Tensor) - Input size must be a 1-D tensor of 2 elements: new_height, new_width.
           The new size of output image.
           Types allowed: int32.

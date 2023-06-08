@@ -10,8 +10,7 @@
 
     输入：
         - **x** (Tensor[bool]) - bool类型的输入Tensor。
-          shape: :math:`(N,*)` ，其中 :math:`*` 表示任意数量的附加维度，其秩应小于8。
-        - **axis** (Union[int, tuple(int), list(int)]) - 要减少的维度。默认值:  ``()`` ，缩小所有维度。只允许常量值。取值必须在[-rank(`x`), rank(`x`))范围内。
+        - **axis** (Union[int, tuple(int), list(int)]) - 要规约计算的维度。默认值:  ``()`` ，在所有维度上规约。只允许常量值。取值必须在[-rank(`x`), rank(`x`))范围内。
 
     输出：
         bool类型的Tensor。

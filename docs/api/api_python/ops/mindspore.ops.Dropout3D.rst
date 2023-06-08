@@ -14,7 +14,7 @@
         - **keep_prob** (float) - 输入通道保留率，数值范围在0到1之间，例如 `keep_prob` = 0.8，意味着过滤20%的通道。默认值： ``0.5`` 。
 
     输入：
-        - **x** (Tensor) - shape为 :math:`(N, C, D, H, W)` 的五维Tensor。N代表批次大小，C代表管道，D代表特征深度，H代表特征高度，W代表特征宽度。数据类型为int8、int16、int32、int64、float16或float32。
+        - **x** (Tensor) - shape为 :math:`(N, C, D, H, W)` 的五维Tensor。N代表批次大小，C代表管道，D代表特征深度，H代表特征高度，W代表特征宽度。
 
     输出：
         - **output** (Tensor) - shape和数据类型与 `x` 相同。

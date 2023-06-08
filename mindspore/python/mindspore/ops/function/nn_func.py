@@ -4375,7 +4375,7 @@ def grid_sample(input, grid, mode='bilinear', padding_mode='zeros', align_corner
 
     Args:
         input (Tensor): input with shape of :math:`(N, C, H_{in}, W_{in})` (4-D case) or :math:`(N, C, D_{in},
-            H_{in}, W_{in})` (5-D case) and dtype of float32 or float64.
+            H_{in}, W_{in})` (5-D case) and dtype of float16, float32 or float64.
         grid (Tensor): flow-field with shape of :math:`(N, H_{out}, W_{out}, 2)` (4-D case) or :math:`(N, D_{out},
             H_{out}, W_{out}, 3)` (5-D case) and same dtype as `input`.
         mode (str): An optional string specifying the interpolation method. The optional values are
