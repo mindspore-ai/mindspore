@@ -78,7 +78,7 @@ FuncGraphPtr ListInsert::GenerateFuncGraph(const abstract::AbstractBasePtrList &
     MS_LOG(DEBUG) << "Enable inplace operation, convert list insert to InplaceListInsert ops.";
     AnfNodePtrList list_inplace_inputs = {NewValueNode(prim::kPrimListInplaceInsert), arg0_node, insert_index_node,
                                           insert_obj_node};
-    auto list_inplace_node = ret->NewCNode(list_inplace_inputs);
+    auto list_inplace_node = ret->NewCNodeInOrder(list_inplace_inputs);
     list_inplace_node->set_has_side_effect_node(true);
     ret->set_output(list_inplace_node);
     ret->set_has_side_effect_node(true);
@@ -150,7 +150,7 @@ FuncGraphPtr ListPop::GenerateFuncGraph(const abstract::AbstractBasePtrList &arg
       scope_name().find("VmapRule") == std::string::npos) {
     MS_LOG(DEBUG) << "Enable inplace operation, convert list pop to InplaceListPop ops.";
     AnfNodePtrList list_inplace_inputs = {NewValueNode(prim::kPrimListInplacePop), arg0_node, pop_index_node};
-    auto list_inplace_node = ret->NewCNode(list_inplace_inputs);
+    auto list_inplace_node = ret->NewCNodeInOrder(list_inplace_inputs);
     list_inplace_node->set_has_side_effect_node(true);
     auto pop_node = ret->NewCNode({NewValueNode(prim::kPrimListGetItem), arg0_node, NewValueNode(pop_position)});
     auto out_node = ret->NewCNode({NewValueNode(prim::kPrimMakeTuple), list_inplace_node, pop_node});
@@ -215,7 +215,7 @@ FuncGraphPtr ListExtend::GenerateFuncGraph(const abstract::AbstractBasePtrList &
     AnfNodePtr arg0_node = ret->add_parameter();
     AnfNodePtr arg1_node = ret->add_parameter();
     AnfNodePtrList list_inplace_inputs = {NewValueNode(prim::kPrimListInplaceExtend), arg0_node, arg1_node};
-    auto list_inplace_node = ret->NewCNode(list_inplace_inputs);
+    auto list_inplace_node = ret->NewCNodeInOrder(list_inplace_inputs);
     list_inplace_node->set_has_side_effect_node(true);
     ret->set_output(list_inplace_node);
     ret->set_has_side_effect_node(true);
@@ -299,7 +299,7 @@ FuncGraphPtr ListReverse::GenerateFuncGraph(const abstract::AbstractBasePtrList 
       scope_name().find("VmapRule") == std::string::npos) {
     MS_LOG(DEBUG) << "Enable inplace operation, convert list reverse to InplaceListReverse ops.";
     AnfNodePtrList list_inplace_inputs = {NewValueNode(prim::kPrimListInplaceReverse), arg_node};
-    auto list_inplace_node = ret->NewCNode(list_inplace_inputs);
+    auto list_inplace_node = ret->NewCNodeInOrder(list_inplace_inputs);
     list_inplace_node->set_has_side_effect_node(true);
     ret->set_output(list_inplace_node);
     ret->set_has_side_effect_node(true);

@@ -1086,10 +1086,12 @@ class AfterOptARewriter : public BaseRewriter {
     const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
 
     const auto &node_inputs = node->inputs();
-    constexpr size_t node_inputs_size = 3;
-    if (node_inputs.size() != node_inputs_size) {
-      MS_LOG(EXCEPTION) << "The size of input to ListInplaceExtend should be " << node_inputs_size << " but got "
-                        << node_inputs.size();
+    constexpr size_t min_node_inputs_size = 3;
+    constexpr size_t max_node_inputs_size = 4;
+    size_t inputs_size = node_inputs.size();
+    if (inputs_size != min_node_inputs_size && inputs_size != max_node_inputs_size) {
+      MS_LOG(EXCEPTION) << "The size of input to ListInplaceExtend should be " << min_node_inputs_size << " or "
+                        << max_node_inputs_size << " but got " << inputs_size;
     }
     constexpr size_t node_list_index = 1;
     constexpr size_t node_target_index = 2;
@@ -1099,6 +1101,10 @@ class AfterOptARewriter : public BaseRewriter {
     const auto key_value_tuple = fg->NewCNode(key_value_list);
 
     auto res = fallback::CreatePyExecuteCNode(node, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
+
+    if (inputs_size == max_node_inputs_size) {
+      res->add_input(node_inputs[max_node_inputs_size - 1]);
+    }
 
     res->set_debug_info(node->debug_info());
     auto abs = node->abstract();
@@ -1144,10 +1150,12 @@ class AfterOptARewriter : public BaseRewriter {
     const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
 
     const auto &node_inputs = node->inputs();
-    constexpr size_t node_inputs_size = 4;
-    if (node_inputs.size() != node_inputs_size) {
-      MS_LOG(EXCEPTION) << "The size of input to ListInplaceInsert should be " << node_inputs_size << " but got "
-                        << node_inputs.size();
+    constexpr size_t min_node_inputs_size = 4;
+    constexpr size_t max_node_inputs_size = 5;
+    size_t inputs_size = node_inputs.size();
+    if (inputs_size != min_node_inputs_size && inputs_size != max_node_inputs_size) {
+      MS_LOG(EXCEPTION) << "The size of input to ListInplaceInsert should be " << min_node_inputs_size << " or "
+                        << max_node_inputs_size << " but got " << inputs_size;
     }
     constexpr size_t node_list_index = 1;
     constexpr size_t node_index_index = 2;
@@ -1159,6 +1167,10 @@ class AfterOptARewriter : public BaseRewriter {
     const auto key_value_tuple = fg->NewCNode(key_value_list);
 
     auto res = fallback::CreatePyExecuteCNode(node, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
+
+    if (inputs_size == max_node_inputs_size) {
+      res->add_input(node_inputs[max_node_inputs_size - 1]);
+    }
 
     res->set_debug_info(node->debug_info());
     auto abs = node->abstract();
@@ -1202,10 +1214,12 @@ class AfterOptARewriter : public BaseRewriter {
     const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
 
     const auto &node_inputs = node->inputs();
-    constexpr size_t node_inputs_size = 3;
-    if (node_inputs.size() != node_inputs_size) {
-      MS_LOG(EXCEPTION) << "The size of input to ListInplacePop should be " << node_inputs_size << " but got "
-                        << node_inputs.size();
+    constexpr size_t min_node_inputs_size = 3;
+    constexpr size_t max_node_inputs_size = 4;
+    size_t inputs_size = node_inputs.size();
+    if (inputs_size != min_node_inputs_size && inputs_size != max_node_inputs_size) {
+      MS_LOG(EXCEPTION) << "The size of input to ListInplacePop should be " << min_node_inputs_size << " or "
+                        << max_node_inputs_size << " but got " << inputs_size;
     }
     constexpr size_t node_list_index = 1;
     constexpr size_t node_index_index = 2;
@@ -1215,6 +1229,10 @@ class AfterOptARewriter : public BaseRewriter {
     const auto key_value_tuple = fg->NewCNode(key_value_list);
 
     auto res = fallback::CreatePyExecuteCNode(node, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
+
+    if (inputs_size == max_node_inputs_size) {
+      res->add_input(node_inputs[max_node_inputs_size - 1]);
+    }
 
     res->set_debug_info(node->debug_info());
     auto abs = node->abstract();
@@ -1256,17 +1274,22 @@ class AfterOptARewriter : public BaseRewriter {
     const auto key_value_name_tuple = fg->NewCNode(key_value_names_list);
 
     const auto &node_inputs = node->inputs();
-    constexpr size_t node_inputs_size = 2;
-    if (node_inputs.size() != node_inputs_size) {
-      MS_LOG(EXCEPTION) << "The size of input to ListInplaceAppend should be " << node_inputs_size << " but got "
-                        << node_inputs.size();
+    constexpr size_t min_node_inputs_size = 2;
+    constexpr size_t max_node_inputs_size = 3;
+    size_t inputs_size = node_inputs.size();
+    if (inputs_size != min_node_inputs_size && inputs_size != max_node_inputs_size) {
+      MS_LOG(EXCEPTION) << "The size of input to ListInplaceAppend should be " << min_node_inputs_size << " or "
+                        << max_node_inputs_size << " but got " << inputs_size;
     }
     constexpr size_t node_list_index = 1;
     std::vector<AnfNodePtr> key_value_list{NewValueNode(prim::kPrimMakeTuple)};
     (void)key_value_list.emplace_back(node_inputs[node_list_index]);
     const auto key_value_tuple = fg->NewCNode(key_value_list);
-
     auto res = fallback::CreatePyExecuteCNode(node, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
+
+    if (inputs_size == max_node_inputs_size) {
+      res->add_input(node_inputs[max_node_inputs_size - 1]);
+    }
 
     res->set_debug_info(node->debug_info());
     auto abs = node->abstract();

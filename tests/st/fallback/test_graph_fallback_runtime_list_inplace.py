@@ -194,7 +194,6 @@ def test_return_local_list():
     assert ret == [1, 2, 3, Tensor([1]), 2]
 
 
-@pytest.mark.skip(reason="Can not handle value list in make list scene.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -221,7 +220,6 @@ def test_return_local_list_2():
 global_list_4 = [1, 2]
 
 
-@pytest.mark.skip(reason="Can not handle value list in make list scene.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -267,54 +265,6 @@ def test_local_sequence_used_in_graph_with_operator():
     res = foo(Tensor([1]), Tensor([2]))
     assert isinstance(res, list)
     assert res == [Tensor([1]), Tensor([2]), Tensor([1]), Tensor([2])]
-
-
-@pytest.mark.skip(reason="Operator do not support nested sequence")
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_local_sequence_used_in_graph_with_operator_2():
-    """
-    Feature: Enable list inplace operation
-    Description: List create inside graph should be converted to PyExecute, should be used as input to ops correctly.
-    Expectation: No exception.
-    """
-    seq_func = seq.SequenceMul()
-
-    @jit
-    def foo(x, y, z):
-        list_input = [x, (y, z)]
-        return seq_func(list_input, 2)
-
-    res = foo(Tensor([1]), Tensor([2]), Tensor([3]))
-    assert isinstance(res, list)
-    assert res == [Tensor([1]), (Tensor([2]), Tensor([3])), Tensor([1]), (Tensor([2]), Tensor([3]))]
-
-
-@pytest.mark.skip(reason="SequenceCount operator can not handle sequence input with different elements")
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_list_count():
-    """
-    Feature: list count.
-    Description: support list count.
-    Expectation: No exception.
-    """
-    @jit
-    def list_net_10(aa, bb):
-        x = ['a', {'Michael': 1, 'Bob': 'bb', '2': [1, '2']}, aa, bb]
-        res = x.count(aa)
-        return Tensor(res)
-
-    aa = Tensor(20)
-    bb = Tensor(10)
-    out = list_net_10(aa, bb)
-    assert out == 1
 
 
 global_list_for_reverse = [1, 2, 3, 4]
@@ -443,7 +393,6 @@ def test_list_inplace_reverse_local_list():
     assert out[1] == [3, 2, 1]
 
 
-@pytest.mark.skip(reason="reverse output is not used and is eliminated before JIT Fallback rewriter")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
@@ -567,7 +516,6 @@ def test_list_inplace_pop_local_2():
     assert out[2] == 3
 
 
-@pytest.mark.skip(reason="reverse output is not used and is eliminated before JIT Fallback rewriter")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
@@ -615,7 +563,6 @@ def test_list_inplace_extend():
 global_list_for_pop_extend_2 = [1, 2, 3, 4]
 
 
-@pytest.mark.skip(reason="extend result is not used, the output is eliminated before fallback rewriter")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
@@ -630,9 +577,8 @@ def test_list_inplace_extend_no_return():
     def foo():
         global_list_for_pop_extend_2.extend([1, 2, 3])
 
-    out = foo()
-    assert out == [1, 2, 3, 4, 1, 2, 3]
-    assert id(out) == id(global_list_for_pop_extend_2)
+    foo()
+    assert global_list_for_pop_extend_2 == [1, 2, 3, 4, 1, 2, 3]
 
 
 @pytest.mark.level0

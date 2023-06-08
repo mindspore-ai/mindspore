@@ -41,7 +41,8 @@ AbstractBasePtr ListInplaceReverseInfer(const abstract::AnalysisEnginePtr &, con
   const auto &prim_name = primitive->name();
   constexpr size_t input_len = 1;
   constexpr size_t data_index = 0;
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_len, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, input_len,
+                                           prim_name);
   auto data_abs = dyn_cast<abstract::AbstractList>(input_args[data_index]);
   MS_EXCEPTION_IF_NULL(data_abs);
 

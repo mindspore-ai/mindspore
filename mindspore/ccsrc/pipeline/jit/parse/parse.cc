@@ -854,6 +854,7 @@ FunctionBlockPtr Parser::ParseExpr(const FunctionBlockPtr &block, const py::obje
           auto new_list = func_graph->NewCNodeInOrder(
             {NewValueNode(prim::kPrimTupleGetItem), call_node, NewValueNode(SizeToLong(0))});
           WriteAssignVars(block, list_pop_target_obj_, new_list);
+          block->AddIsolatedNode(call_node);
           return block;
         }
       }
