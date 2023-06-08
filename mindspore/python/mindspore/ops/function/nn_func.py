@@ -3128,7 +3128,7 @@ def pad(input_x, padding, mode='constant', value=None):
             :math:`\text{padding_top}, \text{padding_bottom}`,
             :math:`\text{padding_front}, \text{padding_back})` and so on.
 
-        mode (str, optional): Pad filling mode, ``"constant"`` , ``"reflect"`` or ``"replicate"`` .
+        mode (str, optional): Pad filling mode, ``"constant"`` , ``"reflect"`` , ``"replicate"``  or ``"circular"`` .
             Default: ``'constant'`` .
 
             For "constant" mode, please refer to :class:`mindspore.nn.ConstantPad1d` as an example to understand
@@ -3142,6 +3142,12 @@ def pad(input_x, padding, mode='constant', value=None):
             For "replicate" mode, please refer to :class:`mindspore.nn.ReplicationPad1d` as an example to understand
             this filling pattern.
             The replicate mode is used to pad the last three dimensions of 4D or 5D input, the last two dimensions of 3D
+            or 4D input, or the last dimension of 2D or 3D input.
+
+            For "circular" mode, the pixels from one edge of the image are wrapped around to the opposite edge,
+            such that the pixel on the right edge of the image is replaced with the pixel on the left edge,
+            and the pixel on the bottom edge is replaced with the pixel on the top edge.
+            The circular mode is used to pad the last three dimensions of 4D or 5D input, the last two dimensions of 3D
             or 4D input, or the last dimension of 2D or 3D input.
 
         value (Union[int, float, None], optional): Valid only in "constant" mode.
@@ -3159,7 +3165,7 @@ def pad(input_x, padding, mode='constant', value=None):
         ValueError: If mode is not "constant" and value not None.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore as ms
@@ -3194,6 +3200,19 @@ def pad(input_x, padding, mode='constant', value=None):
            [4. 4. 5. 5.]
            [6. 6. 7. 7.]
            [6. 6. 7. 7.]]]]
+        >>> output3 = ops.pad(x, (1, 1, 2, 1), mode='circular')
+        >>> print(output3)
+        [[[[1. 0. 1. 0.]
+           [3. 2. 3. 2.]
+           [1. 0. 1. 0.]
+           [3. 2. 3. 2.]
+           [1. 0. 1. 0.]]
+
+          [[5. 4. 5. 4.]
+           [7. 6. 7. 6.]
+           [5. 4. 5. 4.]
+           [7. 6. 7. 6.]
+           [5. 4. 5. 4.]]]]
     """
     if not isinstance(input_x, Tensor):
         raise TypeError(f"For 'pad', the type of 'input_x' must be Tensor, but got {type(input_x)}.")
