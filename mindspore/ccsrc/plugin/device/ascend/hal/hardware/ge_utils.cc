@@ -74,7 +74,7 @@ std::string GetGraphName(const FuncGraphPtr &graph) {
 
 OptionMap GetComputeGraphOptions(const ShapeArray &input_shapes, bool is_dynamic_shape) {
   OptionMap options{};
-  if (IsGeTrain() && GetPhasePrefix() != "eval") {
+  if (IsGeTrain() && GetPhasePrefix() == "train") {
     (void)options.emplace("ge.exec.variable_acc", "1");
   }
   if (!is_dynamic_shape) {

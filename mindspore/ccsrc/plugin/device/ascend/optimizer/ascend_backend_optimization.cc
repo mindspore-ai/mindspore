@@ -801,7 +801,7 @@ PassManagerPtr GetAscendUnifyMindIRPassManager() {
 
   if (env_ge == "1") {
     auto env_train = common::GetEnv("MS_GE_TRAIN");
-    if (env_train == "1" && device::ascend::GetPhasePrefix() != "eval") {
+    if (env_train == "1" && device::ascend::GetPhasePrefix() == "train") {
       unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsSplitCond1>());
       unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsSplitCond2>());
     } else {
