@@ -209,6 +209,8 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
                 validator.check_type_name('dtype', dtype, mstype.number_type +
                                           (mstype.bool_, mstype.string), "Tensor")
                 Tensor_.__init__(self, dtype, [-2])
+                logger.warning(f"For 'Tensor', if 'dtype' is not None, 'input_data', 'shape' "
+                               f"or 'init' must not be None.")
             else:
                 # If input data is numpy number, convert it to np array
                 if isinstance(input_data, np_types):
