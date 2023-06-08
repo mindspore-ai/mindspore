@@ -29,17 +29,17 @@ namespace mindspore::lite::micro::nnacl {
 int PoolingFP32Coder::DoCode(CoderContext *const context) {
   // attribute
   auto pooling_parameter = reinterpret_cast<PoolingParameter *>(parameter_);
-  // init struct PoolingParameters
-  pooling_parameter->input_batch_ = input_tensor_->Batch();
-  pooling_parameter->input_channel_ = input_tensor_->Channel();
-  pooling_parameter->input_h_ = input_tensor_->Height();
-  pooling_parameter->input_w_ = input_tensor_->Width();
-  pooling_parameter->output_batch_ = output_tensor_->Batch();
-  pooling_parameter->output_channel_ = output_tensor_->Channel();
-  pooling_parameter->output_h_ = output_tensor_->Height();
-  pooling_parameter->output_w_ = output_tensor_->Width();
+  int thread_num = pooling_parameter->op_parameter_.thread_num_;
 
-  pooling_parameter->thread_num_ = pooling_parameter->op_parameter_.thread_num_;
+  // init struct PoolingComputeParam
+  compute_param_.input_batch_ = input_tensor_->Batch();
+  compute_param_.input_channel_ = input_tensor_->Channel();
+  compute_param_.input_h_ = input_tensor_->Height();
+  compute_param_.input_w_ = input_tensor_->Width();
+  compute_param_.output_batch_ = output_tensor_->Batch();
+  compute_param_.output_channel_ = output_tensor_->Channel();
+  compute_param_.output_h_ = output_tensor_->Height();
+  compute_param_.output_w_ = output_tensor_->Width();
 
   NNaclFp32Serializer code;
   std::string param_name = "pooling_parameter";
@@ -49,6 +49,7 @@ int PoolingFP32Coder::DoCode(CoderContext *const context) {
   Collect(context,
           {
             "wrapper/fp32/pooling_fp32_wrapper.h",
+            "nnacl/kernel/pooling.h",
             "nnacl/fp32/pooling_fp32.h",
           },
           {
@@ -70,21 +71,24 @@ int PoolingFP32Coder::DoCode(CoderContext *const context) {
       break;
     }
   }
+  compute_param_.window_w_ = pooling_parameter->window_w_;
+  compute_param_.window_h_ = pooling_parameter->window_h_;
+  compute_param_.minf = minf;
+  compute_param_.maxf = maxf;
+  code.CodeStruct("pooling_args", compute_param_);
+
   if (pooling_parameter->pool_mode_ == PoolMode_MaxPool) {
     if (!support_parallel_) {
-      code << "    " << param_name << ".op_parameter_.thread_num_ = 1;\n";
-      code << "    " << param_name << ".thread_num_ = 1;\n";
-      code.CodeFunction("MaxPooling", input_tensor_, output_tensor_, "&pooling_parameter", kDefaultTaskId, minf, maxf);
+      code.CodeFunction("MaxPooling", input_tensor_, output_tensor_, "&pooling_parameter", "&pooling_args",
+                        kDefaultTaskId, kDefaultThreadNum);
     } else {
-      code.CodeBaseStruct("PoolingFp32Args", kRunArgs, input_tensor_, output_tensor_, minf, maxf, "&pooling_parameter");
-      code.CodeFunction(kParallelLaunch, "DoMaxPooling", kRunArgsAddr, "pooling_parameter.op_parameter_.thread_num_");
+      code.CodeBaseStruct("PoolingFp32Args", kRunArgs, input_tensor_, output_tensor_, "&pooling_parameter",
+                          "&pooling_args");
+      code.CodeFunction(kParallelLaunch, "DoMaxPooling", kRunArgsAddr, thread_num);
     }
   } else {
-    if (support_parallel_) {
-      code << "    " << param_name << ".op_parameter_.thread_num_ = 1;\n";
-      code << "    " << param_name << ".thread_num_ = 1;\n";
-    }
-    code.CodeFunction("AvgPooling", input_tensor_, output_tensor_, "&pooling_parameter", kDefaultTaskId, minf, maxf);
+    code.CodeFunction("AvgPooling", input_tensor_, output_tensor_, "&pooling_parameter", "&pooling_args",
+                      kDefaultTaskId, kDefaultThreadNum);
   }
 
   MS_LOG(INFO) << "PoolingFp32Code has been called";

@@ -21,6 +21,7 @@
 #include <memory>
 #include <vector>
 #include "coder/opcoders/op_coder.h"
+#include "nnacl/kernel/pooling.h"
 
 namespace mindspore::lite::micro::nnacl {
 class PoolingInt8Coder final : public OperatorCoder {
@@ -34,6 +35,9 @@ class PoolingInt8Coder final : public OperatorCoder {
   int Prepare(CoderContext *const context) override { return RET_OK; }
 
   int DoCode(CoderContext *const context) override;
+
+ private:
+  PoolingComputeParam compute_param_;
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_INT8_POOLING_INT8_CODER_H_

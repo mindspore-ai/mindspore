@@ -19,6 +19,7 @@
 
 #include <vector>
 #include "src/litert/lite_kernel.h"
+#include "nnacl/kernel/pooling.h"
 
 namespace mindspore::kernel {
 using mindspore::schema::PadMode;
@@ -40,6 +41,7 @@ class PoolingGradCPUKernel : public LiteKernel {
 
  private:
   int thread_num_ = 1;
+  PoolingComputeParam compute_;
 };
 
 }  // namespace mindspore::kernel

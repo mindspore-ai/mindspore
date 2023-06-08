@@ -99,36 +99,31 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const ArithmeticPa
 }
 
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const PoolingParameter &pooling_parameter) {
-  std::string quant_name = name + "_quant";
-  std::string in_quant_name = quant_name + "_in";
-  std::string out_quant_name = quant_name + "_out";
+  CodeBaseStruct("PoolingParameter", name, pooling_parameter.op_parameter_, pooling_parameter.pool_mode_,
+                 pooling_parameter.round_mode_, pooling_parameter.pad_mode_, pooling_parameter.act_type_,
+                 pooling_parameter.avg_mode_, pooling_parameter.global_, pooling_parameter.window_w_,
+                 pooling_parameter.window_h_, pooling_parameter.stride_w_, pooling_parameter.stride_h_,
+                 pooling_parameter.pad_u_, pooling_parameter.pad_d_, pooling_parameter.pad_l_,
+                 pooling_parameter.pad_r_);
+}
 
-  MS_CHECK_PTR_IF_NULL(pooling_parameter.quant_args_);
-  ::QuantArg *in_quant_args = pooling_parameter.quant_args_[0];
-  ::QuantArg *out_quant_args = pooling_parameter.quant_args_[1];
-  MS_CHECK_PTR_IF_NULL(in_quant_args);
-  MS_CHECK_PTR_IF_NULL(out_quant_args);
+void NNaclInt8Serializer::CodeStruct(const std::string &name, const PoolingComputeParam &pooling_args) {
+  CodeBaseStruct<false>("PoolingComputeParam", name, pooling_args.input_w_, pooling_args.input_h_,
+                        pooling_args.input_batch_, pooling_args.input_channel_, pooling_args.output_w_,
+                        pooling_args.output_h_, pooling_args.output_batch_, pooling_args.output_channel_,
+                        pooling_args.window_w_, pooling_args.window_h_, pooling_args.minf, pooling_args.maxf);
+}
 
-  code << "    static QuantArg " << in_quant_name << " = " << *in_quant_args << ";\n";
-  code << "    static QuantArg " << out_quant_name << " = " << *out_quant_args << ";\n";
+void NNaclInt8Serializer::CodeStruct(const std::string &name, const QuantArg &in_quant, const QuantArg &out_quant) {
+  std::string in_quant_name = name + "_in";
+  std::string out_quant_name = name + "_out";
 
-  code << "    static QuantArg *" << quant_name << "[2] = {"
+  code << "    static QuantArg " << in_quant_name << " = " << in_quant << ";\n";
+  code << "    static QuantArg " << out_quant_name << " = " << out_quant << ";\n";
+
+  code << "    static QuantArg *" << name << "[2] = {"
        << " &" << in_quant_name << ", "
        << " &" << out_quant_name << "};\n";
-
-  CodeBaseStruct("PoolingParameter", name,
-                 // Primitive parameter
-                 pooling_parameter.op_parameter_, pooling_parameter.pool_mode_, pooling_parameter.round_mode_,
-                 pooling_parameter.pad_mode_, pooling_parameter.act_type_, pooling_parameter.avg_mode_,
-                 pooling_parameter.global_, pooling_parameter.window_w_, pooling_parameter.window_h_,
-                 pooling_parameter.stride_w_, pooling_parameter.stride_h_,
-                 // shape correlative
-                 pooling_parameter.input_w_, pooling_parameter.input_h_, pooling_parameter.input_batch_,
-                 pooling_parameter.input_channel_, pooling_parameter.output_w_, pooling_parameter.output_h_,
-                 pooling_parameter.output_batch_, pooling_parameter.output_channel_, pooling_parameter.pad_u_,
-                 pooling_parameter.pad_d_, pooling_parameter.pad_l_, pooling_parameter.pad_r_,
-                 // other parameter
-                 pooling_parameter.thread_num_, quant_name, pooling_parameter.quantize_);
 }
 
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const SoftmaxParameter &softmax_parameter) {

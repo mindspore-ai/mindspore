@@ -19,22 +19,34 @@
 
 #include <vector>
 #include "src/litert/lite_kernel.h"
-#include "src/litert/kernel/cpu/base/pooling_base.h"
+#include "nnacl/int8/pooling_int8.h"
 
 using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
-class PoolingInt8CPUKernel : public PoolingBaseCPUKernel {
+class PoolingInt8CPUKernel : public LiteKernel {
  public:
   PoolingInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                        const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : PoolingBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {
+    pooling_param_ = reinterpret_cast<PoolingParameter *>(op_parameter_);
+  }
   ~PoolingInt8CPUKernel() { FreeQuantParam(); }
 
   int Prepare() override;
   int ReSize() override;
   int Run() override;
   int RunImpl(int task_id);
+
+ private:
+  int SetQuantParam();
+  void FreeQuantParam();
+
+ private:
+  bool quantize_;
+  PoolingComputeParam compute_;
+  PoolingParameter *pooling_param_ = nullptr;
+  QuantArg **pooling_quant_arg_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

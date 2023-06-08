@@ -35,14 +35,17 @@ int PoolingInt8Coder::DoCode(CoderContext *const context) {
   Tensor *out_tensor = output_tensors_.at(kOutputIndex);
   MS_CHECK_PTR(in_tensor);
   MS_CHECK_PTR(out_tensor);
-  pooling_parameter->input_batch_ = in_tensor->Batch();
-  pooling_parameter->input_channel_ = in_tensor->Channel();
-  pooling_parameter->input_h_ = in_tensor->Height();
-  pooling_parameter->input_w_ = in_tensor->Width();
-  pooling_parameter->output_batch_ = out_tensor->Batch();
-  pooling_parameter->output_channel_ = out_tensor->Channel();
-  pooling_parameter->output_h_ = out_tensor->Height();
-  pooling_parameter->output_w_ = out_tensor->Width();
+
+  compute_param_.input_batch_ = in_tensor->Batch();
+  compute_param_.input_channel_ = in_tensor->Channel();
+  compute_param_.input_h_ = in_tensor->Height();
+  compute_param_.input_w_ = in_tensor->Width();
+  compute_param_.output_batch_ = out_tensor->Batch();
+  compute_param_.output_channel_ = out_tensor->Channel();
+  compute_param_.output_h_ = out_tensor->Height();
+  compute_param_.output_w_ = out_tensor->Width();
+  compute_param_.window_w_ = pooling_parameter->window_w_;
+  compute_param_.window_h_ = pooling_parameter->window_h_;
 
   // get quant params
   std::vector<LiteQuantParam> in_quant_args = in_tensor->quant_params();
@@ -50,6 +53,7 @@ int PoolingInt8Coder::DoCode(CoderContext *const context) {
   Collect(context,
           {
             "nnacl/int8/pooling_int8.h",
+            "nnacl/kernel/pooling.h",
             "nnacl/errorcode.h",
           },
           {
@@ -60,16 +64,15 @@ int PoolingInt8Coder::DoCode(CoderContext *const context) {
   // code op parameter
   ::QuantArg quant_arg_in = {static_cast<float>(in_quant_args.at(0).scale), in_quant_args.at(0).zeroPoint};
   ::QuantArg quant_arg_out = {static_cast<float>(out_quant_args.at(0).scale), out_quant_args.at(0).zeroPoint};
-  ::QuantArg *quant_args[kTwo] = {&quant_arg_in, &quant_arg_out};
-  pooling_parameter->quant_args_ = quant_args;
+
   code.CodeStruct("pooling_parameter", *pooling_parameter);
+  code.CodeStruct("compute", compute_param_);
+  code.CodeStruct("quant", quant_arg_in, quant_arg_out);
 
   if (pooling_parameter->pool_mode_ == PoolMode_MaxPool) {
-    code.CodeFunction("MaxPoolingInt8", in_tensor, out_tensor, "(PoolingParameter *)&pooling_parameter",
-                      kDefaultTaskId);
+    code.CodeFunction("MaxPoolingInt8", in_tensor, out_tensor, "&pooling_parameter", "&compute", "quant");
   } else {
-    code.CodeFunction("AvgPoolingInt8", in_tensor, out_tensor, "(PoolingParameter *)&pooling_parameter",
-                      kDefaultTaskId);
+    code.CodeFunction("AvgPoolingInt8", in_tensor, out_tensor, "&pooling_parameter", "&compute", "&quant");
   }
   context->AppendCode(code.str());
   return lite::RET_OK;

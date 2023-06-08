@@ -18,13 +18,15 @@
 #define NNACL_FP16_GRAD_POOLING_GRAD_H_
 
 #include "nnacl/fp16/pooling_fp16.h"
+#include "nnacl/kernel/pooling.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void AvgPoolingFp16Grad(const float16_t *input_ptr, float16_t *output_ptr, int count, PoolingParameter *pooling_param);
+void AvgPoolingFp16Grad(const float16_t *input_ptr, float16_t *output_ptr, int count, PoolingParameter *pooling_param,
+                        const PoolingComputeParam *pooling_args);
 void MaxPoolingFp16Grad(const float16_t *input_ptr, const float16_t *dy_ptr, float16_t *output_ptr, int output_batch,
-                        PoolingParameter *pooling_param);
+                        PoolingParameter *pooling_param, const PoolingComputeParam *pooling_args);
 #ifdef __cplusplus
 }
 #endif

@@ -18,18 +18,19 @@
 #include <float.h>
 #include "nnacl/fp16_grad/pooling_grad.h"
 
-void AvgPoolingFp16Grad(const float16_t *input_ptr, float16_t *output_ptr, int count, PoolingParameter *pooling_param) {
+void AvgPoolingFp16Grad(const float16_t *input_ptr, float16_t *output_ptr, int count, PoolingParameter *pooling_param,
+                        const PoolingComputeParam *pooling_args) {
   int stride_w = pooling_param->stride_w_;
   int stride_h = pooling_param->stride_h_;
   int pad_w = pooling_param->pad_l_;
   int pad_h = pooling_param->pad_u_;
-  int win_w = pooling_param->window_w_;
-  int win_h = pooling_param->window_h_;
-  int channel = pooling_param->input_channel_;
-  int in_w = pooling_param->input_w_;
-  int in_h = pooling_param->input_h_;
-  int output_w = pooling_param->output_w_;
-  int output_h = pooling_param->output_h_;
+  int win_w = pooling_args->window_w_;
+  int win_h = pooling_args->window_h_;
+  int channel = pooling_args->input_channel_;
+  int in_w = pooling_args->input_w_;
+  int in_h = pooling_args->input_h_;
+  int output_w = pooling_args->output_w_;
+  int output_h = pooling_args->output_h_;
 
   const float16_t kk = 1.0f / (float16_t)(win_h * win_w);
 #if ENABLE_NEON
@@ -103,18 +104,18 @@ static int32x4_t MaxIndex(float16x4_t in, float16x4_t *max, uint32x4_t index, ui
 #endif
 
 void MaxPoolingFp16Grad(const float16_t *input_ptr, const float16_t *dy_ptr, float16_t *output_ptr, int output_batch,
-                        PoolingParameter *pooling_param) {
+                        PoolingParameter *pooling_param, const PoolingComputeParam *pooling_args) {
   int stride_w = pooling_param->stride_w_;
   int stride_h = pooling_param->stride_h_;
   int pad_w = pooling_param->pad_l_;
   int pad_h = pooling_param->pad_u_;
-  int win_w = pooling_param->window_w_;
-  int win_h = pooling_param->window_h_;
-  int channel = pooling_param->input_channel_;
-  int in_w = pooling_param->input_w_;
-  int in_h = pooling_param->input_h_;
-  int output_w = pooling_param->output_w_;
-  int output_h = pooling_param->output_h_;
+  int win_w = pooling_args->window_w_;
+  int win_h = pooling_args->window_h_;
+  int channel = pooling_args->input_channel_;
+  int in_w = pooling_args->input_w_;
+  int in_h = pooling_args->input_h_;
+  int output_w = pooling_args->output_w_;
+  int output_h = pooling_args->output_h_;
 
   for (int ib = 0; ib < output_batch; ib++) {
     float16_t *out = &output_ptr[(ib * in_h * in_w * channel)];

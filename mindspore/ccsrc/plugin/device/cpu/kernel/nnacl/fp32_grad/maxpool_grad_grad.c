@@ -17,13 +17,13 @@
 #include "nnacl/errorcode.h"
 
 int MaxPoolGradGrad(const float *input, const float *grad, float *output, size_t start, size_t end,
-                    PoolingParameter *param) {
-  const int channel = param->input_channel_;
-  const int input_height = param->input_h_;
-  const int input_width = param->input_w_;
+                    PoolingParameter *param, PoolingComputeParam *args) {
+  const int channel = args->input_channel_;
+  const int input_height = args->input_h_;
+  const int input_width = args->input_w_;
 
-  const int window_height = param->window_h_;
-  const int window_width = param->window_w_;
+  const int window_height = args->window_h_;
+  const int window_width = args->window_w_;
 
   const int stride_height = param->stride_h_;
   const int stride_width = param->stride_w_;
@@ -31,9 +31,9 @@ int MaxPoolGradGrad(const float *input, const float *grad, float *output, size_t
   const int pad_top = param->pad_u_;
   const int pad_left = param->pad_l_;
 
-  const int output_height = param->output_h_;
+  const int output_height = args->output_h_;
   NNACL_CHECK_ZERO_RETURN_ERR(output_height);
-  const int output_width = param->output_w_;
+  const int output_width = args->output_w_;
   NNACL_CHECK_ZERO_RETURN_ERR(output_width);
 
   const int output_chw = channel * output_height * output_width;
@@ -74,16 +74,16 @@ int MaxPoolGradGrad(const float *input, const float *grad, float *output, size_t
 }
 
 int MaxPool3DGradGrad(const float *input, const float *grad, float *output, size_t start, size_t end,
-                      Pooling3DParameter *param) {
+                      Pooling3DParameter *param, PoolingComputeParam *args) {
   PoolingParameter *param_2d = (PoolingParameter *)(param);
-  const int channel = param_2d->input_channel_;
+  const int channel = args->input_channel_;
   const int input_depth = param->input_d_;
-  const int input_height = param_2d->input_h_;
-  const int input_width = param_2d->input_w_;
+  const int input_height = args->input_h_;
+  const int input_width = args->input_w_;
 
   const int window_depth = param->window_d_;
-  const int window_height = param_2d->window_h_;
-  const int window_width = param_2d->window_w_;
+  const int window_height = args->window_h_;
+  const int window_width = args->window_w_;
 
   const int stride_depth = param->stride_d_;
   const int stride_height = param_2d->stride_h_;
@@ -95,9 +95,9 @@ int MaxPool3DGradGrad(const float *input, const float *grad, float *output, size
 
   const int output_depth = param->output_d_;
   NNACL_CHECK_ZERO_RETURN_ERR(output_depth);
-  const int output_height = param_2d->output_h_;
+  const int output_height = args->output_h_;
   NNACL_CHECK_ZERO_RETURN_ERR(output_height);
-  const int output_width = param_2d->output_w_;
+  const int output_width = args->output_w_;
   NNACL_CHECK_ZERO_RETURN_ERR(output_width);
 
   const int output_cdhw = channel * output_depth * output_height * output_width;

@@ -22,21 +22,27 @@
 #endif
 #include "nnacl/op_base.h"
 #include "nnacl/fp32/pooling_fp32.h"
+#include "nnacl/kernel/pooling.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 #define MAX_MAXPOOL_SIZE 256
 
-int AvgPoolingInt8(const int8_t *input_ptr, int8_t *output_ptr, const PoolingParameter *pooling_param, int task_id);
+int AvgPoolingInt8(const int8_t *input_ptr, int8_t *output_ptr, const PoolingParameter *pooling_param,
+                   PoolingComputeParam *compute_args, QuantArg **quant_args);
 
-int AvgPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, const PoolingParameter *pooling_param, int task_id);
+int AvgPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, const PoolingParameter *pooling_param,
+                      PoolingComputeParam *compute_args, QuantArg **quant_args, int task_id, int thread_num);
 
-void MaxPoolingInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParameter *pooling_param, int task_id);
+void MaxPoolingInt8(const int8_t *input_ptr, int8_t *output_ptr, const PoolingParameter *pooling_param,
+                    PoolingComputeParam *compute_args, QuantArg **quant_args);
 
-void MaxPoolingWithQuantInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParameter *pooling_param, int task_id);
+void MaxPoolingWithQuantInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParameter *pooling_param,
+                             PoolingComputeParam *compute_args, QuantArg **quant_args, int task_id, int thread_num);
 
-void MaxPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParameter *pooling_param, int task_id);
+void MaxPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParameter *pooling_param,
+                       PoolingComputeParam *compute_args, int task_id, int thread_num);
 #ifdef __cplusplus
 }
 #endif

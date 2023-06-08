@@ -22,9 +22,8 @@
 typedef struct {
   const float *input_;
   float *output_;
-  float min_;
-  float max_;
   const PoolingParameter *pooling_param_;
+  const PoolingComputeParam *pooling_args_;
 } PoolingFp32Args;
 
 #ifdef __cplusplus

@@ -50,6 +50,7 @@
 #include "nnacl/custom_gru_parameter.h"
 #include "nnacl/unstack_parameter.h"
 #include "nnacl/kernel/scale.h"
+#include "nnacl/kernel/pooling.h"
 
 namespace mindspore::lite::micro::nnacl {
 class NNaclFp32Serializer : public Serializer {
@@ -57,6 +58,7 @@ class NNaclFp32Serializer : public Serializer {
   NNaclFp32Serializer() = default;
   ~NNaclFp32Serializer() override = default;
   void CodeStruct(const std::string &name, const PoolingParameter &pooling_parameter);
+  void CodeStruct(const std::string &name, const PoolingComputeParam &pooling_args);
   void CodeStruct(const std::string &name, const SoftmaxParameter &softmax_parameter);
   void CodeStruct(const std::string &name, const BatchNormParameter &batch_norm_parameter);
   void CodeStruct(const std::string &name, const InstanceNormParameter &param);

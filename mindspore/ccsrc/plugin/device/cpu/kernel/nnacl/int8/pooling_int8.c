@@ -18,24 +18,25 @@
 #include "nnacl/common_func.h"
 #include "nnacl/errorcode.h"
 
-int AvgPoolingInt8(const int8_t *input_ptr, int8_t *output_ptr, const PoolingParameter *pooling_param, int task_id) {
+int AvgPoolingInt8(const int8_t *input_ptr, int8_t *output_ptr, const PoolingParameter *pooling_param,
+                   PoolingComputeParam *compute_args, QuantArg **quant_args) {
   int stride_w = pooling_param->stride_w_;
   int stride_h = pooling_param->stride_h_;
   int pad_w = pooling_param->pad_l_;
   int pad_h = pooling_param->pad_u_;
   int win_w = pooling_param->window_w_;
   int win_h = pooling_param->window_h_;
-  int channel = pooling_param->input_channel_;
-  int in_w = pooling_param->input_w_;
-  int in_h = pooling_param->input_h_;
-  int output_w = pooling_param->output_w_;
-  int output_h = pooling_param->output_h_;
-  int output_batch = pooling_param->output_batch_;
+  int channel = compute_args->input_channel_;
+  int in_w = compute_args->input_w_;
+  int in_h = compute_args->input_h_;
+  int output_w = compute_args->output_w_;
+  int output_h = compute_args->output_h_;
+  int output_batch = compute_args->output_batch_;
   int out_plane = output_w * output_h;
-  float input_scale = pooling_param->quant_args_[0][0].scale_;
-  int input_zp = pooling_param->quant_args_[0][0].zp_;
-  float output_scale = pooling_param->quant_args_[1][0].scale_;
-  int output_zp = pooling_param->quant_args_[1][0].zp_;
+  float input_scale = quant_args[0][0].scale_;
+  int input_zp = quant_args[0][0].zp_;
+  float output_scale = quant_args[1][0].scale_;
+  int output_zp = quant_args[1][0].zp_;
   double real_multiplier = input_scale / output_scale;
   const int8_t out_min = INT8_MIN;
   const int8_t out_max = INT8_MAX;
@@ -79,25 +80,26 @@ int AvgPoolingInt8(const int8_t *input_ptr, int8_t *output_ptr, const PoolingPar
   return NNACL_OK;
 }
 
-int AvgPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, const PoolingParameter *pooling_param, int task_id) {
+int AvgPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, const PoolingParameter *pooling_param,
+                      PoolingComputeParam *compute_args, QuantArg **quant_args, int task_id, int thread_num) {
   int win_w = pooling_param->window_w_;
   int win_h = pooling_param->window_h_;
-  int channel = pooling_param->input_channel_;
+  int channel = compute_args->input_channel_;
   int c16 = channel / C16NUM;
-  int in_w = pooling_param->input_w_;
-  int output_w = pooling_param->output_w_;
-  int out_plane = output_w * pooling_param->output_h_;
+  int in_w = compute_args->input_w_;
+  int output_w = compute_args->output_w_;
+  int out_plane = output_w * compute_args->output_h_;
   int out_tile_count = UP_DIV(out_plane, TILE_NUM);
-  int thread_num = out_tile_count < pooling_param->thread_num_ ? out_tile_count : pooling_param->thread_num_;
-  int input_zp = pooling_param->quant_args_[0][0].zp_;
-  int output_zp = pooling_param->quant_args_[1][0].zp_;
-  double real_multiplier = pooling_param->quant_args_[0][0].scale_ / pooling_param->quant_args_[1][0].scale_;
+  thread_num = out_tile_count < thread_num ? out_tile_count : thread_num;
+  int input_zp = quant_args[0][0].zp_;
+  int output_zp = quant_args[1][0].zp_;
+  double real_multiplier = quant_args[0][0].scale_ / quant_args[1][0].scale_;
   const int8_t out_min = INT8_MIN;
   const int8_t out_max = INT8_MAX;
   NNACL_CHECK_ZERO_RETURN_ERR(output_w);
-  for (int batch = 0; batch < pooling_param->output_batch_; batch++) {
-    int in_batch_offset = batch * pooling_param->input_h_ * in_w * channel;
-    int out_batch_offset = batch * pooling_param->output_h_ * output_w * channel;
+  for (int batch = 0; batch < compute_args->output_batch_; batch++) {
+    int in_batch_offset = batch * compute_args->input_h_ * in_w * channel;
+    int out_batch_offset = batch * compute_args->output_h_ * output_w * channel;
     for (int thread_id = task_id; thread_id < out_tile_count; thread_id += thread_num) {
       int cal_start_index = thread_id * TILE_NUM;
       int real_cal_num = (out_plane - cal_start_index) > TILE_NUM ? TILE_NUM : (out_plane - cal_start_index);
@@ -112,7 +114,7 @@ int AvgPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, const Pooling
         int kw_s = MSMAX(0, -in_w_index);
         int kw_e = MSMIN(win_w, in_w - in_w_index);
         int kh_s = MSMAX(0, -in_h_index);
-        int kh_e = MSMIN(win_h, pooling_param->input_h_ - in_h_index);
+        int kh_e = MSMIN(win_h, compute_args->input_h_ - in_h_index);
         int real_count = (kw_e - kw_s) * (kh_e - kh_s);
         if (real_count == 0) {
           return NNACL_ERR;
@@ -274,25 +276,26 @@ int AvgPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, const Pooling
   return NNACL_OK;
 }
 
-void MaxPoolingInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParameter *pooling_param, int task_id) {
+void MaxPoolingInt8(const int8_t *input_ptr, int8_t *output_ptr, const PoolingParameter *pooling_param,
+                    PoolingComputeParam *compute_args, QuantArg **quant_args) {
   int stride_w = pooling_param->stride_w_;
   int stride_h = pooling_param->stride_h_;
   int pad_w = pooling_param->pad_l_;
   int pad_h = pooling_param->pad_u_;
   int win_w = pooling_param->window_w_;
   int win_h = pooling_param->window_h_;
-  int channel = pooling_param->input_channel_;
-  int in_w = pooling_param->input_w_;
-  int in_h = pooling_param->input_h_;
-  int output_w = pooling_param->output_w_;
-  int output_h = pooling_param->output_h_;
-  int output_batch = pooling_param->output_batch_;
+  int channel = compute_args->input_channel_;
+  int in_w = compute_args->input_w_;
+  int in_h = compute_args->input_h_;
+  int output_w = compute_args->output_w_;
+  int output_h = compute_args->output_h_;
+  int output_batch = compute_args->output_batch_;
   int out_plane = output_w * output_h;
   // input channel is equal to output channel
-  float input_scale = pooling_param->quant_args_[0][0].scale_;
-  int input_zp = pooling_param->quant_args_[0][0].zp_;
-  float output_scale = pooling_param->quant_args_[1][0].scale_;
-  int output_zp = pooling_param->quant_args_[1][0].zp_;
+  float input_scale = quant_args[0][0].scale_;
+  int input_zp = quant_args[0][0].zp_;
+  float output_scale = quant_args[1][0].scale_;
+  int output_zp = quant_args[1][0].zp_;
   double real_multiplier = input_scale / output_scale;
 
   for (int batch = 0; batch < output_batch; batch++) {
@@ -325,26 +328,26 @@ void MaxPoolingInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParamete
 }
 
 void MaxPoolingWithQuantInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParameter *pooling_param,
-                             int task_id) {
-  int channel = pooling_param->input_channel_;
-  int in_w = pooling_param->input_w_;
-  int in_h = pooling_param->input_h_;
-  int output_w = pooling_param->output_w_;
-  int out_plane = output_w * pooling_param->output_h_;
+                             PoolingComputeParam *compute_args, QuantArg **quant_args, int task_id, int thread_num) {
+  int channel = compute_args->input_channel_;
+  int in_w = compute_args->input_w_;
+  int in_h = compute_args->input_h_;
+  int output_w = compute_args->output_w_;
+  int out_plane = output_w * compute_args->output_h_;
   int out_tile_count = UP_DIV(out_plane, TILE_NUM);
-  int thread_num = out_tile_count < pooling_param->thread_num_ ? out_tile_count : pooling_param->thread_num_;
+  thread_num = out_tile_count < thread_num ? out_tile_count : thread_num;
   int c16 = UP_DIV(channel, 16);
   // input channel is equal to output channel
-  float input_scale = pooling_param->quant_args_[0][0].scale_;
-  int input_zp = pooling_param->quant_args_[0][0].zp_;
-  float output_scale = pooling_param->quant_args_[1][0].scale_;
-  int output_zp = pooling_param->quant_args_[1][0].zp_;
+  float input_scale = quant_args[0][0].scale_;
+  int input_zp = quant_args[0][0].zp_;
+  float output_scale = quant_args[1][0].scale_;
+  int output_zp = quant_args[1][0].zp_;
   double real_multiplier = input_scale / output_scale;
 
   NNACL_CHECK_ZERO_RETURN(output_w);
-  for (int batch = 0; batch < pooling_param->output_batch_; batch++) {
+  for (int batch = 0; batch < compute_args->output_batch_; batch++) {
     int in_batch_offset = batch * in_h * in_w * channel;
-    int out_batch_offset = batch * pooling_param->output_h_ * output_w * channel;
+    int out_batch_offset = batch * compute_args->output_h_ * output_w * channel;
     for (int thread_id = task_id; thread_id < out_tile_count; thread_id += thread_num) {
       int cal_start_index = thread_id * TILE_NUM;
       int real_cal_num = (out_plane - cal_start_index) > TILE_NUM ? TILE_NUM : (out_plane - cal_start_index);
@@ -420,19 +423,20 @@ void MaxPoolingWithQuantInt8(const int8_t *input_ptr, int8_t *output_ptr, Poolin
   }
 }
 
-void MaxPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParameter *pooling_param, int task_id) {
-  int channel = pooling_param->input_channel_;
-  int in_w = pooling_param->input_w_;
-  int output_w = pooling_param->output_w_;
-  int out_plane = output_w * pooling_param->output_h_;
+void MaxPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParameter *pooling_param,
+                       PoolingComputeParam *compute_args, int task_id, int thread_num) {
+  int channel = compute_args->input_channel_;
+  int in_w = compute_args->input_w_;
+  int output_w = compute_args->output_w_;
+  int out_plane = output_w * compute_args->output_h_;
   int out_tile_count = UP_DIV(out_plane, TILE_NUM);
-  int thread_num = MSMIN(out_tile_count, pooling_param->thread_num_);
+  thread_num = MSMIN(out_tile_count, thread_num);
   int8_t out_array[MAX_MAXPOOL_SIZE];
 
   NNACL_CHECK_ZERO_RETURN(output_w);
-  for (int batch = 0; batch < pooling_param->output_batch_; batch++) {
-    int in_batch_offset = batch * pooling_param->input_h_ * in_w * channel;
-    int out_batch_offset = batch * pooling_param->output_h_ * output_w * channel;
+  for (int batch = 0; batch < compute_args->output_batch_; batch++) {
+    int in_batch_offset = batch * compute_args->input_h_ * in_w * channel;
+    int out_batch_offset = batch * compute_args->output_h_ * output_w * channel;
     for (int thread_id = task_id; thread_id < out_tile_count; thread_id += thread_num) {
       int cal_start_index = thread_id * TILE_NUM;
       int real_cal_num = out_plane - cal_start_index;
@@ -444,9 +448,9 @@ void MaxPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParam
         int in_w_index = out_w_index * pooling_param->stride_w_ - pooling_param->pad_l_;
         int in_h_index = out_h_index * pooling_param->stride_h_ - pooling_param->pad_u_;
         const int ky_s = 0 > (-in_h_index) ? 0 : (-in_h_index);
-        int ky_e = MSMIN(pooling_param->window_h_, pooling_param->input_h_ - in_h_index);
+        int ky_e = MSMIN(compute_args->window_h_, compute_args->input_h_ - in_h_index);
         const int kx_s = 0 > (-in_w_index) ? 0 : (-in_w_index);
-        int kx_e = MSMIN(pooling_param->window_w_, in_w - in_w_index);
+        int kx_e = MSMIN(compute_args->window_w_, in_w - in_w_index);
         int input_stride = (in_h_index * in_w + in_w_index) * channel + in_batch_offset;
         int out_plane_offset = out_batch_offset + index * channel;
 

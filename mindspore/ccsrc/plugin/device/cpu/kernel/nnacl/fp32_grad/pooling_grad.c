@@ -13,23 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "nnacl/fp32_grad/pooling_grad.h"
 #include <stdint.h>
 #include <string.h>
 #include <float.h>
-#include "nnacl/fp32_grad/pooling_grad.h"
 
-void AvgPoolingGrad(const float *input_ptr, float *output_ptr, int count, const PoolingParameter *pooling_param) {
+void AvgPoolingGrad(const float *input_ptr, float *output_ptr, int count, const PoolingParameter *pooling_param,
+                    const PoolingComputeParam *pooling_args) {
   int stride_w = pooling_param->stride_w_;
   int stride_h = pooling_param->stride_h_;
   int pad_w = pooling_param->pad_l_;
   int pad_h = pooling_param->pad_u_;
-  int win_w = pooling_param->window_w_;
-  int win_h = pooling_param->window_h_;
-  int channel = pooling_param->input_channel_;
-  int in_w = pooling_param->input_w_;
-  int in_h = pooling_param->input_h_;
-  int output_w = pooling_param->output_w_;
-  int output_h = pooling_param->output_h_;
+  int win_w = pooling_args->window_w_;
+  int win_h = pooling_args->window_h_;
+  int channel = pooling_args->input_channel_;
+  int in_w = pooling_args->input_w_;
+  int in_h = pooling_args->input_h_;
+  int output_w = pooling_args->output_w_;
+  int output_h = pooling_args->output_h_;
 
   const float kk = 1.0f / (float)(win_h * win_w);
 #if ENABLE_ARM
@@ -101,18 +102,18 @@ static int32x4_t MaxIndex(float32x4_t in, float32x4_t *max, int32x4_t index, int
 #endif
 
 void MaxPoolingGrad(const float *input_ptr, const float *dy_ptr, float *output_ptr, int output_batch,
-                    const PoolingParameter *pooling_param) {
+                    const PoolingParameter *pooling_param, const PoolingComputeParam *pooling_args) {
   int stride_w = pooling_param->stride_w_;
   int stride_h = pooling_param->stride_h_;
   int pad_w = pooling_param->pad_l_;
   int pad_h = pooling_param->pad_u_;
-  int win_w = pooling_param->window_w_;
-  int win_h = pooling_param->window_h_;
-  int channel = pooling_param->input_channel_;
-  int in_w = pooling_param->input_w_;
-  int in_h = pooling_param->input_h_;
-  int output_w = pooling_param->output_w_;
-  int output_h = pooling_param->output_h_;
+  int win_w = pooling_args->window_w_;
+  int win_h = pooling_args->window_h_;
+  int channel = pooling_args->input_channel_;
+  int in_w = pooling_args->input_w_;
+  int in_h = pooling_args->input_h_;
+  int output_w = pooling_args->output_w_;
+  int output_h = pooling_args->output_h_;
   for (int ib = 0; ib < output_batch; ib++) {
     float *out = output_ptr + ib * in_h * in_w * channel;
     const float *inPtr = input_ptr + ib * in_h * in_w * channel;

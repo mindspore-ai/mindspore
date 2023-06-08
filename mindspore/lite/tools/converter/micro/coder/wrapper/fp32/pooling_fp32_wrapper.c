@@ -20,5 +20,6 @@
 
 int DoMaxPooling(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   PoolingFp32Args *args = (PoolingFp32Args *)cdata;
-  return MaxPooling(args->input_, args->output_, args->pooling_param_, task_id, args->min_, args->max_);
+  return MaxPooling(args->input_, args->output_, args->pooling_param_, args->pooling_args_, task_id,
+                    args->pooling_param_->op_parameter_.thread_num_);
 }
