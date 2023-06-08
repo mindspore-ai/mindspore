@@ -155,7 +155,7 @@ class TestEnvEnableProfiler:
         CheckProfilerFiles(self.device_id, self.rank_id, self.profiler_path, "GPU")
         assert status == 0
 
-    @pytest.mark.level0
+    @pytest.mark.level1
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.env_onecard

@@ -53,7 +53,7 @@ class Net3d(nn.Cell):
         return ops.conv3d(x, weight, bias, self.stride, self.pad_mode, self.padding, dilation, groups)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

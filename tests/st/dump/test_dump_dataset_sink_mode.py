@@ -266,7 +266,7 @@ def test_ascend_statistic_dump():
     run_saved_data_dump_test('test_async_dump', 'statistic')
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
