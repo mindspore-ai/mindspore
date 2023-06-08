@@ -804,6 +804,9 @@ class ResizeBicubic(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> class NetResizeBicubic(nn.Cell):
         ...     def __init__(self):
         ...         super(NetResizeBicubic, self).__init__()

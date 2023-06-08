@@ -13,9 +13,9 @@ mindspore.ops.GridSampler2D
         - **padding_mode** (str，可选) - 指定填充模式的可选字符串。可选值为： ``"zeros"`` 、 ``"border"`` 或者 ``"reflection"`` ，默认值：``"zeros"`` 。
           当采样grid超出输入Tensor的边界时，各种填充模式效果如下：
 
-          - ``"zeros"``: 使用零填充输入Tensor。
-          - ``"border"``: 使用Tensor边缘上像素的值填充输入Tensor。
-          - ``"reflection"``: 通过反射Tensor边界处的像素值，并将反射值沿着Tensor的边界向外扩展来填充输入Tensor。
+          - ``"zeros"`` ：使用零填充输入Tensor。
+          - ``"border"`` ：使用Tensor边缘上像素的值填充输入Tensor。
+          - ``"reflection"`` ：通过反射Tensor边界处的像素值，并将反射值沿着Tensor的边界向外扩展来填充输入Tensor。
 
         - **align_corners** (bool，可选) - 一个可选bool。如果为 ``True`` ，输入和输出Tensor的角像素是对齐的，如果为 ``False`` ，
           则不使用角像素对齐。默认值：``False`` 。

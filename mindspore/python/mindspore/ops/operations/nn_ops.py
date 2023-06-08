@@ -150,6 +150,9 @@ class Flatten(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.ones(shape=[1, 2, 3, 4]), mindspore.float32)
         >>> flatten = ops.Flatten()
         >>> output = flatten(input_x)
@@ -1294,6 +1297,9 @@ class BatchNorm(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.ones([2, 2]), mindspore.float32)
         >>> scale = Tensor(np.ones([2]), mindspore.float32)
         >>> bias = Tensor(np.ones([2]), mindspore.float32)
@@ -1446,6 +1452,9 @@ class Conv2D(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.ones([10, 32, 32, 32]), mindspore.float32)
         >>> weight = Tensor(np.ones([32, 32, 3, 3]), mindspore.float32)
         >>> conv2d = ops.Conv2D(out_channel=32, kernel_size=3)
@@ -1797,6 +1806,9 @@ class MaxPool(_Pool):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.arange(1 * 3 * 3 * 4).reshape((1, 3, 3, 4)), mindspore.float32)
         >>> maxpool_op = ops.MaxPool(pad_mode="VALID", kernel_size=2, strides=1)
         >>> output = maxpool_op(x)
@@ -1915,6 +1927,9 @@ class MaxPoolWithArgmax(Primitive):
         Deprecated
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.arange(1 * 3 * 3 * 4).reshape((1, 3, 3, 4)), mindspore.float32)
         >>> maxpool_arg_op = ops.MaxPoolWithArgmax(pad_mode="VALID", kernel_size=2, strides=1)
         >>> output_tensor, argmax = maxpool_arg_op(x)
@@ -2017,6 +2032,9 @@ class MaxPool3D(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.arange(1 * 2 * 2 * 2 * 3).reshape((1, 2, 2, 2, 3)), mindspore.float32)
         >>> max_pool3d = ops.MaxPool3D(kernel_size=2, strides=1, pad_mode="VALID")
         >>> output = max_pool3d(x)
@@ -2139,6 +2157,8 @@ class MaxUnpool2D(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[[[0, 1], [8, 9]]]]).astype(np.float32))
         >>> argmax = Tensor(np.array([[[[0, 1], [2, 3]]]]).astype(np.int64))
         >>> maxunpool2d = ops.MaxUnpool2D(ksize=1, strides=1, pads=0)
@@ -2241,6 +2261,8 @@ class MaxUnpool3D(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[[[[0, 1], [8, 9]]]]]).astype(np.float32))
         >>> argmax = Tensor(np.array([[[[[0, 1], [2, 3]]]]]).astype(np.int64))
         >>> maxunpool3d = ops.MaxUnpool3D(ksize=1, strides=1, pads=0)
@@ -2314,6 +2336,9 @@ class AvgPool(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops, nn
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -2591,6 +2616,9 @@ class MaxPool3DWithArgmax(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.arange(2 * 1 * 2 * 2 * 2).reshape((2, 1, 2, 2, 2)), mindspore.float32)
         >>> max_pool3d_with_arg_op = ops.MaxPool3DWithArgmax(ksize=2, strides=1, pads=1)
         >>> output_tensor, argmax = max_pool3d_with_arg_op(x)
@@ -2679,6 +2707,9 @@ class Conv2DTranspose(Conv2DBackpropInput):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> dout = Tensor(np.ones([10, 32, 30, 30]), mindspore.float32)
         >>> weight = Tensor(np.ones([32, 32, 3, 3]), mindspore.float32)
         >>> x = Tensor(np.ones([10, 32, 32, 32]))
@@ -3230,6 +3261,9 @@ class L2Loss(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float16)
         >>> l2_loss = ops.L2Loss()
         >>> output = l2_loss(input_x)
@@ -3659,6 +3693,9 @@ class LayerNorm(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[1, 2, 3], [1, 2, 3]]), mindspore.float32)
         >>> gamma = Tensor(np.ones([3]), mindspore.float32)
         >>> beta = Tensor(np.ones([3]), mindspore.float32)
@@ -3862,6 +3899,8 @@ class UpsampleTrilinear3D(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> net = ops.UpsampleTrilinear3D()
         >>> in_x = Tensor(input_data=np.random.randn(2, 3, 4, 512, 256))
         >>> output_size=[4, 64, 48]
@@ -4204,6 +4243,8 @@ class LSTM(Primitive):
         ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_size = 10
         >>> hidden_size = 2
         >>> num_layers = 1
@@ -4367,6 +4408,9 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> logits = Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]), mindspore.float32)
         >>> label = Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]), mindspore.float32)
         >>> weight = Tensor(np.array([1.0, 1.0, 1.0]), mindspore.float32)
@@ -4414,6 +4458,9 @@ class Pad(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> pad_op = ops.Pad(((1, 2), (2, 1)))
         >>> output = pad_op(input_x)
@@ -5560,6 +5607,9 @@ class KLDivLoss(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn, ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -5642,6 +5692,9 @@ class BinaryCrossEntropy(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn, ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -7009,6 +7062,9 @@ class Dropout(PrimitiveWithCheck):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> dropout = ops.Dropout(keep_prob=0.5)
         >>> x = Tensor(np.ones([1, 2, 3, 4, 5]), mindspore.float32)
         >>> output, mask = dropout(x)
@@ -7067,6 +7123,9 @@ class Dropout2D(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> dropout = ops.Dropout2D(keep_prob=0.5)
         >>> x = Tensor(np.ones([2, 1, 2, 3]), mindspore.float32)
         >>> output, mask = dropout(x)
@@ -7116,6 +7175,9 @@ class Dropout3D(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> dropout = ops.Dropout3D(keep_prob=0.5)
         >>> x = Tensor(np.ones([2, 1, 2, 1, 2]), mindspore.float32)
         >>> output, mask = dropout(x)
@@ -7183,6 +7245,9 @@ class CTCLoss(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[[0.3, 0.6, 0.6],
         ...                       [0.4, 0.3, 0.9]],
         ...
@@ -7248,6 +7313,9 @@ class CTCGreedyDecoder(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> inputs = Tensor(np.array([[[0.6, 0.4, 0.2], [0.8, 0.6, 0.3]],
         ...                           [[0.0, 0.6, 0.0], [0.5, 0.4, 0.5]]]), mindspore.float32)
         >>> sequence_length = Tensor(np.array([2, 2]), mindspore.int32)
@@ -7409,6 +7477,8 @@ class DynamicRNN(Primitive):
         ``Ascend``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.random.rand(2, 16, 64).astype(np.float16))
         >>> w = Tensor(np.random.rand(96, 128).astype(np.float16))
         >>> b = Tensor(np.random.rand(128).astype(np.float16))
@@ -7548,6 +7618,8 @@ class DynamicGRUV2(Primitive):
         ``Ascend``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.random.rand(2, 8, 64).astype(np.float16))
         >>> weight_i = Tensor(np.random.rand(64, 48).astype(np.float16))
         >>> weight_h = Tensor(np.random.rand(16, 48).astype(np.float16))
@@ -7668,6 +7740,9 @@ class LRN(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[[[0.1], [0.2]],
         ...                       [[0.3], [0.4]]]]), mindspore.float32)
         >>> lrn = ops.LRN()
@@ -7767,6 +7842,9 @@ class AvgPool3D(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> import numpy as np
         >>> x = Tensor(np.arange(1 * 2 * 2 * 2 * 3).reshape((1, 2, 2, 2, 3)), mindspore.float16)
         >>> avg_pool3d = ops.AvgPool3D(kernel_size=2, strides=1, pad_mode="valid")
         >>> output = avg_pool3d(x)
@@ -7939,6 +8017,9 @@ class Conv3D(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.ones([16, 3, 10, 32, 32]), mindspore.float16)
         >>> weight = Tensor(np.ones([32, 3, 4, 3, 3]), mindspore.float16)
         >>> conv3d = ops.Conv3D(out_channel=32, kernel_size=(4, 3, 3))
@@ -8276,6 +8357,9 @@ class CTCLossV2(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> log_probs = Tensor(np.array([[[0.3, 0.6, 0.6]],
         ...                              [[0.9, 0.4, 0.2]]]).astype(np.float32))
         >>> targets = Tensor(np.array([[0, 1]]), mstype.int32)
@@ -8453,6 +8537,9 @@ class Conv3DTranspose(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> dout = Tensor(np.ones([32, 16, 10, 32, 32]), mindspore.float16)
         >>> weight = Tensor(np.ones([16, 3, 4, 6, 2]), mindspore.float16)
         >>> conv3d_transpose = ops.Conv3DTranspose(in_channel=16, out_channel=3, kernel_size=(4, 6, 2))
@@ -9481,6 +9568,8 @@ class GridSampler3D(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> gridsampler = ops.GridSampler3D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=True)
         >>> input_x = Tensor(np.arange(32).reshape((2, 2, 2, 2, 2)).astype(np.float32))
         >>> grid = Tensor(np.arange(-0.2, 1, 0.1).reshape((2, 2, 1, 1, 3)).astype(np.float32))
@@ -10101,6 +10190,8 @@ class GridSampler2D(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> gridsampler = ops.GridSampler2D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=True)
         >>> input_x = Tensor(np.arange(16).reshape((2, 2, 2, 2)).astype(np.float32))
         >>> grid = Tensor(np.arange(-9, 9, 0.5).reshape((2, 3, 3, 2)).astype(np.float32))
@@ -10206,6 +10297,9 @@ class UpsampleNearest3D(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
         ...       .reshape([1, 1, 2, 2, 4]), mstype.float32)
         >>> output_size = [3, 4, 5]
@@ -10828,6 +10922,9 @@ class MaxPoolWithArgmaxV2(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.arange(20 * 16 * 50 * 32).reshape((20, 16, 50, 32)), mindspore.float32)
         >>> maxpool_arg_v2_op = ops.MaxPoolWithArgmaxV2(kernel_size=(3, 2), strides=(2, 1))
         >>> output_tensor, argmax = maxpool_arg_v2_op(x)
