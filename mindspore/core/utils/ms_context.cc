@@ -70,6 +70,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<std::string>(MS_CTX_ENV_CONFIG_PATH, "");
   set_param<std::string>(MS_CTX_TUNE_MODE, "NO_TUNE");
   set_param<std::string>(MS_CTX_GRAPH_KERNEL_FLAGS, "");
+
   set_param<uint32_t>(MS_CTX_TSD_REF, 0);
   set_param<uint32_t>(MS_CTX_GE_REF, 0);
 
@@ -120,6 +121,11 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<bool>(MS_CTX_ENABLE_RECOVERY, false);
   set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, false);
   set_param<bool>(MS_CTX_DISABLE_FORMAT_TRANSFORM, false);
+  set_param<bool>(MS_CTX_RECOMPUTE_COMM_OVERLAP, false);
+  set_param<bool>(MS_CTX_GRAD_COMM_OVERLAP, false);
+  set_param<bool>(MS_CTX_ENABLE_TASK_OPT, false);
+  set_param<bool>(MS_CTX_INTERLEAVED_MATMUL_COMM, false);
+  set_param<bool>(MS_CTX_INTERLEAVED_LAYERNORM_COMM, false);
   set_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL, kOptimizeO0);
   set_param<uint32_t>(MS_CTX_OP_TIMEOUT, kOpTimeout);
 
