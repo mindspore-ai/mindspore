@@ -108,7 +108,7 @@ void RtLoadDumpData(const aicpu::dump::OpMappingInfo &dump_info, void **ptr) {
     return;
   }
 
-  rtError_t rt_ret = rtMalloc(ptr, proto_size, RT_MEMORY_HBM, 0);
+  rtError_t rt_ret = rtMalloc(ptr, proto_size, RT_MEMORY_HBM);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "[DumperBase] Call rtMalloc failed";
   }

@@ -23,7 +23,6 @@
 #include "kernel/common_utils.h"
 namespace mindspore {
 namespace kernel {
-constexpr size_t kWorkspaceSize = 32;
 constexpr size_t kJsonSuffixLength = 5;
 constexpr char kMagic[] = "magic";
 constexpr char kBlockDim[] = "blockDim";
@@ -305,7 +304,7 @@ void KernelPack::ParseWorkSpace(const std::string &key, const nlohmann::json &js
       return;
     }
     size_t num = workspace.at("num");
-    std::vector<int64_t> sizes = workspace.at(kSize);
+    std::vector<size_t> sizes = workspace.at(kSize);
     if (num != sizes.size()) {
       MS_LOG(WARNING) << "'num' and length of 'size' must be same. " << js.dump(indent);
       return;
@@ -322,8 +321,7 @@ void KernelPack::ParseWorkSpace(const std::string &key, const nlohmann::json &js
     }
 
     for (size_t i = 0; i < sizes.size(); i++) {
-      auto t = sizes[i] < 0 ? kWorkspaceSize : LongToSize(sizes[i]);
-      (void)kernel_json_info->workspaces.emplace_back(t);
+      (void)kernel_json_info->workspaces.emplace_back(sizes[i]);
     }
   } catch (std::exception &e) {
     MS_LOG(ERROR) << "Parse json value failed, error info: " << e.what();

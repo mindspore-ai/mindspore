@@ -8,22 +8,11 @@ set(ASCEND_RPATH ${ASCEND_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/lib64)
 set(ASCEND_RPATH ${ASCEND_RPATH}:/usr/local/Ascend/latest/lib64)
 set(ASCEND_RPATH ${ASCEND_RPATH}:/usr/local/Ascend/nnae/latest/lib64/plugin/opskernel/)
 set(ASCEND_RPATH ${ASCEND_RPATH}:/usr/local/Ascend/latest/lib64/plugin/opskernel/)
-if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "x86_64")
-    set(ASCEND_RPATH
-${ASCEND_RPATH}:/usr/local/Ascend/nnae/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling/lib/linux/x86_64)
-    set(ASCEND_RPATH
-${ASCEND_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling/lib/linux/x86_64)
-    set(ASCEND_RPATH
-${ASCEND_RPATH}:/usr/local/Ascend/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling/lib/linux/x86_64)
-else()
-    set(ASCEND_RPATH
-${ASCEND_RPATH}:/usr/local/Ascend/nnae/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling/lib/linux/aarch64)
-    set(ASCEND_RPATH
-${ASCEND_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling/lib/linux/aarch64)
-    set(ASCEND_RPATH
-${ASCEND_RPATH}:/usr/local/Ascend/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling/lib/linux/aarch64)
-endif()
-
+set(ASCEND_RPATH ${ASCEND_RPATH}:/usr/local/Ascend/opp/built-in/op_impl/ai_core/tbe/op_tiling)
+set(ASCEND_RPATH ${ASCEND_RPATH}:/usr/local/Ascend/nnae/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling)
+set(ASCEND_RPATH
+        ${ASCEND_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling)
+set(ASCEND_RPATH ${ASCEND_RPATH}:/usr/local/Ascend/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling)
 
 ### cxx api need file ###
 if(ENABLE_ACL)
@@ -107,11 +96,8 @@ if(MODE_ASCEND_ALL)
     find_library(PLATFORM platform ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(OPT_FEATURE opt_feature ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(adump_server libadump_server.a ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "x86_64")
-        find_library(OPTILING optiling ${ASCEND_CANN_OPP_X86_64_PATH} ${ASCEND_TOOLKIT_OPP_X86_64_PATH})
-    else()
-        find_library(OPTILING optiling ${ASCEND_CANN_OPP_AARCH64_PATH} ${ASCEND_TOOLKIT_OPP_AARCH64_PATH})
-    endif()
+    find_library(OPTILING optiling ${ASCEND_CANN_OPP_PATH} ${ASCEND_TOOLKIT_OPP_PATH}
+                    ${ASCEND_CANN_OPP_PATH_TEMP} ${ASCEND_TOOLKIT_OPP_PATH_TEMP})
     find_library(ACL_OP_COMPILER acl_op_compiler ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(CANN_KB cann_kb ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(COMPRESS compress ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})

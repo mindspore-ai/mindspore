@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2023 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,15 +50,13 @@ class OpTilingCalculateAdapter {
   void UpdateWorkspace(const ::ge::NodePtr &ge_node, const std::vector<int64_t> &workspace_size_list) const;
 
  private:
-  void ConstructNodeInputAnchor(const ::ge::NodePtr &node, ::ge::ComputeGraphPtr *ge_graph,
-                                const std::map<std::size_t, ::ge::NodePtr> &constant_ops) const;
   void ConvertInputShapeAndType(const CNodePtr &node, ::ge::OpDescPtr *op_desc);
   void ConvertOutputShapeAndType(const CNodePtr &node, ::ge::OpDescPtr *op_desc);
   void ConvertCompileInfo(const CNodePtr &node, ::ge::OpDescPtr *op_desc);
   void ConvertAttrs(const CNodePtr &node, ::ge::OpDescPtr *op_desc) const;
-  std::map<std::size_t, ::ge::NodePtr> ConvertDepends(const CNodePtr &node,
-                                                      const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
-                                                      const ::ge::OpDescPtr &op_desc, ::ge::ComputeGraphPtr *ge_graph);
+  std::vector<std::tuple<std::size_t, ::ge::NodePtr>> ConvertDepends(
+    const CNodePtr &node, const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map, ::ge::OpDescPtr *op_desc,
+    ::ge::ComputeGraphPtr *ge_graph);
   void ConvertAtomicCompileInfo(const CNodePtr &node, ::ge::OpDescPtr *op_desc) const;
   ::ge::NodePtr NewConstantOp(const CNodePtr &node, const std::string &name, const tensor::TensorPtr &tensor_data,
                               ::ge::ComputeGraphPtr *ge_graph, size_t index) const;
