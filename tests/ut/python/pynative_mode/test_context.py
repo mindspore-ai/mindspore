@@ -114,6 +114,10 @@ def test_ascend_config():
     with pytest.raises(ValueError):
         context.set_context(atomic_clean_policy=0)
     with pytest.raises(ValueError):
+        context.set_context(matmul_allow_hf32=0)
+    with pytest.raises(ValueError):
+        context.set_context(conv_allow_hf32=0)
+    with pytest.raises(ValueError):
         context.set_context(ascend_config={"precision_mode": "xxx"})
     with pytest.raises(ValueError):
         context.set_context(ascend_config={"xxxx": 1})
@@ -127,8 +131,13 @@ def test_ascend_config():
         context.set_context(ascend_config={"atomic_clean_policy": 3})
     with pytest.raises(ValueError):
         context.set_context(ascend_config={"precision_mode": 2})
+    with pytest.raises(ValueError):
+        context.set_context(ascend_config={"matmul_allow_hf32": 2})
+    with pytest.raises(ValueError):
+        context.set_context(ascend_config={"conv_allow_hf32": 2})
     context.set_context.__wrapped__(ascend_config={
-        "precision_mode": "force_fp16", "jit_compile": True, "atomic_clean_policy": 1})
+        "precision_mode": "force_fp16", "jit_compile": True, "atomic_clean_policy": 1,
+        "matmul_allow_hf32": False, "conv_allow_hf32": True})
 
 
 def test_print_file_path():

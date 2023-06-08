@@ -66,6 +66,8 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<std::string>(MS_CTX_PRECISION_MODE, "");
   set_param<std::string>(MS_CTX_ENABLE_JIT_COMPILE, "");
   set_param<std::string>(MS_CTX_ATOMIC_CLEAN_POLICY, "");
+  set_param<std::string>(MS_CTX_MATMUL_ALLOW_HF32, "");
+  set_param<std::string>(MS_CTX_CONV_ALLOW_HF32, "");
   set_param<std::string>(MS_CTX_ENV_CONFIG_PATH, "");
   set_param<std::string>(MS_CTX_TUNE_MODE, "NO_TUNE");
   set_param<std::string>(MS_CTX_GRAPH_KERNEL_FLAGS, "");

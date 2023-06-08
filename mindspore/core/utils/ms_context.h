@@ -151,6 +151,8 @@ enum MsCtxParam : unsigned {
   MS_CTX_PRECISION_MODE,
   MS_CTX_ENABLE_JIT_COMPILE,
   MS_CTX_ATOMIC_CLEAN_POLICY,
+  MS_CTX_MATMUL_ALLOW_HF32,
+  MS_CTX_CONV_ALLOW_HF32,
   MS_CTX_TYPE_STRING_END,
 
   // parameter numbers of each type
