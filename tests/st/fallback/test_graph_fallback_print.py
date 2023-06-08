@@ -22,7 +22,9 @@ import pytest
 import numpy as np
 import mindspore.nn as nn
 import mindspore as ms
-from mindspore import Tensor, jit, context
+from mindspore import Tensor, jit, context, Parameter
+from mindspore.ops import operations as P
+import mindspore.common.dtype as mstype
 from tests.security_utils import security_off_wrap
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -546,4 +548,44 @@ def test_print_joinedstr():
         time.sleep(0.1)
 
     patterns = {"Tensor(x): [1 2 3 4 5], dict_input: {'a': 1, 'b': 2, 'x:(1, 2, 3, 4, 5)': 3}"}
+    check_output(cap.output, patterns)
+
+
+@security_off_wrap
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+def test_print_param_value():
+    """
+    Feature: graph print parameter value.
+    Description: Test print parameter value.
+    Expectation: No exception.
+    """
+    class ParamValueNet(ms.nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.assignadd = P.AssignAdd()
+            self.assign = P.Assign()
+            self.p0 = Parameter(Tensor(0., mstype.float32), "p1")
+            self.p1 = Parameter(Tensor(1., mstype.float32), "p2")
+
+        def construct(self, x):
+            if x > 100:
+                self.assign(self.p0, x)
+                print(self.p0.value())
+            else:
+                self.assignadd(self.p1, x)
+                print(self.p1.value())
+
+    cap = Capture()
+    with capture(cap):
+        test_net = ParamValueNet()
+        x = Tensor(99, mstype.float32)
+        test_net(x)
+        sys.stdout.flush()
+        time.sleep(0.1)
+        assert test_net.p1 == 100
+
+    patterns = {"Tensor(shape=[], dtype=Float32, value=100)"}
     check_output(cap.output, patterns)
