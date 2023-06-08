@@ -931,6 +931,15 @@ OperatorInfoPtr OperatorInstanceByName(const std::string &name, const PrimitiveA
   if (name.length() == 0) {
     MS_LOG(EXCEPTION) << "Length of name is zero!";
   }
+
+  if (name == "Custom" &&
+      (attrs.find(KAttrAsLossDivisor) == attrs.end() || attrs.find(KAttrDevMatrixShape) == attrs.end() ||
+       attrs.find(KAttrInputsTensorMap) == attrs.end() || attrs.find(KAttrOutputsTensorMap) == attrs.end())) {
+    MS_LOG(WARNING) << "The attr for parallelization settings is not found in the custom op."
+                    << "To enable auto parallelization, set the attrs includeing [" << KAttrAsLossDivisor << ", "
+                    << KAttrDevMatrixShape << ", " << KAttrInputsTensorMap << ", " << KAttrOutputsTensorMap << "]";
+    return nullptr;
+  }
   std::string distribute_opname = GetDisOpName(name);
   OperatorInfoPtr operator_ =
     (OperatorInfoPtr)DynCreator::Instance().Create(distribute_opname, shape_list[0], shape_list[1], attrs, TOTAL_OPS);
