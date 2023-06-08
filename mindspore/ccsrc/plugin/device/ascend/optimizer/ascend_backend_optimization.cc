@@ -44,6 +44,7 @@
 #include "plugin/device/ascend/optimizer/ir_fission/ascend_clip_by_norm_fission.h"
 #include "backend/common/pass/communication_op_fusion.h"
 #include "backend/common/pass/dropout_gen_mask_fusion.h"
+#include "backend/common/pass/merge_transdata.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/square_sum_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/clip_by_norm_no_div_square_sum_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/lamb_update_with_lr_rule_fusion.h"
@@ -519,8 +520,6 @@ void AscendAfterInlineOptimization(const std::shared_ptr<session::KernelGraph> &
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto after_inline_pm = std::make_shared<PassManager>("after_inline_pm");
   after_inline_pm->AddPass(std::make_shared<DropoutGenMaskFusion>());
-  after_inline_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
-  after_inline_pm->AddPass(std::make_shared<EliminateRedundantOp>());
   static const auto graph_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
   static const auto graph_reuse = (graph_reuse_env == "1" || graph_reuse_env == "2");
   if (graph_reuse) {
@@ -536,6 +535,9 @@ void AscendAfterInlineOptimization(const std::shared_ptr<session::KernelGraph> &
     after_inline_pm->AddPass(std::make_shared<InsertTensorMoveForCascade>());
     after_inline_pm->AddPass(std::make_shared<GradientsAllReduceDependLastSend>());
   }
+  after_inline_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
+  after_inline_pm->AddPass(std::make_shared<EliminateRedundantOp>());
+  after_inline_pm->AddPass(std::make_shared<MergeTransData>());
   optimizer->AddPassManager(after_inline_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
