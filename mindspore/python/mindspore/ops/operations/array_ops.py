@@ -1151,6 +1151,9 @@ class Padding(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[8], [10]]), mindspore.float32)
         >>> pad_dim_size = 4
         >>> output = ops.Padding(pad_dim_size)(x)
@@ -4249,6 +4252,9 @@ class ResizeNearestNeighborV2(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> input_tensor = Tensor(np.ones((1, 4, 4, 1)), mstype.float32)
         >>> size = Tensor([2, 2], mstype.int32)
         >>> resize = ops.ResizeNearestNeighborV2()
@@ -6388,6 +6394,9 @@ class EmbeddingLookup(PrimitiveWithCheck):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_params = Tensor(np.array([[8, 9], [10, 11], [12, 13], [14, 15]]), mindspore.float32)
         >>> input_indices = Tensor(np.array([[5, 2], [8, 5]]), mindspore.int32)
         >>> offset = 4
