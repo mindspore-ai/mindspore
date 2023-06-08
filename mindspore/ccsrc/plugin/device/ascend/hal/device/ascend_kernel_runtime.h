@@ -106,9 +106,10 @@ class AscendKernelRuntime : public KernelRuntime {
   void LaunchDataDump(GraphId graph_id);
 #endif
   static std::pair<CNodePtr, std::string> GetErrorNodeInfo(uint32_t streamid, uint32_t taskid);
-  static std::string GetDumpPath();
+  static std::string GetDumpPath(const std::string &suffix);
 #ifndef ENABLE_SECURITY
   static void PrintDebugInfoAndDumpFailNode(const session::KernelGraph &graph);
+  static void DumpDebugInfoFile(const session::KernelGraph &graph);
 #endif
   static void TaskFailCallback(rtExceptionInfo *task_fail_info);
   static bool DeleteDumpDir(const std::string &path);

@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_GE_RUNTIME_TASK_PROFILER_TASK_H_
 
 #include <memory>
+#include <string>
 #include "plugin/device/ascend/hal/device/ge_runtime/task/task.h"
 
 namespace mindspore::ge::model_runner {
@@ -28,6 +29,8 @@ class ProfilerTask : public TaskRepeater<ProfilerTraceTaskInfo> {
   ~ProfilerTask() override;
 
   void Distribute() override;
+
+  std::string task_name() const override { return task_info_->op_name(); }
 
  private:
   std::shared_ptr<ProfilerTraceTaskInfo> task_info_;
