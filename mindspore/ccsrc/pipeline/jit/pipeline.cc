@@ -904,11 +904,6 @@ bool GraphExecutorPy::CompileInner(const py::object &source, const py::tuple &ar
   }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-#ifdef WITH_BACKEND
-  if (ms_context->backend_policy() == "ge") {
-    InitParams(GetParams(phase_), phase_);
-  }
-#endif
 #ifdef ENABLE_DUMP_IR
   mindspore::RDR::Snapshot();
 #endif
@@ -1398,6 +1393,18 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase) 
   return res;
 }
 
+#ifdef WITH_BACKEND
+void GraphExecutorPy::GeFirstInitParams() {
+  static bool inited = false;
+  if (!inited) {
+    MS_LOG(INFO) << "Start init params.";
+    const auto &init_params = GetParams(phase_);
+    InitParams(init_params, phase_);
+    inited = true;
+  }
+}
+#endif
+
 py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &phase_obj) {
   // Init for dynamic-obfuscated model infer
   (void)mindspore::kernel::CustomizedOpaquePredicate::GetInstance().init_calling_count();
@@ -1413,6 +1420,7 @@ py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &ph
   MS_EXCEPTION_IF_NULL(ms_context);
 #ifdef WITH_BACKEND
   if (ms_context->backend_policy() == "ge") {
+    GeFirstInitParams();
     std::string phase_prefix = GetPhasePrefix(phase);
     if (phase_prefix == "save") {
       auto pos = phase.find('.');
