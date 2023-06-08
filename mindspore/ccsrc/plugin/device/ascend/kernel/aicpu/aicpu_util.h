@@ -183,6 +183,7 @@ constexpr auto kTriu = "Triu";
 constexpr auto kUniformCandidateSampler = "UniformCandidateSampler";
 constexpr auto kExpand = "Expand";
 constexpr auto kExpandDims = "ExpandDims";
+constexpr auto kCast = "Cast";
 constexpr auto kReshape = "Reshape";
 constexpr auto kFlatten = "Flatten";
 constexpr auto kSqueeze = "Squeeze";
@@ -332,7 +333,8 @@ const std::set<std::string> kCpuKernelBaseOps{kDropoutGenMaskOpName,
                                               kFlatten,
                                               kSqueeze,
                                               kUniformCandidateSampler,
-                                              kExpandDims};
+                                              kExpandDims,
+                                              kCast};
 const std::set<std::string> kDynamicInputOps{kRaggedTensorToTensor,
                                              kSparseCross,
                                              kRaggedTensorToSparse,

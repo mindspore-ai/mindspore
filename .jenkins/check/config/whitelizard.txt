@@ -379,3 +379,4 @@ mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/batchmatmul.cc:aicpu::BatchMatMulCpuKernel::DoCompute
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/sparse_to_dense.cc:aicpu::SparseToDenseCpuKernel::ValidParam
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/upsample_trilinear3d_grad.cc:aicpu::UpsampleTrilinear3dGradCpuKernel::UpsampleTrilinear3dGradCompute
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cast_kernels.cc:aicpu::CastKernel::DoCompute
