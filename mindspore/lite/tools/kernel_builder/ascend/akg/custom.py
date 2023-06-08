@@ -121,6 +121,11 @@ class OpInfer:
         """infer shape"""
         self.output_desc[0]["shape"] = copy_shape(self.input_desc[0]["shape"])
 
+    def infer_ori_shape(self):
+        """infer original shape"""
+        for _, desc in enumerate(self.output_desc):
+            desc["ori_shape"] = copy_shape(desc["shape"])
+
     def infer(self):
         """infer shape, format and data type"""
         self.infer_type()
@@ -135,7 +140,7 @@ class OpInfer:
         for _, desc in enumerate(self.output_desc):
             desc["ori_data_type"] = desc["data_type"]
             desc["ori_format"] = desc["format"]
-            desc["ori_shape"] = copy_shape(desc["shape"])
+        self.infer_ori_shape()
         self.infer()
         self.post_process()
 
@@ -152,6 +157,9 @@ class Elemwise(OpInfer):
             return supported_formats
         return ["ND,ND", "FRACTAL_NZ,FRACTAL_NZ", "NC1HWC0,NC1HWC0", "FRACTAL_Z,FRACTAL_Z"]
 
+    def infer_ori_shape(self):
+        self.output_desc[0]["ori_shape"] = self.input_desc[0]["ori_shape"]
+
 
 class ElemwiseBinaryNoBroadcast(OpInfer):
     """Elemwise op with two inputs and one output, not supports broadcast."""
@@ -159,6 +167,9 @@ class ElemwiseBinaryNoBroadcast(OpInfer):
     def supported_format(self):
         return ["ND,ND,ND", "FRACTAL_NZ,FRACTAL_NZ,FRACTAL_NZ", "NC1HWC0,NC1HWC0,NC1HWC0",
                 "FRACTAL_Z,FRACTAL_Z,FRACTAL_Z"]
+
+    def infer_ori_shape(self):
+        self.output_desc[0]["ori_shape"] = self.input_desc[0]["ori_shape"]
 
 
 class ElemwiseBinary(OpInfer):
@@ -255,12 +266,25 @@ class ElemwiseBinary(OpInfer):
         _, _, out_shape = self.broadcast_shape(sh0, sh1)
         self.output_desc[0]["shape"] = out_shape
 
+    def infer_ori_shape(self):
+        sh0, sh1 = self.input_desc[0]["ori_shape"], self.input_desc[1]["ori_shape"]
+        _, _, out_shape = self.broadcast_shape(sh0, sh1)
+        self.output_desc[0]["ori_shape"] = out_shape
+
 
 class MatMul(OpInfer):
     """MatMul op."""
 
     def supported_format(self):
         return ["FRACTAL_NZ,FRACTAL_NZ,FRACTAL_NZ"]
+
+    def nd_infer(self, sh0, sh1, trans_a, trans_b):
+        if len(sh0) != len(sh1):
+            raise ValueError("For '{}', input shape '{}' and '{}' are not supported".format(self.name, sh0, sh1))
+        m = sh0[-2] if not trans_a else sh0[-1]
+        n = sh1[-1] if not trans_b else sh1[-2]
+        res = sh0[:-2] + [m, n]
+        return res
 
     def infer_shape(self):
         sh0, sh1 = self.input_desc[0]["shape"], self.input_desc[1]["shape"]
@@ -270,9 +294,7 @@ class MatMul(OpInfer):
             raise ValueError("For '{}', input '{}' and '{}' are not supported"
                              .format(self.name, self.input_desc[0], self.input_desc[1]))
         if format0 != "FRACTAL_NZ" and len(sh0) >= 2:
-            m = sh0[-2] if not trans_a else sh0[-1]
-            n = sh1[-1] if not trans_b else sh1[-2]
-            self.output_desc[0]["shape"] = sh0[:-2] + [m, n]
+            self.output_desc[0]["shape"] = self.nd_infer(sh0, sh1, trans_a, trans_b)
         elif format0 == "FRACTAL_NZ" and len(sh0) >= 4:
             m1, m0 = sh0[-3], sh0[-2]
             if trans_a:
@@ -284,6 +306,11 @@ class MatMul(OpInfer):
         else:
             raise ValueError("For '{}', input '{}' and '{}' are not supported"
                              .format(self.name, self.input_desc[0], self.input_desc[1]))
+
+    def infer_ori_shape(self):
+        sh0, sh1 = self.input_desc[0]["ori_shape"], self.input_desc[1]["ori_shape"]
+        trans_a, trans_b = self.get_attr("transpose_a"), self.get_attr("transpose_b")
+        self.output_desc[0]["ori_shape"] = self.nd_infer(sh0, sh1, trans_a, trans_b)
 
     def post_process(self):
         self.op_desc["attr"].append({"data_type": "str", "name": "left_format", "value": self.input_desc[0]["format"]})
@@ -349,6 +376,12 @@ class ReduceSum(OpInfer):
             self.set_attr("axis", new_axis)
             self.output_desc[0]["shape"] = self._reduced_shape(cur_shape, new_axis, self.get_attr("keep_dims"))
 
+    def infer_ori_shape(self):
+        shape = self.input_desc[0]["ori_shape"]
+        rank = len(shape)
+        axis = [i + rank if i < 0 else i for i in self.get_attr("axis")]
+        self.output_desc[0]["ori_shape"] = self._reduced_shape(shape, axis, self.get_attr("keep_dims"))
+
 
 class Reshape(OpInfer):
     """Reshape op."""
@@ -358,18 +391,82 @@ class Reshape(OpInfer):
 
     def infer_shape(self):
         """Reshape keeps ND format, so the output shape will not be changed"""
-        self.output_desc[0]["shape"] = self.output_desc[0]["shape"]
+        self.output_desc[0]["shape"] = self.output_desc[0]["ori_shape"]
+
+    def infer_ori_shape(self):
+        shape = self.input_desc[0]["ori_shape"]
+        out_shape = copy_shape(self.get_attr("shape"))
+        if -1 in out_shape:
+            idx = out_shape.index(-1)
+            tmp = []
+            for _, s in enumerate(out_shape):
+                if s != -1:
+                    tmp.append(s)
+            if len(tmp) + 1 != len(out_shape):
+                raise ValueError("Find multiple -1 in attr 'shape' {}".format(out_shape))
+            out_shape[idx] = functools.reduce(lambda x, y: x * y, shape) // functools.reduce(lambda x, y: x * y, tmp)
+        self.output_desc[0]["ori_shape"] = out_shape
+
+    def post_process(self):
+        for item in self.op_desc["attr"]:
+            if item["name"] == "shape":
+                item["ori_value"] = item["value"]
+                item["value"] = self.output_desc[0]["shape"]
 
 
-class Broadcast(OpInfer):
-    """Broadcast op."""
+class BroadcastTo(OpInfer):
+    """BroadcastTo op."""
 
     def supported_format(self):
         return ["ND,ND"]
 
     def infer_shape(self):
         """Broadcast op keeps ND format, so the output shape will not be changed"""
-        self.output_desc[0]["shape"] = self.output_desc[0]["shape"]
+        self.output_desc[0]["shape"] = self.output_desc[0]["ori_shape"]
+
+    def infer_ori_shape(self):
+        shape = self.input_desc[0]["ori_shape"]
+        broad_shape = self.get_attr("shape")
+        if len(broad_shape) < len(shape):
+            raise ValueError("The length of attr 'shape' must be >= the length of input shape, but got attr 'shape': "
+                             "{}, input shape: {}".format(broad_shape, shape))
+        pad_shape = [1] * (len(broad_shape) - len(shape)) + shape
+        out_shape = []
+        for i, b in enumerate(broad_shape):
+            if b == -1:
+                out_shape.append(pad_shape[i])
+            else:
+                out_shape.append(b)
+        self.output_desc[0]["ori_shape"] = out_shape
+
+    def post_process(self):
+        for item in self.op_desc["attr"]:
+            if item["name"] == "shape":
+                item["ori_value"] = item["value"]
+                item["value"] = self.output_desc[0]["shape"]
+
+
+class Tile(OpInfer):
+    """BroadcastTo op."""
+
+    def supported_format(self):
+        return ["ND,ND"]
+
+    def infer_shape(self):
+        """Tile op keeps ND format, so the output shape will not be changed"""
+        self.output_desc[0]["shape"] = self.output_desc[0]["ori_shape"]
+
+    def infer_ori_shape(self):
+        shape = self.input_desc[0]["ori_shape"]
+        multiples = self.get_attr("multiples")
+        if len(multiples) < len(shape):
+            raise ValueError("The length of attr 'multiples' must be >= the length of input shape, but got attr "
+                             "'multiples': {}, input shape: {}".format(multiples, shape))
+        pad_shape = [1] * (len(multiples) - len(shape)) + shape
+        out_shape = []
+        for i, m in enumerate(multiples):
+            out_shape.append(m * pad_shape[i])
+        self.output_desc[0]["ori_shape"] = out_shape
 
 
 prims = {
@@ -390,8 +487,8 @@ prims = {
     "BatchMatMul": MatMul,
     "ReduceSum": ReduceSum,
     "Reshape": Reshape,
-    "BroadcastTo": Broadcast,
-    "Tile": Broadcast,
+    "BroadcastTo": BroadcastTo,
+    "Tile": Tile,
 }
 
 
@@ -421,13 +518,18 @@ def update_global_input_desc(info_desc, args):
             return "float32"
         return tbe_type
 
+    def _covert_tbe_shape(tbe_shape):
+        if not tbe_shape:
+            return [1]
+        return copy_shape(tbe_shape)
+
     if isinstance(info_desc.get("input_desc"), list):
         for i, desc in enumerate(info_desc["input_desc"]):
             desc[0]["ori_data_type"] = desc[0]["data_type"]
             desc[0]["data_type"] = _convert_tbe_type(args[i]["dtype"])
-            desc[0]["ori_format"] = desc[0]["format"]
+            desc[0]["ori_format"] = args[i].get("ori_format", desc[0]["format"])
             desc[0]["format"] = args[i]["format"]
-            desc[0]["ori_shape"] = copy_shape(desc[0]["shape"])
+            desc[0]["ori_shape"] = _covert_tbe_shape(args[i].get("ori_shape", desc[0]["shape"]))
             desc[0]["shape"] = list(args[i]["shape"])
 
 
@@ -493,14 +595,13 @@ def save(filename, contents):
         f.write(contents)
 
 
-def update_akg_info(args, kernel_name, info_path):
+def update_akg_info(args, info_path, kernel_name=None):
     """Update akg info base on the current inputs provided by GE"""
-    save_path = os.path.join(os.path.realpath(os.path.dirname(info_path)), kernel_name + ".info")
     with open(info_path, 'r') as f:
         info_str = f.read()
         desc = json.loads(info_str)
         desc["op_ori"] = desc["op"]
-        desc["op"] = kernel_name
+        desc["op"] = kernel_name if kernel_name else desc["op"]
         if "target_info" in desc:  # to delete
             del desc["target_info"]
         tensor_desc = {}  # {tensor_name: tensor_desc}
@@ -527,9 +628,7 @@ def update_akg_info(args, kernel_name, info_path):
         # Update data format to DefaultFormat
         convert_to_default_format(desc)
 
-        # Save the updated info file which will be compiled by AKG
-        save(save_path, json.dumps(desc))
-        return save_path
+        return desc
 
 
 def search_supported_types_formats(info):
@@ -625,26 +724,24 @@ def search_supported_types_formats(info):
 def op_select_format(*args, **kwags):
     """Entrance for format/data type selection, will invoked by GE"""
     info_path = args[-1]
-    with open(info_path, 'r') as f:
-        info_str = f.read()
-        desc = json.loads(info_str)
-        supported_io_type, supported_io_format = search_supported_types_formats(desc)
-        input_num = len(desc["input_desc"])
-        output_num = len(desc["output_desc"])
-        param_list = []
-        for i in range(input_num + output_num):
-            dtype_list = [item[i] for item in supported_io_type] * len(supported_io_format)
-            format_list = functools.reduce(lambda x, y: x + y,
-                                           [[item[i]] * len(supported_io_type) for item in supported_io_format])
-            classify = "input" + str(i) if i < input_num else "output" + str(i - input_num)
-            name = "x" + str(i) if i < input_num else "y" + str(i - input_num)
-            param = gen_param(classify=classify,
-                              name=name,
-                              datatype=",".join(dtype_list),
-                              format=",".join(format_list))
-            param_list.append(param)
-        param_dynamic_in_json = get_dynamic_param_in_json(param_list)
-        return param_dynamic_in_json
+    desc = update_akg_info(args, info_path)
+    supported_io_type, supported_io_format = search_supported_types_formats(desc)
+    input_num = len(desc["input_desc"])
+    output_num = len(desc["output_desc"])
+    param_list = []
+    for i in range(input_num + output_num):
+        dtype_list = [item[i] for item in supported_io_type] * len(supported_io_format)
+        format_list = functools.reduce(lambda x, y: x + y,
+                                       [[item[i]] * len(supported_io_type) for item in supported_io_format])
+        classify = "input" + str(i) if i < input_num else "output" + str(i - input_num)
+        name = "x" + str(i) if i < input_num else "y" + str(i - input_num)
+        param = gen_param(classify=classify,
+                          name=name,
+                          datatype=",".join(dtype_list),
+                          format=",".join(format_list))
+        param_list.append(param)
+    param_dynamic_in_json = get_dynamic_param_in_json(param_list)
+    return param_dynamic_in_json
 
 
 def custom(*args, **kwags):
@@ -654,7 +751,10 @@ def custom(*args, **kwags):
     if not isinstance(info_path, str):
         # in this case, kernel_name is not passed by GE, skip compiling
         return
-    real_info_path = update_akg_info(args, kernel_name, info_path)
+    updated_desc = update_akg_info(args, info_path, kernel_name)
+    real_info_path = os.path.join(os.path.realpath(os.path.dirname(info_path)), kernel_name + ".info")
+    # Save the updated info file which will be compiled by AKG
+    save(real_info_path, json.dumps(updated_desc))
     my_env = os.environ
     my_env["MS_COMPILER_CACHE_PATH"] = get_current_build_config("kernel_meta_parent_dir")
     my_env["KERNEL_META_DIR"] = "kernel_meta"
