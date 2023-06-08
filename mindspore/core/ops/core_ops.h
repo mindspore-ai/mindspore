@@ -1564,7 +1564,9 @@ GVAR_DEF(PrimitivePtr, kPrimVmapStackAssign, std::make_shared<Primitive>(kVmapSt
 GVAR_DEF(PrimitivePtr, kPrimVmapUnstackAssign, std::make_shared<Primitive>(kVmapUnstackAssign));
 GVAR_DEF(PrimitivePtr, kPrimSelect, std::make_shared<Primitive>(kSelect));
 GVAR_DEF(PrimitivePtr, kPrimCall, std::make_shared<Primitive>("call"));
-GVAR_DEF(PrimitivePtr, kPrimRaise, std::make_shared<Primitive>("raise"));
+GVAR_DEF(PrimitivePtr, kPrimRaise,
+         std::make_shared<Primitive>("raise", mindspore::HashMap<std::string, ValuePtr>(
+                                                {{std::string(GRAPH_FLAG_SIDE_EFFECT_IO), MakeValue(true)}})));
 GVAR_DEF(PrimitivePtr, kPrimJoinedStr, std::make_shared<Primitive>("JoinedStr"));
 GVAR_DEF(PrimitivePtr, kPrimCallInline, std::make_shared<Primitive>("call_inline"));
 

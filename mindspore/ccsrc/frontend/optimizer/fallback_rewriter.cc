@@ -1411,15 +1411,14 @@ class AfterOptARewriter : public BaseRewriter {
     // Pack local parameter values
     const auto key_value_tuple = fg->NewCNodeInOrder(key_value->values);
     // Build the PyExecute node for raise error.
-    const auto raise_pyexecute_node =
-      fg->NewCNodeInOrder({NewValueNode(prim::kPrimPyExecute), NewValueNode(script_str), key_value_name_tuple,
-                           key_value_tuple, inputs[inputs.size() - 1]});
+    const auto raise_pyexecute_node = fallback::CreatePyExecuteCNodeInOrder(
+      fg, NewValueNode(script_str), key_value_name_tuple, key_value_tuple, cnode->debug_info());
+    raise_pyexecute_node->add_input(inputs[inputs.size() - 1]);
     auto old_abs = cnode->abstract();
     MS_EXCEPTION_IF_NULL(old_abs);
     const auto &type = old_abs->BuildType();
     MS_EXCEPTION_IF_NULL(type);
     fallback::SetRealType(raise_pyexecute_node, type);
-    raise_pyexecute_node->set_debug_info(cnode->debug_info());
     MS_LOG(DEBUG) << "Raise convert to PyExecute node: " << raise_pyexecute_node->DebugString();
     return raise_pyexecute_node;
   }

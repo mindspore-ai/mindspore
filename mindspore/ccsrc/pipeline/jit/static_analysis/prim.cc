@@ -2960,21 +2960,9 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     const auto &cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
 
-    // Return Any directly if meet variable condition.
-    bool is_variable_condition = raiseutils::HasVariableCondition(cur_graph);
-    if (is_variable_condition) {
-      AbstractBasePtr res = std::make_shared<AbstractNegligible>();
-      auto prim = prim::kPrimRaise;
-      (void)prim->AddAttr(GRAPH_FLAG_SIDE_EFFECT_IO, MakeValue(true));
-      cnode->set_input(0, NewValueNode(prim));
-      cnode->set_has_side_effect_node(true);
-      cur_graph->set_has_side_effect_node(true);
-      auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
-      evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
-      return infer_result;
-    }
-
-    // Not accept if raise variable in variable condition.
+    // Return Any directly if meet variable condition or content.
+    std::vector<FuncGraphPtr> prev_graph;
+    bool is_variable_condition = raiseutils::HasVariableCondition(cur_graph, &prev_graph);
     auto &inputs = cnode->inputs();
     bool has_variable = false;
     size_t index_begin = 2;
@@ -2985,9 +2973,13 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
         break;
       }
     }
-    if (has_variable) {
-      MS_LOG(EXCEPTION) << "Should not raise with variable under a constant condition.\n\n"
-                        << trace::GetDebugInfo(node->debug_info());
+    if (is_variable_condition || has_variable) {
+      AbstractBasePtr res = std::make_shared<AbstractNegligible>();
+      cnode->set_has_side_effect_node(true);
+      cur_graph->set_has_side_effect_node(true);
+      auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
+      evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
+      return infer_result;
     }
 
     // Continue to handle raise in compile time.
