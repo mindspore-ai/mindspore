@@ -120,6 +120,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     AddFlag(&BenchmarkFlags::model_file_, "modelFile", "Input model file", "");
     AddFlag(&BenchmarkFlags::model_type_, "modelType", "Input model type. MindIR | MindIR_Lite", "MindIR");
     AddFlag(&BenchmarkFlags::in_data_file_, "inDataFile", "Input data file, if not set, use random input", "");
+    AddFlag(&BenchmarkFlags::group_info_file_, "GroupInfoFile", "Communication group info file", "");
     AddFlag(&BenchmarkFlags::config_file_, "configFile", "Config file", "");
     AddFlag(&BenchmarkFlags::device_, "device", "CPU | GPU | NPU | Ascend310 | Ascend310P | Auto", "CPU");
     AddFlag(&BenchmarkFlags::provider_, "provider", "device provider litert | tensorrt | mindrt", "litert");
@@ -188,6 +189,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   int workers_num_ = 2;
   std::string model_file_;
   std::string in_data_file_;
+  std::string group_info_file_;
   std::string config_file_;
   std::string model_type_;
   std::vector<std::string> input_data_list_;

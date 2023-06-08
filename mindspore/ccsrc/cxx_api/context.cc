@@ -46,6 +46,7 @@ struct Context::Data {
   std::vector<std::shared_ptr<DeviceInfoContext>> device_info_list;
   int32_t thread_num;
   bool enable_parallel_ = false;
+  std::string group_info_file_ = "";
   std::vector<int32_t> affinity_core_list_;
   int affinity_mode_ = 2;
 };
@@ -73,6 +74,16 @@ void Context::SetEnableParallel(bool is_parallel) {
 bool Context::GetEnableParallel() const {
   MS_EXCEPTION_IF_NULL(data_);
   return data_->enable_parallel_;
+}
+
+void Context::SetGroupInfoFile(std::string group_info_file) {
+  MS_EXCEPTION_IF_NULL(data_);
+  data_->group_info_file_ = group_info_file;
+}
+
+std::string Context::GetGroupInfoFile() const {
+  MS_EXCEPTION_IF_NULL(data_);
+  return data_->group_info_file_;
 }
 
 void Context::SetThreadAffinity(int mode) {

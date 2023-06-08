@@ -97,6 +97,22 @@ void Context::SetInterOpParallelNum(int32_t parallel_num) {
   data_->inter_op_parallel_num_ = parallel_num;
 }
 
+void Context::SetGroupInfoFile(std::string group_info_file) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return;
+  }
+  data_->group_info_file_ = group_info_file;
+}
+
+std::string Context::GetGroupInfoFile() const {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return "";
+  }
+  return data_->group_info_file_;
+}
+
 int32_t Context::GetInterOpParallelNum() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";

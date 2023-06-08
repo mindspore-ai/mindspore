@@ -39,6 +39,7 @@
 #include "src/common/utils.h"
 #include "include/api/types.h"
 #include "include/api/model.h"
+#include "include/api/context.h"
 #include "tools/common/opengl_util.h"
 #ifdef PARALLEL_INFERENCE
 #include "include/api/model_parallel_runner.h"

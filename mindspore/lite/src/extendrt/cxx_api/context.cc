@@ -87,6 +87,22 @@ int32_t Context::GetThreadNum() const {
   return data_->thread_num;
 }
 
+void Context::SetGroupInfoFile(std::string group_info_file) {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return;
+  }
+  data_->group_info_file_ = group_info_file;
+}
+
+std::string Context::GetGroupInfoFile() const {
+  if (data_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
+    return "";
+  }
+  return data_->group_info_file_;
+}
+
 void Context::SetInterOpParallelNum(int32_t parallel_num) {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
