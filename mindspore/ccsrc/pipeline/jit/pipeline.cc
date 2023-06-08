@@ -457,6 +457,15 @@ py::object GraphExecutorPy::GenerateArgumentsKey(const py::object &obj, const py
   kArgsCache[args_abs] = key_counter;
   kCellArgsMap[obj.ptr()] = args_abs;
   MS_LOG(INFO) << "Generate a new compile key for new args, key: " << key_counter;
+  if (IS_OUTPUT_ON(mindspore::kInfo)) {
+    std::ostringstream buffer;
+    buffer << "New cached args:"
+           << "\n";
+    for (size_t i = 0; i < args_abs.size(); ++i) {
+      buffer << "Arg[" << i << "]: " << args_abs[i]->ToString() << "\n";
+    }
+    MS_LOG(INFO) << buffer.str();
+  }
   return py::int_(key_counter++);
 }
 
