@@ -2641,17 +2641,13 @@ def atan2(input, other):
         - Arg `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
           If they have different data types, the lower precision data type will be converted to relatively the
           highest precision data type.
-        - The inputs must be two tensors or one tensor and one scalar.
-        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
+        - At least one of the `input` and `other` args is Tensor.
 
     Args:
         input (Tensor, Number.number): The input tensor or scalar.
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
             The data type should be one of the following types: float16, float32, float64
         other (Tensor, Number.number): The input tensor or scalar. It has the same shape with `input`.
-
-    Note:
-        At least one of the input args should be Tensor.
 
     Returns:
         Tensor or scalar, the shape is the same as the one after broadcasting,and the data type is same as `input`.
