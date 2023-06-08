@@ -23,42 +23,42 @@
 #include "infer/context.h"
 #include "src/extendrt/graph_compiler/compile_result.h"
 #include "src/extendrt/graph_compiler/single_graph_scheduler.h"
+#include "src/extendrt/graph_compiler/compile_option.h"
 
-namespace mindspore::infer {
-class DefaultGraphCompiler : public abstract::GraphCompiler {
+namespace mindspore::lite {
+class DefaultGraphCompiler : public infer::abstract::GraphCompiler {
  public:
   explicit DefaultGraphCompiler(const std::shared_ptr<Context> &context) : context_(context) {
     inner_context_ = nullptr;
   }
   ~DefaultGraphCompiler() override = default;
 
-  std::shared_ptr<abstract::ExecutionPlan> Compile(FuncGraphPtr graph) override;
+  std::shared_ptr<infer::abstract::ExecutionPlan> Compile(FuncGraphPtr graph) override;
 
  protected:
-  std::shared_ptr<abstract::ExecutionPlan> NonCFGCompile(const std::vector<GraphSegmentPtr> &graph_segments,
-                                                         const FuncGraphPtr &func_graph);
+  std::shared_ptr<infer::abstract::ExecutionPlan> NonCFGCompile(const std::vector<GraphSegmentPtr> &graph_segments,
+                                                                const FuncGraphPtr &func_graph);
 
   virtual std::vector<GraphSegmentPtr> Partition(const FuncGraphPtr &graph);
 
   CompileResultPtr Compile(const GraphSegmentPtr &segment, const std::vector<AnfNodePtr> &inputs,
                            const std::vector<AnfNodePtr> &outputs);
 
-  std::vector<abstract::Kernel *> Schedule(const CompileResultPtr &compile_result);
+  std::vector<InferKernel *> Schedule(const CompileResultPtr &compile_result);
 
  private:
-  abstract::Tensor *CreateTensor(const AnfNodePtr &node);
-  std::vector<abstract::Tensor *> CreateTensors(const std::vector<AnfNodePtr> &nodes);
+  InferTensor *CreateTensor(const AnfNodePtr &node);
+  std::vector<InferTensor *> CreateTensors(const std::vector<AnfNodePtr> &nodes);
   Status GetDTAndShapeFromParameter(const ParameterPtr &parameter, TypeId *data_type, ShapeVector *shape_vector);
   Status GetDTAndShapeFromAbTensor(const mindspore::abstract::AbstractTensorPtr &abstract, TypeId *data_type,
                                    ShapeVector *shape_vector);
 
  private:
-  mindspore::HashMap<AnfNodePtr, infer::abstract::Tensor *> anf_tensor_map_;
+  mindspore::HashMap<AnfNodePtr, InferTensor *> anf_tensor_map_;
   SingleGraphSchedulerPtr scheduler_{nullptr};
   const std::shared_ptr<Context> &context_;
   std::shared_ptr<mindspore::infer::abstract::Context> inner_context_;
-  abstract::CompileOption option_{};
 };
-}  // namespace mindspore::infer
+}  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_EXTENDRT_GRAPH_COMPILER_DEFAULT_GRAPH_COMPILER_H_

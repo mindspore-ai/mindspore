@@ -30,7 +30,7 @@
 #include "ops/primitive_c.h"
 
 namespace mindspore {
-namespace infer {
+namespace lite {
 namespace {
 constexpr char tab[] = "  ";
 
@@ -385,5 +385,5 @@ CompileResult::~CompileResult() {
   }
   arg_nodes_.clear();
 }
-}  // namespace infer
+}  // namespace lite
 }  // namespace mindspore

@@ -23,7 +23,7 @@
 namespace mindspore::kernel {
 std::shared_ptr<KernelMod> DefaultKernelLib::CreateKernelMod(const PrimitiveType &op_type, const KernelAttr &attr,
                                                              const Format &format, const std::string &backend) {
-  if (backend != infer::abstract::kBackendCPU) {
+  if (backend != kBackendCPU) {
     MS_LOG(INFO) << "DefaultKernelLib only support CPU backend, but got: " << backend << ".";
     return nullptr;
   }
@@ -44,8 +44,8 @@ std::shared_ptr<KernelMod> DefaultKernelLib::CreateKernelMod(const PrimitiveType
   return kernel_mod;
 }
 
-bool DefaultKernelLib::Support(const PrimitiveType &op_type, const KernelAttr &attr, const Format &format,
-                               const std::string &backend) const {
+bool DefaultKernelLib::Support(const PrimitiveType &op_type, const KernelAttr &attr, const std::string &backend,
+                               const Format &format) const {
   return DefaultKernelLib::CreateKernelMod(op_type, attr, format, backend) != nullptr;
 }
 

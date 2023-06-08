@@ -45,9 +45,9 @@ TypeId GetFirstFp32Fp16OrInt8Type(const KernelAttr &attr) {
 }
 }  // namespace
 
-bool NNAclLib::Support(const PrimitiveType &op_type, const KernelAttr &attr, const Format &format,
-                       const std::string &backend) const {
-  if (backend != infer::abstract::kBackendCPU) {
+bool NNACLLib::Support(const PrimitiveType &op_type, const KernelAttr &attr, const std::string &backend,
+                       const Format &format) const {
+  if (backend != kBackendCPU) {
     MS_LOG(INFO) << "NNACL only support CPU backend, but got: " << backend << ".";
     return false;
   }
@@ -65,7 +65,7 @@ bool NNAclLib::Support(const PrimitiveType &op_type, const KernelAttr &attr, con
   return lite::KernelRegistry::GetInstance()->SupportKernel(key);
 }
 
-LiteKernel *NNAclLib::CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
+LiteKernel *NNACLLib::CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
                                    const std::vector<InferTensor *> &outputs, const InferContext *ctx) const {
   if (!MatchFormat(spec.format, NHWC)) {
     MS_LOG(INFO) << "NNACL only support NHWC layout, but got " << FormatEnumToString(spec.format);
@@ -93,5 +93,5 @@ LiteKernel *NNAclLib::CreateKernel(const KernelSpec &spec, const std::vector<Inf
   return lite_kernel;
 }
 
-REG_KERNEL_LIB(kNNAclName, NNAclLib);
+REG_KERNEL_LIB(kNNACLLibName, NNACLLib);
 }  // namespace mindspore::kernel

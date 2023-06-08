@@ -21,8 +21,8 @@
 #include "src/litert/inner_context.h"
 
 namespace mindspore {
-namespace infer {
+namespace kernel {
 int CNodeInferShape(const CNodePtr &cnode, const std::vector<lite::Tensor *> &outputs);
-}  // namespace infer
+}  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_EXTENDRT_KERNEL_DEFAULT_CNODE_INFER_MANAGER_H_

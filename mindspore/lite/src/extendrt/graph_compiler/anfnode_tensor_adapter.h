@@ -26,7 +26,7 @@
 #include "include/api/status.h"
 
 namespace mindspore {
-namespace infer {
+namespace lite {
 class TensorAdapter;
 using TensorAdapterPtr = std::shared_ptr<TensorAdapter>;
 class TensorAdapter {
@@ -73,7 +73,7 @@ class TensorAdapter {
 
  public:
   Format format_{DEFAULT_FORMAT};
-  TensorCompressionType compress_type_{kNoCompression};
+  TensorCompressionType compress_type_ = TensorCompressionType::kNoCompression;
   TypeId data_type_{kTypeUnknown};
   bool is_const_{false};
   std::vector<int64_t> shape_{};
@@ -81,7 +81,7 @@ class TensorAdapter {
   size_t data_len_{0};
   bool own_data_{true};
 };
-}  // namespace infer
+}  // namespace lite
 }  // namespace mindspore
 
 #endif

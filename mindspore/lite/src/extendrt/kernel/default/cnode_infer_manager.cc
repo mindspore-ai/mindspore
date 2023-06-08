@@ -20,7 +20,7 @@
 #include "src/extendrt/graph_compiler/anfnode_tensor_adapter.h"
 
 namespace mindspore {
-namespace infer {
+namespace kernel {
 bool SetDTAndShapeFromAbTensorToLiteTensor(const AbstractBasePtr &abstract, lite::Tensor *tensor) {
   if (!utils::isa<mindspore::abstract::AbstractTensorPtr>(abstract)) {
     MS_LOG(ERROR) << "The abstract should be tensor, but got abstract : " << abstract;
@@ -28,7 +28,7 @@ bool SetDTAndShapeFromAbTensorToLiteTensor(const AbstractBasePtr &abstract, lite
   }
   ShapeVector shape_vector;
   TypeId data_type = kTypeUnknown;
-  auto ret = infer::TensorAdapter::GetDTAndShapeFromAbTensor(
+  auto ret = lite::TensorAdapter::GetDTAndShapeFromAbTensor(
     utils::cast<mindspore::abstract::AbstractTensorPtr>(abstract), &data_type, &shape_vector);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Get dtype and shape from abstract failed, abstract : " << abstract;
@@ -72,5 +72,5 @@ int CNodeInferShape(const CNodePtr &cnode, const std::vector<lite::Tensor *> &ou
   MS_LOG(ERROR) << "Unsupported abstract: " << abstract;
   return lite::RET_ERROR;
 }
-}  // namespace infer
+}  // namespace kernel
 }  // namespace mindspore

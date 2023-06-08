@@ -18,37 +18,32 @@
 #define MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_KERNEL_SELECTOR_H
 
 #include <vector>
+#include <memory>
 #include "src/extendrt/kernel/primitive_type.h"
 #include "kernel/common_utils.h"
 #include "src/infer/graph_compiler.h"
 #include "src/extendrt/kernel/kernel_lib.h"
 #include "src/infer/kernel.h"
+#include "src/extendrt/graph_compiler/compile_option.h"
 
 namespace mindspore::kernel {
 class KernelSelector {
  public:
-  explicit KernelSelector(const infer::abstract::CompileOption *compile_option) : compile_option_(compile_option) {}
+  explicit KernelSelector(const std::shared_ptr<lite::CompileOption> &compile_option)
+      : compile_option_(compile_option) {}
   virtual ~KernelSelector() = default;
   virtual LiteKernel *CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
                                    const std::vector<InferTensor *> &outputs, const InferContext *ctx) = 0;
 
  protected:
   std::vector<const KernelLib *> Candidates(const PrimitiveType &op_type, const KernelAttr &require,
-                                            bool match_format = false) {
-    std::vector<const KernelLib *> results;
-    for (const auto &iter : KernelLibRegister::Instance().GetAllLibs()) {
-      const auto *kernel_lib = iter.second;
-      Format select_format = match_format ? compile_option_->format : Format::DEFAULT_FORMAT;
-      if (kernel_lib->Support(op_type, require, select_format, compile_option_->backend)) {
-        results.emplace_back(kernel_lib);
-      }
-    }
-    return results;
-  }
+                                            bool match_format = false);
 
  protected:
-  const infer::abstract::CompileOption *compile_option_{nullptr};
+  const std::shared_ptr<lite::CompileOption> compile_option_{nullptr};
 };
+
+std::shared_ptr<KernelSelector> CreateKernelSelector(const std::shared_ptr<lite::CompileOption> &compile_option);
 }  // namespace mindspore::kernel
 
-#endif  // LITE_KERNEL_SELECTOR_H
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_KERNEL_SELECTOR_H

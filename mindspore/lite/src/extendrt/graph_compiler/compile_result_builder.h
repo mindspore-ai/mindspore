@@ -28,7 +28,7 @@
 #include "include/api/status.h"
 
 namespace mindspore {
-namespace infer {
+namespace lite {
 class CompileResultBuilder {
  public:
   explicit CompileResultBuilder(Format graph_format) : graph_format_(graph_format) {}
@@ -63,7 +63,7 @@ class CompileResultBuilder {
   Format graph_format_{DEFAULT_FORMAT};
   std::set<std::string> input_names_{};
 };
-}  // namespace infer
+}  // namespace lite
 }  // namespace mindspore
 
 #endif

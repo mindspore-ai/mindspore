@@ -22,18 +22,16 @@
 #include "src/extendrt/kernel/kernel_lib.h"
 #include "src/litert/kernel/cpu/nnacl/nnacl_kernel.h"
 #include "src/common/tensor_util.h"
-
-using mindspore::infer::abstract::Tensor;
+#include "src/extendrt/kernel/kernel_spec_infos.h"
 
 namespace mindspore {
 namespace kernel {
-constexpr char kNNAclName[] = "NNAcl";
-class NNAclLib : public KernelLib {
+class NNACLLib : public KernelLib {
  public:
-  NNAclLib() : KernelLib(kNNAclName, "CPU") {}
+  NNACLLib() : KernelLib(kNNACLLibName, kBackendCPU) {}
 
-  bool Support(const PrimitiveType &op_type, const KernelAttr &dt, const Format &format,
-               const std::string &backend) const override;
+  bool Support(const PrimitiveType &op_type, const KernelAttr &dt, const std::string &backend,
+               const Format &format = DEFAULT_FORMAT) const override;
   LiteKernel *CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
                            const std::vector<InferTensor *> &outputs, const InferContext *ctx) const override;
 };

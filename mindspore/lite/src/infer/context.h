@@ -20,8 +20,11 @@
 
 #include "litert/inner_context.h"
 
-namespace mindspore::infer::abstract {
+namespace mindspore {
+namespace infer::abstract {
 using Context = mindspore::lite::InnerContext;
-}  // namespace mindspore::infer::abstract
+}
+using InferContext = infer::abstract::Context;
+}  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_INFER_CONTEXT_H_

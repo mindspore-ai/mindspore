@@ -30,13 +30,13 @@
 #include "extendrt/graph_compiler/anfnode_tensor_adapter.h"
 #include "src/extendrt/graph_compiler/compile_result_builder.h"
 
-namespace mindspore::infer {
+namespace mindspore::lite {
 static const std::vector<PrimitivePtr> ms_infer_cut_list = {prim::kPrimReturn,   prim::kPrimPartial,
                                                             prim::kPrimSwitch,   prim::kPrimMakeTuple,
                                                             prim::kPrimBpropCut, prim::kPrimSwitchLayer};
 static constexpr auto ms_infer_backend_name = "mindspore_lite_backend";
 
-std::shared_ptr<abstract::ExecutionPlan> DefaultGraphCompiler::Compile(FuncGraphPtr graph) {
+std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::Compile(FuncGraphPtr graph) {
   MS_LOG(INFO) << "DefaultGraphCompiler::Compile";
 
   inner_context_ = ContextUtils::Convert(context_.get());
@@ -89,16 +89,16 @@ CompileResultPtr DefaultGraphCompiler::Compile(const GraphSegmentPtr &segment, c
   return builder->Build(segment, inputs, outputs);
 }
 
-std::vector<abstract::Kernel *> DefaultGraphCompiler::Schedule(const CompileResultPtr &compile_result) {
+std::vector<InferKernel *> DefaultGraphCompiler::Schedule(const CompileResultPtr &compile_result) {
   if (MS_UNLIKELY(scheduler_ == nullptr)) {
-    scheduler_ = std::make_shared<SingleGraphScheduler>(this->inner_context_.get(), option_);
+    scheduler_ = std::make_shared<SingleGraphScheduler>(this->inner_context_.get(), std::make_shared<CompileOption>());
   }
   return {scheduler_->Schedule(compile_result)};
 }
 
-std::shared_ptr<abstract::ExecutionPlan> DefaultGraphCompiler::NonCFGCompile(
+std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::NonCFGCompile(
   const std::vector<GraphSegmentPtr> &graph_segments, const FuncGraphPtr &func_graph) {
-  auto execution_plan = std::make_shared<ExecutionPlan>();
+  auto execution_plan = std::make_shared<infer::ExecutionPlan>();
   anf_tensor_map_.clear();
 
   // set func graph manager
@@ -121,7 +121,7 @@ std::shared_ptr<abstract::ExecutionPlan> DefaultGraphCompiler::NonCFGCompile(
     return nullptr;
   }
   graph_outputs.emplace_back(graph_output);
-  std::vector<abstract::Tensor *> graph_input_tensors;
+  std::vector<InferTensor *> graph_input_tensors;
   auto graph_output_tensors = CreateTensors(graph_outputs);
   if (graph_output_tensors.size() != graph_outputs.size()) {
     MS_LOG(ERROR) << "DefaultGraphCompiler::NonCFGCompile create graph output tensor failed";
@@ -137,7 +137,7 @@ std::shared_ptr<abstract::ExecutionPlan> DefaultGraphCompiler::NonCFGCompile(
   }
   execution_plan->SetOutputs(graph_output_tensors);
   execution_plan->SetContext(inner_context_);
-  auto *output_isolate_map = new std::unordered_map<abstract::Tensor *, abstract::Tensor *>();
+  auto *output_isolate_map = new std::unordered_map<InferTensor *, InferTensor *>();
   for (const auto &graph_segment : graph_segments) {
     if (graph_segment->nodes_.size() == 1) {
       auto node = graph_segment->nodes_[0];
@@ -199,7 +199,7 @@ std::shared_ptr<abstract::ExecutionPlan> DefaultGraphCompiler::NonCFGCompile(
   return execution_plan;
 }
 
-abstract::Tensor *DefaultGraphCompiler::CreateTensor(const AnfNodePtr &node) {
+InferTensor *DefaultGraphCompiler::CreateTensor(const AnfNodePtr &node) {
   if (node->isa<CNode>()) {
     auto cnode = node->cast<CNodePtr>();
     if (cnode == nullptr) {
@@ -287,16 +287,17 @@ Status DefaultGraphCompiler::GetDTAndShapeFromAbTensor(const mindspore::abstract
   return kSuccess;
 }
 
-std::vector<abstract::Tensor *> DefaultGraphCompiler::CreateTensors(const std::vector<AnfNodePtr> &nodes) {
-  std::vector<abstract::Tensor *> tensors;
+std::vector<InferTensor *> DefaultGraphCompiler::CreateTensors(const std::vector<AnfNodePtr> &nodes) {
+  std::vector<InferTensor *> tensors;
   std::transform(nodes.begin(), nodes.end(), std::back_inserter(tensors),
                  [this](const AnfNodePtr &node) { return this->CreateTensor(node); });
   return tensors;
 }
 
-static std::shared_ptr<abstract::GraphCompiler> DefaultGraphCompilerCreator(const std::shared_ptr<Context> &ctx) {
+static std::shared_ptr<infer::abstract::GraphCompiler> DefaultGraphCompilerCreator(
+  const std::shared_ptr<Context> &ctx) {
   auto graph_compiler = std::make_shared<DefaultGraphCompiler>(ctx);
   return graph_compiler;
 }
 REG_GRAPH_COMPILER(kDefaultCompiler, DefaultGraphCompilerCreator);
-}  // namespace mindspore::infer
+}  // namespace mindspore::lite
