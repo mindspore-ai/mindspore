@@ -49,6 +49,8 @@ bool Initialize() {
     exit(0);
     return true;
   }
+
+  MsException::Instance().CheckException();
   return true;
 }
 
