@@ -1315,13 +1315,13 @@ static void InsertAllGatherOp(const FuncGraphPtr &root, const std::string &group
 
 static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &parameter,
                                     const std::string &opt_shard_group) {
-  int32_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
   auto enable_opt_shard = ParallelContext::GetInstance()->enable_parallel_optimizer();
-  if ((opt_shard_group.empty() && split_stage_num <= 1) || (!enable_opt_shard)) {
+  if (!enable_opt_shard) {
     return;
   }
-
-  if (opt_shard_group.empty() && (!ParameterRequireGrad(parameter) || !root->has_flag(kTraining))) {
+  int32_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
+  if (opt_shard_group.empty() &&
+      (split_stage_num <= 1 || !ParameterRequireGrad(parameter) || !root->has_flag(kTraining))) {
     return;
   }
 
@@ -1624,7 +1624,7 @@ static std::shared_ptr<TensorLayout> FindNextLayout(const CNodePtr &cnode, bool 
       *next_is_reshape = true;
       continue;
     }
-    if (IsPrimitiveCNode(use_apply, prim::kPrimDepend) && node_pair.second != 1) {
+    if (IsOneOfPrimitiveCNode(use_apply, {prim::kPrimDepend, prim::kPrimUpdateState}) && node_pair.second != 1) {
       continue;
     }
     if (IsPrimitiveCNode(use_apply, prim::kPrimMakeTuple)) {
