@@ -328,6 +328,9 @@ ValuePtr StubNodeToValueInner(const ValuePtr &v) {
   } else if (utils::isa<ValueSequence>(v)) {
     const auto &value_seq = utils::cast<ValueSequencePtr>(v);
     const auto &values = value_seq->value();
+    if (!values.empty() && utils::isa<Scalar>(values[0])) {
+      return v;
+    }
     ValuePtrList value_list;
     (void)std::transform(values.begin(), values.end(), std::back_inserter(value_list),
                          [](const ValuePtr &value) { return StubNodeToValueInner(value); });
@@ -624,7 +627,7 @@ ValuePtr DataConvert::PyObjToValue(const py::object &obj, bool stub) {
   return converted_ret;
 }
 
-ValuePtr DataConvert::BaseRefToValue(const BaseRef &value, bool requires_grad) {
+ValuePtr DataConvert::BaseRefToValue(const BaseRef &value, bool requires_grad, bool is_out_sequence) {
   MS_EXCEPTION_IF_NULL(value);
   ValuePtr ret;
   if (utils::isa<tensor::TensorPtr>(value)) {
@@ -638,7 +641,7 @@ ValuePtr DataConvert::BaseRefToValue(const BaseRef &value, bool requires_grad) {
     ret = utils::cast<ValuePtr>(value);
   } else if (utils::isa<VectorRef>(value)) {
     auto vec_ref = utils::cast<VectorRef>(value);
-    ret = VectorRefToValue(vec_ref, requires_grad);
+    ret = VectorRefToValue(vec_ref, requires_grad, is_out_sequence);
   } else if (utils::isa<int>(value)) {
     ret = MakeValue(utils::cast<int>(value));
   } else if (utils::isa<float>(value)) {
@@ -653,12 +656,16 @@ ValuePtr DataConvert::BaseRefToValue(const BaseRef &value, bool requires_grad) {
   return ret;
 }
 
-ValuePtr DataConvert::VectorRefToValue(const VectorRef &vec_ref, bool requires_grad) {
+ValuePtr DataConvert::VectorRefToValue(const VectorRef &vec_ref, bool requires_grad, bool is_out_sequence) {
   MS_EXCEPTION_IF_NULL(vec_ref);
+
   size_t value_size = vec_ref.size();
+  if (value_size == 1 && !is_out_sequence) {
+    return BaseRefToValue(vec_ref[0], requires_grad, is_out_sequence);
+  }
   std::vector<ValuePtr> v_list(value_size);
   for (size_t i = 0; i < value_size; ++i) {
-    v_list[i] = BaseRefToValue(vec_ref[i], requires_grad);
+    v_list[i] = BaseRefToValue(vec_ref[i], requires_grad, is_out_sequence);
   }
   return std::make_shared<ValueTuple>(v_list);
 }

@@ -195,10 +195,6 @@ void ClearInputDeviceAddressDynamic(const KernelGraphPtr &graph, const DeviceCon
   }
 }
 
-bool OpInBlackList(const session::BackendOpRunInfoPtr &op_run_info) {
-  return IsOneOfCacheBlackList(op_run_info->base_op_run_info.op_name);
-}
-
 int GetExecutionMode() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -931,16 +927,15 @@ void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs,
   MS_EXCEPTION_IF_NULL(op_compiler_info);
   const auto &graph = op_compiler_info->graph_;
   MS_EXCEPTION_IF_NULL(graph);
-  const auto &output_nodes = op_compiler_info->graph_output_nodes_;
 
   runtime::UpdateDeviceAddress(graph, GetTensorWithoutValueMask(op_run_info), op_compiler_info->device_context_);
   // Create output tensor
-  UpdateOutput(output_nodes, outputs);
+  UpdateOutput(op_compiler_info->graph_output_nodes_, outputs);
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
-  auto run_op_context = std::make_shared<pynative::OpTaskContext>(graph->graph_id(), graph, output_nodes, op_run_info,
+  auto run_op_context = std::make_shared<pynative::OpTaskContext>(graph->graph_id(), graph, op_run_info,
                                                                   op_compiler_info->device_context_, infer_flag);
 
   // Save build task and run task.
@@ -970,12 +965,11 @@ void MindRTBackend::DispatchOpTaskDynamic(bool single_op_cache_hit, VectorRef *o
   MS_EXCEPTION_IF_NULL(op_compiler_info);
   const auto &graph = op_compiler_info->graph_;
   MS_EXCEPTION_IF_NULL(graph);
-  const auto &output_nodes = op_compiler_info->graph_output_nodes_;
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
-  auto run_op_context = std::make_shared<pynative::OpTaskContext>(graph->graph_id(), graph, output_nodes, op_run_info,
+  auto run_op_context = std::make_shared<pynative::OpTaskContext>(graph->graph_id(), graph, op_run_info,
                                                                   op_compiler_info->device_context_, infer_flag);
   run_op_context->set_op_compiler_info(op_compiler_info);
   run_op_context->set_device_address_list(device_address_list);
@@ -1010,8 +1004,8 @@ void MindRTBackend::RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr 
   auto &op_executor = runtime::OpExecutor::GetInstance();
   bool is_dynamic_shape = op_run_info->base_op_run_info.has_dynamic_output;
   bool async_exec_disabled = is_dynamic_shape || op_compiler_info->need_erase_ ||
-                             !op_run_info->base_op_run_info.lazy_build || OpInBlackList(op_run_info) ||
-                             GetExecutionMode() == kGraphMode || EnablePyNativeSyncRunning();
+                             !op_run_info->base_op_run_info.lazy_build || GetExecutionMode() == kGraphMode ||
+                             EnablePyNativeSyncRunning();
   if (!async_exec_disabled) {
     MS_LOG(DEBUG) << "Async exec enabled, op: " << op_run_info->base_op_run_info.op_name;
     DispatchOpTask(single_op_cache_hit, outputs, op_compiler_info, op_run_info);
@@ -1076,8 +1070,7 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
 
   bool is_dynamic_shape = op_run_info->base_op_run_info.has_dynamic_output;
   auto async_exec_disabled = is_dynamic_shape || !op_run_info->base_op_run_info.lazy_build ||
-                             OpInBlackList(op_run_info) || GetExecutionMode() == kGraphMode ||
-                             EnablePyNativeSyncRunning();
+                             GetExecutionMode() == kGraphMode || EnablePyNativeSyncRunning();
   auto device_context = op_compiler_info->device_context_;
   if (!single_op_cache_hit) {
     CompileSingleOpGraph(op_compiler_info->graph_, device_context, true);
