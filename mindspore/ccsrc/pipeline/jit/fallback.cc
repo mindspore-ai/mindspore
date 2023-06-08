@@ -79,11 +79,11 @@ std::string ConvertUnicodeStrToRealStr(const std::string &target) {
       try {
         script_buffer << char(std::stol(cur_str, nullptr, base_16));
       } catch (std::invalid_argument &) {
-        MS_LOG(ERROR) << "Invalid argument";
-      } catch (std::out_of_range) {
-        MS_LOG(ERROR) << "Out of range";
+        MS_LOG(EXCEPTION) << "Invalid argument";
+      } catch (std::out_of_range const &) {
+        MS_LOG(EXCEPTION) << "Out of range";
       } catch (...) {
-        MS_LOG(ERROR) << "Other unexpected error";
+        MS_LOG(EXCEPTION) << "Other unexpected error";
       }
     } else {
       script_buffer << cur_str;
