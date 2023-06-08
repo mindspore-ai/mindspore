@@ -16,8 +16,8 @@
 
 #include "plugin/device/gpu/kernel/arrays/tensor_scatter_arithmetic_gpu_kernel.h"
 #include <functional>
-#include "mindspore/core/ops/base_operator.h"
 #include "mindspore/core/abstract/utils.h"
+#include "mindspore/core/ops/base_operator.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
@@ -27,18 +27,6 @@ namespace kernel {
     &TensorScatterArithmeticGpuKernelMod::LaunchKernel<T, S>
 
 constexpr auto kTensorScatterUpdate = "TensorScatterUpdate";
-
-void TensorScatterArithmeticGpuKernelMod::FreeResource() {
-  if (indices_stride_ != nullptr) {
-    device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(indices_stride_);
-    indices_stride_ = nullptr;
-  }
-
-  if (work_shape_ != nullptr) {
-    device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(work_shape_);
-    work_shape_ = nullptr;
-  }
-}
 
 bool TensorScatterArithmeticGpuKernelMod::GetOpType(const BaseOperatorPtr &base_operator) {
   static const std::map<std::string, TensorScatterArithmeticFunctionType> tensor_scatter_op_map = {
@@ -63,16 +51,17 @@ bool TensorScatterArithmeticGpuKernelMod::GetOpType(const BaseOperatorPtr &base_
 
 void TensorScatterArithmeticGpuKernelMod::UpdateSize() {
   // Calculate indices dim 0/1
-  indices_dim_0_ = indices_shape_[0];
-  indices_dim_1_ = indices_shape_[indices_shape_.size() - 1];
+  indices_dim_0_ = static_cast<size_t>(indices_shape_[0]);
+  indices_dim_1_ = static_cast<size_t>(indices_shape_[indices_shape_.size() - 1]);
   // Calculate block_size
-  block_size_ = 1;
+  int64_t block_size = 1;
   for (size_t i = indices_dim_1_; i < output_shape_.size(); i++) {
-    block_size_ *= output_shape_[i];
+    block_size *= output_shape_[i];
   }
+  block_size_ = static_cast<size_t>(block_size);
   // Calculate indices_stride
   vec_indices_stride_.resize(indices_dim_1_, 0);
-  vec_indices_stride_[indices_dim_1_ - 1] = block_size_;
+  vec_indices_stride_[indices_dim_1_ - 1] = block_size;
   for (size_t i = indices_dim_1_ - 1; i > 0; --i) {
     vec_indices_stride_[i - 1] = vec_indices_stride_[i] * output_shape_[i];
   }
@@ -81,6 +70,7 @@ void TensorScatterArithmeticGpuKernelMod::UpdateSize() {
 bool TensorScatterArithmeticGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                                const std::vector<KernelTensorPtr> &inputs,
                                                const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
@@ -99,6 +89,8 @@ bool TensorScatterArithmeticGpuKernelMod::Init(const BaseOperatorPtr &base_opera
     MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the data type of input args not supports Complex.";
     return false;
   }
+  data_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
+  indices_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex1)->GetDtype());
   return true;
 }
 
@@ -109,54 +101,25 @@ int TensorScatterArithmeticGpuKernelMod::Resize(const BaseOperatorPtr &base_oper
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  FreeResource();
-  workspace_size_list_.clear();
-  vec_work_shape_.clear();
-  memcpy_flag_ = false;
-  data_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
-  indices_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex1)->GetDtype());
 
-  input_shape_.clear();
-  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
-  input_size_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>());
+  input_shape_ = inputs.at(kIndex0)->GetShapeVector();
+  indices_shape_ = inputs.at(kIndex1)->GetShapeVector();
+  update_shape_ = inputs.at(kIndex2)->GetShapeVector();
 
-  indices_shape_.clear();
-  auto indices_shape = inputs.at(kIndex1)->GetShapeVector();
-  constexpr size_t k_min_indices_rank = 2;
-  // To correspondence with other backend, We need to except ValueError, so just give exception info for dimension
-  // checking.
-  if (indices_shape.size() < k_min_indices_rank) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "' , the dimension of 'indices' must be at least 2, but got "
-                             << indices_shape.size();
-  }
-  (void)std::transform(indices_shape.begin(), indices_shape.end(), std::back_inserter(indices_shape_), LongToSize);
+  input_size_ = static_cast<size_t>(
+    std::accumulate(input_shape_.begin(), input_shape_.end(), int64_t(1), std::multiplies<int64_t>()));
+  update_size_ = static_cast<size_t>(
+    std::accumulate(update_shape_.begin(), update_shape_.end(), int64_t(1), std::multiplies<int64_t>()));
 
-  update_shape_.clear();
-  auto update_shapes = inputs.at(kIndex2)->GetShapeVector();
-  (void)std::transform(update_shapes.begin(), update_shapes.end(), std::back_inserter(update_shape_), LongToSize);
-  update_size_ = std::accumulate(update_shape_.begin(), update_shape_.end(), size_t(1), std::multiplies<size_t>());
-
-  output_shape_.clear();
-  auto output_shapes = outputs.at(kIndex0)->GetShapeVector();
-  (void)std::transform(output_shapes.begin(), output_shapes.end(), std::back_inserter(output_shape_), LongToSize);
-  output_size_ = std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<size_t>());
-  vec_work_shape_ = input_shape_;
+  output_shape_ = outputs.at(kIndex0)->GetShapeVector();
+  output_size_ =
+    static_cast<size_t>(std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<int64_t>()));
   UpdateSize();
-  const size_t indices_len = indices_unit_size_ * vec_indices_stride_.size();
-  indices_stride_ = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(indices_len);
-  if (indices_stride_ == nullptr) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the memory alloc of indices_stride_ must be successful, but failed, got size: "
-                      << indices_len;
-  }
-  const size_t vec_work_len = indices_unit_size_ * vec_work_shape_.size();
-  work_shape_ = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(vec_work_len);
-  if (work_shape_ == nullptr) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the memory alloc of work_shape_ must be successful, but failed, got size: "
-                      << vec_work_len;
-  }
+
+  size_t vec_indices_stride__len = indices_unit_size_ * vec_indices_stride_.size();
+  workspace_size_list_.push_back(vec_indices_stride__len);
+  size_t work_shape_len = indices_unit_size_ * input_shape_.size();
+  workspace_size_list_.push_back(work_shape_len);
   return KRET_OK;
 }
 template <typename T>
@@ -166,29 +129,27 @@ template <typename T, typename S>
 bool TensorScatterArithmeticGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                        const std::vector<AddressPtr> &workspace,
                                                        const std::vector<AddressPtr> &outputs) {
-  VARIABLE_NOT_USED(workspace);
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   S *indices = GetDeviceAddress<S>(inputs, kIndex1);
   T *update = GetDeviceAddress<T>(inputs, kIndex2);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
+  S *indices_stride_device = GetDeviceAddress<S>(workspace, kIndex0);
+  S *work_shape_device = GetDeviceAddress<S>(workspace, kIndex1);
 
-  if (!memcpy_flag_) {
-    const size_t indices_len = indices_unit_size_ * vec_indices_stride_.size();
-    std::vector<S> vec_indices_stride_s = std::vector<S>(vec_indices_stride_.begin(), vec_indices_stride_.end());
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(indices_stride_, vec_indices_stride_s.data(), indices_len, cudaMemcpyHostToDevice,
-                      reinterpret_cast<cudaStream_t>(stream_ptr_)),
-      "TensorScatterArithmeticGpuKernelMod cudaMemcpy failed in TensorScatterArithmeticGpuKernelMod::Launch.");
-
-    const size_t vec_work_len = indices_unit_size_ * vec_work_shape_.size();
-    std::vector<S> vec_work_shape_s = std::vector<S>(vec_work_shape_.begin(), vec_work_shape_.end());
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(work_shape_, vec_work_shape_s.data(), vec_work_len, cudaMemcpyHostToDevice,
-                      reinterpret_cast<cudaStream_t>(stream_ptr_)),
-      "TensorScatterArithmeticGpuKernelMod cudaMemcpy failed in TensorScatterArithmeticGpuKernelMod::Launch.");
-    memcpy_flag_ = true;
-  }
-
+  std::vector<S> indices_stride{};
+  (void)std::transform(vec_indices_stride_.begin(), vec_indices_stride_.end(), std::back_inserter(indices_stride),
+                       [](const int64_t value) { return static_cast<S>(value); });
+  std::vector<S> work_shape{};
+  (void)std::transform(input_shape_.begin(), input_shape_.end(), std::back_inserter(work_shape),
+                       [](const int64_t value) { return static_cast<S>(value); });
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(indices_stride_device, indices_stride.data(), workspace[kIndex0]->size, cudaMemcpyHostToDevice,
+                    reinterpret_cast<cudaStream_t>(stream_ptr_)),
+    "TensorScatterArithmeticGpuKernelMod cudaMemcpy failed in TensorScatterArithmeticGpuKernelMod::Launch.");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(work_shape_device, work_shape.data(), workspace[kIndex1]->size, cudaMemcpyHostToDevice,
+                    reinterpret_cast<cudaStream_t>(stream_ptr_)),
+    "TensorScatterArithmeticGpuKernelMod cudaMemcpy failed in TensorScatterArithmeticGpuKernelMod::Launch.");
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(output, input, input_size_ * data_unit_size_, cudaMemcpyDeviceToDevice,
                     reinterpret_cast<cudaStream_t>(stream_ptr_)),
@@ -197,15 +158,13 @@ bool TensorScatterArithmeticGpuKernelMod::LaunchKernel(const std::vector<Address
   if constexpr ((std::is_same_v<T, Complex<float>>) || (std::is_same_v<T, Complex<double>>)) {
     if (kernel_name_ == kTensorScatterUpdate) {
       CallTensorScatterUpdate(input, indices, update, output, block_size_, update_size_, output_size_, indices_dim_0_,
-                              indices_dim_1_, reinterpret_cast<S *>(indices_stride_),
-                              reinterpret_cast<S *>(work_shape_), device_id_,
+                              indices_dim_1_, indices_stride_device, work_shape_device, device_id_,
                               reinterpret_cast<cudaStream_t>(stream_ptr_));
       return true;
     }
   } else {
     TensorScatterArithmetic(op_func_type_, input, indices, update, output, block_size_, update_size_, output_size_,
-                            indices_dim_0_, indices_dim_1_, reinterpret_cast<S *>(indices_stride_),
-                            reinterpret_cast<S *>(work_shape_), device_id_,
+                            indices_dim_0_, indices_dim_1_, indices_stride_device, work_shape_device, device_id_,
                             reinterpret_cast<cudaStream_t>(stream_ptr_));
   }
   return true;

@@ -18,14 +18,14 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_TOPK_GPU_KERNEL_H_
 
 #include <limits>
-#include <vector>
 #include <map>
 #include <memory>
-#include "plugin/device/gpu/kernel/gpu_kernel.h"
-#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
+#include <vector>
 #include "ops/topk.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cast_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/topk_impl.cuh"
+#include "plugin/device/gpu/kernel/gpu_kernel.h"
+#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -70,10 +70,6 @@ class TopKGpuKernelMod : public NativeGpuKernelMod {
       Cast(outer_size_ * k_, casted_float32_top_k_output, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
     } else {
       T init_k = std::numeric_limits<T>::lowest();
-      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMemcpyAsync(&k_cut, k, sizeof(S), cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(stream_ptr)),
-        "cudaMemcpyAsync k_cut failed");
-      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaDeviceSynchronize(), "cudaDeviceSyncFailed - TopK");
       FastTopK(outer_size_, inner_size_, input_addr, k_cut, output_addr, indices, init_k,
                reinterpret_cast<cudaStream_t>(stream_ptr));
     }

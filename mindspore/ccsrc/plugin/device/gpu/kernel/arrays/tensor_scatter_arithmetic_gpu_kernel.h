@@ -17,16 +17,16 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_TENSOR_TENSOR_SCATTER_ARITHMETIC_GPU_KERNEL_H
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_TENSOR_TENSOR_SCATTER_ARITHMETIC_GPU_KERNEL_H
 
-#include <vector>
 #include <algorithm>
-#include <string>
 #include <map>
-#include <utility>
 #include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+#include "kernel/common_utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/tensor_scatter_arithmetic.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -34,7 +34,7 @@ class TensorScatterArithmeticGpuKernelMod : public NativeGpuKernelMod,
                                             public MatchKernelHelper<TensorScatterArithmeticGpuKernelMod> {
  public:
   TensorScatterArithmeticGpuKernelMod() = default;
-  ~TensorScatterArithmeticGpuKernelMod() override { FreeResource(); }
+  ~TensorScatterArithmeticGpuKernelMod() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -54,17 +54,14 @@ class TensorScatterArithmeticGpuKernelMod : public NativeGpuKernelMod,
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
-  void FreeResource();
   bool GetOpType(const BaseOperatorPtr &base_operator);
   void UpdateSize();
-  template <typename S>
-  void CheckIndicesValid(int *has_error, S *indices);
+
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
   using SupportList = std::vector<std::pair<KernelAttr, TensorScatterArithmeticGpuKernelMod::KernelRunFunc>>;
 
-  bool memcpy_flag_{false};
   size_t input_size_{1};
   size_t update_size_{1};
   size_t output_size_{1};
@@ -74,20 +71,12 @@ class TensorScatterArithmeticGpuKernelMod : public NativeGpuKernelMod,
   size_t data_unit_size_{0};
   size_t indices_unit_size_{0};
   TensorScatterArithmeticFunctionType op_func_type_{TENSOR_SCATTER_FUNC_INVALID_TYPE};
-  std::vector<size_t> update_shape_;
-  std::vector<size_t> indices_shape_;
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> output_shape_;
-  std::vector<size_t> vec_indices_stride_;
-  std::vector<size_t> vec_work_shape_;
-  void *indices_stride_{nullptr};
-  void *work_shape_{nullptr};
+  std::vector<int64_t> update_shape_;
+  std::vector<int64_t> indices_shape_;
+  std::vector<int64_t> input_shape_;
+  std::vector<int64_t> output_shape_;
+  std::vector<int64_t> vec_indices_stride_;
   void *stream_ptr_{nullptr};
-  size_t slice_size_{1};
-  size_t batch_size_{1};
-  size_t inner_size_{1};
-  size_t total_batch_size_{1};
-  std::vector<size_t> batch_strides_;
 };
 }  // namespace kernel
 }  // namespace mindspore
