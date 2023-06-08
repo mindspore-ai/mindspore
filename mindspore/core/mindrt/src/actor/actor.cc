@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ ActorBase::~ActorBase() {}
 
 void ActorBase::Spawn(const std::shared_ptr<ActorBase>, std::unique_ptr<MailBox> mailboxPtr) {
   // lock here or await(). and unlock at Quit() or at await.
-  waiterLock.lock();
+  waiterLock.Wait();
   this->mailbox = std::move(mailboxPtr);
 }
 
@@ -39,21 +39,8 @@ void ActorBase::Await() {
   std::string actorName = id.Name();
   // lock here or at spawn(). and unlock here or at worker(). wait for the worker to finish.
   MS_LOG(DEBUG) << "ACTOR is waiting for terminate to finish. a=" << actorName.c_str();
-
-#ifdef _MSC_VER
-#define TRY_LOCK_INTERVAL 10
-  while (true) {
-    if (waiterLock.try_lock()) {
-      waiterLock.unlock();
-      break;
-    } else {
-      std::this_thread::sleep_for(std::chrono::milliseconds(TRY_LOCK_INTERVAL));
-    }
-  }
-#else
-  waiterLock.lock();
-  waiterLock.unlock();
-#endif
+  waiterLock.Wait();
+  waiterLock.Signal();
 
   // mailbox's hook may hold the actor reference, we need explicitly free the mailbox to avoid the memory leak. the
   // details can refer to the comments in ActorMgr::Spawn
@@ -87,7 +74,7 @@ int ActorBase::EnqueMessage(std::unique_ptr<MessageBase> msg) const {
 void ActorBase::Quit() {
   Finalize();
   // lock at spawn(), unlock here.
-  waiterLock.unlock();
+  waiterLock.Signal();
 }
 
 void ActorBase::Run() {
