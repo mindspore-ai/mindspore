@@ -1460,6 +1460,13 @@ def diagonal(x, offset=0, axis1=0, axis2=1):
     return res.astype(dtype)
 
 
+def diagonal_scatter(input, src, offset, dim1=0, dim2=1):
+    r"""
+    Embed `src` into the diagonal of `input` according to the `dim1` and `dim2`.
+    """
+    return F.diagonal_scatter(input, src, offset, dim1, dim2)
+
+
 def digamma(input):
     """
     Computes the logarithmic derivative of the gamma function on input.
@@ -2147,6 +2154,20 @@ def nansum(input, axis=None, keepdims=False, *, dtype=None):
     Computes sum of all elements, treating NaNs as zero.
     """
     return F.nansum(input, axis=axis, keepdims=keepdims, dtype=dtype)
+
+
+def nanmean(input, axis=None, keepdims=False, *, dtype=None):
+    r"""
+    Computes the mean of input tensor, ignoring NaN.
+    """
+    return F.nanmean(input, axis, keepdims, dtype=dtype)
+
+
+def nanmedian(input, axis=-1, keepdims=False):
+    r"""
+    Computes the median and indices of input tensor, ignoring NaN.
+    """
+    return F.nanmedian(input, axis, keepdims)
 
 
 def repeat(x, repeats, axis=None):

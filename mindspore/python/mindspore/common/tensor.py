@@ -2746,6 +2746,13 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         res = tensor_operator_registry.get('tensor_slice')(res, begin, size)
         return res.astype(dtype)
 
+    def diagonal_scatter(self, src, offset=0, dim1=0, dim2=1):
+        r"""
+        For details, please refer to :func:`mindspore.ops.diagonal_scatter`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('diagonal_scatter')(self, src, offset, dim1, dim2)
+
     def trace(self, offset=0, axis1=0, axis2=1, dtype=None):
         """
         Return the sum along diagonals of the tensor.
@@ -3203,6 +3210,20 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         self._init_check()
         return tensor_operator_registry.get('nansum')(self, axis=axis, keepdims=keepdims, dtype=dtype)
+
+    def nanmean(self, axis=None, keepdims=False, *, dtype=None):
+        r"""
+        For details, please refer to :func:`mindspore.ops.nanmean`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('nanmean')(self, axis, keepdims, dtype=dtype)
+
+    def nanmedian(self, axis=-1, keepdims=False):
+        r"""
+        For details, please refer to :func:`mindspore.ops.nanmedian`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('nanmedian')(self, axis, keepdims)
 
     def repeat(self, repeats, axis=None):
         """

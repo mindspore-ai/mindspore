@@ -4600,43 +4600,99 @@ def median(input, axis=-1, keepdims=False):
     return median_(input)
 
 
-def nanmedian(x, axis=-1, keepdims=False):
+def nanmedian(input, axis=-1, keepdims=False):
     r"""
-    Computes the median and indices of input tensor, ignoring NaN.
+    Computes the median and indices of `input` , ignoring NaN.
+    If all elements in the reduced dimensions are NaN, the result will be NaN.
+
+    .. warning::
+        - `indices` does not necessarily contain the first occurrence of each median value found in the `input`,
+          unless it is unique.
+        - The specific implementation of this API is device-specific. The results may be different on CPU and GPU.
 
     Args:
-        x (Tensor): A Tensor of any dimension whose data type is int16, int32, int64, float32 or float64.
-        axis (int, optional): The dimension need to reduce. Default: -1.
-        keepdims (bool, optional): Whether the output tensor needs to retain `axis` dimension or not.
-            Default: ``False``.
+        input (Tensor): The input tensor to calculate the median and indices.
+        axis (int, optional): The dimension need to calculate median and indices.
+            Default: ``-1`` , calculate the last dimension.
+        keepdims (bool, optional): Whether the output tensor needs to retain dimension or not.
+            Default: ``False``, not to retain dimensions.
 
     Returns:
-        Tensor, has the same dtype as `x`. If `keepdims` is true,
-        has the same shape as `x` with dimension `axis` being 1.
-        Otherwise, dimension `axis` is reduced.
+        Tensor, the median of input along the specified dimension, has the same dtype as `input`.
 
-        indices (Tensor), has the same shape as the `y`, but dtype is int64.
+        indices (Tensor), median index, dtype is int64.
 
     Raises:
-        TypeError: If dtype of `x` is not one of the following: int16, int32, int64, float32, float64.
-        TypeError: If input `x` is not a Tensor.
-        TypeError: If `axis` is not a int.
-        TypeError: If `keepdims` is not a bool.
-        ValueError: If `axis` is not in range of [-x.dim, x.dim-1].
+        TypeError: If dtype of `input` is not one of the following: int16, int32, int64, float32, float64.
+        TypeError: If input `input` is not a Tensor.
+        TypeError: If `axis` is not int.
+        TypeError: If `keepdims` is not bool.
+        ValueError: If `axis` is not in range of [-r, r) which `r` means the rank of `input`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([[0.5, -1.1, float('nan')], [3.4, float('nan'), 0.7]]).astype(np.float32))
-        >>> y, indices = ops.nanmedian(x, axis=0, keepdims=False)
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> x = Tensor([[0.57, 0.11, float("nan")],
+        >>>             [0.38, float("nan"), float("nan")],
+        >>>             [0.36, 0.16, float("nan")]], mindspore.float32)
+        >>> y, idx = ops.nanmedian(x, axis=0, keepdims=False)
         >>> print(y)
-        [ 0.5 -1.1  0.7]
-        >>> print(indices)
-        [0 0 1]
+        [0.38 0.11  nan]
+        >>> print(idx)
+        [1 0 0]
     """
     nanmedian_ = _get_cache_prim(Median)(global_median=False, axis=axis, keep_dims=keepdims, ignore_nan=True)
-    return nanmedian_(x)
+    return nanmedian_(input)
+
+
+def nanmean(input, axis=None, keepdims=False, *, dtype=None):
+    r"""
+    Computes the mean of `input` , ignoring NaN.
+    If all elements in the reduced dimensions are NaN, the result will be NaN.
+
+    Args:
+        input (Tensor): The input tensor to calculate the mean.
+        axis (int, optional): The dimension need to reduce. Default: ``None``, all dimensions are reduced.
+        keepdims (bool, optional): Whether the output tensor needs to retain dimension or not.
+            Default: ``False``, not to retain dimensions.
+
+    Keyword Args:
+        dtype (mindspore.dtype, optional): The output Tensor data type. Default: ``None`` , the data type of output
+        Tensor is same as the input.
+
+    Returns:
+        Tensor, the mean of input `input` in the given dimension axis, while ignoring NaNs.
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+        TypeError: If `axis` is not int.
+        TypeError: If `keepdims` is not bool.
+        TypeError: If `dtype` is not mindspore dtype.
+        ValueError: If `axis` is not in range of [-r, r) which `r` means the rank of `input`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> x = Tensor([[0.5, -1.1, float('nan')], [3.4, float('nan'), float('nan')]], mindspore.float32)
+        >>> y = ops.nanmean(x, axis=0, keepdims=False)
+        >>> print(y)
+        [ 1.95 -1.1    nan]
+    """
+    _check_is_tensor("input", input, "nanmean")
+    _check_repeat_in_axis(axis, input.ndim, "nanmean")
+    nan_sum = nansum(input, axis, keepdims)
+    is_num = isnan(input).logical_not()
+    is_num = is_num.sum(axis=axis, keepdims=keepdims)
+    out = nan_sum / is_num
+    if dtype is not None:
+        return out.astype(dtype)
+    return out
 
 
 def orgqr(input, input2):
@@ -11597,6 +11653,8 @@ __all__ = [
     'multiply',
     'nan_to_num',
     'nansum',
+    'nanmean',
+    'nanmedian',
     'digamma',
     'lgamma',
     'tensor_div',

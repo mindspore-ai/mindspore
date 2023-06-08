@@ -110,8 +110,9 @@ class Dropout(Cell):
     r"""
     Dropout layer for the input.
 
-    Dropout is a regularization method. The operator randomly sets some neurons output to 0
-    according to the probability of discarding the probability of discarding.
+    Dropout is a means of regularization that reduces overfitting by preventing correlations between neuronal nodes.
+    The operator randomly sets some neurons output to 0 according to `p`, which means the probability of discarding
+    during training. And the return will be multiplied by :math:`\frac{1}{1-p}` during training.
     During the reasoning, this layer returns the same Tensor as the `x`.
 
     This technique is proposed in paper `Dropout: A Simple Way to Prevent Neural Networks from Overfitting
