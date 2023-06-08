@@ -43,7 +43,10 @@ link_directories(${MS_CCSRC_BUILD_PATH}/minddata/mindrecord)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/kernels/image)
 file(GLOB_RECURSE UT_CORE_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./core/abstract/*.cc ./core/utils/*.cc
-        ./ir/dtype/*.cc ./ir/*.cc ./mindapi/*.cc ./mindir/*.cc ./ops/test_ops_fake_quant_param.cc ./base/*.cc)
+        ./ir/dtype/*.cc ./ir/*.cc ./mindapi/*.cc ./mindir/*.cc ./ops/*.cc ./base/*.cc)
+file(GLOB_RECURSE UT_CORE_OPS_TODO_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./ops/todo/*.cc)
+list(REMOVE_ITEM UT_CORE_SRCS ${UT_CORE_OPS_TODO_SRCS})
+
 file(GLOB_RECURSE UT_MINDDATA_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./dataset/*.cc ./mindrecord/*.cc)
 file(GLOB_RECURSE UT_MINDDATA_COMMON_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./dataset/common/*.cc)
 file(GLOB_RECURSE UT_API_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./cxx_api/*.cc ./c_api/*.cc)
@@ -57,7 +60,6 @@ file(GLOB_RECURSE UT_BACKEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./backend
 file(GLOB_RECURSE UT_PS_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./ps/*.cc ./plugin/device/cpu/hal/*.cc)
 file(GLOB_RECURSE UT_OTHERS_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./debug/*.cc ./side_effect/*.cc ./utils/*.cc
         ./place/*.cc)
-
 file(GLOB_RECURSE UT_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./stub/*.cc ./common/*.cc)
 
 if(NOT ENABLE_CPU OR WIN32 OR APPLE)

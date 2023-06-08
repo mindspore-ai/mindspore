@@ -44,6 +44,7 @@ python ${PROJECT_PATH}/build/mindspore/tests/ut/cpp/data/dataset/testAlbum/gen_j
 
 RET=0
 if [ $# -gt 0 ]; then
+  ./ut_CORE_tests --gtest_filter=$1
   ./ut_API_tests --gtest_filter=$1
   ./ut_FRONTEND_tests --gtest_filter=$1
   ./ut_OLD_BACKEND_tests --gtest_filter=$1
@@ -56,7 +57,7 @@ if [ $# -gt 0 ]; then
 fi
 
 pids=()
-tasks=(./ut_API_tests ./ut_FRONTEND_tests ./ut_OLD_BACKEND_tests ./ut_BACKEND_tests ./ut_PS_tests ./ut_OTHERS_tests ./ut_MINDDATA0_tests ./ut_MINDDATA1_tests)
+tasks=(./ut_CORE_tests ./ut_API_tests ./ut_FRONTEND_tests ./ut_OLD_BACKEND_tests ./ut_BACKEND_tests ./ut_PS_tests ./ut_OTHERS_tests ./ut_MINDDATA0_tests ./ut_MINDDATA1_tests)
 set +e
 for task in "${tasks[@]}"; do
   $task &
