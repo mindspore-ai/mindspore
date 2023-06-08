@@ -513,6 +513,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Returns a view of a matrix (2-D tensor) conjugated and transposed.
         x.H is equivalent to `mindspore.Tensor.swapaxes(0, 1).conj()` for complex matrices and
         `mindspore.Tensor.swapaxes(0, 1)` for real matrices.
+
+        Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
         """
         if self.ndim != 2:
             raise ValueError(f"For tensor.H only support 2-D Tensor, but got {self.ndim}-D.")
