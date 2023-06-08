@@ -28,6 +28,7 @@
 #include "tools/common/protobuf_utils.h"
 #include "tools/common/tensor_util.h"
 #include "ops/tensor_list_stack.h"
+#include "ops/concat.h"
 #include "ir/func_graph.h"
 #include "tools/converter/quantizer/quant_param_holder.h"
 #include "tools/converter/converter_context.h"
@@ -54,6 +55,32 @@ constexpr int kTensorListDatasize = 3;
 constexpr int kTypeIndex = 0;
 constexpr int kElementShapeIndex = 1;
 constexpr int kTensorsNumIndex = 2;
+
+int InsertConcatForMMCVModulatedDeformConv2d(const FuncGraphPtr &func_graph) {
+  MS_ASSERT(func_graph != nullptr);
+  auto cnodes = func_graph->GetOrderedCnodes();
+  constexpr size_t has_bias_count = 6;
+  constexpr int c_axis = 1;
+  for (auto &cnode : cnodes) {
+    if (!opt::CheckPrimitiveType(cnode, prim::kPrimDeformableConv2d)) {
+      continue;
+    }
+    auto concat_prim = std::make_shared<ops::Concat>();
+    concat_prim->set_axis(c_axis);
+    auto concat_prim_c = concat_prim->GetPrim();
+    MS_CHECK_TRUE_RET(concat_prim_c != nullptr, RET_ERROR);
+
+    auto concat_op = func_graph->NewCNode(concat_prim_c, {cnode->input(2), cnode->input(3)});
+    // features, filter, offsets, bias(optional)
+    std::vector<AnfNodePtr> new_input = {cnode->input(0), cnode->input(1), cnode->input(4), concat_op};
+    if (cnode->inputs().size() == has_bias_count) {
+      new_input.push_back(cnode->input(has_bias_count - 1));
+    }
+    cnode->set_inputs(new_input);
+  }
+  opt::UpdateManager(func_graph);
+  return RET_OK;
+}
 
 int Onnx2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs, const converter::ConverterParameters &flag) {
   for (const auto &func_graph : all_func_graphs) {
@@ -85,6 +112,11 @@ int Onnx2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs, const converte
     }
     if (!OnnxQuantizeLinearAdjust::Adjust(func_graph)) {
       MS_LOG(ERROR) << "onnx quantize linear adjust failed.";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+      return RET_ERROR;
+    }
+    if (InsertConcatForMMCVModulatedDeformConv2d(func_graph) != RET_OK) {
+      MS_LOG(ERROR) << "Insert concat for MMCVModulatedDeformConv2d failed.";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
       return RET_ERROR;
     }

@@ -2917,6 +2917,7 @@ OperatorPtr DfGraphConvertor::ConvertCNode(const CNodePtr node) {
   // get corresponding OpAdapter
   OpAdapterPtr adpt = FindAdapter(node, training_);
   if (adpt == nullptr) {
+    MS_LOG(ERROR) << "Cannot get adapter for " << node->fullname_with_scope();
     error_ = NOT_FOUND;
     return nullptr;
   }

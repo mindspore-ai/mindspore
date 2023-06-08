@@ -114,6 +114,10 @@ class MS_CORE_API CheckAndConvertUtils {
 
     return arg_value;
   }
+  static int64_t CheckAttrInt64Positive(const std::string &op, const ValuePtr &attr, const std::string &attr_name);
+  static std::vector<int64_t> CheckAttrTuple(const PrimitivePtr &prim, const std::string &attr_name,
+                                             size_t num_element);
+
   static std::string CheckString(const std::string &arg_name, const std::string &arg_value,
                                  const std::set<std::string> &check_list, const std::string &prim_name);
 
