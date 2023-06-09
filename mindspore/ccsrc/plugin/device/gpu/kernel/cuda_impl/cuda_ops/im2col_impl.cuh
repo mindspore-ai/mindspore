@@ -23,7 +23,7 @@ CUDA_LIB_EXPORT cudaError_t CudaIm2Col(const int batches, const int x_channel, c
                                        const int y_out_plane, const int y_height, const int y_width,
                                        const int kernel_height, const int kernel_width, const int stride_height,
                                        const int stride_width, const int dilation_height, const int dilation_width,
-                                       const int pad_height, const int pad_width, T *x, T *y, const uint32_t device_id,
-                                       cudaStream_t stream);
+                                       const int pad_height, const int pad_width, T *x, T *y, int *const maxBlockSize,
+                                       const uint32_t device_id, cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_Im2Col_CUH_

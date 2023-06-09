@@ -6198,7 +6198,7 @@ def expand(input_x, size):
     return expand_op(input_x, size)
 
 
-@constexpr
+@_primexpr
 def _check_fold_param(param, param_name):
     """Check the parameters of fold op."""
     validator.check_value_type(param_name, param, [int, list, tuple], 'fold')
@@ -6209,6 +6209,14 @@ def _check_fold_param(param, param_name):
     else:
         validator.check_positive_int_sequence(param, param_name, 'fold')
     return param
+
+
+@_primexpr
+def _check_fold_input(input):
+    """Check the rank of fold's input."""
+    if not isinstance(input, (Tensor, Tensor_)) or F.rank(input) != 3:
+        raise ValueError(
+            f"For array function 'fold', 'input' must be a 3-D tensor.")
 
 
 def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
@@ -6252,23 +6260,20 @@ def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
         >>> print(output.shape)
         (16, 16, 8, 8)
     """
-    if not isinstance(input, (Tensor, Tensor_)) or F.rank(input) != 3:
-        raise ValueError(
-            f"For array function 'fold', 'input' must be a 3-D tensor."
-        )
+    _check_fold_input(input)
     kernel_size = _check_fold_param(kernel_size, "kernel_size")
     dilation = _check_fold_param(dilation, "dilation")
     padding = _check_fold_param(padding, "padding")
     stride = _check_fold_param(stride, "stride")
     fold_op = _get_cache_prim(Col2Im)(kernel_size, dilation, padding, stride)
     input_shape = F.shape(input)
-    k = (kernel_size[0] * kernel_size[-1])
+    k = kernel_size[0] * kernel_size[-1]
     r_shape = input_shape[:1] + (-1, k) + input_shape[-1:]
     input = F.reshape(input, r_shape)
     return fold_op(input, output_size)
 
 
-@constexpr
+@_primexpr
 def _check_unfold_params(param, param_name, param_size):
     """Check the parameters of unfold op."""
     validator.check_value_type(param_name, param, [int, tuple, list], 'unfold')
