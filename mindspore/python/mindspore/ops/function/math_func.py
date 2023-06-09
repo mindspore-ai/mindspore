@@ -8444,8 +8444,17 @@ def matmul(input, other):
     if not (isinstance(input, Tensor) and isinstance(other, Tensor)):
         raise TypeError("For matmul op, inputs must be all tensors.")
 
-    dtype_op = _get_cache_prim(P.DType)()
     rank_op = _get_cache_prim(P.Rank)()
+    input_rank, other_rank = rank_op(input), rank_op(other)
+    if input_rank == 2 and other_rank == 2:
+        _matmul = _get_cache_prim(P.MatMul)(False, False)
+        return _matmul(input, other)
+
+    if input_rank == other_rank and input_rank > 2:
+        _batch_matmul = _get_cache_prim(P.BatchMatMul)(False, False)
+        return _batch_matmul(input, other)
+
+    dtype_op = _get_cache_prim(P.DType)()
     shape_op = _get_cache_prim(P.Shape)()
     reshape_op = _get_cache_prim(P.Reshape)()
 
