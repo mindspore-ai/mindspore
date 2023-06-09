@@ -17,6 +17,13 @@
     :exclude-members: infer_value, infer_shape, infer_dtype, target
     :members:
 
+{% elif fullname in ["mindspore.ops.MultitypeFuncGraph"] %}
+{{ fullname | underline }}
+
+.. autoclass:: {{ name }}
+    :exclude-members: set_doc_url
+    :members:
+
 {% elif fullname=="mindspore.Tensor" %}
 {{ fullname | underline }}
 

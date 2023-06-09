@@ -10636,11 +10636,12 @@ class MaxPoolWithArgmaxV2(Primitive):
         strides (Union[int, tuple[int]], optional): The distance of kernel moving, an int number that represents
             not only the height of movement but also the width of movement, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: None, meaning that `strides = kernel_size`.
-        pads (Union[int, tuple[int]]): An int number that represents the depth, height and width of movement are both
-            strides, or a tuple of two int numbers that represent depth, height and width of movement respectively.
-        dilation (Union[int, tuple[int]]): Control the stride of elements in the kernel. Default: '(1, 1)'.
-        ceil_mode (bool): Whether to use ceil instead of floor to calculate output shape. Default: False.
-        argmax_type (mindspore.dtype) : The dtype for argmax. Default: mstype.int64. [Disabled in Ascend.]
+        pads (Union[int, tuple[int]], optional): An int number that represents the depth, height and width of movement
+            are both strides, or a tuple of two int numbers that represent depth, height and width of movement
+            respectively. Default: 0.
+        dilation (Union[int, tuple[int]], optional): Control the stride of elements in the kernel. Default: '(1, 1)'.
+        ceil_mode (bool, optional): Whether to use ceil instead of floor to calculate output shape. Default: False.
+        argmax_type (mindspore.dtype, optional) : The dtype for argmax. Default: mstype.int64. [Disabled in Ascend.]
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})` with data type of int8,

@@ -1004,7 +1004,9 @@ def set_context(**kwargs):
             Memory reuse:
 
             - mem_Reuse: controls whether the memory reuse function is turned on. When set to True,
-            - the memory reuse function is turned on. When set to False, the memory reuse function is turned off.
+              the memory reuse function is turned on. When set to False, the memory reuse function is turned off.
+              For more details, please refer to `Configure RDR and memory reuse
+              <https://www.mindspore.cn/tutorials/experts/en/r2.0/debug/custom_debug.html>`_ .
 
         precompile_only (bool): Whether to only precompile the network. Default: False.
             If set to True, the network will only be compiled, not executed.
