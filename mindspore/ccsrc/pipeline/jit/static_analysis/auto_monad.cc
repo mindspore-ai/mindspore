@@ -1355,6 +1355,21 @@ class AutoMonadConverter {
 
     // Check all cnodes in order list.
     for (auto &cnode : func_graph_->order_list()) {
+      // Process param.value()  Load(param, U) ---> Load(param, GetUniverse())
+      if (IsPrimitiveCNode(cnode, prim::kPrimLoad)) {
+        const size_t param_index = 1;
+        const size_t monad_index = 2;
+        auto param = cnode->input(param_index);
+        auto load_monad = cnode->input(monad_index);
+        auto param_abs = param->abstract();
+        MS_EXCEPTION_IF_NULL(param_abs);
+        if (param_abs->isa<abstract::AbstractRefTensor>() && IsValueNode<UMonad>(load_monad)) {
+          auto current_u = GetUniverse();
+          manager_->SetEdge(cnode, SizeToInt(monad_index), current_u);
+          u_ = UpdateState(current_u, cnode);
+          continue;
+        }
+      }
       auto &info = GetEffectInfo(cnode);
       has_effect_cnodes_ = (has_effect_cnodes_ || HasSideEffects(info));
       if (cnode->func_graph() != func_graph_) {
