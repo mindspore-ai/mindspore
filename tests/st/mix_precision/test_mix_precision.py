@@ -17,6 +17,8 @@ import os
 import re
 import pytest
 import numpy as np
+import mindspore as ms
+from mindspore.amp import auto_mixed_precision
 from mindspore.common import dtype
 from mindspore import nn
 from mindspore import ops
@@ -277,4 +279,58 @@ def test_custom_mix_precision():
     model_pynative = Model(net_pynative, loss_pynative, opt_pynative, amp_level="O0")
     model_pynative.train(1, dataset2, dataset_sink_mode=False)
     out_pynative = model_pynative.predict(Tensor(input_data))
+    allclose_nparray(out_graph.asnumpy(), out_pynative.asnumpy(), 0.001, 0.001)
+
+
+class TestOp(ms.nn.Cell):
+    def __init__(self):
+        super(TestOp, self).__init__()
+        self.weight = ms.Parameter(ms.Tensor(np.ones([32, 32, 3, 3]), ms.float32))
+
+    def construct(self, x):
+        ndim = x.ndim
+        if ndim == 3:
+            x = x.expand_dims(0)
+            output = ms.ops.conv2d(x, self.weight)
+            output = output.squeeze(0)
+        else:
+            output = ms.ops.conv2d(x, self.weight)
+        return output
+
+
+class TestNet(ms.nn.Cell):
+    def __init__(self):
+        super(TestNet, self).__init__()
+        self.op = TestOp()
+
+    def construct(self, x):
+        out = self.op(x)
+        return out
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_all_subgraph_mix_precision():
+    """
+    Feature: Test all subgraph mixed precision
+    Description: Test all subgraph mixed precision
+    Expectation: success.
+    """
+    test_net = TestNet()
+    mix_net = auto_mixed_precision(test_net, 'O2')
+    x = ms.Tensor(np.ones([10, 32, 32, 32]), ms.float32)
+
+    # graph mode
+    context.set_context(mode=context.GRAPH_MODE)
+    os.environ['MS_DEV_AMP_ENABLE_ALL_FG'] = '1'
+    out_graph = mix_net(x)
+    os.environ['MS_DEV_AMP_ENABLE_ALL_FG'] = ''
+
+    # pynative mode
+    context.set_context(mode=context.PYNATIVE_MODE)
+    out_pynative = mix_net(x)
     allclose_nparray(out_graph.asnumpy(), out_pynative.asnumpy(), 0.001, 0.001)
