@@ -572,7 +572,7 @@ kernel::AddressPtrList MallocOutputMemoryForDeviceAddress(
 
 device::DeviceAddressPtr CreateTensorDeviceAddressWithTensorAndCachedInfo(
   const OpCompilerInfoPtr &op_compiler_info, const TensorPtr &tensor,
-  const device::DeviceAddressPtr &cached_device_address, const AnfNodePtr &node) {
+  const device::DeviceAddressPtr &cached_device_address, const AnfNodePtr &node, bool skip_sync) {
   auto &device_context = op_compiler_info->device_context_;
   auto format = cached_device_address->format();
   auto dtype = cached_device_address->type_id();
@@ -582,17 +582,14 @@ device::DeviceAddressPtr CreateTensorDeviceAddressWithTensorAndCachedInfo(
   auto new_device_address =
     device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, format, dtype, tensor->shape());
   new_device_address->set_from_persistent_mem(tensor->is_parameter());
-
-  if (!device_context->device_res_manager_->AllocateMemory(new_device_address.get())) {
-    MS_LOG(EXCEPTION) << "Device(id:" << device_context->device_context_key().device_id_
-                      << ") memory isn't enough and alloc failed, kernel name: " << node->DebugString()
-                      << ", alloc size: " << new_device_address->GetSize() << "B.";
-  }
-
-  auto &ignore_list = op_compiler_info->ignore_host_to_device_inputs_;
-  if (ignore_list.empty() || ignore_list.find(cached_device_address) == ignore_list.end()) {
-    if (!new_device_address->SyncHostToDevice(shape, tensor_size, dtype, tensor->data_c(),
-                                              tensor->device_info().host_format_)) {
+  if (!skip_sync) {
+    if (!device_context->device_res_manager_->AllocateMemory(new_device_address.get())) {
+      MS_LOG(EXCEPTION) << "Device(id:" << device_context->device_context_key().device_id_
+                        << ") memory isn't enough and alloc failed, kernel name: " << node->DebugString()
+                        << ", alloc size: " << new_device_address->GetSize() << "B.";
+    }
+    if (!new_device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(node, 0), tensor_size, dtype,
+                                              tensor->data_c(), tensor->device_info().host_format_)) {
       MS_LOG(EXCEPTION) << "SyncHostToDevice failed";
     }
   }
@@ -650,14 +647,22 @@ void UpdateInputInCompileInfo(const OpCompilerInfoPtr &op_compiler_info, const s
     MS_EXCEPTION_IF_NULL(input_tensor);
     auto device_sync = input_tensor->device_address();
     auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(device_sync);
+    auto skip_sync = true;
+    auto &ignore_list = op_compiler_info->ignore_host_to_device_inputs_;
+    if (ignore_list.empty() || ignore_list.find(op_compiler_info->inputs_[i]) == ignore_list.end()) {
+      skip_sync = false;
+    }
     if (device_address != nullptr) {
       // Update cached input info by input tensor info
       UpdateTensorCache(op_compiler_info->device_context_, device_address, op_compiler_info->inputs_[i], input_tensor,
                         op_compiler_info->graph_->inputs()[i]);
+      if (skip_sync) {
+        (*address_map_to_tensor)[op_compiler_info->inputs_[i]] = input_tensor;
+      }
     } else {
       // Create new device address using tensor and cached device address
       auto new_device_address = CreateTensorDeviceAddressWithTensorAndCachedInfo(
-        op_compiler_info, input_tensor, op_compiler_info->inputs_[i], op_compiler_info->graph_->inputs()[i]);
+        op_compiler_info, input_tensor, op_compiler_info->inputs_[i], op_compiler_info->graph_->inputs()[i], skip_sync);
       input_tensor->set_device_address(new_device_address);
       (*address_map_to_tensor)[op_compiler_info->inputs_[i]] = input_tensor;
     }
