@@ -248,6 +248,9 @@ CNodePtr FindNodeWithMircoSize(const AnfNodePtr &node_user, const NodeUsersMap &
   while (!visited.empty()) {
     auto cur_node = visited.front();
     visited.pop();
+    if (node_users_map.find(cur_node) == node_users_map.end()) {
+      continue;
+    }
     auto users = node_users_map.at(cur_node);
     for (auto &temp_user : users) {
       auto cnode = temp_user.first->cast<CNodePtr>();
