@@ -19,7 +19,6 @@ from functools import partial
 from itertools import compress
 
 import numpy as np
-from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.common.tensor import Tensor
@@ -909,9 +908,6 @@ def real_axes(ndim_orig, ndim_out, axes_orig):
     axes = tuple(range(_diff))
     axes_orig = map(partial(operator.add, _diff), axes_orig)
     return axes + tuple(axes_orig)
-
-
-check_axis_valid_const = constexpr(validator.check_axis_valid)
 
 
 @_primexpr

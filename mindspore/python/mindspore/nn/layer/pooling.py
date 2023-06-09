@@ -1179,23 +1179,23 @@ class AvgPool1d(_PoolNd):
 @_primexpr
 def _adaptive_shape_check(in_shape, output_size, prim_name):
     """Check shape."""
-    msg_prefix = "For {}, the".format(prim_name)
+    msg_prefix = f"For {prim_name}, the"
     if len(in_shape) != 3:
-        raise ValueError("{} input must has 3 dim, but got {}.".format(msg_prefix, len(in_shape)))
+        raise ValueError(f"{msg_prefix} input must has 3 dim, but got {len(in_shape)}.")
     if in_shape[2] < output_size:
-        raise ValueError("{} input's last dimension must be greater or equal to "
-                         "output size {}, but got {}.".format(msg_prefix, output_size, in_shape[2]))
+        raise ValueError(f"{msg_prefix} input's last dimension must be greater or equal to "
+                         f"output size {output_size}, but got {in_shape[2]}.")
     if in_shape[2] % output_size != 0:
-        raise ValueError("{} input's last dimension must be divisible by "
-                         "output size {}, but got {}.".format(msg_prefix, output_size, in_shape[2]))
+        raise ValueError(f"{msg_prefix} input's last dimension must be divisible by "
+                         f"output size {output_size}, but got {in_shape[2]}.")
 
 
 @constexpr
 def _adaptive_dtype_check(x_dtype, prim_name):
     """Check dtype."""
     if x_dtype not in [mstype.float16, mstype.float32]:
-        raise TypeError("For {}, the x_dtype must be float16 or float32, "
-                        "but got {}.".format(prim_name, x_dtype))
+        raise TypeError(f"For {prim_name}, the x_dtype must be float16 or float32, "
+                        f"but got {x_dtype}.")
 
 
 class AdaptiveAvgPool1d(Cell):

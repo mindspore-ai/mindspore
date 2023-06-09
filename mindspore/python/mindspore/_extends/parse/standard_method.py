@@ -553,7 +553,7 @@ def transpose(x, *axis):
         (3, 2, 1)
     """
     ndim = F.rank(x)
-    perm = check_transpose_axis_const(axis, ndim)
+    perm = validator.check_transpose_axis(axis, ndim)
     return F.transpose(x, perm)
 
 
@@ -1295,7 +1295,7 @@ def permute(input, *axis):
     Permutes the dimensions of the input tensor according to input permutation.
     """
     ndim = F.rank(input)
-    perm = check_transpose_axis_const(axis, ndim)
+    perm = validator.check_transpose_axis(axis, ndim)
     return F.permute(input, perm)
 
 
@@ -1830,7 +1830,7 @@ def searchsorted(x, v, side='left', sorter=None):
     """
     def get_log2_size(size):
         """Get log2 size"""
-        log2_res = F.log2(F.cast(Tensor(size), mstype.float32))
+        log2_res = F.log2(F.cast(size, mstype.float32))
         ceil_res = F.ceil(log2_res)
         cast_res = F.cast(ceil_res, mstype.int64)
         return cast_res
@@ -2130,7 +2130,8 @@ def _check_sum_to_size(size, input_dim, shape_input):
 def _count_axes(size, input_shape, shape_input):
     """Count the sum axes for sum_to_size."""
     axes = []
-    for i, element in enumerate(size):
+    for i in range(len(size)):
+        element = size[i]
         if element != input_shape[i] and element == 1:
             axes.append(i)
         elif element != input_shape[i]:
@@ -2149,6 +2150,7 @@ def sum_to_size(input, *size):
     if len(size) < input.ndim:
         pre_axis = tuple(axis for axis in range(input.ndim - len(size)))
         input = input.sum(pre_axis)
+
     axes = _count_axes(size, input.shape, shape_input)
     if axes:
         return input.sum(tuple(axes), keepdims=True)
@@ -3317,7 +3319,6 @@ def check_view_shape(x):
 
 
 check_astype_dtype_const = constexpr(validator.check_astype_dtype)
-check_transpose_axis_const = constexpr(validator.check_transpose_axis)
 max_ = constexpr(validator.max_)
 min_ = constexpr(validator.min_)
 expanded_shape = validator.expanded_shape

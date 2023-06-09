@@ -135,3 +135,8 @@ def generate_shape_index(out_shape, indices_shape, axis, batch_dims=0):
     index = tuple(range(out_rank))
     perm = index[:batch_dims] + perm_part1 + index[batch_dims:axis] + index[axis + ind_rank - batch_dims:]
     return perm
+
+
+def ms_arrange(x):
+    out = [i for i in range(x)]
+    return out

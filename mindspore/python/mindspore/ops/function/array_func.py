@@ -60,6 +60,7 @@ from mindspore.common import Tensor
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore import _checkparam as validator
 from mindspore._c_expression import Tensor as Tensor_
+from mindspore.ops._utils.utils import ms_arrange
 
 tuple_to_tensor_ = TupleToTensor()
 eye_ = P.Eye()
@@ -5274,7 +5275,8 @@ def _split_sub_tensors(x, split_size_or_sections, axis):
     strides = _list_comprehensions(x.ndim, 1, True)
     begin = _list_comprehensions(x.ndim, 0)
     end = _list_comprehensions(x.shape)
-    for i, idx in enumerate(new_indices):
+    for i in ms_arrange(len(new_indices)):
+        idx = new_indices[i]
         begin[axis] = 0 if i == 0 else new_indices[i - 1]
         end[axis] = idx
         sliced_tensor = strided_slice(x, tuple(begin), tuple(end), strides)
@@ -5495,7 +5497,7 @@ def _canonicalize_axis(axis, ndim):
     raise ValueError(f"duplicate axis in {axis}.")
 
 
-@constexpr
+@_primexpr
 def _list_comprehensions(obj, item=None, return_tuple=False):
     """
     Generates a new list or tuple by list comprehension.
@@ -5513,7 +5515,9 @@ def _list_comprehensions(obj, item=None, return_tuple=False):
     """
     lst = obj
     if isinstance(obj, int):
-        lst = np.arange(obj)
+        lst = []
+        for i in ms_arrange(obj):
+            lst.append(i)
     if item is None:
         res = list(lst)
     else:
@@ -5523,7 +5527,7 @@ def _list_comprehensions(obj, item=None, return_tuple=False):
     return res
 
 
-@constexpr
+@_primexpr
 def _tuple_setitem(tup, idx, value):
     """
     Returns a tuple with specified `idx` set to `value`.
@@ -5546,7 +5550,8 @@ def _tensor_split_sub_tensors(x, indices_or_sections, axis):
     strides = _list_comprehensions(x.ndim, 1, True)
     begin = _list_comprehensions(x.ndim, 0)
     end = _list_comprehensions(x.shape)
-    for i, idx in enumerate(indices_or_sections):
+    for i in ms_arrange(len(indices_or_sections)):
+        idx = indices_or_sections[i]
         begin[axis] = 0 if i == 0 else indices_or_sections[i - 1]
         end[axis] = idx
         sliced_tensor = strided_slice(x, tuple(begin), tuple(end), strides)
@@ -6407,7 +6412,7 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
     return out
 
 
-@constexpr
+@_primexpr
 def _check_diagonal_axes(dim1, dim2, x_ndim):
     """Check the parameters of unfold op."""
     axes = validator.check_axis_valid((dim1, dim2), x_ndim)
@@ -6462,7 +6467,7 @@ def diagonal(input, offset=0, dim1=0, dim2=1):
 
     axes = _check_diagonal_axes(dim1, dim2, x_ndim)
     perm = ()
-    for i in np.arange(x_ndim):
+    for i in ms_arrange(x_ndim):
         if i not in axes:
             perm += (i,)
     perm += axes
@@ -6491,7 +6496,7 @@ def diagonal(input, offset=0, dim1=0, dim2=1):
     res = _get_cache_prim(P.ReduceSum)()(prod_val.astype(mstype.float32), -1)
 
     begin = ()
-    for _ in np.arange((x_ndim - 2)):
+    for _ in ms_arrange(x_ndim - 2):
         begin += (0,)
     last_dim_begin = np.max((0, -offset)).astype(np.int64)
     begin += (last_dim_begin,)
@@ -6844,7 +6849,7 @@ def moveaxis(x, source, destination):
     return movedim(x, source, destination)
 
 
-@constexpr
+@_primexpr
 def _check_swapaxes_axis(axes, ndim):
     return validator.check_swapaxes_axis(axes, ndim)
 
@@ -6937,7 +6942,7 @@ def _check_is_int(arg_value, arg_name, op_name):
     return arg_value
 
 
-@constexpr
+@_primexpr
 def _check_positive_int(arg_value, arg_name, op_name):
     arg_value = validator.check_positive_int(arg_value, arg_name, op_name)
     return arg_value

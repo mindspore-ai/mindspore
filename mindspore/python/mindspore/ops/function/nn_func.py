@@ -53,15 +53,13 @@ tuple_to_tensor_ = TupleToTensor()
 tensor_to_tuple_ = TensorToTuple()
 cast_ = P.Cast()
 sigmoid_ = NN_OPS.Sigmoid()
-check_positive_int_const = constexpr(validator.check_positive_int)
-check_positive_int_sequence_const = constexpr(
-    validator.check_positive_int_sequence)
-check_positive_float_const = constexpr(validator.check_positive_float)
-check_positive_float_sequence_const = constexpr(
-    validator.check_positive_float_sequence)
+check_positive_int_const = validator.check_positive_int
+check_positive_int_sequence_const = validator.check_positive_int_sequence
+check_positive_float_const = validator.check_positive_float
+check_positive_float_sequence_const = validator.check_positive_float_sequence
 check_bool_const = constexpr(validator.check_bool)
-check_int_const = constexpr(validator.check_is_int)
-check_non_negative_float_const = constexpr(validator.check_non_negative_float)
+check_int_const = validator.check_is_int
+check_non_negative_float_const = validator.check_non_negative_float
 check_string_const = constexpr(validator.check_string)
 
 
@@ -323,7 +321,7 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
     return input_x
 
 
-@constexpr
+@_primexpr
 def _check_avgpool_2d_kernel_size(kernel_size):
     """check and calculate the avgpool2d kernel_size"""
     if isinstance(kernel_size, int):
@@ -340,7 +338,7 @@ def _check_avgpool_2d_kernel_size(kernel_size):
     return kernel_size
 
 
-@constexpr
+@_primexpr
 def _check_avgpool_2d_stride(stride):
     """check and calculate the avgpool2d stride"""
     if isinstance(stride, int):
@@ -357,7 +355,7 @@ def _check_avgpool_2d_stride(stride):
     return stride
 
 
-@constexpr
+@_primexpr
 def _check_avgpool_2d_padding(padding):
     """check and calculate the avgpool2d padding"""
     if isinstance(padding, int):
@@ -374,7 +372,7 @@ def _check_avgpool_2d_padding(padding):
     return padding
 
 
-@constexpr
+@_primexpr
 def _check_avg_pool2d_type_and_value(ceil_mode, count_include_pad, divisor_override):
     """check the type of avgpool2d input"""
     validator.check_value_type('ceil_mode', ceil_mode, bool, 'avg_pool2d')
@@ -567,7 +565,7 @@ def is_ascend_backend():
     return context.get_context('device_target') == 'Ascend'
 
 
-@constexpr
+@_primexpr
 def _check_adaptive_max_pool1d_output_size(output_size):
     """Check the output_size value in adaptive_max_pool1d op."""
     validator.check_int(output_size, 1, validator.GE, "output_size", 'adaptive_max_pool1d')
@@ -1494,7 +1492,7 @@ def fast_gelu(x):
     return fast_gelu_(x)
 
 
-@constexpr
+@_primexpr
 def _check_float_range_inc_neither(arg_value, lower_limit, upper_limit, arg_name=None, prim_name=None):
     """
     Method for checking whether input value is in float range inc neither.
@@ -3092,7 +3090,7 @@ def pdist(input, p=2.0):
     return pdist_(input)
 
 
-@constexpr
+@_primexpr
 def _check_pad_inputs(padding):
     """check the input of pad"""
     if len(padding) % 2 != 0:
@@ -4109,7 +4107,7 @@ def mish(x):
     return mish_(x)
 
 
-@constexpr
+@_primexpr
 def _check_value_type(arg_name, arg_value, valid_types, prim_name=None):
     """Checks whether a value is instance of some types."""
     return validator.check_value_type(arg_name, arg_value, valid_types, prim_name)
@@ -5672,7 +5670,7 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     return output
 
 
-@constexpr
+@_primexpr
 def _check_positive_int(arg_value, arg_name=None, prim_name=None):
     validator.check_positive_int(arg_value, arg_name=arg_name, prim_name=prim_name)
 
@@ -6620,7 +6618,7 @@ def _scaled_dot_product_attention(query, key, value, attn_mask, dropout_p, is_ca
     return (output, attn)
 
 
-@constexpr
+@_primexpr
 def _check_qkv_shape(query_ndim, key_ndim, value_ndim):
     """Check the expected shape for `query, `key`, `value` and returns whether the input is batched."""
     # Shape check.
@@ -6643,7 +6641,7 @@ def _check_qkv_shape(query_ndim, key_ndim, value_ndim):
     return is_batched
 
 
-@constexpr
+@_primexpr
 def _check_kpm_shape(query_ndim, kmp_ndim):
     """check key_padding_mask shape"""
     if query_ndim == 3:
@@ -6657,7 +6655,7 @@ def _check_kpm_shape(query_ndim, kmp_ndim):
                              f"but got `key_padding_mask` with {kmp_ndim}D.")
 
 
-@constexpr
+@_primexpr
 def _check_attn_mask_shape(query_ndim, query_shape, key_shape, attn_mask_ndim,
                            attn_mask_shape, num_heads):
     """

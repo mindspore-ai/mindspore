@@ -22,7 +22,7 @@ from mindspore.ops import functional as F
 from mindspore.nn.cell import Cell
 from mindspore.common.tensor import Tensor
 from mindspore.common import dtype as mstype
-from mindspore.ops.primitive import constexpr
+from mindspore.ops.primitive import _primexpr
 from mindspore import _checkparam as Validator
 from mindspore.ops._primitive_cache import _get_cache_prim
 
@@ -281,10 +281,9 @@ class _ClipByGlobalNorm(Cell):
         return clip_x
 
 
-@constexpr
+@_primexpr
 def _check_value(clip_norm):
     Validator.check_number("clip_norm", clip_norm, 0.0, Validator.GT, "clip_by_global_norm")
-    return clip_norm
 
 
 def clip_by_global_norm(x, clip_norm=1.0, use_norm=None):
@@ -324,6 +323,6 @@ def clip_by_global_norm(x, clip_norm=1.0, use_norm=None):
          [ 4.47213590e-01,  1.49071202e-01]]))
     """
 
-    clip_norm = _check_value(clip_norm)
+    _check_value(clip_norm)
     clip_val = _ClipByGlobalNorm(clip_norm, use_norm)(x)
     return clip_val

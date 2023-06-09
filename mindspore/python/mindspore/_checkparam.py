@@ -125,14 +125,13 @@ def _check_3d_int_or_tuple(arg_name, arg_value, prim_name, allow_five=False, ret
 
     def _raise_message(third_one_flag=False, three_input_flag=False):
         if third_one_flag:
-            raise ValueError("For '{}', the depth of parameter '{}' must be 1, but got {}." \
-                .format(prim_name, arg_name, ret_value[-3]))
+            raise ValueError(f"For '{prim_name}', the depth of parameter '{arg_name}' must be 1, " \
+                             f"but got {ret_value[-3]}.")
         if three_input_flag:
-            raise ValueError("For '{}', the parameter '{}' must be an positive integer " \
-                "or a tuple of three positive integer, but got {}.".format(prim_name, arg_name, arg_value))
-        raise ValueError("For '{}', the parameter '{}' must be an positive integer " \
-            "or a tuple of three {}positive integer, but got {}" \
-            .format(prim_name, arg_name, 'or five ' if allow_five else '', arg_value))
+            raise ValueError(f"For '{prim_name}', the parameter '{arg_name}' must be an positive integer " \
+                             f"or a tuple of three positive integer, but got {arg_value}.")
+        raise ValueError(f"For '{prim_name}', the parameter '{arg_name}' must be an positive integer or " \
+                         f"a tuple of three {'or five ' if allow_five else ''}positive integer, but got {arg_value}")
 
     def _get_return_value():
         def _check():
@@ -238,8 +237,8 @@ def check_is_number(arg_value, arg_type, arg_name=None, prim_name=None):
             if math.isinf(arg_value) or math.isnan(arg_value) or np.isinf(arg_value) or np.isnan(arg_value):
                 raise ValueError(f"{prim_name} {arg_name} must be a legal float, but got '{arg_value}'.")
         else:
-            raise TypeError("{} type of {} must be '{}', but got '{}'.".format(
-                prim_name, arg_name, arg_type.__name__, type(arg_value).__name__))
+            raise TypeError(f"{prim_name} type of {arg_name} must be '{arg_type.__name__}', " \
+                            f"but got '{type(arg_value).__name__}'.")
     _check_param()
     return arg_value
 
@@ -258,13 +257,13 @@ def check_number_range(arg_value, lower_limit, upper_limit, rel, value_type, arg
     def _check_param():
         type_mismatch = not isinstance(arg_value, (np.ndarray, np.generic, value_type)) or isinstance(arg_value, bool)
         if type_mismatch:
-            raise TypeError("{} {} must be '{}',  but got '{}'.".format(
-                prim_name, arg_name, value_type.__name__, type(arg_value).__name__))
+            raise TypeError(f"{prim_name} {arg_name} must be '{value_type.__name__}',  " \
+                            f"but got '{type(arg_value).__name__}'.")
 
         if not _check_inc_rel(arg_value, lower_limit, upper_limit, rel):
             rel_str = _format_str_two_value(lower_limit, upper_limit, rel)
-            raise ValueError("{} {} must be in range of {}, but got {} with type '{}'.".format(
-                prim_name, arg_name, rel_str, arg_value, type(arg_value).__name__))
+            raise ValueError(f"{prim_name} {arg_name} must be in range of {rel_str}, " \
+                             f"but got {arg_value} with type '{type(arg_value).__name__}'.")
     _check_param()
     return arg_value
 
@@ -336,8 +335,9 @@ def check_positive_int_sequence(sequence, arg_name=None, prim_name=None):
     - sequence = check_positive_int_sequence(sequence)
     - sequence = check_positive_int_sequence(sequence, "dims")
     """
-    for idx, element in enumerate(sequence):
-        arg_idx = '{}[{}]'.format(arg_name if arg_name else 'arg_name', idx)
+    for idx in range(len(sequence)):
+        element = sequence[idx]
+        arg_idx = f"{arg_name if arg_name else 'arg_name'}[{idx}]"
         _check_number(element, 0, GT, int, arg_idx, prim_name)
     return sequence
 
@@ -383,8 +383,9 @@ def check_non_negative_int_sequence(sequence, arg_name=None, prim_name=None):
     - sequence = check_non_negative_int_sequence(sequence)
     - sequence = check_non_negative_int_sequence(sequence, "dims")
     """
-    for idx, element in enumerate(sequence):
-        arg_idx = '{}[{}]'.format(arg_name if arg_name else 'arg_name', idx)
+    for idx in range(len(sequence)):
+        element = sequence[idx]
+        arg_idx = f"{arg_name if arg_name else 'arg_name'}[{idx}]"
         _check_number(element, 0, GE, int, arg_idx, prim_name)
     return sequence
 
@@ -431,8 +432,9 @@ def check_positive_float_sequence(sequence, arg_name=None, prim_name=None):
     - sequence = check_positive_float_sequence(sequence)
     - sequence = check_positive_float_sequence(sequence, "dims")
     """
-    for idx, element in enumerate(sequence):
-        arg_idx = '{}[{}]'.format(arg_name if arg_name else 'arg_name', idx)
+    for idx in range(len(sequence)):
+        element = sequence[idx]
+        arg_idx = f"{arg_name if arg_name else 'arg_name'}[{idx}]"
         _check_number(element, 0, GT, float, arg_idx, prim_name)
     return sequence
 
@@ -574,7 +576,7 @@ def check_file_name_by_regular(target, reg=None, prim_name=None):
     """Check whether file name is legitimate."""
     if not isinstance(target, str):
         prim_name = f"For '{prim_name}', the" if prim_name else "The"
-        raise TypeError("{} '{}' must be string, but got {}.".format(prim_name, target, type(target)))
+        raise TypeError(f"{prim_name} '{target}' must be string, but got {type(target)}.")
     if target.endswith("\\") or target.endswith("/"):
         prim_name = f"For '{prim_name}', the" if prim_name else "The"
         raise ValueError(f"{prim_name} '{target}' cannot be a directory path.")

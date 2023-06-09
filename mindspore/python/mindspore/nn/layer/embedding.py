@@ -150,7 +150,7 @@ class Embedding(Cell):
         return s
 
 
-@constexpr
+@_primexpr
 def _make_axis_range(start, end):
     axis = tuple(range(start, end))
     return axis

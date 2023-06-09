@@ -2240,7 +2240,7 @@ class NLLLoss(LossBase):
         return F.nll_loss(logits, labels, self.weight, self.ignore_index, self.reduction)
 
 
-@constexpr
+@_primexpr
 def _check_cross_entropy_inputs(logits_shape, label_shape,
                                 logits_rank, label_rank,
                                 logits_dtype, label_dtype,

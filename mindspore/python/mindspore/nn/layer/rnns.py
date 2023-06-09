@@ -37,8 +37,8 @@ __all__ = ['LSTM', 'GRU', 'RNN']
 
 @_primexpr
 def _init_state(shape, dtype, is_lstm):
-    hx = P.Zeros()(shape, dtype)
-    cx = P.Zeros()(shape, dtype)
+    hx = P.zeros(shape, dtype)
+    cx = P.zeros(shape, dtype)
     if is_lstm:
         return (hx, cx)
     return hx
@@ -260,8 +260,8 @@ class _DynamicGRUAscend(Cell):
     def construct(self, x, h_0, seq_length, w_ih, w_hh, b_ih, b_hh):
         '''Dynamic GRU module on Ascend'''
         if b_ih is None:
-            b_ih = P.Zeros()(w_ih.shape[0], w_ih.dtype)
-            b_hh = P.Zeros()(w_ih.shape[0], w_ih.dtype)
+            b_ih = P.zeros(w_ih.shape[0], w_ih.dtype)
+            b_hh = P.zeros(w_ih.shape[0], w_ih.dtype)
         outputs, _, _, _, _, _ = self.gru(self.cast(x, self.dtype), \
                                           self.cast(self.transpose(w_ih, (1, 0)), self.dtype), \
                                           self.cast(self.transpose(w_hh, (1, 0)), self.dtype), \
@@ -344,7 +344,7 @@ class _DynamicLSTMAscend(Cell):
         w_hh = self.concat_dim0((w_hh_i, w_hh_g, w_hh_f, w_hh_o))
         weight = self.concat_dim1((w_ih, w_hh))
         if b_ih is None:
-            bias = P.Zeros()(w_ih.shape[0], w_ih.dtype)
+            bias = P.zeros(w_ih.shape[0], w_ih.dtype)
         else:
             b_ih_i, b_ih_f, b_ih_g, b_ih_o = self.split(b_ih)
             b_hh_i, b_hh_f, b_hh_g, b_hh_o = self.split(b_hh)

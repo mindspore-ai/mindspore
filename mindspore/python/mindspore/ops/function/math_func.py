@@ -2112,7 +2112,7 @@ def cov(input, *, correction=1, fweights=None, aweights=None):
         w_sum = w.sum()
         avg = (input_x * w).sum(1) / _get_default_div_type(w_sum)
     else:
-        w_sum = Tensor(num_observations, dtype=mstype.int64)
+        w_sum = ops.cast(num_observations, dtype=mstype.int64)
         avg = input_x.sum(1) / _get_default_div_type(w_sum)
 
     if w is not None and aweights is not None and correction != 0:
@@ -4922,9 +4922,9 @@ def logspace(start, end, steps, base=10, *, dtype=mstype.float32):
         [1.e+01 1.e+02 1.e+03 1.e+04 1.e+05 1.e+06 1.e+07 1.e+08 1.e+09 1.e+10]
     """
     if isinstance(start, float):
-        start = Tensor(start, dtype=mstype.float32)
+        start = ops.cast(start, dtype=mstype.float32)
     if isinstance(end, float):
-        end = Tensor(end, dtype=mstype.float32)
+        end = ops.cast(end, dtype=mstype.float32)
     logspace_ = _get_cache_prim(P.LogSpace)(steps, base, dtype)
     return logspace_(start, end)
 
@@ -5019,7 +5019,7 @@ def logaddexp2(input, other):
     return y
 
 
-@constexpr
+@_primexpr
 def _check_and_canonicalize_axes(axes, ndim):
     """Check whether the types and values of input axes are valid."""
     return validator.check_and_canonicalize_axes(axes, ndim)
@@ -6628,7 +6628,7 @@ def dstack(inputs):
     return P.Concat(2)(trans_inputs)
 
 
-@constexpr
+@_primexpr
 def _check_is_int(arg_value, arg_name, cls_name):
     validator.check_is_int(arg_value, arg_name, cls_name)
 
@@ -7091,7 +7091,7 @@ def combinations(x, r=2, with_replacement=False):
     """
 
     def _combinations(iterable, r):
-        lst = ops.StridedSlice()(Tensor([np.zeros(r)]), (0,), (0,), (1,))
+        lst = ops.StridedSlice()(ops.zeros(r), (0,), (0,), (1,))
         pool = tuple(iterable)
         n = len(pool)
         if r > n:
@@ -7263,7 +7263,7 @@ def copysign(x, other):
     return P.Select()(less_zero, P.Neg()(pos_tensor), pos_tensor)
 
 
-@constexpr
+@_primexpr
 def _check_non_negative_int(arg_value, arg_name, prim_name):
     validator.check_non_negative_int(arg_value, arg_name, prim_name)
 
@@ -7794,7 +7794,7 @@ def _moveaxis(x, source, destination):
     return ops.transpose(x, perm)
 
 
-@constexpr
+@_primexpr
 def _check_axis(axis, ord, ndim):
     """axis check"""
     if axis is None:
@@ -7812,7 +7812,7 @@ def _check_axis(axis, ord, ndim):
     return axis, False
 
 
-@constexpr
+@_primexpr
 def _check_ord(ord, axis):
     if len(axis) == 1:
         if isinstance(ord, str):
@@ -8182,12 +8182,12 @@ def _check_attr_dtype(param_name, input_dtype, allow_dtypes, cls_name):
     validator.check_value_type(param_name, input_dtype, allow_dtypes, cls_name)
 
 
-@constexpr
+@_primexpr
 def _check_positive_float(arg_value, arg_name, cls_name):
     validator.check_positive_float(arg_value, arg_name, cls_name)
 
 
-@constexpr
+@_primexpr
 def _check_int_range(arg_value, lower_limit, upper_limit, arg_name=None, prim_name=None):
     validator.check_int_range(arg_value, lower_limit,
                               upper_limit, validator.INC_LEFT, arg_name, prim_name)
@@ -8411,11 +8411,11 @@ def stft(x, n_fft, hop_length=None, win_length=None, window=None, center=True,
         (2, 33, 450, 2)
     """
     if hop_length is None:
-        hop_length = int(np.floor(n_fft / 4))
+        hop_length = int(n_fft // 4)
     if win_length is None:
-        win_length = int(np.floor(n_fft))
+        win_length = int(n_fft // 1)
     if window is None:
-        window = P.Ones()((win_length,), mstype.float32)
+        window = ops.ones(win_length, mstype.float32)
 
     def _is_complex(x):
         dtype = P.DType()
@@ -11061,7 +11061,8 @@ def _canonicalize_fft_shape_and_dim(input, shape, dim):
             ret_shape[i] = input_sizes[i]
     else:
         ret_shape = [0] * len(ret_dim)
-        for i, value in enumerate(ret_dim):
+        for i in range(len(ret_dim)):
+            value = ret_dim[i]
             ret_shape[i] = input_sizes[value]
 
     for value in ret_shape:
@@ -11082,7 +11083,8 @@ def _resize_input(input, input_dim, ret_dim, ret_shape, input_sizes):
     """Resize the input"""
     paddings = [0] * input_dim * 2
     must_copy = False
-    for i, value in enumerate(ret_dim):
+    for i in range(len(ret_dim)):
+        value = ret_dim[i]
         # resize input based on n & dim
         if ret_shape[i] == -1:
             continue
@@ -11116,7 +11118,8 @@ def _permute_input(input, input_dim, ret_dim):
 
    # partition dim_permute
     dim_permute_a, dim_permute_b = [], []
-    for i, value in enumerate(dim_permute):
+    for i in range(len(dim_permute)):
+        value = dim_permute[i]
         (dim_permute_a if not is_transformed_dim[i] else dim_permute_b).append(value)
 
     # strides
@@ -11137,7 +11140,8 @@ def _permute_input(input, input_dim, ret_dim):
     # copy
     if dim_permute_b:
         ret_dim = sorted(ret_dim, key=cmp_to_key(cmp))
-        for i, value in enumerate(ret_dim):
+        for i in range(len(ret_dim)):
+            value = ret_dim[i]
             dim_permute_b[i] = value
 
     # merge
