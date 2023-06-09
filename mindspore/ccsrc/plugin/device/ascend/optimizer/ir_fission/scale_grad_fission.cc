@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ const AnfNodePtr ScaleGradFission::Process(const FuncGraphPtr &graph, const AnfN
   const auto ori_inputs = scale_grad_cnode->inputs();
   auto input_size = ori_inputs.size();
   if (input_size < kScaleGradInputSize) {
-    MS_LOG(EXCEPTION) << "ScaleGrad inputs size is less than 3!";
+    MS_LOG(INTERNAL_EXCEPTION) << "ScaleGrad inputs size is less than 3!";
   }
 
   auto scale_node = ori_inputs[input_size - 1];
@@ -78,8 +78,8 @@ const AnfNodePtr ScaleGradFission::Process(const FuncGraphPtr &graph, const AnfN
     } else if (scale_type_id == kNumberTypeFloat16) {
       scale_value = static_cast<float>(*(static_cast<float16 *>(tensor->data_c())));
     } else {
-      MS_LOG(EXCEPTION) << "Scale value's type is error, must be float32 or float16, but get "
-                        << TypeIdToString(scale_type_id);
+      MS_LOG(INTERNAL_EXCEPTION) << "Scale value's type is error, must be float32 or float16, but get "
+                                 << TypeIdToString(scale_type_id);
     }
 
     if (std::fabs(static_cast<double>(scale_value) - 1.0) < kFloatMinimal) {

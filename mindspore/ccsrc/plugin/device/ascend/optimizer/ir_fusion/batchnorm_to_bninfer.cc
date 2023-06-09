@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ CNodePtr BatchNorm2BNInfer::CreateBNInfer(const FuncGraphPtr &graph, const CNode
   auto old_abs_list = old_abs->cast<abstract::AbstractSequencePtr>();
   MS_EXCEPTION_IF_NULL(old_abs_list);
   if (old_abs_list->elements().size() == 0) {
-    MS_LOG(EXCEPTION) << "BatchNorm's output abstract size is 0";
+    MS_LOG(INTERNAL_EXCEPTION) << "BatchNorm's output abstract size is 0";
   }
   new_node->set_abstract(old_abs_list->elements()[0]);
   common::AnfAlgo::CopyNodeAttr(kAttrIsTraining, batchnorm, new_node);
@@ -111,7 +111,7 @@ const AnfNodePtr BatchNorm2BNInfer::Process(const FuncGraphPtr &graph, const Anf
   if (kernel_graph->is_from_single_op()) {
     const auto ori_inputs = cnode->inputs();
     if (ori_inputs.size() < kBatchNormInputNum) {
-      MS_LOG(EXCEPTION) << "BatchNorm's inputs size is less than 5.";
+      MS_LOG(INTERNAL_EXCEPTION) << "BatchNorm's inputs size is less than 5.";
     }
     auto mean = CreateTensorMoveOp(graph, ori_inputs[kIdxMean]);
     auto variance = CreateTensorMoveOp(graph, ori_inputs[kIdxVariance]);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ constexpr auto kScalarTensorShapeSize = 1;
 int64_t EnvironMgr::Create() {
   mutex.lock();
   if (env_handles_count_ >= INT64_MAX) {
-    MS_LOG(EXCEPTION) << " The handles number is out of range: " << env_handles_count_;
+    MS_LOG(INTERNAL_EXCEPTION) << " The handles number is out of range: " << env_handles_count_;
   }
   int64_t ret_handle = ++env_handles_count_;
   auto env = std::make_shared<Environ>(ret_handle);

@@ -94,12 +94,12 @@ const AnfNodePtr TransposeOptimizer::Process(const FuncGraphPtr &func_graph, con
         break;
       }
       default:
-        MS_LOG(EXCEPTION) << "Unexpected tensor data type :" << tensor_type;
+        MS_LOG(INTERNAL_EXCEPTION) << "Unexpected tensor data type :" << tensor_type;
     }
     auto ret = memcpy_s(tensor->data_c(), tensor->Size(), perm_tensor->data_c(), perm_tensor->Size());
     if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "Copy data error, src data: " << perm_tensor->ToString()
-                        << ", copy size: " << perm_tensor->Size() << "dst capacity: " << tensor->Size();
+      MS_LOG(INTERNAL_EXCEPTION) << "Copy data error, src data: " << perm_tensor->ToString()
+                                 << ", copy size: " << perm_tensor->Size() << "dst capacity: " << tensor->Size();
     }
   }
   return node;

@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,13 +40,13 @@ class UnionFindSet {
     T key_parent = key;
     auto iter = union_find_set_.find(key_parent);
     if (iter == union_find_set_.end()) {
-      MS_LOG(EXCEPTION) << "union_find_set_ cannot find key " << key_parent;
+      MS_LOG(INTERNAL_EXCEPTION) << "union_find_set_ cannot find key " << key_parent;
     }
     while (key_parent != iter->second) {
       key_parent = iter->second;
       iter = union_find_set_.find(key_parent);
       if (iter == union_find_set_.end()) {
-        MS_LOG(EXCEPTION) << "union_find_set_ cannot find key " << key_parent;
+        MS_LOG(INTERNAL_EXCEPTION) << "union_find_set_ cannot find key " << key_parent;
       }
     }
 
@@ -55,7 +55,7 @@ class UnionFindSet {
     while (tmp != key_parent) {
       iter = union_find_set_.find(tmp);
       if (iter == union_find_set_.end()) {
-        MS_LOG(EXCEPTION) << "union_find_set_ cannot find key " << tmp;
+        MS_LOG(INTERNAL_EXCEPTION) << "union_find_set_ cannot find key " << tmp;
       }
       tmp_parent = iter->second;
       union_find_set_[tmp] = key_parent;

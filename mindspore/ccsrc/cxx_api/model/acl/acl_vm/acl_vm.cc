@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ std::vector<MSTensor> ParseVectorMsTensorRef(const VectorRef &args) {
       auto wrapper = utils::cast<MSTensorRef>(arg);
       (void)ms_tensors.emplace_back(wrapper.GetTensor());
     } else {
-      MS_LOG(EXCEPTION) << "Invalid item " << arg.ToString();
+      MS_LOG(INTERNAL_EXCEPTION) << "Invalid item " << arg.ToString();
     }
   }
   return ms_tensors;
@@ -230,7 +230,7 @@ void AclCompileGraph::AddPartial(const CNodePtr &node) {
   }
   auto fn = inputs[1];
   if (!IsValueNode<FuncGraph>(fn)) {
-    MS_LOG(EXCEPTION) << "The type of 1st input of node must be FuncGraph";
+    MS_LOG(INTERNAL_EXCEPTION) << "The type of 1st input of node must be FuncGraph";
   }
   for (size_t i = 1; i < inputs.size(); i++) {
     if (IsMonadNode(inputs[i])) {

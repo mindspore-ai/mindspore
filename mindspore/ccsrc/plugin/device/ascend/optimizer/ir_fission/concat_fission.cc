@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,8 +57,8 @@ AnfNodePtr ConcatFission::CreateNewConcat(const FuncGraphPtr &func_graph, const 
   auto output_shape = output_shapeptr->shape();
   if (axis_from_attr < 0 || axis_from_attr >= SizeToLong(output_shape.size()) ||
       axis_from_attr >= SizeToLong(input_shape.size())) {
-    MS_LOG(EXCEPTION) << "The concat_dim value " << axis_from_attr << "is out of range"
-                      << trace::DumpSourceLines(origin_concat_cnode);
+    MS_LOG(INTERNAL_EXCEPTION) << "The concat_dim value " << axis_from_attr << "is out of range"
+                               << trace::DumpSourceLines(origin_concat_cnode);
   }
   auto axis = LongToSize(axis_from_attr);
   output_shape[axis] = 0;

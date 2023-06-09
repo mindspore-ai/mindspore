@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,7 +108,8 @@ static T ConvertAttr(const CNodePtr &cnode, const ge::OpDescPtr &ge_op, const st
   }
 
   if (!ret) {
-    MS_LOG(EXCEPTION) << "Set attr " << ge_attr_name << " for ge node of " << cnode->DebugString() << " failed.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Set attr " << ge_attr_name << " for ge node of " << cnode->DebugString()
+                               << " failed.";
   }
   MS_LOG(INFO) << "Convert success, attr " << ge_attr_name << " is " << attr;
   return attr;
@@ -122,7 +123,7 @@ static void SetGeNodeInt64VecAttr(const ge::OpDescPtr &ge_op, const std::string 
   }
   auto ret = ge::AttrUtils::SetListInt(*ge_op, ge_attr_name, attr_value);
   if (!ret) {
-    MS_LOG(EXCEPTION) << "Set attr " << ge_attr_name << " for ge node failed.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Set attr " << ge_attr_name << " for ge node failed.";
   }
 }
 
@@ -191,8 +192,8 @@ std::tuple<ge::NodePtr, ge::ComputeGraphPtr> GenerateStubGeNode(const AnfNodePtr
   // set node data type
   bool ret = ge::AttrUtils::SetDataType(*op_desc, ge::HCOM_ATTR_DATA_TYPE, ConvertHcclDTypeToGeDType(datatype));
   if (!ret) {
-    MS_LOG(EXCEPTION) << "Set attr " << ge::HCOM_ATTR_DATA_TYPE << " for ge node of " << cnode->DebugString()
-                      << " failed.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Set attr " << ge::HCOM_ATTR_DATA_TYPE << " for ge node of " << cnode->DebugString()
+                               << " failed.";
   }
 
   // set node attr
@@ -223,7 +224,8 @@ HcclTaskInfo ParseDomiTask(const ge::OpDescPtr &op, const domi::TaskDef &task_de
   int64_t stream_num;
   bool ret = ge::AttrUtils::GetInt(*op, kGeNodeAttrUsedStreamNum, stream_num);
   if (!ret) {
-    MS_LOG(EXCEPTION) << "Get attr " << kGeNodeAttrUsedStreamNum << " for ge node " << op->GetType() << " failed.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Get attr " << kGeNodeAttrUsedStreamNum << " for ge node " << op->GetType()
+                               << " failed.";
   }
 
   return {task_def.private_def(), workspace_size, stream_num};

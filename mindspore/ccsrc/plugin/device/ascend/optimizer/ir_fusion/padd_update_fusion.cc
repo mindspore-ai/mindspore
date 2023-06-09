@@ -104,12 +104,12 @@ const AnfNodePtr PaddUpdateFusion::Process(const FuncGraphPtr &func_graph, const
   }
 
   if (!common::AnfAlgo::HasNodeAttr(kAttrPaddings, cnode)) {
-    MS_LOG(EXCEPTION) << "PadD should have primal attribute paddings";
+    MS_LOG(INTERNAL_EXCEPTION) << "PadD should have primal attribute paddings";
   }
   std::vector<std::vector<int64_t>> paddings =
     common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(cnode, kAttrPaddings);
   if (paddings.size() < 1 || paddings[0].size() < 1) {
-    MS_LOG(EXCEPTION) << "Failed to get paddings value from PadD node";
+    MS_LOG(INTERNAL_EXCEPTION) << "Failed to get paddings value from PadD node";
   }
   if (paddings.size() > kPadMaxDims) {
     // There is a precision problem for Pad when the rank of input is larger than kPadMaxDims.

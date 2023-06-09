@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ void TensorCopySlices::GetInputOutputInfo(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   size_t input_size = common::AnfAlgo::GetInputTensorNum(anf_node);
   if (input_size != kTensorCopySlicesInputSize) {
-    MS_LOG(EXCEPTION) << "TensorCopySlices input size is not 2, got " << input_size;
+    MS_LOG(INTERNAL_EXCEPTION) << "TensorCopySlices input size is not 2, got " << input_size;
   }
   input_type_id_ = AnfAlgo::GetPrevNodeOutputDeviceDataType(anf_node, 0);
   update_type_id_ = AnfAlgo::GetPrevNodeOutputDeviceDataType(anf_node, 0);
@@ -112,7 +112,7 @@ void TensorCopySlices::GetInputOutputTotalCount(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   size_t input_size = common::AnfAlgo::GetInputTensorNum(anf_node);
   if (input_size != kTensorCopySlicesInputSize) {
-    MS_LOG(EXCEPTION) << "TensorCopySlices input size is not 2";
+    MS_LOG(INTERNAL_EXCEPTION) << "TensorCopySlices input size is not 2";
   }
 
   auto input_shape = AnfAlgo::GetInputDeviceShape(anf_node, 0);
@@ -135,10 +135,10 @@ std::vector<TaskInfoPtr> TensorCopySlices::GenTask(const std::vector<AddressPtr>
                                                    const std::vector<AddressPtr> &,
                                                    const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
   if (inputs.size() != kTensorCopySlicesInputSize) {
-    MS_LOG(EXCEPTION) << "inputs size is not 2.";
+    MS_LOG(INTERNAL_EXCEPTION) << "inputs size is not 2.";
   }
   if (outputs.size() != 1) {
-    MS_LOG(EXCEPTION) << "outputs size is not 1.";
+    MS_LOG(INTERNAL_EXCEPTION) << "outputs size is not 1.";
   }
   MS_EXCEPTION_IF_NULL(outputs[0]);
   MS_EXCEPTION_IF_NULL(inputs[0]);

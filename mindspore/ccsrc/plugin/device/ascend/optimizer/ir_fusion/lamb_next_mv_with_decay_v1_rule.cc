@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -159,8 +159,8 @@ const AnfNodePtr LambNextMVWithDecayV1Rule::Process(const FuncGraphPtr &func_gra
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   if (manager->node_users().find(mul4) == manager->node_users().end()) {
-    MS_LOG(EXCEPTION) << "The Mul4 should be used by at least another node input."
-                      << " trace: " << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "The Mul4 should be used by at least another node input."
+                               << " trace: " << trace::DumpSourceLines(node);
   }
   AnfNodeIndexSet mul4_output_node_index_set = manager->node_users()[mul4];
   auto iter = std::find_if(
@@ -190,8 +190,8 @@ const AnfNodePtr LambNextMVWithDecayV1Rule::Process(const FuncGraphPtr &func_gra
   std::vector<AnfNodePtr> fusion_node_outputs;
   CreateMultipleOutputsOfAnfNode(func_graph, fusion_node, kLambNextMVWithDecayV1OutputNum, &fusion_node_outputs);
   if (fusion_node_outputs.size() != kLambNextMVWithDecayV1OutputNum) {
-    MS_LOG(EXCEPTION) << "create multiple outputs for fusion node fail!"
-                      << " trace: " << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "create multiple outputs for fusion node fail!"
+                               << " trace: " << trace::DumpSourceLines(node);
   }
   (void)manager->Replace(add0, fusion_node_outputs[kIndex1]);
   (void)manager->Replace(add1, fusion_node_outputs[kIndex2]);

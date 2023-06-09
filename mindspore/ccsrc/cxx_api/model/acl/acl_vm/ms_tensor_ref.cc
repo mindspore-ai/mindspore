@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,8 @@ std::vector<MSTensor> MSTensorRef::Convert(const BaseRef &args) {
     auto wrapper = utils::cast<MSTensorRef>(args);
     res.push_back(wrapper.ms_tensor_);
   } else {
-    MS_LOG(EXCEPTION) << "Invalid BaseRef " << args.ToString() << " must be MSTensorRef or VectorRef{MSTensorRef...}";
+    MS_LOG(INTERNAL_EXCEPTION) << "Invalid BaseRef " << args.ToString()
+                               << " must be MSTensorRef or VectorRef{MSTensorRef...}";
   }
 
   return res;
@@ -70,7 +71,8 @@ std::vector<MSTensor> MSTensorRef::ConvertTuple(const VectorRef &args) {
       auto wrapper = utils::cast<MSTensorRef>(item);
       outs.push_back(wrapper.ms_tensor_);
     } else {
-      MS_LOG(EXCEPTION) << "Invalid BaseRef " << args.ToString() << " must be MSTensorRef or VectorRef{MSTensorRef...}";
+      MS_LOG(INTERNAL_EXCEPTION) << "Invalid BaseRef " << args.ToString()
+                                 << " must be MSTensorRef or VectorRef{MSTensorRef...}";
     }
   }
   return outs;

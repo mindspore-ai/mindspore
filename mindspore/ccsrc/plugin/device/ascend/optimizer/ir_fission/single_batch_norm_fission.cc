@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ AnfNodePtr SingleBatchNormFission::CreateBNTrainingReduce(const FuncGraphPtr &fu
   auto bn_cnode = bn->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(bn_cnode);
   if (bn_cnode->inputs().size() < kBatchNormRealInputNum + 1) {
-    MS_LOG(EXCEPTION) << "The input size of node " + bn_cnode->DebugString() + " is less than "
-                      << (kBatchNormRealInputNum + 1) << trace::DumpSourceLines(bn);
+    MS_LOG(INTERNAL_EXCEPTION) << "The input size of node " + bn_cnode->DebugString() + " is less than "
+                               << (kBatchNormRealInputNum + 1) << trace::DumpSourceLines(bn);
   }
   std::vector<AnfNodePtr> bn_training_reduce_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingReduceOpName)), bn_cnode->input(1)};
@@ -59,12 +59,12 @@ AnfNodePtr SingleBatchNormFission::CreateBNTrainingUpdateV3(
   auto bn_cnode = bn->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(bn_cnode);
   if (bn_cnode->inputs().size() < kBatchNormRealInputNum + 1) {
-    MS_LOG(EXCEPTION) << "The input size of node " + bn_cnode->DebugString() + " is less than "
-                      << (kBatchNormRealInputNum + 1) << trace::DumpSourceLines(bn);
+    MS_LOG(INTERNAL_EXCEPTION) << "The input size of node " + bn_cnode->DebugString() + " is less than "
+                               << (kBatchNormRealInputNum + 1) << trace::DumpSourceLines(bn);
   }
   if (bn_training_reduce_outputs.size() != kBNTrainingReduceOutputNum) {
-    MS_LOG(EXCEPTION) << "The output size of node bn_training_reduce must be " << kBNTrainingReduceOutputNum
-                      << ", but it is " << bn_training_reduce_outputs.size() << trace::DumpSourceLines(bn);
+    MS_LOG(INTERNAL_EXCEPTION) << "The output size of node bn_training_reduce must be " << kBNTrainingReduceOutputNum
+                               << ", but it is " << bn_training_reduce_outputs.size() << trace::DumpSourceLines(bn);
   }
   std::vector<AnfNodePtr> bn_training_update_v3_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingUpdateV3OpName)),
@@ -79,8 +79,8 @@ AnfNodePtr SingleBatchNormFission::CreateBNTrainingUpdateV3(
   auto bn_abstract_tuple = dyn_cast<abstract::AbstractTuple>(bn->abstract());
   MS_EXCEPTION_IF_NULL(bn_abstract_tuple);
   if (bn_abstract_tuple->elements().size() != kBnOutputNum) {
-    MS_LOG(EXCEPTION) << "The abstract size of node bn must be " << kBnOutputNum << ", but it is "
-                      << bn_abstract_tuple->elements().size() << trace::DumpSourceLines(bn);
+    MS_LOG(INTERNAL_EXCEPTION) << "The abstract size of node bn must be " << kBnOutputNum << ", but it is "
+                               << bn_abstract_tuple->elements().size() << trace::DumpSourceLines(bn);
   }
   bn_training_update_v3->set_abstract(bn->abstract());
   bn_training_update_v3->set_scope(bn->scope());

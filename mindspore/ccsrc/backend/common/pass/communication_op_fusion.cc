@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -325,8 +325,8 @@ static void AdjustAllReduceInputWithLoad(const CNodePtr &cnode) {
         auto new_cnode_make_tuple = cnode_make_tuple->func_graph()->NewCNode(new_tuple_inputs);
         manager->Replace(cnode_make_tuple, new_cnode_make_tuple);
       } else {
-        MS_LOG(EXCEPTION) << "Cannot replace UpdateState with CNode U: " << cnode_update_state->DebugString()
-                          << " as make_tuple CNode cannot match " << cnode_make_tuple->DebugString();
+        MS_LOG(INTERNAL_EXCEPTION) << "Cannot replace UpdateState with CNode U: " << cnode_update_state->DebugString()
+                                   << " as make_tuple CNode cannot match " << cnode_make_tuple->DebugString();
       }
     }
   }
@@ -465,7 +465,7 @@ bool CommunicationOpFusion::DoFusion(const FuncGraphPtr &func_graph, const Commu
         kernel_graph->ReplaceInternalOutput(communication_op_node_item, new_communication_op, 0, LongToSize(offset));
       }
       if (!manager->Replace(communication_op_node_item, tuple_getitem)) {
-        MS_LOG(EXCEPTION) << "Manager replace node failed";
+        MS_LOG(INTERNAL_EXCEPTION) << "Manager replace node failed";
       }
     }
     start_index = end_index + 1;

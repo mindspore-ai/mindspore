@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ class TaskStream {
   uint32_t GetGenStreamIndex(uint32_t stream_id) {
     auto iter = gen_stream_index_map_.find(stream_id);
     if (iter == gen_stream_index_map_.end()) {
-      MS_LOG(EXCEPTION) << "Parameter stream_id not in gen_stream_index_map_, id: " << stream_id;
+      MS_LOG(INTERNAL_EXCEPTION) << "Parameter stream_id not in gen_stream_index_map_, id: " << stream_id;
     }
     return iter->second;
   }

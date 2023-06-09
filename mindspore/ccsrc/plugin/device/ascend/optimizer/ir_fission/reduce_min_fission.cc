@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ std::vector<int64_t> CalFirstAxis(const ShapeVector &shape, const std::vector<in
 
   for (size_t i = 0; i < axis_fisrt.size(); ++i) {
     if (axis_fisrt[i] < -dim_size || axis_fisrt[i] > dim_size - 1) {
-      MS_LOG(EXCEPTION) << "The axis of ReduceMin verify failed, quit optimizing";
+      MS_LOG(INTERNAL_EXCEPTION) << "The axis of ReduceMin verify failed, quit optimizing";
     }
     if (axis_fisrt[i] < 0) {
       axis_fisrt[i] = dim_size + axis_fisrt[i];

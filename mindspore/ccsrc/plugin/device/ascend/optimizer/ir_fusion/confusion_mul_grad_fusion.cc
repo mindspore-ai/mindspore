@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ AnfNodePtr GetMul0(const FuncGraphPtr &graph, const AnfNodePtr &input2, const An
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   if (manager->node_users().find(input2) == manager->node_users().end()) {
-    MS_LOG(EXCEPTION) << "node has no output in manager" << trace::DumpSourceLines(input2);
+    MS_LOG(INTERNAL_EXCEPTION) << "node has no output in manager" << trace::DumpSourceLines(input2);
   }
 
   AnfNodePtr mul0 = nullptr;

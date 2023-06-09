@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ void MultiGraphAclSession::RunGraph(GraphId graph_id, const std::vector<MSTensor
   MS_LOG(INFO) << "Start run graph " << graph_id;
   auto iter = graph_cells_.find(graph_id);
   if (iter == graph_cells_.cend()) {
-    MS_LOG(EXCEPTION) << "Graph id " << graph_id << " not found.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Graph id " << graph_id << " not found.";
   }
   std::vector<MSTensor> out_tensors;
   auto ret = iter->second.Run(inputs, &out_tensors);
@@ -123,8 +123,8 @@ VectorRef MultiGraphAclSession::ConstructOutputRef(GraphId graph_id, std::deque<
       outs.emplace_back(ConstructOutputRefByTupleNode(cnode, out_tensors));
     } else if (AnfUtils::IsRealKernel(anf_node)) {
       if (out_tensors->empty()) {
-        MS_LOG(EXCEPTION) << "Can not find MSTensor for output node " << out->DebugString()
-                          << ", visited: " << anf_node->DebugString();
+        MS_LOG(INTERNAL_EXCEPTION) << "Can not find MSTensor for output node " << out->DebugString()
+                                   << ", visited: " << anf_node->DebugString();
       }
       outs.emplace_back(MSTensorRef(out_tensors->front()));
       out_tensors->pop_front();
@@ -154,8 +154,8 @@ VectorRef MultiGraphAclSession::ConstructOutputRefByTupleNode(const CNodePtr &tu
       outs.emplace_back(ConstructOutputRefByTupleNode(cnode, out_tensors));
     } else if (AnfUtils::IsRealKernel(anf_node)) {
       if (out_tensors->empty()) {
-        MS_LOG(EXCEPTION) << "Can not find MSTensor for output node " << tuple_node->input(i)->DebugString()
-                          << ", visited: " << anf_node->DebugString();
+        MS_LOG(INTERNAL_EXCEPTION) << "Can not find MSTensor for output node " << tuple_node->input(i)->DebugString()
+                                   << ", visited: " << anf_node->DebugString();
       }
       outs.emplace_back(MSTensorRef(out_tensors->front()));
       out_tensors->pop_front();

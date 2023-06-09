@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,14 +48,14 @@ abstract::ShapePtr CdistAscendInferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
   }
   if (x_size != y_size) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                             << "', rank of input_x and input_y must be equal, but got rank of input_x: " << x_size
-                             << ", rank of input_y: " << y_size << ".";
+    MS_INTERNAL_EXCEPTION(ValueError) << "For '" << primitive->name()
+                                      << "', rank of input_x and input_y must be equal, but got rank of input_x: "
+                                      << x_size << ", rank of input_y: " << y_size << ".";
   }
 
   if (x_size < kCdistInputDimsMin) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', rank of input must be greater than "
-                             << kCdistInputDimsMin << ", but got rank of input: " << x_size << ".";
+    MS_INTERNAL_EXCEPTION(ValueError) << "For '" << primitive->name() << "', rank of input must be greater than "
+                                      << kCdistInputDimsMin << ", but got rank of input: " << x_size << ".";
   }
 
   for (size_t i = 0; i < x_size; i++) {
@@ -63,10 +63,10 @@ abstract::ShapePtr CdistAscendInferShape(const PrimitivePtr &primitive,
       continue;
     }
     if (x_shape[i] != y_shape[i]) {
-      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                               << "', the shape of 'x' must be the same as the shape of 'y', "
-                                  "but got 'x_shape["
-                               << i << "]': " << x_shape[i] << " and 'y_shape[" << i << "]': " << y_shape[i];
+      MS_INTERNAL_EXCEPTION(ValueError) << "For '" << primitive->name()
+                                        << "', the shape of 'x' must be the same as the shape of 'y', "
+                                           "but got 'x_shape["
+                                        << i << "]': " << x_shape[i] << " and 'y_shape[" << i << "]': " << y_shape[i];
     }
   }
 
@@ -119,21 +119,22 @@ abstract::ShapePtr CdistGradAscendInferShape(const PrimitivePtr &primitive,
   }
   CheckAndConvertUtils::Check("grad shape", grad_shape, kEqual, cdist_shape, prim_name, ValueError);
   if (x_size != y_size) {
-    MS_EXCEPTION(ValueError) << "For 'CdistGrad', rank of input_x and input_y must be equal, but got input_x size: "
-                             << x_size << ", input_y size: " << y_size << ".";
+    MS_INTERNAL_EXCEPTION(ValueError)
+      << "For 'CdistGrad', rank of input_x and input_y must be equal, but got input_x size: " << x_size
+      << ", input_y size: " << y_size << ".";
   }
 
   if (x_size < kCdistInputDimsMin) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', rank of input must be greater than "
-                             << kCdistInputDimsMin << ", but got rank of input: " << x_size << ".";
+    MS_INTERNAL_EXCEPTION(ValueError) << "For '" << primitive->name() << "', rank of input must be greater than "
+                                      << kCdistInputDimsMin << ", but got rank of input: " << x_size << ".";
   }
 
   for (size_t i = 0; i < x_size; i++) {
     if (x_shape[i] != y_shape[i]) {
-      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                               << "', the shape of 'x' must be the same as the shape of 'y', "
-                                  "but got 'x_shape["
-                               << i << "]': " << x_shape[i] << " and 'y_shape[" << i << "]': " << y_shape[i];
+      MS_INTERNAL_EXCEPTION(ValueError) << "For '" << primitive->name()
+                                        << "', the shape of 'x' must be the same as the shape of 'y', "
+                                           "but got 'x_shape["
+                                        << i << "]': " << x_shape[i] << " and 'y_shape[" << i << "]': " << y_shape[i];
     }
   }
 
@@ -171,7 +172,7 @@ ShapeVector CalCdistBroadCastShape(ShapeVector x_shape, ShapeVector y_shape) {
   (void)x_shape.insert(x_shape.cend() + kInputXDimP, 1);
   (void)y_shape.insert(y_shape.cend() + kInputYDimR, 1);
   if (x_shape.size() != y_shape.size()) {
-    MS_EXCEPTION(ValueError) << "For Cdist, input_x and input_y should have the same rank.";
+    MS_INTERNAL_EXCEPTION(ValueError) << "For Cdist, input_x and input_y should have the same rank.";
   }
   if (x_shape == y_shape) {
     return x_shape;
@@ -187,8 +188,8 @@ ShapeVector CalCdistBroadCastShape(ShapeVector x_shape, ShapeVector y_shape) {
     } else if (x_shape[length - i] == y_shape[length - i]) {
       broadcast_shape.push_back(x_shape[length - i]);
     } else {
-      MS_EXCEPTION(ValueError) << "The two input shape can not broadcast, x_shape: " << x_shape << ", y_shape"
-                               << y_shape;
+      MS_INTERNAL_EXCEPTION(ValueError) << "The two input shape can not broadcast, x_shape: " << x_shape << ", y_shape"
+                                        << y_shape;
     }
   }
   return broadcast_shape;

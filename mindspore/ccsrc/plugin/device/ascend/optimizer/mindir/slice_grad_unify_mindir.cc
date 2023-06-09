@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,9 +59,10 @@ AnfNodePtr BuildPad(const PatternMap &m, const AnfNodePtr &pad) {
   MS_EXCEPTION_IF_NULL(slice_grad);
   auto input_num = common::AnfAlgo::GetInputTensorNum(slice_grad);
   if (input_num != kSliceGradInputTensorNum && input_num != kSliceGradCangjieInputTensorNum) {
-    MS_LOG(EXCEPTION) << "The input tensor size[" << input_num
-                      << "] of node " + slice_grad->DebugString() + " is not equal to " << kSliceGradInputTensorNum
-                      << " or " << kSliceGradCangjieInputTensorNum << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "The input tensor size[" << input_num
+                               << "] of node " + slice_grad->DebugString() + " is not equal to "
+                               << kSliceGradInputTensorNum << " or " << kSliceGradCangjieInputTensorNum
+                               << trace::DumpSourceLines(node);
   }
   MS_EXCEPTION_IF_NULL(pad);
   pad->set_scope(slice_grad->scope());
@@ -80,7 +81,7 @@ AnfNodePtr BuildPad(const PatternMap &m, const AnfNodePtr &pad) {
     sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(slice_grad, kAttrSize);
   }
   if (x_shape.size() != begins.size() || begins.size() != sizes.size()) {
-    MS_LOG(EXCEPTION)
+    MS_LOG(INTERNAL_EXCEPTION)
       << "For SliceGrad, x_shape dim number should be equal to len(begin) and len(size), but got x_shape dim: "
       << x_shape.size() << ", len(begin): " << begins.size() << ", len(size): " << sizes.size()
       << trace::DumpSourceLines(node);

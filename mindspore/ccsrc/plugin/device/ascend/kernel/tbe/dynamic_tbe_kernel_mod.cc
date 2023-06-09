@@ -78,11 +78,11 @@ void DynamicTbeKernelMod::GenFuncStub() {
     auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim_, &handle_);
     if (kernel_pack_->kernel_json_info().has_kernel_list) {
       if (func_stub != 1) {
-        MS_LOG(EXCEPTION) << "GenFuncStub failed.";
+        MS_LOG(INTERNAL_EXCEPTION) << "GenFuncStub failed.";
       }
     } else {
       if (func_stub == 0) {
-        MS_LOG(EXCEPTION) << "GenFuncStub failed.";
+        MS_LOG(INTERNAL_EXCEPTION) << "GenFuncStub failed.";
       }
       func_stub_ = reinterpret_cast<void *>(func_stub);
     }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -238,17 +238,17 @@ void MemReuseUtil::SetWkMap(const CNodePtr &kernel, KernelDef *kernel_def_ptr) {
         auto wk_ref = wk_refs[i];
         kernel_def_ptr->wk_space_[key].push_back(wk_ref);
       } else {
-        MS_LOG(EXCEPTION) << "current index: " << i << " larger than wk_refs size " << wk_refs.size();
+        MS_LOG(INTERNAL_EXCEPTION) << "current index: " << i << " larger than wk_refs size " << wk_refs.size();
       }
     } else {
-      MS_LOG(EXCEPTION) << "kernel_workspace_refs_ init error";
+      MS_LOG(INTERNAL_EXCEPTION) << "kernel_workspace_refs_ init error";
     }
   }
 }
 
 KernelRefCountPtr MemReuseUtil::GetRef(const AnfNodePtr &node, size_t output_idx) {
   if (node == nullptr) {
-    MS_LOG(EXCEPTION) << "The node pointer is a nullptr.";
+    MS_LOG(INTERNAL_EXCEPTION) << "The node pointer is a nullptr.";
   }
   // Get ref count for cnode, except monad cnode.
   if (node->isa<CNode>() && !HasAbstractMonad(node)) {
@@ -276,7 +276,8 @@ KernelRefCountPtr MemReuseUtil::GetKernelInputRef(const CNodePtr &kernel, size_t
     kernel_input = VisitKernelWithReturnType(input_node, 0, true);
   }
   if (IsPrimitive(kernel_input.first, prim::kPrimMakeTuple)) {
-    MS_LOG(EXCEPTION) << "Input node [" << input_node->DebugString() << "]'s input " << input_idx << " is MakeTuple";
+    MS_LOG(INTERNAL_EXCEPTION) << "Input node [" << input_node->DebugString() << "]'s input " << input_idx
+                               << " is MakeTuple";
   }
   auto result = GetRef(kernel_input.first, kernel_input.second);
   return result;
@@ -313,7 +314,7 @@ void MemReuseUtil::SetKernelDefInputs() {
     // find kernel_def according to cnode addr
     auto iter = kernel_map_.find(key);
     if (iter == kernel_map_.end()) {
-      MS_LOG(EXCEPTION) << "kernel [" << kernel->fullname_with_scope() << "] is not init.";
+      MS_LOG(INTERNAL_EXCEPTION) << "kernel [" << kernel->fullname_with_scope() << "] is not init.";
     }
     auto kernel_def = iter->second;
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel);
@@ -332,12 +333,13 @@ void MemReuseUtil::SetKernelDefInputs() {
           input = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, true);
         }
         if (IsPrimitive(input.first, prim::kPrimMakeTuple)) {
-          MS_LOG(EXCEPTION) << "Input node [" << input_node->DebugString() << "]'s input " << i << " is MakeTuple";
+          MS_LOG(INTERNAL_EXCEPTION) << "Input node [" << input_node->DebugString() << "]'s input " << i
+                                     << " is MakeTuple";
         }
         auto input_key = (input.first).get();
         auto input_iter = kernel_map_.find(input_key);
         if (input_iter == kernel_map_.end()) {
-          MS_LOG(EXCEPTION) << "kernel [" << (input.first)->fullname_with_scope() << "] is not init.";
+          MS_LOG(INTERNAL_EXCEPTION) << "kernel [" << (input.first)->fullname_with_scope() << "] is not init.";
         }
         kernel_def->InsertInputKernel(input_iter->second);
       }
@@ -454,7 +456,7 @@ void MemReuseUtil::ResetDynamicUsedRefCount() {
 
 void MemReuseUtil::SetAllInfo(const KernelGraph *graph) {
   if (!InitDynamicKernelRef(graph)) {
-    MS_LOG(EXCEPTION) << "Init ReuseAssignDynamicMemory Fault";
+    MS_LOG(INTERNAL_EXCEPTION) << "Init ReuseAssignDynamicMemory Fault";
   }
   SetKernelDefMap();
   SetReuseRefCount();

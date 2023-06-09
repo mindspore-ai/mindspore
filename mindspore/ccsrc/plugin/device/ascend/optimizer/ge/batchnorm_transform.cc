@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -278,7 +278,7 @@ const AnfNodePtr BatchNormTransform::Process(const FuncGraphPtr &fg, const AnfNo
     new_node = TransformBatchNorm(node);
     // This transformation has to be successful
     if (new_node == nullptr) {
-      MS_LOG(EXCEPTION) << "BatchNorm transformation failed!";
+      MS_LOG(INTERNAL_EXCEPTION) << "BatchNorm transformation failed!";
     }
     MS_LOG(INFO) << "BatchNorm transform success.";
     return new_node;

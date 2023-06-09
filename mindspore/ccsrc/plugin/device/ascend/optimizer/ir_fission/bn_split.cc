@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ AnfNodePtr BnSplit::CreateOutputsOfBNTrainingUpdate(const FuncGraphPtr &graph, c
   MS_EXCEPTION_IF_NULL(bn_cnode);
   CheckCNodeInputSize(bn_cnode, kBnInputTensorNum);
   if (bn_training_reduce_outputs.size() != kBNTrainingReduceOutputNum) {
-    MS_LOG(EXCEPTION) << "BN1 outputs has wrong input size" << trace::DumpSourceLines(bn_cnode);
+    MS_LOG(INTERNAL_EXCEPTION) << "BN1 outputs has wrong input size" << trace::DumpSourceLines(bn_cnode);
   }
   // the inputs of BNTrainingUpdate are from the outputs of BNTrainingReduce and the inputs of BN
   std::vector<AnfNodePtr> bn_training_update_inputs = {
@@ -128,7 +128,7 @@ AnfNodePtr BnSplit::SplitBatchNormForTBE(const FuncGraphPtr &func_graph, const A
     return nullptr;
   }
   if (bn_training_reduce_outputs.size() != kBN1OutputNum) {
-    MS_LOG(EXCEPTION) << "Make outputs of op BNTrainingReduce fail" << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Make outputs of op BNTrainingReduce fail" << trace::DumpSourceLines(node);
   }
 
   // Create BNTrainingUpdate node
@@ -153,7 +153,7 @@ AnfNodePtr SyncBnSplit::SyncBNSplitForTBE(const FuncGraphPtr &func_graph, const 
     return nullptr;
   }
   if (bn_training_reduce_outputs.size() != kBN1OutputNum) {
-    MS_LOG(EXCEPTION) << "Make outputs of op BNTrainingReduce fail" << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Make outputs of op BNTrainingReduce fail" << trace::DumpSourceLines(node);
   }
 
   std::vector<AnfNodePtr> allreduce_mul_outputs;
@@ -171,13 +171,13 @@ AnfNodePtr CreateValueNodeOfDeviceNumReciprocal(const FuncGraphPtr &graph, const
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(sync_bn_cnode);
   if (!common::AnfAlgo::HasNodeAttr(kDeviceNum, sync_bn_cnode)) {
-    MS_LOG(EXCEPTION) << "The node [" << sync_bn_cnode->DebugString() << "] does not have attr device_num."
-                      << trace::DumpSourceLines(sync_bn_cnode);
+    MS_LOG(INTERNAL_EXCEPTION) << "The node [" << sync_bn_cnode->DebugString() << "] does not have attr device_num."
+                               << trace::DumpSourceLines(sync_bn_cnode);
   }
   auto device_num = common::AnfAlgo::GetNodeAttr<int64_t>(sync_bn_cnode, kDeviceNum);
   if (device_num == 0) {
-    MS_LOG(EXCEPTION) << "The device_num attr of node [" << sync_bn_cnode->DebugString() << "] should not be 0."
-                      << trace::DumpSourceLines(sync_bn_cnode);
+    MS_LOG(INTERNAL_EXCEPTION) << "The device_num attr of node [" << sync_bn_cnode->DebugString()
+                               << "] should not be 0." << trace::DumpSourceLines(sync_bn_cnode);
   }
   MS_LOG(INFO) << "Got device_num value: " << device_num;
   const float device_num_reciprocal = 1.0 / device_num;
@@ -236,8 +236,8 @@ AnfNodePtr CreateAllReduceAndMul(const FuncGraphPtr &graph, const AnfNodePtr &al
   auto sync_bn_opname = sync_bn_cnode->fullname_with_scope();
   auto opid_pos = sync_bn_opname.rfind("-op");
   if (opid_pos == std::string::npos || opid_pos + kPositionOffset >= sync_bn_opname.size()) {
-    MS_LOG(EXCEPTION) << "Op[" << sync_bn_cnode->DebugString() << "] has no opid."
-                      << trace::DumpSourceLines(sync_bn_cnode);
+    MS_LOG(INTERNAL_EXCEPTION) << "Op[" << sync_bn_cnode->DebugString() << "] has no opid."
+                               << trace::DumpSourceLines(sync_bn_cnode);
   }
   int64_t opid = std::stol(sync_bn_opname.substr(opid_pos + kPositionOffset));
   // user defined fusion should be greater than 1

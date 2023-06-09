@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,24 +40,24 @@ void PatternMap::Erase(const mindspore::HashSet<std::string> &del_set) {
 
 AnfNodePtr PatternMap::Get(const std::string &name) const {
   if (!Contains(name)) {
-    MS_LOG(EXCEPTION) << "Key: " << name << " is not in PatternMap";
+    MS_LOG(INTERNAL_EXCEPTION) << "Key: " << name << " is not in PatternMap";
   }
 
   auto iter = node_map_.find(name);
   if (iter == node_map_.end()) {
-    MS_LOG(EXCEPTION) << "Var Key: " << name << " is not in PatternMap";
+    MS_LOG(INTERNAL_EXCEPTION) << "Var Key: " << name << " is not in PatternMap";
   }
   return iter->second;
 }
 
 const std::vector<AnfNodePtr> &PatternMap::GetSeq(const std::string &name) const {
   if (!Contains(name)) {
-    MS_LOG(EXCEPTION) << "Key: " << name << " is not in PatternMap";
+    MS_LOG(INTERNAL_EXCEPTION) << "Key: " << name << " is not in PatternMap";
   }
 
   auto iter = seq_map_.find(name);
   if (iter == seq_map_.end()) {
-    MS_LOG(EXCEPTION) << "SeqVar Key: " << name << " is not in PatternMap";
+    MS_LOG(INTERNAL_EXCEPTION) << "SeqVar Key: " << name << " is not in PatternMap";
   }
   return iter->second;
 }
@@ -66,7 +66,7 @@ bool PatternMap::Emplace(const std::string &name, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   name_set_.insert(name);
   if (seq_map_.find(name) != seq_map_.end()) {
-    MS_LOG(EXCEPTION) << "Var Key: " << name << " should not be in SeqVarMap.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Var Key: " << name << " should not be in SeqVarMap.";
   }
 
   (void)opt_scope_.insert(node);
@@ -87,7 +87,7 @@ bool PatternMap::Emplace(const std::string &name, const AnfNodePtr &node) {
 bool PatternMap::Emplace(const std::string &name, const std::vector<AnfNodePtr> &v) {
   name_set_.insert(name);
   if (node_map_.find(name) != node_map_.end()) {
-    MS_LOG(EXCEPTION) << "SeqVar Key: " << name << " should not be in VarMap.";
+    MS_LOG(INTERNAL_EXCEPTION) << "SeqVar Key: " << name << " should not be in VarMap.";
   }
 
   for (const auto &node : v) {
@@ -130,7 +130,7 @@ bool PatternMap::Check(const std::string &name, const AnfNodePtr &node) const { 
 
 SrcPattern &SrcPattern::AddVar(const std::string &name, const ConditionFunc &f) {
   if (ref_map_.find(name) != ref_map_.end()) {
-    MS_LOG(EXCEPTION) << "Var: " << name << " is already in SrcPattern.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Var: " << name << " is already in SrcPattern.";
   }
 
   auto var = std::make_shared<CondVar>(f);
@@ -140,7 +140,7 @@ SrcPattern &SrcPattern::AddVar(const std::string &name, const ConditionFunc &f) 
 
 SrcPattern &SrcPattern::AddSeqVar(const std::string &name, const ConditionFunc &f) {
   if (ref_map_.find(name) != ref_map_.end()) {
-    MS_LOG(EXCEPTION) << "SeqVar: " << name << " is already in SrcPattern.";
+    MS_LOG(INTERNAL_EXCEPTION) << "SeqVar: " << name << " is already in SrcPattern.";
   }
 
   auto seq_var = std::make_shared<SeqVar>(f);
@@ -151,14 +151,14 @@ SrcPattern &SrcPattern::AddSeqVar(const std::string &name, const ConditionFunc &
 const BaseRef &SrcPattern::GetRef(const std::string &name) const {
   auto iter = ref_map_.find(name);
   if (iter == ref_map_.end()) {
-    MS_LOG(EXCEPTION) << "Key: " << name << " not in PatternMap";
+    MS_LOG(INTERNAL_EXCEPTION) << "Key: " << name << " not in PatternMap";
   }
   return iter->second;
 }
 
 SrcPattern &SrcPattern::AddCNode(const std::string &name, const std::initializer_list<PatternNode> &v) {
   if (ref_map_.find(name) != ref_map_.end()) {
-    MS_LOG(EXCEPTION) << "CNode: " << name << " is already in SrcPattern.";
+    MS_LOG(INTERNAL_EXCEPTION) << "CNode: " << name << " is already in SrcPattern.";
   }
 
   std::vector<BaseRef> ele;
@@ -168,7 +168,7 @@ SrcPattern &SrcPattern::AddCNode(const std::string &name, const std::initializer
     } else if (node.type_ == "prim") {
       ele.emplace_back(node.p_);
     } else {
-      MS_LOG(EXCEPTION) << "Error MatchNode Type: " << node.type_ << ", CNode: " << name;
+      MS_LOG(INTERNAL_EXCEPTION) << "Error MatchNode Type: " << node.type_ << ", CNode: " << name;
     }
   }
 
@@ -187,7 +187,7 @@ SrcPattern &SrcPattern::AddCNode(const std::string &name, const std::initializer
 
 BaseRef SrcPattern::GetRoot() const {
   if (!has_root_) {
-    MS_LOG(EXCEPTION) << "This SrcPattern has no root node.";
+    MS_LOG(INTERNAL_EXCEPTION) << "This SrcPattern has no root node.";
   }
   return GetRef(root_);
 }
@@ -197,7 +197,7 @@ const Seq &GetSeq(const std::string &pattern_name, const std::string &node_name,
   MS_EXCEPTION_IF_NULL(equiv);
   auto equiv_iter = equiv->find(var);
   if (equiv_iter == equiv->end()) {
-    MS_LOG(EXCEPTION) << "The SeqVar Key: " << pattern_name << " is not in EquivMap, node name: " << node_name;
+    MS_LOG(INTERNAL_EXCEPTION) << "The SeqVar Key: " << pattern_name << " is not in EquivMap, node name: " << node_name;
   }
 
   BaseRef &seq_ref = equiv_iter->second;
@@ -205,7 +205,8 @@ const Seq &GetSeq(const std::string &pattern_name, const std::string &node_name,
     const Seq &seq = utils::cast<Seq>(seq_ref);
     return seq;
   }
-  MS_LOG(EXCEPTION) << "The value of SeqVar Key: " << pattern_name << " is not a seq, node name: " << node_name;
+  MS_LOG(INTERNAL_EXCEPTION) << "The value of SeqVar Key: " << pattern_name
+                             << " is not a seq, node name: " << node_name;
 }
 
 bool SrcPattern::CheckEmptySeqVar(const std::string &name, const EquivPtr &equiv,
@@ -234,7 +235,7 @@ bool SrcPattern::match(const std::string &name, const AnfNodePtr &node, const Eq
   MS_EXCEPTION_IF_NULL(equiv);
   auto input_iter = inputs_map_.find(name);
   if (input_iter == inputs_map_.end()) {
-    MS_LOG(EXCEPTION) << "Key: " << name << " is not a CNode.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Key: " << name << " is not a CNode.";
   }
 
   if (m_->Contains(name)) {
@@ -308,7 +309,7 @@ bool SrcPattern::match(const std::string &name, const AnfNodePtr &node, const Eq
 bool SrcPattern::build_pattern_map(const AnfNodePtr &node, const EquivPtr &equiv) {
   MS_EXCEPTION_IF_NULL(m_);
   if (!has_root_) {
-    MS_LOG(EXCEPTION) << "This SourcePattern has no root node.";
+    MS_LOG(INTERNAL_EXCEPTION) << "This SourcePattern has no root node.";
   }
   m_->Clear();
   return match(root_, node, equiv);
@@ -322,7 +323,7 @@ DstPattern &DstPattern::AddCNode(const string &name, const std::initializer_list
   }
 
   if (m_->Contains(name)) {
-    MS_LOG(EXCEPTION) << "CNode: " + name + " is already in DstPattern";
+    MS_LOG(INTERNAL_EXCEPTION) << "CNode: " + name + " is already in DstPattern";
   }
 
   std::vector<AnfNodePtr> anf_inputs;
@@ -345,7 +346,7 @@ DstPattern &DstPattern::AddCNode(const string &name, const std::initializer_list
         }
       }
     } else {
-      MS_LOG(EXCEPTION) << "Error ReplaceNode Type: " << r.type_ << ", CNode: " << name;
+      MS_LOG(INTERNAL_EXCEPTION) << "Error ReplaceNode Type: " << r.type_ << ", CNode: " << name;
     }
   }
 
@@ -358,7 +359,7 @@ DstPattern &DstPattern::AddCNode(const string &name, const std::initializer_list
     auto cnode = new_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (anf_inputs.size() != cnode->inputs().size()) {
-      MS_LOG(EXCEPTION)
+      MS_LOG(INTERNAL_EXCEPTION)
         << "The actual input size does not correspond to the input size of the pattern, actual input size: "
         << anf_inputs.size() << ", pattern input size: " << new_node->cast<CNodePtr>()->inputs().size()
         << ", CNode: " << name;
@@ -367,10 +368,10 @@ DstPattern &DstPattern::AddCNode(const string &name, const std::initializer_list
       MS_EXCEPTION_IF_NULL(anf_inputs[i]);
       MS_EXCEPTION_IF_NULL(cnode->input(i));
       if (!opt::AnfEqual(anf_inputs[i], cnode->input(i))) {
-        MS_LOG(EXCEPTION) << "The actual input does not correspond to the input of the pattern, the input index: " << i
-                          << ", actual input: " << anf_inputs[i]->DebugString()
-                          << ", pattern input: " << new_node->cast<CNodePtr>()->input(i)->DebugString()
-                          << ", CNode: " << name;
+        MS_LOG(INTERNAL_EXCEPTION)
+          << "The actual input does not correspond to the input of the pattern, the input index: " << i
+          << ", actual input: " << anf_inputs[i]->DebugString()
+          << ", pattern input: " << new_node->cast<CNodePtr>()->input(i)->DebugString() << ", CNode: " << name;
       }
     }
   }
@@ -389,7 +390,7 @@ DstPattern &DstPattern::AddValueNode(const string &name, const BuildValueFunc &b
   }
 
   if (m_->Contains(name)) {
-    MS_LOG(EXCEPTION) << "ValueNode: " + name + " is already in DstPattern";
+    MS_LOG(INTERNAL_EXCEPTION) << "ValueNode: " + name + " is already in DstPattern";
   }
 
   auto node = buildfunc(*m_);
@@ -487,13 +488,14 @@ void DeleteCNode(const AnfNodePtr &node, const FuncGraphPtr &sub_graph, const Fu
   if (node->isa<CNode>()) {
     auto name_to_cnode_iter = func_graph_index->name_to_cnode_.find(GetCNodeKey(node));
     if (name_to_cnode_iter == func_graph_index->name_to_cnode_.end()) {
-      MS_LOG(EXCEPTION) << "ProcessFastPass Error, name_to_cnode_ can't find cnode_name: "
-                        << common::AnfAlgo::GetCNodeName(node);
+      MS_LOG(INTERNAL_EXCEPTION) << "ProcessFastPass Error, name_to_cnode_ can't find cnode_name: "
+                                 << common::AnfAlgo::GetCNodeName(node);
     }
     auto &cnode_set = name_to_cnode_iter->second;
     auto cnode_set_iter = cnode_set.find(node);
     if (cnode_set_iter == cnode_set.end()) {
-      MS_LOG(EXCEPTION) << "ProcessFastPass Error, name_to_cnode_ can't find node: " << node->fullname_with_scope();
+      MS_LOG(INTERNAL_EXCEPTION) << "ProcessFastPass Error, name_to_cnode_ can't find node: "
+                                 << node->fullname_with_scope();
     }
     (void)cnode_set.erase(cnode_set_iter);
     ModifyOutputAndCallerToMap(node->cast<CNodePtr>(), sub_graph, &func_graph_index->subgraph_out_caller_map_, false);
@@ -534,11 +536,12 @@ bool DelSrcPattern(const std::pair<AnfNodePtr, FuncGraphPtr> &top, const AnfNode
   if (node != root) {
     auto degree_iter = func_graph_index->node_degree_.find(node);
     if (degree_iter == func_graph_index->node_degree_.end()) {
-      MS_LOG(EXCEPTION) << "ProcessFastPass Error, node: " << node->fullname_with_scope() << " not in degree map";
+      MS_LOG(INTERNAL_EXCEPTION) << "ProcessFastPass Error, node: " << node->fullname_with_scope()
+                                 << " not in degree map";
     }
     if (degree_iter->second <= 0) {
-      MS_LOG(EXCEPTION) << "ProcessFastPass Error, node: " << node->fullname_with_scope()
-                        << " degree error, degree: " << degree_iter->second;
+      MS_LOG(INTERNAL_EXCEPTION) << "ProcessFastPass Error, node: " << node->fullname_with_scope()
+                                 << " degree error, degree: " << degree_iter->second;
     }
     degree_iter->second--;
     if (degree_iter->second > 0) {
@@ -601,11 +604,12 @@ bool DelCascadeNode(const std::pair<AnfNodePtr, FuncGraphPtr> &top,
   if ((*need_delete).find({node, fg}) == (*need_delete).end()) {
     auto degree_iter = func_graph_index->node_degree_.find(node);
     if (degree_iter == func_graph_index->node_degree_.end()) {
-      MS_LOG(EXCEPTION) << "ProcessFastPass Error, node: " << node->fullname_with_scope() << " not in degree map";
+      MS_LOG(INTERNAL_EXCEPTION) << "ProcessFastPass Error, node: " << node->fullname_with_scope()
+                                 << " not in degree map";
     }
     if (degree_iter->second <= 0) {
-      MS_LOG(EXCEPTION) << "ProcessFastPass Error, node: " << node->fullname_with_scope()
-                        << " degree error, degree: " << degree_iter->second;
+      MS_LOG(INTERNAL_EXCEPTION) << "ProcessFastPass Error, node: " << node->fullname_with_scope()
+                                 << " degree error, degree: " << degree_iter->second;
     }
     degree_iter->second--;
     if (degree_iter->second > 0) {
@@ -629,7 +633,7 @@ void BFS(const AnfNodePtr &root, const FuncGraphPtr &sub_graph, const mindspore:
       anf_q.push(p);
     }
   } else {
-    MS_LOG(EXCEPTION) << "Illegal BFS stage, expected stage is 0/1/2, but get stage: " << stage;
+    MS_LOG(INTERNAL_EXCEPTION) << "Illegal BFS stage, expected stage is 0/1/2, but get stage: " << stage;
   }
 
   while (!anf_q.empty()) {
@@ -644,7 +648,7 @@ void BFS(const AnfNodePtr &root, const FuncGraphPtr &sub_graph, const mindspore:
     } else if (stage == kStageTwo) {
       ret = DelCascadeNode(top, need_delete, func_graph_index);
     } else {
-      MS_LOG(EXCEPTION) << "Illegal BFS stage, expected stage is 0/1/2, but get stage: " << stage;
+      MS_LOG(INTERNAL_EXCEPTION) << "Illegal BFS stage, expected stage is 0/1/2, but get stage: " << stage;
     }
     if (!ret) {
       continue;
@@ -667,7 +671,8 @@ void PatternToPatternPass::AfterProcess(const AnfNodePtr &old_node, const AnfNod
 
   auto old_node_iter = func_graph_index->node_degree_.find(old_node);
   if (old_node_iter == func_graph_index->node_degree_.end()) {
-    MS_LOG(EXCEPTION) << "ProcessFastPass Error, old_node: " << old_node->fullname_with_scope() << " not in degree map";
+    MS_LOG(INTERNAL_EXCEPTION) << "ProcessFastPass Error, old_node: " << old_node->fullname_with_scope()
+                               << " not in degree map";
   }
   auto origin_degree = old_node_iter->second;
 

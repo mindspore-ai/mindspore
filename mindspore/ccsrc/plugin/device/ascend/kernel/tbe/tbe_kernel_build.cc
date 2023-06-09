@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ void GetRealInputSize(const nlohmann::json &input_json, std::vector<size_t> *inp
       if (input_json[kJShape][j] == -1) {
         auto input_max_shape = input_json[kJRange];
         if (j >= input_max_shape.size()) {
-          MS_LOG(EXCEPTION) << "Invalid Dynamic Shape Max Shape";
+          MS_LOG(INTERNAL_EXCEPTION) << "Invalid Dynamic Shape Max Shape";
         }
         if (input_max_shape[j][kMaxShapeIdx] == -1) {
           MS_LOG(INFO) << "Change -1 Shape to 1";
@@ -109,7 +109,7 @@ void GetRealOutputSize(const nlohmann::json &output_json, std::vector<size_t> *o
       if (output_json[kJShape][j] == -1) {
         auto output_max_shape = output_json[kJRange];
         if (j >= output_max_shape.size()) {
-          MS_LOG(EXCEPTION) << "Invalid Dynamic Shape Max Shape";
+          MS_LOG(INTERNAL_EXCEPTION) << "Invalid Dynamic Shape Max Shape";
         }
         if (output_max_shape[j][kMaxShapeIdx] == -1) {
           MS_LOG(INFO) << "Change -1 Shape to 1";

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -238,8 +238,8 @@ AnfNodePtr InsertTransOpForSingleOutput(const FuncGraphPtr &func_graph, const An
   std::string output_format = AnfAlgo::GetOutputFormat(node, 0);
   auto origin_shape = common::AnfAlgo::GetOutputInferShape(node, 0);
   if (output_format == kOpFormat_NC1KHKWHWC0) {
-    MS_LOG(EXCEPTION) << "Got the hw format " << output_format << "when insert the transdata node "
-                      << node->DebugString() << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Got the hw format " << output_format << "when insert the transdata node "
+                               << node->DebugString() << trace::DumpSourceLines(node);
   }
   if (NeedInsertTransData(origin_shape, output_format)) {
     MS_LOG(DEBUG) << "Inserted TransData change format from [" << output_format
@@ -268,8 +268,8 @@ AnfNodePtr InsertTransOpForMultipleOutput(const FuncGraphPtr &func_graph, const 
   for (size_t output_idx = 0; output_idx < out_num; ++output_idx) {
     std::string output_format = AnfAlgo::GetOutputFormat(node, output_idx);
     if (output_format == kOpFormat_NC1KHKWHWC0) {
-      MS_LOG(EXCEPTION) << "Got the special format" << output_format << " when insert the transdata node "
-                        << node->DebugString() << trace::DumpSourceLines(node);
+      MS_LOG(INTERNAL_EXCEPTION) << "Got the special format" << output_format << " when insert the transdata node "
+                                 << node->DebugString() << trace::DumpSourceLines(node);
     }
     auto tuple_getitem = CreatTupleGetItemNode(func_graph, node, output_idx);
     auto origin_shape = common::AnfAlgo::GetOutputInferShape(node, output_idx);
@@ -871,9 +871,9 @@ std::string GetInputName(const CNodePtr &origin_op, size_t input_index) {
   MS_EXCEPTION_IF_NULL(origin_primitive);
   auto input_names = origin_primitive->GetAttr(kAttrInputNames);
   if (input_names == nullptr) {
-    MS_LOG(EXCEPTION) << "input_names are nullptr in cnode " << origin_op->fullname_with_scope()
-                      << ", debug string:" << origin_op->DebugString()
-                      << ", attr text:" << origin_primitive->GetAttrsText();
+    MS_LOG(INTERNAL_EXCEPTION) << "input_names are nullptr in cnode " << origin_op->fullname_with_scope()
+                               << ", debug string:" << origin_op->DebugString()
+                               << ", attr text:" << origin_primitive->GetAttrsText();
   }
 
   auto input_names_vec = GetValue<std::vector<std::string>>(input_names);

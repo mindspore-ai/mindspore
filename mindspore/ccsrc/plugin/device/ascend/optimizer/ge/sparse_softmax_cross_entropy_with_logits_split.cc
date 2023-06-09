@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,8 +56,8 @@ CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_
     size_t index = logits_shape.size() - 1;
     depth = logits_shape[index];
   } else {
-    MS_LOG(EXCEPTION) << "Logits's shape of node [" << sparse_softmax_node->DebugString() << "] is empty"
-                      << trace::DumpSourceLines(sparse_softmax_node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Logits's shape of node [" << sparse_softmax_node->DebugString() << "] is empty"
+                               << trace::DumpSourceLines(sparse_softmax_node);
   }
 
   auto value_on = std::make_shared<tensor::Tensor>(1.0, kFloat32);
@@ -108,7 +108,7 @@ CNodePtr CreateSoftmaxCrossEntropyWithLogits(const FuncGraphPtr &graph, const CN
   if (!labels_shape.empty()) {
     (void)loss_shape.emplace_back(labels_shape[0]);
   } else {
-    MS_LOG(EXCEPTION) << "One_hot output's shape is empty." << trace::DumpSourceLines(one_hot_node);
+    MS_LOG(INTERNAL_EXCEPTION) << "One_hot output's shape is empty." << trace::DumpSourceLines(one_hot_node);
   }
 
   auto data_types = common::AnfAlgo::GetOutputInferDataType(one_hot_node, 0);
@@ -146,7 +146,8 @@ std::vector<int64_t> GetAxis(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto output_shape = common::AnfAlgo::GetOutputInferShape(node, 0);
   if (output_shape.empty()) {
-    MS_LOG(EXCEPTION) << node->fullname_with_scope() << "'s output shape is empty" << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << node->fullname_with_scope() << "'s output shape is empty"
+                               << trace::DumpSourceLines(node);
   }
   std::vector<int64_t> range;
   for (size_t i = 0; i < output_shape.size(); i++) {
@@ -194,15 +195,16 @@ CNodePtr CreateMul(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_nod
   MS_EXCEPTION_IF_NULL(softmax_output_node);
   auto softmax_output_shape = common::AnfAlgo::GetOutputInferShape(softmax_output_node, 0);
   if (softmax_output_shape.size() != kSoftmaxOutputShapeSize) {
-    MS_LOG(EXCEPTION) << "SoftmaxCrossEntropyWithLogits the second output shape size should be "
-                      << kSoftmaxOutputShapeSize << ", but got " << softmax_output_shape.size()
-                      << trace::DumpSourceLines(softmax_output_node);
+    MS_LOG(INTERNAL_EXCEPTION) << "SoftmaxCrossEntropyWithLogits the second output shape size should be "
+                               << kSoftmaxOutputShapeSize << ", but got " << softmax_output_shape.size()
+                               << trace::DumpSourceLines(softmax_output_node);
   }
   ShapeVector tensor_shape;
   (void)tensor_shape.emplace_back(softmax_output_shape[0]);
   (void)tensor_shape.emplace_back(1);
   if (softmax_output_shape[0] == 0) {
-    MS_LOG(EXCEPTION) << "Output_shape[0] of softmax should not be 0" << trace::DumpSourceLines(softmax_output_node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Output_shape[0] of softmax should not be 0"
+                               << trace::DumpSourceLines(softmax_output_node);
   }
   std::vector<float> tensor_value(softmax_output_shape[0], 1.0 / softmax_output_shape[0]);
   auto buf_size = sizeof(float) * tensor_value.size();
@@ -262,8 +264,8 @@ CNodePtr CreateRealDiv(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax
   CheckCNodeInputSize(sparse_softmax_node, kSparseSoftmaxCrossEntropyWithLogitsInputTensorsNum);
   auto labels_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 1);
   if (labels_shape.size() != 1) {
-    MS_LOG(EXCEPTION) << "Label's shape should be 1-D, but got " << labels_shape.size()
-                      << trace::DumpSourceLines(sparse_softmax_node);
+    MS_LOG(INTERNAL_EXCEPTION) << "Label's shape should be 1-D, but got " << labels_shape.size()
+                               << trace::DumpSourceLines(sparse_softmax_node);
   }
   auto y_value = static_cast<float>(labels_shape[0]);
   auto y = std::make_shared<tensor::Tensor>(y_value, kFloat32);
@@ -311,14 +313,14 @@ CNodePtr CreateExpandDims(const FuncGraphPtr &graph, const CNodePtr &real_div_no
 bool IsSparseSoftmaxCrossEntropyWithLogitsGrad(const CNodePtr &sparse) {
   MS_EXCEPTION_IF_NULL(sparse);
   if (common::AnfAlgo::GetCNodeName(sparse) != kSparseSoftmaxCrossEntropyWithLogitsOpName) {
-    MS_LOG(EXCEPTION) << "Input node should be " << kSparseSoftmaxCrossEntropyWithLogitsOpName << ", but got "
-                      << common::AnfAlgo::GetCNodeName(sparse) << trace::DumpSourceLines(sparse);
+    MS_LOG(INTERNAL_EXCEPTION) << "Input node should be " << kSparseSoftmaxCrossEntropyWithLogitsOpName << ", but got "
+                               << common::AnfAlgo::GetCNodeName(sparse) << trace::DumpSourceLines(sparse);
   }
   if (common::AnfAlgo::HasNodeAttr(kAttrIsGrad, sparse)) {
     return common::AnfAlgo::GetNodeAttr<bool>(sparse, kAttrIsGrad);
   } else {
-    MS_LOG(EXCEPTION) << "Node of " << sparse->fullname_with_scope() << " does not have the attr " << kAttrIsGrad
-                      << trace::DumpSourceLines(sparse);
+    MS_LOG(INTERNAL_EXCEPTION) << "Node of " << sparse->fullname_with_scope() << " does not have the attr "
+                               << kAttrIsGrad << trace::DumpSourceLines(sparse);
   }
 }
 
@@ -343,7 +345,7 @@ CNodePtr HandleTrain(const FuncGraphPtr &fg, const AnfNodePtr &node) {
   auto depend_node = node->cast<CNodePtr>();
   auto inputs = depend_node->inputs();
   if (inputs.size() != kDependInputSize) {
-    MS_LOG(EXCEPTION) << "Check depend input size failed!";
+    MS_LOG(INTERNAL_EXCEPTION) << "Check depend input size failed!";
   }
   auto sparse_softmax_node_grad_anf = inputs[1];
   MS_EXCEPTION_IF_NULL(sparse_softmax_node_grad_anf);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ static CNodePtr CastNodeToSpecificDType(const FuncGraphPtr &func_graph, const An
   (void)cast_inputs.emplace_back(node);
   auto cast_cnode = NewCNode(cast_inputs, func_graph);
   if (cast_cnode == nullptr) {
-    MS_LOG(EXCEPTION) << "CastNodeToSpecificDType failed. node: " << node->fullname_with_scope();
+    MS_LOG(INTERNAL_EXCEPTION) << "CastNodeToSpecificDType failed. node: " << node->fullname_with_scope();
   }
   common::AnfAlgo::SetOutputInferTypeAndShape({dtype}, {shape}, cast_cnode.get());
   common::AnfAlgo::SetNodeAttr(kAttrDstType, TypeIdToType(dtype), cast_cnode);
@@ -217,7 +217,7 @@ std::vector<AnfNodePtr> DynamicGRUV2GradFission::AddGRUHiddenGradNode(const Func
   // add loop t hidden grad nodes; [[hidden_grad_nodes] [matmul_nodes]]
   AddTLoopNode(func_graph, dynamic_gru_v2_grad_cnode, &result_nodes);
   if (result_nodes.empty() || result_nodes[0].empty()) {
-    MS_LOG(EXCEPTION) << "result_node is empty, DynamicGRUGrad fission failed.";
+    MS_LOG(INTERNAL_EXCEPTION) << "result_node is empty, DynamicGRUGrad fission failed.";
   }
   auto gru_hidden_grad_nodes = result_nodes[kIndex0];
   (void)result.emplace_back(gru_hidden_grad_nodes[gru_hidden_grad_nodes.size() - 1]);
@@ -289,8 +289,8 @@ AnfNodePtr DynamicGRUV2GradFission::AddHConcatNode(const FuncGraphPtr &func_grap
   std::vector<AnfNodePtr> splitv_outputs;
   CreateMultipleOutputsOfAnfNode(func_graph, splitv, kSplitVOutputNum, &splitv_outputs);
   if (splitv_outputs.size() != kSplitVOutputNum) {
-    MS_LOG(EXCEPTION) << "Create outputs of node " << splitv->DebugString() << " failed"
-                      << trace::DumpSourceLines(splitv);
+    MS_LOG(INTERNAL_EXCEPTION) << "Create outputs of node " << splitv->DebugString() << " failed"
+                               << trace::DumpSourceLines(splitv);
   }
   std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcatD->name()))};
   auto init_h_reshape = CreateHReshape(func_graph, dynamic_gru_v2_grad_cnode->input(input_index["init_h"]));

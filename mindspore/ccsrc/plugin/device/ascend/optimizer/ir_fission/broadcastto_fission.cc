@@ -1,6 +1,6 @@
 
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,8 +104,9 @@ const AnfNodePtr DynamicBroadcastToFission::Process(const FuncGraphPtr &graph, c
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (common::AnfAlgo::GetInputTensorNum(cnode) != kDynamicBroadcastToInputNum) {
-    MS_LOG(EXCEPTION) << "DynamicBroadcastTo only support 2 inputs, but got "
-                      << common::AnfAlgo::GetInputTensorNum(cnode) << ", node: " << cnode->fullname_with_scope();
+    MS_LOG(INTERNAL_EXCEPTION) << "DynamicBroadcastTo only support 2 inputs, but got "
+                               << common::AnfAlgo::GetInputTensorNum(cnode)
+                               << ", node: " << cnode->fullname_with_scope();
   }
   auto cast_to_node = AddCastNode(graph, kNumberTypeInt8, cnode, true);
   auto dynamic_broadcastto_node = AddDynamicBroadCastToNode(graph, cnode, cast_to_node);

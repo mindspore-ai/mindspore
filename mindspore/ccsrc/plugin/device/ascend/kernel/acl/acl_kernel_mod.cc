@@ -41,8 +41,8 @@ std::string MsTensorDescString(const TensorParams &param) {
 
 void AclKernelMod::GetInputInfo(const std::vector<KernelTensorPtr> &inputs) {
   if (input_device_formats_.size() != inputs.size()) {
-    MS_LOG(EXCEPTION) << "Acl kernel's input size is not equal with format's size:" << input_device_formats_.size()
-                      << " - input's size:" << inputs.size();
+    MS_LOG(INTERNAL_EXCEPTION) << "Acl kernel's input size is not equal with format's size:"
+                               << input_device_formats_.size() << " - input's size:" << inputs.size();
   }
 
   std::string format = transform::AclHelper::GetFormatFromAttr(primitive_ptr_);
@@ -56,7 +56,7 @@ void AclKernelMod::GetInputInfo(const std::vector<KernelTensorPtr> &inputs) {
     auto shape = input->GetShapeVector();
     if (!IsValidShape(shape)) {
       // early stop if any input shape contains -1/-2, which means input shape is dynamic
-      MS_LOG(EXCEPTION) << "In Resize function, input shape must be valid!";
+      MS_LOG(INTERNAL_EXCEPTION) << "In Resize function, input shape must be valid!";
     }
     if (!format.empty()) {
       params.ori_format = format;
@@ -77,8 +77,8 @@ void AclKernelMod::GetInputInfo(const std::vector<KernelTensorPtr> &inputs) {
 int AclKernelMod::GetOutputInfo(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &outputs) {
   int ret = KRET_OK;
   if (output_device_formats_.size() != outputs.size()) {
-    MS_LOG(EXCEPTION) << "Acl kernel's output size is not equal with format's size:" << output_device_formats_.size()
-                      << " - output's size:" << outputs.size();
+    MS_LOG(INTERNAL_EXCEPTION) << "Acl kernel's output size is not equal with format's size:"
+                               << output_device_formats_.size() << " - output's size:" << outputs.size();
   }
 
   size_t idx = 0;
@@ -195,12 +195,12 @@ void AclKernelMod::SetDeviceInfo(const std::vector<std::string> &input_device_fo
                                  const std::vector<TypeId> &input_device_types,
                                  const std::vector<TypeId> &output_device_types) {
   if (input_device_formats.size() != input_device_types.size()) {
-    MS_LOG(EXCEPTION) << "Acl kernel's input size is not equal with format's size:" << input_device_formats.size()
-                      << " and type's size:" << input_device_types.size();
+    MS_LOG(INTERNAL_EXCEPTION) << "Acl kernel's input size is not equal with format's size:"
+                               << input_device_formats.size() << " and type's size:" << input_device_types.size();
   }
   if (output_device_formats.size() != output_device_types.size()) {
-    MS_LOG(EXCEPTION) << "Acl kernel's output size is not equal with format's size:" << output_device_formats.size()
-                      << " and type's size:" << output_device_types.size();
+    MS_LOG(INTERNAL_EXCEPTION) << "Acl kernel's output size is not equal with format's size:"
+                               << output_device_formats.size() << " and type's size:" << output_device_types.size();
   }
   input_device_formats_ = input_device_formats;
   output_device_formats_ = output_device_formats;

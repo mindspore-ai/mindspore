@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ bool RecvKernel::Init(const AnfNodePtr &anf_node) {
   auto primitive = common::AnfAlgo::GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);
   if (!common::AnfAlgo::HasNodeAttr(kAttrEventId, anf_node->cast<CNodePtr>())) {
-    MS_LOG(EXCEPTION) << "RecvKernel has no attr kAttrEventId";
+    MS_LOG(INTERNAL_EXCEPTION) << "RecvKernel has no attr kAttrEventId";
   }
   event_id_ = GetValue<uint32_t>(primitive->GetAttr(kAttrEventId));
 

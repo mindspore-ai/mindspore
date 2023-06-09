@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ AnfNodePtr InsertTensorMoveForGetNextOutputs(const FuncGraphPtr &func_graph, con
     auto tuple_get_item = CreatTupleGetItemNode(func_graph, node, output_index);
     auto new_node = CreateTensorMoveOp(func_graph, tuple_get_item);
     if (new_node == nullptr) {
-      MS_LOG(EXCEPTION) << "Create tensor move op failed!";
+      MS_LOG(INTERNAL_EXCEPTION) << "Create tensor move op failed!";
     }
     if (common::AnfAlgo::IsDynamicShape(tuple_get_item)) {
       MS_LOG(DEBUG) << "The tenser move op has dynamic shape attr.";

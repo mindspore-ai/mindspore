@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,7 +138,7 @@ void Visitor::Visit(const CNodePtr &cnode, VectorRef *const values_ref, AnfNodeP
 
   for (auto &any_item : outs) {
     if (!utils::isa<AnfNodePtr>(any_item)) {
-      MS_LOG(EXCEPTION) << "VisitError, fn not return the same type AnfNodePtr";
+      MS_LOG(INTERNAL_EXCEPTION) << "VisitError, fn not return the same type AnfNodePtr";
     }
     new_inputs.push_back(utils::cast<AnfNodePtr>(any_item));
   }
@@ -149,7 +149,7 @@ void Visitor::Visit(const CNodePtr &cnode, VectorRef *const values_ref, AnfNodeP
     any_fg = cnode->func_graph();
     values_ref->push_back(GetVar(any_fg));
     if (!utils::isa<FuncGraphPtr>(any_fg)) {
-      MS_LOG(EXCEPTION) << "VisitError, fn not return the same type FuncGraphPtr";
+      MS_LOG(INTERNAL_EXCEPTION) << "VisitError, fn not return the same type FuncGraphPtr";
     }
     new_cnode = std::make_shared<CNode>(new_inputs, utils::cast<FuncGraphPtr>(any_fg));
   } else {
@@ -160,7 +160,7 @@ void Visitor::Visit(const CNodePtr &cnode, VectorRef *const values_ref, AnfNodeP
     } else if (utils::isa<FuncGraphPtr>(any_fg)) {
       new_cnode = std::make_shared<CNode>(new_inputs, utils::cast<FuncGraphPtr>(any_fg));
     } else {
-      MS_LOG(EXCEPTION) << "VisitError, fn not return VarPtr or FuncGraphPtr";
+      MS_LOG(INTERNAL_EXCEPTION) << "VisitError, fn not return VarPtr or FuncGraphPtr";
     }
   }
   new_cnode->set_abstract(cnode->abstract());
@@ -178,6 +178,6 @@ void Visitor::Visit(const ValueNodePtr &vnode, VectorRef *const values_ref, AnfN
     }
     return;
   }
-  MS_LOG(EXCEPTION) << "Visit result is not ValuePtr.";
+  MS_LOG(INTERNAL_EXCEPTION) << "Visit result is not ValuePtr.";
 }
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,7 +113,7 @@ std::vector<TaskInfoPtr> TbeKernelMod::GenTask(const std::vector<AddressPtr> &in
                                                const std::vector<AddressPtr> &workspaces,
                                                const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
   if (kernel_pack_ == nullptr) {
-    MS_EXCEPTION(ArgumentError) << "kernel pack should not be nullptr.";
+    MS_INTERNAL_EXCEPTION(ArgumentError) << "kernel pack should not be nullptr.";
   }
 
   std::vector<uint8_t> args;
@@ -161,7 +161,7 @@ std::vector<TaskInfoPtr> TbeKernelMod::GenTask(const std::vector<AddressPtr> &in
   stream_id_ = stream_id;
   auto funcstub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim_, nullptr);
   if (funcstub == 0) {
-    MS_EXCEPTION(ArgumentError) << "GenFuncStub failed.";
+    MS_INTERNAL_EXCEPTION(ArgumentError) << "GenFuncStub failed.";
   }
 
   std::string stub_func = KernelManager::GetStubFuncName(kernel_pack_);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,8 @@ bool StreamActiveKernel::Init(const AnfNodePtr &anf_node) {
   auto primitive = common::AnfAlgo::GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);
   if (!common::AnfAlgo::HasNodeAttr(kAttrActiveStreamList, anf_node->cast<CNodePtr>())) {
-    MS_LOG(EXCEPTION) << "StreamActiveKernel " << anf_node->DebugString() << "has no attr kAttrActiveStreamList";
+    MS_LOG(INTERNAL_EXCEPTION) << "StreamActiveKernel " << anf_node->DebugString()
+                               << "has no attr kAttrActiveStreamList";
   }
   active_streams_index_ = GetValue<std::vector<uint32_t>>(primitive->GetAttr(kAttrActiveStreamList));
   return true;

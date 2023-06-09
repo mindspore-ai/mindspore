@@ -71,8 +71,8 @@ const AnfNodePtr ProcessGetNextForHeterogenous(const FuncGraphPtr &graph, const 
 bool IsDynamicGetNext(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!common::AnfAlgo::HasNodeAttr(kShapesAttrName, node)) {
-    MS_LOG(EXCEPTION) << "The GetNext node do not have attr " << kShapesAttrName
-                      << ", node: " << node->fullname_with_scope();
+    MS_LOG(INTERNAL_EXCEPTION) << "The GetNext node do not have attr " << kShapesAttrName
+                               << ", node: " << node->fullname_with_scope();
   }
   auto shapes = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(node, kShapesAttrName);
   for (auto shape : shapes) {

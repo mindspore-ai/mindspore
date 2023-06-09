@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,11 +80,11 @@ VectorRef GenerateInputsRef(const std::vector<tensor::TensorPtr> &inputs, const 
       auto param_ptr = (graph_params[i])->cast_ptr<Parameter>();
       MS_EXCEPTION_IF_NULL(param_ptr);
       if (!param_ptr->has_default()) {
-        MS_LOG(EXCEPTION) << "Parameter[" << i << "] has no default param";
+        MS_LOG(INTERNAL_EXCEPTION) << "Parameter[" << i << "] has no default param";
       }
       if (!param_ptr->default_param()->isa<Tensor>()) {
-        MS_LOG(EXCEPTION) << "Parameter[" << param_ptr->ToString()
-                          << "] is not initialized, need to call `.init_data()`";
+        MS_LOG(INTERNAL_EXCEPTION) << "Parameter[" << param_ptr->ToString()
+                                   << "] is not initialized, need to call `.init_data()`";
       }
       results.push_back(param_ptr->default_param());
     }
@@ -96,8 +96,8 @@ uint32_t GetRootGraphIdFromActorInfo(const std::string &actor_info) {
   const std::string prefix = "kernel_graph_";
   auto pos = actor_info.find(prefix);
   if (pos == std::string::npos) {
-    MS_LOG(EXCEPTION) << "Cannot find prefix " << prefix << " from actor_info" << actor_info
-                      << ", failed to get graph id.";
+    MS_LOG(INTERNAL_EXCEPTION) << "Cannot find prefix " << prefix << " from actor_info" << actor_info
+                               << ", failed to get graph id.";
   }
   std::string first_num = "";
   for (size_t i = prefix.size(); i < actor_info.size(); ++i) {

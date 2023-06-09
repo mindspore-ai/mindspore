@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,8 +58,8 @@ ValueNodePtr CreateAssistNode(const FuncGraphPtr &func_graph, const AnfNodePtr &
     SetAssistTensorData<float>(tensor->data_c(), static_cast<float>(1), matrix_size);
     x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat, shape);
   } else {
-    MS_EXCEPTION(TypeError) << "The type of node [" << node->DebugString()
-                            << "] should be int32, float16 or float32, but got" << node->Type()->ToString();
+    MS_INTERNAL_EXCEPTION(TypeError) << "The type of node [" << node->DebugString()
+                                     << "] should be int32, float16 or float32, but got" << node->Type()->ToString();
   }
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -90,7 +90,7 @@ const AnfNodePtr Conv2dBackpropFilterMul::Process(const FuncGraphPtr &func_graph
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (!common::AnfAlgo::HasNodeAttr(kAttrGroup, cnode)) {
-    MS_LOG(EXCEPTION) << "Get Conv2DBackpropFilter attr(groups) failed, node: " << node->DebugString();
+    MS_LOG(INTERNAL_EXCEPTION) << "Get Conv2DBackpropFilter attr(groups) failed, node: " << node->DebugString();
   }
   auto groups = common::AnfAlgo::GetNodeAttr<int64_t>(node, kAttrGroup);
   // if groups not > 1, skip process

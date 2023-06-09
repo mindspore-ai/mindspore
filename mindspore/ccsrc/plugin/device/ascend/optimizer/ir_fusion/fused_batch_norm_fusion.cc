@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,8 @@ void GetBNOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &bn, std::vect
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   if (manager->node_users().find(bn) == manager->node_users().end()) {
-    MS_LOG(EXCEPTION) << "The bn node " << bn->DebugString() << " should has some outputs"
-                      << trace::DumpSourceLines(bn);
+    MS_LOG(INTERNAL_EXCEPTION) << "The bn node " << bn->DebugString() << " should has some outputs"
+                               << trace::DumpSourceLines(bn);
   }
   for (const auto &node_index : manager->node_users()[bn]) {
     const AnfNodePtr &output = node_index.first;
@@ -132,8 +132,8 @@ void FusedBatchNormFusion::GetBNTrainingUpdateAbstractList(const EquivPtr &equiv
   auto bn_abstract_tuple = dyn_cast<abstract::AbstractTuple>(bn->abstract());
   MS_EXCEPTION_IF_NULL(bn_abstract_tuple);
   if (bn_abstract_tuple->elements().size() < kBnOutputNum) {
-    MS_LOG(EXCEPTION) << "The abstract size of node bn must not be less than " << kBnOutputNum << ", but it is "
-                      << bn_abstract_tuple->elements().size() << trace::DumpSourceLines(bn);
+    MS_LOG(INTERNAL_EXCEPTION) << "The abstract size of node bn must not be less than " << kBnOutputNum
+                               << ", but it is " << bn_abstract_tuple->elements().size() << trace::DumpSourceLines(bn);
   }
   auto variable_input0 = GetAnfNodeByVar(equiv, variable_input0_var_);
   auto variable_input1 = GetAnfNodeByVar(equiv, variable_input1_var_);
@@ -208,8 +208,8 @@ const AnfNodePtr FusedBatchNormFusion::Process(const FuncGraphPtr &func_graph, c
   CreateMultipleOutputsOfAnfNode(func_graph, bn_training_update, kBNTrainingUpdateOutputNum,
                                  &bn_training_update_outputs);
   if (bn_training_update_outputs.size() < kBNTrainingUpdateOutputNum) {
-    MS_LOG(EXCEPTION) << "The output size of node bn must be " << kBNTrainingUpdateOutputNum << ", but it is "
-                      << bn_training_update_outputs.size() << trace::DumpSourceLines(node);
+    MS_LOG(INTERNAL_EXCEPTION) << "The output size of node bn must be " << kBNTrainingUpdateOutputNum << ", but it is "
+                               << bn_training_update_outputs.size() << trace::DumpSourceLines(node);
   }
   // Replace old bn outputs with new outputs
   std::vector<AnfNodePtr> bn_outputs;
@@ -229,7 +229,7 @@ const AnfNodePtr FusedBatchNormFusion::Process(const FuncGraphPtr &func_graph, c
     MS_EXCEPTION_IF_NULL(value_node);
     auto value_index = GetValue<int64_t>(value_node->value());
     if (value_index < 0) {
-      MS_LOG(EXCEPTION) << "Error value index: " << value_index;
+      MS_LOG(INTERNAL_EXCEPTION) << "Error value index: " << value_index;
     }
     auto index = LongToSize(value_index);
     if (index == kReplaceOutputIndex0 || index == kReplaceOutputIndex1) {

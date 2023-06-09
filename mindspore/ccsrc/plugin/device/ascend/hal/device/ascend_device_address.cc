@@ -115,8 +115,8 @@ void SyncMemory(void *dst, const void *src, uint64_t size, aclrtMemcpyKind kind)
 bool FloatToHalfAndSyncHostToDevice(void *dst, size_t dst_size, const void *src, size_t src_size) {
   auto elem_num = src_size / kFloatBytes;
   if (elem_num != (dst_size / kFloat16Bytes)) {
-    MS_EXCEPTION(ArgumentError) << "FloatToHalf failed. size not match src_size[" << src_size << "], dst_size["
-                                << dst_size << "]";
+    MS_INTERNAL_EXCEPTION(ArgumentError) << "FloatToHalf failed. size not match src_size[" << src_size << "], dst_size["
+                                         << dst_size << "]";
   }
   std::vector<float16> half_data(elem_num);
   FloatToHalf(half_data.data(), src, elem_num);
@@ -126,7 +126,7 @@ bool FloatToHalfAndSyncHostToDevice(void *dst, size_t dst_size, const void *src,
 
 bool Float64ToFloatAndSyncHostToDevice(void *dst, size_t dst_size, const void *src, size_t src_size) {
   if (src_size / kFloat64Bytes != dst_size / kFloatBytes) {
-    MS_EXCEPTION(ArgumentError) << "src_size[" << src_size << "], dst_size[" << dst_size << "]";
+    MS_INTERNAL_EXCEPTION(ArgumentError) << "src_size[" << src_size << "], dst_size[" << dst_size << "]";
   }
   size_t elem_num = dst_size / sizeof(float);
   auto host_tmp = std::vector<float>(elem_num);
@@ -138,8 +138,8 @@ bool Float64ToFloatAndSyncHostToDevice(void *dst, size_t dst_size, const void *s
 bool SyncDeviceToHostAndHalfToFloat(void *dst, size_t dst_size, const void *src, size_t src_size) {
   auto elem_num = src_size / kFloat16Bytes;
   if (elem_num != (dst_size / kFloatBytes)) {
-    MS_EXCEPTION(ArgumentError) << "HalfToFloat failed. size not match src_size[" << src_size << "], dst_size["
-                                << dst_size << "]";
+    MS_INTERNAL_EXCEPTION(ArgumentError) << "HalfToFloat failed. size not match src_size[" << src_size << "], dst_size["
+                                         << dst_size << "]";
   }
   std::vector<float16> half_data(elem_num);
   SyncMemory(half_data.data(), src, src_size, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -149,7 +149,7 @@ bool SyncDeviceToHostAndHalfToFloat(void *dst, size_t dst_size, const void *src,
 
 bool SyncDeviceToHostAndFloatToFloat64(void *dst, size_t dst_size, const void *src, size_t src_size) {
   if (src_size / kFloatBytes != dst_size / kFloat64Bytes) {
-    MS_EXCEPTION(ArgumentError) << "src_size[" << src_size << "], dst_size[" << dst_size << "]";
+    MS_INTERNAL_EXCEPTION(ArgumentError) << "src_size[" << src_size << "], dst_size[" << dst_size << "]";
   }
   size_t elem_num = src_size / sizeof(float);
   auto host_tmp = std::vector<float>(elem_num);
