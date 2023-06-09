@@ -115,6 +115,9 @@ static inline bool UseMPI() {
   std::string ompi_command_env = GetEnv("OMPI_COMMAND");
   std::string pmix_rank_env = GetEnv("PMIX_RANK");
   if (!ompi_command_env.empty() && !pmix_rank_env.empty()) {
+    if (!GetEnv("MS_ROLE").empty()) {
+      return false;
+    }
     return true;
   }
   return false;
