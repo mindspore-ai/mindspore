@@ -18,6 +18,7 @@
 #include "nnacl/op_base.h"
 #include "nnacl/clip_parameter.h"
 #include "nnacl/fp32/activation_fp32.h"
+#include "nnacl/kernel/base_kernel.h"
 
 int GetClipMinMaxValue(TensorC *tensor, float *data) {
   NNACL_CHECK_NULL_RETURN_ERR(tensor);
@@ -36,13 +37,6 @@ int GetClipMinMaxValue(TensorC *tensor, float *data) {
   return NNACL_OK;
 }
 
-int clip_prepare(struct KernelBase *self) {
-  ClipStruct *clip = (ClipStruct *)self;
-  NNACL_CHECK_NULL_RETURN_ERR(clip);
-  NNACL_CHECK_FALSE(self->in_size_ < ONE_TENSOR || self->out_size_ < ONE_TENSOR, NNACL_TENSOR_SIZE_INVALID);
-  return NNACL_OK;
-}
-
 int clip_resize(struct KernelBase *self) {
   ClipStruct *clip = (ClipStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(clip);
@@ -50,8 +44,6 @@ int clip_resize(struct KernelBase *self) {
     TC_PTYPE(PrimType_Clip), 1, 1, GetElementNum(clip->base_.out_[FIRST_INPUT]), clip->base_.thread_nr_);
   return NNACL_OK;
 }
-
-int clip_release(struct KernelBase *self) { return NNACL_OK; }
 
 int clip_do_compute(void *cdata, int task_id, float l, float r) {
   ClipStruct *clip = (ClipStruct *)cdata;
@@ -116,9 +108,9 @@ int clip_compute(struct KernelBase *self) {
 KernelBase *CreateClip(OpParameter *param, int data_type) {
   ClipStruct *clip = (ClipStruct *)malloc(sizeof(ClipStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(clip);
-  clip->base_.prepare = clip_prepare;
+  clip->base_.prepare = base_kernel_prepare_one_input;
   clip->base_.resize = clip_resize;
-  clip->base_.release = clip_release;
+  clip->base_.release = base_kernel_release;
   clip->base_.compute = clip_compute;
   return (KernelBase *)clip;
 }

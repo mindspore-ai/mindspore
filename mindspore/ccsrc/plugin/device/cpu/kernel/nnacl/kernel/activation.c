@@ -18,6 +18,7 @@
 #include "nnacl/activation_parameter.h"
 #include "nnacl/op_base.h"
 #include "nnacl/fp32/activation_fp32.h"
+#include "nnacl/kernel/base_kernel.h"
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/activation_fp16.h"
 #endif
@@ -27,9 +28,6 @@ typedef struct ActivationStruct {
   int data_type_;
   ActType act_type_;
 } ActivationStruct;
-
-int activation_release(struct KernelBase *self) { return NNACL_OK; }
-int activation_prepare(struct KernelBase *self) { return NNACL_OK; }
 
 int activation_resize(struct KernelBase *self) {
   ActivationStruct *activation = (ActivationStruct *)self;
@@ -181,9 +179,9 @@ KernelBase *CreateActivation(OpParameter *param, int data_type) {
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(activation);
   activation->data_type_ = data_type;
   activation->act_type_ = act->type_;
-  activation->base.prepare = activation_prepare;
+  activation->base.prepare = base_kernel_prepare_one_input;
   activation->base.resize = activation_resize;
-  activation->base.release = activation_release;
+  activation->base.release = base_kernel_release;
   activation->base.compute = activation_compute;
   return (KernelBase *)activation;
 }

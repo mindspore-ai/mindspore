@@ -22,20 +22,26 @@
 #include "include/errorcode.h"
 #include "nnacl/int8/crop_int8.h"
 #include "src/litert/lite_kernel.h"
-#include "src/litert/kernel/cpu/base/crop_base.h"
 
 namespace mindspore::kernel {
-class CropInt8CPUKernel : public CropBaseCPUKernel {
+class CropInt8CPUKernel : public LiteKernel {
  public:
   CropInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                     const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx)
-      : CropBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~CropInt8CPUKernel() = default;
 
   int Prepare() override;
   int ReSize() override;
   int Run() override;
   void DoExecute(int task_id);
+
+ private:
+  std::vector<int> input_shape_;
+  std::vector<int> output_shape_;
+  int64_t in_offset_[COMM_SHAPE_SIZE];
+  CropQuantArg quant_arg;
+  CropParameter *crop_para_ = nullptr;
 };
 
 int CropInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);

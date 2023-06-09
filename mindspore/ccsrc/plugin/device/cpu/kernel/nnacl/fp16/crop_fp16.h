@@ -20,16 +20,7 @@
 #include "nnacl/op_base.h"
 #include "nnacl/crop_parameter.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-void Fp16Crop(const float16_t *input, float16_t *output, int task_id, const CropParameter *para);
-void Fp16Crop1D(const float16_t *input, float16_t *output, int task_id, const CropParameter *para);
-void Fp16Crop2D(const float16_t *input, float16_t *output, int task_id, const CropParameter *para);
-void Fp16Crop3D(const float16_t *input, float16_t *output, int task_id, const CropParameter *para);
-void Fp16Crop4D(const float16_t *input, float16_t *output, int task_id, const CropParameter *para);
-#ifdef __cplusplus
-}
-#endif
+void Fp16Crop(const float16_t *input, float16_t *output, int *in_shape, int *out_shape, int64_t *in_offset,
+              int input_dim, int task_id, int thread_num);
 
-#endif  //  NNACL_FP16_CROP_FP16_H_
+#endif  // NNACL_FP16_CROP_FP16_H_

@@ -17,6 +17,7 @@
 #include "nnacl/kernel/softmax.h"
 #include "nnacl/nnacl_common.h"
 #include "nnacl/fp32/softmax_fp32.h"
+#include "nnacl/kernel/base_kernel.h"
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/softmax_fp16.h"
 #endif
@@ -114,12 +115,6 @@ int softmax_resize(struct KernelBase *self) {
   return NNACL_OK;
 }
 
-int softmax_prepare(struct KernelBase *self) {
-  NNACL_CHECK_FALSE(self->in_size_ < 1, NNACL_ERR);
-  NNACL_CHECK_FALSE(self->out_size_ < 1, NNACL_ERR);
-  return NNACL_OK;
-}
-
 int softmax_compute(struct KernelBase *self) {
   SoftmaxStruct *softmax = (SoftmaxStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(softmax);
@@ -151,7 +146,7 @@ KernelBase *CreateSoftmax(OpParameter *param, int data_type) {
   softmax->sum_data_ = NULL;
   softmax->data_type_ = data_type;
   softmax->base_.release = softmax_release;
-  softmax->base_.prepare = softmax_prepare;
+  softmax->base_.prepare = base_kernel_prepare_one_input;
   softmax->base_.resize = softmax_resize;
   softmax->base_.compute = softmax_compute;
   return (KernelBase *)softmax;

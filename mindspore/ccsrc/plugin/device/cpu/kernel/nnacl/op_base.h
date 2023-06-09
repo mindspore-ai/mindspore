@@ -636,9 +636,13 @@ typedef enum TypeIdC {
   kNumberTypeFloat16,
   kNumberTypeFloat32,
   kNumberTypeFloat64,
+  kNumberTypeDouble,
+  kNumberTypeComplex,
   kNumberTypeComplex64,
   kNumberTypeComplex128,
-  kNumberTypeEnd
+  kNumberTypeInt4,
+  kNumberTypeGLUInt,
+  kNumberTypeEnd,
 } TypeIdC;
 
 typedef enum DataOrder {

@@ -19,16 +19,10 @@
 #include "nnacl/op_base.h"
 #include "nnacl/nnacl_common.h"
 #include "nnacl/base/fill_base.h"
+#include "nnacl/kernel/base_kernel.h"
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/fill_fp16.h"
 #endif
-
-int fill_prepare(struct KernelBase *self) {
-  FillStruct *fill = (FillStruct *)self;
-  NNACL_CHECK_NULL_RETURN_ERR(fill);
-  NNACL_CHECK_FALSE(self->in_size_ < TWO_TENSOR || self->out_size_ < ONE_TENSOR, NNACL_TENSOR_SIZE_INVALID);
-  return NNACL_OK;
-}
 
 int fill_resize(struct KernelBase *self) {
   FillStruct *fill = (FillStruct *)self;
@@ -44,8 +38,6 @@ int fill_resize(struct KernelBase *self) {
   }
   return NNACL_OK;
 }
-
-int fill_release(struct KernelBase *self) { return NNACL_OK; }
 
 int fill_do_compute(void *cdata, int task_id, float l, float r) {
   FillStruct *fill = (FillStruct *)cdata;
@@ -91,9 +83,9 @@ int fill_compute(struct KernelBase *self) {
 KernelBase *CreateFill(OpParameter *param, int data_type) {
   FillStruct *fill = (FillStruct *)malloc(sizeof(FillStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(fill);
-  fill->base_.prepare = fill_prepare;
+  fill->base_.prepare = base_kernel_prepare_two_input;
   fill->base_.resize = fill_resize;
-  fill->base_.release = fill_release;
+  fill->base_.release = base_kernel_release;
   fill->base_.compute = fill_compute;
   return (KernelBase *)fill;
 }

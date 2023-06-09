@@ -19,6 +19,7 @@
 #include "nnacl/exp_parameter.h"
 #include "nnacl/op_base.h"
 #include "nnacl/fp32/exp_fp32.h"
+#include "nnacl/kernel/base_kernel.h"
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/exp_fp16.h"
 #endif
@@ -54,8 +55,6 @@ int exp_prepare(struct KernelBase *self) {
   return NNACL_OK;
 }
 
-int exp_release(struct KernelBase *self) { return NNACL_OK; }
-
 int exp_do_compute(void *cdata, int task_id, float l, float r) {
   ExpStruct *exp = (ExpStruct *)cdata;
   NNACL_CHECK_NULL_RETURN_ERR(exp);
@@ -71,7 +70,7 @@ KernelBase *CreateExp(OpParameter *param, int data_type) {
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(exp);
   exp->base_.prepare = exp_prepare;
   exp->base_.resize = exp_resize;
-  exp->base_.release = exp_release;
+  exp->base_.release = base_kernel_release;
   exp->base_.compute = exp_compute;
   exp->ExpCompute = ExpFusionFp32;
 #ifdef ENABLE_FP16

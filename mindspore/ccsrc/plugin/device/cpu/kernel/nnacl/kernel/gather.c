@@ -17,6 +17,7 @@
 #include "nnacl/kernel/gather.h"
 #include "nnacl/nnacl_common.h"
 #include "nnacl/op_base.h"
+#include "nnacl/kernel/base_kernel.h"
 
 #define kGatherMinCostPerThread 16384
 
@@ -132,8 +133,6 @@ void GatherUpdateThreadNumProcess(GatherStruct *gather) {
   return;
 }
 
-int gather_release(struct KernelBase *self) { return NNACL_OK; }
-
 int ChooseGatherThreadCuttingStrategy(GatherStruct *gather) {
   gather->block_infos_size_ = 0;
   if (gather->outer_size_ == 0 || gather->indices_size_ == 0 || gather->byte_inner_size_ == 0) {
@@ -230,7 +229,7 @@ KernelBase *CreateGather(OpParameter *param, int data_type) {
   gather->block_infos_size_ = 0;
   gather->base_.prepare = gather_prepare;
   gather->base_.resize = gather_resize;
-  gather->base_.release = gather_release;
+  gather->base_.release = base_kernel_release;
   gather->base_.compute = gather_compute;
   return (KernelBase *)gather;
 }
