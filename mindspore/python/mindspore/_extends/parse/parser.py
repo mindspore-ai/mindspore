@@ -55,7 +55,9 @@ RESOLVE_TYPE_CLASS_INSTANCE = 4         # Resolve the class instance of common c
 RESOLVE_TYPE_NAMESPACE_INSTANCE = 5     # Resolve the namespace instance.
 RESOLVE_TYPE_NUMPY_INT_NUMBER = 6       # Resolve numpy int number.
 RESOLVE_TYPE_NUMPY_FLOAT_NUMBER = 7     # Resolve numpy float number.
-RESOLVE_TYPE_NUMPY_BOOL_NUMBER = 8     # Resolve numpy bool number.
+RESOLVE_TYPE_NUMPY_BOOL_NUMBER = 8      # Resolve numpy bool number.
+RESOLVE_TYPE_TUPLE = 9                  # Resolve builtin tuple type.
+RESOLVE_TYPE_LIST = 10                  # Resolve builtin list type.
 RESOLVE_TYPE_INVALID = 0xFF             # Resolve invalid.
 
 # Define the class instance detail type
@@ -167,6 +169,22 @@ def parse_cb(func, parse_method=None):
     return Parser(func, parse_method)
 
 
+def get_attr_from_object(obj, attr_name=None):
+    """
+    Get attr from object.
+
+    Args:
+        obj(Object): Instance of class or module.
+        attr_name(str): Attribute name to check.
+
+    Returns:
+        Object, obj's attr.
+    """
+    if obj is not None and attr_name is not None and hasattr(obj, attr_name):
+        return getattr(obj, attr_name)
+    return None
+
+
 def get_parse_method_of_class(obj, parse_method=None):
     """
     Get parse method of class.
@@ -178,7 +196,6 @@ def get_parse_method_of_class(obj, parse_method=None):
     Returns:
         Function, obj's method.
     """
-    method = None
     method_name = None
     if parse_method is not None:
         method_name = parse_method
@@ -187,10 +204,8 @@ def get_parse_method_of_class(obj, parse_method=None):
             method_name = "_backward_hook_construct"
         else:
             method_name = "construct"
-    if method_name is not None:
-        if hasattr(obj, method_name):
-            method = getattr(obj, method_name)
-    return method
+
+    return get_attr_from_object(obj, method_name)
 
 
 def get_bprop_method_of_class(obj, parse_method=None):
@@ -204,12 +219,10 @@ def get_bprop_method_of_class(obj, parse_method=None):
     Returns:
         Function, obj's method.
     """
-    method = None
     if isinstance(obj, nn.Cell):
         method_name = "bprop"
-        if hasattr(obj, method_name):
-            method = getattr(obj, method_name)
-    return method
+        return get_attr_from_object(obj, method_name)
+    return None
 
 
 def resolve_symbol(namespace, symbol):
@@ -343,6 +356,10 @@ def get_obj_type(obj):
         obj_type = RESOLVE_TYPE_CLASS_TYPE
     elif isinstance(obj, Namespace):
         obj_type = RESOLVE_TYPE_NAMESPACE_INSTANCE
+    elif isinstance(obj, tuple):
+        obj_type = RESOLVE_TYPE_TUPLE
+    elif isinstance(obj, list):
+        obj_type = RESOLVE_TYPE_LIST
     elif _is_class_instance(obj):
         obj_type = RESOLVE_TYPE_CLASS_INSTANCE
     elif _is_numpy_int_number(obj):
@@ -845,9 +862,7 @@ def _jit_fallback_generate_list(key_name, list_value):
 
 def get_dtype(name: str):
     """get mstype from name"""
-    if not hasattr(mstype, name):
-        return None
-    return getattr(mstype, name)
+    return get_attr_from_object(mstype, name)
 
 
 def get_user_workspace_root_dir(module_path):

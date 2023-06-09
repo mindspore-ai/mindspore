@@ -198,6 +198,7 @@ class Parser {
   AnfNodePtr ParseNull(const FunctionBlockPtr &block, const py::object &value_body) const;
   // Process a compare expression.
   AnfNodePtr ParseCompare(const FunctionBlockPtr &block, const py::object &node);
+  AnfNodePtr ParseCompareInner(const FunctionBlockPtr &block, const py::object &node, bool force_interpret = false);
   // Process a bool operation.
   AnfNodePtr ParseBoolOp(const FunctionBlockPtr &block, const py::object &node);
   // Process a lambda operation.
@@ -231,6 +232,13 @@ class Parser {
   std::vector<AnfNodePtr> ParseException(const FunctionBlockPtr &block, const py::list &args, const std::string &name);
   std::vector<AnfNodePtr> ParseRaiseCall(const FunctionBlockPtr &block, const py::object &node);
   void ParseStrInError(const FunctionBlockPtr &block, const py::list &args, std::vector<AnfNodePtr> *str_nodes);
+  AnfNodePtr ParseRecursiveMethodOrCellObj(const FunctionBlockPtr &block, const py::object &cell_or_method);
+  AnfNodePtr ParseRecursiveFuncDef(const FunctionBlockPtr &block, const py::object &node, bool only_attr = false);
+
+  bool GetBoolObjForAstCompare(const py::object &node, bool *bool_res);
+  py::object GetPyObjForAstAttr(const py::object &attr_ast_node);
+  bool CheckConstantCondition(const py::object &test_node, bool *is_true_cond);
+
   FunctionBlockPtr MakeAssertErrorBlock(const FunctionBlockPtr &block, const py::object &node);
   AnfNodePtr ProcessAttributeWithClassMember(const FunctionBlockPtr &block, const py::object &node) const;
 
@@ -252,7 +260,7 @@ class Parser {
                                             const py::object &iter_obj);
   // Check if the node need interpreting.
   AnfNodePtr HandleInterpret(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
-                             const py::object &value_object);
+                             const py::object &value_object, bool force_interpret = false);
   bool CheckNeedConvertInterpret(const FunctionBlockPtr &block, const AnfNodePtr &node,
                                  const string &script_text) const;
   // Handle interpret for augassign expression.

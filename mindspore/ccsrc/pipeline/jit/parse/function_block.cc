@@ -170,7 +170,7 @@ std::pair<AnfNodePtr, bool> FunctionBlock::FindPredInterpretNode(const std::stri
 
 // Read variable from predecessors
 AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
-  MS_LOG(DEBUG) << "Read begin, var: " << var_name << ", block: " << ToString();
+  MS_LOG(DEBUG) << "Read begin, var_name: " << var_name << ", block: " << ToString();
   // Get var node if it is found
   auto node = ReadLocalVariable(var_name);
   if (node != nullptr) {
@@ -180,6 +180,7 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
     return node;
   }
 
+  MS_LOG(DEBUG) << "matured_: " << matured_ << ", prev_blocks_.size: " << prev_blocks_.size();
   // Get var from predecessor block, if can't get then make a resolve node to it
   if (matured_) {
     // If only one predecessor block, read the definition of var from it.
@@ -201,7 +202,7 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
       if (it != var_to_resolve_.end()) {
         return it->second;
       }
-      MS_LOG(DEBUG) << "var: " << var_name;
+      MS_LOG(DEBUG) << "var_name: " << var_name;
       auto tmp_node = MakeResolveSymbol(var_name);
       var_to_resolve_[var_name] = tmp_node;
       return tmp_node;
@@ -236,7 +237,7 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
   }
   // In SetPhiArgument/CollectRemovablePhi, this phi may be set as removable and set it as
   // real node, so check it again.
-  MS_LOG(DEBUG) << "Read again, var: " << var_name << ", block: " << ToString();
+  MS_LOG(DEBUG) << "Read again, var_name: " << var_name << ", block: " << ToString();
   node = ReadLocalVariable(var_name);
   if (node != nullptr) {
     return node;
