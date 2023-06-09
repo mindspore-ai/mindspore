@@ -21,7 +21,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "tools/converter/quantizer/quant_strategy.h"
-#include "tools/converter/quantizer/fixed_bit_weight_quantization.h"
+#include "tools/converter/quantizer/fixed_bit_weight_quantization_with_holder.h"
 #include "tools/common/node_util.h"
 
 namespace mindspore::lite::quant {
@@ -141,7 +141,7 @@ int QuantNodePass::DoParameterNodeQuant(const CNodePtr &cnode, const ParameterPt
   CHECK_NULL_RETURN(primitive);
   auto op_name = cnode->fullname_with_scope();
   if (input_index == THIRD_INPUT + 1 && CheckNodeInSet(cnode, kHasBiasOperator)) {
-    FixedBitWeightQuantization fixed_bit_quant;
+    FixedBitWeightQuantizationWithHolder fixed_bit_quant;
     ret = fixed_bit_quant.QuantBias(input_node, primitive);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << op_name << " Do bias quant failed.";

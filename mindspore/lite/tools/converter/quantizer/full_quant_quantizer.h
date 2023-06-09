@@ -76,8 +76,14 @@ class FullQuantQuantizer : public Quantizer {
 
   int QuantNode(const FuncGraphPtr &func_graph);
 
-  int SetInOutQuantParam(const AnfNodePtr &input_node, const std::unique_ptr<DataDistribution> &info,
-                         const PrimitivePtr &primitive, size_t index, bool is_input = true) const;
+  int QuantNodeGraphInput(const PrimitivePtr &primitive, const AnfNodePtr &input_node,
+                          const std::unique_ptr<DataDistribution> &info);
+
+  int QuantNodeCNode(const PrimitivePtr &input_cnode_primitive, const AnfNodePtr &input_node,
+                     const std::unique_ptr<DataDistribution> &info);
+
+  std::vector<schema::QuantParamT> GetQuantParam(const AnfNodePtr &input_node,
+                                                 const std::unique_ptr<DataDistribution> &info) const;
 
   int QuantWeight(const CNodePtr &cnode, const PrimitivePtr &primitive, const AnfNodePtr &weight, int input_index,
                   const tensor::TensorPtr &tensor_info, bool per_channel = true);
@@ -92,7 +98,7 @@ class FullQuantQuantizer : public Quantizer {
 
   int DoValueNodeQuant(const CNodePtr &cnode, const ValueNodePtr &input_node, size_t input_index);
 
-  int IsSupportWeightQuant(const CNodePtr &cnode, const AnfNodePtr &input_node, size_t input_index);
+  int IsSupportWeightQuant(const AnfNodePtr &input_node);
 
   void InitQMinMax();
 

@@ -26,17 +26,6 @@
 #include "ir/tensor.h"
 
 namespace mindspore::lite::quant {
-constexpr float kBinarySearchStep = 2.0;
-typedef struct {
-  int status;
-  float scale;
-} BinarySearchResult;
-
-typedef struct {
-  float inv_norm;
-  MinMax mm;
-} LayerParam;
-
 class MixedBitWeightQuantization {
  public:
   explicit MixedBitWeightQuantization(float target_relative_err, float target_search_tolerance = 0.01,
@@ -47,7 +36,7 @@ class MixedBitWeightQuantization {
   ~MixedBitWeightQuantization() = default;
 
   int QuantFilter(const PrimitivePtr &primitive, const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
-                  int index, QuantType quant_type, bool use_auto_tune_alg = false);
+                  QuantType quant_type, bool use_auto_tune_alg = false);
 
  private:
   int DoQuantization(float *weights, std::vector<int64_t> shape, int preferred_dim,

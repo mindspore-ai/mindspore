@@ -23,7 +23,7 @@
 #include "tools/converter/quantizer/quant_helper/transform_uint8_pass.h"
 #include "tools/converter/quantizer/quant_helper/quant_node_pass.h"
 #include "tools/converter/quantizer/insert_quant_node_manager.h"
-#include "tools/converter/quantizer/fixed_bit_weight_quantization.h"
+#include "tools/converter/quantizer/fixed_bit_weight_quantization_with_holder.h"
 #include "tools/converter/quantizer/quant_strategy.h"
 #include "include/backend/optimizer/graph_optimizer.h"
 #include "tools/optimizer/fusion/quant_dtype_cast_fusion.h"
@@ -171,7 +171,7 @@ int QATTransform::StaticWeightQuantInfo(const FuncGraphPtr &func_graph,
         MS_LOG(INFO) << "This op " << cnode->fullname_with_scope() << "'input[" << i - 1 << "] dont need quant weight";
         continue;
       }
-      FixedBitWeightQuantization fixed_bit_quant;
+      FixedBitWeightQuantizationWithHolder fixed_bit_quant;
       auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
       CHECK_NULL_RETURN(primitive);
       auto weight_quant_type = WeightQuantType::FIXED_BIT_PER_LAYER;

@@ -63,6 +63,17 @@ int GetQuantType(const CNodePtr &cnode, quant::QuantType *quant_type) {
   return RET_OK;
 }
 
+int GetQuantTypeNew(const CNodePtr &cnode, quant::QuantType *quant_type) {
+  auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "primitive is nullptr.";
+    return RET_NULL_PTR;
+  }
+  auto quant_type_attr = primitive->GetAttr(quant::kQuantType);
+  *quant_type = static_cast<quant::QuantType>(GetValue<int32_t>(quant_type_attr));
+  return RET_OK;
+}
+
 void GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs) {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(all_func_graphs != nullptr);
@@ -587,6 +598,7 @@ bool CheckControlFlowType(const AnfNodePtr &node) {
   }
   return false;
 }
+
 int CloneFuncGraph(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param,
                    FuncGraphPtr *func_graph_bak) {
   CHECK_NULL_RETURN(func_graph_bak);
@@ -729,5 +741,159 @@ bool IsPerchannelWeight(const std::vector<schema::QuantParamT> &quant_params, co
                         int preferred_dim) {
   auto dims = weight->shape();
   return (static_cast<int>(quant_params.size()) == dims[preferred_dim]);
+}
+
+QuantizationParamPtr ConvertQuantParamTToQuantizationParam(const std::vector<schema::QuantParamT> &quant_params) {
+  if (quant_params.empty()) {
+    return nullptr;
+  }
+  QuantizationParam quantization(quant::kLinearQuant);
+  std::vector<ValuePtr> scale_list;
+  std::vector<ValuePtr> zeroPoint_list;
+  std::vector<ValuePtr> min_list;
+  std::vector<ValuePtr> max_list;
+  std::vector<ValuePtr> varCorr_list;
+  std::vector<ValuePtr> meanCorr_list;
+  std::vector<ValuePtr> numBits_list;
+  std::vector<ValuePtr> narrowRange_list;
+  std::vector<ValuePtr> dstDtype_list;
+  std::vector<ValuePtr> roundType_list;
+  std::vector<ValuePtr> multiplier_list;
+  for (auto quant_param : quant_params) {
+    scale_list.push_back(MakeValue(quant_param.scale));
+    zeroPoint_list.push_back(MakeValue(quant_param.zeroPoint));
+    min_list.push_back(MakeValue(quant_param.min));
+    max_list.push_back(MakeValue(quant_param.max));
+    varCorr_list.push_back(MakeValue(quant_param.varCorr));
+    meanCorr_list.push_back(MakeValue(quant_param.meanCorr));
+    numBits_list.push_back(MakeValue(quant_param.numBits));
+    narrowRange_list.push_back(MakeValue(quant_param.narrowRange));
+    dstDtype_list.push_back(MakeValue(quant_param.dstDtype));
+    roundType_list.push_back(MakeValue(quant_param.roundType));
+    multiplier_list.push_back(MakeValue(quant_param.multiplier));
+  }
+  quantization.AddAttr(quant::kScaleList, std::make_shared<ValueList>(scale_list));
+  quantization.AddAttr(quant::kZeroPointList, std::make_shared<ValueList>(zeroPoint_list));
+  quantization.AddAttr(quant::kMinList, std::make_shared<ValueList>(min_list));
+  quantization.AddAttr(quant::kMaxList, std::make_shared<ValueList>(max_list));
+  quantization.AddAttr(quant::kVarCorrList, std::make_shared<ValueList>(varCorr_list));
+  quantization.AddAttr(quant::kMeanCorrList, std::make_shared<ValueList>(meanCorr_list));
+  quantization.AddAttr(quant::kNumBitList, std::make_shared<ValueList>(numBits_list));
+  quantization.AddAttr(quant::kNarrowRangeList, std::make_shared<ValueList>(narrowRange_list));
+  quantization.AddAttr(quant::kDstDtypeList, std::make_shared<ValueList>(dstDtype_list));
+  quantization.AddAttr(quant::kRoundTypeList, std::make_shared<ValueList>(roundType_list));
+  quantization.AddAttr(quant::kMultiplierList, std::make_shared<ValueList>(multiplier_list));
+  return std::make_shared<mindspore::QuantizationParam>(quantization);
+}
+
+std::vector<schema::QuantParamT> ConvertQuantizationParamToQuantParamT(const QuantizationParamPtr &quantization_param) {
+  std::vector<schema::QuantParamT> quant_params;
+  if (quantization_param == nullptr) {
+    return quant_params;
+  }
+  auto scale_list_attr = quantization_param->GetAttr(quant::kScaleList);
+  auto zero_point_list_attr = quantization_param->GetAttr(quant::kZeroPointList);
+  auto min_list_attr = quantization_param->GetAttr(quant::kMinList);
+  auto max_list_attr = quantization_param->GetAttr(quant::kMaxList);
+  auto var_corr_list_attr = quantization_param->GetAttr(quant::kVarCorrList);
+  auto mean_corr_list_attr = quantization_param->GetAttr(quant::kMeanCorrList);
+  auto num_bits_list_attr = quantization_param->GetAttr(quant::kNumBitList);
+  auto narrow_range_list_attr = quantization_param->GetAttr(quant::kNarrowRangeList);
+  auto dst_dtype_list_attr = quantization_param->GetAttr(quant::kDstDtypeList);
+  auto round_type_list_attr = quantization_param->GetAttr(quant::kRoundTypeList);
+  auto multiplier_list_attr = quantization_param->GetAttr(quant::kMultiplierList);
+  if (scale_list_attr != nullptr && zero_point_list_attr != nullptr && min_list_attr != nullptr &&
+      max_list_attr != nullptr && var_corr_list_attr != nullptr && mean_corr_list_attr != nullptr &&
+      num_bits_list_attr != nullptr && narrow_range_list_attr != nullptr) {
+    auto scales = GetValue<std::vector<double>>(scale_list_attr);
+    auto zero_points = GetValue<std::vector<int32_t>>(zero_point_list_attr);
+    auto mins = GetValue<std::vector<double>>(min_list_attr);
+    auto maxs = GetValue<std::vector<double>>(max_list_attr);
+    auto var_corrs = GetValue<std::vector<float>>(var_corr_list_attr);
+    auto mean_corrs = GetValue<std::vector<float>>(mean_corr_list_attr);
+    auto num_bits_list = GetValue<std::vector<int32_t>>(num_bits_list_attr);
+    auto narrow_range_list = GetValue<std::vector<bool>>(narrow_range_list_attr);
+    auto dst_dtype_list = GetValue<std::vector<int32_t>>(dst_dtype_list_attr);
+    auto round_type_list = GetValue<std::vector<int32_t>>(round_type_list_attr);
+    auto multiplier_list = GetValue<std::vector<int32_t>>(multiplier_list_attr);
+    for (size_t index = 0; index < scales.size(); ++index) {
+      schema::QuantParamT quant_param;
+      quant_param.scale = scales.at(index);
+      quant_param.zeroPoint = zero_points.at(index);
+      quant_param.min = mins.at(index);
+      quant_param.max = maxs.at(index);
+      quant_param.varCorr = var_corrs.at(index);
+      quant_param.meanCorr = mean_corrs.at(index);
+      quant_param.numBits = num_bits_list.at(index);
+      quant_param.narrowRange = narrow_range_list.at(index);
+      quant_param.dstDtype = dst_dtype_list.at(index);
+      quant_param.roundType = round_type_list.at(index);
+      quant_param.multiplier = multiplier_list.at(index);
+      quant_param.inited = true;
+      quant_params.push_back(quant_param);
+    }
+  }
+  return quant_params;
+}
+
+std::vector<schema::QuantParamT> GetInputNodeQuantParam(const CNodePtr &cnode, size_t index, size_t multi_ouput_index) {
+  if (cnode->size() <= index) {
+    MS_LOG(WARNING) << "index out of range, cnode input size is: " << cnode->size() << ", but index: " << index;
+    return {};
+  }
+  auto input_node = cnode->input(index);
+  MS_CHECK_TRUE_MSG(input_node != nullptr, {}, "Anf node nullptr.");
+  auto cnode_primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_CHECK_TRUE_MSG(cnode_primitive != nullptr, {}, "Primitive is nullptr.");
+  if (IsGraphInput(input_node)) {
+    auto quantization_param_value = cnode_primitive->GetAttr(quant::kGraphInputQuantParam);
+    MS_CHECK_TRUE_MSG(quantization_param_value != nullptr, {}, "Graph input quant param Not exist.");
+    auto quantization_param = quantization_param_value->cast<mindspore::QuantizationParamPtr>();
+    MS_CHECK_TRUE_MSG(quantization_param != nullptr, {}, "Graph input quant param Not exist.");
+    return quant::ConvertQuantizationParamToQuantParamT(quantization_param);
+  } else if (input_node->isa<mindspore::CNode>()) {
+    auto input_cnode = input_node->cast<mindspore::CNodePtr>();
+    auto input_cnode_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
+    MS_CHECK_TRUE_MSG(input_cnode_primitive != nullptr, {}, "Primitive is nullptr.");
+    auto quantization_param_value = input_cnode_primitive->GetAttr(quant::kQuantParam);
+    MS_CHECK_TRUE_MSG(quantization_param_value != nullptr, {}, "quantization_param_value is nullptr.");
+    auto quantization_param_list = GetValue<std::vector<QuantizationParamPtr>>(quantization_param_value);
+    if (quantization_param_list.size() <= multi_ouput_index) {
+      MS_LOG(WARNING) << input_cnode->fullname_with_scope() << " quant param is empty";
+      MS_LOG(WARNING) << "this node's input node: " << input_cnode->fullname_with_scope()
+                      << "'s output quant_params size: " << quantization_param_list.size()
+                      << ", but index: " << multi_ouput_index;
+      return {};
+    }
+    // multi-output
+    return quant::ConvertQuantizationParamToQuantParamT(quantization_param_list.at(multi_ouput_index));
+  } else if (input_node->isa<mindspore::Parameter>() || input_node->isa<mindspore::ValueNode>()) {
+    tensor::TensorPtr input_tensor = quant::GetNodeTensor(input_node);
+    MS_CHECK_TRUE_MSG(input_tensor != nullptr, {}, "Get node tensor failed.");
+    auto quantization_params = input_tensor->quant_params();
+    if (quantization_params.empty()) {
+      MS_LOG(WARNING) << input_node->fullname_with_scope() << " quantization param is empty.";
+      return {};
+    }
+    auto quantization_param = quantization_params.front();
+    return quant::ConvertQuantizationParamToQuantParamT(quantization_param);
+  } else {
+    MS_LOG(ERROR) << cnode->fullname_with_scope() << " input node with index: " << index
+                  << " Not supported for quant param";
+  }
+  return {};
+}
+
+tensor::TensorPtr GetNodeTensor(const AnfNodePtr &node) {
+  // Only Parameter or ValueNode Node has tensor
+  if (node->isa<Parameter>()) {
+    auto parameter = node->cast<ParameterPtr>();
+    if (parameter->default_param() != nullptr) {
+      return parameter->default_param()->cast<tensor::TensorPtr>();
+    }
+  } else if (node->isa<ValueNode>()) {
+    return node->cast<ValueNodePtr>()->value()->cast<tensor::TensorPtr>();
+  }
+  return nullptr;
 }
 }  // namespace mindspore::lite::quant

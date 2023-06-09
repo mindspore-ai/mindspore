@@ -18,6 +18,7 @@
 #include <cmath>
 #include <cfloat>
 #include <map>
+#include <memory>
 #include "tools/common/statistic_utils.h"
 #include "tools/converter/quantizer/quantize_util.h"
 
@@ -270,12 +271,11 @@ int MixedBitWeightQuantization::QuantizeByScale(const float *weights, int weight
   quant_params->scale = scale;
   quant_params->zeroPoint = 0;
   quant_params->numBits = 0;
-  quant_params->inited = true;
   return RET_OK;
 }
 
 int MixedBitWeightQuantization::QuantFilter(const PrimitivePtr &primitive, const AnfNodePtr &parameter_node,
-                                            const tensor::TensorPtr &weight, int index, QuantType quant_type,
+                                            const tensor::TensorPtr &weight, QuantType quant_type,
                                             bool use_auto_tune_alg) {
   CHECK_NULL_RETURN(primitive);
   CHECK_NULL_RETURN(weight);
@@ -299,14 +299,12 @@ int MixedBitWeightQuantization::QuantFilter(const PrimitivePtr &primitive, const
     MS_LOG(ERROR) << "UpdateTensorDataAndSize error";
     return RET_ERROR;
   }
-
-  if (quant_params.empty()) {
-    MS_LOG(ERROR) << "quant_params empty";
-    return RET_ERROR;
-  }
-  auto quant_param_holder = GetCNodeQuantHolder(primitive);
-  quant_param_holder->set_input_quant_param(index, quant_params);
-  quant_param_holder->set_quant_type(quant_type);
+  auto quantization_ptr = quant::ConvertQuantParamTToQuantizationParam(quant_params);
+  CHECK_NULL_RETURN(quantization_ptr);
+  weight->set_quant_param(std::vector<std::shared_ptr<mindspore::QuantizationParam>>{quantization_ptr});
+  auto quant_type_value = MakeValue(static_cast<int>(quant_type));
+  MS_CHECK_TRUE_MSG(quant_type_value != nullptr, RET_ERROR, "quant_type is nullptr.");
+  primitive->AddAttr(quant::kQuantType, quant_type_value);
   return ret;
 }
 }  // namespace mindspore::lite::quant

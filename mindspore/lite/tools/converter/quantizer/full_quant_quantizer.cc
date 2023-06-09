@@ -41,15 +41,14 @@ using std::vector;
 namespace mindspore::lite::quant {
 FullQuantQuantizer::~FullQuantQuantizer() {}
 
-int FullQuantQuantizer::SetInOutQuantParam(const AnfNodePtr &input_node, const std::unique_ptr<DataDistribution> &info,
-                                           const PrimitivePtr &primitive, size_t index, bool is_input) const {
-  auto quant_param_holder = GetCNodeQuantHolder(primitive);
-  MS_CHECK_TRUE_MSG(quant_param_holder != nullptr, RET_NULL_PTR, "quant_param_holder is nullptr.");
+std::vector<schema::QuantParamT> FullQuantQuantizer::GetQuantParam(
+  const AnfNodePtr &input_node, const std::unique_ptr<DataDistribution> &info) const {
+  std::vector<schema::QuantParamT> quant_params;
   schema::QuantParamT quant_param;
   TypeId type_id = kTypeUnknown;
   if (opt::GetDataTypeFromAnfNode(input_node, &type_id) != RET_OK) {
     MS_LOG(ERROR) << "Get data type failed.";
-    return RET_ERROR;
+    return quant_params;
   }
   if (type_id == kNumberTypeFloat32 && info != nullptr) {
     quant_param.scale = info->GetScale();
@@ -61,16 +60,9 @@ int FullQuantQuantizer::SetInOutQuantParam(const AnfNodePtr &input_node, const s
     quant_param.inited = true;
     quant_param.roundType = 1;
     quant_param.multiplier = 1;
-  } else {
-    quant_param.inited = false;
+    quant_params.push_back(quant_param);
   }
-  std::vector<schema::QuantParamT> quant_params = {quant_param};
-  if (is_input) {
-    quant_param_holder->set_input_quant_param(index, quant_params);
-  } else {
-    quant_param_holder->set_output_quant_param(index, quant_params);
-  }
-  return RET_OK;
+  return quant_params;
 }
 
 int FullQuantQuantizer::QuantWeight(const CNodePtr &cnode, const PrimitivePtr &primitive, const AnfNodePtr &weight,
@@ -81,8 +73,8 @@ int FullQuantQuantizer::QuantWeight(const CNodePtr &cnode, const PrimitivePtr &p
   auto weight_q_max = per_channel ? init_param_.weight_channel_q_max_ : init_param_.weight_layer_q_max_;
   auto symmetric = per_channel ? init_param_.weight_channel_symmetric_ : init_param_.weight_layer_symmetric_;
   return fixed_bit_quant_.QuantFilter(weight, tensor_info, primitive, quant::QUANT_ALL, weight_q_max, weight_q_min,
-                                      init_param_.bit_num_, weight_quant_type, kNumberTypeInt8, input_index - 1,
-                                      preferred_dim, symmetric);
+                                      init_param_.bit_num_, weight_quant_type, kNumberTypeInt8, preferred_dim,
+                                      symmetric);
 }
 
 int FullQuantQuantizer::DoParameterWeightQuant(const CNodePtr &cnode, const ParameterPtr &weight,
@@ -110,12 +102,7 @@ int FullQuantQuantizer::DoValueNodeWeightQuant(const CNodePtr &cnode, const Valu
   return QuantWeight(cnode, primitive, weight, input_index, tensor_info, per_channel);
 }
 
-int FullQuantQuantizer::IsSupportWeightQuant(const CNodePtr &cnode, const AnfNodePtr &input_node, size_t input_index) {
-  auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-  if (primitive == nullptr) {
-    return RET_ERROR;
-  }
-  auto op_name = cnode->fullname_with_scope();
+int FullQuantQuantizer::IsSupportWeightQuant(const AnfNodePtr &input_node) {
   TypeId type_id = kTypeUnknown;
   if (opt::GetDataTypeFromAnfNode(input_node, &type_id) != RET_OK) {
     MS_LOG(ERROR) << "Get data type failed.";
@@ -127,19 +114,11 @@ int FullQuantQuantizer::IsSupportWeightQuant(const CNodePtr &cnode, const AnfNod
     if (iter == weight_quant_params_bak_.end()) {
       return RET_ERROR;
     } else {
-      auto quant_param_holder = GetCNodeQuantHolder(primitive);
-      MS_CHECK_TRUE_MSG(quant_param_holder != nullptr, RET_NULL_PTR, "quant_param_holder is nullptr.");
-      quant_param_holder->set_input_quant_param(input_index - 1, iter->second);
       return RET_NO_CHANGE;
     }
   }
   // Only data the data type is fp32 can be quant.
   if (type_id != kNumberTypeFloat32) {
-    auto ret = SetInOutQuantParam(input_node, nullptr, primitive, input_index - 1, true);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << op_name << " Set In/Out quant param failed.";
-      return ret;
-    }
     return RET_NO_CHANGE;
   }
   return RET_OK;
@@ -147,15 +126,17 @@ int FullQuantQuantizer::IsSupportWeightQuant(const CNodePtr &cnode, const AnfNod
 
 int FullQuantQuantizer::DoParameterNodeQuant(const CNodePtr &cnode, const ParameterPtr &input_node,
                                              size_t input_index) {
-  auto ret = IsSupportWeightQuant(cnode, input_node, input_index);
+  auto ret = IsSupportWeightQuant(input_node);
   if (ret != RET_OK) {
     return ret;
   }
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   CHECK_NULL_RETURN(primitive);
   auto op_name = cnode->fullname_with_scope();
-  if (input_index == THIRD_INPUT + 1 && CheckNodeInSet(cnode, kHasBiasOperator)) {
-    ret = fixed_bit_quant_.QuantBias(input_node, primitive);
+  if (input_index == THIRD_INPUT + kPrimOffset && CheckNodeInSet(cnode, kHasBiasOperator)) {
+    auto weight_parameter = cnode->input(SECOND_INPUT + kPrimOffset)->cast<ParameterPtr>();
+    auto active_quant_params = quant::GetInputNodeQuantParam(cnode, FIRST_INPUT + kPrimOffset);
+    ret = fixed_bit_quant_.QuantBias(weight_parameter, input_node, active_quant_params);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << op_name << " Do bias quant failed.";
       return ret;
@@ -177,7 +158,7 @@ int FullQuantQuantizer::DoParameterNodeQuant(const CNodePtr &cnode, const Parame
 }
 
 int FullQuantQuantizer::DoValueNodeQuant(const CNodePtr &cnode, const ValueNodePtr &input_node, size_t input_index) {
-  auto ret = IsSupportWeightQuant(cnode, input_node, input_index);
+  auto ret = IsSupportWeightQuant(input_node);
   if (ret != RET_OK) {
     return ret;
   }
@@ -192,60 +173,95 @@ int FullQuantQuantizer::DoValueNodeQuant(const CNodePtr &cnode, const ValueNodeP
   return RET_OK;
 }
 
+int FullQuantQuantizer::QuantNodeGraphInput(const PrimitivePtr &primitive, const AnfNodePtr &input_node,
+                                            const std::unique_ptr<DataDistribution> &info) {
+  TypeId type_id = kTypeUnknown;
+  if (opt::GetDataTypeFromAnfNode(input_node, &type_id) != RET_OK) {
+    MS_LOG(ERROR) << "Get data type failed.";
+    return RET_ERROR;
+  }
+  if (type_id == kNumberTypeFloat32 && info != nullptr) {
+    schema::QuantParamT quant_param;
+    quant_param.scale = info->GetScale();
+    quant_param.zeroPoint = info->GetZeroPoint();
+    quant_param.max = info->GetEncodeMax();
+    quant_param.min = info->GetEncodeMin();
+    quant_param.numBits = init_param_.bit_num_;
+    quant_param.narrowRange = true;
+    quant_param.inited = true;
+    quant_param.roundType = 1;
+    quant_param.multiplier = 1;
+    auto quantization_param = quant::ConvertQuantParamTToQuantizationParam({quant_param});
+    primitive->AddAttr(quant::kGraphInputQuantParam, quantization_param);
+  }
+  return RET_OK;
+}
+
+int FullQuantQuantizer::QuantNodeCNode(const PrimitivePtr &input_cnode_primitive, const AnfNodePtr &input_node,
+                                       const std::unique_ptr<DataDistribution> &info) {
+  if (!input_cnode_primitive->HasAttr(quant::kQuantParam) ||
+      input_cnode_primitive->GetAttr(quant::kQuantParam) == nullptr) {
+    auto quant_params = GetQuantParam(input_node, info);
+    if (quant_params.empty()) {
+      MS_LOG(INFO) << input_node->fullname_with_scope() << " quant param not exist.";
+      return RET_NO_CHANGE;
+    }
+    auto quantization_ptr = quant::ConvertQuantParamTToQuantizationParam(quant_params);
+    if (quantization_ptr != nullptr) {
+      std::vector<ValuePtr> quantization_list = {quantization_ptr};
+      input_cnode_primitive->AddAttr(quant::kQuantParam, std::make_shared<ValueList>(quantization_list));
+    }
+  } else {
+    MS_LOG(WARNING) << input_node->fullname_with_scope() << " quant param already exist.";
+  }
+  return RET_OK;
+}
+
 int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
   auto inputs_diverg_info = calibrator_->GetInputDivergInfo();
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-  if (primitive == nullptr) {
-    return RET_ERROR;
-  }
+  CHECK_NULL_RETURN(primitive);
   auto op_name = cnode->fullname_with_scope();
-  auto primitive_quant_holder = GetCNodeQuantHolder(primitive);
-  MS_CHECK_TRUE_MSG(primitive_quant_holder != nullptr, RET_NULL_PTR, "primitive_quant_holder is nullptr.");
   MS_ASSERT(cnode->inputs().size() - 1 <= (*inputs_diverg_info)[op_name].size());
   int ret;
   for (size_t i = 1; i < cnode->inputs().size(); i++) {
     auto input_node = cnode->input(i);
-    MS_ASSERT(input_node != nullptr);
+    CHECK_NULL_RETURN(input_node);
     bool is_graph_input = IsGraphInput(input_node);
     if (is_graph_input) {
       // do input quant
       auto &info = (*inputs_diverg_info)[op_name][i - 1];
-      ret = SetInOutQuantParam(input_node, info, primitive, i - 1, true);
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << input_node->fullname_with_scope() << " Set activation quant failed.";
-        return ret;
+      if (info == nullptr) {
+        MS_LOG(INFO) << input_node->fullname_with_scope() << " quant info not exist.";
+        continue;
+      }
+      if (QuantNodeGraphInput(primitive, input_node, info) != RET_OK) {
+        MS_LOG(ERROR) << input_node->fullname_with_scope() << " Do graph input node quant failed.";
+        return RET_ERROR;
       }
     } else if (input_node->isa<mindspore::CNode>()) {
       auto input_cnode = input_node->cast<mindspore::CNodePtr>();
       MS_CHECK_TRUE_MSG(input_cnode != nullptr, RET_NULL_PTR, "input_cnode is nullptr.");
       auto input_cnode_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
       if (input_cnode_primitive == nullptr) {
-        MS_LOG(DEBUG) << "input: " << i << " " << input_cnode->fullname_with_scope() << ": "
-                      << " Primitive is null";
+        MS_LOG(WARNING) << "input: " << i << " " << input_cnode->fullname_with_scope() << ": "
+                        << " Primitive is null";
         continue;
       }
-      auto input_primitive_quant_holder = GetCNodeQuantHolder(input_cnode_primitive);
-      MS_CHECK_TRUE_MSG(input_primitive_quant_holder != nullptr, RET_NULL_PTR,
-                        "input_primitive_quant_holder is nullptr.");
-      if (input_primitive_quant_holder->IsOutputQuantParamsInited()) {
-        auto quant_param = input_primitive_quant_holder->get_output_quant_params().front();
-        primitive_quant_holder->set_input_quant_param(i - 1, quant_param);
-      } else {
-        // do input quant
-        auto &info = (*inputs_diverg_info)[op_name][i - 1];
-        ret = SetInOutQuantParam(input_node, info, primitive, i - 1, true);
-        if (ret != RET_OK) {
-          MS_LOG(ERROR) << input_node->fullname_with_scope() << " Set activation quant failed.";
-          return ret;
-        }
+      auto &info = (*inputs_diverg_info)[op_name][i - 1];
+      ret = QuantNodeCNode(input_cnode_primitive, input_node, info);
+      if (ret != RET_NO_CHANGE && ret != RET_OK) {
+        MS_LOG(ERROR) << input_node->fullname_with_scope() << " Do cnode quant failed.";
+        return RET_ERROR;
       }
     } else if (input_node->isa<mindspore::Parameter>()) {
       if (init_param_.weight_data_type_ == kTypeUnknown) {
         MS_LOG(INFO) << "weight parameters do not need to be quantified.";
         continue;
       }
-      ret = DoParameterNodeQuant(cnode, input_node->cast<ParameterPtr>(), i);
+      auto parameter_node = input_node->cast<ParameterPtr>();
+      ret = DoParameterNodeQuant(cnode, parameter_node, i);
       if (ret == RET_NO_CHANGE) {
         continue;
       } else if (ret != RET_OK) {
@@ -253,14 +269,19 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
         return ret;
       }
       // support shared weight
-      weight_quant_params_bak_[input_node->fullname_with_scope()] =
-        primitive_quant_holder->get_input_quant_params()[i - 1];
+      auto tensor_info = parameter_node->default_param()->cast<tensor::TensorPtr>();
+      if (tensor_info->quant_params().empty()) {
+        continue;
+      }
+      auto quant_params = quant::ConvertQuantizationParamToQuantParamT(tensor_info->quant_params().front());
+      weight_quant_params_bak_[input_node->fullname_with_scope()] = quant_params;
     } else if (input_node->isa<mindspore::ValueNode>()) {
       if (init_param_.weight_data_type_ == kTypeUnknown) {
         MS_LOG(INFO) << "weight parameters do not need to be quantified.";
         continue;
       }
-      ret = DoValueNodeQuant(cnode, input_node->cast<ValueNodePtr>(), i);
+      auto value_node = input_node->cast<ValueNodePtr>();
+      ret = DoValueNodeQuant(cnode, value_node, i);
       if (ret == RET_NO_CHANGE) {
         continue;
       } else if (ret != RET_OK) {
@@ -268,8 +289,12 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
         return ret;
       }
       // support shared weight
-      weight_quant_params_bak_[input_node->fullname_with_scope()] =
-        primitive_quant_holder->get_input_quant_params()[i - 1];
+      auto tensor_info = value_node->value()->cast<tensor::TensorPtr>();
+      if (tensor_info->quant_params().empty()) {
+        continue;
+      }
+      auto quant_params = quant::ConvertQuantizationParamToQuantParamT(tensor_info->quant_params().front());
+      weight_quant_params_bak_[input_node->fullname_with_scope()] = quant_params;
     } else {
       MS_LOG(ERROR) << input_node->fullname_with_scope() << ":" << input_node->type_name() << " is not support type";
       return RET_ERROR;
@@ -293,16 +318,13 @@ int FullQuantQuantizer::QuantNode(const FuncGraphPtr &func_graph) {
       MS_LOG(ERROR) << "primitive is nullptr";
       return RET_ERROR;
     }
-    auto primitive_quant_holder = GetCNodeQuantHolder(primitive);
-    MS_CHECK_TRUE_MSG(primitive_quant_holder != nullptr, RET_NULL_PTR, "primitive_quant_holder is nullptr.");
     if (inputs_diverg_info->find(op_name) == inputs_diverg_info->end()) {
       MS_LOG(INFO) << op_name << " can not do quant";
-      primitive_quant_holder->set_quant_type(quant::QUANT_NONE);
+      primitive->AddAttr(quant::kQuantType, MakeValue(static_cast<int>(quant::QUANT_NONE)));
       continue;
     }
 
     auto op_type = primitive->name();
-    MS_LOG(DEBUG) << "OpName: " << op_name;
     if (op_type == mindspore::ops::kNameTupleGetItem) {
       constexpr int tuple_get_item_input_size = 3;
       MS_CHECK_TRUE_MSG(cnode->size() == tuple_get_item_input_size, RET_ERROR, "cnode->size() != 3");
@@ -313,29 +335,16 @@ int FullQuantQuantizer::QuantNode(const FuncGraphPtr &func_graph) {
         continue;
       }
       size_t index = static_cast<size_t>(opt::CastToInt(index_value_node->value()).front());
-      auto input_node = cnode->input(SECOND_INPUT);
-      MS_CHECK_TRUE_MSG(input_node != nullptr, RET_ERROR, "input_node == nullptr");
-      auto input_cnode = input_node->cast<mindspore::CNodePtr>();
-      MS_CHECK_TRUE_MSG(input_cnode != nullptr, RET_ERROR, "input_cnode == nullptr");
-      auto input_cnode_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
-      if (input_cnode_primitive == nullptr) {
-        MS_LOG(WARNING) << "input_cnode_primitive is null";
-        continue;
-      }
-      auto input_primitive_quant_holder = GetCNodeQuantHolder(input_cnode_primitive);
-      MS_CHECK_TRUE_MSG(input_primitive_quant_holder != nullptr, RET_NULL_PTR,
-                        "input_primitive_quant_holder is nullptr.");
-
-      if (input_primitive_quant_holder->get_output_quant_params().size() > index) {
-        auto quant_param = input_primitive_quant_holder->get_output_quant_params()[index];
-        primitive_quant_holder->set_input_quant_param(0, quant_param);
-        primitive_quant_holder->set_output_quant_param(0, quant_param);
+      auto input_node_quant_params = quant::GetInputNodeQuantParam(cnode, FIRST_INPUT + kPrimOffset, index);
+      std::vector<ValuePtr> quantization_list;
+      auto quantization_ptr = quant::ConvertQuantParamTToQuantizationParam(input_node_quant_params);
+      if (quantization_ptr != nullptr) {
+        quantization_list.push_back(quantization_ptr);
+        primitive->AddAttr(quant::kQuantParam, std::make_shared<ValueList>(quantization_list));
+        primitive->AddAttr(quant::kQuantType, MakeValue(static_cast<int>(quant::QUANT_ALL)));
       } else {
-        MS_LOG(WARNING) << "this TupleGetItem node's input node: " << input_cnode->fullname_with_scope()
-                        << "'s output quant_params size: "
-                        << input_primitive_quant_holder->get_output_quant_params().size() << ", but index: " << index;
+        MS_LOG(WARNING) << cnode->fullname_with_scope() << "this TupleGetItem node's input_node_quant_params is empty.";
       }
-      primitive_quant_holder->set_quant_type(quant::QUANT_ALL);
       continue;
     } else {  // do simple op quant
       auto status = QuantNodeSimpleOp(cnode);
@@ -346,15 +355,17 @@ int FullQuantQuantizer::QuantNode(const FuncGraphPtr &func_graph) {
     }
     // do output quant, there may multi-output
     auto &infos = (*outputs_diverg_info)[op_name];
+    std::vector<ValuePtr> quantization_list;
     for (size_t index = 0; index < infos.size(); index++) {
       auto &info = infos.at(index);
-      auto ret = SetInOutQuantParam(cnode, info, primitive, index, false);
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "Set In/Out quant param failed.";
-        return ret;
+      auto quant_params = GetQuantParam(cnode, info);
+      auto quantization_ptr = quant::ConvertQuantParamTToQuantizationParam(quant_params);
+      if (quantization_ptr != nullptr) {
+        quantization_list.push_back(quantization_ptr);
       }
-      primitive_quant_holder->set_quant_type(quant::QUANT_ALL);
     }
+    primitive->AddAttr(quant::kQuantParam, std::make_shared<ValueList>(quantization_list));
+    primitive->AddAttr(quant::kQuantType, MakeValue(static_cast<int>(quant::QUANT_ALL)));
   }
   return RET_OK;
 }
@@ -668,7 +679,7 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     // add quant_cast
     for (auto &cnode : func_graph->GetOrderedCnodes()) {
       quant::QuantType curr_quant_type;
-      if (GetQuantType(cnode, &curr_quant_type) != RET_OK) {
+      if (GetQuantTypeNew(cnode, &curr_quant_type) != RET_OK) {
         MS_LOG(ERROR) << "Get quant type failed, cnode name: " << cnode->fullname_with_scope();
         return RET_ERROR;
       }

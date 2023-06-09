@@ -95,8 +95,10 @@ int CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, dou
   quant_param->max = encode_max;
   quant_param->scale = scale;
   quant_param->zeroPoint = zero_point;
-  quant_param->narrowRange = narrow_range;
+  quant_param->varCorr = 1.0;
+  quant_param->meanCorr = 0;
   quant_param->numBits = num_bits;
+  quant_param->narrowRange = narrow_range;
 
   return RET_OK;
 }

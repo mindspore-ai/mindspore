@@ -275,12 +275,14 @@ int MindIRSerializer::ConvertQuantHolderToQuantizationParam(const FuncGraphPtr &
       }
 
       auto output_quant_params = quant_params_holder->get_output_quant_params();
+      std::vector<ValuePtr> quantization_param_list;
       for (unsigned int index = 0; index < output_quant_params.size(); index++) {
         if (quant_params_holder->CheckInit(index, false)) {
           auto quantization_ptr = ConvertQuantParamTToQuantizationParam(output_quant_params[index]);
-          primitive->AddAttr(quant::kQuantParam, quantization_ptr);
+          quantization_param_list.push_back(quantization_ptr);
         }
       }
+      primitive->AddAttr(quant::kQuantParam, std::make_shared<ValueList>(quantization_param_list));
     }
   }
   return RET_OK;

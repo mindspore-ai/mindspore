@@ -216,6 +216,79 @@ int TransformUint8Pass::DoNodeDTypeTrans(const CNodePtr &cnode) {
   return RET_OK;
 }
 
+// Copy quant param from quant_para_holder into CNode
+int TransformUint8Pass::CopyQuantParam(const CNodePtr &cnode) {
+  auto cnode_primitve = GetValueNode<PrimitivePtr>(cnode->input(0));
+  CHECK_NULL_RETURN(cnode_primitve);
+  auto quant_param_holder = GetCNodeQuantHolder(cnode);
+  CHECK_NULL_RETURN(quant_param_holder);
+  if (opt::CheckPrimitiveType(cnode, prim::kPrimQuantDTypeCast)) {
+    cnode_primitve->AddAttr(quant::kQuantType, MakeValue(static_cast<int>(quant::QUANT_NONE)));
+  } else {
+    auto quant_type = quant_param_holder->quant_type();
+    cnode_primitve->AddAttr(quant::kQuantType, MakeValue(static_cast<int>(quant_type)));
+  }
+  auto input_quant_params = quant_param_holder->get_input_quant_params();
+  auto output_quant_params = quant_param_holder->get_output_quant_params();
+  if (quant_param_holder->IsOutputExistInited()) {
+    std::vector<ValuePtr> quantization_list;
+    for (size_t index = 0; index < output_quant_params.size(); index++) {
+      auto quantization_ptr = ConvertQuantParamTToQuantizationParam(output_quant_params[index]);
+      if (quantization_ptr != nullptr) {
+        quantization_list.push_back(quantization_ptr);
+      }
+    }
+    cnode_primitve->AddAttr(quant::kQuantParam, std::make_unique<ValueList>(quantization_list));
+  } else {
+    MS_LOG(DEBUG) << cnode->fullname_with_scope() << " output quant params empty.";
+  }
+
+  if (quant_param_holder->IsInputExistInited()) {
+    for (size_t index = 1; index < cnode->size(); index++) {
+      auto input_node = cnode->input(index);
+      CHECK_NULL_RETURN(input_node);
+      // If quant_param not exist, skip
+      if ((static_cast<int>(index) - kPrimOffset) >= static_cast<int>(input_quant_params.size())) {
+        continue;
+      }
+      auto input_quant_param = input_quant_params.at(static_cast<int>(index) - kPrimOffset);
+      if (input_quant_param.empty()) {
+        MS_LOG(DEBUG) << cnode->fullname_with_scope() << " input node index: " << index << " quant param is empty.";
+        continue;
+      }
+      if (IsGraphInput(input_node)) {
+        auto quantization_param = quant::ConvertQuantParamTToQuantizationParam(input_quant_param);
+        cnode_primitve->AddAttr(quant::kGraphInputQuantParam, quantization_param);
+      } else if (input_node->isa<mindspore::CNode>()) {
+        // input node has single output
+        continue;
+      } else if (input_node->isa<mindspore::Parameter>()) {
+        auto parameter_node = input_node->cast<ParameterPtr>();
+        CHECK_NULL_RETURN(parameter_node);
+        auto tensor_info = parameter_node->default_param()->cast<tensor::TensorPtr>();
+        CHECK_NULL_RETURN(tensor_info);
+        auto quantization_ptr = quant::ConvertQuantParamTToQuantizationParam(input_quant_param);
+        CHECK_NULL_RETURN(quantization_ptr);
+        tensor_info->set_quant_param(std::vector<QuantizationParamPtr>{quantization_ptr});
+      } else if (input_node->isa<mindspore::ValueNode>()) {
+        auto value_node = input_node->cast<ValueNodePtr>();
+        CHECK_NULL_RETURN(value_node);
+        auto tensor_info = value_node->value()->cast<tensor::TensorPtr>();
+        CHECK_NULL_RETURN(tensor_info);
+        auto quantization_ptr = quant::ConvertQuantParamTToQuantizationParam(input_quant_param);
+        CHECK_NULL_RETURN(quantization_ptr);
+        tensor_info->set_quant_param(std::vector<QuantizationParamPtr>{quantization_ptr});
+      } else {
+        MS_LOG(ERROR) << input_node->fullname_with_scope() << ":" << input_node->type_name() << " not supported.";
+        return RET_ERROR;
+      }
+    }
+  } else {
+    MS_LOG(DEBUG) << cnode->fullname_with_scope() << " input quant params is empty.";
+  }
+  return RET_OK;
+}
+
 bool TransformUint8Pass::CheckNeedDTypeTrans(const CNodePtr &cnode) {
   if (opt::IsSpecialType(cnode) || CheckControlFlowType(cnode)) {
     return false;

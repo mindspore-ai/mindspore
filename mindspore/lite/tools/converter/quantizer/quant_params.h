@@ -22,6 +22,7 @@
 #include <set>
 #include "schema/inner/model_generated.h"
 #include "ops/core_ops.h"
+#include "src/common/quant_utils.h"
 namespace mindspore::lite::quant {
 enum WeightQuantType {
   FIXED_BIT_PER_CHANNEL = 0,
@@ -45,6 +46,8 @@ constexpr int kPrimOffset = 1;
 constexpr int kU8ZeroPointOffset = 128;
 constexpr int kMinIterations = 40;
 constexpr auto kQuantParam = "quant_param";
+constexpr auto kGraphInputQuantParam = "graph_input_quant_param";
+constexpr auto kGraphOutputQuantParam = "graph_output_quant_param";
 constexpr auto kQuantType = "quant_type";
 constexpr auto kClusterQuant = "cluster_quant";
 constexpr auto kClusterCentroidList = "cluster_centroid_list";
@@ -57,6 +60,10 @@ constexpr auto kVarCorrList = "var_corr_list";
 constexpr auto kMeanCorrList = "mean_corr_list";
 constexpr auto kNumBitList = "num_bit_list";
 constexpr auto kNarrowRangeList = "narrow_range_list";
+constexpr auto kDstDtypeList = "dst_dtype_list";
+constexpr auto kRoundTypeList = "round_type_list";
+constexpr auto kMultiplierList = "multiplier_list";
+constexpr float kBinarySearchStep = 2.0;
 
 const std::set<PrimitivePtr> kHasBiasOperator = {prim::kPrimConv2DFusion,    prim::kPrimConv2dTransposeFusion,
                                                  prim::kPrimMatMulFusion,    prim::kPrimFullConnection,
@@ -169,6 +176,16 @@ struct AscendQuantParam {
 struct DynamicQuantParam {
   DynamicQuantStrategy quant_strategy = quant::ACTIVATION_LAYER_WEIGHT_CHANNEL;
 };
+
+typedef struct {
+  int status;
+  float scale;
+} BinarySearchResult;
+
+typedef struct {
+  float inv_norm;
+  MinMax mm;
+} LayerParam;
 }  // namespace mindspore::lite::quant
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_PARAMS_H_
