@@ -60,7 +60,7 @@ def check_and_print_when_fail(to_check, expect, rtol, atol):
         raise ValueError("Loss is %s, but expect %s!" % (str(to_chekc), str(expect)))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_yolov5_dynamic_gpu():
