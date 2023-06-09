@@ -24,6 +24,7 @@
 #include "ops/primitive_c.h"
 #include "backend/common/graph_kernel/model/node.h"
 #include "ir/dtype/type.h"
+#include "include/backend/visible.h"
 
 namespace mindspore::graphkernel::inner {
 #define CHECK_ATTR(attrs, attr_name)                                                              \
@@ -33,7 +34,7 @@ namespace mindspore::graphkernel::inner {
     }                                                                                             \
   } while (0)
 
-class PrimOp : public Node {
+class BACKEND_EXPORT PrimOp : public Node {
  public:
   enum class ComputeType : int {
     VIRTUAL = 0,

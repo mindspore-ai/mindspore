@@ -27,53 +27,7 @@ namespace mindspore {
 namespace transform {
 static uint32_t CustomInferFunc(const Operator &) { return 0; }
 
-static ge::graphStatus CustomAkgOpInferFunc(Operator &op) {
-  // output_names
-  std::vector<std::string> output_names;
-  auto status = op.GetAttr("output_names", output_names);
-  if (status != 0) {
-    return status;
-  }
-
-  // output_shapes
-  std::vector<std::vector<int64_t>> output_shapes;
-  status = op.GetAttr("output_shapes", output_shapes);
-  if (status != 0) {
-    return status;
-  }
-  if (output_shapes.size() != output_names.size()) {
-    return 1;
-  }
-
-  // output_formats
-  std::vector<int32_t> output_formats;
-  status = op.GetAttr("output_formats", output_formats);
-  if (status != 0) {
-    return status;
-  }
-  if (output_formats.size() != output_names.size()) {
-    return 1;
-  }
-
-  // output_types
-  std::vector<int32_t> output_types;
-  status = op.GetAttr("output_types", output_types);
-  if (status != 0) {
-    return status;
-  }
-  if (output_types.size() != output_names.size()) {
-    return 1;
-  }
-
-  // Update output tensor desc
-  for (size_t i = 0; i < output_names.size(); ++i) {
-    ge::TensorDesc output_desc(ge::Shape(output_shapes[i]), static_cast<ge::Format>(output_formats[i]),
-                               static_cast<ge::DataType>(output_types[i]));
-    (void)op.UpdateOutputDesc(output_names[i], output_desc);
-  }
-
-  return 0;
-}
+ge::graphStatus CustomAkgOpInferFunc(ge::Operator &op);
 
 // check a Custom node is an akg kernel, it should be called in the case of node is a Custom node.
 bool IsAkgOp(const AnfNodePtr &node) {

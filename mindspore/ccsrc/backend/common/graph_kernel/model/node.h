@@ -27,6 +27,7 @@
 #include "utils/hash_map.h"
 #include "utils/shape_utils.h"
 #include "include/common/utils/utils.h"
+#include "include/backend/visible.h"
 
 namespace mindspore::graphkernel::inner {
 enum class NType {
@@ -41,17 +42,17 @@ using DFormat = std::string;
 using DShape = ShapeVector;
 using DAttrs = mindspore::HashMap<std::string, ValuePtr>;
 
-struct NodeBase {
+struct BACKEND_EXPORT NodeBase {
   DShape shape;
   TypeId type;
   DFormat format;
 };
 using NodeBaseList = std::vector<NodeBase>;
 
-class Node;
+class BACKEND_EXPORT Node;
 using NodePtr = std::shared_ptr<Node>;
 using NodePtrList = std::vector<NodePtr>;
-class Node : public NodeBase, public std::enable_shared_from_this<Node> {
+class BACKEND_EXPORT Node : public NodeBase, public std::enable_shared_from_this<Node> {
  public:
   explicit Node(const NodeBase &baseinfo) : NodeBase(baseinfo) {}
   virtual ~Node() { ClearInputs(); }  // remove this node from the previous nodes' user.
