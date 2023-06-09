@@ -117,6 +117,9 @@ class CeLU(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([-2.0, -1.0, 1.0, 2.0]), mindspore.float32)
         >>> celu = ops.CeLU(alpha=1.0)
         >>> output = celu(input_x)
@@ -250,6 +253,9 @@ class AdaptiveAvgPool2D(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> # case 1: output_size=(None, 2)
         >>> input_x = Tensor(np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
         ...                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
@@ -437,6 +443,9 @@ class Softmax(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> logits = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
         >>> softmax = ops.Softmax()
         >>> output = softmax(logits)
@@ -475,6 +484,9 @@ class LogSoftmax(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> logits = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
         >>> log_softmax = ops.LogSoftmax()
         >>> output = log_softmax(logits)
@@ -515,6 +527,9 @@ class Softplus(Primitive):
         ``Ascend``  ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
         >>> softplus = ops.Softplus()
         >>> output = softplus(input_x)
@@ -545,6 +560,9 @@ class Softsign(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([0, -1, 2, 30, -30]), mindspore.float32)
         >>> softsign = ops.Softsign()
         >>> output = softsign(input_x)
@@ -576,6 +594,9 @@ class ReLU(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> relu = ops.ReLU()
         >>> output = relu(input_x)
@@ -657,6 +678,9 @@ class Mish(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> mish = ops.Mish()
         >>> output = mish(x)
@@ -703,6 +727,9 @@ class SeLU(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> selu = ops.SeLU()
         >>> output = selu(input_x)
@@ -733,6 +760,9 @@ class ReLU6(PrimitiveWithCheck):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> relu6 = ops.ReLU6()
         >>> result = relu6(input_x)
@@ -834,6 +864,9 @@ class Elu(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> elu = ops.Elu()
         >>> output = elu(input_x)
@@ -867,6 +900,9 @@ class HSwish(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> hswish = ops.HSwish()
         >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> result = hswish(input_x)
@@ -895,6 +931,9 @@ class Sigmoid(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
         >>> sigmoid = ops.Sigmoid()
         >>> output = sigmoid(input_x)
@@ -925,6 +964,9 @@ class HSigmoid(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> hsigmoid = ops.HSigmoid()
         >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> result = hsigmoid(input_x)
@@ -954,6 +996,9 @@ class Tanh(Primitive):
         ``Ascend`` ``GPU``  ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
         >>> tanh = ops.Tanh()
         >>> output = tanh(input_x)
@@ -2830,6 +2875,8 @@ class NLLLoss(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> logits = Tensor(np.array([[0.5488135, 0.71518934],
         ...                           [0.60276335, 0.5448832],
         ...                           [0.4236548, 0.6458941]]).astype(np.float32))
@@ -2883,6 +2930,8 @@ class SoftmaxCrossEntropyWithLogits(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> logits = Tensor([[2, 4, 1, 4, 5], [2, 1, 2, 4, 3]], mindspore.float32)
         >>> labels = Tensor([[0, 0, 0, 0, 1], [0, 0, 0, 1, 0]], mindspore.float32)
         >>> softmax_cross = ops.SoftmaxCrossEntropyWithLogits()
@@ -2934,6 +2983,8 @@ class SparseSoftmaxCrossEntropyWithLogits(Primitive):
         ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> logits = Tensor([[2, 3, 1, 4, 5], [2, 1, 2, 4, 3]], mindspore.float32)
         >>> labels = Tensor([0, 1], mindspore.int32)
         >>> sparse_softmax_cross = ops.SparseSoftmaxCrossEntropyWithLogits()
@@ -3113,6 +3164,9 @@ class SmoothL1Loss(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> loss = ops.SmoothL1Loss()
         >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> labels = Tensor(np.array([1, 2, 2]), mindspore.float32)
@@ -3169,6 +3223,9 @@ class MultiMarginLoss(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.ones(shape=[3, 3]), mindspore.float32)
         >>> target = Tensor(np.array([1, 2, 1]), mindspore.int64)
         >>> weight = Tensor(np.array([1, 1, 1]), mindspore.float32)
@@ -3223,6 +3280,9 @@ class SoftMarginLoss(Primitive):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> loss = ops.SoftMarginLoss()
         >>> logits = Tensor(np.array([[0.3, 0.7], [0.5, 0.5]]), mindspore.float32)
         >>> labels = Tensor(np.array([[-1, 1], [1, -1]]), mindspore.float32)
@@ -3344,6 +3404,8 @@ class RNNTLoss(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import ops
         >>> B, T, U, V = 1, 2, 3, 5
         >>> blank = 0
         >>> acts = np.random.random((B, T, U, V)).astype(np.float32)
@@ -4038,6 +4100,9 @@ class GeLU(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
         >>> gelu = ops.GeLU()
         >>> result = gelu(x)
@@ -4087,6 +4152,9 @@ class FastGeLU(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> fast_gelu = ops.FastGeLU()
         >>> output = fast_gelu(x)
@@ -4175,6 +4243,9 @@ class PReLU(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn, ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -4317,6 +4388,8 @@ class SigmoidCrossEntropyWithLogits(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> logits = Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]).astype(np.float32))
         >>> labels = Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]).astype(np.float32))
         >>> sigmoid = ops.SigmoidCrossEntropyWithLogits()
@@ -4862,6 +4935,9 @@ class Adam(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn, ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -5780,6 +5856,9 @@ class ApplyAdaMax(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn, ops, Parameter
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -5977,6 +6056,9 @@ class ApplyAdagrad(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn, ops, Parameter
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -6062,6 +6144,9 @@ class ApplyAdagradV2(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn, ops, Parameter
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -8894,6 +8979,9 @@ class ApplyAdagradDA(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import dtype as mstype
+        >>> from mindspore import Tensor, nn, ops, Parameter
         >>> class ApplyAdagradDANet(nn.Cell):
         ...     def __init__(self, use_locking=False):
         ...         super(ApplyAdagradDANet, self).__init__()
@@ -9296,6 +9384,9 @@ class MultilabelMarginLoss(Primitive):
         ``Ascend`` ``GPU``
 
     Examples:
+       >>> import mindspore
+       >>> import numpy as np
+       >>> from mindspore import Tensor, ops
        >>> loss = ops.MultilabelMarginLoss()
        >>> x = Tensor(np.array([[0.1, 0.2, 0.4, 0.8], [0.2, 0.3, 0.5, 0.7]]), mindspore.float32)
        >>> target = Tensor(np.array([[1, 2, 0, 3], [2, 3, -1, 1]]), mindspore.int32)
@@ -10065,6 +10156,9 @@ class TripletMarginLoss(Primitive):
         ``GPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> loss = ops.TripletMarginLoss()
         >>> x = Tensor(np.array([[0.3, 0.7], [0.5, 0.5]]), mindspore.float32)
         >>> positive = Tensor(np.array([[0.4, 0.6], [0.4, 0.6]]), mindspore.float32)

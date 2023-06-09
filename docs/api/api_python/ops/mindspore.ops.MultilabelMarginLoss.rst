@@ -11,9 +11,9 @@ mindspore.ops.MultilabelMarginLoss
     参数：
         - **reduction** (str, 可选) - 可选，对输出应用特定的缩减方法：可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` 。默认值： ``'mean'`` 。
 
-          - ``'none'``：不应用缩减方法。
-          - ``'mean'``：输出的值总和除以输出的元素个数。
-          - ``'sum'``：输出的总和。
+          - ``'none'`` ：不应用缩减方法。
+          - ``'mean'`` ：输出的值总和除以输出的元素个数。
+          - ``'sum'`` ：输出的总和。
 
     输入：
         - **x** (Tensor) - 预测值。shape为 :math:`(C)` 或 :math:`(N, C)`，其中 :math:`N`
@@ -23,4 +23,4 @@ mindspore.ops.MultilabelMarginLoss
     输出：
         - **y** (Union[Tensor, Scalar]) - MultilabelMarginLoss损失。如果 `reduction` 的值为 'none'，
           那么返回shape为 :math:`(N)` 的Tensor类型数据。否则返回一个标量。
-        - **is_target** (Tensor) - 用于反向输入的Tensor, 其shape与 `target` 一致，数据类型为int32。
+        - **is_target** (Tensor) - 用于反向输入的Tensor，其shape与 `target` 一致，数据类型为int32。
