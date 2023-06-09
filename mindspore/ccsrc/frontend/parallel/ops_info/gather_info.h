@@ -195,7 +195,7 @@ class ManualImpl : public GatherUtil {
   Status InferOffset();
   Shape param_split_shapes_;
   Shape index_offsets_;
-  int64_t index_offset_;
+  int64_t index_offset_ = 0;
   std::string target_ = DEVICE;
   std::string replace_op_name_;
   mindspore::HashMap<std::string, ValuePtr> attrs_;
@@ -292,7 +292,8 @@ class GatherInfo : public OperatorInfo {
  public:
   GatherInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
              const PrimitiveAttrs &attrs, const std::string &replace_op_name = GATHERV2)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<GatherCost>()) {}
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<GatherCost>()),
+        replace_op_name_(replace_op_name) {}
   ~GatherInfo() override = default;
   Status Init(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) override;
   Status InitForCostModel(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) override;

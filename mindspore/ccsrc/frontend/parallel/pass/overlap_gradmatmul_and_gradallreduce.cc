@@ -39,6 +39,8 @@ bool IsForwardNode(const CNodePtr &cnode) {
 void ExtractForwardNodes(const std::vector<CNodePtr> &origin_nodes_topological,
                          std::vector<std::string> *forward_comm_node_unique_id_list,
                          std::vector<std::string> *forward_matmul_unique_id_list) {
+  MS_EXCEPTION_IF_NULL(forward_comm_node_unique_id_list);
+  MS_EXCEPTION_IF_NULL(forward_matmul_unique_id_list);
   for (auto &node : origin_nodes_topological) {
     if (!IsForwardNode((node))) {
       continue;

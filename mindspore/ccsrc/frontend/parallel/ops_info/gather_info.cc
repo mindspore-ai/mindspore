@@ -310,8 +310,8 @@ Status BatchImpl::InferTensorMap() {
   (void)indices_rm_batch.erase(indices_rm_batch.cbegin(),
                                indices_rm_batch.cbegin() + LongToSize(batch_dims_));  // [f, g]
 
-  out_map.insert(out_map.cbegin() + LongToSize(axis_), indices_rm_batch.cbegin(),
-                 indices_rm_batch.cend());  // [a, b, c, f, g, e]
+  (void)out_map.insert(out_map.cbegin() + LongToSize(axis_), indices_rm_batch.cbegin(),
+                       indices_rm_batch.cend());  // [a, b, c, f, g, e]
 
   inputs_tensor_map_.push_back(param_map);    // param
   inputs_tensor_map_.push_back(indices_map);  // indices
@@ -365,9 +365,9 @@ Status NormalImpl::InferTensorMap() {
   TensorMap indices_map = tmp_map;                                                              // [f, g, c, 1, e]
   (void)indices_map.erase(indices_map.cbegin() + inputs_shape_[1].size(), indices_map.cend());  // [f, g]
 
-  TensorMap out_map = param_map;                                                                   // [c, 1, e]
-  (void)out_map.erase(out_map.cbegin() + LongToSize(axis_));                                       // [c, e]
-  out_map.insert(out_map.cbegin() + LongToSize(axis_), indices_map.cbegin(), indices_map.cend());  // [c, f, g, e]
+  TensorMap out_map = param_map;                                                                         // [c, 1, e]
+  (void)out_map.erase(out_map.cbegin() + LongToSize(axis_));                                             // [c, e]
+  (void)out_map.insert(out_map.cbegin() + LongToSize(axis_), indices_map.cbegin(), indices_map.cend());  // [c, f, g, e]
 
   inputs_tensor_map_.push_back(param_map);    // param
   inputs_tensor_map_.push_back(indices_map);  // indices
@@ -663,7 +663,7 @@ Status ShardAxisImpl::CheckSplitAxisStrategy(const Shape &param_strategy, const 
   }
 
   if ((product_p != SizeToLong(stage_device_size)) && (param_strategy.at(LongToSize(axis_)) != 1) && (axis_ == 0)) {
-    if ((param_strategy.size() == 2) && (param_strategy[1] != 1)) {
+    if ((param_strategy.size() == kSizeTwo) && (param_strategy[1] != kSizeOne)) {
       FILTER_LOG(is_auto_parallel) << name_
                                    << ": axis(0) is split, and param_strategy[1] != 1, don't support"
                                       " repeated calc.";
@@ -759,7 +759,7 @@ Status ShardAxisImpl::InferTensorMap() {
       // the output is repeat calculation
       (void)tensor_map_out.insert(tensor_map_out.end(), MAP_NONE);
     } else {
-      (void)tensor_map_out.insert(tensor_map_out.end(), param_size - 1);
+      (void)tensor_map_out.insert(tensor_map_out.end(), SizeToLong(param_size) - 1);
     }
     (void)tensor_map_out.insert(tensor_map_out.end(), index_size - 1, MAP_NONE);
     for (size_t i = 1; i < param_size; ++i) {
@@ -793,14 +793,9 @@ Status ShardAxisImpl::InferTensorInfo() {
     return FAILED;
   }
 
-  // infer tensor info
-  TensorInfo input_tensor_info(input_tensor_layout);
-  TensorInfo input_index_info(input_index_layout);
-  TensorInfo output_tensor_info(output_tensor_layout);
-
-  inputs_tensor_info_.push_back(input_tensor_info);
-  inputs_tensor_info_.push_back(input_index_info);
-  outputs_tensor_info_.push_back(output_tensor_info);
+  (void)inputs_tensor_info_.emplace_back(TensorInfo(input_tensor_layout));
+  (void)inputs_tensor_info_.emplace_back(TensorInfo(input_index_layout));
+  (void)outputs_tensor_info_.emplace_back(TensorInfo(output_tensor_layout));
   return SUCCESS;
 }
 
@@ -1062,7 +1057,7 @@ Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
       return FAILED;
   }
 
-  if (gather_util_->CheckStrategy(param_strategy, indices_strategy)) {
+  if (gather_util_->CheckStrategy(param_strategy, indices_strategy) != SUCCESS) {
     return FAILED;
   }
   gather_util_->set_param_strategy(param_strategy);
@@ -1183,13 +1178,9 @@ Status GatherUtil::InferTensorInfoNoSplitAxis() {
   }
 
   // infer tensor info
-  TensorInfo input_tensor_info(input_tensor_layout);
-  TensorInfo input_index_info(input_index_layout);
-  TensorInfo output_tensor_info(output_tensor_layout);
-
-  inputs_tensor_info_.push_back(input_tensor_info);
-  inputs_tensor_info_.push_back(input_index_info);
-  outputs_tensor_info_.push_back(output_tensor_info);
+  (void)inputs_tensor_info_.emplace_back(TensorInfo(input_tensor_layout));
+  (void)inputs_tensor_info_.emplace_back(TensorInfo(input_index_layout));
+  (void)outputs_tensor_info_.emplace_back(TensorInfo(output_tensor_layout));
   return SUCCESS;
 }
 

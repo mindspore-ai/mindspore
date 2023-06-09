@@ -1139,8 +1139,19 @@ def set_context(**kwargs):
             - jit_compile (bool): Whether to select online compilation. the default value is based on CANN.
 
             - parallel_speed_up_json_path(Union[str, None]): The path to the parallel speed up json file, configuration
-              can refer to 'mindspore/config/parallel_speed_up json'. If its value is None or '',
-              it does not take effect. Default None.
+              can refer to
+              `parallel_speed_up.json <https://gitee.com/mindspore/mindspore/blob/r2.0/config/parallel_speed_up.json>`_ .
+              If its value is None or '', it does not take effect. Default None.
+
+              - recompute_comm_overlap (bool): Enable overlap between recompute ops and communication ops if True.
+                Default: False.
+              - matmul_grad_comm_overlap (bool): Enable overlap between grad ops and communication ops if True.
+                Default: False.
+              - enable_task_opt (bool): Enable the optimizaton of the number of tasks for each communication if True.
+                Default: False.
+              - interleaved_matmul_comm (bool): Enable interleaved optimization of Matmul-Comm if True. Default: False.
+              - interleaved_layernorm_comm (bool): Enable interleaved optimization of LayerNorm-Comm if True.
+                Default: False.
 
     Raises:
         ValueError: If input key is not an attribute in context.
