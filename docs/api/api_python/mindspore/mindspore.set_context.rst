@@ -180,11 +180,11 @@ mindspore.set_context
           - **parallel_speed_up_json_path** (Union[str, None]): 并行加速配置文件，配置项可以参考 `parallel_speed_up.json <https://gitee.com/mindspore/mindspore/blob/r2.0/config/parallel_speed_up.json>`_ 。
             当设置为None时，表示不启用。
 
-            - **recompute_comm_overlap**（bool): 为True时表示开启反向重计算和通信掩盖。默认值：False。
-            - **matmul_grad_comm_overlap**（bool): 为True时表示开启反向Matmul和通信掩盖。默认值：False。
-            - **enable_task_opt**（bool): 为True时表示开启通信算子task数量优化。默认值：False。
-            - **interleaved_matmul_comm**（bool): 为True时表示开启Matmul-Comm的细粒度双副本优化。默认值：False。
-            - **interleaved_layernorm_comm**（bool): 为True时表示开启LayerNorm-Comm细粒度双副本优化。默认值：False。
+            - **recompute_comm_overlap** (bool): 为True时表示开启反向重计算和通信掩盖。默认值：False。
+            - **matmul_grad_comm_overlap** (bool): 为True时表示开启反向Matmul和通信掩盖。默认值：False。
+            - **enable_task_opt** (bool): 为True时表示开启通信算子task数量优化。默认值：False。
+            - **interleaved_matmul_comm** (bool): 为True时表示开启Matmul-Comm的细粒度双副本优化。默认值：False。
+            - **interleaved_layernorm_comm** (bool): 为True时表示开启LayerNorm-Comm细粒度双副本优化。默认值：False。
 
     异常：
         - **ValueError** - 输入key不是上下文中的属性。
