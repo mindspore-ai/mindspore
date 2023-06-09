@@ -7400,7 +7400,7 @@ def logsumexp(input, axis, keep_dims=False):
     _reduce_sum = _get_cache_prim(P.ReduceSum)(keep_dims)
     _log = _get_cache_prim(P.Log)()
 
-    input_max = input.max(axis=axis, keepdims=True)
+    input_max = ops.ReduceMax(keep_dims=True)(input, axis)
     input_exp = _exp(input - input_max)
     input_sumexp = _reduce_sum(input_exp, axis)
     input_logsumexp = _log(input_sumexp)
