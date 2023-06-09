@@ -17,10 +17,14 @@
 #define MINDSPORE_NNACL_FP32_TRIU_TRIL_H_
 
 #include "nnacl/op_base.h"
+#include "nnacl/kernel.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+int TriuTrilGetKValue(KernelBase *self, int64_t *k);
+
 void TriuByte8(const void *src, void *dst, int64_t k, int64_t height, int64_t width, int64_t out_elems);
 void TriuByte4(const void *src, void *dst, int64_t k, int64_t height, int64_t width, int64_t out_elems);
 void TriuByte2(const void *src, void *dst, int64_t k, int64_t height, int64_t width, int64_t out_elems);

@@ -84,6 +84,7 @@ class NNaclFp32Serializer : public Serializer {
   void CodeStruct(const std::string &name, const CustomGruParameter &param);
   void CodeStruct(const std::string &name, const SlidingWindowParam &param);
   void CodeStruct(const std::string &name, const UnstackParameter &param);
+  void CodeStruct(const std::string &name, const int *list, int size);
   void CodeArrayStruct(const std::string &name, TensorC *tensorC, std::vector<Tensor *> tensor);
 
  private:

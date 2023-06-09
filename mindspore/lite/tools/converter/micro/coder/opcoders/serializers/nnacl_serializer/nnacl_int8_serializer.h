@@ -67,6 +67,7 @@ class NNaclInt8Serializer : public Serializer {
   void CodeStruct(const std::string &name, const PadParameter &batchnorm_parameter);
   void CodeStruct(const std::string &name, const GatherQuantArg &batchnorm_parameter);
   void CodeStruct(const std::string &name, const SpliceWrapperParam &splice_param);
+  void CodeStruct(const std::string &name, const int *list, int size);
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_SERIALIZER_NNACL_INT8_SERIALIZER_H_

@@ -37,10 +37,11 @@ SoftmaxInt8CPUKernel::~SoftmaxInt8CPUKernel() {
 }
 
 int SoftmaxInt8CPUKernel::Prepare() {
-  auto ret = SoftmaxBaseCPUKernel::Prepare();
-  if (ret != RET_OK) {
-    return ret;
+  if (softmax_param_ == nullptr) {
+    MS_LOG(ERROR) << "SoftmaxParameter nullptr";
+    return RET_NULL_PTR;
   }
+
   if (in_tensors_[0]->data_type() != mindspore::kNumberTypeInt8 ||
       out_tensors_[0]->data_type() != mindspore::kNumberTypeInt8) {
     MS_LOG(ERROR) << "Datatype error, input0 data_type is " << in_tensors_[0]->data_type() << ", output data_type is "
@@ -85,7 +86,23 @@ int SoftmaxInt8CPUKernel::Prepare() {
   return ReSize();
 }
 
-int SoftmaxInt8CPUKernel::ReSize() { return SoftmaxBaseCPUKernel::ReSize(); }
+int SoftmaxInt8CPUKernel::ReSize() {
+  auto input_tensor = in_tensors_.front();
+  CHECK_NULL_RETURN(input_tensor);
+  auto in_shape = input_tensor->shape();
+  auto in_dims = in_shape.size();
+  int ele_size = 1;
+  n_dim_ = static_cast<int>(in_dims);
+  if (softmax_param_->axis_ == -1) {
+    softmax_param_->axis_ += static_cast<int>(in_dims);
+  }
+  for (size_t i = 0; i < in_dims; i++) {
+    input_shape_[i] = in_shape.at(i);
+    ele_size *= in_shape.at(i);
+  }
+  element_size_ = ele_size;
+  return RET_OK;
+}
 
 int SoftmaxInt8CPUKernel::DoSoftmax(int task_id) {
   MS_ASSERT(in_tensors_.size() == 1);
@@ -99,13 +116,13 @@ int SoftmaxInt8CPUKernel::DoSoftmax(int task_id) {
   int outter_size = 1;
   int inner_size = 1;
   for (int i = 0; i < softmax_param_->axis_; i++) {
-    outter_size *= softmax_param_->input_shape_[i];
+    outter_size *= input_shape_[i];
   }
-  for (int i = softmax_param_->axis_; i < softmax_param_->n_dim_; i++) {
-    inner_size *= softmax_param_->input_shape_[i];
+  for (int i = softmax_param_->axis_; i < n_dim_; i++) {
+    inner_size *= input_shape_[i];
   }
 
-  int stride = UP_DIV(outter_size, thread_count_);
+  int stride = UP_DIV(outter_size, softmax_param_->op_parameter_.thread_num_);
   if (INT_MUL_OVERFLOW(task_id, stride)) {
     MS_LOG(ERROR) << "int mul overflow.";
     return RET_ERROR;
@@ -114,7 +131,7 @@ int SoftmaxInt8CPUKernel::DoSoftmax(int task_id) {
   int stride_size = stride * task_id * inner_size;
 
   auto error_code = SoftmaxInt8(input_ptr + stride_size, output_ptr + stride_size, count, exp_data_ + stride_size,
-                                sum_data_, quant_param_, softmax_param_);
+                                sum_data_, input_shape_, n_dim_, softmax_param_->axis_, quant_param_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "DoSoftmax error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;
@@ -134,15 +151,15 @@ int SoftmaxRun(void *cdata, int task_id, float, float) {
 }
 
 int SoftmaxInt8CPUKernel::Run() {
-  CHECK_LESS_RETURN(MAX_MALLOC_SIZE, softmax_param_->element_size_ * sizeof(int));
-  exp_data_ = reinterpret_cast<int *>(ms_context_->allocator->Malloc(softmax_param_->element_size_ * sizeof(int)));
+  CHECK_LESS_RETURN(MAX_MALLOC_SIZE, element_size_ * sizeof(int));
+  exp_data_ = reinterpret_cast<int *>(ms_context_->allocator->Malloc(element_size_ * sizeof(int)));
   int inner_size = 1;
-  for (int i = softmax_param_->axis_ + 1; i < softmax_param_->n_dim_; i++) {
-    if (INT_MUL_OVERFLOW(inner_size, softmax_param_->input_shape_[i])) {
+  for (int i = softmax_param_->axis_ + 1; i < n_dim_; i++) {
+    if (INT_MUL_OVERFLOW(inner_size, input_shape_[i])) {
       MS_LOG(ERROR) << "int mul overflow.";
       return RET_ERROR;
     }
-    inner_size *= softmax_param_->input_shape_[i];
+    inner_size *= input_shape_[i];
   }
   sum_data_ = reinterpret_cast<int *>(ms_context_->allocator->Malloc(inner_size * sizeof(int)));
   if (exp_data_ == nullptr || sum_data_ == nullptr) {
@@ -151,7 +168,7 @@ int SoftmaxInt8CPUKernel::Run() {
     ms_context_->allocator->Free(sum_data_);
     return RET_ERROR;
   }
-  auto ret = ParallelLaunch(this->ms_context_, SoftmaxRun, this, thread_count_);
+  auto ret = ParallelLaunch(this->ms_context_, SoftmaxRun, this, softmax_param_->op_parameter_.thread_num_);
   ms_context_->allocator->Free(exp_data_);
   ms_context_->allocator->Free(sum_data_);
   if (ret != RET_OK) {

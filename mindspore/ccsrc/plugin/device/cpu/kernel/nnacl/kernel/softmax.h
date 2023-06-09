@@ -21,6 +21,19 @@
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 
+typedef struct SoftmaxStruct {
+  KernelBase base_;
+  int axis_;
+  int n_dim_;
+  int in_plane_size_;
+  int out_plane_size_;
+  void *sum_data_;
+  TypeIdC data_type_;
+} SoftmaxStruct;
+
+int InitSoftmaxParam(SoftmaxStruct *softmax);
+int softmax_prepare(struct KernelBase *self);
+int softmax_release(struct KernelBase *self);
 KernelBase *CreateSoftmax(OpParameter *param, int data_type);
 
 #endif  // NNACL_KERNEL_SOFTMAX_H_

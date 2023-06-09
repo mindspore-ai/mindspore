@@ -41,6 +41,9 @@ class SoftmaxCrossEntropyWithLogitsCPUKernel : public LossKernel {
   int DoExecute(int task_id);
 
  private:
+  int n_dim_;
+  int element_size_;
+  int input_shape_[DIMENSION_5D];
   SoftmaxCrossEntropyParameter *param_;
   SoftmaxParameter sm_params_;
 };

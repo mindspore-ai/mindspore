@@ -32,15 +32,15 @@ int SoftmaxGradCPUKernel::Prepare() {
   auto in_shape = in_tensors_.at(0)->shape();
   auto in_dims = in_shape.size();
   int ele_size = 1;
-  param->n_dim_ = in_dims;
+  n_dim_ = in_dims;
   for (size_t i = 0; i < in_dims; i++) {
-    param->input_shape_[i] = in_shape.at(i);
+    input_shape_[i] = in_shape.at(i);
     ele_size *= in_shape.at(i);
   }
-  param->element_size_ = ele_size;
+  element_size_ = ele_size;
 
   auto axis = param->axis_;
-  if ((axis < -1) || (axis > param->n_dim_)) {
+  if ((axis < -1) || (axis > n_dim_)) {
     MS_LOG(ERROR) << "SoftmaxGrad axis is invalid!";
     return RET_ERROR;
   } else if (axis == -1) {
@@ -63,8 +63,9 @@ int SoftmaxGradCPUKernel::DoExecute(int task_id) {
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
   float *sum_data_ = static_cast<float *>(workspace());
   float *sum_mul_ = sum_data_ + inner_size_;
-  SoftmaxGrad(input_ptr, yt_ptr, output_ptr, sum_data_, sum_mul_, reinterpret_cast<SoftmaxParameter *>(op_parameter_));
 
+  SoftmaxGrad(input_ptr, yt_ptr, output_ptr, sum_data_, sum_mul_, input_shape_, n_dim_, element_size_,
+              reinterpret_cast<SoftmaxParameter *>(op_parameter_)->axis_);
   return RET_OK;
 }
 

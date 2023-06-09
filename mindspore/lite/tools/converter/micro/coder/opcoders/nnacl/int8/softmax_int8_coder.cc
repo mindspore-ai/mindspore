@@ -48,14 +48,14 @@ int SoftMaxInt8Coder::Prepare(CoderContext *const context) {
   quant_params_.shift_left_ = right_shift < 0 ? -right_shift : 0;
   quant_params_.shift_right_ = right_shift < 0 ? -right_shift : 0;
   // malloc tmp buffer
-  exp_data_size_ = softmax_param_->element_size_ * sizeof(int);
+  exp_data_size_ = element_size_ * sizeof(int);
   exp_data_ = static_cast<int *>(allocator_->Malloc(kNumberTypeInt32, exp_data_size_, kWorkspace));
   MS_CHECK_PTR(exp_data_);
   int inner_size = 1;
-  MS_CHECK_TRUE(softmax_param_->n_dim_ <= static_cast<int>(std::extent<decltype(softmax_param_->input_shape_)>::value),
+  MS_CHECK_TRUE(n_dim_ <= static_cast<int>(std::extent<decltype(input_shape_)>::value),
                 "n_dim should be less than the length of maximum value of input_shape");
-  for (int i = softmax_param_->axis_ + 1; i < softmax_param_->n_dim_; i++) {
-    inner_size *= softmax_param_->input_shape_[i];
+  for (int i = softmax_param_->axis_ + 1; i < n_dim_; i++) {
+    inner_size *= input_shape_[i];
   }
   sum_data_size_ = inner_size * sizeof(int);
   sum_data_ = static_cast<int *>(allocator_->Malloc(kNumberTypeInt32, sum_data_size_, kWorkspace));
@@ -66,9 +66,9 @@ int SoftMaxInt8Coder::Prepare(CoderContext *const context) {
 int SoftMaxInt8Coder::DoCode(CoderContext *const context) {
   int outter_size = 1;
   for (int i = 0; i < softmax_param_->axis_; i++) {
-    outter_size *= softmax_param_->input_shape_[i];
+    outter_size *= input_shape_[i];
   }
-  MS_CHECK_TRUE(softmax_param_->n_dim_ <= static_cast<int>(std::extent<decltype(softmax_param_->input_shape_)>::value),
+  MS_CHECK_TRUE(n_dim_ <= static_cast<int>(std::extent<decltype(input_shape_)>::value),
                 "n_dim should be less than the length of maximum value of input_shape");
   Collect(context,
           {
@@ -84,6 +84,7 @@ int SoftMaxInt8Coder::DoCode(CoderContext *const context) {
 
   code.CodeStruct("quant_params", quant_params_);
   code.CodeStruct("softmax_parameter", *softmax_param_);
+  code.CodeStruct("input_shape", input_shape_, DIMENSION_5D);
 
   code.CodeFunction("memset", exp_data_, 0, exp_data_size_);
   code.CodeFunction("memset", sum_data_, 0, sum_data_size_);
@@ -91,8 +92,8 @@ int SoftMaxInt8Coder::DoCode(CoderContext *const context) {
   MS_CHECK_TRUE(thread_num_ > 0, "thread_num_ <= 0");
   int stride = UP_DIV(outter_size, thread_num_);
   int count = MSMIN(stride, outter_size - stride * kDefaultTaskId);
-  code.CodeFunction("SoftmaxInt8", input_tensor_, output_tensor_, count, exp_data_, sum_data_, "&quant_params",
-                    "(SoftmaxParameter *)&softmax_parameter");
+  code.CodeFunction("SoftmaxInt8", input_tensor_, output_tensor_, count, exp_data_, sum_data_, "input_shape", n_dim_,
+                    "softmax_parameter.axis_", "&quant_params");
   context->AppendCode(code.str());
   return RET_OK;
 }

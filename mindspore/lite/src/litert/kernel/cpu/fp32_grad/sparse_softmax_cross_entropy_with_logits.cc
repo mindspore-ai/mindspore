@@ -91,7 +91,7 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::DoExecute(int task_id) {
   float *losses = static_cast<float *>(workspace());
   CHECK_NULL_RETURN(losses);
   float *sum_data = losses + data_size;
-  int length = sm_params_->input_shape_[sm_params_->axis_];
+  int length = input_shape_[sm_params_->axis_];
   int stride = UP_DIV(outter_size_, threads_);
   int count = MSMIN(stride, outter_size_ - stride * task_id);
   if (count <= 0) return RET_OK;
@@ -129,8 +129,8 @@ int SparseSoftmaxCrossEntropyWithLogitsRun(void *cdata, int task_id, float lhs_s
 
 int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
   int axis = sm_params_->axis_;
-  int n_dim = sm_params_->n_dim_;
-  const int *input_shape = sm_params_->input_shape_;
+  int n_dim = n_dim_;
+  const int *input_shape = input_shape_;
   int inner_size = 1;
   int outter_size = 1;
   CHECK_NULL_RETURN(in_tensors_.at(0));
@@ -139,7 +139,7 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
   CHECK_NULL_RETURN(losses);
   float *sum_data = losses + data_size;
   std::fill(losses, losses + data_size, 0.f);
-  std::fill(sum_data, sum_data + sm_params_->input_shape_[0], 0.f);
+  std::fill(sum_data, sum_data + input_shape_[0], 0.f);
   for (int i = 0; i < axis; i++) {
     outter_size *= input_shape[i];
   }
@@ -193,11 +193,11 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Prepare() {
       return RET_ERROR;
     }
   }
-  sm_params_->n_dim_ = 2;
-  sm_params_->element_size_ = static_cast<int>(data_size);
+  n_dim_ = 2;
+  element_size_ = static_cast<int>(data_size);
   sm_params_->axis_ = 1;
   for (size_t i = 0; i < dims.size(); i++) {
-    sm_params_->input_shape_[i] = dims.at(i);
+    input_shape_[i] = dims.at(i);
   }
   return RET_OK;
 }

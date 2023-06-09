@@ -186,6 +186,6 @@ KernelBase *CreateActivation(OpParameter *param, int data_type) {
   return (KernelBase *)activation;
 }
 
-REG_KERNEL_CREATOR(PrimType_Activation, kNumberTypeFloat32, CreateActivation);
-REG_KERNEL_CREATOR(PrimType_Activation, kNumberTypeFloat16, CreateActivation);
-REG_KERNEL_CREATOR(PrimType_Activation, kNumberTypeUInt32, CreateActivation);
+REG_KERNEL_CREATOR(PrimType_Activation, kNumberTypeFloat32, CreateActivation)
+REG_KERNEL_CREATOR(PrimType_Activation, kNumberTypeFloat16, CreateActivation)
+REG_KERNEL_CREATOR(PrimType_Activation, kNumberTypeUInt32, CreateActivation)

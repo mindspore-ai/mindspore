@@ -115,7 +115,7 @@ KernelBase *CreateClip(OpParameter *param, int data_type) {
   return (KernelBase *)clip;
 }
 
-REG_KERNEL_CREATOR(PrimType_Clip, kNumberTypeFloat, CreateClip);
-REG_KERNEL_CREATOR(PrimType_Clip, kNumberTypeFloat32, CreateClip);
-REG_KERNEL_CREATOR(PrimType_Clip, kNumberTypeInt, CreateClip);
-REG_KERNEL_CREATOR(PrimType_Clip, kNumberTypeInt32, CreateClip);
+REG_KERNEL_CREATOR(PrimType_Clip, kNumberTypeFloat, CreateClip)
+REG_KERNEL_CREATOR(PrimType_Clip, kNumberTypeFloat32, CreateClip)
+REG_KERNEL_CREATOR(PrimType_Clip, kNumberTypeInt, CreateClip)
+REG_KERNEL_CREATOR(PrimType_Clip, kNumberTypeInt32, CreateClip)

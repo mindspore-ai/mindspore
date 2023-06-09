@@ -81,5 +81,5 @@ KernelBase *CreateExp(OpParameter *param, int data_type) {
   return (KernelBase *)exp;
 }
 
-REG_KERNEL_CREATOR(PrimType_ExpFusion, kNumberTypeFloat32, CreateExp);
-REG_KERNEL_CREATOR(PrimType_ExpFusion, kNumberTypeFloat16, CreateExp);
+REG_KERNEL_CREATOR(PrimType_ExpFusion, kNumberTypeFloat32, CreateExp)
+REG_KERNEL_CREATOR(PrimType_ExpFusion, kNumberTypeFloat16, CreateExp)

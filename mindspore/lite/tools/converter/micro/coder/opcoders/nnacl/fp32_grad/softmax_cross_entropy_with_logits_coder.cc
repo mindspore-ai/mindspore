@@ -36,11 +36,11 @@ int SoftmaxCrossEntropyWithLogitsCoder::Prepare(CoderContext *const context) {
 
   losses_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, data_size * sizeof(float), kWorkspace));
   sum_data_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, dims[0] * sizeof(float), kWorkspace));
-  softmax_params_.n_dim_ = DIMENSION_2D;
-  softmax_params_.element_size_ = data_size;
+  n_dim_ = DIMENSION_2D;
+  element_size_ = data_size;
   softmax_params_.axis_ = 1;
   for (size_t i = 0; i < dims.size(); i++) {
-    softmax_params_.input_shape_[i] = dims.at(i);
+    input_shape_[i] = dims.at(i);
   }
   return RET_OK;
 }
@@ -58,6 +58,8 @@ int SoftmaxCrossEntropyWithLogitsCoder::DoCode(CoderContext *const context) {
           });
   NNaclFp32Serializer code, init_code;
   code.CodeStruct("softmax_params", softmax_params_);
+  code.CodeStruct("input_shape", input_shape_, DIMENSION_5D);
+
   // Get Tensor Pointer
   std::string in_str = allocator_->GetRuntimeAddr(input_tensor_);
   std::string labels_str = allocator_->GetRuntimeAddr(input_tensors_.at(1));
@@ -67,8 +69,7 @@ int SoftmaxCrossEntropyWithLogitsCoder::DoCode(CoderContext *const context) {
     grad_str = allocator_->GetRuntimeAddr(output_tensors_.at(1));
   }
   auto *softmax_cross_entropy_param = reinterpret_cast<SoftmaxCrossEntropyParameter *>(parameter_);
-  code.CodeFunction("Softmax", in_str, losses_, sum_data_, "softmax_params.axis_", "softmax_params.n_dim_",
-                    "softmax_params.input_shape_");
+  code.CodeFunction("Softmax", in_str, losses_, sum_data_, "softmax_params.axis_", n_dim_, "input_shape");
   code.CodeFunction("ForwardPostExecute", labels_str, losses_, grad_str, out_str,
                     softmax_cross_entropy_param->number_of_classes_, softmax_cross_entropy_param->batch_size_);
 

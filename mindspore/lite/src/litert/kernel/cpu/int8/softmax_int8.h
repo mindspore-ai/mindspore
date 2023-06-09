@@ -18,15 +18,18 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_INT8_SOFTMAX_INT8_H_
 
 #include <vector>
-#include "src/litert/kernel/cpu/base/softmax_base.h"
+#include "src/litert/lite_kernel.h"
+#include "nnacl/softmax_parameter.h"
 #include "nnacl/int8/quantize.h"
 
 namespace mindspore::kernel {
-class SoftmaxInt8CPUKernel : public SoftmaxBaseCPUKernel {
+class SoftmaxInt8CPUKernel : public LiteKernel {
  public:
   SoftmaxInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : SoftmaxBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {
+    softmax_param_ = reinterpret_cast<SoftmaxParameter *>(op_parameter_);
+  }
   ~SoftmaxInt8CPUKernel() override;
 
   int Prepare() override;
@@ -35,8 +38,12 @@ class SoftmaxInt8CPUKernel : public SoftmaxBaseCPUKernel {
   int DoSoftmax(int task_id);
 
  private:
+  int n_dim_;
+  int element_size_;
+  int input_shape_[DIMENSION_5D];
   int *sum_data_ = nullptr;
   int *exp_data_ = nullptr;
+  SoftmaxParameter *softmax_param_;
   SoftmaxQuantArg *quant_param_ = nullptr;
 };
 }  // namespace mindspore::kernel

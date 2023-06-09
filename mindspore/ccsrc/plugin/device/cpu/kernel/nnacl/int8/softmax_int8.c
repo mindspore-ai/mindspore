@@ -18,12 +18,8 @@
 #include "nnacl/errorcode.h"
 
 int SoftmaxInt8(const int8_t *input_ptr, int8_t *output_ptr, int count, int32_t *exp_data, int32_t *sum_data,
-                const SoftmaxQuantArg *quant_param, const SoftmaxParameter *parameter) {
-  int32_t axis = parameter->axis_;
-  int n_dim = parameter->n_dim_;
-  const int32_t *input_shape = parameter->input_shape_;
+                const int32_t *input_shape, int n_dim, int32_t axis, const SoftmaxQuantArg *quant_param) {
   int axis_shape_size = input_shape[axis];
-
   int inner_size = 1;
   if (n_dim > DIMENSION_5D) {
     return NNACL_ERR;

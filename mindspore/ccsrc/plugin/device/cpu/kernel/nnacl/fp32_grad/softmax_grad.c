@@ -18,13 +18,8 @@
 #include <string.h>
 
 void SoftmaxGrad(const float *input_ptr, const float *yt_ptr, float *output_ptr, float *sum_data, float *sum_mul,
-                 const SoftmaxParameter *parameter) {
-  int32_t axis = parameter->axis_;
-  int n_dim = parameter->n_dim_;
-  int ele_size = parameter->element_size_;
-  const int *input_shape = parameter->input_shape_;
+                 const int *input_shape, int n_dim, int ele_size, int32_t axis) {
   int dim = 1;
-
   int inner_size = 1, outter_size = 1;
   for (int i = 0; i < axis; i++) {
     outter_size *= input_shape[i];

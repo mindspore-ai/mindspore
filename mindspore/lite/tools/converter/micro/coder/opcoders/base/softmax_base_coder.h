@@ -42,6 +42,11 @@ class SoftmaxBaseCoder : public OperatorCoder {
   int thread_count_{0};
 
   SoftmaxQuantArg quant_params_{};
+
+ protected:
+  int n_dim_;
+  int element_size_;
+  int input_shape_[DIMENSION_5D];
 };
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_BASE_SOFTMAX_BASE_CODER_H_

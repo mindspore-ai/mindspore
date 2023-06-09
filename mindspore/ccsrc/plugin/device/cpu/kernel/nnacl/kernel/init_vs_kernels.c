@@ -30,6 +30,7 @@
 #include "nnacl/kernel/gather.h"
 #include "nnacl/kernel/gather_d.h"
 #include "nnacl/kernel/group_norm.h"
+#include "nnacl/kernel/log_softmax.h"
 #include "nnacl/kernel/matmul.h"
 #include "nnacl/kernel/reshape.h"
 #include "nnacl/kernel/scale.h"
@@ -39,6 +40,7 @@
 #include "nnacl/kernel/strided_slice.h"
 #include "nnacl/kernel/softmax.h"
 #include "nnacl/kernel/tile.h"
+#include "nnacl/kernel/tril.h"
 #include "nnacl/kernel/triu.h"
 #include "nnacl/kernel/transpose.h"
 #ifdef ENABLE_FP16
@@ -79,6 +81,7 @@ void init_vs_kernels_f16(KernelCreator **creators) {
   creators[PrimType_LogicalAnd][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_LogicalOr][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_Log][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
+  creators[PrimType_LogSoftmax][REGIST_DT(kNumberTypeFloat16)] = CreateLogSoftmax;
   creators[PrimType_LogicalNot][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_Maximum][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_Neg][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
@@ -103,6 +106,8 @@ void init_vs_kernels_f16(KernelCreator **creators) {
   creators[PrimType_Square][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_Sqrt][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_TileFusion][REGIST_DT(kNumberTypeFloat16)] = CreateTile;
+  creators[PrimType_Triu][REGIST_DT(kNumberTypeFloat16)] = CreateTriu;
+  creators[PrimType_Tril][REGIST_DT(kNumberTypeFloat16)] = CreateTril;
   creators[PrimType_Transpose][REGIST_DT(kNumberTypeFloat16)] = CreateTranspose;
   creators[PrimType_Unsqueeze][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
 #endif
@@ -176,6 +181,7 @@ void init_vs_kernels_i(KernelCreator **creators) {
   creators[PrimType_LogicalOr][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
   creators[PrimType_LogicalOr][REGIST_DT(kNumberTypeBool)] = CreateArithmetic;
   creators[PrimType_Log][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
+  creators[PrimType_LogSoftmax][REGIST_DT(kNumberTypeFloat32)] = CreateLogSoftmax;
   creators[PrimType_Log1p][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
   creators[PrimType_LogicalNot][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
   creators[PrimType_LogicalNot][REGIST_DT(kNumberTypeBool)] = CreateArithmeticSelf;
@@ -237,7 +243,6 @@ void init_vs_kernels_r(KernelCreator **creators) {
   creators[PrimType_Triu][REGIST_DT(kNumberTypeFloat)] = CreateTriu;
   creators[PrimType_Triu][REGIST_DT(kNumberTypeFloat64)] = CreateTriu;
   creators[PrimType_Triu][REGIST_DT(kNumberTypeFloat32)] = CreateTriu;
-  creators[PrimType_Triu][REGIST_DT(kNumberTypeFloat16)] = CreateTriu;
   creators[PrimType_Triu][REGIST_DT(kNumberTypeInt)] = CreateTriu;
   creators[PrimType_Triu][REGIST_DT(kNumberTypeInt64)] = CreateTriu;
   creators[PrimType_Triu][REGIST_DT(kNumberTypeInt32)] = CreateTriu;
@@ -248,6 +253,20 @@ void init_vs_kernels_r(KernelCreator **creators) {
   creators[PrimType_Triu][REGIST_DT(kNumberTypeUInt16)] = CreateTriu;
   creators[PrimType_Triu][REGIST_DT(kNumberTypeUInt8)] = CreateTriu;
   creators[PrimType_Triu][REGIST_DT(kNumberTypeBool)] = CreateTriu;
+  creators[PrimType_Tril][REGIST_DT(kNumberTypeDouble)] = CreateTril;
+  creators[PrimType_Tril][REGIST_DT(kNumberTypeFloat)] = CreateTril;
+  creators[PrimType_Tril][REGIST_DT(kNumberTypeFloat64)] = CreateTril;
+  creators[PrimType_Tril][REGIST_DT(kNumberTypeFloat32)] = CreateTril;
+  creators[PrimType_Tril][REGIST_DT(kNumberTypeInt)] = CreateTril;
+  creators[PrimType_Tril][REGIST_DT(kNumberTypeInt64)] = CreateTril;
+  creators[PrimType_Tril][REGIST_DT(kNumberTypeInt32)] = CreateTril;
+  creators[PrimType_Tril][REGIST_DT(kNumberTypeInt16)] = CreateTril;
+  creators[PrimType_Tril][REGIST_DT(kNumberTypeInt8)] = CreateTril;
+  creators[PrimType_Tril][REGIST_DT(kNumberTypeUInt64)] = CreateTril;
+  creators[PrimType_Tril][REGIST_DT(kNumberTypeUInt32)] = CreateTril;
+  creators[PrimType_Tril][REGIST_DT(kNumberTypeUInt16)] = CreateTril;
+  creators[PrimType_Tril][REGIST_DT(kNumberTypeUInt8)] = CreateTril;
+  creators[PrimType_Tril][REGIST_DT(kNumberTypeBool)] = CreateTril;
   creators[PrimType_Transpose][REGIST_DT(kNumberTypeFloat32)] = CreateTranspose;
   creators[PrimType_Transpose][REGIST_DT(kNumberTypeInt32)] = CreateTranspose;
   creators[PrimType_Unsqueeze][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;
