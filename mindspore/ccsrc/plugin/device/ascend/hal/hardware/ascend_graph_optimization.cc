@@ -229,6 +229,7 @@ void AscendGraphOptimization::OptimizeACLGraph(const KernelGraphPtr &graph) {
     graph->set_executable(false);
     MS_LOG(DEBUG) << "Status record: end optimize acl graph. graph id: " << graph->graph_id();
   }
+  opt::AscendUnfoldInputsForSpecialNodes(graph);
   opt::AscendBackendOptimizeACL(graph);
   memo_.clear();
   // clear and reset graph_manager_ after optimization

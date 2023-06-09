@@ -16,6 +16,8 @@
 #include "plugin/device/ascend/kernel/acl/acl_kernel_build.h"
 #include "plugin/device/ascend/kernel/acl/acl_kernel_mod.h"
 #include "include/backend/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
+#include "transform/acl_ir/acl_helper.h"
 
 namespace mindspore {
 namespace kernel {
@@ -31,6 +33,25 @@ KernelModPtr AclOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
   auto output_formats = build_info->GetAllOutputFormats();
   auto output_types = build_info->GetAllOutputDeviceTypes();
   kernel_mod_ptr->SetDeviceInfo(input_formats, output_formats, input_types, output_types);
+
+  auto cnode = anf_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (common::AnfAlgo::HasNodeAttr(kAttrMutableKernel, cnode)) {
+    return kernel_mod_ptr;
+  }
+
+  auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
+  MS_EXCEPTION_IF_NULL(primitive);
+  kernel_mod_ptr->SetPrimitive(primitive);
+  std::string format = transform::AclHelper::GetFormatFromAttr(primitive);
+  for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(cnode); ++i) {
+    auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, i);
+    kernel_mod_ptr->PackageInput(i, format, &shape);
+  }
+  for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(cnode); ++i) {
+    const auto &shape = common::AnfAlgo::GetOutputInferShape(cnode, i);
+    kernel_mod_ptr->PackageOutput(i, shape);
+  }
 
   return kernel_mod_ptr;
 }

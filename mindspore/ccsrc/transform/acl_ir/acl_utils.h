@@ -217,6 +217,8 @@ class AclRunner {
     AclAttrMaker::SetAttr(attrName, value, acl_param_.attr);
   }
 
+  void AoeDump();
+
   void Run(void *stream_ptr, bool is_sync);
 
   std::vector<std::vector<int64_t>> SyncData();

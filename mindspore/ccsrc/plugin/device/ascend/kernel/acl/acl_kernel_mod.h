@@ -56,6 +56,10 @@ class AclKernelMod : public AscendKernelMod {
                      const std::vector<TypeId> &input_device_types, const std::vector<TypeId> &output_device_types);
   bool IsNeedRetrieveOutputShape() override;
 
+  void PackageInput(const size_t idx, const std::string &format, ShapeVector *shape);
+  void PackageOutput(const size_t idx, const ShapeVector &shape);
+  void SetPrimitive(const PrimitivePtr &primitive);
+
  protected:
   std::string DebugString() const;
   void SyncOutputShape() override;
