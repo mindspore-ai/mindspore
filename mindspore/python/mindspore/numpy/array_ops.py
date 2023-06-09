@@ -2528,7 +2528,7 @@ def argwhere(a):
     Find the indices of Tensor elements that are non-zero, grouped by element.
 
     Args:
-        a (Union[int, float, bool, list, tuple, Tensor]): Input tensor.
+        a (Union[list, tuple, Tensor]): Input tensor.
 
     Returns:
         Tensor. Indices of elements that are non-zero. Indices are grouped by element.
@@ -2536,6 +2536,7 @@ def argwhere(a):
 
     Raises:
         TypeError: If input `a` is not array_like.
+        ValueError: If dim of `a` equals to 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2597,15 +2598,23 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     concat_array = concat_array.sort()[0]
 
     mask = concat_array[1:] == concat_array[:-1]
-    res = F.masked_select(concat_array[:-1], mask)
+    res = F.cast(F.masked_select(concat_array[:-1], mask), mstype.int32)
+
+    def get_index(arr, val):
+        for i, v in enumerate(arr):
+            if val == v:
+                return Tensor(i, dtype=mstype.int32)
+        return Tensor(-1, dtype=mstype.int32)
 
     if return_indices:
-        ar1_indices = []
-        ar2_indices = []
-        ar1_raveled = list(ar1.ravel())
-        ar2_raveled = list(ar2.ravel())
+        ar1_indices = F.fill(mstype.int32, (res.size,), -1)
+        ar2_indices = F.fill(mstype.int32, (res.size,), -1)
+        ar1_raveled = F.cast(ar1.ravel(), mstype.int32)
+        ar2_raveled = F.cast(ar2.ravel(), mstype.int32)
+        i = Tensor(0, dtype=mstype.int32)
         for out in list(res):
-            ar1_indices.append(ar1_raveled.index(out))
-            ar2_indices.append(ar2_raveled.index(out))
+            ar1_indices = F.index_fill(ar1_indices, 0, i, get_index(ar1_raveled, out))
+            ar2_indices = F.index_fill(ar2_indices, 0, i, get_index(ar2_raveled, out))
+            i += 1
         return res, ar1_indices, ar2_indices
     return res
