@@ -1600,7 +1600,7 @@ class BatchMatMul(Primitive):
 
         \text{output}[..., :, :] = \text{matrix}(x[..., :, :]) * \text{matrix}(y[..., :, :])
 
-    The first input tensor must be not less than `3` and the second input must be not less than `2`.
+    The rank of both two input tensors must be same and not less than `2`.
 
     Args:
         transpose_a (bool): If true, the last two dimensions of `x` is transposed before multiplication.
@@ -1621,7 +1621,7 @@ class BatchMatMul(Primitive):
     Raises:
         TypeError: If `transpose_a` or `transpose_b` is not a bool.
         ValueError: If length of shape of `x` is not equal to length of shape of `y` or
-                    length of shape of `x` is less than 3.
+                    length of shape of inputs is less than 2.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
