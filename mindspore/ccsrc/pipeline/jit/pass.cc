@@ -50,6 +50,7 @@
 #include "frontend/parallel/pass/overlap_recompute_and_grad_model_parallel.h"
 #include "frontend/parallel/pass/overlap_gradmatmul_and_gradallreduce.h"
 #include "frontend/optimizer/recompute.h"
+#include "frontend/optimizer/irpass/recompute.h"
 #include "frontend/optimizer/slice_activation_in_recompute.h"
 #include "frontend/optimizer/comm_op_attrs.h"
 #include "frontend/optimizer/environ_conversion.h"
@@ -390,7 +391,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig recompute_prepare = opt::OptPassConfig({irpass.set_cell_output_no_recompute_});
   opt::OptPassConfig get_grad = opt::OptPassConfig({irpass.get_grad_eliminate_});
 
-  opt::OptPassConfig cell_reuse_recompute_pass = opt::OptPassConfig(
+  opt::OptPassConfig cell_reuse_cell_recompute_pass = opt::OptPassConfig(
     {
       irpass.add_recompute_primal_,
       irpass.remove_not_recompute_node_,
@@ -416,7 +417,8 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"virtual_dataset", virtual_dataset},
                          {"get_grad_eliminate_", get_grad},
                          {"virtual_output", opt::OptPassConfig({irpass.virtual_output_eliminate_})},
-                         {"cell_reuse_recompute_pass", cell_reuse_recompute_pass},
+                         {"cell_reuse_cell_primitive_pass", opt::OptPassConfig(opt::irpass::AddRecomputePrimitive)},
+                         {"cell_reuse_cell_recompute_pass", cell_reuse_cell_recompute_pass},
                          {"meta_fg_expand", opt::OptPassConfig(opt::irpass::ExpandMetaFg())},
                          {"after_resolve", after_resolve_pass},
                          {"a_after_grad", a_after_grad},
