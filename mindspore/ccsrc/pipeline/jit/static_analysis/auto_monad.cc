@@ -1441,7 +1441,7 @@ class AutoMonadConverter {
         auto input = attach_cnode->input(1);
         // Check the input of stop_gradient.
         if (input->isa<CNode>() && input->cast<CNodePtr>()->has_side_effect_node()) {
-          return;
+          MS_LOG(WARNING) << "Some side effect nodes were eliminated by mistake.";
         }
         // Replace Depend(orig_output, StopGrad) node with orig_output.
         // After that, nodes may be eliminated if have no side effects.
