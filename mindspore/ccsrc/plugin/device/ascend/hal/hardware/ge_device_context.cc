@@ -131,6 +131,25 @@ void UseOpDebugConfig(std::map<std::string, std::string> *ge_options) {
     MS_LOG(INFO) << "Use MS_COMPILER_OP_DEBUG_CONFIG:" << ge_op_debug_config;
   }
 }
+
+// ge.exec.allow_hf32 default value is "10"(enable Conv, disable Matmul) set by CANN
+void SetAscendHF32Config(const std::shared_ptr<MsContext> &ms_context_ptr,
+                         std::map<std::string, std::string> *ge_options) {
+  std::string allow_matmul_hf32 = ms_context_ptr->get_param<std::string>(MS_CTX_MATMUL_ALLOW_HF32);
+  std::string allow_conv_hf32 = ms_context_ptr->get_param<std::string>(MS_CTX_CONV_ALLOW_HF32);
+  if (allow_matmul_hf32.empty() && allow_conv_hf32.empty()) {
+    MS_LOG(INFO) << "The default value of allow_matmul_hf32 and allow_conv_hf32 are set by CANN.";
+  } else if (allow_matmul_hf32.empty() && !allow_conv_hf32.empty()) {
+    (*ge_options)["ge.exec.allow_hf32"] = allow_conv_hf32 + std::string("0");
+  } else if (!allow_matmul_hf32.empty() && allow_conv_hf32.empty()) {
+    (*ge_options)["ge.exec.allow_hf32"] = std::string("1") + allow_matmul_hf32;
+  } else {
+    (*ge_options)["ge.exec.allow_hf32"] = allow_conv_hf32 + allow_matmul_hf32;
+  }
+
+  MS_LOG(INFO) << "allow_matmul_hf32: " << allow_matmul_hf32 << ", allow_conv_hf32: " << allow_conv_hf32;
+}
+
 void GeDeviceContext::SetAscendConfig(const std::shared_ptr<MsContext> &ms_context_ptr,
                                       std::map<std::string, std::string> *ge_options) const {
   MS_EXCEPTION_IF_NULL(ms_context_ptr);
@@ -162,6 +181,8 @@ void GeDeviceContext::SetAscendConfig(const std::shared_ptr<MsContext> &ms_conte
     (*ge_options)["ge.exec.atomicCleanPolicy"] = atomic_clean_policy;
     MS_LOG(INFO) << "Set GE atomic clean policy to " << atomic_clean_policy << ".";
   }
+
+  SetAscendHF32Config(ms_context_ptr, ge_options);
 }
 
 void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_ptr,

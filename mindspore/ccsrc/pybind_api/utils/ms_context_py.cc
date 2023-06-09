@@ -96,6 +96,8 @@ void RegMsContext(const py::module *m) {
     .value("precision_mode", MsCtxParam::MS_CTX_PRECISION_MODE)
     .value("jit_compile", MsCtxParam::MS_CTX_ENABLE_JIT_COMPILE)
     .value("atomic_clean_policy", MsCtxParam::MS_CTX_ATOMIC_CLEAN_POLICY)
+    .value("matmul_allow_hf32", MsCtxParam::MS_CTX_MATMUL_ALLOW_HF32)
+    .value("conv_allow_hf32", MsCtxParam::MS_CTX_CONV_ALLOW_HF32)
     .value("save_graphs_path", MsCtxParam::MS_CTX_SAVE_GRAPHS_PATH)
     .value("compile_cache_path", MsCtxParam::MS_CTX_COMPILE_CACHE_PATH)
     .value("variable_memory_max_size", MsCtxParam::MS_CTX_VARIABLE_MEMORY_MAX_SIZE)

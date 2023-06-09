@@ -278,7 +278,9 @@ class _Context:
                                           "allow_fp32_to_bf16", "allow_fp32_to_lowprecision",
                                           "allow_mix_precision_fp16", "allow_mix_precision_bf16"],
                        'jit_compile': [True, False],
-                       'atomic_clean_policy': [0, 1]}
+                       'atomic_clean_policy': [0, 1],
+                       'matmul_allow_hf32': [True, False],
+                       'conv_allow_hf32': [True, False]}
         for ascend_key, ascend_value in ascend_config.items():
             if ascend_key not in ascend_cfgs:
                 raise ValueError(f"For 'context.set_context', the key of argument 'ascend_config' must be one of "
@@ -293,6 +295,10 @@ class _Context:
                 self.set_param(ms_ctx_param.jit_compile, "1" if ascend_value else "0")
             if ascend_key == 'atomic_clean_policy':
                 self.set_param(ms_ctx_param.atomic_clean_policy, str(ascend_value))
+            if ascend_key == 'matmul_allow_hf32':
+                self.set_param(ms_ctx_param.matmul_allow_hf32, "1" if ascend_value else "0")
+            if ascend_key == 'conv_allow_hf32':
+                self.set_param(ms_ctx_param.conv_allow_hf32, "1" if ascend_value else "0")
 
     def set_backend_policy(self, policy):
         success = self._context_handle.set_backend_policy(policy)
@@ -1135,6 +1141,8 @@ def set_context(**kwargs):
                 the built-in optimization strategy, automatically reduces the precision of some operators to bfloat16.
 
             - jit_compile (bool): Whether to select online compilation. the default value is based on CANN.
+            - matmul_allow_hf32 (bool): Whether to convert FP32 to HF32 for Matmul operators. Default value: ``False``.
+            - conv_allow_hf32 (bool): Whether to convert FP32 to HF32 for Conv operators. Default value: ``True``.
         jit_syntax_level (int): Set JIT syntax level for graph compiling, triggered by GRAPH_MODE and @jit decorator.
             The value must be in [STRICT(``0``), COMPATIBLE(``1``), LAX(``2``)]. Default: LAX(``2``). All levels
             support all backends.
@@ -1202,7 +1210,7 @@ def set_context(**kwargs):
             logger.warning(f"For 'context.set_context', '{key}' parameter is deprecated. "
                            "For details, please see the interface parameter API comments")
             continue
-        if key in ('precision_mode', 'jit_compile', 'atomic_clean_policy'):
+        if key in ('precision_mode', 'jit_compile', 'atomic_clean_policy', 'matmul_allow_hf32', 'conv_allow_hf32'):
             raise ValueError(f"Please set '{key}' through parameter ascend_config")
         if key == 'save_graphs':
             if value is True:

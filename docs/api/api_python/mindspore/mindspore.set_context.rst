@@ -190,6 +190,9 @@ mindspore.set_context
 
             - 0：集中清理网络中所有atomic算子占用的内存。
             - 1：不集中清理内存，对网络中每一个atomic算子进行单独清零。当网络中内存超限时，可以尝试此种清理方式，但可能会导致一定的性能损耗。
+
+          - **matmul_allow_hf32** (bool): 是否为Matmul类算子使能FP32转换为HF32。默认值： ``False``。
+          - **conv_allow_hf32** (bool): 是否为Conv类算子使能FP32转换为HF32。默认值： ``True``。
         - **jit_syntax_level** (int) - 当通过GRAPH_MODE或者@jit装饰器触发图编译时，此选项用于设置JIT语法支持级别。
           其值必须在[STRICT(``0``)，COMPATIBLE(``1``)，LAX(``2``)]范围内，默认值为LAX(``2``)。全部级别都支持所有后端。
 
