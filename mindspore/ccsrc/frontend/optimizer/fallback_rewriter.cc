@@ -447,7 +447,28 @@ class BeforeOptARewriter : public BaseRewriter {
     MS_EXCEPTION_IF_NULL(node);
     constexpr size_t expect_inputs_size = 2;
     CheckInputsSize(node, expect_inputs_size);
-    return node->input(1);
+    auto input = node->input(1);
+    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime || !is_dict_output_) {
+      return input;
+    }
+    auto abs_dict = GetAbstract<AbstractDictionary>(input);
+    if (abs_dict == nullptr) {
+      return nullptr;
+    }
+    const auto &elements = abs_dict->elements();
+    std::vector<AnfNodePtr> new_inputs;
+    new_inputs.reserve(elements.size() + 1);
+    (void)new_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+    auto fg = node->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    for (const auto &element : elements) {
+      MS_EXCEPTION_IF_NULL(element.first->BuildValue());
+      AnfNodePtr value_node =
+        fg->NewCNode({NewValueNode(prim::kPrimDictGetItem), input, NewValueNode(element.first->BuildValue())});
+      (void)new_inputs.emplace_back(value_node);
+    }
+    return fg->NewCNode(std::move(new_inputs));
   }
 
   // From:
