@@ -1141,6 +1141,13 @@ def set_context(**kwargs):
                 the built-in optimization strategy, automatically reduces the precision of some operators to bfloat16.
 
             - jit_compile (bool): Whether to select online compilation. the default value is based on CANN.
+            - atomic_clean_policy (int): The policy for cleaning memory occupied by atomic operators in the network
+              The default value is based on CANN.
+
+              - 0: The memory occupied by all atomic operators in the network is cleaned centrally.
+              - 1: Memory is not cleaned centrally and each atomic operator in the network is cleaned separately.
+                When the memory of the network exceeds the limit, you may try this cleaning policy, but it may cause
+                performance loss.
             - matmul_allow_hf32 (bool): Whether to convert FP32 to HF32 for Matmul operators. Default value: ``False``.
             - conv_allow_hf32 (bool): Whether to convert FP32 to HF32 for Conv operators. Default value: ``True``.
         jit_syntax_level (int): Set JIT syntax level for graph compiling, triggered by GRAPH_MODE and @jit decorator.
@@ -1152,14 +1159,6 @@ def set_context(**kwargs):
               scalar.
             - LAX(``2``): Compatible with all Python syntax as much as possible. However, execution performance may be
               affected and not optimal.
-
-            - atomic_clean_policy (int): The policy for cleaning memory occupied by atomic operators in the network
-              The default value is based on CANN.
-
-              - 0: The memory occupied by all atomic operators in the network is cleaned centrally.
-              - 1: Memory is not cleaned centrally and each atomic operator in the network is cleaned separately.
-                When the memory of the network exceeds the limit, you may try this cleaning policy, but it may cause
-                performance loss.
 
     Raises:
         ValueError: If input key is not an attribute in context.
