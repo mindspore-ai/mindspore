@@ -12,7 +12,7 @@ mindspore.ops.ReverseV2
         - **axis** (Union[tuple(int), list(int)]) - 指定反转的轴。
 
     输入：
-        - **input_x** (Tensor) - 输入需反转的任意维度的Tensor。数据类型为数值型，不包括float64。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
+        - **input_x** (Tensor) - 输入需反转的任意维度的Tensor。shape为： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
 
     输出：
         Tensor，shape和数据类型与输入 `input_x` 相同。

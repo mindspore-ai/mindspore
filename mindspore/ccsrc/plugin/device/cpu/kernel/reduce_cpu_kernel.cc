@@ -103,6 +103,22 @@ void ReduceSum(const T *in, T *out, size_t start, size_t end, TransposeIterator 
   *out = value;
 }
 
+template <>
+void ReduceSum(const bool *in, bool *out, size_t start, size_t end, TransposeIterator *iter) {
+  bool value = *out;
+  if (iter != nullptr) {
+    for (size_t i = start; i < end; i++) {
+      value |= in[iter->GetPos()];
+      iter->GenNextPos();
+    }
+  } else {
+    for (size_t i = start; i < end; i++) {
+      value |= in[i];
+    }
+  }
+  *out = value;
+}
+
 template <typename T>
 void ReduceMean(const T *in, T *out, size_t start, size_t end, TransposeIterator *iter) {
   ReduceSum(in, out, start, end, iter);
@@ -110,16 +126,30 @@ void ReduceMean(const T *in, T *out, size_t start, size_t end, TransposeIterator
 
 template <typename T>
 void ReduceProd(const T *in, T *out, size_t start, size_t end, TransposeIterator *iter) {
-  if (iter != nullptr) {
-    for (size_t i = start; i < end; i++) {
-      *out *= in[iter->GetPos()];
-      iter->GenNextPos();
+  if constexpr (std::is_same<T, bool>::value) {
+    if (iter != nullptr) {
+      for (size_t i = start; i < end; i++) {
+        *out = *out && in[iter->GetPos()];
+        iter->GenNextPos();
+      }
+      return;
     }
-    return;
-  }
 
-  for (size_t i = start; i < end; i++) {
-    *out *= in[i];
+    for (size_t i = start; i < end; i++) {
+      *out = *out && in[i];
+    }
+  } else {
+    if (iter != nullptr) {
+      for (size_t i = start; i < end; i++) {
+        *out *= in[iter->GetPos()];
+        iter->GenNextPos();
+      }
+      return;
+    }
+
+    for (size_t i = start; i < end; i++) {
+      *out *= in[i];
+    }
   }
 }
 
@@ -259,6 +289,12 @@ void ReduceCpuKernelFunc<T>::ChooseFunc(const std::string &kernel_name_) {
     } else if (kernel_name_ == kReduceAny) {
       reduce_type_ = ReduceFuncType::kReduceAnyType;
       reduce_func_ = ReduceAny<T>;
+    } else if (kernel_name_ == kReduceProd) {
+      reduce_type_ = ReduceFuncType::kReduceProdType;
+      reduce_func_ = ReduceProd<T>;
+    } else if (kernel_name_ == kReduceSum) {
+      reduce_type_ = ReduceFuncType::kReduceSumType;
+      reduce_func_ = ReduceSum<T>;
     } else {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', unsupported reduce operation for bool.";
     }
@@ -468,6 +504,8 @@ static std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>> kernel_ma
   {REDUCE_CPU_REG(kNumberTypeUInt64, kNumberTypeInt32, uint64_t)},
   {REDUCE_CPU_REG(kNumberTypeUInt64, kNumberTypeInt64, uint64_t)}};
 static std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>> kernel_sum_prod_mean_list = {
+  {REDUCE_CPU_REG(kNumberTypeBool, kNumberTypeInt32, bool)},
+  {REDUCE_CPU_REG(kNumberTypeBool, kNumberTypeInt64, bool)},
   {REDUCE_CPU_REG(kNumberTypeFloat32, kNumberTypeInt32, float)},
   {REDUCE_CPU_REG(kNumberTypeFloat32, kNumberTypeInt64, float)},
   {REDUCE_CPU_REG(kNumberTypeFloat64, kNumberTypeInt32, double)},

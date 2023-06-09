@@ -45,6 +45,10 @@ void CalReverseV2(const T* input, T* output, const size_t* input_shape, const in
   return;
 }
 
+template CUDA_LIB_EXPORT void CalReverseV2<bool>(const bool* input, bool* output, const size_t* input_shape,
+                                                    const int64_t* strides, const int64_t* axis, size_t input_size,
+                                                    size_t axis_size, cudaStream_t cuda_stream);
+
 template CUDA_LIB_EXPORT void CalReverseV2<Complex<float>>(const Complex<float>* input, Complex<float>* output,
                                                  const size_t* input_shape, const int64_t* strides,
                                                  const int64_t* axis, size_t input_size,
@@ -72,6 +76,14 @@ template CUDA_LIB_EXPORT void CalReverseV2<uint8_t>(const uint8_t* input, uint8_
                                                     size_t axis_size, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void CalReverseV2<uint16_t>(const uint16_t* input, uint16_t* output, const size_t* input_shape,
+                                                    const int64_t* strides, const int64_t* axis, size_t input_size,
+                                                    size_t axis_size, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void CalReverseV2<uint32_t>(const uint32_t* input, uint32_t* output, const size_t* input_shape,
+                                                    const int64_t* strides, const int64_t* axis, size_t input_size,
+                                                    size_t axis_size, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void CalReverseV2<uint64_t>(const uint64_t* input, uint64_t* output, const size_t* input_shape,
                                                     const int64_t* strides, const int64_t* axis, size_t input_size,
                                                     size_t axis_size, cudaStream_t cuda_stream);
 

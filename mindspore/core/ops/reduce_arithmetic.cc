@@ -59,7 +59,7 @@ class ReduceArithmeticInfer : public abstract::OpInferBase {
       {prim::kPrimReduceMin->name(), common_valid_types_with_complex_and_bool},
       {prim::kPrimReduceSum->name(), common_valid_types_with_complex_and_bool},
       {prim::kPrimReduceSumD->name(), common_valid_types_with_complex_and_bool},
-      {prim::kPrimReduceProd->name(), common_valid_types_with_complex},
+      {prim::kPrimReduceProd->name(), common_valid_types_with_complex_and_bool},
       {prim::kPrimReduceMean->name(), common_valid_types_with_complex},
       {prim::kPrimReduceMeanD->name(), common_valid_types_with_complex},
     };

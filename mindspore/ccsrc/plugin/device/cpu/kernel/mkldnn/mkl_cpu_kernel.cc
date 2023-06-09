@@ -465,11 +465,7 @@ size_t MKLCpuKernelMod::GetSize(const dnnl::memory::desc &desc) const {
 
 dnnl::memory::data_type MKLCpuKernelMod::GetDnnlDataType(TypeId ms_type_id) const {
   static const std::map<TypeId, dnnl::memory::data_type> dnnl_data_type_map = {
-    {kNumberTypeFloat16, dnnl::memory::data_type::f16},
-    {kNumberTypeFloat32, dnnl::memory::data_type::f32},
-    {kNumberTypeInt32, dnnl::memory::data_type::s32},
-    {kNumberTypeInt8, dnnl::memory::data_type::s8},
-    {kNumberTypeUInt8, dnnl::memory::data_type::u8}};
+    {kNumberTypeFloat16, dnnl::memory::data_type::f16}, {kNumberTypeFloat32, dnnl::memory::data_type::f32}};
   auto iter = dnnl_data_type_map.find(ms_type_id);
   if (iter == dnnl_data_type_map.end()) {
     MS_LOG(WARNING) << "Dnnl do not support data type:" << TypeIdToString(ms_type_id);

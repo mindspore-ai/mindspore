@@ -1595,7 +1595,6 @@ class MatrixBandPart(Primitive):
 
     Inputs:
         - **x** (Tensor) - Input tensor. :math:`(*, m, n)` where :math:`*` means, any number of additional dimensions.
-          The data type must be float16, float32, float64, int32 or int64.
         - **lower** (Union[int, Tensor]) - Number of subdiagonals to keep. The data type must be int32 or int64.
           If negative, keep entire lower triangle.
         - **upper** (Union[int, Tensor]) - Number of superdiagonals to keep. The data type must be int32 or int64.
@@ -3248,7 +3247,7 @@ class ReverseV2(Primitive):
         axis (Union[tuple(int), list(int)]): The indices of the dimensions to reverse.
 
     Inputs:
-        - **input_x** (Tensor) - The target tensor. The data type is Number except float64.
+        - **input_x** (Tensor) - The target tensor.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
@@ -8679,7 +8678,7 @@ class TopK(Primitive):
             If ``False`` , the obtained elements will not be sorted. Default: ``True`` .
 
     Inputs:
-        - **input_x** (Tensor) - Input to be computed, data type must be float16, float32 or int32 on CPU,
+        - **input_x** (Tensor) - Input to be computed, data type can be Number on CPU,
           and float16 or float32 on GPU.
         - **k** (int) - The number of top elements to be computed along the last dimension, constant input is needed.
 
@@ -8693,7 +8692,7 @@ class TopK(Primitive):
         TypeError: If `sorted` is not a bool.
         TypeError: If `input_x` is not a Tensor.
         TypeError: If `k` is not an int.
-        TypeError: If dtype of `input_x` is not one of the following: float16, float32 or int32.
+        TypeError: If dtype of `input_x` is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
