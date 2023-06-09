@@ -16,7 +16,6 @@
 from __future__ import absolute_import
 from __future__ import division
 import numpy as np
-import mindspore.nn as nn
 from mindspore.ops import operations as P
 from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
@@ -123,7 +122,7 @@ class StudentT(Distribution):
         self.abs = P.Abs()
         self.half = 0.5
         self.half_log_pi = 0.5 * np.log(np.pi)
-        self.lgamma = nn.LGamma()
+        self.lgamma = P.Lgamma()
 
     def _log_prob(self, value, df=None, mean=None, sd=None):
         r"""
@@ -146,5 +145,5 @@ class StudentT(Distribution):
         y = (value - mean) / sd
         log_unnormalized_prob = -0.5 * (df + 1.) * self.log1p(y**2. / df)
         log_normalization = self.log(self.abs(sd)) + 0.5 * self.log(df) + self.half_log_pi + \
-                            self.lgamma(self.half * df) - self.lgamma(self.half * (df + 1.))
+            self.lgamma(self.half * df) - self.lgamma(self.half * (df + 1.))
         return log_unnormalized_prob - log_normalization

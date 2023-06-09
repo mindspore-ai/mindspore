@@ -32,6 +32,12 @@
 namespace mindspore {
 namespace parallel {
 const int64_t TWO_INPUT_SIZE = 2;
+
+constexpr char KAttrAsLossDivisor[] = "as_loss_divisor";
+constexpr char KAttrDevMatrixShape[] = "dev_matrix_shape";
+constexpr char KAttrInputsTensorMap[] = "inputs_tensor_map";
+constexpr char KAttrOutputsTensorMap[] = "outputs_tensor_map";
+
 extern size_t TOTAL_OPS;
 extern std::map<AnfNodePtr, std::pair<AnfNodePtr, int64_t>> g_RefMap;
 struct CommInfo {

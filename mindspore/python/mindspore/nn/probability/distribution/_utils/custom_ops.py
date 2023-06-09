@@ -16,7 +16,15 @@
 import numpy as np
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
+from mindspore.ops.primitive import constexpr
 from mindspore.common import dtype as mstype
+from .utils import CheckTensor
+
+
+@constexpr(check=False)
+def _check_tensor(x, name):
+    CheckTensor()(x, name)
+    return x
 
 
 def exp_generic(input_x):
@@ -61,6 +69,14 @@ def log_generic(input_x):
     result = select(
         nonpos_x, (-1.0) * inf, log_x)
     return select(neg_x, nan, result)
+
+
+def log_generic_with_check(x):
+    """
+    log generic with input check
+    """
+    _check_tensor(x, "the input of log_generic")
+    return log_generic(x)
 
 
 def log1p_generic(x):

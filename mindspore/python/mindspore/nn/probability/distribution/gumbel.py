@@ -17,7 +17,6 @@ import numpy as np
 from mindspore.ops import operations as P
 from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
-import mindspore.nn as nn
 import mindspore.nn.probability.bijector as msb
 import mindspore.nn.probability.distribution as msd
 from .transformed_distribution import TransformedDistribution
@@ -103,7 +102,7 @@ class Gumbel(TransformedDistribution):
         self.exp = exp_generic
         self.expm1 = P.Expm1()
         self.fill = P.Fill()
-        self.lgamma = nn.LGamma()
+        self.lgamma = P.Lgamma()
         self.log = log_generic
         self.shape = P.Shape()
         self.squeeze = P.Squeeze(0)

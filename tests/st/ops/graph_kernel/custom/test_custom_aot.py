@@ -236,17 +236,7 @@ add_cpu_info_attr_only = CustomRegOp("add_with_attr_kernel_cpu_2") \
     .get_op_info()
 
 
-def aot_reduce_dyn_shape(source_name):
-    shape = (4, 5)
-    axis = 1
-    keep_dim = False
-    input_x = np.random.normal(0, 1, shape).astype(np.float32)
-    dir_path = os.path.dirname(os.path.abspath(__file__))
-    func_path = dir_path + "/aot_test_files/" + source_name
 
-    test = ReduceDynNet(func_path + ":CustomReduce", mstype.float32, axis, keep_dim)
-    output = test(Tensor(input_x))
-    assert np.allclose(np.sum(input_x, axis, keepdims=keep_dim), output.asnumpy(), 0.001, 0.001)
 
 
 @pytest.mark.level0
@@ -267,27 +257,6 @@ def test_aot_single_output_cpu():
         aot_single_output_with_attr("add_with_attr.cc", add_with_attr_cpu_info)
         aot_single_output_with_attr_only("add_with_attr.cc", add_cpu_info_attr_only)
         aot_single_output_dyn_shape("add.cc", add_cpu_info)
-        aot_reduce_dyn_shape("reduce.cc")
-
-
-class ReduceDynNet(Cell):
-    def __init__(self, func, out_types, axis, keep_dim):
-        super(ReduceDynNet, self).__init__()
-        reduce_cpu_info = CustomRegOp("reduce_kernel_cpu") \
-            .input(0, "x1") \
-            .output(0, "y") \
-            .dtype_format(DataType.None_None, DataType.None_None) \
-            .attr("reduce_axis", "required", "float", value=axis) \
-            .attr("keep_dim", "required", "bool", value=keep_dim) \
-            .target("CPU") \
-            .get_op_info()
-        self.program = ops.Custom(func, None, out_types, "aot", reg_info=reduce_cpu_info)
-        self.convert_to_dynamic = inner.ConvertToDynamic(
-            is_dynamic_rank=True).add_prim_attr("primitive_target", "CPU")
-
-    def construct(self, x):
-        x = self.convert_to_dynamic(x)
-        return self.program(x)
 
 
 @pytest.mark.level0

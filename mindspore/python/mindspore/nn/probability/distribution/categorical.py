@@ -27,7 +27,7 @@ from mindspore.common import dtype as mstype
 from .distribution import Distribution
 from ._utils.utils import check_prob, check_sum_equal_one, check_rank,\
     check_distribution_name
-from ._utils.custom_ops import exp_generic, log_generic, broadcast_to
+from ._utils.custom_ops import exp_generic, log_generic, broadcast_to, log_generic_with_check
 
 
 class Categorical(Distribution):
@@ -157,6 +157,7 @@ class Categorical(Distribution):
         # when the graph kernel mode is enable
         # use Log directly as akg will handle the corner cases
         self.log = P.Log() if context.get_context("enable_graph_kernel") else log_generic
+        self.log_with_check = P.Log() if context.get_context("enable_graph_kernel") else log_generic_with_check
         self.log_softmax = P.LogSoftmax()
         self.logicor = P.LogicalOr()
         self.logicand = P.LogicalAnd()
@@ -254,8 +255,11 @@ class Categorical(Distribution):
         probs_b = self._check_value(probs_b, 'probs_b')
         probs_b = self.cast(probs_b, self.parameter_type)
         probs_a = self._check_param_type(probs)
-        logits_a = self.log(probs_a)
-        logits_b = self.log(probs_b)
+        if probs is None:
+            logits_a = self.log(probs_a)
+        else:
+            logits_a = self.log_with_check(probs_a)
+        logits_b = self.log_with_check(probs_b)
         return self.squeeze(self.reduce_sum(
             self.softmax(logits_a) * (self.log_softmax(logits_a) - (self.log_softmax(logits_b))), -1))
 
