@@ -40,7 +40,7 @@ bool MergeTransData::Run(const FuncGraphPtr &func_graph) {
     return false;
   }
 
-  std::map<std::pair<AnfNodePtr, std::string>, std::vector<CNodePtr>> transdata_map;
+  std::map<std::tuple<AnfNodePtr, std::string, ShapeVector>, std::vector<CNodePtr>> transdata_map;
   MS_EXCEPTION_IF_NULL(func_graph);
   const std::vector<AnfNodePtr> &node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
@@ -48,8 +48,9 @@ bool MergeTransData::Run(const FuncGraphPtr &func_graph) {
       auto cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       auto out_format = AnfAlgo::GetOutputFormat(cnode, 0);
+      auto out_shape = AnfAlgo::GetOutputDeviceShape(cnode, 0);
       auto prenode = common::AnfAlgo::VisitKernelWithReturnType(cnode->input(kOne), 0, true);
-      transdata_map[{prenode.first, out_format}].push_back(cnode);
+      transdata_map[{prenode.first, out_format, out_shape}].push_back(cnode);
     }
   }
 
@@ -61,7 +62,14 @@ bool MergeTransData::Run(const FuncGraphPtr &func_graph) {
       continue;
     }
     for (size_t i = kOne; i < kv.second.size(); i++) {
-      (void)manager->Replace(kv.second[i], kv.second[0]);
+      if (IsPrimitiveCNode(kv.second[i]->input(kIndexOne), prim::kPrimDepend)) {
+        auto depend_node = kv.second[i]->input(kIndexOne)->cast<CNodePtr>();
+        auto new_depend_node =
+          func_graph->NewCNode({NewValueNode(prim::kPrimDepend), kv.second[kIndexZero], depend_node->input(kIndexTwo)});
+        (void)manager->Replace(kv.second[i], new_depend_node);
+      } else {
+        (void)manager->Replace(kv.second[i], kv.second[kIndexZero]);
+      }
     }
   }
 
