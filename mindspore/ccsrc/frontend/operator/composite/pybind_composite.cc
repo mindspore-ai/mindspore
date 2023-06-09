@@ -60,6 +60,9 @@ void RegCompositeOpsGroup(const py::module *m) {
   // Reg TupleAdd
   (void)py::class_<TupleAdd, MetaFuncGraph, std::shared_ptr<TupleAdd>>(*m, "TupleAdd_").def(py::init<std::string &>());
 
+  // Reg ListAdd
+  (void)py::class_<ListAdd, MetaFuncGraph, std::shared_ptr<ListAdd>>(*m, "ListAdd_").def(py::init<std::string &>());
+
   // Reg TupleGetItemTensor
   (void)py::class_<TupleGetItemTensor, MetaFuncGraph, std::shared_ptr<TupleGetItemTensor>>(*m, "TupleGetItemTensor_")
     .def(py::init<std::string &>());

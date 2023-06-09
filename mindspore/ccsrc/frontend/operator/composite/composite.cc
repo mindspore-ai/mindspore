@@ -1600,6 +1600,53 @@ FuncGraphPtr TupleAdd::GenerateFuncGraph(const AbstractBasePtrList &args_abs_lis
   return ret;
 }
 
+FuncGraphPtr ListAdd::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
+  // args: list1, list2
+  abstract::CheckArgsSize("ListAdd", args_abs_list, 2);
+  AbstractBasePtr abs_a = args_abs_list[0];
+  AbstractBasePtr abs_b = args_abs_list[1];
+
+  AbstractListPtr a_list = dyn_cast<AbstractList>(abs_a);
+  AbstractListPtr b_list = dyn_cast<AbstractList>(abs_b);
+  if (a_list == nullptr || b_list == nullptr) {
+    TypePtrList types;
+    (void)std::transform(args_abs_list.begin(), args_abs_list.end(), std::back_inserter(types),
+                         [](const AbstractBasePtr &arg) -> TypePtr {
+                           MS_EXCEPTION_IF_NULL(arg);
+                           return arg->BuildType();
+                         });
+    auto stub = GenerateStubFunc(types);
+    if (stub != nullptr) {
+      MS_LOG(DEBUG) << "GenerateStubFunc for ListAdd "
+                    << ", function: " << stub->ToString();
+      return stub;
+    }
+    MS_LOG(EXCEPTION) << "The type of argument in ListAdd operator should be list, but the first argument is "
+                      << args_abs_list[0]->ToString() << ", the second argument is " << args_abs_list[1]->ToString();
+  }
+
+  FuncGraphPtr ret = std::make_shared<FuncGraph>();
+  ret->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  AnfNodePtr p_list_a = ret->add_parameter();
+  AnfNodePtr p_list_b = ret->add_parameter();
+
+  std::vector<AnfNodePtr> elems;
+  elems.push_back(NewValueNode(prim::kPrimMakeList));
+
+  int64_t tuple_size = SizeToLong(a_list->size());
+  for (int64_t i = 0; i < tuple_size; ++i) {
+    elems.push_back(ret->NewCNodeInOrder({NewValueNode(prim::kPrimListGetItem), p_list_a, NewValueNode(i)}));
+  }
+
+  tuple_size = SizeToLong(b_list->size());
+  for (int64_t i = 0; i < tuple_size; ++i) {
+    elems.push_back(ret->NewCNodeInOrder({NewValueNode(prim::kPrimListGetItem), p_list_b, NewValueNode(i)}));
+  }
+
+  ret->set_output(ret->NewCNodeInOrder(elems));
+  return ret;
+}
+
 int64_t GetArgScalarValue(const abstract::AbstractScalarPtr &scalar, const std::string &) {
   MS_EXCEPTION_IF_NULL(scalar);
   return GetValue<int64_t>(scalar->BuildValue());

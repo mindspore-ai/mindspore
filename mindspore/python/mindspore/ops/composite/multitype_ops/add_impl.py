@@ -59,6 +59,30 @@ _tuple_add = _TupleAdd('tuple_add')
 """`_tuple_add` is an metafuncgraph object which will concatenate two tuples to form a tuple."""
 
 
+class _ListAdd(base.ListAdd_):
+    """
+    Adding two lists.
+
+    Args:
+        x (list): x
+        y (list): y
+
+    Returns:
+        List, consists of elements of x and elements of y.
+    """
+
+    def __init__(self, name):
+        """Initialize _TupleAdd."""
+        base.ListAdd_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+_list_add = _ListAdd('list_add')
+"""`_list_add` is an metafuncgraph object which will concatenate two lists to form a list."""
+
+
 @add.register("Number", "Number")
 @_add_backward.register("Number", "Number")
 def _scalar_add_scalar(x, y):
@@ -198,9 +222,7 @@ def _list_add_list(x, y):
     """
     if F.is_sequence_shape_unknown(x) or F.is_sequence_shape_unknown(y):
         return SequenceAdd()(x, y)
-    for i in y:
-        x.append(i)
-    return x
+    return _list_add(x, y)
 
 
 @add.register("Tensor", "Tensor")
