@@ -621,7 +621,7 @@ void PipelineTransformer::RemoveMonadNode() {
   }
 }
 
-static std::pair<ValueListPtr, TypePtr> GetShapeType(const AnfNodePtr &node, const Shape &shape) {
+static std::pair<ValueListPtr, TypePtr> GetShapeType(const AnfNodePtr &node, const Shape &shape, size_t index) {
   TypePtr type;
   auto cnode = node->cast<CNodePtr>();
   if (cnode != nullptr && IsValueNode<FuncGraph>(cnode->input(0))) {
@@ -636,7 +636,14 @@ static std::pair<ValueListPtr, TypePtr> GetShapeType(const AnfNodePtr &node, con
   (void)std::transform(shape.begin(), shape.end(), std::back_inserter(element),
                        [](int elem) { return MakeValue(elem); });
   auto shape_list = std::make_shared<ValueList>(element);
-  auto tensor_type = type->cast<mindspore::TensorTypePtr>();
+  TensorTypePtr tensor_type;
+  if (type->isa<mindspore::TensorType>()) {
+    tensor_type = type->cast<mindspore::TensorTypePtr>();
+  } else if (type->isa<Tuple>()) {
+    auto tuple_type = type->cast<TuplePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_type);
+    tensor_type = tuple_type->elements().at(index)->cast<TensorTypePtr>();
+  }
   MS_EXCEPTION_IF_NULL(tensor_type);
   auto dtype = tensor_type->element();
   MS_EXCEPTION_IF_NULL(dtype);
@@ -702,7 +709,7 @@ SendAttr PipelineTransformer::InsertSend(const AnfNodePtr &parameter, int64_t us
   auto index = op_info_pair.second;
   auto op_info = op_info_pair.first;
   auto slice_shape = tensor_info.slice_shape();
-  auto shape_type_pair = GetShapeType(parameter, slice_shape);
+  auto shape_type_pair = GetShapeType(parameter, slice_shape, 0);
   prim->set_attr(SHAPE, shape_type_pair.first);
   prim->set_attr(DTYPE, shape_type_pair.second);
   std::vector<AnfNodePtr> send_input = {send_node, parameter};
@@ -766,7 +773,7 @@ AnfNodePtr PipelineTransformer::InsertReceive(const FuncGraphPtr &graph, const A
   }
   auto tensor_layout = tensor_info.tensor_layout();
   Shape slice_shape = tensor_info.slice_shape();
-  auto shape_type_pair = GetShapeType(node, slice_shape);
+  auto shape_type_pair = GetShapeType(node, slice_shape, 0);
   Attr attr_shape = std::make_pair(SHAPE, shape_type_pair.first);
   Attr attr_dtype = std::make_pair(DTYPE, shape_type_pair.second);
   Attr attr_group = std::make_pair(GROUP, MakeValue(group_[0]));
@@ -981,11 +988,21 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer:
   return std::make_pair(send_ops, receive_ops);
 }
 
-tensor::TensorPtr CreateZeroseOutput(const AnfNodePtr &node) {
+tensor::TensorPtr CreateZeroseOutput(const AnfNodePtr &node, size_t index) {
   auto out_shapes = GetNodeShape(node);
-  auto out_shape_type = GetShapeType(node, out_shapes[0]);
-  auto zero_tensor = TensorConstructUtils::CreateZerosTensor(out_shape_type.second, out_shapes[0]);
+  auto out_shape_type = GetShapeType(node, out_shapes.at(index), index);
+  auto zero_tensor = TensorConstructUtils::CreateZerosTensor(out_shape_type.second, out_shapes.at(index));
   return zero_tensor;
+}
+
+AnfNodePtr PipelineTransformer::CreateTupleZeroTensor(const AnfNodePtr &node, size_t index) {
+  std::vector<AnfNodePtr> temp_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+  auto out_shapes = GetNodeShape(node);
+  for (size_t ele = 0; ele < out_shapes.size(); ++ele) {
+    temp_tuple_inputs.emplace_back(NewValueNode(CreateZeroseOutput(node, ele)));
+  }
+  auto temp_tuple = main_graph_->NewCNode(temp_tuple_inputs);
+  return temp_tuple;
 }
 
 void PipelineTransformer::CutGraph() {
@@ -1004,26 +1021,42 @@ void PipelineTransformer::CutGraph() {
     return;
   }
   (void)make_tuple_inputs.insert(make_tuple_inputs.cend(), send_ops.cbegin(), send_ops.cend());
+  auto make_tuple = main_graph_->NewCNode(make_tuple_inputs);
   if (!send_ops.empty()) {
     type_ptr_ = send_ops.back()->user_data<Type>(DTYPE);
     shape_ = send_ops.back()->user_data<ValueList>(SHAPE);
   }
-  auto real_out = GetRealKernelNode(main_graph_->output(), -1).first;
+  // first: out node  second: getitem index
+  auto real_kernel = GetRealKernelNode(main_graph_->output(), -1);
+  auto real_out = real_kernel.first;
   MS_EXCEPTION_IF_NULL(real_out);
   std::vector<AnfNodePtr> out_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
   if (IsPrimitiveCNode(real_out, prim::kPrimMakeTuple)) {
     auto real_out_cnode = real_out->cast<CNodePtr>();
     for (size_t i = 1; i < real_out_cnode->inputs().size(); ++i) {
-      out_tuple_inputs.emplace_back(NewValueNode(CreateZeroseOutput(real_out_cnode->input(i))));
+      auto each_out_shapes = GetNodeShape(real_out_cnode->input(i));
+      // In case: tuple's input is also a tuple
+      if (each_out_shapes.size() > 1) {
+        auto temp_tuple = CreateTupleZeroTensor(real_out_cnode->input(i), each_out_shapes.size());
+        out_tuple_inputs.emplace_back(temp_tuple);
+        continue;
+      }
+      out_tuple_inputs.emplace_back(NewValueNode(CreateZeroseOutput(real_out_cnode->input(i), 0)));
     }
   }
-  auto make_tuple = main_graph_->NewCNode(make_tuple_inputs);
   std::vector<AnfNodePtr> out = {NewValueNode(prim::kPrimDepend)};
   if (out_tuple_inputs.size() > INDEX_ONE) {
     auto out_tuple = main_graph_->NewCNode(out_tuple_inputs);
     out.emplace_back(out_tuple);
   } else {
-    auto out_tensor = NewValueNode(CreateZeroseOutput(real_out));
+    auto real_out_shapes = GetNodeShape(real_out);
+    AnfNodePtr out_tensor;
+    // In case: op has multioutput
+    if (real_out_shapes.size() > 1 && real_kernel.second == -1) {
+      out_tensor = CreateTupleZeroTensor(real_out, real_out_shapes.size());
+    } else {
+      out_tensor = NewValueNode(CreateZeroseOutput(real_out, 0));
+    }
     out.emplace_back(out_tensor);
   }
   out.push_back(make_tuple);
@@ -1079,12 +1112,13 @@ bool PipelineTransformer::IsRedundancyParameter(const AnfNodePtr &parameter) {
   } else {
     auto parameters = root_->parameters();
     auto param_name = param_ptr->name();
+    auto non_clone_name = param_name.substr(param_name.find_first_of('.') + 1);
     for (auto &param : parameters) {
       if (ParameterIsCloned(param)) {
         continue;
       }
       auto non_cloned_param = param->cast<ParameterPtr>();
-      if (param_name.find(non_cloned_param->name()) == std::string::npos) {
+      if (non_clone_name != non_cloned_param->name()) {
         continue;
       }
       stage_set = parameter_color_map_.at(param);
