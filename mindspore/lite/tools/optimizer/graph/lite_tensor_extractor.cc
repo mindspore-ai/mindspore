@@ -305,7 +305,19 @@ int LiteTensorExtractor::GetCNodeInputAbstractLists(const CNodePtr &cnode, Abstr
         return RET_ERROR;
       }
     }
-    abs_list->push_back(abs->Clone());
+
+    // change Lite dynamic shape {-1} to core/ops dynamic rank {-2}, will be removed after calling core/infer
+    auto new_abs = abs->Clone();
+    ShapeVector shape;
+    if (opt::FetchShapeFromAbstract(new_abs, &shape) != RET_OK) {
+      MS_LOG(ERROR) << "FetchShapeFromAbstract failed.";
+      return RET_ERROR;
+    }
+    if (IsDynamic(shape)) {
+      auto dynamic_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+      new_abs->set_shape(dynamic_shape);
+    }
+    abs_list->push_back(new_abs);
   }
   cnode->set_inputs(origin_inputs);
   return RET_OK;

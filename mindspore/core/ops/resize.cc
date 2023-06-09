@@ -182,14 +182,13 @@ void GetNewHeightAndWidth(const PrimitivePtr &primitive, const AbstractBasePtr &
 abstract::ShapePtr ResizeInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   std::vector<int64_t> output_shape(4, -1);
   auto images_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  if (images_shape.size() != 0) {
-    constexpr int64_t image_shape_size = 4;
-    (void)CheckAndConvertUtils::CheckInteger("images dimension", SizeToLong(images_shape.size()), kEqual,
-                                             image_shape_size, primitive->name());
-  } else {
-    output_shape = {abstract::Shape::kShapeDimAny};
+  if (IsDynamicRank(images_shape)) {
+    output_shape = {abstract::Shape::kShapeRankAny};
     return std::make_shared<abstract::Shape>(output_shape);
   }
+  constexpr int64_t image_shape_size = 4;
+  (void)CheckAndConvertUtils::CheckInteger("images dimension", SizeToLong(images_shape.size()), kEqual,
+                                           image_shape_size, primitive->name());
 
   output_shape[0] = images_shape[0];
   output_shape[kFormatNCHWIndexC] = images_shape[kFormatNCHWIndexC];

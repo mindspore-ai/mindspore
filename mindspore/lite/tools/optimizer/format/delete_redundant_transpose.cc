@@ -94,7 +94,7 @@ STATUS DeleteRedundantTranspose::DeleteNot4DTranspose(const FuncGraphPtr &func_g
       }
       continue;
     }
-    if (!shape.empty() && shape.size() != perm.size() && !(shape.size() == 1 && shape[0] == -1)) {
+    if (!lite::JudgeDynamicShape(shape) && shape.size() != perm.size()) {
       MS_LOG(DEBUG) << "transpose node need to be deleted.";
       if (UpdateNodeFormat(cnode) != lite::RET_OK) {
         MS_LOG(ERROR) << "update cnode format failed.";

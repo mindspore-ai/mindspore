@@ -58,7 +58,7 @@ STATUS UpdateConv2DParamPass::UpdateConv2DAttr(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "fetch shape from abstract failed.";
     return lite::RET_ERROR;
   }
-  if (shape.empty()) {
+  if (lite::JudgeDynamicShape(shape)) {
     return lite::RET_OK;
   }
   if (shape.size() != kInputSizeFour) {

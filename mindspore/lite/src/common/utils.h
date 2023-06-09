@@ -266,6 +266,26 @@ inline bool FloatCompare(const float &a, const float &b = 0.0f) {
   return std::fabs(a - b) <= std::numeric_limits<float>::epsilon();
 }
 
+inline bool JudgeDynamicShape(const std::vector<int> &shape) {
+  if (shape.size() == 0) {
+    return true;
+  }
+  if (shape.size() == 1 && shape[0] == -1) {
+    return true;
+  }
+  return false;
+}
+
+inline bool JudgeDynamicShape(const std::vector<int64_t> &shape) {
+  if (shape.size() == 0) {
+    return true;
+  }
+  if (shape.size() == 1 && shape[0] == -1) {
+    return true;
+  }
+  return false;
+}
+
 }  // namespace lite
 }  // namespace mindspore
 

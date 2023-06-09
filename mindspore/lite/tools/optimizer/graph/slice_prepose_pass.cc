@@ -112,7 +112,7 @@ bool IsScalarNode(const AnfNodePtr &nodePtr) {
     auto tensor = utils::cast<tensor::TensorPtr>(utils::cast<ParameterPtr>(nodePtr)->default_param());
     MS_ASSERT(tensor != nullptr);
     auto shape = tensor->shape();
-    if (shape.empty() || (shape.size() == 1 && shape[0] == 1)) {
+    if (lite::JudgeDynamicShape(shape)) {
       return true;
     }
   }
@@ -857,7 +857,8 @@ bool SlicePreposePass::PreposeWithSoftmax(const FuncGraphPtr &graph, const CNode
   }
   auto shape = GetCNodeInputShape(softmax_cnode, 1);
   if (softmax_axis.front() == -1) {
-    if (shape.empty()) {  // when softmax axis == -1, shape info is needed to determine whether slice can be preposed
+    // when softmax axis == -1, shape info is needed to determine whether slice can be preposed
+    if (lite::JudgeDynamicShape(shape)) {
       return false;
     }
     softmax_axis[0] += static_cast<int64_t>(shape.size());
@@ -880,7 +881,7 @@ bool SlicePreposePass::PreposeWithSoftmax(const FuncGraphPtr &graph, const CNode
         return false;
       }
       if (slice_size[i] != -1) {
-        if (shape.empty() || slice_axes[i] >= static_cast<int>(shape.size())) {
+        if (lite::JudgeDynamicShape(shape) || slice_axes[i] >= static_cast<int>(shape.size())) {
           return false;
         }
         if (slice_size[i] < shape[slice_axes[i]]) {
@@ -1256,8 +1257,8 @@ bool SlicePreposePass::PreposeWithArithmetic(const FuncGraphPtr &graph, const CN
     auto &another_shape = shapes[another_index];
     if (IsScalarNode(input)) {
       continue;
-    } else if (shape.empty()) {           // infershape failed at this input
-      if (IsScalarNode(another_input)) {  // if another input is scalar, we can process this one
+    } else if (lite::JudgeDynamicShape(shape)) {  // infershape failed at this input
+      if (IsScalarNode(another_input)) {          // if another input is scalar, we can process this one
         auto new_slice_vnode = CopySliceValueNode(slice_cnode);
         if (new_slice_vnode == nullptr) {
           changed = false;

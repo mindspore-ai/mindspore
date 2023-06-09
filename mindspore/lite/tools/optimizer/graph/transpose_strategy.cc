@@ -24,6 +24,7 @@
 #include <string>
 #include <utility>
 #include "ops/crop.h"
+#include "src/common/utils.h"
 #include "ops/fusion/activation.h"
 #include "ops/fusion/slice_fusion.h"
 #include "ops/op_utils.h"
@@ -63,7 +64,7 @@ bool JudgeIs4DInput(NodeInferShape *node_infer_shape, const CNodePtr &cnode) {
   if (shape.size() != kInputSizeFour) {
     if (cnode->size() > kInputSizeTwo) {
       shape = node_infer_shape->GetInputShape(cnode, kInputIndexTwo);
-      if (shape.size() != kInputSizeFour && !shape.empty()) {
+      if (shape.size() != kInputSizeFour && !lite::JudgeDynamicShape(shape)) {
         return false;
       }
     } else {
@@ -272,7 +273,7 @@ STATUS ChangeOpSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode, Form
     }
   }
   auto shape = node_infer_shape->GetInputShape(cnode, kInputIndexTwo);
-  if (shape.empty()) {
+  if (lite::JudgeDynamicShape(shape)) {
     return lite::RET_NOT_SUPPORT;
   }
   int element_num = shape.front();
@@ -514,7 +515,7 @@ STATUS TransposeStrategy::TransposeInsertDependOnShape(const FuncGraphPtr &func_
   MS_ASSERT(base_node != nullptr);
   size_t input_index = before ? index : static_cast<size_t>(node_users.front().second);
   auto shape = node_infer_shape_.GetInputShape(base_node, input_index);
-  if (!shape.empty() && shape.size() != kNH2NC.size()) {
+  if (!lite::JudgeDynamicShape(shape) && shape.size() != kNH2NC.size()) {
     return lite::RET_NO_CHANGE;
   }
   return lite::RET_OK;
