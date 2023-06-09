@@ -203,14 +203,12 @@ void RuntimeModel::DistributeTask() {
     }
     task_id_list_.push_back(task_id);
     stream_id_list_.push_back(stream_id);
-    if (task->Args() != nullptr) {
-      std::shared_ptr<RuntimeInfo> runtime_tuple =
-        std::make_shared<RuntimeInfo>(task_id, stream_id, task->Args(), task_info);
-      auto emplace_ret = runtime_info_map_.emplace(task->task_name(), runtime_tuple);
-      if (!emplace_ret.second) {
-        // The task_name is (fullname_with_scope + UniqueId). There should be no duplication.
-        MS_LOG(EXCEPTION) << "Task name exist: " << task->task_name();
-      }
+    std::shared_ptr<RuntimeInfo> runtime_tuple =
+      std::make_shared<RuntimeInfo>(task_id, stream_id, task->Args(), task_info);
+    auto emplace_ret = runtime_info_map_.emplace(task->task_name(), runtime_tuple);
+    if (!emplace_ret.second) {
+      // The task_name is (fullname_with_scope + UniqueId). There should be no duplication.
+      MS_LOG(EXCEPTION) << "Task name exist: " << task->task_name();
     }
     if (task->task_name() == kEndGraph) {
       (void)end_graph_info_map_.emplace(task_id, stream_id);

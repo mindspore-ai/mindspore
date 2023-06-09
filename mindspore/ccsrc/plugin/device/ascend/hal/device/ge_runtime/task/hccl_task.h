@@ -38,6 +38,8 @@ class HcclTask : public TaskRepeater<HcclTaskInfo> {
 
   std::string DebugString() const override;
 
+  std::string task_name() const override { return task_info_->op_name(); }
+
  private:
   class StreamGuard;
   void SetSecondaryStream();
