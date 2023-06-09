@@ -140,6 +140,7 @@ ParameterPtr FuncGraph::AddFvParameter(const std::string &name, const ValuePtr &
   param->set_name(name);
   MS_EXCEPTION_IF_NULL(param->debug_info());
   param->debug_info()->set_name(name);
+  param->debug_info()->set_trace_info(nullptr);
   MS_EXCEPTION_IF_NULL(default_value);
   param->set_default_param(default_value);
   param->set_abstract(default_value->ToAbstract());

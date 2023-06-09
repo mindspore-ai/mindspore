@@ -183,7 +183,7 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object 
   auto param_name = py::cast<std::string>(name_attr);
   auto top_func_graph = Parser::GetTopFuncGraph();
   // If the parameter node has been created , return it.
-  AnfNodePtr para_node = nullptr;
+  ParameterPtr para_node = nullptr;
   for (auto const &param : top_func_graph->parameters()) {
     auto param_node = dyn_cast<Parameter>(param);
     if (param_node != nullptr && param_node->name() == param_name) {
@@ -201,7 +201,7 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object 
           MS_LOG(EXCEPTION) << "The parameter " << param_node->DebugString() << " , its name '" << param_name
                             << "' already exists. Please set a unique name for the parameter.";
         }
-        para_node = param;
+        para_node = param_node;
         MS_LOG(DEBUG) << "Found existing parameter for " << func_graph->ToString()
                       << ", param: " << para_node->DebugString() << ", top_func_graph: " << top_func_graph->ToString();
         break;
@@ -396,6 +396,68 @@ AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &
   return output;
 }
 
+bool TransformVectorFuncValueNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &func_graph,
+                                  const ValuePtr &value, AnfNodePtr *const transformed) {
+  MS_EXCEPTION_IF_NULL(value);
+  const auto &value_vec = GetValue<ValuePtrList>(value);
+  if (value_vec.empty()) {
+    return false;
+  }
+  std::vector<AnfNodePtr> nodes;
+  (void)nodes.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+  bool is_all_func = true;
+  for (auto &elem : value_vec) {
+    MS_EXCEPTION_IF_NULL(elem);
+    AnfNodePtr node = nullptr;
+    if (elem->isa<ValueTuple>() || elem->isa<ValueList>()) {
+      is_all_func = is_all_func && TransformVectorFuncValueNode(manager, func_graph, elem, &node);
+    } else if (elem->isa<FuncGraph>()) {
+      FuncGraphPtr new_fg = elem->cast<FuncGraphPtr>();
+      manager->AddFuncGraph(new_fg);
+      node = NewValueNode(new_fg);
+    } else if (elem->isa<Primitive>()) {
+      node = NewValueNode(elem);
+    } else {
+      is_all_func = false;
+    }
+    (void)nodes.emplace_back(node);
+  }
+  if (is_all_func) {
+    // (1) The celllist or ordered_cell will be parsed as valuetuple of const graph in it,
+    // So if has graph in list, try to replace the node with make tuple of graph value node.
+    // We do this because the graph manager won't investigate the graph inside valuetuple,
+    // change the vector of graph to be make_tuple of graph value node.
+    // (2) the primitive valuetuple or valuelist may encounter to abstract error, make it all
+    // independent nodes.
+    *transformed = func_graph->NewCNode(std::move(nodes));
+  }
+  return is_all_func;
+}
+
+// Resolve the python obj, and if the resovled node is valuenode with graphs, add the graphs to manager.
+AnfNodePtr ResolveObjectAndAddToManager(const FuncGraphManagerPtr &manager, const py::object &obj,
+                                        const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  ScopeGuard scope_guard(node->scope());
+  AnfNodePtr resolved_node = nullptr;
+  bool success = ResolveObjectToNode(node, obj, &resolved_node);
+  if (!success) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Parse Resolve covert failed.";
+  }
+  if (IsValueNode<FuncGraph>(resolved_node)) {
+    auto new_fg = GetValueNode<FuncGraphPtr>(resolved_node);
+    manager->AddFuncGraph(new_fg);
+  }
+
+  // If the constant node is constant of vector of graph, add graph to manager.
+  if (IsValueNode<ValueTuple>(resolved_node) || IsValueNode<ValueList>(resolved_node)) {
+    auto value = resolved_node->cast<ValueNodePtr>()->value();
+    (void)TransformVectorFuncValueNode(manager, node->func_graph(), value, &resolved_node);
+  }
+  return resolved_node;
+}
+}  // namespace
+
 bool ResolveObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, AnfNodePtr *const node) {
   MS_EXCEPTION_IF_NULL(origin_node);
   auto func_graph = origin_node->func_graph();
@@ -462,68 +524,6 @@ bool ResolveObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, A
   *node = output;
   return true;
 }
-
-bool TransformVectorFuncValueNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &func_graph,
-                                  const ValuePtr &value, AnfNodePtr *const transformed) {
-  MS_EXCEPTION_IF_NULL(value);
-  const auto &value_vec = GetValue<ValuePtrList>(value);
-  if (value_vec.empty()) {
-    return false;
-  }
-  std::vector<AnfNodePtr> nodes;
-  (void)nodes.emplace_back(NewValueNode(prim::kPrimMakeTuple));
-  bool is_all_func = true;
-  for (auto &elem : value_vec) {
-    MS_EXCEPTION_IF_NULL(elem);
-    AnfNodePtr node = nullptr;
-    if (elem->isa<ValueTuple>() || elem->isa<ValueList>()) {
-      is_all_func = is_all_func && TransformVectorFuncValueNode(manager, func_graph, elem, &node);
-    } else if (elem->isa<FuncGraph>()) {
-      FuncGraphPtr new_fg = elem->cast<FuncGraphPtr>();
-      manager->AddFuncGraph(new_fg);
-      node = NewValueNode(new_fg);
-    } else if (elem->isa<Primitive>()) {
-      node = NewValueNode(elem);
-    } else {
-      is_all_func = false;
-    }
-    (void)nodes.emplace_back(node);
-  }
-  if (is_all_func) {
-    // (1) The celllist or ordered_cell will be parsed as valuetuple of const graph in it,
-    // So if has graph in list, try to replace the node with make tuple of graph value node.
-    // We do this because the graph manager won't investigate the graph inside valuetuple,
-    // change the vector of graph to be make_tuple of graph value node.
-    // (2) the primitive valuetuple or valuelist may encounter to abstract error, make it all
-    // independent nodes.
-    *transformed = func_graph->NewCNode(std::move(nodes));
-  }
-  return is_all_func;
-}
-
-// Resolve the python obj, and if the resovled node is valuenode with graphs, add the graphs to manager.
-AnfNodePtr ResolveObjectAndAddToManager(const FuncGraphManagerPtr &manager, const py::object &obj,
-                                        const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  ScopeGuard scope_guard(node->scope());
-  AnfNodePtr resolved_node = nullptr;
-  bool success = ResolveObjectToNode(node, obj, &resolved_node);
-  if (!success) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Parse Resolve covert failed.";
-  }
-  if (IsValueNode<FuncGraph>(resolved_node)) {
-    auto new_fg = GetValueNode<FuncGraphPtr>(resolved_node);
-    manager->AddFuncGraph(new_fg);
-  }
-
-  // If the constant node is constant of vector of graph, add graph to manager.
-  if (IsValueNode<ValueTuple>(resolved_node) || IsValueNode<ValueList>(resolved_node)) {
-    auto value = resolved_node->cast<ValueNodePtr>()->value();
-    (void)TransformVectorFuncValueNode(manager, node->func_graph(), value, &resolved_node);
-  }
-  return resolved_node;
-}
-}  // namespace
 
 std::pair<NameSpacePtr, SymbolPtr> GetNamespaceAndSymbol(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);

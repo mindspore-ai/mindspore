@@ -527,6 +527,7 @@ class SideEffectFinder {
   }
 
   FuncGraphPtr GetGraphFromSwitchWithDeadNode(const CNodePtr &cnode) const {
+    MS_EXCEPTION_IF_NULL(cnode);
     auto node = cnode->inputs()[0];
     MS_EXCEPTION_IF_NULL(node);
     if (!IsPrimitiveCNode(node, prim::kPrimSwitch)) {
@@ -549,9 +550,13 @@ class SideEffectFinder {
 
   // Get and trace graphs from a tuple of func node for switch_layer.
   std::vector<FuncGraphPtr> GetGraphsFromTuple(const AnfNodePtr &func_tuple) {
-    // The func tuple maker.
+    // The functions make tuple CNode.
     if (IsPrimitiveCNode(func_tuple, prim::kPrimMakeTuple)) {
       return GetGraphsFromMakeTuple(func_tuple->cast<CNodePtr>());
+    }
+    // The functions value tuple.
+    if (IsValueNode<ValueTuple>(func_tuple)) {
+      return GetGraphsFromValueTuple(func_tuple->cast<ValueNodePtr>());
     }
     // Trace tuple from parameter.
     auto para = dyn_cast<Parameter>(func_tuple);
@@ -563,6 +568,7 @@ class SideEffectFinder {
     }
     // Trace tuple returned from func graph call.
     auto cnode = dyn_cast<CNode>(func_tuple);
+    MS_EXCEPTION_IF_NULL(cnode);
     auto func_graph = GetFuncGraph(cnode);
     if (func_graph != nullptr) {
       return GetGraphsFromTuple(func_graph->output());
@@ -589,7 +595,30 @@ class SideEffectFinder {
       auto func_graph = GetValueNode<FuncGraphPtr>(inputs.at(i));
       if (func_graph == nullptr) {
         MS_LOG(WARNING) << "Non-graph found in switch_layer input: " << make_tuple->DebugString(recursive_level)
-                        << " index=" << i;
+                        << ", index: " << i;
+        continue;
+      }
+      graphs.push_back(func_graph);
+    }
+    return graphs;
+  }
+
+  // Get graphs from a tuple of functions value tuple for switch_layer.
+  std::vector<FuncGraphPtr> GetGraphsFromValueTuple(const ValueNodePtr &value_node) const {
+    MS_EXCEPTION_IF_NULL(value_node);
+    const auto &value = value_node->value();
+    MS_EXCEPTION_IF_NULL(value);
+    auto value_tuple = value->cast_ptr<ValueTuple>();
+
+    std::vector<FuncGraphPtr> graphs;
+    graphs.reserve(value_tuple->size());
+    MS_EXCEPTION_IF_NULL(value_tuple);
+    const auto &tuple_elements = value_tuple->value();
+    for (size_t i = 0; i < tuple_elements.size(); ++i) {
+      const auto &tuple_element = tuple_elements[i];
+      auto func_graph = tuple_element->cast<FuncGraphPtr>();
+      if (func_graph == nullptr) {
+        MS_LOG(WARNING) << "Non-graph found in switch_layer input: " << value_node->DebugString() << ", index: " << i;
         continue;
       }
       graphs.push_back(func_graph);

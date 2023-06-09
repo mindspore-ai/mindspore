@@ -96,6 +96,10 @@ AnalysisContextPtr AnalysisContext::NewContext(const FuncGraphPtr &fg, const Abs
   // Find func graph's parent and its parent context firstly.
   MS_EXCEPTION_IF_NULL(fg);
   FuncGraphPtr parent_graph = fg->parent();
+  if (IS_OUTPUT_ON(mindspore::kDebug)) {
+    MS_LOG(DEBUG) << "fg: " << ((fg != nullptr) ? fg->ToString() : "nullptr")
+                  << ", parent_graph: " << ((parent_graph != nullptr) ? parent_graph->ToString() : "nullptr");
+  }
   auto parent_context = FindContext(parent_graph);
   if (parent_context == nullptr) {
     // If parent context is not found, we'll raise exception.
@@ -185,6 +189,9 @@ AnalysisContextPtr AnalysisContext::NewDummyContext() {
 }
 
 std::string AnalysisContext::ToString() const {
+  if (func_graph_ == nullptr && parent_ == nullptr && args_abs_list_.empty()) {
+    return "<Dummy Context>";
+  }
   std::ostringstream buffer;
   buffer << "{";
   if (func_graph_ != nullptr) {

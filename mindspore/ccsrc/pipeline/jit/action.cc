@@ -825,6 +825,7 @@ bool ParseAction(const ResourcePtr &resource) {
 
   py::object input = resource->source_input();
   parse::Parser::InitParserEnvironment(input);
+  parse::Parser::EnableDeferResolve(false);
   py::module path = py::module::import("os.path");
   std::string dir = path.attr("dirname")(py::globals()["__file__"]).cast<std::string>();
 
@@ -846,11 +847,12 @@ bool ParseAction(const ResourcePtr &resource) {
                         [](const AnfNodePtr &param) { param->cast<ParameterPtr>()->set_is_top_graph_param(true); });
   }
   parse::Parser::UpdateTopFuncGraph(top_graph);
-
   resource->set_func_graph(top_graph);
   FuncGraphManagerPtr manager = resource->manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(top_graph);
+
+  parse::Parser::EnableDeferResolve(true);
   return true;
 }
 
@@ -1947,7 +1949,10 @@ static std::vector<ActionItem> CommonPipeline() {
   (void)actions.emplace_back(std::make_pair("parse", ParseAction));
 
   // Resolve the python func
-  (void)actions.emplace_back(std::make_pair("symbol_resolve", SymbolResolveAction));
+  static auto boost_parse = common::GetEnv("MS_DEV_BOOST_PARSE");
+  if (boost_parse != "2" && boost_parse != "3") {
+    (void)actions.emplace_back(std::make_pair("symbol_resolve", SymbolResolveAction));
+  }
 
   // Notice: Temporary solution, to be implemented using Python Rewriter in the future.
   // Set mixed Precision flag in subgraph.
