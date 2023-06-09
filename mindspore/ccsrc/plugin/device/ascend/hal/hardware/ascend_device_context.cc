@@ -35,6 +35,7 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 void AscendDeviceContext::Initialize() {
+  std::lock_guard<std::mutex> lock(init_mutex_);
   if (initialized_) {
     MS_EXCEPTION_IF_NULL(runtime_instance_);
     runtime_instance_->SetContext();
