@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_RUNTIME_HARDWARE_ASCEND_ASCEND_DEVICE_CONTEXT_H_
 
 #include <memory>
+#include <mutex>
 #include "runtime/hardware/device_context.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "plugin/device/ascend/hal/hardware/ascend_device_res_manager.h"
@@ -53,6 +54,7 @@ class AscendDeviceContext : public DeviceInterface<AscendGraphExecutor, AscendKe
 
  private:
   bool initialized_{false};
+  std::mutex init_mutex_;
   AscendKernelRuntime *runtime_instance_{nullptr};
   std::unique_ptr<AscendDeprecatedInterface> deprecated_interface_;
 };
