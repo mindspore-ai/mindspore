@@ -18,7 +18,6 @@
 #include <map>
 #include "plugin/device/gpu/kernel/arrays/tile_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
-#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace kernel {
@@ -87,12 +86,6 @@ bool TileGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
                                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
-  }
-  if (input_shape_.size() > MAX_SHAPE_SIZE || input_shape_.size() > output_shape_.size()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', input shape can not be greater than default max size: " << MAX_SHAPE_SIZE
-                      << " and output shape: " << output_shape_.size() << ", but got input shape "
-                      << input_shape_.size();
   }
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
