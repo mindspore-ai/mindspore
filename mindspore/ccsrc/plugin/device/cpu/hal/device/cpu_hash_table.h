@@ -18,6 +18,7 @@
 
 #include <shared_mutex>
 #include <unordered_map>
+#include <utility>
 
 #include "runtime/device/hash_table.h"
 #include "plugin/device/cpu/hal/hardware/cpu_memory_pool.h"
@@ -29,6 +30,9 @@ namespace cpu {
 template <typename Key, typename Value>
 class CPUHashTable : public HashTable<Key, Value> {
  public:
+  using Status = HashTableElementStatus;
+  using ValueStatusPair = std::pair<Value *, Status>;
+
   explicit CPUHashTable(size_t value_dim);
   ~CPUHashTable() override;
 
@@ -41,7 +45,7 @@ class CPUHashTable : public HashTable<Key, Value> {
   // The last parameter `stream` is meaningless for the cpu hash table version.
   bool Find(const Key *keys, size_t key_num, bool insert_default_value, Value *outputs, void *) override;
 
-  bool Insert(const Key *keys, size_t key_num, const Value *value, void *) override;
+  bool Insert(const Key *keys, size_t key_num, const Value *values, void *) override;
 
   bool Erase(const Key *keys, size_t key_num, void *) override;
 
@@ -62,6 +66,12 @@ class CPUHashTable : public HashTable<Key, Value> {
   bool Clear() override;
 
  private:
+  // Export all keys, values and status of the hash table.
+  HashTableExportData ExportFully();
+
+  // Export the keys, values and status which are modified since last import or export.
+  HashTableExportData ExportIncrementally();
+
   // Allocate host memory from dynamic memory pool.
   void *AllocateMemory(size_t size) const;
 
@@ -69,7 +79,7 @@ class CPUHashTable : public HashTable<Key, Value> {
   void FreeMemory(void *ptr) const;
 
   // The key-value style elements stored in this hash table.
-  std::unordered_map<Key, Value *> values_;
+  std::unordered_map<Key, ValueStatusPair> values_;
 
   // This mutex is to guarantee the thread-safe of the `values_` above.
   // The perforcemence of this thread-safe mechanism is poor, so a more efficient way could be used later.
