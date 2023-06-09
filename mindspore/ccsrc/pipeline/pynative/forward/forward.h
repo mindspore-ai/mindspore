@@ -59,7 +59,7 @@ class ForwardExecutor {
   void RunOpForwardAsyncImpl(const FrontendOpRunInfoPtr &op_run_info);
   // If sub is true, this function will not convert StubTensor to Tensor.
   // Used to reduce the overhead of StubTensor WaitValue.
-  FrontendOpRunInfoPtr GenerateOpRunInfo(const py::args &args, bool stub = false) const;
+  FrontendOpRunInfoPtr GenerateOpRunInfo(const py::args &args, bool stub = false);
   void set_grad_executor(const GradExecutorPtr &grad_executor) { grad_executor_ = GradExecutorWeakPtr(grad_executor); }
   void ClearNodeAbsMap() const;
   void SetNodeAbsMapByValue(const FrontendOpRunInfoPtr &op_run_info) const;
