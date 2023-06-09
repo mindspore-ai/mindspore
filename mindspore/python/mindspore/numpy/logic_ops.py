@@ -21,6 +21,7 @@ from mindspore.common import Tensor
 from mindspore.ops import operations as P
 
 from mindspore.numpy.math_ops import _apply_tensor_op
+from mindspore.numpy.array_ops import unique
 from mindspore.numpy.array_creations import zeros, ones, asarray
 from mindspore.numpy.utils import _check_input_tensor, _to_tensor, _isnan
 from mindspore.numpy.utils_const import _raise_type_error, _check_same_type, \
@@ -887,3 +888,46 @@ def sometrue(a, axis=None, keepdims=False):
     a = _to_tensor(a)
     keepdims = keepdims not in (0, False)
     return F.not_equal(a, 0).any(axis, keepdims)
+
+
+def setdiff1d(ar1, ar2, assume_unique=False):
+    """
+    Find the set difference of two Tensors.
+    Return the unique values in `ar1` that are not in `ar2`.
+
+    Args:
+        ar1 (Union[int, float, bool, list, tuple, Tensor]): Input tensor.
+        ar2 (Union[int, float, bool, list, tuple, Tensor]): Input tensor.
+        assume_unique (bool): If `True`, the input Tensors are assumed to be unique, which can speed up the calculation.
+                              If `True` but `ar1` or `ar2` are not unique,
+                              incorrect results and out-of-bounds indices could result.
+                              Default: ``False``.
+
+    Returns:
+        1D Tensor of values in `ar1` that are not in `ar2`.
+        The result is sorted when `assume_unique`=``False``, but otherwise only sorted if the input is sorted.
+
+    Raises:
+        TypeError: If input `ar1` or `ar2` is not array_like.
+        TypeError: If `assume_unique` is not bool.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> a = np.array([1, 2, 3, 2, 4, 1])
+        >>> b = np.array([3, 4, 5, 6])
+        >>> np.setdiff1d(a, b)
+        Tensor([1, 2])
+    """
+    if not isinstance(assume_unique, bool):
+        _raise_type_error("assume_unique is not bool type.")
+    ar1, ar2 = _to_tensor(ar1, ar2)
+    if assume_unique:
+        ar1.ravel()
+    else:
+        ar1 = unique(ar1).sort()[0]
+        ar2 = unique(ar2).sort()[0]
+    mask = in1d(ar1, ar2, invert=True)
+    return F.masked_select(ar1, mask)

@@ -33,7 +33,7 @@ from mindspore.numpy.array_ops import (transpose, expand_dims, squeeze, rollaxis
                                        tile, broadcast_to, broadcast_arrays, roll, append, split, vsplit,
                                        flip, flipud, fliplr, hsplit, dsplit, take_along_axis, take, repeat,
                                        rot90, select, array_split, choose, size, array_str, apply_along_axis,
-                                       piecewise, unravel_index, apply_over_axes)
+                                       piecewise, unravel_index, apply_over_axes, argwhere, intersect1d)
 from mindspore.numpy.array_creations import copy_ as copy
 from mindspore.numpy.array_creations import (array, asarray, asfarray, ones, zeros, full, randn, rand, randint,
                                              linspace, logspace, eye, identity, empty, empty_like, arange,
@@ -62,7 +62,7 @@ from mindspore.numpy.math_ops import (mean, inner, add, subtract, multiply, divi
 from mindspore.numpy.logic_ops import (not_equal, less_equal, less, greater_equal, greater, equal, isfinite,
                                        isnan, isinf, isposinf, isneginf, isscalar, logical_and, logical_not,
                                        logical_or, logical_xor, in1d, isin, isclose, signbit, sometrue,
-                                       array_equal, array_equiv)
+                                       array_equal, array_equiv, setdiff1d)
 
 mod = remainder
 fabs = absolute
@@ -82,7 +82,7 @@ array_ops_module = ['transpose', 'expand_dims', 'squeeze', 'rollaxis', 'swapaxes
                     'tile', 'broadcast_to', 'broadcast_arrays', 'append', 'roll', 'split', 'vsplit',
                     'flip', 'flipud', 'fliplr', 'hsplit', 'dsplit', 'take_along_axis', 'take',
                     'repeat', 'rot90', 'select', 'array_split', 'choose', 'size', 'array_str',
-                    'apply_along_axis', 'piecewise', 'unravel_index', 'apply_over_axes']
+                    'apply_along_axis', 'piecewise', 'unravel_index', 'apply_over_axes', 'argwhere', 'intersect1d']
 
 array_creations_module = ['array', 'asarray', 'asfarray', 'ones', 'zeros', 'full', 'randn', 'rand',
                           'randint', 'arange', 'linspace', 'logspace', 'eye', 'identity', 'empty',
@@ -112,7 +112,7 @@ math_module = ['mean', 'inner', 'add', 'subtract', 'multiply', 'divide', 'true_d
 logic_module = ['not_equal', 'less_equal', 'less', 'greater_equal', 'greater', 'equal', 'isfinite',
                 'isnan', 'isinf', 'isposinf', 'isneginf', 'isscalar', 'logical_and', 'logical_not',
                 'logical_or', 'logical_xor', 'in1d', 'isin', 'isclose', 'signbit', 'sometrue',
-                'array_equal', 'array_equiv']
+                'array_equal', 'array_equiv', 'setdiff1d']
 
 __all__ = array_ops_module + array_creations_module + math_module + logic_module + numeric_types
 

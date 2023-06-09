@@ -1644,6 +1644,42 @@ def test_apply_over_axes():
             match_array(actual.asnumpy(), expected, error=5)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_argwhere():
+    """
+    Feature: test argwhere.
+    Description: test argwhere.
+    Expectation: same output as numpy.
+    """
+    x = rand_int(2, 1, 4).astype(onp.int32)
+    match_res(mnp.argwhere, onp.argwhere, x)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_intersect1d():
+    """
+    Feature: test intersect1d.
+    Description: test intersect1d.
+    Expectation: same as numpy.
+    """
+    x = rand_int(2, 1, 4).astype(onp.int32)
+    y = rand_int(2, 1, 4).astype(onp.int32)
+    match_res(mnp.intersect1d, onp.intersect1d, x, y)
+    x = onp.unique(x)
+    y = onp.unique(y)
+    match_res(mnp.intersect1d, onp.intersect1d, x, y, assume_unique=True)
+
+
 @pytest.mark.level2
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

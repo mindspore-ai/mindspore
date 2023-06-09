@@ -2521,3 +2521,91 @@ def apply_over_axes(func, a, axes):
         if res.ndim != a.ndim:
             _raise_value_error("function is not returning a tensor of the correct shape")
     return res
+
+
+def argwhere(a):
+    """
+    Find the indices of Tensor elements that are non-zero, grouped by element.
+
+    Args:
+        a (Union[int, float, bool, list, tuple, Tensor]): Input tensor.
+
+    Returns:
+        Tensor. Indices of elements that are non-zero. Indices are grouped by element.
+        This Tensor will have shape :math:`(N, a.ndim)` where N is the number of non-zero items.
+
+    Raises:
+        TypeError: If input `a` is not array_like.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> x = np.array([[[1, 0], [-5, 0]]])
+        >>> np.argwhere(x)
+        Tensor([[0 0 0]
+                [0 1 0]])
+    """
+    a = _to_tensor(a)
+    return F.argwhere(a)
+
+
+def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
+    """
+    Find the intersection of two Tensors.
+    Return the sorted, unique values that are in both of the input Tensors.
+
+    Args:
+        ar1 (Union[int, float, bool, list, tuple, Tensor]): Input tensor.
+        ar2 (Union[int, float, bool, list, tuple, Tensor]): Input tensor.
+        assume_unique (bool): If `True`, the input Tensors are assumed to be unique, which can speed up the calculation.
+                              If `True` but `ar1` or `ar2` are not unique,
+                              incorrect results and out-of-bounds indices could result.
+                              Default: ``False``.
+        return_indices (bool): If `True`, the indices which correspond to the intersection of two Tensors are returned.
+                               The first instance of a value is used if there are multiple.
+                               Default: ``False``.
+
+    Returns:
+        Tensor or tuple of Tensors.
+        If `return_indices` is ``False``, return the intersection tensor, otherwise return tuple of tensors.
+
+    Raises:
+        TypeError: If input `ar1` or `ar2` is not array_like.
+        TypeError: If `assume_unique` or `return_indices` is not bool.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> np.intersect1d([1, 3, 4, 3], [3, 1, 2, 1])
+        Tensor([1, 3])
+    """
+    if not isinstance(assume_unique, bool) or not isinstance(return_indices, bool):
+        _raise_type_error("assume_unique or return_indices is not bool type.")
+    ar1, ar2 = _to_tensor(ar1, ar2)
+    if not assume_unique:
+        array1 = unique(ar1)
+        array2 = unique(ar2)
+    else:
+        array1 = ar1.ravel()
+        array2 = ar2.ravel()
+
+    concat_array = concatenate((array1, array2))
+    concat_array = concat_array.sort()[0]
+
+    mask = concat_array[1:] == concat_array[:-1]
+    res = F.masked_select(concat_array[:-1], mask)
+
+    if return_indices:
+        ar1_indices = []
+        ar2_indices = []
+        ar1_raveled = list(ar1.ravel())
+        ar2_raveled = list(ar2.ravel())
+        for out in list(res):
+            ar1_indices.append(ar1_raveled.index(out))
+            ar2_indices.append(ar2_raveled.index(out))
+        return res, ar1_indices, ar2_indices
+    return res

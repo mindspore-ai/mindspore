@@ -489,3 +489,23 @@ def test_sometrue():
     mnp_arr = to_tensor(onp_arr)
     for actual, expected in zip(mnp_sometrue(mnp_arr), onp_sometrue(onp_arr)):
         onp.testing.assert_equal(actual.asnumpy().tolist(), expected.tolist())
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_setdiff1d():
+    """
+    Feature: test setdiff1d.
+    Description: test setdiff1d.
+    Expectation: same as numpy.
+    """
+    x = rand_int(2, 1, 4).astype(onp.int32)
+    y = rand_int(2, 1, 4).astype(onp.int32)
+    match_res(mnp.setdiff1d, onp.setdiff1d, x, y)
+    x = onp.unique(x)
+    y = onp.unique(y)
+    match_res(mnp.setdiff1d, onp.setdiff1d, x, y, assume_unique=True)
