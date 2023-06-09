@@ -261,8 +261,12 @@ void ClusterContext::PostProcess() {
 
     // 1. Get new rank id from meta server node because it may be reassigned.
     std::string final_rank_id = cgn->GetMetadata(node_role_ + node_id_);
-    cgn->set_rank_id(static_cast<uint32_t>(std::atoi(final_rank_id.c_str())));
-    MS_LOG(WARNING) << "This node " << node_id_ << " rank id: " << final_rank_id;
+    if (!final_rank_id.empty()) {
+      cgn->set_rank_id(static_cast<uint32_t>(std::atoi(final_rank_id.c_str())));
+      MS_LOG(WARNING) << "This node " << node_id_ << " rank id: " << final_rank_id;
+    } else {
+      MS_LOG(WARNING) << "This node could be redundant and is not successfully registered.";
+    }
 
     // 2. Set this node's client ip address in this cluster.
     const std::string &client_ip_in_cluster = cgn->client_ip();
