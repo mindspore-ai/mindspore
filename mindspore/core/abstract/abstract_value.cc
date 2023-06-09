@@ -188,6 +188,10 @@ AbstractBasePtr AbstractScalar::Join(const AbstractBasePtr &other) {
   }
   const auto &value_self = GetValueTrack();
   const auto &value_other = other->GetValueTrack();
+  if (other->isa<AbstractNegligible>() && !value_self->isa<ValueAny>()) {
+    return std::make_shared<AbstractAny>();
+  }
+
   ValuePtr res_value = ValueJoin(value_self, value_other);
   if (res_value == value_self) {
     return shared_from_base<AbstractBase>();
