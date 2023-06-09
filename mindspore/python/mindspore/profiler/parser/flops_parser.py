@@ -64,9 +64,12 @@ class FlopsParser:
         self._step_trace_filename = f'step_trace_raw_{self._rank_id}_detail_time.csv'
         self._timeline_data_filename = f'output_timeline_data_{self._rank_id}.txt'
         self._flops_summary = {
-            'FLOPs': 0,
-            'FLOPS': 0,
-            'FLOPS_Utilization': 0
+            'cube_FLOPs': 0.0,
+            'vec_FLOPs': 0.0,
+            'cube_FLOPS': 0.0,
+            'vec_FLOPS': 0.0,
+            'cube_FLOPS_Utilization': 0.0,
+            'vec_FLOPS_Utilization': 0.0
         }
         self._flops_each_scope = {}
         self._flops_sankey_diagram = {}
@@ -80,22 +83,22 @@ class FlopsParser:
             fp = float(line[start_dot]) / 100000.0
             bp = float(line[end_dot]) / 100000.0
             op_all_step_time.append([fp, bp])
-            op_all_step_comp.append([0.0, bp - fp])
+            op_all_step_comp.append([0.0, 0.0, bp - fp])
         return op_all_step_time, op_all_step_comp
 
     @staticmethod
     def _add_step_flops_time(op_name, task_fops, op_idx, step_idx, op_start_time,
                              op_all_step_time, op_all_step_comp):
         """Get the start time from the current task."""
-        while((op_idx < len(op_start_time)) and (op_name != op_start_time[op_idx][0])):
+        while ((op_idx < len(op_start_time)) and (op_name != op_start_time[op_idx][0])):
             op_idx += 1
         if op_idx >= len(op_start_time):
             logger.debug(f"Op name {op_name} does not exist in timeline dict.")
             return op_idx, step_idx, op_all_step_comp
 
         # do not add the op FLOPS that not in fp_and_bp time.
-        while((step_idx < len(op_all_step_time)) and
-              (op_start_time[op_idx][1] >= op_all_step_time[step_idx][1])):
+        while ((step_idx < len(op_all_step_time)) and
+               (op_start_time[op_idx][1] >= op_all_step_time[step_idx][1])):
             step_idx += 1
         if step_idx >= len(op_all_step_time):
             logger.info(f"Op name {op_name} does not exist in timeline dict.")
@@ -111,16 +114,15 @@ class FlopsParser:
 
     def execute(self):
         """Get the flops of aicore operators and write to file."""
-        peak_flops = self._get_peak_flops()
+        cube_peak_flops, vec_peak_flops = self._get_peak_flops()
 
         op_avg_time_dict = self._get_op_avg_time_dict()
         op_flops_list = []
-        op_name_set = set()
         op_compute_dict = dict()
         # get all step time.
         op_all_step_time, op_all_step_comp = self._get_all_step_time()
         op_start_time = self._get_op_start_time()
-        op_idx = 0
+
         step_idx = 0
         aicore_file_doc = os.path.join(self._input_dir, "data")
         source_files = self._get_aicore_files(aicore_file_doc)
@@ -137,65 +139,75 @@ class FlopsParser:
                 result = [hex(i) for i in struct.unpack(self.RUNTIME_COMMON, log_struct)]
                 op_name = self._get_op_name(result)
 
-                if op_name == "":
+                if op_name == "" or op_name not in op_avg_time_dict:
                     # filter out the blank line in the file.
-                    continue
-                if op_name not in op_avg_time_dict:
                     logger.info(f"Op name {op_name} does not exist in op average time dict.")
                     continue
                 # Convert the unit of task_fops to MFLOPs(1e6).
-                if op_name in op_compute_dict:
-                    task_fops = op_compute_dict.get(op_name)
-                else:
-                    task_fops = self._compute_task_flops(result) * 1e-6
-                    op_compute_dict[op_name] = task_fops
+                if op_name not in op_compute_dict:
+                    cube_flops, vec_flops = self._compute_task_flops(result)
+                    cube_mflops = cube_flops * 1e-6
+                    vec_mflops = vec_flops * 1e-6
 
-                # add the op FLOPS in current step.
-                if len(op_start_time) >= 1 and len(op_all_step_time) >= 1:
-                    op_idx, step_idx, op_all_step_comp = self._add_step_flops_time(
-                        op_name, task_fops, op_idx, step_idx, op_start_time, op_all_step_time, op_all_step_comp)
+                    op_compute_dict[op_name] = (cube_mflops, vec_mflops)
 
-                # calculate averge op FLOPS.
-                if op_name in op_name_set:
-                    continue
-                op_avg_time = op_avg_time_dict.get(op_name)
-                # Time unit of op_avg_time is ms.
-                # The unit of gflop_per_second is GFLOPS(1e9).
-                if float(op_avg_time) == 0.0:
-                    raise ValueError("All operators take 0 ms.")
-                if peak_flops == 0:
-                    raise ValueError("The frequency of an operator is 0.")
-                gflop_per_second = task_fops / float(op_avg_time)
-                flops_utilization = (gflop_per_second * 1e9 / peak_flops) * 100
-                self._flops_summary['FLOPs'] += task_fops
-                self._flops_summary['FLOPS'] += gflop_per_second
-                op_flops = [op_name, str(task_fops), str(gflop_per_second), str(flops_utilization)]
-                op_flops_list.append(op_flops)
-                op_name_set.add(op_name)
-                self._add_flops_to_each_scope(op_name, task_fops)
+                    op_avg_time = float(op_avg_time_dict.get(op_name)) * 1e-3  # ms to s
+                    cube_flops_per_second = cube_flops / op_avg_time
+                    vec_flops_per_second = vec_flops / op_avg_time
+                    cube_gflops_per_second = cube_flops_per_second * 1e-9
+                    vec_gflops_per_second = vec_flops_per_second * 1e-9
+                    cube_flops_utilization = (cube_flops_per_second / cube_peak_flops) * 100
+                    vec_flops_utilization = (vec_flops_per_second / vec_peak_flops) * 100
+                    op_flops = [op_name, str(cube_mflops), str(cube_gflops_per_second), str(cube_flops_utilization),
+                                str(vec_mflops), str(vec_gflops_per_second), str(vec_flops_utilization)]
+                    op_flops_list.append(op_flops)
+                    self._flops_summary['cube_FLOPs'] += cube_mflops
+                    self._flops_summary['cube_FLOPS'] += cube_gflops_per_second
+                    self._flops_summary['vec_FLOPs'] += vec_mflops
+                    self._flops_summary['vec_FLOPS'] += vec_gflops_per_second
 
-        if not op_name_set:
+        if not op_compute_dict:
             raise ProfilerRawFileException("No aicore operator found.")
-        self._flops_summary['FLOPS'] /= len(op_name_set)
 
-        sum_flops_utilization = 0.0
+        for op_name, s_time in op_start_time:
+            while step_idx < len(op_all_step_time):
+                if op_all_step_time[step_idx][0] <= s_time <= op_all_step_time[step_idx][1]:
+                    cube_mflops, vec_mflops = op_compute_dict.get(op_name, (0, 0))
+                    op_all_step_comp[step_idx][0] += cube_mflops
+                    op_all_step_comp[step_idx][1] += vec_mflops
+                    break
+                if op_all_step_time[step_idx][0] > s_time:
+                    break
+                step_idx += 1
+            step_idx = 0
+
+        self._flops_summary['cube_FLOPS'] /= len(op_compute_dict)
+        self._flops_summary['vec_FLOPS'] /= len(op_compute_dict)
+
+        sum_cube_flops_utilization = 0.0
+        sum_vec_flops_utilization = 0.0
         # calculate the every step FLOPS utilization and the average values.
         utilization_save_filename = os.path.join(self._output_dir, self._flops_utilization_step_filename)
         with open(utilization_save_filename, 'w') as f:
-            f.write("steps, FLOPS_Utilization %\n")
+            f.write("steps, cube_FLOPS_Utilization, vec_FLOPS_Utilization%\n")
             for i, x in enumerate(op_all_step_comp):
-                current_utilization = x[0] / x[1] * 1e9 / peak_flops * 100
-                sum_flops_utilization += current_utilization
+                cube_current_utilization = x[0] / (x[2] * 1e-3) / cube_peak_flops * 100
+                vec_current_utilization = x[1] / (x[2] * 1e-3) / vec_peak_flops * 100
+                sum_cube_flops_utilization += cube_current_utilization
+                sum_vec_flops_utilization += vec_current_utilization
                 f.write(str(i + 1))
                 f.write(",")
-                f.write(str(current_utilization))
+                f.write(str(cube_current_utilization))
+                f.write(",")
+                f.write(str(vec_current_utilization))
                 f.write("\n")
+
         if len(op_all_step_comp) >= 1:
-            self._flops_summary['FLOPS_Utilization'] = sum_flops_utilization / len(op_all_step_comp)
+            self._flops_summary['cube_FLOPS_Utilization'] = sum_cube_flops_utilization / len(op_all_step_comp)
+            self._flops_summary['vec_FLOPS_Utilization'] = sum_vec_flops_utilization / len(op_all_step_comp)
         else:
             logger.warning("The number of data calculation steps is 0, please check whether the "
                            "output timeline data is none.")
-            self._flops_summary['FLOPS_Utilization'] = 0.0
         self._format_scope_flops()
         self._write_file(op_flops_list)
 
@@ -240,15 +252,17 @@ class FlopsParser:
         try:
             with open(info_json_file_path, 'r', encoding='utf-8') as info_file:
                 device_info = json.load(info_file)['DeviceInfo'][0]
-                device_frequency = float(device_info["aic_frequency"])
+                aic_frequency = float(device_info["aic_frequency"])
+                aiv_frequency = float(device_info["aiv_frequency"])
                 ai_core_num = float(device_info["ai_core_num"])
                 # peak_flops formula (provided by Hisi): device_frequency * num_of_aicore * 4096 * 2.
-                peak_flops = device_frequency * 1e6 * ai_core_num * 4096 * 2
+                cube_peak_flops = aic_frequency * ai_core_num * 4096 * 2 * 1e6
+                vec_peak_flops = aiv_frequency * ai_core_num * 128 * 1e6
         except (IOError, OSError, json.JSONDecodeError) as err:
             logger.critical(f'Error occurred when read {info_json_file_path} file: {err}')
             raise ProfilerIOException()
 
-        return peak_flops
+        return cube_peak_flops, vec_peak_flops
 
     def _compute_task_flops(self, log_result):
         """Compute the FLOPs of each task."""
@@ -266,13 +280,11 @@ class FlopsParser:
 
         # These formula is provided by HISI profiling.
         # a cube_fp16 instruction has (16**3)*2 float point operation.
-        # a cube_fp16 instruction has 16*16*32*2 float point operation.
-        cube_fops = cube_fp16_exec * (16 ** 3) * 2 + cube_int8_exec * 16 * 16 * 32 * 2
-        vec_fops = vec_fp32 * 32 + vec_fp16_128lane_exec * 128 + \
-                   vec_fp16_64lane_exec * 64 + vec_int32_exec * 64 + vec_misc_exec * 32
-        task_fops = cube_fops + vec_fops
-
-        return task_fops
+        # a cube_int8 instruction has 16*16*32*2 float point operation.
+        cube_flops = cube_fp16_exec * (16 ** 3) * 2 + cube_int8_exec * 16 * 16 * 32 * 2
+        vec_flops = vec_fp32 * 32 + vec_fp16_128lane_exec * 128 + \
+                    vec_fp16_64lane_exec * 64 + vec_int32_exec * 64 + vec_misc_exec * 32
+        return cube_flops, vec_flops
 
     def _get_op_name(self, log_result):
         """Get the operator name for current task_id."""
@@ -287,7 +299,7 @@ class FlopsParser:
         return op_name
 
     def _get_op_avg_time_dict(self):
-        """Get the op average execution time."""
+        """Get the op average execution time(ms)."""
         op_avg_time_dict = {}
         optime_file_path = os.path.join(self._output_dir, self._optime_filename)
 
@@ -388,7 +400,8 @@ class FlopsParser:
 
         try:
             with open(output_file_path, 'w') as f:
-                header = "op_full_name, MFLOPs(10^6), GFLOPS(10^9), FLOPS utilization(%) \n"
+                header = "op_full_name, MFLOPs(10^6 cube), GFLOPS(10^9 cube), FLOPS utilization(% cube), " \
+                         "MFLOPs(10^6 vec), GFLOPS(10^9 vec), FLOPS utilization(% vec) \n"
                 f.writelines(header)
                 for op_flops in op_flops_list:
                     line = ", ".join(op_flops)
@@ -398,8 +411,8 @@ class FlopsParser:
             logger.critical(f'Error occurred when writing {output_file_path} file: {err}')
             raise ProfilerIOException()
 
-        for key in self._flops_summary:
-            self._flops_summary[key] = round(self._flops_summary[key], 3)
+        for key, value in self._flops_summary.items():
+            self._flops_summary[key] = round(value, 3)
         try:
             with open(output_summary_file_path, 'w') as json_file:
                 json.dump(self._flops_summary, json_file)
@@ -421,7 +434,7 @@ class FlopsParser:
         aicore_files = self._search_file(profiler_dir)
         if not aicore_files:
             logger.warning("Aicore file does not exist.")
-            return[]
+            return []
 
         return aicore_files
 
@@ -458,7 +471,7 @@ class FlopsParser:
             )
             if len(aicore_files) >= 1:
                 logger.warning("The aicore file structure is changed, please upgrade " \
-                    "mindspore and regenerate profiling data")
+                               "mindspore and regenerate profiling data")
 
         file_paths = [os.path.join(input_dir, file) for file in aicore_files]
         logger.info("Find %d aicore files.", len(file_paths))
