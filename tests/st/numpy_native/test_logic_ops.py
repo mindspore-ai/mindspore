@@ -509,3 +509,7 @@ def test_setdiff1d():
     x = onp.unique(x)
     y = onp.unique(y)
     match_res(mnp.setdiff1d, onp.setdiff1d, x, y, assume_unique=True)
+    with pytest.raises(TypeError):
+        mnp.intersect1d(None, None)
+    with pytest.raises(TypeError):
+        mnp.intersect1d(x, y, assume_unique=1)
