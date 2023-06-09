@@ -81,7 +81,8 @@ int ConvBaseInitConvWeightBias(ConvolutionBaseStruct *conv) {
     ConvBaseUpdateOriginWeightAndBias(conv);
   }
 
-  if (!conv->infershape_done_) {
+  /* check weight shape done */
+  if (!CheckInferShapeDone(&conv->base_.in_[SECOND_INPUT], ONE_TENSOR, NULL, 0)) {
     return NNACL_OK;
   }
 
