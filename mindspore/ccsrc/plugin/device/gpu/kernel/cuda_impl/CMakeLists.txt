@@ -16,7 +16,7 @@ if(${CUDA_VERSION} VERSION_LESS 11.0)
 else()
     if(NOT MSVC)
         string(REPLACE "-std=c++17" "-std=c++14" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -std=c++14")
+        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -std=c++14 -objtemp")
     endif()
 endif()
 

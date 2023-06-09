@@ -86,7 +86,7 @@ build_option_proc_z()
 
 build_option_proc_upper_g()
 {
-  if [[ "X$OPTARG" == "Xcommon" || "X$OPTARG" == "Xauto" ]]; then
+  if [[ "X$OPTARG" == "Xcommon" || "X$OPTARG" == "Xauto" || "X$OPTARG" == "Xptx" ]]; then
     export CUDA_ARCH=$OPTARG
   else
     echo "Invalid value $OPTARG for option -G"
