@@ -8,7 +8,7 @@ mindspore.ops.BatchMatMul
     .. math::
         \text{output}[..., :, :] = \text{matrix}(x[..., :, :]) * \text{matrix}(y[..., :, :])
 
-    两个输入Tensor必须具有相同的秩，并且秩必须不小于 `3`。
+    两个输入Tensor必须具有相同的秩，并且秩必须不小于 `2`。
 
     参数：
         - **transpose_a** (bool) - 如果为True，则在乘法之前转置 `x` 的最后两个维度。默认值：False。
@@ -23,4 +23,4 @@ mindspore.ops.BatchMatMul
 
     异常：
         - **TypeError** - `transpose_a` 或 `transpose_b` 不是bool。
-        - **ValueError** - `x` 的shape长度不等于 `y` 的shape长度或 `x` 的shape长度小于3。
+        - **ValueError** - `x` 的shape长度不等于 `y` 的shape长度或输入的shape长度小于2。
