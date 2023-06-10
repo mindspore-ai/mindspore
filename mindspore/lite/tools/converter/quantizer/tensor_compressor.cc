@@ -99,6 +99,8 @@ int TensorCompressor::SetNewCompressionTensor(const ParameterPtr &weight, const 
     return RET_ERROR;
   }
   CHECK_NULL_RETURN(compression_tensor);
+  // set quant param
+  compression_tensor->set_quant_param(tensor_info->quant_params());
   // update tensor data
   WriteBufferWithAlignByte(bits, static_cast<int8_t *>(compression_tensor->data().data()));
   weight->set_default_param(compression_tensor);
@@ -140,6 +142,8 @@ int TensorCompressor::DoBitPack(const ParameterPtr &weight, size_t bit_num) {
       return RET_ERROR;
     }
   }
+  // set quant param
+  compression_tensor->set_quant_param(tensor_info->quant_params());
   // update tensor data
   weight->set_default_param(compression_tensor);
   weight->set_abstract(compression_tensor->ToAbstract());

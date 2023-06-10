@@ -301,6 +301,7 @@ int FetchFromDefaultParam(const ParameterPtr &param_node, const converter::FmkTy
   }
   if (tensor_info != nullptr) {
     data_info->compress_type_ = tensor_info->compression_type();
+    data_info->quant_params_ = tensor_info->quant_params();
   }
 
   data_info->format_ = NHWC;

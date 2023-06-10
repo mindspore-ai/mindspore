@@ -75,8 +75,7 @@ void EncodeMinMax(float min_value, float max_value, int quant_min, int quant_max
                   float *encode_max);
 template <typename T>
 T QuantizeData(float origin_data, const schema::QuantParamT *quant_param, int quant_max, int quant_min) {
-  MS_ASSERT(quant_param != nullptr);
-  MS_ASSERT(quant_param->inited);
+  MS_CHECK_TRUE_MSG(quant_param != nullptr, 0, "quant_param is nullptr.");
   const auto scale = quant_param->scale;
   const int zero_point = quant_param->zeroPoint;
   if (scale <= SCALE_THREASHOLD) {
@@ -196,6 +195,7 @@ int DoPerChannelQuant(const float *raw_datas, size_t elem_count, std::vector<sch
   for (size_t i = 0; i < elem_count; i++) {
     float raw_data = raw_datas[i];
     auto bucket_index = GetBucketIndex(dims, preferred_dim, i);
+    MS_CHECK_GT(static_cast<int>(quant_params->size()), bucket_index, RET_ERROR);
     auto quant_param = quant_params->at(bucket_index);
     auto quant_data = QuantizeData<T>(raw_data, &quant_param, quant_max, quant_min);
     (*quant_datas)[i] = quant_data;

@@ -47,6 +47,8 @@ class TransformUint8Pass {
 
   int DoNodeDTypeTrans(const CNodePtr &cnode);
 
+  int CopyQuantParam(const CNodePtr &cnode);
+
   bool CheckNeedDTypeTrans(const CNodePtr &cnode);
 
   bool IsSharedWeightParameter(const AnfNodePtr &anf_node);

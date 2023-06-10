@@ -15,6 +15,7 @@
  */
 
 #define USE_DEPRECATED_API
+
 #include "tools/lite_exporter/anf_exporter.h"
 #include <list>
 #include <memory>
@@ -45,10 +46,8 @@
 #include "tools/common/node_util.h"
 #include "src/common/log_util.h"
 #include "tools/converter/converter_context.h"
-#include "tools/converter/quantizer/quantize_util.h"
-#include "tools/converter/quantizer/fse_encoder.h"
-#include "tools/converter/quantizer/tensor_compressor.h"
 #include "nnacl/op_base.h"
+#include "tools/converter/quantizer/quantize_util.h"
 
 using mindspore::ops::PrimitiveC;
 
@@ -64,6 +63,7 @@ namespace mindspore::lite {
 namespace {
 constexpr int kIndexOfValueInputOfGetTupleItem = 2;
 constexpr int kMaxDepth = 2048;
+
 std::list<CNodePtr> GetOrderedCNodes(const FuncGraphPtr fg) {
   MS_CHECK_TRUE_MSG(fg != nullptr, {}, "fg is nullptr.");
   auto BelongSameGraph = std::bind(IncludeBelongGraph, fg, std::placeholders::_1);
@@ -220,32 +220,11 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
     auto activate_index = dst_node->inputIndex[i];
     MS_CHECK_TRUE_MSG(meta_graph->allTensors.size() > activate_index, RET_ERROR, "allTensors size is wrong.");
     auto tensor_input = meta_graph->allTensors[activate_index].get();
-    CHECK_NULL_RETURN(tensor_input);
-
-    auto input = cnode->input(i + quant::kPrimOffset);
-    tensor::TensorPtr input_tensor = GetInputTensor(input);
-    if (input_tensor == nullptr) {
-      MS_LOG(DEBUG) << input->fullname_with_scope() << " can't cast to tensor";
-      continue;
-    }
-    auto quantization_params = input_tensor->quant_params();
-    if (quantization_params.empty()) {
-      MS_LOG(DEBUG) << input->fullname_with_scope() << " quantization params empty.";
-      continue;
-    }
-    auto quantization_param = quantization_params[0];
-    auto cluster_centroid_list_attr = quantization_param->GetAttr(quant::kClusterCentroidList);
-    if (cluster_centroid_list_attr != nullptr) {
-      tensor_input->quantClusters = GetValue<std::vector<float>>(cluster_centroid_list_attr);
-      continue;
-    }
-    if (!TensorQuantParamsInited(*tensor_input)) {
-      tensor_input->quantParams.clear();
-      // set QuantParamT into meta_graph tensor
-      if (SetQuantizationParamToTensorT(tensor_input, quantization_param, dst_node) != RET_OK) {
-        MS_LOG(ERROR) << "[input][" << i << "]node: " << dst_node->name << " SetQuantizationParamToTensorT failed.";
-        return RET_ERROR;
-      }
+    auto input_node = cnode->input(i + quant::kPrimOffset);
+    auto status = SetInputQuantParamToTensorT(primitive, input_node, tensor_input);
+    if (status != RET_NO_CHANGE && status != RET_OK) {
+      MS_LOG(ERROR) << "[input][" << i << "] node: " << dst_node->name << " SetInputQuantParamToTensorT failed.";
+      return status;
     }
   }
 
@@ -254,70 +233,26 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
     auto output_tensor = meta_graph->allTensors[dst_node->outputIndex[i]].get();
     auto quantization_param_value = primitive->GetAttr(quant::kQuantParam);
     if (quantization_param_value == nullptr) {
-      MS_LOG(DEBUG) << "[output]node: " << dst_node->name << " output quant param Not exist.";
+      MS_LOG(INFO) << "[output]node: " << dst_node->name << " output quant param Not exist.";
       continue;
     }
-    auto quantization_param = quantization_param_value->cast<mindspore::QuantizationParamPtr>();
-    if (quantization_param == nullptr) {
-      MS_LOG(DEBUG) << "[output]node: " << dst_node->name << " output quant param Not exist.";
+    auto quantization_param_list = GetValue<std::vector<QuantizationParamPtr>>(quantization_param_value);
+    if (quantization_param_list.empty()) {
+      MS_LOG(INFO) << "[output]node: " << dst_node->name << " output quant param Not exist.";
       continue;
     }
     if (output_tensor->quantParams.empty() && dst_node->quantType != schema::QuantType_QUANT_WEIGHT) {
-      // set QuantParamT into meta_graph tensor
-      if (SetQuantizationParamToTensorT(output_tensor, quantization_param, dst_node) != RET_OK) {
-        MS_LOG(ERROR) << "[output]node: " << dst_node->name << " SetQuantizationParamToTensorT failed.";
-        return RET_ERROR;
+      // Set QuantParamT into meta_graph tensor
+      // Not support cnode with multi-output
+      auto quant_params = quant::ConvertQuantizationParamToQuantParamT(quantization_param_list.front());
+      for (auto quant_param : quant_params) {
+        auto quant_param_ptr = std::make_unique<schema::QuantParamT>(quant_param);
+        MS_LOG(DEBUG) << "node: " << output_tensor->name << " scale: " << quant_param_ptr->scale
+                      << " zp: " << quant_param_ptr->zeroPoint;
+        CHECK_NULL_RETURN(quant_param_ptr);
+        output_tensor->quantParams.emplace_back(std::move(quant_param_ptr));
       }
     }
-  }
-  return RET_OK;
-}
-
-int AnfExporter::SetQuantizationParamToTensorT(mindspore::schema::TensorT *tensorT,
-                                               const mindspore::QuantizationParamPtr &quantization_param,
-                                               const std::unique_ptr<schema::CNodeT> &dst_node) {
-  CHECK_NULL_RETURN(tensorT);
-  CHECK_NULL_RETURN(quantization_param);
-  auto scale_list_attr = quantization_param->GetAttr(quant::kScaleList);
-  auto zero_point_list_attr = quantization_param->GetAttr(quant::kZeroPointList);
-  auto min_list_attr = quantization_param->GetAttr(quant::kMinList);
-  auto max_list_attr = quantization_param->GetAttr(quant::kMaxList);
-  auto var_corr_list_attr = quantization_param->GetAttr(quant::kVarCorrList);
-  auto mean_corr_list_attr = quantization_param->GetAttr(quant::kMeanCorrList);
-  auto num_bits_list_attr = quantization_param->GetAttr(quant::kNumBitList);
-  auto narrow_range_list_attr = quantization_param->GetAttr(quant::kNarrowRangeList);
-  CHECK_NULL_RETURN(scale_list_attr);
-  CHECK_NULL_RETURN(zero_point_list_attr);
-  CHECK_NULL_RETURN(min_list_attr);
-  CHECK_NULL_RETURN(max_list_attr);
-  CHECK_NULL_RETURN(var_corr_list_attr);
-  CHECK_NULL_RETURN(mean_corr_list_attr);
-  CHECK_NULL_RETURN(num_bits_list_attr);
-  CHECK_NULL_RETURN(narrow_range_list_attr);
-  auto scale_list = GetValue<std::vector<double>>(scale_list_attr);
-  auto zero_point_list = GetValue<std::vector<int32_t>>(zero_point_list_attr);
-  auto min_list = GetValue<std::vector<double>>(min_list_attr);
-  auto max_list = GetValue<std::vector<double>>(max_list_attr);
-  auto var_corr_list = GetValue<std::vector<float>>(var_corr_list_attr);
-  auto mean_corr_list = GetValue<std::vector<float>>(mean_corr_list_attr);
-  auto num_bits_list = GetValue<std::vector<int32_t>>(num_bits_list_attr);
-  auto narrow_range_list = GetValue<std::vector<bool>>(narrow_range_list_attr);
-
-  for (size_t index = 0; index < scale_list.size(); ++index) {
-    schema::QuantParamT quant_param;
-    quant_param.scale = scale_list.at(index);
-    quant_param.zeroPoint = zero_point_list.at(index);
-    quant_param.min = min_list.at(index);
-    quant_param.max = max_list.at(index);
-    quant_param.varCorr = var_corr_list.at(index);
-    quant_param.meanCorr = mean_corr_list.at(index);
-    quant_param.numBits = num_bits_list.at(index);
-    quant_param.narrowRange = narrow_range_list.at(index);
-    quant_param.inited = true;
-    auto output_quant_param_ptr = std::make_unique<schema::QuantParamT>(quant_param);
-    MS_LOG(DEBUG) << "node: " << dst_node->name << " scale: " << output_quant_param_ptr->scale
-                  << " zp: " << output_quant_param_ptr->zeroPoint;
-    tensorT->quantParams.emplace_back(std::move(output_quant_param_ptr));
   }
   return RET_OK;
 }
@@ -333,6 +268,88 @@ tensor::TensorPtr AnfExporter::GetInputTensor(const AnfNodePtr &node) {
     return node->cast<ValueNodePtr>()->value()->cast<tensor::TensorPtr>();
   }
   return nullptr;
+}
+
+int AnfExporter::SetInputQuantParamToTensorT(const std::shared_ptr<mindspore::Primitive> &primitive,
+                                             const AnfNodePtr &input_node, mindspore::schema::TensorT *tensor_input) {
+  CHECK_NULL_RETURN(primitive);
+  CHECK_NULL_RETURN(input_node);
+  CHECK_NULL_RETURN(tensor_input);
+  if (IsGraphInput(input_node)) {
+    if (!primitive->HasAttr(quant::kGraphInputQuantParam)) {
+      return RET_NO_CHANGE;
+    }
+    if (TensorQuantParamsInited(*tensor_input)) {
+      MS_LOG(DEBUG) << input_node->fullname_with_scope() << " TensorT quant param exist.";
+      return RET_NO_CHANGE;
+    }
+    tensor_input->quantParams.clear();
+    auto quantization_param_value = primitive->GetAttr(quant::kGraphInputQuantParam);
+    auto quantization_param_ptr = quantization_param_value->cast<QuantizationParamPtr>();
+    CHECK_NULL_RETURN(quantization_param_ptr);
+    auto quant_params = quant::ConvertQuantizationParamToQuantParamT(quantization_param_ptr);
+    for (auto quant_param : quant_params) {
+      auto quant_param_ptr = std::make_unique<schema::QuantParamT>(quant_param);
+      MS_LOG(DEBUG) << "node: " << input_node->fullname_with_scope() << " scale: " << quant_param_ptr->scale
+                    << " zp: " << quant_param_ptr->zeroPoint;
+      tensor_input->quantParams.emplace_back(std::move(quant_param_ptr));
+    }
+  } else if (input_node->isa<mindspore::CNode>()) {
+    // input node has single output
+    auto input_cnode = input_node->cast<mindspore::CNodePtr>();
+    auto input_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
+    MS_CHECK_TRUE_MSG(input_primitive != nullptr, RET_ERROR, "Input node primitive nullptr.");
+    if (!input_primitive->HasAttr(quant::kQuantParam)) {
+      return RET_NO_CHANGE;
+    }
+    if (TensorQuantParamsInited(*tensor_input)) {
+      MS_LOG(DEBUG) << input_node->fullname_with_scope() << " TensorT quant param exist.";
+      return RET_NO_CHANGE;
+    }
+    tensor_input->quantParams.clear();
+    auto quantization_param_value = input_primitive->GetAttr(quant::kQuantParam);
+    auto quantization_param_list = GetValue<std::vector<QuantizationParamPtr>>(quantization_param_value);
+    if (quantization_param_list.empty()) {
+      MS_LOG(DEBUG) << input_node->fullname_with_scope() << " quantization param is empty.";
+      return RET_NO_CHANGE;
+    }
+    auto quant_params = quant::ConvertQuantizationParamToQuantParamT(quantization_param_list.front());
+    for (auto quant_param : quant_params) {
+      auto quant_param_ptr = std::make_unique<schema::QuantParamT>(quant_param);
+      MS_LOG(DEBUG) << "node: " << input_node->fullname_with_scope() << " scale: " << quant_param_ptr->scale
+                    << " zp: " << quant_param_ptr->zeroPoint;
+      tensor_input->quantParams.emplace_back(std::move(quant_param_ptr));
+    }
+  } else if (input_node->isa<mindspore::Parameter>() || input_node->isa<mindspore::ValueNode>()) {
+    tensor::TensorPtr input_tensor = GetInputTensor(input_node);
+    MS_CHECK_TRUE_RET(input_tensor != nullptr, RET_NO_CHANGE);
+    auto quantization_params = input_tensor->quant_params();
+    if (quantization_params.empty()) {
+      MS_LOG(DEBUG) << input_node->fullname_with_scope() << " quantization param is empty.";
+      return RET_NO_CHANGE;
+    }
+    auto quantization_param = quantization_params.front();
+    auto cluster_centroid_list_attr = quantization_param->GetAttr(quant::kClusterCentroidList);
+    if (cluster_centroid_list_attr != nullptr) {
+      tensor_input->quantClusters = GetValue<std::vector<float>>(cluster_centroid_list_attr);
+      return RET_OK;
+    }
+    if (!TensorQuantParamsInited(*tensor_input)) {
+      tensor_input->quantParams.clear();
+      // Set QuantParamT into meta_graph tensor
+      auto quant_params = quant::ConvertQuantizationParamToQuantParamT(quantization_param);
+      for (auto quant_param : quant_params) {
+        auto quant_param_ptr = std::make_unique<schema::QuantParamT>(quant_param);
+        MS_LOG(DEBUG) << "node: " << tensor_input->name << " scale: " << quant_param_ptr->scale
+                      << " zp: " << quant_param_ptr->zeroPoint;
+        CHECK_NULL_RETURN(quant_param_ptr);
+        tensor_input->quantParams.emplace_back(std::move(quant_param_ptr));
+      }
+    }
+  } else {
+    MS_LOG(WARNING) << input_node->fullname_with_scope() << " : " << input_node->type_name() << " not supported.";
+  }
+  return RET_OK;
 }
 
 int AnfExporter::CreateNewTensorForParameter(const std::unique_ptr<schema::MetaGraphT> &meta_graphT,

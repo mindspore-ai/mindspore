@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <memory>
 #include "ir/primitive.h"
 #include "ir/func_graph.h"
 #include "src/common/utils.h"
@@ -37,6 +38,7 @@ struct DataInfo {
   std::vector<int> shape_;
   std::vector<uint8_t> data_;
   void *data_ptr_;
+  std::vector<std::shared_ptr<QuantizationParam>> quant_params_;
   DataInfo()
       : enable_huffman_code_(false),
         compress_type_(kNoCompression),

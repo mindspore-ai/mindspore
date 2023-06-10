@@ -196,9 +196,9 @@ int WeightQuantizer::LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr 
       status = DoMixBitQuant(cnode, parameter, idx, tensor_info, preferred_dim, tmp_weight_quant_type, symmetric);
     } else {
       FixedBitWeightQuantization fixed_bit_quant;
-      status = fixed_bit_quant.QuantFilter(parameter, tensor_info, primitive, quant_type_, q_max, q_min, bit_num_,
-                                           tmp_weight_quant_type, type_id_, idx - 1, preferred_dim, symmetric, false,
-                                           bias_correction_);
+      status =
+        fixed_bit_quant.QuantFilter(parameter, tensor_info, primitive, quant_type_, q_max, q_min, bit_num_,
+                                    tmp_weight_quant_type, type_id_, preferred_dim, symmetric, false, bias_correction_);
     }
     if (status == RET_NO_CHANGE) {
       continue;
@@ -208,7 +208,7 @@ int WeightQuantizer::LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr 
     }
     // Post linear quant
     if (compression) {
-      status = DoCompression(cnode, parameter, idx);
+      status = DoCompression(cnode, parameter, tensor_info);
       if (status != RET_OK) {
         MS_LOG(ERROR) << cnode->fullname_with_scope() << " compression failed.";
         return status;
@@ -232,17 +232,18 @@ int WeightQuantizer::LinearQuant(const FuncGraphPtr &func_graph, const CNodePtr 
   return RET_OK;
 }
 
-int WeightQuantizer::DoCompression(const CNodePtr &cnode, const ParameterPtr &parameter, int idx) {
+int WeightQuantizer::DoCompression(const CNodePtr &cnode, const ParameterPtr &parameter,
+                                   const tensor::TensorPtr tensor) {
   int ret = RET_OK;
+  auto quantization_params = tensor->quant_params();
+  if (quantization_params.empty()) {
+    MS_LOG(ERROR) << cnode->fullname_with_scope() << " tensor: " << tensor->name() << " quantization params empty.";
+    return RET_ERROR;
+  }
+  auto quant_params = quant::ConvertQuantizationParamToQuantParamT(quantization_params.front());
   if (dequant_strategy_ == ON_THE_FLY) {
     if (bit_num_ < k8Bit) {
       FSEEncoder fse_encoder;
-      auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-      CHECK_NULL_RETURN(primitive);
-      auto quant_param_holder = GetCNodeQuantHolder(primitive);
-      auto tensor_quant_params = quant_param_holder->get_input_quant_params();
-      MS_CHECK_GT(static_cast<int>(tensor_quant_params.size()), idx - 1, RET_ERROR);
-      auto quant_params = tensor_quant_params.at(idx - 1);
       mindspore::TensorCompressionType compress_type =
         dequant_strategy_ == ON_THE_FLY ? mindspore::kFSEInfer : mindspore::kFSE;
       ret = fse_encoder.Compress(parameter, quant_params, compress_type, max_segments_);
@@ -255,10 +256,6 @@ int WeightQuantizer::DoCompression(const CNodePtr &cnode, const ParameterPtr &pa
     }
   }
   TensorCompressor compressor;
-  auto quant_param_holder = GetCNodeQuantHolder(cnode);
-  auto tensor_quant_params = quant_param_holder->get_input_quant_params();
-  MS_CHECK_GT(static_cast<int>(tensor_quant_params.size()), idx - 1, RET_ERROR);
-  auto quant_params = tensor_quant_params.at(idx - 1);
   if (type_id_ == kNumberTypeInt8) {
     ret = compressor.DoSparseCompress<int8_t>(parameter, bit_num_, quant_params);
   } else if (type_id_ == kNumberTypeInt16) {
@@ -283,25 +280,24 @@ int WeightQuantizer::DoCompression(const CNodePtr &cnode, const ParameterPtr &pa
 }
 
 int WeightQuantizer::DoMixBitQuant(const CNodePtr &cnode, const ParameterPtr &parameter, int idx,
-                                   const tensor::TensorPtr &tensor_info, int preferred_dim,
-                                   WeightQuantType weight_quant_type, bool symmetric) {
+                                   tensor::TensorPtr tensor_info, int preferred_dim, WeightQuantType weight_quant_type,
+                                   bool symmetric) {
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   CHECK_NULL_RETURN(primitive);
   auto mixed_bit_quantization = MixedBitWeightQuantization(mixed_bit_init_scale_);
-  auto status =
-    mixed_bit_quantization.QuantFilter(primitive, parameter, tensor_info, idx - 1, quant_type_, is_auto_tune_);
+  auto status = mixed_bit_quantization.QuantFilter(primitive, parameter, tensor_info, quant_type_, is_auto_tune_);
   if (status == RET_OK) {
     FSEEncoder fse_encoder;
-    auto quant_param_holder = GetCNodeQuantHolder(primitive);
-    auto tensor_quant_params = quant_param_holder->get_input_quant_params();
-    MS_CHECK_GT(static_cast<int>(tensor_quant_params.size()), idx - 1, RET_ERROR);
-    auto quant_params = tensor_quant_params.at(idx - 1);
+    auto quantization_params = tensor_info->quant_params();
+    if (quantization_params.empty()) {
+      MS_LOG(ERROR) << cnode->fullname_with_scope() << " tensor: " << tensor_info->name()
+                    << " quantization params empty.";
+      return RET_ERROR;
+    }
+    auto quant_params = quant::ConvertQuantizationParamToQuantParamT(quantization_params.front());
     mindspore::TensorCompressionType compress_type =
       dequant_strategy_ == ON_THE_FLY ? mindspore::kFSEInfer : mindspore::kFSE;
     status = fse_encoder.Compress(parameter, quant_params, compress_type);
-    if (status == RET_OK) {
-      quant_param_holder->ClearQuantParams();
-    }
     auto new_tensor_info = parameter->default_param()->cast<tensor::TensorPtr>();
     CHECK_NULL_RETURN(new_tensor_info);
     weight_quantized_tensors_.insert(new_tensor_info);
@@ -315,7 +311,7 @@ int WeightQuantizer::DoMixBitQuant(const CNodePtr &cnode, const ParameterPtr &pa
       << " mixed bit quantization search failed, the current layer rolls back to 8 bit fixed quantization.";
     FixedBitWeightQuantization fixed_bit_quant;
     status = fixed_bit_quant.QuantFilter(parameter, tensor_info, primitive, quant_type_, quant_max, quant_min, bit_num_,
-                                         weight_quant_type, kNumberTypeInt8, idx - 1, preferred_dim, symmetric);
+                                         weight_quant_type, kNumberTypeInt8, preferred_dim, symmetric);
   }
   return status;
 }
@@ -403,11 +399,13 @@ int WeightQuantizer::MarkCNodeWeightQuantType(const CNodePtr &cnode) {
     return RET_ERROR;
   }
 
-  auto quant_param_holder = GetCNodeQuantHolder(primitive);
-  CHECK_NULL_RETURN(quant_param_holder);
-  if (quant_param_holder->quant_type() == quant::QUANT_WEIGHT) {
-    // already marked with QuantType_QUANT_WEIGHT
-    return RET_OK;
+  auto quant_type_attr = primitive->GetAttr(quant::kQuantType);
+  if (quant_type_attr != nullptr) {
+    auto quant_type = static_cast<quant::QuantType>(GetValue<int32_t>(quant_type_attr));
+    if (quant_type == quant::QUANT_WEIGHT) {
+      // already marked with QUANT_WEIGHT
+      return RET_OK;
+    }
   }
 
   // Support Share Weight Quant.
@@ -419,7 +417,7 @@ int WeightQuantizer::MarkCNodeWeightQuantType(const CNodePtr &cnode) {
       GetParameterAndTensor(input_node, &param_node, &tensor_info);
       auto param = weight_quantized_tensors_.find(tensor_info);
       if (param != weight_quantized_tensors_.end()) {
-        quant_param_holder->set_quant_type(quant::QUANT_WEIGHT);
+        primitive->AddAttr(quant::kQuantType, MakeValue(static_cast<int>(quant::QUANT_WEIGHT)));
         continue;
       }
     }

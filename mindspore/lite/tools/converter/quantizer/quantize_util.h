@@ -57,6 +57,8 @@ int DeQuantData(const mindspore::MSTensor *tensor, std::vector<double> *dequant_
 
 int GetQuantType(const CNodePtr &cnode, quant::QuantType *quant_type);
 
+int GetQuantTypeNew(const CNodePtr &cnode, quant::QuantType *quant_type);
+
 void GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs);
 
 int UpdateDataType(const AnfNodePtr &node, TypeId new_data_type);
@@ -105,6 +107,13 @@ int DumpGraph(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPar
 
 bool IsPerchannelWeight(const std::vector<schema::QuantParamT> &quant_params, const tensor::TensorPtr &weight,
                         int preferred_dim);
+QuantizationParamPtr ConvertQuantParamTToQuantizationParam(const std::vector<schema::QuantParamT> &quant_params);
+
+std::vector<schema::QuantParamT> ConvertQuantizationParamToQuantParamT(const QuantizationParamPtr &quantization_param);
+
+std::vector<schema::QuantParamT> GetInputNodeQuantParam(const CNodePtr &cnode, size_t index,
+                                                        size_t multi_ouput_index = 0);
+tensor::TensorPtr GetNodeTensor(const AnfNodePtr &node);
 
 template <typename T>
 int DeQuantData(const int8_t *tensor_data, int64_t elements_num, std::vector<mindspore::QuantParam> quant_params,

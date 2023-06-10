@@ -289,6 +289,21 @@ int InsertQuantNodeManager::InsertDequantNode(const FuncGraphPtr &graph) {
   return RET_OK;
 }
 
+int InsertQuantNodeManager::InsertQuantDtypeCastNodeNew(const FuncGraphPtr &graph, const CNodePtr &cnode,
+                                                        InsertDirection insert_direction, TypeId cast_dtype,
+                                                        CastNodeType cast_node_type, size_t index,
+                                                        const AnfNodePtr &output_node) {
+  CHECK_NULL_RETURN(graph);
+  CHECK_NULL_RETURN(cnode);
+  if (insert_direction == FORWARD) {
+    return InsertForwardQuantNodeNew(graph, cnode, cast_dtype, index, cast_node_type);
+  } else if (insert_direction == BACKWARD && cast_node_type == kDeQuant) {
+    return InsertBackwardDeQuantNode(graph, cnode, cast_dtype, index, output_node);
+  }
+  MS_LOG(ERROR) << "Invalid insert direction: " << insert_direction;
+  return RET_NOT_SUPPORT;
+}
+
 int InsertQuantNodeManager::InsertQuantDtypeCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode,
                                                      InsertDirection insert_direction, TypeId cast_dtype,
                                                      CastNodeType cast_node_type, size_t index,
@@ -302,6 +317,88 @@ int InsertQuantNodeManager::InsertQuantDtypeCastNode(const FuncGraphPtr &graph, 
   }
   MS_LOG(ERROR) << "Invalid insert direction: " << insert_direction;
   return RET_NOT_SUPPORT;
+}
+
+int InsertQuantNodeManager::InsertForwardQuantNodeNew(const FuncGraphPtr &graph, const CNodePtr &cnode,
+                                                      TypeId cast_dtype, size_t index, CastNodeType cast_node_type) {
+  if (cast_dtype != kNumberTypeUInt8 && cast_dtype != kNumberTypeFloat32) {
+    MS_LOG(ERROR) << "Invalid cast dtype: " << cast_dtype;
+    return RET_NOT_SUPPORT;
+  }
+
+  auto input_node = cnode->input(index);
+  CHECK_NULL_RETURN(input_node);
+  if (!input_node->isa<mindspore::CNode>() && !IsGraphInput(input_node)) {
+    MS_LOG(ERROR) << "Invalid input node, input node name: " << input_node->fullname_with_scope();
+    return RET_ERROR;
+  }
+  if (CheckDataType(input_node, cast_dtype) != RET_OK) {
+    return RET_NO_CHANGE;
+  }
+  // insert forward cast_node
+  TypeId src_dtype;
+  TypeId dst_dtype;
+  std::vector<schema::QuantParamT> cast_input_quant_params;
+  std::vector<schema::QuantParamT> cast_output_quant_params;
+  if (cast_node_type == kQuant) {
+    src_dtype = cast_dtype;
+    dst_dtype = kNumberTypeInt8;
+    cast_output_quant_params = quant::GetInputNodeQuantParam(cnode, index);
+    std::copy(cast_output_quant_params.cbegin(), cast_output_quant_params.cend(),
+              std::back_inserter(cast_input_quant_params));
+    // Uint8toInt8
+    if (src_dtype == kNumberTypeUInt8) {
+      for (auto &quant_param : cast_input_quant_params) {
+        quant_param.zeroPoint += kU8ZeroPointOffset;
+      }
+    }
+  } else {
+    src_dtype = kNumberTypeInt8;
+    dst_dtype = cast_dtype;
+    auto input_cnode = std::dynamic_pointer_cast<mindspore::CNode>(input_node);
+    auto input_cnode_primitive_c = GetValueNode<std::shared_ptr<mindspore::Primitive>>(input_cnode->input(0));
+    if (input_cnode_primitive_c == nullptr) {
+      MS_LOG(DEBUG) << "input: " << index << " " << input_cnode->fullname_with_scope() << ": "
+                    << " PrimitiveC is null";
+      return RET_NO_CHANGE;
+    }
+    auto quantization_param_value = input_cnode_primitive_c->GetAttr(quant::kQuantParam);
+    auto quantization_param_list = GetValue<std::vector<QuantizationParamPtr>>(quantization_param_value);
+    if (quantization_param_list.empty()) {
+      MS_LOG(ERROR) << input_node->fullname_with_scope() << " quantization param Not exist.";
+      return RET_ERROR;
+    }
+    cast_input_quant_params = quant::ConvertQuantizationParamToQuantParamT(quantization_param_list.front());
+    std::copy(cast_input_quant_params.cbegin(), cast_input_quant_params.cend(),
+              std::back_inserter(cast_output_quant_params));
+  }
+  ValueNodePtr new_primitive = NewQuantCastPrimitive(src_dtype, dst_dtype, input_node, cast_node_type,
+                                                     cast_input_quant_params, cast_output_quant_params, 0, false);
+  std::vector<AnfNodePtr> op_inputs = {new_primitive, input_node};
+  auto quant_cast_cnode = graph->NewCNode(op_inputs);
+  CHECK_NULL_RETURN(quant_cast_cnode);
+  quant_cast_cnode->set_fullname_with_scope(cnode->fullname_with_scope() + "_dtype_cast_" + std::to_string(index) +
+                                            "_pre");
+  // set abstract
+  if (input_node->abstract() != nullptr) {
+    auto abstract = input_node->abstract()->Clone();
+    quant_cast_cnode->set_abstract(abstract);
+    if (quant::UpdateDataType(quant_cast_cnode, dst_dtype) != RET_OK) {
+      MS_LOG(ERROR) << "UpdateDataType failed, cnode name: " << quant_cast_cnode->fullname_with_scope();
+      return RET_ERROR;
+    }
+  } else {
+    MS_LOG(INFO) << "input node abstract nullptr, input node name: " << input_node->fullname_with_scope();
+  }
+  auto manager = graph->manager();
+  if (manager == nullptr) {
+    manager = Manage(graph, true);
+  }
+  CHECK_NULL_RETURN(manager);
+  manager->SetEdge(cnode, index, quant_cast_cnode);
+  MS_LOG(INFO) << "InsertForwardQuantNode cnode name: " << cnode->fullname_with_scope() << " src dtype:" << src_dtype
+               << " dst_type: " << dst_dtype;
+  return RET_OK;
 }
 
 int InsertQuantNodeManager::InsertForwardQuantNode(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype,
@@ -493,19 +590,19 @@ int InsertQuantNodeManager::InsertCastNodeForFullQuant(const FuncGraphPtr &graph
     }
     quant::QuantType pre_quant_type = quant::QUANT_NONE;
     if (input_node->isa<mindspore::CNode>()) {
-      if (GetQuantType(input_node->cast<mindspore::CNodePtr>(), &pre_quant_type) != RET_OK) {
+      if (GetQuantTypeNew(input_node->cast<mindspore::CNodePtr>(), &pre_quant_type) != RET_OK) {
         MS_LOG(ERROR) << "Get quant type failed, cnode name: " << cnode->fullname_with_scope();
         return RET_ERROR;
       }
     }
     if (pre_quant_type == quant::QUANT_NONE && curr_quant_type == quant::QUANT_ALL) {
-      auto status = InsertQuantDtypeCastNode(graph, cnode, FORWARD, cast_dtype, kQuant, index, nullptr);
+      auto status = InsertQuantDtypeCastNodeNew(graph, cnode, FORWARD, cast_dtype, kQuant, index, nullptr);
       if (status != RET_OK && status != RET_NO_CHANGE) {
         MS_LOG(ERROR) << "InsertQuantDtypeCastNode kQuant failed, cnode name: " << cnode->fullname_with_scope();
         return status;
       }
     } else if (pre_quant_type == quant::QUANT_ALL && curr_quant_type == quant::QUANT_NONE) {
-      auto status = InsertQuantDtypeCastNode(graph, cnode, FORWARD, cast_dtype, kDeQuant, index, nullptr);
+      auto status = InsertQuantDtypeCastNodeNew(graph, cnode, FORWARD, cast_dtype, kDeQuant, index, nullptr);
       if (status != RET_OK && status != RET_NO_CHANGE) {
         MS_LOG(ERROR) << "InsertQuantDtypeCastNode kDeQuant failed, cnode name: " << cnode->fullname_with_scope();
         return status;
@@ -675,7 +772,7 @@ int InsertQuantNodeManager::InsertAscendAntiQuantNode(const FuncGraphPtr &func_g
     }
     std::vector<int64_t> shape_vector = {};
     for (size_t i = 0; i < shape.size(); i++) {
-      if (i == (size_t)axis) {
+      if (i == static_cast<size_t>(axis)) {
         shape_vector.push_back((int64_t)input_quant_params.size());
       } else {
         shape_vector.push_back(1);
@@ -902,6 +999,66 @@ ValueNodePtr InsertQuantNodeManager::NewQuantCastPrimitive(int src_type, int dst
   auto prim = prim_c->GetPrim();
   MS_CHECK_TRUE_MSG(prim != nullptr, nullptr, "prim is nullptr");
   prim->AddAttr("quant_params", quant_params_holder);
+  return NewValueNode(prim);
+}
+
+ValueNodePtr InsertQuantNodeManager::NewQuantCastPrimitive(int src_type, int dst_type, const AnfNodePtr &input_node,
+                                                           const CastNodeType &cast_node_type,
+                                                           const std::vector<schema::QuantParamT> &input_quant_params,
+                                                           const std::vector<schema::QuantParamT> &output_quant_params,
+                                                           int axis, bool set_quant_flag) {
+  auto prim_c = std::make_shared<ops::QuantDTypeCast>();
+  MS_CHECK_TRUE_MSG(prim_c != nullptr, nullptr, "prim_c is nullptr.");
+  prim_c->Init(src_type, dst_type);
+  prim_c->set_axis(axis);
+  auto prim = prim_c->GetPrim();
+  if (set_quant_flag) {
+    prim->AddAttr(quant::kQuantType, MakeValue(static_cast<int>(quant::QUANT_ALL)));
+  }
+  if (!output_quant_params.empty()) {
+    auto quantization_ptr = quant::ConvertQuantParamTToQuantizationParam(output_quant_params);
+    std::vector<ValuePtr> quantization_list = {quantization_ptr};
+    prim->AddAttr(quant::kQuantParam, std::make_shared<ValueList>(quantization_list));
+  } else {
+    MS_LOG(WARNING) << "New quant cast node's output quant param is empty, input node: "
+                    << input_node->fullname_with_scope();
+  }
+
+  if (!input_quant_params.empty()) {
+    if (cast_node_type == kQuant) {
+      if (IsGraphInput(input_node)) {
+        // Set input quant param into new cast cnode primitive
+        auto quantization_ptr = quant::ConvertQuantParamTToQuantizationParam(input_quant_params);
+        prim->AddAttr(quant::kGraphInputQuantParam, quantization_ptr);
+      } else if (input_node->isa<mindspore::CNode>()) {
+        // Set input quant param into input cnode
+        auto input_cnode = input_node->cast<mindspore::CNodePtr>();
+        auto input_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
+        MS_CHECK_TRUE_MSG(input_primitive != nullptr, nullptr, "Primitive is nullptr.");
+        std::vector<ValuePtr> quantization_list;
+        auto quantization_ptr = ConvertQuantParamTToQuantizationParam(input_quant_params);
+        quantization_list.push_back(quantization_ptr);
+        input_primitive->AddAttr(quant::kQuantParam, std::make_unique<ValueList>(quantization_list));
+      }
+    } else if (cast_node_type == kDeQuant) {
+      // Set input quant param into cnode
+      if (input_node->isa<mindspore::CNode>()) {
+        auto input_cnode = input_node->cast<mindspore::CNodePtr>();
+        auto input_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
+        MS_CHECK_TRUE_MSG(input_primitive != nullptr, nullptr, "Primitive is nullptr.");
+        std::vector<ValuePtr> quantization_list;
+        auto quantization_ptr = ConvertQuantParamTToQuantizationParam(input_quant_params);
+        quantization_list.push_back(quantization_ptr);
+        input_primitive->AddAttr(quant::kQuantParam, std::make_unique<ValueList>(quantization_list));
+      } else {
+        MS_LOG(WARNING) << "New quant cast node kDeQuant, but input node is Not A CNode, input node: "
+                        << input_node->fullname_with_scope();
+      }
+    }
+  } else {
+    MS_LOG(WARNING) << "New quant cast node's input quant param is empty, input node: "
+                    << input_node->fullname_with_scope();
+  }
   return NewValueNode(prim);
 }
 

@@ -140,6 +140,7 @@ AnfNodePtr CloneParameterAndValueNode(const CNodePtr &cnode, size_t index, const
       return nullptr;
     }
   }
+  tensor_info->set_quant_param(data_info.quant_params_);
   auto mirror_parameter = mirror_graph->add_parameter();
   MS_CHECK_TRUE_RET(mirror_parameter != nullptr, nullptr);
 
@@ -239,6 +240,12 @@ FuncGraphPtr CloneFuncGraph(const FuncGraphPtr &graph, const std::shared_ptr<Con
       mirror_prim == nullptr ? mirror_graph->NewCNode(node_inputs) : mirror_graph->NewCNode(mirror_prim, node_inputs);
     MS_CHECK_TRUE_RET(mirror_cnode != nullptr, nullptr);
     mirror_cnode->set_fullname_with_scope(cnode->fullname_with_scope());
+    auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+    MS_CHECK_TRUE_RET(primitive != nullptr, nullptr);
+    auto quant_type_valueptr = primitive->GetAttr(quant::kQuantType);
+    if (quant_type_valueptr != nullptr) {
+      mirror_cnode->AddAttr(quant::kQuantType, quant_type_valueptr);
+    }
     if (cnode->abstract() != nullptr) {
       mirror_cnode->set_abstract(cnode->abstract()->Clone());
     }

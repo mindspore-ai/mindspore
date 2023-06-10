@@ -81,8 +81,15 @@ class InsertQuantNodeManager {
 
   int SetCastNodeAbstract(const CNodePtr &cnode, const AnfNodePtr &input_node, const CNodePtr &cast_cnode);
 
+  int InsertForwardQuantNodeNew(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype, size_t index,
+                                CastNodeType cast_node_type);
+
   int InsertForwardQuantNode(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype, size_t index,
                              CastNodeType cast_node_type);
+
+  int InsertQuantDtypeCastNodeNew(const FuncGraphPtr &graph, const CNodePtr &cnode, InsertDirection insert_direction,
+                                  TypeId cast_dtype, CastNodeType cast_node_type, size_t index,
+                                  const AnfNodePtr &output_node);
 
   int InsertBackwardDeQuantNode(const FuncGraphPtr &graph, const CNodePtr &cnode, TypeId cast_dtype, size_t index,
                                 const AnfNodePtr &output_node);
@@ -95,6 +102,12 @@ class InsertQuantNodeManager {
                       TypeId dst_dtype);
 
   ValueNodePtr NewQuantCastPrimitive(int src_type, int dst_type,
+                                     const std::vector<schema::QuantParamT> &input_quant_params,
+                                     const std::vector<schema::QuantParamT> &output_quant_params, int axis = 0,
+                                     bool set_quant_flag = true);
+
+  ValueNodePtr NewQuantCastPrimitive(int src_type, int dst_type, const AnfNodePtr &input_node,
+                                     const CastNodeType &cast_node_type,
                                      const std::vector<schema::QuantParamT> &input_quant_params,
                                      const std::vector<schema::QuantParamT> &output_quant_params, int axis = 0,
                                      bool set_quant_flag = true);
