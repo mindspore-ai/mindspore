@@ -339,3 +339,26 @@ def test_print_pyexecute():
     output = net(ms.Tensor(x))
     print(output)
     assert output == 200
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_dtype_is_cond():
+    """
+    Feature: Side effect in Fallback runtime.
+    Description: Side effect in Fallback runtime.
+    Expectation: No error.
+    """
+    @ms.jit
+    def func(x):
+        dtype = x.dtype
+        if dtype:
+            return 0
+        return 1
+
+    x = ms.Tensor(True)
+    out = func(x)
+    assert out == 0

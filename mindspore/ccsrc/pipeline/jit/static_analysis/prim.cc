@@ -1404,7 +1404,7 @@ EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, con
   auto eng = out_conf->engine();
   MS_EXCEPTION_IF_NULL(eng);
   auto fn_conf = eng->MakeConfig(getattr_node, out_conf->context(), out_conf->func_graph());
-  return eng->ForwardConfig(out_conf, fn_conf, false);
+  return eng->ForwardConfig(out_conf, fn_conf);
 }
 
 EvalResultPtr InterpretSetAttrNode(const AbstractBasePtrList &args_abs_list, const AnfNodeConfigPtr &out_conf) {
@@ -1458,7 +1458,7 @@ EvalResultPtr InterpretSetAttrNode(const AbstractBasePtrList &args_abs_list, con
   auto eng = out_conf->engine();
   MS_EXCEPTION_IF_NULL(eng);
   auto fn_conf = eng->MakeConfig(setattr_node, out_conf->context(), out_conf->func_graph());
-  return eng->ForwardConfig(out_conf, fn_conf, false);
+  return eng->ForwardConfig(out_conf, fn_conf);
 }
 
 EvalResultPtr StaticGetterInferred(const ValuePtr &value, const ConfigPtr &data_conf, const AnfNodeConfigPtr &old_conf,
@@ -1532,7 +1532,6 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AbstractBasePtrList &arg
     MS_EXCEPTION_IF_NULL(out_cnode);
     constexpr auto default_index = 3;
     auto default_node = out_cnode->inputs()[default_index];
-    func_graph->ReplaceInOrder(out_node, default_node);
     auto eng = out_conf->engine();
     MS_EXCEPTION_IF_NULL(eng);
     auto fn_conf = eng->MakeConfig(default_node, out_conf->context(), out_conf->func_graph());
@@ -1541,9 +1540,6 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AbstractBasePtrList &arg
   if (pipeline::GetJitLevel() == "O0" && IsValueNode<FuncGraph>(new_node)) {
     UpdateDebugInfo(GetValueNode<FuncGraphPtr>(new_node), out_node->scope(), out_node->debug_info());
   }
-
-  // Replace old node with the resolved new node in order list.
-  func_graph->ReplaceInOrder(out_node, new_node);
 
   AnalysisEnginePtr eng = out_conf->engine();
   MS_EXCEPTION_IF_NULL(eng);
@@ -1750,10 +1746,8 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
       auto out_node = out_conf->node();
       auto out_cnode = out_node->cast_ptr<CNode>();
       MS_EXCEPTION_IF_NULL(out_cnode);
-      auto fg = out_cnode->func_graph();
       constexpr auto default_index = 3;
       auto default_node = out_cnode->inputs()[default_index];
-      fg->ReplaceInOrder(out_node, default_node);
       auto eng = out_conf->engine();
       MS_EXCEPTION_IF_NULL(eng);
       auto fn_conf = eng->MakeConfig(default_node, out_conf->context(), out_conf->func_graph());
@@ -2091,7 +2085,6 @@ EvalResultPtr ConstexprEvaluator::EvalPrim(const AnalysisEnginePtr &engine, cons
     const auto &out_cnode_inputs = out_cnode->inputs();
     (void)std::copy(out_cnode_inputs.begin() + 1, out_cnode_inputs.end(), std::back_inserter(new_cnode_inputs));
     auto new_node = func_graph->NewCNodeInOrder(new_cnode_inputs);
-    func_graph->ReplaceInOrder(out_node, new_node);
     AnalysisEnginePtr eng = out_conf->engine();
     MS_EXCEPTION_IF_NULL(eng);
     AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
@@ -3224,7 +3217,6 @@ class CondEvaluator : public TransitionPrimEvaluator {
       prim_fg->set_manager(mng);
       new_node = cur_graph->NewCNodeInOrder({NewValueNode(prim_fg), cond_node});
     }
-    cur_graph->ReplaceInOrder(cnode, new_node);
     AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
     return engine->ForwardConfig(out_conf, fn_conf);
   }
