@@ -418,6 +418,7 @@ int BenchmarkBase::Init() {
   MS_LOG(INFO) << "ModelPath = " << this->flags_->model_file_;
   MS_LOG(INFO) << "ModelType = " << this->flags_->model_type_;
   MS_LOG(INFO) << "InDataPath = " << this->flags_->in_data_file_;
+  MS_LOG(INFO) << "GroupInfoFile = " << this->flags_->group_info_file_;
   MS_LOG(INFO) << "ConfigFilePath = " << this->flags_->config_file_;
   MS_LOG(INFO) << "InDataType = " << this->flags_->in_data_type_in_;
   MS_LOG(INFO) << "LoopCount = " << this->flags_->loop_count_;
@@ -435,6 +436,7 @@ int BenchmarkBase::Init() {
   std::cout << "ModelPath = " << this->flags_->model_file_ << std::endl;
   std::cout << "ModelType = " << this->flags_->model_type_ << std::endl;
   std::cout << "InDataPath = " << this->flags_->in_data_file_ << std::endl;
+  std::cout << "GroupInfoFile = " << this->flags_->group_info_file_ << std::endl;
   std::cout << "ConfigFilePath = " << this->flags_->config_file_ << std::endl;
   std::cout << "InDataType = " << this->flags_->in_data_type_in_ << std::endl;
   std::cout << "LoopCount = " << this->flags_->loop_count_ << std::endl;

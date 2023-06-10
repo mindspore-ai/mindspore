@@ -66,6 +66,16 @@ class MS_API Context {
   /// \return The current thread number setting.
   int32_t GetThreadNum() const;
 
+  /// \brief Set the communication group info file path.
+  ///
+  /// \param[in] group_info_file communication group info file for distributed inference.
+  void SetGroupInfoFile(std::string group_info_file);
+
+  /// \brief Get the communication group info file path.
+  ///
+  /// \return The communication group info file path setting.
+  std::string GetGroupInfoFile() const;
+
   /// \brief Set the parallel number of operators at runtime.
   ///
   /// \param[in] parallel_num the parallel number of operators at runtime.

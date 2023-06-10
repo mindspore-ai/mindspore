@@ -54,12 +54,12 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/session/factory.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/infer_device_address.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/kernel_build_utils.cc
-        # ${CMAKE_CURRENT_SOURCE_DIR}/utils/kernel_graph_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/tensor_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/runtime_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/serialization.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/func_graph_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/factory.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/delegate/comm_group_info.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/plugin/tensorrt_executor_plugin.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/plugin/litert_executor_plugin.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/delegate/plugin/ascend_ge_executor_plugin.cc
@@ -109,6 +109,8 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
             "${CCSRC_DIR}/runtime/graph_scheduler/actor/rpc/protocol/rpc.proto")
     ms_protobuf_generate(RPC_PROTO_SRCS RPC_PROTO_HDRS ${RPC_PROTO})
     list(APPEND MSLITE_PROTO_SRC ${RPC_PROTO_SRCS})
+
+    include_directories(${TOP_DIR}/graphengine/910/inc/external/hccl)
 
     add_library(mindspore-lite-proto STATIC ${MSLITE_PROTO_SRC})
 

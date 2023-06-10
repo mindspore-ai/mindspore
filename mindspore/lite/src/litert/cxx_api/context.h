@@ -34,6 +34,7 @@ struct Context::Data {
   std::vector<std::shared_ptr<DeviceInfoContext>> device_info_list;
   int affinity_mode_ = 0;
   int32_t inter_op_parallel_num_ = 0;
+  std::string group_info_file_ = "";
   int32_t thread_num = 0;  // defaults are automatically adjusted based on computer performance
   bool enable_parallel_ = false;
   std::vector<int32_t> affinity_core_list_;

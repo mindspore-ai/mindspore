@@ -490,6 +490,7 @@ void BenchmarkUnifiedApi::InitMSContextForAscend(const std::shared_ptr<mindspore
 
 int BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context> &context) {
   context->SetThreadNum(flags_->num_threads_);
+  context->SetGroupInfoFile(flags_->group_info_file_);
   context->SetThreadAffinity(flags_->cpu_bind_mode_);
   context->SetInterOpParallelNum(flags_->inter_op_parallel_num_);
   if (!flags_->core_list_.empty()) {

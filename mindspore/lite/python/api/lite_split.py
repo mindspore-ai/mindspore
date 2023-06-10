@@ -131,8 +131,6 @@ def split_ir(file_name, device_num):
     Examples:
         >>> split_ir("net.mindir", "[0,2)")
 
-    wait for mindspore split code merge
-    ms.export_split_mindir(file_name)
 
     """
     _mindspore = None
@@ -148,6 +146,7 @@ def split_ir(file_name, device_num):
 
     _mindspore.set_context(mode=_mindspore.GRAPH_MODE, save_graphs=True)
     _mindspore.communication.init(backend_name="hccl")
+    _mindspore.export_split_mindir(file_name)
 
 
 def get_host_ip():
