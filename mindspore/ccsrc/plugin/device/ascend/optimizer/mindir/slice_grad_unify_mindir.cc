@@ -44,12 +44,23 @@ std::vector<int64_t> GetInputXShape(const AnfNodePtr &node) {
   return common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
 }
 
-std::vector<int64_t> GetTupleValue(const AnfNodePtr &node) {
+std::vector<int64_t> GetTensorValue(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto value_node = node->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(value_node);
-  MS_EXCEPTION_IF_NULL(value_node->value());
-  return GetValue<std::vector<int64_t>>(value_node->value());
+  auto ori_value = value_node->value();
+  MS_EXCEPTION_IF_NULL(ori_value);
+  if (!ori_value->isa<tensor::Tensor>()) {
+    MS_LOG(EXCEPTION) << "Value is not tensor";
+  }
+  auto tensor_ptr = ori_value->cast<tensor::TensorPtr>();
+  std::vector<int64_t> value;
+  auto element_size = tensor_ptr->data().size();
+  auto *data = static_cast<int64_t *>(tensor_ptr->data_c());
+  for (auto i = 0; i < element_size; i++) {
+    value.push_back(data[i]);
+  }
+  return value;
 }
 
 AnfNodePtr BuildPad(const PatternMap &m, const AnfNodePtr &pad) {
@@ -73,8 +84,8 @@ AnfNodePtr BuildPad(const PatternMap &m, const AnfNodePtr &pad) {
   std::vector<int64_t> begins;
   std::vector<int64_t> sizes;
   if (input_num == kSliceGradInputTensorNum) {
-    begins = GetTupleValue(slice_grad->input(kIndex3));
-    sizes = GetTupleValue(slice_grad->input(kIndex4));
+    begins = GetTensorValue(slice_grad->input(kIndex3));
+    sizes = GetTensorValue(slice_grad->input(kIndex4));
   } else {
     // if frontend is Cangjie and mode is pynative, input 2, 3 is already converted to attr
     begins = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(slice_grad, kAttrBegin);
@@ -106,8 +117,8 @@ bool SliceGradUnifyMindIR::CheckMatchedDAG(const PatternMap &, const FuncGraphPt
   if (input_num == kSliceGradInputTensorNum) {
     auto begin_value = GetValueNode(slice_grad->input(kIndex3));
     auto size_value = GetValueNode(slice_grad->input(kIndex4));
-    if (IsDynamic(x_shape) || begin_value == nullptr || size_value == nullptr || !begin_value->isa<ValueSequence>() ||
-        !size_value->isa<ValueSequence>()) {
+    if (IsDynamic(x_shape) || begin_value == nullptr || size_value == nullptr || !begin_value->isa<tensor::Tensor>() ||
+        !size_value->isa<tensor::Tensor>()) {
       return false;
     }
   }
