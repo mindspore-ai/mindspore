@@ -1,7 +1,7 @@
 mindspore.ops.AvgPool
 ======================
 
-.. py:class:: mindspore.ops.AvgPool(kernel_size=1, strides=1, pad_mode="valid", data_format="NCHW")
+.. py:class:: mindspore.ops.AvgPool(kernel_size=1, strides=1, pad_mode='valid', data_format='NCHW')
 
     对输入的多维数据进行二维平均池化运算。
 

@@ -1,7 +1,7 @@
 mindspore.ops.MaxPool3DWithArgmax
 =================================
 
-.. py:class:: mindspore.ops.MaxPool3DWithArgmax(ksize, strides, pads, dilation=(1, 1, 1), ceil_mode=False, data_format="NCDHW", argmax_type=mstype.int64)
+.. py:class:: mindspore.ops.MaxPool3DWithArgmax(ksize, strides, pads, dilation=(1, 1, 1), ceil_mode=False, data_format='NCDHW', argmax_type=mstype.int64)
 
     三维最大值池化，返回最大值结果及其索引值。
 

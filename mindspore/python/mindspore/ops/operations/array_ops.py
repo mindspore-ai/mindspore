@@ -1002,7 +1002,7 @@ class Gather(Primitive):
 
     Args:
         batch_dims (int, optional): Specifies the number of batch dimensions.
-            It must be less than or euqal to the rank of `input_indices`. Default: ``0`` .
+            It must be less than or equal to the rank of `input_indices`. Default: ``0`` .
 
     Inputs:
         - **input_params** (Tensor) - The original Tensor. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
