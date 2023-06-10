@@ -26,6 +26,7 @@ namespace mindspore {
 namespace pynative {
 constexpr int32_t kTaskQueueSize = 8192;
 constexpr size_t kMaxSpinCount = 300000;
+constexpr size_t kThreadNameThreshold = 15;
 
 #ifndef LIKELY
 #ifdef _MSC_VER
@@ -39,6 +40,13 @@ constexpr size_t kMaxSpinCount = 300000;
 
 AsyncQueue::~AsyncQueue() { WorkerJoin(); }
 
+void AsyncQueue::SetThreadName() const {
+// Set thread name for gdb debug
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
+  (void)pthread_setname_np(pthread_self(), name_.substr(0, kThreadNameThreshold).c_str());
+#endif
+}
+
 void AsyncQueue::WorkerLoop() {
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
   // cppcheck-suppress unreadVariable
@@ -48,6 +56,8 @@ void AsyncQueue::WorkerLoop() {
     (void)kill(this_pid, SIGTERM);
   });
 #endif
+
+  SetThreadName();
 
   while (true) {
     std::shared_ptr<AsyncTask> task;
@@ -209,6 +219,8 @@ void AsyncHqueue::WorkerLoop() {
     (void)kill(this_pid, SIGTERM);
   });
 #endif
+
+  SetThreadName();
 
   while (alive_) {
     if (LIKELY(!tasks_.Empty())) {

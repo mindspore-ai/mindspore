@@ -21,6 +21,8 @@
 #include <memory>
 #include <thread>
 #include <mutex>
+#include <string>
+#include <utility>
 #include <condition_variable>
 
 #include "include/backend/visible.h"
@@ -38,7 +40,7 @@ constexpr int kThreadIdle = 1;  // idle, the thread is waiting
 // Create a new thread to execute the tasks in the queue sequentially.
 class BACKEND_EXPORT AsyncQueue {
  public:
-  AsyncQueue() = default;
+  explicit AsyncQueue(std::string name) : name_(std::move(name)) {}
   virtual ~AsyncQueue();
 
   // Add task to the end of the queue.
@@ -61,10 +63,12 @@ class BACKEND_EXPORT AsyncQueue {
 
  protected:
   virtual void WorkerLoop();
+  void SetThreadName() const;
 
   std::shared_ptr<std::thread> worker_{nullptr};
   std::mutex task_mutex_;
   std::condition_variable task_cond_var_;
+  std::string name_;
 
  private:
   void ClearTaskWithException();
@@ -75,7 +79,7 @@ using AsyncQueuePtr = std::shared_ptr<AsyncQueue>;
 
 class BACKEND_EXPORT AsyncHqueue final : public AsyncQueue {
  public:
-  AsyncHqueue() = default;
+  explicit AsyncHqueue(std::string name) : AsyncQueue(std::move(name)) {}
   ~AsyncHqueue() override;
 
   // Init resource
