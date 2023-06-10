@@ -54,6 +54,7 @@ namespace {
 static constexpr char kConstantValueNode[] = "Constant";
 static constexpr char kDoSignaturePrimitivePrefix[] = "S-Prim-";
 static constexpr char kQuantParam[] = "quant_param";
+static constexpr char kGraphInputQuantParam[] = "graph_input_quant_param";
 
 enum ParseForm : int {
   FORM_PARSE_TYPE = 0,
@@ -382,7 +383,7 @@ ValuePtr MSANFModelParser::GetValueFromAttributeProto(const mind_ir::AttributePr
           return nullptr;
         }
         return tensor_info;
-      } else if (tensor_proto.name() == kQuantParam) {
+      } else if (tensor_proto.name() == kGraphInputQuantParam) {
         auto quantization_param_vector = GenerateQuantizationParam(tensor_proto);
         if (!quantization_param_vector.empty()) {
           return quantization_param_vector[0];
@@ -1468,6 +1469,11 @@ ValuePtr MSANFModelParser::ObtainValueInSequenceForm(const mind_ir::AttributePro
             return nullptr;
           }
           (void)vec.emplace_back(tensor_info);
+        } else if (tensor_proto.name() == kQuantParam) {
+          auto quantization_param_vector = GenerateQuantizationParam(tensor_proto);
+          if (!quantization_param_vector.empty()) {
+            (void)vec.emplace_back(quantization_param_vector[0]);
+          }
         } else {
           // For data type.
           const int attr_tensor_type = tensor_proto.data_type();

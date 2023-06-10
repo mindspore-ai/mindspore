@@ -236,6 +236,10 @@ int MindIRSerializer::ConvertQuantHolderToQuantizationParam(const FuncGraphPtr &
         MS_LOG(DEBUG) << cnode->fullname_with_scope() << " : primitive is nullptr";
         return RET_OK;
       }
+      if (primitive->HasAttr(quant::kQuantType)) {
+        MS_LOG(DEBUG) << cnode->fullname_with_scope() << " already set quant_param into tensor.";
+        continue;
+      }
       auto quant_params_holder = GetCNodeQuantHolder(primitive);
       if (quant_params_holder == nullptr) {
         MS_LOG(DEBUG) << cnode->fullname_with_scope() << " quant_params_holder not exist.";
