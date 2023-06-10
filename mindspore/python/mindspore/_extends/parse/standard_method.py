@@ -2326,47 +2326,6 @@ def hasnext(it):
 
 
 @constexpr
-def constant_abs(x):
-    """Returns the absolute value of the constant."""
-    if x is None:
-        raise ValueError("For abs(), the input should be a constant or Tensor type.")
-    return abs(x)
-
-
-def ms_abs(x):
-    """Implementation of `abs`."""
-    if isinstance(x, Tensor):
-        return abs_(x)
-    return constant_abs(x)
-
-
-@constexpr
-def constant_round(*data):
-    """Returns the rounded value of the constant."""
-    for x in data:
-        if x is None:
-            raise ValueError(
-                "For round(), the input should be a Tensor or 1-2 constants.")
-    return round(*data)
-
-
-def ms_round(*data):
-    """Implementation of `round`."""
-    len_data = len(data)
-    if len_data <= 0 or len_data > 2:
-        const_utils.raise_type_error("round() requires 1 or 2 arguments.")
-    if len_data == 1 or data[1] is None:
-        x = data[0]
-        if isinstance(x, Tensor):
-            return round_(x)
-        return constant_round(x)
-    if isinstance(data[0], Tensor) or isinstance(data[1], Tensor):
-        const_utils.raise_type_error(
-            "When applying round() to tensor, only one tensor is supported as input.")
-    return constant_round(*data)
-
-
-@constexpr
 def cast_to_str(data):
     return str(data)
 

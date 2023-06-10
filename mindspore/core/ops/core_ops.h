@@ -521,6 +521,7 @@ constexpr auto kListGreaterEqual = "list_greater_equal";
 constexpr auto kCond = "Cond";
 constexpr auto kPackFunc = "PackFunc";
 constexpr auto kIsInstance = "isinstance";
+constexpr auto kInnerAbs = "inner_abs";
 
 constexpr auto kBufferAppend = "BufferAppend";
 
@@ -1444,8 +1445,10 @@ GVAR_DEF(PrimitivePtr, kPrimExpand, std::make_shared<Primitive>("Expand"));
 GVAR_DEF(PrimitivePtr, kPrimExpandDims, std::make_shared<Primitive>("ExpandDims"));
 GVAR_DEF(PrimitivePtr, kPrimAbs, std::make_shared<Primitive>(kAbs));
 GVAR_DEF(PrimitivePtr, kPrimAbsGrad, std::make_shared<Primitive>("AbsGrad"));
+GVAR_DEF(PrimitivePtr, kPrimInnerAbs, std::make_shared<Primitive>(kInnerAbs));
 GVAR_DEF(PrimitivePtr, kPrimRint, std::make_shared<Primitive>("Rint"));
 GVAR_DEF(PrimitivePtr, kPrimRound, std::make_shared<Primitive>("Round"));
+GVAR_DEF(PrimitivePtr, kPrimInnerRound, std::make_shared<Primitive>("inner_round"));
 GVAR_DEF(PrimitivePtr, kPrimExp, std::make_shared<Primitive>(kExp));
 GVAR_DEF(PrimitivePtr, kPrimExpm1, std::make_shared<Primitive>("Expm1"));
 GVAR_DEF(PrimitivePtr, kPrimLog, std::make_shared<Primitive>(kLog));

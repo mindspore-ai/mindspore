@@ -958,6 +958,20 @@ def is_from_third_party_library(value):
     return get_module_source_location(module) == MODULE_FROM_THIRDPARTY
 
 
+def get_const_abs(obj):
+    """get absolute value of const object."""
+    return abs(obj)
+
+
+def get_const_round(obj):
+    """get round value of const object."""
+    if isinstance(obj, tuple):
+        val = obj[0]
+        point_num = obj[1]
+        return round(val, point_num)
+    return round(obj)
+
+
 class Parser:
     """
     Parser python code to ast tree.
