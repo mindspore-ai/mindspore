@@ -304,6 +304,11 @@ bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
     MS_LOG(INFO) << "AICPU Execute node:" << cnode->fullname_with_scope() << " success.";
     return true;
   }
+  // skip execute if all outputs are empty tensor
+  if (is_output_all_empty_tensor_) {
+    MS_LOG(INFO) << "Outputs are all empty tensors, skip launch node " << cnode->fullname_with_scope();
+    return true;
+  }
 
   // create asyncflag_op's event
   CreateAsyncWaitEventAndUpdateEventInfo(cnode);
@@ -402,6 +407,9 @@ int AicpuOpKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
 
   need_skip_execute_ = AnfAlgo::IsDynamicShapeSkipExecute(cnode);
   if (need_skip_execute_) {
+    return 0;
+  }
+  if (IsOutputAllEmptyTensor()) {
     return 0;
   }
 

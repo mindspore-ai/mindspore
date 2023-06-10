@@ -59,12 +59,14 @@ class AscendKernelMod : public KernelMod {
 
  protected:
   virtual void UpdateOutputSizeList();
+  bool IsOutputAllEmptyTensor();
 
   AnfNodeWeakPtr anf_node_;
   std::vector<CNodeWeakPtr> atomic_clean_nodes_;
   uint32_t block_dim_{1};
   uint32_t stream_id_{0};
   std::string atomic_compile_info_{};
+  bool is_output_all_empty_tensor_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

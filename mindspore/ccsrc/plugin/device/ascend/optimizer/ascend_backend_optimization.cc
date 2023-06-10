@@ -138,6 +138,7 @@
 #include "plugin/device/ascend/optimizer/buffer_fusion/reduce_eltwise_fusion_pass.h"
 #include "plugin/device/ascend/optimizer/buffer_fusion/segment_eltwise_fusion_pass.h"
 #include "plugin/device/ascend/optimizer/format_type/deal_ref_output.h"
+#include "plugin/device/ascend/optimizer/enhancer/skip_empty_tensor_output.h"
 #include "plugin/device/ascend/optimizer/enhancer/insert_tensor_move_for_hccl_op.h"
 #include "plugin/device/ascend/optimizer/enhancer/insert_tensor_move_for_cascade.h"
 #include "plugin/device/ascend/optimizer/enhancer/insert_pad_for_nms_with_mask.h"
@@ -428,6 +429,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   ir_fusion_pm->AddPass(std::make_shared<InsertTranspose>());
   ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
+  ir_fusion_pm->AddPass(std::make_shared<SkipEmptyTensorOutputPass>());
   optimizer->AddPassManager(ir_fusion_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
@@ -500,6 +502,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<ResizeLinear1DFission>());
   ir_fusion_pm->AddPass(std::make_shared<ResizeLinear1DGradFission>());
   ir_fusion_pm->AddPass(std::make_shared<opt::MaxPoolWithArgmaxUnifyMindIR>());
+  ir_fusion_pm->AddPass(std::make_shared<SkipEmptyTensorOutputPass>());
   const auto &pass_creators =
     opt::Factory<PatternProcessPass>::Instance().GetPassCreatorsByType(kPassType::kIRFusionFissionPass);
   for (const auto &pass_creator : pass_creators) {
