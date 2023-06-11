@@ -2803,11 +2803,13 @@ static void MoveMicroMirrorOutCallFunc(const FuncGraphPtr &root) {
     }
     size_t curr_param_index = curr_param_iter - sub_graph_parameters.begin();
     AnfNodePtr call_nodes_common_param_input = nullptr;
+    FuncGraphPtr call_nodes_func_graph = nullptr;
     for (const auto &node_pair : call_cnodes_map) {
       if (!node_pair.first->first->isa<CNode>() || node_pair.first->second > 0) {
         continue;
       }
       auto cnode = node_pair.first->first->cast<CNodePtr>();
+      call_nodes_func_graph = cnode->func_graph();
       auto cnode_input = cnode->input(curr_param_index + 1);
       if (!call_nodes_common_param_input) {
         call_nodes_common_param_input = cnode_input;
@@ -2817,13 +2819,19 @@ static void MoveMicroMirrorOutCallFunc(const FuncGraphPtr &root) {
         break;
       }
     }
-    if (!call_nodes_common_param_input) {
+    if (!call_nodes_common_param_input || !call_nodes_func_graph) {
       continue;
     }
     // Insert new MicroMirror in root func
     if (!IsPrimitiveCNode(call_nodes_common_param_input, prim::kPrimMirrorMicroStep)) {
-      auto new_mirror_node = NewMicroMirrorPrimByMicroMirror(micro_mirror, call_nodes_common_param_input);
-      manager->Replace(call_nodes_common_param_input, new_mirror_node);
+      auto new_mirror_node =
+        NewMicroMirrorPrimByMicroMirror(call_nodes_func_graph, micro_mirror, call_nodes_common_param_input);
+      for (const auto &node_pair : call_cnodes_map) {
+        if (!node_pair.first->first->isa<CNode>() || node_pair.first->second > 0) {
+          continue;
+        }
+        manager->SetEdge(node_pair.first->first, curr_param_index + 1, new_mirror_node);
+      }
     }
 
     // Remove MicroMirror in call_func

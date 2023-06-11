@@ -78,7 +78,8 @@ void RedistributionPreNode(const CNodePtr &cnode, const FuncGraphManagerPtr &man
 void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &manager,
                             const NodeUsersMap &node_users_map, int64_t get_item_index, int64_t make_tuple_index,
                             std::vector<std::pair<std::pair<AnfNodePtr, int>, int>> *next_nodes);
-AnfNodePtr NewMicroMirrorPrimByMicroMirror(const CNodePtr &micro_mirror, const AnfNodePtr &micro_mirror_new_input);
+AnfNodePtr NewMicroMirrorPrimByMicroMirror(const FuncGraphPtr &func_graph, const CNodePtr &micro_mirror,
+                                           const AnfNodePtr &micro_mirror_new_input);
 // for specific scenarios
 RankList FindCommonMirrorGroup(const FuncGraphPtr &root);
 bool IsTraining(const FuncGraphManagerPtr &manager);
