@@ -36,7 +36,7 @@ static const std::set<OperatorType> ElementWiseOpType = {
   OperatorType::kRecSqueeze,      OperatorType::kRecReduce,      OperatorType::kRecCast,
   OperatorType::kRecReshape,      OperatorType::kRecGatherV2,    OperatorType::kRecArgWithValue,
   OperatorType::kRecSoftmax,      OperatorType::kRecOneHot,      OperatorType::kRecExpandDims,
-  OperatorType::kRecStridedSlice, OperatorType::kRecBatchMatMul, OperatorType::kRecBatchNorm};
+  OperatorType::kRecStridedSlice, OperatorType::kRecBatchMatMul, OperatorType::kRecLayerNorm};
 
 const TensorParam MakeTensor(int64_t n, int64_t c, int64_t h, int64_t w);
 
