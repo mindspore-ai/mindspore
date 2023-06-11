@@ -467,60 +467,53 @@ ResourcePtr GraphExecutorPy::GetResource(const std::string &phase) {
 }
 
 FuncGraphPtr GraphExecutorPy::GetFuncGraph(const std::string &phase) {
-  if (info_.count(phase) == 0) {
+  const auto it = info_.find(phase);
+  if (it == info_.end()) {
     MS_LOG(INFO) << "No executor info. found for phase: " << phase;
     return nullptr;
   }
-  return info_[phase]->func_graph;
+  return it->second->func_graph;
 }
 
 void GraphExecutorPy::SetPrimalFuncGraph(const FuncGraphPtr &primal_func_graph, const std::string &phase) {
-  MS_EXCEPTION_IF_NULL(primal_func_graph);
-  if (info_.find(phase) == info_.end()) {
+  const auto it = info_.find(phase);
+  if (it == info_.end()) {
     MS_LOG(INTERNAL_EXCEPTION) << "No executor info. found for phase: " << phase;
     return;
   }
-  info_[phase]->primal_func_graph = primal_func_graph;
+  MS_EXCEPTION_IF_NULL(primal_func_graph);
+  it->second->primal_func_graph = primal_func_graph;
 }
 
 FuncGraphPtr GraphExecutorPy::GetPrimalFuncGraph(const std::string &phase) {
-  if (info_.find(phase) == info_.end()) {
+  const auto it = info_.find(phase);
+  if (it == info_.end()) {
     MS_LOG(INFO) << "No executor info. found for phase: " << phase;
     return nullptr;
   }
-  return info_[phase]->func_graph;
+  return it->second->primal_func_graph;
 }
 
 FuncGraphPtr GraphExecutorPy::GetGradGraph(const std::string &phase) {
-  if (phase.empty()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "The input phase is empty.";
+  const auto it = info_.find(phase);
+  if (it == info_.end()) {
+    MS_LOG(INFO) << "No executor info. found for phase: " << phase;
+    return nullptr;
   }
-  if (info_.count(phase) == 0) {
-    MS_LOG(INTERNAL_EXCEPTION) << "No phase in executor:" << phase;
-  }
-
-  auto execute_info = info_[phase];
-  MS_EXCEPTION_IF_NULL(execute_info);
-  auto grad_graph = execute_info->grad_graph;
-  MS_EXCEPTION_IF_NULL(grad_graph);
-  return grad_graph;
+  return it->second->grad_graph;
 }
 
 void GraphExecutorPy::SetGradGraph(const FuncGraphPtr &grad_graph, const std::string &phase) {
-  if (phase.empty()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "The input phase is empty.";
+  const auto it = info_.find(phase);
+  if (it == info_.end()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "No executor info. found for phase: " << phase;
+    return;
   }
-  if (info_.count(phase) == 0) {
-    MS_LOG(INTERNAL_EXCEPTION) << "No phase in executor: " << phase;
-  }
-
-  auto execute_info = info_[phase];
-  MS_EXCEPTION_IF_NULL(execute_info);
-  if (execute_info->grad_graph != nullptr) {
+  if (it->second->grad_graph != nullptr) {
     MS_LOG(DEBUG) << "The grad graph has existed, phase is: " << phase;
   }
   MS_EXCEPTION_IF_NULL(grad_graph);
-  execute_info->grad_graph = grad_graph;
+  it->second->grad_graph = grad_graph;
 }
 
 compile::VmEvalFuncPtr GraphExecutorPy::GetVmEvalFunc(const std::string &phase) {

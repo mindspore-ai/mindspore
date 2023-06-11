@@ -44,47 +44,50 @@ struct GradAttr {
 };
 
 struct GradParam {
-  GradParam(const PrimitivePtr prim, const ValuePtrList &op_args, const std::vector<AbstractBasePtr> &input_abs,
-            const ValuePtr &out, const AbstractBasePtr &out_abs, const FuncGraphPtr fprop_fg,
-            const FuncGraphPtr source_fg, bool grad_by_value, bool use_dynamic_shape_process)
+  GradParam(const PrimitivePtr &prim, const ValuePtrList &op_args, const abstract::AbstractBasePtrList &input_abs,
+            const ValuePtr &out, const AbstractBasePtr &out_abs, const std::vector<TensorGradType> &op_args_grad_type,
+            bool grad_by_value, bool use_dynamic_shape_process)
       : prim(prim),
         op_args(op_args),
         input_abs(input_abs),
         out(out),
         out_abs(out_abs),
-        fg(fprop_fg),
-        source_fg(source_fg),
+        op_args_grad_type(op_args_grad_type),
         grad_by_value(grad_by_value),
-        use_dynamic_shape_process(use_dynamic_shape_process) {}
+        use_dynamic_shape_process(use_dynamic_shape_process) {
+    input_size = op_args.size();
+  }
 
-  // primitive
+  // Common domain
   const PrimitivePtr prim;
   // Input value for cnode
   const ValuePtrList op_args{};
-  std::vector<TensorGradType> op_args_grad_type{};
   // Abs of input
-  const std::vector<AbstractBasePtr> input_abs{};
+  const abstract::AbstractBasePtrList input_abs{};
   // Output of op
   const ValuePtr out;
   // Abs of out;
   const AbstractBasePtr out_abs;
-  // Forward func graph for ms_function
-  const FuncGraphPtr fg;
-  // grad func graph for ms_function or fg
-  const FuncGraphPtr source_fg;
+  const std::vector<TensorGradType> op_args_grad_type{};
   // High order used this
   bool grad_by_value{true};
   // Dynamic shape or dynamic structure
   bool use_dynamic_shape_process{false};
-  // Op forward output used in bprop graph
+
+  // For other used
   bool out_used_in_bporp_graph{false};
-  // control flow or auto parallel
-  bool is_not_support_by_expander{false};
-  // ms function
+  bool is_control_flow{false};
+  size_t input_size{0};
+
+  // For ms function domain
   bool is_ms_function_graph{false};
-  // op output index
-  size_t op_index{0};
-  // For pass graph cache key
+  bool is_ms_function_self_dynamic_shape{false};
+
+  // For KPynativeWithFProp used
+  FuncGraphPtr fg;
+  // grad func graph for ms_function or fg
+  FuncGraphPtr source_fg;
+  // Op forward output used in bprop graph
   std::string graph_cache_key;
 };
 using GradParamPtr = std::shared_ptr<GradParam>;
@@ -97,11 +100,11 @@ class FunctionNode {
   void AddNextEdge(const std::shared_ptr<VariableAdjoint> &next_variable, const AnfNodePtr &din);
   void UpdateAccumulativeDout(const AnfNodePtr &new_dout);
   const std::vector<std::pair<std::shared_ptr<VariableAdjoint>, AnfNodePtr>> &next_edges() const { return next_edges_; }
-  const FuncGraphPtr tape() { return tape_; }
-  AnfNodePtr accumulate_dout() const { return accumulate_dout_; }
+  const FuncGraphPtr &tape() { return tape_; }
+  const AnfNodePtr &accumulate_dout() const { return accumulate_dout_; }
   void set_accumulate_dout(const AnfNodePtr &accumulate_dout) { accumulate_dout_ = accumulate_dout; }
   void ReplaceEdges();
-  const AnfNodePtr fake_dout() const { return fake_dout_; }
+  const AnfNodePtr &fake_dout() const { return fake_dout_; }
 
  private:
   AnfNodePtr HyperAdd(const AnfNodePtr &left_node, const AnfNodePtr &right_node);
@@ -202,12 +205,16 @@ class AutoGradCellImpl {
     return ad_param_;
   }
   FuncGraphPtr GradFuncGraph(const GradParamPtr &grad_param);
+  AnfNodePtr GetKnode(const PrimitivePtr &prim, const CNodePtr &cnode, const AnfNodePtrList &cnode_inputs,
+                      bool ms_function_by_value);
   CNodePtr GetBpropGraphCNode(const GradParamPtr &grad_param, const AnfNodePtrList &args, AnfNodePtr *const tape_dout);
   CNodePtr GetBPropFromExpander(const GradParamPtr &grad_param, const AnfNodePtrList &args,
                                 AnfNodePtr *const tape_dout);
   CNodePtr GetBPropFromFProp(const GradParamPtr &grad_param, const AnfNodePtrList &args, AnfNodePtr *const tape_dout);
+  CNodePtr GetBPropCNode(const GradParamPtr &grad_param, const AnfNodePtrList &args, const FuncGraphPtr &bprop_graph,
+                         bool cache_hit, AnfNodePtr *const tape_dout);
   void GradGraphByExpander(const GradParamPtr &grad_param);
-  ValuePtrList GetInputArgs(const CNodePtr &cnode, std::vector<AnfNodePtr> *cnode_inputs) const;
+  ValuePtrList GetInputArgs(const CNodePtr &cnode, AnfNodePtrList *cnode_inputs) const;
   void CreateParameterAdjoint(const GradParamPtr &grad_param) const;
   void ProcessMetaFuncGraphOp(const GradParamPtr &grad_param, const PrimitivePtr &prim, const CNodePtr &cnode,
                               const ValuePtrList &op_args, const ValuePtr &out);
@@ -216,14 +223,16 @@ class AutoGradCellImpl {
                                     const VariableAdjointPtr &variable_adjoint, bool is_custom_prim);
   // Back propagate for one node;
   void UpdateNextEdges(const VariableAdjointPtr &variable, const std::vector<CNodePtr> &dins,
-                       const ValuePtrList &op_args);
-  void UpdateNextEdge(const FunctionNodePtr &fn, const AnfNodePtr &din, const ValuePtr &input_arg);
+                       const ValuePtrList &op_args, const abstract::AbstractBasePtrList &abs,
+                       bool use_dynamic_shape_process);
+  void UpdateNextEdge(const FunctionNodePtr &fn, const AnfNodePtr &din, const ValuePtr &input_arg,
+                      const AbstractBasePtr &abs);
 
-  void BuildForwardLastNode();
+  AbstractBasePtr BuildForwardLastNode();
   // Add parameter(weights) to anfnode_to_variable_adjoint_
-  ParameterPtr NewWeightParameter(const tensor::TensorPtr &tensor);
-  ParameterPtr AddParameterNode(const tensor::TensorPtr &tensor);
-  AnfNodePtr MapParameter(const ValuePtr &value);
+  ParameterPtr NewWeightParameter(const tensor::TensorPtr &tensor, const abstract::AbstractBasePtr &abs);
+  ParameterPtr AddParameterNode(const tensor::TensorPtr &tensor, const abstract::AbstractBasePtr &abs);
+  AnfNodePtr MapParameter(const ValuePtr &value, const abstract::AbstractBasePtr &abs);
   ParameterPtr ExtractParameter(const tensor::TensorPtr &tensor);
   AnfNodePtrList ExtractParamters(const tensor::TensorPtrList weights, const FuncGraphPtr &fg);
   AnfNodePtr TraceShape(const FunctionNodePtr &fn, const ValuePtr &out_value, const abstract::AbstractBasePtr &out_abs,
@@ -254,25 +263,31 @@ class AutoGradCellImpl {
   void ElimateTupleGetItem();
 
   // Fbprop
-  void SetKNodeInfo(const ValuePtr &value, const AnfNodePtr &k_node);
+  void SetKNodeInfo(const ValuePtr &value, const AnfNodePtr &k_node, const AbstractBasePtr &out_abs);
   AnfNodePtr BuildKNode(const AnfNodePtr &prim, const GradParamPtr &grad_param, bool from_single_op);
-  void BuildKNodeListFromPrimalCNode(const ValuePtrList &op_args, std::vector<AnfNodePtr> *const node_list);
+  void BuildKNodeListFromPrimalCNode(const ValuePtrList &op_args, const abstract::AbstractBasePtrList &input_abs,
+                                     AnfNodePtrList *const node_list);
   AnfNodePtr BuildKNodeForCNodeInput(const AnfNodePtr &input_node);
-  AnfNodePtr BuildKNodeForCNodeInput(const ValuePtr &input);
+  AnfNodePtr BuildKNodeForCNodeInput(const ValuePtr &input, const abstract::AbstractBasePtr &abs);
   AnfNodePtr BuildKNodeForMakeTuple(const AnfNodePtr &input_node);
   AnfNodePtr BuildKNodeForTupleGetItem(const AnfNodePtr &input_node);
+
+  // Convert
+  void ConvertValueNodeValueToTensor(const AnfNodePtr &din);
+  CNodePtr ConvertConstInputToAttr(const CNodePtr &cnode, const std::string &device_target,
+                                   bool is_dynamic_shape = false);
 
   // Last cnode of this Cell, may be a primitive op or cell with user defined bprop.
   AdParamPtr ad_param_{nullptr};
   // Top cell inputs
   std::vector<std::pair<AnfNodePtr, VariableAdjointPtr>> cell_inputs_;
   // These weights need to calculate gradient.
-  mindspore::HashSet<std::string> need_grad_weights_;
+  mindspore::HashSet<std::string> need_grad_weights_{};
   AnfNodePtrList weights_used_in_graph_;
   AnfNodePtrList k_nodes_used_in_graph_;
   // Flag for ms_funtcion and high order
   bool need_do_manager_replace_{false};
-  size_t op_num_in_bprop_graph_{0};
+  std::string device_target_;
 };
 using AutoGradCellImplPtr = std::shared_ptr<AutoGradCellImpl>;
 

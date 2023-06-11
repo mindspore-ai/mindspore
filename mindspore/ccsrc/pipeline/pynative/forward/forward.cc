@@ -276,7 +276,11 @@ FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args, bo
   PyNativeAlgo::PyParser::ParseOpInputByPythonObj(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_INPUTS)],
                                                   stub);
   op_run_info->base_op_run_info.device_target = GetCurrentDeviceTarget(op_run_info->op_prim);
-  PyNativeAlgo::Common::GetConstInputToAttr(op_run_info);
+  bool is_dynamic_shape =
+    op_run_info->base_op_run_info.has_dynamic_output || op_run_info->base_op_run_info.use_dynamic_shape_process;
+  PyNativeAlgo::Common::GetConstInputToAttr(op_run_info->op_prim, op_run_info->base_op_run_info.op_name,
+                                            op_run_info->base_op_run_info.device_target, is_dynamic_shape,
+                                            &op_run_info->input_to_attr);
   bool is_dynamic_inputs = IsDynamicInputs(op_run_info);
   if (!op_run_info->input_to_attr.empty() || is_dynamic_inputs) {
     MS_LOG(DEBUG) << "Op_prim need clone:" << op_run_info->base_op_run_info.op_name
@@ -372,7 +376,6 @@ ValuePtr ForwardExecutor::RunOpWithBackendPolicy(const FrontendOpRunInfoPtr &op_
 ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) const {
   MS_LOG(DEBUG) << "RunOpInVM start";
   MS_EXCEPTION_IF_NULL(op_run_info);
-  MS_EXCEPTION_IF_NULL(op_run_info->op_prim);
   op_run_info->run_in_vm = true;
   if (op_run_info->grad_flag) {
     for (size_t i = 0; i < op_run_info->input_size; i++) {
@@ -385,7 +388,7 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
   if (IsVmOp(op_run_info->base_op_run_info.op_name)) {
     std::vector<ValuePtr> result(op_run_info->input_size);
     for (size_t i = 0; i < op_run_info->input_size; i++) {
-      bool input_is_tensor = op_run_info->input_value[i]->isa<tensor::Tensor>();
+      bool input_is_tensor = PyNativeAlgo::Common::IsTensor(op_run_info->input_value[i]);
       if (input_is_tensor && op_run_info->base_op_run_info.op_name != prim::kPrimHookBackward->name() &&
           op_run_info->base_op_run_info.op_name != prim::kPrimCellBackwardHook->name()) {
         const auto &tensor = op_run_info->input_value[i]->cast<tensor::TensorPtr>();
@@ -399,7 +402,13 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
         result[i] = op_run_info->input_value[i];
       }
     }
-    auto result_v = std::make_shared<ValueTuple>(result);
+    // If input is tuple or list, just return origin input format of tuple or list
+    ValuePtr result_v;
+    if (op_run_info->input_size == 1 && !PyNativeAlgo::Common::IsTensor(op_run_info->input_value[kIndex0])) {
+      result_v = result[kIndex0];
+    } else {
+      result_v = std::make_shared<ValueTuple>(result);
+    }
     if (op_run_info->grad_flag) {
       (void)PyNativeAlgo::Common::SetValueGradInfo(result_v, nullptr, TensorGradType::kOpOutput);
     }

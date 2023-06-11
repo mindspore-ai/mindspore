@@ -28,7 +28,6 @@
 namespace mindspore {
 namespace pynative {
 namespace {
-const char kAddedValue[] = "added_value";
 const mindspore::HashSet<std::string> kNotRealOP{
   kMakeTupleOpName,
   kTupleGetItemOpName,
@@ -53,7 +52,7 @@ const mindspore::HashSet<std::string> kExpanderWhiteList{
 };
 
 FrontendOpRunInfoPtr GetOpRunInfo(const py::object &out, const py::args &args, const std::string &graph_phase,
-                                  bool modify_output, ValuePtr *added_out_v) {
+                                  bool modify_output, const FuncGraphPtr &ms_func_graph, ValuePtr *added_out_v) {
   auto op_run_info = std::make_shared<FrontendOpRunInfo>();
   op_run_info->grad_flag = true;
   op_run_info->is_ms_function_input = true;
@@ -61,9 +60,9 @@ FrontendOpRunInfoPtr GetOpRunInfo(const py::object &out, const py::args &args, c
   PyNativeAlgo::PyParser::ParseOpInputByPythonObj(op_run_info, args);
   // Set input abs
   op_run_info->input_abs.resize(op_run_info->input_size);
+  const auto &original_params = ms_func_graph->parameters();
   for (size_t i = 0; i < op_run_info->input_size; ++i) {
-    op_run_info->input_abs[i] =
-      PyNativeAlgo::Common::SetAbstractValueToAnyValue((op_run_info->input_value[i]->ToAbstract()));
+    op_run_info->input_abs[i] = original_params[i]->abstract();
   }
   if (modify_output) {
     if (!py::isinstance<py::tuple>(out)) {
@@ -81,9 +80,6 @@ FrontendOpRunInfoPtr GetOpRunInfo(const py::object &out, const py::args &args, c
   } else {
     op_run_info->out_value = PyNativeAlgo::DataConvert::PyObjToValue(out);
   }
-
-  op_run_info->base_op_run_info.abstract =
-    PyNativeAlgo::Common::SetAbstractValueToAnyValue(op_run_info->out_value->ToAbstract());
   return op_run_info;
 }
 
@@ -120,7 +116,7 @@ void ModifyOutputNode(const FuncGraphPtr &func_graph) {
 
   // Create a new make tuple node to hold all forward used nodes.
   abstract::AbstractBasePtrList added_abs_list;
-  std::vector<AnfNodePtr> added_node_list{NewValueNode(prim::kPrimMakeTuple)};
+  AnfNodePtrList added_node_list{NewValueNode(prim::kPrimMakeTuple)};
   const auto &used_forward_nodes = func_graph->used_forward_nodes();
   for (const auto &node : used_forward_nodes) {
     MS_EXCEPTION_IF_NULL(node);
@@ -136,7 +132,7 @@ void ModifyOutputNode(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(original_output_node);
   auto original_output_abs = original_output_node->abstract();
   MS_EXCEPTION_IF_NULL(original_output_abs);
-  std::vector<AnfNodePtr> new_output_nodes{NewValueNode(prim::kPrimMakeTuple), original_output_node, added_output_node};
+  AnfNodePtrList new_output_nodes{NewValueNode(prim::kPrimMakeTuple), original_output_node, added_output_node};
   auto merge_node = func_graph->NewCNode(std::move(new_output_nodes));
   abstract::AbstractBasePtrList new_output_abs{original_output_abs, added_output_abs};
   merge_node->set_abstract(std::make_shared<abstract::AbstractTuple>(new_output_abs));
@@ -194,7 +190,7 @@ void GetUsedCNodeInBpropGraph(const CNodePtr &cnode, const mindspore::HashSet<si
   }
 }
 
-AnfNodePtr GetAddedNode(const FuncGraphPtr &ms_func_graph) {
+CNodePtr GetAddedNode(const FuncGraphPtr &ms_func_graph) {
   MS_EXCEPTION_IF_NULL(ms_func_graph);
   if (!ms_func_graph->modify_output()) {
     return nullptr;
@@ -210,27 +206,21 @@ AnfNodePtr GetAddedNode(const FuncGraphPtr &ms_func_graph) {
     MS_LOG(EXCEPTION) << "The input size of merge make tuple node should be 3, but it is: " << merge_make_tuple->size();
   }
   constexpr size_t added_output_index = 2;
-  return merge_make_tuple->input(added_output_index);
+  return merge_make_tuple->input(added_output_index)->cast<CNodePtr>();
 }
 }  // namespace
 
-void MsFunction::RunReplace(const CNodePtr &added_make_tuple, const vector<ValuePtr> &total_output_tensors,
-                            const FuncGraphPtr &grad_graph, bool is_dynamic_shape) const {
-  MS_EXCEPTION_IF_NULL(added_make_tuple);
-  MS_EXCEPTION_IF_NULL(grad_graph);
+void MsFunction::RunReplace(const CNodePtr &added_node, const ValuePtrList &total_output_tensors) const {
+  MS_EXCEPTION_IF_NULL(added_node);
   size_t index = 0;
-  for (size_t i = 1; i < added_make_tuple->size(); ++i) {
-    const auto &input_i = added_make_tuple->input(i);
+  for (size_t i = 1; i < added_node->size(); ++i) {
+    const auto &input_i = added_node->input(i);
     MS_EXCEPTION_IF_NULL(input_i);
     auto cnode = input_i->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     MS_LOG(DEBUG) << "Replace output tensors for cnode: " << cnode->DebugString();
     auto output_vnode = cnode->forward().first;
     MS_EXCEPTION_IF_NULL(output_vnode);
-    // To clean up all value nodes in PyNative after run grad graph
-    if (is_not_support_by_expander_) {
-      grad_graph->AddValueNode(output_vnode);
-    }
     MS_LOG(DEBUG) << "Old output value node: " << output_vnode->ToString();
     bool is_tuple_out = output_vnode->abstract()->isa<abstract::AbstractSequence>();
     size_t output_num = GetOutputTensorNumForTuple(cnode);
@@ -254,17 +244,6 @@ void MsFunction::RunReplace(const CNodePtr &added_make_tuple, const vector<Value
     } else {
       output_vnode->set_value(new_values[0]);
     }
-    if (is_dynamic_shape) {
-      if (is_tuple_out) {
-        AbstractBasePtrList abs_list;
-        for (size_t j = 0; j < output_num; ++j) {
-          (void)abs_list.emplace_back(PyNativeAlgo::Common::SetAbstractValueToAnyValue(new_values[j]->ToAbstract()));
-        }
-        output_vnode->set_abstract(std::make_shared<abstract::AbstractTuple>(abs_list));
-      } else {
-        output_vnode->set_abstract(PyNativeAlgo::Common::SetAbstractValueToAnyValue(new_values[0]->ToAbstract()));
-      }
-    }
     MS_LOG(DEBUG) << "New output value node: " << output_vnode->ToString();
   }
   // Save op info with new tensors for current running ms_function func graph.
@@ -274,33 +253,19 @@ void MsFunction::RunReplace(const CNodePtr &added_make_tuple, const vector<Value
   }
 }
 
-void MsFunction::ReplaceAddedCnodeActualOutput(const GradExecutor *grad_executor, const FuncGraphPtr &grad_graph,
-                                               const AnfNodePtr &added_node,
-                                               const vector<ValuePtr> &total_output_tensors) const {
+void MsFunction::ReplaceAddedCnodeActualOutput(const CNodePtr &added_node,
+                                               const ValuePtrList &total_output_tensors) const {
   MS_EXCEPTION_IF_NULL(added_node);
-  bool is_dynamic_shape = common::AnfAlgo::IsDynamicShape(added_node);
-  if (is_dynamic_shape) {
-    const_cast<GradExecutor *>(grad_executor)->set_use_dynamic_shape_process(true);
-    MS_LOG(DEBUG) << "Ms function is dynamic shape";
-  }
-  // Just one added output
-  MS_EXCEPTION_IF_NULL(grad_executor);
-  if (added_node->isa<ValueNode>()) {
-    MS_LOG(DEBUG) << "The added forward output node is value node: " << added_node->DebugString();
-    return;
-  }
   // Replace new output tensors for forward nodes, it will also work in grad graph with same value node.
-  auto added_make_tuple = added_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(added_make_tuple);
-  MS_LOG(DEBUG) << "The added forward make tuple node info: " << added_make_tuple->DebugString();
+  MS_LOG(DEBUG) << "The added forward make tuple node info: " << added_node->DebugString();
   // The forward node in ms_function graph is created during compilation and is a
   // placeholder(mindspore/ccsrc/frontend/optimizer/ad/pynative_dfunctor.cc).After running ms_function, need to update
   // to real value.
-  RunReplace(added_make_tuple, total_output_tensors, grad_graph, is_dynamic_shape);
+  RunReplace(added_node, total_output_tensors);
 }
 
-void MsFunction::GetInputArgsNode(const FrontendOpRunInfoPtr &op_run_info, AnfNodePtrList *input_nodes,
-                                  const GradExecutor *grad_executor) const {
+void MsFunction::GetInputArgsNode(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
+                                  const FuncGraphPtr &ms_func_graph, AnfNodePtrList *input_nodes) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(input_nodes);
   MS_EXCEPTION_IF_NULL(grad_executor);
@@ -309,45 +274,8 @@ void MsFunction::GetInputArgsNode(const FrontendOpRunInfoPtr &op_run_info, AnfNo
     const auto &id = PyNativeAlgo::Common::GetIdByValue(input_i_value);
     const auto &input_i_node = grad_executor->GetInput(input_i_value, id);
     MS_EXCEPTION_IF_NULL(input_i_node);
-    MS_LOG(DEBUG) << "The input " << i << " id " << id << " value is: " << input_i_value->ToString()
-                  << ", node is: " << input_i_node->DebugString();
+    MS_LOG(DEBUG) << "The input " << i << " id " << id << " , node is: " << input_i_node->DebugString();
     (void)input_nodes->emplace_back(input_i_node);
-  }
-}
-
-void MsFunction::SetWeights(const FrontendOpRunInfoPtr &op_run_info, const FuncGraphPtr &ms_func_graph,
-                            const TopCellInfoPtr &top_cell) const {
-  // Get weights info of ms_function
-  MS_EXCEPTION_IF_NULL(ms_func_graph);
-  const auto &original_params = ms_func_graph->parameters();
-  size_t params_size = original_params.size();
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  for (size_t i = 0; i < params_size; ++i) {
-    if (i < op_run_info->input_size) {  // non-weights node.
-      if (op_run_info->input_value[i]->isa<tensor::Tensor>()) {
-        auto t = op_run_info->input_value[i]->cast<tensor::TensorPtr>();
-        const auto &auto_grad_meta_data = t->auto_grad_meta_data();
-        // Maybe have constant tensor input
-        if (auto_grad_meta_data == nullptr) {
-          op_run_info->input_value_grad_type[i] = PyNativeAlgo::Common::SetTensorGradInfo(t, top_cell);
-        } else {
-          op_run_info->input_value_grad_type[i] = auto_grad_meta_data->grad_type();
-        }
-      } else {
-        MS_LOG(EXCEPTION) << "Get no tensor input " << op_run_info->input_value[i]->ToString();
-      }
-      continue;
-    }
-    // Must weight param
-    auto param = original_params[i]->cast<ParameterPtr>();
-    const auto tensor_value = PyNativeAlgo::Common::GetTensorFromParam(original_params[i]);
-    MS_EXCEPTION_IF_NULL(tensor_value);
-    (void)op_run_info->input_value.emplace_back(tensor_value);
-    (void)op_run_info->input_value_grad_type.emplace_back(
-      PyNativeAlgo::Common::SetTensorGradInfo(tensor_value, top_cell));
-    (void)op_run_info->input_abs.emplace_back(param->abstract());
-    MS_LOG(DEBUG) << "Top graph set free parameter " << param->DebugString() << ". Its default value is "
-                  << tensor_value->ToString() << ". Its name is: " << param->name();
   }
 }
 
@@ -390,17 +318,15 @@ void MsFunction::MakeCNodeForMsFunction(const FrontendOpRunInfoPtr &op_run_info,
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(ms_func_graph);
   // Get input node info of ms_function
-  std::vector<AnfNodePtr> input_nodes{NewValueNode(ms_func_graph)};
+  AnfNodePtrList input_nodes{NewValueNode(ms_func_graph)};
   MS_EXCEPTION_IF_NULL(grad_executor);
-  GetInputArgsNode(op_run_info, &input_nodes, grad_executor);
+  GetInputArgsNode(op_run_info, grad_executor, ms_func_graph, &input_nodes);
   // Get weights node info of ms_function.
   GetWeightsNode(op_run_info, grad_executor, ms_func_graph, &input_nodes);
   // Make a CNode which includes ms_function fprop graph and inputs node
   MS_EXCEPTION_IF_NULL(ms_function_cnode);
   *ms_function_cnode = grad_executor->top_cell()->fg()->NewCNode(input_nodes);
-  // If ms function is dynamic shape, used actual shape in pynative mode
-  (*ms_function_cnode)
-    ->set_abstract(PyNativeAlgo::Common::SetAbstractValueToAnyValue(op_run_info->out_value->ToAbstract()));
+  (*ms_function_cnode)->set_abstract(ms_func_graph->output()->abstract());
   MS_LOG(DEBUG) << "Make ms function forward CNode: " << (*ms_function_cnode)->DebugString();
 }
 
@@ -410,18 +336,24 @@ void MsFunction::MakeAdjointForMsFunction(const FrontendOpRunInfoPtr &op_run_inf
   MS_EXCEPTION_IF_NULL(grad_executor);
 
   const auto &top_cell = grad_executor->top_cell();
-  SetWeights(op_run_info, ms_func_graph, top_cell);
+  PyNativeAlgo::Common::SetGraphInputAndWeightsInfo(op_run_info, ms_func_graph);
   RecordForwardGraphForMsFunction(op_run_info, grad_executor, ms_func_graph);
   // Connect grad graph of ms_function to context.
   (void)PyNativeAlgo::Common::SetValueGradInfo(op_run_info->out_value, top_cell, TensorGradType::kOpOutput);
   auto grad_param = std::make_shared<autograd::GradParam>(
     nullptr, op_run_info->input_value, op_run_info->input_abs, op_run_info->out_value,
-    op_run_info->base_op_run_info.abstract, grad_graph, ms_func_graph, !top_cell->is_high_order_top_cell(),
+    ms_func_graph->output()->abstract(), op_run_info->input_value_grad_type, !top_cell->is_high_order_top_cell(),
     grad_executor->use_dynamic_shape_process());
-  grad_param->is_not_support_by_expander = is_not_support_by_expander_;
+
+  grad_param->is_control_flow = compile_info_.is_control_flow_;
   grad_param->is_ms_function_graph = true;
-  grad_param->graph_cache_key = op_run_info->op_info;
-  grad_param->op_args_grad_type = op_run_info->input_value_grad_type;
+  // As long as the ms function is in the process of dynamic shape,
+  // let it run actor execution to avoid backend pass
+  grad_param->is_ms_function_self_dynamic_shape = compile_info_.is_dynamic_shape_;
+
+  grad_param->fg = grad_graph;
+  grad_param->source_fg = ms_func_graph;
+  grad_param->graph_cache_key = graph_phase_;
   {
     py::gil_scoped_release gil_release;
     grad_executor->async_executor()->Wait();
@@ -429,6 +361,8 @@ void MsFunction::MakeAdjointForMsFunction(const FrontendOpRunInfoPtr &op_run_inf
   if (!top_cell->auto_grad_cell_ptr()->KPynativeWithFProp(grad_param)) {
     MS_LOG(EXCEPTION) << "Failed to make adjoint for ms_function cnode, ms_function cnode info: ";
   }
+  top_cell->set_has_call_graph(grad_executor->use_dynamic_shape_process());
+  top_cell->set_has_control_flow(compile_info_.is_control_flow_);
   top_cell->set_need_do_final_opt(true);
 }
 
@@ -448,7 +382,7 @@ void MsFunction::RecordForwardGraphForMsFunction(const FrontendOpRunInfoPtr &op_
 
 void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
                                      const FuncGraphPtr &primal_func_graph, const FuncGraphPtr &grad_graph,
-                                     const AnfNodePtr &added_node, const ValuePtr &added_out_v) const {
+                                     const CNodePtr &added_node, const ValuePtr &added_out_v) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(grad_executor);
   // Step 1: Replace added cnode forward with actual output
@@ -457,26 +391,26 @@ void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, co
     ValuePtrList total_output_tensors;
     PyNativeAlgo::DataConvert::FlattenValueSeqArg(added_out_v, &total_output_tensors);
     flatten_v = std::make_shared<ValueTuple>(total_output_tensors);
-    ReplaceAddedCnodeActualOutput(grad_executor, grad_graph, added_node, total_output_tensors);
+    ReplaceAddedCnodeActualOutput(added_node, total_output_tensors);
   }
 
   // Step 2: Update actual output tensors used in grad graph.
   MS_LOG(DEBUG) << "ms_function actual output value: " << op_run_info->out_value->ToString();
   grad_executor->top_cell()->GetOpInfo(op_run_info);
-  grad_executor->UpdateForwardTensorInfoInBpropGraph(op_run_info->op_info, op_run_info->out_value);
+  grad_executor->UpdateTopCellForwardTensorInfoInBpropGraph(op_run_info->op_info, op_run_info->out_value);
 
   // Step 3: Update output tensors of added forward nodes, which are added to return node of ms_function func graph.
   if (added_out_v != nullptr) {
-    grad_executor->UpdateForwardTensorInfoInBpropGraph(op_run_info->op_info + kAddedValue, flatten_v);
+    // If ms function is not control flow, the ms function is executed by actor under dynamic shape
+    if (grad_executor->use_dynamic_shape_process() && !compile_info_.is_control_flow_) {
+      UpdateMsFunctionlForwardTensorInfoInBpropGraph(op_run_info->op_info + kAddedValue, flatten_v);
+    } else {
+      grad_executor->UpdateTopCellForwardTensorInfoInBpropGraph(op_run_info->op_info + kAddedValue, flatten_v);
+    }
   }
 
-  auto clone_grad_graph = grad_graph;
-  if (is_not_support_by_expander_) {
-    // Clone value node for find it in grad.cc:SaveForwardTensorInfoInBpropGraph, which used by clean device address
-    clone_grad_graph = BasicClone(grad_graph, true);
-  }
   // Make Adjoint for grad graph
-  MakeAdjointForMsFunction(op_run_info, grad_executor, primal_func_graph, clone_grad_graph);
+  MakeAdjointForMsFunction(op_run_info, grad_executor, primal_func_graph, grad_graph);
 
   auto node_info = std::make_shared<DynamicDetectNodeInfo>();
   node_info->is_graph_node = true;
@@ -486,17 +420,46 @@ void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, co
   grad_executor->CheckGraphDynamic(op_run_info->input_value, node_info);
 }
 
-void MsFunction::Reset() {
-  is_not_support_by_expander_ = true;
-  graph_phase_.clear();
+void MsFunction::UpdateMsFunctionlForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v) {
+  const auto it = graph_phase_with_replace_info_.find(graph_phase_);
+  if (it == graph_phase_with_replace_info_.end()) {
+    MS_LOG(DEBUG) << "Ms function " << graph_phase_ << " run firstly";
+    auto &replace_info = graph_phase_with_replace_info_[graph_phase_];
+    SetIdWithOpInfo(v, op_info, kIndex0, &(replace_info.id_with_op_info));
+    return;
+  }
+  // Not first run
+  MS_LOG(DEBUG) << "Update ms function forward output tensor info";
+  UpdateForwardOutputTensorInfo(op_info, v, it->second);
 }
 
-FuncGraphPtr MsFunction::ProcessMsFunctionFuncGraph(const FuncGraphPtr &ms_func_graph) const {
+void MsFunction::SaveForwardOutputTensorInfoInBpropGraph(const FuncGraphPtr &func_graph) {
+  const auto it = graph_phase_with_replace_info_.find(graph_phase_);
+  if (it == graph_phase_with_replace_info_.end()) {
+    MS_LOG(EXCEPTION) << "Can not find graph phase " << graph_phase_ << " in graph_phase_with_replace_info";
+  }
+  MS_LOG(DEBUG) << "Save ms function forward output tensor info";
+  auto manager = MakeManager();
+  MS_EXCEPTION_IF_NULL(manager);
+  manager->AddFuncGraph(func_graph);
+  SaveForwardOutputTensorInfo(func_graph, true, &(it->second));
+}
+
+void MsFunction::Reset() { graph_phase_.clear(); }
+
+FuncGraphPtr MsFunction::ProcessMsFunctionFuncGraph(const FuncGraphPtr &ms_func_graph) {
   MS_EXCEPTION_IF_NULL(ms_func_graph);
   if (PyNativeAlgo::Common::IsControlFlowGraph(ms_func_graph)) {
     MS_LOG(DEBUG) << "Get control flow";
+    ms_function_compile_info_[graph_phase_].is_control_flow_ = true;
     return nullptr;
   }
+  if (auto abs = ms_func_graph->output()->abstract(); abs != nullptr && abs->BuildShape()->IsDynamic()) {
+    MS_LOG(DEBUG) << "Get dynamic shape";
+    ms_function_compile_info_[graph_phase_].is_dynamic_shape_ = true;
+    return nullptr;
+  }
+  ms_function_compile_info_[graph_phase_] = MsFunctionCompileInfo();
   PyNativeAlgo::Common::DumpGraphIR("ms_func_modify_before_forward_graph.ir", ms_func_graph);
   AnfNodePtrList node_list{};
   const auto &order = TopoSort(ms_func_graph->output());
@@ -532,6 +495,7 @@ FuncGraphPtr MsFunction::ProcessMsFunctionFuncGraph(const FuncGraphPtr &ms_func_
     MS_EXCEPTION_IF_NULL(c_node);
     c_node->set_forward(PyNativeAlgo::Common::CreateValueNodeByValue(out, cn->abstract()), "");
   }
+  // Ms_func_graph will be changed output
   auto clone_graph = BasicClone(ms_func_graph);
   ms_func_graph->set_used_forward_nodes(node_list);
   ModifyOutputNode(ms_func_graph);
@@ -564,11 +528,15 @@ py::object MsFunction::GradMsFunction(const py::object &out, const py::args &arg
     graph_phase_.clear();
     return ret;
   }
+  compile_info_ = ms_function_compile_info_.at(graph_phase_);
   ValuePtr added_out_v = nullptr;
-  const auto &op_run_info = GetOpRunInfo(out, args, graph_phase_, ms_func_graph->modify_output(), &added_out_v);
-  FuncGraphPtr grad_graph = executor->GetGradGraph(graph_phase_);
-  is_not_support_by_expander_ = !grad_graph->has_flag(kFlagGraphGradByExpander);
+  const auto &op_run_info =
+    GetOpRunInfo(out, args, graph_phase_, ms_func_graph->modify_output(), ms_func_graph, &added_out_v);
   PyNativeAlgo::Common::DumpGraphIR("ms_func_forward_graph.ir", ms_func_graph);
+  auto grad_graph = executor->GetGradGraph(graph_phase_);
+  if (compile_info_.is_dynamic_shape_) {
+    grad_executor->set_use_dynamic_shape_process(true);
+  }
   GradMsFunctionInner(op_run_info, grad_executor.get(), executor->GetPrimalFuncGraph(graph_phase_), grad_graph,
                       GetAddedNode(ms_func_graph), added_out_v);
   Reset();

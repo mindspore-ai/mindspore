@@ -303,7 +303,7 @@ void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
     }
 
     // Kernel selection process for non control op.
-    if (!common::AnfAlgo::IsControlOpExecInBackend(node)) {
+    if (!common::AnfAlgo::IsBpropCutOpExecInBackend(node)) {
       auto [msg, etype] = SetKernelInfoWithMsg(node);
       if (!msg.empty()) {
         MS_EXCEPTION(etype) << "#umsg#Kernel select failed:#umsg#" << msg;
@@ -327,7 +327,7 @@ void CPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
   }
   auto &node_list = graph->execution_order();
   for (auto &node : node_list) {
-    if (!common::AnfAlgo::IsControlOpExecInBackend(node)) {
+    if (!common::AnfAlgo::IsBpropCutOpExecInBackend(node)) {
       auto [msg, etype] = SetKernelInfoWithMsg(node);
       if (msg.empty()) {
         continue;
@@ -364,7 +364,7 @@ void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
   std::vector<AnfNodePtr> akg_nodes;
   for (const auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
-    if (common::AnfAlgo::IsControlOpExecInBackend(node)) {
+    if (common::AnfAlgo::IsBpropCutOpExecInBackend(node)) {
       continue;
     }
     if (session::AnfRuntimeAlgorithm::GetKernelType(node) == KernelType::AKG_KERNEL) {

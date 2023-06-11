@@ -28,6 +28,7 @@
 #include "include/backend/optimizer/helper.h"
 #include "pipeline/jit/action.h"
 #include "pipeline/jit/parse/data_converter.h"
+#include "pipeline/pynative/grad/ms_function_call_graph.h"
 #include "ir/anf.h"
 #include "pybind_api/ir/base_ref_py.h"
 #include "pybind_api/pybind_patch.h"
@@ -678,27 +679,9 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
 
 void MindRTBackend::RunMsGradGraph(const CNodePtr &kernel, const VectorRef &args, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(kernel);
-  if (!IsValueNode<FuncGraph>(kernel)) {
-    MS_LOG(EXCEPTION) << "kernel:" << kernel->ToString() << ", is not func graph.";
-  }
-  auto func_graph = GetValueNode<FuncGraphPtr>(kernel);
-  MS_EXCEPTION_IF_NULL(func_graph);
-  func_graph->set_flag(kFlagIsPynativeBpropGraph, true);
-
-  auto old_root_graph = root_graph_;
-  auto actor_info = CompileGraphs(func_graph);
-
-  MS_LOG(INFO) << "Status record: start run actor: " << actor_info;
-  // Fetch the graph compiler info.
-  const auto &graph_iter = actor_to_graph_compiler_info_.find(actor_info);
-  if (graph_iter == actor_to_graph_compiler_info_.end()) {
-    MS_LOG(EXCEPTION) << "Can't find the graph compiler info, actor_info:" << actor_info;
-  }
-  MS_EXCEPTION_IF_NULL(graph_iter->second);
-  const auto &graph_compiler_info = *(graph_iter->second);
-
-  RunGraphByActors(actor_info, graph_compiler_info, args, outputs);
-  root_graph_ = old_root_graph;
+  auto ms_function_special_graph = kernel->user_data<pynative::MsFunctionCallGraph>();
+  MS_EXCEPTION_IF_NULL(ms_function_special_graph);
+  *outputs = ms_function_special_graph->Run(args);
 }
 
 void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_info, const VectorRef &args,
@@ -741,13 +724,13 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
       MS_LOG(DEBUG) << "Split and run op " << kernel->fullname_with_scope();
       InputTensorInfo input_tensor_info;
       VectorRef op_outputs;
-      if (common::AnfAlgo::IsControlOpExecInBackend(kernel)) {
+      if (common::AnfAlgo::IsBpropCutOpExecInBackend(kernel)) {
         WaitTaskFinish();
         RunControlOperator(graph_compiler_, graph, kernel, op_output_map, parameter_index, inputs[graph_index],
                            &input_tensor_info, &op_outputs);
         // Execute remaining lazy tasks before PyNative hook exit.
         WaitTaskFinish();
-      } else if (common::AnfAlgo::HasNodeAttr(kAttrMsFunctionControl, kernel)) {
+      } else if (common::AnfAlgo::HasNodeAttr(kAttrMsFunctionCallNode, kernel)) {
         WaitTaskFinish();
         graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index],
                                                  &input_tensor_info);

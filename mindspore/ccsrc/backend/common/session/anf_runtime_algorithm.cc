@@ -1083,7 +1083,10 @@ bool AnfRuntimeAlgorithm::IsFeatureMapOutput(const AnfNodePtr &node) {
     return IsFeatureMapOutput(node->cast<CNodePtr>()->input(1));
   }
   auto kernel_info = dynamic_cast<const device::KernelInfo *>(node->kernel_info());
-  MS_EXCEPTION_IF_NULL(kernel_info);
+  // If node is a call node which not have kernel info
+  if (kernel_info == nullptr) {
+    return false;
+  }
   return kernel_info->is_feature_map();
 }
 

@@ -49,7 +49,7 @@ struct NodeInfo {
 using NodeInfoPtr = std::shared_ptr<NodeInfo>;
 struct DynamicDetectNodeInfo {
   PrimitivePtr prim{nullptr};
-  std::vector<AbstractBasePtr> input_abs;
+  abstract::AbstractBasePtrList input_abs;
   abstract::AbstractBasePtr out_abs;
   std::vector<std::pair<std::string, NodeInfo>> inputs;
   bool is_graph_node{false};
@@ -112,13 +112,13 @@ class GradExecutor {
   CNodePtr ConstructForwardGraph(const FrontendOpRunInfoPtr &op_run_info) const;
   void RecordForwardGraph(const FrontendOpRunInfoPtr &op_run_info) const;
   void RecordForwardGraphForInput(const ValuePtr &value, const string &input_id,
-                                  const abstract::AbstractBasePtr &param_abs) const;
+                                  const abstract::AbstractBasePtr &param_abs);
   void RecordNestedGraph(const FuncGraphPtr &first_grad_fg, const GraphInfoPtr &inner_graph_info,
                          const std::vector<ValuePtr> &forward_args, const ValuePtr &out);
   void SaveForwardGraph(const ValuePtr &value, const string &value_id) const;
   void BackupInputTensorGradInfo(const ValuePtr &value);
   void SaveInputTensorGradInfo(const InputArgsInfoPtr &input_args_info);
-  void ClearOuterCellGradInfo(const TopCellInfoPtr &top_cell);
+  void ClearTopCellParamGradInfo(const TopCellInfoPtr &top_cell);
   void ResumeOuterCellGradInfo(const TopCellInfoPtr &top_cell);
   py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
                              const py::object &grad_hash_id, const py::args &args);
@@ -127,8 +127,7 @@ class GradExecutor {
   void ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) const;
   AnfNodePtr GetInput(const ValuePtr &v, const string &obj_id) const;
   AnfNodePtr GetParamInput(const ValuePtr &v, const std::string &id) const;
-  void UpdateForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v) const;
-  void UpdatePreTensorInfo(const tensor::TensorPtr &new_tensor, const tensor::TensorPtr &old_tensor) const;
+  void UpdateTopCellForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v) const;
   void ClearRes();
   void AsyncClearTopCell();
   void AsyncClearAutoGradCell(const TopCellInfoPtr &top_cell);
@@ -188,14 +187,13 @@ class GradExecutor {
   void SwitchTopCell();
   TopCellInfoPtr GetTopCell(const std::string &already_run_cell_id);
   void DoParameterReplace(const FuncGraphPtr &first_grad_fg, const GraphInfoPtr &inner_graph_info,
-                          const std::vector<ValuePtr> &forward_args, std::vector<AnfNodePtr> *inputs);
-  void SetWeights(const FuncGraphPtr &first_grad_fg, ValuePtrList *inputs);
+                          const std::vector<ValuePtr> &forward_args, AnfNodePtrList *inputs);
   void MakeNestedCnode(bool has_custom_bprop, const std::vector<ValuePtr> &forward_args,
                        const FuncGraphPtr &cur_run_bprop_graph, const BaseRef &out);
   TopCellInfoPtr PopHighOrderGraphStack();
   void PushInputArgsInfoStack(const InputArgsInfoPtr &input_args_info);
   void PopInputArgsInfoStack();
-  void HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_info, bool is_bprop_top) const;
+  void HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_info, bool is_bprop_top);
   void InitResourceAndDfBuilder(const InputArgsInfoPtr &cell_info);
   void MakeNewTopGraph(const InputArgsInfoPtr &input_args_info);
 
@@ -219,8 +217,6 @@ class GradExecutor {
                               const abstract::AbstractBasePtr &ir_abs) const;
   void UpdateParamAbsByArgs(const std::vector<ValuePtr> &input_args, const FuncGraphPtr &bprop_graph);
   std::vector<size_t> GetGradPositionArgs(const py::object &grad_position, bool get_by_position) const;
-  void SaveForwardTensorForReplace(const ValuePtr &value) const;
-  void SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr &resource) const;
   // Manage resource for construct forward graph.
   AnfNodePtr GetOutputNodeAsInput(const std::string &obj_id) const;
   AnfNodePtr GetValueSequenceInput(const ValuePtr &v, const std::string &obj_id) const;
@@ -233,14 +229,14 @@ class GradExecutor {
   bool init_{false};
   bool grad_flag_{false};
   bool grad_is_running_{false};
-  bool need_renormalize_{false};
   bool eliminate_forward_{true};
   bool save_graphs_{false};
   size_t custom_bprop_cell_count_{0};
   size_t obj_order_{0};
   // If grad_order=1, indicate first derivative; grad_order=2, indicate second derivative; ...
   size_t grad_order_{0};
-  size_t op_num_in_bprop_graph_{0};
+  // Used for auto grad map reserve
+  size_t op_num_in_bprop_graph_{kDefaultContainerSize};
   std::string grad_operation_;
   TopCellInfoPtr top_cell_{nullptr};
   InputArgsInfoPtr top_input_args_info_{nullptr};

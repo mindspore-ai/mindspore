@@ -1745,15 +1745,15 @@ void AnfAlgo::GetRealInputs(const AnfNodePtr &node, std::vector<KernelWithIndex>
   }
 }
 
-bool AnfAlgo::IsControlOpExecInBackend(const AnfNodePtr &node) {
+bool AnfAlgo::IsBpropCutOpExecInBackend(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     return false;
   }
   // Operators in set control_ops_exec_in_backend will be compiled into kernel graph, rather than be cut into single op
   // and executed in VM.
-  static std::set<std::string> control_ops_exec_in_backend = {kBpropCutOpName};
-  return control_ops_exec_in_backend.find(AnfAlgo::GetCNodeName(node)) != control_ops_exec_in_backend.end();
+  static std::set<std::string> bprop_cut_ops_exec_in_backend = {kBpropCutOpName};
+  return bprop_cut_ops_exec_in_backend.find(AnfAlgo::GetCNodeName(node)) != bprop_cut_ops_exec_in_backend.end();
 }
 
 bool AnfAlgo::IsNodeInputContainMonad(const AnfNodePtr &node) {

@@ -584,7 +584,7 @@ bool GetSelectKernelResult(const CNodePtr &kernel_node,
       }
     }
 
-    if (!result && (!common::AnfAlgo::IsControlOpExecInBackend(kernel_node))) {
+    if (!result && (!common::AnfAlgo::IsBpropCutOpExecInBackend(kernel_node))) {
       result = SelectAkgKernel(kernel_node, builder->Build());
       *kernel_type = AKG_KERNEL;
     }
@@ -707,7 +707,7 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
        << common::AnfAlgo::GetCNodeName(kernel_node) << " on GPU currently.";
     return {ss.str(), NotSupportError};
   }
-  if (!result && (!common::AnfAlgo::IsControlOpExecInBackend(kernel_node))) {
+  if (!result && (!common::AnfAlgo::IsBpropCutOpExecInBackend(kernel_node))) {
     builder->SetKernelType(UNKNOWN_KERNEL_TYPE);
     builder->SetProcessor(kernel::Processor::UNKNOWN);
     return PrintUnsupportedTypeWarning(kernel_node, inputs_type, outputs_type, kernel_type);

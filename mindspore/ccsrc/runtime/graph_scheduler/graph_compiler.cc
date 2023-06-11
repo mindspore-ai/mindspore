@@ -246,7 +246,7 @@ bool IsEnableZeroCopy(bool run_in_pynative) {
   }
   return true;
 }
-}  // namespace
+
 void SetRunGraphBySingleOpFlag(const KernelGraphPtr &graph) {
   for (auto &node : graph->execution_order()) {
     MS_EXCEPTION_IF_NULL(node->input(0));
@@ -258,7 +258,7 @@ void SetRunGraphBySingleOpFlag(const KernelGraphPtr &graph) {
       }
     }
     // BpGraph contain bprop_cut node.
-    auto contain_bprop_cut = common::AnfAlgo::IsControlOpExecInBackend(node);
+    auto contain_bprop_cut = common::AnfAlgo::IsBpropCutOpExecInBackend(node);
     if (enable || contain_bprop_cut) {
       MS_LOG(INFO) << "Set kFlagEnableRunGraphBySingleOp: NeedSkipResize:" << enable
                    << "     BpGraph contain bprop_cut node:" << contain_bprop_cut;
@@ -267,6 +267,8 @@ void SetRunGraphBySingleOpFlag(const KernelGraphPtr &graph) {
     }
   }
 }
+}  // namespace
+
 GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs,
                                     const DeviceContext *device_context, device::RunMode run_mode,
                                     bool run_in_pynative) {
@@ -334,7 +336,7 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
 }
 
 GraphId GraphCompiler::CompileDynamicGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs,
-                                           const DeviceContext *device_context) {
+                                           const DeviceContext *device_context, bool has_ms_function_call_graph) {
   MS_EXCEPTION_IF_NULL(session_);
   MS_EXCEPTION_IF_NULL(segment);
   MS_EXCEPTION_IF_NULL(device_context);
@@ -350,13 +352,8 @@ GraphId GraphCompiler::CompileDynamicGraph(const GraphSegmentPtr &segment, const
   MS_LOG(INFO) << "Set kFlagEnableRunGraphBySingleOp: Dynamic shape or dynamic graph structure flag";
   graph->set_flag(kFlagEnableRunGraphBySingleOp, true);
 
-  //  Speedup: OptimizeDynamicGraph(graph, device_context);
-  opt::OptimizationWithoutBackend(graph);
-  // Unify the MindIR, must be before of the graph optimization.
-  auto kernel_executor = device_context->GetKernelExecutor(true);
-  if (kernel_executor != nullptr) {
-    kernel_executor->AddMindIRPass(graph);
-  }
+  graph->SetExecOrderByDefault();
+
   graph->UpdateGraphAquireGilAttr();
   graph->SetInputNodes();
   auto manager = Manage(graph);
@@ -469,8 +466,8 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
     AnfAlgo::UpdateGraphValidRefPair(root_graph);
   } else {
     for (auto &node : root_graph->execution_order()) {
-      if (common::AnfAlgo::IsControlOpExecInBackend(node)) {
-        MS_LOG(INFO) << "Set kFlagEnableRunGraphBySingleOp: IsControlOpExecInBackend";
+      if (common::AnfAlgo::IsBpropCutOpExecInBackend(node)) {
+        MS_LOG(INFO) << "Set kFlagEnableRunGraphBySingleOp: IsBpropCutOpExecInBackend";
         root_graph->set_flag(kFlagEnableRunGraphBySingleOp, true);
       }
     }

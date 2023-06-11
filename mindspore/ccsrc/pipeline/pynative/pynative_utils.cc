@@ -109,7 +109,7 @@ AnfNodePtr Common::ConvertValueSequenceToMakeTuple(const ValueNodePtr &node, con
                       << value_sequence->ToString();
   }
 
-  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimMakeTuple)};
+  AnfNodePtrList inputs{NewValueNode(prim::kPrimMakeTuple)};
   for (const auto &value : value_sequence->value()) {
     MS_EXCEPTION_IF_NULL(value);
     auto value_node = NewValueNode(value);
@@ -350,30 +350,29 @@ void Common::StubNodeToValue(const FrontendOpRunInfoPtr &op_run_info) {
   }
 }
 
-void Common::GetConstInputToAttr(const FrontendOpRunInfoPtr &op_run_info) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  if (op_run_info->base_op_run_info.op_name == prim::kPrimCustom->name()) {
+void Common::GetConstInputToAttr(const PrimitivePtr &op_prim, const std::string &op_name,
+                                 const std::string &device_target, bool is_dynamic_shape,
+                                 mindspore::HashSet<size_t> *input_to_attr_index) {
+  if (op_name == prim::kPrimCustom->name()) {
     // Custom op needs to set reg dynamically
     mindspore::HashSet<size_t> attr_indexes;
-    const PrimitivePtr &op_prim = op_run_info->op_prim;
-    MS_EXCEPTION_IF_NULL(op_prim);
-    opt::GetCustomOpAttrIndex(op_prim, &op_run_info->input_to_attr);
+    opt::GetCustomOpAttrIndex(op_prim, input_to_attr_index);
     return;
   }
 
   // Ascend const input to attr move to AscendVmOpAdapter
-  if (op_run_info->base_op_run_info.device_target == kAscendDevice) {
+  if (device_target == kAscendDevice) {
     return;
   }
 
-  auto reg_info = opt::OpAdaptationInfoRegister::GetInstance().GetOpAdaptationInfo(
-    op_run_info->base_op_run_info.op_name, op_run_info->base_op_run_info.device_target,
-    op_run_info->base_op_run_info.has_dynamic_output || op_run_info->base_op_run_info.use_dynamic_shape_process);
+  auto reg_info =
+    opt::OpAdaptationInfoRegister::GetInstance().GetOpAdaptationInfo(op_name, device_target, is_dynamic_shape);
   if (reg_info == nullptr) {
     return;
   } else {
+    MS_EXCEPTION_IF_NULL(input_to_attr_index);
     for (auto &iter : reg_info->input_attr_map()) {
-      (void)op_run_info->input_to_attr.insert(iter.first);
+      (void)input_to_attr_index->insert(iter.first);
     }
   }
 }
@@ -391,7 +390,10 @@ ValueNodePtr Common::CreateValueNodeByValue(const ValuePtr &v, const abstract::A
 
 tensor::TensorPtr Common::CreateFakeTensorWithoutDeviceAddress(const tensor::TensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
-  auto t = std::make_shared<tensor::Tensor>(*(tensor->cast<tensor::TensorPtr>()));
+  auto t = std::make_shared<tensor::Tensor>(*tensor);
+  if (tensor->is_parameter()) {
+    t->set_param_info(tensor->param_info());
+  }
   t->set_device_address(nullptr);
   return t;
 }
@@ -399,7 +401,11 @@ tensor::TensorPtr Common::CreateFakeTensorWithoutDeviceAddress(const tensor::Ten
 ValuePtr Common::CreateFakeValueWithoutDeviceAddress(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
   if (value->isa<tensor::Tensor>()) {
-    auto t = std::make_shared<tensor::Tensor>(*(value->cast<tensor::TensorPtr>()));
+    const auto &v_t = value->cast<tensor::TensorPtr>();
+    auto t = std::make_shared<tensor::Tensor>(*v_t);
+    if (v_t->is_parameter()) {
+      t->set_param_info(v_t->param_info());
+    }
     t->set_device_address(nullptr);
     return t;
   } else if (value->isa<ValueSequence>()) {
@@ -425,19 +431,33 @@ TensorGradType Common::SetValueGradInfo(const ValuePtr &value, const TopCellInfo
       return tensor_value->auto_grad_meta_data()->grad_type();
     }
     const auto &auto_grad_meta_data = std::make_shared<AutoGradMetaData>();
-    if (tensor_value->is_parameter()) {
+    if (tensor_value->is_parameter() && grad_type != TensorGradType::kInput) {
       grad_type = TensorGradType::kParameter;
     }
     auto_grad_meta_data->set_grad_type(grad_type);
     tensor_value->set_auto_grad_meta_data(auto_grad_meta_data);
-    if (top_cell != nullptr && PyNativeAlgo::Common::IsParamTensor(grad_type)) {
+    if (top_cell != nullptr && PyNativeAlgo::Common::IsParam(grad_type)) {
       top_cell->AddParamGradInfo(tensor_value, auto_grad_meta_data);
     }
+    return grad_type;
   } else if (value->isa<ValueSequence>()) {
     const auto &value_seq = value->cast<ValueSequencePtr>()->value();
+    TensorGradType ret_type = grad_type;
     for (const auto &v : value_seq) {
-      SetValueGradInfo(v, top_cell, grad_type);
+      auto ret = SetValueGradInfo(v, top_cell, grad_type);
+      if (PyNativeAlgo::Common::IsParam(ret)) {
+        ret_type = ret;
+      }
     }
+    return ret_type;
+  } else if (value->isa<tensor::COOTensor>()) {
+    const auto &coo_tensor = value->cast<tensor::COOTensorPtr>();
+    const auto &indices_tensor = coo_tensor->GetIndices();
+    return SetValueGradInfo(indices_tensor, top_cell, grad_type);
+  } else if (value->isa<tensor::CSRTensor>()) {
+    const auto &csr_tensor = value->cast<tensor::CSRTensorPtr>();
+    const auto &indices_tensor = csr_tensor->GetIndices();
+    return SetValueGradInfo(indices_tensor, top_cell, grad_type);
   }
   return grad_type;
 }
@@ -453,12 +473,41 @@ TensorGradType Common::SetTensorGradInfo(const tensor::TensorPtr &tensor, const 
   // Set weight tensor grad type
   if (tensor->is_parameter()) {
     auto_grad_meta_data->set_grad_type(TensorGradType::kParameter);
-    MS_EXCEPTION_IF_NULL(top_cell);
-    top_cell->AddParamGradInfo(tensor, auto_grad_meta_data);
+    if (top_cell != nullptr) {
+      top_cell->AddParamGradInfo(tensor, auto_grad_meta_data);
+    }
     return TensorGradType::kParameter;
   }
   // Is a constant input tensor, but not constant scalar value
   return TensorGradType::kConstant;
+}
+
+void Common::SetGraphInputAndWeightsInfo(const FrontendOpRunInfoPtr &op_run_info, const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  const auto &original_params = func_graph->parameters();
+  size_t params_size = original_params.size();
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  bool need_add_input_abs = op_run_info->input_abs.empty();
+  for (size_t i = 0; i < params_size; ++i) {
+    if (i < op_run_info->input_size) {  // non-weights node.
+      op_run_info->input_value_grad_type[i] =
+        SetValueGradInfo(op_run_info->input_value[i], nullptr, TensorGradType::kConstant);
+      if (need_add_input_abs) {
+        (void)op_run_info->input_abs.emplace_back(original_params[i]->abstract());
+      }
+      continue;
+    }
+    // Must weight param
+    const auto &param = original_params[i]->cast<ParameterPtr>();
+    const auto tensor_value = PyNativeAlgo::Common::GetTensorFromParam(original_params[i]);
+    MS_EXCEPTION_IF_NULL(tensor_value);
+    (void)op_run_info->input_value.emplace_back(tensor_value);
+    (void)op_run_info->input_value_grad_type.emplace_back(
+      PyNativeAlgo::Common::SetTensorGradInfo(tensor_value, nullptr));
+    (void)op_run_info->input_abs.emplace_back(param->abstract());
+    MS_LOG(DEBUG) << "Set graph weight parameter " << param->DebugString() << ". Its default value is "
+                  << tensor_value->ToString() << ". Its name is: " << param->name();
+  }
 }
 
 std::string PyParser::GetIdByPyObj(const py::object &obj) {
@@ -696,7 +745,7 @@ void DataConvert::PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_in
     }
     if (op_run_info->grad_flag) {
       auto grad_type = Common::SetTensorGradInfo(tensor, top_cell);
-      if (PyNativeAlgo::Common::IsParamTensor(grad_type)) {
+      if (PyNativeAlgo::Common::IsParam(grad_type)) {
         op_run_info->input_value_grad_type[index] = TensorGradType::kParameter;
       }
       if (op_run_info->input_unused_in_bprop[index]) {
@@ -786,7 +835,7 @@ void DataConvert::ConvertCSRTensorToTensorList(const FrontendOpRunInfoPtr &op_ru
     for (int i = 0; i < input_num; ++i) {
       auto iter = op_run_info->base_op_run_info.input_tensor.rbegin() + i;
       auto grad_type = Common::SetTensorGradInfo(*iter, top_cell);
-      if (PyNativeAlgo::Common::IsParamTensor(grad_type)) {
+      if (PyNativeAlgo::Common::IsParam(grad_type)) {
         op_run_info->input_value_grad_type[index] = TensorGradType::kParameter;
       }
     }
