@@ -1,7 +1,7 @@
 mindspore.ops.MaxPool3DWithArgmax
 =================================
 
-.. py:class:: mindspore.ops.MaxPool3DWithArgmax(ksize, strides, pads, dilation=(1, 1, 1), ceil_mode=False, data_format="NCDHW", argmax_type=mstype.int64)
+.. py:class:: mindspore.ops.MaxPool3DWithArgmax(ksize, strides, pads, dilation=(1, 1, 1), ceil_mode=False, data_format='NCDHW', argmax_type=mstype.int64)
 
     三维最大值池化，返回最大值结果及其索引值。
 
@@ -35,7 +35,7 @@ mindspore.ops.MaxPool3DWithArgmax
         - **dilation** (Union[int, tuple[int]]) - 控制池化核内元素的间距。默认为(1, 1, 1)。
         - **ceil_mode** (bool) - 是否使用ceil代替floor来计算输出的shape。默认为False。
         - **data_format** (str) - 选择输入数据格式，当前仅支持'NCDHW'。默认为'NCDHW'。
-        - **argmax_type** (mindspore.dtype) - 返回的最大值索引的数据类型。默认为mindspore.int64。
+        - **argmax_type** (mindspore.dtype) - 返回的最大值索引的数据类型。默认为mstype.int64。
 
     输入：
         - **x** (Tensor) - shape为 :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` 的Tensor。支持数据类型包括int8、int16、int32、int64、uint8、uint16、uint32、uint64、float16、float32和float64。
@@ -53,4 +53,4 @@ mindspore.ops.MaxPool3DWithArgmax
         - **ValueError** - `ksize` 或 `strides` 的元素值小于1。
         - **ValueError** - `pads` 的元素值小于0。
         - **ValueError** - `data_format` 不是'NCDHW'。
-        - **ValueError** - `argmax_type` 不是mindspore.int64或mindspore.int32。
+        - **ValueError** - `argmax_type` 不是mstype.int64或mstype.int32。
