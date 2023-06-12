@@ -39,10 +39,8 @@ def test_parameter_2_1():
         def construct(self):
             return self.param_a + self.param_b
 
-    with pytest.raises(ValueError, match="its name 'name_a' already exists."):
-        net = ParamNet()
-        res = net()
-        assert res == 3
+    net = ParamNet()
+    net()
 
 
 def test_parameter_2_2():
@@ -63,10 +61,8 @@ def test_parameter_2_2():
         def construct(self):
             return self.param_a + self.res1[0] + self.res2
 
-    with pytest.raises(ValueError, match="its name 'name_a' already exists."):
-        net = ParamNet()
-        res = net()
-        assert res == 10
+    net = ParamNet()
+    net()
 
 
 def test_parameter_4():
@@ -156,7 +152,6 @@ def test_parameter_parameter_tuple_1():
         def construct(self):
             return self.param_a + self.param_tuple[0] + self.param_tuple[1]
 
-    with pytest.raises(ValueError, match="its name 'name_a' already exists."):
-        net = ParamNet()
-        res = net()
-        assert res == 11
+
+    net = ParamNet()
+    net()

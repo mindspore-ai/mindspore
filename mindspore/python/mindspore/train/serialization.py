@@ -1193,13 +1193,20 @@ def _load_dismatch_prefix_params(net, parameter_dict, param_not_load, strict_loa
     """When some net parameter did not load, try to continue loading."""
     prefix_name = ""
     longest_name = param_not_load[0]
+    delete_name = False
+    add_name = False
     while prefix_name != longest_name and param_not_load:
         logger.debug("Count: {} parameters has not been loaded, try to continue loading.".format(len(param_not_load)))
         prefix_name = longest_name
         for net_param_name in param_not_load:
             for dict_name in parameter_dict:
                 if dict_name.endswith(net_param_name):
+                    add_name = True
                     prefix_name = dict_name[:-len(net_param_name)]
+                    break
+                if net_param_name.endswith(dict_name):
+                    delete_name = True
+                    prefix_name = net_param_name[:-len(dict_name)]
                     break
             if prefix_name != longest_name:
                 break
@@ -1208,7 +1215,10 @@ def _load_dismatch_prefix_params(net, parameter_dict, param_not_load, strict_loa
             logger.warning(f"For 'load_param_into_net', remove parameter prefix name: {prefix_name},"
                            f" continue to load.")
             for _, param in net.parameters_and_names():
-                new_param_name = prefix_name + param.name
+                if add_name:
+                    new_param_name = prefix_name + param.name
+                if delete_name and prefix_name in param.name:
+                    new_param_name = param.name.split(prefix_name)[1]
                 if param.name in param_not_load and new_param_name in parameter_dict:
                     new_param = parameter_dict[new_param_name]
                     _update_param(param, new_param, strict_load)
