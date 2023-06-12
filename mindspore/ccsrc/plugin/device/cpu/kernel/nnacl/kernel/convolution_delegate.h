@@ -23,12 +23,12 @@
 #include "nnacl/conv_parameter.h"
 
 typedef struct ConvolutionDelegateStruct {
-  ConvolutionBaseStruct conv_;
+  ConvolutionBaseStruct conv_;         /* used for Conv2dFusion basic operator */
+  ConvolutionBaseStruct *convolution_; /* real running conv */
   float *origin_weight_;
   float *origin_bias_;
   bool need_free_weight_;
   bool need_free_bias_;
-  ConvolutionBaseStruct *convolution_;
 } ConvolutionDelegateStruct;
 
 KernelBase *CreateConvlutionDelegate(ConvParameter *conv_param);

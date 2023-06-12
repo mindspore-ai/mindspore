@@ -26,6 +26,7 @@
 
 #define CONVOLUTION_WINOGRAD_MATRIX_SIZE 64
 #define CONVOLUTION_WINOGRAD_TMP_BUFFER_SIZE 5
+#define CONVOLUTION_WINOGRAD_INPUT_UNIT_SIZE 8
 
 typedef float *TmpBufferAddress;
 
@@ -54,6 +55,7 @@ typedef struct ConvolutionWinogradBaseStruct {
 void ConvWinoBasePackWeight(ConvolutionBaseStruct *conv);
 int ConvWinoBaseConfigInputOutput(ConvolutionWinogradBaseStruct *winograd);
 int ConvWinoBaseRunImpl(ConvolutionBaseStruct *conv, int task_id);
+int ConvWinoBaseMallocWeightBiasData(ConvolutionBaseStruct *conv);
 int convolution_winograd_base_prepare(KernelBase *self);
 int convolution_winograd_base_resize(KernelBase *self);
 int convolution_winograd_base_release(KernelBase *self);

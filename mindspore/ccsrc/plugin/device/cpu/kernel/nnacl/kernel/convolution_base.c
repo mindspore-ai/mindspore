@@ -36,31 +36,6 @@ void ConvBaseRelease(ConvolutionBaseStruct *conv) {
 int ConvBasePrepare(ConvolutionBaseStruct *conv) {
   NNACL_CHECK_FALSE(conv->base_.in_size_ < TWO_TENSOR, NNACL_INPUT_TENSOR_ERROR);
   NNACL_CHECK_FALSE(conv->base_.out_size_ < ONE_TENSOR, NNACL_OUTPUT_TENSOR_ERROR);
-
-  TensorC *input = conv->base_.in_[FIRST_INPUT];
-  NNACL_CHECK_NULL_RETURN_ERR(input);
-  NNACL_CHECK_FALSE(input->shape_size_ != DIMENSION_4D, NNACL_INPUT_TENSOR_ERROR);
-  conv->input_b_ = GetBatch(input);
-  conv->input_h_ = GetHeight(input);
-  conv->input_w_ = GetWidth(input);
-  conv->input_c_ = GetChannel(input);
-  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv->input_h_, conv->input_w_, NNACL_CONVOLUTION_INPUT_HW_OVERFLOW);
-
-  TensorC *output = conv->base_.out_[OUTPUT_INDEX];
-  NNACL_CHECK_NULL_RETURN_ERR(output);
-  NNACL_CHECK_FALSE(output->shape_size_ != DIMENSION_4D, NNACL_OUTPUT_TENSOR_ERROR);
-  conv->output_b_ = GetBatch(output);
-  conv->output_h_ = GetHeight(output);
-  conv->output_w_ = GetWidth(output);
-  conv->output_c_ = GetChannel(output);
-  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv->output_h_, conv->output_w_, NNACL_CONVOLUTION_INPUT_HW_OVERFLOW);
-
-  TensorC *filter = conv->base_.in_[SECOND_INPUT];
-  NNACL_CHECK_NULL_RETURN_ERR(filter);
-  conv->kernel_h_ = GetHeight(filter);
-  conv->kernel_w_ = GetWidth(filter);
-  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv->kernel_h_, conv->kernel_w_, NNACL_CONVOLUTION_KERNEL_HW_OVERFLOW);
-
   return NNACL_OK;
 }
 

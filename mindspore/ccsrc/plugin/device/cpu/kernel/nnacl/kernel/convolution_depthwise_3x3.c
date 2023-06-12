@@ -24,17 +24,17 @@ int ConvDw3x3Run(void *cdata, int task_id, float l, float r) {
   ConvolutionDepthwise3x3Struct *conv_dw = (ConvolutionDepthwise3x3Struct *)cdata;
   NNACL_CHECK_NULL_RETURN_ERR(conv_dw);
 
-  int units = UP_DIV(conv_dw->conv_.output_w_, C2NUM);  // F(2, 3) contains 2 conv units
-  int c4 = UP_ROUND(conv_dw->conv_.input_c_, C4NUM);
+  int units = UP_DIV(conv_dw->conv_.compute_.out_w_, C2NUM);  // F(2, 3) contains 2 conv units
+  int c4 = UP_ROUND(conv_dw->conv_.compute_.in_c_, C4NUM);
   int c12c4_units = C12NUM * c4 * units;
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(c12c4_units, task_id, NNACL_ERR);
   float *buffer = conv_dw->buffer_ + c12c4_units * task_id;
   NNACL_CHECK_ZERO_RETURN_ERR(conv_dw->conv_.base_.thread_nr_);
 
-  int step_oh = UP_DIV(conv_dw->conv_.output_h_, conv_dw->conv_.base_.thread_nr_);
+  int step_oh = UP_DIV(conv_dw->conv_.compute_.out_h_, conv_dw->conv_.base_.thread_nr_);
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(step_oh, task_id, NNACL_ERR);
   int start_oh = step_oh * task_id;
-  int end_oh = MSMIN(start_oh + step_oh, conv_dw->conv_.output_h_);
+  int end_oh = MSMIN(start_oh + step_oh, conv_dw->conv_.compute_.out_h_);
 
   ConvParameter *conv_param = (ConvParameter *)conv_dw->conv_.base_.param_;
   NNACL_CHECK_NULL_RETURN_ERR(conv_param);
@@ -46,11 +46,11 @@ int ConvDw3x3Run(void *cdata, int task_id, float l, float r) {
 void ConvDw3x3PackWeight(ConvolutionBaseStruct *conv) {
   void *origin_weight = (conv->base_.train_session_) ? conv->base_.in_[SECOND_INPUT]->data_ : conv->origin_weight_;
   NNACL_CHECK_NULL_RETURN_VOID(origin_weight);
-  PackWeightConvDw3x3Fp32((float *)origin_weight, (float *)conv->packed_weight_, conv->output_c_);
+  PackWeightConvDw3x3Fp32((float *)origin_weight, (float *)conv->packed_weight_, conv->compute_.out_c_);
 }
 
 int ConvDw3x3MallocWeightBiasData(ConvolutionBaseStruct *conv) {
-  int c4 = UP_ROUND(conv->output_c_, C4NUM);
+  int c4 = UP_ROUND(conv->compute_.out_c_, C4NUM);
   if (!conv->base_.train_session_) {
     if (conv->packed_weight_ == NULL) {
       int pack_weight_size = c4 * C12NUM;
@@ -76,7 +76,7 @@ int convolution_depthwise_3x3_resize(KernelBase *self) {
   if (ret != NNACL_OK) {
     return ret;
   }
-  self->thread_nr_ = NNACL_MIN(self->thread_nr_, conv->output_h_);
+  self->thread_nr_ = NNACL_MIN(self->thread_nr_, conv->compute_.out_h_);
   return NNACL_OK;
 }
 
@@ -90,7 +90,7 @@ int convolution_depthwise_3x3_prepare(KernelBase *self) {
   ConvBaseUpdateOriginWeightAndBias(&conv_dw->conv_);
 
   if (self->train_session_) {
-    int c4 = UP_ROUND(conv_dw->conv_.output_c_, C4NUM);
+    int c4 = UP_ROUND(conv_dw->conv_.compute_.out_c_, C4NUM);
     NNACL_CHECK_INT_MUL_NOT_OVERFLOW(c4, C12NUM, NNACL_ERR);
     int pack_weight_size = c4 * C12NUM;
     self->work_size_ = pack_weight_size * sizeof(float);
@@ -103,8 +103,8 @@ int convolution_depthwise_3x3_compute(KernelBase *self) {
   ConvolutionDepthwise3x3Struct *conv_dw = (ConvolutionDepthwise3x3Struct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(conv_dw);
 
-  int units = UP_DIV(conv_dw->conv_.output_w_, C2NUM);  // F(2, 3) contains 2 conv units
-  int c4 = UP_ROUND(conv_dw->conv_.input_c_, C4NUM);
+  int units = UP_DIV(conv_dw->conv_.compute_.out_w_, C2NUM);  // F(2, 3) contains 2 conv units
+  int c4 = UP_ROUND(conv_dw->conv_.compute_.in_c_, C4NUM);
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(C12NUM, c4, NNACL_ERR);
   int c12c4 = C12NUM * c4;
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(c12c4, units, NNACL_ERR);

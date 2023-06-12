@@ -20,15 +20,15 @@
 #include "nnacl/fp32/pack_fp32.h"
 
 int ConvDwSWMallocWeightBiasData(ConvolutionBaseStruct *conv) {
-  int OC4 = UP_DIV(conv->output_c_, C4NUM);
-  int pack_weight_size = C4NUM * OC4 * conv->kernel_h_ * conv->kernel_w_;
+  int OC4 = UP_DIV(conv->compute_.out_c_, C4NUM);
+  int pack_weight_size = C4NUM * OC4 * conv->compute_.kernel_hw_;
   if (!conv->base_.train_session_) {
     NNACL_CHECK_MALLOC_SIZE(pack_weight_size * sizeof(float));
     conv->packed_weight_ = ConvBaseGetConvPackWeightData(conv, pack_weight_size * sizeof(float));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv->packed_weight_);
   }
 
-  int malloc_size = NNACL_MAX(conv->output_c_, C4NUM * OC4);
+  int malloc_size = NNACL_MAX(conv->compute_.out_c_, C4NUM * OC4);
   if (conv->bias_data_ == NULL) {
     NNACL_CHECK_MALLOC_SIZE(malloc_size * sizeof(float));
     conv->bias_data_ = conv->base_.env_->alloc(conv->base_.env_->allocator_, malloc_size * sizeof(float));
@@ -40,16 +40,15 @@ int ConvDwSWMallocWeightBiasData(ConvolutionBaseStruct *conv) {
 }
 
 int ConvDwSWInitPackedInputOutput(ConvolutionDepthwiseSWStruct *conv_dw) {
-  if (conv_dw->conv_.input_c_ % C4NUM == 0) {
+  if (conv_dw->conv_.compute_.in_c_ % C4NUM == 0) {
     conv_dw->need_align_ = false;
     return NNACL_OK;
   }
 
   conv_dw->need_align_ = true;
-  int IC4 = UP_DIV(conv_dw->conv_.input_c_, C4NUM);
-  int conv_input_hw = conv_dw->conv_.input_h_ * conv_dw->conv_.input_w_;
-  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_dw->conv_.input_b_, conv_input_hw, NNACL_ERR);
-  int conv_input_bhw = conv_dw->conv_.input_b_ * conv_input_hw;
+  int IC4 = UP_DIV(conv_dw->conv_.compute_.in_c_, C4NUM);
+  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_dw->conv_.compute_.in_n_, conv_dw->conv_.compute_.in_hw_, NNACL_ERR);
+  int conv_input_bhw = conv_dw->conv_.compute_.in_n_ * conv_dw->conv_.compute_.in_hw_;
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_input_bhw, C4NUM * IC4, NNACL_ERR);
   int pack_input_size = conv_input_bhw * C4NUM * IC4;
   NNACL_CHECK_MALLOC_SIZE(pack_input_size * sizeof(float));
@@ -57,10 +56,9 @@ int ConvDwSWInitPackedInputOutput(ConvolutionDepthwiseSWStruct *conv_dw) {
     (float *)conv_dw->conv_.base_.env_->alloc(conv_dw->conv_.base_.env_->allocator_, pack_input_size * sizeof(float));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_dw->packed_input_);
 
-  int OC4 = UP_DIV(conv_dw->conv_.output_c_, C4NUM);
-  int output_hw = conv_dw->conv_.output_h_ * conv_dw->conv_.output_w_;
-  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_dw->conv_.output_b_, output_hw, NNACL_ERR);
-  int output_bhw = conv_dw->conv_.output_b_ * output_hw;
+  int OC4 = UP_DIV(conv_dw->conv_.compute_.out_c_, C4NUM);
+  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_dw->conv_.compute_.out_n_, conv_dw->conv_.compute_.out_hw_, NNACL_ERR);
+  int output_bhw = conv_dw->conv_.compute_.out_n_ * conv_dw->conv_.compute_.out_hw_;
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(output_bhw, C4NUM * OC4, NNACL_ERR);
   int pack_output_size = output_bhw * C4NUM * OC4;
   NNACL_CHECK_MALLOC_SIZE(pack_output_size * sizeof(float));
@@ -93,8 +91,7 @@ void ConvDwSWFreePackedInputOutput(ConvolutionDepthwiseSWStruct *conv_dw) {
 void ConvDwSWPackWeight(ConvolutionBaseStruct *conv) {
   void *origin_weight = (conv->base_.train_session_) ? conv->base_.in_[SECOND_INPUT]->data_ : conv->origin_weight_;
   NNACL_CHECK_NULL_RETURN_VOID(origin_weight);
-  PackNCHWToNC4HW4Fp32((float *)origin_weight, (float *)conv->packed_weight_, 1, conv->kernel_h_ * conv->kernel_w_,
-                       conv->output_c_);
+  PackNCHWToNC4HW4Fp32(origin_weight, conv->packed_weight_, 1, conv->compute_.kernel_hw_, conv->compute_.out_c_);
 }
 
 int convolution_depthwise_sw_resize(KernelBase *self) {
@@ -109,7 +106,7 @@ int convolution_depthwise_sw_resize(KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(conv_param);
   InitSlidingParamConvDw(&conv_dw->sliding_, conv_param, C4NUM);
 
-  self->thread_nr_ = NNACL_MIN(self->thread_nr_, conv_dw->conv_.output_h_);
+  self->thread_nr_ = NNACL_MIN(self->thread_nr_, conv_dw->conv_.compute_.out_h_);
   NNACL_CHECK_ZERO_RETURN_ERR(self->thread_nr_);
   return NNACL_OK;
 }
@@ -135,8 +132,8 @@ int convolution_depthwise_sw_compute(KernelBase *self) {
   float *input_ptr = (float *)input_tensor->data_;
   NNACL_CHECK_NULL_RETURN_ERR(input_ptr);
   if (conv_dw->need_align_) {
-    PackNHWCToNHWC4Fp32(input_ptr, conv_dw->packed_input_, conv_dw->conv_.input_b_,
-                        conv_dw->conv_.input_h_ * conv_dw->conv_.input_w_, conv_dw->conv_.input_c_);
+    PackNHWCToNHWC4Fp32(input_ptr, conv_dw->packed_input_, conv_dw->conv_.compute_.in_n_,
+                        conv_dw->conv_.compute_.in_hw_, conv_dw->conv_.compute_.in_c_);
   } else {
     conv_dw->packed_input_ = input_ptr;
   }
@@ -152,8 +149,8 @@ int convolution_depthwise_sw_compute(KernelBase *self) {
   ret = self->env_->parallel_launch(self->env_->thread_pool_, ConvDwSWRun, self, self->thread_nr_);
 
   if (conv_dw->need_align_) {
-    PackNHWCXToNHWCFp32(conv_dw->packed_output_, output_ptr, conv_dw->conv_.output_b_,
-                        conv_dw->conv_.output_h_ * conv_dw->conv_.output_w_, conv_dw->conv_.output_c_, C4NUM);
+    PackNHWCXToNHWCFp32(conv_dw->packed_output_, output_ptr, conv_dw->conv_.compute_.out_n_,
+                        conv_dw->conv_.compute_.out_hw_, conv_dw->conv_.compute_.out_c_, C4NUM);
   }
 
   ConvDwSWFreePackedInputOutput(conv_dw);
@@ -172,10 +169,9 @@ int convolution_depthwise_sw_prepare(KernelBase *self) {
   ConvBaseUpdateOriginWeightAndBias(&conv_dw->conv_);
 
   if (self->train_session_) {
-    int OC4 = UP_DIV(conv_dw->conv_.output_c_, C4NUM);
-    int weight_size_hw = conv_dw->conv_.kernel_h_ * conv_dw->conv_.kernel_w_;
-    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(C4NUM * OC4, weight_size_hw, NNACL_ERR);
-    int pack_weight_size = C4NUM * OC4 * weight_size_hw;
+    int OC4 = UP_DIV(conv_dw->conv_.compute_.out_c_, C4NUM);
+    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(C4NUM * OC4, conv_dw->conv_.compute_.kernel_hw_, NNACL_ERR);
+    int pack_weight_size = C4NUM * OC4 * conv_dw->conv_.compute_.kernel_hw_;
     self->work_size_ = pack_weight_size * sizeof(float);
   }
 
