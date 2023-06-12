@@ -536,9 +536,9 @@ def set_auto_parallel_context(**kwargs):
 
     Some configurations are parallel mode specific, see the below table for details:
 
-    =========================  =========================
+    ===========================  ===========================
              Common                  AUTO_PARALLEL
-    =========================  =========================
+    ===========================  ===========================
     device_num                   gradient_fp32_sync
     global_rank                  loss_repeated_mean
     gradients_mean               search_mode
@@ -968,7 +968,9 @@ def set_context(**kwargs):
             Memory reuse:
 
             - mem_Reuse: controls whether the memory reuse function is turned on. When set to True,
-            - the memory reuse function is turned on. When set to False, the memory reuse function is turned off.
+              the memory reuse function is turned on. When set to False, the memory reuse function is turned off.
+              For more details, please refer to `Configure RDR and memory reuse
+              <https://www.mindspore.cn/tutorials/experts/en/r1.11/debug/custom_debug.html>`_ .
 
         precompile_only (bool): Whether to only precompile the network. Default: False.
             If set to True, the network will only be compiled, not executed.
@@ -995,7 +997,7 @@ def set_context(**kwargs):
             If enable_graph_kernel is set to True, acceleration can be enabled.
             For details of graph kernel fusion, please check
             `Enabling Graph Kernel Fusion
-            <https://www.mindspore.cn/tutorials/experts/en/r2.0/debug/graph_fusion_engine.html>`_.
+            <https://www.mindspore.cn/tutorials/experts/en/r1.11/debug/graph_fusion_engine.html>`_.
         graph_kernel_flags (str):
             Optimization options of graph kernel fusion, and the priority is higher when it conflicts
             with enable_graph_kernel. Only for experienced users.

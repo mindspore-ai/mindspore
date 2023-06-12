@@ -172,8 +172,8 @@ class AdaptiveAvgPool3D(Primitive):
     Refer to :func:`mindspore.ops.adaptive_avg_pool3d` for more details.
 
     Args:
-        - output_size (Union[int, tuple]) - Specify the size of output tensor. It
-          can be a single int or a tuple of three ints.
+        output_size (Union[int, tuple]): Specify the size of output tensor. It
+            can be a single int or a tuple of three ints.
 
     Inputs:
         - **x** (Tensor) - The input of AdaptiveAvgPool3D, which is a 5D or 4D tensor.
@@ -564,7 +564,7 @@ class ReLU(Primitive):
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
           additional dimensions, data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+          `number <https://www.mindspore.cn/docs/en/r1.11/api_python/mindspore.html#mindspore.dtype>`_.
 
     Outputs:
         Tensor of shape :math:`(N, *)`, with the same dtype and shape as the `input_x`.
@@ -601,7 +601,7 @@ class ReLUV3(Primitive):
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
           additional dimensions, data type is
-          `number <https://www.mindspore.cn/docs/en/r2.0/api_python/mindspore.html#mindspore.dtype>`_.
+          `number <https://www.mindspore.cn/docs/en/r1.11/api_python/mindspore.html#mindspore.dtype>`_.
 
     Outputs:
         Tensor of shape :math:`(N, *)`, with the same type and shape as the `input_x`.
@@ -3119,8 +3119,8 @@ class MultiMarginLoss(Primitive):
           support float16, float32 or float64.
 
     Outputs:
-        Tensor, When `reduction` is "none", the shape is :math:`(N,)`.
-        Otherwise, it is a scalar. Has the same data type with `inputs`.
+        - **outputs** (Tensor) - When `reduction` is "none", the shape is :math:`(N,)`.
+          Otherwise, it is a scalar. Has the same data type with `inputs`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3864,7 +3864,6 @@ class UpsampleTrilinear3D(Primitive):
             [1.5  1.75 2.25 2.5 ]
             [2.5  2.75 3.25 3.5 ]
             [3.   3.25 3.75 4.  ]]
-
            [[1.   1.25 1.75 2.  ]
             [1.5  1.75 2.25 2.5 ]
             [2.5  2.75 3.25 3.5 ]

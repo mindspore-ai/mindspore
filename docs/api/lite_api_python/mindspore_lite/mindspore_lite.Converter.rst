@@ -11,7 +11,7 @@ mindspore_lite.Converter
 
     2. 将MindSpore模型转换生成MindSpore模型或MindSpore Lite模型。
 
-    推荐转换为MindSpore模型。目前，支持转换为MindSpore Lite模型，但是该选项将会被废弃。如有需要，请使用 `推理模型离线转换 <https://www.mindspore.cn/lite/docs/zh-CN/r2.0/use/cloud_infer/converter_tool.html>`_ 来替换Python接口。Model接口和ModelParallelRunner接口只支持MindSpore模型。
+    推荐转换为MindSpore模型。目前，支持转换为MindSpore Lite模型，但是该选项将会被废弃。如有需要，请使用 `推理模型离线转换 <https://www.mindspore.cn/lite/docs/zh-CN/r1.11/use/cloud_infer/converter_tool.html>`_ 来替换Python接口。Model接口和ModelParallelRunner接口只支持MindSpore模型。
 
     .. note::
         请先构造Converter类，再通过执行Converter.convert()方法生成模型。
@@ -23,11 +23,11 @@ mindspore_lite.Converter
         执行转换，将第三方模型转换为MindSpore模型或MindSpore Lite模型。
 
         参数：
-            - **fmk_type** (FmkType) - 输入模型框架类型。选项有FmkType.TF | FmkType.CAFFE | FmkType.ONNX | FmkType.MINDIR | FmkType.TFLITE | FmkType.PYTORCH。有关详细信息，请参见 `框架类型 <https://mindspore.cn/lite/api/zh-CN/r2.0/mindspore_lite/mindspore_lite.FmkType.html>`_ 。
+            - **fmk_type** (FmkType) - 输入模型框架类型。选项有FmkType.TF | FmkType.CAFFE | FmkType.ONNX | FmkType.MINDIR | FmkType.TFLITE | FmkType.PYTORCH。有关详细信息，请参见 `框架类型 <https://mindspore.cn/lite/api/zh-CN/r1.11/mindspore_lite/mindspore_lite.FmkType.html>`_ 。
             - **model_file** (str) - 转换时的输入模型文件路径。例如："/home/user/model.prototxt"。选项有TF: "model.pb" | CAFFE: "model.prototxt" | ONNX: "model.onnx" | MINDIR: "model.mindir" | TFLITE: "model.tflite" | PYTORCH: "model.pt or model.pth"。
             - **output_file** (str) - 转换时的输出模型文件路径。可自动生成.ms或.mindir后缀。如果将 `save_type` 设置为ModelType.MINDIR，那么将生成MindSpore模型，该模型使用.mindir作为后缀。如果将 `save_type` 设置为ModelType.MINDIR_LITE，那么将生成MindSpore Lite模型，该模型使用.ms作为后缀。例如：输入模型为"/home/user/model.prototxt"，将 `save_type` 设置为ModelType.MINDIR，它将生成名为model.prototxt.mindir的模型在/home/user/路径下。
             - **weight_file** (str，可选) - 输入模型权重文件。仅当输入模型框架类型为FmkType.CAFFE时必选，Caffe模型一般分为两个文件： `model.prototxt` 是模型结构，对应 `model_file` 参数； `model.caffemodel` 是模型权值文件，对应 `weight_file` 参数。例如："/home/user/model.caffemodel"。默认值：""，表示无模型权重文件。
-            - **config_file** (str，可选) - Converter的配置文件，可配置训练后量化或离线拆分算子并行或禁用算子融合功能并将插件设置为so路径等功能。 `config_file` 配置文件采用 `key = value` 的方式定义相关参数，有关训练后量化的配置参数，请参见 `训练后量化 <https://www.mindspore.cn/lite/docs/zh-CN/r2.0/use/post_training_quantization.html>`_ 。有关扩展的配置参数，请参见 `扩展配置 <https://www.mindspore.cn/lite/docs/zh-CN/r2.0/use/nnie.html#扩展配置>`_ 。例如："/home/user/model.cfg"。默认值：""，表示不设置Converter的配置文件。
+            - **config_file** (str，可选) - Converter的配置文件，可配置训练后量化或离线拆分算子并行或禁用算子融合功能并将插件设置为so路径等功能。 `config_file` 配置文件采用 `key = value` 的方式定义相关参数，有关训练后量化的配置参数，请参见 `训练后量化 <https://www.mindspore.cn/lite/docs/zh-CN/r1.11/use/post_training_quantization.html>`_ 。有关扩展的配置参数，请参见 `扩展配置 <https://www.mindspore.cn/lite/docs/zh-CN/r1.11/use/nnie.html#扩展配置>`_ 。例如："/home/user/model.cfg"。默认值：""，表示不设置Converter的配置文件。
 
         异常：
             - **TypeError** - `fmk_type` 不是FmkType类型。
@@ -101,7 +101,7 @@ mindspore_lite.Converter
         获取量化模型输入Tensor的数据类型。
 
         返回：
-            DataType，量化模型输入Tensor的数据类型。仅当模型输入Tensor的量化参数（ `scale` 和 `zero point` ）都具备时有效。默认与原始模型输入Tensor的data type保持一致。支持以下4种数据类型：DataType.FLOAT32 | DataType.INT8 | DataType.UINT8 | DataType.UNKNOWN。默认值：DataType.FLOAT32。有关详细信息，请参见 `数据类型 <https://mindspore.cn/lite/api/zh-CN/r2.0/mindspore_lite/mindspore_lite.DataType.html>`_ 。
+            DataType，量化模型输入Tensor的数据类型。仅当模型输入Tensor的量化参数（ `scale` 和 `zero point` ）都具备时有效。默认与原始模型输入Tensor的data type保持一致。支持以下4种数据类型：DataType.FLOAT32 | DataType.INT8 | DataType.UINT8 | DataType.UNKNOWN。默认值：DataType.FLOAT32。有关详细信息，请参见 `数据类型 <https://mindspore.cn/lite/api/zh-CN/r1.11/mindspore_lite/mindspore_lite.DataType.html>`_ 。
 
             - **DataType.FLOAT32** - 32位浮点数。
             - **DataType.INT8**    - 8位整型数。
@@ -114,7 +114,7 @@ mindspore_lite.Converter
         获取模型的输入format。
 
         返回：
-            Format，模型的输入format。仅对四维输入有效。支持以下2种输入格式：Format.NCHW | Format.NHWC。默认值：Format.NHWC。有关详细信息，请参见 `数据格式 <https://mindspore.cn/lite/api/zh-CN/r2.0/mindspore_lite/mindspore_lite.Format.html>`_ 。
+            Format，模型的输入format。仅对四维输入有效。支持以下2种输入格式：Format.NCHW | Format.NHWC。默认值：Format.NHWC。有关详细信息，请参见 `数据格式 <https://mindspore.cn/lite/api/zh-CN/r1.11/mindspore_lite/mindspore_lite.Format.html>`_ 。
 
             - **Format.NCHW** - 按批次N、通道C、高度H和宽度W的顺序存储Tensor数据。
             - **Format.NHWC** - 按批次N、高度H、宽度W和通道C的顺序存储Tensor数据。
@@ -153,7 +153,7 @@ mindspore_lite.Converter
         获取量化模型输出Tensor的data type。
 
         返回：
-            DataType，量化模型输出Tensor的data type。仅当模型输出Tensor的量化参数（scale和zero point）都具备时有效。默认与原始模型输出Tensor的data type保持一致。支持以下4种数据类型：DataType.FLOAT32 | DataType.INT8 | DataType.UINT8 | DataType.UNKNOWN。有关详细信息，请参见 `数据类型 <https://mindspore.cn/lite/api/zh-CN/r2.0/mindspore_lite/mindspore_lite.DataType.html>`_ 。
+            DataType，量化模型输出Tensor的data type。仅当模型输出Tensor的量化参数（scale和zero point）都具备时有效。默认与原始模型输出Tensor的data type保持一致。支持以下4种数据类型：DataType.FLOAT32 | DataType.INT8 | DataType.UINT8 | DataType.UNKNOWN。有关详细信息，请参见 `数据类型 <https://mindspore.cn/lite/api/zh-CN/r1.11/mindspore_lite/mindspore_lite.DataType.html>`_ 。
 
             - **DataType.FLOAT32** - 32位浮点数。
             - **DataType.INT8**    - 8位整型数。
@@ -166,7 +166,7 @@ mindspore_lite.Converter
         获取导出模型文件的类型。
 
         返回：
-            ModelType，导出模型文件的类型。选项有ModelType.MINDIR | ModelType.MINDIR_LITE。推荐转换为MindSpore模型。目前，支持转换为MindSpore Lite模型，但是该选项将会被废弃。有关详细信息，请参见 `模型类型 <https://mindspore.cn/lite/api/zh-CN/r2.0/mindspore_lite/mindspore_lite.ModelType.html>`_ 。
+            ModelType，导出模型文件的类型。选项有ModelType.MINDIR | ModelType.MINDIR_LITE。推荐转换为MindSpore模型。目前，支持转换为MindSpore Lite模型，但是该选项将会被废弃。有关详细信息，请参见 `模型类型 <https://mindspore.cn/lite/api/zh-CN/r1.11/mindspore_lite/mindspore_lite.ModelType.html>`_ 。
 
     .. py:method:: set_config_info(section="", config_info=None)
 
@@ -175,9 +175,9 @@ mindspore_lite.Converter
         参数：
             - **section** (str，可选) - 配置参数的类别。配合 `config_info` 一起，设置confile的个别参数。例如：对于 `section` 是"common_quant_param"， `config_info` 是{"quant_type":"WEIGHT_QUANT"}。默认值：""。
 
-              有关训练后量化的配置参数，请参见 `训练后量化 <https://www.mindspore.cn/lite/docs/zh-CN/r2.0/use/post_training_quantization.html>`_ 。
+              有关训练后量化的配置参数，请参见 `训练后量化 <https://www.mindspore.cn/lite/docs/zh-CN/r1.11/use/post_training_quantization.html>`_ 。
 
-              有关扩展的配置参数，请参见 `扩展配置 <https://www.mindspore.cn/lite/docs/zh-CN/r2.0/use/nnie.html#扩展配置>`_ 。
+              有关扩展的配置参数，请参见 `扩展配置 <https://www.mindspore.cn/lite/docs/zh-CN/r1.11/use/nnie.html#扩展配置>`_ 。
 
               - "common_quant_param"：公共量化参数部分。
               - "mixed_bit_weight_quant_param"：混合位权重量化参数部分。
@@ -187,9 +187,9 @@ mindspore_lite.Converter
 
             - **config_info** (dict{str: str}，可选) - 配置参数列表。配合 `section` 一起，设置confile的个别参数。例如：对于 `section` 是"common_quant_param"， `config_info` 是{"quant_type":"WEIGHT_QUANT"}。默认值：None。
 
-              有关训练后量化的配置参数，请参见 `训练后量化 <https://www.mindspore.cn/lite/docs/zh-CN/r2.0/use/post_training_quantization.html>`_ 。
+              有关训练后量化的配置参数，请参见 `训练后量化 <https://www.mindspore.cn/lite/docs/zh-CN/r1.11/use/post_training_quantization.html>`_ 。
 
-              有关扩展的配置参数，请参见 `扩展配置 <https://www.mindspore.cn/lite/docs/zh-CN/r2.0/use/nnie.html#扩展配置>`_ 。
+              有关扩展的配置参数，请参见 `扩展配置 <https://www.mindspore.cn/lite/docs/zh-CN/r1.11/use/nnie.html#扩展配置>`_ 。
 
         异常：
             - **TypeError** - `section` 不是str类型。

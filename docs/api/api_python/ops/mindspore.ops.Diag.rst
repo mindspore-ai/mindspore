@@ -11,7 +11,7 @@ mindspore.ops.Diag
     更多参考详见 :func:`mindspore.ops.diag`。
 
     输入：
-        - **input** (Tensor) - 输入Tensor。
+        - **input_x** (Tensor) - 输入Tensor。
 
     输出：
         Tensor，数据类型与 `input_x` 一致。

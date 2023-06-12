@@ -28,9 +28,3 @@ mindspore.train.ConvertModelUtils
 
         返回：
             model (Object)，用于训练的高级API。 
-        
-        样例：
-
-        .. note::
-            运行以下样例之前，需自定义网络Net和数据集准备函数create_dataset。详见 `网络构建 <https://www.mindspore.cn/tutorials/zh-CN/r2.0/beginner/model.html>`_ 和 `数据集 Dataset <https://www.mindspore.cn/tutorials/zh-CN/r2.0/beginner/dataset.html>`_ 。
-

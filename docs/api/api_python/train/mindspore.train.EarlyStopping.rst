@@ -20,11 +20,6 @@ mindspore.train.EarlyStopping
         - **ValueError** - 当 `mode` 不在 `{'auto', 'min', 'max'}` 中。
         - **ValueError** - 当传入的 `monitor` 返回值不是标量。
 
-    样例：
-
-    .. note::
-        运行以下样例之前，需自定义网络LeNet5和数据集准备函数create_dataset。详见 `网络构建 <https://www.mindspore.cn/tutorials/zh-CN/r2.0/beginner/model.html>`_ 和 `数据集 Dataset <https://www.mindspore.cn/tutorials/zh-CN/r2.0/beginner/dataset.html>`_ 。
-
     .. py:method:: on_train_begin(run_context)
 
         训练开始时初始化相关的变量。
