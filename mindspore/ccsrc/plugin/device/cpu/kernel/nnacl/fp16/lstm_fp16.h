@@ -40,8 +40,9 @@ void ElementMulAccFp16(const float16_t *input0, const float16_t *input1, float16
 int ElementOptMulAccFp16(const float16_t *input0, const float16_t input1, float16_t *output, const int element_size);
 
 void LstmFp16(float16_t *output, const float16_t *input, const float16_t *weight_i, const float16_t *weight_h,
-              const float16_t *input_bias, const float16_t *state_bias, float16_t *hidden_state, float16_t *cell_state,
-              float16_t *buffer[6], const LstmParameter *lstm_param);
+              const float16_t *input_bias, const float16_t *state_bias, const float16_t *weight_project,
+              const float16_t *project_bias, float16_t *hidden_state, float16_t *cell_state, float16_t *buffer[C7NUM],
+              const LstmParameter *lstm_param);
 #ifdef __cplusplus
 }
 #endif

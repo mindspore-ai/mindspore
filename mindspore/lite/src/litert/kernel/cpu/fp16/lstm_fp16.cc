@@ -48,6 +48,14 @@ void LstmFp16CPUKernel::FreeTmpBuffer() {
     free(state_bias_);
     state_bias_ = nullptr;
   }
+  if (weight_project_ptr_ != nullptr) {
+    free(weight_project_ptr_);
+    weight_project_ptr_ = nullptr;
+  }
+  if (project_bias_ != nullptr) {
+    free(project_bias_);
+    project_bias_ = nullptr;
+  }
 }
 
 void LstmFp16CPUKernel::FreeRunBuffer() {
@@ -76,6 +84,10 @@ int LstmFp16CPUKernel::InitParam() {
   std::vector<int> w_shape = weight_i->shape();
   NNACL_CHECK_ZERO_RETURN_ERR(gate_num);
   lstm_param_->hidden_size_ = w_shape.at(1) / gate_num;
+
+  auto weight_h = in_tensors_.at(C2NUM);
+  auto h_shape = weight_h->shape();
+  lstm_param_->project_size_ = h_shape.back();
 
   const int twice = 2;
   lstm_param_->output_step_ = lstm_param_->bidirectional_ ? twice * lstm_param_->batch_ * lstm_param_->hidden_size_
@@ -148,7 +160,7 @@ int LstmFp16CPUKernel::InitStateWeightBias() {
   auto weight_h_data = weight_h->data();
   CHECK_NULL_RETURN(weight_h_data);
   weight_h_ptr_ = reinterpret_cast<float16_t *>(
-    malloc(weight_batch_ * lstm_param_->state_col_align_ * lstm_param_->hidden_size_ * sizeof(float16_t)));
+    malloc(weight_batch_ * lstm_param_->state_col_align_ * lstm_param_->project_size_ * sizeof(float16_t)));
   if (weight_h_ptr_ == nullptr) {
     MS_LOG(ERROR) << "LstmFp16CPUKernel malloc weight_h_ptr_ error.";
     return RET_ERROR;
@@ -157,10 +169,10 @@ int LstmFp16CPUKernel::InitStateWeightBias() {
   if (!is_vec_) {
     if (weight_h->data_type() == kNumberTypeFloat32) {
       PackLstmWeightFp32ToFp16(weight_h_ptr_, reinterpret_cast<float *>(weight_h_data), weight_batch_,
-                               lstm_param_->hidden_size_, lstm_param_->hidden_size_, lstm_param_->state_col_align_);
+                               lstm_param_->project_size_, lstm_param_->hidden_size_, lstm_param_->state_col_align_);
     } else if (weight_h->data_type() == kNumberTypeFloat16) {
       PackLstmWeightFp16(weight_h_ptr_, reinterpret_cast<float16_t *>(weight_h_data), weight_batch_,
-                         lstm_param_->hidden_size_, lstm_param_->hidden_size_, lstm_param_->state_col_align_);
+                         lstm_param_->project_size_, lstm_param_->hidden_size_, lstm_param_->state_col_align_);
     } else {
       MS_LOG(ERROR) << "Unsupported data type of weight_h tensor for lstm.";
       return RET_ERROR;
@@ -202,6 +214,62 @@ int LstmFp16CPUKernel::InitStateWeightBias() {
   return RET_OK;
 }
 
+int LstmFp16CPUKernel::InitProjectWeight() {
+  if (in_tensors_.size() < C7NUM) {
+    return RET_OK;
+  }
+  auto weight_pro = in_tensors_.at(SEVEN_INPUT);
+  auto shape = weight_pro->shape();
+  if (shape.size() != C3NUM) {
+    MS_LOG(ERROR) << "Project-weight's shape must be 3D.";
+    return RET_ERROR;
+  }
+  auto weight_pro_data = weight_pro->data();
+  CHECK_NULL_RETURN(weight_pro_data);
+  int batch = lstm_param_->bidirectional_ ? C2NUM : C1NUM;
+  if (shape[0] != batch) {
+    MS_LOG(ERROR) << "Project-weight's shape[0] must be 1(bidirectional=false) or 2(bidirectional=true).";
+    return RET_ERROR;
+  }
+  int pro_col_align = is_vec_ ? lstm_param_->project_size_ : UP_ROUND(lstm_param_->project_size_, C8NUM);
+  weight_project_ptr_ =
+    reinterpret_cast<float16_t *>(malloc(batch * lstm_param_->hidden_size_ * pro_col_align * sizeof(float16_t)));
+  if (weight_project_ptr_ == nullptr) {
+    MS_LOG(ERROR) << "LstmFp16CPUKernel malloc weight_project_ptr_ error.";
+    return RET_ERROR;
+  }
+
+  if (!is_vec_) {
+    if (weight_pro->data_type() == kNumberTypeFloat32) {
+      PackLstmWeightFp32ToFp16(weight_project_ptr_, reinterpret_cast<float *>(weight_pro_data), batch,
+                               lstm_param_->hidden_size_, lstm_param_->project_size_, pro_col_align);
+    } else if (weight_pro->data_type() == kNumberTypeFloat16) {
+      PackLstmWeightFp16(weight_project_ptr_, reinterpret_cast<float16_t *>(weight_pro_data), batch,
+                         lstm_param_->hidden_size_, lstm_param_->project_size_, pro_col_align);
+    } else {
+      MS_LOG(ERROR) << "Unsupported data type of weight_project tensor for lstm.";
+      return RET_ERROR;
+    }
+  } else {
+    if (weight_pro->data_type() == kNumberTypeFloat32) {
+      Float32ToFloat16(reinterpret_cast<float *>(weight_pro_data), weight_project_ptr_, weight_pro->ElementsNum());
+    } else if (weight_pro->data_type() == kNumberTypeFloat16) {
+      memcpy(weight_project_ptr_, weight_pro_data, weight_pro->Size());
+    } else {
+      MS_LOG(ERROR) << "Unsupported data type of weight_project tensor for lstm.";
+      return RET_ERROR;
+    }
+  }
+  size_t bias_size = UP_ROUND(lstm_param_->project_size_, C8NUM) * sizeof(float16_t);
+  project_bias_ = reinterpret_cast<float16_t *>(malloc(bias_size));
+  if (project_bias_ == nullptr) {
+    MS_LOG(ERROR) << "LstmFp16CPUKernel malloc project_bias_ error.";
+    return RET_ERROR;
+  }
+  (void)memset(project_bias_, 0, bias_size);
+  return RET_OK;
+}
+
 int LstmFp16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C6NUM);
   for (size_t i = 0; i < in_tensors_.size(); i++) {
@@ -239,11 +307,18 @@ int LstmFp16CPUKernel::ReSize() {
     FreeTmpBuffer();
     return RET_ERROR;
   }
+
+  ret = InitProjectWeight();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Lstm fp16 InitProjectWeight error.";
+    FreeTmpBuffer();
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
 int LstmFp16CPUKernel::MallocRunBuffer() {
-  for (int i = 0; i < 6; i++) {
+  for (int i = 0; i < C7NUM; i++) {
     buffer_[i] = nullptr;
   }
   buffer_[packed_input_index] = reinterpret_cast<float16_t *>(
@@ -262,7 +337,7 @@ int LstmFp16CPUKernel::MallocRunBuffer() {
 
   if (!is_vec_) {
     buffer_[packed_state_index] = reinterpret_cast<float16_t *>(
-      ms_context_->allocator->Malloc(lstm_param_->state_row_align_ * lstm_param_->hidden_size_ * sizeof(float16_t)));
+      ms_context_->allocator->Malloc(lstm_param_->state_row_align_ * lstm_param_->project_size_ * sizeof(float16_t)));
     if (buffer_[packed_state_index] == nullptr) {
       MS_LOG(ERROR) << "LstmFp16CPUKernel malloc state * weight left matirx error.";
       return RET_ERROR;
@@ -277,7 +352,7 @@ int LstmFp16CPUKernel::MallocRunBuffer() {
   }
 
   if (!(lstm_param_->zoneout_cell_ >= -FLT_EPSILON && lstm_param_->zoneout_cell_ <= FLT_EPSILON)) {
-    int buffer_size = lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float16_t);
+    int buffer_size = lstm_param_->batch_ * lstm_param_->project_size_ * sizeof(float16_t);
     buffer_[cell_state_index] = reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(buffer_size));
     if (buffer_[cell_state_index] == nullptr) {
       MS_LOG(ERROR) << "LstmFp16CPUKernel malloc state_buffer for cell error.";
@@ -289,6 +364,14 @@ int LstmFp16CPUKernel::MallocRunBuffer() {
     buffer_[hidden_state_index] = reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(buffer_size));
     if (buffer_[hidden_state_index] == nullptr) {
       MS_LOG(ERROR) << "LstmFp16CPUKernel malloc state_buffer for hidden error.";
+      return RET_ERROR;
+    }
+  }
+  if (!is_vec_ && in_tensors_.size() == C7NUM) {
+    buffer_[project_input_index] = reinterpret_cast<float16_t *>(
+      ms_context_->allocator->Malloc(lstm_param_->state_row_align_ * lstm_param_->hidden_size_ * sizeof(float16_t)));
+    if (buffer_[project_input_index] == nullptr) {
+      MS_LOG(ERROR) << "LstmFp16CPUKernel malloc project_buffer for hidden error.";
       return RET_ERROR;
     }
   }
@@ -325,8 +408,8 @@ int LstmFp16CPUKernel::Run() {
   CHECK_NULL_RETURN(weight_h_ptr_);
   CHECK_NULL_RETURN(input_bias_);
   CHECK_NULL_RETURN(state_bias_);
-  LstmFp16(output_ptr, input_ptr, weight_i_ptr_, weight_h_ptr_, input_bias_, state_bias_,
-           reinterpret_cast<float16_t *>(output_hidden_state->data()),
+  LstmFp16(output_ptr, input_ptr, weight_i_ptr_, weight_h_ptr_, input_bias_, state_bias_, weight_project_ptr_,
+           project_bias_, reinterpret_cast<float16_t *>(output_hidden_state->data()),
            reinterpret_cast<float16_t *>(output_cell_state->data()), buffer_, lstm_param_);
   FreeRunBuffer();
   return RET_OK;
