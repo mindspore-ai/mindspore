@@ -206,7 +206,7 @@ uint32_t AdaptiveMaxPool3dCpuKernel::AdaptiveMaxPool3dCompute(CpuKernelContext &
                 for (ih = 0; ih < kH; ++ih) {
                   for (iw = 0; iw < kW; ++iw) {
                     T val = *(ip + it * istrideT + ih * istrideH + iw * istrideW);
-                    if ((val > maxval) || std::isnan(static_cast<double>(val)) || maxval == T(0)) {
+                    if ((val > maxval) || std::isnan(static_cast<double>(val))) {
                       maxval = val;
                       maxindex = (it + istartT) * isizeH * isizeW + (ih + istartH) * isizeW + (iw + istartW);
                     }
