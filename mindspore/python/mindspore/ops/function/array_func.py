@@ -4808,7 +4808,7 @@ def is_nonzero(input):
     Determine whether the input Tensor contains 0 or False. The input can only be a single element.
 
     Args:
-        input (Tensor): the input tensor.
+        input (Tensor): The input tensor.
 
     Returns:
         Bool, returns False if the input Tensor contains a unit element of 0 or a single element of False,
@@ -4822,11 +4822,9 @@ def is_nonzero(input):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor
-        >>> import mindspore.ops as ops
-        >>> x1 = ms.Tensor([[[False]]])
-        >>> x2 = ms.Tensor([[3.5]])
+        >>> from mindspore import Tensor, ops
+        >>> x1 = Tensor([[[False]]])
+        >>> x2 = Tensor([[3.5]])
         >>> out1 = ops.is_nonzero(x1)
         False
         >>> out2 = ops.is_nonzero(x2)
