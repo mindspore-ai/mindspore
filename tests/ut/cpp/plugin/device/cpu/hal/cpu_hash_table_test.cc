@@ -54,6 +54,9 @@ TEST_F(TestCPUHashTable, test_cpu_hash_table) {
     }
   }
 
+  // Statuses to insert.
+  std::vector<HashTableElementStatus> statuses_to_insert(key_num, HashTableElementStatus::kModified);
+
   // Keys and values check map.
   std::unordered_map<Key, std::vector<Value>> keys_values;
   for (size_t i = 0; i < key_num; ++i) {
@@ -114,7 +117,17 @@ TEST_F(TestCPUHashTable, test_cpu_hash_table) {
     EXPECT_TRUE(keys_values.find(keys_to_check[i]) != keys_values.end());
     EXPECT_EQ(keys_values[keys_to_check[i]], std::vector<Value>(values_to_check.begin() + i * value_dim,
                                                                 values_to_check.begin() + (i + 1) * value_dim));
+    EXPECT_EQ(statuses_to_check[i], HashTableElementStatus::kModified);
   }
+
+  EXPECT_TRUE(
+    hash_table.Insert(keys_to_insert.data(), key_num, value_to_insert.data(), statuses_to_insert.data(), nullptr));
+
+  HashTableExportData incre_export_data_after_insert;
+  EXPECT_NO_THROW(incre_export_data_after_insert = hash_table.Export(true));
+  EXPECT_EQ(*incre_export_data[0], *incre_export_data_after_insert[0]);
+  EXPECT_EQ(*incre_export_data[1], *incre_export_data_after_insert[1]);
+  EXPECT_EQ(*incre_export_data[2], *incre_export_data_after_insert[2]);
 
   EXPECT_TRUE(hash_table.Erase(keys_to_insert.data(), erase_key_num, nullptr));
   EXPECT_EQ(hash_table.size(), key_num - erase_key_num);

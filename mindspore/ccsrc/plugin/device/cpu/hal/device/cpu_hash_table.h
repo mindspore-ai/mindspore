@@ -47,6 +47,8 @@ class CPUHashTable : public HashTable<Key, Value> {
 
   bool Insert(const Key *keys, size_t key_num, const Value *values, void *) override;
 
+  bool Insert(const Key *keys, size_t key_num, const Value *values, Status *statuses, void *) override;
+
   bool Erase(const Key *keys, size_t key_num, void *) override;
 
   bool Reserve(size_t new_capacity, void *) override;

@@ -109,6 +109,35 @@ bool CPUHashTable<Key, Value>::Insert(const Key *keys, size_t key_num, const Val
 }
 
 template <typename Key, typename Value>
+bool CPUHashTable<Key, Value>::Insert(const Key *keys, size_t key_num, const Value *values, Status *statuses, void *) {
+  std::unique_lock<std::shared_mutex> lock(mutex_);
+  MS_ERROR_IF_NULL(keys);
+  MS_ERROR_IF_NULL(values);
+  MS_ERROR_IF_NULL(statuses);
+
+  for (size_t i = 0; i < key_num; ++i) {
+    const auto &key = keys[i];
+
+    auto iter = values_.find(key);
+    // The the key does not exist, a new value buffer should be allocated firstly.
+    if (iter == values_.end()) {
+      auto value_addr = AllocateMemory(value_size_);
+      MS_EXCEPTION_IF_NULL(value_addr);
+      iter = values_.emplace(key, std::make_pair(reinterpret_cast<Value *>(value_addr), statuses[i])).first;
+    }
+
+    auto ret = memcpy_s(iter->second.first, value_size_, values + (i * value_dim_), value_size_);
+    if (ret != EOK) {
+      MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
+      return false;
+    }
+    iter->second.second = statuses[i];
+  }
+  is_dirty_ = true;
+  return true;
+}
+
+template <typename Key, typename Value>
 bool CPUHashTable<Key, Value>::Erase(const Key *keys, size_t key_num, void *) {
   std::unique_lock<std::shared_mutex> lock(mutex_);
 
