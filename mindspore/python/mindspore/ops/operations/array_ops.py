@@ -7471,6 +7471,9 @@ class ExtractVolumePatches(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> kernel_size = (1, 1, 2, 2, 2)
         >>> strides = (1, 1, 1, 1, 1)
         >>> padding = "VALID"
@@ -8746,6 +8749,9 @@ class Bincount(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> array = Tensor(np.array([1, 2, 2, 3, 3, 3, 4, 4, 4, 4]), mindspore.int32)
         >>> size = Tensor(5, mindspore.int32)
         >>> weights = Tensor(np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1]), mindspore.float32)

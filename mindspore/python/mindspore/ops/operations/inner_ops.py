@@ -146,6 +146,8 @@ class NoRepeatNGram(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> no_repeat_ngram = ops.NoRepeatNGram(ngram_size=3)
         >>> state_seq = Tensor([[[1, 2, 1, 2, 5, 1, 2],
         ...                      [9, 3, 9, 5, 4, 1, 5]],

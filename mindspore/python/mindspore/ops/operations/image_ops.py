@@ -323,6 +323,8 @@ class CropAndResize(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import nn, ops
         >>> class CropAndResizeNet(nn.Cell):
         ...     def __init__(self, crop_size):
         ...         super(CropAndResizeNet, self).__init__()
@@ -743,6 +745,8 @@ class ResizeBilinearV2(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mindspore.float32)
         >>> output = ops.ResizeBilinearV2()(x, (5, 5))
         >>> print(output)
