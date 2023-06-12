@@ -15,6 +15,7 @@
  */
 
 #include "frontend/parallel/ops_info/operator_info.h"
+
 #include <algorithm>
 #include <functional>
 #include <memory>
@@ -23,6 +24,7 @@
 #include <vector>
 #include <unordered_map>
 #include <numeric>
+
 #include "ir/tensor.h"
 #include "ir/value.h"
 #include "frontend/parallel/auto_parallel/edge_costmodel.h"
