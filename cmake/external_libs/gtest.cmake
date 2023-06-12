@@ -29,39 +29,57 @@ if(NOT ENABLE_GLIBCXX)
     set(gtest_CXXFLAGS "${gtest_CXXFLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
 endif()
 
-if(ENABLE_GITEE)
-    set(REQ_URL "https://gitee.com/mirrors/googletest/repository/archive/release-1.8.1.tar.gz")
-    set(SHA256 "9bf1fe5182a604b4135edc1a425ae356c9ad15e9b23f9f12a02e80184c3a249c")
+if(BUILD_LITE)
+    if(ENABLE_GITEE)
+        set(REQ_URL "https://gitee.com/mirrors/googletest/repository/archive/release-1.8.1.tar.gz")
+        set(SHA256 "9bf1fe5182a604b4135edc1a425ae356c9ad15e9b23f9f12a02e80184c3a249c")
+    else()
+        set(REQ_URL "https://github.com/google/googletest/archive/release-1.8.1.tar.gz")
+        set(SHA256 "9bf1fe5182a604b4135edc1a425ae356c9ad15e9b23f9f12a02e80184c3a249c")
+    endif()
+
+    mindspore_add_pkg(gtest
+            VER 1.8.1
+            LIBS gtest gmock
+            URL ${REQ_URL}
+            SHA256 ${SHA256}
+            CMAKE_OPTION ${CMAKE_OPTION})
 else()
-    set(REQ_URL "https://github.com/google/googletest/archive/release-1.8.1.tar.gz")
-    set(SHA256 "9bf1fe5182a604b4135edc1a425ae356c9ad15e9b23f9f12a02e80184c3a249c")
+    if(ENABLE_GITEE)
+        set(REQ_URL "https://gitee.com/mirrors/googletest/repository/archive/release-1.12.1.tar.gz")
+        set(SHA256 "81964fe578e9bd7c94dfdb09c8e4d6e6759e19967e397dbea48d1c10e45d0df2")
+    else()
+        set(REQ_URL "https://github.com/google/googletest/archive/release-1.12.1.tar.gz")
+        set(SHA256 "81964fe578e9bd7c94dfdb09c8e4d6e6759e19967e397dbea48d1c10e45d0df2")
+    endif()
+
+    mindspore_add_pkg(gtest
+            VER 1.12.1
+            LIBS gtest gmock
+            URL ${REQ_URL}
+            SHA256 ${SHA256}
+            CMAKE_OPTION ${CMAKE_OPTION})
 endif()
 
-mindspore_add_pkg(gtest
-        VER 1.8.1
-        LIBS gtest gmock
-        URL ${REQ_URL}
-        SHA256 ${SHA256}
-        CMAKE_OPTION ${CMAKE_OPTION})
 include_directories(${gtest_INC})
 add_library(mindspore::gtest ALIAS gtest::gtest)
 add_library(mindspore::gmock ALIAS gtest::gmock)
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     file(COPY ${gtest_DIRPATH}/bin/libgtest${CMAKE_SHARED_LIBRARY_SUFFIX} DESTINATION
-            ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest)
+            ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest FOLLOW_SYMLINK_CHAIN)
     file(COPY ${gtest_DIRPATH}/bin/libgtest_main${CMAKE_SHARED_LIBRARY_SUFFIX} DESTINATION
-            ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest)
+            ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest FOLLOW_SYMLINK_CHAIN)
     file(COPY ${gtest_DIRPATH}/bin/libgmock_main${CMAKE_SHARED_LIBRARY_SUFFIX} DESTINATION
-            ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest)
+            ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest FOLLOW_SYMLINK_CHAIN)
     file(COPY ${gtest_DIRPATH}/bin/libgmock${CMAKE_SHARED_LIBRARY_SUFFIX} DESTINATION
-            ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest)
+            ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest FOLLOW_SYMLINK_CHAIN)
 else()
     file(COPY ${gtest_LIBPATH}/libgtest${CMAKE_SHARED_LIBRARY_SUFFIX} DESTINATION
-            ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest)
+            ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest FOLLOW_SYMLINK_CHAIN)
     file(COPY ${gtest_LIBPATH}/libgtest_main${CMAKE_SHARED_LIBRARY_SUFFIX} DESTINATION
-            ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest)
+            ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest FOLLOW_SYMLINK_CHAIN)
     file(COPY ${gtest_LIBPATH}/libgmock${CMAKE_SHARED_LIBRARY_SUFFIX} DESTINATION
-            ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest)
+            ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest FOLLOW_SYMLINK_CHAIN)
     file(COPY ${gtest_LIBPATH}/libgmock_main${CMAKE_SHARED_LIBRARY_SUFFIX} DESTINATION
-            ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest)
+            ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest FOLLOW_SYMLINK_CHAIN)
 endif()

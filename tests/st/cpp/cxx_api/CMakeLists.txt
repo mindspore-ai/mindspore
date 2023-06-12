@@ -20,4 +20,5 @@ target_link_libraries(cxx_st_tests PRIVATE mindspore_shared_lib _c_dataengine mi
 target_link_options(cxx_st_tests PRIVATE -Wl,--unresolved-symbols=ignore-all)
 set_target_properties(cxx_st_tests PROPERTIES SKIP_BUILD_RPATH TRUE RUNTIME_OUTPUT_DIRECTORY
         ${CMAKE_CURRENT_SOURCE_DIR})
-file(COPY ${gtest_LIBPATH}/libgtest${CMAKE_SHARED_LIBRARY_SUFFIX} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR})
+file(COPY ${gtest_LIBPATH}/libgtest${CMAKE_SHARED_LIBRARY_SUFFIX}
+        DESTINATION ${CMAKE_CURRENT_SOURCE_DIR} FOLLOW_SYMLINK_CHAIN)
