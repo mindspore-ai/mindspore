@@ -15,6 +15,7 @@
  */
 #include <memory>
 #include "common/common_test.h"
+#include "mock/runtime/event.h"
 #define private public
 #include "plugin/device/ascend/hal/device/ge_runtime/model_runner.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/runtime_model.h"
@@ -130,6 +131,8 @@ TEST_F(TestAscendGeRuntime, test_event_record_task_create_invalid_event_id_faile
 }
 
 TEST_F(TestAscendGeRuntime, test_event_wait_task_create_success) {
+  START_MOCK(rtEventReset);
+  EXPECT_CALL(MOCK_OBJECT(rtEventReset), rtEventReset(_, _)).WillOnce(Return(RT_ERROR_NONE));
   ModelContext model_context(0, 0, 0, reinterpret_cast<rtModel_t>(1), reinterpret_cast<rtStream_t>(2),
                              {reinterpret_cast<rtStream_t>(1)}, {reinterpret_cast<rtLabel_t>(1)},
                              {reinterpret_cast<rtEvent_t>(1)});
