@@ -52,7 +52,7 @@ file(GLOB_RECURSE UT_MINDDATA_COMMON_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} .
 file(GLOB_RECURSE UT_API_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./cxx_api/*.cc ./c_api/*.cc)
 file(GLOB_RECURSE UT_FRONTEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./operator/*.cc ./optimizer/*.cc
         ./parallel/*.cc ./pipeline/*.cc ./pynative/*.cc)
-file(GLOB_RECURSE UT_OLD_BACKEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}  ./device/*.cc ./kernel/*.cc
+file(GLOB_RECURSE UT_OLD_BACKEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./device/*.cc ./kernel/*.cc
         ./pre_activate/*.cc ./session/*.cc ./transform/*.cc ./vm/*.cc ./runtime/graph_scheduler/*.cc
         ./runtime/device/gsm/*.cc ./tbe/*.cc)
 file(GLOB_RECURSE UT_BACKEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./backend/*.cc)
@@ -60,7 +60,7 @@ file(GLOB_RECURSE UT_BACKEND_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./backend
 file(GLOB_RECURSE UT_PS_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./ps/*.cc ./plugin/device/cpu/hal/*.cc)
 file(GLOB_RECURSE UT_OTHERS_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./debug/*.cc ./side_effect/*.cc ./utils/*.cc
         ./place/*.cc)
-file(GLOB_RECURSE UT_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./stub/*.cc ./common/*.cc)
+file(GLOB_RECURSE UT_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ./stub/*.cc ./common/*.cc ./mock/*.cc)
 
 if(NOT ENABLE_CPU OR WIN32 OR APPLE)
     file(GLOB_RECURSE UT_DISTRIBUTED_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
@@ -309,8 +309,9 @@ foreach(comp ${ALL_UT_COMPS})
             _ut_mindspore_obj -Wl,--end-group proto_input_ut)
 
     if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-        target_link_libraries(ut_${comp}_tests PRIVATE mindspore::gtest mindspore::event mindspore::event_pthreads
-                mindspore::event_openssl mindspore::ssl mindspore::crypto ${PYTHON_LIBRARIES} pthread util dl)
+        target_link_libraries(ut_${comp}_tests PRIVATE mindspore::gtest mindspore::gmock mindspore::event
+                mindspore::event_pthreads mindspore::event_openssl mindspore::ssl mindspore::crypto ${PYTHON_LIBRARIES}
+                pthread util dl)
         target_link_libraries(ut_${comp}_tests PRIVATE mindspore::sqlite mindspore::jpeg_turbo mindspore::turbojpeg
                 mindspore::opencv_core mindspore::opencv_imgcodecs mindspore::opencv_imgproc mindspore::tinyxml2
                 mindspore::sentencepiece mindspore::sentencepiece_train mindspore::icuuc mindspore::icudata
@@ -318,7 +319,7 @@ foreach(comp ${ALL_UT_COMPS})
     elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
         target_link_libraries(ut_${comp}_tests PRIVATE  mindspore::z)
     else()
-        target_link_libraries(ut_${comp}_tests PRIVATE mindspore::gtest ${PYTHON_LIBRARIES})
+        target_link_libraries(ut_${comp}_tests PRIVATE mindspore::gtest mindspore::gmock ${PYTHON_LIBRARIES})
     endif()
     target_link_libraries(ut_${comp}_tests PRIVATE mindspore::glog)
     target_link_libraries(ut_${comp}_tests PRIVATE securec mindspore::grpc++ mindspore::protobuf)
