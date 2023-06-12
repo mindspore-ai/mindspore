@@ -13,7 +13,9 @@
 # limitations under the License.
 # ============================================================================
 import os
-
+import re
+import subprocess
+from subprocess import Popen
 import pytest
 
 
@@ -27,3 +29,28 @@ def test_hccl_init_fail():
     assert ret == 0
     grep_ret = os.system(f"grep 'Ascend Error Message' {sh_path}/test_hccl_init_fail.log -c")
     assert grep_ret == 0
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_single
+def test_aicerror_message():
+    """
+    Feature: Improve usability
+    Description: Test log when an aicerror occurs
+    Expectation: print related log like "[ERROR] Task DebugString, Tbetask..."
+    """
+    os.environ["GLOG_v"] = "3"
+    cur_path = os.path.split(os.path.realpath(__file__))[0]
+    proc = Popen(["pytest", os.path.join(cur_path, "aicore_error.py")], stdout=subprocess.PIPE)
+    try:
+        output, _ = proc.communicate(timeout=90)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        output, _ = proc.communicate()
+    log = output.decode()
+    pattern = re.compile(r"\[ERROR\].*?Task DebugString.*?[Aicpu|Tbe|Hccl]task")
+    res = pattern.findall(log)
+    assert len(res) >= 1
+    del os.environ["GLOG_v"]
