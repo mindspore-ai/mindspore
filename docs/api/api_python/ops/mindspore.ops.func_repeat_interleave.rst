@@ -7,7 +7,7 @@ mindspore.ops.repeat_interleave
 
     参数：
         - **input** (Tensor) - 进行重复操作的入参Tensor，类型必须为float16，float32，int8，uint8，int16，int32或者int64。
-        - **repeats** (int) - 指定复制次数，为正数。
+        - **repeats** (Union[int, tuple, list, Tensor]) - 指定复制次数，为正数。
         - **axis** (int，可选) - 指定复制轴，默认值： ``None`` 。如果为 ``None`` ，输入Tensor会被展平并且输出结果也会被展平。
 
     返回：

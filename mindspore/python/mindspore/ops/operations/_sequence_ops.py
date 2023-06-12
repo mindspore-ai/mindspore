@@ -468,7 +468,7 @@ class TensorToList(PrimitiveWithCheck):
     def infer_value(self, x):
         """infer_value TensorToList"""
         value = None
-        if x is not None and None not in x and isinstance(x, (Tensor, Tensor_)):
+        if x is not None and isinstance(x, (Tensor, Tensor_)):
             value = x.asnumpy().tolist()
         return value
 
