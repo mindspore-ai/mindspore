@@ -788,8 +788,8 @@ bool AnfTransform::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param)
   std::vector<std::tuple<std::string, opt::PassPtr, bool>> pass_infos = {
     {"DumpGraph", std::make_shared<opt::DumpGraph>(param), true},
     {"RemoveRedundantOpPass", std::make_shared<opt::RemoveRedundantOpPass>(param->train_model), false},
-    {"ToNCHWFormat", std::make_shared<opt::ToNCHWFormat>(fmk, is_train), true},
-    {"ToNHWCFormat", std::make_shared<opt::ToNHWCFormat>(fmk, is_train), true},
+    {"ToNCHWFormat", std::make_shared<opt::ToNCHWFormat>(fmk, is_train, param->save_type), true},
+    {"ToNHWCFormat", std::make_shared<opt::ToNHWCFormat>(fmk, is_train, param->save_type), true},
     {"ConstFoldPass", std::make_shared<opt::ConstFoldPass>(fmk, is_train), true},
     {"InferShapePass", std::make_shared<opt::InferShapePass>(fmk, is_train), false},
     {"DeleteRedundantTranspose", std::make_shared<opt::DeleteRedundantTranspose>(), false},
