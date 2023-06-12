@@ -212,6 +212,7 @@
 #include "plugin/device/ascend/optimizer/ge/convert_data_depend_to_control_depend.h"
 #include "plugin/device/ascend/optimizer/ge/convert_condition_input_to_scalar.h"
 #include "plugin/device/ascend/optimizer/ge/maketuple_depend_remover.h"
+#include "plugin/device/ascend/optimizer/ge/hcom/add_parallel_group_for_hcom.h"
 
 namespace mindspore {
 namespace opt {
@@ -605,6 +606,7 @@ void AscendBackendOptimizeGE(const std::shared_ptr<session::KernelGraph> &kernel
   opt_ge_pm->AddPass(std::make_shared<ConvertCondInputToScalar>());
   opt_ge_pm->AddPass(std::make_shared<opt::ConvertDataDependToControlDepend>());
   opt_ge_pm->AddPass(std::make_shared<opt::MakeTupleDependRemover>());
+  opt_ge_pm->AddPass(std::make_shared<opt::AddParallelGroupForHcom>());
   optimizer->AddPassManager(opt_ge_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();

@@ -70,5 +70,11 @@ HcclResult HcclAdapter::HcclAllToAll(void *, void *, hccl::HcclAllToAllVParams, 
 }
 
 bool HcclAdapter::UseHcclCM() const { return false; }
+
+bool HcclAdapter::IsSameServer(const std::vector<uint32_t> &rank_ids) const { return false; }
+
+std::string HcclAdapter::GetHcomGroup(const std::string &original_group, const std::vector<uint32_t> &rank_ids) const {
+  return "";
+}
 }  // namespace hccl
 }  // namespace mindspore

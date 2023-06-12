@@ -76,6 +76,7 @@ constexpr auto kTypeIdentityN = "IdentityN";
 constexpr auto kTypeMerge = "Merge";
 constexpr auto kTypeIf = "If";
 constexpr auto kTypeVariable = "Variable";
+constexpr auto kParallelGroup = "_parallel_group";
 
 namespace {
 const std::map<TypeId, TypeId> kReduceRaiseMap = {{kNumberTypeInt64, kNumberTypeInt32}};
@@ -2707,6 +2708,26 @@ void DfGraphConvertor::ConvertDynamicStitch(const CNodePtr &node) {
   op_cache_[node.get()] = op;
 }
 
+void DfGraphConvertor::ConvertParallelGroupToHcom(const CNodePtr &node) {
+  auto group_name = common::AnfAlgo::GetNodeAttr<std::string>(node, kParallelGroup);
+  OpAdapterPtr adpt = FindAdapter(node, training_);
+  if (adpt == nullptr) {
+    return;
+  }
+
+  // get operator
+  OperatorPtr op = nullptr;
+  auto it_op = op_cache_.find(node.get());
+  if (it_op != op_cache_.end()) {
+    op = it_op->second;
+  } else {
+    op = adpt->generate(node);
+  }
+  MS_EXCEPTION_IF_NULL(op);
+  (void)op->SetAttr(kParallelGroup, group_name);
+  op_cache_[node.get()] = op;
+}
+
 void DfGraphConvertor::ConvertAllReduce(const CNodePtr &node) {
   MS_LOG(INFO) << "Add AllReduce fusion_id";
   OpAdapterPtr adpt = FindAdapter(node, training_);
@@ -2861,6 +2882,9 @@ bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) 
 
   if (const auto it = auxiliary_node_converters.find(name); it != auxiliary_node_converters.cend()) {
     it->second(this, node);
+  }
+  if (common::AnfAlgo::HasNodeAttr(kParallelGroup, node)) {
+    ConvertParallelGroupToHcom(node);
   }
 
   return true;

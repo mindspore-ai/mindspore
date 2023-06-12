@@ -26,6 +26,7 @@
 #include "plugin/device/ascend/hal/device/kernel_adjust.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/model_runner.h"
+#include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "include/backend/optimizer/helper.h"
 #include "kernel/oplib/oplib.h"
 #include "include/common/utils/utils.h"
@@ -60,36 +61,6 @@ constexpr size_t kLastGradAndStatusNum = 2;
 
 const std::unordered_set<std::string> kDropoutGenMaskOps = {kDropoutGenMaskOpName, kDropoutGenMaskV3OpName,
                                                             kStatelessDropOutGenMaskOpName};
-
-bool IsSameServer(const std::vector<uint32_t> &rank_ids) {
-  auto min_iter = min_element(rank_ids.begin(), rank_ids.end());
-  uint32_t min = (min_iter != rank_ids.end()) ? *min_iter : 0;
-  auto max_iter = max_element(rank_ids.begin(), rank_ids.end());
-  uint32_t max = (max_iter != rank_ids.end()) ? *max_iter : 0;
-  return ((max - min < kDeviceNumOfServer) && (min / kDeviceNumOfServer == max / kDeviceNumOfServer));
-}
-
-string DoGetHcomGroup(const string &original_group, const std::vector<uint32_t> &rank_ids) {
-  string communi_parallel_mode = parallel::ParallelContext::GetInstance()->communi_parallel_mode();
-  if (communi_parallel_mode == parallel::kAllGroupParallel) {
-    return original_group;
-  }
-
-  if (communi_parallel_mode == parallel::kNoGroupParallel) {
-    return kDefaultGroup;
-  }
-
-  if (rank_ids.empty() || original_group == kHcclWorldGroup) {
-    return kDefaultGroup;
-  }
-
-  if (IsSameServer(rank_ids)) {
-    return original_group;
-  }
-
-  return kDefaultGroup;
-}
-
 string GetHcomGroup(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (!common::AnfAlgo::HasNodeAttr(kAttrGroup, cnode)) {
@@ -100,7 +71,7 @@ string GetHcomGroup(const CNodePtr &cnode) {
   auto rank_ids = common::AnfAlgo::HasNodeAttr(kAttrGroupRankIds, cnode)
                     ? common::AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(cnode, kAttrGroupRankIds)
                     : std::vector<uint32_t>();
-  auto new_group = DoGetHcomGroup(group_name, rank_ids);
+  auto new_group = hccl::HcclAdapter::GetInstance().GetHcomGroup(group_name, rank_ids);
   MS_LOG(INFO) << "hcom node: " << cnode->fullname_with_scope() << ", old group: " << group_name
                << ", new group: " << new_group;
 
@@ -218,7 +189,7 @@ uint32_t AscendStreamAssign::GetHcomTaskNum(const CNodePtr &cnode) {
     return kTaskNumPerHcomNode;
   }
 
-  if (IsSameServer(rank_ids)) {
+  if (hccl::HcclAdapter::GetInstance().IsSameServer(rank_ids)) {
     return kTaskNumPerSameServerHcomNode;
   } else if (rank_ids.size() == static_cast<size_t>(device_num) && device_num >= kDeviceNumThreshold) {
     return kTaskNumPerWorldHcomNode;
