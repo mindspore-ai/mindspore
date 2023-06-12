@@ -643,7 +643,7 @@ class Cell(Cell_):
         _check_args(args)
         self._check_cell_flags_in_pynative()
 
-        if self.requires_grad:
+        if self.requires_grad and _pynative_executor.enable_grad():
             _pynative_executor.set_grad_flag(True)
 
         if self._dynamic_shape_inputs is not None:

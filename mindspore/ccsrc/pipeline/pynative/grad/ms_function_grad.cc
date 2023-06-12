@@ -54,7 +54,7 @@ const mindspore::HashSet<std::string> kExpanderWhiteList{
 FrontendOpRunInfoPtr GetOpRunInfo(const py::object &out, const py::args &args, const std::string &graph_phase,
                                   bool modify_output, const FuncGraphPtr &ms_func_graph, ValuePtr *added_out_v) {
   auto op_run_info = std::make_shared<FrontendOpRunInfo>();
-  op_run_info->grad_flag = true;
+  op_run_info->requires_grad = true;
   op_run_info->is_ms_function_input = true;
   op_run_info->base_op_run_info.op_name = graph_phase;
   PyNativeAlgo::PyParser::ParseOpInputByPythonObj(op_run_info, args);
@@ -523,7 +523,7 @@ py::object MsFunction::GradMsFunction(const py::object &out, const py::args &arg
   // Save dynamic shape info if output tensors of forward graph have dynamic shapes
   const auto &grad_executor = PyNativeAlgo::Common::GetPyNativeExecutor()->grad_executor();
   // Make Adjoint for grad graph of ms_function.
-  if (!grad_executor->grad_flag()) {
+  if (!grad_executor->RequiresGrad()) {
     MS_LOG(DEBUG) << "Only run forward infer computation, no need to construct grad graph.";
     graph_phase_.clear();
     return ret;

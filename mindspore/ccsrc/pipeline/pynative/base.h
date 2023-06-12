@@ -66,7 +66,7 @@ struct AsyncStatus {
 struct FrontendOpRunInfo {
   BaseOpRunInfo base_op_run_info;
   bool run_in_vm = false;
-  bool grad_flag = false;
+  bool requires_grad = false;
   bool output_get_by_infer_value = false;
   bool should_be_cache = false;
   bool is_ms_function_input = false;

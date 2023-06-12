@@ -100,6 +100,9 @@ class GradExecutor {
   inline void set_top_cell(TopCellInfoPtr top_cell) { top_cell_ = std::move(top_cell); }
   inline bool grad_flag() const { return grad_flag_; }
   inline void set_grad_flag(bool flag) { grad_flag_ = flag; }
+  inline bool enable_grad() const { return enable_grad_; }
+  inline void set_enable_grad(bool enable_grad) { enable_grad_ = enable_grad; }
+  inline bool RequiresGrad() const { return enable_grad() && grad_flag(); }
   // Construct grad graph for ms_function
   inline bool eliminate_forward() const { return eliminate_forward_; }
   inline void set_eliminate_forward(bool eliminate_forward) { eliminate_forward_ = eliminate_forward; }
@@ -228,6 +231,7 @@ class GradExecutor {
   bool IsGraphDynamic(const ValuePtrList &inputs, const DynamicDetectNodeInfoPtr &node, size_t node_idx) const;
   bool init_{false};
   bool grad_flag_{false};
+  bool enable_grad_{true};
   bool grad_is_running_{false};
   bool eliminate_forward_{true};
   bool save_graphs_{false};

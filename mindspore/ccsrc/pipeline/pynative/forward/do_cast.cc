@@ -279,7 +279,7 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
   MS_EXCEPTION_IF_NULL(v);
   constexpr auto input_size = 2;
   const auto &cast_run_info = std::make_shared<FrontendOpRunInfo>();
-  cast_run_info->grad_flag = op_run_info->grad_flag;
+  cast_run_info->requires_grad = op_run_info->requires_grad;
   cast_run_info->op_prim = GetPrimByTypeId(type_id);
   MS_EXCEPTION_IF_NULL(cast_run_info->op_prim);
   cast_run_info->base_op_run_info.op_name = prim::kPrimCast->name();

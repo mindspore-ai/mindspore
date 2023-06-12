@@ -25,6 +25,7 @@ import ast
 import inspect
 import importlib
 import hashlib
+import contextlib
 from collections import OrderedDict
 from functools import wraps
 import numpy as np
@@ -1003,6 +1004,27 @@ def _parameter_broadcast(obj):
     _build_broadcast_graph(broadcast_params_dict, broadcast_phase)
 
 
+class _no_grad(contextlib.ContextDecorator):
+    """
+    Context Manager to disable gradient calculation. When enter this context, we will disable calculate
+    gradient. When exit this context, we will resume its prev state.
+    Currently, it can only use in Pynative mode. It also can be used as decorator.
+    """
+
+    def __init__(self):
+        self.prev_state = False
+
+    def __enter__(self):
+        if context.get_context("mode") == context.GRAPH_MODE:
+            raise RuntimeError("For no_grad feature, currently only support Pynative mode, but got Graph mode.")
+        self.prev_state = _pynative_executor.enable_grad()
+        _pynative_executor.set_enable_grad(False)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        _pynative_executor.set_enable_grad(self.prev_state)
+        return False
+
+
 class _PyNativeExecutor:
     """
     A pynative executor used to compile/manage/run single op.
@@ -1200,6 +1222,27 @@ class _PyNativeExecutor:
             None.
         """
         self._executor.set_grad_flag(flag)
+
+    def enable_grad(self):
+        """
+        The global flag whether needing to calculate gradient.
+
+        Return:
+            bool, whether needing to calculate gradient.
+        """
+        return self._executor.enable_grad()
+
+    def set_enable_grad(self, flag):
+        """
+        Set the flag of calculating gradient.
+
+        Args:
+            flag (bool): Specifying whether calculating gradient.
+
+        Return:
+            None.
+        """
+        self._executor.set_enable_grad(flag)
 
     def set_ms_function_compile_status(self, status, phase):
         """
