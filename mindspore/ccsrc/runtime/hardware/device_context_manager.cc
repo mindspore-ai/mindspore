@@ -490,7 +490,8 @@ DeviceContext *DeviceContextManager::GetOrCreateDeviceContext(const DeviceContex
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->backend_policy() == "ge" && (jit_level == kAttrJitLevelO3 || jit_level == "")) {
+  if (ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice &&
+      ms_context->backend_policy() == "ge" && (jit_level == kAttrJitLevelO3 || jit_level == "")) {
     name = "GE";
     device_context_key_str = "GE_0";
   }

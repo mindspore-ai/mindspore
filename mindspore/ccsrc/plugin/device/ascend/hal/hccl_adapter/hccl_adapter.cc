@@ -53,27 +53,6 @@ static std::string GenerateCMChiefWorkDevice() {
   }
 }
 
-static void AddCMEnvToHcclOption(std::map<std::string, std::string> *hccl_opt_map) {
-  MS_EXCEPTION_IF_NULL(hccl_opt_map);
-  // Before hccl initialization, the validation of these environment variables is already verified.
-  hccl_opt_map->emplace("ge.cmChiefIp", mindspore::common::GetEnv(mindspore::distributed::kEnvSchedulerHost));
-
-  // We offset scheduler port by 1 as cm chief port.
-  std::string sched_port = mindspore::common::GetEnv(mindspore::distributed::kEnvSchedulerPort);
-  int sched_port_num = std::stoi(sched_port);
-  int cm_port_num = sched_port_num + 1;
-  hccl_opt_map->emplace("ge.cmChiefPort", std::to_string(cm_port_num));
-
-  hccl_opt_map->emplace("ge.cmChiefWorkerDevice", GenerateCMChiefWorkDevice());
-  hccl_opt_map->emplace("ge.cmWorkerSize", mindspore::common::GetEnv(mindspore::distributed::kEnvWorkerNum));
-  hccl_opt_map->emplace("ge.cmWorkerIp", mindspore::common::GetEnv(mindspore::distributed::kEnvWorkerIp));
-  MS_LOG(WARNING) << "Set CM options to hccl. OPTION_EXEC_CM_CHIEF_IP: " << hccl_opt_map->at("ge.cmChiefIp")
-                  << ", OPTION_EXEC_CM_CHIEF_PORT: " << hccl_opt_map->at("ge.cmChiefPort")
-                  << ", OPTION_EXEC_CM_CHIEF_DEVICE: " << hccl_opt_map->at("ge.cmChiefWorkerDevice")
-                  << ", OPTION_EXEC_CM_WORKER_SIZE: " << hccl_opt_map->at("ge.cmWorkerSize")
-                  << ", OPTION_EXEC_CM_WORKER_IP: " << hccl_opt_map->at("ge.cmWorkerIp");
-}
-
 static std::map<std::string, std::string> GenHcclOptions(uint32_t device_id, std::string_view rank_id,
                                                          std::string_view rank_file = "") {
   auto env_deploy_mode = mindspore::common::GetEnv(kHcclDeployModeEnv);
@@ -100,7 +79,7 @@ static std::map<std::string, std::string> GenHcclOptions(uint32_t device_id, std
     default_options_map.emplace(ge::OPTION_EXEC_RANK_TABLE_FILE, rank_file.data());
   }
   if (mindspore::hccl::HcclAdapter::GetInstance().UseHcclCM()) {
-    AddCMEnvToHcclOption(&default_options_map);
+    mindspore::hccl::HcclAdapter::AddCMEnvToHcclOption(&default_options_map);
   }
 
   return default_options_map;
@@ -691,5 +670,27 @@ string HcclAdapter::GetHcomGroup(const string &original_group, const std::vector
   }
 
   return kDefaultGroup;
+}
+
+void HcclAdapter::AddCMEnvToHcclOption(std::map<std::string, std::string> *hccl_opt_map) {
+  MS_EXCEPTION_IF_NULL(hccl_opt_map);
+  // Before hccl initialization, the validation of these environment variables is already verified.
+  hccl_opt_map->emplace(ge::OPTION_EXEC_CM_CHIEF_IP,
+                        mindspore::common::GetEnv(mindspore::distributed::kEnvSchedulerHost));
+
+  // We offset scheduler port by 1 as cm chief port.
+  std::string sched_port = mindspore::common::GetEnv(mindspore::distributed::kEnvSchedulerPort);
+  int sched_port_num = std::stoi(sched_port);
+  int cm_port_num = sched_port_num + 1;
+  hccl_opt_map->emplace(ge::OPTION_EXEC_CM_CHIEF_PORT, std::to_string(cm_port_num));
+  hccl_opt_map->emplace(ge::OPTION_EXEC_CM_CHIEF_DEVICE, GenerateCMChiefWorkDevice());
+  hccl_opt_map->emplace(ge::OPTION_EXEC_CM_WORKER_SIZE,
+                        mindspore::common::GetEnv(mindspore::distributed::kEnvWorkerNum));
+  hccl_opt_map->emplace(ge::OPTION_EXEC_CM_WORKER_IP, mindspore::common::GetEnv(mindspore::distributed::kEnvWorkerIp));
+  MS_LOG(INFO) << "Set CM options to hccl. OPTION_EXEC_CM_CHIEF_IP: " << hccl_opt_map->at(ge::OPTION_EXEC_CM_CHIEF_IP)
+               << ", OPTION_EXEC_CM_CHIEF_PORT: " << hccl_opt_map->at(ge::OPTION_EXEC_CM_CHIEF_PORT)
+               << ", OPTION_EXEC_CM_CHIEF_DEVICE: " << hccl_opt_map->at(ge::OPTION_EXEC_CM_CHIEF_DEVICE)
+               << ", OPTION_EXEC_CM_WORKER_SIZE: " << hccl_opt_map->at(ge::OPTION_EXEC_CM_WORKER_SIZE)
+               << ", OPTION_EXEC_CM_WORKER_IP: " << hccl_opt_map->at(ge::OPTION_EXEC_CM_WORKER_IP);
 }
 }  // namespace mindspore::hccl

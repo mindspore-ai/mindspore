@@ -95,6 +95,7 @@ class HcclAdapter {
 
   // Return whether using CM to initialize HCCL.
   bool UseHcclCM() const;
+  static void AddCMEnvToHcclOption(std::map<std::string, std::string> *hccl_opt_map);
 
   bool IsSameServer(const std::vector<uint32_t> &rank_ids) const;
 
