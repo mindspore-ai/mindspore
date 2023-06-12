@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_INFER_TENSOR_H_
-#define MINDSPORE_LITE_INFER_TENSOR_H_
 
-#include <vector>
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_GRAPH_COMPILER_COMPILE_OPTION_H
+#define MINDSPORE_LITE_SRC_EXTENDRT_GRAPH_COMPILER_COMPILE_OPTION_H
+
 #include <string>
-#include <memory>
+#include "mindapi/base/format.h"
+#include "mindapi/base/type_id.h"
+#include "src/extendrt/kernel/kernel_spec_infos.h"
 
-#include "core/type_id.h"
-#include "src/tensor.h"
-
-namespace mindspore {
-namespace infer::abstract {
-using Tensor = mindspore::lite::Tensor;
-}
-using InferTensor = infer::abstract::Tensor;
-}  // namespace mindspore
-
-#endif  // MINDSPORE_LITE_INFER_TENSOR_H_
+namespace mindspore::lite {
+struct CompileOption {
+  Format format{Format::NHWC};
+  std::string backend{kernel::kBackendCPU};
+  TypeId datatype{kNumberTypeFloat32};
+};
+}  // namespace mindspore::lite
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_GRAPH_COMPILER_COMPILE_OPTION_H

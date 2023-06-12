@@ -22,8 +22,11 @@
 #include "infer/tensor.h"
 #include "src/executor/kernel_exec.h"
 
-namespace mindspore::infer::abstract {
+namespace mindspore {
+namespace infer::abstract {
 using Kernel = mindspore::kernel::KernelExec;
-}  // namespace mindspore::infer::abstract
+}
+using InferKernel = infer::abstract::Kernel;
+}  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_INFER_KERNEL_H_

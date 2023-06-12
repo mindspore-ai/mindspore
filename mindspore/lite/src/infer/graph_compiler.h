@@ -22,16 +22,6 @@
 #include "infer/execution_flow.h"
 
 namespace mindspore::infer::abstract {
-constexpr char kBackendCPU[] = "CPU";
-constexpr char kBackendGPU[] = "GPU";
-constexpr char kBackendNPU[] = "NPU";
-constexpr char kBackendAscend[] = "Ascend";
-struct CompileOption {
-  Format format{Format::NHWC};
-  std::string backend{kBackendCPU};
-  TypeId datatype{kNumberTypeFloat32};
-};
-
 class GraphCompiler : public std::enable_shared_from_this<GraphCompiler> {
  public:
   virtual ~GraphCompiler() = default;

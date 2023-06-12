@@ -23,18 +23,18 @@
 #include "src/extendrt/graph_compiler/compile_result.h"
 #include "src/extendrt/execution_flow.h"
 #include "src/litert/inner_context.h"
-#include "src/infer/graph_compiler.h"
+#include "src/extendrt/graph_compiler/compile_option.h"
 #include "src/infer/kernel.h"
-#include "src/extendrt/kernel/kernel_selector.h"
+#include "src/extendrt/kernel/kernel_selector/kernel_selector.h"
 
 namespace mindspore {
-namespace infer {
+namespace lite {
 class SingleGraphScheduler {
  public:
-  explicit SingleGraphScheduler(lite::InnerContext *context, const abstract::CompileOption &option)
+  explicit SingleGraphScheduler(lite::InnerContext *context, const std::shared_ptr<CompileOption> &option)
       : context_(context), compile_option_(option) {}
   virtual ~SingleGraphScheduler() = default;
-  abstract::Kernel *Schedule(const CompileResultPtr &node_list);
+  InferKernel *Schedule(const CompileResultPtr &node_list);
 
  private:
   int SelectKernel(const CompileResultPtr &node_list);
@@ -45,14 +45,14 @@ class SingleGraphScheduler {
   int FallBackInferShape(const CompileResultPtr &node_list);
 
  private:
-  lite::InnerContext *context_;
-  const abstract::CompileOption &compile_option_;
-  ExecutionFlowPtr execution_flow_{nullptr};
+  InnerContext *context_;
+  std::shared_ptr<CompileOption> compile_option_{nullptr};
+  infer::ExecutionFlowPtr execution_flow_{nullptr};
   std::shared_ptr<kernel::KernelSelector> kernel_selector_{nullptr};
 
   std::map<std::string, OpParameter *> op_parameters_;
 };
 using SingleGraphSchedulerPtr = std::shared_ptr<SingleGraphScheduler>;
-}  // namespace infer
+}  // namespace lite
 }  // namespace mindspore
 #endif

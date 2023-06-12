@@ -32,7 +32,7 @@
 #include "src/extendrt/kernel/primitive_type.h"
 
 namespace mindspore {
-namespace infer {
+namespace lite {
 class CompileNode {
  public:
   explicit CompileNode(std::string name, const kernel::PrimitiveType &type) : name_(std::move(name)), type_(type) {}
@@ -121,7 +121,7 @@ class CompileResult {
   Format base_format_{DEFAULT_FORMAT};
 };
 using CompileResultPtr = std::shared_ptr<CompileResult>;
-}  // namespace infer
+}  // namespace lite
 }  // namespace mindspore
 
 #endif

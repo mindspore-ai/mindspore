@@ -60,5 +60,5 @@ int LiteKernelMod::Run() {
   return ret ? RET_OK : RET_ERROR;
 }
 
-int LiteKernelMod::InferShape() { return infer::CNodeInferShape(cnode_, this->out_tensors_); }
+int LiteKernelMod::InferShape() { return CNodeInferShape(cnode_, this->out_tensors_); }
 }  // namespace mindspore::kernel

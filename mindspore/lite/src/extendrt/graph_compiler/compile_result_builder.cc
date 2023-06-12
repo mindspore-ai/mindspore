@@ -29,7 +29,7 @@ using AbstractTensorPtr = mindspore::abstract::AbstractTensorPtr;
 using AbstractSequencePtr = mindspore::abstract::AbstractSequencePtr;
 
 namespace mindspore {
-namespace infer {
+namespace lite {
 StatusCode CompileResultBuilder::BuildInputs(const AnfNodePtrList &inputs) {
   MS_ASSERT(graph_ != nullptr);
   if (graph_->InputSize() > 0) {
@@ -458,5 +458,5 @@ StatusCode CompileResultBuilder::BuildNodeOutputTensor(const CNodePtr &cnode, co
   }
   return kSuccess;
 }
-}  // namespace infer
+}  // namespace lite
 }  // namespace mindspore

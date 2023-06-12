@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_INFER_TENSOR_H_
-#define MINDSPORE_LITE_INFER_TENSOR_H_
 
-#include <vector>
-#include <string>
-#include <memory>
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_KERNEL_LIB_INFOS_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_KERNEL_LIB_INFOS_H_
 
-#include "core/type_id.h"
-#include "src/tensor.h"
+namespace mindspore::kernel {
+// kernel library names
+constexpr char kNNACLLibName[] = "NNACL";
+constexpr char kDefaultKernelLibName[] = "Default";
 
-namespace mindspore {
-namespace infer::abstract {
-using Tensor = mindspore::lite::Tensor;
-}
-using InferTensor = infer::abstract::Tensor;
-}  // namespace mindspore
+// backend
+constexpr char kBackendCPU[] = "CPU";
+constexpr char kBackendGPU[] = "GPU";
+constexpr char kBackendNPU[] = "NPU";
+constexpr char kBackendAscend[] = "Ascend";
+}  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_INFER_TENSOR_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_KERNEL_LIB_INFOS_H_

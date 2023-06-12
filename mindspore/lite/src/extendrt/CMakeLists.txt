@@ -26,8 +26,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/../litert/kernel/cpu/nnacl/nnacl_reshape.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../litert/kernel/cpu/nnacl/cxx_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/nnacl/nnacl_lib.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/kernel/default/lite_kernel_mod.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/kernel/default/default_kernel_lib.cc)
+        )
 
     set(MSLITE_EXTEND_DEFAULT_KERNEL_LIB_SRC
             ${CMAKE_CURRENT_SOURCE_DIR}/kernel/default/cnode_infer_manager.cc
@@ -38,6 +37,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${MSLITE_KERNEL_PLUGIN}
         ${MSLITE_EXTEND_NNACL_KERNEL_LIB_SRC}
         ${MSLITE_EXTEND_DEFAULT_KERNEL_LIB_SRC}
+        ${CMAKE_CURRENT_SOURCE_DIR}/kernel/kernel_selector/kernel_selector.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/file_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/graph_util.cc

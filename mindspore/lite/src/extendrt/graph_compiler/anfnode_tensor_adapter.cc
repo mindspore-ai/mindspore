@@ -26,7 +26,7 @@ using AbstractBasePtr = mindspore::abstract::AbstractBasePtr;
 using AbstractTensorPtr = mindspore::abstract::AbstractTensorPtr;
 
 namespace mindspore {
-namespace infer {
+namespace lite {
 Tensor *TensorAdapter::Convert2Tensor(const ParameterPtr &param_node, const std::string &tensor_name) {
   auto adapter = TensorAdapter::Create(param_node);
   if (adapter == nullptr) {
@@ -345,5 +345,5 @@ StatusCode TensorAdapter::GetDTAndShapeFromParameter(const ParameterPtr &param_n
   }
   return GetDTAndShapeFromAbTensor(abstract_tensor, data_type, shape_vector);
 }
-}  // namespace infer
+}  // namespace lite
 }  // namespace mindspore
