@@ -44,6 +44,28 @@ def test_global_list_used_in_graph():
     assert id(res) == id(global_list_1)
 
 
+global_float_list_1 = [1.0, 2.0, 3.0, 4.0]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_global_list_used_in_graph_2():
+    """
+    Feature: Enable list inplace operation
+    Description: List passed as global should not change the python obj
+    Expectation: No exception.
+    """
+    @jit
+    def foo():
+        return global_float_list_1
+
+    res = foo()
+    assert id(res) == id(global_float_list_1)
+
+
 global_numpy_list = [np.array([1, 2, 3]), np.array([4, 5, 6])]
 
 
@@ -241,6 +263,29 @@ def test_return_local_list_3():
     assert isinstance(ret, list)
     assert ret == [1, 2, 3, Tensor([1]), [1, 2]]
     assert id(ret[4]) == id(global_list_4)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_return_local_list_4():
+    """
+    Feature: Enable list inplace operation
+    Description: List create inside graph should be converted to PyExecute.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(a, b):
+        x = [1.0, 2, 3.0, a, b]
+        return x
+
+    input_a = Tensor([1])
+    input_b = 2
+    ret = foo(input_a, input_b)
+    assert isinstance(ret, list)
+    assert ret == [1.0, 2, 3.0, Tensor([1]), 2]
 
 
 
