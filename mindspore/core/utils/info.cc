@@ -55,6 +55,8 @@ std::string HighLightLine(const std::string &line, int col_begin, int col_end, S
       temp_line = start + "<" + trimmed + ">" + end;
     } else if (tip == kSourceLineTipNextLine) {
       tip_ss << start_spaces << "^";
+    } else if (tip == kSourceSectionTipNextLineHere) {
+      tip_ss << start_spaces << "~<-------------HERE";
     }
     oss << temp_line << "\n" << tip_ss.str();
     return oss.str();
@@ -64,9 +66,11 @@ std::string HighLightLine(const std::string &line, int col_begin, int col_end, S
 
 // Generate debug information for the location node .
 // print the file name, line no and column no, and part of the content
-std::string Location::ToString(SourceLineTip tip) const {
+std::string Location::ToString(SourceLineTip tip, int start_line) const {
   std::stringstream debug_info_ss;
+  std::stringstream section_debug_info_ss;
   debug_info_ss << "In file " << file_name_ << ":" << line_ << std::endl;
+  section_debug_info_ss << "In file " << file_name_ << ":" << line_ << std::endl;
   if (line_ <= 0) {
     return debug_info_ss.str();
   }
@@ -83,11 +87,17 @@ std::string Location::ToString(SourceLineTip tip) const {
   std::string line;
   (void)getline(file, line);
   while (line_num != line_ - 1) {
+    if (line_num >= start_line - 1) {
+      section_debug_info_ss << line << "\n";
+    }
     (void)getline(file, line);
     line_num++;
   }
   file.close();
-
+  if (tip == kSourceSectionTipNextLineHere) {
+    section_debug_info_ss << HighLightLine(line, column_, column_end_, tip) << std::endl;
+    return section_debug_info_ss.str();
+  }
   debug_info_ss << HighLightLine(line, column_, column_end_, tip) << std::endl;
   return debug_info_ss.str();
 }

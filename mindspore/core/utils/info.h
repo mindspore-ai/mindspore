@@ -27,7 +27,12 @@
 #include "ir/scope.h"
 #include "utils/trace_info.h"
 namespace mindspore {
-enum SourceLineTip { kSourceLineTipDiscard = 0, kSourceLineTipNextLine = 1, kSourceLineTipInLine = 2 };
+enum SourceLineTip {
+  kSourceLineTipDiscard = 0,
+  kSourceLineTipNextLine = 1,
+  kSourceLineTipInLine = 2,
+  kSourceSectionTipNextLineHere = 3
+};
 
 // typedef enum CacheBool { UNCACHED = -1, FALSE, TRUE } CacheBool;
 using CacheBool = int32_t;
@@ -50,7 +55,7 @@ class Location {
         expr_src_(expr),
         comments_(std::move(comments)) {}
   ~Location() = default;
-  MS_CORE_API std::string ToString(SourceLineTip tip = kSourceLineTipNextLine) const;
+  MS_CORE_API std::string ToString(SourceLineTip tip = kSourceLineTipNextLine, int start_line = 0) const;
   std::string file_name() const { return file_name_; }
   int line() const { return line_; }
   int line_end() const { return line_end_; }

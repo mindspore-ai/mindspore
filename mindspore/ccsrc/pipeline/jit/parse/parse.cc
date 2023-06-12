@@ -2342,6 +2342,8 @@ void Parser::CheckReturnInLoop(const FunctionBlockPtr &block, const FunctionBloc
 FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast While";
   MS_EXCEPTION_IF_NULL(block);
+  std::string while_block_name = "while";
+  block->set_block_name(while_block_name);
   FunctionBlockPtr header_block = nullptr;
   FunctionBlockPtr body_block = nullptr;
   FunctionBlockPtr after_block = nullptr;
@@ -2362,10 +2364,6 @@ FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::obj
     after_block = MakeFunctionBlock(*this);
   }
 
-  std::string block_name = "outside of 'while'";
-  block->set_block_name(block_name);
-  std::string body_block_name = "inside of 'while'";
-  body_block->set_block_name(body_block_name);
   body_block->AddPrevBlock(header_block);
   after_block->AddPrevBlock(header_block);
   block->Jump(header_block, {});
@@ -2428,6 +2426,8 @@ FunctionBlockPtr Parser::ParseFor(const FunctionBlockPtr &block, const py::objec
     TraceGuard trace_guard(GetLocation(orelse_obj));
     MS_LOG(EXCEPTION) << "The 'for...else...' statement is not supported now.";
   }
+  std::string for_block_name = "for";
+  block->set_block_name(for_block_name);
   static const auto transform_for_half_unroll_call = (common::GetEnv("MS_DEV_FOR_HALF_UNROLL") == "1");
   if (transform_for_half_unroll_call) {
     return ParseForRepeat(block, node);

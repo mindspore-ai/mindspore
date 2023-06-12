@@ -442,6 +442,63 @@ void FunctionBlock::SetPhiArgument(const ParameterPtr &phi) {
   }
 }
 
+namespace {
+std::string GetIfTheOtherBranchName(const std::string &v) {
+  static mindspore::HashMap<std::string, std::string> pair_branch_name{{"true branch", "false branch"},
+                                                                       {"false branch", "true branch"}};
+  auto iter = pair_branch_name.find(v);
+  if (iter != pair_branch_name.end()) {
+    return iter->second;
+  } else {
+    return v;
+  }
+}
+
+std::string GetVariableDefinedLocation(const FunctionBlock *block, const std::string &var, int start_line) {
+  HashSet<FunctionBlock *> visited;
+  std::vector<FunctionBlock *> todo_list = {};
+  for (auto &prev : block->prev_blocks()) {
+    (void)todo_list.push_back(prev);
+  }
+  while (!todo_list.empty()) {
+    auto cur_block = todo_list.back();
+    todo_list.pop_back();
+    if (visited.find(cur_block) != visited.cend()) {
+      continue;
+    }
+    (void)visited.insert(cur_block);
+    std::copy(cur_block->prev_blocks().cbegin(), cur_block->prev_blocks().cend(), std::back_inserter(todo_list));
+    auto node = cur_block->ReadLocalVariable(var);
+    if (node != nullptr && !node->isa<Parameter>()) {
+      const auto &debug_info = trace::GetSourceCodeDebugInfo(node->debug_info());
+      const auto &location = debug_info->location();
+      return location->ToString(kSourceSectionTipNextLineHere, start_line);
+    }
+  }
+  return "";
+}
+}  // namespace
+
+void FunctionBlock::CheckVariableNotDefined(const std::pair<std::string, AnfNodePtr> &not_defined_branch,
+                                            const std::string &var) {
+  std::ostringstream oss;
+  std::string not_defined_branch_name = not_defined_branch.first;
+  const auto &debug_info = trace::GetSourceCodeDebugInfo(this->func_graph()->debug_info());
+  const auto &location = debug_info->location();
+  int start_line = location->line();
+  if ((not_defined_branch_name == "while") || (not_defined_branch_name == "for")) {
+    oss << "The local variable '" << var << "' defined in the '" << not_defined_branch_name
+        << "' loop body cannot be used outside of the loop body. "
+        << "Please define variable '" << var << "' before '" << not_defined_branch_name << "'.\n";
+  }
+  if ((not_defined_branch_name == "true branch") || (not_defined_branch_name == "false branch")) {
+    oss << "The local variable '" << var << "' is not defined in " << not_defined_branch_name << ", but defined in "
+        << GetIfTheOtherBranchName(not_defined_branch_name) << ".\n";
+  }
+  oss << GetVariableDefinedLocation(this, var, start_line);
+  MS_EXCEPTION(UnboundLocalError) << oss.str();
+}
+
 std::set<AnfNodePtr> FunctionBlock::SearchAllArgsOfPhiNode(const std::string &var, const ParameterPtr &phi) {
   std::vector<std::pair<std::string, AnfNodePtr>> defined_branch;
   std::pair<std::string, AnfNodePtr> not_defined_branch;
@@ -471,14 +528,9 @@ std::set<AnfNodePtr> FunctionBlock::SearchAllArgsOfPhiNode(const std::string &va
                   << (phi ? phi->ToString() : "null") << " may be replaced by node " << arg_node->DebugString();
   }
 
-  if (!not_defined_branch.first.empty()) {
+  if (not_defined_branch.second != nullptr) {
     if (!defined_branch.empty()) {
-      const auto &debug_info = trace::GetSourceCodeDebugInfo(defined_branch.back().second->debug_info());
-      const auto &location = debug_info->location();
-      MS_EXCEPTION(UnboundLocalError) << "The local variable '" << var << "' is not defined in "
-                                      << not_defined_branch.first << ", but defined in " << defined_branch.back().first
-                                      << ".\n"
-                                      << location->ToString();
+      CheckVariableNotDefined(not_defined_branch, var);
     }
     MS_EXCEPTION(NameError) << "The name '" << var << "' is not defined, or not supported in graph mode.";
   }
