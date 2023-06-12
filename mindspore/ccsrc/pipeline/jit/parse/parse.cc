@@ -597,6 +597,51 @@ ScopePtr Parser::GetScopeForParseFunction() {
   return scope;
 }
 
+void Parser::ConvertGetattrNodes() {
+  // If obj.attr has been set a new value in graph, convert all getattr node to PyExecute.
+  AnfNodePtr op_node = NewValueNode(prim::kPrimGetAttr);
+  for (const auto &setattr_node_pair : setattr_nodes_map_) {
+    const auto &obj_str = setattr_node_pair.first;
+    const auto &attr_map = setattr_node_pair.second;
+    auto getattr_nodes_map_iter = getattr_nodes_map_.find(obj_str);
+    // If the same object is not in both setattr map and getattr map, no need to convert getattr node.
+    if (getattr_nodes_map_iter == getattr_nodes_map_.end()) {
+      continue;
+    }
+    const auto &getattr_map = getattr_nodes_map_iter->second;
+    for (const auto &attr_pair : attr_map) {
+      const auto &attr_str = attr_pair.first;
+      auto getattr_map_iter = getattr_map.find(attr_str);
+      // If the same attr for the same obj is not in both setattr map and getattr map, no need to convert getattr node.
+      if (getattr_map_iter == getattr_map.end()) {
+        continue;
+      }
+      const auto &setattr_node = attr_pair.second;
+      auto setattr_cnode = setattr_node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(setattr_cnode);
+      const auto getattr_nodes = getattr_map_iter->second;
+      constexpr size_t obj_index = 1;
+      const auto &setattr_cnode_obj_node = setattr_cnode->input(obj_index);
+      AnfNodePtr cur_getattr_node = nullptr;
+      for (const auto &getattr_node : getattr_nodes) {
+        auto getattr_node_fg = getattr_node->func_graph();
+        MS_EXCEPTION_IF_NULL(getattr_node_fg);
+        std::vector<AnfNodePtr> new_getattr_node_inputs = {op_node, setattr_cnode_obj_node, NewValueNode(attr_str)};
+        if (cur_getattr_node != nullptr && cur_getattr_node->func_graph() == getattr_node_fg) {
+          (void)new_getattr_node_inputs.emplace_back(cur_getattr_node);
+        }
+        auto new_getattr_node = getattr_node_fg->NewCNode(new_getattr_node_inputs);
+        new_getattr_node->set_debug_info(getattr_node->debug_info());
+        MS_LOG(DEBUG) << "Generate new getattr node: " << new_getattr_node->DebugString();
+        const auto &manager = Manage(getattr_node_fg, false);
+        MS_EXCEPTION_IF_NULL(manager);
+        (void)manager->Replace(getattr_node, new_getattr_node);
+        cur_getattr_node = new_getattr_node;
+      }
+    }
+  }
+}
+
 FunctionBlockPtr Parser::ParseDefFunction(const py::object &node, const FunctionBlockPtr &block) {
   const std::string cell_construct = "construct";
   const std::string cell_scope_name_split_reserve = "-";
@@ -685,6 +730,7 @@ FunctionBlockPtr Parser::ParseDefFunction(const py::object &node, const Function
     }
   }
 
+  ConvertGetattrNodes();
   GenerateArgsDefaultValueForFunction(func_block, node);
   return func_block;
 }
@@ -1702,7 +1748,9 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
       AnfNodePtr value_node = NewValueNode(interpreted_obj);
       return block->func_graph()->NewCNodeInOrder({op_node, value_node, attr_node, setattr_node});
     } else {
-      return ProcessAttributeWithClassMember(block, node);
+      auto ret_node = ProcessAttributeWithClassMember(block, node);
+      (void)getattr_nodes_map_["self"][attr_str].emplace_back(ret_node);
+      return ret_node;
     }
   }
   // If not self.xx, process the obj, eg: obj.xx

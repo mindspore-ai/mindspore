@@ -297,6 +297,7 @@ class Parser {
   static std::shared_ptr<std::map<ParameterPtr, AnfNodePtr>> CollectRemovablePhiArgs(
     const std::map<ParameterPtr, std::set<AnfNodePtr>> &phi_to_args);
   void RemoveUnnecessaryPhis();
+  void ConvertGetattrNodes();
   // Write a new var.
   void WriteAssignVars(const FunctionBlockPtr &block, const py::object &target_object, const AnfNodePtr &value_node);
 
@@ -403,6 +404,8 @@ class Parser {
 
   // Record all setattr nodes and their targets and values.
   std::map<std::string, std::map<std::string, AnfNodePtr>> setattr_nodes_map_;
+  // Record all getattr node for specific object and attribute name.
+  std::map<std::string, std::map<std::string, std::vector<AnfNodePtr>>> getattr_nodes_map_;
 };
 
 // AST node type define code to ast.
