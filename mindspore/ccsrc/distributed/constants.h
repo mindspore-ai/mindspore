@@ -52,6 +52,8 @@ constexpr char kEnvRoleOfScheduler[] = "MS_SCHED";
 const std::set<std::string> kValidRoleName = {kEnvRoleOfServer, kEnvRoleOfPServer, kEnvRoleOfWorker,
                                               kEnvRoleOfScheduler};
 
+constexpr char kEnvWorkerClientIp[] = "MS_WORKER_CLIENT_IP";
+
 // Used in parameter server embedding cache scenarios to identify the same Parameter between Worker and Server.
 constexpr char kParameterKey[] = "parameter_key";
 // Embedding cache lookup operation.

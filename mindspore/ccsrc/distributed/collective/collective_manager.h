@@ -104,6 +104,10 @@ class BACKEND_EXPORT CollectiveManager {
   // Initialize communication library on device side.
   bool InitDeviceCommLib();
 
+  // In some cases, for example, Ascend, device context should be initialized again right after collective communication
+  // is successfully initialized.
+  void ReInitDeviceCtx();
+
   // Assign the local rank id for this process.
   bool AssignLocalRank();
 

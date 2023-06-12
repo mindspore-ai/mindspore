@@ -25,6 +25,7 @@
 #include <limits>
 #include <cmath>
 #include <chrono>
+#include <algorithm>
 #include "mindapi/base/macros.h"
 namespace mindspore {
 class MSLogTime {
@@ -127,6 +128,12 @@ static inline bool UseDynamicCluster() {
 // UseDynamicCluster or UseMPI. If false, means use rank table file.
 static inline bool UseHostCollective() { return common::UseDynamicCluster() || common::UseMPI(); }
 
+static inline bool UseHcclCM() {
+  // If environment variable 'MS_HCCL_CM_INIT' is set, we consider this process should use 'HcclCommInitRootInfo' type
+  // of methods, which could be used in kernel-by-kernel and pynative mode as well.
+  return common::UseDynamicCluster() && common::GetEnv("MS_HCCL_CM_INIT") == "1";
+}
+
 template <typename T>
 bool IsEqual(const T *a, const T *b) {
   if (a == b) {
@@ -172,6 +179,10 @@ inline bool IsFloatEqual(const float &a, const float &b) {
 
 inline bool IsDoubleEqual(const double &a, const double &b) {
   return (std::fabs(a - b) <= std::numeric_limits<double>::epsilon());
+}
+
+inline bool IsStrNumeric(const std::string &str) {
+  return std::all_of(str.begin(), str.end(), [](char c) { return std::isdigit(c); });
 }
 }  // namespace common
 }  // namespace mindspore

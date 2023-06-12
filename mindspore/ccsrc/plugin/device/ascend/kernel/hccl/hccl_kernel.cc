@@ -147,7 +147,7 @@ bool HcclKernel::Init(const AnfNodePtr &anf_node) {
   HcomUtil::GetHcomGroup(NOT_NULL(anf_node), NOT_NULL(&group_));
   // pynative with ranktable also need hccl_comm
   comm_ = AscendCollectiveCommLib::GetInstance().HcclCommunicator(group_);
-  if (common::UseHostCollective()) {
+  if (common::UseHostCollective() && !common::UseHcclCM()) {
     MS_EXCEPTION_IF_NULL(comm_);
     common::AnfAlgo::SetNodeAttr(kAttrComm, MakeValue<int64_t>(reinterpret_cast<int64_t>(comm_)), anf_node);
   }

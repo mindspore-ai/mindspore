@@ -54,6 +54,9 @@ struct NodeInfo {
   // The local host name of this cluster node.
   std::string host_name;
 
+  // The host ip of this cluster node used for registry.
+  std::string host_ip;
+
   // The role name of this cluster node.
   std::string role;
 
@@ -192,6 +195,10 @@ class MetaServerNode : public NodeBase {
 
   // Allocate a new valid rank id for new registered compute graph node.
   uint32_t AllocateRankId(const std::string &role);
+
+  // Reassign node ranks. This method should be called only after cluster is successfully built. It sorts all nodes with
+  // their node ip and node id, then assign their rank ids.
+  void ReassignNodeRank();
 
   // Persist the required metadata of cluster into storage through configuration.
   bool Persist();
