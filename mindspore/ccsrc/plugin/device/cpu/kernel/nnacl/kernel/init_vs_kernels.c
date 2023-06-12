@@ -32,6 +32,7 @@
 #include "nnacl/kernel/group_norm.h"
 #include "nnacl/kernel/matmul.h"
 #include "nnacl/kernel/reshape.h"
+#include "nnacl/kernel/scale.h"
 #include "nnacl/kernel/shape.h"
 #include "nnacl/kernel/reduce.h"
 #include "nnacl/kernel/stack.h"
@@ -90,6 +91,7 @@ void init_vs_kernels_f16(KernelCreator **creators) {
   creators[PrimType_Rsqrt][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_Round][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_Reciprocal][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
+  creators[PrimType_ScaleFusion][REGIST_DT(kNumberTypeFloat16)] = CreateScale;
   creators[PrimType_Shape][REGIST_DT(kNumberTypeFloat16)] = CreateShape;
   creators[PrimType_Softmax][REGIST_DT(kNumberTypeFloat16)] = CreateSoftmax;
   creators[PrimType_Stack][REGIST_DT(kNumberTypeFloat16)] = CreateStackF16;
@@ -204,6 +206,7 @@ void init_vs_kernels_r(KernelCreator **creators) {
   creators[PrimType_Reciprocal][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
   creators[PrimType_Round][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
   creators[PrimType_Rsqrt][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
+  creators[PrimType_ScaleFusion][REGIST_DT(kNumberTypeFloat32)] = CreateScale;
   creators[PrimType_Shape][REGIST_DT(kNumberTypeInt32)] = CreateShape;
   creators[PrimType_Shape][REGIST_DT(kNumberTypeBool)] = CreateShape;
   creators[PrimType_Shape][REGIST_DT(kNumberTypeFloat32)] = CreateShape;

@@ -47,11 +47,11 @@ ScaleInt8CPUKernel::~ScaleInt8CPUKernel() {
 
 int ScaleInt8CPUKernel::InitScaleOffset() {
   CalcMultiplesAndStrides(tile_para);
-  scale_param_->const_scale_ = false;
+  const_scale_ = false;
   auto *scale_ptr = reinterpret_cast<int8_t *>(in_tensors_.at(1)->data());
   // scale may be const value ,can be processed in prepare stage
   if (scale_ptr != nullptr) {
-    scale_param_->const_scale_ = true;
+    const_scale_ = true;
     input1_data_ = scale_ptr;
     // need broadcasting
     if (in_tensors_.at(0)->ElementsNum() != in_tensors_.at(1)->ElementsNum()) {
@@ -67,14 +67,14 @@ int ScaleInt8CPUKernel::InitScaleOffset() {
     }
   }
 
-  scale_param_->const_offset_ = false;
+  const_offset_ = false;
   if (in_tensors_.size() == kScaleBiasInputsSize) {
     has_bias_ = true;
     auto offset_tensor = in_tensors_.at(kOffsetIndex);
     auto *offset_ptr = reinterpret_cast<int8_t *>(offset_tensor->data());
     // offset may be const value ,can be processed in prepare stage
     if (offset_ptr != nullptr) {
-      scale_param_->const_offset_ = true;
+      const_offset_ = true;
       input2_data_ = offset_ptr;
       // need broadcasting
       if (in_tensors_.at(0)->ElementsNum() != in_tensors_.at(kOffsetIndex)->ElementsNum()) {
@@ -155,41 +155,41 @@ int ScaleInt8CPUKernel::InitQuantArgs() {
   auto input_scale = input->quant_params().front().scale;
   auto scale_scale = scale->quant_params().front().scale;
   auto output_scale = output->quant_params().front().scale;
-  scale_param_->input_zp_ = input->quant_params().front().zeroPoint;
-  scale_param_->scale_zp_ = scale->quant_params().front().zeroPoint;
-  scale_param_->output_zp_ = output->quant_params().front().zeroPoint;
+  quant_.input_zp_ = input->quant_params().front().zeroPoint;
+  quant_.scale_zp_ = scale->quant_params().front().zeroPoint;
+  quant_.output_zp_ = output->quant_params().front().zeroPoint;
 
   // (in * scale + offset) / output
   const double input_output_multiplier = input_scale * scale_scale / output_scale;
   int shift;
-  QuantizeMultiplier(input_output_multiplier, &scale_param_->scale_mul_arg_.multiplier_, &shift);
-  scale_param_->scale_mul_arg_.left_shift_ = shift > 0 ? shift : 0;
-  scale_param_->scale_mul_arg_.right_shift_ = shift < 0 ? -shift : 0;
+  QuantizeMultiplier(input_output_multiplier, &quant_.scale_mul_arg_.multiplier_, &shift);
+  quant_.scale_mul_arg_.left_shift_ = shift > 0 ? shift : 0;
+  quant_.scale_mul_arg_.right_shift_ = shift < 0 ? -shift : 0;
 
   if (in_tensors_.size() == kScaleBiasInputsSize) {
     auto offset = in_tensors_.at(kOffsetIndex);
     CHECK_LESS_RETURN(offset->quant_params().size(), 1);
     auto offset_scale = offset->quant_params().front().scale;
-    scale_param_->offset_zp_ = offset->quant_params().front().zeroPoint;
+    quant_.offset_zp_ = offset->quant_params().front().zeroPoint;
 
     const double offset_multiplier = offset_scale / output_scale;
-    QuantizeMultiplier(offset_multiplier, &scale_param_->offset_mul_arg_.multiplier_, &shift);
-    scale_param_->offset_mul_arg_.left_shift_ = shift > 0 ? shift : 0;
-    scale_param_->offset_mul_arg_.right_shift_ = shift < 0 ? -shift : 0;
+    QuantizeMultiplier(offset_multiplier, &quant_.offset_mul_arg_.multiplier_, &shift);
+    quant_.offset_mul_arg_.left_shift_ = shift > 0 ? shift : 0;
+    quant_.offset_mul_arg_.right_shift_ = shift < 0 ? -shift : 0;
   }
 
   switch (scale_param_->activation_type_) {
     case schema::ActivationType_RELU:
-      scale_param_->output_activation_min_ = 0;
-      scale_param_->output_activation_max_ = INT8_MAX;
+      quant_.output_activation_min_ = 0;
+      quant_.output_activation_max_ = INT8_MAX;
       break;
     case schema::ActivationType_RELU6:
-      scale_param_->output_activation_min_ = 0;
-      scale_param_->output_activation_max_ = 6;
+      quant_.output_activation_min_ = 0;
+      quant_.output_activation_max_ = 6;
       break;
     case schema::ActivationType_NO_ACTIVATION:
-      scale_param_->output_activation_min_ = INT8_MIN;
-      scale_param_->output_activation_max_ = INT8_MAX;
+      quant_.output_activation_min_ = INT8_MIN;
+      quant_.output_activation_max_ = INT8_MAX;
       break;
     default:
       MS_LOG(ERROR) << "Scale does not support activation type " << scale_param_->activation_type_;
@@ -270,10 +270,9 @@ int ScaleInt8CPUKernel::Scale(int task_id) const {
   if (has_bias_) {
     int8_t *cur_input2_data = input2_data_ + task_id * count_unit_;
     CHECK_NULL_RETURN(cur_input2_data);
-    DoScaleWithBiasInt8(cur_input0_data, cur_output_data, cur_input1_data, cur_input2_data, scale_param_,
-                        real_dst_count);
+    DoScaleWithBiasInt8(cur_input0_data, cur_output_data, cur_input1_data, cur_input2_data, &quant_, real_dst_count);
   } else {
-    DoScaleInt8(cur_input0_data, cur_output_data, cur_input1_data, scale_param_, real_dst_count);
+    DoScaleInt8(cur_input0_data, cur_output_data, cur_input1_data, &quant_, real_dst_count);
   }
   return RET_OK;
 }
@@ -297,7 +296,7 @@ int ScaleInt8CPUKernel::Run() {
   // need broadcasting
   if (in_tensors_.at(0)->ElementsNum() != in_tensors_.at(1)->ElementsNum()) {
     // scale is passed by previous node, need do broadcasting online
-    if (!scale_param_->const_scale_) {
+    if (!const_scale_) {
       input1_data_ = reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(out_tensors_.at(0)->Size()));
       if (input1_data_ == nullptr) {
         MS_LOG(ERROR) << "malloc input1_data_  failed.";
@@ -309,7 +308,7 @@ int ScaleInt8CPUKernel::Run() {
     }
 
     // If has bias, bias is passed by previous node case, need do broadcasting online
-    if (has_bias_ && !scale_param_->const_offset_) {
+    if (has_bias_ && !const_offset_) {
       input2_data_ = reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(out_tensors_.at(0)->Size()));
       if (input2_data_ == nullptr) {
         MS_LOG(ERROR) << "malloc input2_data_  failed.";
@@ -324,11 +323,11 @@ int ScaleInt8CPUKernel::Run() {
 
     ret = ParallelLaunch(this->ms_context_, ScaleRunInt8, this, op_parameter_->thread_num_);
     // free memory malloced from memory pool
-    if (!scale_param_->const_scale_) {
+    if (!const_scale_) {
       ctx_->allocator->Free(input1_data_);
       input1_data_ = nullptr;
     }
-    if (has_bias_ && !scale_param_->const_offset_) {
+    if (has_bias_ && !const_offset_) {
       ctx_->allocator->Free(input2_data_);
       input2_data_ = nullptr;
     }
@@ -339,7 +338,7 @@ int ScaleInt8CPUKernel::Run() {
   if (input1_data_ == nullptr) {
     input1_data_ = reinterpret_cast<int8_t *>(in_tensors_.at(1)->data());
   }
-  if (has_bias_ && !scale_param_->const_offset_) {
+  if (has_bias_ && !const_offset_) {
     input2_data_ = reinterpret_cast<int8_t *>(in_tensors_.at(kOffsetIndex)->data());
   }
   ret = ParallelLaunch(this->ms_context_, ScaleRunInt8, this, op_parameter_->thread_num_);

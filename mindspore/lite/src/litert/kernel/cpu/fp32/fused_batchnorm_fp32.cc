@@ -60,9 +60,9 @@ void FusedBatchnormCPUKernel::FreeScaleAndOffset() {
 }
 
 int FusedBatchnormCPUKernel::InitScaleParam() {
-  scale_param_ = reinterpret_cast<ScaleParameter *>(malloc(sizeof(ScaleParameter)));
+  scale_param_ = reinterpret_cast<ScaleStruct *>(malloc(sizeof(ScaleStruct)));
   CHECK_NULL_RETURN(scale_param_);
-  scale_param_->op_parameter_.thread_num_ = ms_context_->thread_num_;
+  scale_param_->base_.thread_nr_ = ms_context_->thread_num_;
 
   scale_param_->axis_ = kNHWC_C;
   auto in_shape = in_tensors_[0]->shape();

@@ -56,6 +56,9 @@ class ScaleInt8CPUKernel : public LiteKernel {
   bool has_bias_ = false;
   bool malloced_scale_ = false;
   bool malloced_offset_ = false;
+  bool const_scale_ = false;
+  bool const_offset_ = false;
+  ScaleQuantParameter quant_;
 
   int InitQuantArgs();
 };

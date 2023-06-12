@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,27 +14,28 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_SCALE_H_
-#define NNACL_SCALE_H_
+#ifndef NNACL_KERNEL_SCALE_H_
+#define NNACL_KERNEL_SCALE_H_
 
 #include "nnacl/op_base.h"
+#include "nnacl/tensor_c.h"
+#include "nnacl/kernel.h"
 
-typedef struct ScaleParameter {
-  // primitive parameter
-  OpParameter op_parameter_;
+typedef struct ScaleStruct {
+  KernelBase base_;
   int axis_;
-  int activation_type_;
-} ScaleParameter;
+  int data_type_;
+  int axis_size_;
+  int outer_size_;
+  int inner_size_;
+  bool malloc_scale_;
+  bool malloc_offset_;
+  void *scale_;
+  void *offset_;
+  void *input_;
+  void *output_;
+} ScaleStruct;
 
-typedef struct ScaleQuantParameter {
-  QuantMulArg scale_mul_arg_;
-  QuantMulArg offset_mul_arg_;
-  int input_zp_;
-  int scale_zp_;
-  int offset_zp_;
-  int output_zp_;
-  int output_activation_min_;
-  int output_activation_max_;
-} ScaleQuantParameter;
+KernelBase *CreateScale(OpParameter *param, int data_type);
 
-#endif  // NNACL_SCALE_H_
+#endif  // NNACL_KERNEL_SCALE_H_

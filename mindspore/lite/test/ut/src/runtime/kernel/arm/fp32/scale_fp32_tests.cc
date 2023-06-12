@@ -18,9 +18,10 @@
 #include "mindspore/lite/src/tensor.h"
 #include "common/common_test.h"
 #include "nnacl/pad_parameter.h"
-#include "mindspore/lite/src/litert/kernel_registry.h"
 #include "schema/ops_generated.h"
 #include "nnacl/fp32/scale_fp32.h"
+#include "nnacl/scale_parameter.h"
+#include "nnacl/nnacl_manager.h"
 
 using mindspore::schema::ActivationType;
 using mindspore::schema::ActivationType_NO_ACTIVATION;
@@ -54,6 +55,7 @@ class TestScaleFp32 : public mindspore::CommonTest {
 };
 
 void TestScaleFp32::TearDown() {
+  kernel_->set_parameter(nullptr);
   delete kernel_;
   in_tensor_.set_data(nullptr);
   scale_tensor_.set_data(nullptr);
@@ -82,15 +84,18 @@ void TestScaleFp32::Prepare(const std::vector<int> &input_shape, const std::vect
   offset_tensor_.set_data(offset_data);
   out_tensor_.set_data(output_data);
 
+  param_.op_parameter_.type_ = PrimType_ScaleFusion;
+  param_.op_parameter_.thread_num_ = thread_num;
   param_.activation_type_ = act_type;
   param_.axis_ = axis;
+
   ctx_ = lite::InnerContext();
   ctx_.thread_num_ = thread_num;
   ctx_.Init();
-  creator_ = lite::KernelRegistry::GetInstance()->GetCreator(desc_);
-  ASSERT_NE(creator_, nullptr);
-  kernel_ = creator_(inputs_, outputs_, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc_);
+
+  kernel_ = nnacl::NNACLKernelRegistry(&param_.op_parameter_, inputs_, outputs_, &ctx_, desc_);
   ASSERT_NE(kernel_, nullptr);
+
   auto ret = kernel_->Prepare();
   EXPECT_EQ(0, ret);
 }
