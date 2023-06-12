@@ -26,7 +26,7 @@ from mindspore.ops.primitive import _primexpr
 from mindspore.ops.primitive import Primitive
 from mindspore.ops.function import _VmapGeneralRule
 from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _raise_value_error, \
-    _bdim_at_front, _vmap_clone_prim, _vmap_update_prim_attr, _bdim_at_any, _handle_broadcasting
+    _bdim_at_front, _vmap_clone_prim, _bdim_at_any, _handle_broadcasting
 
 
 @vmap_rules_getters.register(G.NLLLossGrad)
@@ -665,9 +665,8 @@ def get_grid_sampler_grad_vmap_rule(prim, axis_size):
 def get_upsample_grad_vmap_rule(prim, axis_size):
     """VmapRule for `UpsampleNearest3DGrad` and `UpsampleTrilinear3DGrad`."""
     cdhw_reverse_index = -4
-    input_size = prim.input_size
 
-    def vmap_rule(grad_bdim):
+    def vmap_rule(grad_bdim, isize_bdim, osize_bdim, scales_bdim):
         is_all_none, result = vmap_general_preprocess(prim, grad_bdim)
         if is_all_none:
             return result
@@ -679,11 +678,17 @@ def get_upsample_grad_vmap_rule(prim, axis_size):
         grad = F.reshape(grad, input_shape)
         real_in_shape = F.shape(grad)
 
+        isize, isize_dim = isize_bdim
+        osize, osize_dim = osize_bdim
+        scales, scales_dim = scales_bdim
+        if isize_dim is not None or osize_dim is not None or scales_dim is not None:
+            _raise_value_error(
+                "The source axis of `input_size`, `output_size` and `scales` must be None, but got {0}, {1} and {2}."
+                .format(isize_dim, osize_dim, scales_dim))
         # update batch dimension of input_size
-        new_input_size = (real_in_shape[0],) + input_size[1:]
-        _vmap_update_prim_attr(prim, 'input_size', new_input_size)
+        new_isize = (real_in_shape[0],) + isize[1:]
 
-        out = prim(grad)
+        out = prim(grad, new_isize, osize, scales)
         out_shape = F.shape(out)
         real_out_shape = grad_shape[:cdhw_reverse_index] + out_shape[cdhw_reverse_index:]
         out = F.reshape(out, real_out_shape)

@@ -3951,8 +3951,8 @@ class UpsampleTrilinear3D(Primitive):
         TypeError: When `scales` is not ``None`` and `scales` is not list[float] or tuple[float].
         TypeError: If dtype of `x` is not in [float16, float32, float64].
         TypeError: If type of `align_corners` is not bool.
-        ValueError: If any value of `output_size` is negative when `output_size` is not ``None``.
-        ValueError: If any value of `scales` is negative when `scales` is not ``None``.
+        ValueError: If any value of `output_size` is negative or zero when `output_size` is not ``None``.
+        ValueError: If any value of `scales` is negative or zero when `scales` is not ``None``.
         ValueError: If shape of `x` is not 5D.
         ValueError: If none of `scales` and `output_size` is specified or both specified.
         ValueError: If size of `scales` is not equal 3 when `scales` is specified.
@@ -10380,8 +10380,8 @@ class UpsampleNearest3D(Primitive):
         TypeError: When `output_size` is not ``None`` and `output_size` is not list[int] or tuple[int].
         TypeError: When `scales` is not ``None`` and `scales` is not list[float] or tuple[float].
         TypeError: If dtype of `x` is not int [uint8, float16, float32, float64].
-        ValueError: If any value of `output_size` is negative when `output_size` is not ``None``.
-        ValueError: If any value of `scales` is negative when `scales` is not ``None``.
+        ValueError: If any value of `output_size` is negative or zero when `output_size` is not ``None``.
+        ValueError: If any value of `scales` is negative or zero when `scales` is not ``None``.
         ValueError: If shape of `x` is not 5D.
         ValueError: If none of `scales` and `output_size` is specified or both specified.
         ValueError: If size of `scales` is not equal 3 when `scales` is specified.

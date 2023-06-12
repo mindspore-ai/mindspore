@@ -120,7 +120,7 @@ def test_upsample_nearest_3d_error():
     with pytest.raises(TypeError):
         grad_tensor = Tensor(np.ones((2, 2, 2, 2, 2), dtype=np.float32))
         net = NetUpsampleNearest3DGrad()
-        net(grad_tensor, (2, 2, 2, 2, 2), None, [1., 2., 3.])
+        net(grad_tensor, (2, 2, 2, 2, 2), None, [1, 2, 3])
 
     with pytest.raises(ValueError):
         grad_tensor = Tensor(np.ones((2, 2, 2, 2, 2), dtype=np.float32))
@@ -164,7 +164,8 @@ def test_vmap_upsample_nearest3d_grad():
                        [[[[[20.2, 21.], [11.299999, 11.700001]],
                           [[25.0, 25.8], [13.700001,
                                           14.1]]]]]]).astype(np.float32)
-    out_vmap = F.vmap(net, in_axes=(0))(input_tensor, input_shape, [2, 3, 4],
-                                        None)
+    out_vmap = F.vmap(net,
+                      in_axes=(0, None, None, None))(input_tensor, input_shape,
+                                                     [2, 3, 4], None)
     error = np.ones(shape=expect.shape) * 1.0e-6
     assert np.all(abs(out_vmap.asnumpy() - expect) < error)
