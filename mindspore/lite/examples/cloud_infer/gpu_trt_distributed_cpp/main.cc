@@ -47,11 +47,19 @@ int GenerateInputDataWithRandom(std::vector<mindspore::MSTensor> inputs) {
   return 0;
 }
 
+std::string AddNumberBeforeExtension(std::string model_path, int rank_id) {
+  // find last "." in the path and add rank id before it
+  size_t dot_pos = model_path.find_last_of(".");
+  model_path.insert(dot_pos, std::to_string(rank_id));
+  return model_path;
+}
+
 int QuickStart(int argc, const char **argv) {
-  if (argc < 5) {
-    std::cerr << "Model path, device id, rank id and config file path must be provided.\n";
+  if (argc < 2) {
+    std::cerr << "Model file must be provided.\n";
     return -1;
   }
+
   // Read model file.
   std::string model_path = argv[1];
   if (model_path.empty()) {
@@ -59,58 +67,30 @@ int QuickStart(int argc, const char **argv) {
     return -1;
   }
 
-  // Read device id.
-  std::string device_id_str = argv[2];
-  auto device_id = std::stoul(argv[2]);
-  if (device_id_str.empty() || device_id > kMaxDeviceNum) {
-    std::cerr << "Device id " << device_id_str << " is invalid.";
-    return -1;
-  }
-
-  // Read rank id.
-  std::string rank_id_str = argv[3];
-  auto rank_id = std::stoul(argv[3]);
-  if (rank_id_str.empty() || rank_id > kMaxDeviceNum) {
-    std::cerr << "Rank id " << rank_id_str << " is invalid.";
-    return -1;
-  }
-
-  // Read config file.
-  std::string config_path = argv[4];
-  if (config_path.empty()) {
-    std::cerr << "Config path " << config_path << " is invalid.";
-    return -1;
-  }
-
-  // Create and init context, add Ascend device info
+  // Create and init context, add gpu device info
   auto context = std::make_shared<mindspore::Context>();
   if (context == nullptr) {
     std::cerr << "New context failed." << std::endl;
     return -1;
   }
   auto &device_list = context->MutableDeviceInfo();
-  auto device_info = std::make_shared<mindspore::AscendDeviceInfo>();
+  auto device_info = std::make_shared<mindspore::GPUDeviceInfo>();
   if (device_info == nullptr) {
-    std::cerr << "New AscendDeviceInfo failed." << std::endl;
+    std::cerr << "New GPUDeviceInfo failed." << std::endl;
     return -1;
   }
 
   // set distributed info
-  device_info->SetDeviceID(device_id);
-  device_info->SetRankID(rank_id);
-  device_info->SetProvider("ge");
+  auto rank_id = device_info->GetRankID();  // rank id is set and returned by mpi
+  device_info->SetDeviceID(rank_id);        // as we set visible device id in env, we use rank id as device id
+  device_info->SetProvider("tensorrt");
   device_list.push_back(device_info);
 
-  mindspore::Model model;
-  // Load config file
-  if (!config_path.empty()) {
-    if (model.LoadConfig(config_path) != mindspore::kSuccess) {
-      std::cerr << "Failed to load config file " << config_path << std::endl;
-      return -1;
-    }
-  }
+  // simply adding the rank id before extensions to distinguish each model from each rank
+  model_path = AddNumberBeforeExtension(model_path, rank_id);
 
   // Build model
+  mindspore::Model model;
   auto build_ret = model.Build(model_path, mindspore::kMindIR, context);
   if (build_ret != mindspore::kSuccess) {
     std::cerr << "Build model error " << build_ret << std::endl;

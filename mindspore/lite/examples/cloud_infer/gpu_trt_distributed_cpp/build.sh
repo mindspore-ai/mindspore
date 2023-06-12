@@ -15,7 +15,6 @@
 # ============================================================================
 
 export LITE_HOME=/your/path/to/mindspore-lite-xxx
-export ASCEND_HOME=/your/path/to/Ascend
 export LD_LIBRARY_PATH=$LITE_HOME/runtime/lib:$LITE_HOME/tools/converter/lib:$LITE_HOME/runtime/third_party/dnnl:$LD_LIBRARY_PATH
 
 mkdir -p build

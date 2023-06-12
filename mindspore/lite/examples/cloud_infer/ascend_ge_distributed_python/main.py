@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""ascend_ge_distributed.py"""
+"""main.py"""
 
 import argparse
 import numpy as np
@@ -30,10 +30,12 @@ args = parser.parse_args()
 context = mslite.Context()
 context.target = ["Ascend"]
 
-# set distributed infer args and build model
-context.ascend.provider = "ge"
+# set distributed info
 context.ascend.device_id = args.device_id
 context.ascend.rank_id = args.rank_id
+context.ascend.provider = "ge"
+
+# create Model and build Model
 model = mslite.Model()
 model.build_from_file(
     args.model_path, mslite.ModelType.MINDIR, context, args.config_file)
