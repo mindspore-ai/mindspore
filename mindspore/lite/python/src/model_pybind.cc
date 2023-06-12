@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "include/api/model.h"
+#include "include/api/model_group.h"
 #include "include/api/model_parallel_runner.h"
 #include "src/common/log_adapter.h"
 #include "pybind11/pybind11.h"
@@ -225,5 +226,13 @@ void ModelParallelRunnerPyBind(const py::module &m) {
     .def("get_outputs", &PyModelParallelRunnerGetOutputs)
     .def("predict", &PyModelParallelRunnerPredict, py::call_guard<py::gil_scoped_release>());
 #endif
+}
+
+void ModelGroupPyBind(const py::module &m) {
+  (void)py::class_<ModelGroup, std::shared_ptr<ModelGroup>>(m, "ModelGroupBind")
+    .def(py::init<>())
+    .def("add_model", py::overload_cast<const std::vector<std::string> &>(&ModelGroup::AddModel))
+    .def("cal_max_size_of_workspace",
+         py::overload_cast<ModelType, const std::shared_ptr<Context> &>(&ModelGroup::CalMaxSizeOfWorkspace));
 }
 }  // namespace mindspore::lite
