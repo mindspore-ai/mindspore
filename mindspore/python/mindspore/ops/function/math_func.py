@@ -1607,7 +1607,7 @@ def logical_not(input):
 
     Args:
         input (Tensor): The input tensor.
-            :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+            :math:`(N,*)` where :math:`*` means any number of additional dimensions.
 
     Returns:
         Tensor, the shape is the same as the `input`, and the dtype is bool.

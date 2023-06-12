@@ -1468,7 +1468,7 @@ class DynamicBroadcastTo(Primitive):
     Inputs:
         - **input_x** (Tensor) - The input tensor. The data type should be one of the following types:
           float16, float32, int32, int8, uint8.
-          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N,*)` where :math:`*` means any number of additional dimensions.
         - **shape** (Tensor): The target shape to broadcast.
 
     Outputs:

@@ -3871,6 +3871,7 @@ class Acosh(Primitive):
     Inputs:
         - **x** (Tensor) - The shape of tensor is
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          Input value must be in range [1, inf].
 
     Outputs:
         Tensor, has the same shape and type as `x`.
@@ -4340,7 +4341,7 @@ class Lerp(Primitive):
     Refer to :func:`mindspore.ops.lerp` for more details.
 
     Inputs:
-        - **start** (Tensor) - The tensor with the starting points. Data type must be float16 or float32.
+        - **start** (Tensor) - The tensor with the starting points. Data type must be float16, float32 or float64.
         - **end** (Tensor) - The tensor with the ending points. Data type must be the same as `start`.
         - **weight** (Union[float, Tensor]) - The weight for the interpolation formula. Must be a float
           or a scalar tensor with float16 or float32 data type.
@@ -4491,7 +4492,7 @@ class LogicalNot(Primitive):
 
     Inputs:
         - **x** (Tensor) - The input tensor.
-          :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          :math:`(N,*)` where :math:`*` means any number of additional dimensions.
 
     Outputs:
         Tensor, the shape is the same as the `x`, and the dtype is bool.
@@ -6116,9 +6117,10 @@ class LinSpace(Primitive):
     Refer to :func:`mindspore.ops.linspace` for more details.
 
     Inputs:
-        - **start** (Tensor) -  Start value of interval, 0-D Tensor with dtype float32.
-        - **stop** (Tensor) - Last value of interval, 0-D Tensor with dtype float32.
+        - **start** (Tensor) -  Start value of interval, 0-D Tensor with dtype float32 or float64.
+        - **stop** (Tensor) - Last value of interval, 0-D Tensor with dtype  float32 or float64.
         - **num** (int) - Number of ticks in the interval, inclusive of `start` and `stop`.
+          Supported dtypes: int32, int64.
 
     Outputs:
         Tensor, has the same shape and dtype as `start`.
