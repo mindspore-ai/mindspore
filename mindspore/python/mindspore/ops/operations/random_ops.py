@@ -952,6 +952,8 @@ class UniformCandidateSampler(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> sampler = ops.UniformCandidateSampler(1, 3, False, 4, 1)
         >>> output1, output2, output3 = sampler(Tensor(np.array([[1], [3], [4], [6], [3]], dtype=np.int64)))
         >>> print(output1.shape)
@@ -1022,6 +1024,8 @@ class LogUniformCandidateSampler(Primitive):
         ``Ascend`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> sampler = ops.LogUniformCandidateSampler(2, 5, True, 5)
         >>> output1, output2, output3 = sampler(Tensor(np.array([[1, 7], [0, 4], [3, 3]])))
         >>> print(output1, output2, output3)

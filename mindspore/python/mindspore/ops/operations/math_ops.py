@@ -1479,6 +1479,8 @@ class LpNorm(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[[1.0, 2.0], [3.0, 4.0]], [[5.0, 6.0], [7.0, 8.0]]]).astype(np.float32))
         >>> op = ops.LpNorm(axis=[0, 1], p=2, keep_dims=False)
         >>> output = op(input_x)
@@ -4388,6 +4390,8 @@ class Gcd(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x1 = Tensor(np.array([7, 8, 9]))
         >>> x2 = Tensor(np.array([14, 6, 12]))
         >>> gcd_ = ops.Gcd()
@@ -5207,6 +5211,9 @@ class NMSWithMask(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> bbox = np.array([[100.0, 100.0, 50.0, 68.0, 0.63], [150.0, 75.0, 165.0, 115.0, 0.55],
         ...                  [12.0, 190.0, 288.0, 200.0, 0.9], [28.0, 130.0, 106.0, 172.0, 0.3]])
         >>> bbox[:, 2] += bbox[:, 0]
@@ -6504,6 +6511,9 @@ class ComplexAbs(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.asarray(np.complex(3+4j)), mindspore.complex64)
         >>> complex_abs = ops.ComplexAbs()
         >>> output = complex_abs(x)
@@ -6570,6 +6580,9 @@ class Complex(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> real = Tensor(np.array([1]), mindspore.float32)
         >>> imag = Tensor(np.array([2]), mindspore.float32)
         >>> complex = ops.Complex()
@@ -7781,6 +7794,9 @@ class Cholesky(Primitive):
         ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[1.0, 1.0], [1.0, 2.0]]), mindspore.float32)
         >>> cholesky = ops.Cholesky(upper=False)
         >>> output = cholesky(input_x)
@@ -7991,6 +8007,9 @@ class FFTWithSize(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> # case FFT: signal_ndim: 1, inverse: False, real: False.
         >>> fft_in = Tensor(np.array([2, 1, 2]), mindspore.complex64)
         >>> fft_net = ops.FFTWithSize(signal_ndim=1, inverse=False, real=False)

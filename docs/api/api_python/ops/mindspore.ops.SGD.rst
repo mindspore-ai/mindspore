@@ -9,7 +9,7 @@ mindspore.ops.SGD
 
     .. note::
         如果参数没有分组，优化器中的 `weight_decay` 将应用于名称中没有'beta'或'gamma'的网络参数。用户可以将参数分组来改变权重衰减的策略。当参数被分组时，每个组可以设置 `weight_decay`。如果没有，优化器中的 `weight_decay` 将被应用。
-        有关更多详细信息，请参阅: :class:`mindspore.nn.SGD` 。
+        有关更多详细信息，请参阅： :class:`mindspore.nn.SGD` 。
 
     参数：
         - **dampening** (float) - 动量的抑制因子。默认值： ``0.0`` 。

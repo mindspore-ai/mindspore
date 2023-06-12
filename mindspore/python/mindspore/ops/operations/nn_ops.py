@@ -3101,6 +3101,9 @@ class ApplyMomentum(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn, ops, Parameter
         >>> class Net(nn.Cell):
         ...    def __init__(self):
         ...        super(Net, self).__init__()
@@ -3495,6 +3498,9 @@ class SGD(PrimitiveWithCheck):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> sgd = ops.SGD()
         >>> parameters = Tensor(np.array([2, -0.5, 1.7, 4]), mindspore.float32)
         >>> gradient = Tensor(np.array([1, -1, 0.5, 2]), mindspore.float32)
@@ -3589,6 +3595,8 @@ class ApplyRMSProp(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn, ops, Parameter
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -3683,6 +3691,8 @@ class ApplyCenteredRMSProp(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn, ops, Parameter
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -3821,6 +3831,9 @@ class L2Normalize(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> l2_normalize = ops.L2Normalize()
         >>> x = Tensor(np.random.randint(-256, 256, (2, 3, 4)), mindspore.float32)
         >>> output = l2_normalize(x)
@@ -4766,6 +4779,8 @@ class ComputeAccidentalHits(PrimitiveWithCheck):
         ``Ascend``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> true_classes = np.array([[1, 2], [0, 4], [3, 3]])
         >>> sampled_candidates = np.array([0, 1, 2, 3, 4])
         >>> sampler = ops.ComputeAccidentalHits(2)
@@ -4845,6 +4860,9 @@ class ROIAlign(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> features = Tensor(np.array([[[[1., 2.], [3., 4.]]]]), mindspore.float32)
         >>> rois = Tensor(np.array([[0, 0.2, 0.3, 0.2, 0.3]]), mindspore.float32)
         >>> roi_align = ops.ROIAlign(2, 2, 0.5, 2)
@@ -6259,6 +6277,9 @@ class SparseApplyAdagradV2(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn, ops, Parameter
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -6348,6 +6369,8 @@ class ApplyProximalAdagrad(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn, ops, Parameter
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -6447,6 +6470,8 @@ class SparseApplyProximalAdagrad(Primitive):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn, ops, Parameter
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -6541,6 +6566,8 @@ class ApplyAddSign(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn, ops, Parameter
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -6643,6 +6670,8 @@ class ApplyPowerSign(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn, ops, Parameter
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -6719,6 +6748,8 @@ class ApplyGradientDescent(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn, ops, Parameter
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -6790,6 +6821,8 @@ class ApplyProximalGradientDescent(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn, ops, Parameter
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -6858,6 +6891,8 @@ class LARSUpdate(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn, ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -6933,6 +6968,8 @@ class ApplyFtrl(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn, ops, Parameter
         >>> class ApplyFtrlNet(nn.Cell):
         ...     def __init__(self):
         ...         super(ApplyFtrlNet, self).__init__()
@@ -7025,6 +7062,9 @@ class SparseApplyFtrl(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn, Parameter
         >>> class SparseApplyFtrlNet(nn.Cell):
         ...     def __init__(self):
         ...         super(SparseApplyFtrlNet, self).__init__()
