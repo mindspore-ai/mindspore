@@ -39,7 +39,7 @@ BucketBatchByLengthOp::BucketBatchByLengthOp(const std::vector<std::string> &len
       length_dependent_columns_(length_dependent_columns),
       bucket_boundaries_(bucket_boundaries),
       bucket_batch_sizes_(bucket_batch_sizes),
-      element_length_function_(element_length_function),
+      element_length_function_(std::move(element_length_function)),
       pad_info_(pad_info),
       pad_to_bucket_boundary_(pad_to_bucket_boundary),
       drop_remainder_(drop_remainder),
@@ -136,8 +136,8 @@ Status BucketBatchByLengthOp::PadAndBatchBucket(int32_t bucket_index, int32_t ba
     for (auto &pair : pad_info_copy) {
       std::vector<dsize_t> pad_shape = pair.second.first.AsVector();
 
-      for (size_t i = 0; i < pad_shape.size(); i++) {
-        if (pad_shape[i] == TensorShape::kDimUnknown) {
+      for (auto &i : pad_shape) {
+        if (i == TensorShape::kDimUnknown) {
           if (bucket_index + 1 >= bucket_boundaries_.size()) {
             std::string error_message =
               "Invalid data, requested to pad to bucket boundary failed, bucket index should be less than " +
@@ -145,7 +145,7 @@ Status BucketBatchByLengthOp::PadAndBatchBucket(int32_t bucket_index, int32_t ba
             RETURN_STATUS_UNEXPECTED(error_message);
           }
 
-          pad_shape[i] = bucket_boundaries_[bucket_index + 1] - 1;
+          i = bucket_boundaries_[bucket_index + 1] - 1;
         }
       }
 
@@ -157,7 +157,7 @@ Status BucketBatchByLengthOp::PadAndBatchBucket(int32_t bucket_index, int32_t ba
   RETURN_IF_NOT_OK(BatchOp::PadColumns(bucket, pad_info_copy, column_name_id_map_));
 
   TensorRow batched_bucket;
-  RETURN_IF_NOT_OK(BatchOp::BatchRows(bucket, &batched_bucket, batch_size));
+  RETURN_IF_NOT_OK(BatchOp::BatchRows(bucket, &batched_bucket));
   (*bucket)->clear();
 
   RETURN_IF_NOT_OK(out_connector_->Add(std::move(batched_bucket)));
@@ -172,7 +172,7 @@ Status BucketBatchByLengthOp::ComputeColMap() {
   RETURN_IF_NOT_OK(DatasetOp::ComputeColMap());
 
   for (const auto &inCol : length_dependent_columns_) {
-    bool found = column_name_id_map_.find(inCol) != column_name_id_map_.end() ? true : false;
+    bool found = column_name_id_map_.find(inCol) != column_name_id_map_.end();
     if (!found) {
       std::string err_msg = "Invalid parameter, input column name: " + inCol + " doesn't exist in the dataset columns.";
       RETURN_STATUS_UNEXPECTED(err_msg);

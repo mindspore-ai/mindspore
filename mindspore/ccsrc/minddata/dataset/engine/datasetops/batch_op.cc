@@ -27,45 +27,25 @@
 
 namespace mindspore {
 namespace dataset {
-BatchOp::Builder::Builder(int32_t batch_size) : builder_drop_(false), builder_pad_(false), builder_pad_map_({}) {
-  builder_batch_size_ = batch_size;
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  builder_num_workers_ = cfg->num_parallel_workers();
-  builder_op_connector_size_ = cfg->op_connector_size();
-}
-
-Status BatchOp::Builder::Build(std::shared_ptr<BatchOp> *ptr) {
-  RETURN_UNEXPECTED_IF_NULL(ptr);
-#ifdef ENABLE_PYTHON
-  *ptr = std::make_shared<BatchOp>(builder_batch_size_, builder_drop_, builder_pad_, builder_op_connector_size_,
-                                   builder_num_workers_, builder_in_names_, builder_out_names_,
-                                   builder_batch_size_func_, builder_batch_map_func_, builder_pad_map_);
-#else
-  *ptr = std::make_shared<BatchOp>(builder_batch_size_, builder_drop_, builder_pad_, builder_op_connector_size_,
-                                   builder_num_workers_, builder_in_names_, builder_pad_map_);
-#endif
-  return Status::OK();
-}
-
 #ifdef ENABLE_PYTHON
 BatchOp::BatchOp(int32_t batch_size, bool drop, bool pad, int32_t op_queue_size, int32_t num_workers,
                  const std::vector<std::string> &in_col, const std::vector<std::string> &out_col,
                  py::function batch_size_func, py::function batch_map_func, PadInfo pad_map)
-    : BatchOp(batch_size, drop, pad, op_queue_size, num_workers, in_col, pad_map) {
-  batch_size_func_ = batch_size_func;
-  batch_map_func_ = batch_map_func;
+    : BatchOp(batch_size, drop, pad, op_queue_size, num_workers, in_col, std::move(pad_map)) {
+  batch_size_func_ = std::move(batch_size_func);
+  batch_map_func_ = std::move(batch_map_func);
   out_col_names_ = out_col;
 }
 // if PYTHON is disabled. per_batch_map can't be used
 #endif
 BatchOp::BatchOp(int32_t batch_size, bool drop, bool pad, int32_t op_queue_size, int32_t num_workers,
-                 const std::vector<std::string> &cols_to_map, PadInfo pad_map)
+                 std::vector<std::string> cols_to_map, PadInfo pad_map)
     : ParallelOp(num_workers, op_queue_size),
       start_batch_size_(batch_size),
       drop_(drop),
       pad_(pad),
-      in_col_names_(cols_to_map),
-      pad_info_(pad_map),
+      in_col_names_(std::move(cols_to_map)),
+      pad_info_(std::move(pad_map)),
       batch_num_(0),
       batch_cnt_(0),
       python_mp_(nullptr) {
@@ -93,14 +73,14 @@ Status BatchOp::operator()() {
   RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
   int32_t cur_batch_size = 0;
   RETURN_IF_NOT_OK(GetBatchSize(&cur_batch_size, CBatchInfo(0, 0, 0)));
-  while (child_iterator_->EofHandled() == false) {
+  while (!child_iterator_->EofHandled()) {
     if (op_current_repeats_ % GetOpNumRepeatsPerEpoch() == 0) {
       ep_step = 0;
       RETURN_IF_NOT_OK(callback_manager_.EpochBegin(CallbackParam(op_current_epochs_ + 1, ep_step, total_step)));
     }
     while (!new_row.eoe()) {
       // we only call stepBegin when a new batch is starting to be filled.
-      if (table->size() == 0) {
+      if (table->empty()) {
         ep_step++;
         total_step++;
         RETURN_IF_NOT_OK(callback_manager_.StepBegin(CallbackParam(op_current_epochs_ + 1, ep_step, total_step)));
@@ -117,7 +97,7 @@ Status BatchOp::operator()() {
       RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
     }
     // Reminder logic, execute only when there is a remainder (table is non empty) and don't drop
-    if (drop_ == false && table->empty() == false) {
+    if (!drop_ && !table->empty()) {
       RETURN_IF_NOT_OK(worker_in_queues_[NextWorkerID()]->EmplaceBack(
         std::make_pair(std::move(table), CBatchInfo(epoch_num, batch_num++, cnt + 1 - epoch_num))));
       cnt++;
@@ -164,19 +144,16 @@ void BatchOp::Print(std::ostream &out, bool show_all) const {
   }
 }
 
-Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *src, TensorRow *dest, dsize_t batch_size,
+Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *tensor_row_dequeue, TensorRow *batched_tensor_row,
                           bool concat_batch, bool contains_per_batch_map) {
-  RETURN_UNEXPECTED_IF_NULL(src);
-  RETURN_UNEXPECTED_IF_NULL(dest);
-  if ((*src)->size() != batch_size) {
-    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Source table size does not match the batch_size.");
-  }
-
+  RETURN_UNEXPECTED_IF_NULL(tensor_row_dequeue);
+  RETURN_UNEXPECTED_IF_NULL(batched_tensor_row);
+  auto batch_size = (*tensor_row_dequeue)->size();
   if (batch_size == 1) {
-    *dest = std::move((*src)->front());
-    (*src)->pop_front();
+    *batched_tensor_row = std::move((*tensor_row_dequeue)->front());
+    (*tensor_row_dequeue)->pop_front();
 
-    for (const auto &tensor : (*dest)) {
+    for (const auto &tensor : (*batched_tensor_row)) {
       // If concat batch rows, the result should not be expend dimension.
       if (!concat_batch) {
         RETURN_IF_NOT_OK(tensor->ExpandDim(0));
@@ -185,21 +162,35 @@ Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *src, TensorRow *d
     return Status::OK();
   }
 
-  auto num_columns = (*src)->front().size();
+  auto num_columns = (*tensor_row_dequeue)->front().size();
   for (size_t i = 0; i < num_columns; i++) {
-    std::shared_ptr<Tensor> new_tensor;
-    RETURN_IF_NOT_OK(ConvertRowsToTensor(src, &new_tensor, batch_size, i, contains_per_batch_map));
-    (void)dest->emplace_back(new_tensor);
+    std::shared_ptr<Tensor> batched_tensor;
+    RETURN_IF_NOT_OK(ConvertRowsToTensor(tensor_row_dequeue, &batched_tensor, batch_size, i, contains_per_batch_map));
+    (void)batched_tensor_row->emplace_back(batched_tensor);
   }
 
   return Status::OK();
 }
 
-Status BatchOp::ConvertRowsToTensor(const std::unique_ptr<TensorQTable> *src, std::shared_ptr<Tensor> *dst,
-                                    dsize_t batch_size, size_t col, bool contains_per_batch_map) {
-  RETURN_UNEXPECTED_IF_NULL(src);
-  RETURN_UNEXPECTED_IF_NULL(dst);
-  std::shared_ptr<Tensor> first_tensor = (*src)->at(0).at(col);  // first row, column i
+Status CopyTensorToBatch(const std::shared_ptr<Tensor> &element_tensor, std::shared_ptr<Tensor> *batched_tensor,
+                         size_t index) {
+  RETURN_UNEXPECTED_IF_NULL(batched_tensor);
+  // ConvertRowsToTensor has confirmed that the shape of element_tensor matches the expected shape of batch_tensor
+  auto element_size = element_tensor->SizeInBytes();
+  errno_t copy_status =
+    memcpy_s(reinterpret_cast<void *>((*batched_tensor)->GetMutableBuffer() + index * element_size),
+             element_tensor->SizeInBytes(), element_tensor->GetBuffer(), element_tensor->SizeInBytes());
+  CHECK_FAIL_RETURN_UNEXPECTED(copy_status == EOK,
+                               "Failed to copy tensor to batch, got error_t: " + std::to_string(copy_status));
+  return Status::OK();
+}
+
+Status BatchOp::ConvertRowsToTensor(const std::unique_ptr<TensorQTable> *tensor_row_dequeue,
+                                    std::shared_ptr<Tensor> *batched_tensor, dsize_t batch_size, size_t column_index,
+                                    bool contains_per_batch_map) {
+  RETURN_UNEXPECTED_IF_NULL(tensor_row_dequeue);
+  RETURN_UNEXPECTED_IF_NULL(batched_tensor);
+  std::shared_ptr<Tensor> first_tensor = (*tensor_row_dequeue)->at(0).at(column_index);  // first row
   TensorShape first_shape = first_tensor->shape();
   DataType first_type = first_tensor->type();
   TensorShape new_shape = first_shape.PrependDim(static_cast<int64_t>(batch_size));
@@ -207,13 +198,12 @@ Status BatchOp::ConvertRowsToTensor(const std::unique_ptr<TensorQTable> *src, st
   std::shared_ptr<Tensor> new_tensor;
   if (first_type.IsNumeric()) {  // numeric tensor
     RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, first_type, &new_tensor));
-    dsize_t j = 0;
-    for (auto row : **src) {
-      std::shared_ptr<Tensor> old_tensor = row.at(col);  // row j, column i
+    for (auto row_index = 0; row_index < batch_size; ++row_index) {
+      std::shared_ptr<Tensor> old_tensor = (**tensor_row_dequeue)[row_index][column_index];
       // check the newly popped rows have the same dim and type as the first
       if (old_tensor->shape() == first_shape && old_tensor->type() == first_type) {
         if (new_shape.NumOfElements() != 0) {
-          RETURN_IF_NOT_OK(new_tensor->InsertTensor({j++}, old_tensor));
+          RETURN_IF_NOT_OK(CopyTensorToBatch(old_tensor, &new_tensor, row_index));
         }
         // Don't do anything if the tensor has no data
       } else if (old_tensor->shape() != first_shape) {  // newly popped rows have different dim
@@ -223,7 +213,8 @@ Status BatchOp::ConvertRowsToTensor(const std::unique_ptr<TensorQTable> *src, st
         RETURN_STATUS_UNEXPECTED(
           "Inconsistent batch shapes, batch operation expects same shape for each data row, "
           "but got inconsistent shape in column " +
-          std::to_string(col) + ", expected shape for this column is:" + shape1.str() + ", got shape:" + shape2.str());
+          std::to_string(column_index) + ", expected shape for this column is:" + shape1.str() +
+          ", got shape:" + shape2.str());
       } else {  // newly popped rows have different type
         std::string type1, type2;
         type1 = first_type.ToString();
@@ -231,7 +222,7 @@ Status BatchOp::ConvertRowsToTensor(const std::unique_ptr<TensorQTable> *src, st
         RETURN_STATUS_UNEXPECTED(
           "Inconsistent batch type, batch operation expects same type for each data row, "
           "but got inconsistent type in column " +
-          std::to_string(col) + ", expected type for this column is:" + type1 + ", got type:" + type2);
+          std::to_string(column_index) + ", expected type for this column is:" + type1 + ", got type:" + type2);
       }
     }
 #ifdef ENABLE_PYTHON
@@ -247,11 +238,11 @@ Status BatchOp::ConvertRowsToTensor(const std::unique_ptr<TensorQTable> *src, st
 
       py::dict new_dict;
       size_t num_keys = 0;
-      for (size_t j = 0; j < batch_size; j++) {
-        std::shared_ptr<Tensor> old_tensor = (*src)->at(j).at(col);  // row j, column col
+      for (size_t row_index = 0; row_index < batch_size; ++row_index) {
+        std::shared_ptr<Tensor> old_tensor = (**tensor_row_dequeue)[row_index][column_index];
         py::dict old_dict;
         RETURN_IF_NOT_OK(old_tensor->GetDataAsPythonObject(&old_dict));
-        if (j == 0) {
+        if (row_index == 0) {
           num_keys = py::len(old_dict);
           for (auto key_val : old_dict) {
             py::list li;
@@ -282,7 +273,7 @@ Status BatchOp::ConvertRowsToTensor(const std::unique_ptr<TensorQTable> *src, st
           CHECK_FAIL_RETURN_UNEXPECTED(
             arr.dtype() != py::dtype("object_"),
             std::string("Batch operation: failed to create a NumPy array with primitive types for the dictionary ") +
-              "objects in column " + std::to_string(col) + ", key: '" + item.first.cast<std::string>() +
+              "objects in column " + std::to_string(column_index) + ", key: '" + item.first.cast<std::string>() +
               "'.\nIf you want a customized array, define a custom 'per_batch_map' function.");
           np_dict[item.first] = arr;
         }
@@ -292,15 +283,15 @@ Status BatchOp::ConvertRowsToTensor(const std::unique_ptr<TensorQTable> *src, st
 #endif
   } else {  // handle string column differently
     std::vector<std::string> strings;
-    for (dsize_t j = 0; j < batch_size; j++) {
-      std::shared_ptr<Tensor> old_tensor = (*src)->at(j).at(col);
+    for (dsize_t row_index = 0; row_index < batch_size; ++row_index) {
+      std::shared_ptr<Tensor> old_tensor = (**tensor_row_dequeue)[row_index][column_index];
       for (auto itr = old_tensor->begin<std::string_view>(); itr != old_tensor->end<std::string_view>(); ++itr) {
         (void)strings.emplace_back(*itr);
       }
     }
     RETURN_IF_NOT_OK(Tensor::CreateFromVector(strings, new_shape, first_type, &new_tensor));
   }
-  *dst = std::move(new_tensor);
+  *batched_tensor = std::move(new_tensor);
   return Status::OK();
 }
 
@@ -313,7 +304,11 @@ Status BatchOp::WorkerEntry(int32_t workerId) {
   std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> table_pair;
   RETURN_IF_NOT_OK(worker_in_queues_[workerId]->PopFront(&table_pair));
   while (table_pair.second.ctrl_ != batchCtrl::kQuit) {
-    if (table_pair.second.ctrl_ == batchCtrl::kEOE) {
+    if (table_pair.second.ctrl_ == batchCtrl::kNoCtrl) {
+      TensorRow batched_tensor_row;
+      RETURN_IF_NOT_OK(MakeBatchedRow(std::move(table_pair), &batched_tensor_row));
+      RETURN_IF_NOT_OK(worker_out_queues_[workerId]->EmplaceBack(std::move(batched_tensor_row)));
+    } else if (table_pair.second.ctrl_ == batchCtrl::kEOE) {
       RETURN_IF_NOT_OK(worker_out_queues_[workerId]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagEOE)));
     } else if (table_pair.second.ctrl_ == batchCtrl::kEOF) {
       RETURN_IF_NOT_OK(worker_out_queues_[workerId]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagEOF)));
@@ -321,31 +316,27 @@ Status BatchOp::WorkerEntry(int32_t workerId) {
       RETURN_IF_NOT_OK(worker_out_queues_[workerId]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagWait)));
       RETURN_IF_NOT_OK(TaskManager::FindMe()->Wait());  // wait for auto tune update workers successful
       TaskManager::FindMe()->Clear();
-    } else if (table_pair.second.ctrl_ == batchCtrl::kNoCtrl) {
-      TensorRow new_row;
-      RETURN_IF_NOT_OK(MakeBatchedRow(std::move(table_pair), &new_row));
-      RETURN_IF_NOT_OK(worker_out_queues_[workerId]->EmplaceBack(std::move(new_row)));
     }
     RETURN_IF_NOT_OK(worker_in_queues_[workerId]->PopFront(&table_pair));
   }
   return Status::OK();
 }
 
-Status BatchOp::MakeBatchedRow(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> table_pair, TensorRow *new_row) {
-  RETURN_UNEXPECTED_IF_NULL(table_pair.first);
+Status BatchOp::MakeBatchedRow(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> tensor_info_pair,
+                               TensorRow *batched_tensor_row) {
+  RETURN_UNEXPECTED_IF_NULL(tensor_info_pair.first);
   bool concat_batch = false;
   bool contains_per_batch_map = false;
 #ifdef ENABLE_PYTHON
   if (batch_map_func_) {
     contains_per_batch_map = true;
-    RETURN_IF_NOT_OK(MapColumns(&table_pair, &concat_batch));
+    RETURN_IF_NOT_OK(MapColumns(&tensor_info_pair, &concat_batch));
   }  // pass it through pyfunc
 #endif
   if (pad_) {
-    RETURN_IF_NOT_OK(PadColumns(&table_pair.first, pad_info_, column_name_id_map_));
+    RETURN_IF_NOT_OK(PadColumns(&tensor_info_pair.first, pad_info_, column_name_id_map_));
   }  // do padding if needed
-  RETURN_IF_NOT_OK(
-    BatchRows(&table_pair.first, new_row, table_pair.first->size(), concat_batch, contains_per_batch_map));
+  RETURN_IF_NOT_OK(BatchRows(&tensor_info_pair.first, batched_tensor_row, concat_batch, contains_per_batch_map));
   return Status::OK();
 }
 
@@ -366,7 +357,7 @@ Status BatchOp::MapColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> 
 
   std::unordered_map<std::string, size_t> in_col_name_id;  // name of columns that need to be fed to per-batch_map
   for (size_t i = 0; i < in_col_names_.size(); i++) {
-    in_col_name_id.insert({in_col_names_[i], i});
+    (void)in_col_name_id.insert({in_col_names_[i], i});
   }
 
   for (const auto &itr : child_map_) {
@@ -640,7 +631,7 @@ Status BatchOp::UnpackPadInfo(const PadInfo &pad_info,
   RETURN_UNEXPECTED_IF_NULL(pad_shapes);
   if (pad_info.empty()) {  // if pad_info empty, pad every columns automatically
     for (size_t col_id = 0; col_id < column_name_id_map.size(); col_id++) {
-      pad_cols->insert(col_id);
+      (void)pad_cols->insert(col_id);
     }
   } else {
     for (const auto &p : pad_info) {
@@ -654,7 +645,7 @@ Status BatchOp::UnpackPadInfo(const PadInfo &pad_info,
         "column name: " +
           p.first + ", the size of pad value: " + std::to_string(pad_vals->size()) +
           " and the size of pad shape: " + std::to_string(pad_shapes->size()) + ".");
-      pad_cols->insert(col_id);
+      (void)pad_cols->insert(col_id);
       (*pad_vals)[col_id] = p.second.second;              // set pad values
       (*pad_shapes)[col_id] = p.second.first.AsVector();  // empty vector if shape is unknown
     }
@@ -686,7 +677,7 @@ Status BatchOp::ComputeColMap() {
                 return a.second < b.second;
               });
     for (auto &it : tmp) {
-      in_col_names_.emplace_back(it.first);
+      (void)in_col_names_.emplace_back(it.first);
     }
   }
 #endif
@@ -720,7 +711,7 @@ Status BatchOp::ComputeColMap() {
   auto child_map_no_in_col = child_map_;
 
   for (const auto &col : in_col_names_) {
-    child_map_no_in_col.erase(col);
+    (void)child_map_no_in_col.erase(col);
   }
 
   // col names are changed
@@ -732,10 +723,10 @@ Status BatchOp::ComputeColMap() {
     }
   } else {  // number of columns are different, put the output column names first, then the original ones
     for (const std::string &col : out_col_names_) {
-      column_name_id_map_.insert({col, column_name_id_map_.size()});
+      (void)column_name_id_map_.insert({col, column_name_id_map_.size()});
     }
     for (const auto &itr : child_map_no_in_col) {
-      column_name_id_map_.insert({itr.first, column_name_id_map_.size()});
+      (void)column_name_id_map_.insert({itr.first, column_name_id_map_.size()});
     }
   }
 
@@ -811,7 +802,7 @@ Status BatchOp::GetNextRowPullMode(TensorRow *const row) {
   }
   RETURN_UNEXPECTED_IF_NULL(table_pair.first);
   if (!table_pair.first->empty()) {
-    table_pair.second = std::move(CBatchInfo(op_current_epochs_, batch_num_, batch_cnt_));
+    table_pair.second = CBatchInfo(op_current_epochs_, batch_num_, batch_cnt_);
     // Generate row with batched tensors
     RETURN_IF_NOT_OK(MakeBatchedRow(std::move(table_pair), row));
     // Increment batch counters
