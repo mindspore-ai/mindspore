@@ -28,26 +28,26 @@
 #include "common/common.h"
 
 namespace mindspore {
-void GeDeviceContext::Initialize(const std::shared_ptr<Context> &context, const ConfigInfos &config_info) {
+Status GeDeviceContext::Initialize(const std::shared_ptr<Context> &context, const ConfigInfos &config_info) {
   MsContext::GetInstance()->set_backend_policy("ge");
-  InitGe(MsContext::GetInstance(), context, config_info);
+  return InitGe(MsContext::GetInstance(), context, config_info);
 }
 
 void GeDeviceContext::Destroy() { (void)FinalizeGe(MsContext::GetInstance()); }
 
-void GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context, const std::shared_ptr<Context> &context,
-                             const ConfigInfos &config_info) {
+Status GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context, const std::shared_ptr<Context> &context,
+                               const ConfigInfos &config_info) {
   MS_EXCEPTION_IF_NULL(inst_context);
   int32_t is_heterogeneous = 0;
   (void)rtGetIsHeterogenous(&is_heterogeneous);
   inst_context->set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, is_heterogeneous == 1);
   if (inst_context->get_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT)) {
-    return;
+    return kSuccess;
   }
 
   if (static_cast<bool>(inst_context->get_param<uint32_t>(MS_CTX_GE_REF))) {
     inst_context->increase_param<uint32_t>(MS_CTX_GE_REF);
-    return;
+    return kSuccess;
   }
 
   std::map<std::string, std::string> ge_options;
@@ -56,12 +56,13 @@ void GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context, con
     // Release GIL before calling into (potentially long-running) C++ code
     mindspore::ScopedLongRunning long_running;
     if (ge::GEInitialize(ge_options) != ge::GRAPH_SUCCESS) {
-      MS_LOG(EXCEPTION) << "Initialize GE failed!";
+      MS_LOG(ERROR) << "Initialize GE failed: " << ge::GEGetErrorMsg();
+      return kLiteError;
     }
   }
   inst_context->increase_param<uint32_t>(MS_CTX_GE_REF);
   MS_LOG(INFO) << "Init ge successful, ge reference = " << inst_context->get_param<uint32_t>(MS_CTX_GE_REF) << ".";
-  return;
+  return kSuccess;
 }
 
 void GeDeviceContext::SetDisableReuseMemoryFlag(std::map<std::string, std::string> *ge_options) const {

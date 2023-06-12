@@ -27,8 +27,7 @@ Status AscendGeExecutorPluginImpl::AscendGeDeviceContextInitialize(const std::sh
     MS_LOG(ERROR) << "Create GeDeviceContext failed.";
     return kLiteUninitializedObj;
   }
-  ge_context_->Initialize(context, config_info);
-  return kSuccess;
+  return ge_context_->Initialize(context, config_info);
 }
 
 void AscendGeExecutorPluginImpl::AscendGeDeviceContextDestroy() const {
