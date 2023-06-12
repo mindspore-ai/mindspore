@@ -181,6 +181,21 @@ uint32_t Im2colCpuKernel::Compute(CpuKernelContext &ctx) {
   auto data_type = ctx.Input(0)->GetDataType();
   uint32_t ret = KERNEL_STATUS_OK;
   switch (data_type) {
+    case DT_UINT8:
+      ret = Im2colCompute<std::uint8_t>(ctx);
+      break;
+    case DT_INT8:
+      ret = Im2colCompute<std::int8_t>(ctx);
+      break;
+    case DT_INT16:
+      ret = Im2colCompute<std::int16_t>(ctx);
+      break;
+    case DT_INT32:
+      ret = Im2colCompute<std::int32_t>(ctx);
+      break;
+    case DT_INT64:
+      ret = Im2colCompute<std::int64_t>(ctx);
+      break;
     case DT_FLOAT16:
       ret = Im2colCompute<Eigen::half>(ctx);
       break;
