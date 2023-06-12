@@ -1265,6 +1265,8 @@ class OnnxExporter {
                               std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimLessEqual(const FuncGraphPtr &func_graph, const CNodePtr &node,
                            std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
+  void ExportPrimNotEqual(const FuncGraphPtr &func_graph, const CNodePtr &node,
+                          std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimSqueeze(const FuncGraphPtr &func_graph, const CNodePtr &node,
                          std::map<AnfNodePtr, std::string> *node_map_ptr, onnx::GraphProto *graph_proto);
   void ExportPrimDynamicRNN(const FuncGraphPtr &func_graph, const CNodePtr &node,
@@ -3170,6 +3172,18 @@ void OnnxExporter::ExportPrimLessEqual(const FuncGraphPtr &, const CNodePtr &nod
   AddOp("Not", {greater_name}, {node_name}, graph_proto);
 }
 
+void OnnxExporter::ExportPrimNotEqual(const FuncGraphPtr &, const CNodePtr &node,
+                                      std::map<AnfNodePtr, std::string> *node_map_ptr,
+                                      onnx::GraphProto *const graph_proto) {
+  auto node_name = RegisterNodeWithUniqueName(node, node_map_ptr);
+  auto input_x_name = GetNodeInputName(node->input(kOneNum), node_map_ptr, graph_proto);
+  auto input_y_name = GetNodeInputName(node->input(kTwoNum), node_map_ptr, graph_proto);
+  auto equal_name = node_name + "equal";
+
+  AddOp("Equal", {input_x_name, input_y_name}, {equal_name}, graph_proto);
+  AddOp("Not", {equal_name}, {node_name}, graph_proto);
+}
+
 void OnnxExporter::ExportPrimSqueeze(const FuncGraphPtr &, const CNodePtr &node,
                                      std::map<AnfNodePtr, std::string> *node_map_ptr,
                                      onnx::GraphProto *const graph_proto) {
@@ -3875,6 +3889,7 @@ void OnnxExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &n
     {prim::kPrimConv2DTranspose, &OnnxExporter::ExportPrimConv2DTranspose},
     {prim::kPrimGreaterEqual, &OnnxExporter::ExportPrimGreaterEqual},
     {prim::kPrimLessEqual, &OnnxExporter::ExportPrimLessEqual},
+    {prim::kPrimNotEqual, &OnnxExporter::ExportPrimNotEqual},
     {prim::kPrimSqueeze, &OnnxExporter::ExportPrimSqueeze},
     {prim::kPrimExpandDims, &OnnxExporter::ExportPrimExpandDims},
     {prim::kPrimGatherD, &OnnxExporter::ExportPrimGatherD},
