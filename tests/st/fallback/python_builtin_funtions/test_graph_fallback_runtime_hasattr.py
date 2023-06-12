@@ -68,3 +68,27 @@ def test_fallback_hasattr_asnumpy():
 
     res = Net()
     assert res
+
+
+@pytest.mark.skip(reason="No support yet.")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_hasattr_dtype():
+    """
+    Feature: JIT Fallback
+    Description: Test hasattr in fallback runtime
+    Expectation: No exception.
+    """
+    @ms.jit
+    def func(x):
+        dtype = x.dtype
+        if hasattr(dtype, "__bool__"):
+            return 0
+        return 1
+
+    x = ms.Tensor(True)
+    out = func(x)
+    assert out == 1

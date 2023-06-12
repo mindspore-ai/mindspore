@@ -2810,11 +2810,7 @@ def check_len_(x):
 
 def real_bool_(x):
     """bool function to get truth value"""
-    if hasattr(x, "__bool__"):
-        return x.__bool__()
-    if hasattr(x, "__len__"):
-        return x.__len__() != 0
-    return True
+    return bool(x)
 
 
 def enumerate_(x, start=0):

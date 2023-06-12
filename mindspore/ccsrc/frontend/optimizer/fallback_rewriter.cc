@@ -1735,22 +1735,21 @@ class AfterOptARewriter : public BaseRewriter {
     return value_node;
   }
 
-  AnfNodePtr ConvertTypeToPyExecute(const ValueNodePtr &node, const TypePtr &type) const {
+  AnfNodePtr ConvertTypeToPyExecute(const FuncGraphPtr &fg, const ValueNodePtr &node, const TypePtr &type) const {
     // Support convert type to PyExecute.
     const auto py_type = ValueToPyData(type);
     MS_LOG(DEBUG) << "py_type: " << py_type;
-    auto res =
-      fallback::ConvertPyObjectToPyExecute(root_graph_, py::str(py_type).cast<std::string>(), py_type, node, false);
+    auto res = fallback::ConvertPyObjectToPyExecute(fg, py::str(py_type).cast<std::string>(), py_type, node, false);
     fallback::SetRealType(res, type);
     return res;
   }
 
-  AnfNodePtr ConvertClassTypeToPyExecute(const ValueNodePtr &node, const ClassTypePtr &class_type) const {
+  AnfNodePtr ConvertClassTypeToPyExecute(const FuncGraphPtr &fg, const ValueNodePtr &node,
+                                         const ClassTypePtr &class_type) const {
     // Support convert class type to PyExecute.
     const auto py_type = ValueToPyData(class_type);
     MS_LOG(DEBUG) << "py_type: " << py_type;
-    auto res =
-      fallback::ConvertPyObjectToPyExecute(root_graph_, py::str(py_type).cast<std::string>(), py_type, node, true);
+    auto res = fallback::ConvertPyObjectToPyExecute(fg, py::str(py_type).cast<std::string>(), py_type, node, true);
     fallback::SetRealType(res, class_type);
     MS_LOG(DEBUG) << "res: " << res->DebugString();
     return res;
@@ -1766,11 +1765,11 @@ class AfterOptARewriter : public BaseRewriter {
     }
     if (vm_pipeline_ && MsContext::GetInstance()->GetJitSyntaxLevel() == kLax) {
       if (value->isa<Type>()) {
-        return ConvertTypeToPyExecute(value_node, value->cast<TypePtr>());
+        return ConvertTypeToPyExecute(fg, value_node, value->cast<TypePtr>());
       } else if (value->isa<parse::ClassType>()) {
         auto class_type = GetValueNode<ClassTypePtr>(value_node);
         MS_EXCEPTION_IF_NULL(class_type);
-        return ConvertClassTypeToPyExecute(value_node, class_type);
+        return ConvertClassTypeToPyExecute(fg, value_node, class_type);
       }
     }
     if (value->isa<parse::MsClassObject>()) {

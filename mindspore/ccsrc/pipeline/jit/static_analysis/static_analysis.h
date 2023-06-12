@@ -327,8 +327,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
 
   // Set the analysis result for orig to the result for new.
   // This sets an entry in anfnode_config_map from orig to new.
-  EvalResultPtr ForwardConfig(const AnfNodeConfigPtr &orig_conf, const AnfNodeConfigPtr new_conf,
-                              bool need_erase = true);
+  EvalResultPtr ForwardConfig(const AnfNodeConfigPtr &orig_conf, const AnfNodeConfigPtr new_conf);
   const PrimEvaluatorMap &PrimConstructors() const { return prim_constructors_; }
 
   FuncGraphPtr root_func_graph() const { return root_func_graph_; }
