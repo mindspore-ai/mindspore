@@ -845,7 +845,7 @@ class AfterOptARewriter : public BaseRewriter {
 
     // Script
     std::stringstream script_buffer;
-    script_buffer << "__import__('mindspore').common._utils._jit_fallback_dict_setitem(" << kInternalDictSelfStr << ", "
+    script_buffer << "__import__('mindspore').common._jit_fallback_utils.dict_setitem(" << kInternalDictSelfStr << ", "
                   << kInternalDictKeyStr << ", " << kInternalDictValueStr << ")";
     const std::string &script = script_buffer.str();
     const auto script_str = std::make_shared<StringImm>(script);
@@ -1003,7 +1003,7 @@ class AfterOptARewriter : public BaseRewriter {
     const auto list_key_input = "__internal_list_key__";
     const auto list_value_input = "__internal_list_value__";
     std::stringstream script_buffer;
-    script_buffer << "__import__('mindspore')._extends.parse._jit_fallback_generate_list(" << list_key_input << ", "
+    script_buffer << "__import__('mindspore').common._jit_fallback_utils.generate_list(" << list_key_input << ", "
                   << list_value_input << ")";
     const std::string &script = script_buffer.str();
     const auto script_str = std::make_shared<StringImm>(script);
@@ -1048,7 +1048,7 @@ class AfterOptARewriter : public BaseRewriter {
     constexpr auto internal_list_input = "__internal_list_input__";
     constexpr auto internal_target_input = "__internal_target_input__";
     std::stringstream script_buffer;
-    script_buffer << "__import__('mindspore').common._utils._jit_fallback_list_inplace_extend(" << internal_list_input
+    script_buffer << "__import__('mindspore').common._jit_fallback_utils.list_inplace_extend(" << internal_list_input
                   << ", " << internal_target_input << ")";
     const std::string &script = script_buffer.str();
     const auto script_str = std::make_shared<StringImm>(script);
@@ -1114,7 +1114,7 @@ class AfterOptARewriter : public BaseRewriter {
     constexpr auto internal_index_input = "__internal_index_input__";
     constexpr auto internal_target_input = "__internal_target_input__";
     std::stringstream script_buffer;
-    script_buffer << "__import__('mindspore').common._utils._jit_fallback_list_inplace_insert(" << internal_list_input
+    script_buffer << "__import__('mindspore').common._jit_fallback_utils.list_inplace_insert(" << internal_list_input
                   << ", " << internal_index_input << ", " << internal_target_input << ")";
     const std::string &script = script_buffer.str();
     const auto script_str = std::make_shared<StringImm>(script);
@@ -1183,7 +1183,7 @@ class AfterOptARewriter : public BaseRewriter {
     constexpr auto internal_list_input = "__internal_list_input__";
     constexpr auto internal_index_input = "__internal_index_input__";
     std::stringstream script_buffer;
-    script_buffer << "__import__('mindspore').common._utils._jit_fallback_list_inplace_pop(" << internal_list_input
+    script_buffer << "__import__('mindspore').common._jit_fallback_utils.list_inplace_pop(" << internal_list_input
                   << ", " << internal_index_input << ")";
     const std::string &script = script_buffer.str();
     const auto script_str = std::make_shared<StringImm>(script);
@@ -1247,7 +1247,7 @@ class AfterOptARewriter : public BaseRewriter {
     MS_EXCEPTION_IF_NULL(fg);
     constexpr auto internal_list_input = "__internal_list_input__";
     std::stringstream script_buffer;
-    script_buffer << "__import__('mindspore').common._utils._jit_fallback_list_inplace_reverse(" << internal_list_input
+    script_buffer << "__import__('mindspore').common._jit_fallback_utils.list_inplace_reverse(" << internal_list_input
                   << ")";
     const std::string &script = script_buffer.str();
     const auto script_str = std::make_shared<StringImm>(script);
@@ -1308,7 +1308,7 @@ class AfterOptARewriter : public BaseRewriter {
     MS_EXCEPTION_IF_NULL(fg);
     constexpr auto internal_list_input = "__internal_list_input__";
     std::stringstream script_buffer;
-    script_buffer << "__import__('mindspore').common._utils._jit_fallback_list_inplace_clear(" << internal_list_input
+    script_buffer << "__import__('mindspore').common._jit_fallback_utils.list_inplace_clear(" << internal_list_input
                   << ")";
     const std::string &script = script_buffer.str();
     const auto script_str = std::make_shared<StringImm>(script);

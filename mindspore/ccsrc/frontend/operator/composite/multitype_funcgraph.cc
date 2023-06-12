@@ -240,7 +240,7 @@ FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
   std::ostringstream buffer;
   buffer << types;
   bool has_any = std::any_of(types.begin(), types.end(), [](const TypePtr &type) { return type->isa<AnyType>(); });
-  if (!py_fn.is_none() && !has_any) {
+  if (!py_fn.is_none() && (!has_any || name_ == "add_backward")) {
     FuncGraphPtr func_graph = parse::ParsePythonCode(py_fn);
     if (func_graph == nullptr) {
       MS_LOG(INTERNAL_EXCEPTION) << "Fail to parse overload function " << buffer.str() << ".";
@@ -264,6 +264,16 @@ FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
     AnfNodePtrList node_inputs{};
     for (auto type : types) {
       node_inputs.push_back(func_graph->add_parameter());
+    }
+    if (name_ == "ones_like_leaf") {
+      AnfNodePtr template_node = fallback::GenerateOnesOrZerosLikeNode(func_graph, node_inputs[0], "ones_like");
+      func_graph->set_output(template_node);
+      return func_graph;
+    }
+    if (name_ == "zeros_like_leaf") {
+      AnfNodePtr template_node = fallback::GenerateOnesOrZerosLikeNode(func_graph, node_inputs[0], "zeros_like");
+      func_graph->set_output(template_node);
+      return func_graph;
     }
     auto ret_node = fallback::GeneratePyExecuteNodeWithScriptSrc(func_graph, types, node_inputs, node_expr_src_);
     if (ret_node != nullptr) {

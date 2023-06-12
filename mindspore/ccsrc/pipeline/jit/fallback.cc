@@ -159,7 +159,7 @@ CNodePtr CreatePyExecuteCNodeInOrder(const AnfNodePtr &orig_node, const AnfNodeP
 }
 
 void SetPyObjectToLocalVariable(const std::string &key, const py::object &value) {
-  py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+  py::module mod = python_adapter::GetPyModule("mindspore.common._jit_fallback_utils");
   constexpr auto set_local_variable = "set_local_variable";
   MS_LOG(DEBUG) << set_local_variable << "([" << key << "]/" << key << ", " << value << ")";
   (void)python_adapter::CallPyModFn(mod, set_local_variable, key, value);
@@ -173,7 +173,7 @@ AnfNodePtr ConvertPyObjectToPyExecute(const FuncGraphPtr &fg, const std::string 
 
   // Get the value node from the dict in IR.
   std::stringstream script_buffer;
-  script_buffer << "__import__('mindspore')._extends.parse.get_local_variable(" << value_node_key << ")";
+  script_buffer << "__import__('mindspore').common._jit_fallback_utils.get_local_variable(" << value_node_key << ")";
   const std::string &script = script_buffer.str();
   const auto script_str = std::make_shared<StringImm>(script);
 
@@ -197,7 +197,7 @@ AnfNodePtr ConvertPyObjectToPyInterpret(const FuncGraphPtr &fg, const std::strin
   auto prim = NewValueNode(prim::kPrimPyInterpret);
   auto value_node_key = ConvertRealStrToUnicodeStr(key, 0);
   std::stringstream script_buffer;
-  script_buffer << "__import__('mindspore')._extends.parse.get_local_variable(" << value_node_key << ")";
+  script_buffer << "__import__('mindspore').common._jit_fallback_utils.get_local_variable(" << value_node_key << ")";
   const std::string &script = script_buffer.str();
   auto script_str = std::make_shared<parse::Script>(script);
   auto script_node = NewValueNode(script_str);
@@ -623,6 +623,20 @@ AnfNodePtr ConvertCNodeToPyExecuteForPrim(const CNodePtr &cnode, string name) {
   MS_LOG(DEBUG) << "Convert: " << cnode->DebugString() << " -> " << pyexecute_node->DebugString();
   pyexecute_node->set_debug_info(cnode->debug_info());
   return pyexecute_node;
+}
+
+AnfNodePtr GenerateOnesOrZerosLikeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
+                                       const std::string &type) {
+  auto str_value = std::make_shared<StringImm>("__import__('mindspore').common._jit_fallback_utils." + type + "(key)");
+  auto script_node = NewValueNode(str_value);
+
+  std::vector<ValuePtr> key_value{std::make_shared<StringImm>("key")};
+  const auto key_tuple = std::make_shared<ValueTuple>(key_value);
+  auto key_tuple_node = NewValueNode(key_tuple);
+  auto values_tuple_node = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), input});
+  AnfNodePtr template_node = fallback::CreatePyExecuteCNodeInOrder(func_graph, script_node, key_tuple_node,
+                                                                   values_tuple_node, values_tuple_node->debug_info());
+  return template_node;
 }
 }  // namespace fallback
 
