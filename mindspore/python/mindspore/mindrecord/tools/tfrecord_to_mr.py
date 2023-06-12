@@ -92,7 +92,7 @@ class TFRecordToMR:
         ...                 "int64_list": tf.io.FixedLenFeature([6], tf.int64),
         ...                 "float_list": tf.io.FixedLenFeature([7], tf.float32)}
         >>> tfrecord_to_mr = TFRecordToMR(tfrecord_file, mindrecord_file, feature_dict, ["image_bytes"])
-        >>> tfrecord_to_mr.transform()
+        >>> status = tfrecord_to_mr.transform()
     """
 
     def __init__(self, source, destination, feature_dict, bytes_fields=None):

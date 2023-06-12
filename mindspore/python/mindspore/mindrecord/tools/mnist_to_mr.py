@@ -54,7 +54,7 @@ class MnistToMR:
         >>> mnist_dir = "/path/to/mnist"
         >>> mindrecord_file = "/path/to/mindrecord/file"
         >>> mnist_to_mr = MnistToMR(mnist_dir, mindrecord_file)
-        >>> mnist_to_mr.transform()
+        >>> status = mnist_to_mr.transform()
     """
 
     def __init__(self, source, destination, partition_number=1):

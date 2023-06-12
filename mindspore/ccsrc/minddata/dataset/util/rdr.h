@@ -30,6 +30,8 @@ class MDChannelInfo {
 
   std::string ToString();
 
+  std::string ToFormatString();
+
   Status RecordBatchQueue(int64_t batch_queue_size);
 
   Status RecordPreprocessBatch(int64_t preprocess_batch);

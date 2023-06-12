@@ -110,7 +110,7 @@ DataQueueOp::~DataQueueOp() {
   }
 
   // won't print rdr if call stop_send manually or send infinite epoch
-  std::string rdr_msg = md_channel_info_->ToString();
+  std::string rdr_msg = md_channel_info_->ToFormatString();
   if (!send_finished_ && !rdr_msg.empty() && num_epochs != -1) {
     MS_LOG(WARNING) << rdr_msg;
   }

@@ -52,7 +52,7 @@ class Cifar10ToMR:
         >>> cifar10_dir = "/path/to/cifar10"
         >>> mindrecord_file = "/path/to/mindrecord/file"
         >>> cifar10_to_mr = Cifar10ToMR(cifar10_dir, mindrecord_file)
-        >>> cifar10_to_mr.transform()
+        >>> status = cifar10_to_mr.transform()
     """
 
     def __init__(self, source, destination):
