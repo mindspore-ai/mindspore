@@ -108,7 +108,7 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
       MS_EXCEPTION_IF_NULL(kernel);
 
       auto old_gpu_kernel_mod = std::dynamic_pointer_cast<kernel::DeprecatedNativeGpuKernelMod>(gpu_kernel_mod);
-      auto args = kernel::AbstractArgsFromCNode(kernel, old_gpu_kernel_mod != nullptr);
+      auto args = kernel::AbstractArgsFromCNode(kernel);
       // inputs_tensor_map is ops's valueDepend input. if this input is const_value tensor,
       // we will put this tensor in args.inputs.host_data_.
       auto inputs_tensor_map = std::map<uint32_t, tensor::TensorPtr>();

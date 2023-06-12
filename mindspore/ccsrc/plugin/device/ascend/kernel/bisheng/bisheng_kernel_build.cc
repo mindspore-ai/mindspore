@@ -67,7 +67,7 @@ KernelModPtr BiShengOpBuild(const AnfNodePtr &anf_node) {
 
   MS_LOG(INFO) << "Bisheng internal op " << kernel_name;
   auto kernel_mod = Factory<BiShengKernelMod>::Instance().Create(kernel_name);
-  auto args = AbstractArgsFromCNode(cnode, false);
+  auto args = AbstractArgsFromCNode(cnode);
   auto inputs_tensor_map = std::map<uint32_t, tensor::TensorPtr>();
   SetInputsByConstInputs(cnode, &inputs_tensor_map);
   SetInputsByDependMap(inputs_tensor_map, &args.inputs);

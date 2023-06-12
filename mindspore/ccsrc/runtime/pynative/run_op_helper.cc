@@ -517,22 +517,17 @@ void InferNodeRealShape(const CNodePtr &kernel) {
   opt::InferOp(kernel);
 }
 
-void InferNodeRealShape(const CNodePtr &kernel, const pynative::ExecuteKernelInfo &execute_kernel,
-                        const std::vector<tensor::TensorPtr> &input_tensors) {
+kernel::KernelArgs InferNodeRealShape(const CNodePtr &kernel, const pynative::ExecuteKernelInfo &execute_kernel,
+                                      const std::vector<tensor::TensorPtr> &input_tensors) {
   MS_EXCEPTION_IF_NULL(kernel);
-  if (session::AnfRuntimeAlgorithm::GetKernelType(kernel) == KernelType::AKG_KERNEL) {
-    MS_LOG(EXCEPTION) << "Akg kernel do not support dynamic shape: " << kernel->fullname_with_scope();
-  }
-  opt::dynamic_shape::InferOp(kernel, execute_kernel, input_tensors);
+  return opt::dynamic_shape::InferOp(kernel, execute_kernel, input_tensors);
 }
 
-void ResizeNodeInput(const CNodePtr &kernel) {
+void ResizeNodeInput(const CNodePtr &kernel, const kernel::KernelArgs &args) {
   MS_EXCEPTION_IF_NULL(kernel);
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  auto args = kernel::GetArgsFromCNode(kernel);
-  MS_EXCEPTION_IF_NULL(args);
-  if (kernel_mod->Resize(args->inputs, args->outputs, args->depend_tensor_map) ==
+  if (kernel_mod->Resize(args.inputs, args.outputs, args.depend_tensor_map) ==
       static_cast<int>(kernel::KRET_RESIZE_FAILED)) {
     MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Resize failed.";
   }
@@ -650,17 +645,11 @@ void UpdateInputInCompileInfo(const OpCompilerInfoPtr &op_compiler_info, const s
     MS_LOG(EXCEPTION) << "Real input tensor's number " << input_tensors_num
                       << " is not equal cached input tensor's number " << cached_input_num << " !";
   }
-  auto inputs = op_compiler_info->graph_->input_nodes();
   for (size_t i = 0; i < input_tensors_num; ++i) {
     auto &input_tensor = input_tensors[i];
     MS_EXCEPTION_IF_NULL(input_tensor);
-    inputs[i]->set_abstract(std::make_shared<abstract::AbstractTensor>(input_tensor->Dtype(), input_tensor->shape()));
     auto device_sync = input_tensor->device_address();
     auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(device_sync);
-    auto op_runtime_info = inputs[i]->user_data<runtime::OpRuntimeInfo>();
-    if (op_runtime_info != nullptr) {
-      op_runtime_info->Resize(inputs[i]);
-    }
     if (device_address != nullptr) {
       // Update cached input info by input tensor info
       UpdateTensorCache(op_compiler_info->device_context_, device_address, op_compiler_info->inputs_[i], input_tensor,
@@ -904,15 +893,16 @@ void LaunchKernelsDynamic(const pynative::OpCompilerInfoPtr &op_compiler_info,
     // Check if need infer shape
     std::vector<tensor::TensorPtr> tensors = GetAllInputTensor(
       execute_kernel.inputs_device_address_, address_map_to_tensor, op_compiler_info->value_map_to_tensor_);
+    kernel::KernelArgs args;
     if (is_need_infer) {
-      InferNodeRealShape(kernel, execute_kernel, tensors);
+      args = InferNodeRealShape(kernel, execute_kernel, tensors);
     } else {
       kernel->set_abstract(op_run_info->base_op_run_info.abstract);
-      opt::dynamic_shape::SetOpArgs(kernel, execute_kernel.inputs_device_address_, tensors);
+      args = opt::dynamic_shape::SetOpArgs(kernel, execute_kernel, tensors);
     }
 
     // Resize
-    ResizeNodeInput(kernel);
+    ResizeNodeInput(kernel, args);
 
     // Malloc input tensor memory
     auto inputs = MallocInputMemoryForDeviceAddress(execute_kernel.inputs_device_address_, device_context);
@@ -971,7 +961,8 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
     auto inputs = CreateKernelInputAddress(runtime_info, node);
     if (is_dynamic_shape) {
       InferNodeRealShape(node);
-      ResizeNodeInput(node);
+      auto args = kernel::GetArgsFromCNode(node);
+      ResizeNodeInput(node, *args);
 #ifndef ENABLE_SECURITY
       if (common::AnfAlgo::GetCNodeName(node) != kGetNextOpName) {
         ProfilerManager::GetInstance()->SetNetDynamicShapeStatus();
