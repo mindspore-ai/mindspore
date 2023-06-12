@@ -35,6 +35,7 @@ enum OperatorType {
   kRecElmWiseOp,
   kRecReLU,
   kRecBatchNorm,
+  kRecLayerNorm,
   kRecReshape,
   kRecBiasAdd,
   kRecSoftmax,

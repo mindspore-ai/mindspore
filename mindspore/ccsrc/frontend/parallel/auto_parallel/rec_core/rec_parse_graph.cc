@@ -53,7 +53,7 @@ const std::map<std::string, OperatorType> DictOpType{
   {FLATTEN, OperatorType::kRecReshape},
   {BIAS_ADD, OperatorType::kRecBiasAdd},
   {BATCH_NORM, OperatorType::kRecBatchNorm},
-  {LAYER_NORM, OperatorType::kRecBatchNorm},
+  {LAYER_NORM, OperatorType::kRecLayerNorm},
   {SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS, OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits},
   {ONEHOT, OperatorType::kRecOneHot},
   {SQUEEZE, OperatorType::kRecSqueeze},
