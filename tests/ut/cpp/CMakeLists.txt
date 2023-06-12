@@ -114,6 +114,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/runtime/device/kernel_info.cc"
         "../../../mindspore/ccsrc/runtime/device/launch_kernel.cc"
         "../../../mindspore/ccsrc/runtime/graph_scheduler/*.cc"
+        "../../../mindspore/ccsrc/runtime/profiler/*.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/profiling/*.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/ge_runtime/*.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/kernel_select_ascend.cc"
@@ -287,6 +288,7 @@ add_library(backend_static STATIC
         $<TARGET_OBJECTS:_mindspore_runtime_collective_obj>
         $<TARGET_OBJECTS:_mindspore_runtime_device_obj>
         $<TARGET_OBJECTS:_mindspore_runtime_graph_scheduler_obj>
+        $<TARGET_OBJECTS:_mindspore_runtime_profiler_obj>
         $<TARGET_OBJECTS:_mindspore_runtime_hardware_obj>
         $<TARGET_OBJECTS:_mindspore_runtime_pynative_obj>
         $<TARGET_OBJECTS:_mindspore_runtime_data_queue_obj>)

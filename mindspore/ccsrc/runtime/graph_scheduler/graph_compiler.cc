@@ -53,6 +53,7 @@
 #include "include/backend/distributed/ps/ps_context.h"
 #include "runtime/graph_scheduler/embedding_cache_scheduler.h"
 #endif
+#include "runtime/profiler/profiler.h"
 
 namespace mindspore {
 namespace runtime {

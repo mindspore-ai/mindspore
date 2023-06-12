@@ -30,24 +30,29 @@ void GatherActor::SendOutput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(gather_input_);
 
-  // 1.Send data with branch id.
-  const auto &iter = output_data_with_branch_id_arrows_.find(gather_input_->func_graph_);
-  if (iter != output_data_with_branch_id_arrows_.end()) {
-    OpRealParameterWithBranchID output;
-    BuildOutput(&output, context);
-    for (const auto &data_with_branch_id_arrow : iter->second) {
-      ActorDispatcher::Send(data_with_branch_id_arrow, &EntranceActor::RunOpRealParameterWithBranchID, output, context);
+  {
+    // 1.Send data with branch id.
+    ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kSendOutput, GetAID().Name());
+    const auto &iter = output_data_with_branch_id_arrows_.find(gather_input_->func_graph_);
+    if (iter != output_data_with_branch_id_arrows_.end()) {
+      OpRealParameterWithBranchID output;
+      BuildOutput(&output, context);
+      for (const auto &data_with_branch_id_arrow : iter->second) {
+        ActorDispatcher::Send(data_with_branch_id_arrow, &EntranceActor::RunOpRealParameterWithBranchID, output,
+                              context);
+      }
     }
-  }
 
-  // 2.Send branch id.
-  for (const auto &branch_id_arrow : output_branch_id_arrows_) {
-    ActorDispatcher::Send(branch_id_arrow, &ControlActor::RunBranchID, output_branch_id_, context);
+    // 2.Send branch id.
+    for (const auto &branch_id_arrow : output_branch_id_arrows_) {
+      ActorDispatcher::Send(branch_id_arrow, &ControlActor::RunBranchID, output_branch_id_, context);
+    }
   }
 
   // 3.Send data and control in base class. Control arrow needs to be sent after the real parameter data and branch id.
   AbstractActor::SendOutput(context);
 
+  ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kSendOutput, GetAID().Name());
   // 4.Send Partial.
   for (const auto &partial_arrow : output_partial_arrows_) {
     MS_EXCEPTION_IF_NULL(partial_arrow);
@@ -72,6 +77,7 @@ void GatherActor::SendOutput(OpContext<DeviceTensor> *const context) {
 }
 
 void GatherActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context) {
+  ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kPreLaunch, GetAID().Name());
   MS_EXCEPTION_IF_NULL(context);
   // Build the gather input.
   GatherInput(context);

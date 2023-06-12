@@ -187,6 +187,7 @@ bool ControlActor::CheckRunningCondition(const OpContext<DeviceTensor> *context)
 }
 
 void ControlActor::FetchInput(OpContext<DeviceTensor> *const context) {
+  ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kPreLaunch, GetAID().Name());
   MS_EXCEPTION_IF_NULL(context);
 
   // Fetch input device tensor from input data.
@@ -284,6 +285,7 @@ void ControlActor::FetchInput(OpContext<DeviceTensor> *const context) {
 }
 
 void ControlActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context) {
+  ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kPreLaunch, GetAID().Name());
   MS_EXCEPTION_IF_NULL(context);
   // Increase dynamic ref count by the output data.
   for (size_t i = 0; i < output_data_.size(); ++i) {
@@ -346,7 +348,6 @@ void ControlActor::EraseInput(const OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   const auto &sequential_num = context->sequential_num_;
   AbstractActor::EraseInput(context);
-
   if (input_partials_num_ != 0) {
     auto ret = input_op_partials_.erase(sequential_num);
     if (ret == 0) {
@@ -448,6 +449,7 @@ void ControlActor::SendOutput(OpContext<DeviceTensor> *const context) {
   // Send data in base class.
   AbstractActor::SendOutput(context);
 
+  ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kSendOutput, GetAID().Name());
   // Send Partial.
   for (const auto &partial_arrow : output_partial_arrows_) {
     MS_EXCEPTION_IF_NULL(partial_arrow);
@@ -470,6 +472,7 @@ void ControlActor::SendOutput(OpContext<DeviceTensor> *const context) {
 }
 
 void ControlActor::UpdateDynamicShapeInParameter() {
+  ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelInfer, GetAID().Name());
   for (size_t i = 0; i < backend_parameters_.size(); ++i) {
     if (backend_parameters_[i].empty() || input_device_tensors_[i] == nullptr) {
       continue;

@@ -36,6 +36,8 @@ void DataSourceActor::Init() {
 }
 
 void DataSourceActor::FetchData(OpContext<DeviceTensor> *const context) {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kRuntime, runtime::ProfilerEvent::kPreLaunch,
+                                     GetAID().Name());
   MS_LOG(INFO) << "Data source actor(" << GetAID().Name() << ") fetches data.";
   MS_EXCEPTION_IF_NULL(context);
   // Pop the data of last time.

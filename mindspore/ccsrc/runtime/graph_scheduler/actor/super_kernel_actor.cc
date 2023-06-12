@@ -103,6 +103,7 @@ size_t SuperKernelActor::FetchInputNodePosition(const AnfNodePtr &intput_node) {
 }
 
 void SuperKernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const context) {
+  ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kPreLaunch, GetAID().Name());
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
   std::vector<DeviceTensor *> memory_free_list;
@@ -179,9 +180,12 @@ void SuperKernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context
 
 void SuperKernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
-  if (!CopyInputData(context)) {
-    std::string error_info = "Copy the input data failed, graph id: " + std::to_string(graph_->graph_id());
-    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+  {
+    ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kPreLaunch, GetAID().Name());
+    if (!CopyInputData(context)) {
+      std::string error_info = "Copy the input data failed, graph id: " + std::to_string(graph_->graph_id());
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
   }
 
   try {
@@ -190,6 +194,7 @@ void SuperKernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const contex
     const std::map<string, string> compile_options;
     MS_EXCEPTION_IF_NULL(device_contexts_[0]->graph_executor_);
     if (!IsSkippedLaunch(nullptr, graph_)) {
+      ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kGraphLaunch, GetAID().Name());
       auto ret = device_contexts_[0]->graph_executor_->RunGraph(graph_, inputs, &outputs, compile_options);
       if (!ret) {
         std::string error_info = "Launch graph failed, graph id: " + std::to_string(graph_->graph_id());
@@ -202,16 +207,19 @@ void SuperKernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const contex
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
 
-  for (auto item : ref_node_addr_map_) {
-    MS_EXCEPTION_IF_NULL(item.first);
-    MS_EXCEPTION_IF_NULL(item.second);
-    MS_LOG(INFO) << "The input ref node copy back from address: " << item.first->GetPtr()
-                 << " to address: " << item.second->GetPtr() << ".";
-    if (!Copy(item.second, item.first)) {
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Copy data failed.");
+  {
+    ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kPostLaunch, GetAID().Name());
+    for (auto item : ref_node_addr_map_) {
+      MS_EXCEPTION_IF_NULL(item.first);
+      MS_EXCEPTION_IF_NULL(item.second);
+      MS_LOG(INFO) << "The input ref node copy back from address: " << item.first->GetPtr()
+                   << " to address: " << item.second->GetPtr() << ".";
+      if (!Copy(item.second, item.first)) {
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Copy data failed.");
+      }
     }
+    ref_node_addr_map_.clear();
   }
-  ref_node_addr_map_.clear();
 
   // Debug actor is blocked, must wait debug actor callback message to process continue.
   if (debug_aid_ != nullptr) {

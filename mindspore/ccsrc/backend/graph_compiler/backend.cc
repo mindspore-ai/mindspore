@@ -793,7 +793,11 @@ void MindRTBackend::RunGraphByCondition(const ActorInfo &actor_info, const Graph
   MS_LOG(INFO) << "Status record: end run actor: " << actor_info;
 }
 
-void MindRTBackend::WaitTaskFinish() const { runtime::OpExecutor::GetInstance().WaitAll(); }
+void MindRTBackend::WaitTaskFinish() const {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kWaitTaskFinish,
+                                     runtime::kDefaultOpName);
+  runtime::OpExecutor::GetInstance().WaitAll();
+}
 
 void MindRTBackend::ClearOpExecutorResource() const { runtime::OpExecutor::GetInstance().Reset(); }
 

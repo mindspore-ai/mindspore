@@ -475,6 +475,8 @@ void DataPrepareActor::SetInitTensorsIfNeeded(const std::vector<std::vector<Tens
 void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &input_tensors,
                                    OpContext<DeviceTensor> *const context, GraphExecutionStrategy real_strategy) {
   MS_EXCEPTION_IF_NULL(context);
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kRuntime, runtime::ProfilerEvent::kPreLaunch,
+                                     GetAID().Name());
 
 #if defined(__linux__) && defined(WITH_BACKEND)
   // Update rpc actors' status.

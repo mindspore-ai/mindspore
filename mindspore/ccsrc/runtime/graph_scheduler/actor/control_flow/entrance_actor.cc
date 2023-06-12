@@ -85,6 +85,7 @@ void EntranceActor::Run(OpContext<DeviceTensor> *const context) {
 }
 
 void EntranceActor::FetchInput(OpContext<DeviceTensor> *const context) {
+  ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kPreLaunch, GetAID().Name());
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
 

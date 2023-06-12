@@ -189,6 +189,8 @@ void PushTupleTensor(const VectorRef &args, const std::vector<AnfNodePtr> &param
 
 std::vector<std::vector<tensor::TensorPtr>> GetRunGraphInputs(const GraphCompilerInfo &graph_compiler_info,
                                                               const VectorRef &args) {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kRuntime, runtime::ProfilerEvent::kInputProcess,
+                                     graph_compiler_info.name_);
   const auto &origin_parameters = graph_compiler_info.origin_parameters_order_;
   std::vector<std::vector<tensor::TensorPtr>> input_tensor_lists;
   std::map<size_t, ValuePtrList> flatten_values;
@@ -686,6 +688,9 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &graph_output, const Vec
 
 void MindRTBackendBase::ConstructOutputs(runtime::ActorSet *actor_set, VectorRef *outputs,
                                          const FuncGraphPtr &root_graph) {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  MS_EXCEPTION_IF_NULL(outputs);
+  MS_EXCEPTION_IF_NULL(root_graph);
   bool need_contruct_output = !(distributed::recovery::RecoveryContext::GetInstance()->enable_recovery() &&
                                 distributed::recovery::RecoveryContext::GetInstance()->need_reset());
   bool is_embedding_cache_server = false;
@@ -752,6 +757,7 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
   }
 
   auto input_tensors = GetRunGraphInputs(graph_compiler_info, args);
+
   // Release python gil.
   mindspore::ScopedLongRunning long_running;
   // Run actor DAG.
@@ -759,12 +765,16 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
   MS_EXCEPTION_IF_NULL(actor_set);
   runtime::GraphScheduler::GetInstance().Run(actor_set, input_tensors);
 
-  MS_EXCEPTION_IF_NULL(graph_compiler_);
-  graph_compiler_->Summary(graph_compiler_info.graphs_);
+  {
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kRuntime, runtime::ProfilerEvent::kOutputProcess,
+                                       actor_set->name_);
+    MS_EXCEPTION_IF_NULL(graph_compiler_);
+    graph_compiler_->Summary(graph_compiler_info.graphs_);
 
-  ConstructOutputs(actor_set, outputs, root_graph_);
+    ConstructOutputs(actor_set, outputs, root_graph_);
 
-  runtime::GraphScheduler::GetInstance().ClearActorData(actor_set);
+    runtime::GraphScheduler::GetInstance().ClearActorData(actor_set);
+  }
   // Close abstract_lock for dynamic_shape
   AnfUtils::CloseAbstractLock();
   MS_LOG(INFO) << "Status record: end run actor: " << actor_info;
