@@ -29,7 +29,6 @@
 #include <stack>
 #include <fstream>
 #include <sstream>
-
 #include "include/common/utils/config_manager.h"
 #include "utils/hash_map.h"
 #include "utils/ms_context.h"

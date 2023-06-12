@@ -15,7 +15,6 @@
  */
 
 #include "include/common/utils/convert_utils.h"
-
 #include <vector>
 #include <string>
 #include <memory>
@@ -23,10 +22,8 @@
 #include <utility>
 #include <cfloat>
 #include <cmath>
-
 #include "ir/value.h"
 #include "ir/tensor.h"
-#include "ir/param_info.h"
 #include "utils/ms_context.h"
 #include "utils/anf_utils.h"
 #include "include/common/utils/utils.h"

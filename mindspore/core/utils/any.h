@@ -25,7 +25,6 @@
 #include <sstream>
 #include <vector>
 #include <utility>
-
 #include "utils/overload.h"
 #include "utils/log_adapter.h"
 #include "utils/misc.h"

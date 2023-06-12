@@ -24,7 +24,6 @@
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
-#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace ops {

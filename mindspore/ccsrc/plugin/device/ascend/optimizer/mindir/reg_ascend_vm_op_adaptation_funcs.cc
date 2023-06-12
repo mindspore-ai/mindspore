@@ -16,7 +16,6 @@
 #include "plugin/device/ascend/optimizer/mindir/reg_ascend_vm_op_adaptation_funcs.h"
 #include "include/backend/optimizer/op_adaptation_info_factory.h"
 #include "include/common/utils/anfalgo.h"
-#include "include/common/utils/utils.h"
 
 namespace mindspore::opt {
 bool ApplyAdagradV2PreCheck(const CNodePtr &node) {

@@ -15,13 +15,10 @@
  */
 
 #include "plugin/device/ascend/optimizer/ge/ge_specialized_prepare.h"
-
 #include <vector>
 #include <memory>
 #include <unordered_map>
-
 #include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace opt {

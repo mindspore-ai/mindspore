@@ -24,7 +24,6 @@
 #include <memory>
 #include <sstream>
 #include <utility>
-
 #include "base/base.h"
 #include "ir/anf.h"
 #include "ir/dtype.h"

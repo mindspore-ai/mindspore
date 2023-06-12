@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <memory>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "utils/ms_utils.h"
 #include "mindspore/core/ops/log_softmax.h"
 
 namespace mindspore {

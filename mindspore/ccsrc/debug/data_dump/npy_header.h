@@ -18,7 +18,6 @@
 #define MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_NPY_HEADER_H_
 
 #include <string>
-
 #include "mindspore/core/utils/shape_utils.h"
 #include "mindspore/core/ir/dtype/type_id.h"
 

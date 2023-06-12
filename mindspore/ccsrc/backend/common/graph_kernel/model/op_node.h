@@ -20,7 +20,6 @@
 #include <string>
 #include <vector>
 #include <utility>
-
 #include "ops/primitive_c.h"
 #include "backend/common/graph_kernel/model/node.h"
 #include "ir/dtype/type.h"

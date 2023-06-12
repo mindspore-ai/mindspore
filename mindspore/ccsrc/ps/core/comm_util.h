@@ -44,7 +44,6 @@
 #include <openssl/rand.h>
 #include <openssl/ssl.h>
 #include <openssl/x509v3.h>
-
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
@@ -59,7 +58,6 @@
 #include <thread>
 #include <utility>
 #include <vector>
-
 #include "proto/comm.pb.h"
 #include "proto/ps.pb.h"
 #include "ps/core/cluster_metadata.h"

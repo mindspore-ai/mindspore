@@ -19,7 +19,6 @@
 
 #include <memory>
 #include <vector>
-
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
 #include "mindspore/core/ops/core_ops.h"

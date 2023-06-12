@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/ir_fission/conv2d_backprop_filter_mul_fission.h"
-
 #include <algorithm>
 #include <string>
 #include <vector>
 #include <memory>
 #include "backend/common/pass/const_input_to_attr.h"
-#include "kernel/kernel_build_info.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/kernel_graph.h"
 #include "include/backend/anf_runtime_algorithm.h"

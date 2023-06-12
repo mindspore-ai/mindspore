@@ -22,7 +22,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-
 #include "abstract/abstract_value.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"

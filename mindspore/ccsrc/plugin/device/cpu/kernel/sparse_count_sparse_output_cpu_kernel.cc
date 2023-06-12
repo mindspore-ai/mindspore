@@ -20,7 +20,6 @@
 #include <map>
 #include <limits>
 #include <memory>
-#include "utils/ms_utils.h"
 #include "plugin/device/cpu/kernel/sparse_count_sparse_output_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "ops/sparse_count_sparse_output.h"

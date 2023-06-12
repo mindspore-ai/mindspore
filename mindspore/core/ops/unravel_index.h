@@ -18,7 +18,6 @@
 #define MINDSPORE_CORE_OPS_UNRAVELINDEX_H_
 #include <vector>
 #include <memory>
-
 #include "ops/primitive_c.h"
 #include "ops/base_operator.h"
 #include "ops/op_utils.h"

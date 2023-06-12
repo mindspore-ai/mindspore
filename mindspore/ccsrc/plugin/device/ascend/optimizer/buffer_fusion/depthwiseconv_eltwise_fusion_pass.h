@@ -17,7 +17,6 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_PASS_DEPTHWISECONV_ELTWISE_FUSION_PASS_H_
 
 #include <utility>
-
 #include "utils/hash_set.h"
 #include "plugin/device/ascend/optimizer/buffer_fusion/fusion_base_pass.h"
 #include "ir/anf.h"

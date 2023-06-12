@@ -22,7 +22,6 @@
 #include <string>
 #include "ir/func_graph.h"
 #include "abstract/abstract_function.h"
-#include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
 #include "utils/ms_context.h"
 #include "abstract/ops/primitive_infer_map.h"

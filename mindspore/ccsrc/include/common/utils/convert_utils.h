@@ -22,7 +22,6 @@
 #include <stack>
 #include <string>
 #include <vector>
-
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "utils/convert_utils_base.h"

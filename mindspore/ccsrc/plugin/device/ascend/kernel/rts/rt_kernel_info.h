@@ -24,7 +24,6 @@
 #include <set>
 #include <vector>
 #include <utility>
-
 #include "ir/dtype.h"
 #include "kernel/kernel_build_info.h"
 #include "kernel/kernel.h"

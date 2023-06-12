@@ -15,9 +15,7 @@
  */
 
 #include "include/common/utils/json_operation_utils.h"
-#include <string>
 #include <nlohmann/json.hpp>
-#include "ir/dtype.h"
 namespace mindspore {
 bool ParseJson(const std::string &str, nlohmann::json *des_json) {
   try {

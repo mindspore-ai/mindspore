@@ -19,7 +19,6 @@
 #include <functional>
 #include "mindspore/core/ops/fusion/scale_grad_fusion.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "utils/ms_utils.h"
 
 namespace mindspore::kernel {
 namespace {

@@ -17,7 +17,6 @@
 #include <utility>
 #include "include/backend/anf_runtime_algorithm.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
-#include "include/common/utils/anfalgo.h"
 #include "frontend/optimizer/opt.h"
 #include "utils/trace_base.h"
 namespace mindspore {

@@ -15,9 +15,7 @@
  */
 
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/agnostic_selector/tbe_kernel_agnostic_selector.h"
-
 #include "include/common/utils/utils.h"
-#include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_select_utils.h"
 
 namespace mindspore::kernel {

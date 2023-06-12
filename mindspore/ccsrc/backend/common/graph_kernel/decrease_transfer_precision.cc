@@ -22,7 +22,6 @@
 #include "mindspore/core/ops/core_ops.h"
 #include "include/common/utils/utils.h"
 #include "backend/common/graph_kernel/graph_kernel_helper.h"
-#include "ir/tensor.h"
 #include "ir/manager.h"
 #include "kernel/kernel_build_info.h"
 #include "kernel/common_utils.h"

@@ -20,7 +20,6 @@
 #include <vector>
 #include <string>
 #include <memory>
-
 #include "ops/base_operator.h"
 #include "abstract/ops/op_infer.h"
 #include "mindapi/base/types.h"

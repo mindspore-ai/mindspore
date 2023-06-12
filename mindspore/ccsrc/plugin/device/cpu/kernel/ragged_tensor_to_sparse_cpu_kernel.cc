@@ -17,7 +17,6 @@
 #include "plugin/device/cpu/kernel/ragged_tensor_to_sparse_cpu_kernel.h"
 #include <algorithm>
 #include <cstdio>
-#include "utils/ms_utils.h"
 #include "include/common/thread_pool.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 namespace mindspore {

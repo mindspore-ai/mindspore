@@ -18,7 +18,6 @@
 #define MINDSPORE_CORE_OPS_ADAPTIVEAVGPOOL3D_H_
 #include <memory>
 #include <vector>
-
 #include "abstract/abstract_value.h"
 #include "mindapi/base/types.h"
 #include "ops/base_operator.h"

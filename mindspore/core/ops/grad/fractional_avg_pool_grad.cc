@@ -15,13 +15,11 @@
  */
 
 #include "ops/grad/fractional_avg_pool_grad.h"
-
 #include <string>
 #include <memory>
 #include <set>
 #include <vector>
 #include <map>
-
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "abstract/abstract_value.h"
@@ -31,11 +29,8 @@
 #include "base/base.h"
 #include "ir/anf.h"
 #include "ir/dtype/number.h"
-#include "ir/dtype/tensor_type.h"
 #include "ir/dtype/type.h"
-#include "ir/named.h"
 #include "ir/primitive.h"
-#include "ir/tensor.h"
 #include "ir/value.h"
 #include "mindapi/base/shared_ptr.h"
 #include "mindapi/ir/value.h"

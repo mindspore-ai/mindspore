@@ -22,7 +22,6 @@
 #include <memory>
 #include <functional>
 #include <set>
-#include "utils/ms_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "mindspore/core/ops/lp_norm.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"

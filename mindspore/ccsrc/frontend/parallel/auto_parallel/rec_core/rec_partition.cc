@@ -21,8 +21,6 @@
 #include <utility>
 #include <vector>
 #include <iostream>
-
-#include "ir/anf.h"
 #include "frontend/parallel/status.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/step_parallel_utils.h"

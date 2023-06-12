@@ -15,15 +15,12 @@
  */
 
 #include "frontend/parallel/auto_parallel/rec_core/rec_cost.h"
-
 #include <algorithm>
 #include <limits>
 #include <string>
 #include <utility>
 #include <vector>
-
 #include "include/common/utils/parallel_context.h"
-#include "ir/anf.h"
 
 namespace mindspore {
 namespace parallel {

@@ -19,7 +19,6 @@
 #include <string>
 #include <algorithm>
 #include <map>
-#include "utils/ms_utils.h"
 #include "utils/profile.h"
 
 namespace mindspore {

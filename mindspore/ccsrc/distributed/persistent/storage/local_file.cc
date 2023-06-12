@@ -15,18 +15,15 @@
  */
 
 #include "distributed/persistent/storage/local_file.h"
-
 #include <dirent.h>
 #include <cmath>
 #include <algorithm>
 #include <numeric>
 #include <tuple>
 #include <utility>
-
 #include "utils/convert_utils_base.h"
 #include "utils/file_utils.h"
 #include "utils/log_adapter.h"
-#include "include/common/utils/utils.h"
 #include "distributed/persistent/storage/constants.h"
 #include "utils/system/env.h"
 #include "base/float16.h"

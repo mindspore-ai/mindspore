@@ -30,7 +30,6 @@
 #include <vector>
 #include <utility>
 #include <tuple>
-#include <nlohmann/json.hpp>
 #include "include/common/utils/utils.h"
 #include "kernel/kernel.h"
 #include "kernel/oplib/opinfo.h"

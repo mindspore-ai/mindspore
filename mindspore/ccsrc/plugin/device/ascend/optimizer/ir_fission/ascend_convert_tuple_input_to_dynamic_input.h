@@ -17,7 +17,6 @@
 #define MINDSPORE_CCSRC_OPTIMIZER_ASCEND_IR_ASCEND_CONVERT_TUPLE_INPUT_TO_DYNAMIC_INPUT_H_
 
 #include <string>
-
 #include "ir/anf.h"
 #include "include/backend/optimizer/optimizer.h"
 

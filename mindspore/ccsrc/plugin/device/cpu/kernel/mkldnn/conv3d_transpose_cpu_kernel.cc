@@ -15,10 +15,8 @@
  */
 
 #include "plugin/device/cpu/kernel/mkldnn/conv3d_transpose_cpu_kernel.h"
-
 #include <string>
 #include <algorithm>
-#include "utils/ms_utils.h"
 #include "ops/conv3d_transpose.h"
 
 namespace mindspore {

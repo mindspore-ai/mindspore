@@ -21,7 +21,6 @@
 #include <map>
 #include <cmath>
 #include <string>
-
 #include "ops/base_operator.h"
 #include "abstract/ops/op_infer.h"
 #include "mindapi/base/types.h"

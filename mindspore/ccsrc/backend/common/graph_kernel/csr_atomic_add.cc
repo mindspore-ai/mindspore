@@ -18,10 +18,7 @@
 #include <memory>
 #include <vector>
 #include "mindspore/core/ops/core_ops.h"
-#include "ir/tensor.h"
 #include "include/common/utils/utils.h"
-#include "kernel/kernel.h"
-#include "kernel/common_utils.h"
 #include "backend/common/graph_kernel/graph_kernel_helper.h"
 #include "include/backend/kernel_graph.h"
 

@@ -18,7 +18,6 @@
 
 #ifndef ENABLE_SECURITY
 #include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
 #endif
 
 namespace mindspore {

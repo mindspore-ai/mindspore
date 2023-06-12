@@ -16,7 +16,6 @@
 
 #include "plugin/device/cpu/kernel/rl/tensor_array_stack_kernel.h"
 #include <algorithm>
-#include "kernel/common_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_tensor_array.h"
 #include "runtime/device/tensor_array_manager.h"
 

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/format_type/insert_cast.h"
-
 #include <memory>
 #include <string>
 #include <vector>
@@ -26,7 +25,6 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/kernel_graph.h"
 #include "include/common/utils/utils.h"
-#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace opt {

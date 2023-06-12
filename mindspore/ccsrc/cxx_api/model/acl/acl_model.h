@@ -21,7 +21,6 @@
 #include <unordered_map>
 #include <memory>
 #include <map>
-
 #include "include/api/cell.h"
 #include "include/api/status.h"
 #include "cxx_api/model/model_impl.h"

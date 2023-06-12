@@ -20,7 +20,6 @@
 #include <string>
 #include <vector>
 #include <memory>
-
 #include "abstract/abstract_value.h"
 #include "ops/primitive_c.h"
 #include "ops/base_operator.h"

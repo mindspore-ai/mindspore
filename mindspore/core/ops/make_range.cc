@@ -15,12 +15,10 @@
  */
 
 #include "ops/make_range.h"
-
 #include <vector>
 #include <memory>
 #include <string>
 #include <set>
-
 #include "include/common/utils/utils.h"
 #include "abstract/abstract_value.h"
 #include "abstract/ops/op_infer.h"
@@ -33,7 +31,6 @@
 #include "ir/scalar.h"
 #include "ir/value.h"
 #include "ops/core_ops.h"
-#include "ops/op_name.h"
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"

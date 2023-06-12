@@ -23,7 +23,6 @@
 #include <string>
 #include <tuple>
 #include <functional>
-#include "mindspore/core/ops/core_ops.h"
 #include "ir/graph_utils.h"
 #include "utils/anf_utils.h"
 #include "backend/common/graph_kernel/model/lite_graph.h"

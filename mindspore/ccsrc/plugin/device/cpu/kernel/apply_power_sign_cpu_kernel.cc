@@ -21,7 +21,6 @@
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/adam_fp32.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {

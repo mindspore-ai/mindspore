@@ -19,7 +19,6 @@
 #include <functional>
 #include "mindspore/core/ops/hsigmoid.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "utils/ms_utils.h"
 
 namespace mindspore::kernel {
 constexpr auto kHSigmoid = "HSigmoid";

@@ -26,7 +26,6 @@
 #include <utility>
 #include <set>
 #include <bitset>
-
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "base/base.h"

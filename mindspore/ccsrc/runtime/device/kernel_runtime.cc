@@ -32,8 +32,6 @@
 #include "frontend/operator/ops.h"
 #include "ir/value.h"
 #include "utils/ms_context.h"
-#include "utils/ms_utils.h"
-#include "utils/shape_utils.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/parallel_context.h"
 #include "include/common/debug/env_config_parser.h"

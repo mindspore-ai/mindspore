@@ -20,7 +20,6 @@
 #include <vector>
 #include <map>
 #include <limits>
-#include "utils/ms_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {

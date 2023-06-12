@@ -17,7 +17,6 @@
 #include "plugin/device/cpu/kernel/mkldnn/lstm_grad_cpu_kernel.h"
 #include <cstring>
 #include <string>
-#include "utils/ms_utils.h"
 #include "mindspore/core/ops/grad/lstm_grad.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 

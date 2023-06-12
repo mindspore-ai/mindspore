@@ -15,12 +15,10 @@
  */
 
 #include "ops/edit_distance.h"
-
 #include <set>
 #include <vector>
 #include <algorithm>
 #include <memory>
-
 #include "utils/check_convert_utils.h"
 #include "include/common/utils/utils.h"
 #include "abstract/abstract_value.h"
@@ -32,7 +30,6 @@
 #include "ir/anf.h"
 #include "ir/dtype/number.h"
 #include "ir/primitive.h"
-#include "ir/tensor.h"
 #include "mindapi/base/shape_vector.h"
 #include "mindapi/base/shared_ptr.h"
 #include "mindapi/ir/value.h"

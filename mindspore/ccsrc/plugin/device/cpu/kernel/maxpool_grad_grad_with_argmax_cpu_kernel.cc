@@ -18,7 +18,6 @@
 #include <algorithm>
 #include <functional>
 #include <unordered_map>
-#include "utils/ms_utils.h"
 #include "utils/profile.h"
 #include "mindspore/ccsrc/kernel/common_utils.h"
 

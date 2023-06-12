@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 #include "ops/non_deterministic_ints.h"
-
 #include <string>
 #include <memory>
 #include <set>
 #include <vector>
-
 #include "ir/dtype/number.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -29,11 +27,8 @@
 #include "abstract/utils.h"
 #include "base/base.h"
 #include "ir/anf.h"
-#include "ir/dtype/tensor_type.h"
 #include "ir/dtype/type.h"
-#include "ir/named.h"
 #include "ir/primitive.h"
-#include "ir/tensor.h"
 #include "ir/value.h"
 #include "mindapi/base/shape_vector.h"
 #include "ops/core_ops.h"

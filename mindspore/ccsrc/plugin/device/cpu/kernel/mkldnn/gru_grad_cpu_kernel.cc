@@ -18,7 +18,6 @@
 #include <cstddef>
 #include <cstring>
 #include <string>
-#include "utils/ms_utils.h"
 #include "mindspore/core/ops/grad/gru_v2_grad.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 

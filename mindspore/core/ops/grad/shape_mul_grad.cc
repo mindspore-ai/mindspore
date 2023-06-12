@@ -15,19 +15,15 @@
  */
 
 #include "ops/grad/shape_mul_grad.h"
-
 #include <vector>
 #include <memory>
 #include <string>
-
 #include "utils/check_convert_utils.h"
 #include "abstract/abstract_value.h"
-#include "abstract/dshape.h"
 #include "abstract/ops/op_infer.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "base/base.h"
 #include "ir/anf.h"
-#include "ir/dtype/number.h"
 #include "ir/primitive.h"
 #include "ir/value.h"
 #include "ops/core_ops.h"

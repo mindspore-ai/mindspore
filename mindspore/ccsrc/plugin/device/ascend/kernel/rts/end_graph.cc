@@ -20,7 +20,6 @@
 #include "runtime/stream.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
 #include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
 
 using mindspore::ge::model_runner::EndGraphTaskInfo;
 using EndGraphTaskInfoPtr = std::shared_ptr<EndGraphTaskInfo>;

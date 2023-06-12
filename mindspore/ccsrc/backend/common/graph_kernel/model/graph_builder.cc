@@ -15,7 +15,6 @@
  */
 #include "backend/common/graph_kernel/model/graph_builder.h"
 #include <memory>
-#include "ir/dtype.h"
 
 namespace mindspore::graphkernel::inner {
 NodePtr GraphBuilder::Reshape(const NodePtr &input, const ShapeVector &shape) const {

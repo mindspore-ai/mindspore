@@ -15,13 +15,11 @@
  */
 
 #include "backend/common/graph_kernel/tensor_inplace.h"
-
 #include <algorithm>
 #include <utility>
 #include <vector>
 #include "backend/common/graph_kernel/model/op_node.h"
 #include "backend/common/graph_kernel/model/op_register.h"
-#include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/graph_kernel/graph_kernel_helper.h"
 

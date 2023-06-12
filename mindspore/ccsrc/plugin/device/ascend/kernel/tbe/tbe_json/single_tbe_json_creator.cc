@@ -25,7 +25,6 @@
 #include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
 #include "runtime/dev.h"
-#include "utils/ms_utils.h"
 #include "include/common/utils/json_operation_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/tbe_json_utils.h"
 #include "runtime/device/ms_device_shape_transfer.h"

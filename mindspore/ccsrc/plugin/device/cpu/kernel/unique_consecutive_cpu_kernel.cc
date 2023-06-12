@@ -24,7 +24,6 @@
 #include "include/common/thread_pool.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "mindspore/core/ops/unique_consecutive.h"
-#include "mindspore/core/base/base.h"
 
 namespace mindspore {
 namespace kernel {

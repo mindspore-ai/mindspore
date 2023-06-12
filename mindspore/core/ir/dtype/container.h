@@ -28,7 +28,6 @@
 #include <vector>
 #include <type_traits>
 #include <algorithm>
-
 #include "utils/hash_map.h"
 #include "base/base.h"
 #include "ir/named.h"

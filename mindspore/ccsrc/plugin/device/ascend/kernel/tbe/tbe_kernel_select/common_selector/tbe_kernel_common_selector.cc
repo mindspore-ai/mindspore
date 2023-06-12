@@ -15,9 +15,6 @@
  */
 
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/common_selector/tbe_kernel_common_selector.h"
-
-#include "include/common/utils/utils.h"
-#include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_select_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
 

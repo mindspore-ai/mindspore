@@ -15,10 +15,8 @@
  */
 
 #include <string>
-
 #include "ir/dtype.h"
 #include "utils/log_adapter.h"
-#include "utils/ms_utils.h"
 #include "abstract/param_validator.h"
 #include "abstract/ops/infer_functions.h"
 #include "abstract/utils.h"

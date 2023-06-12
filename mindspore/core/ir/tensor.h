@@ -24,7 +24,6 @@
 #include <mutex>
 #include <condition_variable>
 #include <utility>
-
 #include "ir/device_sync.h"
 #include "ir/meta_tensor.h"
 #include "utils/log_adapter.h"

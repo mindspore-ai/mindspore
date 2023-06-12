@@ -20,7 +20,6 @@
 #include <string>
 #include <utility>
 #include <memory>
-
 #include "include/backend/optimizer/pass.h"
 #include "ir/func_graph.h"
 #include "ir/anf.h"

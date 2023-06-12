@@ -20,7 +20,6 @@
 #include <unordered_map>
 #include "mindspore/core/ops/grad/resize_linear_1d_grad.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "utils/ms_utils.h"
 #include "kernel/common_utils.h"
 
 namespace mindspore::kernel {

@@ -17,14 +17,12 @@
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_build.h"
 #include <memory>
 #include <map>
-#include "mindspore/core/ops/core_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_convert_utils.h"
 #include "utils/ms_context.h"
 #include "runtime/dev.h"
 #include "utils/convert_utils_base.h"
-#include "utils/ms_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/tbe_json_utils.h"
 namespace mindspore {
 namespace kernel {

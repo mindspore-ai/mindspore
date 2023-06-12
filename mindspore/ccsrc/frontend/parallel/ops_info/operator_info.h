@@ -23,7 +23,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
 #include "utils/hash_map.h"
 #include "utils/ms_utils.h"
 #include "base/base.h"

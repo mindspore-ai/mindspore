@@ -18,7 +18,6 @@
 #include <string>
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/path.h"
-#include "mindspore/core/utils/ms_utils.h"
 
 namespace mindspore {
 namespace dataset {

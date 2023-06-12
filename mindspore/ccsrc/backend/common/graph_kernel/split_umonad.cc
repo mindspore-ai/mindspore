@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 #include "backend/common/graph_kernel/split_umonad.h"
-
 #include <vector>
 #include <string>
 #include <algorithm>
 #include <memory>
-
 #include "mindspore/core/ops/core_ops.h"
-#include "include/common/utils/utils.h"
 #include "include/backend/kernel_info.h"
 #include "include/backend/optimizer/helper.h"
 

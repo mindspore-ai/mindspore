@@ -15,18 +15,15 @@
  */
 
 #include "include/common/debug/draw.h"
-
 #include <iostream>
 #include <iterator>
 #include <vector>
 #include <string>
 #include <algorithm>
-
 #include "ir/meta_func_graph.h"
 #include "ir/primitive.h"
 #include "ir/graph_utils.h"
 #include "ir/tensor.h"
-#include "include/common/utils/utils.h"
 #include "include/common/debug/anf_dump_utils.h"
 #include "mindspore/core/utils/file_utils.h"
 

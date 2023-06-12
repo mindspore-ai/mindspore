@@ -19,7 +19,6 @@
 
 #include <netinet/in.h>
 #include <string>
-
 #include "utils/convert_utils_base.h"
 
 namespace mindspore {

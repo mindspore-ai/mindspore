@@ -23,7 +23,6 @@
 #include <string>
 #include <vector>
 #include <mutex>
-
 #include "include/backend/distributed/ps/constants.h"
 #include "utils/log_adapter.h"
 #include "ps/core/file_configuration.h"

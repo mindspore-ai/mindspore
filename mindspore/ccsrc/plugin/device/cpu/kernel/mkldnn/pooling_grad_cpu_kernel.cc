@@ -15,11 +15,8 @@
  */
 
 #include "plugin/device/cpu/kernel/mkldnn/pooling_grad_cpu_kernel.h"
-
 #include <functional>
 #include <unordered_map>
-
-#include "utils/ms_utils.h"
 #include "utils/profile.h"
 
 namespace mindspore {

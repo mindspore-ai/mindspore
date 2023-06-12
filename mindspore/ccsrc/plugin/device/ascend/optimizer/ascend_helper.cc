@@ -23,7 +23,6 @@
 #include "plugin/device/ascend/kernel/aicpu/aicpu_attr_to_input_registry.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_input_to_attr_registry.h"
 #include "runtime/device/ms_device_shape_transfer.h"
-#include "utils/ms_utils.h"
 #include "include/backend/optimizer/helper.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/kernel_info.h"

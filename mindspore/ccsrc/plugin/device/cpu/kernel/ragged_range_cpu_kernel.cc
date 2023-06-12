@@ -21,7 +21,6 @@
 #include <memory>
 #include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {

@@ -20,7 +20,6 @@
 #include <algorithm>
 #include <functional>
 #include <fstream>
-
 #include "include/common/debug/dump_proto.h"
 #include "include/common/debug/anf_ir_dump.h"
 

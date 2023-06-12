@@ -15,10 +15,8 @@
  */
 
 #include "plugin/device/cpu/kernel/mkldnn/conv_cpu_kernel.h"
-
 #include <string>
 #include <algorithm>
-#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {

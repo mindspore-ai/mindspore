@@ -19,11 +19,9 @@
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "utils/ms_utils.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "nlohmann/json.hpp"
-#include "mindspore/core/ops/core_ops.h"
 #include "include/backend/debug/profiler/profiling.h"
 
 namespace mindspore {

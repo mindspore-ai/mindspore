@@ -20,7 +20,6 @@
 #include <vector>
 #include <set>
 #include <string>
-
 #include "ir/dtype/type_id.h"
 #include "ir/value.h"
 #include "ir/tensor.h"

@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 #include "backend/common/graph_kernel/parallel_optimizer.h"
-
 #include <vector>
 #include <utility>
 #include <algorithm>
 #include "abstract/utils.h"
-#include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore::graphkernel {

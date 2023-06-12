@@ -20,7 +20,6 @@
 #include <utility>
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "utils/ms_utils.h"
 #include "ops/fused_sparse_adam.h"
 
 namespace mindspore {

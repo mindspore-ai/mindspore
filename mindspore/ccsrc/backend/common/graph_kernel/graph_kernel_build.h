@@ -21,7 +21,6 @@
 #include <memory>
 #include <sstream>
 #include <unordered_map>
-
 #include "ir/anf.h"
 #include "include/backend/optimizer/optimizer.h"
 #include "kernel/common_utils.h"

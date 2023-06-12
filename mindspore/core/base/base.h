@@ -26,7 +26,6 @@
 #include <vector>
 #include <utility>
 #include <algorithm>
-
 #include "base/user_data.h"
 #include "mindapi/base/macros.h"
 #include "utils/hashing.h"

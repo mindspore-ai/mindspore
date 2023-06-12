@@ -15,15 +15,11 @@
  */
 
 #include "ir/graph_utils.h"
-
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "ir/visitor.h"
-#include "ir/manager.h"
 #include "ir/func_graph.h"
 #include "utils/label.h"
-#include "utils/log_adapter.h"
-#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace {

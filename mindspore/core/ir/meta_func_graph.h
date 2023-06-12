@@ -24,7 +24,6 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
-
 #include "ir/dtype.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"

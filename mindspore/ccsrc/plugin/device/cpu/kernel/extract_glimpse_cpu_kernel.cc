@@ -23,7 +23,6 @@
 #include <cmath>
 #include <tuple>
 #include <type_traits>
-#include "utils/ms_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "mindspore/core/ops/extract_glimpse.h"
 

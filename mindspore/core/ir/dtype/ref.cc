@@ -15,7 +15,6 @@
  */
 
 #include "ir/dtype/ref.h"
-#include "utils/log_adapter.h"
 #include "ir/dtype/tensor_type.h"
 
 namespace mindspore {

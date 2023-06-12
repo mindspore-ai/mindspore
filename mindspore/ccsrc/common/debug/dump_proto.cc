@@ -14,22 +14,18 @@
  * limitations under the License.
  */
 #include "include/common/debug/dump_proto.h"
-
 #include <algorithm>
 #include <fstream>
 #include <map>
 #include <memory>
 #include <utility>
 #include <vector>
-
 #include "google/protobuf/util/json_util.h"
-
 #include "proto/anf_ir.pb.h"
 #include "proto/mind_ir.pb.h"
 #include "ir/graph_utils.h"
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
-#include "include/common/utils/utils.h"
 #include "include/common/debug/anf_dump_utils.h"
 #include "utils/anf_utils.h"
 #include "frontend/parallel/ops_info/ops_utils.h"  // todo: use constant string now

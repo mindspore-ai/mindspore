@@ -20,7 +20,6 @@
 #include <utility>
 #include <unordered_map>
 #include <tuple>
-#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {

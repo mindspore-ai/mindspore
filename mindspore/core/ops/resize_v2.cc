@@ -20,7 +20,6 @@
 #include "ops/op_utils.h"
 #include "mindapi/src/helper.h"
 #include "utils/check_convert_utils.h"
-#include "include/common/utils/utils.h"
 
 namespace mindspore {
 namespace ops {

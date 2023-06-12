@@ -15,12 +15,10 @@
  */
 
 #include "abstract/abstract_function.h"
-
 #include <vector>
 #include <utility>
 #include <algorithm>
 #include "base/base.h"
-#include "ops/core_ops.h"
 #include "utils/hashing.h"
 #include "utils/hash_set.h"
 #include "utils/ms_utils.h"

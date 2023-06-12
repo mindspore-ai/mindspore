@@ -23,7 +23,6 @@
 #include <string>
 #include <typeindex>
 #include <vector>
-
 #include "utils/hash_map.h"
 #include "ir/anf.h"
 #include "ir/primitive.h"

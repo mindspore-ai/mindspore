@@ -15,7 +15,6 @@
  */
 
 #include "minddata/mindrecord/include/shard_task_list.h"
-#include "utils/ms_utils.h"
 #include "minddata/mindrecord/include/common/shard_utils.h"
 
 namespace mindspore {

@@ -16,14 +16,12 @@
 
 #include <sentencepiece_processor.h>
 #include <sentencepiece_trainer.h>
-
 #include <fstream>
 #include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/include/dataset/text.h"
 #include "minddata/dataset/util/status.h"
@@ -33,7 +31,6 @@
 #else
 #include "mindspore/lite/src/common/file_utils.h"
 #endif
-#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace dataset {

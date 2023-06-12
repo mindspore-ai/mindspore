@@ -15,7 +15,6 @@
  */
 
 #include "backend/common/graph_kernel/compact_tensor_liveness.h"
-#include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore::graphkernel {

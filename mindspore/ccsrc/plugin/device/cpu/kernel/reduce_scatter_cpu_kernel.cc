@@ -18,7 +18,6 @@
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/hal/device/mpi/mpi_interface.h"
 #include "mindspore/core/ops/reduce_scatter.h"
-#include "ir/primitive.h"
 
 namespace mindspore {
 namespace kernel {

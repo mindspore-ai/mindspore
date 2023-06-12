@@ -17,7 +17,6 @@
 #include "plugin/device/ascend/hal/device/ge_runtime/model_runner.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/runtime_model.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/davinci_model.h"
-#include "mindspore/core/utils/log_adapter.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore::ge::model_runner {

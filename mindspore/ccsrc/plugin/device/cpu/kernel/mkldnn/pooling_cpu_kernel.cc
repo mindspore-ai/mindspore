@@ -15,12 +15,10 @@
  */
 
 #include "plugin/device/cpu/kernel/mkldnn/pooling_cpu_kernel.h"
-
 #include <iostream>
 #include <string>
 #include <algorithm>
 #include <functional>
-#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {

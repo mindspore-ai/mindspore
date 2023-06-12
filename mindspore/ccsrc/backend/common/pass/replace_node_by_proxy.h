@@ -16,7 +16,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_REPLACE_NODE_BY_PROXY_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_REPLACE_NODE_BY_PROXY_H_
 #include <string>
-
 #include "include/backend/optimizer/pass.h"
 #include "ir/func_graph.h"
 #include "ir/anf.h"

@@ -19,7 +19,6 @@
 #include <vector>
 #include <complex>
 #include <map>
-#include "utils/ms_utils.h"
 #include "plugin/device/cpu/kernel/sparse_concat_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 

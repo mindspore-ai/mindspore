@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "backend/common/graph_kernel/floatstatus_addn_fusion.h"
-
 #include <vector>
 #include <string>
 #include <memory>
@@ -22,7 +21,6 @@
 #include <unordered_set>
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "kernel/common_utils.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/graph_kernel/graph_kernel_helper.h"
 #include "backend/common/graph_kernel/adapter/expander.h"

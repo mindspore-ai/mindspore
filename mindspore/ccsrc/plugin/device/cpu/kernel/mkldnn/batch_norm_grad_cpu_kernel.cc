@@ -17,7 +17,6 @@
 #include "plugin/device/cpu/kernel/mkldnn/batch_norm_grad_cpu_kernel.h"
 #include <map>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "utils/ms_utils.h"
 #include "mindspore/core/ops/grad/batch_norm_grad.h"
 
 namespace mindspore {

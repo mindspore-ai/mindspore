@@ -21,7 +21,6 @@
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/add_fp32.h"
 #include "plugin/device/cpu/kernel/nnacl/errorcode.h"
-#include "utils/ms_utils.h"
 #include "include/common/thread_pool.h"
 
 namespace mindspore {
