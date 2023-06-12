@@ -245,7 +245,7 @@ def test_ascend_lenet_grad_by_list_tuple():
     return loss_output
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

@@ -80,7 +80,7 @@ def train(net, data, label):
     assert np.all(diff < 1.e-6)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
