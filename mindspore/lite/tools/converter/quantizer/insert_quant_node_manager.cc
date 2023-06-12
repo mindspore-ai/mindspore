@@ -373,7 +373,7 @@ int InsertQuantNodeManager::InsertForwardQuantNodeNew(const FuncGraphPtr &graph,
               std::back_inserter(cast_output_quant_params));
   }
   ValueNodePtr new_primitive = NewQuantCastPrimitive(src_dtype, dst_dtype, input_node, cast_node_type,
-                                                     cast_input_quant_params, cast_output_quant_params, 0, false);
+                                                     cast_input_quant_params, cast_output_quant_params, 0, true);
   std::vector<AnfNodePtr> op_inputs = {new_primitive, input_node};
   auto quant_cast_cnode = graph->NewCNode(op_inputs);
   CHECK_NULL_RETURN(quant_cast_cnode);

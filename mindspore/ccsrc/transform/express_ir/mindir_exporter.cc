@@ -1249,6 +1249,17 @@ bool IrExportBuilder::SetTypeToAttributeProto_irs(const ValuePtr &value, mind_ir
   } else if (value->isa<tensor::Tensor>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TENSORS);
     return SetTensorToAttributeProto(value, attr_proto);
+  } else if (value->isa<QuantizationParam>()) {
+    auto quantization_param = value->cast<std::shared_ptr<QuantizationParam>>();
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TENSORS);
+    auto tensor_proto = attr_proto->add_tensors();
+    tensor_proto->set_name("quant_param");
+    auto quant_param_proto = tensor_proto->add_quant_params();
+    auto ret = SetQuantizationParamToAttrProto(quantization_param, quant_param_proto);
+    if (ret != true) {
+      MS_LOG(ERROR) << "QuantizationParam Set Value to AttributeProto Error";
+      return false;
+    }
   } else {
     MS_LOG(EXCEPTION) << "Unsupported type: " << value->type_name();
   }
