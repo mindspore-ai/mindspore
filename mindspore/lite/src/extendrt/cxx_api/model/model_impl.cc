@@ -17,6 +17,15 @@
 #include <algorithm>
 #include <set>
 #include <shared_mutex>
+#include <cstring>
+#include <memory>
+#include <unordered_map>
+#include "pybind_api/ir/primitive_py.h"
+#include "ops/primitive_c.h"
+#include "tools/optimizer/common/gllo_utils.h"
+#include "src/common/utils.h"
+#include "nnacl/op_base.h"
+#include "ops/op_utils.h"
 #include "extendrt/cxx_api/model/model_impl.h"
 #include "extendrt/cxx_api/dlutils.h"
 #include "extendrt/cxx_api/file_utils.h"
@@ -115,6 +124,83 @@ FuncGraphPtr CreateFuncGraphFromDataFlow(const void *model_data, size_t data_siz
   return_cnode->set_fullname_with_scope("Return");
   func_graph->set_return(return_cnode);
   return func_graph;
+}
+
+std::unordered_map<std::string, mindspore::Format> kStr2FormatMap{{"DEFAULT_FORMAT", mindspore::Format::DEFAULT_FORMAT},
+                                                                  {"NCHW", mindspore::Format::NCHW},
+                                                                  {"NHWC", mindspore::Format::NHWC},
+                                                                  {"NHWC4", mindspore::Format::NHWC4},
+                                                                  {"HWKC", mindspore::Format::HWKC},
+                                                                  {"HWCK", mindspore::Format::HWCK},
+                                                                  {"KCHW", mindspore::Format::KCHW},
+                                                                  {"CKHW", mindspore::Format::CKHW},
+                                                                  {"KHWC", mindspore::Format::KHWC},
+                                                                  {"CHWK", mindspore::Format::CHWK},
+                                                                  {"HW", mindspore::Format::HW},
+                                                                  {"HW4", mindspore::Format::HW4},
+                                                                  {"NC", mindspore::Format::NC},
+                                                                  {"NC4", mindspore::Format::NC4},
+                                                                  {"NC4HW4", mindspore::Format::NC4HW4},
+                                                                  {"NUM_OF_FORMAT", mindspore::Format::NUM_OF_FORMAT},
+                                                                  {"NCDHW", mindspore::Format::NCDHW},
+                                                                  {"NWC", mindspore::Format::NWC},
+                                                                  {"NCW", mindspore::Format::NCW},
+                                                                  {"NDHWC", mindspore::Format::NDHWC},
+                                                                  {"NC8HW8", mindspore::Format::NC8HW8}};
+
+Status PrimitivePyToC(const FuncGraphPtr &func_graph) {
+  MS_ASSERT(func_graph != nullptr);
+  auto node_list = TopoSort(func_graph->get_return());
+  for (auto &node : node_list) {
+    MS_ASSERT(node != nullptr);
+    if (!utils::isa<CNodePtr>(node)) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    MS_ASSERT(cnode != nullptr);
+
+    // judge if primitive is PrimitivePy
+    auto primpy_ptr = GetValueNode<PrimitivePtr>(cnode->input(0));
+    MS_EXCEPTION_IF_NULL(primpy_ptr);
+    if (!utils::isa<PrimitivePy>(primpy_ptr)) {
+      continue;
+    }
+    MS_LOG(INFO) << "Transform a primitivePy to primitiveC for node " << cnode->fullname_with_scope();
+
+    auto kernel_name = primpy_ptr->name();
+    ops::PrimitiveCPtr primc_ptr = nullptr;
+    static auto &primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
+    auto primc_it = primc_fns.find(kernel_name);
+    if (primc_it != primc_fns.end() && primc_it->second) {
+      primc_ptr = primc_it->second();
+    }
+    if (primc_ptr == nullptr) {
+      MS_LOG(ERROR) << "OpPrimCRegister can not find " << kernel_name;
+      return kLiteError;
+    }
+    (void)primc_ptr->SetAttrs(primpy_ptr->attrs());
+
+    if (primpy_ptr->HasAttr(ops::kFormat)) {
+      MS_LOG(INFO) << "Add attr Original format to " << cnode->fullname_with_scope();
+      auto format_str = GetValue<string>(primpy_ptr->GetAttr(ops::kFormat));
+      auto format_it = kStr2FormatMap.find(format_str.c_str());
+      if (format_it != kStr2FormatMap.end()) {
+        MS_LOG(INFO) << "Add attr Original format" << format_it->second << " to " << cnode->fullname_with_scope();
+        (void)primc_ptr->AddAttr(mindspore::ops::kOriginalFormat,
+                                 std::dynamic_pointer_cast<mindspore::Value>(
+                                   api::MakeValue<int64_t>(static_cast<int64_t>(format_it->second))->impl()));
+      } else {
+        MS_LOG(ERROR) << "Fail to find format " << format_str.c_str() << "in kStr2FormatMap";
+        return kLiteError;
+      }
+    }
+
+    auto new_prim = MakeValue(primc_ptr);
+    auto new_value_node = NewValueNode(new_prim);
+    new_value_node->set_abstract(new_prim->ToAbstract());
+    cnode->set_input(0, new_value_node);
+  }
+  return kSuccess;
 }
 }  // namespace
 
@@ -313,6 +399,12 @@ Status ModelImpl::Build(const FuncGraphPtr &func_graph, const std::shared_ptr<Co
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "Input func graph is nullptr";
     return kLiteError;
+  }
+  // transfer primitivePy to primitiveC
+  ret = PrimitivePyToC(func_graph);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "transfer primitivePy to primitiveCfailed.";
+    return ret;
   }
   // convert and optimize func graph to infer
   ret = ConvertGraphOnline(func_graph, model_context);

@@ -341,15 +341,8 @@ STATUS ConverterFuncGraph::Optimize(const std::shared_ptr<ConverterPara> &param,
     }
     return RET_OK;
   }
-
-  auto status = ReplacePrimitivePyToC(func_graph);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "ReplacePrimitivePyToC failed.";
-    return status;
-  }
-
   std::vector<std::string> output_names;
-  status = UnifyFuncGraphForInfer(param, func_graph, &output_names);
+  auto status = UnifyFuncGraphForInfer(param, func_graph, &output_names);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "UnifyFuncGraphForInfer failed.";
     return status;
