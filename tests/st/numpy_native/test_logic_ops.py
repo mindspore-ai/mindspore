@@ -505,10 +505,10 @@ def test_setdiff1d():
     """
     x = rand_int(2, 1, 4).astype(onp.int32)
     y = rand_int(2, 1, 4).astype(onp.int32)
-    match_res(mnp.setdiff1d, onp.setdiff1d, x, y)
+    match_res(mnp.setdiff1d, onp.setdiff1d, x, y, dtype=mnp.int32)
     x = onp.unique(x)
     y = onp.unique(y)
-    match_res(mnp.setdiff1d, onp.setdiff1d, x, y, assume_unique=True)
+    match_res(mnp.setdiff1d, onp.setdiff1d, x, y, dtype=mnp.int32, assume_unique=True)
     with pytest.raises(TypeError):
         mnp.intersect1d(None, None)
     with pytest.raises(TypeError):

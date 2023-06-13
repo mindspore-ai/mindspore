@@ -1679,12 +1679,12 @@ def test_intersect1d():
     """
     x = rand_int(2, 1, 4).astype(onp.int32)
     y = rand_int(2, 1, 4).astype(onp.int32)
-    match_res(mnp.intersect1d, onp.intersect1d, x, y)
-    match_res(mnp.intersect1d, onp.intersect1d, x, y, return_indices=True)
+    match_res(mnp.intersect1d, onp.intersect1d, x, y, dtype=mnp.int32)
+    match_res(mnp.intersect1d, onp.intersect1d, x, y, dtype=mnp.int32, return_indices=True)
     x = onp.unique(x)
     y = onp.unique(y)
-    match_res(mnp.intersect1d, onp.intersect1d, x, y, assume_unique=True)
-    match_res(mnp.intersect1d, onp.intersect1d, x, y, assume_unique=True, return_indices=True)
+    match_res(mnp.intersect1d, onp.intersect1d, x, y, dtype=mnp.int32, assume_unique=True)
+    match_res(mnp.intersect1d, onp.intersect1d, x, y, dtype=mnp.int32, assume_unique=True, return_indices=True)
     with pytest.raises(TypeError):
         mnp.intersect1d(None, None)
     with pytest.raises(TypeError):
