@@ -1,3 +1,4 @@
+
 /**
  * Copyright 2023 Huawei Technologies Co., Ltd
  *
@@ -14,17 +15,17 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_KERNEL_BASE_KERNEL_H_
-#define NNACL_KERNEL_BASE_KERNEL_H_
+#ifndef NNACL_KERNEL_SIZE_H_
+#define NNACL_KERNEL_SIZE_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 
-int base_kernel_prepare_one_input(KernelBase *self);
-int base_kernel_prepare_two_input(KernelBase *self);
-int base_kernel_prepare_1in_2out(KernelBase *self);
-int base_kernel_resize(KernelBase *self);
-int base_kernel_release(KernelBase *self);
+typedef struct SizeStruct {
+  KernelBase base_;
+} SizeStruct;
 
-#endif  // NNACL_KERNEL_BASE_KERNEL_H_
+KernelBase *CreateSize(OpParameter *param, int data_type);
+
+#endif  // NNACL_KERNEL_SIZE_H_

@@ -46,6 +46,8 @@ int PoolingInt8Coder::DoCode(CoderContext *const context) {
   compute_param_.output_w_ = out_tensor->Width();
   compute_param_.window_w_ = pooling_parameter->window_w_;
   compute_param_.window_h_ = pooling_parameter->window_h_;
+  compute_param_.minf = INT8_MIN;
+  compute_param_.maxf = INT8_MAX;
 
   // get quant params
   std::vector<LiteQuantParam> in_quant_args = in_tensor->quant_params();

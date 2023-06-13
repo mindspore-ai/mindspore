@@ -39,10 +39,12 @@
 #include "nnacl/kernel/stack.h"
 #include "nnacl/kernel/strided_slice.h"
 #include "nnacl/kernel/softmax.h"
+#include "nnacl/kernel/size.h"
 #include "nnacl/kernel/tile.h"
 #include "nnacl/kernel/tril.h"
 #include "nnacl/kernel/triu.h"
 #include "nnacl/kernel/transpose.h"
+#include "nnacl/kernel/unique.h"
 #ifdef ENABLE_FP16
 #include "nnacl/kernel/f16/arithmetic_f16.h"
 #include "nnacl/kernel/f16/arithmetic_compare_f16.h"
@@ -103,6 +105,7 @@ void init_vs_kernels_f16(KernelCreator **creators) {
   creators[PrimType_SubFusion][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_SquaredDifference][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_Sin][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
+  creators[PrimType_Size][REGIST_DT(kNumberTypeFloat16)] = CreateSize;
   creators[PrimType_Square][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_Sqrt][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_TileFusion][REGIST_DT(kNumberTypeFloat16)] = CreateTile;
@@ -110,6 +113,7 @@ void init_vs_kernels_f16(KernelCreator **creators) {
   creators[PrimType_Tril][REGIST_DT(kNumberTypeFloat16)] = CreateTril;
   creators[PrimType_Transpose][REGIST_DT(kNumberTypeFloat16)] = CreateTranspose;
   creators[PrimType_Unsqueeze][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
+  creators[PrimType_Unique][REGIST_DT(kNumberTypeFloat16)] = CreateUnique;
 #endif
 }
 
@@ -230,6 +234,8 @@ void init_vs_kernels_r(KernelCreator **creators) {
   creators[PrimType_Square][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
   creators[PrimType_Sqrt][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
   creators[PrimType_Sin][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
+  creators[PrimType_Size][REGIST_DT(kNumberTypeInt32)] = CreateSize;
+  creators[PrimType_Size][REGIST_DT(kNumberTypeFloat32)] = CreateSize;
   creators[PrimType_SubFusion][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
   creators[PrimType_SubFusion][REGIST_DT(kNumberTypeInt32)] = CreateArithmetic;
   creators[PrimType_Squeeze][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;
@@ -273,6 +279,8 @@ void init_vs_kernels_r(KernelCreator **creators) {
   creators[PrimType_Unsqueeze][REGIST_DT(kNumberTypeInt32)] = CreateReshape;
   creators[PrimType_Unsqueeze][REGIST_DT(kNumberTypeInt64)] = CreateReshape;
   creators[PrimType_Unsqueeze][REGIST_DT(kNumberTypeBool)] = CreateReshape;
+  creators[PrimType_Unique][REGIST_DT(kNumberTypeInt32)] = CreateUnique;
+  creators[PrimType_Unique][REGIST_DT(kNumberTypeFloat32)] = CreateUnique;
 }
 
 void init_vs_kernels(KernelCreator **creators) {

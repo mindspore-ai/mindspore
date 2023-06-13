@@ -47,6 +47,7 @@ int NNACLKernel::Prepare() {
 
   int ret = kernel_->prepare(kernel_);
   if (ret != RET_OK) {
+    MS_LOG(ERROR) << "NNACL prepare failed. ret=" << ret;
     return ret;
   }
 
@@ -61,7 +62,13 @@ int NNACLKernel::ReSize() {
     return RET_ERROR;
   }
   UpdateTensorC();
-  return kernel_->resize(kernel_);
+
+  int ret = kernel_->resize(kernel_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "NNACL resize failed. ret=" << ret;
+    return ret;
+  }
+  return RET_OK;
 }
 
 int NNACLKernel::Run() {
@@ -70,7 +77,13 @@ int NNACLKernel::Run() {
   }
   UpdateTensorC();
   kernel_->workspace_ = workspace();
-  return kernel_->compute(kernel_);
+
+  int ret = kernel_->compute(kernel_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "NNACL run failed. ret=" << ret;
+    return ret;
+  }
+  return RET_OK;
 }
 
 int NNACLKernel::InferShape() {
