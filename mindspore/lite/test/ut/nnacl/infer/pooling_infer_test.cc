@@ -45,7 +45,7 @@ TEST_F(PoolingInferTest, PoolingInferTest0) {
   parameter->pad_r_ = 0;
   parameter->pad_l_ = 0;
   parameter->global_ = false;
-  parameter->round_mode_ = RoundMode_Ceil;
+  parameter->round_type_ = RoundType_Ceil;
   int ret = PoolingInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                               reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -86,7 +86,7 @@ TEST_F(PoolingInferTest, PoolingInferTest1) {
   parameter->pad_l_ = 0;
   parameter->global_ = false;
   parameter->pad_mode_ = Pad_same;
-  parameter->round_mode_ = RoundMode_Ceil;
+  parameter->round_type_ = RoundType_Ceil;
   int ret = PoolingInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                               reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -127,7 +127,7 @@ TEST_F(PoolingInferTest, PoolingInferTest2) {
   parameter->pad_l_ = 0;
   parameter->global_ = false;
   parameter->pad_mode_ = Pad_valid;
-  parameter->round_mode_ = RoundMode_Floor;
+  parameter->round_type_ = RoundType_Floor;
   int ret = PoolingInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                               reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -168,7 +168,7 @@ TEST_F(PoolingInferTest, PoolingInferTest3) {
   parameter->pad_l_ = 0;
   parameter->global_ = false;
   parameter->pad_mode_ = Pad_valid;
-  parameter->round_mode_ = RoundMode_Floor;
+  parameter->round_type_ = RoundType_Floor;
   int ret = PoolingInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                               reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -209,7 +209,7 @@ TEST_F(PoolingInferTest, PoolingInferTest4) {
   parameter->pad_l_ = 0;
   parameter->global_ = false;
   parameter->pad_mode_ = Pad_pad;
-  parameter->round_mode_ = RoundMode_Ceil;
+  parameter->round_type_ = RoundType_Ceil;
   int ret = PoolingInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                               reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -250,7 +250,7 @@ TEST_F(PoolingInferTest, PoolingInferTest5) {
   parameter->pad_l_ = 0;
   parameter->global_ = false;
   parameter->pad_mode_ = Pad_pad;
-  parameter->round_mode_ = RoundMode_Ceil;
+  parameter->round_type_ = RoundType_Ceil;
   int ret = PoolingInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                               reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);

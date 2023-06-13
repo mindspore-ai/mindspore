@@ -40,8 +40,8 @@ PoolingM::PoolingM(const PoolingConfig &cfg) : Node() {
     MS_LOG(ERROR) << "bad pad mode";
     return;
   }
-  pool_param->pad_mode_ = static_cast<PadMode>(pad_mode + Pad_pad);
-  pool_param->round_mode_ = RoundMode_Floor;
+  pool_param->pad_mode_ = static_cast<PadType>(pad_mode + Pad_pad);
+  pool_param->round_type_ = RoundType_Floor;
   pool_param->act_type_ = ActType_No;
 }
 
@@ -69,11 +69,11 @@ int PoolingM::GetMode(std::string mode) {
 }
 
 void PoolingM::UpdateRoundMode(const PoolingParameter *param, schema::RoundMode *round_mode) {
-  switch (param->round_mode_) {
-    case RoundMode_Floor:
+  switch (param->round_type_) {
+    case RoundType_Floor:
       *round_mode = schema::RoundMode_FLOOR;
       break;
-    case RoundMode_Ceil:
+    case RoundType_Ceil:
       *round_mode = schema::RoundMode_CEIL;
       break;
     default:

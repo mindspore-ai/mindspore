@@ -84,7 +84,7 @@ LiteKernel *NNACLLib::CreateKernel(const KernelSpec &spec, const std::vector<Inf
   op_parameter->thread_num_ = ctx->thread_num_;
   // create nnacl kernel base directly in the further
   kernel::KernelKey key{kCPU, data_type, NHWC, spec.op_type.FBType()};
-  auto lite_kernel = lite::KernelRegistry::GetInstance()->GetLiteKernel(inputs, outputs, ctx, key, op_parameter);
+  auto lite_kernel = lite::KernelRegistry::GetInstance()->GetLiteKernel(inputs, outputs, ctx, &key, op_parameter);
   if (lite_kernel == nullptr) {
     MS_LOG(INFO) << "Create lite kernel failed:  " << op_parameter->name_;
     free(op_parameter);

@@ -64,7 +64,7 @@ int NNAPIConv::AddAttributesForConv(ANeuralNetworksModel *nnapi_model, std::vect
   }
   if (pad_list_.empty()) {
     // Use the implicit pad mode for NNAPI model.
-    MS_CHECK_TRUE_RET(pad_mode_ != PadMode::Pad_pad, RET_ERROR);
+    MS_CHECK_TRUE_RET(pad_mode_ != PadType::Pad_pad, RET_ERROR);
     auto pad_mode = pad_mode_ - 1;  // the enum pad scheme of NNAPI is PAD_SAME and PAD_VALID.
     if (AddScalarToNNAPIModel<int>(nnapi_model, all_tensors, "pad_mode", DataType::kNumberTypeInt32, pad_mode) !=
         RET_OK) {

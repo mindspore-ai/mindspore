@@ -75,7 +75,7 @@ int NNAPIConvTranspose::AddOpToNNAPIModel(ANeuralNetworksModel *nnapi_model,
     }
   }
 
-  if (pad_mode_ == PadMode::Pad_pad) {
+  if (pad_mode_ == PadType::Pad_pad) {
     MS_CHECK_TRUE_RET(pad_list_.size() == DIMENSION_4D, RET_ERROR);
     for (auto pad : pad_list_) {
       if (AddScalarToNNAPIModel<int>(nnapi_model, all_tensors, "pad", DataType::kNumberTypeInt32, pad) != RET_OK) {

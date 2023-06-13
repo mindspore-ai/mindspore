@@ -46,7 +46,7 @@ ConvM::ConvM(const ConvConfig &cfg) : Node() {
     MS_LOG(ERROR) << "bad pad mode";
     return;
   }
-  conv_param->pad_mode_ = static_cast<PadMode>(pad_mode);
+  conv_param->pad_mode_ = static_cast<PadType>(pad_mode);
   conv_param->pad_u_ = cfg.padding_[C0NUM];
   conv_param->pad_d_ = cfg.padding_[C1NUM];
   conv_param->pad_l_ = cfg.padding_[C2NUM];

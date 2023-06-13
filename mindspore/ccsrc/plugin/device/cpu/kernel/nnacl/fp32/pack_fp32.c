@@ -1366,6 +1366,85 @@ void PackNC4HW4ToNHWCFp32(const void *src, void *dst, int batch, int plane, int 
   }
 }
 
+void PackNC8HW8ToNCHWFp32(const void *src, void *dst, int batch, int plane, int channel) {
+  int c8 = UP_ROUND(channel, C8NUM);
+  for (int b = 0; b < batch; b++) {
+    int src_offset = b * plane * c8;
+    int dst_offset = b * plane * channel;
+
+    const float *fp32_src = (const float *)src + src_offset;
+    float *fp32_dst = (float *)dst + dst_offset;
+    for (size_t c = 0; c < channel; c++) {
+      size_t c_div = c / C8NUM;
+      size_t c_mod = c % C8NUM;
+      for (size_t p = 0; p < plane; p++) {
+        int src_offset_c = c_div * plane * C8NUM + p * C8NUM + c_mod;
+        int dst_offset_c = c * plane + p;
+        fp32_dst[dst_offset_c] = fp32_src[src_offset_c];
+      }
+    }
+  }
+}
+
+void PackNHWCToNC8HW8Fp32(const void *src, void *dst, int batch, int plane, int channel) {
+  int c8 = UP_DIV(channel, C8NUM);
+  int c8_minus = c8 - 1;
+  for (int b = 0; b < batch; b++) {
+    int src_oc_offset = b * plane * channel;
+    int dst_oc_offset = b * plane * c8 * C8NUM;
+    for (int k = 0; k < plane; k++) {
+      int src_kernel_offset = src_oc_offset + k * channel;
+      int dst_kernel_offset = dst_oc_offset + k * C8NUM;
+      for (int j = 0; j < c8_minus; ++j) {
+        int src_ic_offset = src_kernel_offset + j * C8NUM;
+        int dst_ic_offset = dst_kernel_offset + j * plane * C8NUM;
+        for (int i = 0; i < C8NUM; ++i) {
+          ((float *)dst + dst_ic_offset)[i] = ((float *)src + src_ic_offset)[i];
+        }
+      }
+      int tmp_c = c8_minus * C8NUM;
+      int tmp_c_offset = tmp_c * plane;
+      int res_c = channel - tmp_c;
+      if (res_c > channel) {
+        return;
+      }
+      for (int l = 0; l < res_c; ++l) {
+        int src_ic_offset = src_kernel_offset + tmp_c + l;
+        int dst_ic_offset = dst_kernel_offset + tmp_c_offset + l;
+        ((float *)dst + dst_ic_offset)[0] = ((float *)src + src_ic_offset)[0];
+      }
+    }
+  }
+}
+
+void PackNC8HW8ToNHWCFp32(const void *src, void *dst, int batch, int plane, int channel) {
+  int c8 = UP_DIV(channel, C8NUM);
+  for (int b = 0; b < batch; b++) {
+    int src_offset = b * plane * c8 * C8NUM;
+    int dst_offset = b * plane * channel;
+    for (int k = 0; k < plane; k++) {
+      int src_kernel_offset = src_offset + k * C8NUM;
+      int dst_kernel_offset = dst_offset + k * channel;
+      for (int c = 0; c < c8 - 1; c++) {
+        int src_c_offset = src_kernel_offset + c * plane * C8NUM;
+        int dst_c_offset = dst_kernel_offset + c * C8NUM;
+
+        ((float *)dst + dst_c_offset)[Index0] = ((float *)src + src_c_offset)[Index0];
+        ((float *)dst + dst_c_offset)[Index1] = ((float *)src + src_c_offset)[Index1];
+        ((float *)dst + dst_c_offset)[Index2] = ((float *)src + src_c_offset)[Index2];
+        ((float *)dst + dst_c_offset)[Index3] = ((float *)src + src_c_offset)[Index3];
+      }
+      // res part
+      int res_c = channel - (c8 - 1) * C8NUM;
+      for (int i = 0; i < res_c; i++) {
+        int src_res_c_offset = src_kernel_offset + (c8 - 1) * C8NUM * plane + i;
+        int dst_res_c_offset = dst_kernel_offset + (c8 - 1) * C8NUM + i;
+        ((float *)dst + dst_res_c_offset)[0] = ((float *)src + src_res_c_offset)[0];
+      }
+    }
+  }
+}
+
 void PackNC8HW8AlignedToNC8HW8NotAlignedFp32(const void *src, void *dst, const int batch, const int plane,
                                              const int channel) {
   int down_channel_8 = DOWN_ROUND(channel, C8NUM);

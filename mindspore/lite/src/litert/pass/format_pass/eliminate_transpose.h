@@ -32,7 +32,6 @@ class EliminateTranspose : public FormatPass {
   int DoubleTransposeFusion(kernel::SubGraphKernel *subgraph);
   int EliminateForSingleKernel(kernel::SubGraphKernel *subgraph, std::vector<Tensor *> *all_tensors);
   int HorizontalTransposeFusionPass(kernel::SubGraphKernel *subgraph);
-  int RepeteTransposeFusionPass(kernel::SubGraphKernel *subgraph, std::vector<lite::Tensor *> *all_tensors);
 
   TransposeStrategy transpose_strategy_;
   Format format_;

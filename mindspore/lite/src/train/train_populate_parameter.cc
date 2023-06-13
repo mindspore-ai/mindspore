@@ -214,7 +214,7 @@ OpParameter *PopulateMaxPoolGradParameter(const void *prim) {
   pooling_param->pad_r_ = 0;
   pooling_param->stride_w_ = static_cast<int>(value->strides()->Get(1));
   pooling_param->stride_h_ = static_cast<int>(value->strides()->Get(0));
-  pooling_param->round_mode_ = RoundMode_No;
+  pooling_param->round_type_ = RoundType_No;
   pooling_param->pool_mode_ = PoolMode_MaxPool;
   switch (value->pad_mode()) {
     case schema::PadMode_SAME:
@@ -265,7 +265,7 @@ OpParameter *PopulateAvgPoolGradParameter(const void *prim) {
       pooling_param->pad_mode_ = Pad_pad;
       break;
   }
-  pooling_param->round_mode_ = RoundMode_No;
+  pooling_param->round_type_ = RoundType_No;
   pooling_param->pool_mode_ = PoolMode_AvgPool;
   return reinterpret_cast<OpParameter *>(pooling_param);
 }

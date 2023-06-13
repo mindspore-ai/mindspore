@@ -53,9 +53,9 @@ std::ostream &operator<<(std::ostream &code, PoolMode pool_mode) {
   return code;
 }
 
-std::ostream &operator<<(std::ostream &code, RoundMode round_mode) {
-  code << "(RoundMode)"
-       << "(" << static_cast<int>(round_mode) << ")";
+std::ostream &operator<<(std::ostream &code, RoundType round_type) {
+  code << "(RoundType)"
+       << "(" << static_cast<int>(round_type) << ")";
   return code;
 }
 
@@ -65,8 +65,8 @@ std::ostream &operator<<(std::ostream &code, RoundingMode rounding_mode) {
   return code;
 }
 
-std::ostream &operator<<(std::ostream &code, PadMode pad_mode) {
-  code << "(PadMode)"
+std::ostream &operator<<(std::ostream &code, PadType pad_mode) {
+  code << "(PadType)"
        << "(" << static_cast<int>(pad_mode) << ")";
   return code;
 }

@@ -57,9 +57,9 @@ schema::PrimitiveType GetSchemaPrimitiveType(const AnfNodePtr &node) {
 }
 
 STATUS CreateMatmulPackDataIntoTable(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                                     OpParameter *op_parameter, const kernel::KernelKey &desc,
+                                     OpParameter *op_parameter, kernel::KernelKey *desc,
                                      const mindspore::lite::InnerContext *ctx) {
-  if (!KernelRegistry::GetInstance()->SupportKernel(desc)) {
+  if (!KernelRegistry::GetInstance()->SupportKernel(*desc)) {
     MS_LOG(ERROR) << op_parameter->name_ << " is not supported.";
     return RET_ERROR;
   }
@@ -255,7 +255,7 @@ STATUS MatmulPacking(const mindspore::CNodePtr &cnode_ptr, const FuncGraphPtr &f
                     "Can't get data type from " + cnode_ptr->fullname_with_scope() + ".");
   kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, NHWC, op_parameter->type_};
 
-  return CreateMatmulPackDataIntoTable(in_tensors, out_tensors, op_parameter, desc, ctx);
+  return CreateMatmulPackDataIntoTable(in_tensors, out_tensors, op_parameter, &desc, ctx);
 }
 
 BackendType FindBackend(const std::string &target_backend) {

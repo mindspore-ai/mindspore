@@ -696,8 +696,8 @@ typedef enum ActType {
   ActType_Gelu = 19,
   ActType_Unknown = 20
 } ActType;
-typedef enum PadMode { Pad_pad, Pad_same, Pad_valid } PadMode;
-typedef enum EltwiseMode { Eltwise_PROD, Eltwise_SUM, Eltwise_MAXIMUM, Eltwise_UNKNOWN } EltwiseMode;
+typedef enum PadType { Pad_pad, Pad_same, Pad_valid } PadType;
+typedef enum EltwiseType { Eltwise_PROD, Eltwise_SUM, Eltwise_MAXIMUM, Eltwise_UNKNOWN } EltwiseType;
 typedef enum RoundingMode { Rounding_No, Rounding_Away_from_zero, Rounding_Up } RoundingMode;
 
 typedef enum QuantTypeC {

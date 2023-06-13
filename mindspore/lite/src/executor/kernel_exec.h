@@ -354,7 +354,7 @@ class KernelExec {
 
   KernelKey desc() const { return desc_; }
 
-  void set_desc(const KernelKey kernel_key) { desc_ = kernel_key; }
+  void set_desc(const KernelKey &kernel_key) { desc_ = kernel_key; }
 
   SubGraphType subgraph_type() const { return this->subgraph_type_; }
 

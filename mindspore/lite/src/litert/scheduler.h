@@ -111,6 +111,8 @@ class Scheduler {
 
   int ConstructSubGraphs(std::vector<kernel::KernelExec *> *dst_kernel);
 
+  int ProcessSubGraphTranspose(std::vector<kernel::KernelExec *> *dst_kernels);
+
   // create subgraph_kernel from a vector of kernel
   std::vector<kernel::KernelExec *> ScheduleMainSubGraphToKernels();
   kernel::KernelExec *SchedulePartialToSubGraphKernel(const int &subgraph_index);

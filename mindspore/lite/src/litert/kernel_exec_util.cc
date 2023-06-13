@@ -285,6 +285,24 @@ std::vector<KernelExec *> KernelExecUtil::FindOutKernelsForOutTensor(const Kerne
   return out_kernels;
 }
 
+KernelExec *KernelExecUtil::FindInKernelForTensorInSubGraph(lite::Tensor *tensor, SubGraphKernel *graph) {
+  auto iter = std::find_if(graph->nodes().begin(), graph->nodes().end(),
+                           [&tensor](const auto &node) { return lite::IsContain(node->out_tensors(), tensor); });
+  if (iter != graph->nodes().end()) {
+    return *iter;
+  }
+  return nullptr;
+}
+
+std::vector<KernelExec *> KernelExecUtil::FindOutKernelsForTensorInSubGraph(lite::Tensor *tensor,
+                                                                            SubGraphKernel *graph) {
+  std::vector<KernelExec *> out_kernels(graph->nodes().size());
+  auto iter = std::copy_if(graph->nodes().begin(), graph->nodes().end(), out_kernels.begin(),
+                           [&tensor](const auto &node) { return lite::IsContain(node->in_tensors(), tensor); });
+  out_kernels.erase(iter, out_kernels.end());
+  return out_kernels;
+}
+
 int KernelExecUtil::SetKernelTensorDataType(const kernel::KernelExec *kernel) {
   CHECK_NULL_RETURN(kernel);
   if (kernel->desc().arch != kernel::KERNEL_ARCH::kCPU) {

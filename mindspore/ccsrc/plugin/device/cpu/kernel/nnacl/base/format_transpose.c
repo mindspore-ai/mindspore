@@ -23,18 +23,24 @@
 
 int TransposeFp32Data(void *src_data, void *dst_data, const FormatC src_format, const FormatC dst_format,
                       const int batch, const int channel, const int plane) {
-  if (src_format == Format_NCHW && dst_format == Format_NC4HW4) {
-    PackNCHWToNC4HW4Fp32(src_data, dst_data, batch, plane, channel);
-  } else if (src_format == Format_NHWC && dst_format == Format_NC4HW4) {
-    PackNHWCToNC4HW4Fp32(src_data, dst_data, batch, plane, channel);
-  } else if (src_format == Format_NC4HW4 && dst_format == Format_NCHW) {
-    PackNC4HW4ToNCHWFp32(src_data, dst_data, batch, plane, channel);
-  } else if (src_format == Format_NC4HW4 && dst_format == Format_NHWC) {
-    PackNC4HW4ToNHWCFp32(src_data, dst_data, batch, plane, channel);
-  } else if (src_format == Format_NHWC && dst_format == Format_NCHW) {
+  if (src_format == Format_NHWC && dst_format == Format_NCHW) {
     PackNHWCToNCHWFp32(src_data, dst_data, batch, plane, channel, 0, 1);
   } else if (src_format == Format_NCHW && dst_format == Format_NHWC) {
     PackNCHWToNHWCFp32(src_data, dst_data, batch, plane, channel, 0, 1);
+  } else if (src_format == Format_NCHW && dst_format == Format_NC4HW4) {
+    PackNCHWToNC4HW4Fp32(src_data, dst_data, batch, plane, channel);
+  } else if (src_format == Format_NC4HW4 && dst_format == Format_NCHW) {
+    PackNC4HW4ToNCHWFp32(src_data, dst_data, batch, plane, channel);
+  } else if (src_format == Format_NHWC && dst_format == Format_NC4HW4) {
+    PackNHWCToNC4HW4Fp32(src_data, dst_data, batch, plane, channel);
+  } else if (src_format == Format_NC4HW4 && dst_format == Format_NHWC) {
+    PackNC4HW4ToNHWCFp32(src_data, dst_data, batch, plane, channel);
+  } else if (src_format == Format_NHWC && dst_format == Format_NC8HW8) {
+    PackNHWCToNC8HW8Fp32(src_data, dst_data, batch, plane, channel);
+  } else if (src_format == Format_NC8HW8 && dst_format == Format_NHWC) {
+    PackNC8HW8ToNHWCFp32(src_data, dst_data, batch, plane, channel);
+  } else if (src_format == Format_NC8HW8 && dst_format == Format_NCHW) {
+    PackNC8HW8ToNCHWFp32(src_data, dst_data, batch, plane, channel);
   } else {
     return NNACL_ERR;
   }

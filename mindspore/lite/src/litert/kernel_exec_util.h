@@ -47,6 +47,8 @@ class MS_API KernelExecUtil {
   static void FindAllInoutKernelsInSubgraphKernel(const std::vector<KernelExec *> &kernels);
   static KernelExec *FindInKernelForInTensor(const KernelExec *kernel, lite::Tensor *tensor);
   static std::vector<KernelExec *> FindOutKernelsForOutTensor(const KernelExec *kernel, lite::Tensor *tensor);
+  static KernelExec *FindInKernelForTensorInSubGraph(lite::Tensor *tensor, SubGraphKernel *graph);
+  static std::vector<KernelExec *> FindOutKernelsForTensorInSubGraph(lite::Tensor *tensor, SubGraphKernel *graph);
   static int SetKernelTensorDataType(const kernel::KernelExec *kernel);
   static SubGraphKernel *CreateSubGraphKernel(const std::vector<KernelExec *> &kernels,
                                               const std::vector<lite::Tensor *> *in_tensors,
