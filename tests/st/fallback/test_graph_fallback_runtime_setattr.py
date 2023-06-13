@@ -107,6 +107,35 @@ def test_setattr_self_non_param_3():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+def test_setattr_self_repeat():
+    """
+    Feature: Enable setattr for class non-param attribute.
+    Description: Support self.attr=target when self.attr is not parameter.
+    Expectation: No exception.
+    """
+    class TestNet(nn.Cell):
+        def __init__(self, origin_input):
+            super(TestNet, self).__init__()
+            self.data = origin_input
+
+        def construct(self):
+            self.data = 2
+            a = self.data
+            self.data = 3
+            b = self.data
+            return a, b, self.data
+
+    test_net = TestNet(1)
+    ret = test_net()
+    assert ret == (2, 3, 3)
+    assert test_net.data == 3
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_setattr_self_non_param_not_used():
     """
     Feature: Enable setattr for class non-param attribute.

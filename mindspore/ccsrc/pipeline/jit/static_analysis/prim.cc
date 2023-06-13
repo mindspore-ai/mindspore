@@ -2584,10 +2584,12 @@ class SetAttrEvaluator : public TransitionPrimEvaluator {
   MS_DECLARE_PARENT(SetAttrEvaluator, TransitionPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
                          const AnfNodeConfigPtr &out_conf) override {
-    constexpr size_t args_size = 3;
-    if (args_abs_list.size() != args_size) {
-      MS_LOG(EXCEPTION) << "For Primitive SetAttr, the input size should be " << args_size
-                        << ", but got size: " << args_abs_list.size();
+    constexpr size_t min_args_size = 3;
+    constexpr size_t max_args_size = 4;
+    size_t args_size = args_abs_list.size();
+    if (args_size != min_args_size && args_size != max_args_size) {
+      MS_LOG(EXCEPTION) << "For Primitive SetAttr, the input size should be " << min_args_size << " or "
+                        << max_args_size << ", but got size: " << args_size;
     }
     auto res_abstract = EvalUndeterminedArgs(args_abs_list);
     if (res_abstract != nullptr) {
