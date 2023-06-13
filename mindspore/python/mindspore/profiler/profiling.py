@@ -293,7 +293,7 @@ class Profiler:
             ...     profiler = Profiler()
             ...
             ...     # Train Model or eval Model, taking LeNet5 as an example
-            ...     # Refer to https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/lenet.py
+            ...     # Refer to https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/lenet.py
             ...     net = LeNet5()
             ...     train(net)
             ...
