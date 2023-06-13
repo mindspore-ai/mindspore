@@ -221,6 +221,7 @@ inline static PredictOutTypeMap out_type_prediction = {{"ActsULQ", kTupleTensor4
                                                        {"SequenceSlice", kTypeNone},
                                                        {"SequenceSliceGrad", kTypeNone},
                                                        {"SequenceSliceSetItem", kTypeNone},
+                                                       {"SequenceStack", kTypeNone},
                                                        {"SequenceZerosLike", kTypeNone},
                                                        {"Size", kTypeNone},
                                                        {"SoftmaxCrossEntropyWithLogits", kTupleTensor2},

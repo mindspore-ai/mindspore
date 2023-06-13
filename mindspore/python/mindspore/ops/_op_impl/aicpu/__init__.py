@@ -423,5 +423,6 @@ from .glu_grad import _glu_grad_aicpu
 from .sspaddmm import _sspaddmm_aicpu
 from .sequence_addn import _sequence_addn_aicpu
 from .sequence_concat import _sequence_concat_aicpu
+from .sequence_stack import _sequence_stack_aicpu
 from .affine_grid import _affine_grid_aicpu
 from .depth_to_space import _depth_to_space_aicpu
