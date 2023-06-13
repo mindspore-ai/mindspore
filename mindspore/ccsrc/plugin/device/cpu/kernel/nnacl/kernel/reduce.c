@@ -185,33 +185,29 @@ int ReduceCommonPrepare(ReduceStruct *reduce) {
     return ret;
   }
 
-  ReduceParameter *param = (ReduceParameter *)(reduce->base_.param_);
-  NNACL_CHECK_NULL_RETURN_ERR(param);
-  NNACL_CHECK_FALSE(reduce->base_.thread_nr_ == 0, NNACL_ERR);
+  if (reduce->base_.in_size_ == ONE_TENSOR) {
+    reduce->num_axes_ = 0;
+    return NNACL_OK;
+  }
 
-  if (reduce->base_.in_size_ > 1) {
-    TensorC *axes_tensor = reduce->base_.in_[SECOND_INPUT];
-    NNACL_CHECK_NULL_RETURN_ERR(axes_tensor);
-    NNACL_CHECK_FALSE(axes_tensor->data_type_ != kNumberTypeInt && axes_tensor->data_type_ != kNumberTypeInt32,
-                      NNACL_REDUCE_AXES_TENSOR_ERROR);
+  TensorC *axes_tensor = reduce->base_.in_[SECOND_INPUT];
+  NNACL_CHECK_NULL_RETURN_ERR(axes_tensor);
+  NNACL_CHECK_FALSE(axes_tensor->data_type_ != kNumberTypeInt && axes_tensor->data_type_ != kNumberTypeInt32,
+                    NNACL_REDUCE_AXES_TENSOR_ERROR);
 
-    reduce->num_axes_ = GetElementNum(axes_tensor);
+  reduce->num_axes_ = GetElementNum(axes_tensor);
 
-    if (axes_tensor->data_ != NULL && (reduce->num_axes_ <= 0 || reduce->num_axes_ > MAX_SHAPE_SIZE)) {
-      return NNACL_REDUCE_AXES_TENSOR_ERROR;
-    }
-    if (axes_tensor->data_ == NULL) {
-      reduce->num_axes_ = reduce->base_.in_[FIRST_INPUT]->shape_size_;
-      for (int i = 0; i < reduce->num_axes_; i++) {
-        reduce->axes_[i] = i;
-      }
-    } else {
-      NNACL_CHECK_FALSE(GetSize(axes_tensor) == 0, NNACL_REDUCE_AXES_TENSOR_ERROR);
-      (void)memcpy(reduce->axes_, axes_tensor->data_, GetSize(axes_tensor));
+  if (axes_tensor->data_ != NULL && (reduce->num_axes_ <= 0 || reduce->num_axes_ > MAX_SHAPE_SIZE)) {
+    return NNACL_REDUCE_AXES_TENSOR_ERROR;
+  }
+  if (axes_tensor->data_ == NULL) {
+    reduce->num_axes_ = reduce->base_.in_[FIRST_INPUT]->shape_size_;
+    for (int i = 0; i < reduce->num_axes_; i++) {
+      reduce->axes_[i] = i;
     }
   } else {
-    reduce->num_axes_ = ((ReduceParameter *)reduce->base_.param_)->num_axes_;
-    (void)memcpy(reduce->axes_, ((ReduceParameter *)reduce->base_.param_)->axes_, sizeof(int) * MAX_SHAPE_SIZE);
+    NNACL_CHECK_FALSE(GetSize(axes_tensor) == 0, NNACL_REDUCE_AXES_TENSOR_ERROR);
+    (void)memcpy(reduce->axes_, axes_tensor->data_, GetSize(axes_tensor));
   }
 
   return NNACL_OK;

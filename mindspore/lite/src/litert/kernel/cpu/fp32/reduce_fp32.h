@@ -26,20 +26,6 @@
 using mindspore::schema::ReduceMode;
 
 namespace mindspore::kernel {
-typedef int (*Reducer)(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
-                       float *dst_data, const int tid, const int thread_num);
-typedef int (*IntReducer)(const int outer_size, const int inner_size, const int axis_size, const int *src_data,
-                          int *dst_data, const int tid, const int thread_num);
-typedef int (*BoolReducer)(const int outer_size, const int inner_size, const int axis_size, const bool *src_data,
-                           bool *dst_data, const int tid, const int thread_num);
-struct ReduceKernelList {
-  int type_;
-  Reducer float_func_;
-  IntReducer int_func_;
-  BoolReducer bool_func_;
-  Reducer float_last_axis_func_;
-};
-
 class ReduceCPUKernel : public ReduceBaseCPUKernel {
  public:
   ReduceCPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
@@ -50,28 +36,21 @@ class ReduceCPUKernel : public ReduceBaseCPUKernel {
   ~ReduceCPUKernel() override {
     src_data_ = nullptr;
     dst_data_ = nullptr;
-    reducer_ = nullptr;
-    float_last_axis_func_ = nullptr;
-    int_reducer_ = nullptr;
   }
 
   int Prepare() override;
   int Run() override;
-  virtual int CallReduceUnit(int task_id);
+  virtual int CallReduceUnit(int task_id) { return NNACL_ERR; }
 
  protected:
-  virtual void InitialKernelList();
-  virtual void HandleASumAndSumSquare();
-  virtual int CalculateCoeffOutput();
+  virtual void InitialKernelList() { return; }
+  virtual void HandleASumAndSumSquare() { return; }
+  virtual int CalculateCoeffOutput() { return NNACL_ERR; }
 
   int MallocTmpBuffer();
   void FreeTmpBuffer();
 
   ReduceParameter *reduce_param_;
-  Reducer reducer_ = nullptr;
-  Reducer float_last_axis_func_ = nullptr;
-  BoolReducer bool_reducer_ = nullptr;
-  IntReducer int_reducer_ = nullptr;
   std::vector<void *> data_buffers_;
   TypeId data_type_;
 
