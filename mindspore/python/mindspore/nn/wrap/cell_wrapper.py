@@ -357,7 +357,7 @@ class TrainOneStepCell(Cell):
         >>> train_net = nn.TrainOneStepCell(loss_net, optim)
     """
 
-    def __init__(self, network, optimizer, sens=1.0):
+    def __init__(self, network, optimizer, sens=1.0, return_grad=False):
         super(TrainOneStepCell, self).__init__(auto_prefix=False)
         self.network = network
         self.network.set_grad()
@@ -365,6 +365,9 @@ class TrainOneStepCell(Cell):
         self.weights = self.optimizer.parameters
         self.grad = C.GradOperation(get_by_list=True, sens_param=True)
         self.sens = sens
+        self.return_grad = return_grad
+        if return_grad:
+            self.weights_name = [i.name for i in self.optimizer.parameters]
         self.reducer_flag = False
         self.grad_reducer = nn.Identity()
         self.parallel_mode = _get_parallel_mode()
@@ -394,6 +397,11 @@ class TrainOneStepCell(Cell):
         grads = self.grad(self.network, self.weights)(*inputs, sens)
         grads = self.grad_reducer(grads)
         loss = F.depend(loss, self.optimizer(grads))
+        if self.return_grad:
+            grad_with_param_name = {}
+            for index, value in enumerate(grads):
+                grad_with_param_name[self.weights_name[index]] = value
+            return loss, grad_with_param_name
         return loss
 
 
