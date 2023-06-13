@@ -277,6 +277,22 @@ def test_isinstance_x_ms_class_obj_5():
     assert "isinstance() arg 2 must be a type or tuple of types" in str(err.value)
 
 
+def test_isinstance_x_ms_class_obj_6():
+    """
+    Feature: Graph isinstance.
+    Description: Graph isinstance support x to be ms_class object.
+    Expectation: No exception.
+    """
+    ms_obj = MSClass1()
+
+    @jit
+    def foo():
+        return isinstance(ms_obj, MSClass1), isinstance(ms_obj, MSClass2)
+
+    out = foo()
+    assert out[0] and not out[1]
+
+
 def test_isinstance_x_primitive_obj_base_type_primitive():
     """
     Feature: Graph isinstance.

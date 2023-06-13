@@ -418,6 +418,7 @@ MS_CORE_API bool IsSubType(TypePtr const &t1, TypePtr const &t2 = nullptr);
 GVAR_DEF(TypePtr, kTypeExternal, std::make_shared<External>());
 GVAR_DEF(TypePtr, kTypeEnv, std::make_shared<EnvType>());
 GVAR_DEF(TypePtr, kTypeType, std::make_shared<TypeType>());
+GVAR_DEF(TypePtr, kClassType, std::make_shared<MsClassType>());
 GVAR_DEF(TypePtr, kString, std::make_shared<String>());
 GVAR_DEF(TypePtr, kList, std::make_shared<List>());
 GVAR_DEF(TypePtr, kTuple, std::make_shared<Tuple>());

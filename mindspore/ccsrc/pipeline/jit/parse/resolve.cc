@@ -83,21 +83,19 @@ PyObjectWrapper::~PyObjectWrapper() {
 
 abstract::AbstractBasePtr MsClassObject::ToAbstract() {
   py::gil_scoped_acquire acquire;
-  auto abs_scalar =
-    std::make_shared<abstract::AbstractScalar>(shared_from_base<MsClassObject>(), std::make_shared<MsClassType>());
-  AbstractBasePtrList args_abs_list = {abs_scalar};
-  abstract::PrimitiveAbstractClosurePtr func_ptr = nullptr;
   bool is_class_type = parse::data_converter::IsClassType(obj());
   if (is_class_type) {
     // Class type as func, such as Net(x, y)
-    func_ptr = std::make_shared<abstract::PrimitiveAbstractClosure>(prim::kPrimCreateInstance);
+    auto abs_class = std::make_shared<abstract::AbstractClass>(shared_from_base<MsClassObject>());
+    AbstractBasePtrList args_abs_list = {abs_class};
+    auto func_ptr = std::make_shared<abstract::PrimitiveAbstractClosure>(prim::kPrimCreateInstance);
+    auto ret_val = std::make_shared<abstract::PartialAbstractClosure>(func_ptr, args_abs_list);
+    ret_val->set_value_desc(ToString());
+    return ret_val;
   } else {
     // Class instance as func, such as net(x, y)
-    func_ptr = std::make_shared<abstract::PrimitiveAbstractClosure>(prim::kPrimCallInstance);
+    return std::make_shared<abstract::AbstractClass>(shared_from_base<MsClassObject>());
   }
-  auto ret_val = std::make_shared<abstract::PartialAbstractClosure>(func_ptr, args_abs_list);
-  ret_val->set_value_desc(ToString());
-  return ret_val;
 }
 
 static inline bool IsSupportedCreateInstanceType(const py::object &obj) {

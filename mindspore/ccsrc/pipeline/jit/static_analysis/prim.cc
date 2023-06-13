@@ -606,19 +606,6 @@ py::object GetPyObjForPrimitiveAbstract(const PrimitiveAbstractClosurePtr &prim_
   }
   return py::none();
 }
-
-bool IsCallInstance(const PartialAbstractClosurePtr &partial_abs) {
-  auto fn = partial_abs->fn();
-  if (!fn->isa<PrimitiveAbstractClosure>()) {
-    return false;
-  }
-  auto abs_prim = fn->cast_ptr<PrimitiveAbstractClosure>();
-  auto prim = abs_prim->prim();
-  if (prim->name() == prim::kPrimCallInstance->name()) {
-    return true;
-  }
-  return false;
-}
 }  // namespace
 
 void ConvertAbstractFunctionToPython(const AbstractBasePtr &abs_base, py::dict *dic) {
@@ -633,14 +620,6 @@ void ConvertAbstractFunctionToPython(const AbstractBasePtr &abs_base, py::dict *
     if (!args.empty()) {
       auto value = args[0]->BuildValue();
       MS_EXCEPTION_IF_NULL(value);
-      if (IsCallInstance(partial_abs)) {
-        auto value_obj = value->cast_ptr<parse::MsClassObject>();
-        if (value_obj != nullptr) {
-          (*dic)[ATTR_DTYPE] = std::make_shared<MsClassType>();
-          (*dic)[ATTR_VALUE] = value_obj->obj();
-          return;
-        }
-      }
       auto value_obj = value->cast_ptr<parse::ClassType>();
       if (value_obj != nullptr) {
         (*dic)[ATTR_DTYPE] = std::make_shared<TypeType>();
@@ -767,6 +746,12 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base, bool only_conv
     dic[ATTR_VALUE] = py::none();
   } else if (abs_base->isa<AbstractFunction>()) {
     ConvertAbstractFunctionToPython(abs_base, &dic);
+  } else if (abs_base->isa<AbstractClass>()) {
+    auto arg_class = dyn_cast_ptr<AbstractClass>(abs_base);
+    ShapeVector shape;
+    dic[ATTR_SHAPE] = shape;
+    dic[ATTR_DTYPE] = arg_class->BuildType();
+    dic[ATTR_VALUE] = BuildPyObject(arg_class->BuildValue());
   } else if (abs_base->isa<AbstractUndetermined>()) {
     auto arg = dyn_cast_ptr<AbstractUndetermined>(abs_base);
     dic[ATTR_SHAPE] = py::none();
@@ -1544,6 +1529,14 @@ EvalResultPtr GetEvaluatedValueForNameSpace(const AbstractBasePtrList &args_abs_
     data_value = std::make_shared<parse::NameSpace>(parse::RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, ns_obj);
     data_id_str = class_val->name();
   }
+  if (data_value->isa<parse::MsClassObject>()) {
+    auto class_val = dyn_cast_ptr<parse::MsClassObject>(data_value);
+    auto class_obj = class_val->obj();
+    py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+    py::object ns_obj = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, class_obj);
+    data_value = std::make_shared<parse::NameSpace>(parse::RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, ns_obj);
+    data_id_str = class_val->name();
+  }
   if (!data_value->isa<parse::NameSpace>()) {
     static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax);
     if (!allow_fallback_runtime) {
@@ -1764,7 +1757,7 @@ EvalResultPtr GetFuncAbstractAttr(const AbstractFunctionPtr &data_args, const Ab
     auto prim_abs = dyn_cast_ptr<PrimitiveAbstractClosure>(data_partial->fn());
     if (prim_abs != nullptr && !partial_args.empty()) {
       const auto &prim_name = prim_abs->prim()->name();
-      if (prim_name == prim::kPrimCreateInstance->name() || prim_name == prim::kPrimCallInstance->name()) {
+      if (prim_name == prim::kPrimCreateInstance->name()) {
         constexpr size_t class_index = 0;
         auto class_val = partial_args[class_index]->BuildValue();
         MS_EXCEPTION_IF_NULL(class_val);
@@ -2745,63 +2738,6 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
   }
 };
 
-class CallInstanceEvaluator : public TransitionPrimEvaluator {
- public:
-  CallInstanceEvaluator() : TransitionPrimEvaluator("CallInstanceEvaluator") {}
-  ~CallInstanceEvaluator() override = default;
-  MS_DECLARE_PARENT(CallInstanceEvaluator, TransitionPrimEvaluator);
-  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
-                         const AnfNodeConfigPtr &out_conf) override {
-    if (args_abs_list.empty()) {
-      MS_LOG(INTERNAL_EXCEPTION) << "args_abs_list should not be empty.";
-    }
-    constexpr size_t cls_index = 0;
-    auto arg_cls = args_abs_list[cls_index];
-    MS_EXCEPTION_IF_NULL(arg_cls);
-    TypePtr type = arg_cls->GetTypeTrack();
-    MS_EXCEPTION_IF_NULL(type);
-    if (type->type_id() != kObjectTypeClass) {
-      MS_LOG(EXCEPTION) << "CallInstanceEvaluator require first parameter should be an object of TypeClass, but got "
-                        << type->ToString();
-    }
-    ValuePtr value_track = arg_cls->GetValueTrack();
-    MS_EXCEPTION_IF_NULL(value_track);
-    auto ms_class = dyn_cast_ptr<parse::MsClassObject>(value_track);
-    if (ms_class == nullptr) {
-      MS_LOG(EXCEPTION) << "CallInstanceEvaluator only supports MsClassObject.";
-    }
-
-    // Call class instance, net(x, y) -> net.__call__(x, y)
-    py::object cls_obj = ms_class->obj();
-    const std::string call_func = "__call__";
-    if (!py::hasattr(cls_obj, common::SafeCStr(call_func))) {
-      MS_LOG(EXCEPTION) << ms_class->name() << " has no " << call_func << " function, please check the code.";
-    }
-    py::object call_obj = py::getattr(cls_obj, common::SafeCStr(call_func));
-    FuncGraphPtr call_func_graph = parse::ConvertToFuncGraph(call_obj);
-    if (call_func_graph == nullptr) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Parse python object " << call_func << " failed.";
-    }
-    FuncGraphManagerPtr manager = engine->func_graph_manager();
-    manager->AddFuncGraph(call_func_graph);
-
-    // Replace net with net.__call__
-    AnfNodePtr old_node = out_conf->node();
-    MS_EXCEPTION_IF_NULL(old_node);
-    auto old_cnode = dyn_cast_ptr<CNode>(old_node);
-    MS_EXCEPTION_IF_NULL(old_cnode);
-    std::vector<AnfNodePtr> inputs = {NewValueNode(call_func_graph)};
-    for (size_t i = 1; i < old_cnode->size(); i++) {
-      (void)inputs.emplace_back(old_cnode->input(i));
-    }
-    FuncGraphPtr func_graph = out_conf->func_graph();
-    auto new_cnode = func_graph->NewCNode(inputs);
-    // Continue to eval new_cnode.
-    AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
-    return engine->ForwardConfig(out_conf, fn_conf);
-  }
-};
-
 class PartialEvaluator : public Evaluator {
  public:
   PartialEvaluator() : Evaluator("PartialEvaluator") {}
@@ -3014,28 +2950,18 @@ class WithEnterEvaluator : public TransitionPrimEvaluator {
     }
 
     // Check class object
-    auto partial_abs = args_abs_list[0]->cast<PartialAbstractClosurePtr>();
-    MS_EXCEPTION_IF_NULL(partial_abs);
-    if (!IsCallInstance(partial_abs)) {
-      MS_LOG(INTERNAL_EXCEPTION) << "The enter node has wrong input." << node->debug_info();
+    constexpr size_t cls_index = 0;
+    auto cls_val = args_abs_list[cls_index]->BuildValue();
+    MS_EXCEPTION_IF_NULL(cls_val);
+    auto value_obj = cls_val->cast<parse::MsClassObjectPtr>();
+    if (value_obj == nullptr) {
+      MS_EXCEPTION(TypeError) << "Only support jit_class instance, but got " << cls_val->ToString();
     }
+    auto cls_obj = value_obj->obj();
 
-    AbstractBasePtrList args = partial_abs->args();
-    py::object cls_obj;
-    ValuePtr value = nullptr;
-    if (!args.empty()) {
-      value = args[0]->BuildValue();
-      MS_EXCEPTION_IF_NULL(value);
-      auto value_obj = value->cast<parse::MsClassObjectPtr>();
-      if (value_obj != nullptr) {
-        cls_obj = value_obj->obj();
-      }
-    }
     const std::string call_func = "__enter__";
     if (!py::hasattr(cls_obj, common::SafeCStr(call_func))) {
-      MS_EXCEPTION_IF_NULL(value);
-      auto ms_class = dyn_cast_ptr<parse::MsClassObject>(value);
-      MS_LOG(EXCEPTION) << ms_class->name() << " has no " << call_func << " function, please check the code.";
+      MS_LOG(EXCEPTION) << value_obj->name() << " has no " << call_func << " function, please check the code.";
     }
     py::object call_obj = py::getattr(cls_obj, common::SafeCStr(call_func));
     FuncGraphPtr call_func_graph = parse::ConvertToFuncGraph(call_obj);
@@ -3071,29 +2997,18 @@ class WithExitEvaluator : public TransitionPrimEvaluator {
     }
 
     // Check class object
-    auto partial_abs = args_abs_list[0]->cast<PartialAbstractClosurePtr>();
-    MS_EXCEPTION_IF_NULL(partial_abs);
-    if (!IsCallInstance(partial_abs)) {
-      MS_LOG(INTERNAL_EXCEPTION) << "The exit node has wrong input." << node->debug_info();
+    constexpr size_t cls_index = 0;
+    auto cls_val = args_abs_list[cls_index]->BuildValue();
+    MS_EXCEPTION_IF_NULL(cls_val);
+    auto value_obj = cls_val->cast<parse::MsClassObjectPtr>();
+    if (value_obj == nullptr) {
+      MS_EXCEPTION(TypeError) << "Only support jit_class instance, but got " << cls_val->ToString();
     }
+    auto cls_obj = value_obj->obj();
 
-    AbstractBasePtrList args = partial_abs->args();
-    py::object cls_obj;
-    ValuePtr value = nullptr;
-    if (!args.empty()) {
-      value = args[0]->BuildValue();
-      MS_EXCEPTION_IF_NULL(value);
-      auto value_obj = value->cast<parse::MsClassObjectPtr>();
-      if (value_obj != nullptr) {
-        cls_obj = value_obj->obj();
-      }
-    }
     const std::string call_func = "__exit__";
     if (!py::hasattr(cls_obj, common::SafeCStr(call_func))) {
-      MS_EXCEPTION_IF_NULL(value);
-      auto ms_class = dyn_cast_ptr<parse::MsClassObject>(value);
-      MS_EXCEPTION_IF_NULL(ms_class);
-      MS_LOG(EXCEPTION) << ms_class->name() << " has no " << call_func << " function, please check the code.";
+      MS_LOG(EXCEPTION) << value_obj->name() << " has no " << call_func << " function, please check the code.";
     }
     py::object call_obj = py::getattr(cls_obj, common::SafeCStr(call_func));
     FuncGraphPtr call_func_graph = parse::ConvertToFuncGraph(call_obj);
@@ -3253,7 +3168,6 @@ void InitPrimEvaluatorConstructors() {
   constructor[prim::kPrimSetAttr] = std::make_shared<SetAttrEvaluator>();
   constructor[prim::kPrimResolve] = std::make_shared<ResolveEvaluator>();
   constructor[prim::kPrimCreateInstance] = std::make_shared<CreateInstanceEvaluator>();
-  constructor[prim::kPrimCallInstance] = std::make_shared<CallInstanceEvaluator>();
   constructor[prim::kPrimPartial] = std::make_shared<PartialEvaluator>();
   constructor[prim::kPrimPyInterpret] = std::make_shared<PyInterpretEvaluator>();
   constructor[prim::kPrimMakeTuple] = std::make_shared<MakeTupleEvaluator>();

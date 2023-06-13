@@ -368,6 +368,30 @@ class MS_CORE_API AbstractType final : public AbstractBase {
 };
 using AbstractTypePtr = std::shared_ptr<AbstractType>;
 
+/// \brief Class AbstractClass describes the abstract value from a class.
+class MS_CORE_API AbstractClass final : public AbstractBase {
+ public:
+  /// \brief Constructor of AbstractClass.
+  ///
+  /// \param[in] value A class value.
+  explicit AbstractClass(const ValuePtr &value) : AbstractBase(value, kClassType) {}
+
+  /// \brief Destructor of AbstractClass.
+  ~AbstractClass() override = default;
+  MS_DECLARE_PARENT(AbstractClass, AbstractBase)
+
+  std::string ToString() const override;
+
+  bool operator==(const AbstractBase &other) const override;
+
+  TypePtr BuildType() const override { return std::make_shared<MsClassType>(); }
+
+  AbstractBasePtr Clone() const override;
+
+  AbstractBasePtr Broaden() const override { return Clone(); }
+};
+using AbstractClassPtr = std::shared_ptr<AbstractClass>;
+
 /// \brief Class AbstractProblem describes the abstract value from an error.
 class MS_CORE_API AbstractProblem final : public AbstractBase {
  public:

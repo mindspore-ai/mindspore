@@ -255,7 +255,7 @@ EvalResultPtr ConvertToPyExecuteCall(const CNodePtr &cnode, const AnfNodeConfigP
   return eng->ForwardConfig(conf, fn_conf);
 }
 
-EvalResultPtr ConvertClassToFunc(const CNodePtr &cnode, const AbstractBasePtr &abs, const AnfNodeConfigPtr &conf) {
+EvalResultPtr ConvertClassTypeToFunc(const CNodePtr &cnode, const AbstractBasePtr &abs, const AnfNodeConfigPtr &conf) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(abs);
   auto val = abs->BuildValue();
@@ -288,7 +288,44 @@ EvalResultPtr ConvertClassToFunc(const CNodePtr &cnode, const AbstractBasePtr &a
     (void)new_cnode_inputs.emplace_back(inputs[i]);
   }
   auto new_cnode = fg->NewCNodeInOrder(new_cnode_inputs);
-  fg->ReplaceInOrder(cnode, new_cnode);
+  new_cnode->set_debug_info(cnode->debug_info());
+
+  AnalysisEnginePtr eng = conf->engine();
+  MS_EXCEPTION_IF_NULL(eng);
+  AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_cnode, conf->context(), conf->func_graph());
+  return eng->ForwardConfig(conf, fn_conf);
+}
+
+EvalResultPtr ConvertMsClassObjToFunc(const CNodePtr &cnode, const AbstractBasePtr &abs, const AnfNodeConfigPtr &conf) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(abs);
+  auto val = abs->BuildValue();
+  MS_EXCEPTION_IF_NULL(val);
+  auto class_val = dyn_cast_ptr<parse::MsClassObject>(val);
+  MS_EXCEPTION_IF_NULL(class_val);
+  py::object cls_obj = class_val->obj();
+  const std::string call_func_name = "__call__";
+  if (!py::hasattr(cls_obj, common::SafeCStr(call_func_name))) {
+    MS_EXCEPTION(ValueError) << class_val->name() << " has no " << call_func_name
+                             << " function, please check the code.";
+  }
+  py::object call_obj = py::getattr(cls_obj, common::SafeCStr(call_func_name));
+  FuncGraphPtr call_func_graph = parse::ConvertToFuncGraph(call_obj);
+  if (call_func_graph == nullptr) {
+    MS_EXCEPTION(TypeError) << "Expect a function type, but got " << py::str(call_obj) << ".";
+  }
+  auto fg = cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+  call_func_graph->set_manager(fg->manager());
+
+  auto &inputs = cnode->inputs();
+  std::vector<AnfNodePtr> new_cnode_inputs;
+  (void)new_cnode_inputs.emplace_back(NewValueNode(call_func_graph));
+  for (std::size_t i = 1; i < inputs.size(); ++i) {
+    (void)new_cnode_inputs.emplace_back(inputs[i]);
+  }
+  auto new_cnode = fg->NewCNodeInOrder(new_cnode_inputs);
+  new_cnode->set_debug_info(cnode->debug_info());
 
   AnalysisEnginePtr eng = conf->engine();
   MS_EXCEPTION_IF_NULL(eng);
@@ -644,12 +681,15 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
     return std::make_shared<EvalResult>(possible_func->Clone(), std::make_shared<AttrValueMap>());
   }
 
+  if (possible_func->isa<AbstractClass>()) {
+    return ConvertMsClassObjToFunc(cnode, possible_func, conf);
+  }
   if (possible_func->isa<AbstractScalar>()) {
     // Convert class to function, such as list(xxx).
     auto val = possible_func->BuildValue();
     MS_EXCEPTION_IF_NULL(val);
     if (val->isa<parse::ClassType>()) {
-      return ConvertClassToFunc(cnode, possible_func, conf);
+      return ConvertClassTypeToFunc(cnode, possible_func, conf);
     }
     if (val->isa<parse::InterpretedObject>()) {
       MS_LOG(ERROR) << "Do not support " << val << " as a function.\n"

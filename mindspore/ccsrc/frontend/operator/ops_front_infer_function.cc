@@ -403,8 +403,10 @@ AbstractBasePtr InferImplIsInstance(const AnalysisEnginePtr &, const PrimitivePt
   }
 
   // x is ms_class.
-  if (x->isa<abstract::PartialAbstractClosure>()) {
-    auto x_py = GetMsClassPyObj(x->cast<abstract::PartialAbstractClosurePtr>());
+  if (x->isa<abstract::AbstractClass>()) {
+    auto class_value = x->BuildValue();
+    MS_EXCEPTION_IF_NULL(class_value);
+    auto x_py = ValueToPyData(class_value);
     result = CheckIsInstanceForFunc(x_py, cmp, mod);
     return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(result), kBool);
   }
