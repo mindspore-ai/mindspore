@@ -55,7 +55,7 @@ mindspore.set_auto_parallel_context
         - **enable_parallel_optimizer** (bool) - 这是一个开发中的特性，它可以为数据并行训练对权重更新计算进行分片，以节省时间和内存。目前，自动和半自动并行模式支持Ascend和GPU中的所有优化器。数据并行模式仅支持Ascend中的 `Lamb` 和 `AdamWeightDecay` 。默认值： ``False`` 。
         - **enable_alltoall** (bool) - 允许在通信期间生成 `AllToAll` 通信算子的开关。如果其值为 False，则将由 `AllGather` 、 `Split` 和 `Concat` 等通信算子的组合来代替 `AllToAll` 。默认值： ``False`` 。
         - **all_reduce_fusion_config** (list) - 通过参数索引设置 AllReduce 融合策略。仅支持ReduceOp.SUM和HCCL_WORLD_GROUP/NCCL_WORLD_GROUP。没有默认值。如果不设置，则关闭算子融合。
-        - **pipeline_stages** (int) - 设置pipeline并行的阶段信息。这表明了设备如何单独分布在pipeline上。所有的设备将被划分为pipeline_stags个阶段。目前，这只能在启动semi_auto_parallel模式的情况下使用。默认值： ``1`` 。
+        - **pipeline_stages** (int) - 设置pipeline并行的阶段信息。这表明了设备如何单独分布在pipeline上。所有的设备将被划分为pipeline_stags个阶段。默认值： ``1`` 。
         - **grad_accumulation_step** (int) - 在自动和半自动并行模式下设置梯度的累积step。其值应为正整数。默认值： ``1`` 。
         - **parallel_optimizer_config** (dict) - 用于开启优化器并行后的行为配置。仅在enable_parallel_optimizer=True的时候生效。目前，它支持关键字如下的关键字：
 
