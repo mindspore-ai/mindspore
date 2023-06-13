@@ -107,6 +107,13 @@ void PyExecuteCpuKernelMod::AttachPyOutputData(const py::object &py_res) {
   }
 }
 
+void Memcpy(void *addr, size_t addr_size, void *data, size_t data_size) {
+  const auto &res = memcpy_s(addr, addr_size, data, data_size);
+  if (res != EOK) {
+    MS_LOG(EXCEPTION) << "memcpy failed. res: " << res << ", dest size: " << addr_size << ", src size: " << data_size;
+  }
+}
+
 void TensorToRawMemory(const tensor::TensorPtr &tensor, const AddressPtr &address) {
   MS_EXCEPTION_IF_NULL(tensor);
   MS_EXCEPTION_IF_NULL(address);
@@ -148,6 +155,23 @@ void ListToRawMemory(const py::list &obj, const std::vector<AddressPtr> &outputs
     }
   }
 }
+void ToRawMemory(const py::object obj, const std::vector<AddressPtr> &outputs, const TypePtr &type) {
+  if (py::isinstance<tensor::Tensor>(obj)) {
+    TensorToRawMemory(obj.cast<tensor::TensorPtr>(), outputs[0]);
+    return;
+  } else if (py::isinstance<py::list>(obj)) {
+    auto output_list = py::list(obj);
+    static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
+    if (allow_inplace_ops && fallback::CheckListToMemory(output_list)) {
+      ListToRawMemory(py::list(obj), outputs);
+    }
+    return;
+  } else if (py::isinstance<py::bool_>(obj) || py::isinstance<py::int_>(obj) || py::isinstance<py::float_>(obj)) {
+    ScalarToRawMemory(obj, outputs[0]);
+    return;
+  }
+  MS_LOG(EXCEPTION) << "Current not support the PyExecute " << type->ToString() << " to raw memory.";
+}
 
 bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                    const std::vector<AddressPtr> &outputs) {
@@ -174,14 +198,9 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
     const auto &output = fallback::PopPyExecuteOutput();
     const auto &output_type = py::str(output.get_type());
     MS_LOG(DEBUG) << "Python *prebuilt* output type: " << output_type << ", output: " << output;
-    if (py::isinstance<tensor::Tensor>(output)) {
-      TensorToRawMemory(output.cast<tensor::TensorPtr>(), outputs[0]);
-    } else if (py::isinstance<py::list>(output)) {
-      auto output_list = py::list(output);
-      static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
-      if (allow_inplace_ops && fallback::CheckListToMemory(output_list)) {
-        ListToRawMemory(py::list(output), outputs);
-      }
+    auto prim = GetCNodePrimitive(kernel_node_);
+    if (prim->HasAttr(kAttrCopyData)) {
+      ToRawMemory(output, outputs, kernel_node_->abstract()->BuildType());
     }
     AttachPyOutputData(output);
     return true;

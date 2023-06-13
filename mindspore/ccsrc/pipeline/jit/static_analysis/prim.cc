@@ -59,38 +59,6 @@
 namespace mindspore {
 using ClassTypePtr = std::shared_ptr<parse::ClassType>;
 namespace abstract {
-namespace interpret_abstract_bool_checker {
-std::pair<bool, bool> InterpretAbstractBoolChecker(const AbstractBasePtr &cond) {
-  MS_EXCEPTION_IF_NULL(cond);
-  bool is_interpret = false;
-  bool has_true = false;
-  auto value = cond->BuildValue();
-  if (value->isa<parse::InterpretedObject>()) {
-    is_interpret = true;
-    auto interpreted_obj = value->cast_ptr<parse::InterpretedObject>();
-    MS_EXCEPTION_IF_NULL(interpreted_obj);
-    py::object obj = interpreted_obj->obj();
-    constexpr char PYTHON_MOD_CHECK_OBJ_BOOL[] = "check_obj_bool";
-    py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
-    bool res = python_adapter::CallPyModFn(mod, PYTHON_MOD_CHECK_OBJ_BOOL, obj).cast<bool>();
-    // eval("np.array(1) >= 1")                            ---> obj: array([ True])
-    // eval("(np.array([1, 2]) > np.array([1, 0])).any()") ---> obj: True
-    if (res) {
-      has_true = true;
-    }
-  }
-  return {is_interpret, has_true};
-}
-
-struct InterpretAbstractBoolCheckerRegister {
-  InterpretAbstractBoolCheckerRegister() noexcept {
-    abstract::AbstractBase::set_interpret_bool_checker(
-      [](const AbstractBasePtr &cond) { return InterpretAbstractBoolChecker(cond); });
-  }
-  ~InterpretAbstractBoolCheckerRegister() {}
-} interpret_abstract_bool_checker_register;
-}  // namespace interpret_abstract_bool_checker
-
 using mindspore::parse::PyObjectWrapper;
 
 mindspore::HashSet<std::string> prims_to_skip_undetermined_infer{prim::kMakeTuple,  prim::kMakeList,   prim::kSwitch,
@@ -2248,7 +2216,6 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
     const auto &real_shape = fallback::GetRealShape<AnfNode, BaseShape>(node);
     fallback::SetRealShape<AbstractBase, BaseShape>(res, real_shape);
   }
-
   auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
   evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
   return infer_result;

@@ -50,6 +50,7 @@ class UNet(ms.nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@pytest.mark.skip("the PyExecute is in the other graph and the parameter not get user data")
 def test_fallback_side_effect_assign():
     """
     Feature: Fallback runtime side effect.

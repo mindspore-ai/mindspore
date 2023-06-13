@@ -346,21 +346,25 @@ bool NeedConvertToRealTupleGetItem(const CNodePtr &cnode) {
   return false;
 }
 
-void SetPyExecuteCastAttr(const CNodePtr &cnode) {
+void SetPyExecuteSyncAttr(const CNodePtr &cnode) {
   if (!AnfUtils::IsRealKernel(cnode)) {
     return;
   }
   if (IsPrimitiveCNode(cnode, prim::kPrimPyExecute)) {
     return;
   }
-  auto inputs = cnode->inputs();
-  for (const auto &input : inputs) {
-    if (IsPrimitiveCNode(input, prim::kPrimPyExecute)) {
-      // Frontend PyExecute Primitive is all same pointer
-      auto prim = std::make_shared<Primitive>(*common::AnfAlgo::GetCNodePrimitive(input));
-      prim->set_attr(kAttrNeedCast, MakeValue(true));
-      auto input_node = input->cast_ptr<CNode>();
-      input_node->set_input(0, std::make_shared<ValueNode>(prim));
+  for (size_t i = 1; i < cnode->size(); ++i) {
+    auto inputs = common::AnfAlgo::GetRealPrevNodesOutput(cnode, i - 1);
+    for (const auto &input_with_idx : inputs) {
+      auto input = input_with_idx.first;
+      if (IsPrimitiveCNode(input, prim::kPrimPyExecute)) {
+        // Frontend PyExecute Primitive is all same pointer
+        auto prim = std::make_shared<Primitive>(*common::AnfAlgo::GetCNodePrimitive(input));
+        prim->set_attr(kAttrCopyData, MakeValue(true));
+        prim->set_attr(kAttrNeedCast, MakeValue(true));
+        auto input_node = input->cast_ptr<CNode>();
+        input_node->set_input(0, std::make_shared<ValueNode>(prim));
+      }
     }
   }
 }
@@ -511,7 +515,7 @@ void MindRTBackendBase::UnifyMindIR(const FuncGraphPtr &root_graph) const {
                      << ", debug name:" << cnode->DebugString();
       }
 
-      SetPyExecuteCastAttr(cnode);
+      SetPyExecuteSyncAttr(cnode);
     }
   }
 }

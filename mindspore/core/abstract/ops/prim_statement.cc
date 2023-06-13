@@ -48,13 +48,6 @@ void SetVariableFlag(const AbstractBasePtr abs) {
   }
 }
 
-std::pair<bool, bool> CheckCondAbstractIsInterpretedObj(const AbstractBasePtr &cond) {
-  if (abstract::AbstractBase::interpret_bool_checker()) {
-    return abstract::AbstractBase::interpret_bool_checker()(cond);
-  }
-  return {false, false};
-}
-
 void CheckTensorCondValid(const AbstractBasePtr &cond) {
   // Tensor condition must be one element or dynamic shape.
   auto base_shape = cond->BuildShape();
@@ -109,17 +102,6 @@ AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &,
       return fb;
     }
   }
-  TypePtr cond_type = cond->GetTypeTrack();
-  MS_EXCEPTION_IF_NULL(cond_type);
-  if (cond->isa<AbstractScalar>() && cond_type->type_id() == kMetaTypeExternal) {
-    // Check the abstract of condition, if the value is InterpretedObject, and has "True" in it, return true branch.
-    // For example, AbstractScalar(Type: kMetaTypeExternal, Value: InterpretedObject: "True", ...)
-    auto [is_interpret, has_true] = CheckCondAbstractIsInterpretedObj(cond);
-    if (is_interpret) {
-      return (has_true ? tb : fb);
-    }
-  }
-
   MS_LOG(EXCEPTION) << "Not support this condition value: " << cond->GetValueTrack()->ToString();
 }
 

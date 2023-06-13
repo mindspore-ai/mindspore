@@ -229,12 +229,6 @@ class MS_CORE_API AbstractBase : public Base {
   /// \return A pointer to the broadened abstract.
   virtual AbstractBasePtr PartialBroaden() const;
 
-  /// \brief Process the abstract with InterpretedObject.
-  using InterpretBoolChecker = std::pair<bool, bool> (*)(const AbstractBasePtr &cond);
-  static inline InterpretBoolChecker interpret_bool_checker_ = nullptr;
-  static void set_interpret_bool_checker(InterpretBoolChecker checker) { interpret_bool_checker_ = checker; }
-  static inline InterpretBoolChecker interpret_bool_checker() { return interpret_bool_checker_; }
-
   /// \brief Process the user date of abstract with PyExecute node.
   using PyExecuteUserDataCatcher = std::pair<bool, ValuePtr> (*)(const AbstractBasePtr &element_abs);
   static inline PyExecuteUserDataCatcher pyexecute_user_data_catcher_ = nullptr;

@@ -14,6 +14,7 @@
 # ============================================================================
 """ test graph fallback control flow."""
 import numpy as np
+import mindspore as ms
 from mindspore import Tensor, jit, context
 from mindspore import dtype as mstype
 from mindspore.nn import Cell
@@ -149,3 +150,45 @@ def test_single_if_no_else_type_2():
     test_net = TrueNet()
     res = test_net()
     assert str(res) == "[<class 'int'>, <class 'object'>]"
+
+
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
+def test_single_if_tensor_asnumpy_as_condition():
+    """
+    Feature: JIT Fallback
+    Description: Test PyExecute as condition.
+    Expectation: No exception.
+    """
+    @jit
+    def tensor_asnumpy_as_condition(x):
+        cond = x.asnumpy()
+        if cond:
+            return x + 10
+        return x
+
+    x = Tensor(1.0, ms.float32)
+    out = tensor_asnumpy_as_condition(x)
+    assert out == 11
+
+
+@case_register.level1
+@case_register.target_ascend
+@case_register.target_gpu
+@case_register.target_cpu
+def test_parse_ifexpr():
+    """
+    Feature: JIT Fallback
+    Description: Test Interpret node in ifexpr in graph mode.
+    Expectation: No exception.
+    """
+
+    class Network(nn.Cell):
+        def construct(self):
+            y = Tensor([0]) if np.array([1]) else Tensor([1])
+            return y
+
+    net = Network()
+    out = net()
+    assert out == 0
