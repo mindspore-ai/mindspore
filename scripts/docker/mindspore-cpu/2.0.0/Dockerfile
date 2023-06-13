@@ -76,5 +76,5 @@ RUN mkdir -pv /root/.pip \
 
 # Install MindSpore cpu and MindInsight packages
 RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.0.0/MindSpore/unified/x86_64/mindspore-2.0.0-cp37-cp37m-linux_x86_64.whl \
-    && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.0.0/MindInsight/any/mindinsight-2.0.0rc1-py3-none-any.whl \
+    && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.0.0/MindInsight/any/mindinsight-2.0.0-py3-none-any.whl \
     pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.0.0/MindSpore/lite/release/linux/x86_64/cloud_fusion/python37/mindspore_lite-2.0.0-cp37-cp37m-linux_x86_64.whl
