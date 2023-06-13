@@ -43,7 +43,7 @@ Status ActivationInfo::GetAttrs() {
     return FAILED;
   }
 
-  if ((inputs_shape_.size() != ACTIVATION_INPUTS_SIZE) || (outputs_shape_.size() != ACTIVATION_OUTPUTS_SIZE)) {
+  if ((inputs_shape_.size() != ACTIVATION_INPUTS_SIZE)) {
     MS_LOG(ERROR) << name_ << " : Inputs shape size(" << inputs_shape_.size() << ") or outputs shape size("
                   << outputs_shape_.size() << "is wrong.";
     return FAILED;
@@ -68,7 +68,7 @@ Status ActivationInfo::GetAttrs() {
 }
 
 Status ActivationOther::GetAttrs() {
-  if ((inputs_shape_.size() != ACTIVATION_INPUTS_SIZE) || (outputs_shape_.size() != ACTIVATION_OUTPUTS_SIZE)) {
+  if ((inputs_shape_.size() != ACTIVATION_INPUTS_SIZE)) {
     MS_LOG(ERROR) << name_ << " : Inputs shape size(" << inputs_shape_.size() << ") or outputs shape size("
                   << outputs_shape_.size() << "is wrong.";
     return FAILED;
@@ -78,7 +78,7 @@ Status ActivationOther::GetAttrs() {
 
 std::vector<StrategyPtr> Activation::GenerateOpStrategies(int64_t stage_id) {
   std::vector<StrategyPtr> sp_vector;
-  if ((inputs_shape_.size() != ACTIVATION_INPUTS_SIZE) || (outputs_shape_.size() != ACTIVATION_OUTPUTS_SIZE)) {
+  if ((inputs_shape_.size() != ACTIVATION_INPUTS_SIZE)) {
     MS_LOG(EXCEPTION) << name_ << " : Inputs shape size(" << inputs_shape_.size() << ") or outputs shape size("
                       << outputs_shape_.size() << "is wrong.";
   }
@@ -163,7 +163,7 @@ Status Softmax::GetAttrs() {
     }
   }
 
-  if ((inputs_shape_.size() != ACTIVATION_INPUTS_SIZE) || (outputs_shape_.size() != ACTIVATION_OUTPUTS_SIZE)) {
+  if ((inputs_shape_.size() != ACTIVATION_INPUTS_SIZE)) {
     MS_LOG(ERROR) << name_ << " : Inputs shape size or outputs shape size is wrong.";
     return FAILED;
   }
@@ -183,7 +183,7 @@ Status Softmax::GetAttrs() {
 Status Softmax::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 std::vector<StrategyPtr> Softmax::GenerateOpStrategies(int64_t stage_id) {
-  if ((inputs_shape_.size() != ACTIVATION_INPUTS_SIZE) || (outputs_shape_.size() != ACTIVATION_OUTPUTS_SIZE)) {
+  if ((inputs_shape_.size() != ACTIVATION_INPUTS_SIZE)) {
     MS_LOG(EXCEPTION) << name_ << " : Inputs shape size or outputs shape size is wrong.";
   }
 
@@ -682,11 +682,41 @@ Status CummaxInfo::InferAsLossDivisor() {
   return SUCCESS;
 }
 
+Status SortInfo::InferTensorMap() {
+  inputs_tensor_map_.clear();
+  outputs_tensor_map_.clear();
+
+  Shape input_tensor_map;
+  Strategies strategies = strategy_->GetInputDim();
+  size_t dim = strategies[0].size();
+  for (size_t i = 0; i < dim; ++i) {
+    input_tensor_map.push_back(dim - i - 1);
+  }
+
+  inputs_tensor_map_.push_back(input_tensor_map);   // input
+  outputs_tensor_map_.push_back(input_tensor_map);  // output
+  outputs_tensor_map_.push_back(input_tensor_map);
+  return SUCCESS;
+}
+
+Status SortInfo::InferAsLossDivisor() {
+  if (outputs_tensor_map_.empty()) {
+    MS_LOG(ERROR) << name_ << ": The size of outputs tensor map is empty";
+    return FAILED;
+  }
+  as_loss_divisor_ = ComputeRepeatDeviceNumByTensorMap(dev_matrix_shape_, outputs_tensor_map_[0]);
+  MS_LOG(INFO) << name_ << " : The dev matrix shape is " << ShapeToString(dev_matrix_shape_)
+               << ", the output[0]'s tensor map is " << ShapeToString(outputs_tensor_map_[0])
+               << ", as_loss_divisor_ is " << as_loss_divisor_;
+  return SUCCESS;
+}
+
 REGISTER(ActivationInfo);
 REGISTER(GeLUInfo);
 REGISTER(FastGeLUInfo);
 REGISTER(TanhInfo);
 REGISTER(SoftmaxInfo);
+REGISTER(SortInfo);
 REGISTER(LogSoftmaxInfo);
 REGISTER(ReverseV2Info);
 REGISTER(CumSumInfo);
