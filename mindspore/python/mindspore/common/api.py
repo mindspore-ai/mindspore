@@ -1438,6 +1438,8 @@ class _CellGraphExecutor:
         self._set_compile_cache_dep_files(phase)
 
         enable_ge = context.get_context("enable_ge")
+        if enable_ge:
+            obj.add_flags(ge_init=True)
         self._graph_executor.set_weights_values(obj.parameters_dict())
         if jit_config_dict:
             self._graph_executor.set_jit_config(jit_config_dict)

@@ -390,6 +390,8 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
     logger.info("Execute the process of saving checkpoint files.")
 
     if isinstance(save_obj, nn.Cell):
+        if save_obj.ge_init and not save_obj.ge_sync_data:
+            save_obj.exec_checkpoint_graph()
         parameter_layout_dict = save_obj.parameter_layout_dict
         if _is_in_auto_parallel_mode() and not parameter_layout_dict:
             parameter_layout_dict = _get_parameter_layout()
