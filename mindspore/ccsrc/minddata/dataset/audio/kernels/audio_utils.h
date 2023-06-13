@@ -90,6 +90,38 @@ Status AmplitudeToDB(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
   return Status::OK();
 }
 
+template <typename T>
+void AngleImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> out, size_t start, size_t end) {
+  T o;
+  T x;
+  T y;
+  auto itr_start = input->begin<T>();
+  itr_start += start;
+  auto itr_end = input->begin<T>();
+  itr_end += end;
+  auto itr_out = out->begin<T>();
+  size_t offset = start / TWO;
+  itr_out += offset;
+
+  // calculate norm, using: .pow(2.).sum(-1).pow(0.5 * power)
+  for (auto itr = itr_start; itr != itr_end; itr++) {
+    x = static_cast<T>(*itr);
+    itr++;
+    y = static_cast<T>(*itr);
+    o = std::atan2(y, x);
+    *itr_out = o;
+    itr_out++;
+  }
+}
+
+/// \brief Compute the thread nums.
+/// \param input_size: Size of the input.
+/// \param block_size: Customized size for each thread processing.
+/// \param task_num: The final calculated number of threads.
+/// \param once_compute_size: The final calculated size for each thread processing.
+/// \return Status code.
+Status CountThreadNums(size_t input_size, float block_size, size_t *task_num, size_t *once_compute_size);
+
 /// \brief Calculate the angles of the complex numbers.
 /// \param input/output: Tensor of shape <..., time>.
 template <typename T>
@@ -97,21 +129,37 @@ Status Angle(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
   TensorShape shape = input->shape();
   std::vector output_shape = shape.AsVector();
   output_shape.pop_back();
-  std::shared_ptr<Tensor> output_tensor;
-  std::vector<T> out;
-  T o;
-  T x;
-  T y;
-  for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++) {
-    x = static_cast<T>(*itr);
-    itr++;
-    y = static_cast<T>(*itr);
-    o = std::atan2(y, x);
-    (void)out.emplace_back(o);
+  std::shared_ptr<Tensor> out;
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape(output_shape), input->type(), &out));
+
+  std::vector<std::thread> threads;
+  size_t input_size = input->Size();
+  float block_size = 30000;
+  size_t task_num = 0;
+  size_t once_compute_size = 0;
+  RETURN_IF_NOT_OK(CountThreadNums(input_size, block_size, &task_num, &once_compute_size));
+
+  for (int i = 0; i < task_num - 1; i++) {
+    size_t start = i * once_compute_size;
+    size_t end = start + once_compute_size;
+    if (once_compute_size % TWO == 1) {
+      start -= i;
+      end -= (i + 1);
+    }
+    threads.push_back(std::thread(AngleImpl<T>, input, out, start, end));
   }
-  // Generate multidimensional results corresponding to input
-  Tensor::CreateFromVector(out, TensorShape{output_shape}, &output_tensor);
-  *output = output_tensor;
+
+  size_t start = (task_num - 1) * once_compute_size;
+  if (once_compute_size % TWO == 1) {
+    start -= (task_num - 1);
+  }
+  size_t end = input_size;
+  AngleImpl<T>(input, out, start, end);
+
+  for (auto &thread : threads) {
+    thread.join();
+  }
+  *output = out;
   return Status::OK();
 }
 
@@ -139,8 +187,6 @@ Status Biquad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   b_coeffs.push_back(b2);
   return LFilter(input, output, a_coeffs, b_coeffs, true);
 }
-
-Status CountThreadNums(size_t input_size, float block_size, size_t *task_num, size_t *once_compute_size);
 
 template <typename T>
 void ContrastImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out, T enhancement_amount_value,
@@ -182,13 +228,18 @@ Status Contrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
 
   // Multi-threaded parallel computing.
   std::vector<std::thread> workers = std::vector<std::thread>(task_num);
-  for (int i = 0; i < task_num; i++) {
-    size_t start = i * once_compute_size;
-    size_t end = (start + once_compute_size) > input_size ? input_size : (start + once_compute_size);
-    workers[i] = std::thread(ContrastImpl<T>, input, &out, enhancement_amount_value, start, end);
+  int work_index = 0;
+  for (; work_index < task_num - 1; work_index++) {
+    size_t start = work_index * once_compute_size;
+    size_t end = start + once_compute_size;
+    workers[work_index] = std::thread(ContrastImpl<T>, input, &out, enhancement_amount_value, start, end);
   }
 
-  for (int j = 0; j < task_num; j++) {
+  size_t start = work_index * once_compute_size;
+  size_t end = input_size;
+  ContrastImpl<T>(input, &out, enhancement_amount_value, start, end);
+
+  for (int j = 0; j < task_num - 1; j++) {
     workers[j].join();
   }
 
@@ -603,6 +654,7 @@ Status MelScale(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
   RETURN_IF_NOT_OK(CreateFbanks<T>(&freq_bin_mat, n_stft, f_min, f_max, n_mels, sample_rate, norm, mel_type));
   auto data_ptr = &*freq_bin_mat->begin<T>();
   Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> matrix_fb(data_ptr, n_mels, n_stft);
+  auto matrix_fb_t = matrix_fb.transpose();
 
   int rows = input_reshape[1];
   int cols = input_reshape[2];
@@ -613,22 +665,21 @@ Status MelScale(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
   out_shape_vec[input_shape.Size() - TWO] = n_mels;
   TensorShape output_shape(out_shape_vec);
 
-  std::vector<T> mel_specgram(output_shape.NumOfElements());
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(output_shape, input->type(), output));
+  auto out_in = (*output)->GetMutableBuffer();
+  size_t t_size = sizeof(T);
 
   for (int c = 0; c < input_reshape[0]; c++) {
     Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> matrix_c(
       static_cast<T *>(&*input->begin<T>() + rows * cols * c), cols, rows);
-    auto mat_res = (matrix_c * matrix_fb.transpose());
-    size_t offset = mat_res.size();
-    offset *= c;
-    int ret_code = memcpy_s(mel_specgram.data() + offset, mat_res.size() * sizeof(T), mat_res.eval().data(),
-                            mat_res.size() * sizeof(T));
+    auto mat_res = matrix_c * matrix_fb_t;
+    size_t mat_res_size = mat_res.size() * t_size;
+    size_t offset = mat_res_size * c;
+    int ret_code =
+      memcpy_s(reinterpret_cast<void *>(out_in + offset), mat_res_size, mat_res.eval().data(), mat_res_size);
     CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to copy data into std::vector.");
   }
 
-  std::shared_ptr<Tensor> out;
-  RETURN_IF_NOT_OK(Tensor::CreateFromVector(mel_specgram, output_shape, &out));
-  *output = out;
   return Status::OK();
 }
 

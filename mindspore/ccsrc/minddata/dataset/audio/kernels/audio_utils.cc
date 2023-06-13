@@ -486,6 +486,28 @@ Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
 }
 
 template <typename T>
+void NormImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> out, size_t start, size_t end,
+              float power) {
+  auto itr_start = input->begin<T>();
+  itr_start += start;
+  auto itr_end = input->begin<T>();
+  itr_end += end;
+  auto itr_out = out->begin<T>();
+  size_t offset = start / TWO;
+  itr_out += offset;
+
+  // calculate norm, using: .pow(2.).sum(-1).pow(0.5 * power)
+  for (auto itr = itr_start; itr != itr_end; itr++) {
+    auto a = static_cast<T>(*itr);
+    ++itr;
+    auto b = static_cast<T>(*itr);
+    auto res = pow(a, TWO) + pow(b, TWO);
+    *itr_out = static_cast<T>(pow(res, (HALF * power)));
+    itr_out++;
+  }
+}
+
+template <typename T>
 Status Norm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float power) {
   // calculate the output dimension
   auto input_size = input->shape().AsVector();
@@ -493,21 +515,37 @@ Status Norm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
   RETURN_IF_NOT_OK(
     ValidateTensorShape("ComplexNorm", input->IsComplex(), "<..., complex=2>", std::to_string(dim_back)));
   input_size.pop_back();
-  TensorShape out_shape = TensorShape(input_size);
-  RETURN_IF_NOT_OK(Tensor::CreateEmpty(out_shape, input->type(), output));
+  std::shared_ptr<Tensor> out;
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape(input_size), input->type(), &out));
 
-  // calculate norm, using: .pow(2.).sum(-1).pow(0.5 * power)
-  auto itr_out = (*output)->begin<T>();
-  auto itr_in = input->begin<T>();
+  std::vector<std::thread> threads;
+  size_t count = input->Size();
+  float block_size = 30000;
+  size_t task_num = 0;
+  size_t once_compute_size = 0;
+  RETURN_IF_NOT_OK(CountThreadNums(count, block_size, &task_num, &once_compute_size));
 
-  for (; itr_out != (*output)->end<T>(); ++itr_out) {
-    auto a = static_cast<T>(*itr_in);
-    ++itr_in;
-    auto b = static_cast<T>(*itr_in);
-    ++itr_in;
-    auto res = pow(a, 2) + pow(b, 2);
-    *itr_out = static_cast<T>(pow(res, (0.5 * power)));
+  for (int i = 0; i < task_num - 1; i++) {
+    size_t start = i * once_compute_size;
+    size_t end = start + once_compute_size;
+    if (once_compute_size % TWO == 1) {
+      start -= i;
+      end -= (i + 1);
+    }
+    threads.push_back(std::thread(NormImpl<T>, input, out, start, end, power));
   }
+
+  size_t start = (task_num - 1) * once_compute_size;
+  if (once_compute_size % TWO == 1) {
+    start -= (task_num - 1);
+  }
+  size_t end = count;
+  NormImpl<T>(input, out, start, end, power);
+
+  for (auto &thread : threads) {
+    thread.join();
+  }
+  *output = out;
 
   return Status::OK();
 }
