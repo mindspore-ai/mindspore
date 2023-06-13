@@ -639,7 +639,7 @@ def set_auto_parallel_context(**kwargs):
                        and HCCL_WORLD_GROUP/NCCL_WORLD_GROUP. No Default, if it is not set, the fusion is closed.
         pipeline_stages (int): Set the stage information for pipeline parallel. This indicates how the devices are
                         distributed alone in the pipeline. The total devices will be divided into 'pipeline_stags'
-                        stages. Currently, this could only be used when parallel mode semi_auto_parallel is enabled.
+                        stages.
                         Default: ``1`` .
         grad_accumulation_step (int): Set the accumulation steps of gradients in auto and semi auto parallel mode.
                         This should be a positive int. Default: ``1`` .
