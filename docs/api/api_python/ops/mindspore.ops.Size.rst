@@ -8,7 +8,7 @@ mindspore.ops.Size
     更多参考详见 :func:`mindspore.ops.size`。
 
     输入：
-        - **input_x** (Tensor) - 输入参数，shape为 :math:`(x_1, x_2, ..., x_R)` 。数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_ 。
+        - **input_x** (Tensor) - 输入参数，shape为 :math:`(x_1, x_2, ..., x_R)` 。数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/r1.11/api_python/mindspore.html#mindspore.dtype>`_ 。
 
     输出：
         int，表示 `input_x` 元素大小的Scalar。它的值为 :math:`size=x_1*x_2*...x_R` 。

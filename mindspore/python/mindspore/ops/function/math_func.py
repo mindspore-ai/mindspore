@@ -278,8 +278,8 @@ def add(input, other):
     Args:
         input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
             a bool or a tensor whose data type is
-            `number <https://www.mindspore.cn/docs/en/r2.0/api_python/mindspore.html#mindspore.dtype>`_ or
-            `bool_ <https://www.mindspore.cn/docs/en/r2.0/api_python/mindspore.html#mindspore.dtype>`_.
+            `number <https://www.mindspore.cn/docs/en/r1.11/api_python/mindspore.html#mindspore.dtype>`_ or
+            `bool_ <https://www.mindspore.cn/docs/en/r1.11/api_python/mindspore.html#mindspore.dtype>`_.
         other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
             the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
             When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
@@ -765,8 +765,8 @@ def sub(input, other):
     Args:
         input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
             a bool or a tensor whose data type is
-            `number <https://www.mindspore.cn/docs/en/r2.0/api_python/mindspore.html#mindspore.dtype>`_ or
-            `bool_ <https://www.mindspore.cn/docs/en/r2.0/api_python/mindspore.html#mindspore.dtype>`_.
+            `number <https://www.mindspore.cn/docs/en/r1.11/api_python/mindspore.html#mindspore.dtype>`_ or
+            `bool_ <https://www.mindspore.cn/docs/en/r1.11/api_python/mindspore.html#mindspore.dtype>`_.
         other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
             the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
             When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
@@ -853,8 +853,8 @@ def mul(input, other):
     Args:
         input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
             a bool or a tensor whose data type is
-            `number <https://www.mindspore.cn/docs/en/r2.0/api_python/mindspore.html#mindspore.dtype>`_ or
-            `bool_ <https://www.mindspore.cn/docs/en/r2.0/api_python/mindspore.html#mindspore.dtype>`_.
+            `number <https://www.mindspore.cn/docs/en/r1.11/api_python/mindspore.html#mindspore.dtype>`_ or
+            `bool_ <https://www.mindspore.cn/docs/en/r1.11/api_python/mindspore.html#mindspore.dtype>`_.
         other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
             the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
             When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
@@ -1108,8 +1108,8 @@ def pow(input, exponent):
     Args:
         input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
             a bool or a tensor whose data type is
-            `number <https://www.mindspore.cn/docs/en/r2.0/api_python/mindspore.html#mindspore.dtype>`_ or
-            `bool_ <https://www.mindspore.cn/docs/en/r2.0/api_python/mindspore.html#mindspore.dtype>`_.
+            `number <https://www.mindspore.cn/docs/en/r1.11/api_python/mindspore.html#mindspore.dtype>`_ or
+            `bool_ <https://www.mindspore.cn/docs/en/r1.11/api_python/mindspore.html#mindspore.dtype>`_.
         exponent (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
             the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
             When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
@@ -2146,8 +2146,8 @@ def xlogy(input, other):
     Args:
         input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
             a bool or a tensor whose data type is
-            `number <https://www.mindspore.cn/docs/en/r2.0/api_python/mindspore.html#mindspore.dtype>`_ or
-            `bool_ <https://www.mindspore.cn/docs/en/r2.0/api_python/mindspore.html#mindspore.dtype>`_.
+            `number <https://www.mindspore.cn/docs/en/r1.11/api_python/mindspore.html#mindspore.dtype>`_ or
+            `bool_ <https://www.mindspore.cn/docs/en/r1.11/api_python/mindspore.html#mindspore.dtype>`_.
         other (Union[Tensor, number.Number, bool]): The second input is a number.Number or
             a bool when the first input is a tensor or a tensor whose data type is number or bool\_.
             When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
@@ -3816,8 +3816,8 @@ def le(x, y):
     Args:
         x (Union[Tensor, number.Number, bool]): The first input is a number.Number or
             a bool or a tensor whose data type is
-            `number <https://www.mindspore.cn/docs/en/r2.0/api_python/mindspore.html#mindspore.dtype>`_ or
-            `bool_ <https://www.mindspore.cn/docs/en/r2.0/api_python/mindspore.html#mindspore.dtype>`_.
+            `number <https://www.mindspore.cn/docs/en/r1.11/api_python/mindspore.html#mindspore.dtype>`_ or
+            `bool_ <https://www.mindspore.cn/docs/en/r1.11/api_python/mindspore.html#mindspore.dtype>`_.
         y (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
             the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
             When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
@@ -3865,8 +3865,8 @@ def gt(x, y):
     Args:
         x (Union[Tensor, number.Number, bool]): The first input is a number.Number or
             a bool or a tensor whose data type is
-            `number <https://www.mindspore.cn/docs/en/r2.0/api_python/mindspore.html#mindspore.dtype>`_ or
-            `bool_ <https://www.mindspore.cn/docs/en/r2.0/api_python/mindspore.html#mindspore.dtype>`_ .
+            `number <https://www.mindspore.cn/docs/en/r1.11/api_python/mindspore.html#mindspore.dtype>`_ or
+            `bool_ <https://www.mindspore.cn/docs/en/r1.11/api_python/mindspore.html#mindspore.dtype>`_ .
         y (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
             the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
             When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
@@ -4608,6 +4608,9 @@ def ormqr(input, tau, other, left=True, transpose=False):
     Calculates two matrices multiplication of a product of a general matrix with Householder matrices.
     Calculates the product of a matrix C(given by `other`) with dimensions (m, n) and a matrix Q which is represented
     using Householder reflectors (`input`, `tau`). Returns a Tensor.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         input (Tensor): Tensor of shape :math:`(*, mn, k)`, when `left` is True, mn equals to m,
@@ -9706,9 +9709,9 @@ def cholesky_solve(input, input2, upper=False):
         output = (input2 * input2^{T})^{{-1}}input
 
     Args:
-        input (Tensor) - Tensor of shape :math:`(*, N, M)`, indicating 2D or 3D matrices,
+        input (Tensor): Tensor of shape :math:`(*, N, M)`, indicating 2D or 3D matrices,
             with float32 or float64 data type.
-        input2 (Tensor) - Tensor of shape :math:`(*, N, N)`, indicating 2D or 3D square matrices composed of
+        input2 (Tensor): Tensor of shape :math:`(*, N, N)`, indicating 2D or 3D square matrices composed of
             upper or lower triangular Cholesky factor, with float32 or float64 data type.
             `input` and `input2` must have the same type.
         upper (bool, optional): A flag indicates whether to treat the Cholesky factor
@@ -9992,8 +9995,8 @@ def less_equal(input, other):
     Args:
         input (Union[Tensor, Number, bool]): The first input is a Number or
             a bool or a tensor whose data type is
-            `number <https://www.mindspore.cn/docs/en/r2.0/api_python/mindspore.html#mindspore.dtype>`_ or
-            `bool_ <https://www.mindspore.cn/docs/en/r2.0/api_python/mindspore.html#mindspore.dtype>`_.
+            `number <https://www.mindspore.cn/docs/en/r1.11/api_python/mindspore.html#mindspore.dtype>`_ or
+            `bool_ <https://www.mindspore.cn/docs/en/r1.11/api_python/mindspore.html#mindspore.dtype>`_.
         other (Union[Tensor, Number, bool]): The second input, when the first input is a Tensor,
             the second input should be a Number or bool value, or a Tensor whose data type is number or bool\_.
             When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
@@ -10064,8 +10067,8 @@ def greater(input, other):
     Args:
         input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
             a bool or a tensor whose data type is
-            `number <https://www.mindspore.cn/docs/en/r2.0/api_python/mindspore.html#mindspore.dtype>`_ or
-            `bool_ <https://www.mindspore.cn/docs/en/r2.0/api_python/mindspore.html#mindspore.dtype>`_ .
+            `number <https://www.mindspore.cn/docs/en/r1.11/api_python/mindspore.html#mindspore.dtype>`_ or
+            `bool_ <https://www.mindspore.cn/docs/en/r1.11/api_python/mindspore.html#mindspore.dtype>`_ .
         other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
             the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
             When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
@@ -10094,8 +10097,8 @@ def greater_equal(input, other):
     Args:
         input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
             a bool or a tensor whose data type is
-            `number <https://www.mindspore.cn/docs/en/r2.0/api_python/mindspore.html#mindspore.dtype>`_ or
-            `bool_ <https://www.mindspore.cn/docs/en/r2.0/api_python/mindspore.html#mindspore.dtype>`_ .
+            `number <https://www.mindspore.cn/docs/en/r1.11/api_python/mindspore.html#mindspore.dtype>`_ or
+            `bool_ <https://www.mindspore.cn/docs/en/r1.11/api_python/mindspore.html#mindspore.dtype>`_ .
         other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
             the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
             When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.

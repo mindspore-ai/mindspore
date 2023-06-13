@@ -249,7 +249,7 @@ class TransformerEncoderLayer(Cell):
             a callable (`ops.relu` or `ops.gelu`). Default: ``"relu"``.
         layer_norm_eps (float): The epsilon value in LayerNorm modules. Default: ``1e-5``.
         batch_first (bool): If `batch_first = True`, then the shape of input and output tensors is
-             :math:`(batch, seq, feature)` , otherwise the shape is :math:`(seq, batch, feature)` .
+            :math:`(batch, seq, feature)` , otherwise the shape is :math:`(seq, batch, feature)` .
             Default: ``False``.
         norm_first (bool): If `norm_first = True`, layer norm is done prior to attention and feedforward
             operations, respectively. Default: ``False``.

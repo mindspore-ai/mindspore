@@ -57,3 +57,6 @@ https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.0.0/MindSpore/lite/release
 
 https://mindspore.cn*/r2.0/*
 https://www.mindspore.cn*/r2.0/*
+
+https://mindspore.cn*/r1.11/*
+https://www.mindspore.cn*/r1.11/*

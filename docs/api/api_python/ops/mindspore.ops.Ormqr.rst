@@ -4,7 +4,7 @@ mindspore.ops.Ormqr
 .. py:class:: mindspore.ops.Ormqr(left=True, transpose=False)
 
     计算一个普通矩阵与Householder矩阵的乘积。计算维度为(m, n)的矩阵C（由 `other` 给出）和一个矩阵Q的乘积，
-    其中Q由Householder反射系数 (`x`, `tau`）表示，通常由geqrf()计算生成。
+    其中Q由Householder反射系数 (`x`, `tau`) 表示，通常由geqrf()计算生成。
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。

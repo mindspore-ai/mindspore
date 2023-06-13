@@ -305,7 +305,7 @@ def auto_mixed_precision(network, amp_level="O0"):
     :class:`mindspore.nn.LayerNorm`]
 
     For details on automatic mixed precision, refer to
-    `Automatic Mix Precision <https://www.mindspore.cn/tutorials/en/r2.0/advanced/mixed_precision.html>`_ .
+    `Automatic Mix Precision <https://www.mindspore.cn/tutorials/en/r1.11/advanced/mixed_precision.html>`_ .
 
     Args:
         network (Cell): Definition of the network.

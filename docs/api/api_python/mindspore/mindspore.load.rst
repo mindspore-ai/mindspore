@@ -16,7 +16,7 @@ mindspore.load
 
             - 关于使用自定义解密加载的详情，请查看 `教程 <https://www.mindspore.cn/mindarmour/docs/zh-CN/r2.0/model_encrypt_protection.html>`_。
 
-          - **obf_func** (function) - 导入混淆模型所需要的函数，可以参考 `obfuscate_model() <https://www.mindspore.cn/docs/zh-CN/r2.0/api_python/mindspore/mindspore.obfuscate_model.html>`_ 了解详情。
+          - **obf_func** (function) - 导入混淆模型所需要的函数，可以参考 `obfuscate_model() <https://www.mindspore.cn/docs/zh-CN/r1.11/api_python/mindspore/mindspore.obfuscate_model.html>`_ 了解详情。
 
     返回：
         GraphCell，一个可以由 `GraphCell` 构成的可执行的编译图。

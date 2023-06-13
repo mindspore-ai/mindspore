@@ -536,7 +536,7 @@ def load(file_name, **kwargs):
 
             - obf_func (function): A python function used for loading obfuscated MindIR model, which can refer to
               `obfuscate_model()
-              <https://www.mindspore.cn/docs/en/r2.0/api_python/mindspore/mindspore.obfuscate_model.html>`_.
+              <https://www.mindspore.cn/docs/en/r1.11/api_python/mindspore/mindspore.obfuscate_model.html>`_.
 
     Returns:
         GraphCell, a compiled graph that can executed by `GraphCell`.
@@ -1902,7 +1902,7 @@ def build_searched_strategy(strategy_filename):
     Build strategy of every parameter in network. Used in the case of distributed inference.
     For details of it, please check:
     `Saving and Loading Models in Hybrid Parallel Mode
-    <https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/save_load.html>`_.
+    <https://www.mindspore.cn/tutorials/experts/en/r1.11/parallel/save_load.html>`_.
 
     Args:
         strategy_filename (str): Name of strategy file.
@@ -1924,7 +1924,7 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
     """
     Merge parameter slices into one parameter. Used in the case of distributed inference.
     For details of it, please check:
-    `<https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/save_load.html>`_.
+    `<https://www.mindspore.cn/tutorials/experts/en/r1.11/parallel/save_load.html>`_.
 
     Args:
         sliced_parameters (list[Parameter]): Parameter slices in order of rank id.
@@ -2020,7 +2020,7 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
     Load checkpoint into net for distributed predication. Used in the case of distributed inference.
     For details of distributed inference, please check:
     `Distributed Inference
-    <https://www.mindspore.cn/tutorials/experts/en/r2.0/parallel/distributed_inference.html>`_ .
+    <https://www.mindspore.cn/tutorials/experts/en/r1.11/parallel/distributed_inference.html>`_ .
 
     Args:
         network (Cell): Network for distributed predication.

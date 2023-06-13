@@ -1301,7 +1301,7 @@ class Size(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - Input parameters, the shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+          `number <https://www.mindspore.cn/docs/en/r1.11/api_python/mindspore.html#mindspore.dtype>`_.
 
     Outputs:
         int. A scalar representing the elements' size of `input_x`, tensor is the number of elements
@@ -7374,7 +7374,7 @@ class TensorScatterElements(Primitive):
         - **data** (Tensor) - The target tensor. Its rank must be at least 1.
         - **indices** (Tensor) - The index to do scatter operation whose data type must be int32 or
           int64. It has the same rank as `data`. And accepted range is [-s, s) where s is the size along axis.
-        - **update** (Tensor) - The tensor doing the scatter operation with `data`,
+        - **updates** (Tensor) - The tensor doing the scatter operation with `data`,
           it has the same shape and type as `data`.
 
     Outputs:

@@ -171,13 +171,13 @@ class Model:
         >>> from mindspore.train import Model
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
         >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
         >>> # Create the dataset taking MNIST as an example. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/mnist.py
+        >>> # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/mnist.py
         >>> dataset = create_dataset()
         >>> model.train(2, dataset)
     """
@@ -986,10 +986,10 @@ class Model:
             >>> from mindspore.train import Model
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/mnist.py
+            >>> # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/mnist.py
             >>> dataset = create_dataset()
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits()
             >>> loss_scale_manager = ms.FixedLossScaleManager(1024., False)
@@ -1137,11 +1137,11 @@ class Model:
             >>> from mindspore.train import Model
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/mnist.py
+            >>> # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/mnist.py
             >>> train_dataset = create_dataset("train")
             >>> valid_dataset = create_dataset("test")
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits()
             >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
@@ -1226,10 +1226,10 @@ class Model:
             >>> from mindspore.amp import FixedLossScaleManager
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/mnist.py
+            >>> # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/mnist.py
             >>> dataset = create_dataset()
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits()
             >>> loss_scale_manager = FixedLossScaleManager()
@@ -1402,10 +1402,10 @@ class Model:
             >>> from mindspore.train import Model
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/mnist.py
+            >>> # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/mnist.py
             >>> dataset = create_dataset()
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits()
             >>> model = Model(net, loss_fn=loss, optimizer=None, metrics={'acc'})
@@ -1568,10 +1568,10 @@ class Model:
             >>> ms.set_auto_parallel_context(parallel_mode=ms.ParallelMode.SEMI_AUTO_PARALLEL)
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/mnist.py
+            >>> # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/mnist.py
             >>> dataset = create_dataset()
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits()
             >>> loss_scale_manager = ms.FixedLossScaleManager()
