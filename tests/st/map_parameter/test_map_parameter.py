@@ -65,6 +65,7 @@ def test_maptensor_put_get_export(ms_type):
     Description: Test IR graph compiled with MapParameter, test put, get and export api.
     Expectation: IR graph with MapParameter created without exceptions.
     """
+
     class MyNet(nn.Cell):
         def __init__(self, ms_type):
             nn.Cell.__init__(self)
@@ -477,3 +478,93 @@ def test_simple_graph_export_load():
         export(net, t, file_name=file_path, file_format="MINDIR", incremental=True)
         assert os.path.isfile(file_path)
         load(file_path)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_grad_net_on_ascend():
+    """
+    Feature: MapParameter
+    Description: Test grad graph compiled with MapParameter on Ascend.
+    Expectation: Grad graph for MapParameter created without exceptions.
+    """
+    class MyNet(nn.Cell):
+        def __init__(self):
+            nn.Cell.__init__(self)
+            value = np.array([[7, 7, 7], [8, 8, 8]], dtype=np.float32)
+            self.value_tensor = ms.Tensor(value)
+            print("value_tensor:", self.value_tensor)
+            self.key_tensor = Tensor([1, 2], dtype=ms.int32)
+            self.map_tensor = MapParameter(key_tensor=self.key_tensor, value_tensor=self.value_tensor)
+            self.map_tensor = MapParameter(key_type=ms.int32, value_type=ms.float32, value_shape=(3,))
+            self.map_tensor = MapParameter(key_type=ms.int32, value_type=ms.float32, value_shape=(3,),
+                                           default_value="zeros")
+
+        def construct(self, x):
+            weight_lookup = self.map_tensor.get(self.key_tensor)
+            print("input x: ", x)
+            print("weight_lookup: ", weight_lookup)
+            print(x * weight_lookup)
+            return x * weight_lookup
+
+    class GradNet(nn.Cell):
+        def __init__(self, network):
+            super(GradNet, self).__init__()
+            self.grad_by_list = C.GradOperation(get_by_list=True)
+            self.network = network
+            self.weights = ParameterTuple(network.trainable_params())
+
+        def construct(self, *inputs):
+            gout = self.grad_by_list(self.network, self.weights)(*inputs)
+            return gout
+
+    context.set_context(mode=context.GRAPH_MODE)
+    t = initializer('ones', (2, 3), ms.float32)
+    t = t.init_data()
+    net = MyNet()
+    grad = GradNet(net)
+    out = grad(t)
+    print("input t: ", t)
+    print("grad out: ", out)
+    print(out[0].get_keys())
+    print(out[0].get_values())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_map_tensor_get_on_ascend():
+    """
+    Feature: MapParameter
+    Description: Test get api for MapParameter on Ascend.
+    Expectation: get api works as expected.
+    """
+    class MapTensorNet(nn.Cell):
+        def __init__(self):
+            nn.Cell.__init__(self)
+            value = np.array([[7, 7, 7], [8, 8, 8]], dtype=np.float32)
+            self.value_tensor = ms.Tensor(value)
+            print("value_tensor:", self.value_tensor)
+            self.key_tensor = Tensor([1, 2], dtype=ms.int32)
+            self.map_tensor = MapParameter(key_tensor=self.key_tensor, value_tensor=self.value_tensor)
+            self.map_tensor = MapParameter(key_type=ms.int32, value_type=ms.float32, value_shape=(3,))
+            self.map_tensor = MapParameter(key_type=ms.int32, value_type=ms.float32, value_shape=(3,),
+                                           default_value="zeros")
+
+        def construct(self, x):
+            weight_lookup = self.map_tensor.get(self.key_tensor)
+            print("input x: ", x)
+            print("weight_lookup: ", weight_lookup)
+            print(x * weight_lookup)
+            return x * weight_lookup
+
+    context.set_context(mode=context.GRAPH_MODE)
+    net = MapTensorNet()
+    t = initializer('ones', (2, 3), ms.float32)
+    t = t.init_data()
+    out = net(t)
+    print("out: ", out)
+        

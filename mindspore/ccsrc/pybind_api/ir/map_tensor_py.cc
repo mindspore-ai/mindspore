@@ -115,7 +115,7 @@ void RegMapTensor(const py::module *m) {
            auto key_tensor_ptr = std::make_shared<tensor::Tensor>(key_tensor);
            auto value_tensor_ptr = std::make_shared<tensor::Tensor>(value_tensor);
            auto status_tensor_ptr = std::make_shared<Tensor>(kNumberTypeInt, key_tensor.shape());
-           auto value_dtype = key_tensor_ptr->Dtype();
+           auto value_dtype = value_tensor_ptr->Dtype();
            ValuePtr default_value = ConvertMapTensorDefaultValue(default_value_obj, value_dtype);
            ValuePtr permit_filter_value = ConvertMapTensorFilterValue(permit_filter_obj);
            ValuePtr evict_filter_value = ConvertMapTensorFilterValue(evict_filter_obj);
