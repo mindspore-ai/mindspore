@@ -206,11 +206,11 @@ class TopoManager(Observable):
             n.get_node_type(),
             n.get_name(),
             astunparse.unparse(n.get_ast()).strip(),
-            [[key, (value[0].get_name(), value[1] if value else '-')]
+            [[key, ((value[0].get_name(), value[1]) if value else ())]
              for key, value in n.get_arg_providers().items()],
             [[
                 key,
-                [(val[0].get_name(), val[1]) if val else '-'
+                [(val[0].get_name(), val[1]) if val else ()
                  for val in value] if value else []
             ] for key, value in n.get_target_users().items()]
         ] for n in self.symbol_tree.nodes()]

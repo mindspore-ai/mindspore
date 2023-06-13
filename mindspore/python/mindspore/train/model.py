@@ -110,9 +110,13 @@ class Model:
     `Model` groups layers into an object with training and inference features based on the arguments.
 
     Note:
-        If use mixed precision functions, need to set parameter `optimizer` at the same time,
-        otherwise mixed precision functions do not take effect.
-        When uses mixed precision functions, `global_step` in optimizer may be different from `cur_step_num` in Model.
+        - If use mixed precision functions, need to set parameter `optimizer` at the same time,
+          otherwise mixed precision functions do not take effect.
+          When uses mixed precision functions, `global_step` in optimizer may be different from `cur_step_num`
+          in Model.
+        - After using `custom_mixed_precision` or `auto_mixed_precision` for precision conversion, it is not supported
+          to perform the precision conversion again. If  `Model` is used to train a converted network, `amp_level`
+          need to be configured to ``O0`` to avoid the duplicated accuracy conversion.
 
     Args:
         network (Cell): A training or testing network.

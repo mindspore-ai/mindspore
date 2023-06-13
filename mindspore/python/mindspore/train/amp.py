@@ -73,8 +73,8 @@ class _OutputTo16(nn.Cell):
         if isinstance(backbone, nn.Cell) and backbone.jit_config_dict:
             self._jit_config_dict = backbone.jit_config_dict
 
-    def construct(self, x):
-        return F.cast(self._backbone(x), mstype.float16)
+    def construct(self, *args, **kwargs):
+        return F.cast(self._backbone(*args, **kwargs), mstype.float16)
 
 
 class _OutputTo32(nn.Cell):
@@ -85,8 +85,8 @@ class _OutputTo32(nn.Cell):
         if isinstance(backbone, nn.Cell) and backbone.jit_config_dict:
             self._jit_config_dict = backbone.jit_config_dict
 
-    def construct(self, *inputs):
-        out = self._backbone(*inputs)
+    def construct(self, *args, **kwargs):
+        out = self._backbone(*args, **kwargs)
         return F.mixed_precision_cast(mstype.float32, out)
 
 
@@ -218,7 +218,7 @@ def _removed_cast_pair_process(stree, cast_f32_node):
                 for idx, arg in enumerate(cast_f16_user.get_args()):
                     if arg == cast_f16_node.get_targets()[0]:
                         cast_f16_user.set_arg(idx, cast_f32_node.get_args()[0])
-            stree.erase_node(cast_f16_node)
+            stree.erase(cast_f16_node)
         # update args of cell f16 nodes
         elif isinstance(user_node.get_instance(), nn.Cell):
             cell_f16_node = user_node
@@ -226,7 +226,7 @@ def _removed_cast_pair_process(stree, cast_f32_node):
                 if arg == cast_f32_node.get_targets()[0]:
                     cell_f16_node.set_arg(idx, cast_f32_node.get_args()[0])
     # remove the cast f32 node
-    stree.erase_node(cast_f32_node)
+    stree.erase(cast_f32_node)
 
 
 def _remove_duplicated_cast(stree):
@@ -333,10 +333,14 @@ def auto_mixed_precision(network, amp_level="O0"):
         raise TypeError("The network type should be Cell.")
 
     if amp_level == "O0":
-        pass
-    elif amp_level == "O1":
+        return network
+
+    _update_amp_status(network)
+
+    if amp_level == "O1":
         return _auto_white_list(network, AMP_WHITE_LIST)
-    elif amp_level == "O2":
+
+    if amp_level == "O2":
         _auto_black_list(network, AMP_BLACK_LIST)
     elif amp_level == "O3":
         network.to_float(mstype.float16)
@@ -454,6 +458,11 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
     """
     Build the mixed precision training cell automatically.
 
+    Note:
+        - After using `custom_mixed_precision` or `auto_mixed_precision` for precision conversion, it is not supported
+          to perform the precision conversion again. If  `build_train_network` is used to train a converted network,
+          `level` need to be configured to ``O0`` to avoid the duplicated accuracy conversion.
+
     Args:
         network (Cell): Definition of the network.
         optimizer (Optimizer): Define the optimizer to update the Parameter.
@@ -567,8 +576,15 @@ def get_white_list():
     """
     Provide a copy of internal white list used by auto mixed precision.
 
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
+    The current built-in whitelist contents are:
+
+    [:class:`mindspore.nn.Conv1d`, :class:`mindspore.nn.Conv2d`, :class:`mindspore.nn.Conv3d`,
+    :class:`mindspore.nn.Conv1dTranspose`, :class:`mindspore.nn.Conv2dTranspose`,
+    :class:`mindspore.nn.Conv3dTranspose`, :class:`mindspore.nn.Dense`, :class:`mindspore.nn.LSTMCell`,
+    :class:`mindspore.nn.RNNCell`, :class:`mindspore.nn.GRUCell`, :class:`mindspore.ops.Conv2D`,
+    :class:`mindspore.ops.Conv3D`, :class:`mindspore.ops.Conv2DTranspose`,
+    :class:`mindspore.ops.Conv3DTranspose`, :class:`mindspore.ops.MatMul`, :class:`mindspore.ops.BatchMatMul`,
+    :class:`mindspore.ops.PReLU`, :class:`mindspore.ops.ReLU`, :class:`mindspore.ops.Ger`]
 
     Returns:
         list, A copy of internal white list.
@@ -581,8 +597,10 @@ def get_black_list():
     """
     Provide a copy of internal black list used by auto mixed precision.
 
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
+    The current built-in blacklist contents are:
+
+    [:class:`mindspore.nn.BatchNorm1d`, :class:`mindspore.nn.BatchNorm2d`, :class:`mindspore.nn.BatchNorm3d`,
+    :class:`mindspore.nn.LayerNorm`]
 
     Returns:
         list, A copy of internal black list.
@@ -595,24 +613,22 @@ def custom_mixed_precision(network, *, white_list=None, black_list=None):
     """
     Custom mixed precision by setting whitelist or blacklist.
     When the `white_list` is provided, primitives and cells in `white_list` will perform the precision conversion.
-    When the `black_list` is provided, primitives and cells that are not in `black_list` will perform the pereision
+    When the `black_list` is provided, cells that are not in `black_list` will perform the pereision
     conversion.
     Only one of `white_list` and `black_list` should be provided.
 
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
     Note:
-        - `custom_mixed_precision` should not be used at the same time as `auto_mixed_precision` . When both
-          `build_train_network` and `custom_mixed_precision` are used, `build_train_network` need to be called with
-          `level='O0'` before call `custom_mixed_precision` .
+        - After using `custom_mixed_precision` for precision conversion, it is not supported to use other interfaces
+          for precision conversion again. If interfaces like `Model` and `build_train_network` is used to train
+          the converted network, `amp_level` need to be configured to ``O0`` to avoid the duplicated accuracy
+          conversion.
         - Primitives for blacklist is not support yet.
 
     Args:
         network (Cell): Definition of the network.
         white_list (list[Primitive, Cell], optional): White list of custom mixed precision. Defaults: ``None`` , means
             white list is not used.
-        black_list (list[Primitive, Cell], optional): Black list of custom mixed precision. Defaults: ``None`` , means
+        black_list (list[Cell], optional): Black list of custom mixed precision. Defaults: ``None`` , means
             black list is not used.
 
     Returns:
@@ -642,6 +658,8 @@ def custom_mixed_precision(network, *, white_list=None, black_list=None):
         raise ValueError("For custom_mixed_precision, the white_list or black_list cannot be provided "
                          "at the same time, please provide one or the other.")
 
+    _update_amp_status(network)
+
     if white_list is not None:
         _list_check(white_list, "white_list")
         return _auto_white_list(network, white_list)
@@ -668,11 +686,31 @@ def _list_check(custom_list: list, list_name: str):
         if not isinstance(elem, type):
             raise TypeError(f"The element in {list_name} should be a class, but got {elem}")
 
-        if not issubclass(elem, nn.Cell) and not issubclass(elem, Primitive):
+        if list_name == "white_list" and not issubclass(elem, nn.Cell) and not issubclass(elem, Primitive):
             raise TypeError(f"The subclass of element in {list_name} should be one of 'Cell' and 'Primitive', "
                             f"but got {elem}")
+
+        if list_name == "black_list" and not issubclass(elem, nn.Cell):
+            raise TypeError(f"The subclass of element in {list_name} should be one of 'Cell', but got {elem}")
 
     if list_name == 'black_list':
         for elem in AMP_BLACK_LIST:
             if elem not in custom_list:
                 logger.warning(f"{elem} is removed from internal black list.")
+
+
+def _update_amp_status(network):
+    """
+    Update mixed precision status, and check whether network has already performed mixed precision conversion.
+
+    Args:
+        network (Cell): Definition of the network.
+
+    Raises:
+        ValueError: Duplicate automatic mixed-precision operations detected.
+    """
+    if hasattr(network, "amp_converted"):
+        if network.amp_converted:
+            raise ValueError("Duplicate automatic mixed-precision operations detected. You may need "
+                             "to set 'amp_level' to 'O0' when using 'Model' or 'build_train_network'.")
+        network.add_flags_recursive(amp_converted=True)

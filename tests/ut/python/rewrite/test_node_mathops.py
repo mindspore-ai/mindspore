@@ -40,7 +40,7 @@ def erase_node_mathops_add(stree: SymbolTree):
         if node.get_name() == "binop_add":
             for user in node.get_users():
                 user.set_arg(0, node.get_args()[0])
-            stree.erase_node(node)
+            stree.erase(node)
             break
 
 

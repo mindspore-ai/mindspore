@@ -101,7 +101,7 @@ def erase_relu_in_conv2(stree: SymbolTree):
                 assert len(inner_node.get_args()) == 1
                 arg = inner_node.get_args()[0]
                 modify_stree.set_output(0, arg.value)
-                modify_stree.erase_node(inner_node)
+                modify_stree.erase(inner_node)
                 break
             break
 
@@ -201,7 +201,7 @@ def test_subtree_create_erase():
     output_nodes = del_node.get_users()
     for node in output_nodes:
         node.set_arg_by_node(0, input_node)
-    stree.erase_node(del_node)
+    stree.erase(del_node)
     assert stree.get_node("mul") is None
     assert 'z_1 = self.relu(x_3)' in stree.get_code()
     new_net = stree.get_network()

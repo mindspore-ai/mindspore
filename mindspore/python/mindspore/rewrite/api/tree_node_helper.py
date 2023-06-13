@@ -28,6 +28,9 @@ class TreeNodeHelper:
     `TreeNodeHelper` is used to break circle reference while getting symbol_tree from a `Tree` type `Node`.
 
     `TreeNodeHelper` provides a staticmethod `get_sub_tree` for getting symbol_tree from a `Tree` type `Node`.
+
+    .. warning::
+        This is a set of experimental APIs that is subject to change or deletion.
     """
 
     @staticmethod

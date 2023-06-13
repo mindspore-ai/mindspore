@@ -214,7 +214,7 @@ def test_cellcontainer_del():
             users = node.get_users()
             for user in users:
                 user.set_arg(0, "x")
-            stree.erase_node(node)
+            stree.erase(node)
     assert len(stree.get_handler()._nodes) == original_nodes_size - 1
 
 
@@ -234,7 +234,7 @@ def test_cellcontainer_del_node():
                 inputs = node.get_inputs()
                 for user in users:
                     user.set_arg_by_node(0, inputs[0])
-                stree.erase_node(Node(n))
+                stree.erase(Node(n))
                 break
             assert len(node.get_handler().nodes()) == 4
 
