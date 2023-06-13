@@ -243,10 +243,10 @@ build_akg() {
     if [[ "X$USE_LLVM" == "Xon" ]]; then
         graph_kernel_cfg="-DAKG_USE_LLVM=ON ${graph_kernel_cfg}"
         AKG_CMAKE_ARGS="${AKG_CMAKE_ARGS} -DUSE_LLVM=ON"
-        if [[ ("X${MSLITE_GPU_BACKEND}" == "Xtensorrt") && $1 == "x86_64" ]]; then
-            AKG_CMAKE_ARGS="${AKG_CMAKE_ARGS} -DUSE_CUDA=ON"
-            graph_kernel_cfg="-DAKG_USE_CUDA=ON ${graph_kernel_cfg}"
-        fi
+    fi
+    if [[ ("X${MSLITE_GPU_BACKEND}" == "Xtensorrt") && $1 == "x86_64" ]]; then
+        AKG_CMAKE_ARGS="${AKG_CMAKE_ARGS} -DUSE_CUDA=ON"
+        graph_kernel_cfg="-DAKG_USE_CUDA=ON ${graph_kernel_cfg}"
     fi
     if [[ ("X${MSLITE_ENABLE_ACL}" == "Xon") ]]; then
         AKG_CMAKE_ARGS="${AKG_CMAKE_ARGS} -DENABLE_D=ON"

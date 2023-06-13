@@ -19,6 +19,7 @@
 #include <utility>
 #include <numeric>
 #include <functional>
+#include "kernel/graph_kernel/graph_kernel_json_flags.h"
 #include "tools/graph_kernel/common/utils.h"
 #include "src/tensor.h"
 #include "src/common/utils.h"
@@ -65,6 +66,38 @@ class AkgCallBack {
 };
 }  // namespace
 
+int AkgKernel::CheckAkgKernelInfo() {
+  std::string current_arch;
+#if defined(ENABLE_ARM)
+  current_arch = "arm";
+#elif defined(ENABLE_ARM64)
+  current_arch = "aarch64";
+#else
+  current_arch = "x86_64";
+#endif
+  if (current_arch != arch) {
+    MS_LOG(ERROR) << "Current cpu arch is " << current_arch << ", but got a " << arch
+                  << " AKGKernel. AkgKernel info ckeck failed.";
+    return RET_ERROR;
+  }
+#if defined(ENABLE_AVX512)
+  return RET_OK;
+#elif defined(ENABLE_AVX)
+  if (cpu_feature == "avx512") {
+    MS_LOG(ERROR)
+      << "Current Runtime not support avx512, but AkgKernel got an avx512 kernel. AkgKernel info ckeck failed.";
+    return RET_ERROR;
+  }
+#elif defined(ENABLE_AVX)
+  if (cpu_feature == "avx512" || cpu_feature == "avx") {
+    MS_LOG(ERROR) << "Current Runtime not support avx512 and avx, but AkgKernel got an " << cpu_feature
+                  << " kernel. AkgKernel info ckeck failed.";
+    return RET_ERROR;
+  }
+#endif
+  return RET_OK;
+}
+
 void AkgKernel::ExtractKernelAttr() {
   auto prim = static_cast<schema::Primitive *>(params_)->value_as_Custom();
   for (size_t i = 0; i < prim->attr()->size(); i++) {
@@ -78,13 +111,19 @@ void AkgKernel::ExtractKernelAttr() {
       dynamic_batch_size_ = 1;
       std::string dynamic_input_index_str(reinterpret_cast<const char *>(attr->data()->Data()), attr->data()->size());
       graphkernel::GetCustomIndex(dynamic_input_index_str, &dynamic_input_index_);
+    } else if (attr->name()->str() == mindspore::graphkernel::kJsonKeyProcess) {
+      process = std::string(reinterpret_cast<const char *>(attr->data()->Data()), attr->data()->size());
+    } else if (attr->name()->str() == mindspore::graphkernel::kJsonKeyArch) {
+      arch = std::string(reinterpret_cast<const char *>(attr->data()->Data()), attr->data()->size());
+    } else if (attr->name()->str() == mindspore::graphkernel::kJsonKeySystem) {
+      system = std::string(reinterpret_cast<const char *>(attr->data()->Data()), attr->data()->size());
+    } else if (attr->name()->str() == mindspore::graphkernel::kJsonKeyCpuFeature) {
+      cpu_feature = std::string(reinterpret_cast<const char *>(attr->data()->Data()), attr->data()->size());
     } else {
       continue;
     }
   }
 }
-
-AkgKernel::~AkgKernel() { CloseAkgLib(); }
 
 int TmpDoTask(void *obj, int task_id, float lhs_scale, float rhs_scale) {
   return static_cast<AkgKernel *>(obj)->DoTask(task_id, lhs_scale, rhs_scale);
@@ -102,13 +141,6 @@ void AkgKernel::AkgParallelLaunchFunc(AkgParallelLambda flambda, void *cdata, in
   cached_akg_lambda_ = nullptr;
   cached_runtimeargs_ = nullptr;
 }
-class AkgLibraryLoader : public lite::DynamicLibraryLoader {
- public:
-  static AkgLibraryLoader *GetInstance() {
-    static AkgLibraryLoader inst;
-    return &inst;
-  }
-};
 
 int AkgKernel::LoadAkgLib(void *data, size_t file_size) {
   static std::once_flag flag;
@@ -118,23 +150,16 @@ int AkgKernel::LoadAkgLib(void *data, size_t file_size) {
       MS_LOG(ERROR) << "write data to " << kAkgKernelSo << " failed.";
       ret = lite::RET_ERROR;
     }
-    ret = AkgLibraryLoader::GetInstance()->Open(kAkgKernelSo);
   });
   return ret;
-}
-
-void AkgKernel::CloseAkgLib() {
-  static std::once_flag flag;
-  std::call_once(flag, [&]() -> void {
-    if (AkgLibraryLoader::GetInstance()->Close() != lite::RET_OK) {
-      MS_LOG(ERROR) << "Close " << kAkgKernelSo << " handle failed.";
-    }
-  });
 }
 
 int AkgKernel::Prepare() {
   if (kernel_func_ != nullptr) {
     return RET_OK;
+  }
+  if (CheckAkgKernelInfo() != RET_OK) {
+    return RET_ERROR;
   }
   if (in_tensors_.size() < kNumberTwo) {
     MS_LOG(ERROR) << "The number of input tensor in AkgKernel must greater than 2, but now got " << in_tensors_.size();
@@ -143,11 +168,11 @@ int AkgKernel::Prepare() {
   auto akg_lib_tensor = in_tensors_.at(in_tensors_.size() - 1);
   auto akg_lib_ptr = akg_lib_tensor->data();
   auto akg_lib_size = akg_lib_tensor->Size();
-  if (LoadAkgLib(akg_lib_ptr, akg_lib_size) != RET_OK) {
-    MS_LOG(ERROR) << "Load [" << kAkgKernelSo << "] failed. kernel: [" << kernel_name_ << "]";
+  if (!object_loader.LoadAkgLib(akg_lib_ptr, akg_lib_size)) {
+    MS_LOG(ERROR) << "Load object from tensor failed. Kernel name is  [" << kernel_name_ << "]";
     return RET_ERROR;
   }
-  kernel_func_ = AkgLibraryLoader::GetInstance()->GetFunc(kernel_name_.c_str());
+  kernel_func_ = object_loader.LookupFunction(kernel_name_);
   // the last input tensor is akgkernels.so, so we need to remove it.
   in_tensors_.pop_back();
   if (kernel_func_ == nullptr) {

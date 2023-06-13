@@ -29,6 +29,7 @@
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
+#include "thread/threadpool.h"
 #include "tools/common/tensor_util.h"
 #include "utils/anf_utils.h"
 #include "utils/file_utils.h"
@@ -153,11 +154,12 @@ std::string GetCNodeOutputFormatStr(const CNodePtr &cnode) {
   return output_format_str;
 }
 
-ParameterPtr CreateAkgKernelParameter(const FuncGraphPtr &func_graph, const std::string &path) {
+ParameterPtr CreateAkgKernelParameter(const FuncGraphPtr &func_graph, const std::string &path,
+                                      const std::string &kernel_name) {
   MS_CHECK_TRUE_RET(func_graph != nullptr, nullptr);
   auto param_node = func_graph->add_parameter();
   MS_CHECK_TRUE_RET(param_node != nullptr, nullptr);
-  param_node->set_name(path);
+  param_node->set_name(kernel_name);
   auto akg_fd = open(path.c_str(), O_RDONLY);
   struct stat sb;
   if (akg_fd < 0) {
@@ -196,7 +198,6 @@ bool CompileSingleJson(const std::string &json_name) {
   py_cmd << "if not compilewithjsonname(\'" << json_name << "\', " << attrs << "):\n";
   py_cmd << "    raise RuntimeError(\'Compile fail for json: " << json_name << "\')";
   std::string cmd = "python -c \"" + py_cmd.str() + "\"";
-  MS_LOG(INFO) << "GraphKernel CPU backend CompileSingleJson content: \n" << cmd.c_str();
   auto ret = std::system(cmd.c_str());
   if (!WIFEXITED(ret)) {
     MS_LOG(ERROR) << "Python process start fail! process content is as follows:\n" << cmd;
@@ -228,51 +229,27 @@ bool RetStatus(const int status) {
 }
 
 bool CompileJsonsInList(const std::string &dir_path, const std::vector<std::string> &json_list) {
-  auto process_num = std::min(PROCESS_LIMIT, json_list.size());
-  if (process_num == 0) {
+  auto thread_num = std::min(PROCESS_LIMIT, json_list.size());
+  if (thread_num == 0) {
     return true;
   }
-  size_t i;
-  pid_t pid;
-  std::vector<pid_t> child_process;
-  for (i = 0; i < process_num; ++i) {
-    pid = fork();
-    if (pid < 0) {
-      MS_LOG(ERROR) << "fork error";
-      return false;
-    } else if (pid == 0) {
-      break;
-    } else {
-      child_process.emplace_back(pid);
-    }
-  }
-  if (pid == 0) {
-    setpgrp();
-    (void)alarm(TIME_OUT);
+  auto func = [&](void *cdata, int task_id, float lhs_scale, float rhs_scale) -> int {
     bool all_pass{true};
-    for (size_t j = i; j < json_list.size(); j += PROCESS_LIMIT) {
+    for (size_t j = task_id; j < json_list.size(); j += PROCESS_LIMIT) {
       auto res = CompileSingleJson(dir_path + "/" + json_list[j] + ".info");
       if (!res) {
         all_pass = false;
       }
     }
-    if (all_pass) {
-      exit(0);
-    } else {
-      exit(1);
+    if (!all_pass) {
+      MS_LOG(ERROR) << "Some task failed.";
+      return lite::RET_ERROR;
     }
-  } else {
-    bool all_process_pass{true};
-    for (size_t j = 0; j < process_num; ++j) {
-      int status = 0;
-      waitpid(child_process[j], &status, 0);
-      // kill child process of child process if overtime
-      kill(-child_process[j], SIGTERM);
-      all_process_pass = RetStatus(status) && all_process_pass;
-    }
-    if (all_process_pass) {
-      return true;
-    }
+    return lite::RET_OK;
+  };
+  auto *pool = ThreadPool::CreateThreadPool(thread_num);
+  if (pool && pool->ParallelLaunch(func, nullptr, thread_num) == lite::RET_OK) {
+    return true;
   }
   return false;
 }

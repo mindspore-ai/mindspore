@@ -41,7 +41,8 @@ std::string GetCNodeInputShapeStr(const CNodePtr &cnode);
 std::string GetCNodeOutputShapeStr(const CNodePtr &cnode);
 std::string GetCNodeOutputTypeStr(const CNodePtr &cnode);
 std::string GetCNodeOutputFormatStr(const CNodePtr &cnode);
-ParameterPtr CreateAkgKernelParameter(const FuncGraphPtr &func_graph, const std::string &path);
+ParameterPtr CreateAkgKernelParameter(const FuncGraphPtr &func_graph, const std::string &path,
+                                      const std::string &kernel_name);
 bool CompileJsonsInList(const std::string &dir_path, const std::vector<std::string> &json_list);
 void ExcludeTunedObj(const std::string &dir_path, std::set<std::string> *kernel_names,
                      std::map<AnfNodePtr, std::string> *node_kernel);

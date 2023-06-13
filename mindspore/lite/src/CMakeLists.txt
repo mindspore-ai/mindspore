@@ -422,10 +422,9 @@ if(MSLITE_ENABLE_GRAPH_KERNEL)
     file(GLOB_RECURSE GRAPH_KERNEL_SRC
         ${TOOLS_DIR}/graph_kernel/common/*.cc
         ${TOOLS_DIR}/graph_kernel/runtime/*.cc
+        ${CCSRC_DIR}/plugin/device/cpu/kernel/akg/akg_kernle_loader.cc
         )
-    set(LITE_SRC ${LITE_SRC} ${GRAPH_KERNEL_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/dynamic_library_loader.cc
-    )
+        set(LITE_SRC ${LITE_SRC} ${GRAPH_KERNEL_SRC})
 endif()
 
 if(NOT MSLITE_ENABLE_COREML)

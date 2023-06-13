@@ -50,7 +50,6 @@ bool GraphKernelSplitterWithTuning::StartTuning(const std::string &dir_path) con
   py_cmd << "if not " << tune_interface << "(\'" << dir_path << "\', " << attrs.str() << "):\n";
   py_cmd << "    raise RuntimeError(\'Tune fail. info path: " << dir_path << "\')";
   std::string cmd = "python -c \"" + py_cmd.str() + "\"";
-  MS_LOG(INFO) << "GraphKernel split tuning content: \n" << cmd;
   auto ret = std::system(cmd.c_str());
   if (!WIFEXITED(ret)) {
     MS_LOG(ERROR) << "Python process start fail! process content is as follows:\n" << cmd;

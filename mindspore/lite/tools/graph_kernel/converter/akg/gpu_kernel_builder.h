@@ -29,7 +29,6 @@ class GpuKernelBuilder : public AkgKernelBuilder {
   std::vector<std::string> ReadThreadBlockFromJson(const std::string &dir_name);
 
  private:
-  std::string dir_path_;
   std::map<AnfNodePtr, std::string> node_info_map_;
 };
 }  // namespace mindspore::graphkernel

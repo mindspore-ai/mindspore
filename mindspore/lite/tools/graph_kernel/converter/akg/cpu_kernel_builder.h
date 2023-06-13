@@ -26,7 +26,8 @@ class CpuKernelBuilder : public AkgKernelBuilder {
  public:
   bool CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) override;
   AnfNodePtr CreateCustomOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode) override;
-  bool GenerateAkgKernelNodes(const FuncGraphPtr &func_graph, ParameterPtr *param_ptr) override;
+  bool GenerateAkgKernelNodes(const FuncGraphPtr &func_graph, const AnfNodePtr &custom_node,
+                              const CNodePtr &old_cnode) override;
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_CPU_KERNEL_BUILDER_H_
