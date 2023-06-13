@@ -718,7 +718,7 @@ class Adam(Optimizer):
         >>> from mindspore import nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.Adam(params=net.trainable_params())
@@ -1068,7 +1068,7 @@ class AdamWeightDecay(Optimizer):
         >>> from mindspore import nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.AdamWeightDecay(params=net.trainable_params())
@@ -1281,7 +1281,7 @@ class AdamOffload(Optimizer):
         >>> from mindspore import nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.AdamOffload(params=net.trainable_params())
