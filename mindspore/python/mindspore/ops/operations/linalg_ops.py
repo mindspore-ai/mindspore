@@ -52,6 +52,8 @@ class Geqrf(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[-2.0, -1.0], [1.0, 2.0]]).astype(np.float32))
         >>> geqrf = ops.Geqrf()
         >>> y, tau = geqrf(input_x)
