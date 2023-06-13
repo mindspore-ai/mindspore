@@ -56,14 +56,12 @@ EvalResultPtr InnerAbsEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const
   }
   auto cnode = out_conf->node()->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto cur_graph = cnode->func_graph();
   // Convert pyexecute.
   if (fallback::ContainsSequenceAnyType(args_abs_list[0])) {
     const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
     if (allow_fallback_runtime) {
       auto pyexecute_node = fallback::ConvertCNodeToPyExecuteForPrim(cnode, "abs");
       MS_LOG(DEBUG) << "Convert: " << cnode->DebugString() << " -> " << pyexecute_node->DebugString();
-      cur_graph->ReplaceInOrder(cnode, pyexecute_node);
       AnfNodeConfigPtr fn_conf = engine->MakeConfig(pyexecute_node, out_conf->context(), out_conf->func_graph());
       return engine->ForwardConfig(out_conf, fn_conf);
     }
@@ -87,7 +85,6 @@ EvalResultPtr InnerAbsEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const
   // Convert abs ops.
   auto new_cnode = std::make_shared<CNode>(*cnode);
   new_cnode->set_input(0, NewValueNode(prim::kPrimAbs));
-  cur_graph->ReplaceInOrder(cnode, new_cnode);
   AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
   return engine->ForwardConfig(out_conf, fn_conf);
 }
@@ -138,7 +135,6 @@ EvalResultPtr InnerRoundEvaluator::EvalPrim(const AnalysisEnginePtr &engine, con
   }
   auto cnode = out_conf->node()->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto cur_graph = cnode->func_graph();
   // Convert pyexecute.
   if (fallback::ContainsSequenceAnyType(args_abs_list[0]) ||
       (args_abs_list.size() == max_input_index && fallback::ContainsSequenceAnyType(args_abs_list[1]))) {
@@ -146,7 +142,6 @@ EvalResultPtr InnerRoundEvaluator::EvalPrim(const AnalysisEnginePtr &engine, con
     if (allow_fallback_runtime) {
       auto pyexecute_node = fallback::ConvertCNodeToPyExecuteForPrim(cnode, "round");
       MS_LOG(DEBUG) << "Convert: " << cnode->DebugString() << " -> " << pyexecute_node->DebugString();
-      cur_graph->ReplaceInOrder(cnode, pyexecute_node);
       AnfNodeConfigPtr fn_conf = engine->MakeConfig(pyexecute_node, out_conf->context(), out_conf->func_graph());
       return engine->ForwardConfig(out_conf, fn_conf);
     }
@@ -175,7 +170,59 @@ EvalResultPtr InnerRoundEvaluator::EvalPrim(const AnalysisEnginePtr &engine, con
   // Convert round ops.
   auto new_cnode = std::make_shared<CNode>(*cnode);
   new_cnode->set_input(0, NewValueNode(prim::kPrimRound));
-  cur_graph->ReplaceInOrder(cnode, new_cnode);
+  AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
+  return engine->ForwardConfig(out_conf, fn_conf);
+}
+
+EvalResultPtr InnerLenEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list,
+                                          const ConfigPtr &, const AnfNodeConfigPtr &out_conf) {
+  // len([1, 2]]) = 2
+  if (args_abs_list.empty()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "len() requires 1 argument.";
+  }
+  auto cnode = out_conf->node()->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_LOG(DEBUG) << "args_abs_list[0]:" << args_abs_list[0]->ToString();
+
+  // Process constants.
+  if (args_abs_list[0]->isa<AbstractScalar>()) {
+    auto const_value = args_abs_list[0]->BuildValue();
+    MS_EXCEPTION_IF_NULL(const_value);
+    auto py_x_data = ValueToPyData(const_value);
+    py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+    py::object len_data = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_CONST_LEN, py_x_data);
+    ValuePtr len_value = parse::data_converter::PyDataToValue(len_data);
+    MS_EXCEPTION_IF_NULL(len_value);
+    auto res = std::make_shared<AbstractScalar>(len_value);
+    auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
+    evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
+    return infer_result;
+  }
+
+  // Process list, tuple, dict and tensor(pyexecute).
+  auto new_cnode = std::make_shared<CNode>(*cnode);
+  if (args_abs_list[0]->isa<AbstractSequence>()) {
+    new_cnode->set_input(0, NewValueNode(prim::kPrimSequenceLen));
+  } else if (args_abs_list[0]->isa<AbstractDictionary>()) {
+    new_cnode->set_input(0, NewValueNode(prim::kPrimDictLen));
+  } else if (args_abs_list[0]->isa<AbstractAny>()) {
+    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    // Convert pyexecute.
+    if (allow_fallback_runtime) {
+      auto pyexecute_node = fallback::ConvertCNodeToPyExecuteForPrim(cnode, "len");
+      MS_LOG(DEBUG) << "Convert: " << cnode->DebugString() << " -> " << pyexecute_node->DebugString();
+      AnfNodeConfigPtr fn_conf = engine->MakeConfig(pyexecute_node, out_conf->context(), out_conf->func_graph());
+      return engine->ForwardConfig(out_conf, fn_conf);
+    } else {
+      MS_EXCEPTION(TypeError) << "The len() only support Tensor, list, tuple, dict, and scalar const type in JIT"
+                              << "kStrict mode, but got " << args_abs_list[0]->ToString() << ".";
+    }
+  } else if (args_abs_list[0]->isa<AbstractTensor>()) {
+    new_cnode->set_input(0, NewValueNode(prim::kPrimArrayLen));
+  } else {
+    MS_EXCEPTION(TypeError) << "The len() only support Tensor, list, tuple, dict, and scalar type, but got "
+                            << args_abs_list[0]->ToString() << ".";
+  }
   AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
   return engine->ForwardConfig(out_conf, fn_conf);
 }

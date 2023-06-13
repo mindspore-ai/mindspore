@@ -3299,6 +3299,7 @@ void InitBuiltinPrimEvaluatorConstructors() {
   PrimEvaluatorMap &constructor = PrimEvaluatorConstructors;
   constructor[prim::kPrimInnerAbs] = std::make_shared<InnerAbsEvaluator>();
   constructor[prim::kPrimInnerRound] = std::make_shared<InnerRoundEvaluator>();
+  constructor[prim::kPrimInnerLen] = std::make_shared<InnerLenEvaluator>();
 }
 }  // namespace
 

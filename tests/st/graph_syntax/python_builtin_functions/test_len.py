@@ -49,7 +49,7 @@ def test_len_numpy_with_variable():
 def test_len_list_with_variable():
     """
     Feature: Graph len syntax.
-    Description: Graph syntax len support numpy ndarray.
+    Description: Graph syntax len support list.
     Expectation: No exception.
     """
 
@@ -70,7 +70,7 @@ def test_len_list_with_variable():
 def test_len_dict_with_variable():
     """
     Feature: Graph len syntax.
-    Description: Graph syntax len support numpy ndarray.
+    Description: Graph syntax len support dict.
     Expectation: No exception.
     """
 
@@ -81,3 +81,24 @@ def test_len_dict_with_variable():
 
     out = foo(Tensor([10]))
     assert out == 14
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_len_tensor():
+    """
+    Feature: Graph len syntax.
+    Description: Graph syntax len support tensor.
+    Expectation: No exception.
+    """
+
+    @jit
+    def foo(x):
+        return len(x), x.__len__()
+
+    x = Tensor(np.array([[1, 2, 3], [0, 0, 0]]))
+    out = foo(x)
+    assert out[0] == out[1] == 2

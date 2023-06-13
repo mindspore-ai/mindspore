@@ -49,6 +49,15 @@ class InnerRoundEvaluator : public TransitionPrimEvaluator {
                          const AnfNodeConfigPtr &out_conf) override;
   bool CheckConst(const AbstractBasePtrList &args_abs_list);
 };
+
+class InnerLenEvaluator : public TransitionPrimEvaluator {
+ public:
+  InnerLenEvaluator() : TransitionPrimEvaluator("InnerLenEvaluator") {}
+  ~InnerLenEvaluator() override = default;
+  MS_DECLARE_PARENT(InnerLenEvaluator, TransitionPrimEvaluator);
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
+                         const AnfNodeConfigPtr &out_conf) override;
+};
 }  // namespace abstract
 }  // namespace mindspore
 
