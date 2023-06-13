@@ -197,6 +197,24 @@ void MaximumGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset failed. Error no of x: " << res_dx
                       << " and y: " << res_dy;
   }
+
+  if (x_shape_ == y_shape_) {
+    auto task = [&](size_t start, size_t end) {
+      for (size_t i = start; i < end; i++) {
+        if (x_addr[i] > y_addr[i]) {
+          dx_addr[i] = dout_addr[i];
+        } else if (x_addr[i] == y_addr[i]) {
+          dx_addr[i] = dout_addr[i] / 2;
+          dy_addr[i] = dout_addr[i] / 2;
+        } else {
+          dy_addr[i] = dout_addr[i];
+        }
+      }
+    };
+    ParallelLaunchAutoSearch(task, x_tensor_len, this, &parallel_search_info_);
+    return;
+  }
+
   std::vector<size_t> x_shape(dout_shape_.size(), 1);
   std::vector<size_t> y_shape(dout_shape_.size(), 1);
   std::vector<size_t> x_cargo(dout_shape_.size(), 0);

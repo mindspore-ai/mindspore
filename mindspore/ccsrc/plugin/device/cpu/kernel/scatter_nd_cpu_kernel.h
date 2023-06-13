@@ -48,6 +48,7 @@ class ScatterNdCpuKernelMod : public NativeCpuKernelMod {
   std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex2}; }
 
   std::vector<int64_t> out_shape_;
+  std::vector<int> offset_vec_;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;

@@ -115,37 +115,48 @@ bool ScatterUpdateArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel:
       MS_LOG(EXCEPTION) << "For '" << kernel_type_ << "', memcpy_s error. Error no: " << ret;
     }
   }
-  size_t start = 0;
+
   S *indices = reinterpret_cast<S *>(inputs[1]->addr);
   T *updates = reinterpret_cast<T *>(inputs[2]->addr);
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(indices);
   MS_EXCEPTION_IF_NULL(updates);
+
+  std::vector<size_t> offset_vec;
+  offset_vec.resize(num_units_);
   size_t x_mem_size = inputs[0]->size;
-  for (size_t i = start; i < num_units_; ++i) {
-    size_t offset = 0;
-    std::vector<size_t> local_indices;
-    for (size_t j = 0; j < indices_unit_rank_; ++j) {
-      auto index = indices[i * indices_unit_rank_ + j];
-      (void)local_indices.emplace_back(IntToSize(index));
-      if (index < 0) {
-        MS_EXCEPTION(ValueError) << "For '" << kernel_type_
-                                 << "', each element in 'indices' must be greater than or equal to 0, but got "
-                                 << index;
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; ++i) {
+      size_t offset = 0;
+      std::vector<size_t> local_indices;
+      for (size_t j = 0; j < indices_unit_rank_; ++j) {
+        auto index = indices[i * indices_unit_rank_ + j];
+        (void)local_indices.emplace_back(IntToSize(index));
+        if (index < 0) {
+          MS_EXCEPTION(ValueError) << "For '" << kernel_type_
+                                   << "', each element in 'indices' must be greater than or equal to 0, but got "
+                                   << index;
+        }
+        offset += static_cast<size_t>(index) * out_strides_[j] * IntToSize(unit_size_);
       }
-      offset += static_cast<size_t>(index) * out_strides_[j] * IntToSize(unit_size_);
+      if (offset * sizeof(T) >= x_mem_size) {
+        MS_EXCEPTION(ValueError) << "For '" << kernel_type_
+                                 << "', indices out of range for input_x. Please check the indices which is "
+                                 << local_indices;
+      }
+      offset_vec[i] = offset;
     }
-    if (offset * sizeof(T) >= x_mem_size) {
-      MS_EXCEPTION(ValueError) << "For '" << kernel_type_
-                               << "', indices out of range for input_x. Please check the indices which is "
-                               << local_indices;
-    }
+  };
+  ParallelLaunchAutoSearch(task, num_units_, this, &parallel_search_info_);
+
+  for (size_t i = 0; i < offset_vec.size(); i++) {
+    size_t offset = offset_vec[i];
     auto ret = memcpy_s(x + offset, x_mem_size - offset * sizeof(T), updates + unit_size_ * i, unit_size_ * sizeof(T));
     if (ret != EOK) {
-      MS_LOG(ERROR) << "For '" << kernel_type_ << "', memcpy_s error. Error no: " << ret;
-      return false;
+      MS_LOG(EXCEPTION) << "For '" << kernel_type_ << "', memcpy_s error. Error no: " << ret;
     }
   }
+
   if (memcpy_s(outputs[0]->addr, outputs[0]->size, x, inputs[0]->size) != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_type_ << "', it does memory copy fail.";
   }

@@ -40,78 +40,43 @@ struct ComputeParams {
 };
 
 template <typename S, typename T>
-void ParallelLaunch(ScatterNdCpuKernelMod *content, const ComputeParams<S, T> *params, size_t offset, size_t unit) {
-  T *target = params->target_;
-  T *updates = params->updates_;
-  auto compute_func = [&target, &updates](size_t t_idx, size_t u_idx) {
-    auto &atomic_ = reinterpret_cast<std::atomic<T> *>(target)[t_idx];
-    T expect = atomic_.load();
-    T result;
-    do {
-      result = expect + updates[u_idx];
-    } while (!atomic_.compare_exchange_weak(expect, result));
-  };
-  auto task = [&compute_func, &params, offset, unit](size_t update_start, size_t update_end) {
-    for (size_t idx = update_start; idx < update_end; idx++) {
-      compute_func(offset + idx, unit + idx);
-    }
-  };
-  ParallelLaunchAutoSearch(task, IntToSize(params->unit_size_), content, &content->parallel_search_info_);
-}
-
-// the std::atomic don't support complex type, use mutex instead.
-template <typename S, typename T>
-void LaunchForComplex(ScatterNdCpuKernelMod *content, const ComputeParams<S, T> *params, size_t offset, size_t unit) {
-  T *target = params->target_;
-  T *updates = params->updates_;
-  std::mutex task_mutex;
-  auto task = [&target, &updates, unit, offset, &task_mutex](size_t update_start, size_t update_end) {
-    for (size_t idx = update_start; idx < update_end; idx++) {
-      std::lock_guard<std::mutex> task_lock(task_mutex);
-      target[offset + idx] += updates[unit + idx];
-    }
-  };
-  ParallelLaunchAutoSearch(task, IntToSize(params->unit_size_), content, &content->parallel_search_info_);
-}
-
-#define DEF_COMPLEX_LAUNCH_FUNC(S, T)                                                                          \
-  template <>                                                                                                  \
-  void ParallelLaunch<S, T>(ScatterNdCpuKernelMod * content, const ComputeParams<S, T> *params, size_t offset, \
-                            size_t unit) {                                                                     \
-    LaunchForComplex(content, params, offset, unit);                                                           \
-  }
-
-DEF_COMPLEX_LAUNCH_FUNC(int16_t, complex128)
-DEF_COMPLEX_LAUNCH_FUNC(int32_t, complex128)
-DEF_COMPLEX_LAUNCH_FUNC(int64_t, complex128)
-DEF_COMPLEX_LAUNCH_FUNC(int16_t, complex64)
-DEF_COMPLEX_LAUNCH_FUNC(int32_t, complex64)
-DEF_COMPLEX_LAUNCH_FUNC(int64_t, complex64)
-
-template <typename S, typename T>
-void Compute(ScatterNdCpuKernelMod *content, const ComputeParams<S, T> *params, const size_t start, const size_t end) {
+void ComputeOffset(ScatterNdCpuKernelMod *content, const ComputeParams<S, T> *params, size_t num_units) {
   S *indices = params->indices_;
   std::vector<int> *out_strides = params->out_strides_;
-
-  for (size_t i = start; i < end; ++i) {
-    int offset = 0;
-    auto indices_unit_rank = IntToSize(params->indices_unit_rank_);
-    for (size_t j = 0; j < indices_unit_rank; ++j) {
-      int index = static_cast<int>(indices[i * indices_unit_rank + j]);
-      if (index < 0) {
-        MS_LOG(EXCEPTION) << "For '" << kKernelName
-                          << "', each element in 'indices' must be greater "
-                             "than or equal to 0, but got "
-                          << index;
+  size_t indices_unit_rank = IntToSize(params->indices_unit_rank_);
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      int offset = 0;
+      for (size_t j = 0; j < indices_unit_rank; j++) {
+        int index = static_cast<int>(indices[i * indices_unit_rank + j]);
+        if (index < 0) {
+          MS_LOG(EXCEPTION) << "For '" << kKernelName
+                            << "', each element in 'indice' must be greater than or equal to 0, but got " << index;
+        }
+        if (index > content->out_shape_[j]) {
+          MS_LOG(EXCEPTION) << "For '" << kKernelName
+                            << "', each element in 'indices' should be smaller than the value of shape, but got "
+                            << index << " and got the value of shape " << content->out_shape_[j];
+        }
+        offset += index * out_strides->at(j) * params->unit_size_;
       }
-      if (index > static_cast<int>(content->out_shape_[j])) {
-        MS_LOG(EXCEPTION) << "For '" << kKernelName
-                          << "', each element in 'indices' should be smaller than the value of shape, but got " << index
-                          << " and got the value of shape " << content->out_shape_[j];
-      }
-      offset += index * out_strides->at(j) * params->unit_size_;
+      content->offset_vec_[i] = offset;
     }
-    ParallelLaunch(content, params, IntToSize(offset), IntToSize(params->unit_size_) * i);
+  };
+  ParallelLaunchAutoSearch(task, num_units, content, &content->parallel_search_info_);
+}
+
+template <typename S, typename T>
+void ComputeOutput(ScatterNdCpuKernelMod *content, const ComputeParams<S, T> *params, size_t num_units) {
+  T *target = params->target_;
+  T *updates = params->updates_;
+
+  for (size_t i = 0; i < num_units; i++) {
+    auto t = target + content->offset_vec_[i];
+    auto u = updates + params->unit_size_ * i;
+    for (size_t j = 0; j < IntToSize(params->unit_size_); j++) {
+      t[j] += u[j];
+    }
   }
 }
 }  // namespace
@@ -222,9 +187,10 @@ bool ScatterNdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
   params.unit_size_ = unit_size_;
   params.indices_unit_rank_ = indices_unit_rank_;
   params.out_strides_ = &out_strides_;
-  for (size_t idx = 0; idx < num_units_; idx++) {
-    Compute<S, T>(this, &params, idx, idx + 1);
-  }
+  offset_vec_.clear();
+  offset_vec_.resize(num_units_);
+  ComputeOffset<S, T>(this, &params, num_units_);
+  ComputeOutput<S, T>(this, &params, num_units_);
   return true;
 }
 
