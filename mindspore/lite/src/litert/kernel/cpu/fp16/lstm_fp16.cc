@@ -352,7 +352,7 @@ int LstmFp16CPUKernel::MallocRunBuffer() {
   }
 
   if (!(lstm_param_->zoneout_cell_ >= -FLT_EPSILON && lstm_param_->zoneout_cell_ <= FLT_EPSILON)) {
-    int buffer_size = lstm_param_->batch_ * lstm_param_->project_size_ * sizeof(float16_t);
+    int buffer_size = lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float16_t);
     buffer_[cell_state_index] = reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(buffer_size));
     if (buffer_[cell_state_index] == nullptr) {
       MS_LOG(ERROR) << "LstmFp16CPUKernel malloc state_buffer for cell error.";
@@ -360,7 +360,7 @@ int LstmFp16CPUKernel::MallocRunBuffer() {
     }
   }
   if (!(lstm_param_->zoneout_hidden_ >= -FLT_EPSILON && lstm_param_->zoneout_hidden_ <= FLT_EPSILON)) {
-    int buffer_size = lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float16_t);
+    int buffer_size = lstm_param_->batch_ * lstm_param_->project_size_ * sizeof(float16_t);
     buffer_[hidden_state_index] = reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(buffer_size));
     if (buffer_[hidden_state_index] == nullptr) {
       MS_LOG(ERROR) << "LstmFp16CPUKernel malloc state_buffer for hidden error.";
