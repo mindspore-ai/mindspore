@@ -42,7 +42,7 @@ STATUS AclMemManager::GetModelWorkMem(AclModelMemInfo *acl_work_mem_info) {
     if (work_mem_info_.mem_size == 0) {
       return lite::RET_ERROR;
     }
-    auto acl_ret = aclrtMalloc(&work_mem_info_.mem_addr, work_mem_info_.mem_size, ACL_MEM_MALLOC_NORMAL_ONLY);
+    auto acl_ret = aclrtMalloc(&work_mem_info_.mem_addr, work_mem_info_.mem_size, ACL_MEM_MALLOC_HUGE_FIRST);
     if (acl_ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Call aclrtMalloc failed, err_code = " << acl_ret;
       return lite::RET_ERROR;
@@ -59,7 +59,7 @@ STATUS AclMemManager::GetModelWeightMem(AclModelMemInfo *acl_weight_mem_info) {
     if (weight_mem_info_.mem_size == 0) {
       return lite::RET_ERROR;
     }
-    auto acl_ret = aclrtMalloc(&weight_mem_info_.mem_addr, weight_mem_info_.mem_size, ACL_MEM_MALLOC_NORMAL_ONLY);
+    auto acl_ret = aclrtMalloc(&weight_mem_info_.mem_addr, weight_mem_info_.mem_size, ACL_MEM_MALLOC_HUGE_FIRST);
     if (acl_ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Call aclrtMalloc failed, err_code = " << acl_ret;
       return lite::RET_ERROR;

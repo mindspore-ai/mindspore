@@ -24,7 +24,7 @@ from importlib.abc import MetaPathFinder
 from mindspore_lite.version import __version__
 from mindspore_lite.context import Context
 from mindspore_lite.converter import FmkType, Converter
-from mindspore_lite.model import ModelType, Model, ModelParallelRunner
+from mindspore_lite.model import ModelType, Model, ModelParallelRunner, ModelGroup
 from mindspore_lite.tensor import DataType, Format, Tensor
 from mindspore_lite.lite_split import split_network, split_ir
 
@@ -63,13 +63,14 @@ class MSLiteMetaPathFinder(MetaPathFinder):
         """method mslite find module."""
         akg_idx = fullname.find("mindspore_lite.akg")
         if akg_idx != -1:
-            rname = fullname[akg_idx+15:]
+            rname = fullname[akg_idx + 15:]
             return MSLiteMetaPathLoader(rname)
         return None
 
 
 class MSLiteMetaPathLoader:
     """class MSLiteMetaPathLoader loader."""
+
     def __init__(self, rname):
         self.__rname = rname
 

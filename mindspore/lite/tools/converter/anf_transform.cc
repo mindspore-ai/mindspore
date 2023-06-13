@@ -54,7 +54,7 @@
 #include "tools/optimizer/fusion/encoder_layer_fusion.h"
 #include "tools/optimizer/fusion/decoder_layer_fusion.h"
 #include "tools/optimizer/fusion/glu_fusion.h"
-
+#include "tools/optimizer/graph/unused_add_node_remove_pass.h"
 #include "tools/optimizer/fusion/tflite_rel_pos_multi_head_attention_fusion.h"
 #include "tools/optimizer/fusion/matmul_add_fusion.h"
 #include "tools/optimizer/fusion/matmul_mul_fusion.h"
@@ -794,7 +794,8 @@ bool AnfTransform::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param)
     {"InferShapePass", std::make_shared<opt::InferShapePass>(fmk, is_train), false},
     {"DeleteRedundantTranspose", std::make_shared<opt::DeleteRedundantTranspose>(), false},
     {"SpecialNodePostProcess", std::make_shared<opt::SpecialNodePostProcess>(), false},
-    {"DecreaseTransposeAlgo", std::make_shared<opt::DecreaseTransposeAlgo>(fmk, is_train), true}};
+    {"DecreaseTransposeAlgo", std::make_shared<opt::DecreaseTransposeAlgo>(fmk, is_train), true},
+    {"RemoveUnusedAddNodePass", std::make_shared<opt::RemoveUnusedAddNodePass>(), false}};
   for (const auto &pass_info : pass_infos) {
     MS_CHECK_TRUE_RET(std::get<1>(pass_info) != nullptr, false);
     PassStorage::StorePass(std::get<0>(pass_info), std::get<1>(pass_info), std::get<opt::kInputIndexTwo>(pass_info));
