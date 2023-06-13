@@ -1027,7 +1027,8 @@ std::vector<std::pair<AnfNodePtr, int>> GetOutputNodesWithFilter(const AnfNodePt
   return res;
 }
 
-AnfNodePtr NewMicroMirrorPrimByMicroMirror(const CNodePtr &micro_mirror, const AnfNodePtr &micro_mirror_new_input) {
+AnfNodePtr NewMicroMirrorPrimByMicroMirror(const FuncGraphPtr &func_graph, const CNodePtr &micro_mirror,
+                                           const AnfNodePtr &micro_mirror_new_input) {
   auto prim_origin = GetCNodePrimitive(micro_mirror);
   Attr attr0 = std::make_pair(GROUP, prim_origin->GetAttr(GROUP));
   Attr attr1 = std::make_pair(DEV_NUM, prim_origin->GetAttr(DEV_NUM));
@@ -1040,7 +1041,7 @@ AnfNodePtr NewMicroMirrorPrimByMicroMirror(const CNodePtr &micro_mirror, const A
   MS_EXCEPTION_IF_NULL(pyop_instance);
   std::vector<AnfNodePtr> mirror_inputs{NewValueNode(pyop_instance), micro_mirror_new_input,
                                         micro_mirror->input(kIndex2)};
-  auto new_mirror_node = micro_mirror_new_input->func_graph()->NewCNode(mirror_inputs);
+  auto new_mirror_node = func_graph->NewCNode(mirror_inputs);
   auto prim = GetCNodePrimitive(new_mirror_node);
   prim->SetAttrs(prim_origin->attrs());
   new_mirror_node->set_attrs(micro_mirror->attrs());
