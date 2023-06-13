@@ -20,6 +20,6 @@ namespace mindspore {
 namespace transform {
 REGISTER_ACL_OP(MaxPoolGradGrad).Input(0, {}, {}).Input(1, {}, {"NC1HWC0"}).Input(2, {}, {});
 
-REGISTER_ACL_OP(MaxPoolGrad).Input(0, {}, {}).Input(1, {}, {"NC1HWC0"}).Input(2, {}, {});
+REGISTER_ACL_OP(MaxPoolGrad).Input(0, {}, {"NC1HWC0"}).Input(1, {}, {"NC1HWC0"}).Input(2, {}, {});
 }  // namespace transform
 }  // namespace mindspore
