@@ -299,6 +299,7 @@ constexpr char REDUCTION[] = "reduction";
 constexpr char MEAN[] = "mean";
 constexpr char ATTR_NONE[] = "none";
 constexpr char BATCH_MEAN[] = "batchmean";
+constexpr char CONSTANT[] = "constant";
 
 // Operator
 constexpr char VIRTUAL_DIV[] = "_VirtualDiv";
@@ -567,6 +568,7 @@ constexpr char SQUARED_DIFFERENCE[] = "SquaredDifference";
 constexpr char ERFINV[] = "Erfinv";
 constexpr char SPLITV[] = "SplitV";
 constexpr char GAMMA[] = "Gamma";
+constexpr char PAD_V3[] = "PadV3";
 constexpr char KLDIV_LOSS[] = "KLDivLoss";
 constexpr char LIN_SPACE[] = "LinSpace";
 constexpr char SORT[] = "SORT";
