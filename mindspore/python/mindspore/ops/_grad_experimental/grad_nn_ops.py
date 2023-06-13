@@ -65,6 +65,8 @@ from mindspore.ops.operations.nn_ops import MaxPoolWithArgmaxV2
 from mindspore.ops.operations.nn_ops import FractionalMaxPoolWithFixedKsize
 from mindspore.ops.operations._grad_ops import FractionalMaxPoolGradWithFixedKsize
 from mindspore.ops.operations.nn_ops import AdaptiveAvgPool3D
+from mindspore.ops.operations.nn_ops import WKV
+from mindspore.ops.operations._grad_ops import WKVGrad
 from mindspore.ops.operations.nn_ops import GLU
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool3D
 
@@ -555,3 +557,18 @@ def get_bprop_fractional_max_pool_with_fixed_ksize(self):
         return (dx, zeros_like(random_samples))
 
     return bprop
+
+
+@bprop_getters.register(WKV)
+def get_bprop_wkv(self):
+    """Grad definition for `wkv` operation."""
+    wkv_backward = WKVGrad()
+
+    def bpro(w, u, k, v, sp, sq, sm, out, out_sp, out_sq, out_sm, dout):
+        gw, gu, gk, gv = wkv_backward(w, u, k, v, dout)
+        gw = F.sum(gw, 0)
+        gu = F.sum(gu, 0)
+        res = (gw, gu, gk, gv, zeros_like(out_sp), zeros_like(out_sq), zeros_like(out_sm))
+        return res
+
+    return bpro

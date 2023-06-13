@@ -3867,3 +3867,18 @@ class ResizeV2Grad(Primitive):
                                ["align_corners", "half_pixel"], "coordinate_transformation_mode", self.name)
         validator.check_value_type("mode", mode, [str], self.name)
         validator.check_string(mode, ["nearest", "linear", "cubic"], "mode", self.name)
+
+
+class WKVGrad(Primitive):
+    r"""
+    Calculates the gradient of WKV operation.
+
+    Supported Platforms:
+        ``Ascend``
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize WKVGrad."""
+        self.init_prim_io_names(inputs=["time_first", "time_decay", "key", "value", "gy"],
+                                outputs=["gw", "gu", "gk", "gv"])

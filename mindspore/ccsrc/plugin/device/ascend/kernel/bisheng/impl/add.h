@@ -22,6 +22,6 @@
 
 namespace mindspore::kernel::bisheng {
 template <typename T>
-BISHENG_LIB_EXPORT void Add(void *x1, void *x2, void *y, uint64_t size, void *stream);
+BISHENG_LIB_EXPORT void Add(void *x1, void *x2, void *y, void *size, void *stream);
 }  // namespace mindspore::kernel::bisheng
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_BISHENG_IMPL_ADD_H

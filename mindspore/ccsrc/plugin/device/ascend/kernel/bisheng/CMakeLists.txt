@@ -17,7 +17,13 @@ if(${try_result})
     message("Bisheng toolchain seems to work.")
     add_subdirectory(impl)
     file(GLOB SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
-    list(REMOVE_ITEM SRC_LIST "bisheng_kernel_build.cc" "custom_bisheng_kernel.cc")
+    # these source files were compiled in libmindspore_ascend.so
+    list(REMOVE_ITEM SRC_LIST
+            "bisheng_kernel_build.cc"
+            "custom_bisheng_kernel.cc"
+            "bisheng_kernel_metadata.cc"
+            "bisheng_kernel_mod.cc"
+            )
     add_library(bisheng_kernels SHARED ${SRC_LIST})
     target_link_libraries(bisheng_kernels PRIVATE mindspore_ascend bisheng_kernels_impl)
     set_target_properties(bisheng_kernels PROPERTIES INSTALL_RPATH $ORIGIN)
