@@ -46,7 +46,6 @@ int InferenceGenerator::CodeNetHFile() {
   MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
   MS_LOG(INFO) << "write " << net_include_file;
   CodeCommonNetH(ofs);
-  CodeCopyOutputsState(ofs, ctx_->GetCurModelIndex());
   ofs << kEndExternCpp;
   ofs.close();
   return RET_OK;
@@ -58,7 +57,6 @@ int InferenceGenerator::CodeNetCFile() {
   MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
   MS_LOG(INFO) << "write " << net_impl_file;
   CodeCommonNetC(ofs);
-  CodeCopyOutputsImplement(ofs, ctx_);
   CodeNetExecuteFunc(ofs);
   ofs.close();
   return RET_OK;

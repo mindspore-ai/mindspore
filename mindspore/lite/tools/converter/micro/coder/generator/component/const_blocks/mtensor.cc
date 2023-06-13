@@ -39,6 +39,11 @@ const char tensor_header[] = R"RAW(
 
 #include "c_api/data_type_c.h"
 #include "c_api/format_c.h"
+#include "c_api/tensor_c.h"
+#include <stdbool.h>
+#ifdef ENABLE_FP16
+#include <arm_neon.h>
+#endif
 
 typedef struct {
   enum MSDataType type;
@@ -48,6 +53,7 @@ typedef struct {
   int64_t *shape;
   void *data;
   int quant_nums;
+  bool owned;
 } MicroTensor;
 
 typedef struct {
@@ -62,6 +68,20 @@ typedef struct {
   double min;
   double max;
 } QuantParam;
+
+enum TypeTransMode {
+  TypeTransMode_FP32_TO_FP16 = 0,
+  TypeTransMode_FP16_TO_FP32 = 1,
+  TypeTransMode_UNSUPPORT = 2,
+  TypeTransMode_MAX = TypeTransMode_UNSUPPORT
+};
+
+void *TransformInput(MSTensorHandle tensor, int expect_type, bool *type_changed);
+
+#ifdef ENABLE_FP16
+void Fp32CastToFp16(const float *input, float16_t *output, int number);
+void Fp16CastToFp32(const float16_t *input, float *output, int number);
+#endif
 
 #endif  // MINDSPORE_LITE_MICRO_LIBRARY_SOURCE_TENSOR_H_
 
@@ -136,6 +156,7 @@ MSTensorHandle MSTensorCreate(const char *name, MSDataType type, const int64_t *
   micro_tensor->type = type;
   micro_tensor->ndim = shape_num;
   micro_tensor->data = malloc(data_len);
+  micro_tensor->owned = true;
   memcpy(micro_tensor->data, data, data_len);
   micro_tensor->shape = malloc(shape_num * sizeof(int64_t));
   memcpy(micro_tensor->shape, shape, shape_num * sizeof(int64_t));
@@ -144,8 +165,8 @@ MSTensorHandle MSTensorCreate(const char *name, MSDataType type, const int64_t *
 }
 
 void MSTensorDestroy(MSTensorHandle *tensor) {
-   MicroTensor* micro_tensor = (MicroTensor*)(*tensor);
-   free(micro_tensor);
+  MicroTensor* micro_tensor = (MicroTensor*)(*tensor);
+  free(micro_tensor);
 }
 
 void MSTensorSetName(MSTensorHandle tensor, const char *name) {
@@ -163,6 +184,7 @@ MSTensorHandle MSTensorClone(MSTensorHandle tensor) {
   MicroTensor *clone_tensor = malloc( sizeof(MicroTensor));
   size_t tensor_data_size = MSTensorGetDataSize(micro_tensor);
   clone_tensor->data = malloc(tensor_data_size);
+  clone_tensor->owned = true;
   memcpy(clone_tensor->data,micro_tensor->data,tensor_data_size);
   clone_tensor->name = micro_tensor->name;
   clone_tensor->type = micro_tensor->type;
@@ -220,8 +242,14 @@ MSFormat MSTensorGetFormat(const MSTensorHandle tensor) {
 
 void MSTensorSetData(MSTensorHandle tensor, void *data) {
   MicroTensor* micro_tensor = (MicroTensor*)(tensor);
+  if (micro_tensor->data == data) {
+    return;
+  }
   if(micro_tensor->data != NULL) {
-    free(micro_tensor->data);
+    if (micro_tensor->owned) {
+      free(micro_tensor->data);
+      micro_tensor->owned = false;
+    }
   }
   micro_tensor->data = data;
 }
@@ -237,6 +265,7 @@ void *MSTensorGetMutableData(const MSTensorHandle tensor) {
     return micro_tensor->data;
   }
   void* data = malloc(MSTensorGetDataSize(tensor));
+  micro_tensor->owned = true;
   micro_tensor->data = data;
   return data;
 }
@@ -255,6 +284,56 @@ size_t MSTensorGetDataSize(const MSTensorHandle tensor) {
   size_t data_type_size = DataTypeSize(micro_tensor->type);
   int64_t elements = MSTensorGetElementNum(tensor);
   return data_type_size * elements;
+}
+
+#ifdef ENABLE_FP16
+void Fp32CastToFp16(const float *input, float16_t *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (float16_t)(input[i]);
+  }
+}
+
+void Fp16CastToFp32(const float16_t *input, float *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (float)(input[i]);
+  }
+}
+#endif
+
+void *TransformInput(MSTensorHandle tensor, int expect_type, bool *type_changed) {
+  MicroTensor* micro_tensor = (MicroTensor*)(tensor);
+  int cur_type = micro_tensor->type;
+  if (cur_type == expect_type) {
+    return micro_tensor->data;
+  }
+  int type_trans_mode = TypeTransMode_MAX;
+  if (expect_type == kMSDataTypeNumberTypeFloat16 && cur_type == kMSDataTypeNumberTypeFloat32) {
+    type_trans_mode = TypeTransMode_FP32_TO_FP16;
+  } else if (expect_type == kMSDataTypeNumberTypeFloat32 && cur_type == kMSDataTypeNumberTypeFloat16) {
+    type_trans_mode = TypeTransMode_FP16_TO_FP32;
+  }
+  if (type_trans_mode == TypeTransMode_UNSUPPORT) {
+    return NULL;
+  }
+  int shape_size = micro_tensor->ndim;
+  int num = 1;
+  for (int i = 0; i < shape_size; ++i) {
+    num *= micro_tensor->shape[i];
+  }
+#ifdef ENABLE_FP16
+  if (type_trans_mode == TypeTransMode_FP32_TO_FP16) {
+    void *expect_input_fp16 = (void *)malloc(DataTypeSize(expect_type) * num);
+    Fp32CastToFp16((float *)micro_tensor->data, (float16_t *)expect_input_fp16, num);
+    *type_changed = true;
+    return expect_input_fp16;
+  } else if (type_trans_mode == TypeTransMode_FP16_TO_FP32) {
+    void *expect_input_fp32 = (void *)malloc(DataTypeSize(expect_type) * num);
+    Fp16CastToFp32((float16_t *)micro_tensor->data, (float *)expect_input_fp32, num);
+    *type_changed = true;
+    return expect_input_fp32;
+  }
+#endif
+  return NULL;
 }
 
 )RAW";

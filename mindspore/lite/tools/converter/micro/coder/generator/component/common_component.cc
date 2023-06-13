@@ -36,14 +36,15 @@ void MSTensorHandleArrayDestroy(MSTensorHandleArray inputs) {
   }
   for (size_t i = 0; i < inputs.handle_num; i++) {
     MicroTensor *micro_tensor = inputs.handle_list[i];
-    if (!micro_tensor) {
+    if (micro_tensor == NULL) {
       continue;
     }
-    if (micro_tensor->data) {
+    if (micro_tensor->data != NULL && micro_tensor->owned) {
       free(micro_tensor->data);
       micro_tensor->data = NULL;
+      micro_tensor->owned = false;
     }
-    if (micro_tensor->shape) {
+    if (micro_tensor->shape != NULL) {
       free(micro_tensor->shape);
       micro_tensor->shape = NULL;
     }
@@ -465,18 +466,45 @@ void CodeMSModelPredict(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
         << "  }\n";
   }
   ofs << "  const void *inputs_data_array[" << inputs_num << "];\n";
+  ofs << "  int expect_types[" << inputs_num << "] = {";
+  for (size_t i = 0; i < inputs_num; ++i) {
+    ofs << ctx->graph_inputs().at(i)->data_type() << ", ";
+  }
+  ofs << "};\n";
+  ofs << "  bool type_changed[" << inputs_num << "] = {";
+  for (size_t i = 0; i < inputs_num; ++i) {
+    ofs << "false, ";
+  }
+  ofs << "};\n";
   ofs << "  for (int i = 0; i < " << inputs_num << "; i++) {\n";
-  ofs << "    inputs_data_array[i] = ((MicroTensor *)inputs.handle_list[i])->data;\n";
+  ofs << "    inputs_data_array[i] = TransformInput((MicroTensor *)inputs.handle_list[i], expect_types[i], "
+         "&type_changed[i]);\n";
   ofs << "  }\n";
   ofs << "  SetInputs" << ctx->GetCurModelIndex() << "(inputs_data_array, " << inputs_num << ");\n";
-  ofs << "\n";
   ofs << "  Execute" << ctx->GetCurModelIndex() << "(micro_model->train_mode);\n";
   ofs << "\n";
+  ofs << "  for (int i = 0; i < " << inputs_num << "; i++) {\n";
+  ofs << "    if (type_changed[i]) {\n";
+  ofs << "      free((void *)inputs_data_array[i]);\n";
+  ofs << "    }\n";
+  ofs << "  }\n";
+  ofs << "\n";
   ofs << "  void *outputs_data_array[" << outputs_num << "];\n";
+  ofs << "  int expect_out_types[" << outputs_num << "] = {";
+  for (size_t i = 0; i < outputs_num; ++i) {
+    ofs << ctx->graph_outputs().at(i)->data_type() << ", ";
+  }
+  ofs << "};\n";
+  ofs << "  bool out_type_changed[" << outputs_num << "] = {";
+  for (size_t i = 0; i < inputs_num; ++i) {
+    ofs << "false, ";
+  }
+  ofs << "};\n";
   ofs << "  for (int i = 0; i < " << outputs_num << "; i++) {\n";
   ofs << "    outputs_data_array[i] = MSTensorGetMutableData(outputs->handle_list[i]);\n";
   ofs << "  }\n";
-  ofs << "  CopyOutputsData" << ctx->GetCurModelIndex() << "(outputs_data_array, " << outputs_num << ");\n";
+  ofs << "  CopyOutputsData" << ctx->GetCurModelIndex()
+      << "(outputs, outputs_data_array, expect_out_types, out_type_changed);\n";
   if (config.target() != kCortex_M) {
     ofs << "  UnLockBuffer(micro_model->runtime_buffer);\n";
   }
@@ -485,26 +513,64 @@ void CodeMSModelPredict(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
 }
 
 void CodeCopyOutputsState(std::ofstream &ofs, const int model_index) {
-  ofs << "int CopyOutputsData" << model_index << "(void **outputs, int num);\n\n";
+  ofs << "int CopyOutputsData" << model_index
+      << "(MSTensorHandleArray *outputs_ori, void **outputs, int *expect_types, bool *type_changed);\n\n";
 }
 
 void CodeCopyOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
   auto tensor_map = ctx->tensors_map();
   std::vector<Tensor *> outputs = ctx->graph_outputs();
   size_t outputs_size = outputs.size();
+
   ofs << "int CopyOutputsData" << ctx->GetCurModelIndex()
-      << "(void **outputs, int num) {\n"
-         "  if (outputs == NULL) {\n"
+      << "(MSTensorHandleArray *outputs_ori, void **outputs, int *expect_types, bool *type_changed) {\n"
+         "  if (outputs_ori == NULL || outputs == NULL) {\n"
          "    return RET_ERROR;\n"
-         "  }\n"
-      << "  if (num != " << outputs_size << ") {\n"
-      << "    return RET_ERROR;\n"
          "  }\n";
+  ofs << "  unsigned char *buffer[" << outputs_size << "] = {";
+  for (size_t i = 0; i < outputs_size; ++i) {
+    ofs << tensor_map[outputs[i]] << ", ";
+  }
+  ofs << "};\n";
+  ofs << "  size_t buffer_size[" << outputs_size << "] = {";
   for (size_t i = 0; i < outputs_size; ++i) {
     Tensor *output = outputs[i];
     MS_CHECK_PTR_IF_NULL(output);
-    ofs << "  memcpy(outputs[" << i << "], " << tensor_map[output] << ", " << output->Size() << ");\n";
+    ofs << output->Size() << ", ";
   }
+  ofs << "};\n";
+  ofs << "  for (int i = 0; i < " << outputs_size << "; i++) {\n"
+      << "    MicroTensor *micro_tensor = (MicroTensor *)outputs_ori->handle_list[i];\n"
+      << "    int cur_type = micro_tensor->type;\n"
+      << "    int expect_type = expect_types[i];\n";
+  ofs << "    if (cur_type == expect_type) {\n"
+      << "      memcpy(outputs[i], buffer[i], buffer_size[i]);\n"
+      << "      continue;\n"
+      << "    }\n"
+      << "    int shape_size = micro_tensor->ndim;\n"
+      << "    int num = 1;\n"
+      << "    for (int i = 0; i < shape_size; ++i) {\n"
+      << "      num *= micro_tensor->shape[i];\n"
+      << "    }\n";
+  ofs << "    int type_trans_mode = TypeTransMode_MAX;\n"
+         "    if (expect_type == kMSDataTypeNumberTypeFloat16 && cur_type == kMSDataTypeNumberTypeFloat32) {\n"
+         "      type_trans_mode = TypeTransMode_FP32_TO_FP16;\n"
+         "    } else if (expect_type == kMSDataTypeNumberTypeFloat32 && cur_type == kMSDataTypeNumberTypeFloat16) {\n"
+         "      type_trans_mode = TypeTransMode_FP16_TO_FP32;\n"
+         "    }\n";
+  ofs << "    if (type_trans_mode == TypeTransMode_UNSUPPORT) {\n"
+      << "      return kMSStatusLiteNotSupport;\n"
+      << "    }\n";
+  ofs << "#ifdef ENABLE_FP16\n"
+      << "    if (type_trans_mode == TypeTransMode_FP32_TO_FP16) {\n"
+      << "      Fp32CastToFp16((float *)(buffer[i]), (float16_t *)&outputs, num);\n"
+      << "      type_changed[i] = true;\n"
+      << "    } else if (type_trans_mode == TypeTransMode_FP16_TO_FP32) {\n"
+      << "      Fp16CastToFp32((float16_t *)&outputs, (float *)(buffer[i]), num);\n"
+      << "      type_changed[i] = true;\n"
+      << "    }\n"
+      << "#endif\n"
+      << "  }\n";
   ofs << "  return RET_OK;\n"
          "}\n\n";
 }
