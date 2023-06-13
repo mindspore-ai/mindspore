@@ -220,7 +220,7 @@ int ConvertTensorToNCOrNH(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
   if (status != lite::RET_OK) {
     return lite::RET_ERROR;
   }
-  if (data_info.shape_.empty() || (data_info.shape_.size() == 1 && data_info.shape_[0] == 0) ||
+  if (lite::JudgeDynamicShape(data_info.shape_) ||
       std::all_of(data_info.shape_.begin(), data_info.shape_.end(), [](int val) { return val == 1; }) ||
       (data_info.data_type_ != kNumberTypeFloat32 && data_info.data_type_ != kNumberTypeFloat)) {
     return lite::RET_OK;

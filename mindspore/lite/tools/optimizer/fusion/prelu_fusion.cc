@@ -110,7 +110,7 @@ bool PReluFusion::CheckPattern(const FuncGraphPtr &func_graph, const EquivPtr &e
   auto mul_const_shape = mul_const_tensor->shape();
   MS_CHECK_TRUE_RET(mul_const_tensor->data_c() != nullptr, false);
   auto const_data = reinterpret_cast<float *>(mul_const_tensor->data_c());
-  if (mul_const_shape.empty() || (mul_const_shape.size() == 1 && mul_const_shape[0] == 1)) {
+  if (lite::JudgeDynamicShape(mul_const_shape)) {
     slope->push_back(const_data[0]);
   } else {
     for (int offset = 0; offset < mul_const_tensor->ElementsNum(); offset++) {

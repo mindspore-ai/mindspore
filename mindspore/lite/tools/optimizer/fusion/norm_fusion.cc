@@ -164,7 +164,7 @@ bool NormFusion::GetNormTypeAndAxis(const FuncGraphPtr &func_graph, const CNodeP
     return false;
   }
   int shape_size = static_cast<int>(shape.size());
-  if (shape.empty()) {
+  if (lite::JudgeDynamicShape(shape)) {
     auto shape_size_map = ShapeSizeInfer(func_graph);
     if (shape_size_map.find(input_cnode->fullname_with_scope()) != shape_size_map.end()) {
       shape_size = shape_size_map[input_cnode->fullname_with_scope()];
@@ -271,7 +271,7 @@ bool NormFusion::CheckPattern(const FuncGraphPtr &func_graph, const EquivPtr &eq
   if (gamma_shape != beta_shape) {
     return false;
   }
-  if (epsilon_shape.empty() || (epsilon_shape.size() == 1 && epsilon_shape[0] == 1)) {
+  if (lite::JudgeDynamicShape(epsilon_shape)) {
     MS_CHECK_TRUE_RET(epsilon_tensor->data_c() != nullptr, false);
     auto epsilon_data = reinterpret_cast<float *>(epsilon_tensor->data_c());
     *epsilon = epsilon_data[0];

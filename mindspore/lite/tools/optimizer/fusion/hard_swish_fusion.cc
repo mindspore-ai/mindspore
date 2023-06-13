@@ -113,7 +113,7 @@ bool HardSwishFusion::CheckPattern(const FuncGraphPtr &func_graph, const EquivPt
   auto add_const_tensor = add_const_param->cast<tensor::TensorPtr>();
   MS_CHECK_TRUE_RET(add_const_tensor != nullptr, false);
   auto add_const_shape = add_const_tensor->shape();
-  if (add_const_shape.empty() || (add_const_shape.size() == 1 && add_const_shape[0] == 1)) {
+  if (lite::JudgeDynamicShape(add_const_shape)) {
     MS_CHECK_TRUE_RET(add_const_tensor->data_c() != nullptr, false);
     auto const_data = reinterpret_cast<float *>(add_const_tensor->data_c());
     if (const_data[0] != kHSwishAddConst) {
@@ -134,7 +134,7 @@ bool HardSwishFusion::CheckPattern(const FuncGraphPtr &func_graph, const EquivPt
   auto div_const_tensor = div_const_param->cast<tensor::TensorPtr>();
   MS_CHECK_TRUE_RET(div_const_tensor != nullptr, false);
   auto div_const_shape = div_const_tensor->shape();
-  if (div_const_shape.empty() || (div_const_shape.size() == 1 && div_const_shape[0] == 1)) {
+  if (lite::JudgeDynamicShape(div_const_shape)) {
     MS_CHECK_TRUE_RET(div_const_tensor->data_c() != nullptr, false);
     auto const_data = reinterpret_cast<float *>(div_const_tensor->data_c());
     if (const_data[0] != kHSwishDivConst) {

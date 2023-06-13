@@ -139,7 +139,7 @@ STATUS TfliteLstmCellFusion::GetFloatScalarFromTensorInfo(const AnfNodePtr &tens
   }
   auto default_param_ptr = utils::cast<tensor::TensorPtr>(default_param);
   auto tensor_shape = default_param_ptr->shape();
-  if (!(tensor_shape.empty() || (tensor_shape.size() == 1 && tensor_shape[0] == 1))) {
+  if (!lite::JudgeDynamicShape(tensor_shape)) {
     MS_LOG(DEBUG) << "default param is not scalar";
     return RET_ERROR;
   }

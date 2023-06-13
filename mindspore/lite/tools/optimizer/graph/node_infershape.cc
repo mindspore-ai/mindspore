@@ -81,6 +81,17 @@ STATUS ConvertAbstract(const AbstractBasePtr &src_abs, AbstractBasePtr *dst_abs,
       return lite::RET_ERROR;
     }
   }
+
+  // change core/ops dynamic rank {-2} to Lite dynamic shape {-1}, will be removed after calling core/infer
+  ShapeVector shape;
+  if (opt::FetchShapeFromAbstract(*dst_abs, &shape) != RET_OK) {
+    MS_LOG(ERROR) << "FetchShapeFromAbstract failed.";
+    return RET_ERROR;
+  }
+  if (IsDynamicRank(shape)) {
+    auto nnacl_dynamic_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeDimAny});
+    (*dst_abs)->set_shape(nnacl_dynamic_shape);
+  }
   return RET_OK;
 }
 }  // namespace
@@ -369,16 +380,7 @@ STATUS NodeInferShape::InferShapeByOps(const CNodePtr &cnode, bool invalid) {
     infer_ret = OpsInferShape(anf_prim, abs_list, &result, invalid);
   } catch (const std::exception &e) {
     std::cout << e.what() << std::endl;
-    if (invalid) {
-      infer_ret = lite::RET_INFER_INVALID;
-    } else {
-      infer_ret = RET_ERROR;
-    }
-  }
-  if (invalid) {
-    if (infer_ret != RET_OK) {
-      infer_ret = lite::RET_INFER_INVALID;
-    }
+    infer_ret = lite::RET_INFER_INVALID;
   }
   (void)anf_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(static_cast<int64_t>(ori_format)));
   if (infer_ret == lite::RET_OK) {
@@ -478,13 +480,12 @@ STATUS NodeInferShape::SetCNodeAbstract(const std::shared_ptr<CNode> &cnode, con
       return RET_ERROR;
     }
     if (status == lite::RET_INFER_INVALID) {
-      ShapeVector shape;
       if (tensor->data_type() == kObjectTypeTensorType) {
-        shape = {0};
+        ShapeVector shape = {0};
+        auto abstract_shape = std::make_shared<abstract::Shape>(shape);
+        CHECK_NULL_RETURN(abstract_shape);
+        new_abstract->set_shape(abstract_shape);
       }
-      auto abstract_shape = std::make_shared<abstract::Shape>(shape);
-      CHECK_NULL_RETURN(abstract_shape);
-      new_abstract->set_shape(abstract_shape);
     }
     cnode->set_abstract(new_abstract);
   } else {
@@ -497,13 +498,12 @@ STATUS NodeInferShape::SetCNodeAbstract(const std::shared_ptr<CNode> &cnode, con
         return RET_ERROR;
       }
       if (status == lite::RET_INFER_INVALID) {
-        ShapeVector shape;
         if (tensor->data_type() == kObjectTypeTensorType) {
-          shape = {0};
+          ShapeVector shape = {0};
+          auto abstract_shape = std::make_shared<abstract::Shape>(shape);
+          CHECK_NULL_RETURN(abstract_shape);
+          new_abstract->set_shape(abstract_shape);
         }
-        auto abstract_shape = std::make_shared<abstract::Shape>(shape);
-        CHECK_NULL_RETURN(abstract_shape);
-        new_abstract->set_shape(abstract_shape);
       }
       abstract_list.emplace_back(new_abstract);
     }
