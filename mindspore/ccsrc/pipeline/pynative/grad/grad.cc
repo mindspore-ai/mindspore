@@ -133,18 +133,6 @@ ValuePtr ConvertOutputValueToTensor(const ValuePtr &v) {
                     [](const ValuePtr &e) { return PyNativeAlgo::Common::IsTensor(e, true); })) {
       return v;
     }
-    // All value are not tensor
-    if (std::all_of(v_seq->value().begin(), v_seq->value().end(),
-                    [](const ValuePtr &e) { return !PyNativeAlgo::Common::IsTensor(e, true); })) {
-      ValueTuplePtr value_tuple;
-      if (v_seq->isa<ValueList>()) {
-        value_tuple = std::make_shared<ValueTuple>(v_seq->value());
-      } else {
-        value_tuple = v_seq->cast<ValueTuplePtr>();
-      }
-      MS_EXCEPTION_IF_NULL(value_tuple);
-      return opt::CreateTupleTensor(value_tuple);
-    }
     MS_LOG(DEBUG) << "Output is value sequence, but have tensor and other type mixed. Its value is " << v->ToString();
     return PyNativeAlgo::Common::FilterSensValues(v);
   } else if (v->isa<FloatImm>()) {
@@ -734,6 +722,7 @@ void GradExecutor::MakeNewTopGraph(const InputArgsInfoPtr &input_args_info) {
   auto use_dynamic_shape_process = GetTopCellDynamicFlag(input_args_info, obj_id_with_grad_order);
   top_cell_->set_use_dynamic_shape_process(use_dynamic_shape_process);
   top_cell_->set_need_save_dynamic_detect_nodes(IsNeedSaveDynamicDetectNodes(top_cell_, use_dynamic_shape_process));
+  top_cell_->set_input_args_info(top_input_args_info_);
   PushHighOrderGraphStack(top_cell_);
   MS_LOG(DEBUG) << "New top graph, fg ptr " << fg.get() << " resource ptr " << resource.get();
 }
@@ -997,12 +986,11 @@ TopCellInfoPtr GradExecutor::GetAlreadyRunTopCell(const std::string &already_run
 
 void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
                                 const py::object &grad_position, const py::args &args) {
+  GetPreRunTopCell(grad, obj, args);
+  SetSensValue(grad, top_input_args_info_, args);
   MS_EXCEPTION_IF_NULL(top_input_args_info_);
   MS_LOG(DEBUG) << "GradNetInner start " << args.size() << ", cell_id " << top_input_args_info_->cell_id
                 << ", input args info ptr " << top_input_args_info_.get();
-
-  SetSensValue(grad, top_input_args_info_, args);
-  GetPreRunTopCell(grad, obj, args);
 
   // For async, top can not be change when run SetForwardLastNodeInfo; Change top cell after sync
   auto already_run_top_cell = already_run_top_cell_.at(top_cell()->already_run_cell_id());
@@ -1024,6 +1012,7 @@ void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::ob
   AsyncClearTopCell();
   op_num_in_bprop_graph_ = top_cell()->op_index();
   top_cell()->set_grad_operation(grad_operation_);
+  top_cell()->set_input_args_info(nullptr);
   SetBpropGraphJitLevel(obj);
   bool weight_param_is_tuple = true;
   auto w_args = GetWeightsArgs(weights, &weight_param_is_tuple);
@@ -1083,6 +1072,7 @@ void GradExecutor::GetPreRunTopCell(const prim::GradOperationPtr &grad, const py
   MS_LOG(DEBUG) << "Get pre run top cell cell id:" << cell_id;
   const auto &check_already_run_cell_id = GetAlreadyRunCellId(cell_id);
   top_cell_ = GetTopCell(check_already_run_cell_id);
+  top_input_args_info_ = top_cell_->input_args_info();
 }
 
 void GradExecutor::GetGradGraph(const autograd::GradAttr &grad_attr, const std::vector<tensor::TensorPtr> &w_args,
@@ -1137,6 +1127,7 @@ std::vector<tensor::TensorPtr> GradExecutor::GetWeightsArgs(const py::object &we
       const auto value = PyNativeAlgo::DataConvert::PyObjToValue(weights);
       auto tensor = value->cast<tensor::TensorPtr>();
       (void)w_args.emplace_back(tensor);
+      MS_EXCEPTION_IF_NULL(tensor);
       *weight_param_is_tuple = false;
     } else {
       return GetDefaultWeights();
@@ -1633,9 +1624,6 @@ AnfNodePtr GradExecutor::GetValueSequenceInput(const ValuePtr &v, const std::str
   auto cnode = curr_g()->NewCNode(inputs);
   cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(abs_list));
   MS_LOG(DEBUG) << "Create make tuple node: " << cnode->DebugString();
-  // CheckGraphDynamic(cnode);
-  // top_cell()->SetNodeMapInGraphInfoMap(obj_id, cnode, -1, false);
-  top_cell()->IncreaseOpIndex();
   return cnode;
 }
 
@@ -1674,8 +1662,6 @@ AnfNodePtr GradExecutor::CreateTupleGetItemNode(const std::string &obj_id,
     }
   }
   MS_LOG(DEBUG) << "Create tuple getitem node " << c_node->DebugString() << ", abs " << c_node->abstract()->ToString();
-  // CheckGraphDynamic(c_node);
-  top_cell()->IncreaseOpIndex();
   return c_node;
 }
 

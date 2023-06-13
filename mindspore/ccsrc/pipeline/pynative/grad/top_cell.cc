@@ -66,10 +66,6 @@ void SplitString(const std::string &str, std::vector<std::string> *id_vec) {
 void TopCellInfo::RecordCellBackwardHookOp(const std::string &cell_order, const AnfNodePtr &hook_op) {
   MS_EXCEPTION_IF_NULL(hook_op);
   (void)cell_backward_hook_op_[cell_order].emplace_back(hook_op);
-  constexpr size_t cell_backward_hook_max_num = 2;
-  if (cell_backward_hook_op_[cell_order].size() > cell_backward_hook_max_num) {
-    MS_LOG(EXCEPTION) << "Cell order: " << cell_order << " only has two backward hook op.";
-  }
 }
 
 void TopCellInfo::GetOpInfo(const FrontendOpRunInfoPtr &op_run_info) const {

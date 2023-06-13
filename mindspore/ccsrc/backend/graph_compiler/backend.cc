@@ -351,7 +351,7 @@ namespace {
 ValuePtr GetInputofBpropCut(const std::shared_ptr<GraphCompiler> &graph_compiler, const CNodePtr &parent_node,
                             const AnfNodePtr &input_node, const std::map<KernelWithIndex, TensorPtr> &op_output,
                             const std::map<AnfNodePtr, size_t> &parameter_index,
-                            const std::vector<TensorPtr> &graph_inputs, InputTensorInfo *const input_tensor_info,
+                            const std::vector<TensorPtr> &graph_inputs, InputTensorInfo *input_tensor_info,
                             size_t input_index) {
   if (!IsPrimitiveCNode(input_node, prim::kPrimMakeTuple)) {
     auto real_input = common::AnfAlgo::VisitKernel(input_node, 0).first;
@@ -519,7 +519,7 @@ void RunControlOperator(const std::shared_ptr<GraphCompiler> &graph_compiler,
 
 void UpdateOutputAbstract(const VectorRef &outputs, const session::BackendOpRunInfoPtr &op_run_info) {
   auto output_size = outputs.size();
-  if (output_size == 1) {
+  if (output_size == 1 && op_run_info->base_op_run_info.op_name != kGetNextOpName) {
     auto output_tensor = utils::cast<tensor::TensorPtr>(outputs[0]);
     MS_EXCEPTION_IF_NULL(output_tensor);
     op_run_info->base_op_run_info.abstract = output_tensor->ToAbstract();

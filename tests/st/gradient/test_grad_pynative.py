@@ -23,6 +23,7 @@ from mindspore import jit
 from mindspore.ops import composite as C
 from mindspore.ops import grad, value_and_grad, vmap, get_grad
 from mindspore.common import dtype as mstype
+from mindspore import ops
 from mindspore import Parameter, ParameterTuple
 
 context.set_context(mode=context.PYNATIVE_MODE)
@@ -46,6 +47,34 @@ class MultipleInputsSingleOutputNet(nn.Cell):
 class MultipleInputsMultipleOutputsNet(nn.Cell):
     def construct(self, x, y, z):
         return x ** 2 + y ** 2 + z ** 2, x * y * z
+
+
+class NetworkW(nn.Cell):
+    def __init__(self):
+        super(NetworkW, self).__init__()
+        self.w = Parameter(Tensor([5.0], mstype.float32), name='w')
+
+    def construct(self, x):
+        return self.w
+
+
+class NetworkX(nn.Cell):
+    def construct(self, x):
+        return x
+
+
+class NetWorkSequence(nn.Cell):
+    def __init__(self):
+        super(NetWorkSequence, self).__init__()
+        self.scale = Tensor(np.ones([2]), mstype.float32)
+        self.bias = Tensor(np.ones([2]), mstype.float32)
+        self.mean = Tensor(np.ones([2]), mstype.float32)
+        self.variance = Tensor(np.ones([2]), mstype.float32)
+        self.batch_norm = ops.BatchNorm()
+
+    def construct(self, x):
+        output = self.batch_norm(x, self.scale, self.bias, self.mean, self.variance)
+        return output[0]
 
 
 class ParamNet(nn.Cell):
@@ -854,3 +883,61 @@ def test_grad_outer_list_weight():
     out = grad_net(x, y)
     expect_value = Tensor([2, 2], mstype.int64)
     assert np.allclose(out[0].asnumpy(), expect_value.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_with_only_input():
+    """
+    Feature: Test grad special case
+    Description: Test grad with input
+    Expectation: Success
+    """
+
+    model = NetworkX()
+    grad_fn = C.GradOperation(get_all=True)
+    x = Tensor([2], mstype.float32)
+    gradients = grad_fn(model)(x)
+    print(gradients)
+    expect_grad = Tensor([1.], mstype.float32)
+    np.testing.assert_almost_equal(gradients[0].asnumpy(), expect_grad.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_with_only_parameter():
+    """
+    Feature: Test grad special case
+    Description: Test grad with parameter
+    Expectation: Success
+    """
+
+    model = NetworkW()
+    grad_fn = C.GradOperation(get_by_list=True)
+    x = Tensor([2], mstype.float32)
+    gradients = grad_fn(model)(x)
+    print(gradients)
+    expect_grad = Tensor([1.], mstype.float32)
+    np.testing.assert_almost_equal(gradients[0].asnumpy(), expect_grad.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_squence_out():
+    """
+    Feature: Test grad special case
+    Description: Test grad with sequence out
+    Expectation: Success
+    """
+
+    model = NetWorkSequence()
+    grad_fn = ops.grad(model)
+    x = Tensor(np.ones([2, 2]), mstype.float32)
+    gradients = grad_fn(x)
+    print(gradients)
+    expect_grad = Tensor(
+        [[0.999995, 0.999995], [0.999995, 0.999995]], mstype.float32)
+    np.testing.assert_almost_equal(gradients.asnumpy(), expect_grad.asnumpy())

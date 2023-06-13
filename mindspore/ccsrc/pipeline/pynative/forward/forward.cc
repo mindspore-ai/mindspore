@@ -70,6 +70,28 @@ ValuePtr ShallowCopyValue(const FrontendOpRunInfoPtr &op_run_info, const ValuePt
 }
 
 /// TODO(caifubi): delete and throw exception in Init().
+ValuePtr CopyTensorValueWithNewId(const ValuePtr &v) {
+  MS_EXCEPTION_IF_NULL(v);
+  if (v->isa<tensor::Tensor>()) {
+    auto tensor = v->cast<tensor::TensorPtr>();
+    // This constructor will make a tensor with the new id
+    auto new_tensor = std::make_shared<tensor::Tensor>(tensor->data_type(), tensor->shape(), tensor->data_ptr());
+    new_tensor->set_device_address(tensor->device_address());
+    new_tensor->set_sync_status(tensor->sync_status());
+    new_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
+    return new_tensor;
+  } else if (v->isa<ValueSequence>()) {
+    const auto &v_seq = v->cast<ValueSequencePtr>();
+    ValuePtrList v_list;
+    for (const auto &ele : v_seq->value()) {
+      (void)v_list.emplace_back(CopyTensorValueWithNewId(ele));
+    }
+    return std::make_shared<ValueTuple>(v_list);
+  } else {
+    return v;
+  }
+}
+
 MsBackendPolicy GetBackendPolicy(const std::string &device_target) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -546,19 +568,7 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
   if (IsVmOp(op_run_info->base_op_run_info.op_name)) {
     std::vector<ValuePtr> result(op_run_info->input_size);
     for (size_t i = 0; i < op_run_info->input_size; i++) {
-      bool input_is_tensor = PyNativeAlgo::Common::IsTensor(op_run_info->op_grad_info->input_value[i]);
-      if (input_is_tensor && op_run_info->base_op_run_info.op_name != prim::kPrimHookBackward->name() &&
-          op_run_info->base_op_run_info.op_name != prim::kPrimCellBackwardHook->name()) {
-        const auto &tensor = op_run_info->op_grad_info->input_value[i]->cast<tensor::TensorPtr>();
-        // Just get new tensor id
-        auto new_tensor = std::make_shared<tensor::Tensor>(tensor->data_type(), tensor->shape(), tensor->data_ptr());
-        new_tensor->set_device_address(tensor->device_address());
-        new_tensor->set_sync_status(tensor->sync_status());
-        new_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
-        result[i] = new_tensor;
-      } else {
-        result[i] = op_run_info->op_grad_info->input_value[i];
-      }
+      result[i] = CopyTensorValueWithNewId(op_run_info->op_grad_info->input_value[i]);
     }
     auto result_v = ConstructOutputInVM(op_run_info, result);
     if (op_run_info->requires_grad) {

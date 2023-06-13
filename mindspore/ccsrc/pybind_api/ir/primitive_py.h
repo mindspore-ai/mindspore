@@ -114,6 +114,10 @@ class PrimitivePyAdapter {
 
   struct PrimitiveUserData {
     py::object obj;
+    ~PrimitiveUserData() {
+      py::gil_scoped_acquire acquire_gil;
+      obj = py::none();
+    }
   };
 
   void SetUserData(const py::str &key, const py::object &value);

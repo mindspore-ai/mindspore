@@ -46,8 +46,12 @@ struct GradAttr {
 };
 
 struct GradParam {
-  GradParam(OpGradInfoPtr op_grad_info, bool grad_by_value, bool use_dynamic_shape_process)
-      : op_grad_info(op_grad_info), grad_by_value(grad_by_value), use_dynamic_shape_process(use_dynamic_shape_process) {
+  GradParam(OpGradInfoPtr op_grad_info, bool grad_by_value, bool use_dynamic_shape_process,
+            const CNodePtr &cnode = nullptr)
+      : op_grad_info(op_grad_info),
+        grad_by_value(grad_by_value),
+        use_dynamic_shape_process(use_dynamic_shape_process),
+        cnode(cnode) {
     input_size = op_grad_info->input_value.size();
   }
 
@@ -220,6 +224,7 @@ class AutoGradCellImpl {
   AnfNodePtr MapParameter(const ValuePtr &value, const abstract::AbstractBasePtr &abs);
   ParameterPtr ExtractParameter(const tensor::TensorPtr &tensor);
   AnfNodePtrList ExtractParamters(const tensor::TensorPtrList weights, const FuncGraphPtr &fg);
+  void UpdateSensParameter(const ValuePtr &value);
   AnfNodePtr TraceShape(const FunctionNodePtr &fn, const ValuePtr &out_value, const abstract::AbstractBasePtr &out_abs,
                         const tensor::TensorPtr &input_tensor, const AnfNodePtr &din);
   void BuildBPropCutCNode(const CNodePtr &cnode, const PrimitivePtr &prim, std::vector<CNodePtr> *outputs);
