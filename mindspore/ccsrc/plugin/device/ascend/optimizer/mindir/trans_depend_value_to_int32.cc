@@ -73,7 +73,9 @@ const AnfNodePtr TransDependValueToInt32::Process(const FuncGraphPtr &func_graph
   // if node has depend value
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (AnfUtils::GetCNodeName(cnode) == kScatterNdOpName) {
+  static const std::set<std::string> kSkipNodeName = {kScatterNdOpName, kAdaptiveAvgPool2DGradOpName};
+  auto node_name = AnfUtils::GetCNodeName(cnode);
+  if (kSkipNodeName.find(node_name) != kSkipNodeName.end()) {
     return nullptr;
   }
   auto depend_set = abstract::GetValueDependArgIndices(cnode);
