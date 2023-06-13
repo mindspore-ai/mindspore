@@ -71,7 +71,7 @@ class PipelineTransformer {
   AnfNodeIndexSet GetActualOpUsers(const std::pair<AnfNodePtr, int> &node_pair, NodeUsersMap *node_users_map);
   AnfNodePtr HandleParameterGraph(const AnfNodePtr &node, const AnfNodePtr &use_node, int64_t stage, int64_t user_stage,
                                   const ValuePtr &micro, size_t pos, const std::vector<AnfNodePtr> &ops);
-  ValuePtr SetMicroBatch(const AnfNodePtr &node, int64_t micro_size) const;
+  ValuePtr SetMicroBatch(const AnfNodePtr &node, int64_t micro_size, size_t batch_axis) const;
   std::vector<AnfNodePtr> HandleSharedParameter();
   SendAttr InsertSend(const AnfNodePtr &parameter, int64_t user_node_stage, int64_t node_stage, const ValuePtr &value);
   AnfNodePtr InsertReceive(const FuncGraphPtr &graph, const AnfNodePtr &node, const AnfNodePtr &use_node, int index,
@@ -93,6 +93,7 @@ class PipelineTransformer {
   void RedundancyNode(const AnfNodePtr &node, mindspore::HashMap<CNodePtr, std::vector<AnfNodePtr>> *make_tuple_map);
   bool IsRedundancyParameter(const AnfNodePtr &parameter);
   void ElimParameter();
+  size_t GetBatchAxisForInput(const AnfNodeIndexSet &input_node_users) const;
   FuncGraphManagerPtr manager_;
   int64_t stage_;
   FuncGraphPtr root_;
