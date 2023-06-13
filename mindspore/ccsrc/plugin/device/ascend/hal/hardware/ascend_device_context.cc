@@ -62,6 +62,12 @@ void AscendDeviceContext::Initialize() {
   DeviceContext::SetDynKernelExecutor(std::make_shared<GeKernelExecutor>());
   GetKernelExecutor(true)->SetDeviceContext(this);
 
+  auto force_acl = common::GetEnv("MS_DEV_FORCE_ACL");
+  if (!force_acl.empty()) {
+    DeviceContext::SetKernelExecutor(GetKernelExecutor(true));
+    GetKernelExecutor(false)->SetDeviceContext(this);
+  }
+
   MS_EXCEPTION_IF_NULL(device_res_manager_);
   device_res_manager_->Initialize();
   auto ascend_res_manager = dynamic_cast<AscendDeviceResManager *>(device_res_manager_.get());

@@ -638,6 +638,7 @@ void AscendBackendOptimizeACLAfterKernelSelect(const std::shared_ptr<session::Ke
   auto opt_acl_after_kernel_select_pm = std::make_shared<PassManager>("opt_acl_after_kernel_select_pm");
   opt_acl_after_kernel_select_pm->AddPass(std::make_shared<SetFraczGroupAttr>());
   opt_acl_after_kernel_select_pm->AddPass(std::make_shared<InsertIdentity>());
+  opt_acl_after_kernel_select_pm->AddPass(std::make_shared<InsertCast>());
   optimizer->AddPassManager(opt_acl_after_kernel_select_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();

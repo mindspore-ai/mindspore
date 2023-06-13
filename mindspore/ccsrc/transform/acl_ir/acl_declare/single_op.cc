@@ -20,6 +20,8 @@ namespace mindspore {
 namespace transform {
 REGISTER_ACL_OP(Add).Input(0, {}, {"NC1HWC0"}).Input(1, {}, {"NC1HWC0"});
 
-REGISTER_ACL_OP(Cast).Input(0, {}, {"FRACTAL_Z"});
+REGISTER_ACL_OP(Cast).Input(0, {}, {"FRACTAL_Z", "FRACTAL_NZ"});
+
+REGISTER_ACL_OP(Reshape).Input(0, {}, {"FRACTAL_Z", "FRACTAL_NZ"});
 }  // namespace transform
 }  // namespace mindspore

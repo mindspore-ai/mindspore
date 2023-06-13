@@ -132,6 +132,7 @@ void AclRunner::SetStaticMode() {
     MS_LOG(EXCEPTION) << "Acl set static compile mode failed! op_name is " << op_type_ << " and error flag is "
                       << set_compile_flag;
   }
+  is_dynamic_ = false;
 }
 
 void AclRunner::SetDynamicMode() {
@@ -140,6 +141,7 @@ void AclRunner::SetDynamicMode() {
     MS_LOG(EXCEPTION) << "Acl set static compile mode failed! op_name is " << op_type_ << " and error flag is "
                       << set_compile_flag;
   }
+  is_dynamic_ = true;
 }
 
 void AclRunner::SetRunMode(const std::string &mode) {
@@ -153,19 +155,22 @@ void AclRunner::SetRunMode(const std::string &mode) {
   }
 }
 
-void AclRunner::Run(void *stream_ptr, bool is_sync) {
-  MS_EXCEPTION_IF_NULL(stream_ptr);
-
+void AclRunner::AoeDump() {
   // Dump acl graph for aoe.
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->CanDump(kIntroductory)) {
+  if (context_ptr->CanDump(kFully)) {
     auto file_path = GetSaveGraphsPathName("acl_dump");
     auto real_path = FileUtils::CreateNotExistDirs(file_path, true);
     if (!real_path.has_value()) {
       MS_LOG(EXCEPTION) << "Get real path failed. path=" << file_path;
     }
     MS_LOG(INFO) << "Start aclGenGraphAndDumpForOp of op_type: " << op_type_;
+    auto set_compile_flag = aclopSetCompileFlag(ACL_OP_COMPILE_DEFAULT);
+    if (set_compile_flag != ACL_SUCCESS) {
+      MS_LOG(EXCEPTION) << "Acl set static compile mode failed! op_name is " << op_type_ << " and error flag is "
+                        << set_compile_flag;
+    }
     auto dump_ret = aclGenGraphAndDumpForOp(
       const_cast<char *>(op_type_.c_str()), GetNumRealInputs(),
       const_cast<aclTensorDesc **>(acl_param_.input_desc.data()),
@@ -175,7 +180,17 @@ void AclRunner::Run(void *stream_ptr, bool is_sync) {
     if (dump_ret != ACL_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Acl dump graph failed!";
     }
+    if (is_dynamic_) {
+      SetDynamicMode();
+    } else {
+      SetStaticMode();
+    }
   }
+}
+
+void AclRunner::Run(void *stream_ptr, bool is_sync) {
+  MS_EXCEPTION_IF_NULL(stream_ptr);
+  AoeDump();
 
   MS_LOG(DEBUG) << "Start aclopCompileAndExecute of op_type: " << op_type_;
   if (is_sync) {

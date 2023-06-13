@@ -31,6 +31,7 @@
 #include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
+#include "plugin/device/ascend/optimizer/ascend_backend_optimization.h"
 #include "include/backend/optimizer/helper.h"
 #include "kernel/acl/acl_kernel_build.h"
 #include "kernel/aicpu/aicpu_kernel_build.h"
