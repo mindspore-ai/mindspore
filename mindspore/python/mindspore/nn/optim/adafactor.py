@@ -262,7 +262,7 @@ class AdaFactor(Optimizer):
         >>> from mindspore import nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> #1) Parameters use the default learning rate with None and weight decay with 0.
         >>> optim = nn.AdaFactor(params=net.trainable_params())
