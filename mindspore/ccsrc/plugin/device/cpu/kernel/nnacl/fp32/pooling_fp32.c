@@ -20,17 +20,17 @@
 #include "nnacl/op_base.h"
 #include "nnacl/pooling_fp32_simd.h"
 
-int AvgPoolingBatch(const float *src_b_ptr, float *dst_b_ptr, const PoolingParameter *pooling_param, int task_id,
-                    float minf, float maxf) {
-  int win_w = pooling_param->window_w_, win_h = pooling_param->window_h_;
-  int in_w = pooling_param->input_w_, in_h = pooling_param->input_h_;
-  int output_w = pooling_param->output_w_, output_h = pooling_param->output_h_;
-  int channel = pooling_param->input_channel_;
+int AvgPoolingBatch(const float *src_b_ptr, float *dst_b_ptr, const PoolingParameter *pooling_param,
+                    const PoolingComputeParam *pooling_args, int task_id, int thread_num) {
+  int in_w = pooling_args->input_w_, in_h = pooling_args->input_h_;
+  int win_w = pooling_args->window_w_, win_h = pooling_args->window_h_;
+  int output_w = pooling_args->output_w_, output_h = pooling_args->output_h_;
+  int channel = pooling_args->input_channel_;
   int out_plane = output_w * output_h;
   int out_tile_count = UP_DIV(out_plane, TILE_NUM);
   NNACL_CHECK_ZERO_RETURN_ERR(output_w);
 
-  for (int thread_id = task_id; thread_id < out_tile_count; thread_id += pooling_param->thread_num_) {
+  for (int thread_id = task_id; thread_id < out_tile_count; thread_id += thread_num) {
     int cal_start_index = thread_id * TILE_NUM;
     int real_cal_num = (out_plane - cal_start_index) > TILE_NUM ? TILE_NUM : (out_plane - cal_start_index);
     for (int i = 0; i < real_cal_num; i++) {
@@ -52,7 +52,8 @@ int AvgPoolingBatch(const float *src_b_ptr, float *dst_b_ptr, const PoolingParam
       NNACL_CHECK_TRUE_RET(real_win_h_end > real_win_h_start, NNACL_ERR);
       NNACL_CHECK_TRUE_RET(real_win_w_end > real_win_w_start, NNACL_ERR);
       SIMD_RUN_NO_SCALAR(AvgPoolingBatch, ci, src_plane_ptr, channel, dst_plane_ptr, real_win_h_start, real_win_h_end,
-                         real_win_w_start, real_win_w_end, in_h_index, in_w, in_w_index, minf, maxf);
+                         real_win_w_start, real_win_w_end, in_h_index, in_w, in_w_index, pooling_args->minf,
+                         pooling_args->maxf);
 
       for (; ci < channel; ci++) {
         const float *src_c_ptr = src_plane_ptr + ci;
@@ -68,8 +69,8 @@ int AvgPoolingBatch(const float *src_b_ptr, float *dst_b_ptr, const PoolingParam
         }    // win_h loop
         NNACL_CHECK_TRUE_RET(real_count != 0, NNACL_ERR);
         tmp_avg = tmp_avg / (float)real_count;
-        tmp_avg = fmaxf(tmp_avg, minf);
-        tmp_avg = fminf(tmp_avg, maxf);
+        tmp_avg = fmaxf(tmp_avg, pooling_args->minf);
+        tmp_avg = fminf(tmp_avg, pooling_args->maxf);
         dst_c_ptr[0] = tmp_avg;
       }  // channel_res loop
     }    // real_cal_num loop
@@ -77,19 +78,19 @@ int AvgPoolingBatch(const float *src_b_ptr, float *dst_b_ptr, const PoolingParam
   return NNACL_OK;
 }
 
-int AvgPooling(const float *input_ptr, float *output_ptr, const PoolingParameter *pooling_param, int task_id,
-               float minf, float maxf) {
-  int in_w = pooling_param->input_w_;
-  int in_h = pooling_param->input_h_;
-  int output_w = pooling_param->output_w_;
-  int output_h = pooling_param->output_h_;
-  int channel = pooling_param->input_channel_;
-  int output_batch = pooling_param->output_batch_;
+int AvgPooling(const float *input_ptr, float *output_ptr, const PoolingParameter *pooling_param,
+               const PoolingComputeParam *pooling_args, int task_id, int thread_num) {
+  int in_w = pooling_args->input_w_;
+  int in_h = pooling_args->input_h_;
+  int output_w = pooling_args->output_w_;
+  int output_h = pooling_args->output_h_;
+  int channel = pooling_args->input_channel_;
+  int output_batch = pooling_args->output_batch_;
 
   for (int batch = 0; batch < output_batch; batch++) {
     const float *src_b_ptr = input_ptr + batch * in_h * in_w * channel;
     float *dst_b_ptr = output_ptr + batch * output_h * output_w * channel;
-    int ret = AvgPoolingBatch(src_b_ptr, dst_b_ptr, pooling_param, task_id, minf, maxf);
+    int ret = AvgPoolingBatch(src_b_ptr, dst_b_ptr, pooling_param, pooling_args, task_id, thread_num);
     if (ret != NNACL_OK) {
       return ret;
     }
@@ -98,11 +99,11 @@ int AvgPooling(const float *input_ptr, float *output_ptr, const PoolingParameter
 }
 
 int AvgPoolingFromNC4HW4ToNHWCLessC(const float *src_b_ptr, float *dst_b_ptr, const PoolingParameter *pooling_param,
-                                    int task_id, float minf, float maxf) {
-  int in_w = pooling_param->input_w_, in_h = pooling_param->input_h_;
-  int win_w = pooling_param->window_w_, win_h = pooling_param->window_h_;
-  int output_w = pooling_param->output_w_, output_h = pooling_param->output_h_;
-  int channel = pooling_param->input_channel_;
+                                    const PoolingComputeParam *pooling_args, int task_id, int thread_num) {
+  int in_w = pooling_args->input_w_, in_h = pooling_args->input_h_;
+  int win_w = pooling_args->window_w_, win_h = pooling_args->window_h_;
+  int output_w = pooling_args->output_w_, output_h = pooling_args->output_h_;
+  int channel = pooling_args->input_channel_;
 
   int out_plane = output_w * output_h;
   int in_plane = in_w * in_h;
@@ -125,7 +126,7 @@ int AvgPoolingFromNC4HW4ToNHWCLessC(const float *src_b_ptr, float *dst_b_ptr, co
   int last_c_size = channel - cur_c;
 
   int less_out_plane = out_plane * last_c_size;
-  int calc_tile = UP_DIV(less_out_plane, pooling_param->thread_num_);
+  int calc_tile = UP_DIV(less_out_plane, thread_num);
 
   int index_begin = task_id * calc_tile;
   int index_end = (index_begin + calc_tile) < less_out_plane ? (index_begin + calc_tile) : less_out_plane;
@@ -171,7 +172,7 @@ int AvgPoolingFromNC4HW4ToNHWCLessC(const float *src_b_ptr, float *dst_b_ptr, co
 
         float *dst_c_ptr = dst_b_ptr + h * output_w * channel + w * channel + c;
         tmp_avg = tmp_avg / (float)real_count;
-        tmp_avg = fminf(tmp_avg, maxf);
+        tmp_avg = fminf(tmp_avg, pooling_args->maxf);
         dst_c_ptr[0] = tmp_avg;
       }
       w = 0;
@@ -182,11 +183,11 @@ int AvgPoolingFromNC4HW4ToNHWCLessC(const float *src_b_ptr, float *dst_b_ptr, co
 }
 
 int AvgPoolingFromNC4HW4ToNHWCBatch(const float *src_b_ptr, float *dst_b_ptr, const PoolingParameter *pooling_param,
-                                    int task_id, float minf, float maxf) {
-  int in_w = pooling_param->input_w_, in_h = pooling_param->input_h_;
-  int win_w = pooling_param->window_w_, win_h = pooling_param->window_h_;
-  int output_w = pooling_param->output_w_, output_h = pooling_param->output_h_;
-  int channel = pooling_param->input_channel_;
+                                    const PoolingComputeParam *pooling_args, int task_id, int thread_num) {
+  int in_w = pooling_args->input_w_, in_h = pooling_args->input_h_;
+  int win_w = pooling_args->window_w_, win_h = pooling_args->window_h_;
+  int output_w = pooling_args->output_w_, output_h = pooling_args->output_h_;
+  int channel = pooling_args->input_channel_;
 
   int out_plane = output_w * output_h;
   int in_plane = in_w * in_h;
@@ -195,13 +196,13 @@ int AvgPoolingFromNC4HW4ToNHWCBatch(const float *src_b_ptr, float *dst_b_ptr, co
 #ifdef ENABLE_AVX
   const int c_tile = C8NUM;
   const int once_calc_num = 2;
-  MS_FLOAT32X8 min_value_8 = MS_MOV256_F32(minf);
-  MS_FLOAT32X8 max_value_8 = MS_MOV256_F32(maxf);
+  MS_FLOAT32X8 min_value_8 = MS_MOV256_F32(pooling_args->minf);
+  MS_FLOAT32X8 max_value_8 = MS_MOV256_F32(pooling_args->maxf);
 #elif defined(ENABLE_NEON) || defined(ENABLE_SSE)
   const int c_tile = C4NUM;
   const int once_calc_num = 1;
-  MS_FLOAT32X4 min_value = MS_MOVQ_F32(minf);
-  MS_FLOAT32X4 max_value = MS_MOVQ_F32(maxf);
+  MS_FLOAT32X4 min_value = MS_MOVQ_F32(pooling_args->minf);
+  MS_FLOAT32X4 max_value = MS_MOVQ_F32(pooling_args->maxf);
 #else
   const int c_tile = 1;
   const int once_calc_num = 1;
@@ -211,7 +212,7 @@ int AvgPoolingFromNC4HW4ToNHWCBatch(const float *src_b_ptr, float *dst_b_ptr, co
   const int c_xtile = once_calc_num * c_tile;
   int c_tile_num = channel / c_xtile;
   int all_out_plane = out_plane * c_tile_num;
-  int calc_tile = UP_DIV(all_out_plane, pooling_param->thread_num_);
+  int calc_tile = UP_DIV(all_out_plane, thread_num);
 
   int index_begin = task_id * calc_tile;
   int index_end = (index_begin + calc_tile) < all_out_plane ? (index_begin + calc_tile) : all_out_plane;
@@ -296,8 +297,8 @@ int AvgPoolingFromNC4HW4ToNHWCBatch(const float *src_b_ptr, float *dst_b_ptr, co
         MS_STQ_F32(dst_c_ptr, tmp_avg);
 #else
         tmp_avg = tmp_avg / (float)real_count;
-        tmp_avg = fmaxf(tmp_avg, minf);
-        tmp_avg = fminf(tmp_avg, maxf);
+        tmp_avg = fmaxf(tmp_avg, pooling_args->minf);
+        tmp_avg = fminf(tmp_avg, pooling_args->maxf);
         dst_c_ptr[0] = tmp_avg;
 #endif
       }
@@ -310,23 +311,23 @@ int AvgPoolingFromNC4HW4ToNHWCBatch(const float *src_b_ptr, float *dst_b_ptr, co
 }
 
 int AvgPoolingFromNC4HW4ToNHWC(const float *input_ptr, float *output_ptr, const PoolingParameter *pooling_param,
-                               int task_id, float minf, float maxf) {
-  int in_w = pooling_param->input_w_;
-  int in_h = pooling_param->input_h_;
-  int output_w = pooling_param->output_w_;
-  int output_h = pooling_param->output_h_;
-  int channel = pooling_param->input_channel_;
-  int output_batch = pooling_param->output_batch_;
+                               const PoolingComputeParam *pooling_args, int task_id, int thread_num) {
+  int in_w = pooling_args->input_w_;
+  int in_h = pooling_args->input_h_;
+  int output_w = pooling_args->output_w_;
+  int output_h = pooling_args->output_h_;
+  int channel = pooling_args->input_channel_;
+  int output_batch = pooling_args->output_batch_;
 
   for (int batch = 0; batch < output_batch; batch++) {
     const float *src_b_ptr = input_ptr + batch * in_h * in_w * channel;
     float *dst_b_ptr = output_ptr + batch * output_h * output_w * channel;
-    int ret = AvgPoolingFromNC4HW4ToNHWCBatch(src_b_ptr, dst_b_ptr, pooling_param, task_id, minf, maxf);
+    int ret = AvgPoolingFromNC4HW4ToNHWCBatch(src_b_ptr, dst_b_ptr, pooling_param, pooling_args, task_id, thread_num);
     if (ret != NNACL_OK) {
       return ret;
     }
 
-    ret = AvgPoolingFromNC4HW4ToNHWCLessC(src_b_ptr, dst_b_ptr, pooling_param, task_id, minf, maxf);
+    ret = AvgPoolingFromNC4HW4ToNHWCLessC(src_b_ptr, dst_b_ptr, pooling_param, pooling_args, task_id, thread_num);
     if (ret != NNACL_OK) {
       return ret;
     }
@@ -334,17 +335,17 @@ int AvgPoolingFromNC4HW4ToNHWC(const float *input_ptr, float *output_ptr, const 
   return NNACL_OK;
 }
 
-int MaxPoolingBatch(const float *src_b_ptr, float *dst_b_ptr, const PoolingParameter *pooling_param, int task_id,
-                    float minf, float maxf) {
-  int in_w = pooling_param->input_w_, in_h = pooling_param->input_h_;
-  int win_w = pooling_param->window_w_, win_h = pooling_param->window_h_;
-  int output_w = pooling_param->output_w_, output_h = pooling_param->output_h_;
-  int channel = pooling_param->input_channel_;
+int MaxPoolingBatch(const float *src_b_ptr, float *dst_b_ptr, const PoolingParameter *pooling_param,
+                    const PoolingComputeParam *pooling_args, int task_id, int thread_num) {
+  int win_w = pooling_args->window_w_, win_h = pooling_args->window_h_;
+  int in_w = pooling_args->input_w_, in_h = pooling_args->input_h_;
+  int output_w = pooling_args->output_w_, output_h = pooling_args->output_h_;
+  int channel = pooling_args->input_channel_;
   int out_plane = output_w * output_h;
   int out_tile_count = UP_DIV(out_plane, TILE_NUM);
   NNACL_CHECK_ZERO_RETURN_ERR(output_w);
 
-  for (int thread_id = task_id; thread_id < out_tile_count; thread_id += pooling_param->thread_num_) {
+  for (int thread_id = task_id; thread_id < out_tile_count; thread_id += thread_num) {
     int cal_start_index = thread_id * TILE_NUM;
     int real_cal_num = (out_plane - cal_start_index) > TILE_NUM ? TILE_NUM : (out_plane - cal_start_index);
     for (int i = 0; i < real_cal_num; i++) {
@@ -364,7 +365,8 @@ int MaxPoolingBatch(const float *src_b_ptr, float *dst_b_ptr, const PoolingParam
       int ci = 0;
 
       SIMD_RUN_NO_SCALAR(MaxPoolingBatch, ci, src_plane_ptr, channel, dst_plane_ptr, real_win_h_start, real_win_h_end,
-                         real_win_w_start, real_win_w_end, in_h_index, in_w, in_w_index, minf, maxf);
+                         real_win_w_start, real_win_w_end, in_h_index, in_w, in_w_index, pooling_args->minf,
+                         pooling_args->maxf);
 
       for (; ci < channel; ci++) {
         float *dst_c_ptr = dst_plane_ptr + ci;
@@ -376,8 +378,8 @@ int MaxPoolingBatch(const float *src_b_ptr, float *dst_b_ptr, const PoolingParam
             tmp_max = fmaxf(tmp_max, src_win_ptr[0]);
           }  // win_w loop
         }    // win_h loop
-        tmp_max = fmaxf(tmp_max, minf);
-        tmp_max = fminf(tmp_max, maxf);
+        tmp_max = fmaxf(tmp_max, pooling_args->minf);
+        tmp_max = fminf(tmp_max, pooling_args->maxf);
         dst_c_ptr[0] = tmp_max;
       }  // channel_res loop
     }    // real_cal_num loop
@@ -385,19 +387,19 @@ int MaxPoolingBatch(const float *src_b_ptr, float *dst_b_ptr, const PoolingParam
   return NNACL_OK;
 }
 
-int MaxPooling(const float *input_ptr, float *output_ptr, const PoolingParameter *pooling_param, int task_id,
-               float minf, float maxf) {
-  int in_w = pooling_param->input_w_;
-  int in_h = pooling_param->input_h_;
-  int output_w = pooling_param->output_w_;
-  int output_h = pooling_param->output_h_;
-  int channel = pooling_param->input_channel_;
-  int output_batch = pooling_param->output_batch_;
+int MaxPooling(const float *input_ptr, float *output_ptr, const PoolingParameter *pooling_param,
+               const PoolingComputeParam *pooling_args, int task_id, int thread_num) {
+  int in_w = pooling_args->input_w_;
+  int in_h = pooling_args->input_h_;
+  int output_w = pooling_args->output_w_;
+  int output_h = pooling_args->output_h_;
+  int channel = pooling_args->input_channel_;
+  int output_batch = pooling_args->output_batch_;
 
   for (int batch = 0; batch < output_batch; batch++) {
     const float *src_b_ptr = input_ptr + batch * in_h * in_w * channel;
     float *dst_b_ptr = output_ptr + batch * output_h * output_w * channel;
-    int ret = MaxPoolingBatch(src_b_ptr, dst_b_ptr, pooling_param, task_id, minf, maxf);
+    int ret = MaxPoolingBatch(src_b_ptr, dst_b_ptr, pooling_param, pooling_args, task_id, thread_num);
     if (ret != NNACL_OK) {
       return ret;
     }
@@ -406,11 +408,11 @@ int MaxPooling(const float *input_ptr, float *output_ptr, const PoolingParameter
 }
 
 int MaxPoolingFromNC4HW4ToNHWCLessC(const float *src_b_ptr, float *dst_b_ptr, const PoolingParameter *pooling_param,
-                                    int task_id, float minf, float maxf) {
-  int in_w = pooling_param->input_w_, in_h = pooling_param->input_h_;
-  int win_w = pooling_param->window_w_, win_h = pooling_param->window_h_;
-  int output_w = pooling_param->output_w_, output_h = pooling_param->output_h_;
-  int channel = pooling_param->input_channel_;
+                                    const PoolingComputeParam *pooling_args, int task_id, int thread_num) {
+  int in_w = pooling_args->input_w_, in_h = pooling_args->input_h_;
+  int win_w = pooling_args->window_w_, win_h = pooling_args->window_h_;
+  int output_w = pooling_args->output_w_, output_h = pooling_args->output_h_;
+  int channel = pooling_args->input_channel_;
 
   int out_plane = output_w * output_h;
   int in_plane = in_w * in_h;
@@ -433,7 +435,7 @@ int MaxPoolingFromNC4HW4ToNHWCLessC(const float *src_b_ptr, float *dst_b_ptr, co
   int last_c_size = channel - cur_c;
 
   int less_out_plane = out_plane * last_c_size;
-  int calc_tile = UP_DIV(less_out_plane, pooling_param->thread_num_);
+  int calc_tile = UP_DIV(less_out_plane, thread_num);
 
   int index_begin = task_id * calc_tile;
   int index_end = (index_begin + calc_tile) < less_out_plane ? (index_begin + calc_tile) : less_out_plane;
@@ -475,8 +477,8 @@ int MaxPoolingFromNC4HW4ToNHWCLessC(const float *src_b_ptr, float *dst_b_ptr, co
         }
 
         float *dst_c_ptr = dst_b_ptr + h * output_w * channel + w * channel + c;
-        tmp_max = fmaxf(tmp_max, minf);
-        tmp_max = fminf(tmp_max, maxf);
+        tmp_max = fmaxf(tmp_max, pooling_args->minf);
+        tmp_max = fminf(tmp_max, pooling_args->maxf);
         dst_c_ptr[0] = tmp_max;
       }
       w = 0;
@@ -487,11 +489,11 @@ int MaxPoolingFromNC4HW4ToNHWCLessC(const float *src_b_ptr, float *dst_b_ptr, co
 }
 
 int MaxPoolingFromNC4HW4ToNHWCBatch(const float *src_b_ptr, float *dst_b_ptr, const PoolingParameter *pooling_param,
-                                    int task_id, float minf, float maxf) {
-  int in_w = pooling_param->input_w_, in_h = pooling_param->input_h_;
-  int win_w = pooling_param->window_w_, win_h = pooling_param->window_h_;
-  int output_w = pooling_param->output_w_, output_h = pooling_param->output_h_;
-  int channel = pooling_param->input_channel_;
+                                    const PoolingComputeParam *pooling_args, int task_id, int thread_num) {
+  int in_w = pooling_args->input_w_, in_h = pooling_args->input_h_;
+  int win_w = pooling_args->window_w_, win_h = pooling_args->window_h_;
+  int output_w = pooling_args->output_w_, output_h = pooling_args->output_h_;
+  int channel = pooling_args->input_channel_;
 
   int out_plane = output_w * output_h;
   int in_plane = in_w * in_h;
@@ -500,13 +502,13 @@ int MaxPoolingFromNC4HW4ToNHWCBatch(const float *src_b_ptr, float *dst_b_ptr, co
 #ifdef ENABLE_AVX
   const int c_tile = C8NUM;
   const int once_calc_num = 2;
-  MS_FLOAT32X8 min_value_8 = MS_MOV256_F32(minf);
-  MS_FLOAT32X8 max_value_8 = MS_MOV256_F32(maxf);
+  MS_FLOAT32X8 min_value_8 = MS_MOV256_F32(pooling_args->minf);
+  MS_FLOAT32X8 max_value_8 = MS_MOV256_F32(pooling_args->maxf);
 #elif defined(ENABLE_NEON) || defined(ENABLE_SSE)
   const int c_tile = C4NUM;
   const int once_calc_num = 1;
-  MS_FLOAT32X4 min_value = MS_MOVQ_F32(minf);
-  MS_FLOAT32X4 max_value = MS_MOVQ_F32(maxf);
+  MS_FLOAT32X4 min_value = MS_MOVQ_F32(pooling_args->minf);
+  MS_FLOAT32X4 max_value = MS_MOVQ_F32(pooling_args->maxf);
 #else
   const int c_tile = 1;
   const int once_calc_num = 1;
@@ -516,7 +518,7 @@ int MaxPoolingFromNC4HW4ToNHWCBatch(const float *src_b_ptr, float *dst_b_ptr, co
   const int c_xtile = once_calc_num * c_tile;
   int c_tile_num = channel / c_xtile;
   int all_out_plane = out_plane * c_tile_num;
-  int calc_tile = UP_DIV(all_out_plane, pooling_param->thread_num_);
+  int calc_tile = UP_DIV(all_out_plane, thread_num);
 
   int index_begin = task_id * calc_tile;
   int index_end = (index_begin + calc_tile) < all_out_plane ? (index_begin + calc_tile) : all_out_plane;
@@ -594,8 +596,8 @@ int MaxPoolingFromNC4HW4ToNHWCBatch(const float *src_b_ptr, float *dst_b_ptr, co
         tmp_max = MS_MINQ_F32(tmp_max, max_value);
         MS_STQ_F32(dst_c_ptr, tmp_max);
 #else
-        tmp_max = fmaxf(tmp_max, minf);
-        tmp_max = fminf(tmp_max, maxf);
+        tmp_max = fmaxf(tmp_max, pooling_args->minf);
+        tmp_max = fminf(tmp_max, pooling_args->maxf);
         dst_c_ptr[0] = tmp_max;
 #endif
       }
@@ -608,23 +610,23 @@ int MaxPoolingFromNC4HW4ToNHWCBatch(const float *src_b_ptr, float *dst_b_ptr, co
 }
 
 int MaxPoolingFromNC4HW4ToNHWC(const float *input_ptr, float *output_ptr, const PoolingParameter *pooling_param,
-                               int task_id, float minf, float maxf) {
-  int in_w = pooling_param->input_w_;
-  int in_h = pooling_param->input_h_;
-  int output_w = pooling_param->output_w_;
-  int output_h = pooling_param->output_h_;
-  int channel = pooling_param->input_channel_;
-  int output_batch = pooling_param->output_batch_;
+                               const PoolingComputeParam *pooling_args, int task_id, int thread_num) {
+  int in_w = pooling_args->input_w_;
+  int in_h = pooling_args->input_h_;
+  int output_w = pooling_args->output_w_;
+  int output_h = pooling_args->output_h_;
+  int channel = pooling_args->input_channel_;
+  int output_batch = pooling_args->output_batch_;
 
   for (int batch = 0; batch < output_batch; batch++) {
     const float *src_b_ptr = input_ptr + batch * in_h * in_w * channel;
     float *dst_b_ptr = output_ptr + batch * output_h * output_w * channel;
-    int ret = MaxPoolingFromNC4HW4ToNHWCBatch(src_b_ptr, dst_b_ptr, pooling_param, task_id, minf, maxf);
+    int ret = MaxPoolingFromNC4HW4ToNHWCBatch(src_b_ptr, dst_b_ptr, pooling_param, pooling_args, task_id, thread_num);
     if (ret != NNACL_OK) {
       return ret;
     }
 
-    ret = MaxPoolingFromNC4HW4ToNHWCLessC(src_b_ptr, dst_b_ptr, pooling_param, task_id, minf, maxf);
+    ret = MaxPoolingFromNC4HW4ToNHWCLessC(src_b_ptr, dst_b_ptr, pooling_param, pooling_args, task_id, thread_num);
     if (ret != NNACL_OK) {
       return ret;
     }

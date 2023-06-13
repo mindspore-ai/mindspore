@@ -23,7 +23,6 @@ typedef enum PoolMode { PoolMode_No, PoolMode_MaxPool, PoolMode_AvgPool } PoolMo
 typedef enum RoundMode { RoundMode_No, RoundMode_Ceil, RoundMode_Floor } RoundMode;
 
 typedef struct PoolingParameter {
-  // Primitive parameter
   OpParameter op_parameter_;
   PoolMode pool_mode_;
   RoundMode round_mode_;
@@ -35,23 +34,10 @@ typedef struct PoolingParameter {
   int window_h_;
   int stride_w_;
   int stride_h_;
-  // shape correlative
-  int input_w_;
-  int input_h_;
-  int input_batch_;
-  int input_channel_;
-  int output_w_;
-  int output_h_;
-  int output_batch_;
-  int output_channel_;
   int pad_u_;
   int pad_d_;
   int pad_l_;
   int pad_r_;
-  // other parameter
-  int thread_num_;
-  QuantArg **quant_args_;
-  bool quantize_;
 } PoolingParameter;
 
 typedef struct Pooling3DParameter {

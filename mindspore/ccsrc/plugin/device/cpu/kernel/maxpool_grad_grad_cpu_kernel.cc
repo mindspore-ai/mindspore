@@ -66,6 +66,9 @@ bool MaxPoolGradGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   height_index_ = (dim_ == kMaxPool2DGradGradDim) ? kDim2 : kDim3;
   width_index_ = (dim_ == kMaxPool2DGradGradDim) ? kDim3 : kDim4;
 
+  args_ = reinterpret_cast<PoolingComputeParam *>(malloc(sizeof(PoolingComputeParam)));
+  MS_ERROR_IF_NULL(args_);
+
   param_ = (dim_ == kMaxPool2DGradGradDim) ? reinterpret_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)))
                                            : reinterpret_cast<PoolingParameter *>(malloc(sizeof(Pooling3DParameter)));
   MS_ERROR_IF_NULL(param_);
@@ -77,6 +80,7 @@ bool MaxPoolGradGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
     reinterpret_cast<Pooling3DParameter *>(param_)->window_d_ = LongToInt(kernels_[depth_index_]);
     reinterpret_cast<Pooling3DParameter *>(param_)->stride_d_ = LongToInt(strides_[depth_index_]);
   }
+
   return true;
 }
 
@@ -135,17 +139,20 @@ int MaxPoolGradGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   }
 
   in_shapes_ = inputs[0]->GetShapeVector();
-  param_->input_batch_ = LongToInt(in_shapes_[kDim0]);
-  param_->input_channel_ = LongToInt(in_shapes_[kDim1]);
-  param_->input_h_ = LongToInt(in_shapes_[height_index_]);
-  param_->input_w_ = LongToInt(in_shapes_[width_index_]);
+  args_->input_batch_ = LongToInt(in_shapes_[kDim0]);
+  args_->input_channel_ = LongToInt(in_shapes_[kDim1]);
+  args_->input_h_ = LongToInt(in_shapes_[height_index_]);
+  args_->input_w_ = LongToInt(in_shapes_[width_index_]);
 
   out_shapes_ = inputs[1]->GetShapeVector();
-  param_->output_batch_ = LongToInt(out_shapes_[kDim0]);
-  param_->output_channel_ = LongToInt(out_shapes_[kDim1]);
-  param_->output_h_ = LongToInt(out_shapes_[height_index_]);
-  param_->output_w_ = LongToInt(out_shapes_[width_index_]);
+  args_->output_batch_ = LongToInt(out_shapes_[kDim0]);
+  args_->output_channel_ = LongToInt(out_shapes_[kDim1]);
+  args_->output_h_ = LongToInt(out_shapes_[height_index_]);
+  args_->output_w_ = LongToInt(out_shapes_[width_index_]);
   output_elements_ = LongToSize(std::accumulate(out_shapes_.begin(), out_shapes_.end(), 1, std::multiplies<int64_t>()));
+
+  args_->window_h_ = param_->window_h_;
+  args_->window_w_ = param_->window_w_;
 
   if (dim_ == kMaxPool3DGradGradDim) {
     reinterpret_cast<Pooling3DParameter *>(param_)->input_d_ = LongToInt(in_shapes_[depth_index_]);
@@ -172,10 +179,10 @@ bool MaxPoolGradGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, 
   auto task = [input_addr, grad_addr, dx_addr, this](size_t start, size_t end) {
     auto ret = static_cast<int>(NNACL_OK);
     if (dim_ == kMaxPool2DGradGradDim) {
-      ret = MaxPoolGradGrad(input_addr, grad_addr, dx_addr, start, end, param_);
+      ret = MaxPoolGradGrad(input_addr, grad_addr, dx_addr, start, end, param_, args_);
     } else if (dim_ == kMaxPool3DGradGradDim) {
-      ret =
-        MaxPool3DGradGrad(input_addr, grad_addr, dx_addr, start, end, reinterpret_cast<Pooling3DParameter *>(param_));
+      ret = MaxPool3DGradGrad(input_addr, grad_addr, dx_addr, start, end,
+                              reinterpret_cast<Pooling3DParameter *>(param_), args_);
     }
     if (ret != static_cast<int>(NNACL_OK)) {
       MS_LOG(ERROR) << "For '" << kernel_name_

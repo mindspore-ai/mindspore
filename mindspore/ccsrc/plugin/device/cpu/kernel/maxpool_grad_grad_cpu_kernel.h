@@ -27,6 +27,7 @@
 #include "mindspore/core/ops/grad/max_pool_3d_grad_grad.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/device/cpu/kernel/nnacl/pooling_parameter.h"
+#include "plugin/device/cpu/kernel/nnacl/kernel/pooling.h"
 
 namespace mindspore {
 namespace kernel {
@@ -40,6 +41,10 @@ class MaxPoolGradGradCpuKernelMod : public NativeCpuKernelMod {
     if (param_ != nullptr) {
       free(param_);
       param_ = nullptr;
+    }
+    if (args_ != nullptr) {
+      free(args_);
+      args_ = nullptr;
     }
   }
 
@@ -65,6 +70,7 @@ class MaxPoolGradGradCpuKernelMod : public NativeCpuKernelMod {
   std::vector<int64_t> in_shapes_;
   std::vector<int64_t> out_shapes_;
   PoolingParameter *param_ = nullptr;
+  PoolingComputeParam *args_ = nullptr;
 
   size_t dim_ = 0;
   size_t depth_index_ = 0;

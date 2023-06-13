@@ -18,24 +18,24 @@
 #include "src/common/log_adapter.h"
 #include "coder/log.h"
 #include "coder/opcoders/parallel.h"
-#include "nnacl/pooling_parameter.h"
 
 namespace mindspore::lite::micro::nnacl {
 int NNaclFp32Serializer::count = 0;
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const PoolingParameter &pooling_parameter) {
-  CodeBaseStruct<false>("PoolingParameter", name,
-                        // Primitive parameter
-                        pooling_parameter.op_parameter_, pooling_parameter.pool_mode_, pooling_parameter.round_mode_,
-                        pooling_parameter.pad_mode_, pooling_parameter.act_type_, pooling_parameter.avg_mode_,
-                        pooling_parameter.global_, pooling_parameter.window_w_, pooling_parameter.window_h_,
-                        pooling_parameter.stride_w_, pooling_parameter.stride_h_,
-                        // shape correlative
-                        pooling_parameter.input_w_, pooling_parameter.input_h_, pooling_parameter.input_batch_,
-                        pooling_parameter.input_channel_, pooling_parameter.output_w_, pooling_parameter.output_h_,
-                        pooling_parameter.output_batch_, pooling_parameter.output_channel_, pooling_parameter.pad_u_,
-                        pooling_parameter.pad_d_, pooling_parameter.pad_l_, pooling_parameter.pad_r_,
-                        // other parameter
-                        gThreadNum, nullptr, pooling_parameter.quantize_);
+  CodeBaseStruct<false>("PoolingParameter", name, pooling_parameter.op_parameter_, pooling_parameter.pool_mode_,
+                        pooling_parameter.round_mode_, pooling_parameter.pad_mode_, pooling_parameter.act_type_,
+                        pooling_parameter.avg_mode_, pooling_parameter.global_, pooling_parameter.window_w_,
+                        pooling_parameter.window_h_, pooling_parameter.stride_w_, pooling_parameter.stride_h_,
+                        pooling_parameter.pad_u_, pooling_parameter.pad_d_, pooling_parameter.pad_l_,
+                        pooling_parameter.pad_r_);
+}
+
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const PoolingComputeParam &pooling_compute) {
+  CodeBaseStruct<false>("PoolingComputeParam", name, pooling_compute.input_w_, pooling_compute.input_h_,
+                        pooling_compute.input_batch_, pooling_compute.input_channel_, pooling_compute.output_w_,
+                        pooling_compute.output_h_, pooling_compute.output_batch_, pooling_compute.output_channel_,
+                        pooling_compute.window_w_, pooling_compute.window_h_, pooling_compute.minf,
+                        pooling_compute.maxf);
 }
 
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const BatchNormParameter &batch_norm_parameter) {

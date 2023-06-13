@@ -19,15 +19,16 @@
 
 #include "nnacl/op_base.h"
 #include "nnacl/pooling_parameter.h"
+#include "nnacl/kernel/pooling.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 int MaxPoolGradGrad(const float *input, const float *grad, float *output, size_t start, size_t end,
-                    PoolingParameter *param);
+                    PoolingParameter *param, PoolingComputeParam *args);
 
 int MaxPool3DGradGrad(const float *input, const float *grad, float *output, size_t start, size_t end,
-                      Pooling3DParameter *param);
+                      Pooling3DParameter *param, PoolingComputeParam *args);
 #ifdef __cplusplus
 }
 #endif

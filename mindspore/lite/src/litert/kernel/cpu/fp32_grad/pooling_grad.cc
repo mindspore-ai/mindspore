@@ -55,19 +55,22 @@ int PoolingGradCPUKernel::ReSize() {
   int input_w = in_shape.at(kNumShapeDim3);
   MS_CHECK_TRUE_RET(input_h > 0, RET_ERROR);
   MS_CHECK_TRUE_RET(input_w > 0, RET_ERROR);
-  if (pool_param->global_) {
-    pool_param->window_w_ = input_w;
-    pool_param->window_h_ = input_h;
-  }
-  pool_param->input_h_ = in_shape[kNHWC_H];
-  pool_param->input_w_ = in_shape[kNHWC_W];
-  pool_param->input_batch_ = in_shape[kNHWC_N];
-  pool_param->input_channel_ = in_shape[kNHWC_C];
-  pool_param->output_h_ = out_shape[kNHWC_H];
-  pool_param->output_w_ = out_shape[kNHWC_W];
-  pool_param->output_batch_ = out_shape[kNHWC_N];
-  pool_param->output_channel_ = out_shape[kNHWC_C];
 
+  compute_.window_w_ = pool_param->window_w_;
+  compute_.window_h_ = pool_param->window_h_;
+  if (pool_param->global_) {
+    compute_.window_w_ = input_w;
+    compute_.window_h_ = input_h;
+  }
+
+  compute_.input_h_ = in_shape[kNHWC_H];
+  compute_.input_w_ = in_shape[kNHWC_W];
+  compute_.input_batch_ = in_shape[kNHWC_N];
+  compute_.input_channel_ = in_shape[kNHWC_C];
+  compute_.output_h_ = out_shape[kNHWC_H];
+  compute_.output_w_ = out_shape[kNHWC_W];
+  compute_.output_batch_ = out_shape[kNHWC_N];
+  compute_.output_channel_ = out_shape[kNHWC_C];
   return RET_OK;
 }
 
@@ -80,21 +83,21 @@ int PoolingGradCPUKernel::DoExecute(int task_id) {
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(output_ptr);
   MS_CHECK_TRUE_RET(thread_num_ > 0, RET_ERROR);
-  int stride = UP_DIV(pool_param->output_batch_, thread_num_);
-  int count = MSMIN(stride, pool_param->output_batch_ - stride * task_id);
+  int stride = UP_DIV(compute_.output_batch_, thread_num_);
+  int count = MSMIN(stride, compute_.output_batch_ - stride * task_id);
   if (count > 0) {
-    int in_batch_size = pool_param->input_h_ * pool_param->input_w_ * pool_param->input_channel_;
-    int out_batch_size = pool_param->output_h_ * pool_param->output_w_ * pool_param->input_channel_;
+    int in_batch_size = compute_.input_h_ * compute_.input_w_ * compute_.input_channel_;
+    int out_batch_size = compute_.output_h_ * compute_.output_w_ * compute_.input_channel_;
     std::fill(output_ptr + task_id * stride * in_batch_size, output_ptr + ((task_id * stride) + count) * in_batch_size,
               0.f);
     if (pool_param->pool_mode_ == PoolMode_MaxPool) {
       auto dy_ptr = reinterpret_cast<float *>(in_tensors_.at(THIRD_INPUT)->data());
       MaxPoolingGrad(input_ptr + task_id * stride * in_batch_size, dy_ptr + task_id * stride * out_batch_size,
-                     output_ptr + task_id * stride * in_batch_size, count, pool_param);
+                     output_ptr + task_id * stride * in_batch_size, count, pool_param, &compute_);
     } else {
       input_ptr = reinterpret_cast<float *>(in_tensors_.at(THIRD_INPUT)->data());
       AvgPoolingGrad(input_ptr + task_id * stride * out_batch_size, output_ptr + task_id * stride * in_batch_size,
-                     count, pool_param);
+                     count, pool_param, &compute_);
     }
   }
   return RET_OK;

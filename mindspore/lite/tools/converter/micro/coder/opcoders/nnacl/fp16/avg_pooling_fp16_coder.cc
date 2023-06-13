@@ -37,16 +37,16 @@ int PoolingFP16Coder::DoCode(CoderContext *const context) {
   auto pooling_parameter = reinterpret_cast<PoolingParameter *>(parameter_);
   MS_CHECK_PTR(pooling_parameter);
   // init struct PoolingParameters
-  pooling_parameter->input_batch_ = input_tensor_->Batch();
-  pooling_parameter->input_channel_ = input_tensor_->Channel();
-  pooling_parameter->input_h_ = input_tensor_->Height();
-  pooling_parameter->input_w_ = input_tensor_->Width();
-  pooling_parameter->output_batch_ = output_tensor_->Batch();
-  pooling_parameter->output_channel_ = output_tensor_->Channel();
-  pooling_parameter->output_h_ = output_tensor_->Height();
-  pooling_parameter->output_w_ = output_tensor_->Width();
-
-  pooling_parameter->thread_num_ = pooling_parameter->op_parameter_.thread_num_;
+  compute_param_.input_batch_ = input_tensor_->Batch();
+  compute_param_.input_channel_ = input_tensor_->Channel();
+  compute_param_.input_h_ = input_tensor_->Height();
+  compute_param_.input_w_ = input_tensor_->Width();
+  compute_param_.output_batch_ = output_tensor_->Batch();
+  compute_param_.output_channel_ = output_tensor_->Channel();
+  compute_param_.output_h_ = output_tensor_->Height();
+  compute_param_.output_w_ = output_tensor_->Width();
+  compute_param_.window_h_ = pooling_parameter->window_h_;
+  compute_param_.window_w_ = pooling_parameter->window_w_;
 
   NNaclFp32Serializer code;
   std::string param_name = "pooling_parameter";
@@ -75,7 +75,12 @@ int PoolingFP16Coder::DoCode(CoderContext *const context) {
       break;
     }
   }
-  code.CodeFunction("AvgPoolingFp16", input_tensor_, output_tensor_, "&pooling_parameter", kDefaultTaskId, minf, maxf);
+  compute_param_.minf = minf;
+  compute_param_.maxf = maxf;
+  code.CodeStruct("pooling_args", compute_param_);
+
+  code.CodeFunction("AvgPoolingFp16", input_tensor_, output_tensor_, "&pooling_parameter", "&pooling_args",
+                    kDefaultTaskId, parameter_->thread_num_);
 
   MS_LOG(INFO) << "PoolingFp16Code has been called";
   context->AppendCode(code.str());

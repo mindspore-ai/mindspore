@@ -13,20 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "nnacl/fp16/pooling_fp16.h"
 #include <float.h>
 #include "nnacl/errorcode.h"
 
 int AvgPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, const PoolingParameter *pooling_param,
-                   int task_id, float16_t min, float16_t max) {
-  int win_w = pooling_param->window_w_;
-  int win_h = pooling_param->window_h_;
-  int channel = pooling_param->input_channel_;
+                   const PoolingComputeParam *pooling_args, int task_id, int thread_num) {
+  float16_t min = (float16_t)pooling_args->minf;
+  float16_t max = (float16_t)pooling_args->maxf;
+
+  int win_w = pooling_args->window_w_;
+  int win_h = pooling_args->window_h_;
+  int channel = pooling_args->input_channel_;
   int c8 = channel / C8NUM;
-  int in_w = pooling_param->input_w_;
-  int in_h = pooling_param->input_h_;
-  int output_w = pooling_param->output_w_;
-  int output_h = pooling_param->output_h_;
+  int in_w = pooling_args->input_w_;
+  int in_h = pooling_args->input_h_;
+  int output_w = pooling_args->output_w_;
+  int output_h = pooling_args->output_h_;
   int out_plane = output_w * output_h;
   int out_tile_count = UP_DIV(out_plane, TILE_NUM);
 
@@ -36,10 +40,10 @@ int AvgPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, const Pool
 #endif
 
   NNACL_CHECK_ZERO_RETURN_ERR(output_w);
-  for (int batch = 0; batch < pooling_param->output_batch_; batch++) {
+  for (int batch = 0; batch < pooling_args->output_batch_; batch++) {
     const float16_t *src_b_ptr = input_ptr + batch * in_h * in_w * channel;
     float16_t *dst_b_ptr = output_ptr + batch * output_h * output_w * channel;
-    for (int thread_id = task_id; thread_id < out_tile_count; thread_id += pooling_param->thread_num_) {
+    for (int thread_id = task_id; thread_id < out_tile_count; thread_id += thread_num) {
       int cal_start_index = thread_id * TILE_NUM;
       int real_cal_num = (out_plane - cal_start_index) > TILE_NUM ? TILE_NUM : (out_plane - cal_start_index);
       for (int i = 0; i < real_cal_num; i++) {
@@ -135,11 +139,11 @@ int AvgPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, const Pool
   return NNACL_OK;
 }
 
-void MaxPoolingC8Fp16(const float16_t *input_ptr, float16_t *output_ptr, const PoolingParameter *pooling_param,
+void MaxPoolingC8Fp16(const float16_t *input_ptr, float16_t *output_ptr, const PoolingComputeParam *pooling_args,
                       float16_t min, float16_t max, int in_batch_offset, int out_plane_offset, int real_win_h_start,
                       int real_win_h_end, int real_win_w_start, int real_win_w_end, int in_h_index, int in_w_index) {
-  int channel = pooling_param->input_channel_;
-  int in_w = pooling_param->input_w_;
+  int channel = pooling_args->input_channel_;
+  int in_w = pooling_args->input_w_;
   int c8 = channel / C8NUM;
 #ifdef ENABLE_NEON
   float16x8_t min_value = vdupq_n_f16(min);
@@ -179,11 +183,11 @@ void MaxPoolingC8Fp16(const float16_t *input_ptr, float16_t *output_ptr, const P
   }  // c8 loop
 }
 
-void MaxPoolingC4Fp16(const float16_t *input_ptr, float16_t *output_ptr, const PoolingParameter *pooling_param,
+void MaxPoolingC4Fp16(const float16_t *input_ptr, float16_t *output_ptr, const PoolingComputeParam *pooling_args,
                       float16_t min, float16_t max, int in_batch_offset, int out_plane_offset, int real_win_h_start,
                       int real_win_h_end, int real_win_w_start, int real_win_w_end, int in_h_index, int in_w_index) {
-  int channel = pooling_param->input_channel_;
-  int in_w = pooling_param->input_w_;
+  int channel = pooling_args->input_channel_;
+  int in_w = pooling_args->input_w_;
   int c8 = channel / C8NUM;
   int c8_res = channel % C8NUM;
   int c4 = c8_res / C4NUM;
@@ -225,11 +229,11 @@ void MaxPoolingC4Fp16(const float16_t *input_ptr, float16_t *output_ptr, const P
 #endif
   }  // c4 loop
 }
-void MaxPoolingC1Fp16(const float16_t *input_ptr, float16_t *output_ptr, const PoolingParameter *pooling_param,
+void MaxPoolingC1Fp16(const float16_t *input_ptr, float16_t *output_ptr, const PoolingComputeParam *pooling_args,
                       float16_t min, float16_t max, int in_batch_offset, int out_plane_offset, int real_win_h_start,
                       int real_win_h_end, int real_win_w_start, int real_win_w_end, int in_h_index, int in_w_index) {
-  int channel = pooling_param->input_channel_;
-  int in_w = pooling_param->input_w_;
+  int channel = pooling_args->input_channel_;
+  int in_w = pooling_args->input_w_;
   int c8 = channel / C8NUM;
   int c8_res = channel % C8NUM;
   int c4 = c8_res / C4NUM;
@@ -251,22 +255,24 @@ void MaxPoolingC1Fp16(const float16_t *input_ptr, float16_t *output_ptr, const P
 }
 
 void MaxPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, const PoolingParameter *pooling_param,
-                    int task_id, float16_t min, float16_t max) {
+                    const PoolingComputeParam *pooling_args, int task_id, int thread_num) {
+  float16_t min = (float16_t)pooling_args->minf;
+  float16_t max = (float16_t)pooling_args->maxf;
+
   int stride_w = pooling_param->stride_w_;
   int stride_h = pooling_param->stride_h_;
   int pad_w = pooling_param->pad_l_;
   int pad_h = pooling_param->pad_u_;
-  int win_w = pooling_param->window_w_;
-  int win_h = pooling_param->window_h_;
-  int channel = pooling_param->input_channel_;
-  int in_w = pooling_param->input_w_;
-  int in_h = pooling_param->input_h_;
-  int output_w = pooling_param->output_w_;
-  int output_h = pooling_param->output_h_;
-  int output_batch = pooling_param->output_batch_;
+  int win_w = pooling_args->window_w_;
+  int win_h = pooling_args->window_h_;
+  int channel = pooling_args->input_channel_;
+  int in_w = pooling_args->input_w_;
+  int in_h = pooling_args->input_h_;
+  int output_w = pooling_args->output_w_;
+  int output_h = pooling_args->output_h_;
+  int output_batch = pooling_args->output_batch_;
   int out_plane = output_w * output_h;
   int out_tile_count = UP_DIV(out_plane, TILE_NUM);
-  int thread_num = pooling_param->thread_num_;
 
   // input channel is equal to output channel
   NNACL_CHECK_ZERO_RETURN(output_w);
@@ -287,11 +293,11 @@ void MaxPoolingFp16(const float16_t *input_ptr, float16_t *output_ptr, const Poo
         int real_win_h_end = MSMIN(win_h, in_h - in_h_index);
         int real_win_w_start = MSMAX(0, -in_w_index);
         int real_win_w_end = MSMIN(win_w, in_w - in_w_index);
-        MaxPoolingC8Fp16(input_ptr, output_ptr, pooling_param, min, max, in_batch_offset, out_plane_offset,
+        MaxPoolingC8Fp16(input_ptr, output_ptr, pooling_args, min, max, in_batch_offset, out_plane_offset,
                          real_win_h_start, real_win_h_end, real_win_w_start, real_win_w_end, in_h_index, in_w_index);
-        MaxPoolingC4Fp16(input_ptr, output_ptr, pooling_param, min, max, in_batch_offset, out_plane_offset,
+        MaxPoolingC4Fp16(input_ptr, output_ptr, pooling_args, min, max, in_batch_offset, out_plane_offset,
                          real_win_h_start, real_win_h_end, real_win_w_start, real_win_w_end, in_h_index, in_w_index);
-        MaxPoolingC1Fp16(input_ptr, output_ptr, pooling_param, min, max, in_batch_offset, out_plane_offset,
+        MaxPoolingC1Fp16(input_ptr, output_ptr, pooling_args, min, max, in_batch_offset, out_plane_offset,
                          real_win_h_start, real_win_h_end, real_win_w_start, real_win_w_end, in_h_index, in_w_index);
       }  // real_cal_num loop
     }    // out_plane loop

@@ -19,6 +19,7 @@
 
 #include <vector>
 #include "coder/opcoders/op_coder.h"
+#include "nnacl/kernel/pooling.h"
 
 namespace mindspore::lite::micro::nnacl {
 class PoolingFP32Coder : public OperatorCoder {
@@ -31,6 +32,9 @@ class PoolingFP32Coder : public OperatorCoder {
   int Prepare(CoderContext *const context) override { return RET_OK; }
 
   int DoCode(CoderContext *const context) override;
+
+ protected:
+  PoolingComputeParam compute_param_;
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_FP32_CODER_H_

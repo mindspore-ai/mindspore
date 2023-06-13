@@ -20,7 +20,6 @@
 #include "nnacl/op_base.h"
 
 typedef struct ScaleParameter {
-  // primitive parameter
   OpParameter op_parameter_;
   int axis_;
   int activation_type_;
