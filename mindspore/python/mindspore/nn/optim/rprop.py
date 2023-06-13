@@ -135,7 +135,7 @@ class Rprop(Optimizer):
         >>> from mindspore import nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.Rprop(params=net.trainable_params())
