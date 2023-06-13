@@ -446,7 +446,7 @@ std::string AbstractSequence::ToStringInternal() const {
   }
   size_t i = 0;
   size_t size = elements_.size();
-  auto prefix_space = std::string(" ", space_num_);
+  auto prefix_space = std::string(space_num_, ' ');
   for (const auto &element : elements_) {
     MS_EXCEPTION_IF_NULL(element);
     if (element->isa<AbstractSequence>()) {
