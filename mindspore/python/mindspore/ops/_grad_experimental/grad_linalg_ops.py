@@ -40,28 +40,25 @@ _reciprocal = math.Reciprocal()
 _k_0 = Tensor(0, mindspore.int32)
 
 
-@constexpr
-def _raise_value_error(*info):
-    info_str = ""
-    for obj in info:
-        info_str = info_str + f"{obj}"
-    raise ValueError(info_str)
+@_primexpr
+def _check_dim(dim):
+    if dim < 2:
+        raise ValueError(f"The dim can not be less than 2, which is {dim}.")
 
 
 @_primexpr
-def _check_dim(dims):
-    if dims < 2:
-        _raise_value_error(f"To do _matrix_transpose for input a's ndim is not greater or equal to 2, which is invalid:\
-                           {dims}.")
+def generate_perm_for_matrix_transpose(input_dim):
+    perm = tuple(range(input_dim - 2))
+    perm = perm + (input_dim - 1) + (input_dim - 2)
+    return perm
 
 
 def _matrix_transpose(a):
     """Transpose last two axes"""
-    dims = P.Rank()(a)
-    _check_dim(dims)
-    axes = F.make_range(0, dims)
-    axes = axes[:-2] + (axes[-1],) + (axes[-2],)
-    return _transpose(a, axes)
+    dim = P.Rank()(a)
+    _check_dim(dim)
+    perm = generate_perm_for_matrix_transpose(dim)
+    return _transpose(a, perm)
 
 
 def _adjoint(a):
@@ -69,8 +66,7 @@ def _adjoint(a):
 
 
 def _safe_reciprocal(x, epsilon=1e-20):
-    # Reciprocal do not support float64, force to float32
-    return x * _reciprocal(_cast(x * x + epsilon, mindspore.float32))
+    return x * _reciprocal(x * x + epsilon)
 
 
 @constexpr
@@ -116,9 +112,7 @@ def get_bprop_svd(self):
 
         a_shape = _shape(a)
         tensor_rank = P.Rank()(a)
-        if tensor_rank < 2:
-            _raise_value_error(
-                "For input a's ndim is not greater or equal to 2, which is invalid.")
+        _check_dim(tensor_rank)
         m = a_shape[-2]
         n = a_shape[-1]
         s, u, v = out
@@ -131,7 +125,7 @@ def get_bprop_svd(self):
             du, dv = dv, du
 
         if full_matrices and abs(m - n) > 1:
-            _raise_value_error("For 'Svd' gradient, not support for abs(m - n) > 1 with full_matrices is True.")
+            raise ValueError("For 'Svd' gradient, not support for abs(m - n) > 1 with full_matrices is True.")
 
         s_mat = _matrix_diag(s)
         s2 = square(s)
