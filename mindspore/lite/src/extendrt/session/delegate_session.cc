@@ -179,7 +179,11 @@ Status GraphSinkSession::Init(const std::shared_ptr<Context> &context, const Con
     if (device_info->GetDeviceType() == DeviceType::kAscend && device_info->GetProvider() == kAscendProviderGe) {
       MS_LOG(INFO) << "GraphSinkSession::Init ascend helper";
       is_use_ascend_ge_ = true;
-      GeDeviceContextInit(context, config_info);
+      auto ret = GeDeviceContextInit(context, config_info);
+      if (!ret) {
+        MS_LOG(ERROR) << "GraphSinkSession::Init failed, GE device context init failed.";
+        return kLiteError;
+      }
 
       if (!load_hccl_symbols()) {
         return kCoreFailed;

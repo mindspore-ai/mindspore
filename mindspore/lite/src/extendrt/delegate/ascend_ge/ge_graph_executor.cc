@@ -260,7 +260,7 @@ bool GeGraphExecutor::AddGraph(const transform::DfGraphPtr &graph, const std::ma
   auto graph_id = GetNextGraphIdx();
   auto ge_status = ge_session_->AddGraph(static_cast<uint32_t>(graph_id), *(graph), options);
   if (ge_status != ge::GRAPH_SUCCESS) {
-    MS_LOG(ERROR) << "Call GE AddGraph Failed, ret is: " << ge_status;
+    MS_LOG(ERROR) << "Call GE AddGraph Failed: " << ge::GEGetErrorMsg();
     return false;
   }
   *graph_id_ret = graph_id;
@@ -418,7 +418,7 @@ bool GeGraphExecutor::RunGeGraphAsync(uint32_t graph_id, const std::vector<::ge:
   }
   ge::Status ret = ge_session_->RunGraphAsync(graph_id, inputs, call_back);
   if (ret != ge::GRAPH_SUCCESS) {
-    MS_LOG(ERROR) << "Call GE RunGraphAsync Failed, ret is: " << ret;
+    MS_LOG(ERROR) << "Call GE RunGraphAsync Failed: " << ge::GEGetErrorMsg();
     return false;
   }
   if (!is_finished) {

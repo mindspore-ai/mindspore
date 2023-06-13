@@ -16,6 +16,7 @@
 
 #include "cxx_api/model/acl/model_converter.h"
 #include <memory>
+#include "acl/acl.h"
 #include "include/transform/graph_ir/utils.h"
 #include "cxx_api/model/model_converter_utils/multi_process.h"
 #include "graph/model.h"
@@ -149,13 +150,13 @@ Buffer ModelConverter::BuildAirModel(const transform::DfGraphPtr &graph,
   ge::ModelBufferData model;
   auto ret = ge::aclgrphBuildInitialize(init_options);
   if (ret != ge::SUCCESS) {
-    MS_LOG(ERROR) << "Call aclgrphBuildInitialize fail.";
+    MS_LOG(ERROR) << "Call aclgrphBuildInitialize fail: " << aclGetRecentErrMsg();
     return Buffer();
   }
 
   ret = ge::aclgrphBuildModel(*graph, build_options, model);
   if (ret != ge::SUCCESS) {
-    MS_LOG(ERROR) << "Call aclgrphBuildModel fail.";
+    MS_LOG(ERROR) << "Call aclgrphBuildModel fail: " << aclGetRecentErrMsg();
     ge::aclgrphBuildFinalize();
     return Buffer();
   }
