@@ -129,8 +129,8 @@ void ScalarToRawMemory(const py::object &obj, const AddressPtr &address) {
     return;
   }
   if (py::isinstance<py::float_>(obj)) {
-    double data = py::cast<double>(obj);
-    CHECK_RET_WITH_EXCEPT(memcpy_s(address->addr, address->size, &data, sizeof(double)), EOK, "memcpy failed.");
+    float data = py::cast<float>(obj);
+    CHECK_RET_WITH_EXCEPT(memcpy_s(address->addr, address->size, &data, sizeof(float)), EOK, "memcpy failed.");
     return;
   }
   MS_LOG(INTERNAL_EXCEPTION) << "Scalar to raw memory failed!";
