@@ -38,19 +38,6 @@
 
 #define MaxDwConvSWSize 32
 
-void PassConvParam(ConvComputeParam *compute, ConvParameter *conv_param) {
-  compute->stride_h_ = conv_param->stride_h_;
-  compute->stride_w_ = conv_param->stride_w_;
-  compute->dilation_h_ = conv_param->dilation_h_;
-  compute->dilation_w_ = conv_param->dilation_w_;
-  compute->pad_u_ = conv_param->pad_u_;
-  compute->pad_d_ = conv_param->pad_d_;
-  compute->pad_l_ = conv_param->pad_l_;
-  compute->pad_r_ = conv_param->pad_r_;
-  compute->kernel_h_ = conv_param->kernel_h_;
-  compute->kernel_w_ = conv_param->kernel_w_;
-}
-
 float *ConvolutionDelegateCopyData(const TensorC *tensor) {
   NNACL_CHECK_NULL_RETURN_NULL(tensor);
   NNACL_CHECK_NULL_RETURN_NULL(tensor->data_);
@@ -107,50 +94,6 @@ int ConvolutionDelegateGetWeightAndBias(ConvolutionDelegateStruct *convolution_d
   }
 
   return ConvolutionDelegateGetBiasData(convolution_delegate);
-}
-
-int ConvolutionDelegateUpdateComputeInfo(ConvolutionDelegateStruct *convolution_delegate) {
-  NNACL_CHECK_NULL_RETURN_ERR(convolution_delegate);
-  ConvParameter *conv_param = (ConvParameter *)convolution_delegate->conv_.base_.param_;
-  NNACL_CHECK_NULL_RETURN_ERR(conv_param);
-  TensorC *input = convolution_delegate->conv_.base_.in_[FIRST_INPUT];
-  NNACL_CHECK_NULL_RETURN_ERR(input);
-  TensorC *output = convolution_delegate->conv_.base_.out_[OUTPUT_INDEX];
-  NNACL_CHECK_NULL_RETURN_ERR(output);
-
-  conv_param->input_batch_ = GetBatch(input);
-  conv_param->input_h_ = GetHeight(input);
-  conv_param->input_w_ = GetWidth(input);
-  conv_param->input_channel_ = GetChannel(input);
-  conv_param->output_batch_ = GetBatch(output);
-  conv_param->output_h_ = GetHeight(output);
-  conv_param->output_w_ = GetWidth(output);
-  conv_param->output_channel_ = GetChannel(output);
-
-  ConvComputeParam *compute = &convolution_delegate->convolution_->compute_;
-  compute->in_n_ = GetBatch(input);
-  compute->in_h_ = GetHeight(input);
-  compute->in_w_ = GetWidth(input);
-  compute->in_c_ = GetChannel(input);
-  NNACL_CHECK_FALSE(compute->in_c_ != conv_param->input_channel_, NNACL_ERR);
-  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(compute->in_h_, compute->in_w_, NNACL_ERR);
-  compute->in_hw_ = compute->in_h_ * compute->in_w_;
-
-  compute->out_n_ = GetBatch(output);
-  compute->out_h_ = GetHeight(output);
-  compute->out_w_ = GetWidth(output);
-  compute->out_c_ = GetChannel(output);
-  NNACL_CHECK_FALSE(compute->out_c_ != conv_param->output_channel_, NNACL_ERR);
-  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(compute->out_h_, compute->out_w_, NNACL_ERR);
-  compute->out_hw_ = compute->out_h_ * compute->out_w_;
-
-  compute->kernel_h_ = conv_param->kernel_h_;
-  compute->kernel_w_ = conv_param->kernel_w_;
-  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(compute->kernel_h_, compute->kernel_w_, NNACL_ERR);
-  compute->kernel_hw_ = compute->kernel_h_ * compute->kernel_w_;
-
-  PassConvParam(compute, conv_param);
-  return NNACL_OK;
 }
 
 ConvolutionBaseStruct *ConvolutionDelegateConvNC4KernelSelect(ConvolutionDelegateStruct *convolution_delegate) {
@@ -263,7 +206,7 @@ int convolution_delegate_resize(struct KernelBase *self) {
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(convolution_delegate->convolution_);
   }
 
-  ConvolutionDelegateUpdateComputeInfo(convolution_delegate);
+  (void)ConvBaseUpdateComputeInfo(convolution_delegate->convolution_);
 
   int ret = convolution_delegate->convolution_->base_.prepare(&convolution_delegate->convolution_->base_);
   if (ret != NNACL_OK) {
@@ -385,7 +328,8 @@ KernelBase *CreateConv2DFusion(OpParameter *param, int data_type) {
   }
 
   ConvolutionBaseStruct *conv = (ConvolutionBaseStruct *)kernel;
-  PassConvParam(&conv->compute_, conv_param);
+  (void)ConvBaseUpdateParamInfo(&conv->compute_, conv_param);
+
   return kernel;
 }
 
