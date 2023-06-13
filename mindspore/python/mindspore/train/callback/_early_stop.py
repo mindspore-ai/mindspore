@@ -85,13 +85,13 @@ class EarlyStopping(Callback):
         >>> from mindspore import nn
         >>> from mindspore.train import Model, EarlyStopping
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/lenet.py
+        >>> # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         >>> optim = nn.Momentum(net.trainable_params(), 0.01, 0.9)
         >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics={"acc"})
         >>> # Create the dataset taking MNIST as an example. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/mnist.py
+        >>> # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/mnist.py
         >>> dataset = create_dataset()
         >>> cb = EarlyStopping(monitor="acc", patience=3, verbose=True)
         >>> model.fit(10, dataset, callbacks=cb)
