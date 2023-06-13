@@ -657,7 +657,7 @@ def set_auto_parallel_context(**kwargs):
                           lot of device memories, thus can make model be trained
                           with larger batch size. This configure is effective only
                           when the model runs on pipeline training or gradient
-                          accumulation with data parallel. Default ``True`` .
+                          accumulation with data parallel. Default ``False`` .
 
                         - parallel_optimizer_threshold(int): Set the threshold of parallel optimizer. When parallel
                           optimizer is enabled, parameters with size smaller than this threshold will not be sharded

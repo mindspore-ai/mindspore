@@ -289,6 +289,11 @@ void MicroInterleavedOrderControl(const FuncGraphPtr &graph) {
       parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::kAutoParallel) {
     return;
   }
+  static const auto graph_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
+  static const auto graph_reuse = (graph_reuse_env == "1" || graph_reuse_env == "2");
+  if (graph_reuse) {
+    return;
+  }
   if (!parallel::ParallelContext::GetInstance()->enable_micro_interleaved()) {
     return;
   }
