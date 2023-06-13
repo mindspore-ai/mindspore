@@ -2119,6 +2119,25 @@ def sum(input, axis=None, dtype=None, keepdims=False, initial=None):  # pylint: 
     return res.astype(dtype)
 
 
+@_primexpr
+def _check_sum_to_size(size, input_dim, shape_input):
+    """Check the length of size of sum_to_size."""
+    if len(size) > input_dim:
+        raise ValueError(f"For sum_to_size, size {size} is not expandable to the tensor size {shape_input}.")
+
+
+@_primexpr
+def _count_axes(size, input_shape, shape_input):
+    """Count the sum axes for sum_to_size."""
+    axes = []
+    for i, element in enumerate(size):
+        if element != input_shape[i] and element == 1:
+            axes.append(i)
+        elif element != input_shape[i]:
+            raise ValueError(f"For sum_to_size, size {size} is not expandable to the tensor size {shape_input}.")
+    return axes
+
+
 def sum_to_size(input, *size):
     """
     Sum `input` to the `size`. `size` must be expandable to the Tensor size.
@@ -2126,17 +2145,11 @@ def sum_to_size(input, *size):
     if len(size) == 1 and isinstance(size[0], tuple):
         size = size[0]
     shape_input = input.shape
-    if len(size) > input.ndim:
-        raise ValueError(f"For sum_to_size, size {size} is not expandable to the tensor size {shape_input}.")
+    _check_sum_to_size(size, input.ndim, shape_input)
     if len(size) < input.ndim:
         pre_axis = tuple(axis for axis in range(input.ndim - len(size)))
         input = input.sum(pre_axis)
-    axes = []
-    for i, element in enumerate(size):
-        if element != input.shape[i] and element == 1:
-            axes.append(i)
-        elif element != input.shape[i]:
-            raise ValueError(f"For sum_to_size, size {size} is not expandable to the tensor size {shape_input}.")
+    axes = _count_axes(size, input.shape, shape_input)
     if axes:
         return input.sum(tuple(axes), keepdims=True)
     return input
