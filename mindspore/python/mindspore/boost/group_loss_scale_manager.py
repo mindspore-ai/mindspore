@@ -92,7 +92,7 @@ class GroupLossScaleManager(Cell):
         >>> model = ms.Model(net, loss_fn=loss, optimizer=optim, metrics=None, loss_scale_manager=loss_scale_manager, \
         >>>               boost_level="O1", boost_config_dict=boost_config_dict)
         >>> # Create the dataset taking MNIST as an example. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/mnist.py
+        >>> # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/mnist.py
         >>> dataset = create_dataset()
         >>> model.train(2, dataset)
     """
