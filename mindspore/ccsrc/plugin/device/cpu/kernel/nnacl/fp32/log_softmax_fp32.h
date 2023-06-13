@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_NNACL_FP32_LOG_SOFTMAX_H_
-#define MINDSPORE_LITE_NNACL_FP32_LOG_SOFTMAX_H_
+#ifndef NNACL_FP32_LOG_SOFTMAX_FP32_H_
+#define NNACL_FP32_LOG_SOFTMAX_FP32_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/softmax_parameter.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
-void LogSoftmax(const float *input_ptr, float *output_ptr, float *sum_data, const SoftmaxParameter *parameter);
+void LogSoftmax(const float *input_ptr, float *output_ptr, float *sum_data, int *input_shape, int n_dim, int axis);
 void LogSoftmaxLastAxis(const float *src, float *dst, float *exp_data, int batch, int channel);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_FP32_LOG_SOFTMAX_H_
+#endif  // NNACL_FP32_LOG_SOFTMAX_FP32_H_

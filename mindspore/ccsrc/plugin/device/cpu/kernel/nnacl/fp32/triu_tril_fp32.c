@@ -15,6 +15,30 @@
  */
 #include "nnacl/fp32/triu_tril_fp32.h"
 
+int TriuTrilGetKValue(KernelBase *self, int64_t *k) {
+  if (self->in_size_ <= 1) {
+    *k = 0;
+    return NNACL_OK;
+  }
+
+  TensorC *k_tensor = self->in_[SECOND_INPUT];
+  NNACL_CHECK_NULL_RETURN_ERR(k_tensor);
+  NNACL_CHECK_NULL_RETURN_ERR(k_tensor->data_);
+
+  switch (k_tensor->data_type_) {
+    case kNumberTypeInt:
+    case kNumberTypeInt32:
+      *k = *((int *)k_tensor->data_);
+      break;
+    case kNumberTypeInt64:
+      *k = *((int64_t *)k_tensor->data_);
+      break;
+    default:
+      return NNACL_TRIU_K_TENSOR_DATA_TYPE_INVALID;
+  }
+  return NNACL_OK;
+}
+
 void TriuByte8(const void *src, void *dst, int64_t k, int64_t height, int64_t width, int64_t out_elems) {
   const int64_t *src_data = (const int64_t *)src;
   int64_t *dst_data = (int64_t *)dst;

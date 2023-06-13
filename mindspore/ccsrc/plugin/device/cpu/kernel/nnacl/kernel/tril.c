@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-#include "nnacl/kernel/triu.h"
+#include "nnacl/kernel/tril.h"
 #include "nnacl/kernel/base_kernel.h"
 #include "nnacl/common_func.h"
 #include "nnacl/fp32/triu_tril_fp32.h"
 
-int triu_compute(KernelBase *self) {
-  TriuStruct *triu = (TriuStruct *)self;
-  NNACL_CHECK_NULL_RETURN_ERR(triu);
+int tril_compute(KernelBase *self) {
+  TrilStruct *tril = (TrilStruct *)self;
+  NNACL_CHECK_NULL_RETURN_ERR(tril);
 
-  int ret = TriuTrilGetKValue(self, &triu->k_);
+  int ret = TriuTrilGetKValue(self, &tril->k_);
   if (ret != NNACL_OK) {
     return ret;
   }
@@ -53,19 +53,19 @@ int triu_compute(KernelBase *self) {
 
   switch (type_size) {
     case sizeof(int64_t): {
-      TriuByte8(src_data, dst_data, triu->k_, height, width, mul);
+      TrilByte8(src_data, dst_data, tril->k_, height, width, mul);
       break;
     }
     case sizeof(int32_t): {
-      TriuByte4(src_data, dst_data, triu->k_, height, width, mul);
+      TrilByte4(src_data, dst_data, tril->k_, height, width, mul);
       break;
     }
     case sizeof(int16_t): {
-      TriuByte2(src_data, dst_data, triu->k_, height, width, mul);
+      TrilByte2(src_data, dst_data, tril->k_, height, width, mul);
       break;
     }
     case sizeof(int8_t): {
-      TriuByte1(src_data, dst_data, triu->k_, height, width, mul);
+      TrilByte1(src_data, dst_data, tril->k_, height, width, mul);
       break;
     }
     default:
@@ -74,28 +74,28 @@ int triu_compute(KernelBase *self) {
   return NNACL_OK;
 }
 
-KernelBase *CreateTriu(OpParameter *param, int data_type) {
-  TriuStruct *triu = (TriuStruct *)malloc(sizeof(TriuStruct));
-  NNACL_CHECK_NULL_RETURN_NULL(triu);
-  triu->base_.release = base_kernel_release;
-  triu->base_.prepare = base_kernel_prepare_one_input;
-  triu->base_.resize = base_kernel_resize;
-  triu->base_.compute = triu_compute;
-  return (KernelBase *)triu;
+KernelBase *CreateTril(OpParameter *param, int data_type) {
+  TrilStruct *tril = (TrilStruct *)malloc(sizeof(TrilStruct));
+  NNACL_CHECK_NULL_RETURN_NULL(tril);
+  tril->base_.release = base_kernel_release;
+  tril->base_.prepare = base_kernel_prepare_one_input;
+  tril->base_.resize = base_kernel_resize;
+  tril->base_.compute = tril_compute;
+  return (KernelBase *)tril;
 }
 
-REG_KERNEL_CREATOR(PrimType_Triu, kNumberTypeDouble, CreateTriu)
-REG_KERNEL_CREATOR(PrimType_Triu, kNumberTypeFloat, CreateTriu)
-REG_KERNEL_CREATOR(PrimType_Triu, kNumberTypeFloat64, CreateTriu)
-REG_KERNEL_CREATOR(PrimType_Triu, kNumberTypeFloat32, CreateTriu)
-REG_KERNEL_CREATOR(PrimType_Triu, kNumberTypeFloat16, CreateTriu)
-REG_KERNEL_CREATOR(PrimType_Triu, kNumberTypeInt, CreateTriu)
-REG_KERNEL_CREATOR(PrimType_Triu, kNumberTypeInt64, CreateTriu)
-REG_KERNEL_CREATOR(PrimType_Triu, kNumberTypeInt32, CreateTriu)
-REG_KERNEL_CREATOR(PrimType_Triu, kNumberTypeInt16, CreateTriu)
-REG_KERNEL_CREATOR(PrimType_Triu, kNumberTypeInt8, CreateTriu)
-REG_KERNEL_CREATOR(PrimType_Triu, kNumberTypeUInt64, CreateTriu)
-REG_KERNEL_CREATOR(PrimType_Triu, kNumberTypeUInt32, CreateTriu)
-REG_KERNEL_CREATOR(PrimType_Triu, kNumberTypeUInt16, CreateTriu)
-REG_KERNEL_CREATOR(PrimType_Triu, kNumberTypeUInt8, CreateTriu)
-REG_KERNEL_CREATOR(PrimType_Triu, kNumberTypeBool, CreateTriu)
+REG_KERNEL_CREATOR(PrimType_Tril, kNumberTypeDouble, CreateTril)
+REG_KERNEL_CREATOR(PrimType_Tril, kNumberTypeFloat, CreateTril)
+REG_KERNEL_CREATOR(PrimType_Tril, kNumberTypeFloat64, CreateTril)
+REG_KERNEL_CREATOR(PrimType_Tril, kNumberTypeFloat32, CreateTril)
+REG_KERNEL_CREATOR(PrimType_Tril, kNumberTypeFloat16, CreateTril)
+REG_KERNEL_CREATOR(PrimType_Tril, kNumberTypeInt, CreateTril)
+REG_KERNEL_CREATOR(PrimType_Tril, kNumberTypeInt64, CreateTril)
+REG_KERNEL_CREATOR(PrimType_Tril, kNumberTypeInt32, CreateTril)
+REG_KERNEL_CREATOR(PrimType_Tril, kNumberTypeInt16, CreateTril)
+REG_KERNEL_CREATOR(PrimType_Tril, kNumberTypeInt8, CreateTril)
+REG_KERNEL_CREATOR(PrimType_Tril, kNumberTypeUInt64, CreateTril)
+REG_KERNEL_CREATOR(PrimType_Tril, kNumberTypeUInt32, CreateTril)
+REG_KERNEL_CREATOR(PrimType_Tril, kNumberTypeUInt16, CreateTril)
+REG_KERNEL_CREATOR(PrimType_Tril, kNumberTypeUInt8, CreateTril)
+REG_KERNEL_CREATOR(PrimType_Tril, kNumberTypeBool, CreateTril)

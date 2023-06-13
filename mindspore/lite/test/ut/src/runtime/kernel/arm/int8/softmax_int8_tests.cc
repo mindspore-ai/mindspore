@@ -36,11 +36,6 @@ TEST_F(TestSoftmaxInt8, SoftmaxInt8) {
   SoftmaxParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Softmax;
   op_param.axis_ = 2;
-  op_param.element_size_ = 24;
-  op_param.input_shape_[0] = 1;
-  op_param.input_shape_[1] = 2;
-  op_param.input_shape_[2] = 3;
-  op_param.input_shape_[3] = 4;
 
   lite::LiteQuantParam input_quant_arg;
   input_quant_arg.scale = 0.0352941;
@@ -92,5 +87,4 @@ TEST_F(TestSoftmaxInt8, SoftmaxInt8) {
   output0_tensor.set_data(nullptr);
   delete kernel;
 }
-
 }  // namespace mindspore

@@ -22,33 +22,31 @@ int SoftmaxBaseCoder::Init() {
   this->softmax_param_ = reinterpret_cast<SoftmaxParameter *>(parameter_);
   std::vector<int> in_shape = input_tensor_->shape();
   size_t in_dims = in_shape.size();
-  MS_CHECK_TRUE(in_dims < std::extent<decltype(softmax_param_->input_shape_)>::value,
-                "in_dims should be less than input_shape_ size");
+  MS_CHECK_TRUE(in_dims < std::extent<decltype(input_shape_)>::value, "in_dims should be less than input_shape_ size");
   int ele_size = 1;
-  softmax_param_->n_dim_ = in_dims;
+  n_dim_ = in_dims;
   for (int i = 0; i < static_cast<int>(in_dims); i++) {
-    softmax_param_->input_shape_[i] = in_shape.at(i);
+    input_shape_[i] = in_shape.at(i);
     ele_size *= in_shape.at(i);
   }
-  softmax_param_->element_size_ = ele_size;
+  element_size_ = ele_size;
   return RET_OK;
 }
 
 int SoftmaxBaseCoder::ReSize() {
   std::vector<int> in_shape = input_tensor_->shape();
   size_t in_dims = in_shape.size();
-  MS_CHECK_TRUE(in_dims < std::extent<decltype(softmax_param_->input_shape_)>::value,
-                "in_dims should be less than input_shape_ size");
+  MS_CHECK_TRUE(in_dims < std::extent<decltype(input_shape_)>::value, "in_dims should be less than input_shape_ size");
   int ele_size = 1;
-  softmax_param_->n_dim_ = in_dims;
+  n_dim_ = in_dims;
   if (softmax_param_->axis_ == -1) {
     softmax_param_->axis_ += in_dims;
   }
   for (size_t i = 0; i < in_dims; i++) {
-    softmax_param_->input_shape_[i] = in_shape.at(i);
+    input_shape_[i] = in_shape.at(i);
     ele_size *= in_shape.at(i);
   }
-  softmax_param_->element_size_ = ele_size;
+  element_size_ = ele_size;
   return RET_OK;
 }
 }  // namespace mindspore::lite::micro

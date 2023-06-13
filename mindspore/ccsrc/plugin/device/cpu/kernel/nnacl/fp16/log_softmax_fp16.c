@@ -45,11 +45,8 @@ void LogSoftmaxLastAxisFp16(const float16_t *src, float16_t *dst, float16_t *exp
 }
 
 // output = (input - reduce_max(input, axis)) - log(reduce_sum(exp(input - reduce_max(input, axis)), axis))
-void LogSoftmaxFp16(const float16_t *input_ptr, float16_t *output_ptr, float16_t *sum_data,
-                    const SoftmaxParameter *parameter) {
-  int axis = parameter->axis_;
-  int n_dim = parameter->n_dim_;
-  const int *input_shape = parameter->input_shape_;
+void LogSoftmaxFp16(const float16_t *input_ptr, float16_t *output_ptr, float16_t *sum_data, int *input_shape, int n_dim,
+                    int axis) {
   int inner_size = 1;
   int outter_size = 1;
 

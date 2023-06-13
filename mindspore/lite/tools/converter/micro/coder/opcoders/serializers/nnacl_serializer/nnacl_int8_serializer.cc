@@ -132,8 +132,15 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const PoolingParam
 }
 
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const SoftmaxParameter &softmax_parameter) {
-  CodeBaseStruct("SoftmaxParameter", name, softmax_parameter.op_parameter_, softmax_parameter.axis_,
-                 ToString(softmax_parameter.input_shape_), softmax_parameter.element_size_, softmax_parameter.n_dim_);
+  CodeBaseStruct("SoftmaxParameter", name, softmax_parameter.op_parameter_, softmax_parameter.axis_);
+}
+
+void NNaclInt8Serializer::CodeStruct(const std::string &name, const int *list, int size) {
+  code << "int " << name << "[] = {";
+  for (int i = 0; i < size - 1; i++) {
+    code << list[i] << ",";
+  }
+  code << list[size - 1] << "};\n";
 }
 
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const SliceParameter &slice_parameter) {

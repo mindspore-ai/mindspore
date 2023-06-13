@@ -46,8 +46,8 @@ int SoftmaxCrossEntropyWithLogitsCPUKernel::DoExecute(int task_id) {
   float *losses_ = static_cast<float *>(workspace());
   float *sum_data_ = losses_ + data_size;
   std::fill(losses_, losses_ + data_size, 0);
-  std::fill(sum_data_, sum_data_ + sm_params_.input_shape_[0], 0);
-  Softmax(ins, losses_, sum_data_, sm_params_.axis_, sm_params_.n_dim_, sm_params_.input_shape_);
+  std::fill(sum_data_, sum_data_ + input_shape_[0], 0);
+  Softmax(ins, losses_, sum_data_, sm_params_.axis_, n_dim_, input_shape_);
   ForwardPostExecute(labels, losses_, grads, out, param_->number_of_classes_, param_->batch_size_);
   return RET_OK;
 }
@@ -97,10 +97,10 @@ int SoftmaxCrossEntropyWithLogitsCPUKernel::ReSize() {
 
   size_t data_size = in_tensors_.at(0)->ElementsNum();
   set_workspace_size((data_size + static_cast<size_t>(dims.at(0))) * sizeof(float));
-  sm_params_.n_dim_ = 2;
-  sm_params_.element_size_ = data_size;
+  n_dim_ = 2;
+  element_size_ = data_size;
   sm_params_.axis_ = 1;
-  for (size_t i = 0; i < dims.size(); i++) sm_params_.input_shape_[i] = dims.at(i);
+  for (size_t i = 0; i < dims.size(); i++) input_shape_[i] = dims.at(i);
 
   return RET_OK;
 }

@@ -22,16 +22,6 @@
 #include "nnacl/fp16/softmax_fp16.h"
 #endif
 
-typedef struct SoftmaxStruct {
-  KernelBase base_;
-  int axis_;
-  int n_dim_;
-  int in_plane_size_;
-  int out_plane_size_;
-  void *sum_data_;
-  TypeIdC data_type_;
-} SoftmaxStruct;
-
 int SoftmaxLastAxisRun(void *cdata, int task_id, float l, float r) {
   SoftmaxStruct *softmax = (SoftmaxStruct *)cdata;
   NNACL_CHECK_NULL_RETURN_ERR(softmax);
@@ -62,16 +52,6 @@ int SoftmaxLastAxisRun(void *cdata, int task_id, float l, float r) {
   return SoftmaxLastAxis((float *)input_ptr + offset, (float *)output_ptr + offset, end - begin, channel);
 }
 
-void InitSoftmaxParam(SoftmaxStruct *softmax) {
-  TensorC *in_tensor = softmax->base_.in_[FIRST_INPUT];
-  NNACL_CHECK_NULL_RETURN_VOID(in_tensor);
-
-  softmax->n_dim_ = in_tensor->shape_size_;
-  int origin_axis = ((SoftmaxParameter *)softmax->base_.param_)->axis_;
-  softmax->axis_ = origin_axis == -1 ? origin_axis + softmax->n_dim_ : origin_axis;
-  return;
-}
-
 int softmax_release(struct KernelBase *self) {
   SoftmaxStruct *softmax = (SoftmaxStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(softmax);
@@ -82,13 +62,15 @@ int softmax_release(struct KernelBase *self) {
   return NNACL_OK;
 }
 
-int softmax_resize(struct KernelBase *self) {
-  SoftmaxStruct *softmax = (SoftmaxStruct *)self;
-  NNACL_CHECK_NULL_RETURN_ERR(softmax);
-  InitSoftmaxParam(softmax);
-
+int InitSoftmaxParam(SoftmaxStruct *softmax) {
   TensorC *in_tensor = softmax->base_.in_[FIRST_INPUT];
+  NNACL_CHECK_NULL_RETURN_ERR(in_tensor);
   int *in_shape = in_tensor->shape_;
+
+  softmax->n_dim_ = in_tensor->shape_size_;
+  int origin_axis = ((SoftmaxParameter *)softmax->base_.param_)->axis_;
+  softmax->axis_ = origin_axis == -1 ? origin_axis + softmax->n_dim_ : origin_axis;
+
   NNACL_CHECK_TRUE_RET(softmax->axis_ >= 0, NNACL_SOFTMAX_AXIS_INVALID);
   NNACL_CHECK_TRUE_RET(softmax->axis_ < in_tensor->shape_size_, NNACL_SOFTMAX_AXIS_INVALID);
 
@@ -100,14 +82,31 @@ int softmax_resize(struct KernelBase *self) {
   for (int i = softmax->axis_ + 1; i < softmax->n_dim_; i++) {
     in_plane_size *= in_shape[i];
   }
+
+  ExecEnv *env = softmax->base_.env_;
+  NNACL_CHECK_NULL_RETURN_ERR(env);
+
   softmax->in_plane_size_ = in_plane_size;
   softmax->out_plane_size_ = out_plane_size;
+
+  (void)softmax_release(&softmax->base_);
   if (softmax->in_plane_size_ > 1) {
-    (void)softmax_release(self);
-    softmax->sum_data_ =
-      self->env_->alloc(self->env_->allocator_, out_plane_size * in_plane_size * DataTypeCSize(softmax->data_type_));
+    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(out_plane_size, in_plane_size, NNACL_ERR);
+    int sum_data_size = out_plane_size * in_plane_size;
+    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(sum_data_size, DataTypeCSize(softmax->data_type_), NNACL_ERR);
+    softmax->sum_data_ = env->alloc(env->allocator_, sum_data_size * DataTypeCSize(softmax->data_type_));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(softmax->sum_data_);
   }
+  return NNACL_OK;
+}
+
+int softmax_resize(struct KernelBase *self) {
+  SoftmaxStruct *softmax = (SoftmaxStruct *)self;
+  NNACL_CHECK_NULL_RETURN_ERR(softmax);
+  InitSoftmaxParam(softmax);
+
+  TensorC *in_tensor = self->in_[FIRST_INPUT];
+  int *in_shape = in_tensor->shape_;
 
   self->thread_nr_ =
     self->update_thread_(TC_PTYPE(PrimType_Softmax), in_shape[softmax->axis_], in_shape[softmax->axis_],
@@ -143,6 +142,8 @@ int softmax_compute(struct KernelBase *self) {
 KernelBase *CreateSoftmax(OpParameter *param, int data_type) {
   SoftmaxStruct *softmax = (SoftmaxStruct *)malloc(sizeof(SoftmaxStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(softmax);
+  memset(softmax, 0, sizeof(SoftmaxStruct));
+
   softmax->sum_data_ = NULL;
   softmax->data_type_ = data_type;
   softmax->base_.release = softmax_release;

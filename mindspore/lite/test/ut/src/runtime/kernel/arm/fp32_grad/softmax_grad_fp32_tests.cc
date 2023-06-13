@@ -31,40 +31,23 @@ class TestSoftmaxGradFp32 : public mindspore::CommonTest {
   TestSoftmaxGradFp32() {}
 };
 
-void InitSoftMaxParam(SoftmaxParameter *softmax_param, int axis) {
-  softmax_param->axis_ = axis;
-  softmax_param->element_size_ = 1188;
-  softmax_param->n_dim_ = 4;
-  softmax_param->input_shape_[0] = 1;
-  softmax_param->input_shape_[1] = 9;
-  softmax_param->input_shape_[2] = 11;
-  softmax_param->input_shape_[3] = 12;
-}
-
-void InitSoftMaxParam(SoftmaxParameter *softmax_param, int axis, int n, int c, int h, int w) {
-  softmax_param->axis_ = axis;
-  softmax_param->element_size_ = n * c * h * w;
-  softmax_param->n_dim_ = 4;
-  softmax_param->input_shape_[0] = n;
-  softmax_param->input_shape_[1] = c;
-  softmax_param->input_shape_[2] = h;
-  softmax_param->input_shape_[3] = w;
-}
-
 TEST_F(TestSoftmaxGradFp32, SoftmaxGradAxis0) {
   auto softmax_param = new SoftmaxParameter();
   ASSERT_NE(softmax_param, nullptr);
-  // set parameters
-  InitSoftMaxParam(softmax_param, 0);
+
+  softmax_param->axis_ = 0;
+  int element_size_ = 1188;
+  int n_dim_ = 4;
+  int input_shape_[] = {1, 9, 11, 12};
 
   int inner_size = 1;
-  if (softmax_param->axis_ == -1) softmax_param->axis_ = softmax_param->n_dim_ - 1;
-  for (int i = softmax_param->axis_ + 1; i < softmax_param->n_dim_; i++) {
-    inner_size *= softmax_param->input_shape_[i];
+  if (softmax_param->axis_ == -1) softmax_param->axis_ = n_dim_ - 1;
+  for (int i = softmax_param->axis_ + 1; i < n_dim_; i++) {
+    inner_size *= input_shape_[i];
   }
   float *sum_data = new (std::nothrow) float[inner_size];
   ASSERT_NE(sum_data, nullptr);
-  float *sum_mul = new (std::nothrow) float[inner_size * softmax_param->input_shape_[softmax_param->axis_]];
+  float *sum_mul = new (std::nothrow) float[inner_size * input_shape_[softmax_param->axis_]];
   ASSERT_NE(sum_mul, nullptr);
   std::vector<int> shape = {1, 9, 11, 12};
   size_t input_size;
@@ -78,17 +61,19 @@ TEST_F(TestSoftmaxGradFp32, SoftmaxGradAxis0) {
   printf("Calculating runtime cost...\n");
   uint64_t time_avg = 0;
 
-  auto out_data = new float[softmax_param->element_size_];
+  auto out_data = new float[element_size_];
   ASSERT_NE(out_data, nullptr);
   // warm up loop
   for (int i = 0; i < 3; i++) {
-    SoftmaxGrad(input_data, yt_data, out_data, sum_data, sum_mul, softmax_param);
+    SoftmaxGrad(input_data, yt_data, out_data, sum_data, sum_mul, input_shape_, n_dim_, element_size_,
+                softmax_param->axis_);
   }
 
   int loop_count = 3;
   auto time_start = mindspore::lite::GetTimeUs();
   for (int i = 0; i < loop_count; i++) {
-    SoftmaxGrad(input_data, yt_data, out_data, sum_data, sum_mul, softmax_param);
+    SoftmaxGrad(input_data, yt_data, out_data, sum_data, sum_mul, input_shape_, n_dim_, element_size_,
+                softmax_param->axis_);
   }
   auto time_end = mindspore::lite::GetTimeUs();
   auto cost = time_end - time_start;
@@ -114,17 +99,20 @@ TEST_F(TestSoftmaxGradFp32, SoftmaxGradAxis0) {
 TEST_F(TestSoftmaxGradFp32, SoftmaxGradAxis1) {
   auto softmax_param = new SoftmaxParameter();
   ASSERT_NE(softmax_param, nullptr);
-  // set parameters
-  InitSoftMaxParam(softmax_param, 1);
+
+  softmax_param->axis_ = 1;
+  int element_size_ = 1188;
+  int n_dim_ = 4;
+  int input_shape_[] = {1, 9, 11, 12};
 
   int inner_size = 1;
-  if (softmax_param->axis_ == -1) softmax_param->axis_ = softmax_param->n_dim_ - 1;
-  for (int i = softmax_param->axis_ + 1; i < softmax_param->n_dim_; i++) {
-    inner_size *= softmax_param->input_shape_[i];
+  if (softmax_param->axis_ == -1) softmax_param->axis_ = n_dim_ - 1;
+  for (int i = softmax_param->axis_ + 1; i < n_dim_; i++) {
+    inner_size *= input_shape_[i];
   }
   float *sum_data = new (std::nothrow) float[inner_size];
   ASSERT_NE(sum_data, nullptr);
-  float *sum_mul = new (std::nothrow) float[inner_size * softmax_param->input_shape_[softmax_param->axis_]];
+  float *sum_mul = new (std::nothrow) float[inner_size * input_shape_[softmax_param->axis_]];
   ASSERT_NE(sum_mul, nullptr);
 
   std::vector<int> shape = {1, 9, 11, 12};
@@ -141,18 +129,20 @@ TEST_F(TestSoftmaxGradFp32, SoftmaxGradAxis1) {
   printf("Calculating runtime cost...\n");
   uint64_t time_avg = 0;
 
-  auto out_data = new float[softmax_param->element_size_];
+  auto out_data = new float[element_size_];
   ASSERT_NE(out_data, nullptr);
 
   // warm up loop
   for (int i = 0; i < 3; i++) {
-    SoftmaxGrad(input_data, yt_data, out_data, sum_data, sum_mul, softmax_param);
+    SoftmaxGrad(input_data, yt_data, out_data, sum_data, sum_mul, input_shape_, n_dim_, element_size_,
+                softmax_param->axis_);
   }
 
   int loop_count = 3;
   auto time_start = mindspore::lite::GetTimeUs();
   for (int i = 0; i < loop_count; i++) {
-    SoftmaxGrad(input_data, yt_data, out_data, sum_data, sum_mul, softmax_param);
+    SoftmaxGrad(input_data, yt_data, out_data, sum_data, sum_mul, input_shape_, n_dim_, element_size_,
+                softmax_param->axis_);
   }
   auto time_end = mindspore::lite::GetTimeUs();
   auto cost = time_end - time_start;
@@ -179,17 +169,20 @@ TEST_F(TestSoftmaxGradFp32, SoftmaxGradAxis1) {
 TEST_F(TestSoftmaxGradFp32, SoftmaxGradAxis2) {
   auto softmax_param = new SoftmaxParameter();
   ASSERT_NE(softmax_param, nullptr);
-  // set parameters
-  InitSoftMaxParam(softmax_param, 2);
+
+  softmax_param->axis_ = 2;
+  int element_size_ = 1188;
+  int n_dim_ = 4;
+  int input_shape_[] = {1, 9, 11, 12};
 
   int inner_size = 1;
-  if (softmax_param->axis_ == -1) softmax_param->axis_ = softmax_param->n_dim_ - 1;
-  for (int i = softmax_param->axis_ + 1; i < softmax_param->n_dim_; i++) {
-    inner_size *= softmax_param->input_shape_[i];
+  if (softmax_param->axis_ == -1) softmax_param->axis_ = n_dim_ - 1;
+  for (int i = softmax_param->axis_ + 1; i < n_dim_; i++) {
+    inner_size *= input_shape_[i];
   }
   float *sum_data = new (std::nothrow) float[inner_size];
   ASSERT_NE(sum_data, nullptr);
-  float *sum_mul = new (std::nothrow) float[inner_size * softmax_param->input_shape_[softmax_param->axis_]];
+  float *sum_mul = new (std::nothrow) float[inner_size * input_shape_[softmax_param->axis_]];
   ASSERT_NE(sum_mul, nullptr);
 
   std::vector<int> shape = {1, 9, 11, 12};
@@ -206,18 +199,20 @@ TEST_F(TestSoftmaxGradFp32, SoftmaxGradAxis2) {
   printf("Calculating runtime cost...\n");
   uint64_t time_avg = 0;
 
-  auto out_data = new float[softmax_param->element_size_];
+  auto out_data = new float[element_size_];
   ASSERT_NE(out_data, nullptr);
 
   // warm up loop
   for (int i = 0; i < 3; i++) {
-    SoftmaxGrad(input_data, yt_data, out_data, sum_data, sum_mul, softmax_param);
+    SoftmaxGrad(input_data, yt_data, out_data, sum_data, sum_mul, input_shape_, n_dim_, element_size_,
+                softmax_param->axis_);
   }
 
   int loop_count = 3;
   auto time_start = mindspore::lite::GetTimeUs();
   for (int i = 0; i < loop_count; i++) {
-    SoftmaxGrad(input_data, yt_data, out_data, sum_data, sum_mul, softmax_param);
+    SoftmaxGrad(input_data, yt_data, out_data, sum_data, sum_mul, input_shape_, n_dim_, element_size_,
+                softmax_param->axis_);
   }
   auto time_end = mindspore::lite::GetTimeUs();
   auto cost = time_end - time_start;
@@ -244,17 +239,20 @@ TEST_F(TestSoftmaxGradFp32, SoftmaxGradAxis2) {
 TEST_F(TestSoftmaxGradFp32, SoftmaxGradAxis3) {
   auto softmax_param = new SoftmaxParameter();
   ASSERT_NE(softmax_param, nullptr);
-  // set parameters
-  InitSoftMaxParam(softmax_param, 3);
+
+  softmax_param->axis_ = 3;
+  int element_size_ = 1188;
+  int n_dim_ = 4;
+  int input_shape_[] = {1, 9, 11, 12};
 
   int inner_size = 1;
-  if (softmax_param->axis_ == -1) softmax_param->axis_ = softmax_param->n_dim_ - 1;
-  for (int i = softmax_param->axis_ + 1; i < softmax_param->n_dim_; i++) {
-    inner_size *= softmax_param->input_shape_[i];
+  if (softmax_param->axis_ == -1) softmax_param->axis_ = n_dim_ - 1;
+  for (int i = softmax_param->axis_ + 1; i < n_dim_; i++) {
+    inner_size *= input_shape_[i];
   }
   float *sum_data = new (std::nothrow) float[inner_size];
   ASSERT_NE(sum_data, nullptr);
-  float *sum_mul = new (std::nothrow) float[inner_size * softmax_param->input_shape_[softmax_param->axis_]];
+  float *sum_mul = new (std::nothrow) float[inner_size * input_shape_[softmax_param->axis_]];
   ASSERT_NE(sum_mul, nullptr);
 
   std::vector<int> shape = {1, 9, 11, 12};
@@ -270,18 +268,20 @@ TEST_F(TestSoftmaxGradFp32, SoftmaxGradAxis3) {
   printf("Calculating runtime cost...\n");
   uint64_t time_avg = 0;
 
-  auto out_data = new float[softmax_param->element_size_];
+  auto out_data = new float[element_size_];
   ASSERT_NE(out_data, nullptr);
 
   // warm up loop
   for (int i = 0; i < 3; i++) {
-    SoftmaxGrad(input_data, yt_data, out_data, sum_data, sum_mul, softmax_param);
+    SoftmaxGrad(input_data, yt_data, out_data, sum_data, sum_mul, input_shape_, n_dim_, element_size_,
+                softmax_param->axis_);
   }
 
   int loop_count = 3;
   auto time_start = mindspore::lite::GetTimeUs();
   for (int i = 0; i < loop_count; i++) {
-    SoftmaxGrad(input_data, yt_data, out_data, sum_data, sum_mul, softmax_param);
+    SoftmaxGrad(input_data, yt_data, out_data, sum_data, sum_mul, input_shape_, n_dim_, element_size_,
+                softmax_param->axis_);
   }
   auto time_end = mindspore::lite::GetTimeUs();
   auto cost = time_end - time_start;
@@ -309,17 +309,19 @@ TEST_F(TestSoftmaxGradFp32, SoftmaxGradAxisMinus1) {
   auto softmax_param = new SoftmaxParameter();
   ASSERT_NE(softmax_param, nullptr);
 
-  // set parameters
-  InitSoftMaxParam(softmax_param, -1);
+  softmax_param->axis_ = -1;
+  int element_size_ = 1188;
+  int n_dim_ = 4;
+  int input_shape_[] = {1, 9, 11, 12};
 
   int inner_size = 1;
-  if (softmax_param->axis_ == -1) softmax_param->axis_ = softmax_param->n_dim_ - 1;
-  for (int i = softmax_param->axis_ + 1; i < softmax_param->n_dim_; i++) {
-    inner_size *= softmax_param->input_shape_[i];
+  if (softmax_param->axis_ == -1) softmax_param->axis_ = n_dim_ - 1;
+  for (int i = softmax_param->axis_ + 1; i < n_dim_; i++) {
+    inner_size *= input_shape_[i];
   }
   float *sum_data = new (std::nothrow) float[inner_size];
   ASSERT_NE(sum_data, nullptr);
-  float *sum_mul = new (std::nothrow) float[inner_size * softmax_param->input_shape_[softmax_param->axis_]];
+  float *sum_mul = new (std::nothrow) float[inner_size * input_shape_[softmax_param->axis_]];
   ASSERT_NE(sum_mul, nullptr);
 
   std::vector<int> shape = {1, 9, 11, 12};
@@ -335,18 +337,20 @@ TEST_F(TestSoftmaxGradFp32, SoftmaxGradAxisMinus1) {
   printf("Calculating runtime cost...\n");
   uint64_t time_avg = 0;
 
-  auto out_data = new float[softmax_param->element_size_];
+  auto out_data = new float[element_size_];
   ASSERT_NE(out_data, nullptr);
 
   // warm up loop
   for (int i = 0; i < 3; i++) {
-    SoftmaxGrad(input_data, yt_data, out_data, sum_data, sum_mul, softmax_param);
+    SoftmaxGrad(input_data, yt_data, out_data, sum_data, sum_mul, input_shape_, n_dim_, element_size_,
+                softmax_param->axis_);
   }
 
   int loop_count = 3;
   auto time_start = mindspore::lite::GetTimeUs();
   for (int i = 0; i < loop_count; i++) {
-    SoftmaxGrad(input_data, yt_data, out_data, sum_data, sum_mul, softmax_param);
+    SoftmaxGrad(input_data, yt_data, out_data, sum_data, sum_mul, input_shape_, n_dim_, element_size_,
+                softmax_param->axis_);
   }
   auto time_end = mindspore::lite::GetTimeUs();
   auto cost = time_end - time_start;
@@ -369,5 +373,4 @@ TEST_F(TestSoftmaxGradFp32, SoftmaxGradAxisMinus1) {
 
   MS_LOG(INFO) << "SoftmaxGradAxisMinus1 passed";
 }
-
 }  // namespace mindspore

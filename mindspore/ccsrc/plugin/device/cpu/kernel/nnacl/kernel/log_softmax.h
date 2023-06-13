@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,18 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_FP32_GRAD_SOFTMAX_GRAD_H_
-#define NNACL_FP32_GRAD_SOFTMAX_GRAD_H_
+#ifndef NNACL_KERNEL_LOG_SOFTMAX_H_
+#define NNACL_KERNEL_LOG_SOFTMAX_H_
 
-#include "nnacl/fp32/softmax_fp32.h"
-#include "nnacl/fp32_grad/softmax_crossentropy_parameter.h"
+#include "nnacl/op_base.h"
+#include "nnacl/tensor_c.h"
+#include "nnacl/kernel.h"
+#include "nnacl/kernel/softmax.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+typedef struct LogSoftmaxStruct {
+  SoftmaxStruct softmax_;
+} LogSoftmaxStruct;
 
-void SoftmaxGrad(const float *input_ptr, const float *yt_ptr, float *output_ptr, float *sum_data, float *sum_mul,
-                 const int *input_shape, int n_dim, int ele_size, int32_t axis);
-#ifdef __cplusplus
-}
-#endif
+KernelBase *CreateLogSoftmax(OpParameter *param, int data_type);
 
-#endif  // NNACL_FP32_GRAD_SOFTMAX_GRAD_H_
+#endif  // NNACL_KERNEL_LOG_SOFTMAX_H_

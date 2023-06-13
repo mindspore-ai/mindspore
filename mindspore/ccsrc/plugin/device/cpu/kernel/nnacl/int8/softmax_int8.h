@@ -27,7 +27,7 @@
 extern "C" {
 #endif
 int SoftmaxInt8(const int8_t *input_ptr, int8_t *output_ptr, int count, int32_t *exp_data, int32_t *sum_data,
-                const SoftmaxQuantArg *quant_param, const SoftmaxParameter *parameter);
+                const int32_t *input_shape, int n_dim, int32_t axis, const SoftmaxQuantArg *quant_param);
 #ifdef __cplusplus
 }
 #endif
