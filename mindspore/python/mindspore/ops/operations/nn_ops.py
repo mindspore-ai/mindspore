@@ -9610,10 +9610,8 @@ class ApplyAdamWithAmsgradV2(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-    >>> import mindspore as ms
     >>> import mindspore.ops as ops
     >>> import mindspore.nn as nn
-    >>> from mindspore import dtype as mstype
     >>> from mindspore import Tensor, Parameter
     >>> import numpy as np
     >>> class ApplyAdamWithAmsgradNet(nn.Cell):
