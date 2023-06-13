@@ -80,8 +80,13 @@ class Namer:
         if number is None:
             self._names[origin_name] = 1
             return origin_name
-        self._names[origin_name] = number + 1
-        return f"{origin_name}_{number}"
+        while True:
+            new_name = f"{origin_name}_{number}"
+            number += 1
+            self._names[origin_name] = number
+            if new_name in self._names.keys():
+                continue
+            return new_name
 
     def add_name(self, name: str):
         """
@@ -93,44 +98,16 @@ class Namer:
         Raises:
             RuntimeError: If name is not unique in current namer.
         """
-        real_name = Namer._real_name(name)
-        number = self._names.get(real_name)
-        if number is not None:
-            raise RuntimeError("name duplicated: ", name)
-        self._names[name] = 1
+        if self._names.get(name) is None:
+            self._names[name] = 1
 
 
 class TargetNamer(Namer):
     """
     Used for unique-ing targets of node.
     """
-    def __init__(self):
-        super().__init__()
-        self._origin_name_map = {}
-
-    def get_name(self, origin_name: str) -> str:
-        ret = super(TargetNamer, self).get_name(origin_name)
-        self._origin_name_map[origin_name] = ret
-        return ret
-
-    def add_name(self, name: str):
-        super(TargetNamer, self).add_name(name)
-        self._origin_name_map[name] = name
-
-    def get_real_arg(self, origin_arg: str) -> str:
-        """
-        Get real argument from 'origin_arg' because target of node which produces 'origin_arg' may be change for unique.
-
-        Args:
-            origin_arg (str): Origin argument string which may be undefined cause to target unique-lize.
-
-        Returns:
-            A string represents real argument name.
-        """
-        real_arg = self._origin_name_map.get(origin_arg)
-        if real_arg:
-            return real_arg
-        return origin_arg
+    def get_unique_name(self, origin_name: str) -> str:
+        return super(TargetNamer, self).get_name(origin_name)
 
 
 class NodeNamer(Namer):

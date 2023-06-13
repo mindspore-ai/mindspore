@@ -36,7 +36,6 @@ from .namer import TargetNamer, NodeNamer, ClassNamer
 from .common.observer import Observer
 from .common.observable import Observable
 from .common.event import Event
-from .node_visitor import NodeVisitor
 
 
 class Position:
@@ -156,7 +155,7 @@ class SymbolTree(Observer, Observable):
         # name or node would use as name of field, so name of origin network handler field should be added into \
         # _node_name_namer.
         self._node_name_namer.add_name(origin_network_key)
-        self._topo_mgr = TopoManager()
+        self._topo_mgr = TopoManager(self)
         self._topo_mgr.reg_observer(self)
 
         self._nodes: {str, Node} = {}
@@ -218,56 +217,14 @@ class SymbolTree(Observer, Observable):
         return consumers, providers
 
     @staticmethod
-    def _link_nodes_and_find_root(nodes: [Node]) -> Node:
-        """
-        Find inputs for all nodes created by Replacement according to their targets and arguments.
-
-        Find root node of all nodes created by Replacement. One and Only one root should be found.
-
-        Args:
-            nodes (list[Node]): A list of instance of Node created by Replacement.
-
-        Returns:
-            An instance of Node represents root of input nodes.
-        """
-        consumers, providers = SymbolTree._find_consumers_and_providers(nodes)
-        # find root node
-        root = None
-        for node in nodes:
-            used = 0
-            for target in node.get_targets():
-                cur_consumers = consumers.get(target)
-                if not cur_consumers:
-                    continue
-                for cur_consumer in cur_consumers:
-                    if id(cur_consumer) != id(node):
-                        used += 1
-                        break
-            if used == 0:
-                if root is not None:
-                    raise RuntimeError("Replacement should only has one root, found multi-root")
-                root = node
-        if root is None:
-            raise RuntimeError("Replacement should only has one root, found no root")
-        # link node's input
-        for node in nodes:
-            inputs = []
-            for _, arg in node.get_normalized_args().items():
-                node_input: Node = providers.get(arg)
-                if id(node_input) != id(node):
-                    inputs.append(node_input)
-            node.set_inputs(inputs)
-        return root
-
-    @staticmethod
     def _find_all_class_in_symboltree(stree: 'SymbolTree', seen_class: {type, str}, allow_class_name: [], replacers):
         """Find all non-duplicated class name of SymbolTree recursively."""
-        replacer = AstReplacer(stree._class_ast)
+        replacer = AstReplacer(stree.get_class_ast())
         replacers.append(replacer)
         for node in stree.nodes():
             if not isinstance(node, TreeNode):
                 continue
-            if node.symbol_tree._class_ast is None:
+            if node.symbol_tree.get_class_ast() is None:
                 continue
             sub_stree: SymbolTree = node.symbol_tree
             SymbolTree._find_all_class_in_symboltree(sub_stree, seen_class, allow_class_name, replacers)
@@ -280,52 +237,12 @@ class SymbolTree(Observer, Observable):
             if seen_cls_name is not None:
                 replacer.replace_all(sub_stree._class_ast.name, seen_cls_name)
             else:
-                seen_class[type(sub_stree.get_origin_network())] = sub_stree._class_ast.name
-                allow_class_name.append(sub_stree._class_ast.name)
+                seen_class[type(sub_stree.get_origin_network())] = sub_stree.get_class_ast().name
+                allow_class_name.append(sub_stree.get_class_ast().name)
 
     def finish_build(self):
         """Add Event.TopologicalChangeEvent event when build is finished."""
         self.add_event(Event.TopologicalChangeEvent)
-
-    def _create_call_function(self, func, targets, args, kwargs):
-        """
-        Create a Node object and generate the execution code to insert into the source code.
-        The source code calls the 'func' function with 'args' and' kwargs' as parameters.
-
-        Args:
-            func (FunctionType) - The function to be called.
-            targets (list [str]) - indicates the output name. As the output of the node in the source code.
-            args (ParamType) - parameter name of the node. Used as a parameter to a code statement in source
-                code. The default value is None, which means there is no parameter input in the cell.
-            kwargs ({str: ParamType}) - The key type must be str, and the value type must be ParamType. The
-                input parameter name used to describe the formal parameter with a keyword. Enter the name in the source
-                code as the 'kwargs' in the statement expression. The default value is None, which means there is no
-                'kwargs' input.
-
-        Returns:
-            An instance of `Node`.
-        """
-        if not isinstance(func, types.FunctionType):
-            raise TypeError("The 'func' parameter must be a Function, but got ", type(func))
-
-        _package = func.__globals__['__package__']
-        func_name = ".".join([_package, func.__name__]) if _package else func.__name__
-
-        ast_assign = self.create_assign_node(targets, func_name, args, kwargs)
-        scope_targets = [ScopedValue.create_naming_value(targets[0])]
-        scope_func = ScopedValue.create_naming_value(func_name, "")
-        call_args = list()
-        for arg in args:
-            if isinstance(arg, Node):
-                call_args.append(ScopedValue.create_variable_value(arg.get_targets()[0].value))
-            else:
-                call_args.append(ScopedValue.create_variable_value(arg))
-        call_kwargs = {}
-        for k, v in kwargs.items():
-            call_kwargs[k] = ScopedValue.create_variable_value(v)
-        node = self.inner_create_call_function(func_name, ast_assign, scope_func, func, scope_targets, call_args,
-                                               call_kwargs)
-        return node
 
     def create_assign_node(self, targets, func_name, args, kwargs):
         """
@@ -508,16 +425,13 @@ class SymbolTree(Observer, Observable):
         Returns:
             A generator for iterating Nodes of `SymbolTree`.
         """
-        if self._node_visitor is None:
-            self._node_visitor = NodeVisitor(self)
-        it = iter(self._node_visitor)
-
-        while True:
-            try:
-                n = next(it)
-            except StopIteration:
-                return None
-            yield n
+        # Put nodes in the list to avoid iteration stops caused by node topology being modified
+        nodes = []
+        node = self._head
+        while node is not None:
+            nodes.append(node)
+            node = node.get_next()
+        return iter(nodes)
 
     def get_node(self, node_name: str) -> Optional[Node]:
         """
@@ -568,7 +482,7 @@ class SymbolTree(Observer, Observable):
             return []
         if real_node.get_node_type() == NodeType.Output:
             return []
-        return self._topo_mgr.get_node_users(node_or_name)
+        return self._topo_mgr.get_node_users(real_node)
 
     def before(self, node_or_name: Union[Node, str]) -> Position:
         """
@@ -671,12 +585,14 @@ class SymbolTree(Observer, Observable):
                 valid = False
             if not valid:
                 raise RuntimeError("Can not insert a node before or between parameters:", position)
-        # unique targets, name while insert node into symbol_tree
+        # unique node name while insert node into symbol_tree
         node_name = self._node_name_namer.get_name(node)
         node.set_name(node_name)
+        # save target name, which is used to provide unique target
+        if node.get_targets():
+            for target in node.get_targets():
+                self._target_namer.add_name(str(target))
         self._handle_custom_obj_in_normalized_args(node)
-        # _unique_targets must called after _update_args_for_unique and _update_kwargs_for_unique
-        self._unique_targets(node)
         self._insert_node(position, node)
         if isinstance(node, TreeNode):
             node.symbol_tree.reg_observer(self)
@@ -714,7 +630,6 @@ class SymbolTree(Observer, Observable):
         Returns:
             An instance of node which has been appended to SymbolTree.
         """
-        self._update_args_kwargs_for_unique(node)
         if node.get_node_type() == NodeType.Output:
             self._return = node
         elif node.get_node_type() == NodeType.Input:
@@ -794,7 +709,6 @@ class SymbolTree(Observer, Observable):
         """
         logger.info("Ignoring unsupported node (%s) (%s).", type(ast_node).__name__, type(ast_scope).__name__)
         node_name = self._node_name_namer.get_name(type(ast_node).__name__)
-        self._update_names_for_unique(ast_node)
         node = Node.create_python_node(ast_node, node_name)
         self._insert_node(Position.create(self, self._tail, False), node)
         return node
@@ -844,31 +758,25 @@ class SymbolTree(Observer, Observable):
         ret = AstModifier.erase_ast_from_function(self._root_ast, node.get_ast())
         if not ret:
             raise RuntimeError("node not in function ast tree.")
+        self._topo_mgr.on_erase_node(node)
         for key, value in self._nodes.items():
             if id(value) == id(node):
                 self._nodes.pop(key)
                 value.isolate()
                 break
-        self._topo_mgr.on_erase_node(node)
         self._deleted_node.append(node.get_name())
         return node
 
     def replace(self, old_node: Node, new_nodes: [Node]) -> Node:
         """
-        Replace an old_node with a node_tree. 'new_node' is the root node of the node_tree.
-        Note:
-            Rewrite will iterate all nodes linked to this root node and insert these nodes into symbol_tree.
-
-            Inputs of intra sub-tree nodes need to be welly set.
-
-            Inputs of inter sub-tree nodes will be updated by Rewrite automatically.
+        Replace an old_node with a node list.
 
         Args:
             old_node (Node): Node to be replaced.
-            new_nodes (list[Node]): Node tree to replace in.
+            new_nodes (list[Node]): Node list to replace in.
 
         Returns:
-            An instance of Node represents root of node_tree been replaced in.
+            Last node in new_nodes list.
 
         Raises:
             RuntimeError: If 'old_node' is isolated.
@@ -890,18 +798,11 @@ class SymbolTree(Observer, Observable):
             position = self.before(next_node)
         else:
             position = self.after(prev_node)
-        # insert node first, because targets of new_node is determined after insert
-        new_tree_root = SymbolTree._link_nodes_and_find_root(new_nodes)
-        new_node = self._insert_tree(position, new_tree_root)
-        # use targets of insert tree to redirect edge
-        users = self.get_node_users(old_node)
-        if len(new_node.get_targets()) != 1:
-            raise RuntimeError("targets of new_node should have 1 elements")
-        for user in users:
-            self.set_node_arg_by_node(user[0], user[1], new_node)
-        # erase old_node after edge is redirected because node can be erased only when node is isolated topologically
+        for node in new_nodes:
+            self.insert_node(position, node, True)
+            position = self.after(node)
         self.erase_node(old_node)
-        return new_node
+        return new_nodes[-1]
 
     def set_node_arg(self, node: Union[Node, str], index: int, arg: Union[ScopedValue, str]):
         """
@@ -957,7 +858,38 @@ class SymbolTree(Observer, Observable):
         if out_idx >= len(targets):
             raise RuntimeError("out_idx out of range: ", out_idx)
         new_arg = targets[out_idx]
-        self.set_node_arg(real_dst_node, arg_idx, new_arg)
+        real_dst_node.set_arg(new_arg, arg_idx)
+        self._topo_mgr.on_update_arg_by_node(real_dst_node, arg_idx, real_src_node, out_idx)
+
+    def unique_name(self, name: str):
+        return self._target_namer.get_name(name)
+
+    def set_node_target(self, node: Union[Node, str], index: int, target: Union[ScopedValue, str]):
+        """
+        Set target of `node` .
+
+        Args:
+            node (Union[Node, str]): Node to be modified. Can be a node or name of node.
+            index (int): Indicate which target being modified.
+            arg (Union[ScopedValue, str]): New target to been set.
+
+        Raises:
+            ValueError: If `node` is not belong to current SymbolTree.
+            ValueError: If index of `node` 's target is greater than number of targets.
+        """
+
+        real_node = self._get_real_node(node)
+        if real_node is None:
+            raise ValueError("Node is not belong to current SymbolTree: ", node)
+        if isinstance(target, str):
+            target = ScopedValue.create_naming_value(target)
+        targets = node.get_targets()
+        if index >= len(targets):
+            raise ValueError(f"Index of node's target should be less than {len(targets)}, but got {index}")
+        old_target = targets[index]
+        targets[index] = target
+        node.set_targets(targets)
+        self._topo_mgr.on_update_target(node, index, old_target, target)
 
     def print_node_tabulate(self):
         try:
@@ -1050,23 +982,6 @@ class SymbolTree(Observer, Observable):
             source = self.get_code()
             f.write(source.encode('utf-8'))
             f.flush()
-
-    def update_scope_for_unique(self, node: Union[ast.Attribute, ast.Call, ast.Subscript]):
-        """ Update scope of ast node because of unique-ing of targets of other nodes. """
-        if isinstance(node, ast.Call):
-            self.update_scope_for_unique(node.func)
-            return
-        if not isinstance(node, (ast.Attribute, ast.Subscript)):
-            logger.warning(f"Cannot update node {astunparse.unparse(node)} for unique, type of node should "
-                           f"be one of (ast.Attribute, ast.Subscript).")
-            return
-        scope = node.value
-        if not isinstance(scope, ast.Name):
-            self.update_scope_for_unique(scope)
-            return
-        scope_name = scope.id
-        scope_name_unique = self._target_namer.get_real_arg(scope_name)
-        scope.id = scope_name_unique
 
     def _insert_to_ast_while_insert_node(self, node: Node, position: Optional[Position]):
         """ insert_to_ast_while_insert_node. """
@@ -1247,44 +1162,6 @@ class SymbolTree(Observer, Observable):
                     self.set_node_arg_by_node(todo, arg_idx, original_input)
         return root
 
-    def _unique_targets(self, node: Node):
-        """
-        Unique targets of node by _target_namer.
-
-        Args:
-            node (Node): A Node whose targets to be uniqued.
-        """
-        new_targets: [ScopedValue] = []
-        if node.get_targets() is None:
-            return
-        for target in node.get_targets():
-            if not isinstance(target, ScopedValue):
-                raise TypeError("target should be ScopedValue, got: ", type(target))
-            unique_target = self._target_namer.get_name(target.value)
-            new_targets.append(ScopedValue.create_naming_value(unique_target, target.scope))
-        node.set_targets(new_targets)
-
-    def _update_args_kwargs_for_unique(self, node: Node):
-        """
-        Update arguments and keyword arguments of node because unique-ing of targets of other nodes.
-
-        Args:
-            node (Node): A Node whose arguments and keyword arguments to be updated.
-        """
-        result: {str: ScopedValue} = {}
-        if node.get_normalized_args() is None:
-            return
-        for key, arg in node.get_normalized_args().items():
-            if not isinstance(arg, ScopedValue):
-                raise TypeError("arg should be ScopedValue, got: ", type(arg))
-            if arg.type == ValueType.NamingValue:
-                # unique name
-                new_arg = ScopedValue(arg.type, arg.scope, self._target_namer.get_real_arg(arg.value))
-                result[key] = new_arg
-            else:
-                result[key] = arg
-        node.set_normalized_args(result)
-
     def _add_node2nodes(self, node: Node):
         """
         Add `node` to `_nodes` dict.
@@ -1439,49 +1316,42 @@ class SymbolTree(Observer, Observable):
         for p in primitives:
             new_net._primitives[p] = self._origin_network._primitives[p]
 
-    def _update_names_for_unique(self, node: ast.AST):
-        """ Update names of ast nodes for unique. """
-        if isinstance(node, (ast.For, ast.If, ast.While)):
-            self._update_names_for_unique_branchs(node)
-        elif isinstance(node, ast.Assign):
-            self._update_names_for_unique(node.value)
-            for target in node.targets:
-                self._update_names_for_unique(target)
-        elif isinstance(node, ast.Call):
-            if isinstance(node.func, ast.Attribute):
-                self._update_names_for_unique(node.func.value)
-            for arg in node.args:
-                self._update_names_for_unique(arg)
-            for keyword in node.keywords:
-                self._update_names_for_unique(keyword)
-        elif isinstance(node, ast.UnaryOp):
-            self._update_names_for_unique(node.operand)
-        elif isinstance(node, ast.BinOp):
-            self._update_names_for_unique(node.left)
-            self._update_names_for_unique(node.right)
-        elif isinstance(node, (ast.Expr, ast.Attribute, ast.Subscript, ast.Return)):
-            self._update_names_for_unique(node.value)
-        elif isinstance(node, (ast.List, ast.Tuple)):
-            for elt in node.elts:
-                self._update_names_for_unique(elt)
-        elif isinstance(node, ast.Compare):
-            for comparator in node.comparators:
-                self._update_names_for_unique(comparator)
-        elif isinstance(node, ast.Name):
-            node.id = self._target_namer.get_real_arg(node.id)
+    def _create_call_function(self, func, targets, args, kwargs):
+        """
+        Create a Node object and generate the execution code to insert into the source code.
+        The source code calls the 'func' function with 'args' and' kwargs' as parameters.
 
-    def _update_names_for_unique_branchs(self, node: Union[ast.For, ast.If, ast.While]):
-        """ Update names of ast nodes for unique with ast.For, ast.If or ast.While """
-        if isinstance(node, ast.For):
-            self._update_names_for_unique(node.target)
-            self._update_names_for_unique(node.iter)
-            for body in node.body:
-                self._update_names_for_unique(body)
-            for body in node.orelse:
-                self._update_names_for_unique(body)
-        elif isinstance(node, (ast.If, ast.While)):
-            self._update_names_for_unique(node.test)
-            for body in node.body:
-                self._update_names_for_unique(body)
-            for body in node.orelse:
-                self._update_names_for_unique(body)
+        Args:
+            func (FunctionType) - The function to be called.
+            targets (list [str]) - indicates the output name. As the output of the node in the source code.
+            args (ParamType) - parameter name of the node. Used as a parameter to a code statement in source
+                code. The default value is None, which means there is no parameter input in the cell.
+            kwargs ({str: ParamType}) - The key type must be str, and the value type must be ParamType. The
+                input parameter name used to describe the formal parameter with a keyword. Enter the name in the source
+                code as the 'kwargs' in the statement expression. The default value is None, which means there is no
+                'kwargs' input.
+
+        Returns:
+            An instance of `Node`.
+        """
+        if not isinstance(func, types.FunctionType):
+            raise TypeError("The 'func' parameter must be a Function, but got ", type(func))
+
+        _package = func.__globals__['__package__']
+        func_name = ".".join([_package, func.__name__]) if _package else func.__name__
+
+        ast_assign = self.create_assign_node(targets, func_name, args, kwargs)
+        scope_targets = [ScopedValue.create_naming_value(targets[0])]
+        scope_func = ScopedValue.create_naming_value(func_name, "")
+        call_args = list()
+        for arg in args:
+            if isinstance(arg, Node):
+                call_args.append(ScopedValue.create_variable_value(arg.get_targets()[0].value))
+            else:
+                call_args.append(ScopedValue.create_variable_value(arg))
+        call_kwargs = {}
+        for k, v in kwargs.items():
+            call_kwargs[k] = ScopedValue.create_variable_value(v)
+        node = self.inner_create_call_function(func_name, ast_assign, scope_func, func, scope_targets, call_args,
+                                               call_kwargs)
+        return node

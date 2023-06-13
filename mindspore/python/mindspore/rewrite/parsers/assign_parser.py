@@ -240,6 +240,8 @@ class AssignParser(Parser):
                 if not isinstance(single_target, ScopedValue) and not isinstance(single_target.value, str):
                     raise RuntimeError(f"For MindSpore Rewrite, only support str target in tuple, but got type "
                                        f"{type(single_target).__name__}")
+                if single_target.type == ValueType.StringValue:
+                    single_target.type = ValueType.NamingValue
                 targets.append(single_target)
         else:
             targets.append(all_targets)
@@ -353,9 +355,10 @@ class AssignParser(Parser):
             cell_container.append(sub_node)
             # set node inputs
             if i == 0:
-                sub_node.set_inputs(first_node_inputs)
+                for idx, arg_provider in enumerate(first_node_inputs):
+                    sub_node.set_arg_providers(idx, (arg_provider, 0))
             else:
-                sub_node.set_inputs([cell_container.node_list[i-1]])
+                sub_node.set_arg_providers(0, (cell_container.node_list[i-1], 0))
         return cell_container
 
     def _process_external_function(self, stree, func_name):
@@ -576,7 +579,6 @@ class AssignParser(Parser):
                     error_str(f"only support one target in assign now.", child_node=targets, father_node=node))
             value = node.value
             if isinstance(value, ast.Call):
-                stree.update_scope_for_unique(value)
                 node_ = self._convert_ast_call_to_node(value, node, stree)
                 stree.append_origin_field(node_)
             elif isinstance(value, (ast.BinOp, ast.UnaryOp, ast.BoolOp, ast.Compare)):
@@ -594,7 +596,6 @@ class AssignParser(Parser):
                     node_name = "constant_assign"
                 elif isinstance(value, ast.Attribute):
                     node_name = "attribute_assign"
-                    stree.update_scope_for_unique(value)
                 else:
                     node_name = "other_assign"
                 targets = AssignParser._get_targets(AssignParser._create_scopedvalue(node.targets[0]))

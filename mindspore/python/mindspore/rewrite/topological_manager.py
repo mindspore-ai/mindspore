@@ -14,6 +14,7 @@
 # ============================================================================
 """SymbolTree topological-relationship manager."""
 from typing import Tuple
+import astunparse
 
 from .api.scoped_value import ScopedValue
 from .node import Node
@@ -23,22 +24,14 @@ from .common.event import Event
 
 class TopoManager(Observable):
     """SymbolTree topological-relationship manager."""
-
-    def __init__(self):
-        """
-        Constructor of TopoManager.
-        Init provider and consumer.
-        Key of dict is an instance of ScopedValue.
-        Value of dict is a tuple whose first is an instance of Node, whose second is an index.
-        It means node's index th arg is argument
-        """
+    def __init__(self, symbol_tree):
         super().__init__()
-        self._target_provider: {ScopedValue, (Node, int)} = {}
-        self._target_consumer: {ScopedValue, [(Node, int)]} = {}
+        # symbol_tree is used for dump() to use nodes(), so it can be symbol tree or cell container.
+        self.symbol_tree = symbol_tree
 
     def get_node_users(self, node: Node) -> [Tuple[Node, int]]:
         """
-        Get all nodes which depend on node corresponding to node_or_name.
+        Get all nodes which depend on node.
 
         Args:
             node (Node): An instance of node.
@@ -46,87 +39,20 @@ class TopoManager(Observable):
         Returns:
             A list of nodes represents node users.
         """
-        targets = node.get_targets()
         results = []
-        for target in targets:
-            consumers = self._target_consumer.get(target)
-            if consumers is None:
+        for users in node.get_target_users().values():
+            if not users:
                 continue
-            results.extend(consumers)
-        unique_results = []
-        for result in results:
-            if result not in unique_results:
-                unique_results.append(result)
-        return unique_results
+            for user in users:
+                if user not in results:
+                    results.append(user)
+        return results
 
     def topo_changed(self):
         """
         The function is executed when an Event.TopologicalChangeEvent event is received.
         """
         self.changed(Event.TopologicalChangeEvent)
-
-    def _add_consumer(self, product: ScopedValue, consumer: Node, index):
-        """
-        Add a consumer to consumer dict.
-
-        Args:
-            product (ScopedValue): An instance of ScopedValue represents product to be consumed.
-            consumer (Node): An instance of Node represents consumer.
-            index (int): A int represents which input of consumer is the product.
-        """
-        consumers = self._target_consumer.get(product)
-        if consumers is None:
-            self._target_consumer[product] = [(consumer, index)]
-        else:
-            self._target_consumer.get(product).append((consumer, index))
-
-    def _erase_provider(self, product: ScopedValue):
-        """
-        Erase a provider from provider dict.
-
-        Args:
-            product (ScopedValue): An instance of ScopedValue represents product to be erased.
-        """
-        if self._target_provider.get(product) is not None:
-            self._target_provider.pop(product)
-
-    def _erase_consumer(self, product: ScopedValue, consumer: Node):
-        """
-        Erase a consumer from consumer dict.
-
-        Args:
-            product (ScopedValue): An instance of ScopedValue represents product whose consumer would be erased.
-            consumer (Node): An instance of Node which would be erased as a consumer.
-        """
-        consumers = self._target_consumer.get(product)
-        if consumers is None:
-            return
-        for i in range(len(consumers) - 1, -1, -1):
-            exist_ele = consumers[i]
-            if id(exist_ele[0]) == id(consumer):
-                consumers.pop(i)
-
-    def _update_node_inputs(self, node: Node) -> [Node]:
-        """
-        Update inputs of node by current provider dict and consumer dict.
-
-        Args:
-            node (Node): An instance of Node whose inputs will be updated.
-
-        Returns:
-            A list of instance of nodes represents inputs of node.
-        """
-        if node.get_normalized_args() is None:
-            node.set_inputs([])
-            return []
-        inputs = []
-        for arg in node.get_normalized_args().values():
-            provider = self._target_provider.get(arg)
-            # some arg of some node may be self.xxx which is not an output of another node
-            if provider is not None:
-                inputs.append(provider[0])
-        node.set_inputs(inputs)
-        return inputs
 
     def on_insert_node(self, node: Node):
         """
@@ -136,18 +62,19 @@ class TopoManager(Observable):
         Args:
             node (Node): An instance of Node which been inserted into SymbolTree.
         """
-        if node.get_targets() is not None:
-            for i in range(0, len(node.get_targets())):
-                target = node.get_targets()[i]
-                if target.value == "_":
-                    continue
-                if self._target_provider.get(target) is not None:
-                    raise RuntimeError("target duplicated:", target)
-                self._target_provider[target] = (node, i)
         if node.get_normalized_args() is not None:
             for index, arg in enumerate(node.get_normalized_args().values()):
-                self._add_consumer(arg, node, index)
-        self._update_node_inputs(node)
+                provider = self._get_value_provider(node, arg)
+                if provider:
+                    node.set_arg_providers(index, provider)
+                    provider[0].append_target_users(provider[1], (node, index))
+        if node.get_targets() is not None:
+            for index, target in enumerate(node.get_targets()):
+                provider = self._get_value_provider(node, target)
+                if provider:
+                    self._update_target_users_by_node(node, index, provider)
+                else:
+                    self._update_target_users_by_value(node, index, target)
         self.topo_changed()
 
     def on_erase_node(self, node: Node):
@@ -157,17 +84,31 @@ class TopoManager(Observable):
         Args:
             node (Node): An instance of Node which been erased from SymbolTree.
         """
-        if node.get_targets() is not None:
-            for target in node.get_targets():
-                consumers = self._target_consumer.get(target)
-                if consumers is not None and consumers:
-                    raise RuntimeError("Only support erase isolated node: ", node.get_name(), target)
-                self._erase_provider(target)
-        if node.get_normalized_args() is not None:
-            for arg in node.get_normalized_args().values():
-                self._erase_consumer(arg, node)
-        # clear inputs of node rather than call _update_node_inputs because node is already erase from consumer dict
-        node.set_inputs([])
+        prev_providers = {}
+        # Find previous node with same target of current node.
+        # If all target can find crossponding node, then do replace instead of raise RuntimeError
+        for index, target_users in node.get_target_users().items():
+            if not target_users:
+                continue
+            prev_provider = self._get_value_provider(node, node.get_targets()[index])
+            if not prev_provider:
+                raise RuntimeError(f"Node {node.get_name()}'s target {index} is used in node "
+                                   f"{target_users[0][0].get_name()}'s arg {target_users[0][1]}, "
+                                   f"no other node provides this target if node {node.get_name()} is erased.")
+            prev_providers[index] = prev_provider
+        # Update targets topological of nodes
+        for index, prev_provider in prev_providers.items():
+            for target_user in node.get_target_users(index):
+                prev_provider[0].append_target_users(prev_provider[1], target_user)
+                target_user[0].set_arg_providers(target_user[1], prev_provider)
+        # Update arguments topological of nodes
+        for _, arg_providers in node.get_arg_providers().items():
+            if not arg_providers:
+                continue
+            provider_target_users = arg_providers[0].get_target_users(arg_providers[1])
+            for target_user in provider_target_users:
+                if target_user[0] == node:
+                    provider_target_users.remove(target_user)
         self.topo_changed()
 
     def on_update_arg(self, node: Node, arg_idx: int, old_arg: ScopedValue, new_arg: ScopedValue):
@@ -181,23 +122,146 @@ class TopoManager(Observable):
             old_arg (ScopedValue): An instance of ScopedValue represents original argument.
             new_arg (ScopedValue): An instance of ScopedValue represents new argument.
         """
-        self._erase_consumer(old_arg, node)
-        self._add_consumer(new_arg, node, arg_idx)
-        self._update_node_inputs(node)
+        # Update old arg's provider node's target_users.
+        old_provider = self._get_value_provider(node, old_arg)
+        if old_provider:
+            old_provider_target_users = old_provider[0].get_target_users(old_provider[1])
+            for target_user in old_provider_target_users:
+                if target_user[0] == node and target_user[1] == arg_idx:
+                    old_provider_target_users.remove(target_user)
+                    break
+        # Update new arg's provider node's target_users.
+        provider = self._get_value_provider(node, new_arg)
+        if provider:
+            provider[0].append_target_users(provider[1], (node, arg_idx))
+        # Update current node's arg_providers.
+        node.set_arg_providers(arg_idx, provider)
         self.topo_changed()
 
-    def dump(self, title=""):
+    def on_update_target(self, node: Node, index: int, old_target: ScopedValue, new_target: ScopedValue):
+        """
+        Update node's dicts while updating target of node.
+
+        Args:
+            node (Node): An instance of Node whose target being updated.
+            arg_idx (int): An int indicates which target of node being updated.
+            old_target (ScopedValue): An instance of ScopedValue represents old target.
+            new_target (ScopedValue): An instance of ScopedValue represents new target.
+        """
+        # Update old_target provider node's target_user dict & old arg's user nodes' arg_providers dict
+        old_provider = self._get_value_provider(node, old_target)
+        if old_provider:
+            for user in node.get_target_users(index):
+                old_provider[0].append_target_users(old_provider[1], user)
+                user[0].set_arg_providers(user[1], old_provider)
+        else:
+            for user in node.get_target_users(index):
+                user[0].set_arg_providers(user[1], ())
+        # Update new_target node's target_users dict & new user nodes' arg_providers dict
+        node.get_target_users().clear()
+        provider = self._get_value_provider(node, new_target)
+        if provider:
+            self._update_target_users_by_node(node, index, provider)
+        else:
+            self._update_target_users_by_value(node, index, new_target)
+
+    def on_update_arg_by_node(self, dst_node: Node, arg_idx: int, src_node: Node, out_idx: int):
+        """
+        Update argument of 'dst_node' by another Node.
+
+        Args:
+            dst_node (Node): Node to be modified.
+            arg_idx (int): Indicate which input being modified.
+            src_node (Node): Node as new input.
+            out_idx (int): Indicate which output of 'src_node' as new input of 'dst_node'.
+        """
+        # Update old arg's provider node's target_users.
+        if arg_idx in dst_node.get_arg_providers().keys():
+            arg_provider = dst_node.get_arg_providers()[arg_idx]
+            if arg_provider:
+                provider_target_users = arg_provider[0].get_target_users(arg_provider[1])
+                if (dst_node, arg_idx) in provider_target_users:
+                    provider_target_users.remove((dst_node, arg_idx))
+        # Update new arg's provider node's target_users.
+        src_node.append_target_users(out_idx, (dst_node, arg_idx))
+        # Update current node's arg_providers.
+        dst_node.set_arg_providers(arg_idx, (src_node, out_idx))
+        self.topo_changed()
+
+    def dump(self, title="") -> str:
         """
         Dump topological relation.
 
-        Args:
-            title (str): A string as a title will be printed before dumping topological relation.
+        title (str): A string as a title will be printed before dumping topological relation.
         """
-        print(f"{title}------------------------------------------------------------------------------------")
-        for k, v in self._target_provider.items():
-            print(f"{v[0].get_name()} produces {k.value}")
-        for k, v in self._target_consumer.items():
-            print(f"{k.value} is consumed by: ")
-            for ele in v:
-                print(ele[0].get_name())
-        print(f"-----------------------------------------------------------------------------------------")
+        try:
+            from tabulate import tabulate
+        except ImportError:
+            print("`topologival_manager:dump()` relies on the library `tabulate`, "
+                  "which could not be found on this machine. Run `pip "
+                  "install tabulate` to install the library.")
+            return ""
+        dump_str = "=" * 40 + title + "=" * 40 + '\n'
+        node_specs = [[
+            n.get_node_type(),
+            n.get_name(),
+            astunparse.unparse(n.get_ast()).strip(),
+            [[key, (value[0].get_name(), value[1] if value else '-')]
+             for key, value in n.get_arg_providers().items()],
+            [[
+                key,
+                [(val[0].get_name(), val[1]) if val else '-'
+                 for val in value] if value else []
+            ] for key, value in n.get_target_users().items()]
+        ] for n in self.symbol_tree.nodes()]
+        dump_str += tabulate(node_specs, headers=['node type', 'name', 'codes', 'arg providers', 'target users'])
+        dump_str += '\n' + "=" * (82 + len(title)) + '\n'
+        return dump_str
+
+    def _update_target_users_by_value(self, node, index, value: ScopedValue):
+        """
+        Update node's _target_users by ScopedValue when insert a new node.
+        This function is called when target is not found in previous nodes, which means a new target name is set.
+        """
+        search_node = node.get_next()
+        while search_node is not None:
+            if search_node.get_normalized_args() is not None:
+                for arg_index, arg in enumerate(search_node.get_normalized_args().values()):
+                    if arg == value:
+                        node.append_target_users(index, (search_node, arg_index))
+                        search_node.set_arg_providers(arg_index, (node, index))
+            if search_node.get_targets() is not None:
+                for _, target in enumerate(search_node.get_targets()):
+                    if target == value:
+                        return
+            search_node = search_node.get_next()
+        return
+
+    def _update_target_users_by_node(self, node, index, provider: (Node, int)):
+        """
+        Update node's _target_users by previous node when insert a new node.
+        This function is called when target is found in previous nodes, which means a repeat target name is set.
+        """
+        nodes_before_insert = []
+        search_node = provider[0].get_next()
+        while search_node is not None:
+            nodes_before_insert.append(search_node)
+            if search_node == node:
+                break
+            search_node = search_node.get_next()
+        provider_target_users = provider[0].get_target_users(provider[1])
+        for user in provider_target_users:
+            if user[0] not in nodes_before_insert:
+                node.append_target_users(index, user)
+                provider_target_users.remove(user)
+                user[0].set_arg_providers(user[1], (node, index))
+
+    def _get_value_provider(self, node, value: ScopedValue):
+        node = node.get_prev()
+        while node is not None:
+            if node.get_targets() is not None:
+                for index, target in enumerate(node.get_targets()):
+                    if target == value:
+                        return (node, index)
+            node = node.get_prev()
+        return ()

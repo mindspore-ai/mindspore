@@ -59,7 +59,9 @@ def add_relu_in_conv1(stree: SymbolTree):
                     continue
                 position = modify_stree.before(inner_node)
                 new_relu = nn.ReLU()
-                new_relu_node = Node.create_call_cell(new_relu, targets=['x'], name='new_relu',
+                new_relu_node = Node.create_call_cell(new_relu,
+                                                      targets=[stree.unique_name('x')],
+                                                      name='new_relu',
                                                       args=[ScopedValue.create_naming_value('x')])
                 modify_stree.insert(position, new_relu_node)
                 modify_stree.set_output(0, new_relu_node.get_targets()[0].value)
@@ -77,8 +79,11 @@ def replace_bn_in_conv2(stree: SymbolTree):
                 if inner_node.get_instance_type() != nn.BatchNorm2d:
                     continue
                 new_relu = nn.ReLU()
-                new_relu_node = Node.create_call_cell(new_relu, targets=['x'], name='new_relu',
-                                                      args=inner_node.get_args(), kwargs=inner_node.get_kwargs())
+                new_relu_node = Node.create_call_cell(new_relu,
+                                                      targets=[stree.unique_name('x')],
+                                                      name='new_relu',
+                                                      args=inner_node.get_args(),
+                                                      kwargs=inner_node.get_kwargs())
                 modify_stree.replace(inner_node, [new_relu_node])
                 break
             break
@@ -106,8 +111,11 @@ def inset_subtree(stree: SymbolTree):
         if node.get_name() == "conv2":
             position = stree.before(node)
             subtree = SubNet()
-            new_node = Node.create_call_cell(subtree, targets=[ScopedValue.create_naming_value('x')], name='conv',
-                                             args=[ScopedValue.create_naming_value('x')], kwargs={})
+            new_node = Node.create_call_cell(subtree,
+                                             targets=[ScopedValue.create_naming_value(stree.unique_name('x'))],
+                                             name='conv',
+                                             args=[ScopedValue.create_naming_value('x')],
+                                             kwargs={})
             stree.insert(position, new_node)
             break
 
@@ -117,8 +125,11 @@ def inset_subtree2(stree: SymbolTree):
         if node.get_name() == "conv2":
             position = stree.before(node)
             subtree = SubNet()
-            new_node = Node.create_call_cell(subtree, targets=[ScopedValue.create_naming_value('x')], name='conv11',
-                                             args=[ScopedValue.create_naming_value('x')], kwargs={})
+            new_node = Node.create_call_cell(subtree,
+                                             targets=[ScopedValue.create_naming_value(stree.unique_name('x'))],
+                                             name='conv11',
+                                             args=[ScopedValue.create_naming_value('x')],
+                                             kwargs={})
             stree.insert(position, new_node)
             break
 
@@ -134,7 +145,9 @@ def add_relu_in_conv11(stree: SymbolTree):
                     continue
                 position = _stree.before(inner_node)
                 new_relu = nn.ReLU()
-                new_relu_node = Node.create_call_cell(new_relu, targets=['x'], name='relu1',
+                new_relu_node = Node.create_call_cell(new_relu,
+                                                      targets=[stree.unique_name('x')],
+                                                      name='relu1',
                                                       args=[ScopedValue.create_naming_value('x')])
                 _stree.insert(position, new_relu_node)
                 _stree.set_output(0, new_relu_node.get_targets()[0].value)
@@ -160,7 +173,6 @@ def test_subtree_net():
     stree = SymbolTree.create(net)
     transform(stree)
     for node in stree.nodes():
-        print("after transform node name: ", node.get_name(), "; node type: ", node.get_node_type())
         if node.get_node_type() != NodeType.Tree:
             continue
         if node.get_name() == "conv":
@@ -191,7 +203,7 @@ def test_subtree_create_erase():
         node.set_arg_by_node(0, input_node)
     stree.erase_node(del_node)
     assert stree.get_node("mul") is None
-    assert 'z_1 = self.relu(x_4)' in stree.get_code()
+    assert 'z_1 = self.relu(x_3)' in stree.get_code()
     new_net = stree.get_network()
     data_in = Tensor(np.ones([16, 3, 8, 8]), mindspore.float32)
     _cell_graph_executor.compile(new_net, data_in)
@@ -207,16 +219,18 @@ def test_insert_replace():
     stree = SymbolTree.create(net)
     nodes = stree.nodes()
     position = stree.after(next(nodes))
-    new_node = Node.create_call_cell(P.Mul(), targets=[ScopedValue.create_naming_value("inputs")],
+    new_node = Node.create_call_cell(P.Mul(), targets=[ScopedValue.create_naming_value(stree.unique_name("inputs"))],
                                      args=[ScopedValue.create_naming_value("inputs"),
                                            ScopedValue.create_naming_value("mul_weight", "self")],
                                      name="mulnet")
     stree.insert(position, new_node)
     for node in stree.nodes():
         if node.get_instance_type() == P.Add:
-            new_node2 = Node.create_call_cell(P.Mul(), targets=["mulnet"], args=node.get_args(),
+            new_node2 = Node.create_call_cell(P.Mul(), targets=[node.get_targets()[0]], args=node.get_args(),
                                               kwargs=node.get_kwargs(), name="mulnet")
             stree.replace(node, [new_node2])
+            break
+
     new_net = stree.get_network()
     data_in = Tensor(np.ones([16, 3, 8, 8]), mindspore.float32)
     _cell_graph_executor.compile(new_net, data_in)

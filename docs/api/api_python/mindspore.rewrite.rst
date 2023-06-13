@@ -118,11 +118,8 @@ ReWrite完整示例请参考
 
         .. note::
             - 仅支持一对一更换或一对多替换。如果需要多对多替换，请参考PatternEngine。
-            - 当一对多替换时，Rewrite会将 `new_nodes` 中所有节点插入到 `symbol_tree` 中。
-            - 调用者应指定子树内节点的参数和输出来确定子树内的拓扑关系。
-            - 调用者应指定子树输入节点的参数来确定子树与原始树中节点的拓扑关系。
-            - ReWrite将维护子树的前置节点的参数，用于指定子树输出的拓扑关系。
-            - 将 `new_nodes` 替换到SymbolTree后，ReWrite将维护节点的所有输入。
+            - 当一对多替换时，Rewrite会将 `new_nodes` 中的所有节点按顺序插入到 `symbol_tree` 中。
+            - 调用者应维护好 `new_nodes` 里每个节点间的拓扑关系，以及 `new_nodes` 里的节点与原始树中节点的拓扑关系。
 
         参数：
             - **old_node** (Node) - 被替换节点。

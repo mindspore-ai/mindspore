@@ -95,14 +95,16 @@ class Node:
         self._kwargs_num = len(kwargs) if kwargs is not None else 0
         self._normalized_args_keys = []  # for saving args' order
         self._normalized_args = self._get_normalized_args(args, kwargs)
-        # edge of node
-        self._inputs: [Node] = []
         # position in graph nodes list
         # it will affect code-order of python code
         self._prev: Optional[Node] = None
         self._next: Optional[Node] = None
         # A handler of SymbolTree current node belonging to
         self._belong_tree = None
+        # A dict that records which target of which Node current Node's argument came from
+        self._arg_providers: {int: (Node, int)} = {}
+        # A dict that records which argument of which Node uses current Node's target
+        self._target_users: {int: [(Node, int)]} = {}
 
     @classmethod
     def create_call_buildin_op(cls, op: Union[Cell, Primitive], ast_node: Optional[ast.AST], targets: [ScopedValue],
@@ -593,22 +595,17 @@ class Node:
 
     def get_inputs(self) -> ['Node']:
         """
-        Getter of _inputs which represents input nodes of current node in topological order.
+        Get input nodes of current node in topological order.
 
         Returns:
             A list of instances of Node as input nodes.
         """
-        return self._inputs
-
-    def set_inputs(self, inputs: ['Node']):
-        """
-        Setter of _inputs which represents input nodes of current node in topological order.
-
-
-        Args:
-            inputs (list[Node]): A list of instances of Node as new input nodes.
-        """
-        self._inputs = inputs
+        inputs = []
+        for arg_provider in self.get_arg_providers().values():
+            if not arg_provider:
+                continue
+            inputs.append(arg_provider[0])
+        return inputs
 
     def get_targets(self) -> [ScopedValue]:
         """
@@ -942,6 +939,36 @@ class Node:
             A object as attribute.
         """
         return self._attribute.get(key)
+
+    def get_arg_providers(self) -> dict:
+        """
+        Getter of _arg_providers.
+        """
+        return self._arg_providers
+
+    def set_arg_providers(self, index: int, provider: tuple):
+        """
+        Setter of _arg_providers.
+        """
+        self._arg_providers[index] = provider
+
+    def get_target_users(self, index=-1) -> Union[dict, list]:
+        """
+        Getter of _target_users.
+        """
+        if index == -1:
+            return self._target_users
+        if index not in self._target_users.keys():
+            self._target_users[index] = []
+        return self._target_users.get(index, None)
+
+    def append_target_users(self, index: int, provider: tuple):
+        """
+        Setter of _target_users.
+        """
+        if index not in self._target_users.keys():
+            self._target_users[index] = []
+        self._target_users.get(index).append(provider)
 
     def _get_normalized_args(self, args: [ScopedValue], kwargs: {str: ScopedValue}) -> dict:
         """

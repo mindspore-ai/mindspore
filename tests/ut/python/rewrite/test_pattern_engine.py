@@ -73,7 +73,10 @@ def test_one_to_one_pattern():
             bn_node: Node = matched.get(pattern.name())
 
             conv = Conv2d(16, 16, 3)
-            conv_node = Node.create_call_cell(conv, ['x1'], bn_node.get_args(), bn_node.get_kwargs())
+            print("target:", bn_node.get_targets()[0])
+            conv_node = Node.create_call_cell(conv, [bn_node.get_targets()[0]], bn_node.get_args(),
+                                              bn_node.get_kwargs(), name="new_conv")
+            print("node name:", conv_node.get_name())
             return [conv_node]
 
     class BnReplace(PatternEngine):
@@ -100,7 +103,7 @@ def test_one_to_one_pattern():
     conv = stree.get_node("conv")
     bn = stree.get_node("bn")
     relu1 = stree.get_node("relu1")
-    new_conv = stree.get_node("x1")
+    new_conv = stree.get_node("new_conv")
     assert conv is not None
     assert bn is None
     assert relu1 is not None
@@ -148,7 +151,8 @@ def test_one_to_multi_chain_pattern():
             conv1 = Conv2d(16, 16, 3)
             conv_node1 = Node.create_call_cell(conv1, ['x1'], bn_node.get_args(), bn_node.get_kwargs())
             conv2 = Conv2d(16, 16, 5)
-            conv_node2 = Node.create_call_cell(conv2, ['x2'], [ScopedValue.create_naming_value('x1')])
+            conv_node2 = Node.create_call_cell(conv2, [bn_node.get_targets()[0]],
+                                               [ScopedValue.create_naming_value('x1')], name="new_conv")
             return [conv_node1, conv_node2]
 
     class BnReplace(PatternEngine):
@@ -176,7 +180,7 @@ def test_one_to_multi_chain_pattern():
     bn = stree.get_node("bn")
     relu1 = stree.get_node("relu1")
     new_conv1 = stree.get_node("x1")
-    new_conv2 = stree.get_node("x2")
+    new_conv2 = stree.get_node("new_conv")
     assert conv is not None
     assert bn is None
     assert relu1 is not None
@@ -269,9 +273,9 @@ def test_tree_pattern():
             new_relu2_node = Node.create_call_cell(new_relu2, ['new_relu_2'],
                                                    [ScopedValue.create_naming_value('new_add_1')])
             new_add2 = Add()
-            new_add2_node = Node.create_call_cell(new_add2, ['new_add_2'],
+            new_add2_node = Node.create_call_cell(new_add2, [relu_node.get_targets()[0]],
                                                   [ScopedValue.create_naming_value('new_relu_1'),
-                                                   ScopedValue.create_naming_value('new_relu_2')])
+                                                   ScopedValue.create_naming_value('new_relu_2')], name="new_add")
             return [new_add1_node, new_relu1_node, new_relu2_node, new_add2_node]
 
     class AddReluPattern(PatternEngine):
@@ -348,8 +352,8 @@ def test_tree_pattern():
     assert new_relu_1.get_users()[0] == new_add_1
     # check new_add_1 topological order
     assert len(new_add_1.get_inputs()) == 2
-    assert new_add_1.get_inputs()[0] == new_relu_1
-    assert new_add_1.get_inputs()[1] == new_relu
+    assert new_add_1.get_inputs()[0] == new_relu
+    assert new_add_1.get_inputs()[1] == new_relu_1
     assert len(new_add_1.get_users()) == 2
     assert new_add_1.get_users()[0] == relu1
     assert new_add_1.get_users()[1] == relu2
@@ -382,8 +386,8 @@ def test_tree_pattern():
     assert len(new_relu.get_targets()) == 1
     assert len(new_relu_1.get_targets()) == 1
     assert len(new_add_1.get_args()) == 2
-    assert new_relu.get_targets()[0] == new_add_1.get_args()[1]
-    assert new_relu_1.get_targets()[0] == new_add_1.get_args()[0]
+    assert new_relu.get_targets()[0] == new_add_1.get_args()[0]
+    assert new_relu_1.get_targets()[0] == new_add_1.get_args()[1]
 
     assert len(new_add_1.get_targets()) == 1
     assert len(relu1.get_args()) == 1
@@ -441,8 +445,9 @@ class MultiInputPattern(PatternEngine):
             new_add1 = Add()
             new_add1_node = Node.create_call_cell(new_add1, ['new_add1'], [arg1, arg2])
             new_add2 = Add()
-            new_add2_node = Node.create_call_cell(new_add2, ['new_add2'], [ScopedValue.create_naming_value('new_add1'),
-                                                                           arg3])
+            new_add2_node = Node.create_call_cell(new_add2, [addn2_node.get_targets()[0]],
+                                                  [ScopedValue.create_naming_value('new_add1'), arg3],
+                                                  name="new_add2")
             return [new_add1_node, new_add2_node]
 
     def __init__(self):
