@@ -199,6 +199,7 @@ class DfGraphConvertor {
   void ConvertReshape(const CNodePtr &node);
   void ConvertAllReduce(const CNodePtr &node);
   void ConvertHcclNode(const CNodePtr &node);
+  void ConvertAllToAllv(const CNodePtr &node);
   void AddCommAttrForHcclNode(const CNodePtr &node, const OperatorPtr &converted_op);
   void ConvertOCRRecPreHandle(const CNodePtr &node);
   void ConvertConv2D(const CNodePtr &node);

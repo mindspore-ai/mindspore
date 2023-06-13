@@ -63,4 +63,14 @@ ATTR_MAP(HcomReceive) = {{"group", ATTR_DESC(group, AnyTraits<std::string>())},
                          {"shape", ATTR_DESC(shape, AnyTraits<std::vector<int64_t>>())},
                          {"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())}};
 REG_ADPT_DESC(HcomReceive, kNameReceive, ADPT_DESC(HcomReceive));
+
+// HcomAllToAllV
+INPUT_MAP(HcomAllToAllV) = {{1, INPUT_DESC(send_data)},
+                            {2, INPUT_DESC(send_counts)},
+                            {3, INPUT_DESC(send_displacements)},
+                            {4, INPUT_DESC(recv_counts)},
+                            {5, INPUT_DESC(recv_displacements)}};
+OUTPUT_MAP(HcomAllToAllV) = {{0, OUTPUT_DESC(recv_data)}};
+ATTR_MAP(HcomAllToAllV) = {{"group", ATTR_DESC(group, AnyTraits<std::string>())}};
+REG_ADPT_DESC(HcomAllToAllV, kNameAllToAllv, ADPT_DESC(HcomAllToAllV));
 }  // namespace mindspore::transform
