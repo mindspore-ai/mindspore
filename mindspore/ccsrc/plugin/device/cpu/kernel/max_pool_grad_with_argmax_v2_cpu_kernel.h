@@ -48,24 +48,12 @@ class MaxPoolGradWithArgmaxV2CpuKernelMod : public NativeCpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  std::vector<int64_t> GetValidAttr(const std::vector<int64_t> &src_attr) const;
-
-  template <typename DATA_T>
-  void OutPutInitKernel(DATA_T *output, size_t length) const;
-
-  void CheckPadsValue(size_t k_width, size_t p_width, size_t k_height, size_t p_height) const;
-
-  void CheckDilationValue(size_t d_width, size_t in_width, size_t d_height, size_t in_height) const;
-
-  template <typename DATA_T, typename INDICES_T>
-  void MaxPoolGradWithArgmaxV2SingleCompute(DATA_T *input_grad, INDICES_T *input_argmax, DATA_T *output_y, size_t iH,
-                                            size_t iW, size_t oH, size_t oW, size_t kH, size_t kW, size_t sH, size_t sW,
-                                            size_t pH, size_t pW, size_t dH, size_t dW);
-
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  std::vector<int64_t> GetValidAttr(const std::vector<int64_t> &src_attr) const;
+
   template <typename DATA_T, typename INDICES_T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                     const std::vector<AddressPtr> &outputs);
