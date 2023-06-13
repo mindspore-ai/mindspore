@@ -26,6 +26,7 @@ from mindspore.ops.primitive import constexpr
 from mindspore.common import dtype as mstype
 from mindspore.ops._grad.grad_base import bprop_getters
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations.nn_ops import MaxUnpool2D
@@ -564,11 +565,11 @@ def get_bprop_wkv(self):
     """Grad definition for `wkv` operation."""
     wkv_backward = WKVGrad()
 
-    def bpro(w, u, k, v, sp, sq, sm, out, out_sp, out_sq, out_sm, dout):
-        gw, gu, gk, gv = wkv_backward(w, u, k, v, dout)
+    def bpro(w, u, k, v, sp, sq, sm, out, dout):
+        gw, gu, gk, gv = wkv_backward(w, u, k, v, dout[0])
         gw = F.sum(gw, 0)
         gu = F.sum(gu, 0)
-        res = (gw, gu, gk, gv, zeros_like(out_sp), zeros_like(out_sq), zeros_like(out_sm))
+        res = (gw, gu, gk, gv, zeros_like(sp), zeros_like(sq), zeros_like(sm))
         return res
 
     return bpro
