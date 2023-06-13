@@ -50,7 +50,6 @@ def test_setattr_self_non_param():
     assert test_net.data == 2
 
 
-@pytest.mark.skip(reason="Return type is tuple")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -238,7 +237,6 @@ def test_setattr_global_obj_attr2():
 data_obj3 = np.array([1, 2, 3, 4])
 
 
-@pytest.mark.skip(reason="Do not support numpy array as global input")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -342,3 +340,90 @@ def test_setattr_local_object_attr():
     assert len(res) == 2
     assert res[0] == (2, 2)
     assert np.all(res[1] == np.array([[1, 2], [3, 4]]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_setattr_run_multiple_times():
+    """
+    Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
+    Description: Support 'obj.attr = value'.
+    Expectation: No exception.
+    """
+    class SetattrNet(nn.Cell):
+        def __init__(self):
+            super(SetattrNet, self).__init__()
+            self.a = 1
+
+        def construct(self):
+            self.a = self.a + 1
+            return self.a
+
+    net = SetattrNet()
+    ret1 = net()
+    ret2 = net()
+    ret3 = net()
+    assert ret1 == 2
+    assert ret2 == 3
+    assert ret3 == 4
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_setattr_run_multiple_times_2():
+    """
+    Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
+    Description: Support 'obj.attr = value'.
+    Expectation: No exception.
+    """
+    class SetattrNet(nn.Cell):
+        def __init__(self):
+            super(SetattrNet, self).__init__()
+            self.a = Tensor([1, 2, 3])
+
+        def construct(self):
+            self.a = self.a + 1
+            return self.a
+
+    net = SetattrNet()
+    ret1 = net()
+    ret2 = net()
+    ret3 = net()
+    assert np.all(ret1.asnumpy() == np.array([2, 3, 4]))
+    assert np.all(ret2.asnumpy() == np.array([3, 4, 5]))
+    assert np.all(ret3.asnumpy() == np.array([4, 5, 6]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_setattr_run_multiple_times_3():
+    """
+    Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
+    Description: Support 'obj.attr = value'.
+    Expectation: No exception.
+    """
+    class SetattrNet(nn.Cell):
+        def __init__(self):
+            super(SetattrNet, self).__init__()
+            self.a = np.array([1, 2, 3])
+
+        def construct(self):
+            self.a = self.a + 1
+            return self.a
+
+    net = SetattrNet()
+    ret1 = net()
+    ret2 = net()
+    ret3 = net()
+    assert np.all(ret1 == np.array([2, 3, 4]))
+    assert np.all(ret2 == np.array([3, 4, 5]))
+    assert np.all(ret3 == np.array([4, 5, 6]))
