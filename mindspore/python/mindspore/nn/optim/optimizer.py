@@ -722,7 +722,7 @@ class Optimizer(Cell):
         Examples:
             >>> from mindspore import nn
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/lenet.py
+            >>> # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
             >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
