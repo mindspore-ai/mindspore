@@ -13,23 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_RAGGED_RANGE_FP32_H_
-#define MINDSPORE_NNACL_RAGGED_RANGE_FP32_H_
+#ifndef NNACL_FP32_RAGGED_RANGE_FP32_H_
+#define NNACL_FP32_RAGGED_RANGE_FP32_H_
 
-#include <math.h>
-#include "nnacl/ragged_range_parameter.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "nnacl/kernel/ragged_range.h"
 
 void RaggedRangeFp32(const float *starts, const float *limits, const float *deltas, int *splits, float *value,
-                     const RaggedRangeParameter *param);
+                     RaggedRangeStruct *ragged_range);
 void RaggedRangeInt(const int *starts, const int *limits, const int *deltas, int *splits, int *value,
-                    const RaggedRangeParameter *param);
+                    RaggedRangeStruct *ragged_range);
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif  // MINDSPORE_NNACL_RAGGED_RANGE_FP32_H_
+#endif  // NNACL_FP32_RAGGED_RANGE_FP32_H_

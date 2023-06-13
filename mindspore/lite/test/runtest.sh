@@ -64,6 +64,10 @@ echo 'run common ut tests'
 ./lite-test --gtest_filter=TestDeConvolutionFp32*
 ./lite-test --gtest_filter=TestLogicalOrFp32*
 ./lite-test --gtest_filter=TestTileFp32*
+./lite-test --gtest_filter=TestNLLLossFp32*
+./lite-test --gtest_filter=TestRaggedRangeFp32*
+
+
 
 
 # test cases of generic api

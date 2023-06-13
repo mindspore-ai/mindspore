@@ -19,7 +19,7 @@
 #include "nnacl/fp32/ragged_range_fp32.h"
 #include "src/tensor.h"
 #include "src/executor/kernel_exec.h"
-#include "src/litert/kernel_registry.h"
+#include "nnacl/nnacl_manager.h"
 
 namespace mindspore {
 class TestRaggedRangeFp32 : public mindspore::CommonTest {
@@ -47,15 +47,15 @@ TEST_F(TestRaggedRangeFp32, 001) {
   std::vector<lite::Tensor *> inputs = {&in_tensor0, &in_tensor1, &in_tensor2};
   std::vector<lite::Tensor *> outputs = {&out_tensor0, &out_tensor1};
 
-  RaggedRangeParameter param = {{}, 1, true, true, true};
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_RaggedRange};
-
-  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  ASSERT_NE(creator, nullptr);
-
   auto ctx = std::make_shared<lite::InnerContext>();
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&param), ctx.get(), desc);
+
+  OpParameter param;
+  param.thread_num_ = 1;
+  param.type_ = schema::PrimitiveType_RaggedRange;
+
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, param.type_};
+  auto kernel = nnacl::NNACLKernelRegistry(&param, inputs, outputs, ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
 
   auto ret = kernel->Prepare();
@@ -76,6 +76,7 @@ TEST_F(TestRaggedRangeFp32, 001) {
   in_tensor2.set_data(nullptr);
   out_tensor0.set_data(nullptr);
   out_tensor1.set_data(nullptr);
+  kernel->set_parameter(nullptr);
   delete kernel;
 }
 
@@ -83,8 +84,8 @@ TEST_F(TestRaggedRangeFp32, 002) {
   lite::Tensor in_tensor0(kNumberTypeFloat32, {4});
   lite::Tensor in_tensor1(kNumberTypeFloat32, {4});
   lite::Tensor in_tensor2(kNumberTypeFloat32, {4});
-  lite::Tensor out_tensor0(kNumberTypeFloat32, {2});
-  lite::Tensor out_tensor1(kNumberTypeInt32, {5});
+  lite::Tensor out_tensor0(kNumberTypeFloat32, {5});
+  lite::Tensor out_tensor1(kNumberTypeInt32, {11});
 
   float input_data0[] = {0, 1, 7, 3};
   float input_data1[] = {3, 8, 4, 4};
@@ -99,15 +100,15 @@ TEST_F(TestRaggedRangeFp32, 002) {
   std::vector<lite::Tensor *> inputs = {&in_tensor0, &in_tensor1, &in_tensor2};
   std::vector<lite::Tensor *> outputs = {&out_tensor0, &out_tensor1};
 
-  RaggedRangeParameter param = {{}, 4, false, false, false};
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_RaggedRange};
-
-  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  ASSERT_NE(creator, nullptr);
-
   auto ctx = std::make_shared<lite::InnerContext>();
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&param), ctx.get(), desc);
+
+  OpParameter param;
+  param.thread_num_ = 1;
+  param.type_ = schema::PrimitiveType_RaggedRange;
+
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, param.type_};
+  auto kernel = nnacl::NNACLKernelRegistry(&param, inputs, outputs, ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
 
   auto ret = kernel->Prepare();
@@ -129,6 +130,7 @@ TEST_F(TestRaggedRangeFp32, 002) {
   in_tensor2.set_data(nullptr);
   out_tensor0.set_data(nullptr);
   out_tensor1.set_data(nullptr);
+  kernel->set_parameter(nullptr);
   delete kernel;
 }
 }  // namespace mindspore

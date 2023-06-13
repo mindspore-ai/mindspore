@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "src/common/ops/operator_populate/operator_populate_register.h"
-#include "nnacl/fp32/range_fp32.h"
+#include "nnacl/range_parameter.h"
 #include "ops/range.h"
 using mindspore::ops::kNameRange;
 using mindspore::schema::PrimitiveType_Range;
@@ -36,7 +36,7 @@ OpParameter *PopulateRangeOpParameter(const BaseOperatorPtr &base_operator) {
   param->start_ = static_cast<int>(op->get_start());
   param->limit_ = static_cast<int>(op->get_limit());
   param->delta_ = static_cast<int>(op->get_delta());
-  param->dType_ = static_cast<int>(op->get_d_type());
+  param->dtype_ = static_cast<int>(op->get_d_type());
   return reinterpret_cast<OpParameter *>(param);
 }
 REG_OPERATOR_POPULATE(kNameRange, PrimitiveType_Range, PopulateRangeOpParameter)

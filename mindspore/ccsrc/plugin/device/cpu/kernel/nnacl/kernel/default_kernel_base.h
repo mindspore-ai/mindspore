@@ -21,6 +21,7 @@
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 
+int default_prepare_3in_2out(KernelBase *self);
 int default_prepare_1in_1out(KernelBase *self);
 int default_prepare_2in_1out(KernelBase *self);
 int default_prepare_1in_2out(KernelBase *self);

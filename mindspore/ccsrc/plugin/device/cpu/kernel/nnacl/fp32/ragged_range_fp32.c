@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "nnacl/fp32/ragged_range_fp32.h"
+#include <math.h>
+#include "nnacl/op_base.h"
 
 void RaggedRangeFp32(const float *starts, const float *limits, const float *deltas, int *splits, float *value,
-                     const RaggedRangeParameter *param) {
+                     RaggedRangeStruct *ragged_range) {
   splits[0] = 0;
-  for (int i = 0; i < param->rows; i++) {
-    float start = param->starts_is_scalar ? starts[0] : starts[i];
-    float limit = param->limits_is_scalar ? limits[0] : limits[i];
-    float delta = param->deltas_is_scalar ? deltas[0] : deltas[i];
-    int len = MSMAX((int)ceil((float)(limit - start) / delta), 0);
+  for (int i = 0; i < ragged_range->rows_; i++) {
+    float start = ragged_range->starts_is_scalar_ ? starts[0] : starts[i];
+    float limit = ragged_range->limits_is_scalar_ ? limits[0] : limits[i];
+    float delta = ragged_range->deltas_is_scalar_ ? deltas[0] : deltas[i];
+    int len = NNACL_MAX((int)ceil((float)(limit - start) / delta), 0);
     splits[i + 1] = splits[i] + len;
     for (int j = 0; j < len; j++) {
       *value++ = start;
@@ -32,14 +35,14 @@ void RaggedRangeFp32(const float *starts, const float *limits, const float *delt
 }
 
 void RaggedRangeInt(const int *starts, const int *limits, const int *deltas, int *splits, int *value,
-                    const RaggedRangeParameter *param) {
+                    RaggedRangeStruct *ragged_range) {
   splits[0] = 0;
-  for (int i = 0; i < param->rows; i++) {
-    int start = param->starts_is_scalar ? starts[0] : starts[i];
-    int limit = param->limits_is_scalar ? limits[0] : limits[i];
-    int delta = param->deltas_is_scalar ? deltas[0] : deltas[i];
+  for (int i = 0; i < ragged_range->rows_; i++) {
+    int start = ragged_range->starts_is_scalar_ ? starts[0] : starts[i];
+    int limit = ragged_range->limits_is_scalar_ ? limits[0] : limits[i];
+    int delta = ragged_range->deltas_is_scalar_ ? deltas[0] : deltas[i];
     NNACL_CHECK_ZERO_RETURN(delta);
-    int len = MSMAX((int)ceil((float)(limit - start) / delta), 0);
+    int len = NNACL_MAX((int)ceil((float)(limit - start) / delta), 0);
     splits[i + 1] = splits[i] + len;
     for (int j = 0; j < len; j++) {
       *value++ = start;

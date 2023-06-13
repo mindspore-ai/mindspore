@@ -14,27 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_LOCAL_RESPONSE_NORM_H_
-#define MINDSPORE_NNACL_LOCAL_RESPONSE_NORM_H_
+#ifndef NNACL_FP32_LOCAL_RESPONSE_NORM_FP32_H_
+#define NNACL_FP32_LOCAL_RESPONSE_NORM_FP32_H_
 
 #include "nnacl/op_base.h"
+#include "nnacl/local_response_norm_parameter.h"
 
-typedef struct LocalResponseNormParameter {
-  // Primitive parameter
-  OpParameter op_parameter_;
-  int depth_radius_;
-  float bias_;
-  float alpha_;
-  float beta_;
-} LocalResponseNormParameter;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 int LocalResponseNorm(const float *input_ptr, int out_size, int channel, float *output_ptr,
                       const LocalResponseNormParameter *param);
-#ifdef __cplusplus
-}
-#endif
 
-#endif  // MINDSPORE_NNACL_LOCAL_RESPONSE_NORM_H_
+#endif  // NNACL_FP32_LOCAL_RESPONSE_NORM_FP32_H_

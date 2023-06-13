@@ -1,3 +1,4 @@
+
 /**
  * Copyright 2020 Huawei Technologies Co., Ltd
  *
@@ -14,21 +15,17 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_FP32_RANGE_FP32_H_
-#define NNACL_FP32_RANGE_FP32_H_
+#ifndef NNACL_LRM_PARAMETER_H_
+#define NNACL_LRM_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
-void Range(float *output_ptr, float start, float delta, int nums) {
-  for (int i = 0; i < nums; ++i, start += delta) {
-    output_ptr[i] = start;
-  }
-}
+typedef struct LocalResponseNormParameter {
+  OpParameter op_parameter_;
+  int depth_radius_;
+  float bias_;
+  float alpha_;
+  float beta_;
+} LocalResponseNormParameter;
 
-void RangeInt(int *output_ptr, int start, int delta, int nums) {
-  for (int i = 0; i < nums; ++i, start += delta) {
-    output_ptr[i] = start;
-  }
-}
-
-#endif  // NNACL_FP32_RANGE_FP32_H_
+#endif  // NNACL_LRM_PARAMETER_H_

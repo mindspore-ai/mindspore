@@ -37,6 +37,8 @@ class NLLLossGradCPUKernel : public LiteKernel {
   int Run() override;
 
  private:
+  int batch_;
+  int class_num_;
   NLLLossParameter *nllloss_param_;
 };
 }  // namespace mindspore::kernel

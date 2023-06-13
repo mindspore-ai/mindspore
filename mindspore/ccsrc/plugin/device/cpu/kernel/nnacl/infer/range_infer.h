@@ -17,7 +17,6 @@
 #define MINDSPORE_NNACL_RANGE_INFER_H
 
 #include "nnacl/infer/common_infer.h"
-#include "nnacl/fp32/range_fp32.h"
 
 #ifdef __cplusplus
 extern "C" {

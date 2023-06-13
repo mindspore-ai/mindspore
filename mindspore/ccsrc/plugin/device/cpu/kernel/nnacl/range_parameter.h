@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef NNACL_FP32_RANGE_FP32_H_
-#define NNACL_FP32_RANGE_FP32_H_
+#ifndef NNACL_RANGE_PARAMETER_H_
+#define NNACL_RANGE_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
-void Range(float *output_ptr, float start, float delta, int nums) {
-  for (int i = 0; i < nums; ++i, start += delta) {
-    output_ptr[i] = start;
-  }
-}
+typedef struct RangeParameter {
+  OpParameter op_parameter_;
+  int dtype_;
+  int start_;
+  int limit_;
+  int delta_;
+} RangeParameter;
 
-void RangeInt(int *output_ptr, int start, int delta, int nums) {
-  for (int i = 0; i < nums; ++i, start += delta) {
-    output_ptr[i] = start;
-  }
-}
-
-#endif  // NNACL_FP32_RANGE_FP32_H_
+#endif  // NNACL_RANGE_PARAMETER_H_

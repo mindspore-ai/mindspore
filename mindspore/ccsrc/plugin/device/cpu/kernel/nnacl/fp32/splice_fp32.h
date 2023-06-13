@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP32_SPLICE_FP32_H_
-#define MINDSPORE_NNACL_FP32_SPLICE_FP32_H_
+#ifndef NNACL_FP32_SPLICE_FP32_H_
+#define NNACL_FP32_SPLICE_FP32_H_
+
 #include <string.h>
 #include "nnacl/splice_parameter.h"
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void SpliceFp32(const float *src_data, int src_row, int src_col, const SpliceParameter *splice_parameter,
                 float *dst_data, int dst_row, int dst_col);
 
-#ifdef __cplusplus
-}
-#endif
-#endif  // MINDSPORE_NNACL_FP32_SPLICE_FP32_H_
+#endif  // NNACL_FP32_SPLICE_FP32_H_
