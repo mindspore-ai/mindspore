@@ -15,12 +15,14 @@
  */
 
 #include "frontend/parallel/auto_parallel/rec_core/rec_partition.h"
+
 #include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 #include <iostream>
+
 #include "frontend/parallel/status.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/step_parallel_utils.h"
