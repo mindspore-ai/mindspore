@@ -426,7 +426,7 @@ void GPUKernelExecutor::FuseOperators(const KernelGraphPtr &graph) const {
     if (!graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
       pm->AddPass(std::make_shared<opt::CastAllFusion>("cast_all"));
     }
-    pm->AddPass(std::make_shared<opt::CombineMomentumFusion>("combine_momentum"));
+    pm->AddPass(std::make_shared<opt::CombineOptimizerFusion>(kCombineOptimizerOpName));
     pm->AddPass(std::make_shared<opt::ReplaceMomentumCastFusion>());
     pm->AddPass(std::make_shared<opt::BCEWithLogitsLossFusion>());
     pm->AddPass(std::make_shared<opt::InsertCastGPU>("insert_cast_gpu"));

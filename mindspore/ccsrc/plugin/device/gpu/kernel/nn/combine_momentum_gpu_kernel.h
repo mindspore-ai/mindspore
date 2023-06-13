@@ -25,6 +25,9 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/momentum_impl.cuh"
 namespace mindspore {
 namespace kernel {
+constexpr int kCombineMomentumInputsNum = 5;
+constexpr int kCombineScaleMomentumInputsNum = 6;
+constexpr int kCombineWeightDecayMomentumInputsNum = 7;
 template <typename T, typename S>
 class CombineMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
@@ -39,7 +42,14 @@ class CombineMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     auto stream = reinterpret_cast<cudaStream_t>(stream_ptr);
     for (size_t i = 0; i < num_; i++) {
-      if (input_num_ == 6) {
+      if (input_num_ == kCombineMomentumInputsNum) {
+        T *variable = GetDeviceAddress<T>(inputs, i * input_num_);
+        T *acc = GetDeviceAddress<T>(inputs, i * input_num_ + 1);
+        T *lr = GetDeviceAddress<T>(inputs, i * input_num_ + 2);
+        S *grad = GetDeviceAddress<S>(inputs, i * input_num_ + 3);
+        T *mom = GetDeviceAddress<T>(inputs, i * input_num_ + 4);
+        MomentumUpdateVariable(elements_[i], variable, acc, lr, grad, mom, false, stream);
+      } else if (input_num_ == kCombineScaleMomentumInputsNum) {
         T *scale = GetDeviceAddress<T>(inputs, i * input_num_);
         T *variable = GetDeviceAddress<T>(inputs, i * input_num_ + 1);
         T *acc = GetDeviceAddress<T>(inputs, i * input_num_ + 2);
@@ -47,7 +57,7 @@ class CombineMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         S *grad = GetDeviceAddress<S>(inputs, i * input_num_ + 4);
         T *mom = GetDeviceAddress<T>(inputs, i * input_num_ + 5);
         FusedScaleMomentum(elements_[i], scale, variable, acc, lr, grad, mom, stream);
-      } else {
+      } else if (input_num_ == kCombineWeightDecayMomentumInputsNum) {
         T *weight_decay = GetDeviceAddress<T>(inputs, i * input_num_);
         T *scale = GetDeviceAddress<T>(inputs, i * input_num_ + 1);
         T *variable = GetDeviceAddress<T>(inputs, i * input_num_ + 2);
@@ -56,6 +66,8 @@ class CombineMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         S *grad = GetDeviceAddress<S>(inputs, i * input_num_ + 5);
         T *mom = GetDeviceAddress<T>(inputs, i * input_num_ + 6);
         FusedWeightDecayScaleMomentum(elements_[i], weight_decay, scale, variable, acc, lr, grad, mom, stream);
+      } else {
+        MS_LOG(EXCEPTION) << "Combine kernel input num is invalid.";
       }
     }
     return true;
@@ -65,10 +77,14 @@ class CombineMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     kernel_node_ = kernel_node;
     num_ = GetAttr<size_t>(kernel_node, "n");
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    if (kernel_name == "CombineMomentum") {
-      input_num_ = 6;
+    if (kernel_name == kCombineMomentumOpName) {
+      input_num_ = kCombineMomentumInputsNum;
+    } else if (kernel_name == kCombineScaleMomentumOpName) {
+      input_num_ = kCombineScaleMomentumInputsNum;
+    } else if (kernel_name == kCombineWeightDecayScaleMomentumOpName) {
+      input_num_ = kCombineWeightDecayMomentumInputsNum;
     } else {
-      input_num_ = 7;
+      MS_LOG(EXCEPTION) << "Combine kernel name is invalid.";
     }
     for (size_t i = 0; i < num_; i++) {
       auto variable_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i * input_num_ + input_num_ - 5);

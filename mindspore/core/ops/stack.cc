@@ -123,15 +123,16 @@ TypePtr StackInferType(const PrimitivePtr &primitive, const std::vector<Abstract
                                            primitive->name());
   primitive->AddAttr("num", MakeValue(SizeToLong(elements.size())));
   auto element0 = elements[0]->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(element0);
+  if (element0 == nullptr) {
+    MS_EXCEPTION(TypeError) << "Infer type failed.";
+  }
   auto infer_type0 = element0->BuildType();
-  MS_EXCEPTION_IF_NULL(infer_type0);
   for (size_t i = 1; i < elements.size(); i++) {
     auto elementi = elements[i]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(elementi);
     auto infer_typei = elementi->BuildType();
     MS_EXCEPTION_IF_NULL(infer_typei);
-    if (infer_typei == infer_type0) {
+    if (infer_typei->ToString() != infer_type0->ToString()) {
       MS_EXCEPTION(TypeError) << "All input must have the same data type!input[" << i << "] data type = " << infer_typei
                               << "infer_type0= " << infer_type0;
     }

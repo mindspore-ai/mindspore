@@ -36,7 +36,7 @@
 #include "plugin/device/gpu/optimizer/batch_norm_add_relu_fusion.h"
 #include "plugin/device/gpu/optimizer/post_batch_norm_add_relu_fusion.h"
 #include "plugin/device/gpu/optimizer/batch_norm_add_relu_grad_fusion.h"
-#include "plugin/device/gpu/optimizer/combine_momentum_fusion.h"
+#include "plugin/device/gpu/optimizer/combine_optimizer_fusion.h"
 #include "plugin/device/gpu/optimizer/combine_cast_fusion.h"
 #include "plugin/device/gpu/optimizer/cudnn_inplace_fusion.h"
 #include "plugin/device/gpu/optimizer/insert_format_transform_op.h"

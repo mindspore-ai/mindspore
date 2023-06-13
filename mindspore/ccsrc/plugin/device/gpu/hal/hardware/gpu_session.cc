@@ -34,7 +34,7 @@
 #include "plugin/device/gpu/optimizer/batch_norm_add_relu_fusion.h"
 #include "plugin/device/gpu/optimizer/post_batch_norm_add_relu_fusion.h"
 #include "plugin/device/gpu/optimizer/batch_norm_add_relu_grad_fusion.h"
-#include "plugin/device/gpu/optimizer/combine_momentum_fusion.h"
+#include "plugin/device/gpu/optimizer/combine_optimizer_fusion.h"
 #include "plugin/device/gpu/optimizer/combine_cast_fusion.h"
 #include "plugin/device/gpu/optimizer/cudnn_inplace_fusion.h"
 #include "plugin/device/gpu/optimizer/insert_format_transform_op.h"
@@ -163,7 +163,7 @@ void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   if (!graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
     pm->AddPass(std::make_shared<opt::CastAllFusion>("cast_all"));
   }
-  pm->AddPass(std::make_shared<opt::CombineMomentumFusion>("combine_momentum"));
+  pm->AddPass(std::make_shared<opt::CombineOptimizerFusion>(kCombineOptimizerOpName));
   pm->AddPass(std::make_shared<opt::ReplaceMomentumCastFusion>());
   pm->AddPass(std::make_shared<opt::ReplaceAddNFusion>());
   pm->AddPass(std::make_shared<opt::PrintReduceFusion>("print_reduce"));

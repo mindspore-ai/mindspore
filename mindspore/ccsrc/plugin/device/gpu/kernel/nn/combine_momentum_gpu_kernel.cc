@@ -21,6 +21,16 @@ namespace kernel {
 MS_REG_GPU_KERNEL_TWO(CombineMomentum,
                       KernelAttr()
                         .AddAllSameAttr(true)
+                        .AddInputAttr(kNumberTypeFloat32)  // variable
+                        .AddInputAttr(kNumberTypeFloat32)  // accumulation
+                        .AddInputAttr(kNumberTypeFloat32)  // learning_rate
+                        .AddInputAttr(kNumberTypeFloat32)  // gradient
+                        .AddInputAttr(kNumberTypeFloat32)  // momentum
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      CombineMomentumGpuKernelMod, float, float)
+MS_REG_GPU_KERNEL_TWO(CombineScaleMomentum,
+                      KernelAttr()
+                        .AddAllSameAttr(true)
                         .AddInputAttr(kNumberTypeFloat32)  // scale
                         .AddInputAttr(kNumberTypeFloat32)  // variable
                         .AddInputAttr(kNumberTypeFloat32)  // accumulation
@@ -29,7 +39,7 @@ MS_REG_GPU_KERNEL_TWO(CombineMomentum,
                         .AddInputAttr(kNumberTypeFloat32)  // momentum
                         .AddOutputAttr(kNumberTypeFloat32),
                       CombineMomentumGpuKernelMod, float, float)
-MS_REG_GPU_KERNEL_TWO(CombineMomentum,
+MS_REG_GPU_KERNEL_TWO(CombineScaleMomentum,
                       KernelAttr()
                         .AddAllSameAttr(true)
                         .AddInputAttr(kNumberTypeFloat32)  // scale
@@ -42,7 +52,7 @@ MS_REG_GPU_KERNEL_TWO(CombineMomentum,
                         .AddInputAttr(kNumberTypeFloat32)  // momentum
                         .AddOutputAttr(kNumberTypeFloat32),
                       CombineMomentumGpuKernelMod, float, half)
-MS_REG_GPU_KERNEL_TWO(CombineMomentumWeight,
+MS_REG_GPU_KERNEL_TWO(CombineWeightDecayScaleMomentum,
                       KernelAttr()
                         .AddAllSameAttr(true)
                         .AddInputAttr(kNumberTypeFloat32)  // weight decay
@@ -54,7 +64,7 @@ MS_REG_GPU_KERNEL_TWO(CombineMomentumWeight,
                         .AddInputAttr(kNumberTypeFloat32)  // momentum
                         .AddOutputAttr(kNumberTypeFloat32),
                       CombineMomentumGpuKernelMod, float, float)
-MS_REG_GPU_KERNEL_TWO(CombineMomentumWeight,
+MS_REG_GPU_KERNEL_TWO(CombineWeightDecayScaleMomentum,
                       KernelAttr()
                         .AddAllSameAttr(true)
                         .AddInputAttr(kNumberTypeFloat32)  // variable
