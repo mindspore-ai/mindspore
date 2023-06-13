@@ -40,7 +40,7 @@ class StaticAllocator : public Allocator {
     if (ptr == nullptr) return STATIC_ALLOCATION;
     char *ptrc = reinterpret_cast<char *>(ptr);
     char *bufc = reinterpret_cast<char *>(start_buf_);
-    return ((ptrc < bufc) || (ptrc - bufc >= static_cast<ptrdiff_t>(size_)) ? 1 : 0);
+    return ((ptrc < bufc) || (ptrc >= bufc + size_)) ? 1 : 0;
   }
 
  private:
