@@ -3207,7 +3207,6 @@ def pad(input_x, padding, mode='constant', value=None):
            [1. 0. 1. 0.]
            [3. 2. 3. 2.]
            [1. 0. 1. 0.]]
-
           [[5. 4. 5. 4.]
            [7. 6. 7. 6.]
            [5. 4. 5. 4.]
