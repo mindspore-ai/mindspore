@@ -18,6 +18,7 @@ from mindspore.ops.op_info_register import op_info_register, AiCPURegOp, DataTyp
 
 adaptive_max_pool_2d_op_info = AiCPURegOp("AdaptiveMaxPool2D")                                            \
     .fusion_type("OPAQUE")                                                                                \
+    .attr("output_size", "listInt")                                                                       \
     .input(0, "x", "required")                                                                            \
     .output(0, "y", "required")                                                                           \
     .output(1, "argmax", "required")                                                                      \

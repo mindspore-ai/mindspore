@@ -66,7 +66,6 @@ class BernoulliCpuKernelMod : public NativeCpuKernelMod {
 
   static std::vector<std::pair<KernelAttr, BernoulliFunc>> func_list_;
   BernoulliFunc kernel_func_;
-  std::vector<size_t> input_shape_;
   std::vector<int64_t> x_shape_;
   std::vector<int64_t> p_shape_;
   // std::vector<size_t> input_shape;
