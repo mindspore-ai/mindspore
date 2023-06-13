@@ -68,8 +68,8 @@ bool SortGpuKernelMod<int32_t, half>::LaunchKernel(const std::vector<AddressPtr>
 
   // if sort not in descending order, negate input and negate back after sorting
   if (!descending_) {
-    NegOpt<half>(intermediate_input_device, intermediate_output_device, input_size_,
-                 reinterpret_cast<cudaStream_t>(stream_ptr));
+    UnaryOpsCudaFunc<ElwiseOpType::kNeg, half, half>(input_size_, intermediate_input_device, intermediate_output_device,
+                                                     reinterpret_cast<cudaStream_t>(stream_ptr));
     intermediate_input_device = output_device;
     intermediate_output_device = temp_output_device;
   }
@@ -102,10 +102,9 @@ bool SortGpuKernelMod<int32_t, half>::LaunchKernel(const std::vector<AddressPtr>
   // negate back the sorted values if we negated prior to sorting
   if (!descending_) {
     std::swap(intermediate_input_device, intermediate_output_device);
-    NegOpt<half>(intermediate_input_device, intermediate_output_device, input_size_,
-                 reinterpret_cast<cudaStream_t>(stream_ptr));
+    UnaryOpsCudaFunc<ElwiseOpType::kNeg, half, half>(input_size_, intermediate_input_device, intermediate_output_device,
+                                                     reinterpret_cast<cudaStream_t>(stream_ptr));
   }
-
   return true;
 }
 
@@ -148,8 +147,8 @@ bool SortGpuKernelMod<int32_t, float>::LaunchKernel(const std::vector<AddressPtr
 
   // if sort not in descending order, negate input and negate back after sorting
   if (!descending_) {
-    NegOpt<float>(intermediate_input_device, intermediate_output_device, input_size_,
-                  reinterpret_cast<cudaStream_t>(stream_ptr));
+    UnaryOpsCudaFunc<ElwiseOpType::kNeg, float, float>(
+      input_size_, intermediate_input_device, intermediate_output_device, reinterpret_cast<cudaStream_t>(stream_ptr));
     intermediate_input_device = output_device;
     intermediate_output_device = temp_output_device;
   }
@@ -182,8 +181,8 @@ bool SortGpuKernelMod<int32_t, float>::LaunchKernel(const std::vector<AddressPtr
   // negate back the sorted values if we negated prior to sorting
   if (!descending_) {
     std::swap(intermediate_input_device, intermediate_output_device);
-    NegOpt<float>(intermediate_input_device, intermediate_output_device, input_size_,
-                  reinterpret_cast<cudaStream_t>(stream_ptr));
+    UnaryOpsCudaFunc<ElwiseOpType::kNeg, float, float>(
+      input_size_, intermediate_input_device, intermediate_output_device, reinterpret_cast<cudaStream_t>(stream_ptr));
   }
 
   return true;

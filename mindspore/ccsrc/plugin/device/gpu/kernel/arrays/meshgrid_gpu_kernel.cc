@@ -18,7 +18,7 @@
 #include "mindspore/core/ops/meshgrid.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/binary_ops_impl.cuh"
 #include "plugin/device/gpu/kernel/math/broadcast_public.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise_op_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/eltwise_ops_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -102,8 +102,8 @@ bool MeshgridGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
     return true;
   }
   T *ones_device = GetDeviceAddress<T>(workspace, 0);
-  CalOnesLike(static_cast<T *>(nullptr), ones_device, output_size_, reinterpret_cast<cudaStream_t>(cuda_stream_));
-
+  UnaryOpsCudaFunc<ElwiseOpType::kOnesLike, T, T>(output_size_, static_cast<T *>(nullptr), ones_device,
+                                                  reinterpret_cast<cudaStream_t>(cuda_stream_));
   std::vector<int64_t> simplified_in0_shape;
   std::vector<int64_t> simplified_in1_shape;
   std::vector<int64_t> simplified_out_shape;

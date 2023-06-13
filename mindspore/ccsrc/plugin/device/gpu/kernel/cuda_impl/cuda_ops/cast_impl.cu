@@ -18,7 +18,7 @@
 #include <iostream>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cast_impl.cuh"
 #include "include/cuda_fp16.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementswise_op_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/elementswise_pub_impl.cuh"
 
 template <typename S, typename T>
 struct CastFunctor {

@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ELEMENTWISE_UTILS_IMPL_CUH_
 
 #include <algorithm>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 namespace cuda {
 namespace elementwise {
 // An empirical parameter
@@ -26,7 +26,7 @@ namespace elementwise {
 // the maximum number of registers that can be used by each thread is 255.
 // So, kThreadsPerBlock = 64 * 1024 / 255 = 256.
 // Refer from https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capabilities
-constexpr uint kThreadsPerBlock = 256;
+constexpr uint kThreadsPerBlock = 1024;
 // An empirical parameter
 constexpr uint kWaves = 32;
 constexpr uint kStride = 2;
@@ -43,46 +43,6 @@ inline VectorizedConfig GetVectorizedConfig(uint nums, uint vec_size) {
   uint tail_nums = nums - tail_offset;
   VectorizedConfig config{vec_nums, tail_offset, tail_nums};
   return config;
-}
-
-struct CudaConfig {
-  int dev_{0};
-  int sm_nums_{1};
-  int max_threads_{1};
-};
-
-// Get some necessary hardware config.
-inline cudaError_t GetCurrentConfig(CudaConfig *config) {
-  // 1. Get current device.
-  // 2. Get current sm_nums
-  // 3. Get the maximum resident threads in per multiprocessor.
-  int dev;
-  cudaError_t err = cudaGetDevice(&dev);
-  if (err != cudaSuccess) {
-    return err;
-  }
-  int sm_nums;
-  err = cudaDeviceGetAttribute(&sm_nums, cudaDevAttrMultiProcessorCount, dev);
-  if (err != cudaSuccess) {
-    return err;
-  }
-  int max_threads;
-  err = cudaDeviceGetAttribute(&max_threads, cudaDevAttrMaxThreadsPerMultiProcessor, dev);
-  if (err != cudaSuccess) {
-    return err;
-  }
-  config->dev_ = dev;
-  config->sm_nums_ = sm_nums;
-  config->max_threads_ = max_threads;
-  return err;
-}
-
-// Get best blocks basing on parallel data size for current hardware, adaptively.
-inline uint GetBestBlocks(uint n, const CudaConfig &config) {
-  uint best_blocks =
-    std::max<uint>(1, std::min<uint>((n + kThreadsPerBlock - 1) / kThreadsPerBlock,
-                                     config.sm_nums_ * config.max_threads_ / kThreadsPerBlock * kWaves));
-  return best_blocks;
 }
 
 template <typename T, uint vec_size>
@@ -143,7 +103,7 @@ bool IsAligned() {
 }
 
 template <uint vec_size, typename T, typename... Args>
-bool IsAligned(const T *ptr, const Args *... others) {
+bool IsAligned(const T *ptr, const Args *...others) {
   return reinterpret_cast<uintptr_t>(ptr) % sizeof(Vec<T, vec_size>) == 0 && IsAligned<vec_size, Args...>(others...);
 }
 
@@ -183,8 +143,8 @@ GeneralApplyVec(const FunctorT &functor, Args... args[vec_size]) {
 
 template <uint vec_size, bool tail, typename Factory, typename OUT, typename... IN>
 __global__ void __launch_bounds__(kThreadsPerBlock)
-  DoApply(Factory factory, uint vec_nums, AlignVec<OUT, vec_size> *vec_out, const AlignVec<IN, vec_size> *... vec_in,
-          uint tail_nums, OUT *tail_out, const IN *... tail_in) {
+  DoApply(Factory factory, uint vec_nums, AlignVec<OUT, vec_size> *vec_out, const AlignVec<IN, vec_size> *...vec_in,
+          uint tail_nums, OUT *tail_out, const IN *...tail_in) {
   auto functor = factory();
   const uint global_tid = blockIdx.x * kThreadsPerBlock + threadIdx.x;
   for (uint i = global_tid; i < vec_nums; i += blockDim.x * gridDim.x) {
@@ -197,8 +157,8 @@ __global__ void __launch_bounds__(kThreadsPerBlock)
 
 template <uint vec_size, typename Factory, typename... Args>
 __global__ void __launch_bounds__(kThreadsPerBlock)
-  GeneralDoApply(Factory factory, uint vec_nums, AlignVec<Args, vec_size> *... vec_args, uint tail_nums,
-                 Args *... tail_args) {
+  GeneralDoApply(Factory factory, uint vec_nums, AlignVec<Args, vec_size> *...vec_args, uint tail_nums,
+                 Args *...tail_args) {
   auto functor = factory();
   const uint global_tid = blockIdx.x * kThreadsPerBlock + threadIdx.x;
   for (uint i = global_tid; i < vec_nums; i += blockDim.x * gridDim.x) {
@@ -210,14 +170,9 @@ __global__ void __launch_bounds__(kThreadsPerBlock)
 }
 
 template <uint vec_size, typename Factory, typename OUT, typename... IN>
-cudaError_t LaunchKernel(Factory factory, uint nums, OUT *out, const IN *... in, cudaStream_t stream) {
+cudaError_t LaunchKernel(Factory factory, uint nums, OUT *out, const IN *...in, cudaStream_t stream) {
   VectorizedConfig vectorized_config = GetVectorizedConfig(nums, vec_size);
-  CudaConfig config;
-  cudaError_t err = GetCurrentConfig(&config);
-  if (err != cudaSuccess) {
-    return err;
-  }
-  uint num_blocks = GetBestBlocks(vectorized_config.vec_nums, config);
+  uint num_blocks = CUDA_BLOCKS_CAL(GET_CTX_DEVICE_ID, nums, kThreadsPerBlock);
   dim3 block{kThreadsPerBlock};
   dim3 grid{uint(num_blocks)};
   if (vectorized_config.tail_nums > 0) {
@@ -237,14 +192,9 @@ cudaError_t LaunchKernel(Factory factory, uint nums, OUT *out, const IN *... in,
 }
 
 template <uint vec_size, typename Factory, typename... Args>
-cudaError_t LaunchKernel(Factory factory, uint nums, const Args *... args, cudaStream_t stream) {
+cudaError_t LaunchKernel(Factory factory, uint nums, const Args *...args, cudaStream_t stream) {
   VectorizedConfig vectorized_config = GetVectorizedConfig(nums, vec_size);
-  CudaConfig config;
-  cudaError_t err = GetCurrentConfig(&config);
-  if (err != cudaSuccess) {
-    return err;
-  }
-  uint num_blocks = GetBestBlocks(vectorized_config.vec_nums, config);
+  uint num_blocks = CUDA_BLOCKS_CAL(GET_CTX_DEVICE_ID, nums, kThreadsPerBlock);
   dim3 block{kThreadsPerBlock};
   dim3 grid{uint(num_blocks)};
   auto func = GeneralDoApply<vec_size, Factory, Args...>;
@@ -256,7 +206,7 @@ cudaError_t LaunchKernel(Factory factory, uint nums, const Args *... args, cudaS
 
 template <typename Factory, typename OUT, typename... IN>
 struct DoLaunch {
-  static cudaError_t Launch(Factory factory, uint n, OUT *out, const IN *... in, cudaStream_t stream) {
+  static cudaError_t Launch(Factory factory, uint n, OUT *out, const IN *...in, cudaStream_t stream) {
     constexpr uint max_pack_size = VecSize<OUT, IN...>();
     if (IsAligned<max_pack_size, OUT, IN...>(out, in...)) {
       return LaunchKernel<max_pack_size, Factory, OUT, IN...>(factory, n, out, in..., stream);
@@ -267,7 +217,7 @@ struct DoLaunch {
 
 template <typename Factory, typename... Args>
 struct GeneralLaunch {
-  static cudaError_t Launch(Factory factory, uint n, const Args *... args, cudaStream_t stream) {
+  static cudaError_t Launch(Factory factory, uint n, const Args *...args, cudaStream_t stream) {
     constexpr uint max_pack_size = VecSize<Args...>();
     if (IsAligned<max_pack_size, Args...>(args...)) {
       return LaunchKernel<max_pack_size, Factory, Args...>(factory, n, args..., stream);

@@ -14,27 +14,26 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_UNARY_OP_GRAD_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_UNARY_OP_GRAD_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_UNARY_OPS_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_UNARY_OPS_GPU_KERNEL_H_
 
-#include <cuda_runtime_api.h>
+#include <functional>
 #include <vector>
 #include <string>
-#include <memory>
-#include <complex>
 #include <map>
 #include <utility>
+#include <algorithm>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
-#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/unary_op_grad_impl.cuh"
+#include "plugin/factory/ms_factory.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/eltwise_ops_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/eltwise_ops_type.cuh"
 
 namespace mindspore {
 namespace kernel {
-constexpr auto kUnKnown = "UnKnown";
-class UnaryGradOpGpuKernelMod : public NativeGpuKernelMod {
+class ElementwiseOpsGpuKernel : public NativeGpuKernelMod {
  public:
-  explicit UnaryGradOpGpuKernelMod(const std::string &kernel_type) : kernel_name_(kernel_type) {}
-  ~UnaryGradOpGpuKernelMod() override = default;
+  explicit ElementwiseOpsGpuKernel(const std::string &kernel_name) { kernel_name_ = kernel_name; }
+  ~ElementwiseOpsGpuKernel() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -56,18 +55,22 @@ class UnaryGradOpGpuKernelMod : public NativeGpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using UnaryOpGradFunc = std::function<bool(UnaryGradOpGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                             const std::vector<kernel::AddressPtr> &)>;
-  static std::map<std::string, std::vector<std::pair<KernelAttr, UnaryGradOpGpuKernelMod::UnaryOpGradFunc>>>
-    kernel_attr_map_;
-  UnaryOpGradFunc kernel_func_;
-  bool is_null_input_{false};
-  std::string kernel_name_{kUnKnown};
+  template <ElwiseOpType Op, typename Inp_t, typename Out_t>
+  bool UnaryLaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+
+  template <ElwiseOpType Op, typename In0_t, typename In1_t, typename Out_t>
+  bool BinaryLaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                          const std::vector<kernel::AddressPtr> &outputs);
+
+  using OpsFunc = std::function<bool(ElementwiseOpsGpuKernel *, const std::vector<kernel::AddressPtr> &,
+                                     const std::vector<kernel::AddressPtr> &)>;
+  static std::map<std::string, std::vector<std::pair<KernelAttr, ElementwiseOpsGpuKernel::OpsFunc>>> kernel_attr_map_;
+  size_t ele_num_;
+  OpsFunc kernel_func_;
+  bool is_null_input_{true};
   void *cuda_stream_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_UNARY_OP_GRAD_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_UNARY_OPS_GPU_KERNEL_H_

@@ -16,9 +16,8 @@
 
 #include <memory>
 #include "plugin/device/gpu/kernel/arrays/array_reduce_gpu_kernel.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/unary_op_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/binary_ops_impl.cuh"
-#include "plugin/device/gpu/kernel/math/broadcast_public.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/eltwise_ops_impl.cuh"
 #include "ops/reduce.h"
 #include "plugin/device/gpu/kernel/arrays/cast_gpu_kernel.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
@@ -403,10 +402,13 @@ void ArrayReduceGpuKernelMod::LaunchComplexKernel(const std::vector<AddressPtr> 
   if (input_real == nullptr || input_imag == nullptr || output_real == nullptr || output_imag == nullptr) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the memory alloc of failed";
   }
-  int output_count = output_size_ / sizeof(S);
-  int input_count = input_size_ / sizeof(S);
-  Real(input_addr, input_real, input_count, reinterpret_cast<cudaStream_t>(stream_ptr));
-  Imag(input_addr, input_imag, input_count, reinterpret_cast<cudaStream_t>(stream_ptr));
+  const int64_t output_count = output_size_ / sizeof(S);
+  const size_t input_count = input_size_ / sizeof(S);
+
+  UnaryOpsCudaFunc<ElwiseOpType::kReal, T, S>(input_count, input_addr, input_real,
+                                              reinterpret_cast<cudaStream_t>(stream_ptr));
+  UnaryOpsCudaFunc<ElwiseOpType::kImag, T, S>(input_count, input_addr, input_imag,
+                                              reinterpret_cast<cudaStream_t>(stream_ptr));
   std::stringstream ss;
   ss << "For '" << kernel_name_ << "', cudnnReduceTensor failed.";
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
@@ -417,7 +419,7 @@ void ArrayReduceGpuKernelMod::LaunchComplexKernel(const std::vector<AddressPtr> 
     cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, workspace_addr, workspace_size_, &alpha,
                       inputA_descriptor_, input_imag, &beta, outputC_descriptor_, output_imag),
     ss.str());
-  std::vector<int64_t> ele_shape = {static_cast<int64_t>(output_count)};
+  std::vector<int64_t> ele_shape = {output_count};
   BinaryOpWithBroadcastCudaFunc<BinaryOpType::kComplex, S, S, T>(false, ele_shape, ele_shape, ele_shape, output_real,
                                                                  output_imag, output_addr, device_id_,
                                                                  reinterpret_cast<cudaStream_t>(stream_ptr));

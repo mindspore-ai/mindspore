@@ -20,7 +20,7 @@
 #include <utility>
 #include <memory>
 #include "mindspore/core/ops/grad/batch_norm_grad.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise_op_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/eltwise_ops_impl.cuh"
 #include "ops/op_name.h"
 
 namespace mindspore {
@@ -212,7 +212,8 @@ bool BatchNormGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   }
   if (activation_type_ == mindspore::ActivationType::SWISH) {
     y = GetDeviceAddress<T>(inputs, kIndex7);
-    SiLUGradOpt(y, dy, dy, x_size_ / sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_));
+    BinaryOpsCudaFunc<ElwiseOpType::kSiLUGrad, T, T, T>(x_size_ / sizeof(T), y, dy, dy,
+                                                        reinterpret_cast<cudaStream_t>(cuda_stream_));
   }
   if (is_train_) {
     auto reserve_addr = GetPossiblyNullDeviceAddress<float>(inputs, kIndex5);

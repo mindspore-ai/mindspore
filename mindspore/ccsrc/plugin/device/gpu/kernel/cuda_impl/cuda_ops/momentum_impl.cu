@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/momentum_impl.cuh"
 #include <iostream>
-#include "momentum_impl.cuh"
 #include "include/cuda_fp16.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementswise_op_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/elementswise_pub_impl.cuh"
 
 template <typename T, typename S, typename G>
 struct MomentumUpdateVariableFunctor {

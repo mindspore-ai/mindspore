@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 #include "plugin/device/gpu/kernel/sparse/sparse_matrix_sparse_matmul_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/eltwise_ops_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/eltwise_ops_type.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/unary_op_impl.cuh"
 namespace mindspore {
 namespace kernel {
 template <typename T>
@@ -289,7 +290,7 @@ void SparseMatrixSparseMatMulGpuKernelMod::Core(int x1_num_rows, int x1_num_cols
     x1_Val_t = allocator.AllocTensorMem(current_x1_nnz * sizeof(T));
     x1_RowPtr_t = reinterpret_cast<int *>(allocator.AllocTensorMem((x1_num_cols + 1) * sizeof(int)));
     x1_ColInd_t = reinterpret_cast<int *>(allocator.AllocTensorMem(current_x1_nnz * sizeof(int)));
-    Conj(x1_compute_val, x1_Val_c, current_x1_nnz, stream);
+    UnaryOpsCudaFunc<ElwiseOpType::kConj, T, T>(current_x1_nnz, x1_compute_val, x1_Val_c, stream);
     MatrixTranspose<T>(x1_num_rows, x1_num_cols, current_x1_nnz, x1_Val_c, x1_compute_row, x1_compute_col, x1_Val_t,
                        x1_RowPtr_t, x1_ColInd_t);
     x1_compute_row = x1_RowPtr_t;
@@ -304,7 +305,7 @@ void SparseMatrixSparseMatMulGpuKernelMod::Core(int x1_num_rows, int x1_num_cols
     x2_Val_t = allocator.AllocTensorMem(current_x2_nnz * sizeof(T));
     x2_RowPtr_t = reinterpret_cast<int *>(allocator.AllocTensorMem((x2_num_cols + 1) * sizeof(int)));
     x2_ColInd_t = reinterpret_cast<int *>(allocator.AllocTensorMem(current_x2_nnz * sizeof(int)));
-    Conj(x2_compute_val, x2_Val_c, current_x2_nnz, stream);
+    UnaryOpsCudaFunc<ElwiseOpType::kConj, T, T>(current_x2_nnz, x2_compute_val, x2_Val_c, stream);
     MatrixTranspose<T>(x2_num_rows, x2_num_cols, current_x2_nnz, x2_Val_c, x2_compute_row, x2_compute_col, x2_Val_t,
                        x2_RowPtr_t, x2_ColInd_t);
     x2_compute_row = x2_RowPtr_t;

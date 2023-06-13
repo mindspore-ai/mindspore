@@ -20,7 +20,7 @@
 #include <utility>
 #include <memory>
 #include "mindspore/core/ops/batch_norm.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise_op_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/eltwise_ops_impl.cuh"
 #include "ops/op_name.h"
 
 namespace mindspore {
@@ -71,7 +71,8 @@ bool BatchNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
       "Kernel launch failed");
   }
   if (kernel_name_ == kBatchNormWithActivation && activation_type_ == mindspore::ActivationType::SWISH) {
-    SiLUOpt(y, y, output_size_ / sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_));
+    UnaryOpsCudaFunc<ElwiseOpType::kSiLU, T, T>(output_size_ / sizeof(T), y, y,
+                                                reinterpret_cast<cudaStream_t>(cuda_stream_));
   }
   return true;
 }
