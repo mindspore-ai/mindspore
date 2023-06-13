@@ -169,6 +169,10 @@ void GeDeviceContext::SetAscendConfig(const std::shared_ptr<MsContext> &ms_conte
     (*ge_options)["ge.exec.precision_mode"] = "force_fp16";
   }
 
+  (*ge_options)["ge.topoSortingMode"] = "0";
+  (*ge_options)["ge.exec.memoryOptimizationPolicy"] = "MemoryPriority";
+  MS_LOG(INFO) << "Set GE topo mode to memory-priority.";
+
   if (ms_context_ptr->get_param<std::string>(MS_CTX_ENABLE_JIT_COMPILE) != "") {
     (*ge_options)["ge.jit_compile"] = ms_context_ptr->get_param<std::string>(MS_CTX_ENABLE_JIT_COMPILE);
     MS_LOG(INFO) << "Set jit_compile " << ms_context_ptr->get_param<std::string>(MS_CTX_ENABLE_JIT_COMPILE) << ".";
