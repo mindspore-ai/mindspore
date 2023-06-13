@@ -112,41 +112,38 @@ int Conv1x1RunHw(void *cdata, int task_id, float l, float r) {
 
 void Conv1x1PackWeight(ConvolutionBaseStruct *conv) {
   TensorC *filter_tensor = conv->base_.in_[SECOND_INPUT];
-  int input_channel = GetChannel(filter_tensor);
-  int output_channel = GetBatch(filter_tensor);
-  if (input_channel <= 0 || output_channel <= 0) {
+  NNACL_CHECK_NULL_RETURN_VOID(filter_tensor);
+  ConvComputeParam *compute = &conv->compute_;
+  NNACL_CHECK_NULL_RETURN_VOID(compute);
+
+  if (compute->in_c_ <= 0 || compute->out_c_ <= 0) {
     return;
   }
+
   void *origin_weight = conv->base_.train_session_ ? filter_tensor->data_ : conv->origin_weight_;
   NNACL_CHECK_NULL_RETURN_VOID(origin_weight);
 
 #ifdef ENABLE_AVX
-  RowMajor2Col16Major((float *)origin_weight, (float *)conv->packed_weight_, output_channel, input_channel);
+  RowMajor2Col16Major((float *)origin_weight, (float *)conv->packed_weight_, compute->out_c_, compute->in_c_);
 #elif defined(ENABLE_ARM32)
-  RowMajor2Col4Major((float *)origin_weight, (float *)conv->packed_weight_, output_channel, input_channel);
+  RowMajor2Col4Major((float *)origin_weight, (float *)conv->packed_weight_, compute->out_c_, compute->in_c_);
 #else
-  RowMajor2Col8Major((float *)origin_weight, (float *)conv->packed_weight_, output_channel, input_channel);
+  RowMajor2Col8Major((float *)origin_weight, (float *)conv->packed_weight_, compute->out_c_, compute->in_c_);
 #endif
 }
 
 int Conv1x1MallocWeightBiasData(ConvolutionBaseStruct *conv) {
   Convolution1x1Struct *conv_1x1 = (Convolution1x1Struct *)conv;
+  NNACL_CHECK_NULL_RETURN_ERR(conv_1x1);
 
-  TensorC *filter_tensor = conv->base_.in_[SECOND_INPUT];
-  int input_channel = GetChannel(filter_tensor);
-  NNACL_CHECK_FALSE(input_channel <= 0, NNACL_CONVOLUTION_WEIGHT_SHAPE_INVALID);
-  int output_channel = GetBatch(filter_tensor);
-  NNACL_CHECK_FALSE(output_channel <= 0, NNACL_CONVOLUTION_WEIGHT_SHAPE_INVALID);
-
-  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(input_channel, UP_ROUND(output_channel, conv_1x1->col_tile_), NNACL_ERR);
-  int size = input_channel * UP_ROUND(output_channel, conv_1x1->col_tile_) * sizeof(float);
+  int size = conv->compute_.in_c_ * UP_ROUND(conv->compute_.out_c_, conv_1x1->col_tile_) * sizeof(float);
   if (!conv->base_.train_session_) {
     conv->packed_weight_ = ConvBaseGetConvPackWeightData(conv, size);
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv->packed_weight_);
   }
 
   if (conv->base_.in_size_ == THREE_TENSOR) {
-    size = UP_ROUND(output_channel, conv_1x1->col_tile_) * sizeof(float);
+    size = UP_ROUND(conv->compute_.out_c_, conv_1x1->col_tile_) * sizeof(float);
     conv->bias_data_ = conv->base_.env_->alloc(conv->base_.env_->allocator_, size);
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv->bias_data_);
     memset(conv->bias_data_, 0, size);
@@ -259,14 +256,9 @@ int convolution_1x1_prepare(KernelBase *self) {
 #endif
 
   if (self->train_session_) {
-    TensorC *filter_tensor = conv_1x1->conv_.base_.in_[SECOND_INPUT];
-    int input_channel = GetChannel(filter_tensor);
-    NNACL_CHECK_FALSE(input_channel <= 0, NNACL_CONVOLUTION_WEIGHT_SHAPE_INVALID);
-    int output_channel = GetBatch(filter_tensor);
-    NNACL_CHECK_FALSE(output_channel <= 0, NNACL_CONVOLUTION_WEIGHT_SHAPE_INVALID);
-    int output_tile_size = UP_ROUND(output_channel, conv_1x1->col_tile_);
-    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(input_channel, output_tile_size, NNACL_ERR);
-    size_t size = input_channel * output_tile_size * sizeof(float);
+    int output_tile_size = UP_ROUND(conv_1x1->conv_.compute_.out_c_, conv_1x1->col_tile_);
+    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_1x1->conv_.compute_.in_c_, output_tile_size, NNACL_ERR);
+    size_t size = conv_1x1->conv_.compute_.in_c_ * output_tile_size * sizeof(float);
     conv_1x1->conv_.base_.work_size_ = size;
   }
 

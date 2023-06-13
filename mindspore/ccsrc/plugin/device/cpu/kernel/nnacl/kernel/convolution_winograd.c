@@ -69,5 +69,8 @@ ConvolutionBaseStruct *CreateConvolutionWinograd(ConvParameter *conv_param, int 
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(kernel);
 
   kernel->output_unit_ = out_unit;
+  kernel->conv_.malloc_weight_bias_ = ConvWinoBaseMallocWeightBiasData;
+  kernel->conv_.run_impl_ = ConvWinoBaseRunImpl;
+  kernel->conv_.pack_weight_ = ConvWinoBasePackWeight;
   return (ConvolutionBaseStruct *)kernel;
 }

@@ -20,30 +20,29 @@
 #include "nnacl/fp32/pack_fp32.h"
 
 int ConvDwSWAVXInitPackedInputOutput(ConvolutionDepthwiseSWAVXStruct *conv_dw) {
-  conv_dw->input_need_align_ = (conv_dw->conv_.input_c_ % conv_dw->oc_tile_ != 0);
-  conv_dw->output_need_align_ = (conv_dw->conv_.output_c_ % conv_dw->oc_tile_ != 0);
+  conv_dw->input_need_align_ = (conv_dw->conv_.compute_.in_c_ % conv_dw->oc_tile_ != 0);
+  conv_dw->output_need_align_ = (conv_dw->conv_.compute_.out_c_ % conv_dw->oc_tile_ != 0);
+
+  ExecEnv *env = conv_dw->conv_.base_.env_;
+  NNACL_CHECK_NULL_RETURN_ERR(env);
 
   if (conv_dw->input_need_align_) {
-    int ic_algin = UP_DIV(conv_dw->conv_.input_c_, conv_dw->oc_tile_);
-    int input_hw = conv_dw->conv_.input_h_ * conv_dw->conv_.input_w_;
-    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_dw->conv_.input_b_, input_hw, NNACL_ERR);
-    int input_bhw = conv_dw->conv_.input_b_ * input_hw;
+    int ic_algin = UP_DIV(conv_dw->conv_.compute_.in_c_, conv_dw->oc_tile_);
+    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_dw->conv_.compute_.in_n_, conv_dw->conv_.compute_.in_hw_, NNACL_ERR);
+    int input_bhw = conv_dw->conv_.compute_.in_n_ * conv_dw->conv_.compute_.in_hw_;
     NNACL_CHECK_INT_MUL_NOT_OVERFLOW(input_bhw, conv_dw->oc_tile_ * ic_algin, NNACL_ERR);
     int pack_input_size = input_bhw * conv_dw->oc_tile_ * ic_algin;
-    conv_dw->packed_input_ =
-      (float *)conv_dw->conv_.base_.env_->alloc(conv_dw->conv_.base_.env_->allocator_, pack_input_size * sizeof(float));
+    conv_dw->packed_input_ = (float *)env->alloc(env->allocator_, pack_input_size * sizeof(float));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_dw->packed_input_);
   }
 
   if (conv_dw->output_need_align_) {
-    int oc_algin = UP_DIV(conv_dw->conv_.output_c_, conv_dw->oc_tile_);
-    int output_hw = conv_dw->conv_.output_h_ * conv_dw->conv_.output_w_;
-    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_dw->conv_.output_b_, output_hw, NNACL_ERR);
-    int output_bhw = conv_dw->conv_.output_b_ * output_hw;
+    int oc_algin = UP_DIV(conv_dw->conv_.compute_.out_c_, conv_dw->oc_tile_);
+    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_dw->conv_.compute_.out_n_, conv_dw->conv_.compute_.out_hw_, NNACL_ERR);
+    int output_bhw = conv_dw->conv_.compute_.out_n_ * conv_dw->conv_.compute_.out_hw_;
     NNACL_CHECK_INT_MUL_NOT_OVERFLOW(output_bhw, conv_dw->oc_tile_ * oc_algin, NNACL_ERR);
     int pack_output_size = output_bhw * conv_dw->oc_tile_ * oc_algin;
-    conv_dw->packed_output_ = (float *)conv_dw->conv_.base_.env_->alloc(conv_dw->conv_.base_.env_->allocator_,
-                                                                        pack_output_size * sizeof(float));
+    conv_dw->packed_output_ = (float *)env->alloc(env->allocator_, pack_output_size * sizeof(float));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_dw->packed_output_);
   }
 
@@ -54,20 +53,20 @@ void ConvDwSWAVXPackWeight(ConvolutionBaseStruct *conv) {
   ConvolutionDepthwiseSWAVXStruct *conv_dw = (ConvolutionDepthwiseSWAVXStruct *)conv;
   NNACL_CHECK_NULL_RETURN_VOID(conv_dw);
 
-  int oc_algin = UP_DIV(conv->output_c_, conv_dw->oc_tile_);
+  int oc_algin = UP_DIV(conv->compute_.out_c_, conv_dw->oc_tile_);
   void *origin_weight = conv->base_.train_session_ ? conv->base_.in_[SECOND_INPUT]->data_ : conv->origin_weight_;
   NNACL_CHECK_NULL_RETURN_VOID(origin_weight);
 
-  PackNHWCToNXHWCXFp32(conv->kernel_h_, conv->kernel_w_, conv->output_c_, oc_algin, 1, (float *)conv->packed_weight_,
-                       (float *)conv->origin_weight_);
+  PackNHWCToNXHWCXFp32(conv->compute_.kernel_h_, conv->compute_.kernel_w_, conv->compute_.out_c_, oc_algin, 1,
+                       (float *)conv->packed_weight_, (float *)conv->origin_weight_);
 }
 
 int ConvDwSWAVXMallocWeightBiasData(ConvolutionBaseStruct *conv) {
   ConvolutionDepthwiseSWAVXStruct *conv_dw = (ConvolutionDepthwiseSWAVXStruct *)conv;
   NNACL_CHECK_NULL_RETURN_ERR(conv_dw);
 
-  int oc_algin = UP_DIV(conv->output_c_, conv_dw->oc_tile_);
-  int pack_weight_size = oc_algin * conv_dw->oc_tile_ * conv->kernel_h_ * conv->kernel_w_;
+  int oc_algin = UP_DIV(conv->compute_.out_c_, conv_dw->oc_tile_);
+  int pack_weight_size = oc_algin * conv_dw->oc_tile_ * conv->compute_.kernel_hw_;
 
   if (!conv->base_.train_session_) {
     NNACL_CHECK_MALLOC_SIZE(pack_weight_size * sizeof(float));
@@ -131,8 +130,8 @@ int convolution_depthwise_sw_avx_compute(KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(input_ptr);
 
   if (conv_dw->input_need_align_) {
-    PackNHWCToNHWCXFp32(input_ptr, conv_dw->packed_input_, conv_dw->conv_.input_b_,
-                        conv_dw->conv_.input_h_ * conv_dw->conv_.input_w_, conv_dw->conv_.input_c_, conv_dw->oc_tile_);
+    PackNHWCToNHWCXFp32(input_ptr, conv_dw->packed_input_, conv_dw->conv_.compute_.in_n_,
+                        conv_dw->conv_.compute_.in_hw_, conv_dw->conv_.compute_.in_c_, conv_dw->oc_tile_);
   } else {
     conv_dw->packed_input_ = input_ptr;
   }
@@ -149,9 +148,8 @@ int convolution_depthwise_sw_avx_compute(KernelBase *self) {
   ret = self->env_->parallel_launch(self->env_->thread_pool_, ConvDwSWAvxRun, self, self->thread_nr_);
 
   if (conv_dw->output_need_align_) {
-    PackNHWCXToNHWCFp32(conv_dw->packed_output_, output_ptr, conv_dw->conv_.output_b_,
-                        conv_dw->conv_.output_h_ * conv_dw->conv_.output_w_, conv_dw->conv_.output_c_,
-                        conv_dw->oc_tile_);
+    PackNHWCXToNHWCFp32(conv_dw->packed_output_, output_ptr, conv_dw->conv_.compute_.out_n_,
+                        conv_dw->conv_.compute_.out_hw_, conv_dw->conv_.compute_.out_c_, conv_dw->oc_tile_);
   }
 
   ConvDwSWAVXFreePackedInputOutput(conv_dw);
@@ -171,14 +169,9 @@ int convolution_depthwise_sw_avx_prepare(KernelBase *self) {
   ConvBaseUpdateOriginWeightAndBias(&conv_dw->conv_);
 
   if (self->train_session_) {
-    TensorC *weight_tensor = self->in_[SECOND_INPUT];
-    NNACL_CHECK_NULL_RETURN_ERR(weight_tensor);
-    NNACL_CHECK_TRUE_RET(weight_tensor->shape_size_ == DIMENSION_4D, NNACL_CONVOLUTION_WEIGHT_SHAPE_INVALID);
-
-    int oc_algin = UP_DIV(conv_dw->conv_.output_c_, conv_dw->oc_tile_);
-    int weight_size_hw = conv_dw->conv_.kernel_h_ * conv_dw->conv_.kernel_w_;
-    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(oc_algin * conv_dw->oc_tile_, weight_size_hw, NNACL_ERR);
-    int pack_weight_size = oc_algin * conv_dw->oc_tile_ * weight_size_hw;
+    int oc_algin = UP_DIV(conv_dw->conv_.compute_.out_c_, conv_dw->oc_tile_);
+    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(oc_algin * conv_dw->oc_tile_, conv_dw->conv_.compute_.kernel_hw_, NNACL_ERR);
+    int pack_weight_size = oc_algin * conv_dw->oc_tile_ * conv_dw->conv_.compute_.kernel_hw_;
     self->work_size_ = pack_weight_size * sizeof(float);
   }
 

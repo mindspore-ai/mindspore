@@ -20,15 +20,19 @@
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
+#include "nnacl/conv_parameter.h"
 
 #define ConvMinBlock 1
 
 typedef struct ConvolutionBaseStruct {
   KernelBase base_;
-  FormatC out_format_;
+  ConvComputeParam compute_;
   bool weight_is_packed_;
   bool is_repack_;
   bool infershape_done_;
+  bool use_batch_cut_flag_;
+  FormatC out_format_;
+
   void *packed_weight_;
   void *bias_data_;
   void *origin_weight_;  // do not free
@@ -43,29 +47,6 @@ typedef struct ConvolutionBaseStruct {
   void *pack_weight_manager_;
   void (*free_by_sharing_weight_)(void *manager, void *tensor_data);
   void *(*get_pack_data_by_sharing_weight_)(void *manager, const void *tensor_data, const size_t size, bool *is_packed);
-
-  bool use_batch_cut_flag_;
-
-  int input_b_;
-  int input_h_;
-  int input_w_;
-  int input_c_;
-  int output_b_;
-  int output_h_;
-  int output_w_;
-  int output_c_;
-
-  int kernel_h_;
-  int kernel_w_;
-
-  int stride_h_;
-  int stride_w_;
-  int dilation_h_;
-  int dilation_w_;
-  int pad_u_;
-  int pad_d_;
-  int pad_l_;
-  int pad_r_;
 } ConvolutionBaseStruct;
 
 void ConvBaseRelease(ConvolutionBaseStruct *conv);

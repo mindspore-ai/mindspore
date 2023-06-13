@@ -35,27 +35,54 @@ typedef struct ConvParameter {
   int pad_l_;
   int pad_r_;
   int group_;
-  int tile_num_;
-  int input_batch_;
-  int input_h_;
-  int input_w_;
+  int tile_num_;    /* # */
+  int input_batch_; /* # */
+  int input_h_;     /* # */
+  int input_w_;     /* # */
   int input_channel_;
-  int output_batch_;
-  int output_h_;
-  int output_w_;
+  int output_batch_; /* # */
+  int output_h_;     /* # */
+  int output_w_;     /* # */
   int output_channel_;
-  int thread_num_;
-  int input_unit_;
-  int output_unit_;
+  int thread_num_;  /* # */
+  int input_unit_;  /* # */
+  int output_unit_; /* # */
   PadMode pad_mode_;
   ActType act_type_;
-  int channel_multiplie_;
-  int output_padding_w_;
-  int output_padding_h_;
+  int channel_multiplie_; /* # */
+  int output_padding_w_;  /* # */
+  int output_padding_h_;  /* # */
   int out_format_;
 
   bool dynamic_shape_;
 } ConvParameter;
+
+typedef struct ConvComputeParam {
+  int kernel_h_;
+  int kernel_w_;
+  int stride_h_;
+  int stride_w_;
+  int dilation_h_;
+  int dilation_w_;
+  int pad_u_;
+  int pad_d_;
+  int pad_l_;
+  int pad_r_;
+
+  int in_n_;
+  int in_h_;
+  int in_w_;
+  int in_c_;
+  int out_n_;
+  int out_h_;
+  int out_w_;
+  int out_c_;
+
+  int in_hw_;
+  int out_hw_;
+  int kernel_hw_;
+  int tile_num_;
+} ConvComputeParam;
 
 typedef struct SlidingWindowParam {
   int left_;

@@ -19,6 +19,46 @@
 #include "nnacl/fp32/winograd_transform.h"
 #include "nnacl/fp32/conv_winograd_fp32.h"
 
+int ConvWinoBaseMallocWeightBiasData(ConvolutionBaseStruct *conv) {
+  ConvolutionWinogradBaseStruct *winograd = (ConvolutionWinogradBaseStruct *)conv;
+  NNACL_MALLOC_CHECK_NULL_RETURN_ERR(winograd);
+
+  // set data
+  size_t trans_matrix_data_size = winograd->input_unit_ * winograd->input_unit_ * conv->compute_.in_c_ *
+                                  UP_ROUND(conv->compute_.out_c_, winograd->oc_block_) * sizeof(float);
+  if (!conv->base_.train_session_) {
+    if (conv->packed_weight_ == NULL) {
+      NNACL_CHECK_MALLOC_SIZE(trans_matrix_data_size);
+      conv->packed_weight_ = ConvBaseGetConvPackWeightData(conv, trans_matrix_data_size);
+      NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv->packed_weight_);
+    }
+  }
+
+  float matrix_a[CONVOLUTION_WINOGRAD_MATRIX_SIZE];
+  float matrix_at[CONVOLUTION_WINOGRAD_MATRIX_SIZE];
+  float matrix_b[CONVOLUTION_WINOGRAD_MATRIX_SIZE];
+  float matrix_bt[CONVOLUTION_WINOGRAD_MATRIX_SIZE];
+  float coef = 1.0f;
+  if (winograd->input_unit_ == CONVOLUTION_WINOGRAD_INPUT_UNIT_SIZE) {
+    coef = 0.5f;
+  }
+  int ret = CookToomFilter(matrix_a, matrix_at, matrix_b, matrix_bt, winograd->matrix_g_, winograd->matrix_gt_, coef,
+                           winograd->output_unit_, winograd->kernel_unit_);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
+
+  // init bias
+  size_t new_bias_size = UP_ROUND(conv->compute_.out_c_, C4NUM) * sizeof(float);
+  if (conv->bias_data_ == NULL) {
+    NNACL_CHECK_MALLOC_SIZE(new_bias_size);
+    conv->bias_data_ = conv->base_.env_->alloc(conv->base_.env_->allocator_, new_bias_size);
+    NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv->bias_data_);
+  }
+  memset(conv->bias_data_, 0, new_bias_size);
+  return NNACL_OK;
+}
+
 void ConvWinoBaseFreeTmpBuffer(ConvolutionWinogradBaseStruct *winograd) {
   ExecEnv *env = winograd->conv_.base_.env_;
   NNACL_CHECK_NULL_RETURN_VOID(env);
@@ -56,7 +96,8 @@ int ConvWinoBaseWinogradFilterTransform(ConvolutionWinogradBaseStruct *winograd,
   NNACL_CHECK_ZERO_RETURN_ERR(winograd->oc_block_);
   return WinogradWeightTransform(weight_data, (float *)winograd->conv_.packed_weight_, winograd->matrix_g_,
                                  winograd->matrix_gt_, winograd->oc_block_, winograd->input_unit_,
-                                 winograd->kernel_unit_, winograd->conv_.input_c_, winograd->conv_.output_c_, true);
+                                 winograd->kernel_unit_, winograd->conv_.compute_.in_c_,
+                                 winograd->conv_.compute_.out_c_, true);
 }
 
 void ConvWinoBasePackWeight(ConvolutionBaseStruct *conv) {
@@ -78,7 +119,7 @@ int convolution_winograd_base_prepare(KernelBase *self) {
 
   winograd->conv_.init_global_variable_(&winograd->conv_);
 
-  winograd->kernel_unit_ = winograd->conv_.kernel_h_;
+  winograd->kernel_unit_ = winograd->conv_.compute_.kernel_h_;
   winograd->input_unit_ = winograd->output_unit_ + winograd->kernel_unit_ - 1;
 
   if (self->train_session_) {
@@ -87,10 +128,11 @@ int convolution_winograd_base_prepare(KernelBase *self) {
     NNACL_CHECK_FALSE(filter_tensor->shape_size_ != DIMENSION_4D, NNACL_CONVOLUTION_WEIGHT_SHAPE_INVALID);
 
     int input_plane = winograd->input_unit_ * winograd->input_unit_;
-    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(input_plane, winograd->conv_.input_c_, NNACL_ERR);
-    int in_chw = input_plane * winograd->conv_.input_c_;
-    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(in_chw, UP_ROUND(winograd->conv_.output_c_, winograd->oc_block_), NNACL_ERR);
-    int trans_matrix_data_size = in_chw * UP_ROUND(winograd->conv_.output_c_, winograd->oc_block_) * sizeof(float);
+    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(input_plane, winograd->conv_.compute_.in_c_, NNACL_ERR);
+    int in_chw = input_plane * winograd->conv_.compute_.in_c_;
+    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(in_chw, UP_ROUND(winograd->conv_.compute_.out_c_, winograd->oc_block_), NNACL_ERR);
+    int trans_matrix_data_size =
+      in_chw * UP_ROUND(winograd->conv_.compute_.out_c_, winograd->oc_block_) * sizeof(float);
     self->work_size_ = trans_matrix_data_size;
   }
 
@@ -98,17 +140,15 @@ int convolution_winograd_base_prepare(KernelBase *self) {
 }
 
 int ConvoWinoBaseUpdateThreadNumProcess(ConvolutionWinogradBaseStruct *winograd) {
-  if (winograd->conv_.input_b_ % winograd->conv_.base_.thread_nr_ == 0) {
+  if (winograd->conv_.compute_.in_n_ % winograd->conv_.base_.thread_nr_ == 0) {
     winograd->conv_.use_batch_cut_flag_ = true;
     return NNACL_OK;
   } else {
     winograd->conv_.use_batch_cut_flag_ = false;
   }
 
-  const int tile_num = C12NUM;
-  int output_hw = winograd->conv_.output_h_ * winograd->conv_.output_w_;
-  winograd->conv_.base_.thread_nr_ =
-    MSMIN(UP_DIV(UP_DIV(output_hw, tile_num), ConvMinBlock), winograd->conv_.base_.thread_nr_);
+  int update_thread = UP_DIV(UP_DIV(winograd->conv_.compute_.out_hw_, C12NUM), ConvMinBlock);
+  winograd->conv_.base_.thread_nr_ = NNACL_MIN(update_thread, winograd->conv_.base_.thread_nr_);
 
   return NNACL_OK;
 }
@@ -126,38 +166,33 @@ int ConvWinoBaseConfigInputOutput(ConvolutionWinogradBaseStruct *winograd) {
 }
 
 int ConvoWinoBaseInitTmpBuffer(ConvolutionWinogradBaseStruct *winograd) {
-  int input_plane = winograd->input_unit_ * winograd->input_unit_;
-  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(winograd->conv_.base_.thread_nr_, input_plane, NNACL_ERR);
-  int thread_input_plane = winograd->conv_.base_.thread_nr_ * input_plane;
+  ExecEnv *env = winograd->conv_.base_.env_;
+  NNACL_CHECK_NULL_RETURN_ERR(env);
+
+  int thread_input_plane = winograd->conv_.base_.thread_nr_ * winograd->conv_.compute_.in_hw_;
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(winograd->tile_num_, thread_input_plane, NNACL_ERR);
   int total_thread_input_plane = winograd->tile_num_ * thread_input_plane;
-  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(total_thread_input_plane, winograd->conv_.input_c_, NNACL_ERR);
-  size_t tile_buffer_size = total_thread_input_plane * winograd->conv_.input_c_ * sizeof(float);
-  winograd->trans_input_ =
-    (float *)winograd->conv_.base_.env_->alloc(winograd->conv_.base_.env_->allocator_, tile_buffer_size);
+  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(total_thread_input_plane, winograd->conv_.compute_.in_c_, NNACL_ERR);
+  size_t tile_buffer_size = total_thread_input_plane * winograd->conv_.compute_.in_c_ * sizeof(float);
+  winograd->trans_input_ = (float *)env->alloc(env->allocator_, tile_buffer_size);
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(winograd->trans_input_);
 
-  int oc8 = UP_ROUND(winograd->conv_.output_c_, C8NUM);
+  int oc8 = UP_ROUND(winograd->conv_.compute_.out_c_, C8NUM);
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(total_thread_input_plane, oc8, NNACL_ERR);
-  winograd->gemm_out_ = winograd->conv_.base_.env_->alloc(winograd->conv_.base_.env_->allocator_,
-                                                          total_thread_input_plane * oc8 * sizeof(float));
+  winograd->gemm_out_ = env->alloc(env->allocator_, total_thread_input_plane * oc8 * sizeof(float));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(winograd->gemm_out_);
 
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(winograd->tmp_data_tile_, thread_input_plane, NNACL_ERR);
-  winograd->tmp_data_ = winograd->conv_.base_.env_->alloc(
-    winograd->conv_.base_.env_->allocator_, winograd->tmp_data_tile_ * thread_input_plane * sizeof(float));
+  winograd->tmp_data_ = env->alloc(env->allocator_, winograd->tmp_data_tile_ * thread_input_plane * sizeof(float));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(winograd->tmp_data_);
 
-  winograd->col_buffer_ = winograd->conv_.base_.env_->alloc(
-    winograd->conv_.base_.env_->allocator_,
-    winograd->conv_.base_.thread_nr_ * winograd->tile_num_ * winograd->conv_.input_c_ * sizeof(float));
+  winograd->col_buffer_ = env->alloc(env->allocator_, winograd->conv_.base_.thread_nr_ * winograd->tile_num_ *
+                                                        winograd->conv_.compute_.in_c_ * sizeof(float));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(winograd->col_buffer_);
 
-  int tile = UP_ROUND(winograd->conv_.input_c_, winograd->tmp_data_tile_);
+  int tile = UP_ROUND(winograd->conv_.compute_.in_c_, winograd->tmp_data_tile_);
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(total_thread_input_plane, tile, NNACL_ERR);
-
-  winograd->opt_input_trans_ = winograd->conv_.base_.env_->alloc(winograd->conv_.base_.env_->allocator_,
-                                                                 total_thread_input_plane * tile * sizeof(float));
+  winograd->opt_input_trans_ = env->alloc(env->allocator_, total_thread_input_plane * tile * sizeof(float));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(winograd->opt_input_trans_);
 
   winograd->tmp_buffer_address_list_[Index0] = winograd->trans_input_;
@@ -245,7 +280,7 @@ int convolution_winograd_base_compute(KernelBase *self) {
     return ret;
   }
 
-  ret = self->env_->parallel_launch(self->env_->allocator_, ConvWinoImpl, self, self->thread_nr_);
+  ret = self->env_->parallel_launch(self->env_->thread_pool_, ConvWinoImpl, self, self->thread_nr_);
   ConvWinoBaseFreeTmpBuffer(winograd);
   return ret;
 }
@@ -264,10 +299,7 @@ ConvolutionWinogradBaseStruct *CreateConvWinogradBase(ConvParameter *conv_param)
   memset(winograd, 0, sizeof(ConvolutionWinogradBaseStruct));
 
   winograd->config_input_output_ = ConvWinoBaseConfigInputOutput;
-
   winograd->conv_.init_global_variable_ = ConvWinoBaseInitGlobalVariable;
-  winograd->conv_.pack_weight_ = ConvWinoBasePackWeight;
-  winograd->conv_.run_impl_ = ConvWinoBaseRunImpl;
 
   winograd->conv_.base_.prepare = convolution_winograd_base_prepare;
   winograd->conv_.base_.resize = convolution_winograd_base_resize;

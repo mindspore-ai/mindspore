@@ -48,9 +48,8 @@ int ConvIm2ColBaseMallocWeightBiasData(ConvolutionBaseStruct *conv) {
   ConvolutionIm2ColBaseStruct *conv_im2col = (ConvolutionIm2ColBaseStruct *)conv;
   NNACL_CHECK_NULL_RETURN_ERR(conv_im2col);
 
-  size_t oc_block_num = UP_ROUND(conv->output_c_, conv_im2col->oc_tile_);
-  size_t kernel_plane = conv->kernel_h_ * conv->kernel_w_;
-  size_t pack_weight_size = oc_block_num * conv->input_c_ * kernel_plane;
+  size_t oc_block_num = UP_ROUND(conv->compute_.out_c_, conv_im2col->oc_tile_);
+  size_t pack_weight_size = oc_block_num * conv->compute_.out_c_ * conv->compute_.kernel_hw_;
   if (!conv->base_.train_session_) {
     NNACL_CHECK_MALLOC_SIZE(pack_weight_size * sizeof(float));
     conv->packed_weight_ = ConvBaseGetConvPackWeightData(conv, pack_weight_size * sizeof(float));
@@ -71,15 +70,15 @@ int ConvIm2ColBaseUpdateThreadNumProcess(KernelBase *self, int32_t kernel_type, 
   ConvolutionIm2ColBaseStruct *conv_im2col = (ConvolutionIm2ColBaseStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(conv_im2col);
 
-  if (conv_im2col->conv_.input_b_ % self->thread_nr_ == 0) {
+  if (conv_im2col->conv_.compute_.in_n_ % self->thread_nr_ == 0) {
     conv_im2col->conv_.use_batch_cut_flag_ = true;
     return NNACL_OK;
   } else {
     conv_im2col->conv_.use_batch_cut_flag_ = false;
   }
 
-  int output_hw = conv_im2col->conv_.output_h_ * conv_im2col->conv_.output_w_;
-  self->thread_nr_ = MSMIN(UP_DIV(UP_DIV(output_hw, conv_im2col->row_tile_), ConvMinBlock), self->thread_nr_);
+  int update_thread = UP_DIV(UP_DIV(conv_im2col->conv_.compute_.out_hw_, conv_im2col->row_tile_), ConvMinBlock);
+  self->thread_nr_ = NNACL_MIN(self->thread_nr_, update_thread);
   return NNACL_OK;
 }
 
@@ -108,10 +107,8 @@ int ConvIm2ColBaseInitTmpBuffer(ConvolutionIm2ColBaseStruct *conv_im2col) {
   NNACL_CHECK_NULL_RETURN_ERR(out_tensor);
   NNACL_CHECK_NULL_RETURN_ERR(out_tensor->data_);
 
-  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv->kernel_h_, conv->kernel_w_, NNACL_ERR);
-  int kernel_hw = conv->kernel_h_ * conv->kernel_w_;
-  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(kernel_hw, conv->input_c_, NNACL_ERR);
-  int kernel_chw = kernel_hw * conv->input_c_;
+  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv->compute_.kernel_hw_, conv->compute_.in_c_, NNACL_ERR);
+  int kernel_chw = conv->compute_.kernel_hw_ * conv->compute_.in_c_;
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(kernel_chw, conv->base_.thread_nr_, NNACL_ERR);
   int total_kernel_chw = kernel_chw * conv->base_.thread_nr_;
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(total_kernel_chw, conv_im2col->row_tile_, NNACL_ERR);
@@ -142,8 +139,8 @@ void ConvIm2ColBasePackWeight(ConvolutionBaseStruct *conv) {
 
   ConvolutionIm2ColBaseStruct *conv_im2col = (ConvolutionIm2ColBaseStruct *)conv;
   NNACL_CHECK_NULL_RETURN_VOID(conv_im2col->row_major_to_col_nmajor_);
-  conv_im2col->row_major_to_col_nmajor_((float *)origin_weight, (float *)conv->packed_weight_, conv->output_c_,
-                                        conv->input_c_ * conv->kernel_h_ * conv->kernel_w_);
+  conv_im2col->row_major_to_col_nmajor_((float *)origin_weight, (float *)conv->packed_weight_, conv->compute_.out_c_,
+                                        conv->compute_.in_c_ * conv->compute_.kernel_hw_);
 }
 
 void ConvIm2ColBaseInitGlobalVariable(ConvolutionBaseStruct *conv) {
@@ -214,14 +211,10 @@ int convolution_im2col_base_prepare(KernelBase *self) {
   conv_im2col->conv_.init_global_variable_(&conv_im2col->conv_);
 
   if (self->train_session_) {
-    int kernel_hw = conv_im2col->conv_.kernel_h_ * conv_im2col->conv_.kernel_w_;
-    int oc_block_num = UP_ROUND(conv_im2col->conv_.output_c_, conv_im2col->oc_tile_);
-
-    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_im2col->conv_.input_c_, kernel_hw, NNACL_ERR);
-    int kernel_chw = conv_im2col->conv_.input_c_ * kernel_hw;
+    int oc_block_num = UP_ROUND(conv_im2col->conv_.compute_.out_c_, conv_im2col->oc_tile_);
+    int kernel_chw = conv_im2col->conv_.compute_.in_c_ * conv_im2col->conv_.compute_.kernel_hw_;
     NNACL_CHECK_INT_MUL_NOT_OVERFLOW(oc_block_num, kernel_chw, NNACL_ERR);
     int pack_weight_size = oc_block_num * kernel_chw;
-
     self->work_size_ = pack_weight_size * sizeof(float);
   }
 

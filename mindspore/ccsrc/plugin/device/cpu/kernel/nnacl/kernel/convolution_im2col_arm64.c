@@ -57,7 +57,7 @@ ConvolutionBaseStruct *CreateConvIm2ColARM64(ConvParameter *conv_param) {
   memset(conv_im2col, 0, sizeof(ConvolutionIm2ColBaseStruct));
 
   conv_im2col->init_tmp_buffer_ = ConvIm2ColBaseInitTmpBuffer;
-
+  conv_im2col->conv_.malloc_weight_bias_ = ConvIm2ColBaseMallocWeightBiasData;
   conv_im2col->conv_.init_global_variable_ = ConvIm2ColARM64InitGlobalVariable;
   conv_im2col->conv_.run_impl_ = ConvIm2ColARM64RunImpl;
   conv_im2col->conv_.pack_weight_ = ConvIm2ColBasePackWeight;

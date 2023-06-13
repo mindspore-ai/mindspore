@@ -22,23 +22,23 @@
 void ConvIm2ColAVX512InitGlobalVariable(ConvolutionBaseStruct *conv) {
   ConvolutionIm2ColBaseStruct *conv_im2col = (ConvolutionIm2ColBaseStruct *)conv;
   conv_im2col->oc_tile_ = C16NUM;
-  conv_im2col->row_tile_ = MSMIN(
-    UP_DIV(conv_im2col->conv_.output_h_ * conv_im2col->conv_.output_w_, conv_im2col->conv_.base_.thread_nr_), C150NUM);
+  conv_im2col->row_tile_ =
+    MSMIN(UP_DIV(conv_im2col->conv_.compute_.out_hw_, conv_im2col->conv_.base_.thread_nr_), C150NUM);
   conv_im2col->row_major_to_col_nmajor_ = RowMajor2Col64Major;
 }
 
 int ConvIm2ColAVX512InitTmpBuffer(struct ConvolutionIm2ColBaseStruct *conv_im2col) {
-  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_im2col->conv_.kernel_h_, conv_im2col->conv_.kernel_w_, NNACL_ERR);
-  int kernel_hw = conv_im2col->conv_.kernel_h_ * conv_im2col->conv_.kernel_w_;
-  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(kernel_hw, conv_im2col->conv_.input_c_, NNACL_ERR);
-  int kernel_chw = kernel_hw * conv_im2col->conv_.input_c_;
+  ExecEnv *env = conv_im2col->conv_.base_.env_;
+  NNACL_CHECK_NULL_RETURN_ERR(env);
+  ConvComputeParam *compute = &conv_im2col->conv_.compute_;
+  NNACL_CHECK_NULL_RETURN_ERR(compute);
+
+  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(compute->kernel_hw_, compute->in_c_, NNACL_ERR);
+  int kernel_chw = compute->kernel_hw_ * compute->in_c_;
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(kernel_chw, conv_im2col->conv_.base_.thread_nr_, NNACL_ERR);
   int total_kernel_chw = kernel_chw * conv_im2col->conv_.base_.thread_nr_;
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(total_kernel_chw, conv_im2col->row_tile_, NNACL_ERR);
   size_t unit_size = total_kernel_chw * conv_im2col->row_tile_;
-
-  ExecEnv *env = conv_im2col->conv_.base_.env_;
-  NNACL_CHECK_NULL_RETURN_ERR(env);
 
   if (conv_im2col->packed_input_ != NULL) {
     env->free(env->allocator_, conv_im2col->packed_input_);
@@ -47,22 +47,19 @@ int ConvIm2ColAVX512InitTmpBuffer(struct ConvolutionIm2ColBaseStruct *conv_im2co
   conv_im2col->packed_input_ = env->alloc(env->allocator_, unit_size * sizeof(float));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_im2col->packed_input_);
 
-  if (conv_im2col->conv_.output_c_ % conv_im2col->oc_tile_ != 0) {
-    conv_im2col->output_need_align_ = true;
-
+  conv_im2col->output_need_align_ = compute->out_c_ % conv_im2col->oc_tile_ != 0;
+  if (conv_im2col->output_need_align_) {
     if (conv_im2col->tmp_output_ != NULL) {
       env->free(env->allocator_, conv_im2col->tmp_output_);
       conv_im2col->tmp_output_ = NULL;
     }
 
     // avx512 need to malloc dst aligned to C16NUM
-    int oc_algin = UP_ROUND(conv_im2col->conv_.output_c_, conv_im2col->oc_tile_);
-    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_im2col->conv_.output_h_, conv_im2col->conv_.output_w_, NNACL_ERR);
-    int output_hw = conv_im2col->conv_.output_h_ * conv_im2col->conv_.output_w_;
-    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_im2col->conv_.output_b_, output_hw, NNACL_ERR);
-    int output_bhw = conv_im2col->conv_.output_b_ * output_hw;
+    int oc_algin = UP_ROUND(compute->out_c_, conv_im2col->oc_tile_);
+    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(compute->out_n_, compute->out_hw_, NNACL_ERR);
+    int output_bhw = compute->out_n_ * compute->out_hw_;
     NNACL_CHECK_INT_MUL_NOT_OVERFLOW(output_bhw, oc_algin, NNACL_ERR);
-    size_t pack_output_size = output_bhw * conv_im2col->conv_.output_w_ * oc_algin;
+    size_t pack_output_size = output_bhw * compute->out_w_ * oc_algin;
 
     conv_im2col->tmp_output_ = env->alloc(env->allocator_, pack_output_size * sizeof(float));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_im2col->tmp_output_);
@@ -120,9 +117,8 @@ int convolution_im2col_avx512_compute(KernelBase *self) {
   ret = self->env_->parallel_launch(self->env_->thread_pool_, ConvIm2ColBaseImpl, self, self->thread_nr_);
 
   if (conv_im2col->output_need_align_) {
-    PackNHWCXToNHWCFp32(conv_im2col->tmp_output_, output_addr, conv_im2col->conv_.output_b_,
-                        conv_im2col->conv_.output_w_ * conv_im2col->conv_.output_h_, conv_im2col->conv_.output_c_,
-                        conv_im2col->oc_tile_);
+    PackNHWCXToNHWCFp32(conv_im2col->tmp_output_, output_addr, conv_im2col->conv_.compute_.out_n_,
+                        conv_im2col->conv_.compute_.out_hw_, conv_im2col->conv_.compute_.out_c_, conv_im2col->oc_tile_);
   } else {
     conv_im2col->tmp_output_ = NULL;
   }
@@ -137,7 +133,7 @@ ConvolutionBaseStruct *CreateConvIm2ColAVX512(ConvParameter *conv_param) {
   memset(conv_im2col, 0, sizeof(ConvolutionIm2ColBaseStruct));
 
   conv_im2col->init_tmp_buffer_ = ConvIm2ColAVX512InitTmpBuffer;
-
+  conv_im2col->conv_.malloc_weight_bias_ = ConvIm2ColBaseMallocWeightBiasData;
   conv_im2col->conv_.init_global_variable_ = ConvIm2ColAVX512InitGlobalVariable;
   conv_im2col->conv_.run_impl_ = ConvIm2ColAVX512RunImpl;
   conv_im2col->conv_.pack_weight_ = ConvIm2ColBasePackWeight;

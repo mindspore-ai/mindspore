@@ -24,26 +24,21 @@ int ConvSWInitTmpBuffer(ConvolutionSWStruct *conv_sw) {
   NNACL_CHECK_NULL_RETURN_ERR(input_tensor);
   float *input_data = (float *)input_tensor->data_;
   NNACL_CHECK_NULL_RETURN_ERR(input_data);
-  ConvParameter *conv_param = (ConvParameter *)conv_sw->conv_.base_.param_;
-  NNACL_CHECK_NULL_RETURN_ERR(conv_param);
+  ConvComputeParam *compute = &conv_sw->conv_.compute_;
+  NNACL_CHECK_NULL_RETURN_ERR(compute);
 
-  if (conv_sw->ic_res_ != 0 && conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1) {
-    // 1x1 conv input is align to in_tile
-    int in_channel = conv_param->input_channel_;
-    int ic_block_num = UP_DIV(in_channel, conv_sw->in_tile_);
-
-    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_param->input_h_, conv_param->input_w_, NNACL_ERR);
-    int input_hw = conv_param->input_h_ * conv_param->input_w_;
-    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_param->input_batch_, input_hw, NNACL_ERR);
-    int input_bhw = conv_param->input_batch_ * conv_param->input_h_ * conv_param->input_w_;
+  if (conv_sw->ic_res_ != 0 && compute->kernel_h_ == 1 && compute->kernel_w_ == 1) {
+    int ic_block_num = UP_DIV(compute->in_c_, conv_sw->in_tile_);
+    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(compute->in_n_, compute->in_hw_, NNACL_ERR);
+    int input_bhw = compute->in_n_ * conv_sw->conv_.compute_.in_hw_;
     NNACL_CHECK_INT_MUL_NOT_OVERFLOW(input_bhw, ic_block_num * conv_sw->in_tile_, NNACL_ERR);
 
     conv_sw->input_data_ = (float *)conv_sw->conv_.base_.env_->alloc(
       conv_sw->conv_.base_.env_->allocator_, input_bhw * ic_block_num * conv_sw->in_tile_ * sizeof(float));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_sw->input_data_);
 
-    PackNHWCToNHWCXFp32(input_data, conv_sw->input_data_, conv_param->input_batch_, input_hw,
-                        conv_param->input_channel_, conv_sw->oc_tile_);
+    PackNHWCToNHWCXFp32(input_data, conv_sw->input_data_, compute->in_n_, compute->in_hw_, compute->in_c_,
+                        conv_sw->oc_tile_);
   } else {
     conv_sw->input_data_ = input_data;
   }
@@ -53,12 +48,9 @@ int ConvSWInitTmpBuffer(ConvolutionSWStruct *conv_sw) {
   if (conv_sw->oc_res_ == 0) {  // not need to malloc dst
     conv_sw->output_data_ = out_data;
   } else {  // need to malloc dst to align block
-    int out_channel = conv_param->output_channel_;
-    int oc_block_num = UP_DIV(out_channel, conv_sw->oc_tile_);
-    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_param->output_h_, conv_param->output_w_, NNACL_ERR);
-    int output_hw = conv_param->output_h_ * conv_param->output_w_;
-    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_param->output_batch_, output_hw, NNACL_ERR);
-    int output_bhw = conv_param->output_batch_ * output_hw;
+    int oc_block_num = UP_DIV(compute->out_c_, conv_sw->oc_tile_);
+    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(compute->out_n_, compute->out_hw_, NNACL_ERR);
+    int output_bhw = compute->out_n_ * compute->out_hw_;
     NNACL_CHECK_INT_MUL_NOT_OVERFLOW(output_bhw, oc_block_num * conv_sw->oc_tile_, NNACL_ERR);
     conv_sw->output_data_ = (float *)conv_sw->conv_.base_.env_->alloc(
       conv_sw->conv_.base_.env_->allocator_, output_bhw * oc_block_num * conv_sw->oc_tile_ * sizeof(float));

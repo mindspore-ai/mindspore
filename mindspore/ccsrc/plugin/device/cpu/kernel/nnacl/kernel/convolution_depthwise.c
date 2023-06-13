@@ -50,15 +50,16 @@ int ConvDwRun(void *cdata, int task_id, float l, float r) {
 }
 
 void ConvDwPackWeight(ConvolutionBaseStruct *conv) {
-  PackWeightKHWToHWKFp32((float *)conv->base_.in_[SECOND_INPUT]->data_, (float *)conv->packed_weight_,
-                         conv->kernel_h_ * conv->kernel_w_, conv->output_c_);
+  void *origin_data = conv->base_.in_[SECOND_INPUT]->data_;
+  NNACL_CHECK_NULL_RETURN_VOID(origin_data);
+  PackWeightKHWToHWKFp32(origin_data, conv->packed_weight_, conv->compute_.kernel_hw_, conv->compute_.out_c_);
 }
 
 int ConvDwMallocWeightBiasData(ConvolutionBaseStruct *conv) {
   TensorC *weight_tensor = conv->base_.in_[SECOND_INPUT];
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(weight_tensor);
 
-  int pack_weight_size = conv->kernel_h_ * conv->kernel_w_ * conv->output_c_;
+  int pack_weight_size = conv->compute_.kernel_hw_ * conv->compute_.out_c_;
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(pack_weight_size, sizeof(float), NNACL_ERR);
 
   if (!conv->base_.train_session_) {
@@ -67,43 +68,47 @@ int ConvDwMallocWeightBiasData(ConvolutionBaseStruct *conv) {
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv->packed_weight_);
   }
 
-  NNACL_CHECK_MALLOC_SIZE(conv->output_c_ * sizeof(float));
+  NNACL_CHECK_MALLOC_SIZE(conv->compute_.out_c_ * sizeof(float));
   if (conv->bias_data_ == NULL) {
-    conv->bias_data_ = conv->base_.env_->alloc(conv->base_.env_->allocator_, conv->output_c_ * sizeof(float));
+    conv->bias_data_ = conv->base_.env_->alloc(conv->base_.env_->allocator_, conv->compute_.out_c_ * sizeof(float));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv->bias_data_);
   }
-  memset(conv->bias_data_, 0, conv->output_c_ * sizeof(float));
+  memset(conv->bias_data_, 0, conv->compute_.out_c_ * sizeof(float));
   return NNACL_OK;
 }
 
 int ConvDwInitConvDwCalcInfo(ConvolutionDepthwiseStruct *conv_dw) {
   ExecEnv *env = conv_dw->conv_.base_.env_;
+  NNACL_CHECK_NULL_RETURN_ERR(env);
+  ConvComputeParam *compute = &conv_dw->conv_.compute_;
+  NNACL_CHECK_NULL_RETURN_ERR(compute);
 
   (void)convolution_depthwise_release((KernelBase *)conv_dw);
 
-  conv_dw->dw_param_.num_pixels_ = env->alloc(env->allocator_, conv_dw->conv_.kernel_w_ * sizeof(int));
+  conv_dw->dw_param_.num_pixels_ = env->alloc(env->allocator_, compute->kernel_w_ * sizeof(int));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_dw->dw_param_.num_pixels_);
 
-  conv_dw->dw_param_.out_w_start_ = env->alloc(env->allocator_, conv_dw->conv_.kernel_w_ * sizeof(int));
+  conv_dw->dw_param_.out_w_start_ = env->alloc(env->allocator_, compute->kernel_w_ * sizeof(int));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_dw->dw_param_.out_w_start_);
 
-  conv_dw->dw_param_.out_w_end_ = env->alloc(env->allocator_, conv_dw->conv_.kernel_w_ * sizeof(int));
+  conv_dw->dw_param_.out_w_end_ = env->alloc(env->allocator_, compute->kernel_w_ * sizeof(int));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_dw->dw_param_.out_w_end_);
 
   int *num_pixels = (int *)(conv_dw->dw_param_.num_pixels_);
   int *out_w_start = (int *)(conv_dw->dw_param_.out_w_start_);
   int *out_w_end = (int *)(conv_dw->dw_param_.out_w_end_);
   conv_dw->dw_param_.first_calc_kw_ = -1;
-  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_dw->conv_.dilation_w_, (conv_dw->conv_.kernel_w_ - 1), NNACL_ERR);
-  for (int kw = 0; kw < conv_dw->conv_.kernel_w_; kw++) {
+  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(compute->dilation_w_, (compute->kernel_w_ - 1), NNACL_ERR);
+  for (int kw = 0; kw < compute->kernel_w_; kw++) {
     out_w_start[kw] =
-      MSMAX(0, (conv_dw->conv_.pad_l_ - conv_dw->conv_.dilation_w_ * kw + conv_dw->conv_.stride_w_ - 1) /
-                 conv_dw->conv_.stride_w_);
-    out_w_end[kw] = MSMIN(conv_dw->conv_.output_w_, (conv_dw->conv_.input_w_ + conv_dw->conv_.pad_l_ -
-                                                     conv_dw->conv_.dilation_w_ * kw + conv_dw->conv_.stride_w_ - 1) /
-                                                      conv_dw->conv_.stride_w_);
+      NNACL_MAX(0, (compute->pad_l_ - compute->dilation_w_ * kw + compute->stride_w_ - 1) / compute->stride_w_);
+
+    out_w_end[kw] = NNACL_MIN(
+      (compute->in_w_ + compute->pad_l_ - compute->dilation_w_ * kw + compute->stride_w_ - 1) / compute->stride_w_,
+      compute->out_w_);
+
     num_pixels[kw] = out_w_end[kw] - out_w_start[kw];
-    if (conv_dw->dw_param_.first_calc_kw_ == -1 && out_w_start[kw] == 0 && num_pixels[kw] == conv_dw->conv_.output_w_) {
+    if (conv_dw->dw_param_.first_calc_kw_ == -1 && out_w_start[kw] == 0 && num_pixels[kw] == compute->out_w_) {
       conv_dw->dw_param_.first_calc_kw_ = kw;
     }
   }
@@ -169,7 +174,7 @@ int convolution_depthwise_resize(KernelBase *self) {
     return ret;
   }
 
-  self->thread_nr_ = MSMIN(self->thread_nr_, conv_dw->conv_.output_h_);
+  self->thread_nr_ = NNACL_MIN(self->thread_nr_, conv_dw->conv_.compute_.out_h_);
   NNACL_CHECK_ZERO_RETURN_ERR(self->thread_nr_);
 
   ret = ConvDwInitConvDwCalcInfo(conv_dw);
