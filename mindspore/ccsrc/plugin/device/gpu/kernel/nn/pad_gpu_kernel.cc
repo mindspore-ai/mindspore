@@ -15,14 +15,14 @@
  */
 
 #include "plugin/device/gpu/kernel/nn/pad_gpu_kernel.h"
-#include <map>
-#include <functional>
 #include <algorithm>
+#include <functional>
+#include <map>
 #include <utility>
 #include "mindspore/core/ops/pad.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/pad_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/slice_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 namespace kernel {
@@ -58,11 +58,10 @@ bool PadFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
 int PadFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                const std::vector<KernelTensorPtr> &outputs,
                                const std::map<uint32_t, tensor::TensorPtr> &) {
-  ResetResource();
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-
+  ResetResource();
   input_shape_ = Convert2SizeTClipNeg(inputs[kIndex0]->GetShapeVector());
   input_rank_ = input_shape_.size();
   auto output_shape = outputs[kIndex0]->GetShapeVector();
@@ -88,8 +87,8 @@ int PadFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of element of 'paddings' must be equal to 2, "
                         << "but got the size of paddings[" << i << "]: " << paddings[i].size();
     }
-    flattened_paddings_.push_back(static_cast<int32_t>(paddings[i][0]));
-    flattened_paddings_.push_back(static_cast<int32_t>(paddings[i][1]));
+    flattened_paddings_.push_back(static_cast<int>(paddings[i][0]));
+    flattened_paddings_.push_back(static_cast<int>(paddings[i][1]));
   }
 
   input_size_ = 1;
@@ -104,17 +103,12 @@ int PadFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be equal to 0, but "
                       << "got the " << input_rank_;
   }
-  if (output_shape.size() != input_rank_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input and output must be the same, but "
-                      << "got the dimension of input: " << input_rank_
-                      << ", the dimension of output: " << output_shape.size();
-  }
   strides_.resize(input_rank_);
   strides_[input_rank_ - 1] = 1;
   for (int i = SizeToInt(input_rank_) - 2; i >= 0; i--) {
-    strides_[i] = static_cast<size_t>(output_shape[i + 1]) * strides_[i + 1];
+    strides_[i] = static_cast<int>(output_shape[i + 1]) * strides_[i + 1];
   }
-  InitWorkspaceSizeLists();
+
   return static_cast<int>(KRET_OK);
 }
 
@@ -127,27 +121,18 @@ bool PadFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   float pad_value = 0.0;
   FillDeviceArray(output_size_, output_device, pad_value, reinterpret_cast<cudaStream_t>(stream_ptr));
 
-  size_t *input_shape_device = GetDeviceAddress<size_t>(workspace, kIndex0);
-  size_t *strides_device = GetDeviceAddress<size_t>(workspace, kIndex1);
-  int32_t *paddings_device = GetDeviceAddress<int32_t>(workspace, kIndex2);
+  // input_shape, strides, paddings
+  PadInfo info;
+  const size_t kValue2 = 2;
+  for (size_t i = 0; i < input_rank_; ++i) {
+    info.shape[i] = static_cast<int>(input_shape_[i]);
+    info.strides[i] = strides_[i];
+    info.paddings[kValue2 * i] = flattened_paddings_[kValue2 * i];
+    info.paddings[kValue2 * i + 1] = flattened_paddings_[kValue2 * i + 1];
+  }
 
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(input_shape_device, &input_shape_[0], workspace_size_list_[kIndex0], cudaMemcpyHostToDevice,
-                    reinterpret_cast<cudaStream_t>(stream_ptr)),
-    "For 'Pad', cudaMemcpyAsync for input_shape_ failed");
-
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(strides_device, &strides_[0], workspace_size_list_[kIndex1], cudaMemcpyHostToDevice,
-                    reinterpret_cast<cudaStream_t>(stream_ptr)),
-    "For 'Pad', cudaMemcpyAsync for strides_ failed");
-
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(paddings_device, &flattened_paddings_[0], workspace_size_list_[kIndex2], cudaMemcpyHostToDevice,
-                    reinterpret_cast<cudaStream_t>(stream_ptr)),
-    "For 'Pad', cudaMemcpyAsync for paddings_ failed");
-
-  CalPadGeneral(input_device, output_device, input_shape_device, strides_device, paddings_device, input_size_,
-                input_rank_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CalPadGeneral(input_device, output_device, info, input_size_, input_rank_,
+                reinterpret_cast<cudaStream_t>(stream_ptr));
 
   return true;
 }

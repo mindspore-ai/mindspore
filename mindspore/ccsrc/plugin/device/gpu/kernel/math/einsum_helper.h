@@ -18,19 +18,19 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_EINSUM_HELPER_H_
 
 #include <ctype.h>
-#include <vector>
-#include <string>
-#include <unordered_map>
-#include <map>
-#include <tuple>
-#include <set>
-#include <memory>
 #include <functional>
-#include "plugin/device/gpu/kernel/gpu_kernel.h"
-#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
+#include <map>
+#include <memory>
+#include <set>
+#include <string>
+#include <tuple>
+#include <unordered_map>
+#include <vector>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/einsum_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/tile_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
+#include "plugin/device/gpu/kernel/gpu_kernel.h"
+#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
 
 namespace mindspore {
@@ -503,22 +503,22 @@ class EinsumHelper {
   void Transpose(T *input_ptr, T *output_ptr, const std::vector<size_t> &inp_shape,
                  const std::vector<size_t> &operate_info, void *stream_ptr) {
     // operate_info: input_axis
-    size_t size = 1;
-    size_t *d_shape_ptr = reinterpret_cast<size_t *>(workspace_ptr_[shape_ptr_idx_start_]);
-    size_t *d_info_ptr = reinterpret_cast<size_t *>(workspace_ptr_[shape_ptr_idx_start_ + 1]);
-    for (size_t idx = 0; idx < inp_shape.size(); ++idx) {
-      size *= inp_shape[idx];
+    const size_t dims = inp_shape.size();
+    const size_t operate_dims = operate_info.size();
+    if (dims > TRANSPOSE_MAX_DIMENSION || operate_dims > TRANSPOSE_MAX_DIMENSION) {
+      MS_LOG(EXCEPTION) << "For 'Transpose', the dimension of output cannot be greater than " << TRANSPOSE_MAX_DIMENSION
+                        << ", but got " << dims;
     }
-    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-      cudaMemcpyAsync(d_shape_ptr, &inp_shape[0], inp_shape.size() * sizeof(size_t), cudaMemcpyHostToDevice,
-                      reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "For " + node_name_ + ", Transpose's cudaMemcpyAsync failed.");
-    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-      cudaMemcpyAsync(d_info_ptr, &operate_info[0], operate_info.size() * sizeof(size_t), cudaMemcpyHostToDevice,
-                      reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "For " + node_name_ + ", Transpose's cudaMemcpyAsync failed.");
-    CalTranspose<T>(size, input_ptr, d_shape_ptr, d_info_ptr, inp_shape.size(), output_ptr,
-                    reinterpret_cast<cudaStream_t>(stream_ptr));
+    size_t size = 1;
+    TransposeInfo info;
+    for (size_t i = 0; i < dims; ++i) {
+      size *= inp_shape[i];
+      info.shape[i] = static_cast<int>(inp_shape[i]);
+    }
+    for (size_t i = 0; i < operate_dims; ++i) {
+      info.perm[i] = static_cast<int>(operate_info[i]);
+    }
+    CalTranspose<T>(size, input_ptr, info, dims, output_ptr, reinterpret_cast<cudaStream_t>(stream_ptr));
   }
   bool SegLeftEquation(const std::string &left_equation, const std::vector<std::vector<int64_t>> &input_shapes) {
     size_t cur_element = 0;

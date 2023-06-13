@@ -16,12 +16,12 @@
 
 #include "plugin/device/gpu/kernel/math/ormqr_gpu_kernel.h"
 #include <complex>
-#include <vector>
 #include <map>
 #include <utility>
+#include <vector>
 #include "abstract/utils.h"
-#include "kernel/common_utils.h"
 #include "include/common/utils/convert_utils.h"
+#include "kernel/common_utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/real_to_complex_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_public/cusolver.h"
@@ -80,12 +80,8 @@ int OrmqrGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   std::swap(transpose_output_shape_[other_shape_.size() - kDim1], transpose_output_shape_[other_shape_.size() - kDim2]);
 
   workspace_size_list_.push_back(batch_size_ * sizeof(int));               // dev_info
-  workspace_size_list_.push_back(x_shape_.size() * sizeof(size_t));        // x_shape
-  workspace_size_list_.push_back(x_shape_.size() * sizeof(size_t));        // x_axis
-  workspace_size_list_.push_back(other_shape_.size() * sizeof(size_t));    // other_shape
   workspace_size_list_.push_back(batch_size_ * x_m_ * x_n_ * unit_size_);  // x data
   workspace_size_list_.push_back(batch_size_ * m_ * n_ * unit_size_);      // other data
-  workspace_size_list_.push_back(x_shape_.size() * sizeof(size_t));        // trans output shape
   return 0;
 }
 template <typename T>
@@ -124,36 +120,29 @@ bool OrmqrGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   T *output_y = GetDeviceAddress<T>(outputs, kIndex0);
 
   int *dev_info = GetDeviceAddress<int>(workspace, kIndex0);
-  size_t *d_trans_x_shape_ = GetDeviceAddress<size_t>(workspace, kIndex1);
-  size_t *d_trans_x_axis = GetDeviceAddress<size_t>(workspace, kIndex2);
-  size_t *d_trans_other_shape_ = GetDeviceAddress<size_t>(workspace, kIndex3);
-  T *d_x = GetDeviceAddress<T>(workspace, kIndex4);
-  T *d_other = GetDeviceAddress<T>(workspace, kIndex5);
-  size_t *d_trans_output_shape = GetDeviceAddress<size_t>(workspace, kIndex6);
+  T *d_x = GetDeviceAddress<T>(workspace, kIndex1);
+  T *d_other = GetDeviceAddress<T>(workspace, kIndex2);
 
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(d_trans_x_axis, transpose_x_axis_.data(), sizeof(size_t) * x_shape_.size(), cudaMemcpyHostToDevice,
-                    reinterpret_cast<cudaStream_t>(cuda_stream_)),
-    "cuda memcpy failed!");
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(d_trans_x_shape_, x_shape_.data(), sizeof(size_t) * x_shape_.size(), cudaMemcpyHostToDevice,
-                    reinterpret_cast<cudaStream_t>(cuda_stream_)),
-    "cuda memcpy failed!");
+  TransposeInfo x_info, y_info, o_info;
+  for (size_t i = 0; i < x_shape_.size(); ++i) {
+    x_info.shape[i] = static_cast<int>(x_shape_[i]);
+    x_info.perm[i] = static_cast<int>(transpose_x_axis_[i]);
+    o_info.perm[i] = static_cast<int>(transpose_x_axis_[i]);
+    y_info.perm[i] = static_cast<int>(transpose_x_axis_[i]);
+  }
+  for (size_t i = 0; i < other_shape_.size(); ++i) {
+    o_info.shape[i] = static_cast<int>(other_shape_[i]);
+    y_info.shape[i] = static_cast<int>(transpose_output_shape_[i]);
+  }
   size_t trans_size = static_cast<size_t>(batch_size_ * x_m_ * x_n_);
-  CalTranspose(trans_size, x, d_trans_x_shape_, d_trans_x_axis, x_shape_.size(), d_x,
-               reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CalTranspose(trans_size, x, x_info, x_shape_.size(), d_x, reinterpret_cast<cudaStream_t>(cuda_stream_));
 
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(d_trans_other_shape_, other_shape_.data(), sizeof(size_t) * other_shape_.size(),
-                    cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(cuda_stream_)),
-    "cuda memcpy failed!");
   trans_size = static_cast<size_t>(batch_size_ * m_ * n_);
-  CalTranspose(trans_size, other, d_trans_other_shape_, d_trans_x_axis, other_shape_.size(), d_other,
-               reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CalTranspose(trans_size, other, o_info, other_shape_.size(), d_other, reinterpret_cast<cudaStream_t>(cuda_stream_));
+
   RunOrmqr(d_x, tau, d_other, dev_info);
-  cudaMemcpyAsync(d_trans_output_shape, transpose_output_shape_.data(), sizeof(size_t) * other_shape_.size(),
-                  cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(cuda_stream_));
-  CalTranspose(trans_size, d_other, d_trans_output_shape, d_trans_x_axis, other_shape_.size(), output_y,
+
+  CalTranspose(trans_size, d_other, y_info, other_shape_.size(), output_y,
                reinterpret_cast<cudaStream_t>(cuda_stream_));
 
   return true;

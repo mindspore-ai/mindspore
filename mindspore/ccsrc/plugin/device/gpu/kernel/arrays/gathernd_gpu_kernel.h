@@ -17,14 +17,14 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_ARRAYS_GATHERND_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_ARRAYS_GATHERND_GPU_KERNEL_H_
 #include <map>
-#include <vector>
 #include <string>
-#include "plugin/device/gpu/kernel/gpu_kernel.h"
-#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gathernd.cuh"
+#include <vector>
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "mindspore/core/ops/gather_nd.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gathernd.cuh"
+#include "plugin/device/gpu/kernel/gpu_kernel.h"
+#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -39,26 +39,17 @@ class GatherNdFwdGpuKernelMod : public NativeGpuKernelMod {
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     S *indices_addr = GetDeviceAddress<S>(inputs, 1);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
-    S *dev_batch_strides = GetDeviceAddress<S>(workspace, 0);
-    S *dev_batch_indices = GetDeviceAddress<S>(workspace, 1);
-    int *device_flag = GetDeviceAddress<int>(workspace, 2);
-    const size_t strides_len = sizeof(S) * batch_strides_.size();
-    const size_t indices_len = sizeof(S) * batch_indices_.size();
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(dev_batch_strides, &batch_strides_[0], strides_len, cudaMemcpyHostToDevice,
-                      reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "cudaMemcpyAsync failed in GatherNdFwdGpuKernelMod::Launch.");
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(dev_batch_indices, &batch_indices_[0], indices_len, cudaMemcpyHostToDevice,
-                      reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "cudaMemcpyAsync failed in GatherNdFwdGpuKernelMod::Launch.");
 
-    auto ret = GatherNd(input_addr, indices_addr, output_addr, dims_[0], dims_[1], dims_[2], dev_batch_strides,
-                        dev_batch_indices, device_flag, reinterpret_cast<cudaStream_t>(stream_ptr));
-    if (ret.first >= 0) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the indices[" << ret.first << "]: " << ret.second
-                        << ", does not index into input_shape: " << input_shapes_ << ".";
+    // strides and indices
+    GatherNdInfo<S> info;
+    for (int64_t i = 0; i < dim_indices_last_; ++i) {
+      info.indices[i] = batch_indices_[i];
+      info.strides[i] = batch_strides_[i];
     }
+
+    auto status = GatherNd(input_addr, indices_addr, output_addr, dims_[0], dims_[1], dims_[2], info,
+                           reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
     return true;
   }
 
@@ -91,30 +82,29 @@ class GatherNdFwdGpuKernelMod : public NativeGpuKernelMod {
     }
 
     int64_t dim_after_indices = 1;
-    size_t dim_indices_last = indices_shapes[indices_shapes.size() - IntToSize(1)];
-    for (size_t i = dim_indices_last; i < input_shapes_.size(); i++) {
+    dim_indices_last_ = indices_shapes[indices_shapes.size() - IntToSize(1)];
+    for (size_t i = dim_indices_last_; i < input_shapes_.size(); i++) {
       dim_after_indices *= input_shapes_[i];
     }
-    dims_ = {LongToSize(dim_of_indices), LongToSize(dim_after_indices), dim_indices_last};
+    dims_ = {LongToSize(dim_of_indices), LongToSize(dim_after_indices), LongToSize(dim_indices_last_)};
 
-    batch_strides_.resize(dim_indices_last, 0);
-    batch_indices_.resize(dim_indices_last, 0);
+    batch_strides_.resize(dim_indices_last_, 0);
+    batch_indices_.resize(dim_indices_last_, 0);
 
-    if (dim_indices_last > 0) {
-      batch_strides_[dim_indices_last - 1] = input_shapes_[dim_indices_last - 1];
-      batch_indices_[dim_indices_last - 1] = dims_[1];
+    if (dim_indices_last_ > 0) {
+      batch_strides_[dim_indices_last_ - 1] = input_shapes_[dim_indices_last_ - 1];
+      batch_indices_[dim_indices_last_ - 1] = dims_[1];
     }
-    for (int i = static_cast<int>(dim_indices_last) - 1; i > 0; --i) {
+    for (int i = static_cast<int>(dim_indices_last_) - 1; i > 0; --i) {
       batch_strides_[i - 1] = input_shapes_[i - 1];
       batch_indices_[i - 1] = batch_indices_[i] * input_shapes_[i];
     }
-    const size_t strides_size = sizeof(S) * batch_strides_.size();
-    const size_t indices_size = sizeof(S) * batch_indices_.size();
-    workspace_size_list_ = {strides_size, indices_size, sizeof(int)};
+
     return ret;
   }
 
  private:
+  int64_t dim_indices_last_{0};
   std::vector<size_t> dims_;
   std::vector<int64_t> input_shapes_;
   std::vector<S> batch_strides_;

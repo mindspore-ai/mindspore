@@ -16,8 +16,8 @@
 
 #include <iostream>
 #include <vector>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/bce_with_logits_loss_impl.cuh"
 #include "include/cuda_fp16.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/bce_with_logits_loss_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/elementswise_pub_impl.cuh"
 
 struct StrideInfo {
@@ -29,9 +29,7 @@ struct StrideInfo {
 template <typename T>
 struct FillWithoutBroadcastFunctor {
   FillWithoutBroadcastFunctor() {}
-  __device__ __forceinline__ void operator()(T *dst, const T *src) const {
-    dst[0] = src[0];
-  }
+  __device__ __forceinline__ void operator()(T *dst, const T *src) const { dst[0] = src[0]; }
 };
 
 StrideInfo CalBceStride(const std::vector<int64_t> inp_shape, const std::vector<int64_t> out_shape) {
@@ -52,14 +50,14 @@ StrideInfo CalBceStride(const std::vector<int64_t> inp_shape, const std::vector<
     strides.inp_stride[idx] = strides.inp_stride[idx + 1] * inp_shape[idx];
     strides.out_stride[idx] = strides.out_stride[idx + 1] * out_shape[idx];
     cur_inp_shape = strides.inp_stride[idx] / strides.inp_stride[idx + 1];
-    strides.index_stride[idx] = (cur_inp_shape ==1) ? 0 : 1;
+    strides.index_stride[idx] = (cur_inp_shape == 1) ? 0 : 1;
   }
   return strides;
 }
 
 template <typename T>
-__global__ void FillAndBroadcast(const size_t size, const size_t shape_size, const StrideInfo strides,
-                                 const T *src, T *dst) {
+__global__ void FillAndBroadcast(const size_t size, const size_t shape_size, const StrideInfo strides, const T *src,
+                                 T *dst) {
   for (int pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     size_t tmp_pos = pos;
     size_t cur_idx = 0;
@@ -103,61 +101,46 @@ __global__ void BCEWithLogitsLossMain(size_t size, const half *predict, const ha
 template <typename T>
 struct MulFunctor {
   MulFunctor() {}
-  __device__ __forceinline__ void operator()(T *rhs, const T *lhs) const {
-    rhs[0] *= lhs[0];
-  }
+  __device__ __forceinline__ void operator()(T *rhs, const T *lhs) const { rhs[0] *= lhs[0]; }
 };
 
 template <typename T>
 void CalBCEWithLogitsLoss(const size_t input_size, const T *predict, const T *target,
-                          const std::vector<int64_t> &input_shape,
-                          const size_t shape_size, const T *weight, const std::vector<int64_t> &weight_shape,
-                          const bool weight_need_broadcast,
+                          const std::vector<int64_t> &input_shape, const size_t shape_size, const T *weight,
+                          const std::vector<int64_t> &weight_shape, const bool weight_need_broadcast,
                           const T *pos_weight, const std::vector<int64_t> &pos_weight_shape,
                           const bool pos_weight_need_broadcast, T *shape_broadcasted, T *output,
                           cudaStream_t cuda_stream) {
   if (pos_weight_need_broadcast) {
     StrideInfo strides = CalBceStride(pos_weight_shape, input_shape);
-    FillAndBroadcast<<<GET_BLOCKS(input_size), GET_THREADS, 0, cuda_stream>>>(
-    input_size, shape_size, strides, pos_weight, shape_broadcasted);
+    FillAndBroadcast<<<GET_BLOCKS(input_size), GET_THREADS, 0, cuda_stream>>>(input_size, shape_size, strides,
+                                                                              pos_weight, shape_broadcasted);
   } else {
     FillWithoutBroadcastFunctor<T> functor;
-    cuda::elementwise::UnaryInputUnaryOutput(functor, (uint)(input_size), shape_broadcasted,
-                                             pos_weight, cuda_stream);
+    cuda::elementwise::UnaryInputUnaryOutput(functor, (uint)(input_size), shape_broadcasted, pos_weight, cuda_stream);
   }
   BCEWithLogitsLossMain<<<GET_BLOCKS(input_size), GET_THREADS, 0, cuda_stream>>>(input_size, predict, target,
                                                                                  shape_broadcasted, output);
   if (weight_need_broadcast) {
     StrideInfo strides = CalBceStride(weight_shape, input_shape);
-    FillAndBroadcast<<<GET_BLOCKS(input_size), GET_THREADS, 0, cuda_stream>>>(
-    input_size, shape_size, strides, weight, shape_broadcasted);
+    FillAndBroadcast<<<GET_BLOCKS(input_size), GET_THREADS, 0, cuda_stream>>>(input_size, shape_size, strides, weight,
+                                                                              shape_broadcasted);
   } else {
     FillWithoutBroadcastFunctor<T> functor;
-    cuda::elementwise::UnaryInputUnaryOutput(functor, (uint)(input_size), shape_broadcasted,
-                                             pos_weight, cuda_stream);
+    cuda::elementwise::UnaryInputUnaryOutput(functor, (uint)(input_size), shape_broadcasted, pos_weight, cuda_stream);
   }
   MulFunctor<T> functor;
-  cuda::elementwise::UnaryInputUnaryOutput(functor, (uint)(input_size), output,
-                                           shape_broadcasted, cuda_stream);
+  cuda::elementwise::UnaryInputUnaryOutput(functor, (uint)(input_size), output, shape_broadcasted, cuda_stream);
   return;
 }
 
-template CUDA_LIB_EXPORT void CalBCEWithLogitsLoss<half>(const size_t input_size, const half *predict,
-                                                         const half *target, const std::vector<int64_t> &input_shape,
-                                                         const size_t shape_size, const half *weight,
-                                                         const std::vector<int64_t> &weight_shape,
-                                                         const bool weight_need_broadcast,
-                                                         const half *pos_weight,
-                                                         const std::vector<int64_t> &pos_weight_shape,
-                                                         const bool pos_weight_need_broadcast, half *shape_broadcasted,
-                                                         half *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalBCEWithLogitsLoss<float>(const size_t input_size, const float *predict,
-                                                          const float *target, const std::vector<int64_t> &input_shape,
-                                                          const size_t shape_size, const float *weight,
-                                                          const std::vector<int64_t> &weight_shape,
-                                                          const bool weight_need_broadcast,
-                                                          const float *pos_weight,
-                                                          const std::vector<int64_t> &pos_weight_shape,
-                                                          const bool pos_weight_need_broadcast,
-                                                          float *shape_broadcasted, float *output,
-                                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalBCEWithLogitsLoss<half>(
+  const size_t input_size, const half *predict, const half *target, const std::vector<int64_t> &input_shape,
+  const size_t shape_size, const half *weight, const std::vector<int64_t> &weight_shape,
+  const bool weight_need_broadcast, const half *pos_weight, const std::vector<int64_t> &pos_weight_shape,
+  const bool pos_weight_need_broadcast, half *shape_broadcasted, half *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalBCEWithLogitsLoss<float>(
+  const size_t input_size, const float *predict, const float *target, const std::vector<int64_t> &input_shape,
+  const size_t shape_size, const float *weight, const std::vector<int64_t> &weight_shape,
+  const bool weight_need_broadcast, const float *pos_weight, const std::vector<int64_t> &pos_weight_shape,
+  const bool pos_weight_need_broadcast, float *shape_broadcasted, float *output, cudaStream_t cuda_stream);

@@ -16,12 +16,12 @@
 
 #include "plugin/device/gpu/kernel/math/geqrf_gpu_kernel.h"
 #include <complex>
-#include <vector>
 #include <map>
 #include <utility>
+#include <vector>
 #include "abstract/utils.h"
-#include "kernel/common_utils.h"
 #include "include/common/utils/convert_utils.h"
+#include "kernel/common_utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/real_to_complex_impl.cuh"
 
@@ -103,11 +103,8 @@ void GeqrfGpuKernelMod::InitSizeLists() {
   output_size_list_.push_back(batch_size_ * p_ * sizeof(T));
   workspace_size_list_.push_back(batch_size_ * sizeof(int));
   // for transpose input x and output y, tau
-  workspace_size_list_.push_back(input_x_dims_ * sizeof(size_t));
-  workspace_size_list_.push_back(input_x_dims_ * sizeof(size_t));
   workspace_size_list_.push_back(batch_size_ * m_ * n_ * sizeof(T));
   workspace_size_list_.push_back(batch_size_ * m_ * n_ * sizeof(T));
-  workspace_size_list_.push_back(input_x_dims_ * sizeof(size_t));
 }
 
 template <typename T>
@@ -198,29 +195,21 @@ bool GeqrfGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   T *output_tau = GetDeviceAddress<T>(outputs, kIndex1);
 
   int *dev_info = GetDeviceAddress<int>(workspace, kIndex0);
-  size_t *d_trans_input_x_shape = GetDeviceAddress<size_t>(workspace, kIndex1);
-  size_t *d_trans_input_x_axis = GetDeviceAddress<size_t>(workspace, kIndex2);
-  T *d_input_x = GetDeviceAddress<T>(workspace, kIndex3);
-  T *d_output_y = GetDeviceAddress<T>(workspace, kIndex4);
-  size_t *d_trans_output_y_shape = GetDeviceAddress<size_t>(workspace, kIndex5);
+  T *d_input_x = GetDeviceAddress<T>(workspace, kIndex1);
+  T *d_output_y = GetDeviceAddress<T>(workspace, kIndex2);
 
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(d_trans_input_x_axis, transpose_input_x_axis_, sizeof(size_t) * input_x_dims_,
-                    cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(cuda_stream_)),
-    "cuda memcpy failed!");
+  TransposeInfo x_info, y_info;
+  for (size_t i = 0; i < input_x_dims_; ++i) {
+    x_info.shape[i] = static_cast<int>(transpose_input_x_shape_[i]);
+    x_info.perm[i] = static_cast<int>(transpose_input_x_axis_[i]);
+    y_info.shape[i] = static_cast<int>(transpose_output_y_shape_[i]);
+    y_info.perm[i] = static_cast<int>(transpose_input_x_axis_[i]);
+  }
 
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(d_trans_input_x_shape, transpose_input_x_shape_, sizeof(size_t) * input_x_dims_,
-                    cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(cuda_stream_)),
-    "cuda memcpy failed!");
-  CalTranspose(batch_size_ * m_ * n_, input_x, d_trans_input_x_shape, d_trans_input_x_axis, input_x_dims_, d_input_x,
+  CalTranspose(batch_size_ * m_ * n_, input_x, x_info, input_x_dims_, d_input_x,
                reinterpret_cast<cudaStream_t>(cuda_stream_));
-
   LaunchGeqrf(d_input_x, d_output_y, output_tau, dev_info);
-
-  cudaMemcpyAsync(d_trans_output_y_shape, transpose_output_y_shape_, sizeof(size_t) * input_x_dims_,
-                  cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(cuda_stream_));
-  CalTranspose(batch_size_ * m_ * n_, d_output_y, d_trans_output_y_shape, d_trans_input_x_axis, input_x_dims_, output_y,
+  CalTranspose(batch_size_ * m_ * n_, d_output_y, y_info, input_x_dims_, output_y,
                reinterpret_cast<cudaStream_t>(cuda_stream_));
 
   return true;

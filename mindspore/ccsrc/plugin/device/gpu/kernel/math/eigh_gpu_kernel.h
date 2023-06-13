@@ -17,23 +17,23 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_EIGH_GPU_KERNEL_H
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_EIGH_GPU_KERNEL_H
 #include <cublas_v2.h>
+#include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
 #include <cusolverDn.h>
-#include <cuda_runtime.h>
-#include <vector>
-#include <complex>
 #include <algorithm>
+#include <complex>
 #include <map>
 #include <string>
 #include <type_traits>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/triangle_matrix_copy_impl.cuh"
+#include <vector>
+#include "include/common/utils/convert_utils.h"
+#include "mindspore/core/ops/eigh.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/triangle_matrix_copy_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
-#include "include/common/utils/convert_utils.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
-#include "mindspore/core/ops/eigh.h"
 
 namespace mindspore {
 namespace kernel {
@@ -100,16 +100,20 @@ class EighGpuKernelMod : public NativeGpuKernelMod {
     } else {
       uplo_ = CUBLAS_FILL_MODE_LOWER;
     }
-    auto output_addr = GetDeviceAddress<T>(outputs, kDim0);  // output eigenvalues
+    // output eigenvalues
+    auto output_addr = GetDeviceAddress<T>(outputs, kDim0);
     // Output eigenvector if need
     T *output_v_addr = nullptr;
     if (compute_eigen_vectors_) {
-      output_v_addr = GetDeviceAddress<T>(outputs, kDim1);  // output eigenvalues
+      // output eigenvalues
+      output_v_addr = GetDeviceAddress<T>(outputs, kDim1);
     } else {
-      output_v_addr = GetDeviceAddress<T>(workspace, kDim4);  // not output eigenvalues, use workspace
+      // not output eigenvalues, use workspace
+      output_v_addr = GetDeviceAddress<T>(workspace, kDim4);
     }
     int *devInfo = GetDeviceAddress<int>(workspace, kDim0);
-    auto w_v_addr = GetDeviceAddress<T>(workspace, kDim1);  // temp eigenvector before transpose
+    // temp eigenvector before transpose
+    auto w_v_addr = GetDeviceAddress<T>(workspace, kDim1);
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(w_v_addr, inout_A_addr, m_ * m_ * sizeof(T), cudaMemcpyDeviceToDevice,
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
@@ -130,18 +134,18 @@ class EighGpuKernelMod : public NativeGpuKernelMod {
       cusolverDnDsyevd(cusolver_handle_, jobz_, uplo_, m_, w_v_addr, lda_, output_addr, reinterpret_cast<T *>(d_work),
                        lwork, devInfo);
     }
-    size_t input_shape[kShape2dDims] = {m_, m_};
-    size_t input_axis[kShape2dDims] = {1, 0};
-    size_t *dev_input_shape = GetDeviceAddress<size_t>(workspace, kDim2);
-    size_t *dev_input_axis = GetDeviceAddress<size_t>(workspace, kDim3);
-    cudaMemcpyAsync(dev_input_shape, input_shape, kShape2dDims * sizeof(size_t), cudaMemcpyHostToDevice,
-                    reinterpret_cast<cudaStream_t>(stream_ptr));
-    cudaMemcpyAsync(dev_input_axis, input_axis, kShape2dDims * sizeof(size_t), cudaMemcpyHostToDevice,
-                    reinterpret_cast<cudaStream_t>(stream_ptr));
+
     if (compute_eigen_vectors_) {
-      CalTranspose(m_ * m_, w_v_addr, dev_input_shape, dev_input_axis, kShape2dDims, output_v_addr,
-                   reinterpret_cast<cudaStream_t>(stream_ptr));
+      size_t input_shape[kShape2dDims] = {m_, m_};
+      int input_axis[kShape2dDims] = {1, 0};
+      TransposeInfo info;
+      for (size_t i = 0; i < kShape2dDims; ++i) {
+        info.shape[i] = static_cast<int>(input_shape[i]);
+        info.perm[i] = input_axis[i];
+      }
+      CalTranspose(m_ * m_, w_v_addr, info, kShape2dDims, output_v_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
     }
+
     device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(d_work);
     int info_gpu = 0;
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(&info_gpu, devInfo, sizeof(int), cudaMemcpyDeviceToHost,

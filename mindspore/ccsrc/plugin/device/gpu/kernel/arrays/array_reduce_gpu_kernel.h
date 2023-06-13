@@ -17,14 +17,15 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_ARRAY_REDUCE_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_ARRAY_REDUCE_GPU_KERNEL_H_
 
-#include <map>
-#include <string>
-#include <vector>
 #include <algorithm>
 #include <functional>
+#include <map>
+#include <string>
 #include <utility>
-#include "plugin/device/gpu/kernel/gpu_kernel.h"
+#include <vector>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/reduce_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
+#include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
 #include "utils/check_convert_utils.h"
@@ -63,19 +64,18 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
     kernel_name_ = "ArrayReduce";
     axis_.clear();
     input_reshape_.clear();
-    input_shape_.clear();
     reduce_first_axis_ = false;
   }
 
   void InferArrayReduceType();
   void FormatAxis(const size_t dims, const std::vector<int> &axis, std::vector<bool> *bitmap);
   std::vector<size_t> ToRowReduce();
-
+  std::vector<size_t> GetNewShape(const size_t dims);
   void GetTransposePerm(size_t *transpose_perm);
-
-  void GetOriginShape(size_t *origin_shape);
-  void SimplyReduce(const ShapeVector input_shape, const std::vector<int> axis);
+  void GetTransposeInfo(TransposeInfo *const info, const size_t dims, size_t *const transpose_perm);
+  void SimplyReduce(const ShapeVector &input_shape, const std::vector<int> &axis);
   void InferInAndOutDesc(const ShapeVector &input_shape, const ShapeVector &output_shape);
+
   std::vector<KernelAttr> GetOpSupport() override;
   std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
   template <typename T>
@@ -111,8 +111,8 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
   std::string kernel_type_{"Unknown"};
   bool reduce_first_axis_;
   std::vector<size_t> input_reshape_;
-  ShapeVector input_shape_;
   size_t input_num_;
+  size_t unit_size_;
 };
 }  // namespace kernel
 }  // namespace mindspore

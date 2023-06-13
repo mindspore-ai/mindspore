@@ -23,9 +23,9 @@
 template <typename T>
 CUDA_LIB_EXPORT void CalBCEWithLogitsLoss(const size_t input_size, const T *predict, const T *target,
                                           const std::vector<int64_t> &input_shape, const size_t shape_size,
-                                          const T *weight,
-                                          const std::vector<int64_t> &weight_shape, const bool weight_need_broadcast,
-                                          const T *pos_weight, const std::vector<int64_t> &pos_weight_shape,
+                                          const T *weight, const std::vector<int64_t> &weight_shape,
+                                          const bool weight_need_broadcast, const T *pos_weight,
+                                          const std::vector<int64_t> &pos_weight_shape,
                                           const bool pos_weight_need_broadcast, T *shape_broadcasted, T *output,
                                           cudaStream_t cuda_stream);
 

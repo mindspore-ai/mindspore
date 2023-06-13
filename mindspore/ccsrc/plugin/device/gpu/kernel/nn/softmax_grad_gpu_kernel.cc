@@ -15,9 +15,9 @@
  */
 
 #include "plugin/device/gpu/kernel/nn/softmax_grad_gpu_kernel.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
-#include "mindspore/core/ops/grad/softmax_grad.h"
 #include "mindspore/core/ops/grad/log_softmax_grad.h"
+#include "mindspore/core/ops/grad/softmax_grad.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -76,6 +76,7 @@ int SoftmaxGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     }
     InitSizeByAxis(input_shape, axis[0]);
   }
+  use_workspace_ = (axis_ != static_cast<int>(input_shape_.size()) - 1);
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
     cudnnSetTensor4dDescriptor(y_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, SizeToInt(batch_size_),
                                SizeToInt(channel_size_), SizeToInt(height_), SizeToInt(width_)),
@@ -92,43 +93,33 @@ bool SoftmaxGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   T *dy_addr = GetDeviceAddress<T>(inputs, kIndex1);
   T *dx_addr = GetDeviceAddress<T>(outputs, kIndex0);
 
-  T *transpose_y_addr = GetDeviceAddress<T>(workspace, kIndex0);
-  T *transpose_dy_addr = GetDeviceAddress<T>(workspace, kIndex1);
-  T *transpose_dx_addr = GetDeviceAddress<T>(workspace, kIndex2);
-  size_t *input_shape = GetDeviceAddress<size_t>(workspace, kIndex3);
-  size_t *transpose_shape = GetDeviceAddress<size_t>(workspace, kIndex4);
-  size_t *transpose_axis = GetDeviceAddress<size_t>(workspace, kIndex5);
   const float alpha = 1;
   const float beta = 0;
-
-  if (axis_ == static_cast<int>(input_shape_.size()) - 1) {
+  if (!use_workspace_) {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSoftmaxBackward(cudnn_handle_, algo_, mode_, &alpha, y_desc_, y_addr,
                                                              y_desc_, dy_addr, &beta, y_desc_, dx_addr),
                                         kernel_name_ + "cudnnSoftmaxBackward failed");
   } else {
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(input_shape, &input_shape_[0], workspace_size_, cudaMemcpyHostToDevice,
-                      reinterpret_cast<cudaStream_t>(stream_ptr)),
-      kernel_name_ + "cudaMemcpyAsync input_shape failed");
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(transpose_shape, &transpose_shape_[0], workspace_size_, cudaMemcpyHostToDevice,
-                      reinterpret_cast<cudaStream_t>(stream_ptr)),
-      kernel_name_ + "cudaMemcpyAsync input_shape failed");
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(transpose_axis, &transpose_axis_[0], workspace_size_, cudaMemcpyHostToDevice,
-                      reinterpret_cast<cudaStream_t>(stream_ptr)),
-      kernel_name_ + "cudaMemcpyAsync input_axis failed");
+    T *transpose_y_addr = GetDeviceAddress<T>(workspace, kIndex0);
+    T *transpose_dy_addr = GetDeviceAddress<T>(workspace, kIndex1);
+    T *transpose_dx_addr = GetDeviceAddress<T>(workspace, kIndex2);
+
+    TransposeInfo x_info, y_info;
+    for (size_t i = 0; i < shape_size_; ++i) {
+      x_info.shape[i] = static_cast<int>(input_shape_[i]);
+      x_info.perm[i] = static_cast<int>(transpose_axis_[i]);
+      y_info.shape[i] = static_cast<int>(transpose_shape_[i]);
+      y_info.perm[i] = static_cast<int>(transpose_axis_[i]);
+    }
+
     size_t size = input_size_ / sizeof(T);
-    CalTranspose(size, y_addr, input_shape, transpose_axis, shape_size_, transpose_y_addr,
-                 reinterpret_cast<cudaStream_t>(stream_ptr));
-    CalTranspose(size, dy_addr, input_shape, transpose_axis, shape_size_, transpose_dy_addr,
-                 reinterpret_cast<cudaStream_t>(stream_ptr));
+    CalTranspose(size, y_addr, x_info, shape_size_, transpose_y_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CalTranspose(size, dy_addr, x_info, shape_size_, transpose_dy_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnSoftmaxBackward(cudnn_handle_, algo_, mode_, &alpha, y_desc_, transpose_y_addr, y_desc_, transpose_dy_addr,
                            &beta, y_desc_, transpose_dx_addr),
       kernel_name_ + "cudnnSoftmaxBackward failed");
-    CalTranspose(size, transpose_dx_addr, transpose_shape, transpose_axis, shape_size_, dx_addr,
-                 reinterpret_cast<cudaStream_t>(stream_ptr));
+    CalTranspose(size, transpose_dx_addr, y_info, shape_size_, dx_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
   }
   return true;
 }

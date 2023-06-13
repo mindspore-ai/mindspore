@@ -16,12 +16,18 @@
 
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_GATHERND_CUH_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_GATHERND_CUH_
-#include <vector>
 #include <utility>
+#include <vector>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+
+template <typename S>
+struct GatherNdInfo {
+  S indices[8] = {0};
+  S strides[8] = {0};
+};
+
 template <typename T, typename S>
-CUDA_LIB_EXPORT std::pair<int, std::vector<S>> GatherNd(T *input, S *indices, T *output, const size_t &output_dim0,
-                                                        const size_t &output_dim1, const size_t &indices_dim1,
-                                                        S *batch_strides, S *batch_indices, int *device_flag,
-                                                        cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t GatherNd(T *input, S *indices, T *output, const size_t &output_dim0,
+                                     const size_t &output_dim1, const size_t &indices_dim1, const GatherNdInfo<S> &info,
+                                     cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_GATHERND_CUH_

@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_TENSOR_SCATTER_ARITHMETIC_CUH_
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
+
 enum TensorScatterArithmeticFunctionType {
   TENSOR_SCATTER_FUNC_UPDATE = 0,
   TENSOR_SCATTER_FUNC_MIN,
@@ -29,16 +30,22 @@ enum TensorScatterArithmeticFunctionType {
   TENSOR_SCATTER_FUNC_INVALID_TYPE = 255
 };
 
+template <typename S>
+struct TensorScatterInfo {
+  S indices_stride[8] = {0};
+  S work_shape[8] = {0};
+};
+
 template <typename T, typename S>
 CUDA_LIB_EXPORT void TensorScatterArithmetic(const enum TensorScatterArithmeticFunctionType &func_type, const T *input,
                                              const S *indices, const T *update, T *output, const size_t &block_size,
                                              const size_t &input_size, const size_t &output_size,
                                              const size_t &indices_dim_0, const size_t &indices_dim_1,
-                                             S *indices_stride, S *work_shape, uint32_t device_id, cudaStream_t stream);
+                                             const TensorScatterInfo<S> &info, uint32_t device_id, cudaStream_t stream);
 template <typename T, typename S>
 CUDA_LIB_EXPORT void CallTensorScatterUpdate(const T *input, const S *indices, const T *update, T *output,
                                              const size_t &block_size, const size_t &input_size,
                                              const size_t &output_size, const size_t &indices_dim_0,
-                                             const size_t &indices_dim_1, S *indices_stride, S *work_shape,
+                                             const size_t &indices_dim_1, const TensorScatterInfo<S> &info,
                                              uint32_t device_id, cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_TENSOR_SCATTER_ARITHMETIC_CUH_

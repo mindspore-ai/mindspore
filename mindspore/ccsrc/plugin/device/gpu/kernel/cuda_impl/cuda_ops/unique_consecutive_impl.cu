@@ -17,19 +17,19 @@
 #include <thrust/adjacent_difference.h>
 #include <thrust/copy.h>
 #include <thrust/device_ptr.h>
-#include <thrust/execution_policy.h>
 #include <thrust/device_vector.h>
+#include <thrust/execution_policy.h>
+#include <thrust/gather.h>
+#include <thrust/iterator/zip_iterator.h>
+#include <thrust/remove.h>
 #include <thrust/sequence.h>
 #include <thrust/sort.h>
 #include <thrust/unique.h>
-#include <thrust/gather.h>
-#include <thrust/remove.h>
-#include <thrust/iterator/zip_iterator.h>
 #include <algorithm>
 #include <vector>
-#include "unique_consecutive_impl.cuh"
 #include "include/cuda_fp16.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
+#include "unique_consecutive_impl.cuh"
 
 template <typename T>
 struct BinaryEqual {
@@ -171,13 +171,18 @@ std::vector<std::vector<int>> ComputeUniqueConsecutiveByAxis(const T *input, int
   cudaMemcpyAsync(dev_input_shape, input_shape.data(), sizeof(size_t) * shape_size, cudaMemcpyHostToDevice,
                   cuda_stream);
   // Used for transpose: dev_input_axis={0, 1, ..., axis, ...} -> dev_input_axis[0]=axis, dev_input_axis[axis]=0
-  thrust::sequence(policy, thrust::device_pointer_cast(dev_input_axis),
-                   thrust::device_pointer_cast(dev_input_axis) + shape_size);
-  thrust::fill(policy, thrust::device_pointer_cast(dev_input_axis), thrust::device_pointer_cast(dev_input_axis) + 1,
-               axis);
-  thrust::fill(policy, thrust::device_pointer_cast(dev_input_axis) + axis,
-               thrust::device_pointer_cast(dev_input_axis) + axis + 1, 0);
-  CalTranspose(num_elements, input, dev_input_shape, dev_input_axis, shape_size, indices_data, cuda_stream);
+  TransposeInfo info;
+  for (size_t i = 0; i < input_shape.size(); ++i) {
+    info.shape[i] = static_cast<int>(input_shape[i]);
+    if (i == 0) {
+      info.perm[i] = static_cast<int>(axis);
+    } else if (i == static_cast<size_t>(axis)) {
+      info.perm[i] = static_cast<int>(0);
+    } else {
+      info.perm[i] = static_cast<int>(i);
+    }
+  }
+  CalTranspose(num_elements, input, info, shape_size, indices_data, cuda_stream);
 
   // Inverse indices.
   int64_t num_inp = input_shape[axis];
@@ -235,8 +240,7 @@ std::vector<std::vector<int>> ComputeUniqueConsecutiveByAxis(const T *input, int
     thrust::sequence(policy, thrust::device_pointer_cast(input_index),
                      thrust::device_pointer_cast(input_index) + num_elements);
     thrust::transform(policy, thrust::device_pointer_cast(input_index),
-                      thrust::device_pointer_cast(input_index) + num_elements,
-                      thrust::device_pointer_cast(input_index),
+                      thrust::device_pointer_cast(input_index) + num_elements, thrust::device_pointer_cast(input_index),
                       IndexToAxis<S>(num_elements, axis, dev_input_shape, range_data, indices_size));
     thrust::remove_if(policy, thrust::device_pointer_cast(output), thrust::device_pointer_cast(output) + num_elements,
                       input_index, thrust::identity<T>());

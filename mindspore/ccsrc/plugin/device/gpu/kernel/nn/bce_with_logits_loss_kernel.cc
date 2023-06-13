@@ -48,27 +48,6 @@ int BCEWithLogitsLossKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   input_shape_ = inputs[kIndex0]->GetShapeVector();
   weight_shape_ = inputs[kIndex2]->GetShapeVector();
   pos_weight_shape_ = inputs[kIndex3]->GetShapeVector();
-
-  if (input_shape_.size() < 1) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of logits cannot be less than 1, but got "
-                  << input_shape_.size();
-    return KRET_RESIZE_FAILED;
-  }
-  if (weight_shape_.size() < 1) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of weight cannot be less than 1, but got "
-                  << weight_shape_.size();
-    return KRET_RESIZE_FAILED;
-  }
-  if (pos_weight_shape_.size() < 1) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of pos_weight cannot be less than 1, but got "
-                  << pos_weight_shape_.size();
-    return KRET_RESIZE_FAILED;
-  }
-  if (input_shape_.size() > MAX_LOGITS_DIMENSION) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of logits cannot be greater than "
-                  << MAX_LOGITS_DIMENSION << ", but got " << input_shape_.size();
-    return KRET_RESIZE_FAILED;
-  }
   input_size_ = SizeOf(input_shape_);
   // weight shape
   weight_size_ = SizeOf(weight_shape_);
@@ -76,7 +55,9 @@ int BCEWithLogitsLossKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   // pos_weight shape
   pos_weight_size_ = SizeOf(pos_weight_shape_);
   pos_weight_need_broadcast_ = NeedBroadcast(&pos_weight_shape_, input_shape_);
-  InitWorkSpaceSizeLists();
+  // extra space for holding extra array shape of input, for broadcasted
+  // weight and pos_weight
+  workspace_size_list_.push_back(input_size_ * type_id_size_);
   return KRET_OK;
 }
 

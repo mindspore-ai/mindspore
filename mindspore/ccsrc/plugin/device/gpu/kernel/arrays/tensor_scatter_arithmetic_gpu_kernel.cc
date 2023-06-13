@@ -116,11 +116,6 @@ int TensorScatterArithmeticGpuKernelMod::Resize(const BaseOperatorPtr &base_oper
   output_size_ =
     static_cast<size_t>(std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<int64_t>()));
   UpdateSize();
-
-  size_t vec_indices_stride__len = indices_unit_size_ * vec_indices_stride_.size();
-  workspace_size_list_.push_back(vec_indices_stride__len);
-  size_t work_shape_len = indices_unit_size_ * input_shape_.size();
-  workspace_size_list_.push_back(work_shape_len);
   return KRET_OK;
 }
 template <typename T>
@@ -134,38 +129,25 @@ bool TensorScatterArithmeticGpuKernelMod::LaunchKernel(const std::vector<Address
   S *indices = GetDeviceAddress<S>(inputs, kIndex1);
   T *update = GetDeviceAddress<T>(inputs, kIndex2);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
-  S *indices_stride_device = GetDeviceAddress<S>(workspace, kIndex0);
-  S *work_shape_device = GetDeviceAddress<S>(workspace, kIndex1);
-
-  std::vector<S> indices_stride{};
-  (void)std::transform(vec_indices_stride_.begin(), vec_indices_stride_.end(), std::back_inserter(indices_stride),
-                       [](const int64_t value) { return static_cast<S>(value); });
-  std::vector<S> work_shape{};
-  (void)std::transform(input_shape_.begin(), input_shape_.end(), std::back_inserter(work_shape),
-                       [](const int64_t value) { return static_cast<S>(value); });
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(indices_stride_device, indices_stride.data(), workspace[kIndex0]->size, cudaMemcpyHostToDevice,
-                    reinterpret_cast<cudaStream_t>(stream_ptr_)),
-    "TensorScatterArithmeticGpuKernelMod cudaMemcpy failed in TensorScatterArithmeticGpuKernelMod::Launch.");
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(work_shape_device, work_shape.data(), workspace[kIndex1]->size, cudaMemcpyHostToDevice,
-                    reinterpret_cast<cudaStream_t>(stream_ptr_)),
-    "TensorScatterArithmeticGpuKernelMod cudaMemcpy failed in TensorScatterArithmeticGpuKernelMod::Launch.");
+  // vec_indices_stride and work_shape
+  TensorScatterInfo<S> info;
+  for (size_t i = 0; i < indices_dim_1_; ++i) {
+    info.indices_stride[i] = static_cast<S>(vec_indices_stride_[i]);
+    info.work_shape[i] = static_cast<S>(input_shape_[i]);
+  }
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(output, input, input_size_ * data_unit_size_, cudaMemcpyDeviceToDevice,
                     reinterpret_cast<cudaStream_t>(stream_ptr_)),
     "cudaMemcpy output failed");
-
   if constexpr ((std::is_same_v<T, Complex<float>>) || (std::is_same_v<T, Complex<double>>)) {
     if (kernel_name_ == kTensorScatterUpdate) {
       CallTensorScatterUpdate(input, indices, update, output, block_size_, update_size_, output_size_, indices_dim_0_,
-                              indices_dim_1_, indices_stride_device, work_shape_device, device_id_,
-                              reinterpret_cast<cudaStream_t>(stream_ptr_));
+                              indices_dim_1_, info, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
       return true;
     }
   } else {
     TensorScatterArithmetic(op_func_type_, input, indices, update, output, block_size_, update_size_, output_size_,
-                            indices_dim_0_, indices_dim_1_, indices_stride_device, work_shape_device, device_id_,
+                            indices_dim_0_, indices_dim_1_, info, device_id_,
                             reinterpret_cast<cudaStream_t>(stream_ptr_));
   }
   return true;

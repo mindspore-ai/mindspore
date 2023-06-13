@@ -17,12 +17,12 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_NN_SOFTMAX_GRAD_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_NN_SOFTMAX_GRAD_GPU_KERNEL_H_
 
-#include <vector>
-#include <string>
 #include <algorithm>
-#include <map>
-#include <utility>
 #include <functional>
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
@@ -61,12 +61,11 @@ class SoftmaxGradGpuKernelMod : public NativeGpuKernelMod {
   void InitSizeLists() {
     input_size_list_.push_back(input_size_);
     output_size_list_.push_back(output_size_);
-    workspace_size_list_.push_back(input_size_);
-    workspace_size_list_.push_back(input_size_);
-    workspace_size_list_.push_back(output_size_);
-    workspace_size_list_.push_back(workspace_size_);
-    workspace_size_list_.push_back(workspace_size_);
-    workspace_size_list_.push_back(workspace_size_);
+    if (use_workspace_) {
+      workspace_size_list_.push_back(input_size_);
+      workspace_size_list_.push_back(input_size_);
+      workspace_size_list_.push_back(output_size_);
+    }
     return;
   }
 
@@ -109,7 +108,6 @@ class SoftmaxGradGpuKernelMod : public NativeGpuKernelMod {
     width_ = 1;
     input_size_ = type_id_size_ * batch_size_ * channel_size_ * height_ * width_;
     output_size_ = input_size_;
-    workspace_size_ = shape_size_ * sizeof(size_t);
   }
 
   SoftmaxGradGpuLaunchFunc kernel_func_;
@@ -121,10 +119,9 @@ class SoftmaxGradGpuKernelMod : public NativeGpuKernelMod {
   cudnnSoftmaxMode_t mode_{CUDNN_SOFTMAX_MODE_INSTANCE};
   cudnnDataType_t cudnn_data_type_{CUDNN_DATA_FLOAT};
   bool is_null_input_{false};
+  bool use_workspace_{false};
   size_t input_size_{0};
   size_t output_size_{0};
-  size_t workspace_size_{0};
-
   std::vector<size_t> input_shape_;
   std::vector<size_t> transpose_shape_;
   std::vector<size_t> transpose_axis_;
