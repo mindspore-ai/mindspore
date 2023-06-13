@@ -118,6 +118,10 @@ void ClonePrim(const FrontendOpRunInfoPtr &op_run_info) {
 
 bool IsDynamicInputs(const FrontendOpRunInfoPtr &op_run_info) {
   for (const auto &value : op_run_info->input_value) {
+    MS_EXCEPTION_IF_NULL(value);
+    if (value->isa<stub::SequenceNode>()) {
+      return true;
+    }
     if (!value->isa<ValueSequence>()) {
       continue;
     }
@@ -128,7 +132,7 @@ bool IsDynamicInputs(const FrontendOpRunInfoPtr &op_run_info) {
     if (tuple_inputs.empty()) {
       continue;
     }
-    if (tuple_inputs[0]->isa<tensor::Tensor>()) {
+    if (tuple_inputs[0]->isa<tensor::Tensor>() || tuple_inputs[0]->isa<stub::TensorNode>()) {
       return true;
     }
   }
