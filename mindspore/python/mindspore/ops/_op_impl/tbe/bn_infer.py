@@ -24,12 +24,12 @@ bn_infer_op_info = TBERegOp("BNInfer") \
     .kernel_name("bn_infer") \
     .partial_flag(True) \
     .attr("epsilon", "required", "float", "all") \
-    .input(0, "x", False, "required", "all", reshape_type="NC") \
+    .input(0, "x", False, "required", "all", reshape_type="NCH") \
     .input(1, "scale", False, "required", "all") \
     .input(2, "offset", False, "required", "all") \
     .input(3, "mean", False, "required", "all") \
     .input(4, "variance", False, "required", "all") \
-    .output(0, "y", False, "required", "all", reshape_type="NC") \
+    .output(0, "y", False, "required", "all", reshape_type="NCH") \
     .dtype_format(DataType.F16_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
                   DataType.F32_5HD, DataType.F16_5HD) \
     .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
