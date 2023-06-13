@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
+#include "plugin/device/cpu/kernel/col2im_cpu_kernel.h"
 #include <algorithm>
+#include <complex>
 #include <functional>
 #include <string>
-#include <complex>
 #include "ops/col2im.h"
-#include "plugin/device/cpu/kernel/col2im_cpu_kernel.h"
 #include "plugin/device/cpu/kernel/eigen/eigen_common_utils.h"
 
 namespace mindspore {
@@ -140,7 +140,6 @@ bool Col2ImCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   KernelAttr().AddInputAttr(T).AddInputAttr(kNumberTypeInt32).AddOutputAttr(T), &Col2ImCpuKernelMod::LaunchKernel<S>
 
 std::vector<std::pair<KernelAttr, Col2ImCpuKernelMod::Col2ImFunc>> Col2ImCpuKernelMod::func_list_ = {
-  {COL2IM_CPU_REG(kNumberTypeFloat16, float16)},
   {COL2IM_CPU_REG(kNumberTypeFloat32, float)},
   {COL2IM_CPU_REG(kNumberTypeFloat64, double)},
   {COL2IM_CPU_REG(kNumberTypeComplex64, std::complex<float>)},
