@@ -120,12 +120,6 @@ class RegisterStandardPrimitiveEvalHelper {
     return std::dynamic_pointer_cast<ops::PrimitiveC>(out.impl());                                            \
   }                                                                                                           \
   ops::OpPrimCRegisterHelper primc_gen_##name(#name, GetDefaultPrimC##name)
-
-class RegisterInferDependsHelper {
- public:
-  RegisterInferDependsHelper(const std::string &name, const std::set<int64_t> &depends);
-  ~RegisterInferDependsHelper() = default;
-};
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_ABSTRACT_PRIMITIVE_INFER_MAP_H_

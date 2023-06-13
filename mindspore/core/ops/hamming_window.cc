@@ -172,6 +172,8 @@ class MIND_API AGHammingWindowInfer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return HammingWindowInfer(engine, primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {0}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(HammingWindow, prim::kPrimHammingWindow, AGHammingWindowInfer, false);

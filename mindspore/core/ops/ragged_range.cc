@@ -236,6 +236,8 @@ class MIND_API AGRaggedRangeInfer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return RaggedRangeInfer(engine, primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {0, 1, 2}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(RaggedRange, prim::kPrimRaggedRange, AGRaggedRangeInfer, false);

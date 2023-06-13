@@ -75,6 +75,8 @@ class MIND_API AGSliceGradInfer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return SliceGradInfer(engine, primitive, input_args);
   }
+
+  std::set<int64_t> GetValueDependArgIndices() const override { return {2, 3}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(SliceGrad, prim::kPrimSliceGrad, AGSliceGradInfer, false);

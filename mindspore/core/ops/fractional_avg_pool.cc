@@ -202,6 +202,7 @@ class MIND_API AGFractionalAvgPoolInfer : public abstract::OpInferBase {
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return FractionalAvgPoolInfer(engine, primitive, input_args);
   }
+  std::set<int64_t> GetValueDependArgIndices() const override { return {0}; }
 };
 
 REGISTER_PRIMITIVE_OP_INFER_IMPL(FractionalAvgPool, prim::kPrimFractionalAvgPool, AGFractionalAvgPoolInfer, false);

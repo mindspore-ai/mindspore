@@ -10,7 +10,6 @@ mindspore/mindspore/ccsrc/minddata/dataset/engine/datasetops/source/csv_op.cc:mi
 mindspore/mindspore/lite/tools/converter/graphdef_transform.cc:mindspore::lite::GraphDefTransform::Transform
 mindspore/mindspore/lite/providers/nnie_proposal/src/proposal.cc:mindspore::proposal::Rpn
 mindspore/mindspore/core/abstract/ops/primitive_infer_map.cc:mindspore::abstract::GetPrimitiveInferMap
-mindspore/mindspore/core/abstract/ops/primitive_infer_map.cc:mindspore::abstract::GetInferDependsMap
 mindspore/mindspore/core/ir/tensor.cc:mindspore::tensor::MakeTensorData
 mindspore/mindspore/ccsrc/kernel/common_utils.cc:mindspore::kernel::UnitSizeInBytes
 mindspore/mindspore/ccsrc/frontend/optimizer/irpass.cc:mindspore::opt::irpass::OptimizeIRPassLib::OptimizeIRPassLib
