@@ -523,9 +523,11 @@ class Dense(Cell):
         in_channels (int): The number of channels in the input space.
         out_channels (int): The number of channels in the output space.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable weight_init parameter. The dtype
-            is same as `x`. The values of str refer to the function `initializer`. Default: ``'normal'`` .
+            is same as `x`. The values of str refer to the function `initializer`. Default: ``None`` ,
+            weight will be initialized using HeUniform.
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
-            same as `x`. The values of str refer to the function `initializer`. Default: ``'zeros'`` .
+            same as `x`. The values of str refer to the function `initializer`. Default: ``None`` ,
+            bias will be initialized using Uniform.
         has_bias (bool): Specifies whether the layer uses a bias vector :math:`\text{bias}`. Default: ``True``.
         activation (Union[str, Cell, Primitive, None]): activate function applied to the output of the fully connected
             layer. Both activation name, e.g. 'relu', and mindspore activation function, e.g. mindspore.ops.ReLU(),
@@ -565,7 +567,7 @@ class Dense(Cell):
     def __init__(self,
                  in_channels,
                  out_channels,
-                 weight_init=HeUniform(math.sqrt(5)),
+                 weight_init=None,
                  bias_init=None,
                  has_bias=True,
                  activation=None):
@@ -587,6 +589,8 @@ class Dense(Cell):
                                  f"be equal to 2, and the first dim must be equal to 'out_channels', and the "
                                  f"second dim must be equal to 'in_channels'. But got 'weight_init': {weight_init}, "
                                  f"'out_channels': {out_channels}, 'in_channels': {in_channels}.")
+        if weight_init is None:
+            weight_init = HeUniform(math.sqrt(5))
         self.weight = Parameter(initializer(
             weight_init, [out_channels, in_channels]), name="weight")
 

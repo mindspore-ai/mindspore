@@ -25,8 +25,9 @@ from ..ut_filter import non_graph_engine
 
 
 def test_dense_none():
-    with pytest.raises(TypeError):
-        nn.Dense(3, 2, None, None)
+    dense = nn.Dense(3, 4, None, None)
+    input_data = Tensor(np.random.randint(0, 255, [2, 3]).astype(np.float32))
+    dense(input_data)
 
 
 @non_graph_engine

@@ -66,8 +66,9 @@ def test_dense_nobias():
 
 
 def test_dense_none():
-    with pytest.raises(TypeError):
-        nn.Dense(3, 2, None, None)
+    dense = nn.Dense(3, 4, None, None)
+    input_data = Tensor(np.random.randint(0, 255, [2, 3]).astype(np.float32))
+    dense(input_data)
 
 
 def test_dense_str_activation():

@@ -58,7 +58,6 @@ class _Conv(Cell):
         self.kernel_size = kernel_size
         self.stride = stride
         self.pad_mode = pad_mode
-        self.weight_init = weight_init
         self.data_format = Validator.check_string(data_format, ['NCHW', 'NHWC', 'NCDHW'], 'format', self.cls_name)
         if context.get_context("device_target") != "GPU" and self.data_format == "NHWC":
             raise ValueError(f"For '{self.cls_name}', the \"NHWC\" format only support in GPU target, "
@@ -95,6 +94,9 @@ class _Conv(Cell):
         else:
             shape = [out_channels, *kernel_size, in_channels // group] if self.data_format == "NHWC" else \
                 [out_channels, in_channels // group, *kernel_size]
+        if weight_init is None:
+            weight_init = HeUniform(math.sqrt(5))
+        self.weight_init = weight_init
         self.weight = Parameter(initializer(self.weight_init, shape), name='weight')
 
         self.bias_init = bias_init
@@ -209,10 +211,11 @@ class Conv2d(_Conv):
             values from ``'TruncatedNormal'`` , ``'Normal'`` , ``'Uniform'`` , ``'HeUniform'`` and ``'XavierUniform'``
             distributions as well as constant ``'One'`` and ``'Zero'`` distributions are possible. Alias
             ``'xavier_uniform'`` , ``'he_uniform'`` , ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and
-            lowercase are both acceptable. Refer to the values of Initializer for more details. Default: ``'normal'`` .
+            lowercase are both acceptable. Refer to the values of Initializer for more details. Default: ``None`` ,
+            weight will be initialized using HeUniform.
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
-            Initializer for more details. Default: ``'zeros'`` .
+            Initializer for more details. Default: ``None`` , bias will be initialized using Uniform.
         data_format (str): The optional value for data format, is ``'NHWC'`` or ``'NCHW'`` .
             Default: ``'NCHW'`` .
 
@@ -286,7 +289,7 @@ class Conv2d(_Conv):
                  dilation=1,
                  group=1,
                  has_bias=False,
-                 weight_init=HeUniform(math.sqrt(5)),
+                 weight_init=None,
                  bias_init=None,
                  data_format='NCHW'):
         """Initialize Conv2d."""
@@ -387,10 +390,11 @@ class Conv1d(_Conv):
             values from ``'TruncatedNormal'`` , ``'Normal'`` , ``'Uniform'`` , ``'HeUniform'`` and ``'XavierUniform'``
             distributions as well as constant 'One' and 'Zero' distributions are possible. Alias ``'xavier_uniform'`` ,
             ``'he_uniform'`` , ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and lowercase are both acceptable.
-            Refer to the values of Initializer for more details. Default: ``'normal'`` .
+            Refer to the values of Initializer for more details. Default: ``None`` ,
+            weight will be initialized using HeUniform.
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
-            Initializer for more details. Default: ``'zeros'`` .
+            Initializer for more details. Default: ``None`` , bias will be initialized using Uniform.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})`.
@@ -446,7 +450,7 @@ class Conv1d(_Conv):
                  dilation=1,
                  group=1,
                  has_bias=False,
-                 weight_init=HeUniform(math.sqrt(5)),
+                 weight_init=None,
                  bias_init=None):
         """Initialize Conv1d."""
         Validator.check_value_type("kernel_size", kernel_size, [int], self.cls_name)
@@ -588,10 +592,11 @@ class Conv3d(_Conv):
             values from ``'TruncatedNormal'`` , ``'Normal'`` , ``'Uniform'`` , ``'HeUniform'`` and ``'XavierUniform'``
             distributions as well as constant ``'One'`` and ``'Zero'`` distributions are possible. Alias
             ``'xavier_uniform'`` , ``'he_uniform'`` , ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and
-            lowercase are both acceptable. Refer to the values of Initializer for more details. Default: ``'normal'`` .
+            lowercase are both acceptable. Refer to the values of Initializer for more details. Default: ``None`` ,
+            weight will be initialized using HeUniform.
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of bias parameter.
-            Available initialization methods are the same as `weight_init`. Refer to the values of
-            Initializer for more details. Default: ``'zeros'`` .
+            Available initialization methods are the same as 'weight_init'. Refer to the values of
+            Initializer for more details. Default: ``None`` , bias will be initialized using Uniform.
         data_format (str): The optional value for data format. Currently only support ``'NCDHW'``.
 
     Inputs:
@@ -670,7 +675,7 @@ class Conv3d(_Conv):
                  dilation=1,
                  group=1,
                  has_bias=False,
-                 weight_init=HeUniform(math.sqrt(5)),
+                 weight_init=None,
                  bias_init=None,
                  data_format='NCDHW'):
         """Initialize Conv3d."""
@@ -798,10 +803,11 @@ class Conv3dTranspose(_Conv):
             values from ``'TruncatedNormal'`` , ``'Normal'`` , ``'Uniform'`` , ``'HeUniform'`` and ``'XavierUniform'``
             distributions as well as constant ``'One'`` and ``'Zero'`` distributions are possible. Alias
             ``'xavier_uniform'`` , ``'he_uniform'`` , ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and
-            lowercase are both acceptable. Refer to the values of Initializer for more details. Default: ``'normal'`` .
+            lowercase are both acceptable. Refer to the values of Initializer for more details. Default: ``None`` ,
+            weight will be initialized using HeUniform.
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
-            Initializer for more details. Default: ``'zeros'`` .
+            Initializer for more details. Default: ``None`` , bias will be initialized using Uniform.
         data_format (str): The optional value for data format. Currently only support ``'NCDHW'`` .
             Default: ``'NCDHW'`` .
 
@@ -884,7 +890,7 @@ class Conv3dTranspose(_Conv):
                  group=1,
                  output_padding=0,
                  has_bias=False,
-                 weight_init=HeUniform(math.sqrt(5)),
+                 weight_init=None,
                  bias_init=None,
                  data_format='NCDHW'):
         """Initialize Conv3dTranspose."""
@@ -1012,10 +1018,11 @@ class Conv2dTranspose(_Conv):
             values from ``'TruncatedNormal'`` , ``'Normal'`` , ``'Uniform'`` , ``'HeUniform'`` and ``'XavierUniform'``
             distributions as well as constant ``'One'`` and ``'Zero'`` distributions are possible. Alias
             ``'xavier_uniform'`` , ``'he_uniform'`` , ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and
-            lowercase are both acceptable. Refer to the values of Initializer for more details. Default: ``'normal'`` .
+            lowercase are both acceptable. Refer to the values of Initializer for more details. Default: ``None`` ,
+            weight will be initialized using HeUniform.
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
-            Initializer for more details. Default: ``'zeros'`` .
+            Initializer for more details. Default: ``None`` , bias will be initialized using Uniform.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -1087,7 +1094,7 @@ class Conv2dTranspose(_Conv):
                  dilation=1,
                  group=1,
                  has_bias=False,
-                 weight_init=HeUniform(math.sqrt(5)),
+                 weight_init=None,
                  bias_init=None):
         """Initialize Conv2dTranspose."""
         kernel_size = twice(kernel_size)
@@ -1222,10 +1229,11 @@ class Conv1dTranspose(_Conv):
             values from ``'TruncatedNormal'`` , ``'Normal'`` , ``'Uniform'`` , ``'HeUniform'`` and ``'XavierUniform'``
             distributions as well as constant ``'One'`` and ``'Zero'`` distributions are possible. Alias
             ``'xavier_uniform'`` , ``'he_uniform'``, ``'ones'`` and ``'zeros'`` are acceptable. Uppercase and lowercase
-            are both acceptable. Refer to the values of Initializer for more details. Default: ``'normal'`` .
+            are both acceptable. Refer to the values of Initializer for more details. Default: ``None`` ,
+            weight will be initialized using HeUniform.
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initialization method of bias parameter.
             Available initialization methods are the same as 'weight_init'. Refer to the values of
-            Initializer for more details. Default: ``'zeros'`` .
+            Initializer for more details. Default: ``None`` , bias will be initialized using Uniform.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})`.
@@ -1272,7 +1280,7 @@ class Conv1dTranspose(_Conv):
                  dilation=1,
                  group=1,
                  has_bias=False,
-                 weight_init=HeUniform(math.sqrt(5)),
+                 weight_init=None,
                  bias_init=None):
         """Initialize Conv1dTranspose."""
         Validator.check_value_type("kernel_size", kernel_size, [int], self.cls_name)

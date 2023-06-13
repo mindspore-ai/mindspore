@@ -1,7 +1,7 @@
 mindspore.nn.Dense
 ===================
 
-.. py:class:: mindspore.nn.Dense(in_channels, out_channels, weight_init=HeUniform(math.sqrt(5)), bias_init=None, has_bias=True, activation=None)
+.. py:class:: mindspore.nn.Dense(in_channels, out_channels, weight_init=None, bias_init=None, has_bias=True, activation=None)
 
     全连接层。
 
@@ -15,8 +15,8 @@ mindspore.nn.Dense
     参数：
         - **in_channels** (int) - Dense层输入Tensor的空间维度。
         - **out_channels** (int) - Dense层输出Tensor的空间维度。
-        - **weight_init** (Union[Tensor, str, Initializer, numbers.Number]) - 权重参数的初始化方法。数据类型与 `x` 相同。str的值引用自函数 `initializer`。默认值：``'normal'`` 。
-        - **bias_init** (Union[Tensor, str, Initializer, numbers.Number]) - 偏置参数的初始化方法。数据类型与 `x` 相同。str的值引用自函数 `initializer`。默认值：``'zeros'`` 。
+        - **weight_init** (Union[Tensor, str, Initializer, numbers.Number]) - 权重参数的初始化方法。数据类型与 `x` 相同。str的值引用自函数 `initializer`。默认值：``None`` ，权重使用HeUniform初始化。
+        - **bias_init** (Union[Tensor, str, Initializer, numbers.Number]) - 偏置参数的初始化方法。数据类型与 `x` 相同。str的值引用自函数 `initializer`。默认值：``None`` ，偏差使用Uniform初始化。
         - **has_bias** (bool) - 是否使用偏置向量 :math:`\text{bias}` 。默认值： ``True`` 。
         - **activation** (Union[str, Cell, Primitive, None]) - 应用于全连接层输出的激活函数。可指定激活函数名，如'relu'，或具体激活函数，如mindspore.nn.ReLU()。默认值： ``None`` 。
 
