@@ -259,4 +259,18 @@ ATTR_MAP(Conv3DBackpropFilter) = {
 };
 OUTPUT_MAP(Conv3DBackpropFilter) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Conv3DBackpropFilter, kConv3DBackpropFilterOpName, ADPT_DESC(Conv3DBackpropFilter))
+
+// DeformableConv2d
+INPUT_MAP(DeformableConv2D) = {
+  {1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}, {3, INPUT_DESC(offsets)}, {4, INPUT_DESC(bias)}};
+ATTR_MAP(DeformableConv2D) = {
+  {"strides", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"dilations", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
+  {"deformable_groups", ATTR_DESC(deformable_groups, AnyTraits<int64_t>())},
+  {"modulated", ATTR_DESC(modulated, AnyTraits<bool>())},
+};
+OUTPUT_MAP(DeformableConv2D) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(DeformableConv2D, kDeformableConv2dOpName, ADPT_DESC(DeformableConv2D))
 }  // namespace mindspore::transform

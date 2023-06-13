@@ -357,6 +357,17 @@ size_t CheckAndConvertUtils::CheckAbstractTypeSame(const std::vector<AbstractBas
   return 0;
 }
 
+int64_t CheckAndConvertUtils::CheckAttrInt64Positive(const std::string &op, const ValuePtr &attr,
+                                                     const std::string &attr_name) {
+  MS_EXCEPTION_IF_NULL(attr);
+  int64_t attr_val = attr->cast<Int64ImmPtr>()->value();
+  if (attr_val <= 0) {
+    MS_EXCEPTION(ValueError) << "For '" << op << "', the '" << attr_name
+                             << "' should be greater than 0, but got: " << attr_val << ".";
+  }
+  return attr_val;
+}
+
 void CheckAndConvertUtils::CheckAbstractTypeAndShapeSame(const std::vector<AbstractBasePtr> &abs_list,
                                                          const std::string &precondition_log,
                                                          const std::string &standard_abs_description,
@@ -1074,6 +1085,33 @@ std::vector<int64_t> CheckAndConvertUtils::CheckIntOrTupleInt(const std::string 
                             << " must be one of ['int', 'tuple', 'list'] with all Int elements, but got "
                             << attr->ToString();
   }
+  return result;
+}
+
+std::vector<int64_t> CheckAndConvertUtils::CheckAttrTuple(const PrimitivePtr &prim, const std::string &attr_name,
+                                                          size_t num_element) {
+  auto attr = prim->GetAttr(attr_name);
+  MS_EXCEPTION_IF_NULL(attr);
+  std::vector<int64_t> result;
+  if (!attr->isa<ValueTuple>()) {
+    MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', the '" << attr_name
+                             << "' should be a tuple[int64], but got: " << attr->ToString() << ".";
+  }
+  std::vector<ValuePtr> attr_vec = attr->cast<ValueTuplePtr>()->value();
+  if (attr_vec.size() != num_element) {
+    MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', the '" << attr_name
+                             << "' should be a tuple[int64] with size " << num_element << ", but its size is "
+                             << attr_vec.size() << ".";
+  }
+  (void)std::transform(attr_vec.begin(), attr_vec.end(), std::back_inserter(result),
+                       [&prim, &attr_name](const ValuePtr &e) -> int64_t {
+                         auto value = GetValue<int64_t>(e);
+                         if (value < 0) {
+                           MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', the element of '" << attr_name
+                                                    << "' should not be negative number, but got " << value << ".";
+                         }
+                         return value;
+                       });
   return result;
 }
 

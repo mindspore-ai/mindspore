@@ -69,6 +69,7 @@
 #include "ops/split.h"
 #include "ops/strided_slice.h"
 #include "ops/grid_sampler_2d.h"
+#include "ops/deformable_conv2d.h"
 #include "tools/lite_exporter/fetch_content.h"
 #include "nnacl/op_base.h"
 #include "tools/common/graph_util.h"
@@ -90,6 +91,7 @@ static const std::unordered_map<std::string, std::vector<size_t>> NHWCOpMap = {
   {ops::kNameConv2DFusion, {1}},
   {ops::kNameConv2dTransposeFusion, {1}},
   {ops::kNameDepthToSpace, {1}},
+  {ops::kNameDeformableConv2d, {1}},
   {ops::kNameFusedBatchNorm, {1}},
   {ops::kNameInstanceNorm, {1}},
   {ops::kNameGridSampler2D, {1}},
@@ -122,6 +124,7 @@ static const std::unordered_map<std::string, std::vector<size_t>> ToNCHWOpMap = 
   {ops::kNameConv2DFusion, {1}},
   {ops::kNameConv2dTransposeFusion, {1}},
   {ops::kNameDepthToSpace, {1}},
+  {ops::kNameDeformableConv2d, {1}},
   {ops::kNameFusedBatchNorm, {1}},
   {ops::kNameGridSampler2D, {1}},
   {ops::kNameInstanceNorm, {1}},
