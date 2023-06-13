@@ -62,7 +62,7 @@ def dataset_generator():
         yield (np.ones((32, 2 * i), dtype=np.float32), np.ones((32, 2 * i), dtype=np.float32))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -80,7 +80,7 @@ def test_ascend_profiling():
         assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/device_*/data/l2_cache.data*")) >= 2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -100,7 +100,7 @@ def test_ascend_pynative_profiling():
         assert len(glob.glob(f"{tmpdir}/profiler*/output_timeline_data_*.txt")) == 1
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

@@ -134,7 +134,7 @@ class TestSummary:
         model.eval(ds_eval, dataset_sink_mode=dataset_sink_mode, callbacks=[summary_collector])
         return summary_dir
 
-    @pytest.mark.level1
+    @pytest.mark.level0
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_gpu_training
@@ -157,7 +157,7 @@ class TestSummary:
         for value in Counter(tag_list).values():
             assert value == tag_count
 
-    @pytest.mark.level1
+    @pytest.mark.level0
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_gpu_training
@@ -178,7 +178,7 @@ class TestSummary:
         for value in Counter(tag_list).values():
             assert value == tag_count
 
-    @pytest.mark.level1
+    @pytest.mark.level0
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.env_onecard

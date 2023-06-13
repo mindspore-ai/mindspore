@@ -274,7 +274,7 @@ def test_interpolate_linear(mode):
     assert np.allclose(output_3d_3.asnumpy(), except_3d_3, atol=1e-5, rtol=1e-5)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
