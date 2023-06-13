@@ -185,10 +185,10 @@ class SummaryCollector(Callback):
         ...     ms.set_context(mode=ms.GRAPH_MODE, device_target="Ascend")
         ...     mnist_dataset_dir = '/path/to/mnist_dataset_directory'
         ...     # Create the dataset taking MNIST as an example. Refer to
-        ...     # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/mnist.py
+        ...     # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/mnist.py
         ...     ds_train = create_dataset()
         ...     # Define the network structure of LeNet5. Refer to
-        ...     # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/lenet.py
+        ...     # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/lenet.py
         ...     network = LeNet5(10)
         ...     net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         ...     net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)
