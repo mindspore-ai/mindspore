@@ -2542,7 +2542,10 @@ static void HandleForwardMakeTupleAndMakeList(const std::vector<AnfNodePtr> &all
     auto make_tuple_list_next_cnode = make_tuple_list_next_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(make_tuple_list_next_cnode);
     OperatorInfoPtr op_info = GetDistributeOperator(make_tuple_list_next_cnode);
-    MS_EXCEPTION_IF_NULL(op_info);
+    if (op_info == nullptr) {
+      MS_LOG(INFO) << "The cnode has not operator info: " << GetPrimName(make_tuple_list_next_cnode);
+      continue;
+    }
     cnode->set_user_data<OperatorInfo>(op_info);
   }
 }
