@@ -37,6 +37,7 @@ class TensorFlowUtils {
   static std::string GetFlattenNodeName(const std::string &input_name);
   static std::string GetNodeName(const std::string &input_name);
   static mindspore::Format ParseNodeFormat(const tensorflow::NodeDef &node_def);
+  static bool OutputIsInputOp(const std::string &op_name);
 };
 }  // namespace lite
 }  // namespace mindspore

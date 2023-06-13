@@ -15,13 +15,16 @@
  */
 
 #include "tools/converter/parser/tf/remove_ineffective_control_flow.h"
+#include <map>
+#include "tools/converter/parser/tf/tf_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "ops/core_ops.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
-bool RemoveIneffectiveControlFlow::Run(const FuncGraphPtr &func_graph) {
+bool RemoveIneffectiveControlFlow::Run(const FuncGraphPtr &func_graph,
+                                       std::map<AnfNodePtr, int> *ineffective_if_op_map) {
   MS_ASSERT(func_graph != nullptr);
   auto manager = func_graph->manager();
   MS_CHECK_TRUE_MSG(manager != nullptr, false, "manager is a nullptr.");
@@ -30,15 +33,16 @@ bool RemoveIneffectiveControlFlow::Run(const FuncGraphPtr &func_graph) {
     if (!utils::isa<CNodePtr>(node)) {
       continue;
     }
-    if (!opt::CheckPrimitiveType(node, prim::kPrimMerge)) {
-      continue;
-    }
     auto cnode = node->cast<CNodePtr>();
-    if (!CheckIfIneffective(cnode)) {
-      continue;
+    if (opt::CheckPrimitiveType(node, prim::kPrimMerge)) {
+      if (CheckIfIneffective(cnode)) {
+        (void)manager->Replace(node, shared_input_);
+      }
+    } else if (CheckIfCondIsConstTensor(ineffective_if_op_map, cnode)) {
+      (void)manager->Replace(node, shared_input_);
     }
-    (void)manager->Replace(node, shared_input_);
   }
+
   return true;
 }
 
@@ -75,6 +79,33 @@ bool RemoveIneffectiveControlFlow::CheckIfIneffective(const CNodePtr &merge) {
     return true;
   };
   return IsSwitch(merge->input(1)) && IsSwitch(merge->input(opt::kInputSizeTwo));
+}
+
+bool RemoveIneffectiveControlFlow::CheckIfCondIsConstTensor(std::map<AnfNodePtr, int> *ineffective_if_op_map,
+                                                            const CNodePtr &anf_node) {
+  if (ineffective_if_op_map == nullptr) {
+    return false;
+  }
+
+  MS_ASSERT(anf_node != nullptr);
+  if (!utils::isa<CNode>(anf_node)) {
+    return false;
+  }
+
+  if (!opt::CheckPrimitiveType(anf_node, prim::kPrimIf)) {
+    return false;
+  }
+
+  if (ineffective_if_op_map->find(anf_node) == ineffective_if_op_map->end()) {
+    return false;
+  }
+
+  auto index = (*ineffective_if_op_map)[anf_node];
+  if (index < 0) {
+    return false;
+  }
+  this->shared_input_ = anf_node->input(index);
+  return true;
 }
 }  // namespace lite
 }  // namespace mindspore
