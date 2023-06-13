@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -374,6 +374,12 @@ bool CollectiveOpsImpl::Broadcast(const void *sendbuff, void *recvbuff, size_t c
   // Broadcast data to processes which are not the root.
   MS_LOG(DEBUG) << "Start broadcast from root to other processes.";
   if (rank_id_ == global_root_rank) {
+    int ret = memcpy_s(recvbuff, count * sizeof(T), sendbuff, count * sizeof(T));
+    if (ret != EOK) {
+      MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")"
+                    << ", broadcast size is " << (count * sizeof(T));
+      return false;
+    }
     for (uint32_t i = 1; i < group_rank_size; i++) {
       uint32_t dst_rank = group_to_global_ranks[i];
       MS_LOG(DEBUG) << "Broadcast data to process " << dst_rank;
