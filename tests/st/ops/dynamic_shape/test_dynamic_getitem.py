@@ -78,6 +78,33 @@ class CommonFunc():
         grad_net(self.input_np_t, Tensor(self.out_np))
 
 
+class DynamicRankCommonFunc():
+    def __init__(self, ms_net, np_net, input_np, axis_np):
+        super().__init__()
+        self.ms_net = ms_net
+        self.input_np_t = Tensor(input_np)
+        self.axis_np_t = Tensor(axis_np)
+        axis_dyn = Tensor(shape=(None,), dtype=self.axis_np_t.dtype)
+        self.ms_net.set_inputs(self.input_np_t, axis_dyn)
+        self.ms_net.set_grad()
+        self.np_net = np_net
+
+        self.input_np = input_np
+        self.axis_np = axis_np
+
+        self.out_np = np.array(1).astype(input_np.dtype)
+
+    def forward_cmp(self):
+        out_ms = self.ms_net(self.input_np_t, self.axis_np_t)
+        self.out_np = self.np_net(self.input_np, self.axis_np)
+        assert np.allclose(out_ms.asnumpy(), self.out_np, rtol=0.0001)
+
+    def grad_impl(self):
+        grad_net = GradOfFirstInput(self.ms_net)
+        grad_net.set_train()
+        grad_net(self.input_np_t, self.axis_np_t, Tensor(self.out_np))
+
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -314,6 +341,45 @@ def test_dynamic_getitem_slice():
     fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
+    fact.forward_cmp()
+    fact.grad_impl()
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_rank_getitem_slice():
+    """
+    Feature: Test Tensor slice for dynamic rank in feed mode.
+    Description: The input shape is dynamic and the tensor index is slice.
+    Expectation: Assert the result is equal the numpy result.
+    """
+    class Net(Cell):
+        def construct(self, x, axis):
+            x = ops.reduce_sum(x, axis)
+            x = x[2:4]
+            return x
+
+    class NumpyNet():
+        @classmethod
+        def __call__(cls, x, axis):
+            x = x.sum(axis=axis[0]).sum(axis=axis[0])
+            x = x[2:4]
+            return x
+
+    net_ms = Net()
+    net_np = NumpyNet()
+    input_np = np.random.randn(3, 6, 4).astype(np.float32)
+    axis_np = np.array([0, 1])
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    fact = DynamicRankCommonFunc(net_ms, net_np, input_np, axis_np)
+    fact.forward_cmp()
+    context.set_context(mode=context.GRAPH_MODE)
+    fact = DynamicRankCommonFunc(net_ms, net_np, input_np, axis_np)
     fact.forward_cmp()
     fact.grad_impl()
 

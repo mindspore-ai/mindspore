@@ -68,34 +68,33 @@ int NormalizeSliceInfoCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   return 0;
 }
 
-template <typename T>
 bool NormalizeSliceInfoCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                   const std::vector<AddressPtr> &workspace,
                                                   const std::vector<AddressPtr> &outputs) const {
-  const auto data_shape_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  const auto init_by_none_addr = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  const auto start_addr = reinterpret_cast<T *>(inputs[kIndex2]->addr);
-  const auto stop_addr = reinterpret_cast<T *>(inputs[kIndex3]->addr);
-  const auto step_addr = reinterpret_cast<T *>(inputs[kIndex4]->addr);
+  const auto data_shape_addr = reinterpret_cast<int64_t *>(inputs[kIndex0]->addr);
+  const auto init_by_none_addr = reinterpret_cast<int64_t *>(inputs[kIndex1]->addr);
+  const auto start_addr = reinterpret_cast<int64_t *>(inputs[kIndex2]->addr);
+  const auto stop_addr = reinterpret_cast<int64_t *>(inputs[kIndex3]->addr);
+  const auto step_addr = reinterpret_cast<int64_t *>(inputs[kIndex4]->addr);
 
-  auto output_start_attr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
-  auto output_stop_attr = reinterpret_cast<T *>(outputs[kIndex1]->addr);
-  auto output_step_attr = reinterpret_cast<T *>(outputs[kIndex2]->addr);
+  auto output_start_attr = reinterpret_cast<int64_t *>(outputs[kIndex0]->addr);
+  auto output_stop_attr = reinterpret_cast<int64_t *>(outputs[kIndex1]->addr);
+  auto output_step_attr = reinterpret_cast<int64_t *>(outputs[kIndex2]->addr);
 
   auto output_arg_size = outputs[kIndex0]->size;
-  T dim_size = data_shape_addr[0];
+  int64_t dim_size = data_shape_addr[0];
   bool start_by_none_init = init_by_none_addr[0] == 1;
   bool stop_by_none_init = init_by_none_addr[1] == 1;
   bool step_by_none_init = init_by_none_addr[2] == 1;
 
-  T start = 0;
-  T stop = 0;
-  T step = step_by_none_init ? 1 : step_addr[0];
+  int64_t start = 0;
+  int64_t stop = 0;
+  int64_t step = step_by_none_init ? 1 : step_addr[0];
+  int64_t start_default;
+  int64_t stop_default;
   if (step == 0) {
     MS_LOG(EXCEPTION) << "For 'slice', 'strides' cannot contain 0";
   }
-  T start_default;
-  T stop_default;
   if (step < 0) {
     start_default = -1;
     stop_default = -(dim_size + 1);
@@ -105,8 +104,9 @@ bool NormalizeSliceInfoCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
     stop_default = dim_size;
     stop = stop_by_none_init ? stop_default : std::min(stop_default, stop_addr[0]);
   }
+
   start = start_by_none_init ? start_default : start_addr[0];
-  if (start == stop) {
+  if ((start - stop) * step >= 0) {
     step = 1;
   }
   CheckCopy(output_start_attr, output_arg_size, &start, output_arg_size, kernel_name_);
@@ -132,7 +132,7 @@ std::vector<std::pair<KernelAttr, NormalizeSliceInfoCpuKernelMod::NormalizeSlice
        .AddOutputAttr(kNumberTypeInt64)
        .AddOutputAttr(kNumberTypeInt64)
        .AddOutputAttr(kNumberTypeInt64),
-     &NormalizeSliceInfoCpuKernelMod::LaunchKernel<int64_t>},
+     &NormalizeSliceInfoCpuKernelMod::LaunchKernel},
 };
 
 std::vector<KernelAttr> NormalizeSliceInfoCpuKernelMod::GetOpSupport() {

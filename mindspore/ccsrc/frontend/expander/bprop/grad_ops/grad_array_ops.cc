@@ -1325,6 +1325,16 @@ REG_BPROP_BUILDER("NormalizeSlice").SetUnusedInputs({i0, i1, i2, i3, i4, i5, i6}
           ib->ZerosLike(step)};
 });
 
+REG_BPROP_BUILDER("SliceToIndices").SetUnusedInputs({i0, i1, i2, i3, i4}).SetBody(BODYFUNC(ib) {
+  auto data_shape = ib->GetInput(kIndex0);
+  auto init_by_none = ib->GetInput(kIndex1);
+  auto start = ib->GetInput(kIndex2);
+  auto stop = ib->GetInput(kIndex3);
+  auto step = ib->GetInput(kIndex4);
+  return {ib->ZerosLike(data_shape), ib->ZerosLike(init_by_none), ib->ZerosLike(start), ib->ZerosLike(stop),
+          ib->ZerosLike(step)};
+});
+
 REG_BPROP_BUILDER("Fills").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto value = ib->GetInput(kIndex1);

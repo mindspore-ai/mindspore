@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NORMALIZE_SLICE_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NORMALIZE_SLICE_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_SLICE_TO_INDICES_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_SLICE_TO_INDICES_CPU_KERNEL_H_
 #include <vector>
 #include <map>
 #include <utility>
@@ -25,10 +25,10 @@
 
 namespace mindspore {
 namespace kernel {
-class NormalizeSliceInfoCpuKernelMod : public NativeCpuKernelMod {
+class SliceToIndicesCpuKernelMod : public NativeCpuKernelMod {
  public:
-  NormalizeSliceInfoCpuKernelMod() = default;
-  ~NormalizeSliceInfoCpuKernelMod() override = default;
+  SliceToIndicesCpuKernelMod() = default;
+  ~SliceToIndicesCpuKernelMod() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -46,13 +46,16 @@ class NormalizeSliceInfoCpuKernelMod : public NativeCpuKernelMod {
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
-  using NormalizeSliceFunc =
-    std::function<bool(NormalizeSliceInfoCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+  using SliceToIndicesFunc =
+    std::function<bool(SliceToIndicesCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
 
-  static std::vector<std::pair<KernelAttr, NormalizeSliceFunc>> func_list_;
-  NormalizeSliceFunc kernel_func_;
+  static std::vector<std::pair<KernelAttr, SliceToIndicesFunc>> func_list_;
+  SliceToIndicesFunc kernel_func_;
+
+ private:
+  int64_t data_shape_size_;
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NORMALIZE_SLICE_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_SLICE_TO_INDICES_CPU_KERNEL_H_

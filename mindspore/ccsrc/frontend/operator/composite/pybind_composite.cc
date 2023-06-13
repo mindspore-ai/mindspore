@@ -148,6 +148,10 @@ void RegCompositeOpsGroup(const py::module *m) {
   // Reg TensorIndexGetitem
   (void)py::class_<TensorIndexGetitem, MetaFuncGraph, std::shared_ptr<TensorIndexGetitem>>(*m, "TensorIndexGetitem_")
     .def(py::init<std::string &>());
+
+  // Reg TensorIndexSetitem
+  (void)py::class_<TensorIndexSetitem, MetaFuncGraph, std::shared_ptr<TensorIndexSetitem>>(*m, "TensorIndexSetitem_")
+    .def(py::init<std::string &>());
 }
 }  // namespace prim
 }  // namespace mindspore

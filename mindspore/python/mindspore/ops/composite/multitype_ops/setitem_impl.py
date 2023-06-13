@@ -438,7 +438,7 @@ def _tensor_setitem_by_slice_with_tensor(data, input_slice, value):
     Outputs:
         Tensor, element type and shape is same as data.
     """
-    return compile_utils.tensor_setitem_by_slice_with_tensor(data, input_slice, value)
+    return compile_utils.tensor_setitem_by_slice(data, input_slice, value)
 
 
 @setitem.register("Tensor", "Slice", "Number")
@@ -460,7 +460,7 @@ def _tensor_setitem_by_slice_with_number(data, input_slice, value):
     Outputs:
         Tensor, element type and shape is same as data.
     """
-    return compile_utils.tensor_setitem_by_slice_with_number(data, input_slice, value)
+    return compile_utils.tensor_setitem_by_slice(data, input_slice, value)
 
 
 @setitem.register("Tensor", "Slice", "List")
@@ -482,7 +482,7 @@ def _tensor_setitem_by_slice_with_list(data, input_slice, value):
     Outputs:
         Tensor, element type and shape is same as data.
     """
-    return compile_utils.tensor_setitem_by_slice_with_sequence(data, input_slice, value)
+    return compile_utils.tensor_setitem_by_slice(data, input_slice, value)
 
 
 @setitem.register("Tensor", "Slice", "Tuple")
@@ -504,7 +504,7 @@ def _tensor_setitem_by_slice_with_tuple(data, input_slice, value):
     Outputs:
         Tensor, element type and shape is same as data.
     """
-    return compile_utils.tensor_setitem_by_slice_with_sequence(data, input_slice, value)
+    return compile_utils.tensor_setitem_by_slice(data, input_slice, value)
 
 
 @setitem.register("Tensor", "Number", "Number")
