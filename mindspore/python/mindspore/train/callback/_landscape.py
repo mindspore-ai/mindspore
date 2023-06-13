@@ -187,10 +187,10 @@ class SummaryLandscape:
         ...     # If the device_target is Ascend, set the device_target to "Ascend"
         ...     ms.set_context(mode=ms.GRAPH_MODE, device_target="GPU")
         ...     # Create the dataset taking MNIST as an example. Refer to
-        ...     # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/mnist.py
+        ...     # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/mnist.py
         ...     ds_train = create_dataset()
         ...     # Define the network structure of LeNet5. Refer to
-        ...     # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/lenet.py
+        ...     # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/lenet.py
         ...     network = LeNet5()
         ...     net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         ...     net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)
@@ -210,13 +210,13 @@ class SummaryLandscape:
         ...     # Simple usage for visualization landscape:
         ...     def callback_fn():
         ...         # Define the network structure of LeNet5. Refer to
-        ...         # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/lenet.py
+        ...         # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/lenet.py
         ...         network = LeNet5()
         ...         net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         ...         metrics = {"Loss": Loss()}
         ...         model = Model(network, net_loss, metrics=metrics)
         ...         # Create the dataset taking MNIST as an example. Refer to
-        ...         # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/mnist.py
+        ...         # https://gitee.com/mindspore/docs/blob/r1.11/docs/mindspore/code/mnist.py
         ...         ds_eval = create_dataset()
         ...         return model, network, ds_eval, metrics
         ...
