@@ -42,7 +42,7 @@ class FilenameBlock;
 
 using StringIndex = AutoIndexObj<std::string>;
 
-class NonMappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow> {
+class NonMappableLeafOp : public ParallelOp<TensorRow, TensorRow> {
  public:
   // NONE: No compression_type is used
   // GZIP: GZIP compression_type with num_samples provided
@@ -67,7 +67,7 @@ class NonMappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow>
                     const CompressionType &compression_type = CompressionType::NONE);
 
   // Default destructor
-  ~NonMappableLeafOp() = default;
+  ~NonMappableLeafOp() override = default;
 
   // Instantiates the internal queues and connectors.
   // @return Status - the error code returned.
