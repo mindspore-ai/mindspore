@@ -960,6 +960,7 @@ FuncGraphPtr GenerateReusingGraph(const FuncGraphPtr &fg) {
 
   // Make the reusable graph to be the no_inline status.
   reusing_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
+  reusing_graph->set_flag(FUNC_GRAPH_FLAG_CELL_REUSE, true);
 
   // Make the all trainable parameters of the reusable cell to be the
   // parameters of the reusable graph.
@@ -1434,7 +1435,7 @@ bool AcceptableReturnValue(const CNodePtr &cnode, const AnfNodePtr &input0) {
     auto fg = GetValueNode<FuncGraphPtr>(input0);
     MS_EXCEPTION_IF_NULL(fg);
     auto debug_str = fg->ToString();
-    if (fg->has_flag(FUNC_GRAPH_FLAG_NO_INLINE) && debug_str.find("CR-") != std::string::npos) {
+    if (fg->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE)) {
       return true;
     }
   }
