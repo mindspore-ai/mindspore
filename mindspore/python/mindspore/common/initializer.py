@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Initializer for cell parameters."""
+
 from __future__ import absolute_import
 
 import numbers
@@ -31,6 +32,13 @@ _INITIALIZER_ALIAS = dict()
 class Initializer:
     """
     The abstract base class of the initializer.
+
+    Note:
+        Initializers are intended to be used for delayed initialization in parallel mode rather than Tensor
+        initialization. If you have to use Initializers to create a Tensor, :func:`mindspore.Tensor.init_data` should be
+        followed in most of the cases. For more information, please refer to `mindspore.Tensor.init_data
+        <https://www.mindspore.cn/docs/en/master/api_python/mindspore/Tensor/mindspore.Tensor.init_data.html#
+        mindspore-tensor-init-data>`_ .
 
     Args:
         kwargs (dict): Keyword arguments for Initializer.
@@ -125,8 +133,9 @@ class Zero(Initializer):
     Examples:
         >>> import mindspore
         >>> from mindspore.common.initializer import initializer, Zero
-        >>> tensor1 = initializer(Zero(), [1, 2, 3], mindspore.float32)
-        >>> tensor2 = initializer('zeros', [1, 2, 3], mindspore.float32)
+        >>> from mindspore import Parameter
+        >>> w1 = Parameter(initializer(Zero(), [1, 2, 3], mindspore.float32))
+        >>> w2 = Parameter(initializer('zeros', [1, 2, 3], mindspore.float32))
     """
 
     def _initialize(self, arr):
@@ -141,8 +150,9 @@ class One(Initializer):
     Examples:
         >>> import mindspore
         >>> from mindspore.common.initializer import initializer, One
-        >>> tensor1 = initializer(One(), [1, 2, 3], mindspore.float32)
-        >>> tensor2 = initializer('ones', [1, 2, 3], mindspore.float32)
+        >>> from mindspore import Parameter
+        >>> w1 = Parameter(initializer(One(), [1, 2, 3], mindspore.float32))
+        >>> w2 = Parameter(initializer('ones', [1, 2, 3], mindspore.float32))
     """
 
     def _initialize(self, arr):
@@ -276,8 +286,9 @@ class XavierNormal(Initializer):
     Examples:
         >>> import mindspore
         >>> from mindspore.common.initializer import initializer, XavierNormal
-        >>> tensor1 = initializer(XavierNormal(), [1, 2, 3], mindspore.float32)
-        >>> tensor2 = initializer('xavier_normal', [1, 2, 3], mindspore.float32)
+        >>> from mindspore import Parameter
+        >>> w1 = Parameter(initializer(XavierNormal(), [1, 2, 3], mindspore.float32))
+        >>> w2 = Parameter(initializer('xavier_normal', [1, 2, 3], mindspore.float32))
     """
     def __init__(self, gain=1):
         super().__init__(gain=gain)
@@ -314,8 +325,9 @@ class XavierUniform(Initializer):
     Examples:
         >>> import mindspore
         >>> from mindspore.common.initializer import initializer, XavierUniform
-        >>> tensor1 = initializer(XavierUniform(), [1, 2, 3], mindspore.float32)
-        >>> tensor2 = initializer('xavier_uniform', [1, 2, 3], mindspore.float32)
+        >>> from mindspore import Parameter
+        >>> w1 = Parameter(initializer(XavierUniform(), [1, 2, 3], mindspore.float32))
+        >>> w2 = Parameter(initializer('xavier_uniform', [1, 2, 3], mindspore.float32))
     """
 
     def __init__(self, gain=1):
@@ -358,8 +370,9 @@ class HeUniform(Initializer):
     Examples:
         >>> import mindspore
         >>> from mindspore.common.initializer import initializer, HeUniform
-        >>> tensor1 = initializer(HeUniform(), [1, 2, 3], mindspore.float32)
-        >>> tensor2 = initializer('he_uniform', [1, 2, 3], mindspore.float32)
+        >>> from mindspore import Parameter
+        >>> w1 = Parameter(initializer(HeUniform(), [1, 2, 3], mindspore.float32))
+        >>> w2 = Parameter(initializer('he_uniform', [1, 2, 3], mindspore.float32))
     """
 
     def __init__(self, negative_slope=0, mode='fan_in', nonlinearity='leaky_relu'):
@@ -404,8 +417,9 @@ class HeNormal(Initializer):
     Examples:
         >>> import mindspore
         >>> from mindspore.common.initializer import initializer, HeNormal
-        >>> tensor1 = initializer(HeNormal(), [1, 2, 3], mindspore.float32)
-        >>> tensor2 = initializer('he_normal', [1, 2, 3], mindspore.float32)
+        >>> from mindspore import Parameter
+        >>> w1 = Parameter(initializer(HeNormal(), [1, 2, 3], mindspore.float32))
+        >>> w2 = Parameter(initializer('he_normal', [1, 2, 3], mindspore.float32))
     """
 
     def __init__(self, negative_slope=0, mode='fan_in', nonlinearity='leaky_relu'):
@@ -433,7 +447,8 @@ class Constant(Initializer):
     Examples:
         >>> import mindspore
         >>> from mindspore.common.initializer import initializer, Constant
-        >>> tensor1 = initializer(Constant(3), [1, 2, 3], mindspore.float32)
+        >>> from mindspore import Parameter
+        >>> w1 = Parameter(initializer(Constant(3), [1, 2, 3], mindspore.float32))
     """
 
     def __init__(self, value):
@@ -455,8 +470,9 @@ class Identity(Initializer):
     Examples:
         >>> import mindspore
         >>> from mindspore.common.initializer import initializer, Identity
-        >>> tensor1 = initializer(Identity(), [2, 3], mindspore.float32)
-        >>> tensor2 = initializer('identity', [2, 3], mindspore.float32)
+        >>> from mindspore import Parameter
+        >>> w1 = initializer(Identity(), [2, 3], mindspore.float32)
+        >>> w2 = initializer('identity', [2, 3], mindspore.float32)
     """
 
     def _initialize(self, arr):
@@ -483,7 +499,8 @@ class Sparse(Initializer):
     Examples:
         >>> import mindspore
         >>> from mindspore.common.initializer import initializer, Sparse
-        >>> tensor1 = initializer(Sparse(sparsity=0.1, sigma=0.01), [5, 8], mindspore.float32)
+        >>> from mindspore import Parameter
+        >>> w1 = Parameter(initializer(Sparse(sparsity=0.1, sigma=0.01), [5, 8], mindspore.float32))
     """
 
     def __init__(self, sparsity, sigma=0.01):
@@ -521,8 +538,9 @@ class Dirac(Initializer):
     Examples:
         >>> import mindspore
         >>> from mindspore.common.initializer import initializer, Dirac
-        >>> tensor1 = initializer(Dirac(groups=2), [6, 4, 3, 3], mindspore.float32)
-        >>> tensor2 = initializer("dirac", [6, 4, 3, 3], mindspore.float32)
+        >>> from mindspore import Parameter
+        >>> w1 = Parameter(initializer(Dirac(groups=2), [6, 4, 3, 3], mindspore.float32))
+        >>> w2 = Parameter(initializer("dirac", [6, 4, 3, 3], mindspore.float32))
     """
 
     def __init__(self, groups=1):
@@ -572,8 +590,9 @@ class Orthogonal(Initializer):
     Examples:
         >>> import mindspore
         >>> from mindspore.common.initializer import initializer, Orthogonal
-        >>> tensor1 = initializer(Orthogonal(gain=2.), [2, 3, 4], mindspore.float32)
-        >>> tensor2 = initializer('orthogonal', [2, 3, 4], mindspore.float32)
+        >>> from mindspore import Parameter
+        >>> w1 = Parameter(initializer(Orthogonal(gain=2.), [2, 3, 4], mindspore.float32))
+        >>> w2 = Parameter(initializer('orthogonal', [2, 3, 4], mindspore.float32))
     """
 
     def __init__(self, gain=1.):
@@ -630,9 +649,10 @@ class VarianceScaling(Initializer):
     Examples:
         >>> import mindspore
         >>> from mindspore.common.initializer import initializer, VarianceScaling
-        >>> tensor1 = initializer(VarianceScaling(scale=1.0, mode='fan_out',
-        ...                                       distribution='untruncated_normal'), [2, 3], mindspore.float32)
-        >>> tensor2 = initializer('varianceScaling', [2, 3], mindspore.float32)
+        >>> from mindspore import Parameter
+        >>> w1 = Parameter(initializer(VarianceScaling(scale=1.0, mode='fan_out',
+        ...                                            distribution='untruncated_normal'), [2, 3], mindspore.float32))
+        >>> w2 = Parameter(initializer('varianceScaling', [2, 3], mindspore.float32))
     """
 
     def __init__(self, scale=1.0, mode='fan_in', distribution='truncated_normal'):
@@ -688,8 +708,9 @@ class Uniform(Initializer):
     Examples:
         >>> import mindspore
         >>> from mindspore.common.initializer import initializer, Uniform
-        >>> tensor1 = initializer(Uniform(), [1, 2, 3], mindspore.float32)
-        >>> tensor2 = initializer('uniform', [1, 2, 3], mindspore.float32)
+        >>> from mindspore import Parameter
+        >>> w1 = Parameter(initializer(Uniform(), [1, 2, 3], mindspore.float32))
+        >>> w2 = Parameter(initializer('uniform', [1, 2, 3], mindspore.float32))
     """
 
     def __init__(self, scale=0.07):
@@ -717,8 +738,9 @@ class Normal(Initializer):
     Examples:
         >>> import mindspore
         >>> from mindspore.common.initializer import initializer, Normal
-        >>> tensor1 = initializer(Normal(), [1, 2, 3], mindspore.float32)
-        >>> tensor2 = initializer('normal', [1, 2, 3], mindspore.float32)
+        >>> from mindspore import Parameter
+        >>> w1 = Parameter(initializer(Normal(), [1, 2, 3], mindspore.float32))
+        >>> w2 = Parameter(initializer('normal', [1, 2, 3], mindspore.float32))
     """
 
     def __init__(self, sigma=0.01, mean=0.0):
@@ -743,16 +765,20 @@ class TruncatedNormal(Initializer):
     Examples:
         >>> import mindspore
         >>> from mindspore.common.initializer import initializer, TruncatedNormal
-        >>> tensor1 = initializer(TruncatedNormal(), [1, 2, 3], mindspore.float32)
-        >>> tensor2 = initializer('truncatedNormal', [1, 2, 3], mindspore.float32)
+        >>> from mindspore import Parameter
+        >>> w1 = Parameter(initializer(TruncatedNormal(), [1, 2, 3], mindspore.float32))
+        >>> w2 = Parameter(initializer('truncatedNormal', [1, 2, 3], mindspore.float32))
     """
 
-    def __init__(self, sigma=0.01):
+    def __init__(self, sigma=0.01, mean=0.0, a=-2, b=2):
         super(TruncatedNormal, self).__init__(sigma=sigma)
         self.sigma = sigma
+        self.mean = mean
+        self.a = a
+        self.b = b
 
     def _initialize(self, arr):
-        tmp = _init_truncated_normal(-2, 2, 0, self.sigma, arr.shape)
+        tmp = _init_truncated_normal(self.a, self.b, self.mean, self.sigma, arr.shape)
         _assignment(arr, tmp)
 
 
@@ -788,11 +814,12 @@ def initializer(init, shape=None, dtype=mstype.float32):
         >>> import mindspore
         >>> from mindspore import Tensor
         >>> from mindspore.common.initializer import initializer, One
-        >>> data = Tensor(np.zeros([1, 2, 3]), mindspore.float32)
-        >>> tensor1 = initializer(data, [1, 2, 3], mindspore.float32)
-        >>> tensor2 = initializer('ones', [1, 2, 3], mindspore.float32)
-        >>> tensor3 = initializer(One(), [1, 2, 3], mindspore.float32)
-        >>> tensor4 = initializer(0, [1, 2, 3], mindspore.float32)
+        >>> from mindspore import Parameter
+        >>> data = Tensor(np.zeros([1, 2, 3]), mindspore.float32))
+        >>> w1 = Parameter(initializer(data, [1, 2, 3], mindspore.float32))
+        >>> w2 = Parameter(initializer('ones', [1, 2, 3], mindspore.float32))
+        >>> w3 = Parameter(initializer(One(), [1, 2, 3], mindspore.float32))
+        >>> w4 = Parameter(initializer(0, [1, 2, 3], mindspore.float32))
     """
     if not isinstance(init, (Tensor, numbers.Number, str, Initializer)):
         raise TypeError("For 'initializer', the type of the 'init' argument should be 'Tensor', 'number', 'string' "
