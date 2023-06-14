@@ -196,6 +196,10 @@ Status Serialization::ExportModel(const Model &model, ModelType model_type, cons
     MS_LOG(ERROR) << "Model implement is null.";
     return kLiteUninitializedObj;
   }
+  if (model.impl_->session_ == nullptr) {
+    MS_LOG(ERROR) << "Model hasn't been built.";
+    return kLiteError;
+  }
   if (!model.impl_->IsTrainModel()) {
     MS_LOG(ERROR) << "Model is not TrainModel.";
     return kLiteError;
@@ -203,10 +207,6 @@ Status Serialization::ExportModel(const Model &model, ModelType model_type, cons
   if (model_type != kMindIR && model_type != kMindIR_Lite) {
     MS_LOG(ERROR) << "Unsupported Export Format " << model_type;
     return kLiteParamInvalid;
-  }
-  if (model.impl_->session_ == nullptr) {
-    MS_LOG(ERROR) << "Model session is nullptr.";
-    return kLiteError;
   }
   auto ret = model.impl_->session_->Export(
     CharToString(model_file), export_inference_only ? lite::MT_INFERENCE : lite::MT_TRAIN,
@@ -223,6 +223,10 @@ Status Serialization::ExportWeightsCollaborateWithMicro(const Model &model, Mode
     MS_LOG(ERROR) << "Model implement is null.";
     return kLiteUninitializedObj;
   }
+  if (model.impl_->session_ == nullptr) {
+    MS_LOG(ERROR) << "Model hasn't been built.";
+    return kLiteError;
+  }
   if (!model.impl_->IsTrainModel()) {
     MS_LOG(ERROR) << "Model is not TrainModel.";
     return kLiteError;
@@ -230,10 +234,6 @@ Status Serialization::ExportWeightsCollaborateWithMicro(const Model &model, Mode
   if (model_type != kMindIR && model_type != kMindIR_Lite) {
     MS_LOG(ERROR) << "Model type is not kMindIR or kMindIR_Lite";
     return kLiteParamInvalid;
-  }
-  if (model.impl_->session_ == nullptr) {
-    MS_LOG(ERROR) << "Model session is nullptr.";
-    return kLiteError;
   }
   if (!is_inference) {
     MS_LOG(ERROR) << "Currently, can only export inference-model's weights.";
