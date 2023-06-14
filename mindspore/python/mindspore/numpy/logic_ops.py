@@ -925,7 +925,7 @@ def setdiff1d(ar1, ar2, assume_unique=False):
         _raise_type_error("assume_unique is not bool type.")
     ar1, ar2 = _to_tensor(ar1, ar2)
     if assume_unique:
-        ar1.ravel()
+        ar1 = ar1.ravel()
     else:
         ar1 = unique(ar1).sort()[0]
         ar2 = unique(ar2).sort()[0]
