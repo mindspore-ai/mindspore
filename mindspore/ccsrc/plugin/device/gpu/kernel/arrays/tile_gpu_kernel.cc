@@ -26,6 +26,7 @@ constexpr size_t kInputNum = 2;
 constexpr size_t kTileOutputsNum = 1;
 constexpr size_t kIndex0 = 0;
 constexpr size_t kIndex1 = 1;
+constexpr size_t kMaxShapeSize = 8;
 }  // namespace
 bool TileGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                             const std::vector<KernelTensorPtr> &outputs) {
@@ -86,6 +87,12 @@ bool TileGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
                                     const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
+  }
+  if (input_shape_.size() > kMaxShapeSize || input_shape_.size() > output_shape_.size()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', input shape can not be greater than default max size: " << kMaxShapeSize
+                      << " and output shape: " << output_shape_.size() << ", but got input shape "
+                      << input_shape_.size();
   }
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
