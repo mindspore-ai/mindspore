@@ -48,6 +48,7 @@ bool DeviceEmbeddingOperation::ParseHostDataHostToDevice(int id, size_t data_ste
   } else {
     int *host_to_server_index = embedding_cache_table_manager.embedding_host_cache_->host_to_server_index.get();
     int *host_to_server_ids = embedding_cache_table_manager.embedding_host_cache_->host_to_server_ids.get();
+    auto tmp_host_to_server_size = statistics_info_->host_to_server_size_;
     while (true) {
       // Calculate the mapping of id to index.
       auto index = host_hash_map->ParseData(id, host_to_server_index, host_to_server_ids, data_step, graph_running_step,
@@ -55,6 +56,13 @@ bool DeviceEmbeddingOperation::ParseHostDataHostToDevice(int id, size_t data_ste
       if (index == INVALID_INDEX_VALUE) {
         RETURN_IF_FALSE_WITH_LOG(actor_->WaitGraphRun(), "Wait graph run failed.");
         continue;
+      }
+
+      // The embedding vector of id which is never used before need not be evicted to remote.
+      if (tmp_host_to_server_size < statistics_info_->host_to_server_size_) {
+        if (modified_ids_.find(host_to_server_ids[tmp_host_to_server_size]) == modified_ids_.end()) {
+          statistics_info_->host_to_server_size_ = tmp_host_to_server_size;
+        }
       }
       host_to_device_index[statistics_info_->host_to_device_size_ - 1] = index;
 
@@ -103,6 +111,7 @@ bool DeviceEmbeddingOperation::ParseHostDataDeviceToHost(size_t data_step, size_
   } else {
     int *host_to_server_index = embedding_cache_table_manager.embedding_host_cache_->host_to_server_index.get();
     int *host_to_server_ids = embedding_cache_table_manager.embedding_host_cache_->host_to_server_ids.get();
+    auto tmp_host_to_server_size = statistics_info_->host_to_server_size_;
     while (true) {
       // Calculate the mapping of id to index.
       auto index = host_hash_map->ParseData(swap_device_to_host_id, host_to_server_index, host_to_server_ids, data_step,
@@ -112,6 +121,14 @@ bool DeviceEmbeddingOperation::ParseHostDataDeviceToHost(size_t data_step, size_
         RETURN_IF_FALSE_WITH_LOG(actor_->WaitGraphRun(), "Wait graph run");
         continue;
       }
+
+      // The embedding vector of id which is never used before need not be evicted to remote.
+      if (tmp_host_to_server_size < statistics_info_->host_to_server_size_) {
+        if (modified_ids_.find(host_to_server_ids[tmp_host_to_server_size]) == modified_ids_.end()) {
+          statistics_info_->host_to_server_size_ = tmp_host_to_server_size;
+        }
+      }
+
       device_to_host_index[statistics_info_->device_to_host_size_ - 1] = index;
       break;
     }

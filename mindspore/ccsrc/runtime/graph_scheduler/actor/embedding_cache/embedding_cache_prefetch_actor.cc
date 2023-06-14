@@ -876,10 +876,14 @@ bool EmbeddingCachePrefetchActor::SyncHostEmbeddingTable() {
   std::unique_ptr<int[]> host_to_server_indices_ptr = std::make_unique<int[]>(swap_indices_lens);
   MS_ERROR_IF_NULL(host_to_server_indices_ptr);
   size_t idx = 0;
+  const auto &modified_ids = emb_ops_->modified_ids();
   for (const auto &item : hash_id_to_index) {
-    host_to_server_ids_ptr[idx] = item.first;
-    host_to_server_indices_ptr[idx++] = item.second;
+    if (modified_ids.find(item.first) != modified_ids.end()) {
+      host_to_server_ids_ptr[idx] = item.first;
+      host_to_server_indices_ptr[idx++] = item.second;
+    }
   }
+  swap_indices_lens = idx;
   for (const auto &item : embedding_cache_table_manager.hash_tables_) {
     const auto &hash_info = item.second;
     std::vector<float> swap_out_data;

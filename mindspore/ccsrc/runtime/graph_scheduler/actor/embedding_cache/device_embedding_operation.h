@@ -88,6 +88,9 @@ class DeviceEmbeddingOperation {
   static bool MemcpyDeviceToHostAsync(void *dst, const void *src, size_t size, const DeviceContext *device_context,
                                       size_t stream_id);
 
+  // Get all modified ids.
+  mindspore::HashSet<int> modified_ids() const { return modified_ids_; }
+
  protected:
   // Parse the hit and swap out to device cache information of the currently preprocessed id of the local host cache.
   bool ParseHostDataHostToDevice(int id, size_t data_step, size_t graph_running_step, bool *host_cache_need_wait_graph);
@@ -132,6 +135,9 @@ class DeviceEmbeddingOperation {
 
   // The feature ids that have been initialized already.
   std::set<int> initialized_ids_;
+
+  // The feature ids whose embedding vectors are modified(trained).
+  mindspore::HashSet<int> modified_ids_;
 
   // Statistics on the cache hit rate of the host and device and the information used to update cache.
   EmbeddingCacheStatisticsInfo *statistics_info_;

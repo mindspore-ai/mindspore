@@ -59,6 +59,7 @@ bool DeviceDenseEmbeddingOperation::CountCacheMissIds(int *batch_ids, const size
     if (in_device[i] || out_range[i]) {
       continue;
     }
+    (void)modified_ids_.insert(batch_ids[i]);
     bool need_swap_host_to_device = true;
     bool need_swap_device_to_host = true;
     int index = INVALID_INDEX_VALUE;
