@@ -403,7 +403,6 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   ir_fusion_pm->AddPass(std::make_shared<SyncBnGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<Conv2dBackpropInputDilationFusion>());
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
-  ir_fusion_pm->AddPass(std::make_shared<AdamWeightDecayFission>());
   ir_fusion_pm->AddPass(std::make_shared<ScaleGradFission>());
   if (kernel_graph->is_dynamic_shape()) {
     ir_fusion_pm->AddPass(std::make_shared<MaximumGradFission>());
@@ -478,7 +477,6 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<SpaceToDepthSplit>());
   ir_fusion_pm->AddPass(std::make_shared<DeformableOffsetsFusion>());
   ir_fusion_pm->AddPass(std::make_shared<DeformableOffsetsGradFusion>());
-  ir_fusion_pm->AddPass(std::make_shared<AdamWeightDecayFission>());
   ir_fusion_pm->AddPass(std::make_shared<ScaleGradFission>());
   ir_fusion_pm->AddPass(std::make_shared<MaxPool3DGradGradFission>());
   ir_fusion_pm->AddPass(std::make_shared<AdaptiveMaxPool2DFusion>());
