@@ -49,6 +49,8 @@ typedef struct ConvolutionBaseStruct {
   void *(*get_pack_data_by_sharing_weight_)(void *manager, const void *tensor_data, const size_t size, bool *is_packed);
 } ConvolutionBaseStruct;
 
+int ConvBaseUpdateParamInfo(ConvComputeParam *compute, ConvParameter *conv_param);
+int ConvBaseUpdateComputeInfo(ConvolutionBaseStruct *conv);
 void ConvBaseRelease(ConvolutionBaseStruct *conv);
 int ConvBaseCheckResizeValid(ConvolutionBaseStruct *conv);
 int ConvBasePrepare(ConvolutionBaseStruct *conv);

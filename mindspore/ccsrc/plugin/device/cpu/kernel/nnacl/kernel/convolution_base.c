@@ -17,6 +17,65 @@
 #include "nnacl/kernel/convolution_base.h"
 #include "nnacl/conv_parameter.h"
 
+int ConvBaseUpdateParamInfo(ConvComputeParam *compute, ConvParameter *conv_param) {
+  compute->stride_h_ = conv_param->stride_h_;
+  compute->stride_w_ = conv_param->stride_w_;
+  compute->dilation_h_ = conv_param->dilation_h_;
+  compute->dilation_w_ = conv_param->dilation_w_;
+  compute->pad_u_ = conv_param->pad_u_;
+  compute->pad_d_ = conv_param->pad_d_;
+  compute->pad_l_ = conv_param->pad_l_;
+  compute->pad_r_ = conv_param->pad_r_;
+
+  compute->in_c_ = conv_param->input_channel_;
+  compute->out_c_ = conv_param->output_channel_;
+
+  compute->kernel_h_ = conv_param->kernel_h_;
+  compute->kernel_w_ = conv_param->kernel_w_;
+  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(compute->kernel_h_, compute->kernel_w_, NNACL_ERR);
+  compute->kernel_hw_ = compute->kernel_h_ * compute->kernel_w_;
+
+  return NNACL_OK;
+}
+
+int ConvBaseUpdateComputeInfo(ConvolutionBaseStruct *conv) {
+  NNACL_CHECK_NULL_RETURN_ERR(conv);
+  ConvParameter *conv_param = (ConvParameter *)conv->base_.param_;
+  NNACL_CHECK_NULL_RETURN_ERR(conv_param);
+  TensorC *input = conv->base_.in_[FIRST_INPUT];
+  NNACL_CHECK_NULL_RETURN_ERR(input);
+  TensorC *output = conv->base_.out_[OUTPUT_INDEX];
+  NNACL_CHECK_NULL_RETURN_ERR(output);
+
+  conv_param->input_batch_ = GetBatch(input);
+  conv_param->input_h_ = GetHeight(input);
+  conv_param->input_w_ = GetWidth(input);
+  conv_param->input_channel_ = GetChannel(input);
+  conv_param->output_batch_ = GetBatch(output);
+  conv_param->output_h_ = GetHeight(output);
+  conv_param->output_w_ = GetWidth(output);
+  conv_param->output_channel_ = GetChannel(output);
+
+  ConvComputeParam *compute = &conv->compute_;
+  compute->in_n_ = GetBatch(input);
+  compute->in_h_ = GetHeight(input);
+  compute->in_w_ = GetWidth(input);
+  compute->in_c_ = GetChannel(input);
+  NNACL_CHECK_FALSE(compute->in_c_ != conv_param->input_channel_, NNACL_ERR);
+  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(compute->in_h_, compute->in_w_, NNACL_ERR);
+  compute->in_hw_ = compute->in_h_ * compute->in_w_;
+
+  compute->out_n_ = GetBatch(output);
+  compute->out_h_ = GetHeight(output);
+  compute->out_w_ = GetWidth(output);
+  compute->out_c_ = GetChannel(output);
+  NNACL_CHECK_FALSE(compute->out_c_ != conv_param->output_channel_, NNACL_ERR);
+  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(compute->out_h_, compute->out_w_, NNACL_ERR);
+  compute->out_hw_ = compute->out_h_ * compute->out_w_;
+
+  return ConvBaseUpdateParamInfo(compute, conv_param);
+}
+
 void ConvBaseRelease(ConvolutionBaseStruct *conv) {
   if (!conv->base_.train_session_) {
     if (!conv->is_sharing_pack_) {
@@ -36,7 +95,7 @@ void ConvBaseRelease(ConvolutionBaseStruct *conv) {
 int ConvBasePrepare(ConvolutionBaseStruct *conv) {
   NNACL_CHECK_FALSE(conv->base_.in_size_ < TWO_TENSOR, NNACL_INPUT_TENSOR_ERROR);
   NNACL_CHECK_FALSE(conv->base_.out_size_ < ONE_TENSOR, NNACL_OUTPUT_TENSOR_ERROR);
-  return NNACL_OK;
+  return ConvBaseUpdateComputeInfo(conv);
 }
 
 void ConvBaseUpdateOriginWeightAndBias(ConvolutionBaseStruct *conv) {

@@ -32,19 +32,24 @@ int DoConcat(ConcatStruct *concat, int task_id) {
   int64_t start_row = start / concat->inner_sizes_[concat->base_.in_size_];
   int64_t end_row = end / concat->inner_sizes_[concat->base_.in_size_];
 
-  uint8_t **src = concat->base_.env_->alloc(concat->base_.env_->allocator_, concat->base_.in_size_ * sizeof(uint8_t *));
+  size_t src_buf_size = concat->base_.in_size_ * sizeof(uint8_t *);
+  NNACL_CHECK_MALLOC_SIZE(src_buf_size);
+  uint8_t **src = (uint8_t **)concat->base_.env_->alloc(concat->base_.env_->allocator_, src_buf_size);
+  NNACL_MALLOC_CHECK_NULL_RETURN_ERR(src);
   for (size_t i = 0; i < concat->base_.in_size_; ++i) {
     if (concat->is_with_data_[i]) {
       src[i] = concat->inputs_ptr_[i] + start_row * concat->inner_sizes_[i];
     }
   }
   uint8_t *out = concat->output_ + start;
+
   int input_index = concat->block_boundary_infos_[task_id].begin_input_;
   int end_index = concat->block_boundary_infos_[task_id].end_input_;
   if (start_row == end_row) {
     if (input_index == end_index) {
       memcpy(out, src[input_index] + concat->block_boundary_infos_[task_id].begin_point_,
              concat->block_boundary_infos_[task_id].end_point_ - concat->block_boundary_infos_[task_id].begin_point_);
+      concat->base_.env_->free(concat->base_.env_->allocator_, src);
       return NNACL_OK;
     }
     int64_t size = concat->inner_sizes_[input_index] - concat->block_boundary_infos_[task_id].begin_point_;
@@ -56,6 +61,7 @@ int DoConcat(ConcatStruct *concat, int task_id) {
       out += concat->inner_sizes_[input_index];
     }
     memcpy(out, src[input_index], concat->block_boundary_infos_[task_id].end_point_);
+    concat->base_.env_->free(concat->base_.env_->allocator_, src);
     return NNACL_OK;
   }
   for (int i = 0; i < input_index; ++i) {
@@ -84,6 +90,7 @@ int DoConcat(ConcatStruct *concat, int task_id) {
     out += concat->inner_sizes_[input_index];
   }
   memcpy(out, src[end_index], concat->block_boundary_infos_[task_id].end_point_);
+
   concat->base_.env_->free(concat->base_.env_->allocator_, src);
   return NNACL_OK;
 }

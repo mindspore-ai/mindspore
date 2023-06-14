@@ -60,6 +60,9 @@ void StackF16FreeBuffer(StackF16Struct *stack_f16) {
     }
     stack_f16->stack_.buffers_[i] = NULL;
   }
+
+  stack_f16->stack_.base_.env_->free(stack_f16->stack_.base_.env_->allocator_, stack_f16->init_);
+  stack_f16->init_ = NULL;
 }
 
 int stack_f16_compute(KernelBase *self) {
