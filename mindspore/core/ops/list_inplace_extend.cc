@@ -92,9 +92,7 @@ AbstractBasePtr ListInplaceExtendInfer(const abstract::AnalysisEnginePtr &, cons
   }
   abstract::AbstractListPtr ret = std::make_shared<abstract::AbstractList>(new_elements);
 
-  if (!data_abs->has_list_py_obj()) {
-    MS_LOG(ERROR) << "Missing python object for list inplace Extend.";
-  } else {
+  if (data_abs->has_list_py_obj()) {
     ret = AbstractBroaden(ret)->cast<abstract::AbstractListPtr>();
     ret->set_list_user_data(data_abs->list_user_data());
   }

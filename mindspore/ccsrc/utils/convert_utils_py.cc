@@ -598,13 +598,6 @@ py::object VectorRefToPyData(const VectorRef &value_list, const AbstractBasePtr 
     return MakeCOOTensor(value_list);
   }
   if (abs->isa<abstract::AbstractList>()) {
-    auto abs_list = abs->cast<abstract::AbstractListPtr>();
-    static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
-    if (allow_inplace_ops && abs_list->has_list_py_obj()) {
-      MS_LOG(DEBUG) << "Current abstract list has python object, directly return the abstract.";
-      auto py_list_func = *(abs_list->list_py_obj<py::list>());
-      return py_list_func;
-    }
     return AbstractSequenceToPyData<py::list>(value_list, abs);
   }
   return AbstractSequenceToPyData<py::tuple>(value_list, abs);

@@ -50,10 +50,8 @@ AbstractBasePtr ListInplaceClearInfer(const abstract::AnalysisEnginePtr &, const
   abstract::AbstractBasePtrList empty_elements = {};
   ret = std::make_shared<abstract::AbstractList>(empty_elements);
 
-  if (!data_abs->has_list_py_obj()) {
-    MS_LOG(ERROR) << "Missing python object for list inplace Clear.";
-  } else {
-    ret = ret->cast<abstract::AbstractListPtr>();
+  if (data_abs->has_list_py_obj()) {
+    ret = AbstractBroaden(ret)->cast<abstract::AbstractListPtr>();
     ret->set_list_user_data(data_abs->list_user_data());
   }
 

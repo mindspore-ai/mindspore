@@ -1328,21 +1328,26 @@ std::pair<py::object, bool> GraphExecutorPy::GetPyExecuteOutputFromAddress(const
 }
 
 std::pair<py::object, bool> GraphExecutorPy::GetPyExecuteSequenceOutputFromAddress(const py::object &obj,
-                                                                                   const BaseRef &value) const {
+                                                                                   const BaseRef &value,
+                                                                                   const AbstractBasePtr &abs) const {
   static const auto allow_inplace_ops = common::GetEnv("MS_DEV_FALLBACK_SUPPORT_LIST") != "0";
-  if (allow_inplace_ops && py::isinstance<py::list>(obj)) {
-    return {obj, true};
+  if (allow_inplace_ops && abs != nullptr && abs->isa<abstract::AbstractList>()) {
+    auto abs_list = abs->cast<abstract::AbstractListPtr>();
+    if (abs_list->has_list_py_obj()) {
+      MS_LOG(DEBUG) << "Current abstract list has python object, directly return the corresponding object.";
+      return {*(abs_list->list_py_obj<py::list>()), true};
+    }
   }
   bool has_real_node_address = false;
   py::object output = py::none();
   if (py::isinstance<py::tuple>(obj)) {
-    const auto &[py_res, has_real_output] = GetPyExecuteData<py::tuple>(obj, value);
+    const auto &[py_res, has_real_output] = GetPyExecuteData<py::tuple>(obj, value, abs);
     if (has_real_output) {
       output = py_res;
       has_real_node_address = true;
     }
   } else if (py::isinstance<py::list>(obj)) {
-    const auto &[py_res, has_real_output] = GetPyExecuteData<py::list>(obj, value);
+    const auto &[py_res, has_real_output] = GetPyExecuteData<py::list>(obj, value, abs);
     if (has_real_output) {
       output = py_res;
       has_real_node_address = true;
@@ -1356,13 +1361,32 @@ std::pair<py::object, bool> GraphExecutorPy::GetPyExecuteSequenceOutputFromAddre
   return {output, has_real_node_address};
 }
 
+AbstractBasePtrList GetSeqElementsAbs(const AbstractBasePtr &abs, size_t len) {
+  if (abs == nullptr) {
+    return AbstractBasePtrList(len, nullptr);
+  }
+  auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(abs_seq);
+  if (abs_seq->dynamic_len()) {
+    return AbstractBasePtrList(len, nullptr);
+  }
+  if (abs_seq->size() != len) {
+    MS_LOG(INTERNAL_EXCEPTION) << "The output python object sequence size should equal to abstract sequence size "
+                               << "but got python object sequence size: " << len
+                               << " and abstract sequence size: " << abs_seq->size();
+  }
+  return abs_seq->elements();
+}
+
 template <typename T>
-std::pair<py::object, bool> GraphExecutorPy::GetPyExecuteData(const py::object &res, const BaseRef &value) const {
+std::pair<py::object, bool> GraphExecutorPy::GetPyExecuteData(const py::object &res, const BaseRef &value,
+                                                              const AbstractBasePtr &abs) const {
   const auto &res_seq = res.cast<T>();
   T output_seq = T(res_seq.size());
   bool has_real_node_address = false;
+  const auto &elements = GetSeqElementsAbs(abs, res_seq.size());
   for (size_t i = 0; i < res_seq.size(); ++i) {
-    const auto &[py_res, has_real_output] = GetPyExecuteSequenceOutputFromAddress(res_seq[i], value);
+    const auto &[py_res, has_real_output] = GetPyExecuteSequenceOutputFromAddress(res_seq[i], value, elements[i]);
     if (has_real_output) {
       output_seq[i] = py_res;
       has_real_node_address = true;
@@ -1487,7 +1511,7 @@ py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &ph
     res = BaseRefToPyData(value, output_abs);
     // If crossing the graph, may not get PyExecuteOutputUserData in the parent graph.
     // Get PyExecuteOutputUserData by device_address bound AnfNode which is in sub graph.
-    const auto &[py_res, has_real_node_address] = GetPyExecuteSequenceOutputFromAddress(res, value);
+    const auto &[py_res, has_real_node_address] = GetPyExecuteSequenceOutputFromAddress(res, value, output_abs);
     // Replace the output if it's not Tensor, but Python data.
     if (has_real_node_address) {
       return py_res;
