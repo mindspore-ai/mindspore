@@ -41,6 +41,7 @@ from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.nn.loss.loss import LossBase
 from mindspore.train._utils import check_value_type, _make_directory
 from mindspore._c_expression import security
+from mindspore._c_expression import _collect_host_info
 
 HYPER_CONFIG_ENV_NAME = "MINDINSIGHT_HYPER_CONFIG"
 HYPER_CONFIG_LEN_LIMIT = 100000
@@ -466,6 +467,7 @@ class SummaryCollector(Callback):
 
     def begin(self, run_context):
         cb_params = run_context.original_args()
+        _collect_host_info("Callback", "SummaryCollector", "begin", level=1)
         self._check_callbacks(cb_params)
 
         if cb_params.mode not in ModeEnum.to_list():
@@ -477,6 +479,7 @@ class SummaryCollector(Callback):
 
     def step_end(self, run_context):
         cb_params = run_context.original_args()
+        _collect_host_info("Callback", "SummaryCollector", "step_end", level=1)
         if cb_params.mode != ModeEnum.TRAIN.value:
             return
 
@@ -551,6 +554,7 @@ class SummaryCollector(Callback):
 
     def epoch_end(self, run_context):
         cb_params = run_context.original_args()
+        _collect_host_info("Callback", "SummaryCollector", "epoch_end", level=1)
         self._collect_tensor_data(cb_params)
         collect_landscape = self._collect_specified_data.get('collect_landscape')
         if collect_landscape is not None:
@@ -567,6 +571,7 @@ class SummaryCollector(Callback):
 
     def end(self, run_context):
         cb_params = run_context.original_args()
+        _collect_host_info("Callback", "SummaryCollector", "end", level=1)
         if cb_params.mode == ModeEnum.TRAIN.value:
             self._collect_train_lineage(cb_params)
         else:
