@@ -663,7 +663,7 @@ Status ShardAxisImpl::CheckSplitAxisStrategy(const Shape &param_strategy, const 
   }
 
   if ((product_p != SizeToLong(stage_device_size)) && (param_strategy.at(LongToSize(axis_)) != 1) && (axis_ == 0)) {
-    if ((param_strategy.size() == 2) && (param_strategy[1] != 1)) {
+    if ((param_strategy.size() == kSizeTwo) && (param_strategy[1] != kSizeOne)) {
       FILTER_LOG(is_auto_parallel) << name_
                                    << ": axis(0) is split, and param_strategy[1] != 1, don't support"
                                       " repeated calc.";
@@ -793,14 +793,9 @@ Status ShardAxisImpl::InferTensorInfo() {
     return FAILED;
   }
 
-  // infer tensor info
-  TensorInfo input_tensor_info(input_tensor_layout);
-  TensorInfo input_index_info(input_index_layout);
-  TensorInfo output_tensor_info(output_tensor_layout);
-
-  inputs_tensor_info_.push_back(input_tensor_info);
-  inputs_tensor_info_.push_back(input_index_info);
-  outputs_tensor_info_.push_back(output_tensor_info);
+  (void)inputs_tensor_info_.emplace_back(TensorInfo(input_tensor_layout));
+  (void)inputs_tensor_info_.emplace_back(TensorInfo(input_index_layout));
+  (void)outputs_tensor_info_.emplace_back(TensorInfo(output_tensor_layout));
   return SUCCESS;
 }
 
@@ -1183,13 +1178,9 @@ Status GatherUtil::InferTensorInfoNoSplitAxis() {
   }
 
   // infer tensor info
-  TensorInfo input_tensor_info(input_tensor_layout);
-  TensorInfo input_index_info(input_index_layout);
-  TensorInfo output_tensor_info(output_tensor_layout);
-
-  inputs_tensor_info_.push_back(input_tensor_info);
-  inputs_tensor_info_.push_back(input_index_info);
-  outputs_tensor_info_.push_back(output_tensor_info);
+  (void)inputs_tensor_info_.emplace_back(TensorInfo(input_tensor_layout));
+  (void)inputs_tensor_info_.emplace_back(TensorInfo(input_index_layout));
+  (void)outputs_tensor_info_.emplace_back(TensorInfo(output_tensor_layout));
   return SUCCESS;
 }
 

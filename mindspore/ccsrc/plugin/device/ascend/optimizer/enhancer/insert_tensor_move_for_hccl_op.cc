@@ -101,6 +101,28 @@ bool InsertTensorMoveForHcclOp::NeedInsertTensorMove(const FuncGraphPtr &graph, 
   return false;
 }
 
+void AdjustDependToTensorMove(const AnfNodePtr &input, const AnfNodePtr &tensor_move) {
+  auto func_graph = input->func_graph();
+  if (!func_graph) {
+    return;
+  }
+  auto manager = func_graph->manager();
+  if (manager == nullptr) {
+    return;
+  }
+  auto input_users = manager->node_users()[input];
+  for (const auto &input_user : input_users) {
+    if (!IsPrimitiveCNode(input_user.first, prim::kPrimDepend)) {
+      continue;
+    }
+    auto depend_cnode = input_user.first->cast<CNodePtr>();
+    if (!depend_cnode->HasAttr(kAttrCommInputDepend)) {
+      continue;
+    }
+    manager->SetEdge(depend_cnode, input_user.second, tensor_move);
+  }
+}
+
 void InsertTensorMoveForHcclOp::InsertTensorMove(const FuncGraphPtr &graph, const CNodePtr &hccl_node) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(hccl_node);
@@ -116,6 +138,7 @@ void InsertTensorMoveForHcclOp::InsertTensorMove(const FuncGraphPtr &graph, cons
       if (input->isa<CNode>() && common::AnfAlgo::IsDynamicShape(input)) {
         MS_LOG(DEBUG) << "The tenser move op has dynamic shape attr.";
       }
+      AdjustDependToTensorMove(input, tensor_move);
       new_inputs.push_back(tensor_move);
       need_tensor_move_async = true;
     } else {
