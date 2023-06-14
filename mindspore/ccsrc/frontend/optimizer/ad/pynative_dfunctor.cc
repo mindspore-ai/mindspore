@@ -21,6 +21,31 @@
 
 namespace mindspore {
 namespace ad {
+const mindspore::HashSet<std::string> kNotRealOP{
+  kMakeTupleOpName,
+  kMakeListNewOpName,
+  kTupleGetItemOpName,
+  kStopGradientOpName,
+  kUpdateStateOpName,
+  kLoadOPName,
+  kDependOpName,
+  kReturnOpName,
+  kNPUAllocFloatStatusOpName,
+  kNPUGetFloatStatusOpName,
+  kNPUClearFloatStatusOpName,
+  kMirrorOperatorOpName,
+  kSequenceSliceOpName,
+  kSequenceMulOpName,
+};
+
+bool IsRealOp(const AnfNodePtr &node) {
+  const auto prim = GetCNodePrimitive(node);
+  if (prim == nullptr) {
+    return false;
+  }
+  return kNotRealOP.find(prim->name()) == kNotRealOP.end();
+}
+
 tensor::TensorPtr PynativeDFunctor::GenNewTensorInner(const TypePtr &type_elem, const BaseShapePtr &shape_elem) {
   MS_EXCEPTION_IF_NULL(type_elem);
   MS_EXCEPTION_IF_NULL(shape_elem);
@@ -101,6 +126,21 @@ ValueNodePtr PynativeDFunctor::GenNewTensor(const CNodePtr &cnode_morph) {
     }
     auto value_tuple = std::make_shared<ValueTuple>(output_values);
     return gen_output_value_node(value_tuple);
+  } else if (cnode_type->isa<List>()) {
+    auto list_shape = cnode_shape->cast<abstract::ListShapePtr>();
+    MS_EXCEPTION_IF_NULL(list_shape);
+    auto list_type = cnode_type->cast<ListPtr>();
+    MS_EXCEPTION_IF_NULL(list_type);
+    size_t output_num = list_type->elements().size();
+    MS_EXCEPTION_IF_CHECK_FAIL(output_num != 0, "No output value.");
+    std::vector<ValuePtr> output_values;
+    for (size_t i = 0; i < output_num; ++i) {
+      auto shape_elem = list_shape->shape()[i];
+      auto type_elem = list_type->elements()[i];
+      output_values.push_back(NewValue(type_elem, shape_elem));
+    }
+    auto value_tuple = std::make_shared<ValueList>(output_values);
+    return gen_output_value_node(value_tuple);
   } else if (cnode_type->isa<TensorType>()) {
     auto tensor_value = GenNewTensorInner(cnode_type, cnode_shape);
     return gen_output_value_node(tensor_value);
@@ -166,7 +206,7 @@ std::vector<AnfNodePtr> PynativeDFunctor::RunOutputReplace(const CNodePtr &forwa
                                                            const FuncGraphPtr &fprop_graph,
                                                            const CNodePtr &cnode_morph) {
   MS_EXCEPTION_IF_NULL(cnode_morph);
-  if (IsPrimitiveCNode(cnode_morph, prim::kPrimStopGradient) || IsPrimitiveCNode(cnode_morph, prim::kPrimMirror)) {
+  if (!IsRealOp(cnode_morph)) {
     return {};
   }
   // Use manager to get the link relation among nodes.
@@ -215,8 +255,7 @@ std::vector<AnfNodePtr> PynativeDFunctor::RunInputReplace(const FuncGraphPtr &bp
     const auto &input_node = cnode_morph->input(i + 1);
     MS_EXCEPTION_IF_NULL(input_node);
     // Parameter, ValueNode and StopGradient CNode no need to replace.
-    if (input_node->isa<Parameter>() || input_node->isa<ValueNode>() ||
-        IsPrimitiveCNode(input_node, prim::kPrimStopGradient) || IsPrimitiveCNode(input_node, prim::kPrimMirror)) {
+    if (input_node->isa<Parameter>() || input_node->isa<ValueNode>() || !IsRealOp(input_node)) {
       continue;
     }
     // Replace forward input node by its output value.

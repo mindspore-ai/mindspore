@@ -40,5 +40,13 @@ REG_BPROP_BUILDER("make_range").SetBody(BODYFUNC(ib) {
     }
   }
 });
+
+REG_BPROP_BUILDER("ListInsert").SetBody(BODYFUNC(ib) {
+  auto idx = ib->GetInput(kIndex1);
+  auto value = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto dx = ib->Emit("ListAppendAndInsertGrad", {dout, idx});
+  return {dx, ib->ZerosLike(idx), ib->ZerosLike(value)};
+});
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

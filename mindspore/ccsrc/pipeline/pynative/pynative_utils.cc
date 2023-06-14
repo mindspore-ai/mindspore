@@ -76,6 +76,40 @@ void AddDynInputsSizesAttr(const FrontendOpRunInfoPtr &op_run_info) {
   op_run_info->op_grad_info->op_prim->set_attr(kAttrDynInputSizes,
                                                MakeValue(op_run_info->base_op_run_info.dyn_input_sizes));
 }
+
+ValuePtr CreateNonTensorByAbstract(const abstract::AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
+  auto type_id = pynative::PyNativeAlgo::Common::GetTypeFromAbstract(abs);
+  if (abs->isa<abstract::AbstractMonad>()) {
+    return std::make_shared<tensor::Tensor>(0);
+  }
+  if (type_id == kMetaTypeNone) {
+    return kNone;
+  }
+  if (type_id == kMetaTypeNull) {
+    return kNull;
+  }
+  if (abs->isa<abstract::AbstractSequence>()) {
+    const auto &abs_seq = abs->cast<abstract::AbstractSequencePtr>()->elements();
+    ValuePtrList value_ptr_list;
+    std::transform(abs_seq.begin(), abs_seq.end(), std::back_inserter(value_ptr_list),
+                   [](const abstract::AbstractBasePtr &elem) { return CreateNonTensorByAbstract(elem); });
+    return std::make_shared<ValueTuple>(value_ptr_list);
+  }
+  if (type_id == kNumberTypeBool) {
+    return MakeValue(true);
+  } else if (type_id == kObjectTypeString) {
+    return MakeValue("");
+  } else if (type_id >= kNumberTypeInt && type_id <= kNumberTypeUInt64) {
+    return MakeValue(static_cast<int64_t>(0));
+  } else if (type_id >= kNumberTypeFloat && type_id <= kNumberTypeFloat64) {
+    return MakeValue(static_cast<float>(0));
+  } else if (type_id == kNumberTypeDouble) {
+    return MakeValue(static_cast<double>(0));
+  } else {
+    MS_LOG(EXCEPTION) << "Get unsupported type " << type_id;
+  }
+}
 }  // namespace
 
 AbstractBasePtr Common::SetAbstractValueToAnyValue(const AbstractBasePtr &abs) {
@@ -290,7 +324,8 @@ ValuePtr Common::CreatOutputTensorValueByAbstract(const abstract::AbstractBasePt
     auto abs_seq = abs->cast<abstract::AbstractSequencePtr>();
     std::vector<ValuePtr> out;
     if (!abs_seq->elements().front()->isa<abstract::AbstractTensor>()) {
-      MS_LOG(EXCEPTION) << "Get non tensor output";
+      MS_LOG(DEBUG) << "Get non tensor output";
+      return CreateNonTensorByAbstract(abs);
     }
     for (size_t i = 0; i < abs_seq->size(); ++i) {
       (void)out.emplace_back(std::make_shared<tensor::Tensor>(type_id, GetShapeFromAbstract(abs_seq->elements()[i])));
