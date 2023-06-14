@@ -647,6 +647,9 @@ AnfNodePtr DFunctor::MapFuncGraphToK(const AnfNodePtr &primal) {
   if (func_graph->has_flag(FUNC_GRAPH_FLAG_NO_INLINE)) {
     functor->k_graph_->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
   }
+  if (func_graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE)) {
+    functor->k_graph_->set_flag(FUNC_GRAPH_FLAG_CELL_REUSE, true);
+  }
   if (func_graph->has_flag(GRAPH_FLAG_IS_WHILE_HEADER)) {
     functor->k_graph_->set_flag(GRAPH_FLAG_IS_WHILE_HEADER, true);
     functor->tape_->set_flag(GRAPH_FLAG_IS_WHILE_HEADER, true);
