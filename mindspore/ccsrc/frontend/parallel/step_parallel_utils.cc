@@ -55,6 +55,9 @@ size_t TOTAL_OPS = 0;
 // it will be one item in map with key: C, and value: (B, i)
 std::map<AnfNodePtr, std::pair<AnfNodePtr, int64_t>> g_RefMap;
 
+// maybe the input value is dynamic for these ops
+static const std::set<std::string> CANDIDATE_DYNAMIC_VALUE_OPS = {RESHAPE, STRIDED_SLICE};
+
 bool IsSomePrimitive(const CNodePtr &cnode, const std::string &name) {
   if (!cnode) {
     return false;
@@ -183,6 +186,9 @@ static bool IsWhileGraph(const FuncGraphPtr &cur_fg, const FuncGraphPtr &fg) {
 
 AnfNodePtr CheckMakeTupleSplit(const AnfNodePtr &node, const FuncGraphManagerPtr &manager) {
   auto node_users = manager->node_users()[node];
+  if (node_users.size() == 1) {
+    return node_users.front().first;
+  }
 
   bool is_first_tensor_info = true;
   TensorInfo first_tensor_info;
@@ -492,16 +498,16 @@ RankList FindCommonMirrorGroup(const FuncGraphPtr &root) {
     if (ParallelContext::GetInstance()->enable_parallel_optimizer() &&
         (!param_ptr->param_info() || param_ptr->param_info()->parallel_optimizer())) {
       if (ParallelContext::GetInstance()->optimizer_weight_shard_size() == -1) {
-        MS_LOG(WARNING) << "The parameter :" << param_ptr->fullname_with_scope()
-                        << " is fully shard by optimizer parallel,"
-                           " thus cannot find common data parallel group for this rank";
+        MS_LOG(INFO) << "The parameter :" << param_ptr->fullname_with_scope()
+                     << " is fully shard by optimizer parallel,"
+                        " thus cannot find common data parallel group for this rank";
         return {g_device_manager->global_rank()};
       }
       allow_repeat_num = size_t(ParallelContext::GetInstance()->optimizer_weight_shard_size());
     }
     if (IsFullySplitParameter(param_ptr, allow_repeat_num)) {
-      MS_LOG(WARNING) << "The parameter :" << param_ptr->fullname_with_scope()
-                      << " is fully shard, thus cannot find common data parallel group for this rank";
+      MS_LOG(INFO) << "The parameter :" << param_ptr->fullname_with_scope()
+                   << " is fully shard, thus cannot find common data parallel group for this rank";
       return {g_device_manager->global_rank()};
     }
   }
@@ -1052,6 +1058,10 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
       input_shapes = GetRefKeyNodeShape(input, func_graph);
     } else if (input->isa<CNode>() || IsValueNode<Tensor>(input) || input->isa<Parameter>() ||
                ((IsValueNode<ValueList>(input) || IsValueNode<ValueTuple>(input)) && (inputs_size == concat_size))) {
+      if (IsSomePrimitiveList(node, CANDIDATE_DYNAMIC_VALUE_OPS) && IsPrimitiveCNode(input, prim::kPrimMakeTuple)) {
+        MS_LOG(INFO) << "may be dynamic shape, no need to get input's shape";
+        continue;
+      }
       input_shapes = GetNodeShape(input);
     } else {
       continue;
@@ -1171,6 +1181,27 @@ void AddNodeFusionInfo(const CNodePtr &node, const CNodePtr &comm_node, const st
   }
 }
 
+static ValuePtr GetMakeTupleValue(const AnfNodePtr &node) {
+  auto cnode = node->cast<CNodePtr>();
+  auto &inputs = cnode->inputs();
+
+  std::vector<int64_t> value_list;
+  for (size_t index = 1; index < inputs.size(); ++index) {
+    if (inputs[index]->isa<ValueNode>()) {
+      auto element = GetValueNode(inputs[index]);
+      if (element->isa<Int64Imm>()) {
+        int64_t value = element->cast<Int64ImmPtr>()->value();
+        value_list.push_back(value);
+        continue;
+      }
+    }
+    value_list.push_back(-1);  // dynamic shape
+  }
+
+  MS_LOG(INFO) << "the make tuple value is " << value_list;
+  return MakeValue(value_list);
+}
+
 OperatorInfoPtr CreateOperatorInfo(const CNodePtr &cnode) {
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_EXCEPTION_IF_NULL(prim);
@@ -1191,6 +1222,10 @@ OperatorInfoPtr CreateOperatorInfo(const CNodePtr &cnode) {
   for (size_t index = 1; index < inputs.size(); ++index) {
     if (inputs[index]->isa<ValueNode>()) {
       input_value.push_back(GetValueNode(inputs[index]));
+      continue;
+    } else if (IsPrimitiveCNode(inputs[index], prim::kPrimMakeTuple)) {
+      auto make_tuple_value = GetMakeTupleValue(inputs[index]);
+      (void)input_value.emplace_back(make_tuple_value);
       continue;
     }
     (void)input_value.emplace_back(nullptr);
