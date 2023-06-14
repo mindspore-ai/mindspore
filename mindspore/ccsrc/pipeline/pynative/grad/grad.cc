@@ -1365,7 +1365,7 @@ void GradExecutor::MakeNestedCnode(bool has_custom_bprop, const std::vector<Valu
   auto inner_graph_info = top_cell()->graph_info_map().at(curr_g());
   SwitchTopCell();
 
-  auto out_value = PyNativeAlgo::DataConvert::BaseRefToValue(out, true);
+  auto out_value = PyNativeAlgo::DataConvert::BaseRefToValue(out, true, true);
   // Get output values
   if (has_custom_bprop && !out_value->isa<ValueSequence>()) {
     std::vector<ValuePtr> out_v{out_value};

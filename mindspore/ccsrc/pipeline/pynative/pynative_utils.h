@@ -80,8 +80,8 @@ struct PyParser {
 struct DataConvert {
   static py::object ValueToPyObj(const ValuePtr &v);
   static ValuePtr PyObjToValue(const py::object &obj, bool stub = false);
-  static ValuePtr BaseRefToValue(const BaseRef &value, bool requires_grad);
-  static ValuePtr VectorRefToValue(const VectorRef &vec_ref, bool requires_grad);
+  static ValuePtr BaseRefToValue(const BaseRef &value, bool requires_grad, bool is_out_sequence);
+  static ValuePtr VectorRefToValue(const VectorRef &vec_ref, bool requires_grad, bool is_out_sequence);
   static void FlattenValueSeqArg(const ValuePtr &v, std::vector<ValuePtr> *flatten_v);
   static void FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<ValuePtr> *flatten_v, bool has_sens);
   static void GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const std::string &device_target,

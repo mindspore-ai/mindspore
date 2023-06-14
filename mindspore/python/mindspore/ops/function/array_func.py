@@ -927,14 +927,11 @@ def ones(shape, dtype=None):  # pylint: disable=redefined-outer-name
     value = Tensor(1, _dtype)
     if isinstance(shape, int):
         shape = tuple([shape])
-    shape_tensor = shape
-    if isinstance(shape, (list, tuple)) and not shape:
-        shape_tensor = Tensor(shape, dtype=mstype.int64)
-    elif not isinstance(shape, Tensor):
-        shape_tensor = Tensor(shape)
-    if shape_tensor.ndim == 0 and shape_tensor.size == 1:
-        shape_tensor = shape_tensor.reshape(1)
-    output = ones_op(shape_tensor, value)
+    elif isinstance(shape, list):
+        shape = Tensor(shape, dtype=mstype.int64)
+    elif isinstance(shape, Tensor) and shape.ndim == 0 and shape.size == 1:
+        shape = shape.reshape(1)
+    output = ones_op(shape, value)
     return output
 
 
@@ -1003,14 +1000,11 @@ def zeros(size, dtype=None):  # pylint: disable=redefined-outer-name
     value = Tensor(0, _dtype)
     if isinstance(size, int):
         size = tuple([size])
-    shape_tensor = size
-    if isinstance(size, (list, tuple)) and not size:
-        shape_tensor = Tensor(size, dtype=mstype.int64)
-    elif not isinstance(size, Tensor):
-        shape_tensor = Tensor(size, dtype=mstype.int64)
-    if shape_tensor.ndim == 0 and shape_tensor.size == 1:
-        shape_tensor = shape_tensor.reshape(1)
-    output = zero_op(shape_tensor, value)
+    elif isinstance(size, list):
+        size = Tensor(size, dtype=mstype.int64)
+    elif isinstance(size, Tensor) and size.ndim == 0 and size.size == 1:
+        size = size.reshape(1)
+    output = zero_op(size, value)
     return output
 
 

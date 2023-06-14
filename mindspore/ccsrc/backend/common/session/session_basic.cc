@@ -1246,7 +1246,11 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const BackendO
   auto op_prim = op_run_info->op_prim;
   MS_EXCEPTION_IF_NULL(op_prim);
   // Decoupling of frontend PrimitivePy and backend Primitive
-  inputs.push_back(std::make_shared<ValueNode>(std::make_shared<Primitive>(*op_prim)));
+  auto new_prim = std::make_shared<Primitive>(*op_prim);
+  if (op_run_info->base_op_run_info.use_dynamic_shape_process) {
+    AnfAlgo::SetDynamicAttrToPrim(new_prim);
+  }
+  inputs.push_back(std::make_shared<ValueNode>(new_prim));
   // set input parameter
   if (input_tensors.size() != tensors_mask.size()) {
     MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors.size() << " should be equal to tensors mask size "

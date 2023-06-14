@@ -30,11 +30,10 @@ namespace mindspore {
 namespace pynative {
 class OpTaskContext {
  public:
-  OpTaskContext(GraphId graph_id, KernelGraphPtr graph, std::vector<session::KernelWithIndex> output_nodes,
-                session::BackendOpRunInfoPtr op_run_info, device::DeviceContext *device_context, bool is_pynative_infer)
+  OpTaskContext(GraphId graph_id, KernelGraphPtr graph, session::BackendOpRunInfoPtr op_run_info,
+                device::DeviceContext *device_context, bool is_pynative_infer)
       : graph_id_(graph_id),
         graph_(std::move(graph)),
-        output_nodes_(std::move(output_nodes)),
         op_run_info_(std::move(op_run_info)),
         device_context_(device_context),
         is_pyantive_infer_(is_pynative_infer) {}
@@ -42,7 +41,6 @@ class OpTaskContext {
 
   GraphId graph_id() const { return graph_id_; }
   const KernelGraphPtr &graph() const { return graph_; }
-  const std::vector<session::KernelWithIndex> &output_nodes() const { return output_nodes_; }
   const session::BackendOpRunInfoPtr &op_run_info() const { return op_run_info_; }
   device::DeviceContext *device_context() const { return device_context_; }
   bool is_pynative_infer() const { return is_pyantive_infer_; }

@@ -138,6 +138,15 @@ bool IsDynamicInputs(const FrontendOpRunInfoPtr &op_run_info) {
   }
   return false;
 }
+
+ValuePtr ConstructOutputInVM(const FrontendOpRunInfoPtr &op_run_info, const std::vector<ValuePtr> &result) {
+  if (result.size() == 1 && op_run_info->base_op_run_info.abstract != nullptr &&
+      !op_run_info->base_op_run_info.abstract->isa<abstract::AbstractSequence>()) {
+    return result[kIndex0];
+  }
+
+  return std::make_shared<ValueTuple>(result);
+}
 }  // namespace
 
 void ForwardExecutor::ClearForwardTask() {
@@ -326,13 +335,6 @@ void ForwardExecutor::InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_inf
 void ForwardExecutor::GetOutput(const FrontendOpRunInfoPtr &op_run_info) {
   // Run op with selected backend, nop is no need run backend
   op_run_info->out_value = RunOpWithBackendPolicy(op_run_info);
-  if (op_run_info->out_value->isa<ValueSequence>()) {
-    const auto &result_v_list = op_run_info->out_value->cast<ValueSequencePtr>();
-    if (result_v_list->size() == 1 && op_run_info->base_op_run_info.abstract != nullptr &&
-        !op_run_info->base_op_run_info.abstract->isa<abstract::AbstractSequence>()) {
-      op_run_info->out_value = result_v_list->value().front();
-    }
-  }
   // Some operators do not have StubNodes, such as Cast inserted for automatic mixed precision.
   if (op_run_info->stub_output != nullptr) {
     if (op_run_info->base_op_run_info.has_dynamic_output) {
@@ -406,13 +408,7 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
         result[i] = op_run_info->input_value[i];
       }
     }
-    // If input is tuple or list, just return origin input format of tuple or list
-    ValuePtr result_v;
-    if (op_run_info->input_size == 1 && !PyNativeAlgo::Common::IsTensor(op_run_info->input_value[kIndex0])) {
-      result_v = result[kIndex0];
-    } else {
-      result_v = std::make_shared<ValueTuple>(result);
-    }
+    auto result_v = ConstructOutputInVM(op_run_info, result);
     if (op_run_info->requires_grad) {
       (void)PyNativeAlgo::Common::SetValueGradInfo(result_v, nullptr, TensorGradType::kOpOutput);
     }
@@ -433,7 +429,8 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
     MS_LOG(EXCEPTION) << "VM op " << op_run_info->base_op_run_info.op_name << " run failed!";
   }
   ValuePtr result_v = PyNativeAlgo::DataConvert::PyObjToValue(result);
-  if (!result_v->isa<ValueSequence>()) {
+  if (!result_v->isa<ValueSequence>() && (op_run_info->base_op_run_info.abstract == nullptr ||
+                                          op_run_info->base_op_run_info.abstract->isa<abstract::AbstractSequence>())) {
     result_v = std::make_shared<ValueTuple>(std::vector{result_v});
   }
   if (op_run_info->requires_grad) {
@@ -572,8 +569,8 @@ ValuePtr ForwardExecutor::RunOpInMsInner(const FrontendOpRunInfoPtr &op_run_info
   // get graph info for checking it whether existing in the cache
   op_run_info->base_op_run_info.graph_info =
     pynative::OpCompiler::GetInstance().GetSingleOpGraphInfo(op_run_info->base_op_run_info, op_run_info->op_prim);
-  auto backend_op_run_info = std::make_shared<BackendOpRunInfo>(
-    op_run_info->base_op_run_info, std::make_shared<Primitive>(*op_run_info->op_prim), true, false);
+  auto backend_op_run_info =
+    std::make_shared<BackendOpRunInfo>(op_run_info->base_op_run_info, op_run_info->op_prim, true, false);
 
 #if defined(__APPLE__)
   backend_op_run_info->base_op_run_info.lazy_build = false;
@@ -584,7 +581,6 @@ ValuePtr ForwardExecutor::RunOpInMsInner(const FrontendOpRunInfoPtr &op_run_info
   MS_EXCEPTION_IF_NULL(cur_mind_rt_backend);
   bool use_dynamic_shape_process = op_run_info->base_op_run_info.use_dynamic_shape_process;
   if (use_dynamic_shape_process) {
-    AnfAlgo::SetDynamicAttrToPrim(backend_op_run_info->op_prim);
     cur_mind_rt_backend->RunOpDynamic(backend_op_run_info, &outputs);
   } else {
     cur_mind_rt_backend->RunOp(backend_op_run_info, &outputs);
@@ -593,7 +589,11 @@ ValuePtr ForwardExecutor::RunOpInMsInner(const FrontendOpRunInfoPtr &op_run_info
   if (op_run_info->base_op_run_info.has_dynamic_output) {
     op_run_info->base_op_run_info.abstract = backend_op_run_info->base_op_run_info.abstract;
   }
-  const auto &result_v = PyNativeAlgo::DataConvert::VectorRefToValue(outputs, op_run_info->requires_grad);
+
+  bool is_out_sequence = (op_run_info->base_op_run_info.abstract == nullptr ||
+                          op_run_info->base_op_run_info.abstract->isa<abstract::AbstractSequence>());
+  const auto &result_v =
+    PyNativeAlgo::DataConvert::VectorRefToValue(outputs, op_run_info->requires_grad, is_out_sequence);
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, false);
   MS_LOG(DEBUG) << "RunOpInMs end";
   return result_v;
