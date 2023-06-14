@@ -42,6 +42,7 @@ class HcclTask : public TaskRepeater<HcclTaskInfo> {
 
  private:
   class StreamGuard;
+  void InitGeTask();
   void SetSecondaryStream();
   void CreateStream(int64_t stream_num, int64_t master_stream_id);
   void CreateStream(rtModel_t model, rtStream_t *stream) const;
@@ -52,6 +53,7 @@ class HcclTask : public TaskRepeater<HcclTaskInfo> {
   std::shared_ptr<HcclTaskInfo> task_info_;
   void *stream_;
   void *workspace_mem_;
+  uint32_t task_id_;
   rtModel_t rt_model_handle_;
   int32_t priority_;
   std::vector<std::shared_ptr<StreamGuard>> secondary_stream_list_;

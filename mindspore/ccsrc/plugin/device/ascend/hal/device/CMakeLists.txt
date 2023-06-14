@@ -3,6 +3,11 @@ if("${ENABLE_HIDDEN}" STREQUAL "OFF")
     string(REPLACE " -fvisibility=hidden" " -fvisibility=default" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif()
 
+if(DEFINED ENV{ENABLE_ASYNC_LINK} AND
+        ("$ENV{ENABLE_ASYNC_LINK}" STREQUAL "ON" OR "$ENV{ENABLE_ASYNC_LINK}" STREQUAL "on"))
+    add_compile_definitions(ENABLE_ASYNC_LINK)
+endif()
+
 file(GLOB_RECURSE DEVICE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
 list(REMOVE_ITEM DEVICE_SRC_LIST "distribute/mpi_collective_group.cc"
         "distribute/collective_group_wrapper.cc" "distribute/mpi_pycc.cc")
