@@ -86,7 +86,6 @@ const char FUNC_GRAPH_FLAG_PRIMAL_OF_BPROP[] = "primal_of_bprop";
 const char FUNC_GRAPH_FLAG_SPARSE_BPROP[] = "sparse_bprop";
 const char FUNC_GRAPH_FLAG_NO_INLINE[] = "no_inline";
 const char FUNC_GRAPH_FLAG_CELL_REUSE[] = "cell_reuse";
-const char FUNC_GRAPH_FLAG_NEED_BACKEND_INLINE[] = "need_backend_inline";
 const char FUNC_GRAPH_FLAG_AFTER_BLOCK[] = "after_block";
 const char FUNC_GRAPH_FLAG_CORE[] = "core";
 const char FUNC_GRAPH_FLAG_K_GRAPH[] = "k_graph";
