@@ -2803,6 +2803,9 @@ class BiasAdd(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.arange(6).reshape((2, 3)), mindspore.float32)
         >>> bias = Tensor(np.random.random(3).reshape((3,)), mindspore.float32)
         >>> bias_add = ops.BiasAdd()
@@ -7813,6 +7816,9 @@ class InTopK(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x1 = Tensor(np.array([[1, 8, 5, 2, 7], [4, 9, 1, 3, 5]]), mindspore.float32)
         >>> x2 = Tensor(np.array([1, 3]), mindspore.int32)
         >>> in_top_k = ops.InTopK(3)

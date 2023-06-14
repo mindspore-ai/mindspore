@@ -164,6 +164,8 @@ class Ger(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> x1 = Tensor([1., 2., 3., 4.], mindspore.float32)
         >>> x2 = Tensor([1., 2., 3.], mindspore.float32)
         >>> ger = ops.Ger()
@@ -661,6 +663,9 @@ class ReduceMean(_Reduce):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = ops.ReduceMean(keep_dims=True)
         >>> output = op(x, 1)
@@ -820,6 +825,9 @@ class ReduceSum(PrimitiveWithCheck):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = ops.ReduceSum(keep_dims=True)
         >>> output = op(x, 1)
@@ -934,6 +942,8 @@ class ReduceAll(_Reduce):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[True, False], [True, True]]))
         >>> op = ops.ReduceAll(keep_dims=True)
         >>> # case 1: Reduces a dimension by the "logicalAND" of all elements in the dimension.
@@ -989,6 +999,8 @@ class ReduceAny(_Reduce):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[True, False], [True, True]]))
         >>> op = ops.ReduceAny(keep_dims=True)
         >>> # case 1: Reduces a dimension by the "logical OR" of all elements in the dimension.
@@ -1045,6 +1057,9 @@ class ReduceMax(_Reduce):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = ops.ReduceMax(keep_dims=True)
         >>> output = op(x, 1)
@@ -1129,6 +1144,9 @@ class ReduceMin(_Reduce):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = ops.ReduceMin(keep_dims=True)
         >>> output = op(x, 1)
@@ -1252,6 +1270,9 @@ class ReduceProd(_Reduce):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = ops.ReduceProd(keep_dims=True)
         >>> output = op(x, 1)
@@ -1551,6 +1572,9 @@ class MatMul(PrimitiveWithCheck):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> a = Tensor(np.ones(shape=[1, 3]), mindspore.float32)
         >>> b = Tensor(np.ones(shape=[3, 4]), mindspore.float32)
         >>> matmul = ops.MatMul()
@@ -1639,6 +1663,9 @@ class BatchMatMul(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.ones(shape=[2, 4, 1, 3]), mindspore.float32)
         >>> y = Tensor(np.ones(shape=[2, 4, 3, 4]), mindspore.float32)
         >>> batmatmul = ops.BatchMatMul()
@@ -2178,6 +2205,9 @@ class Sub(_MathBinaryOp):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> y = Tensor(np.array([4, 5, 6]), mindspore.int32)
         >>> sub = ops.Sub()
@@ -2310,6 +2340,9 @@ class SquaredDifference(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
         >>> y = Tensor(np.array([2.0, 4.0, 6.0]), mindspore.float32)
         >>> squared_difference = ops.SquaredDifference()
@@ -2346,6 +2379,9 @@ class Square(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
         >>> square = ops.Square()
         >>> output = square(x)
@@ -2422,6 +2458,9 @@ class Sqrt(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([1.0, 4.0, 9.0]), mindspore.float32)
         >>> sqrt = ops.Sqrt()
         >>> output = sqrt(x)
@@ -3196,6 +3235,9 @@ class Minimum(_MathBinaryOp):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> # case 1 : same data type
         >>> x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
         >>> y = Tensor(np.array([4.0, 2.0, 6.0]), mindspore.float32)
@@ -3241,6 +3283,9 @@ class Maximum(_MathBinaryOp):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> # case 1 : same data type
         >>> x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
         >>> y = Tensor(np.array([4.0, 2.0, 6.0]), mindspore.float32)
@@ -3588,6 +3633,9 @@ class TruncateDiv(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([2, 4, -1]), mindspore.int32)
         >>> y = Tensor(np.array([3, 3, 3]), mindspore.int32)
         >>> truncate_div = ops.TruncateDiv()
@@ -3641,6 +3689,9 @@ class TruncateMod(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([2, 4, -1]), mindspore.int32)
         >>> y = Tensor(np.array([3, 3, 3]), mindspore.int32)
         >>> truncate_mod = ops.TruncateMod()
@@ -3843,6 +3894,9 @@ class Xdivy(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([2, 4, -1]), mindspore.float32)
         >>> y = Tensor(np.array([2, 2, 2]), mindspore.float32)
         >>> xdivy = ops.Xdivy()
@@ -3925,6 +3979,9 @@ class Xlogy(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([-5, 0, 4]), mindspore.float32)
         >>> y = Tensor(np.array([2, 2, 2]), mindspore.float32)
         >>> xlogy = ops.Xlogy()
@@ -4077,6 +4134,9 @@ class Sinh(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> sinh = ops.Sinh()
         >>> x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
         >>> output = sinh(x)
@@ -4176,6 +4236,9 @@ class Equal(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> # case 1: The shape of two inputs are different
         >>> x = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> equal = ops.Equal()
@@ -4236,6 +4299,9 @@ class ApproximateEqual(_LogicBinaryOp):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> y = Tensor(np.array([2, 3, 6]), mindspore.float32)
         >>> approximate_equal = ops.ApproximateEqual(2.)
@@ -4274,6 +4340,9 @@ class EqualCount(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> y = Tensor(np.array([1, 2, 4]), mindspore.int32)
         >>> equal_count = ops.EqualCount()
@@ -4307,6 +4376,9 @@ class NotEqual(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> not_equal = ops.NotEqual()
         >>> output = not_equal(x, 2.0)
@@ -4350,6 +4422,9 @@ class Greater(PrimitiveWithCheck):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> y = Tensor(np.array([1, 1, 4]), mindspore.int32)
         >>> greater = ops.Greater()
@@ -4395,6 +4470,9 @@ class GreaterEqual(PrimitiveWithCheck):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> y = Tensor(np.array([1, 1, 4]), mindspore.int32)
         >>> greater_equal = ops.GreaterEqual()
@@ -4504,6 +4582,9 @@ class Less(PrimitiveWithCheck):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> y = Tensor(np.array([1, 1, 4]), mindspore.int32)
         >>> less = ops.Less()
@@ -4548,6 +4629,9 @@ class LessEqual(PrimitiveWithCheck):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> y = Tensor(np.array([1, 1, 4]), mindspore.int32)
         >>> less_equal = ops.LessEqual()
@@ -4721,6 +4805,9 @@ class IsNan(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> is_nan = ops.IsNan()
         >>> x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
         >>> output = is_nan(x)
@@ -4751,6 +4838,9 @@ class IsInf(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> is_inf = ops.IsInf()
         >>> x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
         >>> output = is_inf(x)
@@ -4774,6 +4864,9 @@ class IsFinite(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> is_finite = ops.IsFinite()
         >>> x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
         >>> output = is_finite(x)
@@ -5226,6 +5319,9 @@ class Sin(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> sin = ops.Sin()
         >>> x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
         >>> output = sin(x)
@@ -5411,6 +5507,9 @@ class Sign(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+         >>> import mindspore
+         >>> import numpy as np
+         >>> from mindspore import Tensor, ops
          >>> x = Tensor(np.array([[2.0, 0.0, -1.0]]), mindspore.float32)
          >>> sign = ops.Sign()
          >>> output = sign(x)
@@ -5471,6 +5570,9 @@ class Tan(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> tan = ops.Tan()
         >>> x = Tensor(np.array([-1.0, 0.0, 1.0]), mindspore.float32)
         >>> output = tan(x)
@@ -6345,6 +6447,9 @@ class MatrixInverse(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[[-0.710504  , -1.1207525],
         ...                       [-1.7651395 , -1.7576632]],
         ...                      [[ 0.52412605,  1.9070215],
@@ -6396,6 +6501,8 @@ class MatrixPower(Primitive):
         ``Ascend`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor([[[0, 1], [-1, 0]], [[1, 0], [0, -1]]], dtype=ms.float32)
         >>> matrix_power = ops.MatrixPower(n=2)
         >>> y = matrix_power(x)
@@ -6864,6 +6971,9 @@ class Trunc(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([3.4742, 0.5466, -0.8008, -3.9079]), mindspore.float32)
         >>> output = ops.Trunc()(x)
         >>> print(output)
@@ -7805,6 +7915,9 @@ class Zeta(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([10.]), mindspore.float32)
         >>> q = Tensor(np.array([1.]), mindspore.float32)
         >>> zeta = ops.Zeta()
@@ -8555,6 +8668,9 @@ class Orgqr(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[-114.6, 10.9, 1.1], [-0.304, 38.07, 69.38], [-0.45, -0.17, 62.]]), mindspore.float32)
         >>> tau = Tensor(np.array([1.55, 1.94, 0.0]), mindspore.float32)
         >>> net = ops.Orgqr()
@@ -8910,6 +9026,9 @@ class Ormqr(Primitive):
         ``GPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[-114.6, 10.9, 1.1], [-0.304, 38.07, 69.38], [-0.45, -0.17, 62]]), mindspore.float32)
         >>> tau = Tensor(np.array([1.55, 1.94, 3.0]), mindspore.float32)
         >>> other = Tensor(np.array([[-114.6, 10.9, 1.1],

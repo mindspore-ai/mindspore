@@ -18,4 +18,4 @@
         - **TypeError** - 如果 `x` 和 `y` 不是以下之一：Tensor、Number、bool。
         - **TypeError** - 如果 `x` 和 `y` 的数据类型不是float16、float32、float64、complex64、complex128、bool。
         - **ValueError** - 如果 `x` 不能广播至 `y` 的shape。
-        - **RuntimeError** - 如果Parameter的 `x` , `y` 需要进行数据类型转换，但是Parameter是不支持数据类型转换。
+        - **RuntimeError** - 如果Parameter的 `x` 、 `y` 需要进行数据类型转换，但是Parameter是不支持数据类型转换。

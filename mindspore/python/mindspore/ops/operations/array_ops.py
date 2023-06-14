@@ -2087,6 +2087,9 @@ class Argmax(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[1, 20, 5], [67, 8, 9], [130, 24, 15]]).astype(np.float32))
         >>> output = ops.Argmax(output_type=mindspore.int32)(input_x)
         >>> print(output)
@@ -2132,6 +2135,9 @@ class Argmin(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([2.0, 3.1, 1.2]), mindspore.float32)
         >>> index = ops.Argmin()(input_x)
         >>> print(index)
@@ -2248,6 +2254,9 @@ class ArgMaxWithValue(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
         >>> index, output = ops.ArgMaxWithValue()(input_x)
         >>> print(index, output)
@@ -2310,6 +2319,9 @@ class ArgMinWithValue(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
         >>> index, output = ops.ArgMinWithValue()(x)
         >>> print(index, output)
