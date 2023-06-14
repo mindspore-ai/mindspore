@@ -486,8 +486,8 @@ static void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, cons
     MS_LOG(EXCEPTION) << "Failure:tensor_redistribution init failed";
   }
   RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution.InferTensorRedistributionOperatorList();
-  redistribution_oplist_ptr =
-    TensorTransform::GetInstance()->OptimizeTensorRedistributionOperatorList(redistribution_oplist_ptr);
+  redistribution_oplist_ptr = TensorTransform::GetInstance()->OptimizeTensorRedistributionOperatorList(
+    redistribution_oplist_ptr, tensor_redistribution.input_shape());
   if (redistribution_oplist_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "Failure:InferTensorRedistribution failed";
   }
@@ -717,11 +717,10 @@ static void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node) {
     PrimitivePtr origin_prim = GetValueNode<PrimitivePtr>(node->input(0));
     SetUserAttrs(origin_prim->attrs(), prim);
     auto origin_prim_attrs = origin_prim->attrs();
-    if (origin_prim_attrs.find(RECOMPUTE_COMM_OP) != origin_prim_attrs.end() &&
-        !GetValue<bool>(origin_prim_attrs[RECOMPUTE_COMM_OP]) &&
-        COMMUNICATION_OPS.find(prim->name()) != COMMUNICATION_OPS.end()) {
+    if (origin_prim_attrs.find(RECOMPUTE_COMM_OP) != origin_prim_attrs.end()) {
+      auto do_recompute = GetValue<bool>(origin_prim_attrs[RECOMPUTE_COMM_OP]);
       MS_LOG(INFO) << "The redistribution node in reshape would not be recomputed.";
-      prim->set_attr("recompute", MakeValue(false));
+      prim->set_attr(RECOMPUTE, MakeValue(do_recompute));
     }
     if (index == replace_op.size() - 1) {
       replace_node->set_user_data<OperatorInfo>(node->user_data<OperatorInfo>());

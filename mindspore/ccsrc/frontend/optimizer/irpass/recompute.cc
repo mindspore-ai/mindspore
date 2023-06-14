@@ -107,6 +107,9 @@ bool AddNewPrimalNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg
 
 bool HasRecomputedInput(const CNodePtr &k_fg_caller_cnode) {
   for (auto &input : k_fg_caller_cnode->inputs()) {
+    if (IsPrimitiveCNode(input, prim::kPrimMakeTuple)) {
+      return HasRecomputedInput(input->cast<CNodePtr>());
+    }
     // The recomputed input should be a tuple_getitem to get the forward part of recomputed k graph.
     if (!IsPrimitiveCNode(input, prim::kPrimTupleGetItem)) {
       continue;
@@ -152,7 +155,7 @@ AnfNodePtr GetBpropGetter(const FuncGraphManagerPtr &manager, const CNodePtr &no
 
 bool HasRecomputedOutput(const FuncGraphManagerPtr &manager, const AnfNodePtr &node) {
   // The forward part may have multiple outputs.
-  if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+  if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem) || IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
     const auto &user_nodes = manager->node_users()[node];
     return std::any_of(user_nodes.begin(), user_nodes.end(),
                        [&manager](const auto &iter) { return HasRecomputedOutput(manager, iter.first); });
@@ -183,7 +186,8 @@ void GetDependencies(const FuncGraphManagerPtr &manager, const CNodePtr &k_fg_ca
                      std::vector<std::pair<CNodePtr, AnfNodePtr>> *depends) {
   bool is_recompute_k_fg_caller = IsRecomputeKGraphCaller(k_fg_caller);
   // We only handle the recomputed k graph caller.
-  if (!is_recompute_k_fg_caller && !IsPrimitiveCNode(k_fg_caller, prim::kPrimTupleGetItem)) {
+  if (!is_recompute_k_fg_caller && !IsPrimitiveCNode(k_fg_caller, prim::kPrimTupleGetItem) &&
+      !IsPrimitiveCNode(k_fg_caller, prim::kPrimMakeTuple)) {
     return;
   }
   if (is_recompute_k_fg_caller) {
@@ -192,6 +196,9 @@ void GetDependencies(const FuncGraphManagerPtr &manager, const CNodePtr &k_fg_ca
     if (forward_getter == nullptr) {
       auto bprop_caller = GetBpropCaller(manager, GetBpropGetter(manager, k_fg_caller));
       // Add the dout input of its bprop function to the dependencies.
+      if (bprop_caller == nullptr) {
+        return;
+      }
       (void)depends->emplace_back(std::make_pair(k_fg_caller, bprop_caller->cast<CNodePtr>()->input(1)));
       return;
     }
@@ -207,6 +214,9 @@ void GetDependencies(const FuncGraphManagerPtr &manager, const CNodePtr &k_fg_ca
       }
       // Add the dout input of its bprop function to the dependencies.
       auto bprop_caller = GetBpropCaller(manager, GetBpropGetter(manager, k_fg_caller));
+      if (bprop_caller == nullptr) {
+        return;
+      }
       (void)depends->emplace_back(std::make_pair(k_fg_caller, bprop_caller->cast<CNodePtr>()->input(1)));
       return;
     }
@@ -254,7 +264,7 @@ AnfNodePtr MoveKCallerToBprop(const FuncGraphManagerPtr &manager, const FuncGrap
     return new_k_fg_caller;
   }
   // If it is not tuple_getitem, it should be node which is not set recomputed.
-  if (!IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+  if (!IsPrimitiveCNode(node, prim::kPrimTupleGetItem) && !IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
     return node;
   }
   for (auto &input : node->inputs()) {
@@ -305,9 +315,15 @@ void AddDependNodes(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg, 
   std::vector<AnfNodePtr> depend_inputs{NewValueNode(prim::kPrimMakeTuple)};
   (void)std::transform(dependencies.begin(), dependencies.end(), std::back_inserter(depend_inputs),
                        [](const auto &pair) { return pair.second; });
+  FuncGraphPtr bprop_fg;
   // Add the dependency nodes to the first recomputed nodes.
   auto bprop_caller = GetBpropCaller(manager, GetBpropGetter(manager, k_fg_caller_cnode));
-  auto bprop_fg = bprop_caller->func_graph();
+  if (bprop_fg == nullptr) {
+    bprop_fg = dependencies[0].second->func_graph();
+  } else {
+    bprop_fg = bprop_caller->func_graph();
+  }
+
   MS_EXCEPTION_IF_NULL(bprop_fg);
   if (bprop_fg == fg) {
     auto depend =

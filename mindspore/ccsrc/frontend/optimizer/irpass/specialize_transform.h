@@ -103,7 +103,7 @@ class SpecializeOnGraphArguments : public AnfVisitor {
     }
 
     auto inp0_fg = GetValueNode<FuncGraphPtr>(inputs[0]);
-    if (inp0_fg == nullptr || inp0_fg->has_flag(FUNC_GRAPH_FLAG_NO_INLINE) ||
+    if (inp0_fg == nullptr || inp0_fg->has_flag(FUNC_GRAPH_FLAG_NO_INLINE) || IsSetRecomputed(inp0_fg) ||
         inp0_fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || inp0_fg->recursive()) {
       return nullptr;
     }
@@ -131,6 +131,13 @@ class SpecializeOnGraphArguments : public AnfVisitor {
 
  private:
   internal::SpecializeTransform specialize_transform_;
+  bool IsSetRecomputed(const FuncGraphPtr &fg) {
+    static const auto cell_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
+    static bool cell_reuse_enable = cell_reuse_env == "1" || cell_reuse_env == "2";
+    return fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE) ||
+           (cell_reuse_enable &&
+            (fg->has_flag(FUNC_GRAPH_NOT_RECOMPUTE_K_GRAPH) || fg->has_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH)));
+  }
 };
 }  // namespace irpass
 }  // namespace opt
