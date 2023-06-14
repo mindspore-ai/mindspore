@@ -21,6 +21,7 @@
 #include <utility>
 #include <memory>
 #include <functional>
+#include <string>
 #include "include/backend/device_address.h"
 #include "plugin/device/cpu/hal/device/cpu_hash_table.h"
 
@@ -43,6 +44,7 @@ template <typename KeyType, typename ValueType>
 void CreateCPUHashTable(const UserDataPtr &user_data) {
   MS_EXCEPTION_IF_NULL(user_data);
   auto shape_vector = user_data->get<ShapeVector>(kHashTableShapeVector);
+  auto default_value = user_data->get<Value>(kHashTableDefaultValue);
   MS_EXCEPTION_IF_NULL(shape_vector);
 
   int32_t value_size = 1;
@@ -52,8 +54,16 @@ void CreateCPUHashTable(const UserDataPtr &user_data) {
   if (value_size <= 0) {
     MS_LOG(WARNING) << "Invalid value size:" << value_size;
   }
-  user_data->set<CPUHashTable<KeyType, ValueType>>(kUserDataData,
-                                                   std::make_shared<CPUHashTable<KeyType, ValueType>>(value_size));
+  if (default_value->isa<StringImm>()) {
+    user_data->set<CPUHashTable<KeyType, ValueType>>(
+      kUserDataData,
+      std::make_shared<CPUHashTable<KeyType, ValueType>>(value_size, GetValue<std::string>(default_value)));
+  } else if (default_value->isa<FloatImm>()) {
+    user_data->set<CPUHashTable<KeyType, ValueType>>(
+      kUserDataData, std::make_shared<CPUHashTable<KeyType, float>>(value_size, GetValue<float>(default_value)));
+  } else {
+    MS_LOG(EXCEPTION) << "Invalid Default Value:" << default_value;
+  }
 }
 
 /**

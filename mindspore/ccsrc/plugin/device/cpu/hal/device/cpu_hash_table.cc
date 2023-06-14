@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 #include <algorithm>
 
 #include "utils/log_adapter.h"
@@ -29,6 +30,18 @@ namespace device {
 namespace cpu {
 template <typename Key, typename Value>
 CPUHashTable<Key, Value>::CPUHashTable(size_t value_dim) : value_dim_(value_dim), value_size_(0) {
+  (void)Initialize();
+}
+
+template <typename Key, typename Value>
+CPUHashTable<Key, Value>::CPUHashTable(size_t value_dim, const std::string &initializer)
+    : value_dim_(value_dim), value_size_(0), initializer_(initializer), default_value_(0) {
+  (void)Initialize();
+}
+
+template <typename Key, typename Value>
+CPUHashTable<Key, Value>::CPUHashTable(size_t value_dim, const Value &default_value)
+    : value_dim_(value_dim), value_size_(0), initializer_(""), default_value_(default_value) {
   (void)Initialize();
 }
 
@@ -49,21 +62,67 @@ bool CPUHashTable<Key, Value>::Finalize() {
 }
 
 template <typename Key, typename Value>
-bool CPUHashTable<Key, Value>::Find(const Key *keys, size_t key_num, bool, Value *outputs, void *) {
+bool CPUHashTable<Key, Value>::Find(const Key *keys, size_t key_num, bool insert_default_value, Value *outputs,
+                                    void *) {
   std::unique_lock<std::shared_mutex> lock(mutex_);
 
+  MS_EXCEPTION_IF_NULL(outputs);
   // Find and copy values to output buffer if the keys exist.
   for (size_t i = 0; i < key_num; ++i) {
     const auto &key = keys[i];
+    size_t offset = i * value_dim_;
+    size_t src_size = value_size_;
+    size_t dst_size = value_size_;
     if (values_.find(key) != values_.end()) {
-      size_t offset = i * value_dim_;
-      size_t src_size = value_size_;
-      size_t dst_size = value_size_;
-
       // Copy the value of the key from the hash table to the outputs.
       auto value = values_[key].first;
       MS_EXCEPTION_IF_NULL(value);
       auto ret = memcpy_s(outputs + offset, dst_size, value, src_size);
+      if (ret != EOK) {
+        MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
+        return false;
+      }
+    } else if (!initializer_.empty()) {
+      // allocate memory for value
+      auto value_addr = reinterpret_cast<Value *>(AllocateMemory(value_size_));
+      MS_EXCEPTION_IF_NULL(value_addr);
+      values_.emplace(key, std::make_pair(reinterpret_cast<Value *>(value_addr), Status::kModified));
+      if (initializer_ == kNormalDistribution) {
+        // initialize normal distribution parameter
+        const double mean = 0.0;
+        const double sigma = 0.01;
+        std::random_device rd;
+        const std::uint64_t seed = rd();
+        size_t skip = 0;
+        random::GenerateRandoms<Value, Generator, NormalDistribution>(seed, skip, value_addr, value_dim_, mean, sigma);
+      } else if (initializer_ == kOnesDistribution) {
+        default_value_ = 1;
+        for (size_t k = 0; k < value_dim_; ++k) {
+          value_addr[k] = default_value_;
+        }
+      } else if (initializer_ == kZerosDistribution) {
+        default_value_ = 0;
+        for (size_t k = 0; k < value_dim_; ++k) {
+          value_addr[k] = default_value_;
+        }
+      } else {
+        MS_LOG(ERROR) << "Unsupported initializer: " << initializer_;
+        return false;
+      }
+      auto ret = memcpy_s(outputs + offset, dst_size, value_addr, src_size);
+      if (ret != EOK) {
+        MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
+        return false;
+      }
+    } else if (insert_default_value) {
+      // if there's no key in values_
+      auto value_addr = reinterpret_cast<Value *>(AllocateMemory(value_size_));
+      MS_EXCEPTION_IF_NULL(value_addr);
+      values_.emplace(key, std::make_pair(reinterpret_cast<Value *>(value_addr), Status::kModified));
+      for (size_t k = 0; k < value_dim_; ++k) {
+        value_addr[k] = default_value_;
+      }
+      auto ret = memcpy_s(outputs + offset, dst_size, value_addr, src_size);
       if (ret != EOK) {
         MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
         return false;
@@ -192,7 +251,70 @@ bool CPUHashTable<Key, Value>::GetKeysAndValues(Key *keys, Value *values, void *
 }
 
 template <typename Key, typename Value>
-bool CPUHashTable<Key, Value>::Import(const DataLenPair &) {
+bool CPUHashTable<Key, Value>::Import(const DataLenPair &input_data) {
+  // 1. import input tensor data once receiving kImportTensorNum(3) input tensors: {key_tensor, value_tensor,
+  // status_tensor}
+  static std::vector<DataLenPair> input_data_list;
+  if (input_data_list.size() < kImportTensorNum) {
+    input_data_list.emplace_back(input_data);
+  }
+  if (input_data_list.size() != kImportTensorNum) {
+    return true;
+  }
+
+  const auto &input_keys = input_data_list[0];
+  const auto &input_values = input_data_list[1];
+  void *host_keys = input_keys.first;
+  void *host_values = input_values.first;
+  MS_ERROR_IF_NULL(host_keys);
+  MS_ERROR_IF_NULL(host_values);
+
+  size_t keys_len = input_keys.second;
+  size_t values_len = input_values.second;
+  if (keys_len == 0) {
+    return true;
+  }
+
+  // 2. Allocate temp buffer to keys and values
+  Key *device_keys = static_cast<Key *>(AllocateMemory(keys_len));  // Allocate memory on the heap for keys on the CPU
+  if (device_keys == nullptr) {                                     // Check if the allocation was successful
+    return false;                                                   // return false to indicate failure
+  }
+
+  Value *device_values = static_cast<Value *>(AllocateMemory(values_len));
+  if (device_values == nullptr) {
+    free(device_keys);
+    return false;
+  }
+
+  // 3. Copy input keys and values to device.
+  auto ret = memcpy_s(device_keys, keys_len, host_keys, keys_len);
+  if (ret != EOK) {
+    MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
+    return false;
+  }
+  ret = memcpy_s(device_values, values_len, host_values, values_len);
+  if (ret != EOK) {
+    MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
+    return false;
+  }
+
+  // 4. Insert input keys and values to hash table.
+  Status *statuses = new Status[keys_len];
+  std::fill_n(statuses, keys_len, Status::kUnchanged);
+  if (!Insert(device_keys, keys_len / sizeof(Key), device_values, statuses, nullptr)) {
+    FreeMemory(device_keys);
+    FreeMemory(device_values);
+    MS_LOG(ERROR) << "Insert keys and values failed.";
+    return false;
+  }
+  // If insertion succeeded, free memory for keys and values
+  FreeMemory(device_keys);
+  FreeMemory(device_values);
+
+  input_data_list.clear();  // Clear the list of input tensors
+  delete[] statuses;
+
   return true;
 }
 

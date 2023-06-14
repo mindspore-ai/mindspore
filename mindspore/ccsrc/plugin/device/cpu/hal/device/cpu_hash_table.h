@@ -18,14 +18,27 @@
 
 #include <shared_mutex>
 #include <unordered_map>
+#include <random>
+#include <vector>
+#include <string>
 #include <utility>
 
 #include "runtime/device/hash_table.h"
 #include "plugin/device/cpu/hal/hardware/cpu_memory_pool.h"
+#include "include/common/random.h"
 
 namespace mindspore {
 namespace device {
 namespace cpu {
+constexpr static size_t kImportTensorNum = 3;
+constexpr static char kNormalDistribution[] = "normal";
+constexpr static char kZerosDistribution[] = "zeros";
+constexpr static char kOnesDistribution[] = "ones";
+
+using DataType = float;
+using Generator = random::Philox;
+using NormalDistribution = random::NormalDistribution<double>;
+
 // A hash table base on the host side cpu.
 template <typename Key, typename Value>
 class CPUHashTable : public HashTable<Key, Value> {
@@ -34,6 +47,8 @@ class CPUHashTable : public HashTable<Key, Value> {
   using ValueStatusPair = std::pair<Value *, Status>;
 
   explicit CPUHashTable(size_t value_dim);
+  CPUHashTable(size_t value_dim, const std::string &initializer);
+  CPUHashTable(size_t value_dim, const Value &default_value);
   ~CPUHashTable() override;
 
   // Initialize the resources (e.g. device context) needed by this hash table.
@@ -91,6 +106,9 @@ class CPUHashTable : public HashTable<Key, Value> {
   size_t value_dim_;
   size_t value_size_;
 
+  // These two augments are set for padding the missing keys.
+  std::string initializer_;
+  Value default_value_;
   // The flag records whether the elements of the hash table have changed since the last export, true means that there
   // has been a change.
   bool is_dirty_{true};
