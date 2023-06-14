@@ -140,6 +140,27 @@ Status Biquad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   return LFilter(input, output, a_coeffs, b_coeffs, true);
 }
 
+Status CountThreadNums(size_t input_size, float block_size, size_t *task_num, size_t *once_compute_size);
+
+template <typename T>
+void ContrastImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out, T enhancement_amount_value,
+                  size_t start, size_t end) {
+  auto itr_out = (*out)->begin<T>();
+  itr_out += start;
+  auto tmp_start = input->begin<T>();
+  tmp_start += start;
+  auto tmp_end = input->begin<T>();
+  tmp_end += end;
+
+  for (auto itr_in = tmp_start; itr_in != tmp_end; itr_in++) {
+    // PI / 2 is half of the constant PI
+    T temp1 = static_cast<T>(*itr_in) * (PI / TWO);
+    T temp2 = enhancement_amount_value * std::sin(temp1 * 4);
+    *itr_out = std::sin(temp1 + temp2);
+    itr_out++;
+  }
+}
+
 /// \brief Apply contrast effect.
 /// \param input/output: Tensor of shape <..., time>.
 /// \param enhancement_amount: controls the amount of the enhancement.
@@ -151,14 +172,26 @@ Status Contrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
   TensorShape output_shape{input->shape()};
   std::shared_ptr<Tensor> out;
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(output_shape, input->type(), &out));
-  auto itr_out = out->begin<T>();
-  for (auto itr_in = input->begin<T>(); itr_in != input->end<T>(); itr_in++) {
-    // PI / 2 is half of the constant PI
-    T temp1 = static_cast<T>(*itr_in) * (PI / TWO);
-    T temp2 = enhancement_amount_value * std::sin(temp1 * 4);
-    *itr_out = std::sin(temp1 + temp2);
-    itr_out++;
+
+  // Get the thread num and once compute size.
+  size_t task_num = 0;
+  size_t once_compute_size = 0;
+  float block_size = 6000;
+  size_t input_size = input->Size();
+  RETURN_IF_NOT_OK(CountThreadNums(input_size, block_size, &task_num, &once_compute_size));
+
+  // Multi-threaded parallel computing.
+  std::vector<std::thread> workers = std::vector<std::thread>(task_num);
+  for (int i = 0; i < task_num; i++) {
+    size_t start = i * once_compute_size;
+    size_t end = (start + once_compute_size) > input_size ? input_size : (start + once_compute_size);
+    workers[i] = std::thread(ContrastImpl<T>, input, &out, enhancement_amount_value, start, end);
   }
+
+  for (int j = 0; j < task_num; j++) {
+    workers[j].join();
+  }
+
   *output = out;
   return Status::OK();
 }

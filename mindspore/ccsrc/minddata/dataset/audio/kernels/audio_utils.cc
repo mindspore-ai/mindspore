@@ -28,6 +28,22 @@ namespace dataset {
 // global lock for cyl_bessel_i and cyl_bessel_if function
 std::mutex cyl_bessel_mux_;
 
+// Compute the thread nums.
+Status CountThreadNums(size_t input_size, float block_size, size_t *task_num, size_t *once_compute_size) {
+  CHECK_FAIL_RETURN_UNEXPECTED(block_size != 0, "Invalid data, the value of 'block_size' should not be 0, but got 0.");
+  size_t audio_thread_num = 4;
+  size_t thread_num =
+    input_size < block_size * audio_thread_num ? std::ceil(input_size / block_size) : audio_thread_num;
+  *once_compute_size = (input_size + thread_num - 1) / thread_num;
+  CHECK_FAIL_RETURN_UNEXPECTED((*once_compute_size) != 0,
+                               "Invalid data, the value of 'once_compute_size' should not be 0, but got 0.");
+  *task_num = input_size / (*once_compute_size);
+  if (input_size % (*once_compute_size) != 0) {
+    *task_num += 1;
+  }
+  return Status::OK();
+}
+
 /// \brief Calculate complex tensor angle.
 /// \param[in] input - Input tensor, must be complex, <channel, freq, time, complex=2>.
 /// \param[out] output - Complex tensor angle.
