@@ -8,7 +8,9 @@
     更多详细信息请参见 :class:`mindspore.nn.FTRL` 。
 
     .. note::
-        当前在Ascend平台上仅支持正数，其余场景计算结果未定义。
+        - 当前在Ascend平台上仅支持正数，其余场景计算结果未定义。
+        - `var` 、 `accum` 、 `linear` 和 `grad` 的输入符合隐式类型转换规则，使数据类型一致。如果它们具有不同的数据类型，则低精度数据类型将转换为相对最高精度的数据类型。
+
 
     参数：
         - **use_locking** (bool) - 是否对参数更新加锁保护。默认值： ``False`` 。
@@ -31,5 +33,5 @@
         - **TypeError** - 如果 `var` 、 `grad` 、 `lr` 、 `l1` 、 `l2` 或 `lr_power` 的数据类型既不是float16也不是float32。
         - **TypeError** - 如果 `lr` 、 `l1` 、 `l2` 或 `lr_power` 既不是数值型也不是Tensor。
         - **TypeError** - 如果 `grad` 不是Tensor。
-        - **RuntimeError** - 如果 `var`、 `accum`、 `linear` 参数类型不一致。
-        - **RuntimeError** - 如果 `grad`、 `lr`、 `l1`、 `l2`、`lr_power` 的参数类型与 `var` 不一致且精度大于 `var`。
+        - **TypeError** - 如果 `var`、 `accum`、 `linear` 参数类型不一致。
+        - **TypeError** - 如果 `grad`、 `lr`、 `l1`、 `l2`、`lr_power` 的参数类型与 `var` 不一致且精度大于 `var`。

@@ -42,4 +42,4 @@
         - **TypeError** - 如果 `var` 、 `m` 、 `v` 、 `beta_power` 、 `lr` 、 `beta1` 、 `beta2` 、 `epsilon` 或 `grad` 的数据类型既不是float16也不是float32。
         - **TypeError** - 如果 `beta_power` 、 `lr` 、 `beta1` 、 `beta2` 或 `epsilon` 既不是数值型也不是Tensor。
         - **TypeError** - 如果 `grad` 不是Tensor。
-        - **RuntimeError** - 如果 `var` 、 `m` 、 `v` 和 `grad` 不支持数据类型转换。
+        - **TypeError** - 如果 `var` 、 `m` 、 `v` 和 `grad` 不支持数据类型转换。

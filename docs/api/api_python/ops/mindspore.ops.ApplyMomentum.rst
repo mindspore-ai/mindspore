@@ -28,4 +28,4 @@
 
     异常：
         - **TypeError** - 如果 `use_locking` 或 `use_nesterov` 不是bool，或 `gradient_scale` 不是float。
-        - **RuntimeError** - 如果 `var` 、 `accum` 和 `grad` 不支持数据类型转换。
+        - **TypeError** - 如果 `var` 、 `accum` 和 `grad` 不支持数据类型转换。

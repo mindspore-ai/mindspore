@@ -26,4 +26,4 @@ mindspore.ops.ApproximateEqual
 
     异常：
         - **TypeError** - `tolerance` 不是float类型。
-        - **RuntimeError** - `x` 与 `y` 之间的类型转换不被支持。
+        - **TypeError** - `x` 与 `y` 之间的类型转换不被支持。
