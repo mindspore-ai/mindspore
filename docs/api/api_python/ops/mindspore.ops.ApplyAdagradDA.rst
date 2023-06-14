@@ -53,4 +53,4 @@ mindspore.ops.ApplyAdagradDA
         - **TypeError** - 如果 `gradient_accumulator` 、 `gradient_squared_accumulator` 、 `grad` 与 `var` 的数据类型不相同。
         - **TypeError** - 如果 `global_step` 的数据类型不是int32也不是int64。
         - **ValueError** - 如果 `lr` 、 `l1` 、 `l2` 和 `global_step` 的shape大小不为0。
-        - **RuntimeError** - 如果 `var` 、 `gradient_accumulator` 、 `gradient_squared_accumulator` 和 `grad` 不支持数据类型转换。
+        - **TypeError** - 如果 `var` 、 `gradient_accumulator` 、 `gradient_squared_accumulator` 和 `grad` 不支持数据类型转换。

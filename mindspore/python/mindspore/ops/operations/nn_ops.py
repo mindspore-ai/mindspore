@@ -4913,6 +4913,11 @@ class Adam(Primitive):
     :math:`\epsilon` represents
     `epsilon`.
 
+    Inputs of `var`, `m`, `v` and `gradient`
+    comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, the lower priority data type will be converted to
+    the relatively highest priority data type.
+
     Args:
         use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
             If ``True`` , updates of the var, m, and v tensors will be protected by a lock.
@@ -6157,7 +6162,7 @@ class ApplyAdagradV2(Primitive):
     Raises:
         TypeError: If dtype of `var`, `accum`, `lr` or `grad` is neither float16 nor float32.
         TypeError: If `lr` is neither a Number nor a Tensor.
-        RuntimeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
+        TypeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -9013,7 +9018,7 @@ class ApplyAdagradDA(Primitive):
         TypeError: If dtype of `gradient_accumulator`, `gradient_squared_accumulator` or `grad` is not same as `var`.
         TypeError: If dtype of `global_step` is not int32 nor int64.
         ValueError: If the shape size of `lr`, `l1`, `l2` and `global_step` is not 0.
-        RuntimeError: If the data type of `var`, `gradient_accumulator`, `gradient_squared_accumulator` and `grad`
+        TypeError: If the data type of `var`, `gradient_accumulator`, `gradient_squared_accumulator` and `grad`
                       conversion of Parameter is not supported.
 
     Supported Platforms:
