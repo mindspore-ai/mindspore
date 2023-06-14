@@ -3554,7 +3554,7 @@ def slogdet(input):
 
 def trace(input):
     """
-    Returns a new tensor that is the sum of the input trace.
+    Returns a new tensor that is the sum of the `input` main trace.
 
     Note:
         Input must be matrix, and complex number is not supported at present.
@@ -4154,7 +4154,8 @@ def approximate_equal(x, y, tolerance=1e-5):
 
 def isfinite(x):
     r"""
-    Determines which elements are finite for each position.
+    Determines which elements are finite for each position. If elements are not ``NaN`` , ``-INF`` , ``INF``,
+    they are finite.
 
     .. math::
 
@@ -7867,9 +7868,6 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
     other `int` or `float`  -- not supported --              :math:`sum(abs(x)^{ord})^{(1 / ord)}`
     ====================== ================================ ==========================================
 
-    .. note::
-        Currently, complex numbers are not supported.
-
     Args:
         A (Tensor): Tensor of shape :math:`(*, n)` or :math:`(*, m, n)` where * is zero or more batch dimensions.
         ord (Union[int, float, inf, -inf, 'fro', 'nuc'], optional): norm's mode. refer to the table above for
@@ -7906,6 +7904,10 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
+
+    Note:
+        - Currently, complex numbers are not supported.
+        - Running on ``Ascend`` platform is not supported when ord is `2` , `-2` or `nuc` .
 
     Examples:
         >>> import mindspore as ms
@@ -10591,7 +10593,7 @@ def logical_xor(input, other):
         Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
 
     Raises:
-        TypeError: If neither `input` nor `other` is a Tensor whose data type is bool.
+        TypeError: If the dtype of `input` or `other` is not bool or can not be implicitly converted to bool.
         ValueError: If the shape of two inputs cannot be broadcast.
 
     Supported Platforms:
