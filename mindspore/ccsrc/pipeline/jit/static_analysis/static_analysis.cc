@@ -262,6 +262,15 @@ EvalResultPtr ConvertClassToFunc(const CNodePtr &cnode, const AbstractBasePtr &a
   MS_EXCEPTION_IF_NULL(val);
   auto class_val = dyn_cast_ptr<parse::ClassType>(val);
   MS_EXCEPTION_IF_NULL(class_val);
+  // Check if parameter.
+  if (py::hasattr(class_val->obj(), "__parameter__")) {
+    MS_EXCEPTION(ValueError)
+      << "Failed to compile in GRAPH_MODE because creating Parameter instances is not supported in "
+      << "'construct' or function with @jit decorator. Try to create Parameter instances externally "
+      << "such as initialized in the method '__init__' before assigning.\nFor more details, please refer to "
+      << "https://www.mindspore.cn/docs/zh-CN/master/design/dynamic_graph_and_static_graph.html \n";
+  }
+
   const auto &class_name = class_val->name();
   py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
   auto py_fn = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_CONVERT_CLASS_TO_FUNCTION, py::str(class_name));
