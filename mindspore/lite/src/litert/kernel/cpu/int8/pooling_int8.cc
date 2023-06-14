@@ -144,6 +144,8 @@ int PoolingInt8CPUKernel::ReSize() {
     pooling_param_->window_h_ = compute_.input_h_;
     pooling_param_->window_w_ = compute_.input_w_;
   }
+  compute_.minf = INT8_MIN;
+  compute_.maxf = INT8_MAX;
 
   FreeQuantParam();
   int ret = SetQuantParam();

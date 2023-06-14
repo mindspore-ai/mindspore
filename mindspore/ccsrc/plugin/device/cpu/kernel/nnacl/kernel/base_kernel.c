@@ -16,6 +16,12 @@
 
 #include "nnacl/kernel/base_kernel.h"
 
+int base_kernel_prepare_1in_2out(KernelBase *self) {
+  NNACL_CHECK_FALSE(self->in_size_ < ONE_TENSOR, NNACL_ERR);
+  NNACL_CHECK_FALSE(self->out_size_ < TWO_TENSOR, NNACL_ERR);
+  return NNACL_OK;
+}
+
 int base_kernel_prepare_one_input(KernelBase *self) {
   NNACL_CHECK_FALSE(self->in_size_ < ONE_TENSOR, NNACL_ERR);
   NNACL_CHECK_FALSE(self->out_size_ < ONE_TENSOR, NNACL_ERR);
