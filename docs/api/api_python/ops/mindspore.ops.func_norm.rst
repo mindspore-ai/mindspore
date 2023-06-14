@@ -23,9 +23,6 @@ mindspore.ops.norm
     其余int或float值     不支持                             :math:`sum(abs(x)^{ord})^{(1 / ord)}`
     =================   ================================== ==============================================
 
-    .. note::
-        当前暂不支持复数。
-
     参数：
         - **A** (Tensor) - shape为 :math:`(*, n)` 或者 :math:`(*, m, n)` 的Tensor，其中*是零个或多个batch维度。
         - **ord** (Union[int, float, inf, -inf, 'fro', 'nuc'], 可选) - norm的模式。行为参考上表。默认值： ``None`` 。
@@ -52,3 +49,7 @@ mindspore.ops.norm
         - **ValueError** - `A` 是一个矩阵并且 `ord` 为一个整型但是取值不为[1, -1, 2, -2]之一。
         - **ValueError** - `dim` 的两个元素在标准化过后取值相同。
         - **ValueError** - `dim` 的任意元素超出索引。
+
+    ..note::
+        - 当前暂不支持复数。
+        - 当ord为 `2` , `-2` or `nuc` 时，不支持在 ``Ascend`` 平台上运行。
