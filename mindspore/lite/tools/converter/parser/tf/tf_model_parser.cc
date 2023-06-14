@@ -18,6 +18,7 @@
 #include "tools/converter/parser/tf/tf_model_parser.h"
 #include <functional>
 #include <set>
+#include <algorithm>
 #include "include/registry/node_parser_registry.h"
 #include "src/common/log_adapter.h"
 #include "src/common/utils.h"
@@ -40,6 +41,7 @@
 #include "tools/converter/parser/unify_format.h"
 #include "tools/converter/parser/tf/tf_input_adjust.h"
 #include "tools/converter/parser/tf/remove_ineffective_control_flow.h"
+#include "tools/converter/parser/tf/tf_util.h"
 
 using mindspore::converter::kFmkTypeTf;
 namespace mindspore {
@@ -49,10 +51,6 @@ bool IsTensorListOp(const AnfNodePtr &anf_node) {
   return opt::CheckPrimitiveType(anf_node, prim::kPrimTensorListFromTensor) ||
          opt::CheckPrimitiveType(anf_node, prim::kPrimTensorListSetItem) ||
          opt::CheckPrimitiveType(anf_node, prim::kPrimTensorListReserve);
-}
-
-bool IsEmptyOp(const std::string &op_name) {
-  return op_name == "Identity" || op_name == "StopGradient" || op_name == "NoOp" || op_name == "ReadVariableOp";
 }
 
 constexpr size_t kConvWeightIndex = 2;
@@ -71,11 +69,11 @@ AnfNodePtr GetAnfNode(const std::string &name, const std::unordered_map<std::str
 
 std::string GetOriginInputName(const tensorflow::NodeDef &node,
                                const std::map<std::string, const tensorflow::NodeDef *> &tf_graph_nodes) {
-  if (!IsEmptyOp(node.op())) {
+  if (!TensorFlowUtils::OutputIsInputOp(node.op())) {
     return node.name();
   }
   auto tmp_node = &node;
-  while (IsEmptyOp(tmp_node->op())) {
+  while (TensorFlowUtils::OutputIsInputOp(tmp_node->op())) {
     auto flatten_input_name = TensorFlowUtils::GetFlattenNodeName(tmp_node->input(0));
     if (tf_graph_nodes.find(flatten_input_name) == tf_graph_nodes.end()) {
       return flatten_input_name;
@@ -645,6 +643,7 @@ api::FuncGraphPtr TFModelParser::Parse(const converter::ConverterParameters &fla
     return nullptr;
   }
   bool success_flag = true;
+  ineffective_if_op_map_.clear();
   for (int i = 0; i < tf_root_graph_->node_size(); i++) {
     auto &node_def = tf_root_graph_->node(i);
     status = ConvertOps(node_def, tf_root_graph_nodes_, graph, &anf_root_node_map_);
@@ -688,7 +687,7 @@ api::FuncGraphPtr TFModelParser::Parse(const converter::ConverterParameters &fla
   }
   std::set<FuncGraphPtr> all_func_graphs = {};
   GetAllFuncGraph(graph, &all_func_graphs);
-  if ((status = TF2AnfAdjust(all_func_graphs)) != RET_OK) {
+  if ((status = TF2AnfAdjust(all_func_graphs, &ineffective_if_op_map_)) != RET_OK) {
     MS_LOG(ERROR) << "TF2AnfAdjust failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
@@ -1081,7 +1080,7 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
   MS_ASSERT(func_graph_ptr != nullptr);
   STATUS status = RET_OK;
   const auto &op_type = node_def.op();
-  if (IsEmptyOp(op_type)) {
+  if (TensorFlowUtils::OutputIsInputOp(op_type)) {
     return RET_OK;
   } else if (op_type == "Placeholder" || op_type == "Const") {
     node_output_num_[node_def.name()] = 1;
@@ -1156,8 +1155,114 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
   return status;
 }
 
+bool TFModelParser::IsEmptyTfFunction(const CNodePtr &anf_node, std::string branch_name) {
+  for (int i = 0; i < tf_root_graph_->library().function_size(); i++) {
+    auto &tf_sub_fuction = tf_root_graph_->library().function(i);
+    auto &tf_sub_signature = tf_sub_fuction.signature();
+    auto &sub_graph_name = tf_sub_signature.name();
+
+    if (branch_name == sub_graph_name) {
+      auto &tf_sub_signature_output_arg = tf_sub_signature.output_arg();
+      if (tf_sub_signature_output_arg.size() != 1) {
+        return false;
+      }
+      auto &tf_sub_signature_output_name = tf_sub_signature_output_arg.Get(0).name();
+      auto input_arg_size = tf_sub_signature.input_arg_size();
+      if (tf_sub_fuction.node_def_size() == 0) {
+        for (int index = 0; index < input_arg_size; index++) {
+          auto &input_arg = tf_sub_signature.input_arg(index);
+          if (input_arg.name() == tf_sub_signature_output_name) {
+            if (ineffective_if_op_map_.find(anf_node) == ineffective_if_op_map_.end()) {
+              ineffective_if_op_map_[anf_node] = index + C2NUM;
+              return true;
+            }
+          }
+        }
+      } else if (tf_sub_fuction.node_def_size() == 1) {
+        auto &node_def = tf_sub_fuction.node_def(0);
+        if (!TensorFlowUtils::OutputIsInputOp(node_def.name())) {
+          return false;
+        }
+        for (int index = 0; index < input_arg_size; index++) {
+          auto &input_arg = tf_sub_signature.input_arg(index);
+          if (input_arg.name() == node_def.input(0)) {
+            auto output_name = node_def.name();
+            transform(output_name.begin(), output_name.end(), output_name.begin(), ::tolower);
+            if (output_name == tf_sub_signature_output_name) {
+              if (ineffective_if_op_map_.find(anf_node) == ineffective_if_op_map_.end()) {
+                ineffective_if_op_map_[anf_node] = index + C2NUM;
+                return true;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return false;
+}
+
+bool TFModelParser::IsIneffectiveIfOp(const CNodePtr &anf_node, const string &op_type,
+                                      const tensorflow::NodeDef &node_def) {
+  if (op_type == "If") {
+    lite::DataInfo if_cond_info;
+    auto if_cond = anf_node->input(1);
+    if (if_cond == nullptr) {
+      return false;
+    }
+    int status = lite::RET_ERROR;
+    if (if_cond->isa<Parameter>()) {
+      status = lite::FetchDataFromParameterNode(anf_node, 1, converter::kFmkTypeMs, &if_cond_info, true);
+    } else if (utils::isa<CNodePtr>(if_cond)) {
+      auto input_cnode = if_cond->cast<CNodePtr>();
+      if (input_cnode == nullptr) {
+        return false;
+      }
+      if (!opt::CheckPrimitiveType(input_cnode, prim::kPrimConstant)) {
+        return false;
+      }
+
+      auto input_cnode_in1 = input_cnode->input(1);
+      if (input_cnode_in1 == nullptr) {
+        return false;
+      }
+      if (input_cnode_in1->isa<Parameter>()) {
+        status = lite::FetchDataFromParameterNode(input_cnode, 1, converter::kFmkTypeMs, &if_cond_info, true);
+      } else if (input_cnode_in1->isa<ValueNode>()) {
+        status = lite::FetchDataFromValueNode(input_cnode, 1, converter::kFmkTypeMs, false, &if_cond_info, true);
+      }
+    }
+
+    if (status == lite::RET_OK) {
+      if (static_cast<TypeId>(if_cond_info.data_type_) == kNumberTypeBool && if_cond_info.data_.size() == 1) {
+        tensorflow::AttrValue attr_value;
+        if (static_cast<bool>(if_cond_info.data_[0])) {
+          if (TensorFlowUtils::FindAttrValue(node_def, "then_branch", &attr_value)) {
+            auto then_name = attr_value.func().name();
+            if (IsEmptyTfFunction(anf_node, then_name)) {
+              return true;
+            }
+          }
+        } else {
+          if (TensorFlowUtils::FindAttrValue(node_def, "else_branch", &attr_value)) {
+            auto else_name = attr_value.func().name();
+            if (IsEmptyTfFunction(anf_node, else_name)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+  }
+  return false;
+}
+
 STATUS TFModelParser::ProcessControlFlowOp(const CNodePtr &anf_node, const string &op_type,
                                            const tensorflow::NodeDef &node_def) {
+  if (IsIneffectiveIfOp(anf_node, op_type, node_def)) {
+    return RET_OK;
+  }
+
   if (op_type == "StatelessWhile" || op_type == "While") {
     MS_LOG(INFO) << "find while node:" << node_def.name();
     tensorflow::AttrValue attr_value;
@@ -1236,10 +1341,10 @@ STATUS TFModelParser::GetGraphOutputNames(std::vector<AnfNodePtr> *output_nodes)
         return RET_ERROR;
       }
       output_nodes->push_back(anf_node);
-      if (IsEmptyOp(node->op())) {
+      if (TensorFlowUtils::OutputIsInputOp(node->op())) {
         auto tmp_node = node;
         bool found_input = true;
-        while (tmp_node->name().empty() && IsEmptyOp(tmp_node->op())) {
+        while (tmp_node->name().empty() && TensorFlowUtils::OutputIsInputOp(tmp_node->op())) {
           auto flatten_input_name = TensorFlowUtils::GetFlattenNodeName(tmp_node->input(0));
           if (tf_root_graph_nodes_.find(flatten_input_name) != tf_root_graph_nodes_.end()) {
             tmp_node = tf_root_graph_nodes_.at(flatten_input_name);
@@ -1333,7 +1438,8 @@ STATUS TFModelParser::MakeAnfGraphOutputs(const std::vector<AnfNodePtr> &output_
   return RET_OK;
 }
 
-int TFModelParser::TF2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
+int TFModelParser::TF2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs,
+                                std::map<AnfNodePtr, int> *ineffective_if_op_map) {
   for (const auto &func_graph : all_func_graphs) {
     if (!TfInputAdjust::Adjust(func_graph)) {
       MS_LOG(ERROR) << "Do TfInputAdjust failed.";
@@ -1341,7 +1447,7 @@ int TFModelParser::TF2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
     }
     auto remove_ineffective_control_flow = std::make_shared<RemoveIneffectiveControlFlow>();
     MS_CHECK_TRUE_RET(remove_ineffective_control_flow != nullptr, RET_ERROR);
-    if (!remove_ineffective_control_flow->Run(func_graph)) {
+    if (!remove_ineffective_control_flow->Run(func_graph, ineffective_if_op_map)) {
       MS_LOG(ERROR) << "Do RemoveIneffectiveControlFlow failed.";
       return RET_ERROR;
     }
