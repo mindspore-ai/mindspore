@@ -127,22 +127,46 @@ int NNACLKernel::OptimizeDataCopy() {
   return RET_OK;
 }
 
+int NNACLKernel::NNACLCheckArgs() {
+  if (op_parameter_ == nullptr) {
+    MS_LOG(ERROR) << "NNACL check failed. Invalid parameter.";
+    return RET_ERROR;
+  }
+
+  if (in_size_ == 0 || in_size_ * sizeof(TensorC *) > MAX_MALLOC_SIZE) {
+    MS_LOG(ERROR) << "NNACL check failed. Invalid input size: " << in_size_;
+    return RET_ERROR;
+  }
+
+  if (out_size_ == 0 || out_size_ * sizeof(TensorC *) > MAX_MALLOC_SIZE) {
+    MS_LOG(ERROR) << "NNACL check failed. Invalid output size: " << out_size_;
+    return RET_ERROR;
+  }
+
+  if (op_parameter_->thread_num_ <= 0 || op_parameter_->thread_num_ >= MAX_THREAD_NUM) {
+    MS_LOG(ERROR) << "NNACL check failed. Invalid thread number: " << op_parameter_->thread_num_;
+    return RET_ERROR;
+  }
+
+  return RET_OK;
+}
+
 int NNACLKernel::InitKernel(const TypeId &data_type, const lite::InnerContext *ctx) {
   CHECK_NULL_RETURN(ctx);
 
   in_size_ = in_tensors_.size();
-  if (in_size_ == 0 || in_size_ > MAX_MALLOC_SIZE) {
-    return RET_ERROR;
+  out_size_ = out_tensors_.size();
+
+  int ret = NNACLCheckArgs();
+  if (ret != RET_OK) {
+    return ret;
   }
+
   in_ = reinterpret_cast<TensorC **>(malloc(in_size_ * sizeof(TensorC *)));
   if (in_ == nullptr) {
     return RET_ERROR;
   }
 
-  out_size_ = out_tensors_.size();
-  if (out_size_ == 0 || out_size_ > MAX_MALLOC_SIZE) {
-    return RET_ERROR;
-  }
   out_ = reinterpret_cast<TensorC **>(malloc(out_size_ * sizeof(TensorC *)));
   if (out_ == nullptr) {
     return RET_ERROR;
@@ -152,6 +176,7 @@ int NNACLKernel::InitKernel(const TypeId &data_type, const lite::InnerContext *c
   kernel_ =
     CreateKernel(op_parameter_, in_, in_size_, out_, out_size_, data_type, const_cast<ExecEnv *>(ctx->GetExecEnv()));
   if (kernel_ == nullptr) {
+    MS_LOG(ERROR) << "NNACL create kernel failed.";
     return RET_ERROR;
   }
   kernel_->update_thread_ = lite::UpdateThreadNum;
