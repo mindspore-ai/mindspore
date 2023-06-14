@@ -1143,7 +1143,7 @@ def set_context(**kwargs):
             - matmul_allow_hf32 (bool): Whether to convert FP32 to HF32 for Matmul operators. Default value: ``False``.
             - conv_allow_hf32 (bool): Whether to convert FP32 to HF32 for Conv operators. Default value: ``True``.
             - op_precision_mode (str): Path to config file of op precision mode. For detailed information, please refer
-              to https://www.hiascend.com/.
+              to <https://www.hiascend.com/>.
         jit_syntax_level (int): Set JIT syntax level for graph compiling, triggered by GRAPH_MODE and @jit decorator.
             The value must be in [STRICT(``0``), COMPATIBLE(``1``), LAX(``2``)]. Default: LAX(``2``). All levels
             support all backends.

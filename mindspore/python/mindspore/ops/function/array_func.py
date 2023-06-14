@@ -4503,8 +4503,8 @@ def unsorted_segment_min(x, segment_ids, num_segments):
 
     Args:
         x (Tensor): The shape is :math:`(x_1, x_2, ..., x_R)`. With float16, float32 or int32 data type.
-        segment_ids (Tensor): A `1-D` tensor whose shape is :math:`(x_1)`,
-                              the value must be non-negative tensor. The data type must be int32.
+        segment_ids (Tensor): TThe label indicates the segment to which each element belongs.
+            Set the shape as :math:`(x_1, x_2, ..., x_N)`, where 0 < N <= R.
         num_segments (int): The value specifies the number of distinct `segment_ids`.
 
     Returns:
@@ -4554,8 +4554,8 @@ def unsorted_segment_max(x, segment_ids, num_segments):
 
     Args:
         x (Tensor): The shape is :math:`(x_1, x_2, ..., x_R)`. With float16, float32 or int32 data type.
-        segment_ids (Tensor): A `1-D` tensor whose shape is :math:`(x_1)`,
-                              the value must be non-negative tensor. The data type must be int32.
+        segment_ids (Tensor): TThe label indicates the segment to which each element belongs.
+            Set the shape as :math:`(x_1, x_2, ..., x_N)`, where 0 < N <= R.
         num_segments (int): The value specifies the number of distinct `segment_ids`.
 
     Returns:

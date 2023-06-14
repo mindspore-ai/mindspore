@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UNSORTED_SEGMENT_MAX_CUH_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UNSORTED_SEGMENT_MAX_CUH_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UNSORT_SEGMENT_MAX_CUH_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UNSORT_SEGMENT_MAX_CUH_
 #include <cuda_runtime.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
-// Setting warp size to sync data across threads
-#define KWARPSIZE 32
-template <typename T, typename S>
-CUDA_LIB_EXPORT void CalUnsortedSegmentMax(const T *input, const S *segment_ids, const int64_t num_segments,
-                                           size_t outer_size, size_t inner_size, T *output, cudaStream_t stream);
+template<typename T, typename S>
+CUDA_LIB_EXPORT void UnsortedSegmentMax(size_t input_dim0, size_t input_dim1, size_t output_dim0, size_t output_dim1,
+                                        T *input_addr, S *ids, T *output_addr, cudaStream_t stream,
+                                        const uint32_t &device_id);
 
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UNSORTED_SEGMENT_MAX_CUH_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UNSORT_SEGMENT_MAX_CUH_

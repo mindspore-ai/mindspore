@@ -101,6 +101,10 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   (void)CheckAndConvertUtils::CheckInteger("input_x shape size", SizeToLong(x_shape.size()), kGreaterThan, 0,
                                            prim_name);
   auto ids_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  if (ids_shape.empty()) {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', segment_ids value cannot be 0-D.";
+  }
+
   for (auto ids_shape_value : ids_shape) {
     if (ids_shape_value < 0) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name

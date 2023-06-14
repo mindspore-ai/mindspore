@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,181 +18,197 @@
 
 namespace mindspore {
 namespace kernel {
-// Dynamic Mode - registered for int32/int64 3rd input
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMin,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeFloat32),
-                      UnsortedSegmentMinGpuKernelMod, float)
+namespace {
+using KernelRunFunc = UnsortedSegmentMinGpuKernelMod::KernelRunFunc;
+}  // namespace
+#define UNSORTED_SEGMENT_MIN_GPU_REGISTER(T_DT, S_DT, T, S)               \
+  KernelAttr().AddInputAttr(T_DT).AddInputAttr(S_DT).AddOutputAttr(T_DT), \
+    &UnsortedSegmentMinGpuKernelMod::LaunchKernel<T, S>
+#define UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(T_DT, S_DT, DT, T, S)                         \
+  KernelAttr().AddInputAttr(T_DT).AddInputAttr(S_DT).AddInputAttr(DT).AddOutputAttr(T_DT), \
+    &UnsortedSegmentMinGpuKernelMod::LaunchKernel<T, S>
 
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMin,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddOutputAttr(kNumberTypeFloat32),
-                      UnsortedSegmentMinGpuKernelMod, float)
+void UnsortedSegmentMinGpuKernelMod::ResetResource() {
+  input_dim0_ = 1;
+  input_dim1_ = 1;
+  output_dim0_ = 1;
+  output_dim1_ = 1;
+  input_size_list_.clear();
+  output_size_list_.clear();
+  workspace_size_list_.clear();
+}
 
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMin,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeFloat16),
-                      UnsortedSegmentMinGpuKernelMod, half)
+void UnsortedSegmentMinGpuKernelMod::InitSizeLists() {
+  input_size_list_.push_back(batch_size_ * input_dim0_ * input_dim1_ * data_unit_size_);
+  input_size_list_.push_back(batch_size_ * input_dim0_ * ids_unit_size_);
+  output_size_list_.push_back(batch_size_ * output_dim0_ * output_dim1_ * data_unit_size_);
+}
 
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMin,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddOutputAttr(kNumberTypeFloat16),
-                      UnsortedSegmentMinGpuKernelMod, half)
-// Int32
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMin,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeInt32),
-                      UnsortedSegmentMinGpuKernelMod, int)
+bool UnsortedSegmentMinGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                          const std::vector<KernelTensorPtr> &inputs,
+                                          const std::vector<KernelTensorPtr> &outputs) {
+  if (inputs.empty() || outputs.empty()) {
+    MS_LOG(ERROR) << "Got empty inputs or outputs, which is invalid.";
+    return false;
+  }
 
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMin,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddOutputAttr(kNumberTypeInt32),
-                      UnsortedSegmentMinGpuKernelMod, int)
-// Int8
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMin,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeInt8)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeInt8),
-                      UnsortedSegmentMinGpuKernelMod, int8_t)
+  kernel_name_ = base_operator->name();
+  batch_rank_ = base_operator->get_batch_rank();
 
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMin,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeInt8)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddOutputAttr(kNumberTypeInt8),
-                      UnsortedSegmentMinGpuKernelMod, int8_t)
-// UInt8
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMin,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeUInt8)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeUInt8),
-                      UnsortedSegmentMinGpuKernelMod, uint8_t)
+  data_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
+  ids_unit_size_ = abstract::TypeIdSize(inputs.at(kIndex1)->GetDtype());
 
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMin,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeUInt8)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddOutputAttr(kNumberTypeUInt8),
-                      UnsortedSegmentMinGpuKernelMod, uint8_t)
-// Int16
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMin,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeInt16)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeInt16),
-                      UnsortedSegmentMinGpuKernelMod, int16_t)
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+    return false;
+  }
+  return true;
+}
 
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMin,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeInt16)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddOutputAttr(kNumberTypeInt16),
-                      UnsortedSegmentMinGpuKernelMod, int16_t)
-// UInt16
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMin,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeUInt16)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeUInt16),
-                      UnsortedSegmentMinGpuKernelMod, uint16_t)
+int UnsortedSegmentMinGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                           const std::vector<KernelTensorPtr> &inputs,
+                                           const std::vector<KernelTensorPtr> &outputs,
+                                           const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  if (ret != KRET_OK) {
+    return ret;
+  }
 
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMin,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeUInt16)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddOutputAttr(kNumberTypeUInt16),
-                      UnsortedSegmentMinGpuKernelMod, uint16_t)
-// UInt32
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMin,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeUInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeUInt32),
-                      UnsortedSegmentMinGpuKernelMod, uint32_t)
+  ResetResource();
 
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMin,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeUInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddOutputAttr(kNumberTypeUInt32),
-                      UnsortedSegmentMinGpuKernelMod, uint32_t)
-// Int64
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMin,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeInt64),
-                      UnsortedSegmentMinGpuKernelMod, int64_t)
+  auto input_shapes = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  auto ids_shapes = inputs[kIndex1]->GetDeviceShapeAdaptively();
+  auto output_shapes = outputs[kIndex0]->GetDeviceShapeAdaptively();
 
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMin,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddOutputAttr(kNumberTypeInt64),
-                      UnsortedSegmentMinGpuKernelMod, int64_t)
-// UInt64
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMin,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeUInt64)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeUInt64),
-                      UnsortedSegmentMinGpuKernelMod, uint64_t)
+  batch_size_ = 1;
+  for (int64_t i = 0; i < batch_rank_; i++) {
+    batch_size_ *= input_shapes[i];
+  }
+  in_stride_ = 1;
+  for (size_t i = batch_rank_; i < input_shapes.size(); i++) {
+    in_stride_ *= input_shapes[i];
+  }
+  ids_stride_ = 1;
+  for (size_t i = batch_rank_; i < ids_shapes.size(); i++) {
+    ids_stride_ *= ids_shapes[i];
+  }
+  out_stride_ = 1;
+  for (size_t i = batch_rank_; i < output_shapes.size(); i++) {
+    out_stride_ *= output_shapes[i];
+  }
 
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMin,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeUInt64)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddOutputAttr(kNumberTypeUInt64),
-                      UnsortedSegmentMinGpuKernelMod, uint64_t)
-// Float64
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMin,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat64)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddOutputAttr(kNumberTypeFloat64),
-                      UnsortedSegmentMinGpuKernelMod, double)
+  auto axis = ids_shapes.size();
+  for (size_t i = batch_rank_; i < input_shapes.size(); i++) {
+    if (i < axis) {
+      input_dim0_ *= input_shapes[i];
+    } else {
+      input_dim1_ *= input_shapes[i];
+    }
+  }
 
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMin,
-                      KernelAttr()
-                        .AddInputAttr(kNumberTypeFloat64)
-                        .AddInputAttr(kNumberTypeInt32)
-                        .AddInputAttr(kNumberTypeInt64)
-                        .AddOutputAttr(kNumberTypeFloat64),
-                      UnsortedSegmentMinGpuKernelMod, double)
+  output_dim0_ = output_shapes[batch_rank_];
+  for (size_t j = batch_rank_ + 1; j < output_shapes.size(); j++) {
+    output_dim1_ *= output_shapes[j];
+  }
+
+  InitSizeLists();
+  return KRET_OK;
+}
+
+template <typename T, typename S>
+bool UnsortedSegmentMinGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                                  const std::vector<AddressPtr> &workspace,
+                                                  const std::vector<AddressPtr> &outputs) {
+  T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
+  S *ids_addr = GetDeviceAddress<S>(inputs, kIndex1);
+  T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
+
+  for (int64_t i = 0; i < batch_size_; i++) {
+    T *input_batch_addr = input_addr + i * in_stride_;
+    S *ids_batch_addr = ids_addr + i * ids_stride_;
+    T *output_batch_addr = output_addr + i * out_stride_;
+    UnsortedSegmentMin(input_dim0_, input_dim1_, output_dim0_, output_dim1_, input_batch_addr, ids_batch_addr,
+                       output_batch_addr, reinterpret_cast<cudaStream_t>(stream_ptr_), device_id_);
+  }
+
+  return true;
+}
+
+const std::vector<std::pair<KernelAttr, KernelRunFunc>> &UnsortedSegmentMinGpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
+    {UNSORTED_SEGMENT_MIN_GPU_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, double, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, double, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, float, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, float, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, half, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, half, int64_t)},
+
+    {UNSORTED_SEGMENT_MIN_GPU_REGISTER(kNumberTypeInt64, kNumberTypeInt32, int64_t, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_REGISTER(kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_REGISTER(kNumberTypeInt32, kNumberTypeInt32, int32_t, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_REGISTER(kNumberTypeInt32, kNumberTypeInt64, int32_t, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_REGISTER(kNumberTypeInt16, kNumberTypeInt32, int16_t, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_REGISTER(kNumberTypeInt16, kNumberTypeInt64, int16_t, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_REGISTER(kNumberTypeInt8, kNumberTypeInt32, int8_t, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_REGISTER(kNumberTypeInt8, kNumberTypeInt64, int8_t, int64_t)},
+
+    {UNSORTED_SEGMENT_MIN_GPU_REGISTER(kNumberTypeUInt64, kNumberTypeInt32, uint64_t, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_REGISTER(kNumberTypeUInt64, kNumberTypeInt64, uint64_t, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_REGISTER(kNumberTypeUInt32, kNumberTypeInt32, uint32_t, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_REGISTER(kNumberTypeUInt32, kNumberTypeInt64, uint32_t, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_REGISTER(kNumberTypeUInt16, kNumberTypeInt32, uint16_t, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_REGISTER(kNumberTypeUInt16, kNumberTypeInt64, uint16_t, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, uint8_t, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_REGISTER(kNumberTypeUInt8, kNumberTypeInt64, uint8_t, int64_t)},
+
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, kNumberTypeInt32, double, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeInt32, double, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeInt32, float, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeInt32, float, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeInt32, half, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeInt32, half, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, kNumberTypeInt64, double, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeInt64, double, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeInt64, float, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeInt64, float, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeInt64, half, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeInt64, half, int64_t)},
+
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeInt8, kNumberTypeInt32, kNumberTypeInt32, int8_t, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeInt8, kNumberTypeInt64, kNumberTypeInt32, int8_t, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeInt8, kNumberTypeInt32, kNumberTypeInt64, int8_t, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeInt8, kNumberTypeInt64, kNumberTypeInt64, int8_t, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt32, int16_t, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeInt16, kNumberTypeInt64, kNumberTypeInt32, int16_t, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64, int16_t, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeInt16, kNumberTypeInt64, kNumberTypeInt64, int16_t, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, int, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt64, int, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, int, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, int64_t, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt32, int64_t, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, int64_t, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t)},
+
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeInt32, uint8_t, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeUInt8, kNumberTypeInt64, kNumberTypeInt32, uint8_t, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeInt64, uint8_t, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeUInt8, kNumberTypeInt64, kNumberTypeInt64, uint8_t, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeUInt16, kNumberTypeInt32, kNumberTypeInt32, uint16_t, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeUInt16, kNumberTypeInt64, kNumberTypeInt32, uint16_t, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeUInt16, kNumberTypeInt32, kNumberTypeInt64, uint16_t, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeUInt16, kNumberTypeInt64, kNumberTypeInt64, uint16_t, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeUInt32, kNumberTypeInt32, kNumberTypeInt32, uint32_t, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeUInt32, kNumberTypeInt64, kNumberTypeInt32, uint32_t, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeUInt32, kNumberTypeInt32, kNumberTypeInt64, uint32_t, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeUInt32, kNumberTypeInt64, kNumberTypeInt64, uint32_t, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeUInt64, kNumberTypeInt32, kNumberTypeInt32, uint64_t, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeInt32, uint64_t, int64_t)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeUInt64, kNumberTypeInt32, kNumberTypeInt64, uint64_t, int)},
+    {UNSORTED_SEGMENT_MIN_GPU_DY_REGISTER(kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeInt64, uint64_t, int64_t)}};
+  return func_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, UnsortedSegmentMin, UnsortedSegmentMinGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
