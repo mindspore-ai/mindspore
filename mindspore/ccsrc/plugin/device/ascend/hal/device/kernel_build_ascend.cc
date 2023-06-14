@@ -360,9 +360,21 @@ void InsertFusionAtomicOp(const CNodePtr &first_clear_node, const std::vector<An
   } else {
     common::AnfAlgo::SetNodeAttr(kAttrAtomicAddMemSize, MakeValue(clean_size_list), clear_zero);
   }
-  common::AnfAlgo::CopyNodeAttr(kAttrDtypes, first_clear_node, clear_zero);
-  common::AnfAlgo::CopyNodeAttr(kAttrValuesInt, first_clear_node, clear_zero);
-  common::AnfAlgo::CopyNodeAttr(kAttrValuesFloat, first_clear_node, clear_zero);
+  if (common::AnfAlgo::HasNodeAttr(kAttrDtypes, first_clear_node)) {
+    common::AnfAlgo::CopyNodeAttr(kAttrDtypes, first_clear_node, clear_zero);
+  } else {
+    common::AnfAlgo::SetNodeAttr(kAttrDtypes, MakeValue(std::vector<int64_t>{}), clear_zero);
+  }
+  if (common::AnfAlgo::HasNodeAttr(kAttrValuesInt, first_clear_node)) {
+    common::AnfAlgo::CopyNodeAttr(kAttrValuesInt, first_clear_node, clear_zero);
+  } else {
+    common::AnfAlgo::SetNodeAttr(kAttrValuesInt, MakeValue(std::vector<int64_t>{}), clear_zero);
+  }
+  if (common::AnfAlgo::HasNodeAttr(kAttrValuesFloat, first_clear_node)) {
+    common::AnfAlgo::CopyNodeAttr(kAttrValuesFloat, first_clear_node, clear_zero);
+  } else {
+    common::AnfAlgo::SetNodeAttr(kAttrValuesFloat, MakeValue(std::vector<float>{}), clear_zero);
+  }
   AnfAlgo::SetStreamDistinctionLabel(AnfAlgo::GetStreamDistinctionLabel(first_clear_node.get()), clear_zero.get());
   (void)(*clean_ops)[first_clear_node].emplace_back(clear_zero);
 }
