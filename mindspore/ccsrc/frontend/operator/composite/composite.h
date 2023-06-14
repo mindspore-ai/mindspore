@@ -236,6 +236,16 @@ class TupleAdd : public MetaFuncGraph {
 };
 using TupleAddPtr = std::shared_ptr<TupleAdd>;
 
+class ListAdd : public MetaFuncGraph {
+ public:
+  explicit ListAdd(const std::string &name) : MetaFuncGraph(name) {}
+  ~ListAdd() override = default;
+  MS_DECLARE_PARENT(ListAdd, MetaFuncGraph)
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
+  friend bool operator==(const ListAdd &lhs, const ListAdd &rhs) { return lhs.name_ == rhs.name_; }
+};
+using ListAddPtr = std::shared_ptr<ListAdd>;
+
 class SequenceSlice : public MetaFuncGraph {
  public:
   explicit SequenceSlice(const std::string &name) : MetaFuncGraph(name) {}
