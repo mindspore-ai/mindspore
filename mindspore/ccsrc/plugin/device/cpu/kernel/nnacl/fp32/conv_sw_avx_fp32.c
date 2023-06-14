@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/fp32/conv_sw_avx_fp32.h"
+#include "nnacl/fp32/conv_sw.h"
 #include "nnacl/intrinsics/ms_simd_avx_instructions.h"
 
 void SWConv3x32AVXKernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
@@ -1139,132 +1140,25 @@ typedef void (*SWConvKernel)(float *dst, const float *src, const float *weight, 
                              size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step,
                              size_t kw_remainder, size_t write_mode);
 
-void SWAVXBorder(float *dst, const float *src, const float *weight, const float *bias, int top, int bottom, int left,
-                 int right, const ConvParameter *conv_param, const SlidingWindowParam *sw_param,
-                 const SWConvKernel kernel, int act_type, int ow_bock, int oc_block, size_t write_mode) {
-  for (int oh = top; oh < bottom; oh++) {  // now h is only loop one time
-    int ih = oh * conv_param->stride_h_ - conv_param->pad_u_;
-    int start_kh = MSMAX(0, UP_DIV(-ih, conv_param->dilation_h_));
-    int end_kh = MSMIN(conv_param->kernel_h_, UP_DIV(conv_param->input_h_ - ih, conv_param->dilation_h_));
-    const float *src_h = src + ih * sw_param->in_h_step_;
-    float *dst_kernel = dst + left * sw_param->out_w_step_;
-    for (int ow = left; ow < right; ow += ow_bock) {
-      int iw = ow * conv_param->stride_w_ - conv_param->pad_l_;
-      int start_kw = MSMAX(0, UP_DIV(-iw, conv_param->dilation_w_));
-      int end_kw = MSMIN(conv_param->kernel_w_, UP_DIV(conv_param->input_w_ - iw, conv_param->dilation_w_));
-      const float *src_w = src_h + iw * sw_param->ic_align_;
-      const float *src_kernel = src_w + start_kh * sw_param->in_kh_step_ + start_kw * sw_param->in_kw_step_;
-      const float *weight_kernel =
-        weight + (start_kh * conv_param->kernel_w_ + start_kw) * sw_param->ic_align_ * C8NUM * oc_block;
-      kernel(dst_kernel, src_kernel, weight_kernel, bias, end_kh - start_kh, end_kw - start_kw, act_type, ow_bock,
-             oc_block, sw_param->out_block_step_, sw_param->ic_align_, sw_param->in_kw_step_, sw_param->in_kh_step_,
-             sw_param->in_sw_step_,
-             (conv_param->kernel_w_ - end_kw + start_kw) * C8NUM * oc_block * sw_param->ic_align_, write_mode);
-      dst_kernel += ow_bock * sw_param->out_w_step_;
-    }  // width loop
-    dst += sw_param->out_h_step_;
-  }  // height loop
-}
-
-// fp32 sliding window common conv
-void ConvSWAVXFp32(const float *input_data, const float *packed_weight, const float *bias_data, float *output_data,
-                   int task_id, ConvParameter *conv_param, SlidingWindowParam *sw_param) {
-  int out_h = conv_param->output_h_;
-  int oh_step = UP_DIV(out_h, conv_param->thread_num_);
-  int oh_start = oh_step * task_id;
-  int oh_end = MSMIN(oh_start + oh_step, out_h);
-  if (oh_start >= oh_end) {
-    return;
-  }
-  int oc_tile_ = C8NUM;  // oc in algin to C8NUM in x86_64_avx
-  int act_type = C0NUM;
-  if (conv_param->act_type_ == ActType_Relu6) {
-    act_type += C1NUM;
-  }
-  if (conv_param->act_type_ == ActType_Relu || conv_param->act_type_ == ActType_Relu6) {
-    act_type += C2NUM;
-  }
-  int kernel_h = conv_param->kernel_h_;
-  int kernel_w = conv_param->kernel_w_;
-  int ic_algin = sw_param->ic_align_;
-  int in_sw_step = sw_param->in_sw_step_;
-  int in_kw_step = sw_param->in_kw_step_;
-  int in_kh_step = sw_param->in_kh_step_;
-  int in_sh_step = sw_param->in_sh_step_;
-  int out_h_step = sw_param->out_h_step_;
-  int out_c_step = sw_param->out_c_step_;
-  int out_w_step = sw_param->out_w_step_;
-  int out_block_step = sw_param->out_block_step_;
-  int kernel_step = sw_param->kernel_step_;
-  int in_step = sw_param->in_step_;
-  int out_step = sw_param->out_step_;
-  int c_block = sw_param->c_block_;
-  int top = sw_param->top_;
-  int left = sw_param->left_;
-  int right = sw_param->right_;
-  int bottom = sw_param->bottom_;
-  int stride_h = conv_param->stride_h_;
-  int stride_w = conv_param->stride_w_;
-  int out_w = conv_param->output_w_;
-  int pad_u = conv_param->pad_u_;
-  int pad_l = conv_param->pad_l_;
-  int in_h_step = sw_param->in_h_step_;
-  int out_batch = conv_param->output_batch_;
-  int in_h_start = top * stride_h - pad_u;
-  int in_w_start = left * stride_w - pad_l;
-  int center_step = in_h_start * in_h_step + in_w_start * ic_algin;
-  int write_mode = conv_param->out_format_;
-  const int ow_block_num[4] = {12, 6, 4, 3};
-  const SWConvKernel kernel[4][2] = {{SWConv1x8AVXKernel, SWConv12x8AVXKernel},
-                                     {SWConv1x16AVXKernel, SWConv6x16AVXKernel},
-                                     {SWConv1x24AVXKernel, SWConv4x24AVXKernel},
+#define ROW_NUM_LIST const int ow_block_num[4] = {12, 6, 4, 3};
+#define KERNEL_LIST                                                              \
+  const SWConvKernel kernel[4][2] = {{SWConv1x8AVXKernel, SWConv12x8AVXKernel},  \
+                                     {SWConv1x16AVXKernel, SWConv6x16AVXKernel}, \
+                                     {SWConv1x24AVXKernel, SWConv4x24AVXKernel}, \
                                      {SWConv1x32AVXKernel, SWConv3x32AVXKernel}};
-  for (int b = 0; b < out_batch; b++) {
-    for (int oh = oh_start; oh < oh_end; oh += 1) {
-      float *dst_oh = output_data + oh * out_h_step;
-      const float *src_h = input_data + center_step;
-
-      int oc_block = 0;
-      const float *bias = bias_data;
-      for (int oc = 0; oc < c_block; oc += oc_block) {
-        oc_block = MSMIN(C4NUM, c_block - oc);  // 4 3 2 1
-        const float *weight = packed_weight + oc * kernel_step;
-        if (bias != NULL) {
-          bias = bias_data + oc * oc_tile_;
-        }
-        // nhwc dst_w = dst_oh + oc * oc_tile_;  nc8hw8 dst_w = dst_oh * oc * ow * oh * oc_tile_;
-        float *dst_oc = dst_oh + oc * out_c_step;
-        const SWConvKernel kernel_border = kernel[oc_block - 1][0];
-        if (oh < top || oh >= bottom) {  // oh in up or down border
-          SWAVXBorder(dst_oc, input_data, weight, bias, oh, oh + 1, 0, out_w, conv_param, sw_param, kernel_border,
-                      act_type, 1, oc_block, write_mode);
-        } else {  // oh in center
-          // ow in right
-          SWAVXBorder(dst_oc, input_data, weight, bias, oh, oh + 1, 0, left, conv_param, sw_param, kernel_border,
-                      act_type, 1, oc_block, write_mode);
-          // ow in center
-          const float *src_w = src_h + (oh - top) * in_sh_step;
-          int ow_block = ow_block_num[oc_block - 1];         // 12 6 4 3
-          for (int ow = left; ow < right; ow += ow_block) {  // left ~ right
-            ow_block = MSMIN(ow_block, right - ow);
-            if (ow_block < ow_block_num[oc_block - 1]) {  // ow is not enough and process one ow
-              ow_block = 1;
-            }
-            kernel[oc_block - 1][ow_block / ow_block_num[oc_block - 1]](
-              dst_oc + ow * out_w_step, src_w, weight, bias, kernel_h, kernel_w, act_type, ow_block, oc_block,
-              out_block_step, ic_algin, in_kw_step, in_kh_step, in_sw_step, 0, write_mode);
-            src_w += ow_block * in_sw_step;
-          }
-          // ow in left
-          SWAVXBorder(dst_oc, input_data, weight, bias, oh, oh + 1, right, out_w, conv_param, sw_param, kernel_border,
-                      act_type, 1, oc_block, write_mode);
-        }
-      }
-    }  // output h loop
-    input_data += in_step;
-    output_data += out_step;
-  }  // batch loop
-}
+#define COMPUTE_CORE                                                                                                 \
+  if (ow_block < ow_block_num[oc_block - 1]) {                                                                       \
+    ow_block = 1;                                                                                                    \
+  }                                                                                                                  \
+  kernel[oc_block - 1][ow_block / ow_block_num[oc_block - 1]](                                                       \
+    dst_oc + ow * out_w_step, src_w, weight, bias, kernel_h, kernel_w, act_type, ow_block, oc_block, out_block_step, \
+    ic_algin, in_kw_step, in_kh_step, in_sw_step, 0, write_mode);
+#define OUTER_COMPUTE                                                                                                 \
+  kernel(dst_kernel, src_kernel, weight_kernel, bias, end_kh - start_kh, end_kw - start_kw, act_type, ow_bock,        \
+         oc_block, sw_param->out_block_step_, sw_param->ic_align_, sw_param->in_kw_step_, sw_param->in_kh_step_,      \
+         sw_param->in_sw_step_, (conv_param->kernel_w_ - end_kw + start_kw) * C8NUM * oc_block * sw_param->ic_align_, \
+         write_mode);
+GenerateConvSWFunc(AVX, C4NUM, ROW_NUM_LIST, KERNEL_LIST, COMPUTE_CORE, OUTER_COMPUTE);
 
 #ifdef ENABLE_DEBUG
 void SWConvWxKAVXKernel(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,

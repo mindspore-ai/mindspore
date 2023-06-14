@@ -34,6 +34,7 @@ if(NOT PLATFORM_ARM64)
     set(KERNEL_SRC_ARM64_FILE   ${CMAKE_CURRENT_SOURCE_DIR}/fp32/convolution_im2col_arm64_fp32.cc
                                 ${CMAKE_CURRENT_SOURCE_DIR}/fp32/matmul_fp32_arm64.cc
                                 ${CMAKE_CURRENT_SOURCE_DIR}/fp32/convolution_winograd_arm64_fp32.cc
+                                ${CMAKE_CURRENT_SOURCE_DIR}/fp32/convolution_slidewindow_arm64_fp32.cc
     )
     list(REMOVE_ITEM KERNEL_SRC ${KERNEL_SRC_ARM64_FILE})
 endif()

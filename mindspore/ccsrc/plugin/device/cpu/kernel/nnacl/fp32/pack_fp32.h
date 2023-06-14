@@ -99,9 +99,11 @@ void Transpose8X8Fp32Arm64(const float *src_ptr, float *dst_ptr, int src_stride,
 #ifdef ENABLE_ARM32
 void Transpose8X8Fp32Arm32(const float *src_ptr, float *dst_ptr, int src_stride, int dst_stride);
 #endif
-#ifdef ENABLE_AVX
+#if defined(ENABLE_AVX) || defined(ENABLE_ARM64)
 void PackNHWCToNXHWCXFp32(int kernel_h, int kernel_w, int output_channel, int oc_block_num, int input_channel,
                           float *tmp_weight, const float *src);
+#endif
+#ifdef ENABLE_AVX
 #ifdef ENABLE_DEBUG
 void SWPackNHWCToNXHWCXFp32(int kernel_h, int kernel_w, int output_channel, int oc_block_num, int input_channel,
                             float *tmp_weight, const float *src);

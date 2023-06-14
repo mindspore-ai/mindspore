@@ -15,7 +15,7 @@
  */
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_CONVOLUTION_SLIDEWINDOW_FP32_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_CONVOLUTION_SLIDEWINDOW_FP32_H_
-#ifdef ENABLE_AVX
+#if defined(ENABLE_AVX) || defined(ENABLE_ARM64)
 #include <vector>
 #include "src/executor/kernel_exec.h"
 #include "nnacl/op_base.h"
