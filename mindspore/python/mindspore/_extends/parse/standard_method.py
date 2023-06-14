@@ -2774,14 +2774,6 @@ def ms_len_with_iterable_check(data):
     return data.__len__()
 
 
-def ms_next_with_dyn_input_check(it):
-    """Implementation of `next` with daynamic input check."""
-    if isinstance(it, (tuple, list)) and F.is_sequence_shape_unknown(it):
-        raise ValueError(f"For 'ListComprehension' syntax [i for i in x], "
-                         f"input x can not be dynamic length list/tuple in graph mode")
-    return it.__ms_hasnext__()
-
-
 def floor(x):
     """Rounds a tensor down to the closest integer element-wise."""
     return x.__floor__()
