@@ -127,16 +127,28 @@ _fallback_unsupported_python_builtin_type = (
 _modules_from_mindspore = (
     "mindspore",           # https://gitee.com/mindspore/mindspore
     "msadapter",           # https://openi.pcl.ac.cn/OpenI/MSAdapter
+    "mindocr",             # https://github.com/mindspore-lab/mindocr
+    "mindyolo",            # https://github.com/mindspore-lab/mindyolo
+    "mindnlp",             # https://github.com/mindspore-lab/mindnlp
+    "mindcv",              # https://github.com/mindspore-lab/mindcv
+    "mindspore_rec",       # https://github.com/mindspore-lab/mindrec
+    "mindaudio",           # https://github.com/mindspore-lab/mindaudio
+    "mindone",             # https://github.com/mindspore-lab/mindone
+    "mindspore_rl",        # https://github.com/mindspore-lab/mindrl
+    "mindformers",         # https://github.com/mindspore-lab/mindformers
+    "mindpet",             # https://github.com/mindspore-lab/mindpet
+    "mindpose",            # https://github.com/mindspore-lab/mindpose
+    "mindface",            # https://github.com/mindspore-lab/mindface
+    "mindsearch",          # https://github.com/mindspore-lab/mindsearch
     "mindinsight",         # https://gitee.com/mindspore/mindinsight
-    "mindelec",            # https://gitee.com/mindspore/mindscience/tree/master/MindElec
-    "mindflow",            # https://gitee.com/mindspore/mindscience/tree/master/MindFlow
-    "mindsponge",          # https://gitee.com/mindspore/mindscience/tree/master/MindSPONGE
+    "mindelec",            # https://gitee.com/mindspore/mindscience
+    "mindflow",            # https://gitee.com/mindspore/mindscience
+    "mindsponge",          # https://gitee.com/mindspore/mindscience
+    "mindearth",           # https://gitee.com/mindspore/mindscience
+    "sciai",               # https://gitee.com/mindspore/mindscience
     "mindquantum",         # https://gitee.com/mindspore/mindquantum
-    "mindearth",           # https://gitee.com/mindspore/mindsciencetmp/tree/master/MindEarth
-    "mindformers",         # https://gitee.com/mindspore/mindformers
     "mindarmour",          # https://gitee.com/mindspore/mindarmour
     "mindpandas",          # https://gitee.com/mindspore/mindpandas
-    "mindtext",            # https://gitee.com/mindspore/mindnlp
     "mindvision",          # https://gitee.com/mindspore/vision
     "mindspore_gl",        # https://gitee.com/mindspore/graphlearning
     "mindspore_federated", # https://gitee.com/mindspore/federated
@@ -144,8 +156,6 @@ _modules_from_mindspore = (
     "mindspore_serving",   # https://gitee.com/mindspore/serving
     "mindspore_xai",       # https://gitee.com/mindspore/xai
     "mindspore_hub",       # https://gitee.com/mindspore/hub
-    "mindspore_rl",        # https://gitee.com/mindspore/reinforcement
-    "mindspore_rec",       # https://gitee.com/mindspore/recommender
     "ringmo_framework",    # https://gitee.com/mindspore/ringmo-framework
 )
 
@@ -762,14 +772,6 @@ def get_args(node):
     return args
 
 
-def _in_sys_path(file_path):
-    """To check if file_path is under system path."""
-    for path in list(sys.path):
-        if file_path.startswith(path):
-            return True
-    return False
-
-
 def _convert_stub_tensor(data):
     """Convert stub tensor output to tensor"""
     if is_stub_tensor(data):
@@ -865,97 +867,125 @@ def get_dtype(name: str):
     return get_attr_from_object(mstype, name)
 
 
-def get_user_workspace_root_dir(module_path):
-    """Get the path of the top level package of the current working directory."""
-    module_abspath = os.path.abspath(module_path)
-    upper_path = os.path.abspath(os.path.dirname(module_abspath))
-    if module_abspath == upper_path:
+class ThirdPartyLibraryChecker:
+    """
+    Check if a module or function is from third-party libraries.
+
+    Rules for detecting third-party libraries:
+
+    1. The mindspore module and its suite are not third-party libraries.
+
+    2. Python built-in modules and python standard libraries are third-party libraries.
+
+    3. Modules with module names provided by MS_JIT_IGNORE_MODULES are treated as third-party
+       libraries, but those provided by MS_JIT_MODULES are not.
+
+    4. Third-party libraries have 'site-packages' in their installation path.
+    """
+    def __init__(self):
+        self.jit_modules = self.get_jit_modules()
+        self.jit_ignore_modules = self.get_jit_ignore_modules()
+        self.user_workspace_dir = self.get_top_level_module_path(os.getcwd())
+        self.python_builtin_dir = os.path.abspath(os.path.dirname(os.__file__))
+
+    @staticmethod
+    def get_jit_modules():
+        """Modules in jit_modules require jit."""
+        jit_modules = []
+        # Get jit modules from environment variable.
+        env_modules = os.getenv('MS_JIT_MODULES')
+        if env_modules is not None:
+            jit_modules = env_modules.split(',')
+        return jit_modules
+
+    @staticmethod
+    def get_jit_ignore_modules():
+        """Modules in jit_ignore_modules do not need jit."""
+        jit_ignore_modules = []
+        # Get jit ignore modules from environment variable.
+        env_modules = os.getenv('MS_JIT_IGNORE_MODULES')
+        if env_modules is not None:
+            jit_ignore_modules = env_modules.split(',')
+        # sys.builtin_module_names do not need jit.
+        jit_ignore_modules.extend(sys.builtin_module_names)
+        return jit_ignore_modules
+
+    @staticmethod
+    def is_mindspore_related_module(module):
+        """Check if module is mindspore module or its suite."""
+        module_leftmost_name = module.__name__.split('.')[0]
+        return module_leftmost_name in _modules_from_mindspore
+
+    def get_top_level_module_path(self, module_path):
+        """Get the path of the top level package of the current working directory."""
+        module_abspath = os.path.abspath(module_path)
+        upper_path = os.path.abspath(os.path.dirname(module_abspath))
+        if module_abspath == upper_path:
+            return module_abspath
+        # Check whether __init__.py exists in the upper directory.
+        init_path = os.path.join(upper_path, '__init__.py')
+        # If the path does not exist or is accessed without permission, os.path.isfile returns false.
+        if os.path.isfile(init_path):
+            module_abspath = self.get_top_level_module_path(upper_path)
         return module_abspath
-    # Check whether __init__.py exists in the upper directory.
-    init_path = os.path.join(upper_path, '__init__.py')
-    # If the path does not exist or is accessed without permission, os.path.isfile returns false.
-    if os.path.isfile(init_path):
-        module_abspath = get_user_workspace_root_dir(upper_path)
-    return module_abspath
 
-
-user_workspace_dir_ = get_user_workspace_root_dir(os.getcwd())
-python_builtin_dir_ = os.path.abspath(os.path.dirname(os.__file__))
-
-
-def get_jit_dir():
-    """Get jit dir from environment variable."""
-    jit_dir = []
-    env_path = os.getenv('MS_DEV_JIT_DIR')
-    if env_path is not None:
-        path_list = env_path.split(',')
-        for path in path_list:
-            jit_dir.append(os.path.abspath(path))
-    return jit_dir
-
-
-def get_jit_ignore_dir():
-    """Get jit ignore dir from environment variable."""
-    jit_ignore_dir = []
-    env_path = os.getenv('MS_DEV_JIT_IGNORE_DIR')
-    if env_path is not None:
-        path_list = env_path.split(',')
-        for path in path_list:
-            ignore_path = os.path.abspath(path)
-            if user_workspace_dir_.startswith(ignore_path):
-                logger.warning(f"When MS_DEV_JIT_IGNORE_DIR is set, the user workspace directory " \
-                               f"'{user_workspace_dir_}' will not be included.")
-            jit_ignore_dir.append(ignore_path)
-    return jit_ignore_dir
-
-
-jit_dir_ = get_jit_dir()
-jit_ignore_dir_ = get_jit_ignore_dir()
-
-
-def _in_user_workspace(module):
-    """To check if module is under user workspace path."""
-    # A modules without __file__ attribute is considered to be in user workspace.
-    if not hasattr(module, '__file__'):
-        return True
-    module_path = os.path.abspath(module.__file__)
-    if module_path.startswith(user_workspace_dir_):
-        return True
-    if module_path.startswith(python_builtin_dir_):
-        return False
-    # Check if module path is not under jit_ignore_dir_ but under jit_dir_.
-    for path in jit_ignore_dir_:
-        if module_path.startswith(path):
-            return False
-    for path in jit_dir_:
-        if module_path.startswith(path):
+    def is_third_party_module(self, module):
+        """Check if module is a third-party library."""
+        module_leftmost_name = module.__name__.split('.')[0]
+        # Modules in jit_ignore_modules are treated as third-party libraries, such as sys.builtin_module_names.
+        if module_leftmost_name in self.jit_ignore_modules:
+            logger.debug(f"Found third-party module '{module_leftmost_name}' in jit_ignore_modules.")
             return True
-    # Check if module path is under site-packages.
-    split_path = module_path.split(os.path.sep)
-    return "site-packages" not in split_path
+        # Modules in jit_modules require jit and they are considered to be in user workspace.
+        if module_leftmost_name in self.jit_modules:
+            logger.debug(f"Found user-defined module '{module_leftmost_name}' in jit_modules.")
+            return False
+        # A modules without __file__ attribute is considered to be in user workspace.
+        if not hasattr(module, '__file__'):
+            return False
+        module_path = os.path.abspath(module.__file__)
+        # Python builtin modules are treated as third-party libraries.
+        if module_path.startswith(self.python_builtin_dir):
+            logger.debug(f"Found python builtin module '{module.__name__}', which is a third-party module.")
+            return True
+        # Check if module is under user workspace directory.
+        if module_path.startswith(self.user_workspace_dir):
+            logger.debug(f"Found module '{module.__name__}' in user_workspace_dir: {self.user_workspace_dir}")
+            return False
+        # Third-party modules are under site-packages.
+        split_path = module_path.split(os.path.sep)
+        result = "site-packages" in split_path
+        if result:
+            logger.debug(f"Found third-party module '{module.__name__}' in path '{module_path}'")
+        return result
 
-
-def get_module_source_location(module):
-    """Get the source location of the module."""
-    module_leftmost_name = module.__name__.split('.')[0]
-    if module_leftmost_name in _modules_from_mindspore:
-        return MODULE_FROM_MINDSPORE
-    if module_leftmost_name not in sys.builtin_module_names and _in_user_workspace(module):
+    def get_module_source_location(self, module):
+        """Get the source location of the module."""
+        if self.is_mindspore_related_module(module):
+            return MODULE_FROM_MINDSPORE
+        if self.is_third_party_module(module):
+            return MODULE_FROM_THIRDPARTY
         return MODULE_FROM_USER_WORKSPACE
-    return MODULE_FROM_THIRDPARTY
+
+    def is_third_party_module_or_function(self, value):
+        """Check if value is from a third-party library."""
+        if inspect.ismodule(value):
+            module = value
+        elif inspect.isfunction(value) or inspect.ismethod(value):
+            if value in _convert_map():
+                return False
+            module = inspect.getmodule(value)
+        else:
+            return False
+        return self.get_module_source_location(module) == MODULE_FROM_THIRDPARTY
+
+
+third_party_checker = ThirdPartyLibraryChecker()
 
 
 def is_from_third_party_library(value):
     """Check if value is from a third-party library."""
-    if inspect.ismodule(value):
-        module = value
-    elif inspect.isfunction(value) or inspect.ismethod(value):
-        if value in _convert_map():
-            return False
-        module = inspect.getmodule(value)
-    else:
-        return False
-    return get_module_source_location(module) == MODULE_FROM_THIRDPARTY
+    return third_party_checker.is_third_party_module_or_function(value)
 
 
 def get_const_abs(obj):
