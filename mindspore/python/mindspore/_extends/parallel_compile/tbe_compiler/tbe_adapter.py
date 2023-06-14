@@ -313,7 +313,8 @@ def check_support(job: TbeJob):
     _normalize_module_name(op_module_name, compute_op_info["py_module_path"])
     func_name = "check_supported"
     op_type = compute_op_info["type"]
-    res = call_op_func((inputs, outputs, attrs), op_module_name, func_name, op_type, {op_type: "high_performance"})
+    op_impl_mode = compute_op_info["op_impl_mode"]
+    res = call_op_func((inputs, outputs, attrs), op_module_name, func_name, op_type, op_impl_mode)
     if isinstance(res, tuple):
         result, reason = res
         result_str = str(result)
@@ -350,9 +351,10 @@ def select_op_format(job: TbeJob):
     inputs, outputs, attrs = assemble_op_args(compute_op_info)
     op_module_name = get_module_name(compute_op_info)
     py_module_path = compute_op_info["py_module_path"]
+    op_impl_mode = compute_op_info["op_impl_mode"]
     _normalize_module_name(op_module_name, py_module_path)
     op_func_name = "op_select_format"
-    res = call_op_func((inputs, outputs, attrs), op_module_name, op_func_name)
+    res = call_op_func((inputs, outputs, attrs), op_module_name, op_func_name, op_impl_mode)
     job.result = str(res)
     return True
 
@@ -397,11 +399,10 @@ def _pre_build_compute_op_info(compute_op, job):
     is_dynamic_impl = compute_op["is_dynamic_impl"]
     int64_mode = compute_op["int64mode"]
     res = check_op_impl_mode(op_module_name, op_func_name)
-    op_impl_mode = job.content["SocInfo"]["op_impl_mode"]
-    op_impl_mode_list = job.content["SocInfo"]["op_impl_mode_list"]
+    op_impl_mode = compute_op["op_impl_mode"]
     op_full_name = job.content["full_name"]
     if not res:
-        if op_impl_mode_list:
+        if op_impl_mode:
             job.warning("The op {} do NOT support op_impl_mode, current op_impl_mode:{}".format(op_type, op_impl_mode))
     else:
         job.info("OpType {} support op_impl_mode, current op_impl_mode:{}".format(op_type, op_impl_mode))
@@ -410,7 +411,7 @@ def _pre_build_compute_op_info(compute_op, job):
     dispatch_prebuild_task(job.source_id, job.id, l1_size, op_module_name, op_full_name,
                            op_type, op_func_name, unknown_shape,
                            (inputs, outputs, attrs, options), int64_mode, is_dynamic_impl,
-                           context_param, job.pass_list)
+                           context_param, job.pass_list, op_impl_mode=op_impl_mode)
 
 
 def get_prebuild_output(op_name):
@@ -475,12 +476,13 @@ def build_single_pre_op(job: TbeJob):
     is_dynamic_impl = compute_op_info["is_dynamic_impl"]
     int64_mode = compute_op_info["int64mode"]
     op_pattern = compute_op_info["pattern"]
+    op_impl_mode = compute_op_info["op_impl_mode"]
     options = get_options_info(job.content)
     fuzz_build_info = get_fuzz_build_info(job.content)
     dispatch_single_op_compile_task(job.source_id, job.id, l1_size, op_module_name, op_name, op_type, op_func_name,
                                     op_kernel_name, unknown_shape, (inputs, outputs, attrs, options), int64_mode,
                                     None, None, is_dynamic_impl, op_pattern,
-                                    json.dumps(fuzz_build_info), None, job.pass_list)
+                                    json.dumps(fuzz_build_info), None, job.pass_list, op_impl_mode=op_impl_mode)
     return True
 
 
@@ -553,6 +555,7 @@ def rl_tune_single_op(job: TbeJob):
     unknown_shape = compute_op_info["unknown_shape"]
     int64_mode = compute_op_info["int64mode"]
     op_pattern = compute_op_info["pattern"]
+    op_impl_mode = compute_op_info["op_impl_mode"]
     fuzz_build_info = get_fuzz_build_info(job.content)
     auto_tiling_mode = job.content["SocInfo"]["autoTilingMode"]
     device_id = job.content["SocInfo"]["deviceId"]
@@ -560,7 +563,8 @@ def rl_tune_single_op(job: TbeJob):
     try:
         build_single_op_from_c(op_module_name, op_func_name, op_type, "build", unknown_shape,
                                (inputs, outputs, attrs), int64_mode, unknown_shape, options,
-                               op_pattern, auto_tiling_mode, device_id, json.dumps(fuzz_build_info))
+                               op_pattern, auto_tiling_mode, device_id, json.dumps(fuzz_build_info),
+                               op_impl_mode=op_impl_mode)
     # pylint: disable=broad-except
     except Exception:
         job.error(

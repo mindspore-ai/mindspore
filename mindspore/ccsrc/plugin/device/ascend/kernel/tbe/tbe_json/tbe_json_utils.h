@@ -76,6 +76,7 @@ constexpr auto kJSplitIndex = "split_index";
 constexpr auto kJTotalShape = "total_shape";
 constexpr auto kJDynamicCompileStatic = "dynamic_compile_static";
 constexpr auto kJIsDynamicImpl = "is_dynamic_impl";
+constexpr auto kJOpImplMode = "op_impl_mode";
 constexpr auto kJInt64Mode = "int64mode";
 constexpr auto kJValidShape = "valid_shape";
 constexpr auto kJModuleName = "module_name";

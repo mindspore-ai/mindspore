@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -263,32 +263,33 @@ class _Context:
         Enable ascend config.
 
         Args:
-            ascend_config (dict): 'precision_mode'
+            ascend_config (dict):
                 - precision_mode (str): "force_fp16", "allow_fp32_to_fp16", "allow_mix_precision",
                             "must_keep_origin_dtype", "force_fp32", "force_lowerprecision", "allow_fp32_to_bf16",
                             "allow_fp32_to_lowprecision", "allow_mix_precision_fp16" and "allow_mix_precision_bf16".
-
                 - jit_compile (bool): ``False`` and ``True``.
-
                 - atomic_clean_policy (int): ``0`` and ``1``.
+                - op_precision_mode (str): config file path.
         """
-
-        ascend_cfgs = {'precision_mode': ["force_fp16", "allow_fp32_to_fp16", "allow_mix_precision",
-                                          "must_keep_origin_dtype", "force_fp32", "force_lowerprecision",
-                                          "allow_fp32_to_bf16", "allow_fp32_to_lowprecision",
-                                          "allow_mix_precision_fp16", "allow_mix_precision_bf16"],
-                       'jit_compile': [True, False],
-                       'atomic_clean_policy': [0, 1],
-                       'matmul_allow_hf32': [True, False],
-                       'conv_allow_hf32': [True, False]}
+        ascend_cfg_set = ('precision_mode', 'jit_compile', 'atomic_clean_policy', 'matmul_allow_hf32',
+                          'conv_allow_hf32', 'op_precision_mode')
+        ascend_cfg_modes = {'precision_mode': ["force_fp16", "allow_fp32_to_fp16", "allow_mix_precision",
+                                               "must_keep_origin_dtype", "force_fp32", "force_lowerprecision",
+                                               "allow_fp32_to_bf16", "allow_fp32_to_lowprecision",
+                                               "allow_mix_precision_fp16", "allow_mix_precision_bf16"],
+                            'jit_compile': [True, False],
+                            'atomic_clean_policy': [0, 1],
+                            'matmul_allow_hf32': [True, False],
+                            'conv_allow_hf32': [True, False]}
         for ascend_key, ascend_value in ascend_config.items():
-            if ascend_key not in ascend_cfgs:
+            if ascend_key not in ascend_cfg_set:
                 raise ValueError(f"For 'context.set_context', the key of argument 'ascend_config' must be one of "
-                                 f"{ascend_cfgs}, but got {ascend_key}.")
-            supported_modes = ascend_cfgs.get(ascend_key)
-            if ascend_value not in supported_modes:
-                raise ValueError(f"For 'ascend_config', the value of argument {ascend_key} must be one of "
-                                 f"{supported_modes}, but got {ascend_value}.")
+                                 f"{ascend_cfg_set}, but got {ascend_key}.")
+            if ascend_key in ascend_cfg_modes:
+                supported_modes = ascend_cfg_modes.get(ascend_key)
+                if ascend_config[ascend_key] not in supported_modes:
+                    raise ValueError(f"For 'ascend_config', the value of argument {ascend_key} must be one of "
+                                     f"{supported_modes}, but got {ascend_config[ascend_key]}.")
             if ascend_key == 'precision_mode':
                 self.set_param(ms_ctx_param.precision_mode, ascend_value)
             if ascend_key == 'jit_compile':
@@ -299,6 +300,16 @@ class _Context:
                 self.set_param(ms_ctx_param.matmul_allow_hf32, "1" if ascend_value else "0")
             if ascend_key == 'conv_allow_hf32':
                 self.set_param(ms_ctx_param.conv_allow_hf32, "1" if ascend_value else "0")
+            if ascend_key == 'op_precision_mode':
+                op_precision_path = ascend_value
+                if not isinstance(op_precision_path, str) or op_precision_path.strip() == "":
+                    raise ValueError(f"For 'ascend_config', the 'op_precision_mode' is invalid type, "
+                                     f"it should be Non-empty string, but got '{op_precision_path}'.")
+                real_path = os.path.realpath(op_precision_path)
+                if not os.path.exists(real_path):
+                    raise ValueError(f"For 'ascend_config', the 'op_precision_mode' is invalid path, "
+                                     f"got '{op_precision_path}'.")
+                self.set_param(ms_ctx_param.op_precision_mode, ascend_value)
 
     def set_backend_policy(self, policy):
         success = self._context_handle.set_backend_policy(policy)
@@ -1131,6 +1142,8 @@ def set_context(**kwargs):
                 performance loss.
             - matmul_allow_hf32 (bool): Whether to convert FP32 to HF32 for Matmul operators. Default value: ``False``.
             - conv_allow_hf32 (bool): Whether to convert FP32 to HF32 for Conv operators. Default value: ``True``.
+            - op_precision_mode (str): Path to config file of op precision mode. For detailed information, please refer
+              to https://www.hiascend.com/.
         jit_syntax_level (int): Set JIT syntax level for graph compiling, triggered by GRAPH_MODE and @jit decorator.
             The value must be in [STRICT(``0``), COMPATIBLE(``1``), LAX(``2``)]. Default: LAX(``2``). All levels
             support all backends.
@@ -1171,8 +1184,8 @@ def set_context(**kwargs):
         >>> ms.set_context(memory_optimize_level='O0')
         >>> ms.set_context(memory_offload='ON')
         >>> ms.set_context(deterministic='ON')
-        >>> ms.set_context(ascend_config={"precision_mode": "force_fp16", "jit_compile": True})
-        >>> ms.set_context(ascend_config={"precision_mode": "force_fp16", "atomic_clean_policy": 1})
+        >>> ms.set_context(ascend_config={"precision_mode": "force_fp16", "jit_compile": True,
+        ...                "atomic_clean_policy": 1, "op_precision_mode": "./op_precision_config_file"})
         >>> ms.set_context(jit_syntax_level=ms.STRICT)
     """
     ctx = _context()
@@ -1189,7 +1202,8 @@ def set_context(**kwargs):
             logger.warning(f"For 'context.set_context', '{key}' parameter is deprecated. "
                            "For details, please see the interface parameter API comments")
             continue
-        if key in ('precision_mode', 'jit_compile', 'atomic_clean_policy', 'matmul_allow_hf32', 'conv_allow_hf32'):
+        if key in ('precision_mode', 'jit_compile', 'atomic_clean_policy', 'matmul_allow_hf32', 'conv_allow_hf32',
+                   'op_precision_mode'):
             raise ValueError(f"Please set '{key}' through parameter ascend_config")
         if key == 'save_graphs':
             if value is True:

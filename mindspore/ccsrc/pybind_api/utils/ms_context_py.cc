@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,6 +98,7 @@ void RegMsContext(const py::module *m) {
     .value("atomic_clean_policy", MsCtxParam::MS_CTX_ATOMIC_CLEAN_POLICY)
     .value("matmul_allow_hf32", MsCtxParam::MS_CTX_MATMUL_ALLOW_HF32)
     .value("conv_allow_hf32", MsCtxParam::MS_CTX_CONV_ALLOW_HF32)
+    .value("op_precision_mode", MsCtxParam::MS_CTX_OP_PRECISION_MODE)
     .value("save_graphs_path", MsCtxParam::MS_CTX_SAVE_GRAPHS_PATH)
     .value("compile_cache_path", MsCtxParam::MS_CTX_COMPILE_CACHE_PATH)
     .value("variable_memory_max_size", MsCtxParam::MS_CTX_VARIABLE_MEMORY_MAX_SIZE)

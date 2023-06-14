@@ -38,6 +38,7 @@
 #include "backend/common/session/kernel_build_client.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_load.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
+#include "plugin/device/ascend/kernel/tbe/op_impl_mode_config.h"
 #include "kernel/oplib/op_info_utils.h"
 #include "common/plugin/opp_so_manager.h"
 #ifndef ENABLE_SECURITY
@@ -374,6 +375,7 @@ bool AscendKernelRuntime::Init() {
   if (!mindspore::kernel::OpInfoUtils::GenerateOpInfos(soc_version, ascend_path)) {
     MS_LOG(EXCEPTION) << "Load op info form json config failed, version: " << soc_version;
   }
+  kernel::OpImplModeConfig::GetInstance().Initialize();
   if (!ErrorManagerAdapter::Init()) {
     MS_LOG(WARNING) << "Init ErrorManager failed.";
   }
