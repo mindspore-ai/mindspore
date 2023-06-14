@@ -39,4 +39,4 @@ mindspore.ops.ApplyAdagradV2
     异常：
         - **TypeError** - 如果 `var` 、 `accum` 、 `lr` 或 `grad` 的数据类型既不是float16也不是float32。
         - **TypeError** - 如果 `lr` 既不是数值型也不是Tensor。
-        - **RuntimeError** - 如果 `var` 、 `accum` 和 `grad` 不支持数据类型转换。
+        - **TypeError** - 如果 `var` 、 `accum` 和 `grad` 不支持数据类型转换。
