@@ -157,5 +157,9 @@ mindspore::Format TensorFlowUtils::ParseNodeFormat(const tensorflow::NodeDef &no
   }
   return mindspore::Format::NCHW;
 }
+
+bool TensorFlowUtils::OutputIsInputOp(const std::string &op_name) {
+  return op_name == "Identity" || op_name == "StopGradient" || op_name == "NoOp" || op_name == "ReadVariableOp";
+}
 }  // namespace lite
 }  // namespace mindspore

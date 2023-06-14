@@ -17,7 +17,10 @@
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_REMOVE_INEFFECTIVE_CONTROL_FLOW_H
 #define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_REMOVE_INEFFECTIVE_CONTROL_FLOW_H
 
+#include <map>
 #include "ir/func_graph.h"
+#include "proto/graph.pb.h"
+#include "proto/node_def.pb.h"
 
 namespace mindspore {
 namespace lite {
@@ -25,10 +28,11 @@ class RemoveIneffectiveControlFlow {
  public:
   RemoveIneffectiveControlFlow() = default;
   ~RemoveIneffectiveControlFlow() = default;
-  bool Run(const FuncGraphPtr &func_graph);
+  bool Run(const FuncGraphPtr &func_graph, std::map<AnfNodePtr, int> *ineffective_if_op_map);
 
  private:
   bool CheckIfIneffective(const CNodePtr &merge);
+  bool CheckIfCondIsConstTensor(std::map<AnfNodePtr, int> *ineffective_if_op_map, const CNodePtr &anf_node);
   AnfNodePtr shared_input_{nullptr};
 };
 }  // namespace lite
