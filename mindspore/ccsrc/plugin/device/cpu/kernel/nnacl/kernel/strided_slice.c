@@ -20,7 +20,7 @@
 #include "nnacl/op_base.h"
 #include "nnacl/fp32/strided_slice_fp32.h"
 #include "nnacl/kernel/reshape.h"
-#include "nnacl/kernel/base_kernel.h"
+#include "nnacl/kernel/default_kernel_base.h"
 
 #define MinStridedSlicePerThread 16384
 
@@ -262,8 +262,8 @@ KernelBase *CreateStridedSlice(OpParameter *param, int data_type) {
   StridedSliceStruct *strided_slice = (StridedSliceStruct *)malloc(sizeof(StridedSliceStruct));
   NNACL_CHECK_NULL_RETURN_NULL(strided_slice);
   strided_slice->data_type_ = data_type;
-  strided_slice->base_.release = base_kernel_release;
-  strided_slice->base_.prepare = base_kernel_prepare_one_input;
+  strided_slice->base_.release = default_release;
+  strided_slice->base_.prepare = default_prepare_1in_1out;
   strided_slice->base_.resize = strided_slice_resize;
   strided_slice->base_.compute = strided_slice_compute;
   return (KernelBase *)strided_slice;

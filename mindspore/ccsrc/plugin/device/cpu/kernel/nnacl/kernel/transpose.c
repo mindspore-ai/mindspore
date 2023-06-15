@@ -18,7 +18,7 @@
 #include "nnacl/fp32/transpose_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"
 #include "nnacl/tensor_c.h"
-#include "nnacl/kernel/base_kernel.h"
+#include "nnacl/kernel/default_kernel_base.h"
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/pack_fp16.h"
 #include "nnacl/fp16/transpose_fp16.h"
@@ -313,8 +313,8 @@ KernelBase *CreateTranspose(OpParameter *param, int data_type) {
   transpose->nhwc2nchw_ = PackNHWCToNCHWFp32;
   transpose->optimize_ = TransposeDimsFp32;
   transpose->compute_ = DoTransposeFp32;
-  transpose->base_.release = base_kernel_release;
-  transpose->base_.prepare = base_kernel_prepare_one_input;
+  transpose->base_.release = default_release;
+  transpose->base_.prepare = default_prepare_1in_1out;
   transpose->base_.resize = transpose_resize;
   transpose->base_.compute = transpose_compute;
 #ifdef ENABLE_FP16

@@ -18,7 +18,7 @@
 #include "nnacl/tensor_c.h"
 #include "nnacl/op_base.h"
 #include "nnacl/fp32/bias_add.h"
-#include "nnacl/kernel/base_kernel.h"
+#include "nnacl/kernel/default_kernel_base.h"
 
 #define BIAS_ADD_PER_UNIT_LOAD_NUM 2
 #define BIAS_ADD_PER_UNIT_STORE_NUM 1
@@ -121,9 +121,9 @@ int biasadd_compute(struct KernelBase *self) {
 KernelBase *CreateBiasAdd(OpParameter *param, int data_type) {
   BiasAddStruct *bias_add = (BiasAddStruct *)malloc(sizeof(BiasAddStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(bias_add);
-  bias_add->base_.prepare = base_kernel_prepare_two_input;
+  bias_add->base_.prepare = default_prepare_2in_1out;
   bias_add->base_.resize = biasadd_resize;
-  bias_add->base_.release = base_kernel_release;
+  bias_add->base_.release = default_release;
   bias_add->base_.compute = biasadd_compute;
   return (KernelBase *)bias_add;
 }

@@ -15,7 +15,7 @@
  */
 
 #include "nnacl/kernel/reshape.h"
-#include "nnacl/kernel/base_kernel.h"
+#include "nnacl/kernel/default_kernel_base.h"
 
 int kMinCostPerThread = 16384;
 
@@ -60,8 +60,8 @@ int reshape_compute(struct KernelBase *self) {
 KernelBase *CreateReshape(OpParameter *param, int data_type) {
   ReshapeStruct *reshape = (ReshapeStruct *)malloc(sizeof(ReshapeStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(reshape);
-  reshape->base_.release = base_kernel_release;
-  reshape->base_.prepare = base_kernel_prepare_one_input;
+  reshape->base_.release = default_release;
+  reshape->base_.prepare = default_prepare_1in_1out;
   reshape->base_.resize = reshape_resize;
   reshape->base_.compute = reshape_compute;
   return (KernelBase *)reshape;

@@ -14,30 +14,30 @@
  * limitations under the License.
  */
 
-#include "nnacl/kernel/base_kernel.h"
+#include "nnacl/kernel/default_kernel_base.h"
 
-int base_kernel_prepare_1in_2out(KernelBase *self) {
+int default_prepare_1in_2out(KernelBase *self) {
   NNACL_CHECK_FALSE(self->in_size_ < ONE_TENSOR, NNACL_ERR);
   NNACL_CHECK_FALSE(self->out_size_ < TWO_TENSOR, NNACL_ERR);
   return NNACL_OK;
 }
 
-int base_kernel_prepare_one_input(KernelBase *self) {
+int default_prepare_1in_1out(KernelBase *self) {
   NNACL_CHECK_FALSE(self->in_size_ < ONE_TENSOR, NNACL_ERR);
   NNACL_CHECK_FALSE(self->out_size_ < ONE_TENSOR, NNACL_ERR);
   return NNACL_OK;
 }
 
-int base_kernel_prepare_two_input(KernelBase *self) {
+int default_prepare_2in_1out(KernelBase *self) {
   NNACL_CHECK_FALSE(self->in_size_ < ONE_TENSOR, NNACL_ERR);
   NNACL_CHECK_FALSE(self->out_size_ < ONE_TENSOR, NNACL_ERR);
   return NNACL_OK;
 }
 
-int base_kernel_resize(KernelBase *self) {
+int default_resize(KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(self->in_[FIRST_INPUT]);
   NNACL_CHECK_NULL_RETURN_ERR(self->out_[OUTPUT_INDEX]);
   return NNACL_OK;
 }
 
-int base_kernel_release(KernelBase *self) { return NNACL_OK; }
+int default_release(KernelBase *self) { return NNACL_OK; }

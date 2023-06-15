@@ -16,7 +16,7 @@
 
 #include "nnacl/kernel/addn.h"
 #include "nnacl/fp32/add_fp32.h"
-#include "nnacl/kernel/base_kernel.h"
+#include "nnacl/kernel/default_kernel_base.h"
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/arithmetic_fp16.h"
 #endif
@@ -132,9 +132,9 @@ KernelBase *CreateAddN(OpParameter *param, int data_type) {
   AddNStruct *addn = (AddNStruct *)malloc(sizeof(AddNStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(addn);
   addn->data_type_ = data_type;
-  addn->base_.prepare = base_kernel_prepare_two_input;
+  addn->base_.prepare = default_prepare_1in_1out;
   addn->base_.resize = addn_resize;
-  addn->base_.release = base_kernel_release;
+  addn->base_.release = default_release;
   addn->base_.compute = addn_compute;
   return (KernelBase *)addn;
 }

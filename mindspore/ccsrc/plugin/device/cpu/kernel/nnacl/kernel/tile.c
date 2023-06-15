@@ -19,7 +19,7 @@
 #include "nnacl/nnacl_common.h"
 #include "nnacl/op_base.h"
 #include "nnacl/base/tile_base.h"
-#include "nnacl/kernel/base_kernel.h"
+#include "nnacl/kernel/default_kernel_base.h"
 
 #define kDoubleInputsSize 2
 
@@ -166,8 +166,8 @@ KernelBase *CreateTile(OpParameter *param, int data_type) {
   TileStruct *tile = (TileStruct *)malloc(sizeof(TileStruct));
   NNACL_CHECK_NULL_RETURN_NULL(tile);
   tile->resize_done_ = false;
-  tile->base_.release = base_kernel_release;
-  tile->base_.prepare = base_kernel_prepare_one_input;
+  tile->base_.release = default_release;
+  tile->base_.prepare = default_prepare_1in_1out;
   tile->base_.resize = tile_resize;
   tile->base_.compute = tile_compute;
   return (KernelBase *)tile;

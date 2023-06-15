@@ -17,7 +17,7 @@
 #include "nnacl/kernel/softmax.h"
 #include "nnacl/nnacl_common.h"
 #include "nnacl/fp32/softmax_fp32.h"
-#include "nnacl/kernel/base_kernel.h"
+#include "nnacl/kernel/default_kernel_base.h"
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/softmax_fp16.h"
 #endif
@@ -147,7 +147,7 @@ KernelBase *CreateSoftmax(OpParameter *param, int data_type) {
   softmax->sum_data_ = NULL;
   softmax->data_type_ = data_type;
   softmax->base_.release = softmax_release;
-  softmax->base_.prepare = base_kernel_prepare_one_input;
+  softmax->base_.prepare = default_prepare_1in_1out;
   softmax->base_.resize = softmax_resize;
   softmax->base_.compute = softmax_compute;
   return (KernelBase *)softmax;
