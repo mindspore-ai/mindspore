@@ -5645,35 +5645,35 @@ def addmm(input, mat1, mat2, *, beta=1, alpha=1):
     return beta * input + alpha * (matmul_op(mat1, mat2))
 
 
-def addmv(x, mat, vec, *, beta=1, alpha=1):
+def addmv(input, mat, vec, *, beta=1, alpha=1):
     """
-    Multiplies matrix `mat` and vector `vec`. The vector `x` is added to the final result.
+    Multiplies matrix `mat` and vector `vec`. The vector `input` is added to the final result.
 
-    If mat is a :math:`(N, M)` tensor, vec is a 1-D tensor of size :math:`M`, then `x` must be broadcastable
+    If mat is a :math:`(N, M)` tensor, vec is a 1-D tensor of size :math:`M`, then `input` must be broadcastable
     with a 1-D tensor of size :math:`N`.In this case `out` will be 1-D tensor of size :math:`N`.
 
     The optional values `beta` and `alpha` are the matrix-vector product between `mat` and `vec` and the scale
-    factor for the added Tensor `x` respectively. If `beta` is 0, then `x` will be ignored.
+    factor for the added Tensor `input` respectively. If `beta` is 0, then `input` will be ignored.
 
     .. math::
-        output = β x + α (mat @ vec)
+        output = β input + α (mat @ vec)
 
     Args:
-        x (Tensor): Vector to be added. The shape of the tensor is :math:`(N,)`.
+        input (Tensor): Vector to be added. The shape of the tensor is :math:`(N,)`.
         mat (Tensor): The first tensor to be multiplied. The shape of the tensor is :math:`(N, M)`.
         vec (Tensor): The second tensor to be multiplied. The shape of the tensor is :math:`(M,)`.
 
     Keyword Args:
-        beta (scalar[int, float, bool], optional): Multiplier for `x` (β). The `beta` must be int or
+        beta (scalar[int, float, bool], optional): Multiplier for `input` (β). The `beta` must be int or
             float or bool. Default: ``1`` .
         alpha (scalar[int, float, bool], optional): Multiplier for `mat` @ `vec` (α). The `alpha` must
             be int or float or bool. Default: ``1`` .
 
     Returns:
-        Tensor, the shape of the output tensor is :math:`(N,)`, has the same dtype as `x`.
+        Tensor, the shape of the output tensor is :math:`(N,)`, has the same dtype as `input`.
 
     Raises:
-        TypeError: If `mat`, `vec`, `x` is not a Tensor.
+        TypeError: If `mat`, `vec`, `input` is not a Tensor.
         TypeError: If inputs `mat`, 'vec' are not the same dtype.
         ValueError: If `mat` is not a 2-D Tensor.
         ValueError: If `vec` is not a 1-D Tensor.
@@ -5682,24 +5682,24 @@ def addmv(x, mat, vec, *, beta=1, alpha=1):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([2., 3.]).astype(np.float32))
+        >>> input = Tensor(np.array([2., 3.]).astype(np.float32))
         >>> mat = Tensor(np.array([[2., 5., 3.], [4., 2., 2.]]).astype(np.float32))
         >>> vec = Tensor(np.array([3., 2., 4.]).astype(np.float32))
-        >>> output = ops.addmv(x, mat, vec)
+        >>> output = ops.addmv(input, mat, vec)
         >>> print(output)
         [30. 27.]
     """
 
     dtypeop = P.DType()
-    input_dtype = dtypeop(x)
-    if not (isinstance(x, Tensor) and isinstance(mat, Tensor) and isinstance(vec, Tensor)):
+    input_dtype = dtypeop(input)
+    if not (isinstance(input, Tensor) and isinstance(mat, Tensor) and isinstance(vec, Tensor)):
         raise TypeError("For Addmv, inputs must be all tensors.")
     if dtypeop(mat) != dtypeop(vec):
         raise TypeError("For Addmv, the mat and vec should be the same dtype.")
-    _check_input_1d(x.shape, "x", "Addmv")
+    _check_input_1d(input.shape, "input", "Addmv")
     _check_input_1d(vec.shape, "vec", "Addmv")
     _check_input_2d(mat.shape, "mat", "Addmv")
-    _check_input_dtype("x", input_dtype,
+    _check_input_dtype("input", input_dtype,
                        [mstype.float16, mstype.float32, mstype.float64,
                         mstype.int16, mstype.int32, mstype.int64], "Addmv")
     _check_attr_dtype("alpha", alpha, [int, float, bool], "Addmv")
@@ -5708,7 +5708,7 @@ def addmv(x, mat, vec, *, beta=1, alpha=1):
         scalar_cast = P.ScalarCast()
         alpha = scalar_cast(alpha, mstype.int32)
         beta = scalar_cast(beta, mstype.int32)
-    out = beta * x + alpha * mv(mat, vec)
+    out = beta * input + alpha * mv(mat, vec)
     return out
 
 
@@ -9234,18 +9234,18 @@ def log1p(input):
     return _log1p(input)
 
 
-def kron(x, y):
+def kron(input, other):
     """
-    Computes the Kronecker product :math:`x ⊗ y`, denoted by ⊗, of `x` and `y`.
+    Computes the Kronecker product :math:`input ⊗ other`, denoted by ⊗, of `input` and `other`.
 
-    If `x` is a :math:`(a_{0}` x :math:`a_{1}` x ... x :math:`a_{n})` Tensor
-    and `y` is a :math:`(b_{0}` x :math:`b_{1}` x ... x :math:`b_{n})` Tensor,
-    the result will be a :math:`(a_{0}*b_{0}` x :math:`a_{1}*b_{1}` x ... x :math:`a_{n}*b_{n})`
+    If `input` is a :math:`(a_{0}` input :math:`a_{1}` input ... input :math:`a_{n})` Tensor
+    and `other` is a :math:`(b_{0}` input :math:`b_{1}` input ... input :math:`b_{n})` Tensor,
+    the result will be a :math:`(a_{0}*b_{0}` input :math:`a_{1}*b_{1}` input ... input :math:`a_{n}*b_{n})`
     Tensor with the following entries:
 
     .. math::
-        (x ⊗ y)_{k_{0},k_{1},...k_{n}} =
-        x_{i_{0},i_{1},...i_{n}} * y_{j_{0},j_{1},...j_{n}},
+        (input ⊗ other)_{k_{0},k_{1},...k_{n}} =
+        input_{i_{0},i_{1},...i_{n}} * other_{j_{0},j_{1},...j_{n}},
 
     where :math:`k_{t} = i_{t} * b_{t} + j_{t}` for 0 ≤ `t` ≤ `n`. If one
     Tensor has fewer dimensions than the other it is unsqueezed
@@ -9255,15 +9255,15 @@ def kron(x, y):
         Supports real-valued and complex-valued inputs.
 
     Args:
-        x (Tensor): Input Tensor, has the shape :math:`(r0, r1, ... , rN)`.
-        y (Tensor): Input Tensor, has the shape :math:`(s0, s1, ... , sN)`.
+        input (Tensor): Input Tensor, has the shape :math:`(r0, r1, ... , rN)`.
+        other (Tensor): Input Tensor, has the shape :math:`(s0, s1, ... , sN)`.
 
     Returns:
         Tensor, has the shape :math:`(r0 * s0, r1 * s1, ... , rN * sN)`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If `y` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If `other` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -9273,9 +9273,9 @@ def kron(x, y):
         >>> import numpy as np
         >>> from mindspore import Tensor, nn
         >>> from mindspore import ops
-        >>> x = Tensor(np.array([[0, 1, 2], [3, 4, 5]])).astype(np.float32)
-        >>> y = Tensor(np.array([[-1, -2, -3], [-4, -6, -8]])).astype(np.float32)
-        >>> output = ops.kron(x, y)
+        >>> input = Tensor(np.array([[0, 1, 2], [3, 4, 5]])).astype(np.float32)
+        >>> other = Tensor(np.array([[-1, -2, -3], [-4, -6, -8]])).astype(np.float32)
+        >>> output = ops.kron(input, other)
         >>> print(output)
         [[  0.   0.   0.  -1.  -2.  -3.  -2.  -4.  -6.]
          [  0.   0.   0.  -4.  -6.  -8.  -8. -12. -16.]
@@ -9283,41 +9283,41 @@ def kron(x, y):
          [-12. -18. -24. -16. -24. -32. -20. -30. -40.]]
     """
 
-    if not isinstance(x, (Tensor, Tensor_)):
-        raise TypeError("the input x must be Tensor!")
-    if not isinstance(y, (Tensor, Tensor_)):
-        raise TypeError("the input y must be Tensor!")
-    if x is None or y is None:
+    if not isinstance(input, (Tensor, Tensor_)):
+        raise TypeError("the input must be Tensor!")
+    if not isinstance(other, (Tensor, Tensor_)):
+        raise TypeError("the other must be Tensor!")
+    if input is None or other is None:
         return None
-    if x.ndim == 0 or y.ndim == 0:
-        return x * y
+    if input.ndim == 0 or other.ndim == 0:
+        return input * other
 
-    if x.ndim >= y.ndim:
-        maxdim = x.ndim
+    if input.ndim >= other.ndim:
+        maxdim = input.ndim
     else:
-        maxdim = y.ndim
-    pad_x = maxdim - x.ndim
-    pad_y = maxdim - y.ndim
-    x_reshape = [0 for x in range(2 * maxdim)]
-    y_reshape = [0 for x in range(2 * maxdim)]
-    result_shape = [0 for x in range(maxdim)]
+        maxdim = other.ndim
+    pad_x = maxdim - input.ndim
+    pad_y = maxdim - other.ndim
+    x_reshape = [0 for _ in range(2 * maxdim)]
+    y_reshape = [0 for _ in range(2 * maxdim)]
+    result_shape = [0 for _ in range(maxdim)]
 
     for i in range(maxdim):
         if i >= pad_x:
-            x_reshape[2 * i] = x.shape[i - pad_x]
+            x_reshape[2 * i] = input.shape[i - pad_x]
         else:
             x_reshape[2 * i] = 1
         x_reshape[2 * i + 1] = 1
         y_reshape[2 * i] = 1
         if i >= pad_y:
-            y_reshape[2 * i + 1] = y.shape[i - pad_y]
+            y_reshape[2 * i + 1] = other.shape[i - pad_y]
         else:
             y_reshape[2 * i + 1] = 1
         result_shape[i] = x_reshape[2 * i] * y_reshape[2 * i + 1]
 
-    x = x.reshape(x_reshape)
-    y = y.reshape(y_reshape)
-    result = (x * y).reshape(result_shape)
+    input = input.reshape(x_reshape)
+    other = other.reshape(y_reshape)
+    result = (input * other).reshape(result_shape)
     return result
 
 

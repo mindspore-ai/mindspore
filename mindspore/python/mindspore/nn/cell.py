@@ -1569,8 +1569,8 @@ class Cell(Cell_):
             padding=0, dilation=(1, 1), group=1, has_bias=False, weight_init=normal, bias_init=zeros, format=NCHW>
         """
         if dst_type not in (mstype.float16, mstype.float32):
-            raise ValueError("For 'to_float', the argument 'dst_type' must be float32 or float16, "
-                             "but got {}.".format(dst_type))
+            raise ValueError("For 'to_float', the argument 'dst_type' must be mstype.float32 or mstype.float16, "
+                             "but got type: {} and value: {}.".format(type(dst_type), dst_type))
         if dst_type == mstype.float16:
             self._set_mixed_precision_type_recursive(MixedPrecisionType.FP16)
             self.to_float_fp16 = True

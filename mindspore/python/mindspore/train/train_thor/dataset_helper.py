@@ -53,7 +53,7 @@ class DatasetHelper:
         dataset (DataSet): The training dataset iterator.
         dataset_sink_mode (bool): If true use GetNext to fetch the data, or else feed the data from host.
             Default: ``True``.
-        sink_size (int): Control the amount of data in each sink.
+        sink_size (int): Control the number of steps for each sinking.
                              If sink_size=-1, sink the complete dataset for each epoch.
                              If sink_size>0, sink sink_size data for each epoch. Default: -1.
         epoch_num (int): Control the number of epoch data to send. Default: 1.

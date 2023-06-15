@@ -220,14 +220,14 @@ def clamp(input, min=None, max=None):
     return clip_by_value(input, min, max)
 
 
-def clip(x, min=None, max=None):
+def clip(input, min=None, max=None):
     r"""
     Alias for :func:`mindspore.ops.clamp` .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
     """
-    return clamp(x, min, max)
+    return clamp(input, min, max)
 
 
 @get_square_sum.register("Tensor")

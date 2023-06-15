@@ -7,8 +7,6 @@ mindspore.nn.SequentialCell
 
     SequentialCell将按照传入List的顺序依次将Cell添加。此外，也支持OrderedDict作为构造器传入。
 
-    .. note:: SequentialCell 和 torch.nn.ModuleList 是不同的，ModuleList是一个用于存储模块的列表，但SequentialCell中的Cell是以级联方式连接的，不是单纯的存储。
-
     参数：
         - **args** (list, OrderedDict) - 仅包含Cell子类的列表或有序字典。
 

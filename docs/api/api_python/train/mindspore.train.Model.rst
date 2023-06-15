@@ -49,7 +49,7 @@
         参数：
             - **train_dataset** (Dataset) - 一个训练集迭代器。如果定义了 `train_dataset` ，将会构建训练计算图。默认值： ``None`` 。
             - **valid_dataset** (Dataset) - 一个验证集迭代器。如果定义了 `valid_dataset` ，将会构建验证计算图，此时 `Model` 中的 `metrics` 不能为None。默认值： ``None`` 。
-            - **sink_size** (int) - 控制每次数据下沉的数据量。默认值： ``-1`` 。
+            - **sink_size** (int) - 控制每次数据下沉的step数量。默认值： ``-1`` 。
             - **epoch** (int) - 控制训练轮次。默认值： ``1`` 。
 
     .. py:method:: eval(valid_dataset, callbacks=None, dataset_sink_mode=False)
@@ -98,7 +98,7 @@
             - **callbacks** (Optional[list[Callback], Callback]) - 训练过程中需要执行的回调对象或者回调对象列表。默认值： ``None`` 。
             - **dataset_sink_mode** (bool) - 训练数据是否直接下沉至处理器进行处理。使用PYNATIVE_MODE模式或CPU处理器时，模型训练流程将以非下沉模式执行。默认值： ``False`` 。
             - **valid_dataset_sink_mode** (bool) - 推理数据是否直接下沉至处理器进行处理。默认值： ``False`` 。
-            - **sink_size** (int) - 控制每次数据下沉的数据量。`dataset_sink_mode` 为False时 `sink_size` 无效。如果sink_size=-1，则每一次epoch下沉完整数据集。如果sink_size>0，则每一次epoch下沉数据量为sink_size的数据集。默认值： ``-1`` 。
+            - **sink_size** (int) - 控制每次数据下沉的step数量。`dataset_sink_mode` 为False时 `sink_size` 无效。如果sink_size=-1，则每一次epoch下沉完整数据集。如果sink_size>0，则每一次epoch下沉数据量为sink_size的数据集。默认值： ``-1`` 。
             - **initial_epoch** (int) - 从哪个epoch开始训练，一般用于中断恢复训练场景。默认值： ``0`` 。
 
         教程样例：
@@ -131,7 +131,7 @@
         参数：
             - **train_dataset** (Dataset) - 一个训练数据集迭代器。如果没有损失函数（loss_fn），返回一个包含多个数据的元组（data1, data2, data3, ...）并传递给网络。否则，返回一个元组（data, label），数据和标签将被分别传递给网络和损失函数。
             - **dataset_sink_mode** (bool) - 决定是否以数据集下沉模式进行训练。默认值： ``True`` 。PyNative模式下或处理器为CPU时，训练模型流程使用的是数据不下沉（non-sink）模式。默认值： ``True`` 。
-            - **sink_size** (int) - 控制每次数据下沉的数据量，如果 `sink_size` =-1，则每一次epoch下沉完整数据集。如果 `sink_size` >0，则每一次epoch下沉数据量为 `sink_size` 的数据集。如果 `dataset_sink_mode` 为False，则设置 `sink_size` 为无效。默认值： ``-1`` 。
+            - **sink_size** (int) - 控制每次数据下沉的step数量，如果 `sink_size` =-1，则每一次epoch下沉完整数据集。如果 `sink_size` >0，则每一次epoch下沉数据量为 `sink_size` 的数据集。如果 `dataset_sink_mode` 为False，则设置 `sink_size` 为无效。默认值： ``-1`` 。
 
         返回：
             Dict，用于加载分布式checkpoint的参数layout字典。
@@ -173,7 +173,7 @@
             - **train_dataset** (Dataset) - 一个训练数据集迭代器。如果定义了 `loss_fn` ，则数据和标签会被分别传给 `network` 和 `loss_fn` ，此时数据集需要返回一个元组（data, label）。如果数据集中有多个数据或者标签，可以设置 `loss_fn` 为None，并在 `network` 中实现损失函数计算，此时数据集返回的所有数据组成的元组（data1, data2, data3, ...）会传给 `network` 。
             - **callbacks** (Optional[list[Callback], Callback]) - 训练过程中需要执行的回调对象或者回调对象列表。默认值： ``None`` 。
             - **dataset_sink_mode** (bool) - 数据是否直接下沉至处理器进行处理。使用PYNATIVE_MODE模式或CPU处理器时，模型训练流程将以非下沉模式执行。默认值： ``False`` 。
-            - **sink_size** (int) - 控制每次数据下沉的数据量。`dataset_sink_mode` 为False时 `sink_size` 无效。如果sink_size=-1，则每一次epoch下沉完整数据集。如果sink_size>0，则每一次epoch下沉数据量为sink_size的数据集。默认值： ``-1`` 。
+            - **sink_size** (int) - 控制每次数据下沉的step数量。`dataset_sink_mode` 为False时 `sink_size` 无效。如果sink_size=-1，则每一次epoch下沉完整数据集。如果sink_size>0，则每一次epoch下沉数据量为sink_size的数据集。默认值： ``-1`` 。
             - **initial_epoch** (int) - 从哪个epoch开始训练，一般用于中断恢复训练场景。默认值： ``0`` 。
 
     .. py:method:: train_network

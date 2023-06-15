@@ -114,10 +114,6 @@ class SequentialCell(Cell):
     A list of Cells will be added to it in the order they are passed in the constructor.
     Alternatively, an ordered dict of cells can also be passed in.
 
-    Note:
-        SequentialCell and torch.nn.ModuleList are different, ModuleList is a list for storing modules. However,
-        the layers in a Sequential are connected in a cascading way.
-
     Args:
         args (list, OrderedDict): List or OrderedDict of subclass of Cell.
 
