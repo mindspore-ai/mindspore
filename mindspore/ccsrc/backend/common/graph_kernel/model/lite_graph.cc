@@ -130,6 +130,16 @@ NodePtr LiteGraph::GraphBuilderBase::Emit(const std::string &op, const NodePtrLi
   return op_ptr;
 }
 
+NodePtr LiteGraph::GraphBuilderBase::Op(const std::string &op, const NodeBaseList &baseinfolist,
+                                        const NodePtrList &inputs, const DAttrs &attrs) const {
+  PrimOpPtr op_ptr = CreateOp(op, graph_->NodeName());
+  op_ptr->SetInputs(inputs);
+  op_ptr->SetAttrs(attrs);
+  op_ptr->SetBaseInfo(baseinfolist);
+  (void)graph_->ops_.emplace_back(op_ptr);
+  return op_ptr;
+}
+
 NodePtr LiteGraph::GraphBuilderBase::Op(const std::string &op, const NodeBase &baseinfo, const NodePtrList &inputs,
                                         const DAttrs &attrs) const {
   PrimOpPtr op_ptr = CreateOp(op, graph_->NodeName());
