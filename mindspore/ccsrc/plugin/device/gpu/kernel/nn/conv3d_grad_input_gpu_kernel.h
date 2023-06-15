@@ -169,8 +169,7 @@ class Conv3dGradInputGpuKernelMod : public NativeGpuKernelMod {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetConvolutionMathType(conv_desc_, CUDNN_TENSOR_OP_MATH),
                                           "cudnnSetConvolutionMathType failed.")
     }
-    algo_ = SelectBackwardDataAlgorithm(cudnn_handle_, w_desc_, dy_desc_, conv_desc_, dx_desc_real, group_,
-                                        kConv3dBwdDataAlgoName);
+    algo_ = SelectBackwardDataAlgorithm(cudnn_handle_, w_desc_, dy_desc_, conv_desc_, dx_desc_real, group_);
     auto inplace_algo_ptr = base_operator->GetAttr("inplace_algo");
     if (inplace_algo_ptr == nullptr) {
       beta_ = 0;

@@ -47,7 +47,12 @@ class NetConv2d(nn.Cell):
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_conv2d():
+def test_conv2d_max_device_memory():
+    """
+    Feature: Test conv2d op with max device memory
+    Description: Test conv2d op with max device memory
+    Expectation: The value is processed as expected
+    """
     x = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
     w = Tensor(np.arange(2 * 3 * 1 * 1).reshape(2, 3, 1, 1).astype(np.float32))
     expect = np.array([[[[45, 48, 51],
@@ -56,12 +61,32 @@ def test_conv2d():
                         [[126, 138, 150],
                          [162, 174, 186],
                          [198, 210, 222]]]]).astype(np.float32)
-
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU", max_device_memory="0.2GB")
     conv2d = NetConv2d()
     output = conv2d(x, w)
     assert (output.asnumpy() == expect).all()
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('algo', ["normal", "performance"])
+def test_conv2d(algo):
+    """
+    Feature: Test conv2d op
+    Description: Test conv2d op
+    Expectation: The value is processed as expected
+    """
+    x = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
+    w = Tensor(np.arange(2 * 3 * 1 * 1).reshape(2, 3, 1, 1).astype(np.float32))
+    expect = np.array([[[[45, 48, 51],
+                         [54, 57, 60],
+                         [63, 66, 69]],
+                        [[126, 138, 150],
+                         [162, 174, 186],
+                         [198, 210, 222]]]]).astype(np.float32)
+    gpu_config = {"conv_fprop_algo": algo}
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU", gpu_config=gpu_config)
     conv2d = NetConv2d()
     output = conv2d(x, w)
     assert (output.asnumpy() == expect).all()

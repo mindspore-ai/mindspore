@@ -50,7 +50,17 @@ class Conv2dInput(nn.Cell):
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_conv2d_backprop_input():
+@pytest.mark.parametrize('algo', ["normal", "performance", "algo_0", "algo_1", "fft", "fft_tiling", "winograd",
+                                  "winograd_nonfused"])
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_conv2d_backprop_input(algo, mode):
+    """
+    Feature: Test conv2d backprop input op
+    Description: Test conv2d backprop input op
+    Expectation: The value is processed as expected
+    """
+    gpu_config = {"conv_dgrad_algo": algo}
+    context.set_context(mode=mode, device_target="GPU", gpu_config=gpu_config)
     w = Tensor(np.array([[[[1, 0, -1], [1, 0, -1], [1, 0, -1]]]]).astype(np.float32))
     x = Tensor(np.array([[[
         [3, 0, 1, 2, 7, 4],

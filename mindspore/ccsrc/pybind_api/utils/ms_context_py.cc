@@ -113,7 +113,10 @@ void RegMsContext(const py::module *m) {
     .value("memory_offload", MsCtxParam::MS_CTX_ENABLE_MEM_OFFLOAD)
     .value("memory_optimize_level", MsCtxParam::MS_CTX_MEMORY_OPTIMIZE_LEVEL)
     .value("op_timeout", MsCtxParam::MS_CTX_OP_TIMEOUT)
-    .value("jit_syntax_level", MsCtxParam::MS_CTX_JIT_SYNTAX_LEVEL);
+    .value("jit_syntax_level", MsCtxParam::MS_CTX_JIT_SYNTAX_LEVEL)
+    .value("conv_fprop_algo", MsCtxParam::MS_CTX_CONV_FPROP_ALGO)
+    .value("conv_dgrad_algo", MsCtxParam::MS_CTX_CONV_DGRAD_ALGO)
+    .value("conv_wgrad_algo", MsCtxParam::MS_CTX_CONV_WGRAD_ALGO);
   (void)py::class_<mindspore::MsContext, std::shared_ptr<mindspore::MsContext>>(*m, "MSContext")
     .def_static("get_instance", &mindspore::MsContext::GetInstance, "Get ms context instance.")
     .def("get_param", &mindspore::MsCtxGetParameter, "Get value of specified parameter.")

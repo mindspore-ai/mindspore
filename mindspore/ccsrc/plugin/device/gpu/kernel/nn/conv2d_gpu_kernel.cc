@@ -186,11 +186,10 @@ int Conv2dFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   if (cudnn_data_type_ == CUDNN_DATA_HALF) {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetConvolutionMathType(conv_desc_, CUDNN_TENSOR_OP_MATH),
                                         "cudnnSetConvolutionMathType failed.")
-  }
-  conv_algorithm_ = SelectForwardAlgorithm(cudnn_handle_, input_descriptor_real, filter_desc_, conv_desc_, output_desc_,
-                                           group_, kConv2dFwdAlgoName);
-  if (cudnn_data_type_ == CUDNN_DATA_HALF) {
     conv_algorithm_ = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM;
+  } else {
+    conv_algorithm_ =
+      SelectForwardAlgorithm(cudnn_handle_, input_descriptor_real, filter_desc_, conv_desc_, output_desc_, group_);
   }
   InitSizeLists();
   return KRET_OK;

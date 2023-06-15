@@ -28,7 +28,16 @@ context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_conv2d_depthwiseconv2d_str():
+@pytest.mark.parametrize('algo', ["normal", "performance", "implicit_gemm", "precomp_gemm", "gemm"])
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_conv2d_depthwiseconv2d_str(algo, mode):
+    """
+    Feature: Test conv2d depth wise op
+    Description: Test conv2d depth wise op
+    Expectation: The value is processed as expected
+    """
+    gpu_config = {"conv_fprop_algo": algo}
+    context.set_context(mode=mode, device_target="GPU", gpu_config=gpu_config)
     net = nn.Conv2d(128, 128, (2, 3), stride=4, pad_mode='valid', padding=0, group=128, weight_init='normal')
     input_data = Tensor(np.ones([3, 128, 127, 114]), dtype=mstype.float32)
     output = net(input_data)

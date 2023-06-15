@@ -147,8 +147,8 @@ int Conv3dGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetConvolutionMathType(conv_desc_, CUDNN_TENSOR_OP_MATH),
                                         "cudnnSetConvolutionMathType failed.")
   }
-  conv_algorithm_ = SelectForwardAlgorithm(cudnn_handle_, input_descriptor_real, filter_desc_, conv_desc_, output_desc_,
-                                           group_, kConv3dFwdAlgoName);
+  conv_algorithm_ =
+    SelectForwardAlgorithm(cudnn_handle_, input_descriptor_real, filter_desc_, conv_desc_, output_desc_, group_);
   InitSizeLists();
   return KRET_OK;
 }

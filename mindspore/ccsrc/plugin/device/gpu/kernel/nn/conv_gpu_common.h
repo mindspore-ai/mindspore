@@ -21,52 +21,68 @@
 #include <cudnn.h>
 #include <unordered_map>
 #include <string>
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace kernel {
-constexpr auto kConv2dFwdAlgoName = "CUDNN_CONV2D_FWD_ALGO";
-constexpr auto kConv2dBwdDataAlgoName = "CUDNN_CONV2D_BWD_DATA_ALGO";
-constexpr auto kConv2dBwdFilterAlgoName = "CUDNN_CONV2D_BWD_FILTER_ALGO";
-
-constexpr auto kConv3dFwdAlgoName = "CUDNN_CONV3D_FWD_ALGO";
-constexpr auto kConv3dBwdDataAlgoName = "CUDNN_CONV3D_BWD_DATA_ALGO";
-constexpr auto kConv3dBwdFilterAlgoName = "CUDNN_CONV3D_BWD_FILTER_ALGO";
-constexpr auto kConv3dTransposeAlgoName = "CUDNN_CONV3D_TRANSPOSE_ALGO";
-constexpr auto kEnableCudnnHeuristicSearch = "ENABLE_CUDNN_HEURISTIC_SEARCH";
+constexpr auto kConvNormalAlgoName = "normal";
+constexpr auto kConvPerformanceAlgoName = "performance";
 
 static std::unordered_map<std::string, cudnnConvolutionFwdAlgo_t> cudnn_fwd_algos = {
-  {"CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM", CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM},
-  {"CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM", CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM},
-  {"CUDNN_CONVOLUTION_FWD_ALGO_GEMM", CUDNN_CONVOLUTION_FWD_ALGO_GEMM},
-  {"CUDNN_CONVOLUTION_FWD_ALGO_DIRECT", CUDNN_CONVOLUTION_FWD_ALGO_DIRECT},
-  {"CUDNN_CONVOLUTION_FWD_ALGO_FFT", CUDNN_CONVOLUTION_FWD_ALGO_FFT},
-  {"CUDNN_CONVOLUTION_FWD_ALGO_FFT_TILING", CUDNN_CONVOLUTION_FWD_ALGO_FFT_TILING},
-  {"CUDNN_CONVOLUTION_FWD_ALGO_WINOGRAD", CUDNN_CONVOLUTION_FWD_ALGO_WINOGRAD},
-  {"CUDNN_CONVOLUTION_FWD_ALGO_WINOGRAD_NONFUSED", CUDNN_CONVOLUTION_FWD_ALGO_WINOGRAD_NONFUSED}};
+  {"implicit_gemm", CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM},
+  {"precomp_gemm", CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM},
+  {"gemm", CUDNN_CONVOLUTION_FWD_ALGO_GEMM},
+  {"direct", CUDNN_CONVOLUTION_FWD_ALGO_DIRECT},
+  {"fft", CUDNN_CONVOLUTION_FWD_ALGO_FFT},
+  {"fft_tiling", CUDNN_CONVOLUTION_FWD_ALGO_FFT_TILING},
+  {"winograd", CUDNN_CONVOLUTION_FWD_ALGO_WINOGRAD},
+  {"winograd_nonfused", CUDNN_CONVOLUTION_FWD_ALGO_WINOGRAD_NONFUSED}};
 
 static std::unordered_map<std::string, cudnnConvolutionBwdDataAlgo_t> cudnn_bwd_data_algos = {
-  {"CUDNN_CONVOLUTION_BWD_DATA_ALGO_0", CUDNN_CONVOLUTION_BWD_DATA_ALGO_0},
-  {"CUDNN_CONVOLUTION_BWD_DATA_ALGO_1", CUDNN_CONVOLUTION_BWD_DATA_ALGO_1},
-  {"CUDNN_CONVOLUTION_BWD_DATA_ALGO_FFT", CUDNN_CONVOLUTION_BWD_DATA_ALGO_FFT},
-  {"CUDNN_CONVOLUTION_BWD_DATA_ALGO_FFT_TILING", CUDNN_CONVOLUTION_BWD_DATA_ALGO_FFT_TILING},
-  {"CUDNN_CONVOLUTION_BWD_DATA_ALGO_WINOGRAD", CUDNN_CONVOLUTION_BWD_DATA_ALGO_WINOGRAD},
-  {"CUDNN_CONVOLUTION_BWD_DATA_ALGO_WINOGRAD_NONFUSED", CUDNN_CONVOLUTION_BWD_DATA_ALGO_WINOGRAD_NONFUSED}};
+  {"algo_0", CUDNN_CONVOLUTION_BWD_DATA_ALGO_0},
+  {"algo_1", CUDNN_CONVOLUTION_BWD_DATA_ALGO_1},
+  {"fft", CUDNN_CONVOLUTION_BWD_DATA_ALGO_FFT},
+  {"fft_tiling", CUDNN_CONVOLUTION_BWD_DATA_ALGO_FFT_TILING},
+  {"winograd", CUDNN_CONVOLUTION_BWD_DATA_ALGO_WINOGRAD},
+  {"winograd_nonfused", CUDNN_CONVOLUTION_BWD_DATA_ALGO_WINOGRAD_NONFUSED}};
 
 static std::unordered_map<std::string, cudnnConvolutionBwdFilterAlgo_t> cudnn_bwd_filter_algos = {
-  {"CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0", CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0},
-  {"CUDNN_CONVOLUTION_BWD_FILTER_ALGO_1", CUDNN_CONVOLUTION_BWD_FILTER_ALGO_1},
-  {"CUDNN_CONVOLUTION_BWD_FILTER_ALGO_FFT", CUDNN_CONVOLUTION_BWD_FILTER_ALGO_FFT},
-  {"CUDNN_CONVOLUTION_BWD_FILTER_ALGO_3", CUDNN_CONVOLUTION_BWD_FILTER_ALGO_3},
-  {"CUDNN_CONVOLUTION_BWD_FILTER_ALGO_WINOGRAD_NONFUSED", CUDNN_CONVOLUTION_BWD_FILTER_ALGO_WINOGRAD_NONFUSED},
-  {"CUDNN_CONVOLUTION_BWD_FILTER_ALGO_FFT_TILING", CUDNN_CONVOLUTION_BWD_FILTER_ALGO_FFT_TILING}};
+  {"algo_0", CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0},
+  {"algo_1", CUDNN_CONVOLUTION_BWD_FILTER_ALGO_1},
+  {"fft", CUDNN_CONVOLUTION_BWD_FILTER_ALGO_FFT},
+  {"algo_3", CUDNN_CONVOLUTION_BWD_FILTER_ALGO_3},
+  {"winograd_nonfused", CUDNN_CONVOLUTION_BWD_FILTER_ALGO_WINOGRAD_NONFUSED},
+  {"fft_tiling", CUDNN_CONVOLUTION_BWD_FILTER_ALGO_FFT_TILING}};
 
 static cudnnConvolutionFwdAlgo_t SelectForwardAlgorithm(cudnnHandle_t handle, const cudnnTensorDescriptor_t &x_desc,
                                                         const cudnnFilterDescriptor_t &w_desc,
                                                         const cudnnConvolutionDescriptor_t &conv_desc,
-                                                        const cudnnTensorDescriptor_t &y_desc, const int &group,
-                                                        const std::string &env_name) {
-  cudnnConvolutionFwdAlgo_t conv_algorithm = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM;
+                                                        const cudnnTensorDescriptor_t &y_desc, const int &group) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto algo = context_ptr->get_param<std::string>(MS_CTX_CONV_FPROP_ALGO);
+  constexpr int requested_algo_count = 1;
+  int returned_algo_count = 0;
+  cudnnConvolutionFwdAlgoPerf_t perf_results;
 
+  cudnnConvolutionFwdAlgo_t conv_algorithm = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM;
+  if (cudnn_fwd_algos.find(algo) != cudnn_fwd_algos.end()) {
+    conv_algorithm = cudnn_fwd_algos[algo];
+  } else if (algo == kConvNormalAlgoName) {
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnGetConvolutionForwardAlgorithm_v7(handle, x_desc, w_desc, conv_desc, y_desc, requested_algo_count,
+                                             &returned_algo_count, &perf_results),
+      "cudnnGetConvolutionForwardAlgorithm_v7 failed");
+    conv_algorithm = perf_results.algo;
+  } else if (algo == kConvPerformanceAlgoName) {
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnFindConvolutionForwardAlgorithm(handle, x_desc, w_desc, conv_desc, y_desc, requested_algo_count,
+                                           &returned_algo_count, &perf_results),
+      "cudnnFindConvolutionForwardAlgorithm failed");
+    conv_algorithm = perf_results.algo;
+  } else {
+    MS_LOG(EXCEPTION) << "Conv fprop algo type: " << algo << " is not supported.";
+  }
 #if CUDNN_VERSION < 8000
   if (group > 1) {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
@@ -74,46 +90,39 @@ static cudnnConvolutionFwdAlgo_t SelectForwardAlgorithm(cudnnHandle_t handle, co
                                           CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT, 0, &conv_algorithm),
       "cudnnGetConvolutionForwardAlgorithm failed");
   }
-#else
-  std::string cudnn_algo = common::GetEnv(env_name);
-  if (!cudnn_algo.empty()) {
-    if (cudnn_fwd_algos.find(cudnn_algo) == cudnn_fwd_algos.end()) {
-      MS_LOG(EXCEPTION) << "cudnn algorithm type: " << cudnn_algo << " is not supported.";
-    } else {
-      conv_algorithm = cudnn_fwd_algos[cudnn_algo];
-    }
-  } else {
-    std::string heuristic_search = common::GetEnv(kEnableCudnnHeuristicSearch);
-    constexpr int requested_algo_count = 1;
-    int returned_algo_count = 0;
-    cudnnConvolutionFwdAlgoPerf_t perf_results;
-    if (heuristic_search.empty() || heuristic_search == "True") {
-      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-        cudnnGetConvolutionForwardAlgorithm_v7(handle, x_desc, w_desc, conv_desc, y_desc, requested_algo_count,
-                                               &returned_algo_count, &perf_results),
-        "cudnnGetConvolutionForwardAlgorithm_v7 failed");
-    } else if (heuristic_search == "False") {
-      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-        cudnnFindConvolutionForwardAlgorithm(handle, x_desc, w_desc, conv_desc, y_desc, requested_algo_count,
-                                             &returned_algo_count, &perf_results),
-        "cudnnFindConvolutionForwardAlgorithm failed");
-    } else {
-      MS_LOG(EXCEPTION) << "Enable cudnn heuristic search type: " << heuristic_search << " is not supported.";
-    }
-    conv_algorithm = perf_results.algo;
-  }
 #endif
   return conv_algorithm;
 }
 
-static cudnnConvolutionBwdDataAlgo_t SelectBackwardDataAlgorithm(cudnnHandle_t handle,
-                                                                 const cudnnFilterDescriptor_t &w_desc,
-                                                                 const cudnnTensorDescriptor_t &dy_desc,
-                                                                 const cudnnConvolutionDescriptor_t &conv_desc,
-                                                                 const cudnnTensorDescriptor_t &dx_desc,
-                                                                 const int &group, const std::string &env_name) {
-  cudnnConvolutionBwdDataAlgo_t conv_algorithm = CUDNN_CONVOLUTION_BWD_DATA_ALGO_0;
+static cudnnConvolutionBwdDataAlgo_t SelectBackwardDataAlgorithm(
+  cudnnHandle_t handle, const cudnnFilterDescriptor_t &w_desc, const cudnnTensorDescriptor_t &dy_desc,
+  const cudnnConvolutionDescriptor_t &conv_desc, const cudnnTensorDescriptor_t &dx_desc, const int &group) {
+  auto context_ptr = MsContext::GetInstance();
+  auto algo = context_ptr->get_param<std::string>(MS_CTX_CONV_DGRAD_ALGO);
+  MS_EXCEPTION_IF_NULL(context_ptr);
 
+  cudnnConvolutionBwdDataAlgo_t conv_algorithm = CUDNN_CONVOLUTION_BWD_DATA_ALGO_1;
+  constexpr int requested_algo_count = 1;
+  int returned_algo_count = 0;
+  cudnnConvolutionBwdDataAlgoPerf_t perf_results;
+
+  if (cudnn_bwd_data_algos.find(algo) != cudnn_bwd_data_algos.end()) {
+    conv_algorithm = cudnn_bwd_data_algos[algo];
+  } else if (algo == kConvNormalAlgoName) {
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnGetConvolutionBackwardDataAlgorithm_v7(handle, w_desc, dy_desc, conv_desc, dx_desc, requested_algo_count,
+                                                  &returned_algo_count, &perf_results),
+      "cudnnGetConvolutionBackwardDataAlgorithm_v7 failed");
+    conv_algorithm = perf_results.algo;
+  } else if (algo == kConvPerformanceAlgoName) {
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnFindConvolutionBackwardDataAlgorithm(handle, w_desc, dy_desc, conv_desc, dx_desc, requested_algo_count,
+                                                &returned_algo_count, &perf_results),
+      "cudnnFindConvolutionBackwardDataAlgorithm failed");
+    conv_algorithm = perf_results.algo;
+  } else {
+    MS_LOG(EXCEPTION) << "Conv dgrad algo type: " << algo << " is not supported.";
+  }
 #if CUDNN_VERSION < 8000
   if (group > 1) {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
@@ -121,82 +130,44 @@ static cudnnConvolutionBwdDataAlgo_t SelectBackwardDataAlgorithm(cudnnHandle_t h
                                                CUDNN_CONVOLUTION_BWD_DATA_SPECIFY_WORKSPACE_LIMIT, 0, &conv_algorithm),
       "cudnnGetConvolutionBackwardDataAlgorithm failed");
   }
-#else
-  std::string cudnn_algo = common::GetEnv("CUDNN_CONV2D_BWD_DATA_ALGO");
-  if (!cudnn_algo.empty()) {
-    if (cudnn_bwd_data_algos.find(cudnn_algo) == cudnn_bwd_data_algos.end()) {
-      MS_LOG(EXCEPTION) << "cudnn algorithm type: " << cudnn_algo << " is not supported.";
-    } else {
-      conv_algorithm = cudnn_bwd_data_algos[cudnn_algo];
-    }
-  } else {
-    std::string heuristic_search = common::GetEnv(kEnableCudnnHeuristicSearch);
-    constexpr int requested_algo_count = 1;
-    int returned_algo_count = 0;
-    cudnnConvolutionBwdDataAlgoPerf_t perf_results;
-    if (heuristic_search.empty() || heuristic_search == "True") {
-      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-        cudnnGetConvolutionBackwardDataAlgorithm_v7(handle, w_desc, dy_desc, conv_desc, dx_desc, requested_algo_count,
-                                                    &returned_algo_count, &perf_results),
-        "cudnnGetConvolutionBackwardDataAlgorithm_v7 failed");
-    } else if (heuristic_search == "False") {
-      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-        cudnnFindConvolutionBackwardDataAlgorithm(handle, w_desc, dy_desc, conv_desc, dx_desc, requested_algo_count,
-                                                  &returned_algo_count, &perf_results),
-        "cudnnFindConvolutionBackwardDataAlgorithm failed");
-    } else {
-      MS_LOG(EXCEPTION) << "Enable cudnn heuristic search type: " << heuristic_search << " is not supported.";
-    }
-    conv_algorithm = perf_results.algo;
-  }
-
 #endif
   return conv_algorithm;
 }
 
-static cudnnConvolutionBwdFilterAlgo_t SelectBackwardFilterAlgorithm(cudnnHandle_t handle,
-                                                                     const cudnnTensorDescriptor_t x_desc,
-                                                                     const cudnnTensorDescriptor_t dy_desc,
-                                                                     const cudnnConvolutionDescriptor_t conv_desc,
-                                                                     const cudnnFilterDescriptor_t dw_desc,
-                                                                     const int &group, const std::string &env_name) {
-  cudnnConvolutionBwdFilterAlgo_t conv_algorithm = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0;
+static cudnnConvolutionBwdFilterAlgo_t SelectBackwardFilterAlgorithm(
+  cudnnHandle_t handle, const cudnnTensorDescriptor_t x_desc, const cudnnTensorDescriptor_t dy_desc,
+  const cudnnConvolutionDescriptor_t conv_desc, const cudnnFilterDescriptor_t dw_desc, const int &group) {
+  auto context_ptr = MsContext::GetInstance();
+  auto algo = context_ptr->get_param<std::string>(MS_CTX_CONV_WGRAD_ALGO);
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  constexpr int requested_algo_count = 1;
+  int returned_algo_count = 0;
+  cudnnConvolutionBwdFilterAlgoPerf_t perf_results;
 
+  cudnnConvolutionBwdFilterAlgo_t conv_algorithm = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_1;
+  if (cudnn_bwd_filter_algos.find(algo) != cudnn_bwd_filter_algos.end()) {
+    conv_algorithm = cudnn_bwd_filter_algos[algo];
+  } else if (algo == kConvNormalAlgoName) {
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnGetConvolutionBackwardFilterAlgorithm_v7(handle, x_desc, dy_desc, conv_desc, dw_desc, requested_algo_count,
+                                                    &returned_algo_count, &perf_results),
+      "cudnnGetConvolutionBackwardFilterAlgorithm_v7 failed");
+    conv_algorithm = perf_results.algo;
+  } else if (algo == kConvPerformanceAlgoName) {
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnFindConvolutionBackwardFilterAlgorithm(handle, x_desc, dy_desc, conv_desc, dw_desc, requested_algo_count,
+                                                  &returned_algo_count, &perf_results),
+      "cudnnFindConvolutionBackwardFilterAlgorithm failed");
+    conv_algorithm = perf_results.algo;
+  } else {
+    MS_LOG(EXCEPTION) << "Conv wgrad algo type: " << algo << " is not supported.";
+  }
 #if CUDNN_VERSION < 8000
   if (group > 1) {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetConvolutionBackwardFilterAlgorithm(
                                           handle, x_desc, dy_desc, conv_desc, dw_desc,
                                           CUDNN_CONVOLUTION_BWD_FILTER_SPECIFY_WORKSPACE_LIMIT, 0, &conv_algorithm),
                                         "GetConvolutionBackwardFilterAlgorithm failed");
-  }
-#else
-  std::string cudnn_algo = common::GetEnv("CUDNN_CONV2D_BWD_FILTER_ALGO");
-  if (!cudnn_algo.empty()) {
-    if (cudnn_bwd_filter_algos.find(cudnn_algo) == cudnn_bwd_filter_algos.end()) {
-      MS_LOG(EXCEPTION) << "cudnn algorithm type: " << cudnn_algo << " is not supported.";
-    } else {
-      conv_algorithm = cudnn_bwd_filter_algos[cudnn_algo];
-    }
-  } else {
-    std::string heuristic_search = common::GetEnv(kEnableCudnnHeuristicSearch);
-    constexpr int requested_algo_count = 1;
-    int returned_algo_count = 0;
-    cudnnConvolutionBwdFilterAlgoPerf_t perf_results;
-    if (heuristic_search.empty() || heuristic_search == "True") {
-      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-        cudnnGetConvolutionBackwardFilterAlgorithm_v7(handle, x_desc, dy_desc, conv_desc, dw_desc, requested_algo_count,
-                                                      &returned_algo_count, &perf_results),
-        "cudnnGetConvolutionBackwardFilterAlgorithm_v7 failed");
-    } else if (heuristic_search == "False") {
-      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-        cudnnFindConvolutionBackwardFilterAlgorithm(handle, x_desc, dy_desc, conv_desc, dw_desc, requested_algo_count,
-                                                    &returned_algo_count, &perf_results),
-        "cudnnFindConvolutionBackwardFilterAlgorithm failed");
-    } else {
-      MS_LOG(EXCEPTION) << "Enable cudnn heuristic search type: " << heuristic_search << " is not supported.";
-    }
-
-    conv_algorithm = perf_results.algo;
   }
 #endif
   return conv_algorithm;
