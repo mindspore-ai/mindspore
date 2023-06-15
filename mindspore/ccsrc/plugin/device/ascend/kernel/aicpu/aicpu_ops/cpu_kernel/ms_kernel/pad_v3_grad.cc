@@ -99,6 +99,7 @@ uint32_t PadV3GradCpuKernel::Compute(CpuKernelContext &ctx) {
     PAD_V3_GRAD_COMPUTE_CASE(DT_DOUBLE, double, ctx)
     PAD_V3_GRAD_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
     PAD_V3_GRAD_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
+    PAD_V3_GRAD_COMPUTE_CASE(DT_BOOL, bool, ctx)
     default:
       KERNEL_LOG_ERROR("PadV3Grad kernel data type [%s] not support.", DTypeStr(data_type).c_str());
       return KERNEL_STATUS_PARAM_INVALID;

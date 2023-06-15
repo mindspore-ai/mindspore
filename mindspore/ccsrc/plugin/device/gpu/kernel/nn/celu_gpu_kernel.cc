@@ -79,6 +79,8 @@ const std::vector<std::pair<KernelAttr, CeluGpuKernelMod::KernelRunFunc>> &CeluG
      &CeluGpuKernelMod::LaunchKernel<half>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      &CeluGpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &CeluGpuKernelMod::LaunchKernel<double>},
   };
   return func_list;
 }
