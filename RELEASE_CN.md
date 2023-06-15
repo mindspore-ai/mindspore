@@ -2,6 +2,782 @@
 
 [View English](./RELEASE.md)
 
+## MindSpore 2.0.0 Release Notes
+
+### 主要特性和增强
+
+#### PyNative
+
+- [Stable] 全面支持动态shape，算子支持度详见[nn接口动态shape支持情况](https://www.mindspore.cn/docs/zh-CN/r2.0/note/dynamic_shape_nn.html)、[ops接口动态shape支持情况](https://www.mindspore.cn/docs/zh-CN/r2.0/note/dynamic_shape_func.html)和[算子动态shape支持情况](https://www.mindspore.cn/docs/zh-CN/r2.0/note/dynamic_shape_primitive.html)。
+
+#### AutoParallel
+
+- [STABLE] 新建MindFormers独立仓，提供分布式并行套件功能，替代mindspore.nn.transformer模块。
+- [DEMO] 分布式Gather算子支持BatchDim属性。
+- [DEMO] 流水线并行支持指定输入数据任意维度作为Batch维。
+
+### API变更
+
+#### 算子
+
+- `mindspore.ops.AdaptiveAvgPool2D` 新增算子原语。
+- `mindspore.ops.BatchToSpaceNDV2` 新增算子原语。
+- `mindspore.ops.CeLU` 新增算子原语。
+- `mindspore.ops.ExtractVolumePatches` 新增算子原语。
+- `mindspore.ops.FFTWithSize` 新增算子原语。
+- `mindspore.ops.FillDiagonal` 新增算子原语。
+- `mindspore.ops.FractionalMaxPool3DWithFixedKsize` 新增算子原语。
+- `mindspore.ops.Im2Col` 新增算子原语。
+- `mindspore.ops.MaskedScatter` 新增算子原语。
+- `mindspore.ops.MatrixBandPart` 新增算子原语。
+- `mindspore.ops.MatrixInverse` 新增算子原语。
+- `mindspore.ops.MaxPoolWithArgmaxV2` 新增算子原语。
+- `mindspore.ops.Ormqr` 新增算子原语。
+- `mindspore.ops.RandpermV2` 新增算子原语。
+- `mindspore.ops.ResizeBicubic` 新增算子原语。
+- `mindspore.ops.Triu` 新增算子原语。
+- `mindspore.ops.Zeta` 新增算子原语。
+
+#### 非兼容性接口变更
+
+- 接口名称：mindspore.ops.MultitypeFuncGraph
+
+  变更内容：该接口参数doc_url在MindSpore 2.0.0.rc1版本作为测试特性，MindSpore 2.0.0版本优化后用户不需要额外配置此参数，故此参数在MindSpore 2.0.0版本删除。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0 接口</td>
+  </tr>
+  <tr>
+  <td><pre>
+  mindspore.ops.MultitypeFuncGraph（name, read_value=False, doc_url=""）
+  </pre>
+  </td>
+  <td><pre>
+  mindspore.ops.MultitypeFuncGraph（name, read_value=False）
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.set_context(auto_tune_mode="GA,RL")
+
+  变更内容：下线算子AutoTune调优工具，删除auto_tune_mode选项，未来会规划新的调优工具。
+
+- 接口名称：mindspore.set_context(mode=PYNATIVE_MODE)
+
+  变更内容：默认由GRAPH_MODE改为PYNATIVE_MODE。
+
+  说明：原有使用方式若未设置运行模式，该变更会影响性能，需要额外设置图模式，则使用以下方式：
+  mindspore.set_context(mode=GRAPH_MODE)。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  mindspore.set_context(mode=GRAPH_MODE)
+  </pre>
+  </td>
+  <td><pre>
+  mindspore.set_context(mode=PYNATIVE_MODE)
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.train.Model.train
+
+  变更内容：dataset_sink_mode 默认值由True改为False。
+
+  说明：原有使用方式若未设置dataset_sink_mode，该变更会影响性能，需要额外设置数据下沉运行模式，则使用以下方式：
+  Model.train(dataset_sink_mode=True)。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  Model.train(dataset_sink_mode=True)
+  </pre>
+  </td>
+  <td><pre>
+  Model.train(dataset_sink_mode=False)
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.export
+
+  变更内容：参数file_format由"AIR"改为不指定默认值。
+
+  说明：原有使用方式若未设置file_format，需要额外设置file_format，则使用以下方式：
+  mindspore.export(net, *inputs, file_name, file_format="AIR", **kwargs)。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  mindspore.export(net, *inputs, file_name,
+                   file_format="AIR", **kwargs)
+  </pre>
+  </td>
+  <td><pre>
+  mindspore.export(net, *inputs, file_name,
+                   file_format, **kwargs)
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.ops.norm
+
+  变更内容：扩展ord参数功能，支持多种形式。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  ops.norm(input_x, axis, p=2, keep_dims=False, epsilon=1e-12)
+  >>> # 举例:
+  >>> input = Tensor(np.array([[[1.0, 2.0], [3.0, 4.0]],
+  ...                          [[5.0, 6.0], [7.0, 8.0]]]).astype(np.float32))
+  >>> output = ops.norm(input, [0, 1], p=2)
+  </pre></td>
+  <td><pre>
+  ops.norm(A, ord=None, dim=None, keepdim=False, *, dtype=None)
+  >>> # 举例:
+  >>> input = Tensor(np.array([[[1.0, 2.0], [3.0, 4.0]],
+  ...                          [[5.0, 6.0], [7.0, 8.0]]]).astype(np.float32))
+  >>> output = ops.norm(input, ord=2, dim=(0, 1))
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.Tensor.norm
+
+  变更内容：扩展ord参数功能，支持多种形式。
+
+  说明：参考ops.norm例子。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  Tensor.norm(axis, p=2, keep_dims=False, epsilon=1e-12)
+  </pre>
+  </td>
+  <td><pre>
+  Tensor.norm(ord=None, dim=None, keepdim=False, *, dtype=None)
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.ops.dropout
+
+  变更内容：删除seed0、seed1参数，新增参数seed=None。由返回Tensor和掩码改为只返回Tensor，新增入参training=True。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  ops.dropout(x, p=0.5, seed0=0, seed1=0)
+  >>> # 举例:
+  >>> input = Tensor(((20, 16), (50, 50)),
+  ...                mindspore.float32)
+  >>> output, mask = dropout(x, p=0.5)
+  </pre>
+  </td>
+  <td><pre>
+  ops.dropout(input, p=0.5, training=True, seed=None)
+  >>> # 举例:
+  >>> input = Tensor(((20, 16), (50, 50)),
+  ...                mindspore.float32)
+  >>> output = ops.dropout(input, p=0.5，training=True)
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.ops.dropout2d
+
+  变更内容：返回值从Tensor和掩码改为只返回Tensor，新增入参training=True。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td>
+  <pre>
+  ops.dropout2d(x, p=0.5)
+  >>> # 举例:
+  >>> input = Tensor(np.ones([2, 1, 2, 3]),
+  ...                mindspore.float32)
+  >>> output, mask = dropout2d(input, 0.5)
+  </pre>
+  </td>
+  <td>
+  <pre>
+  ops.dropout2d(input, p=0.5, training=True)
+  >>> # 举例:
+  >>> input = Tensor(np.ones([2, 1, 2, 3]),
+  ...                mindspore.float32)
+  >>> output = ops.dropout2d(input, 0.5, training=True)
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.ops.dropout3d
+
+  变更内容：返回值从Tensor和掩码改为只返回Tensor，新增入参training=True。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  ops.dropout3d(x, p=0.5)
+  >>> # 举例:
+  >>> input = Tensor(np.ones([2, 1, 2, 3]),
+  ...                mindspore.float32)
+  >>> output, mask = dropout3d(input, 0.5)
+  </pre>
+  </td>
+  <td><pre>
+  ops.dropout3d(input, p=0.5, training=True)
+  >>> # 举例:
+  >>> input = Tensor(np.ones([2, 1, 2, 3]),
+  ...                mindspore.float32)
+  >>> output = ops.dropout3d(input, 0.5, training=True)
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.ops.std
+
+  变更内容：接口重构，接口使用方式更符合用户使用习惯。
+
+  说明：原有unbiased如果已显示设置，采用以下替代方案：
+  ddof=0替代unbiased=False，ddof=1替代unbiased=True。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  ops.std(input_x, axis=(), unbiased=True, keep_dims=False)
+  </pre>
+  </td>
+  <td><pre>
+  ops.std(input, axis=None, ddof=0, keepdims=False)
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.load_param_into_net
+
+  变更内容：新增ckpt中未加载的参数作为返回值。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  net_param = load_param_into_net()
+  </pre>
+  </td>
+  <td><pre>
+  net_param, ckpt_param = load_param_into_net()
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.nn.BCELoss
+
+  变更内容：`reduction` 默认值由'none'变为'mean'。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  BCELoss(weight=None, reduction='none')
+  >>> # 举例:
+  >>> weight = Tensor(np.array([[1.0, 2.0, 3.0],
+  ...                           [4.0, 3.3, 2.2]]),
+  ...                 mindspore.float32)
+  >>> loss = nn.BCELoss(weight=weight, reduction='mean')
+  >>> logits = Tensor(np.array([[0.1, 0.2, 0.3],
+  ...                           [0.5, 0.7, 0.9]]),
+  ...                 mindspore.float32)
+  >>> labels = Tensor(np.array([[0, 1, 0], [0, 0, 1]]),
+  ...                 mindspore.float32)
+  >>> output = loss(logits, labels)
+  >>> print(output)
+  >>> 1.8952923
+  </pre>
+  </td>
+  <td><pre>
+  BCELoss(weight=None, reduction='mean')
+  >>> # 举例:
+  >>> weight = Tensor(np.array([[1.0, 2.0, 3.0],
+  ...                           [4.0, 3.3, 2.2]]),
+  ...                 mindspore.float32)
+  >>> loss = nn.BCELoss(weight=weight)
+  >>> logits = Tensor(np.array([[0.1, 0.2, 0.3],
+  ...                           [0.5, 0.7, 0.9]]),
+  ...                 mindspore.float32)
+  >>> labels = Tensor(np.array([[0, 1, 0], [0, 0, 1]]),
+  ...                 mindspore.float32)
+  >>> output = loss(logits, labels)
+  >>> print(output)
+  >>> 1.8952923
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.ops.split
+
+  变更内容：接口重构，接口使用方式更符合用户使用习惯，调整第2个和第3个参数的顺序，修改并扩展split_size_or_sections功能。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  ops.split(input_x, axis=0, output_num=1)
+  >>> # 举例:
+  >>> input = Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]),
+  ...                mindspore.int32)
+  >>> output = ops.split(input, axis=1, output_num=4)
+  </pre>
+  </td>
+  <td><pre>
+  ops.split(tensor, split_size_or_sections, axis=0)
+  >>> # 举例:
+  >>> input = Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]),
+  ...                mindspore.int32)
+  >>> output = ops.split(input, split_size_or_sections=1, axis=1)
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.Tensor.split
+
+  变更内容：接口重构，接口使用方式更符合用户使用习惯，调整两个参数的位置，修改并扩展split_size_or_sections功能。
+
+  说明：参考ops.split例子。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  Tensor.split(axis=0, output_num=1)
+  </pre>
+  </td>
+  <td><pre>
+  Tensor.split(split_size_or_sections, axis=0)
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.ops.pad
+
+  变更内容：修改参数名paddings为padding，添加mode和value功能。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  ops.pad(input_x, paddings)
+  >>> # 举例:
+  >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6],
+  ...                            [0.4, 0.5, -3.2]]),
+  ...                  mindspore.float32)
+  >>> paddings = ((1, 2), (2, 1))
+  >>> output = ops.pad(input_x, paddings)
+  </pre>
+  </td>
+  <td><pre>
+  ops.pad(input_x, padding, mode='constant', value=None)
+  >>> # 举例:
+  >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6],
+  ...                            [0.4, 0.5, -3.2]]),
+  ...                  mindspore.float32)
+  >>> paddings = (2, 1, 1, 2)
+  >>> output = ops.pad(input_x, paddings)
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.ops.meshgrid
+
+  变更内容：入参由inputs改为*input。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  ops.meshgrid(inputs, indexing='xy')
+  >>> # 举例:
+  >>> x = Tensor(np.array([1, 2, 3, 4]).astype(np.int32))
+  >>> y = Tensor(np.array([5, 6, 7]).astype(np.int32))
+  >>> z = Tensor(np.array([8, 9, 0, 1, 2]).astype(np.int32))
+  >>> output = ops.meshgrid((x, y, z), indexing='xy')
+  </pre>
+  </td>
+  <td><pre>
+  ops.meshgrid(*inputs, indexing='xy')
+  >>> # 举例:
+  >>> x = Tensor(np.array([1, 2, 3, 4]).astype(np.int32))
+  >>> y = Tensor(np.array([5, 6, 7]).astype(np.int32))
+  >>> z = Tensor(np.array([8, 9, 0, 1, 2]).astype(np.int32))
+  >>> output = ops.meshgrid(x, y, z, indexing='xy')
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.ops.max
+
+  变更内容：返回值调换顺序，由：“下标，最大值”改为“最大值，下标”。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  ops.max(x, axis=0, keep_dims=False)
+  >>> # 举例:
+  >>> input = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]),
+  ...                mindspore.float32)
+  >>> index, output = ops.max(input)
+  >>> print(index, output)
+  >>> 3 0.7
+  </pre>
+  </td>
+  <td><pre>
+  ops.max(input, axis=None, keepdims=False, *, initial=None, where=True, return_indices=False)
+  >>> # 举例:
+  >>> input = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]),
+  ...                mindspore.float32)
+  >>> output, index = ops.max(input, axis=0)
+  >>> print(output, index)
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.ops.min
+
+  变更内容：返回值调换顺序，由：“下标，最小值”改为“最小值，下标”。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  ops.min(x, axis=0, keep_dims=False)
+  >>> # 举例:
+  >>> input = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]),
+  ...                mindspore.float32)
+  >>> index, output = ops.min(input)
+  >>> 0 0.0
+  </pre>
+  </td>
+  <td><pre>
+  ops.min(input, axis=None, keepdims=False, *, initial=None, where=True, return_indices=False)
+  >>> # 举例:
+  >>> input = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]),
+  ...                mindspore.float32)
+  >>> output, index = ops.min(input, keepdims=True)
+  >>> 0.0 0
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.ops.random_gamma
+
+  变更内容：删除seed2参数，seed=0改为None。框架行为统一且符合用户实际使用场景及习惯。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  ops.random_gamma(shape, alpha, seed=0, seed2=0)
+  </pre>
+  </td>
+  <td><pre>
+  ops.random_gamma(shape, alpha, seed=None)
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.ops.standard_laplace
+
+  变更内容：删除seed2参数，seed=0改为None。框架行为统一且符合用户实际使用场景及习惯。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  ops.standard_laplace(shape, seed=0, seed2=0)
+  </pre>
+  </td>
+  <td><pre>
+  ops.standard_laplace(shape, seed=None)
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.ops.standard_normal
+
+  变更内容：删除seed2参数，seed=0改为None。框架行为统一且符合用户实际使用场景及习惯。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  ops.standard_normal(shape, seed=0, seed2=0)
+  </pre>
+  </td>
+  <td><pre>
+  ops.standard_normal(shape, seed=None)
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.ops.bernoulli
+
+  变更内容：seed的默认值由-1改为None。符合用户实际使用场景。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  ops.bernoulli(x, p=0.5, seed=-1)
+  </pre>
+  </td>
+  <td><pre>
+  ops.bernoulli(input, p=0.5, seed=None)
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.data_sink
+
+  变更内容：删除steps参数，jit参数名称修改为jit_config，新增input_signature参数。增加易用性，符合用户实际使用场景。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  mindspore.data_sink(fn, dataset, steps,
+                      sink_size=1, jit=False)
+  </pre>
+  </td>
+  <td><pre>
+  mindspore.data_sink(fn, dataset, sink_size=1,
+                      jit_config=None, input_signature=None)
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.ops.conv2d
+
+  变更内容：扩展接口功能，添加bias参数，修改参数名及参数顺序。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  conv2d(inputs, weight, pad_mode="valid",
+         padding=0, stride=1, dilation=1, group=1)
+  </pre>
+  </td>
+  <td><pre>
+  conv2d(input, weight, bias=None, stride=1,
+         pad_mode="valid", padding=0, dilation=1, groups=1)
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.dataset.vision.Pad
+
+  变更内容：调整Pad、RandomCrop、RandomCropWithBbox入参padding，当Padding输入长度为2的序列时，行为将从使用第一个值填充左/上边界，使用第二个值填充右/下边界，变为使用第一个值填充左/右边界，使用第二个值填充上/下边界。
+
+  说明：仅使用size为2的padding参数无法兼容旧版本的效果，需显式表示（左、右、上、下）。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  mindspore.dataset.vision.Pad(padding=(1,2))
+  代表图片的左/上填充 1像素，右/下填充 2像素
+  </pre>
+  </td>
+  <td><pre>
+  mindspore.dataset.vision.Pad(padding=(1,2,1,2))
+  代表图片的左/上填充 1像素，右/下填充 2像素
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.dataset.Dataset.map
+
+  变更内容：删除column_order参数。因为在绝大部分的情况下，output_columns参数与column_order参数都是同一个值，不需要再传入column_order。若需要调整数据列顺序，使用mindspore.dataset.Dataset.project实现。
+
+  说明：
+
+  1) 在不需要改变列顺序时，直接去掉column_order参数即可。
+  2) 需要指定数据列顺序时，删除column_order参数，并在后面加上一个project方法进行列变换（如下面的例子）。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  >>> dataset = dataset.map(operations=[transforms],
+  ...                       input_columns=["column_a"],
+  ...                       output_columns=["column_b", "column_c"],
+  ...                       column_order=["column_c", "column_b"])
+  </pre>
+  </td>
+  <td><pre>
+  >>> dataset = dataset.map(operations=[transforms],
+  ...                       input_columns=["column_a"],
+  ...                       output_columns=["column_b", "column_c"])
+  >>> dataset = dataset.project(["column_c", column_b"])")
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.dataset.Dataset.batch
+
+  变更内容：删除column_order参数。因为在绝大部分的情况下，output_columns参数与column_order参数都是同一个值，不需要再传入column_order。若需要调整数据列顺序，使用mindspore.dataset.Dataset.project实现。
+
+  说明：
+
+  1) 在不需要改变列顺序时，直接去掉column_order参数即可。
+  2) 需要指定数据列顺序时，删除column_order参数，并在后面加上一个project方法进行列变换（如下面的例子）。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  >>> dataset = dataset.batch(batch_size=4,
+  ...                         input_columns=["column_a"],
+  ...                         output_columns=["column_b", "column_c"],
+  ...                         column_order=["column_c", "column_b"])
+  </pre>
+  </td>
+  <td><pre>
+  >>> dataset = dataset.batch(batch_size=4, input_columns=["column_a"]
+  ...                         output_columns=["column_b", "column_c"])
+  >>> dataset = dataset.project(["column_c", column_b"])")
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+- 接口名称：mindspore.dataset.Dataset.batch
+
+  变更内容：将batch方法拆分为：batch和padded_batch两个方法。pad_info参数从batch方法移动到padded_batch方法。
+
+  说明：如需使用pad_info参数，改用padded_batch方法。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原接口 </td> <td style="text-align:center"> v2.0.0-rc1接口 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  >>> dataset = dataset.batch(batch_size=4,
+  ...                         drop_remainder=True, pad_info=...)
+  </pre>
+  </td>
+  <td><pre>
+  >>> dataset = dataset.padded_batch(batch_size=4,
+  ...                                drop_remainder=True, pad_info=...)
+  </pre>
+  </td>
+  </tr>
+  </table>
+
+### Bug fixes
+
+- [I62I3J] 修复bgcf网络在昇腾310上推理失败的问题
+- [I7C2W3] 修复Pipeline并行场景下多loss打印编译失败问题
+
+### 贡献者
+
+感谢以下人员做出的贡献:
+
+alashkari,anzhengqi,archer2049,B.L.LAN,baihuawei,bichaoyang,BJ-WANG,Bokai Li,Brian-K,caifubi,caiyimeng,cathwong,changzherui,ChenDonYY,chenfei_mindspore,chengang,chengbin,chenhaozhe,chenjianping,chenkang,chenweifeng,chuht,chujinjin,davidanugraha,DavidFFFan,DeshiChen,douzhixing,emmmmtang,Erpim,Ethan,fangwenyi,fangzehua,fangzhou0329,fary86,fengyixing,gaoshuanglong,Gaoxiong,gaoyong10,gengdongjie,gongdaguo1,Greatpan,GuoZhibin,guozhijian,hangq,hanhuifeng,haozhang,hedongdong,Henry Shi,heterogeneous_to_backoff_2_0,huangbingjian,huanghui,huangxinjing,hujiahui8,hujingsong,huoxinyou,jachua,jiahongQian,jianghui58,jiangzhenguang,jiaorui,jiaoy1224,jijiarong,jjfeing,JoeyLin,json,JuiceZ,jxl,kairui_kou,KevinYi,kisnwang,KXiong,laiyongqiang,lanzhineng,liangchenghui,liangzelang,LiangZhibo,lianliguang,lichen,ligan,lijunbin,limingqi107,ling,linqingke,liubuyu,liuchao,liuchuting,liujunzhu,liuluobin,liutongtong9,liuyang811,lixiao,liyan2022,liyejun,liyuxia,looop5,luochao60,luojianing,luoyang,luoyuan,lyqlola,maning202007,maoyaomin,Margaret_wangrui,mayadong,MaZhiming,melody,mengyuanli,michaelzhu_70ab,Mohammad Motallebi,moran,NaCN,nomindcarry,OwenSec,panfengfeng,panshaowu,panzhihui,pkuliuliu,qinzheng,qiuzhongya,qujianwei,r1chardf1d0,Renyuan Zhang,RobinGrosman,shaojunsong,shenwei41,Soaringfish,tangdezhi_123,tanghuikang,tan-wei-cheng,TinaMengtingZhang,TronZhang,TuDouNi,VectorSL,wang_ziqi,wanghenchang,wangnan39,wangpingan,wangshaocong,wangshengnan123,wangtongyu6,weichaoran,wind-zyx,wqx,wtcheng,wujueying,wYann,XianglongZeng,xiaohanzhang,xiaotianci,xiaoyao,XinDu,xulei,xumengjuan1,xupan,xwkgch,yanghaoran,yangluhang,yangruoqi713,yangshuo,yangsijia,yangzhenzhang,yanzhenxiang2020,Yanzhi_YI,yao_yf,yefeng,yeyunpeng2020,Yi_zhang95,yide12,YijieChen,YingLai Lin,YingtongHu,youshu,yuchaojie,yuedongli,YuJianfeng,zangqx,ZengZitao,zhangbuxue,zhangdanyang,zhangdong,zhangfanghe,zhangqi,zhangqinghua,zhangyanhui,zhangyinxia,zhangyongxian,zhangzhaoju,zhanzhan,zhengzuohe,ZhidanLiu,zhixinaa,zhoufeng,zhouyaqiang0,zhuguodong,zhupuxu,zhuyuxiao,zichun_ye,zjun,zlq2020,zong_shuai,ZPaC,zuochuanyong,zyli2020,陈宇,范吉斌,冯一航,胡彬,宦晓玲,黄勇,雷元哲,李良灿,李林杰,刘崇鸣,刘力力,刘勇琪,吕浩宇,吕昱峰（Nate.River）,没有窗户的小巷,沈竞兴,十六夜,王程浩,王禹程,王振邦,徐安越,徐永飞,杨旭华,于振华,俞涵,张清华,张澍坤,张栩浩,张学同,赵英灼,周超,周洪叶,朱家兴
+
+欢迎以任何形式对项目提供贡献！
+
 ## MindSpore 2.0.0-rc1 Release Notes
 
 ### 主要特性和增强
@@ -976,7 +1752,6 @@ alashkari,anzhengqi,archer2049,B.L.LAN,baihuawei,bichaoyang,BJ-WANG,Bokai Li,Bri
 - [STABLE] `mindspore.ops.ResizeNearestNeighborV2` 新增算子原语。
 - [STABLE] `mindspore.ops.RGBToHSV` 新增算子原语。
 - [STABLE] `mindspore.ops.RightShift` 新增算子原语。
-- [STABLE] `mindspore.ops.Roll` 新增算子原语。
 - [STABLE] `mindspore.ops.SampleDistortedBoundingBoxV2` 新增算子原语。
 - [STABLE] `mindspore.ops.ScaleAndTranslate` 新增算子原语。
 - [STABLE] `mindspore.ops.ScatterAddWithAxis` 新增算子原语。
