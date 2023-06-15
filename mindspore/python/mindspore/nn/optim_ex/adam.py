@@ -162,10 +162,10 @@ class Adam(Optimizer):
             exp_avg = exp_avgs[i]
             exp_avg_sq = exp_avg_sqs[i]
             step_t = state_steps[i]
-            step_t = F.depend(step_t, self.assignadd(step_t, self.increase_tensor))
 
             F.assign(exp_avg, self.op_mul(exp_avg, beta1) + self.op_mul(grad, 1-beta1))
             F.assign(exp_avg_sq, ops.addcmul(self.op_mul(exp_avg_sq, beta2), grad, grad.conj(), 1-beta2))
+            step_t = F.depend(step_t, self.assignadd(step_t, self.increase_tensor))
 
             bias_correction1 = F.tuple_to_array((1.0,)) - self.op_pow(beta1, step_t)
             bias_correction2 = F.tuple_to_array((1.0,)) - self.op_pow(beta2, step_t)
@@ -183,12 +183,12 @@ class Adam(Optimizer):
     def _init_group(self, group, gradients, params, grads, exp_avgs, exp_avg_sqs,
                     max_exp_avg_sqs, state_steps, group_id):
         """ Initialize group params. """
-        id = self.group_start_id[group_id]
+        p_id = self.group_start_id[group_id]
         for i, param in enumerate(group["params"]):
             params.append(param)
-            grads.append(gradients[id+i])
-            exp_avgs.append(self.exp_avg[id+i])
-            exp_avg_sqs.append(self.exp_avg_sq[id+i])
-            max_exp_avg_sqs.append(self.max_exp_avg_sq[id+i])
-            state_steps.append(self.state_step[id+i])
+            grads.append(gradients[p_id+i])
+            exp_avgs.append(self.exp_avg[p_id+i])
+            exp_avg_sqs.append(self.exp_avg_sq[p_id+i])
+            max_exp_avg_sqs.append(self.max_exp_avg_sq[p_id+i])
+            state_steps.append(self.state_step[p_id+i])
         return params, grads, exp_avgs, exp_avg_sqs, max_exp_avg_sqs, state_steps

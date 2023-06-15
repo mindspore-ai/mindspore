@@ -92,9 +92,6 @@ class SGD(Optimizer):
         if momentum < 0.0:
             raise ValueError("Invalid momentum value: {}".format(momentum))
         momentum = float(momentum)
-        Validator.check_value_type("weight_decay", weight_decay, [float], self.cls_name)
-        if weight_decay < 0.0:
-            raise ValueError("Invalid weight_decay value: {}".format(weight_decay))
         Validator.check_value_type("dampening", dampening, [int, float], self.cls_name)
         dampening = float(dampening)
         Validator.check_value_type("nesterov", nesterov, [bool], self.cls_name)
@@ -134,10 +131,10 @@ class SGD(Optimizer):
             opt(param, grad, lr, accums[i], momentum, stats[i])
 
     def _init_group(self, group, gradients, params, accums, grads, stats, group_id):
-        id = self.group_start_id[group_id]
+        p_id = self.group_start_id[group_id]
         for i, param in enumerate(group["params"]):
             params.append(param)
-            grads.append(gradients[id+i])
-            accums.append(self.accum[id+i])
-            stats.append(self.stat[id+i])
+            grads.append(gradients[p_id+i])
+            accums.append(self.accum[p_id+i])
+            stats.append(self.stat[p_id+i])
         return params, grads, accums, stats
