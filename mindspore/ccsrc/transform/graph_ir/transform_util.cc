@@ -18,6 +18,7 @@
 #include <utility>
 #include <map>
 #include <algorithm>
+#include <complex>
 
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/utils.h"
@@ -87,13 +88,22 @@ vector<int64_t> TransformUtil::ConvertIntToList(int64_t data, int size) {
 }
 
 static std::map<MeDataType, GeDataType> datatype_trans_map = {
-  {MeDataType::kNumberTypeFloat16, GeDataType::DT_FLOAT16}, {MeDataType::kNumberTypeFloat32, GeDataType::DT_FLOAT},
-  {MeDataType::kNumberTypeFloat64, GeDataType::DT_DOUBLE},  {MeDataType::kNumberTypeInt8, GeDataType::DT_INT8},
-  {MeDataType::kNumberTypeInt16, GeDataType::DT_INT16},     {MeDataType::kNumberTypeInt32, GeDataType::DT_INT32},
-  {MeDataType::kNumberTypeInt64, GeDataType::DT_INT64},     {MeDataType::kNumberTypeUInt8, GeDataType::DT_UINT8},
-  {MeDataType::kNumberTypeUInt16, GeDataType::DT_UINT16},   {MeDataType::kNumberTypeUInt32, GeDataType::DT_UINT32},
-  {MeDataType::kNumberTypeUInt64, GeDataType::DT_UINT64},   {MeDataType::kNumberTypeBool, GeDataType::DT_BOOL},
-  {MeDataType::kObjectTypeString, GeDataType::DT_STRING},   {MeDataType::kNumberTypeFloat, GeDataType::DT_FLOAT}};
+  {MeDataType::kNumberTypeFloat16, GeDataType::DT_FLOAT16},
+  {MeDataType::kNumberTypeFloat32, GeDataType::DT_FLOAT},
+  {MeDataType::kNumberTypeFloat64, GeDataType::DT_DOUBLE},
+  {MeDataType::kNumberTypeInt8, GeDataType::DT_INT8},
+  {MeDataType::kNumberTypeInt16, GeDataType::DT_INT16},
+  {MeDataType::kNumberTypeInt32, GeDataType::DT_INT32},
+  {MeDataType::kNumberTypeInt64, GeDataType::DT_INT64},
+  {MeDataType::kNumberTypeUInt8, GeDataType::DT_UINT8},
+  {MeDataType::kNumberTypeUInt16, GeDataType::DT_UINT16},
+  {MeDataType::kNumberTypeUInt32, GeDataType::DT_UINT32},
+  {MeDataType::kNumberTypeUInt64, GeDataType::DT_UINT64},
+  {MeDataType::kNumberTypeBool, GeDataType::DT_BOOL},
+  {MeDataType::kObjectTypeString, GeDataType::DT_STRING},
+  {MeDataType::kNumberTypeFloat, GeDataType::DT_FLOAT},
+  {MeDataType::kNumberTypeComplex64, GeDataType::DT_COMPLEX64},
+  {MeDataType::kNumberTypeComplex128, GeDataType::DT_COMPLEX128}};
 
 GeDataType TransformUtil::ConvertDataType(const MeDataType &type) {
   MS_LOG(DEBUG) << "Convert me data type: " << TypeIdLabel(type) << " to ge data type";
@@ -105,13 +115,21 @@ GeDataType TransformUtil::ConvertDataType(const MeDataType &type) {
 }
 
 static std::map<MeDataType, size_t> datatype_size_map = {
-  {MeDataType::kNumberTypeFloat16, sizeof(float) / 2}, {MeDataType::kNumberTypeFloat32, sizeof(float)},  // 1/2 of float
-  {MeDataType::kNumberTypeFloat64, sizeof(double)},    {MeDataType::kNumberTypeInt8, sizeof(int8_t)},
-  {MeDataType::kNumberTypeInt16, sizeof(int16_t)},     {MeDataType::kNumberTypeInt32, sizeof(int32_t)},
-  {MeDataType::kNumberTypeInt64, sizeof(int64_t)},     {MeDataType::kNumberTypeUInt8, sizeof(uint8_t)},
-  {MeDataType::kNumberTypeUInt16, sizeof(uint16_t)},   {MeDataType::kNumberTypeUInt32, sizeof(uint32_t)},
-  {MeDataType::kNumberTypeUInt64, sizeof(uint64_t)},   {MeDataType::kNumberTypeBool, sizeof(bool)},
-  {MeDataType::kNumberTypeFloat, sizeof(float)}};
+  {MeDataType::kNumberTypeFloat16, sizeof(float) / 2},  // 1/2 of float
+  {MeDataType::kNumberTypeFloat32, sizeof(float)},
+  {MeDataType::kNumberTypeFloat64, sizeof(double)},
+  {MeDataType::kNumberTypeInt8, sizeof(int8_t)},
+  {MeDataType::kNumberTypeInt16, sizeof(int16_t)},
+  {MeDataType::kNumberTypeInt32, sizeof(int32_t)},
+  {MeDataType::kNumberTypeInt64, sizeof(int64_t)},
+  {MeDataType::kNumberTypeUInt8, sizeof(uint8_t)},
+  {MeDataType::kNumberTypeUInt16, sizeof(uint16_t)},
+  {MeDataType::kNumberTypeUInt32, sizeof(uint32_t)},
+  {MeDataType::kNumberTypeUInt64, sizeof(uint64_t)},
+  {MeDataType::kNumberTypeBool, sizeof(bool)},
+  {MeDataType::kNumberTypeFloat, sizeof(float)},
+  {MeDataType::kNumberTypeComplex64, sizeof(std::complex<float>)},
+  {MeDataType::kNumberTypeComplex128, sizeof(std::complex<double>)}};
 
 size_t TransformUtil::GetDataTypeSize(const MeDataType &type) {
   if (datatype_size_map.find(type) != datatype_size_map.end()) {
