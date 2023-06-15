@@ -49,7 +49,7 @@ int ConvIm2ColBaseMallocWeightBiasData(ConvolutionBaseStruct *conv) {
   NNACL_CHECK_NULL_RETURN_ERR(conv_im2col);
 
   size_t oc_block_num = UP_ROUND(conv->compute_.out_c_, conv_im2col->oc_tile_);
-  size_t pack_weight_size = oc_block_num * conv->compute_.out_c_ * conv->compute_.kernel_hw_;
+  size_t pack_weight_size = oc_block_num * conv->compute_.in_c_ * conv->compute_.kernel_hw_;
   if (!conv->base_.train_session_) {
     NNACL_CHECK_MALLOC_SIZE(pack_weight_size * sizeof(float));
     conv->packed_weight_ = ConvBaseGetConvPackWeightData(conv, pack_weight_size * sizeof(float));
