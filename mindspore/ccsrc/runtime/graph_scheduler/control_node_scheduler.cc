@@ -1240,7 +1240,9 @@ void ControlNodeScheduler::LinkControlArrowForKernelActor(ActorSet *const actor_
     // control actor, so the no-input kernel actor collected in the graph scheduler will also collect this actor,
     // and it needs to be skipped here.
     MS_EXCEPTION_IF_NULL(no_input_kernel_actor);
-    if ((no_input_kernel_actor->input_datas_num_ != 0) || (no_input_kernel_actor->input_controls_num_ != 0)) {
+    // Control arrow for custom actor will be linked in next step.
+    if ((no_input_kernel_actor->input_datas_num_ != 0) || (no_input_kernel_actor->input_controls_num_ != 0) ||
+        no_input_kernel_actor->type() == KernelTransformType::kCustomActor) {
       continue;
     }
 
