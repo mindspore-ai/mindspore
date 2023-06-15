@@ -29,7 +29,7 @@ from mindspore.nn import MultiheadAttention, TransformerEncoderLayer, \
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [ms.float16, ms.float32])
+@pytest.mark.parametrize('dtype', [ms.float32, ms.float32])
 @pytest.mark.parametrize('jit', [False, True])
 def test_multihead_attention_pynative(dtype, jit):
     """

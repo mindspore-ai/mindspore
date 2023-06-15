@@ -8569,6 +8569,7 @@ def matmul(input, other):
         when both `input`, `other` are 1-d vectors.
 
     Raises:
+        TypeError: If the dtype of `input` and the dtype of `other` are not the same.
         ValueError: If the last dimension of `input` is not the same size as the
             second-to-last dimension of `other`, or if a scalar value is passed in.
         ValueError: If the shape of `input` and `other` could not broadcast together.
@@ -8612,15 +8613,8 @@ def matmul(input, other):
         _batch_matmul = _get_cache_prim(P.BatchMatMul)(False, False)
         return _batch_matmul(input, other)
 
-    dtype_op = _get_cache_prim(P.DType)()
     shape_op = _get_cache_prim(P.Shape)()
     reshape_op = _get_cache_prim(P.Reshape)()
-
-    dtype1 = dtype_op(input)
-    dtype2 = dtype_op(other)
-    if not _check_same_type(dtype1, dtype2):
-        input = input.astype(mstype.float32)
-        other = other.astype(mstype.float32)
 
     ndim1_orig, ndim2_orig = rank_op(input), rank_op(other)
     shape1_orig, shape2_orig = shape_op(input), shape_op(other)

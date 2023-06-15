@@ -27,5 +27,6 @@ mindspore.ops.MatMul
 
     异常：
         - **TypeError** - `transpose_a` 或 `transpose_b` 不是bool。
+        - **TypeError** - `a` 的dtype和 `b` 的dtype不一致。
         - **ValueError** - 矩阵 `a` 的列不等于矩阵 `b` 的行。
         - **ValueError** - `a` 或 `b` 的维度不等于2。
