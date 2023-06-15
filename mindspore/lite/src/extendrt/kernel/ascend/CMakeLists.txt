@@ -13,6 +13,8 @@ file(GLOB_RECURSE ASCEND_SRC ${CMAKE_CURRENT_SOURCE_DIR}
         "model/*.cc"
         )
 
+set(ASCEND_SRC ${ASCEND_SRC} ${TOP_DIR}/mindspore/lite/src/litert/kernel/ascend/src/acl_mem_manager.cc)
+
 add_library(ascend_kernel_plugin_mid OBJECT ${ASCEND_SRC})
 add_library(ascend_kernel_plugin SHARED $<TARGET_OBJECTS:ascend_kernel_plugin_mid>)
 
