@@ -15,12 +15,12 @@
  */
 
 #include <memory>
-#include "plugin/device/gpu/kernel/arrays/array_reduce_gpu_kernel.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/binary_ops_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/eltwise_ops_impl.cuh"
 #include "ops/reduce.h"
-#include "plugin/device/gpu/kernel/arrays/cast_gpu_kernel.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+#include "plugin/device/gpu/kernel/arrays/array_reduce_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/reduce_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -36,32 +36,25 @@ constexpr auto kReduceAny = "ReduceAny";
 
 constexpr size_t kIndex0 = 0;
 constexpr size_t kIndex1 = 1;
-constexpr size_t kIndex2 = 2;
-constexpr size_t kIndex3 = 3;
-constexpr size_t kDynamicAxisInputNum = 2;
-constexpr size_t kComplexFloatFlag = 1;
-constexpr size_t kComplexDoubleFlag = 2;
-constexpr size_t kComplexRate = 2;
-constexpr size_t kInt32Flag = 1;
-constexpr size_t kInt64Flag = 2;
-constexpr size_t kInt16Flag = 3;
 
-const std::map<std::string, cudnnReduceTensorOp_t> kReduceTypeMap = {
-  {"ReduceMax", CUDNN_REDUCE_TENSOR_MAX},  {"ReduceMean", CUDNN_REDUCE_TENSOR_AVG},
-  {"ReduceSum", CUDNN_REDUCE_TENSOR_ADD},  {"ReduceMin", CUDNN_REDUCE_TENSOR_MIN},
-  {"ReduceAny", CUDNN_REDUCE_TENSOR_MAX},  {"ReduceAll", CUDNN_REDUCE_TENSOR_MUL},
-  {"ReduceProd", CUDNN_REDUCE_TENSOR_MUL},
+const std::map<std::string, ReduceType_t> kReduceTypeMap = {
+  {"ReduceMax", ReduceMax}, {"ReduceMean", ReduceMean}, {"ReduceSum", ReduceSum},   {"ReduceMin", ReduceMin},
+  {"ReduceAny", ReduceAny}, {"ReduceAll", ReduceAll},   {"ReduceProd", ReduceProd},
 };
 
 #define REDUCE_REGISTER(INPUTX, AXIS, T) \
   KernelAttr().AddInputAttr(INPUTX).AddInputAttr(AXIS).AddOutputAttr(INPUTX), &ArrayReduceGpuKernelMod::LaunchKernel<T>
 
+#define REDUCE_REGISTER_COMPLEX(INPUTX, AXIS, T)                              \
+  KernelAttr().AddInputAttr(INPUTX).AddInputAttr(AXIS).AddOutputAttr(INPUTX), \
+    &ArrayReduceGpuKernelMod::LaunchComplexKernel<T>
+
 std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayReduceGpuKernelMod::all_any_list_ = {
   {REDUCE_REGISTER(kNumberTypeBool, kNumberTypeInt32, bool)},
-  {REDUCE_REGISTER(kNumberTypeBool, kNumberTypeInt64, bool)}};
-std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayReduceGpuKernelMod::prod_list_ = {
-  {REDUCE_REGISTER(kNumberTypeBool, kNumberTypeInt32, bool)},
   {REDUCE_REGISTER(kNumberTypeBool, kNumberTypeInt64, bool)},
+};
+
+std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayReduceGpuKernelMod::prod_list_ = {
   {REDUCE_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, half)},
   {REDUCE_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, half)},
   {REDUCE_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, float)},
@@ -70,19 +63,26 @@ std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayRed
   {REDUCE_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, double)},
   {REDUCE_REGISTER(kNumberTypeInt8, kNumberTypeInt32, int8_t)},
   {REDUCE_REGISTER(kNumberTypeInt8, kNumberTypeInt64, int8_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, uint8_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt8, kNumberTypeInt64, uint8_t)},
   {REDUCE_REGISTER(kNumberTypeInt16, kNumberTypeInt32, int16_t)},
   {REDUCE_REGISTER(kNumberTypeInt16, kNumberTypeInt64, int16_t)},
   {REDUCE_REGISTER(kNumberTypeInt32, kNumberTypeInt32, int32_t)},
   {REDUCE_REGISTER(kNumberTypeInt32, kNumberTypeInt64, int32_t)},
   {REDUCE_REGISTER(kNumberTypeInt64, kNumberTypeInt32, int64_t)},
   {REDUCE_REGISTER(kNumberTypeInt64, kNumberTypeInt64, int64_t)},
-  {REDUCE_REGISTER(kNumberTypeComplex64, kNumberTypeInt32, Complex<float>)},
-  {REDUCE_REGISTER(kNumberTypeComplex64, kNumberTypeInt64, Complex<float>)},
-  {REDUCE_REGISTER(kNumberTypeComplex128, kNumberTypeInt32, Complex<double>)},
-  {REDUCE_REGISTER(kNumberTypeComplex128, kNumberTypeInt64, Complex<double>)},
+  {REDUCE_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, uint8_t)},
+  {REDUCE_REGISTER(kNumberTypeUInt8, kNumberTypeInt64, uint8_t)},
+  {REDUCE_REGISTER(kNumberTypeUInt16, kNumberTypeInt32, uint16_t)},
+  {REDUCE_REGISTER(kNumberTypeUInt16, kNumberTypeInt64, uint16_t)},
+  {REDUCE_REGISTER(kNumberTypeUInt32, kNumberTypeInt32, uint32_t)},
+  {REDUCE_REGISTER(kNumberTypeUInt32, kNumberTypeInt64, uint32_t)},
+  {REDUCE_REGISTER(kNumberTypeUInt64, kNumberTypeInt32, uint64_t)},
+  {REDUCE_REGISTER(kNumberTypeUInt64, kNumberTypeInt64, uint64_t)},
+  {REDUCE_REGISTER_COMPLEX(kNumberTypeComplex64, kNumberTypeInt32, Complex<float>)},
+  {REDUCE_REGISTER_COMPLEX(kNumberTypeComplex64, kNumberTypeInt64, Complex<float>)},
+  {REDUCE_REGISTER_COMPLEX(kNumberTypeComplex128, kNumberTypeInt32, Complex<double>)},
+  {REDUCE_REGISTER_COMPLEX(kNumberTypeComplex128, kNumberTypeInt64, Complex<double>)},
 };
+
 std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayReduceGpuKernelMod::sum_list_ = {
   {REDUCE_REGISTER(kNumberTypeBool, kNumberTypeInt32, bool)},
   {REDUCE_REGISTER(kNumberTypeBool, kNumberTypeInt64, bool)},
@@ -94,20 +94,29 @@ std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayRed
   {REDUCE_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, double)},
   {REDUCE_REGISTER(kNumberTypeInt8, kNumberTypeInt32, int8_t)},
   {REDUCE_REGISTER(kNumberTypeInt8, kNumberTypeInt64, int8_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, uint8_t)},
-  {REDUCE_REGISTER(kNumberTypeUInt8, kNumberTypeInt64, uint8_t)},
   {REDUCE_REGISTER(kNumberTypeInt16, kNumberTypeInt32, int16_t)},
   {REDUCE_REGISTER(kNumberTypeInt16, kNumberTypeInt64, int16_t)},
   {REDUCE_REGISTER(kNumberTypeInt32, kNumberTypeInt32, int32_t)},
   {REDUCE_REGISTER(kNumberTypeInt32, kNumberTypeInt64, int32_t)},
   {REDUCE_REGISTER(kNumberTypeInt64, kNumberTypeInt32, int64_t)},
   {REDUCE_REGISTER(kNumberTypeInt64, kNumberTypeInt64, int64_t)},
-  {REDUCE_REGISTER(kNumberTypeComplex64, kNumberTypeInt32, Complex<float>)},
-  {REDUCE_REGISTER(kNumberTypeComplex64, kNumberTypeInt64, Complex<float>)},
-  {REDUCE_REGISTER(kNumberTypeComplex128, kNumberTypeInt32, Complex<double>)},
-  {REDUCE_REGISTER(kNumberTypeComplex128, kNumberTypeInt64, Complex<double>)},
+  {REDUCE_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, uint8_t)},
+  {REDUCE_REGISTER(kNumberTypeUInt8, kNumberTypeInt64, uint8_t)},
+  {REDUCE_REGISTER(kNumberTypeUInt16, kNumberTypeInt32, uint16_t)},
+  {REDUCE_REGISTER(kNumberTypeUInt16, kNumberTypeInt64, uint16_t)},
+  {REDUCE_REGISTER(kNumberTypeUInt32, kNumberTypeInt32, uint32_t)},
+  {REDUCE_REGISTER(kNumberTypeUInt32, kNumberTypeInt64, uint32_t)},
+  {REDUCE_REGISTER(kNumberTypeUInt64, kNumberTypeInt32, uint64_t)},
+  {REDUCE_REGISTER(kNumberTypeUInt64, kNumberTypeInt64, uint64_t)},
+  {REDUCE_REGISTER_COMPLEX(kNumberTypeComplex64, kNumberTypeInt32, Complex<float>)},
+  {REDUCE_REGISTER_COMPLEX(kNumberTypeComplex64, kNumberTypeInt64, Complex<float>)},
+  {REDUCE_REGISTER_COMPLEX(kNumberTypeComplex128, kNumberTypeInt32, Complex<double>)},
+  {REDUCE_REGISTER_COMPLEX(kNumberTypeComplex128, kNumberTypeInt64, Complex<double>)},
 };
+
 std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayReduceGpuKernelMod::max_min_list_ = {
+  {REDUCE_REGISTER(kNumberTypeBool, kNumberTypeInt32, bool)},
+  {REDUCE_REGISTER(kNumberTypeBool, kNumberTypeInt64, bool)},
   {REDUCE_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, half)},
   {REDUCE_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, half)},
   {REDUCE_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, float)},
@@ -122,11 +131,16 @@ std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayRed
   {REDUCE_REGISTER(kNumberTypeInt32, kNumberTypeInt64, int32_t)},
   {REDUCE_REGISTER(kNumberTypeInt64, kNumberTypeInt32, int64_t)},
   {REDUCE_REGISTER(kNumberTypeInt64, kNumberTypeInt64, int64_t)},
-  {REDUCE_REGISTER(kNumberTypeComplex64, kNumberTypeInt32, Complex<float>)},
-  {REDUCE_REGISTER(kNumberTypeComplex64, kNumberTypeInt64, Complex<float>)},
-  {REDUCE_REGISTER(kNumberTypeComplex128, kNumberTypeInt32, Complex<double>)},
-  {REDUCE_REGISTER(kNumberTypeComplex128, kNumberTypeInt64, Complex<double>)},
+  {REDUCE_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, uint8_t)},
+  {REDUCE_REGISTER(kNumberTypeUInt8, kNumberTypeInt64, uint8_t)},
+  {REDUCE_REGISTER(kNumberTypeUInt16, kNumberTypeInt32, uint16_t)},
+  {REDUCE_REGISTER(kNumberTypeUInt16, kNumberTypeInt64, uint16_t)},
+  {REDUCE_REGISTER(kNumberTypeUInt32, kNumberTypeInt32, uint32_t)},
+  {REDUCE_REGISTER(kNumberTypeUInt32, kNumberTypeInt64, uint32_t)},
+  {REDUCE_REGISTER(kNumberTypeUInt64, kNumberTypeInt32, uint64_t)},
+  {REDUCE_REGISTER(kNumberTypeUInt64, kNumberTypeInt64, uint64_t)},
 };
+
 std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayReduceGpuKernelMod::mean_list_ = {
   {REDUCE_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, half)},
   {REDUCE_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, half)},
@@ -134,11 +148,12 @@ std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>> ArrayRed
   {REDUCE_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, float)},
   {REDUCE_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, double)},
   {REDUCE_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, double)},
-  {REDUCE_REGISTER(kNumberTypeComplex64, kNumberTypeInt32, Complex<float>)},
-  {REDUCE_REGISTER(kNumberTypeComplex64, kNumberTypeInt64, Complex<float>)},
-  {REDUCE_REGISTER(kNumberTypeComplex128, kNumberTypeInt32, Complex<double>)},
-  {REDUCE_REGISTER(kNumberTypeComplex128, kNumberTypeInt64, Complex<double>)},
+  {REDUCE_REGISTER_COMPLEX(kNumberTypeComplex64, kNumberTypeInt32, Complex<float>)},
+  {REDUCE_REGISTER_COMPLEX(kNumberTypeComplex64, kNumberTypeInt64, Complex<float>)},
+  {REDUCE_REGISTER_COMPLEX(kNumberTypeComplex128, kNumberTypeInt32, Complex<double>)},
+  {REDUCE_REGISTER_COMPLEX(kNumberTypeComplex128, kNumberTypeInt64, Complex<double>)},
 };
+
 std::map<std::string, std::vector<std::pair<KernelAttr, ArrayReduceGpuKernelMod::ReduceFunc>>>
   ArrayReduceGpuKernelMod::kernel_attr_list_ = {
     {prim::kPrimReduceSum->name(), sum_list_},     {prim::kPrimReduceMean->name(), mean_list_},
@@ -183,54 +198,63 @@ bool ArrayReduceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   }
   kernel_func_ = kernel_attr_list_[kernel_type_][index].second;
 
-  auto type_id = kernel_attr.GetInputAttr(kIndex0).dtype;
-  auto type_name = TypeIdLabel(type_id);
-  if (type_id == kNumberTypeComplex64) {
-    data_type_ = CUDNN_DATA_FLOAT;
-    complex_op_type = kComplexFloatFlag;
-  } else if (type_id == kNumberTypeComplex128) {
-    data_type_ = CUDNN_DATA_DOUBLE;
-    complex_op_type = kComplexDoubleFlag;
-  } else if (type_id == kNumberTypeInt64) {
-    data_type_ = CUDNN_DATA_DOUBLE;
-    int_op_type = kInt64Flag;
-  } else if (type_id == kNumberTypeInt16) {
-    data_type_ = CUDNN_DATA_FLOAT;
-    int_op_type = kInt16Flag;
-  } else {
-    data_type_ = GetCudnnDataType(type_name);
-  }
-  if (data_type_ == CUDNN_DATA_INT32) {
-    data_type_ = CUDNN_DATA_FLOAT;
-    int_op_type = kInt32Flag;
-  }
-
   auto kernel_ptr = std::dynamic_pointer_cast<ops::Reduce>(base_operator);
   keep_dims_ = kernel_ptr->get_keep_dims();
   skip_mode_ = kernel_ptr->get_skip_mode();
 
-  InitResource();
   return true;
 }
 
-void ArrayReduceGpuKernelMod::InitCudnnResource() {
-  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(inputA_descriptor_, &input_size_),
-                                      "cudnnGetTensorSizeInBytes failed.");
-  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(outputC_descriptor_, &output_size_),
-                                      "cudnnGetTensorSizeInBytes failed.");
-
-  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-    cudnnGetReductionWorkspaceSize(cudnn_handle_, reduce_tensor_descriptor_, inputA_descriptor_, outputC_descriptor_,
-                                   &workspace_size_),
-    "cudnnGetReductionWorkspaceSize failed.");
-  workspace_size_list_.push_back(workspace_size_);
-  if (complex_op_type != 0) {
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(outputC_descriptor_, &output_size_),
-                                        "cudnnGetTensorSizeInBytes failed.");
-    output_size_list_.clear();
-    output_size_list_.push_back(output_size_ * kComplexRate);
+void ArrayReduceGpuKernelMod::FormatAxis(const size_t dims, const std::vector<int> &axis, std::vector<bool> *bitmap) {
+  if (dims == 0) {
+    return;
   }
-  return;
+  const int dims_len = SizeToInt(dims);
+  auto axis_fill = axis;
+  if (axis.empty()) {
+    for (int i = 0; i < dims_len; i++) {
+      axis_fill.push_back(i);
+    }
+  }
+  for (size_t i = 0; i < axis_fill.size(); i++) {
+    int index = axis_fill[i];
+    if (index < -dims_len || index >= dims_len) {
+      MS_LOG(EXCEPTION) << "Invalid reduction dimension (" << index << " for input with " << dims << " dimension(s)";
+    }
+    index = (index + dims) % dims;
+    if ((*bitmap)[index]) {
+      MS_LOG(EXCEPTION) << "Invalid reduction arguments: Axes contains duplicate dimension: " << index;
+    }
+    (*bitmap)[index] = true;
+  }
+}
+
+void ArrayReduceGpuKernelMod::SimplyReduce(const ShapeVector input_shape, const std::vector<int> axis) {
+  std::vector<bool> bitmap(input_shape.size(), false);
+  FormatAxis(input_shape.size(), axis, &bitmap);
+  size_t dim_index = 0;
+  for (; dim_index < input_shape.size(); dim_index++) {
+    if (input_shape[dim_index] != 1) break;
+  }
+  if (dim_index >= input_shape.size()) {
+    reduce_first_axis_ = true;
+  } else {
+    input_reshape_.clear();
+    reduce_first_axis_ = bitmap[dim_index];
+    input_reshape_.push_back(input_shape[dim_index]);
+    dim_index++;
+    for (; dim_index < input_shape.size(); dim_index++) {
+      const size_t size = input_shape[dim_index];
+      if (size == 1) {
+        bitmap[dim_index] = bitmap[dim_index - 1];
+      }
+      if (bitmap[dim_index] != bitmap[dim_index - 1]) {
+        input_reshape_.push_back(size);
+      } else {
+        input_reshape_.back() *= size;
+      }
+    }
+  }
 }
 
 int ArrayReduceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -240,19 +264,24 @@ int ArrayReduceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   all_match_ = false;
   int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
   if (ret != KRET_OK) {
-    InitCudnnResource();
     return ret;
   }
 
   auto inputA_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
+
+  input_num_ = 1;
+  for (size_t i = 0; i < inputA_shape.size(); i++) {
+    input_num_ *= inputA_shape[i];
+  }
+
+  input_shape_.clear();
+  input_shape_ = inputA_shape;
   std::vector<int64_t> attr_axis;
   if (!TryGetIntValue(inputs, kIndex1, kernel_name_, &attr_axis)) {
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get axis input! ";
   }
   if (AnfAlgo::IsDynamicShapeSkipExecute(skip_mode_, inputs[kIndex1]->GetShapeVector())) {
     need_skip_execute_ = true;
-    // As size of input_size_list_ is equal to size of inputs, input_size_list_[0] is safe.
-    input_size_ = input_size_list_[0];
     return KRET_OK;
   }
 
@@ -264,18 +293,19 @@ int ArrayReduceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   std::sort(axis_.begin(), axis_.end());
   auto multiple_pos = std::unique(axis_.begin(), axis_.end());
   axis_.erase(multiple_pos, axis_.end());
-
   auto outputC_shape = outputs[kIndex0]->GetDeviceShapeAdaptively();
   is_null_input_ =
     CHECK_SHAPE_NULL(inputA_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(outputC_shape, kernel_name_, "output");
   if (is_null_input_) {
-    InitCudnnResource();
     return KRET_OK;
   }
 
   InferInAndOutDesc(inputA_shape, outputC_shape);
   InferArrayReduceType();
-  InitCudnnResource();
+  if (all_match_) {
+    return KRET_OK;
+  }
+  SimplyReduce(inputA_shape, axis_);
   return KRET_OK;
 }
 
@@ -286,24 +316,12 @@ void ArrayReduceGpuKernelMod::InferInAndOutDesc(const ShapeVector &input_shape, 
   CheckTensorSize({input_shape, output_shape});
   if (input_shape.size() <= split_dim) {
     ShapeNdTo4d(input_shape, &inputA);
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-      cudnnSetTensor4dDescriptor(inputA_descriptor_, CUDNN_TENSOR_NCHW, data_type_, LongToInt(inputA[0]),
-                                 LongToInt(inputA[1]), LongToInt(inputA[kIndex2]), LongToInt(inputA[kIndex3])),
-      "cudnnSetTensor4dDescriptor failed");
   } else {
-    (void)CudnnSetTensorNdDescriptor(input_shape, inputA_descriptor_, data_type_, kernel_name_);
     std::copy(input_shape.begin(), input_shape.end(), std::back_inserter(inputA));
   }
 
   if (axis_.empty()) {
     outputC_shape.resize(input_shape.size(), 1);
-    if (outputC_shape.size() <= split_dim) {
-      CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-        cudnnSetTensor4dDescriptor(outputC_descriptor_, CUDNN_TENSOR_NCHW, data_type_, 1, 1, 1, 1),
-        "cudnnSetTensor4dDescriptor failed");
-    } else {
-      (void)CudnnSetTensorNdDescriptor(outputC_shape, outputC_descriptor_, data_type_, kernel_name_);
-    }
 
     bool is_not_all_match = std::any_of(inputA.begin(), inputA.end(), [](int64_t s) { return s != 1; });
     if (is_not_all_match) {
@@ -323,12 +341,7 @@ void ArrayReduceGpuKernelMod::InferInAndOutDesc(const ShapeVector &input_shape, 
 
   if (outputC_shape.size() <= split_dim) {
     ShapeNdTo4d(outputC_shape, &outputC);
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-      cudnnSetTensor4dDescriptor(outputC_descriptor_, CUDNN_TENSOR_NCHW, data_type_, SizeToInt(outputC[0]),
-                                 SizeToInt(outputC[1]), SizeToInt(outputC[kIndex2]), SizeToInt(outputC[kIndex3])),
-      "cudnnSetTensor4dDescriptor failed");
   } else {
-    (void)CudnnSetTensorNdDescriptor(outputC_shape, outputC_descriptor_, data_type_, kernel_name_);
     std::copy(outputC_shape.begin(), outputC_shape.end(), std::back_inserter(outputC));
   }
 
@@ -340,94 +353,136 @@ void ArrayReduceGpuKernelMod::InferInAndOutDesc(const ShapeVector &input_shape, 
 
 void ArrayReduceGpuKernelMod::InferArrayReduceType() {
   std::stringstream ss;
-  ss << "For '" << kernel_name_ << "', cudnnSetReduceTensorDescriptor failed.";
+  ss << "For '" << kernel_name_ << "', InferArrayReduceType failed.";
   auto iter = kReduceTypeMap.find(kernel_name_);
   if (iter == kReduceTypeMap.end()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "Only support these array reduce kernel types: "
                       << "ReduceMax, ReduceMean, ReduceSum, ReduceMin, ReduceAny, ReduceAll, ReduceProd currently"
                       << ", but got " << kernel_name_;
   }
-  reduce_tensor_op_ = iter->second;
-  // add check for float64
-  cudnnDataType_t comp_type = (data_type_ == CUDNN_DATA_DOUBLE) ? CUDNN_DATA_DOUBLE : CUDNN_DATA_FLOAT;
-  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-    cudnnSetReduceTensorDescriptor(reduce_tensor_descriptor_, reduce_tensor_op_, comp_type, nan_prop_, reduce_indices_,
-                                   CUDNN_32BIT_INDICES),
-    ss.str());
-  return;
-}
-template <typename T, typename S>
-void ArrayReduceGpuKernelMod::LaunchIntKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
-                                              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  S *input_addr = GetDeviceAddress<S>(inputs, 0);
-  S *output_addr = GetDeviceAddress<S>(outputs, 0);
-  S *workspace_addr = GetPossiblyNullDeviceAddress<S>(workspace, 0);
-  T alpha = static_cast<T>(1.0f);
-  T beta = static_cast<T>(0.0f);
-
-  T *casted_input = reinterpret_cast<T *>(device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(input_size_));
-  T *output_before_cast =
-    reinterpret_cast<T *>(device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(output_size_));
-
-  const int input_num = input_size_ / sizeof(T);
-  const int output_num = output_size_ / sizeof(S);
-  std::stringstream ss;
-  ss << "For '" << kernel_name_ << "', cudnnReduceTensor failed.";
-
-  Cast(input_num, input_addr, casted_input, reinterpret_cast<cudaStream_t>(stream_ptr));
-  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-    cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, workspace_addr, workspace_size_, &alpha,
-                      inputA_descriptor_, casted_input, &beta, outputC_descriptor_, output_before_cast),
-    ss.str());
-  Cast(output_num, output_before_cast, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
-  device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(casted_input);
-  device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(output_before_cast);
+  reduce_op_type_ = iter->second;
   return;
 }
 
-template <typename T, typename S>
-void ArrayReduceGpuKernelMod::LaunchComplexKernel(const std::vector<AddressPtr> &inputs,
+std::vector<size_t> ArrayReduceGpuKernelMod::ToRowReduce() {
+  const size_t input_reshape_dims = input_reshape_.size();
+  std::vector<size_t> shape;
+  for (size_t i = reduce_first_axis_; i < input_reshape_dims; i += 2) {
+    shape.push_back(input_reshape_[i]);
+  }
+  for (size_t i = !reduce_first_axis_; i < input_reshape_dims; i += 2) {
+    shape.push_back(input_reshape_[i]);
+  }
+  return shape;
+}
+
+void ArrayReduceGpuKernelMod::GetTransposePerm(size_t *transpose_perm) {
+  const size_t dims = input_reshape_.size();
+  const size_t identity_dims = (dims + !reduce_first_axis_) / 2;
+  for (size_t i = 0; i < identity_dims; i++) {
+    transpose_perm[i] = 2 * i + reduce_first_axis_;
+  }
+  for (size_t i = identity_dims; i < dims; i++) {
+    transpose_perm[i] = 2 * (i - identity_dims) + !reduce_first_axis_;
+  }
+  return;
+}
+
+void ArrayReduceGpuKernelMod::GetOriginShape(size_t *origin_shape) {
+  const size_t dims = input_reshape_.size();
+  for (size_t i = 0; i < dims; i++) {
+    origin_shape[i] = input_reshape_[i];
+  }
+  return;
+}
+
+template <typename T>
+bool ArrayReduceGpuKernelMod::LaunchComplexKernel(const std::vector<AddressPtr> &inputs,
                                                   const std::vector<AddressPtr> &workspace,
                                                   const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  T *input_addr = GetDeviceAddress<T>(inputs, 0);
-  T *output_addr = GetDeviceAddress<T>(outputs, 0);
-  S alpha = static_cast<S>(1.0f);
-  S beta = static_cast<S>(0.0f);
-  T *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 0);
-  S *input_real = reinterpret_cast<S *>(device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(input_size_));
-  S *input_imag = reinterpret_cast<S *>(device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(input_size_));
-  S *output_real = reinterpret_cast<S *>(device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(output_size_));
-  S *output_imag = reinterpret_cast<S *>(device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(output_size_));
-  if (input_real == nullptr || input_imag == nullptr || output_real == nullptr || output_imag == nullptr) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the memory alloc of failed";
+  if (is_null_input_) {
+    return true;
   }
-  const int64_t output_count = output_size_ / sizeof(S);
-  const size_t input_count = input_size_ / sizeof(S);
+  T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
+  T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
+  if (input_reshape_.size() == 0 || (input_reshape_.size() == 1 && !reduce_first_axis_)) {
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(output_addr, input_addr, input_num_ * sizeof(T), cudaMemcpyDeviceToDevice,
+                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "cudaMemcpyAsync output failed");
+    return true;
+  } else {
+    if ((input_reshape_.size() <= 3)) {
+      auto status = ArrayReduceComplex(input_addr, input_reshape_, reduce_first_axis_, reduce_op_type_, output_addr,
+                                       reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+      return true;
+    } else {
+      T *temp = nullptr;
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMalloc(reinterpret_cast<void **>(&temp), input_num_ * sizeof(T)),
+                                         "Malloc failed");
+      const size_t dims = input_reshape_.size();
+      size_t *origin_shape = reinterpret_cast<size_t *>(malloc(dims * sizeof(size_t)));
+      size_t *transpose_perm = reinterpret_cast<size_t *>(malloc(dims * sizeof(size_t)));
 
-  UnaryOpsCudaFunc<ElwiseOpType::kReal, T, S>(input_count, input_addr, input_real,
-                                              reinterpret_cast<cudaStream_t>(stream_ptr));
-  UnaryOpsCudaFunc<ElwiseOpType::kImag, T, S>(input_count, input_addr, input_imag,
-                                              reinterpret_cast<cudaStream_t>(stream_ptr));
-  std::stringstream ss;
-  ss << "For '" << kernel_name_ << "', cudnnReduceTensor failed.";
-  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-    cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, workspace_addr, workspace_size_, &alpha,
-                      inputA_descriptor_, input_real, &beta, outputC_descriptor_, output_real),
-    ss.str());
-  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-    cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, workspace_addr, workspace_size_, &alpha,
-                      inputA_descriptor_, input_imag, &beta, outputC_descriptor_, output_imag),
-    ss.str());
-  std::vector<int64_t> ele_shape = {output_count};
-  BinaryOpWithBroadcastCudaFunc<BinaryOpType::kComplex, S, S, T>(false, ele_shape, ele_shape, ele_shape, output_real,
-                                                                 output_imag, output_addr, device_id_,
-                                                                 reinterpret_cast<cudaStream_t>(stream_ptr));
-  device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(input_real);
-  device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(input_imag);
-  device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(output_real);
-  device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(output_imag);
-  return;
+      const size_t identity_dims = (dims + !reduce_first_axis_) / 2;
+
+      for (size_t i = 0; i < dims; i++) {
+        origin_shape[i] = input_reshape_[i];
+      }
+
+      for (size_t i = 0; i < identity_dims; i++) {
+        transpose_perm[i] = 2 * i + reduce_first_axis_;
+      }
+      for (size_t i = identity_dims; i < dims; i++) {
+        transpose_perm[i] = 2 * (i - identity_dims) + !reduce_first_axis_;
+      }
+
+      size_t *origin_shape_device = nullptr;
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+        cudaMalloc(reinterpret_cast<void **>(&origin_shape_device), dims * sizeof(size_t)),
+        "Malloc 'origin_shape' failed.");
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+        cudaMemcpyAsync(origin_shape_device, origin_shape, dims * sizeof(size_t), cudaMemcpyHostToDevice,
+                        reinterpret_cast<cudaStream_t>(stream_ptr)),
+        "Memcpy 'origin_shape' from host to device failed.");
+      free(origin_shape);
+
+      size_t *transpose_perm_device = nullptr;
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+        cudaMalloc(reinterpret_cast<void **>(&transpose_perm_device), dims * sizeof(size_t)),
+        "Malloc 'transpose_perm' failed.");
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+        cudaMemcpyAsync(transpose_perm_device, transpose_perm, dims * sizeof(size_t), cudaMemcpyHostToDevice,
+                        reinterpret_cast<cudaStream_t>(stream_ptr)),
+        "Memcpy 'transpose_perm' from host to device failed.");
+      free(transpose_perm);
+
+      CalTranspose(input_num_, input_addr, origin_shape_device, transpose_perm_device, input_reshape_.size(), temp,
+                   reinterpret_cast<cudaStream_t>(stream_ptr));
+
+      input_reshape_ = ToRowReduce();
+
+      size_t new_dim0 = 1;
+      size_t new_dim1 = 1;
+      std::vector<size_t> new_input_reshape;
+      for (size_t i = 0; i < identity_dims; i++) {
+        new_dim0 *= input_reshape_[i];
+      }
+      new_input_reshape.push_back(new_dim0);
+      for (size_t i = identity_dims; i < input_reshape_.size(); i++) {
+        new_dim1 *= input_reshape_[i];
+      }
+      new_input_reshape.push_back(new_dim1);
+      reduce_first_axis_ = false;
+      auto status = ArrayReduceComplex(temp, new_input_reshape, reduce_first_axis_, reduce_op_type_, output_addr,
+                                       reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaFree(temp), "Free temp failed.");
+      return true;
+    }
+  }
+  return true;
 }
 
 template <typename T>
@@ -437,52 +492,85 @@ bool ArrayReduceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   if (is_null_input_) {
     return true;
   }
-  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetStream(cudnn_handle_, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                      "Failed to set stream for cuDNN handle.");
-  T *input_addr = GetDeviceAddress<T>(inputs, 0);
-  T *output_addr = GetDeviceAddress<T>(outputs, 0);
-  if (all_match_ || need_skip_execute_) {
-    MS_LOG(DEBUG)
-      << "The corresponding dimensions of the input and output tensors all match. No need to call cuDNN kernel.";
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(output_addr, input_addr, input_size_, cudaMemcpyDeviceToDevice,
-                                                       reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                       "cudaMemcpyAsync failed in ArrayReduceGpuKernelMod::Launch.");
+  T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
+  T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
+  if (input_reshape_.size() == 0 ||
+      (input_reshape_.size() == 1 && !reduce_first_axis_)) {  // to-do, define the output when size == 1
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(output_addr, input_addr, input_num_ * sizeof(T), cudaMemcpyDeviceToDevice,
+                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "cudaMemcpyAsync output failed");
     return true;
-  }
-  if (complex_op_type == kComplexFloatFlag) {
-    LaunchComplexKernel<Complex<float>, float>(inputs, workspace, outputs, stream_ptr);
-    return true;
-  } else if (complex_op_type == kComplexDoubleFlag) {
-    LaunchComplexKernel<Complex<double>, double>(inputs, workspace, outputs, stream_ptr);
-    return true;
-  }
-  T alpha = static_cast<T>(1.0f);
-  T beta = static_cast<T>(0.0f);
-  T *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 0);
-  if (int_op_type == kInt32Flag) {
-    LaunchIntKernel<float, int32_t>(inputs, workspace, outputs, stream_ptr);
-    return true;
-  } else if (int_op_type == kInt64Flag) {
-    LaunchIntKernel<double, int64_t>(inputs, workspace, outputs, stream_ptr);
-    return true;
-  } else if (int_op_type == kInt16Flag) {
-    LaunchIntKernel<float, int16_t>(inputs, workspace, outputs, stream_ptr);
-    return true;
-  }
-  std::stringstream ss;
-  ss << "For '" << kernel_name_ << "', cudnnReduceTensor failed.";
-  if (data_type_ == CUDNN_DATA_DOUBLE) {
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-      cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, workspace_addr, workspace_size_, &alpha,
-                        inputA_descriptor_, input_addr, &beta, outputC_descriptor_, output_addr),
-      ss.str());
   } else {
-    const float alphaf = static_cast<float>(alpha);
-    const float betaf = static_cast<float>(beta);
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-      cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, workspace_addr, workspace_size_, &alphaf,
-                        inputA_descriptor_, input_addr, &betaf, outputC_descriptor_, output_addr),
-      ss.str());
+    if ((input_reshape_.size() <= 3)) {
+      auto status = ArrayReduce(input_addr, input_reshape_, reduce_first_axis_, reduce_op_type_, output_addr,
+                                reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+      return true;
+    } else {
+      T *temp = nullptr;
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMalloc(reinterpret_cast<void **>(&temp), input_num_ * sizeof(T)),
+                                         "Malloc failed");
+      const size_t dims = input_reshape_.size();
+      size_t *origin_shape = reinterpret_cast<size_t *>(malloc(dims * sizeof(size_t)));
+      size_t *transpose_perm = reinterpret_cast<size_t *>(malloc(dims * sizeof(size_t)));
+
+      const size_t identity_dims = (dims + !reduce_first_axis_) / 2;
+
+      for (size_t i = 0; i < dims; i++) {
+        origin_shape[i] = input_reshape_[i];
+      }
+
+      for (size_t i = 0; i < identity_dims; i++) {
+        transpose_perm[i] = 2 * i + reduce_first_axis_;
+      }
+      for (size_t i = identity_dims; i < dims; i++) {
+        transpose_perm[i] = 2 * (i - identity_dims) + !reduce_first_axis_;
+      }
+
+      size_t *origin_shape_device = nullptr;
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+        cudaMalloc(reinterpret_cast<void **>(&origin_shape_device), dims * sizeof(size_t)),
+        "Malloc 'origin_shape' failed.");
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+        cudaMemcpyAsync(origin_shape_device, origin_shape, dims * sizeof(size_t), cudaMemcpyHostToDevice,
+                        reinterpret_cast<cudaStream_t>(stream_ptr)),
+        "Memcpy 'origin_shape' from host to device failed.");
+      free(origin_shape);
+
+      size_t *transpose_perm_device = nullptr;
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+        cudaMalloc(reinterpret_cast<void **>(&transpose_perm_device), dims * sizeof(size_t)),
+        "Malloc 'transpose_perm' failed.");
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+        cudaMemcpyAsync(transpose_perm_device, transpose_perm, dims * sizeof(size_t), cudaMemcpyHostToDevice,
+                        reinterpret_cast<cudaStream_t>(stream_ptr)),
+        "Memcpy 'transpose_perm' from host to device failed.");
+      free(transpose_perm);
+
+      CalTranspose(input_num_, input_addr, origin_shape_device, transpose_perm_device, input_reshape_.size(), temp,
+                   reinterpret_cast<cudaStream_t>(stream_ptr));
+
+      input_reshape_ = ToRowReduce();
+
+      size_t new_dim0 = 1;
+      size_t new_dim1 = 1;
+      std::vector<size_t> new_input_reshape;
+      for (size_t i = 0; i < identity_dims; i++) {
+        new_dim0 *= input_reshape_[i];
+      }
+      new_input_reshape.push_back(new_dim0);
+      for (size_t i = identity_dims; i < input_reshape_.size(); i++) {
+        new_dim1 *= input_reshape_[i];
+      }
+      new_input_reshape.push_back(new_dim1);
+      reduce_first_axis_ = false;
+      auto status = ArrayReduce(temp, new_input_reshape, reduce_first_axis_, reduce_op_type_, output_addr,
+                                reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaFree(temp), "Free temp failed.");
+      return true;
+    }
   }
   return true;
 }
