@@ -291,8 +291,14 @@ void DeviceAddressUtils::CreateKernelOutputDeviceAddress(const DeviceContext *de
       auto output_format = AnfAlgo::GetOutputFormat(kernel, i);
       auto output_type = AnfAlgo::GetOutputDeviceDataType(kernel, i);
       auto address_size = AnfAlgo::GetOutputTensorMemSize(kernel, i);
+      UserDataPtr user_data = nullptr;
+      auto kernel_info = dynamic_cast<device::KernelInfo *>(kernel->kernel_info());
+      MS_EXCEPTION_IF_NULL(kernel_info);
+      if (kernel_info->kernel_mod() != nullptr && kernel_info->kernel_mod()->need_user_data()) {
+        user_data = std::make_shared<UserData>();
+      }
       auto device_address = real_device_context->device_res_manager_->CreateDeviceAddress(
-        nullptr, address_size, output_format, output_type, trans::GetRuntimePaddingShape(kernel, i));
+        nullptr, address_size, output_format, output_type, trans::GetRuntimePaddingShape(kernel, i), user_data);
       if (is_from_persistent_mem) {
         device_address->set_from_persistent_mem(true);
       }
