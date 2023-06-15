@@ -19,7 +19,7 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/nnacl_utils.h"
 
-int Reverse(const float *input, float *output, size_t elem_size, int *index) {
+int Reverse(const float *input, float *output, size_t elem_size, int32_t *index) {
   for (size_t i = 0; i < elem_size; i++) {
     NNACL_ASSERT(index[i] >= 0);
     output[index[i]] = input[i];

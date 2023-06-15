@@ -35,7 +35,7 @@ static inline int ElementOptAdd@SIMD_INSTRUCTION@(int index, const float *in0, c
   return index;
 }
 
-static inline int ElementOptAddInt@SIMD_INSTRUCTION@(int index, const int *in0, const int *in1, int *out,
+static inline int ElementOptAddInt@SIMD_INSTRUCTION@(int index, const int32_t *in0, const int32_t *in1, int32_t *out,
                                                      int size) {
   SIMD_EPI32 vin0_ = SIMD_MOV_EPI32(in0[0]);
   for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
@@ -100,7 +100,7 @@ static inline int ElementAddRelu6@SIMD_INSTRUCTION@(int index, const float *in0,
   return index;
 }
 
-static inline int ElementAddInt@SIMD_INSTRUCTION@(int index, const int *in0, const int *in1, int *out, int size) {
+static inline int ElementAddInt@SIMD_INSTRUCTION@(int index, const int32_t *in0, const int32_t *in1, int32_t *out, int size) {
   for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_EPI32 vin0 = SIMD_LD_EPI32(in0 + index);
     SIMD_EPI32 vin1 = SIMD_LD_EPI32(in1 + index);

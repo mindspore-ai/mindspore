@@ -43,7 +43,7 @@ void LogSoftmaxLastAxis(const float *src, float *dst, float *exp_data, int batch
 }
 
 // output = (input - reduce_max(input, axis)) - log(reduce_sum(exp(input - reduce_max(input, axis)), axis))
-void LogSoftmax(const float *input_ptr, float *output_ptr, float *sum_data, int *input_shape, int n_dim, int axis) {
+void LogSoftmax(const float *input_ptr, float *output_ptr, float *sum_data, int32_t *input_shape, int n_dim, int axis) {
   int inner_size = 1;
   int outter_size = 1;
 

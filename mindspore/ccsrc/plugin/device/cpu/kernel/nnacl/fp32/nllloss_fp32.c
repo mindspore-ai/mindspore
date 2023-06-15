@@ -18,7 +18,7 @@
 #include "nnacl/op_base.h"
 #include "nnacl/errorcode.h"
 
-int NLLLoss(const float *logits, const int *labels, const float *weight, float *loss, float *total_weight,
+int NLLLoss(const float *logits, const int32_t *labels, const float *weight, float *loss, float *total_weight,
             const NLLLossStruct *nllloss, const ReductionType reduction_type) {
   NNACL_CHECK_NULL_RETURN_ERR(logits);
   NNACL_CHECK_NULL_RETURN_ERR(labels);

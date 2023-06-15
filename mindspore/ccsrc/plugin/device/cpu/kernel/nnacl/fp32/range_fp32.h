@@ -25,7 +25,7 @@ void Range(float *output_ptr, float start, float delta, int nums) {
   }
 }
 
-void RangeInt(int *output_ptr, int start, int delta, int nums) {
+void RangeInt(int32_t *output_ptr, int start, int delta, int nums) {
   for (int i = 0; i < nums; ++i, start += delta) {
     output_ptr[i] = start;
   }

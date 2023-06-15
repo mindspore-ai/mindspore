@@ -32,7 +32,7 @@ int ElementDivRelu6(const float *in0, const float *in1, float *out, int size);
 int ElementOptDiv(const float *in0, const float *in1, float *out, int size, bool first_scalar);
 int ElementOptDivRelu(const float *in0, const float *in1, float *out, int size, bool first_scalar);
 int ElementOptDivRelu6(const float *in0, const float *in1, float *out, int size, bool first_scalar);
-int ElementOptDivInt(const int *in0, const int *in1, int *out, int size, bool first_scalar);
+int ElementOptDivInt(const int32_t *in0, const int32_t *in1, int32_t *out, int size, bool first_scalar);
 int BroadcastDiv(const float *in0, const float *in1, float *tile_in0, float *tile_in1, float *out, int size,
                  ArithmeticParameter *param);
 

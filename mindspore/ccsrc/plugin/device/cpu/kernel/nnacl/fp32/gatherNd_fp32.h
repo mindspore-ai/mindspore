@@ -27,7 +27,7 @@ typedef struct {
 #ifdef __cplusplus
 extern "C" {
 #endif
-int GatherNd(const void *input, void *output, const int *in_offset, int area, int count, int data_type_len);
+int GatherNd(const void *input, void *output, const int32_t *in_offset, int area, int count, int data_type_len);
 #ifdef __cplusplus
 }
 #endif

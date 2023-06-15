@@ -71,7 +71,7 @@ int Fp32Clip(const float *src, int length, float *dst, float min, float max) {
   return NNACL_OK;
 }
 
-int Int32Clip(const int *src, int length, int *dst, int min, int max) {
+int Int32Clip(const int32_t *src, int length, int32_t *dst, int min, int max) {
   int i = 0;
 
   SIMD_RUN_NO_SCALAR(Int32Clip, i, src, length, dst, min, max);

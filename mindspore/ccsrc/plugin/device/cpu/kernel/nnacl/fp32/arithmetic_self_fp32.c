@@ -30,7 +30,7 @@ int ElementAbs(const float *input, float *output, const int element_size) {
   return NNACL_OK;
 }
 
-int ElementAbsInt(const int *input, int *output, const int element_size) {
+int ElementAbsInt(const int32_t *input, int32_t *output, const int element_size) {
   int i = 0;
 
   // only avx512 support abs fp32 instruction
@@ -176,7 +176,7 @@ int ElementNegative(const float *input, float *output, const int element_size) {
   return NNACL_OK;
 }
 
-int ElementNegativeInt(const int *input, int *output, const int element_size) {
+int ElementNegativeInt(const int32_t *input, int32_t *output, const int element_size) {
   int i = 0;
 
   SIMD_RUN_NO_SCALAR(ElementNegativeInt, i, input, output, element_size);

@@ -64,7 +64,7 @@ int DecodeBoxes(int num_boxes, const float *input_boxes, const float *anchors,
 }
 
 int NmsSingleClass(const int num_boxes, const float *decoded_boxes, const int max_detections, const float *scores,
-                   int *selected, void (*PartialArgSort)(const float *, int *, int, int),
+                   int32_t *selected, void (*PartialArgSort)(const float *, int32_t *, int, int),
                    const DetectionPostProcessParameter *param) {
   if (PartialArgSort == NULL) {
     return NNACL_NULL_PTR;
@@ -73,7 +73,7 @@ int NmsSingleClass(const int num_boxes, const float *decoded_boxes, const int ma
   const int output_num = num_boxes < max_detections ? num_boxes : max_detections;
   int possible_candidate_num = num_boxes;
   int selected_num = 0;
-  int *indexes = (int *)param->single_class_indexes_;
+  int32_t *indexes = (int32_t *)param->single_class_indexes_;
   for (int i = 0; i < num_boxes; ++i) {
     indexes[i] = i;
     nms_candidate[i] = 1;
@@ -106,7 +106,7 @@ int NmsSingleClass(const int num_boxes, const float *decoded_boxes, const int ma
 }
 
 int NmsMultiClassesFastCore(const int num_boxes, const int num_classes_with_bg, const float *input_scores,
-                            void (*PartialArgSort)(const float *, int *, int, int),
+                            void (*PartialArgSort)(const float *, int32_t *, int, int),
                             const DetectionPostProcessParameter *param, const int task_id, const int thread_num) {
   if (input_scores == NULL || param == NULL || PartialArgSort == NULL) {
     return NNACL_NULL_PTR;
@@ -119,7 +119,7 @@ int NmsMultiClassesFastCore(const int num_boxes, const int num_classes_with_bg, 
     param->max_classes_per_detection_ < param->num_classes_ ? param->max_classes_per_detection_ : param->num_classes_;
   float *scores = (float *)param->scores_;
   for (int i = task_id; i < num_boxes; i += thread_num) {
-    int *indexes = (int *)param->indexes_ + i * param->num_classes_;
+    int32_t *indexes = (int32_t *)param->indexes_ + i * param->num_classes_;
     for (int j = 0; j < param->num_classes_; ++j) {
       indexes[j] = i * num_classes_with_bg + first_class_index + j;
     }
@@ -132,7 +132,7 @@ int NmsMultiClassesFastCore(const int num_boxes, const int num_classes_with_bg, 
 int DetectionPostProcessFast(const int num_boxes, const int num_classes_with_bg, const float *input_scores,
                              const float *decoded_boxes, float *output_boxes, float *output_classes,
                              float *output_scores, float *output_num,
-                             void (*PartialArgSort)(const float *, int *, int, int),
+                             void (*PartialArgSort)(const float *, int32_t *, int, int),
                              const DetectionPostProcessParameter *param) {
   if (input_scores == NULL || decoded_boxes == NULL || output_boxes == NULL || output_classes == NULL ||
       output_scores == NULL || output_num == NULL || param == NULL || PartialArgSort == NULL) {
@@ -142,11 +142,11 @@ int DetectionPostProcessFast(const int num_boxes, const int num_classes_with_bg,
   const int first_class_index = num_classes_with_bg - (int)(param->num_classes_);
   const int64_t max_classes_per_anchor =
     param->max_classes_per_detection_ < param->num_classes_ ? param->max_classes_per_detection_ : param->num_classes_;
-  int *selected = (int *)param->selected_;
+  int32_t *selected = (int32_t *)param->selected_;
   int selected_num = NmsSingleClass(num_boxes, decoded_boxes, param->max_detections_, (float *)param->scores_, selected,
                                     PartialArgSort, param);
   for (int i = 0; i < selected_num; ++i) {
-    int *indexes = (int *)param->indexes_ + selected[i] * param->num_classes_;
+    int32_t *indexes = (int32_t *)param->indexes_ + selected[i] * param->num_classes_;
     BboxCorner *box = (BboxCorner *)(decoded_boxes) + selected[i];
     for (int j = 0; j < max_classes_per_anchor; ++j) {
       *((BboxCorner *)(output_boxes) + out_num) = *box;
@@ -169,7 +169,7 @@ int DetectionPostProcessFast(const int num_boxes, const int num_classes_with_bg,
 
 int DetectionPostProcessRegular(const int num_boxes, const int num_classes_with_bg, const float *input_scores,
                                 float *output_boxes, float *output_classes, float *output_scores, float *output_num,
-                                void (*PartialArgSort)(const float *, int *, int, int),
+                                void (*PartialArgSort)(const float *, int32_t *, int, int),
                                 const DetectionPostProcessParameter *param) {
   if (input_scores == NULL || output_boxes == NULL || output_classes == NULL || output_scores == NULL ||
       output_num == NULL || param == NULL || PartialArgSort == NULL) {
@@ -177,11 +177,11 @@ int DetectionPostProcessRegular(const int num_boxes, const int num_classes_with_
   }
   const int first_class_index = num_classes_with_bg - (int)(param->num_classes_);
   float *decoded_boxes = (float *)param->decoded_boxes_;
-  int *selected = (int *)param->selected_;
+  int32_t *selected = (int32_t *)param->selected_;
   float *scores = (float *)param->scores_;
   float *all_scores = (float *)param->all_class_scores_;
-  int *indexes = (int *)(param->indexes_);
-  int *all_indexes = (int *)(param->all_class_indexes_);
+  int32_t *indexes = (int32_t *)(param->indexes_);
+  int32_t *all_indexes = (int32_t *)(param->all_class_indexes_);
   int all_classes_sorted_num = 0;
   int all_classes_output_num = 0;
   for (int j = first_class_index; j < num_classes_with_bg; ++j) {

@@ -33,7 +33,7 @@ int ElementOptSub(const float *in0, const float *in1, float *out, int size, bool
   return NNACL_OK;
 }
 
-int ElementOptSubInt(const int *in0, const int *in1, int *out, int size, bool first_scalar) {
+int ElementOptSubInt(const int32_t *in0, const int32_t *in1, int32_t *out, int size, bool first_scalar) {
   int index = 0;
   if (first_scalar) {
     SIMD_RUN_NO_SCALAR(ElementOptSubIntNum0, index, in0, in1, out, size);
@@ -91,7 +91,7 @@ int ElementSub(const float *in0, const float *in1, float *out, int size) {
   return NNACL_OK;
 }
 
-int ElementSubInt(const int *in0, const int *in1, int *out, int size) {
+int ElementSubInt(const int32_t *in0, const int32_t *in1, int32_t *out, int size) {
   int index = 0;
 
   SIMD_RUN_NO_SCALAR(ElementSubInt, index, in0, in1, out, size);

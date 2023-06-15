@@ -17,8 +17,8 @@
 #include "nnacl/fp32/transpose_fp32.h"
 #include "nnacl/op_base.h"
 
-void TransposeDim2Fp32(const float *in_data, float *out_data, const int *strides, int *out_strides, const int *perm,
-                       const int *output_shape) {
+void TransposeDim2Fp32(const float *in_data, float *out_data, const int32_t *strides, int32_t *out_strides,
+                       const int32_t *perm, const int32_t *output_shape) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int output0 = output_shape[0];
@@ -32,8 +32,8 @@ void TransposeDim2Fp32(const float *in_data, float *out_data, const int *strides
   }
 }
 
-void TransposeDim3Fp32(const float *in_data, float *out_data, const int *strides, const int *out_strides,
-                       const int *perm, const int *output_shape) {
+void TransposeDim3Fp32(const float *in_data, float *out_data, const int32_t *strides, const int32_t *out_strides,
+                       const int32_t *perm, const int32_t *output_shape) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int stride2 = strides[perm[2]];
@@ -55,8 +55,8 @@ void TransposeDim3Fp32(const float *in_data, float *out_data, const int *strides
   }
 }
 
-void TransposeDim4Fp32(const float *in_data, float *out_data, const int *strides, const int *out_strides,
-                       const int *perm, const int *output_shape) {
+void TransposeDim4Fp32(const float *in_data, float *out_data, const int32_t *strides, const int32_t *out_strides,
+                       const int32_t *perm, const int32_t *output_shape) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int stride2 = strides[perm[2]];
@@ -87,8 +87,8 @@ void TransposeDim4Fp32(const float *in_data, float *out_data, const int *strides
   }
 }
 
-void TransposeDim5Fp32(const float *in_data, float *out_data, const int *strides, const int *out_strides,
-                       const int *perm, const int *output_shape) {
+void TransposeDim5Fp32(const float *in_data, float *out_data, const int32_t *strides, const int32_t *out_strides,
+                       const int32_t *perm, const int32_t *output_shape) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int stride2 = strides[perm[2]];
@@ -126,8 +126,8 @@ void TransposeDim5Fp32(const float *in_data, float *out_data, const int *strides
   }
 }
 
-void TransposeDim6Fp32(const float *in_data, float *out_data, const int *strides, const int *out_strides,
-                       const int *perm, const int *output_shape) {
+void TransposeDim6Fp32(const float *in_data, float *out_data, const int32_t *strides, const int32_t *out_strides,
+                       const int32_t *perm, const int32_t *output_shape) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int stride2 = strides[perm[2]];
@@ -172,8 +172,8 @@ void TransposeDim6Fp32(const float *in_data, float *out_data, const int *strides
   }
 }
 
-void TransposeDimsFp32(const void *in, void *out, const int *output_shape, int *perm, int *strides, int *out_strides,
-                       int num_axes, int task_id, int thread_num) {
+void TransposeDimsFp32(const void *in, void *out, const int32_t *output_shape, int32_t *perm, int32_t *strides,
+                       int32_t *out_strides, int num_axes, int task_id, int thread_num) {
   const float *in_data = (const float *)in;
   float *out_data = (float *)out;
   NNACL_CHECK_NULL_RETURN_VOID(in_data);
@@ -204,8 +204,8 @@ void TransposeDimsFp32(const void *in, void *out, const int *output_shape, int *
   }
 }
 
-int DoTransposeFp32(const void *in, void *out, const int *output_shape, int *perm, int *strides, int *out_strides,
-                    int data_size, int num_axes) {
+int DoTransposeFp32(const void *in, void *out, const int32_t *output_shape, int32_t *perm, int32_t *strides,
+                    int32_t *out_strides, int data_size, int num_axes) {
   const float *in_data = (const float *)in;
   float *out_data = (float *)out;
 

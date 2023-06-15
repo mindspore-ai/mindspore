@@ -54,7 +54,7 @@ static inline int ElementMulRelu6@SIMD_INSTRUCTION@(int index, const float *in0,
   return index;
 }
 
-static inline int ElementMulInt@SIMD_INSTRUCTION@(int index, const int *in0, const int *in1, int *out, int size) {
+static inline int ElementMulInt@SIMD_INSTRUCTION@(int index, const int32_t *in0, const int32_t *in1, int32_t *out, int size) {
   for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_EPI32 vin0 = SIMD_LD_EPI32(in0 + index);
     SIMD_EPI32 vin1 = SIMD_LD_EPI32(in1 + index);
@@ -64,7 +64,7 @@ static inline int ElementMulInt@SIMD_INSTRUCTION@(int index, const int *in0, con
   return index;
 }
 
-static inline int ElementMulReluInt@SIMD_INSTRUCTION@(int index, const int *in0, const int *in1, int *out, int size) {
+static inline int ElementMulReluInt@SIMD_INSTRUCTION@(int index, const int32_t *in0, const int32_t *in1, int32_t *out, int size) {
   for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_EPI32 vin0 = SIMD_LD_EPI32(in0 + index);
     SIMD_EPI32 vin1 = SIMD_LD_EPI32(in1 + index);
@@ -74,7 +74,7 @@ static inline int ElementMulReluInt@SIMD_INSTRUCTION@(int index, const int *in0,
   return index;
 }
 
-static inline int ElementMulRelu6Int@SIMD_INSTRUCTION@(int index, const int *in0, const int *in1, int *out, int size) {
+static inline int ElementMulRelu6Int@SIMD_INSTRUCTION@(int index, const int32_t *in0, const int32_t *in1, int32_t *out, int size) {
   for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_EPI32 vin0 = SIMD_LD_EPI32(in0 + index);
     SIMD_EPI32 vin1 = SIMD_LD_EPI32(in1 + index);
@@ -144,7 +144,7 @@ static inline int ElementOptMulRelu6Num1@SIMD_INSTRUCTION@(int index, const floa
   return index;
 }
 
-static inline int ElementOptMulIntNum0@SIMD_INSTRUCTION@(int index, const int *in0, const int *in1, int *out, int size) {
+static inline int ElementOptMulIntNum0@SIMD_INSTRUCTION@(int index, const int32_t *in0, const int32_t *in1, int32_t *out, int size) {
   SIMD_EPI32 vin0_opt_ = SIMD_MOV_EPI32(in0[0]);
   for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_EPI32 vin1 = SIMD_LD_EPI32(in1 + index);
@@ -154,7 +154,7 @@ static inline int ElementOptMulIntNum0@SIMD_INSTRUCTION@(int index, const int *i
   return index;
 }
 
-static inline int ElementOptMulIntNum1@SIMD_INSTRUCTION@(int index, const int *in0, const int *in1, int *out, int size) {
+static inline int ElementOptMulIntNum1@SIMD_INSTRUCTION@(int index, const int32_t *in0, const int32_t *in1, int32_t *out, int size) {
   SIMD_EPI32 vin1_opt_ = SIMD_MOV_EPI32(in1[0]);
   for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_EPI32 vin0 = SIMD_LD_EPI32(in0 + index);
@@ -164,7 +164,7 @@ static inline int ElementOptMulIntNum1@SIMD_INSTRUCTION@(int index, const int *i
   return index;
 }
 
-static inline int ElementOptMulReluIntNum0@SIMD_INSTRUCTION@(int index, const int *in0, const int *in1, int *out, int size) {
+static inline int ElementOptMulReluIntNum0@SIMD_INSTRUCTION@(int index, const int32_t *in0, const int32_t *in1, int32_t *out, int size) {
   SIMD_EPI32 vin0_opt_ = SIMD_MOV_EPI32(in0[0]);
   for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_EPI32 vin1 = SIMD_LD_EPI32(in1 + index);
@@ -174,7 +174,7 @@ static inline int ElementOptMulReluIntNum0@SIMD_INSTRUCTION@(int index, const in
   return index;
 }
 
-static inline int ElementOptMulReluIntNum1@SIMD_INSTRUCTION@(int index, const int *in0, const int *in1, int *out, int size) {
+static inline int ElementOptMulReluIntNum1@SIMD_INSTRUCTION@(int index, const int32_t *in0, const int32_t *in1, int32_t *out, int size) {
   SIMD_EPI32 vin1_opt_ = SIMD_MOV_EPI32(in1[0]);
   for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_EPI32 vin0 = SIMD_LD_EPI32(in0 + index);
@@ -184,7 +184,7 @@ static inline int ElementOptMulReluIntNum1@SIMD_INSTRUCTION@(int index, const in
   return index;
 }
 
-static inline int ElementOptMulRelu6IntNum0@SIMD_INSTRUCTION@(int index, const int *in0, const int *in1, int *out, int size) {
+static inline int ElementOptMulRelu6IntNum0@SIMD_INSTRUCTION@(int index, const int32_t *in0, const int32_t *in1, int32_t *out, int size) {
   SIMD_EPI32 vin0_opt_ = SIMD_MOV_EPI32(in0[0]);
   for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_EPI32 vin1 = SIMD_LD_EPI32(in1 + index);
@@ -194,7 +194,7 @@ static inline int ElementOptMulRelu6IntNum0@SIMD_INSTRUCTION@(int index, const i
   return index;
 }
 
-static inline int ElementOptMulRelu6IntNum1@SIMD_INSTRUCTION@(int index, const int *in0, const int *in1, int *out, int size) {
+static inline int ElementOptMulRelu6IntNum1@SIMD_INSTRUCTION@(int index, const int32_t *in0, const int32_t *in1, int32_t *out, int size) {
   SIMD_EPI32 vin1_opt_ = SIMD_MOV_EPI32(in1[0]);
   for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_EPI32 vin0 = SIMD_LD_EPI32(in0 + index);

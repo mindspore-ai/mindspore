@@ -18,9 +18,9 @@
 
 #include "nnacl/kernel/ragged_range.h"
 
-void RaggedRangeFp32(const float *starts, const float *limits, const float *deltas, int *splits, float *value,
+void RaggedRangeFp32(const float *starts, const float *limits, const float *deltas, int32_t *splits, float *value,
                      RaggedRangeStruct *ragged_range);
-void RaggedRangeInt(const int *starts, const int *limits, const int *deltas, int *splits, int *value,
-                    RaggedRangeStruct *ragged_range);
+void RaggedRangeInt(const int32_t *starts, const int32_t *limits, const int32_t *deltas, int32_t *splits,
+                    int32_t *value, RaggedRangeStruct *ragged_range);
 
 #endif  // NNACL_FP32_RAGGED_RANGE_FP32_H_

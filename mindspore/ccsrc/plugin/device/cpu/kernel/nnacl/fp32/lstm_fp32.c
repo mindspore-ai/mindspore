@@ -33,7 +33,7 @@ static void PackLstmMatrix(const float *src_batch, float *dst_batch, int col, in
 }
 
 static void PackLstmWeightBatch(float *dst, const float *src, int batch, int deep, int col, int col_align,
-                                const int *order) {
+                                const int32_t *order) {
   for (int i = 0; i < batch; i++) {
     const float *src_batch = src + i * col * deep;
     float *dst_batch = dst + ((order == NULL) ? i : order[i]) * col_align * deep;
@@ -41,12 +41,12 @@ static void PackLstmWeightBatch(float *dst, const float *src, int batch, int dee
   }
 }
 
-void PackLstmWeight(float *dst, const float *src, int batch, int deep, int col, int col_align, const int *order) {
+void PackLstmWeight(float *dst, const float *src, int batch, int deep, int col, int col_align, const int32_t *order) {
   PackLstmWeightBatch(dst, src, batch, deep, col, col_align, order);
 }
 
 void PackLstmWeightWithStride(float *dst, const float *src, int batch, int deep, int col, int col_align,
-                              bool is_bidirectional, int stride, const int *order) {
+                              bool is_bidirectional, int stride, const int32_t *order) {
   int unidirectional_batch = is_bidirectional ? batch / 2 : batch;
   PackLstmWeightBatch(dst, src, unidirectional_batch, deep, col, col_align, order);
   src += stride;
@@ -57,7 +57,7 @@ void PackLstmWeightWithStride(float *dst, const float *src, int batch, int deep,
 }
 
 void PackLstmBias(float *dst, const float *src, int batch, int col, int col_align, bool is_bidirectional,
-                  const int *order) {
+                  const int32_t *order) {
   int unidirectional_batch = is_bidirectional ? batch / 2 : batch;
   for (int i = 0; i < unidirectional_batch; i++) {
     const float *src_batch = src + i * col;
@@ -76,7 +76,7 @@ void PackLstmBias(float *dst, const float *src, int batch, int col, int col_alig
 }
 
 void PackLstmBiasWithStride(float *dst, const float *src, int batch, int col, int col_align, bool is_bidirectional,
-                            int b_stride, const int *order) {
+                            int b_stride, const int32_t *order) {
   int unidirectional_batch = is_bidirectional ? batch / 2 : batch;
   for (int i = 0; i < unidirectional_batch; i++) {
     const float *src_batch = src + i * col;

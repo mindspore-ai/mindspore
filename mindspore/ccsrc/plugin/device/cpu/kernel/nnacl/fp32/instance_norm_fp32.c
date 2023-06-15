@@ -117,8 +117,8 @@ int InstanceNorm(const float *src_data, float *dst_data, const float *gamma_data
 
 #if defined(ENABLE_SSE) || defined(ENABLE_ARM)
 void InstanceNormC4HW4ArmSse(const float *src_b, float *dst_b, const float *gamma_data, const float *beta_data,
-                             int *c_src, const InstanceNormParameter *param, int channel, int channel_end, int hw_plane,
-                             MS_FLOAT32X4 hw_planev) {
+                             int32_t *c_src, const InstanceNormParameter *param, int channel, int channel_end,
+                             int hw_plane, MS_FLOAT32X4 hw_planev) {
   int c = *c_src;
   for (; c <= channel_end - C16NUM; c += C16NUM) {
     const float *src = src_b + c * hw_plane, *src1 = src_b + (c + C4NUM) * hw_plane;

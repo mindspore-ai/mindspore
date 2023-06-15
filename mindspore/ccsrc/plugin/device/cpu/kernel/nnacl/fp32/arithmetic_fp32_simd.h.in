@@ -90,7 +90,7 @@ static inline int ElementOptFloorDivNum1@SIMD_INSTRUCTION@(int index, const floa
 }
 #endif
 
-static inline int ElementFloorDivInt@SIMD_INSTRUCTION@(int index, const int *in0, const int *in1, int *out, int size) {
+static inline int ElementFloorDivInt@SIMD_INSTRUCTION@(int index, const int32_t *in0, const int32_t *in1, int32_t *out, int size) {
   for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_EPI32 in0_tmp = SIMD_LD_EPI32(in0 + index);
     SIMD_EPI32 in1_tmp = SIMD_LD_EPI32(in1 + index);
@@ -100,7 +100,7 @@ static inline int ElementFloorDivInt@SIMD_INSTRUCTION@(int index, const int *in0
   return index;
 }
 
-static inline int ElementOptFloorDivIntNum0@SIMD_INSTRUCTION@(int index, const int *in0, const int *in1, int *out, int size) {
+static inline int ElementOptFloorDivIntNum0@SIMD_INSTRUCTION@(int index, const int32_t *in0, const int32_t *in1, int32_t *out, int size) {
   SIMD_EPI32 in0_tmp = SIMD_MOV_EPI32(in0[0]);
   for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_EPI32 in1_tmp = SIMD_LD_EPI32(in1 + index);
@@ -110,7 +110,7 @@ static inline int ElementOptFloorDivIntNum0@SIMD_INSTRUCTION@(int index, const i
   return index;
 }
 
-static inline int ElementOptFloorDivIntNum1@SIMD_INSTRUCTION@(int index, const int *in0, const int *in1, int *out, int size) {
+static inline int ElementOptFloorDivIntNum1@SIMD_INSTRUCTION@(int index, const int32_t *in0, const int32_t *in1, int32_t *out, int size) {
   SIMD_EPI32 in1_tmp = SIMD_MOV_EPI32(in1[0]);
   for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_EPI32 in0_tmp = SIMD_LD_EPI32(in0 + index);
@@ -150,7 +150,7 @@ static inline int ElementOptMaximumNum1@SIMD_INSTRUCTION@(int index, const float
   return index;
 }
 
-static inline int ElementMaximumInt@SIMD_INSTRUCTION@(int index, const int *in0, const int *in1, int *out, int size) {
+static inline int ElementMaximumInt@SIMD_INSTRUCTION@(int index, const int32_t *in0, const int32_t *in1, int32_t *out, int size) {
   for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_EPI32 in0_tmp = SIMD_LD_EPI32(in0 + index);
     SIMD_EPI32 in1_tmp = SIMD_LD_EPI32(in1 + index);
@@ -160,7 +160,7 @@ static inline int ElementMaximumInt@SIMD_INSTRUCTION@(int index, const int *in0,
   return index;
 }
 
-static inline int ElementOptMaximumIntNum0@SIMD_INSTRUCTION@(int index, const int *in0, const int *in1, int *out, int size) {
+static inline int ElementOptMaximumIntNum0@SIMD_INSTRUCTION@(int index, const int32_t *in0, const int32_t *in1, int32_t *out, int size) {
   SIMD_EPI32 in0_tmp = SIMD_MOV_EPI32(in0[0]);
   for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_EPI32 in1_tmp = SIMD_LD_EPI32(in1 + index);
@@ -170,7 +170,7 @@ static inline int ElementOptMaximumIntNum0@SIMD_INSTRUCTION@(int index, const in
   return index;
 }
 
-static inline int ElementOptMaximumIntNum1@SIMD_INSTRUCTION@(int index, const int *in0, const int *in1, int *out, int size) {
+static inline int ElementOptMaximumIntNum1@SIMD_INSTRUCTION@(int index, const int32_t *in0, const int32_t *in1, int32_t *out, int size) {
   SIMD_EPI32 in1_tmp = SIMD_MOV_EPI32(in1[0]);
   for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_EPI32 in0_tmp = SIMD_LD_EPI32(in0 + index);
@@ -180,7 +180,7 @@ static inline int ElementOptMaximumIntNum1@SIMD_INSTRUCTION@(int index, const in
   return index;
 }
 
-static inline int ElementMinimumInt@SIMD_INSTRUCTION@(int index, const int *in0, const int *in1, int *out, int size) {
+static inline int ElementMinimumInt@SIMD_INSTRUCTION@(int index, const int32_t *in0, const int32_t *in1, int32_t *out, int size) {
   for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_EPI32 in0_tmp = SIMD_LD_EPI32(in0 + index);
     SIMD_EPI32 in1_tmp = SIMD_LD_EPI32(in1 + index);
@@ -190,7 +190,7 @@ static inline int ElementMinimumInt@SIMD_INSTRUCTION@(int index, const int *in0,
   return index;
 }
 
-static inline int ElementOptMinimumIntNum0@SIMD_INSTRUCTION@(int index, const int *in0, const int *in1, int *out, int size) {
+static inline int ElementOptMinimumIntNum0@SIMD_INSTRUCTION@(int index, const int32_t *in0, const int32_t *in1, int32_t *out, int size) {
   SIMD_EPI32 in0_tmp = SIMD_MOV_EPI32(in0[0]);
   for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_EPI32 in1_tmp = SIMD_LD_EPI32(in1 + index);
@@ -200,7 +200,7 @@ static inline int ElementOptMinimumIntNum0@SIMD_INSTRUCTION@(int index, const in
   return index;
 }
 
-static inline int ElementOptMinimumIntNum1@SIMD_INSTRUCTION@(int index, const int *in0, const int *in1, int *out, int size) {
+static inline int ElementOptMinimumIntNum1@SIMD_INSTRUCTION@(int index, const int32_t *in0, const int32_t *in1, int32_t *out, int size) {
   SIMD_EPI32 in1_tmp = SIMD_MOV_EPI32(in1[0]);
   for (int block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_EPI32 in0_tmp = SIMD_LD_EPI32(in0 + index);

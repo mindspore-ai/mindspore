@@ -18,7 +18,7 @@
 #include <math.h>
 #include "nnacl/op_base.h"
 
-void RaggedRangeFp32(const float *starts, const float *limits, const float *deltas, int *splits, float *value,
+void RaggedRangeFp32(const float *starts, const float *limits, const float *deltas, int32_t *splits, float *value,
                      RaggedRangeStruct *ragged_range) {
   splits[0] = 0;
   for (int i = 0; i < ragged_range->rows_; i++) {
@@ -34,8 +34,8 @@ void RaggedRangeFp32(const float *starts, const float *limits, const float *delt
   }
 }
 
-void RaggedRangeInt(const int *starts, const int *limits, const int *deltas, int *splits, int *value,
-                    RaggedRangeStruct *ragged_range) {
+void RaggedRangeInt(const int32_t *starts, const int32_t *limits, const int32_t *deltas, int32_t *splits,
+                    int32_t *value, RaggedRangeStruct *ragged_range) {
   splits[0] = 0;
   for (int i = 0; i < ragged_range->rows_; i++) {
     int start = ragged_range->starts_is_scalar_ ? starts[0] : starts[i];

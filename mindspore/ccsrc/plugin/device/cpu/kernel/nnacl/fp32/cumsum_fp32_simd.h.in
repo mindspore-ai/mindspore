@@ -68,22 +68,22 @@ static inline int64_t CumsumReverse@SIMD_INSTRUCTION@(int64_t index, const float
 
 // (a, b, c) -> (a, a+b, a+b+c)  exclusive == false
 // (a, b, c) -> (0, a,   a+b)    exclusive == true
-static inline int64_t CumsumIntOutputInitWithInput@SIMD_INSTRUCTION@(int64_t index, const int *layer_input,
-  int *layer_output, int inner_dim) {
+static inline int64_t CumsumIntOutputInitWithInput@SIMD_INSTRUCTION@(int64_t index, const int32_t *layer_input,
+  int32_t *layer_output, int inner_dim) {
   for (int block_max_size = inner_dim - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_ST_EPI32(layer_output + index, SIMD_LD_EPI32(layer_input + index));
   }
   return index;
 }
 
-static inline int64_t CumsumIntOutputInitWithZero@SIMD_INSTRUCTION@(int64_t index, int *layer_output, int inner_dim) {
+static inline int64_t CumsumIntOutputInitWithZero@SIMD_INSTRUCTION@(int64_t index, int32_t *layer_output, int inner_dim) {
   for (int block_max_size = inner_dim - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_ST_EPI32(layer_output + index, SIMD_MOV_EPI32(0.0f));
   }
   return index;
 }
 
-static inline int64_t CumsumInt@SIMD_INSTRUCTION@(int64_t index, const int *layer_input, int *layer_output, int *layer_last_output,
+static inline int64_t CumsumInt@SIMD_INSTRUCTION@(int64_t index, const int32_t *layer_input, int32_t *layer_output, int32_t *layer_last_output,
   int inner_dim) {
   for (int block_max_size = inner_dim - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_EPI32 input_val = SIMD_LD_EPI32(layer_input + index);
@@ -96,7 +96,7 @@ static inline int64_t CumsumInt@SIMD_INSTRUCTION@(int64_t index, const int *laye
 
 // (a, b, c) -> (c+b+a, c+b, c) exclusive==false
 // (a, b, c) -> (c+b, c, 0) exclusive==true
-static inline int64_t CumsumReverseInt@SIMD_INSTRUCTION@(int64_t index, const int *layer_input, int *layer_output, int *layer_last_output,
+static inline int64_t CumsumReverseInt@SIMD_INSTRUCTION@(int64_t index, const int32_t *layer_input, int32_t *layer_output, int32_t *layer_last_output,
   int inner_dim) {
   for (int block_max_size = inner_dim - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_EPI32 input_val = SIMD_LD_EPI32(layer_input - index - BLOCK_NUM + 1);

@@ -24,7 +24,7 @@ extern "C" {
 #endif
 
 int64_t Fp32SplitReduceSumConcatFusion(const float *src, float *dst, int64_t inner_size, int64_t mid_size,
-                                       int *mid_split, int64_t mid_len, int64_t out_size);
+                                       int32_t *mid_split, int64_t mid_len, int64_t out_size);
 
 #ifdef __cplusplus
 }

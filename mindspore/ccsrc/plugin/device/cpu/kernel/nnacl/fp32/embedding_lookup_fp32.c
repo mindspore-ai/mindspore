@@ -31,7 +31,7 @@ void l2_regulate(float *data, int size, float max_norm) {
   return;
 }
 
-int CopyData(float *input_data, const int *ids, float *output_data, int num,
+int CopyData(float *input_data, const int32_t *ids, float *output_data, int num,
              const EmbeddingLookupParameter *parameter) {
   if (ids[num] >= parameter->layer_num_ || ids[num] < 0) {
     return NNACL_ERRCODE_INDEX_OUT_OF_RANGE;
@@ -47,8 +47,8 @@ int CopyData(float *input_data, const int *ids, float *output_data, int num,
   return NNACL_OK;
 }
 
-int EmbeddingLookup(float *input_data, const int *ids, float *output_data, const EmbeddingLookupParameter *parameter,
-                    int task_id) {
+int EmbeddingLookup(float *input_data, const int32_t *ids, float *output_data,
+                    const EmbeddingLookupParameter *parameter, int task_id) {
   if (parameter->op_parameter_.thread_num_ == 0) {
     return NNACL_PARAM_INVALID;
   }

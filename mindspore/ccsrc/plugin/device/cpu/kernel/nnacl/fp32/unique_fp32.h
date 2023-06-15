@@ -27,8 +27,8 @@ typedef struct UniqueParameter {
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Unique(const float *input, int input_len, float *output0, int *output0_len, int *output1);
-void UniqueInt(const int *input, int input_len, int *output0, int *output0_len, int *output1);
+void Unique(const float *input, int input_len, float *output0, int32_t *output0_len, int32_t *output1);
+void UniqueInt(const int32_t *input, int input_len, int32_t *output0, int32_t *output0_len, int32_t *output1);
 #ifdef __cplusplus
 }
 #endif

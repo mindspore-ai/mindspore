@@ -80,8 +80,8 @@ void TopkInt(void *input_data, void *output_data, int32_t *output_index, TopkPar
   int k = parameter->k_;
   TopkNode *top_map = (TopkNode *)parameter->topk_node_list_;
 
-  int *cur_input_data = (int *)input_data;
-  int *cur_output_data = (int *)output_data;
+  int32_t *cur_input_data = (int32_t *)input_data;
+  int32_t *cur_output_data = (int32_t *)output_data;
   int32_t *cur_output_index = output_index;
   for (int i = 0; i < outer_loop_num; i++) {
     int in_offset = i * dim_size * inner_loop_num;
