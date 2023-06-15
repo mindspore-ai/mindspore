@@ -28,6 +28,7 @@ from mindspore.parallel._utils import _get_device_num, _get_global_rank, _need_t
     _to_full_shapes, _get_pipeline_stages
 from mindspore.parallel._ps_context import _is_role_sched
 from mindspore.ops import operations as P
+from mindspore._c_expression import _set_dataset_mode_config
 
 
 def _send_data(dataset, epoch_num):
@@ -205,6 +206,7 @@ def connect_network_with_dataset(network, dataset_helper):
         >>> net = nn.Dense(10, 5)
         >>> net_with_get_next = ms.connect_network_with_dataset(net, dataset_helper)
     """
+    _set_dataset_mode_config('sink')
     dataset_iter = dataset_helper.iter
     dataset = dataset_iter.dataset
     aux = _get_dataset_aux(dataset)
