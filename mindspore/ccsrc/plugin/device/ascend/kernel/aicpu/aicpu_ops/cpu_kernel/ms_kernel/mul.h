@@ -46,16 +46,16 @@ class MulCpuKernel : public CpuKernel {
    */
   bool AlignedCheck(const BCalcInfo &calcInfo) const;
 
-  template <int32_t RANK, typename T>
-  uint32_t MulCalculateWithAlignedCheck(BCalcInfo &calcInfo);
+  template <typename T>
+  uint32_t MulCalculateWithAlignedCheck(BCalcInfo &calcInfo, const int32_t &rank);
 
   /**
    * @brief compute for all types
    * @param ctx cpu kernel context
    * @return status if success
    */
-  template <int32_t RANK, typename T, int32_t OPTION>
-  uint32_t MulCalculate(BCalcInfo &calcInfo);
+  template <typename T, int32_t OPTION>
+  uint32_t MulCalculate(BCalcInfo &calcInfo, const int32_t &rank);
 };
 }  // namespace aicpu
 #endif  // AICPU_KERNELS_NORMALIZED_MUL_H

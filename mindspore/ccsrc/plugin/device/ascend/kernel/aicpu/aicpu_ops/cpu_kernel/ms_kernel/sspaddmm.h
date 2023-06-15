@@ -16,8 +16,6 @@
 
 #ifndef AICPU_KERNELS_NORMALIZED_SSPADDMM_H_
 #define AICPU_KERNELS_NORMALIZED_SSPADDMM_H_
-#include <deque>
-#include <set>
 #include <unordered_map>
 #include <vector>
 

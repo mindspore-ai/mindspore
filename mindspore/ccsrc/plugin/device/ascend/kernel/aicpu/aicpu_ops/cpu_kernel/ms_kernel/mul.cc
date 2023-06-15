@@ -21,8 +21,10 @@
 #include "cpu_kernel_utils.h"
 
 namespace {
+const int32_t kMaxDim = 8;
+const int32_t kMaxIndex = 7;
 const char *const kMul = "Mul";
-}
+}  // namespace
 
 namespace aicpu {
 uint32_t MulCpuKernel::Compute(CpuKernelContext &ctx) {
@@ -96,43 +98,26 @@ uint32_t MulCpuKernel::MulCompute(const CpuKernelContext &ctx) {
   }
   bcast.GetBcastVec(calcInfo);
   int32_t rank = static_cast<int32_t>(calcInfo.shape_out.size());
-  switch (rank) {
-    case 0: {
-      T v0 = *(reinterpret_cast<const T *>(calcInfo.input_0->GetData()));
-      T v1 = *(reinterpret_cast<const T *>(calcInfo.input_1->GetData()));
-      T *value_out = reinterpret_cast<T *>(calcInfo.output->GetData());
-      *(value_out) = v0 * v1;
-      return KERNEL_STATUS_OK;
-    }
-    case 1:
-      return MulCalculateWithAlignedCheck<1, T>(calcInfo);
-    case 2:
-      return MulCalculateWithAlignedCheck<2, T>(calcInfo);
-    case 3:
-      return MulCalculateWithAlignedCheck<3, T>(calcInfo);
-    case 4:
-      return MulCalculateWithAlignedCheck<4, T>(calcInfo);
-    case 5:
-      return MulCalculateWithAlignedCheck<5, T>(calcInfo);
-    case 6:
-      return MulCalculateWithAlignedCheck<6, T>(calcInfo);
-    case 7:
-      return MulCalculateWithAlignedCheck<7, T>(calcInfo);
-    case 8:
-      return MulCalculateWithAlignedCheck<8, T>(calcInfo);
-    default:
-      KERNEL_LOG_ERROR("[%s] Rank of output should less than 9 but get [%zu].", ctx.GetOpType().c_str(),
-                       calcInfo.shape_out.size());
-      return KERNEL_STATUS_PARAM_INVALID;
+  if (rank == 0) {
+    T v0 = *(reinterpret_cast<const T *>(calcInfo.input_0->GetData()));
+    T v1 = *(reinterpret_cast<const T *>(calcInfo.input_1->GetData()));
+    T *value_out = reinterpret_cast<T *>(calcInfo.output->GetData());
+    *(value_out) = v0 * v1;
+    return KERNEL_STATUS_OK;
+  } else if (rank < 0 || rank > kMaxDim) {
+    KERNEL_LOG_ERROR("[%s] Rank of output should less than 9 but get [%zu].", ctx.GetOpType().c_str(),
+                     calcInfo.shape_out.size());
+    return KERNEL_STATUS_PARAM_INVALID;
   }
+  return MulCalculateWithAlignedCheck<T>(calcInfo, rank);
 }
 
-template <int32_t RANK, typename T>
-uint32_t MulCpuKernel::MulCalculateWithAlignedCheck(BCalcInfo &calcInfo) {
+template <typename T>
+uint32_t MulCpuKernel::MulCalculateWithAlignedCheck(BCalcInfo &calcInfo, const int32_t &rank) {
   if (AlignedCheck(calcInfo)) {
-    return MulCalculate<RANK, T, Eigen::Aligned>(calcInfo);
+    return MulCalculate<T, Eigen::Aligned>(calcInfo, rank);
   }
-  return MulCalculate<RANK, T, Eigen::Unaligned>(calcInfo);
+  return MulCalculate<T, Eigen::Unaligned>(calcInfo, rank);
 }
 
 bool MulCpuKernel::AlignedCheck(const BCalcInfo &calcInfo) const {
@@ -140,8 +125,8 @@ bool MulCpuKernel::AlignedCheck(const BCalcInfo &calcInfo) const {
          AddrAlignedCheck(calcInfo.output->GetData());
 }
 
-template <int32_t RANK, typename T, int32_t OPTION>
-uint32_t MulCpuKernel::MulCalculate(BCalcInfo &calcInfo) {
+template <typename T, int32_t OPTION>
+uint32_t MulCpuKernel::MulCalculate(BCalcInfo &calcInfo, const int32_t &rank) {
   Eigen::TensorMap<Eigen::Tensor<T, 1>, OPTION> input0(static_cast<T *>(calcInfo.input_0->GetData()),
                                                        calcInfo.input_0->GetTensorShape()->NumElements());
   Eigen::TensorMap<Eigen::Tensor<T, 1>, OPTION> input1(static_cast<T *>(calcInfo.input_1->GetData()),
@@ -162,18 +147,26 @@ uint32_t MulCpuKernel::MulCalculate(BCalcInfo &calcInfo) {
     return KERNEL_STATUS_OK;
   }
 
-  Eigen::DSizes<Eigen::DenseIndex, RANK> reshape_0;
-  Eigen::DSizes<Eigen::DenseIndex, RANK> reshape_1;
-  Eigen::DSizes<Eigen::DenseIndex, RANK> shape_out;
-  Eigen::array<Eigen::DenseIndex, RANK> bcast_0;
-  Eigen::array<Eigen::DenseIndex, RANK> bcast_1;
+  Eigen::DSizes<Eigen::DenseIndex, kMaxDim> reshape_0;
+  Eigen::DSizes<Eigen::DenseIndex, kMaxDim> reshape_1;
+  Eigen::DSizes<Eigen::DenseIndex, kMaxDim> shape_out;
+  Eigen::array<Eigen::DenseIndex, kMaxDim> bcast_0;
+  Eigen::array<Eigen::DenseIndex, kMaxDim> bcast_1;
 
-  for (int32_t i = 0; i < RANK; i++) {
-    reshape_0[(RANK - i) - 1] = calcInfo.reshape_0[i];
-    reshape_1[(RANK - i) - 1] = calcInfo.reshape_1[i];
-    shape_out[(RANK - i) - 1] = calcInfo.shape_out[i];
-    bcast_0[(RANK - i) - 1] = calcInfo.bcast_0[i];
-    bcast_1[(RANK - i) - 1] = calcInfo.bcast_1[i];
+  for (int32_t i = 0; i < kMaxDim; i++) {
+    if (i < rank) {
+      reshape_0[kMaxIndex - i] = calcInfo.reshape_0[i];
+      reshape_1[kMaxIndex - i] = calcInfo.reshape_1[i];
+      shape_out[kMaxIndex - i] = calcInfo.shape_out[i];
+      bcast_0[kMaxIndex - i] = calcInfo.bcast_0[i];
+      bcast_1[kMaxIndex - i] = calcInfo.bcast_1[i];
+    } else {
+      reshape_0[kMaxIndex - i] = 1;
+      reshape_1[kMaxIndex - i] = 1;
+      shape_out[kMaxIndex - i] = 1;
+      bcast_0[kMaxIndex - i] = 1;
+      bcast_1[kMaxIndex - i] = 1;
+    }
   }
   output.reshape(shape_out) =
     input0.reshape(reshape_0).broadcast(bcast_0) * input1.reshape(reshape_1).broadcast(bcast_1);

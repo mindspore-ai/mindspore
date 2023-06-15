@@ -15,8 +15,6 @@
  */
 #include "sspaddmm.h"
 #include <complex>
-#include <iostream>
-#include "utils/eigen_tensor.h"
 
 namespace aicpu {
 
@@ -61,9 +59,6 @@ T *SspaddmmCpuKernel::ScalarSparseMul(CpuKernelContext &ctx, Tensor *vals, Tenso
     case DT_INT64:
       scalar_val = static_cast<T>(reinterpret_cast<int64_t *>(scalar_val_addr)[0]);
       break;
-    case DT_FLOAT16:
-      scalar_val = static_cast<T>(reinterpret_cast<Eigen::half *>(scalar_val_addr)[0]);
-      break;
     case DT_FLOAT:
       scalar_val = static_cast<T>(reinterpret_cast<float *>(scalar_val_addr)[0]);
       break;
@@ -103,7 +98,7 @@ T *SspaddmmCpuKernel::ScalarSparseMul(CpuKernelContext &ctx, Tensor *vals, Tenso
     max_core_num = max_core_num == 0 ? 1 : max_core_num;
     CpuKernelUtils::ParallelFor(ctx, data_num, data_num / max_core_num, multi);
   } else {
-    // no match for ‘operator*=’ (operand types are ‘Eigen::half’ and ‘float’)
+    // no match for ‘operator*=’ (operand types is ‘float’)
     for (uint32_t idx = 0; idx < data_num; idx++) {
       val_addr_bak[idx] = val_addr[idx] * scalar_val;
     }
@@ -132,7 +127,7 @@ void SspaddmmCpuKernel::Clear(Tensor *tensor, CpuKernelContext &ctx) {
     max_core_num = max_core_num == 0 ? 1 : max_core_num;
     CpuKernelUtils::ParallelFor(ctx, num, num / max_core_num, multi);
   } else {
-    // no match for ‘operator*=’ (operand types are ‘Eigen::half’ and ‘float’)
+    // no match for ‘operator*=’ (operand types is ‘float’)
     for (uint32_t idx = 0; idx < num; idx++) {
       addr[idx] = static_cast<T>(0);
     }
@@ -160,7 +155,7 @@ void SspaddmmCpuKernel::ClearIndices(Tensor *tensor, CpuKernelContext &ctx) {
     max_core_num = max_core_num == 0 ? 1 : max_core_num;
     CpuKernelUtils::ParallelFor(ctx, num, num / max_core_num, multi);
   } else {
-    // no match for ‘operator*=’ (operand types are ‘Eigen::half’ and ‘float’)
+    // no match for ‘operator*=’ (operand types is ‘float’)
     for (uint32_t idx = 0; idx < num; idx++) {
       addr[idx] = static_cast<T>(0);
     }
@@ -246,7 +241,7 @@ uint32_t SspaddmmCpuKernel::SparseMulDense(CpuKernelContext &ctx, Tensor *mat1_i
   int out_num = output_indices_tensor->GetTensorShape()->GetDimSize(1);
   std::unordered_map<T_idx, std::unordered_map<int64_t, uint32_t>> idx_map_cnt;
   std::unordered_map<T_idx, std::vector<T_idx>> unrepeated;
-  std::unordered_map<T_idx, std::unordered_map<T_idx, std::vector<T>>> co_map_idx;
+  std::unordered_map<T_idx, std::unordered_map<T_idx, std::vector<int64_t>>> co_map_idx;
 
   // unrepeated : [1 -> [0], 2 -> [1, 2]]
   // co_map_idx : [1][0] -> 0.3
@@ -254,7 +249,7 @@ uint32_t SspaddmmCpuKernel::SparseMulDense(CpuKernelContext &ctx, Tensor *mat1_i
     T_idx _row = mat1_idx_addr[i];
     T_idx _col = mat1_idx_addr[i + mat1_vals_num];
     unrepeated[_row].push_back(_col);
-    co_map_idx[_row][_col].push_back(mat1_val_addr[i]);
+    co_map_idx[_row][_col].push_back(i);
     for (uint32_t j = 0; j < mat2_col; j++) {
       if (idx_map_cnt[_row][j] == 0) {
         idx_map_cnt[_row][j] = this->cnt_;
@@ -283,7 +278,7 @@ uint32_t SspaddmmCpuKernel::SparseMulDense(CpuKernelContext &ctx, Tensor *mat1_i
         // get val
         auto row_mat1 = res[i];
         for (auto row_mat2 : unrepeated[row_mat1]) {
-          T val = co_map_idx[row_mat1][row_mat2].back();
+          T val = mat1_val_addr[co_map_idx[row_mat1][row_mat2].back()];
           co_map_idx[row_mat1][row_mat2].pop_back();
           for (int64_t j = 0; j < mat2_col; j++) {
             // get val
@@ -302,7 +297,7 @@ uint32_t SspaddmmCpuKernel::SparseMulDense(CpuKernelContext &ctx, Tensor *mat1_i
       // get val
       auto row_mat1 = res[i];
       for (auto row_mat2 : unrepeated[row_mat1]) {
-        T val = co_map_idx[row_mat1][row_mat2].back();
+        T val = mat1_val_addr[co_map_idx[row_mat1][row_mat2].back()];
         co_map_idx[row_mat1][row_mat2].pop_back();
         for (int64_t j = 0; j < mat2_col; j++) {
           // get val
@@ -436,6 +431,7 @@ uint32_t SspaddmmCpuKernel::ValidParam(CpuKernelContext &ctx) {
   Tensor *mat1_indices_tensor = ctx.Input(3);
   Tensor *mat1_values_tensor = ctx.Input(4);
   Tensor *mat1_shapes_tensor = ctx.Input(5);
+
   Tensor *mat2_tensor = ctx.Input(6);
   Tensor *alpha_tensor = ctx.Input(7);
   Tensor *beta_tensor = ctx.Input(8);
@@ -445,32 +441,36 @@ uint32_t SspaddmmCpuKernel::ValidParam(CpuKernelContext &ctx) {
   Tensor *output_shapes_tensor = ctx.Output(2);
 
   // valid shape nullptr
+  auto input_values_shape = input_values_tensor->GetTensorShape();
+  auto input_indices_shape = input_indices_tensor->GetTensorShape();
+  auto input_shapes_shape = input_shapes_tensor->GetTensorShape();
+
+  auto mat1_indices_shape = mat1_indices_tensor->GetTensorShape();
   auto mat1_values_shape = mat1_values_tensor->GetTensorShape();
   auto mat1_shapes_shape = mat1_shapes_tensor->GetTensorShape();
-  auto mat1_indices_shape = mat1_indices_tensor->GetTensorShape();
+
   auto mat2_shapes_shape = mat2_tensor->GetTensorShape();
-  auto input_values_shape = input_values_tensor->GetTensorShape();
-  auto input_shapes_shape = input_shapes_tensor->GetTensorShape();
-  auto input_indices_shape = input_indices_tensor->GetTensorShape();
-  auto output_values_shape = output_values_tensor->GetTensorShape();
-  auto output_shapes_shape = output_shapes_tensor->GetTensorShape();
-  auto output_indices_shape = output_indices_tensor->GetTensorShape();
   auto alpha_shape = alpha_tensor->GetTensorShape();
   auto beta_shape = beta_tensor->GetTensorShape();
+
+  auto output_indices_shape = output_indices_tensor->GetTensorShape();
+  auto output_values_shape = output_values_tensor->GetTensorShape();
+  auto output_shapes_shape = output_shapes_tensor->GetTensorShape();
+
   // sparse_indices
   // GetDims() will return dims number, uint32_t
-  if (mat1_indices_shape->GetDims() != 2) {
-    KERNEL_LOG_ERROR(
-      "Mat1 sparse_indices should be 2D, got dim "
-      "size [%d].",
-      mat1_indices_shape->GetDims());
-    return KERNEL_STATUS_PARAM_INVALID;
-  }
   if (input_indices_shape->GetDims() != 2) {
     KERNEL_LOG_ERROR(
       "Input sparse_indices should be 2D, got dim "
       "size [%d].",
       input_indices_shape->GetDims());
+    return KERNEL_STATUS_PARAM_INVALID;
+  }
+  if (mat1_indices_shape->GetDims() != 2) {
+    KERNEL_LOG_ERROR(
+      "Mat1 sparse_indices should be 2D, got dim "
+      "size [%d].",
+      mat1_indices_shape->GetDims());
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (output_indices_shape->GetDims() != 2) {
@@ -482,28 +482,36 @@ uint32_t SspaddmmCpuKernel::ValidParam(CpuKernelContext &ctx) {
   }
 
   // valid data type
-  int32_t mat1_IndiceType = mat1_indices_tensor->GetDataType();
   int32_t input_IndiceType = input_indices_tensor->GetDataType();
-  int32_t output_IndiceType = output_indices_tensor->GetDataType();
-  int32_t mat1_ShapeType = mat1_shapes_tensor->GetDataType();
   int32_t input_ShapeType = input_shapes_tensor->GetDataType();
+  int32_t mat1_IndiceType = mat1_indices_tensor->GetDataType();
+  int32_t mat1_ShapeType = mat1_shapes_tensor->GetDataType();
+  int32_t output_IndiceType = output_indices_tensor->GetDataType();
   int32_t output_ShapeType = output_shapes_tensor->GetDataType();
 
-  bool validIndiceType = ((mat1_IndiceType == DT_INT32) || (mat1_IndiceType == DT_INT64)) &&
-                         ((output_IndiceType == DT_INT32) || (output_IndiceType == DT_INT64)) &&
-                         ((input_IndiceType == DT_INT32) || (input_IndiceType == DT_INT64));
-  bool validShapeType = ((mat1_ShapeType == DT_INT32) || (mat1_ShapeType == DT_INT64)) &&
-                        ((output_ShapeType == DT_INT32) || (output_ShapeType == DT_INT64)) &&
-                        ((input_ShapeType == DT_INT32) || (input_ShapeType == DT_INT64));
-  if (!validShapeType || !validIndiceType) {
+  bool validIndiceType = ((input_IndiceType == DT_INT32) || (input_IndiceType == DT_INT64)) &&
+                         ((mat1_IndiceType == DT_INT32) || (mat1_IndiceType == DT_INT64)) &&
+                         ((output_IndiceType == DT_INT32) || (output_IndiceType == DT_INT64));
+  bool validShapeType = ((input_ShapeType == DT_INT32) || (input_ShapeType == DT_INT64)) &&
+                        ((mat1_ShapeType == DT_INT32) || (mat1_ShapeType == DT_INT64)) &&
+                        ((output_ShapeType == DT_INT32) || (output_ShapeType == DT_INT64));
+  if (!validIndiceType || !validShapeType) {
     KERNEL_LOG_ERROR(
       "Valid indice and shape data type failed, "
       "indiceType and shapeType should be INT32 or INT64");
     return KERNEL_STATUS_PARAM_INVALID;
   }
   // sparse_values' number check
-  int32_t mat1_values_dims_size = mat1_values_shape->GetDims();
   int32_t input_values_dims_size = input_values_shape->GetDims();
+  int32_t mat1_values_dims_size = mat1_values_shape->GetDims();
+
+  if ((input_values_dims_size != 0) && (input_values_dims_size != 1)) {
+    KERNEL_LOG_ERROR(
+      "input values_shape should be a scalar or a vector, "
+      "got dim size [%d].",
+      input_values_shape->GetDims());
+    return KERNEL_STATUS_PARAM_INVALID;
+  }
 
   if ((mat1_values_dims_size != 0) && (mat1_values_dims_size != 1)) {
     KERNEL_LOG_ERROR(
@@ -513,28 +521,21 @@ uint32_t SspaddmmCpuKernel::ValidParam(CpuKernelContext &ctx) {
     return KERNEL_STATUS_PARAM_INVALID;
   }
 
-  if ((input_values_dims_size != 0) && (input_values_dims_size != 1)) {
-    KERNEL_LOG_ERROR(
-      "input values_shape should be a scalar or a vector, "
-      "got dim size [%d].",
-      input_values_shape->GetDims());
-    return KERNEL_STATUS_PARAM_INVALID;
-  }
-  int64_t mat1_elems_num = mat1_indices_shape->GetDims() > 0 ? mat1_indices_shape->GetDimSize(1) : 1;
   int64_t input_elems_num = input_indices_shape->GetDims() > 0 ? input_indices_shape->GetDimSize(1) : 1;
+  int64_t mat1_elems_num = mat1_indices_shape->GetDims() > 0 ? mat1_indices_shape->GetDimSize(1) : 1;
 
-  if ((mat1_values_dims_size == 1) && (mat1_values_tensor->NumElements() != mat1_elems_num)) {
-    KERNEL_LOG_ERROR(
-      "mat1 values_shape has incorrect number of elements [%lld], "
-      "should be [%lld]",
-      mat1_values_tensor->NumElements(), mat1_elems_num);
-    return KERNEL_STATUS_PARAM_INVALID;
-  }
   if ((input_values_dims_size == 1) && (input_values_tensor->NumElements() != input_elems_num)) {
     KERNEL_LOG_ERROR(
       "input values_shape has incorrect number of elements [%lld], "
       "should be [%lld]",
       input_values_tensor->NumElements(), input_elems_num);
+    return KERNEL_STATUS_PARAM_INVALID;
+  }
+  if ((mat1_values_dims_size == 1) && (mat1_values_tensor->NumElements() != mat1_elems_num)) {
+    KERNEL_LOG_ERROR(
+      "mat1 values_shape has incorrect number of elements [%lld], "
+      "should be [%lld]",
+      mat1_values_tensor->NumElements(), mat1_elems_num);
     return KERNEL_STATUS_PARAM_INVALID;
   }
   if (alpha_shape->GetDims() > 1) {
