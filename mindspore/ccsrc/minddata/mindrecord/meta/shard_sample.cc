@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -128,50 +128,158 @@ Status ShardSample::UpdateTasks(ShardTaskList &tasks, int64_t taking) {
   return Status::OK();
 }
 
-Status ShardSample::Execute(ShardTaskList &tasks) {
-  if (offset_ != -1) {
-    int64_t old_v = 0;
-    int64_t num_rows_ = tasks.sample_ids_.size();
-    for (int64_t x = 0; x < denominator_; x++) {
-      int64_t samples_per_buffer_ = (num_rows_ + offset_) / denominator_;
-      int64_t remainder = (num_rows_ + offset_) % denominator_;
-      if (x < remainder) {
-        samples_per_buffer_++;
-      }
-      if (x < offset_) {
-        samples_per_buffer_--;
-      }
-      old_v += samples_per_buffer_;
-      // nums_per_shard_ is used to save the current shard's ending index
-      nums_per_shard_.push_back(old_v);
+Status ShardSample::UpdatePartitionWhenSlowMode(ShardTaskList &tasks) {
+  // distribtued sample when load mode is slow load
+  // split shard sample
+  // 0 : 17  -  shard0 has 17 samples - pre shard 2
+  // 1 : 32  -  shard1 has 15 samples - pre shard 0
+  // 2 : 58  -  shard2 has 26 samples - pre shard 1
+  // padded_sample = 6
+  // Assuming this is an 8-card training
+  // card 0 : kCommonTask, 0, 0, 8
+  // card 1 : kCommonTask, 0, 8, 16
+  // card 2 : kCommonTask, 0, 16, 17
+  // card 2 : kCommonTask, 1, 17, 24
+  // card 3 : kCommonTask, 1, 24, 32
+  // card 4 : kCommonTask, 2, 32, 40
+  // card 5 : kCommonTask, 2, 40, 48
+  // card 6 : kCommonTask, 2, 48, 56
+  // card 7 : kCommonTask, 2, 56, 58
+  // card 7 : kPaddedTask, -1, 58, 64
+  auto tasks_shard_sample_count = tasks.shuffled_shard_sample_count_;
+  int64_t total_sample = tasks_shard_sample_count[tasks_shard_sample_count.size() - 1] + tasks.padded_sample_;
+  int64_t step = total_sample % denominator_ == 0 ? total_sample / denominator_ : total_sample / denominator_ + 1;
+  int64_t start = partition_id_ * step;
+  int64_t end = (partition_id_ + 1) * step;
+  std::vector<PartitionedShardSampleCount> vpssc;
+  int64_t tmp_start = start;
+  int64_t tmp_end = end;
+  for (int32_t shard_index = 0; shard_index < tasks_shard_sample_count.size(); shard_index++) {
+    if (tmp_start >= tasks_shard_sample_count[shard_index]) {
+      continue;
+    }
+
+    if (tmp_end <= tasks_shard_sample_count[shard_index]) {
+      tmp_end = end;
+      // add new range to vp
+      PartitionedShardSampleCount pssc;
+      pssc.task_type = TaskType::kCommonTask;
+      pssc.shard_id = shard_index;
+      pssc.start = tmp_start;
+      pssc.end = tmp_end;
+      vpssc.push_back(pssc);
+      break;
+    } else {
+      PartitionedShardSampleCount pssc;
+      pssc.task_type = TaskType::kCommonTask;
+      pssc.shard_id = shard_index;
+      pssc.start = tmp_start;
+      pssc.end = tasks_shard_sample_count[shard_index];
+      vpssc.push_back(pssc);
+      tmp_start = tasks_shard_sample_count[shard_index];
     }
   }
-  int no_of_categories = static_cast<int>(tasks.categories);
-  int64_t total_no = tasks.sample_ids_.size();
-  int64_t taking = 0;
-  if (sampler_type_ == kCustomTopNSampler) {  // non sharding case constructor #1
-    no_of_samples_ = std::min(no_of_samples_, total_no);
-    taking = no_of_samples_ - no_of_samples_ % no_of_categories;
-  } else if (sampler_type_ == kSubsetRandomSampler || sampler_type_ == kSubsetSampler) {
-    CHECK_FAIL_RETURN_UNEXPECTED_MR(static_cast<int64_t>(indices_.size()) <= total_no,
-                                    "Invalid input, indices size: " + std::to_string(indices_.size()) +
-                                      " should be less than or equal to database size: " + std::to_string(total_no) +
-                                      ".");
-  } else {  // constructor TopPercent
-    if (numerator_ > 0 && denominator_ > 0 && numerator_ <= denominator_) {
-      if (numerator_ == 1 && denominator_ > 1) {  // sharding
-        taking = (total_no + denominator_ - 1) / denominator_;
-      } else {  // non sharding
-        taking = total_no * numerator_ / denominator_;
-        taking -= (taking % no_of_categories);
+
+  // retrieve from the start or padded sample
+  if (end > tasks_shard_sample_count[tasks_shard_sample_count.size() - 1]) {
+    // padded scenario
+    if (tasks.padded_sample_ > 0) {
+      if (end - tasks_shard_sample_count[tasks_shard_sample_count.size() - 1] <= tasks.padded_sample_) {
+        PartitionedShardSampleCount pssc;
+        pssc.task_type = TaskType::kPaddedTask;
+        pssc.shard_id = -1;
+        pssc.start = tmp_start;
+        pssc.end = end;
+        vpssc.push_back(pssc);
+      } else {
+        RETURN_STATUS_UNEXPECTED_MR(
+          "It's padded sample scenario, but the total sample: " + std::to_string(total_sample) +
+          " which is not divisible by " + std::to_string(denominator_));
       }
     } else {
-      RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] 'numerator_': " + std::to_string(numerator_) +
-                                  " should be positive and less than denominator_: " + std::to_string(denominator_) +
-                                  ".");
+      tmp_start = 0;
+      end = end - tasks_shard_sample_count[tasks_shard_sample_count.size() - 1];
+      tmp_end = end;
+      for (int32_t shard_index = 0; shard_index < tasks_shard_sample_count.size(); shard_index++) {
+        if (tmp_start >= tasks_shard_sample_count[shard_index]) {
+          continue;
+        }
+
+        if (tmp_end <= tasks_shard_sample_count[shard_index]) {
+          tmp_end = end;
+          // add new range to vp
+          PartitionedShardSampleCount pssc;
+          pssc.task_type = TaskType::kCommonTask;
+          pssc.shard_id = shard_index;
+          pssc.start = tmp_start;
+          pssc.end = tmp_end;
+          vpssc.push_back(pssc);
+          break;
+        } else {
+          PartitionedShardSampleCount pssc;
+          pssc.task_type = TaskType::kCommonTask;
+          pssc.shard_id = shard_index;
+          pssc.start = tmp_start;
+          pssc.end = tasks_shard_sample_count[shard_index];
+          vpssc.push_back(pssc);
+          tmp_start = tasks_shard_sample_count[shard_index];
+        }
+      }
     }
   }
-  return UpdateTasks(tasks, taking);
+
+  tasks.SetPartitionedShardSampleCount(vpssc);
+  return Status::OK();
+}
+
+Status ShardSample::Execute(ShardTaskList &tasks) {
+  if (tasks.load_mode_ != LoadMode::kSlow) {
+    if (offset_ != -1) {
+      int64_t old_v = 0;
+      int64_t num_rows_ = tasks.sample_ids_.size();
+      for (int64_t x = 0; x < denominator_; x++) {
+        int64_t samples_per_buffer_ = (num_rows_ + offset_) / denominator_;
+        int64_t remainder = (num_rows_ + offset_) % denominator_;
+        if (x < remainder) {
+          samples_per_buffer_++;
+        }
+        if (x < offset_) {
+          samples_per_buffer_--;
+        }
+        old_v += samples_per_buffer_;
+        // nums_per_shard_ is used to save the current shard's ending index
+        nums_per_shard_.push_back(old_v);
+      }
+    }
+    int no_of_categories = static_cast<int>(tasks.categories);
+    int64_t total_no = tasks.sample_ids_.size();
+    int64_t taking = 0;
+    if (sampler_type_ == kCustomTopNSampler) {  // non sharding case constructor #1
+      no_of_samples_ = std::min(no_of_samples_, total_no);
+      taking = no_of_samples_ - no_of_samples_ % no_of_categories;
+    } else if (sampler_type_ == kSubsetRandomSampler || sampler_type_ == kSubsetSampler) {
+      CHECK_FAIL_RETURN_UNEXPECTED_MR(static_cast<int64_t>(indices_.size()) <= total_no,
+                                      "Invalid input, indices size: " + std::to_string(indices_.size()) +
+                                        " should be less than or equal to database size: " + std::to_string(total_no) +
+                                        ".");
+    } else {  // constructor TopPercent
+      if (numerator_ > 0 && denominator_ > 0 && numerator_ <= denominator_) {
+        if (numerator_ == 1 && denominator_ > 1) {  // sharding
+          taking = (total_no + denominator_ - 1) / denominator_;
+        } else {  // non sharding
+          taking = total_no * numerator_ / denominator_;
+          taking -= (taking % no_of_categories);
+        }
+      } else {
+        RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] 'numerator_': " + std::to_string(numerator_) +
+                                    " should be positive and less than denominator_: " + std::to_string(denominator_) +
+                                    ".");
+      }
+    }
+    return UpdateTasks(tasks, taking);
+  }
+
+  return UpdatePartitionWhenSlowMode(tasks);
 }
 
 Status ShardSample::SufExecute(ShardTaskList &tasks) {

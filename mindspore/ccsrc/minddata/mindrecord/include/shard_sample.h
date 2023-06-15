@@ -48,6 +48,10 @@ class MINDRECORD_API ShardSample : public ShardOperator {
 
   int64_t GetNumSamples(int64_t dataset_size, int64_t num_classes) override;
 
+ private:
+  // Update the partition_shard_sample_count_ in tasks
+  Status UpdatePartitionWhenSlowMode(ShardTaskList &tasks);  // NOLINT
+
  protected:
   int64_t numerator_;
   int64_t denominator_;

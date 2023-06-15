@@ -383,7 +383,7 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess8) {
   EXPECT_EQ(shapes.size(), 2);
   EXPECT_EQ(shapes[0].ToString(), "<>");
   EXPECT_EQ(shapes[1].ToString(), "<>");
-  EXPECT_EQ(ds->GetDatasetSize(), 5);
+  EXPECT_EQ(ds->GetDatasetSize(), 9);
   EXPECT_EQ(ds->GetRepeatCount(), 1);
   EXPECT_EQ(ds->GetColumnNames(), column_names);
 

@@ -160,6 +160,15 @@ const std::unordered_map<std::string, std::string> kTypesMap = {
 /// \brief the max number of samples to enable lazy load
 const uint32_t LAZY_LOAD_THRESHOLD = 5000000;
 
+/// \brief the max number of samples
+const uint32_t SLOW_LOAD_THRESHOLD = 100000000;
+
+enum LoadMode {
+  kFast = 0,  // use std::tuple<TaskType, std::tuple<int, int>, std::vector<uint64_t>, json>; to cache meta data
+  kLazy = 1,  // >5,000,000 samples, use std::tuple<TaskType, std::tuple<int, int>, {}, {}> to cache meta data
+  kSlow = 2   // >100,000,000 samples, don't cache meta data which is too large
+};
+
 /// \brief parallel convert from vector<py::bytes> to vector<vector<uint8_t>>
 const uint32_t kParallelConvert = 4;
 
