@@ -210,7 +210,7 @@ extern "C" {
   for (size_t i = 0; i < outputs.size(); ++i) {
     shape_size += outputs[i]->shape().size();
   }
-  constexpr int kMicroTensorSize = 32;
+  constexpr int kMicroTensorSize = 36;  // sizeof(MicroTensor) in generated file tensor.h, need to check and update
   size_t workspace_size = UP_ROUND(ctx_->total_buffer_size(), C4NUM) + UP_ROUND(ctx_->weight_buffer_size(), C4NUM) +
                           shape_size * sizeof(int64_t) +
                           (kMicroTensorSize) * (ctx_->graph_inputs().size() + ctx_->graph_outputs().size());

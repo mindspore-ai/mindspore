@@ -56,9 +56,11 @@ int PoolingFP16Coder::DoCode(CoderContext *const context) {
   Collect(context,
           {
             "nnacl/fp16/pooling_fp16.h",
+            "nnacl/kernel/pooling.h",
           },
           {
             "pooling_fp16.c",
+            "pooling.c",
           });
   switch (pooling_parameter->act_type_) {
     case ActType_Relu: {
