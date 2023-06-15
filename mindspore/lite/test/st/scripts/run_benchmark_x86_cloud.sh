@@ -120,12 +120,15 @@ fi
 models_tf_config=${basepath}/../${config_folder}/models_tf_cloud.cfg
 models_tf_ms_config=${basepath}/../${config_folder}/models_tf_cloud_ms.cfg
 models_onnx_config=${basepath}/../${config_folder}/models_onnx_cloud.cfg
+models_posttraining_config=${basepath}/../${config_folder}/models_posttraining_cloud.cfg
+models_dynamic_quant_config=${basepath}/../${config_folder}/models_dynamic_quant_cloud.cfg
+
 # Prepare the config file list
 x86_cfg_file_list=()
 if [[ $backend == "x86_cloud_tf" ]]; then
   x86_cfg_file_list=("$models_tf_config" "$models_tf_ms_config")
 elif [[ $backend == "x86_cloud_onnx" ]]; then
-  x86_cfg_file_list=("$models_onnx_config")
+  x86_cfg_file_list=("$models_onnx_config" "$models_posttraining_config" "$models_dynamic_quant_config")
 fi
 
 ms_models_path=${basepath}/ms_models

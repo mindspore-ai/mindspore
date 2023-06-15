@@ -123,11 +123,13 @@ function Convert() {
               spec_shapes=${spec_shapes}${name_array[$i]}':'${shape_array[$i]}';'
             done
           fi
-        elif [[ ${cfg_file_name} =~ "posttraining" ]]; then
+        fi
+
+        if [[ ${cfg_file_name} =~ "posttraining" || ${cfg_file_name} =~ "posttraining_cloud" ]]; then
           quant_type="PostTraining"
           output_file=${output_file}"_posttraining"
           config_file="${quant_config_path}/${model_name}_${cfg_file_name:7:-4}.config"
-        elif [[ ${cfg_file_name} =~ "dynamic_quant" ]]; then
+        elif [[ ${cfg_file_name} =~ "dynamic_quant" || ${cfg_file_name} =~ "posttraining_cloud" ]]; then
           quant_type="DynamicQuant"
           output_file=${output_file}"_dynamic_quant"
           config_file="${quant_config_path}/dynamic_quant.cfg"
