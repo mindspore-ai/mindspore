@@ -83,3 +83,21 @@ def test_bernoulli_dynamic():
     nonzero_count = np.count_nonzero(output.asnumpy())
     elem_count = x.size
     assert elem_count * 0.4 < nonzero_count < elem_count * 0.6
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_bernoulli_dynamic_x_type_error():
+    """
+    Feature: Bernoulli function
+    Description: Test cases for Bernoulli
+    Expectation: Raise TypeError.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    with pytest.raises(TypeError):
+        x = np.random.random(size=(15, 26, 2, 8, 10))
+        p = Tensor(np.random.random(size=(15, 26, 2, 8, 10)))
+        net = BernoulliDynamic()
+        output = net(x, p=p)
+        print(output)

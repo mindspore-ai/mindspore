@@ -532,7 +532,7 @@ ValuePtr ConvertOtherObj(const py::object &obj, bool forbid_reuse = false) {
           python_adapter::CallPyModFn(mod, PYTHON_MOD_IS_FROM_THIRD_PARTY_LIBRARY, obj).cast<bool>();
         if (is_third_party_function) {
           MS_LOG(DEBUG) << "Converting the function from third-party library: " << py::str(obj);
-          return std::make_shared<InterpretedObject>(obj, py::str(obj));
+          return std::make_shared<InterpretedObject>(obj);
         }
       }
     }
@@ -552,7 +552,7 @@ ValuePtr ConvertOtherObj(const py::object &obj, bool forbid_reuse = false) {
       obj_type == RESOLVE_TYPE_NUMPY_BOOL_NUMBER) {
     return ConvertConstantNumpyNumber(obj, obj_type);
   }
-  auto res = std::make_shared<InterpretedObject>(obj, py::str(obj));
+  auto res = std::make_shared<InterpretedObject>(obj);
   MS_EXCEPTION_IF_NULL(res);
   MS_LOG(DEBUG) << "Get interpreted object: " << res->ToString();
   return res;
