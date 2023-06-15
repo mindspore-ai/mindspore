@@ -60,6 +60,8 @@ int MatMulFP16Coder::Prepare(CoderContext *const context) {
   MatMulParameter *matmul_param = reinterpret_cast<MatMulParameter *>(parameter_);
   params_.act_type_ = matmul_param->act_type_;
   params_.thread_num_ = matmul_param->op_parameter_.thread_num_;
+  params_.a_transpose_ = matmul_param->a_transpose_;
+  params_.b_transpose_ = matmul_param->b_transpose_;
   MS_CHECK_TRUE_RET(input_tensors_.size() >= kBiasIndex, RET_ERROR);
   filter_tensor_ = input_tensors_.at(kWeightIndex);
   MS_CHECK_PTR(filter_tensor_);
