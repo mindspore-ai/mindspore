@@ -4050,6 +4050,9 @@ class OneHot(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> indices = Tensor(np.array([0, 1, 2]), mindspore.int32)
         >>> depth, on_value, off_value = 3, Tensor(1.0, mindspore.float32), Tensor(0.0, mindspore.float32)
         >>> onehot = ops.OneHot()
@@ -10977,6 +10980,8 @@ class ChannelShuffle(Primitive):
         ``Ascend`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> group = 2
         >>> x = Tensor(np.arange(1 * 4 * 2 * 2).reshape(1, 4, 2, 2).astype(np.int16))
         >>> channel_shuffle_func = ops.ChannelShuffle(group)

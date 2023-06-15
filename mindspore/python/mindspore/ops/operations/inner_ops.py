@@ -86,6 +86,8 @@ class Randperm(Primitive):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> # The result of every execution is different because this operator will generate n random samples.
         >>> randperm = ops.Randperm(max_length=30, pad=-1)
         >>> n = Tensor([20], dtype=mindspore.int32)

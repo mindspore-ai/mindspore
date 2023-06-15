@@ -203,6 +203,7 @@ class StandardLaplace(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import ops
         >>> shape = (4, 16)
         >>> stdlaplace = ops.StandardLaplace(seed=2)
         >>> output = stdlaplace(shape)
@@ -261,6 +262,9 @@ class RandomGamma(Primitive):
         ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> shape = Tensor(np.array([3, 1, 2]), mstype.int32)
         >>> alpha = Tensor(np.array([[3, 4], [5, 6]]), mstype.float32)
         >>> gamma = ops.RandomGamma(seed=3)
@@ -374,6 +378,9 @@ class Gamma(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> shape = (3, 1, 2)
         >>> alpha = Tensor(np.array([[3, 4], [5, 6]]), mstype.float32)
         >>> beta = Tensor(np.array([1.0]), mstype.float32)
@@ -584,6 +591,9 @@ class RandomPoisson(Primitive):
         ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> shape = Tensor(np.array([2, 3]), mstype.int32)
         >>> rate = Tensor(np.array([2, 2]), mstype.int32)
         >>> seed = 0
@@ -645,6 +655,8 @@ class UniformInt(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> shape = (2, 4)
         >>> minval = Tensor(1, mstype.int32)
         >>> maxval = Tensor(5, mstype.int32)
@@ -699,6 +711,7 @@ class UniformReal(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import ops
         >>> shape = (2, 2)
         >>> uniformreal = ops.UniformReal(seed=2)
         >>> output = uniformreal(shape)
@@ -741,6 +754,8 @@ class RandomChoiceWithMask(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> rnd_choice_mask = ops.RandomChoiceWithMask()
         >>> input_x = Tensor(np.ones(shape=[240000, 4]).astype(np.bool))
         >>> output_y, output_mask = rnd_choice_mask(input_x)
@@ -787,6 +802,9 @@ class RandomCategorical(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import nn, ops
         >>> class Net(nn.Cell):
         ...   def __init__(self, num_sample):
         ...     super(Net, self).__init__()
@@ -847,6 +865,8 @@ class Multinomial(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> x = Tensor([[0., 9., 4., 0.]], mstype.float32)
         >>> multinomial = ops.Multinomial(seed=10)
         >>> output = multinomial(x, 2)
@@ -900,6 +920,8 @@ class MultinomialWithReplacement(Primitive):
         ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> x = Tensor([[0., 9., 4., 0.]], mstype.float32)
         >>> seed = Tensor(2, mstype.int64)
         >>> offset = Tensor(5, mstype.int64)
