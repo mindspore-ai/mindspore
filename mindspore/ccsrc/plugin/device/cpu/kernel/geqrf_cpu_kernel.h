@@ -66,6 +66,8 @@ class GeqrfCpuKernelMod : public NativeCpuKernelMod {
   void Geqrf(size_t m, size_t n, T *x, T *tau);
   size_t num_m = 0;
   size_t num_n = 0;
+  size_t elem_num;
+  size_t batch_num;
 };
 }  // namespace kernel
 }  // namespace mindspore

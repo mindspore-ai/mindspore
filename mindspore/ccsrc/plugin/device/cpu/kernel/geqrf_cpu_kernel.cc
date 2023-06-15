@@ -15,6 +15,8 @@
  */
 
 #include "plugin/device/cpu/kernel/geqrf_cpu_kernel.h"
+
+#include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -25,6 +27,7 @@ constexpr size_t kOutputsNum = 2;
 constexpr size_t kInputIndex0 = 0;
 constexpr size_t kOutputIndex0 = 0;
 constexpr size_t kOutputIndex1 = 1;
+constexpr int64_t kLastSecond = -2;
 }  // namespace
 
 bool GeqrfCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -49,8 +52,11 @@ int GeqrfCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
     return ret;
   }
   std::vector<int64_t> input0_tensor_shape = inputs[0]->GetShapeVector();
-  num_m = static_cast<size_t>(input0_tensor_shape[0]);
-  num_n = static_cast<size_t>(input0_tensor_shape[1]);
+  elem_num = static_cast<size_t>(
+    std::accumulate(input0_tensor_shape.begin(), input0_tensor_shape.end(), 1, std::multiplies<int64_t>()));
+  num_m = static_cast<size_t>(input0_tensor_shape.end()[kLastSecond]);
+  num_n = static_cast<size_t>(input0_tensor_shape.back());
+  batch_num = elem_num / (num_m * num_n);
   return KRET_OK;
 }
 
@@ -115,14 +121,23 @@ void GeqrfCpuKernelMod::Geqrf(size_t num_m_, size_t num_n_, T *x, T *tau) {
   }
   size_t k = std::min(num_m_, num_n_);
   T one = static_cast<T>(1);
-  std::unique_ptr<T[]> workspace = std::make_unique<T[]>(num_n_);
-  for (size_t i = 0; i < k; i++) {
-    Larfg<T>(num_m_ - i, i, i, x, tau + i);
-    T aii = *(x + i * num_n_ + i);
-    *(x + i * num_n_ + i) = one;
-    workspace = Larf<T>(num_m_ - i, num_n_ - i - 1, x, tau + i, std::move(workspace), i, i + 1);
-    *(x + i * num_n_ + i) = aii;
-  }
+  auto x_origin = x;
+  auto tau_origin = tau;
+  auto geqrf_shard = [&](size_t start, size_t end) {
+    std::unique_ptr<T[]> workspace = std::make_unique<T[]>(num_n_);
+    for (size_t batch = start; batch < end; ++batch) {
+      x = x_origin + batch * num_m_ * num_n_;
+      tau = tau_origin + batch * k;
+      for (size_t i = 0; i < k; i++) {
+        Larfg<T>(num_m_ - i, i, i, x, tau + i);
+        T aii = *(x + i * num_n_ + i);
+        *(x + i * num_n_ + i) = one;
+        workspace = Larf<T>(num_m_ - i, num_n_ - i - 1, x, tau + i, std::move(workspace), i, i + 1);
+        *(x + i * num_n_ + i) = aii;
+      }
+    }
+  };
+  ParallelLaunchAutoSearch(geqrf_shard, batch_num, this, &parallel_search_info_);
 }
 
 template <typename T>
@@ -131,11 +146,7 @@ bool GeqrfCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inpu
   T *x = static_cast<T *>(inputs[kInputIndex0]->addr);
   T *y = static_cast<T *>(outputs[kOutputIndex0]->addr);
   T *tau = static_cast<T *>(outputs[kOutputIndex1]->addr);
-  for (size_t i = 0; i < num_m; i++) {
-    for (size_t j = 0; j < num_n; j++) {
-      *(y + i * num_n + j) = *(x + i * num_n + j);
-    }
-  }
+  std::copy(x, x + elem_num, y);
   Geqrf<T>(num_m, num_n, y, tau);
   return true;
 }
