@@ -56,7 +56,7 @@ bool RemoveUnusedAddNodePass::Run(const FuncGraphPtr &func_graph) {
         MS_LOG(DEBUG) << "node is not cnode";
         continue;
       }
-      if (!CheckPrimitiveType(add_input, prim::kPrimMul) || !CheckPrimitiveType(add_input, prim::kPrimMulFusion)) {
+      if (!CheckPrimitiveType(add_input, prim::kPrimMul) && !CheckPrimitiveType(add_input, prim::kPrimMulFusion)) {
         MS_LOG(DEBUG) << "node is not mul or mulfusion";
         continue;
       }
@@ -86,7 +86,7 @@ bool RemoveUnusedAddNodePass::Run(const FuncGraphPtr &func_graph) {
         MS_LOG(INFO) << "remove node name: " << node->fullname_with_scope()
                      << "remove node input index: " << node_index;
         manager->Replace(node, node->cast<CNodePtr>()->input(node_index));
-        MS_LOG(DEBUG) << "RemoveUnusedAddNodePass success, node name: " << node->fullname_with_scope();
+        MS_LOG(INFO) << "RemoveUnusedAddNodePass success, node name: " << node->fullname_with_scope();
       }
     }
   }

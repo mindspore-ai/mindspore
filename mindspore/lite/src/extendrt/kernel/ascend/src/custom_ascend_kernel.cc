@@ -35,7 +35,7 @@ CustomAscendKernelMod::CustomAscendKernelMod()
     : load_model_(false), acl_options_(nullptr), model_infer_(nullptr), input_data_idx_(0) {}
 
 CustomAscendKernelMod::~CustomAscendKernelMod() {
-  if (load_model_) {
+  if (load_model_ || is_multi_model_sharing_mem_prepare_) {
     if (!model_infer_->Finalize()) {
       MS_LOG(ERROR) << "Model finalize failed.";
     }

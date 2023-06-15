@@ -56,6 +56,7 @@ constexpr size_t kMaxSectionNum = 100;
 constexpr size_t kMaxConfigNumPerSection = 1000;
 std::shared_mutex g_model_converter_lock;
 constexpr auto kAscendProviderGe = "ge";
+std::mutex g_load_mindir_lock;
 
 std::map<std::string, tensor::TensorPtr> GetParams(const FuncGraphPtr &anf_graph) {
   MS_EXCEPTION_IF_NULL(anf_graph);
@@ -298,11 +299,15 @@ FuncGraphPtr ModelImpl::LoadGraphByBufferImpl(const void *model_buff, size_t mod
     (void)UpdateConfig(lite::kAscendContextSection,
                        std::pair<std::string, std::string>(lite::kDumpModelNameKey, model_name));
   }
-  MindIRLoader mindir_loader(true, nullptr, 0, kDecModeAesGcm, false);
-  auto func_graph = mindir_loader.LoadMindIR(model_buff, model_size, weight_path);
-  if (func_graph == nullptr) {
-    MS_LOG(ERROR) << "Failed to load MindIR model, please check the validity of the model: " << weight_path;
-    return nullptr;
+  FuncGraphPtr func_graph;
+  {
+    std::unique_lock<std::mutex> l(g_load_mindir_lock);
+    MindIRLoader mindir_loader(true, nullptr, 0, kDecModeAesGcm, false);
+    func_graph = mindir_loader.LoadMindIR(model_buff, model_size, weight_path);
+    if (func_graph == nullptr) {
+      MS_LOG(ERROR) << "Failed to load MindIR model, please check the validity of the model: " << weight_path;
+      return nullptr;
+    }
   }
   return func_graph;
 }
