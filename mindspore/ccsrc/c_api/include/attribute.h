@@ -157,7 +157,7 @@ MIND_C_API STATUS MSOpGetAttrArrayInt64(ResMgrHandle res_mgr, ConstNodeHandle op
 /// \return Attribute value handle.
 MIND_C_API AttrHandle MSNewAttrInt64(ResMgrHandle res_mgr, const int64_t v);
 
-/// \brief Create new flaot32 attribute scalar value.
+/// \brief Create new float32 attribute scalar value.
 ///
 /// \param[in] res_mgr Resource Handle that manages the nodes of the funcGraph.
 /// \param[in] v Given value.

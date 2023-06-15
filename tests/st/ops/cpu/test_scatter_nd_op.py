@@ -128,7 +128,7 @@ def test_scatternd_float64():
 def test_scatternd_float32():
     """
     Feature: ScatterNd
-    Description: statternd with flaot32 dtype
+    Description: statternd with float32 dtype
     Expectation: success
     """
     scatternd_positive(np.float32)
@@ -141,7 +141,7 @@ def test_scatternd_float32():
 def test_scatternd_float16():
     """
     Feature: ScatterNd
-    Description: statternd with flaot32 dtype
+    Description: statternd with float32 dtype
     Expectation: success
     """
     scatternd_positive(np.float16)
