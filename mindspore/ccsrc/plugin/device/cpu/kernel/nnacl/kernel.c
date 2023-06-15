@@ -52,22 +52,43 @@ int DefaultThreadUpdate(int32_t type, int64_t load, int64_t store, int64_t unit,
   return thread > 0 ? thread : 1;
 }
 
-int NnaclKernelInferShape(struct KernelBase *self) { return NNACL_OK; }
+int NNACLKernelInferShape(struct KernelBase *self) { return NNACL_OK; }
+
+int NNACLCheckKernelBase(KernelBase *kernel_base) {
+  CheckExecEnv(kernel_base);
+
+  if (kernel_base->param_ == NULL) {
+    return NNACL_ERR;
+  }
+
+  if (kernel_base->thread_nr_ <= 0 || kernel_base->thread_nr_ > MAX_THREAD_NUM) {
+    return NNACL_ERR;
+  }
+
+  if (kernel_base->in_size_ == 0 || kernel_base->in_ == NULL) {
+    return NNACL_ERR;
+  }
+  if (kernel_base->out_size_ == 0 || kernel_base->out_ == NULL) {
+    return NNACL_ERR;
+  }
+  return NNACL_OK;
+}
 
 KernelBase *CreateKernel(OpParameter *param, TensorC **ins, size_t in_size, TensorC **outs, size_t out_size,
                          int data_type, ExecEnv *env) {
-  if (env == NULL) {
-    return NULL;
-  }
   Init_MSC_VER_kernels();
   KernelCreator creator = g_kernelCreatorRegistry[param->type_][REGIST_DT(data_type)];
   if (creator == NULL) {
     return NULL;
   }
+
   KernelBase *kernel_base = creator(param, data_type);
-  kernel_base->infershape = NnaclKernelInferShape;
+  if (kernel_base == NULL) {
+    return NULL;
+  }
+
+  kernel_base->infershape = NNACLKernelInferShape;
   kernel_base->env_ = env;
-  CheckExecEnv(kernel_base);
   kernel_base->param_ = param;
   kernel_base->thread_nr_ = param->thread_num_;
   kernel_base->train_session_ = param->is_train_session_;
@@ -76,5 +97,11 @@ KernelBase *CreateKernel(OpParameter *param, TensorC **ins, size_t in_size, Tens
   kernel_base->out_ = outs;
   kernel_base->out_size_ = out_size;
   kernel_base->update_thread_ = DefaultThreadUpdate;
+
+  int ret = NNACLCheckKernelBase(kernel_base);
+  if (ret != NNACL_OK) {
+    return NULL;
+  }
+
   return kernel_base;
 }

@@ -34,12 +34,15 @@ class NNACLKernel : public kernel::LiteKernel {
   int ReSize() override;
   int Run() override;
   int InferShape() override;
-  virtual int InitKernel(const TypeId &data_type, const lite::InnerContext *ctx);
+  int InitKernel(const TypeId &data_type, const lite::InnerContext *ctx);
   const KernelBase *Kernel() const { return kernel_; }
 
  protected:
   void UpdateTensorC();
   int OptimizeDataCopy();
+
+ private:
+  int NNACLCheckArgs();
 
  protected:
   KernelBase *kernel_ = nullptr;
