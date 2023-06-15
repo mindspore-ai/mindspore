@@ -35,11 +35,14 @@ class CompileResultBuilder {
   ~CompileResultBuilder() = default;
   CompileResultPtr Build(const GraphSegmentPtr &graph_segment, const AnfNodePtrList &inputs,
                          const AnfNodePtrList &outputs);
+  CompileResultPtr Build(const FuncGraphPtr &func_graph);
 
  private:
   // build
   StatusCode BuildInputs(const AnfNodePtrList &inputs);
   StatusCode BuildNodes(const GraphSegmentPtr &graph_segment);
+  StatusCode BuildNodes(const std::vector<AnfNodePtr> &nodes);
+  StatusCode BuildNodes(const FuncGraphPtr &func_graph);
   StatusCode BuildOutputs(const AnfNodePtrList &outputs);
   StatusCode OptimizeGraph();
   // methods about node

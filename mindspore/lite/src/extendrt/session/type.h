@@ -26,6 +26,7 @@ enum SessionType {
   kLiteInferSession,
   kDelegateSession,
   kBishengSession,
+  kMemoryOffloadSession,
   kNoneSession
 };
 }  // namespace mindspore

@@ -31,7 +31,7 @@ class BACKEND_EXPORT SwapStrategyBuilder {
   ~SwapStrategyBuilder() = default;
   std::shared_ptr<SwapStrategy> Build(const KernelGraphPtr &graph, const std::shared_ptr<SwapContext> &context);
 
- private:
+ protected:
   struct Span {
     size_t tensor_id_{0};
     size_t tensor_size_{0};
@@ -50,6 +50,11 @@ class BACKEND_EXPORT SwapStrategyBuilder {
     }
   };
 
+  bool EnoughSpaceForSpan(const std::shared_ptr<Span> &span, std::vector<size_t> *mem_used,
+                          size_t total_mem_size) const;
+  void SpanToTensorAction();
+
+ private:
   void ResetState(const KernelGraphPtr &graph, const std::shared_ptr<SwapContext> &context);
   void AnalyzeGraph(const KernelGraphPtr &graph);
   void BuildSpans();
@@ -60,14 +65,14 @@ class BACKEND_EXPORT SwapStrategyBuilder {
   void AddFusedTensorSpan(const std::shared_ptr<MemUsageTensorInfo> &info, size_t start_index,
                           size_t current_kernel_id);
   void HandleFusedTensor();
-  void SpanToTensorAction();
+
   void RecordSpan(const std::shared_ptr<MemUsageTensorInfo> &info, size_t last_index, size_t current_index,
                   bool output_span = false);
-  bool EnoughSpaceForSpan(const std::shared_ptr<Span> &span, std::vector<size_t> *mem_used,
-                          size_t total_mem_size) const;
+
   void AddTensorAction(SwapActionType action_type, size_t tensor_id, size_t kernel_id);
   std::shared_ptr<SwapStrategy> BuildStrategy(const KernelGraphPtr &graph);
 
+ protected:
   std::shared_ptr<MemUsageAnalyzer> analyzer_{nullptr};
   std::shared_ptr<SwapContext> context_{nullptr};
   size_t kernel_num_{0};
