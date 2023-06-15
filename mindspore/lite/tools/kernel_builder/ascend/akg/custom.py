@@ -375,6 +375,8 @@ class ReduceSum(OpInfer):
                     new_axis.append(i)
             self.set_attr("axis", new_axis)
             self.output_desc[0]["shape"] = self._reduced_shape(cur_shape, new_axis, self.get_attr("keep_dims"))
+        else:
+            self.output_desc[0]["shape"] = self.output_desc[0]["ori_shape"]
 
     def infer_ori_shape(self):
         shape = self.input_desc[0]["ori_shape"]
