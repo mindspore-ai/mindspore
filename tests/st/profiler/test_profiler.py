@@ -16,6 +16,7 @@ import os
 import shutil
 
 import sys
+import csv
 
 from tests.security_utils import security_off_wrap
 import pytest
@@ -152,6 +153,7 @@ class TestProfiler:
             return
         self._train_with_profiler(device_target="CPU", profile_memory=False)
         self._check_cpu_profiling_file()
+        self._check_host_profiling_file()
 
     @pytest.mark.level1
     @pytest.mark.platform_x86_gpu_training
@@ -160,6 +162,7 @@ class TestProfiler:
     def test_gpu_profiler(self):
         self._train_with_profiler(device_target="GPU", profile_memory=False)
         self._check_gpu_profiling_file()
+        self._check_host_profiling_file()
 
     @pytest.mark.level1
     @pytest.mark.platform_x86_gpu_training
@@ -173,6 +176,7 @@ class TestProfiler:
         """
         self._train_with_profiler(device_target="GPU", profile_memory=False, context_mode=context.PYNATIVE_MODE)
         self._check_gpu_profiling_file()
+        self._check_host_profiling_file()
 
     @pytest.mark.level1
     @pytest.mark.platform_arm_ascend_training
@@ -182,14 +186,31 @@ class TestProfiler:
     def test_ascend_profiler(self):
         self._train_with_profiler(device_target="Ascend", profile_memory=True)
         self._check_d_profiling_file()
+        self._check_host_profiling_file()
 
-    def _train_with_profiler(self, device_target, profile_memory, context_mode=context.GRAPH_MODE):
+    @pytest.mark.level1
+    @pytest.mark.platform_arm_ascend_training
+    @pytest.mark.platform_x86_ascend_training
+    @pytest.mark.env_onecard
+    @security_off_wrap
+    @pytest.mark.parametrize("profile_framework", ['all', 'time', 'memory', None])
+    def test_host_profiler(self, profile_framework):
+        self._train_with_profiler(device_target="Ascend", profile_memory=False, only_profile_host=True,
+                                  profile_framework=profile_framework)
+        self._check_host_profiling_file(profile_framework=profile_framework)
+
+    def _train_with_profiler(self, device_target, profile_memory, context_mode=context.GRAPH_MODE,
+                             only_profile_host=False, profile_framework='all'):
         context.set_context(mode=context_mode, device_target=device_target)
         ds_train = create_dataset(os.path.join(self.mnist_path, "train"))
         if ds_train.get_dataset_size() == 0:
             raise ValueError("Please check dataset size > 0 and batch_size <= dataset size")
-
-        profiler = Profiler(profile_memory=profile_memory, output_path='data')
+        if only_profile_host:
+            profiler = Profiler(output_path='data', op_time=False,
+                                parallel_strategy=False, aicore_metrics=-1, data_process=False,
+                                profile_framework=profile_framework)
+        else:
+            profiler = Profiler(profile_memory=profile_memory, output_path='data', profile_framework=profile_framework)
         profiler_name = os.listdir(os.path.join(os.getcwd(), 'data'))[0]
         self.profiler_path = os.path.join(os.getcwd(), f'data/{profiler_name}/')
         lenet = LeNet5()
@@ -238,3 +259,21 @@ class TestProfiler:
         cpu_profiler_files = (op_detail_file, op_type_file, timeline_file)
         for file in cpu_profiler_files:
             assert os.path.isfile(file)
+
+    def _check_host_profiling_file(self, profile_framework='all'):
+        host_dir = os.path.join(self.profiler_path, 'host_info')
+        if profile_framework is None:
+            assert not os.path.exists(host_dir)
+            return
+        if profile_framework in ['all', 'time']:
+            timeline_file = os.path.join(host_dir, f'timeline_{self.rank_id}.json')
+            assert os.path.isfile(timeline_file)
+        csv_file = os.path.join(host_dir, f'host_info_{self.rank_id}.csv')
+        assert os.path.exists(csv_file)
+        with open(csv_file, 'r') as f:
+            f_reader = csv.reader(f)
+            header = next(f_reader)
+            assert header == ['tid', 'pid', 'parent_pid', 'module_name', 'event', 'stage', 'level', 'start_end',
+                              'custom_info', 'memory_usage', 'time_stamp']
+            for row in f_reader:
+                assert len(row) == 11

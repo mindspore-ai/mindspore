@@ -22,9 +22,7 @@ namespace mindspore::dataset {
 Status CollectPipelineInfoStart(const std::string &event, const std::string &stage,
                                 const std::map<std::string, std::string> &custom_info) {
 #if !defined(ENABLE_SECURITY) && !defined(ENABLE_ANDROID)
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    profiler::CollectHostInfo("dataset", event, stage, InfoLevel::kUser, InfoType::kAll, TimeType::kStart, custom_info),
-    "Collect pipeline info failed, please refer to the previous log for more details.");
+  profiler::CollectHostInfo("dataset", event, stage, InfoLevel::kUser, InfoType::kAll, TimeType::kStart, custom_info);
 #endif
   return Status::OK();
 }
@@ -32,9 +30,7 @@ Status CollectPipelineInfoStart(const std::string &event, const std::string &sta
 Status CollectPipelineInfoEnd(const std::string &event, const std::string &stage,
                               const std::map<std::string, std::string> &custom_info) {
 #if !defined(ENABLE_SECURITY) && !defined(ENABLE_ANDROID)
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    profiler::CollectHostInfo("dataset", event, stage, InfoLevel::kUser, InfoType::kAll, TimeType::kEnd, custom_info),
-    "Collect pipeline info failed, please refer to the previous log for more details.");
+  profiler::CollectHostInfo("dataset", event, stage, InfoLevel::kUser, InfoType::kAll, TimeType::kEnd, custom_info);
 #endif
   return Status::OK();
 }

@@ -17,15 +17,12 @@
 #include "include/backend/debug/profiler/profiling.h"
 #include <chrono>
 #include <cmath>
-#ifdef __linux__
-#include "sys/syscall.h"
-#endif
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 #ifdef __linux__
+#include <unistd.h>
 #include "utils/profile.h"
 #include "include/backend/debug/common/csv_writer.h"
-#define GetTid() syscall(SYS_gettid)
 #endif
 
 namespace mindspore {
@@ -256,21 +253,28 @@ bool ProfilerManager::NeedCollectHostMemory() const {
   return profile_framework_ == "memory" || profile_framework_ == "all";
 }
 
-bool CollectHostInfo(const std::string &module_name, const std::string &event, const std::string &stage, int level,
+bool ProfilerManager::EnableCollectHost() const { return profile_framework_ != "NULL"; }
+
+void CollectHostInfo(const std::string &module_name, const std::string &event, const std::string &stage, int level,
                      int profile_framework, int start_end, const std::map<std::string, std::string> &custom_info) {
+#ifndef ENABLE_SECURITY
 #ifndef __linux__
-  return true;
+  return;
 #else
   auto profiler_manager = profiler::ProfilerManager::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_manager);
   if (!profiler_manager->GetProfilingEnableFlag()) {
     MS_LOG(INFO) << "Profiler is not enabled, no need to record Host info.";
-    return true;
+    return;
+  }
+  if (!profiler_manager->EnableCollectHost()) {
+    MS_LOG(INFO) << "Profiler profile_framework is not enabled, no need to record Host info.";
+    return;
   }
   auto output_path = profiler_manager->ProfileDataPath();
   if (output_path.empty()) {
     MS_LOG(ERROR) << "The output path is empty, skip collect host info.";
-    return false;
+    return;
   }
   HostProfileData host_profile_data;
   host_profile_data.module_name = module_name;
@@ -279,11 +283,11 @@ bool CollectHostInfo(const std::string &module_name, const std::string &event, c
   host_profile_data.level = level;
   host_profile_data.start_end = start_end;
   host_profile_data.custom_info = custom_info;
-  auto tid = GetTid();
+  auto tid = std::this_thread::get_id();
   host_profile_data.tid = tid;
-  ProcessStatus process_status = ProcessStatus::GetInstance();
-  host_profile_data.pid = process_status.GetKeyValue("Pid");
-  host_profile_data.parent_pid = process_status.GetKeyValue("PPid");
+
+  host_profile_data.pid = getpid();
+  host_profile_data.parent_pid = getppid();
 
   // Collect Host info.
   if (profiler_manager->NeedCollectHostTime()) {
@@ -293,12 +297,14 @@ bool CollectHostInfo(const std::string &module_name, const std::string &event, c
     host_profile_data.time_stamp = time_stamp;
   }
   if (profiler_manager->NeedCollectHostMemory()) {
+    ProcessStatus process_status = ProcessStatus::GetInstance();
     uint64_t memory_usage = process_status.GetMemoryCost(kVmRSS);
     host_profile_data.memory_usage = memory_usage;
   }
   std::lock_guard<std::mutex> lock(file_line_mutex);
   WriteHostDataToFile(host_profile_data, output_path);
-  return true;
+  return;
+#endif
 #endif
 }
 #ifdef __linux__

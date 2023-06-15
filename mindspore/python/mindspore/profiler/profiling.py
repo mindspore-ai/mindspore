@@ -78,7 +78,7 @@ class DeviceSupportParam(Enum):
 
 
 ALWAYS_VALID_PARAM = ['start', 'start_profile', 'output_path', 'data_process', 'parallel_strategy', 'l2_cache',
-                      'ascend_job_id', 'op_time']
+                      'ascend_job_id', 'op_time', 'profile_framework']
 
 
 def _environment_check():
@@ -96,7 +96,7 @@ class ExecutionCalculator:
         self.count = 0
 
 
-def calulate_dataset_execution_time(input_file, output_file):
+def calculate_dataset_execution_time(input_file, output_file):
     r"""
     Parse the host info into timeline file, so as to show on UI.
 
@@ -128,7 +128,7 @@ def calulate_dataset_execution_time(input_file, output_file):
                         execution_time_map[title] = ExecutionCalculator(event=event, stage=stage)
                     execution_time_map[title].count += 1
                     execution_time_map[title].average_execution += \
-                        (dur - execution_time_map[title].average_execution)/execution_time_map[title].count
+                        (dur - execution_time_map[title].average_execution) / execution_time_map[title].count
                     del ts_map[event_stage_tid_pid]
                 elif start_end == '0':
                     ts = int(row['time_stamp'])
@@ -262,7 +262,7 @@ class Profiler:
         timeline_limit (int, optional): Set the maximum storage size of the timeline file (unit M). When using this
             parameter, `op_time` must be set to True. Default value: ``500`` .
         profile_framework (str, optional): Whether to collect host memory and time, it must be one of ["all", "time",
-            "memory"]. Default: "all".
+            "memory", None]. Default: "all".
 
     Raises:
         RuntimeError: When the version of CANN does not match the version of MindSpore,
@@ -496,7 +496,8 @@ class Profiler:
 
         elif self._device_target and self._device_target == DeviceTarget.ASCEND.value:
             self._ascend_analyse()
-        self._host_info_analyse()
+        if self._profile_framework in ["all", "time"]:
+            self._host_info_analyse()
         logger.info("Profiling: all the data have been analyzed.")
         self._init_profiler_info()
 
@@ -568,7 +569,8 @@ class Profiler:
             if self._data_process:
                 self._md_profiler.start()
                 self._gpu_profiler.data_process_enable(True)
-            self._gpu_profiler.step_profiling_enable(True)
+            if self._profile_framework or self._op_time:
+                self._gpu_profiler.step_profiling_enable(True)
         elif self._device_target and self._device_target == DeviceTarget.ASCEND.value:
             if self._data_process:
                 self._md_profiler.start()
@@ -673,6 +675,10 @@ class Profiler:
         """Complete Profiler initialization according to device_target"""
         profiler_manager = c_expression.ProfilerManager
         self._profiler_manager = profiler_manager.get_instance()
+        if self._profile_framework is None:
+            self._profiler_manager.set_profile_framework("NULL")
+        else:
+            self._profiler_manager.set_profile_framework(self._profile_framework)
         if self._device_target:
             cpu_profiler = c_expression.Profiler
             self._cpu_profiler = cpu_profiler.get_instance("CPU")
@@ -719,7 +725,6 @@ class Profiler:
             self._md_profiler = cde.GlobalContext.profiling_manager()
             logger.warning("md_profiler init.")
             self._md_profiler.init()
-        self._profiler_manager.set_profile_framework(self._profile_framework)
         self._init_time = int(time.time() * 10000000)
         logger.info("Profiling: profiling init time: %d", self._init_time)
         self._parse_parameter_for_ascend(kwargs)
@@ -1527,10 +1532,10 @@ class Profiler:
             timeline_limit = 500
         self._timeline_size_limit_byte = timeline_limit * 1024 * 1024
         self._profile_framework = kwargs.pop("profile_framework", "all")
-        if not isinstance(self._profile_framework, str) or self._profile_framework not in ["memory", "time", "all"]:
+        if self._profile_framework not in ["memory", "time", "all", None]:
             raise RuntimeError(
-                f"For '{self.__class__.__name__}', the parameter data_process must be str, and be one of ['memory',"
-                f" 'time', 'all']，but got type {self._profile_framework}.")
+                f"For '{self.__class__.__name__}', the parameter data_process must be one of ['memory',"
+                f" 'time', 'all', None]，but got {self._profile_framework}.")
 
     def _analyse_hccl_info(self):
         """Analyse hccl info."""
@@ -1574,5 +1579,5 @@ class Profiler:
         timeline_file = os.path.join(self._output_path, 'host_info', json_file_name)
         dataset_execution_file = os.path.join(self._output_path, 'host_info', dataset_file_name)
         parse_host_info(host_info_file, timeline_file)
-        calulate_dataset_execution_time(host_info_file, dataset_execution_file)
+        calculate_dataset_execution_time(host_info_file, dataset_execution_file)
         logger.info("Profile HostInfo finished.")

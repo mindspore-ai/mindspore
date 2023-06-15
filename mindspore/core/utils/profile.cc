@@ -412,44 +412,6 @@ int64_t ProcessStatus::GetMemoryCost(const std::string &key) const {
 #endif
 }
 
-int64_t ProcessStatus::GetKeyValue(const std::string &key) const {
-#if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
-  return kInvalid;
-#else
-
-  FILE *file = fopen(kProcessStatusFileName, "r");
-  if (file == nullptr) {
-    MS_LOG(ERROR) << "Get process status file failed.";
-    return 0;
-  }
-
-  int64_t value = 0;
-  char buf[kLineMaxSize] = {0};
-  while (fgets(buf, kLineMaxSize, file)) {
-    // Get mem title.
-    std::string line(buf);
-    auto title_end_pos = line.find(":");
-    auto title = line.substr(0, title_end_pos);
-    // Get mem size.
-    if (title == key) {
-      auto value_begin_pos = title_end_pos + 1;
-      if (value_begin_pos < line.length()) {
-        auto value_string = line.substr(value_begin_pos);
-        value = std::atol(value_string.c_str());
-      }
-      break;
-    }
-    if (memset_s(buf, kLineMaxSize, 0, kLineMaxSize) != EOK) {
-      MS_LOG(ERROR) << "Set process status file failed.";
-      (void)fclose(file);
-      return 0;
-    }
-  }
-  (void)fclose(file);
-  return value;
-#endif
-}
-
 void ProcessStatus::RecordStart(const std::string &step_name) {
   if (!kRecordMemoryFlag) {
     return;

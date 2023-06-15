@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <map>
+#include <thread>
 #include <memory>
 #include <mutex>
 #include <shared_mutex>
@@ -58,7 +59,7 @@ struct OpInfo {
 };
 
 struct HostProfileData {
-  int tid = 0;
+  std::thread::id tid = std::thread::id();
   int pid = 0;
   int parent_pid = 0;
   std::string module_name = "";
@@ -87,6 +88,7 @@ class BACKEND_EXPORT ProfilerManager {
   void SetProfileFramework(std::string profile_framework);
   bool NeedCollectHostTime() const;
   bool NeedCollectHostMemory() const;
+  bool EnableCollectHost() const;
 
  private:
   inline static std::shared_ptr<ProfilerManager> profiler_manager_inst_ = std::make_shared<ProfilerManager>();
@@ -160,7 +162,7 @@ class BACKEND_EXPORT Profiler {
 // profile_framework: 0, all host info, 1, host memory, 2, host time;
 // start_end: 0, start flag, 1, end flag, 2, no distinguish start and end.
 // Default parameter for host profile meaning: for developer user, collect both time and memory, record timestamp.
-BACKEND_EXPORT bool CollectHostInfo(
+BACKEND_EXPORT void CollectHostInfo(
   const std::string &module_name, const std::string &event, const std::string &stage, int level = 0,
   int profile_framework = 0, int start_end = 2,
   const std::map<std::string, std::string> &custom_info = std::map<std::string, std::string>());
