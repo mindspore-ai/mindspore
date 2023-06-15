@@ -6352,6 +6352,8 @@ class Eps(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor([4, 1, 2, 3], mindspore.float32)
         >>> output = ops.Eps()(x)
         >>> print(output)
@@ -6403,6 +6405,8 @@ class LinSpace(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> linspace = ops.LinSpace()
         >>> start = Tensor(1, mindspore.float32)
         >>> stop = Tensor(10, mindspore.float32)
@@ -7960,6 +7964,8 @@ class Bernoulli(Primitive):
         ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor([0.1, 0.2, 0.3], mindspore.float32)
         >>> bernoulli = ops.Bernoulli()
         >>> output = bernoulli(input_x, Tensor([1.0]))

@@ -335,6 +335,9 @@ class Cast(PrimitiveWithCheck):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
         >>> input_x = Tensor(input_np)
         >>> type_dst = mindspore.int32
@@ -1760,6 +1763,8 @@ class Ones(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import ops
         >>> ones = ops.Ones()
         >>> output = ones((2, 2), mindspore.float32)
         >>> print(output)
@@ -1801,6 +1806,8 @@ class Zeros(Primitive):
         Deprecated
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import ops
         >>> zeros = ops.Zeros()
         >>> output = zeros((2, 2), mindspore.float32)
         >>> print(output)
@@ -1830,6 +1837,8 @@ class OnesLike(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> oneslike = ops.OnesLike()
         >>> input_x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))
         >>> output = oneslike(input_x)
@@ -1861,6 +1870,8 @@ class ZerosLike(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> zeroslike = ops.ZerosLike()
         >>> input_x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
         >>> output = zeroslike(input_x)
@@ -4064,6 +4075,8 @@ class Eye(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import ops
         >>> eye = ops.Eye()
         >>> output = eye(2, 2, mindspore.int32)
         >>> print(output)
@@ -5767,6 +5780,9 @@ class BatchToSpace(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> block_size = 2
         >>> crops = [[0, 0], [0, 0]]
         >>> batch_to_space = ops.BatchToSpace(block_size, crops)
@@ -5916,6 +5932,9 @@ class BatchToSpaceND(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> block_size = 2
         >>> crops = [[0, 0], [0, 0]]
         >>> batch_to_space = ops.BatchToSpaceND(block_size, crops)
@@ -6008,6 +6027,8 @@ class BroadcastTo(PrimitiveWithCheck):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> shape = (2, 3)
         >>> x = Tensor(np.array([1, 2, 3]).astype(np.float32))
         >>> output = ops.BroadcastTo(shape=shape)(x)
@@ -8506,6 +8527,8 @@ class AffineGrid(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> affinegrid = ops.AffineGrid(align_corners=False)
         >>> theta = Tensor([[[0.8, 0.5, 0],[-0.5, 0.8, 0]]], mindspore.float32)
         >>> out_size = (1, 3, 2, 3)
