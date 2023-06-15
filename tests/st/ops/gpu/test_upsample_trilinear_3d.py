@@ -37,7 +37,6 @@ class UpsampleTrilinear3DNet(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu
 @pytest.mark.env_onecard
-@pytest.mark.skip(reason="Have issues")
 def test_upsample_trilinear_3d_dynamic_shape():
     """
     Feature: Test UpsampleTrilinear3D op in gpu.
@@ -45,14 +44,13 @@ def test_upsample_trilinear_3d_dynamic_shape():
     Expectation: Expect correct shape result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-    output_size = [2, 4, 4]
     net = UpsampleTrilinear3DNet()
+    output_size = [2, 4, 4]
+    scales = None
     x_dyn = Tensor(shape=[None, 1, 1, 2, 2], dtype=ms.float32)
-    output_size_dyn = Tensor(shape=[None], dtype=ms.int32)
-    scales_dyn = Tensor(shape={None}, dtype=ms.float32)
-    net.set_inputs(x_dyn, output_size_dyn, scales_dyn)
+    net.set_inputs(x_dyn, output_size, scales)
     x = Tensor(np.arange(1, 5, dtype=np.float32).reshape((1, 1, 1, 2, 2)))
-    output = net(x, output_size, None)
+    output = net(x, output_size, scales)
     expect_shape = (1, 1, 2, 4, 4)
     assert expect_shape == output.asnumpy().shape
 
@@ -61,7 +59,6 @@ def test_upsample_trilinear_3d_dynamic_shape():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
-@pytest.mark.skip(reason="Have issues")
 def test_upsample_trilinear_3d_output_size(data_type):
     """
     Feature: UpsampleTrilinear3D
@@ -112,7 +109,6 @@ def test_upsample_trilinear_3d_output_size(data_type):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
-@pytest.mark.skip(reason="Have issues")
 def test_upsample_trilinear_3d_output_size_align_corners(data_type):
     """
     Feature: UpsampleTrilinear3D
@@ -163,7 +159,6 @@ def test_upsample_trilinear_3d_output_size_align_corners(data_type):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
-@pytest.mark.skip(reason="Have issues")
 def test_upsample_trilinear_3d_scales(data_type):
     """
     Feature: UpsampleTrilinear3D
@@ -217,7 +212,6 @@ def test_upsample_trilinear_3d_scales(data_type):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
-@pytest.mark.skip(reason="Have issues")
 def test_upsample_trilinear_3d_scales_align_corners(data_type):
     """
     Feature: UpsampleTrilinear3D
@@ -270,7 +264,6 @@ def test_upsample_trilinear_3d_scales_align_corners(data_type):
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.skip(reason="Have issues")
 def test_upsample_trilinear_3d_error():
     """
     Feature: UpsampleTrilinear3D
@@ -292,7 +285,7 @@ def test_upsample_trilinear_3d_error():
     with pytest.raises(TypeError):
         input_tensor = Tensor(np.ones((2, 2, 2, 2, 2), dtype=np.float32))
         net = UpsampleTrilinear3DNet()
-        net(input_tensor, [1, 2, 3], None)
+        net(input_tensor, None, [1, 2, 3])
 
     with pytest.raises(ValueError):
         input_tensor = Tensor(np.ones((2, 2, 2, 2, 2), dtype=np.float32))
