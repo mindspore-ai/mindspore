@@ -59,7 +59,7 @@ DEVICE float Tan(const float val) {
 }
 template <>
 DEVICE half Tan(const half val) {
-  return hsin(val) / hcos(val);
+  return __float2half(__tanf(__half2float(val)));
 }
 template <typename T>
 DEVICE T Sinh(const T val) {
@@ -232,6 +232,14 @@ DEVICE Complex<double> Log1p(const Complex<double> val) {
 }
 template <typename T>
 DEVICE T IsNan(const T val) {
+  return false;
+}
+template <>
+DEVICE float IsNan(const float val) {
+  return isnan(val);
+}
+template <>
+DEVICE double IsNan(const double val) {
   return isnan(val);
 }
 template <>
