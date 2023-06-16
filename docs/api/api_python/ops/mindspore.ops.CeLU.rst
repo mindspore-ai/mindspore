@@ -14,7 +14,7 @@
         - **alpha** (float，可选) - celu公式定义的阈值 :math:`\alpha` 。默认值： ``1.0`` 。
 
     输入：
-        - **input_x** (Tensor) - 输入Tensor。
+        - **input_x** (Tensor) - 输入Tensor，数据类型为float16或float32。
 
     输出：
         Tensor，shape和数据类型与输入相同。

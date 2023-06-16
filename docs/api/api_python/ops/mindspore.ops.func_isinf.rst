@@ -15,7 +15,7 @@ mindspore.ops.isinf
     其中 :math:`Inf` 表示不是一个数字。
 
     参数：
-        - **input** (Tensor) - IsInf的输入，shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
+        - **input** (Tensor) - 输入Tensor。
 
     返回：
         Tensor，shape与相同的输入，数据的类型为bool。

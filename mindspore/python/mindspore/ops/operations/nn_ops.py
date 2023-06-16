@@ -108,7 +108,7 @@ class CeLU(Primitive):
         alpha (float, optional): The :math:`\alpha` value for the Celu formulation. Default: ``1.0`` .
 
     Inputs:
-        - **input_x** (Tensor) - Input Tensor.
+        - **input_x** (Tensor) - The input tensor with a dtype of float16 or float32.
 
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
@@ -125,6 +125,10 @@ class CeLU(Primitive):
         >>> output = celu(input_x)
         >>> print(output)
         [-0.86466473 -0.63212055  1.          2.        ]
+        >>> input_x = Tensor(2.1, mindspore.float32)
+        >>> output = celu(input_x)
+        >>> print(output)
+        2.1
     """
 
     @prim_attr_register
@@ -434,7 +438,7 @@ class Softmax(Primitive):
 
     Inputs:
         - **logits** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, with float16 or float32 data type.
+          additional dimensions, with float16, float32 or float64(CPU, GPU) data type.
 
     Outputs:
         Tensor, with the same type and shape as the logits.
@@ -513,15 +517,14 @@ class Softplus(Primitive):
         \text{output} = \log(1 + \exp(\text{x}))
 
     Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, with float16 or float32 data type.
+        - **input_x** (Tensor) - Tensor of any dimension, with float16, float32 or float64(CPU, GPU) data type.
 
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
 
     Raises:
         TypeError: If `input_x` is not a Tensor.
-        TypeError: If the dtype of `input_x` is neither float16 nor float32.
+        TypeError: If the dtype of `input_x` is not float16, float32 or float64.
 
     Supported Platforms:
         ``Ascend``  ``GPU`` ``CPU``
@@ -583,12 +586,10 @@ class ReLU(Primitive):
     Refer to :func:`mindspore.ops.relu` for more details.
 
     Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+        - **input_x** (Tensor) - Input Tensor of numeric types.
 
     Outputs:
-        Tensor of shape :math:`(N, *)`, with the same dtype and shape as the `input_x`.
+        Tensor, has the same dtype and shape as `input_x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -655,24 +656,13 @@ class Mish(PrimitiveWithInfer):
     r"""
     Computes MISH(A Self Regularized Non-Monotonic Neural Activation Function) of input tensors element-wise.
 
-    The function is shown as follows:
-
-    .. math::
-
-        \text{output} = x * \tanh(\log(1 + \exp(\text{x})))
-
-    See more details in `A Self Regularized Non-Monotonic Neural Activation Function
-    <https://arxiv.org/abs/1908.08681>`_.
+    Refer to :func:`mindspore.ops.mish` for more details.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, with float16 or float32 data type.
+        - **x** (Tensor) - The input Tensor with float16, float32 or float64 data type.
 
     Outputs:
         Tensor, with the same type and shape as the `x`.
-
-    Raises:
-        TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -686,6 +676,10 @@ class Mish(PrimitiveWithInfer):
         >>> output = mish(x)
         >>> print(output.shape)
         (2, 3)
+        >>> x = Tensor(2.1, mindspore.float32)
+        >>> output = mish(x)
+        >>> print(output.shape)
+        2.050599
     """
 
     @prim_attr_register
@@ -751,7 +745,7 @@ class ReLU6(PrimitiveWithCheck):
     Refer to :func:`mindspore.ops.relu6` for more details.
 
     Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, with float16 or float32 data type.
+        - **input_x** (Tensor) - Input Tensor of float16 or float32 data type.
 
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
@@ -890,8 +884,7 @@ class HSwish(Primitive):
     Refer to :func:`mindspore.ops.hardswish` for more details.
 
     Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions.
+        - **input_x** (Tensor) - The input Tensor.
 
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
@@ -919,11 +912,11 @@ class HSwish(Primitive):
 class Sigmoid(Primitive):
     r"""
     Sigmoid activation function.
+
     Refer to :func:`mindspore.ops.sigmoid` for more details.
 
     Inputs:
-        - **input_x** (Tensor) - Tensor of any dimension, the data type is
-          float16, float32, float64, complex64 or complex128.
+        - **input_x** (Tensor) - Tensor of any dimension.
 
     Outputs:
         Tensor, with the same type and shape as the input_x.
@@ -955,8 +948,7 @@ class HSigmoid(Primitive):
     Refer to :func:`mindspore.ops.hardsigmoid` for more details.
 
     Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions.
+        - **input_x** (Tensor) - The input Tensor.
 
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
@@ -988,7 +980,7 @@ class Tanh(Primitive):
     Refer to :func:`mindspore.ops.tanh` for more details.
 
     Inputs:
-        - **input_x** (Tensor) - Input Tensor of any dimension, with float16 or float32 data type.
+        - **input_x** (Tensor) - Input Tensor of any dimension.
 
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
@@ -1005,6 +997,10 @@ class Tanh(Primitive):
         >>> output = tanh(input_x)
         >>> print(output)
         [0.7615941 0.9640276 0.9950547 0.9993293 0.9999092]
+        >>> input_x = Tensor(2.1+2j, mindspore.complex64)
+        >>> output = tanh(input_x)
+        >>> print(output)
+        (1.0195323-0.023145922j)
     """
 
     @prim_attr_register
@@ -1837,6 +1833,7 @@ class MaxPool(_Pool):
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+          Supported dtypes: float16, float32, float64.
 
     Outputs:
         Tensor, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
@@ -2367,12 +2364,14 @@ class AvgPool(Primitive):
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+          Supported dtypes: float16, float32, float64.
 
     Outputs:
         Tensor, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Raises:
         TypeError: If `kernel_size` or `strides` is neither int nor tuple.
+        TypeError: If dtype of `x` is not  float16, float32 or float64.
         ValueError: If `kernel_size` or `strides` is less than 1.
         ValueError: If `pad_mode` is neither 'valid' nor 'same' with not case sensitive.
         ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
@@ -7183,7 +7182,7 @@ class Dropout(PrimitiveWithCheck):
         Seed1 (int, optional): Seed1 value for random generating. Default: ``0`` .
 
     Inputs:
-        - **x** (Tensor) - The input of Dropout, a Tensor of any shape with data type of float16 or float32.
+        - **x** (Tensor) - The input Tensor of shape :math:`(*, N)`, with data type of float16, float32 or float64.
 
     Outputs:
         - **output** (Tensor) - With the same shape and data type as `x`.
@@ -7236,8 +7235,7 @@ class Dropout2D(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - A 4-D tensor with shape :math:`(N, C, H, W)`, where N is the batch size, C is the number
-          of channels, H is the feature height, and W is the feature width. The data type should be int8, int16, int32,
-          int64, float16 or float32.
+          of channels, H is the feature height, and W is the feature width.
 
     Outputs:
         - **output** (Tensor) - With the same shape and data type as `x`.
@@ -7245,7 +7243,6 @@ class Dropout2D(PrimitiveWithInfer):
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not int8, int16, int32, int64, float16, float32 or float64.
         TypeError: If the data type of `keep_prob` is not float.
         ValueError: If `keep_prob` is out of the range `[0.0, 1.0]`.
         ValueError: If `x` shape is not `4D`.
@@ -8931,7 +8928,7 @@ class HShrink(Primitive):
         lambd (float, optional): The threshold :math:`\lambda` defined by the Hard Shrink formula. Default: ``0.5`` .
 
     Inputs:
-        - **input_x** (Tensor) - The input of HardShrink.
+        - **input_x** (Tensor) - The input of Hard Shrink with data type of float16 or float32.
 
     Outputs:
         Tensor, the same shape and data type as the input.
@@ -11001,6 +10998,9 @@ class MaxPoolWithArgmaxV2(Primitive):
     .. math::
         \text{output}(N_i, C_j, h, w) = \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value and argmax

@@ -8,7 +8,7 @@ mindspore.ops.NonZero
     更多细节请参考 :func:`mindspore.ops.nonzero`。
 
     输入：
-        - **x** (Tensor) - 输入Tensor。
+        - **x** (Tensor) - 输入Tensor，其秩应大于等于1。
 
     输出：
         - **y** (Tensor) - 二维Tensor，数据类型为int64。

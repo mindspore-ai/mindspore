@@ -5775,10 +5775,9 @@ def rint(x, dtype=None):
     Note:
         Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
         not supported.
-        Ascend does not support dtype `float64` currently.
 
     Args:
-        x (Union[float, list, tuple, Tensor]): Input tensor.
+        x (Union[float, list, tuple, Tensor]): Input tensor of any dimension.
         dtype (:class:`mindspore.dtype`, optional): Default: ``None`` . Overrides the dtype of the
             output Tensor.
 

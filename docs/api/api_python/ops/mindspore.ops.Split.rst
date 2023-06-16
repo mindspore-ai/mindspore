@@ -12,8 +12,7 @@
         - **output_num** (int) - 指定分割数量。其值为正整数。默认值： ``1`` 。
 
     输入：
-        - **input_x** (Tensor) - Tensor的shape为 :math:`(x_1, x_2, ..., x_R)` 。
+        - **input_x** (Tensor) - Tensor的shape为 :math:`(x_0, x_1, ..., x_{R-1})` ，其中R >= 1。
 
     输出：
-        tuple[Tensor]，每个输出Tensor的shape相同，即 :math:`(y_1, y_2, ..., y_S)` 。数据类型与 `input_x` 的相同。
-
+        tuple[Tensor]，每个输出Tensor的shape相同，为 :math:`(x_0, x_1, ..., x_{axis}/{output_num}, ..., x_{R-1})` 。数据类型与 `input_x` 的相同。

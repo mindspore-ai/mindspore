@@ -12,11 +12,11 @@
         \text{output} = \log(1 + \exp(\text{x}))
 
     输入：
-        - **input_x** (Tensor) - shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度，数据类型支持float16或float32。
+        - **input_x** (Tensor) - 任意维度的输入Tensor，数据类型支持float16、float32或float64(CPU和GPU)。
 
     输出：
         Tensor，与 `input_x` 的shape和数据类型相同。
 
     异常：
         - **TypeError** - `input_x` 不是Tensor。
-        - **TypeError** - `input_x` 的数据类型非float16或float32。
+        - **TypeError** - `input_x` 的数据类型非float16、float32或float64。

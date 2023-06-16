@@ -1300,14 +1300,13 @@ def expm1(input):
         out_i = e^{x_i} - 1
 
     Args:
-        input (Tensor): The input tensor with a dtype of float16 or float32.
+        input (Tensor): The input Tensor.
 
     Returns:
         Tensor, has the same shape as the `input`.
 
     Raises:
         TypeError: If `input` is not a Tensor.
-        TypeError: If dtype of `input` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1340,8 +1339,6 @@ def log(input):
 
     Raises:
         TypeError: If `input` is not a Tensor.
-        TypeError: If dtype of `input` is not float16, float32 or float64 on CPU.
-        TypeError: If dtype of `input` is not float16 or float32 on Ascend.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1351,6 +1348,10 @@ def log(input):
         >>> output = ops.log(x)
         >>> print(output)
         [0.        0.6931472 1.3862944]
+        >>> x = Tensor(2.1+2j, mindspore.complex64)
+        >>> output = ops.log(x)
+        >>> print(output)
+        (1.0647107+0.7610128j)
     """
     return log_(input)
 
@@ -1612,8 +1613,7 @@ def logical_not(input):
         out_{i} = \\neg input_{i}
 
     Args:
-        input (Tensor): The input tensor.
-            :math:`(N,*)` where :math:`*` means any number of additional dimensions.
+        input (Tensor): The input tensor, the dtype must be bool.
 
     Returns:
         Tensor, the shape is the same as the `input`, and the dtype is bool.
@@ -2537,13 +2537,12 @@ def tanh(input):
     where :math:`x_i` is an element of the input Tensor.
 
     Args:
-        input (Tensor): Input of Tanh, with float16 or float32 data type.
+        input (Tensor): Input of Tanh.
 
     Returns:
         Tensor, with the same type and shape as the `input`.
 
     Raises:
-        TypeError: If dtype of `input` is neither float16 nor float32.
         TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
@@ -2554,6 +2553,10 @@ def tanh(input):
         >>> output = ops.tanh(input)
         >>> print(output)
         [0.7615941 0.9640276 0.9950547 0.9993293 0.9999092]
+        >>> input = Tensor(2.1+2j, mindspore.complex64)
+        >>> output = ops.tanh(input)
+        >>> print(output)
+        (1.0195323-0.023145922j)
     """
     return tanh_(input)
 
@@ -3035,14 +3038,13 @@ def invert(x):
         out_i = \sim x_{i}
 
     Args:
-        x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-            The data type should be one of the following types: int16, uint16.
+        x (Tensor): The input Tensor.
 
     Returns:
         Tensor, has the same shape as `x`.
 
     Raises:
-        TypeError: If dtype of `x` is neither int16 nor uint16.
+        TypeError: If dtype of `x` is neither int nor uint.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3811,7 +3813,7 @@ def logit(input, eps=None):
         \end{align}
 
     Args:
-        input (Tensor): The input tensor.
+        input (Tensor): The input tensor of type float16, float32 or float64.
         eps (float, optional): The epsilon. If eps is not None, the input clamp bound is defined as [eps, 1-eps],
             otherwise, the input `input` is not clamped. Default: ``None`` .
 
@@ -4217,6 +4219,10 @@ def isfinite(x):
         >>> output = ops.isfinite(x)
         >>> print(output)
         [False  True False]
+        >>> x = Tensor(2.1, mindspore.float64)
+        >>> output = ops.isfinite(x)
+        >>> print(output)
+        True
     """
     return isfinite_(x)
 
@@ -4251,6 +4257,10 @@ def isnan(x):
         >>> output = ops.isnan(x)
         >>> print(output)
         [ True False False]
+        >>> x = Tensor(2.1, mindspore.float64)
+        >>> output = ops.isnan(x)
+        >>> print(output)
+        False
     """
     return isnan_(x)
 
@@ -9246,16 +9256,13 @@ def log1p(input):
         out_i = {log_e}(input_i + 1)
 
     Args:
-        input (Tensor): The input tensor. With float16 or float32 data type.
-            The value must be greater than -1.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        input (Tensor): The input tensor. The value must be greater than -1.
 
     Returns:
         Tensor, has the same shape as the `input`.
 
     Raises:
         TypeError: If `input` is not a Tensor.
-        TypeError: If dtype of `input` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -9265,6 +9272,10 @@ def log1p(input):
         >>> output = ops.log1p(x)
         >>> print(output)
         [0.6931472 1.0986123 1.609438 ]
+        >>> x = Tensor(2.1+2j, mindspore.complex64)
+        >>> output = ops.log1p(x)
+        >>> print(output)
+        (1.3054024+0.57296616j)
     """
     _log1p = _get_cache_prim(P.Log1p)()
     return _log1p(input)
@@ -10150,7 +10161,7 @@ def erfinv(input):
     where :math:`x` is the `input`.
 
     Args:
-        input (Tensor): The input tensor to compute to, with data type float32, float16 or float64.
+        input (Tensor): The input tensor to compute with, with data type float16, float32 or float64.
 
     Returns:
         Tensor, has the same shape and dtype as `input`.
@@ -10437,6 +10448,10 @@ def lgamma(input):
         >>> output = ops.lgamma(x)
         >>> print(output)
         [0.5723649 0.8854049 9.549267 ]
+        >>> x = Tensor(2.1, mindspore.float32)
+        >>> output = ops.lgamma(x)
+        >>> print(output)
+        0.045437694
     """
     lgamma_op = _get_cache_prim(P.Lgamma)()
     return lgamma_op(input)
@@ -10527,7 +10542,6 @@ def isinf(input):
 
     Args:
         input (Tensor): The input tensor.
-          :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
         Tensor, has the same shape of input, and the dtype is bool.
@@ -10543,6 +10557,10 @@ def isinf(input):
         >>> output = ops.isinf(x)
         >>> print(output)
         [False False True]
+        >>> x = Tensor(2.1, mindspore.float64)
+        >>> output = ops.isinf(x)
+        >>> print(output)
+        False
     """
     isinf_op = _get_cache_prim(P.IsInf)()
     return isinf_op(input)

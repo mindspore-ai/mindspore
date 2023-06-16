@@ -8,7 +8,7 @@ mindspore.ops.Erf
     更多参考详见 :func:`mindspore.ops.erf`。
 
     输入：
-        - **x** (Tensor) - 高斯误差函数的输入Tensor。
+        - **x** (Tensor) - 高斯误差函数的输入Tensor。数据类型必须为float16、float32或float64。
 
     输出：
         Tensor，具有与 `x` 相同的数据类型和shape。

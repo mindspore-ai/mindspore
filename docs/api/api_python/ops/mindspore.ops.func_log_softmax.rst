@@ -21,3 +21,4 @@ mindspore.ops.log_softmax
         - **TypeError** - `axis` 不是int。
         - **TypeError** - `logits` 的数据类型既不是float16也不是float32。
         - **ValueError** - `axis` 不在[-len(logits.shape), len(logits.shape))范围中。
+        - **ValueError** - `logits` 的维度小于1。

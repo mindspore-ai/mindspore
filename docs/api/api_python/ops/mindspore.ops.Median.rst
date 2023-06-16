@@ -16,7 +16,7 @@ mindspore.ops.Median
         - **ignore_nan** (bool, 可选) - 是否忽略输入Tensor中的NaN值。默认值： ``False`` 。
 
     输入：
-        - **x** (Tensor) - 要计算中值的Tensor。支持的数据类型：int16、int32、int64、float32或float64。
+        - **x** (Tensor) - 要计算中值的Tensor。
 
     输出：
         - **y** (Tensor) - 中值，数据类型与 `x` 相同。
@@ -28,7 +28,6 @@ mindspore.ops.Median
         - **indices** (Tensor) - 中值的索引。shape与 `y` 一致，数据类型为int64。
 
     异常：
-        - **TypeError** - `x` 的数据类型不是: int16、int32、int64、float32、float64。
         - **TypeError** - `x` 不是Tensor。
         - **TypeError** - `global_median` 、 `keep_dims` 或 `ignore_nan` 被指定了一个非bool值。
         - **TypeError** - `axis` 不是int。

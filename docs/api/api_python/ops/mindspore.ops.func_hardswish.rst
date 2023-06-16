@@ -13,11 +13,11 @@ mindspore.ops.hardswish
     其中， :math:`x_i` 是输入的元素。
 
     参数：
-        - **x** (Tensor) - 用于计算Hard Swish的Tensor。数据类型必须是float16或float32。
+        - **x** (Tensor) - 用于计算Hard Swish的Tensor。
 
     返回：
         Tensor，shape和数据类型与输入相同。
 
     异常：
         - **TypeError** - `x` 不是一个Tensor。
-        - **TypeError** - `x` 的数据类型既不是float16也不是float32。
+        - **TypeError** - `x` 的数据类型int或者float。

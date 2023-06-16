@@ -2104,8 +2104,7 @@ def stack(tensors, axis=0):
 
     Args:
         tensors (Union[tuple, list]): A Tuple or list of Tensor objects with the same shape and type.
-        axis (int): Dimension to stack. Default: ``0`` .
-            Negative values wrap around. The range is [-(R+1), R+1).
+        axis (int): Dimension to stack. The range is [-(R+1), R+1). Default: ``0`` .
 
     Returns:
         Tensor. A stacked Tensor with the same type as `tensors`.
@@ -2133,14 +2132,8 @@ def stack(tensors, axis=0):
 
 def unstack(input_x, axis=0):
     r"""
-    Unstacks tensor in specified axis.
-
-    Unstacks a tensor of rank `R` along axis dimension, output tensors will have rank `(R-1)`.
-
-    Given a tensor of shape :math:`(x_1, x_2, ..., x_R)`. If :math:`0 \le axis`,
-    the shape of tensor in output is :math:`(x_1, x_2, ..., x_{axis}, x_{axis+2}, ..., x_R)`.
-
-    This is the opposite of pack.
+    Unstacks tensor in specified axis, this is the opposite of :func:`mindspore.ops.stack`.
+    Assuming input is a tensor of rank `R`, output tensors will have rank `(R-1)`.
 
     Args:
         input_x (Tensor): The shape is :math:`(x_1, x_2, ..., x_R)`.
@@ -2150,6 +2143,8 @@ def unstack(input_x, axis=0):
 
     Returns:
         A tuple of tensors, the shape of each objects is the same.
+        Given a tensor of shape :math:`(x_1, x_2, ..., x_R)`. If :math:`0 \le axis`,
+        the shape of tensor in output is :math:`(x_1, x_2, ..., x_{axis}, x_{axis+2}, ..., x_R)`.
 
     Raises:
         ValueError: If axis is out of the range [-len(input_x.shape), len(input_x.shape)).
@@ -4000,7 +3995,7 @@ def nonzero(input):
     Return a Tensor of the positions of all non-zero values.
 
     Args:
-        input (Tensor): nonzero input, Tensor with any dimensions. The data type is int, float or bool.
+        input (Tensor): The input Tensor, its rank should be greater than or eaqual to 1.
 
     Returns:
         Tensor, a 2-D Tensor whose data type is int64, containing the positions of all non-zero values of the input.

@@ -409,7 +409,6 @@ Linear Algebraic Functions
     mindspore.ops.lu_unpack
     mindspore.ops.matmul
     mindspore.ops.matrix_band_part
-    mindspore.ops.matrix_power
     mindspore.ops.matrix_solve
     mindspore.ops.matrix_band_part
     mindspore.ops.matrix_diag

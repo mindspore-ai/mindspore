@@ -13,7 +13,7 @@
         - **Seed1** (int，可选) - 全局的随机种子，和算子层的随机种子共同决定最终生成的随机数。默认值： ``0`` 。
 
     输入：
-        - **x** (Tensor) - Dropout的输入，任意维度的Tensor，其数据类型为float16或float32。
+        - **x** (Tensor) - 输入Tensor，shape为 :math:`(*, N)`，数据类型为float16、float32或float64。
 
     输出：
         - **output** (Tensor) - shape和数据类型与 `x` 相同。

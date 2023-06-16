@@ -11,7 +11,7 @@
         1, &if\ x > 0\end{cases}
 
     输入：
-        - **x** (Tensor) - Sign的输入，shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
+        - **x** (Tensor) - 任意维度输入Tensor。
 
     输出：
         Tensor，shape和数据类型与 `x` 相同。

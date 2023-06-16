@@ -789,6 +789,11 @@ class Squeeze(Primitive):
         [[1. 1.]
          [1. 1.]
          [1. 1.]]
+        >>> input_x = Tensor(2.1+2j mindspore.complex64)
+        >>> squeeze = ops.Squeeze()
+        >>> output = squeeze(input_x)
+        >>> print(output)
+        2.1+2j
     """
 
     @prim_attr_register
@@ -1233,11 +1238,12 @@ class Split(Primitive):
         output_num (int): The number of output tensors. Must be positive int. Default: ``1`` .
 
     Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_0, x_1, ..., x_{R-1})`, R >= 1.
 
     Outputs:
         tuple[Tensor], the shape of each output tensor is the same, which is
-        :math:`(y_1, y_2, ..., y_S)`. And the data type is the same with `input_x`.
+        :math:`(x_0, x_1, ..., x_{axis}/{output_num}, ..., x_{R-1})`.
+        And the data type is the same as `input_x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1867,7 +1873,7 @@ class ZerosLike(Primitive):
     Returns a Tensor with a value of 0 and its shape and data type is the same as the input.
 
     Inputs:
-        - **input_x** (Tensor) - Input Tensor of any dimension. The data type is Number.
+        - **input_x** (Tensor) - Input Tensor of any dimension.
 
     Outputs:
         Tensor, has the same shape and data type as `input_x` but filled with zeros.
@@ -2083,22 +2089,18 @@ class InvertPermutation(PrimitiveWithInfer):
 
 class Argmax(Primitive):
     """
-    Returns the indices of the maximum value of a tensor across the axis.
+    Returns the indices of the maximum value along a specified `axis` of a Tensor.
 
     Refer to :func:`mindspore.ops.argmax` for more details.
 
     Args:
         axis (int): Axis where the Argmax operation applies to. Default: ``-1`` .
-        output_type (:class:`mindspore.dtype`): An optional data type of ``mstype.int32`` .
-            Default: ``mstype.int32``.
+        output_type (:class:`mindspore.dtype`): Output data type.
+            Supported types: ``mstype.int32`` , ``mstype.int64`` . Default: ``mstype.int32`` .
 
     Inputs:
-        - **input_x** (Tensor) - Input tensor. :math:`(N, *)` where :math:`*` means, any number of additional
-          dimensions. Support data type list as follows:
-
-          - Ascend: Float16, Float32.
-          - GPU: Float16, Float32.
-          - CPU: Float16, Float32, Float64.
+        - **input_x** (Tensor) - The input tensor. :math:`(N, *)` where :math:`*` means, any number of additional
+          dimensions.
 
     Outputs:
         Tensor, indices of the max value of input tensor across the axis.
@@ -2128,21 +2130,19 @@ class Argmax(Primitive):
 
 class Argmin(Primitive):
     """
-    Returns the indices of the minimum value of a tensor across the axis.
+    Returns the indices of the minimum value along a specified `axis` of a Tensor.
 
     If the shape of input tensor is :math:`(x_1, ..., x_N)`, the shape of the output tensor is
     :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
 
     Args:
         axis (int): Axis where the Argmin operation applies to. Default: ``-1`` .
-        output_type (:class:`mindspore.dtype`): An optional data type of ``mstype.int32`` and
-            ``mstype.int64`` . Default: ``mstype.int32`` .
+        output_type (:class:`mindspore.dtype`): Output data type.
+            Supported types: ``mstype.int32`` , ``mstype.int64`` . Default: ``mstype.int32`` .
 
     Inputs:
         - **input_x** (Tensor) - Input tensor.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-
-          - Ascend: Float16, Float32, Float64, Int8, Int16, Int32, Int64, UInt8, UInt16, UInt32, UInt64.
 
     Outputs:
         Tensor, whose dtype is determined by `output_type`.
@@ -3008,8 +3008,7 @@ class Stack(PrimitiveWithInfer):
     Refer to :func:`mindspore.ops.stack` for more details.
 
     Args:
-        axis (int):  Dimension to stack. Default: ``0`` .
-            Negative values wrap around. The range is [-(R+1), R+1).
+        axis (int, optional): Dimension to stack. The range is [-(R+1), R+1). Default: ``0`` .
 
     Inputs:
         - **input_x** (Union[tuple, list]) - A Tuple or list of Tensor objects with the same shape and type.
@@ -3118,14 +3117,10 @@ class Unpack(PrimitiveWithInfer):
 
 class Unstack(Primitive):
     r"""
-    Unstacks tensor in specified axis.
+    Unstacks tensor in specified axis, this is the opposite of ops.Stack.
+    Assuming input is a tensor of rank `R`, output tensors will have rank `(R-1)`.
 
-    Unstacks a tensor of rank `R` along axis dimension, output tensors will have rank `(R-1)`.
-
-    Given a tensor of shape :math:`(x_1, x_2, ..., x_R)`. If :math:`0 \le axis`,
-    the shape of tensor in output is :math:`(x_1, x_2, ..., x_{axis}, x_{axis+2}, ..., x_R)`.
-
-    This is the opposite of pack.
+    Refer to :func:`mindspore.ops.unstack` for more details.
 
     Args:
         axis (int): Dimension along which to unpack. Default: ``0`` .
@@ -3139,9 +3134,8 @@ class Unstack(Primitive):
 
     Outputs:
         A tuple of tensors, the shape of each objects is the same.
-
-    Raises:
-        ValueError: If axis is out of the range [-len(input_x.shape), len(input_x.shape)).
+        Given a tensor of shape :math:`(x_1, x_2, ..., x_R)`. If :math:`0 \le axis`,
+        the shape of tensor in output is :math:`(x_1, x_2, ..., x_{axis}, x_{axis+2}, ..., x_R)`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3322,10 +3316,8 @@ class Rint(Primitive):
     Returns an integer that is closest to `input_x` element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The target tensor, which must be one of the following types:
-          float16, float32, float64. The shape is :math:`(N,*)` where :math:`*` means
-          any number of additional dimensions.
-
+        - **input_x** (Tensor) - Input tensor of any dimension, which must be one of the following types:
+          float16, float32, float64.
     Outputs:
         Tensor, has the same shape and type as `input_x`.
 
@@ -4843,7 +4835,7 @@ class Triu(Primitive):
 
     Inputs:
         - **x** (Tensor) - The input tensor with shape :math:`(M, N, *)`
-          where :math:`*` means any number of additional dimensions. The data type is Number.
+          where :math:`*` means any number of additional dimensions.
 
     Outputs:
         - **y** (Tensor) - A tensor has the same shape and data type as input.
@@ -6380,13 +6372,13 @@ class Sort(Primitive):
         Using Float32 might cause loss of accuracy.
 
     Args:
-        axis (int): The dimension to sort along. Default: ``-1``, means the last dimension.
+        axis (int, optional): The dimension to sort along. Default: ``-1``, means the last dimension.
             The Ascend backend only supports sorting the last dimension.
-        descending (bool): Controls the sort order. If descending is ``True`` then the elements
+        descending (bool, optional): Controls the sort order. If descending is ``True`` then the elements
             are sorted in descending order by value. Default: ``False`` .
 
     Inputs:
-        - **x** (Tensor) - The input tensor of any dimension, with a type of float16 or float32.
+        - **x** (Tensor) - The input tensor.
 
     Outputs:
         - **y1** (Tensor) - A tensor whose values are the sorted values, with the same shape and data type as input.
@@ -6395,7 +6387,6 @@ class Sort(Primitive):
     Raises:
         TypeError: If `axis` is not an int.
         TypeError: If `descending` is not a bool.
-        TypeError: If dtype of `x` is neither float16 nor float32.
         ValueError: If `axis` is not in range of [-len(x.shape), len(x.shape)).
 
     Supported Platforms:
@@ -7953,7 +7944,7 @@ class NonZero(Primitive):
     Refer to :func:`mindspore.ops.nonzero` for more details.
 
     Inputs:
-        - **x** (Tensor) - The input Tensor.
+        - **x** (Tensor) - The input Tensor, its rank should be greater than or eaqual to 1.
 
     Outputs:
         - **y** (Tensor), 2-D Tensor of data type int64.
@@ -8001,8 +7992,8 @@ class Tril(Primitive):
             indicating the main didiagonal.
 
     Inputs:
-        - **x** (Tensor) - A Tensor with shape :math:`(x_1, x_2, ..., x_R)`. The rank must be at least 2.
-          Supporting all number types including bool.
+        - **x** (Tensor) - The input tensor with shape :math:`(M, N, *)`
+          where :math:`*` means any number of additional dimensions.
 
     Outputs:
         Tensor, the same shape and data type as the input `x`.
@@ -8010,7 +8001,6 @@ class Tril(Primitive):
     Raises:
         TypeError: If `x` is not a Tensor.
         TypeError: If `diagonal` is not an int.
-        TypeError: If the type of `x` is neither number nor bool.
         ValueError: If the rank of `x` is less than 2.
 
     Supported Platforms:

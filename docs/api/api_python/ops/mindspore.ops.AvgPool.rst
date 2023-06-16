@@ -18,13 +18,14 @@ mindspore.ops.AvgPool
         - **data_format** (str，可选) - 指定输入和输出的数据格式。取值为 ``'NHWC'`` 或 ``'NCHW'`` 。默认值： ``'NCHW'`` 。
 
     输入：
-        - **x** (Tensor) - 输入shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 的Tensor。
+        - **x** (Tensor) - 输入shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 的Tensor。支持的数据类型：float16、float32、float64。
 
     输出：
         Tensor，shape为 :math:`(N, C_{out}, H_{out}, W_{out})` 。
 
     异常：
         - **TypeError** - `kernel_size` 或 `strides` 既不是int也不是tuple。
+        - **TypeError** - `x` 的数据类型不是float16、float32或float64。
         - **ValueError** - `pad_mode` 既不是'valid'，也不是'same'，不区分大小写。
         - **ValueError** - `data_format` 既不是'NCHW'也不是'NHWC'。
         - **ValueError** - `kernel_size` 或 `strides` 小于1。

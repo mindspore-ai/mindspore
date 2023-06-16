@@ -12,7 +12,7 @@ mindspore.ops.StandardNormal
         - **seed2** (int) - 随机种子2，用来防止随机种子冲突，非负值。默认值： ``0`` 。
 
     输入：
-        - **shape** (tuple) - 目标随机数Tensor的shape。只允许常量值。
+        - **shape** (tuple) - 目标随机数Tensor的shape。只允许常量值。支持类型为：int32、int64。
 
     输出：
         Tensor。shape为输入 `shape` 。数据类型支持float32。
