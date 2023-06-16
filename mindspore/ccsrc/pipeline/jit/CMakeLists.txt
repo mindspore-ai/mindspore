@@ -3,6 +3,7 @@ file(GLOB_RECURSE _PIPELINE_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "resource.cc"
     "pass.cc"
     "action.cc"
+    "backend_adapter.cc"
     "validator.cc"
     "remove_value_node_dup.cc"
     "pipeline_split.cc"
