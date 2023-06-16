@@ -191,7 +191,8 @@ def combine_profile_options(profiling_options):
         "data_process": profiling_options.get("data_process", True),
         "timeline_limit": profiling_options.get("timeline_limit", 500),
         "parallel_strategy": profiling_options.get("parallel_strategy", True),
-        'op_time': profiling_options.get("op_time", True)
+        'op_time': profiling_options.get("op_time", True),
+        'profile_framework': profiling_options.get("profile_framework", "all")
     }
     combine_options = parse_profiling_args(config_options)
     if combine_options.get("start"):
@@ -243,7 +244,8 @@ def profiler_check_env():
              l2_cache=config.get("l2_cache", False),
              sync_enable=config.get("sync_enable", False),
              op_time=config.get("op_time", False),
-             timeline_limit=config.get("timeline_limit", 500))
+             timeline_limit=config.get("timeline_limit", 500),
+             profile_framework=config.get("profile_framework", "all"))
 
 
 profiler_check_env()

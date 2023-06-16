@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "debug/data_dump/csv_writer.h"
+#include "include/backend/debug/common/csv_writer.h"
 
 #include <memory>
 #include <map>
@@ -22,7 +22,6 @@
 #include "utils/system/file_system.h"
 #include "utils/file_utils.h"
 #include "include/common/debug/common.h"
-#include "debug/debug_services.h"
 
 namespace mindspore {
 CsvWriter &CsvWriter::GetInstance() {

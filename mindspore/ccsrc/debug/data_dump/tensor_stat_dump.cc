@@ -21,7 +21,7 @@
 #include "include/common/debug/common.h"
 #include "debug/debug_services.h"
 #include "include/backend/debug/debugger/debugger.h"
-#include "debug/data_dump/csv_writer.h"
+#include "include/backend/debug/common/csv_writer.h"
 
 namespace {
 constexpr auto kInput = "input";

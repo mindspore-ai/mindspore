@@ -35,7 +35,7 @@
 #include "include/common/utils/config_manager.h"
 #include "utils/file_utils.h"
 #include "include/backend/debug/data_dump/tensor_stat_dump.h"
-#include "debug/data_dump/csv_writer.h"
+#include "include/backend/debug/common/csv_writer.h"
 #include "abstract/utils.h"
 #include "runtime/hardware/device_context_manager.h"
 #ifdef ENABLE_DEBUGGER

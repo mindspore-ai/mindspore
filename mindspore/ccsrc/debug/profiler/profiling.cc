@@ -17,11 +17,25 @@
 #include "include/backend/debug/profiler/profiling.h"
 #include <chrono>
 #include <cmath>
+#ifdef __linux__
+#include "sys/syscall.h"
+#endif
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
+#ifdef __linux__
+#include "utils/profile.h"
+#include "include/backend/debug/common/csv_writer.h"
+#define GetTid() syscall(SYS_gettid)
+#endif
 
 namespace mindspore {
 namespace profiler {
+#ifdef __linux__
+constexpr auto HostDataHeader =
+  "tid,pid,parent_pid,module_name,event,stage,level,start_end,custom_info,memory_usage,time_stamp\n";
+const auto kVmRSS = "VmRSS";
+std::mutex file_line_mutex;
+#endif
 std::map<std::string, std::shared_ptr<Profiler>> &Profiler::GetInstanceMap() {
   static std::map<std::string, std::shared_ptr<Profiler>> instance_map = {};
   return instance_map;
@@ -219,5 +233,120 @@ std::string ProfilerManager::GetProfilingOptions() const {
 
   return "";
 }
+
+std::string ProfilerManager::ProfileDataPath() const {
+  if (auto gpu_instance = Profiler::GetInstance(kGPUDevice); gpu_instance != nullptr) {
+    return gpu_instance->ProfileDataPath();
+  }
+
+  if (auto ascend_instance = Profiler::GetInstance(kAscendDevice); ascend_instance != nullptr) {
+    return ascend_instance->ProfileDataPath();
+  }
+
+  return "";
+}
+
+void ProfilerManager::SetProfileFramework(std::string profile_framework) { profile_framework_ = profile_framework; }
+
+bool ProfilerManager::NeedCollectHostTime() const {
+  return profile_framework_ == "all" || profile_framework_ == "time";
+}
+
+bool ProfilerManager::NeedCollectHostMemory() const {
+  return profile_framework_ == "memory" || profile_framework_ == "all";
+}
+
+bool CollectHostInfo(const std::string &module_name, const std::string &event, const std::string &stage, int level,
+                     int profile_framework, int start_end, const std::map<std::string, std::string> &custom_info) {
+#ifndef __linux__
+  return true;
+#else
+  auto profiler_manager = profiler::ProfilerManager::GetInstance();
+  MS_EXCEPTION_IF_NULL(profiler_manager);
+  if (!profiler_manager->GetProfilingEnableFlag()) {
+    MS_LOG(INFO) << "Profiler is not enabled, no need to record Host info.";
+    return true;
+  }
+  auto output_path = profiler_manager->ProfileDataPath();
+  if (output_path.empty()) {
+    MS_LOG(ERROR) << "The output path is empty, skip collect host info.";
+    return false;
+  }
+  HostProfileData host_profile_data;
+  host_profile_data.module_name = module_name;
+  host_profile_data.event = event;
+  host_profile_data.stage = stage;
+  host_profile_data.level = level;
+  host_profile_data.start_end = start_end;
+  host_profile_data.custom_info = custom_info;
+  auto tid = GetTid();
+  host_profile_data.tid = tid;
+  ProcessStatus process_status = ProcessStatus::GetInstance();
+  host_profile_data.pid = process_status.GetKeyValue("Pid");
+  host_profile_data.parent_pid = process_status.GetKeyValue("PPid");
+
+  // Collect Host info.
+  if (profiler_manager->NeedCollectHostTime()) {
+    auto now = std::chrono::steady_clock::now();
+    int64_t ns = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
+    uint64_t time_stamp = static_cast<uint64_t>(ns);
+    host_profile_data.time_stamp = time_stamp;
+  }
+  if (profiler_manager->NeedCollectHostMemory()) {
+    uint64_t memory_usage = process_status.GetMemoryCost(kVmRSS);
+    host_profile_data.memory_usage = memory_usage;
+  }
+  std::lock_guard<std::mutex> lock(file_line_mutex);
+  WriteHostDataToFile(host_profile_data, output_path);
+  return true;
+#endif
+}
+#ifdef __linux__
+void WriteHostDataToFile(const HostProfileData &host_profile_data, const std::string &output_path) {
+  std::string file_name = "host_info_0.csv";
+  std::string rank_id = common::GetEnv("RANK_ID");
+  if (!rank_id.empty()) {
+    file_name = "host_info_" + rank_id + ".csv";
+  }
+  std::string csv_file = output_path + "/host_info/" + file_name;
+  // try to open file
+  CsvWriter &csv = CsvWriter::GetInstance();
+  int retry = 2;
+  while (retry > 0) {
+    if (csv.OpenFile(csv_file, HostDataHeader)) {
+      break;
+    }
+    retry--;
+  }
+  if (retry == 0) {
+    MS_LOG(WARNING) << "Open csv file failed, skipping saving host info to file.";
+    return;
+  }
+  csv.WriteToCsv(host_profile_data.tid);
+  csv.WriteToCsv(host_profile_data.pid);
+  csv.WriteToCsv(host_profile_data.parent_pid);
+  csv.WriteToCsv(host_profile_data.module_name);
+  csv.WriteToCsv(host_profile_data.event);
+  csv.WriteToCsv(host_profile_data.stage);
+  csv.WriteToCsv(host_profile_data.level);
+  csv.WriteToCsv(host_profile_data.start_end);
+  if (!host_profile_data.custom_info.empty()) {
+    std::string custom_info_str = "{";
+    for (auto it = host_profile_data.custom_info.cbegin(); it != host_profile_data.custom_info.cend(); ++it) {
+      custom_info_str += "{" + it->first + ":" + it->second + "}";
+    }
+    custom_info_str += "}";
+    if (custom_info_str.find(",") != std::string::npos) {
+      custom_info_str = "\"" + custom_info_str + "\"";
+    }
+    csv.WriteToCsv(custom_info_str);
+  } else {
+    csv.WriteToCsv("");
+  }
+  csv.WriteToCsv(host_profile_data.memory_usage);
+  csv.WriteToCsv(host_profile_data.time_stamp, true);
+  MS_LOG(INFO) << "Write file finished. File path is: " << csv_file;
+}
+#endif
 }  // namespace profiler
 }  // namespace mindspore
