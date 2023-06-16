@@ -312,7 +312,7 @@ def check_equal_int(arg_value, value, arg_name=None, prim_name=None):
     Checks input integer value `arg_value` compare to `value`.
 
     Usage:
-    - number = check_int(number, 0, GE, "number", None) # number >= 0
+    - number = check_equal_int(number, 0, "number", None) # number == 0
     """
     return _check_number(arg_value, value, EQ, int, arg_name, prim_name)
 

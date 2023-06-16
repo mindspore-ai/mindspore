@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/unsorted_segment_max.cuh"
 #include <limits>
 #include "include/cuda_fp16.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 
 template <typename T>
 __device__ __forceinline__ void min_val_init(T *init_val) {
@@ -29,136 +30,115 @@ __device__ __forceinline__ void min_val_init(half *init_val) {
 }
 
 template <typename T, typename S>
-__global__ void UnsortedSegmentMax(const T *input, const S *segment_ids, const int64_t num_segments, size_t outer_size,
-                                   size_t inner_size, T init_K, T *output) {
-  min_val_init(&init_K);
-  for (size_t t_idx = blockIdx.x * blockDim.x + threadIdx.x; t_idx < KWARPSIZE * num_segments * inner_size;
-       t_idx += blockDim.x * gridDim.x) {
-    size_t segment_id = t_idx / KWARPSIZE / inner_size;
-    size_t inner_id = t_idx / KWARPSIZE % inner_size;
-    size_t lane_id = threadIdx.x % KWARPSIZE;
-    T threadK = init_K;
+__global__ void UnsortedSegmentMaxCal(size_t input_dim0, size_t input_dim1, size_t output_dim0, size_t output_dim1,
+                                      T *input_addr, S *ids_addr, T *output_addr) {
+  for (int input_index = blockIdx.x * blockDim.x + threadIdx.x; input_index < input_dim0 * input_dim1;
+       input_index += blockDim.x * gridDim.x) {
+    size_t j = input_index / input_dim1;
+    size_t k = input_index % input_dim1;
 
-    for (size_t i = lane_id; i < outer_size; i += KWARPSIZE) {
-      if (segment_ids[i] != segment_id) continue;
-      T other_K = input[i * inner_size + inner_id];
-      if (threadK < other_K) {
-        threadK = other_K;
-      }
+    S i = ids_addr[j];
+    if (i < 0 || i >= output_dim0) {
+      continue;
     }
-    __syncwarp();
+    size_t output_index = i * output_dim1 + k;
+    MsAtomicMax(output_addr + output_index, input_addr[input_index]);
+  }
+}
 
-    for (size_t offset = KWARPSIZE / 2; offset > 0; offset /= 2) {
-      T other_K = __shfl_down_sync(0xffffffff, threadK, offset);
-      if (threadK < other_K) {
-        threadK = other_K;
-      }
-    }
-
-    __syncwarp();
-
-    if (lane_id == 0) {
-      output[segment_id * inner_size + inner_id] = threadK;
-    }
-    __syncthreads();
+template <typename T>
+__global__ void UnsortedSegmentMaxInit(size_t size, T *output_addr) {
+  T init_value = static_cast<T>(0);
+  min_val_init(&init_value);
+  for (int index = blockIdx.x * blockDim.x + threadIdx.x; index < size; index += blockDim.x * gridDim.x) {
+    output_addr[index] = init_value;
   }
 }
 
 template <typename T, typename S>
-void CalUnsortedSegmentMax(const T *input, const S *segment_ids, const int64_t num_segments, size_t outer_size,
-                           size_t inner_size, T *output, cudaStream_t stream) {
-  size_t size = (inner_size * KWARPSIZE * num_segments);
-  T init_K = std::numeric_limits<T>::lowest();
-  UnsortedSegmentMax<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(input, segment_ids, num_segments, outer_size,
-                                                                   inner_size, init_K, output);
+void UnsortedSegmentMax(size_t input_dim0, size_t input_dim1, size_t output_dim0, size_t output_dim1, T *input_addr,
+                        S *ids_addr, T *output_addr, cudaStream_t stream, const uint32_t &device_id) {
+  size_t out_size = output_dim0 * output_dim1;
+  UnsortedSegmentMaxInit<<<CUDA_BLOCKS(device_id, out_size), CUDA_THREADS(device_id), 0, stream>>>(out_size,
+                                                                                                   output_addr);
+
+  size_t in_size = input_dim0 * input_dim1;
+  UnsortedSegmentMaxCal<<<CUDA_BLOCKS(device_id, in_size), CUDA_THREADS(device_id), 0, stream>>>(
+    input_dim0, input_dim1, output_dim0, output_dim1, input_addr, ids_addr, output_addr);
   return;
 }
 
-template CUDA_LIB_EXPORT void CalUnsortedSegmentMax<float, int>(const float *input, const int *segment_ids,
-                                                                const int64_t num_segments, size_t outer_size,
-                                                                size_t inner_size, float *output, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalUnsortedSegmentMax<float, int64_t>(const float *input, const int64_t *segment_ids,
-                                                                    const int64_t num_segments, size_t outer_size,
-                                                                    size_t inner_size, float *output,
-                                                                    cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalUnsortedSegmentMax<half, int>(const half *input, const int *segment_ids,
-                                                               const int64_t num_segments, size_t outer_size,
-                                                               size_t inner_size, half *output, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalUnsortedSegmentMax<half, int64_t>(const half *input, const int64_t *segment_ids,
-                                                                   const int64_t num_segments, size_t outer_size,
-                                                                   size_t inner_size, half *output,
-                                                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalUnsortedSegmentMax<int, int>(const int *input, const int *segment_ids,
-                                                              const int64_t num_segments, size_t outer_size,
-                                                              size_t inner_size, int *output, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalUnsortedSegmentMax<int, int64_t>(const int *input, const int64_t *segment_ids,
-                                                                  const int64_t num_segments, size_t outer_size,
-                                                                  size_t inner_size, int *output, cudaStream_t stream);
+template CUDA_LIB_EXPORT void UnsortedSegmentMax(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, double *input_addr, int *ids_addr,
+                                                 double *output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT void UnsortedSegmentMax(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, double *input_addr, int64_t *ids_addr,
+                                                 double *output_addr, cudaStream_t stream, const uint32_t &device_id);
 
-template CUDA_LIB_EXPORT void CalUnsortedSegmentMax<int8_t, int>(const int8_t *input, const int *segment_ids,
-                                                                 const int64_t num_segments, size_t outer_size,
-                                                                 size_t inner_size, int8_t *output,
-                                                                 cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalUnsortedSegmentMax<int8_t, int64_t>(const int8_t *input, const int64_t *segment_ids,
-                                                                     const int64_t num_segments, size_t outer_size,
-                                                                     size_t inner_size, int8_t *output,
-                                                                     cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalUnsortedSegmentMax<uint8_t, int>(const uint8_t *input, const int *segment_ids,
-                                                                  const int64_t num_segments, size_t outer_size,
-                                                                  size_t inner_size, uint8_t *output,
-                                                                  cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalUnsortedSegmentMax<uint8_t, int64_t>(const uint8_t *input, const int64_t *segment_ids,
-                                                                      const int64_t num_segments, size_t outer_size,
-                                                                      size_t inner_size, uint8_t *output,
-                                                                      cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalUnsortedSegmentMax<int16_t, int>(const int16_t *input, const int *segment_ids,
-                                                                  const int64_t num_segments, size_t outer_size,
-                                                                  size_t inner_size, int16_t *output,
-                                                                  cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalUnsortedSegmentMax<int16_t, int64_t>(const int16_t *input, const int64_t *segment_ids,
-                                                                      const int64_t num_segments, size_t outer_size,
-                                                                      size_t inner_size, int16_t *output,
-                                                                      cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalUnsortedSegmentMax<uint16_t, int>(const uint16_t *input, const int *segment_ids,
-                                                                   const int64_t num_segments, size_t outer_size,
-                                                                   size_t inner_size, uint16_t *output,
-                                                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalUnsortedSegmentMax<uint16_t, int64_t>(const uint16_t *input,
-                                                                       const int64_t *segment_ids,
-                                                                       const int64_t num_segments, size_t outer_size,
-                                                                       size_t inner_size, uint16_t *output,
-                                                                       cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalUnsortedSegmentMax<uint32_t, int>(const uint32_t *input, const int *segment_ids,
-                                                                   const int64_t num_segments, size_t outer_size,
-                                                                   size_t inner_size, uint32_t *output,
-                                                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalUnsortedSegmentMax<uint32_t, int64_t>(const uint32_t *input,
-                                                                       const int64_t *segment_ids,
-                                                                       const int64_t num_segments, size_t outer_size,
-                                                                       size_t inner_size, uint32_t *output,
-                                                                       cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalUnsortedSegmentMax<int64_t, int>(const int64_t *input, const int *segment_ids,
-                                                                  const int64_t num_segments, size_t outer_size,
-                                                                  size_t inner_size, int64_t *output,
-                                                                  cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalUnsortedSegmentMax<int64_t, int64_t>(const int64_t *input, const int64_t *segment_ids,
-                                                                      const int64_t num_segments, size_t outer_size,
-                                                                      size_t inner_size, int64_t *output,
-                                                                      cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalUnsortedSegmentMax<uint64_t, int>(const uint64_t *input, const int *segment_ids,
-                                                                   const int64_t num_segments, size_t outer_size,
-                                                                   size_t inner_size, uint64_t *output,
-                                                                   cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalUnsortedSegmentMax<uint64_t, int64_t>(const uint64_t *input,
-                                                                       const int64_t *segment_ids,
-                                                                       const int64_t num_segments, size_t outer_size,
-                                                                       size_t inner_size, uint64_t *output,
-                                                                       cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalUnsortedSegmentMax<double, int>(const double *input, const int *segment_ids,
-                                                                 const int64_t num_segments, size_t outer_size,
-                                                                 size_t inner_size, double *output,
-                                                                 cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalUnsortedSegmentMax<double, int64_t>(const double *input, const int64_t *segment_ids,
-                                                                     const int64_t num_segments, size_t outer_size,
-                                                                     size_t inner_size, double *output,
-                                                                     cudaStream_t stream);
+template CUDA_LIB_EXPORT void UnsortedSegmentMax(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, float *input_addr, int *ids_addr,
+                                                 float *output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT void UnsortedSegmentMax(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, float *input_addr, int64_t *ids_addr,
+                                                 float *output_addr, cudaStream_t stream, const uint32_t &device_id);
+
+template CUDA_LIB_EXPORT void UnsortedSegmentMax(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, half *input_addr, int *ids_addr, half *output_addr,
+                                                 cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT void UnsortedSegmentMax(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, half *input_addr, int64_t *ids_addr,
+                                                 half *output_addr, cudaStream_t stream, const uint32_t &device_id);
+
+template CUDA_LIB_EXPORT void UnsortedSegmentMax(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, int8_t *input_addr, int *ids_addr,
+                                                 int8_t *output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT void UnsortedSegmentMax(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, int8_t *input_addr, int64_t *ids_addr,
+                                                 int8_t *output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT void UnsortedSegmentMax(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, int16_t *input_addr, int *ids_addr,
+                                                 int16_t *output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT void UnsortedSegmentMax(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, int16_t *input_addr, int64_t *ids_addr,
+                                                 int16_t *output_addr, cudaStream_t stream, const uint32_t &device_id);
+
+template CUDA_LIB_EXPORT void UnsortedSegmentMax(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, int *input_addr, int *ids_addr, int *output_addr,
+                                                 cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT void UnsortedSegmentMax(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, int *input_addr, int64_t *ids_addr,
+                                                 int *output_addr, cudaStream_t stream, const uint32_t &device_id);
+
+template CUDA_LIB_EXPORT void UnsortedSegmentMax(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, int64_t *input_addr, int *ids_addr,
+                                                 int64_t *output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT void UnsortedSegmentMax(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, int64_t *input_addr, int64_t *ids_addr,
+                                                 int64_t *output_addr, cudaStream_t stream, const uint32_t &device_id);
+
+template CUDA_LIB_EXPORT void UnsortedSegmentMax(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, uint8_t *input_addr, int *ids_addr,
+                                                 uint8_t *output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT void UnsortedSegmentMax(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, uint8_t *input_addr, int64_t *ids_addr,
+                                                 uint8_t *output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT void UnsortedSegmentMax(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, uint16_t *input_addr, int *ids_addr,
+                                                 uint16_t *output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT void UnsortedSegmentMax(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, uint16_t *input_addr, int64_t *ids_addr,
+                                                 uint16_t *output_addr, cudaStream_t stream, const uint32_t &device_id);
+
+template CUDA_LIB_EXPORT void UnsortedSegmentMax(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, uint32_t *input_addr, int *ids_addr,
+                                                 uint32_t *output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT void UnsortedSegmentMax(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, uint32_t *input_addr, int64_t *ids_addr,
+                                                 uint32_t *output_addr, cudaStream_t stream, const uint32_t &device_id);
+
+template CUDA_LIB_EXPORT void UnsortedSegmentMax(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, uint64_t *input_addr, int *ids_addr,
+                                                 uint64_t *output_addr, cudaStream_t stream, const uint32_t &device_id);
+template CUDA_LIB_EXPORT void UnsortedSegmentMax(size_t input_dim0, size_t input_dim1, size_t output_dim0,
+                                                 size_t output_dim1, uint64_t *input_addr, int64_t *ids_addr,
+                                                 uint64_t *output_addr, cudaStream_t stream, const uint32_t &device_id);

@@ -20,7 +20,7 @@ mindspore.ops.unsorted_segment_max
 
     参数：
         - **x** (Tensor) - shape： :math:`(x_1, x_2, ..., x_R)` 。数据类型支持float16、float32或int32。
-        - **segment_ids** (Tensor) - shape为 :math:`(x_1)` 的一维张量，值必须是非负数。数据类型支持int32。
+        - **segment_ids** (Tensor) - 用于指示每个元素所属段的标签，将shape设置为 :math:`(x_1, x_2, ..., x_N)` ，其中0<N<=R。
         - **num_segments** (int) - 分段的数量。
 
     返回：
