@@ -176,13 +176,19 @@ constexpr size_t kConv3DDilationNum = 3;
 constexpr size_t kConv3DStartIndex = 2;
 constexpr size_t kConv3DPaddingNum = 6;
 
-inline std::vector<int64_t> Conv3DCheckAttrIntOrTuple(const ValuePtr &attr, const size_t start_idx,
-                                                      const size_t num_element) {
+inline std::vector<int64_t> Conv3DCheckAttrIntOrTuple(const std::string &attrname, const ValuePtr &attr,
+                                                      const size_t start_idx, const size_t num_element) {
   std::vector<int64_t> result;
   MS_EXCEPTION_IF_NULL(attr);
   if (attr->isa<ValueTuple>()) {
     std::vector<ValuePtr> attr_vec = attr->cast<ValueTuplePtr>()->value();
     auto it_start = attr_vec.begin() + SizeToLong(start_idx);
+    if (start_idx + num_element > attr_vec.size()) {
+      MS_EXCEPTION(ValueError) << "For Conv3d attribute " << attrname
+                               << ", start_idx + num_element can't be larger than attr_vec size"
+                               << ", but got start_idx: " << start_idx << ", num_element: " << num_element
+                               << ", attr_vec size: " << attr_vec.size();
+    }
     (void)std::transform(it_start, it_start + SizeToLong(num_element), std::back_inserter(result),
                          [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
   } else {
@@ -230,12 +236,12 @@ class Conv3DInfer : public abstract::OpInferBase {
       return std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
     }
     std::vector<int64_t> kernel_size =
-      Conv3DCheckAttrIntOrTuple(primitive->GetAttr(kKernelSize), 0, kConv3DKernelSizeNum);
+      Conv3DCheckAttrIntOrTuple("kernel size", primitive->GetAttr(kKernelSize), 0, kConv3DKernelSizeNum);
     std::vector<int64_t> stride =
-      Conv3DCheckAttrIntOrTuple(primitive->GetAttr(kStrides), kConv3DStartIndex, kConv3DstrideNum);
+      Conv3DCheckAttrIntOrTuple("strides", primitive->GetAttr(kStrides), kConv3DStartIndex, kConv3DstrideNum);
     std::vector<int64_t> dilation =
-      Conv3DCheckAttrIntOrTuple(primitive->GetAttr(kDilations), kConv3DStartIndex, kConv3DDilationNum);
-    std::vector<int64_t> pad_list = Conv3DCheckAttrIntOrTuple(primitive->GetAttr(kPad), 0, kConv3DPaddingNum);
+      Conv3DCheckAttrIntOrTuple("dilations", primitive->GetAttr(kDilations), kConv3DStartIndex, kConv3DDilationNum);
+    std::vector<int64_t> pad_list = Conv3DCheckAttrIntOrTuple("pad", primitive->GetAttr(kPad), 0, kConv3DPaddingNum);
     int64_t pad_mode;
     CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr(kPadMode), &pad_mode);
 
