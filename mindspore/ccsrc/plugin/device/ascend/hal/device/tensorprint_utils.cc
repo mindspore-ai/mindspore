@@ -397,12 +397,12 @@ AclHandle &AclHandle::GetInstance() {
 bool AclHandle::CreateChannel(uint32_t deviceId, std::string name, size_t capacity) {
   acl_handle_ = acltdtCreateChannelWithCapacity(deviceId, name.c_str(), capacity);
   if (acl_handle_ == nullptr) {
-    MS_LOG(INFO) << "try create tdt channel ...";
+    MS_LOG(INFO) << "For Print ops, select TDT channel.";
     const std::string receive_prefix = "TF_RECEIVE_";
     acl_handle_ = acltdtCreateChannel(deviceId, (receive_prefix + name).c_str());
     channel_type_ = ChannelType::kTDT;
   } else {
-    MS_LOG(INFO) << "created mbuf channel.";
+    MS_LOG(INFO) << "For Print ops, select MBUF channel.";
   }
   return acl_handle_ != nullptr;
 }
