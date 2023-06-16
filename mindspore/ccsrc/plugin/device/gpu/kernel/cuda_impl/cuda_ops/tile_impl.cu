@@ -19,8 +19,8 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 struct StrideInfo {
-  size_t inp_stride[8];
-  size_t out_stride[8];
+  size_t inp_stride[TILE_MAX_DIMENSION + 1];
+  size_t out_stride[TILE_MAX_DIMENSION + 1];
 };
 
 template <typename T>

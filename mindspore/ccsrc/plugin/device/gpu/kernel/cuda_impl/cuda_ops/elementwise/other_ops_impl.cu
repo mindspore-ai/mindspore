@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include <unsupported/Eigen/SpecialFunctions>
+#include <limits>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/eltwise_ops_func.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/elt_unary_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/elt_binary_impl.cuh"
@@ -120,7 +121,12 @@ REGISTER_UNARY_OP_CUDA_FUNC_COMPLEX_TYPE(ElwiseOpType::kNeg);
 template <typename Type>
 struct UnaryFunc<ElwiseOpType::kReciprocal, Type, Type> {
   DEVICE_HOST UnaryFunc() {}
-  DEVICE Type operator()(const Type val) const { return Type(1.0) / val; }
+  DEVICE Type operator()(const Type val) const {
+    if (val != Type(0)) {
+      return Type(1.0) / val;
+    }
+    return std::numeric_limits<Type>::max() + Type(1);
+  }
 };
 REGISTER_UNARY_OP_CUDA_FUNC_BOOL_TYPE(ElwiseOpType::kReciprocal);
 REGISTER_UNARY_OP_CUDA_FUNC_INT_TYPE(ElwiseOpType::kReciprocal);
@@ -136,9 +142,7 @@ struct UnaryFunc<ElwiseOpType::kExpm1, Type, Type> {
 template <typename Type>
 struct UnaryFunc<ElwiseOpType::kExpm1, Complex<Type>, Complex<Type>> {
   DEVICE_HOST UnaryFunc() {}
-  DEVICE Complex<Type> operator()(const Complex<Type> val) const {
-    return exp(val) - Complex<Type>(1.0);
-  }
+  DEVICE Complex<Type> operator()(const Complex<Type> val) const { return exp(val) - Complex<Type>(1.0); }
 };
 template <>
 struct UnaryFunc<ElwiseOpType::kExpm1, float, float> {

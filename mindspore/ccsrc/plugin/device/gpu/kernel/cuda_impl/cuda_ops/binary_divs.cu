@@ -135,6 +135,7 @@ struct BinaryFunc<BinaryOpType::kFloorDiv, T, T, T, typename std::is_integral<T>
 };
 REGISTER_BINARY_OP_CUDA_FUNC_FLOAT_TYPE(BinaryOpType::kFloorDiv);
 REGISTER_BINARY_OP_CUDA_FUNC_INT_TYPE(BinaryOpType::kFloorDiv);
+REGISTER_BINARY_OP_CUDA_FUNC_BOOL_TYPE(BinaryOpType::kFloorDiv);
 
 template <typename T>
 struct BinaryFunc<BinaryOpType::kTruncateDiv, T, T, T, typename std::is_floating_point<T>::type> {
