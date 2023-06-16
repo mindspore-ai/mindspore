@@ -253,7 +253,7 @@ def test_fallback_side_effect_assign_1():
     assert out[1] == 20
 
 
-@pytest.mark.skip(reason="No support yet.")
+@pytest.mark.skip("the PyExecute is in the other graph and the parameter not get user data")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -363,3 +363,40 @@ def test_fallback_dtype_is_cond():
     x = ms.Tensor(True)
     out = func(x)
     assert out == 0
+
+
+@pytest.mark.skip("the PyExecute is in the other graph and the parameter not get user data")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_if_after_for_in_if_numpy():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    class UserDefinedNet2:
+        def __init__(self):
+            self.x = np.array([1, 2])
+            self.y = np.array([3, 4])
+            self.z = np.array([1, 2, 3, 4])
+
+        def __call__(self, x):
+            return self.x
+
+    class PyExecuteNet(ms.nn.Cell):
+        def __init__(self, net):
+            super().__init__()
+            self.net = net
+
+        def construct(self):
+            x = self.net.x
+            y = self.net.y
+            z = self.net.z
+            if len(x) + len(y) == len(z):
+                return Tensor(y)
+            return Tensor(z)
+
+    net = PyExecuteNet(UserDefinedNet2())
+    output = net()
+    assert (output.asnumpy() == [3, 4]).all()
