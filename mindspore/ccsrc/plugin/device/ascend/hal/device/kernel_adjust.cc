@@ -37,6 +37,7 @@
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
 #include "utils/shape_utils.h"
+#include "include/backend/debug/profiler/profiling.h"
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #endif
@@ -431,6 +432,7 @@ void KernelAdjust::InsertEosDoneSend(const std::shared_ptr<session::KernelGraph>
 
 void KernelAdjust::ProcessLoopSink(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "AscendPreprocess_ProcessLoopSink", 0, 0, 0);
   device::ascend::AscendStreamMng &resource_manager = device::ascend::AscendStreamMng::GetInstance();
   resource_manager.ResetResource();
   if (!NeedLoopSink()) {
@@ -525,6 +527,7 @@ void KernelAdjust::ProcessLoopSink(const std::shared_ptr<session::KernelGraph> &
   fpbp_active_streams.push_back(fpbp_switch_stream_id);
   InsertFpBpAndEosLoopStreamActive(kernel_graph_ptr, &exec_order, fpbp_active_streams);
   kernel_graph_ptr->set_execution_order(exec_order);
+  profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "AscendPreprocess_ProcessLoopSink", 0, 0, 1);
 }
 
 kernel::KernelBuildInfo::KernelBuildInfoBuilder KernelAdjust::CreateMngKernelBuilder(

@@ -21,6 +21,7 @@
 #include "include/backend/optimizer/optimizer.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "plugin/device/ascend/optimizer/ge/reduce_axis_update.h"
+#include "include/backend/debug/profiler/profiling.h"
 
 namespace mindspore {
 namespace opt {
@@ -36,12 +37,14 @@ void ReduceOptimization(const FuncGraphPtr &func_graph) {
   }
 #endif
 
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "GeOptimizeGraph_ReduceOptimization", 0, 0, 0);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>("reduce_optimization_pm");
   pm->AddPass(std::make_shared<opt::ReduceAxisUpdate>());
   optimizer->AddPassManager(pm);
 
   (void)optimizer->Optimize(func_graph);
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "GeOptimizeGraph_ReduceOptimization", 0, 0, 1);
 
 #ifdef ENABLE_DUMP_IR
   if (context->CanDump(kIntroductory)) {

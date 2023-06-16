@@ -34,6 +34,7 @@
 #include "plugin/device/ascend/hal/device/kernel_adjust.h"
 #include "plugin/device/cpu/hal/device/kernel_select_cpu.h"
 #include "backend/common/pass/insert_type_transform_op.h"
+#include "include/backend/debug/profiler/profiling.h"
 
 #ifndef ENABLE_SECURITY
 #include "include/common/debug/anf_ir_dump.h"
@@ -169,6 +170,7 @@ void AscendGraphOptimization::Reset() {
 }
 
 void AscendGraphOptimization::InlineSubGraph(const KernelGraphPtr &graph) {
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "AscendOptimizeGraph_InlineSubGraph", 0, 0, 0);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
 #ifdef ENABLE_DUMP_IR
@@ -204,12 +206,13 @@ void AscendGraphOptimization::InlineSubGraph(const KernelGraphPtr &graph) {
     DumpIR(file_name, graph, true, kWholeStack);
   }
 #endif
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "AscendOptimizeGraph_InlineSubGraph", 0, 0, 1);
 }
 
 void AscendGraphOptimization::OptimizeGraph(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Status record: start optimize graph. graph id: " << graph->graph_id();
-
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "AscendOptimizeGraph", 1, 0, 0);
   // empty graph dont entry to backend
   if (graph->execution_order().empty()) {
     MS_LOG(INFO) << graph->ToString() << " is empty graph.";
@@ -230,6 +233,7 @@ void AscendGraphOptimization::OptimizeGraph(const KernelGraphPtr &graph) {
   memo_.clear();
   // clear and reset graph_manager_ after optimization
   graph_manager_ = MakeManager();
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "AscendOptimizeGraph", 1, 0, 1);
   MS_LOG(INFO) << "Status record: end optimize graph. graph id: " << graph->graph_id();
 }
 
@@ -289,7 +293,7 @@ void AscendGraphOptimization::OptimizeACLGraphAfterKernelSelect(const KernelGrap
 
 void AscendGraphOptimization::OptimizeSingleOpGraph(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
-
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "AscendOptimizeSingleOpGraph", 1, 0, 0);
   if (graph->has_flag(kAttrMutableKernel)) {
     AclOpOptimize(graph);
   } else {
@@ -313,6 +317,7 @@ void AscendGraphOptimization::OptimizeSingleOpGraph(const KernelGraphPtr &graph)
 
   // must clear memo_ which holds kernel graph after using AscendGraphOptimization class.
   memo_.clear();
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "AscendOptimizeSingleOpGraph", 1, 0, 1);
 }
 
 void AscendGraphOptimization::AclOpOptimize(const KernelGraphPtr &graph) {
@@ -346,6 +351,8 @@ void AscendGraphOptimization::AclOpOptimize(const KernelGraphPtr &graph) {
 }
 
 void AscendGraphOptimization::OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) {
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "AscendOptimizeGraph_OptimizeGraphWithoutDeviceInfo", 0, 0,
+                            0);
   MS_EXCEPTION_IF_NULL(graph);
   CheckControlFlowDynamicShape(graph);
   auto context_ptr = MsContext::GetInstance();
@@ -362,9 +369,12 @@ void AscendGraphOptimization::OptimizeGraphWithoutDeviceInfo(const KernelGraphPt
   AddGraphToManager(NOT_NULL(graph), NOT_NULL(graph_manager_));
   memo_.clear();
   IRFusionOptimization(graph);
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "AscendOptimizeGraph_OptimizeGraphWithoutDeviceInfo", 0, 0,
+                            1);
 }
 
 void AscendGraphOptimization::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph) {
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "AscendOptimizeGraph_OptimizeGraphWithDeviceInfo", 0, 0, 0);
   MS_EXCEPTION_IF_NULL(graph);
   memo_.clear();
   HardWareOptimization(graph);
@@ -373,11 +383,13 @@ void AscendGraphOptimization::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &
   UpdateRefOutputMap(graph);
   AnfAlgo::InsertMakeTupleForOutput(NOT_NULL(graph));
   RemoveUnusedValueNode(graph);
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "AscendOptimizeGraph_OptimizeGraphWithDeviceInfo", 0, 0, 1);
 }
 
 void AscendGraphOptimization::OptimizeExecutionOrder(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Status record: start optimize execution order. graph id: " << graph->graph_id();
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "AscendOptimizeGraph_OptimizeExecutionOrder", 0, 0, 0);
   PROF_START(optimize_execution_order);
   // root root_graph validate,include generate execute order and so on
   RootGraphExecutorValidate(NOT_NULL(graph));
@@ -408,12 +420,15 @@ void AscendGraphOptimization::OptimizeExecutionOrder(const KernelGraphPtr &graph
   }
 #endif
   PROF_END(optimize_execution_order);
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "AscendOptimizeGraph_OptimizeExecutionOrder", 0, 0, 1);
   MS_LOG(INFO) << "Status record: end optimize execution order. graph id: " << graph->graph_id();
 }
 
 void AscendGraphOptimization::PostOptimization(const KernelGraphPtr &graph) const {
   MS_LOG(INFO) << "Status record: start post optimization. graph id: " << graph->graph_id();
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "AscendOptimizeGraph_PostOptimization", 0, 0, 0);
   graph->SetOptimizerFlag();
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "AscendOptimizeGraph_PostOptimization", 0, 0, 1);
   MS_LOG(INFO) << "Status record: end post optimization. graph id: " << graph->graph_id();
 }
 
@@ -438,8 +453,10 @@ void AscendGraphOptimization::CommOpReuse(const KernelGraphPtr &graph) const {
   }
   MS_LOG(INFO) << "MAX_COMM_OP_REUSE_NUM: " << max_comm_op_reuse_num;
   MS_LOG(INFO) << "Status record: start comm op reuse. graph id: " << graph->graph_id();
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "CommOpReuse", 0, 0, 0);
   opt::AscendCommOpReuse comm_io_reuse(graph, max_comm_op_reuse_num);
   comm_io_reuse.Run();
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "CommOpReuse", 0, 0, 1);
   MS_LOG(INFO) << "Status record: end comm op reuse. graph id: " << graph->graph_id();
 
 #ifdef ENABLE_DUMP_IR
@@ -499,10 +516,12 @@ void AscendGraphOptimization::IRFusionOptimization(const KernelGraphPtr &graph) 
 
 void AscendGraphOptimization::HandleControlFlow(const NotNull<KernelGraphPtr> graph) const {
   MS_LOG(INFO) << "Status record: start handle control flow. graph id: " << graph->graph_id();
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "HandleControlFlow", 0, 0, 0);
   PROF_START(handle_control_flow);
   AscendAutoMonad auto_monad(graph);
   auto_monad.Run();
   PROF_END(handle_control_flow);
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "HandleControlFlow", 0, 0, 1);
   MS_LOG(INFO) << "Status record: end handle control flow. graph id: " << graph->graph_id();
 }
 
@@ -571,6 +590,7 @@ void AscendGraphOptimization::RecurseSelectKernelInfo(const KernelGraphPtr &grap
 
 void AscendGraphOptimization::SelectKernel(const KernelGraphPtr &graph) {
   MS_LOG(INFO) << "Status record: start select kernel info. graph id: " << graph->graph_id();
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "AscendOptimizeGraph_SelectKernel", 0, 0, 0);
   PROF_START(select_kernel);
   raise_precision_count_ = 0;
   reduce_precision_count_ = 0;
@@ -590,6 +610,7 @@ void AscendGraphOptimization::SelectKernel(const KernelGraphPtr &graph) {
   }
   AscendInsertTypeTransformOps(graph);
   PROF_END(select_kernel);
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "AscendOptimizeGraph_SelectKernel", 0, 0, 1);
   MS_LOG(INFO) << "Status record: end select kernel info. graph id: " << graph->graph_id();
 }
 
@@ -620,10 +641,12 @@ void AscendGraphOptimization::UpdateRefOutputMap(const KernelGraphPtr &graph) {
 void AscendGraphOptimization::UnifyMindIR(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Status record: start unify mindir. graph id: " << graph->graph_id();
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "UnifyMindIR", 0, 0, 0);
   PROF_START(unify_mindir);
   opt::CommonUnifyMindIR(graph);
   opt::AscendUnifyMindIR(graph);
   PROF_END(unify_mindir);
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "UnifyMindIR", 0, 0, 1);
   // must clear memo_ which holds kernelgraph after using AscendGraphOptimization class.
   memo_.clear();
   MS_LOG(INFO) << "Status record: end unify mindir. graph id: " << graph->graph_id();
@@ -634,9 +657,11 @@ void AscendGraphOptimization::AscendMindIRPass(const KernelGraphPtr &graph) cons
 void AscendGraphOptimization::OpAdaptation(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Status record: start op adaptation. graph id: " << graph->graph_id();
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "OpAdaption", 1, 0, 0);
   PROF_START(op_adaptation);
   opt::AscendOpAdaptation(graph);
   PROF_END(op_adaptation);
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "OpAdaption", 1, 0, 1);
   // must clear memo_ which holds kernel graph after using AscendGraphOptimization class.
   memo_.clear();
   MS_LOG(INFO) << "Status record: end op adaptation. graph id: " << graph->graph_id();

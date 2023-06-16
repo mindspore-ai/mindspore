@@ -42,6 +42,7 @@
 #include "transform/acl_ir/acl_helper.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/backend/debug/data_dump/overflow_dumper.h"
+#include "include/backend/debug/profiler/profiling.h"
 
 using Adx::AdxRegDumpProcessCallBack;
 using mindspore::device::ascend::ProfilingManager;
@@ -242,6 +243,7 @@ void GeKernelExecutor::AddMindIRPass(const KernelGraphPtr &graph) const {
 void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
   // will be cached by OpCompileInfo
   MS_EXCEPTION_IF_NULL(graph);
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "GeOptimizeGraph", 1, 0, 0);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   AscendGraphOptimization::GetInstance().OptimizeACLGraph(kernel_graph);
@@ -274,17 +276,20 @@ void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
     }
   }
   AscendGraphOptimization::GetInstance().OptimizeACLGraphAfterKernelSelect(kernel_graph);
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "GeOptimizeGraph", 1, 0, 0);
 }
 
 void GeKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
   // build kernel mod
   MS_LOG(DEBUG) << "Status record: start create kernel.";
+  profiler::CollectHostInfo("Ascend", "CreateKernel", "CreateGeKernel", 1, 0, 0);
   PROF_START(create_kernel);
   auto ret = GenerateKernelMod(nodes);
   if (!ret) {
     MS_LOG(EXCEPTION) << "Kernel build error.";
   }
   PROF_END(create_kernel);
+  profiler::CollectHostInfo("Ascend", "CreateKernel", "CreateGeKernel", 1, 0, 0);
   MS_LOG(DEBUG) << "Status record: end create kernel.";
 }
 
@@ -299,6 +304,7 @@ void GeKernelExecutor::LaunchDeviceLibrary() {
 
 void GeKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
+  profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "GePreprocess", 1, 0, 0);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
 
@@ -330,6 +336,7 @@ void GeKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   LaunchDeviceLibrary();
   // build kernel mod
   CreateKernel(nodes);
+  profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "GePreprocess", 1, 0, 0);
 }
 
 bool GeKernelExecutor::PySyncRuning() const {

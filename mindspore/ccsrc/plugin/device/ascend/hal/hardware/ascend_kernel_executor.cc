@@ -44,6 +44,7 @@
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "plugin/device/ascend/hal/device/dump/ascend_dump.h"
 #include "include/backend/debug/data_dump/overflow_dumper.h"
+#include "include/backend/debug/profiler/profiling.h"
 
 using Adx::AdxRegDumpProcessCallBack;
 using mindspore::device::ascend::ProfilingManager;
@@ -165,12 +166,14 @@ void AscendKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) cons
   SelectKernelInfoAfterKernelSelect(nodes);
 
   MS_LOG(INFO) << "Status record: start create kernel.";
+  profiler::CollectHostInfo("Ascend", "Operator Compilation", "CreateAscendKernel", 1, 0, 0);
   PROF_START(create_kernel);
   auto ret = device::ascend::KernelBuild(nodes);
   if (!ret) {
     MS_LOG(EXCEPTION) << "Kernel build error.";
   }
   PROF_END(create_kernel);
+  profiler::CollectHostInfo("Ascend", "Operator Compilation", "CreateAscendKernel", 1, 0, 1);
   MS_LOG(INFO) << "Status record: end create kernel.";
 }
 
@@ -203,6 +206,7 @@ void AscendKernelExecutor::SetAtomicCleanToNodes(const KernelGraphPtr &graph,
 
 void AscendKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
+  profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "", 1, 0, 0);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
 #ifdef ENABLE_DEBUGGER
@@ -216,6 +220,7 @@ void AscendKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const 
   } else {
     PreprocessBeforeRunGraph(kernel_graph);
   }
+  profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "", 1, 0, 1);
 }
 
 void AscendKernelExecutor::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const {

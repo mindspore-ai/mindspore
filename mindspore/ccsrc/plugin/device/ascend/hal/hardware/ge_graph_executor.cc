@@ -39,6 +39,7 @@
 #include "plugin/device/ascend/hal/hardware/ge_utils.h"
 #include "runtime/dev.h"
 #include "plugin/device/ascend/hal/hardware/ascend_graph_optimization.h"
+#include "include/backend/debug/profiler/profiling.h"
 
 namespace mindspore {
 namespace device {
@@ -276,12 +277,50 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
   return true;
 }
 
+void SetOutputs(const std::vector<KernelWithIndex> &graph_outputs,
+                const std::vector<transform::GeTensorPtr> &ge_outputs, const std::vector<TypeId> &me_types) {
+  for (size_t i = 0; i < graph_outputs.size(); ++i) {
+    const auto &[output_node, idx] = common::AnfAlgo::FetchRealNodeSkipMonadControl(graph_outputs[i]);
+    const auto &tensor = ge_outputs[i];
+    auto output_addr = AnfAlgo::GetMutableOutputAddr(output_node, idx);
+    ::ge::Placement dp = tensor->GetTensorDesc().GetPlacement();
+    auto &&ge_data_uni = tensor->ResetData();
+    auto deleter = ge_data_uni.get_deleter();
+    auto ge_data = ge_data_uni.release();
+    MS_EXCEPTION_IF_NULL(ge_data);
+    if (dp == ::ge::kPlacementHost) {
+      constexpr int64_t kTensorAlignBytes = 64;
+      if (reinterpret_cast<uintptr_t>(ge_data) % kTensorAlignBytes != 0) {
+        MS_LOG(EXCEPTION) << "Skip zero-copy ge tensor " << reinterpret_cast<uintptr_t>(ge_data)
+                          << ", bytes not aligned with expected.";
+      }
+      if (me_types[i] == TypeId::kObjectTypeString) {
+        MS_LOG(EXCEPTION) << "It is not supported that Output node " << output_node->DebugString()
+                          << "'s output data type is string now.";
+      }
+      MS_LOG(DEBUG) << "Zero-copy ge tensor " << reinterpret_cast<uintptr_t>(ge_data) << " as aligned with "
+                    << kTensorAlignBytes << " types.";
+      output_addr->set_is_ptr_persisted(false);
+      output_addr->set_from_mem_pool(false);
+      output_addr->set_deleter(deleter);
+      output_addr->set_ptr(ge_data);
+      output_addr->SetSize(tensor->GetSize());
+    } else {
+      MS_LOG(EXCEPTION) << "It is not supported that Output node " << output_node->DebugString()
+                        << "'s output data's placement is device now.";
+    }
+    auto actual_shapes = tensor->GetTensorDesc().GetShape().GetDims();
+    UpdateOutputNodeShape(output_node, idx, me_types[i], actual_shapes);
+  }
+}
+
 bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs,
                                std::vector<tensor::Tensor> *outputs,
                                const std::map<string, string> & /* compile_options */) {
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_name = GetGraphName(graph);
   MS_LOG(DEBUG) << "GE run graph " << graph_name << " start.";
+  profiler::CollectHostInfo("Ascend", "RunGraph", "GeRunGraph_" + graph_name, 1, 0, 0);
   // copy input from device to host
   const auto &cur_inputs = graph->get_inputs();
   std::vector<tensor::TensorPtr> input_tensors;
@@ -325,6 +364,7 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
     MS_LOG(DEBUG) << "Run graph finish, outputs size is: " << ge_outputs.size();
     if (ret == transform::Status::NOT_FOUND) {
       MS_LOG(WARNING) << "The Graph[" << graph_name << "] is not found, skip run it.";
+      profiler::CollectHostInfo("Ascend", "RunGraph", "GeRunGraph_" + graph_name, 1, 0, 1);
       return true;
     } else if (ret != transform::Status::SUCCESS) {
       MS_LOG(EXCEPTION) << "Exec graph failed";
@@ -340,48 +380,13 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
     MS_LOG(EXCEPTION) << "Invalid output size, graph's size " << graph_outputs.size() << " tensor size "
                       << ge_outputs.size();
   }
-
-  for (size_t i = 0; i < graph_outputs.size(); ++i) {
-    const auto &[output_node, idx] = common::AnfAlgo::FetchRealNodeSkipMonadControl(graph_outputs[i]);
-    const auto &tensor = ge_outputs[i];
-    auto output_addr = AnfAlgo::GetMutableOutputAddr(output_node, idx);
-    ::ge::Placement dp = tensor->GetTensorDesc().GetPlacement();
-    auto &&ge_data_uni = tensor->ResetData();
-    auto deleter = ge_data_uni.get_deleter();
-    auto ge_data = ge_data_uni.release();
-    MS_EXCEPTION_IF_NULL(ge_data);
-    if (dp == ::ge::kPlacementHost) {
-      constexpr int64_t kTensorAlignBytes = 64;
-      if (reinterpret_cast<uintptr_t>(ge_data) % kTensorAlignBytes != 0) {
-        MS_LOG(EXCEPTION) << "Skip zero-copy ge tensor " << reinterpret_cast<uintptr_t>(ge_data)
-                          << ", bytes not aligned with expected.";
-      }
-      if (me_types[i] == TypeId::kObjectTypeString) {
-        MS_LOG(EXCEPTION) << "It is not supported that Output node " << output_node->DebugString()
-                          << "'s output data type is string now.";
-      }
-      MS_LOG(DEBUG) << "Zero-copy ge tensor " << reinterpret_cast<uintptr_t>(ge_data) << " as aligned with "
-                    << kTensorAlignBytes << " types.";
-      output_addr->set_is_ptr_persisted(false);
-      output_addr->set_from_mem_pool(false);
-      output_addr->set_deleter(deleter);
-      output_addr->set_ptr(ge_data);
-      output_addr->SetSize(tensor->GetSize());
-    } else {
-      MS_LOG(EXCEPTION) << "It is not supported that Output node " << output_node->DebugString()
-                        << "'s output data's placement is device now.";
-    }
-
-    auto actual_shapes = tensor->GetTensorDesc().GetShape().GetDims();
-    UpdateOutputNodeShape(output_node, idx, me_types[i], actual_shapes);
-  }
-
+  SetOutputs(graph_outputs, ge_outputs, me_types);
   if (graph->has_flag(transform::kGraphFlagHasGetNext)) {
     MS_LOG(DEBUG) << "Reset ConfigManager, graph: " << graph_name;
     ConfigManager::GetInstance().ResetConfig();
     ConfigManager::GetInstance().ResetIterNum();
   }
-
+  profiler::CollectHostInfo("Ascend", "RunGraph", "GeRunGraph_" + graph_name, 1, 0, 1);
   MS_LOG(DEBUG) << "GE run graph end.";
   return true;
 }

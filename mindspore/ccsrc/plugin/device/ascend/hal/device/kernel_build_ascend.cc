@@ -33,6 +33,7 @@
 #include "plugin/device/ascend/kernel/acl/acl_kernel_build.h"
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "include/transform/graph_ir/types.h"
+#include "include/backend/debug/profiler/profiling.h"
 
 namespace mindspore {
 namespace device {
@@ -43,6 +44,8 @@ constexpr size_t kMaxAttrMemListSize = 192;
 static std::mutex compile_mtx;
 
 static kernel::KernelModPtr SerialCompileImpl(const AnfNodePtr &anf_node) {
+  profiler::CollectHostInfo("Ascend", "Operator Compilation",
+                            "CreateAscendKernel_SerialCompile_" + anf_node->fullname_with_scope(), 0, 0, 0);
   kernel::KernelModPtr kernel_mod_ptr = nullptr;
   KernelType kernel_type = AnfAlgo::GetKernelType(anf_node);
   switch (kernel_type) {
@@ -75,6 +78,8 @@ static kernel::KernelModPtr SerialCompileImpl(const AnfNodePtr &anf_node) {
       MS_LOG(EXCEPTION) << "node [" << anf_node->DebugString() << "] Unsupported kernel_type:" << kernel_type;
     }
   }
+  profiler::CollectHostInfo("Ascend", "Operator Compilation",
+                            "CreateAscendKernel_SerialCompile_" + anf_node->fullname_with_scope(), 0, 0, 1);
   return kernel_mod_ptr;
 }
 
@@ -579,6 +584,7 @@ std::vector<CNodePtr> GatherAllAtomicOps(const CleanOpsMap &node_maps) {
 
 void InsertAtomicCleanOps(const std::vector<CNodePtr> &nodes, CleanOpsMap *maps) {
   MS_EXCEPTION_IF_NULL(maps);
+  profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "AscendPreprocess_InsertAtomicCleanOps", 0, 0, 0);
   // assign attr
   TagNeedInsertAtomicAttr(nodes);
   // insert atomic
@@ -586,6 +592,7 @@ void InsertAtomicCleanOps(const std::vector<CNodePtr> &nodes, CleanOpsMap *maps)
   std::vector<CNodePtr> all_atomics = GatherAllAtomicOps(*maps);
   // build atomic
   (void)KernelBuild(all_atomics);
+  profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "AscendPreprocess_InsertAtomicCleanOps", 0, 0, 1);
 }
 
 void InsertAtomicCleanOps(const KernelGraphPtr &kernel_graph) {

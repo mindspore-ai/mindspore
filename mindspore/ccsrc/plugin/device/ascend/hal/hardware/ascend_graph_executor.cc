@@ -28,6 +28,7 @@
 #include "plugin/device/ascend/optimizer/ir_fission/add_status_input_for_random_operator.h"
 #include "ir/anf.h"
 #include "kernel/oplib/oplib.h"
+#include "include/backend/debug/profiler/profiling.h"
 #ifndef ENABLE_SECURITY
 #include "plugin/device/ascend/hal/profiler/memory_profiling.h"
 using mindspore::profiler::ascend::MemoryProfiling;
@@ -277,6 +278,7 @@ bool AscendGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_LOG(INFO) << "Status record: start launch graph. graph id: " << kernel_graph->graph_id()
                << ", options:" << compile_options;
+  profiler::CollectHostInfo("Ascend", "RunGraph", "AscendRunGraph_" + kernel_graph->ToString(), 1, 0, 0);
   PROF_START(launch_graph);
   MS_EXCEPTION_IF_NULL(runtime_instance_);
   runtime_instance_->SetContext();
@@ -290,6 +292,7 @@ bool AscendGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<
     MS_LOG(WARNING) << warning_message;
   }
   PROF_END(launch_graph);
+  profiler::CollectHostInfo("Ascend", "RunGraph", "AscendRunGraph_" + kernel_graph->ToString(), 1, 0, 1);
   MS_LOG(INFO) << "Status record: end launch graph. graph id: " << kernel_graph->graph_id();
   return ret;
 }
@@ -329,6 +332,7 @@ void AscendGraphExecutor::UpdateExecOrder(const KernelGraphPtr &graph) const {
 
 void AscendGraphExecutor::AllocateGraphMemory(const NotNull<KernelGraphPtr> &root_graph) const {
   MS_LOG(INFO) << "Status record: start memory alloc. graph id: " << root_graph->graph_id();
+  profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "AscendPreprocess_AllocateGraphMemory", 0, 0, 0);
   PROF_START(graph_memory_alloc);
   MS_EXCEPTION_IF_NULL(runtime_instance_);
   runtime_instance_->ClearGlobalIdleMem();
@@ -344,6 +348,7 @@ void AscendGraphExecutor::AllocateGraphMemory(const NotNull<KernelGraphPtr> &roo
   runtime_instance_->UpdateRefNodeOutputMem(*root_graph.get());
 
   PROF_END(graph_memory_alloc);
+  profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "AscendPreprocess_AllocateGraphMemory", 0, 0, 1);
   MS_LOG(INFO) << "Status record: end memory alloc. graph id: " << root_graph->graph_id()
                << ", Memory Statistics: " << device::ascend::AscendMemAdapter::GetInstance().DevMemStatistics();
   MS_LOG(INFO) << "The dynamic memory pool total size is: "
@@ -382,6 +387,7 @@ void AscendGraphExecutor::AssignInputMemory(const NotNull<KernelGraphPtr> &graph
 
 void AscendGraphExecutor::LoadModel(const NotNull<KernelGraphPtr> &root_graph) const {
   MS_LOG(INFO) << "Status record: start load model. graph id: " << root_graph->graph_id();
+  profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "AscendPreprocess_LoadModel", 0, 0, 0);
   PROF_START(load_model);
   MS_EXCEPTION_IF_NULL(runtime_instance_);
   bool ret_ok = runtime_instance_->Load(*root_graph.get(), true);
@@ -389,6 +395,7 @@ void AscendGraphExecutor::LoadModel(const NotNull<KernelGraphPtr> &root_graph) c
     MS_LOG(EXCEPTION) << "Load task error!";
   }
   PROF_END(load_model);
+  profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "AscendPreprocess_LoadModel", 0, 0, 1);
   MS_LOG(INFO) << "Status record: end load model. graph id: " << root_graph->graph_id();
 }
 

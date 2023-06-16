@@ -35,6 +35,7 @@
 #include "kernel/graph_kernel/graph_kernel_json_generator.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "include/backend/debug/profiler/profiling.h"
 
 namespace mindspore {
 namespace kernel {
@@ -133,6 +134,7 @@ bool AkgKernelBuilder::AkgOpParallelBuild(const std::vector<JsonNodePair> &build
 }
 
 bool AkgKernelBuilder::SingleOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
+  profiler::CollectHostInfo("Ascend", "Operator Compilation", "CreateAscendKernel_AkgOpParallelBuild", 0, 0, 0);
   std::vector<JsonNodePair> json_and_node;
   for (const auto &anf_node : anf_nodes) {
     MS_EXCEPTION_IF_NULL(anf_node);
@@ -180,6 +182,7 @@ bool AkgKernelBuilder::SingleOpParallelBuild(const std::vector<AnfNodePtr> &anf_
 
   if (json_and_node.empty()) {
     MS_LOG(INFO) << "There is no akg kernel to be compiled.";
+    profiler::CollectHostInfo("Ascend", "Operator Compilation", "CreateAscendKernel_AkgOpParallelBuild", 0, 0, 1);
     return true;
   }
 
@@ -187,6 +190,7 @@ bool AkgKernelBuilder::SingleOpParallelBuild(const std::vector<AnfNodePtr> &anf_
   if (!res) {
     MS_LOG(ERROR) << "Akg build kernel failed.";
   }
+  profiler::CollectHostInfo("Ascend", "Operator Compilation", "CreateAscendKernel_AkgOpParallelBuild", 0, 0, 1);
   return true;
 }
 }  // namespace kernel
