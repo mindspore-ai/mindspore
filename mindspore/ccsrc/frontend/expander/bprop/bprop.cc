@@ -133,7 +133,7 @@ void BpropExpander::PostProcess(const BpropIRBuilder *ir_builder) const {
       // record parameter's and dout's user
       if (users_ != nullptr) {
         if (inp == dout || inp->isa<Parameter>()) {
-          (void)((*users_)[inp].emplace_back(node, i));
+          (void)((*users_).dout_user_[inp].emplace_back(node, i));
         }
       }
       if (IsPrimitiveCNode(inp, prim::kPrimTupleGetItem)) {
@@ -141,7 +141,7 @@ void BpropExpander::PostProcess(const BpropIRBuilder *ir_builder) const {
         auto real_input = getitem->input(kIndex1);
         // record the dout's successor getitem's users
         if (users_ != nullptr && real_input == dout) {
-          (void)((*users_)[inp].emplace_back(node, i));
+          (void)((*users_).tuple_getitem_user_[inp].emplace_back(node, i));
         } else if (real_input->isa<ValueNode>()) {
           // eliminate redundant getitem
           auto real_input_value = real_input->cast<ValueNodePtr>()->value();
@@ -222,7 +222,7 @@ void BpropExpander::DumpResult(const std::string &name) const {
   DumpIR("bprop/bprop_expander_" + name + ".ir", fg, true);
 
   if (users_ != nullptr) {
-    for (auto &uiter : *users_) {
+    for (auto &uiter : users_->dout_user_) {
       for (auto &iter : uiter.second) {
         auto user = iter.first.lock();
         if (user == nullptr) {

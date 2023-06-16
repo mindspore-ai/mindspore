@@ -28,10 +28,14 @@ namespace mindspore {
 namespace expander {
 namespace bprop {
 using UserType = mindspore::HashMap<AnfNodePtr, std::vector<std::pair<std::weak_ptr<CNode>, int>>>;
+struct UserMap {
+  UserType dout_user_;
+  UserType tuple_getitem_user_;
+};
 class BpropExpander {
  public:
   BpropExpander() {}
-  BpropExpander(CNodePtrList *outputs, UserType *users) : outputs_(outputs), users_(users) {}
+  BpropExpander(CNodePtrList *outputs, UserMap *users) : outputs_(outputs), users_(users) {}
   ~BpropExpander() = default;
   bool Run(const CNodePtr &cnode);
   const mindspore::HashSet<size_t> &GetUnusedInputs(const string &op_name) const;
@@ -50,7 +54,7 @@ class BpropExpander {
   // create bprop func_graph in graph_mode.
   NodePtrList output_nodes_;
   CNodePtrList *outputs_{nullptr};
-  UserType *users_{nullptr};
+  UserMap *users_{nullptr};
 };
 
 bool ExpandBpropInGraphMode(const BpropHandle *handle, const PrimitivePtr &prim, const FuncGraphPtr &graph);

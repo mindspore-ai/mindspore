@@ -63,6 +63,8 @@ class MsFunction {
   // Make adjoint for ms_function fprop graph and connect it with previous op
   void MakeAdjointForMsFunction(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
                                 const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph) const;
+  void KPynativeWithFProp(const GradExecutor *grad_executor, const autograd::AutoGradCellImplPtr &auto_grad_cell_ptr,
+                          const autograd::GradParamPtr &grad_param) const;
   void RecordForwardGraphForMsFunction(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
                                        const FuncGraphPtr &ms_func_graph) const;
   void UpdateMsFunctionlForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v);
