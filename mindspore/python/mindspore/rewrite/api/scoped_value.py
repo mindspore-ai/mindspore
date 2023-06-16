@@ -78,6 +78,8 @@ class ScopedValue:
         Examples:
             >>> from mindspore.rewrite import ScopedValue
             >>> variable = ScopedValue.create_variable_value(2)
+            >>> print(variable)
+            2
         """
         if isinstance(value, int):
             return cls(ValueType.IntValue, "", value)
@@ -117,6 +119,8 @@ class ScopedValue:
         Examples:
             >>> from mindspore.rewrite import ScopedValue
             >>> variable = ScopedValue.create_naming_value("conv", "self")
+            >>> print(variable)
+            self.conv
         """
         Validator.check_value_type("name", name, [str], "ScopedValue")
         Validator.check_value_type("scope", scope, [str], "ScopedValue")
@@ -142,7 +146,9 @@ class ScopedValue:
 
         Examples:
             >>> from mindspore.rewrite import ScopedValue
-            >>> variables = ScopedValue.create_name_values(["z", "z_1"], name="subnet")
+            >>> variables = ScopedValue.create_name_values(names=["z", "z_1"], scopes=["self", "self"])
+            >>> print(variables)
+            [self.z, self.z_1]
         """
         Validator.check_element_type_of_iterable("names", names, [str], "ScopedValue")
         if scopes is not None:

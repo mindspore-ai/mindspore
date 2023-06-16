@@ -204,7 +204,7 @@ class Replacement(abc.ABC):
 
     Examples:
         >>> from mindspore.rewrite import Replacement, Node
-        >>> from mindspore.nn import nn
+        >>> import mindspore.nn as nn
         >>> class BnReplacement(Replacement):
         ...     def build(self, pattern, is_chain_pattern: bool, matched):
         ...         bn_node: Node = matched.get(pattern.name())
