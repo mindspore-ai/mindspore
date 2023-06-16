@@ -117,9 +117,10 @@ if(MODE_ASCEND_ALL)
     find_library(COMPRESS compress ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     find_library(OPSKERNEL opskernel ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     set(AICPU_CANN_ACL_PATH ${ASCEND_CANN_RUNTIME_PATH}/plugin/opskernel/)
-    find_library(AICPU_ASCEND_ENGINE aicpu_ascend_engine ${AICPU_CANN_ACL_PATH})
-    find_library(HOST_CPU_ENGINE host_cpu_engine ${AICPU_CANN_ACL_PATH})
-    find_library(AICPU_TF_ENGINE aicpu_tf_engine ${AICPU_CANN_ACL_PATH})
+    set(AICPU_TOOLKIT_ACL_PATH ${ASCEND_TOOLKIT_RUNTIME_PATH}/plugin/opskernel/)
+    find_library(AICPU_ASCEND_ENGINE aicpu_ascend_engine ${AICPU_CANN_ACL_PATH} ${AICPU_TOOLKIT_ACL_PATH})
+    find_library(HOST_CPU_ENGINE host_cpu_engine ${AICPU_CANN_ACL_PATH} ${AICPU_TOOLKIT_ACL_PATH})
+    find_library(AICPU_TF_ENGINE aicpu_tf_engine ${AICPU_CANN_ACL_PATH} ${AICPU_TOOLKIT_ACL_PATH})
 
     target_link_libraries(mindspore_ascend PRIVATE ${RUNTIME_LIB} ${TSDCLIENT} ${DATATRANSFER} ${ERROR_MANAGER}
             -Wl,--no-as-needed ${OPTILING} ${PLATFORM} ${ACL} ${ACL_TDT_CHANNEL} ${OPT_FEATURE} ${PROFILING}

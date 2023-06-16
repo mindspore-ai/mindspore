@@ -25,10 +25,19 @@
 #include "utils/ms_context.h"
 #include "include/transform/graph_ir/types.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
+#include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace device {
 namespace ascend {
+class GeHostAddress : public cpu::CPUDeviceAddress {
+ public:
+  GeHostAddress(void *ptr, size_t size, const std::string &format, TypeId type_id, const std::string &device_name,
+                uint32_t device_id)
+      : CPUDeviceAddress(ptr, size, format, type_id, device_name, device_id) {}
+  DeviceType GetDeviceType() const override { return DeviceType::kAscend; }
+};
+
 class GeDeviceResManager : public DeviceResManager {
  public:
   GeDeviceResManager() : mem_manager_(nullptr) {}
