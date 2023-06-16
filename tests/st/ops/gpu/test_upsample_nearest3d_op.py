@@ -44,10 +44,11 @@ def test_upsample_nearest_3d_dynamic_shape():
     Expectation: Expect correct shape result.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-    output_size = [3, 4, 5]
     net = UpsampleNearest3DNet()
+    output_size = [3, 4, 5]
+    scales = None
     x_dyn = Tensor(shape=[None, 1, 2, 2, 4], dtype=ms.float32)
-    net.set_inputs(x_dyn, output_size, None)
+    net.set_inputs(x_dyn, output_size, scales)
     x = Tensor(
         np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
                   16]).reshape([1, 1, 2, 2, 4]), ms.float32)
@@ -149,7 +150,7 @@ def test_upsample_nearest_3d_error():
     with pytest.raises(TypeError):
         input_tensor = Tensor(np.ones((2, 2, 2, 2, 2), dtype=np.float32))
         net = UpsampleNearest3DNet()
-        net(input_tensor, None, [1.0, 2.0, 3.0])
+        net(input_tensor, None, [1, 2, 3])
 
     with pytest.raises(ValueError):
         input_tensor = Tensor(np.ones((2, 2, 2, 2, 2), dtype=np.float32))
