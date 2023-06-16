@@ -985,7 +985,10 @@ class AfterOptARewriter : public BaseRewriter {
 
     auto list_node_input = GenerateTupleInput(node);
 
-    py::list list_object = py::list();
+    if (!fallback::HasPyListObject(node->abstract())) {
+      MS_LOG(EXCEPTION) << "MakeList node: " << node->DebugString() << " do not have python list object.";
+    }
+    py::list list_object = *fallback::GetPyListObject<AbstractBase, py::list>(node->abstract());
     const std::string list_obj_str_prefix = "__list_py_object_";
     auto list_obj_id = fallback::GetPyObjectPtrStr(list_object);
     MS_LOG(DEBUG) << "Current python object id: " << list_obj_id;
@@ -1060,7 +1063,7 @@ class AfterOptARewriter : public BaseRewriter {
     constexpr size_t node_list_index = 1;
     constexpr size_t node_target_index = 2;
     auto list_input_node = node_inputs[node_list_index];
-    if (!list_abs->has_list_py_obj() && IsPrimitiveCNode(list_input_node, prim::kPrimMakeList)) {
+    if (IsPrimitiveCNode(list_input_node, prim::kPrimMakeList)) {
       TraceGuard trace_guard(std::make_shared<TraceCopy>(list_input_node->debug_info()));
       auto new_node = ConvertMakeList(list_input_node->cast<CNodePtr>());
       (void)manager_->Replace(list_input_node, new_node);
@@ -1128,7 +1131,7 @@ class AfterOptARewriter : public BaseRewriter {
     constexpr size_t node_index_index = 2;
     constexpr size_t node_target_index = 3;
     auto list_input_node = node_inputs[node_list_index];
-    if (!list_abs->has_list_py_obj() && IsPrimitiveCNode(list_input_node, prim::kPrimMakeList)) {
+    if (IsPrimitiveCNode(list_input_node, prim::kPrimMakeList)) {
       TraceGuard trace_guard(std::make_shared<TraceCopy>(list_input_node->debug_info()));
       auto new_node = ConvertMakeList(list_input_node->cast<CNodePtr>());
       (void)manager_->Replace(list_input_node, new_node);
@@ -1195,7 +1198,7 @@ class AfterOptARewriter : public BaseRewriter {
     constexpr size_t node_list_index = 1;
     constexpr size_t node_index_index = 2;
     auto list_input_node = node_inputs[node_list_index];
-    if (!list_abs->has_list_py_obj() && IsPrimitiveCNode(list_input_node, prim::kPrimMakeList)) {
+    if (IsPrimitiveCNode(list_input_node, prim::kPrimMakeList)) {
       TraceGuard trace_guard(std::make_shared<TraceCopy>(list_input_node->debug_info()));
       auto new_node = ConvertMakeList(list_input_node->cast<CNodePtr>());
       (void)manager_->Replace(list_input_node, new_node);
@@ -1257,7 +1260,7 @@ class AfterOptARewriter : public BaseRewriter {
     }
     constexpr size_t node_list_index = 1;
     auto list_input_node = node_inputs[node_list_index];
-    if (!list_abs->has_list_py_obj() && IsPrimitiveCNode(list_input_node, prim::kPrimMakeList)) {
+    if (IsPrimitiveCNode(list_input_node, prim::kPrimMakeList)) {
       TraceGuard trace_guard(std::make_shared<TraceCopy>(list_input_node->debug_info()));
       auto new_node = ConvertMakeList(list_input_node->cast<CNodePtr>());
       (void)manager_->Replace(list_input_node, new_node);

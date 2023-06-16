@@ -68,6 +68,7 @@ TypePtr GetJitAnnotationTypeFromComment(const AnfNodePtr &node,
 bool ContainsSequenceAnyType(const AbstractBasePtr &abs);
 
 std::string ConvertRealStrToUnicodeStr(const std::string &target, size_t index);
+py::object GeneratePyObj(const abstract::AbstractBasePtr &abs);
 void AttachListObjToAbs(const AbstractBasePtr &abs, const py::object &obj);
 
 AnfNodePtr ConvertCNodeToPyExecuteForPrim(const CNodePtr &cnode, string name);

@@ -227,6 +227,14 @@ void Validate(const FuncGraphPtr &func_graph) {
     while (IsPrimitiveCNode(node, prim::kPrimReturn) || IsPrimitiveCNode(node, prim::kPrimDepend)) {
       node = node->cast_ptr<CNode>()->input(1);
     }
+    if (IsPrimitiveCNode(node, prim::kPrimMakeList)) {
+      auto abs = node->abstract();
+      if (abs != nullptr && abs->isa<abstract::AbstractList>()) {
+        MS_LOG(DEBUG) << "Clear python object for make list node: " << node->DebugString();
+        auto abs_list = abs->cast<abstract::AbstractListPtr>();
+        abs_list->set_list_py_obj<py::list>(nullptr);
+      }
+    }
     if (IsValueNode<ValueTuple>(node)) {
       CheckValueTuple(node);
       continue;
