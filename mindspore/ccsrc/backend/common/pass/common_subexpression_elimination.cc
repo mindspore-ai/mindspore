@@ -140,7 +140,10 @@ bool BackendCSE::CheckValueNode(const ValueNodePtr &main, const ValueNodePtr &no
   if (main_value->isa<Primitive>() && node_value->isa<Primitive>()) {
     return false;
   } else if (main_value->isa<tensor::Tensor>() && node_value->isa<tensor::Tensor>()) {
-    return (AbsOf(main) == AbsOf(node)) && CheckEqualKernelBuildInfo(main, node);
+    auto main_tensor = main_value->cast<tensor::TensorPtr>();
+    auto node_tensor = node_value->cast<tensor::TensorPtr>();
+    return (AbsOf(main) == AbsOf(node)) && CheckEqualKernelBuildInfo(main, node) &&
+           main_tensor->device_address() == node_tensor->device_address();
   }
   return (AbsOf(main) == AbsOf(node)) && (*main_value == *node_value);
 }
