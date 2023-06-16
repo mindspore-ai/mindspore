@@ -465,7 +465,7 @@ def test_repeat_elements_large_one_element_rep_1():
 @pytest.mark.env_onecard
 def test_repeat_elements_large_one_element_rep_many():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    a = np.arange(1).reshape(1, 1, 1, 1, 1, 1, 1)
+    a = np.arange(1).reshape(1, 1, 1, 1, 1, 1)
 
     ms_out = repeat_elements(a, 42, 0)
     np_out = a.repeat(42, 0)
@@ -489,10 +489,6 @@ def test_repeat_elements_large_one_element_rep_many():
 
     ms_out = repeat_elements(a, 42, 5)
     np_out = a.repeat(42, 5)
-    np.testing.assert_array_equal(np_out, ms_out)
-
-    ms_out = repeat_elements(a, 42, 6)
-    np_out = a.repeat(42, 6)
     np.testing.assert_array_equal(np_out, ms_out)
 
 @pytest.mark.level1
@@ -539,7 +535,7 @@ def test_repeat_elements_large_rep_1():
 @pytest.mark.env_onecard
 def test_repeat_elements_large_rep_many():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    a = np.arange(1152).reshape(4, 3, 4, 2, 1, 4, 3)
+    a = np.arange(1152).reshape(4, 3, 4, 2, 4, 3)
 
     ms_out = repeat_elements(a, 4, 0)
     np_out = a.repeat(4, 0)
@@ -563,10 +559,6 @@ def test_repeat_elements_large_rep_many():
 
     ms_out = repeat_elements(a, 4, 5)
     np_out = a.repeat(4, 5)
-    np.testing.assert_array_equal(np_out, ms_out)
-
-    ms_out = repeat_elements(a, 4, 6)
-    np_out = a.repeat(4, 6)
     np.testing.assert_array_equal(np_out, ms_out)
 
 @pytest.mark.level1
@@ -574,7 +566,7 @@ def test_repeat_elements_large_rep_many():
 @pytest.mark.env_onecard
 def test_repeat_elements_half():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    a = np.arange(1152).astype(np.float16).reshape(4, 3, 4, 2, 1, 4, 3)
+    a = np.arange(1152).astype(np.float16).reshape(4, 3, 4, 2, 4, 3)
 
     ms_out = repeat_elements(a, 4, 0)
     np_out = a.repeat(4, 0)
@@ -598,10 +590,6 @@ def test_repeat_elements_half():
 
     ms_out = repeat_elements(a, 4, 5)
     np_out = a.repeat(4, 5)
-    np.testing.assert_array_equal(np_out, ms_out)
-
-    ms_out = repeat_elements(a, 4, 6)
-    np_out = a.repeat(4, 6)
     np.testing.assert_array_equal(np_out, ms_out)
 
 @pytest.mark.level1

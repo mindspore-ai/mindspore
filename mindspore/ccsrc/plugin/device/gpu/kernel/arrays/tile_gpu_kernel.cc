@@ -26,7 +26,7 @@ constexpr size_t kInputNum = 2;
 constexpr size_t kTileOutputsNum = 1;
 constexpr size_t kIndex0 = 0;
 constexpr size_t kIndex1 = 1;
-constexpr size_t kMaxShapeSize = 8;
+constexpr size_t kMaxShapeSize = 7;
 }  // namespace
 bool TileGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                             const std::vector<KernelTensorPtr> &outputs) {
