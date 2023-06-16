@@ -912,7 +912,7 @@ class Dataset:
             >>> dataset = ds.Cifar10Dataset(dataset_dir=cifar10_dataset_dir)
             >>>
             >>> # Define two operations, where each operation accepts 1 input column and outputs 1 column.
-            >>> decode_op = vision.Decode(rgb=True)
+            >>> decode_op = vision.Decode(to_pil=False)
             >>> random_jitter_op = vision.RandomColorAdjust(brightness=(0.8, 0.8), contrast=(1, 1),
             ...                                             saturation=(1, 1), hue=(0, 0))
             >>>
@@ -2465,7 +2465,7 @@ def _check_shm_usage(num_worker, queue_size, max_rowsize, num_queues=1):
         device_num = _get_device_num()
         # In the cluster, _get_device_num indicates the number of the entire cluster. The maximum number of cards
         # on the ascend server is 8.
-        if device_num > 1 and context.get_context("device_target") == "Ascend":
+        if device_num > 1:
             device_num = min(device_num, 8)
         shm_estimate_usage = device_num * num_worker * num_queues * \
                              (queue_size + 2) * max_rowsize * 1024 * 1024

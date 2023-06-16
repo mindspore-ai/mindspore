@@ -1268,8 +1268,7 @@ Status ShardReader::CreateLazyTasksByRow(const std::vector<std::tuple<int, int, 
   return Status::OK();
 }
 
-Status ShardReader::CreateSlowTasksByRow(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,
-                                         const std::vector<std::shared_ptr<ShardOperator>> &operators) {
+Status ShardReader::CreateSlowTasksByRow() {
   CheckIfColumnInIndex(selected_columns_);
   CHECK_FAIL_RETURN_UNEXPECTED_MR(shard_count_ <= kMaxFileCount,
                                   "Invalid data, the number of mindrecord files should be less than or equal to " +
@@ -1308,7 +1307,7 @@ Status ShardReader::CreateTasks(const std::vector<std::tuple<int, int, int, uint
         }
       }
     } else {
-      RETURN_IF_NOT_OK_MR(CreateSlowTasksByRow(row_group_summary, operators));
+      RETURN_IF_NOT_OK_MR(CreateSlowTasksByRow());
     }
   } else {
     RETURN_IF_NOT_OK_MR(CreateTasksByCategory(operators[category_operator]));

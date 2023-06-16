@@ -328,6 +328,8 @@ class SamplerFn:
             for w in self.workers:
                 if self.multi_process is True and hasattr(w, '_closed') and w._closed is False:  # pylint: disable=W0212
                     try:
+                        # del the queue first
+                        del w.res_queue
                         w.join()
                     except Exception:  # pylint: disable=W0703
                         # Block all errors when join
@@ -502,7 +504,9 @@ class _GeneratorWorkerMp(multiprocessing.Process):
     def __del__(self):
         # del all the Queue & SharedQueue when the iter had been deleted from ITERATORS_LIST
         del self.idx_queue
-        del self.res_queue
+        if hasattr(self, 'res_queue'):
+            # del the queue when has
+            del self.res_queue
 
 
 class GeneratorDataset(MappableDataset, UnionBaseDataset):

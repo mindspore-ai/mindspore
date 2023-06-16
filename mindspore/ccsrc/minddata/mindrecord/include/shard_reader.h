@@ -287,8 +287,7 @@ class MINDRECORD_API ShardReader {
                               const std::vector<std::shared_ptr<ShardOperator>> &operators);
 
   /// \brief create task in slow load mode
-  Status CreateSlowTasksByRow(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,
-                              const std::vector<std::shared_ptr<ShardOperator>> &operators);
+  Status CreateSlowTasksByRow();
 
   /// \brief crate task list
   Status CreateTasks(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,
