@@ -59,7 +59,7 @@ class ParallelOp : public DatasetOp {
     }
   }
   // Destructor
-  ~ParallelOp() = default;
+  ~ParallelOp() override = default;
 
   /// A print method typically used for debugging
   /// \param out - The output stream to write output to
