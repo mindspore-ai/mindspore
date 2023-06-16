@@ -32,6 +32,7 @@ enum class HashTableElementStatus {
 };
 
 namespace device {
+constexpr size_t kDefaultSliceSizeInMB = 1024;
 // The base class of device hash table.
 template <typename Key, typename Value>
 class HashTable {
@@ -72,6 +73,15 @@ class HashTable {
   // Argument `incremental` mean the flag that determine whether export hash table in incremental or full manner, true
   // for incremental export, false for full export.
   virtual HashTableExportData Export(bool incremental) = 0;
+
+  // Export a slice from the hash table, the size is specified by the parameter 'slice_size_in_mega_bytes' in MB,
+  // default 1024MB.
+  // Argument `incremental` determine whether export hash table in incremental or full manner, true
+  // for incremental export, false for full export.
+  // Argument `last_slice` is a bool returned to indicate whether the slice by export is the last slice, that is,
+  // the export is complete.
+  virtual HashTableExportData ExportSlice(bool incremental, bool *last_slice,
+                                          size_t slice_size_in_mega_bytes = kDefaultSliceSizeInMB) = 0;
 
   // Get the max number of elements the container could hold.
   virtual size_t capacity() const = 0;

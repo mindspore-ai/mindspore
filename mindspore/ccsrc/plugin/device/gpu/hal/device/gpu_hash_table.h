@@ -65,7 +65,7 @@ class GPUHashTable : public HashTable<Key, Value> {
   using CharAllocatorType = typename std::allocator_traits<Allocator>::template rebind_alloc<char>;
 
   // Find elements with specific keys, if a key does not exist, initialize the value for the key based on the
-  // initialzer and insert the key-value pair into map. The initializer can be 'normal', 'zero' or 'one', and also
+  // initializer and insert the key-value pair into map. The initializer can be 'normal', 'zero' or 'one', and also
   // could be a specific 'Value' type scalar.
   bool Find(const Key *keys, size_t key_num, bool insert_default_value, Value *outputs, void *stream) override;
 
@@ -93,6 +93,9 @@ class GPUHashTable : public HashTable<Key, Value> {
   // for incremental export, false for full export.
   HashTableExportData Export(bool incremental) override;
 
+  // Export a slice from the hash table, the size is specified by the parameter 'slice_size_in_mega_bytes' in MB.
+  HashTableExportData ExportSlice(bool incremental, bool *last_slice, size_t slice_size_in_mega_bytes) override;
+
   // Get the number of elements that can be held in currently allocated storage.
   size_t capacity() const override { return capacity_; }
 
@@ -108,7 +111,7 @@ class GPUHashTable : public HashTable<Key, Value> {
 
  private:
   // Find elements with specific keys, if the key does not exist, initialize the value for the key based on the
-  // initialzer and insert the key-value pair into map.The initializer can be 'normal', 'zeros' or 'ones'.
+  // initializer and insert the key-value pair into map.The initializer can be 'normal', 'zeros' or 'ones'.
   bool Find(const Key *keys, size_t key_num, bool insert_default_value, const std::string &initializer, Value *outputs,
             void *stream);
 

@@ -269,6 +269,100 @@ TEST_F(TestCPUHashTable, test_cpu_hash_table_find) {
   keys_to_check.clear();
   values_to_check.clear();
 }
+
+/// Feature: test cpu hash table all api.
+/// Description: test cpu hash table data structure and interface.
+/// Expectation: all interface work normally.
+TEST_F(TestCPUHashTable, test_cpu_hash_table_export_slice) {
+  size_t value_dim = 1024;
+  size_t key_num = 512;
+
+  size_t slice_size_in_mb = 1;
+  size_t slice_num = (slice_size_in_mb << 20) / (value_dim * sizeof(Value));
+  CPUHashTable<Key, Value> hash_table(value_dim);
+
+  // Keys and values to insert.
+  std::vector<Key> keys_to_insert(key_num);
+  std::iota(keys_to_insert.begin(), keys_to_insert.end(), 0);
+
+  std::vector<Value> value_to_insert(key_num * value_dim);
+  for (size_t i = 0; i < key_num; i++) {
+    for (size_t j = 0; j < value_dim; j++) {
+      value_to_insert[i * value_dim + j] = static_cast<Value>(i);
+    }
+  }
+
+  // Keys and values check map.
+  std::map<Key, std::vector<Value>> keys_values;
+  for (size_t i = 0; i < key_num; ++i) {
+    keys_values.emplace(keys_to_insert[i], std::vector<Value>(value_to_insert.begin() + i * value_dim,
+                                                              value_to_insert.begin() + (i + 1) * value_dim));
+  }
+  EXPECT_EQ(keys_values.size(), key_num);
+
+  // Keys, values and statuses check tensor.
+  std::vector<Key> keys_to_check(key_num);
+  std::vector<Value> values_to_check(key_num * value_dim);
+  std::vector<HashTableElementStatus> statuses_to_check(key_num);
+
+  // Test all api of cpu hash table.
+  EXPECT_TRUE(hash_table.Insert(keys_to_insert.data(), key_num, value_to_insert.data(), nullptr));
+
+  std::vector<HashTableExportData> full_export_data, incre_export_data;
+  bool last_slice = false;
+  while (!last_slice) {
+    HashTableExportData ret;
+    EXPECT_NO_THROW(ret = hash_table.ExportSlice(false, &last_slice, slice_size_in_mb));
+    EXPECT_EQ(ret[0]->size(), sizeof(Key) * slice_num);
+    EXPECT_EQ(ret[1]->size(), sizeof(Value) * value_dim * slice_num);
+    EXPECT_EQ(ret[2]->size(), sizeof(HashTableElementStatus) * slice_num);
+    full_export_data.push_back(ret);
+  }
+
+  last_slice = false;
+  while (!last_slice) {
+    HashTableExportData ret;
+    EXPECT_NO_THROW(ret = hash_table.ExportSlice(true, &last_slice, slice_size_in_mb));
+    EXPECT_EQ(ret[0]->size(), sizeof(Key) * slice_num);
+    EXPECT_EQ(ret[1]->size(), sizeof(Value) * value_dim * slice_num);
+    EXPECT_EQ(ret[2]->size(), sizeof(HashTableElementStatus) * slice_num);
+    incre_export_data.push_back(ret);
+  }
+
+  EXPECT_FALSE(hash_table.is_dirty());
+
+  EXPECT_EQ(full_export_data.size(), incre_export_data.size());
+  EXPECT_EQ(full_export_data.size(), key_num / slice_num);
+
+  for (size_t i = 0; i < full_export_data.size(); ++i) {
+    EXPECT_EQ(*full_export_data[i][0], *incre_export_data[i][0]);
+    EXPECT_EQ(*full_export_data[i][1], *incre_export_data[i][1]);
+    EXPECT_EQ(*full_export_data[i][2], *incre_export_data[i][2]);
+  }
+
+  std::map<Key, std::vector<Value>> keys_values_to_check;
+  for (auto &item : full_export_data) {
+    auto &key_data = item[0];
+    auto &value_data = item[1];
+    auto &status_data = item[2];
+    size_t slice_key_num = key_data->size() / sizeof(Key);
+    Key *key_ptr = reinterpret_cast<Key *>(key_data->data());
+    Value *value_ptr = reinterpret_cast<Value *>(value_data->data());
+    HashTableElementStatus *status_ptr = reinterpret_cast<HashTableElementStatus *>(status_data->data());
+
+    for (size_t i = 0; i < slice_key_num; i++) {
+      keys_values_to_check.emplace(key_ptr[i],
+                                   std::vector<Value>(value_ptr + i * value_dim, value_ptr + (i + 1) * value_dim));
+
+      EXPECT_EQ(status_ptr[i], HashTableElementStatus::kModified);
+    }
+  }
+
+  EXPECT_EQ(keys_values_to_check.size(), key_num);
+  EXPECT_EQ(keys_values_to_check, keys_values);
+
+  EXPECT_TRUE(hash_table.Clear());
+}
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore

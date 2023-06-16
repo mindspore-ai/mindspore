@@ -774,6 +774,14 @@ HashTableExportData GPUHashTable<Key, Value, Allocator>::Export(bool incremental
 }
 
 template <typename Key, typename Value, typename Allocator>
+HashTableExportData GPUHashTable<Key, Value, Allocator>::ExportSlice(bool incremental, bool *last_slice, size_t) {
+  MS_EXCEPTION_IF_NULL(last_slice);
+
+  *last_slice = true;
+  return Export(incremental);
+}
+
+template <typename Key, typename Value, typename Allocator>
 HashTableExportData GPUHashTable<Key, Value, Allocator>::ExportFully(cudaStream_t stream) {
   if (size_ == 0) {
     return {std::make_shared<std::vector<char>>(), std::make_shared<std::vector<char>>(),

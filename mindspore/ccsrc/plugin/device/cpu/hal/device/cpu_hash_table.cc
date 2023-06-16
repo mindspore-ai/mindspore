@@ -325,27 +325,78 @@ bool CPUHashTable<Key, Value>::Import(const DataLenPair &input_data) {
 }
 
 template <typename Key, typename Value>
-HashTableExportData CPUHashTable<Key, Value>::ExportIncrementally() {
+HashTableExportData CPUHashTable<Key, Value>::ExportSliceFully(size_t begin, size_t end) {
+  if (end < begin) {
+    MS_LOG(EXCEPTION) << "Invalid export position parameter, begin: " << begin << ", end: " << end;
+  }
+
+  const size_t size = end - begin;
+  auto keys = std::make_shared<std::vector<char>>(size * sizeof(Key));
+  auto keys_data = reinterpret_cast<Key *>(keys->data());
+  auto values = std::make_shared<std::vector<char>>(size * value_size_);
+  auto values_data = reinterpret_cast<Value *>(values->data());
+  auto statuses = std::make_shared<std::vector<char>>(size * sizeof(HashTableElementStatus));
+  auto statuses_data = reinterpret_cast<Status *>(statuses->data());
+
+  size_t index = 0;
+  auto begin_iter = values_.begin();
+  std::advance(begin_iter, begin);
+  auto end_iter = values_.begin();
+  std::advance(end_iter, end);
+  for (auto iter = begin_iter; iter != end_iter; iter++) {
+    auto key = iter->first;
+    auto value = iter->second.first;
+    auto status = iter->second.second;
+
+    // Export the key.
+    keys_data[index] = key;
+    // Export the status.
+    statuses_data[index] = status;
+
+    // Export the value.
+    size_t offset = index * value_dim_;
+    size_t src_size = value_size_;
+    size_t dst_size = value_size_;
+    auto ret = memcpy_s(values_data + offset, dst_size, value, src_size);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+    }
+    ++index;
+  }
+  return {keys, values, statuses};
+}
+
+template <typename Key, typename Value>
+HashTableExportData CPUHashTable<Key, Value>::ExportSliceIncrementally(size_t begin, size_t end) {
+  if (end < begin) {
+    MS_LOG(EXCEPTION) << "Invalid export position parameter, begin: " << begin << ", end: " << end;
+  }
+
+  auto begin_iter = values_.begin();
+  std::advance(begin_iter, begin);
+  auto end_iter = values_.begin();
+  std::advance(end_iter, end);
+
   // 1. Count export number of all modified elememts.
-  size_t update_elements_size = std::count_if(
-    values_.begin(), values_.end(), [](typename std::unordered_map<Key, ValueStatusPair>::const_reference item) {
-      return item.second.second == Status::kModified;
+  size_t update_elements_size =
+    std::count_if(begin_iter, end_iter, [](typename std::unordered_map<Key, ValueStatusPair>::const_reference item) {
+      return item.second.second != Status::kUnchanged;
     });
 
   auto keys = std::make_shared<std::vector<char>>(update_elements_size * sizeof(Key));
   auto keys_data = reinterpret_cast<Key *>(keys->data());
   auto values = std::make_shared<std::vector<char>>(update_elements_size * value_size_);
-  auto value_data = reinterpret_cast<Value *>(values->data());
+  auto values_data = reinterpret_cast<Value *>(values->data());
   auto statuses = std::make_shared<std::vector<char>>(update_elements_size * sizeof(HashTableElementStatus));
   auto statuses_data = reinterpret_cast<Status *>(statuses->data());
 
   // 2. Export all modified elememts.
   size_t index = 0;
-  for (auto iter = values_.begin(); iter != values_.end(); iter++) {
+  for (auto iter = begin_iter; iter != end_iter; iter++) {
     auto key = iter->first;
     auto value = iter->second.first;
     auto status = iter->second.second;
-    if (status != Status::kModified) {
+    if (status == Status::kUnchanged) {
       continue;
     }
 
@@ -358,41 +409,7 @@ HashTableExportData CPUHashTable<Key, Value>::ExportIncrementally() {
     size_t offset = index * value_dim_;
     size_t src_size = value_size_;
     size_t dst_size = value_size_;
-    auto ret = memcpy_s(value_data + offset, dst_size, value, src_size);
-    if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
-    }
-    ++index;
-  }
-  return {keys, values, statuses};
-}
-
-template <typename Key, typename Value>
-HashTableExportData CPUHashTable<Key, Value>::ExportFully() {
-  const size_t size = values_.size();
-  auto keys = std::make_shared<std::vector<char>>(size * sizeof(Key));
-  auto keys_data = reinterpret_cast<Key *>(keys->data());
-  auto values = std::make_shared<std::vector<char>>(size * value_size_);
-  auto value_data = reinterpret_cast<Value *>(values->data());
-  auto statuses = std::make_shared<std::vector<char>>(size * sizeof(HashTableElementStatus));
-  auto statuses_data = reinterpret_cast<Status *>(statuses->data());
-
-  size_t index = 0;
-  for (auto iter = values_.begin(); iter != values_.end(); iter++) {
-    auto key = iter->first;
-    auto value = iter->second.first;
-    auto status = iter->second.second;
-
-    // Export the key.
-    keys_data[index] = key;
-    // Export the status.
-    statuses_data[index] = status;
-
-    // Export the value.
-    size_t offset = index * value_dim_;
-    size_t src_size = value_size_;
-    size_t dst_size = value_size_;
-    auto ret = memcpy_s(value_data + offset, dst_size, value, src_size);
+    auto ret = memcpy_s(values_data + offset, dst_size, value, src_size);
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
     }
@@ -406,10 +423,58 @@ HashTableExportData CPUHashTable<Key, Value>::Export(bool incremental) {
   // Update is_dirty_ to false because already get latest content after export.
   is_dirty_ = false;
 
-  if (incremental) {
-    return ExportIncrementally();
+  if (size() == 0) {
+    return HashTableExportData();
   }
-  return ExportFully();
+
+  size_t begin = 0;
+  size_t end = size();
+
+  if (incremental) {
+    return ExportSliceIncrementally(begin, end);
+  }
+  return ExportSliceFully(begin, end);
+}
+
+template <typename Key, typename Value>
+HashTableExportData CPUHashTable<Key, Value>::ExportSlice(bool incremental, bool *last_slice,
+                                                          size_t slice_size_in_mega_bytes) {
+  MS_EXCEPTION_IF_NULL(last_slice);
+  if (size() == 0) {
+    *last_slice = true;
+    is_dirty_ = false;
+    return HashTableExportData();
+  }
+
+  constexpr size_t mega_byte_to_byte_rate = static_cast<size_t>(1) << 20;
+  size_t slice_size = slice_size_in_mega_bytes * mega_byte_to_byte_rate / value_size_;
+  if (slice_size == 0) {
+    MS_LOG(EXCEPTION) << "The parameter[slice_size_in_mega_bytes] " << slice_size_in_mega_bytes
+                      << " should be greater than the length in meta bytes of one element in hash map: "
+                      << value_size_ / mega_byte_to_byte_rate;
+  }
+
+  if (end_ == 0) {
+    end_ = std::min(begin_ + slice_size, size());
+  }
+
+  HashTableExportData ret;
+  if (incremental) {
+    ret = ExportSliceIncrementally(begin_, end_);
+  } else {
+    ret = ExportSliceFully(begin_, end_);
+  }
+
+  *last_slice = (end_ == size());
+  if (*last_slice) {
+    is_dirty_ = false;
+    begin_ = 0;
+    end_ = 0;
+  } else {
+    begin_ += slice_size;
+    end_ = std::min(begin_ + slice_size, size());
+  }
+  return ret;
 }
 
 template <typename Key, typename Value>

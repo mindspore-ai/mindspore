@@ -22,6 +22,7 @@
 #include <vector>
 #include <tuple>
 #include <utility>
+#include <memory>
 
 namespace mindspore {
 namespace distributed {
@@ -46,6 +47,7 @@ struct ConstDataWithLen {
 };
 
 // This Class provides upper-layer interfaces for persistent storage.
+template <typename KeyType = int32_t, typename ValueType = float>
 class StorageBase {
  public:
   StorageBase() = default;
@@ -85,6 +87,9 @@ class StorageBase {
   // Parameter[out] `values`: The values corresponding to keys need to read, containing data pointer and data buffer
   // length.
   virtual void Read(const ConstDataWithLen &keys, const DataWithLen &values) {}
+
+  // Dump all keys of all key-value pairs in storage.
+  virtual std::unique_ptr<std::vector<KeyType>> GetAllKeys() const { return nullptr; }
 };
 }  // namespace storage
 }  // namespace distributed

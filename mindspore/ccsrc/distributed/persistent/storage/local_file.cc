@@ -401,7 +401,8 @@ void LocalFile<KeyType, ValueType>::Read(const ConstDataWithLen &keys, const Dat
     // 1. Find the position offset measured in bytes from the beginning of this file by keys.
     auto iter = keys_to_locations_.find(keys_data[i]);
     if (iter == keys_to_locations_.end()) {
-      MS_LOG(EXCEPTION) << "Can not find key: " << keys_data[i] << " to locate the position in file.";
+      MS_LOG(DEBUG) << "Can not find key: " << keys_data[i] << " to locate the position in file.";
+      continue;
     }
     const std::pair<size_t, size_t> &offset = iter->second;
 
@@ -412,6 +413,19 @@ void LocalFile<KeyType, ValueType>::Read(const ConstDataWithLen &keys, const Dat
     MS_EXCEPTION_IF_CHECK_FAIL(block_file->PRead(values_data + i * element_size_, element_len, offset_in_block),
                                "PRead file failed.");
   }
+}
+
+template <typename KeyType, typename ValueType>
+std::unique_ptr<std::vector<KeyType>> LocalFile<KeyType, ValueType>::GetAllKeys() const {
+  size_t keys_num = keys_to_locations_.size();
+  auto keys_vec = std::make_unique<std::vector<KeyType>>(keys_num);
+  MS_EXCEPTION_IF_NULL(keys_vec);
+  size_t index = 0;
+  for (const auto &item : keys_to_locations_) {
+    keys_vec->at(index) = item.first;
+    ++index;
+  }
+  return std::move(keys_vec);
 }
 
 template class LocalFile<int32_t, bool>;
