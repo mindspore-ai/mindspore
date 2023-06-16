@@ -3365,6 +3365,8 @@ class DataFormatDimMap(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor([0, 1, 2, 3], mindspore.int32)
         >>> dfdm = ops.DataFormatDimMap()
         >>> output = dfdm(input_x)

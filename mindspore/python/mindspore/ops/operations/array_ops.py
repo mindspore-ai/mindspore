@@ -234,6 +234,9 @@ class ExpandDims(PrimitiveWithCheck):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
         >>> expand_dims = ops.ExpandDims()
         >>> output = expand_dims(input_tensor, 0)
@@ -276,6 +279,9 @@ class DType(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
         >>> output = ops.DType()(input_tensor)
         >>> print(output)
@@ -1035,6 +1041,9 @@ class Gather(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> # case1: input_indices is a Tensor with shape (5, ).
         >>> input_params = Tensor(np.array([1, 2, 3, 4, 5, 6, 7]), mindspore.float32)
         >>> input_indices = Tensor(np.array([0, 2, 4, 2, 6]), mindspore.int32)
@@ -1733,6 +1742,8 @@ class FillV2(PrimitiveWithCheck):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> fillV2 = ops.FillV2()
         >>> output = fillV2(Tensor([2, 3], mindspore.int32), Tensor(1, mindspore.float32))
         >>> print(output)
@@ -2796,6 +2807,8 @@ class Concat(PrimitiveWithCheck):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x1 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
         >>> input_x2 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
         >>> op = ops.Concat()
@@ -3942,6 +3955,7 @@ class Diag(PrimitiveWithCheck):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor([1, 2, 3, 4]).astype('int32')
         >>> diag = ops.Diag()
         >>> output = diag(input_x)
@@ -4322,6 +4336,9 @@ class GatherNd(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> op = ops.GatherNd()
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
@@ -5650,6 +5667,9 @@ class DepthToSpace(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.random.rand(1, 12, 1, 1), mindspore.float32)
         >>> block_size = 2
         >>> depth_to_space = ops.DepthToSpace(block_size)
@@ -6498,6 +6518,9 @@ class GatherD(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[1, 2], [3, 4]]), mindspore.int32)
         >>> index = Tensor(np.array([[0, 0], [1, 0]]), mindspore.int32)
         >>> dim = 1
@@ -8389,6 +8412,8 @@ class FillDiagonal(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).astype(np.float32))
         >>> fill_value = 9.9
         >>> fill_diagonal = ops.FillDiagonal(fill_value)
@@ -8479,6 +8504,8 @@ class HammingWindow(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> # case 1: periodic=True.
         >>> length = Tensor(np.array([6]).astype(np.int32))
         >>> hamming_window = ops.HammingWindow(periodic=True)
