@@ -113,3 +113,44 @@ template CUDA_LIB_EXPORT cudaError_t CudaIm2Col(const int batches, const int x_c
                                                 const int dilation_height, const int dilation_width,
                                                 const int pad_height, const int pad_width, Complex128 *x, Complex128 *y,
                                                 int *const maxBlockSize, const uint32_t device_id, cudaStream_t stream);
+
+template CUDA_LIB_EXPORT cudaError_t CudaIm2Col(const int batches, const int x_channel, const int x_height,
+                                                const int x_width, const int y_out_plane, const int y_height,
+                                                const int y_width, const int kernel_height, const int kernel_width,
+                                                const int stride_height, const int stride_width,
+                                                const int dilation_height, const int dilation_width,
+                                                const int pad_height, const int pad_width, uint8_t *x, uint8_t *y,
+                                                int *const maxBlockSize, const uint32_t device_id, cudaStream_t stream);
+
+template CUDA_LIB_EXPORT cudaError_t CudaIm2Col(const int batches, const int x_channel, const int x_height,
+                                                const int x_width, const int y_out_plane, const int y_height,
+                                                const int y_width, const int kernel_height, const int kernel_width,
+                                                const int stride_height, const int stride_width,
+                                                const int dilation_height, const int dilation_width,
+                                                const int pad_height, const int pad_width, int8_t *x, int8_t *y,
+                                                int *const maxBlockSize, const uint32_t device_id, cudaStream_t stream);
+
+template CUDA_LIB_EXPORT cudaError_t CudaIm2Col(const int batches, const int x_channel, const int x_height,
+                                                const int x_width, const int y_out_plane, const int y_height,
+                                                const int y_width, const int kernel_height, const int kernel_width,
+                                                const int stride_height, const int stride_width,
+                                                const int dilation_height, const int dilation_width,
+                                                const int pad_height, const int pad_width, int16_t *x, int16_t *y,
+                                                int *const maxBlockSize, const uint32_t device_id, cudaStream_t stream);
+
+template CUDA_LIB_EXPORT cudaError_t CudaIm2Col(const int batches, const int x_channel, const int x_height,
+                                                const int x_width, const int y_out_plane, const int y_height,
+                                                const int y_width, const int kernel_height, const int kernel_width,
+                                                const int stride_height, const int stride_width,
+                                                const int dilation_height, const int dilation_width,
+                                                const int pad_height, const int pad_width, int32_t *x, int32_t *y,
+                                                int *const maxBlockSize, const uint32_t device_id, cudaStream_t stream);
+
+template CUDA_LIB_EXPORT cudaError_t CudaIm2Col(const int batches, const int x_channel, const int x_height,
+                                                const int x_width, const int y_out_plane, const int y_height,
+                                                const int y_width, const int kernel_height, const int kernel_width,
+                                                const int stride_height, const int stride_width,
+                                                const int dilation_height, const int dilation_width,
+                                                const int pad_height, const int pad_width, int64_t *x, int64_t *y,
+                                                int *const maxBlockSize, const uint32_t device_id, cudaStream_t stream);
+
