@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
+#ifdef MSLITE_ENABLE_GRAPH_KERNEL
 #include <fstream>
 #include <string>
 #include <vector>
 #include <memory>
 #include <unordered_map>
 #include "nlohmann/json.hpp"
-#include "graph/operator.h"
 #include "transform/graph_ir/transform_util.h"
 #include "backend/common/graph_kernel/model/op_register.h"
+#endif
+#include "graph/operator.h"
 
 namespace mindspore {
 namespace transform {
+#ifdef MSLITE_ENABLE_GRAPH_KERNEL
 using mindspore::graphkernel::inner::DAttrs;
 using mindspore::graphkernel::inner::Node;
 using mindspore::graphkernel::inner::NodeBase;
@@ -293,5 +296,8 @@ ge::graphStatus CustomAkgOpInferFunc(ge::Operator &op) {
   MS_LOG(INFO) << "End infer shape for op " << op_key;
   return ge::GRAPH_SUCCESS;
 }
+#else
+ge::graphStatus CustomAkgOpInferFunc(ge::Operator &) { return ge::GRAPH_SUCCESS; }
+#endif
 }  // namespace transform
 }  // namespace mindspore
