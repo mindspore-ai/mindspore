@@ -15,6 +15,7 @@
 """Communication management API"""
 import os
 from mindspore import context
+from mindspore import log as logger
 from mindspore.parallel._ps_context import _is_ps_mode, _is_role_pserver, _is_role_sched, _get_ps_context
 from mindspore.communication._comm_helper import Backend, _get_rank_helper, _get_size_helper, \
     _get_world_rank_from_group_rank_helper, _get_group_rank_from_world_rank_helper, \
@@ -34,6 +35,10 @@ DEFAULT_WORLD_COMM_GROUP = HCCL_WORLD_COMM_GROUP
 
 def _set_rank_from_mpi():
     """Set environment variable according to OMPI"""
+    if os.getenv("MS_ROLE"):
+        logger.warning("Launching dynamic cluster with OpenMPI. "
+                       "MindSpore will prioritize the use of dynamic cluster. Do not set env from OpenMPI.")
+
     ompi_rank_id = os.getenv("OMPI_COMM_WORLD_RANK")
     ompi_device_id = os.getenv("OMPI_COMM_WORLD_LOCAL_RANK")
     ompi_rank_size = os.getenv("OMPI_COMM_WORLD_SIZE")

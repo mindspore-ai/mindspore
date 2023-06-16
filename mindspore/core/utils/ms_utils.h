@@ -111,6 +111,9 @@ static inline bool IsLittleByteOrder() {
 }
 
 static inline bool UseMPI() {
+  if (!GetEnv("MS_ROLE").empty()) {
+    return false;
+  }
   // If these OpenMPI environment variables are set, we consider this process is launched by OpenMPI.
   std::string ompi_command_env = GetEnv("OMPI_COMMAND");
   std::string pmix_rank_env = GetEnv("PMIX_RANK");
