@@ -1388,6 +1388,8 @@ class CumProd(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> a, b, c, = 1, 2, 3
         >>> x = Tensor(np.array([a, b, c]).astype(np.float32))
         >>> op0 = ops.CumProd()
@@ -1817,6 +1819,8 @@ class CumSum(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float32))
         >>> cumsum = ops.CumSum()
         >>> # case 1: along the axis 0
@@ -3043,6 +3047,8 @@ class HistogramFixedWidth(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor([-1.0, 0.0, 1.5, 2.0, 5.0, 15], mindspore.float16)
         >>> range_op = Tensor([0.0, 5.0], mindspore.float16)
         >>> hist = ops.HistogramFixedWidth(5)
@@ -3156,6 +3162,9 @@ class Hypot(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x1 = Tensor(np.array([3., 5., 7.]))
         >>> x2 = Tensor(np.array([4., 12., 24.]))
         >>> hypot_ = ops.Hypot()
@@ -3208,6 +3217,8 @@ class Heaviside(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([-1.5, 0., 2.]))
         >>> values = Tensor(np.array([0.5]))
         >>> heaviside = ops.Heaviside()
@@ -5034,6 +5045,9 @@ class FloatStatus(Primitive):
         ``GPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> float_status = ops.FloatStatus()
         >>> x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
         >>> result = float_status(x)
@@ -7212,6 +7226,8 @@ class Igamma(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> a = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
         >>> x = Tensor(np.array([2.0, 3.0, 4.0, 5.0]).astype(np.float32))
         >>> igamma = ops.Igamma()
@@ -7249,6 +7265,8 @@ class Igammac(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> a = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
         >>> x = Tensor(np.array([2.0, 3.0, 4.0, 5.0]).astype(np.float32))
         >>> igammac = ops.Igammac()
@@ -8926,6 +8944,9 @@ class Fmax(Primitive):
         ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x1 = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
         >>> x2 = Tensor(np.array([4.0, 2.0, 6.0]), mindspore.float32)
         >>> fmax = ops.Fmax()
@@ -8974,6 +8995,9 @@ class Eig(Primitive):
         ``Ascend`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[1.0, 0.0], [0.0, 2.0]]), mindspore.float32)
         >>> eig = ops.Eig(compute_v=True)
         >>> u, v = eig(input_x)
