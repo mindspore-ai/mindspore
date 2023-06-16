@@ -36,7 +36,7 @@ class TestReduceInt8 : public mindspore::CommonTest {
  public:
   TestReduceInt8() = default;
   void Prepare(const std::vector<int> &in_shape, const std::vector<int> &out_shape, int8_t *input_data,
-               int8_t *output_data, ReduceMode mode, const int *axes, const int num_axes);
+               int8_t *output_data, ReduceMode mode, int *axes, const int num_axes);
   void TearDown() override;
 
  public:
@@ -44,8 +44,9 @@ class TestReduceInt8 : public mindspore::CommonTest {
 
   ReduceParameter param_ = {};
   Tensor in_tensor_;
+  Tensor axes_tensor_;
   Tensor out_tensor_;
-  std::vector<Tensor *> inputs{&in_tensor_};
+  std::vector<Tensor *> inputs{&in_tensor_, &axes_tensor_};
   std::vector<Tensor *> outputs{&out_tensor_};
   kernel::KernelKey desc_ = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_ReduceFusion};
   kernel::KernelCreator creator_ = nullptr;
@@ -57,17 +58,24 @@ class TestReduceInt8 : public mindspore::CommonTest {
 };
 
 void TestReduceInt8::TearDown() {
+  axes_tensor_.set_data(nullptr);
+  kernel_->set_parameter(nullptr);
   delete kernel_;
   in_tensor_.set_data(nullptr);
+  axes_tensor_.set_data(nullptr);
   out_tensor_.set_data(nullptr);
 }
 
 void TestReduceInt8::Prepare(const std::vector<int> &in_shape, const std::vector<int> &out_shape, int8_t *input_data,
-                             int8_t *output_data, ReduceMode mode, const int *axes, const int num_axes) {
+                             int8_t *output_data, ReduceMode mode, int *axes, const int num_axes) {
   in_tensor_.set_data_type(kNumberTypeInt8);
   in_tensor_.set_shape(in_shape);
   in_tensor_.set_data(input_data);
   in_tensor_.AddQuantParam(quant_in_);
+
+  axes_tensor_.set_data_type(kNumberTypeInt32);
+  axes_tensor_.set_shape({num_axes});
+  axes_tensor_.set_data(axes);
 
   out_tensor_.set_data_type(kNumberTypeInt8);
   out_tensor_.set_shape(out_shape);
@@ -75,12 +83,11 @@ void TestReduceInt8::Prepare(const std::vector<int> &in_shape, const std::vector
   out_tensor_.AddQuantParam(quant_out_);
 
   param_.mode_ = static_cast<int>(mode);
-  param_.num_axes_ = num_axes;
-  memcpy(param_.axes_, axes, num_axes * sizeof(int));
 
   creator_ = lite::KernelRegistry::GetInstance()->GetCreator(desc_);
 
   ctx_.thread_num_ = thread_num_;
+  param_.op_parameter_.thread_num_ = thread_num_;
   ASSERT_EQ(lite::RET_OK, ctx_.Init());
   kernel_ = creator_(inputs, outputs, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc_);
   auto ret = kernel_->Prepare();
@@ -121,7 +128,7 @@ TEST_F(TestReduceInt8, MeanAllAxis) {
                            80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95};
   int8_t output_data[1] = {0};
   int axes[] = {0};
-  int num_axes = 0;
+  int num_axes = 1;
   std::vector<int> input_shape = {2, 4, 4, 3};
   std::vector<int> output_shape = {1};
   int output_size = 1;
@@ -257,8 +264,8 @@ TEST_F(TestReduceInt8, MinAll) {
                            60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
                            80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95};
   int8_t output_data[1] = {0};
-  int axes[] = {0};
-  int num_axes = 0;
+  int axes[] = {0, 1, 2, 3};
+  int num_axes = 4;
   std::vector<int> input_shape = {2, 4, 4, 3};
   std::vector<int> output_shape = {1};
   int output_size = 1;

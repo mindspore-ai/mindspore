@@ -94,7 +94,6 @@
 #include "nnacl/infer/lstm_infer.h"
 #include "nnacl/infer/matmul_infer.h"
 #include "nnacl/infer/max_min_grad_infer.h"
-#include "nnacl/infer/mean_infer.h"
 #include "nnacl/infer/mfcc_infer.h"
 #include "nnacl/infer/nllloss_grad_infer.h"
 #include "nnacl/infer/nllloss_infer.h"

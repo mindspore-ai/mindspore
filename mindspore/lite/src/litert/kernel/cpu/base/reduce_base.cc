@@ -121,8 +121,7 @@ int ReduceBaseCPUKernel::Prepare() {
       (void)memcpy(axes_, axes_tensor->data(), axes_tensor->Size());
     }
   } else {
-    num_axes_ = reduce_param->num_axes_;
-    (void)memcpy(axes_, reduce_param->axes_, sizeof(reduce_param->axes_));
+    num_axes_ = 0;
   }
 
   mode_ = reduce_param->mode_;

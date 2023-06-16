@@ -103,23 +103,6 @@ void ReduceInt8CPUKernel::Match4DReducePattern() {
   }
 }
 
-int ReduceInt8CPUKernel::CheckQuantParams() {
-  lite::Tensor *input = in_tensors_.at(0);
-  lite::Tensor *output = out_tensors_.at(0);
-  MS_CHECK_FALSE_MSG(input->quant_params().empty(), RET_ERROR, "input quant params is empty.");
-  MS_CHECK_FALSE_MSG(output->quant_params().empty(), RET_ERROR, "input quant params is empty.");
-  double epsilon = std::numeric_limits<double>::epsilon();
-  auto input_quant_param = input->quant_params().front();
-  auto output_quant_param = output->quant_params().front();
-  MS_CHECK_FALSE_MSG(input_quant_param.scale < -epsilon, RET_ERROR, "The input scale value should be positive.");
-  MS_CHECK_FALSE_MSG(output_quant_param.scale < -epsilon, RET_ERROR, "The output scale value should be positive.");
-  if (input_quant_param.scale < epsilon || output_quant_param.scale < epsilon) {
-    MS_LOG(ERROR) << "Scale value is equal 0.0";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
 int ReduceInt8CPUKernel::Prepare() {
   auto ret = ReduceBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
@@ -399,8 +382,6 @@ void ReduceInt8CPUKernel::FreeTmpBuffer() {
     begin_src_data_ = nullptr;
   }
 }
-
-int ReduceInt8CPUKernel::ReSize() { return ReduceBaseCPUKernel::ReSize(); }
 
 int ReduceInt8Impl(void *cdata, int task_id, float, float) {
   auto reduce = reinterpret_cast<ReduceInt8CPUKernel *>(cdata);

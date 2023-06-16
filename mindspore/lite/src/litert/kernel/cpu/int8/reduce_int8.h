@@ -42,12 +42,10 @@ class ReduceInt8CPUKernel : public ReduceBaseCPUKernel {
   ~ReduceInt8CPUKernel() override;
 
   int Prepare() override;
-  int ReSize() override;
   int Run() override;
   int Fast4DReduceMeanHWImpl();
   int Reduce4DExecute(int task_id);
   int CallReduceUnit(int task_id);
-  int ReduceLastAxis(int task_id);
 
  private:
   int MallocTmpBuffer();
@@ -61,9 +59,7 @@ class ReduceInt8CPUKernel : public ReduceBaseCPUKernel {
   int CalculateQuantArgsReduceSumSquare();
   void FreeMultipliers();
   void GetQuantArgs(size_t i);
-  int CheckQuantParams();
 
-  ReduceParameter *param_ = nullptr;
   ReduceQuantArg quant_arg_ = {};
   int8_t *nchw_in_data_ = nullptr;
   int32_t bias_ = 0;

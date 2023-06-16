@@ -19,16 +19,11 @@
 #include "nnacl/op_base.h"
 
 typedef struct ReduceParameter {
-  // primitive parameter
   OpParameter op_parameter_;
-  int axes_[MAX_SHAPE_SIZE];
   bool keep_dims_;
   int mode_;
   bool reduce_to_end_;
   float coeff;
-
-  // other parameter
-  int num_axes_;
 } ReduceParameter;
 
 #endif  // NNACL_REDUCE_PARAMETER_H_
