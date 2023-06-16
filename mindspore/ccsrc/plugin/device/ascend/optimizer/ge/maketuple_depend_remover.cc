@@ -31,6 +31,8 @@ constexpr auto var = "var";
 constexpr auto maketuple = "maketuple";
 constexpr auto depend = "depend";
 constexpr auto dep_input = "depend_first_input";
+constexpr auto kXs = "Xs";
+constexpr auto kV = "V";
 }  // namespace
 bool MakeTupleDependRemover::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &graph,
                                              const AnfNodePtr &node) const {
@@ -51,13 +53,15 @@ AnfNodePtr SelectInput(const PatternMap &m, const AnfNodePtr &default_node) {
 
 void MakeTupleDependRemover::DefineSrcPattern(SrcPattern *src_pattern) {
   (*src_pattern)
-    .AddVar(var)
+    .AddVar(kV)
+    .AddSeqVar(kXs)
+    .AddCNode(var, {kV, kXs})
     .AddCNode(maketuple, {prim::kPrimMakeTuple})
     .AddCNode(depend, {prim::kPrimDepend, var, maketuple});
 }
 
 void MakeTupleDependRemover::DefineDstPattern(DstPattern *dst_pattern) {
-  (*dst_pattern).AddCNode(dep_input, {prim::kPrimDepend, var, maketuple}, SelectInput);
+  (*dst_pattern).AddCNode(dep_input, {kV, kXs}, SelectInput);
 }
 }  // namespace opt
 }  // namespace mindspore
