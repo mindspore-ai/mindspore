@@ -35,7 +35,9 @@ AbstractBasePtr GetAbstract(const AnfNodePtr &node) {
   const auto &abs = node->abstract();
   if (abs == nullptr) {
     MS_EXCEPTION_IF_CHECK_FAIL(node->isa<ValueNode>(), node->ToString() + " has no abstract");
-    return node->cast<ValueNodePtr>()->value()->ToAbstract();
+    auto node_abs = node->cast<ValueNodePtr>()->value()->ToAbstract();
+    node->set_abstract(node_abs);
+    return node_abs;
   }
   return abs;
 }
@@ -303,6 +305,37 @@ AnfNodePtr PackExpander::ConvertInput(const py::object &arg) const {
   }
 }
 
+void PackExpander::SetMixedPrecisionFlagToGraph() const {
+  auto mixed_type = mix_precision_types_.top();
+  graphs_.top()->set_flag(GRAPH_FLAG_MIX_PRECISION_FP16, mixed_type == MixedPrecisionType::kFP16);
+  graphs_.top()->set_flag(GRAPH_FLAG_MIX_PRECISION_FP32, mixed_type == MixedPrecisionType::kFP32);
+}
+
+bool PackExpander::SetMixedPrecision(const py::object &obj) {
+  if (!py::isinstance<Cell>(obj)) {
+    return false;
+  }
+  auto cell = py::cast<CellPtr>(obj);
+  MS_EXCEPTION_IF_NULL(cell);
+  auto mixed_type = cell->GetMixedPrecisionType();
+  if (mixed_type != MixedPrecisionType::kNotSet &&
+      (mix_precision_types_.empty() || mixed_type != mix_precision_types_.top())) {
+    mix_precision_types_.push(mixed_type);
+    SetMixedPrecisionFlagToGraph();
+    return true;
+  }
+  return false;
+}
+
+void PackExpander::RecoverMixedPrecision() {
+  mix_precision_types_.pop();
+  if (!mix_precision_types_.empty()) {
+    return SetMixedPrecisionFlagToGraph();
+  }
+  graphs_.top()->erase_flag(GRAPH_FLAG_MIX_PRECISION_FP16);
+  graphs_.top()->erase_flag(GRAPH_FLAG_MIX_PRECISION_FP32);
+}
+
 void RegPackExpanderPy(const py::module *m) {
   (void)py::class_<PackNode, std::shared_ptr<PackNode>>(*m, "PackNode")
     .def("get_shape", &PackNode::GetShape, "get shape")
@@ -313,7 +346,9 @@ void RegPackExpanderPy(const py::module *m) {
     .def_static("get_instance", &PackExpander::Instance, "PackExpander get_instance.")
     .def("emit", &PackExpander::Emit, "emit op in current graph")
     .def("begin_graph", &PackExpander::BeginFuncGraph, "begin graph in current graph")
-    .def("end_graph", &PackExpander::EndFuncGraph, "end graph in current graph");
+    .def("end_graph", &PackExpander::EndFuncGraph, "end graph in current graph")
+    .def("set_mixed_precision", &PackExpander::SetMixedPrecision, "set mixed precision by python cell.")
+    .def("recover_mixed_precision", &PackExpander::RecoverMixedPrecision, "recover mixed precision.");
 }
 }  // namespace expander
 }  // namespace mindspore
