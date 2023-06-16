@@ -1894,7 +1894,7 @@ class TupleToArray(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (tuple) - A tuple of numbers. These numbers have the same type.
-          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N,*)` where :math:`*` means any number of additional dimensions.
 
     Outputs:
         Tensor, if the input tuple contains `N` numbers, then the shape of the output tensor is :math:`(N,)`.
@@ -4064,7 +4064,6 @@ class Eye(Primitive):
         - **n** (int) - The number of rows of returned tensor. Constant value only.
         - **m** (int) - The number of columns of returned tensor. Constant value only.
         - **t** (mindspore.dtype) - MindSpore's dtype, the data type of the returned tensor.
-          The data type can be bool or Number.
           Default: ``None`` , the data type of the returned tensor is mindspore.float32.
 
     Outputs:
@@ -4358,7 +4357,7 @@ class ScatterUpdate(Primitive):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-          The shape is 0-D or :math:`(N, *)` where :math:`*` means,any number of additional dimensions.
+          The shape is 0-D or :math:`(N, *)` where :math:`*` means any number of additional dimensions.
         - **indices** (Tensor) - The index of input tensor. With int32 data type.
           If there are duplicates in indices, the order for updating is undefined.
         - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
@@ -4427,7 +4426,7 @@ class ScatterNdUpdate(Primitive):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-          The shape is :math:`(N, *)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N, *)` where :math:`*` means any number of additional dimensions.
         - **indices** (Tensor) - The index of input tensor, with int32 or int64 data type.
         - **updates** (Tensor) - N-D(2D or 3D) Tensor The tensor to be updated to the input tensor,
           has the same type as input. The shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
@@ -4494,7 +4493,7 @@ class ScatterMax(_ScatterOpDynamic):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-          The shape is :math:`(N, *)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N, *)` where :math:`*` means any number of additional dimensions.
         - **indices** (Tensor) - The index to do max operation whose data type must be mindspore.int32 or
           mindspore.int64.
         - **updates** (Tensor) - The tensor that performs the maximum operation with `input_x`,
@@ -4552,7 +4551,7 @@ class ScatterMin(_ScatterOpDynamic):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-          The shape is :math:`(N, *)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N, *)` where :math:`*` means any number of additional dimensions.
         - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32 or
           mindspore.int64.
         - **updates** (Tensor) - The tensor doing the min operation with `input_x`,
@@ -4916,7 +4915,7 @@ class ScatterMul(_ScatterOpDynamic):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-          The shape is :math:`(N, *)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N, *)` where :math:`*` means any number of additional dimensions.
         - **indices** (Tensor) - The index to do multiply operation whose data type must be mstype.int32 or
           mstype.int64.
         - **updates** (Tensor) - The tensor doing the multiply operation with `input_x`,
@@ -5021,7 +5020,7 @@ class ScatterDiv(_ScatterOpDynamic):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-          The shape is :math:`(N, *)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N, *)` where :math:`*` means any number of additional dimensions.
         - **indices** (Tensor) - The index to do divide operation whose data type must be mstype.int32 or
           mstype.int64.
         - **updates** (Tensor) - The tensor doing the divide operation with `input_x`,
@@ -5122,7 +5121,7 @@ class ScatterNdAdd(Primitive):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-          The shape is :math:`(N, *)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N, *)` where :math:`*` means any number of additional dimensions.
         - **indices** (Tensor) - The index to do add operation whose data type must be mindspore.int32.
           The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
         - **updates** (Tensor) - The tensor doing the add operation with `input_x`,
@@ -5196,7 +5195,7 @@ class ScatterNdSub(Primitive):
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
-          The shape is :math:`(N, *)` where :math:`*` means,any number of additional dimensions.
+          The shape is :math:`(N, *)` where :math:`*` means any number of additional dimensions.
         - **indices** (Tensor) - The index to do sub operation whose data type must be mindspore.int32.
           The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
         - **updates** (Tensor) - The tensor doing the sub operation with `input_x`,
@@ -5983,7 +5982,7 @@ class BatchToSpaceNDV2(Primitive):
     Inputs:
         - **input_x** (Tensor) - The input tensor. It must be greater or equal to 2-D
           tensor(equal to 4-D tensor on Ascend), batch dimension must be divisible by product of `block_shape`.
-        - **block_shape** (Union[list(int), tuple(int), int]) - The block shape of dividing block with all value greater
+        - **block_shape** (Tensor) - The block shape of dividing block with all value greater
           than or equal to 1. If `block_shape` is a tuple or list, the length of `block_shape` is M corresponding
           to the number of spatial dimensions. If `block_shape` is an int, the block size of M dimensions are the
           same, equal to `block_shape`. In this case of Ascend, M must be 2.
@@ -5998,6 +5997,15 @@ class BatchToSpaceNDV2(Primitive):
 
     Supported Platforms:
         ``Ascend``
+
+    Examples:
+        >>> block_shape = Tensor(np.array([2, 2]), mindspore.int32)
+        >>> crops = [[0, 0], [0, 0]]
+        >>> input_x = Tensor(np.array([[[[1]]], [[[2]]], [[[3]]], [[[4]]]]), mindspore.float32)
+        >>> output = ops.BatchToSpaceNDV2(input_x, block_shape, crops)
+        >>> print(output)
+        [[[[1.  2.]
+           [3.  4.]]]]
     """
 
     @prim_attr_register
@@ -6564,12 +6572,9 @@ class Range(PrimitiveWithCheck):
             will occur.
 
     Inputs:
-        - **start** (Tensor) - A scalar Tensor. The first number in the sequence. Must have
-          type: int32 ,int64, float32 or float64.
-        - **limit** (Tensor) - A scalar Tensor. Upper limit of the sequence, exclusive. Must
-          have type: int32 ,int64, float32 or float64.
-        - **delta** (Tensor) - A scalar Tensor. Number that increments `start`. Must have
-          type: int32 ,int64, float32 or float64.
+        - **start** (Tensor) - A scalar Tensor. The first number in the sequence.
+        - **limit** (Tensor) - A scalar Tensor. Upper limit of the sequence, exclusive.
+        - **delta** (Tensor) - A scalar Tensor. Number that increments `start`.
 
     Outputs:
        A 1-D Tensor, with the same type as the inputs.
@@ -6905,8 +6910,7 @@ class TensorScatterUpdate(_TensorScatterOp):
 
     Inputs:
         - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
-          The shape is :math:`(N, *)` where :math:`*` means,any number of additional dimensions.
-          The data type is Number.
+          The shape is :math:`(N, *)` where :math:`*` means any number of additional dimensions.
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
           The rank must be at least 2.
         - **update** (Tensor) - The tensor to update the input tensor, has the same type as input, and

@@ -16,7 +16,7 @@ mindspore.ops.OneHot
     输入：
         - **indices** (Tensor) - 输入索引，shape为 :math:`(X_0, \ldots, X_n)` 的Tensor。数据类型必须为int32或int64。
         - **depth** (int) - 输入的Scalar，定义one-hot的深度。
-        - **on_value** (Tensor) - 当 `indices[j] = i` 时，用来填充输出的值。数据类型为float16或float32。
+        - **on_value** (Tensor) - 当 `indices[j] = i` 时，用来填充输出的值。
         - **off_value** (Tensor) - 当 `indices[j] != i` 时，用来填充输出的值。数据类型与 `on_value` 的相同。
 
     输出：

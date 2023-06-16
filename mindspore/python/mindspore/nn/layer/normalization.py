@@ -215,6 +215,7 @@ class BatchNorm1d(_BatchNorm):
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C)` or :math:`(N, C, L)` ,
           where `N` is the batch size, `C` is the number of features or channels, and `L` is the sequence length.
+          Supported types: float16, float32.
 
     Outputs:
         Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C)` or :math:`(N, C, L)` .
@@ -308,7 +309,7 @@ class BatchNorm2d(_BatchNorm):
             Default: ``'NCHW'`` .
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, C, H, W)`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C, H, W)`. Supported types: float16, float32.
 
     Outputs:
         Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C, H, W)`.
@@ -386,6 +387,7 @@ class BatchNorm3d(Cell):
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
+          Supported types: float16, float32.
 
     Outputs:
         Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out}, D_{out},H_{out}, W_{out})`.

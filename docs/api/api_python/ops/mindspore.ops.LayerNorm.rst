@@ -18,9 +18,9 @@ mindspore.ops.LayerNorm
         - **epsilon** (float) - 添加到分母中的值，以确保数据稳定性。默认值： ``1e-7`` 。
 
     输入：
-        - **input_x** (Tensor) - LayerNorm的输入，shape为 :math:`(N, \ldots)` 的Tensor。
-        - **gamma** (Tensor) - 可学习参数 :math:`\gamma` ，shape为 :math:`(P_0, \ldots, P_\text{begin_params_axis})` 的Tensor。
-        - **beta** (Tensor) - 可学习参数 :math:`\beta` 。shape为 :math:`(P_0, \ldots, P_\text{begin_params_axis})` 的Tensor。
+        - **input_x** (Tensor) - LayerNorm的输入，shape为 :math:`(N, \ldots)` 的Tensor。支持的数据类型：float16、float32、float64。
+        - **gamma** (Tensor) - 可学习参数 :math:`\gamma` ，shape为 :math:`(P_0, \ldots, P_\text{begin_params_axis})` 的Tensor。支持的数据类型：float16、float32、float64。
+        - **beta** (Tensor) - 可学习参数 :math:`\beta` 。shape为 :math:`(P_0, \ldots, P_\text{begin_params_axis})` 的Tensor。支持的数据类型：float16、float32、float64。
 
     输出：
         tuple[Tensor]，3个Tensor组成的tuple，层归一化输入和更新后的参数。

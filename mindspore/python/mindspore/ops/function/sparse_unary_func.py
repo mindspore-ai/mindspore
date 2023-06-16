@@ -584,7 +584,7 @@ def coo_asin(x: COOTensor) -> COOTensor:
 
     Args:
         x (COOTensor): Input COOTensor. The shape of COOTensor is :math:`(N,*)` ,
-            where :math:`*` means,any number of additional dimensions.
+            where :math:`*` means any number of additional dimensions.
             The data type should be one of the following types: float16, float32, float64, complex64, complex128.
 
     Returns:

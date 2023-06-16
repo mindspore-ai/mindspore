@@ -26,7 +26,7 @@ mindspore.nn.BatchNorm1d
         - **data_format** (str) - 数据格式可为 ``'NHWC'`` 或 ``'NCHW'`` 。默认值： ``'NCHW'`` 。
 
     输入：
-        - **x** (Tensor) - 输入shape为 :math:`(N, C)` 或 :math:`(N, C, L)` 的Tensor，其中 `N` 为batch， `C` 为特征数量或通道数量， `L` 为序列长度。
+        - **x** (Tensor) - 输入shape为 :math:`(N, C)` 或 :math:`(N, C, L)` 的Tensor，其中 `N` 为batch， `C` 为特征数量或通道数量， `L` 为序列长度。支持数据类型：float16、float32。
 
     输出：
         Tensor，归一化后的Tensor，shape为 :math:`(N, C)` 或 :math:`(N, C, L)` 。

@@ -27,7 +27,7 @@ mindspore.nn.BatchNorm3d
         - **use_batch_statistics** (bool) - 如果为 ``True`` ，则使用当前批次数据的平均值和方差值。如果为 ``False`` ，则使用指定的平均值和方差值。如果为 ``None`` ，训练时，将使用当前批次数据的均值和方差，并更新动态均值和方差，验证过程将直接使用动态均值和方差。默认值： ``None`` 。
 
     输入：
-        - **x** (Tensor) - 输入shape为 :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` 的Tensor。
+        - **x** (Tensor) - 输入shape为 :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` 的Tensor。支持数据类型：float16、float32。
 
     输出：
         Tensor，归一化后的Tensor，shape为 :math:`(N, C_{out}, D_{out},H_{out}, W_{out})`。

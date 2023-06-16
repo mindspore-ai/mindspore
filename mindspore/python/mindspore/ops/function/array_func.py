@@ -2381,7 +2381,7 @@ def scatter_mul(input_x, indices, updates):
 
     Args:
         input_x (Parameter): The target tensor to be updated, with data type of Parameter.
-            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+            The shape is :math:`(N,*)` where :math:`*` means any number of additional dimensions.
         indices (Tensor): The index to do mul operation whose data type must be int32 or int64.
         updates (Tensor): The tensor doing the mul operation with `input_x`,
             the data type is same as `input_x`, the shape is `indices.shape + input_x.shape[1:]`.
@@ -5002,7 +5002,7 @@ def tuple_to_array(input_x):
 
     Args:
         input_x (tuple): A tuple of numbers. These numbers have the same type. Only constant value is allowed.
-            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+            The shape is :math:`(N,*)` where :math:`*` means any number of additional dimensions.
 
     Returns:
         Tensor, if the input tuple contains `N` numbers, then the shape of the output tensor is (N,).

@@ -3746,11 +3746,11 @@ class LayerNorm(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, \ldots)`.
-          The input of LayerNorm.
+          The input of LayerNorm. Supported dtypes: float16, float32, float64.
         - **gamma** (Tensor) - Tensor of shape :math:`(P_0, \ldots, P_\text{begin_params_axis})`.
-          The learnable parameter :math:`\gamma` as the scale on norm.
+          The learnable parameter :math:`\gamma` as the scale on norm. Supported dtypes: float16, float32, float64.
         - **beta** (Tensor) - Tensor of shape :math:`(P_0, \ldots, P_\text{begin_params_axis})`.
-          The learnable parameter :math:`\beta` as the scale on norm.
+          The learnable parameter :math:`\beta` as the scale on norm. Supported dtypes: float16, float32, float64.
 
     Outputs:
         tuple[Tensor], tuple of 3 tensors, the normalized input and the updated parameters.
@@ -4031,10 +4031,8 @@ class OneHot(Primitive):
           Data type must be uint8, int32 or int64.
         - **depth** (int) - A scalar defining the depth of the one-hot dimension.
         - **on_value** (Tensor) - A value to fill in output when `indices[j] = i`.
-          Support uint8, uint16, uint32, uint64, int8, int16, int32, int64, float16, float32, float64,
-          bool, complex64, complex128.
         - **off_value** (Tensor) - A value to fill in output when `indices[j] != i`.
-          Has the same data type as `on_value`.
+          It has the same data type as `on_value`.
 
     Outputs:
         Tensor, one-hot tensor. Tensor of shape :math:`(X_0, \ldots, X_{axis}, \text{depth} ,X_{axis+1}, \ldots, X_n)`.
@@ -8466,13 +8464,13 @@ class CTCLossV2(Primitive):
 
     Inputs:
         - **log_probs** (Tensor) - A tensor of shape :math:`(T, C, N)`, where :math:`T` is input length, :math:`N` is
-          batch size and :math:`C` is number of classes (including blank).
+          batch size and :math:`C` is number of classes (including blank). Supported dtypes: float32, float64.
         - **targets** (Tensor) - A tensor of shape :math:`(N, S)`, where :math:`S` is max target length,
-          means the target sequences.
+          means the target sequences. Supported dtypes: int32, int64.
         - **input_lengths** (Union(Tuple, Tensor)) - A tuple or Tensor of shape :math:`(N)`.
-          It means the lengths of the input.
+          It means the lengths of the input. Supported dtypes: int32, int64.
         - **target_lengths** (Union(Tuple, Tensor)) - A tuple or Tensor of shape :math:`(N)`.
-          It means the lengths of the target.
+          It means the lengths of the target. Supported dtypes: int32, int64.
 
     Outputs:
         - **neg_log_likelihood** (Tensor) - A loss value which is differentiable with respect to each input node.
