@@ -765,8 +765,8 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
 
         return deco
 
+    # pylint: disable=missing-docstring
     def set_doc_url(self, doc_url):
-        """Register a doc_url for MultitypeFuncGraph object."""
         self.set_doc_url_(doc_url)
 
 
