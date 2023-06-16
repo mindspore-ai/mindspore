@@ -29,7 +29,64 @@ from ..operations import linalg_ops
 from .._primitive_cache import _get_cache_prim
 
 
-__all__ = ['eig', 'eigvals', 'geqrf', 'svd', 'pinv', 'qr']
+__all__ = ['cond', 'eig', 'eigvals', 'geqrf', 'svd', 'pinv', 'qr']
+
+
+def cond(A, p=None):
+    r"""
+    Returns the matrix norm or vector norm of a given tensor.
+
+    `p` is the calculation mode of norm. The following norm modes are supported.
+
+    ==========================  ================================ ==========================================
+    `p`                         norm for matrices                 norm for vectors
+    ==========================  ================================ ==========================================
+    ``None`` (default)          `2`-norm (see below)              `2`-norm (see below)
+    ``'fro'``                   Frobenius norm                    -- not supported --
+    ``'nuc'``                   nuclear norm                      -- not supported --
+    ``inf``                     :math:`max(sum(abs(x), dim=1))`   :math:`max(abs(x))`
+    ``-inf``                    :math:`min(sum(abs(x), dim=1))`   :math:`min(abs(x))`
+    ``0``                       -- not supported --               :math:`sum(x != 0)`
+    ``1``                       :math:`max(sum(abs(x), dim=0))`   as below
+    ``-1``                      :math:`min(sum(abs(x), dim=0))`   as below
+    ``2``                       largest singular value            as below
+    ``-2``                      smallest singular value           as below
+    other ``int`` or ``float``  -- not supported --               :math:`sum(abs(x)^{p})^{(1 / p)}`
+    ==========================  ================================ ==========================================
+
+    Note:
+        Currently, complex numbers are not supported.
+
+    Args:
+        A (Tensor): Tensor of shape :math:`(*, n)` or :math:`(*, m, n)` where * is zero or more batch dimensions.
+        p (Union[int, float, inf, -inf, 'fro', 'nuc'], optional): norm's mode. Refer to the table above for
+            behavior. Default: ``None``.
+
+    Returns:
+        Tensor, the result of norm calculation on the specified dimension, `dim`, has the same dtype as `A`.
+
+    Raises:
+        TypeError: If `A` is a vector and `p` is a str.
+        ValueError: If `A` is a matrices and `p` is not in valid mode.
+        ValueError: If `A` is a matrix and `p` is an integer that is not in [1, -1, 2, -2].
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> x = ms.Tensor([[1.0, 0.0, -1.0], [0.0, 1.0, 0.0], [1.0, 0.0, 1.0]])
+        >>> print(ms.ops.cond(x))
+        1.4142
+        >>> print(ms.ops.cond(x, 'fro'))
+        1.1623
+    """
+    matrix_inverse = _get_cache_prim(P.MatrixInverse)(adjoint=False)
+    if p is None:
+        p = 2
+    norm_a = F.norm(A, p)
+    norm_inv_a = F.norm(matrix_inverse(A), p)
+    return norm_a * norm_inv_a
 
 
 def eig(A):
@@ -95,6 +152,7 @@ def eigvals(A):
     Examples:
         >>> import mindspore
         >>> from mindspore import Tensor, ops
+        >>> import numpy as np
         >>> input_x = Tensor(np.array([[1.0, 0.0], [0.0, 2.0]]), mindspore.float32)
         >>> u = ops.eigvals(input_x)
         >>> print(u)

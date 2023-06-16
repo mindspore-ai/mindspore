@@ -395,6 +395,7 @@ Reduction函数
     mindspore.ops.adjoint
     mindspore.ops.cholesky
     mindspore.ops.cholesky_solve
+    mindspore.ops.cond
     mindspore.ops.batch_dot
     mindspore.ops.dot
     mindspore.ops.eig
