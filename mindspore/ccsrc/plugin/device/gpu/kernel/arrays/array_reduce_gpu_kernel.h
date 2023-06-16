@@ -24,6 +24,7 @@
 #include <functional>
 #include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/reduce_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
 #include "utils/check_convert_utils.h"
@@ -33,7 +34,7 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
  public:
   ArrayReduceGpuKernelMod() { ResetResource(); }
   explicit ArrayReduceGpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) { ResetResource(); }
-  ~ArrayReduceGpuKernelMod() override { DestroyResource(); }
+  ~ArrayReduceGpuKernelMod() = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -47,62 +48,41 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
-  void DestroyResource() noexcept override {
-    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyReduceTensorDescriptor(reduce_tensor_descriptor_),
-                                       "cudnnDestroyReduceTensorDescriptor failed.");
-    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(inputA_descriptor_),
-                                       "cudnnDestroyTensorDescriptor failed.");
-    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(outputC_descriptor_),
-                                       "cudnnDestroyTensorDescriptor failed.");
-  }
-
  protected:
   void ResetResource() {
-    cudnn_handle_ = nullptr;
-    reduce_tensor_op_ = CUDNN_REDUCE_TENSOR_ADD;
-    data_type_ = CUDNN_DATA_FLOAT;
-    nan_prop_ = CUDNN_NOT_PROPAGATE_NAN;
-    reduce_indices_ = CUDNN_REDUCE_TENSOR_NO_INDICES;
-    reduce_tensor_descriptor_ = nullptr;
-    inputA_descriptor_ = nullptr;
-    outputC_descriptor_ = nullptr;
+    reduce_op_type_ = ReduceSum;
     need_skip_execute_ = false;
     keep_dims_ = false;
     skip_mode_ = false;
     all_match_ = false;
     is_null_input_ = false;
-    complex_op_type = 0;
+    input_num_ = 1;
     input_size_ = 0;
     output_size_ = 0;
     workspace_size_ = 0;
-    int_op_type = 0;
     kernel_name_ = "ArrayReduce";
     axis_.clear();
+    input_reshape_.clear();
+    input_shape_.clear();
+    reduce_first_axis_ = false;
   }
 
-  void InitResource() override {
-    cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateReduceTensorDescriptor(&reduce_tensor_descriptor_),
-                                        "cudnnCreateReduceTensorDescriptor failed.");
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&inputA_descriptor_),
-                                        "cudnnCreateTensorDescriptor failed.");
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&outputC_descriptor_),
-                                        "cudnnCreateTensorDescriptor failed.");
-  }
-
-  void InitCudnnResource();
   void InferArrayReduceType();
+  void FormatAxis(const size_t dims, const std::vector<int> &axis, std::vector<bool> *bitmap);
+  std::vector<size_t> ToRowReduce();
+
+  void GetTransposePerm(size_t *transpose_perm);
+
+  void GetOriginShape(size_t *origin_shape);
+  void SimplyReduce(const ShapeVector input_shape, const std::vector<int> axis);
   void InferInAndOutDesc(const ShapeVector &input_shape, const ShapeVector &output_shape);
   std::vector<KernelAttr> GetOpSupport() override;
   std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);
-  template <typename T, typename S>
-  void LaunchIntKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                       const std::vector<AddressPtr> &outputs, void *stream_ptr);
-  template <typename T, typename S>
-  void LaunchComplexKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  template <typename T>
+  bool LaunchComplexKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                            const std::vector<AddressPtr> &outputs, void *stream_ptr);
   using ReduceFunc =
     std::function<bool(ArrayReduceGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
@@ -116,14 +96,7 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
   static std::map<std::string, std::vector<std::pair<KernelAttr, ReduceFunc>>> kernel_attr_list_;
 
  private:
-  cudnnHandle_t cudnn_handle_;
-  cudnnReduceTensorOp_t reduce_tensor_op_;
-  cudnnDataType_t data_type_;
-  cudnnNanPropagation_t nan_prop_;
-  cudnnReduceTensorIndices_t reduce_indices_;
-  cudnnReduceTensorDescriptor_t reduce_tensor_descriptor_;
-  cudnnTensorDescriptor_t inputA_descriptor_;
-  cudnnTensorDescriptor_t outputC_descriptor_;
+  ReduceType_t reduce_op_type_;
 
   std::vector<int> axis_;
   bool keep_dims_;
@@ -131,13 +104,15 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
   bool need_skip_execute_;
   bool all_match_;
   bool is_null_input_;
-  int complex_op_type;
-  size_t int_op_type;
   size_t input_size_;
   size_t output_size_;
   size_t workspace_size_;
   static constexpr size_t kAxisIndex_{1};
   std::string kernel_type_{"Unknown"};
+  bool reduce_first_axis_;
+  std::vector<size_t> input_reshape_;
+  ShapeVector input_shape_;
+  size_t input_num_;
 };
 }  // namespace kernel
 }  // namespace mindspore
