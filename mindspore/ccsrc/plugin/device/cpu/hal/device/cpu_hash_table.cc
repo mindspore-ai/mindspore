@@ -82,7 +82,16 @@ bool CPUHashTable<Key, Value>::Find(const Key *keys, size_t key_num, bool insert
         MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
         return false;
       }
-    } else if (!initializer_.empty()) {
+      continue;
+    }
+
+    if (!insert_default_value) {
+      MS_LOG(ERROR) << "The key: " << key << " does not exist in the hash table.";
+      return false;
+    }
+
+    // Insert key-value pair into values_ by default_value or initializer
+    if (!initializer_.empty()) {
       // allocate memory for value
       auto value_addr = reinterpret_cast<Value *>(AllocateMemory(value_size_));
       MS_EXCEPTION_IF_NULL(value_addr);
@@ -114,7 +123,7 @@ bool CPUHashTable<Key, Value>::Find(const Key *keys, size_t key_num, bool insert
         MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
         return false;
       }
-    } else if (insert_default_value) {
+    } else {
       // if there's no key in values_
       auto value_addr = reinterpret_cast<Value *>(AllocateMemory(value_size_));
       MS_EXCEPTION_IF_NULL(value_addr);
@@ -127,9 +136,6 @@ bool CPUHashTable<Key, Value>::Find(const Key *keys, size_t key_num, bool insert
         MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
         return false;
       }
-    } else {
-      MS_LOG(ERROR) << "The key: " << key << " does not exist in the hash table.";
-      return false;
     }
   }
   return true;

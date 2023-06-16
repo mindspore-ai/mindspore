@@ -397,6 +397,8 @@ def test_map_parameter_in_construct():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_map_parameter_get_data_api():
     """
@@ -413,7 +415,6 @@ def test_map_parameter_get_data_api():
         print("the_values:", the_values)
 
 
-@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_map_parameter_filter():
@@ -539,7 +540,7 @@ def test_grad_net_on_ascend():
 def test_map_tensor_get_on_ascend():
     """
     Feature: MapParameter
-    Description: Test get api for MapParameter on Ascend.
+    Description: Test get api in Net for MapParameter on Ascend.
     Expectation: get api works as expected.
     """
     class MapTensorNet(nn.Cell):
@@ -547,8 +548,8 @@ def test_map_tensor_get_on_ascend():
             nn.Cell.__init__(self)
             value = np.array([[7, 7, 7], [8, 8, 8]], dtype=np.float32)
             self.value_tensor = ms.Tensor(value)
-            print("value_tensor:", self.value_tensor)
             self.key_tensor = Tensor([1, 2], dtype=ms.int32)
+            # using comment to try different map Parameter
             self.map_tensor = MapParameter(key_tensor=self.key_tensor, value_tensor=self.value_tensor)
             self.map_tensor = MapParameter(key_type=ms.int32, value_type=ms.float32, value_shape=(3,))
             self.map_tensor = MapParameter(key_type=ms.int32, value_type=ms.float32, value_shape=(3,),
@@ -556,9 +557,8 @@ def test_map_tensor_get_on_ascend():
 
         def construct(self, x):
             weight_lookup = self.map_tensor.get(self.key_tensor)
-            print("input x: ", x)
-            print("weight_lookup: ", weight_lookup)
-            print(x * weight_lookup)
+            print("Input x: ", x)
+            print("Get Value from MapTensor: ", weight_lookup)
             return x * weight_lookup
 
     context.set_context(mode=context.GRAPH_MODE)
@@ -567,4 +567,3 @@ def test_map_tensor_get_on_ascend():
     t = t.init_data()
     out = net(t)
     print("out: ", out)
-        
