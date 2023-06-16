@@ -808,11 +808,13 @@ build_aar() {
 
 update_submodule()
 {
-  git submodule update --init graphengine
-  cd "${BASEPATH}/graphengine"
-  git submodule update --init 910/metadef
+  if [[ "${MSLITE_ENABLE_ACL}" == "on" ]] || [[ "${AOS_SDK}" ]]; then
+    git submodule update --init graphengine
+    cd "${BASEPATH}/graphengine"
+    git submodule update --init 910/metadef
+  fi
   cd "${BASEPATH}"
-  if [[ ("X$ENABLE_AKG" == "Xon" && ("${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE}" == "on") || ("${MSLITE_ENABLE_CLOUD_INFERENCE}" == "on")) ]]; then
+  if [[ ("X$ENABLE_AKG" == "Xon" && (("${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE}" == "on") || ("${MSLITE_ENABLE_CLOUD_INFERENCE}" == "on"))) ]]; then
     if [[ ("${MSLITE_ENABLE_ACL}" == "on") ]]; then
       git submodule update --init akg
     else
@@ -922,9 +924,8 @@ fi
 
 INSTALL_PREFIX=${BASEPATH}/output/tmp
 LITE_JAVA_PATH=${BASEPATH}/mindspore/lite/java
-if [[ "${MSLITE_ENABLE_ACL}" == "on" ]] || [[ "${AOS_SDK}" ]]; then
-    update_submodule
-fi
+
+update_submodule
 
 CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_VERBOSE=${ENABLE_VERBOSE}"
 if [[ "${DEBUG_MODE}" == "on" ]]; then
