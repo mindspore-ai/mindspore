@@ -428,6 +428,7 @@ Linear Algebraic Functions
     mindspore.ops.slogdet
     mindspore.ops.qr
     mindspore.ops.trace
+    mindspore.ops.vander
 
 Spectral Functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -5083,6 +5083,63 @@ def _check_var_std_input(input, ddof, keepdims, axis, cls_name):
     return axis
 
 
+def vander(x, N=None):
+    """
+    Generates a Vandermonde matrix. The columns of the output matrix are powers of the input vector.
+    The i-th output column is the input vector raised element-wise to the power of :math:`N - i - 1`.
+
+    Args:
+        x (Tensor): 1-D input array.
+        N (int, optional): Number of columns in the output. Default: ``None``,
+            `N` will be assigned as :math:`len(x)`.
+
+    Returns:
+        Tensor, the columns are :math:`x^0, x^1, ..., x^{(N-1)}`.
+
+    Raises:
+        TypeError: If input `x` is not Tensor.
+        ValueError: If `x` is not 1-D.
+        TypeError: If input `N` is not int.
+        ValueError: If `N` <= 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import Tensor, ops
+        >>> a = Tensor([1., 2., 3., 5.])
+        >>> print(ops.vander(a, N=3))
+        [[1.   1.   1.]
+         [4.   2.   1.]
+         [9.   3.   1.]
+         [25.  5.   1.]]
+        >>> a = Tensor([1., 2., 3., 5.])
+        >>> print(ops.vander(a))
+        [[1.    1.   1.   1.]
+         [8.    4.   2.   1.]
+         [27.   9.   3.   1.]
+         [125.  25.  5.   1.]]
+    """
+    if not isinstance(x, Tensor):
+        raise TypeError(
+            f"For vander, x must be Tensor, but got {type(x)}")
+    if x.ndim != 1:
+        raise ValueError(
+            f"For vander, x must be 1-D, but got dimension = {x.ndim}")
+    if N is None:
+        N = len(x)
+    if not isinstance(N, int):
+        raise TypeError(
+            f"For vander, N must be an integer but got {type(N)}.")
+    if N <= 0:
+        raise ValueError(
+            f"For vander, N must be greater than 0, but got {N}.")
+    exponent = ops.range(Tensor(N-1), Tensor(-1), Tensor(-1))
+    x = F.expand_dims(x, 1)
+    exponent = F.expand_dims(exponent, 0)
+    return F.tensor_pow(x, exponent)
+
+
 def var(input, axis=None, ddof=0, keepdims=False):
     r"""
     Returns the variance of each row of the input Tensor by default, or it can calculate them
@@ -11839,6 +11896,7 @@ __all__ = [
     'atleast_3d',
     'view_as_real',
     'vstack',
+    'vander',
     'row_stack',
     'var',
     'var_mean',

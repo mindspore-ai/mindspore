@@ -428,6 +428,7 @@ Reduction函数
     mindspore.ops.slogdet
     mindspore.ops.qr
     mindspore.ops.trace
+    mindspore.ops.vander
 
 谱函数
 ^^^^^^^^^^^^^
