@@ -210,6 +210,12 @@ class ModelImpl {
   ///
   void SetMsContext();
 
+  bool IsEnableModelSharing(const std::string &model_path);
+
+  bool IsEnableModelSharing(const std::pair<const void *, size_t> &model_buff);
+
+  Status UpdateSharingWorkspaceConfig(const void *model_buff, size_t model_size, const std::string &model_path);
+
   friend class Model;
   friend class Serialization;
 
