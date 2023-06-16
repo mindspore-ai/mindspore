@@ -9893,8 +9893,8 @@ class FractionalMaxPool3DWithFixedKsize(Primitive):
         >>> net = ops.FractionalMaxPool3DWithFixedKsize(ksize = ksize, output_shape = output_shape)
         >>> output, argmax = net(x, random_samples)
         >>> print(output)
-        >>> print(argmax)
         [[[[[13. 16.]]]]]
+        >>> print(argmax)
         [[[[[12 15]]]]]
     """
 
