@@ -44,5 +44,5 @@ mindspore.ops.conv1d
         - **ValueError** - `bias` 的shape不是 :math:`(C_{out})` 。
         - **ValueError** - `stride` 或 `diation` 小于1。
         - **ValueError** - `pad_mode` 不是"same"、"valid"或"pad"。
-        - **ValueError** - `padding` 是一个长度不等于4的tuple。
+        - **ValueError** - `padding` 是一个长度不等于1的tuple。
         - **ValueError** - `pad_mode` 不等于"pad"时，`padding` 大于0。

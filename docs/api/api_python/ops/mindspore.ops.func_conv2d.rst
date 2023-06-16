@@ -30,8 +30,8 @@ mindspore.ops.conv2d
           - **valid**: 在不填充的前提下返回有效计算所得的输出。不满足计算的多余像素会被丢弃。如果设置此模式，则 `padding` 的值必须为0。
           - **pad**: 对输入 `input` 进行填充。在输入的高度和宽度方向上填充 `padding` 大小的0。如果设置此模式， `padding` 必须大于或等于0。
         
-        - **padding** (Union(int, tuple[int])，可选) - 输入 `input` 的高度和宽度方向上填充的数量。数据类型为int或包含2个int组成的tuple。如果 `padding` 是一个int，那么上、下、左、右的填充都等于 `padding` 。如果 `padding` 是一个有2个int组成的tuple，那么上、下的填充为 `padding[0]` ，左、右的填充为 `padding[1]` 。值必须大于等于0，默认值： ``0`` 。
-        - **dilation** (Union(int, tuple[int])，可选) - 卷积核元素间的间隔。数据类型为int或者由2个或4个int组成的tuple。若 :math:`k > 1` ，则卷积核间隔 `k` 个元素进行采样。垂直和水平方向上的 `k` ，其取值范围分别为[1, H]和[1, W]。默认值： ``1`` 。
+        - **padding** (Union(int, tuple[int], list[int])，可选) - 输入 `input` 的高度和宽度方向上填充的数量。数据类型为int或包含2个int组成的tuple。如果 `padding` 是一个int，那么上、下、左、右的填充都等于 `padding` 。如果 `padding` 是一个有2个int组成的tuple，那么上、下的填充为 `padding[0]` ，左、右的填充为 `padding[1]` 。值必须大于等于0，默认值： ``0`` 。
+        - **dilation** (Union(int, tuple[int])，可选) - 卷积核元素间的间隔。数据类型为int或由2个int组成的tuple。若 :math:`k > 1` ，则卷积核间隔 `k` 个元素进行采样。垂直和水平方向上的 `k` ，其取值范围分别为[1, H]和[1, W]。默认值： ``1`` 。
         - **groups** (int，可选) - 将过滤器拆分为组。默认值： ``1`` 。
 
     返回：
@@ -44,5 +44,5 @@ mindspore.ops.conv2d
         - **ValueError** - `bias` 的shape不是 :math:`(C_{out})` 。
         - **ValueError** - `stride` 或 `diation` 小于1。
         - **ValueError** - `pad_mode` 不是"same"、"valid"或"pad"。
-        - **ValueError** - `padding` 是一个长度不等于4的tuple。
+        - **ValueError** - `padding` 是一个长度不等于2的tuple或list。
         - **ValueError** - `pad_mode` 不等于"pad"时，`padding` 大于0。

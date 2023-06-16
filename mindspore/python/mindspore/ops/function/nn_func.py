@@ -4877,16 +4877,27 @@ def _manipulate_padding(padding, dim):
     return ms_padding
 
 
-def _manipulate_dilation(dilation, dim=1):
+def _manipulate_dilation(dilation):
     """convert 1d dilation to 2d"""
     if isinstance(dilation, int):
+        if dilation <= 0:
+            raise ValueError(f"For 'conv1d', dilation must be a positive int, but got {dilation}.")
         return 1, dilation
     if isinstance(dilation, (tuple, list)):
         if len(dilation) != 1:
-            raise ValueError(f"For 'conv{dim}d', dilation must be a tuple/list with 1 element or int, \
+            raise ValueError(f"For 'conv1d', dilation must be a tuple/list with 1 element or int, \
             but got {dilation}.")
+        if dilation[0] <= 0:
+            raise ValueError(f"For 'conv1d', elements in dilation must be positive int, but got {dilation}.")
         return 1, dilation[0]
-    return dilation
+    raise ValueError(f"For 'conv1d', dilation must be an int or a tuple/list with 1 element, but got {dilation}.")
+
+
+def _check_conv_iterable_lengths(iterable, dim, iter_name):
+    """check iterables lengths used in conv functions"""
+    if len(iterable) != dim:
+        raise ValueError(f"For 'conv{dim}d', the {iter_name} must be a int or a tuple/list with length {dim}, "
+                         f"but got {iterable}.")
 
 
 def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dilation=1, groups=1):
@@ -4948,9 +4959,9 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
 
             - pad: Implicit paddings on both sides of the input `x`. The number of `padding` will be padded to the input
               Tensor borders. `padding` must be greater than or equal to 0.
-        padding (Union(int, tuple[int]), optional): Implicit paddings on both sides of `input`, meaning the paddings of
-            left and right are the same, equal to padding or padding[0] when padding is a tuple of 1 integer.
-            Default: ``0`` .
+        padding (Union(int, tuple[int], list[int]), optional): Implicit paddings on both sides of `input`, meaning the
+            paddings of left and right are the same, equal to padding or padding[0] when padding is a tuple of
+            1 integer. Default: ``0`` .
         dilation (Union(int, tuple[int]), optional): Gaps between kernel elements. The data type is int or a tuple of
             1 integer. Specifies the dilation rate to use for dilated convolution. If set to be :math:`k > 1`,
             there will be :math:`k - 1` pixels skipped for each sampling location. Its value must be greater than or
@@ -4981,6 +4992,10 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         >>> print(output.shape)
         (4, 2, 5)
     """
+    if input.ndim != 3:
+        raise ValueError(f"For 'conv1d', the input must be a 3D Tensor, but got input of {input.ndim}D.")
+    if weight.ndim != 3:
+        raise ValueError(f"For 'conv1d', the weight must be a 3D Tensor, but got input of {weight.ndim}D.")
     _expand = _get_cache_prim(P.ExpandDims)()
     expanded_input = _expand(input, 2)
     sqz = _get_cache_prim(P.Squeeze)(2)
@@ -4995,7 +5010,7 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
             raise ValueError(f"For 'conv1d', padding must be a tuple or list with 1 element or int, but got {padding}.")
         padding = (0, 0, padding[0], padding[0])
     else:
-        raise ValueError(f"For 'conv1d', padding must be a tuple, list or int, but got {type(padding)}.")
+        raise TypeError(f"For 'conv1d', padding must be a tuple, list or int, but got {type(padding)}.")
     dilation = _manipulate_dilation(dilation)
     conv = _get_cache_prim(P.Conv2D)(out_channel, kernel_size, 1, pad_mode, padding, stride, dilation, groups, "NCHW")
     conv_res = conv(expanded_input, expanded_weight)
@@ -5072,10 +5087,10 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
 
             - pad: Implicit paddings on both sides of the input `x`. The number of `padding` will be padded to the input
               Tensor borders. `padding` must be greater than or equal to 0.
-        padding (Union(int, tuple[int]), optional): Implicit paddings on both sides of the input `x`.
+        padding (Union(int, tuple[int], list[int]), optional): Implicit paddings on both sides of the input `x`.
             If `padding` is one integer, the paddings of top, bottom, left and right are the same, equal to padding.
-            If `padding` is a tuple with two integers, the padding of top adn bottom is padding[0], and the padding of
-            left and right is padding[1]. Default: ``0`` .
+            If `padding` is a tuple/list with 2 integers, the padding of top adn bottom is padding[0],
+            and the padding of left and right is padding[1]. Default: ``0`` .
         dilation (Union(int, tuple[int]), optional): Gaps between kernel elements.The data type is int or a tuple of
             2 integers. Specifies the dilation rate to use for dilated convolution. If set to be :math:`k > 1`,
             there will be :math:`k - 1` pixels skipped for each sampling location. Its value must
@@ -5092,7 +5107,7 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         ValueError: If  the shape of `bias` is not :math:`C_{out}` .
         ValueError: If `stride` or `dilation` is less than 1.
         ValueError: If `pad_mode` is not one of 'same', 'valid' or 'pad'.
-        ValueError: If `padding` is a tuple whose length is not equal to 2.
+        ValueError: If `padding` is a tuple/list whose length is not equal to 2.
         ValueError: If `pad_mode` is not equal to 'pad' and `padding` is greater than 0.
 
     Supported Platforms:
@@ -5105,6 +5120,10 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         >>> print(output.shape)
         (10, 32, 30, 30)
     """
+    if isinstance(stride, (tuple, list)):
+        _check_conv_iterable_lengths(stride, dim=2, iter_name='stride')
+    if isinstance(dilation, (tuple, list)):
+        _check_conv_iterable_lengths(dilation, dim=2, iter_name='dilation')
     if isinstance(padding, (tuple, list)):
         padding = _manipulate_padding(padding, dim=2)
     weight_shape = weight.shape
@@ -5584,9 +5603,9 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
             - pad: Implicit paddings on both sides of the input in depth, height and width. The number of `pad` will
               be padded to the input Tensor borders. `pad` must be greater than or equal to 0.
 
-        padding (Union[int, tuple[int]], optional): The pad value to be filled. If `pad` is an integer,
+        padding (Union[int, tuple[int], list[int]], optional): The pad value to be filled. If `pad` is an integer,
             the paddings of head, tail, top, bottom, left and right are the same, equal to pad.
-            If `pad` is a tuple of 3 integers, the padding of head, tail, top, bottom,
+            If `pad` is a tuple/list of 3 integers, the padding of head, tail, top, bottom,
             left and right equal to pad[0], pad[0], pad[1], pad[1], pad[2] and pad[2] correspondingly. Default: ``0`` .
         dilation (Union[int, tuple[int]], optional): The data type is int or a tuple of 3 integers
             :math:`(dilation_d, dilation_h, dilation_w)`. Currently, dilation on depth only supports the case of 1
@@ -5640,7 +5659,7 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         ValueError: If the shape of `bias` is not :math:`C_{out}`.
         ValueError: If `stride` or `dilation` is less than 1.
         ValueError: If `pad_mode` is not one of 'same', 'valid' or 'pad'.
-        ValueError: If `padding` is a tuple whose length is not equal to 4.
+        ValueError: If `padding` is a tuple or list whose length is not equal to 3.
         ValueError: If `pad_mode` is not equal to 'pad' and `pad` is greater than 0.
 
     Supported Platforms:
@@ -5662,6 +5681,10 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     weight_shape = weight.shape
     out_channel = weight_shape[0]
     kernel_size = weight_shape[2:5]
+    if isinstance(stride, (tuple, list)):
+        _check_conv_iterable_lengths(stride, dim=3, iter_name='stride')
+    if isinstance(dilation, (tuple, list)):
+        _check_conv_iterable_lengths(dilation, dim=3, iter_name='dilation')
     if isinstance(padding, (list, tuple)):
         padding = _manipulate_padding(padding, dim=3)
     conv = _get_cache_prim(P.Conv3D)(out_channel, kernel_size, 1, pad_mode, padding, stride, dilation, groups, "NCDHW")
