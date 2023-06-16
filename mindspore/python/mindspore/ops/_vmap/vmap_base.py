@@ -499,6 +499,7 @@ _ops_vmap_clone_prim_dict = {
     "ApplyProximalAdagrad": P.ApplyProximalAdagrad,
     "ApplyProximalGradientDescent": P.ApplyProximalGradientDescent,
     "ApplyAdamWithAmsgrad": P.ApplyAdamWithAmsgrad,
+    "ApplyAdamWithAmsgradV2": P.ApplyAdamWithAmsgradV2,
     "ApplyPowerSign": P.ApplyPowerSign,
     "ApplyAdagradDA": P.ApplyAdagradDA,
     "ApplyAdagradV2": P.ApplyAdagradV2,
