@@ -92,6 +92,9 @@ def sparsify(f, arg_types, sparse_rules=None):
     Sparsify a Cell object by inferring the appropriate sparse function calls to replace the original function calls by
     propagating sparse properties provided in `arg_types`.
 
+    .. warning::
+        This is a set of experimental APIs that is subject to change or deletion.
+
     Args:
         f (Cell): Cell object to be sparsified.
         arg_types (Tuple[ArgType] | Dict[int, ArgType]): The type of argument (sparse csr, sparse coo,

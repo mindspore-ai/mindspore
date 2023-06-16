@@ -158,6 +158,7 @@ class Cell(Cell_):
         self.to_float_fp16 = False
         self.ge_init = False
         self.ge_sync_data = False
+        self.amp_converted = False
 
     def __getstate__(self):
         base = Cell_.__getstate__(self)

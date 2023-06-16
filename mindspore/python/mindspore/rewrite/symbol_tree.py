@@ -892,15 +892,7 @@ class SymbolTree(Observer, Observable):
         self._topo_mgr.on_update_target(node, index, old_target, target)
 
     def print_node_tabulate(self):
-        try:
-            from tabulate import tabulate
-        except ImportError:
-            print("`print_tabular` relies on the library `tabulate`, "
-                  "which could not be found on this machine. Run `pip "
-                  "install tabulate` to install the library.")
-        node_specs = [[n.get_node_type(), n.get_name(), n.get_targets(), n.get_args(), n.get_kwargs()]
-                      for n in self.nodes()]
-        print(tabulate(node_specs, headers=['node type', 'name', 'target', 'args', 'kwargs']))
+        print(self._topo_mgr.dump())
 
     def dump(self):
         """Dump graph."""

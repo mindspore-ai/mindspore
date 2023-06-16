@@ -18,7 +18,7 @@ This example mainly illustrates the usage of rewrite.
 from typing import OrderedDict
 import numpy as np
 
-import mindspore
+from mindspore.common import dtype as mstype
 from mindspore import Tensor, export
 from mindspore.rewrite import SymbolTree, ScopedValue, Node, NodeType, Replacement, PatternEngine, PatternNode, \
     TreeNodeHelper
@@ -69,7 +69,6 @@ class Net(nn.Cell):
 def create_stree(network):
     """创建SymbolTree"""
     stree = SymbolTree.create(network)
-    stree.dump()
     return stree
 
 
@@ -79,7 +78,7 @@ def insert_node(stree):
         if node.get_name() == "conv2":  # 在名称为'conv2'的节点前面插入新的节点
             position = stree.before(node)
             new_conv = nn.Conv2d(1, 1, 1)
-            new_conv_node = Node.create_call_cell(new_conv, targets=['x_1'], name='new_conv',
+            new_conv_node = Node.create_call_cell(new_conv, targets=['output'], name='new_conv',
                                                   args=node.get_args())
             stree.insert(position, new_conv_node)
             break
@@ -99,8 +98,8 @@ def insert_node_to_subtree(stree):
             if node.get_instance_type() == nn.Conv2d:
                 position = stree.after(node)
                 new_conv = nn.Conv2d(1, 1, 1)
-                new_conv_node = Node.create_call_cell(new_conv, targets=['x_1'], name='new_conv',
-                                                      args=[ScopedValue.create_naming_value('x_1')])
+                new_conv_node = Node.create_call_cell(new_conv, targets=['x'], name='new_conv',
+                                                      args=[ScopedValue.create_naming_value('x')])
                 stree.insert(position, new_conv_node)
                 break
 
@@ -111,21 +110,19 @@ def insert_node_to_subtree(stree):
             break
 
 
-def delete_node(stree):
+def erase_node(stree):
     """删除类型为nn.Flatten的节点"""
     for node in stree.nodes():
         if node.get_instance_type() == nn.Flatten:
-            for n in node.get_users():
-                n.set_arg(0, "x_7")
-            stree.erase_node(node)
+            stree.erase(node)
             break
 
 
 def replace_node(stree):
     """替换网络中的节点"""
     new_conv = nn.Conv2d(1, 1, 1)
-    new_conv_node = Node.create_call_cell(new_conv, [ScopedValue.create_naming_value("replace_conv")],
-                                          args=[ScopedValue.create_naming_value('x')])
+    new_conv_node = Node.create_call_cell(new_conv, targets=[ScopedValue.create_naming_value("x")],
+                                          args=[ScopedValue.create_naming_value('x')], name="replace_conv")
     for node in stree.nodes():
         if node.get_name() == "conv1":
             new_conv_node = stree.replace(node, [new_conv_node])
@@ -139,9 +136,8 @@ def pattern_replace(stree):
 
         def build(self, pattern: PatternNode, is_chain_pattern: bool, matched: OrderedDict) -> [Node]:
             bn_node: Node = matched.get(pattern.name())
-
             conv = nn.Conv2d(1, 1, 1)
-            conv_node = Node.create_call_cell(conv, ['x1'], bn_node.get_args(), bn_node.get_kwargs(),
+            conv_node = Node.create_call_cell(conv, ['x'], bn_node.get_args(), bn_node.get_kwargs(),
                                               name="pattern_conv")
             return [conv_node]
 
@@ -165,33 +161,56 @@ def get_code(stree):
     return stree.get_code()
 
 
+def print_symbol_tree_info(stree):
+    """打印SymbolTree里的信息"""
+    stree.print_node_tabulate()
+    for node in stree.nodes():
+        if node.get_node_type() == NodeType.Tree:
+            print(f"subtree:{node.get_name()}")
+            subtree = TreeNodeHelper.get_sub_tree(node)
+            subtree.print_node_tabulate()
+            break
+
+
 def test_rewrite():
     """ReWrite测试函数"""
     net = Net()
     stree = create_stree(net)
 
-    print(f"origin code: {stree.get_code()}")
+    print("[origin code]")
+    print_symbol_tree_info(stree)
+
+    print("[insert code: new_conv]")
     insert_node(stree)
-    print(f"after inser node code: {stree.get_code()}")
+    print_symbol_tree_info(stree)
 
+    print("[insert code to subtree code: new_conv]")
     insert_node_to_subtree(stree)
-    print(f"after inser node to subtree code: {stree.get_code()}")
+    print_symbol_tree_info(stree)
 
-    delete_node(stree)
-    print(f"after remove node code: {stree.get_code()}")
+    print("[erase code: flatten]")
+    erase_node(stree)
+    print_symbol_tree_info(stree)
 
+    print("[replace code: conv1 -> replace_conv]")
     replace_node(stree)
-    print(f"after replace node code: {stree.get_code()}")
+    print_symbol_tree_info(stree)
 
+    print("[pattern replace code: max_pool2d -> pattern_conv]")
     pattern_replace(stree)
-    print(f"after pattern replace node code: {stree.get_code()}")
+    print_symbol_tree_info(stree)
 
-    inputs = Tensor(np.ones([1, 1, 32, 32]), mindspore.float32)  # pylint: disable=not-callable
+    inputs = Tensor(np.ones([1, 1, 32, 32]), mstype.float32) # pylint: disable=not-callable
     new_net = get_net(stree)
     source_code = get_code(stree)
+
+    print("[rewritten code]")
     print(source_code)
-    out = new_net(inputs)
-    print("out: ", out)
+
+    print("[output]")
+    output = new_net(inputs)
+    print(output)
+
     export(new_net, inputs, file_name="new_net", file_format="MINDIR")
 
 

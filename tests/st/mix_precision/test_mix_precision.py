@@ -282,6 +282,26 @@ def test_custom_mix_precision():
     allclose_nparray(out_graph.asnumpy(), out_pynative.asnumpy(), 0.001, 0.001)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_duplicated_mix_precision():
+    """
+    Feature: Test duplicated mixed precision
+    Description: Test duplicated mixed precision raise error
+    Expectation: raise ValueError.
+    """
+    net = Net(3, 10)
+    white_list = amp.get_white_list()
+    white_list.clear()
+    white_list.append(nn.ReLU)
+    white_list.append(nn.Conv2d)
+    net = amp.custom_mixed_precision(net, white_list=white_list)
+    with pytest.raises(ValueError) as e:
+        net = amp.auto_mixed_precision(net, amp_level='O1')
+    assert "Duplicate automatic mixed-precision operations detected" in str(e.value)
+
+
 class TestOp(ms.nn.Cell):
     def __init__(self):
         super(TestOp, self).__init__()

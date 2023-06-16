@@ -178,7 +178,7 @@ def test_erase_subtree_node():
                     output_nodes = n.get_users()
                     for out_node in output_nodes:
                         out_node.set_arg_by_node(0, input_node)
-                    subtree.erase_node(n)
+                    subtree.erase(n)
                     break
             assert len(subtree.get_handler()._nodes) == orig_node_num - 1
             break
@@ -203,7 +203,7 @@ def test_erase_subtree_node_01():
                     output_nodes = n.get_users()
                     for _nn in output_nodes:
                         _nn.set_arg_by_node(0, input_node)
-                    subtree.erase_node(n)
+                    subtree.erase(n)
                     assert len(subtree.get_handler()._nodes) == orig_node_num - 1
                     break
             break
@@ -222,7 +222,7 @@ def test_erase_subtree_node_02():
                 output_nodes = node.get_users()
                 for n in output_nodes:
                     n.set_arg_by_node(0, input_node)
-                subtree.erase_node(node)
+                subtree.erase(node)
                 break
 
     net = ForNetWithSubTree()

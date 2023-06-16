@@ -108,7 +108,7 @@ class ConvBnPattern(PatternEngine):
 
 def test_resnet_erase_in_if():
     """
-    Feature: erase_node api and if_parser
+    Feature: erase api and if_parser
     Description: erase a node in ast.If.
     Expectation: Success.
     """
@@ -121,7 +121,7 @@ def test_resnet_erase_in_if():
             input_ = node_.get_inputs()[0]
             output = node_.get_users()[0]
             output.set_arg_by_node(0, input_)
-            stree.erase_node(node)
+            stree.erase(node)
             break
     assert len(stree.get_handler()._nodes) == original_nodes_size - 1
 

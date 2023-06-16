@@ -31,6 +31,9 @@ class PatternNode:
     """
     `PatternNode` is defined as a node while defining pattern.
 
+    .. warning::
+        This is a set of experimental APIs that is subject to change or deletion.
+
     Args:
         pattern_node_name (str): Name of current node.
         match_type (Type): A type represents what type would be matched of current node. Default: ``Type[None]`` .
@@ -180,6 +183,9 @@ class PatternNode:
 class VarNode(PatternNode):
     """
     VarNode is a subclass of `PatternNode` whose `match` method is always return True.
+
+    .. warning::
+        This is a set of experimental APIs that is subject to change or deletion.
     """
 
     def __init__(self):
@@ -192,6 +198,9 @@ class VarNode(PatternNode):
 class Replacement(abc.ABC):
     """
     Interface of replacement function.
+
+    .. warning::
+        This is a set of experimental APIs that is subject to change or deletion.
 
     Examples:
         >>> from mindspore.rewrite import Replacement, Node
@@ -231,6 +240,9 @@ class Replacement(abc.ABC):
 class PatternEngine:
     """
     `PatternEngine` is defined how to transform a `SymbolTree` by `PattenNode`.
+
+    .. warning::
+        This is a set of experimental APIs that is subject to change or deletion.
 
     Args:
         pattern (Union[PatternNode, List]): An instance of `PatternNode` or a cell-type-list to construct `PatternNode`
@@ -292,7 +304,7 @@ class PatternEngine:
         to_erase_list = matched_dict.values()
         for node in reversed(to_erase_list):
             if node != old_root:
-                stree.erase_node(node)
+                stree.erase(node)
         return new_root
 
     @staticmethod
@@ -303,7 +315,7 @@ class PatternEngine:
         for n in reversed(to_erase_list):
             if n.get_handler() is node:
                 continue
-            stree.erase_node(n)
+            stree.erase(n)
 
     def apply(self, stree: SymbolTree) -> bool:
         """

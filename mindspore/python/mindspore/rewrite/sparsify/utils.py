@@ -32,6 +32,9 @@ class ArgType(Enum):
     - CSR represents a CSRTensor.
     - COO represents a COOTensor.
     - NONSPARSE represents a non-sparse value.
+
+    .. warning::
+        This is a set of experimental APIs that is subject to change or deletion.
     """
     NONSPARSE = auto()
     CSR = auto()
@@ -45,6 +48,9 @@ class SparseFunc(NamedTuple):
 
     Note:
         If `fn` is a function with type hints, `inputs` and/or `outputs`, when provided, override function type hints.
+
+    .. warning::
+        This is a set of experimental APIs that is subject to change or deletion.
 
     Args:
         fn (Union[str, Callable]): a sparse function. If `fn` is a string, the function represents a mindspore

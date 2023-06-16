@@ -5,8 +5,10 @@ mindspore.amp.get_black_list
 
     提供用于自动混合精度的内置黑名单的拷贝。
 
-    .. warning::
-        这是一个实验性API，后续可能修改或删除。
+    当前的内置黑名单内容为：
+
+    [:class:`mindspore.nn.BatchNorm1d`, :class:`mindspore.nn.BatchNorm2d`, :class:`mindspore.nn.BatchNorm3d`,
+    :class:`mindspore.nn.LayerNorm`]
 
     返回：
         list：内置黑名单的拷贝。

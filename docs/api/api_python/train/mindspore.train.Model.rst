@@ -6,8 +6,11 @@
     模型训练或推理的高阶接口。 `Model` 会根据用户传入的参数封装可训练或推理的实例。
 
     .. note::
-        如果使用混合精度功能，需要同时设置 `optimizer` 参数，否则混合精度功能不生效。
-        当使用混合精度时，优化器中的 `global_step` 可能与模型中的 `cur_step_num` 不同。
+
+        - 如果使用混合精度功能，需要同时设置 `optimizer` 参数，否则混合精度功能不生效。
+          当使用混合精度时，优化器中的 `global_step` 可能与模型中的 `cur_step_num` 不同。
+        - 使用 `custom_mixed_precision` 或 `auto_mixed_precision` 进行精度转换后，不支持再次使用其他接口进行精度转换。
+          如果使用 `Model` 来训练转换后的网络，则需要将 `amp_level` 配置为 ``O0`` 以避免重复的精度转换。
 
     参数：
         - **network** (Cell) - 用于训练或推理的神经网络。
