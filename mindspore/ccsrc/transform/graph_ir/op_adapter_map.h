@@ -444,6 +444,8 @@ constexpr const char kNameLayerNormBetaGammaBackpropV2[] = "LayerNormBetaGammaBa
 constexpr const char kNameGRUV2HiddenGradCell[] = "GRUV2HiddenGradCell";
 constexpr const char kNameTopKV2[] = "TopKV2";
 constexpr const char kNameGridSampler2D[] = "GridSampler2D";
+constexpr const char kNameLeftShift[] = "LeftShift";
+constexpr const char kNameRightShift[] = "RightShift";
 
 class OpAdapterDesc;
 

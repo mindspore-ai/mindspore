@@ -702,4 +702,16 @@ ATTR_MAP(CosineSimilarity) = {{"dim", ATTR_DESC(dim, AnyTraits<int64_t>())},
                               {"eps", ATTR_DESC(eps, AnyTraits<float>())}};
 OUTPUT_MAP(CosineSimilarity) = {{0, OUTPUT_DESC(output_y)}};
 REG_ADPT_DESC(CosineSimilarity, kNameCosineSimilarity, ADPT_DESC(CosineSimilarity))
+
+// LeftShift
+INPUT_MAP(LeftShift) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(y)}};
+ATTR_MAP(LeftShift) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(LeftShift) = {{0, OUTPUT_DESC(z)}};
+REG_ADPT_DESC(LeftShift, kNameLeftShift, ADPT_DESC(LeftShift))
+
+// RightShift
+INPUT_MAP(RightShift) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(y)}};
+ATTR_MAP(RightShift) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(RightShift) = {{0, OUTPUT_DESC(z)}};
+REG_ADPT_DESC(RightShift, kNameRightShift, ADPT_DESC(RightShift))
 }  // namespace mindspore::transform
