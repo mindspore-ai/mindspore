@@ -29,6 +29,7 @@
 #include "backend/common/graph_kernel/core/shape_ops_splitter.h"
 #include "backend/common/graph_kernel/core/update_state_formatter.h"
 #include "backend/common/graph_kernel/core/transform_op_optimizer.h"
+#include "backend/common/graph_kernel/core/convert_op_input_attr.h"
 
 #include "tools/graph_kernel/converter/akg/utils.h"
 #include "tools/graph_kernel/converter/kernel_builder.h"
@@ -101,7 +102,8 @@ GkPassManagerPtr GraphKernelOptimizer::Split() const {
   pm->Add(std::make_shared<ExtendOutputForUpdateState>(), OptLevel_1, is_cpu);
   std::vector<PrimitivePtr> duplicated_ops = {prim::kPrimReshape};
   pm->Add(std::make_shared<ShapeOpsSplitter>(duplicated_ops), OptLevel_1);
-
+  // add const inputs to attribute then eliminate those inputs for static kernels.
+  pm->Add(std::make_shared<GraphKernelInputToAttrConverter>(), OptLevel_1);
   // Split kernel according to costmodel
   pm->Add(std::make_shared<GraphKernelSplitterWithTuning>(), OptLevel_1);
 

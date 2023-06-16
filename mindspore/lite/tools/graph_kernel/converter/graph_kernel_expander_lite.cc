@@ -92,10 +92,7 @@ AnfNodePtr InferValueDeco::Run(const AnfNodePtr &node) {
     return nullptr;
   }
   auto fg = GetCNodeFuncGraph(ret);
-
   AnfNodePtrList inputs = ret->cast<CNodePtr>()->inputs();
-  (void)RemoveNonScalarConstTensorFromParameter(fg, &inputs);
-
   inner::LiteGraphPtr litegraph = GkUtils::AnfGraph2LiteGraph(fg);
   auto ops_list = litegraph->GetOrderedNodes();
   auto iter = ops_list.begin();
@@ -116,7 +113,7 @@ AnfNodePtr InferValueDeco::Run(const AnfNodePtr &node) {
     return nullptr;
   }
 
-  if (outputs[0]->NodeType() == inner::NType::Value) {
+  if (outputs[0]->NodeType() == inner::NType::Tensor) {
     auto value = std::static_pointer_cast<inner::ConstTensorNode>(outputs[0])->data();
     auto valuenode = NewValueNode(value);
     valuenode->set_abstract(value->ToAbstract());
@@ -248,23 +245,23 @@ ExpanderPtr GraphKernelExpanderLite::InitExpander(const AnfNodePtr &node) {
   auto expander = std::make_shared<DefaultExpander>(Callback::Instance());
   ExpanderCreatorFuncList decos = {InferValueDeco::Creator};
   std::map<std::string, ExpanderCreatorFuncList> creators = {
-    {prim::kPrimReduceFusion->name(), {InputToAttrDeco::Creator, FixFormatDeco::Creator}},
-    {prim::kPrimExpandDims->name(), {InputToAttrDeco::Creator, FixFormatDeco::Creator}},
+    {prim::kPrimReduceFusion->name(), {DependValueDeco::GetCreator({1}), FixFormatDeco::Creator}},
+    {prim::kPrimExpandDims->name(), {{DependValueDeco::GetCreator({1})}, FixFormatDeco::Creator}},
     {prim::kPrimUnsqueeze->name(), {FixFormatDeco::Creator}},
     {prim::kPrimSqueeze->name(), {FixFormatDeco::Creator}},
     {prim::kPrimShape->name(), {FixFormatDeco::Creator}},
-    {prim::kPrimReshape->name(), {InputToAttrDeco::Creator, FixFormatDeco::Creator}},
-    {prim::kPrimConstantOfShape->name(), {InputToAttrDeco::Creator, FixFormatDeco::Creator}},
-    {prim::kPrimTranspose->name(), {InputToAttrDeco::Creator}},
-    {prim::kPrimGather->name(), {InputToAttrDeco::Creator, FixFormatDeco::Creator}},
-    {prim::kPrimReduceMean->name(), {InputToAttrDeco::Creator, FixFormatDeco::Creator}},
+    {prim::kPrimReshape->name(), {DependValueDeco::GetCreator({1}), FixFormatDeco::Creator}},
+    {prim::kPrimConstantOfShape->name(), {DependValueDeco::GetCreator({0}), FixFormatDeco::Creator}},
+    {prim::kPrimTranspose->name(), {DependValueDeco::GetCreator({1})}},
+    {prim::kPrimGather->name(), {DependValueDeco::GetCreator({2}), FixFormatDeco::Creator}},
+    {prim::kPrimReduceMean->name(), {DependValueDeco::GetCreator({1}), FixFormatDeco::Creator}},
     {prim::kPrimConcat->name(), {FixFormatDeco::Creator}},
     {prim::kPrimStridedSlice->name(), {FixFormatDeco::Creator}},
     {prim::kPrimConv2DFusion->name(), {SubstituteConv2D::Creator}},
     {prim::kPrimMatMulFusion->name(), {MatmulPackB::Creator}},
     {prim::kPrimAvgPoolFusion->name(), {PoolLayoutDeco::Creator}},
     {prim::kPrimMaxPoolFusion->name(), {PoolLayoutDeco::Creator}},
-    {prim::kPrimTile->name(), {InputToAttrDeco::Creator, UseInputFormatDeco::Creator}},
+    {prim::kPrimTile->name(), {{DependValueDeco::GetCreator({1})}, UseInputFormatDeco::Creator}},
   };
   auto iter = creators.find(GetCNodePrimitive(node)->name());
   if (iter != creators.end()) {

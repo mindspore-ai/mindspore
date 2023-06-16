@@ -158,7 +158,7 @@ class ExpanderInfoValidator:
         def _check_attr(obj):
             for a in args:
                 if a not in obj.attrs:
-                    raise GKException("attr '{}' does not exist.".format(a))
+                    raise GKException("attr '{}' does not exist. {}".format(a, obj.name))
 
         def wrapper(cls):
             if not issubclass(cls, Expander):

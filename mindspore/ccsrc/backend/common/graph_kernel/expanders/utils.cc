@@ -22,6 +22,8 @@
 
 #include "backend/common/graph_kernel/model/lite_graph.h"
 #include "backend/common/graph_kernel/model/node.h"
+#include "ir/value.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore::graphkernel::expanders {
 constexpr int OFFSET1 = 1;
@@ -98,6 +100,8 @@ std::vector<int64_t> GetAxisList(const ValuePtr &value) {
   if (value->isa<ValueSequence>()) {
     const auto &vals = value->cast<ValueSequencePtr>()->value();
     (void)std::transform(vals.begin(), vals.end(), std::back_inserter(result), get_int_value);
+  } else if (value->isa<tensor::Tensor>()) {
+    result = CheckAndConvertUtils::CheckTensorIntValue("axes value", value, "GetAxisList");
   } else {
     result.push_back(get_int_value(value));
   }
@@ -132,6 +136,9 @@ std::vector<int64_t> GetReducedOriShape(const std::vector<int64_t> &shape, const
 std::vector<int64_t> ToFracZAxis(const std::vector<int64_t> &ori_shape, const std::vector<int64_t> &ori_axis) {
   std::vector<int64_t> frac_z_axis = ori_axis;
   int64_t shape_len = SizeToLong(ori_shape.size());
+  if (shape_len == 0) {
+    MS_LOG(EXCEPTION) << "In ToFracZAxis, divisor is zero";
+  }
   for (size_t i = 0; i < frac_z_axis.size(); i++) {
     int64_t axis_index = (frac_z_axis[i] + shape_len) % shape_len;
     if (axis_index == shape_len - OFFSET1) {

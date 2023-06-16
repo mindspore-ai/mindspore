@@ -48,6 +48,8 @@ class TransformOp {
   virtual NodePtr GenTransformOp(const NodePtr &input_node, TransOpType trans_type) = 0;
   // check the input format is kFormatA or kFormatB
   virtual FormatType GetFormatType(const std::string &fmt);
+  // set inputs for this transform op
+  virtual void SetInput(const NodePtr &node, const NodePtr &input_node);
   // get hash value for this transform op
   size_t Hash() const;
 

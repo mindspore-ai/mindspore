@@ -76,23 +76,6 @@ tensor::TensorPtr InferValueWithAbstract(const PrimitivePtr &prim, const Abstrac
   return nullptr;
 }
 
-void PrimOp::SetAbastractsFromAttrs(const PrimitivePtr &primitive, const mindspore::HashSet<size_t> &convert_input_list,
-                                    AbstractBasePtrList *inputs_abstract,
-                                    std::vector<std::string> input_names_vec) const {
-  for (size_t index = 0; index < input_names_vec.size(); ++index) {
-    // if convert input list find the index it means the input has been converted to the attr
-    if (convert_input_list.find(index) != convert_input_list.end()) {
-      AbstractBasePtr rectify_abs = nullptr;
-      auto input_name = input_names_vec[index];
-      auto attr = primitive->GetAttr(input_name);
-      if (attr != nullptr) {
-        rectify_abs = attr->ToAbstract();
-        inputs_abstract->push_back(rectify_abs);
-      }
-    }
-  }
-}
-
 std::pair<PrimitivePtr, AbstractBasePtrList> PrimOp::GenPrimAndAbstract(const NodePtrList &inputs,
                                                                         const DAttrs &attrs) const {
   const auto &op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
@@ -283,7 +266,7 @@ tensor::TensorPtr PrimOp::CalcByOperator(const NodePtrList &inputs, const DAttrs
 
 NodePtr PrimOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs) {
   for (auto i : inputs) {
-    if (i->NodeType() != NType::Value) {
+    if (i->NodeType() != NType::Tensor) {
       return nullptr;
     }
   }
@@ -493,7 +476,7 @@ DFormat TransposeOp::InferFormat(const NodePtrList &inputs, const DAttrs &attrs)
 
 NodePtr ConstantOfShapeOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs) {
   for (auto i : inputs) {
-    if (i->NodeType() != NType::Value) {
+    if (i->NodeType() != NType::Tensor) {
       return nullptr;
     }
   }
@@ -645,12 +628,6 @@ std::vector<size_t> CompactShape(const ShapeVector &origin, int64_t axis) {
   return new_shape;
 }
 
-void GatherOp::RectifyAbstract(const PrimitivePtr &primitive, AbstractBasePtrList *input_abstract_ptr) {
-  if (primitive->HasAttr("axis")) {
-    (void)input_abstract_ptr->emplace_back(primitive->GetAttr("axis")->ToAbstract());
-  }
-}
-
 template <typename TM>
 tensor::TensorPtr GatherOp::CalcGather(const NodePtrList &inputs, const DAttrs &attrs) {
   constexpr size_t param_index = 0;
@@ -714,7 +691,7 @@ tensor::TensorPtr GatherOp::CalcGather(const NodePtrList &inputs, const DAttrs &
 
 NodePtr GatherOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs) {
   for (auto i : inputs) {
-    if (i->NodeType() != NType::Value) {
+    if (i->NodeType() != NType::Tensor) {
       return nullptr;
     }
   }
@@ -810,7 +787,7 @@ tensor::TensorPtr ConcatOp::CalcConcat(const NodePtrList &inputs, const DAttrs &
 
 NodePtr ConcatOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs) {
   for (auto i : inputs) {
-    if (i->NodeType() != NType::Value) {
+    if (i->NodeType() != NType::Tensor) {
       return nullptr;
     }
   }
@@ -975,28 +952,6 @@ std::vector<DShape> StandardNormalOp::InferShape(const NodePtrList &, const DAtt
   return {GetListInt(attrs.find("shape")->second)};
 }
 
-void StridedSliceOp::RectifyAbstract(const PrimitivePtr &primitive, AbstractBasePtrList *inputs_abstract) {
-  if (!primitive->HasAttr("new_axis_mask")) {
-    (void)primitive->AddAttr("new_axis_mask", MakeValue((int64_t(0))));
-  }
-  if (!primitive->HasAttr("shrink_axis_mask")) {
-    (void)primitive->AddAttr("shrink_axis_mask", MakeValue((int64_t(0))));
-  }
-  if (!primitive->HasAttr("end_mask")) {
-    (void)primitive->AddAttr("end_mask", MakeValue((int64_t(0))));
-  }
-  if (!primitive->HasAttr("begin_mask")) {
-    (void)primitive->AddAttr("begin_mask", MakeValue((int64_t(0))));
-  }
-  if (!primitive->HasAttr("ellipsis_mask")) {
-    (void)primitive->AddAttr("ellipsis_mask", MakeValue((int64_t(0))));
-  }
-  const mindspore::HashSet<size_t> &convert_input_list{1, 2, 3};
-  auto input_names = primitive->GetAttr(kAttrInputNames);
-  auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
-  SetAbastractsFromAttrs(primitive, convert_input_list, inputs_abstract, input_names_vec);
-}
-
 template <typename TM>
 tensor::TensorPtr StridedSliceOnnxOp::CalcStridedSliceOnnx(const NodePtrList &inputs, const DAttrs &) const {
   constexpr size_t input_index = 0;
@@ -1067,7 +1022,7 @@ tensor::TensorPtr StridedSliceOnnxOp::CalcStridedSliceOnnx(const NodePtrList &in
 
 NodePtr StridedSliceOnnxOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs) {
   for (auto i : inputs) {
-    if (i->NodeType() != NType::Value) {
+    if (i->NodeType() != NType::Tensor) {
       return nullptr;
     }
   }
@@ -1172,45 +1127,5 @@ std::vector<TypeId> MatMulOp::InferType(const NodePtrList &inputs, const DAttrs 
     return {TypeId::kNumberTypeInt32};
   }
   return {inputs[0]->type};
-}
-
-void TupleGetItemOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) {
-  if (prim->HasAttr("index")) {
-    (void)abs_list->emplace_back(prim->GetAttr("index")->ToAbstract());
-  }
-}
-
-void ReduceOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) {
-  if (prim->HasAttr("axis")) {
-    (void)abs_list->emplace_back(prim->GetAttr("axis")->ToAbstract());
-  }
-}
-
-void ReshapeOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) {
-  if (prim->HasAttr("shape")) {
-    (void)abs_list->emplace_back(prim->GetAttr("shape")->ToAbstract());
-  } else if (prim->HasAttr("input_shape")) {
-    (void)abs_list->emplace_back(prim->GetAttr("input_shape")->ToAbstract());
-  }
-}
-
-void TransposeOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) {
-  if (prim->HasAttr("input_perm")) {
-    (void)abs_list->emplace_back(prim->GetAttr("input_perm")->ToAbstract());
-  } else if (prim->HasAttr("perm")) {
-    (void)abs_list->emplace_back(prim->GetAttr("perm")->ToAbstract());
-  }
-}
-
-void TileOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) {
-  if (prim->HasAttr("multiples")) {
-    (void)abs_list->emplace_back(prim->GetAttr("multiples")->ToAbstract());
-  }
-}
-
-void OneHotOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) {
-  if (prim->HasAttr("depth")) {
-    (void)abs_list->emplace_back(prim->GetAttr("depth")->ToAbstract());
-  }
 }
 }  // namespace mindspore::graphkernel::inner

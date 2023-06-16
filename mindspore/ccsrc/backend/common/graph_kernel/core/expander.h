@@ -63,16 +63,23 @@ class BACKEND_EXPORT ExpanderDecorator : public Expander {
 using ExpanderCreatorFunc = std::function<ExpanderPtr(const ExpanderPtr &)>;
 using ExpanderCreatorFuncList = std::vector<ExpanderCreatorFunc>;
 
-class BACKEND_EXPORT InputToAttrDeco : public ExpanderDecorator {
+// This decorator is required if we need to get the value of one input parameter during expanding
+class BACKEND_EXPORT DependValueDeco : public ExpanderDecorator {
  public:
-  explicit InputToAttrDeco(const ExpanderPtr &decorated) : ExpanderDecorator(decorated) {}
-  ~InputToAttrDeco() = default;
-  static ExpanderPtr Creator(const ExpanderPtr &decorated) {
-    return std::static_pointer_cast<Expander>(std::make_shared<InputToAttrDeco>(decorated));
+  DependValueDeco(const ExpanderPtr &decorated, const HashSet<size_t> &input_idx)
+      : ExpanderDecorator(decorated), input_idx_(input_idx) {}
+  ~DependValueDeco() = default;
+
+  static ExpanderCreatorFunc GetCreator(const HashSet<size_t> &input_idx) {
+    return [input_idx](const ExpanderPtr &decorated) {
+      return std::static_pointer_cast<Expander>(std::make_shared<DependValueDeco>(decorated, input_idx));
+    };
   }
   AnfNodePtr Run(const AnfNodePtr &node) override;
-};
 
+ protected:
+  HashSet<size_t> input_idx_;
+};
 /**
  * Wrap Expander with decorators.
  */

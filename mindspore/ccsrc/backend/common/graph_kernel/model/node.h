@@ -21,6 +21,7 @@
 #include <set>
 #include <string>
 #include "ir/dtype/type_id.h"
+#include "ir/anf.h"
 #include "ir/value.h"
 #include "ir/tensor.h"
 #include "utils/hash_map.h"
@@ -33,7 +34,8 @@ enum class NType {
   Base,
   Primitive,
   Parameter,
-  Value,
+  Tensor,
+  Scalar,
   Output,
 };
 
@@ -107,13 +109,27 @@ class ConstTensorNode : public Node {
         data_(data) {}
   ~ConstTensorNode() = default;
 
-  NType NodeType() override { return NType::Value; }
+  NType NodeType() override { return NType::Tensor; }
   std::string ToString() const override { return data_->data().ToString(data_->data_type(), data_->shape(), false); }
   const tensor::TensorPtr data() const { return data_; }
   abstract::AbstractBasePtr ToAbstract() const override { return data_->ToAbstract(); }
 
  protected:
   tensor::TensorPtr data_;
+};
+
+class ConstScalarNode : public Node {
+ public:
+  explicit ConstScalarNode(const ValuePtr &data)
+      : Node({DShape({}), data->type()->type_id(), kOpFormat_DEFAULT}), data_(data) {}
+  ~ConstScalarNode() = default;
+
+  NType NodeType() override { return NType::Scalar; }
+  const ValuePtr data() const { return data_; }
+  abstract::AbstractBasePtr ToAbstract() const override { return data_->ToAbstract(); }
+
+ protected:
+  ValuePtr data_;
 };
 
 class ParamNode : public Node {

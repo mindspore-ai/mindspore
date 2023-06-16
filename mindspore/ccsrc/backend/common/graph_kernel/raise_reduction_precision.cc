@@ -47,8 +47,8 @@ AnfNodePtr RaiseReductionPrecision::CreateReduceSum(const AnfNodePtr &node, cons
   cnode->set_input(1, input);
   cnode->set_abstract(std::make_shared<abstract::AbstractTensor>(kFloat32, GetShape(node)));
   kernel::KernelBuildInfo::KernelBuildInfoBuilder info_builder;
-  info_builder.SetInputsFormat({AnfAlgo::GetInputFormat(node, 0)});
-  info_builder.SetInputsDeviceType({kFloat32->type_id()});
+  info_builder.SetInputsFormat({AnfAlgo::GetInputFormat(node, 0), AnfAlgo::GetInputFormat(node, 1)});
+  info_builder.SetInputsDeviceType({kFloat32->type_id(), kInt64->type_id()});
   info_builder.SetOutputsFormat({AnfAlgo::GetOutputFormat(node, 0)});
   info_builder.SetOutputsDeviceType({kFloat32->type_id()});
   info_builder.SetProcessor(AnfAlgo::GetProcessor(node));

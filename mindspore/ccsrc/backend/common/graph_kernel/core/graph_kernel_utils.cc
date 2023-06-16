@@ -24,9 +24,11 @@
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
 #include "backend/common/graph_kernel/model/op_node.h"
+#include "backend/common/graph_kernel/model/node.h"
 #include "backend/common/graph_kernel/model/graph_builder.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "runtime/hardware/device_context_manager.h"
+#include "backend/common/graph_kernel/core/convert_op_input_attr.h"
 
 namespace mindspore::graphkernel {
 std::string GkUtils::ExtractGraphKernelName(const AnfNodePtrList &nodes, const std::string &prefix,
@@ -228,13 +230,22 @@ FuncGraphPtr GkUtils::LiteGraph2AnfGraph(const inner::LiteGraphPtr &lite_graph, 
                            if (iter != node_map.end()) {
                              return iter->second;
                            } else {
-                             if (inp->NodeType() != inner::NType::Value) {
-                               MS_LOG(EXCEPTION) << "Node " << inp->debug_name() << " should be a Value node";
+                             auto node_type = inp->NodeType();
+                             if (node_type != inner::NType::Tensor && node_type != inner::NType::Scalar) {
+                               MS_LOG(EXCEPTION)
+                                 << "Node " << inp->debug_name() << " should be a Tensor or Scalar node";
                              }
-                             auto inp_value = inp->As<inner::ConstTensorNode>()->data();
+                             ValuePtr inp_value = nullptr;
+                             if (node_type == inner::NType::Tensor) {
+                               inp_value = inp->As<inner::ConstTensorNode>()->data();
+                             } else {
+                               inp_value = inp->As<inner::ConstScalarNode>()->data();
+                             }
                              auto value_node = NewValueNode(inp_value);
                              value_node->set_abstract(inp_value->ToAbstract());
-                             cb->SetBasicNodeKernelInfo(value_node, {{inp->shape, inp->type, inp->format}});
+                             if (node_type == inner::NType::Tensor) {
+                               cb->SetBasicNodeKernelInfo(value_node, {{inp->shape, inp->type, inp->format}});
+                             }
                              return value_node;
                            }
                          });
@@ -302,17 +313,30 @@ inner::LiteGraphPtr GkUtils::AnfGraph2LiteGraph(const FuncGraphPtr &func_graph,
     auto prim = GetCNodePrimitive(cnode);
     MS_EXCEPTION_IF_NULL(prim);
     inner::NodePtrList inputs;
-    (void)std::transform(cnode->inputs().begin() + 1, cnode->inputs().end(), std::back_inserter(inputs),
-                         [&node_map, &gb](const AnfNodePtr &no) {
-                           const auto iter = node_map.find(no);
-                           if (iter != node_map.end()) {
-                             return iter->second;
-                           } else {
-                             auto tensor = GetValueNode<tensor::TensorPtr>(no);
-                             MS_EXCEPTION_IF_NULL(tensor);
-                             return gb.Value(tensor);
-                           }
-                         });
+    for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+      auto input_i = cnode->input(i);
+      const auto iter = node_map.find(input_i);
+      inner::NodePtr input_node = nullptr;
+      if (iter != node_map.end()) {
+        auto value = input_i->abstract()->BuildValue();
+        auto tensor = value->cast<tensor::TensorPtr>();
+        if (tensor != nullptr && tensor->data().const_data() != nullptr) {
+          auto prim_name = GetCNodePrimitive(cnode)->name();
+          if (ConvertOpUtils::NeedConvert(prim_name, i - 1)) {
+            input_node = gb.Value(tensor);
+          } else {
+            input_node = iter->second;
+          }
+        } else {
+          input_node = iter->second;
+        }
+      } else {
+        auto tensor = GetValueNode<tensor::TensorPtr>(input_i);
+        MS_EXCEPTION_IF_NULL(tensor);
+        input_node = gb.Value(tensor);
+      }
+      inputs.push_back(input_node);
+    }
     auto op = gb.Op(AnfUtils::GetCNodeName(node), ExtractBuildInfo(node), inputs, prim->attrs());
     node_map[node] = op;
     if (op_node_map != nullptr) {

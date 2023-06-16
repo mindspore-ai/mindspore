@@ -98,6 +98,6 @@ std::vector<PrimitivePtr> GraphKernelExpanderWithPy::InitOpList() {
 
 ExpanderPtr GraphKernelExpanderWithPy::InitExpander(const AnfNodePtr &node) {
   auto e = GetExpander(node, false);
-  return InputToAttrDeco::Creator(e);
+  return e;
 }
 }  // namespace mindspore::graphkernel

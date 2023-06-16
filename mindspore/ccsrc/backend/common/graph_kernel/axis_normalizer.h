@@ -28,7 +28,10 @@ class AxisNormalizer : public opt::Pass {
   bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
-  bool Process(const FuncGraphPtr &func_graph) const;
+  bool Process(const AnfNodePtr &graph_kernel_node) const;
+  // convert the axis value to a shape vector, return true if the axis changed after normalization,
+  // return false otherwise
+  bool AxisProcess(ValuePtr axis, const size_t rank, ShapeVector *axis_vec) const;
   int64_t NormAxis(int64_t x, size_t rank) const;
   bool IsReduce(const AnfNodePtr &node) const;
 };

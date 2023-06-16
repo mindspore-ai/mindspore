@@ -81,10 +81,6 @@ class BACKEND_EXPORT PrimOp : public Node {
   // rectify abstract before calling PrimitiveC's inference function.
   virtual void RectifyAbstract(const PrimitivePtr &, AbstractBasePtrList *) {}
 
-  // set abstracts from attrs.
-  void SetAbastractsFromAttrs(const PrimitivePtr &primitive, const mindspore::HashSet<size_t> &convert_input_list,
-                              AbstractBasePtrList *inputs_abstract, std::vector<std::string> input_names_vec) const;
-
   std::string op_;
   ComputeType compute_type_;
 };
@@ -96,7 +92,6 @@ class ReshapeOp : public PrimOp {
   ~ReshapeOp() = default;
 
  protected:
-  void RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list);
   DFormat InferFormat(const NodePtrList &, const DAttrs &attrs) override {
     return attrs.find("format") == attrs.end() ? kOpFormat_DEFAULT
                                                : GetValue<std::string>(attrs.find("format")->second);
@@ -123,9 +118,6 @@ class TileOp : public BroadcastOp {
  public:
   explicit TileOp(const std::string &op) : BroadcastOp(op) {}
   ~TileOp() = default;
-
- protected:
-  void RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) override;
 };
 
 class ReduceOp : public PrimOp {
@@ -134,7 +126,6 @@ class ReduceOp : public PrimOp {
   ~ReduceOp() = default;
 
  protected:
-  void RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) override;
   DFormat InferFormat(const NodePtrList &, const DAttrs &) override { return kOpFormat_DEFAULT; };
 };
 
@@ -170,7 +161,6 @@ class TransposeOp : public OpaqueOp {
   ~TransposeOp() = default;
 
  protected:
-  void RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) override;
   DFormat InferFormat(const NodePtrList &inputs, const DAttrs &attrs) override;
 };
 
@@ -178,9 +168,6 @@ class OneHotOp : public OpaqueOp {
  public:
   explicit OneHotOp(const std::string &op) : OpaqueOp(op) {}
   ~OneHotOp() = default;
-
- protected:
-  void RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) override;
 };
 class LayoutTransformOp : public OpaqueOp {
  public:
@@ -272,7 +259,6 @@ class GatherOp : public OpaqueOp {
   NodePtr InferValue(const NodePtrList &inputs, const DAttrs &attrs) override;
 
  protected:
-  void RectifyAbstract(const PrimitivePtr &primitive, AbstractBasePtrList *input_abstract_ptr) override;
   template <typename TM>
   tensor::TensorPtr CalcGather(const NodePtrList &inputs, const DAttrs &attrs);
   DFormat InferFormat(const NodePtrList &, const DAttrs &) override { return kOpFormat_DEFAULT; };
@@ -343,9 +329,6 @@ class StridedSliceOp : public OpaqueOp {
  public:
   explicit StridedSliceOp(const std::string &op) : OpaqueOp(op) {}
   ~StridedSliceOp() = default;
-
- protected:
-  void RectifyAbstract(const PrimitivePtr &primitive, AbstractBasePtrList *inputs_abstract) override;
 };
 
 class StridedSliceOnnxOp : public OpaqueOp {
@@ -378,9 +361,6 @@ class TupleGetItemOp : public VirtualOp {
  public:
   using VirtualOp::VirtualOp;
   ~TupleGetItemOp() = default;
-
- protected:
-  void RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *abs_list) override;
 };
 }  // namespace mindspore::graphkernel::inner
 #endif
