@@ -26,15 +26,101 @@
 namespace mindspore {
 namespace ops {
 namespace {
+using abstract::Shape;
 constexpr size_t kConv2DBackpropFilterDoutIndex = 0;
 constexpr size_t kConv2DBackpropFilterInputIndex = 1;
+constexpr size_t kConv2DBackpropFilterSizeIndex = 2;
+constexpr auto kCon2dPadSize = 4;
+
+ShapeVector CalcPadListForSameMode(const ShapeVector &dout_shape_norm, const ShapeVector &x_size_v,
+                                   const ShapeVector &kernel_size, const ShapeVector &stride,
+                                   const ShapeVector &dilation) {
+  ShapeVector pad_list(kCon2dPadSize, Shape::kShapeDimAny);
+  if (IsDynamicRank(dout_shape_norm) || IsDynamicRank(x_size_v)) {
+    return pad_list;
+  }
+  const auto stride_h = stride[kIndex2];
+  const auto stride_w = stride[kIndex3];
+  const auto kernel_h = kernel_size[kIndex0];
+  const auto kernel_w = kernel_size[kIndex1];
+  const auto dilation_h = dilation[kIndex2];
+  const auto dilation_w = dilation[kIndex3];
+  constexpr auto pad_divisor = 2;
+  if (dout_shape_norm[kInputIndex2] != Shape::kShapeDimAny && x_size_v[kInputIndex2] != Shape::kShapeDimAny) {
+    auto pad_needed_h =
+      (dout_shape_norm[kInputIndex2] - 1) * stride_h + dilation_h * (kernel_h - 1) + 1 - x_size_v[kInputIndex2];
+    pad_needed_h = 0 > pad_needed_h ? 0 : pad_needed_h;
+    pad_list[kIndex0] = pad_needed_h / pad_divisor;
+    pad_list[kIndex1] = pad_needed_h - pad_list[kIndex0];
+  }
+  if (dout_shape_norm[kInputIndex3] != Shape::kShapeDimAny && x_size_v[kInputIndex3] != Shape::kShapeDimAny) {
+    auto pad_needed_w =
+      (dout_shape_norm[kInputIndex3] - 1) * stride_w + dilation_w * (kernel_w - 1) + 1 - x_size_v[kInputIndex3];
+    pad_needed_w = pad_needed_w > 0L ? pad_needed_w : 0L;
+    pad_list[kIndex2] = pad_needed_w / pad_divisor;
+    pad_list[kIndex3] = pad_needed_w - pad_list[kIndex2];
+  }
+  return pad_list;
+}
+
+void SetConv2dPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_shape_norm,
+                      const std::vector<int64_t> &x_size_v) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  // check
+  auto kernel_size =
+    CheckAndConvertUtils::CheckIntOrTupleInt("attribute[kernel_size]", primitive->GetAttr(kKernelSize), prim_name);
+  auto stride = CheckAndConvertUtils::CheckIntOrTupleInt("attribute[stride]", primitive->GetAttr(kStride), prim_name);
+  auto dilation =
+    CheckAndConvertUtils::CheckIntOrTupleInt("attribute[dilation]", primitive->GetAttr(kDilation), prim_name);
+
+  auto attr_pad_list_prt = primitive->GetAttr(kPadList);
+  MS_EXCEPTION_IF_NULL(attr_pad_list_prt);
+  int64_t pad_mode;
+  CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr(kPadMode), &pad_mode, true);
+
+  ShapeVector pad_list(kCon2dPadSize, Shape::kShapeDimAny);
+  auto is_valid_pad_attr = [&attr_pad_list_prt]() -> bool {
+    if (attr_pad_list_prt->isa<None>()) {
+      return false;
+    }
+    auto attr_pad_list = GetValue<ShapeVector>(attr_pad_list_prt);
+    return std::all_of(attr_pad_list.begin(), attr_pad_list.end(), [](int64_t val) { return val >= 0; });
+  };
+  if (is_valid_pad_attr()) {
+    pad_list = GetValue<ShapeVector>(attr_pad_list_prt);
+  } else if (pad_mode == VALID) {
+    std::fill(pad_list.begin(), pad_list.end(), 0);
+  } else if (pad_mode == SAME) {
+    pad_list = CalcPadListForSameMode(dout_shape_norm, x_size_v, kernel_size, stride, dilation);
+  } else if (pad_mode == PAD) {
+    pad_list = GetValue<std::vector<int64_t>>(primitive->GetAttr(kPad));
+  }
+  (void)primitive->AddAttr(kPadList, MakeValue(pad_list));
+}
 
 abstract::ShapePtr Conv2DBackpropFilterInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
-  constexpr size_t kFilterSizeIndex = 2;
-  auto filter_size = input_args[kFilterSizeIndex];
+  auto filter_size = input_args[kConv2DBackpropFilterSizeIndex];
   auto out_shape = GetShapeValue(primitive, filter_size);
   auto ret_shape = std::make_shared<abstract::Shape>(out_shape);
+
+  auto dout_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kConv2DBackpropFilterDoutIndex]->BuildShape())[kShape];
+  auto input_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kConv2DBackpropFilterInputIndex]->BuildShape())[kShape];
+
+  auto format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr(kFormat));
+  // normalize shape to NCHW format
+  auto normalize_shape = [&format](const ShapeVector &shape) -> ShapeVector {
+    if (format == Format::NCHW) {
+      return shape;
+    }
+    // convert NHWC to NCHW format
+    return {shape[0], shape[3], shape[1], shape[2]};
+  };
+  SetConv2dPadList(primitive, normalize_shape(dout_shape), normalize_shape(input_shape));
+
   return ret_shape;
 }
 
