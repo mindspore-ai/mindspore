@@ -109,6 +109,7 @@ struct BinaryFunc<BinaryOpType::kSquaredDifference, In0_t, In1_t, Complex<Out_t>
 };
 REGISTER_BINARY_OP_CUDA_FUNC_COMPLEX_TYPE(BinaryOpType::kSquaredDifference);
 REGISTER_BINARY_OP_CUDA_FUNC_FLOAT_TYPE(BinaryOpType::kSquaredDifference);
+REGISTER_BINARY_OP_CUDA_FUNC_INT_TYPE(BinaryOpType::kSquaredDifference);
 
 template <typename T>
 struct BinaryFunc<BinaryOpType::kAtan2, T, T, T, typename std::is_floating_point<T>::type> {

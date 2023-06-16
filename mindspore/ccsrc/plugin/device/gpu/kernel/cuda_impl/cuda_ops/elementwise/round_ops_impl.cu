@@ -89,21 +89,14 @@ template <typename Type>
 struct UnaryFunc<ElwiseOpType::kRound, Type, Type> {
   DEVICE_HOST UnaryFunc() {}
   DEVICE Type operator()(const Type val) const {
-    return round(val);
+    return nearbyintf(val);
   }
 };
 template <>
-struct UnaryFunc<ElwiseOpType::kRound, float, float> {
+struct UnaryFunc<ElwiseOpType::kRound, double, double> {
   DEVICE_HOST UnaryFunc() {}
-  DEVICE float operator()(const float val) const {
-    return roundf(val);
-  }
-};
-template <>
-struct UnaryFunc<ElwiseOpType::kRound, half, half> {
-  DEVICE_HOST UnaryFunc() {}
-  DEVICE half operator()(const half val) const {
-    return __float2half(roundf(__half2float(val)));
+  DEVICE double operator()(const double val) const {
+    return nearbyint(val);
   }
 };
 REGISTER_UNARY_OP_CUDA_FUNC_FLOAT_TYPE(ElwiseOpType::kRound);
