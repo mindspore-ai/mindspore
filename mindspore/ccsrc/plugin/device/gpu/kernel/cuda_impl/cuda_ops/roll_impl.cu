@@ -71,3 +71,13 @@ const size_t outer_size, const int64_t dims, const uint32_t &device_id, cudaStre
 template CUDA_LIB_EXPORT void CalRoll<uint32_t>(const uint32_t* input, uint32_t* outputs,
 int64_t* stride, int64_t* kernel_shift, int64_t* dim_size,
 const size_t outer_size, const int64_t dims, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalRoll<int16_t>(const int16_t* input, int16_t* outputs,
+int64_t* stride, int64_t* kernel_shift, int64_t* dim_size,
+const size_t outer_size, const int64_t dims, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalRoll<int64_t>(const int64_t* input, int64_t* outputs,
+int64_t* stride, int64_t* kernel_shift, int64_t* dim_size,
+const size_t outer_size, const int64_t dims, const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalRoll<bool>(const bool* input, bool* outputs,
+int64_t* stride, int64_t* kernel_shift, int64_t* dim_size,
+const size_t outer_size, const int64_t dims, const uint32_t &device_id, cudaStream_t cuda_stream);
+
