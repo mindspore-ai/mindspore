@@ -200,6 +200,11 @@ class Expand(Primitive):
         [[1. 1. 1. 1.]
          [2. 2. 2. 2.]
          [3. 3. 3. 3.]]
+        >>> input_x = Tensor(2, mindspore.int16)
+        >>> size = Tensor(np.array([1, 1]), mindspore.int32)
+        >>> y = ops.Expand()(input_x, size)
+        >>> print(y)
+        [[2]]
     """
 
     @prim_attr_register
@@ -235,6 +240,11 @@ class ExpandDims(PrimitiveWithCheck):
         >>> print(output)
         [[[2. 2.]
           [2. 2.]]]
+        >>> input_tensor = Tensor(2.1+2j, mindspore.complex64)
+        >>> expand_dims = ops.ExpandDims()
+        >>> output = expand_dims(input_tensor, 0)
+        >>> print(output)
+        [2.1+2.j]
     """
 
     @prim_attr_register
@@ -442,7 +452,6 @@ class Im2Col(Primitive):
 
     Inputs:
         - **x** (Tensor) - input tensor, only 4-D input tensors (batched image-like tensors) are supported.
-          support all real number data type.
 
     Outputs:
         Tensor, a 4-D Tensor with same type of input `x`.
@@ -534,8 +543,8 @@ class Col2Im(Primitive):
             for height and width. If type is int, it means that height equal with width. Default: ``1`` .
 
     Inputs:
-        - **x** (Tensor) - 4D tensor with data type float16 or float32.
-        - **output_size** (Tensor) - 1D tensor with 2 elements of data type int32.
+        - **x** (Tensor) - 4D input Tensor.
+        - **output_size** (Tensor) - 1D tensor with 2 elements of data type int32 or int64.
 
     Outputs:
         Tensor, a 4-D Tensor with same type of input `x`.
@@ -4250,8 +4259,7 @@ class ResizeNearestNeighborV2(Primitive):
 
     Inputs:
         - **x** (Tensor) - 4-D with shape :math:`(batch, height, width, channels)`
-          or :math:`(batch, channels, height, width)` depending on the attr 'data_format'. Support
-          type [`int8`, `uint8`, `int16`, `uint16`, `int32`, `int64`, `float16`, `float32`, `float64`].
+          or :math:`(batch, channels, height, width)` depending on the attr 'data_format'.
         - **size** (Tensor) - The new size for the images. A 1-D int32 Tensor
           of 2 elements: [`new_height, new_width`].
 
@@ -4263,7 +4271,6 @@ class ResizeNearestNeighborV2(Primitive):
 
     Raises:
         TypeError: If `x` or `size` is not a Tensor.
-        TypeError: If the data type  of `x` is not in supported list.
         TypeError: If the data type  of `size` is not int32.
         TypeError: If `align_corners` or `half_pixel_centers` is not bool.
         TypeError: If `data_format` is not string.
@@ -6050,6 +6057,14 @@ class BroadcastTo(PrimitiveWithCheck):
         >>> print(output)
         [[1. 1.]
          [2. 2.]]
+        >>>
+        >>> shape = (1, 3, 3)
+        >>> x = Tensor(2.1+2j, mindspore.complex64)
+        >>> output = ops.BroadcastTo(shape=shape)(x)
+        >>> print(output)
+        [[[2.1+2.j 2.1+2.j 2.1+2.j]
+         [2.1+2.j 2.1+2.j 2.1+2.j]
+         [2.1+2.j 2.1+2.j 2.1+2.j]]]
     """
 
     @prim_attr_register
@@ -6690,9 +6705,9 @@ class MaskedFill(Primitive):
     Refer to :func:`mindspore.ops.masked_fill` for more details.
 
     Inputs:
-        - **input** (Tensor) - The source tensor whose data type is one of float16, float32, int8, int32.
+        - **input** (Tensor) - The input Tensor.
         - **mask** (Tensor[bool]) - The boolean mask.
-        - **value** (Union[float, Tensor]) – The value to fill in with, which dtype is the same as `input`.
+        - **value** (Union[float, Tensor]) - The value to fill in with, which dtype is the same as `input`.
 
     Outputs:
         Tensor, has the same type and shape as `input`.
@@ -6762,8 +6777,8 @@ class MaskedSelect(PrimitiveWithCheck):
     The shapes of the `mask` tensor and the `x` tensor don't need to match, but they must be broadcastable.
 
     Inputs:
-        - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        - **mask** (Tensor[bool]) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        - **x** (Tensor) - Input Tensor of any dimension.
+        - **mask** (Tensor[bool]) - Boolean mask Tensor, has the same shape as `x`.
 
     Outputs:
         A 1-D Tensor, with the same type as x.
@@ -6781,6 +6796,11 @@ class MaskedSelect(PrimitiveWithCheck):
         >>> output = ops.MaskedSelect()(x, mask)
         >>> print(output)
         [1 3]
+        >>> x = Tensor(2.1, mindspore.float32)
+        >>> mask = Tensor(True, mindspore.bool_)
+        >>> output = ops.MaskedSelect()(x, mask)
+        >>> print(output)
+        [2.1]
     """
 
     @prim_attr_register
@@ -7833,7 +7853,7 @@ class RightShift(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - The target tensor, will be shifted to the right
-          by `input_y` bits element-wise.
+          by `input_y` bits element-wise. Support all int and uint types.
         - **input_y** (Tensor) - Number of bits shifted, the tensor must have the same type as `input_x`.
 
     Outputs:
@@ -8314,15 +8334,15 @@ class LeftShift(Primitive):
         This is an experimental API that is subject to change or deletion.
 
     Inputs:
-        - **x1** (Tensor) - The target tensor whose dtype supports int8, int16, int32, int64,
-          uint8, uint16, uint32, uint64, will be shifted to the left by x2 in element-wise.
-        - **x2** (Tensor) - The tensor must have the same dtype as x1. And the tensor must have the same shape as x1
-          or could be broadcast with x1.
+        - **x1** (Tensor) - The target tensor whose dtype supports all int and uint type,
+          will be shifted to the left by `x2` in element-wise.
+        - **x2** (Tensor) - The tensor must have the same dtype as `x1`.
+          And the tensor must have the same shape as `x1` or could be broadcast with `x1`.
 
     Outputs:
-        - **output** (Tensor) - The output tensor, has the same dtype as x1.
-          And the shape of the output tensor is the same shape as x1, or the same shape
-          as x1 and x2 after broadcasting.
+        - **output** (Tensor) - The output tensor, has the same dtype as `x1`.
+          And the shape of the output tensor is the same shape as `x1`, or the same shape
+          as `x1` and `x2` after broadcasting.
 
     Raises:
         TypeError: If `x1` or `x2` has wrong type.
@@ -8718,12 +8738,16 @@ class TopK(Primitive):
 
     If the two compared elements are the same, the one with the smaller index value is returned first.
 
+    Note:
+        Currently, Ascend/CPU supported all common data types except bool and complex type,
+        but GPU only supports float16, float32 currently.
+
     Args:
         sorted (bool, optional): If ``True`` , the obtained elements will be sorted by the values in descending order.
             If ``False`` , the obtained elements will not be sorted. Default: ``True`` .
 
     Inputs:
-        - **input_x** (Tensor) - Input to be computed, data type can be Number on CPU,
+        - **input_x** (Tensor) - Input to be computed, data type can be Number on Ascend/CPU,
           and float16 or float32 on GPU.
         - **k** (int) - The number of top elements to be computed along the last dimension, constant input is needed.
 

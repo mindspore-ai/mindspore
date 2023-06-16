@@ -2795,7 +2795,6 @@ class BiasAdd(Primitive):
         TypeError: If `data_format` is not a str.
         ValueError: If value of `data_format` is not in the range of ['NHWC','NCHW','NCDHW'].
         TypeError: If `input_x` or `bias` is not a Tensor.
-        TypeError: If dtype of `input_x` or `bias` is neither float16 nor float32.
         TypeError: If dtype of `input_x` or `bias` is inconsistent.
         TypeError: If dimension of `input_x` is not in the range [2, 5].
 
@@ -3159,10 +3158,8 @@ class SmoothL1Loss(Primitive):
             ``'sum'`` . Default: ``'none'`` .
 
     Inputs:
-        - **logits** (Tensor) - Tensor of shape :math:`(N, *)` where :math:`*` means, any number of
-          additional dimensions. Data type must be float16 or float32.
-        - **labels** (Tensor) - Ground truth data, tensor of shape :math:`(N, *)`,
-          same shape and dtype as the `logits`.
+        - **logits** (Tensor) - Input Tensor of any dimension. Data type must be float16, float32 or float64.
+        - **labels** (Tensor) - Ground truth data, has the same shape and dtype as the `logits`.
 
     Outputs:
         Tensor, loss float tensor, same shape and dtype as the `logits`.
@@ -7294,7 +7291,6 @@ class Dropout3D(PrimitiveWithInfer):
     Inputs:
         - **x** (Tensor) - A 5-D tensor with shape :math:`(N, C, D, H, W)`, where N is the batch size, C is the number
           of channels, D is the feature depth, H is the feature height, and W is the feature width.
-          The data type should be int8, int16, int32, int64, float16 or float32.
 
     Outputs:
         - **output** (Tensor) - With the same shape and data type as `x`.
@@ -7957,7 +7953,7 @@ class AvgPool3D(Primitive):
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`.
-          Currently support float16 and float32 data type.
+          Currently support float16, float32 and float64 data type.
 
     Outputs:
         Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})`. Has the same data type with `x`.
@@ -9697,8 +9693,8 @@ class GridSampler3D(Primitive):
             Default: ``False`` .
 
     Inputs:
-        - **input_x** (Tensor) - A 5-D tensor with dtype of float32 or float64 and shape of :math:`(N, C, D_{in},
-          H_{in}, W_{in})`.
+        - **input_x** (Tensor) - A 5-D tensor with dtype of float16, float32 or float64
+          and shape of :math:`(N, C, D_{in}, H_{in}, W_{in})`.
         - **grid** (Tensor) - A 5-D tensor whose dtype is the same as `input_x` and whose shape is :math:`(N, D_{out},
           H_{out}, W_{out}, 3)`.
 
@@ -10291,6 +10287,8 @@ class GridSampler2D(Primitive):
     .. warning::
         This is an experimental API that is subject to change or deletion.
 
+    Refer to :func:`mindspore.ops.grid_sample` for more details.
+
     Args:
         interpolation_mode (str, optional): An optional string specifying the interpolation method.
             The optional values are
@@ -10309,7 +10307,7 @@ class GridSampler2D(Primitive):
             and output tensors are aligned. When set to ``False`` , it is not aligned. Default: ``False`` .
 
     Inputs:
-        - **input_x** (Tensor) - A 4-D tensor with dtype of float16 or float32 and shape of
+        - **input_x** (Tensor) - A 4-D tensor with dtype of float16, float32 or float64 and shape of
           :math:`(N, C, H_{in}, W_{in})`.
         - **grid** (Tensor) - A 4-D tensor whose dtype is the same as `input_x` and whose shape is
           :math:`(N, H_{out}, W_{out}, 2)`.
@@ -10318,17 +10316,6 @@ class GridSampler2D(Primitive):
 
     Outputs:
        A 4-D Tensor whose dtype is the same as `input_x` and whose shape is :math:`(N, C, H_{out}, W_{out})`.
-
-    Raises:
-        TypeError: If `input_x` or `grid` is not a Tensor.
-        TypeError: If the dtypes of `input_x` and `grid` are inconsistent.
-        TypeError: If the dtype of `input_x` or `grid` is not a valid type.
-        TypeError: If `align_corners` is not a boolean value.
-        ValueError: If the rank of `input_x` or `grid` is not equal to 4.
-        ValueError: If the first dimension of `input_x` is not equal to that of `grid`.
-        ValueError: If the forth dimension of `grid` is not equal to 2.
-        ValueError: If `interpolation_mode` is not "bilinear", "nearest" or a string value.
-        ValueError: If `padding_mode` is not "zeros", "border", "reflection" or a string value.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

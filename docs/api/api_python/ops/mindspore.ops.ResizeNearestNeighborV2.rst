@@ -13,7 +13,7 @@ mindspore.ops.ResizeNearestNeighborV2
         - **data_format** (str，可选) - 输入 `x` 的数据格式。默认值： ``"NHWC"`` 。
 
     输入：
-        - **x** (Tensor) - 四维的Tensor，其shape为 :math:`(batch, height, width, channels)` 或者 :math:`(batch, channels, height, width)`，取决于 `data_format` 。支持的数据类型列表：[int8, uint8, int16, uint16, int32, int64, float16, float32, float64]。
+        - **x** (Tensor) - 四维的Tensor，其shape为 :math:`(batch, height, width, channels)` 或者 :math:`(batch, channels, height, width)`，取决于 `data_format` 。
         - **size** (Tensor) - 输出图片的尺寸。一维的Tensor，含有两个元素[ `new_height` , `new_width` ]。
 
     输出：
@@ -21,7 +21,6 @@ mindspore.ops.ResizeNearestNeighborV2
 
     异常：
         - **TypeError** - `x` 或者 `size` 不是Tensor。
-        - **TypeError** - `x` 不在支持的数据类型列表里。
         - **TypeError** - `size` 的数据类型不是int32。
         - **TypeError** - `align_corners` 和 `half_pixel_centers` 不是 bool。
         - **TypeError** - `data_format` 为不是string类型。

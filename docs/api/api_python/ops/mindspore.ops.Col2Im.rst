@@ -25,8 +25,8 @@
         - **stride** (Union[int, tuple[int], list[int]], 可选) - 滑窗移动的步长，由两个正整数组成，分别代表滑窗在横向与纵向上的移动步长。如果数据类型为int，代表不同方向上的步长相等。默认值： ``1`` 。
 
     输入：
-        - **x** (Tensor) - 4D Tensor，数据类型为float16或float32。
-        - **output_size** (Tensor) - 1D Tensor，输出Tensor的后两维的shape，包含2个元素且其数据类型为int32。
+        - **x** (Tensor) - 4D 输入Tensor。
+        - **output_size** (Tensor) - 1D Tensor，输出Tensor的后两维的shape，包含2个元素且其数据类型为int32或int64。
 
     输出：
         4D Tensor，类型与输入 `x` 一致。

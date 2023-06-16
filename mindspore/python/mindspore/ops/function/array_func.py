@@ -1512,7 +1512,7 @@ def reshape(input, shape):
     """
     Rearranges the input Tensor based on the given shape.
 
-    The 'shape' can only have one -1 at most, in which case it’s inferred from the remaining dimensions and
+    The 'shape' can only have one -1 at most, in which case it's inferred from the remaining dimensions and
     the number of elements in the input.
 
     Args:
@@ -4474,6 +4474,13 @@ def broadcast_to(input, shape): # pylint: disable=redefined-outer-name
         >>> print(output)
         [[1. 1.]
          [2. 2.]]
+        >>> shape = (1, 3, 3)
+        >>> x = Tensor(2.1+2j, mindspore.complex64)
+        >>> output = ops.broadcast_to(x, shape)
+        >>> print(output)
+        [[[2.1+2.j 2.1+2.j 2.1+2.j]
+         [2.1+2.j 2.1+2.j 2.1+2.j]
+         [2.1+2.j 2.1+2.j 2.1+2.j]]]
     """
     if isinstance(shape, Tensor) or F.is_sequence_value_unknown(shape):
         _dyn_broadcast_to = _get_cache_prim(DynamicBroadcastTo)()
@@ -6094,6 +6101,7 @@ def unsorted_segment_sum(input_x, segment_ids, num_segments):
     return unsorted_segment_sum_(input_x, segment_ids, num_segments)
 
 
+
 def topk(input, k, dim=None, largest=True, sorted=True):
     r"""
     Finds values and indices of the `k` largest or smallest entries along a given dimension.
@@ -6116,8 +6124,12 @@ def topk(input, k, dim=None, largest=True, sorted=True):
 
     If the two compared elements are the same, the one with the smaller index value is returned first.
 
+    Note:
+        Currently, Ascend/CPU supported all common data types except bool and complex type,
+        but GPU only supports float16, float32 currently.
+
     Args:
-        input (Tensor): Input to be computed, data type must be float16, float32 or int32.
+        input (Tensor): Input to be computed.
         k (int): The number of top or bottom elements to be computed along the last dimension, constant input is needed.
         dim (int, optional): The dimension to sort along. Default: ``None`` .
         largest (bool, optional): If largest is ``False``  then the k smallest elements are returned.
@@ -6135,7 +6147,6 @@ def topk(input, k, dim=None, largest=True, sorted=True):
         TypeError: If `sorted` is not a bool.
         TypeError: If `input` is not a Tensor.
         TypeError: If `k` is not an int.
-        TypeError: If dtype of `input` is not one of the following: float16, float32 or int32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6195,7 +6206,7 @@ def expand(input_x, size):
           the front, and for the new dimensions, the `size` can not be -1.
 
     Args:
-        input_x (Tensor): A Tensor to be expanded. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        input_x (Tensor): A Tensor to be expanded.
         size (Tensor): The expanded shape of `input_x`.
 
     Returns:
@@ -6223,6 +6234,11 @@ def expand(input_x, size):
         [[2. 2. 2. 2.]
          [3. 3. 3. 3.]
          [4. 4. 4. 4.]]
+        >>> input_x = Tensor(2, mindspore.int16)
+        >>> size = Tensor(np.array([1, 1]), mindspore.int32)
+        >>> y = ops.expand(input_x, size)
+        >>> print(y)
+        [[2]]
     """
     expand_op = _get_cache_prim(Expand)()
     return expand_op(input_x, size)

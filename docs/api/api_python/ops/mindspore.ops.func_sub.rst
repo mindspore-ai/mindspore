@@ -10,10 +10,9 @@ mindspore.ops.sub
         out_{i} = input_{i} - other_{i}
 
     .. note::
-        - 输入 `input` 和 `other` 遵循隐式类型转换规则，使数据类型保持一致。
-        - 输入必须是两个Tensor，或一个Tensor和一个Scalar。
-        - 当输入是两个Tensor时，它们的数据类型不能同时是bool，它们的shape可以广播。
-        - 当输入是一个Tensor和一个Scalar时，Scalar只能是一个常数。
+        - 两个输入中至少有一个Tensor，当两个输入具有不同的shape时，它们的shape必须要能广播为一个共同的shape。
+        - 两个输入不能同时为布尔类型。[True, Tensor(True, mindspore.bool_), Tensor(np.array([True]), mindspore.bool_)]的都为布尔类型。
+        - 两个输入遵循隐式类型转换规则，使数据类型保持一致。
 
     参数：
         - **input** (Union[Tensor, number.Number, bool]) - 第一个输入，是一个number.Number、bool值或数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 或 `bool_ <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 的Tensor。

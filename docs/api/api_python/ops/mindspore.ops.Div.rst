@@ -5,15 +5,12 @@ mindspore.ops.Div
 
     逐元素计算第一输入Tensor除以第二输入Tensor的商。
 
-    .. math::
-
-        out_{i} = \frac{x_i}{y_i}
+    更多参考详见 :func:`mindspore.ops.div`。
 
     .. note::
-        - 输入 `x` 和 `y` 遵循隐式类型转换规则，使数据类型保持一致。
-        - 输入必须是两个Tensor，或一个Tensor和一个Scalar。
-        - 当输入是两个Tensor时，它们的数据类型不能同时是bool，并保证其shape可以广播。
-        - 当输入是一个Tensor和一个Scalar时，Scalar只能是一个常数。
+        - 两个输入中至少有一个Tensor，当两个输入具有不同的shape时，它们的shape必须要能广播为一个共同的shape。
+        - 两个输入不能同时为布尔类型。[True, Tensor(True, mindspore.bool_), Tensor(np.array([True]), mindspore.bool_)]的都为布尔类型。
+        - 两个输入遵循隐式类型转换规则，使数据类型保持一致。
 
     输入：
         - **x** (Union[Tensor, number.Number, bool]) - 第一个输入，是一个number.Number、bool值或数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 或 `bool_ <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 的Tensor。
@@ -21,7 +18,3 @@ mindspore.ops.Div
 
     输出：
         Tensor，shape与输入 `x`，`y` 广播后的shape相同，数据类型为两个输入中精度较高的类型。
-
-    异常：
-        - **TypeError** - `x` 和 `y` 都不是Tensor。
-        - **TypeError** - `x` 和 `y` 数据类型都是bool_的Tensor。

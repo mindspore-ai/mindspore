@@ -268,13 +268,13 @@ def add(input, other):
 
         out_{i} = input_{i} + other_{i}
 
-    .. note::
-        - Inputs of `input` and `other` comply with the implicit type conversion rules to make
-          the data types consistent.
-        - The inputs must be two tensors or one tensor and one scalar.
-        - When the inputs are two tensors,
-          dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
-        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
+    Note:
+        - One of the two inputs must be a Tensor, when the two inputs have different shapes,
+          they must be able to broadcast to a common shape.
+        - The two inputs can not be bool type at the same time,
+          [True, Tensor(True, mindspore.bool_), Tensor(np.array([True]), mindspore.bool_)] are all considered bool type.
+        - The two inputs comply with the implicit type conversion rules to make the data types
+          consistent.
 
     Args:
         input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
@@ -802,13 +802,13 @@ def sub(input, other):
 
         out_{i} = input_{i} - other_{i}
 
-    .. note::
-        - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
+    Note:
+        - One of the two inputs must be a Tensor, when the two inputs have different shapes,
+          they must be able to broadcast to a common shape.
+        - The two inputs can not be bool type at the same time,
+          [True, Tensor(True, mindspore.bool_), Tensor(np.array([True]), mindspore.bool_)] are all considered bool type.
+        - The two inputs comply with the implicit type conversion rules to make the data types
           consistent.
-        - The inputs must be two tensors or one tensor and one scalar.
-        - When the inputs are two tensors,
-          dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
-        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
     Args:
         input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
@@ -890,13 +890,14 @@ def mul(input, other):
     .. math::
 
         out_{i} = input_{i} * other_{i}
-    .. note::
-        - Inputs of `input` and `other` comply with the implicit type conversion rules to make the
-          data types consistent.
-        - The inputs must be two tensors or one tensor and one scalar.
-        - When the inputs are two tensors,
-          dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
-        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
+
+    Note:
+        - One of the two inputs must be a Tensor, when the two inputs have different shapes,
+          they must be able to broadcast to a common shape.
+        - The two inputs can not be bool type at the same time,
+          [True, Tensor(True, mindspore.bool_), Tensor(np.array([True]), mindspore.bool_)] are all considered bool type.
+        - The two inputs comply with the implicit type conversion rules to make the data types
+          consistent.
 
     Args:
         input (Union[Tensor, number.Number, bool]): The first input is a number.Number or
@@ -943,12 +944,12 @@ def div(input, other, *, rounding_mode=None):
     Divides the first input tensor by the second input tensor in floating-point type element-wise.
 
     Note:
-        - Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types
+        - One of the two inputs must be a Tensor, when the two inputs have different shapes,
+          they must be able to broadcast to a common shape.
+        - The two inputs can not be bool type at the same time,
+          [True, Tensor(True, mindspore.bool_), Tensor(np.array([True]), mindspore.bool_)] are all considered bool type.
+        - The two inputs comply with the implicit type conversion rules to make the data types
           consistent.
-        - The inputs must be two tensors or one tensor and one scalar.
-        - When the inputs are two tensors, dtypes of them cannot be bool at the same time, and the shapes of them
-          could be broadcast.
-        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
     .. math::
 
@@ -1111,6 +1112,11 @@ def floor_divide(input, other):
         >>> output = ops.floor_divide(x, y)
         >>> print(output)
         [ 0  1 -1]
+        >>> x = Tensor(2.0, mindspore.complex64)
+        >>> y = Tensor(2.0, mindspore.float32)
+        >>> output = ops.floor_divide(x, y)
+        >>> print(output)
+        1.0
     """
     return tensor_floordiv(input, other)
 
@@ -1668,6 +1674,21 @@ def logical_or(input, other):
         >>> output = ops.logical_or(x, y)
         >>> print(output)
         [ True  True  True]
+        >>> x = Tensor(1, mindspore.bool_)
+        >>> y = Tensor(0, mindspore.bool_)
+        >>> output = ops.logical_or(x, y)
+        >>> print(output)
+        True
+        >>> x = True
+        >>> y = Tensor(0, mindspore.bool_)
+        >>> output = ops.logical_or(x, y)
+        >>> print(output)
+        True
+        >>> x = True
+        >>> y = Tensor(np.array([True, False]), mindspore.bool_)
+        >>> output = ops.logical_or(x, y)
+        >>> print(output)
+        [True, True]
     """
     if isinstance(input, Tensor) and input.dtype != mstype.bool_:
         input = input.astype(mstype.bool_)
@@ -1715,6 +1736,21 @@ def logical_and(input, other):
         >>> output = ops.logical_and(x, y)
         >>> print(output)
         [ True False False]
+        >>> x = Tensor(1, mindspore.bool_)
+        >>> y = Tensor(0, mindspore.bool_)
+        >>> output = ops.logical_and(x, y)
+        >>> print(output)
+        False
+        >>> x = True
+        >>> y = Tensor(0, mindspore.bool_)
+        >>> output = ops.logical_and(x, y)
+        >>> print(output)
+        False
+        >>> x = True
+        >>> y = Tensor(np.array([True, False]), mindspore.bool_)
+        >>> output = ops.logical_and(x, y)
+        >>> print(output)
+        [True, False]
     """
     if isinstance(input, Tensor) and input.dtype != mstype.bool_:
         input = input.astype(mstype.bool_)
@@ -2654,12 +2690,12 @@ def atan2(input, other):
 
     Args:
         input (Tensor, Number.number): The input tensor or scalar.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
             The data type should be one of the following types: float16, float32, float64
-        other (Tensor, Number.number): The input tensor or scalar. It has the same shape with `input`.
+        other (Tensor, Number.number): The input tensor or scalar. It has the same shape with `input` or
+            its shape is able to broadcast with `input`.
 
     Returns:
-        Tensor or scalar, the shape is the same as the one after broadcasting,and the data type is same as `input`.
+        Tensor or scalar, the shape is the same as the one after broadcasting, and the data type is same as `input`.
 
     Raises:
         TypeError: If `input` or `other` is not a Tensor or scalar.
@@ -10605,6 +10641,21 @@ def logical_xor(input, other):
         >>> output = ops.logical_xor(x, y)
         >>> print(output)
         [False True True]
+        >>> x = Tensor(1, mindspore.bool_)
+        >>> y = Tensor(0, mindspore.bool_)
+        >>> output = ops.logical_xor(x, y)
+        >>> print(output)
+        True
+        >>> x = True
+        >>> y = Tensor(0, mindspore.bool_)
+        >>> output = ops.logical_xor(x, y)
+        >>> print(output)
+        True
+        >>> x = True
+        >>> y = Tensor(np.array([True, False]), mindspore.bool_)
+        >>> output = ops.logical_xor(x, y)
+        >>> print(output)
+        [False, True]
     """
     if isinstance(input, Tensor) and input.dtype != mstype.bool_:
         input = input.astype(mstype.bool_)

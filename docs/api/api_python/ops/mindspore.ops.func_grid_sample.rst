@@ -16,7 +16,7 @@ mindspore.ops.grid_sample
     远离边界的位置，它会一直被反射，直到在边界内。
 
     参数：
-        - **input** (Tensor) - 4-D场景下，shape为 :math:`(N, C, H_{in}, W_{in})`，5-D场景下，shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})`。数据类型为float32或float64。
+        - **input** (Tensor) - 4-D场景下，shape为 :math:`(N, C, H_{in}, W_{in})`，5-D场景下，shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})`。数据类型为float16、float32或float64。
         - **grid** (Tensor) - 4-D场景下，shape为 :math:`(N, H_{out}, W_{out}, 2)`，5-D场景下，shape为 :math:`(N, D_{out}, H_{out}, W_{out}, 3)`。数据类型与 `input` 保持一致。
         - **mode** (str) - 插值方法。可选方法为 `bilinear`，`nearest`。默认值：`bilinear`。当 `mode` 为 `bilinear`，且输入为5-D，则 `mode` 为 `trilinear`。但是，当输入为4-D，则 `mode` 为 `bilinear`。默认值： ``'bilinear'`` 。
         - **padding_mode** (str) - 填充方法。可选方法为 ``'zeros'``，``'border'`` 和 ``'reflection'``。默认值： ``'zeros'`` 。
