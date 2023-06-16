@@ -40,7 +40,8 @@ REG_ADPT_DESC(ResizeNearestNeighborGrad, kNameResizeNearestNeighborGrad, ADPT_DE
 
 // ResizeBilinearV2Grad
 INPUT_MAP(ResizeBilinearV2Grad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(original_image)}};
-ATTR_MAP(ResizeBilinearV2Grad) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
+ATTR_MAP(ResizeBilinearV2Grad) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())},
+                                  {"half_pixel_centers", ATTR_DESC(half_pixel_centers, AnyTraits<bool>())}};
 OUTPUT_MAP(ResizeBilinearV2Grad) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ResizeBilinearGrad, kNameResizeBilinearGrad, ADPT_DESC(ResizeBilinearV2Grad))
 REG_ADPT_DESC(ResizeBilinearV2Grad, kResizeBilinearV2GradOpName, ADPT_DESC(ResizeBilinearV2Grad))

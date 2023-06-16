@@ -22,7 +22,6 @@ resize_bilinear_grad_op_info = AiCPURegOp("ResizeBilinearGrad") \
     .input(0, "input", "required") \
     .output(1, "input_grad", "required") \
     .attr("align_corners", "bool") \
-    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
     .get_op_info()
 
