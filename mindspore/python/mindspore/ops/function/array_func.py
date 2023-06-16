@@ -4822,8 +4822,10 @@ def is_nonzero(input):
         >>> x1 = Tensor([[[False]]])
         >>> x2 = Tensor([[3.5]])
         >>> out1 = ops.is_nonzero(x1)
+        >>> print(out1)
         False
         >>> out2 = ops.is_nonzero(x2)
+        >>> print(out2)
         True
     """
     if not isinstance(input, Tensor):
