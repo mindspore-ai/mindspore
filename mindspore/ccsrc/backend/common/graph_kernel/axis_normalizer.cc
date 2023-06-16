@@ -23,6 +23,7 @@
 #include "ir/anf.h"
 #include "ir/tensor.h"
 #include "ir/scalar.h"
+#include "utils/anf_utils.h"
 #include "backend/common/graph_kernel/graph_kernel_helper.h"
 #include "backend/common/graph_kernel/adapter/callback_impl.h"
 #include "include/common/utils/anfalgo.h"
@@ -52,7 +53,7 @@ bool AxisNormalizer::AxisProcess(ValuePtr axis, const size_t rank, ShapeVector *
       }
     } else if (vec[0]->isa<Int32Imm>() || vec[0]->isa<Int64Imm>()) {
       for (auto v : vec) {
-        auto v1 = GetValue<int64_t>(v);
+        auto v1 = AnfUtils::GetIntValue(v);
         auto v2 = NormAxis(v1, rank);
         axis_vec->push_back(v2);
         diff = diff || (v1 != v2);

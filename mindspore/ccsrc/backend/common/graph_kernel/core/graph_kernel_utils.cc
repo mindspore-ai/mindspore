@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
+
 #include <map>
 #include <memory>
 #include <sstream>
 #include <utility>
 #include <unordered_map>
 #include <algorithm>
-#include "mindspore/core/ops/core_ops.h"
+
+#include "ir/anf.h"
+#include "ops/core_ops.h"
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
 #include "backend/common/graph_kernel/model/op_node.h"
@@ -280,6 +283,25 @@ FuncGraphPtr GkUtils::LiteGraph2AnfGraph(const inner::LiteGraphPtr &lite_graph, 
   return func_graph;
 }
 
+tensor::TensorPtr InputValue2Tensor(ValuePtr input_value) {
+  // input value of a cnode can be one of tensor, valuesequence and int,
+  // in order to emit litegraph node by gb.Value, convert the type of value to tensor anyway
+  tensor::TensorPtr input_tensor = nullptr;
+  if (input_value->isa<Int32Imm>() || input_value->isa<Int64Imm>()) {
+    auto input_num = GetValue<int64_t>(input_value);
+    input_tensor = std::make_shared<tensor::Tensor>(input_num);
+  } else if (input_value->isa<ValueSequence>()) {
+    auto input_seq = input_value->cast<ValueSequencePtr>()->value();
+    std::vector<int64_t> input_vec;
+    std::transform(input_seq.begin(), input_seq.end(), std::back_inserter(input_vec),
+                   [](auto v) { return AnfUtils::GetIntValue(v); });
+    input_tensor = std::make_shared<tensor::Tensor>(input_vec);
+  } else if (input_value->isa<tensor::Tensor>()) {
+    input_tensor = input_value->cast<tensor::TensorPtr>();
+  }
+  return input_tensor;
+}
+
 inner::LiteGraphPtr GkUtils::AnfGraph2LiteGraph(const FuncGraphPtr &func_graph,
                                                 HashMap<inner::NodePtr, AnfNodePtr> *op_node_map) {
   std::string name = "Default";
@@ -317,21 +339,27 @@ inner::LiteGraphPtr GkUtils::AnfGraph2LiteGraph(const FuncGraphPtr &func_graph,
       auto input_i = cnode->input(i);
       const auto iter = node_map.find(input_i);
       inner::NodePtr input_node = nullptr;
-      if (iter != node_map.end()) {
-        auto value = input_i->abstract()->BuildValue();
-        auto tensor = value->cast<tensor::TensorPtr>();
-        if (tensor != nullptr && tensor->data().const_data() != nullptr) {
-          auto prim_name = GetCNodePrimitive(cnode)->name();
-          if (ConvertOpUtils::NeedConvert(prim_name, i - 1)) {
-            input_node = gb.Value(tensor);
+      if (iter != node_map.end()) {  // parameter or cnode
+        if (input_i->isa<Parameter>()) {
+          auto value = input_i->abstract()->BuildValue();
+          auto tensor = value->cast<tensor::TensorPtr>();
+          if (tensor != nullptr && tensor->data().const_data() != nullptr) {
+            auto prim_name = GetCNodePrimitive(cnode)->name();
+            if (ConvertOpUtils::NeedConvert(prim_name, i - 1)) {
+              input_node = gb.Value(tensor);
+            } else {
+              input_node = iter->second;
+            }
           } else {
             input_node = iter->second;
           }
         } else {
           input_node = iter->second;
         }
-      } else {
-        auto tensor = GetValueNode<tensor::TensorPtr>(input_i);
+      } else {  // valuenode
+        auto input_value_node = input_i->cast<ValueNodePtr>();
+        auto input_value = input_value_node->value();
+        auto tensor = InputValue2Tensor(input_value);
         MS_EXCEPTION_IF_NULL(tensor);
         input_node = gb.Value(tensor);
       }
