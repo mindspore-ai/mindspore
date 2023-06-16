@@ -15,7 +15,7 @@
  */
 
 #include "nnacl/kernel/unique.h"
-#include "nnacl/kernel/base_kernel.h"
+#include "nnacl/kernel/default_kernel_base.h"
 #include "nnacl/fp32/unique_fp32.h"
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/unique_fp16.h"
@@ -53,9 +53,9 @@ KernelBase *CreateUnique(OpParameter *param, int data_type) {
   UniqueStruct *unique = (UniqueStruct *)malloc(sizeof(UniqueStruct));
   NNACL_CHECK_NULL_RETURN_NULL(unique);
   unique->data_type_ = data_type;
-  unique->base_.release = base_kernel_release;
-  unique->base_.prepare = base_kernel_prepare_1in_2out;
-  unique->base_.resize = base_kernel_resize;
+  unique->base_.release = default_release;
+  unique->base_.prepare = default_prepare_1in_2out;
+  unique->base_.resize = default_resize;
   unique->base_.compute = unique_compute;
   return (KernelBase *)unique;
 }

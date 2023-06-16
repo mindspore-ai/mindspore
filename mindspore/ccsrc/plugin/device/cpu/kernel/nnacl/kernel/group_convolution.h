@@ -26,6 +26,7 @@
 typedef struct GroupConvolutionStruct {
   ConvolutionBaseStruct conv_base_;
   KernelBase **group_convs_;
+  ConvParameter new_conv_param_;
   TypeIdC data_type_;
   int input_shape_[DIMENSION_4D];
   int output_shape_[DIMENSION_4D];

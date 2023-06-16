@@ -15,7 +15,7 @@
  */
 
 #include "nnacl/kernel/size.h"
-#include "nnacl/kernel/base_kernel.h"
+#include "nnacl/kernel/default_kernel_base.h"
 
 int size_compute(KernelBase *self) {
   TensorC *in_tensor = self->in_[FIRST_INPUT];
@@ -31,9 +31,9 @@ int size_compute(KernelBase *self) {
 KernelBase *CreateSize(OpParameter *param, int data_type) {
   SizeStruct *size = (SizeStruct *)malloc(sizeof(SizeStruct));
   NNACL_CHECK_NULL_RETURN_NULL(size);
-  size->base_.release = base_kernel_release;
-  size->base_.prepare = base_kernel_prepare_one_input;
-  size->base_.resize = base_kernel_resize;
+  size->base_.release = default_release;
+  size->base_.prepare = default_prepare_1in_1out;
+  size->base_.resize = default_resize;
   size->base_.compute = size_compute;
   return (KernelBase *)size;
 }

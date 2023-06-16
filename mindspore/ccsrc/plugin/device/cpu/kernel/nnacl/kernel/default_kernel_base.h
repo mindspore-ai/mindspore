@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_KERNEL_BASE_KERNEL_H_
-#define NNACL_KERNEL_BASE_KERNEL_H_
+#ifndef NNACL_KERNEL_DEFAULT_KERNEL_BASE_H_
+#define NNACL_KERNEL_DEFAULT_KERNEL_BASE_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 
-int base_kernel_prepare_one_input(KernelBase *self);
-int base_kernel_prepare_two_input(KernelBase *self);
-int base_kernel_prepare_1in_2out(KernelBase *self);
-int base_kernel_resize(KernelBase *self);
-int base_kernel_release(KernelBase *self);
+int default_prepare_1in_1out(KernelBase *self);
+int default_prepare_2in_1out(KernelBase *self);
+int default_prepare_1in_2out(KernelBase *self);
+int default_resize(KernelBase *self);
+int default_release(KernelBase *self);
 
-#endif  // NNACL_KERNEL_BASE_KERNEL_H_
+#endif  // NNACL_KERNEL_DEFAULT_KERNEL_BASE_H_

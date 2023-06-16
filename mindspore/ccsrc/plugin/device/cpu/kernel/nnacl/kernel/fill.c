@@ -19,7 +19,7 @@
 #include "nnacl/op_base.h"
 #include "nnacl/nnacl_common.h"
 #include "nnacl/base/fill_base.h"
-#include "nnacl/kernel/base_kernel.h"
+#include "nnacl/kernel/default_kernel_base.h"
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/fill_fp16.h"
 #endif
@@ -83,9 +83,9 @@ int fill_compute(struct KernelBase *self) {
 KernelBase *CreateFill(OpParameter *param, int data_type) {
   FillStruct *fill = (FillStruct *)malloc(sizeof(FillStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(fill);
-  fill->base_.prepare = base_kernel_prepare_two_input;
+  fill->base_.prepare = default_prepare_2in_1out;
   fill->base_.resize = fill_resize;
-  fill->base_.release = base_kernel_release;
+  fill->base_.release = default_release;
   fill->base_.compute = fill_compute;
   return (KernelBase *)fill;
 }

@@ -16,7 +16,7 @@
 
 #include "nnacl/kernel/log_softmax.h"
 #include "nnacl/common_func.h"
-#include "nnacl/kernel/base_kernel.h"
+#include "nnacl/kernel/default_kernel_base.h"
 #include "nnacl/fp32/log_softmax_fp32.h"
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/log_softmax_fp16.h"
@@ -109,7 +109,7 @@ KernelBase *CreateLogSoftmax(OpParameter *param, int data_type) {
 
   log_softmax->softmax_.sum_data_ = NULL;
   log_softmax->softmax_.data_type_ = data_type;
-  log_softmax->softmax_.base_.prepare = base_kernel_prepare_one_input;
+  log_softmax->softmax_.base_.prepare = default_prepare_1in_1out;
   log_softmax->softmax_.base_.release = softmax_release;
   log_softmax->softmax_.base_.resize = log_softmax_resize;
   log_softmax->softmax_.base_.compute = log_softmax_compute;

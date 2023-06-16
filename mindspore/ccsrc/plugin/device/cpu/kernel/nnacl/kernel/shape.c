@@ -15,7 +15,7 @@
  */
 
 #include "nnacl/kernel/shape.h"
-#include "nnacl/kernel/base_kernel.h"
+#include "nnacl/kernel/default_kernel_base.h"
 
 int shape_compute(struct KernelBase *self) {
   TensorC *in = self->in_[FIRST_INPUT];
@@ -33,9 +33,9 @@ int shape_compute(struct KernelBase *self) {
 KernelBase *CreateShape(OpParameter *param, int data_type) {
   ShapeStruct *shape = (ShapeStruct *)malloc(sizeof(ShapeStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(shape);
-  shape->base_.release = base_kernel_release;
-  shape->base_.prepare = base_kernel_prepare_one_input;
-  shape->base_.resize = base_kernel_resize;
+  shape->base_.release = default_release;
+  shape->base_.prepare = default_prepare_1in_1out;
+  shape->base_.resize = default_resize;
   shape->base_.compute = shape_compute;
   return (KernelBase *)shape;
 }

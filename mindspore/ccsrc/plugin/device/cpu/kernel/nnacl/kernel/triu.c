@@ -15,7 +15,7 @@
  */
 
 #include "nnacl/kernel/triu.h"
-#include "nnacl/kernel/base_kernel.h"
+#include "nnacl/kernel/default_kernel_base.h"
 #include "nnacl/common_func.h"
 #include "nnacl/fp32/triu_tril_fp32.h"
 
@@ -77,9 +77,9 @@ int triu_compute(KernelBase *self) {
 KernelBase *CreateTriu(OpParameter *param, int data_type) {
   TriuStruct *triu = (TriuStruct *)malloc(sizeof(TriuStruct));
   NNACL_CHECK_NULL_RETURN_NULL(triu);
-  triu->base_.release = base_kernel_release;
-  triu->base_.prepare = base_kernel_prepare_one_input;
-  triu->base_.resize = base_kernel_resize;
+  triu->base_.release = default_release;
+  triu->base_.prepare = default_prepare_1in_1out;
+  triu->base_.resize = default_resize;
   triu->base_.compute = triu_compute;
   return (KernelBase *)triu;
 }

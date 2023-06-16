@@ -15,7 +15,7 @@
  */
 
 #include "nnacl/kernel/tril.h"
-#include "nnacl/kernel/base_kernel.h"
+#include "nnacl/kernel/default_kernel_base.h"
 #include "nnacl/common_func.h"
 #include "nnacl/fp32/triu_tril_fp32.h"
 
@@ -77,9 +77,9 @@ int tril_compute(KernelBase *self) {
 KernelBase *CreateTril(OpParameter *param, int data_type) {
   TrilStruct *tril = (TrilStruct *)malloc(sizeof(TrilStruct));
   NNACL_CHECK_NULL_RETURN_NULL(tril);
-  tril->base_.release = base_kernel_release;
-  tril->base_.prepare = base_kernel_prepare_one_input;
-  tril->base_.resize = base_kernel_resize;
+  tril->base_.release = default_release;
+  tril->base_.prepare = default_prepare_1in_1out;
+  tril->base_.resize = default_resize;
   tril->base_.compute = tril_compute;
   return (KernelBase *)tril;
 }

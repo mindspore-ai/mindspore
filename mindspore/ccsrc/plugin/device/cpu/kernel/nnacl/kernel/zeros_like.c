@@ -15,7 +15,7 @@
  */
 
 #include "nnacl/kernel/zeros_like.h"
-#include "nnacl/kernel/base_kernel.h"
+#include "nnacl/kernel/default_kernel_base.h"
 #include "nnacl/common_func.h"
 
 int zeros_like_compute(KernelBase *self) {
@@ -30,9 +30,9 @@ int zeros_like_compute(KernelBase *self) {
 KernelBase *CreateZerosLike(OpParameter *param, int data_type) {
   ZerosLikeStruct *zeros_like = (ZerosLikeStruct *)malloc(sizeof(ZerosLikeStruct));
   NNACL_CHECK_NULL_RETURN_NULL(zeros_like);
-  zeros_like->base_.release = base_kernel_release;
-  zeros_like->base_.prepare = base_kernel_prepare_one_input;
-  zeros_like->base_.resize = base_kernel_resize;
+  zeros_like->base_.release = default_release;
+  zeros_like->base_.prepare = default_prepare_1in_1out;
+  zeros_like->base_.resize = default_resize;
   zeros_like->base_.compute = zeros_like_compute;
   return (KernelBase *)zeros_like;
 }

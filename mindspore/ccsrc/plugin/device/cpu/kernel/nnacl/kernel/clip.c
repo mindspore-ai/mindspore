@@ -18,7 +18,7 @@
 #include "nnacl/op_base.h"
 #include "nnacl/clip_parameter.h"
 #include "nnacl/fp32/activation_fp32.h"
-#include "nnacl/kernel/base_kernel.h"
+#include "nnacl/kernel/default_kernel_base.h"
 
 int GetClipMinMaxValue(TensorC *tensor, float *data) {
   NNACL_CHECK_NULL_RETURN_ERR(tensor);
@@ -108,9 +108,9 @@ int clip_compute(struct KernelBase *self) {
 KernelBase *CreateClip(OpParameter *param, int data_type) {
   ClipStruct *clip = (ClipStruct *)malloc(sizeof(ClipStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(clip);
-  clip->base_.prepare = base_kernel_prepare_one_input;
+  clip->base_.prepare = default_prepare_1in_1out;
   clip->base_.resize = clip_resize;
-  clip->base_.release = base_kernel_release;
+  clip->base_.release = default_release;
   clip->base_.compute = clip_compute;
   return (KernelBase *)clip;
 }
