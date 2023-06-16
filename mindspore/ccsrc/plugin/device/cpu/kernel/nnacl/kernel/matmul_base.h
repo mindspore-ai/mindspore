@@ -37,8 +37,7 @@ typedef struct MatmulSlice {
   int col_e_;
 } MatmulSlice;
 
-typedef struct MatmulFp32Struct {
-  KernelBase base_;
+typedef struct MatmulComputeParam {
   int row_;
   int col_;
   int deep_;
@@ -54,6 +53,11 @@ typedef struct MatmulFp32Struct {
   int batch_stride_;
   int pack_b_stride_;
   int block_col_unit_;
+} MatmulComputeParam;
+
+typedef struct MatmulFp32Struct {
+  KernelBase base_;
+  MatmulComputeParam compute_;
   MatmulType matmul_type_;
 
   /* model pool optimize */

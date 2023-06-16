@@ -25,14 +25,14 @@ int fullconnection_prepare(KernelBase *self) {
 
   if (matmul->a_const_ || matmul->infer_shape_) {
     int *a_shape = self->in_[FIRST_INPUT]->shape_;
-    matmul->row_ = a_shape[0];
-    matmul->deep_ = a_shape[1];
+    matmul->compute_.row_ = a_shape[0];
+    matmul->compute_.deep_ = a_shape[1];
   }
 
   if (matmul->b_const_ || matmul->infer_shape_) {
     int *b_shape = self->in_[SECOND_INPUT]->shape_;
-    matmul->col_ = b_shape[0];
-    matmul->deep_ = b_shape[1];
+    matmul->compute_.col_ = b_shape[0];
+    matmul->compute_.deep_ = b_shape[1];
   }
 
   matmul->batch_ = 1;
@@ -59,9 +59,9 @@ int fullconnection_resize(KernelBase *self) {
   for (size_t i = 0; i < self->out_[0]->shape_size_ - 1; ++i) {
     row *= (self->out_[OUTPUT_INDEX]->shape_)[i];
   }
-  matmul->row_ = row;
-  matmul->col_ = (self->out_[OUTPUT_INDEX]->shape_)[self->out_[0]->shape_size_ - 1];
-  matmul->deep_ = self->in_[SECOND_INPUT]->shape_[SECOND_INPUT];
+  matmul->compute_.row_ = row;
+  matmul->compute_.col_ = (self->out_[OUTPUT_INDEX]->shape_)[self->out_[0]->shape_size_ - 1];
+  matmul->compute_.deep_ = self->in_[SECOND_INPUT]->shape_[SECOND_INPUT];
 
   return matmul_f32_resize(self);
 }
