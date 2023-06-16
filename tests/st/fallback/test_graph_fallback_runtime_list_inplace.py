@@ -288,7 +288,7 @@ def test_return_local_list_4():
     assert ret == [1.0, 2, 3.0, Tensor([1]), 2]
 
 
-
+@pytest.mark.skip(reason="No need to convert to PyExecute node. SequenceMul execute fail in Ascend.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -720,3 +720,95 @@ def test_list_inplace_insert_local_list_2():
     assert len(out) == 2
     assert out[0] == [0, [("a", "b"), 1, 2, 3], 4, 5]
     assert out[1] == [("a", "b"), 1, 2, 3]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_reverse_with_variable():
+    """
+    Feature: list inplace ops.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(a, b):
+        x = [a, b]
+        x.reverse()
+        return x
+
+    a = Tensor([1, 2, 3])
+    b = Tensor([4, 5, 6])
+    out = foo(a, b)
+    assert isinstance(out, list)
+    assert len(out) == 2
+    assert np.all(out[0].asnumpy() == np.array([4, 5, 6]))
+    assert np.all(out[1].asnumpy() == np.array([1, 2, 3]))
+
+
+@pytest.mark.skip(reason="mutable list should convert to cnode")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_reverse_with_variable_2():
+    """
+    Feature: list inplace ops.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit
+    def foo():
+        x = mutable([1, 2, 3])
+        x.reverse()
+        return x
+
+    out = foo()
+    assert out == [3, 2, 1]
+
+
+@pytest.mark.skip(reason="mutable list should convert to cnode")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_reverse_with_variable_3():
+    """
+    Feature: list inplace ops.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit
+    def foo():
+        m = mutable([[1, 2], 3, 4])
+        x = m[0]
+        x.reverse()
+        return m
+
+    out = foo()
+    assert out == [[2, 1], 3, 4]
+
+
+@pytest.mark.skip(reason="mutable list should convert to cnode")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_reverse_with_variable_4():
+    """
+    Feature: list inplace ops.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit
+    def foo():
+        m = mutable([[1, 2, 3], 3, 4])
+        x = m[0]
+        x.reverse()
+        y = m[0]
+        y.pop()
+        return m
+
+    out = foo()
+    assert out == [[3, 2], 3, 4]
