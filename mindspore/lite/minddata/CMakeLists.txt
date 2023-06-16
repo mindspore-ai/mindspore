@@ -219,11 +219,12 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
         ${MINDDATA_DIR}/engine/opt/post/auto_worker_pass.cc
         ${MINDDATA_DIR}/engine/opt/pass.cc
         ${MINDDATA_DIR}/engine/perf/auto_tune.cc
-        ${MINDDATA_DIR}/engine/perf/profiling.cc
-        ${MINDDATA_DIR}/engine/perf/monitor.cc
-        ${MINDDATA_DIR}/engine/perf/device_queue_tracing.cc
         ${MINDDATA_DIR}/engine/perf/connector_size.cc
         ${MINDDATA_DIR}/engine/perf/dataset_iterator_tracing.cc
+        ${MINDDATA_DIR}/engine/perf/device_queue_tracing.cc
+        ${MINDDATA_DIR}/engine/perf/info_collector.cc
+        ${MINDDATA_DIR}/engine/perf/monitor.cc
+        ${MINDDATA_DIR}/engine/perf/profiling.cc
         ${MINDDATA_DIR}/engine/datasetops/source/sampler/sampler.cc
         ${MINDDATA_DIR}/engine/datasetops/source/sampler/subset_sampler.cc
         ${MINDDATA_DIR}/engine/datasetops/source/sampler/distributed_sampler.cc
