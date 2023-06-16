@@ -29,6 +29,7 @@ const int64_t kTwo = 2;
 const int64_t kThree = 3;
 const int64_t kFour = 4;
 const size_t DIM_SIZE_1 = 1;
+const size_t DIM_SIZE_3 = 3;
 const size_t DIM_SIZE_5 = 5;
 }  // namespace
 
@@ -47,6 +48,21 @@ bool MaxPool3DWithArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   strides_list_ = kernel_ptr->get_strides();
   pads_list_ = kernel_ptr->get_pads();
   dilation_list_ = kernel_ptr->get_dilation();
+  if (ksize_list_.size() != DIM_SIZE_1 && ksize_list_.size() != DIM_SIZE_3) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the ksize size must be 1 or 3, but got " << ksize_list_;
+  }
+  if (strides_list_.size() != DIM_SIZE_1 && strides_list_.size() != DIM_SIZE_3) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the strides size must be 1 or 3, but got "
+                             << strides_list_;
+  }
+  if (pads_list_.size() != DIM_SIZE_1 && pads_list_.size() != DIM_SIZE_1) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the strides size must be 1 or 3, but got " << pads_list_;
+  }
+  if (dilation_list_.size() != DIM_SIZE_1 && dilation_list_.size() != DIM_SIZE_3 &&
+      dilation_list_.size() != DIM_SIZE_5) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the strides size must be 1 or 3 or 5, but got "
+                             << dilation_list_;
+  }
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
