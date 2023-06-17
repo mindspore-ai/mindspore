@@ -16,5 +16,6 @@ mindspore.ops.matmul
         Tensor或Scalar，输入的矩阵乘积。仅当 `input` 和 `other` 为一维向量时，输出为Scalar。
 
     异常：
+        - **TypeError** - `input` 的dtype和 `other` 的dtype不一致。
         - **ValueError** -  `input` 的最后一维度和 `other` 的倒数第二维度不相等，或者输入的是Scalar。
         - **ValueError** - `input` 和 `other` 彼此不能广播。

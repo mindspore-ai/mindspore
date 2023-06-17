@@ -46,10 +46,10 @@ TypePtr LogicalAndInferType(const PrimitivePtr &prim, const std::vector<Abstract
   string x_dtype_str = x_dtype->ToString();
   string y_dtype_str = y_dtype->ToString();
   if (!x_dtype->isa<TensorType>()) {
-    x_dtype_str = "Tensor" + x_dtype_str + "]";
+    x_dtype_str = "Tensor[" + x_dtype_str + "]";
   }
   if (!y_dtype->isa<TensorType>()) {
-    y_dtype_str = "Tensor" + y_dtype_str + "]";
+    y_dtype_str = "Tensor[" + y_dtype_str + "]";
   }
   if (x_dtype_str != kBool) {
     MS_EXCEPTION(TypeError) << buffer.str() << x_dtype->ToString() << ".";

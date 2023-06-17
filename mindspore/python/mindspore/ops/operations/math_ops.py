@@ -1604,6 +1604,7 @@ class MatMul(PrimitiveWithCheck):
 
     Raises:
         TypeError: If `transpose_a` or `transpose_b` is not a bool.
+        TypeError: If the dtype of `a` and the dtype of `b` are not the same.
         ValueError: If the column of matrix dimensions of `a` is not equal to
                     the row of matrix dimensions of `b`.
         ValueError: If length of shape of `a` or `b` is not equal to 2.
