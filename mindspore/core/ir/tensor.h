@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CORE_IR_TENSOR_H_
 #define MINDSPORE_CORE_IR_TENSOR_H_
 
+#include <future>
 #include <memory>
 #include <string>
 #include <vector>
@@ -218,6 +219,32 @@ class Tensor;
 using TensorPtr = std::shared_ptr<Tensor>;
 using TensorPtrList = std::vector<std::shared_ptr<Tensor>>;
 
+template <typename T>
+class FutureData {
+ public:
+  FutureData(std::shared_ptr<T> data, std::exception_ptr e_ptr) : data_(std::move(data)), e_ptr_(std::move(e_ptr)) {}
+  virtual ~FutureData() {}
+
+  virtual std::shared_ptr<T> GetData() const { return data_; }
+  const std::exception_ptr &GetException() const { return e_ptr_; }
+
+ private:
+  std::shared_ptr<T> data_;
+  std::exception_ptr e_ptr_;
+};
+
+template <typename T>
+class FutureBase {
+ public:
+  explicit FutureBase(std::future<std::shared_ptr<tensor::FutureData<T>>> future) : future_(std::move(future)) {}
+  virtual ~FutureBase() {}
+  virtual std::shared_ptr<T> Get() = 0;
+
+ protected:
+  std::future<std::shared_ptr<tensor::FutureData<T>>> future_;
+  std::shared_ptr<tensor::FutureData<T>> future_data_;
+};
+
 // Tensor entity class
 class MS_CORE_API Tensor : public MetaTensor {
  public:
@@ -368,37 +395,7 @@ class MS_CORE_API Tensor : public MetaTensor {
   Tensor(TypeId origin_data_type, const ShapeVector &shape, size_t compression_data_size,
          TensorCompressionType compression_type);
 
-  Tensor &operator=(const Tensor &tensor) {
-    if (this == &tensor) {
-      return *this;
-    }
-    init_flag_ = tensor.init_flag_;
-    is_forward_output_ = tensor.is_forward_output_;
-    data_ = tensor.data_;
-    id_ = tensor.id_;
-    event_ = tensor.event_;
-    need_wait_ = tensor.need_wait_;
-    sync_status_ = tensor.sync_status_;
-    device_sync_ = tensor.device_sync_;
-    need_release_device_mem_ = tensor.need_release_device_mem_;
-    cache_enable_ = tensor.cache_enable_;
-    base_shape_ptr_ = tensor.base_shape_ptr_;
-    cache_tensor_ptr_ = tensor.cache_tensor_ptr_;
-    hashmap_tensor_ptr_ = tensor.hashmap_tensor_ptr_;
-    padding_type_ = tensor.padding_type();
-    device_event_ = tensor.device_event_;
-    lazy_callback_ = tensor.lazy_callback_;
-    user_data_ = tensor.user_data_;
-    auto_grad_meta_data_ = tensor.auto_grad_meta_data_;
-    compression_type_ = tensor.compression_type_;
-    tensor_name_ = tensor.tensor_name_;
-    adapter_flag_ = tensor.adapter_flag_;
-    cast_dtype_ = tensor.cast_dtype_;
-    graph_output_ = tensor.graph_output_;
-    quant_params_ = tensor.quant_params_;
-    updated_by_device_ = tensor.updated_by_device_;
-    return *this;
-  }
+  Tensor &operator=(const Tensor &tensor);
 
   /// Destructor of Tensor.
   ~Tensor() override;
@@ -560,22 +557,14 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \brief Get the device address.
   ///
   /// \return The device address.
-  DeviceSyncPtr device_address() const { return device_sync_; }
+  DeviceSyncPtr device_address() const;
 
   /// \brief Set the device address.
   ///
   /// \param[in] device_sync The input Device synchronization.
   /// \param[in] need_update_ref_count If need_update_ref_count is true, the device address cannot be released and
   /// reused, so the feature map should set false when set device address of tensor.
-  void set_device_address(const DeviceSyncPtr &device_sync, bool need_update_ref_count = true) {
-    device_sync_ = device_sync;
-    // To support the old and new runtime coexistence, the output of old runtime may be the input of new runtime, so the
-    // device address cannot be released through ref count and set max ref count in this scenario.
-    if (need_update_ref_count && (device_sync_ != nullptr)) {
-      device_sync_->set_original_ref_count(SIZE_MAX);
-      device_sync_->ResetRefCount();
-    }
-  }
+  void set_device_address(const DeviceSyncPtr &device_sync, bool need_update_ref_count = true);
 
   /// \brief Check whether to release device memory.
   ///
@@ -821,6 +810,13 @@ class MS_CORE_API Tensor : public MetaTensor {
   /// \return tensor name.
   const std::string &name() const { return tensor_name_; }
 
+  /// \brief Set tensor future.
+  ///
+  /// \param[in] address_future The future to get device address.
+  void set_address_future(const std::shared_ptr<FutureBase<DeviceSync>> &address_future) {
+    address_future_ = address_future;
+  }
+
   /// \brief Set tensor quant param.
   ///
   /// \param[in] quant_param The tensor quant param.
@@ -881,6 +877,7 @@ class MS_CORE_API Tensor : public MetaTensor {
   TensorCompressionType compression_type_{kNoCompression};
   std::vector<std::shared_ptr<QuantizationParam>> quant_params_;
   std::string tensor_name_;
+  std::shared_ptr<FutureBase<DeviceSync>> address_future_{};
 };
 
 // CSRTensor entity class

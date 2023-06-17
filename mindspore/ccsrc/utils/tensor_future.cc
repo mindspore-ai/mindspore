@@ -1,4 +1,6 @@
 /**
+ * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
+ *
  * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,24 +16,34 @@
  * limitations under the License.
  */
 
-#include "pipeline/pynative/forward/forward_task.h"
-
-#include <memory>
 #include "include/common/utils/tensor_future.h"
+#include "pybind_api/gil_scoped_long_running.h"
 
 namespace mindspore {
 namespace pynative {
-void FrontendTask::Run() { run_func_(op_run_info_); }
-
-void FrontendTask::SetException(const std::exception_ptr &e) { op_run_info_->stub_output->SetException(e); }
-
-void BackendTask::Run() { run_func_(op_run_info_, backend_op_run_info_); }
-
-void BackendTask::SetException(const std::exception_ptr &e) {
-  if (backend_op_run_info_ != nullptr) {
-    for (auto &promise : backend_op_run_info_->device_sync_promises) {
-      promise.set_value(std::make_shared<pynative::DeviceAddressFutureData>(nullptr, e));
+DeviceAddressFuture::~DeviceAddressFuture() {
+  if (future_.valid()) {
+    try {
+      (void)future_.get();
+    } catch (...) {
+      MS_LOG(INFO) << "Find error and ignore when destroy future";
     }
+  }
+}
+
+std::shared_ptr<DeviceSync> DeviceAddressFuture::Get() {
+  if (future_.valid()) {
+    GilReleaseWithCheck gil_release;
+    auto future_data = future_.get();
+    if (future_data->GetException() != nullptr) {
+      std::rethrow_exception(future_data->GetException());
+    }
+    future_data_ = future_data;
+  }
+  if (future_data_ != nullptr) {
+    return future_data_->GetData();
+  } else {
+    return nullptr;
   }
 }
 }  // namespace pynative

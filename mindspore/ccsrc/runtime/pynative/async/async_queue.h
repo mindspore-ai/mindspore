@@ -23,6 +23,7 @@
 #include <mutex>
 #include <string>
 #include <utility>
+#include <unordered_map>
 #include <condition_variable>
 
 #include "include/backend/visible.h"
@@ -37,10 +38,21 @@ namespace pynative {
 /* Thread status */
 constexpr int kThreadBusy = 0;  // busy, the thread is running task
 constexpr int kThreadIdle = 1;  // idle, the thread is waiting
+
+enum kThreadWaitLevel : int {
+  kLevelUnknown = 0,
+  kLevelPython,
+  kLevelGrad,
+  kLevelFrontend,
+  kLevelBackend,
+  kLevelDevice,
+};
+
 // Create a new thread to execute the tasks in the queue sequentially.
 class BACKEND_EXPORT AsyncQueue {
  public:
-  explicit AsyncQueue(std::string name) : name_(std::move(name)) {}
+  explicit AsyncQueue(std::string name, kThreadWaitLevel wait_level)
+      : name_(std::move(name)), wait_level_(wait_level) {}
   virtual ~AsyncQueue();
 
   // Add task to the end of the queue.
@@ -69,6 +81,9 @@ class BACKEND_EXPORT AsyncQueue {
   std::mutex task_mutex_;
   std::condition_variable task_cond_var_;
   std::string name_;
+  kThreadWaitLevel wait_level_;
+  inline static std::unordered_map<std::thread::id, kThreadWaitLevel> thread_id_to_wait_level_;
+  inline static std::mutex level_mutex_;
 
  private:
   void ClearTaskWithException();
@@ -79,7 +94,7 @@ using AsyncQueuePtr = std::shared_ptr<AsyncQueue>;
 
 class BACKEND_EXPORT AsyncHqueue final : public AsyncQueue {
  public:
-  explicit AsyncHqueue(std::string name) : AsyncQueue(std::move(name)) {}
+  explicit AsyncHqueue(std::string name, kThreadWaitLevel wait_level) : AsyncQueue(std::move(name), wait_level) {}
   ~AsyncHqueue() override;
 
   // Init resource

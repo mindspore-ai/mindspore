@@ -34,7 +34,7 @@
 #include "backend/common/session/session_basic.h"
 #include "runtime/hardware/device_context.h"
 #include "runtime/graph_scheduler/graph_scheduler.h"
-#include "runtime/pynative/async/backend_op_task.h"
+#include "runtime/pynative/async/device_task.h"
 #include "runtime/pynative/op_compiler.h"
 #include "include/backend/visible.h"
 
@@ -91,7 +91,7 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
                             bool is_dynamic_shape = false) const;
 
   // Get saved OpBuildTask in OpExecutor and build all the kernels together in PyNative mode.
-  void CompileSingleOpGraphs(const std::vector<std::shared_ptr<pynative::BackendOpBuildTask>> &build_tasks) const;
+  void CompileSingleOpGraphs(const std::vector<std::shared_ptr<pynative::DeviceOpBuildTask>> &build_tasks) const;
 
   // In PyNative mode, the size of single op cache list will be increasing, which lead to memory cost increasing,
   // so the latest single op cache should be erased when cache list size exceeds threshold value.
@@ -126,10 +126,11 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
 
   void RunMsGradGraph(const CNodePtr &kernel, const VectorRef &args, VectorRef *outputs);
 
-  void UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs) const;
+  void UpdateOutput(const session::BackendOpRunInfoPtr &op_run_info,
+                    const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs) const;
 
-  void UpdateOutputDynamic(const OpCompilerInfoPtr &op_compiler_info, VectorRef *const outputs,
-                           const vector<device::DeviceAddressPtr> &device_address_list) const;
+  void UpdateOutputDynamic(const session::BackendOpRunInfoPtr &op_run_info, const OpCompilerInfoPtr &op_compiler_info,
+                           const vector<device::DeviceAddressPtr> &device_address_list, VectorRef *const outputs) const;
 
   void ReleaseForwardOutput(const std::vector<TensorPtr> &input_tensors);
 
@@ -148,5 +149,6 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
 };
 using MindRTBackendPtr = std::shared_ptr<compile::MindRTBackend>;
 }  // namespace compile
+using BackendOpRunInfoPtr = std::shared_ptr<session::BackendOpRunInfo>;
 }  // namespace mindspore
 #endif

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_BACKEND_OP_TASK_H_
-#define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_BACKEND_OP_TASK_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_DEVICE_TASK_H_
+#define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_DEVICE_TASK_H_
 
 #include <utility>
 #include <vector>
@@ -62,11 +62,11 @@ class OpTaskContext {
   vector<device::DeviceAddressPtr> device_address_list_;
 };
 
-class BackendOpTask : public AsyncTask {
+class DeviceOpTask : public AsyncTask {
  public:
-  BackendOpTask(std::shared_ptr<OpTaskContext> context, pynative::TaskType task_type)
+  DeviceOpTask(std::shared_ptr<OpTaskContext> context, pynative::TaskType task_type)
       : AsyncTask(task_type), context_(std::move(context)) {}
-  ~BackendOpTask() override = default;
+  ~DeviceOpTask() override = default;
 
   void Run() override {}
 
@@ -76,13 +76,12 @@ class BackendOpTask : public AsyncTask {
   std::shared_ptr<OpTaskContext> context_;
 };
 
-class BackendOpRunTask : public BackendOpTask {
+class DeviceOpRunTask : public DeviceOpTask {
  public:
-  BackendOpRunTask(std::shared_ptr<OpTaskContext> context,
-                   std::function<void(const std::shared_ptr<OpTaskContext> &context)> run_func,
-                   std::future<bool> future)
-      : BackendOpTask(std::move(context), kOpRunTask), run_func_(std::move(run_func)), future_(std::move(future)) {}
-  ~BackendOpRunTask() override = default;
+  DeviceOpRunTask(std::shared_ptr<OpTaskContext> context,
+                  std::function<void(const std::shared_ptr<OpTaskContext> &context)> run_func, std::future<bool> future)
+      : DeviceOpTask(std::move(context), kDeviceOpTask), run_func_(std::move(run_func)), future_(std::move(future)) {}
+  ~DeviceOpRunTask() override = default;
   void Run() override;
 
  private:
@@ -90,11 +89,11 @@ class BackendOpRunTask : public BackendOpTask {
   std::future<bool> future_;
 };
 
-class BackendOpBuildTask : public BackendOpTask {
+class DeviceOpBuildTask : public DeviceOpTask {
  public:
-  BackendOpBuildTask(std::shared_ptr<OpTaskContext> context, std::promise<bool> promise)
-      : BackendOpTask(std::move(context), kOpBuildTask), promise_(std::move(promise)), has_set_value_(false) {}
-  ~BackendOpBuildTask() override;
+  DeviceOpBuildTask(std::shared_ptr<OpTaskContext> context, std::promise<bool> promise)
+      : DeviceOpTask(std::move(context), kDeviceOpBuildTask), promise_(std::move(promise)), has_set_value_(false) {}
+  ~DeviceOpBuildTask() override;
   void Run() override {}
   void SetBuildReady(bool build_success);
 
@@ -104,4 +103,4 @@ class BackendOpBuildTask : public BackendOpTask {
 };
 }  // namespace pynative
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_BACKEND_OP_TASK_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_DEVICE_TASK_H_

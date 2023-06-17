@@ -27,6 +27,7 @@ namespace pynative {
 constexpr int32_t kTaskQueueSize = 8192;
 constexpr size_t kMaxSpinCount = 300000;
 constexpr size_t kThreadNameThreshold = 15;
+thread_local kThreadWaitLevel current_level_{kThreadWaitLevel::kLevelUnknown};
 
 #ifndef LIKELY
 #ifdef _MSC_VER
@@ -57,7 +58,12 @@ void AsyncQueue::WorkerLoop() {
   });
 #endif
 
+  // Thread init.
   SetThreadName();
+  {
+    std::unique_lock<std::mutex> lock(level_mutex_);
+    thread_id_to_wait_level_[std::this_thread::get_id()] = wait_level_;
+  }
 
   while (true) {
     std::shared_ptr<AsyncTask> task;
@@ -94,7 +100,6 @@ void AsyncQueue::WorkerLoop() {
         MsException::Instance().SetException();
         // MsException is unreliable because it gets modified everywhere.
         auto e_ptr = std::current_exception();
-        task->SetException(e_ptr);
         while (!tasks_.empty()) {
           auto &t = tasks_.front();
           if (t->task_type() == kExitTask) {
@@ -124,13 +129,22 @@ void AsyncQueue::Wait() {
   if (worker_ == nullptr) {
     return;
   }
-  // Avoid deadlock.
-  if (worker_->get_id() == std::this_thread::get_id()) {
+  if (current_level_ == kThreadWaitLevel::kLevelUnknown) {
+    std::unique_lock<std::mutex> lock(level_mutex_);
+    current_level_ = thread_id_to_wait_level_[std::this_thread::get_id()];
+  }
+
+  if (current_level_ >= wait_level_) {
+    MS_LOG(DEBUG) << "No need to wait, current level " << current_level_ << " AsyncQueue name " << name_;
+    // Only need to wait the low level thread.
     return;
   }
+
+  MS_LOG(DEBUG) << "Start to wait thread " << name_;
   std::unique_lock<std::mutex> lock(task_mutex_);
   task_cond_var_.wait(lock, [this]() { return tasks_.empty(); });
   MsException::Instance().CheckException();
+  MS_LOG(DEBUG) << "End to wait thread " << name_;
 }
 
 bool AsyncQueue::Empty() {

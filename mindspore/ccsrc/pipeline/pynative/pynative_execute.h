@@ -52,9 +52,9 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
     return forward_executor_;
   }
 
-  bool DisablePyTraceAsync(const FrontendOpRunInfoPtr &op_run_info) const;
   void StoreAsyncStatus(const FrontendOpRunInfoPtr &op_run_info) const;
-  py::object RunOpAsync(const py::args &args) const;
+  // Generate stub tensor and dispatch async task.
+  py::object RunOpStub(const py::args &args) const;
   py::object RealRunOp(const py::args &args) const;
   py::object CallConstantFolding(const py::args &args) const;
   bool grad_flag() const;

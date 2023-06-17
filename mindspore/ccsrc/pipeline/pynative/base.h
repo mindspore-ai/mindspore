@@ -30,6 +30,7 @@
 #include "pipeline/jit/parse/parse.h"
 #include "abstract/abstract_value.h"
 #include "include/common/utils/stub_tensor.h"
+#include "include/common/utils/tensor_future.h"
 
 namespace mindspore {
 namespace pynative {
@@ -87,6 +88,8 @@ struct FrontendOpRunInfo {
   std::vector<Signature> signatures{};
   AsyncStatus async_status;
   mindspore::HashSet<size_t> input_to_attr{};
+  std::vector<tensor::TensorPtr> output_tensors;
+  std::vector<std::promise<DeviceAddressFutureDataPtr>> device_sync_promises;
 };
 using FrontendOpRunInfoPtr = std::shared_ptr<FrontendOpRunInfo>;
 

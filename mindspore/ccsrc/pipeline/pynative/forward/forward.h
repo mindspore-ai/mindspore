@@ -42,21 +42,19 @@ class ForwardExecutor {
   ForwardExecutor()
       : cast_operation_(std::make_shared<CastOperation>()),
         infer_operation_(std::make_shared<InferOperation>()),
-        forward_queue_(std::make_shared<AsyncQueue>("runop_forward")) {}
+        frontend_queue_(std::make_shared<AsyncQueue>("frontend_queue", kThreadWaitLevel::kLevelFrontend)),
+        backend_queue_(std::make_shared<AsyncQueue>("backend_queue", kThreadWaitLevel::kLevelBackend)) {}
   ~ForwardExecutor() = default;
 
   void Init();
   std::function<void(const FrontendOpRunInfoPtr &)> RunOpS = [this](auto &&PH1) {
-    RunOpForward(std::forward<decltype(PH1)>(PH1));
+    RunOpFrontend(std::forward<decltype(PH1)>(PH1));
   };
 
-  std::function<void(const FrontendOpRunInfoPtr &)> RunOpSAsync = [this](auto &&PH1) {
-    RunOpForwardAsync(std::forward<decltype(PH1)>(PH1));
-  };
-
-  void RunOpForward(const FrontendOpRunInfoPtr &op_run_info);
-  void RunOpForwardAsync(const FrontendOpRunInfoPtr &op_run_info);
-  void RunOpForwardAsyncImpl(const FrontendOpRunInfoPtr &op_run_info);
+  void DispatchBackendTask(const FrontendOpRunInfoPtr &op_run_info,
+                           const session::BackendOpRunInfoPtr &backend_op_run_info);
+  void DispatchFrontendTask(const FrontendOpRunInfoPtr &op_run_info);
+  void RunOpFrontend(const FrontendOpRunInfoPtr &op_run_info);
   // If sub is true, this function will not convert StubTensor to Tensor.
   // Used to reduce the overhead of StubTensor WaitValue.
   FrontendOpRunInfoPtr GenerateOpRunInfo(const py::args &args, bool stub = false);
@@ -67,6 +65,7 @@ class ForwardExecutor {
   AbstractBasePtr GetNodeAbsById(const std::string &id) const;
   void ClearRes();
   void set_lazy_build(bool lazy_build) { lazy_build_ = lazy_build; }
+  bool EnablePipeline(const std::string &op_name) const;
   inline bool enable_async() const { return enable_async_; }
   inline const std::string &device_target() const { return device_target_; }
   const MindrtBackendMap &mindrt_backend() const { return mindrt_backends_; }
@@ -90,7 +89,10 @@ class ForwardExecutor {
   }
   bool is_ms_function_compiling() const { return is_ms_function_compiling_; }
 
-  void WorkerJoin() { forward_queue_->WorkerJoin(); }
+  void WorkerJoin() {
+    frontend_queue_->WorkerJoin();
+    backend_queue_->WorkerJoin();
+  }
   void ClearForwardTask();
   void WaitForwardTask();
   bool IsVmOp(const std::string &op_name) const;
@@ -106,16 +108,22 @@ class ForwardExecutor {
     return cast_operation_;
   }
   ValuePtr RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) const;
-  ValuePtr RunOpInMs(const FrontendOpRunInfoPtr &op_run_info);
-  ValuePtr RunOpInMsInner(const FrontendOpRunInfoPtr &op_run_info);
-  ValuePtr RunOpWithBackendPolicy(const FrontendOpRunInfoPtr &op_run_info);
-  void GetOutput(const FrontendOpRunInfoPtr &op_run_info);
+  ValuePtr RunOpInMs(const FrontendOpRunInfoPtr &op_run_info, const BackendOpRunInfoPtr &backend_op_run_info);
+  ValuePtr RunOpInMsInner(const FrontendOpRunInfoPtr &op_run_info, const BackendOpRunInfoPtr &backend_op_run_info);
+  ValuePtr RunOpWithBackendPolicy(const FrontendOpRunInfoPtr &op_run_info,
+                                  const BackendOpRunInfoPtr &backend_op_run_info);
+  void RunOpBackend(const FrontendOpRunInfoPtr &op_run_info, const BackendOpRunInfoPtr &backend_op_run_info);
+  void RunOpBackendSync(const FrontendOpRunInfoPtr &op_run_info);
+
+  VectorRef RunOpBackendInner(const FrontendOpRunInfoPtr &op_run_info, const BackendOpRunInfoPtr &backend_op_run_info);
   // Mix precision and Implicit transform
   void SetCastForInputs(const FrontendOpRunInfoPtr &op_run_info) const;
   // Infer output abstract
   void InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_info) const;
   // Check sync condition in heterogeneous
   void CheckIfNeedSyncForHeterogeneous(const std::string &cur_target);
+  void PrepareOpInputs(const FrontendOpRunInfoPtr &op_run_info);
+  void PrepareOpOutputs(const FrontendOpRunInfoPtr &op_run_info);
 
  private:
   bool init_{false};
@@ -130,7 +138,8 @@ class ForwardExecutor {
   CastOperationPtr cast_operation_;
   InferOperationPtr infer_operation_;
   MindrtBackendMap mindrt_backends_;
-  AsyncQueuePtr forward_queue_;
+  AsyncQueuePtr frontend_queue_;
+  AsyncQueuePtr backend_queue_;
 };
 }  // namespace pynative
 }  // namespace mindspore

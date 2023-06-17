@@ -21,7 +21,16 @@
 
 namespace mindspore {
 namespace pynative {
-enum TaskType { kUnknownTask = 0, kOpRunTask, kOpBuildTask, kBpropTask, kForwardTask, kExitTask, kWaitTask };
+enum TaskType {
+  kUnknownTask = 0,
+  kDeviceOpTask,
+  kDeviceOpBuildTask,
+  kBpropTask,
+  kFrontendTask,
+  kBackendTask,
+  kExitTask,
+  kWaitTask
+};
 
 class AsyncTask {
  public:

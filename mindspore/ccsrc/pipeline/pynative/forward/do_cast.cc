@@ -300,7 +300,7 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
   (void)cast_run_info->input_value.emplace_back(GetDstType(type_id));
   cast_run_info->input_size = input_size;
   PyNativeAlgo::PyParser::PrepareOpGradInfo(cast_run_info);
-  PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->RunOpForward(cast_run_info);
+  PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->RunOpFrontend(cast_run_info);
   return cast_run_info->out_value;
 }
 

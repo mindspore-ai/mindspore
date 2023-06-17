@@ -206,6 +206,60 @@ bool EnablePyNativeSyncRunning() {
   MS_EXCEPTION_IF_NULL(ms_context);
   return ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
 }
+
+void UpdateTensorAddress(const session::BackendOpRunInfoPtr &op_run_info,
+                         const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs) {
+  auto &output_tensors = op_run_info->output_tensors;
+  auto &output_promises = op_run_info->device_sync_promises;
+  if (output_tensors.size() != output_nodes.size() || output_tensors.size() != output_promises.size()) {
+    MS_LOG(EXCEPTION) << "Output tensors " << output_tensors.size() << " output promises " << output_promises.size()
+                      << " output nodes " << output_nodes.size();
+  }
+
+  auto exec_mode = GetExecutionMode();
+  for (size_t i = 0; i < output_nodes.size(); ++i) {
+    auto &node_index = output_nodes[i];
+    if (AnfAlgo::GetOutputTensorNum(node_index.first) == 0) {
+      continue;
+    }
+    auto &output_tensor = output_tensors[i];
+    auto &output_promise = output_promises[i];
+    const auto &device_address = AnfAlgo::GetMutableOutputAddr(node_index.first, node_index.second, false);
+    output_promise.set_value(std::make_shared<pynative::DeviceAddressFutureData>(device_address, nullptr));
+    (void)outputs->emplace_back(output_tensor);
+
+    if (exec_mode != kPynativeMode) {
+      output_tensor->data_sync(false);
+    }
+  }
+}
+
+void UpdateTensorAddressDynamic(const session::BackendOpRunInfoPtr &op_run_info,
+                                const OpCompilerInfoPtr &op_compiler_info,
+                                const vector<device::DeviceAddressPtr> &device_address_list, VectorRef *const outputs) {
+  MS_EXCEPTION_IF_NULL(op_compiler_info);
+  auto &output_tensors = op_run_info->output_tensors;
+  auto &output_promises = op_run_info->device_sync_promises;
+  auto &output_nodes = op_compiler_info->graph_output_nodes_;
+  if (output_tensors.size() != output_nodes.size() || output_tensors.size() != output_promises.size()) {
+    MS_LOG(EXCEPTION) << "Output tensors " << output_tensors.size() << " output promises " << output_promises.size()
+                      << " output nodes " << output_nodes.size();
+  }
+
+  auto exec_mode = GetExecutionMode();
+  for (size_t i = 0; i < output_nodes.size(); ++i) {
+    if (op_compiler_info->graph_outputs_tensor_num_[i] == 0) {
+      continue;
+    }
+    auto &output_tensor = output_tensors[i];
+    auto &output_promise = output_promises[i];
+    output_promise.set_value(std::make_shared<pynative::DeviceAddressFutureData>(device_address_list[i], nullptr));
+    (void)outputs->emplace_back(output_tensor);
+    if (exec_mode != kPynativeMode) {
+      output_tensor->data_sync(false);
+    }
+  }
+}
 }  // namespace
 
 VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const std::string &target) {
@@ -759,7 +813,7 @@ void MindRTBackend::ReleaseForwardOutput(const std::vector<TensorPtr> &input_ten
 }
 
 void MindRTBackend::CompileSingleOpGraphs(
-  const std::vector<std::shared_ptr<pynative::BackendOpBuildTask>> &build_tasks) const {
+  const std::vector<std::shared_ptr<pynative::DeviceOpBuildTask>> &build_tasks) const {
   if (build_tasks.empty()) {
     return;
   }
@@ -893,7 +947,7 @@ void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs,
 
   runtime::UpdateDeviceAddress(graph, GetTensorWithoutValueMask(op_run_info), op_compiler_info->device_context_);
   // Create output tensor
-  UpdateOutput(op_compiler_info->graph_output_nodes_, outputs);
+  UpdateOutput(op_run_info, op_compiler_info->graph_output_nodes_, outputs);
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -907,11 +961,11 @@ void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs,
 
   auto &op_executor = runtime::OpExecutor::GetInstance();
   if (!single_op_cache_hit) {
-    op_executor.PushOpBuildTask(std::make_shared<pynative::BackendOpBuildTask>(run_op_context, std::move(promise)));
+    op_executor.PushOpBuildTask(std::make_shared<pynative::DeviceOpBuildTask>(run_op_context, std::move(promise)));
   } else {
     promise.set_value(true);
   }
-  op_executor.PushOpRunTask(std::make_shared<pynative::BackendOpRunTask>(
+  op_executor.PushOpRunTask(std::make_shared<pynative::DeviceOpRunTask>(
     run_op_context, [this](const std::shared_ptr<pynative::OpTaskContext> &ctx) { OpRunCallback(ctx); },
     std::move(future)));
 
@@ -942,7 +996,7 @@ void MindRTBackend::DispatchOpTaskDynamic(bool single_op_cache_hit, VectorRef *o
 
   auto &op_executor = runtime::OpExecutor::GetInstance();
   promise.set_value(true);
-  op_executor.PushOpRunTask(std::make_shared<pynative::BackendOpRunTask>(
+  op_executor.PushOpRunTask(std::make_shared<pynative::DeviceOpRunTask>(
     run_op_context, [this](const std::shared_ptr<pynative::OpTaskContext> &ctx) { OpRunCallbackDynamic(ctx); },
     std::move(future)));
 
@@ -990,7 +1044,7 @@ void MindRTBackend::RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr 
   if (!op_run_info->is_infer) {
     ReleaseForwardOutput(op_run_info->base_op_run_info.input_tensor);
   }
-  UpdateOutput(output_nodes, outputs);
+  UpdateOutput(op_run_info, output_nodes, outputs);
 
   ClearGraphDeviceAddress(graph, device_context, op_run_info->is_gradient_out);
   ClearInputDeviceAddress(graph, device_context);
@@ -1045,7 +1099,7 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
     auto device_address_list = runtime::DeviceAddressUtils::CreateGraphOutputDeviceAddress(
       op_compiler_info, op_run_info->base_op_run_info.abstract);
     // Create output tensor
-    UpdateOutputDynamic(op_compiler_info, outputs, device_address_list);
+    UpdateOutputDynamic(op_run_info, op_compiler_info, device_address_list, outputs);
     DispatchOpTaskDynamic(single_op_cache_hit, outputs, op_compiler_info, op_run_info, device_address_list);
     return;
   }
@@ -1063,7 +1117,7 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
   }
 
   // Create output tensor
-  UpdateOutputDynamic(op_compiler_info, outputs, device_address_list);
+  UpdateOutputDynamic(op_run_info, op_compiler_info, device_address_list, outputs);
   ClearInputDeviceAddressDynamic(graph, device_context);
   UpdateOutputAbstract(*outputs, op_run_info);
 }
@@ -1078,7 +1132,7 @@ void MindRTBackend::RunOp(const session::BackendOpRunInfoPtr &op_run_info, Vecto
     pynative::OpCompiler::GetInstance().Compile(op_run_info, &single_op_cache_hit, device_name_, device_id_);
   MS_EXCEPTION_IF_NULL(op_compiler_info);
   if (runtime::OpExecutor::GetInstance().ActorInQueue(op_compiler_info->graph_id_)) {
-    WaitTaskFinish();
+    runtime::OpExecutor::GetInstance().Wait();
   }
 
   if (!single_op_cache_hit) {
@@ -1113,9 +1167,15 @@ void MindRTBackend::CompileSingleOpGraph(const KernelGraphPtr &graph, const Devi
   pynative::OpCompiler::GetInstance().BatchBuild({graph}, device_context, is_dynamic_shape);
 }
 
-void MindRTBackend::UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes,
+void MindRTBackend::UpdateOutput(const session::BackendOpRunInfoPtr &op_run_info,
+                                 const std::vector<session::KernelWithIndex> &output_nodes,
                                  VectorRef *const outputs) const {
   MS_EXCEPTION_IF_NULL(outputs);
+  if (!op_run_info->device_sync_promises.empty()) {
+    UpdateTensorAddress(op_run_info, output_nodes, outputs);
+    return;
+  }
+
   for (auto &item_with_index : output_nodes) {
     MS_EXCEPTION_IF_NULL(item_with_index.first);
     if (AnfAlgo::GetOutputTensorNum(item_with_index.first) == 0) {
@@ -1128,9 +1188,16 @@ void MindRTBackend::UpdateOutput(const std::vector<session::KernelWithIndex> &ou
   }
 }
 
-void MindRTBackend::UpdateOutputDynamic(const OpCompilerInfoPtr &op_compiler_info, VectorRef *const outputs,
-                                        const vector<device::DeviceAddressPtr> &device_address_list) const {
-  MS_LOG(DEBUG) << "UpdateOutputDynamic";
+void MindRTBackend::UpdateOutputDynamic(const session::BackendOpRunInfoPtr &op_run_info,
+                                        const OpCompilerInfoPtr &op_compiler_info,
+                                        const vector<device::DeviceAddressPtr> &device_address_list,
+                                        VectorRef *const outputs) const {
+  if (!op_run_info->device_sync_promises.empty()) {
+    MS_LOG(DEBUG) << "Has promise and update tensor address, op " << op_run_info->base_op_run_info.op_name;
+    UpdateTensorAddressDynamic(op_run_info, op_compiler_info, device_address_list, outputs);
+    return;
+  }
+  MS_LOG(DEBUG) << "No promise, just create tensor and address, op " << op_run_info->base_op_run_info.op_name;
   MS_EXCEPTION_IF_NULL(op_compiler_info);
   auto output_nodes = op_compiler_info->graph_output_nodes_;
   auto outputs_size = output_nodes.size();

@@ -678,7 +678,8 @@ Tensor::Tensor(const Tensor &tensor)
       pin_mem_register_(tensor.pin_mem_register_),
       auto_grad_meta_data_(tensor.auto_grad_meta_data_),
       compression_type_(tensor.compression_type_),
-      tensor_name_(tensor.tensor_name_) {
+      tensor_name_(tensor.tensor_name_),
+      address_future_(tensor.address_future_) {
   user_data_ = tensor.user_data_;
 }
 
@@ -703,8 +704,42 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
       pin_mem_register_(tensor.pin_mem_register_),
       auto_grad_meta_data_(tensor.auto_grad_meta_data_),
       compression_type_(tensor.compression_type_),
-      tensor_name_(tensor.tensor_name_) {
+      tensor_name_(tensor.tensor_name_),
+      address_future_(tensor.address_future_) {
   user_data_ = tensor.user_data_;
+}
+
+Tensor &Tensor::operator=(const Tensor &tensor) {
+  if (this == &tensor) {
+    return *this;
+  }
+  init_flag_ = tensor.init_flag_;
+  is_forward_output_ = tensor.is_forward_output_;
+  data_ = tensor.data_;
+  id_ = tensor.id_;
+  event_ = tensor.event_;
+  need_wait_ = tensor.need_wait_;
+  sync_status_ = tensor.sync_status_;
+  device_sync_ = tensor.device_sync_;
+  need_release_device_mem_ = tensor.need_release_device_mem_;
+  cache_enable_ = tensor.cache_enable_;
+  base_shape_ptr_ = tensor.base_shape_ptr_;
+  cache_tensor_ptr_ = tensor.cache_tensor_ptr_;
+  hashmap_tensor_ptr_ = tensor.hashmap_tensor_ptr_;
+  padding_type_ = tensor.padding_type();
+  device_event_ = tensor.device_event_;
+  lazy_callback_ = tensor.lazy_callback_;
+  user_data_ = tensor.user_data_;
+  auto_grad_meta_data_ = tensor.auto_grad_meta_data_;
+  compression_type_ = tensor.compression_type_;
+  tensor_name_ = tensor.tensor_name_;
+  adapter_flag_ = tensor.adapter_flag_;
+  cast_dtype_ = tensor.cast_dtype_;
+  graph_output_ = tensor.graph_output_;
+  quant_params_ = tensor.quant_params_;
+  updated_by_device_ = tensor.updated_by_device_;
+  address_future_ = tensor.address_future_;
+  return *this;
 }
 
 Tensor::Tensor(TypeId data_type, const ShapeVector &shape, TensorDataPtr data)
@@ -832,13 +867,32 @@ void Tensor::ExecuteLazyTask() const {
   }
 }
 
+DeviceSyncPtr Tensor::device_address() const {
+  if (address_future_ != nullptr) {
+    device_sync_ = address_future_->Get();
+  }
+  return device_sync_;
+}
+
+void Tensor::set_device_address(const DeviceSyncPtr &device_sync, bool need_update_ref_count) {
+  address_future_ = nullptr;
+  device_sync_ = device_sync;
+  // To support the old and new runtime coexistence, the output of old runtime may be the input of new runtime, so the
+  // device address cannot be released through ref count and set max ref count in this scenario.
+  if (need_update_ref_count && (device_sync_ != nullptr)) {
+    device_sync_->set_original_ref_count(SIZE_MAX);
+    device_sync_->ResetRefCount();
+  }
+}
+
 // Assign value to this tensor.
 Tensor &Tensor::AssignValue(const Tensor &tensor) {
   if (this != &tensor) {
     lazy_callback_ = tensor.lazy_callback_;
     ExecuteLazyTask();
     MetaTensor::operator=(tensor);
-    device_sync_ = tensor.device_sync_;
+    address_future_ = nullptr;
+    device_sync_ = tensor.device_address();
     need_release_device_mem_ = tensor.need_release_device_mem_;
     is_forward_output_ = tensor.is_forward_output_;
     MS_EXCEPTION_IF_NULL(data_);
@@ -927,6 +981,9 @@ std::string Tensor::ToStringRepr() const {
 
 void Tensor::data_sync(bool need_wait) const {
   if (need_wait) {
+    if (address_future_ != nullptr) {
+      device_sync_ = address_future_->Get();
+    }
     ExecuteLazyTask();
     Wait();
   }

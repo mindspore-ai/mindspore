@@ -30,7 +30,7 @@
 #include "runtime/hardware/device_context.h"
 #include "runtime/graph_scheduler/graph_scheduler.h"
 #include "include/backend/visible.h"
-#include "runtime/pynative/async/backend_op_task.h"
+#include "runtime/pynative/async/device_task.h"
 #include "runtime/pynative/async/async_queue.h"
 
 namespace mindspore::runtime {
@@ -49,11 +49,11 @@ class BACKEND_EXPORT OpExecutor {
   // Register build callback function
   void Register(const std::function<void()> &callback);
 
-  void PushOpBuildTask(const std::shared_ptr<pynative::BackendOpBuildTask> &op_build_task);
+  void PushOpBuildTask(const std::shared_ptr<pynative::DeviceOpBuildTask> &op_build_task);
 
-  void PushOpRunTask(const std::shared_ptr<pynative::BackendOpRunTask> &op_run_task);
+  void PushOpRunTask(const std::shared_ptr<pynative::DeviceOpRunTask> &op_run_task);
 
-  const std::vector<std::shared_ptr<pynative::BackendOpBuildTask>> &GetOpBuildTasks() const { return op_build_tasks_; }
+  const std::vector<std::shared_ptr<pynative::DeviceOpBuildTask>> &GetOpBuildTasks() const { return op_build_tasks_; }
 
   bool BuildQueueEmpty();
   bool RunQueueEmpty();
@@ -61,7 +61,7 @@ class BACKEND_EXPORT OpExecutor {
   // If the build queue is full, we can compile the kernels in parallel.
   bool BuildQueueFull();
 
-  std::vector<std::shared_ptr<pynative::BackendOpBuildTask>> PopOpBuildTasks();
+  std::vector<std::shared_ptr<pynative::DeviceOpBuildTask>> PopOpBuildTasks();
 
   // When an exception occurs, the state needs to be reset.
   // Because we may sometimes have to ignore the exception and continue to run other tasks
@@ -89,9 +89,9 @@ class BACKEND_EXPORT OpExecutor {
   void WaitForRun();
   void ClearResources();
 
-  pynative::AsyncQueue async_queue_{"runop_backend"};
+  pynative::AsyncQueue async_queue_{"runop_device", pynative::kThreadWaitLevel::kLevelDevice};
 
-  std::vector<std::shared_ptr<pynative::BackendOpBuildTask>> op_build_tasks_;
+  std::vector<std::shared_ptr<pynative::DeviceOpBuildTask>> op_build_tasks_;
 
   std::set<GraphId> actor_in_queue_;
   std::function<void()> batch_build_callback_{nullptr};

@@ -372,6 +372,7 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Address
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   KernelType kernel_type = AnfAlgo::GetKernelType(kernel);
   MS_EXCEPTION_IF_NULL(kernel);
+  MS_EXCEPTION_IF_NULL(res_manager_);
   (void)res_manager_->BindDeviceToCurrentThread(false);
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
