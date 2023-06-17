@@ -2276,7 +2276,8 @@ bool OrderPyExecuteAfterRewriter(const FuncGraphPtr &root, const pipeline::Resou
     auto cur_change = OrderPyExecuteCNode(fg, manager);
     change = change || cur_change;
   }
-  change = change || OrderPyExecuteCNode(root, manager);
+  bool root_change = OrderPyExecuteCNode(root, manager);
+  change = change || root_change;
   if (change) {
     abstract::AbstractBasePtrList new_args_spec;
     (void)std::transform(root->parameters().begin(), root->parameters().end(), std::back_inserter(new_args_spec),
