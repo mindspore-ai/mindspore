@@ -447,3 +447,33 @@ def test_create_custom_class_args():
     net = Net()
     out = net(x, y)
     assert out == 12
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_getattr_cust_class_const():
+    """
+    Feature: getattr for custom class.
+    Description: Support getattr for custom class.
+    Expectation: No exception.
+    """
+    class GetattrClass():
+        def __init__(self):
+            self.attr1 = 99
+            self.attr2 = 1
+
+    class GetattrClassNet(ms.nn.Cell):
+        def __init__(self):
+            super(GetattrClassNet, self).__init__()
+            self.cls = GetattrClass()
+
+        def construct(self, x):
+            if self.cls.attr2 == 1:
+                return x * 2
+            return x + self.cls.attr2
+
+    net = GetattrClassNet()
+    x = 99
+    out = net(x)
+    assert out == 198

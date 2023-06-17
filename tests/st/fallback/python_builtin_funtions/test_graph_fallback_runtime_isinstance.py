@@ -15,7 +15,8 @@
 
 import pytest
 import numpy as np
-from mindspore import Tensor, context, Parameter, ms_class
+from mindspore import Tensor, context, Parameter, jit_class, COOTensor, CSRTensor
+from mindspore.common.sparse_tensor import RowTensorInner
 import mindspore.nn as nn
 import mindspore as ms
 
@@ -143,7 +144,7 @@ def test_fallback_isinstance_tuple():
     assert out == 0
 
 
-@ms_class
+@jit_class
 class NetIsinstanceClass:
     def __init__(self):
         self.number = 1
@@ -153,12 +154,22 @@ class NetIsinstanceClass:
         return out
 
 
+@jit_class
+class NetIsinstanceClass2:
+    def __init__(self):
+        self.number2 = 1
+
+    def add(self):
+        out = self.number2 + self.number2
+        return out
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_fallback_isinstance_ms_class_type():
+def test_fallback_isinstance_jit_class_type():
     """
     Feature: JIT Fallback
     Description: Test isinstance() in fallback runtime
@@ -182,13 +193,12 @@ def test_fallback_isinstance_ms_class_type():
     assert not res[0], res[1]
 
 
-@pytest.mark.skip(reason="No support yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_fallback_isinstance_ms_class_type_tuple():
+def test_fallback_isinstance_jit_class_type_tuple():
     """
     Feature: JIT Fallback
     Description: Test isinstance() in fallback runtime
@@ -199,11 +209,161 @@ def test_fallback_isinstance_ms_class_type_tuple():
         def __init__(self, x):
             super().__init__()
             self.x = x
+            self.y = NetIsinstanceClass()
 
         def construct(self):
-            return isinstance(self.x, (NetIsinstanceClass, int))
+            return isinstance(self.x, (NetIsinstanceClass, int)), isinstance(self.x, (NetIsinstanceClass2, int))
 
     input_x_nparray = np.array([[2, 2], [2, 2]])
     net_isinstance = IsinstanceNet2(input_x_nparray)
     res = net_isinstance()
+    assert not res[0] and not res[1]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_isinstance_tensor():
+    """
+    Feature: JIT Fallback
+    Description: Test isinstance() in fallback runtime
+    Expectation: No exception.
+    """
+
+    class IsinstanceNet3(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            indices_cootensor = Tensor([[0, 1], [1, 2]], dtype=ms.int32)
+            values_cootensor = Tensor([1, 2], dtype=ms.float32)
+            shape_cootensor = (3, 4)
+            self.x = COOTensor(indices_cootensor, values_cootensor, shape_cootensor)
+
+        def construct(self):
+            return isinstance(self.x, Tensor)
+
+    net_isinstance = IsinstanceNet3()
+    res = net_isinstance()
     assert not res
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_isinstance_cootensor():
+    """
+    Feature: JIT Fallback
+    Description: Test isinstance() in fallback runtime
+    Expectation: No exception.
+    """
+
+    class IsinstanceNet4(nn.Cell):
+        def __init__(self, x):
+            super().__init__()
+            self.x = x
+            indices_cootensor = Tensor([[0, 1], [1, 2]], dtype=ms.int32)
+            values_cootensor = Tensor([1, 2], dtype=ms.float32)
+            shape_cootensor = (3, 4)
+            self.y = COOTensor(indices_cootensor, values_cootensor, shape_cootensor)
+
+        def construct(self):
+            return isinstance(self.x, COOTensor), isinstance(self.y, COOTensor)
+
+    input_x_nparray = np.array([[2, 2], [2, 2]])
+    net_isinstance = IsinstanceNet4(input_x_nparray)
+    res = net_isinstance()
+    assert not res[0] and res[1]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_isinstance_csrtensor():
+    """
+    Feature: JIT Fallback
+    Description: Test isinstance() in fallback runtime
+    Expectation: No exception.
+    """
+
+    class IsinstanceNet5(nn.Cell):
+        def __init__(self, x):
+            super().__init__()
+            self.x = x
+            indptr = Tensor([0, 1, 2])
+            indices = Tensor([0, 1])
+            values = Tensor([1, 2], dtype=ms.float32)
+            shape = (2, 6)
+            self.y = CSRTensor(indptr, indices, values, shape)
+
+        def construct(self):
+            return isinstance(self.x, CSRTensor), isinstance(self.y, CSRTensor)
+
+    input_x_nparray = np.array([[2, 2], [2, 2]])
+    net_isinstance = IsinstanceNet5(input_x_nparray)
+    res = net_isinstance()
+    assert not res[0] and res[1]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_isinstance_rowtensor():
+    """
+    Feature: JIT Fallback
+    Description: Test isinstance() in fallback runtime
+    Expectation: No exception.
+    """
+
+    class IsinstanceNet6(nn.Cell):
+        def __init__(self, x):
+            super().__init__()
+            self.x = x
+
+        def construct(self):
+            return isinstance(self.x, RowTensorInner)
+
+    input_x_nparray = np.array([[2, 2], [2, 2]])
+
+    net_isinstance = IsinstanceNet6(input_x_nparray)
+    res = net_isinstance()
+    assert not res
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_isinstance_rowtensor_cootenosr_csrtensor_np():
+    """
+    Feature: JIT Fallback
+    Description: Test isinstance() in fallback runtime
+    Expectation: No exception.
+    """
+
+    class IsinstanceNet7(nn.Cell):
+        def __init__(self, x):
+            super().__init__()
+            self.x = x
+            indptr = Tensor([0, 1, 2])
+            indices = Tensor([0, 1])
+            values = Tensor([1, 2], dtype=ms.float32)
+            shape = (2, 6)
+            self.y = CSRTensor(indptr, indices, values, shape)
+
+        def construct(self):
+            out1 = isinstance(self.x, (RowTensorInner, COOTensor, CSRTensor, np.ndarray))
+            out2 = isinstance(self.y, (RowTensorInner, COOTensor, CSRTensor, np.ndarray))
+            return out1, out2
+
+    input_x_nparray = np.array([[2, 2], [2, 2]])
+    net_isinstance = IsinstanceNet7(input_x_nparray)
+    res = net_isinstance()
+    assert res[0] and res[1]

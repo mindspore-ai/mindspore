@@ -808,9 +808,6 @@ def eval_script(exp_str, params):
         logger.debug(error_info)
         raise e
 
-    # Convert set to tuple.
-    if isinstance(res, set):
-        return tuple(res)
     return res
 
 

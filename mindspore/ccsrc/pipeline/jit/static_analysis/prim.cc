@@ -1307,7 +1307,9 @@ EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, con
   MS_LOG(DEBUG) << "expr: " << expr << ", for node: " << out_conf->node()->DebugString(debug_recursive_level)
                 << ", owner_value: " << owner_value->ToString();
   if (owner_value->isa<parse::InterpretedObject>()) {
-    owner_node = fallback::ConvertInterpretedObjectToPyExecute(fg, owner_value, owner_node);
+    const auto &interpreted_value = dyn_cast<parse::InterpretedObject>(owner_value);
+    const auto &key = interpreted_value->name();
+    owner_node = fallback::ConvertPyObjectToPyExecute(fg, key, interpreted_value->obj(), owner_node, true);
   }
 
   constexpr auto internal_getattr_owner_str = "__internal_getattr_owner__";
@@ -1380,7 +1382,9 @@ EvalResultPtr InterpretSetAttrNode(const AbstractBasePtrList &args_abs_list, con
   MS_LOG(DEBUG) << "node: " << out_conf->node()->DebugString(debug_recursive_level)
                 << ", owner_value: " << owner_value->ToString();
   if (owner_value->isa<parse::InterpretedObject>()) {
-    owner_node = fallback::ConvertInterpretedObjectToPyExecute(fg, owner_value, owner_node);
+    const auto &interpreted_value = dyn_cast<parse::InterpretedObject>(owner_value);
+    const auto &key = interpreted_value->name();
+    owner_node = fallback::ConvertPyObjectToPyExecute(fg, key, interpreted_value->obj(), owner_node, true);
   }
 
   ValuePtr attr_str_value = args_abs_list[1]->BuildValue();
@@ -2316,6 +2320,13 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
       MS_LOG(WARNING) << "The tensor " << converted_val->ToString()
                       << " which is not used for network input argument should not be set const.";
     }
+    if (converted_val->isa<parse::InterpretedObject>()) {
+      const auto interpreted_value = dyn_cast<parse::InterpretedObject>(converted_val);
+      MS_LOG(DEBUG) << "The InterpretedObject(" << converted_val->ToString() << ") is converted by PyInterpret"
+                    << " node: " << node->DebugString();
+      interpreted_value->set_has_converted(true);
+    }
+
     AbstractBasePtr res = ToAbstract(converted_val, AnalysisContext::DummyContext(), out_conf);
     auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
     evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);

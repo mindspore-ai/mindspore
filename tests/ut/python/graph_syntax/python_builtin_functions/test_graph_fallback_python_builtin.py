@@ -140,19 +140,6 @@ def test_fallback_reversed():
     assert foo() == (3, 2, 1)
 
 
-def test_fallback_set():
-    """
-    Feature: JIT Fallback
-    Description: Test set() in graph mode.
-    Expectation: No exception.
-    """
-    @jit
-    def foo():
-        x = set([1, 2, 1])
-        return x
-    assert list(foo()) == [1, 2]
-
-
 def test_fallback_slice():
     """
     Feature: JIT Fallback

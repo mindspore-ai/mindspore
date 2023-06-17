@@ -640,14 +640,16 @@ EvalResultPtr AnalysisEngine::InterpretedNodeCall(const CNodePtr &cnode, const A
   MS_LOG(DEBUG) << "Current CNode: " << cnode->DebugString(recursive_level)
                 << ", func_node: " << func_node->DebugString(recursive_level);
   auto prim = GetCNodePrimitiveWithoutDoSignature(func_node);
-  if (!IsPrimitiveEquals(prim, prim::kPrimGetAttr) &&
-      !IsPrimitiveEquals(prim, prim::kPrimPyExecute)) {  // Optimize the performance.
+  if (!IsPrimitiveEquals(prim, prim::kPrimGetAttr) && !IsPrimitiveEquals(prim, prim::kPrimPyExecute) &&
+      !IsPrimitiveEquals(prim, prim::kPrimPyInterpret)) {
+    // Optimize the performance.
     return nullptr;
   }
   AnfNodeConfigPtr func_conf = MakeConfig(func_node, conf->context(), conf->func_graph());
   MS_EXCEPTION_IF_NULL(func_conf);
   const auto &forwarded_conf = GetForwardConfig(func_conf);
-  if (!IsPrimitiveCNode(forwarded_conf->node(), prim::kPrimPyExecute)) {
+  if (!IsPrimitiveCNode(forwarded_conf->node(), prim::kPrimPyExecute) &&
+      !IsPrimitiveCNode(forwarded_conf->node(), prim::kPrimPyInterpret)) {
     return nullptr;
   }
 

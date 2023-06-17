@@ -235,7 +235,12 @@ AnfNodePtr ConvertInterpretedObjForResolve(const AnfNodePtr &origin_node, const 
   if (convert_result->isa<InterpretedObject>() && !origin_node->has_user_data("__py_interpret_local_value_flag__")) {
     constexpr auto recursive_level = 2;
     MS_LOG(DEBUG) << "Convert InterpretedObj for resolve, node: " << origin_node->DebugString(recursive_level);
-    return fallback::ConvertInterpretedObjectToPyExecute(func_graph, convert_result, origin_node);
+    auto interpreted_value = dyn_cast<InterpretedObject>(convert_result);
+    const auto &key = interpreted_value->name();
+    if (interpreted_value->has_converted()) {
+      return fallback::ConvertPyObjectToPyExecute(func_graph, key, interpreted_value->obj(), origin_node, true);
+    }
+    return fallback::ConvertPyObjectToPyInterpret(func_graph, key, interpreted_value->obj(), origin_node, true);
   }
   return nullptr;
 }
