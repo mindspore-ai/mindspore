@@ -1453,6 +1453,7 @@ GVAR_DEF(PrimitivePtr, kPrimInnerAbs, std::make_shared<Primitive>(kInnerAbs));
 GVAR_DEF(PrimitivePtr, kPrimRint, std::make_shared<Primitive>("Rint"));
 GVAR_DEF(PrimitivePtr, kPrimRound, std::make_shared<Primitive>("Round"));
 GVAR_DEF(PrimitivePtr, kPrimInnerRound, std::make_shared<Primitive>("inner_round"));
+GVAR_DEF(PrimitivePtr, kPrimInnerLen, std::make_shared<Primitive>("inner_len"));
 GVAR_DEF(PrimitivePtr, kPrimExp, std::make_shared<Primitive>(kExp));
 GVAR_DEF(PrimitivePtr, kPrimExpm1, std::make_shared<Primitive>("Expm1"));
 GVAR_DEF(PrimitivePtr, kPrimLog, std::make_shared<Primitive>(kLog));

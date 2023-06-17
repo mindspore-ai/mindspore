@@ -46,7 +46,7 @@ def test_fallback_len_asnumpy():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_len_numpy():
+def test_len_numpy_string():
     """
     Feature: Graph len syntax.
     Description: Graph syntax len support numpy ndarray.
@@ -56,7 +56,7 @@ def test_len_numpy():
     @jit
     def foo():
         x = np.array([[1, 2, 3], [0, 0, 0]])
-        return len(x)
+        return len(x), len("string")
 
     out = foo()
-    assert out == 2
+    assert out[0] == 2, out[1] == 4

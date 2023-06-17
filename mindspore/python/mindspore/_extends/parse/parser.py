@@ -1002,6 +1002,11 @@ def get_const_round(obj):
     return round(obj)
 
 
+def get_const_len(obj):
+    """get the length of const object."""
+    return len(obj)
+
+
 class Parser:
     """
     Parser python code to ast tree.
