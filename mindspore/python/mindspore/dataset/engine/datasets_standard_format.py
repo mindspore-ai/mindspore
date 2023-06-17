@@ -134,8 +134,10 @@ class MindDataset(MappableDataset, UnionBaseDataset):
             - ``Shuffle.GLOBAL`` : Global shuffle of all rows of data in dataset, same as setting shuffle to True.
 
             - ``Shuffle.FILES`` : Shuffle the file sequence but keep the order of data within each file.
+              Not supported when the number of samples in the dataset is greater than 100 million.
 
             - ``Shuffle.INFILE`` : Keep the file sequence the same but shuffle the data within each file.
+              Not supported when the number of samples in the dataset is greater than 100 million.
 
         num_shards (int, optional): Number of shards that the dataset will be divided into. Default: ``None`` .
             When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
@@ -195,8 +197,8 @@ class MindDataset(MappableDataset, UnionBaseDataset):
 
     Examples:
         >>> import mindspore.dataset as ds
-        >>> mind_dataset_dir = ["/path/to/mind_dataset_file"] # contains 1 or multiple MindRecord files
-        >>> dataset = ds.MindDataset(dataset_files=mind_dataset_dir)
+        >>> mindrecord_files = ["/path/to/mind_dataset_file"] # contains 1 or multiple MindRecord files
+        >>> dataset = ds.MindDataset(dataset_files=mindrecord_files)
     """
 
     def parse(self, children=None):

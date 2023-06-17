@@ -44,7 +44,7 @@ ShardReader::ShardReader()
       total_blob_size_(0),
       sample_id_position_(0),
       deliver_id_(0),
-      lazy_load_(false),
+      load_mode_(LoadMode::kFast),
       shard_sample_count_() {}
 
 Status ShardReader::GetMeta(const std::string &file_path, std::shared_ptr<json> meta_data_ptr,
@@ -109,14 +109,25 @@ Status ShardReader::Init(const std::vector<std::string> &file_paths, bool load_d
     num_rows_ += std::get<get_index>(rg);
   }
 
-  if (num_rows_ > LAZY_LOAD_THRESHOLD) {
-    lazy_load_ = true;
-    tasks_.lazy_load_ = true;
+  if (num_rows_ > SLOW_LOAD_THRESHOLD) {
+    load_mode_ = LoadMode::kSlow;
+    tasks_.load_mode_ = LoadMode::kSlow;
+    MS_LOG(INFO) << "The number of samples is larger than " << SLOW_LOAD_THRESHOLD
+                 << ", enable slow load mode. If you want to speed up data loading, "
+                 << "it is recommended that you save multiple samples into one record when creating MindRecord files,"
+                 << " so that you can enable fast loading mode, and don't forget to adjust your batch size "
+                 << "according to the current samples.";
+  } else if (num_rows_ > LAZY_LOAD_THRESHOLD) {
+    load_mode_ = LoadMode::kLazy;
+    tasks_.load_mode_ = LoadMode::kLazy;
     MS_LOG(INFO) << "The number of samples is larger than " << LAZY_LOAD_THRESHOLD
                  << ", enable lazy load mode. If you want to speed up data loading, "
                  << "it is recommended that you save multiple samples into one record when creating MindRecord files,"
                  << " so that you can enable fast loading mode, and don't forget to adjust your batch size "
                  << "according to the current samples.";
+  } else {
+    load_mode_ = LoadMode::kFast;
+    tasks_.load_mode_ = LoadMode::kFast;
   }
 
   auto disk_size = page_size_ * row_group_summary.size();
@@ -345,6 +356,8 @@ std::shared_ptr<ShardColumn> ShardReader::GetShardColumn() const { return shard_
 int ShardReader::GetShardCount() const { return shard_header_->GetShardCount(); }
 
 int64_t ShardReader::GetNumRows() const { return num_rows_; }
+
+int64_t ShardReader::GetNumRowsAfterSampling() const { return tasks_.SizeAfterSampling(); }
 
 std::vector<std::tuple<int, int, int, uint64_t>> ShardReader::ReadRowGroupSummary() {
   std::vector<std::tuple<int, int, int, uint64_t>> row_group_summary;
@@ -1032,12 +1045,13 @@ Status ShardReader::CountTotalRows(const std::vector<std::string> &file_paths, b
           num_samples = op->GetNumSamples(num_samples, 0);
           CHECK_FAIL_RETURN_UNEXPECTED_MR(
             num_samples != -1,
-            "Invalid data, the size of dataset and padded samples: " + std::to_string(num_samples) +
+            "Invalid data, the size of dataset and padded samples: " + std::to_string(num_padded) +
               " can not be divisible by the value of 'num_shards'.\n Please adjust the value of 'num_padded'.");
           root = false;
         }
       } else {
         num_samples = op->GetNumSamples(num_samples, 0);
+        num_samples += num_padded;
       }
     } else {
       if (num_padded > 0) {
@@ -1052,8 +1066,8 @@ Status ShardReader::CountTotalRows(const std::vector<std::string> &file_paths, b
 Status ShardReader::Open(const std::vector<std::string> &file_paths, bool load_dataset, int n_consumer,
                          const std::vector<std::string> &selected_columns,
                          const std::vector<std::shared_ptr<ShardOperator>> &operators, int64_t num_padded,
-                         bool lazy_load) {
-  lazy_load_ = lazy_load;
+                         LoadMode load_mode) {
+  load_mode_ = load_mode;
 
   // Open file and set header by ShardReader
   RETURN_IF_NOT_OK_MR(Init(file_paths, load_dataset));
@@ -1254,6 +1268,20 @@ Status ShardReader::CreateLazyTasksByRow(const std::vector<std::tuple<int, int, 
   return Status::OK();
 }
 
+Status ShardReader::CreateSlowTasksByRow(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,
+                                         const std::vector<std::shared_ptr<ShardOperator>> &operators) {
+  CheckIfColumnInIndex(selected_columns_);
+  CHECK_FAIL_RETURN_UNEXPECTED_MR(shard_count_ <= kMaxFileCount,
+                                  "Invalid data, the number of mindrecord files should be less than or equal to " +
+                                    std::to_string(kMaxFileCount) + " but got: " + std::to_string(shard_count_) +
+                                    ".\nPlease adjust the number of mindrecord files.");
+  uint32_t sample_count = shard_sample_count_[shard_sample_count_.size() - 1];
+  MS_LOG(DEBUG) << "Succeed to get " << sample_count << " records from dataset.";
+  tasks_.padded_sample_ = num_padded_;
+  tasks_.SetShardSampleCount(shard_sample_count_);
+  return Status::OK();
+}
+
 Status ShardReader::CreateTasks(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,
                                 const std::vector<std::shared_ptr<ShardOperator>> &operators) {
   int category_operator = -1;
@@ -1266,42 +1294,61 @@ Status ShardReader::CreateTasks(const std::vector<std::tuple<int, int, int, uint
   }
 
   if (-1 == category_operator) {
-    if (lazy_load_ == false) {
-      RETURN_IF_NOT_OK_MR(CreateTasksByRow(row_group_summary, operators));
-    } else {
-      RETURN_IF_NOT_OK_MR(CreateLazyTasksByRow(row_group_summary, operators));
-    }
-
-    // need padded sample to the task
-    if (num_padded_ > 0) {
-      for (auto i = 0; i < num_padded_; ++i) {
-        tasks_.InsertTask(TaskType::kPaddedTask, 0, 0, {}, json());
+    if (load_mode_ != LoadMode::kSlow) {
+      if (load_mode_ == LoadMode::kLazy) {
+        RETURN_IF_NOT_OK_MR(CreateLazyTasksByRow(row_group_summary, operators));
+      } else {
+        RETURN_IF_NOT_OK_MR(CreateTasksByRow(row_group_summary, operators));
       }
+
+      // need padded sample to the task
+      if (num_padded_ > 0) {
+        for (auto i = 0; i < num_padded_; ++i) {
+          tasks_.InsertTask(TaskType::kPaddedTask, 0, 0, {}, json());
+        }
+      }
+    } else {
+      RETURN_IF_NOT_OK_MR(CreateSlowTasksByRow(row_group_summary, operators));
     }
   } else {
     RETURN_IF_NOT_OK_MR(CreateTasksByCategory(operators[category_operator]));
   }
+
   MS_LOG(DEBUG) << "Succeed to create " << tasks_.Size() << " initial task to start with before sampling.";
-  tasks_.InitSampleIds();
+  if (load_mode_ != LoadMode::kSlow) {
+    tasks_.InitSampleIds();
 
-  for (uint32_t operator_no = 0; operator_no < operators.size(); operator_no++) {
-    const auto &op = operators[operator_no];
-    if (std::dynamic_pointer_cast<ShardCategory>(op)) {
-      continue;
+    for (uint32_t operator_no = 0; operator_no < operators.size(); operator_no++) {
+      const auto &op = operators[operator_no];
+      if (std::dynamic_pointer_cast<ShardCategory>(op)) {
+        continue;
+      }
+
+      if (std::dynamic_pointer_cast<ShardDistributedSample>(op) || std::dynamic_pointer_cast<ShardShuffle>(op)) {
+        op->SetShardSampleCount(shard_sample_count_);
+      }
+      RETURN_IF_NOT_OK_MR((*op)(tasks_));
     }
 
-    if (std::dynamic_pointer_cast<ShardDistributedSample>(op) || std::dynamic_pointer_cast<ShardShuffle>(op)) {
-      op->SetShardSampleCount(shard_sample_count_);
+    if (tasks_.permutation_.empty()) {
+      tasks_.MakePerm();
     }
-    RETURN_IF_NOT_OK_MR((*op)(tasks_));
+  } else {
+    for (uint32_t operator_no = 0; operator_no < operators.size(); operator_no++) {
+      const auto &op = operators[operator_no];
+      CHECK_FAIL_RETURN_UNEXPECTED_MR(
+        !std::dynamic_pointer_cast<ShardCategory>(op),
+        "[Internal ERROR] The retrieval function is not available when in slow loading mode.");
+      if (std::dynamic_pointer_cast<ShardDistributedSample>(op) || std::dynamic_pointer_cast<ShardShuffle>(op)) {
+        op->SetShardSampleCount(shard_sample_count_);
+      }
+      RETURN_IF_NOT_OK_MR((*op)(tasks_));
+    }
   }
 
-  if (tasks_.permutation_.empty()) {
-    tasks_.MakePerm();
-  }
   num_rows_ = tasks_.Size();
   MS_LOG(INFO) << "The total number of samples is " << num_rows_
-               << ", the number of samples after sampling is: " << tasks_.sample_ids_.size();
+               << ", the number of samples after sampling is: " << tasks_.SizeAfterSampling();
 
   return Status::OK();
 }
@@ -1309,9 +1356,17 @@ Status ShardReader::CreateTasks(const std::vector<std::tuple<int, int, int, uint
 Status ShardReader::ConsumerOneTask(int64_t task_id, uint32_t consumer_id,
                                     std::shared_ptr<TASK_CONTENT> *task_content_ptr) {
   RETURN_UNEXPECTED_IF_NULL_MR(task_content_ptr);
-  // All tasks are done
-  CHECK_FAIL_RETURN_UNEXPECTED_MR(task_id < tasks_.Size(), "[Internal ERROR] 'task_id': " + std::to_string(task_id) +
-                                                             " is out of bound: " + std::to_string(tasks_.Size()));
+  if (load_mode_ == LoadMode::kFast || load_mode_ == LoadMode::kLazy) {
+    // All tasks are done
+    CHECK_FAIL_RETURN_UNEXPECTED_MR(task_id < tasks_.Size(), "[Internal ERROR] 'task_id': " + std::to_string(task_id) +
+                                                               " is out of bound: " + std::to_string(tasks_.Size()));
+  } else {
+    CHECK_FAIL_RETURN_UNEXPECTED_MR(
+      task_id < (num_padded_ + shard_sample_count_[shard_sample_count_.size() - 1]),
+      "[Internal ERROR] 'task_id': " + std::to_string(task_id) +
+        " is out of bound: " + std::to_string(num_padded_ + shard_sample_count_[shard_sample_count_.size() - 1]));
+  }
+
   uint32_t shard_id = 0;
   uint32_t group_id = 0;
   uint32_t blob_start = 0;
@@ -1330,12 +1385,7 @@ Status ShardReader::ConsumerOneTask(int64_t task_id, uint32_t consumer_id,
 
   shard_id = std::get<0>(std::get<1>(task));  // shard id
 
-  if (lazy_load_ == false) {
-    group_id = std::get<1>(std::get<1>(task));  // group id
-    blob_start = std::get<2>(task)[0];          // blob start
-    blob_end = std::get<2>(task)[1];            // blob end
-    var_fields = std::get<3>(task);             // scalar variable field
-  } else {
+  if (load_mode_ == LoadMode::kLazy || load_mode_ == LoadMode::kSlow) {
     // get scalar variable fields by sample id
     uint32_t sample_id_in_shard = std::get<1>(std::get<1>(task));
 
@@ -1350,6 +1400,11 @@ Status ShardReader::ConsumerOneTask(int64_t task_id, uint32_t consumer_id,
     blob_start = offsets[shard_id][0][2];     // blob start
     blob_end = offsets[shard_id][0][3];       // blob end
     var_fields = local_columns[shard_id][0];  // scalar variable field
+  } else {
+    group_id = std::get<1>(std::get<1>(task));  // group id
+    blob_start = std::get<2>(task)[0];          // blob start
+    blob_end = std::get<2>(task)[1];            // blob end
+    var_fields = std::get<3>(task);             // scalar variable field
   }
 
   // read the blob from data file
@@ -1390,18 +1445,29 @@ void ShardReader::ConsumerByRow(int consumer_id) {
 
   // Loop forever
   for (;;) {
-    int sample_id_pos = 0;
+    int64_t sample_id_pos = 0;
 
     // Get next task ID
     sample_id_pos = sample_id_position_++;
 
-    // All tasks are done
-    if (sample_id_pos >= static_cast<int>(tasks_.sample_ids_.size())) {
-      return;
-    }
     auto task_content_ptr =
       std::make_shared<TASK_CONTENT>(TaskType::kCommonTask, std::vector<std::tuple<std::vector<uint8_t>, json>>());
-    if (ConsumerOneTask(tasks_.sample_ids_[sample_id_pos], consumer_id, &task_content_ptr).IsError()) {
+    int64_t task_id = 0;
+
+    if (load_mode_ == LoadMode::kFast || load_mode_ == LoadMode::kLazy) {
+      // All tasks are done
+      if (sample_id_pos >= static_cast<int>(tasks_.sample_ids_.size())) {
+        return;
+      }
+      task_id = tasks_.sample_ids_[sample_id_pos];
+    } else {
+      // task_id is not correct when slow load mode
+      if (sample_id_pos >= shard_sample_count_[shard_sample_count_.size() - 1]) {
+        return;
+      }
+      task_id = sample_id_pos;
+    }
+    if (ConsumerOneTask(task_id, consumer_id, &task_content_ptr).IsError()) {
       MS_LOG(ERROR) << "[Internal ERROR] Error raised in ConsumerOneTask function.";
       return;
     }
@@ -1425,7 +1491,8 @@ std::vector<std::tuple<std::vector<uint8_t>, json>> ShardReader::GetNext() {
   if (interrupt_) {
     return std::vector<std::tuple<std::vector<uint8_t>, json>>();
   }
-  if (deliver_id_ >= static_cast<int>(tasks_.sample_ids_.size())) {
+
+  if (deliver_id_ >= static_cast<int>(tasks_.SizeAfterSampling())) {
     return std::vector<std::tuple<std::vector<uint8_t>, json>>();
   }
 
@@ -1512,8 +1579,12 @@ void ShardReader::ShuffleTask() {
       }
     }
   }
-  if (tasks_.permutation_.empty()) {
-    tasks_.MakePerm();
+  if (load_mode_ != kSlow) {
+    if (tasks_.permutation_.empty()) {
+      tasks_.MakePerm();
+    }
+  } else {
+    tasks_.generator_ids_.ResetShardIndexAndID();
   }
 }
 
@@ -1522,5 +1593,8 @@ const std::vector<int64_t> *ShardReader::GetSampleIds() {
   return &(this->tasks_.sample_ids_);
 }
 
+LoadMode ShardReader::GetLoadMode() { return load_mode_; }
+
+std::vector<int64_t> ShardReader::GetNextSampleIds() { return tasks_.GetNextSampleIds(); }
 }  // namespace mindrecord
 }  // namespace mindspore

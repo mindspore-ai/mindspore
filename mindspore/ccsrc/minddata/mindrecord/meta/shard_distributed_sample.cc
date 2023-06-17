@@ -52,7 +52,7 @@ int64_t ShardDistributedSample::GetNumSamples(int64_t dataset_size, int64_t num_
 }
 
 Status ShardDistributedSample::PreExecute(ShardTaskList &tasks) {
-  auto total_no = tasks.Size();
+  int64_t total_no = tasks.Size();
   if (no_of_padded_samples_ > 0 && first_epoch_) {
     CHECK_FAIL_RETURN_UNEXPECTED_MR(
       total_no % denominator_ == 0,

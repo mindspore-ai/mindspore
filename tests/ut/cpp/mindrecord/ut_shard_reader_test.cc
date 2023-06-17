@@ -72,7 +72,7 @@ TEST_F(TestShardReader, TestShardReaderLazyLoad) {
   auto column_list = std::vector<std::string>{"file_name"};
 
   ShardReader dataset;
-  dataset.Open({file_name}, true, 4, column_list, {}, 0, true);
+  dataset.Open({file_name}, true, 4, column_list, {}, 0, LoadMode::kLazy);
   dataset.Launch();
 
   uint32_t count = 0;
@@ -121,7 +121,7 @@ TEST_F(TestShardReader, TestShardReaderLazyLoadDistributed) {
   std::vector<std::shared_ptr<ShardOperator>> ops;
   ops.push_back(std::make_shared<ShardSample>(1, 8));
   ShardReader dataset;
-  dataset.Open({file_name}, true, 4, column_list, ops, 0, true);
+  dataset.Open({file_name}, true, 4, column_list, ops, 0, LoadMode::kLazy);
   dataset.Launch();
 
   uint32_t count = 0;

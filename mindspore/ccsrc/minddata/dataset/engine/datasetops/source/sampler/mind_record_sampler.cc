@@ -34,32 +34,47 @@ Status MindRecordSamplerRT::GetNextSample(TensorRow *out) {
   } else if (next_id_ == num_samples_) {
     (*out) = TensorRow(TensorRow::kFlagEOE);
   } else {
-    std::shared_ptr<Tensor> sampleIdsTensor;
-    int64_t last_id = std::min(samples_per_tensor_ + next_id_, num_samples_);
-    RETURN_IF_NOT_OK(CreateSamplerTensor(&sampleIdsTensor, last_id - next_id_));
-    auto id_ptr = sampleIdsTensor->begin<int64_t>();
-    for (int64_t i = 0; i < (last_id - next_id_); i++) {
-      *(id_ptr + static_cast<ptrdiff_t>(i)) = (*sample_ids_)[i];
+    if (shard_reader_->GetLoadMode() != mindrecord::LoadMode::kSlow) {
+      std::shared_ptr<Tensor> sampleIdsTensor;
+      int64_t last_id = std::min(samples_per_tensor_ + next_id_, num_samples_);
+      RETURN_IF_NOT_OK(CreateSamplerTensor(&sampleIdsTensor, last_id - next_id_));
+      auto id_ptr = sampleIdsTensor->begin<int64_t>();
+      for (int64_t i = 0; i < (last_id - next_id_); i++) {
+        *(id_ptr + static_cast<ptrdiff_t>(i)) = (*sample_ids_)[i];
+      }
+      next_id_ = last_id;
+      (*out) = {sampleIdsTensor};
+    } else {
+      auto next_sample_ids = shard_reader_->GetNextSampleIds();
+      std::shared_ptr<Tensor> sampleIdsTensor;
+      RETURN_IF_NOT_OK(CreateSamplerTensor(&sampleIdsTensor, next_sample_ids.size()));
+      auto id_ptr = sampleIdsTensor->begin<int64_t>();
+      for (int64_t i = 0; i < next_sample_ids.size(); i++) {
+        *(id_ptr + static_cast<ptrdiff_t>(i)) = next_sample_ids[i];
+      }
+      next_id_ = next_id_ + next_sample_ids.size();
+      (*out) = {sampleIdsTensor};
     }
-    next_id_ = last_id;
-
-    (*out) = {sampleIdsTensor};
   }
   return Status::OK();
 }
 
 Status MindRecordSamplerRT::InitSampler() {
-  sample_ids_ = shard_reader_->GetSampleIds();
-  if (!sample_ids_) {
-    // Note, sample_ids_.empty() is okay and will just give no sample ids.
-    RETURN_STATUS_UNEXPECTED(
-      "[Internal ERROR]Init Sampler failed as sample_ids is empty, here ShardReader did not provide a valid sample ids "
-      "vector via MindRecordSamplerRT.");
-  }
+  if (shard_reader_->GetLoadMode() != mindrecord::LoadMode::kSlow) {
+    sample_ids_ = shard_reader_->GetSampleIds();
+    if (!sample_ids_) {
+      // Note, sample_ids_.empty() is okay and will just give no sample ids.
+      RETURN_STATUS_UNEXPECTED(
+        "[Internal ERROR]Init Sampler failed as sample_ids is empty, here ShardReader did not provide a valid sample "
+        "ids vector via MindRecordSamplerRT.");
+    }
 
-  // Usually, the num samples is given from the user interface. In our case, that data is in mindrecord.
-  // Mindrecord already created the sample ids at this point, so the num samples is the size of the sampled id list.
-  num_samples_ = sample_ids_->size();
+    // Usually, the num samples is given from the user interface. In our case, that data is in mindrecord.
+    // Mindrecord already created the sample ids at this point, so the num samples is the size of the sampled id list.
+    num_samples_ = shard_reader_->GetNumRowsAfterSampling();
+  } else {
+    num_samples_ = shard_reader_->GetNumRowsAfterSampling();
+  }
   return Status::OK();
 }
 

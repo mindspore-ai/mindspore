@@ -164,42 +164,60 @@ Status ShardShuffle::Execute(ShardTaskList &tasks) {
   CHECK_FAIL_RETURN_UNEXPECTED_MR(tasks.categories >= 1,
                                   "[Internal ERROR] task categories should be greater than or equal to 1 but got: " +
                                     std::to_string(tasks.categories));
-  if (shuffle_type_ == kShuffleSample) {  // shuffle each sample
-    if (tasks.permutation_.empty() == true) {
-      tasks.MakePerm();
-    }
-    if (GetShuffleMode() == dataset::ShuffleMode::kGlobal) {
-      if (replacement_ == true) {
-        ShardTaskList new_tasks;
-        if (no_of_samples_ == 0) {
-          no_of_samples_ = tasks.sample_ids_.size();
-        }
-        CHECK_FAIL_RETURN_UNEXPECTED_MR(
-          no_of_samples_ > 0,
-          "Invalid input, 'num_samples' should be positive but got: " + std::to_string(no_of_samples_));
-        for (uint32_t i = 0; i < no_of_samples_; ++i) {
-          new_tasks.AssignTask(tasks, tasks.GetRandomTaskID());
-        }
-
-        ShardTaskList::TaskListSwap(tasks, new_tasks);
-      } else {
-        std::shuffle(tasks.permutation_.begin(), tasks.permutation_.end(), std::default_random_engine(shuffle_seed_));
-        auto total_no = tasks.Size();
-        ShardTaskList new_tasks;
-        int64_t samples_to_assign =
-          (no_of_samples_ > 0 && no_of_samples_ < total_no) ? no_of_samples_ : tasks.sample_ids_.size();
-        for (int64_t i = 0; i < samples_to_assign; ++i) {
-          new_tasks.AssignTask(tasks, tasks.permutation_[i]);
-        }
-        ShardTaskList::TaskListSwap(tasks, new_tasks);
+  if (tasks.load_mode_ != LoadMode::kSlow) {
+    if (shuffle_type_ == kShuffleSample) {  // shuffle each sample
+      if (tasks.permutation_.empty() == true) {
+        tasks.MakePerm();
       }
-    } else if (GetShuffleMode() == dataset::ShuffleMode::kInfile) {
-      RETURN_IF_NOT_OK_MR(ShuffleInfile(tasks));
-    } else if (GetShuffleMode() == dataset::ShuffleMode::kFiles) {
-      RETURN_IF_NOT_OK_MR(ShuffleFiles(tasks));
+      if (GetShuffleMode() == dataset::ShuffleMode::kGlobal) {
+        if (replacement_ == true) {
+          ShardTaskList new_tasks;
+          if (no_of_samples_ == 0) {
+            no_of_samples_ = tasks.sample_ids_.size();
+          }
+          CHECK_FAIL_RETURN_UNEXPECTED_MR(
+            no_of_samples_ > 0,
+            "Invalid input, 'num_samples' should be positive but got: " + std::to_string(no_of_samples_));
+          for (uint32_t i = 0; i < no_of_samples_; ++i) {
+            new_tasks.AssignTask(tasks, tasks.GetRandomTaskID());
+          }
+
+          ShardTaskList::TaskListSwap(tasks, new_tasks);
+        } else {
+          std::shuffle(tasks.permutation_.begin(), tasks.permutation_.end(), std::default_random_engine(shuffle_seed_));
+          auto total_no = tasks.Size();
+          ShardTaskList new_tasks;
+          int64_t samples_to_assign =
+            (no_of_samples_ > 0 && no_of_samples_ < total_no) ? no_of_samples_ : tasks.sample_ids_.size();
+          for (int64_t i = 0; i < samples_to_assign; ++i) {
+            new_tasks.AssignTask(tasks, tasks.permutation_[i]);
+          }
+          ShardTaskList::TaskListSwap(tasks, new_tasks);
+        }
+      } else if (GetShuffleMode() == dataset::ShuffleMode::kInfile) {
+        RETURN_IF_NOT_OK_MR(ShuffleInfile(tasks));
+      } else if (GetShuffleMode() == dataset::ShuffleMode::kFiles) {
+        RETURN_IF_NOT_OK_MR(ShuffleFiles(tasks));
+      }
+    } else {  // shuffle unit like: (a1, b1, c1),(a2, b2, c2),..., (an, bn, cn)
+      return this->CategoryShuffle(tasks);
     }
-  } else {  // shuffle unit like: (a1, b1, c1),(a2, b2, c2),..., (an, bn, cn)
-    return this->CategoryShuffle(tasks);
+  } else {
+    // just shuffle file names
+    CHECK_FAIL_RETURN_UNEXPECTED_MR(
+      GetShuffleMode() != dataset::ShuffleMode::kInfile && GetShuffleMode() != dataset::ShuffleMode::kFiles,
+      "The shuffle mode Shuffle.FILES and Shuffle.INFILE are not supported because "
+      "the number of samples in the dataset is greater than " +
+        std::to_string(SLOW_LOAD_THRESHOLD) + ".");
+    auto shard_sample_count = GetShardSampleCount();
+    std::vector<int32_t> file_ids;
+    for (int32_t i = 0; i < shard_sample_count.size(); i++) {
+      file_ids.push_back(i);
+    }
+    std::shuffle(file_ids.begin(), file_ids.end(), std::default_random_engine(shuffle_seed_));
+    tasks.SetFileIds(file_ids);
+    tasks.need_shuffle_ = true;
+    tasks.shuffle_seed_ = shuffle_seed_;
   }
   return Status::OK();
 }
