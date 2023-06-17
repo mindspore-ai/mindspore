@@ -54,7 +54,7 @@ TypePtr CeLUInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   (void)CheckAndConvertUtils::CheckInteger("CeLU input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x_type = input_args[0]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, prim_name);

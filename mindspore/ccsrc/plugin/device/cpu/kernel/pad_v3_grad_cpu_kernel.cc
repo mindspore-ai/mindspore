@@ -293,6 +293,8 @@ std::vector<std::pair<KernelAttr, PadV3GradCpuKernelMod::SelectFunc>> PadV3GradC
    &PadV3GradCpuKernelMod::LaunchKernel<std::complex<float>, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
    &PadV3GradCpuKernelMod::LaunchKernel<std::complex<double>, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+   &PadV3GradCpuKernelMod::LaunchKernel<bool, int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
    &PadV3GradCpuKernelMod::LaunchKernel<float16, int32_t>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
@@ -318,7 +320,9 @@ std::vector<std::pair<KernelAttr, PadV3GradCpuKernelMod::SelectFunc>> PadV3GradC
   {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex64),
    &PadV3GradCpuKernelMod::LaunchKernel<std::complex<float>, int32_t>},
   {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex128),
-   &PadV3GradCpuKernelMod::LaunchKernel<std::complex<double>, int32_t>}};
+   &PadV3GradCpuKernelMod::LaunchKernel<std::complex<double>, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+   &PadV3GradCpuKernelMod::LaunchKernel<bool, int32_t>}};
 
 std::vector<KernelAttr> PadV3GradCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

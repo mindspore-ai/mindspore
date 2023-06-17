@@ -220,7 +220,7 @@ TypePtr PadV3InferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
   std::map<std::string, TypePtr> args = {{"x", input_args[0]->BuildType()}};
   return CheckAndConvertUtils::CheckTensorTypeSame(args,
                                                    {kInt, kInt8, kInt16, kInt32, kInt64, kUInt, kUInt8, kUInt16, kFloat,
-                                                    kFloat16, kFloat32, kFloat64, kComplex64, kComplex128},
+                                                    kFloat16, kFloat32, kFloat64, kComplex64, kComplex128, kBool},
                                                    prim->name());
 }
 }  // namespace

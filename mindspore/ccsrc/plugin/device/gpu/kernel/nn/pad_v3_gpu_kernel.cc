@@ -75,6 +75,7 @@ const std::vector<std::pair<KernelAttr, PadV3PtrCreatorFunc>> kernel_attr = {
   REG_PAD_V3_KERNEL(kNumberTypeUInt8, uint8_t, int64_t),
   REG_PAD_V3_KERNEL(kNumberTypeComplex64, Complex<float>, int64_t),
   REG_PAD_V3_KERNEL(kNumberTypeComplex128, Complex<double>, int64_t),
+  REG_PAD_V3_KERNEL(kNumberTypeBool, bool, int64_t),
 };
 }  // namespace
 

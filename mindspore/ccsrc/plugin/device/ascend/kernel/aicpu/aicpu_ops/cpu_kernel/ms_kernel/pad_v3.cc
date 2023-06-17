@@ -87,6 +87,7 @@ uint32_t PadV3CpuKernel::Compute(CpuKernelContext &ctx) {
     PAD_V3_COMPUTE_CASE(DT_DOUBLE, double, ctx)
     PAD_V3_COMPUTE_CASE(DT_COMPLEX64, std::complex<float>, ctx)
     PAD_V3_COMPUTE_CASE(DT_COMPLEX128, std::complex<double>, ctx)
+    PAD_V3_COMPUTE_CASE(DT_BOOL, bool, ctx)
     default:
       KERNEL_LOG_ERROR("PadV3 kernel data type [%s] not support.", DTypeStr(data_type_).c_str());
       return KERNEL_STATUS_PARAM_INVALID;

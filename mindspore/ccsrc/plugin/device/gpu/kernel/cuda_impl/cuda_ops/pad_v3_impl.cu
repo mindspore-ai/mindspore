@@ -973,3 +973,52 @@ template CUDA_LIB_EXPORT void CalCircularPadGrad3d<Complex<double>>(
   const int64_t old_width, const int64_t padded_depth, const int64_t padded_height, const int64_t padded_width,
   const int64_t pad_head, const int64_t pad_top, const int64_t pad_left, const int64_t pad_back, const int64_t pad_down,
   const int64_t pad_right, Complex<double> *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void CalConstantPad3d<bool>(
+  const size_t size, const bool *input, const int64_t num, const int64_t channels, const int64_t old_depth,
+  const int64_t old_height, const int64_t old_width, const int64_t padded_depth, const int64_t padded_height,
+  const int64_t padded_width, const int64_t pad_head, const int64_t pad_top, const int64_t pad_left,
+  const bool *pad_value, bool *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void CalCircularPad3d<bool>(
+  const size_t size, const bool *input, const int64_t old_depth, const int64_t old_height, const int64_t old_width,
+  const int64_t padded_depth, const int64_t padded_height, const int64_t padded_width, const int64_t pad_head,
+  const int64_t pad_top, const int64_t pad_left, const int64_t pad_back, const int64_t pad_down,
+  const int64_t pad_right, bool *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void CalReflectPad3d<bool>(const size_t size, const bool *input, const int64_t num,
+                                                    const int64_t channels, const int64_t old_depth,
+                                                    const int64_t old_height, const int64_t old_width,
+                                                    const int64_t padded_depth, const int64_t padded_height,
+                                                    const int64_t padded_width, const int64_t pad_head,
+                                                    const int64_t pad_top, const int64_t pad_left, bool *output,
+                                                    const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalEdgePad3d<bool>(const size_t size, const bool *input, const int64_t num,
+                                                 const int64_t channels, const int64_t old_depth,
+                                                 const int64_t old_height, const int64_t old_width,
+                                                 const int64_t padded_depth, const int64_t padded_height,
+                                                 const int64_t padded_width, const int64_t pad_head,
+                                                 const int64_t pad_top, const int64_t pad_left, bool *output,
+                                                 const uint32_t &device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void CalReflectPadGrad3d<bool>(const size_t size, bool *input, const int64_t num,
+                                                        const int64_t channels, const int64_t old_depth,
+                                                        const int64_t old_height, const int64_t old_width,
+                                                        const int64_t padded_depth, const int64_t padded_height,
+                                                        const int64_t padded_width, const int64_t pad_head,
+                                                        const int64_t pad_top, const int64_t pad_left, bool *output,
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalEdgePadGrad3d<bool>(const size_t size, bool *input, const int64_t num,
+                                                     const int64_t channels, const int64_t old_depth,
+                                                     const int64_t old_height, const int64_t old_width,
+                                                     const int64_t padded_depth, const int64_t padded_height,
+                                                     const int64_t padded_width, const int64_t pad_head,
+                                                     const int64_t pad_top, const int64_t pad_left, bool *output,
+                                                     const uint32_t &device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void CalCircularPadGrad3d<bool>(
+  const size_t size, const bool *input, const int64_t old_depth, const int64_t old_height, const int64_t old_width,
+  const int64_t padded_depth, const int64_t padded_height, const int64_t padded_width, const int64_t pad_head,
+  const int64_t pad_top, const int64_t pad_left, const int64_t pad_back, const int64_t pad_down,
+  const int64_t pad_right, bool *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+
