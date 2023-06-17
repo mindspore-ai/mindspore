@@ -311,6 +311,39 @@ class _Context:
                                      f"got '{op_precision_path}'.")
                 self.set_param(ms_ctx_param.op_precision_mode, ascend_value)
 
+    def set_gpu_config(self, gpu_config):
+        """
+        Enable gpu config.
+
+        Args:
+            gpu_config (dict):
+
+                - conv_fprop_algo (str): "normal", "performance" or user specifies conv forward algorithm directly.
+                - conv_dgrad_algo (str): "normal", "performance" or user specifies conv data grad algorithm directly.
+                - conv_wgrad_algo (str): "normal", "performance" or user specifies conv weight grad algorithm directly.
+        """
+
+        gpu_cfgs = {'conv_fprop_algo': ["normal", "performance", "implicit_gemm", "precomp_gemm", "gemm", "direct",
+                                        "fft", "fft_tiling", "winograd", "winograd_nonfused"],
+                    'conv_dgrad_algo': ["normal", "performance", "algo_0", "algo_1", "fft", "fft_tiling", "winograd",
+                                        "winograd_nonfused"],
+                    'conv_wgrad_algo': ["normal", "performance", "algo_0", "algo_1", "fft", "algo_3", "fft_tiling",
+                                        "winograd_nonfused"]}
+        for gpu_key in gpu_config:
+            if gpu_key not in gpu_cfgs:
+                raise ValueError(f"For 'context.set_context', the key of argument 'gpu_config' must be one of "
+                                 f"{gpu_cfgs}, but got {gpu_key}.")
+            supported_value = gpu_cfgs.get(gpu_key)
+            if gpu_config[gpu_key] not in supported_value:
+                raise ValueError(f"For 'gpu_config', the value of argument {gpu_key} must be one of "
+                                 f"{supported_value}, but got {gpu_config[gpu_key]}.")
+            if gpu_key == 'conv_fprop_algo':
+                self.set_param(ms_ctx_param.conv_fprop_algo, gpu_config[gpu_key])
+            if gpu_key == 'conv_dgrad_algo':
+                self.set_param(ms_ctx_param.conv_dgrad_algo, gpu_config[gpu_key])
+            if gpu_key == 'conv_wgrad_algo':
+                self.set_param(ms_ctx_param.conv_wgrad_algo, gpu_config[gpu_key])
+
     def set_backend_policy(self, policy):
         success = self._context_handle.set_backend_policy(policy)
         if not success:
@@ -482,6 +515,7 @@ class _Context:
         'deterministic': set_deterministic,
         'ascend_config': set_ascend_config,
         'jit_syntax_level': set_jit_syntax_level,
+        'gpu_config': set_gpu_config,
     }
 
     @property
@@ -832,7 +866,8 @@ def _check_target_specific_cfgs(device, arg_key):
         'max_device_memory': ['Ascend', 'GPU'],
         'mempool_block_size': ['GPU', 'Ascend'],
         'disable_format_transform': ['GPU'],
-        'ascend_config': ['Ascend']
+        'ascend_config': ['Ascend'],
+        'gpu_config': ['GPU'],
     }
     # configs not in map device_cfgs are supposed to be suitable for all devices
     if arg_key not in device_cfgs:
@@ -855,7 +890,7 @@ def _check_target_specific_cfgs(device, arg_key):
                  graph_kernel_flags=str, save_compile_cache=bool, runtime_num_threads=int, load_compile_cache=bool,
                  grad_for_scalar=bool, pynative_synchronize=bool, mempool_block_size=str, disable_format_transform=bool,
                  op_timeout=int, deterministic=str, ascend_config=dict, jit_syntax_level=int,
-                 jit_enable_inplace_ops=bool)
+                 jit_enable_inplace_ops=bool, gpu_config=dict)
 def set_context(**kwargs):
     """
     Set context for running environment.
@@ -938,6 +973,8 @@ def set_context(**kwargs):
     |                         |  ascend_config               |  Ascend                    |
     |                         +------------------------------+----------------------------+
     |                         |  jit_syntax_level            |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  gpu_config                  |  GPU                       |
     +-------------------------+------------------------------+----------------------------+
 
     Args:
@@ -1153,7 +1190,72 @@ def set_context(**kwargs):
               scalar.
             - LAX(``2``): Compatible with all Python syntax as much as possible. However, execution performance may be
               affected and not optimal.
+        gpu_config (dict): Set the parameters specific to gpu hardware platform. It is not set by default.
+            Currently, only setting `conv_fprop_algo` and `conv_dgrad_algo` and `conv_wgrad_algo` are supported on GPU
+            hardware platform.
 
+            - conv_fprop_algo (str): Specifies convolution forward algorithm and the default value is 'normal',
+              The value range is as follows:
+
+              - normal: Use the heuristic search algorithm.
+              - performance: Use the trial search algorithm.
+              - implicit_gemm: This algorithm expresses the convolution as a matrix product without actually explicitly
+                forming the matrix that holds the input tensor data.
+              - implicit_precomp_gemm: This algorithm expresses convolution as a matrix product without actually
+                explicitly forming the matrix that holds the input tensor data, but still needs some memory workspace to
+                precompute some indices in order to facilitate the implicit construction of the matrix that holds the
+                input tensor data.
+              - gemm: This algorithm expresses the convolution as an explicit matrix product. A significant memory
+                workspace is needed to store the matrix that holds the input tensor data.
+              - direct: This algorithm expresses the convolution as a direct convolution (for example, without
+                implicitly or explicitly doing a matrix multiplication).
+              - fft: This algorithm uses the Fast-Fourier Transform approach to compute the convolution. A significant
+                memory workspace is needed to store intermediate results.
+              - fft_tiling: This algorithm uses the Fast-Fourier Transform approach but splits the inputs into tiles.
+                A significant memory workspace is needed to store intermediate results but less than fft algorithm for
+                large size images.
+              - winograd: This algorithm uses the Winograd Transform approach to compute the convolution. A reasonably
+                sized workspace is needed to store intermediate results.
+              - winograd_nonfused: This algorithm uses the Winograd Transform approach to compute the convolution. A
+                significant workspace may be needed to store intermediate results.
+            - conv_dgrad_algo (str): Specifies convolution data grad algorithm and the default value is 'normal',
+              The value range is as follows:
+
+              - normal: Use the heuristic search algorithm.
+              - performance: Use the trial search algorithm.
+              - algo_0: This algorithm expresses the convolution as a sum of matrix products without actually explicitly
+                forming the matrix that holds the input tensor data. The sum is done using the atomic add operation,
+                thus the results are non-deterministic.
+              - algo_1: This algorithm expresses the convolution as a matrix product without actually explicitly forming
+                the matrix that holds the input tensor data. The results are deterministic.
+              - fft: This algorithm uses a Fast-Fourier Transform approach to compute the convolution. A significant
+                memory workspace is needed to store intermediate results. The results are deterministic.
+              - fft_tiling: This algorithm uses the Fast-Fourier Transform approach but splits the inputs into tiles.
+                A significant memory workspace is needed to store intermediate results but less than fft for large size
+                images. The results are deterministic.
+              - winograd: This algorithm uses the Winograd Transform approach to compute the convolution. A reasonably
+                sized workspace is needed to store intermediate results. The results are deterministic.
+              - winograd_nonfused: This algorithm uses the Winograd Transform approach to compute the convolution.
+                A significant workspace may be needed to store intermediate results. The results are deterministic.
+            - conv_wgrwd_algo (str): Specifies convolution filter grad algorithm and the default value is 'normal',
+              The value range is as follows:
+
+              - normal: Use the heuristic search algorithm.
+              - performance: Use the trial search algorithm.
+              - algo_0: This algorithm expresses the convolution as a sum of matrix products without actually explicitly
+                forming the matrix that holds the input tensor data. The sum is done using the atomic add operation,
+                thus the results are non-deterministic.
+              - algo_1: This algorithm expresses the convolution as a matrix product without actually explicitly forming
+                the matrix that holds the input tensor data. The results are deterministic.
+              - fft: This algorithm uses a Fast-Fourier Transform approach to compute the convolution. A significant
+                memory workspace is needed to store intermediate results. The results are deterministic.
+              - algo_3: This algorithm is similar to algo_0 but uses some small workspace to precompute some indices.
+                The results are also non-deterministic.
+              - winograd_nonfused: This algorithm uses the Winograd Transform approach to compute the convolution.
+                A significant workspace may be needed to store intermediate results. The results are deterministic.
+              - fft_tiling: This algorithm uses the Fast-Fourier Transform approach but splits the inputs into tiles.
+                A significant memory workspace is needed to store intermediate results but less than fft for large size
+                images. The results are deterministic.
     Raises:
         ValueError: If input key is not an attribute in context.
 
@@ -1187,6 +1289,7 @@ def set_context(**kwargs):
         >>> ms.set_context(ascend_config={"precision_mode": "force_fp16", "jit_compile": True,
         ...                "atomic_clean_policy": 1, "op_precision_mode": "./op_precision_config_file"})
         >>> ms.set_context(jit_syntax_level=ms.STRICT)
+        >>> ms.set_context(gpu_config={"conv_fprop_algo": "performance"})
     """
     ctx = _context()
     # set device target first

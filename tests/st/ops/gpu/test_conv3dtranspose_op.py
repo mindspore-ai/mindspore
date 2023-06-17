@@ -45,13 +45,15 @@ class NetConv3dTranspose(nn.Cell):
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_conv3dtranspose_dshape_1():
+@pytest.mark.parametrize('algo', ["normal", "performance"])
+def test_conv3dtranspose_dshape_1(algo):
     """
     Feature: Test conv3dtranspose dynamic shape.
     Description: Test conv3dtranspose dynamic shape.
     Expectation: Success.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    gpu_config = {"conv_dgrad_algo": algo}
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU', gpu_config=gpu_config)
     net = NetConv3dTranspose()
     input_x_dyn = Tensor(shape=[1, 2, 3, 3, None], dtype=ms.float32)
     input_w_dyn = Tensor(shape=[2, 2, 2, 2, None], dtype=ms.float32)
