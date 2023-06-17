@@ -738,12 +738,20 @@ std::pair<CNodePtr, std::string> AscendKernelRuntime::GetErrorNodeInfo(uint32_t 
 }
 
 std::string AscendKernelRuntime::GetDumpPath(const std::string &suffix) {
-  uint32_t rank_id = 0;
+  std::string rank_id_str;
   auto inst = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(inst);
   if (inst->parallel_mode() != parallel::kStandalone) {
+    uint32_t rank_id = 0;
     if (!CommManager::GetInstance().GetRankID(kHcclWorldGroup, &rank_id)) {
       MS_LOG(WARNING) << "Get rank id failed, now using the default value 0.";
+    }
+    rank_id_str = std::to_string(rank_id);
+  } else {
+    rank_id_str = common::GetEnv(kRankID);
+    if (rank_id_str.empty()) {
+      MS_LOG(WARNING) << "Environment variable 'RANK_ID' is empty, using the default value: 0";
+      rank_id_str = "0";
     }
   }
 
@@ -752,9 +760,9 @@ std::string AscendKernelRuntime::GetDumpPath(const std::string &suffix) {
   if (ms_om_path.empty()) {
     MS_LOG(WARNING) << "The environment variable 'MS_OM_PATH' is not set, the files will save to the process local "
                     << "path, as ./rank_id/" + suffix + "/...";
-    path = "./rank_" + std::to_string(rank_id) + "/" + suffix;
+    path = "./rank_" + rank_id_str + "/" + suffix;
   } else {
-    path = ms_om_path + "/rank_" + std::to_string(rank_id) + "/" + suffix;
+    path = ms_om_path + "/rank_" + rank_id_str + "/" + suffix;
   }
   return path;
 }
@@ -886,6 +894,7 @@ void AscendKernelRuntime::DumpDebugInfoFile(const session::KernelGraph &graph) {
     }
     ofs << std::endl;
   }
+  MS_LOG(ERROR) << "Execute order has saved at " << file;
 }
 #endif
 
