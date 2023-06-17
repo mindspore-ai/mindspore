@@ -16,7 +16,6 @@
 
 #include "plugin/device/ascend/hal/hardware/ge_device_res_manager.h"
 #include "plugin/device/cpu/hal/device/cpu_memory_manager.h"
-#include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "include/transform/graph_ir/utils.h"
 
 namespace mindspore {

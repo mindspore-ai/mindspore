@@ -225,7 +225,7 @@ void GeGraphExecutor::AllocInputHostMemory(const KernelGraphPtr &kernel_graph) c
     }
 
     auto device_address_ptr =
-      std::make_shared<cpu::CPUDeviceAddress>(nullptr, tensor_size, kOpFormat_DEFAULT, output_type_id, kCPUDevice, 0);
+      std::make_shared<GeHostAddress>(nullptr, tensor_size, kOpFormat_DEFAULT, output_type_id, kAscendDevice, 0);
     device_address_ptr->set_is_ptr_persisted(false);
     AnfAlgo::SetOutputAddr(device_address_ptr, 0, input_node.get());
   }
@@ -247,7 +247,7 @@ void GeGraphExecutor::AllocOutputHostMemory(const KernelGraphPtr &kernel_graph) 
     auto i = output_with_index.second;
     TypeId output_type_id = common::AnfAlgo::GetOutputInferDataType(output_node, i);
     auto output_device_addr =
-      std::make_shared<cpu::CPUDeviceAddress>(nullptr, 0, kOpFormat_DEFAULT, output_type_id, kCPUDevice, 0);
+      std::make_shared<GeHostAddress>(nullptr, 0, kOpFormat_DEFAULT, output_type_id, kAscendDevice, 0);
     AnfAlgo::SetOutputAddr(output_device_addr, i, output_node.get());
 
     if (common::AnfAlgo::IsNopNode(output_node)) {
