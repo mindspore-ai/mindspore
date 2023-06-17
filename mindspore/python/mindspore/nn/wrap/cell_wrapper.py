@@ -634,6 +634,12 @@ class PipelineCell(Cell):
         self.micro_inputs = nn.CellList()
         self.micro_size = micro_size
         self.add_list = []
+        if not isinstance(micro_size, int):
+            raise TypeError("For 'PipelineCell', the argument 'micro_size' must be integer, "
+                            "but got the type : {}.".format(type(micro_size)))
+        if micro_size <= 0:
+            raise ValueError("For 'PipelineCell', the argument 'micro_size' must be large than 0, "
+                             "but got {}.".format(micro_size))
         for i in range(micro_size):
             micro_input = _MicroBatch(micro_size)
             self.micro_inputs.append(micro_input)
@@ -673,6 +679,12 @@ class GradAccumulationCell(Cell):
         self.micro_inputs = nn.CellList()
         self.micro_size = micro_size
         self.add_list = []
+        if not isinstance(micro_size, int):
+            raise TypeError("For 'GradAccumulationCell', the argument 'micro_size' must be integer, "
+                            "but got the type : {}.".format(type(micro_size)))
+        if micro_size <= 0:
+            raise ValueError("For 'GradAccumulationCell', the argument 'micro_size' must be large than 0, "
+                             "but got {}.".format(micro_size))
         for i in range(micro_size):
             micro_input = _MicroBatch(micro_size)
             micro_input.strided_slice.add_prim_attr("grad_accu_num", micro_size)
