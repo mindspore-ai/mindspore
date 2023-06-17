@@ -30,6 +30,7 @@
 #include "utils/hash_map.h"
 #include "ir/meta_func_graph.h"
 #include "pipeline/jit/parse/parse_base.h"
+#include "pipeline/jit/parse/resolve.h"
 #include "utils/log_adapter.h"
 #include "utils/ordered_set.h"
 
@@ -72,11 +73,15 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   void SetStateAssign(const AnfNodePtr &target, const AnfNodePtr &source);
   void AddGlobalVar(const std::string &var_name) { (void)global_vars_.insert(var_name); }
   bool IsGlobalVar(const std::string &var_name) { return global_vars_.find(var_name) != global_vars_.end(); }
-  std::pair<AnfNodePtr, std::string> MakeResolveAstOp(const py::object &op);
+
+  py::tuple GetAstOpNameSpace(const py::object &op);
+  AnfNodePtr MakeResolveAstOpNameSpace(const py::tuple &namespace_var);
   AnfNodePtr MakeResolveClassMemberOrSelf(const std::string &attr_or_self);
   AnfNodePtr MakeResolveSymbol(const std::string &value);
   AnfNodePtr MakeResolveOperation(const std::string &value);
   AnfNodePtr MakeResolve(const std::shared_ptr<NameSpace> &name_space, const std::shared_ptr<Symbol> &resolve_symbol);
+  AnfNodePtr DoResolve(const AnfNodePtr &node, const std::shared_ptr<NameSpace> &name_space,
+                       const std::shared_ptr<Symbol> &resolve_symbol);
   AnfNodePtr HandleNamespaceSymbol(const std::string &var_name);
   AnfNodePtr MakeInterpret(const std::string &script_text, const AnfNodePtr &global_dict_node,
                            const AnfNodePtr &local_dict_node, const AnfNodePtr &orig_node);

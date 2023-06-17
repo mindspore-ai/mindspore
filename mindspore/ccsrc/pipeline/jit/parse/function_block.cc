@@ -21,7 +21,7 @@
 #include <algorithm>
 #include <queue>
 
-#include "pipeline/jit/parse/resolve.h"
+#include "ir/cell.h"
 #include "pipeline/jit/parse/parse.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "frontend/operator/ops.h"
@@ -223,10 +223,13 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
     // If the current node is created as a phi node at the first time.(the var_name has not be found in pre blocks)
     // need resolve to determine whether it needs to be marked with interpret.
     auto resolve_node = MakeResolveSymbol(var_name);
-    CheckUndefinedSymbol(var_name, resolve_node);
     MS_EXCEPTION_IF_NULL(resolve_node);
+    CheckUndefinedSymbol(var_name, resolve_node);
     phi_param->set_interpret(resolve_node->interpret());
     phi_param->set_interpret_internal_type(resolve_node->interpret_internal_type());
+    if (resolve_node->isa<Parameter>()) {
+      phi_param->set_debug_info(resolve_node->debug_info());
+    }
   }
 
   func_graph()->add_parameter(phi_param);
@@ -246,7 +249,7 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
 }
 
 // Resolve Ast operator node
-std::pair<AnfNodePtr, std::string> FunctionBlock::MakeResolveAstOp(const py::object &op) {
+py::tuple FunctionBlock::GetAstOpNameSpace(const py::object &op) {
   auto ast = parser_.ast();
   MS_EXCEPTION_IF_NULL(ast);
   TraceGuard trace_guard(parser_.GetLocation(op));
@@ -255,15 +258,17 @@ std::pair<AnfNodePtr, std::string> FunctionBlock::MakeResolveAstOp(const py::obj
   if (namespace_var.size() != namespace_size) {
     MS_LOG(INTERNAL_EXCEPTION) << "Resolve ast op failed, get namespace tuple size=" << namespace_var.size();
   }
+  return namespace_var;
+}
+
+// Resolve Ast operator node
+AnfNodePtr FunctionBlock::MakeResolveAstOpNameSpace(const py::tuple &namespace_var) {
   constexpr size_t namespace_index = 0;
-  constexpr size_t symbol_index = 1;
-  constexpr size_t op_str_index = 2;
   NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_AST, namespace_var[namespace_index]);
+  constexpr size_t symbol_index = 1;
   SymbolPtr symbol = std::make_shared<Symbol>(namespace_var[symbol_index].cast<std::string>());
-  std::string op_str = py::str(namespace_var[op_str_index]);
-  MS_LOG(DEBUG) << "name_space: " << name_space->ToString() << ", symbol: " << symbol->ToString()
-                << ", operation :" << op_str;
-  return std::pair<AnfNodePtr, std::string>(MakeResolve(name_space, symbol), op_str);
+  MS_LOG(DEBUG) << "name_space: " << name_space->ToString() << ", symbol: " << symbol->ToString();
+  return MakeResolve(name_space, symbol);
 }
 
 // Resolve class member: method, member variable, or self.
@@ -396,6 +401,46 @@ AnfNodePtr FunctionBlock::MakeResolveOperation(const std::string &value) {
   return MakeResolve(name_space, symbol);
 }
 
+namespace {
+// The same as TransformVectorFuncValueNode() in mindspore/ccsrc/pipeline/jit/parse/resolve.cc, but not add to manager.
+bool TransformVectorFuncValueNode(const FuncGraphPtr &func_graph, const ValuePtr &value,
+                                  AnfNodePtr *const transformed) {
+  MS_EXCEPTION_IF_NULL(value);
+  const auto &value_vec = GetValue<ValuePtrList>(value);
+  if (value_vec.empty()) {
+    return false;
+  }
+  std::vector<AnfNodePtr> nodes;
+  (void)nodes.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+  bool is_all_func = true;
+  for (auto &elem : value_vec) {
+    MS_EXCEPTION_IF_NULL(elem);
+    AnfNodePtr node = nullptr;
+    if (elem->isa<ValueTuple>() || elem->isa<ValueList>()) {
+      is_all_func = is_all_func && TransformVectorFuncValueNode(func_graph, elem, &node);
+    } else if (elem->isa<FuncGraph>()) {
+      FuncGraphPtr new_fg = elem->cast<FuncGraphPtr>();
+      node = NewValueNode(new_fg);
+    } else if (elem->isa<Primitive>()) {
+      node = NewValueNode(elem);
+    } else {
+      is_all_func = false;
+    }
+    (void)nodes.emplace_back(node);
+  }
+  if (is_all_func) {
+    // (1) The celllist or ordered_cell will be parsed as valuetuple of const graph in it,
+    // So if has graph in list, try to replace the node with make tuple of graph value node.
+    // We do this because the graph manager won't investigate the graph inside valuetuple,
+    // change the vector of graph to be make_tuple of graph value node.
+    // (2) the primitive valuetuple or valuelist may encounter to abstract error, make it all
+    // independent nodes.
+    *transformed = func_graph->NewCNode(std::move(nodes));
+  }
+  return is_all_func;
+}
+}  // namespace
+
 AnfNodePtr FunctionBlock::MakeResolve(const NameSpacePtr &name_space, const SymbolPtr &resolve_symbol) {
   MS_LOG(DEBUG) << "MakeResolve for "
                 << (name_space ? (std::string)py::str(name_space->namespace_obj()) : "null namespace") << " , "
@@ -403,7 +448,41 @@ AnfNodePtr FunctionBlock::MakeResolve(const NameSpacePtr &name_space, const Symb
   ValueNodePtr module_node = NewValueNode(name_space);
   ValueNodePtr symbol_node = NewValueNode(resolve_symbol);
   auto node = func_graph_->NewCNodeInOrder({NewValueNode(prim::kPrimResolve), module_node, symbol_node});
-  return node;
+
+  // Directly resolve the symbol.
+  return DoResolve(node, name_space, resolve_symbol);
+}
+
+AnfNodePtr FunctionBlock::DoResolve(const AnfNodePtr &node, const std::shared_ptr<NameSpace> &name_space,
+                                    const std::shared_ptr<Symbol> &resolve_symbol) {
+  static auto boost_parse = common::GetEnv("MS_DEV_BOOST_PARSE");
+  if (Parser::defer_resolve() || (boost_parse != "2" && boost_parse != "3")) {
+    return node;
+  }
+  // Directly resolve the symbol.
+  const auto &obj = GetSymbolObject(name_space, resolve_symbol, node);
+  // Avoid recursively resolving Cell.
+  if (py::isinstance<Cell>(obj) && resolve_symbol->symbol() == "self") {
+    MS_LOG(ERROR) << "Not direct resolve Cell self. node: " << node->DebugString() << ", ns: " << name_space->ToString()
+                  << ", sym: " << resolve_symbol->ToString();
+    return node;
+  }
+  AnfNodePtr resolved_node = nullptr;
+  bool success = ResolveObjectToNode(node, obj, &resolved_node);
+  if (!success || resolved_node == nullptr) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Parse Resolve covert failed." << node->DebugString()
+                               << ", ns: " << name_space->ToString() << ", sym: " << resolve_symbol->ToString();
+  }
+  // If the constant node is constant of vector of graph, add graph to manager.
+  if (IsValueNode<ValueTuple>(resolved_node) || IsValueNode<ValueList>(resolved_node)) {
+    auto value = resolved_node->cast<ValueNodePtr>()->value();
+    if (!TransformVectorFuncValueNode(func_graph_, value, &resolved_node)) {
+      MS_LOG(INFO) << "Fail to convert value tuple/list to CNode, " << resolved_node->DebugString();
+    }
+  }
+  MS_LOG(DEBUG) << "node: " << node->DebugString() << ", ns: " << name_space->ToString()
+                << ", sym: " << resolve_symbol->ToString() << ", resolved_node: " << resolved_node->DebugString();
+  return resolved_node;
 }
 
 AnfNodePtr FunctionBlock::MakeInterpret(const std::string &script_text, const AnfNodePtr &global_dict_node,
@@ -636,8 +715,10 @@ CNodePtr FunctionBlock::ConditionalJump(const AnfNodePtr &cond_node, const AnfNo
   MS_EXCEPTION_IF_NULL(true_block_call);
   MS_EXCEPTION_IF_NULL(false_block_call);
   if (func_graph_->get_return() != nullptr) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Failure: have return node! NodeInfo: "
-                               << trace::GetDebugInfo(func_graph_->get_return()->debug_info());
+    MS_LOG(INTERNAL_EXCEPTION) << "Failure: have return node! fg: " << func_graph_->ToString()
+                               << "\nNodeInfo: " << trace::GetDebugInfo(func_graph_->get_return()->debug_info())
+                               << "\ncond_node: " << cond_node->DebugString()
+                               << "\nNodeInfo: " << trace::GetDebugInfo(cond_node->debug_info());
   }
   CNodePtr switch_app =
     func_graph_->NewCNodeInOrder({NewValueNode(prim::kPrimSwitch), cond_node, true_block_call, false_block_call});

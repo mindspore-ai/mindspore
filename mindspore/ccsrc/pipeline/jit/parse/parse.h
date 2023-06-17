@@ -129,6 +129,8 @@ class Parser {
   static void CleanParserResource();
   static FuncGraphPtr GetTopFuncGraph() { return top_func_graph_.lock(); }
   static void UpdateTopFuncGraph(const FuncGraphPtr &func_graph);
+  static void EnableDeferResolve(bool enabled) { defer_resolve_ = enabled; }
+  static bool defer_resolve() { return defer_resolve_; }
 
  private:
   // Process the stmt node method list.
@@ -231,8 +233,6 @@ class Parser {
   std::vector<AnfNodePtr> ParseException(const FunctionBlockPtr &block, const py::list &args, const std::string &name);
   std::vector<AnfNodePtr> ParseRaiseCall(const FunctionBlockPtr &block, const py::object &node);
   void ParseStrInError(const FunctionBlockPtr &block, const py::list &args, std::vector<AnfNodePtr> *str_nodes);
-  AnfNodePtr ParseRecursiveMethodOrCellObj(const FunctionBlockPtr &block, const py::object &cell_or_method);
-  AnfNodePtr ParseRecursiveFuncDef(const FunctionBlockPtr &block, const py::object &node, bool only_attr = false);
 
   bool GetBoolObjForAstCompare(const py::object &node, bool *bool_res);
   py::object GetPyObjForAstAttr(const py::object &attr_ast_node);
@@ -376,6 +376,8 @@ class Parser {
 
   // The shared_ptr will be hold by GraphManager, so just hold a weak ref here.
   static FuncGraphWeakPtr top_func_graph_;
+  // Set if defer resolve during parsing.
+  inline static bool defer_resolve_{false};
   // Python function id, used to indicate whether two CNodes come from the same Python function.
   const std::shared_ptr<ParseFunctionAst> &ast_;
   FuncGraphPtr func_graph_;

@@ -467,7 +467,7 @@ std::string ArgsToString(const AbstractBasePtrList &args_abs_list);
 bool enable_waiting_branch_eval();
 bool NeedWaitForBranches(const AbstractBasePtr &abstract);
 
-inline std::string GetInferThread() { return std::string(" INFER:") + AnalysisSchedule::thread_id() + ":"; }
+inline std::string GetInferThread() { return std::string("[tid: ") + AnalysisSchedule::thread_id() + "] "; }
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PIPELINE_JIT_STATIC_ANALYSIS_ASYNC_EVAL_RESULT_H_
