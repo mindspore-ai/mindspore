@@ -33,8 +33,8 @@ constexpr int64_t kOneAnfValue = 1;
 
 static abstract::AbstractTuplePtr VectorToTuple(const std::vector<int64_t> &nums) {
   abstract::AbstractBasePtrList elems;
-  std::transform(nums.begin(), nums.end(), std::back_inserter(elems),
-                 [](int64_t num) { return std::make_shared<abstract::AbstractScalar>(num); });
+  (void)std::transform(nums.begin(), nums.end(), std::back_inserter(elems),
+                       [](int64_t num) { return std::make_shared<abstract::AbstractScalar>(num); });
   return std::make_shared<abstract::AbstractTuple>(elems);
 }
 
@@ -111,7 +111,7 @@ AnfNodePtr TensorIndex::NormalizeSliceInfo(const AnfNodePtr &data_node, const An
   AnfNodePtr shape_node = NewCNode({NewValueNode(prim::kPrimShape), data_node}, res_graph_);
   AnfNodePtrList stride_slice{NewValueNode(prim::kPrimNormalizeSlice)};
   auto stride_slice_input = NormalizeSlice({start_abs, stop_abs, step_abs}, shape_node, index_node);
-  stride_slice.insert(stride_slice.end(), stride_slice_input.begin(), stride_slice_input.end());
+  (void)stride_slice.insert(stride_slice.end(), stride_slice_input.begin(), stride_slice_input.end());
   return res_graph_->NewCNode(stride_slice);
 }
 
@@ -141,11 +141,11 @@ void TensorIndexGetitem::GetItemBySlice(const AnfNodePtr &data_node, const AnfNo
     step_strides[0] = slice_info[kIndex2];
     auto slice_infos = std::vector<AbstractBasePtr>{VectorToTuple(start_strides), VectorToTuple(stop_strides),
                                                     VectorToTuple(step_strides)};
-    std::transform(slice_infos.begin(), slice_infos.end(), std::back_inserter(slice_nodes),
-                   [](const AbstractBasePtr &slice_info) { return NewValueNode(slice_info->BuildValue()); });
+    (void)std::transform(slice_infos.begin(), slice_infos.end(), std::back_inserter(slice_nodes),
+                         [](const AbstractBasePtr &slice_info) { return NewValueNode(slice_info->BuildValue()); });
   } else {
     for (size_t i = 0; i < slice_info_size; i++) {
-      slice_nodes.emplace_back(res_graph_->NewCNode(
+      (void)slice_nodes.emplace_back(res_graph_->NewCNode(
         {NewValueNode(prim::kPrimTupleGetItem), normalized_slice_node, NewValueNode(SizeToLong(i))}));
     }
   }
@@ -201,19 +201,19 @@ void TensorIndexSetitem::SetItemBySlice(const AnfNodePtr &data_node, const AnfNo
     int64_t step = slice_info[kIndex2];
     std::vector<int64_t> indices;
     for (int64_t i = start; i < stop; i += step) {
-      indices.emplace_back(i);
+      (void)indices.emplace_back(i);
     }
     ShapeVector indices_shp({static_cast<int64_t>(indices.size()), 1});
     auto shp_buf_size = sizeof(int64_t) * indices.size();
     auto indices_tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt64, indices_shp, indices.data(), shp_buf_size);
-    output_nodes.emplace_back(NewValueNode(indices_tensor->ToAbstract()->BuildValue()));
+    (void)output_nodes.emplace_back(NewValueNode(indices_tensor->ToAbstract()->BuildValue()));
     auto value_shape = data_shape_;
     value_shape[0] = SizeToLong(indices.size());
     value_shape_node = NewValueNode(std::vector<int64_t>(value_shape));
-    output_nodes.emplace_back(value_shape_node);
-    output_nodes.emplace_back(NewValueNode(start));
-    output_nodes.emplace_back(NewValueNode(stop));
-    output_nodes.emplace_back(NewValueNode(step));
+    (void)output_nodes.emplace_back(value_shape_node);
+    (void)output_nodes.emplace_back(NewValueNode(start));
+    (void)output_nodes.emplace_back(NewValueNode(stop));
+    (void)output_nodes.emplace_back(NewValueNode(step));
   } else {
     auto start_abs = abs_slice_ptr->start();
     auto stop_abs = abs_slice_ptr->stop();
@@ -222,10 +222,10 @@ void TensorIndexSetitem::SetItemBySlice(const AnfNodePtr &data_node, const AnfNo
     AnfNodePtrList slice_to_indices{NewValueNode(prim::kPrimSliceToIndices)};
     auto stride_slice_input = NormalizeSlice({start_abs, stop_abs, step_abs}, shape_node, index_node);
     const size_t slice_to_indices_output_size = 5;
-    slice_to_indices.insert(slice_to_indices.end(), stride_slice_input.begin(), stride_slice_input.end());
+    (void)slice_to_indices.insert(slice_to_indices.end(), stride_slice_input.begin(), stride_slice_input.end());
     auto slice_to_indices_node = res_graph_->NewCNode(slice_to_indices);
     for (size_t i = 0; i < slice_to_indices_output_size; i++) {
-      output_nodes.emplace_back(
+      (void)output_nodes.emplace_back(
         res_graph_->NewCNode({NewValueNode(kPrimTupleGetItem), slice_to_indices_node, NewValueNode(SizeToLong(i))}));
     }
   }
@@ -233,9 +233,7 @@ void TensorIndexSetitem::SetItemBySlice(const AnfNodePtr &data_node, const AnfNo
   auto type_id = dyn_cast<abstract::AbstractTensor>(data)->element()->BuildType();
   if (value->isa<abstract::AbstractTensor>()) {
     auto cast_node = NewValueNode(prim::kPrimCast);
-    auto prim = GetValueNode<PrimitivePtr>(cast_node);
-    prim->SetAttrs({{kAttrDstType, type_id}});
-    new_value_node = res_graph_->NewCNode({cast_node, value_node});
+    new_value_node = res_graph_->NewCNode({cast_node, value_node, NewValueNode(type_id)});
   } else if (value->isa<abstract::AbstractScalar>()) {
     new_value_node = res_graph_->NewCNode(
       {NewValueNode(prim::kPrimFill), NewValueNode(type_id), NewValueNode(ShapeVector()), value_node});
@@ -245,7 +243,7 @@ void TensorIndexSetitem::SetItemBySlice(const AnfNodePtr &data_node, const AnfNo
     ValueNodePtr sequence_to_tensor_node = NewValueNode(sequence_to_tensor);
     new_value_node = res_graph_->NewCNode({sequence_to_tensor_node, value_node, NewValueNode(type_id)});
   }
-  output_nodes.emplace_back(new_value_node);
+  (void)output_nodes.emplace_back(new_value_node);
   res_graph_->set_output(res_graph_->NewCNode(output_nodes));
 }
 

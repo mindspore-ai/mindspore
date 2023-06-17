@@ -1106,7 +1106,9 @@ def tensor_setitem_by_slice(self, index, value):
         self, index, value)
     value = F.broadcast_to(value, value_shape)
     if not const_utils.is_ascend() and step == 1:
-        return copy_slice(self, value, start, stop, step)
+        if isinstance(step, Tensor):
+            return copy_slice(self, value, start, stop, step)
+        return copy_slice(self, value, (start,), (stop,), (step,))
     return F.tensor_scatter_update(self, indices, value)
 
 
