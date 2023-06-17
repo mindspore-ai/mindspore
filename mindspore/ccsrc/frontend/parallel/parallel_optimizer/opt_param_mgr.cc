@@ -111,12 +111,6 @@ class OptParamMgrImpl : public OptParamMgr {
       return false;
     }
 
-    if (StageSharedParam(parameter)) {
-      MS_LOG(INFO) << "Parallel optimizer: " << parameter->ToString()
-                   << " is stage-shared in pipeline parallel. Skipped.";
-      return false;
-    }
-
     auto param_ptr = parameter->cast<ParameterPtr>();
     if ((!param_ptr) || (!param_ptr->has_default())) {
       MS_LOG(INFO) << "Parallel optimizer: " << parameter->ToString() << " is not a parameter.";
