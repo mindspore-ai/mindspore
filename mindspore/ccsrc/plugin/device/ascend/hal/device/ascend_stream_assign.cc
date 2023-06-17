@@ -30,6 +30,7 @@
 #include "include/backend/optimizer/helper.h"
 #include "kernel/oplib/oplib.h"
 #include "include/common/utils/utils.h"
+#include "include/backend/debug/profiler/profiling.h"
 
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/stream_exec_order_recorder.h"
@@ -479,6 +480,7 @@ void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) 
 
   MS_LOG(INFO) << "Status record: start assign stream. graph id: " << graph_ptr->graph_id()
                << ", sink mode: " << IsTaskSink();
+  profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "AscendPreprocess_AssignStream", 0, 0, 0);
   PROF_START(assign_stream);
   if (!IsTaskSink()) {
     auto kernels = graph_ptr->execution_order();
@@ -487,6 +489,7 @@ void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) 
     MS_LOG(INFO) << "After finish stream assign";
     graph_ptr->PrintGraphExecuteOrder();
     PROF_END(assign_stream);
+    profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "AscendPreprocess_AssignStream", 0, 0, 1);
     MS_LOG(INFO) << "Status record: end assign stream. graph id: " << graph_ptr->graph_id();
     return;
   }
@@ -534,6 +537,7 @@ void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) 
   PrintStreamGroups();
   FindEventRelations(graph_ptr);
   PROF_END(assign_stream);
+  profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "AscendPreprocess_AssignStream", 0, 0, 1);
   MS_LOG(INFO) << "Status record: end assign stream. graph id: " << graph_ptr->graph_id();
 }
 

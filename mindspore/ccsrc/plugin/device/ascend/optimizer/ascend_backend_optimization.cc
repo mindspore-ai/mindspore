@@ -213,6 +213,7 @@
 #include "plugin/device/ascend/optimizer/ge/convert_condition_input_to_scalar.h"
 #include "plugin/device/ascend/optimizer/ge/maketuple_depend_remover.h"
 #include "plugin/device/ascend/optimizer/ge/hcom/add_parallel_group_for_hcom.h"
+#include "include/backend/debug/profiler/profiling.h"
 
 namespace mindspore {
 namespace opt {
@@ -311,6 +312,7 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
 
 void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_AscendDataLayout", 0, 0, 0);
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto data_layout_pm = std::make_shared<PassManager>("transop_pm");
   data_layout_pm->AddPass(std::make_shared<ReselectCallInlineFormat>());
@@ -345,11 +347,13 @@ void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph)
   data_layout_pm->AddPass(std::make_shared<RemoveInternalOutputTransOp>());
   optimizer->AddPassManager(data_layout_pm);
   (void)optimizer->Optimize(kernel_graph);
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_AscendDataLayout", 0, 0, 1);
   kernel_graph->SetExecOrderByDefault();
 }
 
 void AscendMixPrecision(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_AscendMixPrecision", 0, 0, 0);
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto mixed_precision_pm = std::make_shared<PassManager>("cast_pm");
   mixed_precision_pm->AddPass(std::make_shared<InsertCast>());
@@ -373,11 +377,13 @@ void AscendMixPrecision(const std::shared_ptr<session::KernelGraph> &kernel_grap
   optimizer->AddPassManager(mixed_precision_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_AscendMixPrecision", 0, 0, 1);
 }
 
 void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_LOG(INFO) << "Status record: start ascend ir fusion pass. graph id: " << kernel_graph->graph_id();
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_IRFusionOptimization", 0, 0, 0);
   PROF_START(ir_fusion);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -441,11 +447,13 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   }
 #endif
   PROF_END(ir_fusion);
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_IRFusionOptimization", 0, 0, 1);
   MS_LOG(INFO) << "Status record: end ascend ir fusion pass. graph id: " << kernel_graph->graph_id();
 }
 
 void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_RunOpIRFusionOptimization", 0, 0, 0);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (!context_ptr->get_param<bool>(MS_CTX_IR_FUSION_FLAG)) {
@@ -523,10 +531,12 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
     DumpIR("hwopt_d_ir_fusion_after.ir", kernel_graph);
   }
 #endif
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_RunOpIRFusionOptimization", 0, 0, 1);
 }
 
 void RunOpAscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_RunOpOptimization", 0, 0, 0);
   // data layout optimization
   AscendDataLayout(kernel_graph);
   // mixed precision optimization
@@ -540,9 +550,11 @@ void RunOpAscendBackendOptimization(const std::shared_ptr<session::KernelGraph> 
   optimizer->AddPassManager(other_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_RunOpOptimization", 0, 0, 1);
 }
 
 void AscendAfterInlineOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_AfterInlineOptimization", 0, 0, 0);
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto after_inline_pm = std::make_shared<PassManager>("after_inline_pm");
   after_inline_pm->AddPass(std::make_shared<DropoutGenMaskFusion>());
@@ -567,11 +579,13 @@ void AscendAfterInlineOptimization(const std::shared_ptr<session::KernelGraph> &
   optimizer->AddPassManager(after_inline_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_AfterInlineOptimization", 0, 0, 1);
 }
 
 void AscendBackendOptimizeACL(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_LOG(DEBUG) << "Status record: start ascend backend optimize acl pass. graph id: " << kernel_graph->graph_id();
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_OptimizeACL", 0, 0, 0);
   PROF_START(ascend_backend_optimize_acl);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -598,6 +612,7 @@ void AscendBackendOptimizeACL(const std::shared_ptr<session::KernelGraph> &kerne
   }
 #endif
   PROF_END(ascend_backend_optimize_acl);
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_OptimizeACL", 0, 0, 1);
   MS_LOG(DEBUG) << "Status record: end ascend backend optimize acl pass. graph id: " << kernel_graph->graph_id();
 }
 
@@ -637,6 +652,8 @@ void AscendBackendOptimizeACLAfterKernelSelect(const std::shared_ptr<session::Ke
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_LOG(DEBUG) << "Status record: start ascend backend optimize acl pass after kernel select. graph id: "
                 << kernel_graph->graph_id();
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_OptimizeACLAfterKernelSelect", 0, 0,
+                            0);
   PROF_START(ascend_backend_optimize_acl_after_kernel_select);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -663,6 +680,8 @@ void AscendBackendOptimizeACLAfterKernelSelect(const std::shared_ptr<session::Ke
   }
 #endif
   PROF_END(ascend_backend_optimize_acl_after_kernel_select);
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_OptimizeACLAfterKernelSelect", 0, 0,
+                            1);
   MS_LOG(DEBUG) << "Status record: end ascend backend optimize acl pass. graph id: " << kernel_graph->graph_id();
 }
 
@@ -670,6 +689,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_LOG(INFO) << "Status record: start ascend backend(data layer & mix precision ...) pass. graph id: "
                << kernel_graph->graph_id();
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_Optimization", 0, 0, 0);
   PROF_START(ascend_backend_optimization);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -739,11 +759,13 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   }
 #endif
   PROF_END(ascend_backend_optimization);
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_Optimization", 0, 0, 1);
   MS_LOG(INFO) << "Status record: end ascend backend(data layer & mix precision ...) pass. graph id: "
                << kernel_graph->graph_id();
 }
 
 void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_UBFusionOptimization", 0, 0, 0);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (!context_ptr->get_param<bool>(MS_CTX_IR_FUSION_FLAG)) {
@@ -799,6 +821,7 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
     DumpIR(file_name, kernel_graph);
   }
 #endif
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_UBFusionOptimization", 0, 0, 1);
 }
 
 PassManagerPtr GetAscendUnifyMindIRPassManager() {
@@ -876,6 +899,7 @@ PassManagerPtr GetAscendUnifyMindIRPassManager() {
 }
 
 void AscendUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_UnifyMindIR", 0, 0, 0);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -896,9 +920,11 @@ void AscendUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph
     DumpIR(file_name, kernel_graph);
   }
 #endif
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_UnifyMindIR", 0, 0, 1);
 }
 
 void AscendOpAdaptation(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_OpAdaptation", 0, 0, 0);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -923,9 +949,11 @@ void AscendOpAdaptation(const std::shared_ptr<session::KernelGraph> &kernel_grap
     DumpIR(file_name, kernel_graph, true, kWholeStack);
   }
 #endif
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_OpAdaptation", 0, 0, 1);
 }
 
 void AscendUnfoldInputsForSpecialNodes(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_UnfoldInputsForSpecialNodes", 0, 0, 0);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -952,6 +980,7 @@ void AscendUnfoldInputsForSpecialNodes(const std::shared_ptr<session::KernelGrap
     DumpIR(file_name, kernel_graph, true, kWholeStack);
   }
 #endif
+  profiler::CollectHostInfo("Ascend", "Graph Optimization", "BackendOptimization_UnfoldInputsForSpecialNodes", 0, 0, 1);
 }
 }  // namespace opt
 }  // namespace mindspore

@@ -44,6 +44,7 @@
 #include "utils/trace_base.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/json_operation_utils.h"
+#include "include/backend/debug/profiler/profiling.h"
 
 namespace mindspore {
 namespace kernel {
@@ -828,6 +829,7 @@ void TbeKernelCompileManager::TbePreBuild(const KernelGraphPtr &kernel_graph) {
 
 std::pair<std::vector<CNodePtr>, std::vector<CNodePtr>> TbeKernelCompileManager::TbeSingleOpCompile(
   const std::vector<CNodePtr> &node_list) {
+  profiler::CollectHostInfo("Ascend", "Operator Compilation", "CreateAscendKernel_TbeSingleOpCompile", 0, 0, 0);
   MS_LOG(INFO) << "Single op parallel build start.";
   auto job_type = is_tune_flag_ ? kTune : kCompile;
   DistributeCompileTask(node_list, job_type);
@@ -836,10 +838,12 @@ std::pair<std::vector<CNodePtr>, std::vector<CNodePtr>> TbeKernelCompileManager:
   ClearOldTask();
   MS_LOG(INFO) << "TBE Single op parallel build result: all:" << node_list.size() << " success:" << ret.first.size()
                << " failed:" << ret.second.size() << ".";
+  profiler::CollectHostInfo("Ascend", "Operator Compilation", "CreateAscendKernel_TbeSingleOpCompile", 0, 0, 1);
   return ret;
 }
 
 JsonNameMap TbeKernelCompileManager::TbeFusionOpCompile(const std::vector<FusionScopeInfo> &fusion_scopes) {
+  profiler::CollectHostInfo("Ascend", "Operator Compilation", "TbeFusionOpCompile", 0, 0, 0);
   MS_LOG(INFO) << "Fusion op build start";
   auto json_creator = std::make_shared<FusionBuildTbeJsonCreator>();
   MS_EXCEPTION_IF_NULL(json_creator);
@@ -884,6 +888,7 @@ JsonNameMap TbeKernelCompileManager::TbeFusionOpCompile(const std::vector<Fusion
     SaveTaskInfo(false, build_json, json_name, full_name, task_id, fusion_scope_iter.scope_id);
   }
   Query(job_type);
+  profiler::CollectHostInfo("Ascend", "Operator Compilation", "TbeFusionOpCompile", 0, 0, 1);
   // only fusion op compile succeed can be return
   return GetAllSuccessFusion();
 }

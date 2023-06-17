@@ -41,6 +41,7 @@
 #include "kernel/common_utils.h"
 #include "kernel/kernel_build_info.h"
 #include "plugin/device/cpu/hal/device/kernel_select_cpu.h"
+#include "include/backend/debug/profiler/profiling.h"
 
 namespace mindspore {
 namespace device {
@@ -1383,6 +1384,7 @@ void SetAscendKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
 // check whether the node has completed the operator selection. If not, the operator
 // selection needs to be performed to set kernel info.
 void SelectKernelInfoAfterKernelSelect(const std::vector<CNodePtr> &nodes) {
+  profiler::CollectHostInfo("Ascend", "Operator Compilation", "SelectKernelInfo", 0, 0, 0);
   // Check whether the node has completed kernel selection.
   for (const auto &node : nodes) {
     auto kernel_info = AnfAlgo::GetSelectKernelBuildInfo(node);
@@ -1398,6 +1400,7 @@ void SelectKernelInfoAfterKernelSelect(const std::vector<CNodePtr> &nodes) {
       HandleKernelSelectFailure(graph, node, failure_info);
     }
   }
+  profiler::CollectHostInfo("Ascend", "Operator Compilation", "SelectKernelInfo", 0, 0, 1);
 }
 
 void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node,
