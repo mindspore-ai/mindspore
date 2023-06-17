@@ -214,11 +214,13 @@ AscendTdtQueue::AscendTdtQueue(const std::string &channel_name) : DataQueue(chan
       }
       data_queue_capacity = env_capacity;
     }
-    MS_LOG(INFO) << "Select MBUF channel, the capacity of data queue is: " << data_queue_capacity;
+    // Create device channel
     acl_handle_ = acltdtCreateChannelWithCapacity(device_id_, channel_name_.c_str(), data_queue_capacity);
-    queue_type_ = "Ascend_MBUF";
-    if (acl_handle_ == nullptr) {
-      MS_LOG(INFO) << "Select the TDT channel.";
+    if (acl_handle_ != nullptr) {
+      MS_LOG(INFO) << "Select MBUF channel, the capacity of data queue is: " << data_queue_capacity;
+      queue_type_ = "Ascend_MBUF";
+    } else {
+      MS_LOG(INFO) << "Select TDT channel.";
       acl_handle_ = acltdtCreateChannel(device_id_, channel_name_.c_str());
       queue_type_ = "Ascend_TDT";
       if (acl_handle_ == nullptr) {
