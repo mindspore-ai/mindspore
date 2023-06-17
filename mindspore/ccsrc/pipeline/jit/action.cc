@@ -800,6 +800,17 @@ bool OptimizeAction(const ResourcePtr &resource, const std::vector<PassItem> &pa
   return true;
 }
 
+bool PackExpandAction(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  if (resource->manager() == nullptr) {
+    MS_LOG(EXCEPTION) << "PackExpandAction error, manager is null.";
+  }
+  if (resource->func_graph() == nullptr) {
+    MS_LOG(EXCEPTION) << "PackExpandAction error, graph is null.";
+  }
+  return PackExpandPass(resource);
+}
+
 bool OptInlineAction(const ResourcePtr &resource) {
   if (parallel::ParallelContext::GetInstance()->parallel_mode() == "semi_auto_parallel" ||
       parallel::ParallelContext::GetInstance()->parallel_mode() == "auto_parallel") {
@@ -1528,6 +1539,10 @@ static std::vector<ActionItem> CommonPipeline() {
   (void)actions.emplace_back(std::make_pair("meta_unpack_prepare", MetaUnpackPrepareAction));
   // Evaluate type and shape, and specialize.
   (void)actions.emplace_back(std::make_pair("abstract_specialize", AbstractSpecializeAction));
+  // PackFunc Expand.
+  if (common::GetEnv("MS_DEV_DISABLE_TRACE") != "on") {
+    (void)actions.emplace_back(std::make_pair("pack_expand", PackExpandAction));
+  }
   // Auto-monad for side-effects handling.
   (void)actions.emplace_back(std::make_pair("auto_monad", AutoMonadAction));
   // Do data structure simplifications and inline.

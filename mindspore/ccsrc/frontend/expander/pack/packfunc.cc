@@ -29,11 +29,11 @@ namespace expander {
 using PackGraphMap = std::unordered_map<abstract::AbstractBasePtrList, FuncGraphPtr,
                                         abstract::AbstractBasePtrListHasher, abstract::AbstractBasePtrListEqual>;
 
-static std::unordered_map<int64_t, PackGraphMap> pack_graph_cache;
+static std::unordered_map<std::string, PackGraphMap> pack_graph_cache;
 void ClearAllCache() { pack_graph_cache.clear(); }
 
 FuncGraphPtr ExpandPackFunc(const PrimitivePtr &prim, const abstract::AbstractBasePtrList &abs_list) {
-  auto key = GetValue<std::int64_t>(prim->GetAttr("unique_key"));
+  auto key = GetValue<std::string>(prim->GetAttr("unique_key"));
   auto &graph_map = pack_graph_cache[key];
   auto it = graph_map.find(abs_list);
   if (it != graph_map.end()) {
@@ -53,7 +53,7 @@ FuncGraphPtr ExpandPackFunc(const PrimitivePtr &prim, const abstract::AbstractBa
   }
   static bool dump_result = (common::GetEnv("MS_DEV_DUMP_PACK") == "on");
   if (dump_result) {
-    DumpIR("pack_func_" + std::to_string(key) + ".ir", graph, true);
+    DumpIR("pack_func_" + key + ".ir", graph, true);
   }
   return graph;
 }

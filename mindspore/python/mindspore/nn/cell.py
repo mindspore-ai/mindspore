@@ -2288,7 +2288,7 @@ class Cell(Cell_):
     def _run_packfunc(self, *args, **kwargs):
         """ Run Packed Cell in Pack."""
         args = self.auto_cast_inputs(args)
-        if hasattr(self, "bprop"):
+        if hasattr(self, "bprop") or hasattr(self, "_pipeline_stage"):
             expander = PackExpander.get_instance()
             args = expander.begin_graph(self, *args)
             args = [_convert_tensor(a) for a in args]

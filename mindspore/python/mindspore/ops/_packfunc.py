@@ -14,6 +14,7 @@
 # ============================================================================
 """Context for PackFunc"""
 import functools
+import types
 from mindspore.common.tensor import Tensor
 from mindspore.ops.primitive import _RunOpHook, Primitive
 from mindspore._c_expression import PackExpander, PackNode
@@ -61,21 +62,22 @@ class PackFunc(Primitive):
 
     expander = PackExpander.get_instance()
 
-    def __init__(self, fun, unique_key, **kwarg):
+    def __init__(self, fun, unique_key):
         super(PackFunc, self).__init__(self.__class__.__name__)
         self.func = fun
         self.add_prim_attr("unique_key", unique_key)
-        self.kwarg = kwarg
+        self.kwargs = {}
 
-    def __call__(self, *args):
+    def __call__(self, *args, **kwargs):
         if _RunOpHook.current and _RunOpHook.current.hook is PackFunc._trace_run_op:
-            return self.func(*args, **self.kwarg)
+            return self.func(*args, **kwargs)
+        self.kwargs = kwargs
         return super().__call__(*args)
 
     def __expand__(self, args):
         with _RunOpHook(PackFunc._trace_run_op):
             fun_args = [_convert_tensor(a) for a in args]
-            ret = self.func(*fun_args, **self.kwarg)
+            ret = self.func(*fun_args, **self.kwargs)
         return ret
 
     @staticmethod
@@ -84,17 +86,51 @@ class PackFunc(Primitive):
         return _convert_tensor(ret)
 
 
+class _PackSourceBuilder:
+    """Generation Pack Python code by method"""
+
+    def __init__(self, original_fn):
+        self.original_fn = original_fn
+        self.pack_fn_name = f"_{original_fn.__name__}_pack"
+        self._generate_pack_op()
+
+
+    def get_code_source(self):
+        if isinstance(self.original_fn, types.MethodType):
+            new_src = "def {0}_wrap(self, *args, **kwargs):\n    return self.{0}(*args, **kwargs)".format(
+                self.pack_fn_name)
+        else:
+            new_src = "def {0}_wrap(*args, **kwargs):\n    return {0}(*args, **kwargs)".format(
+                self.pack_fn_name)
+        return new_src
+
+
+    def _generate_pack_op(self):
+        fn = self.original_fn.pack_fn
+        if isinstance(self.original_fn, types.MethodType):
+            obj = self.original_fn.__self__
+            key = "%d_ID%d" % (id(obj), id(fn))
+            setattr(obj, self.pack_fn_name, PackFunc(
+                lambda *args_, **kwarg_: fn(obj, *args_, **kwarg_), key))
+        else:
+            key = str(id(fn))
+            fn.__globals__[self.pack_fn_name] = PackFunc(fn, key)
+
+
+
+
 def pack(fn):
     """Create an pack func from a python function"""
 
     @functools.wraps(fn)
-    def _pack_wrap(*args, **kwarg):
+    def _pack_wrap(*args, **kwargs):
         if args and not isinstance(args[0], Tensor) and hasattr(args[0], fn.__name__):
             obj = args[0]
+            key = "%d_ID%d" % (id(obj), id(fn))
             res = PackFunc(
-                lambda *args_, **kwarg_: fn(obj, *args_, **kwarg_), id(fn), **kwarg)(*args[1:])
+                lambda *args_, **kwarg_: fn(obj, *args_, **kwarg_), key)(*args[1:], **kwargs)
         else:
-            res = PackFunc(fn, id(fn), **kwarg)(*args)
+            res = PackFunc(fn, str(id(fn)))(*args, **kwargs)
         return res
     _pack_wrap.pack_fn = fn
     return _pack_wrap

@@ -20,6 +20,7 @@
 #include "ir/tensor.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "pipeline/jit/parse/data_converter.h"
+#include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/static_analysis/prim.h"
 #include "frontend/operator/composite/do_signature.h"
 #include "frontend/operator/ops_front_infer_function.h"
@@ -143,6 +144,7 @@ py::object PackExpander::BeginFuncGraph(const py::object &obj, const py::args &i
   auto up_graph = graphs_.top();
   auto graph = std::make_shared<FuncGraph>();
   graphs_.push(graph);
+  parse::data_converter::SetFuncGraphByCellObj(graph, obj);
   AnfNodePtrList node_inputs = {NewValueNode(graph)};
   auto args = py::cast<py::tuple>(inputs);
   py::tuple outputs(inputs.size());
@@ -295,6 +297,9 @@ AnfNodePtr PackExpander::ConvertInput(const py::object &arg) const {
   if (IsPackTensor(arg)) {
     py::object node = py::getattr(arg, stub::PY_ATTR_STUB);
     return node.cast<std::shared_ptr<PackNode>>()->Get();
+  } else if (py::hasattr(arg, "__parameter__") && py::isinstance<tensor::MetaTensor>(arg) &&
+             GetExecutionMode() == kGraphMode) {
+    return parse::ResolveParameterObj(graphs_.top(), arg);
   } else {
     auto val = parse::data_converter::PyDataToValue(arg);
     MS_EXCEPTION_IF_NULL(val);

@@ -48,6 +48,7 @@ bool ValidatePass(const ResourcePtr &resource);
 bool ConvertPrepareAdapt(const ResourcePtr &resource);
 bool AddCacheEmbeddingPass(const ResourcePtr &resource);
 bool MetaUnpackPreparePass(const ResourcePtr &resource);
+bool PackExpandPass(const ResourcePtr &resource);
 void ReclaimOptimizer();
 bool PynativeOptPass(const ResourcePtr &resource);
 bool EliminateSpecialOpOptPass(const ResourcePtr &resource);

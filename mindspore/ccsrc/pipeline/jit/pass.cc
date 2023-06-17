@@ -67,6 +67,7 @@
 #include "frontend/optimizer/irpass/parameter_eliminate.h"
 #include "frontend/optimizer/irpass/updatestate_eliminate.h"
 #include "frontend/optimizer/irpass/expand_dump_flag.h"
+#include "frontend/optimizer/irpass/pack_expand.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "include/backend/distributed/ps/util.h"
 #include "include/backend/distributed/ps/ps_context.h"
@@ -837,6 +838,17 @@ bool MetaUnpackPreparePass(const ResourcePtr &resource) {
   auto prepare_map = GetMetaUnpackPreparePhases();
   auto infer_opt_prepare = opt::Optimizer::MakeOptimizer("meta_unpack_prepare", resource, prepare_map);
   (void)infer_opt_prepare->step(func_graph, false);
+  return true;
+}
+
+bool PackExpandPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  FuncGraphPtr func_graph = resource->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  opt::OptPassConfig pack_expand = opt::OptPassConfig(mindspore::opt::irpass::PackExpand());
+  OptPassGroupMap map({{"pack_expand", pack_expand}});
+  auto pack_expand_opt = opt::Optimizer::MakeOptimizer("pack_expand", resource, map);
+  (void)pack_expand_opt->step(func_graph, false);
   return true;
 }
 

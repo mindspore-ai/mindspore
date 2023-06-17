@@ -27,7 +27,8 @@ from mindspore.ops import operations as P
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
-def test_pack_basic_cell():
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_pack_basic_cell(mode):
     """
     Feature: pack of cell
     Description: Verify the result of pack
@@ -47,24 +48,13 @@ def test_pack_basic_cell():
             _, b = self.arg_max(z)
             return z * z, b
 
-    @pack
-    def func(x, k):
-        z = x[0] * x[0]
-        z[2] = z[1]
-        z = P.Concat()((z, x[0] + k))
-        return z
-
-    ms.set_context(mode=ms.PYNATIVE_MODE)
+    ms.set_context(mode=mode)
     net = Net()
     x = Tensor([1, 2, 3, 4])
     y = Tensor([4, 5, 6, 7], ms.float64)
     output, max_ = net(x, y)
     expect = np.array([36., 64., 100., 144.])
     expect_max = np.array([12])
-
-    func_output = func((x,), 10)
-    func_expect = np.array([1, 4, 4, 16, 11, 12, 13, 14])
-    assert np.allclose(func_output.asnumpy(), func_expect)
     assert np.allclose(output.asnumpy(), expect)
     assert np.allclose(max_.asnumpy(), expect_max)
     assert output.dtype == ms.float64
@@ -88,7 +78,18 @@ def test_pack_python_infer_cell():
         def construct(self, x, y):
             z = self.choleskytrsm(x) + y
             return z * z
+    @pack
+    def func(x, k):
+        z = x[0] * x[0]
+        z[2] = z[1]
+        z = P.Concat()((z, x[0] + k))
+        return z
     ms.set_context(mode=ms.PYNATIVE_MODE)
+    x = Tensor([1, 2, 3, 4])
+    func_output = func((x,), 10)
+    func_expect = np.array([1, 4, 4, 16, 11, 12, 13, 14])
+    assert np.allclose(func_output.asnumpy(), func_expect)
+
     net = Net()
     x = Tensor(np.array([[0.25, 0], [0, 0.25]]), ms.float32)
     y = Tensor(np.array([[1, 2], [2, 1]]), ms.float32)

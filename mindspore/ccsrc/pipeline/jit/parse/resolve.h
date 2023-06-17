@@ -166,6 +166,7 @@ AnfNodePtr ResolveMsClassWithAttr(const py::object &cls_obj, const AnfNodePtr &a
 AnfNodePtr ResolveInterpretedObjectOfSetAttr(const AnfNodePtr &target_node, const AnfNodePtr &attr_node,
                                              const AnfNodePtr &value_node);
 
+AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object &obj);
 // Check if node is cnode with getitem.
 bool IsGetItemCNode(const AnfNodePtr &node);
 
