@@ -59,10 +59,10 @@ FrontendOpRunInfoPtr GetOpRunInfo(const py::object &out, const py::args &args, c
   op_run_info->base_op_run_info.op_name = graph_phase;
   PyNativeAlgo::PyParser::ParseOpInputByPythonObj(op_run_info, args);
   // Set input abs
-  op_run_info->input_abs.resize(op_run_info->input_size);
+  op_run_info->op_grad_info->input_abs.resize(op_run_info->input_size);
   const auto &original_params = ms_func_graph->parameters();
   for (size_t i = 0; i < op_run_info->input_size; ++i) {
-    op_run_info->input_abs[i] = original_params[i]->abstract();
+    op_run_info->op_grad_info->input_abs[i] = original_params[i]->abstract();
   }
   if (modify_output) {
     if (!py::isinstance<py::tuple>(out)) {
@@ -76,9 +76,9 @@ FrontendOpRunInfoPtr GetOpRunInfo(const py::object &out, const py::args &args, c
     MS_EXCEPTION_IF_NULL(added_out_v);
     // Forward output of op in ms_function graph
     *added_out_v = PyNativeAlgo::DataConvert::PyObjToValue(tuple_out[1]);
-    op_run_info->out_value = PyNativeAlgo::DataConvert::PyObjToValue(tuple_out[0]);
+    op_run_info->real_out = PyNativeAlgo::DataConvert::PyObjToValue(tuple_out[0]);
   } else {
-    op_run_info->out_value = PyNativeAlgo::DataConvert::PyObjToValue(out);
+    op_run_info->real_out = PyNativeAlgo::DataConvert::PyObjToValue(out);
   }
   return op_run_info;
 }
@@ -270,7 +270,7 @@ void MsFunction::GetInputArgsNode(const FrontendOpRunInfoPtr &op_run_info, const
   MS_EXCEPTION_IF_NULL(input_nodes);
   MS_EXCEPTION_IF_NULL(grad_executor);
   for (size_t i = 0; i < op_run_info->input_size; ++i) {
-    const auto &input_i_value = op_run_info->input_value[i];
+    const auto &input_i_value = op_run_info->op_grad_info->input_value[i];
     const auto &id = PyNativeAlgo::Common::GetIdByValue(input_i_value);
     const auto &input_i_node = grad_executor->GetInput(input_i_value, id);
     MS_EXCEPTION_IF_NULL(input_i_node);
@@ -339,11 +339,15 @@ void MsFunction::MakeAdjointForMsFunction(const FrontendOpRunInfoPtr &op_run_inf
   PyNativeAlgo::Common::SetGraphInputAndWeightsInfo(op_run_info, ms_func_graph);
   RecordForwardGraphForMsFunction(op_run_info, grad_executor, ms_func_graph);
   // Connect grad graph of ms_function to context.
-  (void)PyNativeAlgo::Common::SetValueGradInfo(op_run_info->out_value, top_cell, TensorGradType::kOpOutput);
-  auto grad_param = std::make_shared<autograd::GradParam>(
-    nullptr, op_run_info->input_value, op_run_info->input_abs, op_run_info->out_value,
-    ms_func_graph->output()->abstract(), op_run_info->input_value_grad_type, !top_cell->is_high_order_top_cell(),
-    grad_executor->use_dynamic_shape_process());
+  (void)PyNativeAlgo::Common::SetValueGradInfo(op_run_info->real_out, top_cell, TensorGradType::kOpOutput);
+  auto op_grad_info = std::make_shared<OpGradInfo>();
+  op_grad_info->input_value = op_run_info->op_grad_info->input_value;
+  op_grad_info->input_abs = op_run_info->op_grad_info->input_abs;
+  op_grad_info->out_value = op_run_info->real_out;
+  op_grad_info->out_abs = ms_func_graph->output()->abstract();
+  op_grad_info->input_value_grad_type = op_run_info->op_grad_info->input_value_grad_type;
+  auto grad_param = std::make_shared<autograd::GradParam>(op_grad_info, !top_cell->is_high_order_top_cell(),
+                                                          grad_executor->use_dynamic_shape_process());
 
   grad_param->is_control_flow = compile_info_.is_control_flow_;
   grad_param->is_ms_function_graph = true;
@@ -381,7 +385,7 @@ void MsFunction::RecordForwardGraphForMsFunction(const FrontendOpRunInfoPtr &op_
     CNodePtr ms_function_cnode = nullptr;
     MakeCNodeForMsFunction(op_run_info, grad_executor, ms_func_graph, &ms_function_cnode);
     MS_EXCEPTION_IF_NULL(ms_function_cnode);
-    const auto &out_id = PyNativeAlgo::Common::GetIdByValue(op_run_info->out_value);
+    const auto &out_id = PyNativeAlgo::Common::GetIdByValue(op_run_info->real_out);
     const auto &top_cell = grad_executor->top_cell();
     top_cell->SetNodeMapInGraphInfoMap(out_id, ms_function_cnode);
   }
@@ -402,9 +406,9 @@ void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, co
   }
 
   // Step 2: Update actual output tensors used in grad graph.
-  MS_LOG(DEBUG) << "ms_function actual output value: " << op_run_info->out_value->ToString();
+  MS_LOG(DEBUG) << "ms_function actual output value: " << op_run_info->real_out->ToString();
   grad_executor->top_cell()->GetOpInfo(op_run_info);
-  grad_executor->UpdateTopCellForwardTensorInfoInBpropGraph(op_run_info->op_info, op_run_info->out_value);
+  grad_executor->UpdateTopCellForwardTensorInfoInBpropGraph(op_run_info->op_info, op_run_info->real_out);
 
   // Step 3: Update output tensors of added forward nodes, which are added to return node of ms_function func graph.
   if (added_out_v != nullptr) {
@@ -419,12 +423,11 @@ void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, co
   // Make Adjoint for grad graph
   MakeAdjointForMsFunction(op_run_info, grad_executor, primal_func_graph, grad_graph);
 
-  auto node_info = std::make_shared<DynamicDetectNodeInfo>();
+  auto node_info = std::make_shared<DynamicDetectNodeInfo>(nullptr, op_run_info->op_grad_info->input_abs,
+                                                           op_run_info->base_op_run_info.abstract);
   node_info->is_graph_node = true;
   node_info->graph_phase = op_run_info->base_op_run_info.op_name;
-  node_info->input_abs = op_run_info->input_abs;
-  node_info->out_abs = op_run_info->base_op_run_info.abstract;
-  grad_executor->CheckGraphDynamic(op_run_info->input_value, node_info);
+  grad_executor->CheckGraphDynamic(op_run_info->op_grad_info->input_value, node_info);
 }
 
 void MsFunction::UpdateMsFunctionlForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v) {

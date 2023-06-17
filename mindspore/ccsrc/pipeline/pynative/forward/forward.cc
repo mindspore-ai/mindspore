@@ -111,17 +111,17 @@ void UpdateOutputStubNodeAbs(const FrontendOpRunInfoPtr &op_run_info) {
 void ClonePrim(const FrontendOpRunInfoPtr &op_run_info) {
   // Clone a new prim
   MS_EXCEPTION_IF_NULL(op_run_info);
-  auto prim_py = op_run_info->op_prim->cast<PrimitivePyPtr>();
+  auto prim_py = op_run_info->op_grad_info->op_prim->cast<PrimitivePyPtr>();
   MS_EXCEPTION_IF_NULL(prim_py);
   auto new_adapter = std::make_shared<PrimitivePyAdapter>(*prim_py->adapter());
-  auto new_prim = std::make_shared<PrimitivePy>(*(op_run_info->op_prim->cast<PrimitivePyPtr>()));
-  op_run_info->op_prim = new_prim;
+  auto new_prim = std::make_shared<PrimitivePy>(*(op_run_info->op_grad_info->op_prim->cast<PrimitivePyPtr>()));
+  op_run_info->op_grad_info->op_prim = new_prim;
   MS_EXCEPTION_IF_NULL(new_adapter);
   new_adapter->set_attached_primitive(new_prim);
 }
 
 bool IsDynamicInputs(const FrontendOpRunInfoPtr &op_run_info) {
-  for (const auto &value : op_run_info->input_value) {
+  for (const auto &value : op_run_info->op_grad_info->input_value) {
     MS_EXCEPTION_IF_NULL(value);
     if (value->isa<stub::SequenceNode>()) {
       return true;
@@ -160,7 +160,7 @@ void UpdateOutputStubNodeValue(const FrontendOpRunInfoPtr &op_run_info, const Va
 
 BackendOpRunInfoPtr CreateBackendOpRunInfo(const FrontendOpRunInfoPtr &op_run_info) {
   auto backend_op_run_info =
-    std::make_shared<BackendOpRunInfo>(op_run_info->base_op_run_info, op_run_info->op_prim, true, false);
+    std::make_shared<BackendOpRunInfo>(op_run_info->base_op_run_info, op_run_info->op_grad_info->op_prim, true, false);
   backend_op_run_info->output_tensors = op_run_info->output_tensors;
   // Need to update promise in backend task.
   backend_op_run_info->device_sync_promises = std::move(op_run_info->device_sync_promises);
@@ -179,9 +179,9 @@ void TransformOutputValues(const FrontendOpRunInfoPtr &op_run_info) {
   auto result_value = std::make_shared<ValueTuple>(output_values);
   if (result_value->size() == 1 && op_run_info->base_op_run_info.abstract != nullptr &&
       !op_run_info->base_op_run_info.abstract->isa<abstract::AbstractSequence>()) {
-    op_run_info->out_value = result_value->value().front();
+    op_run_info->real_out = result_value->value().front();
   } else {
-    op_run_info->out_value = result_value;
+    op_run_info->real_out = result_value;
   }
 }
 
@@ -233,7 +233,7 @@ void UpdateStubTensor(const FrontendOpRunInfoPtr &op_run_info) {
     if (op_run_info->base_op_run_info.has_dynamic_output) {
       UpdateOutputStubNodeAbs(op_run_info);
     }
-    op_run_info->stub_output->SetValue(op_run_info->out_value);
+    op_run_info->stub_output->SetValue(op_run_info->real_out);
   }
 }
 }  // namespace
@@ -354,7 +354,7 @@ void ForwardExecutor::RunOpFrontend(const FrontendOpRunInfoPtr &op_run_info) {
   }
 
   if (op_run_info->output_get_by_infer_value) {
-    UpdateOutputStubNodeValue(op_run_info, op_run_info->out_value);
+    UpdateOutputStubNodeValue(op_run_info, op_run_info->real_out);
     MS_LOG(DEBUG) << "Grad flag: " << op_run_info->requires_grad
                   << " output_get_by_infer_value: " << op_run_info->output_get_by_infer_value;
     return;
@@ -406,10 +406,10 @@ FrontendOpRunInfoPtr ForwardExecutor::GenerateOpRunInfo(const py::args &args, bo
   PyNativeAlgo::PyParser::SetPrim(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_PRIM)]);
   PyNativeAlgo::PyParser::ParseOpInputByPythonObj(op_run_info, args[static_cast<size_t>(RunOpArgsEnum::PY_INPUTS)],
                                                   stub);
-  op_run_info->base_op_run_info.device_target = GetCurrentDeviceTarget(op_run_info->op_prim);
+  op_run_info->base_op_run_info.device_target = GetCurrentDeviceTarget(op_run_info->op_grad_info->op_prim);
   bool is_dynamic_shape =
     op_run_info->base_op_run_info.has_dynamic_output || op_run_info->base_op_run_info.use_dynamic_shape_process;
-  PyNativeAlgo::Common::GetConstInputToAttr(op_run_info->op_prim, op_run_info->base_op_run_info.op_name,
+  PyNativeAlgo::Common::GetConstInputToAttr(op_run_info->op_grad_info->op_prim, op_run_info->base_op_run_info.op_name,
                                             op_run_info->base_op_run_info.device_target, is_dynamic_shape,
                                             &op_run_info->input_to_attr);
   bool is_dynamic_inputs = IsDynamicInputs(op_run_info);
@@ -488,10 +488,10 @@ VectorRef ForwardExecutor::RunOpBackendInner(const FrontendOpRunInfoPtr &op_run_
 void ForwardExecutor::RunOpBackend(const FrontendOpRunInfoPtr &op_run_info,
                                    const BackendOpRunInfoPtr &backend_op_run_info) {
   // Run op with selected backend, nop is no need run backend
-  op_run_info->out_value = RunOpWithBackendPolicy(op_run_info, backend_op_run_info);
+  op_run_info->real_out = RunOpWithBackendPolicy(op_run_info, backend_op_run_info);
   // Not use GetNext abs
   if (op_run_info->base_op_run_info.op_name != kGetNextOpName) {
-    op_run_info->out_value_id = PyNativeAlgo::Common::GetIdByValue(op_run_info->out_value);
+    op_run_info->out_value_id = PyNativeAlgo::Common::GetIdByValue(op_run_info->real_out);
     SetNodeAbsMapByValue(op_run_info);
   }
 }
@@ -534,19 +534,19 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
   op_run_info->run_in_vm = true;
   if (op_run_info->requires_grad) {
     for (size_t i = 0; i < op_run_info->input_size; i++) {
-      op_run_info->input_value_grad_type[i] =
-        PyNativeAlgo::Common::SetValueGradInfo(op_run_info->input_value[i], nullptr, TensorGradType::kConstant);
+      op_run_info->op_grad_info->input_value_grad_type[i] = PyNativeAlgo::Common::SetValueGradInfo(
+        op_run_info->op_grad_info->input_value[i], nullptr, TensorGradType::kConstant);
       (void)op_run_info->base_op_run_info.input_tensor.emplace_back(
-        op_run_info->input_value[i]->cast<tensor::TensorPtr>());
+        op_run_info->op_grad_info->input_value[i]->cast<tensor::TensorPtr>());
     }
   }
   if (IsVmOp(op_run_info->base_op_run_info.op_name)) {
     std::vector<ValuePtr> result(op_run_info->input_size);
     for (size_t i = 0; i < op_run_info->input_size; i++) {
-      bool input_is_tensor = PyNativeAlgo::Common::IsTensor(op_run_info->input_value[i]);
+      bool input_is_tensor = PyNativeAlgo::Common::IsTensor(op_run_info->op_grad_info->input_value[i]);
       if (input_is_tensor && op_run_info->base_op_run_info.op_name != prim::kPrimHookBackward->name() &&
           op_run_info->base_op_run_info.op_name != prim::kPrimCellBackwardHook->name()) {
-        const auto &tensor = op_run_info->input_value[i]->cast<tensor::TensorPtr>();
+        const auto &tensor = op_run_info->op_grad_info->input_value[i]->cast<tensor::TensorPtr>();
         // Just get new tensor id
         auto new_tensor = std::make_shared<tensor::Tensor>(tensor->data_type(), tensor->shape(), tensor->data_ptr());
         new_tensor->set_device_address(tensor->device_address());
@@ -554,7 +554,7 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
         new_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
         result[i] = new_tensor;
       } else {
-        result[i] = op_run_info->input_value[i];
+        result[i] = op_run_info->op_grad_info->input_value[i];
       }
     }
     auto result_v = ConstructOutputInVM(op_run_info, result);
@@ -565,15 +565,15 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
     return result_v;
   }
 
-  MS_EXCEPTION_IF_NULL(op_run_info->op_prim);
+  MS_EXCEPTION_IF_NULL(op_run_info->op_grad_info->op_prim);
   py::list vm_op_inputs = py::list(op_run_info->input_size);
   for (size_t i = 0; i < op_run_info->input_size; ++i) {
-    vm_op_inputs[i] = PyNativeAlgo::DataConvert::ValueToPyObj(op_run_info->input_value[i]);
+    vm_op_inputs[i] = PyNativeAlgo::DataConvert::ValueToPyObj(op_run_info->op_grad_info->input_value[i]);
   }
-  if (!utils::isa<PrimitivePy>(op_run_info->op_prim)) {
-    MS_LOG(EXCEPTION) << "Not a PrimitivePy, " << op_run_info->op_prim->ToString();
+  if (!utils::isa<PrimitivePy>(op_run_info->op_grad_info->op_prim)) {
+    MS_LOG(EXCEPTION) << "Not a PrimitivePy, " << op_run_info->op_grad_info->op_prim->ToString();
   }
-  auto result = utils::cast<PrimitivePyPtr>(op_run_info->op_prim)->RunPyComputeFunction(vm_op_inputs);
+  auto result = utils::cast<PrimitivePyPtr>(op_run_info->op_grad_info->op_prim)->RunPyComputeFunction(vm_op_inputs);
   if (py::isinstance<py::none>(result)) {
     MS_LOG(EXCEPTION) << "VM op " << op_run_info->base_op_run_info.op_name << " run failed!";
   }
@@ -674,7 +674,9 @@ void ForwardExecutor::ProcessBeforeEndGraph(const py::object &obj, bool is_cell)
 
 void ForwardExecutor::ProcessAfterEndGraph(const py::object &obj, bool is_cell) const {
   if (IsFirstCell()) {
-    ClearNodeAbsMap();
+    auto forward_task =
+      std::make_shared<FrontendTask>([this](const FrontendOpRunInfoPtr &op_run_info) { ClearNodeAbsMap(); }, nullptr);
+    frontend_queue_->Push(forward_task);
   }
   PrintPyObjInfo(obj, kEnd, is_cell);
 }
@@ -708,10 +710,10 @@ ValuePtr ForwardExecutor::RunOpInMs(const FrontendOpRunInfoPtr &op_run_info,
   static const auto dump_fallback = (common::GetEnv("MS_DEV_FALLBACK_DUMP_NODE") == "1");
   if (dump_fallback) {
     MS_LOG(ERROR) << "NOTICE: The op is running in JIT Fallback:\n"
-                  << "primitive: " << op_run_info->op_prim->ToString();
+                  << "primitive: " << op_run_info->op_grad_info->op_prim->ToString();
   } else {
     MS_LOG(INFO) << "NOTICE: The op is running in JIT Fallback:\n"
-                 << "primitive: " << op_run_info->op_prim->ToString();
+                 << "primitive: " << op_run_info->op_grad_info->op_prim->ToString();
   }
   return RunOpInMsInner(op_run_info, backend_op_run_info);
 }
@@ -727,10 +729,10 @@ void ForwardExecutor::PrepareOpOutputs(const FrontendOpRunInfoPtr &op_run_info) 
   CreateOutputTensor(op_run_info->base_op_run_info.abstract, &op_run_info->output_tensors,
                      &op_run_info->device_sync_promises);
   TransformOutputValues(op_run_info);
-  UpdateOutputStubNodeValue(op_run_info, op_run_info->out_value);
+  UpdateOutputStubNodeValue(op_run_info, op_run_info->real_out);
   // Not use GetNext abs
   if (op_run_info->base_op_run_info.op_name != kGetNextOpName) {
-    op_run_info->out_value_id = PyNativeAlgo::Common::GetIdByValue(op_run_info->out_value);
+    op_run_info->out_value_id = PyNativeAlgo::Common::GetIdByValue(op_run_info->real_out);
     // save abs for next infer
     SetNodeAbsMapByValue(op_run_info);
   }
