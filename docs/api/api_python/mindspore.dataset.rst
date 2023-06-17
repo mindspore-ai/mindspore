@@ -233,6 +233,8 @@ config模块能够设置或获取数据处理的全局配置参数。
     mindspore.dataset.config.set_error_samples_mode
     mindspore.dataset.config.get_error_samples_mode
     mindspore.dataset.config.ErrorSamplesMode
+    mindspore.dataset.config.set_debug_mode
+    mindspore.dataset.config.get_debug_mode
 
 其他
 -----

@@ -26,12 +26,33 @@ class DebugHook(ABC):
     The base class for Dataset Pipeline Python Debugger hook. All user defined hook behaviors
     must inherit this base class.
 
-    To debug the input and output data of map operation in dataset pipeline, users can add
-    breakpoint to or single stepping in this class. They can also see the type and shape of
-    the data from the log being printed.
+    To debug the input and output data of `map` operation in dataset pipeline, users can add
+    breakpoint in `compute` method, or print types and shapes of the data.
 
     Args:
-        prev_op_name (str, optional): name of the operation before current debugging point.
+        prev_op_name (str, optional): name of the operation before current debugging point. Default: ``None``.
+
+    Example:
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.debug as debug
+        >>>
+        >>> class CustomizedHook(debug.DebugHook):
+        ...     def __init__(self):
+        ...         super().__init__()
+        ...
+        ...     def compute(self, *args):
+        ...         import pdb
+        ...         pdb.set_trace()
+        ...         print("Data after decode", *args)
+        ...         return args
+        >>>
+        >>> # Enable debug mode
+        >>> ds.config.set_debug_mode(True, debug_hook_list=[CustomizedHook()])
+        >>>
+        >>> # Define dataset pipeline
+        >>> dataset = ds.ImageFolderDataset(dataset_dir="/path/to/image_folder_dataset_directory")
+        >>> # Insert debug hook after `Decode` operation.
+        >>> dataset = dataset.map([vision.Decode(), CustomizedHook(), vision.CenterCrop(100)])
     """
     def __init__(self, prev_op_name=None):
         self.prev_op_name = prev_op_name
@@ -55,6 +76,10 @@ class DebugHook(ABC):
     def compute(self, *args):
         """
         Defines the debug behaviour to be performed. This method must be overridden by all subclasses.
+        Refers to the example above to define a customized hook.
+
+        Args:
+            *args (Any): The input/output of the operation, just print it.
         """
         raise RuntimeError("compute() is not overridden in subclass of class DebugHook.")
 
