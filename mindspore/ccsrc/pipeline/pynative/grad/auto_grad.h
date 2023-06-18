@@ -25,6 +25,7 @@
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "frontend/expander/bprop/bprop.h"
+#include "pipeline/pynative/base.h"
 
 namespace mindspore {
 namespace pynative {
@@ -45,32 +46,13 @@ struct GradAttr {
 };
 
 struct GradParam {
-  GradParam(const PrimitivePtr &prim, const ValuePtrList &op_args, const abstract::AbstractBasePtrList &input_abs,
-            const ValuePtr &out, const AbstractBasePtr &out_abs, const std::vector<TensorGradType> &op_args_grad_type,
-            bool grad_by_value, bool use_dynamic_shape_process, const CNodePtr &cnode = nullptr)
-      : prim(prim),
-        op_args(op_args),
-        input_abs(input_abs),
-        out(out),
-        out_abs(out_abs),
-        op_args_grad_type(op_args_grad_type),
-        grad_by_value(grad_by_value),
-        use_dynamic_shape_process(use_dynamic_shape_process),
-        cnode(cnode) {
-    input_size = op_args.size();
+  GradParam(OpGradInfoPtr op_grad_info, bool grad_by_value, bool use_dynamic_shape_process)
+      : op_grad_info(op_grad_info), grad_by_value(grad_by_value), use_dynamic_shape_process(use_dynamic_shape_process) {
+    input_size = op_grad_info->input_value.size();
   }
 
-  // Common domain
-  const PrimitivePtr prim;
-  // Input value for cnode
-  const ValuePtrList op_args{};
-  // Abs of input
-  const abstract::AbstractBasePtrList input_abs{};
-  // Output of op
-  const ValuePtr out;
-  // Abs of out;
-  const AbstractBasePtr out_abs;
-  const std::vector<TensorGradType> op_args_grad_type{};
+  OpGradInfoPtr op_grad_info;
+
   // High order used this
   bool grad_by_value{true};
   // Dynamic shape or dynamic structure
@@ -94,8 +76,8 @@ struct GradParam {
   // Used for pyexecute
   CNodePtr cnode;
 };
-using GradParamPtr = std::shared_ptr<GradParam>;
 
+using GradParamPtr = std::shared_ptr<GradParam>;
 class VariableAdjoint;
 class FunctionNode {
  public:
@@ -226,7 +208,7 @@ class AutoGradCellImpl {
                                     const VariableAdjointPtr &variable_adjoint, bool is_custom_prim);
   // Back propagate for one node;
   void UpdateNextEdges(const VariableAdjointPtr &variable, const std::vector<CNodePtr> &dins,
-                       const ValuePtrList &op_args, const abstract::AbstractBasePtrList &abs,
+                       const ValuePtrList &input_value, const abstract::AbstractBasePtrList &abs,
                        bool use_dynamic_shape_process);
   void UpdateNextEdge(const FunctionNodePtr &fn, const AnfNodePtr &din, const ValuePtr &input_arg,
                       const AbstractBasePtr &abs);
@@ -286,7 +268,7 @@ class AutoGradCellImpl {
   // Top cell inputs
   std::vector<std::pair<AnfNodePtr, VariableAdjointPtr>> cell_inputs_;
   // These weights need to calculate gradient.
-  mindspore::HashSet<std::string> need_grad_weights_{};
+  mindspore::HashSet<std::string> need_grad_weights_;
   AnfNodePtrList weights_used_in_graph_;
   AnfNodePtrList k_nodes_used_in_graph_;
   // Flag for ms_funtcion and high order

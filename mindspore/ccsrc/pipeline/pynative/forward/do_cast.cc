@@ -178,7 +178,7 @@ void CastOperation::GetDstType(const FrontendOpRunInfoPtr &op_run_info,
       if (index >= op_run_info->input_size) {
         MS_LOG(EXCEPTION) << "The index " << index << " exceeds the size of py_args " << op_run_info->input_size;
       }
-      const auto &v = op_run_info->input_value[index];
+      const auto &v = op_run_info->op_grad_info->input_value[index];
       if (v->isa<FloatImm>()) {
         has_scalar_float32 = true;
       }
@@ -280,8 +280,7 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
   constexpr auto input_size = 2;
   const auto &cast_run_info = std::make_shared<FrontendOpRunInfo>();
   cast_run_info->requires_grad = op_run_info->requires_grad;
-  cast_run_info->op_prim = GetPrimByTypeId(type_id);
-  MS_EXCEPTION_IF_NULL(cast_run_info->op_prim);
+  cast_run_info->op_grad_info->op_prim = GetPrimByTypeId(type_id);
   cast_run_info->base_op_run_info.op_name = prim::kPrimCast->name();
   cast_run_info->base_op_run_info.is_mixed_precision_cast = true;
   cast_run_info->base_op_run_info.next_op_name = op_name;
@@ -290,18 +289,19 @@ ValuePtr CastOperation::DoAutoCast(const FrontendOpRunInfoPtr &op_run_info, cons
   cast_run_info->base_op_run_info.use_dynamic_shape_process = op_run_info->base_op_run_info.use_dynamic_shape_process;
   cast_run_info->cell_obj_id = op_run_info->cell_obj_id;
   cast_run_info->base_op_run_info.device_target =
-    PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->GetCurrentDeviceTarget(cast_run_info->op_prim);
+    PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->GetCurrentDeviceTarget(
+      cast_run_info->op_grad_info->op_prim);
   bool is_dynamic_shape =
     cast_run_info->base_op_run_info.has_dynamic_output || cast_run_info->base_op_run_info.use_dynamic_shape_process;
-  PyNativeAlgo::Common::GetConstInputToAttr(cast_run_info->op_prim, cast_run_info->base_op_run_info.op_name,
-                                            cast_run_info->base_op_run_info.device_target, is_dynamic_shape,
-                                            &cast_run_info->input_to_attr);
-  (void)cast_run_info->input_value.emplace_back(v);
-  (void)cast_run_info->input_value.emplace_back(GetDstType(type_id));
+  PyNativeAlgo::Common::GetConstInputToAttr(
+    cast_run_info->op_grad_info->op_prim, cast_run_info->base_op_run_info.op_name,
+    cast_run_info->base_op_run_info.device_target, is_dynamic_shape, &cast_run_info->input_to_attr);
+  (void)cast_run_info->op_grad_info->input_value.emplace_back(v);
+  (void)cast_run_info->op_grad_info->input_value.emplace_back(GetDstType(type_id));
   cast_run_info->input_size = input_size;
   PyNativeAlgo::PyParser::PrepareOpGradInfo(cast_run_info);
   PyNativeAlgo::Common::GetPyNativeExecutor()->forward_executor()->RunOpFrontend(cast_run_info);
-  return cast_run_info->out_value;
+  return cast_run_info->real_out;
 }
 
 ValuePtr CastOperation::DoParamMixPrecisionCast(const FrontendOpRunInfoPtr &op_run_info, bool *is_cast,
@@ -357,9 +357,9 @@ void CastOperation::DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
                                     const mindspore::HashMap<SignatureEnumDType, TypeId> &dst_type,
                                     const std::vector<SignatureEnumDType> &dtypes) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  MS_EXCEPTION_IF_NULL(op_run_info->op_prim);
+  MS_EXCEPTION_IF_NULL(op_run_info->op_grad_info->op_prim);
   const auto &signature = op_run_info->signatures;
-  auto &input_args = op_run_info->input_value;
+  auto &input_args = op_run_info->op_grad_info->input_value;
   size_t input_args_size = input_args.size();
   for (size_t i = 0; i < input_args_size; ++i) {
     // No need to implicit cast if no dtype.
@@ -390,7 +390,7 @@ void CastOperation::DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
       is_same_type = (prim::type_map.find(arg_type_id) == prim::type_map.end() || arg_type_id == it->second);
     }
     if (sig == SignatureEnumRW::kRWWrite && arg_type_id != kTypeUnknown && !is_same_type) {
-      prim::RaiseExceptionForConvertRefDtype(op_run_info->op_prim, TypeIdToMsTypeStr(arg_type_id),
+      prim::RaiseExceptionForConvertRefDtype(op_run_info->op_grad_info->op_prim, TypeIdToMsTypeStr(arg_type_id),
                                              TypeIdToMsTypeStr(it->second), i);
     }
     if (is_same_type) {
@@ -399,8 +399,8 @@ void CastOperation::DoSignatureCast(const FrontendOpRunInfoPtr &op_run_info,
 
     if (IsValueTypeInvalid(v)) {
       std::string type_str = v->type() == nullptr ? "None, value is \"" + v->ToString() + "\"" : v->type()->ToString();
-      MS_EXCEPTION(TypeError) << "For '" << op_run_info->op_prim->name() << "', the " << (i + 1) << "th input "
-                              << signature[i].name << " can not be implicitly converted. "
+      MS_EXCEPTION(TypeError) << "For '" << op_run_info->op_grad_info->op_prim->name() << "', the " << (i + 1)
+                              << "th input " << signature[i].name << " can not be implicitly converted. "
                               << "Its type is " << type_str << ". Only support Tensor or Scalar.";
     }
     MS_LOG(DEBUG) << "Implicit cast for " << op_run_info->base_op_run_info.op_name << " " << i
@@ -416,10 +416,10 @@ void CastOperation::SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run
     MS_LOG(DEBUG) << "No mix precision for " << op_run_info->base_op_run_info.op_name;
     return;
   }
-  MS_EXCEPTION_IF_NULL(op_run_info->op_prim);
+  MS_EXCEPTION_IF_NULL(op_run_info->op_grad_info->op_prim);
   const auto &signature = op_run_info->signatures;
   for (size_t i = 0; i < op_run_info->input_size; i++) {
-    const auto &v = op_run_info->input_value[i];
+    const auto &v = op_run_info->op_grad_info->input_value[i];
     auto sig = SignatureEnumRW::kRWDefault;
     if (!signature.empty()) {
       if (i >= signature.size()) {
@@ -439,22 +439,22 @@ void CastOperation::SetTensorMixPrecisionCast(const FrontendOpRunInfoPtr &op_run
           continue;
         }
       }
-      cast_output = DoParamMixPrecisionCast(op_run_info, &is_cast, v, op_run_info->op_prim->name(), i);
+      cast_output = DoParamMixPrecisionCast(op_run_info, &is_cast, v, op_run_info->op_grad_info->op_prim->name(), i);
     } else if (v->isa<ValueSequence>()) {
       // mix precision for tuple inputs
       cast_output = DoParamMixPrecisionCastTuple(op_run_info, &is_cast, v->cast<ValueSequencePtr>(),
-                                                 op_run_info->op_prim->name(), i);
+                                                 op_run_info->op_grad_info->op_prim->name(), i);
     }
     if (is_cast) {
       MS_EXCEPTION_IF_NULL(cast_output);
-      op_run_info->input_value[i] = cast_output;
+      op_run_info->op_grad_info->input_value[i] = cast_output;
     }
   }
 }
 
 void CastOperation::SetImplicitCast(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  const auto &prim = op_run_info->op_prim;
+  const auto &prim = op_run_info->op_grad_info->op_prim;
   MS_EXCEPTION_IF_NULL(prim);
   const auto &it = implicit_cast_map_.find(prim->name());
   if (it == implicit_cast_map_.end()) {

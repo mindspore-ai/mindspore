@@ -45,14 +45,17 @@ struct NodeInfo {
   size_t op_index;
   ValuePtr value;
 };
-
 using NodeInfoPtr = std::shared_ptr<NodeInfo>;
+
 struct DynamicDetectNodeInfo {
-  PrimitivePtr prim{nullptr};
-  abstract::AbstractBasePtrList input_abs;
-  abstract::AbstractBasePtr out_abs;
-  std::vector<std::pair<std::string, NodeInfo>> inputs;
+  DynamicDetectNodeInfo(const PrimitivePtr &op_prim, const abstract::AbstractBasePtrList &input_abs,
+                        const abstract::AbstractBasePtr &out_abs)
+      : op_prim(op_prim), input_abs(input_abs), out_abs(out_abs) {}
+  PrimitivePtr op_prim{nullptr};
+  abstract::AbstractBasePtrList input_abs{};
+  abstract::AbstractBasePtr out_abs{nullptr};
   bool is_graph_node{false};
+  std::vector<std::pair<std::string, NodeInfo>> inputs;
   std::string graph_phase;
 };
 using DynamicDetectNodeInfoPtr = std::shared_ptr<DynamicDetectNodeInfo>;
@@ -130,7 +133,7 @@ class GradExecutor {
   void ProcessOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) const;
   AnfNodePtr GetInput(const ValuePtr &v, const string &obj_id) const;
   AnfNodePtr GetParamInput(const ValuePtr &v, const std::string &id) const;
-  void UpdateTopCellForwardTensorInfoInBpropGraph(const std::string &op_info, const ValuePtr &v) const;
+  void UpdateTopCellForwardTensorInfoInBpropGraph(const string &op_info, const ValuePtr &v) const;
   void ClearRes();
   void AsyncClearTopCell();
   void AsyncClearAutoGradCell(const TopCellInfoPtr &top_cell);

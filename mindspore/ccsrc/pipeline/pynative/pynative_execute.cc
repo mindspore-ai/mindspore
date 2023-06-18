@@ -73,7 +73,7 @@ T PyNativeExecutorTry(const std::function<T(const Args &...)> &method, const Arg
 
 // Tensor may be used before the execution of the asynchronous task.
 void SetCallbackForInputTensor(const FrontendOpRunInfoPtr &op_run_info) {
-  for (auto &input : op_run_info->input_value) {
+  for (auto &input : op_run_info->op_grad_info->input_value) {
     MS_EXCEPTION_IF_NULL(input);
     if (input->isa<tensor::Tensor>()) {
       auto tensor = input->cast<tensor::TensorPtr>();
@@ -106,7 +106,7 @@ py::object PyNativeExecutor::RunOpStub(const py::args &args) const {
     PyNativeAlgo::Common::StubNodeToValue(op_run_info);
     // RunOp sync
     PyNativeExecutorTry(forward_executor()->RunOpS, op_run_info);
-    return PyNativeAlgo::DataConvert::ValueToPyObj(op_run_info->out_value);
+    return PyNativeAlgo::DataConvert::ValueToPyObj(op_run_info->real_out);
   }
   // 3. create top stub node
   auto node = stub::MakeTopNode(top_type);
@@ -125,9 +125,9 @@ py::object PyNativeExecutor::RealRunOp(const py::args &args) const {
   PyNativeExecutorTry(forward_executor()->RunOpS, op_run_info);
   if (PyGILState_Check() == 0) {
     py::gil_scoped_acquire acquire;
-    return PyNativeAlgo::DataConvert::ValueToPyObj(op_run_info->out_value);
+    return PyNativeAlgo::DataConvert::ValueToPyObj(op_run_info->real_out);
   } else {
-    return PyNativeAlgo::DataConvert::ValueToPyObj(op_run_info->out_value);
+    return PyNativeAlgo::DataConvert::ValueToPyObj(op_run_info->real_out);
   }
 }
 

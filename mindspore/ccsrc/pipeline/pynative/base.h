@@ -64,7 +64,20 @@ struct AsyncStatus {
   size_t custom_bprop_cell_count{0};
 };
 
+struct OpGradInfo {
+  PrimitivePtr op_prim{nullptr};
+  abstract::AbstractBasePtrList input_abs{};
+  abstract::AbstractBasePtr out_abs{nullptr};
+  std::vector<ValuePtr> input_value{};
+  ValuePtr out_value{nullptr};
+  std::vector<TensorGradType> input_value_grad_type{};
+};
+using OpGradInfoPtr = std::shared_ptr<OpGradInfo>;
+
 struct FrontendOpRunInfo {
+  FrontendOpRunInfo() { op_grad_info = std::make_shared<OpGradInfo>(); }
+  OpGradInfoPtr op_grad_info;
+
   BaseOpRunInfo base_op_run_info;
   bool run_in_vm = false;
   bool requires_grad = false;
@@ -73,16 +86,13 @@ struct FrontendOpRunInfo {
   bool is_ms_function_input = false;
   int mix_type{0};
   size_t input_size = 0;
-  PrimitivePtr op_prim{nullptr};
-  ValuePtr out_value{nullptr};
+  // real_out return to python; out_value in OpGradInfo may be fake value;
+  ValuePtr real_out{nullptr};
   std::string op_info;
   std::string out_value_id;
   std::string cell_obj_id;
-  abstract::AbstractBasePtrList input_abs{};
-  std::vector<ValuePtr> input_value{};
   std::vector<bool> input_unused_in_bprop{};
   // Hold tensorGradType
-  std::vector<TensorGradType> input_value_grad_type{};
   std::vector<std::string> input_value_id{};
   stub::StubNodePtr stub_output{nullptr};
   std::vector<Signature> signatures{};

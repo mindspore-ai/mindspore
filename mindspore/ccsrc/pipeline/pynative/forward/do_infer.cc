@@ -63,7 +63,7 @@ ValuePtr GetInferValueFromAbstract(const AbstractBasePtr &abs) {
 }
 
 void CallPyInferFunc(const PrimitivePtr &primitive, const FrontendOpRunInfoPtr &op_run_info) {
-  const AbstractBasePtrList &arg_spec = op_run_info->input_abs;
+  const AbstractBasePtrList &arg_spec = op_run_info->op_grad_info->input_abs;
   auto py_infer_args = PreparePyInputs(arg_spec);
   auto prim_py = dyn_cast<PrimitivePy>(primitive);
   MS_EXCEPTION_IF_NULL(prim_py);
@@ -94,8 +94,8 @@ std::optional<abstract::StandardPrimitiveImplReg> GetPyNativePrimitiveInferImpl(
 void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_LOG(DEBUG) << "Op " << op_run_info->base_op_run_info.op_name
-                << " infer input: " << mindspore::ToString(op_run_info->input_abs);
-  const auto &prim = op_run_info->op_prim;
+                << " infer input: " << mindspore::ToString(op_run_info->op_grad_info->input_abs);
+  const auto &prim = op_run_info->op_grad_info->op_prim;
   MS_EXCEPTION_IF_NULL(prim);
   op_run_info->base_op_run_info.abstract = nullptr;
   auto eval_impl = GetPyNativePrimitiveInferImpl(prim);
@@ -108,7 +108,7 @@ void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) cons
 
   // the WhileList ops should be constant fold in Pynative mode.
   if (!eval_impl->IsInWhiteList() && eval_impl->IsImplInferValue()) {
-    auto value = eval_impl->InferValue(prim, op_run_info->input_abs);
+    auto value = eval_impl->InferValue(prim, op_run_info->op_grad_info->input_abs);
     if (value != nullptr && !value->isa<ValueAny>()) {
       op_run_info->base_op_run_info.abstract = value->ToAbstract();
       prim->EndRecordAddAttr();
@@ -117,7 +117,7 @@ void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) cons
   }
 
   // Call Cpp infer
-  auto infer_res = eval_impl->InferShapeAndType(nullptr, prim, op_run_info->input_abs);
+  auto infer_res = eval_impl->InferShapeAndType(nullptr, prim, op_run_info->op_grad_info->input_abs);
   prim->EndRecordAddAttr();
   if (infer_res == nullptr) {
     py::gil_scoped_acquire acquire;
@@ -138,9 +138,10 @@ void InferOperation::SetInputAbstract(const FrontendOpRunInfoPtr &op_run_info) {
   // Get input abstract by input value and set it to `op_run_info`.
   MS_EXCEPTION_IF_NULL(op_run_info);
   op_run_info->input_value_id.resize(op_run_info->input_size);
-  op_run_info->input_abs.resize(op_run_info->input_size);
+  op_run_info->op_grad_info->input_abs.resize(op_run_info->input_size);
   for (size_t i = 0; i < op_run_info->input_size; ++i) {
-    op_run_info->input_abs[i] = GetInputValueAbs(op_run_info, op_run_info->input_value[i], i);
+    op_run_info->op_grad_info->input_abs[i] =
+      GetInputValueAbs(op_run_info, op_run_info->op_grad_info->input_value[i], i);
   }
 }
 
@@ -225,7 +226,7 @@ void InferOperation::InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_info
     MS_LOG(DEBUG) << "Get output by constant folding, output is " << infer_value->ToString();
     op_run_info->output_get_by_infer_value = true;
     op_run_info->should_be_cache = false;
-  } else if (op_run_info->op_prim->const_prim()) {
+  } else if (op_run_info->op_grad_info->op_prim->const_prim()) {
     MS_LOG(DEBUG) << "Get output by const prim.";
     op_run_info->output_get_by_infer_value = true;
     op_run_info->should_be_cache = false;
@@ -234,12 +235,12 @@ void InferOperation::InferOutputAbstract(const FrontendOpRunInfoPtr &op_run_info
     // Cache output abstract, the const infer value needs to infer every step.
     SaveOutputAbstractToCache(op_run_info);
   }
-  op_run_info->out_value = infer_value;
+  op_run_info->real_out = infer_value;
 }
 
 bool InferOperation::GetOutputAbstractByCache(const FrontendOpRunInfoPtr &op_run_info) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  const auto &prim = op_run_info->op_prim;
+  const auto &prim = op_run_info->op_grad_info->op_prim;
   MS_EXCEPTION_IF_NULL(prim);
 
   AbsCacheKey key{prim->name(), prim->Hash(), prim->attrs()};
@@ -247,7 +248,7 @@ bool InferOperation::GetOutputAbstractByCache(const FrontendOpRunInfoPtr &op_run
   if (prim_iter != prim_abs_list_.end()) {
     MS_LOG(DEBUG) << "Output abstract cache matched prim " << prim->name();
     const auto &input_abs_map = prim_iter->second;
-    auto abs_iter = input_abs_map.find(op_run_info->input_abs);
+    auto abs_iter = input_abs_map.find(op_run_info->op_grad_info->input_abs);
     if (abs_iter != input_abs_map.end()) {
       MS_EXCEPTION_IF_NULL(abs_iter->second.abs);
       MS_LOG(DEBUG) << "From output abstract cache get output abs " << abs_iter->second.abs->ToString();
@@ -263,20 +264,20 @@ bool InferOperation::GetOutputAbstractByCache(const FrontendOpRunInfoPtr &op_run
 
 void InferOperation::SaveOutputAbstractToCache(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  const auto &prim = op_run_info->op_prim;
+  const auto &prim = op_run_info->op_grad_info->op_prim;
   MS_EXCEPTION_IF_NULL(prim);
   AbsCacheKey key{prim->name(), prim->Hash(), prim->attrs()};
   auto &out = prim_abs_list_[key];
-  out[op_run_info->input_abs].abs = op_run_info->base_op_run_info.abstract;
-  out[op_run_info->input_abs].attrs = prim->evaluate_added_attrs();
+  out[op_run_info->op_grad_info->input_abs].abs = op_run_info->base_op_run_info.abstract;
+  out[op_run_info->op_grad_info->input_abs].attrs = prim->evaluate_added_attrs();
 }
 
 void InferOperation::SetNodeAbsCacheByValue(const FrontendOpRunInfoPtr &op_run_info) {
   SetNodeAbsById(op_run_info->out_value_id,
                  PyNativeAlgo::Common::SetAbstractValueToAnyValue(op_run_info->base_op_run_info.abstract));
   // If value is a `value tuple` or `value list`, cache the abstract of each element value.
-  if (op_run_info->out_value->isa<ValueSequence>()) {
-    const auto &seq_value = op_run_info->out_value->cast<ValueSequencePtr>();
+  if (op_run_info->real_out->isa<ValueSequence>()) {
+    const auto &seq_value = op_run_info->real_out->cast<ValueSequencePtr>();
     const auto &seq_abs = op_run_info->base_op_run_info.abstract->cast<abstract::AbstractSequencePtr>();
     MS_EXCEPTION_IF_NULL(seq_abs);
 
@@ -334,9 +335,9 @@ void InferOperation::SetNodeAbsById(const std::string &id, const abstract::Abstr
 py::object InferOperation::CallConstantFolding(const py::args &args) const {
   const auto &op_run_info = std::make_shared<FrontendOpRunInfo>();
   PyNativeAlgo::PyParser::SetPrim(op_run_info, args[0]);
-  op_run_info->base_op_run_info.op_name = op_run_info->op_prim->name();
+  op_run_info->base_op_run_info.op_name = op_run_info->op_grad_info->op_prim->name();
   const auto &v = PyNativeAlgo::DataConvert::PyObjToValue(args[1]);
-  (void)op_run_info->input_abs.emplace_back(v->ToAbstract());
+  (void)op_run_info->op_grad_info->input_abs.emplace_back(v->ToAbstract());
   PynativeInfer(op_run_info);
   auto infer_value = GetInferValueFromAbstract(op_run_info->base_op_run_info.abstract);
   if (infer_value->isa<ValueAny>()) {
