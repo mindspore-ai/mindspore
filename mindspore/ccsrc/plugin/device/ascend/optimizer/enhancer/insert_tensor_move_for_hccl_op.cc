@@ -107,7 +107,9 @@ void AdjustDependToTensorMove(const AnfNodePtr &input, const AnfNodePtr &tensor_
     return;
   }
   auto manager = func_graph->manager();
-  MS_EXCEPTION_IF_NULL(manager);
+  if (!manager) {
+    return;
+  }
   auto input_users = manager->node_users()[input];
   for (const auto &input_user : input_users) {
     if (!IsPrimitiveCNode(input_user.first, prim::kPrimDepend)) {
