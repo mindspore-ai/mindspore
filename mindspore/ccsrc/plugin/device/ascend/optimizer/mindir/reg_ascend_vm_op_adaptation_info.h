@@ -397,11 +397,7 @@ REG_ASCEND_VM_OP_ADAPTATION_INFO(kSparseApplyFtrlOpName).set_backend_op_name(kSp
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kSparseApplyFtrlV2OpName).set_backend_op_name(kSparseApplyFtrlV2DOpName);
 
-REG_ASCEND_VM_OP_ADAPTATION_INFO(kSparseApplyRMSPropOpName)
-  .set_target_op_name(kSparseApplyRMSPropDOpName)
-  .set_input_attr_info(4, "float")
-  .set_input_attr_info(5, "float")
-  .set_input_attr_info(6, "float");
+REG_ASCEND_VM_OP_ADAPTATION_INFO(kSparseApplyRMSPropOpName).set_backend_op_name(kSparseApplyRMSPropDOpName);
 
 REG_ASCEND_VM_OP_ADAPTATION_INFO(kSplitOpName).set_backend_op_name(kSplitDOpName);
 
