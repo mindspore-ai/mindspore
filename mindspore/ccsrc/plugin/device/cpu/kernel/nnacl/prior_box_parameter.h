@@ -19,7 +19,6 @@
 #include "nnacl/op_base.h"
 
 typedef struct PriorBoxParameter {
-  // Primitive parameter
   OpParameter op_parameter_;
   int32_t min_sizes_size;
   int32_t min_sizes[MAX_SHAPE_SIZE];

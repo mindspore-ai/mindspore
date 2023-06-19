@@ -19,12 +19,13 @@
 #include <float.h>
 #include "nnacl/arg_min_max_parameter.h"
 #include "nnacl/nnacl_common.h"
+#include "nnacl/kernel/arg_min_max.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 void ArgMinMaxFp16(const float16_t *input, void *output, float16_t *output_value, const int *in_shape,
-                   const ArgMinMaxParameter *param);
+                   const ArgMinMaxComputeParam *param);
 #ifdef __cplusplus
 }
 #endif

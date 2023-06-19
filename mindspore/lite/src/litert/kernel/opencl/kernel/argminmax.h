@@ -20,6 +20,7 @@
 #include <vector>
 #include "src/litert/kernel/opencl/opencl_kernel.h"
 #include "nnacl/arg_min_max_parameter.h"
+#include "nnacl/kernel/arg_min_max.h"
 
 namespace mindspore::kernel {
 class ArgMinMaxOpenCLKernel : public OpenCLKernel {
@@ -47,6 +48,7 @@ class ArgMinMaxOpenCLKernel : public OpenCLKernel {
   cl_int4 src_size_;
   cl_int4 cus_size_;
   cl_int4 strides_;
+  ArgMinMaxComputeParam compute_;
 };
 }  // namespace mindspore::kernel
 #endif

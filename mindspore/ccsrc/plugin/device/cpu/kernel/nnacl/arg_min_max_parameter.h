@@ -17,40 +17,14 @@
 #ifndef NNACL_ARG_MIN_MAX_PARAMETER_H_
 #define NNACL_ARG_MIN_MAX_PARAMETER_H_
 
-#ifdef ENABLE_ARM64
-#include <arm_neon.h>
-#endif
 #include "nnacl/op_base.h"
-
-typedef int (*COMPARE_FUNCTION)(const void *a, const void *b);
-
-typedef struct ArgElement {
-  uint32_t index_;
-  union ArgData {
-    int8_t i8_data_;
-    int32_t i_data_;
-    float f_data_;
-#ifdef ENABLE_ARM
-#if (!SUPPORT_NNIE) || (defined SUPPORT_34XX)
-    float16_t f16_data_;
-#endif
-#endif
-  } data_;
-} ArgElement;
 
 typedef struct ArgMinMaxParameter {
   OpParameter op_parameter_;
-  bool out_value_;
-  bool keep_dims_;
-  bool get_max_;
   int32_t axis_;
   int32_t topk_;
-  int32_t axis_type_;
-  int32_t dims_size_;
-  int32_t data_type_;  // equals to type_id
-  int32_t in_strides_[COMM_SHAPE_SIZE];
-  int32_t out_strides_[COMM_SHAPE_SIZE];
-  ArgElement *arg_elements_;
+  bool keep_dims_;
+  bool out_value_;
 } ArgMinMaxParameter;
 
 #endif  // NNACL_ARG_MIN_MAX_PARAMETER_H_
