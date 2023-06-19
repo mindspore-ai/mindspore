@@ -625,6 +625,7 @@ void SetWeightFormat(const AnfNodePtr &real_input_node, std::vector<string> outp
   }
   auto selected_kernel_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
   MS_EXCEPTION_IF_NULL(selected_kernel_info);
+  static std::unordered_map<tensor::Tensor *, TypeId> format_type;
   if (AnfAlgo::GetOutputDeviceDataType(real_input_node, 0) == kTypeUnknown || force_fresh) {
     if (IsValueNode<tensor::Tensor>(real_input_node)) {
       auto host_tensor_ptr = GetValueNode<tensor::TensorPtr>(real_input_node);
@@ -632,12 +633,23 @@ void SetWeightFormat(const AnfNodePtr &real_input_node, std::vector<string> outp
       std::vector<string> format = {host_tensor_ptr->device_info().host_format_};
       output_format = format[0] == kOpFormat_DEFAULT ? output_format : format;
       builder->SetOutputsFormat(output_format);
+      auto iter = format_type.find(host_tensor_ptr.get());
+      if (iter != format_type.end()) {
+        std::vector<TypeId> output_type = {iter->second};
+        builder->SetOutputsDeviceType(output_type);
+        AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), real_input_node.get());
+      } else {
+        std::vector<TypeId> output_type = {selected_kernel_info->GetInputDeviceType(input_index)};
+        builder->SetOutputsDeviceType(output_type);
+        AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), real_input_node.get());
+        format_type[host_tensor_ptr.get()] = output_type[0];
+      }
     } else {
       builder->SetOutputsFormat(output_format);
+      std::vector<TypeId> output_type = {common::AnfAlgo::GetOutputInferDataType(real_input_node, 0)};
+      builder->SetOutputsDeviceType(output_type);
+      AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), real_input_node.get());
     }
-    std::vector<TypeId> output_type = {common::AnfAlgo::GetOutputInferDataType(real_input_node, 0)};
-    builder->SetOutputsDeviceType(output_type);
-    AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), real_input_node.get());
   }
 }
 
