@@ -82,7 +82,7 @@ def test_function_csr_add():
     assert np.allclose(c.values.asnumpy(), c_values_excpected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -153,7 +153,7 @@ def test_pynative_csr_add():
     assert np.allclose(c.values.asnumpy(), c_values_excpected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -219,7 +219,7 @@ def test_csr_add_3d():
     assert np.allclose(c[4].asnumpy(), (1, 2, 4, 5, 3, 1, 2, 4, 5, 3))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_csr_add_abnormal():
