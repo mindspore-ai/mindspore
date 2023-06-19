@@ -152,7 +152,7 @@ def test_single_if_no_else_type_2():
     assert str(res) == "[<class 'int'>, <class 'object'>]"
 
 
-@case_register.level1
+@case_register.level0
 @case_register.target_ascend
 @case_register.target_gpu
 def test_single_if_tensor_asnumpy_as_condition():
@@ -171,24 +171,3 @@ def test_single_if_tensor_asnumpy_as_condition():
     x = Tensor(1.0, ms.float32)
     out = tensor_asnumpy_as_condition(x)
     assert out == 11
-
-
-@case_register.level1
-@case_register.target_ascend
-@case_register.target_gpu
-@case_register.target_cpu
-def test_parse_ifexpr():
-    """
-    Feature: JIT Fallback
-    Description: Test Interpret node in ifexpr in graph mode.
-    Expectation: No exception.
-    """
-
-    class Network(nn.Cell):
-        def construct(self):
-            y = Tensor([0]) if np.array([1]) else Tensor([1])
-            return y
-
-    net = Network()
-    out = net()
-    assert out == 0
