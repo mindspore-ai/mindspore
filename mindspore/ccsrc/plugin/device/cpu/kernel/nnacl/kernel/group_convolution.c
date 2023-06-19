@@ -366,15 +366,12 @@ int group_convolution_compute(KernelBase *self) {
   for (int i = 0; i < conv_param->group_; ++i) {
     // first, malloc data for sub_kernel's tensors.
     TensorC *sub_kernel_in_tensor = group_conv->group_convs_[i]->in_[FIRST_INPUT];
-    NNACL_MALLOC_CHECK_NULL_RETURN_ERR(sub_kernel_in_tensor);
-    void *sub_in_data = malloc(GetSize(sub_kernel_in_tensor));
-    NNACL_MALLOC_CHECK_NULL_RETURN_ERR(sub_in_data);
-    sub_kernel_in_tensor->data_ = sub_in_data;
+    sub_kernel_in_tensor->data_ = self->env_->alloc(self->env_->allocator_, GetSize(sub_kernel_in_tensor));
+    NNACL_MALLOC_CHECK_NULL_RETURN_ERR(sub_kernel_in_tensor->data_);
 
     TensorC *sub_kernel_out_tensor = group_conv->group_convs_[i]->out_[OUTPUT_INDEX];
-    void *sub_out_data = malloc(GetSize(sub_kernel_out_tensor));
-    NNACL_MALLOC_CHECK_NULL_RETURN_ERR(sub_out_data);
-    sub_kernel_out_tensor->data_ = sub_out_data;
+    sub_kernel_out_tensor->data_ = self->env_->alloc(self->env_->allocator_, GetSize(sub_kernel_out_tensor));
+    NNACL_MALLOC_CHECK_NULL_RETURN_ERR(sub_kernel_out_tensor->data_);
 
     // second, separate group conv input into several parts. This step must be in runtime stage.
     ret = GroupConvSeparateInput(group_conv, i);
@@ -395,11 +392,9 @@ int group_convolution_compute(KernelBase *self) {
     }
 
     // free data
-    free(sub_in_data);
-    sub_in_data = NULL;
+    free(sub_kernel_in_tensor->data_);
     sub_kernel_in_tensor->data_ = NULL;
-    free(sub_out_data);
-    sub_out_data = NULL;
+    free(sub_kernel_out_tensor->data_);
     sub_kernel_out_tensor->data_ = NULL;
   }
   return NNACL_OK;
@@ -427,11 +422,12 @@ int group_convolution_prepare(KernelBase *self) {
   return GroupConvBasePrepare(group_conv);
 }
 
-KernelBase *CreateGroupConvolution(ConvParameter *conv_param) {
+KernelBase *CreateGroupConvolution(ConvParameter *conv_param, TypeIdC data_type) {
   GroupConvolutionStruct *group_conv = (GroupConvolutionStruct *)malloc(sizeof(GroupConvolutionStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(group_conv);
   memset(group_conv, 0, sizeof(GroupConvolutionStruct));
 
+  group_conv->data_type_ = data_type;
   group_conv->conv_base_.base_.compute = group_convolution_compute;
   group_conv->conv_base_.base_.resize = group_convolution_resize;
   group_conv->conv_base_.base_.prepare = group_convolution_prepare;

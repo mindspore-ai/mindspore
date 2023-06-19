@@ -49,6 +49,6 @@ typedef struct GroupConvolutionStruct {
   int ori_out_channel_;
 } GroupConvolutionStruct;
 
-KernelBase *CreateGroupConvolution(ConvParameter *conv_param);
+KernelBase *CreateGroupConvolution(ConvParameter *conv_param, TypeIdC data_type);
 
 #endif  // NNACL_KERNEL_GROUP_CONVOLUTION_H_
