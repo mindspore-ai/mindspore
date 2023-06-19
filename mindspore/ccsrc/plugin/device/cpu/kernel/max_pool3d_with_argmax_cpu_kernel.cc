@@ -55,7 +55,7 @@ bool MaxPool3DWithArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the strides size must be 1 or 3, but got "
                              << strides_list_;
   }
-  if (pads_list_.size() != DIM_SIZE_1 && pads_list_.size() != DIM_SIZE_1) {
+  if (pads_list_.size() != DIM_SIZE_1 && pads_list_.size() != DIM_SIZE_3) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the strides size must be 1 or 3, but got " << pads_list_;
   }
   if (dilation_list_.size() != DIM_SIZE_1 && dilation_list_.size() != DIM_SIZE_3 &&
