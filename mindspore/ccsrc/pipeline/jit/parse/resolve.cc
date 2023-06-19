@@ -81,6 +81,13 @@ PyObjectWrapper::~PyObjectWrapper() {
   obj_ = nullptr;
 }
 
+InterpretedObject::InterpretedObject(const py::object &obj) : PyObjectWrapper(obj) {
+  std::stringstream buf;
+  auto type_str = python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_PARSE_GET_TYPE, obj);
+  buf << "PythonObject(type: " << std::string(py::str(type_str)) << ", value: " << std::string(py::str(obj)) << ")";
+  this->set_name(buf.str());
+}
+
 abstract::AbstractBasePtr MsClassObject::ToAbstract() {
   py::gil_scoped_acquire acquire;
   bool is_class_type = parse::data_converter::IsClassType(obj());
@@ -720,7 +727,7 @@ AnfNodePtr ResolveInterpretedObjectOfSetAttr(const AnfNodePtr &target_node, cons
   MS_EXCEPTION_IF_NULL(name_space);
   MS_EXCEPTION_IF_NULL(symbol);
   auto symbol_obj = GetSymbolObject(name_space, symbol, target_node);
-  auto interpreted_obj = std::make_shared<InterpretedObject>(symbol_obj, py::str(symbol_obj));
+  auto interpreted_obj = std::make_shared<InterpretedObject>(symbol_obj);
   MS_EXCEPTION_IF_NULL(interpreted_obj);
   MS_LOG(DEBUG) << "Created a interpreted object: " << interpreted_obj->ToString();
   const auto &resolve_node = ConvertInterpretedObjForResolve(target_node, interpreted_obj, target_node->func_graph());

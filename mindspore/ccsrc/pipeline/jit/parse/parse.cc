@@ -1645,7 +1645,7 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
       }
     }
     if (setattr_node != nullptr) {  // If setattr before, should make the getattr call into PyExecute also.
-      const auto &interpreted_obj = std::make_shared<InterpretedObject>(ast()->obj(), py::str(ast()->obj()));
+      const auto &interpreted_obj = std::make_shared<InterpretedObject>(ast()->obj());
       AnfNodePtr value_node = NewValueNode(interpreted_obj);
       return block->func_graph()->NewCNodeInOrder({op_node, value_node, attr_node, setattr_node});
     } else {
@@ -3061,7 +3061,7 @@ void Parser::HandleAssignClassMember(const FunctionBlockPtr &block, const py::ob
     const py::object id_obj = python_adapter::GetPyObjAttr(target_obj, "id");
     target_id_str = id_obj.cast<std::string>();
     if (ast()->target_type() == PARSE_TARGET_OBJECT_INSTANCE && target_id_str == "self") {
-      const auto &interpreted_obj = std::make_shared<InterpretedObject>(ast()->obj(), py::str(ast()->obj()));
+      const auto &interpreted_obj = std::make_shared<InterpretedObject>(ast()->obj());
       target_node = NewValueNode(interpreted_obj);
     } else {
       target_node = ParseExprNode(block, target_obj);

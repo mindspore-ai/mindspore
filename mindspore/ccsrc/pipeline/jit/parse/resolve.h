@@ -122,8 +122,7 @@ using PyObjectWrapperPtr = std::shared_ptr<PyObjectWrapper>;
 // InterpretedObject class wrappers interpreted python object.
 class InterpretedObject final : public PyObjectWrapper {
  public:
-  explicit InterpretedObject(const py::object &obj, const std::string &name = "null")
-      : PyObjectWrapper(obj, "InterpretedObject: \'" + name + "\'") {}
+  explicit InterpretedObject(const py::object &obj);
   ~InterpretedObject() override = default;
   MS_DECLARE_PARENT(InterpretedObject, PyObjectWrapper);
   abstract::AbstractBasePtr ToAbstract() override {
