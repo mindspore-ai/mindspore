@@ -261,6 +261,7 @@ bool StackActor::CheckStackControlRunningCondition(const OpContext<DeviceTensor>
 void StackActor::FetchInput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   if (input_stack_data_num_ != 0) {
+    ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kPreLaunch, GetAID().Name());
     const auto &data_iter = input_stack_data_.find(context->sequential_num_);
     if (data_iter == input_stack_data_.end()) {
       std::string error_info = "Invalid input for actor:" + GetAID().Name();
@@ -279,6 +280,7 @@ void StackActor::FetchInput(OpContext<DeviceTensor> *const context) {
   }
 
   if (input_stack_partials_num_ != 0) {
+    ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kPreLaunch, GetAID().Name());
     const auto &partial_iter = input_stack_partials_.find(context->sequential_num_);
     if (partial_iter == input_stack_partials_.end()) {
       std::string error_info = "Invalid input for actor:" + GetAID().Name();

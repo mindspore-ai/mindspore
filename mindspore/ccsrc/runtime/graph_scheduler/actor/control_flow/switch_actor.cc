@@ -37,6 +37,8 @@ void SwitchActor::FetchInput(OpContext<DeviceTensor> *const context) {
 
   // Call the base class interface to get input data and input partial.
   ControlActor::FetchInput(context);
+
+  ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kPreLaunch, GetAID().Name());
   size_t index = GetIndex(context);
   if (!output_partial_arrows_.empty()) {
     if (index + kSwitchCondPos >= input_partials_.size()) {

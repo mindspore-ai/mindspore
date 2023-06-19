@@ -114,6 +114,7 @@ void OutputActor::ClearOutputCache() {
 }
 
 void OutputActor::RunOpControl(AID *const, OpContext<DeviceTensor> *const context) {
+  ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kOutputProcess, GetAID().Name());
   MS_EXCEPTION_IF_NULL(context);
   ++current_count_;
   MS_LOG(DEBUG) << "Actor(" << GetAID().Name() << ") receive the input op control and current count:" << current_count_;
@@ -170,6 +171,7 @@ void OutputActor::RunOpControl(AID *const, OpContext<DeviceTensor> *const contex
 }
 
 void OutputActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) {
+  ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kOutputProcess, GetAID().Name());
   MS_EXCEPTION_IF_NULL(input_data);
   MS_EXCEPTION_IF_NULL(input_data->data_);
   MS_EXCEPTION_IF_NULL(context);

@@ -49,6 +49,8 @@ void ExitActor::Init() {
 void ExitActor::FetchInput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   ControlActor::FetchInput(context);
+
+  ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kPreLaunch, GetAID().Name());
   CopyDeviceAddress(context);
 
   auto data_iter = output_branch_data_.find(output_branch_id_);
@@ -82,6 +84,7 @@ void ExitActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   // 1.Send output in base class.
   ControlActor::SendOutput(context);
 
+  ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kSendOutput, GetAID().Name());
   // 2.Send output data in output branch.
   const auto &branch_data_iter = output_branch_data_.find(output_branch_id_);
   if (branch_data_iter != output_branch_data_.end()) {
@@ -135,6 +138,7 @@ void ExitActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context)
   MS_EXCEPTION_IF_NULL(context);
   ControlActor::IncreaseDynamicRefCounts(context);
 
+  ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kPreLaunch, GetAID().Name());
   // Increase dynamic ref count by the output data in output branch.
   if (output_branch_data_.count(output_branch_id_) > 0) {
     for (auto &output_data : output_branch_data_[output_branch_id_]) {

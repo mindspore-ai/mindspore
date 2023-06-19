@@ -64,6 +64,7 @@ void LoopCountActor::IncreaseLoopCount(OpContext<DeviceTensor> *const context) {
 
   // Sync device stream.
   if ((strategy_ == GraphExecutionStrategy::kPipeline) && is_need_sync_stream_) {
+    ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kStreamSync, GetAID().Name());
     std::set<const DeviceContext *> sync_stream_device_contexts;
     for (auto &device_context : device_contexts_) {
       MS_EXCEPTION_IF_NULL(device_context);
@@ -90,6 +91,7 @@ void LoopCountActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
 }
 
 void LoopCountActor::SendOutput(OpContext<DeviceTensor> *const context) {
+  ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kSendOutput, GetAID().Name());
   // Send recorder info.
   if (recorder_aid_ != nullptr) {
     ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordOnStepEnd, context);

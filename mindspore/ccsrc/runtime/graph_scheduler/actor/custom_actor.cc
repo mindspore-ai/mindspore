@@ -24,6 +24,7 @@ namespace runtime {
 void CustomActor::Init() {
   auto kernel = kernel_.lock();
   MS_EXCEPTION_IF_NULL(kernel);
+  custom_type_ = AnfUtils::GetCustomActorType(kernel);
   auto base_node = AnfUtils::GetCustomActorBaseNode(kernel);
   MS_EXCEPTION_IF_NULL(base_node);
   if (base_node->isa<CNode>()) {
@@ -42,6 +43,8 @@ void CustomActor::Run(OpContext<DeviceTensor> *const ctx) {
   MS_EXCEPTION_IF_ZERO("device_contexts_ size", device_contexts_.size());
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
   try {
+    ProfilerEvent event = (custom_type_ == kInfer) ? ProfilerEvent::kKernelInfer : ProfilerEvent::kKernelResize;
+    ProfilerRecorder profiler(ProfilerModule::kKernel, event, GetAID().Name());
     // Collect the inputs from input data.
     const auto &data_iter = input_op_datas_.find(ctx->sequential_num_);
     if (data_iter != input_op_datas_.end()) {
@@ -77,7 +80,7 @@ void CustomActor::Run(OpContext<DeviceTensor> *const ctx) {
 
     // Update the output addr size after inferop && updateop, because after the inferop & updateop, the shape of output
     // maybe changed.
-    if (AnfUtils::GetCustomActorType(kernel_.lock()) == kInfer) {
+    if (custom_type_ == kInfer) {
       auto base_node = AnfUtils::GetCustomActorBaseNode(kernel_.lock());
       MS_EXCEPTION_IF_NULL(base_node);
       auto kernel_info = dynamic_cast<KernelInfo *>(base_node->kernel_info());

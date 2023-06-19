@@ -170,14 +170,16 @@ void KernelActor::Run(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
 
+  uint64_t start_time = 0;
+  PROFILER_START(start_time);
   FetchInputDeviceTensor(context);
   FetchOutputDeviceTensor(context);
   if (is_dynamic_shape_) {
     FetchWorkspaceDeviceTensor();
   }
-
   // Set the memory address for the tensors which use the somas.
   SetSomasMemory(context);
+  PROFILER_END(start_time, ProfilerModule::kRuntime, ProfilerEvent::kPreLaunch, GetAID().Name(), false);
 
   // Allocate the memory address for other tensors which don't use the somas.
   if (!memory_alloc_list_.empty()) {
@@ -672,14 +674,19 @@ bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const) {
 
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
   MS_LOG(DEBUG) << "Begin launch kernel of actor: " << GetAID().Name();
+  uint64_t start_time = 0;
+  PROFILER_START(start_time);
   auto ret = device_contexts_[0]->GetKernelExecutor(false)->LaunchKernel(
     kernel_, launch_info_.inputs_, launch_info_.workspaces_, launch_info_.outputs_, kernel_info_->stream_id());
+  PROFILER_END(start_time, ProfilerModule::kKernel, ProfilerEvent::kKernelLaunch, GetAID().Name(), false);
   MS_LOG(DEBUG) << "End launch kernel of actor: " << GetAID().Name();
   return ret;
 }
 
 void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *const context) {
   if (is_dynamic_shape_) {
+    uint64_t start_time = 0;
+    PROFILER_START(start_time);
     try {
       MS_EXCEPTION_IF_NULL(kernel_);
       kernel::UpdateNodeShape(kernel_);
@@ -693,6 +700,7 @@ void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *const context) {
                                kernel_->fullname_with_scope();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
     }
+    PROFILER_END(start_time, ProfilerModule::kKernel, ProfilerEvent::kKernelUpdate, GetAID().Name(), false);
   }
 
   running_dependent_msg_num_ = SizeToInt(input_datas_num_ + input_controls_num_);
@@ -718,6 +726,9 @@ void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *const context) {
 }
 
 void KernelActor::RefreshDeviceTensorCopyStore(OpContext<DeviceTensor> *const context) {
+  uint64_t start_time = 0;
+  PROFILER_START(start_time);
+
   MS_EXCEPTION_IF_NULL(context);
   for (auto &ref_input_index : modifiable_ref_input_indexes_) {
     if (ref_input_index >= input_device_tensors_.size()) {
@@ -760,6 +771,8 @@ void KernelActor::RefreshDeviceTensorCopyStore(OpContext<DeviceTensor> *const co
       }
     }
   }
+
+  PROFILER_END(start_time, ProfilerModule::kRuntime, ProfilerEvent::kPostLaunch, GetAID().Name(), false);
 }
 
 void KernelActor::SendRecorderInfo(OpContext<DeviceTensor> *const context) const {

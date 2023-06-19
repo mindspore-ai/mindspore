@@ -410,6 +410,7 @@ set(BACKEND_SUB_COMP
         runtime/device
         runtime/graph_scheduler
         runtime/hardware
+        runtime/profiler
         runtime/pynative
         runtime/data_queue
         plugin/device/cpu/hal/device

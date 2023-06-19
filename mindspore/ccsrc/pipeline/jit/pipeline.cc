@@ -72,6 +72,7 @@
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/pynative/op_executor.h"
 #include "runtime/device/stream_synchronizer.h"
+#include "runtime/profiler/profiler.h"
 #include "include/backend/distributed/collective/collective_manager.h"
 #include "include/common/utils/dynamic_obfuscation/dynamic_obfuscation.h"
 #include "include/common/utils/dynamic_obfuscation/registry_opaque_predicate.h"
@@ -1399,6 +1400,7 @@ std::pair<py::object, bool> GraphExecutorPy::GetPyExecuteData(const py::object &
 }
 
 py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase) {
+  runtime::ProfilerAnalyzer::GetInstance().StartStep();
   py::object res;
   HandleExceptionRethrow(
     [this, &res, &args, &phase]() {
@@ -1408,6 +1410,7 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase) 
     },
     [this]() { executor_running_ = false; }, [this]() { executor_running_ = false; },
     [this]() { executor_running_ = false; }, nullptr, true);
+  runtime::ProfilerAnalyzer::GetInstance().EndStep();
   return res;
 }
 
@@ -2053,6 +2056,7 @@ void ClearResPart1() {
 #endif
   session::ExecutorManager::Instance().Clear();
   runtime::GraphScheduler::GetInstance().Clear();
+  runtime::ProfilerAnalyzer::GetInstance().Clear();
 
   MS_LOG(INFO) << "Start clear kernel runtime...";
   device::KernelRuntimeManager::Instance().ClearRuntimeResource();

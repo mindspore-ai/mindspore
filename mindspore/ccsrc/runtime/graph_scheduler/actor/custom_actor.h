@@ -56,6 +56,8 @@ class CustomActor : public MemoryAwareActor {
   std::vector<DeviceTensor *> input_device_tensors_;
   // The device tensors for memory free.
   std::vector<DeviceTensor *> memory_free_list_;
+
+  std::string custom_type_;
 };
 
 using CustomActorPtr = std::shared_ptr<CustomActor>;

@@ -37,6 +37,7 @@
 #include "frontend/operator/ops_front_infer_function.h"
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #include "mindspore/ccsrc/plugin/device/cpu/kernel/pyexecute/py_execute_cpu_kernel.h"
+#include "runtime/profiler/profiler.h"
 
 namespace mindspore {
 namespace opt {
@@ -1172,6 +1173,8 @@ void GetPrimitiveChangeInfo(const PrimitivePtr &prim, std::string *me_name, bool
 void CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list, const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(prim);
   MS_EXCEPTION_IF_NULL(cnode);
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelInferInner,
+                                     prim->name(), true);
   AbstractBasePtr out_abs;
   auto old_abs = cnode->abstract();
   MS_EXCEPTION_IF_NULL(old_abs);

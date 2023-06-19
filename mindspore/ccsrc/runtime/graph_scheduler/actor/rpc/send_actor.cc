@@ -120,6 +120,7 @@ bool SendActor::LaunchKernel(OpContext<DeviceTensor> *const context) {
 void SendActor::EraseInput(const OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   AbstractActor::EraseInput(context);
+
   if (input_op_inter_process_.count(context->sequential_num_) != 0) {
     (void)input_op_inter_process_.erase(context->sequential_num_);
   }
