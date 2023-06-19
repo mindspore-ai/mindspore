@@ -21,6 +21,8 @@
 #include <memory>
 #include <thread>
 #include <mutex>
+#include <string>
+#include <utility>
 #include <condition_variable>
 
 #include "include/backend/visible.h"
@@ -31,7 +33,7 @@ namespace pynative {
 // Create a new thread to execute the tasks in the queue sequentially.
 class BACKEND_EXPORT AsyncQueue {
  public:
-  AsyncQueue() = default;
+  explicit AsyncQueue(std::string name) : name_(std::move(name)) {}
   ~AsyncQueue();
 
   // Add task to the end of the queue.
@@ -55,12 +57,15 @@ class BACKEND_EXPORT AsyncQueue {
  private:
   void WorkerLoop();
 
+  void SetThreadName() const;
+
   void ClearTaskWithException();
 
   std::queue<std::shared_ptr<AsyncTask>> tasks_;
   std::shared_ptr<std::thread> worker_{nullptr};
   std::mutex task_mutex_;
   std::condition_variable task_cond_var_;
+  std::string name_;
 };
 using AsyncQueuePtr = std::shared_ptr<AsyncQueue>;
 }  // namespace pynative

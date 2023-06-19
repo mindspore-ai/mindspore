@@ -54,7 +54,7 @@ class GradExecutor {
   explicit GradExecutor(const ForwardExecutorPtr &forward_executor = nullptr)
       : forward_executor_(ForwardExecutorWeakPtr(forward_executor)),
         ms_function_(std::make_shared<MsFunction>()),
-        async_executor_(std::make_shared<AsyncQueue>()) {}
+        async_executor_(std::make_shared<AsyncQueue>("grad_queue")) {}
 
   void Init();
   std::function<void(const py::object &, const py::args &)> InitGraph = [this](auto &&PH1, auto &&PH2) {

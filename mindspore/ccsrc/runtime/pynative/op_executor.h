@@ -88,7 +88,7 @@ class BACKEND_EXPORT OpExecutor {
   void WaitForRun();
   void ClearResources();
 
-  pynative::AsyncQueue async_queue_;
+  pynative::AsyncQueue async_queue_{"runop_backend"};
 
   std::vector<std::shared_ptr<pynative::BackendOpBuildTask>> op_build_tasks_;
 
