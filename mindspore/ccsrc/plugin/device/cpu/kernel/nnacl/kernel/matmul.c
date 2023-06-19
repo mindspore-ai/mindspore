@@ -27,8 +27,8 @@ void Matmul_InitShapeA(MatmulFp32Struct *matmul) {
   }
   matmul->a_batch_ = batch;
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
-  matmul->row_ = param->a_transpose_ ? a_shape[a_shape_size - 1] : a_shape[a_shape_size - C2NUM];
-  matmul->deep_ = param->a_transpose_ ? a_shape[a_shape_size - C2NUM] : a_shape[a_shape_size - 1];
+  matmul->compute_.row_ = param->a_transpose_ ? a_shape[a_shape_size - 1] : a_shape[a_shape_size - C2NUM];
+  matmul->compute_.deep_ = param->a_transpose_ ? a_shape[a_shape_size - C2NUM] : a_shape[a_shape_size - 1];
 }
 
 void Matmul_InitShapeB(MatmulFp32Struct *matmul) {
@@ -41,8 +41,8 @@ void Matmul_InitShapeB(MatmulFp32Struct *matmul) {
   }
   matmul->b_batch_ = batch;
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
-  matmul->col_ = param->b_transpose_ ? b_shape[b_shape_size - C2NUM] : b_shape[b_shape_size - 1];
-  matmul->deep_ = param->b_transpose_ ? b_shape[b_shape_size - 1] : b_shape[b_shape_size - C2NUM];
+  matmul->compute_.col_ = param->b_transpose_ ? b_shape[b_shape_size - C2NUM] : b_shape[b_shape_size - 1];
+  matmul->compute_.deep_ = param->b_transpose_ ? b_shape[b_shape_size - 1] : b_shape[b_shape_size - C2NUM];
 }
 
 int Matmul_InitBroadcastParams(MatmulFp32Struct *matmul) {

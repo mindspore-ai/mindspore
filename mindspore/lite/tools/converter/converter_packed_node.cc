@@ -104,7 +104,7 @@ int ReplaceMatMulFusionToCustom(schema::MetaGraphT *meta_graph, const std::uniqu
     const MatmulFp32Struct *matmul = reinterpret_cast<const MatmulFp32Struct *>(kernel_base);
     if (matmul->matmul_type_ == kMatmulFp32BaseCpu || matmul->matmul_type_ == kMatmulFp32Arm64Cpu) {
       b_batch = matmul->b_batch_;
-      pack_b_size = b_batch * matmul->col_align_ * matmul->deep_ * sizeof(float);
+      pack_b_size = b_batch * matmul->compute_.col_align_ * matmul->compute_.deep_ * sizeof(float);
       pack_b_ptr = matmul->matrix_b_.pack_ptr_;
     }
   }

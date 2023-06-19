@@ -24,14 +24,14 @@ int ConvSW1x1Prepare(ConvolutionSW1x1Struct *sw_1x1) {
 
   if (sw_1x1->conv_.infershape_done_ || matmul->a_const_) {
     TensorC *input_tensor = sw_1x1->conv_.base_.in_[FIRST_INPUT];
-    matmul->row_ = GetBatch(input_tensor) * GetHeight(input_tensor) * GetWidth(input_tensor);
-    matmul->deep_ = GetChannel(input_tensor);
+    matmul->compute_.row_ = GetBatch(input_tensor) * GetHeight(input_tensor) * GetWidth(input_tensor);
+    matmul->compute_.deep_ = GetChannel(input_tensor);
   }
 
   if (sw_1x1->conv_.infershape_done_ || matmul->b_const_) {
     TensorC *weight_tensor = sw_1x1->conv_.base_.in_[SECOND_INPUT];
-    matmul->col_ = GetBatch(weight_tensor);
-    matmul->deep_ = GetChannel(weight_tensor);
+    matmul->compute_.col_ = GetBatch(weight_tensor);
+    matmul->compute_.deep_ = GetChannel(weight_tensor);
   }
 
   matmul->a_batch_ = 1;

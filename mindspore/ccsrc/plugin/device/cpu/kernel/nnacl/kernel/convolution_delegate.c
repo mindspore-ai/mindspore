@@ -333,4 +333,4 @@ KernelBase *CreateConv2DFusion(OpParameter *param, int data_type) {
   return kernel;
 }
 
-REG_KERNEL_CREATOR(PrimType_Conv2DFusion, kNumberTypeFloat32, CreateConv2DFusion);
+REG_KERNEL_CREATOR(PrimType_Conv2DFusion, kNumberTypeFloat32, CreateConv2DFusion)

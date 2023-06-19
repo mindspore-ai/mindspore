@@ -60,12 +60,12 @@ int MatmulFp32Arm64_PackMatrixAImplOpt(MatmulFp32Struct *matmul) {
   MatrixAPack pack;
   pack.src_ptr_ = src_ptr;
   pack.matrix_a_ = &matmul->matrix_a_;
-  pack.deep_ = matmul->deep_;
-  pack.col_ = matmul->col_;
-  pack.row_ = matmul->row_;
+  pack.deep_ = matmul->compute_.deep_;
+  pack.col_ = matmul->compute_.col_;
+  pack.row_ = matmul->compute_.row_;
   pack.a_transpose_ = param->a_transpose_;
   pack.unit_num_ = 0;
-  pack.unit_num_ = matmul->a_batch_ * UP_DIV(matmul->row_, C12NUM) * matmul->deep_;
+  pack.unit_num_ = matmul->a_batch_ * UP_DIV(matmul->compute_.row_, C12NUM) * matmul->compute_.deep_;
   pack.thread_ = MSMIN(matmul->base_.thread_nr_, UP_DIV(pack.unit_num_, kPackAMinUnitNum));
   if (pack.thread_ < 1) {
     pack.thread_ = 1;
@@ -95,8 +95,8 @@ bool MatmulFp32Arm64_CheckThreadCuttingByRow(MatmulFp32Struct *matmul) {
   if (matmul->b_batch_ != C1NUM) {
     return false;
   }
-  if (matmul->batch_ >= matmul->base_.thread_nr_ || matmul->col_ == 1) {
-    matmul->row_min_unit_ = C4NUM;
+  if (matmul->batch_ >= matmul->base_.thread_nr_ || matmul->compute_.col_ == 1) {
+    matmul->compute_.row_min_unit_ = C4NUM;
     return true;
   }
   return false;
@@ -104,9 +104,9 @@ bool MatmulFp32Arm64_CheckThreadCuttingByRow(MatmulFp32Struct *matmul) {
 void MatmulFp32Arm64_InitGlobalVariable(MatmulFp32Struct *matmul) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
   matmul->pack_opt_ = true;
-  matmul->row_tile_ = C12NUM;
-  matmul->col_tile_ = C8NUM;
-  matmul->col_min_unit_ = C8NUM;
+  matmul->compute_.row_tile_ = C12NUM;
+  matmul->compute_.col_tile_ = C8NUM;
+  matmul->compute_.col_min_unit_ = C8NUM;
   matmul->matrix_a_.need_pack_ = true;
   matmul->matrix_b_.need_pack_ = !matmul->weight_is_packed_;
   matmul->matrix_a_pack_fun_ = param->a_transpose_ ? RowMajor2Row12MajorParallel : RowMajor2Col12MajorParallel;
@@ -114,29 +114,30 @@ void MatmulFp32Arm64_InitGlobalVariable(MatmulFp32Struct *matmul) {
 }
 
 int MatmulFp32Arm64_ParallelRunByBatch(MatmulFp32Struct *matmul, int task_id) {
-  MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
   NNACL_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
+  MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
+  MatmulComputeParam *compute = &matmul->compute_;
+  ActType act = param->act_type_;
 
-  int start_batch = task_id * matmul->batch_stride_;
-  int end_batch = MSMIN(matmul->batch_, start_batch + matmul->batch_stride_);
+  int start_batch = task_id * compute->batch_stride_;
+  int end_batch = MSMIN(matmul->batch_, start_batch + compute->batch_stride_);
   int func_flag = 0;
-  if (matmul->row_ == 1) {
-    func_flag += (!matmul->b_const_ && matmul->col_ <= C128NUM) ? C2NUM : C1NUM;
+  if (compute->row_ == 1) {
+    func_flag += (!matmul->b_const_ && compute->col_ <= C128NUM) ? C2NUM : C1NUM;
   }
 
   for (int index = start_batch; index < end_batch; ++index) {
-    const float *a = matmul->matrix_a_.pack_ptr_ + matmul->a_offset_[index] * matmul->row_align_ * matmul->deep_;
-    const float *b = matmul->matrix_b_.pack_ptr_ + matmul->b_offset_[index] * matmul->deep_ * matmul->col_align_;
-    float *c = matmul->output_data_ + index * matmul->row_ * matmul->col_step_;
-
+    const float *a = matmul->matrix_a_.pack_ptr_ + matmul->a_offset_[index] * compute->row_align_ * compute->deep_;
+    const float *b = matmul->matrix_b_.pack_ptr_ + matmul->b_offset_[index] * compute->deep_ * compute->col_align_;
+    float *c = matmul->output_data_ + index * compute->row_ * compute->col_step_;
     float *bias = (matmul->matrix_c_.pack_ptr_ == NULL) ? NULL : matmul->matrix_c_.pack_ptr_;
+
     if (func_flag == 0) {
-      MatMulOpt(a, b, c, bias, param->act_type_, matmul->deep_, matmul->row_, matmul->col_step_, matmul->col_,
-                OutType_Nhwc);
+      MatMulOpt(a, b, c, bias, act, compute->deep_, compute->row_, compute->col_step_, compute->col_, OutType_Nhwc);
     } else if (func_flag == C1NUM) {
-      MatVecMulPackFp32(a, b, c, bias, param->act_type_, matmul->deep_, matmul->col_step_);
+      MatVecMulPackFp32(a, b, c, bias, act, compute->deep_, compute->col_step_);
     } else {
-      MatVecMulNoPackFp32(a, b, c, bias, param->act_type_, matmul->deep_, matmul->col_step_, matmul->col_step_);
+      MatVecMulNoPackFp32(a, b, c, bias, act, compute->deep_, compute->col_step_, compute->col_step_);
     }
   }
   return NNACL_OK;
@@ -147,7 +148,7 @@ int MatmulFp32Arm64_ParallelRunByRow(MatmulFp32Struct *matmul, int task_id) {
   NNACL_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
 
   int start_row = matmul->split_points_[task_id];
-  int end_row = matmul->row_num_;
+  int end_row = matmul->compute_.row_num_;
   if (task_id < (matmul->base_.thread_nr_ - 1)) {
     end_row = matmul->split_points_[task_id + 1];
   }
@@ -156,16 +157,18 @@ int MatmulFp32Arm64_ParallelRunByRow(MatmulFp32Struct *matmul, int task_id) {
     return NNACL_OK;
   }
   GemmIsNotPackByRow(matmul->matrix_a_.pack_ptr_, matmul->matrix_b_.pack_ptr_, matmul->output_data_,
-                     matmul->matrix_c_.pack_ptr_, start_row, end_row, matmul->deep_, param->act_type_);
+                     matmul->matrix_c_.pack_ptr_, start_row, end_row, matmul->compute_.deep_, param->act_type_);
   return NNACL_OK;
 }
 
 int MatmulFp32Arm64_ParallelRunByOC(MatmulFp32Struct *matmul, int task_id) {
-  MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
   NNACL_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
+  MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
+  MatmulComputeParam *compute = &matmul->compute_;
+  ActType act = param->act_type_;
 
   int start_oc = matmul->split_points_[task_id];
-  int end_oc = matmul->col_step_;
+  int end_oc = matmul->compute_.col_step_;
   if (task_id < (matmul->base_.thread_nr_ - 1)) {
     end_oc = matmul->split_points_[task_id + 1];
   }
@@ -174,22 +177,23 @@ int MatmulFp32Arm64_ParallelRunByOC(MatmulFp32Struct *matmul, int task_id) {
     return NNACL_OK;
   }
   int func_flag = 0;
-  if (matmul->row_ == 1) {
-    func_flag += (!matmul->b_const_ && matmul->col_ <= C128NUM) ? C2NUM : C1NUM;
+  if (compute->row_ == 1) {
+    func_flag += (!matmul->b_const_ && compute->col_ <= C128NUM) ? C2NUM : C1NUM;
   }
-  int b_stride = func_flag == C2NUM ? 1 : matmul->deep_;
+  int b_stride = func_flag == C2NUM ? start_oc : start_oc * compute->deep_;
+
   for (int i = 0; i < matmul->batch_; ++i) {
-    float *a = matmul->matrix_a_.pack_ptr_ + matmul->a_offset_[i] * matmul->row_align_ * matmul->deep_;
-    float *b =
-      matmul->matrix_b_.pack_ptr_ + matmul->b_offset_[i] * matmul->deep_ * matmul->col_align_ + start_oc * b_stride;
-    float *c = matmul->output_data_ + i * matmul->row_ * matmul->col_step_ + start_oc;
+    float *a = matmul->matrix_a_.pack_ptr_ + matmul->a_offset_[i] * compute->row_align_ * compute->deep_;
+    float *b = matmul->matrix_b_.pack_ptr_ + matmul->b_offset_[i] * compute->deep_ * compute->col_align_ + b_stride;
+    float *c = matmul->output_data_ + i * compute->row_ * compute->col_step_ + start_oc;
     float *bias = (matmul->matrix_c_.pack_ptr_ == NULL) ? NULL : matmul->matrix_c_.pack_ptr_ + start_oc;
+
     if (func_flag == 0) {
-      MatMulOpt(a, b, c, bias, param->act_type_, matmul->deep_, matmul->row_, compute_oc, matmul->col_, OutType_Nhwc);
+      MatMulOpt(a, b, c, bias, act, compute->deep_, compute->row_, compute_oc, compute->col_, OutType_Nhwc);
     } else if (func_flag == C1NUM) {
-      MatVecMulPackFp32(a, b, c, bias, param->act_type_, matmul->deep_, compute_oc);
+      MatVecMulPackFp32(a, b, c, bias, act, compute->deep_, compute_oc);
     } else {
-      MatVecMulNoPackFp32(a, b, c, bias, param->act_type_, matmul->deep_, compute_oc, matmul->col_step_);
+      MatVecMulNoPackFp32(a, b, c, bias, act, compute->deep_, compute_oc, compute->col_step_);
     }
   }
   return NNACL_OK;
