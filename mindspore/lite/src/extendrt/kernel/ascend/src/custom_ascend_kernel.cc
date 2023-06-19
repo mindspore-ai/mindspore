@@ -35,7 +35,7 @@ CustomAscendKernelMod::CustomAscendKernelMod()
     : load_model_(false), acl_options_(nullptr), model_infer_(nullptr), input_data_idx_(0) {}
 
 CustomAscendKernelMod::~CustomAscendKernelMod() {
-  if (load_model_) {
+  if (load_model_ || is_multi_model_sharing_mem_prepare_) {
     if (!model_infer_->Finalize()) {
       MS_LOG(ERROR) << "Model finalize failed.";
     }
@@ -80,6 +80,17 @@ AclModelOptionsPtr CustomAscendKernelMod::GenAclOptions(const BaseOperatorPtr &b
   if (dump_path_val != nullptr) {
     auto val = GetValue<std::string>(dump_path_val);
     acl_options_ptr->dump_path = val;
+  }
+  auto inner_calc_workspace_size = prim->GetAttr("inner_calc_workspace_size");
+  if (inner_calc_workspace_size != nullptr) {
+    auto val = GetValue<bool>(inner_calc_workspace_size);
+    acl_options_ptr->multi_model_sharing_mem_prepare = val;
+    is_multi_model_sharing_mem_prepare_ = true;
+  }
+  auto inner_sharing_workspace = prim->GetAttr("inner_sharing_workspace");
+  if (inner_sharing_workspace != nullptr) {
+    auto val = GetValue<bool>(inner_sharing_workspace);
+    acl_options_ptr->multi_model_sharing_mem = val;
   }
   // set device id
   uint32_t device_count;
@@ -132,6 +143,10 @@ bool CustomAscendKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   if (!model_infer_->Load(om_data->addr, om_data->size)) {
     MS_LOG(ERROR) << "Load om data failed.";
     return false;
+  }
+  if (is_multi_model_sharing_mem_prepare_) {
+    MS_LOG(INFO) << "is multi model sharing mem prepare.";
+    return true;
   }
   UpdateInputKernelTensorInfo();
   (void)RetrieveOutputShape();

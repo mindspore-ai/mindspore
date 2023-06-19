@@ -73,6 +73,7 @@ constexpr auto kInferShapePass = "InferShapePass";
 constexpr auto kConstFoldPass = "ConstFoldPass";
 constexpr auto kRemoveRedundantOpPass = "RemoveRedundantOpPass";
 constexpr auto kDelRedundantTranspose = "DeleteRedundantTranspose";
+constexpr auto kRemoveUnusedAddNodePass = "RemoveUnusedAddNodePass";
 constexpr auto kFuncType = "func_type";
 constexpr auto kUniqueName = "uniq_name";
 constexpr size_t kDependInputNum = 3;
@@ -201,7 +202,7 @@ STATUS AclPassImpl::CommonPass(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "Convert make_list to MakeTuple failed.";
     return lite::RET_ERROR;
   }
-  if (!lite::RunOptimizerPass(func_graph, {kRemoveRedundantOpPass})) {
+  if (!lite::RunOptimizerPass(func_graph, {kRemoveRedundantOpPass, kRemoveUnusedAddNodePass})) {
     MS_LOG(ERROR) << "Remove redundant op pass failed.";
     return lite::RET_ERROR;
   }

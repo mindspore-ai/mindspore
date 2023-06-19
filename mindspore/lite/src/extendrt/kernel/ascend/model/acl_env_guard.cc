@@ -47,7 +47,13 @@ aclError AclInitAdapter::AclFinalize() {
 
   MS_LOG(INFO) << "Begin acl finalize.";
   init_flag_ = false;
-  return aclFinalize();
+  MS_LOG(INFO) << "AclInitAdapter::aclFinalize begin.";
+  auto rt_ret = aclFinalize();
+  if (rt_ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "aclFinalize failed, rt_ret=" << rt_ret;
+  }
+  MS_LOG(INFO) << "AclInitAdapter::aclFinalize end.";
+  return rt_ret;
 }
 
 aclError AclInitAdapter::ForceFinalize() {

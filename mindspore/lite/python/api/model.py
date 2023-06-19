@@ -24,7 +24,7 @@ from mindspore_lite.context import Context
 from mindspore_lite.lib import _c_lite_wrapper
 from mindspore_lite.tensor import Tensor
 
-__all__ = ['ModelType', 'Model', 'ModelParallelRunner']
+__all__ = ['ModelType', 'Model', 'ModelParallelRunner', 'ModelGroup']
 
 
 class ModelType(Enum):
@@ -553,3 +553,62 @@ class ModelParallelRunner:
         for _output in _outputs:
             predict_outputs.append(Tensor(_output))
         return predict_outputs
+
+
+class ModelGroup:
+    """
+    The `ModelGroup` class is used to define a MindSpore model group,
+    facilitating multiple models to share workspace memory.
+
+    Examples:
+        >>> import mindspore_lite as mslite
+        >>> model_group = mslite.ModelGroup()
+        >>> model_group.add_model([path1, path2])
+        >>> model_group.cal_max_size_of_workspace(model_type, context)
+    """
+
+    def __init__(self):
+        self._model_group = _c_lite_wrapper.ModelGroupBind()
+
+    def add_model(self, model_path_list):
+        """
+        Add models that require shared workspace memory.
+
+        Args:
+           model_path_list (list[str]): model_path_list Define the list of model path.
+
+        Raises:
+           TypeError: `model_path_list` is not a list.
+           TypeError: `model_path_list` is a list, but the elements are not str.
+           RuntimeError: add model failed.
+        """
+        check_isinstance("model_path_list", model_path_list, list)
+        for i, element in enumerate(model_path_list):
+            if not isinstance(element, str):
+                raise TypeError(f"model_path_list element must be str, but got "
+                                f"{type(element)} at index {i}.")
+        ret = self._model_group.add_model(model_path_list)
+        if not ret.IsOk():
+            raise RuntimeError(f"ModelGroup's add model failed.")
+
+    def cal_max_size_of_workspace(self, model_type, context):
+        """
+        Calculate the max workspace of the added models.
+
+        Args:
+           model_type (ModelType): model_type Define The type of model file.
+           context (Context): context A context used to store options.
+
+        Raises:
+           TypeError: `model_type` is not a ModelType.
+           TypeError: `context` is a Context.
+           RuntimeError: cal max size of workspace failed.
+        """
+        check_isinstance("context", context, Context)
+        check_isinstance("model_type", model_type, ModelType)
+        model_type_ = _c_lite_wrapper.ModelType.kMindIR_Lite
+        if model_type is ModelType.MINDIR:
+            model_type_ = _c_lite_wrapper.ModelType.kMindIR
+        ret = self._model_group.cal_max_size_of_workspace(model_type_, context._context._inner_context)
+        if not ret.IsOk():
+            raise RuntimeError(f"ModelGroup's cal max size of workspace failed.")
