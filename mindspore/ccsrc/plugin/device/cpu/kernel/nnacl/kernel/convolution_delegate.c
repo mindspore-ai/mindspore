@@ -324,7 +324,7 @@ KernelBase *CreateConv2DFusion(OpParameter *param, int data_type) {
   } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
     kernel = CreateConvolutionDepthwise(conv_param);
   } else {
-    kernel = CreateGroupConvolution(conv_param);
+    kernel = CreateGroupConvolution(conv_param, data_type);
   }
 
   ConvolutionBaseStruct *conv = (ConvolutionBaseStruct *)kernel;
