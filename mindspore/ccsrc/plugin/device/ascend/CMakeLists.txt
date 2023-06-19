@@ -62,6 +62,7 @@ endforeach()
 
 list(APPEND ASCEND_SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
 list(APPEND ASCEND_SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_transform_acl_ir_obj>)
+list(APPEND ASCEND_SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_transform_acl_declare_obj>)
 add_library(mindspore_ascend SHARED ${ASCEND_SUB_OBJECTS_SRC})
 if(${ASCEND_VERSION} STREQUAL "910")
     set_target_properties(mindspore_ascend PROPERTIES VERSION 1)

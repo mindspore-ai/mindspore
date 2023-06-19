@@ -24,6 +24,9 @@
 #include "runtime/pynative/op_runtime_info.h"
 #include "runtime/device/device_address_utils.h"
 #include "backend/common/optimizer/common_backend_optimization.h"
+#ifdef ENABLE_D
+#include "transform/acl_ir/acl_adapter_info.h"
+#endif
 
 namespace mindspore {
 using runtime::DeviceAddressUtils;
@@ -352,7 +355,8 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
   } else {
     graph_info += "_0_";
   }
-  graph_info += op_prim->name();
+  auto op_name = op_prim->name();
+  graph_info += op_name;
   bool has_hidden_side_effect = op_prim->HasAttr(GRAPH_FLAG_SIDE_EFFECT_HIDDEN);
   for (size_t index = 0; index < op_info.input_tensor.size(); ++index) {
     const auto &input_tensor = op_info.input_tensor[index];
@@ -401,6 +405,34 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
     }
     graph_info.append(element.second->ToString());
   });
+
+#ifdef ENABLE_D
+  // Ascend special info.
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice &&
+      transform::AclAdapterManager::GetInstance().CheckAclAdapter(op_name)) {
+    auto acl_info = transform::AclAdapterManager::GetInstance().GetOpInfo(op_name);
+    if (acl_info.output_selector() != nullptr) {
+      auto func = acl_info.output_selector();
+      MS_EXCEPTION_IF_NULL(func);
+      if (op_info.input_tensor.size() == 0) {
+        return graph_info;
+      }
+      auto first_tenspr = op_info.input_tensor[0];
+      MS_EXCEPTION_IF_NULL(first_tenspr);
+      auto first_dtype = first_tenspr->data_type();
+      std::vector<ShapeVector> input_shapes;
+      std::transform(op_info.input_tensor.begin(), op_info.input_tensor.end(), std::back_inserter(input_shapes),
+                     [](const auto &tensor) {
+                       MS_EXCEPTION_IF_NULL(tensor);
+                       return tensor->shape();
+                     });
+      auto format = func(first_dtype, input_shapes);
+      graph_info += format;
+    }
+  }
+#endif
 
   return graph_info;
 }
