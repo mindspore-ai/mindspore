@@ -134,7 +134,7 @@ echo 'run c api ut test'
 echo 'run bfc memory ut test'
 ./lite-test --gtest_filter="DynamicMemManagerTest.*"
 
-mindspore_lite_whl=$(ls ${CUR_DIR}/../../../output/*.whl)
+mindspore_lite_whl=$(ls ${CUR_DIR}/../../../output/*.whl) || true
 if [[ -f "${mindspore_lite_whl}" || "$MSLITE_ENABLE_SERVER_INFERENCE" == on ]]; then
   # prepare model and inputdata for Python-API ut test
   if [ ! -e mobilenetv2.ms ]; then
