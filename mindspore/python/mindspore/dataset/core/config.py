@@ -853,28 +853,24 @@ def set_debug_mode(debug_mode_flag: bool, debug_hook_list: list = None):
     sequentially with a single thread.
 
     Note:
-        - When debug_mode is enabled, if set_seed has not yet been issued, MindData will internally set the seed to 1
+        When debug_mode is enabled,
+        - If random seed has not been set, will internally set the seed to 1.
           so that debug mode execution of the dataset pipeline can produce deterministic results.
-        - When debug_mode is enabled, many configuration settings are ignored, including the following noteworthy
-          settings:
+        - The following configuration settings are ignored:
+
             - auto_offload (False is used.)
             - enable_autotune (False is used.)
             - error_samples_mode (ErrorSamplesMode.RETURN is used.)
             - num_parallel_workers (Value 1 is used.)
-        - If both debug_mode is enabled and a dataset pipeline has Map operation with offload set, then offloading is
-          ignored.
-        - If both debug_mode is enabled and a dataset pipeline has Map operation or Batch operation with
-          python_multiprocessing=True, then Python multiprocessing is ignored.
-        - If both debug_mode is enabled and a dataset pipeline has GeneratorDataset with
-          python_multiprocessing=True (the default value), then Python multiprocessing is ignored.
-        - If both debug_mode is enabled and a dataset operation has cache set, then the cache is dropped.
-        - If both debug_mode and profiling are enabled, then dataset profiling is ignored.
+        - The `offload` parameter in `map` operation will be ignored.
+        - The `python_multiprocessing` parameter in `GeneratorDataset`, `map`/`batch` operation will be ignored.
+        - The `cache` parameter in Dataset loading API will be ignored.
 
     Args:
         debug_mode_flag (bool): Whether dataset pipeline debug mode is enabled, which forces the pipeline
             to run synchronously and sequentially.
         debug_hook_list (list[DebugHook]): a list of debug hook objects to be inserted before and after each
-            transform operation in map operation. Default: ``None``, which means to use `[PrintMetaDataHook]`,
+            transform operation in map operation. Default: ``None``, which means to use basic print hook,
             which prints shape/size/type of each input/output data of each transformation.
 
     Raises:
@@ -884,6 +880,8 @@ def set_debug_mode(debug_mode_flag: bool, debug_hook_list: list = None):
 
     Examples:
         1. Enable dataset pipeline debug mode and use default debug hook.
+        >>> import mindspore.dataset as ds
+        >>>
         >>> # Print shape and type of input/output data of each transform op in map operator.
         >>> ds.config.set_debug_mode(True)
 
@@ -909,7 +907,7 @@ def set_debug_mode(debug_mode_flag: bool, debug_hook_list: list = None):
         4. Enable dataset pipeline debug mode and use user-defined debug hook and insert by users manually.
         >>> ds.config.set_debug_mode(True)
         >>> dataset = ds.ImageFolderDataset(dataset_dir="/path/to/image_folder_dataset_directory")
-        >>> # the debug hook is added after `Decode` operation.
+        >>> # The debug hook is added after `Decode` operation.
         >>> dataset = dataset.map([vision.Decode(), CustomizedHook(), vision.CenterCrop(100)])
     """
     if not isinstance(debug_mode_flag, bool):

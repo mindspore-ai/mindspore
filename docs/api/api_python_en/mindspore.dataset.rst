@@ -189,6 +189,8 @@ The configuration module provides various functions to set and get the supported
     mindspore.dataset.config.set_error_samples_mode
     mindspore.dataset.config.get_error_samples_mode
     mindspore.dataset.config.ErrorSamplesMode
+    mindspore.dataset.config.set_debug_mode
+    mindspore.dataset.config.get_debug_mode
 
 Others
 -------
