@@ -144,7 +144,10 @@ class DeviceAddress : public mindspore::DeviceSync {
     std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
     ptr_ = ptr;
     if (ptr != nullptr) {
-      status_ = DeviceAddressStatus::kInDevice;
+      const auto &storage_info = GetStorageInfo();
+      if (storage_info.host_ptr_ == nullptr && storage_info.file_name_.empty()) {
+        status_ = DeviceAddressStatus::kInDevice;
+      }
     }
   }
   size_t GetSize() const { return size_; }
@@ -237,6 +240,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   virtual void *GetOffloadPtr() const { return nullptr; }
 
   virtual void SetStorageInfo(const StorageInfo &) {}
+  virtual StorageInfo GetStorageInfo() const { return StorageInfo(); }
 
   virtual void Swap(DeviceAddress *other) {
     MS_EXCEPTION_IF_NULL(other);

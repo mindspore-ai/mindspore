@@ -372,6 +372,80 @@ AbstractActor *MemSwapScheduler::GetActorForLink(size_t id, const std::shared_pt
   return action_iter->second.get();
 }
 
+void MemSwapScheduler::LinkCtrlArrowForGraph(const std::shared_ptr<device::SwapStrategy> &strategy,
+                                             const mindspore::KernelGraphPtr &graph,
+                                             const mindspore::runtime::ControlNodeParserPtr &parser,
+                                             mindspore::runtime::ActorSet *actor_set) const {
+  MS_EXCEPTION_IF_NULL(strategy);
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(parser);
+  MS_EXCEPTION_IF_NULL(actor_set);
+  std::map<size_t, std::pair<size_t, size_t>> inplace_map;
+  const size_t node_num = strategy->nodes_.size() - 1;
+  for (const auto &iter : strategy->nodes_) {
+    const auto id = iter.first;
+    const auto &node = iter.second;
+    if (IsSkippedKernelActor(node)) {
+      inplace_map[id] = std::make_pair(id == 0 ? 1 : id - 1, id == node_num ? node_num - 1 : id + 1);
+    }
+  }
+  for (const auto &link : strategy->links_) {
+    MS_EXCEPTION_IF_NULL(link);
+    size_t from_id = link->from_;
+    const auto &from_iter = inplace_map.find(from_id);
+    if (from_iter != inplace_map.end()) {
+      from_id = from_iter->second.first;
+    }
+    const auto from_actor = GetActorForLink(from_id, strategy, graph, parser, actor_set);
+    MS_EXCEPTION_IF_NULL(from_actor);
+    size_t to_id = link->to_;
+    const auto &to_iter = inplace_map.find(to_id);
+    if (to_iter != inplace_map.end()) {
+      to_id = to_iter->second.second;
+    }
+    const auto to_actor = GetActorForLink(to_id, strategy, graph, parser, actor_set);
+    MS_EXCEPTION_IF_NULL(to_actor);
+    if (from_actor != to_actor) {
+      SchedulerHelper::AddControlArrow(from_actor, to_actor);
+    }
+  }
+}
+
+void MemSwapScheduler::LinkDataArrowForGraph(const std::shared_ptr<device::SwapStrategy> &strategy,
+                                             const KernelGraphPtr &graph, const ControlNodeParserPtr &parser) const {
+  ControlActor *source_actor = nullptr;
+  if (parser->IsCallInputKernelGraph(graph.get())) {
+    source_actor = GetCtrlActor(parser, graph, kStackActorNameSuffix);
+  } else {
+    source_actor = GetCtrlActor(parser, graph, kEntranceActorNameSuffix);
+  }
+  if (source_actor == nullptr) {
+    return;
+  }
+  const auto &action_actor_map = action_actor_map_.find(graph->graph_id());
+  if (action_actor_map == action_actor_map_.end()) {
+    return;
+  }
+  const auto &data_dependency = data_dependency_.find(graph->graph_id());
+  if (data_dependency == data_dependency_.end()) {
+    return;
+  }
+  for (const auto &action_iter : strategy->actions_) {
+    const auto &actor_iter = (action_actor_map->second).find(action_iter.first);
+    if (actor_iter == (action_actor_map->second).end()) {
+      continue;
+    }
+    const auto &data_dependency_iter = (data_dependency->second).find(actor_iter->second);
+    if (data_dependency_iter == (data_dependency->second).end()) {
+      continue;
+    }
+    for (size_t i = 0; i < data_dependency_iter->second.size(); ++i) {
+      const auto &output_index = data_dependency_iter->second[i];
+      SchedulerHelper::AddDataArrow(source_actor, actor_iter->second.get(), output_index, i);
+    }
+  }
+}
+
 void MemSwapScheduler::Link(const GraphCompilerInfo &graph_compiler_info, ActorSet *actor_set) const {
   MS_EXCEPTION_IF_NULL(actor_set);
   const auto &parser = graph_compiler_info.control_node_parser_;
@@ -381,46 +455,8 @@ void MemSwapScheduler::Link(const GraphCompilerInfo &graph_compiler_info, ActorS
       continue;
     }
     const auto &strategy = strategy_iter->second;
-    MS_EXCEPTION_IF_NULL(strategy);
-    for (const auto &link : strategy->links_) {
-      MS_EXCEPTION_IF_NULL(link);
-      const auto from_actor = GetActorForLink(link->from_, strategy, graph, parser, actor_set);
-      MS_EXCEPTION_IF_NULL(from_actor);
-      const auto to_actor = GetActorForLink(link->to_, strategy, graph, parser, actor_set);
-      MS_EXCEPTION_IF_NULL(to_actor);
-      SchedulerHelper::AddControlArrow(from_actor, to_actor);
-    }
-    ControlActor *source_actor = nullptr;
-    if (parser->IsCallInputKernelGraph(graph.get())) {
-      source_actor = GetCtrlActor(parser, graph, kStackActorNameSuffix);
-    } else {
-      source_actor = GetCtrlActor(parser, graph, kEntranceActorNameSuffix);
-    }
-    if (source_actor == nullptr) {
-      continue;
-    }
-    const auto &action_actor_map = action_actor_map_.find(graph->graph_id());
-    if (action_actor_map == action_actor_map_.end()) {
-      continue;
-    }
-    const auto &data_dependency = data_dependency_.find(graph->graph_id());
-    if (data_dependency == data_dependency_.end()) {
-      continue;
-    }
-    for (const auto &action_iter : strategy->actions_) {
-      const auto &actor_iter = (action_actor_map->second).find(action_iter.first);
-      if (actor_iter == (action_actor_map->second).end()) {
-        continue;
-      }
-      const auto &data_dependency_iter = (data_dependency->second).find(actor_iter->second);
-      if (data_dependency_iter == (data_dependency->second).end()) {
-        continue;
-      }
-      for (size_t i = 0; i < data_dependency_iter->second.size(); ++i) {
-        const auto &output_index = data_dependency_iter->second[i];
-        SchedulerHelper::AddDataArrow(source_actor, actor_iter->second.get(), output_index, i);
-      }
-    }
+    LinkCtrlArrowForGraph(strategy, graph, parser, actor_set);
+    LinkDataArrowForGraph(strategy, graph, parser);
   }
 }
 }  // namespace runtime

@@ -66,6 +66,7 @@ class BACKEND_EXPORT LoadableDeviceAddress : public DeviceAddress {
   bool Wait() const override;
 
   void SetStorageInfo(const StorageInfo &storage_info) final;
+  StorageInfo GetStorageInfo() const final;
 
   // Set host ptr data offloaded to
   void SetOffloadPtr(void *offload_ptr) final;

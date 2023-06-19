@@ -175,7 +175,7 @@ void MemUsageAnalyzer::AddKernelAndTensorInfo(const KernelGraphPtr &graph) {
     size_t kernel_mem = 0;
 
     // Add input tensors
-    const auto input_num = kernel_mod->GetInputSizeList().size();
+    const auto input_num = common::AnfAlgo::GetInputTensorNum(node);
     for (size_t index = 0; index < input_num; ++index) {
       auto prev_node_output = common::AnfAlgo::GetPrevNodeOutput(node, index, true);
       if (graph->IsInRefOutputMap(prev_node_output)) {

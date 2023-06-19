@@ -299,6 +299,8 @@ void LoadableDeviceAddress::SetStorageInfo(const mindspore::device::StorageInfo 
   }
 }
 
+StorageInfo LoadableDeviceAddress::GetStorageInfo() const { return storage_info_; }
+
 void LoadableDeviceAddress::Swap(mindspore::device::DeviceAddress *other) {
   DeviceAddress::Swap(other);
   if (other == this) {
