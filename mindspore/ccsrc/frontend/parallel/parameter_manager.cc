@@ -1470,7 +1470,7 @@ std::shared_ptr<TensorLayout> CreateParameterLayout(const AnfNodePtr &node) {
 }
 
 // temporary method for handling StandardNormal Insertion in opt graph
-void InsertStdNormForTaggedNodes(const FuncGraphManagerPtr &manager, const std::vector<AnfNodePtr> &all_nodes) {
+void InsertUniformRealForTaggedNodes(const FuncGraphManagerPtr &manager, const std::vector<AnfNodePtr> &all_nodes) {
   for (auto &node : all_nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {
@@ -1485,20 +1485,20 @@ void InsertStdNormForTaggedNodes(const FuncGraphManagerPtr &manager, const std::
     }
     auto comm_prim = common::AnfAlgo::GetCNodePrimitive(node);
     if (comm_prim->HasAttr("insert_rand")) {
-      MS_LOG(INFO) << "Insert StandardNormal to node" << node->DebugString();
+      MS_LOG(INFO) << "Insert UniformReal to node" << node->DebugString();
       std::vector<AnfNodePtr> inputShape = {NewValueNode(prim::kPrimShape), node->cast<CNodePtr>()->input(kIndex1)};
       auto inputShapeNode = node->func_graph()->NewCNode(inputShape);
 
-      std::vector<AnfNodePtr> stdNorm = {NewValueNode(prim::kPrimStandardNormal), inputShapeNode->cast<AnfNodePtr>()};
-      auto stdNormNode = node->func_graph()->NewCNode(stdNorm);
+      std::vector<AnfNodePtr> uniformReal = {NewValueNode(prim::kPrimUniformReal), inputShapeNode->cast<AnfNodePtr>()};
+      auto uniformRealNode = node->func_graph()->NewCNode(uniformReal);
 
-      auto stdNormPrim = GetCNodePrimitive(stdNormNode);
-      auto attrs = stdNormPrim->attrs();
+      auto uniformRealPrim = GetCNodePrimitive(uniformRealNode);
+      auto attrs = uniformRealPrim->attrs();
       attrs["seed"] = MakeValue<int64_t>(0);
       attrs["seed2"] = MakeValue<int64_t>(0);
-      stdNormPrim->SetAttrs(attrs);
+      uniformRealPrim->SetAttrs(attrs);
 
-      manager->SetEdge(node, 1, stdNormNode);
+      manager->SetEdge(node, 1, uniformRealNode);
     }
   }
 }
