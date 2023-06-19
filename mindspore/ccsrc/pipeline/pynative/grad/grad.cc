@@ -1104,6 +1104,7 @@ std::vector<AnfNodePtr> GradExecutor::GetWeightsArgs(const py::object &weights, 
     const auto &v = PyNativeAlgo::DataConvert::PyObjToValue(obj);
     const auto &obj_id = PyNativeAlgo::Common::GetIdByValue(v);
     auto param = GetParamInput(v, obj_id);
+    MS_EXCEPTION_IF_NULL(param);
     auto weight_param = param->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(weight_param);
     auto tensor = v->cast<tensor::TensorPtr>();
