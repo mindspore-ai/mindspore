@@ -13,7 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """ test jit_class """
+import numpy as np
 import pytest
+import mindspore as ms
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore import Tensor, context, jit_class
@@ -128,6 +130,35 @@ def test_ms_class_create_instance_method():
     assert out.asnumpy() == 10
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_ms_class_type_method():
+    """
+    Feature: JIT Fallback
+    Description: Access the methods of the created class instance.
+    Expectation: No exception.
+    """
+    @jit_class
+    class InnerNet:
+        number = 2
+
+        def act(self, x, y):
+            return self.number * (x + y)
+
+    class Net(nn.Cell):
+        def construct(self, x, y):
+            return InnerNet.act(InnerNet, x, y)
+
+    x = Tensor(2, dtype=mstype.int32)
+    y = Tensor(3, dtype=mstype.int32)
+    net = Net()
+    out = net(x, y)
+    assert out.asnumpy() == 10
+
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -163,3 +194,38 @@ def test_ms_class_create_instance_call():
     net = Net()
     out = net(x, y, z)
     assert out == 10
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_ms_class_call_twice():
+    """
+    Feature: JIT Fallback
+    Description: Call class object twice.
+    Expectation: No exception.
+    """
+    @ms.jit_class
+    class Save:
+        def __init__(self):
+            self.num = ms.Parameter(0, name="num", requires_grad=False)
+
+        def __call__(self, x):
+            self.num = self.num + 1
+            return x
+
+    save = Save()
+
+    class Net(nn.Cell):
+        def construct(self, x):
+            x = save(x)
+            x = save(x + 1)
+            return x + 1, save.num
+
+    x = ms.Tensor([1, 2, 3])
+    net = Net()
+    out, num = net(x)
+    assert np.all(out.asnumpy() == np.array([3, 4, 5]))
+    assert num == 2

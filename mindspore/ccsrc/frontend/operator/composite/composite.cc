@@ -44,6 +44,7 @@ constexpr auto kStepDefault = 1;
 
 using mindspore::abstract::AbstractBase;
 using mindspore::abstract::AbstractBasePtr;
+using mindspore::abstract::AbstractClass;
 using mindspore::abstract::AbstractDictionary;
 using mindspore::abstract::AbstractDictionaryPtr;
 using mindspore::abstract::AbstractElementPair;
@@ -1184,27 +1185,20 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_ab
     weight_value_ = args_abs_list[weights_index];
   }
   MS_EXCEPTION_IF_NULL(fn_abs);
+  if (fn_abs->isa<AbstractClass>()) {
+    auto class_abs = dyn_cast<AbstractClass>(fn_abs);
+    auto class_val = class_abs->BuildValue();
+    MS_EXCEPTION_IF_NULL(class_val);
+    auto class_obj = class_val->cast<parse::MsClassObjectPtr>();
+    MS_EXCEPTION_IF_NULL(class_obj);
+    auto obj_name = std::regex_replace(class_obj->name(), std::regex("MsClassObject:"), "");
+    MS_LOG(EXCEPTION) << "For 'GradOperation', the first argument must be a 'Function' or 'Cell' type "
+                      << "object, but got object with jit_class type" << obj_name << ".";
+  }
   AbstractFunctionPtr fn = dyn_cast<AbstractFunction>(fn_abs);
   if (fn == nullptr) {
     MS_LOG(EXCEPTION) << "For 'GradOperation', the first argument must be a 'Function' or 'Cell', but got "
                       << args_abs_list[0]->ToString();
-  }
-  if (fn->isa<abstract::PartialAbstractClosure>()) {
-    auto partial_abs = fn->cast<abstract::PartialAbstractClosurePtr>();
-    const auto &args = partial_abs->args();
-    if (!args.empty()) {
-      auto value = args[0]->BuildValue();
-      MS_EXCEPTION_IF_NULL(value);
-      if (value->isa<parse::MsClassObject>()) {
-        auto value_obj = dyn_cast_ptr<parse::MsClassObject>(value);
-        MS_EXCEPTION_IF_NULL(value_obj);
-        auto obj_name = std::regex_replace(value_obj->name(), std::regex("MsClassObject:"), "");
-        MS_LOG(EXCEPTION) << "For 'GradOperation', the first argument must be a 'Function' or 'Cell' type "
-                          << "object, but got object with jit_class type" << obj_name << ".\n'GradOperation' "
-                          << "does not support '__call__' magic methods as object.\nFor more details, "
-                          << "please refer to https://www.mindspore.cn/search?inputValue=Gradoperation";
-      }
-    }
   }
 
   // Waiting for implementation.

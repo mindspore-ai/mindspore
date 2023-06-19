@@ -97,6 +97,7 @@ TypePtr TypeIdToType(TypeId id) {
                                                                 {kObjectTypeRefKey, kRefKeyType},
                                                                 {kObjectTypeRef, kRefType},
                                                                 {kMetaTypeTypeType, kTypeType},
+                                                                {kObjectTypeClass, kClassType},
                                                                 {kObjectTypeString, kString},
                                                                 {kObjectTypeList, kList},
                                                                 {kObjectTypeTuple, kTuple},
