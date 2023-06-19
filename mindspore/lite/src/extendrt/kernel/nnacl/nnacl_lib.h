@@ -34,6 +34,9 @@ class NNACLLib : public KernelLib {
                const Format &format = DEFAULT_FORMAT) const override;
   LiteKernel *CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
                            const std::vector<InferTensor *> &outputs, const InferContext *ctx) const override;
+
+  InferKernel *CreateKernelExec(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
+                                const std::vector<InferTensor *> &outputs, const InferContext *ctx) const override;
 };
 }  // namespace kernel
 }  // namespace mindspore

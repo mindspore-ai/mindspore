@@ -574,6 +574,7 @@ int LiteSession::CompileGraph(Model *model) {
   } else {
     // Convert to abstract base model interface
     ret = ConvertTensors(model);
+    context_->set_schema_version(reinterpret_cast<LiteModel *>(model)->GetSchemaVersion());
   }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvertTensors failed: " << ret;

@@ -93,5 +93,17 @@ LiteKernel *NNACLLib::CreateKernel(const KernelSpec &spec, const std::vector<Inf
   return lite_kernel;
 }
 
+InferKernel *NNACLLib::CreateKernelExec(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
+                                        const std::vector<InferTensor *> &outputs, const InferContext *ctx) const {
+  auto *kernel_exec = KernelLib::CreateKernelExec(spec, inputs, outputs, ctx);
+  if (kernel_exec == nullptr) {
+    return nullptr;
+  }
+  auto desc = kernel_exec->desc();
+  desc.format = Format::NHWC;
+  kernel_exec->set_desc(desc);
+  return kernel_exec;
+}
+
 REG_KERNEL_LIB(kNNACLLibName, NNACLLib);
 }  // namespace mindspore::kernel

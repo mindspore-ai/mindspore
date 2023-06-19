@@ -51,7 +51,8 @@ bool ExecutionPlan::PrepareKernels() {
     for (auto &node : subgraph_kernel->nodes()) {
       auto ret = node->Prepare();
       if (ret != RET_OK) {
-        MS_LOG(ERROR) << "ExecutionPlan::PrepareKernels node: " << node->name() << " prepare failed.";
+        MS_LOG(ERROR) << "ExecutionPlan::PrepareKernels node: " << node->name()
+                      << " prepare failed, type: " << schema::EnumNamePrimitiveType(node->type());
         return false;
       }
     }

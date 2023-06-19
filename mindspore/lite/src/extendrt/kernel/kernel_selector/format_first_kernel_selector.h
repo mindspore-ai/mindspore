@@ -33,18 +33,19 @@ class FormatFirstKernelSelector : public KernelSelector {
       : KernelSelector(compile_option) {}
   ~FormatFirstKernelSelector() override = default;
 
-  LiteKernel *CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
-                           const std::vector<InferTensor *> &outputs, const InferContext *ctx) override {
+  InferKernel *CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
+                            const std::vector<InferTensor *> &outputs, const InferContext *ctx) override {
     static std::map<std::string, int> kPriorityMap{
       {"custom", 0},
       {kNNACLLibName, 1},
       {"bolt", 1},
       {kDefaultKernelLibName, 100},
     };
-
-    auto candidates = Candidates(spec.op_type, spec.attr, true);  //  match format first
+    auto match_ks = spec;
+    auto candidates = Candidates(match_ks.op_type, match_ks.attr, match_ks.backend, match_ks.format);
     if (candidates.empty()) {
-      candidates = Candidates(spec.op_type, spec.attr);
+      match_ks.format = DEFAULT_FORMAT;
+      candidates = Candidates(match_ks.op_type, match_ks.attr, match_ks.backend, match_ks.format);
     }
     if (candidates.empty()) {
       MS_LOG(ERROR) << "Can not find suitable kernellib, op_type: " << spec.op_type << ", kernel attr: " << spec.attr;
@@ -62,10 +63,10 @@ class FormatFirstKernelSelector : public KernelSelector {
       }
     }
     MS_ASSERT(selected != nullptr);
-    auto kernel = selected->CreateKernel(spec, inputs, outputs, ctx);
+    auto kernel = selected->CreateKernelExec(match_ks, inputs, outputs, ctx);
     if (kernel == nullptr) {
-      MS_LOG(ERROR) << "Create kernel from " << selected->Name() << " failed, op_type: " << spec.op_type
-                    << ", kernel attr: " << spec.attr;
+      MS_LOG(ERROR) << "Create kernel from " << selected->Name() << " failed, op_type: " << match_ks.op_type
+                    << ", kernel attr: " << match_ks.attr;
       return nullptr;
     }
     MS_LOG(INFO) << "Create " << selected->Name() << " kernel for " << spec.cnode->fullname_with_scope();

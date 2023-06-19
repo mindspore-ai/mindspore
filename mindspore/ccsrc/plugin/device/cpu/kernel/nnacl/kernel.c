@@ -52,7 +52,7 @@ int DefaultThreadUpdate(int32_t type, int64_t load, int64_t store, int64_t unit,
   return thread > 0 ? thread : 1;
 }
 
-int NNACLKernelInferShape(struct KernelBase *self) { return NNACL_OK; }
+int NNACLKernelInferShape(struct KernelBase *self) { return NNACL_ERR; }
 
 int NNACLCheckKernelBase(KernelBase *kernel_base) {
   CheckExecEnv(kernel_base);

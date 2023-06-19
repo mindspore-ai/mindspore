@@ -42,7 +42,7 @@ int RuntimeFormatPass(std::vector<mindspore::kernel::KernelExec *> *subgraph_lis
                       std::vector<mindspore::lite::Tensor *> *tensors, mindspore::Format graph_format) {
 #ifndef ENABLE_MULTI_LAYOUT
   return RET_OK;
-#endif
+#else
   for (const auto &subgraph : *subgraph_list) {
     FormatOptimizePtr optimize = std::make_shared<FormatOptimize>();
 
@@ -58,5 +58,6 @@ int RuntimeFormatPass(std::vector<mindspore::kernel::KernelExec *> *subgraph_lis
   }
 
   return RET_OK;
+#endif
 }
 }  // namespace mindspore::lite::pass

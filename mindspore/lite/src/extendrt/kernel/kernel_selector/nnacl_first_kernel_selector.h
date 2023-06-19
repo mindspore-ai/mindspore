@@ -34,21 +34,23 @@ class NNACLFirstKernelSelector : public KernelSelector {
       : KernelSelector(compile_option) {}
   ~NNACLFirstKernelSelector() override = default;
 
-  LiteKernel *CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
-                           const std::vector<InferTensor *> &outputs, const InferContext *ctx) override {
+  InferKernel *CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
+                            const std::vector<InferTensor *> &outputs, const InferContext *ctx) override {
     auto nnacl_lib = KernelLibRegister::Instance().GetKernelLib(kNNACLLibName);
     if (nnacl_lib == nullptr) {
       MS_LOG(ERROR) << "Can not find NNACL kernellib.";
       return nullptr;
     }
-    if (nnacl_lib->Support(spec.op_type, spec.attr, compile_option_->backend)) {
-      auto kernel = nnacl_lib->CreateKernel(spec, inputs, outputs, ctx);
+    auto match_ks = spec;
+    match_ks.format = DEFAULT_FORMAT;
+    if (nnacl_lib->Support(match_ks.op_type, match_ks.attr, match_ks.backend)) {
+      auto kernel = nnacl_lib->CreateKernelExec(match_ks, inputs, outputs, ctx);
       if (kernel == nullptr) {
-        MS_LOG(ERROR) << "Create kernel from " << nnacl_lib->Name() << " failed, op_type: " << spec.op_type
-                      << ", kernel attr: " << spec.attr;
+        MS_LOG(ERROR) << "Create kernel from " << nnacl_lib->Name() << " failed, op_type: " << match_ks.op_type
+                      << ", kernel attr: " << match_ks.attr;
         return nullptr;
       }
-      MS_LOG(INFO) << "Create NNACL kernel for " << spec.cnode->fullname_with_scope();
+      MS_LOG(INFO) << "Create NNACL kernel for " << match_ks.cnode->fullname_with_scope();
       return kernel;
     }
 
@@ -57,14 +59,14 @@ class NNACLFirstKernelSelector : public KernelSelector {
       MS_LOG(ERROR) << "Can not find kernelmod kernellib.";
       return nullptr;
     }
-    if (kernelmod_lib->Support(spec.op_type, spec.attr, compile_option_->backend)) {
-      auto kernel = kernelmod_lib->CreateKernel(spec, inputs, outputs, ctx);
+    if (kernelmod_lib->Support(match_ks.op_type, match_ks.attr, match_ks.backend)) {
+      auto kernel = kernelmod_lib->CreateKernelExec(match_ks, inputs, outputs, ctx);
       if (kernel == nullptr) {
-        MS_LOG(ERROR) << "Create kernel from " << kernelmod_lib->Name() << " failed, op_type: " << spec.op_type
-                      << ", kernel attr: " << spec.attr;
+        MS_LOG(ERROR) << "Create kernel from " << kernelmod_lib->Name() << " failed, op_type: " << match_ks.op_type
+                      << ", kernel attr: " << match_ks.attr;
         return nullptr;
       }
-      MS_LOG(INFO) << "Create KernelMod kernel for " << spec.cnode->fullname_with_scope();
+      MS_LOG(INFO) << "Create KernelMod kernel for " << match_ks.cnode->fullname_with_scope();
       return kernel;
     }
     return nullptr;

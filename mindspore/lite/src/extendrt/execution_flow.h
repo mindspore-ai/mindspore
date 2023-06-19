@@ -29,21 +29,21 @@ class ExecutionFlow : public abstract::ExecutionFlow {
   ExecutionFlow() = default;
   ~ExecutionFlow() override;
 
-  std::vector<abstract::Kernel *> GetKernels() override { return kernels_; }
+  std::vector<InferKernel *> GetKernels() override { return kernels_; }
 
-  void SetKernels(const std::vector<abstract::Kernel *> &kernels) override { kernels_ = kernels; }
+  void SetKernels(const std::vector<InferKernel *> &kernels) override { kernels_ = kernels; }
 
-  std::vector<abstract::Tensor *> GetInputs() override { return inputs_; }
+  std::vector<InferTensor *> GetInputs() override { return inputs_; }
 
-  void SetInputs(const std::vector<abstract::Tensor *> &inputs) override { inputs_ = inputs; }
+  void SetInputs(const std::vector<InferTensor *> &inputs) override { inputs_ = inputs; }
 
-  std::vector<abstract::Tensor *> GetOutputs() override { return outputs_; }
+  std::vector<InferTensor *> GetOutputs() override { return outputs_; }
 
-  void SetOutputs(const std::vector<abstract::Tensor *> &outputs) override { outputs_ = outputs; }
+  void SetOutputs(const std::vector<InferTensor *> &outputs) override { outputs_ = outputs; }
 
-  std::shared_ptr<abstract::Context> GetContext() override { return context_; }
+  InferContextPtr GetContext() override { return context_; }
 
-  void SetContext(std::shared_ptr<abstract::Context> context) override { context_ = context; }
+  void SetContext(InferContextPtr context) override { context_ = context; }
 
   const abstract::KernelCallBack &GetKernelBeforeCallBack() override { return before_; }
 
@@ -53,20 +53,20 @@ class ExecutionFlow : public abstract::ExecutionFlow {
 
   void SetKernelAfterCallBack(const abstract::KernelCallBack &callback) override { after_ = callback; }
 
-  abstract::Kernel *ConstructFusionKernel() override;
+  InferKernel *ConstructFusionKernel() override;
 
-  std::vector<abstract::Tensor *> GetTensors() { return tensors_; }
+  std::vector<InferTensor *> GetTensors() { return tensors_; }
 
-  void SetTensors(const std::vector<abstract::Tensor *> &tensors) { tensors_ = tensors; }
+  void SetTensors(const std::vector<InferTensor *> &tensors) { tensors_ = tensors; }
 
   std::string Dump() const;
 
  private:
-  std::vector<abstract::Kernel *> kernels_;
-  std::vector<abstract::Tensor *> inputs_;
-  std::vector<abstract::Tensor *> outputs_;
-  std::vector<abstract::Tensor *> tensors_;
-  std::shared_ptr<abstract::Context> context_;
+  std::vector<InferKernel *> kernels_;
+  std::vector<InferTensor *> inputs_;
+  std::vector<InferTensor *> outputs_;
+  std::vector<InferTensor *> tensors_;
+  InferContextPtr context_;
   abstract::KernelCallBack before_;
   abstract::KernelCallBack after_;
 };

@@ -156,7 +156,8 @@ TensorAdapterPtr TensorAdapter::CreateFromInt32ImmValue(const ValueNodePtr &valu
     return nullptr;
   }
   auto data = GetValue<int32_t>(value);
-  adapter->data_ = &data;
+  adapter->data_ = malloc(sizeof(int32_t));
+  (reinterpret_cast<int32_t *>(adapter->data_))[0] = data;
   adapter->data_len_ = sizeof(int32_t);
   adapter->own_data_ = false;
   return adapter;
@@ -174,7 +175,8 @@ TensorAdapterPtr TensorAdapter::CreateFromInt64ImmValue(const ValueNodePtr &valu
     return nullptr;
   }
   auto data = GetValue<int64_t>(value);
-  adapter->data_ = &data;
+  adapter->data_ = malloc(sizeof(int64_t));
+  (reinterpret_cast<int64_t *>(adapter->data_))[0] = data;
   adapter->data_len_ = sizeof(int64_t);
   adapter->own_data_ = false;
   return adapter;
@@ -197,7 +199,8 @@ TensorAdapterPtr TensorAdapter::CreateFromBoolImmValue(const ValueNodePtr &value
     return nullptr;
   }
   auto data_value = data->value();
-  adapter->data_ = &data_value;
+  adapter->data_ = malloc(sizeof(bool));
+  (reinterpret_cast<bool *>(adapter->data_))[0] = data_value;
   adapter->data_len_ = sizeof(bool);
   adapter->own_data_ = false;
   return adapter;
@@ -221,7 +224,8 @@ TensorAdapterPtr TensorAdapter::CreateFromNumberTypeValue(const ValueNodePtr &va
     number_type = TypeToTypeMap.at(number_type);
   }
   auto number_data = static_cast<int32_t>(number_type);
-  adapter->data_ = &number_data;
+  adapter->data_ = malloc(sizeof(int32_t));
+  (reinterpret_cast<int32_t *>(adapter->data_))[0] = number_data;
   adapter->data_len_ = sizeof(int32_t);
   adapter->own_data_ = false;
   return adapter;

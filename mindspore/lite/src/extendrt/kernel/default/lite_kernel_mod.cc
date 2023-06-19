@@ -15,7 +15,6 @@
  */
 
 #include "src/extendrt/kernel/default/lite_kernel_mod.h"
-#include <string>
 #include "src/extendrt/utils/tensor_utils.h"
 #include "src/extendrt/kernel/default/cnode_infer_manager.h"
 
@@ -46,15 +45,15 @@ int LiteKernelMod::Run() {
 
   AddressPtrList workspace;
   auto workspace_size = kernel_mod_->GetWorkspaceSizeList();
-  for (size_t i = 0; i < workspace_size.size(); i++) {
-    auto buffer = ms_context_->allocator->Malloc(workspace_size.at(i));
-    std::shared_ptr<Address> address = std::make_shared<Address>(buffer, workspace_size.at(i));
+  for (size_t &i : workspace_size) {
+    auto buffer = ms_context_->allocator->Malloc(i);
+    std::shared_ptr<Address> address = std::make_shared<Address>(buffer, i);
     workspace.push_back(address);
   }
 
   auto ret = kernel_mod_->Launch(inputs, workspace, outputs, nullptr);
 
-  for (auto address : workspace) {
+  for (const auto &address : workspace) {
     ms_context_->allocator->Free(address->addr);
   }
   return ret ? RET_OK : RET_ERROR;

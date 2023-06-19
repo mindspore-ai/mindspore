@@ -24,9 +24,10 @@ ExecutionFlow::~ExecutionFlow() {
   for (auto kernel : kernels_) {
     delete kernel;
   }
+  kernels_.clear();
 }
 
-abstract::Kernel *ExecutionFlow::ConstructFusionKernel() {
+InferKernel *ExecutionFlow::ConstructFusionKernel() {
   kernel::KernelExecUtil::FindAllInoutKernels(kernels_);
   kernel::SubGraphType cur_sub_graph_type = kernel::kCpuFP32SubGraph;
   MS_LOG(INFO) << "cur_sub_graph_type: " << cur_sub_graph_type;
@@ -37,6 +38,7 @@ abstract::Kernel *ExecutionFlow::ConstructFusionKernel() {
     MS_LOG(ERROR) << "CreateSubGraphKernel failed, cur_sub_graph_type: " << cur_sub_graph_type;
     return nullptr;
   }
+  this->kernels_.clear();
   return subgraph_kernel;
 }
 

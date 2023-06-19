@@ -16,9 +16,11 @@
 #include "src/common/ops/operator_populate/operator_populate_register.h"
 #include "nnacl/conv_parameter.h"
 #include "ops/conv2d.h"
+#include "ops/fusion/conv2d_fusion.h"
 using mindspore::ops::kActivationType;
 using mindspore::ops::kInChannel;
 using mindspore::ops::kNameConv2D;
+using mindspore::ops::kNameConv2DFusion;
 using mindspore::ops::kPadList;
 using mindspore::schema::PrimitiveType_Conv2DFusion;
 namespace mindspore {
@@ -169,5 +171,6 @@ OpParameter *PopulateConv2dOpParameter(const BaseOperatorPtr &base_operator) {
 }
 
 REG_OPERATOR_POPULATE(kNameConv2D, PrimitiveType_Conv2DFusion, PopulateConv2dOpParameter)
+REG_OPERATOR_POPULATE(kNameConv2DFusion, PrimitiveType_Conv2DFusion, PopulateConv2dOpParameter)
 }  // namespace lite
 }  // namespace mindspore

@@ -17,8 +17,8 @@
 #include "src/extendrt/graph_compiler/single_graph_scheduler.h"
 #include <algorithm>
 #include "src/common/log_util.h"
+#include "ops/core_ops.h"
 #include "src/common/ops/operator_populate/operator_populate_register.h"
-#include "src/litert/kernel_registry.h"
 #include "src/litert/lite_kernel.h"
 #include "src/common/tensor_util.h"
 #include "src/extendrt/kernel/kernel_lib.h"
@@ -32,7 +32,7 @@ namespace lite {
 InferKernel *SingleGraphScheduler::Schedule(const CompileResultPtr &node_list) {
   // infer shape
   auto infer_ret = FallBackInferShape(node_list);
-  if (!infer_ret) {
+  if (infer_ret != RET_OK && infer_ret != lite::RET_INFER_INVALID) {
     MS_LOG(ERROR) << "InferShape CompileResult node failed.";
     return nullptr;
   }
@@ -71,23 +71,15 @@ int SingleGraphScheduler::SelectKernel(const CompileResultPtr &node_list) {
   std::vector<InferKernel *> kernels;
   for (const auto &node : node_list->GetNodes()) {
     MSLITE_CHECK_PTR_RETURN(node, lite::RET_NULL_PTR);
-    auto lite_kernel =
+    auto kernel_exec =
       kernel_selector_->CreateKernel({node->GetType(), node->GetKernelAttr(), compile_option_->format,
-                                      node->GetBaseOperator(), node->GetCNode(), compile_option_->backend},
+                                      compile_option_->backend, node->GetBaseOperator(), node->GetCNode()},
                                      node->GetInputs(), node->GetOutputs(), context_.get());
-    if (lite_kernel == nullptr) {
-      MS_LOG(ERROR) << "Create kernel for node: " << node->GetName() << " failed.";
-      return lite::RET_NOT_SUPPORT;
-    }
-    auto *kernel_exec = new (std::nothrow) kernel::KernelExec(std::shared_ptr<kernel::LiteKernel>(lite_kernel));
     if (kernel_exec == nullptr) {
       MS_LOG(ERROR) << "Create kernel exec for node: " << node->GetName() << " failed.";
-      return lite::RET_MEMORY_FAILED;
+      return lite::RET_NOT_SUPPORT;
     }
-    auto desc = kernel_exec->desc();
-    desc.format = compile_option_->format;
-    kernel_exec->set_desc(desc);
-    kernel_exec->set_context(context_.get());
+    kernel_exec->set_name(node->GetName());
     kernels.push_back(kernel_exec);
   }
   execution_flow_->SetKernels(kernels);
@@ -119,7 +111,7 @@ bool SingleGraphScheduler::HandleWeightForKernels() {
   return true;
 }
 
-Status SingleGraphScheduler::OptimizeTranspose(std::vector<kernel::KernelExec *> *kernels) {
+Status SingleGraphScheduler::OptimizeTranspose(std::vector<InferKernel *> *kernels) {
   auto tensors = execution_flow_->GetTensors();
   auto ret = lite::pass::RuntimeFormatPass(kernels, &tensors, compile_option_->format);
   if (ret != RET_OK) {
@@ -219,7 +211,7 @@ int SingleGraphScheduler::FallBackInferShape(const CompileResultPtr &node_list) 
     auto base_operator = node->GetBaseOperator();
     MSLITE_CHECK_PTR_RETURN(base_operator, false);
     if (compile_option_->format == Format::NHWC) {  // for efficient
-      auto op_parameter = lite::OperatorPopulateRegistry::GetInstance()->CreatePopulateByOp(base_operator);
+      auto op_parameter = OperatorPopulateRegistry::GetInstance()->CreatePopulateByOp(base_operator);
       if (op_parameter != nullptr) {
         auto ret = InferShapeByNNACL(node, op_parameter);
         if (ret != lite::RET_OK && ret != lite::RET_INFER_INVALID) {

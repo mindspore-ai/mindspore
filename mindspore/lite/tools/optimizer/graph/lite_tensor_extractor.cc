@@ -199,7 +199,7 @@ int LiteTensorExtractor::GetCNodeConstInputToAbstract(const CNodePtr &cnode, con
       continue;
     }
 
-    if (input_tensor->Size() == data_info.data_.size()) {
+    if (input_tensor->Size() > 0 && input_tensor->Size() == data_info.data_.size()) {
       if (EOK != common::huge_memcpy(reinterpret_cast<uint8_t *>(input_tensor->data_c()), input_tensor->Size(),
                                      data_info.data_.data(), data_info.data_.size())) {
         MS_LOG(ERROR) << "memcpy_s failed.";

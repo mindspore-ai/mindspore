@@ -25,6 +25,7 @@ namespace infer::abstract {
 using Context = mindspore::lite::InnerContext;
 }
 using InferContext = infer::abstract::Context;
+using InferContextPtr = std::shared_ptr<InferContext>;
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_INFER_CONTEXT_H_

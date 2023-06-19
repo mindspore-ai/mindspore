@@ -118,6 +118,8 @@ struct MS_API InnerContext {
   inline void SetBindRunnerId(std::string runner_id) { runner_id_ = runner_id; }
   inline void set_infer_checker(const InferChecker checker) { infer_checker_ = checker; }
   inline const InferChecker get_infer_checker() const { return infer_checker_; }
+  inline void set_schema_version(const int schema_version) { this->schema_version_ = schema_version; }
+  inline const int &get_schema_version() const { return schema_version_; }
 
   std::string vendor_name_;
   InstructionsContext instructions_ctx_;
@@ -149,6 +151,7 @@ struct MS_API InnerContext {
   BindMode bind_mode_{Power_NoBind};
   size_t actor_thread_num_{0};
   ExecEnv exec_env_;
+  int schema_version_{SCHEMA_VERSION::SCHEMA_CUR};
 };
 
 int ParallelLaunch(const InnerContext *context, const Func &func, Content content, int task_num);

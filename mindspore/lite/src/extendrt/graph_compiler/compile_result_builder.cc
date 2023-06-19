@@ -39,6 +39,10 @@ StatusCode CompileResultBuilder::BuildInputs(const AnfNodePtrList &inputs) {
   std::vector<std::unique_ptr<Tensor>> results;
   for (auto &input : inputs) {
     results.clear();
+    auto parameter = utils::cast<ParameterPtr>(input);
+    if (parameter != nullptr && parameter->has_default()) {
+      continue;  // TransformSegmentToAnfGraph puts all input and weight into 'inputs'. In inference, we skip weight.
+    }
     auto ret = CreateTensorsFromAbstract(input->abstract(), &results);
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "Create tensors from abstract of segments input failed, input : "
@@ -195,7 +199,7 @@ StatusCode CompileResultBuilder::RemoveSeqGetItemNode() {
       MS_LOG(ERROR) << "GetItem node should has 1 outputs, but got " << node->OutputSize();
       return kLiteError;
     }
-    auto index_tensor = node->GetInput(1);
+    auto index_tensor = node->GetInput(node->GetInputs().size() - 1);
     if (index_tensor->data() == nullptr) {
       MS_LOG(ERROR) << "`index_tensor` of GetItem should be a const tensor, but has no data.";
       return kLiteError;

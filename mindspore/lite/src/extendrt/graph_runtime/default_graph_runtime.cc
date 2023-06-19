@@ -130,6 +130,9 @@ Status DefaultGraphRuntime::Resize(const std::vector<infer::abstract::Tensor *> 
 
   if (!ResizeKernels()) {
     AbstractTensorUtils::SetTensorListShapse(graph_inputs, original_dims);
+    if (!ResizeKernels()) {
+      MS_LOG(ERROR) << "Restore kernel size failed.";
+    }
     return kLiteError;
   }
 

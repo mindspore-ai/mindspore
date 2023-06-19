@@ -35,16 +35,13 @@
 #include "src/executor/kernel_exec.h"
 
 namespace mindspore::kernel {
-using InferTensor = mindspore::infer::abstract::Tensor;
-using InferContext = mindspore::infer::abstract::Context;
-
 struct KernelSpec {
   PrimitiveType op_type;
   KernelAttr attr;
   Format format;
+  std::string backend;
   BaseOperatorPtr primitive;
   CNodePtr cnode;
-  std::string backend;
 };
 
 class KernelLib {
@@ -56,8 +53,8 @@ class KernelLib {
   virtual LiteKernel *CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
                                    const std::vector<InferTensor *> &outputs, const InferContext *ctx) const = 0;
 
-  KernelExec *CreateKernelExec(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
-                               const std::vector<InferTensor *> &outputs, const InferContext *ctx) {
+  virtual InferKernel *CreateKernelExec(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
+                                        const std::vector<InferTensor *> &outputs, const InferContext *ctx) const {
     auto *lite_kernel = this->CreateKernel(spec, inputs, outputs, ctx);
     if (lite_kernel == nullptr) {
       MS_LOG(ERROR) << "Create lite kernel failed. kernel: " << spec.op_type.PBType();
