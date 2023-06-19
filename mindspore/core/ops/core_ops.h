@@ -1794,6 +1794,7 @@ GVAR_DEF(PrimitivePtr, kPrimIf, std::make_shared<Primitive>("If"));
 GVAR_DEF(PrimitivePtr, kPrimAvgPoolFusion, std::make_shared<Primitive>("AvgPoolFusion"));
 GVAR_DEF(PrimitivePtr, kPrimMaxPoolFusion, std::make_shared<Primitive>("MaxPoolFusion"));
 GVAR_DEF(PrimitivePtr, kPrimActivation, std::make_shared<Primitive>("Activation"));
+GVAR_DEF(PrimitivePtr, kPrimActivationGrad, std::make_shared<Primitive>("ActivationGrad"));
 GVAR_DEF(PrimitivePtr, kPrimPReLUFusion, std::make_shared<Primitive>("PReLUFusion"));
 GVAR_DEF(PrimitivePtr, kPrimTopKFusion, std::make_shared<Primitive>("TopKFusion"));
 GVAR_DEF(PrimitivePtr, kPrimTileFusion, std::make_shared<Primitive>("TileFusion"));
