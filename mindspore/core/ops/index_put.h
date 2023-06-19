@@ -32,9 +32,6 @@ class MIND_API IndexPut : public BaseOperator {
   /// \brief Constructor.
   IndexPut() : BaseOperator(kNameIndexPut) { InitIOName({"x1", "x2", "indices"}, {"y"}); }
 };
-
-abstract::AbstractBasePtr IndexPutInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

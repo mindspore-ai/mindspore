@@ -186,7 +186,9 @@ TuplePtr SparseAddInferType(const PrimitivePtr &primitive, const std::vector<Abs
 
 AbstractBasePtr SparseAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<abstract::AbstractBasePtr> &input_args) {
-  return abstract::MakeAbstract(SparseAddInferShape(primitive, input_args), SparseAddInferType(primitive, input_args));
+  auto tuple_shapes = SparseAddInferShape(primitive, input_args);
+  auto tuple_types = SparseAddInferType(primitive, input_args);
+  return abstract::MakeAbstract(tuple_shapes, tuple_types);
 }
 }  // namespace
 

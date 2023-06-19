@@ -131,9 +131,7 @@ TypePtr IndexPutInferType(const PrimitivePtr &primitive, const std::vector<Abstr
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
   return x1_type;
 }
-}  // namespace
 
-MIND_API_OPERATOR_IMPL(IndexPut, BaseOperator);
 AbstractBasePtr IndexPutInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   const int64_t kInputsNum = 3;
@@ -142,6 +140,26 @@ AbstractBasePtr IndexPutInfer(const abstract::AnalysisEnginePtr &, const Primiti
   auto shape = IndexPutInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(IndexPut, prim::kPrimIndexPut, IndexPutInfer, nullptr, true);
+}  // namespace
+
+MIND_API_OPERATOR_IMPL(IndexPut, BaseOperator);
+class MIND_API AGIndexPutInfer : public abstract::OpInferBase {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) const override {
+    return IndexPutInferShape(primitive, input_args);
+  }
+
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    return IndexPutInferType(primitive, input_args);
+  }
+
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+                                    const std::vector<AbstractBasePtr> &input_args) const override {
+    return IndexPutInfer(engine, primitive, input_args);
+  }
+};
+
+REGISTER_PRIMITIVE_OP_INFER_IMPL(IndexPut, prim::kPrimIndexPut, AGIndexPutInfer, false);
 }  // namespace ops
 }  // namespace mindspore
