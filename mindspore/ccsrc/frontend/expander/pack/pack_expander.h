@@ -61,6 +61,7 @@ class PackExpander {
   py::object EndFuncGraph(const py::object &output);
 
   py::object Emit(const py::object &prim, const py::args &inputs) const;
+  static bool is_pynative_mode;
 
  private:
   AnfNodePtr EmitCNode(const PrimitivePtr &prim, const AnfNodePtrList &cnode_inputs) const;

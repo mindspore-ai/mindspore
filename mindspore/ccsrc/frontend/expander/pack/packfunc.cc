@@ -26,6 +26,21 @@
 
 namespace mindspore {
 namespace expander {
+namespace {
+bool IsAbstractDynamicShape(const std::vector<AbstractBasePtr> &input_args) {
+  return std::any_of(input_args.begin(), input_args.end(),
+                     [](const AbstractBasePtr &abs) { return abs->BuildShape()->IsDynamic(); });
+}
+
+bool IsAbstractOutputTensor(const AbstractBasePtr &abs) {
+  if (abs->isa<abstract::AbstractTuple>()) {
+    auto abs_tuple = abs->cast<abstract::AbstractTuplePtr>()->elements();
+    return std::all_of(abs_tuple.begin(), abs_tuple.end(),
+                       [](const AbstractBasePtr &abs) { return IsAbstractOutputTensor(abs); });
+  }
+  return abs->isa<abstract::AbstractTensor>();
+}
+}  // namespace
 using PackGraphMap = std::unordered_map<abstract::AbstractBasePtrList, FuncGraphPtr,
                                         abstract::AbstractBasePtrListHasher, abstract::AbstractBasePtrListEqual>;
 
@@ -34,6 +49,7 @@ void ClearAllCache() { pack_graph_cache.clear(); }
 
 FuncGraphPtr ExpandPackFunc(const PrimitivePtr &prim, const abstract::AbstractBasePtrList &abs_list) {
   auto key = GetValue<std::string>(prim->GetAttr("unique_key"));
+  PackExpander::is_pynative_mode = GetValue<bool>(prim->GetAttr("is_pynative_mode"));
   auto &graph_map = pack_graph_cache[key];
   auto it = graph_map.find(abs_list);
   if (it != graph_map.end()) {
@@ -73,16 +89,26 @@ class PackFuncInfer : public abstract::OpInferBase {
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
+    if (IsAbstractDynamicShape(input_args)) {
+      MS_LOG(WARNING) << "Dynamic shape operator is not fully supported in trace graph capturing. Please check the "
+                         "dump-ir to confirm its correctness.";
+    }
     auto graph = ExpandPackFunc(primitive, input_args);
     MS_EXCEPTION_IF_NULL(graph);
     // the python primitive object may be used in different places with different inputs, so we
     // cannot save the graph in graph mode. But for pynative mode, this primitive is inferred
     // in forward thread sequentially and deep copied to backend runtime, so we can save graph
     // in attr to save performance.
-    if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+    auto abs = graph->output()->abstract();
+    if (PackExpander::is_pynative_mode) {
       primitive->set_attr("recent_graph", graph);
+      if (!IsAbstractOutputTensor(abs)) {
+        MS_EXCEPTION(ValueError)
+          << "The output of trace captured graph should be one or more flattened Tensor, bug get "
+          << abs->BuildType()->ToString() << ".";
+      }
     }
-    return graph->output()->abstract();
+    return abs;
   }
 };
 }  // namespace expander

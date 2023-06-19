@@ -39,20 +39,17 @@ AbstractBasePtr GetAbstract(const AnfNodePtr &node) {
   return abs;
 }
 
-inline bool IsPackTensor(const py::object &arg) {
-  return py::hasattr(arg, stub::PY_ATTR_STUB) && py::isinstance<PackNode>(py::getattr(arg, stub::PY_ATTR_STUB));
-}
+inline bool IsPackTensor(const py::object &arg) { return py::hasattr(arg, "__pack__"); }
 
 inline bool IsHasValue(const ValuePtr &value) {
   return (value != nullptr && !value->isa<ValueAny>() && !value->isa<None>());
 }
 
-template <typename T>
 bool IsTensorSequence(const py::object &arg) {
-  if (!py::isinstance<T>(arg)) {
+  if (!py::isinstance<py::tuple>(arg) && !py::isinstance<py::list>(arg)) {
     return false;
   }
-  T seq = py::cast<T>(arg);
+  py::tuple seq = py::cast<py::tuple>(arg);
   for (size_t i = 0; i < seq.size(); ++i) {
     if (IsPackTensor(seq[i]) || py::isinstance<tensor::Tensor>(seq[i])) {
       return true;
@@ -60,8 +57,6 @@ bool IsTensorSequence(const py::object &arg) {
   }
   return false;
 }
-
-inline int GetExecutionMode() { return MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE); }
 
 std::pair<AbstractBasePtr, ValuePtr> InferShapeAndValue(const PrimitivePtr &prim, const AbstractBasePtrList abs_list,
                                                         const bool &need_infer_value) {
@@ -103,6 +98,8 @@ std::pair<AbstractBasePtr, ValuePtr> InferShapeAndValue(const PrimitivePtr &prim
   return {infer_res, val};
 }
 }  // namespace
+
+bool PackExpander::is_pynative_mode;
 
 py::object PackNode::GetShape() const {
   auto base = node_->abstract()->BuildShape();
@@ -198,7 +195,7 @@ py::object PackExpander::ConvertCNodeToPython(const AnfNodePtr &node) const {
 py::object PackExpander::ConvertAbstractToParameter(const AbstractBasePtr &abs) const {
   auto val = abs->BuildValue();
   if (IsHasValue(val)) {
-    if (GetExecutionMode() == kGraphMode) {
+    if (!is_pynative_mode) {
       auto param = graphs_.top()->add_parameter();
       param->set_abstract(abs);
     }
@@ -211,7 +208,7 @@ py::object PackExpander::ConvertAbstractToParameter(const AbstractBasePtr &abs) 
     }
     return tuple_node;
   } else if (abs->isa<abstract::AbstractNone>()) {
-    if (GetExecutionMode() == kGraphMode) {
+    if (!is_pynative_mode) {
       auto param = graphs_.top()->add_parameter();
       param->set_abstract(abs);
     }
@@ -280,25 +277,20 @@ AnfNodePtr PackExpander::EmitCNode(const PrimitivePtr &prim, const AnfNodePtrLis
 }
 
 AnfNodePtr PackExpander::ConvertInput(const py::object &arg) const {
-  auto ConvertSqeuenceInput = [&](const auto &tuple) -> AnfNodePtr {
+  if (IsTensorSequence(arg)) {
+    py::tuple tuple = py::cast<py::tuple>(arg);
     AnfNodePtrList cnode_inputs;
     for (size_t i = 0; i < tuple.size(); ++i) {
       cnode_inputs.emplace_back(ConvertInput(tuple[i]));
     }
+    if (py::hasattr(arg, "__parameter_tuple__")) {
+      return EmitCNode(prim::kPrimMakeTuple, std::move(cnode_inputs));
+    }
     return EmitCNode(prim::kPrimMakeTuple, cnode_inputs);
-  };
-  if (IsTensorSequence<py::tuple>(arg)) {
-    return ConvertSqeuenceInput(py::cast<py::tuple>(arg));
-  }
-  if (IsTensorSequence<py::list>(arg)) {
-    return ConvertSqeuenceInput(py::cast<py::list>(arg));
-  }
-  // value
-  if (IsPackTensor(arg)) {
+  } else if (IsPackTensor(arg)) {
     py::object node = py::getattr(arg, stub::PY_ATTR_STUB);
     return node.cast<std::shared_ptr<PackNode>>()->Get();
-  } else if (py::hasattr(arg, "__parameter__") && py::isinstance<tensor::MetaTensor>(arg) &&
-             GetExecutionMode() == kGraphMode) {
+  } else if (py::hasattr(arg, "__parameter__") && py::isinstance<tensor::MetaTensor>(arg) && !is_pynative_mode) {
     return parse::ResolveParameterObj(graphs_.top(), arg);
   } else {
     auto val = parse::data_converter::PyDataToValue(arg);
