@@ -81,6 +81,7 @@ Neural Network
     mindspore.ops.MaxUnpool3D
     mindspore.ops.MirrorPad
     mindspore.ops.Pad
+    mindspore.ops.PadV3
     mindspore.ops.EmbeddingLookup
     mindspore.ops.Padding
     mindspore.ops.ResizeBicubic

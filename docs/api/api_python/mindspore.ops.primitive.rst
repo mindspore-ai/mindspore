@@ -80,6 +80,7 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.MaxUnpool3D
     mindspore.ops.MirrorPad
     mindspore.ops.Pad
+    mindspore.ops.PadV3
     mindspore.ops.Padding
     mindspore.ops.ResizeBicubic
     mindspore.ops.ResizeBilinear
