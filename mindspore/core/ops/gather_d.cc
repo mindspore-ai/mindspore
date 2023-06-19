@@ -62,12 +62,12 @@ bool GetGatherDimValue(const AbstractBasePtr dim_ptr, int64_t *dim_v) {
     if (dim_tensor->data_c() == nullptr) {
       return false;
     }
-    if (dim_tensor->data_type_c() == kNumberTypeInt64) {
+    if (dim_tensor->data_type_c() == TypeId::kNumberTypeInt64) {
       auto dim_data64 = reinterpret_cast<int64_t *>(dim_tensor->data_c());
       MS_EXCEPTION_IF_NULL(dim_data64);
       *dim_v = static_cast<int64_t>(*dim_data64);
       return true;
-    } else if (dim_tensor->data_type_c() == kNumberTypeInt32) {
+    } else if (dim_tensor->data_type_c() == TypeId::kNumberTypeInt32) {
       auto dim_data32 = reinterpret_cast<int *>(dim_tensor->data_c());
       MS_EXCEPTION_IF_NULL(dim_data32);
       *dim_v = static_cast<int64_t>(*dim_data32);
