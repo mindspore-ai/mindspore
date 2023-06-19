@@ -308,7 +308,7 @@ class Parser {
                        const std::string &target_id_str, const std::string &attr_str);
 
   // Assign value to single variable name.
-  void HandleAssignName(const FunctionBlockPtr &block, const py::object &target, const AnfNodePtr &assigned_node);
+  void HandleAssignName(const FunctionBlockPtr &block, const py::object &target, const AnfNodePtr &assigned_node) const;
 
   // Assign value to tuple.
   void HandleAssignTupleOrList(const FunctionBlockPtr &block, const py::object &target,
@@ -372,7 +372,7 @@ class Parser {
   void CheckFuncReturn(const FuncGraphPtr &fn);
 
   // If the node is Parameter member of class.
-  bool IsClassParameterMember(const py::object &target_obj, const AnfNodePtr &target_node);
+  bool IsClassParameterMember(const py::object &target_obj, const AnfNodePtr &target_node) const;
 
   // The shared_ptr will be hold by GraphManager, so just hold a weak ref here.
   static FuncGraphWeakPtr top_func_graph_;

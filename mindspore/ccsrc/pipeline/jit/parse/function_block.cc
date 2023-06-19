@@ -287,7 +287,7 @@ AnfNodePtr FunctionBlock::MakeResolveClassMemberOrSelf(const std::string &attr_o
   return MakeResolve(name_space, symbol);
 }
 
-void FunctionBlock::CheckUndefinedSymbol(const std::string &var, const AnfNodePtr &node) {
+void FunctionBlock::CheckUndefinedSymbol(const std::string &var, const AnfNodePtr &node) const {
   if (node->isa<ValueNode>()) {
     auto value = GetValuePtr<ValueProblem>(node->cast<ValueNodePtr>());
     if ((value != nullptr) && (value->IsUndefined())) {
@@ -536,9 +536,7 @@ std::string GetIfTheOtherBranchName(const std::string &v) {
 std::string GetVariableDefinedLocation(const FunctionBlock *block, const std::string &var, int start_line) {
   HashSet<FunctionBlock *> visited;
   std::vector<FunctionBlock *> todo_list = {};
-  for (auto &prev : block->prev_blocks()) {
-    (void)todo_list.push_back(prev);
-  }
+  (void)std::copy(block->prev_blocks().cbegin(), block->prev_blocks().cend(), std::back_inserter(todo_list));
   while (!todo_list.empty()) {
     auto cur_block = todo_list.back();
     todo_list.pop_back();
@@ -546,7 +544,7 @@ std::string GetVariableDefinedLocation(const FunctionBlock *block, const std::st
       continue;
     }
     (void)visited.insert(cur_block);
-    std::copy(cur_block->prev_blocks().cbegin(), cur_block->prev_blocks().cend(), std::back_inserter(todo_list));
+    (void)std::copy(cur_block->prev_blocks().cbegin(), cur_block->prev_blocks().cend(), std::back_inserter(todo_list));
     auto node = cur_block->ReadLocalVariable(var);
     if (node != nullptr && !node->isa<Parameter>()) {
       const auto &debug_info = trace::GetSourceCodeDebugInfo(node->debug_info());

@@ -791,7 +791,7 @@ FunctionBlockPtr Parser::ParseStatements(const FunctionBlockPtr &block, const py
     }
     sub_block = next_block;
 
-    static auto boost_parse = common::GetEnv("MS_DEV_BOOST_PARSE");
+    static const auto boost_parse = common::GetEnv("MS_DEV_BOOST_PARSE");
     if ((boost_parse != "2" && boost_parse != "3")) {
       // Insert appropriate depended items for the function block if it has a return node
       if (sub_block->func_graph()->get_return() != nullptr || sub_block->is_dead_block()) {
@@ -1337,7 +1337,6 @@ bool Parser::GetBoolObjForAstCompare(const py::object &node, bool *bool_res) {
     return false;
   }
   // Must be NameConstant.
-  py::object comparator;
   py::object comparator_obj = python_adapter::GetPyObjAttr(comparators[0], "value");
   MS_LOG(DEBUG) << "comparator_obj: " << py::str(comparator_obj);
 
@@ -1855,11 +1854,11 @@ AnfNodePtr Parser::ParseTuple(const FunctionBlockPtr &block, const py::object &n
 
   std::vector<AnfNodePtr> tuple_vec;
   AnfNodePtr make_tuple_op = block->MakeResolveOperation(NAMED_PRIMITIVE_MAKETUPLE);
-  tuple_vec.emplace_back(make_tuple_op);
+  (void)tuple_vec.emplace_back(make_tuple_op);
   for (size_t i = 0; i < elts.size(); i++) {
     AnfNodePtr node_ptr = ParseExprNode(block, elts[i]);
     node_ptr = HandleInterpret(block, node_ptr, elts[i]);
-    tuple_vec.emplace_back(node_ptr);
+    (void)tuple_vec.emplace_back(node_ptr);
   }
   MS_EXCEPTION_IF_NULL(block->func_graph());
   CNodePtr tuple_app = block->func_graph()->NewCNodeInOrder(std::move(tuple_vec));
@@ -1878,11 +1877,11 @@ AnfNodePtr Parser::ParseList(const FunctionBlockPtr &block, const py::object &no
 
   std::vector<AnfNodePtr> list_vec;
   AnfNodePtr make_list_op = block->MakeResolveOperation(NAMED_PRIMITIVE_MAKELIST);
-  list_vec.emplace_back(make_list_op);
+  (void)list_vec.emplace_back(make_list_op);
   for (size_t i = 0; i < elts.size(); i++) {
     AnfNodePtr node_ptr = ParseExprNode(block, elts[i]);
     node_ptr = HandleInterpret(block, node_ptr, elts[i]);
-    list_vec.emplace_back(node_ptr);
+    (void)list_vec.emplace_back(node_ptr);
   }
   MS_EXCEPTION_IF_NULL(block->func_graph());
   CNodePtr list_app = block->func_graph()->NewCNodeInOrder(std::move(list_vec));
@@ -1945,10 +1944,10 @@ AnfNodePtr Parser::ParseExtSlice(const FunctionBlockPtr &block, const py::object
   py::tuple slice_tuple = python_adapter::GetPyObjAttr(node, "dims");
 
   std::vector<AnfNodePtr> node_vec;
-  node_vec.emplace_back(make_tuple_op);
+  (void)node_vec.emplace_back(make_tuple_op);
   for (size_t i = 0; i < slice_tuple.size(); i++) {
     AnfNodePtr node_ptr = ParseExprNode(block, slice_tuple[i]);
-    node_vec.emplace_back(node_ptr);
+    (void)node_vec.emplace_back(node_ptr);
   }
   MS_EXCEPTION_IF_NULL(block->func_graph());
   CNodePtr tuple_conde = block->func_graph()->NewCNodeInOrder(std::move(node_vec));
@@ -2139,7 +2138,7 @@ void Parser::CheckControlFlowAlterationInIf(std::pair<FunctionBlockPtr, Function
 
 // Return true if it's constant condition and the condition value returned by is_true_cond, otherwise return false.
 bool Parser::CheckConstantCondition(const py::object &test_node, bool *is_true_cond) {
-  static auto boost_parse = common::GetEnv("MS_DEV_BOOST_PARSE");
+  static const auto boost_parse = common::GetEnv("MS_DEV_BOOST_PARSE");
   if (boost_parse != "1" && boost_parse != "3") {
     return false;
   }
@@ -2826,8 +2825,8 @@ AnfNodePtr Parser::ParseListCompIfs(const FunctionBlockPtr &list_body_block, con
   MS_EXCEPTION_IF_NULL(list_body_block->func_graph());
   std::vector<AnfNodePtr> list_vec;
   AnfNodePtr make_list_op = list_body_block->MakeResolveOperation(NAMED_PRIMITIVE_MAKELIST);
-  list_vec.emplace_back(make_list_op);
-  list_vec.emplace_back(elt_node);
+  (void)list_vec.emplace_back(make_list_op);
+  (void)list_vec.emplace_back(elt_node);
   CNodePtr list_app = list_body_block->func_graph()->NewCNodeInOrder(std::move(list_vec));
   std::string add_module_name = "mindspore.ops.composite.multitype_ops.add_impl";
   ValuePtr add_op = prim::GetPythonOps("add", add_module_name);
@@ -2932,7 +2931,7 @@ AnfNodePtr Parser::ParseFormattedValue(const FunctionBlockPtr &block, const py::
 }
 
 void Parser::HandleAssignName(const FunctionBlockPtr &block, const py::object &target,
-                              const AnfNodePtr &assigned_node) {
+                              const AnfNodePtr &assigned_node) const {
   MS_EXCEPTION_IF_NULL(block);
   MS_EXCEPTION_IF_NULL(assigned_node);
   py::str name = python_adapter::GetPyObjAttr(target, "id");
@@ -2970,7 +2969,7 @@ void Parser::HandleAssignTupleOrList(const FunctionBlockPtr &block, const py::ob
   }
 }
 
-bool Parser::IsClassParameterMember(const py::object &target_obj, const AnfNodePtr &target_node) {
+bool Parser::IsClassParameterMember(const py::object &target_obj, const AnfNodePtr &target_node) const {
   auto attr_name = target_obj.attr("attr").cast<std::string>();
   if (!py::hasattr(ast()->obj(), common::SafeCStr(attr_name))) {
     MS_EXCEPTION(TypeError)
@@ -3027,8 +3026,8 @@ void Parser::MakeSetAttrNode(const FunctionBlockPtr &block, const AnfNodePtr &ta
   auto iter = setattr_nodes_map_.find(target_id_str);
   if (iter == setattr_nodes_map_.end()) {
     auto attr_map = std::map<std::string, AnfNodePtr>();
-    attr_map.emplace(std::make_pair(attr_str, setattr_node));
-    setattr_nodes_map_.emplace(std::make_pair(target_id_str, attr_map));
+    (void)attr_map.emplace(std::make_pair(attr_str, setattr_node));
+    (void)setattr_nodes_map_.emplace(std::make_pair(target_id_str, attr_map));
   } else {
     // If found setattr node before, set it as new setattr node's input.
     auto iter_attr = iter->second.find(attr_str);
@@ -3036,7 +3035,7 @@ void Parser::MakeSetAttrNode(const FunctionBlockPtr &block, const AnfNodePtr &ta
       setattr_node->add_input(iter_attr->second);
     }
     // Force update the setattr node to keep the newest one.
-    iter->second.insert_or_assign(attr_str, setattr_node);
+    (void)iter->second.insert_or_assign(attr_str, setattr_node);
   }
   block->AddIsolatedNode(setattr_node);
 }
@@ -3376,7 +3375,7 @@ FunctionBlockPtr Parser::ParseContinue(const FunctionBlockPtr &block, const py::
   Loop &loop = loops_.top();
   std::vector<AnfNodePtr> args;
   if (loop.iterator != nullptr) {
-    args.emplace_back(loop.iterator);
+    (void)args.emplace_back(loop.iterator);
   }
   block->SetBreakContinueStatementInside();
   MS_LOG(DEBUG) << "Inside the block has continue statement, block: " << block->ToString();
