@@ -7150,7 +7150,7 @@ def row_stack(tensors):
     return vstack(tensors)
 
 
-def combinations(x, r=2, with_replacement=False):
+def combinations(input, r=2, with_replacement=False):
     r"""
     Returns all r-length subsequences of input Tensor.
 
@@ -7159,7 +7159,7 @@ def combinations(x, r=2, with_replacement=False):
     it behaves like `itertools.combinations_with_replacement`.
 
     Args:
-        x (Tensor): One-dimensional tensors.
+        input (Tensor): One-dimensional tensors.
         r (int, optional): Number of elements to perform combination. Default: ``2`` .
         with_replacement (bool, optional): Allow duplication or not. Default: ``False`` .
 
@@ -7167,17 +7167,17 @@ def combinations(x, r=2, with_replacement=False):
         Tensor, contains all possible combinations of elements sampled from input Tensor.
 
     Raises:
-        TypeError: If `x` is not a tensor.
-        TypeError: If `x` is not an int.
+        TypeError: If `input` is not a tensor.
+        TypeError: If `r` is not an int.
         TypeError: If `with_replacement` is not bool.
-        ValueError: If `x` is not one-dimensional.
+        ValueError: If `input` is not one-dimensional.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor([1, 3, -1, 0, 4])
-        >>> output = ops.combinations(x)
+        >>> input = Tensor([1, 3, -1, 0, 4])
+        >>> output = ops.combinations(input)
         >>> print(output.asnumpy())
         [[ 1  3]
          [ 1 -1]
@@ -7239,12 +7239,12 @@ def combinations(x, r=2, with_replacement=False):
             lst = ops.concat((lst, item), -1)
         return None
 
-    if not isinstance(x, Tensor):
-        raise TypeError(f"For 'combinations', 'x' must be a tensor, but got {type(x)}")
-    if x.ndim != 1:
-        raise ValueError(f"For 'combinations', the dimension 'x' must be 1, but got {x.ndim}")
+    if not isinstance(input, Tensor):
+        raise TypeError(f"For 'combinations', 'x' must be a tensor, but got {type(input)}")
+    if input.ndim != 1:
+        raise ValueError(f"For 'combinations', the dimension 'x' must be 1, but got {input.ndim}")
     comb_func = _combinations_with_replacement if with_replacement else _combinations
-    ret = comb_func(x, r)
+    ret = comb_func(input, r)
     if ret.size == 0:
         return ret
     return ops.reshape(ret, (-1, r))
