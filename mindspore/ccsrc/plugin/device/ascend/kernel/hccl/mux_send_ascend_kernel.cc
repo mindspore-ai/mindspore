@@ -24,7 +24,7 @@ namespace kernel {
 MuxSendAscendKernel::MuxSendAscendKernel() {
   if (tcp_client_ == nullptr) {
     tcp_client_ = std::make_unique<distributed::rpc::TCPClient>();
-    tcp_client_->Initialize();
+    (void)tcp_client_->Initialize();
   }
 }
 
@@ -80,7 +80,7 @@ bool MuxSendAscendKernel::Init(const AnfNodePtr &anf_node) {
   auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
   MS_EXCEPTION_IF_NULL(prim);
 
-  src_rank_ = cgn_->rank_id();
+  src_rank_ = UintToInt(cgn_->rank_id());
   dest_rank_ = GetValue<int64_t>(prim->GetAttr("dest_rank"));
 
   hccl_kernel_input_shape_list_.clear();
