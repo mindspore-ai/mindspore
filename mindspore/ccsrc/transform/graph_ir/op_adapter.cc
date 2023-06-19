@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -714,6 +714,11 @@ int OpAdapterImpl::SetCustomOpAttr(const CusOperatorPtr &op, const PrimitivePtr 
     } else if (item.second->isa<ValueSequence>()) {
       value_type = SEQUEUE_VALUE;
       auto val_seq = item.second->cast<ValueSequencePtr>();
+      if (val_seq->size() == 0) {
+        std::vector<int64_t> value;
+        (void)op->SetAttr(item.first, value);
+        continue;
+      }
       if ((*val_seq)[0]->isa<StringImm>()) {
         (void)op->SetAttr(item.first, GetValue<const std::vector<std::string>>(item.second));
       } else if ((*val_seq)[0]->isa<FP32Imm>()) {

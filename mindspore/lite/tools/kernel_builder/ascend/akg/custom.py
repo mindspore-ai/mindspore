@@ -279,6 +279,7 @@ class MatMul(OpInfer):
         return ["FRACTAL_NZ,FRACTAL_NZ,FRACTAL_NZ"]
 
     def nd_infer(self, sh0, sh1, trans_a, trans_b):
+        """infer shape with nd format"""
         if len(sh0) != len(sh1):
             raise ValueError("For '{}', input shape '{}' and '{}' are not supported".format(self.name, sh0, sh1))
         m = sh0[-2] if not trans_a else sh0[-1]
