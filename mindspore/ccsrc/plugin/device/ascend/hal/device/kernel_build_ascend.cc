@@ -180,7 +180,7 @@ void GetAtomicWorkspaceAndOutputIndex(const kernel::NodeBaseInfo &node_base_info
   }
   for (size_t i = 0; i < tmp.size(); i++) {
     if (tmp[i] == 1) {
-      workspace_indexes->emplace_back(i);
+      (void)workspace_indexes->emplace_back(i);
     }
   }
   tmp.clear();
@@ -189,7 +189,7 @@ void GetAtomicWorkspaceAndOutputIndex(const kernel::NodeBaseInfo &node_base_info
     if (idx >= params_size) {
       continue;
     }
-    tmp.emplace_back(parameters_indexes[idx]);
+    (void)tmp.emplace_back(parameters_indexes[idx]);
     if (parameters_indexes[idx] != 0) {
       *output_index_flag = true;
     }
@@ -197,7 +197,7 @@ void GetAtomicWorkspaceAndOutputIndex(const kernel::NodeBaseInfo &node_base_info
 
   for (size_t i = 0; i < tmp.size(); i++) {
     if (tmp[i] == 1) {
-      output_indexes->emplace_back(i);
+      (void)output_indexes->emplace_back(i);
     }
   }
   tmp.clear();
@@ -264,7 +264,7 @@ bool IsAtomicNode(const CNodePtr &kernel_node) {
   kernel_mod->GenAtomicInitInfo(&atomic_init_info);
   if (!atomic_init_info.dtype_list.empty()) {
     std::vector<int64_t> dtype_list;
-    std::transform(
+    (void)std::transform(
       atomic_init_info.dtype_list.begin(), atomic_init_info.dtype_list.end(), std::back_inserter(dtype_list),
       [](const std::string &str_type) { return static_cast<int32_t>(transform::ge_str_dtype_map.at(str_type)); });
     common::AnfAlgo::SetNodeAttr(kAttrTbeOpAtomicDtypes, MakeValue(dtype_list), kernel_node);

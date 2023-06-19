@@ -351,8 +351,8 @@ void KernelPack::ParseParameters(const std::string &key, const nlohmann::json &j
       if (!obj.is_object()) {
         auto in_param = params.get<std::vector<int64_t>>();
         std::vector<size_t> tmp;
-        std::transform(in_param.begin(), in_param.end(), std::back_inserter(tmp),
-                       [](int64_t v) { return LongToSize(v); });
+        (void)std::transform(in_param.begin(), in_param.end(), std::back_inserter(tmp),
+                             [](int64_t v) { return LongToSize(v); });
         kernel_json_info->parameters = tmp;
         return;
       }

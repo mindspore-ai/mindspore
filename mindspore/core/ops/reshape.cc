@@ -29,7 +29,7 @@ namespace {
 constexpr auto kShapeFromTensor = "shape_from_tensor";
 constexpr size_t kSize2 = 2;
 
-ShapeVector UpdateOutputShape(const ShapeVector &x_shape, const ShapeVector &y_shape, const ShapeVector &output_shape) {
+ShapeVector UpdateOutputShape(const ShapeVector &x_shape, const ShapeVector &y_shape) {
   if (IsDynamicShape(y_shape)) {
     ShapeVector ret = ShapeVector{std::accumulate(x_shape.begin(), x_shape.end(), 1, std::multiplies<int64_t>())};
     if (y_shape.size() == kSize2) {
@@ -112,7 +112,7 @@ class ReshapeInfer : public abstract::OpInferBase {
       if (primitive->HasAttr(kShapeFromTensor) && GetValue<bool>(primitive->GetAttr(kShapeFromTensor))) {
         if (input_y->isa<abstract::AbstractTensor>() && value->isa<tensor::Tensor>()) {
           auto y_shape = CheckAndConvertUtils::CheckTensorIntValue("y_shape", value, prim_name);
-          output_shape = UpdateOutputShape(x_shape, y_shape, output_shape);
+          output_shape = UpdateOutputShape(x_shape, y_shape);
         }
       }
 
