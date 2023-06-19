@@ -3,6 +3,8 @@ mindspore.ops.primitive
 
 可用于Cell的构造函数的算子。
 
+动态shape的支持情况详见 `算子动态shape支持情况 <https://mindspore.cn/docs/zh-CN/master/note/dynamic_shape_primitive.html>`_ 。
+
 算子级并行过程各算子的使用约束详见 `算子级并行使用约束 <https://www.mindspore.cn/docs/zh-CN/master/note/operator_list_parallel.html>`_ 。
 
 模块导入方法如下：
