@@ -407,14 +407,11 @@ def hamming_window(window_length, periodic=True, alpha=0.54, beta=0.46, *, dtype
     if dtype is not None and dtype not in mstype.float_type:
         raise TypeError(f"For array function 'hamming_window', 'dtype' must be floating point dtypes, but got {dtype}.")
 
-    if periodic:
-        window_length += 1
-    n = arange(0, window_length)
-    w = alpha - beta * ops.cos((2 * np.pi / (window_length - 1)) * n)
-
-    if dtype is not None:
-        w = P.Cast()(w, dtype)
-    return w[:-1] if periodic else w
+    dtype = mstype.float32 if dtype is None else dtype
+    op = _get_cache_prim(P.HammingWindow)(periodic, alpha, beta, dtype)
+    length = Tensor(np.array([window_length]).astype(np.int32))
+    out = op(length)
+    return out
 
 
 def where(condition, x, y):
