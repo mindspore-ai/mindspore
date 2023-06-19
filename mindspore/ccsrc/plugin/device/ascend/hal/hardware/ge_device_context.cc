@@ -44,7 +44,11 @@ constexpr char kGeDumpMode[3][7] = {"all", "input", "output"};
 const std::set<std::string> kAscend910BVersions = {"Ascend910B1", "Ascend910B2", "Ascend910B3", "Ascend910B4"};
 }  // namespace
 
-bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const { return true; }
+bool GeDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  return context_ptr->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK);
+}
 
 RunMode GeDeviceContext::GetRunMode(const FuncGraphPtr &func_graph) const { return RunMode::kGraphMode; }
 

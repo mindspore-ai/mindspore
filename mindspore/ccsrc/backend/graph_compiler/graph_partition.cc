@@ -645,7 +645,7 @@ bool GraphPartition::IsCut(const AnfNodePtr &node) {
           MS_EXCEPTION_IF_NULL(ms_context);
           ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_HOOK, true);
         }
-        if (backend_name_ == kMsConvert && prim->name() == prim::kPrimMakeTuple->name()) {
+        if ((backend_name_ == kMsConvert || backend_name_ == kGeVm) && prim->name() == prim::kPrimMakeTuple->name()) {
           if (inputs.size() <= 1) {
             return false;
           }

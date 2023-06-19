@@ -1170,7 +1170,8 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
   bool exist_while =
     std::any_of(graphs.cbegin(), graphs.cend(), [](const FuncGraphPtr &fg) { return fg->recursive(); });
   MS_LOG(INFO) << func_graph->ToString() << " exist_while: " << exist_while;
-  if (exist_while || ExistSwitchRef(func_graph, all_nodes)) {
+  static const bool is_enable_ge = (common::GetEnv("MS_ENABLE_GE") == "1");
+  if (!is_enable_ge && (exist_while || ExistSwitchRef(func_graph, all_nodes))) {
     if (!pynative_mode) {
       MS_LOG(INFO) << "Run graph mode with sub graph sink because graph exist while or switch ref.";
       set_ctx(true, false, false);
@@ -1292,13 +1293,13 @@ bool TaskEmitAction(const ResourcePtr &resource) {
     return true;
   }
   // The graph compiling of control sink.
-  if (IsCtrlSink() && backend == kMsConvert) {
+  if (IsCtrlSink() && (backend == kMsConvert || backend == kGeVm)) {
     auto graph_id = bc_ptr->CompileGraph(NOT_NULL(func_graph));
     resource->SetResult(kOutput, graph_id);
     return true;
   }
   std::vector<PrimitivePtr> cut_list = compile::GetNonlinearOps();
-  if (bc_ptr->name() == kMsConvert) {
+  if (bc_ptr->name() == kMsConvert || bc_ptr->name() == kGeVm) {
     cut_list = compile::GetMsNonlinearOps();
   }
   std::shared_ptr<CompileGraphs> compile = std::make_shared<CompileGraphs>(bc_ptr, cut_list);
@@ -1324,7 +1325,7 @@ bool ExecuteAction(const ResourcePtr &resource) {
   }
 
   // The graph running of control sink.
-  if (IsCtrlSink() && backend == kMsConvert) {
+  if (IsCtrlSink() && (backend == kMsConvert || backend == kGeVm)) {
     auto graph_id = resource->GetResult(kOutput).cast<GraphId>();
     auto bc_ptr = resource->GetBackend();
     compile::MsBackend *msbc_ptr = std::dynamic_pointer_cast<compile::MsBackend>(bc_ptr).get();
