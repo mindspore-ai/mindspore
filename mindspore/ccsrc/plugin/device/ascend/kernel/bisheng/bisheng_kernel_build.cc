@@ -22,6 +22,7 @@
 #include <map>
 #include "plugin/device/ascend/kernel/bisheng/custom_bisheng_kernel.h"
 #include "plugin/device/ascend/kernel/bisheng/bisheng_kernel_mod.h"
+#include "include/backend/anf_runtime_algorithm.h"
 #include "plugin/factory/ms_factory.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/dlopen_macro.h"
@@ -67,6 +68,7 @@ KernelModPtr BiShengOpBuild(const AnfNodePtr &anf_node) {
 
   MS_LOG(INFO) << "Bisheng internal op " << kernel_name;
   auto kernel_mod = Factory<BiShengKernelMod>::Instance().Create(kernel_name);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
   auto args = AbstractArgsFromCNode(cnode);
   auto inputs_tensor_map = std::map<uint32_t, tensor::TensorPtr>();
   SetInputsByConstInputs(cnode, &inputs_tensor_map);
@@ -80,6 +82,25 @@ KernelModPtr BiShengOpBuild(const AnfNodePtr &anf_node) {
       MS_LOG(EXCEPTION) << "Bisheng kernel op[" << cnode->fullname_with_scope() << "] Resize failed.";
     }
   }
+  if (!kernel_mod->GetWorkspaceFunc().empty()) {
+    BiShengKernelArgs bisheng_args;
+    for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(cnode); ++i) {
+      bisheng_args.input_shapes.emplace_back(AnfAlgo::GetInputDeviceShape(cnode, i));
+    }
+    for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(cnode); ++i) {
+      bisheng_args.output_shapes.emplace_back(AnfAlgo::GetOutputDeviceShape(cnode, i));
+    }
+    std::vector<size_t> workspace_size_list;
+    for (const auto &func : kernel_mod->GetWorkspaceFunc()) {
+      MS_EXCEPTION_IF_NULL(func);
+      auto workspace_size = func(bisheng_args);
+      if (workspace_size != 0) {
+        workspace_size_list.emplace_back(workspace_size);
+      }
+    }
+    kernel_mod->SetWorkspaceSizeList(workspace_size_list);
+  }
+  kernel_mod->SetNode(anf_node);
   return kernel_mod;
 }
 }  // namespace kernel

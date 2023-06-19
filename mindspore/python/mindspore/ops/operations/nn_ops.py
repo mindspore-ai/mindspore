@@ -11104,3 +11104,56 @@ class Dense(Primitive):
         self.has_bias = has_bias
         self.has_bias = validator.check_bool(has_bias, "has_bias", "Dense")
         self.add_prim_attr("has_bias", self.has_bias)
+
+
+class WKV(Primitive):
+    r"""
+    The WKV computation is similar to AFT(Zhai et al., 2021), but W is now a channel-wise vector multiplied
+    by relative position rather than a pairwise matrix in AFT. We also introduce a vector U for separately
+    attending to the current token in order to compensate for potential degeneration of W.
+
+    Inputs:
+        - **w** (Tensor) - The time_first tensor with data type of float32.
+          Input tensor of shape :math:`(hidden_size,)`.
+        - **u** (Tensor]) - The time_decay tensor with data type of float32.
+          Input tensor of shape :math:`(hidden_size,)`.
+        - **k** (Tensor) - The key tensor with data type of float32.
+          Input tensor of shape :math:`(batch_size, seq_length, hidden_size)`.
+        - **v** (Tensor) - The value tensor with data type of float32.
+          Input tensor of shape :math:`(batch_size, seq_length, hidden_size)`.
+        - **sp** (Tensor) - The states_p tensor with data type of float32.
+          Input tensor of shape :math:`(batch_size, seq_length, hidden_size)`.
+        - **sq** (Tensor) - The states_q tensor with data type of float32.
+          Input tensor of shape :math:`(batch_size, hidden_size)`.
+        - **sm** (Tensor) - The states_m tensor with data type of float32.
+          Input tensor of shape :math:`(batch_size, hidden_size)`.
+
+    Outputs:
+        Tensor of shape :math:`(batch_size, seq_length, hidden_size)`.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> from mindspore.ops.operations import nn_ops
+        >>> b = 32
+        >>> t = 2
+        >>> c = 128
+        >>> w = Tensor(np.random.randn(c).astype(np.float32))
+        >>> u = Tensor(np.random.randn(c).astype(np.float32))
+        >>> k = Tensor(np.random.randn(b, t, c).astype(np.float32))
+        >>> v = Tensor(np.random.randn(b, t, c).astype(np.float32))
+        >>> sp = Tensor(np.random.randn(b, c).astype(np.float32))
+        >>> sq = Tensor(np.random.randn(b, c).astype(np.float32))
+        >>> sm = Tensor(np.random.randn(b, c).astype(np.float32))
+        >>> dense = nn_ops.WKV()
+        >>> output = dense(w, u, k, v, sp, sq, sm)
+        >>> print(output[0].shape)
+        (32, 2, 128)
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize WKV."""
+        self.init_prim_io_names(inputs=["time_first", "time_decay", "key", "value", "sp", "sq", "sm"],
+                                outputs=["output", "out_sp", "out_sq", "out_sm"])

@@ -21,27 +21,31 @@
 
 namespace mindspore::kernel::bisheng {
 template <typename T>
-void Add(void *x1, void *x2, void *y, uint64_t size, void *stream) {
+class AddKernel {};
+
+template <typename T>
+void Add(void *x1, void *x2, void *y, void *size, void *stream) {
   T *input0 = static_cast<T *>(x1);
   T *input1 = static_cast<T *>(x2);
   T *output = static_cast<T *>(y);
+  uint64_t real_size = static_cast<uint64_t *>(size)[0];
   CCEcontext rt_context = nullptr;
   rtCtxGetCurrent(&rt_context);
   sycl::context sycl_context = sycl::make_context<sycl::backend::cce>(rt_context);
   sycl::queue queue = sycl::make_queue<sycl::backend::cce>(stream, sycl_context);
   queue.submit([&](sycl::handler &cgh) {
-    cgh.parallel_for<T>(size / sizeof(T), [=](sycl::id<1> idx) { output[idx] = input0[idx] + input1[idx]; });
+    cgh.parallel_for<AddKernel<T>>(real_size, [=](sycl::id<1> idx) { output[idx] = input0[idx] + input1[idx]; });
   });
 }
 
-template BISHENG_LIB_EXPORT void Add<uint8_t>(void *x1, void *x2, void *y, size_t size, void *stream);
-template BISHENG_LIB_EXPORT void Add<int8_t>(void *x1, void *x2, void *y, size_t size, void *stream);
-template BISHENG_LIB_EXPORT void Add<uint16_t>(void *x1, void *x2, void *y, size_t size, void *stream);
-template BISHENG_LIB_EXPORT void Add<int16_t>(void *x1, void *x2, void *y, size_t size, void *stream);
-template BISHENG_LIB_EXPORT void Add<uint32_t>(void *x1, void *x2, void *y, size_t size, void *stream);
-template BISHENG_LIB_EXPORT void Add<int32_t>(void *x1, void *x2, void *y, size_t size, void *stream);
-template BISHENG_LIB_EXPORT void Add<uint64_t>(void *x1, void *x2, void *y, size_t size, void *stream);
-template BISHENG_LIB_EXPORT void Add<int64_t>(void *x1, void *x2, void *y, size_t size, void *stream);
-template BISHENG_LIB_EXPORT void Add<sycl::half>(void *x1, void *x2, void *y, size_t size, void *stream);
-template BISHENG_LIB_EXPORT void Add<float>(void *x1, void *x2, void *y, size_t size, void *stream);
+template BISHENG_LIB_EXPORT void Add<uint8_t>(void *x1, void *x2, void *y, void *size, void *stream);
+template BISHENG_LIB_EXPORT void Add<int8_t>(void *x1, void *x2, void *y, void *size, void *stream);
+template BISHENG_LIB_EXPORT void Add<uint16_t>(void *x1, void *x2, void *y, void *size, void *stream);
+template BISHENG_LIB_EXPORT void Add<int16_t>(void *x1, void *x2, void *y, void *size, void *stream);
+template BISHENG_LIB_EXPORT void Add<uint32_t>(void *x1, void *x2, void *y, void *size, void *stream);
+template BISHENG_LIB_EXPORT void Add<int32_t>(void *x1, void *x2, void *y, void *size, void *stream);
+template BISHENG_LIB_EXPORT void Add<uint64_t>(void *x1, void *x2, void *y, void *size, void *stream);
+template BISHENG_LIB_EXPORT void Add<int64_t>(void *x1, void *x2, void *y, void *size, void *stream);
+template BISHENG_LIB_EXPORT void Add<sycl::half>(void *x1, void *x2, void *y, void *size, void *stream);
+template BISHENG_LIB_EXPORT void Add<float>(void *x1, void *x2, void *y, void *size, void *stream);
 }  // namespace mindspore::kernel::bisheng

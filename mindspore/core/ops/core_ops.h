@@ -829,6 +829,8 @@ GVAR_DEF(PrimitivePtr, kPrimSparseSparseMinimum, std::make_shared<Primitive>(kSp
 GVAR_DEF(PrimitivePtr, kPrimSparseReshape, std::make_shared<Primitive>(kSparseReshape));
 GVAR_DEF(PrimitivePtr, kPrimSparseReorder, std::make_shared<Primitive>(kSparseReorder));
 GVAR_DEF(PrimitivePtr, kPrimBincount, std::make_shared<Primitive>(kBincount));
+GVAR_DEF(PrimitivePtr, kPrimWKV, std::make_shared<Primitive>("WKV"));
+GVAR_DEF(PrimitivePtr, kPrimWKVGrad, std::make_shared<Primitive>("WKVGrad"));
 
 // image
 GVAR_DEF(PrimitivePtr, kPrimCropAndResizeGradBoxes, std::make_shared<Primitive>(kCropAndResizeGradBoxes));

@@ -20,6 +20,7 @@ from __future__ import absolute_import
 from mindspore.common import dtype as mstype
 from mindspore.ops._grad_experimental.grad_base import bprop_getters
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations.nn_ops import FractionalAvgPool
@@ -33,10 +34,11 @@ from mindspore.ops.operations._grad_ops import AvgPoolGradV1
 from mindspore.ops.operations.nn_ops import MaxPoolWithArgmaxV2
 from mindspore.ops.operations.nn_ops import FractionalMaxPoolWithFixedKsize
 from mindspore.ops.operations._grad_ops import FractionalMaxPoolGradWithFixedKsize
+from mindspore.ops.operations.nn_ops import WKV
+from mindspore.ops.operations._grad_ops import WKVGrad
 from mindspore.ops.operations.nn_ops import GLU
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool3D
 from mindspore.ops.operations._sequence_ops import TupleToTensor
-from mindspore.ops import functional as F
 from mindspore.ops.operations import _rl_inner_ops as rl_ops
 
 
@@ -266,3 +268,18 @@ def get_bprop_basic_lstm_cell(self):
         return res
 
     return bprop
+
+
+@bprop_getters.register(WKV)
+def get_bprop_wkv(self):
+    """Grad definition for `wkv` operation."""
+    wkv_backward = WKVGrad()
+
+    def bpro(w, u, k, v, sp, sq, sm, out, dout):
+        gw, gu, gk, gv = wkv_backward(w, u, k, v, dout[0])
+        gw = F.sum(gw, 0)
+        gu = F.sum(gu, 0)
+        res = (gw, gu, gk, gv, zeros_like(sp), zeros_like(sq), zeros_like(sm))
+        return res
+
+    return bpro

@@ -16,6 +16,7 @@
 
 #include "plugin/device/ascend/kernel/bisheng/add_bisheng_kernel.h"
 #include <algorithm>
+#include <functional>
 #include "plugin/device/ascend/kernel/bisheng/bisheng_op_info.h"
 #include "plugin/device/ascend/kernel/bisheng/impl/add.h"
 
@@ -37,12 +38,13 @@ bool AddBishengKernel::Init(const BaseOperatorPtr &base_operator, const std::vec
     return false;
   }
   kernel_func_ = func_list_[index].second;
+  func_name_ = func_name_list_.at(index);
   return true;
 }
 
 template <typename T>
 bool AddBishengKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> &,
+                                    const std::vector<kernel::AddressPtr> &workspace,
                                     const std::vector<kernel::AddressPtr> &outputs, void *stream) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAddInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAddOutputsNum, kernel_name_);
@@ -55,8 +57,19 @@ bool AddBishengKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &input
     MS_LOG(EXCEPTION) << "Input memory size of input " << inputs[0]->size << " must be equal to memory size of output "
                       << outputs[0]->size;
   }
-  bisheng::Add<T>(inputs[0]->addr, inputs[1]->addr, outputs[0]->addr, outputs[0]->size, stream);
+  bisheng::Add<T>(inputs[0]->addr, inputs[1]->addr, outputs[0]->addr, workspace[0]->addr, stream);
   return true;
+}
+
+int AddTilingFunc(const BiShengKernelArgs &args, std::vector<uint8_t> *tiling_data) {
+  MS_EXCEPTION_IF_NULL(tiling_data);
+  const auto &output_shapes = args.output_shapes;
+  if (output_shapes.empty()) {
+    MS_LOG(EXCEPTION) << "Add op must have output shapes.";
+  }
+  uint64_t size = std::accumulate(output_shapes[0].begin(), output_shapes[0].end(), 1, std::multiplies<uint64_t>());
+  TilingPacking::PackTiling(tiling_data, size);
+  return 0;
 }
 
 REG(AddBishengKernel)
@@ -73,6 +86,8 @@ REG(AddBishengKernel)
   .DataTypeFormat({U32_Default, U32_Default, U32_Default}, &AddBishengKernel::LaunchKernel<uint32_t>)
   .DataTypeFormat({U64_Default, U64_Default, U64_Default}, &AddBishengKernel::LaunchKernel<uint64_t>)
   .DataTypeFormat({F16_Default, F16_Default, F16_Default}, &AddBishengKernel::LaunchKernel<half>)
-  .DataTypeFormat({F32_Default, F32_Default, F32_Default}, &AddBishengKernel::LaunchKernel<float>)
+  .DataTypeFormat({F32_Default, F32_Default, F32_Default}, &AddBishengKernel::LaunchKernel<float>,
+                  "_ZTSN9mindspore6kernel7bisheng9AddKernelIaEE")
+  .Tiling(&AddTilingFunc)
   .End();
 }  // namespace mindspore::kernel
