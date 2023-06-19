@@ -437,27 +437,7 @@ ValuePtr ConvertCellObjToFuncGraph(const py::object &obj) {
     return nullptr;
   }
   // if the cell object has specified bprop, it has user-defined bprop function parse and record it
-  if (py::hasattr(obj, CUSTOM_BPROP_NAME)) {
-    bool enable_bprop_debug = py::cast<bool>(py::getattr(obj, "bprop_debug"));
-    FuncGraphPtr bprop_graph =
-      enable_bprop_debug ? ConvertToBpropCut(obj) : ConvertToFuncGraph(obj, PYTHON_MOD_GET_BPROP_METHOD);
-    if (bprop_graph != nullptr) {
-      (void)func_graph->transforms().emplace(CUSTOM_BPROP_NAME, FuncGraphTransform(bprop_graph));
-      (void)bprop_graph->transforms().emplace("primal", FuncGraphTransform(func_graph));
-      func_graph->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
-      func_graph->set_flag(FUNC_GRAPH_FLAG_PRIMAL_OF_BPROP, true);
-    }
-  }
-  if (py::hasattr(obj, STAGE_NAME)) {
-    auto stage = py::cast<int>(py::getattr(obj, STAGE_NAME));
-    func_graph->set_stage(stage);
-  }
-  auto cell = py::cast<CellPtr>(obj);
-  if (cell != nullptr && cell->HasAttr(kAttrRandomOpSnapShot)) {
-    auto value = cell->GetAttr(kAttrRandomOpSnapShot);
-    MS_EXCEPTION_IF_NULL(value);
-    func_graph->set_attr(kAttrRandomOpSnapShot, value);
-  }
+  data_converter::SetFuncGraphByCellObj(func_graph, obj);
   return func_graph;
 }
 
@@ -933,6 +913,31 @@ ValuePtr PyDataToStubNode(const py::object &obj) {
   ValuePtr value = nullptr;
   (void)ConvertStubData(to_convert, &value);
   return value;
+}
+
+void SetFuncGraphByCellObj(const FuncGraphPtr &func_graph, const py::object &obj) {
+  // if the cell object has specified bprop, it has user-defined bprop function parse and record it
+  if (py::hasattr(obj, CUSTOM_BPROP_NAME)) {
+    bool enable_bprop_debug = py::cast<bool>(py::getattr(obj, "bprop_debug"));
+    FuncGraphPtr bprop_graph =
+      enable_bprop_debug ? ConvertToBpropCut(obj) : ConvertToFuncGraph(obj, PYTHON_MOD_GET_BPROP_METHOD);
+    if (bprop_graph != nullptr) {
+      (void)func_graph->transforms().emplace(CUSTOM_BPROP_NAME, FuncGraphTransform(bprop_graph));
+      (void)bprop_graph->transforms().emplace("primal", FuncGraphTransform(func_graph));
+      func_graph->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
+      func_graph->set_flag(FUNC_GRAPH_FLAG_PRIMAL_OF_BPROP, true);
+    }
+  }
+  if (py::hasattr(obj, STAGE_NAME)) {
+    auto stage = py::cast<int>(py::getattr(obj, STAGE_NAME));
+    func_graph->set_stage(stage);
+  }
+  auto cell = py::cast<CellPtr>(obj);
+  if (cell != nullptr && cell->HasAttr(kAttrRandomOpSnapShot)) {
+    auto value = cell->GetAttr(kAttrRandomOpSnapShot);
+    MS_EXCEPTION_IF_NULL(value);
+    func_graph->set_attr(kAttrRandomOpSnapShot, value);
+  }
 }
 
 void ClearObjectCache() {
