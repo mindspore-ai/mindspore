@@ -64,11 +64,11 @@ class ZeroPad2dNet(nn.Cell):
 class Grad(nn.Cell):
     def __init__(self, network):
         super(Grad, self).__init__()
-        self.grad = GradOperation(get_all=True, sens_param=True)
+        self.grad = GradOperation(get_all=True, sens_param=False)
         self.network = network
 
-    def construct(self, x, grads):
-        return self.grad(self.network)(x, grads)
+    def construct(self, x):
+        return self.grad(self.network)(x)
 
 
 def test_constant_pad_1d_infer():
@@ -113,25 +113,22 @@ def test_constant_pad_1d_train():
     print("=================case 1====================")
     padding = (0, 1)
     value = 0.5
-    grads = np.random.random(size=(1, 2, 3, 5)).astype(np.float32)
     grad = Grad(ConstantPad1dNet(padding, value))
-    output = grad(Tensor(x), Tensor(grads))
+    output = grad(Tensor(x))
     print(output)
 
     print("=================case 2====================")
     padding = 1
     value = 0.5
-    grads = np.random.random(size=(1, 2, 3, 6)).astype(np.float32)
     grad = Grad(ConstantPad1dNet(padding, value))
-    output = grad(Tensor(x), Tensor(grads))
+    output = grad(Tensor(x))
     print(output)
 
     print("=================case 3====================")
     padding = (-1, 0)
     value = 0.5
-    grads = np.random.random(size=(1, 2, 3, 3)).astype(np.float32)
     grad = Grad(ConstantPad1dNet(padding, value))
-    output = grad(Tensor(x), Tensor(grads))
+    output = grad(Tensor(x))
     print(output)
 
 
@@ -177,25 +174,22 @@ def test_constant_pad_2d_train():
     print("=================case 1====================")
     padding = (0, 1)
     value = 0.5
-    grads = np.random.random(size=(1, 2, 3, 5)).astype(np.float32)
     grad = Grad(ConstantPad2dNet(padding, value))
-    output = grad(Tensor(x), Tensor(grads))
+    output = grad(Tensor(x))
     print(output)
 
     print("=================case 2====================")
     padding = 1
     value = 0.5
-    grads = np.random.random(size=(1, 2, 5, 6)).astype(np.float32)
     grad = Grad(ConstantPad2dNet(padding, value))
-    output = grad(Tensor(x), Tensor(grads))
+    output = grad(Tensor(x))
     print(output)
 
     print("=================case 3====================")
     padding = (-1, 1, 0, 1)
     value = 0.5
-    grads = np.random.random(size=(1, 2, 4, 4)).astype(np.float32)
     grad = Grad(ConstantPad2dNet(padding, value))
-    output = grad(Tensor(x), Tensor(grads))
+    output = grad(Tensor(x))
     print(output)
 
 
@@ -241,25 +235,22 @@ def test_constant_pad_3d_train():
     print("=================case 1====================")
     padding = (0, 1)
     value = 0.5
-    grads = np.random.random(size=(1, 2, 3, 5)).astype(np.float32)
     grad = Grad(ConstantPad3dNet(padding, value))
-    output = grad(Tensor(x), Tensor(grads))
+    output = grad(Tensor(x))
     print(output)
 
     print("=================case 2====================")
     padding = 1
     value = 0.5
-    grads = np.random.random(size=(1, 4, 5, 6)).astype(np.float32)
     grad = Grad(ConstantPad3dNet(padding, value))
-    output = grad(Tensor(x), Tensor(grads))
+    output = grad(Tensor(x))
     print(output)
 
     print("=================case 3====================")
     padding = (-1, 1, 0, 1, 1, 0)
     value = 0.5
-    grads = np.random.random(size=(1, 3, 4, 4)).astype(np.float32)
     grad = Grad(ConstantPad3dNet(padding, value))
-    output = grad(Tensor(x), Tensor(grads))
+    output = grad(Tensor(x))
     print(output)
 
 
@@ -302,23 +293,20 @@ def test_zero_pad_2d_train():
     x = np.ones(shape=(1, 2, 3, 4)).astype(np.float32)
     print("=================case 1====================")
     padding = (0, 1)
-    grads = np.random.random(size=(1, 2, 3, 5)).astype(np.float32)
     grad = Grad(ZeroPad2dNet(padding))
-    output = grad(Tensor(x), Tensor(grads))
+    output = grad(Tensor(x))
     print(output)
 
     print("=================case 2====================")
     padding = 1
-    grads = np.random.random(size=(1, 2, 5, 6)).astype(np.float32)
     grad = Grad(ZeroPad2dNet(padding))
-    output = grad(Tensor(x), Tensor(grads))
+    output = grad(Tensor(x))
     print(output)
 
     print("=================case 3====================")
     padding = (-1, 1, 0, 1)
-    grads = np.random.random(size=(1, 2, 4, 4)).astype(np.float32)
     grad = Grad(ZeroPad2dNet(padding))
-    output = grad(Tensor(x), Tensor(grads))
+    output = grad(Tensor(x))
     print(output)
 
 

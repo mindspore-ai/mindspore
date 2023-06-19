@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import os
 import platform
 import numpy as np
 import pytest
@@ -74,6 +75,7 @@ def test_pyfunc_single_output():
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    os.environ['MS_AUTO_IDENTIFY_ENABLE'] = "0"
     func_with_dtype(ms.float16, np.float16)
     func_with_dtype(ms.float32, np.float32)
     func_with_dtype(ms.float64, np.float64)

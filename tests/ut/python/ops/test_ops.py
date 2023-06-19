@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test ops """
+import os
 import functools
 import pytest
 
@@ -4989,12 +4990,14 @@ test_backward_exec_case = filter(lambda x: 'skip' not in x[1] or 'backward' not 
 @mindspore_test(pipeline_for_compile_forward_ge_graph_for_case_by_case_config)
 def test_exec():
     context.set_context(mode=context.GRAPH_MODE)
+    os.environ['MS_AUTO_IDENTIFY_ENABLE'] = "0"
     return test_exec_case
 
 
 @mindspore_test(pipeline_for_compile_grad_ge_graph_for_case_by_case_config)
 def test_backward_exec():
     context.set_context(mode=context.GRAPH_MODE)
+    os.environ['MS_AUTO_IDENTIFY_ENABLE'] = "0"
     return test_backward_exec_case
 
 
