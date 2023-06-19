@@ -633,9 +633,9 @@ class Model:
                            "it is suggested to pad/drop data or adjust sink_size. "
                            "But got 'dataset_size': {}, 'sink_size': {}.".format(dataset_size, sink_size))
         if sink_size == -1:
-            epoch_num = epoch - initial_epoch
+            dataset_sink_num = epoch - initial_epoch
         else:
-            epoch_num = math.ceil(epoch * sink_size / dataset_size) - initial_epoch
+            dataset_sink_num = math.ceil((epoch - initial_epoch) * sink_size / dataset_size)
             train_dataset.__total_batch__ = (epoch - initial_epoch) * sink_size
 
         cb_params.cur_step_num = 0
@@ -665,7 +665,7 @@ class Model:
                                                                   dataset=train_dataset,
                                                                   dataset_sink_mode=True,
                                                                   sink_size=sink_size,
-                                                                  epoch_num=epoch_num,
+                                                                  epoch_num=dataset_sink_num,
                                                                   dataset_helper=dataset_helper)
 
             cb_params.train_network = train_network

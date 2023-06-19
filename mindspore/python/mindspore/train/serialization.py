@@ -976,7 +976,8 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
             param_data_list.append(element_data)
             if (element_id == len(checkpoint_list.value) - 1) or \
                     (element.tag != checkpoint_list.value[element_id + 1].tag):
-                param_data = np.concatenate((param_data_list), axis=0)
+                new_data = b"".join(param_data_list)
+                param_data = np.frombuffer(new_data, np_type)
                 param_data_list.clear()
                 dims = element.tensor.dims
                 if dims == [0] and data_type == 'str':

@@ -2561,33 +2561,33 @@ def tanh(input):
     return tanh_(input)
 
 
-def asinh(x):
+def asinh(input):
     r"""
     Computes inverse hyperbolic sine of the input element-wise.
 
     .. math::
 
-        out_i = \sinh^{-1}(x_i)
+        out_i = \sinh^{-1}(input_i)
 
     Args:
-        x (Tensor): The input tensor of inverse hyperbolic sine function.
+        input (Tensor): The input tensor of inverse hyperbolic sine function.
 
     Returns:
-        Tensor, has the same shape and type as `x`.
+        Tensor, has the same shape and type as `input`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([-5.0, 1.5, 3.0, 100.0]), mindspore.float32)
-        >>> output = ops.asinh(x)
+        >>> input = Tensor(np.array([-5.0, 1.5, 3.0, 100.0]), mindspore.float32)
+        >>> output = ops.asinh(input)
         >>> print(output)
         [-2.3124382  1.1947632  1.8184465  5.298342 ]
     """
-    return asinh_(x)
+    return asinh_(input)
 
 
 def arcsinh(input):
@@ -2643,16 +2643,13 @@ def acosh(input):
     return acosh_(input)
 
 
-def atanh(x):
+def atanh(input):
     r"""
     Computes inverse hyperbolic tangent of the input element-wise.
 
     .. math::
 
-        out_i = \tanh^{-1}(x_{i})
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
+        out_i = \tanh^{-1}(input_{i})
 
     Args:
         x (Tensor): The shape of tensor is
@@ -2663,19 +2660,19 @@ def atanh(x):
         A Tensor, has the same type as the input.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16 or float32.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not float16 or float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([0, -0.5]), mindspore.float32)
-        >>> output = ops.atanh(x)
+        >>> input = Tensor(np.array([0, -0.5]), mindspore.float32)
+        >>> output = ops.atanh(input)
         >>> print(output)
         [ 0.         -0.54930615]
     """
-    return atanh_(x)
+    return atanh_(input)
 
 
 def atan2(input, other):
