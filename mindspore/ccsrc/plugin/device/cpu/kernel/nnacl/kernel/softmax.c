@@ -93,7 +93,7 @@ int InitSoftmaxParam(SoftmaxStruct *softmax) {
   if (softmax->in_plane_size_ > 1) {
     NNACL_CHECK_INT_MUL_NOT_OVERFLOW(out_plane_size, in_plane_size, NNACL_ERR);
     int sum_data_size = out_plane_size * in_plane_size;
-    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(sum_data_size, DataTypeCSize(softmax->data_type_), NNACL_ERR);
+    NNACL_CHECK_INT_MUL_NOT_OVERFLOW(sum_data_size, (int)DataTypeCSize(softmax->data_type_), NNACL_ERR);
     softmax->sum_data_ = env->alloc(env->allocator_, sum_data_size * DataTypeCSize(softmax->data_type_));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(softmax->sum_data_);
   }

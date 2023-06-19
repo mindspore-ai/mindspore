@@ -128,8 +128,8 @@ int MatmulFp32Base_InitParameter(MatmulFp32Struct *matmul) {
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(matmul->a_batch_ * compute->row_align_, compute->deep_, NNACL_ERR);
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(matmul->a_batch_, compute->col_align_, NNACL_ERR);
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(matmul->a_batch_ * compute->col_align_, compute->deep_, NNACL_ERR);
-  size_t a_pack_size = matmul->a_batch_ * compute->row_align_ * compute->deep_;
-  size_t b_pack_size = matmul->b_batch_ * compute->col_align_ * compute->deep_;
+  int a_pack_size = matmul->a_batch_ * compute->row_align_ * compute->deep_;
+  int b_pack_size = matmul->b_batch_ * compute->col_align_ * compute->deep_;
   if ((matmul->matrix_a_.has_packed_ && matmul->matrix_a_.pack_size_ != a_pack_size) ||
       (matmul->matrix_b_.has_packed_ && matmul->matrix_b_.pack_size_ != b_pack_size)) {
     return NNACL_ERR;
@@ -263,7 +263,7 @@ int MatmulFp32Base_PackMatrixB(MatmulFp32Struct *matmul) {
 
 int MatmulFp32Base_BackupConstMatrix(MatmulFp32Struct *matmul, MatrixInfo *matrix_info, int index) {
   NNACL_CHECK_TRUE_RET(index < matmul->base_.in_size_, NNACL_ERR);
-  int backup_size = GetElementNum(matmul->base_.in_[index]) * sizeof(float);
+  int backup_size = GetElementNum(matmul->base_.in_[index]) * (int)sizeof(float);
   NNACL_CHECK_TRUE_RET(backup_size > 0, NNACL_ERR);
   matrix_info->origin_ptr_ = (float *)(matmul->base_.env_->alloc(matmul->base_.env_->allocator_, backup_size));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(matrix_info->origin_ptr_);

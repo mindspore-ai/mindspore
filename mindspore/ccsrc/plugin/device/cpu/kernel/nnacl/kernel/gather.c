@@ -75,7 +75,7 @@ int AssignGatherIndicesData(GatherStruct *gather, bool is_indices_int32) {
     return NNACL_OK;
   }
 
-  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(gather->indices_size_, sizeof(int), NNACL_ERR);
+  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(gather->indices_size_, (int)(sizeof(int)), NNACL_ERR);
   gather->indices_data_ =
     (int *)(gather->base_.env_->alloc(gather->base_.env_->allocator_, gather->indices_size_ * sizeof(int)));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(gather->indices_data_);

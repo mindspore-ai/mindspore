@@ -30,7 +30,8 @@ int TileDoubleInputScenes(TileStruct *tile) {
     return NNACL_OK;
   }
 
-  NNACL_CHECK_FALSE(GetElementNum(t) > tile->base_.in_[FIRST_INPUT]->shape_size_, NNACL_TILE_SECOND_INPUT_NUM_INVALID);
+  NNACL_CHECK_FALSE(GetElementNum(t) > (int)tile->base_.in_[FIRST_INPUT]->shape_size_,
+                    NNACL_TILE_SECOND_INPUT_NUM_INVALID);
   NNACL_CHECK_FALSE(t->data_type_ != kNumberTypeInt && t->data_type_ != kNumberTypeInt32,
                     NNACL_TILE_SECOND_INPUT_DATA_TYPE_INVALID);
 
@@ -111,7 +112,7 @@ int tile_resize(struct KernelBase *self) {
 
   tile->in_dim_ = input->shape_size_;
   NNACL_CHECK_TRUE_RET(tile->in_dim_ > 0 && tile->in_dim_ <= MAX_SHAPE_SIZE, NNACL_TILE_INPUT_SHAPE_INVALID);
-  NNACL_CHECK_FALSE(output->shape_size_ < tile->in_dim_, NNACL_TILE_INPUT_SHAPE_INVALID);
+  NNACL_CHECK_FALSE((int)output->shape_size_ < tile->in_dim_, NNACL_TILE_INPUT_SHAPE_INVALID);
 
   for (int i = 0; i < tile->in_dim_; ++i) {
     tile->in_shape_[i] = input->shape_[i];
