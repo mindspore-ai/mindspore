@@ -23,6 +23,7 @@
 #include "extendrt/mock/lite_runtime/converters.h"
 #include "backend/graph_compiler/graph_partition.h"
 #include "ops/core_ops.h"
+#include "ops/op_name.h"
 #include "extendrt/utils/func_graph_utils.h"
 #include "ir/manager.h"
 #include "base/base_ref.h"
@@ -47,6 +48,10 @@ std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::Compile(Fu
   }
 
   option_ = std::make_shared<CompileOption>();
+  auto format_value = graph->get_attr(mindspore::ops::kFormat);
+  if (format_value != nullptr) {
+    option_->format = Format(GetValue<int64_t>(format_value));
+  }
 
   MS_LOG(DEBUG) << "DefaultGraphCompiler::Compile Partition FunctionGraph Begin";
   auto graph_segments = Partition(graph);
@@ -70,14 +75,6 @@ std::vector<GraphSegmentPtr> DefaultGraphCompiler::Partition(const FuncGraphPtr 
   auto partition = std::make_shared<compile::GraphPartition>(ms_infer_cut_list, ms_infer_backend_name);
   if (partition == nullptr) {
     MS_LOG(ERROR) << "DefaultGraphCompiler::Partition create graph partition failed, maybe not enough memory";
-    return {};
-  }
-
-  // if the context target is cpu, graph should convert to NHWC, call related pass
-  // convert the graph to NHWC format, this is because current nnacl ops only support NHWC
-  auto status = FuncGraphUtils::UnifyGraphToNHWCFormat(graph);
-  if (status != kSuccess) {
-    MS_LOG(ERROR) << "DefaultGraphCompiler::Partition unify graph to NHWC failed";
     return {};
   }
 

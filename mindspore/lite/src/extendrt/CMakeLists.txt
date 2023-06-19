@@ -2,6 +2,7 @@ string(REPLACE "-fvisibility-inlines-hidden" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}"
 string(REPLACE "-fvisibility=hidden" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 string(REPLACE "-fvisibility-inlines-hidden" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 string(REPLACE "-fvisibility=hidden" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+add_compile_definitions(ENABLE_MULTI_LAYOUT)
 if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
     if(PLATFORM_ARM64)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions")
@@ -80,6 +81,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/single_graph_scheduler.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/compile_result_builder.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/anfnode_tensor_adapter.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/graph_compiler/infershape_helper.cc
         )
     if(MSLITE_ENABLE_BFC_MEMORY)
         set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
