@@ -1341,7 +1341,7 @@ Strategies CheckBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
   return stra;
 }
 
-Dimensions ApplyBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s,
+Dimensions ApplyBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &, const size_t iter_ops, Dimensions s,
                           size_t first_tensor_dim, size_t second_tensor_dim, bool broadcast_first_tensor) {
   Dimensions s_empty = {};
   Dimensions s_broadcast;

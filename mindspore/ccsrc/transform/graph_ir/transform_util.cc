@@ -479,7 +479,7 @@ MeTensorPtr TransformUtil::GenerateMeTensor(const GeTensorPtr &ge_tensor, const 
     void *data = reinterpret_cast<void *>(const_cast<uint8_t *>(ge_tensor->GetData()));
     ssize_t data_size = static_cast<ssize_t>(SizeOf(me_dims));
     ssize_t itemsize = MeTensor(me_type, ShapeVector()).data().itemsize();
-    ssize_t ndim = me_dims.size();
+    ssize_t ndim = static_cast<ssize_t>(me_dims.size());
     auto ref_data = std::make_shared<TensorRefData>(data, data_size, itemsize, ndim);
     return make_shared<MeTensor>(me_type, me_dims, ref_data);
   } else {

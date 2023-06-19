@@ -573,7 +573,7 @@ std::pair<aclTensorDesc *, aclDataBuffer *> AclConverter::ConvertTensorToAclDesc
 
   // convert host_tensor's data_type to params.data_type
   if (host_tensor->data_type() != params.data_type && params.data_type != kMetaTypeNone) {
-    host_tensor->set_data_type(params.data_type);
+    (void)host_tensor->set_data_type(params.data_type);
   }
   // Create buf.
   auto buffer_maker = std::make_shared<AclTensorBufferMaker>(host_tensor);

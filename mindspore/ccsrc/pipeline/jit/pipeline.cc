@@ -1631,7 +1631,7 @@ void GraphExecutorPy::KernelBuildServerDir(const py::object &kernel_build_server
 
 bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t batch_size,
                      const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
-                     const std::vector<int64_t> &input_indexes, const std::string &phase, bool need_run) {
+                     const std::vector<int64_t> &input_indexes, const std::string &, bool need_run) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   std::string name = ms_context->backend_policy();
