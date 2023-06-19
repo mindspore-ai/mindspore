@@ -300,6 +300,7 @@ constexpr char MEAN[] = "mean";
 constexpr char ATTR_NONE[] = "none";
 constexpr char BATCH_MEAN[] = "batchmean";
 constexpr char CONSTANT[] = "constant";
+constexpr char PADDINGS_CONTIGUOUS[] = "paddings_contiguous";
 
 // Operator
 constexpr char VIRTUAL_DIV[] = "_VirtualDiv";

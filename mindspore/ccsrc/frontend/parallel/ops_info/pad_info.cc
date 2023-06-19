@@ -29,54 +29,84 @@ Status PadV3Info::GetAttrs() {
     return FAILED;
   }
 
-  if (inputs_shape_.size() != 3) {
-    MS_LOG(ERROR) << name_ << ": the size of inputs shape must be 3, but got " << inputs_shape_.size();
+  // If paddings_contiguous is true, paddings is arranged as [begin0, end0, begin1, end1, ...]
+  // If paddings_contiguous is false, paddings is arranged as [begin0, begin1, ..., end1, end2, ...]
+  bool paddings_contiguous = GetBoolAttr(PADDINGS_CONTIGUOUS);
+  MS_LOG(INFO) << name_ << ": the paddings_contiguous is " << paddings_contiguous;
+
+  if (input_value_.size() < PAD_V3_INPUT_VALUE_MIN_SIZE || input_value_[PADDINGS_INDEX] == nullptr) {
+    MS_LOG(ERROR) << name_ << ": the input_value[1] is null";
     return FAILED;
   }
 
-  if (inputs_shape_[1].size() != 1) {
-    MS_LOG(ERROR) << name_ << ": the dim of paddings must be 1, but the shape of paddings is " << inputs_shape_[1];
+  std::vector<int64_t> paddings;
+  if (input_value_[PADDINGS_INDEX]->isa<tensor::Tensor>()) {
+    paddings = GetTensorValue(input_value_[PADDINGS_INDEX]);
+  } else {
+    paddings = GetValue<Shape>(input_value_[PADDINGS_INDEX]);
+  }
+
+  if (paddings.size() % PADDINGS_PAIR_SIZE != 0) {
+    MS_LOG(ERROR) << name_ << ": the size of paddings must be the multiples of 2, but got " << paddings.size();
     return FAILED;
   }
 
-  if (inputs_shape_[1][0] % 2 != 0) {
-    MS_LOG(ERROR) << name_ << ": the shape of paddings must be the multiples of 2, but got " << inputs_shape_[1][0];
-    return FAILED;
-  }
-
-  padding_dim_num_ = inputs_shape_[1][0] / 2;  // the paddings appear in pairs
-  MS_LOG(INFO) << name_ << ": the padding dim num is " << padding_dim_num_;
-
-  if (padding_dim_num_ > inputs_shape_[0].size()) {
+  if (paddings.size() / PADDINGS_PAIR_SIZE > inputs_shape_[0].size()) {
     MS_LOG(ERROR) << name_
                   << ": the dim of input must be larger than or equal to padding dim num, but the shape of input is "
-                  << inputs_shape_[0] << ", and the padding dim num is " << padding_dim_num_;
+                  << inputs_shape_[0] << ", and the padding dim num is " << (paddings.size() / PADDINGS_PAIR_SIZE);
     return FAILED;
   }
+  MS_LOG(INFO) << name_ << ": the paddings is " << paddings;
+
+  // handle the paddings contiguous
+  Shape con_paddings;  // con_paddings arrange the paddings as [begin0, end0, begin1, end1, ...]
+  if (paddings_contiguous) {
+    con_paddings = paddings;
+  } else {
+    for (size_t i = 0; i < (paddings.size() / PADDINGS_PAIR_SIZE); ++i) {
+      con_paddings.push_back(paddings[i]);
+      con_paddings.push_back(paddings[i + paddings.size() / PADDINGS_PAIR_SIZE]);
+    }
+  }
+  MS_LOG(INFO) << name_ << ": the contiguous paddings is " << con_paddings;
+
+  paddings_flag_ = std::vector<int64_t>(inputs_shape_[0].size(), 0);
+  for (size_t i = inputs_shape_[0].size() - (con_paddings.size() / PADDINGS_PAIR_SIZE), j = 0;
+       i < inputs_shape_[0].size(); ++i) {
+    if (con_paddings[j] != 0 || con_paddings[j + 1] != 0) {
+      paddings_flag_[i] = 1;
+    }
+    j *= PADDINGS_PAIR_SIZE;
+  }
+
+  MS_LOG(INFO) << name_ << ": the paddings flag is " << paddings_flag_;
   return SUCCESS;
 }
 
 Status PadV3Info::CheckStrategy(const StrategyPtr &strategy) {
-  if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
+  if (strategy == nullptr) {
+    MS_LOG(ERROR) << name_ << ": the strategy is null";
     return FAILED;
   }
 
-  // The paddings can not be split
-  Strategies strategies = strategy->GetInputDim();
-  auto paddings_strategy = strategies[1];
-  if (paddings_strategy[0] != NO_SPLIT_STRATEGY) {
-    MS_LOG(ERROR) << name_ << ": the paddings can not be split, but its strategy is " << paddings_strategy;
+  Strategies stra = strategy->GetInputDim();
+  if (stra.empty()) {
+    MS_LOG(ERROR) << name_ << ": the strategy is empty";
+    return FAILED;
+  }
+  auto input_strategy = stra[0];
+
+  // only check the strategy of first input
+  if (CheckStrategyByVector({input_strategy}, {inputs_shape_[0]}) != SUCCESS) {
     return FAILED;
   }
 
-  // the last padding_dim_num_ dims of input can not be split
-  auto input_strategy = strategies[0];
-  size_t input_dim = input_strategy.size();
-  for (size_t i = input_dim - padding_dim_num_; i < input_dim; ++i) {
-    if (input_strategy[i] != NO_SPLIT_STRATEGY) {
-      MS_LOG(ERROR) << name_
-                    << ": the last padding_dim_num dims of input can not be split, but the strategy of input is  "
-                    << input_strategy;
+  // if the paddings flag is 1, the dimension can not be split
+  for (size_t i = 0; i < input_strategy.size(); ++i) {
+    if (paddings_flag_[i] == 1 && input_strategy[i] != NO_SPLIT_STRATEGY) {
+      MS_LOG(ERROR) << name_ << ": the padding dimension of input can not be split, the strategy of input is "
+                    << input_strategy << ", and the paddings flag is " << paddings_flag_;
       return FAILED;
     }
   }
@@ -109,24 +139,36 @@ Status PadV3Info::InferTensorMap() {
   }
 
   inputs_tensor_map_.push_back(input_tensor_map);   // input
-  inputs_tensor_map_.push_back({MAP_NONE});         // paddings, can not be split
-  inputs_tensor_map_.push_back({});                 // value
   outputs_tensor_map_.push_back(input_tensor_map);  // output
   return SUCCESS;
 }
 
-std::vector<StrategyPtr> PadV3Info::GenerateOpStrategies(int64_t stage_id) {
-  Shape split_flag;
-  size_t input_dim = inputs_shape_[0].size();
-  for (size_t i = 0; i < input_dim; ++i) {
-    if (i < input_dim - padding_dim_num_) {
-      split_flag.push_back(1);
-    } else {
-      split_flag.push_back(0);  // the last padding_dim_num_ dims of input can not be split
-    }
+Status PadV3Info::InferMirrorOps() {
+  mirror_ops_.clear();
+
+  std::vector<Group> group;
+  if (CreateGroupByTensorMap(inputs_tensor_map_[0], &group) != SUCCESS) {
+    ReportError(name_ + ": Create group failed");
+    mirror_ops_.clear();
+    return FAILED;
   }
 
-  Shapes splittable_input = {split_flag};
+  OperatorVector mirror_op;
+  if (group.empty()) {
+    MS_LOG(INFO) << name_ << ": The mirror group is empty";
+    return SUCCESS;
+  }
+
+  mirror_op = CreateMirrorOps(group[0].name(), group[0].GetDevNum());
+  mirror_ops_.push_back(mirror_op);
+  return SUCCESS;
+}
+
+std::vector<StrategyPtr> PadV3Info::GenerateOpStrategies(int64_t stage_id) {
+  Shape splittable_flag;
+  (void)std::transform(paddings_flag_.begin(), paddings_flag_.end(), std::back_inserter(splittable_flag),
+                       [](int64_t ele) { return 1 - ele; });
+  Shapes splittable_input = {splittable_flag};
   Shapes tmp_inputs_shape = {inputs_shape_[0]};
 
   std::vector<StrategyPtr> sp_vector;
@@ -137,26 +179,19 @@ std::vector<StrategyPtr> PadV3Info::GenerateOpStrategies(int64_t stage_id) {
     MS_LOG(EXCEPTION) << name_ << ": No available strategy";
   }
 
-  for (auto &sp : sp_vector) {
-    Strategies tmp_strategy;
-    Dimensions input0_strategy = sp->GetInputDim()[0];
-    tmp_strategy.push_back(input0_strategy);      // input
-    tmp_strategy.push_back({NO_SPLIT_STRATEGY});  // paddings
-    tmp_strategy.push_back({});                   // value
-    sp->ResetInputs(tmp_strategy);
-  }
   return sp_vector;
 }
 
 void PadV3Info::ReComputeBatchSplitFlagList() {
-  if (inputs_shape_[0].size() == padding_dim_num_) {
-    MS_LOG(EXCEPTION) << name_ << ": all dims are padding, can not use batch parallel";
-  }
-
   split_flag_list_[0] = true;
 
   for (size_t i = 1; i < split_flag_list_.size(); ++i) {
     split_flag_list_[i] = false;
+  }
+
+  auto paddings_dims = std::accumulate(paddings_flag_.begin(), paddings_flag_.end(), int64_t(0));
+  if (SizeToLong(inputs_shape_[0].size()) == paddings_dims) {
+    split_flag_list_[0] = false;
   }
 }
 
