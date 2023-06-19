@@ -86,13 +86,6 @@ int NNACLKernel::Run() {
   return RET_OK;
 }
 
-int NNACLKernel::InferShape() {
-  if (kernel_ == nullptr) {
-    return RET_ERROR;
-  }
-  return kernel_->infershape(kernel_);
-}
-
 void NNACLKernel::UpdateTensorC() {
   for (size_t i = 0; i < in_size_; i++) {
     in_[i] = in_tensors().at(i)->ConvertToTensorC();

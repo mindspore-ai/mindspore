@@ -120,6 +120,17 @@ class KernelExec {
 
   bool IsBuiltin() { return desc_.provider == kBuiltin; }
 
+  virtual int InferShape() {
+    auto &inputs = in_tensors();
+    auto &outputs = out_tensors();
+    if (!IsBuiltin()) {
+      return lite::KernelInferShape(inputs, outputs, kernel()->primitive(), context_->GetProviders(),
+                                    context_->get_schema_version(), kernel_.get());
+    } else {
+      return reinterpret_cast<LiteKernel *>(kernel_.get())->InferShape();
+    }
+  }
+
   virtual int ReSize() {
     MS_ASSERT(kernel_ != nullptr);
     return kernel_->ReSize();

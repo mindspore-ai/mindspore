@@ -61,7 +61,28 @@ class MS_API LiteKernel : public Abstractkernel {
   }
 
   int Execute() override;
-  virtual int InferShape() { return mindspore::lite::RET_ERROR; }
+
+  virtual int InferShape() {
+    auto ret = lite::KernelInferShape(in_tensors_, out_tensors_, op_parameter_, ms_context_->allocator);
+#ifdef Debug
+    auto output_shape = out_tensors_[0]->shape();
+    std::ostringstream oss;
+    oss << "LiteKernel InferShape ret: " << ret << ", shape: [";
+    bool first_dim = true;
+    for (auto &dim : output_shape) {
+      if (first_dim) {
+        oss << dim;
+        first_dim = false;
+      } else {
+        oss << ", " << dim;
+      }
+    }
+    oss << "]";
+    MS_LOG(INFO) << oss.str();
+#endif
+    return ret;
+  }
+
   virtual int Run() { return mindspore::lite::RET_ERROR; }
   int ReSize() override { return mindspore::lite::RET_ERROR; }
 
