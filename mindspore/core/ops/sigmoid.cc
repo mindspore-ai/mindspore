@@ -60,8 +60,8 @@ class SigmoidInfer : public abstract::OpInferBase {
     auto prim_name = prim->name();
     (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
     auto x_dtype = input_args[0]->BuildType();
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, common_valid_types_with_complex_and_bool,
-                                                     prim->name());
+    const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, prim->name());
     return x_dtype;
   }
 };
