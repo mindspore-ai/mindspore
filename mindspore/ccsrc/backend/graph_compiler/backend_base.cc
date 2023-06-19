@@ -30,6 +30,7 @@
 #ifdef ENABLE_DEBUGGER
 #include "include/backend/debug/debugger/debugger.h"
 #endif
+#include "include/backend/debug/profiler/profiling.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "include/backend/distributed/ps/ps_context.h"
 #endif
@@ -262,7 +263,9 @@ MindRTBackendBase::MindRTBackendBase(const std::string &backend_name, const std:
 
   const auto &device_context =
     device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name, device_id});
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventDeviceInit, kStageDeviceInit, 1, 0, 0);
   device_context->Initialize();
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventDeviceInit, kStageDeviceInit, 1, 0, 1);
   device_id_ = device_context->device_context_key().device_id_;
 #ifdef ENABLE_DEBUGGER
   SetDebuggerInit();
@@ -389,6 +392,7 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_LOG(INFO) << "Status record: start compile function graph: " << func_graph->ToString();
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageCompileGraphs, 1, 0, 0);
   PROF_START(compile_func_graph);
 
   auto root_graph = WrapPrimitives(func_graph);
@@ -448,6 +452,7 @@ const ActorInfo &MindRTBackendBase::CompileGraphs(const FuncGraphPtr &func_graph
   (void)actor_to_graph_compiler_info_.emplace(graph_compiler_info->name_, std::move(graph_compiler_info));
   PROF_END(compile_func_graph);
 
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageCompileGraphs, 1, 0, 1);
   MS_LOG(INFO) << "Status record: end compile function graph: " << func_graph->ToString()
                << ", produce actor: " << actor_info;
   return actor_info;
@@ -544,7 +549,9 @@ void MindRTBackendBase::CompileGraph(const FuncGraphPtr &func_graph, device::Run
 
   bool contain_multi_target = false;
   // Split graph to segments.
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageGraphPartition, 1, 0, 0);
   const auto &segments = graph_partition_->Partition(func_graph, &contain_multi_target);
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageGraphPartition, 1, 0, 1);
   MS_LOG(INFO) << "Compile graph: " << func_graph->ToString() << ", Split segments size: " << segments.size();
 
   // Foreach the segments to compile graph.
@@ -767,14 +774,18 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
     return;
   }
 
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageRunGraph, 1, 0, 0);
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageGetInputs, 1, 0, 0);
   auto input_tensors = GetRunGraphInputs(graph_compiler_info, args);
-
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageGetInputs, 1, 0, 1);
   // Release python gil.
   mindspore::ScopedLongRunning long_running;
   // Run actor DAG.
   const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
   MS_EXCEPTION_IF_NULL(actor_set);
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageRun, 1, 0, 0);
   runtime::GraphScheduler::GetInstance().Run(actor_set, input_tensors);
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageRun, 1, 0, 1);
 
   {
     runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kRuntime, runtime::ProfilerEvent::kOutputProcess,
@@ -782,12 +793,15 @@ void MindRTBackendBase::RunGraph(const ActorInfo &actor_info, const VectorRef &a
     MS_EXCEPTION_IF_NULL(graph_compiler_);
     graph_compiler_->Summary(graph_compiler_info.graphs_);
 
+    (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageConstructOutputs, 1, 0, 0);
     ConstructOutputs(actor_set, outputs, root_graph_);
+    (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageConstructOutputs, 1, 0, 1);
 
     runtime::GraphScheduler::GetInstance().ClearActorData(actor_set);
   }
   // Close abstract_lock for dynamic_shape
   AnfUtils::CloseAbstractLock();
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventRunGraph, kStageRunGraph, 1, 0, 1);
   MS_LOG(INFO) << "Status record: end run actor: " << actor_info;
 }
 

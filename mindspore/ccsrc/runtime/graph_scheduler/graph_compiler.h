@@ -41,6 +41,24 @@ using session::KernelGraph;
 using session::KernelWithIndex;
 using tensor::TensorPtr;
 
+const char kModelNameRuntime[] = "Runtime";
+const char kEventDeviceInit[] = "DeviceInit";
+const char kEventCompileGraph[] = "CompileGraph";
+const char kEventRunGraph[] = "RunGraph";
+const char kStageDeviceInit[] = "DeviceInit";
+const char kStageCompileGraphs[] = "CompileGraphs";
+const char kStageGraphPartition[] = "GraphPartition";
+const char kStageConstructKernelGraph[] = "ConstructKernelGraph";
+const char kStageOptimizeGraph[] = "OptimizeGraph";
+const char kStageCreateKernel[] = "CreateKernel";
+const char kStageGraphTransform[] = "GraphTransform";
+const char kStageBuild[] = "Build";
+const char kStageLink[] = "Link";
+const char kStageOptimize[] = "Optimize";
+const char kStageRunGraph[] = "RunGraph";
+const char kStageGetInputs[] = "GetInputs";
+const char kStageRun[] = "Run";
+const char kStageConstructOutputs[] = "ConstructOutputs";
 namespace runtime {
 // Position of kernel with index, the value pair<branch_id, vector<pos>> means the branch id of the kernel and the pos
 // of the kernel. Generally, there is only one branch, and the branch id is 0 at this time. In control flow, there are

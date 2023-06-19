@@ -280,8 +280,10 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   auto nodes = segment->nodes_;
   auto device_terget = device_context->GetDeviceType();
   // Generate kernel graph.
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageConstructKernelGraph, 1, 0, 0);
   KernelGraphPtr graph =
     session_->ConstructKernelGraph(nodes, outputs, device_terget, true, IsEnableZeroCopy(run_in_pynative));
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageConstructKernelGraph, 1, 0, 1);
   MS_EXCEPTION_IF_NULL(graph);
   SetRunGraphBySingleOpFlag(graph);
   SetGraphDependency(graph, segment);
@@ -497,10 +499,14 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
 #endif
   MS_EXCEPTION_IF_NULL(device_context->GetKernelExecutor(false));
   // Execute optimization pass.
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageOptimizeGraph, 1, 0, 0);
   device_context->GetKernelExecutor(false)->OptimizeGraph(graph);
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageOptimizeGraph, 1, 0, 1);
   // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
   // 'KernelMod' is real executive object of kernel.
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageCreateKernel, 1, 0, 0);
   device_context->GetKernelExecutor(false)->CreateKernel(graph->execution_order());
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageCreateKernel, 1, 0, 1);
 
   // Kernels that are not supported by other device can be backed off and rebuilt on the CPU.
 #ifdef WITH_BACKEND

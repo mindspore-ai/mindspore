@@ -68,6 +68,11 @@
 namespace mindspore {
 namespace device {
 namespace cpu {
+namespace {
+const char kModelNameCPU[] = "CPU";
+const char kEventOptimizeGraph[] = "OptimizeGraph";
+const char kStageSetKernelInfo[] = "SetKernelInfo";
+}  // namespace
 using mindspore::kernel::KernelBuildInfo;
 
 void CPUDeviceContext::Initialize() {
@@ -318,6 +323,7 @@ void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
 
 void CPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
+  (void)profiler::CollectHostInfo(kModelNameCPU, kEventOptimizeGraph, kStageSetKernelInfo, 1, 0, 0);
   bool do_expand = false;
   auto mng = graph->manager();
   if (mng == nullptr) {
@@ -355,6 +361,7 @@ void CPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
     (void)graphkernel::BindValueToGraph().Run(graph);
     graph->SetExecOrderByDefault();
   }
+  (void)profiler::CollectHostInfo(kModelNameCPU, kEventOptimizeGraph, kStageSetKernelInfo, 1, 0, 1);
 }
 
 void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {

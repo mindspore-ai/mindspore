@@ -510,6 +510,7 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   };
   // cppcheck-suppress unreadVariable
   ScopeCleaner cleaner(this);
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageGraphTransform, 1, 0, 0);
   MS_LOG(INFO) << "Graph(" << graph_compiler_info.name_
                << ") transforms actor begin, strategy:" << kGraphExecutionStrategyStr.at(graph_compiler_info.strategy_);
   if (graph_compiler_info.graphs_.size() == 0 && graph_compiler_info.control_nodes_.size() <= 1) {
@@ -525,18 +526,24 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
     graph_compiler_info.strategy_ = GraphExecutionStrategy::kPipeline;
   }
   PersistDeviceTensor(graph_compiler_info);
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageBuild, 1, 0, 0);
   const auto &actor_set = Build(graph_compiler_info);
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageBuild, 1, 0, 1);
   MS_EXCEPTION_IF_NULL(actor_set);
   CacheGraphOutputToActor(graph_compiler_info);
   UpdateDeviceAddressByRefInternalParameter(graph_compiler_info);
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageLink, 1, 0, 0);
   Link(actor_set.get(), graph_compiler_info);
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageLink, 1, 0, 1);
 
   DumpActor(actor_set.get(), graph_compiler_info);
   if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kPipeline) {
     SchedulerHelper::CheckActorValid(actor_set.get());
   }
 
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageOptimize, 1, 0, 0);
   Optimize(actor_set);
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageOptimize, 1, 0, 1);
   MS_LOG(INFO) << "Graph(" << graph_compiler_info.name_ << ") transforms actor end.";
 
 #if defined(__linux__) && defined(WITH_BACKEND)
@@ -557,7 +564,7 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   // Set rpc actors in order to update rpc actors status.
   RpcActorStatusUpdater::GetInstance().set_rpc_actors(graph_compiler_info.name_, actor_set->rpc_actors_);
 #endif
-
+  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageGraphTransform, 1, 0, 1);
   return actor_set.get();
 }
 
