@@ -172,6 +172,7 @@ INPUT_MAP(SparseApplyProximalAdagradD) = {{1, INPUT_DESC(var)},    {2, INPUT_DES
 ATTR_MAP(SparseApplyProximalAdagradD) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(SparseApplyProximalAdagradD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}};
 REG_ADPT_DESC(SparseApplyProximalAdagradD, kSparseApplyProximalAdagradDOpName, ADPT_DESC(SparseApplyProximalAdagradD))
+REG_ADPT_DESC(SparseApplyProximalAdagrad, kNameSparseApplyProximalAdagrad, ADPT_DESC(SparseApplyProximalAdagradD))
 
 // SparseApplyFtrlD
 INPUT_MAP(SparseApplyFtrlD) = {{1, INPUT_DESC(var)},
@@ -245,7 +246,16 @@ INPUT_MAP(SparseApplyRMSProp) = {{1, INPUT_DESC(var)},     {2, INPUT_DESC(ms)}, 
 ATTR_INPUT_MAP(SparseApplyRMSProp) = {{"rho", "rho"}, {"momentum", "momentum"}, {"epsilon", "epsilon"}};
 ATTR_MAP(SparseApplyRMSProp) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(SparseApplyRMSProp) = {{0, OUTPUT_DESC(var)}};
-REG_ADPT_DESC(SparseApplyRMSProp, prim::kPrimSparseApplyRMSProp->name(), ADPT_DESC(SparseApplyRMSProp))
+
+// SparseApplyRMSPropD
+INPUT_MAP(SparseApplyRMSPropD) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(ms)},   {3, INPUT_DESC(mom)},
+                                  {4, INPUT_DESC(lr)},  {5, INPUT_DESC(grad)}, {6, INPUT_DESC(indices)}};
+ATTR_MAP(SparseApplyRMSPropD) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())},
+                                 {"rho", ATTR_DESC(rho, AnyTraits<float>())},
+                                 {"momentum", ATTR_DESC(momentum, AnyTraits<float>())},
+                                 {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
+OUTPUT_MAP(SparseApplyRMSPropD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(ms)}, {2, OUTPUT_DESC(mom)}};
+REG_ADPT_DESC(SparseApplyRMSPropD, prim::kPrimSparseApplyRMSProp->name(), ADPT_DESC(SparseApplyRMSPropD))
 
 // ApplyAdaMax
 INPUT_MAP(ApplyAdaMax) = {{1, INPUT_DESC(var)},         {2, INPUT_DESC(m)},       {3, INPUT_DESC(v)},
@@ -378,7 +388,6 @@ INPUT_MAP(SparseApplyProximalAdagrad) = {{1, INPUT_DESC(var)},    {2, INPUT_DESC
                                          {7, INPUT_DESC(indices)}};
 ATTR_MAP(SparseApplyProximalAdagrad) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(SparseApplyProximalAdagrad) = {{0, OUTPUT_DESC(var)}};
-REG_ADPT_DESC(SparseApplyProximalAdagrad, kNameSparseApplyProximalAdagrad, ADPT_DESC(SparseApplyProximalAdagrad))
 
 // ApplyAdadelta
 INPUT_MAP(ApplyAdadelta) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(accum)}, {3, INPUT_DESC(accum_update)},
