@@ -494,6 +494,31 @@ bool ContainsSequenceAnyType(const AbstractBasePtr &abs) {
   return abs->isa<abstract::AbstractAny>();
 }
 
+py::object GeneratePyObj(const abstract::AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
+  if (abs->isa<abstract::AbstractList>()) {
+    auto abs_list = abs->cast<abstract::AbstractListPtr>();
+    if (abs_list->has_list_py_obj()) {
+      return *abs_list->list_py_obj<py::list>();
+    }
+    py::list ret = py::list(abs_list->size());
+    const auto &elements = abs_list->elements();
+    for (size_t i = 0; i < elements.size(); ++i) {
+      ret[i] = GeneratePyObj(elements[i]);
+    }
+    return ret;
+  } else if (abs->isa<abstract::AbstractTuple>()) {
+    auto abs_tuple = abs->cast<abstract::AbstractTuplePtr>();
+    py::tuple ret = py::tuple(abs_tuple->size());
+    const auto &elements = abs_tuple->elements();
+    for (size_t i = 0; i < elements.size(); ++i) {
+      ret[i] = GeneratePyObj(elements[i]);
+    }
+    return ret;
+  }
+  return ValueToPyData(abs->BuildValue());
+}
+
 void AttachListObjToAbs(const AbstractBasePtr &abs, const py::object &obj) {
   // Nested attach list object to corresponding abstract list.
   // Do not consider dictionary yet.

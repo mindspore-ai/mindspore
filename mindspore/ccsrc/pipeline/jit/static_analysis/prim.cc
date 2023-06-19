@@ -2117,12 +2117,9 @@ EvalResultPtr MakeListEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abstr
     }
   }
   auto abs = std::make_shared<AbstractList>(args_abs_list, sequence_nodes);
-  auto val = abs->BuildValue();
-  if (val != kValueAny) {
-    MS_LOG(DEBUG) << "Generate python object for new value node.";
-    py::list py_list_obj = ValueToPyData(val);
-    fallback::AttachListObjToAbs(abs, py_list_obj);
-  }
+  MS_LOG(DEBUG) << "Generate python object for new value node.";
+  py::object py_list_obj = fallback::GeneratePyObj(abs);
+  fallback::AttachListObjToAbs(abs, py_list_obj);
   auto res = std::make_shared<EvalResult>(abs, std::make_shared<AttrValueMap>());
   evaluator_cache_mgr_->SetValue(args_abs_list, res);
   return res;
