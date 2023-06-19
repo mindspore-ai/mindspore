@@ -634,6 +634,24 @@ void UpdateOutputDeviceInfo(const std::vector<device::DeviceAddressPtr> &device_
   }
 }
 
+void UpdateInputTensorForHeterogeneous(const DeviceContext *device_context, const TensorPtr input_tensor,
+                                       const device::DeviceAddressPtr &cached_device_address) {
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(cached_device_address);
+  auto device_sync = input_tensor->device_address();
+  if (device_sync == nullptr) {
+    return;
+  }
+  auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(device_sync);
+  if (device_address->GetDeviceType() != device_context->GetDeviceType() ||
+      device_address->format() != cached_device_address->format()) {
+    // Need wait for OpExecutor task finish
+    input_tensor->data_sync();
+    // If tensor address is null, we will set Parameter address to the Tensor.
+    input_tensor->set_device_address(nullptr);
+  }
+}
+
 void UpdateInputInCompileInfo(const OpCompilerInfoPtr &op_compiler_info, const std::vector<TensorPtr> &input_tensors,
                               std::map<device::DeviceAddressPtr, tensor::TensorPtr> *address_map_to_tensor) {
   auto input_tensors_num = input_tensors.size();
@@ -642,9 +660,11 @@ void UpdateInputInCompileInfo(const OpCompilerInfoPtr &op_compiler_info, const s
     MS_LOG(EXCEPTION) << "Real input tensor's number " << input_tensors_num
                       << " is not equal cached input tensor's number " << cached_input_num << " !";
   }
+  const auto &device_context = op_compiler_info->device_context_;
   for (size_t i = 0; i < input_tensors_num; ++i) {
     auto &input_tensor = input_tensors[i];
     MS_EXCEPTION_IF_NULL(input_tensor);
+    UpdateInputTensorForHeterogeneous(device_context, input_tensor, op_compiler_info->inputs_[i]);
     auto device_sync = input_tensor->device_address();
     auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(device_sync);
     auto skip_sync = true;
@@ -654,7 +674,7 @@ void UpdateInputInCompileInfo(const OpCompilerInfoPtr &op_compiler_info, const s
     }
     if (device_address != nullptr) {
       // Update cached input info by input tensor info
-      UpdateTensorCache(op_compiler_info->device_context_, device_address, op_compiler_info->inputs_[i], input_tensor,
+      UpdateTensorCache(device_context, device_address, op_compiler_info->inputs_[i], input_tensor,
                         op_compiler_info->graph_->inputs()[i]);
       if (skip_sync) {
         (*address_map_to_tensor)[op_compiler_info->inputs_[i]] = input_tensor;
