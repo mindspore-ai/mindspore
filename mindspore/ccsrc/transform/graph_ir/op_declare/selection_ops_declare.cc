@@ -218,17 +218,12 @@ OUTPUT_MAP(UnsortedSegmentMin) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(UnsortedSegmentMin, prim::kPrimUnsortedSegmentMin->name(), ADPT_DESC(UnsortedSegmentMin))
 
 // ReverseV2
-INPUT_MAP(ReverseV2D) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(ReverseV2D) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};
-OUTPUT_MAP(ReverseV2D) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ReverseV2D, kNameReverseV2, ADPT_DESC(ReverseV2D))
-
-// ReverseV2
 INPUT_MAP(ReverseV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axis)}};
 ATTR_INPUT_MAP(ReverseV2) = {{"axis", "axis"}};
 ATTR_MAP(ReverseV2) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(ReverseV2) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ReverseV2, kNameReverseV2D, ADPT_DESC(ReverseV2))
+REG_ADPT_DESC(ReverseV2, kNameReverseV2, ADPT_DESC(ReverseV2))
+REG_ADPT_DESC(ReverseV2D, kNameReverseV2D, ADPT_DESC(ReverseV2))
 
 // MaskedSelect
 INPUT_MAP(MaskedSelect) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(mask)}};
