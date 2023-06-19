@@ -117,7 +117,25 @@ class CheckpointConfig:
         >>> # Create the dataset taking MNIST as an example. Refer to
         >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
         >>> dataset = create_dataset()
-        >>> config = CheckpointConfig(saved_network=net)
+        >>> config = CheckpointConfig(save_checkpoint_seconds=100, keep_checkpoint_per_n_minutes=5, saved_network=net)
+        >>> config.save_checkpoint_steps
+        1
+        >>> config.save_checkpoint_seconds
+        100
+        >>> config.keep_checkpoint_max
+        5
+        >>> config.keep_checkpoint_per_n_minutes
+        5
+        >>> config.integrated_save
+        True
+        >>> config.async_save
+        False
+        >>> config.saved_network
+        >>> config.enc_key
+        >>> config.enc_mode
+        'AES-GCM'
+        >>> config.append_dict
+        >>> config.get_checkpoint_policy
         >>> ckpoint_cb = ModelCheckpoint(prefix='LeNet5', directory='./checkpoint', config=config)
         >>> model.train(10, dataset, callbacks=ckpoint_cb)
     """

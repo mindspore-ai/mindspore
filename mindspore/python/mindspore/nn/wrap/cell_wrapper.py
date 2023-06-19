@@ -126,6 +126,15 @@ class WithLossCell(Cell):
 
         Returns:
             Cell, the backbone network.
+
+        Examples:
+            >>> from mindspore import nn
+            >>> # Define the network structure of LeNet5. Refer to
+            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> net = LeNet5()
+            >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
+            >>> net_with_criterion = nn.WithLossCell(net, loss_fn)
+            >>> backbone = net_with_criterion.backbone_network
         """
         return self._backbone
 

@@ -349,6 +349,12 @@ class Parameter(Tensor_):
         Args:
             init_in_server (bool): Whether trainable parameter updated by parameter server is
                 initialized on server. Default: ``False``.
+
+        Examples:
+            >>> from mindspore import Tensor, Parameter
+            >>> import numpy as np
+            >>> x = Parameter(Tensor(np.array([1, 2], dtype=np.float32)), name="param")
+            >>> x.set_param_ps(True)
         """
         if not _is_ps_mode() or not (_is_role_worker() or _is_role_pserver() or _is_role_sched()):
             raise RuntimeError("Must complete following two steps before calling set_param_ps: \n"
@@ -369,6 +375,12 @@ class Parameter(Tensor_):
 
         Returns:
             Parameter, a new parameter.
+
+        Examples:
+            >>> from mindspore import Tensor, Parameter
+            >>> import numpy as np
+            >>> x = Parameter(Tensor(np.array([1, 2], dtype=np.float32)), name="param")
+            >>> y = x.copy()
         """
         return self.clone(init='same')
 
@@ -389,6 +401,12 @@ class Parameter(Tensor_):
 
         Default is a None, If `self` is a Parameter without data, after call the
         `init_data` the initialized Parameter with data will be recorded here.
+
+        Examples:
+            >>> from mindspore import Tensor, Parameter
+            >>> import numpy as np
+            >>> x = Parameter(Tensor(np.array([1, 2], dtype=np.float32)), name="param")
+            >>> x.inited_param()
         """
         return self._inited_param
 
@@ -404,7 +422,17 @@ class Parameter(Tensor_):
 
     @property
     def name(self):
-        """Get the name of the parameter."""
+        """
+        Get the name of the parameter.
+
+        Examples:
+            >>> from mindspore import Tensor, Parameter
+            >>> import numpy as np
+            >>> x = Parameter(Tensor(np.array([1, 2], dtype=np.float32)), name="param")
+            >>> x.name = "param1"
+            >>> x.name
+            'param1'
+        """
         return self.param_info.name
 
     @name.setter
@@ -435,7 +463,17 @@ class Parameter(Tensor_):
 
     @property
     def sliced(self):
-        """Get slice status of the parameter."""
+        """
+        Get slice status of the parameter.
+
+        Examples:
+            >>> from mindspore import Tensor, Parameter
+            >>> import numpy as np
+            >>> x = Parameter(Tensor(np.array([1, 2], dtype=np.float32)), name="param")
+            >>> x.sliced = True
+            >>> x.sliced
+            True
+        """
         return self._sliced
 
     @sliced.setter
@@ -451,6 +489,13 @@ class Parameter(Tensor_):
         gradients aggregation are inserted automatically. The value of fusion must be greater than or equal to 0.
         When the value of fusion is 0, operators will not be fused together.
 
+        Examples:
+            >>> from mindspore import Tensor, Parameter
+            >>> import numpy as np
+            >>> x = Parameter(Tensor(np.array([1, 2], dtype=np.float32)), name="param")
+            >>> x.comm_fusion = 3
+            >>> x.comm_fusion
+            3
         """
         return self.param_info.comm_fusion
 
@@ -476,6 +521,14 @@ class Parameter(Tensor_):
             - Only `Graph` mode is supported.
             - It is recommended to use cell.recompute(parallel_optimizer_comm_recompute=True/False) to configure
               the AllGather operators introducing by parallel optimizer rather than using this interface directly.
+
+        Examples:
+            >>> from mindspore import Tensor, Parameter
+            >>> import numpy as np
+            >>> x = Parameter(Tensor(np.array([1, 2], dtype=np.float32)), name="param")
+            >>> x.parallel_optimizer_comm_recompute = True
+            >>> x.parallel_optimizer_comm_recompute
+            True
         """
         return self.param_info.parallel_optimizer_comm_recompute
 
@@ -486,7 +539,17 @@ class Parameter(Tensor_):
 
     @property
     def unique(self):
-        """Whether the parameter is already unique or not."""
+        """
+        Whether the parameter is already unique or not.
+
+        Examples:
+            >>> from mindspore import Tensor, Parameter
+            >>> import numpy as np
+            >>> x = Parameter(Tensor(np.array([1, 2], dtype=np.float32)), name="param")
+            >>> x.unique = True
+            >>> x.unique
+            True
+        """
         return self._unique
 
     @unique.setter
@@ -507,6 +570,12 @@ class Parameter(Tensor_):
 
         Returns:
             Parameter, a new parameter.
+
+        Examples:
+            >>> from mindspore import Tensor, Parameter
+            >>> import numpy as np
+            >>> x = Parameter(Tensor(np.array([1, 2], dtype=np.float32)), name="param")
+            >>> y = x.clone()
         """
         x = copy(self)
         param_info_clone = self.param_info.clone()
@@ -541,6 +610,14 @@ class Parameter(Tensor_):
 
         When layerwise_parallel is true in `DATA_PARALLEL` and `HYBRID_PARALLEL` parallel mode, broadcast and gradients
         communication would not be applied to parameters.
+
+        Examples:
+            >>> from mindspore import Tensor, Parameter
+            >>> import numpy as np
+            >>> x = Parameter(Tensor(np.array([1, 2], dtype=np.float32)), name="param")
+            >>> x.layerwise_parallel = True
+            >>> x.layerwise_parallel
+            True
         """
         return self.param_info.layerwise_parallel
 
@@ -557,6 +634,14 @@ class Parameter(Tensor_):
 
         It is used to filter the weight shard operation in `AUTO_PARALLEL` and `SEMI_AUTO_PARALLEL` mode. It works only
         when enable parallel optimizer in `mindspore.set_auto_parallel_context()`.
+
+        Examples:
+            >>> from mindspore import Tensor, Parameter
+            >>> import numpy as np
+            >>> x = Parameter(Tensor(np.array([1, 2], dtype=np.float32)), name="param")
+            >>> x.parallel_optimizer = True
+            >>> x.parallel_optimizer
+            True
         """
         return self.param_info.parallel_optimizer
 
@@ -568,7 +653,17 @@ class Parameter(Tensor_):
 
     @property
     def cache_enable(self):
-        """Return whether the parameter is cache enable."""
+        """
+        Return whether the parameter is cache enable.
+
+        Examples:
+            >>> from mindspore import Tensor, Parameter
+            >>> import numpy as np
+            >>> x = Parameter(Tensor(np.array([1, 2], dtype=np.float32)), name="param")
+            >>> x.cache_enable=True
+            >>> x.cache_enable
+            True
+        """
         return self.param_info.cache_enable
 
     @cache_enable.setter
@@ -579,7 +674,18 @@ class Parameter(Tensor_):
 
     @property
     def cache_shape(self):
-        """Return the cache shape corresponding to the parameter if use cache."""
+        """
+        Return the cache shape corresponding to the parameter if use cache.
+
+        Examples:
+            >>> from mindspore import Tensor, Parameter
+            >>> import numpy as np
+            >>> x = Parameter(Tensor(np.array([1, 2], dtype=np.float32)), name="param")
+            >>> x.cache_enable=True
+            >>> x.cache_shape=[1, 2]
+            >>> x.cache_shape
+            [1, 2]
+        """
         return self.param_info.cache_shape
 
     @cache_shape.setter
@@ -590,7 +696,17 @@ class Parameter(Tensor_):
 
     @property
     def key(self):
-        """Return the parameter unique key."""
+        """
+        Return the parameter unique key.
+
+        Examples:
+            >>> from mindspore import Tensor, Parameter
+            >>> import numpy as np
+            >>> x = Parameter(Tensor(np.array([1, 2], dtype=np.float32)), name="param")
+            >>> x.key = 2
+            >>> x.key
+            2
+        """
         return self.param_info.key
 
     @key.setter
@@ -604,6 +720,14 @@ class Parameter(Tensor_):
     def requires_grad(self):
         """
         Return whether the parameter requires gradient.
+
+        Examples:
+            >>> from mindspore import Tensor, Parameter
+            >>> import numpy as np
+            >>> x = Parameter(Tensor(np.array([1, 2], dtype=np.float32)), name="param")
+            >>> x.requires_grad = True
+            >>> x.requires_grad
+            True
         """
         return self.param_info.requires_grad
 
@@ -615,7 +739,16 @@ class Parameter(Tensor_):
 
     @property
     def data(self):
-        """Return the parameter object."""
+        """
+        Return the parameter object.
+
+        Examples:
+            >>> from mindspore import Tensor, Parameter
+            >>> import numpy as np
+            >>> x = Parameter(Tensor(np.array([[1, 2], [3, 4]], dtype=np.float32)), name="param")
+            >>> x.data
+            Parameter (name=Parameter, shape=(2, 2), dtype=float32, requires=True)
+        """
         return self
 
     def value(self):
@@ -691,6 +824,13 @@ class Parameter(Tensor_):
 
         Returns:
             Parameter, the parameter after set data.
+
+        Examples:
+            >>> from mindspore import Tensor, Parameter
+            >>> import numpy as np
+            >>> x = Parameter(Tensor(np.array([[1, 2], [3, 4]], dtype=np.float32)), name="param")
+            >>> x.set_data(Tensor(np.array([[6, 6], [6, 6]], dtype=np.float32))
+            Parameter (name=Parameter, shape=(2, 2), dtype=float32, requires=True)
         """
         if not isinstance(data, (Tensor, int, float)):
             raise TypeError(f"Parameter data must be [`Tensor`, `int`, `float`] or a kind of `Tensor` "
@@ -768,6 +908,12 @@ class Parameter(Tensor_):
             RuntimeError: If it is from Initializer, and parallel mode has changed after the Initializer created.
             ValueError: If the length of the layout is less than 6.
             TypeError: If `layout` is not tuple.
+
+        Examples:
+            >>> from mindspore import Tensor, Parameter
+            >>> import numpy as np
+            >>> x = Parameter(Tensor(np.array([[1, 2], [3, 4]], dtype=np.float32)), name="param")
+            >>> x.init_data()
         """
         if self.is_default_input_init and self.is_in_parallel != _is_in_parallel_mode():
             raise RuntimeError("Must set or change parallel mode before any initializer Tensor created.")
@@ -804,6 +950,14 @@ class ParameterTuple(tuple):
 
     Note:
         It is used to store the parameters of the network into the parameter tuple collection.
+
+    Examples:
+            >>> from mindspore import Tensor, Parameter, ParameterTuple
+            >>> import numpy as np
+            >>> x = Parameter(Tensor(np.array([[1, 2], [3, 4]], dtype=np.float32)), name="param")
+            >>> y = Parameter(Tensor(np.array([[5, 6], [7, 8]], dtype=np.float32)), name="param1")
+            >>> pt = ParameterTuple([x, y])
+            >>> pt1 = pt.clone(prefix="new")
     """
 
     def __new__(cls, iterable):

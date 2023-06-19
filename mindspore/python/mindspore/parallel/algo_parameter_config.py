@@ -259,6 +259,10 @@ def set_algo_parameters(**kwargs):
 
     Raises:
         ValueError: If context keyword is not recognized.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> ms.set_algo_parameters(elementwise_op_strategy_follow=True)
     """
     for key, value in kwargs.items():
         if key not in set_algo_parameters_config_func_map:
@@ -284,6 +288,11 @@ def get_algo_parameters(attr_key):
 
     Raises:
         ValueError: If context keyword is not recognized.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> ms.get_algo_parameters("fully_use_devices")
+        True
     """
     if attr_key not in get_algo_parameters_config_func_map:
         raise ValueError("Get context keyword %s is not recognized!" % attr_key)
@@ -305,5 +314,9 @@ def reset_algo_parameters():
     - algo_approxi_epsilon: 0.1.
     - tensor_slice_align_enable: False.
     - tensor_slice_align_size: 16.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> ms.reset_algo_parameters()
     """
     _algo_parameter_config().reset_algo_parameters()

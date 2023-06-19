@@ -165,6 +165,13 @@ def get_seed():
 
     Returns:
         Integer. The global seed.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> ms.set_seed(1234)
+        >>> seed = ms.get_seed()
+        >>> print(seed)
+        1234
     """
     return _GLOBAL_SEED
 

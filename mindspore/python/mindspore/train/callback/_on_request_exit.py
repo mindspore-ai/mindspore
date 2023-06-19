@@ -53,7 +53,8 @@ class OnRequestExit(Callback):
         >>> import numpy as np
         >>> import mindspore as ms
         >>> from mindspore import dataset as ds
-        >>> from mindspore import nn
+        >>> from mindspore import nn, RunContext
+        >>> from mindspore.train.callback import _InternalCallbackParam
         >>>
         >>> # Define the forward net
         >>> class ForwardNet(nn.Cell):
@@ -79,6 +80,15 @@ class OnRequestExit(Callback):
         >>> dataset = dataset.batch(32, drop_remainder=True)
         >>>
         >>> on_request_exit = ms.train.OnRequestExit(file_name='LeNet5')
+        >>> cb_params = _InternalCallbackParam()
+        >>> run_context = RunContext(cb_params)
+        >>> on_request_exit.on_train_begin(run_context)
+        >>> on_request_exit.on_train_step_end(run_context)
+        >>> on_request_exit.on_train_epoch_end(run_context)
+        >>> on_request_exit.on_train_end(run_context)
+        >>> on_request_exit.on_eval_begin(run_context)
+        >>> on_request_exit.on_eval_step_end(run_context)
+        >>> on_request_exit.on_eval_end(run_context)
         >>> model.train(10, dataset, callbacks=on_request_exit)
         >>> # The user send the signal SIGTERM to the training process,
         >>> # the process would save the checkpoint and mindir, and then exit the training process.

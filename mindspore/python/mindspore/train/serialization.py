@@ -2306,6 +2306,11 @@ def async_ckpt_thread_status():
     Returns:
         bool, True, Asynchronous save checkpoint thread is running.
         False, Asynchronous save checkpoint thread is not executing.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> ms.async_ckpt_thread_status()
+        False
     """
     thr_list = threading.enumerate()
     return True in [ele.getName() == "asyn_save_ckpt" for ele in thr_list]

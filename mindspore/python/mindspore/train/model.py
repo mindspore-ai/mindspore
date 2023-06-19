@@ -182,6 +182,9 @@ class Model:
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
         >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
+        >>> model.train_network
+        >>> model.predict_network
+        >>> model.eval_network
         >>> # Create the dataset taking MNIST as an example. Refer to
         >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
         >>> dataset = create_dataset()

@@ -499,12 +499,30 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
     def size(self):
         """
         For details, please refer to :func:`mindspore.ops.size`.
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> import numpy as np
+            >>> x = Tensor(np.array([[1, 2], [3, 4]]))
+            >>> output = x.size
+            >>> print(output)
+            4
         """
         return self._size
 
     @property
     def ndim(self):
-        """Return the number of tensor dimensions."""
+        """
+        Return the number of tensor dimensions.
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> import numpy as np
+            >>> x = Tensor(np.array([[1, 2], [3, 4]]))
+            >>> output = x.ndim
+            >>> print(output)
+            2
+        """
         return len(self._shape)
 
     @property
@@ -516,6 +534,15 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> import numpy as np
+            >>> x = Tensor(np.array([[1, 2], [3, 4]]))
+            >>> output = x.H
+            >>> print(output)
+            [[1 3]
+            [2 4]]
         """
         if self.ndim != 2:
             raise ValueError(f"For tensor.H only support 2-D Tensor, but got {self.ndim}-D.")
@@ -526,27 +553,78 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
     @property
     def has_init(self):
-        """Whether tensor is initialized."""
+        """
+        Whether tensor is initialized.
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> import numpy as np
+            >>> x = Tensor(np.array([[1, 2], [3, 4]]))
+            >>> output = x.has_init
+            >>> print(output)
+            False
+        """
         return self.init is not None
 
     @property
     def itemsize(self):
-        """Return the length of one tensor element in bytes."""
+        """
+        Return the length of one tensor element in bytes.
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> import numpy as np
+            >>> x = Tensor(np.array([[1, 2], [3, 4]]))
+            >>> output = x.itemsize
+            >>> print(output)
+            8
+        """
         return self._itemsize
 
     @property
     def strides(self):
-        """Return the tuple of bytes to step in each dimension when traversing a tensor."""
+        """
+        Return the tuple of bytes to step in each dimension when traversing a tensor.
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> import numpy as np
+            >>> x = Tensor(np.array([[1, 2], [3, 4]]))
+            >>> output = x.strides
+            >>> print(output)
+            (16, 8)
+        """
         return self._strides
 
     @property
     def nbytes(self):
-        """Return the total number of bytes taken by the tensor."""
+        """
+        Return the total number of bytes taken by the tensor.
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> import numpy as np
+            >>> x = Tensor(np.array([[1, 2], [3, 4]]))
+            >>> output = x.nbytes
+            >>> print(output)
+            32
+        """
         return self._nbytes
 
     @property
     def T(self):
-        """Return the transposed tensor."""
+        """
+        Return the transposed tensor.
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> import numpy as np
+            >>> x = Tensor(np.array([[1, 2], [3, 4]]))
+            >>> output = x.T
+            >>> print(output)
+            [[1 3]
+            [2 4]]
+        """
         return self.transpose()
 
     @staticmethod
@@ -653,6 +731,15 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
         Returns:
             Tensor. A Tensor with the same type and shape of input.
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> x = mindspore.Tensor(np.zeros((1, 2)), dtype=mindspore.float32)
+            >>> x.cauchy()
+            Tensor(shape=[1, 2], dtype=Float32, value=
+            [[8.79836142e-01, 9.37541723e-01]])
+
         """
         self._init_check()
         out = tensor_operator_registry.get('cauchy')(list(self.shape), median, sigma)()
@@ -676,6 +763,15 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
         Returns:
             Tensor. A Tensor with the same type and shape of input.
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> x = mindspore.Tensor(np.array([[1, 2], [3, 4]]), dtype=mindspore.float32)
+            >>> output = x.log_normal()
+            >>> print(output)
+            [[1.2788825 2,3305743]
+            [14.944194 0,16303174]]
         """
         self._init_check()
         return tensor_operator_registry.get('log_normal')(mean, std)(self)
@@ -689,6 +785,16 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
         Returns:
             Tensor, Tensor that's been assigned.
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> import numpy as np
+            >>> x = Tensor([1, 2, 3, 4])
+            >>> y = Tensor(np.array([[1, 2], [3, 4]]))
+            >>> output = x.assign_value(y)
+            >>> print(x)
+            [[1 2]
+            [3 4]]
         """
         if is_stub_tensor(value):
             value = value.stub_sync()
