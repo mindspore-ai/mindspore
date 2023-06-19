@@ -89,7 +89,7 @@ struct FrontendOpRunInfo {
   AsyncStatus async_status;
   mindspore::HashSet<size_t> input_to_attr{};
   std::vector<tensor::TensorPtr> output_tensors;
-  std::vector<std::promise<DeviceAddressFutureDataPtr>> device_sync_promises;
+  std::vector<DeviceAddressPromisePtr> device_sync_promises;
 };
 using FrontendOpRunInfoPtr = std::shared_ptr<FrontendOpRunInfo>;
 

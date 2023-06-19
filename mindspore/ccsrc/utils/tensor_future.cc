@@ -46,5 +46,11 @@ std::shared_ptr<DeviceSync> DeviceAddressFuture::Get() {
     return nullptr;
   }
 }
+
+void DeviceAddressPromise::SetValue(const DeviceAddressFutureDataPtr &data) {
+  std::call_once(once_flag_, [this, &data]() { promise_.set_value(data); });
+}
+
+std::future<DeviceAddressFutureDataPtr> DeviceAddressPromise::GetFuture() { return promise_.get_future(); }
 }  // namespace pynative
 }  // namespace mindspore

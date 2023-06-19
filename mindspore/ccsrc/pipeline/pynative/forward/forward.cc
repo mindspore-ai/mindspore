@@ -186,15 +186,16 @@ void TransformOutputValues(const FrontendOpRunInfoPtr &op_run_info) {
 }
 
 void CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs,
-                        std::vector<std::promise<DeviceAddressFutureDataPtr>> *device_sync_promises) {
+                        std::vector<DeviceAddressPromisePtr> *device_sync_promises) {
   auto create_tensor = [&outputs, &device_sync_promises](const TypePtr &type, const ShapeVector &shape_vector) {
     auto output_tensor = std::make_shared<tensor::Tensor>(type->type_id(), shape_vector);
     output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
     outputs->emplace_back(output_tensor);
     MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
 
-    std::promise<DeviceAddressFutureDataPtr> promise;
-    auto future = promise.get_future();
+    DeviceAddressPromisePtr promise =
+      std::make_unique<DeviceAddressPromise>(std::promise<DeviceAddressFutureDataPtr>());
+    auto future = promise->GetFuture();
     auto device_address_future = std::make_shared<DeviceAddressFuture>(std::move(future));
     output_tensor->set_address_future(device_address_future);
     (void)device_sync_promises->emplace_back(std::move(promise));

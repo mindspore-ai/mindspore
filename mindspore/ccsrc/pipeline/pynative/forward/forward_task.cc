@@ -30,7 +30,7 @@ void BackendTask::Run() { run_func_(op_run_info_, backend_op_run_info_); }
 void BackendTask::SetException(const std::exception_ptr &e) {
   if (backend_op_run_info_ != nullptr) {
     for (auto &promise : backend_op_run_info_->device_sync_promises) {
-      promise.set_value(std::make_shared<pynative::DeviceAddressFutureData>(nullptr, e));
+      promise->SetValue(std::make_shared<pynative::DeviceAddressFutureData>(nullptr, e));
     }
   }
 }
