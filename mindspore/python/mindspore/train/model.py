@@ -976,8 +976,8 @@ class Model:
             dataset_sink_mode (bool): Determines whether to pass the data through dataset channel.
                                       Configure pynative mode or CPU, the training process will be performed with
                                       dataset not sink. Default: ``False``.
-            sink_size (int): Control the amount of data in each sink. `sink_size` is invalid if `dataset_sink_mode`
-                             is False.
+            sink_size (int): Control the number of steps for each sinking.
+                             `sink_size` is invalid if `dataset_sink_mode` is False.
                              If sink_size = -1, sink the complete dataset for each epoch.
                              If sink_size > 0, sink sink_size data for each epoch.
                              Default: -1.
@@ -1127,8 +1127,8 @@ class Model:
                                       dataset not sink. Default: ``False`` .
             valid_dataset_sink_mode (bool): Determines whether to pass the validation data through dataset channel.
                                       Default: ``False`` .
-            sink_size (int): Control the amount of data in each sink. `sink_size` is invalid if `dataset_sink_mode`
-                             is False.
+            sink_size (int): Control the number of steps for each sinking.
+                             `sink_size` is invalid if `dataset_sink_mode` is False.
                              If sink_size = -1, sink the complete dataset for each epoch.
                              If sink_size > 0, sink sink_size data for each epoch.
                              Default: ``-1`` .
@@ -1224,7 +1224,7 @@ class Model:
                                      built. Default: ``None`` .
             valid_dataset (Dataset): An evaluating dataset iterator. If `valid_dataset` is defined, evaluation graphs
                                      will be built, and `metrics` in `Model` can not be None. Default: ``None`` .
-            sink_size (int): Control the amount of data in each sink. Default: ``-1`` .
+            sink_size (int): Control the number of steps for each sinking. Default: ``-1`` .
             epoch (int): Control the training epochs. Default: ``1`` .
 
         Examples:
@@ -1626,7 +1626,7 @@ class Model:
             dataset_sink_mode (bool): Determines whether to pass the data through dataset channel.
                                       Configure pynative mode or CPU, the training process will be performed with
                                       dataset not sink. Default: ``True`` .
-            sink_size (int): Control the amount of data in each sink.
+            sink_size (int): Control the number of steps for each sinking.
                              If sink_size = -1, sink the complete dataset for each epoch.
                              If sink_size > 0, sink sink_size data for each epoch.
                              If dataset_sink_mode is False, set sink_size as invalid.
