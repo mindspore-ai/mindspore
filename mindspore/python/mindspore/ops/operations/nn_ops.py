@@ -678,7 +678,7 @@ class Mish(PrimitiveWithInfer):
         (2, 3)
         >>> x = Tensor(2.1, mindspore.float32)
         >>> output = mish(x)
-        >>> print(output.shape)
+        >>> print(output)
         2.050599
     """
 
