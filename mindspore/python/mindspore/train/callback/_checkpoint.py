@@ -31,6 +31,8 @@ from mindspore.parallel._recovery_context import _set_recovery_context, _get_rec
 from mindspore.train.callback._callback import Callback, set_cur_net
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
+from mindspore._c_expression import _collect_host_info
+
 
 _cur_dir = os.getcwd()
 SAVE_DIR = _cur_dir
@@ -403,7 +405,7 @@ class ModelCheckpoint(Callback):
             run_context (RunContext): Context of the train running.
         """
         cb_params = run_context.original_args()
-
+        _collect_host_info("Callback", "ModelCheckpoint", "step_end", level=1)
         # In disaster recovery scenario, the training process may be rolled back to the last step where
         # the ckpt was successfully saved, so the _last_triggered_step should be updated.
         if _get_recovery_context("enable_recovery") and cb_params.last_save_ckpt_step is not None:
@@ -432,6 +434,7 @@ class ModelCheckpoint(Callback):
             run_context (RunContext): Context of the train running.
         """
         cb_params = run_context.original_args()
+        _collect_host_info("Callback", "ModelCheckpoint", "end", level=1)
         _to_save_last_ckpt = True
 
         self._save_ckpt(cb_params, _to_save_last_ckpt)

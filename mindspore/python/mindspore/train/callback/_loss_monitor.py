@@ -19,6 +19,7 @@ import numpy as np
 
 from mindspore import _checkparam as Validator
 from mindspore.train.callback._callback import Callback, _handle_loss
+from mindspore._c_expression import _collect_host_info
 
 
 class LossMonitor(Callback):
@@ -69,7 +70,7 @@ class LossMonitor(Callback):
                     please refer to :class:`mindspore.train.RunContext`.
         """
         cb_params = run_context.original_args()
-
+        _collect_host_info("Callback", "LossMonitor", "step_end", level=1)
         cur_epoch_num = cb_params.get("cur_epoch_num", 1)
         loss = _handle_loss(cb_params.net_outputs)
 
@@ -100,6 +101,7 @@ class LossMonitor(Callback):
                     please refer to :class:`mindspore.train.RunContext`.
         """
         cb_params = run_context.original_args()
+        _collect_host_info("Callback", "LossMonitor", "train_epoch_end", level=1)
         metrics = cb_params.get("metrics")
         if metrics:
             print("Eval result: epoch %d, metrics: %s" % (cb_params.cur_epoch_num, metrics))
