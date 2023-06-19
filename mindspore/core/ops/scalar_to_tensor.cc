@@ -106,12 +106,16 @@ class ScalarToTensorInfer : public abstract::OpInferBase {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "the second input must be a `Type`, but got "
                               << attr->type_name();
     }
-    auto output_dtype = attr->cast<TypePtr>();
+    TypePtr dst_type{nullptr};
+    if (attr->isa<TensorType>()) {
+      dst_type = attr->cast_ptr<TensorType>()->element();
+    } else {
+      dst_type = attr->cast<TypePtr>();
+    }
 
     const std::set<TypePtr> valid_types = {kBool,   kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,
                                            kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
-    return std::make_shared<TensorType>(
-      CheckAndConvertUtils::CheckSubClass("dtype", output_dtype, valid_types, prim_name));
+    return std::make_shared<TensorType>(CheckAndConvertUtils::CheckSubClass("dtype", dst_type, valid_types, prim_name));
   }
 
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
