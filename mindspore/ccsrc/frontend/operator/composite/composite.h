@@ -177,7 +177,7 @@ class GradOperation : public MetaFuncGraph {
  public:
   explicit GradOperation(const std::string &name, bool get_all = false, bool get_by_list = false,
                          bool sens_param = false, bool get_by_position = false, bool has_aux = false,
-                         bool get_value = false, bool return_ids = false);
+                         bool get_value = false, bool return_ids = false, bool merge_forward = false);
   ~GradOperation() override = default;
   MS_DECLARE_PARENT(GradOperation, MetaFuncGraph)
 
@@ -188,6 +188,7 @@ class GradOperation : public MetaFuncGraph {
   FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
 
   bool sens_param() const { return sens_param_; }
+
   bool get_all_;
   bool get_by_list_;
   bool sens_param_;
@@ -195,6 +196,7 @@ class GradOperation : public MetaFuncGraph {
   bool has_aux_;
   bool get_value_;
   bool return_ids_;
+  bool merge_forward_;
 
  private:
   void GradByParameter(const FuncGraphPtr &k_child, const AnfNodePtr &f_app, const AnfNodePtr &bprop,

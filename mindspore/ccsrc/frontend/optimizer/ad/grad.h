@@ -29,6 +29,7 @@ FuncGraphVector GradMultiFuncGraph(const FuncGraphVector &func_graphs, const opt
 FuncGraphPtr Kprim(const ValueNodePtr &value_node, const pipeline::ResourceBasePtr &resources);
 MetaFuncGraphPtr Kmeta(const PrimitivePtr &prim, const pipeline::ResourceBasePtr &);
 void CleanRes();
+bool MergeForward(const FuncGraphPtr &root, const opt::OptimizerPtr &opt);
 }  // namespace ad
 }  // namespace mindspore
 
