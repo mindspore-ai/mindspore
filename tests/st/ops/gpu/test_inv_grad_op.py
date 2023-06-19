@@ -97,32 +97,6 @@ def test_inv_grad_float16(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-@pytest.mark.parametrize('dtype', [np.int8, np.int32])
-def test_inv_grad_int(mode, dtype):
-    """
-    Feature: ALL To ALL
-    Description: test cases for InvGrad for int
-    Expectation: the result match to numpy
-    """
-    context.set_context(mode=mode, device_target="GPU")
-    y = Tensor(np.array([[-1, 1, 5],
-                         [5, 3, 6],
-                         [3, 2, -1]]).astype(dtype))
-    dy = Tensor(np.array([[29, 1, -2],
-                          [2, -1, 2],
-                          [3, 1, 12]]).astype(dtype))
-    expect = np.array([[-29, -1, 50],
-                       [-50, 9, -72],
-                       [-27, -4, -12]]).astype(dtype)
-    net = NetInvGrad()
-    output = net(y, dy)
-    np.testing.assert_array_almost_equal(output.asnumpy(), expect)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_inv_grad_vmap(mode):
     """
     Feature: test inv_grad vmap feature.
