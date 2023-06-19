@@ -530,9 +530,6 @@ FuncGraphPtr GenerateReusingGraph(const FuncGraphPtr &fg) {
     }
   }
   MS_LOG(DEBUG) << "The reusable graph parameter size: " << reusing_graph->parameters().size();
-  if (common::GetEnv("MS_DEV_CELL_REUSE") == "2") {
-    reusing_graph->set_flag(FUNC_GRAPH_FLAG_NEED_BACKEND_INLINE, true);
-  }
   return reusing_graph;
 }
 

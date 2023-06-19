@@ -1120,7 +1120,7 @@ void KernelGraphMgr::ConstructKernelGraphInner(const FuncGraphPtr &func_graph,
   MS_EXCEPTION_IF_NULL(all_out_graph);
   auto node_list = TopoSort(func_graph->get_return());
   MS_EXCEPTION_IF_NULL(graph);
-  if (func_graph->has_flag(FUNC_GRAPH_FLAG_NEED_BACKEND_INLINE)) {
+  if (func_graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE) && common::GetEnv("MS_DEV_CELL_REUSE") == "2") {
     MS_LOG(INFO) << "Need backend inline: " << graph->graph_id();
     graph->set_need_inline(true);
   }
