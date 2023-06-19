@@ -133,10 +133,6 @@ class _ContextSwitchInfo(threading.local):
         self.context_stack.pop()
 
 
-def set_auto_tune_mode(tune_mode):
-    logger.warning(f"AutoTune has been abandoned and no longer takes effect, '{tune_mode}'")
-
-
 class _Context:
     """
     _Context is the environment in which operations are executed
@@ -451,7 +447,6 @@ class _Context:
         'save_graphs_path': set_save_graphs_path,
         'device_target': set_device_target,
         'device_id': set_device_id,
-        'auto_tune_mode': set_auto_tune_mode,
         'max_call_depth': set_max_call_depth,
         'profiling_options': set_profiling_options,
         'variable_memory_max_size': set_variable_memory_max_size,
@@ -839,7 +834,6 @@ def _check_target_specific_cfgs(device, arg_key):
         'enable_reduce_precision': ['Ascend'],
         'print_file_path': ['Ascend'],
         'variable_memory_max_size': ['Ascend'],
-        'auto_tune_mode': ['Ascend'],
         'max_device_memory': ['Ascend', 'GPU'],
         'mempool_block_size': ['GPU', 'Ascend'],
         'disable_format_transform': ['GPU'],
@@ -858,7 +852,7 @@ def _check_target_specific_cfgs(device, arg_key):
 
 
 @args_type_check(mode=int, precompile_only=bool, device_target=str, device_id=int, save_graphs=(bool, int),
-                 save_graphs_path=str, enable_dump=bool, auto_tune_mode=str,
+                 save_graphs_path=str, enable_dump=bool,
                  save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,
                  enable_auto_mixed_precision=bool, inter_op_parallel_num=int,
                  enable_graph_kernel=bool, reserve_class_name_in_scope=bool, check_bprop=bool,
@@ -1193,7 +1187,7 @@ def set_context(**kwargs):
         ctx.set_device_target(kwargs['device_target'])
     device = ctx.get_param(ms_ctx_param.device_target)
     for key, value in kwargs.items():
-        if key == 'enable_sparse':
+        if key in ('enable_sparse', 'auto_tune_mode'):
             logger.warning(f"For 'context.set_context', '{key}' parameter is deprecated, "
                            "and will be removed in the next version.")
             continue
