@@ -57,24 +57,25 @@ class OnRequestExit(Callback):
         >>>
         >>> # Define the forward net
         >>> class ForwardNet(nn.Cell):
-        >>>     def __init__(self, num_class=10, channel=1):
-        >>>         super(ForwardNet, self).__init__()
-        >>>         self.param = ms.Parameter(1.0)
-        >>>         self.relu = ms.ops.ReLU()
+        ...     def __init__(self, num_class=10, channel=1):
+        ...         super(ForwardNet, self).__init__()
+        ...         self.param = ms.Parameter(1.0)
+        ...         self.relu = ms.ops.ReLU()
+        ...
+        ...     def construct(self, x):
+        ...         return self.relu(x + self.param)
         >>>
-        >>>     def construct(self, x):
-        >>>         return self.relu(x + self.param)
         >>> forward_net = ForwardNet()
         >>> loss = nn.MAELoss()
         >>> opt = nn.Momentum(forward_net.trainable_params(), 0.01, 0.9)
-        >>> model = ms.Model(forward_net, loss_fn=loss, optimizer=opt)\
+        >>> model = ms.Model(forward_net, loss_fn=loss, optimizer=opt)
         >>>
         >>> # Create dataset
         >>> def generator_multi_column():
-        >>>    i = 0
-        >>>    while i < 1000:
-        >>>        i += 1
-        >>>        yield np.ones((1, 32, 32)).astype(np.float32) * 0.01, np.array(1).astype(np.int32)
+        ...    i = 0
+        ...    while i < 1000:
+        ...        i += 1
+        ...        yield np.ones((1, 32, 32)).astype(np.float32) * 0.01, np.array(1).astype(np.int32)
         >>> dataset = ds.GeneratorDataset(source=generator_multi_column, column_names=["data", "label"])
         >>> dataset = dataset.batch(32, drop_remainder=True)
         >>>
