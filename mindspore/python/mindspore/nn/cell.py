@@ -881,7 +881,7 @@ class Cell(Cell_):
         Examples:
             >>> import numpy as np
             >>> import mindspore as ms
-            >>> from mindspore import nn, Tensor, context
+            >>> from mindspore import nn, Tensor
             >>>
             >>> class reluNet(nn.Cell):
             ...     def __init__(self):
@@ -1740,9 +1740,7 @@ class Cell(Cell_):
         Examples:
             >>> import numpy as np
             >>> import mindspore as ms
-            >>> import mindspore.nn as nn
-            >>> from mindspore import Tensor
-            >>> from mindspore.ops import GradOperation
+            >>> from mindspore import Tensor, nn, ops
             >>> ms.set_context(mode=ms.PYNATIVE_MODE)
             >>> def forward_pre_hook_fn(cell_id, inputs):
             ...     print("forward inputs: ", inputs)
@@ -1757,7 +1755,7 @@ class Cell(Cell_):
             ...         x = x + x
             ...         x = self.mul(x, y)
             ...         return x
-            >>> grad = GradOperation(get_all=True)
+            >>> grad = ops.GradOperation(get_all=True)
             >>> net = Net()
             >>> output = grad(net)(Tensor(np.ones([1]).astype(np.float32)), Tensor(np.ones([1]).astype(np.float32)))
             forward inputs: (Tensor(shape=[1], dtype=Float32, value= [ 2.00000000e+00]), Tensor(shape=[1],
@@ -1842,9 +1840,7 @@ class Cell(Cell_):
         Examples:
             >>> import numpy as np
             >>> import mindspore as ms
-            >>> import mindspore.nn as nn
-            >>> from mindspore import Tensor
-            >>> from mindspore.ops import GradOperation
+            >>> from mindspore import Tensor, nn, ops
             >>> ms.set_context(mode=ms.PYNATIVE_MODE)
             >>> def forward_hook_fn(cell_id, inputs, output):
             ...     print("forward inputs: ", inputs)
@@ -1860,7 +1856,7 @@ class Cell(Cell_):
             ...         x = x + x
             ...         x = self.mul(x, y)
             ...         return x
-            >>> grad = GradOperation(get_all=True)
+            >>> grad = ops.GradOperation(get_all=True)
             >>> net = Net()
             >>> output = grad(net)(Tensor(np.ones([1]).astype(np.float32)), Tensor(np.ones([1]).astype(np.float32)))
             forward inputs: (Tensor(shape=[1], dtype=Float32, value= [ 2.00000000e+00]), Tensor(shape=[1],
@@ -1944,9 +1940,7 @@ class Cell(Cell_):
         Examples:
             >>> import numpy as np
             >>> import mindspore as ms
-            >>> import mindspore.nn as nn
-            >>> from mindspore import Tensor
-            >>> from mindspore.ops import GradOperation
+            >>> from mindspore import Tensor, nn, ops
             >>> ms.set_context(mode=ms.PYNATIVE_MODE)
             >>> def backward_hook_fn(cell_id, grad_input, grad_output):
             ...     print("backward input: ", grad_input)
@@ -1962,7 +1956,7 @@ class Cell(Cell_):
             ...         x = x + x
             ...         x = self.relu(x)
             ...         return x
-            >>> grad = GradOperation(get_all=True)
+            >>> grad = ops.GradOperation(get_all=True)
             >>> net = Net()
             >>> output = grad(net)(Tensor(np.ones([1]).astype(np.float32)))
             backward input: (Tensor(shape=[1], dtype=Float32, value= [ 1.00000000e+00]),)

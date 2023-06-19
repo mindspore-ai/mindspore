@@ -17,7 +17,7 @@ mindspore.common.initializer
     参数：
         - **init** (Union[Tensor, str, Initializer, numbers.Number]) - 初始化方式。
 
-          - **str** - `init` 是继承自 `Initializer` 的类的别名，实际使用时会调用相应的类。`init` 的值可以是"normal"、"ones"或"zeros"等。
+          - **str** - `init` 是继承自 `Initializer` 的类的别名，实际使用时会调用相应的类。`init` 的值可以是 ``"normal"`` 、 ``"ones"`` 或 ``"zeros"`` 等。
           - **Initializer** - `init` 是继承自 `Initializer` ，用于初始化Tensor的类。
           - **numbers.Number** - 用于初始化Tensor的常量。
           - **Tensor** - 用于初始化Tensor的Tensor。

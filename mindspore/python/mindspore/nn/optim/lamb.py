@@ -218,7 +218,6 @@ class Lamb(Optimizer):
     Examples:
         >>> import mindspore as ms
         >>> from mindspore import nn
-        >>> from mindspore.nn import learning_rate_schedule
         >>>
         >>> # Define the network structure of LeNet5. Refer to
         >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
@@ -227,7 +226,7 @@ class Lamb(Optimizer):
         >>> optim = nn.Lamb(params=net.trainable_params(), learning_rate=0.1)
         >>>
         >>> #2) Use parameter groups and set different values
-        >>> poly_decay_lr = learning_rate_schedule.PolynomialDecayLR(learning_rate=0.1, end_learning_rate=0.01,
+        >>> poly_decay_lr = nn.PolynomialDecayLR(learning_rate=0.1, end_learning_rate=0.01,
         ...                                                    decay_steps=4, power = 0.5)
         >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
         >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
@@ -242,7 +241,7 @@ class Lamb(Optimizer):
         >>> # The final parameters order in which the optimizer will be followed is the value of 'order_params'.
         >>>
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> model = ms.Model(net, loss_fn=loss, optimizer=optim)
+        >>> model = ms.train.Model(net, loss_fn=loss, optimizer=optim)
     """
     _support_parallel_optimizer = True
 

@@ -89,8 +89,8 @@ class DynamicLossScaleUpdateCell(Cell):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor, Parameter, nn
-        >>> import mindspore.ops as ops
+        >>> import mindspore
+        >>> from mindspore import Tensor, Parameter, nn, ops
         >>>
         >>> class Net(nn.Cell):
         ...     def __init__(self, in_features, out_features):
@@ -187,6 +187,7 @@ class FixedLossScaleUpdateCell(Cell):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore
         >>> from mindspore import Tensor, Parameter, nn, ops
         >>>
         >>> class Net(nn.Cell):
@@ -266,7 +267,6 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         >>> import numpy as np
         >>> import mindspore
         >>> from mindspore import Tensor, Parameter, nn, ops
-        >>> from mindspore import dtype as mstype
         >>>
         >>> class Net(nn.Cell):
         ...     def __init__(self, in_features, out_features):
@@ -298,12 +298,12 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         >>> net_with_loss = nn.WithLossCell(net, loss)
         >>> inputs = Tensor(np.ones([size, in_features]).astype(np.float32))
         >>> label = Tensor(np.zeros([size, out_features]).astype(np.float32))
-        >>> scaling_sens = Tensor([1024], dtype=mstype.float32)
+        >>> scaling_sens = Tensor([1024], dtype=mindspore.float32)
         >>> train_network = nn.TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_sense=scaling_sens)
         >>> output = train_network(inputs, label)
         >>>
         >>> # update scaling sens and train the network
-        >>> scaling_sens = Tensor([1], dtype=mstype.float32)
+        >>> scaling_sens = Tensor([1], dtype=mindspore.float32)
         >>> train_network.set_sense_scale(scaling_sens)
         >>> output = train_network(inputs, label)
     """
