@@ -16,7 +16,6 @@
 
 #include "src/extendrt/kernel/kernel_selector/kernel_selector.h"
 #include "src/extendrt/kernel/kernel_selector/nnacl_first_kernel_selector.h"
-#include "src/extendrt/kernel/kernel_selector/format_first_kernel_selector.h"
 
 namespace mindspore::kernel {
 std::vector<const KernelLib *> KernelSelector::Candidates(const PrimitiveType &op_type, const KernelAttr &require,
@@ -32,6 +31,6 @@ std::vector<const KernelLib *> KernelSelector::Candidates(const PrimitiveType &o
 }
 
 std::shared_ptr<KernelSelector> CreateKernelSelector(const std::shared_ptr<lite::CompileOption> &compile_option) {
-  return std::make_shared<FormatFirstKernelSelector>(compile_option);
+  return std::make_shared<NNACLFirstKernelSelector>(compile_option);
 }
 }  // namespace mindspore::kernel
