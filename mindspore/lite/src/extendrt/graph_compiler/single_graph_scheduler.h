@@ -26,13 +26,14 @@
 #include "src/extendrt/graph_compiler/compile_option.h"
 #include "src/infer/kernel.h"
 #include "src/extendrt/kernel/kernel_selector/kernel_selector.h"
+#include "src/infer/context.h"
 
 namespace mindspore {
 namespace lite {
 class SingleGraphScheduler {
  public:
-  explicit SingleGraphScheduler(std::shared_ptr<InnerContext> context, const std::shared_ptr<CompileOption> &option)
-      : context_(context), compile_option_(option) {}
+  explicit SingleGraphScheduler(InferContextPtr context, std::shared_ptr<CompileOption> option)
+      : context_(std::move(context)), compile_option_(std::move(option)) {}
   virtual ~SingleGraphScheduler() = default;
   InferKernel *Schedule(const CompileResultPtr &node_list);
 
@@ -45,7 +46,7 @@ class SingleGraphScheduler {
   int FallBackInferShape(const CompileResultPtr &node_list);
 
  private:
-  std::shared_ptr<InnerContext> context_;
+  InferContextPtr context_{nullptr};
   std::shared_ptr<CompileOption> compile_option_{nullptr};
   infer::ExecutionFlowPtr execution_flow_{nullptr};
   std::shared_ptr<kernel::KernelSelector> kernel_selector_{nullptr};

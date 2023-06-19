@@ -171,7 +171,6 @@ class Scheduler {
   std::unordered_map<kernel::KernelExec *, size_t> partial_kernel_subgraph_index_map_{};
   std::set<lite::LiteGraph::Node *> partial_cnode_inferred_{};
   ControlFlowSchedulerPtr control_flow_scheduler_ = nullptr;
-  int schema_version_ = SCHEMA_VERSION::SCHEMA_CUR;
   std::map<std::string, TypeId> *execution_plan_ = nullptr;
   const std::map<std::string, std::map<std::string, std::string>> *config_info_ = nullptr;
   std::shared_ptr<ShapeFusionPass> shape_fusion_pass_ = nullptr;

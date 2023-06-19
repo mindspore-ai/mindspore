@@ -29,6 +29,7 @@
 #include "abstract/abstract_value.h"
 #include "extendrt/graph_compiler/anfnode_tensor_adapter.h"
 #include "src/extendrt/graph_compiler/compile_result_builder.h"
+#include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore::lite {
 static const std::vector<PrimitivePtr> ms_infer_cut_list = {prim::kPrimReturn,   prim::kPrimPartial,
@@ -44,6 +45,8 @@ std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::Compile(Fu
     MS_LOG(ERROR) << "DefaultGraphCompiler::Compile init inner context failed";
     return nullptr;
   }
+
+  option_ = std::make_shared<CompileOption>();
 
   MS_LOG(DEBUG) << "DefaultGraphCompiler::Compile Partition FunctionGraph Begin";
   auto graph_segments = Partition(graph);
@@ -85,15 +88,43 @@ std::vector<GraphSegmentPtr> DefaultGraphCompiler::Partition(const FuncGraphPtr 
 
 CompileResultPtr DefaultGraphCompiler::Compile(const GraphSegmentPtr &segment, const std::vector<AnfNodePtr> &inputs,
                                                const std::vector<AnfNodePtr> &outputs) {
-  auto builder = std::make_shared<CompileResultBuilder>(Format::NHWC);
+  auto builder = std::make_shared<CompileResultBuilder>(option_->format);
   return builder->Build(segment, inputs, outputs);
 }
 
 std::vector<InferKernel *> DefaultGraphCompiler::Schedule(const CompileResultPtr &compile_result) {
   if (MS_UNLIKELY(scheduler_ == nullptr)) {
-    scheduler_ = std::make_shared<SingleGraphScheduler>(this->inner_context_, std::make_shared<CompileOption>());
+    scheduler_ = std::make_shared<SingleGraphScheduler>(this->inner_context_, option_);
   }
   return {scheduler_->Schedule(compile_result)};
+}
+
+std::vector<AnfNodePtr> DefaultGraphCompiler::GetGraphOutput(AnfNodePtr origin_output) {
+  std::vector<AnfNodePtr> graph_outputs;
+  if (!origin_output->isa<CNode>()) {
+    // not cnode, return origin output node
+    graph_outputs.emplace_back(origin_output);
+    return graph_outputs;
+  }
+
+  // cnode, if MakeTuple, split it into multiple output node
+  auto cnode = origin_output->cast<CNodePtr>();
+  if (cnode == nullptr) {
+    MS_LOG(ERROR) << "cast origin output node into cnode failed";
+    return {};
+  }
+
+  if (!IsPrimitive(cnode->input(0), prim::kPrimMakeTuple)) {
+    // not MakeTuple node, return origin output node
+    graph_outputs.emplace_back(origin_output);
+    return graph_outputs;
+  }
+
+  // MakeTuple Node, get the input node
+  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+    graph_outputs.emplace_back(cnode->input(i));
+  }
+  return graph_outputs;
 }
 
 std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::NonCFGCompile(
@@ -114,13 +145,12 @@ std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::NonCFGComp
     MS_LOG(ERROR) << "DefaultGraphCompiler::NonCFGCompile get graph inputs node failed";
     return nullptr;
   }
-  std::vector<AnfNodePtr> graph_outputs;
   auto graph_output = func_graph->output();
   if (graph_output == nullptr) {
     MS_LOG(ERROR) << "DefaultGraphCompiler::NonCFGCompile get graph output node failed";
     return nullptr;
   }
-  graph_outputs.emplace_back(graph_output);
+  std::vector<AnfNodePtr> graph_outputs = GetGraphOutput(graph_output);
   std::vector<InferTensor *> graph_input_tensors;
   auto graph_output_tensors = CreateTensors(graph_outputs);
   if (graph_output_tensors.size() != graph_outputs.size()) {
@@ -140,16 +170,9 @@ std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::NonCFGComp
   auto *output_isolate_map = new std::unordered_map<InferTensor *, InferTensor *>();
   for (const auto &graph_segment : graph_segments) {
     if (graph_segment->nodes_.size() == 1) {
-      auto node = graph_segment->nodes_[0];
-      if (node->isa<CNode>()) {
-        auto cnode = node->cast<CNodePtr>();
-        auto inps = cnode->inputs();
-        if (!inps.empty()) {
-          auto primitive = inps[0];
-          if (IsPrimitive(primitive, prim::kPrimReturn)) {
-            continue;
-          }
-        }
+      auto &node = graph_segment->nodes_[0];
+      if (opt::CheckPrimitiveType(node, prim::kPrimReturn) || opt::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
+        continue;
       }
     }
     FuncGraphPtr fg = nullptr;
@@ -212,7 +235,7 @@ InferTensor *DefaultGraphCompiler::CreateTensor(const AnfNodePtr &node) {
       return nullptr;
     }
     if (utils::isa<mindspore::abstract::AbstractTensorPtr>(abstract)) {
-      auto tensor = TensorAdapter::Convert2Tensor(abstract, node->fullname_with_scope());
+      auto tensor = TensorAdapter::Convert2Tensor(abstract, abstract->name());
       if (tensor == nullptr) {
         MS_LOG(ERROR) << "Create tensor from abstract failed, abstract : " << abstract;
         return nullptr;
@@ -289,8 +312,45 @@ Status DefaultGraphCompiler::GetDTAndShapeFromAbTensor(const mindspore::abstract
 
 std::vector<InferTensor *> DefaultGraphCompiler::CreateTensors(const std::vector<AnfNodePtr> &nodes) {
   std::vector<InferTensor *> tensors;
-  std::transform(nodes.begin(), nodes.end(), std::back_inserter(tensors),
-                 [this](const AnfNodePtr &node) { return this->CreateTensor(node); });
+  for (const auto &node : nodes) {
+    if (node->isa<CNode>()) {
+      auto cnode = node->cast<CNodePtr>();
+      if (cnode == nullptr) {
+        MS_LOG(ERROR) << "cast to CNode with nullptr";
+        return {};
+      }
+      auto abstract = cnode->abstract();
+      if (abstract == nullptr) {
+        MS_LOG(ERROR) << "get abstract is nullptr for node " << node->fullname_with_scope();
+        return {};
+      }
+      if (abstract->isa<mindspore::abstract::AbstractTuple>()) {
+        auto abstract_tuple = abstract->cast<mindspore::abstract::AbstractTuplePtr>();
+        if (abstract_tuple == nullptr) {
+          MS_LOG(ERROR) << "cast to Abstract Tuple with nullptr";
+          return {};
+        }
+        auto elements = abstract_tuple->elements();
+        for (const auto &element : elements) {
+          if (utils::isa<mindspore::abstract::AbstractTensorPtr>(element)) {
+            auto tensor = TensorAdapter::Convert2Tensor(element, element->name());
+            if (tensor == nullptr) {
+              MS_LOG(ERROR) << "Create tensor from abstract failed, abstract : " << element;
+              return {};
+            }
+            tensors.emplace_back(tensor);
+          }
+        }
+      } else {
+        auto tensor = this->CreateTensor(node);
+        tensors.emplace_back(tensor);
+      }
+    } else {
+      // node must be Parameter
+      auto tensor = this->CreateTensor(node);
+      tensors.emplace_back(tensor);
+    }
+  }
   return tensors;
 }
 

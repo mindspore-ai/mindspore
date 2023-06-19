@@ -30,7 +30,7 @@ static const std::unordered_map<std::string, std::vector<size_t>> cloud_format_k
   {"BatchNormWithAddAndActivation", {0}},
   {"BatchToSpace", {0}},
   {"Conv2D", {0, 1}},
-  {"Conv2DFusion", {0}},
+  {"Conv2DFusion", {0, 1}},
   {"Conv2DTranspose", {0, 1}},
   {"DepthToSpace", {0}},
   {"FusedBatchNorm", {0}},

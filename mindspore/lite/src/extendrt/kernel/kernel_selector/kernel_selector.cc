@@ -20,14 +20,11 @@
 
 namespace mindspore::kernel {
 std::vector<const KernelLib *> KernelSelector::Candidates(const PrimitiveType &op_type, const KernelAttr &require,
-                                                          bool match_format) {
+                                                          const std::string &backend, Format format) {
   std::vector<const KernelLib *> results;
   for (const auto &iter : KernelLibRegister::Instance().GetAllLibs()) {
     const auto *kernel_lib = iter.second;
-    auto support = match_format
-                     ? (kernel_lib->Support(op_type, require, compile_option_->backend, compile_option_->format))
-                     : (kernel_lib->Support(op_type, require, compile_option_->backend));
-    if (support) {
+    if (kernel_lib->Support(op_type, require, backend, format)) {
       results.emplace_back(kernel_lib);
     }
   }

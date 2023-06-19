@@ -59,5 +59,18 @@ LiteKernel *DefaultKernelLib::CreateKernel(const KernelSpec &spec, const std::ve
   return new (std::nothrow) LiteKernelMod(kernel_mod, spec.primitive, spec.cnode, inputs, outputs, ctx);
 }
 
+InferKernel *DefaultKernelLib::CreateKernelExec(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
+                                                const std::vector<InferTensor *> &outputs,
+                                                const InferContext *ctx) const {
+  auto *kernel_exec = KernelLib::CreateKernelExec(spec, inputs, outputs, ctx);
+  if (kernel_exec == nullptr) {
+    return nullptr;
+  }
+  auto desc = kernel_exec->desc();
+  desc.format = Format::NCHW;
+  kernel_exec->set_desc(desc);
+  return kernel_exec;
+}
+
 REG_KERNEL_LIB(kDefaultKernelLibName, DefaultKernelLib);
 }  // namespace mindspore::kernel

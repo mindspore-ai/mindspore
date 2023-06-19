@@ -46,6 +46,15 @@ int InsertTranspose::TransposeConstData(kernel::KernelExec *kernel, size_t index
 
   tensor->FreeData();
   tensor->set_data(buffer, true);
+  if (except_format == NHWC) {
+    tensor->set_shape({tensor->Batch(), tensor->Height(), tensor->Width(), tensor->Channel()});
+  } else if (except_format == NCHW) {
+    tensor->set_shape({tensor->Batch(), tensor->Channel(), tensor->Height(), tensor->Width()});
+  } else {
+    MS_LOG(ERROR) << "unsupported except format: " << except_format;
+    return RET_ERROR;
+  }
+  tensor->set_format(except_format);
   return RET_OK;
 }
 

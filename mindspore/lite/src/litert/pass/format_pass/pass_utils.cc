@@ -69,6 +69,7 @@ kernel::KernelExec *CreateFormatTranspose(Tensor *input, Tensor *output, const T
   kernel::KernelKey format_transpose_key = desc;
   format_transpose_key.type = schema::PrimitiveType_FormatTranspose;
   format_transpose_key.format = NHWC;
+  format_transpose_key.data_type = input->data_type();
 
   kernel::KernelExec *kernel = nullptr;
   auto ret = KernelRegistry::GetInstance()->GetKernelExec({input}, {output}, ctx, nullptr, format_transpose_key,

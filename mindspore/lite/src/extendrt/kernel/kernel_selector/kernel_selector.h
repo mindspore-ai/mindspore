@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 #include "src/extendrt/kernel/primitive_type.h"
 #include "kernel/common_utils.h"
 #include "src/infer/graph_compiler.h"
@@ -32,12 +33,13 @@ class KernelSelector {
   explicit KernelSelector(const std::shared_ptr<lite::CompileOption> &compile_option)
       : compile_option_(compile_option) {}
   virtual ~KernelSelector() = default;
-  virtual LiteKernel *CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
-                                   const std::vector<InferTensor *> &outputs, const InferContext *ctx) = 0;
+  virtual InferKernel *CreateKernel(const KernelSpec &spec, const std::vector<InferTensor *> &inputs,
+                                    const std::vector<InferTensor *> &outputs, const InferContext *ctx) = 0;
 
  protected:
+  // `format = DEFAULT_FORMAT` means not care about Format while select kernel.
   std::vector<const KernelLib *> Candidates(const PrimitiveType &op_type, const KernelAttr &require,
-                                            bool match_format = false);
+                                            const std::string &backend, Format format = DEFAULT_FORMAT);
 
  protected:
   const std::shared_ptr<lite::CompileOption> compile_option_{nullptr};

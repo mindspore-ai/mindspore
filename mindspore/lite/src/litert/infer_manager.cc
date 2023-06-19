@@ -41,10 +41,7 @@ bool InferCheckerAll(const std::vector<Tensor *> &inputs, const std::vector<Tens
     return false;
   }
   auto shape = out->shape();
-  if (std::find(shape.begin(), shape.end(), -1) != shape.end()) {
-    return false;
-  }
-  return true;
+  return !std::any_of(shape.begin(), shape.end(), [](const int dim) { return dim < 0; });
 }
 
 bool InferCheckerInput(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs) {
@@ -55,10 +52,7 @@ bool InferCheckerInput(const std::vector<Tensor *> &inputs, const std::vector<Te
 
 bool InferCheckerOutput(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs) {
   auto shape = outputs.front()->shape();
-  if (std::find(shape.begin(), shape.end(), -1) != shape.end()) {
-    return false;
-  }
-  return true;
+  return !std::any_of(shape.begin(), shape.end(), [](const int dim) { return dim < 0; });
 }
 
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,

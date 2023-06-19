@@ -443,11 +443,7 @@ AnfNodePtr FuncGraphUtils::RefSubGraphNode(const FuncGraphPtr &fg, const AnfNode
   if (node->isa<ValueNode>() && !IsValueNode<FuncGraph>(node)) {
     eqv[node] = node;
   } else if (eqv.find(node) == eqv.end()) {
-    auto parameter = dyn_cast<Parameter>(node);
-    MS_EXCEPTION_IF_NULL(parameter);
-    if (!parameter->has_default()) {
-      inputs.push_back(node);
-    }
+    inputs.push_back(node);
     eqv[node] = fg->add_parameter();
     eqv[node]->set_abstract(node->abstract());
     eqv[node]->set_kernel_info(node->kernel_info_ptr());

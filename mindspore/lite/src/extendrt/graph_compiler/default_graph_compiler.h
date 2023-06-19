@@ -52,12 +52,14 @@ class DefaultGraphCompiler : public infer::abstract::GraphCompiler {
   Status GetDTAndShapeFromParameter(const ParameterPtr &parameter, TypeId *data_type, ShapeVector *shape_vector);
   Status GetDTAndShapeFromAbTensor(const mindspore::abstract::AbstractTensorPtr &abstract, TypeId *data_type,
                                    ShapeVector *shape_vector);
+  std::vector<AnfNodePtr> GetGraphOutput(AnfNodePtr origin_output);
 
  private:
   mindspore::HashMap<AnfNodePtr, InferTensor *> anf_tensor_map_;
   SingleGraphSchedulerPtr scheduler_{nullptr};
   const std::shared_ptr<Context> &context_;
-  std::shared_ptr<mindspore::infer::abstract::Context> inner_context_;
+  InferContextPtr inner_context_{nullptr};
+  std::shared_ptr<CompileOption> option_{nullptr};
 };
 }  // namespace mindspore::lite
 
