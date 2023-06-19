@@ -47,6 +47,7 @@
 #include "backend/common/pass/communication_op_fusion.h"
 #include "backend/common/pass/dropout_gen_mask_fusion.h"
 #include "backend/common/pass/dynamic_sequence_ops_adaptation.h"
+#include "backend/common/pass/merge_transdata.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/square_sum_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/clip_by_norm_no_div_square_sum_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/lamb_update_with_lr_rule_fusion.h"
@@ -541,6 +542,7 @@ void AscendAfterInlineOptimization(const std::shared_ptr<session::KernelGraph> &
   after_inline_pm->AddPass(std::make_shared<DropoutGenMaskFusion>());
   after_inline_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
   after_inline_pm->AddPass(std::make_shared<EliminateRedundantOp>());
+  after_inline_pm->AddPass(std::make_shared<MergeTransData>());
   optimizer->AddPassManager(after_inline_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
