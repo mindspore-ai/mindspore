@@ -385,20 +385,17 @@ STATUS NodeInferShape::InferShapeByOps(const CNodePtr &cnode, bool invalid) {
     infer_ret = OpsInferShape(anf_prim, abs_list, &result, invalid);
   } catch (const std::exception &e) {
     std::cout << e.what() << std::endl;
-    infer_ret = lite::RET_INFER_INVALID;
+    MS_LOG(WARNING) << "InferShapeByOps for op: " << cnode->fullname_with_scope() << " failed.";
+    throw;
   }
   (void)anf_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(static_cast<int64_t>(ori_format)));
   if (infer_ret == lite::RET_OK) {
     (void)anf_prim->AddAttr(kInferDone, MakeValue<bool>(true));
-  }
-  if (infer_ret == lite::RET_OK || infer_ret == lite::RET_INFER_INVALID) {
     auto set_status = SetCNodeAbstractByConvert(cnode, result, infer_ret, changed, kNCHW2NHWC);
     if (set_status != lite::RET_OK) {
       MS_LOG(ERROR) << "SetCNodeAbstractByConvert failed: " << cnode->fullname_with_scope();
       return set_status;
     }
-  } else {
-    MS_LOG(WARNING) << "OpsInferShape failed.";
   }
 
   return infer_ret;

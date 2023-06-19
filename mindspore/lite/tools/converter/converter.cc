@@ -1157,7 +1157,11 @@ int RunConverter(const std::shared_ptr<ConverterPara> &param, void **model_data,
   param->aclModelOptionCfgParam.offline = !not_save;
   int status = RET_OK;
   ConverterImpl converter_impl;
-  status = converter_impl.Convert(param, model_data, data_size, not_save);
+  try {
+    status = converter_impl.Convert(param, model_data, data_size, not_save);
+  } catch (const std::exception &e) {
+    status = RET_ERROR;
+  }
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Convert model failed";
     NotSupportOp::GetInstance()->PrintOps();
