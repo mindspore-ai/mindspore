@@ -31,8 +31,8 @@ mindspore.ops.Conv2D
           - **pad**: 对输入 `x` 进行填充。在输入的高度和宽度方向上填充 `pad` 大小的0。如果设置此模式， `pad` 必须大于或等于0。
 
         - **pad** (Union(int, tuple[int])) - 输入 `x` 的高度和宽度方向上填充的数量。数据类型为int或包含4个int组成的tuple。如果 `pad` 是一个int，那么上、下、左、右的填充都等于 `pad` 。如果 `pad` 是一个有4个int组成的tuple，那么上、下、左、右的填充分别等于 `pad[0]` 、 `pad[1]` 、 `pad[2]` 和 `pad[3]` 。值应该要大于等于0，默认值： ``0`` 。
-        - **stride** (Union(int, tuple[int])) - 卷积核移动的步长，数据类型为int或两个int组成的tuple。一个int表示在高度和宽度方向的移动步长均为该值。两个int组成的tuple分别表示在高度和宽度方向的移动步长。默认值： ``1`` 。
-        - **dilation** (Union(int, tuple[int])) - 卷积核膨胀尺寸。数据类型为int或由2个int组成的tuple。若 :math:`k > 1` ，则卷积核间隔 `k` 个元素进行采样。垂直和水平方向上的 `k` ，其取值范围分别为[1, H]和[1, W]。默认值： ``1`` 。
+        - **stride** (Union(int, tuple[int])) - 卷积核移动的步长，数据类型为int或者两个或4个int组成的tuple。一个int表示在高度和宽度方向的移动步长均为该值。两个int组成的tuple分别表示在高度和宽度方向的移动步长。默认值： ``1`` 。
+        - **dilation** (Union(int, tuple[int])) - 卷积核膨胀尺寸。数据类型为int或者由2个或4个int组成的tuple。若 :math:`k > 1` ，则卷积核间隔 `k` 个元素进行采样。垂直和水平方向上的 `k` ，其取值范围分别为[1, H]和[1, W]。默认值： ``1`` 。
         - **group** (int) - 将过滤器拆分为组。默认值： ``1`` 。
         - **data_format** (str) - 数据格式的可选值有 ``"NHWC"`` ， ``"NCHW"`` 。默认值： ``"NCHW"`` 。
 

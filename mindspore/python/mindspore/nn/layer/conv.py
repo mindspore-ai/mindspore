@@ -177,7 +177,7 @@ class Conv2d(_Conv):
             and width of the convolution kernel. A tuple of two integers represents the height
             and width of the convolution kernel respectively.
         stride (Union[int, tuple[int]]): The movement stride of the 2D convolution kernel.
-            The data type is an integer or a tuple of two integers. An integer represents the movement step size
+            The data type is an integer or a tuple of two or four integers. An integer represents the movement step size
             in both height and width directions. A tuple of two integers represents the movement step size in the height
             and width directions respectively. Default: ``1`` .
         pad_mode (str): Specifies padding mode. The optional values are
@@ -199,7 +199,7 @@ class Conv2d(_Conv):
             is equal to `padding[0]`, `padding[1]`, `padding[2]`, and `padding[3]` respectively.
             The value should be greater than or equal to 0. Default: ``0`` .
         dilation (Union[int, tuple[int]]): Dilation size of 2D convolution kernel.
-            The data type is an integer or a tuple of two integers. If :math:`k > 1`, the kernel is sampled
+            The data type is an integer or a tuple of two or four integers. If :math:`k > 1`, the kernel is sampled
             every `k` elements. The value of `k` on the height and width directions is in range of [1, H]
             and [1, W] respectively. Default: ``1`` .
         group (int): Splits filter into groups, `in_channels` and `out_channels` must be

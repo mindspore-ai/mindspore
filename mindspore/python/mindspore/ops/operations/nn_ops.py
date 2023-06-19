@@ -1463,10 +1463,10 @@ class Conv2D(Primitive):
                     with four integers, the paddings of top, bottom, left and right will be equal to pad[0],
                     pad[1], pad[2], and pad[3] accordingly. Default: ``0`` .
         stride (Union(int, tuple[int])): The distance of kernel moving, an int number that represents
-            the height and width of movement are both strides, or a tuple of two int numbers that
+            the height and width of movement are both strides, or a tuple of two or four int numbers that
             represent height and width of movement respectively. Default: ``1`` .
-        dilation (Union(int, tuple[int])): The data type is int or a tuple of 2 integers. Specifies the dilation rate
-                                      to use for dilated convolution. If set to be :math:`k > 1`, there will
+        dilation (Union(int, tuple[int])): The data type is int or a tuple of 2 or 4 integers. Specifies the dilation
+                                      rate to use for dilated convolution. If set to be :math:`k > 1`, there will
                                       be :math:`k - 1` pixels skipped for each sampling location. Its value must
                                       be greater than or equal to 1 and bounded by the height and width of the
                                       input `x`. Default: ``1`` .
