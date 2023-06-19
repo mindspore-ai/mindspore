@@ -565,9 +565,12 @@ class SymbolTree(Observer, Observable):
             An instance of node which has been inserted into SymbolTree.
 
         Raises:
+            ValueError: Node in the SymbolTree is inserted into SymbolTree again.
             RuntimeError: If 'position' is not in current SymbolTree.
             RuntimeError: If corresponding ast node is not an ast.Assign when 'insert_to_ast' is True.
         """
+        if node in self.nodes():
+            raise ValueError(f"Node in the SymbolTree cannot be inserted into SymbolTree again: {node.get_name()}")
         if position is not None and hasattr(position.node, "container"):
             cellcontainer = getattr(position.node, "container")
             index = cellcontainer.node_list.index(position.node)
