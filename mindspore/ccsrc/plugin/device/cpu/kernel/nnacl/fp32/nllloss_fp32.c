@@ -15,21 +15,21 @@
  */
 
 #include "nnacl/fp32/nllloss_fp32.h"
-
 #include "nnacl/op_base.h"
 #include "nnacl/errorcode.h"
 
 int NLLLoss(const float *logits, const int *labels, const float *weight, float *loss, float *total_weight,
-            const NLLLossParameter *parameter) {
-  if (logits == NULL || labels == NULL || weight == NULL || loss == NULL || total_weight == NULL) {
-    return NNACL_NULL_PTR;
-  }
+            const NLLLossStruct *nllloss, const ReductionType reduction_type) {
+  NNACL_CHECK_NULL_RETURN_ERR(logits);
+  NNACL_CHECK_NULL_RETURN_ERR(labels);
+  NNACL_CHECK_NULL_RETURN_ERR(weight);
+  NNACL_CHECK_NULL_RETURN_ERR(loss);
+  NNACL_CHECK_NULL_RETURN_ERR(total_weight);
 
   float total_loss = 0.0;
   float tmp_total_weight = 0.0;
-  ReductionType reduction_type = parameter->reduction_type_;
-  for (int i = 0; i < parameter->batch_; i++) {
-    int index = i * parameter->class_num_ + labels[i];
+  for (int i = 0; i < nllloss->batch_; i++) {
+    int index = i * nllloss->class_num_ + labels[i];
     float n_weight = weight[labels[i]];
     float n_loss = -logits[index] * n_weight;
     tmp_total_weight += n_weight;

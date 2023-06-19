@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_NNACL_FP32_NLLLOSS_H_
-#define MINDSPORE_LITE_NNACL_FP32_NLLLOSS_H_
+#ifndef NNACL_FP32_NLLLOSS_FP32_H_
+#define NNACL_FP32_NLLLOSS_FP32_H_
 
-#include "nnacl/nllloss_parameter.h"
+#include "nnacl/kernel/nllloss.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 int NLLLoss(const float *logits, const int *labels, const float *weight, float *loss, float *total_weight,
-            const NLLLossParameter *parameter);
+            const NLLLossStruct *parameter, const ReductionType reduction_type);
 #ifdef __cplusplus
 }
 #endif
-
-#endif  // MINDSPORE_LITE_NNACL_FP32_NLLLOSS_H_
+#endif  // NNACL_FP32_NLLLOSS_FP32_H_

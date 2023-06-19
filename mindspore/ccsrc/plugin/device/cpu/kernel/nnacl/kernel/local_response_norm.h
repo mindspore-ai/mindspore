@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_RAGGED_RANGE_PARAMETER_H_
-#define NNACL_RAGGED_RANGE_PARAMETER_H_
+#ifndef NNACL_KERNEL_LOCAL_RESPONSE_NORM_H_
+#define NNACL_KERNEL_LOCAL_RESPONSE_NORM_H_
 
 #include "nnacl/op_base.h"
+#include "nnacl/tensor_c.h"
+#include "nnacl/kernel.h"
 
-typedef struct RaggedRangeParameter {
-  // Primitive parameter
-  OpParameter op_parameter_;
-  // Other parameter
-  int rows;
-  bool starts_is_scalar;
-  bool limits_is_scalar;
-  bool deltas_is_scalar;
-} RaggedRangeParameter;
+typedef struct LocalResponseNormStruct {
+  KernelBase base_;
+} LocalResponseNormStruct;
 
-#endif  // NNACL_RAGGED_RANGE_PARAMETER_H_
+KernelBase *CreateLocalResponseNorm(OpParameter *param, int data_type);
+
+#endif  // NNACL_KERNEL_LOG_SOFTMAX_H_

@@ -21,7 +21,6 @@ typedef struct SpliceParameter {
   OpParameter op_parameter_;
   int context_dim_;
   int forward_indexes_dim_;
-  int src_to_dst_row_offset_;
   int *context_;
   int *forward_indexes_;
   int output_dim_;

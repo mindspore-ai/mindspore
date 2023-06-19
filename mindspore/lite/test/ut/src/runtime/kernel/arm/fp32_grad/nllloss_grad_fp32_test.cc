@@ -90,8 +90,6 @@ TEST_F(TestNLLLossGradFp32, ReductionNone) {
   ctx->thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto *param = new NLLLossParameter;
-  param->batch_ = 3;
-  param->class_num_ = 5;
   param->reduction_type_ = Reduction_None;
   auto *kernel = new kernel::NLLLossGradCPUKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs, ctx);
   kernel->Prepare();
@@ -114,8 +112,6 @@ TEST_F(TestNLLLossGradFp32, ReductionSum) {
   ctx->thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto *param = new NLLLossParameter;
-  param->batch_ = 3;
-  param->class_num_ = 5;
   param->reduction_type_ = Reduction_Sum;
   auto *kernel = new kernel::NLLLossGradCPUKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs, ctx);
   kernel->Prepare();
@@ -138,8 +134,6 @@ TEST_F(TestNLLLossGradFp32, ReductionMean) {
   ctx->thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto *param = new NLLLossParameter;
-  param->batch_ = 3;
-  param->class_num_ = 5;
   param->reduction_type_ = Reduction_Mean;
   auto *kernel = new kernel::NLLLossGradCPUKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs, ctx);
   kernel->Prepare();

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "src/common/ops/populate/populate_register.h"
-#include "nnacl/fp32/range_fp32.h"
+#include "nnacl/range_parameter.h"
 using mindspore::schema::PrimitiveType_Range;
 
 namespace mindspore {
@@ -39,7 +39,7 @@ OpParameter *PopulateRangeParameter(const void *prim) {
   param->start_ = value->start();
   param->limit_ = value->limit();
   param->delta_ = value->delta();
-  param->dType_ = value->d_type();
+  param->dtype_ = value->d_type();
   return reinterpret_cast<OpParameter *>(param);
 }
 REG_POPULATE(PrimitiveType_Range, PopulateRangeParameter, SCHEMA_CUR)

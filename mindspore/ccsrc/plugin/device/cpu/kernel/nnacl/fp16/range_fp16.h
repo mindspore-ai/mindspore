@@ -18,17 +18,10 @@
 
 #include "nnacl/op_base.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-inline void RangeFp16(float16_t *output_ptr, float16_t start, float16_t delta, int nums) {
+void RangeFp16(float16_t *output_ptr, float16_t start, float16_t delta, int nums) {
   for (int i = 0; i < nums; ++i, start += delta) {
     output_ptr[i] = start;
   }
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif  //  NNACL_FP16_RANGE_FP16_H_

@@ -54,7 +54,7 @@ bool NLLLossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     MS_LOG(EXCEPTION) << "For " << kernel_name_
                       << ", the attr 'reduction' only support 'mean', 'sum' and 'none', but got " << reduction;
   }
-  nllloss_param_.reduction_type_ = pair->second;
+  reduction_type_ = pair->second;
   return true;
 }
 
@@ -97,7 +97,6 @@ bool NLLLossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
 
   float total_loss = 0.0;
   float tmp_total_weight = 0.0;
-  ReductionType reduction_type = nllloss_param_.reduction_type_;
   for (int i = 0; i < nllloss_param_.batch_; i++) {
     if (!(labels[i] < nllloss_param_.class_num_)) {
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_
@@ -108,15 +107,15 @@ bool NLLLossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
     float n_loss = -logits[index] * n_weight;
     tmp_total_weight += n_weight;
     total_loss += n_loss;
-    if (reduction_type == Reduction_None) {
+    if (reduction_type_ == Reduction_None) {
       loss[i] = n_loss;
     }
   }
 
   *total_weight = tmp_total_weight;
-  if (reduction_type == Reduction_Sum) {
+  if (reduction_type_ == Reduction_Sum) {
     *loss = total_loss;
-  } else if (reduction_type == Reduction_Mean) {
+  } else if (reduction_type_ == Reduction_Mean) {
     *loss = total_loss / tmp_total_weight;
   }
   return true;

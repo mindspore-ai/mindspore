@@ -22,7 +22,8 @@
 #include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "nnacl/fp32/nllloss_fp32.h"
+#include "nnacl/kernel/nllloss.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace kernel {
@@ -68,7 +69,8 @@ class NLLLossCpuKernelMod : public NativeCpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
   NLLLossFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, NLLLossFunc>> func_list_;
-  NLLLossParameter nllloss_param_{};
+  NLLLossStruct nllloss_param_{};
+  ReductionType reduction_type_;
 };
 }  // namespace kernel
 }  // namespace mindspore

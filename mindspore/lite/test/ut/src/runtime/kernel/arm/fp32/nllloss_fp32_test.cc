@@ -16,10 +16,10 @@
 
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/litert/kernel/cpu/fp32/nllloss_fp32.h"
-#include "src/litert/kernel_registry.h"
 #include "src/executor/kernel_exec.h"
 #include "src/litert/tensor_category.h"
+#include "nnacl/nllloss_parameter.h"
+#include "nnacl/nnacl_manager.h"
 
 namespace mindspore {
 class TestNLLLossFp32 : public mindspore::CommonTest {
@@ -64,8 +64,8 @@ void NLLLossInitArgs(std::vector<lite::Tensor *> *inputs, std::vector<lite::Tens
   outputs->push_back(total_weight_t);
 }
 
-void NLLLossReleaseResources(lite::InnerContext *ctx, kernel::NLLLossCPUKernel *kernel,
-                             std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) {
+void NLLLossReleaseResources(lite::InnerContext *ctx, kernel::LiteKernel *kernel, std::vector<lite::Tensor *> inputs,
+                             std::vector<lite::Tensor *> outputs) {
   delete kernel;
   delete ctx;
   for (auto t : inputs) delete t;
@@ -82,10 +82,14 @@ TEST_F(TestNLLLossFp32, ReductionNone) {
   ctx->thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto *param = new NLLLossParameter;
-  param->batch_ = 3;
-  param->class_num_ = 5;
+  param->op_parameter_.thread_num_ = ctx->thread_num_;
+  param->op_parameter_.type_ = schema::PrimitiveType_NLLLoss;
   param->reduction_type_ = Reduction_None;
-  auto *kernel = new kernel::NLLLossCPUKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs, ctx);
+
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, param->op_parameter_.type_};
+  auto kernel = nnacl::NNACLKernelRegistry(&param->op_parameter_, inputs, outputs, ctx, desc);
+  ASSERT_NE(kernel, nullptr);
+
   kernel->Prepare();
   kernel->Run();
 
@@ -106,10 +110,14 @@ TEST_F(TestNLLLossFp32, ReductionSum) {
   ctx->thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto *param = new NLLLossParameter;
-  param->batch_ = 3;
-  param->class_num_ = 5;
+  param->op_parameter_.thread_num_ = ctx->thread_num_;
+  param->op_parameter_.type_ = schema::PrimitiveType_NLLLoss;
   param->reduction_type_ = Reduction_Sum;
-  auto *kernel = new kernel::NLLLossCPUKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs, ctx);
+
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, param->op_parameter_.type_};
+  auto kernel = nnacl::NNACLKernelRegistry(&param->op_parameter_, inputs, outputs, ctx, desc);
+  ASSERT_NE(kernel, nullptr);
+
   kernel->Prepare();
   kernel->Run();
 
@@ -130,10 +138,14 @@ TEST_F(TestNLLLossFp32, ReductionMean) {
   ctx->thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto *param = new NLLLossParameter;
-  param->batch_ = 3;
-  param->class_num_ = 5;
+  param->op_parameter_.thread_num_ = ctx->thread_num_;
+  param->op_parameter_.type_ = schema::PrimitiveType_NLLLoss;
   param->reduction_type_ = Reduction_Mean;
-  auto *kernel = new kernel::NLLLossCPUKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs, ctx);
+
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, param->op_parameter_.type_};
+  auto kernel = nnacl::NNACLKernelRegistry(&param->op_parameter_, inputs, outputs, ctx, desc);
+  ASSERT_NE(kernel, nullptr);
+
   kernel->Prepare();
   kernel->Run();
 

@@ -14,24 +14,11 @@
  * limitations under the License.
  */
 #include "src/common/ops/populate/populate_register.h"
-#include "nnacl/fp32/ragged_range_fp32.h"
+#include "src/common/ops/populate/default_populate.h"
 using mindspore::schema::PrimitiveType_RaggedRange;
 
 namespace mindspore {
 namespace lite {
-OpParameter *PopulateRaggedRangeParameter(const void *prim) {
-  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  auto primitive = static_cast<const schema::Primitive *>(prim);
-  auto *param = reinterpret_cast<RaggedRangeParameter *>(malloc(sizeof(RaggedRangeParameter)));
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "malloc RaggedRangeParameter failed.";
-    return nullptr;
-  }
-  memset(param, 0, sizeof(RaggedRangeParameter));
-
-  param->op_parameter_.type_ = primitive->value_type();
-  return reinterpret_cast<OpParameter *>(param);
-}
-REG_POPULATE(PrimitiveType_RaggedRange, PopulateRaggedRangeParameter, SCHEMA_CUR)
+REG_POPULATE(PrimitiveType_RaggedRange, DefaultPopulateParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore

@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-#ifndef LITE_NNACL_FP32_NLLLOSS_GRAD_H_
-#define LITE_NNACL_FP32_NLLLOSS_GRAD_H_
+#ifndef NNACL_FP32_GRAD_NLLLOSS_GRAD_FP32_H_
+#define NNACL_FP32_GRAD_NLLLOSS_GRAD_FP32_H_
 
-#include "nnacl/nllloss_parameter.h"
+#include "nnacl/op_base.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 int NLLLossGrad(const float *logits, const float *loss_grad, const int *labels, const float *weight,
-                const float *total_weight, float *logits_grad, const NLLLossParameter *parameter);
+                const float *total_weight, float *logits_grad, int batch, int class_num, ReductionType reduction_type);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // LITE_NNACL_FP32_NLLLOSS_GRAD_H_
+#endif  // NNACL_FP32_GRAD_NLLLOSS_GRAD_FP32_H_

@@ -18,17 +18,9 @@
 
 #include <math.h>
 #include "nnacl/op_base.h"
-#include "nnacl/ragged_range_parameter.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "nnacl/kernel/ragged_range.h"
 
 void RaggedRangeFp16(const float16_t *starts, const float16_t *limits, const float16_t *deltas, int *splits,
-                     float16_t *value, const RaggedRangeParameter *param);
-
-#ifdef __cplusplus
-}
-#endif
+                     float16_t *value, const RaggedRangeStruct *param);
 
 #endif  //   NNACL_FP16_RAGGED_RANGE_FP16_H_

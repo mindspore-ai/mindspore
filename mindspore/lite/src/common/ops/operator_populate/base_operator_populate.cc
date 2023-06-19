@@ -23,7 +23,6 @@
 #include "nnacl/op_base.h"
 #include "nnacl/gather_parameter.h"
 #include "nnacl/fp32/gatherNd_fp32.h"
-#include "nnacl/fp32/ragged_range_fp32.h"
 #include "nnacl/reshape_parameter.h"
 #include "ops/adam.h"
 #include "ops/assert.h"
@@ -96,6 +95,7 @@ REG_OP_BASE_POPULATE(TensorArrayWrite)
 REG_OP_BASE_POPULATE(CustomExtractFeatures)
 REG_OP_BASE_POPULATE(CustomNormalize)
 REG_OP_BASE_POPULATE(HashtableLookup)
+REG_OP_BASE_POPULATE(RaggedRange)
 
 REG_OP_DEFAULT_POPULATE(SparseToDense)
 REG_OP_DEFAULT_POPULATE(Transpose)
@@ -103,7 +103,6 @@ REG_OP_DEFAULT_POPULATE(Tril)
 REG_OP_DEFAULT_POPULATE(Triu)
 REG_OP_DEFAULT_POPULATE(Where)
 REG_OP_DEFAULT_POPULATE(Unique)
-REG_OP_DEFAULT_POPULATE(RaggedRange)
 REG_OP_DEFAULT_POPULATE(Reshape)
 
 using mindspore::ops::kNameGather;

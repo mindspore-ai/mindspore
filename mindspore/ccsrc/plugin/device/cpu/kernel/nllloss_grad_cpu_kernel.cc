@@ -20,6 +20,7 @@
 #include <utility>
 #include <unordered_map>
 #include "mindspore/core/ops/grad/nllloss_grad.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace kernel {
@@ -54,7 +55,7 @@ bool NLLLossGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
                       << ", the attr 'reduction' only support 'mean', 'sum' and 'none', but got " << reduction;
   }
 
-  nllloss_param_.reduction_type_ = pair->second;
+  reduction_type_ = pair->second;
   return true;
 }
 
@@ -97,9 +98,9 @@ bool NLLLossGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
     }
     int index = i * nllloss_param_.class_num_ + labels[i];
     float n_weight = weight[labels[i]];
-    if (nllloss_param_.reduction_type_ == Reduction_Sum) {
+    if (reduction_type_ == Reduction_Sum) {
       logits_grad[index] = -loss_grad[0] * n_weight;
-    } else if (nllloss_param_.reduction_type_ == Reduction_Mean) {
+    } else if (reduction_type_ == Reduction_Mean) {
       logits_grad[index] = -loss_grad[0] * n_weight / *total_weight;
     } else {
       logits_grad[index] = -loss_grad[i] * n_weight;

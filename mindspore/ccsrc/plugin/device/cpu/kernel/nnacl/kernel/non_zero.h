@@ -1,5 +1,6 @@
+
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +15,17 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_FP32_RANGE_FP32_H_
-#define NNACL_FP32_RANGE_FP32_H_
+#ifndef NNACL_KERNEL_NON_ZERO_H_
+#define NNACL_KERNEL_NON_ZERO_H_
 
 #include "nnacl/op_base.h"
+#include "nnacl/tensor_c.h"
+#include "nnacl/kernel.h"
 
-void Range(float *output_ptr, float start, float delta, int nums) {
-  for (int i = 0; i < nums; ++i, start += delta) {
-    output_ptr[i] = start;
-  }
-}
+typedef struct NonZeroStruct {
+  KernelBase base_;
+} NonZeroStruct;
 
-void RangeInt(int *output_ptr, int start, int delta, int nums) {
-  for (int i = 0; i < nums; ++i, start += delta) {
-    output_ptr[i] = start;
-  }
-}
+KernelBase *CreateNonZero(OpParameter *param, int data_type);
 
-#endif  // NNACL_FP32_RANGE_FP32_H_
+#endif  // NNACL_KERNEL_NON_ZERO_H_

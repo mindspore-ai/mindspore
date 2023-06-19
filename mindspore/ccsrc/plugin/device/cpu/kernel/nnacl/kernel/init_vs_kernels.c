@@ -31,15 +31,22 @@
 #include "nnacl/kernel/gather_d.h"
 #include "nnacl/kernel/group_norm.h"
 #include "nnacl/kernel/log_softmax.h"
+#include "nnacl/kernel/local_response_norm.h"
 #include "nnacl/kernel/matmul.h"
+#include "nnacl/kernel/non_zero.h"
+#include "nnacl/kernel/nllloss.h"
 #include "nnacl/kernel/reshape.h"
+#include "nnacl/kernel/range.h"
+#include "nnacl/kernel/rank.h"
 #include "nnacl/kernel/scale.h"
 #include "nnacl/kernel/shape.h"
 #include "nnacl/kernel/reduce.h"
+#include "nnacl/kernel/ragged_range.h"
 #include "nnacl/kernel/stack.h"
 #include "nnacl/kernel/strided_slice.h"
 #include "nnacl/kernel/softmax.h"
 #include "nnacl/kernel/size.h"
+#include "nnacl/kernel/splice.h"
 #include "nnacl/kernel/tile.h"
 #include "nnacl/kernel/tril.h"
 #include "nnacl/kernel/triu.h"
@@ -104,6 +111,7 @@ void init_vs_kernels_f16(KernelCreator **creators) {
   creators[PrimType_Squeeze][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
   creators[PrimType_SubFusion][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_SquaredDifference][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
+  creators[PrimType_Splice][REGIST_DT(kNumberTypeFloat16)] = CreateSplice;
   creators[PrimType_Sin][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_Size][REGIST_DT(kNumberTypeFloat16)] = CreateSize;
   creators[PrimType_Square][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
@@ -189,6 +197,7 @@ void init_vs_kernels_i(KernelCreator **creators) {
   creators[PrimType_Log1p][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
   creators[PrimType_LogicalNot][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
   creators[PrimType_LogicalNot][REGIST_DT(kNumberTypeBool)] = CreateArithmeticSelf;
+  creators[PrimType_LRN][REGIST_DT(kNumberTypeFloat32)] = CreateLocalResponseNorm;
   creators[PrimType_Maximum][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
   creators[PrimType_Maximum][REGIST_DT(kNumberTypeInt32)] = CreateArithmetic;
   creators[PrimType_MatMulFusion][REGIST_DT(kNumberTypeFloat32)] = CreateMatmul;
@@ -198,14 +207,23 @@ void init_vs_kernels_i(KernelCreator **creators) {
   creators[PrimType_MulFusion][REGIST_DT(kNumberTypeInt32)] = CreateArithmetic;
   creators[PrimType_Minimum][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
   creators[PrimType_Minimum][REGIST_DT(kNumberTypeInt32)] = CreateArithmetic;
+  creators[PrimType_NLLLoss][REGIST_DT(kNumberTypeFloat32)] = CreateNLLLoss;
   creators[PrimType_Neg][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
   creators[PrimType_Neg][REGIST_DT(kNumberTypeInt32)] = CreateArithmeticSelf;
   creators[PrimType_NotEqual][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticCompare;
   creators[PrimType_NotEqual][REGIST_DT(kNumberTypeInt32)] = CreateArithmeticCompare;
   creators[PrimType_NotEqual][REGIST_DT(kNumberTypeInt64)] = CreateArithmeticCompare;
+  creators[PrimType_NonZero][REGIST_DT(kNumberTypeBool)] = CreateNonZero;
 }
 
 void init_vs_kernels_r(KernelCreator **creators) {
+  creators[PrimType_RaggedRange][REGIST_DT(kNumberTypeInt32)] = CreateRaggedRange;
+  creators[PrimType_RaggedRange][REGIST_DT(kNumberTypeFloat32)] = CreateRaggedRange;
+  creators[PrimType_Range][REGIST_DT(kNumberTypeFloat32)] = CreateRange;
+  creators[PrimType_Range][REGIST_DT(kNumberTypeInt32)] = CreateRange;
+  creators[PrimType_Range][REGIST_DT(kNumberTypeFloat16)] = CreateRange;
+  creators[PrimType_Rank][REGIST_DT(kNumberTypeFloat32)] = CreateRank;
+  creators[PrimType_Rank][REGIST_DT(kNumberTypeFloat32)] = CreateRank;
   creators[PrimType_Reshape][REGIST_DT(kNumberTypeInt32)] = CreateReshape;
   creators[PrimType_Reshape][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;
   creators[PrimType_Reshape][REGIST_DT(kNumberTypeBool)] = CreateReshape;
@@ -241,6 +259,7 @@ void init_vs_kernels_r(KernelCreator **creators) {
   creators[PrimType_Squeeze][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;
   creators[PrimType_Squeeze][REGIST_DT(kNumberTypeInt32)] = CreateReshape;
   creators[PrimType_Squeeze][REGIST_DT(kNumberTypeBool)] = CreateReshape;
+  creators[PrimType_Splice][REGIST_DT(kNumberTypeFloat32)] = CreateSplice;
   creators[PrimType_TileFusion][REGIST_DT(kNumberTypeInt32)] = CreateTile;
   creators[PrimType_TileFusion][REGIST_DT(kNumberTypeFloat32)] = CreateTile;
   creators[PrimType_TileFusion][REGIST_DT(kNumberTypeBool)] = CreateTile;

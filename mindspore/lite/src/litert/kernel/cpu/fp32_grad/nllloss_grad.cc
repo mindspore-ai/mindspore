@@ -48,8 +48,8 @@ int NLLLossGradCPUKernel::Prepare() {
   CHECK_NULL_RETURN(out_tensors_[kDxIndex]);
 
   const auto logits_shape = in_tensors_[kLogitsIndex]->shape();
-  nllloss_param_->batch_ = logits_shape[0];
-  nllloss_param_->class_num_ = logits_shape[1];
+  batch_ = logits_shape[0];
+  class_num_ = logits_shape[1];
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -72,7 +72,8 @@ int NLLLossGradCPUKernel::Run() {
   CHECK_NULL_RETURN(total_weight);
   CHECK_NULL_RETURN(logits_grad);
 
-  int ret = NLLLossGrad(logits, loss_grad, labels, weight, total_weight, logits_grad, nllloss_param_);
+  int ret = NLLLossGrad(logits, loss_grad, labels, weight, total_weight, logits_grad, batch_, class_num_,
+                        nllloss_param_->reduction_type_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "NLLLossGrad Run error: error_code[" << ret << "]";
     return RET_ERROR;

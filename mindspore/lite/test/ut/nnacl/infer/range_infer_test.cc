@@ -15,6 +15,7 @@
  */
 #include "common/common_test.h"
 #include "nnacl/infer/range_infer.h"
+#include "nnacl/range_parameter.h"
 
 namespace mindspore {
 
@@ -66,16 +67,18 @@ TEST_F(RangeInferTest, RangeInferTest1) {
   inputs[1]->shape_size_ = 1;
   inputs[1]->shape_[0] = 1;
   inputs[1]->data_ = input1_data.data();
+  inputs[1]->data_type_ = kNumberTypeInt32;
   inputs[2] = new TensorC;
   inputs[2]->shape_size_ = 1;
   inputs[2]->shape_[0] = 1;
   inputs[2]->data_ = input2_data.data();
+  inputs[2]->data_type_ = kNumberTypeInt32;
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   RangeParameter *parameter = new RangeParameter;
-  // parameter->limit_ = 18;
-  // parameter->start_ = 3;
-  // parameter->delta_ = 3;
+  parameter->limit_ = 18;
+  parameter->start_ = 3;
+  parameter->delta_ = 3;
   int ret = RangeInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                             reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
@@ -105,16 +108,18 @@ TEST_F(RangeInferTest, RangeInferTest2) {
   inputs[1]->shape_size_ = 1;
   inputs[1]->shape_[0] = 1;
   inputs[1]->data_ = input1_data.data();
+  inputs[1]->data_type_ = kNumberTypeFloat32;
   inputs[2] = new TensorC;
   inputs[2]->shape_size_ = 1;
   inputs[2]->shape_[0] = 1;
   inputs[2]->data_ = input2_data.data();
+  inputs[2]->data_type_ = kNumberTypeFloat32;
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
   RangeParameter *parameter = new RangeParameter;
-  // parameter->limit_ = 18;
-  // parameter->start_ = 3;
-  // parameter->delta_ = 3;
+  parameter->limit_ = 18;
+  parameter->start_ = 3;
+  parameter->delta_ = 3;
   int ret = RangeInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                             reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);

@@ -20,13 +20,8 @@
 #include "nnacl/op_base.h"
 
 typedef struct NLLLossParameter {
-  // primitive parameter
   OpParameter op_parameter_;
   ReductionType reduction_type_;
-
-  // input parameter
-  int batch_;
-  int class_num_;
 } NLLLossParameter;
 
 #endif  // NNACL_NLLLOSS_PARAMETER_H_
