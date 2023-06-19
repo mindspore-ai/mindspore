@@ -785,3 +785,25 @@ def test_list_inplace_reverse_with_variable_3():
     x = mutable([1, 2, 3])
     out = foo(x)
     assert out == [3, 2, 1]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_dynamic_len_list_inplace_op():
+    """
+    Feature: dynamic length list do not run inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit
+    def foo():
+        x = [2, 5, 6, 7]
+        y = mutable(2)
+        x = mutable(x, True)
+        x[y] = 1
+        return x
+
+    out = foo()
+    assert out == [2, 5, 1, 7]

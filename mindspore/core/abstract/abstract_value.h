@@ -1234,6 +1234,11 @@ class MS_CORE_API AbstractList final : public AbstractSequence {
   /// \param[in] value The corresponding user data.
   void set_list_user_data(const UserDataPtr &list_user_data) { list_user_data_ = list_user_data; }
 
+  /// \brief Clear corresponding list user data.
+  ///
+  /// \param[in] value The corresponding user data.
+  void ClearListUserData() { list_user_data_ = std::make_shared<UserData>(); }
+
   /// \brief Get corresponding list user data.
   ///
   /// \return The corresponding list user data.
