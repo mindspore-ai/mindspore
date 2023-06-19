@@ -18,6 +18,7 @@
 #include <set>
 #include <shared_mutex>
 #include "extendrt/cxx_api/model/model_impl.h"
+#include "src/extendrt/model_manager.h"
 #include "extendrt/cxx_api/dlutils.h"
 #include "extendrt/cxx_api/file_utils.h"
 #include "extendrt/utils/tensor_utils.h"
@@ -40,6 +41,7 @@ const char *const kExecutionPlan = "execution_plan";
 constexpr size_t kMaxSectionNum = 100;
 constexpr size_t kMaxConfigNumPerSection = 1000;
 std::shared_mutex g_model_converter_lock;
+std::mutex g_load_mindir_lock;
 }  // namespace
 
 void ModelImpl::SetMsContext() {
@@ -97,6 +99,35 @@ ConverterPlugin::ConverterFunc ConverterPlugin::GetConverterFuncInner() {
 #endif
 }
 
+bool ModelImpl::IsEnableModelSharing(const std::string &model_path) {
+  const std::set<std::string> &model_path_set = ModelManager::GetInstance().GetModelPath();
+  return model_path_set.find(model_path) != model_path_set.end();
+}
+
+bool ModelImpl::IsEnableModelSharing(const std::pair<const void *, size_t> &model_buff) {
+  const std::set<std::pair<const void *, size_t>> &model_buff_set = ModelManager::GetInstance().GetModelBuff();
+  return (model_buff_set.find(model_buff) != model_buff_set.end());
+}
+
+Status ModelImpl::UpdateSharingWorkspaceConfig(const void *model_buff, size_t model_size,
+                                               const std::string &model_path) {
+  bool model_sharing_flag = false;
+  if (!model_path.empty()) {
+    model_sharing_flag = IsEnableModelSharing(model_path);
+  } else {
+    model_sharing_flag = IsEnableModelSharing(std::make_pair(model_buff, model_size));
+  }
+  if (model_sharing_flag) {
+    MS_LOG(INFO) << "model_sharing_flag: " << model_sharing_flag;
+    auto ret = UpdateConfig("inner_common", std::make_pair("inner_sharing_workspace", "true"));
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "UpdateConfig failed.";
+      return ret;
+    }
+  }
+  return kSuccess;
+}
+
 Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, ModelType model_type,
                                     const std::shared_ptr<Context> &model_context, const std::string &model_path) {
   if (model_buff == nullptr) {
@@ -113,8 +144,10 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
     MS_LOG(ERROR) << "Model has been called Build";
     return kLiteError;
   }
-  if (model_context == nullptr) {
-    MS_LOG(ERROR) << "Invalid context pointers.";
+  MS_CHECK_TRUE_MSG(model_context != nullptr, kLiteNullptr, "Invalid context pointers.");
+  auto status = UpdateSharingWorkspaceConfig(model_buff, model_size, model_path);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "UpdateSharingWorkspaceConfig failed.";
     return kLiteNullptr;
   }
   auto mindir_path = GetConfig(lite::kConfigModelFileSection, lite::kConfigMindIRPathKey);
@@ -174,7 +207,10 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
   }
 
   MindIRLoader mindir_loader(true, nullptr, 0, kDecModeAesGcm, false);
-  func_graph = mindir_loader.LoadMindIR(model_buff, model_size, weight_path);
+  {
+    std::unique_lock<std::mutex> l(g_load_mindir_lock);
+    func_graph = mindir_loader.LoadMindIR(model_buff, model_size, weight_path);
+  }
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "Failed to load MindIR model, please check the validity of the model: " << base_path;
     return kLiteError;

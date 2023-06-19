@@ -29,6 +29,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_kernel_mod.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/subgraph_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/numa_adapter.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/model_manager.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/cpu/less_test_kernel_mod.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/cpu/transpose_kernel_mod.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/infer_session.cc
