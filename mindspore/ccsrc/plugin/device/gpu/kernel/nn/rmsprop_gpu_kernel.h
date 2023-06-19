@@ -52,7 +52,7 @@ class RMSPropGpuKernelMod : public NativeGpuKernelMod {
     if (!IsSameShape(size_a, size_b)) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shape of '" << name_a
                     << "' must be the same as the shape of '" << name_b << "', but got the shape of '" << name_b
-                    << "': " << Vector2Str(size_b) << " and the shape of '" << name_a << "': " << Vector2Str(size_a);
+                    << "': " << size_b << " and the shape of '" << name_a << "': " << size_a;
       return KRET_RESIZE_FAILED;
     }
     return KRET_OK;
@@ -61,7 +61,7 @@ class RMSPropGpuKernelMod : public NativeGpuKernelMod {
     if (batch_rank_ == 0) {
       if (lr_shape.size() != 0 && lr_shape.size() != 1) {
         MS_LOG(ERROR) << "For '" << kernel_name_
-                      << "', the shape size of 'lr' must be 0 or 1, but got the shape of 'lr': " << Vector2Str(lr_shape)
+                      << "', the shape size of 'lr' must be 0 or 1, but got the shape of 'lr': " << lr_shape
                       << " and 'batch_rank': " << batch_rank_;
       }
     } else {
@@ -69,7 +69,7 @@ class RMSPropGpuKernelMod : public NativeGpuKernelMod {
         MS_LOG(ERROR) << "For '" << kernel_name_
                       << "', the shape size of 'lr' must be equal to 'batch_rank', "
                          "but got the shape of 'lr': "
-                      << Vector2Str(lr_shape) << " and 'batch_rank': " << batch_rank_;
+                      << lr_shape << " and 'batch_rank': " << batch_rank_;
         return KRET_RESIZE_FAILED;
       }
     }

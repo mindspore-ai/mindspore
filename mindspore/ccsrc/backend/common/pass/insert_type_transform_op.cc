@@ -27,6 +27,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/convert_utils.h"
 #include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 
 namespace mindspore {
 namespace opt {

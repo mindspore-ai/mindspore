@@ -112,8 +112,8 @@ int SparseApplyAdagradDAGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
 
   if (batch_rank_ < 0 || lr_shape.size() != static_cast<size_t>(batch_rank_)) {
     MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "', the shape size of 'lr' must be equal to 'batch_rank', but got the shape of 'lr': "
-                  << Vector2Str(lr_shape) << " and 'batch_rank': " << batch_rank_;
+                  << "', the shape size of 'lr' must be equal to 'batch_rank', but got the shape of 'lr': " << lr_shape
+                  << " and 'batch_rank': " << batch_rank_;
     return KRET_RESIZE_FAILED;
   }
   batch_size_ = 1;
@@ -137,7 +137,7 @@ int SparseApplyAdagradDAGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
     if (var_shape.size() < lr_shape.size()) {
       MS_LOG(ERROR) << "For '" << kernel_name_
                     << "', the shape size of 'var' must be greater than 'lr_shape', but got the shape of 'var': "
-                    << Vector2Str(var_shape) << " and 'lr_shape': " << Vector2Str(lr_shape);
+                    << var_shape << " and 'lr_shape': " << lr_shape;
       return KRET_RESIZE_FAILED;
     }
     std::vector<int64_t> var_batch_shape(var_shape.begin(), var_shape.begin() + batch_rank_);
@@ -145,7 +145,7 @@ int SparseApplyAdagradDAGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
       MS_LOG(ERROR) << "For '" << kernel_name_
                     << "', the batch shape of 'var' must be the same as the shape of 'lr', "
                        "but got the batch shape of 'var': "
-                    << Vector2Str(var_batch_shape) << " and the shape of 'lr': " << Vector2Str(lr_shape);
+                    << var_batch_shape << " and the shape of 'lr': " << lr_shape;
       return KRET_RESIZE_FAILED;
     }
   }

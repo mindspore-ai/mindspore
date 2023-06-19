@@ -29,6 +29,7 @@
 #include "include/backend/kernel_graph.h"
 #include "ir/anf.h"
 #include "kernel/kernel.h"
+#include "kernel/kash/kernel_pack.h"
 
 namespace mindspore {
 namespace kernel {

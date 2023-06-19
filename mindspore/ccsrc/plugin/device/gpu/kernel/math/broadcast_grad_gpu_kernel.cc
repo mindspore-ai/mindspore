@@ -18,6 +18,7 @@
 #include <memory>
 #include <algorithm>
 #include <functional>
+#include "kernel/ops_utils.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/grad/maximum_grad.h"
 #include "mindspore/core/ops/grad/minimum_grad.h"

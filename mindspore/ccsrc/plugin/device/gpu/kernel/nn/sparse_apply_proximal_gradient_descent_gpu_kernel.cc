@@ -103,19 +103,19 @@ int SparseApplyProximalGradientDescentGpuKernelMod::Resize(const BaseOperatorPtr
   if (!alpha_shape.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', 'alpha' must be a scalar,and dimension of 'alpha' must be 0,but got the dimension of 'alpha': "
-                  << Vector2Str(alpha_shape);
+                  << alpha_shape;
     return KRET_RESIZE_FAILED;
   }
   if (!l1_shape.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', 'l1' must be a scalar,and dimension of 'l1' must be 0,but got the dimension of 'l1': "
-                  << Vector2Str(l1_shape);
+                  << l1_shape;
     return KRET_RESIZE_FAILED;
   }
   if (!l2_shape.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', 'l2' must be a scalar,and dimension of 'l2' must be 0,but got the dimension of 'l2': "
-                  << Vector2Str(l2_shape);
+                  << l2_shape;
     return KRET_RESIZE_FAILED;
   }
 

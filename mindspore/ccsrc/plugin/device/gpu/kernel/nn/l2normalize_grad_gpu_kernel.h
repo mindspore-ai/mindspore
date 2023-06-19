@@ -61,8 +61,7 @@ class L2NormalizeGradGpuKernelMod : public NativeGpuKernelMod {
     for (auto &shape : input_shape_list_) {
       if (output_shape != shape) {
         MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shape of input and output must be the same, but "
-                      << "got the shape of input: " << CONVERT_VECTOR_TO_STRING(shape)
-                      << ", the shape of output: " << CONVERT_VECTOR_TO_STRING(output_shape);
+                      << "got the shape of input: " << shape << ", the shape of output: " << output_shape;
         return false;
       }
     }

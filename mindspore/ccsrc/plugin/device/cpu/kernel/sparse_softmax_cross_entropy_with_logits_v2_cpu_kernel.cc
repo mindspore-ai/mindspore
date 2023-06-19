@@ -57,8 +57,8 @@ int SparseSoftmaxCrossEntropyWithLogitsV2CpuKernelMod::Resize(const BaseOperator
   auto labels_batch = labels_shape[kIndex0];
   if (features_shape.size() != kSparseSoftmaxCrossEntropyWithLogitsV2FeaturesShape ||
       labels_shape.size() != kSparseSoftmaxCrossEntropyWithLogitsV2LabelsShape) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input logits(features) shape " << Vector2Str(features_shape)
-                      << " must be same as [batch * classes] and the input labels shape " << Vector2Str(labels_shape)
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input logits(features) shape " << features_shape
+                      << " must be same as [batch * classes] and the input labels shape " << labels_shape
                       << " must be same as [batch].";
   }
   if (features_batch != labels_batch) {

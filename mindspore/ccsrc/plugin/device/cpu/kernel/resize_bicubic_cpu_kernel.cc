@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <limits>
 #include <utility>
-#include "kernel/common_utils.h"
+#include "kernel/ops_utils.h"
 #include "mindspore/core/ops/resize_bicubic.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 

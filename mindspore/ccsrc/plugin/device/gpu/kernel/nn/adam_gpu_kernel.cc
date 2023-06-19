@@ -76,8 +76,8 @@ int AdamGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
 
   if (!IsSameShape(beta1_power_shape, beta2_power_shape)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shapes of 'beta1_power' and 'beta2_power' must be the same, "
-                  << "but get the shapes of 'beta1_power': " << Vector2Str(beta1_power_shape)
-                  << " and 'beta2_power': " << Vector2Str(beta2_power_shape);
+                  << "but get the shapes of 'beta1_power': " << beta1_power_shape
+                  << " and 'beta2_power': " << beta2_power_shape;
     return KRET_RESIZE_FAILED;
   }
 
@@ -85,7 +85,7 @@ int AdamGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape size of 'lr' must be equal to 'batch_rank', "
                      "but got the shape of 'lr': "
-                  << Vector2Str(lr_shape) << " and 'batch_rank': " << batch_rank_;
+                  << lr_shape << " and 'batch_rank': " << batch_rank_;
     return KRET_RESIZE_FAILED;
   }
 
@@ -105,7 +105,7 @@ int AdamGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
     if (var_shape.size() < lr_shape.size()) {
       MS_LOG(ERROR) << "For '" << kernel_name_
                     << "', the shape size of 'var' must be greater than 'lr_shape', but got the shape of 'var': "
-                    << Vector2Str(var_shape) << " and 'lr_shape': " << Vector2Str(lr_shape);
+                    << var_shape << " and 'lr_shape': " << lr_shape;
       return KRET_RESIZE_FAILED;
     }
     std::vector<int64_t> var_batch_shape(var_shape.begin(), var_shape.begin() + batch_rank_);
@@ -113,7 +113,7 @@ int AdamGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
       MS_LOG(ERROR) << "For '" << kernel_name_
                     << "', the batch shape of 'var' must be the same as the shape of 'lr', "
                        "but got the batch shape of 'var': "
-                    << Vector2Str(var_batch_shape) << " and the shape of 'lr': " << Vector2Str(lr_shape);
+                    << var_batch_shape << " and the shape of 'lr': " << lr_shape;
       return KRET_RESIZE_FAILED;
     }
   }

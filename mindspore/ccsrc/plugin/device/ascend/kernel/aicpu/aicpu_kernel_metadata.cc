@@ -19,6 +19,7 @@
 #include <string>
 #include "kernel/oplib/oplib.h"
 #include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

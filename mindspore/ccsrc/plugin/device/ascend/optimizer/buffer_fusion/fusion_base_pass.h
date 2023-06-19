@@ -31,6 +31,7 @@
 
 namespace mindspore {
 namespace opt {
+constexpr auto kPatternElemWise = "ElemWise";
 constexpr size_t MAX_ELTWISE_NUM = 3;
 constexpr size_t MIN_ELTWISE_SIZE = 2;
 constexpr size_t ELTWISE_INPUT_SIZE = 2;
@@ -84,19 +85,19 @@ class FusionBasePass : public PassWithSwitch {
                         size_t not_updatestate_size);
 
   bool CheckSingleInEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node) {
-    return CheckSingleInEltWiseNode(kernel_graph, node, {kernel::kPatternElemWise});
+    return CheckSingleInEltWiseNode(kernel_graph, node, {kPatternElemWise});
   }
   bool CheckSingleInEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node,
                                 const std::unordered_set<std::string> &fusion_types);
 
   bool CheckDoubleInEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node) {
-    return CheckDoubleInEltWiseNode(kernel_graph, node, {kernel::kPatternElemWise});
+    return CheckDoubleInEltWiseNode(kernel_graph, node, {kPatternElemWise});
   }
   bool CheckDoubleInEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node,
                                 const std::unordered_set<std::string> &fusion_types);
 
   bool CheckMultiOutputEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node) {
-    return CheckMultiOutputEltWiseNode(kernel_graph, node, {kernel::kPatternElemWise});
+    return CheckMultiOutputEltWiseNode(kernel_graph, node, {kPatternElemWise});
   }
   bool CheckMultiOutputEltWiseNode(const session::KernelGraph &kernel_graph, const AnfNodePtr &node,
                                    const std::unordered_set<std::string> &fusion_types);

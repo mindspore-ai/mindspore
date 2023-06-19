@@ -26,6 +26,10 @@
 
 namespace mindspore {
 namespace opt {
+namespace {
+constexpr auto kPatternCommReduce = "CommReduce";
+}
+
 void ReduceEltwiseFusionPass::MatchReduceEltwise(const CNodePtr &cnode, const session::KernelGraph &kernel_graph,
                                                  FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(cnode);
@@ -47,7 +51,7 @@ void ReduceEltwiseFusionPass::MatchReduceEltwise(const CNodePtr &cnode, const se
     return;
   }
   if (AnfAlgo::GetKernelType(eltwise_input) == KernelType::TBE_KERNEL &&
-      AnfAlgo::GetFusionType(eltwise_input) == kernel::kPatternCommReduce &&
+      AnfAlgo::GetFusionType(eltwise_input) == kPatternCommReduce &&
       GetNodeOutputTotalUsedNum(kernel_graph, eltwise_input) == 1) {
     (void)record.insert(eltwise_input);
     auto previous_input_cnode = eltwise_input->cast<CNodePtr>();
@@ -81,9 +85,9 @@ void ReduceEltwiseFusionPass::MatchSingleFusionPattern(const session::KernelGrap
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     // Fusion squaresumv1 and sqrt will get worse performance in bert
-    if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
-        AnfAlgo::GetFusionType(cnode) == kernel::kPatternElemWise && cnode->inputs().size() == ELTWISE_INPUT_SIZE &&
-        common::AnfAlgo::GetCNodeName(cnode) != kCastOpName && common::AnfAlgo::GetCNodeName(cnode) != kSqrtOpName) {
+    if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL && AnfAlgo::GetFusionType(cnode) == kPatternElemWise &&
+        cnode->inputs().size() == ELTWISE_INPUT_SIZE && common::AnfAlgo::GetCNodeName(cnode) != kCastOpName &&
+        common::AnfAlgo::GetCNodeName(cnode) != kSqrtOpName) {
       MatchReduceEltwise(cnode, kernel_graph, candidate_fusion);
     }
   }

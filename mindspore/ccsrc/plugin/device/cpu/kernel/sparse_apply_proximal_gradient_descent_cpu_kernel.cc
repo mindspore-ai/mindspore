@@ -121,16 +121,14 @@ int SparseApplyProximalGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr
                       << grad_shape[0] << " indices.shape[0]: " << indices_size_ << ".";
   }
   if (!alpha_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For SparseApplyProximalGradientDescent, alpha is not a scalar, got shape: "
-                      << Vector2Str(alpha_shape) << ".";
+    MS_LOG(EXCEPTION) << "For SparseApplyProximalGradientDescent, alpha is not a scalar, got shape: " << alpha_shape
+                      << ".";
   }
   if (!l1_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For SparseApplyProximalGradientDescent, l1 is not a scalar, got shape: "
-                      << Vector2Str(l1_shape) << ".";
+    MS_LOG(EXCEPTION) << "For SparseApplyProximalGradientDescent, l1 is not a scalar, got shape: " << l1_shape << ".";
   }
   if (!l2_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For SparseApplyProximalGradientDescent, l2 is not a scalar, got shape: "
-                      << Vector2Str(l2_shape) << ".";
+    MS_LOG(EXCEPTION) << "For SparseApplyProximalGradientDescent, l2 is not a scalar, got shape: " << l2_shape << ".";
   }
   return static_cast<int>(KRET_OK);
 }

@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <memory>
 #include <map>
+#include "kernel/kernel_get_value.h"
 #include "mindspore/core/ops/slice.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"

@@ -28,7 +28,7 @@
 #include "ir/dtype.h"
 #include "ir/func_graph.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
-#include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 #include "kernel/graph_kernel/graph_kernel_json_generator.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

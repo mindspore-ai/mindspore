@@ -16,7 +16,7 @@
 
 #include "plugin/device/cpu/kernel/resize_area_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "kernel/common_utils.h"
+#include "kernel/ops_utils.h"
 #include "mindspore/core/ops/resize_area.h"
 
 namespace mindspore {

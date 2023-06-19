@@ -23,7 +23,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_select_utils.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
-#include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 #include "external/platform/platform_info.h"
 
 namespace mindspore::kernel {

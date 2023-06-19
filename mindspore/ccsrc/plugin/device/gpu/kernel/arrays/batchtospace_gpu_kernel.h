@@ -116,8 +116,7 @@ class BatchToSpaceGpuKernelMod : public NativeGpuKernelMod {
     for (size_t idx = 0; idx < SHAPE_SIZE; ++idx) {
       if (input_shape[idx] < 1) {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                          << "', the element of shape of input cannot be less than 1, but got "
-                          << CONVERT_VECTOR_TO_STRING(input_shape);
+                          << "', the element of shape of input cannot be less than 1, but got " << input_shape;
       }
     }
     input_shape_.assign(input_shape.begin(), input_shape.end());

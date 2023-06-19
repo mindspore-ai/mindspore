@@ -24,6 +24,8 @@
 #include <mutex>
 #include <shared_mutex>
 #include "kernel/kernel.h"
+#include "kernel/common_utils.h"
+#include "kernel/kash/kernel_pack.h"
 #include "plugin/device/cpu/kernel/cpu_kernel_mod.h"
 
 namespace mindspore {

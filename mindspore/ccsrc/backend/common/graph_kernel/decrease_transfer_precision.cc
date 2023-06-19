@@ -26,11 +26,15 @@
 #include "backend/common/graph_kernel/graph_kernel_helper.h"
 #include "ir/manager.h"
 #include "kernel/kernel_build_info.h"
-#include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 #include "include/backend/kernel_info.h"
 #include "backend/common/graph_kernel/decrease_transfer_precision.h"
 
 namespace mindspore::graphkernel {
+namespace {
+constexpr auto kPatternOpaque = "Opaque";
+}
+
 static const size_t GK_MIN_SIZE = 2;  // 2
 
 int64_t ObtainGetItemIndex(const AnfNodePtr &getitem) {
@@ -169,7 +173,7 @@ bool DecreaseTransferPrecision::ProcessFather(const FuncGraphPtr &, const AnfNod
     graph_info_builder.SetOutputsDeviceType(cnode_output_type);
     graph_info_builder.SetProcessor(kernel::GetProcessorFromContext());
     graph_info_builder.SetKernelType(KernelType::AKG_KERNEL);
-    graph_info_builder.SetFusionType(kernel::kPatternOpaque);
+    graph_info_builder.SetFusionType(kPatternOpaque);
     auto info_1 = graph_info_builder.Build();
     AnfAlgo::SetSelectKernelBuildInfo(info_1, cnode.get());
     return cnode;
@@ -282,7 +286,7 @@ bool DecreaseTransferPrecision::ProcessSon(const FuncGraphPtr &, const AnfNodePt
   node_info_builder.SetOutputsDeviceType(cnode_output_type);
   node_info_builder.SetProcessor(kernel::GetProcessorFromContext());
   node_info_builder.SetKernelType(KernelType::AKG_KERNEL);
-  node_info_builder.SetFusionType(kernel::kPatternOpaque);
+  node_info_builder.SetFusionType(kPatternOpaque);
   auto info_1 = node_info_builder.Build();
   AnfAlgo::SetSelectKernelBuildInfo(info_1, cnode.get());
   (void)mng->Replace(old_input, cnode);

@@ -161,6 +161,8 @@ static bool KernelBuildParallelCompile(const std::vector<CNodePtr> &kernels) {
 bool KernelBuild(const std::vector<CNodePtr> &kernels) { return device::ascend::KernelBuildParallelCompile(kernels); }
 
 namespace {
+constexpr auto kInterCoreSync = "_inter_core_sync";
+constexpr auto kModeInArgsFirstField = "_mode_in_args_first_field";
 void GetAtomicWorkspaceAndOutputIndex(const kernel::NodeBaseInfo &node_base_info,
                                       const std::vector<size_t> &parameters_indexes,
                                       std::vector<size_t> *output_indexes, std::vector<size_t> *workspace_indexes,
@@ -226,12 +228,12 @@ bool IsAtomicNode(const CNodePtr &kernel_node) {
   node_base_info.offset_index = 0;
   uint32_t mode = 0;
   bool inter_core_sync = false;
-  if (common::AnfAlgo::HasNodeAttr(kernel::kModeInArgsFirstField, kernel_node)) {
-    mode = common::AnfAlgo::GetNodeAttr<uint32_t>(kernel_node, kernel::kModeInArgsFirstField);
+  if (common::AnfAlgo::HasNodeAttr(kModeInArgsFirstField, kernel_node)) {
+    mode = common::AnfAlgo::GetNodeAttr<uint32_t>(kernel_node, kModeInArgsFirstField);
   }
 
-  if (common::AnfAlgo::HasNodeAttr(kernel::kInterCoreSync, kernel_node)) {
-    inter_core_sync = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, kernel::kInterCoreSync);
+  if (common::AnfAlgo::HasNodeAttr(kInterCoreSync, kernel_node)) {
+    inter_core_sync = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, kInterCoreSync);
   }
   if (mode == 1 || inter_core_sync) {
     node_base_info.offset_index = 1;

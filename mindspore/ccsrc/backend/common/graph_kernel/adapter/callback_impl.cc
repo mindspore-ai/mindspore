@@ -24,10 +24,15 @@
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 #include "backend/common/graph_kernel/adapter/fake_abstract_shape.h"
 #include "kernel/graph_kernel_info.h"
 
 namespace mindspore::graphkernel {
+namespace {
+constexpr auto kPatternOpaque = "Opaque";
+}
+
 GRAPH_KERNEL_CALLBACK_REGISTER(CallbackImpl);
 ShapeVector CallbackImpl::GetInputShape(const AnfNodePtr &node, size_t i) {
   return AnfAlgo::GetInputDeviceShape(node, i);
@@ -140,7 +145,7 @@ void CallbackImpl::SetGraphKernelNodeKernelInfo(const AnfNodePtr &node) {
   kernel::KernelBuildInfo::KernelBuildInfoBuilder graph_info_builder;
   graph_info_builder.SetProcessor(kernel::GetProcessorFromContext());
   graph_info_builder.SetKernelType(KernelType::AKG_KERNEL);
-  graph_info_builder.SetFusionType(kernel::kPatternOpaque);
+  graph_info_builder.SetFusionType(kPatternOpaque);
   graph_info_builder.SetInputsFormat(graph_input_format);
   graph_info_builder.SetInputsDeviceType(graph_input_type);
   graph_info_builder.SetOutputsFormat(graph_output_format);
@@ -194,7 +199,7 @@ void CallbackImpl::SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vec
   info_builder.SetOutputsDeviceType(output_types);
   info_builder.SetProcessor(kernel::GetProcessorFromContext());
   info_builder.SetKernelType(KernelType::AKG_KERNEL);
-  info_builder.SetFusionType(kernel::kPatternOpaque);
+  info_builder.SetFusionType(kPatternOpaque);
   auto selected_info = info_builder.Build();
   AnfAlgo::SetSelectKernelBuildInfo(selected_info, node.get());
 }

@@ -41,8 +41,8 @@ int TraceGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   input_shape_ = inputs.at(kIndex1)->GetDeviceShapeAdaptively();
   const std::vector<int64_t> x_shape_ = {2};
   if (input_shape_ != x_shape_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of input[x_shape] should be " << Vector2Str(x_shape_)
-                      << ", but got " << Vector2Str(input_shape_) << ".";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of input[x_shape] should be " << x_shape_
+                      << ", but got " << input_shape_ << ".";
   }
   return KRET_OK;
 }

@@ -21,7 +21,7 @@
 #include <vector>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_class/helper_base.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/resize_bicubic_impl.cuh"
-#include "mindspore/ccsrc/kernel/common_utils.h"
+#include "mindspore/ccsrc/kernel/ops_utils.h"
 
 namespace mindspore {
 namespace cukernel {

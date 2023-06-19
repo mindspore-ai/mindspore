@@ -194,7 +194,7 @@ void BroadcastToCpuKernelMod::CheckArgs() {
       MS_LOG(EXCEPTION)
         << "For '" << kernel_name_ << "', when the " << i
         << "'th, the shape of input must be 1 and equal to the shape of output, but got the shape of input: "
-        << Vector2Str(input_shape_) << ", and the shape of output: " << Vector2Str(output_shape_);
+        << input_shape_ << ", and the shape of output: " << output_shape_;
     }
   }
 }
@@ -251,8 +251,7 @@ bool BroadcastToCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
                       << "', each dimension pair, 'input_x' shape and target shape, "
                          "must be either equal or input is one or the target dimension is -1. "
                          "But got 'input_x' shape: "
-                      << Vector2Str(input_shape_) << " and target shape: " << Vector2Str(output_shape_)
-                      << ". Error code: " << status;
+                      << input_shape_ << " and target shape: " << output_shape_ << ". Error code: " << status;
   }
   return true;
 }

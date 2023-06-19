@@ -21,7 +21,7 @@
 #include <vector>
 #include <tuple>
 #include "src/extendrt/infer_session.h"
-#include "mindspore/ccsrc/kernel/common_utils.h"
+#include "mindspore/ccsrc/kernel/framework_utils.h"
 
 namespace mindspore {
 /// \brief Single Op Session implementation, used in Ascend Device Context.

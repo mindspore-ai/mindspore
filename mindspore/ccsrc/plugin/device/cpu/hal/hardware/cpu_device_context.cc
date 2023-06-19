@@ -29,6 +29,7 @@
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "kernel/kernel_build_info.h"
+#include "kernel/framework_utils.h"
 #include "plugin/device/cpu/hal/device/kernel_select_cpu.h"
 #include "utils/trace_base.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"

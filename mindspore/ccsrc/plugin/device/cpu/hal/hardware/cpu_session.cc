@@ -44,6 +44,7 @@
 #include "backend/common/optimizer/common_backend_optimization.h"
 #include "include/common/debug/dump_proto.h"
 #include "kernel/graph_kernel_info.h"
+#include "kernel/framework_utils.h"
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #endif

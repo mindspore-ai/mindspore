@@ -27,7 +27,7 @@
 #include "frontend/operator/ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 #include "plugin/device/gpu/hal/device/cuda_env_checker.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 namespace mindspore {

@@ -132,17 +132,17 @@ int SparseApplyAdagradDACpuKernelMod::Resize(const BaseOperatorPtr &base_operato
       << grad_shape[0] << ", indices_shape[0]: " << indices_size_ << ".";
   }
   if (!lr_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For SparseApplyAdagradDA, lr is not a scalar, got shape: " << Vector2Str(lr_shape) << ".";
+    MS_LOG(EXCEPTION) << "For SparseApplyAdagradDA, lr is not a scalar, got shape: " << lr_shape << ".";
   }
   if (!l1_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For SparseApplyAdagradDA, l1 is not a scalar, got shape: " << Vector2Str(l1_shape) << ".";
+    MS_LOG(EXCEPTION) << "For SparseApplyAdagradDA, l1 is not a scalar, got shape: " << l1_shape << ".";
   }
   if (!l2_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For SparseApplyAdagradDA, l2 is not a scalar, got shape: " << Vector2Str(l2_shape) << ".";
+    MS_LOG(EXCEPTION) << "For SparseApplyAdagradDA, l2 is not a scalar, got shape: " << l2_shape << ".";
   }
   if (!global_step_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For SparseApplyAdagradDA, global_step is not a scalar, got shape: "
-                      << Vector2Str(global_step_shape) << ".";
+    MS_LOG(EXCEPTION) << "For SparseApplyAdagradDA, global_step is not a scalar, got shape: " << global_step_shape
+                      << ".";
   }
   return KRET_OK;
 }

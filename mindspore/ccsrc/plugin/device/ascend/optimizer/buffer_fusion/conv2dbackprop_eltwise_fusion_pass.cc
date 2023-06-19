@@ -27,6 +27,10 @@
 
 namespace mindspore {
 namespace opt {
+namespace {
+constexpr auto kPatternBroadcast = "Broadcast";
+}
+
 void Conv2DBackpropEltwiseFusionPass::MatchConv2DBackpropInputEltwise(const CNodePtr &cnode,
                                                                       FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(cnode);
@@ -67,7 +71,7 @@ void Conv2DBackpropEltwiseFusionPass::MatchSingleFusionPattern(const session::Ke
     MS_EXCEPTION_IF_NULL(cnode);
     std::set<std::string> support_node_names = {kReluGradV2OpName, kReluOpName, kPReluOpName, kLeakyReluOpName,
                                                 kAddOpName};
-    std::set<std::string> support_fusion_types = {kernel::kPatternElemWise, kernel::kPatternBroadcast};
+    std::set<std::string> support_fusion_types = {kPatternElemWise, kPatternBroadcast};
     if (support_node_names.count(common::AnfAlgo::GetCNodeName(cnode)) > 0 &&
         support_fusion_types.count(AnfAlgo::GetFusionType(cnode)) > 0) {
       MatchConv2DBackpropInputEltwise(cnode, candidate_fusion);

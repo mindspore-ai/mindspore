@@ -65,15 +65,14 @@ int ApplyAdaMaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   if (batch_rank_ == 0) {
     if (lr_shape.size() != 0 && lr_shape.size() != 1) {
       MS_LOG(ERROR) << "For '" << kernel_name_
-                    << "', the shape size of 'lr' must be 0 or 1, but got the shape of 'lr': " << Vector2Str(lr_shape)
+                    << "', the shape size of 'lr' must be 0 or 1, but got the shape of 'lr': " << lr_shape
                     << " and 'batch_rank': " << batch_rank_;
     }
   } else {
     if (batch_rank_ < 0 || lr_shape.size() != static_cast<size_t>(batch_rank_)) {
       MS_LOG(ERROR) << "For '" << kernel_name_
-                    << "', the shape size of 'lr' must be equal to 'batch_rank', "
-                       "but got the shape of 'lr': "
-                    << Vector2Str(lr_shape) << " and 'batch_rank': " << batch_rank_;
+                    << "', the shape size of 'lr' must be equal to 'batch_rank', but got the shape of 'lr': "
+                    << lr_shape << " and 'batch_rank': " << batch_rank_;
       return KRET_RESIZE_FAILED;
     }
   }

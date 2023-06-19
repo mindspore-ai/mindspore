@@ -18,6 +18,8 @@
 #include "common/py_func_graph_fetcher.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "kernel/kernel.h"
+#include "kernel/kernel_get_value.h"
+#include "kernel/kash/kernel_pack.h"
 #include "include/backend/kernel_info.h"
 #include "include/backend/optimizer/optimizer.h"
 #include "include/backend/anf_runtime_algorithm.h"
@@ -37,6 +39,11 @@
 
 namespace mindspore {
 namespace opt {
+namespace {
+constexpr auto kPatternOpaque = "Opaque";
+constexpr auto kPatternCommReduce = "CommReduce";
+}
+
 using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
 class TestHWBufferFusion : public BackendCommon {
  public:
@@ -73,7 +80,7 @@ TEST_F(TestHWBufferFusion, test_tbe_eltwise_fusion_1) {
   builder.SetInputsDeviceType({kFloat32->type_id()});
   builder.SetOutputsDeviceType({kFloat32->type_id()});
   builder.SetKernelType(KernelType::TBE_KERNEL);
-  builder.SetFusionType(kernel::kPatternElemWise);
+  builder.SetFusionType(kPatternElemWise);
   builder.SetProcessor(kernel::Processor::AICORE);
   builder.SetKernelType(KernelType::TBE_KERNEL);
 
@@ -88,7 +95,7 @@ TEST_F(TestHWBufferFusion, test_tbe_eltwise_fusion_1) {
   builder1.SetInputsDeviceType({kFloat32->type_id()});
   builder1.SetOutputsDeviceType({kFloat16->type_id()});
   builder1.SetKernelType(KernelType::TBE_KERNEL);
-  builder1.SetFusionType(kernel::kPatternOpaque);
+  builder1.SetFusionType(kPatternOpaque);
   builder1.SetProcessor(kernel::Processor::AICORE);
   builder1.SetKernelType(KernelType::TBE_KERNEL);
 
@@ -144,7 +151,7 @@ TEST_F(TestHWBufferFusion, test_tbe_eltwise_fusion_2) {
   builder.SetInputsDeviceType({kFloat32->type_id()});
   builder.SetOutputsDeviceType({kFloat32->type_id()});
   builder.SetKernelType(KernelType::TBE_KERNEL);
-  builder.SetFusionType(kernel::kPatternElemWise);
+  builder.SetFusionType(kPatternElemWise);
   builder.SetProcessor(kernel::Processor::AICORE);
   builder.SetKernelType(KernelType::TBE_KERNEL);
 
@@ -167,7 +174,7 @@ TEST_F(TestHWBufferFusion, test_tbe_eltwise_fusion_2) {
   builder1.SetInputsDeviceType({kFloat32->type_id()});
   builder1.SetOutputsDeviceType({kFloat16->type_id()});
   builder1.SetKernelType(KernelType::TBE_KERNEL);
-  builder1.SetFusionType(kernel::kPatternOpaque);
+  builder1.SetFusionType(kPatternOpaque);
   builder1.SetProcessor(kernel::Processor::AICORE);
   builder1.SetKernelType(KernelType::TBE_KERNEL);
 
@@ -180,7 +187,7 @@ TEST_F(TestHWBufferFusion, test_tbe_eltwise_fusion_2) {
   builder2.SetInputsDeviceType({kFloat32->type_id(), kFloat32->type_id()});
   builder2.SetOutputsDeviceType({kFloat32->type_id()});
   builder2.SetKernelType(KernelType::TBE_KERNEL);
-  builder2.SetFusionType(kernel::kPatternCommReduce);
+  builder2.SetFusionType(kPatternCommReduce);
   builder2.SetProcessor(kernel::Processor::AICORE);
   builder2.SetKernelType(KernelType::TBE_KERNEL);
 
@@ -234,7 +241,7 @@ TEST_F(TestHWBufferFusion, test_tbe_reduce_eltwise_fusion) {
   builder.SetInputsDeviceType({kFloat32->type_id()});
   builder.SetOutputsDeviceType({kFloat32->type_id()});
   builder.SetKernelType(KernelType::TBE_KERNEL);
-  builder.SetFusionType(kernel::kPatternElemWise);
+  builder.SetFusionType(kPatternElemWise);
   builder.SetProcessor(kernel::Processor::AICORE);
   builder.SetKernelType(KernelType::TBE_KERNEL);
 
@@ -257,7 +264,7 @@ TEST_F(TestHWBufferFusion, test_tbe_reduce_eltwise_fusion) {
   builder1.SetInputsDeviceType({kFloat32->type_id()});
   builder1.SetOutputsDeviceType({kFloat16->type_id()});
   builder1.SetKernelType(KernelType::TBE_KERNEL);
-  builder1.SetFusionType(kernel::kPatternOpaque);
+  builder1.SetFusionType(kPatternOpaque);
   builder1.SetProcessor(kernel::Processor::AICORE);
   builder1.SetKernelType(KernelType::TBE_KERNEL);
 
@@ -270,7 +277,7 @@ TEST_F(TestHWBufferFusion, test_tbe_reduce_eltwise_fusion) {
   builder2.SetInputsDeviceType({kFloat32->type_id()});
   builder2.SetOutputsDeviceType({kFloat32->type_id()});
   builder2.SetKernelType(KernelType::TBE_KERNEL);
-  builder2.SetFusionType(kernel::kPatternCommReduce);
+  builder2.SetFusionType(kPatternCommReduce);
   builder2.SetProcessor(kernel::Processor::AICORE);
   builder2.SetKernelType(KernelType::TBE_KERNEL);
 
@@ -316,7 +323,7 @@ TEST_F(TestHWBufferFusion, test_tbe_matmul_eltwise_fusion) {
   builder.SetInputsDeviceType({kFloat32->type_id()});
   builder.SetOutputsDeviceType({kFloat32->type_id()});
   builder.SetKernelType(KernelType::TBE_KERNEL);
-  builder.SetFusionType(kernel::kPatternElemWise);
+  builder.SetFusionType(kPatternElemWise);
   builder.SetProcessor(kernel::Processor::AICORE);
   builder.SetKernelType(KernelType::TBE_KERNEL);
   relu->set_kernel_info(std::make_shared<device::KernelInfo>());
@@ -328,7 +335,7 @@ TEST_F(TestHWBufferFusion, test_tbe_matmul_eltwise_fusion) {
   builder2.SetInputsDeviceType({kFloat32->type_id(), kFloat32->type_id()});
   builder2.SetOutputsDeviceType({kFloat32->type_id()});
   builder2.SetKernelType(KernelType::TBE_KERNEL);
-  builder2.SetFusionType(kernel::kPatternOpaque);
+  builder2.SetFusionType(kPatternOpaque);
   builder2.SetProcessor(kernel::Processor::AICORE);
   builder2.SetKernelType(KernelType::TBE_KERNEL);
   matmul->set_kernel_info(std::make_shared<device::KernelInfo>());
@@ -340,7 +347,7 @@ TEST_F(TestHWBufferFusion, test_tbe_matmul_eltwise_fusion) {
   builder1.SetInputsDeviceType({kFloat32->type_id()});
   builder1.SetOutputsDeviceType({kFloat16->type_id()});
   builder1.SetKernelType(KernelType::TBE_KERNEL);
-  builder1.SetFusionType(kernel::kPatternOpaque);
+  builder1.SetFusionType(kPatternOpaque);
   builder1.SetProcessor(kernel::Processor::AICORE);
   builder1.SetKernelType(KernelType::TBE_KERNEL);
   cast->set_kernel_info(std::make_shared<device::KernelInfo>());

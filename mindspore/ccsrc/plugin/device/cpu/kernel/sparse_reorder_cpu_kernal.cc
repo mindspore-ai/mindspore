@@ -56,14 +56,14 @@ int SparseReorderCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', it requires 'values' must be a 1-D Tensor and the first dimension length "
                          "must be equal to the first dimension length of 'indices', but got 'values' shape: "
-                      << Vector2Str(values_shape) << " and 'indices' shape: " << Vector2Str(indices_shape);
+                      << values_shape << " and 'indices' shape: " << indices_shape;
   }
   auto shape_shape = inputs.at(kIndex2)->GetShapeVector();
   if (shape_shape.size() != 1 || shape_shape[0] != indices_shape[1]) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', it requires 'shape' must be a 1-D Tensor and the first dimension length "
                          "must be equal to the second dimension length of 'indices', but got 'shape' shape: "
-                      << Vector2Str(shape_shape) << " and 'indices' shape: " << Vector2Str(indices_shape);
+                      << shape_shape << " and 'indices' shape: " << indices_shape;
   }
 
   indices_shape_ = Convert2SizeT(indices_shape);

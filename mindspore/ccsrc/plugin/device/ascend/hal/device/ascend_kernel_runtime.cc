@@ -73,7 +73,7 @@
 #include "include/common/debug/rdr/recorder_manager.h"
 #endif
 
-#include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 #include "plugin/device/ascend/hal/common/platform_info_util.h"
 #ifndef ENABLE_SECURITY
 using mindspore::device::ascend::ProfilingManager;

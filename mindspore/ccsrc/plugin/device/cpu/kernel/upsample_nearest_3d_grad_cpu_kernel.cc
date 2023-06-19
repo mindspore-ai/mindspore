@@ -17,7 +17,7 @@
 #include "plugin/device/cpu/kernel/upsample_nearest_3d_grad_cpu_kernel.h"
 #include <string>
 #include <utility>
-#include "kernel/common_utils.h"
+#include "kernel/ops_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {

@@ -131,7 +131,7 @@ void CheckValidCpuKernelMod::CheckParams(const std::vector<AddressPtr> &inputs,
   if (outputs[0]->size / sizeof(bool) != inputs[0]->size / sizeof(T) / COORDINATE) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of output must be the same as 'img_metas', but got the shape of output: "
-                      << Vector2Str(output_shape_) << ", the shape of 'img_metas': " << Vector2Str(img_metas_shape_);
+                      << output_shape_ << ", the shape of 'img_metas': " << img_metas_shape_;
   }
 }
 

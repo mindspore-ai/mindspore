@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_CPU_AKG_CPU_KERNEL_BUILD_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_CPU_AKG_CPU_KERNEL_BUILD_H_
 #include <string>
+#include "kernel/kash/kernel_pack.h"
 #include "kernel/graph_kernel/akg/akg_kernel_build.h"
 #include "kernel/graph_kernel/graph_kernel_builder_manager.h"
 #include "base/base.h"

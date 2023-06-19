@@ -114,6 +114,7 @@ constexpr auto KSleepInterval = 1000;
 const uint64_t kUSecondInSecond = 1000000;
 
 namespace {
+constexpr auto kPatternOpaque = "Opaque";
 inline bool Order(const nlohmann::json &json1, const nlohmann::json &json2) {
   return json1[kIndex].dump() < json2[kIndex].dump();
 }
@@ -302,7 +303,7 @@ std::string TbeKernelCompileManager::ParseOpPattern(const std::string &json_str)
   nlohmann::json result;
   if (!ParseJson(json_str, &result)) {
     MS_LOG(WARNING) << "Parse op pattern json error. Origin result: " << json_str;
-    return kernel::kPatternOpaque;
+    return kPatternOpaque;
   }
   return GetJsonValue<std::string>(result, "pattern");
 }

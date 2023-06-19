@@ -19,6 +19,8 @@
 #include "common/py_func_graph_fetcher.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "kernel/kernel.h"
+#include "kernel/kernel_get_value.h"
+#include "kernel/kash/kernel_pack.h"
 #include "include/backend/kernel_info.h"
 #include "include/backend/optimizer/optimizer.h"
 #include "include/backend/anf_runtime_algorithm.h"
@@ -28,6 +30,9 @@
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore::kernel {
+namespace {
+constexpr auto kPatternElemWise = "ElemWise";
+}
 
 using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
 constexpr int64_t kShape4D = 4;
@@ -65,7 +70,7 @@ TEST_F(TestHWTBEJsonCreator, DISABLED_test_tbe_single_common) {
   builder.SetInputsDeviceType({kFloat32->type_id()});
   builder.SetOutputsDeviceType({kFloat32->type_id()});
   builder.SetKernelType(KernelType::TBE_KERNEL);
-  builder.SetFusionType(kernel::kPatternElemWise);
+  builder.SetFusionType(kPatternElemWise);
   builder.SetProcessor(kernel::Processor::AICORE);
   builder.SetKernelType(KernelType::TBE_KERNEL);
 
@@ -107,7 +112,7 @@ TEST_F(TestHWTBEJsonCreator, DISABLED_test_tbe_single_conv2d_backprop_filter) {
   builder.SetInputsDeviceType({kFloat32->type_id(), kFloat32->type_id()});
   builder.SetOutputsDeviceType({kFloat32->type_id()});
   builder.SetKernelType(KernelType::TBE_KERNEL);
-  builder.SetFusionType(kernel::kPatternElemWise);
+  builder.SetFusionType(kPatternElemWise);
   builder.SetProcessor(kernel::Processor::AICORE);
   builder.SetKernelType(KernelType::TBE_KERNEL);
 
@@ -165,7 +170,7 @@ TEST_F(TestHWTBEJsonCreator, DISABLED_test_tbe_single_dynamic_rnn) {
   builder.SetOutputsDeviceType({kFloat16->type_id(), kFloat16->type_id(), kFloat16->type_id(), kFloat16->type_id(),
                                 kFloat16->type_id(), kFloat16->type_id(), kFloat16->type_id(), kFloat16->type_id()});
   builder.SetKernelType(KernelType::TBE_KERNEL);
-  builder.SetFusionType(kernel::kPatternElemWise);
+  builder.SetFusionType(kPatternElemWise);
   builder.SetProcessor(kernel::Processor::AICORE);
   builder.SetKernelType(KernelType::TBE_KERNEL);
 
@@ -218,7 +223,7 @@ TEST_F(TestHWTBEJsonCreator, DISABLED_test_tbe_single_layer_norm) {
   builder.SetInputsDeviceType({kFloat32->type_id(), kFloat32->type_id(), kFloat32->type_id()});
   builder.SetOutputsDeviceType({kFloat32->type_id(), kFloat32->type_id(), kFloat32->type_id()});
   builder.SetKernelType(KernelType::TBE_KERNEL);
-  builder.SetFusionType(kernel::kPatternElemWise);
+  builder.SetFusionType(kPatternElemWise);
   builder.SetProcessor(kernel::Processor::AICORE);
   builder.SetKernelType(KernelType::TBE_KERNEL);
 
@@ -262,7 +267,7 @@ TEST_F(TestHWTBEJsonCreator, test_tbe_fusion_common) {
   builder.SetInputsDeviceType({kFloat32->type_id()});
   builder.SetOutputsDeviceType({kFloat32->type_id()});
   builder.SetKernelType(KernelType::TBE_KERNEL);
-  builder.SetFusionType(kernel::kPatternElemWise);
+  builder.SetFusionType(kPatternElemWise);
   builder.SetProcessor(kernel::Processor::AICORE);
   builder.SetKernelType(KernelType::TBE_KERNEL);
 
@@ -277,7 +282,7 @@ TEST_F(TestHWTBEJsonCreator, test_tbe_fusion_common) {
   builder1.SetInputsDeviceType({kFloat32->type_id()});
   builder1.SetOutputsDeviceType({kFloat16->type_id()});
   builder1.SetKernelType(KernelType::TBE_KERNEL);
-  builder1.SetFusionType(kernel::kPatternOpaque);
+  builder1.SetFusionType(kPatternOpaque);
   builder1.SetProcessor(kernel::Processor::AICORE);
   builder1.SetKernelType(KernelType::TBE_KERNEL);
 
@@ -336,7 +341,7 @@ TEST_F(TestHWTBEJsonCreator, test_fusion_add_conv2d) {
   builder.SetInputsDeviceType({kFloat32->type_id(), kFloat32->type_id()});
   builder.SetOutputsDeviceType({kFloat32->type_id()});
   builder.SetKernelType(KernelType::TBE_KERNEL);
-  builder.SetFusionType(kernel::kPatternElemWise);
+  builder.SetFusionType(kPatternElemWise);
   builder.SetProcessor(kernel::Processor::AICORE);
   builder.SetKernelType(KernelType::TBE_KERNEL);
 

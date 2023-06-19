@@ -36,7 +36,7 @@
 #include "include/common/utils/utils.h"
 #include "include/common/utils/parallel_context.h"
 #include "include/common/debug/env_config_parser.h"
-#include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 
 using mindspore::kernel::Address;
 using mindspore::kernel::AddressPtr;

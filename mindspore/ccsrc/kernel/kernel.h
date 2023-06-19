@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,61 +58,6 @@ enum KernelType : int {
   ACL_KERNEL,
 };
 namespace kernel {
-constexpr auto kPatternAntiQuant = "anti_quant";
-constexpr auto kPatternDequant = "dequant";
-constexpr auto kPatternDequantS16 = "dequant_s16";
-constexpr auto kPatternQuant = "quant";
-constexpr auto kPatternRequant = "requant";
-constexpr auto kPatternRequant_s16 = "requant_s16";
-constexpr auto kPatternBatchMatmul = "BatchMatmul";
-constexpr auto kPatternBnGradReduce = "bn_grad_reduce";
-constexpr auto kPatternBnReduce = "bn_reduce";
-constexpr auto kPatternBnUpdate = "bn_update";
-constexpr auto kPatternBnUpdate_grad = "bn_update_grad";
-constexpr auto kPatternBroadcast = "Broadcast";
-constexpr auto kPatternCommReduce = "CommReduce";
-constexpr auto kPatternConfusiontranspose = "confusiontranspose";
-constexpr auto kPatternConvolution = "Convolution";
-constexpr auto kPatternConv2dBackpropFilter = "Conv2d_backprop_filter";
-constexpr auto kPatternConv2dBackpropInput = "Conv2d_backprop_input";
-constexpr auto kPatternConv3d = "Conv3d";
-constexpr auto kPatternConv3dBackpropFilter = "Conv3d_backprop_filter";
-constexpr auto kPatternConv3dBackpropInput = "Conv3d_backprop_input";
-constexpr auto kPatternCosineEmbeddingLoss = "cosine_embedding_loss";
-constexpr auto kPatternCubeLayerNorm = "cube_layer_norm";
-constexpr auto kPatternDepthwiseConvolution = "DepthwiseConvolution";
-constexpr auto kPatternDilation = "dilation";
-constexpr auto kPatternDropOutDoMaskV3D = "DropOutDoMaskV3D";
-constexpr auto kPatternElemWise = "ElemWise";
-constexpr auto kPatternGEMM = "GEMM";
-constexpr auto kPatternInplace = "Inplace";
-constexpr auto kPatternL2Loss = "l2_loss";
-constexpr auto kPatternL2Normalize = "l2_normalize";
-constexpr auto kPatternL2lossMulAddn = "l2loss_mul_addn";
-constexpr auto kPatternLayerNormGrad = "layer_norm_grad";
-constexpr auto kPatternMatmul = "Matmul";
-constexpr auto kPatternMatmulV2 = "Matmul_v2";
-constexpr auto kPatternMaxPool = "MaxPool";
-constexpr auto kPatternNorm = "Norm";
-constexpr auto kPatternOpaque = "Opaque";
-constexpr auto kPatternPool2d = "Pool2d";
-constexpr auto kPatternPool3d = "Pool3d";
-constexpr auto kPatternPureBroadcast = "PureBroadcast";
-constexpr auto kPatternread_select = "read_select";
-constexpr auto kPatternSegment = "Segment";
-constexpr auto kPatternSoftmaxPattern = "softmax_pattern";
-constexpr auto kPatternSoftmaxCrossEntropyWithLogits = "softmax_cross_entropy_with_logits";
-constexpr auto kPatternStridedRead = "strided_read";
-constexpr auto kPatternStridedWrite = "strided_write";
-constexpr auto kPatternTransdata = "Transdata";
-constexpr auto kPatternTranspose = "Transpose";
-constexpr auto kPatternUnknown = "";
-constexpr auto kPatternWriteSelect = "write_select";
-constexpr auto kModeInArgsFirstField = "_mode_in_args_first_field";
-constexpr auto kInterCoreSync = "_inter_core_sync";
-constexpr auto kInitValue = "init_value";
-constexpr auto kFloatType = "float";
-
 // Backend processor
 enum Processor {
   UNKNOWN = -1,
@@ -123,102 +68,11 @@ enum Processor {
   BISHENG,
 };
 
-struct FlexArray {
-  size_t len;
-  char contents[];
-};
-
-struct GlobalWorkspace {
-  size_t size{0};
-  size_t type{0};
-  bool is_overflow = false;
-};
-
 struct AtomicInitInfo {
   std::vector<std::string> dtype_list;
   std::vector<int64_t> init_value_int64_list;
   std::vector<float> init_value_float_list;
 };
-
-struct NodeBaseInfo {
-  size_t workspace_num;
-  size_t input_num;
-  size_t output_num;
-  size_t offset_index;
-};
-
-struct KernelJsonInfo {
-  std::string bin_file_name;
-  std::string bin_file_suffix;
-  uint32_t block_dim{0};
-  std::string kernel_name;
-  std::string magic;
-  std::vector<size_t> parameters;
-  std::string sha256;
-  std::vector<size_t> workspaces_type;
-  std::vector<size_t> workspaces;
-  GlobalWorkspace global_workspace;
-  bool has_kernel_list{false};
-  uint32_t op_para_size{0};
-  int32_t KBHit{0};
-  uint32_t mode_in_args_first_field{0};
-  uint32_t batch_bind_only{0};
-  uint32_t task_ration{0};
-  std::string core_type;
-  std::vector<std::vector<size_t>> args_remap;
-  AtomicInitInfo atomic_init_info;
-  NodeBaseInfo node_base_info;
-  KernelJsonInfo() = default;
-};
-
-class BACKEND_EXPORT KernelPack {
- public:
-  KernelPack() : json_(nullptr), kernel_(nullptr) {}
-  KernelPack(const KernelPack &) = default;
-  KernelPack &operator=(const KernelPack &) = default;
-  KernelJsonInfo kernel_json_info() const;
-  bool LoadKernelMeta(const std::string &json_f);
-  bool ReadFromJsonFile(const std::string &json_f, const std::string &processor);
-  const FlexArray *GetJson() const { return json_; }
-  const FlexArray *GetKernel() const { return kernel_; }
-  ~KernelPack() {
-    if (json_ != nullptr) {
-      delete[] json_;
-      json_ = nullptr;
-    }
-    if (kernel_ != nullptr) {
-      delete[] kernel_;
-      kernel_ = nullptr;
-    }
-  }
-
- private:
-  bool ReadFromJsonFileHelper(std::ifstream &kernel_bin);
-  void ParseKernelJson(const nlohmann::json &js);
-  static void ParseKernelName(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
-  static void ParseBinFileName(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
-  static void ParseBinFileSuffix(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
-  static void ParseMagic(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
-  static void ParseBlockDim(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
-  static void ParseTaskRatio(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
-  static void ParseCoreType(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
-  static void ParseParameters(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
-  static void ParseWorkSpace(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
-  static void ParseOpParaSize(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
-  static void ParseSHA256(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
-  static void ParseKBHit(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
-  static void ParseBatchBindOnly(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
-  static void ParseKernelList(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
-  static void ParseModeInArgsFirstField(const std::string &key, const nlohmann::json &js,
-                                        KernelJsonInfo *kernel_json_info);
-  static void ParseArgsRemap(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
-  static void ParseGlogbleWorkSpace(const std::string &key, const nlohmann::json &js, KernelJsonInfo *kernel_json_info);
-
-  KernelJsonInfo kernel_json_info_;
-  FlexArray *json_;
-  FlexArray *kernel_;
-};
-using KernelPackPtr = std::shared_ptr<KernelPack>;
 
 /**
  * @brief base class for autotensor kernel and cce kernel.
@@ -487,38 +341,6 @@ inline T *GetDeviceAddress(const std::vector<AddressPtr> &addr_list, size_t inde
   return reinterpret_cast<T *>(addr_list[index]->addr);
 }
 
-BACKEND_EXPORT std::optional<std::vector<int64_t>> TryGetIntValueFromInputs(const std::vector<KernelTensorPtr> &inputs,
-                                                                            const size_t input_index,
-                                                                            const std::string &kernel_name,
-                                                                            bool data_from_host);
-
-inline bool TryGetIntValue(const std::vector<KernelTensorPtr> &inputs, const size_t input_index,
-                           const std::string &kernel_name, int64_t *attr_value, bool data_from_host = true) {
-  auto res = TryGetIntValueFromInputs(inputs, input_index, kernel_name, data_from_host);
-  if (!res.has_value()) {
-    return false;
-  }
-  if (res.value().empty()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', value of the dynamic attr is empty!";
-  }
-  *attr_value = res.value()[0];
-  return true;
-}
-
-inline bool TryGetIntValue(const std::vector<KernelTensorPtr> &inputs, const size_t input_index,
-                           const std::string &kernel_name, std::vector<int64_t> *attr_value,
-                           bool data_from_host = true) {
-  auto res = TryGetIntValueFromInputs(inputs, input_index, kernel_name, data_from_host);
-  if (!res.has_value()) {
-    return false;
-  }
-  *attr_value = res.value();
-  return true;
-}
-
-BACKEND_EXPORT bool TryGetIntValue(const CNodePtr &kernel_node, const size_t input_index,
-                                   std::vector<int64_t> *attr_value, bool data_from_host = true);
-
 BACKEND_EXPORT std::vector<std::vector<int64_t>> GetShapes(const std::vector<KernelTensorPtr> &tensors);
 template <typename T>
 inline bool CheckNullInput(const std::vector<T> &input_shape) {
@@ -534,27 +356,10 @@ inline bool CheckNullInput(const std::vector<T> &input_shape) {
 #define CHECK_NULL_INPUT(input_shape) mindspore::kernel::CheckNullInput(input_shape)
 
 template <typename T>
-inline std::string ConvertVectorToString(const std::vector<T> &value) {
-  std::stringstream ss;
-  ss << "(";
-  for (auto it = value.begin(); it != value.end(); it++) {
-    if (it == value.begin()) {
-      ss << *it;
-    } else {
-      ss << ", " << *it;
-    }
-  }
-  ss << ")";
-  return ss.str();
-}
-
-#define CONVERT_VECTOR_TO_STRING(value) mindspore::kernel::ConvertVectorToString(value)
-
-template <typename T>
 inline bool CheckShapeNull(const std::vector<T> &shape, std::string kernel_name, std::string param_name) {
   if (CHECK_NULL_INPUT(shape)) {
     MS_LOG(WARNING) << "For '" << kernel_name << "', the shape of " << param_name << " cannot contain zero, but got "
-                    << CONVERT_VECTOR_TO_STRING(shape);
+                    << shape;
     return true;
   }
   return false;

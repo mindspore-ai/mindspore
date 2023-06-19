@@ -30,6 +30,10 @@
 
 namespace mindspore {
 namespace opt {
+namespace {
+constexpr auto kPatternElemWise = "ElemWise";
+}
+
 class TestHWInsertCast : public BackendCommon {
  public:
   TestHWInsertCast() : getPyFun_("gtest_input.pre_activate.mixed_precision_test", true) {}
@@ -58,7 +62,7 @@ TEST_F(TestHWInsertCast, test_insert_cast_op_for_single_output) {
   builder.SetOutputsFormat({"NC1HWC0"});
   builder.SetInputsDeviceType({kFloat16->type_id(), kFloat16->type_id()});
   builder.SetOutputsDeviceType({kFloat16->type_id()});
-  builder.SetFusionType(kernel::kPatternElemWise);
+  builder.SetFusionType(kPatternElemWise);
   builder.SetProcessor(kernel::Processor::AICORE);
   builder.SetKernelType(KernelType::AKG_KERNEL);
   builder.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR, kernel::KernelObjectType::TENSOR});
@@ -68,7 +72,7 @@ TEST_F(TestHWInsertCast, test_insert_cast_op_for_single_output) {
   builder1.SetInputsDeviceType({kFloat32->type_id()});
   builder1.SetOutputsFormat({"NC1HWC0"});
   builder1.SetOutputsDeviceType({kFloat32->type_id()});
-  builder1.SetFusionType(kernel::kPatternElemWise);
+  builder1.SetFusionType(kPatternElemWise);
   builder1.SetProcessor(kernel::Processor::AICORE);
   builder1.SetKernelType(KernelType::AKG_KERNEL);
   builder1.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR});
@@ -126,7 +130,7 @@ TEST_F(TestHWInsertCast, test_insert_cast_op_for_multiple_output) {
   builder1.SetInputsDeviceType({kFloat32->type_id()});
   builder1.SetOutputsFormat({"DefaultFormat"});
   builder1.SetOutputsDeviceType({kFloat32->type_id()});
-  builder1.SetFusionType(kernel::kPatternElemWise);
+  builder1.SetFusionType(kPatternElemWise);
   builder1.SetProcessor(kernel::Processor::AICORE);
   builder1.SetKernelType(KernelType::AKG_KERNEL);
   builder1.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR});

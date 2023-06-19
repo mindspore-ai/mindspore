@@ -51,20 +51,17 @@ int BetaincCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   output_shape_ = outputs[kIndex0]->GetShapeVector();
   if (!IsSameShape(input0_shape_, input1_shape_)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shape of 'b' should be same with the shape of 'a', "
-                  << "but got the shape of 'b': " << Vector2Str(input1_shape_)
-                  << " and 'a': " << Vector2Str(input0_shape_);
+                  << "but got the shape of 'b': " << input1_shape_ << " and 'a': " << input0_shape_;
     return KRET_RESIZE_FAILED;
   }
   if (!IsSameShape(input0_shape_, input2_shape_)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shape of 'x' should be same with the shape of 'a', "
-                  << "but got the shape of 'x': " << Vector2Str(input2_shape_)
-                  << " and 'a': " << Vector2Str(input0_shape_);
+                  << "but got the shape of 'x': " << input2_shape_ << " and 'a': " << input0_shape_;
     return KRET_RESIZE_FAILED;
   }
   if (!IsSameShape(input0_shape_, output_shape_)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shape of output should be same with the shape of the 'a', "
-                  << "but got the shape of the output: " << Vector2Str(output_shape_)
-                  << " and 'a': " << Vector2Str(input0_shape_);
+                  << "but got the shape of the output: " << output_shape_ << " and 'a': " << input0_shape_;
     return KRET_RESIZE_FAILED;
   }
   return 0;

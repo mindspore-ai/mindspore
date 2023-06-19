@@ -26,6 +26,7 @@
 #include "plugin/factory/ms_factory.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/dlopen_macro.h"
+#include "kernel/framework_utils.h"
 
 namespace mindspore {
 namespace kernel {

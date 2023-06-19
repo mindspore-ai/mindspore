@@ -41,7 +41,7 @@ bool SparseApplyRMSPropGpuKernelMod::ResizedInputSize(const std::vector<KernelTe
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "', the shape of 'ms' must be the same as the shape of 'var', "
                                 "but got the shape of 'ms': "
-                             << Vector2Str(ms_shape) << " and the shape of 'var': " << Vector2Str(var_shape_);
+                             << ms_shape << " and the shape of 'var': " << var_shape_;
     return false;
   }
   auto mom_shape = inputs.at(kIndex2)->GetShapeVector();
@@ -49,7 +49,7 @@ bool SparseApplyRMSPropGpuKernelMod::ResizedInputSize(const std::vector<KernelTe
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "', the shape of 'mom' must be the same as the shape of 'var', "
                                 "but got the shape of 'mom': "
-                             << Vector2Str(mom_shape) << " and the shape of 'var': " << Vector2Str(var_shape_);
+                             << mom_shape << " and the shape of 'var': " << var_shape_;
     return false;
   }
   // scalar
@@ -57,8 +57,7 @@ bool SparseApplyRMSPropGpuKernelMod::ResizedInputSize(const std::vector<KernelTe
   if (!lr_shape.empty()) {
     MS_EXCEPTION(ValueError)
       << "For '" << kernel_name_
-      << "', 'lr' must be a scalar; thus, its dimension must be 0, but got the dimension of 'lr': "
-      << Vector2Str(lr_shape);
+      << "', 'lr' must be a scalar; thus, its dimension must be 0, but got the dimension of 'lr': " << lr_shape;
     return false;
   }
   auto grad_shape = inputs.at(kIndex4)->GetShapeVector();
@@ -76,13 +75,13 @@ bool SparseApplyRMSPropGpuKernelMod::ResizedInputSize(const std::vector<KernelTe
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "', the shape of 'grad' must be the same as the shape of 'var', "
                                 "but got the shape of 'grad': "
-                             << Vector2Str(mom_shape) << " and the shape of 'var': " << Vector2Str(var_shape_);
+                             << mom_shape << " and the shape of 'var': " << var_shape_;
     return false;
   }
   auto indices_shape = inputs.at(kIndex5)->GetShapeVector();
   if (indices_shape.size() != kIndicesDim) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the 'indices' must be a 1-D Tensor, but got shape: " << Vector2Str(indices_shape);
+                      << "', the 'indices' must be a 1-D Tensor, but got shape: " << indices_shape;
     return false;
   }
   if (indices_shape[kDim0] != var_shape_[kDim0]) {
@@ -99,8 +98,7 @@ bool SparseApplyRMSPropGpuKernelMod::ResizedOutputSize(const std::vector<KernelT
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "', the shape of output 'var' must be the same as the shape of input 'var', but got "
                                 "the shape of output 'var': "
-                             << Vector2Str(output_var_shape)
-                             << ", and the shape of input 'var': " << Vector2Str(var_shape_);
+                             << output_var_shape << ", and the shape of input 'var': " << var_shape_;
     return false;
   }
   auto output_ms_shape = outputs[kIndex1]->GetShapeVector();
@@ -108,8 +106,7 @@ bool SparseApplyRMSPropGpuKernelMod::ResizedOutputSize(const std::vector<KernelT
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "', the shape of output 'ms' must be the same as the shape of input 'ms', "
                                 "but got the shape of output 'ms': "
-                             << Vector2Str(output_ms_shape)
-                             << " and the shape of input 'ms': " << Vector2Str(var_shape_);
+                             << output_ms_shape << " and the shape of input 'ms': " << var_shape_;
     return false;
   }
   auto output_mom_shape = outputs[kIndex2]->GetShapeVector();
@@ -117,8 +114,7 @@ bool SparseApplyRMSPropGpuKernelMod::ResizedOutputSize(const std::vector<KernelT
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                              << "', the shape of output 'mom' must be the same as the shape of output 'mom', "
                                 "but got the shape of output 'mom': "
-                             << Vector2Str(output_mom_shape)
-                             << " and the shape of output 'mom': " << Vector2Str(var_shape_);
+                             << output_mom_shape << " and the shape of output 'mom': " << var_shape_;
     return false;
   }
   return true;

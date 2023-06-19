@@ -61,8 +61,8 @@ int ApplyAdadeltaCpuKernelMod::CheckInputShape(const std::vector<KernelTensorPtr
                   << "', the shape of 'var', 'accum', 'accum_update', 'grad' "
                      "must be the same, "
                      "but got the shapes 'var': "
-                  << Vector2Str(var_shape) << ", 'accum': " << Vector2Str(accum_shape)
-                  << ", 'accum_update': " << Vector2Str(accum_update_shape) << ", 'grad': " << Vector2Str(grad_shape);
+                  << var_shape << ", 'accum': " << accum_shape << ", 'accum_update': " << accum_update_shape
+                  << ", 'grad': " << grad_shape;
     return KRET_RESIZE_FAILED;
   }
 
@@ -70,8 +70,7 @@ int ApplyAdadeltaCpuKernelMod::CheckInputShape(const std::vector<KernelTensorPtr
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape of 'lr', 'rho' and 'epsilon' must be the same, "
                      "but got the shapes 'lr': "
-                  << Vector2Str(lr_shape) << ", 'rho': " << Vector2Str(rho_shape)
-                  << ", 'epsilon': " << Vector2Str(epsilon_shape);
+                  << lr_shape << ", 'rho': " << rho_shape << ", 'epsilon': " << epsilon_shape;
 
     return KRET_RESIZE_FAILED;
   }
@@ -84,7 +83,7 @@ int ApplyAdadeltaCpuKernelMod::CheckShapeSize(std::vector<int64_t> var_shape, st
       MS_LOG(ERROR) << "For '" << kernel_name_
                     << "', the shape size of 'var' must be greater than "
                        "'lr_shape', but got the shape of 'var': "
-                    << Vector2Str(var_shape) << " and 'lr_shape': " << Vector2Str(lr_shape);
+                    << var_shape << " and 'lr_shape': " << lr_shape;
       return KRET_RESIZE_FAILED;
     }
     std::vector<int64_t> var_batch_shape(var_shape.begin(), var_shape.begin() + batch_rank_);
@@ -93,7 +92,7 @@ int ApplyAdadeltaCpuKernelMod::CheckShapeSize(std::vector<int64_t> var_shape, st
                     << "', the batch shape of 'var' must be the same as the "
                        "shape of 'lr', "
                        "but got the batch shape of 'var': "
-                    << Vector2Str(var_batch_shape) << " and the shape of 'lr': " << Vector2Str(lr_shape);
+                    << var_batch_shape << " and the shape of 'lr': " << lr_shape;
       return KRET_RESIZE_FAILED;
     }
   }

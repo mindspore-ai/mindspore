@@ -23,6 +23,7 @@
 #include <functional>
 #include <exception>
 #include "kernel/kernel.h"
+#include "kernel/framework_utils.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/hal/device/cpu_memory_manager.h"

@@ -38,6 +38,7 @@ constexpr size_t kMultiply2 = 2;
 constexpr size_t kTopkIndexK = 1;
 constexpr auto kTopKDOpName = "TopKD";
 constexpr auto kAttrSorted = "sorted";
+constexpr auto kPatternOpaque = "Opaque";
 constexpr auto x1 = "x1";
 constexpr auto x2 = "x2";
 
@@ -122,7 +123,7 @@ ValueNodePtr CreateAssistNode(const std::vector<int64_t> &input_shape, int32_t k
 kernel::KernelBuildInfoPtr CreateKernelBuildInfo() {
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
   builder.SetKernelType(TBE_KERNEL);
-  builder.SetFusionType(kernel::kPatternOpaque);
+  builder.SetFusionType(kPatternOpaque);
   builder.SetProcessor(kernel::AICORE);
   builder.SetInputsFormat({kOpFormat_DEFAULT, kOpFormat_DEFAULT});
   builder.SetOutputsFormat({kOpFormat_DEFAULT, kOpFormat_DEFAULT});

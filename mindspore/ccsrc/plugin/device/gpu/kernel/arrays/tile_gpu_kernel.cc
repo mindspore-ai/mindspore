@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <map>
+#include "kernel/kernel_get_value.h"
 #include "plugin/device/gpu/kernel/arrays/tile_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 

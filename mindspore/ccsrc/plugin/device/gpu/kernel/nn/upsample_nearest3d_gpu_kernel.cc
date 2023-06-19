@@ -23,7 +23,7 @@
 #include <utility>
 #include <functional>
 #include "abstract/utils.h"
-#include "kernel/common_utils.h"
+#include "kernel/ops_utils.h"
 #include "mindspore/core/ops/upsample_nearest_3d.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/upsample_nearest_3d_impl.cuh"
 

@@ -18,6 +18,7 @@
 #include <functional>
 #include <unordered_map>
 #include "utils/profile.h"
+#include "kernel/ops_utils.h"
 
 namespace mindspore {
 namespace kernel {

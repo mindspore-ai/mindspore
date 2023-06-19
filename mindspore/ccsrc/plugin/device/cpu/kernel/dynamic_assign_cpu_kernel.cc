@@ -84,7 +84,7 @@ void DynamicAssignCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the shape of 'input_x' and 'input_y' must be the same, "
                            "but got the shape of 'input_x': "
-                        << Vector2Str(input_x_shape) << ", and the shape of 'input_y': " << Vector2Str(input_y_shape);
+                        << input_x_shape << ", and the shape of 'input_y': " << input_y_shape;
     }
   }
   auto *input_x = reinterpret_cast<T *>(inputs[0]->addr);

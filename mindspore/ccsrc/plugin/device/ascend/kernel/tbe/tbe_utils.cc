@@ -40,7 +40,7 @@
 #include "plugin/device/ascend/kernel/tbe/tbe_json/single_tbe_json_creator.h"
 #include "include/common/utils/json_operation_utils.h"
 #include "mindspore/ccsrc/include/common/debug/common.h"
-#include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 #include "mindspore/core/utils/file_utils.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 

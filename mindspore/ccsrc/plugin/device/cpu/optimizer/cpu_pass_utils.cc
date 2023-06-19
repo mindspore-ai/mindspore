@@ -30,7 +30,7 @@
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
-#include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 
 namespace mindspore {
 namespace opt {

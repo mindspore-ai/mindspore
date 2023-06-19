@@ -17,6 +17,7 @@
 #include "plugin/device/gpu/kernel/arrays/gatherv2_gpu_kernel.h"
 #include <memory>
 #include "mindspore/core/ops/gather.h"
+#include "kernel/kernel_get_value.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {

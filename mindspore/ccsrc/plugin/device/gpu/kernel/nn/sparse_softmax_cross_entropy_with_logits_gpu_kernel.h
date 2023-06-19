@@ -175,8 +175,8 @@ class SparseSoftmaxCrossEntropyWithLogitsGpuKernelMod : public NativeGpuKernelMo
     }
     if (!std::equal(labels_shape.begin(), labels_shape.end(), logits_shape.begin())) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of logits and labels must be the same except "
-                        << "the last dimension, but got the shape of logits: " << CONVERT_VECTOR_TO_STRING(logits_shape)
-                        << ", the shape of labels: " << CONVERT_VECTOR_TO_STRING(labels_shape);
+                        << "the last dimension, but got the shape of logits: " << logits_shape
+                        << ", the shape of labels: " << labels_shape;
     }
   }
 

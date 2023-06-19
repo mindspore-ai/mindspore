@@ -153,7 +153,7 @@ class UniqueCpuKernelMod : public NativeCpuKernelMod {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_
                           << "', the shape size of 'input' must be equal to 'batch_rank + 1', "
                              "but got the shape of 'input': "
-                          << Vector2Str(input_shape) << " and 'batch_rank': " << batch_rank_;
+                          << input_shape << " and 'batch_rank': " << batch_rank_;
       }
       batch_size_ =
         std::accumulate(input_shape.begin(), input_shape.begin() + batch_rank_, 1, std::multiplies<int64_t>());

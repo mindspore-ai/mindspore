@@ -27,6 +27,10 @@
 
 namespace mindspore {
 namespace opt {
+namespace {
+constexpr auto kPatternBroadcast = "Broadcast";
+}
+
 void Conv2DBackpropEltwiseEltwiseFusionPass::MatchConv2DBackpropInputEltwiseEltwise(
   const CNodePtr &cnode, const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(cnode);
@@ -35,7 +39,7 @@ void Conv2DBackpropEltwiseEltwiseFusionPass::MatchConv2DBackpropInputEltwiseEltw
   auto eltwise_input = cnode->input(kIndex1);
   MS_EXCEPTION_IF_NULL(eltwise_input);
   const std::unordered_set<std::string> support_node_names{kAddNOpName, kAddOpName};
-  if (CheckDoubleInEltWiseNode(kernel_graph, eltwise_input, {kernel::kPatternElemWise, kernel::kPatternBroadcast}) &&
+  if (CheckDoubleInEltWiseNode(kernel_graph, eltwise_input, {kPatternElemWise, kPatternBroadcast}) &&
       support_node_names.find(common::AnfAlgo::GetCNodeName(eltwise_input)) != support_node_names.cend()) {
     (void)record.insert(eltwise_input);
   } else {
@@ -77,8 +81,7 @@ void Conv2DBackpropEltwiseEltwiseFusionPass::MatchSingleFusionPattern(const sess
     }
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
-        AnfAlgo::GetFusionType(cnode) == kernel::kPatternElemWise &&
+    if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL && AnfAlgo::GetFusionType(cnode) == kPatternElemWise &&
         common::AnfAlgo::GetCNodeName(cnode) == kReluGradV2OpName) {
       MatchConv2DBackpropInputEltwiseEltwise(cnode, kernel_graph, candidate_fusion);
     }

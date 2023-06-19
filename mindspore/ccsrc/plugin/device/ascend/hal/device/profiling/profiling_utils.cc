@@ -29,6 +29,7 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
+constexpr auto kPatternOpaque = "Opaque";
 constexpr char kFpStartNode[] = "fp_point";
 constexpr char kBpEndNode[] = "bp_point";
 constexpr uint64_t kProfilingFpStartLogId = 2;
@@ -246,7 +247,7 @@ NotNull<CNodePtr> ProfilingUtils::CreateProfilingCNode(const ProfilingContent &p
   kernel::KernelBuildInfo::KernelBuildInfoBuilder selected_kernel_builder;
   selected_kernel_builder.SetInputsFormat({kOpFormat_DEFAULT, kOpFormat_DEFAULT});
   selected_kernel_builder.SetInputsDeviceType({TypeId::kNumberTypeInt32, TypeId::kNumberTypeInt32});
-  selected_kernel_builder.SetFusionType(kernel::kPatternOpaque);
+  selected_kernel_builder.SetFusionType(kPatternOpaque);
   selected_kernel_builder.SetProcessor(kernel::Processor::AICORE);
   selected_kernel_builder.SetKernelType(KernelType::RT_KERNEL);
   abstract::AbstractBasePtr type_none_abstract = std::make_shared<abstract::AbstractNone>();

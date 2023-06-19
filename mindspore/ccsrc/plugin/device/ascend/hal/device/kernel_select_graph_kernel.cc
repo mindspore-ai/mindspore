@@ -21,7 +21,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/kernel_info.h"
 #include "ir/func_graph.h"
-#include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 #include "plugin/device/ascend/kernel/kernel_query.h"
 #include "kernel/kernel_build_info.h"
 
@@ -29,6 +29,7 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 namespace {
+constexpr auto kPatternOpaque = "Opaque";
 // sort format according the number of occurrences.
 bool cmp_format_num(const std::pair<std::string, size_t> &a, const std::pair<std::string, size_t> &b) {
   if (a.second != b.second) {
@@ -470,7 +471,7 @@ void SetGraphKernelInfo(const CNodePtr &kernel_node, const std::vector<std::pair
   graph_info_builder.SetOutputsKernelObjectType(graph_output_object_type);
   graph_info_builder.SetProcessor(kernel::Processor::AICORE);
   graph_info_builder.SetKernelType(KernelType::AKG_KERNEL);
-  graph_info_builder.SetFusionType(kernel::kPatternOpaque);
+  graph_info_builder.SetFusionType(kPatternOpaque);
   auto graph_selected_info = graph_info_builder.Build();
   MS_EXCEPTION_IF_NULL(graph_selected_info);
   AnfAlgo::SetSelectKernelBuildInfo(graph_selected_info, kernel_node.get());

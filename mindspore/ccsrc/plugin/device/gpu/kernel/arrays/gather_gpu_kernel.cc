@@ -17,6 +17,7 @@
 #include <string>
 #include <algorithm>
 
+#include "kernel/kernel_get_value.h"
 #include "plugin/device/gpu/kernel/arrays/gather_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 

@@ -74,14 +74,14 @@ int ApplyProximalAdagradCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape of 'accum' must be the same as the shape of 'var', "
                      "but got the shape of 'accum': "
-                  << Vector2Str(accum_shape) << " and the shape of 'var': " << Vector2Str(var_shape);
+                  << accum_shape << " and the shape of 'var': " << var_shape;
     return KRET_RESIZE_FAILED;
   }
   if (!IsSameShape(var_shape, grad_shape)) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape of 'grad' must be the same as the shape of 'var', "
                      "but got the shape of 'grad': "
-                  << Vector2Str(grad_shape) << " and the shape of 'var': " << Vector2Str(var_shape);
+                  << grad_shape << " and the shape of 'var': " << var_shape;
     return KRET_RESIZE_FAILED;
   }
 
@@ -89,7 +89,7 @@ int ApplyProximalAdagradCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape of 'lr' must be the same as the shape of 'l1', "
                      "but got the shape of 'lr': "
-                  << Vector2Str(lr_shape) << " and the shape of 'l1': " << Vector2Str(l1_shape);
+                  << lr_shape << " and the shape of 'l1': " << l1_shape;
     return KRET_RESIZE_FAILED;
   }
 
@@ -97,14 +97,14 @@ int ApplyProximalAdagradCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape of 'lr' must be the same as the shape of 'l2', "
                      "but got the shape of 'lr': "
-                  << Vector2Str(lr_shape) << " and the shape of 'l2': " << Vector2Str(l2_shape);
+                  << lr_shape << " and the shape of 'l2': " << l2_shape;
     return KRET_RESIZE_FAILED;
   }
   if (batch_rank_ < 0 || lr_shape.size() != static_cast<size_t>(batch_rank_)) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape size of 'lr' must be equal to 'batch_rank', "
                      "but got the shape of 'lr': "
-                  << Vector2Str(lr_shape) << " and 'batch_rank': " << batch_rank_;
+                  << lr_shape << " and 'batch_rank': " << batch_rank_;
     return KRET_RESIZE_FAILED;
   }
 
@@ -124,7 +124,7 @@ int ApplyProximalAdagradCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
     if (var_shape.size() < lr_shape.size()) {
       MS_LOG(ERROR) << "For '" << kernel_name_
                     << "', the shape size of 'var' must be greater than 'lr_shape', but got the shape of 'var': "
-                    << Vector2Str(var_shape) << " and 'lr_shape': " << Vector2Str(lr_shape);
+                    << var_shape << " and 'lr_shape': " << lr_shape;
       return KRET_RESIZE_FAILED;
     }
     std::vector<int64_t> var_batch_shape(var_shape.begin(), var_shape.begin() + batch_rank_);
@@ -132,7 +132,7 @@ int ApplyProximalAdagradCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
       MS_LOG(ERROR) << "For '" << kernel_name_
                     << "', the batch shape of 'var' must be the same as the shape of 'lr', "
                        "but got the batch shape of 'var': "
-                    << Vector2Str(var_batch_shape) << " and the shape of 'lr': " << Vector2Str(lr_shape);
+                    << var_batch_shape << " and the shape of 'lr': " << lr_shape;
       return KRET_RESIZE_FAILED;
     }
   }
