@@ -52,7 +52,7 @@ AnfNodePtr SelectInput(const PatternMap &m, const AnfNodePtr &default_node) {
 }
 
 void MakeTupleDependRemover::DefineSrcPattern(SrcPattern *src_pattern) {
-  (*src_pattern)
+  (void)(*src_pattern)
     .AddVar(kV)
     .AddSeqVar(kXs)
     .AddCNode(var, {kV, kXs})
