@@ -19,7 +19,7 @@
 
 void Matmul_InitShapeA(MatmulFp32Struct *matmul) {
   int *a_shape = matmul->base_.in_[kInputIndex]->shape_;
-  int a_shape_size = matmul->base_.in_[kInputIndex]->shape_size_;
+  size_t a_shape_size = matmul->base_.in_[kInputIndex]->shape_size_;
   int batch = 1;
   NNACL_CHECK_TRUE_RET_VOID(a_shape_size >= C2NUM);
   for (size_t i = 0; i < a_shape_size - C2NUM; ++i) {
@@ -33,7 +33,7 @@ void Matmul_InitShapeA(MatmulFp32Struct *matmul) {
 
 void Matmul_InitShapeB(MatmulFp32Struct *matmul) {
   int *b_shape = matmul->base_.in_[kWeightIndex]->shape_;
-  int b_shape_size = matmul->base_.in_[kWeightIndex]->shape_size_;
+  size_t b_shape_size = matmul->base_.in_[kWeightIndex]->shape_size_;
   int batch = 1;
   NNACL_CHECK_TRUE_RET_VOID(b_shape_size >= C2NUM);
   for (size_t i = 0; i < b_shape_size - C2NUM; ++i) {
@@ -49,8 +49,8 @@ int Matmul_InitBroadcastParams(MatmulFp32Struct *matmul) {
   TensorC *a = matmul->base_.in_[FIRST_INPUT];
   TensorC *b = matmul->base_.in_[SECOND_INPUT];
 
-  size_t max_dim_size = MSMAX(a->shape_size_, b->shape_size_);
-  max_dim_size = MSMAX(max_dim_size, COMM_SHAPE_SIZE);
+  size_t max_dim_size = NNACL_MAX(a->shape_size_, b->shape_size_);
+  max_dim_size = NNACL_MAX(max_dim_size, COMM_SHAPE_SIZE);
 
   int a_shape[MAX_SHAPE_SIZE] = {0};
   int index = max_dim_size - 1;
@@ -62,7 +62,7 @@ int Matmul_InitBroadcastParams(MatmulFp32Struct *matmul) {
   }
 
   int b_shape[MAX_SHAPE_SIZE] = {0};
-  index = max_dim_size - 1;
+  index = (int)max_dim_size - 1;
   for (int i = b->shape_size_ - 1; i >= 0; i--) {
     b_shape[index--] = b->shape_[i];
   }
@@ -75,11 +75,11 @@ int Matmul_InitBroadcastParams(MatmulFp32Struct *matmul) {
   int b_batch_sizes[MAX_SHAPE_SIZE] = {0};
   for (int i = max_dim_size - DIMENSION_3D; i >= 0; --i) {
     if (max_dim_size - DIMENSION_3D == i) {
-      batch_sizes[i] = MSMAX(a_shape[i], b_shape[i]);
+      batch_sizes[i] = NNACL_MAX(a_shape[i], b_shape[i]);
       a_batch_sizes[i] = a_shape[i];
       b_batch_sizes[i] = b_shape[i];
     } else {
-      batch_sizes[i] = batch_sizes[i + 1] * MSMAX(a_shape[i], b_shape[i]);
+      batch_sizes[i] = batch_sizes[i + 1] * NNACL_MAX(a_shape[i], b_shape[i]);
       a_batch_sizes[i] = a_batch_sizes[i + 1] * a_shape[i];
       b_batch_sizes[i] = b_batch_sizes[i + 1] * b_shape[i];
     }
@@ -87,8 +87,8 @@ int Matmul_InitBroadcastParams(MatmulFp32Struct *matmul) {
 
   int out_batch = 1;
   for (size_t i = 0; i < max_dim_size - DIMENSION_2D; ++i) {
-    int max_v = MSMAX(a_shape[i], b_shape[i]);
-    int min_v = MSMIN(a_shape[i], b_shape[i]) > 0 ? MSMIN(a_shape[i], b_shape[i]) : 1;
+    int max_v = NNACL_MAX(a_shape[i], b_shape[i]);
+    int min_v = NNACL_MIN(a_shape[i], b_shape[i]) > 0 ? NNACL_MIN(a_shape[i], b_shape[i]) : 1;
     out_batch *= max_v;
     if ((max_v != min_v) && ((max_v % min_v) != 0)) {
       return NNACL_ERR;
@@ -114,11 +114,13 @@ int Matmul_InitBroadcastParams(MatmulFp32Struct *matmul) {
         return NNACL_ERR;
       }
       if (j < (max_dim_size - DIMENSION_3D)) {
-        a_offset += (delta / batch_sizes[j + 1] * a_shape[j] / MSMAX(a_shape[j], b_shape[j])) * a_batch_sizes[j + 1];
-        b_offset += (delta / batch_sizes[j + 1] * b_shape[j] / MSMAX(a_shape[j], b_shape[j])) * b_batch_sizes[j + 1];
+        a_offset +=
+          (delta / batch_sizes[j + 1] * a_shape[j] / NNACL_MAX(a_shape[j], b_shape[j])) * a_batch_sizes[j + 1];
+        b_offset +=
+          (delta / batch_sizes[j + 1] * b_shape[j] / NNACL_MAX(a_shape[j], b_shape[j])) * b_batch_sizes[j + 1];
       } else {
-        a_offset += (delta * a_shape[j] / MSMAX(a_shape[j], b_shape[j]));
-        b_offset += (delta * b_shape[j] / MSMAX(a_shape[j], b_shape[j]));
+        a_offset += (delta * a_shape[j] / NNACL_MAX(a_shape[j], b_shape[j]));
+        b_offset += (delta * b_shape[j] / NNACL_MAX(a_shape[j], b_shape[j]));
       }
     }
     matmul->a_offset_[i] = a_offset;

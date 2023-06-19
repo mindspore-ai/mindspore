@@ -74,7 +74,7 @@ int ResetTransposeStatus(TransposeStruct *transpose) {
     }
     if (transpose->num_axes_ == 0) {
       for (int i = 0; i < in_tensor->shape_size_; ++i) {
-        trans_nd[i] = in_tensor->shape_size_ - 1 - i;
+        trans_nd[i] = (int)in_tensor->shape_size_ - 1 - i;
       }
       transpose->num_axes_ = in_tensor->shape_size_;
     }
@@ -173,8 +173,8 @@ int TransposeOptimizeShape(TransposeStruct *transpose) {
     transpose->in_shape_[i] = 1;
     transpose->perm_[i] = 0;
   }
-  for (size_t i = 0; i < segments_size; ++i) {
-    for (size_t j = 0; j < segments_size; ++j) {
+  for (int i = 0; i < segments_size; ++i) {
+    for (int j = 0; j < segments_size; ++j) {
       transpose->perm_[i] += (segments[j][FIRST_INPUT] < segments[i][FIRST_INPUT] ? 1 : 0);
     }
     for (int k = 0; k < segment_sizes[i]; ++k) {

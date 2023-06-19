@@ -78,13 +78,14 @@ int stack_resize(KernelBase *self) {
     stack->outer_size_ = 1;
   } else {
     NNACL_CHECK_FALSE(input->shape_size_ < stack->axis_, NNACL_STACK_TENSOR_SHAPE_INVALID);
-    stack->copy_size_ = GetCopyNum(input->shape_, stack->axis_, input->shape_size_) * DataTypeCSize(stack->data_type_);
+    stack->copy_size_ =
+      (size_t)GetCopyNum(input->shape_, stack->axis_, input->shape_size_) * DataTypeCSize(stack->data_type_);
     stack->outer_size_ = GetOuterSize(input->shape_, stack->axis_);
   }
 
   self->thread_nr_ = self->update_thread_(TC_PTYPE(PrimType_Stack), stack->copy_size_, stack->copy_size_,
                                           GetElementNum(self->out_[OUTPUT_INDEX]), self->thread_nr_);
-  self->thread_nr_ = MSMIN(UP_DIV(stack->outer_size_, NNACL_STACK_STEP), self->thread_nr_);
+  self->thread_nr_ = NNACL_MIN(UP_DIV(stack->outer_size_, NNACL_STACK_STEP), self->thread_nr_);
   return NNACL_OK;
 }
 
@@ -96,12 +97,12 @@ int StackRun(void *cdata, int task_id, float l, float r) {
   int step = UP_DIV(stack->outer_size_, stack->base_.thread_nr_);
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(task_id, step, NNACL_ERR);
   int start = task_id * step;
-  int end = MSMIN(start + step, stack->outer_size_);
-  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(stack->base_.in_size_ * start, stack->copy_size_, NNACL_ERR);
+  int end = NNACL_MIN(start + step, stack->outer_size_);
+  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(stack->base_.in_size_ * (size_t)start, stack->copy_size_, NNACL_ERR);
 
   void *output_data = (void *)(stack->base_.out_[OUTPUT_INDEX]->data_);
   NNACL_CHECK_NULL_RETURN_ERR(output_data);
-  uint8_t *output = (uint8_t *)output_data + stack->base_.in_size_ * start * stack->copy_size_;
+  uint8_t *output = (uint8_t *)output_data + stack->base_.in_size_ * (size_t)start * stack->copy_size_;
 
   Stack(stack->buffers_, (void *)output, stack->base_.in_size_, stack->copy_size_, start, end);
   return NNACL_OK;
@@ -111,7 +112,7 @@ int stack_compute(KernelBase *self) {
   StackStruct *stack = (StackStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(stack);
 
-  for (int i = 0; i < self->in_size_; ++i) {
+  for (size_t i = 0; i < self->in_size_; ++i) {
     stack->buffers_[i] = self->in_[i]->data_;
     NNACL_CHECK_NULL_RETURN_ERR(stack->buffers_[i]);
   }

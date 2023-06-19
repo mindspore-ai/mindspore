@@ -129,7 +129,7 @@ int StridedSliceSoftCopyInputToOutput(StridedSliceStruct *strided_slice) {
   NNACL_CHECK_FALSE(total_size == 0, NNACL_STRIDED_SLICE_INVALID_DATA_SIZE);
 
   strided_slice->base_.thread_nr_ =
-    MSMIN((size_t)(strided_slice->base_.thread_nr_), UP_DIV(total_size, MinStridedSlicePerThread));
+    NNACL_MIN(strided_slice->base_.thread_nr_, UP_DIV(total_size, MinStridedSlicePerThread));
   if (strided_slice->base_.thread_nr_ < 1) {
     strided_slice->base_.thread_nr_ = 1;
   }
