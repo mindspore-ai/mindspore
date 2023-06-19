@@ -8451,10 +8451,6 @@ def matmul(input, other):
         _matmul = _get_cache_prim(P.MatMul)(False, False)
         return _matmul(input, other)
 
-    if input_rank == other_rank and input_rank > 2:
-        _batch_matmul = _get_cache_prim(P.BatchMatMul)(False, False)
-        return _batch_matmul(input, other)
-
     shape_op = _get_cache_prim(P.Shape)()
     reshape_op = _get_cache_prim(P.Reshape)()
 
