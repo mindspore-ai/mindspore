@@ -16,8 +16,5 @@
 
 clear
 
-LITE_HOME=/your/path/to/mindspore-lite-xxx
-export LD_LIBRARY_PATH=$LITE_HOME/runtime/lib:$LITE_HOME/tools/converter/lib:$LITE_HOME/runtime/third_party/dnnl:$LD_LIBRARY_PATH
-
-python3 ./ascend_ge_distributed.py --model_path=/your/path/to/0.mindir --device_id=0 --rank_id=0 --config_file=./config_file.ini & 
-python3 ./ascend_ge_distributed.py --model_path=/your/path/to/1.mindir --device_id=1 --rank_id=1 --config_file=./config_file.ini
+python3 ./main.py --model_path=/your/path/to/xxx0.mindir --device_id=0 --rank_id=0 --config_file=./config_file.ini & 
+python3 ./main.py --model_path=/your/path/to/xxx1.mindir --device_id=1 --rank_id=1 --config_file=./config_file.ini

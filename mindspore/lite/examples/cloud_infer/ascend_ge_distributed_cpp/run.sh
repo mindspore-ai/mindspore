@@ -19,5 +19,5 @@ clear
 LITE_HOME=/your/path/to/mindspore-lite-xxx
 export LD_LIBRARY_PATH=$LITE_HOME/runtime/lib:$LITE_HOME/tools/converter/lib:$LITE_HOME/runtime/third_party/dnnl:$LD_LIBRARY_PATH
 
-./build/ascend_ge_distributed /your/path/to/0.mindir 0 0 ./config_file.ini &
-./build/ascend_ge_distributed /your/path/to/1.mindir 1 1 ./config_file.ini 
+./build/ascend_ge_distributed /your/path/to/xxx0.mindir 0 0 ./config_file.ini &
+./build/ascend_ge_distributed /your/path/to/xxx1.mindir 1 1 ./config_file.ini 
