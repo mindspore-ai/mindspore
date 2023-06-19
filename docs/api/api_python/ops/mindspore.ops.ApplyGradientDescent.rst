@@ -24,4 +24,4 @@
         - **TypeError** - 如果 `var` 或 `alpha` 的数据类型既不是float16也不是float32。
         - **TypeError** - 如果 `delta` 不是Tensor。
         - **TypeError** - 如果 `alpha` 既不是数值型也不是Tensor。
-        - **RuntimeError** - 如果不支持 `var` 和 `delta` 数据类型转换。
+        - **TypeError** - 如果不支持 `var` 和 `delta` 数据类型转换。

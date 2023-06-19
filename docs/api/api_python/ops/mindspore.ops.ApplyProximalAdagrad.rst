@@ -37,4 +37,4 @@ mindspore.ops.ApplyProximalAdagrad
         - **TypeError** - `var` 、 `lr` 、 `l1` 或 `l2` 的数据类型不是float16或float32。
         - **TypeError** - `lr` 、 `l1` 或 `l2` 的数据类型不是Number或Tensor。
         - **TypeError** - `grad` 不是Tensor。
-        - **RuntimeError** - `var` 、 `accum` 和 `grad` 网络参数的数据类型转换错误。
+        - **TypeError** - `var` 、 `accum` 和 `grad` 网络参数的数据类型转换错误。

@@ -3,9 +3,9 @@ mindspore.ops.ApplyAdagrad
 
 .. py:class:: mindspore.ops.ApplyAdagrad(update_slots=True)
 
-    ¸ù¾İAdagradËã·¨¸üĞÂÏà¹Ø²ÎÊı¡£
+    æ ¹æ®Adagradç®—æ³•æ›´æ–°ç›¸å…³å‚æ•°ã€‚
 
-    AdagradËã·¨ÔÚÂÛÎÄ `Adaptive Subgradient Methods for Online Learning and Stochastic Optimization <http://www.jmlr.org/papers/volume12/duchi11a/duchi11a.pdf>`_ ÖĞÌá³ö¡£Õë¶Ô²»Í¬²ÎÊıÑù±¾Êı²»¾ùÔÈµÄÎÊÌâ£¬×ÔÊÊÓ¦µÄÎª¸÷¸ö²ÎÊı·ÖÅä²»Í¬µÄÑ§Ï°ÂÊ¡£
+    Adagradç®—æ³•åœ¨è®ºæ–‡ `Adaptive Subgradient Methods for Online Learning and Stochastic Optimization <http://www.jmlr.org/papers/volume12/duchi11a/duchi11a.pdf>`_ ä¸­æå‡ºã€‚é’ˆå¯¹ä¸åŒå‚æ•°æ ·æœ¬æ•°ä¸å‡åŒ€çš„é—®é¢˜ï¼Œè‡ªé€‚åº”çš„ä¸ºå„ä¸ªå‚æ•°åˆ†é…ä¸åŒçš„å­¦ä¹ ç‡ã€‚
 
     .. math::
         \begin{array}{ll} \\
@@ -13,24 +13,24 @@ mindspore.ops.ApplyAdagrad
             var -= lr * grad * \frac{1}{\sqrt{accum}}
         \end{array}
 
-    `var` ¡¢ `accum` ºÍ `grad` µÄÊäÈë×ñÑ­ÒşÊ½ÀàĞÍ×ª»»¹æÔò£¬Ê¹Êı¾İÀàĞÍÒ»ÖÂ¡£Èç¹ûËüÃÇ¾ßÓĞ²»Í¬µÄÊı¾İÀàĞÍ£¬½ÏµÍ¾«¶ÈµÄÊı¾İÀàĞÍ½«×ª»»ÎªÏà¶Ô×î¸ß¾«¶ÈµÄÊı¾İÀàĞÍ¡£
+    `var` ã€ `accum` å’Œ `grad` çš„è¾“å…¥éµå¾ªéšå¼ç±»å‹è½¬æ¢è§„åˆ™ï¼Œä½¿æ•°æ®ç±»å‹ä¸€è‡´ã€‚å¦‚æœå®ƒä»¬å…·æœ‰ä¸åŒçš„æ•°æ®ç±»å‹ï¼Œè¾ƒä½ç²¾åº¦çš„æ•°æ®ç±»å‹å°†è½¬æ¢ä¸ºç›¸å¯¹æœ€é«˜ç²¾åº¦çš„æ•°æ®ç±»å‹ã€‚
 
-    ²ÎÊı£º
-        - **update_slots** (bool) - ÊÇ·ñ¸üĞÂ `accum` ²ÎÊı£¬Èç¹ûÎª ``True`` £¬ `accum` ½«¸üĞÂ¡£Ä¬ÈÏÖµÎª£º ``True`` ¡£
+    å‚æ•°ï¼š
+        - **update_slots** (bool) - æ˜¯å¦æ›´æ–° `accum` å‚æ•°ï¼Œå¦‚æœä¸º ``True`` ï¼Œ `accum` å°†æ›´æ–°ã€‚é»˜è®¤å€¼ä¸ºï¼š ``True`` ã€‚
 
-    ÊäÈë£º
-        - **var** (Parameter) - Òª¸üĞÂµÄÈ¨ÖØ¡£Êı¾İÀàĞÍÎªfloat32»òfloat16¡£shape£º :math:`(N, *)` £¬ÆäÖĞ :math:`*` ±íÊ¾ÈÎÒâÊıÁ¿µÄ¸½¼ÓÎ¬¶È¡£
-        - **accum** (Parameter) - Òª¸üĞÂµÄÀÛ»ı¡£shapeºÍÊı¾İÀàĞÍ±ØĞëÓë `var` ÏàÍ¬¡£
-        - **lr** (Union[Number, Tensor]) - Ñ§Ï°ÂÊ£¬±ØĞëÊÇScalar¡£Êı¾İÀàĞÍÎªfloat32»òfloat16¡£
-        - **grad** (Tensor) - Ìİ¶È£¬ÎªÒ»¸öTensor¡£shapeºÍÊı¾İÀàĞÍ±ØĞëÓë `var` ÏàÍ¬¡£
+    è¾“å…¥ï¼š
+        - **var** (Parameter) - è¦æ›´æ–°çš„æƒé‡ã€‚æ•°æ®ç±»å‹ä¸ºfloat32æˆ–float16ã€‚shapeï¼š :math:`(N, *)` ï¼Œå…¶ä¸­ :math:`*` è¡¨ç¤ºä»»æ„æ•°é‡çš„é™„åŠ ç»´åº¦ã€‚
+        - **accum** (Parameter) - è¦æ›´æ–°çš„ç´¯ç§¯ã€‚shapeå’Œæ•°æ®ç±»å‹å¿…é¡»ä¸ `var` ç›¸åŒã€‚
+        - **lr** (Union[Number, Tensor]) - å­¦ä¹ ç‡ï¼Œå¿…é¡»æ˜¯Scalarã€‚æ•°æ®ç±»å‹ä¸ºfloat32æˆ–float16ã€‚
+        - **grad** (Tensor) - æ¢¯åº¦ï¼Œä¸ºä¸€ä¸ªTensorã€‚shapeå’Œæ•°æ®ç±»å‹å¿…é¡»ä¸ `var` ç›¸åŒã€‚
 
-    Êä³ö£º
-        2¸öTensor×é³ÉµÄtuple£¬¸üĞÂºóµÄÊı¾İ¡£
+    è¾“å‡ºï¼š
+        2ä¸ªTensorç»„æˆçš„tupleï¼Œæ›´æ–°åçš„æ•°æ®ã€‚
 
-        - **var** (Tensor) - shapeºÍÊı¾İÀàĞÍÓë `var` ÏàÍ¬¡£
-        - **accum** (Tensor) - shapeºÍÊı¾İÀàĞÍÓë `accum` ÏàÍ¬¡£
+        - **var** (Tensor) - shapeå’Œæ•°æ®ç±»å‹ä¸ `var` ç›¸åŒã€‚
+        - **accum** (Tensor) - shapeå’Œæ•°æ®ç±»å‹ä¸ `accum` ç›¸åŒã€‚
 
-    Òì³££º
-        - **TypeError** - Èç¹û `var` ¡¢ `accum` ¡¢ `lr` »ò `grad` µÄÊı¾İÀàĞÍ¼È²»ÊÇfloat16Ò²²»ÊÇfloat32¡£
-        - **TypeError** - Èç¹û `lr` ¼È²»ÊÇÊıÖµĞÍÒ²²»ÊÇTensor¡£
-        - **RuntimeError** - Èç¹û `var` ¡¢ `accum` ºÍ `grad` ²»Ö§³ÖÊı¾İÀàĞÍ×ª»»¡£
+    å¼‚å¸¸ï¼š
+        - **TypeError** - å¦‚æœ `var` ã€ `accum` ã€ `lr` æˆ– `grad` çš„æ•°æ®ç±»å‹æ—¢ä¸æ˜¯float16ä¹Ÿä¸æ˜¯float32ã€‚
+        - **TypeError** - å¦‚æœ `lr` æ—¢ä¸æ˜¯æ•°å€¼å‹ä¹Ÿä¸æ˜¯Tensorã€‚
+        - **TypeError** - å¦‚æœ `var` ã€ `accum` å’Œ `grad` ä¸æ”¯æŒæ•°æ®ç±»å‹è½¬æ¢ã€‚

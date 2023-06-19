@@ -31,4 +31,4 @@ mindspore.ops.ApplyProximalGradientDescent
         - **TypeError** - `var` 、 `alpha` 、 `l1` 或 `l2` 的数据类型非float16或float32。
         - **TypeError** - `alpha` 、 `l1` 或 `l2` 不是Number或Tensor。
         - **TypeError** - `delta` 不是Tensor。
-        - **RuntimeError** - `var` 和 `delta` 之间的数值转换不被支持。
+        - **TypeError** - `var` 和 `delta` 之间的数值转换不被支持。

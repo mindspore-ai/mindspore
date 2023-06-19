@@ -3096,7 +3096,7 @@ class ApplyMomentum(Primitive):
 
     Raises:
         TypeError: If the `use_locking` or `use_nesterov` is not a bool or `gradient_scale` is not a float.
-        RuntimeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
+        TypeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5876,7 +5876,7 @@ class ApplyAdaMax(Primitive):
                    float16 nor float32.
         TypeError: If `beta_power`, `lr`, `beta1`, `beta2` or `epsilon` is neither a Number nor a Tensor.
         TypeError: If `grad` is not a Tensor.
-        RuntimeError: If the data type of `var`, `m`, `v` and `grad` conversion of Parameter is not supported.
+        TypeError: If the data type of `var`, `m`, `v` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5980,7 +5980,7 @@ class ApplyAdadelta(Primitive):
         TypeError: If dtype of `var`, `accum`, `accum_update`, `lr`, `rho`, `epsilon` or `grad` is neither float16 nor
                    float32.
         TypeError: If `accum_update`, `lr`, `rho` or `epsilon` is neither a Number nor a Tensor.
-        RuntimeError: If the data type of `var`, `accum`, `accum_update` and `grad` conversion of Parameter
+        TypeError: If the data type of `var`, `accum`, `accum_update` and `grad` conversion of Parameter
                       is not supported.
 
     Supported Platforms:
@@ -6076,7 +6076,7 @@ class ApplyAdagrad(Primitive):
     Raises:
         TypeError: If dtype of `var`, `accum`, `lr` or `grad` is neither float nor complex.
         TypeError: If `lr` is neither a Number nor a Tensor.
-        RuntimeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
+        TypeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6370,7 +6370,7 @@ class ApplyProximalAdagrad(Primitive):
         TypeError: If dtype of `var`, `lr`, `l1` or `l2` is neither float16 nor float32.
         TypeError: If `lr`, `l1` or `l2` is neither a Number nor a Tensor.
         TypeError: If `grad` is not a Tensor.
-        RuntimeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
+        TypeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6567,7 +6567,7 @@ class ApplyAddSign(Primitive):
         TypeError: If dtype of `var`, `lr`, `alpha`, `sign_decay` or `beta` is not float16, float32 or float64.
         TypeError: If `lr`, `alpha` or `sign_decay` is neither a Number nor a Tensor.
         TypeError: If `grad` is not a Tensor.
-        RuntimeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
+        TypeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6749,7 +6749,7 @@ class ApplyGradientDescent(Primitive):
         TypeError: If dtype of `var` or `alpha` is neither float16 nor float32.
         TypeError: If `delta` is not a Tensor.
         TypeError: If `alpha` is neither a Number nor a Tensor.
-        RuntimeError: If the data type of `var` and `delta` conversion of Parameter is not supported.
+        TypeError: If the data type of `var` and `delta` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6822,7 +6822,7 @@ class ApplyProximalGradientDescent(Primitive):
         TypeError: If dtype of `var`, `alpha`, `l1` or `l2` is neither float16 nor float32.
         TypeError: If `alpha`, `l1` or `l2` is neither a Number nor a Tensor.
         TypeError: If `delta` is not a Tensor.
-        RuntimeError: If the data type of `var`, and `delta` conversion of Parameter is not supported.
+        TypeError: If the data type of `var`, and `delta` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6936,8 +6936,13 @@ class ApplyFtrl(Primitive):
     For more details, please refer to :class:`mindspore.nn.FTRL`.
 
     Note:
-        Currently, only positive numbers are supported on the Ascend platform,
-        and the calculation results for other scenarios are not defined.
+        - Currently, only positive numbers are supported on the Ascend platform,
+         and the calculation results for other scenarios are not defined.
+
+        - Inputs of `var`, `accum`, `linear` and `grad` comply with the implicit type conversion rules
+          to make the data types consistent.
+          If they have different data types, the lower priority data type will be converted to
+          the relatively highest priority data type.
 
     Args:
         use_locking (bool): Use locks for updating operation if ``True`` . Default: ``False`` .
@@ -6967,8 +6972,8 @@ class ApplyFtrl(Primitive):
         TypeError: If dtype of `var`, `grad`, `lr`, `l1`, `l2` or `lr_power` is neither float16 nor float32.
         TypeError: If `lr`, `l1`, `l2` or `lr_power` is neither a Number nor a Tensor.
         TypeError: If `grad` is not a Tensor.
-        RuntimeError: If the parameter types of `var`, `accum` and `linear` are inconsistent.
-        RuntimeError: If the parameter types of `grad`, `lr`, `l1`, `l2`, `lr_power` are inconsistent with `var`
+        TypeError: If the parameter types of `var`, `accum` and `linear` are inconsistent.
+        TypeError: If the parameter types of `grad`, `lr`, `l1`, `l2`, `lr_power` are inconsistent with `var`
                       and the precision is greater than `var`.
 
     Supported Platforms:
@@ -9463,6 +9468,19 @@ class ApplyAdamWithAmsgrad(Primitive):
             \hat v_t:=max(\hat v_{t-1}, v_t) \\
             var:=var-lr_t*m_t/(\sqrt{\hat v_t}+\epsilon) \\
         \end{array}
+
+    Inputs of `var`, `m`, `v`, `vhat` and `grad` comply with the implicit type conversion rules
+    to make the data types consistent.
+    If they have different data types, the lower priority data type will be converted to
+    the relatively highest priority data type.
+
+    Inputs of `beta1_power`, `beta1`, `beta2` and `epsilon` comply with the implicit type conversion rules
+    to make the data types consistent.
+    If they have different data types, the lower priority data type will be converted to
+    the relatively highest priority data type.
+
+    However, note that there is no implicit type conversion rule between `var` and `beta1_power`;
+    the two sets of rules are independent of each other.
 
     Args:
         beta1 (float): A Tensor. Must have the same type as beta1_power. Momentum factor. Must be a scalar.

@@ -4411,7 +4411,7 @@ class ApproximateEqual(_LogicBinaryOp):
 
     Raises:
         TypeError: If `tolerance` is not a float.
-        RuntimeError: If the data type of `x`, `y` conversion of Parameter is given
+        TypeError: If the data type of `x`, `y` conversion of Parameter is given
                       but data type conversion of Parameter is not supported.
 
     Supported Platforms:

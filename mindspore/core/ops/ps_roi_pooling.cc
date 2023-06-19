@@ -65,22 +65,29 @@ abstract::ShapePtr PSROIPoolingInferShape(const PrimitivePtr &primitive,
   auto output_dim = GetValue<int64_t>(output_dim_ptr);
 
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto rois_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  if (x_shape[0] != rois_shape[0]) {
+    MS_LOG(EXCEPTION) << "For '" << primitive->name()
+                      << "', the batch number of input 'features' and 'rois' must be equal, but got: " << x_shape[0]
+                      << " and " << rois_shape[0] << "respectively.";
+  }
+
   constexpr size_t x_out_shape_dim = 4;
   if (!IsDynamicRank(x_shape)) {
     if (x_shape.size() != x_out_shape_dim) {
       MS_LOG(EXCEPTION) << "For '" << primitive->name()
-                        << "', input x shape must be 4d(NCHW), but got: " << x_shape.size();
+                        << "', input 'features' shape must be 4d(NCHW), but got: " << x_shape.size();
     }
     if (x_shape[1] != abstract::Shape::kShapeDimAny) {
       // the first dimension of the input data should be equal group_size * group_size * output_dim
       if (x_shape[1] / (group_size * group_size) != output_dim) {
         MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', the second dimension(" << x_shape[1]
-                          << ") of the input x is illegal, it is not equal to group_size(" << group_size
+                          << ") of the input 'features' is illegal, it is not equal to group_size(" << group_size
                           << ") * group_size(" << group_size << ") * output_dim(" << output_dim << ").";
       }
     }
   }
-  auto rois_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+
   std::vector<int64_t> ret_shape(x_out_shape_dim);
   if (IsDynamicRank(rois_shape)) {
     ret_shape = {-1, output_dim, group_size, group_size};
