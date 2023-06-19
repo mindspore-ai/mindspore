@@ -89,9 +89,9 @@ bool MaxPoolGradWithArgmaxV2CpuKernelMod::LaunchKernel(const std::vector<Address
                                                        const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaxPoolGradWithArgmaxV2InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaxPoolGradWithArgmaxV2OutputsNum, kernel_name_);
-  auto input_grads = reinterpret_cast<DATA_T *>(inputs[kIndex1]->addr);
-  auto input_argmax = reinterpret_cast<INDICES_T *>(inputs[kIndex2]->addr);
-  auto output_y = reinterpret_cast<DATA_T *>(outputs[kIndex0]->addr);
+  auto input_grads = static_cast<DATA_T *>(inputs[kIndex1]->addr);
+  auto input_argmax = static_cast<INDICES_T *>(inputs[kIndex2]->addr);
+  auto output_y = static_cast<DATA_T *>(outputs[kIndex0]->addr);
 
   const int64_t grads_channel = grads_shape_.at(kIndexChannel);
   const int64_t grads_height = grads_shape_.at(kIndexHeight);
@@ -126,7 +126,7 @@ bool MaxPoolGradWithArgmaxV2CpuKernelMod::LaunchKernel(const std::vector<Address
   auto task = [input_grads, input_argmax, output_y, &grads_channel, &grads_height, &grads_width, &y_height, &y_width,
                &k_height, &k_width, &s_height, &s_width, &p_height, &p_width, &d_height,
                &d_width](size_t start, size_t end) {
-    for (size_t i = start; i < end; ++i) {
+    for (int i = SizeToInt(start); i < SizeToInt(end); ++i) {
       const int pos_n = i / (grads_channel * y_height * y_width);
       const int pos_c = i / (y_height * y_width) % grads_channel;
       const int pos_h = i / y_width % y_height;
