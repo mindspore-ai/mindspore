@@ -1714,6 +1714,10 @@ class AfterOptARewriter : public BaseRewriter {
     MS_EXCEPTION_IF_NULL(value_node);
     MS_EXCEPTION_IF_NULL(value);
     if (value->isa<None>()) {
+      constexpr auto vmap_prefix = "VmapRule";
+      if (value_node->scope() != nullptr && value_node->scope()->name().rfind(vmap_prefix) == 0) {
+        return value_node;
+      }
       return ConvertNoneToPyExecute(fg);
     }
     if (vm_pipeline_ && MsContext::GetInstance()->GetJitSyntaxLevel() == kLax) {
