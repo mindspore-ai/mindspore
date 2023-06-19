@@ -31,7 +31,7 @@ namespace mindspore {
 namespace lite {
 class SingleGraphScheduler {
  public:
-  explicit SingleGraphScheduler(lite::InnerContext *context, const std::shared_ptr<CompileOption> &option)
+  explicit SingleGraphScheduler(std::shared_ptr<InnerContext> context, const std::shared_ptr<CompileOption> &option)
       : context_(context), compile_option_(option) {}
   virtual ~SingleGraphScheduler() = default;
   InferKernel *Schedule(const CompileResultPtr &node_list);
@@ -45,7 +45,7 @@ class SingleGraphScheduler {
   int FallBackInferShape(const CompileResultPtr &node_list);
 
  private:
-  InnerContext *context_;
+  std::shared_ptr<InnerContext> context_;
   std::shared_ptr<CompileOption> compile_option_{nullptr};
   infer::ExecutionFlowPtr execution_flow_{nullptr};
   std::shared_ptr<kernel::KernelSelector> kernel_selector_{nullptr};

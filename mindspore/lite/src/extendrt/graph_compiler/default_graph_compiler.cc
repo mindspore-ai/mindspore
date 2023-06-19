@@ -91,7 +91,7 @@ CompileResultPtr DefaultGraphCompiler::Compile(const GraphSegmentPtr &segment, c
 
 std::vector<InferKernel *> DefaultGraphCompiler::Schedule(const CompileResultPtr &compile_result) {
   if (MS_UNLIKELY(scheduler_ == nullptr)) {
-    scheduler_ = std::make_shared<SingleGraphScheduler>(this->inner_context_.get(), std::make_shared<CompileOption>());
+    scheduler_ = std::make_shared<SingleGraphScheduler>(this->inner_context_, std::make_shared<CompileOption>());
   }
   return {scheduler_->Schedule(compile_result)};
 }

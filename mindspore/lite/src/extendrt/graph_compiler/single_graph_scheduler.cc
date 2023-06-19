@@ -42,6 +42,7 @@ InferKernel *SingleGraphScheduler::Schedule(const CompileResultPtr &node_list) {
   execution_flow_->SetInputs(node_list->GetInputs());
   execution_flow_->SetOutputs(node_list->GetOutputs());
   execution_flow_->SetTensors(node_list->GetTensors());
+  execution_flow_->SetContext(context_);
   auto schedule_ret = SelectKernel(node_list);
   if (schedule_ret != lite::RET_OK) {
     MS_LOG(ERROR) << "Scheduler CompileResult to kernels failed.";
@@ -73,7 +74,7 @@ int SingleGraphScheduler::SelectKernel(const CompileResultPtr &node_list) {
     auto lite_kernel =
       kernel_selector_->CreateKernel({node->GetType(), node->GetKernelAttr(), compile_option_->format,
                                       node->GetBaseOperator(), node->GetCNode(), compile_option_->backend},
-                                     node->GetInputs(), node->GetOutputs(), context_);
+                                     node->GetInputs(), node->GetOutputs(), context_.get());
     if (lite_kernel == nullptr) {
       MS_LOG(ERROR) << "Create kernel for node: " << node->GetName() << " failed.";
       return lite::RET_NOT_SUPPORT;
@@ -86,7 +87,7 @@ int SingleGraphScheduler::SelectKernel(const CompileResultPtr &node_list) {
     auto desc = kernel_exec->desc();
     desc.format = compile_option_->format;
     kernel_exec->set_desc(desc);
-    kernel_exec->set_context(context_);
+    kernel_exec->set_context(context_.get());
     kernels.push_back(kernel_exec);
   }
   execution_flow_->SetKernels(kernels);
