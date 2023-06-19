@@ -1079,14 +1079,14 @@ def jacfwd(fn, grad_position=0, has_aux=False):
         >>> net = MultipleInputsMultipleOutputsNet()
         >>> jac, aux = jacfwd(net, grad_position=0, has_aux=True)(x, y, z)
         >>> print(jac)
-        [[[[ 2.,  0.]
-           [ 0.,  0.]]
-          [[ 0.,  4.]
-           [ 0.,  0.]]]
-         [[[ 0.,  0.]
-           [ 6.,  0.]]
-          [[ 0.,  0.]
-           [ 0.,  8.]]]]
+        [[[[ 2.  0.]
+           [ 0.  0.]]
+          [[ 0.  4.]
+           [ 0.  0.]]]
+         [[[ 0.  0.]
+           [ 6.  0.]]
+          [[ 0.  0.]
+           [ 0.  8.]]]]
         >>> print(aux)
         [[ 1.  4.]
          [ 9. 16.]]
@@ -1249,14 +1249,14 @@ def jacrev(fn, grad_position=0, has_aux=False):
         >>> net = MultipleInputsMultipleOutputsNet()
         >>> jac, aux = jacrev(net, grad_position=0, has_aux=True)(x, y, z)
         >>> print(jac)
-        [[[[ 2.,  0.]
-           [ 0.,  0.]]
-          [[ 0.,  4.]
-           [ 0.,  0.]]]
-         [[[ 0.,  0.]
-           [ 6.,  0.]]
-          [[ 0.,  0.]
-           [ 0.,  8.]]]]
+        [[[[ 2.  0.]
+           [ 0.  0.]]
+          [[ 0.  4.]
+           [ 0.  0.]]]
+         [[[ 0.  0.]
+           [ 6.  0.]]
+          [[ 0.  0.]
+           [ 0.  8.]]]]
         >>> print(aux)
         [[ 1.  4.]
          [ 9. 16.]]
