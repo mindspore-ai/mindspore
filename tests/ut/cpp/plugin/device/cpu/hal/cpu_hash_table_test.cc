@@ -136,6 +136,139 @@ TEST_F(TestCPUHashTable, test_cpu_hash_table) {
 
   EXPECT_EQ(hash_table.size(), 0);
 }
+
+/// Feature: test cpu hash table find api mainly.
+/// Description: test cpu hash table data find API.
+/// Expectation: find function works normally.
+TEST_F(TestCPUHashTable, test_cpu_hash_table_find) {
+  size_t value_dim = 4;
+  size_t key_num = 10;
+  size_t erase_key_num = 5;
+  CPUHashTable<Key, Value> hash_table(value_dim);
+
+  // Keys and values to insert.
+  std::vector<Key> keys_to_insert(key_num);
+  std::iota(keys_to_insert.begin(), keys_to_insert.end(), 0);
+
+  std::vector<Value> value_to_insert(key_num * value_dim);
+  for (size_t i = 0; i < key_num; i++) {
+    for (size_t j = 0; j < value_dim; j++) {
+      value_to_insert[i * value_dim + j] = static_cast<Value>(i);
+    }
+  }
+
+  // Keys and values check map.
+  std::unordered_map<Key, std::vector<Value>> keys_values;
+  for (size_t i = 0; i < key_num; ++i) {
+    keys_values.emplace(keys_to_insert[i], std::vector<Value>(value_to_insert.begin() + i * value_dim,
+                                                              value_to_insert.begin() + (i + 1) * value_dim));
+  }
+  EXPECT_EQ(keys_values.size(), key_num);
+
+  // Keys, values and statuses check tensor.
+  std::vector<Key> keys_to_check(key_num);
+  std::vector<Value> values_to_check(key_num * value_dim);
+
+  /// Test find() parameters of cpu hash table.
+  // >>>1. if keys_to_insert exists, it will return true
+  // Pad the hash_table
+  EXPECT_TRUE(hash_table.Insert(keys_to_insert.data(), key_num, value_to_insert.data(), nullptr));
+  EXPECT_TRUE(hash_table.Find(keys_to_insert.data(), key_num, false, values_to_check.data(), nullptr));
+  EXPECT_EQ(values_to_check, value_to_insert);
+
+  EXPECT_TRUE(hash_table.is_dirty());
+
+  EXPECT_EQ(hash_table.size(), key_num);
+
+  EXPECT_EQ(hash_table.capacity(), key_num);
+
+  EXPECT_TRUE(hash_table.GetKeysAndValues(keys_to_check.data(), values_to_check.data(), nullptr));
+
+  for (size_t i = 0; i < key_num; ++i) {
+    EXPECT_TRUE(keys_values.find(keys_to_check[i]) != keys_values.end());
+    EXPECT_EQ(keys_values[keys_to_check[i]], std::vector<Value>(values_to_check.begin() + i * value_dim,
+                                                                values_to_check.begin() + (i + 1) * value_dim));
+  }
+  // Clear the hash_table
+  EXPECT_TRUE(hash_table.Erase(keys_to_insert.data(), erase_key_num, nullptr));
+  keys_values.clear();
+  value_to_insert.clear();
+  keys_to_check.clear();
+  values_to_check.clear();
+
+  // >>>2. if keys_to_insert doesn't exist, <insert_default_value> is false, <find> will return false directly
+  EXPECT_FALSE(hash_table.Find(keys_to_insert.data(), key_num, false, values_to_check.data(), nullptr));
+
+  // >>>3. if keys_to_insert doesn't exists, <insert_default_value> is true, it will insert key-value pair with
+  // <Value>default_value
+  Value default_value_ = static_cast<Value>(99);
+  CPUHashTable<Key, Value> hash_table_d(value_dim, default_value_);
+
+  for (size_t i = 0; i < key_num; i++) {
+    for (size_t j = 0; j < value_dim; j++) {
+      value_to_insert[i * value_dim + j] = static_cast<Value>(default_value_);
+    }
+  }
+  // Keys and values check map.
+  for (size_t i = 0; i < key_num; ++i) {
+    keys_values.emplace(keys_to_insert[i], std::vector<Value>(value_to_insert.begin() + i * value_dim,
+                                                              value_to_insert.begin() + (i + 1) * value_dim));
+  }
+  EXPECT_EQ(keys_values.size(), key_num);
+
+  // There is no keys_to_insert in this empty hash_table, so it will be padded automatically
+  EXPECT_TRUE(hash_table_d.Find(keys_to_insert.data(), key_num, true, values_to_check.data(), nullptr));
+  EXPECT_EQ(values_to_check, value_to_insert);
+
+  // Get keys and values from hash_table
+  EXPECT_TRUE(hash_table_d.GetKeysAndValues(keys_to_check.data(), values_to_check.data(), nullptr));
+
+  // Compare keys_to_check and values_to_check with check_map.
+  for (size_t i = 0; i < key_num; ++i) {
+    EXPECT_TRUE(keys_values.find(keys_to_check[i]) != keys_values.end());
+    EXPECT_EQ(keys_values[keys_to_check[i]], std::vector<Value>(values_to_check.begin() + i * value_dim,
+                                                                values_to_check.begin() + (i + 1) * value_dim));
+  }
+  keys_values.clear();
+  value_to_insert.clear();
+  keys_to_check.clear();
+  values_to_check.clear();
+
+  // >>>4. if miss_keys doesn't exists, <insert_default_value> is true, it will insert key-value pair, value is decided
+  // by <String>initializer_
+  std::string initializer_ = "ones";
+  std::map<std::string, int> initializer_values = {{"ones", 1}, {"zeros", 0}};
+  CPUHashTable<Key, Value> hash_table_i(value_dim, initializer_);
+
+  for (size_t i = 0; i < key_num; i++) {
+    for (size_t j = 0; j < value_dim; j++) {
+      value_to_insert[i * value_dim + j] = static_cast<Value>(initializer_values[initializer_]);
+    }
+  }
+  // Keys and values check map.
+  for (size_t i = 0; i < key_num; ++i) {
+    keys_values.emplace(keys_to_insert[i], std::vector<Value>(value_to_insert.begin() + i * value_dim,
+                                                              value_to_insert.begin() + (i + 1) * value_dim));
+  }
+  EXPECT_EQ(keys_values.size(), key_num);
+  // There is no keys_to_insert in this empty hash_table, so it will be padded automatically
+  EXPECT_TRUE(hash_table_i.Find(keys_to_insert.data(), key_num, true, values_to_check.data(), nullptr));
+  EXPECT_EQ(values_to_check, value_to_insert);
+
+  // Get keys and values from hash_table
+  EXPECT_TRUE(hash_table_i.GetKeysAndValues(keys_to_check.data(), values_to_check.data(), nullptr));
+
+  // Compare keys_to_check&values_to_check with check_map.
+  for (size_t i = 0; i < key_num; ++i) {
+    EXPECT_TRUE(keys_values.find(keys_to_check[i]) != keys_values.end());
+    EXPECT_EQ(keys_values[keys_to_check[i]], std::vector<Value>(values_to_check.begin() + i * value_dim,
+                                                                values_to_check.begin() + (i + 1) * value_dim));
+  }
+  keys_values.clear();
+  value_to_insert.clear();
+  keys_to_check.clear();
+  values_to_check.clear();
+}
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore
