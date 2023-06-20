@@ -1203,7 +1203,7 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
 
   // GRAPH | normal network and if/for/switch scenario etc : MultiGraph path in MindRT.
   MS_LOG(INFO) << "Run graph mode with multi graph sink.";
-  set_ctx(true, true, true);
+  set_ctx(true, true, !pynative_mode);
   return;
 }
 

@@ -31,10 +31,11 @@ from mindspore.train import Accuracy
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.train import Model, LossMonitor
+from mindspore.train import Model, LossMonitor, Callback
 from mindspore.common.initializer import TruncatedNormal
-
-context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+from mindspore.train.callback._callback import _handle_loss
+from mindspore.common import JitConfig
+from mindspore.common import set_seed
 
 
 def conv(in_channels, out_channels, kernel_size, stride=1, padding=0):
@@ -141,7 +142,7 @@ def test_train_lenet():
     train_network = TrainOneStepCell(net_with_criterion, optimizer)  # optimizer
     train_network.set_train()
     losses = []
-    for i in range(epoch):
+    for _ in range(epoch):
         data = Tensor(np.ones([net.batch_size, 3, 32, 32]).astype(np.float32) * 0.01)
         label = Tensor(np.ones([net.batch_size]).astype(np.int32))
         loss = train_network(data, label).asnumpy()
@@ -170,7 +171,7 @@ def test_train_lenet_memory_opt():
     train_network = TrainOneStepCell(net_with_criterion, optimizer)  # optimizer
     train_network.set_train()
     losses = []
-    for i in range(epoch):
+    for _ in range(epoch):
         data = Tensor(np.ones([net.batch_size, 3, 32, 32]).astype(np.float32) * 0.01)
         label = Tensor(np.ones([net.batch_size]).astype(np.int32))
         loss = train_network(data, label).asnumpy()
@@ -178,13 +179,16 @@ def test_train_lenet_memory_opt():
     assert losses[-1] < 0.01
 
 
-def create_dataset(data_path, batch_size=32, repeat_size=1,
-                   num_parallel_workers=1):
+def create_dataset(data_path, batch_size=32, repeat_size=1, num_parallel_workers=1, num_samples=None,
+                   enable_shuffle=True):
     """
     create dataset for train or test
     """
     # define dataset
-    mnist_ds = ds.MnistDataset(data_path)
+    if num_samples is None:
+        mnist_ds = ds.MnistDataset(data_path)
+    else:
+        mnist_ds = ds.MnistDataset(data_path, num_samples=num_samples)
 
     resize_height, resize_width = 32, 32
     rescale = 1.0 / 255.0
@@ -208,7 +212,8 @@ def create_dataset(data_path, batch_size=32, repeat_size=1,
 
     # apply DatasetOps
     buffer_size = 10000
-    mnist_ds = mnist_ds.shuffle(buffer_size=buffer_size)  # 10000 as in LeNet train script
+    if enable_shuffle:
+        mnist_ds = mnist_ds.shuffle(buffer_size=buffer_size)  # 10000 as in LeNet train script
     mnist_ds = mnist_ds.batch(batch_size, drop_remainder=True)
     mnist_ds = mnist_ds.repeat(repeat_size)
 
@@ -250,7 +255,7 @@ def test_train_lenet_with_new_interface(num_classes=10, epoch=20, batch_size=32)
 
     train_network = ForwardValueAndGrad(network=net_with_criterion, weights=weights, get_by_list=True, sens_param=True)
     losses = []
-    for i in range(0, epoch):
+    for _ in range(0, epoch):
         data = Tensor(np.ones([batch_size, 1, 32, 32]).astype(np.float32) * 0.01)
         label = Tensor(np.ones([batch_size]).astype(np.int32))
         sens = Tensor(np.ones([1]).astype(np.float32))
@@ -282,7 +287,7 @@ def test_train_lenet_with_new_interface_tuple(num_classes=10, epoch=20, batch_si
 
     train_network = ForwardValueAndGrad(network=net_with_criterion, weights=weights, get_by_list=True, sens_param=True)
     losses = []
-    for i in range(0, epoch):
+    for _ in range(0, epoch):
         data = Tensor(np.ones([batch_size, 1, 32, 32]).astype(np.float32) * 0.01)
         label = Tensor(np.ones([batch_size]).astype(np.int32))
         sens = Tensor(np.ones([1]).astype(np.float32))
@@ -314,7 +319,7 @@ def test_train_lenet_with_new_interface_list(num_classes=10, epoch=20, batch_siz
 
     train_network = ForwardValueAndGrad(network=net_with_criterion, weights=weights, get_by_list=True, sens_param=True)
     losses = []
-    for i in range(0, epoch):
+    for _ in range(0, epoch):
         data = Tensor(np.ones([batch_size, 1, 32, 32]).astype(np.float32) * 0.01)
         label = Tensor(np.ones([batch_size]).astype(np.int32))
         sens = Tensor(np.ones([1]).astype(np.float32))
@@ -324,3 +329,48 @@ def test_train_lenet_with_new_interface_list(num_classes=10, epoch=20, batch_siz
         losses.append(loss)
     assert losses[-1].asnumpy() < 0.01
     assert losses[-1].asnumpy() > 0.001
+
+
+class CustomCallback(Callback):
+    """
+    Assert the loss in every step_end.
+    """
+
+    def __init__(self):
+        super(CustomCallback, self).__init__()
+        self.except_loss = [2.300181, 2.305321, 2.304834, 2.297870, 2.303635]
+
+    def step_end(self, run_context):
+        """
+        Print training loss at the end of step.
+
+        Args:
+            run_context (RunContext): Include some information of the model.  For more details,
+                    please refer to :class:`mindspore.train.RunContext`.
+        """
+        cb_params = run_context.original_args()
+        loss = _handle_loss(cb_params.net_outputs)
+        print("loss is ", loss, flush=True)
+        assert np.allclose(self.except_loss[cb_params.cur_step_num - 1], loss)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_pynative_tasksink():
+    """
+    Feature: PyNative Task Sink
+    Description: Enable PyNative Task Sink by setting JitConfig(jit_level="O2").
+    Expectation: No exception.
+    """
+    set_seed(1)
+    np.random.seed(1)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    ds_train = create_dataset(os.path.join("/home/workspace/mindspore_dataset/mnist", "train"), 32, 1, 1, 160,
+                              False)
+    network = LeNet5(10)
+    network.set_jit_config(JitConfig(jit_level="O2"))
+    net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
+    net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)
+    model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
+    model.train(1, ds_train, callbacks=[CustomCallback()], dataset_sink_mode=True)
