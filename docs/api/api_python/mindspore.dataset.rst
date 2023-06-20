@@ -253,6 +253,7 @@ config模块能够设置或获取数据处理的全局配置参数。
     mindspore.dataset.WaitedDSCallback
     mindspore.dataset.OutputFormat
     mindspore.dataset.compare
+    mindspore.dataset.debug.DebugHook
     mindspore.dataset.deserialize
     mindspore.dataset.serialize
     mindspore.dataset.show
