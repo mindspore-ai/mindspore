@@ -1594,10 +1594,12 @@ int LiteSession::RuntimeAllocatorValid() {
     MS_LOG(DEBUG) << "Not support runtime allocator in runtime-infershape.";
     return RET_ERROR;
   }
+#ifdef ENABLE_MINDRT
   if (kernels_.size() != 1) {
     MS_LOG(DEBUG) << "Not support runtime allocator in random subgraph sort";
     return RET_ERROR;
   }
+#endif
 #ifdef ENABLE_ARM64
   MS_LOG(DEBUG) << "support runtime allocator.";
   return RET_OK;
