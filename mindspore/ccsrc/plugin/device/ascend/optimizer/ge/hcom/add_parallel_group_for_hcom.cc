@@ -29,21 +29,6 @@ namespace opt {
 namespace {
 const char kParallelGroup[] = "_parallel_group";
 }
-std::string AddParallelGroupForHcom::GetHcomGroup(const CNodePtr &cnode) const {
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (!common::AnfAlgo::HasNodeAttr(kAttrGroup, cnode)) {
-    MS_LOG(EXCEPTION) << "Hcom node " << cnode->fullname_with_scope() << " has no group attribute.";
-  }
-
-  auto group_name = common::AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrGroup);
-  auto rank_ids = common::AnfAlgo::HasNodeAttr(kAttrGroupRankIds, cnode)
-                    ? common::AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(cnode, kAttrGroupRankIds)
-                    : std::vector<uint32_t>();
-  auto new_group = hccl::HcclAdapter::GetInstance().GetHcomGroup(group_name, rank_ids);
-  MS_LOG(INFO) << "hcom node: " << cnode->fullname_with_scope() << ", old group: " << group_name
-               << ", new group: " << new_group;
-  return new_group;
-}
 
 const AnfNodePtr AddParallelGroupForHcom::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
                                                   const EquivPtr &) const {
@@ -54,7 +39,7 @@ const AnfNodePtr AddParallelGroupForHcom::Process(const FuncGraphPtr &graph, con
   }
   auto hcom_node = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(hcom_node);
-  auto group = GetHcomGroup(hcom_node);
+  auto group = hccl::HcclAdapter::GetInstance().GetHcomGroup(hcom_node);
   common::AnfAlgo::SetNodeAttr(kParallelGroup, MakeValue(group), node);
   return node;
 }

@@ -44,7 +44,6 @@ namespace ascend {
 namespace {
 constexpr uint32_t kDeviceNumOfServer = 8;
 constexpr uint32_t kDeviceNumThreshold = 1024;
-const char kDefaultGroup[] = "__default_group";
 constexpr auto kAttrStreamID = "stream_id";
 
 constexpr uint32_t kHcomSecondaryStreamNum = 3;
@@ -62,23 +61,6 @@ constexpr size_t kLastGradAndStatusNum = 2;
 
 const std::unordered_set<std::string> kDropoutGenMaskOps = {kDropoutGenMaskOpName, kDropoutGenMaskV3OpName,
                                                             kStatelessDropOutGenMaskOpName};
-string GetHcomGroup(const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (!common::AnfAlgo::HasNodeAttr(kAttrGroup, cnode)) {
-    MS_LOG(EXCEPTION) << "Hcom node " << cnode->fullname_with_scope() << " has no group attribute.";
-  }
-
-  auto group_name = common::AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrGroup);
-  auto rank_ids = common::AnfAlgo::HasNodeAttr(kAttrGroupRankIds, cnode)
-                    ? common::AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(cnode, kAttrGroupRankIds)
-                    : std::vector<uint32_t>();
-  auto new_group = hccl::HcclAdapter::GetInstance().GetHcomGroup(group_name, rank_ids);
-  MS_LOG(INFO) << "hcom node: " << cnode->fullname_with_scope() << ", old group: " << group_name
-               << ", new group: " << new_group;
-
-  return new_group;
-}
-
 CNodePtr GetHcomAndOverflowMarker(const NotNull<KernelGraphPtr> &graph_ptr, vector<CNodePtr> *hcom_nodes) {
   MS_EXCEPTION_IF_NULL(hcom_nodes);
   auto cnode_ptr_list = graph_ptr->execution_order();
@@ -997,7 +979,7 @@ void AscendStreamAssign::ClassifyNodeByGroupAndGraph(const std::vector<CNodePtr>
     if (!IsHcom(cur_cnode_ptr)) {
       MS_LOG(INTERNAL_EXCEPTION) << "Node is not hcom node, it's " << cur_cnode_ptr->fullname_with_scope();
     }
-    auto group_name = GetHcomGroup(cur_cnode_ptr);
+    auto group_name = hccl::HcclAdapter::GetInstance().GetHcomGroup(cur_cnode_ptr);
     auto hcom_graph_id = AnfAlgo::GetGraphId(cur_cnode_ptr.get());
     auto iter = group_graph_map->find(group_name);
     if (iter == group_graph_map->end()) {
@@ -1750,7 +1732,7 @@ void AscendStreamAssign::InsertEventHcomDependCommonBak(const NotNull<KernelGrap
 
 vector<CNodePtr> AscendStreamAssign::GetLastInputCnode(const NotNull<KernelGraphPtr> &graph_ptr,
                                                        const CNodePtr &cur_cnode_ptr) const {
-  auto group_name = GetHcomGroup(cur_cnode_ptr);
+  auto group_name = hccl::HcclAdapter::GetInstance().GetHcomGroup(cur_cnode_ptr);
   auto input_cnodes = GetInputKernels(cur_cnode_ptr);
   if (input_cnodes.empty()) {
     return {};
@@ -1780,7 +1762,7 @@ vector<CNodePtr> AscendStreamAssign::GetLastInputCnode(const NotNull<KernelGraph
   CNodePtr max_common_cnode = nullptr;
   for (const auto &item : std::as_const(result)) {
     if (IsHcom(item.second.first)) {
-      auto cur_group = GetHcomGroup(item.second.first);
+      auto cur_group = hccl::HcclAdapter::GetInstance().GetHcomGroup(item.second.first);
       if (cur_group == group_name) {
         continue;
       } else {
@@ -1885,7 +1867,7 @@ std::vector<std::pair<uint32_t, vector<size_t>>> AscendStreamAssign::GetStreamID
     }
 
     uint32_t cur_stream_id = AnfAlgo::GetStreamId(cur_cnode);
-    auto group_name = GetHcomGroup(cur_cnode);
+    auto group_name = hccl::HcclAdapter::GetInstance().GetHcomGroup(cur_cnode);
     auto cur_graph_id = AnfAlgo::GetGraphId(cur_cnode.get());
     MS_LOG(INFO) << "Hcom node name:" << common::AnfAlgo::GetCNodeName(cur_cnode) << "; group:" << group_name
                  << "; stream id:" << cur_stream_id;
@@ -3049,7 +3031,7 @@ void AscendStreamAssign::InsertEventForOverflowInGraph(const NotNull<KernelGraph
   auto npu_get_node = *result;
   for (auto iter = execution_order.begin(); iter < result; iter++) {
     if (IsHcom(*iter) && AnfAlgo::GetGraphId((*iter).get()) == graph_id) {
-      auto group_name = GetHcomGroup(*iter);
+      auto group_name = hccl::HcclAdapter::GetInstance().GetHcomGroup(*iter);
       group_last_index[group_name] = LongToSize(iter - execution_order.begin());
     }
   }

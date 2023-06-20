@@ -99,7 +99,7 @@ class HcclAdapter {
 
   bool IsSameServer(const std::vector<uint32_t> &rank_ids) const;
 
-  string GetHcomGroup(const string &original_group, const std::vector<uint32_t> &rank_ids) const;
+  string GetHcomGroup(const CNodePtr &cnode) const;
 
  private:
   HcclAdapter() = default;
@@ -119,6 +119,7 @@ class HcclAdapter {
   HcclMode GetCurrentHcclMode() const;
   void CheckExcutionMode() const;
   static std::string GetHcclModeString(HcclMode hccl_mode);
+  string DoGetHcomGroup(const string &original_group, const std::vector<uint32_t> &rank_ids) const;
 
   void *plugin_handle_ = nullptr;
 

@@ -73,7 +73,7 @@ bool HcclAdapter::UseHcclCM() const { return false; }
 
 bool HcclAdapter::IsSameServer(const std::vector<uint32_t> &rank_ids) const { return false; }
 
-std::string HcclAdapter::GetHcomGroup(const std::string &original_group, const std::vector<uint32_t> &rank_ids) const {
+std::string HcclAdapter::GetHcomGroup(const CNodePtr &) const {
   return "";
 }
 }  // namespace hccl
