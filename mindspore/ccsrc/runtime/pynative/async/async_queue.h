@@ -88,7 +88,7 @@ class BACKEND_EXPORT AsyncQueue {
  private:
   void ClearTaskWithException();
 
-  std::queue<std::shared_ptr<AsyncTask>> tasks_;
+  std::queue<std::shared_ptr<AsyncTask>> tasks_queque_;
 };
 using AsyncQueuePtr = std::shared_ptr<AsyncQueue>;
 
@@ -107,7 +107,7 @@ class BACKEND_EXPORT AsyncHqueue final : public AsyncQueue {
  private:
   void WorkerLoop() override;
 
-  HQueue<AsyncTask> tasks_;
+  HQueue<AsyncTask> tasks_hqueque_;
   bool init_{false};
   bool alive_{true};
   std::atomic_int status_{kThreadBusy};
