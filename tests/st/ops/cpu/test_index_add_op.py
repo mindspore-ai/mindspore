@@ -398,7 +398,7 @@ def test_index_add_vmap_cpu():
     Expectation: the result match with expect
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    os.environ['MS_AUTO_IDENTIFY_ENABLE'] = "0"
+    os.environ['MS_AUTO_DYNAMIC_SHAPE_ENABLE'] = "0"
     vmap_case()
 
 

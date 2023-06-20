@@ -149,7 +149,7 @@ def test_multilabel_margin_loss_graph():
     Expectation: success
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    os.environ['MS_AUTO_IDENTIFY_ENABLE'] = "0"
+    os.environ['MS_AUTO_DYNAMIC_SHAPE_ENABLE'] = "0"
     for reduction in ['none', 'sum', 'mean']:
         multilabel_margin_loss_template(np.float32, reduction)
         multilabel_margin_loss_template(np.float16, reduction)

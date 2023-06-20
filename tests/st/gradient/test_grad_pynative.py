@@ -747,7 +747,7 @@ def test_get_grad_by_position_pynative():
             res = x * self.w * self.z
             return res, x, self.w
 
-    os.environ['MS_AUTO_IDENTIFY_ENABLE'] = "0"
+    os.environ['MS_AUTO_DYNAMIC_SHAPE_ENABLE'] = "0"
     x = Tensor(np.array([1, 2]).astype(np.float32))
     net = ParamNetRI()
     weights = net.trainable_params()

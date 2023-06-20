@@ -12,7 +12,7 @@ def test_julia():
     Description: run julia_cases
     Expectation: res == 0
     """
-    os.environ['MS_AUTO_IDENTIFY_ENABLE'] = "0"
+    os.environ['MS_AUTO_DYNAMIC_SHAPE_ENABLE'] = "0"
     system = platform.system()
     machine = platform.machine()
     if system != 'Linux' or machine != 'x86_64':

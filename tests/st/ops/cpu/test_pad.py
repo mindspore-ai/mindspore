@@ -180,7 +180,7 @@ def test_pad_3d_backprop():
     Confirm correct 3d padding backprop
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    os.environ['MS_AUTO_IDENTIFY_ENABLE'] = "0"
+    os.environ['MS_AUTO_DYNAMIC_SHAPE_ENABLE'] = "0"
     net = Grad(Net())
     padded_shape = (5, 10, 32, 32)
 
