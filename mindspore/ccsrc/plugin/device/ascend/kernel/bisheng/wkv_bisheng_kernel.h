@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_BISHENG_ADD_BISHENG_KERNEL_H
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_BISHENG_ADD_BISHENG_KERNEL_H
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_BISHENG_WKV_BISHENG_KERNEL_H
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_BISHENG_WKV_BISHENG_KERNEL_H
 
 #include <vector>
 #include <memory>
@@ -26,12 +26,12 @@
 
 namespace mindspore {
 namespace kernel {
-class AddBishengKernel : public BiShengKernelMod {
-  KernelFunc(AddBishengKernel);
+class WKVBishengKernel : public BiShengKernelMod {
+  KernelFunc(WKVBishengKernel);
 
  public:
-  AddBishengKernel() = default;
-  ~AddBishengKernel() override = default;
+  WKVBishengKernel() = default;
+  ~WKVBishengKernel() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -43,6 +43,7 @@ class AddBishengKernel : public BiShengKernelMod {
 
   std::string GetOpName() override { return bisheng_name_; };
   TilingFunc GetTilingFunc() override { return tiling_func_; };
+  std::string GetBinary() { return "libwkv"; }
 
  private:
   template <typename T>
@@ -51,4 +52,4 @@ class AddBishengKernel : public BiShengKernelMod {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_BISHENG_ADD_BISHENG_KERNEL_H
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_BISHENG_WKV_BISHENG_KERNEL_H
