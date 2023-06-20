@@ -45,7 +45,6 @@ class ChannelShuffleCpuKernelMod : public NativeCpuKernelMod {
  private:
   std::vector<int64_t> input_shape_;
   std::vector<int64_t> output_shape_;
-  std::vector<KernelTensorPtr> outputs_ = {};
   int64_t group_{0};
   TypeId input_dtype_{kTypeUnknown};
   TypeId output_dtype_{kTypeUnknown};

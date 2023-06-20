@@ -105,7 +105,6 @@ bool ChannelShuffleCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   }
   auto *in = static_cast<T *>(inputs[0]->addr);
   auto *out = static_cast<T *>(outputs[0]->addr);
-  outputs_[0]->SetShapeVector(input_shape_);
 
   /*
     view the shape to n g c/g h*w,and transpose dim 1 and dim 2
