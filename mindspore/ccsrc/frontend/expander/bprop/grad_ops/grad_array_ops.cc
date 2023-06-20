@@ -389,7 +389,8 @@ NodePtr CalBatchGather(const BpropIRBuilder *ib, const NodePtr &values, const No
   auto res = ib->ShapeCalc(std::make_shared<CalBatchGatherShapeCalc>(axis, batch_dims), {x});
   auto axis_dim = ib->TupleToTensor(res[0]);
   auto limit = ib->TupleToTensor(res[1]);
-  auto delta = ib->Range(ib->Tensor(0, kInt64), limit, axis_dim);
+  ShapeVector a = {};
+  auto delta = ib->Range(ib->Tensor(0, kInt64), ib->Reshape(limit, a), ib->Reshape(axis_dim, a));
   delta = ib->Reshape(delta, delta_reshape);
   indices_rshp = ib->Add(indices_rshp, delta);
   auto params_grad = ib->UnsortedSegmentSum(values_rshp, indices_rshp, limit);
@@ -788,8 +789,10 @@ REG_BPROP_BUILDER("Sort").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto indices = ib->TupleGetItem(tmp, 1);
   auto res = ib->ShapeCalc(g_sort_2, {indices, top_k_input});
   auto indices_dtype = ib->GetDtype(indices);
-  auto range_flatten_index =
-    ib->Cast(ib->Range(ib->Tensor(0, kInt64), ib->TupleToTensor(res[4]), ib->TupleToTensor(res[2])), indices_dtype);
+  ShapeVector a = {};
+  auto range_flatten_index = ib->Cast(ib->Range(ib->Tensor(0, kInt64), ib->Reshape(ib->TupleToTensor(res[4]), a),
+                                                ib->Reshape(ib->TupleToTensor(res[2]), a)),
+                                      indices_dtype);
   range_flatten_index = ib->ExpandDims(range_flatten_index, -1);
   auto ind_2d = ib->Reshape(indices, res[1]);
   auto ind = ib->Reshape(ib->Add(ind_2d, range_flatten_index), {-1});

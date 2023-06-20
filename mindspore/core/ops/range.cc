@@ -110,6 +110,16 @@ int64_t RangeCalculateShape(const tensor::TensorPtr start_ptr, const tensor::Ten
 
 abstract::ShapePtr RangeCheckAndInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const auto prim_name = primitive->name();
+  std::vector<int64_t> valid_shape{};
+  auto start_shape = input_args[kInputIndex0]->BuildShape();
+  auto limit_shape = input_args[kInputIndex1]->BuildShape();
+  auto delta_shape = input_args[kInputIndex2]->BuildShape();
+  const std::map<std::string, BaseShapePtr> input_shapes = {
+    {"start_shape", start_shape}, {"limit_shape", limit_shape}, {"delta_shape", delta_shape}};
+  (void)CheckAndConvertUtils::CheckTensorShapeSame(input_shapes, valid_shape, prim_name);
+
   int64_t shape_size = abstract::Shape::kShapeDimAny;
   auto start_value = input_args[kInputIndex0]->BuildValue();
   auto limit_value = input_args[kInputIndex1]->BuildValue();
@@ -154,21 +164,24 @@ abstract::ShapePtr RangeCheckAndInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr RangeCheckAndInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
+  const auto &prim_name = prim->name();
   std::set<TypePtr> support_types = {kInt32, kInt64, kFloat32, kFloat64};
   auto start_type = CheckAndConvertUtils::CheckTensorTypeValid("start", input_args[kInputIndex0]->BuildType(),
-                                                               support_types, prim->name());
+                                                               support_types, prim_name);
   auto limit_type = CheckAndConvertUtils::CheckTensorTypeValid("limit", input_args[kInputIndex1]->BuildType(),
-                                                               support_types, prim->name());
+                                                               support_types, prim_name);
   auto delta_type = CheckAndConvertUtils::CheckTensorTypeValid("delta", input_args[kInputIndex2]->BuildType(),
-                                                               support_types, prim->name());
+                                                               support_types, prim_name);
   MS_EXCEPTION_IF_NULL(start_type);
   MS_EXCEPTION_IF_NULL(limit_type);
   MS_EXCEPTION_IF_NULL(delta_type);
   bool same_type = IsSameType(start_type, limit_type) && IsSameType(limit_type, delta_type);
   if (!same_type) {
-    MS_EXCEPTION(TypeError) << "For Range, start, limit delta should have same type, but get start["
-                            << start_type->meta_type() << "], limit[" << limit_type->meta_type() << "], delta["
-                            << delta_type->meta_type() << "].";
+    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', start, limit and delta should have same type, but get start["
+                            << TypeIdToString(start_type->type_id()) << "], limit["
+                            << TypeIdToString(limit_type->type_id()) << "], delta["
+                            << TypeIdToString(delta_type->type_id()) << "].";
   }
   return start_type;
 }
