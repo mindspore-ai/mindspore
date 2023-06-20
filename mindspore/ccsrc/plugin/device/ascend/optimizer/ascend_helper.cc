@@ -843,7 +843,11 @@ void SelectCallInlineKernelInfo(const CNodePtr &node) {
     }
     input_types.push_back(type_id);
     input_formats.push_back(AnfAlgo::GetOutputFormat(param, 0));
-    input_object_types.push_back(kernel::KernelObjectType::TENSOR);
+    if (kernel::TypeIdToKernelObjectType(AnfAlgo::GetOutputObjectType(param, 0)) == kernel::KernelObjectType::SCALAR) {
+      input_object_types.push_back(kernel::KernelObjectType::SCALAR);
+    } else {
+      input_object_types.push_back(kernel::KernelObjectType::TENSOR);
+    }
   }
   for (size_t i = 0; i < AnfUtils::GetOutputTensorNum(node); ++i) {
     output_formats.push_back(AnfAlgo::GetOutputFormat(sub_ret, i));
