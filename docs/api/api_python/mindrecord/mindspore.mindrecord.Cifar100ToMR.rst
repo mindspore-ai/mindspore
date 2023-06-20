@@ -1,7 +1,7 @@
 
 .. py:class:: mindspore.mindrecord.Cifar100ToMR(source, destination)
 
-    将CIFAR-100数据集转换为MindRecord格式数据集。
+    将CIFAR-100数据集（需要是Python版本的，名字类似：cifar-100-python.tar.gz）转换为MindRecord格式数据集。
 
     参数：
         - **source** (str) - 待转换的CIFAR-100数据集文件所在目录的路径。

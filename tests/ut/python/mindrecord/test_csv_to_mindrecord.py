@@ -27,6 +27,7 @@ except ModuleNotFoundError:
     pd = None
 
 CSV_FILE = "../data/mindrecord/testCsv/data.csv"
+CSV_FILE2 = "../data/mindrecord/testCsv/data2.csv"
 PARTITION_NUMBER = 4
 
 @pytest.fixture(name="remove_mindrecord_file")
@@ -69,7 +70,7 @@ def read(filename, columns, row_num):
     reader.close()
 
 def test_csv_to_mindrecord(remove_mindrecord_file):
-    """test transform csv  to mindrecord."""
+    """test transform csv to mindrecord."""
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     csv_trans = CsvToMR(CSV_FILE, file_name, partition_number=PARTITION_NUMBER)
     csv_trans.transform()
@@ -79,7 +80,7 @@ def test_csv_to_mindrecord(remove_mindrecord_file):
     read(file_name + "0", ["Age", "EmployNumber", "Name", "Sales", "Over18"], 5)
 
 def test_csv_to_mindrecord_with_columns(remove_mindrecord_file):
-    """test transform csv  to mindrecord."""
+    """test transform csv to mindrecord."""
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     csv_trans = CsvToMR(CSV_FILE, file_name, columns_list=['Age', 'Sales'], partition_number=PARTITION_NUMBER)
     csv_trans.transform()
@@ -89,7 +90,7 @@ def test_csv_to_mindrecord_with_columns(remove_mindrecord_file):
     read(file_name + "0", ["Age", "Sales"], 5)
 
 def test_csv_to_mindrecord_with_no_exist_columns(remove_mindrecord_file):
-    """test transform csv  to mindrecord."""
+    """test transform csv to mindrecord."""
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     with pytest.raises(Exception, match="The parameter columns_list is illegal, column ssales does not exist."):
         csv_trans = CsvToMR(CSV_FILE, file_name, columns_list=['Age', 'ssales'],
@@ -98,7 +99,7 @@ def test_csv_to_mindrecord_with_no_exist_columns(remove_mindrecord_file):
 
 def test_csv_partition_number_with_illegal_columns(remove_mindrecord_file):
     """
-    test transform csv  to mindrecord
+    test transform csv to mindrecord
     """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     with pytest.raises(Exception, match="The parameter columns_list must be list of str."):
@@ -120,7 +121,7 @@ def test_csv_to_mindrecord_default_partition_number(remove_mindrecord_file):
 
 def test_csv_partition_number_0(remove_mindrecord_file):
     """
-    test transform csv  to mindrecord
+    test transform csv to mindrecord
     when partition number is 0.
     """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -141,10 +142,23 @@ def test_csv_to_mindrecord_partition_number_none(remove_mindrecord_file):
 
 def test_csv_to_mindrecord_illegal_filename(remove_mindrecord_file):
     """
-    test transform csv  to mindrecord
+    test transform csv to mindrecord
     when file name contains illegal character.
     """
     filename = "not_*ok"
     with pytest.raises(Exception, match="File name should not contains"):
         csv_trans = CsvToMR(CSV_FILE, filename)
+        csv_trans.transform()
+
+
+def test_csv_to_mindrecord_illegal_colname(remove_mindrecord_file):
+    """
+    Feature: test transform csv to mindrecord
+    Description: when columna name start with a number.
+    Expectation: success
+    """
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    with pytest.raises(Exception, match="The first line content: 1 of the CSV file is used as a column name and "
+                                        "does not allow starting with a number"):
+        csv_trans = CsvToMR(CSV_FILE2, file_name)
         csv_trans.transform()

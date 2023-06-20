@@ -152,6 +152,10 @@ class CsvToMR:
         self.writer.add_schema(csv_schema, "csv_schema")
 
         # add the index
+        for column_name in list(self.columns_list):
+            if str(column_name).isdigit():
+                raise ValueError("The first line content: {} of the CSV file is used as a column name and "
+                                 "does not allow starting with a number.".format(str(column_name)))
         self.writer.add_index(list(self.columns_list))
 
         csv_iter = self._get_row_of_csv(df, self.columns_list)
@@ -194,6 +198,7 @@ class CsvToMR:
             MRMWriteDatasetError: If failed to write dataset.
             TypeError: If parallel_writer is not bool.
             IOError: Csv file does not exist.
+            ValueError: The first line of the CSV file is used as column name and each field cannot start with a number.
         """
 
         t = ExceptionThread(target=self.run)
