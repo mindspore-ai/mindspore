@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -487,17 +487,28 @@ class TBERegOp(RegOp):
         op_name (str):kernel name.
 
     Examples:
-        >>> from mindspore.ops import TBERegOp, DataType
-        >>> abs_op_info = TBERegOp("Abs") \
+        >>> op_name_op_info = TBERegOp("OpName") \
         ...    .fusion_type("ELEMWISE") \
         ...    .async_flag(False) \
-        ...    .binfile_name("abs.so") \
+        ...    .binfile_name("op_name.so") \
         ...    .compute_cost(10) \
-        ...    .kernel_name("abs") \
+        ...    .kernel_name("op_name") \
         ...    .partial_flag(True) \
         ...    .op_pattern("formatAgnostic") \
-        ...    .input(0, "x", None, "required", None) \
+        ...    .need_check_supported(True) \
+        ...    .dynamic_shape(True) \
+        ...    .dynamic_rank_support(True) \
+        ...    .dynamic_compile_static(True) \
+        ...    .attr("format", "required", "str", "all") \
+        ...    .input(0, "x1", None, "required", None) \
+        ...    .input(0, "x2", None, "required", None) \
+        ...    .input(1, "axis", None, "required", None) \
         ...    .output(0, "y", True, "required", "all") \
+        ...    .real_input_index([1, 0])
+        ...    .input_to_attr_index([2])
+        ...    .unknown_shape_formats(["ND", "ND", "ND", "ND"])
+        ...    .reshape_type("NC") \
+        ...    .is_dynamic_format(True) \
         ...    .dtype_format(DataType.F16_None, DataType.F16_None) \
         ...    .dtype_format(DataType.F32_None, DataType.F32_None) \
         ...    .dtype_format(DataType.I32_None, DataType.I32_None) \

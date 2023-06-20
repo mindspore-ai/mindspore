@@ -99,9 +99,9 @@ void OpImplModeConfig::ParseOneLine(const std::string &line, bool by_op_type, si
     return;
   }
   if (by_op_type) {
-    op_type_impl_mode_map_.emplace(op_type_or_name, impl_mode);
+    (void)op_type_impl_mode_map_.emplace(op_type_or_name, impl_mode);
   } else {
-    op_name_impl_mode_map_.emplace(op_type_or_name, impl_mode);
+    (void)op_name_impl_mode_map_.emplace(op_type_or_name, impl_mode);
   }
 }
 

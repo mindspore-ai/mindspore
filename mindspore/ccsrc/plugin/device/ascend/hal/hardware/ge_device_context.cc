@@ -285,7 +285,6 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
 
   SetAscendConfig(ms_context_ptr, ge_options);
 
-  (*ge_options)["ge.opDebugLevel"] = "3";
   auto op_debug_level = common::GetEnv("MS_COMPILER_OP_LEVEL");
   if (!op_debug_level.empty()) {
     (*ge_options)["ge.opDebugLevel"] = op_debug_level;
