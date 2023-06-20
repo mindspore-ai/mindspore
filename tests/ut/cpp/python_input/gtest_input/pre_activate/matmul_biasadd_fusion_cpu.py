@@ -18,7 +18,7 @@ from mindspore.ops import operations as P
 
 matmul = P.MatMul()
 biasadd = P.BiasAdd()
-prim_after_fusion = Primitive('MatMulBiasAddFusion')
+prim_after_fusion = Primitive('FusedMatMulBiasAdd')
 make_tuple = Primitive('MakeTuple')
 tuple_getitem = Primitive(Constants.kTupleGetItem)
 

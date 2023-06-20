@@ -27,7 +27,7 @@ namespace kernel {
 namespace {
 constexpr auto kMatMul = "MatMul";
 constexpr auto kBatchMatMul = "BatchMatMul";
-constexpr auto kMatMulBiasAdd = "MatMulBiasAddFusion";
+constexpr auto kMatMulBiasAdd = "FusedMatMulBiasAdd";
 constexpr auto kMatMulBiasAddRelu = "MatMulBiasAddReluFusion";
 
 using MatMulFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
@@ -146,7 +146,7 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, MatMul,
                                  []() { return std::make_shared<MatMulCpuKernelMod>(kMatMul); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, BatchMatMul,
                                  []() { return std::make_shared<MatMulCpuKernelMod>(kBatchMatMul); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, MatMulBiasAddFusion,
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, FusedMatMulBiasAdd,
                                  []() { return std::make_shared<MatMulCpuKernelMod>(kMatMulBiasAdd); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, MatMulBiasAddReluFusion,
                                  []() { return std::make_shared<MatMulCpuKernelMod>(kMatMulBiasAddRelu); });
