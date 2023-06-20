@@ -456,3 +456,37 @@ def test_setattr_run_multiple_times_3():
     assert np.all(ret1 == np.array([2, 3, 4]))
     assert np.all(ret2 == np.array([3, 4, 5]))
     assert np.all(ret3 == np.array([4, 5, 6]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_setattr_with_augassign():
+    """
+    Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
+    Description: Support 'obj.attr = value'.
+    Expectation: No exception.
+    """
+    class Inner:
+        def __init__(self):
+            self.i = 3
+
+    class Outer:
+        def __init__(self):
+            self.j = 4
+            self.inner = Inner()
+
+    class SetattrNet(nn.Cell):
+        def __init__(self):
+            super(SetattrNet, self).__init__()
+            self.outer = Outer()
+
+        def construct(self):
+            self.outer.inner.i += 10
+            return self.outer.inner.i
+
+    net = SetattrNet()
+    ret = net()
+    assert ret == 13

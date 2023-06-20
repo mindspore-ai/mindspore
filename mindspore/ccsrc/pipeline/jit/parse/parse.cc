@@ -2056,24 +2056,10 @@ FunctionBlockPtr Parser::ParseAugAssign(const FunctionBlockPtr &block, const py:
 
   AnfNodePtr value_node = ParseExprNode(block, value_object);
   value_node = HandleInterpret(block, value_node, value_object);
-  auto ast_type = AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, target_object)));
 
-  if (ast_type == AST_SUB_TYPE_NAME) {
-    target_node = ParseName(block, target_object);
-  } else if (ast_type == AST_SUB_TYPE_SUBSCRIPT) {
-    target_node = ParseSubscript(block, target_object);
-  } else if (ast_->IsClassMemberOfSelf(target_object)) {
-    target_node = ParseAttribute(block, target_object);
-  } else if (ast_type == AST_SUB_TYPE_ATTRIBUTE) {
+  {
     TraceGuard trace_guard(GetLocation(target_object));
-    MS_EXCEPTION(TypeError) << "Only support augassign to attribute of self, but got attribute of "
-                            << py::str(target_object.attr("value").attr("id")) << ".\n"
-                            << "More details please refer to syntax support at https://www.mindspore.cn";
-  } else {
-    TraceGuard trace_guard(GetLocation(target_object));
-    MS_EXCEPTION(TypeError) << "Only supported augassign to attribute of self, variable and index value, but got "
-                            << target_object.get_type()
-                            << ".\nMore details please refer to syntax support at https://www.mindspore.cn";
+    target_node = ParseExprNode(block, target_object);
   }
 
   if (target_node == nullptr) {
