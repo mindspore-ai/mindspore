@@ -32,7 +32,7 @@ void CommOpAttrs(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   AnfNodePtr return_node = graph->get_return();
   MS_EXCEPTION_IF_NULL(return_node);
-  std::vector<AnfNodePtr> all_nodes = TopoSort(return_node);
+  std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(return_node);
   for (auto &node : all_nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {

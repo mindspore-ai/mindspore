@@ -29,6 +29,7 @@
 namespace mindspore {
 namespace parallel {
 using TransformFunc = std::function<std::pair<std::string, std::vector<int64_t>>(const Operator &)>;
+using InferShapeFunc = std::function<Shape(const Shape &, const std::vector<int64_t> &)>;
 class TensorTransform {
  public:
   static std::shared_ptr<TensorTransform> GetInstance();
@@ -39,16 +40,24 @@ class TensorTransform {
   std::vector<std::pair<std::string, std::vector<int64_t>>> TransformOperators(const Shapes &from, const Shapes &to,
                                                                                const RankList &dev_list,
                                                                                int64_t rank_id);
+  RedistributionOpListPtr OptimizeTensorRedistributionOperatorList(
+    const RedistributionOpListPtr &redistribution_op_list, const Shape &input_shape);
 
  private:
   TensorTransform();
   std::unordered_map<string, TransformFunc> transform_operator_;
+  std::unordered_map<string, InferShapeFunc> infer_shape_operator_;
   bool inited_function_ = false;
   std::pair<std::string, std::vector<int64_t>> ExtractReshapeOp(const Operator &reshape_op_pair) const;
   std::pair<std::string, std::vector<int64_t>> ExtractAllGatherOp(const Operator &allgather_op_pair) const;
   std::pair<std::string, std::vector<int64_t>> ExtractSplitOp(const Operator &split_op_pair) const;
   std::pair<std::string, std::vector<int64_t>> ExtractConcatOp(const Operator &concat_op_pair) const;
   std::pair<std::string, std::vector<int64_t>> ExtractStridedSliceOp(const Operator &slice_op_pair) const;
+  Shape InferReshapeOp(const Shape &ori_shape, const std::vector<int64_t> &op) const;
+  Shape InferAllGatherOp(const Shape &ori_shape, const std::vector<int64_t> &op) const;
+  Shape InferStridedSliceOp(const Shape &ori_shape, const std::vector<int64_t> &op) const;
+  std::vector<Shape> GetRedistributionOpShape(
+    const Shape &ori_shape, const std::vector<std::pair<std::string, std::vector<int64_t>>> &transform_op_list);
   void OptimizeAllConcat(std::vector<std::pair<std::string, std::vector<int64_t>>> *transform_op_list);
   TensorRedistribution tensor_redistribution_;
 };

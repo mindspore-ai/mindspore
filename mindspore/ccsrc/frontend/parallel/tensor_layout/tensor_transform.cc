@@ -30,6 +30,7 @@ const size_t kIndex1 = 1;
 const size_t kIndex2 = 2;
 const size_t kSize2 = 2;
 const size_t kSize3 = 3;
+const size_t kSize1 = 1;
 
 TensorTransform::TensorTransform() {}
 
@@ -49,6 +50,15 @@ void TensorTransform::InitTransforOperator() {
   transform_operator_[SPLIT] = [this](auto op_pair) { return ExtractSplitOp(op_pair); };
   transform_operator_[CONCAT] = [this](auto op_pair) { return ExtractConcatOp(op_pair); };
   transform_operator_[STRIDEDSLICE] = [this](auto op_pair) { return ExtractStridedSliceOp(op_pair); };
+  infer_shape_operator_[RESHAPE] = [this](Shape ori_shape, std::vector<int64_t> op_pair) {
+    return InferReshapeOp(ori_shape, op_pair);
+  };
+  infer_shape_operator_[ALL_GATHER] = [this](Shape ori_shape, std::vector<int64_t> op_pair) {
+    return InferAllGatherOp(ori_shape, op_pair);
+  };
+  infer_shape_operator_[STRIDEDSLICE] = [this](Shape ori_shape, std::vector<int64_t> op_pair) {
+    return InferStridedSliceOp(ori_shape, op_pair);
+  };
   inited_function_ = true;
 }
 
@@ -185,6 +195,132 @@ std::vector<std::pair<std::string, std::vector<int64_t>>> TensorTransform::Trans
   ParallelContext::GetInstance()->set_do_transform(false);
   ParallelContext::GetInstance()->set_global_rank(origin_rank_id);
   return transform_op_list;
+}
+
+Shape TensorTransform::InferReshapeOp(const Shape &ori_shape, const std::vector<int64_t> &op) const {
+  if (std::accumulate(ori_shape.begin(), ori_shape.end(), 1, std::multiplies<int64_t>()) !=
+      std::accumulate(op.begin(), op.end(), 1, std::multiplies<int64_t>())) {
+    MS_LOG(EXCEPTION) << "Infer redistribution error, cannot convert shape: " << ori_shape << " to shape:" << op;
+  }
+  return op;
+}
+
+Shape TensorTransform::InferAllGatherOp(const Shape &ori_shape, const std::vector<int64_t> &op) const {
+  auto new_shape = ori_shape;
+  auto axis = op.back();
+  new_shape[LongToSize(axis)] = new_shape[LongToSize(axis)] * (op.size() - 1);
+  return new_shape;
+}
+
+Shape TensorTransform::InferStridedSliceOp(const Shape &ori_shape, const std::vector<int64_t> &op) const {
+  size_t end_index = size_t(op.size() / 3);
+  if (ori_shape.size() != end_index) {
+    MS_LOG(EXCEPTION) << "Infer redistribution error, the shape:" << ori_shape
+                      << " cannot be sliced with dimension size:" << end_index;
+  }
+  auto new_shape = ori_shape;
+  for (size_t i = 0; i < ori_shape.size(); ++i) {
+    new_shape[i] = (op[end_index + i] - op[i]) / op[kSize2 * end_index + i];
+  }
+  return new_shape;
+}
+
+std::vector<Shape> TensorTransform::GetRedistributionOpShape(
+  const Shape &ori_shape, const std::vector<std::pair<std::string, std::vector<int64_t>>> &transform_op_list) {
+  std::vector<Shape> result_shape;
+  auto cur_shape = ori_shape;
+  for (const auto &op : transform_op_list) {
+    auto op_name = op.first;
+    auto it = infer_shape_operator_.find(op_name);
+    if (it == infer_shape_operator_.end()) {
+      MS_LOG(EXCEPTION) << "The op:" << op_name << " cannot infer shape in redistribution.";
+    }
+    cur_shape = it->second(cur_shape, op.second);
+    result_shape.push_back(cur_shape);
+  }
+  return result_shape;
+}
+
+Operator ConstructReshapeOp(const std::vector<int64_t> &shape) {
+  OperatorAttrs attrs;
+  ValuePtr param_value = MakeValue(shape);
+  Attr param = std::make_pair(SHAPE, param_value);
+  OperatorParams params = {std::make_pair(param, 2)};
+  OperatorArgs args = std::make_pair(attrs, params);
+  return std::make_pair(RESHAPE, args);
+}
+
+RedistributionOpListPtr TensorTransform::OptimizeTensorRedistributionOperatorList(
+  const RedistributionOpListPtr &redistribution_op_list, const Shape &input_shape) {
+  // 1 operators_vector to transform_op_list
+  // 2 allgather->split->concat to allconcat
+  if ((redistribution_op_list->first).size() != (redistribution_op_list->second).size()) {
+    return redistribution_op_list;
+  }
+  auto operators_vector = redistribution_op_list->first;
+  std::vector<std::pair<std::string, std::vector<int64_t>>> transform_op_list;
+  for (auto op_pair : operators_vector) {
+    auto op_name = op_pair.first;
+    auto it = transform_operator_.find(op_name);
+    if (it == transform_operator_.end()) {
+      MS_LOG(WARNING) << "The op:" << op_name << " would not be optimized.";
+      return redistribution_op_list;
+    }
+    transform_op_list.push_back(it->second(op_pair));
+  }
+  OptimizeAllConcat(&transform_op_list);
+  auto shape_list = GetRedistributionOpShape(input_shape, transform_op_list);
+  size_t current_allgather_pos_in_origin_list = 0;
+  std::unordered_map<size_t, std::vector<int64_t>> left_reshape_op_list;
+  std::vector<size_t> allconcat_pos_list;
+  // 3 remove the dim which value is 1 for AllConcat
+  for (size_t i = 0; i < transform_op_list.size(); ++i) {
+    auto trans_op_pair = transform_op_list[i];
+    if (trans_op_pair.first != ALL_GATHER) {
+      current_allgather_pos_in_origin_list++;
+      continue;
+    }
+    auto axis = transform_op_list[i].second.back();
+    if (axis == 0) {
+      continue;
+    }
+    if (i == transform_op_list.size() - 1 || transform_op_list[i + 1].first != RESHAPE) {
+      continue;
+    }
+    auto src_shape = shape_list[i];
+    src_shape[LongToSize(axis)] = src_shape[LongToSize(axis)] / (transform_op_list[i].second.size() - 1);
+    auto new_axis = axis;
+    auto new_src_shape = src_shape;
+    for (int32_t j = axis - 1; j >= 0; --j) {
+      if (src_shape[j] != 1) {
+        continue;
+      }
+      new_src_shape.erase(new_src_shape.begin() + j);
+      new_axis -= 1;
+    }
+    MS_LOG(INFO) << "src_shape:" << src_shape << ", new_src_shape:" << new_src_shape << ", axis:" << axis
+                 << ", new_axis:" << new_axis;
+    if (new_axis != 0) {
+      continue;
+    }
+    left_reshape_op_list[current_allgather_pos_in_origin_list] = new_src_shape;
+    allconcat_pos_list.push_back(current_allgather_pos_in_origin_list);
+    current_allgather_pos_in_origin_list += kSize3;
+  }
+  // Insert reshape and adjust allgather-split-concat for redistribution_op_list
+  std::reverse(allconcat_pos_list.begin(), allconcat_pos_list.end());
+  for (auto pos : allconcat_pos_list) {
+    // erase split concat
+    redistribution_op_list->first.erase(redistribution_op_list->first.begin() + pos + kSize2);
+    redistribution_op_list->first.erase(redistribution_op_list->first.begin() + pos + kSize1);
+    redistribution_op_list->second.erase(redistribution_op_list->second.begin() + pos + kSize2);
+    redistribution_op_list->second.erase(redistribution_op_list->second.begin() + pos + kSize1);
+    // insert reshape before allgather
+    Operator left_reshape_op = ConstructReshapeOp(left_reshape_op_list[pos]);
+    redistribution_op_list->first.insert(redistribution_op_list->first.begin() + pos, left_reshape_op);
+    redistribution_op_list->second.insert(redistribution_op_list->second.begin() + pos, {false, 0});
+  }
+  return redistribution_op_list;
 }
 }  // namespace parallel
 }  // namespace mindspore
