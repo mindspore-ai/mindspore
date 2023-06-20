@@ -86,7 +86,7 @@ class AdamWFactory():
                     no_conv_params.append(param[1])
             group_params = [{'params': conv_params, 'weight_decay': 0.01, 'lr': 0.9, "betas": (0.88, 0.8)},
                             {'params': no_conv_params, 'lr': 0.66, "amsgrad": True}]
-            optimizer = torch.optim.AdamW(params=group_params, lr=self.lr, foreach=False)
+            optimizer = torch.optim.AdamW(params=group_params, lr=self.lr)
 
         criterion = torch.nn.L1Loss(reduction='mean')
         lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 2, gamma=0.5, last_epoch=-1)
@@ -234,7 +234,7 @@ def test_adamw_lr_dynamic(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_adamw_group_lr_dynamic(mode):
     """
     Feature: Test adamw.

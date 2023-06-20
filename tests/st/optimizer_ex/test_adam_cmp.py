@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import pytest
 import numpy as np
 import torch
+import mindspore
 from mindspore import nn
 from mindspore import Tensor, context
 from mindspore.nn.optim_ex import Adam
@@ -190,7 +191,7 @@ def test_adam_basic(mode):
     Description: Test adam with default parameter.
     Expectation: success.
     """
-    fact = AdamWFactory(False, False)
+    fact = AdamFactory(False, False)
     fact.result_cmp()
 
 

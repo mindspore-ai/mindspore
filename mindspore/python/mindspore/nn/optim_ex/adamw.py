@@ -174,26 +174,26 @@ class AdamW(Optimizer):
             bias_correction2_sqrt = self.op_sqrt(bias_correction2)
 
             if amsgrad:
-                next_max_exp_avg = self.op_maximum(max_exp_avg_sqs[i], next_exp_avg_sq)
+                next_max_exp_avg = self.op_maximum(max_exp_avg_sqs[i], exp_avg_sq)
                 denom = self.op_sqrt(next_max_exp_avg) / bias_correction2_sqrt + eps
                 F.assign(max_exp_avg_sqs[i], next_max_exp_avg)
             else:
-                denom = self.op_sqrt(next_exp_avg_sq) / bias_correction2_sqrt + eps
+                denom = self.op_sqrt(exp_avg_sq) / bias_correction2_sqrt + eps
 
-            return_param = next_param - self.op_mul(next_exp_avg / denom, step_size)
+            return_param = next_param - self.op_mul(exp_avg / denom, step_size)
             F.assign(param, return_param)
 
     def _init_group(self, group, gradients, params, grads, amsgrad, exp_avgs, exp_avg_sqs,
                     max_exp_avg_sqs, state_steps, group_id):
         """ Initialize group params. """
-        id = self.group_start_id[group_id]
+        p_id = self.group_start_id[group_id]
         for i, param in enumerate(group["params"]):
-            grad = gradients[id+i]
+            grad = gradients[p_id+i]
             grads.append(grad)
             params.append(param)
-            exp_avgs.append(self.exp_avg[id+i])
-            exp_avg_sqs.append(self.exp_avg_sq[id+i])
+            exp_avgs.append(self.exp_avg[p_id+i])
+            exp_avg_sqs.append(self.exp_avg_sq[p_id+i])
             if amsgrad:
-                max_exp_avg_sqs.append(self.max_exp_avg_sq[id+i])
-            state_steps.append(self.state_step[id+i])
+                max_exp_avg_sqs.append(self.max_exp_avg_sq[p_id+i])
+            state_steps.append(self.state_step[p_id+i])
         return params, grads, exp_avgs, exp_avg_sqs, max_exp_avg_sqs, state_steps
