@@ -265,7 +265,11 @@ bool GraphKernelInputToAttrConverter::EliminateConstInput(const AnfNodePtr &grap
       if (primitive == nullptr) {
         continue;
       }
-      if (ConvertOpUtils::NeedConvert(primitive->name())) {
+      auto prim_name = primitive->name();
+      if (ConvertOpUtils::NeedConvert(prim_name)) {
+        if (prim_name == prim::kPrimTupleGetItem->name()) {
+          continue;
+        }
         auto indices = ConvertOpUtils::GetIndices(primitive->name());
         (void)ConvertOpUtils::ConstInputToAttr(node, indices);
         changed = true;

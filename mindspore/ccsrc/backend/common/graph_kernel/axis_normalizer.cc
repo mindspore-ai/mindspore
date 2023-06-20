@@ -41,7 +41,7 @@ bool AxisNormalizer::IsReduce(const AnfNodePtr &node) const {
 bool AxisNormalizer::AxisProcess(ValuePtr axis, const size_t rank, ShapeVector *axis_vec) const {
   bool diff = false;
   if (axis->isa<Int32Imm>() || axis->isa<Int64Imm>()) {
-    auto v1 = GetValue<int64_t>(axis);
+    auto v1 = AnfUtils::GetIntValue(axis);
     auto v2 = NormAxis(v1, rank);
     axis_vec->push_back(v2);
   } else if (axis->isa<ValueSequence>()) {
