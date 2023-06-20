@@ -1102,8 +1102,11 @@ _tensor_index_setitem = _TensorIndexSetitem('tensor_index_setitem')
 
 
 def tensor_setitem_by_slice(self, index, value):
+    """Set a tensor item by slice."""
     indices, value_shape, start, stop, step, value = _tensor_index_setitem(
         self, index, value)
+    if start == stop:
+        return self
     value = F.broadcast_to(value, value_shape)
     if not const_utils.is_ascend() and step == 1:
         if isinstance(step, Tensor):

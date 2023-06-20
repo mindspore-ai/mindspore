@@ -197,7 +197,9 @@ void TensorIndexSetitem::SetItemBySlice(const AnfNodePtr &data_node, const AnfNo
     AnfNodePtr normalized_slice_node =
       NormalizeSliceInfo(data_node, index_node, index_handle_level, abs_slice_ptr, &is_empty_slice);
     if (is_empty_slice) {
-      return res_graph_->set_output(data_node);
+      auto stub_outputs = AnfNodePtrList(6, NewValueNode(SizeToLong(0)));
+      (void)output_nodes.insert(output_nodes.end(), stub_outputs.begin(), stub_outputs.end());
+      return res_graph_->set_output(res_graph_->NewCNode(output_nodes));
     }
     auto slice_info = GetValue<std::vector<int64_t>>(GetValueNode(normalized_slice_node));
     int64_t start = slice_info[kIndex0];
@@ -236,7 +238,8 @@ void TensorIndexSetitem::SetItemBySlice(const AnfNodePtr &data_node, const AnfNo
   auto new_value_node = value_node;
   auto type_id = dyn_cast<abstract::AbstractTensor>(data)->element()->BuildType();
   if (value->isa<abstract::AbstractTensor>()) {
-    auto cast_node = NewValueNode(prim::kPrimCast);
+    auto cast = prim::GetPythonOps("cast", "mindspore.ops.functional");
+    ValueNodePtr cast_node = NewValueNode(cast);
     new_value_node = res_graph_->NewCNode({cast_node, value_node, NewValueNode(type_id)});
   } else if (value->isa<abstract::AbstractScalar>()) {
     new_value_node = res_graph_->NewCNode(
