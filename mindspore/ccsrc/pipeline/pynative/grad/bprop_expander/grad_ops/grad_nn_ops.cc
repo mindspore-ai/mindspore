@@ -1909,5 +1909,24 @@ REG_BPROP_BUILDER("PadV3").SetUnusedInputs({i0, i1, i3}).SetBody(BODYFUNC(ib) {
 
 REG_BPROP_BUILDER("MaximumGrad").SetUnusedInputs({i0, i1, i2}).SetBody(CommonMaxMinGradBprop);
 REG_BPROP_BUILDER("MinimumGrad").SetUnusedInputs({i0, i1, i2}).SetBody(CommonMaxMinGradBprop);
+
+REG_BPROP_BUILDER("WKV").SetBody(BODYFUNC(ib) {
+  auto w = ib->GetInput(kIndex0);
+  auto u = ib->GetInput(kIndex1);
+  auto k = ib->GetInput(kIndex2);
+  auto v = ib->GetInput(kIndex3);
+  auto sp = ib->GetInput(kIndex4);
+  auto sq = ib->GetInput(kIndex5);
+  auto sm = ib->GetInput(kIndex6);
+  auto dout = ib->GetInput(kIndex8);
+  auto dy = ib->TupleGetItem(dout, kIndex0);
+  auto grad = ib->Emit("WKVGrad", {w, u, k, v, dy});
+  std::vector<int64_t> axis = {0};
+  auto gw = ib->ReduceSum(ib->TupleGetItem(grad, kIndex0), axis);
+  auto gu = ib->ReduceSum(ib->TupleGetItem(grad, kIndex1), axis);
+  auto gk = ib->TupleGetItem(grad, kIndex2);
+  auto gv = ib->TupleGetItem(grad, kIndex3);
+  return {gw, gu, gk, gv, ib->ZerosLike(sp), ib->ZerosLike(sq), ib->ZerosLike(sm)};
+});
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop
