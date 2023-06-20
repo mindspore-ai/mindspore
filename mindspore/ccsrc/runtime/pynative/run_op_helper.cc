@@ -676,14 +676,13 @@ void UpdateInputInCompileInfo(const OpCompilerInfoPtr &op_compiler_info, const s
       // Update cached input info by input tensor info
       UpdateTensorCache(device_context, device_address, op_compiler_info->inputs_[i], input_tensor,
                         op_compiler_info->graph_->inputs()[i]);
-      if (skip_sync) {
-        (*address_map_to_tensor)[op_compiler_info->inputs_[i]] = input_tensor;
-      }
     } else {
       // Create new device address using tensor and cached device address
       auto new_device_address = CreateTensorDeviceAddressWithTensorAndCachedInfo(
         op_compiler_info, input_tensor, op_compiler_info->inputs_[i], op_compiler_info->graph_->inputs()[i], skip_sync);
-      input_tensor->set_device_address(new_device_address);
+      if (!skip_sync) {
+        input_tensor->set_device_address(new_device_address);
+      }
       (*address_map_to_tensor)[op_compiler_info->inputs_[i]] = input_tensor;
     }
   }
