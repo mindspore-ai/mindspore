@@ -119,10 +119,7 @@ ParamInfoPtr GetParamDefaultValue(const AnfNodePtr &node) {
 #ifndef ENABLE_SECURITY
 bool ExistSummaryNode(const KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  auto ret = graph->get_return();
-  MS_EXCEPTION_IF_NULL(ret);
-  auto all_nodes = DeepLinkedGraphSearch(ret);
-  for (auto &n : all_nodes) {
+  for (auto &n : TopoSort(graph->get_return())) {
     if (AnfAlgo::IsSummaryNode(n)) {
       return true;
     }

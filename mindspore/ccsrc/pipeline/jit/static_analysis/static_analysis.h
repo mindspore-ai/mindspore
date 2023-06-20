@@ -330,7 +330,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   EvalResultPtr ForwardConfig(const AnfNodeConfigPtr &orig_conf, const AnfNodeConfigPtr new_conf);
   const PrimEvaluatorMap &PrimConstructors() const { return prim_constructors_; }
 
-  FuncGraphPtr root_func_graph() const { return root_func_graph_; }
+  FuncGraphPtr root_func_graph() const { return root_func_graph_.lock(); }
   AnalysisContextPtr root_context() const { return root_context_; }
   void set_root_context(const AnalysisContextPtr &context) { root_context_ = context; }
 
@@ -374,7 +374,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   std::map<EvaluatorPtr, EvaluatorPtr> multi_poss_;
   std::unordered_set<EvaluatorArgs, EvaluatorArgsHasher, EvaluatorArgsEqual> continued_evals_;
   // Root or top func_graph for static analysis;
-  FuncGraphPtr root_func_graph_{nullptr};
+  FuncGraphWeakPtr root_func_graph_;
   AnalysisContextPtr root_context_{nullptr};
 
   AnalysisContextPtr Run(const FuncGraphPtr &func_graph, const AnalysisContextPtr &context,

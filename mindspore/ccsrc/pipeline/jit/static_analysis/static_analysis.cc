@@ -806,7 +806,6 @@ void AnalysisEngine::Clear() {
   prim_py_evaluators_.clear();
   constructors_app_.clear();
   continued_evals_.clear();
-  root_func_graph_ = nullptr;
   root_context_ = nullptr;
 }
 

@@ -21,9 +21,9 @@ namespace mindspore {
 namespace opt {
 namespace irpass {
 bool ExpandMetaFg::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) {
-  AnfNodePtr return_node = func_graph->get_return();
-  MS_EXCEPTION_IF_NULL(return_node);
-  std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(return_node);
+  auto manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  const auto &all_nodes = manager->all_nodes();
   // The expanding of meta fg may change the number of outer layer meta fgs.
   // So, find all kinds of candidate meta fgs together and then expands them.
   for (auto expand_meta_fg_element : expand_meta_fg_list_) {

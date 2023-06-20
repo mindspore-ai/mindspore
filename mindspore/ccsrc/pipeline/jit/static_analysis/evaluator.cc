@@ -454,6 +454,7 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
 
   auto func_graph_evaluator = mindspore::cast<FuncGraphEvaluator>(this);
   if (func_graph_evaluator != nullptr) {
+    MS_EXCEPTION_IF_NULL(engine->root_func_graph());
     if (engine->root_func_graph() == func_graph_evaluator->func_graph()) {
       engine->set_root_context(context);
     }

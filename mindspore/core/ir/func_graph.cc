@@ -53,6 +53,18 @@ FuncGraph::FuncGraph(GraphDebugInfoPtr &&debug_info)
       stage_(-1),
       phase_(PhaseManager::GetInstance().phase()) {}
 
+FuncGraph::~FuncGraph() {
+  auto nodes = mindspore::TopoSort(return_);
+  OrderedMap<FuncGraph *, size_t> sub_graphs_used_count_in_current_scope;
+  for (const auto &node : nodes) {
+    if (node->isa<CNode>() && node->func_graph().get() == this) {
+      node->cast<CNodePtr>()->set_inputs({});
+    }
+  }
+  DoBreakLoop();
+  subclass_destruct_flag_ = true;
+}
+
 void FuncGraph::DoBreakLoop() {
   if (attached_mng_cnt() > 0) {
     MS_LOG(INFO) << "Current Graph is holding by FuncGraphManager, can't DoBreakLoop now.";

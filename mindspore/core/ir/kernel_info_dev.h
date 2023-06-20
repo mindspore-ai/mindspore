@@ -38,7 +38,8 @@ class RuntimeCache {
   std::pair<AnfNodePtr, size_t> get_prev_node_output(size_t index) {
     auto it = prev_node_output_map_.find(index);
     if (it != prev_node_output_map_.end()) {
-      return it->second;
+      MS_EXCEPTION_IF_NULL(it->second.first.lock());
+      return std::make_pair(it->second.first.lock(), it->second.second);
     } else {
       return std::pair<AnfNodePtr, size_t>();
     }
@@ -77,7 +78,7 @@ class RuntimeCache {
 
  private:
   bool is_valid_{false};
-  std::map<size_t, std::pair<AnfNodePtr, size_t>> prev_node_output_map_;
+  std::map<size_t, std::pair<AnfNodeWeakPtr, size_t>> prev_node_output_map_;
   std::string device_target_;
   ssize_t output_tensor_num_ = -1;
   CacheBool is_real_kernel_ = Uncached;

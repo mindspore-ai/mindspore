@@ -177,9 +177,9 @@ class ConvertSwitchReplacement {
   virtual ~ConvertSwitchReplacement() = default;
 
   bool operator()(const FuncGraphPtr &root, const OptimizerPtr &) const {
-    AnfNodePtr ret = root->get_return();
-    MS_EXCEPTION_IF_NULL(ret);
-    std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
+    auto manager = root->manager();
+    MS_EXCEPTION_IF_NULL(manager);
+    auto all_nodes = manager->all_nodes();
 
     bool change = false;
     for (auto &node : all_nodes) {
