@@ -18,6 +18,7 @@ from __future__ import absolute_import
 import math
 
 from mindspore import _checkparam as Validator
+from mindspore.common._auto_dynamic import is_auto_dynamic, convert_new_shapes
 from mindspore.common.dtype import pytype_to_dtype
 from mindspore.common.api import _cell_graph_executor
 from mindspore.common._utils import is_shape_unknown
@@ -66,6 +67,11 @@ def _dynamic_sink_exception_scenario(dataset_iter, is_dynamic):
 def _dynamic_sink_scenario(dataset, dataset_iter, is_dynamic):
     """Special scenario with dynamic shape and sink_size=1."""
     flag = False
+
+    # This is used only for test
+    if is_auto_dynamic():
+        return False
+
     if _dynamic_sink_data(dataset, dataset_iter) and not _dynamic_sink_exception_scenario(dataset_iter, is_dynamic):
         flag = True
 
@@ -115,6 +121,12 @@ def _generate_network_with_dataset(network, dataset_helper, queue_name):
     Generate new network with network and dataset info.
     """
     dataset_types, dataset_shapes = dataset_helper.types_shapes()
+
+    # This is used only for test
+    if is_auto_dynamic():
+        new_shapes = convert_new_shapes(dataset_shapes)
+        return _generate_dataset_sink_mode_net(network, new_shapes, dataset_types, queue_name)
+
     if network.get_inputs() and None not in network.get_inputs():
         _check_inputs(network.get_inputs(), dataset_shapes, dataset_types)
     elif context.get_context("mode") == context.PYNATIVE_MODE:
