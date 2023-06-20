@@ -48,7 +48,7 @@ function Run_Converter() {
     mkdir -p ${ms_models_path}
 
     cur_timestamp=$((`date '+%s'`*1000+10#`date '+%N'`/1000000))
-    fail_status_file=${cur_timestamp}.log
+    fail_status_file=${x86_path}/mindspore-lite-${version}-linux-x64/${cur_timestamp}.log
     echo '0' > ${fail_status_file}
 
     # parallel processing
