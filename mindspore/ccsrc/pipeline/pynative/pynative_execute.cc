@@ -26,6 +26,7 @@
 #include "pipeline/jit/pass.h"
 #include "runtime/pynative/op_executor.h"
 #include "runtime/pynative/op_compiler.h"
+#include "include/common/profiler.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "ir/cell.h"
 #include "abstract/utils.h"
@@ -92,6 +93,7 @@ void PyNativeExecutor::StoreAsyncStatus(const FrontendOpRunInfoPtr &op_run_info)
 }
 
 py::object PyNativeExecutor::RunOpStub(const py::args &args) const {
+  runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kRunOp);
   FrontendOpRunInfoPtr op_run_info = forward_executor()->GenerateOpRunInfo(args, true);
   SetCallbackForInputTensor(op_run_info);
 
@@ -186,7 +188,11 @@ void PyNativeExecutor::Init() {
   forward_executor_->set_grad_executor(grad_executor_);
 }
 
-void PyNativeExecutor::Sync() const { forward_executor()->Sync(); }
+void PyNativeExecutor::Sync() const {
+  forward_executor()->Sync();
+  runtime::ProfilerAnalyzer::GetInstance().EndStep();
+  runtime::ProfilerAnalyzer::GetInstance().StartStep();
+}
 
 void PyNativeExecutor::SetHookChanged(const py::object &cell) const {
   if (!py::isinstance<Cell>(cell)) {
@@ -233,12 +239,14 @@ void PyNativeExecutor::EndGraph(const py::object &obj, const py::object &out, co
 }
 
 py::object PyNativeExecutor::Run() const {
+  runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kRunGradGraph);
   const auto &ret = PyNativeExecutorTry(grad_executor()->RunGraph);
   return ret;
 }
 
 void PyNativeExecutor::GradNet(const prim::GradOperationPtr &grad, const py::object &cell, const py::object &weights,
                                const py::object &grad_position, const py::args &args) const {
+  runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kCompileGradGraph);
   PyNativeExecutorTry(grad_executor()->GradGraph, grad, cell, weights, grad_position, args);
 }
 

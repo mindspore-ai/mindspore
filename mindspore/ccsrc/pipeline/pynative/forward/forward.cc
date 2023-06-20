@@ -627,6 +627,7 @@ bool ForwardExecutor::CellNotSetMixedPrecision(const FrontendOpRunInfoPtr &op_ru
 }
 
 void ForwardExecutor::ExecuteLazyTask() const {
+  runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kWaitPipeline);
   GilReleaseWithCheck gil_release;
   runtime::OpExecutor::GetInstance().WaitAll();
 }
@@ -674,6 +675,7 @@ void ForwardExecutor::ProcessBeforeEndGraph(const py::object &obj, bool is_cell)
   // Do some finishing work before end graph
   if (IsFirstCell()) {
     if (frontend_queue_ != nullptr) {
+      runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kWaitPipeline);
       GilReleaseWithCheck gil_release;
       frontend_queue_->Wait();
       backend_queue_->Wait();
@@ -712,6 +714,7 @@ std::string ForwardExecutor::GetCurrentDeviceTarget(const PrimitivePtr &op_prim)
 void ForwardExecutor::Sync() {
   ExecuteLazyTask();
 
+  runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kSyncStream);
   for (auto &item : mindrt_backends_) {
     MS_EXCEPTION_IF_NULL(item.second);
     item.second->SyncStream();

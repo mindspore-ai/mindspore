@@ -28,7 +28,7 @@
 #include "runtime/graph_scheduler/optimizer/batch_data_arrow_fusion.h"
 #include "runtime/graph_scheduler/optimizer/multi_actor_fusion.h"
 #include "runtime/hardware/device_context_manager.h"
-#include "runtime/profiler/profiler.h"
+#include "include/common/profiler.h"
 #include "mindrt/src/actor/actormgr.h"
 #include "mindrt/include/async/async.h"
 #include "include/backend/anf_runtime_algorithm.h"

@@ -64,7 +64,7 @@
 #ifdef ENABLE_DUMP_IR
 #include "include/common/debug/anf_ir_dump.h"
 #endif
-#include "runtime/profiler/profiler.h"
+#include "include/common/profiler.h"
 
 namespace mindspore {
 namespace device {

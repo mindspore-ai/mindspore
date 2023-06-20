@@ -21,6 +21,7 @@
 #include "mindspore/core/ops/array_ops.h"
 #include "pipeline/pynative/pynative_utils.h"
 #include "include/common/utils/stub_tensor.h"
+#include "include/common/profiler.h"
 
 namespace mindspore {
 namespace pynative {
@@ -90,6 +91,8 @@ ValuePtr ScalarToDstDtypeValue(const ValuePtr &src_value, const TypeId &dst_type
 const char kOpsFunctionModelName[] = "mindspore.ops.functional";
 
 void CastOperation::DoCast(const FrontendOpRunInfoPtr &op_run_info) {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeCast,
+                                     op_run_info->base_op_run_info.op_name, true);
   // Mixed precision conversion tensors which has cast dtype
   SetTensorMixPrecisionCast(op_run_info);
   // Implicit transform

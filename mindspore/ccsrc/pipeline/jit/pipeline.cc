@@ -73,7 +73,7 @@
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/pynative/op_executor.h"
 #include "runtime/device/stream_synchronizer.h"
-#include "runtime/profiler/profiler.h"
+#include "include/common/profiler.h"
 #include "include/backend/distributed/collective/collective_manager.h"
 #include "include/common/utils/dynamic_obfuscation/dynamic_obfuscation.h"
 #include "include/common/utils/dynamic_obfuscation/registry_opaque_predicate.h"

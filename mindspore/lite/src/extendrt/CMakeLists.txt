@@ -150,7 +150,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CCSRC_DIR}/runtime/device/common_somas_allocator.cc
         ${CCSRC_DIR}/runtime/pynative/op_runtime_info.cc
         ${CCSRC_DIR}/runtime/hardware/device_type.cc
-        ${CCSRC_DIR}/runtime/profiler/profiler.cc
         ${CCSRC_DIR}/kernel/kernel_build_info.cc
         ${CCSRC_DIR}/kernel/common_utils.cc
         ${CCSRC_DIR}/kernel/kernel_factory.cc
@@ -163,6 +162,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CCSRC_DIR}/common/debug/env_config_parser.cc
         ${CCSRC_DIR}/backend/common/mem_reuse/mem_dynamic_allocator.cc
         ${CCSRC_DIR}/common/thread_pool.cc
+        ${CCSRC_DIR}/common/profiler.cc
         ${CCSRC_DIR}/utils/scoped_long_running.cc
         ${CCSRC_DIR}/utils/cse.cc
         ${CCSRC_DIR}/utils/comm_manager.cc

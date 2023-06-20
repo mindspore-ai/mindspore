@@ -15,6 +15,7 @@
  */
 
 #include "runtime/pynative/async/device_task.h"
+#include "include/common/profiler.h"
 
 namespace mindspore {
 namespace pynative {
@@ -30,6 +31,8 @@ void DeviceOpBuildTask::SetBuildReady(bool build_success) {
 }
 
 void DeviceOpRunTask::Run() {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeDeviceTask,
+                                     std::string(), false);
   MS_LOG(DEBUG) << "Wait for build";
   auto build_status = future_.get();
   if (!build_status) {

@@ -33,7 +33,7 @@
 #include "utils/ms_context.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindspore/ccsrc/plugin/device/cpu/kernel/pyexecute/py_execute_cpu_kernel.h"
-#include "runtime/profiler/profiler.h"
+#include "include/common/profiler.h"
 
 namespace mindspore {
 namespace opt::dynamic_shape {

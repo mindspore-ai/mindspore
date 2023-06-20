@@ -18,14 +18,25 @@
 
 #include <memory>
 #include "include/common/utils/tensor_future.h"
+#include "include/common/profiler.h"
 
 namespace mindspore {
 namespace pynative {
-void FrontendTask::Run() { run_func_(op_run_info_); }
+void FrontendTask::Run() {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeFrontendTask,
+                                     std::string(), false);
+  run_func_(op_run_info_);
+  op_run_info_ = nullptr;
+}
 
 void FrontendTask::SetException(const std::exception_ptr &e) { op_run_info_->stub_output->SetException(e); }
 
-void BackendTask::Run() { run_func_(op_run_info_, backend_op_run_info_); }
+void BackendTask::Run() {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeBackendTask,
+                                     std::string(), false);
+  run_func_(op_run_info_, backend_op_run_info_);
+  op_run_info_ = nullptr;
+}
 
 void BackendTask::SetException(const std::exception_ptr &e) {
   if (backend_op_run_info_ != nullptr) {

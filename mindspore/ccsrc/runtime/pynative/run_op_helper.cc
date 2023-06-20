@@ -519,11 +519,15 @@ void InferNodeRealShape(const CNodePtr &kernel) {
 
 kernel::KernelArgs InferNodeRealShape(const CNodePtr &kernel, const pynative::ExecuteKernelInfo &execute_kernel,
                                       const std::vector<tensor::TensorPtr> &input_tensors) {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelInfer,
+                                     kernel->fullname_with_scope(), false);
   MS_EXCEPTION_IF_NULL(kernel);
   return opt::dynamic_shape::InferOp(kernel, execute_kernel, input_tensors);
 }
 
 void ResizeNodeInput(const CNodePtr &kernel, const kernel::KernelArgs &args) {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelResize,
+                                     kernel->fullname_with_scope(), false);
   MS_EXCEPTION_IF_NULL(kernel);
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);

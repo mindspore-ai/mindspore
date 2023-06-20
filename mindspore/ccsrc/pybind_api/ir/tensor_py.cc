@@ -25,6 +25,7 @@
 #include "include/common/utils/python_adapter.h"
 #include "mindspore/ccsrc/include/backend/distributed/embedding_cache/embedding_cache_utils.h"
 #include "pybind_api/ir/tensor_index_py.h"
+#include "include/common/profiler.h"
 
 namespace mindspore {
 namespace tensor {
@@ -450,6 +451,7 @@ void TensorPy::FlushFromCache(const Tensor &tensor) {
 }
 
 py::array TensorPy::SyncAsNumpy(const Tensor &tensor) {
+  runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kAsnumpy);
   {
     py::gil_scoped_release gil_release;
     if (tensor.NeedWait()) {
