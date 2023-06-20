@@ -499,7 +499,8 @@ def _run_opt_with_one_number_use_amsgrad(opt, sparse_opt, push, pull,
                                               (op_shape(param), op_shape(moment1), op_shape(moment2),
                                                op_shape(vhat))), param))
     else:
-        success = F.depend(success, opt(param, moment1, moment2, vhat, beta1_power, beta2_power, lr, gradient))
+        success = F.depend(success, opt(param, moment1, moment2, vhat, beta1_power, beta2_power,
+                                        lr, beta1, beta2, eps, gradient))
     return success
 
 
@@ -797,7 +798,7 @@ class Adam(Optimizer):
         else:
             self._is_device = True
             if use_amsgrad:
-                self.opt = P.ApplyAdamWithAmsgrad(beta1, beta2, eps, use_locking)
+                self.opt = P.ApplyAdamWithAmsgradV2(use_locking)
             else:
                 self.opt = P.Adam(use_locking, use_nesterov)
             self.sparse_opt = P.FusedSparseAdam(use_locking, use_nesterov)
