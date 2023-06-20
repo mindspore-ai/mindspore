@@ -37,7 +37,8 @@ abstract::ShapePtr BufferAppendInferShape(const PrimitivePtr &primitive,
   AbstractBasePtrList exp_shape = input_args[kInputIndex1]->cast<abstract::AbstractSequencePtr>()->elements();
   auto count_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
 
-  (void)CheckAndConvertUtils::CheckInteger("exp elements ", exp_shape.size(), kEqual, data_shape.size(), op_name);
+  (void)CheckAndConvertUtils::CheckInteger("exp elements ", SizeToLong(exp_shape.size()), kEqual,
+                                           SizeToLong(data_shape.size()), op_name);
   int64_t exp_batch = 1;
   if (data_shape[0]->BuildShape()->cast<abstract::ShapePtr>()->shape().size() ==
       exp_shape[0]->BuildShape()->cast<abstract::ShapePtr>()->shape().size()) {

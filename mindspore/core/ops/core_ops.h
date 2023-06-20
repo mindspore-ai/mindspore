@@ -1897,7 +1897,7 @@ GVAR_DEF(PrimitivePtr, kPrimReservoirReplayBufferPush, std::make_shared<Primitiv
 GVAR_DEF(PrimitivePtr, kPrimReservoirReplayBufferSample, std::make_shared<Primitive>("ReservoirReplayBufferSample"));
 GVAR_DEF(PrimitivePtr, kPrimReservoirReplayBufferDestroy, std::make_shared<Primitive>("ReservoirReplayBufferDestroy"));
 GVAR_DEF(PrimitivePtr, kPrimOCRDetectionPreHandle, std::make_shared<Primitive>("OCRDetectionPreHandle"));
-GVAR_DEF(PrimitivePtr, kPrimBufferAppend, std::make_shared<Primitive>(kBufferAppend));
+GVAR_DEF(PrimitivePtr, kPrimBufferAppend, std::make_shared<Primitive>("BufferAppend"));
 
 // Real tuple and list ops.
 GVAR_DEF(PrimitivePtr, kPrimTupleToTensor, std::make_shared<Primitive>(kTupleToTensor));
