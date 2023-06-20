@@ -43,7 +43,7 @@ void LiteKernel::FreeWorkspace() {
 
 int LiteKernel::PreProcess() {
   if (!InferShapeDone()) {
-    auto ret = lite::KernelInferShape(in_tensors_, out_tensors_, op_parameter_, ms_context_->allocator);
+    auto ret = InferShape();
     if (ret != 0) {
       MS_LOG(ERROR) << "InferShape fail!";
       return ret;

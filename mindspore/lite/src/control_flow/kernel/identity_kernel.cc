@@ -43,31 +43,49 @@ int IdentityKernel::Run() {
 }
 
 int IdentityKernel::PreProcess() {
+  auto ret = InferShape();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "infer shape failed.";
+    return ret;
+  }
+  ret = ReSize();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "resize failed.";
+    return ret;
+  }
+  return RET_OK;
+}
+
+int IdentityKernel::InferShape() {
   if (in_tensors().size() != out_tensors().size()) {
     MS_LOG(ERROR) << "output kernel in_tensors size is not same as out_tensors size.";
     return lite::RET_ERROR;
   }
-  auto ret = lite::RET_OK;
+  need_resize_.resize(in_tensors().size());
   for (size_t i = 0; i < in_tensors().size(); ++i) {
     auto src_tensor = in_tensors()[i];
     auto dst_tensor = out_tensors()[i];
-    bool need_resize = false;
-    if (!IsSameShape(src_tensor, dst_tensor)) {
-      need_resize = true;
-    }
-    ret = SetTensorShape(dst_tensor, src_tensor);
-    MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "set input shape failed.");
-    if (need_resize) {
-      ret = lite::MallocTensorData(dst_tensor);
-      MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "malloc dst tensor data failed.");
+    need_resize_[i] = !IsSameShape(src_tensor, dst_tensor);
+    auto ret = SetTensorShape(dst_tensor, src_tensor);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "set output shape failed.";
+      return ret;
     }
   }
-  return ret;
+  return RET_OK;
 }
 
 int IdentityKernel::PostProcess() { return lite::RET_OK; }
 
-int IdentityKernel::ReSize() { return PreProcess(); }
+int IdentityKernel::ReSize() {
+  for (size_t i = 0; i < in_tensors().size(); ++i) {
+    if (need_resize_[i]) {
+      auto ret = lite::MallocTensorData(out_tensors_[i]);
+      MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "malloc dst tensor data failed.");
+    }
+  }
+  return RET_OK;
+}
 
 KernelExec *IdentityKernel::Create(std::vector<lite::Tensor *> in_tensors, std::vector<lite::Tensor *> out_tensors,
                                    const lite::InnerContext *ctx) {

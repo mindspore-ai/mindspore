@@ -89,25 +89,7 @@ int SubGraphKernel::ReSize() {
     for (auto &output : outputs) {
       output->FreeData();
     }
-    auto ret = lite::KernelInferShape(inputs, outputs, kernel->kernel()->primitive(), kernel->Context()->GetProviders(),
-                                      schema_version_, kernel->kernel());
-    if (ret == lite::RET_NOT_SUPPORT) {
-      auto parameter = kernel->op_parameter();
-      if (parameter == nullptr) {
-        MS_LOG(ERROR) << "kernel(" << kernel->name() << ")'s op_parameter is nullptr!";
-        return RET_ERROR;
-      }
-      // replace with custom op in the future.
-      if (parameter->type_ == static_cast<int>(PrimType::PrimType_Inner_Identity)) {
-        ret = kernel->ReSize();
-        if (ret != RET_OK) {
-          MS_LOG(ERROR) << "kernel " << kernel->name() << " resize fail!ret = " << ret;
-          return ret;
-        }
-        continue;
-      }
-      ret = lite::KernelInferShape(inputs, outputs, parameter, context_->allocator);
-    }
+    auto ret = kernel->InferShape();
     if (ret == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape shouldn't be done before runtime, type:"
                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(kernel->type()))
