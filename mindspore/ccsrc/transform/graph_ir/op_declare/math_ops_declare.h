@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_MATH_OPS_DECLARE_H_
 
 #include "inc/ops/math_ops.h"
+#include "inc/ops/spectral_ops.h"
 #include "mindspore/ccsrc/include/common/utils/utils.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
@@ -96,4 +97,7 @@ DECLARE_OP_USE_OUTPUT(InitData)
 
 DECLARE_OP_ADAPTER(GetNext)
 DECLARE_OP_USE_DYN_OUTPUT(GetNext)
+
+DECLARE_OP_ADAPTER(STFT)
+DECLARE_OP_USE_OUTPUT(STFT)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_MATH_OPS_DECLARE_H_

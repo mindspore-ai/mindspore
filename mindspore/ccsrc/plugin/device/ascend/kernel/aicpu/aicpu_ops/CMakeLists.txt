@@ -55,6 +55,7 @@ if(EXISTS ${CMAKE_C_COMPILER} AND EXISTS ${CMAKE_CXX_COMPILER})
         ${CMAKE_CURRENT_SOURCE_DIR}/replay_buffer/priority_replay_buffer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/replay_buffer/priority_replay_buffer_kernels.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/concat_offset_kernel.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/meshgrid_kernels.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/drop_out_gen_mask_kernels.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/sequence_add.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/sequence_addn.cc

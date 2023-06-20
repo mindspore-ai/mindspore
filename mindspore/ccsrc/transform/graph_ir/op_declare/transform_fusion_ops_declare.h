@@ -19,7 +19,7 @@
 
 #include "utils/hash_map.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
-#include "transform/graph_ir/custom_op_proto/kv_cache_mgr.h"
+#include "transform/graph_ir/custom_op_proto/cust_other_ops.h"
 #include "transform/graph_ir/custom_op_proto/flash_attention.h"
 
 DECLARE_OP_ADAPTER(KVCacheMgr)

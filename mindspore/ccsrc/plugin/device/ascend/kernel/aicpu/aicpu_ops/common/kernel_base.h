@@ -19,7 +19,6 @@
 #include <cstdint>
 #include <vector>
 #include <string>
-#include <limits>
 
 #include "common/kernel_util.h"
 #include "aicpu/common/aicpu_task_struct.h"
@@ -80,37 +79,5 @@ class KernelBase {
   std::vector<FWKAdapter::ShapeAndType *> input_shape_and_type_;
   std::vector<FWKAdapter::ShapeAndType *> output_shape_and_type_;
 };
-
-inline size_t IntToSize(int u) {
-  if (u < 0) {
-    AICPU_LOGE("The int value [%d] is less than 0.", u);
-    return SIZE_MAX;
-  }
-  return static_cast<size_t>(u);
-}
-
-inline int SizeToInt(size_t u) {
-  if (u > static_cast<size_t>((std::numeric_limits<int>::max)())) {
-    AICPU_LOGE("The size_t value [%lu] exceeds the maximum value of int.", u);
-    return INT_MAX;
-  }
-  return static_cast<int>(u);
-}
-
-inline size_t LongToSize(int64_t u) {
-  if (u < 0) {
-    AICPU_LOGE("The int64_t value [%ld] is less than 0.", u);
-    return SIZE_MAX;
-  }
-  return static_cast<size_t>(u);
-}
-
-inline int32_t LongToInt(int64_t u) {
-  if (u > static_cast<int64_t>((std::numeric_limits<int32_t>::max)())) {
-    AICPU_LOGE("The size_t value [%ld] exceeds the maximum value of int.", u);
-    return INT_MAX;
-  }
-  return static_cast<int32_t>(u);
-}
 }  // namespace aicpu
 #endif  // AICPU_OPS_AICPU_COMMON_KERNEL_BASE_H_

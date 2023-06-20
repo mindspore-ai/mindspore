@@ -14,13 +14,13 @@ endif()
 
 # add source files
 aux_source_directory(. SRCS)
-set(SRCS ${SRCS}
-    ../utils/util.cc
-    ../utils/transfer_shape_according_to_format.cc
-    ../utils/axis_util.cc
-    ../src/error_util.cc
-    ../src/op_util.cc)
+aux_source_directory(utils UTILS_SRCS)
 
-add_library(${OP_PROTO_TARGET} SHARED ${SRCS})
+include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/transform/graph_ir/)
 
-target_link_libraries(${OP_PROTO_TARGET} ${ASCEND_TENSOR_COMPILER}/lib64/libgraph.so)
+add_library(${OP_PROTO_TARGET} SHARED ${SRCS} ${UTILS_SRCS})
+
+find_library(register libregister.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+find_library(graph libgraph.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+target_link_libraries(${OP_PROTO_TARGET} ${register})
+target_link_libraries(${OP_PROTO_TARGET} ${graph})
