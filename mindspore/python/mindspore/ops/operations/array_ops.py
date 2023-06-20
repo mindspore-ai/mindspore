@@ -8376,7 +8376,7 @@ class LeftShift(Primitive):
         >>> x2 = Tensor(np.array([0, 1, -1]).astype(np.int8))
         >>> output = left_shift(x1, x2)
         >>> print(output)
-        [1 4 3]
+        [1 4 0]
     """
 
     @prim_attr_register
