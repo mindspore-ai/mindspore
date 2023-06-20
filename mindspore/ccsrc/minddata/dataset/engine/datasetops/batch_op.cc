@@ -497,6 +497,14 @@ Status BatchOp::InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBat
       // Invoke batch map func
       py::object ret_py_obj = batch_map_func_(*input_args);
 
+      if (ret_py_obj.is_none()) {
+        std::string error_msg =
+          "The subprocess of dataset may exit unexpected or be killed, "
+          "main process will exit. If this is not an artificial operation, you can use "
+          "mindspore.dataset.config.set_enable_watchdog(False) to block this error.";
+        RETURN_STATUS_UNEXPECTED("Got None from Python object. " + error_msg);
+      }
+
       // return value from per_batch_map can be:
       // case 1: int, float, str, bytes, np.ndarray, dict
       // case 2: item1, item2, item3, ...

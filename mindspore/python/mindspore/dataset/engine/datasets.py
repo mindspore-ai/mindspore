@@ -2965,6 +2965,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         """
 
         def __init__(self):
+            self.origin_hook = sys.excepthook
             sys.excepthook = self.__handler_exception
 
         @staticmethod
@@ -2976,7 +2977,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
                 time.sleep(3)
 
         def __handler_exception(self, ex_type, value, tb):
-            logger.critical("Uncaught exception: ", exc_info=(ex_type, value, tb))
+            self.origin_hook(ex_type, value, tb)
             self.mp_pool_exit_preprocess()
 
     def __init__(self, op_name, num_parallel_workers, operations, max_row_size=16):

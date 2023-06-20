@@ -84,8 +84,11 @@ Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
         // scenario 1: map multi-processing, subprocess stop first and will get none
         // scenario 2: thread mode, user pyfunc return none
         if (ret_py_obj.is_none()) {
-          MS_LOG(INFO) << "Maybe the multi workers of map operation had stopped, so got None from the pyfunc.";
-          goto TimeoutError;
+          std::string error_msg =
+            "The subprocess of dataset may exit unexpected or be killed, "
+            "main process will exit. If this is not an artificial operation, you can use "
+            "mindspore.dataset.config.set_enable_watchdog(False) to block this error.";
+          RETURN_STATUS_UNEXPECTED("Got None from Python object. " + error_msg);
         } else if (py::isinstance<py::tuple>(ret_py_obj)) {
           // In case of a n-m mapping, the return value will be a tuple of numpy arrays
           auto ret_py_tuple = ret_py_obj.cast<py::tuple>();
