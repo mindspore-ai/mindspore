@@ -90,7 +90,7 @@ Status KernelExecutorImpl::Build(const std::shared_ptr<ops::BaseOperator> &op, c
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "cpu kernel Prepare error.";
     FreeAllResource();
-    return static_cast<StatusCode>(ret);
+    return kLiteError;
   }
   return kSuccess;
 }
@@ -119,7 +119,7 @@ Status KernelExecutorImpl::Build(const std::shared_ptr<ops::Custom> &op, const s
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "custom kernel Prepare error.";
     FreeAllResource();
-    return static_cast<StatusCode>(ret);
+    return kLiteError;
   }
   return kSuccess;
 }
@@ -141,7 +141,8 @@ Status KernelExecutorImpl::ReSize(const std::vector<MSTensor> &inputs) {
   kernel_->set_out_tensors(outputs_);
   int ret;
   if (kernel_->type() == schema::PrimitiveType_Custom) {
-    ret = KernelInferShape(inputs_, outputs_, primitive_, context_->GetProviders(), schema_version_);
+    std::set<std::string> providers;
+    ret = KernelInferShape(inputs_, outputs_, primitive_, std::move(providers), schema_version_);
   } else {
     ret = KernelInferShape(inputs_, outputs_, parameter_);
   }
@@ -154,7 +155,7 @@ Status KernelExecutorImpl::ReSize(const std::vector<MSTensor> &inputs) {
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "kernel Resize error.";
     FreeAllResource();
-    return static_cast<StatusCode>(ret);
+    return kLiteError;
   }
   return kSuccess;
 }
@@ -192,7 +193,7 @@ Status KernelExecutorImpl::Execute(const std::vector<MSTensor> &inputs, std::vec
   int ret = kernel_->Execute();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "execute error.";
-    return static_cast<StatusCode>(ret);
+    return kLiteError;
   }
   auto res = GetOutputs();
   outputs->clear();
