@@ -24,6 +24,9 @@
 namespace {
 const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 2;
+const uint32_t kMinDim = 2;
+const uint32_t kMaxDim = 7;
+const uint32_t kNum4 = 4;
 const char *kTranspose = "Transpose";
 
 #define TRANSPOSE_COMPUTE_CASE(DTYPE, TYPE, CTX)            \
@@ -136,83 +139,32 @@ uint32_t TransposeCpuKernel::TransposeCompute(CpuKernelContext &ctx) {
   std::vector<int64_t> shape_y = ctx.Output(0)->GetTensorShape()->GetDimSizes();
   auto input_data = reinterpret_cast<T *>(x_data);
   auto output_data = reinterpret_cast<T *>(y_data);
-  int64_t input_dims = shape_x.size();
-  switch (input_dims) {
-    case 2: {
-      typedef Eigen::TensorMap<Eigen::Tensor<T, 2, Eigen::RowMajor>, Eigen::Aligned> Eigen_Tensor_2D;
-      Eigen_Tensor_2D input_2D(input_data, shape_x.at(0), shape_x.at(1));
-      Eigen_Tensor_2D output_2D(output_data, shape_y.at(0), shape_y.at(1));
-      Eigen::array<Eigen::DenseIndex, 2> perm_2D;
-      for (size_t i = 0; i < 2; ++i) {
-        perm_2D[i] = perm.at(i);
-      }
-      output_2D = input_2D.shuffle(perm_2D);
-      break;
-    }
-    case 3: {
-      typedef Eigen::TensorMap<Eigen::Tensor<T, 3, Eigen::RowMajor>, Eigen::Aligned> Eigen_Tensor_3D;
-      Eigen_Tensor_3D input_3D(input_data, shape_x.at(0), shape_x.at(1), shape_x.at(2));
-      Eigen_Tensor_3D output_3D(output_data, shape_y.at(0), shape_y.at(1), shape_y.at(2));
-      Eigen::array<Eigen::DenseIndex, 3> perm_3D;
-      for (size_t i = 0; i < 3; ++i) {
-        perm_3D[i] = perm.at(i);
-      }
-      output_3D = input_3D.shuffle(perm_3D);
-      break;
-    }
-    case 4: {
-      typedef Eigen::TensorMap<Eigen::Tensor<T, 4, Eigen::RowMajor>, Eigen::Aligned> Eigen_Tensor_4D;
-      Eigen_Tensor_4D input_4D(input_data, shape_x.at(0), shape_x.at(1), shape_x.at(2), shape_x.at(3));
-      Eigen_Tensor_4D output_4D(output_data, shape_y.at(0), shape_y.at(1), shape_y.at(2), shape_y.at(3));
-      Eigen::array<Eigen::DenseIndex, 4> perm_4D;
-      for (size_t i = 0; i < 4; ++i) {
-        perm_4D[i] = perm.at(i);
-      }
-      output_4D = input_4D.shuffle(perm_4D);
-      break;
-    }
-    case 5: {
-      typedef Eigen::TensorMap<Eigen::Tensor<T, 5, Eigen::RowMajor>, Eigen::Aligned> Eigen_Tensor_5D;
-      Eigen_Tensor_5D input_5D(input_data, shape_x.at(0), shape_x.at(1), shape_x.at(2), shape_x.at(3), shape_x.at(4));
-      Eigen_Tensor_5D output_5D(output_data, shape_y.at(0), shape_y.at(1), shape_y.at(2), shape_y.at(3), shape_y.at(4));
-      Eigen::array<Eigen::DenseIndex, 5> perm_5D;
-      for (size_t i = 0; i < 5; ++i) {
-        perm_5D[i] = perm.at(i);
-      }
-      output_5D = input_5D.shuffle(perm_5D);
-      break;
-    }
-    case 6: {
-      typedef Eigen::TensorMap<Eigen::Tensor<T, 6, Eigen::RowMajor>, Eigen::Aligned> Eigen_Tensor_6D;
-      Eigen_Tensor_6D input_6D(input_data, shape_x.at(0), shape_x.at(1), shape_x.at(2), shape_x.at(3), shape_x.at(4),
-                               shape_x.at(5));
-      Eigen_Tensor_6D output_6D(output_data, shape_y.at(0), shape_y.at(1), shape_y.at(2), shape_y.at(3), shape_y.at(4),
-                                shape_y.at(5));
-      Eigen::array<Eigen::DenseIndex, 6> perm_6D;
-      for (size_t i = 0; i < 6; ++i) {
-        perm_6D[i] = perm.at(i);
-      }
-      output_6D = input_6D.shuffle(perm_6D);
-      break;
-    }
-    case 7: {
-      typedef Eigen::TensorMap<Eigen::Tensor<T, 7, Eigen::RowMajor>, Eigen::Aligned> Eigen_Tensor_7D;
-      Eigen_Tensor_7D input_7D(input_data, shape_x.at(0), shape_x.at(1), shape_x.at(2), shape_x.at(3), shape_x.at(4),
-                               shape_x.at(5), shape_x.at(6));
-      Eigen_Tensor_7D output_7D(output_data, shape_y.at(0), shape_y.at(1), shape_y.at(2), shape_y.at(3), shape_y.at(4),
-                                shape_y.at(5), shape_y.at(6));
-      Eigen::array<Eigen::DenseIndex, 7> perm_7D;
-      for (size_t i = 0; i < 7; ++i) {
-        perm_7D[i] = perm.at(i);
-      }
-      output_7D = input_7D.shuffle(perm_7D);
-      break;
-    }
-    default:
-      KERNEL_LOG_ERROR("[%s] : Unhandled input dimensions [%zu].", kTranspose, input_dims);
-      return KERNEL_STATUS_INNER_ERROR;
+  size_t input_dims = shape_x.size();
+  if (input_dims < kMinDim || input_dims > kMaxDim) {
+    KERNEL_LOG_ERROR("[%s] : Unhandled input dimensions [%zu].", kTranspose, input_dims);
+    return KERNEL_STATUS_INNER_ERROR;
   }
-
+  size_t offset = 7 - input_dims;
+  std::vector<int64_t> bcast_shape_x(7, 1);
+  std::vector<int64_t> bcast_shape_y(7, 1);
+  for (size_t i = 0; i < input_dims; ++i) {
+    bcast_shape_x[i + offset] = shape_x[i];
+    bcast_shape_y[i + offset] = shape_y[i];
+  }
+  using Eigen_Tensor = Eigen::TensorMap<Eigen::Tensor<T, 7, Eigen::RowMajor>, Eigen::Aligned>;
+  Eigen_Tensor input(input_data, bcast_shape_x.at(0), bcast_shape_x.at(1), bcast_shape_x.at(2), bcast_shape_x.at(3),
+                     bcast_shape_x.at(4), bcast_shape_x.at(5), bcast_shape_x.at(6));
+  Eigen_Tensor output(output_data, bcast_shape_y.at(0), bcast_shape_y.at(1), bcast_shape_y.at(2), bcast_shape_y.at(3),
+                      bcast_shape_y.at(4), bcast_shape_y.at(5), bcast_shape_y.at(6));
+  Eigen::array<Eigen::DenseIndex, 7> perm_compute;
+  for (size_t j = 0; j < 7; ++j) {
+    if (j < offset) {
+      perm_compute[j] = j;
+    } else {
+      perm_compute[j] = perm.at(j - offset) + offset;
+    }
+  }
+  output = input.shuffle(perm_compute);
   return KERNEL_STATUS_OK;
 }
 
