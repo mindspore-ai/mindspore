@@ -177,6 +177,8 @@ KernelBase *CreateActivation(OpParameter *param, int data_type) {
 
   ActivationStruct *activation = (ActivationStruct *)malloc(sizeof(ActivationStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(activation);
+  memset(activation, 0, sizeof(ActivationStruct));
+
   activation->data_type_ = data_type;
   activation->act_type_ = act->type_;
   activation->base.prepare = default_prepare_1in_1out;

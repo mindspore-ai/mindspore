@@ -19,62 +19,45 @@
 #include "nnacl/base/conv_common_base.h"
 
 int GroupConvBasePrepare(GroupConvolutionStruct *group_conv) {
-  ConvParameter *conv_param = (ConvParameter *)group_conv->conv_base_.base_.param_;
-  NNACL_CHECK_NULL_RETURN_ERR(conv_param);
-
-  for (int i = 0; i < conv_param->group_; ++i) {
+  for (int i = 0; i < group_conv->group_; ++i) {
     KernelBase *sub_conv = group_conv->group_convs_[i];
     NNACL_CHECK_NULL_RETURN_ERR(sub_conv);
-
     int ret = sub_conv->prepare(sub_conv);
     if (ret != NNACL_OK) {
       return ret;
     }
   }
-  conv_param->input_channel_ *= conv_param->group_;
-  conv_param->output_channel_ *= conv_param->group_;
-  // if infer shape is done, resize func will be invoked in sub kernels
   return NNACL_OK;
 }
 
 int group_convolution_release(KernelBase *self) {
   GroupConvolutionStruct *group_conv = (GroupConvolutionStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(group_conv);
-  ConvParameter *conv_param = (ConvParameter *)self->param_;
-  NNACL_CHECK_NULL_RETURN_ERR(conv_param);
 
   if (group_conv->group_convs_ != NULL) {
-    for (int i = 0; i < conv_param->group_; i++) {
-      KernelBase *current_conv = group_conv->group_convs_[i];
-      if (current_conv->param_ != NULL) {
-        free(current_conv->param_);
-        current_conv->param_ = NULL;
-      }
+    for (int i = 0; i < group_conv->group_; i++) {
+      KernelBase *sub_conv = group_conv->group_convs_[i];
 
-      if (current_conv->in_ != NULL) {
-        for (int j = 0; j < current_conv->in_size_; j++) {
-          if (IsConst(current_conv->in_[j])) {
-            free(current_conv->in_[j]->data_);
-            current_conv->in_[j]->data_ = NULL;
+      if (sub_conv->in_ != NULL) {
+        for (int j = 0; j < sub_conv->in_size_; j++) {
+          if (IsConst(sub_conv->in_[j])) {
+            free(sub_conv->in_[j]->data_);
+            sub_conv->in_[j]->data_ = NULL;
           }
-          if (current_conv->in_[j] != NULL) {
-            free(current_conv->in_[j]);
-            current_conv->in_[j] = NULL;
+          if (sub_conv->in_[j] != NULL) {
+            free(sub_conv->in_[j]);
+            sub_conv->in_[j] = NULL;
           }
         }
-        free(current_conv->in_);
-        current_conv->in_ = NULL;
+        free(sub_conv->in_);
+        sub_conv->in_ = NULL;
       }
 
-      if (current_conv->out_ != NULL) {
-        for (int j = 0; j < current_conv->out_size_; j++) {
-          if (current_conv->out_[j] != NULL) {
-            free(current_conv->out_[j]);
-            current_conv->out_[j] = NULL;
-          }
-        }
-        free(current_conv->out_);
-        current_conv->out_ = NULL;
+      if (sub_conv->out_ != NULL) {
+        free(sub_conv->out_[OUTPUT_INDEX]);
+        sub_conv->out_[OUTPUT_INDEX] = NULL;
+        free(sub_conv->out_);
+        sub_conv->out_ = NULL;
       }
 
       if (group_conv->group_convs_[i] != NULL) {
@@ -152,8 +135,8 @@ int GroupConvCreatorNewConstTensor(GroupConvolutionStruct *group_conv, KernelBas
   new_conv->in_[SECOND_INPUT] = weight_tensor;
 
   if (group_conv->conv_base_.base_.in_size_ == THREE_TENSOR) {
-    TensorC *bias_tensor =
-      CreateConstTensor(group_conv->conv_base_.base_.in_[THIRD_INPUT], group_conv->bias_shape_, DIMENSION_1D, group_id);
+    TensorC *bias_tensor = CreateConstTensor(group_conv->conv_base_.base_.in_[THIRD_INPUT],
+                                             &group_conv->sub_out_channel_, DIMENSION_1D, group_id);
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(bias_tensor);
     new_conv->in_[THIRD_INPUT] = bias_tensor;
   }
@@ -181,7 +164,7 @@ int GroupConvCreatorSetShapeOfTensors(GroupConvolutionStruct *group_conv) {
   /* set shape */
   int filter_shape[] = {new_out_channel, new_conv_param->kernel_h_, new_conv_param->kernel_w_, new_in_channel};
   memcpy(group_conv->filter_shape_, filter_shape, DIMENSION_4D * sizeof(int));
-  group_conv->bias_shape_[Index0] = new_out_channel;
+
   new_conv_param->input_channel_ = new_in_channel;
   new_conv_param->output_channel_ = new_out_channel;
 
@@ -244,10 +227,10 @@ int GroupConvConcatOutputRun(void *cdata, int task_id, float l, float r) {
   NNACL_CHECK_NULL_RETURN_ERR(cdata);
   GroupConvolutionStruct *group_conv = (GroupConvolutionStruct *)cdata;
 
-  int plane_step = UP_DIV(group_conv->out_plane_, group_conv->conv_base_.base_.thread_nr_);
+  int plane_step = UP_DIV(group_conv->conv_base_.compute_.out_hw_, group_conv->conv_base_.base_.thread_nr_);
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(plane_step, task_id, NNACL_ERR);
   int begin_plane = plane_step * task_id;
-  int end_plane = MSMIN(group_conv->out_plane_, plane_step * (task_id + 1));
+  int end_plane = NNACL_MIN(group_conv->conv_base_.compute_.out_hw_, plane_step * (task_id + 1));
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(begin_plane, group_conv->sub_out_channel_, NNACL_ERR);
   float *src_ptr = group_conv->sub_out_src_ + begin_plane * group_conv->sub_out_channel_;
   float *dst_ptr = group_conv->sub_out_dst_ + begin_plane * group_conv->ori_out_channel_;
@@ -276,10 +259,10 @@ int GroupConvSeparateInputRun(void *cdata, int task_id, float l, float r) {
   NNACL_CHECK_NULL_RETURN_ERR(cdata);
   GroupConvolutionStruct *group_conv = (GroupConvolutionStruct *)cdata;
 
-  int plane_step = UP_DIV(group_conv->in_plane_, group_conv->conv_base_.base_.thread_nr_);
+  int plane_step = UP_DIV(group_conv->conv_base_.compute_.in_hw_, group_conv->conv_base_.base_.thread_nr_);
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(plane_step, task_id, NNACL_ERR);
   int begin_plane = plane_step * task_id;
-  int end_plane = MSMIN(group_conv->in_plane_, plane_step * (task_id + 1));
+  int end_plane = NNACL_MIN(group_conv->conv_base_.compute_.in_hw_, plane_step * (task_id + 1));
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(begin_plane, group_conv->ori_in_channel_, NNACL_ERR);
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(begin_plane, group_conv->sub_in_channel_, NNACL_ERR);
   float *src_ptr = group_conv->sub_in_src_ + begin_plane * group_conv->ori_in_channel_;
@@ -307,38 +290,50 @@ int GroupConvSeparateInput(GroupConvolutionStruct *group_conv, int group_id) {
 }
 
 int GroupConvBaseInitGroupParam(GroupConvolutionStruct *group_conv) {
-  ConvParameter *conv_param = (ConvParameter *)group_conv->conv_base_.base_.param_;
+  ConvComputeParam *compute = &group_conv->conv_base_.compute_;
 
   TensorC *in_tensor = group_conv->conv_base_.base_.in_[FIRST_INPUT];
   NNACL_CHECK_NULL_RETURN_ERR(in_tensor);
-  group_conv->in_plane_ = GetHeight(in_tensor) * GetWidth(in_tensor) * GetBatch(in_tensor);
-  NNACL_CHECK_FALSE(group_conv->in_plane_ < 0, NNACL_GROUP_CONVOLUTION_SHAPE_INVALID);
+  compute->in_hw_ = GetHeight(in_tensor) * GetWidth(in_tensor) * GetBatch(in_tensor);
+  NNACL_CHECK_FALSE(compute->in_hw_ < 0, NNACL_GROUP_CONVOLUTION_SHAPE_INVALID);
 
-  group_conv->sub_in_channel_ = conv_param->input_channel_ / conv_param->group_;
-  group_conv->ori_in_channel_ = conv_param->input_channel_;
-  group_conv->conv_base_.base_.thread_nr_ =
-    MSMIN(MSMAX(1, group_conv->conv_base_.base_.thread_nr_), group_conv->in_plane_);
+  group_conv->sub_in_channel_ = compute->in_c_ / group_conv->group_;
+  group_conv->ori_in_channel_ = compute->in_c_;
+  group_conv->conv_base_.base_.thread_nr_ = MSMIN(MSMAX(1, group_conv->conv_base_.base_.thread_nr_), compute->in_hw_);
 
   TensorC *out_tensor = group_conv->conv_base_.base_.out_[OUTPUT_INDEX];
   NNACL_CHECK_NULL_RETURN_ERR(out_tensor);
-  group_conv->out_plane_ = GetHeight(out_tensor) * GetWidth(out_tensor) * GetBatch(out_tensor);
-  NNACL_CHECK_FALSE(group_conv->out_plane_ < 0, NNACL_GROUP_CONVOLUTION_SHAPE_INVALID);
+  compute->out_hw_ = GetHeight(out_tensor) * GetWidth(out_tensor) * GetBatch(out_tensor);
+  NNACL_CHECK_FALSE(compute->out_hw_ < 0, NNACL_GROUP_CONVOLUTION_SHAPE_INVALID);
 
-  group_conv->sub_out_channel_ = conv_param->output_channel_ / conv_param->group_;
-  group_conv->ori_out_channel_ = conv_param->output_channel_;
-  group_conv->conv_base_.base_.thread_nr_ =
-    MSMIN(MSMAX(1, group_conv->conv_base_.base_.thread_nr_), group_conv->out_plane_);
+  group_conv->sub_out_channel_ = compute->out_c_ / group_conv->group_;
+  group_conv->ori_out_channel_ = compute->out_c_;
+  group_conv->conv_base_.base_.thread_nr_ = MSMIN(MSMAX(1, group_conv->conv_base_.base_.thread_nr_), compute->in_hw_);
   return NNACL_OK;
+}
+
+void GroupConvUpdateShape(GroupConvolutionStruct *group_conv) {
+  for (int i = 0; i < group_conv->group_; i++) {
+    TensorC *in_tensor = group_conv->conv_base_.base_.in_[FIRST_INPUT];
+    int in_shape[] = {GetBatch(in_tensor), GetHeight(in_tensor), GetWidth(in_tensor), group_conv->sub_in_channel_};
+    memcpy(group_conv->group_convs_[i]->in_[FIRST_INPUT]->shape_, in_shape, DIMENSION_4D * sizeof(float));
+
+    TensorC *out_tensor = group_conv->conv_base_.base_.out_[OUTPUT_INDEX];
+    int out_shape[] = {GetBatch(out_tensor), GetHeight(out_tensor), GetWidth(out_tensor), group_conv->sub_out_channel_};
+    memcpy(group_conv->group_convs_[i]->out_[OUTPUT_INDEX]->shape_, out_shape, DIMENSION_4D * sizeof(float));
+  }
+  return;
 }
 
 int group_convolution_resize(KernelBase *self) {
   GroupConvolutionStruct *group_conv = (GroupConvolutionStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(group_conv);
-  ConvParameter *conv_param = (ConvParameter *)self->param_;
-  NNACL_CHECK_NULL_RETURN_ERR(conv_param);
-  NNACL_CHECK_FALSE(conv_param->group_ == 0, NNACL_GROUP_CONVOLUTION_GROUP_INVALID);
 
-  for (int i = 0; i < conv_param->group_; ++i) {
+  (void)ConvBaseUpdateComputeInfo(&group_conv->conv_base_);
+
+  GroupConvUpdateShape(group_conv);
+
+  for (int i = 0; i < group_conv->group_; ++i) {
     int ret = group_conv->group_convs_[i]->resize(group_conv->group_convs_[i]);
     if (ret != NNACL_OK) {
       return ret;
@@ -350,8 +345,6 @@ int group_convolution_resize(KernelBase *self) {
 int group_convolution_compute(KernelBase *self) {
   GroupConvolutionStruct *group_conv = (GroupConvolutionStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(group_conv);
-  ConvParameter *conv_param = (ConvParameter *)self->param_;
-  NNACL_CHECK_NULL_RETURN_ERR(conv_param);
 
   int ret = GroupConvBaseInitGroupParam(group_conv);
   if (ret != NNACL_OK) {
@@ -363,7 +356,7 @@ int group_convolution_compute(KernelBase *self) {
   group_conv->origin_output_data_ = self->out_[OUTPUT_INDEX]->data_;
   NNACL_CHECK_NULL_RETURN_ERR(group_conv->origin_output_data_);
 
-  for (int i = 0; i < conv_param->group_; ++i) {
+  for (int i = 0; i < group_conv->group_; ++i) {
     // first, malloc data for sub_kernel's tensors.
     TensorC *sub_kernel_in_tensor = group_conv->group_convs_[i]->in_[FIRST_INPUT];
     sub_kernel_in_tensor->data_ = self->env_->alloc(self->env_->allocator_, GetSize(sub_kernel_in_tensor));
@@ -392,9 +385,9 @@ int group_convolution_compute(KernelBase *self) {
     }
 
     // free data
-    free(sub_kernel_in_tensor->data_);
+    self->env_->free(self->env_->allocator_, sub_kernel_in_tensor->data_);
     sub_kernel_in_tensor->data_ = NULL;
-    free(sub_kernel_out_tensor->data_);
+    self->env_->free(self->env_->allocator_, sub_kernel_out_tensor->data_);
     sub_kernel_out_tensor->data_ = NULL;
   }
   return NNACL_OK;
@@ -402,14 +395,15 @@ int group_convolution_compute(KernelBase *self) {
 
 int group_convolution_prepare(KernelBase *self) {
   NNACL_CHECK_FALSE(self->in_size_ < TWO_TENSOR, NNACL_INPUT_TENSOR_ERROR);
-  NNACL_CHECK_FALSE(self->out_size_ < ONE_TENSOR, NNACL_OUTPUT_TENSOR_ERROR);
+  NNACL_CHECK_FALSE(self->out_size_ != ONE_TENSOR, NNACL_OUTPUT_TENSOR_ERROR);
   GroupConvolutionStruct *group_conv = (GroupConvolutionStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(group_conv);
+  NNACL_CHECK_FALSE(group_conv->group_ == 0, NNACL_GROUP_CONVOLUTION_GROUP_INVALID);
 
   GroupConvCreatorSetShapeOfTensors(group_conv);
 
-  group_conv->group_convs_ = (KernelBase **)malloc(group_conv->new_conv_param_.group_ * sizeof(KernelBase *));
-  for (int i = 0; i < group_conv->new_conv_param_.group_; ++i) {
+  group_conv->group_convs_ = (KernelBase **)malloc(group_conv->group_ * sizeof(KernelBase *));
+  for (int i = 0; i < group_conv->group_; ++i) {
     KernelBase *new_conv = CreateConvlutionDelegate(&group_conv->new_conv_param_);
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(new_conv);
     group_conv->group_convs_[i] = new_conv;
@@ -428,6 +422,7 @@ KernelBase *CreateGroupConvolution(ConvParameter *conv_param, TypeIdC data_type)
   memset(group_conv, 0, sizeof(GroupConvolutionStruct));
 
   group_conv->data_type_ = data_type;
+  group_conv->group_ = conv_param->group_;
   group_conv->conv_base_.base_.compute = group_convolution_compute;
   group_conv->conv_base_.base_.resize = group_convolution_resize;
   group_conv->conv_base_.base_.prepare = group_convolution_prepare;
