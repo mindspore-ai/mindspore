@@ -919,7 +919,7 @@ def setdiff1d(ar1, ar2, assume_unique=False):
         >>> a = np.array([1, 2, 3, 2, 4, 1])
         >>> b = np.array([3, 4, 5, 6])
         >>> np.setdiff1d(a, b)
-        Tensor([1, 2])
+        Tensor(shape=[2], dtype=Int32, value=[1, 2])
     """
     if not isinstance(assume_unique, bool):
         _raise_type_error("assume_unique is not bool type.")

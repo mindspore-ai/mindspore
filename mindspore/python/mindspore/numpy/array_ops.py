@@ -2545,8 +2545,7 @@ def argwhere(a):
         >>> import mindspore.numpy as np
         >>> x = np.array([[[1, 0], [-5, 0]]])
         >>> np.argwhere(x)
-        Tensor([[0 0 0]
-                [0 1 0]])
+        Tensor(shape=[2, 3], dtype=Int64, value=[[0, 0, 0], [0, 1, 0]])
     """
     a = _to_tensor(a)
     return F.argwhere(a)
@@ -2582,39 +2581,44 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
     Examples:
         >>> import mindspore.numpy as np
         >>> np.intersect1d([1, 3, 4, 3], [3, 1, 2, 1])
-        Tensor([1, 3])
+        Tensor(shape=[2], dtype=Int32, value=[1, 3])
     """
+    def unique_w_ind(arr):
+        array, sort_indices = arr.ravel().sort()
+        cmp_array1 = F.cat((array, Tensor([0], dtype=array.dtype)))
+        cmp_array2 = F.cat((Tensor([0], dtype=array.dtype), array))
+        mask = cmp_array1 != cmp_array2
+        mask[0] = True
+        array = F.masked_select(array, mask[:-1])
+        ind = F.masked_select(sort_indices, mask[:-1])
+        return array, ind
+
     if not isinstance(assume_unique, bool) or not isinstance(return_indices, bool):
         _raise_type_error("assume_unique or return_indices is not bool type.")
     ar1, ar2 = _to_tensor(ar1, ar2)
+    ind1 = F.fill(mstype.int32, (ar1.size,), -1)
+    ind2 = F.fill(mstype.int32, (ar2.size,), -1)
     if not assume_unique:
-        array1 = unique(ar1)
-        array2 = unique(ar2)
+        if return_indices:
+            array1, ind1 = unique_w_ind(ar1)
+            array2, ind2 = unique_w_ind(ar2)
+        else:
+            array1 = unique(ar1)
+            array2 = unique(ar2)
     else:
         array1 = ar1.ravel()
         array2 = ar2.ravel()
-
     concat_array = concatenate((array1, array2))
-    concat_array = concat_array.sort()[0]
+    concat_array, concat_sort_indices = concat_array.sort()
 
-    mask = concat_array[1:] == concat_array[:-1]
-    res = F.cast(F.masked_select(concat_array[:-1], mask), mstype.int32)
-
-    def get_index(arr, val):
-        for i, v in enumerate(arr):
-            if val == v:
-                return Tensor(i, dtype=mstype.int32)
-        return Tensor(-1, dtype=mstype.int32)
+    mask_res = concat_array[1:] == concat_array[:-1]
+    res = F.masked_select(concat_array[1:], mask_res)
 
     if return_indices:
-        ar1_indices = F.fill(mstype.int32, (res.size,), -1)
-        ar2_indices = F.fill(mstype.int32, (res.size,), -1)
-        ar1_raveled = F.cast(ar1.ravel(), mstype.int32)
-        ar2_raveled = F.cast(ar2.ravel(), mstype.int32)
-        i = Tensor(0, dtype=mstype.int32)
-        for out in list(res):
-            ar1_indices = F.index_fill(ar1_indices, 0, i, get_index(ar1_raveled, out))
-            ar2_indices = F.index_fill(ar2_indices, 0, i, get_index(ar2_raveled, out))
-            i += 1
+        ar1_indices = F.masked_select(concat_sort_indices[:-1], mask_res)
+        ar2_indices = F.masked_select(concat_sort_indices[1:], mask_res) - array1.size
+        if not assume_unique:
+            ar1_indices = ind1.index_select(0, ar1_indices)
+            ar2_indices = ind2.index_select(0, ar2_indices)
         return res, ar1_indices, ar2_indices
     return res
