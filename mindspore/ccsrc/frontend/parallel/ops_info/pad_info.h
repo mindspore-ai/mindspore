@@ -29,7 +29,7 @@
 
 namespace mindspore {
 namespace parallel {
-constexpr size_t PAD_V3_INPUT_VALUE_MIN_SIZE = 2;
+constexpr size_t PAD_V3_INPUT_VALUE_SIZE = 3;
 constexpr size_t PADDINGS_PAIR_SIZE = 2;
 constexpr size_t PADDINGS_INDEX = 1;
 

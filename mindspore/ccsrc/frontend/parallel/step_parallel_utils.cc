@@ -330,7 +330,8 @@ int64_t GetTupleGetItemIndex(const CNodePtr &cnode) {
 
 static bool IsNoNeedRedistribution(const CNodePtr &use_cnode, int use_index) {
   return (IsPrimitiveCNode(use_cnode, prim::kPrimDepend) && use_index != 1) || use_cnode->input(0)->isa<CNode>() ||
-         IsPrimitiveCNode(use_cnode, prim::kPrimUpdateState) || IsPrimitiveCNode(use_cnode, prim::kPrimSwitch);
+         IsPrimitiveCNode(use_cnode, prim::kPrimUpdateState) || IsPrimitiveCNode(use_cnode, prim::kPrimSwitch) ||
+         IsPrimitiveCNode(use_cnode, prim::kPrimShape) || IsPrimitiveCNode(use_cnode, prim::kPrimTensorShape);
 }
 
 std::vector<std::pair<AnfNodePtr, int>> FuncGraphNodeUsers(const std::pair<AnfNodePtr, int> &node_pair) {
