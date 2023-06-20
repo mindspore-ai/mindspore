@@ -120,6 +120,8 @@ struct MS_API InnerContext {
   inline const InferChecker get_infer_checker() const { return infer_checker_; }
   inline void set_schema_version(const int schema_version) { this->schema_version_ = schema_version; }
   inline const int &get_schema_version() const { return schema_version_; }
+  int CreateThreadPool(bool is_control_flow);
+  void DeleteThreadPool();
 
   std::string vendor_name_;
   InstructionsContext instructions_ctx_;
@@ -144,7 +146,6 @@ struct MS_API InnerContext {
   int IsValid();
   bool IsAllDeviceTypeValid() const;
   bool IsCpuBindModeInvalid() const;
-  int CreateThreadPool();
   void InitExecEnv();
 
   std::string runner_id_;

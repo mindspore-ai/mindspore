@@ -603,6 +603,11 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
+  if (ms_context_->GetThreadNum() == 1 && !context_->IsCpuFloat16Enabled() && is_control_flow_) {
+    context_->DeleteThreadPool();
+    (void)context_->CreateThreadPool(is_control_flow_);
+  }
+
   infer_along_running_ = infer_along_running_ && !is_control_flow_ && !is_train_session_ && (is_infershape_ != RET_OK);
   InitGraphInOutTensorsMap(model);
 
@@ -1535,7 +1540,7 @@ int LiteSession::PreCheck(Model *model) {
 int LiteSession::InitExecutor() {
   int ret;
 #ifdef ENABLE_MINDRT
-  if (ms_context_->GetThreadNum() == 1 && !context_->IsCpuFloat16Enabled()) {
+  if (ms_context_->GetThreadNum() == 1 && !context_->IsCpuFloat16Enabled() && !is_control_flow_) {
     executor_ = new (std::nothrow) Executor();
   } else {
     ret = IsolateOutputTensor();
@@ -1755,12 +1760,9 @@ int LiteSession::InitGPURuntime() {
   if (context_->IsDeviceTypeEnabled(DT_CPU)) {
     CpuBindMode cpu_bind_mode = context_->GetDeviceInfo(DT_CPU).cpu_device_info_.cpu_bind_mode_;
     ThreadPool *thread_pool = this->context_->thread_pool_;
-    if (thread_pool == nullptr) {
-      MS_LOG(ERROR) << "thread pool is nullptr";
-      is_running_.store(false);
-      return RET_NULL_PTR;
+    if (thread_pool != nullptr) {
+      thread_pool->SetProcessAffinity(static_cast<BindMode>(cpu_bind_mode));
     }
-    thread_pool->SetProcessAffinity(static_cast<BindMode>(cpu_bind_mode));
   }
 #if GPU_OPENCL
   if (this->context_->IsDeviceTypeEnabled(DT_GPU)) {
@@ -1797,7 +1799,9 @@ int LiteSession::InitGPURuntime() {
   // Setting the binding core will affect the opencl drive scheduling.
   if (context_->IsDeviceTypeEnabled(DT_CPU)) {
     ThreadPool *thread_pool = this->context_->thread_pool_;
-    thread_pool->SetProcessAffinity(static_cast<BindMode>(NO_BIND));
+    if (thread_pool != nullptr) {
+      thread_pool->SetProcessAffinity(static_cast<BindMode>(NO_BIND));
+    }
   }
   return RET_OK;
 }
