@@ -237,21 +237,21 @@ void GenSeedAttrsMap(const CNodePtr &node, RandomNode *random_node) {
   MS_EXCEPTION_IF_NULL(op_info);
   auto attrs = op_info->attrs_ptr();
   for (const auto &attr : attrs) {
-    std::string attr_name = attr->name();
-    std::transform(attr_name.begin(), attr_name.end(), attr_name.begin(), ::tolower);
-    if (attr_name.find("seed") == std::string::npos) {
+    std::string lower_attr_name = attr->name();
+    std::transform(lower_attr_name.begin(), lower_attr_name.end(), lower_attr_name.begin(), ::tolower);
+    if (lower_attr_name.find("seed") == std::string::npos) {
       continue;
     }
-    if (!common::AnfAlgo::HasNodeAttr(attr_name, node)) {
-      MS_LOG(EXCEPTION) << "Node(" << node->fullname_with_scope() << ") doesn't have attr(" << attr_name << ")."
+    if (!common::AnfAlgo::HasNodeAttr(attr->name(), node)) {
+      MS_LOG(EXCEPTION) << "Node(" << node->fullname_with_scope() << ") doesn't have attr(" << attr->name() << ")."
                         << trace::DumpSourceLines(node);
     }
     auto attr_value = common::AnfAlgo::GetNodeAttr<int64_t>(node, attr->name());
     if (attr_value == 0) {
-      MS_LOG(WARNING) << "Node " << node->fullname_with_scope() << " have attr " << attr_name << " value is "
+      MS_LOG(WARNING) << "Node " << node->fullname_with_scope() << " have attr " << attr->name() << " value is "
                       << attr_value << ", in this case the randomness cannot be fixed.";
     }
-    seed_attr[attr_name] = attr_value;
+    seed_attr[attr->name()] = attr_value;
   }
 }
 }  // namespace
