@@ -31,9 +31,6 @@ class AscendGeExecutorPluginImplBase {
   AscendGeExecutorPluginImplBase() = default;
   virtual ~AscendGeExecutorPluginImplBase() = default;
 
-  virtual Status AscendGeDeviceContextInitialize(const std::shared_ptr<Context> &context,
-                                                 const ConfigInfos &config_info = {}) = 0;
-  virtual void AscendGeDeviceContextDestroy() const = 0;
   virtual Status AdaptGraph(FuncGraphPtr graph) const = 0;
 };
 
@@ -41,9 +38,6 @@ class MS_API AscendGeExecutorPlugin {
  public:
   static AscendGeExecutorPlugin &GetInstance();
   bool Register();
-
-  Status InitializeGeContext(const std::shared_ptr<Context> &context, const ConfigInfos &config_info = {});
-  void DestroyGeContext();
   void AdaptGraph(FuncGraphPtr graph);
 
  private:
@@ -53,7 +47,7 @@ class MS_API AscendGeExecutorPlugin {
   std::string plugin_path_;
   void *handle_ = nullptr;
   bool is_registered_ = false;
-  AscendGeExecutorPluginImplBase *ge_plugin_impl_ = nullptr;
+  std::shared_ptr<AscendGeExecutorPluginImplBase> ge_plugin_impl_ = nullptr;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_PLUGIN_ASCEND_GE_EXECUTOR_PLUGIN_H_

@@ -20,22 +20,6 @@
 #include "extendrt/delegate/ascend_ge/ge_utils.h"
 
 namespace mindspore {
-Status AscendGeExecutorPluginImpl::AscendGeDeviceContextInitialize(const std::shared_ptr<Context> &context,
-                                                                   const ConfigInfos &config_info) {
-  ge_context_ = std::make_shared<GeDeviceContext>();
-  if (ge_context_ == nullptr) {
-    MS_LOG(ERROR) << "Create GeDeviceContext failed.";
-    return kLiteUninitializedObj;
-  }
-  return ge_context_->Initialize(context, config_info);
-}
-
-void AscendGeExecutorPluginImpl::AscendGeDeviceContextDestroy() const {
-  if (ge_context_ != nullptr) {
-    ge_context_->Destroy();
-  }
-}
-
 Status AscendGeExecutorPluginImpl::AdaptGraph(FuncGraphPtr graph) const { return GeUtils::AdaptGraph(graph); }
 
 AscendGeExecutorPluginImpl *CreateAscendGeExecutorPluginImpl() { return new AscendGeExecutorPluginImpl(); }

@@ -64,7 +64,6 @@ class GraphSinkSession : public InferSession {
   void SetConfigInfo(ConfigInfos config_infos) { config_infos_ = config_infos; }
 
  private:
-  Status GeDeviceContextInit(const std::shared_ptr<Context> &context, const ConfigInfos &config_info = {});
   Status InitGraphInfo(DelegateGraphInfo *graph_info_ptr, uint32_t graph_id);
   Status InitGraphInputsOutputs(const FuncGraphPtr &graph, DelegateGraphInfo *graph_info);
   Status UpdateGraphInputsOutputs(uint32_t graph_id, DelegateGraphInfo *graph_info);
@@ -74,7 +73,6 @@ class GraphSinkSession : public InferSession {
   std::shared_ptr<mindspore::LiteGraphExecutor> graph_executor_;
   std::map<std::string, std::string> options_;
   std::map<uint32_t, DelegateGraphInfo> graph_infos_;
-  bool is_use_ascend_ge_ = false;
   bool is_data_flow_graph_ = false;
   std::shared_ptr<Context> context_;
   ConfigInfos config_infos_;

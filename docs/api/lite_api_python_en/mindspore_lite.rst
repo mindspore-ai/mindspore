@@ -32,9 +32,11 @@ Model
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore_lite.ModelType
     mindspore_lite.Model
+    mindspore_lite.ModelGroup
+    mindspore_lite.ModelGroupFlag
     mindspore_lite.ModelParallelRunner
+    mindspore_lite.ModelType
 
 Tensor
 ------

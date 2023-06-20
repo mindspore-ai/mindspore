@@ -142,6 +142,28 @@ bool ConvertStrToInt(const std::string &str, int *value) {
   return true;
 }
 
+bool ConvertStrToInt(const std::string &str, int64_t *value) {
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "Value is nullptr";
+    return false;
+  }
+  if (str.empty()) {
+    return false;
+  }
+  char *ptr = nullptr;
+  constexpr int kBase = 10;
+  auto int_val = std::strtol(str.c_str(), &ptr, kBase);
+  if (ptr != (str.c_str() + str.size())) {
+    return false;
+  }
+  if (errno == ERANGE) {
+    MS_LOG(WARNING) << "The range of value is beyond the range of int64";
+    return false;
+  }
+  *value = int_val;
+  return true;
+}
+
 std::vector<std::string> Tokenize(const std::string &src, const std::string &delimiters,
                                   const Option<size_t> &max_token_num) {
   if (max_token_num.IsSome() && max_token_num.Get() == 0) {

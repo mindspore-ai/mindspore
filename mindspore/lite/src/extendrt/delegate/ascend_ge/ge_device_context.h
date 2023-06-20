@@ -28,24 +28,33 @@
 namespace mindspore {
 class GeDeviceContext {
  public:
-  GeDeviceContext() = default;
-  ~GeDeviceContext() = default;
+  GeDeviceContext();
+  ~GeDeviceContext();
 
   GeDeviceContext(const GeDeviceContext &) = delete;
   GeDeviceContext &operator=(const GeDeviceContext &) = delete;
 
+  static std::shared_ptr<GeDeviceContext> InitGlobalContext(const std::shared_ptr<Context> &context,
+                                                            const ConfigInfos &config_info = {});
+
+ private:
   Status Initialize(const std::shared_ptr<Context> &context, const ConfigInfos &config_info = {});
   void Destroy();
 
- private:
   Status InitGe(const std::shared_ptr<MsContext> &inst_context, const std::shared_ptr<Context> &context,
                 const ConfigInfos &config_info = {});
   bool FinalizeGe(const std::shared_ptr<MsContext> &inst_context);
+  Status InitHccl(const std::shared_ptr<Context> &context, const ConfigInfos &config_info);
+
   void GetGeOptions(const std::shared_ptr<MsContext> &inst_context, const std::shared_ptr<Context> &context,
                     std::map<std::string, std::string> *ge_options, const ConfigInfos &config_info = {});
   void SetHcclOptions(const std::shared_ptr<Context> &context, std::map<std::string, std::string> *ge_options,
                       const ConfigInfos &config_info = {});
   void SetDisableReuseMemoryFlag(std::map<std::string, std::string> *ge_options) const;
+  std::shared_ptr<AscendDeviceInfo> GetGeAscendDeviceInfo(const std::shared_ptr<Context> &context);
+
+  static std::weak_ptr<GeDeviceContext> global_ge_context_;
+  static std::mutex global_ge_context_mutex_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_GE_GE_DEVICE_CONTEXT_H_

@@ -23,9 +23,20 @@
 #include "include/api/context.h"
 #include "src/common/log_adapter.h"
 #include "src/extendrt/model_manager.h"
+#include "extendrt/cxx_api/model/model_impl.h"
+#include "src/common/common.h"
 
 namespace mindspore {
+ModelGroupImpl::ModelGroupImpl(ModelGroupFlag flags) : flags_(flags) {
+  static uint32_t g_model_group_id = 0;
+  model_group_id_ = ++g_model_group_id;
+}
+
 Status ModelGroupImpl::AddModel(const std::vector<std::string> &model_path_list) {
+  if (flags_ != ModelGroupFlag::kShareWorkspace) {
+    MS_LOG(ERROR) << "Only support share workspace for ModelGroup::AddModel(const std::vector<std::string> &)";
+    return kLiteError;
+  }
   if (model_path_list.empty()) {
     MS_LOG(ERROR) << "Param model_path_list is empty.";
     return kLiteParamInvalid;
@@ -36,11 +47,15 @@ Status ModelGroupImpl::AddModel(const std::vector<std::string> &model_path_list)
     }
     (void)model_path_list_.emplace_back(model_path);
   }
-
   return kSuccess;
 }
 
 Status ModelGroupImpl::AddModel(const std::vector<std::pair<const void *, size_t>> &model_buff_list) {
+  if (flags_ != ModelGroupFlag::kShareWorkspace) {
+    MS_LOG(ERROR)
+      << "Only support share workspace for ModelGroup::AddModel(const std::vector<std::pair<const void *, size_t>> &)";
+    return kLiteError;
+  }
   if (model_buff_list.empty()) {
     MS_LOG(ERROR) << "Param model_buff_list is empty.";
     return kLiteParamInvalid;
@@ -51,11 +66,36 @@ Status ModelGroupImpl::AddModel(const std::vector<std::pair<const void *, size_t
     }
     (void)model_buff_list_.emplace_back(model_buff);
   }
+  return kSuccess;
+}
 
+Status ModelGroupImpl::AddModel(const std::vector<std::shared_ptr<ModelImpl>> &model_list) {
+  if (flags_ != ModelGroupFlag::kShareWeight) {
+    MS_LOG(ERROR) << "Only support share weight for ModelGroup::AddModel(const std::vector<Model>&)";
+    return kLiteError;
+  }
+  for (auto &impl : model_list) {
+    if (impl == nullptr) {
+      MS_LOG(ERROR) << "model impl cannot be nullptr.";
+      return kLiteError;
+    }
+    auto old_val = impl->GetConfig(lite::kLiteInnerGroupSection, lite::kLiteInnerGroupId);
+    if (!old_val.empty()) {
+      MS_LOG(ERROR) << "model has been in another group, group id: " << old_val;
+      return kLiteError;
+    }
+    impl->UpdateConfig(lite::kLiteInnerGroupSection, {lite::kLiteInnerGroupId, std::to_string(model_group_id_)});
+  }
+  MS_LOG(INFO) << "Update config " << lite::kLiteInnerGroupId << " to " << model_group_id_ << ", section "
+               << lite::kLiteInnerGroupSection;
   return kSuccess;
 }
 
 Status ModelGroupImpl::CalMaxSizeOfWorkspace(ModelType model_type, const std::shared_ptr<Context> &ms_context) {
+  if (flags_ != ModelGroupFlag::kShareWorkspace) {
+    MS_LOG(ERROR) << "Only support share workspace for ModelGroup::CalMaxSizeOfWorkspace";
+    return kLiteError;
+  }
   for (auto &model_path : model_path_list_) {
     Model model;
     std::string sharing_workspace_section = "inner_common";

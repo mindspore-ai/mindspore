@@ -22,6 +22,7 @@ class BaseModel:
     """
     Base class for 'Model' and 'LiteInfer'.
     """
+
     def __init__(self, model):
         self._model = model
 
@@ -59,18 +60,18 @@ class BaseModel:
         """
         Resizes the shapes of inputs.
         """
-        if not isinstance(inputs, list):
-            raise TypeError("inputs must be list, but got {}.".format(type(inputs)))
+        if not isinstance(inputs, (list, tuple)):
+            raise TypeError("inputs must be list or tuple of Lite Tensor, but got {}.".format(type(inputs)))
         _inputs = []
-        if not isinstance(dims, list):
-            raise TypeError("dims must be list, but got {}.".format(type(dims)))
+        if not isinstance(dims, (list, tuple)):
+            raise TypeError("dims must be list or tuple of shape, but got {}.".format(type(dims)))
         for i, element in enumerate(inputs):
             if not isinstance(element, Tensor):
                 raise TypeError(f"inputs element must be Tensor, but got "
                                 f"{type(element)} at index {i}.")
         for i, element in enumerate(dims):
-            if not isinstance(element, list):
-                raise TypeError(f"dims element must be list, but got "
+            if not isinstance(element, (list, tuple)):
+                raise TypeError(f"dims element must be list or tuple of int, but got "
                                 f"{type(element)} at index {i}.")
             for j, dim in enumerate(element):
                 if not isinstance(dim, int):

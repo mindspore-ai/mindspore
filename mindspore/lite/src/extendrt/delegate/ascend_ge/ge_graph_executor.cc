@@ -49,6 +49,7 @@ constexpr auto kProfiling = "profiler";
 constexpr auto kDataFlowGraphType = "data_flow";
 constexpr auto kCustomInputSize = 2;
 constexpr auto kGraphKernelParam = "graph_kernel_param";
+constexpr auto kUnkonwnSessionId = -1;
 
 #ifdef MSLITE_ENABLE_GRAPH_KERNEL
 std::shared_ptr<ConverterPara> ParseGraphKernelConfigs(const ConfigInfos &maps) {
@@ -66,24 +67,6 @@ std::shared_ptr<ConverterPara> ParseGraphKernelConfigs(const ConfigInfos &maps) 
   return param;
 }
 #endif
-
-transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph) {
-  MS_EXCEPTION_IF_NULL(anf_graph);
-  transform::TensorOrderMap res;
-  for (auto &anf_node : anf_graph->parameters()) {
-    MS_EXCEPTION_IF_NULL(anf_node);
-    auto para = anf_node->cast<ParameterPtr>();
-    MS_EXCEPTION_IF_NULL(para);
-    if (para->has_default()) {
-      auto value = para->default_param();
-      MS_EXCEPTION_IF_NULL(value);
-      auto tensor = value->cast<std::shared_ptr<tensor::Tensor>>();
-      res.emplace(para->name(), tensor);
-      MS_LOG(INFO) << "Parameter " << para->name() << " has default value.";
-    }
-  }
-  return res;
-}
 }  // namespace
 
 std::atomic_uint32_t GeGraphExecutor::global_graph_idx_ = 0;
@@ -126,7 +109,17 @@ GeGraphExecutor::~GeGraphExecutor() {
       ge_session_->RemoveGraph(graph_id);
     }
     ge_session_ = nullptr;
+    GeSessionManager::TryReleaseGeSessionContext(session_id_);
   }
+}
+
+bool GeGraphExecutor::Init() {
+  ge_global_context_ = GeDeviceContext::InitGlobalContext(context_, config_infos_);
+  if (ge_global_context_ == nullptr) {
+    MS_LOG(ERROR) << "Failed to Init global context";
+    return false;
+  }
+  return true;
 }
 
 void GeGraphExecutor::GetGeSessionOptions(std::map<std::string, std::string> *ge_options_ptr) {
@@ -236,6 +229,24 @@ void GeGraphExecutor::GetGeGraphOptions(const FuncGraphPtr &anf_graph,
   }
 }
 
+int64_t GeGraphExecutor::GetSessionId() {
+  auto config_it = config_infos_.find(lite::kLiteInnerGroupSection);
+  if (config_it == config_infos_.end()) {
+    return kUnkonwnSessionId;
+  }
+  auto config = config_it->second;
+  auto session_it = config.find(lite::kLiteInnerGroupId);
+  if (session_it == config.end()) {
+    return kUnkonwnSessionId;
+  }
+  int64_t session_id = kUnkonwnSessionId;
+  if (!lite::ConvertStrToInt(session_it->second, &session_id)) {
+    MS_LOG_WARNING << "Failed to parse session_id " << session_it->second << " to int64_t";
+    return kUnkonwnSessionId;
+  }
+  return session_id;
+}
+
 bool GeGraphExecutor::CreateSession() {
   if (ge_session_ != nullptr) {
     MS_LOG(INFO) << "Ge session has already been created";
@@ -244,7 +255,8 @@ bool GeGraphExecutor::CreateSession() {
   (void)setenv("GE_TRAIN", "0", 1);
   std::map<std::string, std::string> session_options;
   GetGeSessionOptions(&session_options);
-  ge_session_ = std::make_shared<ge::Session>(session_options);
+  session_id_ = GetSessionId();
+  ge_session_ = GeSessionManager::CreateGeSession(session_id_, session_options);
   if (ge_session_ == nullptr) {
     MS_LOG(ERROR) << "Failed to create ge session";
     return false;
@@ -266,6 +278,35 @@ bool GeGraphExecutor::AddGraph(const transform::DfGraphPtr &graph, const std::ma
   }
   *graph_id_ret = graph_id;
   return true;
+}
+
+transform::TensorOrderMap GeGraphExecutor::GetParams(const FuncGraphPtr &anf_graph) {
+  MS_EXCEPTION_IF_NULL(anf_graph);
+  transform::TensorOrderMap res;
+  for (auto &anf_node : anf_graph->parameters()) {
+    MS_EXCEPTION_IF_NULL(anf_node);
+    auto para = anf_node->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(para);
+    if (para->has_default()) {
+      auto value = para->default_param();
+      MS_EXCEPTION_IF_NULL(value);
+      auto tensor = value->cast<std::shared_ptr<tensor::Tensor>>();
+      res.emplace(para->name(), tensor);
+    }
+  }
+  if (session_id_ != kUnkonwnSessionId) {
+    std::vector<std::string> graph_params;
+    std::transform(res.begin(), res.end(), std::back_inserter(graph_params),
+                   [](const auto &item) { return item.first; });
+    auto new_params_set = GeSessionManager::UpdateSessionVariables(session_id_, graph_params);
+    for (auto &item : res) {
+      // parameters not in new_params_set has been init by other graph
+      if (new_params_set.find(item.first) == new_params_set.end()) {
+        item.second->set_init_flag(true);
+      }
+    }
+  }
+  return res;
 }
 
 bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &anf_graph, const std::map<string, string> &compile_options,
@@ -581,9 +622,98 @@ std::vector<tensor::Tensor> GeGraphExecutor::GetOutputInfos(uint32_t graph_id) {
                                                                : std::vector<tensor::Tensor>();
 }
 
+std::map<int64_t, GeSessionContext> GeSessionManager::ge_session_map_;
+std::mutex GeSessionManager::session_mutex_;
+
+std::shared_ptr<ge::Session> GeSessionManager::CreateGeSession(
+  int64_t session_id, const std::map<std::string, std::string> &session_options) {
+  std::shared_ptr<ge::Session> ge_session = nullptr;
+  if (session_id == kUnkonwnSessionId) {
+    ge_session = std::make_shared<ge::Session>(session_options);
+    if (ge_session == nullptr) {
+      MS_LOG(ERROR) << "Failed to create ge session";
+      return nullptr;
+    }
+    MS_LOG(INFO) << "Create ge session successfully, which will not be shared with other graph";
+    return ge_session;
+  }
+  std::lock_guard<std::mutex> lock(session_mutex_);
+  auto s_it = ge_session_map_.find(session_id);
+  if (s_it != ge_session_map_.end()) {
+    ge_session = s_it->second.ge_session.lock();
+  }
+  if (ge_session == nullptr) {
+    ge_session = std::make_shared<ge::Session>(session_options);
+    if (ge_session == nullptr) {
+      MS_LOG(ERROR) << "Failed to create ge session";
+      return nullptr;
+    }
+    GeSessionContext session_context;
+    session_context.ge_session = ge_session;
+    session_context.session_options = session_options;
+    ge_session_map_[session_id] = session_context;
+    MS_LOG(INFO) << "Create ge session successfully, lite session id: " << session_id;
+  } else {
+    auto old_options = s_it->second.session_options;
+    if (old_options != session_options) {
+      MS_LOG(ERROR)
+        << "Session options is not equal in diff config infos when models' weights are shared, last session options: "
+        << old_options << ", current session options: " << session_options;
+      return nullptr;
+    }
+    MS_LOG(INFO) << "Get ge session from session map, lite session id: " << session_id;
+  }
+  return ge_session;
+}
+
+std::set<std::string> GeSessionManager::UpdateSessionVariables(int64_t session_id,
+                                                               const std::vector<std::string> &graph_variables) {
+  std::set<std::string> new_variables;
+  if (session_id == kUnkonwnSessionId) {
+    std::transform(graph_variables.begin(), graph_variables.end(), std::inserter(new_variables, new_variables.begin()),
+                   [](const auto &item) { return item; });
+    return new_variables;
+  }
+  std::lock_guard<std::mutex> lock(session_mutex_);
+  std::shared_ptr<ge::Session> ge_session = nullptr;
+  auto s_it = ge_session_map_.find(session_id);
+  if (s_it != ge_session_map_.end()) {
+    ge_session = s_it->second.ge_session.lock();
+  }
+  if (ge_session == nullptr) {
+    std::transform(graph_variables.begin(), graph_variables.end(), std::inserter(new_variables, new_variables.begin()),
+                   [](const auto &item) { return item; });
+    return new_variables;
+  }
+  auto &current_session_variables = s_it->second.session_variables;
+  for (auto &item : graph_variables) {
+    if (current_session_variables.find(item) == current_session_variables.end()) {
+      new_variables.insert(item);
+      current_session_variables.insert(item);
+    }
+  }
+  return new_variables;
+}
+
+void GeSessionManager::TryReleaseGeSessionContext(int64_t session_id) {
+  std::lock_guard<std::mutex> lock(session_mutex_);
+  auto s_it = ge_session_map_.find(session_id);
+  if (s_it != ge_session_map_.end()) {
+    auto ge_session = s_it->second.ge_session.lock();
+    if (ge_session == nullptr) {
+      ge_session_map_.erase(s_it);
+    }
+  }
+}
+
 static std::shared_ptr<device::GraphExecutor> GeGraphExecutorCreator(const std::shared_ptr<Context> &ctx,
                                                                      const ConfigInfos &config_infos) {
-  return std::make_shared<GeGraphExecutor>(ctx, config_infos);
+  auto ge_executor = std::make_shared<GeGraphExecutor>(ctx, config_infos);
+  if (!ge_executor->Init()) {
+    MS_LOG(ERROR) << "Failed to init GeGraphExecutor";
+    return nullptr;
+  }
+  return ge_executor;
 }
 
 REG_DELEGATE(kAscend, kProviderGe, GeGraphExecutorCreator)

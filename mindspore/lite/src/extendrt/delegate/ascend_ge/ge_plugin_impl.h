@@ -27,13 +27,7 @@ class AscendGeExecutorPluginImpl : public lite::AscendGeExecutorPluginImplBase {
  public:
   AscendGeExecutorPluginImpl() = default;
   ~AscendGeExecutorPluginImpl() = default;
-
-  Status AscendGeDeviceContextInitialize(const std::shared_ptr<Context> &context, const ConfigInfos &config_info = {});
-  void AscendGeDeviceContextDestroy() const;
   Status AdaptGraph(FuncGraphPtr graph) const;
-
- private:
-  std::shared_ptr<GeDeviceContext> ge_context_ = nullptr;
 };
 
 extern "C" MS_API AscendGeExecutorPluginImpl *CreateAscendGeExecutorPluginImpl();

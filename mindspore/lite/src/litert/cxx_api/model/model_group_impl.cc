@@ -31,8 +31,16 @@
 
 namespace mindspore {
 using mindspore::lite::RET_OK;
+ModelGroupImpl::ModelGroupImpl(ModelGroupFlag flags) : flags_(flags) {
+  static uint32_t g_model_group_id = 0;
+  model_group_id_ = ++g_model_group_id;
+}
 
 Status ModelGroupImpl::AddModel(const std::vector<std::string> &model_path_list) {
+  if (flags_ != ModelGroupFlag::kShareWorkspace) {
+    MS_LOG(ERROR) << "Only support share workspace for ModelGroup::AddModel(const std::vector<std::string> &)";
+    return kLiteError;
+  }
   if (model_path_list.empty()) {
     MS_LOG(ERROR) << "Param model_path_list is empty.";
     return kLiteParamInvalid;
@@ -48,6 +56,11 @@ Status ModelGroupImpl::AddModel(const std::vector<std::string> &model_path_list)
 }
 
 Status ModelGroupImpl::AddModel(const std::vector<std::pair<const void *, size_t>> &model_buff_list) {
+  if (flags_ != ModelGroupFlag::kShareWorkspace) {
+    MS_LOG(ERROR)
+      << "Only support share workspace for ModelGroup::AddModel(const std::vector<std::pair<const void *, size_t>> &)";
+    return kLiteError;
+  }
   if (model_buff_list.empty()) {
     MS_LOG(ERROR) << "Param model_buff_list is empty.";
     return kLiteParamInvalid;
@@ -85,6 +98,10 @@ lite::LiteSession *ModelGroupImpl::CreateLiteSession(const std::shared_ptr<Conte
 }
 
 Status ModelGroupImpl::CalMaxSizeOfWorkspace(ModelType model_type, const std::shared_ptr<Context> &ms_context) {
+  if (flags_ != ModelGroupFlag::kShareWorkspace) {
+    MS_LOG(ERROR) << "Only support share workspace for ModelGroup::CalMaxSizeOfWorkspace";
+    return kLiteError;
+  }
   for (auto &model_path : model_path_list_) {
     auto *session = CreateLiteSession(ms_context);
     if (session == nullptr) {

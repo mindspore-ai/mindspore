@@ -210,69 +210,6 @@ extern "C" JNIEXPORT bool JNICALL Java_com_mindspore_Model_buildByPath(JNIEnv *e
   return true;
 }
 
-extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_Model_buildWithInc(JNIEnv *env, jclass clazz,
-                                                                           jstring model_path, jstring inc_model_path,
-                                                                           jint model_type, jlong context_ptr,
-                                                                           jstring config_file_path) {
-  jclass array_list = env->FindClass("java/util/ArrayList");
-  jmethodID array_list_construct = env->GetMethodID(array_list, "<init>", "()V");
-  jobject ret_arr = env->NewObject(array_list, array_list_construct);
-  jmethodID array_list_add = env->GetMethodID(array_list, "add", "(Ljava/lang/Object;)Z");
-
-  auto c_model_path = env->GetStringUTFChars(model_path, JNI_FALSE);
-  auto c_inc_model_path = env->GetStringUTFChars(inc_model_path, JNI_FALSE);
-  auto c_config_file_path = env->GetStringUTFChars(config_file_path, JNI_FALSE);
-  mindspore::ModelType c_model_type;
-  if (model_type >= static_cast<int>(mindspore::kMindIR) && model_type <= static_cast<int>(mindspore::kMindIR_Lite)) {
-    c_model_type = static_cast<mindspore::ModelType>(model_type);
-  } else {
-    MS_LOG(ERROR) << "Invalid model type : " << model_type;
-    env->DeleteLocalRef(array_list);
-    env->ReleaseStringUTFChars(model_path, c_model_path);
-    env->ReleaseStringUTFChars(model_path, c_inc_model_path);
-    env->ReleaseStringUTFChars(model_path, c_config_file_path);
-    return ret_arr;
-  }
-  auto *c_context_ptr = reinterpret_cast<mindspore::Context *>(context_ptr);
-  if (c_context_ptr == nullptr) {
-    MS_LOG(ERROR) << "Context pointer from java is nullptr";
-    env->DeleteLocalRef(array_list);
-    env->ReleaseStringUTFChars(model_path, c_model_path);
-    env->ReleaseStringUTFChars(model_path, c_inc_model_path);
-    env->ReleaseStringUTFChars(model_path, c_config_file_path);
-    return ret_arr;
-  }
-  auto context = std::make_shared<mindspore::Context>(*c_context_ptr);
-  mindspore::Status status;
-
-  auto models_vec = mindspore::Model::Build(c_model_path, c_inc_model_path, c_model_type, context, c_config_file_path);
-  if (models_vec.size() == 0) {
-    status = mindspore::kLiteError;
-  }
-
-  env->ReleaseStringUTFChars(model_path, c_model_path);
-  env->ReleaseStringUTFChars(model_path, c_inc_model_path);
-  env->ReleaseStringUTFChars(model_path, c_config_file_path);
-  if (status != mindspore::kSuccess) {
-    MS_LOG(ERROR) << "Error status " << static_cast<int>(status) << " during build of model";
-    return ret_arr;
-  }
-
-  jclass long_object = env->FindClass("java/lang/Long");
-  jmethodID long_object_construct = env->GetMethodID(long_object, "<init>", "(J)V");
-  for (auto model : models_vec) {
-    std::shared_ptr<mindspore::Model> *model_ptr = new std::shared_ptr<mindspore::Model>;
-    *model_ptr = model;
-    jobject model_addr = env->NewObject(long_object, long_object_construct, reinterpret_cast<jlong>(model_ptr));
-    env->CallBooleanMethod(ret_arr, array_list_add, model_addr);
-    env->DeleteLocalRef(model_addr);
-  }
-  env->DeleteLocalRef(array_list);
-  env->DeleteLocalRef(long_object);
-
-  return ret_arr;
-}
-
 jobject GetInOrOutTensors(JNIEnv *env, jobject thiz, jlong model_ptr, bool is_input) {
   jclass array_list = env->FindClass("java/util/ArrayList");
   jmethodID array_list_construct = env->GetMethodID(array_list, "<init>", "()V");

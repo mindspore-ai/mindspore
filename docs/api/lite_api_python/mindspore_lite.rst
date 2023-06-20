@@ -26,9 +26,11 @@ Python接口仅支持云侧推理。
 .. mscnautosummary::
     :toctree: mindspore_lite
 
-    mindspore_lite.ModelType
     mindspore_lite.Model
+    mindspore_lite.ModelGroup
+    mindspore_lite.ModelGroupFlag
     mindspore_lite.ModelParallelRunner
+    mindspore_lite.ModelType
 
 张量
 ------

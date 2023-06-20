@@ -77,6 +77,7 @@ Status SingleOpInferSession::Init(const std::shared_ptr<Context> &context, const
     MS_LOG(ERROR) << "Init ascend failed.";
     return kLiteError;
   }
+  config_infos_ = config_info;
   return kSuccess;
 }
 
@@ -484,8 +485,11 @@ MutableTensorImplPtr SingleOpInferSession::GetInputByTensorName(uint32_t, const 
 static std::shared_ptr<InferSession> SingleOpSessionCreator(const std::shared_ptr<Context> &ctx,
                                                             const ConfigInfos &config_infos) {
   auto session = std::make_shared<SingleOpInferSession>();
-  session->Init(ctx);
-  session->SetConfigInfo(config_infos);
+  auto ret = session->Init(ctx, config_infos);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "Init session failed.";
+    return nullptr;
+  }
   return session;
 }
 REG_SESSION(kSingleOpSession, SingleOpSessionCreator);

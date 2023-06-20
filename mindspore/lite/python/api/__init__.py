@@ -24,7 +24,7 @@ from importlib.abc import MetaPathFinder
 from mindspore_lite.version import __version__
 from mindspore_lite.context import Context
 from mindspore_lite.converter import FmkType, Converter
-from mindspore_lite.model import ModelType, Model, ModelParallelRunner, ModelGroup
+from mindspore_lite.model import ModelType, Model, ModelParallelRunner, ModelGroup, ModelGroupFlag
 from mindspore_lite.tensor import DataType, Format, Tensor
 from mindspore_lite.lite_split import split_network, split_ir
 

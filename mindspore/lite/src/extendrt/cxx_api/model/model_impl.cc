@@ -58,24 +58,6 @@ std::shared_mutex g_model_converter_lock;
 constexpr auto kAscendProviderGe = "ge";
 std::mutex g_load_mindir_lock;
 
-std::map<std::string, tensor::TensorPtr> GetParams(const FuncGraphPtr &anf_graph) {
-  MS_EXCEPTION_IF_NULL(anf_graph);
-  std::map<std::string, tensor::TensorPtr> res;
-  for (auto &anf_node : anf_graph->parameters()) {
-    MS_EXCEPTION_IF_NULL(anf_node);
-    auto para = anf_node->cast<ParameterPtr>();
-    MS_EXCEPTION_IF_NULL(para);
-    if (para->has_default()) {
-      auto value = para->default_param();
-      MS_EXCEPTION_IF_NULL(value);
-      auto tensor = value->cast<std::shared_ptr<tensor::Tensor>>();
-      res.emplace(para->name(), tensor);
-      MS_LOG(INFO) << "Parameter " << para->name() << " has default value.";
-    }
-  }
-  return res;
-}
-
 FuncGraphPtr CreateFuncGraphFromDataFlow(const void *model_data, size_t data_size) {
   auto func_graph = std::make_shared<FuncGraph>();
   if (func_graph == nullptr) {
@@ -257,6 +239,8 @@ ConverterPlugin::ConverterFunc ConverterPlugin::GetConverterFuncInner() {
 #endif
 }
 
+ModelImpl::ModelImpl() : graph_(nullptr), session_(nullptr), context_(nullptr) {}
+
 FuncGraphPtr ModelImpl::LoadGraphByBufferImpl(const void *model_buff, size_t model_size, ModelType model_type,
                                               const std::shared_ptr<Context> &model_context,
                                               const std::string &model_path) {
@@ -359,11 +343,7 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
     MS_LOG(ERROR) << "Create session failed.";
     return kLiteError;
   }
-  auto ret = session_->Init(model_context, config_info_);
-  if (ret != kSuccess) {
-    MS_LOG(ERROR) << "Init session failed.";
-    return ret;
-  }
+  Status ret;
   if (model_type == kMindIR_Lite) {
     ret = session_->CompileGraph(model_buff, model_size, &graph_id_);
     if (ret != kSuccess) {
@@ -426,19 +406,13 @@ Status ModelImpl::Build(const FuncGraphPtr &func_graph, const std::shared_ptr<Co
     MS_LOG(ERROR) << "Create session failed.";
     return kLiteError;
   }
-  auto ret = session_->Init(model_context, config_info_);
-  if (ret != kSuccess) {
-    MS_LOG(ERROR) << "Init session failed.";
-    return ret;
-  }
-
   // get func_graph
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "Input func graph is nullptr";
     return kLiteError;
   }
   // transfer primitivePy to primitiveC
-  ret = PrimitivePyToC(func_graph);
+  auto ret = PrimitivePyToC(func_graph);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "transfer primitivePy to primitiveCfailed.";
     return ret;
@@ -456,92 +430,6 @@ Status ModelImpl::Build(const FuncGraphPtr &func_graph, const std::shared_ptr<Co
   }
   std::shared_lock<std::shared_mutex> build_lock(g_model_converter_lock);
   return FuncGraphReuseManager::GetInstance()->StoreFuncGraph(func_graph, config_info_);
-}
-
-Status ModelImpl::Build(const std::vector<std::shared_ptr<ModelImpl>> &model_impls,
-                        const std::vector<std::string> &model_paths, ModelType model_type,
-                        const std::shared_ptr<Context> &model_context) {
-  if (model_impls.empty()) {
-    MS_LOG(ERROR) << "Model impls size is 0";
-    return kLiteError;
-  }
-  if (model_impls.size() != model_paths.size()) {
-    MS_LOG(ERROR) << "Model impls size " << model_impls.size() << " != model path size " << model_paths.size();
-    return kLiteError;
-  }
-  for (size_t i = 0; i < model_impls.size(); i++) {
-    if (model_impls[i] == nullptr || model_paths[i].empty()) {
-      MS_LOG(ERROR) << "Model " << i << " is invalid, model impl is nullptr or model path is empty";
-      return kLiteError;
-    }
-  }
-  if (model_impls.size() == 1) {
-    return model_impls[0]->Build(model_paths[0], model_type, model_context);
-  }
-  model_impls[0]->SetMsContext();
-  auto thread_num = model_context->GetThreadNum();
-  if (thread_num < 0) {
-    MS_LOG(ERROR) << "Invalid thread num " << thread_num;
-    return kLiteError;
-  }
-  auto session = InferSession::CreateSession(model_context, model_impls[0]->config_info_);
-  if (session == nullptr) {
-    MS_LOG(ERROR) << "Create session failed.";
-    return kLiteError;
-  }
-  auto ret = session->Init(model_context, model_impls[0]->config_info_);
-  if (ret != kSuccess) {
-    MS_LOG(ERROR) << "Init session failed.";
-    return ret;
-  }
-
-  std::set<std::string> total_params;
-  for (size_t i = 0; i < model_impls.size(); i++) {
-    auto &impl = model_impls[i];
-    auto &model_path = model_paths[i];
-    std::lock_guard<std::recursive_mutex> lock(impl->mutex_);
-    if (impl->session_) {
-      MS_LOG(ERROR) << "Model " << i << " has been called Build";
-      return kLiteError;
-    }
-    impl->session_ = session;
-    auto buffer = ReadFile(model_path);
-    if (buffer.DataSize() == 0) {
-      MS_LOG(ERROR) << "Failed to read buffer from model file: " << model_path;
-      return kLiteError;
-    }
-    auto func_graph =
-      impl->LoadGraphByBufferImpl(buffer.Data(), buffer.DataSize(), model_type, model_context, model_path);
-    if (func_graph == nullptr) {
-      MS_LOG(ERROR) << "Failed to load graph";
-      return kCoreFailed;
-    }
-    std::map<std::string, tensor::TensorPtr> params = GetParams(func_graph);
-    for (auto &param : params) {
-      if (total_params.find(param.first) != total_params.end()) {
-        param.second->set_init_flag(true);
-      } else {
-        total_params.emplace(param.first);
-      }
-    }
-    std::shared_lock<std::shared_mutex> build_lock(g_model_converter_lock);
-    ret = session->CompileGraph(func_graph, buffer.Data(), buffer.DataSize(), &impl->graph_id_);
-    if (ret != kSuccess) {
-      MS_LOG(ERROR) << "Failed to compile graph " << model_path;
-      return ret;
-    }
-  }
-  // warm up
-  MS_LOG(INFO) << "Start to warm-up to compile graph, model paths: " << model_paths;
-  for (auto &model : model_impls) {
-    ret = model->Warmup();
-    if (ret != kSuccess) {
-      MS_LOG(ERROR) << "Failed to compile graph, model paths: " << model_paths;
-      return ret;
-    }
-  }
-  MS_LOG(INFO) << "Compile graph success, model paths: " << model_paths;
-  return kSuccess;
 }
 
 Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType model_type,
@@ -771,19 +659,6 @@ Status ModelImpl::Predict() {
   return Predict(inputs, &outputs);
 }
 
-Status ModelImpl::Warmup() {
-  auto inputs = GetInputs();
-  for (auto &input : inputs) {
-    auto shape = input.Shape();
-    if (std::any_of(shape.begin(), shape.end(), [](auto dim) { return dim < 0; })) {
-      MS_LOG(WARNING) << "Failed to warm-up because of dynamic inputs";
-      return kSuccess;
-    }
-  }
-  auto outputs = GetOutputs();
-  return Predict(inputs, &outputs);
-}
-
 bool ModelImpl::HasPreprocess() {
   if (!graph_ || !graph_->graph_data_) {
     MS_LOG(ERROR) << "Model has not been called Build, or Model Build has failed";
@@ -899,7 +774,18 @@ Status ModelImpl::LoadConfig(const std::string &config_path) {
     MS_LOG(ERROR) << "GetAllSectionInfoFromConfigFile fail!ret: " << ret;
     return kLiteFileError;
   }
-  config_info_ = all_config_info;
+  for (auto &section : all_config_info) {
+    const auto &section_name = section.first;
+    auto sec_it = config_info_.find(section_name);
+    if (sec_it == config_info_.end()) {
+      config_info_.emplace(section.first, section.second);
+    } else {
+      auto &cur_sec = sec_it->second;
+      for (auto &config_item : section.second) {
+        cur_sec[config_item.first] = config_item.second;
+      }
+    }
+  }
   return kSuccess;
 }
 

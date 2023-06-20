@@ -23,7 +23,7 @@ from mindspore_lite._checkparam import check_isinstance
 from mindspore_lite.context import Context
 from mindspore_lite.lib import _c_lite_wrapper
 from mindspore_lite.tensor import Tensor
-from .base_model import BaseModel
+from mindspore_lite.base_model import BaseModel
 
 __all__ = ['ModelType', 'Model', 'ModelParallelRunner', 'ModelGroup']
 
@@ -93,66 +93,6 @@ class Model(BaseModel):
     def __str__(self):
         res = f"model_path: {self.model_path_}."
         return res
-
-    @staticmethod
-    def build_multi_models(model_path0, model_path1, model_type, context, config_path):
-        """
-        Used to load two models that share weights. Beta interface, which may be removed in the future.
-
-        Args:
-            model_path0 (str): file path of the first model.
-            model_path1 (str): file path of the second model.
-            model_type (ModelType): Define The type of input model file. only ``ModelType.MINDIR``
-                is supported currently.
-            context (Context, optional): Define the context used to transfer options during execution.
-            config_path (str, optional): Define the config file path. the config file is used to transfer user defined
-                options during build model.
-
-        Returns:
-            list[Tensor], two Model object that share weights.
-
-        Raises:
-            TypeError: `model_path0`, `model_path1` or `config_path` is not a str.
-            TypeError: `model_type` is not a ModelType.
-            TypeError: `context` is not a Context.
-            RuntimeError: `model_path0`, `model_path1` or `config_path` does not exist.
-            RuntimeError: load configuration by `config_path` failed.
-            RuntimeError: build from file failed.
-
-        Examples:
-            >>> import mindspore_lite as mslite
-            >>> context = mslite.Context()
-            >>> context.ascend.device_id = 0
-            >>> context.ascend.rank_id = 0
-            >>> context.ascend.provider = "ge"
-            >>> context.target = ["Ascend"]
-            >>> model0, model1 = mslite.Model.build_from_file("seq_1024.mindir", "seq_1.mindir",
-            ...                                               mslite.ModelType.MINDIR, context, "config.ini")
-        """
-        check_isinstance("model_path0", model_path0, str)
-        check_isinstance("model_path1", model_path1, str)
-        check_isinstance("model_type", model_type, ModelType)
-        check_isinstance("context", context, Context)
-        check_isinstance("config_path", config_path, str)
-        model_type_ = _c_lite_wrapper.ModelType.kMindIR_Lite
-        if model_type is ModelType.MINDIR:
-            model_type_ = _c_lite_wrapper.ModelType.kMindIR
-
-        if not os.path.exists(config_path):
-            raise RuntimeError(f"build_multi_models failed, config_path does not exist")
-
-        models_ = _c_lite_wrapper.ModelBind.build_multi_models(model_path0, model_path1, model_type_,
-                                                               context._context._inner_context, config_path)
-        if not models_:
-            raise RuntimeError(f"build_multi_models failed! model_path0: {model_path0}, model_path1: {model_path1}, "
-                               f"config_file: {config_path}")
-        model0 = Model()
-        model0._model = models_[0]
-        model0.model_path_ = model_path0
-        model1 = Model()
-        model1._model = models_[1]
-        model1.model_path_ = model_path1
-        return model0, model1
 
     def build_from_file(self, model_path, model_type, context=None, config_path=""):
         """
@@ -562,8 +502,8 @@ class ModelParallelRunner:
             >>> total_end_time = time.time()
             >>> print("total run time: ", total_end_time - total_start_time, " s")
         """
-        if not isinstance(inputs, list):
-            raise TypeError("inputs must be list, but got {}.".format(type(inputs)))
+        if not isinstance(inputs, (list, tuple)):
+            raise TypeError("inputs must be list or tuple, but got {}.".format(type(inputs)))
         _inputs = []
         for i, element in enumerate(inputs):
             if not isinstance(element, Tensor):
@@ -579,39 +519,112 @@ class ModelParallelRunner:
         return predict_outputs
 
 
+class ModelGroupFlag(Enum):
+    """
+    The `ModelGroupFlag` class defines the type of the model group.
+
+    The `ModelGroupFlag` is used to define the flags used to construct a `ModelGroup`. Currently, supports:
+
+    1. `ModelGroupFlag.SHARE_WEIGHT`, multiple models share weights share workspace memory, default construction flag
+    for `ModelGroup`.
+
+    2. `ModelGroupFlag.SHARE_WORKSPACE`, multiple models share weights(including constatns and variables) memory.
+    Currently only supported in cloud side Ascend inference and the provider is GE.
+
+    Examples:
+        >>> import mindspore_lite as mslite
+        >>> context = mslite.Context()
+        >>> context.target = ["Ascend"]
+        >>> context.ascend.device_id = 0
+        >>> context.ascend.rank_id = 0
+        >>> context.ascend.provider = "ge"
+        >>> model_group = mslite.ModelGroup(mslite.ModelGroupFlag.SHARE_WEIGHT)
+        >>> model0 = mslite.Model()
+        >>> model1 = mslite.Model()
+        >>> model_group.add_model([model0, model1])
+        >>> model0.build_from_file("seq_1024.mindir", mslite.ModelType.MINDIR, context, "config0.ini")
+        >>> model1.build_from_file("seq_1.mindir", mslite.ModelType.MINDIR, context, "config.ini")
+    """
+
+    SHARE_WEIGHT = 1
+    SHARE_WORKSPACE = 2
+
+
+model_group_flag_py_cxx_map = {
+    ModelGroupFlag.SHARE_WEIGHT: _c_lite_wrapper.ModelGroupFlag.kShareWeight,
+    ModelGroupFlag.SHARE_WORKSPACE: _c_lite_wrapper.ModelGroupFlag.kShareWorkspace,
+}
+
+
 class ModelGroup:
     """
     The `ModelGroup` class is used to define a MindSpore model group,
-    facilitating multiple models to share workspace memory.
+    facilitating multiple models to share workspace memory or weights(including constants and variables) memory.
 
     Examples:
+        >>> # Multi models share workspace memory
         >>> import mindspore_lite as mslite
         >>> model_group = mslite.ModelGroup()
         >>> model_group.add_model([path1, path2])
         >>> model_group.cal_max_size_of_workspace(model_type, context)
+        >>>
+        >>> # Multi models share weights memory
+        >>> import mindspore_lite as mslite
+        >>> context = mslite.Context()
+        >>> context.target = ["Ascend"]
+        >>> context.ascend.device_id = 0
+        >>> context.ascend.rank_id = 0
+        >>> context.ascend.provider = "ge"
+        >>> model_group = mslite.ModelGroup(mslite.ModelGroupFlag.SHARE_WEIGHT)
+        >>> model0 = mslite.Model()
+        >>> model1 = mslite.Model()
+        >>> model_group.add_model([model0, model1])
+        >>> model0.build_from_file("seq_1024.mindir", mslite.ModelType.MINDIR, context, "config0.ini")
+        >>> model1.build_from_file("seq_1.mindir", mslite.ModelType.MINDIR, context, "config.ini")
     """
 
-    def __init__(self):
-        self._model_group = _c_lite_wrapper.ModelGroupBind()
+    def __init__(self, flags=ModelGroupFlag.SHARE_WORKSPACE):
+        if flags == ModelGroupFlag.SHARE_WORKSPACE:
+            flags_inner = _c_lite_wrapper.ModelGroupFlag.kShareWorkspace
+        else:
+            flags_inner = _c_lite_wrapper.ModelGroupFlag.kShareWeight
+        self._model_group = _c_lite_wrapper.ModelGroupBind(flags_inner)
 
-    def add_model(self, model_path_list):
+    def add_model(self, models):
         """
-        Add models that require shared workspace memory.
+        Used to define MindSpore Lite model grouping information, which is used to share workspace memory or
+        weight (including constants and variables) memory. This interface only supports weight memory
+        sharing when the `models` is a tuple or list of `Model` objects, and only supports workspace memory sharing in
+        other scenarios.
 
         Args:
-           model_path_list (list[str]): model_path_list Define the list of model path.
+           models (union[tuple/list(str), tuple/list(Model)]): Define the list/tuple of model paths or Model objects.
 
         Raises:
-           TypeError: `model_path_list` is not a list.
-           TypeError: `model_path_list` is a list, but the elements are not str.
-           RuntimeError: add model failed.
+           TypeError: `models` is not a list and tuple.
+           TypeError: `models` is a list or tuple, but the elements are not all str or Model.
+           RuntimeError: Failed to add model grouping information.
         """
-        check_isinstance("model_path_list", model_path_list, list)
-        for i, element in enumerate(model_path_list):
-            if not isinstance(element, str):
-                raise TypeError(f"model_path_list element must be str, but got "
-                                f"{type(element)} at index {i}.")
-        ret = self._model_group.add_model(model_path_list)
+        check_isinstance("models", models, (list, tuple))
+        if not models:
+            raise RuntimeError(f"models cannot be empty")
+        model0 = models[0]
+        if isinstance(model0, str):
+            for i, element in enumerate(models):
+                if not isinstance(element, str):
+                    raise TypeError(f"models element must be all str or Model, but got "
+                                    f"{type(element)} at index {i}.")
+            ret = self._model_group.add_model(models)
+        elif isinstance(model0, Model):
+            for i, element in enumerate(models):
+                if not isinstance(element, Model):
+                    raise TypeError(f"models element must be all str or Model, but got "
+                                    f"{type(element)} at index {i}.")
+            models_inner = [model._model for model in models]
+            ret = self._model_group.add_model_by_object(models_inner)
+        else:
+            raise TypeError(f"models element must be all str or Model, but got "
+                            f"{type(model0)} at index {0}.")
         if not ret.IsOk():
             raise RuntimeError(f"ModelGroup's add model failed.")
 

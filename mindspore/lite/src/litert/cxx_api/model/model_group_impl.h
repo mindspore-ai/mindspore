@@ -32,7 +32,7 @@
 namespace mindspore {
 class ModelGroupImpl {
  public:
-  ModelGroupImpl() {}
+  explicit ModelGroupImpl(ModelGroupFlag flags);
   ~ModelGroupImpl() = default;
 
   Status AddModel(const std::vector<std::string> &model_path_list);
@@ -45,6 +45,8 @@ class ModelGroupImpl {
   std::vector<std::string> model_path_list_;
   std::vector<std::pair<const void *, size_t>> model_buff_list_;
   std::map<std::string, std::map<std::string, std::string>> config_info_;
+  ModelGroupFlag flags_;
+  uint32_t model_group_id_ = 0;
 };
 }  // namespace mindspore
 
