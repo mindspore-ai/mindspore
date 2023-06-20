@@ -15,6 +15,7 @@
  */
 
 #include "runtime/graph_scheduler/scheduler_helper.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "runtime/graph_scheduler/actor/actor_dump.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

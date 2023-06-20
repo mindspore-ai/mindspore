@@ -17,6 +17,7 @@
 #include <vector>
 #include <string>
 #include "include/backend/kernel_graph.h"
+#include "mindspore/core/ops/math_ops.h"
 #include "backend/common/session/session_basic.h"
 #include "plugin/device/ascend/hal/hardware/ascend_session.h"
 #include "backend/common/mem_reuse/kernel_refcount.h"

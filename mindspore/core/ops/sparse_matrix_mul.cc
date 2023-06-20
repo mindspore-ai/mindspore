@@ -18,19 +18,19 @@
 #include <string>
 #include <vector>
 
-#include "abstract/ops/primitive_infer_map.h"
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include "abstract/param_validator.h"
 #include "base/base.h"
 #include "ir/anf.h"
 #include "ir/primitive.h"
-#include "ops/core_ops.h"
+#include "mindapi/src/helper.h"
+#include "mindspore/core/ops/sparse_ops.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
-#include "utils/log_adapter.h"
-#include "mindapi/src/helper.h"
 #include "ops/sparse_matrix_mul.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace ops {

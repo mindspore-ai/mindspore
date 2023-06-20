@@ -20,8 +20,9 @@
 #include <set>
 
 #include "abstract/ops/primitive_infer_map.h"
-#include "ops/op_utils.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {

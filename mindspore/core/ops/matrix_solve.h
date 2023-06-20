@@ -18,13 +18,13 @@
 #define MINDSPORE_CORE_OPS_MATRIX_SOLVE_H_
 
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
-#include <memory>
 #include <vector>
 
-#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

@@ -18,8 +18,10 @@
 #include "tools/optimizer/graph/add_tensor_array.h"
 #include <vector>
 #include <memory>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "mindspore/core/abstract/dshape.h"
 #include "ops/tensor_array.h"
 #include "ops/tensor_array_read.h"

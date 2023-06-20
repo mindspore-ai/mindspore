@@ -16,12 +16,11 @@
 
 #include "ops/sequence_slice.h"
 
-#include <vector>
-#include <string>
-#include <set>
 #include <memory>
+#include <set>
+#include <string>
+#include <vector>
 
-#include "utils/check_convert_utils.h"
 #include "abstract/abstract_value.h"
 #include "abstract/ops/op_infer.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -30,10 +29,11 @@
 #include "ir/dtype/number.h"
 #include "ir/primitive.h"
 #include "ir/value.h"
-#include "ops/core_ops.h"
-#include "ops/primitive_c.h"
-#include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "ops/primitive_c.h"
+#include "utils/check_convert_utils.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace ops {

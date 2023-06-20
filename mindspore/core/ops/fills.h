@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_CORE_OPS_FILLS_H_
 #define MINDSPORE_CORE_OPS_FILLS_H_
 #include <vector>
-#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
-#include "mindspore/core/ops/core_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

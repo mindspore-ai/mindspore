@@ -18,6 +18,7 @@
 #include <memory>
 #include <set>
 #include <algorithm>
+#include "mindspore/core/ops/sequence_ops.h"
 #include "ops/make_tuple.h"
 #include "ops/return.h"
 #include "tools/converter/converter_context.h"
@@ -27,7 +28,6 @@
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
-#include "ops/core_ops.h"
 namespace {
 constexpr const int kSwitchTruePartialIndex = 2;
 constexpr const int kSwitchFalsePartialIndex = 3;

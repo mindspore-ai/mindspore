@@ -15,6 +15,8 @@
  */
 
 #include "runtime/graph_scheduler/control_node_scheduler.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "runtime/graph_scheduler/control_node_parser.h"
 #include "runtime/graph_scheduler/scheduler_helper.h"
 

@@ -15,6 +15,9 @@
  */
 #define USE_DEPRECATED_API
 #include "tools/converter/parser/lstm_adjust_pass.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ops/lstm.h"
 #include "ops/reshape.h"
 #include "ops/transpose.h"

@@ -16,15 +16,16 @@
 
 #include "ops/sparse_softmax.h"
 
-#include <set>
 #include <map>
-#include <string>
 #include <memory>
+#include <set>
+#include <string>
 
 #include "abstract/ops/primitive_infer_map.h"
-#include "utils/check_convert_utils.h"
-#include "ops/op_name.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/sparse_ops.h"
+#include "ops/op_name.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

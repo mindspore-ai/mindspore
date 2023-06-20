@@ -17,6 +17,8 @@
 #include "plugin/device/ascend/kernel/kernel_query.h"
 #include <algorithm>
 #include <string>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "plugin/device/ascend/kernel/bisheng/bisheng_kernel_metadata.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_metadata.h"
 #include "plugin/device/ascend/kernel/host/host_kernel_metadata.h"

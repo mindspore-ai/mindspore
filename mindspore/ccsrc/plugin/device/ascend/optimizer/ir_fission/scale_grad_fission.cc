@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/ir_fission/scale_grad_fission.h"
-#include <memory>
-#include <vector>
-#include <string>
 #include <cmath>
-#include "include/common/utils/anfalgo.h"
-#include "mindspore/core/ops/core_ops.h"
+#include <memory>
+#include <string>
+#include <vector>
 #include "include/backend/kernel_info.h"
+#include "include/common/utils/anfalgo.h"
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
 
 namespace mindspore {
 namespace opt {

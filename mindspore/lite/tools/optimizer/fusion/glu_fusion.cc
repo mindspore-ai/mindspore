@@ -17,6 +17,9 @@
 #include "tools/optimizer/fusion/glu_fusion.h"
 #include <memory>
 #include <string>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "ops/glu.h"
 #include "include/common/utils/utils.h"
 #include "ops/op_utils.h"

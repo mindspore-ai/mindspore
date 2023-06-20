@@ -16,6 +16,10 @@
 
 #include "transform/graph_ir/op_declare/nonlinear_fuc_ops_declare.h"
 
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
 namespace mindspore::transform {
 // Relu
 INPUT_MAP(Relu) = {{1, INPUT_DESC(x)}};

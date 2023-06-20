@@ -17,8 +17,8 @@
 #ifndef MINDSPORE_CORE_OPS_FORMAT_TRANSPOSE_H_
 #define MINDSPORE_CORE_OPS_FORMAT_TRANSPOSE_H_
 #include <memory>
-#include "ops/base_operator.h"
 #include "mindapi/base/format.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

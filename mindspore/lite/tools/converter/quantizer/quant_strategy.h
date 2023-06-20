@@ -22,7 +22,6 @@
 #include <set>
 #include <string>
 #include "ir/anf.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "utils/check_convert_utils.h"
 #include "ir/manager.h"
 #include "tools/converter/quantizer/quant_params.h"

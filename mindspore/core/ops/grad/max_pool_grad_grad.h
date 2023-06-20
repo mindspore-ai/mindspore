@@ -17,12 +17,12 @@
 #ifndef MINDSPORE_CORE_OPS_MAX_POOL_GRAD_GRAD_H_
 #define MINDSPORE_CORE_OPS_MAX_POOL_GRAD_GRAD_H_
 #include <map>
-#include <vector>
-#include <string>
 #include <memory>
-#include "ops/base_operator.h"
+#include <string>
+#include <vector>
 #include "mindapi/base/types.h"
 #include "mindspore/core/ir/anf.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

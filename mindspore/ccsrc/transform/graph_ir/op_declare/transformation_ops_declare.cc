@@ -15,8 +15,10 @@
  */
 
 #include "transform/graph_ir/op_declare/transformation_ops_declare.h"
-#include <vector>
 #include <string>
+#include <vector>
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
 
 namespace mindspore::transform {
 // Flatten

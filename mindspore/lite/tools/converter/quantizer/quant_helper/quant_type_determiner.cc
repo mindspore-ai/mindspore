@@ -17,6 +17,7 @@
 #include "tools/converter/quantizer/quant_helper/quant_type_determiner.h"
 #include <utility>
 #include <set>
+#include "mindspore/core/ops/framework_ops.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "src/executor/kernel_exec.h"

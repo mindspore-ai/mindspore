@@ -22,6 +22,12 @@
 #include <utility>
 #include <memory>
 #include <algorithm>
+#include "mindspore/core/ops/structure_ops.h"
+#include "mindspore/core/ops/sparse_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ir/anf.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "frontend/operator/ops.h"
@@ -35,7 +41,6 @@
 #include "utils/ordered_map.h"
 #include "utils/ordered_set.h"
 #include "base/effect_info.h"
-#include "ops/core_ops.h"
 #include "abstract/abstract_value.h"
 #include "pipeline/jit/debug/trace.h"
 

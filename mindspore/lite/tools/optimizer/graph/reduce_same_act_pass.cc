@@ -16,6 +16,7 @@
 
 #define USE_DEPRECATED_API
 #include "tools/optimizer/graph/reduce_same_act_pass.h"
+#include "mindspore/core/ops/lite_ops.h"
 #include "ops/op_utils.h"
 #include "src/common/utils.h"
 #include "tools/common/tensor_util.h"

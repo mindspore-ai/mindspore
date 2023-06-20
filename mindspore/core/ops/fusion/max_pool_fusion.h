@@ -16,11 +16,11 @@
 
 #ifndef MINDSPORE_CORE_OPS_MAX_POOL_FUSION_H_
 #define MINDSPORE_CORE_OPS_MAX_POOL_FUSION_H_
-#include <vector>
 #include <memory>
+#include <vector>
 
-#include "ops/max_pool.h"
 #include "mindapi/base/types.h"
+#include "ops/max_pool.h"
 
 namespace mindspore {
 namespace ops {

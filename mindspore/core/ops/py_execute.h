@@ -17,14 +17,14 @@
 #ifndef MINDSPORE_CORE_OPS_PY_EXECUTE_H_
 #define MINDSPORE_CORE_OPS_PY_EXECUTE_H_
 
-#include <vector>
 #include <memory>
 #include <set>
+#include <vector>
 
-#include "ops/base_operator.h"
-#include "ops/op_utils.h"
 #include "mindapi/base/types.h"
 #include "mindapi/src/helper.h"
+#include "ops/base_operator.h"
+#include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/ms_context.h"
 

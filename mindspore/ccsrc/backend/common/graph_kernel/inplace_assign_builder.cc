@@ -16,18 +16,21 @@
 
 #include "backend/common/graph_kernel/inplace_assign_builder.h"
 #include <algorithm>
+#include <map>
 #include <memory>
-#include <utility>
 #include <set>
 #include <string>
-#include <map>
+#include <utility>
 #include <vector>
-#include "mindspore/core/ops/core_ops.h"
-#include "include/common/utils/utils.h"
-#include "include/common/debug/anf_ir_dump.h"
-#include "utils/log_adapter.h"
-#include "backend/common/graph_kernel/graph_kernel_helper.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
+#include "backend/common/graph_kernel/graph_kernel_helper.h"
+#include "include/common/debug/anf_ir_dump.h"
+#include "include/common/utils/utils.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore::graphkernel {
 namespace {

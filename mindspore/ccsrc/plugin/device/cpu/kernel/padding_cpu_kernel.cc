@@ -20,6 +20,7 @@
 #include <utility>
 #include <memory>
 #include <complex>
+#include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/padding.h"
 
 namespace mindspore {

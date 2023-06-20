@@ -18,8 +18,8 @@
 #define MINDSPORE_CORE_OPS_TILE_FUSION_H_
 #include <vector>
 
-#include "ops/tile.h"
 #include "mindapi/base/types.h"
+#include "ops/tile.h"
 
 namespace mindspore {
 namespace ops {

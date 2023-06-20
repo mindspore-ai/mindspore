@@ -16,30 +16,30 @@
 
 #include "ops/cudnn_gru.h"
 
-#include <unordered_map>
 #include <map>
-#include <string>
 #include <set>
+#include <string>
+#include <unordered_map>
 #include <vector>
 
-#include "abstract/ops/primitive_infer_map.h"
-#include "utils/check_convert_utils.h"
-#include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
 #include "abstract/ops/op_infer.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include "base/base.h"
 #include "ir/anf.h"
 #include "ir/dtype/container.h"
 #include "ir/dtype/number.h"
 #include "ir/primitive.h"
 #include "mindapi/base/shape_vector.h"
-#include "ops/core_ops.h"
+#include "mindapi/src/helper.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "ops/op_name.h"
+#include "ops/primitive_c.h"
+#include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

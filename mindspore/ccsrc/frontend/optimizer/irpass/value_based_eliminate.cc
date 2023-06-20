@@ -16,6 +16,10 @@
 
 #include "frontend/optimizer/irpass/value_based_eliminate.h"
 
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/comparison_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 namespace mindspore {
 namespace opt {
 namespace irpass {

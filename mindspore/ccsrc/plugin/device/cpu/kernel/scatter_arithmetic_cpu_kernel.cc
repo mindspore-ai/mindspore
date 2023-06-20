@@ -22,6 +22,7 @@
 #include <string>
 #include <utility>
 #include <functional>
+#include "mindspore/core/ops/array_ops.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "include/backend/distributed/embedding_cache/embedding_cache_utils.h"
 

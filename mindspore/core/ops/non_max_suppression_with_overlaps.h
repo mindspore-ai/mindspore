@@ -18,17 +18,17 @@
 #define MINDSPORE_CORE_OPS_NON_MAX_SUPPRESSION_WITH_OVERLAPS_H_
 
 #include <map>
-#include <vector>
-#include <string>
 #include <memory>
-#include "ops/op_utils.h"
-#include "ops/primitive_c.h"
-#include "abstract/ops/primitive_infer_map.h"
+#include <string>
+#include <vector>
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
-#include "utils/check_convert_utils.h"
-#include "ops/base_operator.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/base/types.h"
+#include "ops/base_operator.h"
+#include "ops/op_utils.h"
+#include "ops/primitive_c.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

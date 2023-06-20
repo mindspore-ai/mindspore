@@ -22,6 +22,7 @@
 #include <windows.h>
 #include <wincrypt.h>
 #endif
+#include "mindspore/core/ops/random_ops.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {

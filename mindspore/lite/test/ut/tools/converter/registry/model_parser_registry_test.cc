@@ -16,11 +16,12 @@
 
 #include <vector>
 #include "common/common_test.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ut/tools/converter/registry/parser/model_parser_test.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "mindspore/core/ir/anf.h"
 #include "mindapi/ir/func_graph.h"
-#include "ops/core_ops.h"
 
 using mindspore::converter::ConverterParameters;
 using mindspore::converter::kFmkTypeCaffe;

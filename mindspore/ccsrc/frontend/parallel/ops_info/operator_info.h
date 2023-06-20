@@ -35,7 +35,6 @@
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_info.h"
 #include "utils/log_adapter.h"
-#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace parallel {

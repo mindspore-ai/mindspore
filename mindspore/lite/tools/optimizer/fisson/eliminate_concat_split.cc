@@ -19,13 +19,14 @@
 #include <string>
 #include <unordered_map>
 #include "tools/common/node_util.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "tools/optimizer/fisson/eliminate_concat_split.h"
 #include "schema/inner/model_generated.h"
 #include "include/common/utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "ops/split_with_overlap.h"
 #include "ops/concat.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "tools/optimizer/parallel/spliter.h"
 #include "src/common/log_util.h"
 #include "nnacl/op_base.h"

@@ -17,6 +17,8 @@
 #include <vector>
 #include <utility>
 #include <algorithm>
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "abstract/utils.h"
 #include "include/common/utils/anfalgo.h"
 

@@ -15,8 +15,9 @@
  */
 
 #include "transform/graph_ir/op_declare/data_flow_ops_declare.h"
-#include <vector>
 #include <string>
+#include <vector>
+#include "mindspore/core/ops/structure_ops.h"
 
 namespace mindspore::transform {
 INPUT_MAP(TensorArray) = {{1, INPUT_DESC(size)}};

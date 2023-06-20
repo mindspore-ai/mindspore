@@ -17,6 +17,13 @@
 #include "frontend/optimizer/irpass/less_batch_normalization.h"
 
 #include <set>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/conv_pool_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "utils/hash_map.h"
 
 namespace mindspore {

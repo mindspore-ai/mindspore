@@ -19,6 +19,9 @@
 #include <functional>
 #include <algorithm>
 #include <memory>
+#include "mindspore/core/ops/random_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "ops/resize.h"
 #include "ops/random_normal.h"
 #include "include/errorcode.h"

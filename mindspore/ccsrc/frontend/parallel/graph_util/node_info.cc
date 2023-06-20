@@ -19,7 +19,9 @@
 #include <string>
 #include <utility>
 
-#include "mindspore/core/ops/core_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ir/param_info.h"
 #include "ir/meta_tensor.h"
 #include "include/common/utils/python_adapter.h"

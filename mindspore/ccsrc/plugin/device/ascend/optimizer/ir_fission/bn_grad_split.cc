@@ -18,6 +18,8 @@
 #include <vector>
 #include <memory>
 
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
 #include "plugin/device/ascend/optimizer/ir_fission/bn_split.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"

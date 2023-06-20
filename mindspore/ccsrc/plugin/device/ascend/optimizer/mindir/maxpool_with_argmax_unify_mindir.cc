@@ -17,11 +17,12 @@
 #include "plugin/device/ascend/optimizer/mindir/maxpool_with_argmax_unify_mindir.h"
 #include <memory>
 #include <vector>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/conv_pool_ops.h"
 #include "include/backend/optimizer/helper.h"
 #include "include/backend/kernel_info.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "include/common/utils/utils.h"
 #include "utils/trace_base.h"
 

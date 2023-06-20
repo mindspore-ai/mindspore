@@ -22,6 +22,7 @@
 #include <map>
 #include <climits>
 
+#include "mindspore/core/ops/array_ops.h"
 #include "include/common/utils/utils.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_mod.h"
 #include "proto/tensor.pb.h"

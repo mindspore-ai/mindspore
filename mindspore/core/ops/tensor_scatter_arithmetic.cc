@@ -20,17 +20,18 @@
 #include <set>
 #include <string>
 
+#include "abstract/ops/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "ops/op_utils.h"
 #include "ops/tensor_scatter_add.h"
-#include "ops/tensor_scatter_sub.h"
+#include "ops/tensor_scatter_div.h"
 #include "ops/tensor_scatter_max.h"
 #include "ops/tensor_scatter_min.h"
 #include "ops/tensor_scatter_mul.h"
-#include "ops/tensor_scatter_div.h"
+#include "ops/tensor_scatter_sub.h"
 #include "ops/tensor_scatter_update.h"
-#include "abstract/ops/primitive_infer_map.h"
-#include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

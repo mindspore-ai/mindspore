@@ -17,6 +17,9 @@
 #define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/tf_lstm_cell_fusion.h"
 #include <memory>
+#include "mindspore/core/ops/structure_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ops/lstm.h"
 #include "src/common/utils.h"
 #include "tools/common/tensor_util.h"

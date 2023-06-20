@@ -19,6 +19,8 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "ops/fusion/mat_mul_fusion.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/quantizer/quant_param_holder.h"

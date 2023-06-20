@@ -23,6 +23,7 @@
 #include <map>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {

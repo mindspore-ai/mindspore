@@ -16,7 +16,9 @@
 #include "tools/optimizer/fisson/fisson_util.h"
 #include <unordered_set>
 #include <memory>
-#include "mindspore/core/ops/core_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/conv_pool_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
 #include "src/common/utils.h"
 #include "ops/split_with_overlap.h"
 #include "tools/common/node_util.h"

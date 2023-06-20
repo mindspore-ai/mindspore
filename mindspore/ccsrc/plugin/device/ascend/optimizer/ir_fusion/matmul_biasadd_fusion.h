@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <string>
+#include "mindspore/core/ops/math_ops.h"
 #include "plugin/device/ascend/optimizer/ascend_pass_control.h"
 
 namespace mindspore {

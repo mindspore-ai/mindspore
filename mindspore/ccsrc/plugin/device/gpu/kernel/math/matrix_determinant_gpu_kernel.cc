@@ -19,6 +19,7 @@
 #include <utility>
 #include <string>
 #include <algorithm>
+#include "mindspore/core/ops/math_ops.h"
 #include "abstract/utils.h"
 #include "kernel/common_utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"

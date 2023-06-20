@@ -18,12 +18,12 @@
 #define MINDSPORE_CORE_OPS_ANGLE_ATOM_ENERGY_H_
 
 #include <map>
-#include <vector>
-#include <string>
 #include <memory>
+#include <string>
+#include <vector>
 
-#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

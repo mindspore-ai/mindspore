@@ -16,8 +16,8 @@
 
 #ifndef MINDSPORE_CORE_OPS_APPROXIMATE_EQUAL_H_
 #define MINDSPORE_CORE_OPS_APPROXIMATE_EQUAL_H_
-#include <vector>
 #include <memory>
+#include <vector>
 
 #include "ops/base_operator.h"
 

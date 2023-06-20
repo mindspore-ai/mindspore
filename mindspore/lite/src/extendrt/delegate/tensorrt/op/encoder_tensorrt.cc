@@ -22,6 +22,7 @@
 #include <functional>
 #include <unordered_map>
 #include <algorithm>
+#include "mindspore/core/ops/nn_ops.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "NvInferRuntimeCommon.h"
 #include "ops/encoder_layer.h"

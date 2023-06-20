@@ -16,12 +16,12 @@
 
 #ifndef MINDSPORE_CORE_OPS_LSTSQ_H_
 #define MINDSPORE_CORE_OPS_LSTSQ_H_
-#include <memory>
 #include <map>
+#include <memory>
 #include <vector>
 
-#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

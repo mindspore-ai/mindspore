@@ -19,20 +19,21 @@
 #include <functional>
 #include <map>
 #include <memory>
-#include <utility>
 #include <set>
 #include <stack>
 #include <string>
+#include <utility>
 #include <vector>
-#include "mindspore/core/ops/core_ops.h"
-#include "include/common/utils/utils.h"
-#include "utils/log_adapter.h"
-#include "kernel/kernel.h"
-#include "backend/common/graph_kernel/graph_kernel_helper.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
+#include "backend/common/graph_kernel/graph_kernel_helper.h"
 #include "include/backend/kernel_graph.h"
 #include "include/common/debug/anf_ir_dump.h"
+#include "include/common/utils/utils.h"
 #include "kernel/common_utils.h"
+#include "kernel/kernel.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore::graphkernel {
 namespace {

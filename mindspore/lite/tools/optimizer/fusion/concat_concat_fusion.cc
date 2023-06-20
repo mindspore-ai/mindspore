@@ -16,6 +16,7 @@
 #define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/concat_concat_fusion.h"
 #include <vector>
+#include "mindspore/core/ops/array_ops.h"
 #include "ir/func_graph.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "ops/op_name.h"

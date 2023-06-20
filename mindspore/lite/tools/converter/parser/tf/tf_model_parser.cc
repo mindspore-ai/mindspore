@@ -16,34 +16,37 @@
  */
 
 #include "tools/converter/parser/tf/tf_model_parser.h"
-#include <functional>
-#include <set>
-#include <queue>
 #include <algorithm>
+#include <functional>
+#include <queue>
+#include <set>
+#include "abstract/utils.h"
 #include "include/registry/node_parser_registry.h"
-#include "src/common/log_adapter.h"
-#include "src/common/utils.h"
-#include "tools/common/graph_util.h"
-#include "tools/common/protobuf_utils.h"
-#include "tools/converter/converter_context.h"
-#include "tools/converter/parser/tf/tf_node_parser_registry.h"
-#include "tools/optimizer/common/gllo_utils.h"
+#include "ir/anf.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/structure_ops.h"
 #include "ops/make_tuple.h"
 #include "ops/return.h"
 #include "ops/tuple_get_item.h"
-#include "ir/anf.h"
-#include "abstract/utils.h"
-#include "tools/converter/quantizer/quant_param_holder.h"
-#include "tools/converter/parser/tf/functionalize_control_op_pass.h"
-#include "tools/converter/parser/parser_utils.h"
-#include "tools/converter/parser/lite_model_parser_creator.h"
-#include "tools/converter/parser/tf/tf_fake_quant_adjust.h"
-#include "tools/common/tensor_util.h"
+#include "src/common/log_adapter.h"
 #include "src/common/log_util.h"
-#include "tools/converter/parser/unify_format.h"
-#include "tools/converter/parser/tf/tf_input_adjust.h"
+#include "src/common/utils.h"
+#include "tools/common/graph_util.h"
+#include "tools/common/protobuf_utils.h"
+#include "tools/common/tensor_util.h"
+#include "tools/converter/converter_context.h"
+#include "tools/converter/parser/lite_model_parser_creator.h"
+#include "tools/converter/parser/parser_utils.h"
+#include "tools/converter/parser/tf/functionalize_control_op_pass.h"
 #include "tools/converter/parser/tf/remove_ineffective_control_flow.h"
+#include "tools/converter/parser/tf/tf_fake_quant_adjust.h"
+#include "tools/converter/parser/tf/tf_input_adjust.h"
+#include "tools/converter/parser/tf/tf_node_parser_registry.h"
 #include "tools/converter/parser/tf/tf_util.h"
+#include "tools/converter/parser/unify_format.h"
+#include "tools/converter/quantizer/quant_param_holder.h"
+#include "tools/optimizer/common/gllo_utils.h"
 
 using mindspore::converter::kFmkTypeTf;
 namespace mindspore {

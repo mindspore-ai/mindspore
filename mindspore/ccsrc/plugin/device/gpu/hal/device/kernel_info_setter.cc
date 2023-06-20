@@ -20,6 +20,11 @@
 #include <tuple>
 #include <string>
 #include <set>
+#include "mindspore/core/ops/sparse_ops.h"
+#include "mindspore/core/ops/conv_pool_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "kernel/common_utils.h"
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
@@ -34,7 +39,6 @@
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
 #include "include/common/utils/utils.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "mindspore/core/ops/op_name.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 

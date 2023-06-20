@@ -23,12 +23,14 @@
 #include <string>
 #include <vector>
 
+#include "mindspore/core/ops/structure_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/common/utils/python_adapter.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 #include "utils/interpret_node_recorder.h"
-#include "ops/core_ops.h"
 #include "pipeline/jit/debug/trace.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "abstract/abstract_value.h"

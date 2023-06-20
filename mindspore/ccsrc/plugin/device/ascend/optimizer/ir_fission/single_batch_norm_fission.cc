@@ -16,6 +16,7 @@
 #include "plugin/device/ascend/optimizer/ir_fission/single_batch_norm_fission.h"
 #include <vector>
 #include <memory>
+#include "mindspore/core/ops/nn_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/optimizer/helper.h"

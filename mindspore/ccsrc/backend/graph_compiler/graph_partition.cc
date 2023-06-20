@@ -15,17 +15,21 @@
  */
 
 #include "backend/graph_compiler/graph_partition.h"
-#include <string>
-#include <utility>
+#include <algorithm>
 #include <map>
 #include <queue>
-#include <stack>
 #include <set>
-#include <algorithm>
-#include "mindspore/core/ops/core_ops.h"
+#include <stack>
+#include <string>
+#include <utility>
 #include "include/common/utils/anfalgo.h"
-#include "utils/ms_context.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/structure_ops.h"
 #include "utils/anf_utils.h"
+#include "utils/ms_context.h"
 namespace mindspore {
 namespace compile {
 namespace {

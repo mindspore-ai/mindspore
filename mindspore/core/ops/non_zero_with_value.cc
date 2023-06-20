@@ -16,12 +16,11 @@
 
 #include "ops/non_zero_with_value.h"
 
-#include <memory>
 #include <functional>
+#include <memory>
 #include <numeric>
 #include <vector>
 
-#include "utils/check_convert_utils.h"
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -30,11 +29,12 @@
 #include "ir/dtype/number.h"
 #include "ir/primitive.h"
 #include "mindapi/base/shape_vector.h"
-#include "ops/core_ops.h"
+#include "mindapi/src/helper.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "ops/primitive_c.h"
+#include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

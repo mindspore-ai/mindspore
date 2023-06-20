@@ -14,9 +14,15 @@
  * limitations under the License.
  */
 #include "backend/operator/ops_backend_infer_function.h"
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/image_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "abstract/ops/infer_functions.h"
 #include "abstract/ops/primitive_infer_map.h"
-#include "ops/core_ops.h"
 #include "ops/export_infer.h"
 namespace mindspore {
 namespace abstract {

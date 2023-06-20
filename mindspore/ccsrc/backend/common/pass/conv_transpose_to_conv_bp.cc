@@ -16,6 +16,7 @@
 #include "backend/common/pass/conv_transpose_to_conv_bp.h"
 #include <memory>
 #include <vector>
+#include "mindspore/core/ops/conv_pool_ops.h"
 #include "ir/primitive.h"
 #include "include/common/utils/utils.h"
 #include "utils/trace_base.h"

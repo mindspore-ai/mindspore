@@ -22,6 +22,7 @@
 #include <vector>
 #include <string>
 #include "include/backend/optimizer/optimizer.h"
+#include "mindspore/core/ops/math_ops.h"
 #include "include/backend/kernel_graph.h"
 #include "backend/common/graph_kernel/graph_kernel_helper.h"
 #include "backend/common/graph_kernel/inplace_assign_builder.h"

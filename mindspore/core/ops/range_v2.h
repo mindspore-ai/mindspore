@@ -17,14 +17,14 @@
 #ifndef MINDSPORE_CORE_OPS_RANGE_V2_H_
 #define MINDSPORE_CORE_OPS_RANGE_V2_H_
 #include <map>
-#include <vector>
-#include <string>
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "abstract/abstract_value.h"
+#include "mindapi/base/types.h"
 #include "ops/base_operator.h"
 #include "utils/check_convert_utils.h"
-#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {

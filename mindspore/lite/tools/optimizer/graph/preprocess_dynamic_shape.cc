@@ -22,10 +22,13 @@
 #include <set>
 #include <string>
 #include <vector>
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/comparison_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "tools/optimizer/common/format_utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/lite_exporter/fetch_content.h"
-#include "ops/core_ops.h"
 #include "ops/op_name.h"
 #include "nnacl/op_base.h"
 

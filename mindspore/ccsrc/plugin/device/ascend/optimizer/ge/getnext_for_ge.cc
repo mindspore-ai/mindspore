@@ -18,6 +18,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include "mindspore/core/ops/structure_ops.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/ms_context.h"
 

@@ -15,19 +15,21 @@
  */
 
 #include <algorithm>
+#include <memory>
+#include <set>
 #include <string>
 #include <vector>
-#include <set>
-#include <memory>
 
-#include "frontend/parallel/pynative_shard/pynative_shard.h"
 #include "frontend/parallel/graph_util/graph_info.h"
-#include "frontend/parallel/step_parallel_utils.h"
-#include "include/common/utils/parallel_context.h"
-#include "frontend/parallel/step_parallel.h"
-#include "utils/ms_context.h"
-#include "include/common/utils/comm_manager.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
+#include "frontend/parallel/pynative_shard/pynative_shard.h"
+#include "frontend/parallel/step_parallel.h"
+#include "frontend/parallel/step_parallel_utils.h"
+#include "include/common/utils/comm_manager.h"
+#include "include/common/utils/parallel_context.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace parallel {

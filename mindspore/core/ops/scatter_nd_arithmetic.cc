@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-#include "ops/scatter_nd_update.h"
-#include "ops/scatter_nd_add.h"
-#include "ops/scatter_nd_sub.h"
-#include "ops/scatter_nd_mul.h"
-#include "ops/scatter_nd_div.h"
-#include "ops/scatter_nd_max.h"
-#include "ops/scatter_nd_min.h"
 #include <map>
 #include <string>
 #include "abstract/ops/primitive_infer_map.h"
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "ops/op_utils.h"
+#include "ops/scatter_nd_add.h"
+#include "ops/scatter_nd_div.h"
+#include "ops/scatter_nd_max.h"
+#include "ops/scatter_nd_min.h"
+#include "ops/scatter_nd_mul.h"
+#include "ops/scatter_nd_sub.h"
+#include "ops/scatter_nd_update.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

@@ -17,6 +17,7 @@
 #include "plugin/device/gpu/kernel/nn/memcpy_gpu_kernel.h"
 #include <map>
 #include <memory>
+#include "mindspore/core/ops/array_ops.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cast_impl.cuh"
 
 namespace mindspore {

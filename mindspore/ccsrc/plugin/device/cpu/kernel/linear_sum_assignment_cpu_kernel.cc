@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <limits>
 #include <numeric>
+#include "mindspore/core/ops/arithmetic_ops.h"
 #include "mindspore/core/ops/linear_sum_assignment.h"
 
 namespace mindspore {

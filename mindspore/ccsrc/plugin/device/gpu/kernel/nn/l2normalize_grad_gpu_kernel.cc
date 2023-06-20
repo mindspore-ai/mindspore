@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/nn/l2normalize_grad_gpu_kernel.h"
+#include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/grad/l2_normalize_grad.h"
 
 namespace mindspore {

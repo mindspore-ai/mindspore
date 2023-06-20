@@ -17,6 +17,10 @@
 #define USE_DEPRECATED_API
 #include "tools/optimizer/format/to_format_base.h"
 #include <set>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ops/op_utils.h"
 #include "src/common/common.h"
 #include "src/common/utils.h"

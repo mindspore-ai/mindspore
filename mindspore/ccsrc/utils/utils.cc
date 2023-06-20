@@ -19,6 +19,7 @@
 #include <set>
 #include <string>
 
+#include "mindspore/core/ops/sparse_ops.h"
 #include "utils/convert_utils_base.h"
 namespace mindspore {
 namespace {

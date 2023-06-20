@@ -21,10 +21,10 @@
 #include <string>
 #include <vector>
 
-#include "ops/op_utils.h"
 #include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
 #include "ops/base_operator.h"
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

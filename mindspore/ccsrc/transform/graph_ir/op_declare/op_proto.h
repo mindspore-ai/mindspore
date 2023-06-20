@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_PROTO_H_
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_PROTO_H_
 
+#include <functional>
 #include <string>
 #include <vector>
-#include <functional>
 #include "graph/types.h"
 #include "utils/hash_map.h"
 

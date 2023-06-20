@@ -18,6 +18,7 @@
 #include <Eigen/Dense>
 #include <vector>
 #include <map>
+#include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/mat_mul.h"
 
 namespace mindspore {

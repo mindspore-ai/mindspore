@@ -17,9 +17,8 @@
 #ifndef MINDSPORE_CORE_OPS_EDIT_DISTANCE_H_
 #define MINDSPORE_CORE_OPS_EDIT_DISTANCE_H_
 #include <memory>
-
+#include "mindspore/core/ops/math_ops.h"
 #include "ops/base_operator.h"
-#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace ops {

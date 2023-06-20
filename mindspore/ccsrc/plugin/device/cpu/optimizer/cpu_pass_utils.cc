@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 
+#include "mindspore/core/ops/array_ops.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "include/backend/optimizer/helper.h"
@@ -30,7 +31,6 @@
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
 #include "kernel/common_utils.h"
-#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace opt {

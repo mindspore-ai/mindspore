@@ -18,6 +18,8 @@
 #include "tools/optimizer/fusion/conv_pad_fusion.h"
 #include <memory>
 #include <vector>
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "tools/common/tensor_util.h"
 #include "tools/lite_exporter/fetch_content.h"
 #include "ops/fusion/pad_fusion.h"

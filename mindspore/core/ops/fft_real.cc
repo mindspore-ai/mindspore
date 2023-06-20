@@ -15,9 +15,9 @@
  */
 
 #include "ops/fft_real.h"
+#include "mindapi/src/helper.h"
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

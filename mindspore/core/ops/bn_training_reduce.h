@@ -16,11 +16,12 @@
 
 #ifndef MINDSPORE_CORE_OPS_BN_TRAINING_REDUCE_H_
 #define MINDSPORE_CORE_OPS_BN_TRAINING_REDUCE_H_
-#include <vector>
 #include <memory>
+#include <vector>
 
-#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

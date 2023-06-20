@@ -17,9 +17,10 @@
 #include "plugin/device/cpu/kernel/sparse_cross_cpu_kernel.h"
 #include <algorithm>
 #include <cstdio>
-#include <vector>
-#include <map>
 #include <limits>
+#include <map>
+#include <vector>
+#include "mindspore/core/ops/math_ops.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {

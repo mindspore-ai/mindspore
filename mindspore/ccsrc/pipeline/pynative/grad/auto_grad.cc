@@ -22,7 +22,12 @@
 #include <utility>
 #include <vector>
 #include <algorithm>
-#include "mindspore/core/ops/core_ops.h"
+#include "mindspore/core/ops/structure_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ir/anf.h"
 #include "ir/func_graph_cloner.h"
 #include "frontend/optimizer/ad/dfunctor.h"

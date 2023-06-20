@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-#include <string>
 #include <memory>
+#include <string>
 #include <vector>
 
-#include "ops/mat_mul.h"
-#include "utils/check_convert_utils.h"
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
 #include "abstract/ops/op_infer.h"
@@ -33,13 +31,15 @@
 #include "mindapi/base/shared_ptr.h"
 #include "mindapi/base/type_id.h"
 #include "mindapi/ir/value.h"
-#include "ops/core_ops.h"
+#include "mindapi/src/helper.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "ops/mat_mul.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
+#include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

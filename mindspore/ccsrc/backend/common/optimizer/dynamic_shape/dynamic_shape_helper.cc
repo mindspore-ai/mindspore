@@ -23,6 +23,7 @@
 #include <vector>
 #include <map>
 #include <utility>
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "include/common/utils/anfalgo.h"

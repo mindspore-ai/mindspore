@@ -17,15 +17,15 @@
 #ifndef MINDSPORE_CORE_OPS_MVLGAMMA_H_
 #define MINDSPORE_CORE_OPS_MVLGAMMA_H_
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
 #include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
-#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "ops/base_operator.h"
+#include "ops/op_utils.h"
+#include "ops/primitive_c.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

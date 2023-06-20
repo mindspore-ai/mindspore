@@ -16,15 +16,18 @@
 
 #include "backend/common/graph_kernel/reorder_ops.h"
 #include <memory>
-#include <vector>
 #include <string>
-#include "utils/hash_set.h"
-#include "mindspore/core/ops/core_ops.h"
-#include "utils/log_adapter.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/debug/anf_ir_dump.h"
+#include <vector>
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
+#include "include/backend/anf_runtime_algorithm.h"
+#include "include/common/debug/anf_ir_dump.h"
+#include "include/common/utils/anfalgo.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "utils/hash_set.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore::graphkernel {
 namespace {

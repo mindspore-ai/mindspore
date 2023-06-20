@@ -15,6 +15,7 @@
  */
 
 #include "backend/common/graph_kernel/depend_elimination.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/common/utils/utils.h"
 
 namespace mindspore::graphkernel {

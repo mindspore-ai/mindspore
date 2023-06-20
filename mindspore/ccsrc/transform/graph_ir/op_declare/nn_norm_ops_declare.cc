@@ -15,8 +15,10 @@
  */
 
 #include "transform/graph_ir/op_declare/nn_norm_ops_declare.h"
-#include <vector>
 #include <string>
+#include <vector>
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
 
 namespace mindspore::transform {
 // SoftmaxV2

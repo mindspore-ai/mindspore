@@ -20,6 +20,8 @@
 #include <memory>
 #include <algorithm>
 #include <utility>
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/registry/node_parser_registry.h"
 #include "ops/primitive_c.h"
 #include "ir/func_graph.h"

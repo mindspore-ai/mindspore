@@ -16,15 +16,15 @@
 #ifndef MINDSPORE_CORE_OPS_QR_H_
 #define MINDSPORE_CORE_OPS_QR_H_
 
-#include <map>
-#include <set>
-#include <vector>
-#include <string>
-#include <memory>
 #include <algorithm>
+#include <map>
+#include <memory>
+#include <set>
+#include <string>
+#include <vector>
 
-#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

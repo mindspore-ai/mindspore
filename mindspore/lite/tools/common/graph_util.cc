@@ -21,6 +21,8 @@
 #include <ctime>
 #include <utility>
 #include <set>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "tools/common/meta_graph_utils.h"
 #include "schema/inner/model_generated.h"
 #include "tools/common/tensor_util.h"
@@ -28,7 +30,6 @@
 #include "src/common/utils.h"
 #include "nnacl/op_base.h"
 #include "ops/make_tuple.h"
-#include "ops/core_ops.h"
 #include "tools/converter/converter_context.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/common/string_util.h"

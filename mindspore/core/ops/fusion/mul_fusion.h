@@ -16,8 +16,8 @@
 
 #ifndef MINDSPORE_CORE_OPS_MUL_FUSION_H_
 #define MINDSPORE_CORE_OPS_MUL_FUSION_H_
-#include "ops/mul.h"
 #include "mindapi/base/types.h"
+#include "ops/mul.h"
 
 namespace mindspore {
 namespace ops {

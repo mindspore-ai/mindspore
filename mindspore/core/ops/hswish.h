@@ -18,11 +18,11 @@
 #define MINDSPORE_CORE_OPS_HSWISH_H_
 
 #include <map>
-#include <vector>
-#include <string>
 #include <memory>
-#include "ops/base_operator.h"
+#include <string>
+#include <vector>
 #include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore::ops {
 constexpr auto kNameHSwish = "HSwish";

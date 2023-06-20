@@ -15,21 +15,23 @@
  */
 #include "backend/common/graph_kernel/core/convert_op_input_attr.h"
 
-#include <vector>
 #include <memory>
-#include <unordered_map>
-
-#include "base/base.h"
-#include "ir/anf.h"
-#include "ir/graph_utils.h"
-#include "ops/core_ops.h"
-#include "ops/primitive_c.h"
-#include "utils/anf_utils.h"
-#include "utils/ms_context.h"
-#include "utils/check_convert_utils.h"
-#include "include/common/utils/anfalgo.h"
+#include <vector>
 #include "backend/common/graph_kernel/core/graph_builder.h"
 #include "backend/common/graph_kernel/core/graph_kernel_callback.h"
+#include "base/base.h"
+#include "include/common/utils/anfalgo.h"
+#include "ir/graph_utils.h"
+#include "mindspore/ccsrc/backend/common/graph_kernel/core/graph_kernel_callback.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "ops/primitive_c.h"
+#include "utils/anf_utils.h"
+#include "utils/check_convert_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore::graphkernel {
 const std::unordered_map<std::string, HashSet<size_t>> &ConvertOpUtils::GetOpIndexInfo() {

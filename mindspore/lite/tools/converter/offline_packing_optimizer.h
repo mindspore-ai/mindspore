@@ -20,7 +20,6 @@
 #include <map>
 #include "base/base.h"
 #include "ir/anf.h"
-#include "ops/core_ops.h"
 #include "litert/lite_kernel.h"
 #include "litert/kernel_registry.h"
 

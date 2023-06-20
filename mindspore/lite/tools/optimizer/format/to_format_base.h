@@ -23,6 +23,8 @@
 #include <unordered_map>
 #include <vector>
 #include "include/backend/optimizer/pass.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
 #include "tools/optimizer/common/format_utils.h"
 #include "tools/optimizer/graph/infershape_pass.h"
 

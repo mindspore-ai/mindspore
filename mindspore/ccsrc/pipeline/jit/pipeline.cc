@@ -25,6 +25,7 @@
 #include <iomanip>
 #include <unordered_map>
 
+#include "mindspore/core/ops/framework_ops.h"
 #include "pybind_api/pybind_patch.h"
 #include "pybind11/pybind11.h"
 #include "ir/param_info.h"

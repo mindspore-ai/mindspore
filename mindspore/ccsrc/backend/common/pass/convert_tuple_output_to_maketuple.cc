@@ -18,9 +18,12 @@
 #include <algorithm>
 #include <memory>
 
-#include "include/backend/optimizer/helper.h"
 #include "include/backend/kernel_graph.h"
+#include "include/backend/optimizer/helper.h"
 #include "include/common/utils/anfalgo.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
 
 namespace mindspore {
 namespace opt {

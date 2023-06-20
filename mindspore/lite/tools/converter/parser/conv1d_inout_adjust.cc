@@ -20,6 +20,9 @@
 #include <vector>
 #include <algorithm>
 #include <memory>
+#include "mindspore/core/ops/conv_pool_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
 #include "mindspore/lite/include/errorcode.h"
 #include "ops/conv2d.h"
 #include "ops/squeeze.h"

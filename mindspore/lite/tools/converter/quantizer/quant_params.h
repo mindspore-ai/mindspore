@@ -17,12 +17,15 @@
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_PARAMS_H_
 #define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_PARAMS_H_
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
-#include <set>
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
 #include "schema/inner/model_generated.h"
-#include "ops/core_ops.h"
 #include "src/common/quant_utils.h"
+
 namespace mindspore::lite::quant {
 enum WeightQuantType {
   FIXED_BIT_PER_CHANNEL = 0,

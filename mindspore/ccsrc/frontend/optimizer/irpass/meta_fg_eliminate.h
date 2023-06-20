@@ -19,8 +19,8 @@
 
 #include <vector>
 #include <memory>
-#include "mindspore/core/ops/core_ops.h"
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "frontend/optimizer/irpass/vmap_eliminate.h"
 #include "frontend/optimizer/irpass/taylor_eliminate.h"
 #include "frontend/optimizer/irpass/shard_eliminate.h"

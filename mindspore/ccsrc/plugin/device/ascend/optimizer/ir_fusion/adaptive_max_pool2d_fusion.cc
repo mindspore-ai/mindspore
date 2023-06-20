@@ -17,6 +17,7 @@
 #include <memory>
 #include <vector>
 
+#include "mindspore/core/ops/conv_pool_ops.h"
 #include "include/backend/optimizer/helper.h"
 #include "abstract/dshape.h"
 #include "include/backend/anf_runtime_algorithm.h"
@@ -28,7 +29,6 @@
 #include "ir/primitive.h"
 #include "ir/value.h"
 #include "mindapi/base/type_id.h"
-#include "ops/core_ops.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

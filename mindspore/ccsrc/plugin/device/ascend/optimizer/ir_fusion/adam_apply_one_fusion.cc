@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/ir_fusion/adam_apply_one_fusion.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 namespace mindspore {

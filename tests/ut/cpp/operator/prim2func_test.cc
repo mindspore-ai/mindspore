@@ -19,10 +19,10 @@
 
 #include "common/common_test.h"
 
+#include "mindspore/core/ops/arithmetic_ops.h"
 #include "ir/anf.h"
 #include "ir/dtype.h"
 #include "frontend/operator/prim_to_function.h"
-#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace prim {

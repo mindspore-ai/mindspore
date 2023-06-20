@@ -18,13 +18,13 @@
 #define MINDSPORE_CORE_OPS_FAKE_QUANT_PARAM_H_
 
 #include <map>
-#include <vector>
-#include <string>
 #include <memory>
+#include <string>
+#include <vector>
 
-#include "ops/base_operator.h"
 #include "ir/dtype/type_id.h"
 #include "mindapi/ir/common.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

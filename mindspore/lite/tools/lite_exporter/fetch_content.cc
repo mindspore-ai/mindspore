@@ -17,24 +17,26 @@
 #define USE_DEPRECATED_API
 #include "tools/lite_exporter/fetch_content.h"
 #include <algorithm>
-#include <string>
-#include <vector>
-#include <unordered_map>
 #include <map>
+#include <string>
+#include <unordered_map>
 #include <utility>
-#include "tools/converter/quantizer/quant_param_holder.h"
-#include "tools/optimizer/common/gllo_utils.h"
-#include "utils/check_convert_utils.h"
-#include "utils/ms_utils_secure.h"
-#include "tools/optimizer/common/format_utils.h"
-#include "tools/optimizer/graph/specify_graph_input_format.h"
+#include <vector>
+#include "mindapi/base/format.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
 #include "nnacl/op_base.h"
-#include "tools/common/node_util.h"
+#include "ops/op_utils.h"
 #include "src/common/ops/anf_utils.h"
 #include "src/common/ops/populate/populate_register.h"
 #include "src/common/primitive_t_utils.h"
-#include "mindapi/base/format.h"
-#include "ops/op_utils.h"
+#include "tools/common/node_util.h"
+#include "tools/converter/quantizer/quant_param_holder.h"
+#include "tools/optimizer/common/format_utils.h"
+#include "tools/optimizer/common/gllo_utils.h"
+#include "tools/optimizer/graph/specify_graph_input_format.h"
+#include "utils/check_convert_utils.h"
+#include "utils/ms_utils_secure.h"
 
 namespace mindspore {
 namespace lite {

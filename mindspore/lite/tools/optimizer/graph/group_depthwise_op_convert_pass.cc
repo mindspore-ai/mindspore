@@ -19,6 +19,7 @@
 #include <vector>
 #include <memory>
 #include <algorithm>
+#include "mindspore/core/ops/lite_ops.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "src/tensor.h"

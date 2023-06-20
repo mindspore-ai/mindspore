@@ -19,10 +19,11 @@
 
 #include <map>
 #include <memory>
-#include <vector>
 #include <string>
-#include "ops/base_operator.h"
+#include <vector>
 #include "mindapi/base/types.h"
+#include "mindspore/core/ops/random_ops.h"
+#include "ops/base_operator.h"
 namespace mindspore {
 namespace ops {
 constexpr auto kRandomGammaGrad = "RandomGammaGrad";

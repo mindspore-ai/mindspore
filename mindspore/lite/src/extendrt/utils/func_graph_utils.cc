@@ -22,6 +22,9 @@
 #include <memory>
 
 #include "src/extendrt/utils/func_graph_utils.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/common/utils/convert_utils.h"
 #include "mindspore/ccsrc/include/backend/optimizer/helper.h"
 

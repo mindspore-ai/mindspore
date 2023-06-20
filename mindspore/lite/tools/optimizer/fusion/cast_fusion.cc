@@ -20,6 +20,9 @@
 #include <memory>
 #include <vector>
 #include <set>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/comparison_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "tools/converter/quantizer/quant_param_holder.h"
 #include "tools/optimizer/common/format_utils.h"
 #include "nnacl/op_base.h"

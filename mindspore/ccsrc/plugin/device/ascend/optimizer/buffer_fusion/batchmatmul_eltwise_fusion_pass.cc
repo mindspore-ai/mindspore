@@ -16,10 +16,10 @@
 #include "plugin/device/ascend/optimizer/buffer_fusion/batchmatmul_eltwise_fusion_pass.h"
 #include <set>
 #include <string>
+#include "mindspore/core/ops/framework_ops.h"
 #include "kernel/kernel_fusion.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "plugin/device/ascend/optimizer/fusion_id_allocator.h"
 

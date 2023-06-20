@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include "mindspore/core/ops/sequence_ops.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "include/backend/optimizer/helper.h"
 #include "kernel/kernel_build_info.h"

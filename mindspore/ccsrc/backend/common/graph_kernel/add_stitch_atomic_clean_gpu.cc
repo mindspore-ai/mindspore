@@ -16,13 +16,15 @@
 #include "backend/common/graph_kernel/add_stitch_atomic_clean_gpu.h"
 #include <algorithm>
 #include <string>
-#include "mindspore/core/ops/core_ops.h"
-#include "include/common/utils/utils.h"
-#include "utils/log_adapter.h"
-#include "kernel/common_utils.h"
-#include "backend/common/graph_kernel/graph_kernel_helper.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
+#include "backend/common/graph_kernel/graph_kernel_helper.h"
 #include "include/backend/kernel_graph.h"
+#include "include/common/utils/utils.h"
+#include "kernel/common_utils.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore::graphkernel {
 void StitchAtomicCleanInserter::CorrectKernelBuildInfo(

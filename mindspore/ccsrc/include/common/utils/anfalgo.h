@@ -28,12 +28,12 @@
 #include <functional>
 #include <optional>
 #include "ir/anf.h"
+#include "mindspore/core/ops/sequence_ops.h"
 #include "ir/func_graph.h"
 #include "ir/dtype.h"
 #include "base/base.h"
 #include "ir/primitive.h"
 #include "ir/kernel_info_dev.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "include/common/utils/contract.h"
 #include "utils/anf_utils.h"
 #include "include/common/utils/utils.h"

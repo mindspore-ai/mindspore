@@ -15,6 +15,7 @@
  */
 
 #include "pattern_to_pattern_pass_utils.h"
+#include "mindspore/core/ops/math_ops.h"
 #include "include/backend/optimizer/node_pass.h"
 
 namespace mindspore {

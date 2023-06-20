@@ -16,35 +16,43 @@
 
 #include "transform/graph_ir/convert.h"
 
-#include <cinttypes>
 #include <algorithm>
+#include <cinttypes>
+#include <functional>
 #include <queue>
 #include <stack>
 #include <unordered_set>
-#include <functional>
-#include "include/common/utils/utils.h"
-#include "include/common/utils/anfalgo.h"
+#include "inc/ops/array_ops.h"
+#include "inc/ops/data_flow_ops.h"
+#include "inc/ops/elewise_calculation_ops.h"
+#include "inc/ops/math_ops.h"
+#include "inc/ops/save_ops.h"
+#include "inc/ops/state_ops.h"
 #include "include/common/debug/anf_ir_dump.h"
-#include "mindspore/core/ops/core_ops.h"
-#include "utils/anf_utils.h"
-#include "utils/log_adapter.h"
-#include "ir/graph_utils.h"
-#include "utils/symbolic.h"
+#include "include/common/utils/anfalgo.h"
 #include "include/common/utils/config_manager.h"
+#include "include/common/utils/utils.h"
 #include "include/transform/graph_ir/utils.h"
-#include "utils/ms_context.h"
-#include "utils/check_convert_utils.h"
-#include "transform/graph_ir/op_adapter_map.h"
-#include "ops/state_ops.h"
-#include "ops/array_ops.h"
-#include "ops/elewise_calculation_ops.h"
-#include "ops/math_ops.h"
-#include "ops/save_ops.h"
-#include "ops/data_flow_ops.h"
-#include "transform/graph_ir/op_adapter.h"
-#include "transform/graph_ir/op_adapter_desc.h"
+#include "ir/graph_utils.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/conv_pool_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/image_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/structure_ops.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
+#include "transform/graph_ir/op_adapter.h"
+#include "transform/graph_ir/op_adapter_desc.h"
+#include "transform/graph_ir/op_adapter_map.h"
+#include "utils/anf_utils.h"
+#include "utils/check_convert_utils.h"
+#include "utils/log_adapter.h"
+#include "utils/ms_context.h"
+#include "utils/symbolic.h"
 
 namespace mindspore {
 namespace transform {

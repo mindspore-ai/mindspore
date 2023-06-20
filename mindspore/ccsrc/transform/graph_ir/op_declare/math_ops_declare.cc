@@ -15,8 +15,12 @@
  */
 
 #include "transform/graph_ir/op_declare/math_ops_declare.h"
-#include <vector>
 #include <string>
+#include <vector>
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/structure_ops.h"
 
 namespace mindspore::transform {
 // ActsULQ

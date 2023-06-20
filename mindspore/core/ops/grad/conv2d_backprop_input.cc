@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include <map>
-#include <vector>
-#include <string>
 #include <memory>
 #include <set>
-#include <algorithm>
+#include <string>
+#include <vector>
 
-#include "ops/grad/conv2d_backprop_input.h"
-#include "utils/check_convert_utils.h"
-#include "ops/op_utils.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/conv_pool_ops.h"
+#include "ops/grad/conv2d_backprop_input.h"
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

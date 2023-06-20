@@ -16,8 +16,8 @@
 
 #ifndef MINDSPORE_CORE_OPS_EXP_FUSION_H_
 #define MINDSPORE_CORE_OPS_EXP_FUSION_H_
-#include "ops/exp.h"
 #include "mindapi/base/types.h"
+#include "ops/exp.h"
 
 namespace mindspore {
 namespace ops {

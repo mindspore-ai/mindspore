@@ -16,6 +16,7 @@
 
 #include "pattern_to_pattern_pass_utils.h"
 
+#include "mindspore/core/ops/other_ops.h"
 namespace mindspore {
 namespace opt {
 namespace {

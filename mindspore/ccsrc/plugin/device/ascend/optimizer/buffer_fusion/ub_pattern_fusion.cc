@@ -24,6 +24,8 @@
 #include <iterator>
 #include <list>
 
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "utils/hash_map.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_compile.h"
 #include "include/backend/optimizer/helper.h"
@@ -45,7 +47,6 @@
 #include "kernel/kernel_build_info.h"
 #include "kernel/kernel_fusion.h"
 #include "mindapi/base/type_id.h"
-#include "ops/core_ops.h"
 #include "utils/anf_utils.h"
 #include "utils/compact_set.h"
 #include "utils/convert_utils_base.h"

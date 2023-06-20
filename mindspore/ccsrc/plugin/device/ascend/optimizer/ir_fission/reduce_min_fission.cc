@@ -16,6 +16,7 @@
 #include "plugin/device/ascend/optimizer/ir_fission/reduce_min_fission.h"
 #include <memory>
 #include <vector>
+#include "mindspore/core/ops/math_ops.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {

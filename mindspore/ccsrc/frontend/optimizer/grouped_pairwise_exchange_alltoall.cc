@@ -23,7 +23,10 @@
 #include <string>
 #include <algorithm>
 
-#include "mindspore/core/ops/core_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "utils/anf_utils.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"

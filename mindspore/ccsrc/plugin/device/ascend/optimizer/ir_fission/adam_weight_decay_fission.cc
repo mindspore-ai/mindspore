@@ -15,12 +15,13 @@
  */
 #include "plugin/device/ascend/optimizer/ir_fission/adam_weight_decay_fission.h"
 #include <memory>
-#include <vector>
 #include <string>
-#include "include/common/utils/anfalgo.h"
-#include "mindspore/core/ops/core_ops.h"
+#include <vector>
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/backend/optimizer/helper.h"
+#include "include/common/utils/anfalgo.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
 
 namespace mindspore {
 namespace opt {

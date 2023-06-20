@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-#include "mindspore/core/ops/sparse_apply_momentum.h"
 #include "plugin/device/gpu/kernel/nn/sparse_apply_momentum_gpu_kernel.h"
-#include <iostream>
 #include <algorithm>
+#include <iostream>
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/sparse_apply_momentum.h"
 
 namespace mindspore {
 namespace kernel {

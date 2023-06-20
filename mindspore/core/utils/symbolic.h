@@ -25,10 +25,10 @@
 #include <string>
 
 #include "utils/hash_map.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "abstract/abstract_value.h"
-#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 class SymbolicKeyInstance : public Value {

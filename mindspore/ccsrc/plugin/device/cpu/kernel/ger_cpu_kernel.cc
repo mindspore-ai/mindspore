@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <utility>
 
+#include "mindspore/core/ops/math_ops.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"

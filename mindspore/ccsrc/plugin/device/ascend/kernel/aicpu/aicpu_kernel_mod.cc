@@ -21,6 +21,7 @@
 #include <string>
 #include <algorithm>
 
+#include "mindspore/core/ops/array_ops.h"
 #include "runtime/mem.h"
 #include "acl/acl_rt.h"
 #include "include/common/utils/convert_utils.h"

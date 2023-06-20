@@ -19,6 +19,7 @@
 #include <string>
 #include <memory>
 #include <algorithm>
+#include "mindspore/core/ops/framework_ops.h"
 #include "tools/common/node_util.h"
 #include "tools/converter/quantizer/insert_quant_node_manager.h"
 #include "tools/converter/quantizer/quantize_util.h"

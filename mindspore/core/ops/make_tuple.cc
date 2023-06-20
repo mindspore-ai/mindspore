@@ -18,16 +18,16 @@
 #include <memory>
 #include <vector>
 
-#include "ops/real_maketuple.h"
-#include "abstract/ops/op_infer.h"
 #include "abstract/abstract_value.h"
+#include "abstract/ops/op_infer.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "base/base.h"
 #include "ir/anf.h"
-#include "ops/core_ops.h"
-#include "ops/primitive_c.h"
-#include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "ops/primitive_c.h"
+#include "ops/real_maketuple.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace ops {

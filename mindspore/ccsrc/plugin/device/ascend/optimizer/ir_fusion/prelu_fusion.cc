@@ -16,10 +16,13 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/prelu_fusion.h"
 #include <memory>
 #include <vector>
+
 #include "include/backend/anf_runtime_algorithm.h"
-#include "ir/primitive.h"
-#include "include/common/utils/utils.h"
 #include "include/backend/optimizer/helper.h"
+#include "include/common/utils/utils.h"
+#include "ir/primitive.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
 
 namespace mindspore {
 namespace opt {

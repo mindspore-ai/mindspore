@@ -16,6 +16,13 @@
 
 #include "frontend/optimizer/irpass/arithmetic_simplify.h"
 
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/arithmetic_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 namespace mindspore {
 namespace opt {
 namespace irpass {

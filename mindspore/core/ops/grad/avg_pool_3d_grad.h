@@ -18,12 +18,12 @@
 #define MINDSPORE_CORE_OPS_AVG_POOL_3D_GRAD_H_
 
 #include <map>
-#include <vector>
-#include <string>
 #include <memory>
-#include "ops/grad/pool_grad.h"
-#include "mindapi/base/types.h"
+#include <string>
+#include <vector>
 #include "mindapi/base/format.h"
+#include "mindapi/base/types.h"
+#include "ops/grad/pool_grad.h"
 
 namespace mindspore {
 namespace ops {

@@ -16,8 +16,8 @@
 
 #ifndef MINDSPORE_CORE_OPS_TENSOR_ARRAY_READ_H_
 #define MINDSPORE_CORE_OPS_TENSOR_ARRAY_READ_H_
-#include <vector>
 #include <string>
+#include <vector>
 #include "ops/base_operator.h"
 
 namespace mindspore {

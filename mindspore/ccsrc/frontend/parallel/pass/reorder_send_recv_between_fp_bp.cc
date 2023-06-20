@@ -20,7 +20,7 @@
 #include <vector>
 #include <string>
 #include <queue>
-#include "mindspore/core/ops/core_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "frontend/parallel/step_parallel.h"
 
 namespace mindspore {

@@ -16,9 +16,10 @@
 #include "tools/converter/parser/inputs_adjust.h"
 #include <string>
 #include <memory>
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "ops/primitive_c.h"
 #include "nnacl/op_base.h"
-#include "ops/core_ops.h"
 
 namespace mindspore::lite {
 namespace {

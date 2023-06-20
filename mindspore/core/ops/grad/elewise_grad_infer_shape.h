@@ -18,9 +18,9 @@
 #define MINDSPORE_CORE_OPS_ELEWISE_GRAD_INFER_SHAPE_H_
 
 #include <vector>
+#include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
 #include "ir/anf.h"
-#include "abstract/abstract_value.h"
 
 namespace mindspore {
 abstract::ShapePtr ElewiseGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);

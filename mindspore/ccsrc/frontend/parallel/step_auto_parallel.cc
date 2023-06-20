@@ -16,9 +16,9 @@
 
 #include "frontend/parallel/step_auto_parallel.h"
 
+#include <algorithm>
 #include <cinttypes>
 #include <ctime>
-#include <algorithm>
 #include <map>
 #include <memory>
 #include <set>
@@ -26,9 +26,6 @@
 #include <utility>
 #include <vector>
 
-#include "utils/hash_map.h"
-#include "utils/hash_set.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/parallel/auto_parallel/dp_algo_costmodel.h"
@@ -37,19 +34,26 @@
 #include "frontend/parallel/auto_parallel/rec_core/rec_generate_strategy.h"
 #include "frontend/parallel/auto_parallel/rec_core/rec_parse_graph.h"
 #include "frontend/parallel/auto_parallel/rec_core/rec_partition.h"
-#include "include/common/utils/parallel_context.h"
-#include "frontend/parallel/graph_util/node_info.h"
 #include "frontend/parallel/graph_util/graph_info.h"
+#include "frontend/parallel/graph_util/node_info.h"
 #include "frontend/parallel/ops_info/reshape_info.h"
 #include "frontend/parallel/ops_info/tmp_identity_info.h"
+#include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
-#include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
-#include "pipeline/jit/pipeline_split.h"
+#include "include/common/utils/parallel_context.h"
 #include "ir/anf.h"
 #include "ir/param_info.h"
 #include "ir/tensor.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "pipeline/jit/pipeline_split.h"
+#include "utils/hash_map.h"
+#include "utils/hash_set.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "include/backend/distributed/ps/util.h"
 #endif

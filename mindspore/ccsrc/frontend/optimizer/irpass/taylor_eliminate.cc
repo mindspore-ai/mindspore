@@ -16,6 +16,10 @@
 #include "frontend/optimizer/irpass/taylor_eliminate.h"
 #include <string>
 #include <vector>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ir/func_graph_cloner.h"
 #include "pipeline/pynative/pynative_execute.h"
 

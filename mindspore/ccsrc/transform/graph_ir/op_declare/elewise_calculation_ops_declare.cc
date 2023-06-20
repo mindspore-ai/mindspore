@@ -16,8 +16,12 @@
 
 #include "transform/graph_ir/op_declare/elewise_calculation_ops_declare.h"
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
 
 namespace mindspore::transform {
 INPUT_MAP(ClipByValue) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(clip_value_min)}, {3, INPUT_DESC(clip_value_max)}};

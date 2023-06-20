@@ -17,8 +17,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/common/utils/anfalgo.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "plugin/device/ascend/optimizer/fusion_id_allocator.h"
 #include "plugin/device/ascend/hal/common/platform_info_util.h"
 

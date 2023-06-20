@@ -20,6 +20,8 @@
 #include <vector>
 #include <algorithm>
 #include <unordered_set>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "src/common/primitive_t_utils.h"
 #include "tools/common/node_util.h"
 #include "tools/common/tensor_util.h"

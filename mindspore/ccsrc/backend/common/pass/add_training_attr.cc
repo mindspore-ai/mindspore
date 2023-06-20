@@ -20,6 +20,8 @@
 #include <memory>
 #include <utility>
 
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "ir/graph_utils.h"

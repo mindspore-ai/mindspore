@@ -15,6 +15,7 @@
  */
 
 #include "tools/converter/parser/onnx/onnx_nonzero_adjust.h"
+#include "mindspore/core/ops/math_ops.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore::lite {

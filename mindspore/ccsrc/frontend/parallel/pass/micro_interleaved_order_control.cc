@@ -23,7 +23,7 @@
 #include <queue>
 #include <unordered_map>
 #include <utility>
-#include "mindspore/core/ops/core_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/common/utils/utils.h"
 #include "frontend/parallel/step_parallel.h"
 

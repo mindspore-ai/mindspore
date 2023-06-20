@@ -16,6 +16,9 @@
 #include <algorithm>
 
 #include "common/common_test.h"
+#include "mindspore/core/ops/comparison_ops.h"
+#include "mindspore/core/ops/arithmetic_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "common/py_func_graph_fetcher.h"
 #include "ir/manager.h"
 #include "utils/log_adapter.h"
@@ -31,7 +34,6 @@
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "utils/log_adapter.h"
-#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace compile {

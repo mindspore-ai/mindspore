@@ -17,11 +17,11 @@
 #define MINDSPORE_CORE_OPS_CONVERT_TO_DYNAMIC_H_
 
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
-#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

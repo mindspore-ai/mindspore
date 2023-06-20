@@ -16,6 +16,7 @@
 
 #include "plugin/device/gpu/kernel/nn/activation_grad_kernel.h"
 #include <memory>
+#include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 namespace mindspore {
 namespace kernel {

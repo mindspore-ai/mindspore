@@ -21,17 +21,21 @@
 #include <algorithm>
 #include <queue>
 
-#include "ir/cell.h"
-#include "pipeline/jit/parse/parse.h"
-#include "pipeline/jit/parse/data_converter.h"
 #include "frontend/operator/ops.h"
-#include "utils/info.h"
-#include "utils/hash_set.h"
-#include "pipeline/jit/fallback.h"
-#include "pipeline/jit/debug/trace.h"
-#include "pipeline/jit/parse/parse_base.h"
-#include "include/common/utils/utils.h"
 #include "include/common/utils/python_adapter.h"
+#include "include/common/utils/utils.h"
+#include "ir/cell.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/structure_ops.h"
+#include "pipeline/jit/debug/trace.h"
+#include "pipeline/jit/fallback.h"
+#include "pipeline/jit/parse/data_converter.h"
+#include "pipeline/jit/parse/parse.h"
+#include "pipeline/jit/parse/parse_base.h"
+#include "pipeline/jit/parse/resolve.h"
+#include "utils/hash_set.h"
+#include "utils/info.h"
 
 namespace mindspore {
 namespace py = pybind11;

@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 #include "backend/common/graph_kernel/cast_matmul_fusion.h"
-#include <vector>
 #include <string>
+#include <vector>
+#include "backend/common/graph_kernel/graph_kernel_helper.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "backend/common/graph_kernel/graph_kernel_helper.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/math_ops.h"
 
 namespace mindspore::graphkernel {
 namespace {

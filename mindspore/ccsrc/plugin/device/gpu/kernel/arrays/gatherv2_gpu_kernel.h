@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <string>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gatherv2.cuh"
 #include "include/backend/anf_runtime_algorithm.h"

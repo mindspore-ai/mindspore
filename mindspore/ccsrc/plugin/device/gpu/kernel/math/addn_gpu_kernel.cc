@@ -16,6 +16,7 @@
 
 #include "plugin/device/gpu/kernel/math/addn_gpu_kernel.h"
 
+#include "mindspore/core/ops/math_ops.h"
 namespace mindspore {
 namespace kernel {
 bool AddNFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,

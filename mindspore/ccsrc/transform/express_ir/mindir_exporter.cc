@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
+#include <algorithm>
+#include <fstream>
+#include <functional>
 #include <map>
 #include <memory>
 #include <utility>
-#include <algorithm>
-#include <functional>
-#include <fstream>
-#include "include/common/debug/dump_proto.h"
 #include "include/common/debug/anf_ir_dump.h"
+#include "include/common/debug/dump_proto.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/structure_ops.h"
 
 namespace mindspore {
 bool IrExportBuilder::SetAbstractFuncToAttributeProto(const abstract::AbstractBasePtr &abstract,

@@ -23,11 +23,14 @@
 #include <utility>
 #include <string>
 #include <memory>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "utils/compact_set.h"
 #include "include/common/utils/utils.h"
-#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore::pipeline {
 namespace {

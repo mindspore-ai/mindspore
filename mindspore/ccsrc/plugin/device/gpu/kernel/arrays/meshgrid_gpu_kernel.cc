@@ -15,6 +15,7 @@
  */
 #include "plugin/device/gpu/kernel/arrays/meshgrid_gpu_kernel.h"
 #include <algorithm>
+#include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/meshgrid.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/binary_ops_impl.cuh"
 #include "plugin/device/gpu/kernel/math/broadcast_public.h"

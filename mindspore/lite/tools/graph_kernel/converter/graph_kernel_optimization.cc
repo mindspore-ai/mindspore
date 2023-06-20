@@ -15,32 +15,33 @@
  */
 #include "tools/graph_kernel/converter/graph_kernel_optimization.h"
 
-#include <vector>
-#include <string>
 #include <memory>
+#include <string>
 #include <unordered_set>
-#include "ir/func_graph.h"
-#include "backend/common/graph_kernel/graph_kernel_flags.h"
+#include <vector>
 #include "include/backend/optimizer/graph_optimizer.h"
+#include "ir/func_graph.h"
+#include "mindspore/core/ops/array_ops.h"
 
 #include "backend/common/graph_kernel/core/arithmetic_simplify.h"
+#include "backend/common/graph_kernel/core/convert_op_input_attr.h"
 #include "backend/common/graph_kernel/core/eliminate_redundant_output.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/common/graph_kernel/core/shape_ops_splitter.h"
-#include "backend/common/graph_kernel/core/update_state_formatter.h"
 #include "backend/common/graph_kernel/core/transform_op_optimizer.h"
-#include "backend/common/graph_kernel/core/convert_op_input_attr.h"
+#include "backend/common/graph_kernel/core/update_state_formatter.h"
+#include "backend/common/graph_kernel/graph_kernel_flags.h"
 
 #include "tools/graph_kernel/converter/akg/utils.h"
-#include "tools/graph_kernel/converter/kernel_builder.h"
+#include "tools/graph_kernel/converter/callback_impl.h"
 #include "tools/graph_kernel/converter/conv_tuning_expander.h"
+#include "tools/graph_kernel/converter/eliminate_maketuple_getitem.h"
 #include "tools/graph_kernel/converter/format_recognition.h"
 #include "tools/graph_kernel/converter/graph_kernel_cluster_lite.h"
 #include "tools/graph_kernel/converter/graph_kernel_expander_lite.h"
 #include "tools/graph_kernel/converter/graph_kernel_splitter_lite.h"
+#include "tools/graph_kernel/converter/kernel_builder.h"
 #include "tools/graph_kernel/converter/parameter_to_tensor.h"
-#include "tools/graph_kernel/converter/eliminate_maketuple_getitem.h"
-#include "tools/graph_kernel/converter/callback_impl.h"
 
 namespace mindspore {
 namespace graphkernel {

@@ -30,9 +30,9 @@
 #include <fstream>
 #include <sstream>
 #include "include/common/utils/config_manager.h"
+#include "mindspore/core/ops/structure_ops.h"
 #include "utils/hash_map.h"
 #include "utils/ms_context.h"
-#include "ops/core_ops.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "ir/tensor.h"

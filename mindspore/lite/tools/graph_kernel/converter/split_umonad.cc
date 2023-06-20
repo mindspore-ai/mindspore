@@ -15,7 +15,8 @@
  */
 #include "tools/graph_kernel/converter/split_umonad.h"
 
-#include "mindspore/core/ops/core_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ir/anf.h"
 #include "ir/graph_utils.h"
 #include "utils/anf_utils.h"

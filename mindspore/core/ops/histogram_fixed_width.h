@@ -17,15 +17,15 @@
 #ifndef MINDSPORE_CORE_OPS_HISTOGRAM_FIXED_WIDTH_H_
 #define MINDSPORE_CORE_OPS_HISTOGRAM_FIXED_WIDTH_H_
 
+#include <algorithm>
+#include <memory>
+#include <set>
 #include <string>
 #include <vector>
-#include <memory>
-#include <algorithm>
-#include <set>
 
-#include "ops/base_operator.h"
-#include "mindapi/base/types.h"
 #include "mindapi/base/type_id.h"
+#include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

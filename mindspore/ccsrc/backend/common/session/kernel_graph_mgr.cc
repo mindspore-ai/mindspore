@@ -20,6 +20,8 @@
 #include <utility>
 #include <functional>
 #include <unordered_map>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "backend/common/optimizer/common_backend_optimization.h"

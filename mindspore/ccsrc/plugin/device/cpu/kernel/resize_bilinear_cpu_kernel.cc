@@ -17,6 +17,7 @@
 #include <map>
 #include <functional>
 #include "plugin/device/cpu/kernel/resize_bilinear_cpu_kernel.h"
+#include "mindspore/core/ops/image_ops.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "kernel/common_utils.h"
 #include "ops/resize_bilinear.h"

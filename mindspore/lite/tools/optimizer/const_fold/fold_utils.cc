@@ -19,6 +19,8 @@
 #include <algorithm>
 #include <memory>
 #include <vector>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/math_ops.h"
 #include "include/backend/optimizer/helper.h"
 #include "ir/anf.h"
 #include "tools/converter/quantizer/quant_param_holder.h"

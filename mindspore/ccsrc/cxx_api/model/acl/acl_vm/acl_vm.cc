@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "mindspore/core/ops/framework_ops.h"
 #include "cxx_api/model/acl/acl_model_options.h"
 #include "cxx_api/model/acl/acl_vm/acl_multi_graph_session.h"
 #include "utils/trace_base.h"

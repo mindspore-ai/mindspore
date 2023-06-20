@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/cpu/kernel/pad_v3_grad_cpu_kernel.h"
+#include "mindspore/core/ops/nn_ops.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "mindspore/core/ops/op_name.h"
 #include "mindspore/core/ops/grad/pad_v3_grad.h"

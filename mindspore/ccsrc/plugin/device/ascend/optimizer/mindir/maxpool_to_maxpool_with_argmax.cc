@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 
+#include "mindspore/core/ops/conv_pool_ops.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"

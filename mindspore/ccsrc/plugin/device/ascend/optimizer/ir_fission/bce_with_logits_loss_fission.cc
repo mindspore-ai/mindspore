@@ -18,6 +18,10 @@
 #include <memory>
 #include <string>
 #include <algorithm>
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "include/backend/optimizer/helper.h"

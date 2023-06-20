@@ -19,6 +19,7 @@
 #endif
 #include <fstream>
 #include <iomanip>
+#include "mindspore/core/ops/structure_ops.h"
 #include "utils/label.h"
 #include "utils/hash_map.h"
 #include "utils/symbolic.h"

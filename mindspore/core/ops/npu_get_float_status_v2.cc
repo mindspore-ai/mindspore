@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
+#include "ops/npu_get_float_status_v2.h"
 #include <map>
 #include <set>
 #include <string>
-#include "ops/npu_get_float_status_v2.h"
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/other_ops.h"
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

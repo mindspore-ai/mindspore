@@ -16,11 +16,11 @@
 
 #ifndef MINDSPORE_CORE_OPS_LAYER_NORM_FUSION_H_
 #define MINDSPORE_CORE_OPS_LAYER_NORM_FUSION_H_
-#include <vector>
 #include <memory>
+#include <vector>
 
-#include "ops/layer_norm.h"
 #include "mindapi/base/types.h"
+#include "ops/layer_norm.h"
 
 namespace mindspore {
 namespace ops {

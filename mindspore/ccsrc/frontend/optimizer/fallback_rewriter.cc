@@ -24,9 +24,14 @@
 #include <utility>
 #include <memory>
 #include <unordered_map>
+#include "mindspore/core/ops/structure_ops.h"
+#include "mindspore/core/ops/sparse_tensor_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/arithmetic_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "abstract/abstract_value.h"
 #include "base/base.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "pipeline/jit/debug/trace.h"
 #include "pipeline/jit/action.h"
 #include "pipeline/jit/parse/parse_base.h"

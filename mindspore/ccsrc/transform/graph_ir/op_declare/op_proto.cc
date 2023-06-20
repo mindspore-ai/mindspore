@@ -15,8 +15,8 @@
  */
 
 #include "transform/graph_ir/op_declare/op_proto.h"
-#include <string>
 #include <limits>
+#include <string>
 #include <utility>
 #include "graph/types.h"
 #include "utils/log_adapter.h"

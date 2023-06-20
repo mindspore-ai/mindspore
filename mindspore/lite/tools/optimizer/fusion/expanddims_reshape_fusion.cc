@@ -16,6 +16,7 @@
 
 #define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/expanddims_reshape_fusion.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "tools/lite_exporter/fetch_content.h"
 #include "ops/op_utils.h"
 #include "ops/reshape.h"

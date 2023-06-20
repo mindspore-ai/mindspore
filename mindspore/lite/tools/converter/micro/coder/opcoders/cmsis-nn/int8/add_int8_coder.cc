@@ -17,13 +17,14 @@
 #include "coder/opcoders/cmsis-nn/int8/add_int8_coder.h"
 #include <algorithm>
 #include <limits>
+#include "coder/log.h"
+#include "coder/opcoders/file_collector.h"
+#include "coder/opcoders/nnacl/int8/add_int8_coder.h"
 #include "coder/opcoders/serializers/serializer.h"
+#include "coder/utils/common.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "nnacl/arithmetic_parameter.h"
 #include "nnacl/int8/quantize.h"
-#include "coder/opcoders/file_collector.h"
-#include "coder/log.h"
-#include "coder/utils/common.h"
-#include "coder/opcoders/nnacl/int8/add_int8_coder.h"
 
 using mindspore::schema::PrimitiveType_AddFusion;
 

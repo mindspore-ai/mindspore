@@ -15,16 +15,18 @@
  */
 #include "backend/common/pass/merge_transdata.h"
 
-#include <memory>
 #include <map>
-#include <utility>
+#include <memory>
 #include <tuple>
+#include <utility>
 
-#include "ir/graph_utils.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/utils.h"
-#include "include/common/utils/parallel_context.h"
 #include "include/backend/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/parallel_context.h"
+#include "include/common/utils/utils.h"
+#include "ir/graph_utils.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 
 namespace mindspore {
 namespace opt {

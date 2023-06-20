@@ -15,20 +15,23 @@
  */
 
 #define USE_DEPRECATED_API
+#include "include/registry/pass_registry.h"
 #include <map>
 #include <string>
 #include <vector>
 #include "common/common_test.h"
 #include "include/registry/model_parser_registry.h"
 #include "include/registry/pass_base.h"
-#include "include/registry/pass_registry.h"
-#include "ops/fusion/add_fusion.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
 #include "ops/addn.h"
 #include "ops/custom.h"
+#include "ops/fusion/add_fusion.h"
+#include "ops/op_utils.h"
 #include "tools/converter/optimizer_manager.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "ut/tools/converter/registry/parser/model_parser_test.h"
-#include "ops/op_utils.h"
 
 using mindspore::converter::ConverterParameters;
 using mindspore::converter::kFmkTypeCaffe;

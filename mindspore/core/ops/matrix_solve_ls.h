@@ -16,10 +16,10 @@
 
 #ifndef MINDSPORE_CORE_OPS_MATRIX_SOLVE_LS_H
 #define MINDSPORE_CORE_OPS_MATRIX_SOLVE_LS_H
-#include <vector>
 #include <memory>
-#include "ops/base_operator.h"
+#include <vector>
 #include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

@@ -18,9 +18,11 @@
 
 #include "pipeline/jit/static_analysis/builtin_prim.h"
 
-#include "pipeline/jit/parse/data_converter.h"
-#include "pipeline/jit/fallback.h"
 #include "include/common/utils/convert_utils_py.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "pipeline/jit/fallback.h"
+#include "pipeline/jit/parse/data_converter.h"
 
 namespace mindspore {
 namespace abstract {

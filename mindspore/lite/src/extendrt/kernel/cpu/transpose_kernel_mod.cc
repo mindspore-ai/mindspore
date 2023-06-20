@@ -17,6 +17,7 @@
 #include "extendrt/kernel/cpu/transpose_kernel_mod.h"
 #include <vector>
 #include <memory>
+#include "mindspore/core/ops/array_ops.h"
 #include "plugin/factory/ms_factory.h"
 #include "include/api/status.h"
 #include "plugin/device/cpu/kernel/nnacl/errorcode.h"

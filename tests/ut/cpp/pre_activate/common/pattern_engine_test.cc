@@ -21,11 +21,11 @@
 #include <algorithm>
 
 #include "common/common_test.h"
+#include "mindspore/core/ops/math_ops.h"
 #include "include/backend/optimizer/pattern_engine.h"
 #include "include/backend/optimizer/visitor.h"
 #include "include/backend/optimizer/helper.h"
 #include "base/base_ref.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "ir/anf.h"
 #include "include/common/utils/utils.h"
 

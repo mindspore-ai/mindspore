@@ -22,9 +22,7 @@
 #include <vector>
 #include "ops/base_operator.h"
 #include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
 #include "utils/check_convert_utils.h"
-#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {

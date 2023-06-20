@@ -18,6 +18,9 @@
 #include <algorithm>
 #include <tuple>
 #define google ascend_private
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "register/ops_kernel_builder_registry.h"
 #include "graph/compute_graph.h"
 #include "graph/debug/ge_attr_define.h"
@@ -25,7 +28,6 @@
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/log_adapter.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "include/transform/graph_ir/utils.h"
 #include "include/common/utils/comm_manager.h"
 #include "plugin/device/ascend/hal/hccl_adapter/all_to_all_v_calc_param.h"

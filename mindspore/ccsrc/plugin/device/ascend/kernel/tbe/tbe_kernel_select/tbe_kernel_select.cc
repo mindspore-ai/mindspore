@@ -15,19 +15,21 @@
  */
 
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_kernel_select.h"
+#include <algorithm>
+#include <iterator>
 #include <memory>
 #include <set>
 #include <utility>
 #include <vector>
-#include <iterator>
-#include <algorithm>
+#include "include/backend/optimizer/helper.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_convert_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/single_tbe_json_creator.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_compile.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_property_checker.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_selector_creator.h"
-#include "include/backend/optimizer/helper.h"
 
 namespace mindspore::kernel {
 constexpr int64_t kDynamicInvalidNum = -1;

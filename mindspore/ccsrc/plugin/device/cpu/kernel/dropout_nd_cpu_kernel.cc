@@ -21,6 +21,7 @@
 #include <set>
 #include <map>
 #include <functional>
+#include "mindspore/core/ops/nn_ops.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "mindspore/core/ops/dropout_nd.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"

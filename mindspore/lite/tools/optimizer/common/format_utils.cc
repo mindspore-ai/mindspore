@@ -19,6 +19,9 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/image_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ops/adam.h"
 #include "ops/addn.h"
 #include "ops/apply_momentum.h"

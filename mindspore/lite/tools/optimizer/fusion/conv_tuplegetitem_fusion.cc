@@ -17,6 +17,7 @@
 #define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/conv_tuplegetitem_fusion.h"
 #include <memory>
+#include "mindspore/core/ops/sequence_ops.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
 

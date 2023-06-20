@@ -16,13 +16,13 @@
 
 #ifndef MINDSPORE_CORE_OPS_MAX_POOL3D_WITH_ARGMAX_H_
 #define MINDSPORE_CORE_OPS_MAX_POOL3D_WITH_ARGMAX_H_
-#include <set>
 #include <map>
+#include <memory>
+#include <set>
 #include <string>
 #include <vector>
-#include <memory>
-#include "utils/check_convert_utils.h"
 #include "ops/base_operator.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

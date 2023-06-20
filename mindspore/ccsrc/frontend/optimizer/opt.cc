@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <utility>
 
+#include "mindspore/core/ops/structure_ops.h"
 #include "utils/hash_map.h"
 #include "ir/anf.h"
 #include "ir/manager.h"

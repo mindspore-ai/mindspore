@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-#include <string>
+#include "ops/grad/resize_v2_grad.h"
 #include <algorithm>
 #include <memory>
 #include <set>
+#include <string>
 #include <vector>
-#include "ops/op_utils.h"
-#include "ops/grad/resize_v2_grad.h"
-#include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/image_ops.h"
+#include "mindspore/core/ops/op_name.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

@@ -20,7 +20,6 @@
 #include <set>
 #include <memory>
 #include "ir/primitive.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "abstract/abstract_value.h"
 #include "ir/anf.h"
 

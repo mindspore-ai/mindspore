@@ -22,8 +22,9 @@
 #include <set>
 
 #include "abstract/ops/primitive_infer_map.h"
-#include "ops/op_name.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/sparse_ops.h"
+#include "ops/op_name.h"
 
 namespace mindspore {
 namespace ops {

@@ -20,6 +20,10 @@
 #include <set>
 #include <unordered_map>
 #include <utility>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ops/op_utils.h"
 #include "src/common/common.h"
 #include "src/common/utils.h"

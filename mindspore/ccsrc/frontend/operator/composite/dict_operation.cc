@@ -20,6 +20,8 @@
 #include <utility>
 #include <algorithm>
 
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "abstract/param_validator.h"
 #include "frontend/optimizer/opt.h"
 #include "include/common/pybind_api/api_register.h"

@@ -16,14 +16,18 @@
 #include "plugin/device/gpu/optimizer/adam_fusion.h"
 
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "ir/primitive.h"
-#include "include/common/utils/utils.h"
 #include "include/backend/optimizer/helper.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
+#include "ir/primitive.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
 
 namespace mindspore {
 namespace opt {

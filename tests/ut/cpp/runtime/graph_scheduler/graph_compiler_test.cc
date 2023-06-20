@@ -16,6 +16,9 @@
 
 #include "tests/ut/cpp/common/device_common_test.h"
 
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 namespace mindspore {
 namespace runtime {
 using namespace test;

@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
+#include "ops/real_div.h"
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
-#include "ops/real_div.h"
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

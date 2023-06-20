@@ -26,7 +26,6 @@
 #include "utils/hash_map.h"
 #include "ir/primitive.h"
 #include "ops/primitive_c.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "abstract/abstract_value.h"
 #include "ir/anf.h"
 #include "abstract/ops/op_infer.h"

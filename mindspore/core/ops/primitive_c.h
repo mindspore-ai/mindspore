@@ -16,10 +16,10 @@
 
 #ifndef MINDSPORE_CORE_OPS_PRIMITIVE_C_H_
 #define MINDSPORE_CORE_OPS_PRIMITIVE_C_H_
-#include <string>
-#include <vector>
 #include <map>
 #include <memory>
+#include <string>
+#include <vector>
 #include "ir/primitive.h"
 #include "ir/value.h"
 #include "utils/hash_map.h"

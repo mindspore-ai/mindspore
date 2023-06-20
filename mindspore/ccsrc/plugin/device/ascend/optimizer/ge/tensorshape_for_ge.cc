@@ -17,6 +17,8 @@
 #include "plugin/device/ascend/optimizer/ge/tensorshape_for_ge.h"
 #include <vector>
 #include <memory>
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/common/utils/anfalgo.h"
 #include "transform/graph_ir/transform_util.h"
 

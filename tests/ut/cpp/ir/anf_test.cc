@@ -18,11 +18,11 @@
 
 #include "common/common_test.h"
 
+#include "mindspore/core/ops/arithmetic_ops.h"
 #include "ir/anf.h"
 #include "ir/tensor.h"
 #include "ir/func_graph.h"
 #include "frontend/operator/ops.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "utils/anf_utils.h"
 
 namespace mindspore {

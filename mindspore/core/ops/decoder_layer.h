@@ -16,12 +16,12 @@
 #ifndef MINDSPORE_CORE_OPS_DECODER_LAYER_H_
 #define MINDSPORE_CORE_OPS_DECODER_LAYER_H_
 #include <map>
-#include <vector>
-#include <string>
 #include <memory>
+#include <string>
+#include <vector>
 
-#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
 
 namespace mindspore {

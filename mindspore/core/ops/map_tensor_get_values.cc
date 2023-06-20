@@ -15,21 +15,21 @@
  */
 #include "ops/map_tensor_get_values.h"
 
-#include <vector>
 #include <memory>
+#include <vector>
 
-#include "utils/check_convert_utils.h"
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "ir/anf.h"
 #include "ir/dtype/tensor_type.h"
 #include "mindapi/base/shape_vector.h"
-#include "ops/core_ops.h"
+#include "mindapi/src/helper.h"
+#include "mindspore/core/ops/sparse_tensor_ops.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
+#include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

@@ -22,8 +22,9 @@
 #include <utility>
 #include <algorithm>
 #include <memory>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/common/utils/utils.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "mindspore/core/utils/ms_context.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/debug/draw.h"

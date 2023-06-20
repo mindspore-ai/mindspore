@@ -18,6 +18,7 @@
 
 #include "pipeline/jit/parse/data_converter.h"
 #include <utility>
+#include "mindspore/core/ops/structure_ops.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/pipeline.h"
 #include "frontend/operator/ops.h"

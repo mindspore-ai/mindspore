@@ -18,7 +18,6 @@
 #define MINDSPORE_CORE_OPS_SHAPE_MUL_GRAD_H_
 
 #include "ops/base_operator.h"
-#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace ops {

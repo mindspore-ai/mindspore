@@ -16,12 +16,12 @@
 
 #include "ops/logical_xor.h"
 #include <map>
-#include <string>
 #include <set>
-#include "ops/op_utils.h"
-#include "mindspore/core/ops/core_ops.h"
-#include "utils/check_convert_utils.h"
+#include <string>
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/comparison_ops.h"
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

@@ -19,6 +19,7 @@
 #include <vector>
 #include <utility>
 #include <memory>
+#include "mindspore/core/ops/sequence_ops.h"
 #include "utils/ms_context.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

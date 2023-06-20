@@ -21,12 +21,12 @@
 #include <vector>
 #include <map>
 #include <queue>
+#include "mindspore/core/ops/framework_ops.h"
 #include "src/common/log_adapter.h"
 #include "tools/common/node_util.h"
 #include "tools/common/graph_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "ops/fusion/partial_fusion.h"
-#include "ops/core_ops.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore::lite {

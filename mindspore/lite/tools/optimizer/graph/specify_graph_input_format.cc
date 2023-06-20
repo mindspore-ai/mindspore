@@ -20,6 +20,8 @@
 #include <vector>
 #include <stack>
 #include <set>
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/optimizer/common/format_utils.h"
 #include "src/common/log_adapter.h"

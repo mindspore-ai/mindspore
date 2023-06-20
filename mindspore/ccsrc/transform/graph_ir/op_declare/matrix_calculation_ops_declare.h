@@ -17,10 +17,10 @@
 #ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_MATRIX_CALCULATION_OPS_DECLARE_H_
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_MATRIX_CALCULATION_OPS_DECLARE_H_
 
-#include "utils/hash_map.h"
-#include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "mindspore/ccsrc/include/common/utils/utils.h"
-#include "ops/matrix_calculation_ops.h"
+#include "inc/ops/matrix_calculation_ops.h"
+#include "transform/graph_ir/op_declare/op_declare_macro.h"
+#include "utils/hash_map.h"
 
 DECLARE_OP_ADAPTER(TensorScatterUpdate)
 DECLARE_OP_USE_OUTPUT(TensorScatterUpdate)

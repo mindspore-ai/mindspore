@@ -18,6 +18,7 @@
 #include "tools/optimizer/const_fold/fold_with_infershape.h"
 #include <memory>
 #include <set>
+#include "mindspore/core/ops/framework_ops.h"
 #include "tools/optimizer/common/format_utils.h"
 #include "nnacl/op_base.h"
 

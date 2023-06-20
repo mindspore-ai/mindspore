@@ -17,6 +17,7 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include "mindspore/core/ops/math_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/graph_kernel/graph_kernel_helper.h"

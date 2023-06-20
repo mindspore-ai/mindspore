@@ -17,8 +17,13 @@
  */
 
 #include "pipeline/jit/resource.h"
+#include "mindspore/core/ops/sparse_tensor_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/comparison_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/arithmetic_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ir/dtype.h"
-#include "ops/core_ops.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "pipeline/jit/debug/trace.h"
 #include "pipeline/jit/parse/data_converter.h"

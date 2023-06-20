@@ -22,6 +22,8 @@
 #include <utility>
 #include <functional>
 
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ir/func_graph.h"
 #include "abstract/abstract_function.h"
 #include "include/common/utils/anfalgo.h"

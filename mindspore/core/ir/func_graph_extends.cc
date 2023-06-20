@@ -18,11 +18,12 @@
 
 #include "ir/func_graph.h"
 
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ir/manager.h"
 #include "utils/ordered_set.h"
 #include "abstract/abstract_value.h"
 #include "abstract/abstract_function.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "ir/func_graph_cloner.h"
 
 namespace mindspore {

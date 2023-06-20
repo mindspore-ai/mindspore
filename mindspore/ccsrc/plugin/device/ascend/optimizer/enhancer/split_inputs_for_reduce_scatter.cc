@@ -16,6 +16,8 @@
 
 #include "plugin/device/ascend/optimizer/enhancer/split_inputs_for_reduce_scatter.h"
 #include <algorithm>
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 

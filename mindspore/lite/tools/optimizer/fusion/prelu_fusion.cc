@@ -15,6 +15,8 @@
  */
 
 #include "tools/optimizer/fusion/prelu_fusion.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
 #include "nnacl/op_base.h"
 #include "ops/fusion/prelu_fusion.h"
 

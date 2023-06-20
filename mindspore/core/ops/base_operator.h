@@ -17,10 +17,10 @@
 #ifndef MINDSPORE_CORE_OPS_BASE_OPERATOR_
 #define MINDSPORE_CORE_OPS_BASE_OPERATOR_
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
-#include <map>
 
 #include "mindapi/ir/primitive.h"
 

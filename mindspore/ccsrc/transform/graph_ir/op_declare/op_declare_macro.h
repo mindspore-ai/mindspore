@@ -26,7 +26,6 @@
 #include "transform/graph_ir/op_adapter_desc.h"
 #include "transform/graph_ir/op_adapter_map.h"
 #include "transform/graph_ir/op_declare/op_proto.h"
-#include "mindspore/core/ops/core_ops.h"
 
 #define DECLARE_CANN_OP_PROTO(T)                               \
   namespace ge {                                               \

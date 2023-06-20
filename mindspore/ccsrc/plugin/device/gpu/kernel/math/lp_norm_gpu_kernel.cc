@@ -20,6 +20,7 @@
 #include <string>
 #include <algorithm>
 #include <set>
+#include "mindspore/core/ops/math_ops.h"
 #include "abstract/utils.h"
 #include "kernel/common_utils.h"
 #include "mindspore/core/ops/lp_norm.h"

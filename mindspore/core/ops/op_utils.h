@@ -16,16 +16,17 @@
 
 #ifndef MINDSPORE_CORE_OPS_OP_UTILS_H
 #define MINDSPORE_CORE_OPS_OP_UTILS_H
-#include <string>
-#include <set>
-#include <vector>
 #include <algorithm>
-#include <memory>
 #include <climits>
-#include "abstract/ops/primitive_infer_map.h"
-#include "mindapi/base/shared_ptr.h"
-#include "mindapi/base/shape_vector.h"
+#include <memory>
+#include <set>
+#include <string>
+#include <vector>
 #include "./op_name.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "mindapi/base/shape_vector.h"
+#include "mindapi/base/shared_ptr.h"
+#include "mindspore/core/ops/math_ops.h"
 
 namespace mindspore::ops {
 const std::set<TypePtr> common_valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,  kUInt16,

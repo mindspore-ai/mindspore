@@ -18,6 +18,9 @@
 #include <functional>
 #include <map>
 #include "runtime/graph_scheduler/control_node_parser.h"
+#include "mindspore/core/ops/sparse_tensor_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include "runtime/device/device_address_utils.h"
 #include "include/common/utils/convert_utils.h"

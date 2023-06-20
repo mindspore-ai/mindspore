@@ -18,11 +18,11 @@
 
 #include <sstream>
 
+#include "mindspore/core/ops/structure_ops.h"
 #include "utils/hash_map.h"
 #include "ir/visitor.h"
 #include "ir/func_graph.h"
 #include "utils/anf_utils.h"
-#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 // namespace to support intermediate representation definition

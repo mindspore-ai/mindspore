@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "ops/invert_permutation.h"
-#include "ops/primitive_c.h"
+#include <memory>
 #include "mindapi/src/helper.h"
+#include "ops/primitive_c.h"
 
 namespace mindspore {
 namespace ops {

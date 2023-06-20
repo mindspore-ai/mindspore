@@ -20,6 +20,9 @@
 #include <string>
 #include <memory>
 #include "pipeline/jit/pipeline_split.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/comm_manager.h"
 #include "include/common/utils/parallel_context.h"

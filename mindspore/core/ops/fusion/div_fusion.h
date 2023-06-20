@@ -16,8 +16,8 @@
 
 #ifndef MINDSPORE_CORE_OPS_DIV_FUSION_H_
 #define MINDSPORE_CORE_OPS_DIV_FUSION_H_
-#include "ops/div.h"
 #include "mindapi/base/types.h"
+#include "ops/div.h"
 
 namespace mindspore {
 namespace ops {

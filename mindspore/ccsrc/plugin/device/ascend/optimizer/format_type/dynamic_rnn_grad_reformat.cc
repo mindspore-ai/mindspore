@@ -18,6 +18,8 @@
 #include <string>
 #include <utility>
 
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "include/backend/optimizer/helper.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
@@ -27,7 +29,6 @@
 #include "kernel/kernel_build_info.h"
 #include "mindapi/base/type_id.h"
 #include "ops/base_operator.h"
-#include "ops/core_ops.h"
 #include "utils/log_adapter.h"
 namespace mindspore {
 namespace opt {

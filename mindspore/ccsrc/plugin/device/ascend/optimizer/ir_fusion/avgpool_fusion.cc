@@ -20,6 +20,7 @@
 #include <string>
 #include <algorithm>
 #include <functional>
+#include "mindspore/core/ops/conv_pool_ops.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

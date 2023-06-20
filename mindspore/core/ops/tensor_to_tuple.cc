@@ -16,19 +16,19 @@
 
 #include "ops/tensor_to_tuple.h"
 
-#include <vector>
 #include <memory>
+#include <vector>
 
-#include "ops/op_utils.h"
-#include "abstract/ops/op_infer.h"
 #include "abstract/abstract_value.h"
+#include "abstract/ops/op_infer.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "base/base.h"
 #include "ir/anf.h"
-#include "ops/core_ops.h"
+#include "mindapi/src/helper.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "ops/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

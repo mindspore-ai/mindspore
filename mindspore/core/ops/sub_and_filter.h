@@ -17,12 +17,12 @@
 #ifndef MINDSPORE_CORE_OPS_SUB_AND_FILTER_H_
 #define MINDSPORE_CORE_OPS_SUB_AND_FILTER_H_
 
-#include <vector>
 #include <memory>
-#include "ops/base_operator.h"
-#include "mindapi/base/types.h"
-#include "ops/primitive_c.h"
+#include <vector>
 #include "abstract/abstract_value.h"
+#include "mindapi/base/types.h"
+#include "ops/base_operator.h"
+#include "ops/primitive_c.h"
 
 namespace mindspore {
 namespace ops {

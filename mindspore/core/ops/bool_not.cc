@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-#include <vector>
-#include <string>
+#include "ops/bool_not.h"
 #include <memory>
 #include <set>
-#include "ops/bool_not.h"
-#include "ops/op_utils.h"
+#include <vector>
 #include "abstract/ops/op_infer.h"
-#include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

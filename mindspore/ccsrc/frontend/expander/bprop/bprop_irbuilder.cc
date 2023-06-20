@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <vector>
 #include <limits>
+#include "mindspore/core/ops/array_ops.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "frontend/expander/bprop/grad_ops/common_utils.h"

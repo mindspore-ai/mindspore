@@ -24,6 +24,15 @@
 #include <cstdint>
 #include <iterator>
 
+#include "mindspore/core/ops/sparse_ops.h"
+#include "mindspore/core/ops/random_ops.h"
+#include "mindspore/core/ops/conv_pool_ops.h"
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/image_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 

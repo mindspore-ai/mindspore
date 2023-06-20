@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <utility>
 #include <map>
+#include "mindspore/core/ops/math_ops.h"
 #include "nnacl/fp32/reduce_fp32.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "utils/check_convert_utils.h"

@@ -15,8 +15,9 @@
  */
 
 #include "transform/graph_ir/op_declare/nn_detect_ops_declare.h"
-#include <vector>
 #include <string>
+#include <vector>
+#include "mindspore/core/ops/conv_pool_ops.h"
 
 namespace mindspore::transform {
 // BoundingBoxEncode

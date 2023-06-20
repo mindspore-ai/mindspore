@@ -42,7 +42,6 @@
 #include "tools/converter/quantizer/quant_params.h"
 #include "tools/converter/quantizer/mixed_bit_weight_quantization.h"
 #include "tools/common/string_util.h"
-#include "ops/core_ops.h"
 #include "ops/quant_dtype_cast.h"
 
 namespace mindspore::lite::quant {

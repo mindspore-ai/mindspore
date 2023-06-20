@@ -18,6 +18,7 @@
 
 #include <memory>
 
+#include "mindspore/core/ops/lite_ops.h"
 #include "nnacl/op_base.h"
 #include "ops/fusion/activation.h"
 #include "ops/op_utils.h"

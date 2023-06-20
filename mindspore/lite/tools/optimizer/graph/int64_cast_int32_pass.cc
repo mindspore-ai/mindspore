@@ -18,6 +18,9 @@
 #include "tools/optimizer/graph/int64_cast_int32_pass.h"
 #include <vector>
 #include <memory>
+#include "mindspore/core/ops/comparison_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ops/op_utils.h"
 #include "ops/cast.h"
 #include "tools/optimizer/common/gllo_utils.h"

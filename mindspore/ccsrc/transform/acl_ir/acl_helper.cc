@@ -17,14 +17,16 @@
 #include "transform/acl_ir/acl_helper.h"
 #include <set>
 #include <string>
+#include "include/api/data_type.h"
+#include "include/backend/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
 #include "include/transform/graph_ir/types.h"
-#include "include/api/data_type.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/structure_ops.h"
 #include "runtime/device/ms_device_shape_transfer.h"
-#include "transform/acl_ir/ge_adapter_info.h"
 #include "transform/acl_ir/acl_adapter_info.h"
+#include "transform/acl_ir/ge_adapter_info.h"
 
 namespace mindspore {
 namespace transform {

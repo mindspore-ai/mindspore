@@ -20,6 +20,7 @@
 #include <string>
 #include <memory>
 
+#include "mindspore/core/ops/array_ops.h"
 #include "ir/func_graph.h"
 #include "utils/ms_context.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"

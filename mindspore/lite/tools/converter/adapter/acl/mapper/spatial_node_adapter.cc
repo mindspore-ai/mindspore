@@ -20,12 +20,12 @@
 #include <set>
 #include <memory>
 #include <string>
+#include "mindspore/core/ops/sequence_ops.h"
 #include "tools/converter/adapter/acl/common/utils.h"
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "tools/common/tensor_util.h"
 #include "include/errorcode.h"
 #include "base/base.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "ops/concat.h"
 #include "ops/batch_norm.h"
 #include "ops/fused_batch_norm.h"

@@ -16,17 +16,15 @@
 
 #include "ops/grad/bias_add_grad.h"
 
-#include <string>
 #include <memory>
 #include <set>
+#include <string>
 #include <vector>
 
-#include "utils/check_convert_utils.h"
-#include "abstract/ops/primitive_infer_map.h"
-#include "utils/ms_context.h"
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
 #include "abstract/ops/op_infer.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include "abstract/utils.h"
 #include "base/base.h"
 #include "ir/anf.h"
@@ -38,13 +36,15 @@
 #include "mindapi/base/shape_vector.h"
 #include "mindapi/base/shared_ptr.h"
 #include "mindapi/ir/value.h"
-#include "ops/core_ops.h"
+#include "mindapi/src/helper.h"
+#include "mindspore/core/ops/nn_ops.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
+#include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
+#include "utils/ms_context.h"
 #include "utils/shape_utils.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

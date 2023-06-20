@@ -16,17 +16,18 @@
 #include "backend/common/graph_kernel/axis_normalizer.h"
 
 #include <algorithm>
-#include <vector>
 #include <memory>
 #include <unordered_map>
+#include <vector>
 
-#include "ir/anf.h"
-#include "ir/tensor.h"
-#include "ir/scalar.h"
-#include "utils/anf_utils.h"
-#include "backend/common/graph_kernel/graph_kernel_helper.h"
 #include "backend/common/graph_kernel/adapter/callback_impl.h"
+#include "backend/common/graph_kernel/graph_kernel_helper.h"
 #include "include/common/utils/anfalgo.h"
+#include "ir/scalar.h"
+#include "ir/tensor.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore::graphkernel {
 int64_t AxisNormalizer::NormAxis(int64_t x, size_t rank) const { return x >= 0 ? x : x + static_cast<int64_t>(rank); }

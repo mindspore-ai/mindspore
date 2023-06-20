@@ -18,12 +18,20 @@
 #include <vector>
 
 #include "common/common_test.h"
+#include "mindspore/core/ops/structure_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/conv_pool_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/image_ops.h"
+#include "mindspore/core/ops/comparison_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/arithmetic_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ir/value.h"
 #include "pybind_api/ir/primitive_py.h"
 #include "pipeline/jit/parse/parse_base.h"
 #include "include/common/utils/python_adapter.h"
 #include "frontend/operator/ops.h"
-#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace prim {

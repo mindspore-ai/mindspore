@@ -16,14 +16,14 @@
 #ifndef MINDSPORE_CORE_OPS_RESIZE_NEAREST_NEIGHBOR_V2_GRAD_H_
 #define MINDSPORE_CORE_OPS_RESIZE_NEAREST_NEIGHBOR_V2_GRAD_H_
 
-#include <string>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "abstract/abstract_value.h"
+#include "mindapi/base/types.h"
 #include "ops/base_operator.h"
 #include "utils/check_convert_utils.h"
-#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {

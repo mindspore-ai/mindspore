@@ -19,9 +19,9 @@
 
 #include <vector>
 #include "ops/base_operator.h"
+#include "ops/upsample_interpolating_3d.h"
 #include "ops/upsample_nearest_3d.h"
 #include "ops/upsample_trilinear_3d.h"
-#include "ops/upsample_interpolating_3d.h"
 
 namespace mindspore {
 namespace ops {

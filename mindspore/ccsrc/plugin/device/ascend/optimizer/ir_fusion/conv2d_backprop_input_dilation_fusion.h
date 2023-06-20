@@ -19,6 +19,7 @@
 #include <memory>
 #include <vector>
 #include "include/backend/optimizer/optimizer.h"
+#include "mindspore/core/ops/conv_pool_ops.h"
 #include "plugin/device/ascend/hal/common/platform_info_util.h"
 
 namespace mindspore {

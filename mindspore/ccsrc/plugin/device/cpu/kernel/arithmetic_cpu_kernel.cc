@@ -24,6 +24,8 @@
 #include <complex>
 #include <unordered_map>
 #include <utility>
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/math_ops.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/arithmetic_fp32.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/mul_fp32.h"

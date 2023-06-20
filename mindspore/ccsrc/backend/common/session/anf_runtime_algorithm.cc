@@ -20,8 +20,10 @@
 #include <map>
 #include <set>
 #include <functional>
+#include "mindspore/core/ops/structure_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "ir/anf.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "utils/shape_utils.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/parallel_context.h"

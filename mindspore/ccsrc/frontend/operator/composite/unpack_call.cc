@@ -18,6 +18,8 @@
 #include <algorithm>
 #include <utility>
 
+#include "mindspore/core/ops/structure_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
 #include "frontend/operator/cc_implementations.h"

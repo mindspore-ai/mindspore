@@ -16,13 +16,15 @@
 
 #include "src/extendrt/graph_compiler/single_graph_scheduler.h"
 #include "src/common/log_util.h"
-#include "src/litert/kernel_registry.h"
+#include "src/common/ops/operator_populate/operator_populate_register.h"
 #include "src/common/tensor_util.h"
+#include "src/extendrt/graph_compiler/infershape_helper.h"
 #include "src/extendrt/kernel/kernel_lib.h"
 #include "src/extendrt/kernel/kernel_selector/kernel_selector.h"
+#include "src/litert/kernel_registry.h"
+#include "src/litert/lite_kernel.h"
 #include "src/litert/pass/format_pass/format_pass.h"
 #include "tools/optimizer/graph/node_infershape.h"
-#include "src/extendrt/graph_compiler/infershape_helper.h"
 
 namespace mindspore {
 namespace lite {

@@ -21,6 +21,7 @@
 #include <map>
 #include <complex>
 #include <utility>
+#include "mindspore/core/ops/array_ops.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "ir/primitive.h"
 #include "ir/dtype/type.h"

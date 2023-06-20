@@ -20,6 +20,7 @@
 #include <utility>
 #include <map>
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
+#include "mindspore/core/ops/sparse_ops.h"
 #include "plugin/device/gpu/kernel/sparse/sparse_tensor_to_csr_sparse_matrix_gpu_kernel.h"
 namespace mindspore {
 namespace kernel {

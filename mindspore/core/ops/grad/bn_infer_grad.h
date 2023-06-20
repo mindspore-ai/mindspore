@@ -18,9 +18,9 @@
 #define MINDSPORE_CORE_OPS_BN_INFER_GRAD_H_
 #include <memory>
 #include <string>
-#include "ops/base_operator.h"
-#include "mindapi/base/types.h"
 #include "mindapi/base/format.h"
+#include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

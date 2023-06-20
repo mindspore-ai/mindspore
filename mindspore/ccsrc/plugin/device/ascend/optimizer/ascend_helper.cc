@@ -19,6 +19,9 @@
 #include <map>
 #include <set>
 #include <algorithm>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "plugin/device/ascend/optimizer/create_node_helper.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_attr_to_input_registry.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_input_to_attr_registry.h"
@@ -28,7 +31,6 @@
 #include "include/backend/kernel_info.h"
 #include "kernel/oplib/oplib.h"
 #include "kernel/common_utils.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/kernel_graph.h"

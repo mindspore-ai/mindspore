@@ -20,6 +20,9 @@
 #include <vector>
 #include <set>
 #include <regex>
+#include "mindspore/core/ops/structure_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "utils/hash_map.h"
 #include "ir/func_graph_cloner.h"
 #include "base/complex_storage.h"

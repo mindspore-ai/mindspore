@@ -18,9 +18,9 @@
 #define MINDSPORE_CORE_OPS_DE_CONV2D_GRAD_FILTER_H_
 #include <vector>
 
-#include "ops/base_operator.h"
-#include "mindapi/base/types.h"
 #include "mindapi/base/format.h"
+#include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

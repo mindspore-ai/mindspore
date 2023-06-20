@@ -18,6 +18,7 @@
 #include <tuple>
 #include <algorithm>
 #include <utility>
+#include "mindspore/core/ops/framework_ops.h"
 #include "extendrt/delegate/factory.h"
 #include "include/common/utils/scoped_long_running.h"
 #include "include/api/context.h"

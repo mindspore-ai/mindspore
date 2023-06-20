@@ -20,6 +20,9 @@
 #include <memory>
 #include <set>
 #include <algorithm>
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "ops/fusion/full_connection.h"
 #include "ops/reshape.h"
 #include "ops/fusion/slice_fusion.h"

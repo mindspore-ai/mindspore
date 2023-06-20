@@ -16,6 +16,7 @@
 #define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/conv_bn_fusion.h"
 #include <memory>
+#include "mindspore/core/ops/nn_ops.h"
 #include "include/common/utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/fusion/batchnorm_to_scale_fusion.h"

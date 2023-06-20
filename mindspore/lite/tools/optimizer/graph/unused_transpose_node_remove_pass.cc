@@ -18,6 +18,8 @@
 #include "tools/optimizer/graph/unused_transpose_node_remove_pass.h"
 #include <vector>
 #include <memory>
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "ops/transpose.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "include/errorcode.h"

@@ -20,7 +20,6 @@
 #include "pipeline/jit/action.h"
 #include "include/common/debug/dump_proto.h"
 #include "load_mindir/load_model.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "ir/anf.h"
 #include "ir/tensor.h"
 namespace mindspore {

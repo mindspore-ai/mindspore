@@ -20,6 +20,8 @@
 #include <vector>
 #include <map>
 #include <stack>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/optimizer/common/format_utils.h"
 #include "tools/lite_exporter/fetch_content.h"

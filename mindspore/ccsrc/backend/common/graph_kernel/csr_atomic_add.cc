@@ -17,10 +17,12 @@
 #include "backend/common/graph_kernel/csr_atomic_add.h"
 #include <memory>
 #include <vector>
-#include "mindspore/core/ops/core_ops.h"
-#include "include/common/utils/utils.h"
 #include "backend/common/graph_kernel/graph_kernel_helper.h"
 #include "include/backend/kernel_graph.h"
+#include "include/common/utils/utils.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/sparse_ops.h"
 
 namespace mindspore::graphkernel {
 class ReduceSumCsrChecker : public AtomicAddChecker {

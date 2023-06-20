@@ -16,6 +16,8 @@
 
 #include "plugin/device/gpu/kernel/math/binary_ops_gpu_kernel.h"
 #include <memory>
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/comparison_ops.h"
 #include "plugin/device/gpu/kernel/math/broadcast_public.h"
 
 namespace mindspore {

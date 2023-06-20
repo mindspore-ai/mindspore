@@ -22,17 +22,19 @@
 #include <functional>
 #include <memory>
 #include <set>
+#include <string>
 #include <tuple>
 #include <utility>
-#include <string>
 
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "frontend/operator/ops.h"
+#include "include/common/utils/utils.h"
+#include "ir/func_graph_cloner.h"
+#include "ir/manager.h"
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "utils/log_adapter.h"
-#include "include/common/utils/utils.h"
-#include "ir/manager.h"
-#include "ir/func_graph_cloner.h"
-#include "frontend/operator/ops.h"
 
 namespace mindspore {
 namespace compile {

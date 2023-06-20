@@ -16,13 +16,13 @@
 
 #ifndef MINDSPORE_CORE_OPS_TRIDIAGONAL_SOLVE_H_
 #define MINDSPORE_CORE_OPS_TRIDIAGONAL_SOLVE_H_
-#include <vector>
 #include <memory>
 #include <string>
+#include <vector>
 #include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
-#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "ops/base_operator.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {

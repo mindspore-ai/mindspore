@@ -15,8 +15,9 @@
  */
 
 #include "transform/graph_ir/op_declare/pad_ops_declare.h"
-#include <vector>
 #include <string>
+#include <vector>
+#include "mindspore/core/ops/array_ops.h"
 
 namespace mindspore::transform {
 // Pad

@@ -18,6 +18,8 @@
 
 #include <memory>
 #include <utility>
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {

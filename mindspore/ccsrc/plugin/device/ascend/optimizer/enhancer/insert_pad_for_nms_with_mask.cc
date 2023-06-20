@@ -17,10 +17,11 @@
 #include "plugin/device/ascend/optimizer/enhancer/insert_pad_for_nms_with_mask.h"
 #include <memory>
 #include <vector>
+#include "mindspore/core/ops/image_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "include/backend/optimizer/helper.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace opt {

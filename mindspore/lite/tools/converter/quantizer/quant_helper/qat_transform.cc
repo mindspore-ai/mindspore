@@ -16,6 +16,7 @@
 #include "tools/converter/quantizer/quant_helper/qat_transform.h"
 #include <memory>
 #include <set>
+#include "mindspore/core/ops/lite_ops.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "tools/converter/quantizer/quant_helper/remove_unused_quant_param.h"
 #include "tools/converter/quantizer/quant_helper/quant_type_determiner.h"

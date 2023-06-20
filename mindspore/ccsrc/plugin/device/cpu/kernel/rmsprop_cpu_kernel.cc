@@ -16,9 +16,11 @@
 
 #include "plugin/device/cpu/kernel/rmsprop_cpu_kernel.h"
 #include <algorithm>
-#include <memory>
-#include <functional>
 #include <complex>
+#include <functional>
+#include <memory>
+
+#include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "nnacl/fp32/rmsprop_fp32.h"
 #include "ops/apply_rms_prop.h"
 

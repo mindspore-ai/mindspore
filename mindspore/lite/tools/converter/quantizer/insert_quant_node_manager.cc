@@ -22,6 +22,9 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "tools/optimizer/graph/node_infershape.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/common/format_utils.h"

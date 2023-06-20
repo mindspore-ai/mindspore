@@ -21,6 +21,7 @@
 #include <algorithm>
 
 #include "frontend/optimizer/irpass.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/operator/ops.h"

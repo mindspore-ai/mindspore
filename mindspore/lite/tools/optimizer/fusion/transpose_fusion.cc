@@ -19,6 +19,9 @@
 #include <unordered_map>
 #include <memory>
 #include <vector>
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "tools/converter/quantizer/quant_param_holder.h"
 #include "mindspore/core/ops/transpose.h"
 #include "tools/optimizer/common/format_utils.h"

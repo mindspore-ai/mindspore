@@ -17,6 +17,8 @@
 #define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/batchnorm_to_scale_fusion.h"
 #include <memory>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
 #include "ops/batch_norm.h"
 #include "ops/fused_batch_norm.h"
 #include "include/common/utils/utils.h"

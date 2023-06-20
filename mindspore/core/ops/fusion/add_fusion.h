@@ -16,11 +16,11 @@
 
 #ifndef MINDSPORE_CORE_OPS_ADD_FUSION_H_
 #define MINDSPORE_CORE_OPS_ADD_FUSION_H_
-#include <vector>
 #include <memory>
+#include <vector>
 
-#include "ops/add.h"
 #include "mindapi/base/types.h"
+#include "ops/add.h"
 
 namespace mindspore {
 namespace ops {

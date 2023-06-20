@@ -21,6 +21,7 @@
 #include <utility>
 #include <algorithm>
 #include <set>
+#include "mindspore/core/ops/other_ops.h"
 #include "include/common/utils/signal_util.h"
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
 #include "utils/ms_context.h"

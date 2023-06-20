@@ -19,6 +19,7 @@
 #include <utility>
 #include <algorithm>
 #include <memory>
+#include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/padding.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/padding_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"

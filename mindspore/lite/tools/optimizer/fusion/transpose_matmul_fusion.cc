@@ -18,6 +18,8 @@
 #include "tools/optimizer/fusion/transpose_matmul_fusion.h"
 #include <memory>
 #include <vector>
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/common/format_utils.h"
 #include "nnacl/op_base.h"

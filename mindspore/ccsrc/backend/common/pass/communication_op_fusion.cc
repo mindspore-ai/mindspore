@@ -15,19 +15,20 @@
  */
 #include "backend/common/pass/communication_op_fusion.h"
 
-#include <vector>
-#include <set>
 #include <memory>
+#include <set>
+#include <vector>
 
-#include "utils/hash_map.h"
-#include "ir/graph_utils.h"
-#include "mindspore/core/ops/core_ops.h"
-#include "include/backend/kernel_info.h"
 #include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "kernel/kernel_build_info.h"
+#include "include/backend/kernel_info.h"
 #include "include/backend/optimizer/helper.h"
+#include "include/common/utils/anfalgo.h"
 #include "include/common/utils/parallel_context.h"
+#include "ir/graph_utils.h"
+#include "kernel/kernel_build_info.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "utils/hash_map.h"
 
 namespace mindspore {
 namespace opt {

@@ -19,7 +19,7 @@
 #include <vector>
 #include <memory>
 
-#include "mindspore/core/ops/core_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {

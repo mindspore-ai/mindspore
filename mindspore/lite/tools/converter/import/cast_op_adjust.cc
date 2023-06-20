@@ -15,6 +15,7 @@
  */
 #include "tools/converter/import/cast_op_adjust.h"
 #include <vector>
+#include "mindspore/core/ops/array_ops.h"
 #include "tools/lite_exporter/fetch_content.h"
 #include "mindspore/lite/include/errorcode.h"
 

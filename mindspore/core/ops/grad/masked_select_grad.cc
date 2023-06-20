@@ -15,26 +15,26 @@
  */
 #include "ops/grad/masked_select_grad.h"
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
-#include "utils/check_convert_utils.h"
-#include "abstract/ops/primitive_infer_map.h"
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
 #include "abstract/ops/op_infer.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include "abstract/utils.h"
 #include "base/base.h"
 #include "ir/anf.h"
 #include "ir/dtype/tensor_type.h"
 #include "ir/dtype/type.h"
 #include "ir/primitive.h"
-#include "ops/core_ops.h"
+#include "mindapi/src/helper.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "ops/primitive_c.h"
+#include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

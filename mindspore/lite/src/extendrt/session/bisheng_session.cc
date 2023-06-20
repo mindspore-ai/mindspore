@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <string>
 #include <memory>
+#include "mindspore/core/ops/sequence_ops.h"
 #include "extendrt/utils/tensor_utils.h"
 #include "extendrt/delegate/factory.h"
 #include "extendrt/session/factory.h"

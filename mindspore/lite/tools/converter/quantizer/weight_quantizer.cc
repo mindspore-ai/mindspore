@@ -21,6 +21,12 @@
 #include <string>
 #include <utility>
 #include <set>
+#include "mindspore/core/ops/conv_pool_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "src/common/log_util.h"
 #include "tools/converter/quantizer/fse_encoder.h"

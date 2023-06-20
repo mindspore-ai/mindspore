@@ -16,11 +16,10 @@
 
 #include "ops/angle.h"
 
+#include <memory>
 #include <set>
 #include <vector>
-#include <memory>
 
-#include "utils/check_convert_utils.h"
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
 #include "abstract/ops/op_infer.h"
@@ -33,12 +32,13 @@
 #include "ir/dtype/type.h"
 #include "ir/primitive.h"
 #include "mindapi/base/type_id.h"
-#include "ops/core_ops.h"
+#include "mindapi/src/helper.h"
+#include "mindspore/core/ops/math_ops.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
+#include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

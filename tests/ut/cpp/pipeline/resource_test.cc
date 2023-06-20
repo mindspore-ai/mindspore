@@ -17,6 +17,7 @@
 #include <memory>
 
 #include "common/common_test.h"
+#include "mindspore/core/ops/arithmetic_ops.h"
 #include "utils/log_adapter.h"
 #include "pipeline/jit/resource.h"
 #include "ir/primitive.h"

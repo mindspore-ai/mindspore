@@ -19,6 +19,9 @@
 #include "tools/converter/quantizer/quant_strategy.h"
 #include <set>
 #include <vector>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "src/common/log_adapter.h"

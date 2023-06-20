@@ -17,13 +17,13 @@
 #ifndef MINDSPORE_EXTRACT_IMAGE_PATCHES_H
 #define MINDSPORE_EXTRACT_IMAGE_PATCHES_H
 #include <map>
-#include <set>
-#include <vector>
 #include <memory>
+#include <set>
 #include <string>
+#include <vector>
 #include "ir/anf.h"
-#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

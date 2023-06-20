@@ -21,6 +21,7 @@
 #include <string>
 #include <map>
 #include <memory>
+#include "mindspore/core/ops/nn_ops.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/bce_with_logits_loss_fp32.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "mindspore/core/ops/bce_with_logits_loss.h"

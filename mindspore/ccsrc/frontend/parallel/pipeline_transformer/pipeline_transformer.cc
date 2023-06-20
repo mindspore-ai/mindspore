@@ -21,6 +21,11 @@
 #include <algorithm>
 #include <memory>
 #include "frontend/parallel/pipeline_transformer/pipeline_transformer.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/other_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/group_manager.h"
@@ -34,7 +39,6 @@
 #include "frontend/parallel/graph_util/graph_splitter.h"
 #include "ir/anf.h"
 #include "ir/graph_utils.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "include/common/utils/comm_manager.h"
 #include "utils/ms_context.h"
 #include "utils/tensor_construct_utils.h"

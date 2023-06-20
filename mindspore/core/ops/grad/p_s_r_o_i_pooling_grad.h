@@ -18,11 +18,11 @@
 #define MINDSPORE_P_S_R_O_I_POOLING_GRAD_H
 
 #include <map>
-#include <vector>
-#include <string>
 #include <memory>
-#include "ops/base_operator.h"
+#include <string>
+#include <vector>
 #include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

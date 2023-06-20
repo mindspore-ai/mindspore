@@ -16,14 +16,14 @@
 
 #ifndef MINDSPORE_CORE_OPS_MULTILABEL_MARGIN_LOSS_H_
 #define MINDSPORE_CORE_OPS_MULTILABEL_MARGIN_LOSS_H_
-#include <memory>
 #include <map>
-#include <vector>
+#include <memory>
 #include <set>
 #include <string>
+#include <vector>
 
-#include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace ops {

@@ -18,6 +18,7 @@
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
 #include <vector>
 #include <memory>
+#include "mindspore/core/ops/lite_ops.h"
 #include "ops/clip.h"
 #include "ops/fusion/activation.h"
 #include "ops/op_utils.h"

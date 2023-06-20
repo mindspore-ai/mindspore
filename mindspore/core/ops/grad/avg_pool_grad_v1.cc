@@ -16,9 +16,10 @@
 
 #include "ops/grad/avg_pool_grad_v1.h"
 #include <set>
-#include "ops/op_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/conv_pool_ops.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {

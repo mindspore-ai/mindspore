@@ -20,6 +20,7 @@
 #include <set>
 #include <memory>
 #include <string>
+#include "mindspore/core/ops/lite_ops.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "nnacl/op_base.h"

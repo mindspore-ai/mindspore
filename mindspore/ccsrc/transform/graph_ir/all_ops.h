@@ -18,5 +18,5 @@
 #define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_ALL_OPS_H_
 
 // old
-#include "ops/all_ops.h"
+#include "inc/ops/all_ops.h"
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_ALL_OPS_H_

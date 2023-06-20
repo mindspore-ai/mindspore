@@ -22,7 +22,6 @@
 #include <memory>
 #include "abstract/abstract_value.h"
 #include "abstract/param_validator.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "abstract/ops/primitive_infer_map.h"
 namespace mindspore {
 namespace abstract {

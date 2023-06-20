@@ -21,6 +21,7 @@
 #include <memory>
 #include <algorithm>
 #include <iomanip>
+#include "mindspore/core/ops/structure_ops.h"
 #include "utils/hash_map.h"
 #include "ir/graph_utils.h"
 #include "utils/symbolic.h"

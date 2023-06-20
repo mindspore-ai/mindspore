@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 #include "backend/common/graph_kernel/split_umonad.h"
-#include <vector>
-#include <string>
 #include <algorithm>
 #include <memory>
-#include "mindspore/core/ops/core_ops.h"
+#include <string>
+#include <vector>
 #include "include/backend/kernel_info.h"
 #include "include/backend/optimizer/helper.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/nn_optimizer_ops.h"
 
 namespace mindspore::graphkernel {
 const BaseRef SplitAssign::DefinePattern() const {

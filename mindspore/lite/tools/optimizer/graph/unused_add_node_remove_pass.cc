@@ -16,11 +16,14 @@
 
 #define USE_DEPRECATED_API
 #include "tools/optimizer/graph/unused_add_node_remove_pass.h"
-#include "ops/op_utils.h"
-#include "src/common/utils.h"
+#include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/lite_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "ops/constant_of_shape.h"
 #include "ops/fusion/add_fusion.h"
 #include "ops/fusion/mul_fusion.h"
-#include "ops/constant_of_shape.h"
+#include "ops/op_utils.h"
+#include "src/common/utils.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {

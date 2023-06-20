@@ -16,9 +16,10 @@
 
 #include "ops/fusion/scale_grad_fusion.h"
 #include <string>
+#include "mindapi/src/helper.h"
+#include "mindspore/core/ops/other_ops.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

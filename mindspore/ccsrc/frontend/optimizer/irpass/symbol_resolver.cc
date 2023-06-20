@@ -18,6 +18,8 @@
 
 #include <string>
 #include <memory>
+#include "mindspore/core/ops/structure_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "pipeline/jit/fallback.h"
 
 namespace mindspore {

@@ -17,11 +17,11 @@
 #ifndef MINDSPORE_CORE_OPS_BINCOUNT_H
 #define MINDSPORE_CORE_OPS_BINCOUNT_H
 
-#include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
+#include <vector>
 #include "abstract/abstract_value.h"
 #include "ops/base_operator.h"
+#include "ops/primitive_c.h"
 
 namespace mindspore {
 namespace ops {

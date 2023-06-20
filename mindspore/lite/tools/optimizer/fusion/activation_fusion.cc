@@ -19,6 +19,7 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
+#include "mindspore/core/ops/lite_ops.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
 #include "ops/fusion/activation.h"

@@ -21,6 +21,7 @@
 #include <utility>
 #include <unordered_map>
 
+#include "mindspore/core/ops/framework_ops.h"
 #include "abstract/abstract_function.h"
 #include "include/common/utils/utils.h"
 #include "utils/anf_utils.h"

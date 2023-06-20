@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 #include "ops/reduce_asum.h"
+#include "mindapi/src/helper.h"
 #include "ops/base_operator.h"
 #include "ops/primitive_c.h"
 #include "utils/log_adapter.h"
-#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {

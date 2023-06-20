@@ -15,28 +15,30 @@
  */
 
 #include "kernel/common_utils.h"
-#include <unordered_map>
+#include <algorithm>
+#include <bitset>
+#include <cmath>
+#include <fstream>
+#include <iostream>
 #include <map>
 #include <set>
-#include <bitset>
-#include <iostream>
-#include <utility>
-#include <fstream>
-#include <algorithm>
 #include <thread>
 #include <tuple>
-#include <cmath>
-#include "nlohmann/json.hpp"
+#include <unordered_map>
+#include <utility>
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/convert_utils.h"
-#include "utils/file_utils.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "ir/graph_utils.h"
+#include "kernel/oplib/oplib.h"
+#include "mindspore/ccsrc/include/common/debug/common.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "nlohmann/json.hpp"
+#include "utils/file_utils.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
-#include "mindspore/ccsrc/include/common/debug/common.h"
-#include "kernel/oplib/oplib.h"
 
 namespace mindspore {
 namespace kernel {

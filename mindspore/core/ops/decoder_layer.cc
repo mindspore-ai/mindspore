@@ -16,9 +16,10 @@
  */
 
 #include "ops/decoder_layer.h"
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
 #include "mindapi/src/helper.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "ops/op_utils.h"
+#include "ops/primitive_c.h"
 
 namespace mindspore::ops {
 MIND_API_OPERATOR_IMPL(DecoderLayer, BaseOperator);

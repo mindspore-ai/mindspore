@@ -16,6 +16,9 @@
 
 #include "tests/ut/cpp/common/device_common_test.h"
 
+#include "mindspore/core/ops/comparison_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/math_ops.h"
 namespace mindspore {
 namespace runtime {
 using namespace test;
@@ -138,7 +141,7 @@ TEST_F(GraphSchedulerTest, Transform) {
   ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
   ms_context->set_param<std::string>(MS_CTX_DEVICE_TARGET, device_name);
 
-  FuncGraphPtr func_graph = BuildGraphs(); 
+  FuncGraphPtr func_graph = BuildGraphs();
   std::vector<FuncGraphPtr> graphs{func_graph};
   FuncGraphManagerPtr manager = std::make_shared<FuncGraphManager>(graphs);
   manager->AddFuncGraph(func_graph);

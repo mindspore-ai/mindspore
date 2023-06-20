@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
+#include "plugin/device/gpu/kernel/arrays/array_reduce_gpu_kernel.h"
 #include <memory>
+#include "mindspore/core/ops/math_ops.h"
 #include "ops/reduce.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
-#include "plugin/device/gpu/kernel/arrays/array_reduce_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/reduce_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
 

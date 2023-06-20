@@ -15,12 +15,15 @@
  */
 
 #include "plugin/device/ascend/optimizer/mindir/aicpu_lib_select.h"
-#include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
-#include <unordered_set>
 #include <string>
-#include "include/common/utils/utils.h"
+#include <unordered_set>
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "include/common/utils/utils.h"
+#include "mindspore/core/ops/conv_pool_ops.h"
+#include "mindspore/core/ops/math_ops.h"
+#include "mindspore/core/ops/sparse_ops.h"
+#include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 
 namespace mindspore {
 namespace opt {

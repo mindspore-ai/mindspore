@@ -15,8 +15,8 @@
  */
 
 #include "ops/grad/elewise_grad_infer_shape.h"
-#include <vector>
 #include <memory>
+#include <vector>
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {

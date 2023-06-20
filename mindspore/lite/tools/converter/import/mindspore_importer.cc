@@ -23,6 +23,8 @@
 #include <regex>
 #include <queue>
 #include <algorithm>
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/import/cast_op_adjust.h"
 #include "tools/converter/import/primitive_adjust.h"

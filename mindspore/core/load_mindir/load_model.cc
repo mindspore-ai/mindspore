@@ -26,6 +26,9 @@
 #include <utility>
 #include <nlohmann/json.hpp>
 #include "load_mindir/load_model.h"
+#include "mindspore/core/ops/structure_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
+#include "mindspore/core/ops/framework_ops.h"
 #include "utils/crypto.h"
 #include "utils/os.h"
 #include "ir/value.h"

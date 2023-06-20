@@ -16,6 +16,7 @@
 
 #include "plugin/device/ascend/optimizer/format_type/insert_transdata_for_runop.h"
 #include <set>
+#include "mindspore/core/ops/sequence_ops.h"
 #include "include/common/utils/utils.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "include/backend/anf_runtime_algorithm.h"

@@ -20,6 +20,7 @@
 #include <map>
 #include <vector>
 #include <memory>
+#include "mindspore/core/ops/sequence_ops.h"
 #include "ir/tensor.h"
 #include "include/backend/device_address.h"
 #include "include/backend/kernel_info.h"

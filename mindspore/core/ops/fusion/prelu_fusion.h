@@ -18,8 +18,8 @@
 #define MINDSPORE_CORE_OPS_PRELU_FUSION_H_
 #include <vector>
 
-#include "ops/prelu.h"
 #include "mindapi/base/types.h"
+#include "ops/prelu.h"
 
 namespace mindspore {
 namespace ops {
