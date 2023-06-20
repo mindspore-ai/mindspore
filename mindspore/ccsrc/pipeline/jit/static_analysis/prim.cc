@@ -3091,6 +3091,9 @@ class CondEvaluator : public TransitionPrimEvaluator {
       const auto key_value_tuple = cur_graph->NewCNode(key_value_list);
       new_node =
         fallback::CreatePyExecuteCNodeInOrder(cnode, NewValueNode(script_str), key_value_name_tuple, key_value_tuple);
+      fallback::SetRealType(new_node, kBool);
+
+      fallback::SetRealShape(new_node, std::make_shared<abstract::Shape>(std::vector<int64_t>{Shape::kShapeDimAny}));
     } else if (cond_abs->isa<AbstractTensor>() && is_while_condition(flag_node)) {
       // When the condition of while is a tensor, do not use standard_method.tensor_bool
       // to avoid turning the tensor into scalar to cause a loop.

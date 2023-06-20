@@ -333,3 +333,20 @@ def test_fallback_math_log():
         return math.log(1)
 
     assert foo() == 0
+
+
+def test_parse_ifexpr():
+    """
+    Feature: JIT Fallback
+    Description: Test Interpret node in ifexpr in graph mode.
+    Expectation: No exception.
+    """
+
+    class Network(nn.Cell):
+        def construct(self):
+            y = Tensor([0]) if np.array([1]) else Tensor([1])
+            return y
+
+    net = Network()
+    out = net()
+    assert out == 0
