@@ -604,30 +604,28 @@ Status MelScale(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
   auto data_ptr = &*freq_bin_mat->begin<T>();
   Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> matrix_fb(data_ptr, n_mels, n_stft);
 
-  // input vector
-  std::vector<T> in_vect(input->Size());
-  size_t ind = 0;
-  for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++, ind++) {
-    in_vect[ind] = (*itr);
-  }
   int rows = input_reshape[1];
   int cols = input_reshape[2];
-
-  std::vector<T> mel_specgram;
-
-  for (int c = 0; c < input_reshape[0]; c++) {
-    std::vector<T> mat_c = std::vector<T>(in_vect.begin() + rows * cols * c, in_vect.begin() + rows * cols * (c + 1));
-    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> matrix_c(mat_c.data(), cols, rows);
-    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> mat_res = (matrix_c * matrix_fb.transpose());
-    std::vector<T> vec_c(mat_res.data(), mat_res.data() + mat_res.size());
-    mel_specgram.insert(mel_specgram.end(), vec_c.begin(), vec_c.end());
-  }
 
   // unpack
   std::vector<int64_t> out_shape_vec = input_shape.AsVector();
   out_shape_vec[input_shape.Size() - 1] = cols;
   out_shape_vec[input_shape.Size() - TWO] = n_mels;
   TensorShape output_shape(out_shape_vec);
+
+  std::vector<T> mel_specgram(output_shape.NumOfElements());
+
+  for (int c = 0; c < input_reshape[0]; c++) {
+    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> matrix_c(
+      static_cast<T *>(&*input->begin<T>() + rows * cols * c), cols, rows);
+    auto mat_res = (matrix_c * matrix_fb.transpose());
+    size_t offset = mat_res.size();
+    offset *= c;
+    int ret_code = memcpy_s(mel_specgram.data() + offset, mat_res.size() * sizeof(T), mat_res.eval().data(),
+                            mat_res.size() * sizeof(T));
+    CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to copy data into std::vector.");
+  }
+
   std::shared_ptr<Tensor> out;
   RETURN_IF_NOT_OK(Tensor::CreateFromVector(mel_specgram, output_shape, &out));
   *output = out;
