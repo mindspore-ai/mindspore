@@ -34,8 +34,8 @@ typedef struct EmbeddingLookupParameter {
 #ifdef __cplusplus
 extern "C" {
 #endif
-int EmbeddingLookup(float *input_data, const int *ids, float *output_data, const EmbeddingLookupParameter *parameter,
-                    int task_id);
+int EmbeddingLookup(float *input_data, const int32_t *ids, float *output_data,
+                    const EmbeddingLookupParameter *parameter, int task_id);
 #ifdef __cplusplus
 }
 #endif

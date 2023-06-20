@@ -139,25 +139,25 @@ RegReduceOp(ReduceL2Norm, float);
 #define IntReduceSumPreDeal int tmp = 0;
 #define IntReduceSumMidCalc tmp += inner_src[i * inner_size];
 #define IntReduceSumPostDeal outer_dst[k] = tmp;
-RegReduceOp(IntReduceSum, int);
+RegReduceOp(IntReduceSum, int32_t);
 
 // IntReduceMean
 #define IntReduceMeanPreDeal int tmp = 0;
 #define IntReduceMeanMidCalc tmp += inner_src[i * inner_size];
 #define IntReduceMeanPostDeal outer_dst[k] = tmp / axis_size;
-RegReduceOp(IntReduceMean, int);
+RegReduceOp(IntReduceMean, int32_t);
 
 // IntReduceMin
 #define IntReduceMinPreDeal int tmp = INT32_MAX;
 #define IntReduceMinMidCalc tmp = MSMIN(tmp, inner_src[i * inner_size]);
 #define IntReduceMinPostDeal outer_dst[k] = tmp;
-RegReduceOp(IntReduceMin, int);
+RegReduceOp(IntReduceMin, int32_t);
 
 // IntReduceMax
 #define IntReduceMaxPreDeal int tmp = INT32_MIN;
 #define IntReduceMaxMidCalc tmp = MSMAX(tmp, inner_src[i * inner_size]);
 #define IntReduceMaxPostDeal outer_dst[k] = tmp;
-RegReduceOp(IntReduceMax, int);
+RegReduceOp(IntReduceMax, int32_t);
 
 int ReduceAll(int outer_size, int inner_size, int axis_size, const bool *src_data, bool *dst_data, int tid,
               int thread_num) {
@@ -184,7 +184,7 @@ int ReduceAll(int outer_size, int inner_size, int axis_size, const bool *src_dat
   return NNACL_OK;
 }
 
-int IntReduceProd(int outer_size, int inner_size, int axis_size, const int *src_data, int *dst_data, int tid,
+int IntReduceProd(int outer_size, int inner_size, int axis_size, const int32_t *src_data, int32_t *dst_data, int tid,
                   int thread_num) {
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
@@ -194,11 +194,11 @@ int IntReduceProd(int outer_size, int inner_size, int axis_size, const int *src_
   }
   int i, j, k;
   for (j = tid; j < outer_size; j += thread_num) {
-    const int *outer_src = src_data + j * axis_size * inner_size;
-    int *outer_dst = dst_data + j * inner_size;
+    const int32_t *outer_src = src_data + j * axis_size * inner_size;
+    int32_t *outer_dst = dst_data + j * inner_size;
     for (k = 0; k < inner_size; k++) {
-      const int *inner_src = outer_src + k;
-      int *inner_dst = outer_dst + k;
+      const int32_t *inner_src = outer_src + k;
+      int32_t *inner_dst = outer_dst + k;
       int tmp = 1;
       for (i = 0; i < axis_size; i++) {
         if (isMulOverflow(tmp, inner_src[i * inner_size])) {
@@ -213,14 +213,14 @@ int IntReduceProd(int outer_size, int inner_size, int axis_size, const int *src_
 }
 
 #ifdef ENABLE_NNACL_INFER_SHAPE
-int ReduceInferShape(int **in_shape, size_t *dim_size, int *out_shape, int *in_format, int *out_format,
-                     int *in_datatype, int *out_datatype, OpParameter *param) {
+int ReduceInferShape(int32_t **in_shape, size_t *dim_size, int32_t *out_shape, int32_t *in_format, int32_t *out_format,
+                     int32_t *in_datatype, int32_t *out_datatype, OpParameter *param) {
   *out_format = in_format[0];
   *out_datatype = in_datatype[0];
   ReduceParameter *reduce_parameter = (ReduceParameter *)param;
   bool keep_dims = reduce_parameter->keep_dims_;
   int num_axes = reduce_parameter->num_axes_;
-  int *in_shape0 = in_shape[0];
+  int32_t *in_shape0 = in_shape[0];
   int rank = dim_size[0];
   NNACL_CHECK_TRUE_RET(rank > 0 && rank <= REDUCE_MAX_AXES_NUM, NNACL_PARAM_INVALID);
   int axes[REDUCE_MAX_AXES_NUM];

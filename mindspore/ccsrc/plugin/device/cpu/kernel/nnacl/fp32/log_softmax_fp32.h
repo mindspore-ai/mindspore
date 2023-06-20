@@ -22,7 +22,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void LogSoftmax(const float *input_ptr, float *output_ptr, float *sum_data, int *input_shape, int n_dim, int axis);
+void LogSoftmax(const float *input_ptr, float *output_ptr, float *sum_data, int32_t *input_shape, int n_dim, int axis);
 void LogSoftmaxLastAxis(const float *src, float *dst, float *exp_data, int batch, int channel);
 #ifdef __cplusplus
 }

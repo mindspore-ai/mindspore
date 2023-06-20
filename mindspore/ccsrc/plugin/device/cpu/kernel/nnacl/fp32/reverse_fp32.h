@@ -33,7 +33,7 @@ typedef struct ReverseParameter {
 #ifdef __cplusplus
 extern "C" {
 #endif
-int Reverse(const float *input, float *output, size_t elem_size, int *index);
+int Reverse(const float *input, float *output, size_t elem_size, int32_t *index);
 #ifdef __cplusplus
 }
 #endif

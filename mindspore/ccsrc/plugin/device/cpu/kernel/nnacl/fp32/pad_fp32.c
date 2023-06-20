@@ -18,8 +18,8 @@
 #include "nnacl/common_func.h"
 #include "nnacl/errorcode.h"
 
-void Pad(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
-         const int *paddings, int tid, int thread_num) {
+void Pad(const float *input_data, float *output_data, const int32_t *input_shape, const int32_t *output_shape,
+         const int32_t *paddings, int tid, int thread_num) {
   if (thread_num == 0) {
     return;
   }
@@ -61,7 +61,7 @@ int TransOut2InputDimIndex(int out_dim_index, int left_pad, int in_dim, int offs
   return MSMAX(index_sum - out_dim_index, 0);
 }
 
-int GetInputFlattenIndex(int out_flatten_index, const int *input_shape, const PadParameter *pad_param) {
+int GetInputFlattenIndex(int out_flatten_index, const int32_t *input_shape, const PadParameter *pad_param) {
   int in_flatten_index = 0;
   for (int i = 0; i < DEFAULT_PAD_NDIMS; ++i) {
     int left_pad = pad_param->paddings_[i * 2];
@@ -74,7 +74,7 @@ int GetInputFlattenIndex(int out_flatten_index, const int *input_shape, const Pa
   return in_flatten_index;
 }
 
-void MirrorPad(const float *input_data, float *output_data, const int *input_shape, const PadParameter *pad_param,
+void MirrorPad(const float *input_data, float *output_data, const int32_t *input_shape, const PadParameter *pad_param,
                int begin, int end) {
   int i = 0;
   for (i = begin; i < end; ++i) {

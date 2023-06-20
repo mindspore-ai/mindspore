@@ -22,7 +22,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int NLLLoss(const float *logits, const int *labels, const float *weight, float *loss, float *total_weight,
+int NLLLoss(const float *logits, const int32_t *labels, const float *weight, float *loss, float *total_weight,
             const NLLLossStruct *parameter, const ReductionType reduction_type);
 #ifdef __cplusplus
 }

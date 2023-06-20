@@ -76,7 +76,7 @@ int ElementOptDivRelu6(const float *in0, const float *in1, float *out, int size,
   return NNACL_OK;
 }
 
-int ElementOptDivInt(const int *in0, const int *in1, int *out, int size, bool first_scalar) {
+int ElementOptDivInt(const int32_t *in0, const int32_t *in1, int32_t *out, int size, bool first_scalar) {
   int index = 0;
 
   if (first_scalar) {

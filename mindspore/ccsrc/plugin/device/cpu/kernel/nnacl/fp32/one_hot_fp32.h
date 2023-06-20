@@ -26,7 +26,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int OneHotToFp32(const int *indices, float on_value, float off_value, float *output,
+int OneHotToFp32(const int32_t *indices, float on_value, float off_value, float *output,
                  const OneHotParameter *one_hot_param, const int tid, const int thread_num);
 #ifdef __cplusplus
 }

@@ -27,13 +27,13 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Pad(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
-         const int *paddings, int tid, int thread_num);
-void MirrorPad(const float *input_data, float *output_data, const int *input_shape, const PadParameter *pad_param,
+void Pad(const float *input_data, float *output_data, const int32_t *input_shape, const int32_t *output_shape,
+         const int32_t *paddings, int tid, int thread_num);
+void MirrorPad(const float *input_data, float *output_data, const int32_t *input_shape, const PadParameter *pad_param,
                int begin, int end);
 
 int TransOut2InputDimIndex(int out_dim_index, int left_pad, int in_dim, int offset);
-int GetInputFlattenIndex(int out_flatten_index, const int *input_shape, const PadParameter *pad_param);
+int GetInputFlattenIndex(int out_flatten_index, const int32_t *input_shape, const PadParameter *pad_param);
 #ifdef __cplusplus
 }
 #endif

@@ -213,7 +213,7 @@ int PackAttentionBias(Matrix *matrix, int tile) {
   return NNACL_OK;
 }
 
-static void RelativeShiftPad(const float *input_data, float *output_data, const int *input_shape, int tid,
+static void RelativeShiftPad(const float *input_data, float *output_data, const int32_t *input_shape, int tid,
                              int thread_num) {
   int row = input_shape[0];
   int col = input_shape[1];
@@ -232,7 +232,7 @@ static void RelativeShiftPad(const float *input_data, float *output_data, const 
   }
 }
 
-static void RelativeShiftSlice(const float *input_data, float *output_data, const int *input_shape, int tid,
+static void RelativeShiftSlice(const float *input_data, float *output_data, const int32_t *input_shape, int tid,
                                int thread_num) {
   int row = input_shape[0];
   int col = input_shape[1];

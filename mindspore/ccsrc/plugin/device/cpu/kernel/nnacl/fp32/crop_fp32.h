@@ -23,9 +23,9 @@
 extern "C" {
 #endif
 
-void Crop4D(const float *input, float *output, const int *in_shape, const int *out_shape,
+void Crop4D(const float *input, float *output, const int32_t *in_shape, const int32_t *out_shape,
             const CropParameter *crop_param, int thread_id, int thread_num);
-void Crop4DNoParallel(const float *input, float *output, const int *in_shape, const int *out_shape,
+void Crop4DNoParallel(const float *input, float *output, const int32_t *in_shape, const int32_t *out_shape,
                       const CropParameter *crop_param);
 #ifdef __cplusplus
 }

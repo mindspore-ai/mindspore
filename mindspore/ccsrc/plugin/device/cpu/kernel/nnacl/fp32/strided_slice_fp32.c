@@ -64,10 +64,10 @@ int DoStridedSliceIn8D(const void *input, void *output, StridedSliceStruct *stri
   uint8_t *out = (uint8_t *)output;
   int data_type_size = DataTypeCSize(strided_slice->data_type_);
 
-  int *begins = strided_slice->begins_;
-  int *ends = strided_slice->ends_;
-  int *strides = strided_slice->strides_;
-  int *in_shape = strided_slice->in_shape_;
+  int32_t *begins = strided_slice->begins_;
+  int32_t *ends = strided_slice->ends_;
+  int32_t *strides = strided_slice->strides_;
+  int32_t *in_shape = strided_slice->in_shape_;
 
   int dim_offset[DIMENSION_8D - 1];
   dim_offset[6] = in_shape[7];

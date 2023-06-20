@@ -82,7 +82,8 @@ int SoftmaxLastAxis(const float *src, float *dst, int batch, int channel) {
 }
 
 // output = exp(input) / reduce_sum(exp(input), axis)
-void Softmax(const float *input_ptr, float *output_ptr, float *sum_data, int axis, int n_dim, const int *input_shape) {
+void Softmax(const float *input_ptr, float *output_ptr, float *sum_data, int axis, int n_dim,
+             const int32_t *input_shape) {
   int inner_size = 1;
   int outter_size = 1;
 

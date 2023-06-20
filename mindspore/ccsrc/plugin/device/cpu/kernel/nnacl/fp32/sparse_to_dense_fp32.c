@@ -29,7 +29,7 @@ int SparseToDenseSetDefault(float *output, float default_value, const SparseToDe
   return NNACL_OK;
 }
 
-int SparseToDense(int *indices_vec, const float *sparse_values, float default_value, float *output,
+int SparseToDense(int32_t *indices_vec, const float *sparse_values, float default_value, float *output,
                   SparseToDenseParameter *param, int task_id) {
   if (param->op_parameter_.thread_num_ == 0) {
     return NNACL_ERR;
@@ -45,7 +45,7 @@ int SparseToDense(int *indices_vec, const float *sparse_values, float default_va
   if (param->validate_indices_ == true) {
     int index_before = -1;
     for (int i = begin; i < end; i++) {
-      int *indices = indices_vec + i * DIMENSION_4D;
+      int32_t *indices = indices_vec + i * DIMENSION_4D;
       int index = stride0 * indices[0] + stride1 * indices[1] + stride2 * indices[2] + indices[3];
       if (index <= index_before) {
         return NNACL_ERR;
@@ -56,13 +56,13 @@ int SparseToDense(int *indices_vec, const float *sparse_values, float default_va
 
   if (param->is_scalar == true) {
     for (int i = begin; i < end; i++) {
-      int *indices = indices_vec + i * DIMENSION_4D;
+      int32_t *indices = indices_vec + i * DIMENSION_4D;
       int index = stride0 * indices[0] + stride1 * indices[1] + stride2 * indices[2] + indices[3];
       output[index] = sparse_values[0];
     }
   } else {
     for (int i = begin; i < end; i++) {
-      int *indices = indices_vec + i * DIMENSION_4D;
+      int32_t *indices = indices_vec + i * DIMENSION_4D;
       int index = stride0 * indices[0] + stride1 * indices[1] + stride2 * indices[2] + indices[3];
       output[index] = sparse_values[i];
     }

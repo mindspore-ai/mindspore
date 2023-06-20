@@ -28,7 +28,7 @@ int TriuTrilGetKValue(KernelBase *self, int64_t *k) {
   switch (k_tensor->data_type_) {
     case kNumberTypeInt:
     case kNumberTypeInt32:
-      *k = *((int *)k_tensor->data_);
+      *k = *((int32_t *)k_tensor->data_);
       break;
     case kNumberTypeInt64:
       *k = *((int64_t *)k_tensor->data_);

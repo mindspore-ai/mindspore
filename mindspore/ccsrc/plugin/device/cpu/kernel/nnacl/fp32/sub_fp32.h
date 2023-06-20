@@ -27,11 +27,11 @@ extern "C" {
 #endif
 
 int ElementSub(const float *in0, const float *in1, float *out, int size);
-int ElementSubInt(const int *in0, const int *in1, int *out, int size);
+int ElementSubInt(const int32_t *in0, const int32_t *in1, int32_t *out, int size);
 int ElementSubRelu(const float *in0, const float *in1, float *out, int size);
 int ElementSubRelu6(const float *in0, const float *in1, float *out, int size);
 int ElementOptSub(const float *in0, const float *in1, float *out, int size, bool first_scalar);
-int ElementOptSubInt(const int *in0, const int *in1, int *out, int size, bool first_scalar);
+int ElementOptSubInt(const int32_t *in0, const int32_t *in1, int32_t *out, int size, bool first_scalar);
 int ElementOptSubRelu(const float *in0, const float *in1, float *out, int size, bool first_scalar);
 int ElementOptSubRelu6(const float *in0, const float *in1, float *out, int size, bool first_scalar);
 

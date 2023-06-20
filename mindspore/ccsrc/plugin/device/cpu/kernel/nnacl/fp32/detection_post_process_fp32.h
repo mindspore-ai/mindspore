@@ -41,17 +41,18 @@ int DecodeBoxes(int num_boxes, const float *input_boxes, const float *anchors,
                 const DetectionPostProcessParameter *param);
 
 int NmsMultiClassesFastCore(const int num_boxes, const int num_classes_with_bg, const float *input_scores,
-                            void (*)(const float *, int *, int, int), const DetectionPostProcessParameter *param,
+                            void (*)(const float *, int32_t *, int, int), const DetectionPostProcessParameter *param,
                             const int task_id, const int thread_num);
 
 int DetectionPostProcessFast(const int num_boxes, const int num_classes_with_bg, const float *input_scores,
                              const float *decoded_boxes, float *output_boxes, float *output_classes,
-                             float *output_scores, float *output_num, void (*)(const float *, int *, int, int),
+                             float *output_scores, float *output_num, void (*)(const float *, int32_t *, int, int),
                              const DetectionPostProcessParameter *param);
 
 int DetectionPostProcessRegular(const int num_boxes, const int num_classes_with_bg, const float *input_scores,
                                 float *output_boxes, float *output_classes, float *output_scores, float *output_num,
-                                void (*)(const float *, int *, int, int), const DetectionPostProcessParameter *param);
+                                void (*)(const float *, int32_t *, int, int),
+                                const DetectionPostProcessParameter *param);
 #ifdef __cplusplus
 }
 #endif

@@ -17,7 +17,7 @@
 #include "nnacl/fp32/one_hot_fp32.h"
 #include "nnacl/errorcode.h"
 
-int OneHotToFp32(const int *indices, float on_value, float off_value, float *output,
+int OneHotToFp32(const int32_t *indices, float on_value, float off_value, float *output,
                  const OneHotParameter *one_hot_param, const int tid, const int thread_num) {
   if (indices == NULL || one_hot_param == NULL || output == NULL) {
     return NNACL_NULL_PTR;
@@ -33,7 +33,7 @@ int OneHotToFp32(const int *indices, float on_value, float off_value, float *out
   for (i = tid; i < outer_size; i += thread_num) {
     float *output_ptr = output + i * depth * inner_size;
     for (k = 0; k < depth; k++) {  // output layout: outer_size * depth * inner_size
-      const int *indices_ptr = indices + i * inner_size;
+      const int32_t *indices_ptr = indices + i * inner_size;
       for (j = 0; j < inner_size; j++) {
         *output_ptr = off_value;
         int index = *(indices_ptr++);

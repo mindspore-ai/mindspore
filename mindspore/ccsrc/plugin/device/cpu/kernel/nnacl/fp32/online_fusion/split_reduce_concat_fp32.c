@@ -20,7 +20,7 @@
 #include "nnacl/errorcode.h"
 
 int64_t Fp32SplitReduceSumConcatFusion(const float *src, float *dst, int64_t inner_size, int64_t mid_size,
-                                       int *mid_split, int64_t mid_len, int64_t out_size) {
+                                       int32_t *mid_split, int64_t mid_len, int64_t out_size) {
   const float *cur_src = src;
   float *cur_dst = dst;
   for (int64_t i = 0; i < out_size; i++) {

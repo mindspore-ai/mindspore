@@ -17,11 +17,12 @@
 #define MINDSPORE_NNACL_INVERT_PERMUTATION_FP32_H_
 
 #include <stddef.h>
+#include "nnacl/op_base.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-int InvertPermutation(const int *input, int *output, size_t num);
+int InvertPermutation(const int32_t *input, int32_t *output, size_t num);
 #ifdef __cplusplus
 }
 #endif

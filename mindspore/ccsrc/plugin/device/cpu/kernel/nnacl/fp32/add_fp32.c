@@ -34,7 +34,7 @@ int ElementOptAdd(const float *in0, const float *in1, float *out, int size, bool
   return NNACL_OK;
 }
 
-int ElementOptAddInt(const int *in0, const int *in1, int *out, int size, bool first_scalar) {
+int ElementOptAddInt(const int32_t *in0, const int32_t *in1, int32_t *out, int size, bool first_scalar) {
   int index = 0;
   if (first_scalar) {
     SIMD_RUN_NO_SCALAR(ElementOptAddInt, index, in0, in1, out, size);
@@ -119,7 +119,7 @@ int ElementAddRelu6(const float *in0, const float *in1, float *out, int size) {
   return NNACL_OK;
 }
 
-int ElementAddInt(const int *in0, const int *in1, int *out, int size) {
+int ElementAddInt(const int32_t *in0, const int32_t *in1, int32_t *out, int size) {
   int index = 0;
 
   SIMD_RUN_NO_SCALAR(ElementAddInt, index, in0, in1, out, size);

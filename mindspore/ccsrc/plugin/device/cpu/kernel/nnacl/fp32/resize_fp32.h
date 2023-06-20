@@ -29,35 +29,35 @@ extern "C" {
 #endif
 typedef float (*CalculateOriginalCoordinate)(int x_resized, int length_original, int length_resized);
 
-int PrepareResizeBilinear(const int *input_shape, const int *output_shape, CalculateOriginalCoordinate calculate,
-                          int *y_bottoms, int *y_tops, int *x_lefts, int *x_rights, float *y_bottom_weights,
-                          float *x_left_weights);
+int PrepareResizeBilinear(const int32_t *input_shape, const int32_t *output_shape,
+                          CalculateOriginalCoordinate calculate, int32_t *y_bottoms, int32_t *y_tops, int32_t *x_lefts,
+                          int32_t *x_rights, float *y_bottom_weights, float *x_left_weights);
 
-int PrepareResizeBicubic(const int *input_shape, const int *output_shape, CalculateOriginalCoordinate calculate,
-                         int *y_tops, int *x_lefts, float *y_weights, float *x_weights, float cubic_coeff);
+int PrepareResizeBicubic(const int32_t *input_shape, const int32_t *output_shape, CalculateOriginalCoordinate calculate,
+                         int32_t *y_tops, int32_t *x_lefts, float *y_weights, float *x_weights, float cubic_coeff);
 
-int ResizeBilinear(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
-                   const int *y_bottoms, const int *y_tops, const int *x_lefts, const int *x_rights,
+int ResizeBilinear(const float *input_data, float *output_data, const int32_t *input_shape, const int32_t *output_shape,
+                   const int32_t *y_bottoms, const int32_t *y_tops, const int32_t *x_lefts, const int32_t *x_rights,
                    const float *y_bottom_weights, const float *x_left_weights, float *line0, float *line1,
                    const int h_begin, const int h_end);
 
-int ResizeBicubic(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
-                  const int *y_tops, const int *x_lefts, const float *y_weights, const float *x_weights,
+int ResizeBicubic(const float *input_data, float *output_data, const int32_t *input_shape, const int32_t *output_shape,
+                  const int32_t *y_tops, const int32_t *x_lefts, const float *y_weights, const float *x_weights,
                   float *line_buffer, const int h_begin, const int h_end);
 
-int PrepareCropAndResizeBilinear(const int *input_shape, const float *boxes, const int *box_idx,
-                                 const int *output_shape, int *y_bottoms, int *y_tops, int *x_lefts, int *x_rights,
-                                 float *y_bottom_weights, float *x_left_weights);
+int PrepareCropAndResizeBilinear(const int32_t *input_shape, const float *boxes, const int32_t *box_idx,
+                                 const int32_t *output_shape, int32_t *y_bottoms, int32_t *y_tops, int32_t *x_lefts,
+                                 int32_t *x_rights, float *y_bottom_weights, float *x_left_weights);
 
-int CropAndResizeBilinear(const float *input_data, float *output_data, const int *box_idx, const float *boxes,
-                          const CropAndResizeParameter *param, const int *input_shape, const int *output_shape,
-                          const int *y_bottoms, const int *y_tops, const int *x_lefts, const int *x_rights,
-                          const float *y_bottom_weights, const float *x_left_weights, float *line0, float *line1,
-                          const int h_begin, const int h_end);
+int CropAndResizeBilinear(const float *input_data, float *output_data, const int32_t *box_idx, const float *boxes,
+                          const CropAndResizeParameter *param, const int32_t *input_shape, const int32_t *output_shape,
+                          const int32_t *y_bottoms, const int32_t *y_tops, const int32_t *x_lefts,
+                          const int32_t *x_rights, const float *y_bottom_weights, const float *x_left_weights,
+                          float *line0, float *line1, const int h_begin, const int h_end);
 
-int ResizeNearestNeighbor(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
-                          CalculateOriginalCoordinate calculate, int coordinate_transform_mode, int tid,
-                          int thread_num);
+int ResizeNearestNeighbor(const float *input_data, float *output_data, const int32_t *input_shape,
+                          const int32_t *output_shape, CalculateOriginalCoordinate calculate,
+                          int coordinate_transform_mode, int tid, int thread_num);
 
 float CalculateAsymmetric(int x_resized, int length_original, int length_resized);
 

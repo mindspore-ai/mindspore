@@ -59,7 +59,7 @@ static inline int Fp32Clip@SIMD_INSTRUCTION@(int index, const float *src, int le
     return index;
 }
 
-static inline int Int32Clip@SIMD_INSTRUCTION@(int index, const int *src, int length, int *dst, int min, int max) {
+static inline int Int32Clip@SIMD_INSTRUCTION@(int index, const int32_t *src, int length, int32_t *dst, int min, int max) {
     SIMD_EPI32 min_val = SIMD_MOV_EPI32(min);
     SIMD_EPI32 max_val = SIMD_MOV_EPI32(max);
     for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {

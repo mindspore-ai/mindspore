@@ -55,7 +55,7 @@ int ElementMulRelu6(const float *in0, const float *in1, float *out, int size) {
   return NNACL_OK;
 }
 
-int ElementMulInt(const int *in0, const int *in1, int *out, int size) {
+int ElementMulInt(const int32_t *in0, const int32_t *in1, int32_t *out, int size) {
   int index = 0;
 
   SIMD_RUN_NO_SCALAR(ElementMulInt, index, in0, in1, out, size);
@@ -65,7 +65,7 @@ int ElementMulInt(const int *in0, const int *in1, int *out, int size) {
   return NNACL_OK;
 }
 
-int ElementMulReluInt(const int *in0, const int *in1, int *out, int size) {
+int ElementMulReluInt(const int32_t *in0, const int32_t *in1, int32_t *out, int size) {
   int index = 0;
 
   SIMD_RUN_NO_SCALAR(ElementMulReluInt, index, in0, in1, out, size);
@@ -76,7 +76,7 @@ int ElementMulReluInt(const int *in0, const int *in1, int *out, int size) {
   return NNACL_OK;
 }
 
-int ElementMulRelu6Int(const int *in0, const int *in1, int *out, int size) {
+int ElementMulRelu6Int(const int32_t *in0, const int32_t *in1, int32_t *out, int size) {
   int index = 0;
 
   SIMD_RUN_NO_SCALAR(ElementMulRelu6Int, index, in0, in1, out, size);
@@ -138,7 +138,7 @@ int ElementOptMulRelu6(const float *in0, const float *in1, float *out, int size,
   return NNACL_OK;
 }
 
-int ElementOptMulInt(const int *in0, const int *in1, int *out, int size, bool first_scalar) {
+int ElementOptMulInt(const int32_t *in0, const int32_t *in1, int32_t *out, int size, bool first_scalar) {
   int index = 0;
   if (first_scalar) {
     SIMD_RUN_NO_SCALAR(ElementOptMulIntNum0, index, in0, in1, out, size);
@@ -154,7 +154,7 @@ int ElementOptMulInt(const int *in0, const int *in1, int *out, int size, bool fi
   return NNACL_OK;
 }
 
-int ElementOptMulReluInt(const int *in0, const int *in1, int *out, int size, bool first_scalar) {
+int ElementOptMulReluInt(const int32_t *in0, const int32_t *in1, int32_t *out, int size, bool first_scalar) {
   int index = 0;
   if (first_scalar) {
     SIMD_RUN_NO_SCALAR(ElementOptMulReluIntNum0, index, in0, in1, out, size);
@@ -170,7 +170,7 @@ int ElementOptMulReluInt(const int *in0, const int *in1, int *out, int size, boo
   return NNACL_OK;
 }
 
-int ElementOptMulRelu6Int(const int *in0, const int *in1, int *out, int size, bool first_scalar) {
+int ElementOptMulRelu6Int(const int32_t *in0, const int32_t *in1, int32_t *out, int size, bool first_scalar) {
   int index = 0;
   if (first_scalar) {
     SIMD_RUN_NO_SCALAR(ElementOptMulRelu6IntNum0, index, in0, in1, out, size);

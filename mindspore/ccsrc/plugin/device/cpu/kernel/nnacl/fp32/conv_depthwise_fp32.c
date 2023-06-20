@@ -103,8 +103,8 @@ int ConvDwAVX512(float *output_data, const float *input_data, const float *weigh
   bool relu = conv_param->act_type_ == ActType_Relu;
   bool relu6 = conv_param->act_type_ == ActType_Relu6;
 
-  int *num_pixels = conv_dw_calc_param->num_pixels_;
-  int *out_w_start = conv_dw_calc_param->out_w_start_;
+  int32_t *num_pixels = conv_dw_calc_param->num_pixels_;
+  int32_t *out_w_start = conv_dw_calc_param->out_w_start_;
   int first_calc_kw = conv_dw_calc_param->first_calc_kw_;
 
   for (int b = 0; b < conv_param->output_batch_; b++) {

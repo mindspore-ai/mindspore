@@ -23,8 +23,8 @@ extern "C" {
 #endif
 void Cumsum(const float *input, float *output, int out_dim, int axis_dim, int inner_dim, bool exclusive);
 void CumsumReverse(const float *input, float *output, int out_dim, int axis_dim, int inner_dim, bool exclusive);
-void CumsumInt(const int *input, int *output, int out_dim, int axis_dim, int inner_dim, bool exclusive);
-void CumsumReverseInt(const int *input, int *output, int out_dim, int axis_dim, int inner_dim, bool exclusive);
+void CumsumInt(const int32_t *input, int32_t *output, int out_dim, int axis_dim, int inner_dim, bool exclusive);
+void CumsumReverseInt(const int32_t *input, int32_t *output, int out_dim, int axis_dim, int inner_dim, bool exclusive);
 #ifdef __cplusplus
 }
 #endif

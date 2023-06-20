@@ -111,13 +111,13 @@ void CumsumReverse(const float *input, float *output, int out_dim, int axis_dim,
 
 // (a, b, c) -> (a, a+b, a+b+c)  exclusive == false
 // (a, b, c) -> (0, a,   a+b)    exclusive == true
-void CumsumInt(const int *input, int *output, int out_dim, int axis_dim, int inner_dim, bool exclusive) {
+void CumsumInt(const int32_t *input, int32_t *output, int out_dim, int axis_dim, int inner_dim, bool exclusive) {
   // when not exclusive, output axis dim[0] is the same as that of input.
   // when exclusive, output axis dim[0] is 0
   if (!exclusive) {
     for (int i = 0; i < out_dim; ++i) {
-      const int *layer_input = input + i * axis_dim * inner_dim;
-      int *layer_output = output + i * axis_dim * inner_dim;
+      const int32_t *layer_input = input + i * axis_dim * inner_dim;
+      int32_t *layer_output = output + i * axis_dim * inner_dim;
 
       int j = 0;
       SIMD_RUN_NO_SCALAR(CumsumIntOutputInitWithInput, j, layer_input, layer_output, inner_dim);
@@ -127,7 +127,7 @@ void CumsumInt(const int *input, int *output, int out_dim, int axis_dim, int inn
     }
   } else {
     for (int i = 0; i < out_dim; ++i) {
-      int *layer_output = output + i * axis_dim * inner_dim;
+      int32_t *layer_output = output + i * axis_dim * inner_dim;
 
       int j = 0;
       SIMD_RUN_NO_SCALAR(CumsumIntOutputInitWithZero, j, layer_output, inner_dim);
@@ -138,9 +138,9 @@ void CumsumInt(const int *input, int *output, int out_dim, int axis_dim, int inn
   }
   int input_offset = exclusive ? 0 : 1;
   for (int i = 0; i < out_dim; ++i) {
-    const int *layer_input = input + i * axis_dim * inner_dim + inner_dim * input_offset;
-    int *layer_last_output = output + i * axis_dim * inner_dim;
-    int *layer_output = layer_last_output + inner_dim;
+    const int32_t *layer_input = input + i * axis_dim * inner_dim + inner_dim * input_offset;
+    int32_t *layer_last_output = output + i * axis_dim * inner_dim;
+    int32_t *layer_output = layer_last_output + inner_dim;
 
     for (int j = 1; j < axis_dim; ++j) {
       int k = 0;
@@ -157,11 +157,11 @@ void CumsumInt(const int *input, int *output, int out_dim, int axis_dim, int inn
 
 // (a, b, c) -> (c+b+a, c+b, c) exclusive==false
 // (a, b, c) -> (c+b, c, 0) exclusive==true
-void CumsumReverseInt(const int *input, int *output, int out_dim, int axis_dim, int inner_dim, bool exclusive) {
+void CumsumReverseInt(const int32_t *input, int32_t *output, int out_dim, int axis_dim, int inner_dim, bool exclusive) {
   if (!exclusive) {
     for (int i = 0; i < out_dim; ++i) {
-      const int *layer_input = input + i * axis_dim * inner_dim + (axis_dim - 1) * inner_dim;
-      int *layer_output = output + i * axis_dim * inner_dim + (axis_dim - 1) * inner_dim;
+      const int32_t *layer_input = input + i * axis_dim * inner_dim + (axis_dim - 1) * inner_dim;
+      int32_t *layer_output = output + i * axis_dim * inner_dim + (axis_dim - 1) * inner_dim;
 
       int j = 0;
       SIMD_RUN_NO_SCALAR(CumsumIntOutputInitWithInput, j, layer_input, layer_output, inner_dim);
@@ -171,7 +171,7 @@ void CumsumReverseInt(const int *input, int *output, int out_dim, int axis_dim, 
     }
   } else {
     for (int i = 0; i < out_dim; ++i) {
-      int *layer_output = output + i * axis_dim * inner_dim + (axis_dim - 1) * inner_dim;
+      int32_t *layer_output = output + i * axis_dim * inner_dim + (axis_dim - 1) * inner_dim;
 
       int j = 0;
       SIMD_RUN_NO_SCALAR(CumsumIntOutputInitWithZero, j, layer_output, inner_dim);
@@ -182,9 +182,9 @@ void CumsumReverseInt(const int *input, int *output, int out_dim, int axis_dim, 
   }
   int input_offset = exclusive ? 0 : 1;
   for (int i = 0; i < out_dim; ++i) {
-    const int *layer_input = input + (i + 1) * axis_dim * inner_dim - 1 - input_offset * inner_dim;
-    int *layer_last_output = output + (i + 1) * axis_dim * inner_dim - 1;
-    int *layer_output = layer_last_output - inner_dim;
+    const int32_t *layer_input = input + (i + 1) * axis_dim * inner_dim - 1 - input_offset * inner_dim;
+    int32_t *layer_last_output = output + (i + 1) * axis_dim * inner_dim - 1;
+    int32_t *layer_output = layer_last_output - inner_dim;
 
     for (int j = 1; j < axis_dim; ++j) {
       int k = 0;

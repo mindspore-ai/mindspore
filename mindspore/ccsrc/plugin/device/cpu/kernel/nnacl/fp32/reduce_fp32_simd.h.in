@@ -134,10 +134,10 @@ static inline int64_t ReduceL2Norm@SIMD_INSTRUCTION@(int64_t index, const float 
   return index;
 }
 
-static inline int64_t IntReduceSum@SIMD_INSTRUCTION@(int64_t index, const int *outer_src, int *outer_dst, int inner_size,
+static inline int64_t IntReduceSum@SIMD_INSTRUCTION@(int64_t index, const int32_t *outer_src, int32_t *outer_dst, int inner_size,
   int axis_size) {
   for (int block_max_size = inner_size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
-    const int *inner_src = outer_src + index;
+    const int32_t *inner_src = outer_src + index;
     SIMD_EPI32 tmp = SIMD_MOV_EPI32(0);
     for (int i = 0; i < axis_size; i++) {
       tmp = SIMD_ADD_EPI32(tmp, SIMD_LD_EPI32(inner_src + i * inner_size));
@@ -147,10 +147,10 @@ static inline int64_t IntReduceSum@SIMD_INSTRUCTION@(int64_t index, const int *o
   return index;
 }
 
-static inline int64_t IntReduceMean@SIMD_INSTRUCTION@(int64_t index, const int *outer_src, int *outer_dst, int inner_size,
+static inline int64_t IntReduceMean@SIMD_INSTRUCTION@(int64_t index, const int32_t *outer_src, int32_t *outer_dst, int inner_size,
   int axis_size) {
   for (int block_max_size = inner_size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
-    const int *inner_src = outer_src + index;
+    const int32_t *inner_src = outer_src + index;
     SIMD_EPI32 tmp = SIMD_MOV_EPI32(0);
     for (int i = 0; i < axis_size; i++) {
       tmp = SIMD_ADD_EPI32(tmp, SIMD_LD_EPI32(inner_src + i * inner_size));
@@ -160,10 +160,10 @@ static inline int64_t IntReduceMean@SIMD_INSTRUCTION@(int64_t index, const int *
   return index;
 }
 
-static inline int64_t IntReduceMin@SIMD_INSTRUCTION@(int64_t index, const int *outer_src, int *outer_dst, int inner_size,
+static inline int64_t IntReduceMin@SIMD_INSTRUCTION@(int64_t index, const int32_t *outer_src, int32_t *outer_dst, int inner_size,
   int axis_size) {
   for (int block_max_size = inner_size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
-    const int *inner_src = outer_src + index;
+    const int32_t *inner_src = outer_src + index;
     SIMD_EPI32 tmp = SIMD_MOV_EPI32(INT32_MAX);
     for (int i = 0; i < axis_size; i++) {
       tmp = SIMD_MIN_EPI32(tmp, SIMD_LD_EPI32(inner_src + i * inner_size));
@@ -173,10 +173,10 @@ static inline int64_t IntReduceMin@SIMD_INSTRUCTION@(int64_t index, const int *o
   return index;
 }
 
-static inline int64_t IntReduceMax@SIMD_INSTRUCTION@(int64_t index, const int *outer_src, int *outer_dst, int inner_size,
+static inline int64_t IntReduceMax@SIMD_INSTRUCTION@(int64_t index, const int32_t *outer_src, int32_t *outer_dst, int inner_size,
   int axis_size) {
   for (int block_max_size = inner_size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
-    const int *inner_src = outer_src + index;
+    const int32_t *inner_src = outer_src + index;
     SIMD_EPI32 tmp = SIMD_MOV_EPI32(INT32_MIN);
     for (int i = 0; i < axis_size; i++) {
       tmp = SIMD_MAX_EPI32(tmp, SIMD_LD_EPI32(inner_src + i * inner_size));

@@ -19,7 +19,7 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/intrinsics/ms_simd_instructions.h"
 
-void CalculateCoordinate(float out, int in, int *bottom, int *top, float *bottom_weight) {
+void CalculateCoordinate(float out, int in, int32_t *bottom, int32_t *top, float *bottom_weight) {
   *bottom = (int)(floorf(out));
   *bottom = *bottom >= 0 ? *bottom : 0;  // extrapolate may generate neg value
   *top = *bottom + 1 < in ? (*bottom + 1) : (in - 1);
@@ -44,7 +44,7 @@ static void BicubicBaseFunc(float a, const float x, float *weight) {
 //        { 0,                                                             otherwise
 // the value of 'a' depends on if is half_pixel_center(the scheme is the same as tf).
 // If is half pixel mode, a equals to -0.5, otherwise -0.75.
-void CalculateWeightForBicubic(float out, int in, int *index, float *weights, float a) {
+void CalculateWeightForBicubic(float out, int in, int32_t *index, float *weights, float a) {
   int floor_index = (int)(floorf(out));
   index[0] = (floor_index - 1) < 0 ? 0 : (floor_index - 1);
   index[1] = floor_index;
@@ -64,9 +64,9 @@ void CalculateWeightForBicubic(float out, int in, int *index, float *weights, fl
   }
 }
 
-int PrepareResizeBilinear(const int *input_shape, const int *output_shape, CalculateOriginalCoordinate calculate,
-                          int *y_bottoms, int *y_tops, int *x_lefts, int *x_rights, float *y_bottom_weights,
-                          float *x_left_weights) {
+int PrepareResizeBilinear(const int32_t *input_shape, const int32_t *output_shape,
+                          CalculateOriginalCoordinate calculate, int32_t *y_bottoms, int32_t *y_tops, int32_t *x_lefts,
+                          int32_t *x_rights, float *y_bottom_weights, float *x_left_weights) {
   if (input_shape == NULL || output_shape == NULL || y_bottoms == NULL || y_tops == NULL || x_lefts == NULL ||
       x_rights == NULL || y_bottom_weights == NULL || x_left_weights == NULL) {
     return NNACL_NULL_PTR;
@@ -89,8 +89,8 @@ int PrepareResizeBilinear(const int *input_shape, const int *output_shape, Calcu
   return NNACL_OK;
 }
 
-int PrepareResizeBicubic(const int *input_shape, const int *output_shape, CalculateOriginalCoordinate calculate,
-                         int *y_tops, int *x_lefts, float *y_weights, float *x_weights, float cubic_coeff) {
+int PrepareResizeBicubic(const int32_t *input_shape, const int32_t *output_shape, CalculateOriginalCoordinate calculate,
+                         int32_t *y_tops, int32_t *x_lefts, float *y_weights, float *x_weights, float cubic_coeff) {
   if (input_shape == NULL || output_shape == NULL || y_tops == NULL || x_lefts == NULL || y_weights == NULL ||
       x_weights == NULL) {
     return NNACL_NULL_PTR;
@@ -112,9 +112,9 @@ int PrepareResizeBicubic(const int *input_shape, const int *output_shape, Calcul
   return NNACL_OK;
 }
 
-int PrepareCropAndResizeBilinear(const int *input_shape, const float *boxes, const int *box_idx,
-                                 const int *output_shape, int *y_bottoms, int *y_tops, int *x_lefts, int *x_rights,
-                                 float *y_bottom_weights, float *x_left_weights) {
+int PrepareCropAndResizeBilinear(const int32_t *input_shape, const float *boxes, const int32_t *box_idx,
+                                 const int32_t *output_shape, int32_t *y_bottoms, int32_t *y_tops, int32_t *x_lefts,
+                                 int32_t *x_rights, float *y_bottom_weights, float *x_left_weights) {
   if (input_shape == NULL || output_shape == NULL || y_bottoms == NULL || y_tops == NULL || x_lefts == NULL ||
       x_rights == NULL || y_bottom_weights == NULL || x_left_weights == NULL) {
     return NNACL_NULL_PTR;
@@ -134,11 +134,11 @@ int PrepareCropAndResizeBilinear(const int *input_shape, const float *boxes, con
     float start_w = box[1];
     float end_w = box[3];
 
-    int *y_bottom = y_bottoms + b * new_height;
-    int *y_top = y_tops + b * new_height;
+    int32_t *y_bottom = y_bottoms + b * new_height;
+    int32_t *y_top = y_tops + b * new_height;
     float *y_bottom_weight = y_bottom_weights + b * new_height;
-    int *x_left = x_lefts + b * new_width;
-    int *x_right = x_rights + b * new_width;
+    int32_t *x_left = x_lefts + b * new_width;
+    int32_t *x_right = x_rights + b * new_width;
     float *x_left_weight = x_left_weights + b * new_width;
     for (int h = 0; h < new_height; h++) {
       if (new_height > 1) {
@@ -161,7 +161,7 @@ int PrepareCropAndResizeBilinear(const int *input_shape, const float *boxes, con
 }
 
 int InterpRow(const float *src_line, float *linear_output, int new_width, const float *x_left_weights,
-              const int *x_lefts, const int *x_rights, int in_c) {
+              const int32_t *x_lefts, const int32_t *x_rights, int in_c) {
   int w;
   for (w = 0; w < new_width; w++) {
     int c = 0;
@@ -230,8 +230,8 @@ int InterpCol(const float *bottom_line, const float *top_line, float *output, in
   return 0;
 }
 
-void Bilinear(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
-              const int *y_bottom, const int *y_top, const int *x_left, const int *x_right,
+void Bilinear(const float *input_data, float *output_data, const int32_t *input_shape, const int32_t *output_shape,
+              const int32_t *y_bottom, const int32_t *y_top, const int32_t *x_left, const int32_t *x_right,
               const float *y_bottom_weight, const float *x_left_weight, float *line0, float *line1, const int h_begin,
               const int h_end) {
   int in_w = input_shape[2];
@@ -283,8 +283,8 @@ void Bilinear(const float *input_data, float *output_data, const int *input_shap
   }
 }
 
-int ResizeBilinear(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
-                   const int *y_bottoms, const int *y_tops, const int *x_lefts, const int *x_rights,
+int ResizeBilinear(const float *input_data, float *output_data, const int32_t *input_shape, const int32_t *output_shape,
+                   const int32_t *y_bottoms, const int32_t *y_tops, const int32_t *x_lefts, const int32_t *x_rights,
                    const float *y_bottom_weights, const float *x_left_weights, float *line0, float *line1,
                    const int h_begin, const int h_end) {
   if (input_data == NULL || output_data == NULL || input_shape == NULL || output_shape == NULL || y_bottoms == NULL ||
@@ -308,7 +308,8 @@ int ResizeBilinear(const float *input_data, float *output_data, const int *input
   return NNACL_OK;
 }
 
-void BicubicInterpRow(const float *src, float *dst, const float *weights, const int *lefts, int width, int channel) {
+void BicubicInterpRow(const float *src, float *dst, const float *weights, const int32_t *lefts, int width,
+                      int channel) {
   for (int w = 0; w < width; w++) {
     const float *weight = weights + 4 * w;
     float *dst_w = dst + w * channel;
@@ -413,9 +414,9 @@ void BicubicInterpCol(const float *src, float *dst, const float *weights, int wi
   }
 }
 
-void Bicubic(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
-             const int *y_tops, const int *x_lefts, const float *y_weights, const float *x_weights, float *line_buffer,
-             const int h_begin, const int h_end) {
+void Bicubic(const float *input_data, float *output_data, const int32_t *input_shape, const int32_t *output_shape,
+             const int32_t *y_tops, const int32_t *x_lefts, const float *y_weights, const float *x_weights,
+             float *line_buffer, const int h_begin, const int h_end) {
   int in_w = input_shape[2];
   int in_c = input_shape[3];
   int new_width = output_shape[2];
@@ -430,8 +431,8 @@ void Bicubic(const float *input_data, float *output_data, const int *input_shape
   }
 }
 
-int ResizeBicubic(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
-                  const int *y_tops, const int *x_lefts, const float *y_weights, const float *x_weights,
+int ResizeBicubic(const float *input_data, float *output_data, const int32_t *input_shape, const int32_t *output_shape,
+                  const int32_t *y_tops, const int32_t *x_lefts, const float *y_weights, const float *x_weights,
                   float *line_buffer, const int h_begin, const int h_end) {
   if (input_data == NULL || output_data == NULL || input_shape == NULL || output_shape == NULL || y_tops == NULL ||
       x_lefts == NULL || y_weights == NULL || x_weights == NULL) {
@@ -448,9 +449,9 @@ int ResizeBicubic(const float *input_data, float *output_data, const int *input_
   return NNACL_OK;
 }
 
-int RewriteExtrapolationValue(const float *input_data, float *output_data, const int *box_idx, const float *boxes,
-                              const CropAndResizeParameter *param, const int *input_shape, const int *output_shape,
-                              const int *y_tops, const int h_begin, const int h_end) {
+int RewriteExtrapolationValue(const float *input_data, float *output_data, const int32_t *box_idx, const float *boxes,
+                              const CropAndResizeParameter *param, const int32_t *input_shape,
+                              const int32_t *output_shape, const int32_t *y_tops, const int h_begin, const int h_end) {
   if (input_data == NULL || output_data == NULL || box_idx == NULL || param == NULL || input_shape == NULL ||
       output_shape == NULL) {
     return NNACL_NULL_PTR;
@@ -504,11 +505,11 @@ int RewriteExtrapolationValue(const float *input_data, float *output_data, const
   return NNACL_OK;
 }
 
-int CropAndResizeBilinear(const float *input_data, float *output_data, const int *box_idx, const float *boxes,
-                          const CropAndResizeParameter *param, const int *input_shape, const int *output_shape,
-                          const int *y_bottoms, const int *y_tops, const int *x_lefts, const int *x_rights,
-                          const float *y_bottom_weights, const float *x_left_weights, float *line0, float *line1,
-                          const int h_begin, const int h_end) {
+int CropAndResizeBilinear(const float *input_data, float *output_data, const int32_t *box_idx, const float *boxes,
+                          const CropAndResizeParameter *param, const int32_t *input_shape, const int32_t *output_shape,
+                          const int32_t *y_bottoms, const int32_t *y_tops, const int32_t *x_lefts,
+                          const int32_t *x_rights, const float *y_bottom_weights, const float *x_left_weights,
+                          float *line0, float *line1, const int h_begin, const int h_end) {
   if (input_data == NULL || output_data == NULL || box_idx == NULL || param == NULL || input_shape == NULL ||
       output_shape == NULL || y_bottoms == NULL || y_tops == NULL || x_lefts == NULL || x_rights == NULL ||
       y_bottom_weights == NULL || x_left_weights == NULL) {
@@ -523,11 +524,11 @@ int CropAndResizeBilinear(const float *input_data, float *output_data, const int
 
   for (int b = 0; b < batch; b++) {
     const float *cur_img = input_data + box_idx[b] * input_h * input_w * new_channel;
-    const int *y_bottom = y_bottoms + b * new_height;
-    const int *y_top = y_tops + b * new_height;
+    const int32_t *y_bottom = y_bottoms + b * new_height;
+    const int32_t *y_top = y_tops + b * new_height;
     const float *y_bottom_weight = y_bottom_weights + b * new_height;
-    const int *x_left = x_lefts + b * new_width;
-    const int *x_right = x_rights + b * new_width;
+    const int32_t *x_left = x_lefts + b * new_width;
+    const int32_t *x_right = x_rights + b * new_width;
     const float *x_left_weight = x_left_weights + b * new_width;
     float *output = output_data + b * new_height * new_width * new_channel;
 
@@ -539,9 +540,9 @@ int CropAndResizeBilinear(const float *input_data, float *output_data, const int
   return NNACL_OK;
 }
 
-int ResizeNearestNeighbor(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
-                          CalculateOriginalCoordinate calculate, int coordinate_transform_mode, int tid,
-                          int thread_num) {
+int ResizeNearestNeighbor(const float *input_data, float *output_data, const int32_t *input_shape,
+                          const int32_t *output_shape, CalculateOriginalCoordinate calculate,
+                          int coordinate_transform_mode, int tid, int thread_num) {
   if (thread_num == 0) {
     return NNACL_PARAM_INVALID;
   }

@@ -21,16 +21,16 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void PackLstmWeight(float *dst, const float *src, int batch, int deep, int col, int col_align, const int *order);
+void PackLstmWeight(float *dst, const float *src, int batch, int deep, int col, int col_align, const int32_t *order);
 
 void PackLstmWeightWithStride(float *dst, const float *src, int batch, int deep, int col, int col_align,
-                              bool is_bidirectional, int stride, const int *order);
+                              bool is_bidirectional, int stride, const int32_t *order);
 
 void PackLstmBias(float *dst, const float *src, int batch, int col, int col_align, bool is_bidirectional,
-                  const int *order);
+                  const int32_t *order);
 
 void PackLstmBiasWithStride(float *dst, const float *src, int batch, int col, int col_align, bool is_bidirectional,
-                            int b_stride, const int *order);
+                            int b_stride, const int32_t *order);
 
 void PackLstmInput(const float *src, float *dst, int row, int deep);
 

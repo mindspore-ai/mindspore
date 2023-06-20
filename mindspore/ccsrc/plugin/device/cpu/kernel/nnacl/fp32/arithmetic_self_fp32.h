@@ -27,7 +27,7 @@
 extern "C" {
 #endif
 int ElementAbs(const float *input, float *output, const int element_size);
-int ElementAbsInt(const int *input, int *output, const int element_size);
+int ElementAbsInt(const int32_t *input, int32_t *output, const int element_size);
 
 int ElementCos(const float *input, float *output, const int element_size);
 
@@ -54,7 +54,7 @@ int ElementFloor(const float *input, float *output, const int element_size);
 int ElementCeil(const float *input, float *output, const int number);
 
 int ElementNegative(const float *input, float *output, const int element_size);
-int ElementNegativeInt(const int *input, int *output, const int element_size);
+int ElementNegativeInt(const int32_t *input, int32_t *output, const int element_size);
 
 int ElementReciprocal(const float *input, float *output, const int element_size);
 
