@@ -15,14 +15,14 @@
  */
 
 #include "plugin/device/gpu/kernel/arrays/fill_v2_gpu_kernel.h"
-#include <functional>
-#include <utility>
-#include <string>
 #include <algorithm>
-#include "mindspore/core/abstract/utils.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/fill_v2_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+#include <functional>
+#include <string>
+#include <utility>
 #include "kernel/common_utils.h"
+#include "mindspore/core/abstract/utils.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/fill_v2_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -35,6 +35,8 @@ bool FillV2GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
                               const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kFillV2InputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kFillV2OutputsNum, kernel_name_);
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -62,21 +64,11 @@ bool FillV2GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   if (output_size_ == 0) {
     return true;
   }
-
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kFillV2InputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kFillV2OutputsNum, kernel_name_);
-
   cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
-
   DataType *input_ptr = GetDeviceAddress<DataType>(inputs, kIndex1);
-  MS_ERROR_IF_NULL_W_RET_VAL(input_ptr, false);
-
   DataType *output_ptr = GetDeviceAddress<DataType>(outputs, kIndex0);
-  MS_ERROR_IF_NULL_W_RET_VAL(output_ptr, false);
-
-  FillV2(output_size_, input_ptr, output_ptr, device_id_, cuda_stream_);
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaGetLastError(), "FillV2 kernel failed.");
-
+  auto status = FillV2(output_size_, input_ptr, output_ptr, device_id_, cuda_stream_);
+  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
   return true;
 }
 

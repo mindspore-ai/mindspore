@@ -44,6 +44,9 @@
 namespace mindspore {
 namespace ops {
 namespace {
+constexpr size_t kMinInputNums = 2;
+constexpr size_t kMaxInputNums = 3;
+
 TypePtr MultiMarginLossInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   (void)CheckAndConvertUtils::CheckTensorTypeValid("target", input_args[kInputIndex1]->BuildType(), {kInt64},
                                                    prim->name());
@@ -159,8 +162,8 @@ string MultiMarginLoss::get_reduction() const {
 AbstractBasePtr MultiMarginLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  CheckAndConvertUtils::CheckInRange("multi_margin_loss_input_nums", input_args.size(), kIncludeBoth, {kDim2, kDim3},
-                                     primitive->name());
+  CheckAndConvertUtils::CheckInRange("multi_margin_loss_input_nums", input_args.size(), kIncludeBoth,
+                                     {kMinInputNums, kMaxInputNums}, primitive->name());
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
   if (input_args.size() == kDim3) {

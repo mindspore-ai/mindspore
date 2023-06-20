@@ -17,10 +17,10 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ZEROSLIKE_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ZEROSLIKE_GPU_KERNEL_H_
 
-#include <vector>
 #include <map>
-#include <utility>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
@@ -40,30 +40,18 @@ class ZerosLikeGpuKernelMod : public NativeGpuKernelMod {
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
-
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
+
+ private:
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);
-
-  bool LaunchKernelComplex64(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                             const std::vector<AddressPtr> &outputs, void *stream_ptr);
-
-  bool LaunchKernelComplex128(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                              const std::vector<AddressPtr> &outputs, void *stream_ptr);
-
   using ZerosLikeLaunchFunc =
     std::function<bool(ZerosLikeGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
-
- private:
   ZerosLikeLaunchFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, ZerosLikeLaunchFunc>> func_list_;
-  size_t input_size_;
-  bool is_null_input_;
 };
 }  // namespace kernel
 }  // namespace mindspore

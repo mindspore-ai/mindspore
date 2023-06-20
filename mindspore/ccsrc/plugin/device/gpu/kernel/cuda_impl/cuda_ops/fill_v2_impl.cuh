@@ -19,7 +19,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void FillV2(const int64_t output_size, const T *input, T *output, const uint32_t device_id,
-                            cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t FillV2(const int64_t output_size, const T *input, T *output, const uint32_t device_id,
+                                   cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_FILL_V2_IMPL_CUH_

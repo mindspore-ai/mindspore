@@ -16,9 +16,8 @@
 
 #include "plugin/device/gpu/kernel/arrays/gatherv2_gpu_kernel.h"
 #include <memory>
-#include "mindspore/core/ops/framework_ops.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "mindspore/core/ops/gather.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 namespace kernel {
@@ -51,21 +50,17 @@ bool GatherV2FwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
 int GatherV2FwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                     const std::vector<KernelTensorPtr> &outputs,
                                     const std::map<uint32_t, tensor::TensorPtr> &) {
-  size_t input_num = inputs.size();
-  if (input_num != kInputNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 3, but got " << input_num;
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
   if (!TryGetIntValue(inputs, kIndex2, kernel_name_, &axis_)) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', cant get axis.";
     return KRET_RESIZE_FAILED;
   }
-  ResetResource();
+
   input_shapes_ = inputs[kIndexZero]->GetShapeVector();
   indices_shapes_ = inputs[kIndexOne]->GetShapeVector();
   output_shapes_ = outputs[kIndexZero]->GetShapeVector();
-  if (IsDynamic(input_shapes_) || IsDynamic(indices_shapes_) || IsDynamic(output_shapes_)) {
-    return KRET_UNKNOWN_SHAPE;
-  }
   if (batch_dims_ < 0) {
     batch_dims_ += SizeToLong(indices_shapes_.size());
   }
@@ -73,7 +68,6 @@ int GatherV2FwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
                    CHECK_SHAPE_NULL(indices_shapes_, kernel_name_, "indices") ||
                    CHECK_SHAPE_NULL(output_shapes_, kernel_name_, "output");
   if (is_null_input_) {
-    InitSizeLists();
     return KRET_OK;
   }
   int dims = SizeToInt(input_shapes_.size());
@@ -82,7 +76,6 @@ int GatherV2FwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
                       << "), but got " << axis_;
   }
   Reshape();
-  InitSizeLists();
   return KRET_OK;
 }
 
@@ -101,15 +94,10 @@ bool GatherV2FwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     return true;
   }
   VARIABLE_NOT_USED(workspace);
-
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   S *indices_addr = GetDeviceAddress<S>(inputs, kIndex1);
   T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
-
   auto input_dim1 = input_shapes_[IntToSize(axis_)];
-
-  MS_EXCEPTION_IF_NULL(input_addr);
-  MS_EXCEPTION_IF_NULL(indices_addr);
   GatherV2(input_addr, indices_addr, output_addr, dims_[kIndex0], dims_[kIndex1], dims_[kIndex2], dims_[kIndex3],
            LongToSize(input_dim1), reinterpret_cast<cudaStream_t>(stream_ptr));
   return true;

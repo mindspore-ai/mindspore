@@ -17,14 +17,14 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_RESIZE_NEAREST_NEIGHBOR_GRAD_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_RESIZE_NEAREST_NEIGHBOR_GRAD_GPU_KERNEL_H_
 
+#include <algorithm>
 #include <map>
 #include <vector>
-#include <algorithm>
-#include "mindspore/core/utils/check_convert_utils.h"
 #include "mindspore/core/ops/grad/resize_nearest_neighbor_grad.h"
+#include "mindspore/core/utils/check_convert_utils.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/resize_nearest_neighbor_grad_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/resize_nearest_neighbor_grad_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -34,30 +34,19 @@ constexpr auto kInputNum = "inputs number";
 template <typename T, typename S = int64_t>
 class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  ResizeNearestNeighborGradGpuKernelMod()
-      : align_corners_(false),
-        is_null_input_(false),
-        shape_size_(0),
-        input_size_(0),
-        output_size_(0),
-        workspace_size_(0),
-        input_num_(0) {}
+  ResizeNearestNeighborGradGpuKernelMod() : align_corners_(false), shape_size_(0), input_size_(0), input_num_(0) {}
   ~ResizeNearestNeighborGradGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 0);
-    int input_size = SizeToInt(input_size_ / sizeof(T));
     float h_scale = Scaling(output_shape_[kIndex2], input_shape_[kIndex2], align_corners_);
     float w_scale = Scaling(output_shape_[kIndex3], input_shape_[kIndex3], align_corners_);
-    CalResizeNearestNeighborGrad(input_size, input, input_shape_[kIndex0], input_shape_[kIndex1], input_shape_[kIndex2],
-                                 input_shape_[kIndex3], output, output_shape_[kIndex0], output_shape_[kIndex1],
-                                 output_shape_[kIndex2], output_shape_[kIndex3], align_corners_, h_scale, w_scale,
-                                 reinterpret_cast<cudaStream_t>(stream_ptr));
+    CalResizeNearestNeighborGrad(input_size_, input, input_shape_[kIndex0], input_shape_[kIndex1],
+                                 input_shape_[kIndex2], input_shape_[kIndex3], output, output_shape_[kIndex0],
+                                 output_shape_[kIndex1], output_shape_[kIndex2], output_shape_[kIndex3], align_corners_,
+                                 h_scale, w_scale, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
@@ -79,20 +68,10 @@ class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
     if (ret != KRET_OK) {
       return ret;
     }
+
     auto input_shape = inputs[kIndex0]->GetShapeVector();
     shape_size_ = input_shape.size();
-    auto output_shape = outputs[kIndex0]->GetShapeVector();
-    if (shape_size_ != RESIZENEARESTNEIGHBORGRAD_DIMENSION) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of input must be "
-                    << RESIZENEARESTNEIGHBORGRAD_DIMENSION << ", but got " << shape_size_;
-      return KRET_RESIZE_FAILED;
-    }
-    if (shape_size_ != output_shape.size()) {
-      MS_LOG(ERROR) << "For '" << kernel_name_
-                    << "', the dimension of input and output must be the same, but got the dimension of input: "
-                    << shape_size_ << ", the dimension of output: " << output_shape.size();
-      return KRET_RESIZE_FAILED;
-    }
+    input_size_ = SizeToInt(SizeOf(input_shape));
 
     input_shape_.clear();
     for (size_t i = 0; i < shape_size_; i++) {
@@ -104,9 +83,7 @@ class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
       input_shape_.push_back(LongToInt(input_shape[i]));
     }
 
-    output_shape_.clear();
-    input_size_ = sizeof(T) * SizeOf(input_shape);
-
+    auto output_shape = outputs[kIndex0]->GetShapeVector();
     output_shape_.clear();
     for (size_t i = 0; i < shape_size_; i++) {
       if (output_shape[i] == 0) {
@@ -116,26 +93,11 @@ class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
       }
       output_shape_.push_back(LongToInt(output_shape[i]));
     }
-    output_size_ = sizeof(T) * SizeOf(output_shape);
+
     return KRET_OK;
   }
 
   std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
-
-  void DestroyResource() noexcept override {
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-    input_shape_.clear();
-    output_shape_.clear();
-    align_corners_ = false;
-    is_null_input_ = false;
-    shape_size_ = 0;
-    input_size_ = 0;
-    output_size_ = 0;
-    workspace_size_ = 0;
-    input_num_ = 0;
-  }
 
  private:
   float Scaling(const int in_size, const int out_size, bool align_corners) {
@@ -144,13 +106,10 @@ class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
   }
 
   bool align_corners_{false};
-  bool is_null_input_{false};
   size_t shape_size_{0};
   std::vector<int> input_shape_;
   std::vector<int> output_shape_;
-  size_t input_size_{0};
-  size_t output_size_{0};
-  size_t workspace_size_{0};
+  int input_size_{0};
   size_t input_num_{0};
 };
 }  // namespace kernel
