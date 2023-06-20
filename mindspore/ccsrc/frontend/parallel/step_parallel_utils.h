@@ -132,6 +132,7 @@ TensorLayout GetInputLayoutFromCNode(const std::pair<AnfNodePtr, int64_t> &node_
 Shape mirror_group_list(const TensorLayoutPtr &layout);
 // Transfer number to serial number string
 std::string GetSerialNumberString(size_t number);
+bool IsIgnoreSplitTensor(const CNodePtr &node, int64_t index);
 }  // namespace parallel
 }  // namespace mindspore
 

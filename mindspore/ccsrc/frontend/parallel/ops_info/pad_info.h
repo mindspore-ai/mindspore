@@ -29,6 +29,10 @@
 
 namespace mindspore {
 namespace parallel {
+constexpr size_t PAD_V3_INPUT_VALUE_MIN_SIZE = 2;
+constexpr size_t PADDINGS_PAIR_SIZE = 2;
+constexpr size_t PADDINGS_INDEX = 1;
+
 class PadV3Info : public OperatorInfo {
  public:
   PadV3Info(const std::string &name, const Shapes &input_shape, const Shapes &output_shape, const PrimitiveAttrs &attrs)
@@ -45,8 +49,9 @@ class PadV3Info : public OperatorInfo {
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
+  Status InferMirrorOps() override;
   std::string mode_;
-  size_t padding_dim_num_ = 1;
+  Shape paddings_flag_;  // if flag is 1, the dimension can not be split
 };
 }  // namespace parallel
 }  // namespace mindspore

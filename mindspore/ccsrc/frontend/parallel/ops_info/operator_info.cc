@@ -2187,5 +2187,20 @@ ForwardOp CreateReduceMeanForwardOp(const std::vector<Group> &forward_group, con
 
   return {op0, op1};
 }
+
+std::vector<int64_t> GetTensorValue(const ValuePtr &ori_value) {
+  MS_EXCEPTION_IF_NULL(ori_value);
+  if (!ori_value->isa<tensor::Tensor>()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Value is not tensor";
+  }
+  auto tensor_ptr = ori_value->cast<tensor::TensorPtr>();
+  std::vector<int64_t> value;
+  auto element_size = tensor_ptr->data().size();
+  auto *data = static_cast<int64_t *>(tensor_ptr->data_c());
+  for (auto i = 0; i < element_size; i++) {
+    value.push_back(data[i]);
+  }
+  return value;
+}
 }  // namespace parallel
 }  // namespace mindspore
