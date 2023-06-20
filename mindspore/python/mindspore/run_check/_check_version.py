@@ -371,6 +371,12 @@ class AscendEnvChecker(EnvChecker):
                 time.sleep(1)
 
     def set_env(self):
+        curr_path = os.path.abspath(os.path.dirname(__file__))
+        if os.getenv('ASCEND_CUSTOM_OPP_PATH'):
+            os.environ['ASCEND_CUSTOM_OPP_PATH'] = os.environ['ASCEND_CUSTOM_OPP_PATH'] + ":" + \
+                                                   curr_path + "/../lib/plugin/ascend/custom_aicpu_ops"
+        else:
+            os.environ['ASCEND_CUSTOM_OPP_PATH'] = curr_path + "/../lib/plugin/ascend/custom_aicpu_ops"
         plugin_dir = os.path.dirname(self.library_path)
         akg_dir = os.path.join(plugin_dir, "ascend")
         if os.getenv('LD_LIBRARY_PATH'):

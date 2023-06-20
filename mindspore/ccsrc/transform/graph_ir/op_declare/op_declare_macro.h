@@ -260,4 +260,19 @@
    private:                                      \
     int ph_{0};                                  \
   } g_reg_adpt_desc_##name;
+
+#define DECLARE_CUST_OP_ADAPTER(T) DECLARE_OP_ADAPTER(Cust##T)
+#define DECLARE_CUST_OP_USE_OUTPUT(T) DECLARE_OP_USE_OUTPUT(Cust##T)
+#define DECLARE_CUST_OP_USE_INPUT_ATTR(T) DECLARE_OP_USE_INPUT_ATTR(Cust##T)
+#define DECLARE_CUST_OP_USE_DYN_INPUT(T) DECLARE_OP_USE_DYN_INPUT(Cust##T)
+#define DECLARE_CUST_OP_USE_DYN_OUTPUT(T) DECLARE_OP_USE_DYN_OUTPUT(Cust##T)
+#define CUST_INPUT_MAP(T) INPUT_MAP(Cust##T)
+#define CUST_DYN_INPUT_MAP(T) DYN_INPUT_MAP(Cust##T)
+#define CUST_ATTR_MAP(T) ATTR_MAP(Cust##T)
+#define CUST_INPUT_ATTR_MAP(T) INPUT_ATTR_MAP(Cust##T)
+#define CUST_ATTR_INPUT_MAP(T) ATTR_INPUT_MAP(Cust##T)
+#define CUST_OUTPUT_MAP(T) OUTPUT_MAP(Cust##T)
+#define CUST_DYN_OUTPUT_MAP(T) DYN_OUTPUT_MAP(Cust##T)
+#define CUST_ADPT_DESC(T) ADPT_DESC(Cust##T)
+
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_MACRO_H_
