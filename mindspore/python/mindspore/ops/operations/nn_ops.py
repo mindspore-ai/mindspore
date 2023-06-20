@@ -3410,7 +3410,7 @@ class RNNTLoss(PrimitiveWithInfer):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import ops
+        >>> from mindspore import ops, Tensor
         >>> B, T, U, V = 1, 2, 3, 5
         >>> blank = 0
         >>> acts = np.random.random((B, T, U, V)).astype(np.float32)
@@ -6937,8 +6937,7 @@ class ApplyFtrl(Primitive):
 
     Note:
         - Currently, only positive numbers are supported on the Ascend platform,
-         and the calculation results for other scenarios are not defined.
-
+          and the calculation results for other scenarios are not defined.
         - Inputs of `var`, `accum`, `linear` and `grad` comply with the implicit type conversion rules
           to make the data types consistent.
           If they have different data types, the lower priority data type will be converted to
@@ -6974,7 +6973,7 @@ class ApplyFtrl(Primitive):
         TypeError: If `grad` is not a Tensor.
         TypeError: If the parameter types of `var`, `accum` and `linear` are inconsistent.
         TypeError: If the parameter types of `grad`, `lr`, `l1`, `l2`, `lr_power` are inconsistent with `var`
-                      and the precision is greater than `var`.
+            and the precision is greater than `var`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

@@ -858,10 +858,10 @@ def set_debug_mode(debug_mode_flag: bool, debug_hook_list: list = None):
           so that debug mode execution of the dataset pipeline can produce deterministic results.
         - The following configuration settings are ignored:
 
-            - auto_offload (False is used.)
-            - enable_autotune (False is used.)
-            - error_samples_mode (ErrorSamplesMode.RETURN is used.)
-            - num_parallel_workers (Value 1 is used.)
+          - auto_offload (False is used.)
+          - enable_autotune (False is used.)
+          - error_samples_mode (ErrorSamplesMode.RETURN is used.)
+          - num_parallel_workers (Value 1 is used.)
         - The `offload` parameter in `map` operation will be ignored.
         - The `python_multiprocessing` parameter in `GeneratorDataset`, `map`/`batch` operation will be ignored.
         - The `cache` parameter in Dataset loading API will be ignored.
@@ -879,19 +879,17 @@ def set_debug_mode(debug_mode_flag: bool, debug_hook_list: list = None):
         TypeError: If any item in `debug_hook_list` is not DebugHook type.
 
     Examples:
-        1. Enable dataset pipeline debug mode and use default debug hook.
+        >>> # 1. Enable dataset pipeline debug mode and use default debug hook.
         >>> import mindspore.dataset as ds
         >>>
         >>> # Print shape and type of input/output data of each transform op in map operator.
         >>> ds.config.set_debug_mode(True)
-
-        2. Enable dataset pipeline debug mode and use pre-defined debug hook provided by MindData.
+        >>> # 2. Enable dataset pipeline debug mode and use pre-defined debug hook provided by MindData.
         >>> import mindspore.dataset.debug as debug
         >>>
         >>> ds.config.set_debug_mode(True, debug_hook_list=[debug.PrintDataHook()])
-
-        3. Enable dataset pipeline debug mode and use user-defined debug hook. It must define a
-        class inherited from DebugHook.
+        >>> # 3. Enable dataset pipeline debug mode and use user-defined debug hook. It must define a
+        >>> # class inherited from DebugHook.
         >>> import mindspore.dataset.debug as debug
         >>>
         >>> class CustomizedHook(debug.DebugHook):
@@ -903,8 +901,7 @@ def set_debug_mode(debug_mode_flag: bool, debug_hook_list: list = None):
         ...         return args
         >>>
         >>> ds.config.set_debug_mode(True, debug_hook_list=[CustomizedHook()])
-
-        4. Enable dataset pipeline debug mode and use user-defined debug hook and insert by users manually.
+        >>> # 4. Enable dataset pipeline debug mode and use user-defined debug hook and insert by users manually.
         >>> ds.config.set_debug_mode(True)
         >>> dataset = ds.ImageFolderDataset(dataset_dir="/path/to/image_folder_dataset_directory")
         >>> # The debug hook is added after `Decode` operation.

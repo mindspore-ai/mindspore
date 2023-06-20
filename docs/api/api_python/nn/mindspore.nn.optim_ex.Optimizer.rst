@@ -22,4 +22,4 @@ mindspore.nn.optim_ex.Optimizer
 
         参数：
             - **group_id** (int) - group的id。
-            - **param_group (dict): 指定了当前网络参数组的特定的优化器配置。
+            - **param_group** (dict) - 指定了当前网络参数组的特定的优化器配置。

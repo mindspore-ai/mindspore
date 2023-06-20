@@ -905,7 +905,7 @@ def setdiff1d(ar1, ar2, assume_unique=False):
 
     Returns:
         1D Tensor of values in `ar1` that are not in `ar2`.
-        The result is sorted when `assume_unique`=``False``, but otherwise only sorted if the input is sorted.
+        The result is sorted when `assume_unique` = ``False`` , but otherwise only sorted if the input is sorted.
 
     Raises:
         TypeError: If input `ar1` or `ar2` is not array_like.

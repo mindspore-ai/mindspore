@@ -1771,12 +1771,12 @@ class MultilabelMarginLoss(LossBase):
         >>> import mindspore as ms
         >>> import mindspore.nn as nn
         >>> import numpy as np
-       >>> loss = nn.MultilabelMarginLoss()
-       >>> x = ms.Tensor(np.array([[0.1, 0.2, 0.4, 0.8], [0.2, 0.3, 0.5, 0.7]]), ms.float32)
-       >>> target = ms.Tensor(np.array([[1, 2, 0, 3], [2, 3, -1, 1]]), ms.int32)
-       >>> output = loss(x, target)
-       >>> print(output)
-       0.325
+        >>> loss = nn.MultilabelMarginLoss()
+        >>> x = ms.Tensor(np.array([[0.1, 0.2, 0.4, 0.8], [0.2, 0.3, 0.5, 0.7]]), ms.float32)
+        >>> target = ms.Tensor(np.array([[1, 2, 0, 3], [2, 3, -1, 1]]), ms.int32)
+        >>> output = loss(x, target)
+        >>> print(output)
+        0.325
     """
 
     def __init__(self, reduction='mean'):

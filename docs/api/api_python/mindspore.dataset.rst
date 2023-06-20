@@ -49,7 +49,7 @@ mindspore.dataset
   可以将预处理完成的数据循环输出。
 
 数据处理Pipeline快速上手
-----------------------
+-------------------------
 
 如何快速使用Dataset Pipeline，可以将 `使用数据Pipeline加载 & 处理数据集 <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_ 下载到本地，按照顺序执行并观察输出结果。
 

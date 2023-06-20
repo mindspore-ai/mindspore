@@ -1,7 +1,7 @@
 mindspore.nn.optim_ex.Adam
 ===========================
 
-.. py:class:: mindspore.nn.Adam(params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0, amsgrad=False, *, maximize=False
+.. py:class:: mindspore.nn.optim_ex.Adam(params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0, amsgrad=False, *, maximize=False)
 
     Adaptive Moment Estimation (Adam)算法的实现。
 
