@@ -204,4 +204,14 @@ ATTR_MAP(GetNext) = {{"types", ATTR_DESC(output_types, AnyTraits<std::vector<GET
                      {"output_num", ATTR_DESC(output_num, AnyTraits<int64_t>())},
                      {"shared_name", ATTR_DESC(channel_name, AnyTraits<string>())}};
 REG_ADPT_DESC(GetNext, prim::kPrimGetNext->name(), ADPT_DESC(GetNext))
+
+INPUT_MAP(STFT) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(window)}};
+OUTPUT_MAP(STFT) = {{0, OUTPUT_DESC(y)}};
+ATTR_MAP(STFT) = {{"hop_length", ATTR_DESC(hop_length, AnyTraits<int64_t>())},
+                  {"win_length", ATTR_DESC(win_length, AnyTraits<int64_t>())},
+                  {"normalized", ATTR_DESC(normalized, AnyTraits<bool>())},
+                  {"onesided", ATTR_DESC(onesided, AnyTraits<bool>())},
+                  {"return_complex", ATTR_DESC(return_complex, AnyTraits<bool>())},
+                  {"n_fft", ATTR_DESC(n_fft, AnyTraits<int64_t>())}};
+REG_ADPT_DESC(STFT, prim::kPrimSTFT->name(), ADPT_DESC(STFT))
 }  // namespace mindspore::transform

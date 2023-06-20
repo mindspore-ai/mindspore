@@ -137,3 +137,9 @@
 "mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/left_shift.cc" "clarifyCalculation"
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/reversev2_cpu_kernel.cc" "unsignedLessThanZero"
 "mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cast_kernels.cc" "unreadVariable"
+
+# custom AICPU op_protos
+"mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/" "syntaxError"
+"mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/" "constParameter"
+"mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/" "unreadVariable"
+"mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/" "useStlAlgorithm"

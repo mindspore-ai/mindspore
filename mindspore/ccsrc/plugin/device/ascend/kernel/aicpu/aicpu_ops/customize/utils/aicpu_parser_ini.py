@@ -19,6 +19,15 @@ import os
 import stat
 import sys
 
+cust_op_lists = [
+    "Cast",
+    "Conj",
+    "IsNan",
+    "SliceGrad",
+    "MaskedSelectGrad",
+    "GatherDGradV2"
+]
+
 
 def parse_ini_files(ini_files):
     '''
@@ -36,20 +45,30 @@ def parse_ini_to_obj(ini_file, aicpu_ops_info):
     '''
     with open(ini_file) as ini_read_file:
         lines = ini_read_file.readlines()
-        ops = {}
+        op_name, info = None, {}
         for line in lines:
             line = line.rstrip()
+            if not line:
+                continue
             if line.startswith("["):
+                if op_name and info: # set info for the last op
+                    aicpu_ops_info["Cust"+op_name] = info
+                info = {}
                 op_name = line[1:-1]
-                ops = {}
-                aicpu_ops_info[op_name] = ops
-            else:
-                key1 = line[:line.index("=")]
-                key2 = line[line.index("=")+1:]
+                info = {}
+                if op_name not in cust_op_lists:
+                    op_name = None
+                    continue
+                aicpu_ops_info[op_name] = info
+            elif op_name:
+                key1 = line[:line.index("=")].strip()
+                key2 = line[line.index("=")+1:].strip()
                 key1_0, key1_1 = key1.split(".")
-                if key1_0 not in ops:
-                    ops[key1_0] = {}
-                ops[key1_0][key1_1] = key2
+                if key1_0 not in info:
+                    info[key1_0] = {}
+                info[key1_0][key1_1] = key2
+        if op_name and info:
+            aicpu_ops_info["Cust"+op_name] = info
 
 
 def check_custom_op_opinfo(required_custom_op_info_keys, ops, op_key):

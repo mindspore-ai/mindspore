@@ -383,3 +383,24 @@ mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/sparse_to_dense.cc:aicpu::SparseToDenseCpuKernel::ValidParam
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cpu_kernel/ms_kernel/upsample_trilinear3d_grad.cc:aicpu::UpsampleTrilinear3dGradCpuKernel::UpsampleTrilinear3dGradCompute
 mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/cast_kernels.cc:aicpu::CastKernel::DoCompute
+
+# custom AICPU op_protos
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/utils/common_shape_fns.cc:ge::SubShape
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/utils/util.cc:ge::TwoBroadcastShape
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/utils/util.cc:ge::TwoShapeAndRangeBroadcast
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/utils/util.cc:ge::InferShapeAndTypeTwoInOneOutBroadcast
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/fractional_max_pool_3d_with_fixed_ksize_proto.cc:ge::IMPLEMT_COMMON_INFERFUNC
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/max_pool_3d_grad_with_argmax_proto.cc:ge::CUST_IMPLEMT_VERIFIER
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/max_unpool_3d_grad_proto.cc:ge::CUST_IMPLEMT_VERIFIER
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/sspaddmm.cc:ge::CUST_IMPLEMT_INFERFUNC
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/sparse_matrix_transpose_proto.cc:ge::CUST_IMPLEMT_VERIFIER
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/batch_norm_grad_grad_proto.cc:ge::CUST_IMPLEMT_INFERFUNC
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/sparse_matrix_mat_mul_proto.cc:ge::CUST_IMPLEMT_VERIFIER
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/sparse_matrix_nnz_proto.cc:ge::CUST_IMPLEMT_VERIFIER
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/max_unpool_2d_grad_proto.cc:ge::CUST_IMPLEMT_VERIFIER
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/max_unpool_3d_proto.cc:ge::CUST_IMPLEMT_VERIFIER
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/max_unpool_2d_proto.cc:ge::CUST_IMPLEMT_VERIFIER
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/utils/util.cc:ge::InferShapeAndTypeTwoInOneOutBroadcast
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/fractional_max_pool_3d_with_fixed_ksize_proto.cc:ge::IMPLEMT_COMMON_INFERFUNC
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/sspaddmm.cc:ge::CUST_IMPLEMT_INFERFUNC
+mindspore/mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ops/customize/op_proto/fractional_max_pool_3d_grad_with_fixed_ksize_proto.cc:ge::IMPLEMT_COMMON_INFERFUNC

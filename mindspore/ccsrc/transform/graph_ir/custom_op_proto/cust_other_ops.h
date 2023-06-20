@@ -14,12 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_AICPU_AICPU_OPS_CUSTOMIZE_OP_PTOTO_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_AICPU_AICPU_OPS_CUSTOMIZE_OP_PTOTO_H_
+#ifndef MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_CUST_OTHER_OPS_H_
+#define MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_CUST_OTHER_OPS_H_
 
 #include "graph/operator_reg.h"
+#include "graph/operator.h"
 
-#define REG_CUST_OP(x) REG_OP(Cust##x)
-#define CUST_OP_END_FACTORY_REG(x) OP_END_FACTORY_REG(Cust##x)
+/* clang-format off */
 
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_AICPU_AICPU_OPS_CUSTOMIZE_OP_PTOTO_H_
+namespace ge {
+REG_OP(KVCacheMgr)
+  .INPUT(past, TensorType({DT_FLOAT16}))
+  .INPUT(cur, TensorType({DT_FLOAT16}))
+  .INPUT(index, TensorType({DT_INT32}))
+  .OUTPUT(past, TensorType({DT_FLOAT16}))
+  .OP_END_FACTORY_REG(KVCacheMgr)
+}  // namespace ge
+#endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_CUST_OTHER_OPS_H_

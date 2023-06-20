@@ -216,4 +216,13 @@ INPUT_MAP(Triu) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Triu) = {{"diagonal", ATTR_DESC(diagonal, AnyTraits<int64_t>())}};
 OUTPUT_MAP(Triu) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Triu, kNameTriu, ADPT_DESC(Triu))
+
+INPUT_MAP(MatrixDiagV3) = {{1, INPUT_DESC(x)},
+                           {2, INPUT_DESC(k)},
+                           {3, INPUT_DESC(num_rows)},
+                           {4, INPUT_DESC(num_cols)},
+                           {5, INPUT_DESC(padding_value)}};
+ATTR_MAP(MatrixDiagV3) = {{"align", ATTR_DESC(align, AnyTraits<std::string>())}};
+OUTPUT_MAP(MatrixDiagV3) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MatrixDiagV3, kNameMatrixDiagV3, ADPT_DESC(MatrixDiagV3))
 }  // namespace mindspore::transform
