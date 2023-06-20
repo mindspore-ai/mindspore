@@ -150,7 +150,7 @@ void PipelineTransformer::MainGraph() {
   return;
 }
 
-ValuePtr PipelineTransformer::SetMicroBatch(const AnfNodePtr &node, int64_t micro_size) const {
+ValuePtr PipelineTransformer::SetMicroBatch(const AnfNodePtr &node, int64_t micro_size, size_t batch_axis) const {
   if (!IsPrimitiveCNode(node, prim::kPrimStridedSlice)) {
     MS_LOG(EXCEPTION) << "Can't find MicroBatch information.";
   }
@@ -160,7 +160,11 @@ ValuePtr PipelineTransformer::SetMicroBatch(const AnfNodePtr &node, int64_t micr
   auto tuple = GetValue<std::vector<int64_t>>(value);
   auto input_tmp = GetNodeShape(cnode->input(1));
   auto input_shape = input_tmp.at(0);
-  int64_t micro = tuple.at(0) * micro_size / input_shape.at(0);
+  auto slice_batch_size = input_shape.at(batch_axis);
+  if (slice_batch_size == 0) {
+    MS_LOG(EXCEPTION) << "slice_batch_size should be a positive integer, but got " << slice_batch_size;
+  }
+  int64_t micro = tuple.at(batch_axis) * micro_size / slice_batch_size;
   cnode->AddPrimalAttr(MICRO, MakeValue(micro));
   cnode->AddPrimalAttr(PIPELINE_BEGIN, MakeValue(micro));
   return MakeValue(micro);
@@ -245,6 +249,40 @@ bool PipelineTransformer::LabelParameterStart(const FuncGraphPtr &graph) {
   return false;
 }
 
+size_t PipelineTransformer::GetBatchAxisForInput(const AnfNodeIndexSet &input_node_users) const {
+  Shapes inputs_tuple;
+  for (const auto &input_node_user : input_node_users) {
+    auto node = input_node_user.first;
+    if (!IsPrimitiveCNode(node, prim::kPrimStridedSlice)) {
+      MS_LOG(EXCEPTION) << "Can't find MicroBatch information.";
+    }
+    auto cnode = node->cast<CNodePtr>();
+    auto value = GetValueNode(cnode->input(2));
+    MS_EXCEPTION_IF_NULL(value);
+    auto tuple = GetValue<std::vector<int64_t>>(value);
+    inputs_tuple.push_back(tuple);
+  }
+  size_t batch_axis = 0;
+  size_t batch_axis_count = 0;
+  size_t input_dim = inputs_tuple.at(0).size();
+  size_t micro_num = inputs_tuple.size();
+  for (size_t axis = 0; axis < input_dim; ++axis) {
+    for (size_t i = 1; i < micro_num; ++i) {
+      if (inputs_tuple[i][axis] != inputs_tuple[i - 1][axis]) {
+        batch_axis = axis;
+        ++batch_axis_count;
+        break;
+      }
+    }
+  }
+  if (batch_axis_count != kSizeOne) {
+    MS_LOG(EXCEPTION)
+      << "For pipeline parallelism, micro_size partitioning of the input along a certain dimension is and "
+      << "is only allowed, but it is found that " << batch_axis_count << " to be partitioned.";
+  }
+  return batch_axis;
+}
+
 void PipelineTransformer::LabelMicroBatch() {
   if (!is_train_) {
     return;
@@ -267,9 +305,13 @@ void PipelineTransformer::LabelMicroBatch() {
       }
       auto micro_size = int64_t(data_users.size());
       micro_size_ = micro_size;
-      MS_LOG(INFO) << "Micro Size is: " << micro_size;
+      auto batch_axis = GetBatchAxisForInput(data_users);
+      MS_LOG(INFO) << "For the "
+                   << GetSerialNumberString(
+                        GetValue<int64_t>(GetValueNode(node_user.first->cast<CNodePtr>()->input(kIndex2))))
+                   << "input, batch axis is " << batch_axis << ", micro size is : " << micro_size;
       for (auto &data_user : data_users) {
-        auto micro = SetMicroBatch(data_user.first, micro_size);
+        auto micro = SetMicroBatch(data_user.first, micro_size, batch_axis);
         SetStridedSliceStrategy(data_user.first);
         auto cnode = data_user.first->cast<CNodePtr>();
         BroadCastMicroBatch(cnode, &node_user_map, micro, 0);
