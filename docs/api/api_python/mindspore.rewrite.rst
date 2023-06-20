@@ -76,14 +76,7 @@ ReWrite完整示例请参考
         异常：
             - **TypeError** - 参数不是Node类型。
 
-    .. py:method:: mindspore.rewrite.SymbolTree.nodes()
-
-        返回当前SymbolTree里节点的生成器，该接口用于遍历SymbolTree里的节点。
-
-        返回：
-            当前SymbolTree中节点的生成器。
-
-    .. py:method:: mindspore.rewrite.SymbolTree.get_node(node_name)
+    .. py:method:: mindspore.rewrite.SymbolTree.get_node(node_name: str)
 
         获取SymbolTree里名称为 `node_name` 的节点。
 
@@ -123,6 +116,13 @@ ReWrite完整示例请参考
             - **TypeError** - 如果参数 `position` 不是Position类型。
             - **TypeError** - 如果参数 `node` 不是Node类型。
 
+    .. py:method:: mindspore.rewrite.SymbolTree.nodes()
+
+        返回当前SymbolTree里节点的生成器，该接口用于遍历SymbolTree里的节点。
+
+        返回：
+            当前SymbolTree中节点的生成器。
+
     .. py:method:: mindspore.rewrite.SymbolTree.print_node_tabulate()
 
         打印SymbolTree里节点的拓扑信息，包括节点类型、节点名称、节点对应代码、节点的输入输出关系等。
@@ -152,7 +152,7 @@ ReWrite完整示例请参考
             - **TypeError** - 如果参数 `new_nodes` 不是list，或者列表中的成员不是Node类型。
             - **TypeError** - 如果参数 `old_node` 不是Node类型。
 
-    .. py:method:: mindspore.rewrite.SymbolTree.unique_name(name)
+    .. py:method:: mindspore.rewrite.SymbolTree.unique_name(name: str = "output")
 
         基于给定 `name` ，返回一个SymbolTree内唯一的新的名称。当需要一个不冲突的变量名时，可以使用该接口。
 

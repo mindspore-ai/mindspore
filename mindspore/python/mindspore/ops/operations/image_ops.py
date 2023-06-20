@@ -324,7 +324,7 @@ class CropAndResize(Primitive):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import nn, ops
+        >>> from mindspore import nn, ops, Tensor
         >>> class CropAndResizeNet(nn.Cell):
         ...     def __init__(self, crop_size):
         ...         super(CropAndResizeNet, self).__init__()

@@ -1,7 +1,7 @@
 mindspore.ops.vecdot
 ====================
 
-.. py:function:: vecdot(x, y, *, axis=-1)
+.. py:function:: mindspore.ops.vecdot(x, y, *, axis=-1)
 
     在指定维度上，计算两批向量的点积。
 

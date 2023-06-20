@@ -388,7 +388,7 @@ class SymbolTree:
             name (str, optional): The prefix of the name. Defaults to ``"output"`` .
 
         Returns:
-            str: A new, unique name within a symbol tree in the format `name_n`, where `n` is a numeric subscript.
-                If there is no name conflict when entered `name`, there is no numeric subscript.
+            str, A new, unique name within a symbol tree in the format `name_n`, where `n` is a numeric subscript.
+            If there is no name conflict when entered `name`, there is no numeric subscript.
         """
         return self._symbol_tree.unique_name(name)

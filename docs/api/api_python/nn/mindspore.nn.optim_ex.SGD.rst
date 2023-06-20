@@ -1,7 +1,7 @@
 mindspore.nn.optim_ex.SGD
 ==========================
 
-.. py:class:: mindspore.nn.SGD(params, lr, momentum=0, dampening=0, weight_decay=0, nesterov=False, *, maximize=False)
+.. py:class:: mindspore.nn.optim_ex.SGD(params, lr, momentum=0, dampening=0, weight_decay=0, nesterov=False, *, maximize=False)
 
     随机梯度下降算法。
 
@@ -34,9 +34,9 @@ mindspore.nn.optim_ex.SGD
 
     异常：
         - **ValueError** - 动量、阻尼或重量衰减值小于0.0。
-        - **ValueError** - 学习率不是int, float或Tensor.
-        - **ValueError** - 学习率小于0.
-        - **ValueError** - ``momentum`` 和 ``weight_decay`` 值小于0.0.
-        - **ValueError** - ``momentum``,``dampening`` 和 ``weight_decay`` 不是int或float.
-        - **ValueError** - ``nesterov`` 和 ``maximize`` 不是布尔类型.
-        - **ValueError** - ``nesterov`` 为True时, ``momentum`` 不为正或 ``dampening`` 不为0.。
+        - **ValueError** - 学习率不是int, float或Tensor。
+        - **ValueError** - 学习率小于0。
+        - **ValueError** - ``momentum`` 和 ``weight_decay`` 值小于0.0。
+        - **ValueError** - ``momentum``, ``dampening`` 和 ``weight_decay`` 不是int或float。
+        - **ValueError** - ``nesterov`` 和 ``maximize`` 不是布尔类型。
+        - **ValueError** - ``nesterov`` 为True时, ``momentum`` 不为正或 ``dampening`` 不为0。

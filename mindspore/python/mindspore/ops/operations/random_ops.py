@@ -806,7 +806,7 @@ class RandomCategorical(PrimitiveWithInfer):
     Examples:
         >>> import mindspore
         >>> import numpy as np
-        >>> from mindspore import nn, ops
+        >>> from mindspore import nn, ops, Tensor
         >>> class Net(nn.Cell):
         ...   def __init__(self, num_sample):
         ...     super(Net, self).__init__()

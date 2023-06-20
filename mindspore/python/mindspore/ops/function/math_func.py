@@ -2652,7 +2652,7 @@ def atanh(input):
         out_i = \tanh^{-1}(input_{i})
 
     Args:
-        x (Tensor): The shape of tensor is
+        input (Tensor): The shape of tensor is
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
             The data type should be one of the following types: float16, float32.
 
