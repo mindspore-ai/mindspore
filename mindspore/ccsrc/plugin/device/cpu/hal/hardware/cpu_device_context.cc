@@ -64,6 +64,7 @@
 #ifdef ENABLE_DUMP_IR
 #include "include/common/debug/anf_ir_dump.h"
 #endif
+#include "runtime/profiler/profiler.h"
 
 namespace mindspore {
 namespace device {
@@ -453,8 +454,6 @@ bool CPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<A
                                      const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
                                      size_t /* stream_id */) const {
   MS_EXCEPTION_IF_NULL(kernel);
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
 
 #ifndef ENABLE_SECURITY
   const auto &profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
@@ -467,7 +466,7 @@ bool CPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<A
   }
 #endif
   MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
-  auto ret = DoLaunchKernel(kernel_mod, inputs, workspace, outputs);
+  auto ret = DoLaunchKernel(kernel, inputs, workspace, outputs);
   MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();
   return ret;
 }
@@ -505,23 +504,27 @@ bool CPUKernelExecutor::LaunchKernelWithProfiling(const CNodePtr &kernel, const 
   auto profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);
 
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-
   uint32_t pid = IntToUint(getpid());
   // cpu support multi-thread with mindrt for profiling.
   profiler_inst->OpDataProducerBeginParallel(kernel->fullname_with_scope(), pid);
-  bool ret = DoLaunchKernel(kernel_mod, inputs, workspace, outputs);
+  bool ret = DoLaunchKernel(kernel, inputs, workspace, outputs);
   profiler_inst->OpDataProducerEndParallel(kernel->fullname_with_scope());
   profiler_inst->RecordFrameWorkInfo(kernel);
   return ret;
 }
 
-bool CPUKernelExecutor::DoLaunchKernel(KernelMod *const kernel_mod, const std::vector<AddressPtr> &inputs,
+bool CPUKernelExecutor::DoLaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
                                        const std::vector<AddressPtr> &workspace,
                                        const std::vector<AddressPtr> &outputs) const {
+  MS_EXCEPTION_IF_NULL(kernel);
+  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  return kernel_mod->Launch(inputs, workspace, outputs, nullptr);
+  uint64_t start_time = 0;
+  PROFILER_START(start_time);
+  auto ret = kernel_mod->Launch(inputs, workspace, outputs, nullptr);
+  PROFILER_END(start_time, runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelLaunch,
+               kernel->fullname_with_scope(), false);
+  return ret;
 }
 
 void CPUKernelExecutor::RebuildKernelSelectBackoffOp(const std::vector<CNodePtr> &nodes) const {

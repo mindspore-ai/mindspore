@@ -40,8 +40,6 @@ enum class ProfilerModule { kPython, kRuntime, kPynative, kKernel, kOther };
 enum class ProfilerEvent {
   kDefault,
   kKernelInfer,
-  // InferInner is not counted in the total time.
-  kKernelInferInner,
   kKernelResize,
   kKernelLaunch,
   kKernelUpdate,
@@ -56,6 +54,10 @@ enum class ProfilerEvent {
   kMemoryFree,
   kCopyData,
   kStreamSync,
+
+  // Inner event is not counted in the total time.
+  kKernelInferInner,
+  kKernelInferDataSync,
 };
 
 #define PROFILER_START(start_time)                                          \

@@ -674,11 +674,8 @@ bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const) {
 
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
   MS_LOG(DEBUG) << "Begin launch kernel of actor: " << GetAID().Name();
-  uint64_t start_time = 0;
-  PROFILER_START(start_time);
   auto ret = device_contexts_[0]->GetKernelExecutor(false)->LaunchKernel(
     kernel_, launch_info_.inputs_, launch_info_.workspaces_, launch_info_.outputs_, kernel_info_->stream_id());
-  PROFILER_END(start_time, ProfilerModule::kKernel, ProfilerEvent::kKernelLaunch, GetAID().Name(), false);
   MS_LOG(DEBUG) << "End launch kernel of actor: " << GetAID().Name();
   return ret;
 }

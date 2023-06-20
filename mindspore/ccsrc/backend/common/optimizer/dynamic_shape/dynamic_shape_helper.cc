@@ -32,6 +32,7 @@
 #include "utils/ms_context.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindspore/ccsrc/plugin/device/cpu/kernel/pyexecute/py_execute_cpu_kernel.h"
+#include "runtime/profiler/profiler.h"
 
 namespace mindspore {
 namespace opt::dynamic_shape {
@@ -138,14 +139,18 @@ tensor::TensorPtr CreateTensorMem(const std::pair<AnfNodePtr, size_t> &input_nod
 tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
                                        const std::pair<AnfNodePtr, size_t> &input_node_with_index, bool skip_nop_node,
                                        void *args) {
+  MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(input_node_with_index.first);
   auto depended_value = CreateTensorMem(input_node_with_index);
   // First use the data of args.
   if (args != nullptr) {
     auto input_device_address = reinterpret_cast<std::vector<device::DeviceAddress *> *>(args);
     if (i < input_device_address->size() && input_device_address->at(i) != nullptr) {
-      MS_EXCEPTION_IF_NULL(node);
+      uint64_t start_time = 0;
+      PROFILER_START(start_time);
       depended_value->data_sync_directly(input_device_address->at(i));
+      PROFILER_END(start_time, runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelInferDataSync,
+                   node->fullname_with_scope(), true);
       return depended_value;
     }
     MS_LOG(WARNING) << "There is no valid data for " << i << " input of " << node->DebugString() << ", "
@@ -159,7 +164,11 @@ tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
     // The second parameter must be false, otherwise the device address cannot be released and allocated, and the
     // address size will be wrong in the dynamic shape scenario.
     depended_value->set_device_address(output_addr, false);
+    uint64_t start_time = 0;
+    PROFILER_START(start_time);
     depended_value->data_sync();
+    PROFILER_END(start_time, runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelInferDataSync,
+                 node->fullname_with_scope(), true);
     return depended_value;
   }
 
@@ -188,7 +197,11 @@ tensor::TensorPtr GetDependValueTensor(const std::vector<device::DeviceAddressPt
     auto shape = output_addr->host_shape();
     auto tensor = std::make_shared<tensor::Tensor>(type, shape);
     tensor->set_device_address(output_addr, false);
+    uint64_t start_time = 0;
+    PROFILER_START(start_time);
     tensor->data_sync();
+    PROFILER_END(start_time, runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelInferDataSync,
+                 runtime::kDefaultOpName, true);
     return tensor;
   }
 
