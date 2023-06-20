@@ -1418,6 +1418,7 @@ class DecodeImage(PrimitiveWithInfer):
 
     Examples:
     """
+
     @prim_attr_register
     def __init__(self, channels=0, dtype=mstype.uint8, expand_animations=False, _op_max_shape="8192,8192,3",
                  _op_max_size=[8000000]):
@@ -1519,6 +1520,7 @@ class Cummin(Primitive):
         >>> print(output[1])
         [0 1 1 1 4 4]
     """
+
     @prim_attr_register
     def __init__(self, axis):
         """Initialize Cummin"""
@@ -1681,6 +1683,7 @@ class PartitionedCall(PrimitiveWithInfer):
 
     Examples:
     """
+
     @prim_attr_register
     def __init__(self, graph, executor_type=""):
         self.add_prim_attr("executor_type", executor_type)
@@ -2185,13 +2188,22 @@ class CheckBprop(PrimitiveWithInfer):
             raise ValueError(f"For {tips} the number of return values(gradients) must be equal to "
                              f"the number of input arguments except 'out' and 'dout', "
                              f"which is:{len(yshapes)} but got {len(xshapes)}.")
-        checking_range = len(yshapes)
-        for i in range(checking_range):
-            xshape = xshapes[i]
-            yshape = yshapes[i]
+
+        def shape_equal(shape1, shape2):
+            if len(shape1) != len(shape2):
+                return False
+            for shape_axis1, shape_axis2 in zip(shape1, shape2):
+                if shape_axis1 == -1 or shape_axis2 == -1:
+                    continue
+                if shape_axis1 != shape_axis2:
+                    return False
+            return True
+
+        for i, (xshape, yshape) in enumerate(zip(xshapes, yshapes)):
             if not xshape or not yshape:
                 continue
-            if xshape != yshape:
+
+            if not shape_equal(xshape, yshape):
                 raise ValueError(f"For {tips}, the {i}th return value(gradient of the {i}th argument) "
                                  f"should have the same shape as the {i}th argument, "
                                  f"which is:{yshape}, but got: {xshape}.")
@@ -2221,6 +2233,7 @@ class CheckBprop(PrimitiveWithInfer):
                                 f"should have the same dtype as the {i}th argument, "
                                 f"which is:{ydtype}, but got: {xdtype}.")
         return xdtypes
+
 
 check_bprop = CheckBprop()
 
@@ -2384,6 +2397,7 @@ class ConvertToAdapterTensor(Primitive):
         >>> print(x)
         [1 2 3]
     """
+
     @prim_attr_register
     def __init__(self):
         """Initialize"""
@@ -2391,6 +2405,7 @@ class ConvertToAdapterTensor(Primitive):
     def __call__(self, x):
         """Run in PyNative mode"""
         return ms_adapter_registry.tensor(x, cast_tensor=True)
+
 
 convert_to_adapter_tensor = ConvertToAdapterTensor()
 
@@ -2415,6 +2430,7 @@ class ConvertToMsTensor(Primitive):
         >>> print(x)
         [1 2 3]
     """
+
     @prim_attr_register
     def __init__(self):
         """Initialize"""
@@ -2424,6 +2440,7 @@ class ConvertToMsTensor(Primitive):
         if isinstance(x, StubTensor):
             return StubTensor(stub=x.stub, tensor=x.tensor)
         return ops.deepcopy(x)
+
 
 convert_to_ms_tensor = ConvertToMsTensor()
 
@@ -2470,6 +2487,7 @@ class IsParameter(PrimitiveWithInfer):
     """
         Check if input is `Parameter`
     """
+
     @prim_attr_register
     def __init__(self):
         """Initialize IsParameter"""
