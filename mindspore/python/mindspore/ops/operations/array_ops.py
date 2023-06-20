@@ -476,6 +476,9 @@ class Im2Col(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> x = Tensor(input_data=np.random.rand(4, 4, 32, 32), dtype=mstype.float64)
         >>> im2col = ops.Im2Col(ksizes=3, strides=1, dilations=1)
         >>> y = im2col(x)
@@ -2052,6 +2055,7 @@ class InvertPermutation(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import ops
         >>> invert = ops.InvertPermutation()
         >>> input_data = (3, 4, 0, 2, 1)
         >>> output = invert(input_data)
@@ -7939,6 +7943,8 @@ class LogSpace(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> logspace = ops.LogSpace(steps = 10, base = 10, dtype=mstype.float32)
         >>> start = Tensor(1, mstype.float32)
         >>> end = Tensor(10, mstype.float32)
@@ -8096,6 +8102,9 @@ class IndexFill(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> index_fill = ops.IndexFill()
         >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).astype(np.float32))
         >>> index = Tensor([0, 2], mindspore.int32)
@@ -8149,6 +8158,9 @@ class IndexPut(Primitive):
         ``Ascend`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x1 = Tensor(np.array([[1, 2, 3], [4, 5, 6]]).astype(np.int32))
         >>> x2 = Tensor(np.array([3]).astype(np.int32))
         >>> indices = [Tensor(np.array([0, 0]).astype(np.int32)), Tensor(np.array([0, 1]).astype(np.int32))]
@@ -8366,6 +8378,8 @@ class LeftShift(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> left_shift = ops.LeftShift()
         >>> x1 = Tensor(np.array([1, 2, 3]).astype(np.int8))
         >>> x2 = Tensor(np.array([0, 1, -1]).astype(np.int8))
