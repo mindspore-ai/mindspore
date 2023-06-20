@@ -655,7 +655,7 @@ Status DataQueueOp::PushDataToGPU() {
     send_finished_ = true;
   }
   tree_->SetFinished();
-  MS_LOG(INFO) << "ExecutionTree finished.  Device queue pushed number of batches: " << send_batch;
+  MS_LOG(INFO) << "ExecutionTree finished. Device queue sent number of batches: " << send_batch;
 
   device::DataQueueMgr::GetInstance().Close(channel_name_);
   device::DataQueueMgr::GetInstance().CloseConfirm();
