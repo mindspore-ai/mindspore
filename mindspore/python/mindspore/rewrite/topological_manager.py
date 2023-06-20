@@ -15,7 +15,7 @@
 """SymbolTree topological-relationship manager."""
 from typing import Tuple
 import astunparse
-
+from mindspore import log as logger
 from .api.scoped_value import ScopedValue
 from .node import Node
 from .common.observable import Observable
@@ -86,21 +86,25 @@ class TopoManager(Observable):
         """
         prev_providers = {}
         # Find previous node with same target of current node.
-        # If all target can find crossponding node, then do replace instead of raise RuntimeError
         for index, target_users in node.get_target_users().items():
             if not target_users:
                 continue
             prev_provider = self._get_value_provider(node, node.get_targets()[index])
             if not prev_provider:
-                raise RuntimeError(f"Node {node.get_name()}'s target {index} is used in node "
-                                   f"{target_users[0][0].get_name()}'s arg {target_users[0][1]}, "
-                                   f"no other node provides this target if node {node.get_name()} is erased.")
-            prev_providers[index] = prev_provider
+                logger.warning(f"Node {node.get_name()}'s target {index} is used in node "
+                               f"{target_users[0][0].get_name()}'s arg {target_users[0][1]}, "
+                               f"no other node provides this target if node {node.get_name()} is erased.")
+                prev_providers[index] = None
+            else:
+                prev_providers[index] = prev_provider
         # Update targets topological of nodes
         for index, prev_provider in prev_providers.items():
             for target_user in node.get_target_users(index):
-                prev_provider[0].append_target_users(prev_provider[1], target_user)
-                target_user[0].set_arg_providers(target_user[1], prev_provider)
+                if prev_provider is None:
+                    target_user[0].get_arg_providers().pop(target_user[1], None)
+                else:
+                    prev_provider[0].append_target_users(prev_provider[1], target_user)
+                    target_user[0].set_arg_providers(target_user[1], prev_provider)
         # Update arguments topological of nodes
         for _, arg_providers in node.get_arg_providers().items():
             if not arg_providers:

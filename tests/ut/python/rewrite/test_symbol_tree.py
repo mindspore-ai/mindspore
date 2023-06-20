@@ -322,23 +322,6 @@ def test_erase_succeed():
     assert len(construct_ast.body) == 5
 
 
-def test_erase_failed():
-    """
-    Feature: Python api erase_node of SymbolTree of Rewrite.
-    Description: Call erase_node to erase a node from SymbolTree which is not isolated.
-    Expectation: Failure.
-    """
-    stree, _, relu1, relu2 = create_symbol_tree()
-    catched_error = False
-    try:
-        stree.set_node_target(relu1, 0, "x1")
-        stree.set_node_arg_by_node(relu2, 0, relu1)
-        stree.erase_node(relu1)
-    except RuntimeError:
-        catched_error = True
-    assert catched_error
-
-
 def test_replace_one_to_one():
     """
     Feature: Python api replace of SymbolTree of Rewrite.
