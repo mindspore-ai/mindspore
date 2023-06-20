@@ -79,7 +79,7 @@ TypePtr MapTensorGetDataInferType(const PrimitivePtr &prim, const std::vector<Ab
   return type;
 }
 
-AbstractBasePtr MapTensorGetDataInfer(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+AbstractBasePtr MapTensorGetDataInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) {
   return MapTensorGetDataInferInner(primitive, input_args);
 }

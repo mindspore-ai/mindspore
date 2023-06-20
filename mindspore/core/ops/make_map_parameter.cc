@@ -36,8 +36,7 @@ namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(MakeMapParameter, BaseOperator);
 
-abstract::ShapePtr MakeMapParameterInferShape(const PrimitivePtr &primitive,
-                                              const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr MakeMapParameterInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   // value_shape
   constexpr int64_t value_arg_index = 1;
   auto shape = input_args[value_arg_index]->GetShapeTrack();
@@ -51,7 +50,7 @@ abstract::ShapePtr MakeMapParameterInferShape(const PrimitivePtr &primitive,
   return std::make_shared<mindspore::abstract::Shape>(shape_vec);
 }
 
-TypePtr MakeMapParameterInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr MakeMapParameterInferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   constexpr int64_t key_arg_index = 0;
   constexpr int64_t value_arg_index = 1;
   auto key_type = input_args[key_arg_index]->GetTypeTrack();
