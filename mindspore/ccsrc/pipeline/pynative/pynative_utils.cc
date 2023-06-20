@@ -628,7 +628,7 @@ void PyParser::PrepareOpGradInfo(const FrontendOpRunInfoPtr &op_run_info) {
   op_run_info->input_unused_in_bprop.resize(op_run_info->input_size + kIndex1, false);
   op_run_info->op_grad_info->input_value_grad_type.resize(op_run_info->input_size, TensorGradType::kConstant);
   if (!op_run_info->is_ms_function_input) {
-    const auto &unused_inputs = BpropExpander().GetUnusedInputs(op_run_info->op_grad_info->op_prim->name());
+    const auto &unused_inputs = BpropExpander::GetUnusedInputs(op_run_info->op_grad_info->op_prim->name());
     for (size_t i = 0; i < op_run_info->input_size; ++i) {
       op_run_info->input_unused_in_bprop[i] = (unused_inputs.find(i) != unused_inputs.end());
     }

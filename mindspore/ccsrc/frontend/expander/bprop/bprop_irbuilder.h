@@ -90,6 +90,7 @@ class BpropIRBuilder : public Emitter {
   NodePtr StridedSlice(const NodePtr &x, const std::map<int64_t, std::vector<int64_t>> &slices) const;
   std::string GetInstanceName() const { return instance_name_; }
   NodePtr TanhGrad(const NodePtr &y, const NodePtr &dy) const { return Emit("TanhGrad", {y, dy}); }
+  virtual NodePtr OutZeros(const NodePtr &node) const { return ZerosLike(node); }
 
  protected:
   std::string name_;
@@ -106,20 +107,17 @@ class BpropIRBuilderFactory {
   }
 
   const BpropHandle *GetBuilder(const std::string &name) const {
-    auto iter = registry().find(name);
-    return (iter == registry().end()) ? nullptr : &(iter->second);
+    auto iter = registry_.find(name);
+    return (iter == registry_.end()) ? nullptr : &(iter->second);
   }
 
-  void RegBuilder(const std::string &name, const BpropIRBuilderFunc &func) const { registry()[name].func = func; }
-  void RegUnusedInputs(const std::string &name, const mindspore::HashSet<size_t> &unused) const {
-    registry()[name].unused_inputs = unused;
+  void RegBuilder(const std::string &name, const BpropIRBuilderFunc &func) { registry_[name].func = func; }
+  void RegUnusedInputs(const std::string &name, const mindspore::HashSet<size_t> &unused) {
+    registry_[name].unused_inputs = unused;
   }
 
  private:
-  HashMap<std::string, BpropHandle> &registry() const {
-    static HashMap<std::string, BpropHandle> reg{};
-    return reg;
-  }
+  HashMap<std::string, BpropHandle> registry_;
 };
 
 class BpropIRBuilderRegHelper {

@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_COMMON_EXPANDER_CORE_INFER_H_
 #include <memory>
 #include "include/common/expander/core/node.h"
+#include "abstract/ops/primitive_infer_map.h"
 
 namespace mindspore {
 namespace expander {
@@ -46,6 +47,10 @@ class COMMON_EXPORT CppInfer : public ExpanderInfer {
 
  protected:
   void InferAnfnode(const AnfNodePtr &anfnode) const;
+  static abstract::PrimitiveEvalImplMap &infer_impl_cache() {
+    static abstract::PrimitiveEvalImplMap cache{};
+    return cache;
+  }
 };
 }  // namespace expander
 }  // namespace mindspore

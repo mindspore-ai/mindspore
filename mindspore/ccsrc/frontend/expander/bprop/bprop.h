@@ -34,24 +34,16 @@ struct UserMap {
 };
 class BpropExpander {
  public:
-  BpropExpander() {}
   BpropExpander(CNodePtrList *outputs, UserMap *users) : outputs_(outputs), users_(users) {}
   ~BpropExpander() = default;
   bool Run(const CNodePtr &cnode);
-  const mindspore::HashSet<size_t> &GetUnusedInputs(const string &op_name) const;
+  static const mindspore::HashSet<size_t> &GetUnusedInputs(const string &op_name);
 
  protected:
   bool RunBprop(const CNodePtr &cnode);
-  void ExtractInputs(const CNodePtr &cnode, const BpropIRBuilder *ir_builder);
-  std::unique_ptr<BpropIRBuilder> CreateIRBuilder(const std::string &name, const CNodePtr &cnode) const;
-  const BpropHandle *GetBpropHandle(const std::string &name) const {
-    return BpropIRBuilderFactory::Instance().GetBuilder(name);
-  }
-  void PostProcess(const BpropIRBuilder *ir_builder) const;
+  void PostProcess(const CNodePtr &cnode) const;
   void DumpResult(const std::string &name) const;
   NodePtrList input_nodes_;
-  // outputs_ must be CNodePtrList, but output_nodes_ may not necessary. output_nodes_ are used to
-  // create bprop func_graph in graph_mode.
   NodePtrList output_nodes_;
   CNodePtrList *outputs_{nullptr};
   UserMap *users_{nullptr};

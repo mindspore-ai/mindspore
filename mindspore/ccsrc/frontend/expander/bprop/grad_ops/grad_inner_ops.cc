@@ -49,7 +49,7 @@ REG_BPROP_BUILDER("MatmulDDS.NotReady").SetUnusedInputs({i2, i3, i5}).SetBody(BO
   auto dk = ib->TupleGetItem(tmp, kIndex1);
   ShapeVector shape = {1, 0, 3, 2};
   dk = ib->Transpose(dk, shape);
-  return {dq, dk, ib->ZerosLike(local_mask), ib->ZerosLike(global_mask)};
+  return {dq, dk, ib->OutZeros(local_mask), ib->OutZeros(global_mask)};
 });
 
 REG_BPROP_BUILDER("ResizeBilinearV2").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {
@@ -59,7 +59,7 @@ REG_BPROP_BUILDER("ResizeBilinearV2").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC
   auto dx = ib->Emit(
     "ResizeBilinearGrad", {dout, x},
     {{"align_corners", ib->GetAttr("align_corners")}, {"half_pixel_centers", ib->GetAttr("half_pixel_centers")}});
-  return {dx, ib->ZerosLike(size)};
+  return {dx, ib->OutZeros(size)};
 });
 
 REG_BPROP_BUILDER("ConvertToDynamic").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
@@ -91,7 +91,7 @@ REG_BPROP_BUILDER("FillV2").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
     axis.push_back(i);
   }
   auto dvalue = ib->ReduceSum(dout, axis);
-  return {ib->ZerosLike(shape), ib->Cast(dvalue, dout_typeptr)};
+  return {ib->OutZeros(shape), ib->Cast(dvalue, dout_typeptr)};
 });
 
 REG_BPROP_BUILDER("TensorCopySlices").SetUnusedInputs({i0, i5}).SetBody(BODYFUNC(ib) {
@@ -112,7 +112,7 @@ REG_BPROP_BUILDER("TensorCopySlices").SetUnusedInputs({i0, i5}).SetBody(BODYFUNC
                                {kAttrEllipsisMask, MakeValue(ellipsis_mask)},
                                {kAttrNewAxisMask, MakeValue(new_axis_mask)},
                                {kAttrShrinkAxisMask, MakeValue(shrink_axis_mask)}});
-  return {x_grad, update_grad, ib->ZerosLike(begin), ib->ZerosLike(end), ib->ZerosLike(stride)};
+  return {x_grad, update_grad, ib->OutZeros(begin), ib->OutZeros(end), ib->OutZeros(stride)};
 });
 
 REG_BPROP_BUILDER("Roll").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
@@ -140,7 +140,7 @@ REG_BPROP_BUILDER("DynamicResizeNearestNeighbor").SetUnusedInputs({i0, i1, i2}).
   auto dout = ib->GetInput(kIndex3);
   auto res = ib->ShapeCalc(g_dynamic_resize_nearest_neighbor, {inputs})[0];
   return {ib->Emit("ResizeNearestNeighborGrad", {dout, res}, {{"align_corners", ib->GetAttr("align_corners")}}),
-          ib->ZerosLike(size)};
+          ib->OutZeros(size)};
 });
 
 REG_BPROP_BUILDER("ParallelResizeBilinear").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
@@ -153,7 +153,7 @@ REG_BPROP_BUILDER("ParallelResizeBilinear").SetUnusedInputs({i2}).SetBody(BODYFU
                       {"dst_start_w", ib->GetAttr("dst_start_w")},
                       {"align_corners", ib->GetAttr("align_corners")},
                       {"half_pixel_centers", MakeValue(false)}});
-  return {dx, ib->ZerosLike(size)};
+  return {dx, ib->OutZeros(size)};
 });
 
 REG_BPROP_BUILDER("DynamicBroadcastTo").SetBody([](const BpropIRBuilder *ib) -> NodePtrList {
@@ -176,7 +176,7 @@ REG_BPROP_BUILDER("DynamicBroadcastTo").SetBody([](const BpropIRBuilder *ib) -> 
     reduced_grad = ib->Cast(reduced_grad, dout_dtype_id);
   }
   auto dx = ib->Reshape(reduced_grad, ib->Shape(x));
-  return {dx, ib->ZerosLike(shp)};
+  return {dx, ib->OutZeros(shp)};
 });
 
 REG_BPROP_BUILDER("SiLU").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {

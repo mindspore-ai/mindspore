@@ -56,7 +56,7 @@ class COMMON_EXPORT Emitter {
   NodePtr EmitValue(const ValuePtr &value) const;
 
   NodePtr MakeTuple(const NodePtrList &inputs) const { return EmitOp(prim::kPrimMakeTuple, inputs); }
-  NodePtr MakeList(const NodePtrList &inputs) const { return Emit("make_list", inputs); }
+  NodePtr MakeList(const NodePtrList &inputs) const { return EmitOp(prim::kPrimMakeList, inputs); }
   NodePtr TupleGetItem(const NodePtr &input, size_t i) const {
     return Emit(prim::kTupleGetItem, {input, Value(static_cast<int64_t>(i))});
   }
@@ -305,6 +305,10 @@ class COMMON_EXPORT Emitter {
     {kNumberTypeBool, 1},    {kNumberTypeInt8, 2},    {kNumberTypeUInt8, 3},
     {kNumberTypeInt16, 4},   {kNumberTypeInt32, 5},   {kNumberTypeInt64, 6},
     {kNumberTypeFloat16, 7}, {kNumberTypeFloat32, 8}, {kNumberTypeFloat64, 9}};
+  static HashMap<std::string, ops::OpPrimCDefineFunc> &primc_func_cache() {
+    static HashMap<std::string, ops::OpPrimCDefineFunc> cache{};
+    return cache;
+  }
 };
 using EmitterPtr = std::shared_ptr<Emitter>;
 

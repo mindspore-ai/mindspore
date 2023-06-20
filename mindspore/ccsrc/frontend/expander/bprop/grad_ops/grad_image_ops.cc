@@ -28,7 +28,7 @@ REG_BPROP_BUILDER("ResizeBicubic").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib
   auto dx = ib->Emit(
     "ResizeBicubicGrad", {dout, images},
     {{"align_corners", ib->GetAttr("align_corners")}, {"half_pixel_centers", ib->GetAttr("half_pixel_centers")}});
-  return {dx, ib->ZerosLike(size)};
+  return {dx, ib->OutZeros(size)};
 });
 
 REG_BPROP_BUILDER("CropAndResize").SetUnusedInputs({i3, i4}).SetBody(BODYFUNC(ib) {
@@ -43,7 +43,7 @@ REG_BPROP_BUILDER("CropAndResize").SetUnusedInputs({i3, i4}).SetBody(BODYFUNC(ib
   auto dout = ib->GetInput(kIndex5);
   if (method != "bilinear") {
     if (!is_ascend_cpu) {
-      return {ib->ZerosLike(x), ib->ZerosLike(boxes), ib->ZerosLike(box_index), ib->ZerosLike(crop_size)};
+      return {ib->OutZeros(x), ib->OutZeros(boxes), ib->OutZeros(box_index), ib->OutZeros(crop_size)};
     }
   }
   auto image_type = ib->GetDtype(x);
@@ -55,7 +55,7 @@ REG_BPROP_BUILDER("CropAndResize").SetUnusedInputs({i3, i4}).SetBody(BODYFUNC(ib
   auto dimage = ib->Emit("CropAndResizeGradImage", {dout, boxes, box_index, image_size},
                          {{"method", MakeValue(method)}, {"T", image_type}, {"max_Byte", MakeValue(max_byte)}});
   auto dbox = ib->Emit("CropAndResizeGradBoxes", {dout, x, boxes, box_index}, {{"method", MakeValue("bilinear")}});
-  return {dimage, dbox, ib->ZerosLike(box_index), ib->ZerosLike(crop_size)};
+  return {dimage, dbox, ib->OutZeros(box_index), ib->OutZeros(crop_size)};
 });
 
 REG_BPROP_BUILDER("ScaleAndTranslate").SetUnusedInputs({i1, i4}).SetBody(BODYFUNC(ib) {
@@ -69,7 +69,7 @@ REG_BPROP_BUILDER("ScaleAndTranslate").SetUnusedInputs({i1, i4}).SetBody(BODYFUN
   auto grad0_fp32 = ib->Emit("ScaleAndTranslateGrad", {dout, images_fp32, scale, translation},
                              {{"kernel_type", ib->GetAttr("kernel_type")}, {"antialias", ib->GetAttr("antialias")}});
   auto grad0 = (images_dtype->type_id() != kNumberTypeFloat32) ? ib->Cast(grad0_fp32, images_dtype) : grad0_fp32;
-  return {grad0, ib->ZerosLike(size), ib->ZerosLike(scale), ib->ZerosLike(translation)};
+  return {grad0, ib->OutZeros(size), ib->OutZeros(scale), ib->OutZeros(translation)};
 });
 
 REG_BPROP_BUILDER("RGBToHSV").SetBody(BODYFUNC(ib) {

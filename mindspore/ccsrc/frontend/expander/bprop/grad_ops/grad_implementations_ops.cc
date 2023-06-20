@@ -23,19 +23,19 @@ REG_BPROP_BUILDERS_BEGIN(GradImplementationsOps)
 REG_BPROP_BUILDER("Load").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto u_monad = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  return {dout, ib->ZerosLike(u_monad)};
+  return {dout, ib->OutZeros(u_monad)};
 });
 
 REG_BPROP_BUILDER("UpdateState").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto u_monad = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex3);
-  return {ib->ZerosLike(u_monad), dout};
+  return {ib->OutZeros(u_monad), dout};
 });
 
 REG_BPROP_BUILDER("Depend").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto param = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  return {dout, ib->ZerosLike(param)};
+  return {dout, ib->OutZeros(param)};
 });
 
 REG_BPROP_BUILDER("TensorMove").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
