@@ -201,7 +201,7 @@ uint32_t AdaptiveMaxPool3dCpuKernel::AdaptiveMaxPool3dCompute(CpuKernelContext &
               // compute local max:
               int64_t it = 0, ih = 0, iw = 0;
               int64_t maxindex = (it + istartT) * isizeH * isizeW + (ih + istartH) * isizeW + (iw + istartW);
-              T maxval = -std::numeric_limits<T>::infinity();
+              T maxval = *ip;
               for (it = 0; it < kT; ++it) {
                 for (ih = 0; ih < kH; ++ih) {
                   for (iw = 0; iw < kW; ++iw) {
