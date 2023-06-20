@@ -343,7 +343,7 @@ def _check_save_obj_and_ckpt_file_name(save_obj, ckpt_file_name):
 
 
 def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
-                    async_save=False, append_dict=None, enc_key=None, enc_mode="AES-GCM"):
+                    async_save=False, append_dict=None, enc_key=None, enc_mode="AES-GCM", choice_func=None):
     """
     Save checkpoint to a specified file.
 
@@ -362,6 +362,12 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         enc_mode (str): This parameter is valid only when enc_key is not set to ``None`` . Specifies the encryption
                         mode, currently supports ``"AES-GCM"`` and ``"AES-CBC"`` and ``"SM4-CBC"`` .
                         Default: ``"AES-GCM"`` .
+        choice_func (function) : A function for saving custom selected parameters. The input value of `choice_func` is
+                                 a parameter name in string type, and the return value is a bool.
+                                 If returns ``True`` , the Parameter that matching the custom condition will be saved.
+                                 If returns ``False`` , the Parameter that not matching the custom condition will not
+                                 be saved. Default: ``None`` .
+
 
     Raises:
         TypeError: If the parameter `save_obj` is not `nn.Cell` or list type.
@@ -374,7 +380,11 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         >>> # Define the network structure of LeNet5. Refer to
         >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
-        >>> ms.save_checkpoint(net, "lenet.ckpt")
+        >>> ms.save_checkpoint(net, "./lenet.ckpt",
+        >>>                    choice_func=lambda x: x.startswith("conv") and not x.startswith("conv1"))
+        >>> param_dict = ms.load_checkpoint("./lenet.ckpt")
+        >>> print(param_dict)
+        {'conv2.weight': Parameter (name=conv2.weight, shape=(16, 6, 5, 5), dtype=Float32, requires_grad=True)}
 
     Tutorial Examples:
         - `Saving and Loading the Model - Saving and Loading the Model Weight
@@ -398,6 +408,8 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         save_obj.init_parameters_data()
         param_dict = OrderedDict()
         for _, param in save_obj.parameters_and_names():
+            if choice_func is not None and not choice_func(param.name):
+                continue
             param_dict[param.name] = param
         param_list = []
         if append_dict and "random_op" in append_dict:

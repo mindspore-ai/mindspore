@@ -13,6 +13,7 @@ mindspore.save_checkpoint
         - **append_dict** (dict) - 需要保存的其他信息。dict的键必须为str类型，dict的值类型必须是int、float、bool、string、Parameter或Tensor类型。默认值： ``None`` 。
         - **enc_key** (Union[None, bytes]) - 用于加密的字节类型密钥。如果值为 ``None`` ，那么不需要加密。默认值： ``None`` 。
         - **enc_mode** (str) - 该参数在 `enc_key` 不为 ``None`` 时有效，指定加密模式，目前仅支持 ``"AES-GCM"`` ， ``"AES-CBC"`` 和 ``"SM4-CBC"`` 。默认值： ``"AES-GCM"`` 。
+        - **choice_func** (function) - 一个用于自定义控制保存参数的函数。函数的输入值为字符串类型的Parameter名称，并且返回值是一个布尔值。如果返回 ``True`` ，则匹配自定义条件的Parameter将被保存。 如果返回 ``False`` ，则未匹配自定义条件的Parameter不会被保存。默认值： ``None`` 。
 
     异常：
         - **TypeError** - 如果参数 `save_obj` 类型不为 `nn.Cell` 或者list。
