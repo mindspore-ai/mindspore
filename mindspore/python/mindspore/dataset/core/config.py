@@ -881,6 +881,7 @@ def set_debug_mode(debug_mode_flag: bool, debug_hook_list: list = None):
     Examples:
         >>> # 1. Enable dataset pipeline debug mode and use default debug hook.
         >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.vision as visiony
         >>>
         >>> # Print shape and type of input/output data of each transform op in map operator.
         >>> ds.config.set_debug_mode(True)
@@ -888,10 +889,11 @@ def set_debug_mode(debug_mode_flag: bool, debug_hook_list: list = None):
         >>> import mindspore.dataset.debug as debug
         >>>
         >>> ds.config.set_debug_mode(True, debug_hook_list=[debug.PrintDataHook()])
+        >>>
         >>> # 3. Enable dataset pipeline debug mode and use user-defined debug hook. It must define a
-        >>> # class inherited from DebugHook.
         >>> import mindspore.dataset.debug as debug
         >>>
+        >>> # class inherited from DebugHook.
         >>> class CustomizedHook(debug.DebugHook):
         ...     def __init__(self):
         ...         super().__init__()
@@ -901,9 +903,11 @@ def set_debug_mode(debug_mode_flag: bool, debug_hook_list: list = None):
         ...         return args
         >>>
         >>> ds.config.set_debug_mode(True, debug_hook_list=[CustomizedHook()])
+        >>>
         >>> # 4. Enable dataset pipeline debug mode and use user-defined debug hook and insert by users manually.
         >>> ds.config.set_debug_mode(True)
         >>> dataset = ds.ImageFolderDataset(dataset_dir="/path/to/image_folder_dataset_directory")
+        >>>
         >>> # The debug hook is added after `Decode` operation.
         >>> dataset = dataset.map([vision.Decode(), CustomizedHook(), vision.CenterCrop(100)])
     """

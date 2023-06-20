@@ -209,6 +209,7 @@ Others
     mindspore.dataset.WaitedDSCallback
     mindspore.dataset.OutputFormat
     mindspore.dataset.compare
+    mindspore.dataset.debug.DebugHook
     mindspore.dataset.deserialize
     mindspore.dataset.serialize
     mindspore.dataset.show
