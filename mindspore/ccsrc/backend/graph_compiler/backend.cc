@@ -225,7 +225,7 @@ void UpdateTensorAddress(const session::BackendOpRunInfoPtr &op_run_info,
     auto &output_tensor = output_tensors[i];
     auto &output_promise = output_promises[i];
     const auto &device_address = AnfAlgo::GetMutableOutputAddr(node_index.first, node_index.second, false);
-    output_promise.set_value(std::make_shared<pynative::DeviceAddressFutureData>(device_address, nullptr));
+    output_promise->SetValue(std::make_shared<pynative::DeviceAddressFutureData>(device_address, nullptr));
     (void)outputs->emplace_back(output_tensor);
 
     if (exec_mode != kPynativeMode) {
@@ -253,7 +253,7 @@ void UpdateTensorAddressDynamic(const session::BackendOpRunInfoPtr &op_run_info,
     }
     auto &output_tensor = output_tensors[i];
     auto &output_promise = output_promises[i];
-    output_promise.set_value(std::make_shared<pynative::DeviceAddressFutureData>(device_address_list[i], nullptr));
+    output_promise->SetValue(std::make_shared<pynative::DeviceAddressFutureData>(device_address_list[i], nullptr));
     (void)outputs->emplace_back(output_tensor);
     if (exec_mode != kPynativeMode) {
       output_tensor->data_sync(false);

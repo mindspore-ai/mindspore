@@ -36,6 +36,20 @@ class COMMON_EXPORT DeviceAddressFuture : public tensor::FutureBase<DeviceSync> 
   ~DeviceAddressFuture() override;
   std::shared_ptr<DeviceSync> Get() override;
 };
+
+class COMMON_EXPORT DeviceAddressPromise {
+ public:
+  explicit DeviceAddressPromise(std::promise<DeviceAddressFutureDataPtr> promise) : promise_(std::move(promise)) {}
+  ~DeviceAddressPromise() = default;
+
+  void SetValue(const DeviceAddressFutureDataPtr &data);
+  std::future<DeviceAddressFutureDataPtr> GetFuture();
+
+ private:
+  std::promise<DeviceAddressFutureDataPtr> promise_;
+  std::once_flag once_flag_;
+};
+using DeviceAddressPromisePtr = std::unique_ptr<DeviceAddressPromise>;
 }  // namespace pynative
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_TENSOR_FUTURE_H_
