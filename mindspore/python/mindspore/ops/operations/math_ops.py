@@ -5824,9 +5824,6 @@ class Atanh(Primitive):
     r"""
     Computes inverse hyperbolic tangent of the input element-wise.
 
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
     Refer to :func:`mindspore.ops.atanh` for more details.
 
     Inputs:
