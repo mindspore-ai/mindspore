@@ -1130,10 +1130,9 @@ class Conv2dTranspose(_Conv):
                                       self.stride[0], self.dilation[0], self.padding_top + self.padding_bottom)
         w_out = _deconv_output_length(self.is_valid, self.is_same, self.is_pad, w, self.kernel_size[1],
                                       self.stride[1], self.dilation[1], self.padding_left + self.padding_right)
-        if self.has_bias:
-            return self.bias_add(self.conv2d_transpose(x, self.weight, (n, self.out_channels, h_out, w_out)),
-                                 self.bias)
         conv2d_trans_ret = self.conv2d_transpose(x, self.weight, (n, self.out_channels, h_out, w_out))
+        if self.has_bias:
+            conv2d_trans_ret = self.bias_add(conv2d_trans_ret, self.bias)
         if isinstance(self.output_padding, tuple):
             if self.output_padding[0] < 0 or self.output_padding[0] >= max(self.dilation[0], self.stride[0]):
                 raise ValueError("output_padding[0] must be in range of [0, max(stride_h, dilation_h)).")
