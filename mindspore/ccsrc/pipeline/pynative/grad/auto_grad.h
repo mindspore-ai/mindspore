@@ -46,12 +46,8 @@ struct GradAttr {
 };
 
 struct GradParam {
-  GradParam(OpGradInfoPtr op_grad_info, bool grad_by_value, bool use_dynamic_shape_process,
-            const CNodePtr &cnode = nullptr)
-      : op_grad_info(op_grad_info),
-        grad_by_value(grad_by_value),
-        use_dynamic_shape_process(use_dynamic_shape_process),
-        cnode(cnode) {
+  GradParam(OpGradInfoPtr op_grad_info, bool grad_by_value, bool use_dynamic_shape_process)
+      : op_grad_info(op_grad_info), grad_by_value(grad_by_value), use_dynamic_shape_process(use_dynamic_shape_process) {
     input_size = op_grad_info->input_value.size();
   }
 
@@ -73,9 +69,9 @@ struct GradParam {
   bool is_ms_function_self_dynamic_shape{false};
 
   // For KPynativeWithFProp used
-  FuncGraphPtr fg;
+  FuncGraphPtr fg{nullptr};
   // grad func graph for ms_function or fg
-  FuncGraphPtr source_fg;
+  FuncGraphPtr source_fg{nullptr};
   // Op forward output used in bprop graph
   std::string graph_cache_key;
   // Used for pyexecute

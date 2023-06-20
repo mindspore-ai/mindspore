@@ -998,6 +998,10 @@ void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::ob
     MS_LOG(DEBUG) << "No need compile graph";
     // If no need compile, we can clear construct bprop queue.
     (void)need_gc_top_cell_list_.emplace_back(top_cell());
+    {
+      GilReleaseWithCheck release_gil;
+      async_executor_->Clear();
+    }
     AsyncClearTopCell();
     set_top_cell(already_run_top_cell);
     top_cell()->UpdateTopCellInfo(false, false, false);
@@ -1005,7 +1009,7 @@ void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::ob
   }
   MS_LOG(DEBUG) << "Need compile graph";
   {
-    py::gil_scoped_release gil_release;
+    GilReleaseWithCheck release_gil;
     async_executor_->Wait();
   }
   set_top_cell(already_run_top_cell);
