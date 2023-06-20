@@ -496,7 +496,7 @@ void CodeMSModelPredict(std::ofstream &ofs, const std::unique_ptr<CoderContext> 
   }
   ofs << "};\n";
   ofs << "  bool out_type_changed[" << outputs_num << "] = {";
-  for (size_t i = 0; i < inputs_num; ++i) {
+  for (size_t i = 0; i < outputs_num; ++i) {
     ofs << "false, ";
   }
   ofs << "};\n";

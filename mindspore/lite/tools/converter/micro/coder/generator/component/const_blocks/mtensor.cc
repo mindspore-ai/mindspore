@@ -54,7 +54,7 @@ typedef struct {
   void *data;
   int quant_nums;
   bool owned;
-} MicroTensor;
+} MicroTensor; // if change MicroTensor parameter, need to update kMicroTensorSize
 
 typedef struct {
   int num;
