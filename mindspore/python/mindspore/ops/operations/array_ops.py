@@ -8760,17 +8760,18 @@ class TopK(Primitive):
 
     If the two compared elements are the same, the one with the smaller index value is returned first.
 
-    Note:
-        Currently, Ascend/CPU supported all common data types except bool and complex type,
-        but GPU only supports float16, float32 currently.
-
     Args:
         sorted (bool, optional): If ``True`` , the obtained elements will be sorted by the values in descending order.
             If ``False`` , the obtained elements will not be sorted. Default: ``True`` .
 
     Inputs:
-        - **input_x** (Tensor) - Input to be computed, data type can be Number on Ascend/CPU,
-          and float16 or float32 on GPU.
+        - **input_x** (Tensor) - Input to be computed, 0-D input is supported on GPU, but not on Ascend or CPU.
+          supported dtypes:
+
+          - Ascend: int8, uint8, int32, int64, float16, float32.
+          - GPU: float16, float32.
+          - CPU: all numeric types.
+
         - **k** (int) - The number of top elements to be computed along the last dimension, constant input is needed.
 
     Outputs:

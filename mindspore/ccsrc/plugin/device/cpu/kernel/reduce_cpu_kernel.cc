@@ -108,12 +108,12 @@ void ReduceSum(const bool *in, bool *out, size_t start, size_t end, TransposeIte
   bool value = *out;
   if (iter != nullptr) {
     for (size_t i = start; i < end; i++) {
-      value |= in[iter->GetPos()];
+      value = value || in[iter->GetPos()];
       iter->GenNextPos();
     }
   } else {
     for (size_t i = start; i < end; i++) {
-      value |= in[i];
+      value = value || in[i];
     }
   }
   *out = value;
