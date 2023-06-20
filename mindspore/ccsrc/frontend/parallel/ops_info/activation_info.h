@@ -133,6 +133,18 @@ class LogSoftmaxInfo : public Softmax {
   ~LogSoftmaxInfo() override = default;
 };
 
+class SortInfo : public Softmax {
+ public:
+  SortInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+           const PrimitiveAttrs &attrs)
+      : Softmax(name, inputs_shape, outputs_shape, attrs) {}
+  ~SortInfo() override = default;
+
+ protected:
+  Status InferTensorMap() override;
+  Status InferAsLossDivisor() override;
+};
+
 class ReverseV2Info : public Softmax {
  public:
   ReverseV2Info(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
