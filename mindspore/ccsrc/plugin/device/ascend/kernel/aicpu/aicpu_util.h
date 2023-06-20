@@ -229,11 +229,13 @@ constexpr auto kMaskedFill = "MaskedFill";
 constexpr auto kDeformableOffsets = "DeformableOffsets";
 constexpr auto kDeformableOffsetsGrad = "DeformableOffsetsGrad";
 constexpr auto kAffineGrid = "AffineGrid";
+constexpr auto kSTFT = "STFT";
 
 const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kMaskedFill,
                                           kMaskedScatter,
                                           kGather,
+                                          kSTFT,
                                           kGreater,
                                           kDynamicStitch,
                                           kSort,
