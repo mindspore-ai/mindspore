@@ -576,6 +576,13 @@ void GradExecutor::HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_
 void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_info) {
   MS_EXCEPTION_IF_NULL(input_args_info);
   forward()->WaitForwardTask();
+  // We need wait construct bprop task of outer top cell finish, if main thread run quickly, when it execute gradnet
+  // and clear async_executor queue, bprop task of outer top cell may not finish, it will cause not found cnode
+  // error.
+  {
+    GilReleaseWithCheck gil_release;
+    async_executor_->Wait();
+  }
   if (input_args_info->is_grad_topest_cell && !input_args_info->grad_is_running) {
     MS_LOG(DEBUG) << "Make new topest graph";
     MakeNewTopGraph(input_args_info);
@@ -594,17 +601,9 @@ void GradExecutor::InitResourceAndDfBuilder(const InputArgsInfoPtr &input_args_i
   } else if (input_args_info->is_high_order_top_cell) {
     MS_LOG(DEBUG) << "Nested grad graph existed in construct";
     SaveInputTensorGradInfo(input_args_info);
-    ClearTopCellParamGradInfo(top_cell());
     MakeNewTopGraph(input_args_info);
   }
 
-  // We need wait construct bprop task of outer top cell finish, if main thread run quickly, when it execute gradnet
-  // and clear async_executor queue, bprop task of outer top cell may not finish, it will cause not found cnode
-  // error.
-  {
-    GilReleaseWithCheck gil_release;
-    async_executor_->Wait();
-  }
   // Init kPynativeCellPtr with input parameters of top cell
   if (!top_cell()->is_init_kpynative()) {
     forward()->WaitForwardTask();
@@ -713,6 +712,7 @@ void GradExecutor::MakeNewTopGraph(const InputArgsInfoPtr &input_args_info) {
   auto resource = std::make_shared<pipeline::Resource>();
   MS_EXCEPTION_IF_NULL(input_args_info);
   const auto &obj_id_with_grad_order = GetAlreadyRunCellId(input_args_info->obj_id);
+  ClearParamGradInfo(top_cell_);
   top_cell_ = std::make_shared<TopCellInfo>(input_args_info->is_high_order_top_cell, input_args_info->grad_order,
                                             obj_id_with_grad_order, input_args_info->cell_id,
                                             input_args_info->already_run_cell_id, resource, fg,
@@ -1015,6 +1015,7 @@ void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::ob
   top_cell()->set_input_args_info(nullptr);
   SetBpropGraphJitLevel(obj);
   bool weight_param_is_tuple = true;
+  ResumeParamGradInfo(top_cell());
   auto w_args = GetWeightsArgs(weights, &weight_param_is_tuple);
   auto p_args = GetGradPositionArgs(grad_position, grad->get_by_position_);
   autograd::GradAttr grad_attr(grad->get_all_, grad->get_by_list_, grad->sens_param_, grad->get_by_position_,
@@ -1293,7 +1294,7 @@ py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, con
         MS_LOG(WARNING) << "The input info " << input_args_id << " is not the same with pre input info "
                         << top_cell()->input_args_id() << ", forward process will run again";
         forward_run = false;
-        ClearTopCellParamGradInfo(top_cell());
+        ClearParamGradInfo(top_cell());
       }
     }
   }
@@ -1454,7 +1455,7 @@ void GradExecutor::SwitchTopCell() {
     outer_top_cell->set_force_top_cell_compile(true);
     outer_top_cell->set_use_dynamic_shape_process(top_cell()->use_dynamic_shape_process());
   }
-  ResumeOuterCellGradInfo(outer_top_cell);
+  ResumeParamGradInfo(outer_top_cell);
   set_top_cell(outer_top_cell);
 }
 
@@ -1913,18 +1914,25 @@ void GradExecutor::BackupInputTensorGradInfo(const ValuePtr &value) {
   }
 }
 
-void GradExecutor::ClearTopCellParamGradInfo(const TopCellInfoPtr &top_cell) {
-  const auto &param_grad_info = top_cell->param_grad_info();
-  for (auto &params : param_grad_info) {
+void GradExecutor::ClearParamGradInfo(const TopCellInfoPtr &top_cell) {
+  if (top_cell == nullptr || top_cell->param_grad_info().empty()) {
+    return;
+  }
+  for (auto &params : top_cell->param_grad_info()) {
     params.first->set_auto_grad_meta_data(nullptr);
   }
+  top_cell->set_resume_flag(true);
 }
 
-void GradExecutor::ResumeOuterCellGradInfo(const TopCellInfoPtr &top_cell) {
+void GradExecutor::ResumeParamGradInfo(const TopCellInfoPtr &top_cell) {
+  if (top_cell == nullptr || !top_cell->resume_flag() || top_cell->param_grad_info().empty()) {
+    return;
+  }
   const auto &param_grad_info = top_cell->param_grad_info();
   for (auto &params : param_grad_info) {
     params.first->set_auto_grad_meta_data(params.second);
   }
+  top_cell->set_resume_flag(false);
 }
 
 void GradExecutor::SetBpropGraphJitLevel(const py::object &obj) const {

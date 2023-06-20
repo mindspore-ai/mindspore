@@ -46,12 +46,8 @@ struct GradAttr {
 };
 
 struct GradParam {
-  GradParam(OpGradInfoPtr op_grad_info, bool grad_by_value, bool use_dynamic_shape_process,
-            const CNodePtr &cnode = nullptr)
-      : op_grad_info(op_grad_info),
-        grad_by_value(grad_by_value),
-        use_dynamic_shape_process(use_dynamic_shape_process),
-        cnode(cnode) {
+  GradParam(OpGradInfoPtr op_grad_info, bool grad_by_value, bool use_dynamic_shape_process)
+      : op_grad_info(op_grad_info), grad_by_value(grad_by_value), use_dynamic_shape_process(use_dynamic_shape_process) {
     input_size = op_grad_info->input_value.size();
   }
 

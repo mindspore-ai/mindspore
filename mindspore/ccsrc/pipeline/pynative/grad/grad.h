@@ -124,8 +124,8 @@ class GradExecutor {
   void SaveForwardGraph(const ValuePtr &value, const string &value_id) const;
   void BackupInputTensorGradInfo(const ValuePtr &value);
   void SaveInputTensorGradInfo(const InputArgsInfoPtr &input_args_info);
-  void ClearTopCellParamGradInfo(const TopCellInfoPtr &top_cell);
-  void ResumeOuterCellGradInfo(const TopCellInfoPtr &top_cell);
+  void ClearParamGradInfo(const TopCellInfoPtr &top_cell);
+  void ResumeParamGradInfo(const TopCellInfoPtr &top_cell);
   py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
                              const py::object &grad_hash_id, const py::args &args);
   TopCellInfoPtr GetAlreadyRunTopCell(const std::string &already_run_cell_id) const;

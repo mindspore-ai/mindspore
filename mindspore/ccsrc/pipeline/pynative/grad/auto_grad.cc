@@ -69,8 +69,8 @@ inline bool IsPrimNeedGrad(const PrimitivePtr &prim) {
   return kGradBlackList.find(prim->name()) == kGradBlackList.end();
 }
 
-ValuePtr GetFakeZeroValue() {
-  static ValuePtr fake_v = MakeValue(0);
+ValuePtr GetFakeZeroTensor() {
+  static ValuePtr fake_v = std::make_shared<tensor::Tensor>(0);
   return fake_v;
 }
 
@@ -115,7 +115,7 @@ AnfNodePtr BuildSparseTensorNode(const FuncGraphPtr &tape, const ValuePtr &spars
 AnfNodePtr BuildSpecialNode(const FuncGraphPtr &tape, const ValuePtr &value, const abstract::AbstractBasePtr &abs,
                             const SpecialType &type) {
   MS_EXCEPTION_IF_NULL(value);
-  if (value->isa<tensor::Tensor>() || value->isa<Scalar>()) {
+  if (value->isa<tensor::Tensor>()) {
     auto prim_node =
       (type == SpecialType::kZerosLikeType ? NewValueNode(prim::kPrimZerosLike) : NewValueNode(prim::kPrimOnesLike));
     auto value_node = PyNativeAlgo::Common::CreateValueNodeByValue(value, abs);
@@ -139,6 +139,9 @@ AnfNodePtr BuildSpecialNode(const FuncGraphPtr &tape, const ValuePtr &value, con
     auto special_like_value = tape->NewCNode(args);
     special_like_value->set_abstract(abs_seq);
     return special_like_value;
+  } else if (value->isa<Scalar>()) {
+    auto fake_tensor = GetFakeZeroTensor();
+    return BuildSpecialNode(tape, fake_tensor, nullptr, type);
   } else if (value->isa<tensor::CSRTensor>()) {
     auto csr_tensor = value->cast<tensor::CSRTensorPtr>();
     MS_EXCEPTION_IF_NULL(csr_tensor);
@@ -164,7 +167,7 @@ AnfNodePtr BuildSpecialNode(const FuncGraphPtr &tape, const ValuePtr &value, con
                             std::make_shared<abstract::AbstractTuple>(abs_list), type);
   } else {
     MS_LOG(INFO) << "For value " << value->ToString() << ", the type is not tensor or scalar";
-    return BuildSpecialNode(tape, GetFakeZeroValue(), nullptr, type);
+    return BuildSpecialNode(tape, GetFakeZeroTensor(), nullptr, type);
   }
 }
 
@@ -526,7 +529,7 @@ AutoGradCellImpl::AutoGradCellImpl(const std::vector<ValuePtr> &input_param_valu
     tape_parameter->set_abstract(abs_list[i]);
 
     auto zeros_like_dout =
-      BuildSpecialNode(ad_param()->tape_, GetFakeZeroValue(), abs_list[i], SpecialType::kZerosLikeType);
+      BuildSpecialNode(ad_param()->tape_, GetFakeZeroTensor(), abs_list[i], SpecialType::kZerosLikeType);
     auto func_node = std::make_shared<FunctionNode>(ad_param()->tape_, zeros_like_dout);
     auto input_adjoint = std::make_shared<VariableAdjoint>(func_node, input_param_values[i], true);
 
@@ -551,7 +554,7 @@ bool AutoGradCellImpl::KPynativeOp(const GradParamPtr &grad_param) {
   }
 
   // construct zeroslike placeholder, if need use in bprop, we replace it in backprogate.
-  AnfNodePtr dout = BuildSpecialNode(ad_param()->tape_, GetFakeZeroValue(), grad_param->op_grad_info->out_abs,
+  AnfNodePtr dout = BuildSpecialNode(ad_param()->tape_, GetFakeZeroTensor(), grad_param->op_grad_info->out_abs,
                                      SpecialType::kZerosLikeType);
   auto fn = std::make_shared<FunctionNode>(ad_param()->tape_, dout);
   auto variable_adjoint = std::make_shared<VariableAdjoint>(fn, grad_param->op_grad_info->out_value);
@@ -602,6 +605,8 @@ bool AutoGradCellImpl::KPynativeWithFProp(const GradParamPtr &grad_param) {
   if (grad_param->grad_by_value) {
     for (size_t i = 0; i < grad_param->input_size; ++i) {
       if (PyNativeAlgo::Common::IsParam(grad_param->op_grad_info->input_value_grad_type[i])) {
+        const auto &abs = grad_param->op_grad_info->input_abs[i];
+        abs->set_value(grad_param->op_grad_info->input_value[i]);
         auto parameter = MapParameter(grad_param->op_grad_info->input_value[i], grad_param->op_grad_info->input_abs[i]);
         if (parameter != nullptr) {
           (void)args_node_list.emplace_back(parameter);
@@ -649,7 +654,7 @@ CNodePtr AutoGradCellImpl::GetBPropCNode(const GradParamPtr &grad_param, const A
 
   // Call by tape_
   MS_EXCEPTION_IF_NULL(tape_dout);
-  *tape_dout = BuildSpecialNode(ad_param()->tape_, GetFakeZeroValue(), grad_param->op_grad_info->out_abs,
+  *tape_dout = BuildSpecialNode(ad_param()->tape_, GetFakeZeroTensor(), grad_param->op_grad_info->out_abs,
                                 SpecialType::kZerosLikeType);
   (void)bprop_inputs.emplace_back(*tape_dout);
   (void)bprop_inputs.insert(bprop_inputs.cbegin(), NewValueNode(bprop_graph));
@@ -836,7 +841,7 @@ void AutoGradCellImpl::GradGraphByExpander(const GradParamPtr &grad_param) {
     (void)cnode_inputs.emplace_back(k_node);
     // Set dout
     AnfNodePtr dout =
-      BuildSpecialNode(ad_param()->tape_, GetFakeZeroValue(), cnode->abstract(), SpecialType::kZerosLikeType);
+      BuildSpecialNode(ad_param()->tape_, GetFakeZeroTensor(), cnode->abstract(), SpecialType::kZerosLikeType);
     (void)cnode_inputs.emplace_back(dout);
     auto input_node = ad_param()->tape_->NewCNode(cnode_inputs);
     input_node->set_abstract(cnode->abstract());
@@ -925,8 +930,7 @@ void AutoGradCellImpl::ProcessMetaFuncGraphOp(const GradParamPtr &grad_param, co
   op_grad_info->out_abs = cnode->abstract();
   op_grad_info->input_value_grad_type = grad_param->op_grad_info->input_value_grad_type;
   auto meta_graph_grad_param =
-    std::make_shared<GradParam>(op_grad_info, grad_param->grad_by_value, grad_param->use_dynamic_shape_process, cnode);
-  meta_graph_grad_param->is_control_flow = true;
+    std::make_shared<GradParam>(op_grad_info, grad_param->grad_by_value, grad_param->use_dynamic_shape_process);
   meta_graph_grad_param->is_ms_function_graph = true;
   // Set to control flow just let it go by ad::Grad, because grad_func_graph with no abstract
   meta_graph_grad_param->is_control_flow = true;
@@ -958,7 +962,7 @@ void AutoGradCellImpl::CreateParameterAdjoint(const GradParamPtr &grad_param) co
       param->set_default_param(tensor);
     }
     param->set_abstract(graph_parameters[i]->abstract());
-    auto zeros_like_dout = BuildSpecialNode(ad_param()->tape_, GetFakeZeroValue(), graph_parameters[i]->abstract(),
+    auto zeros_like_dout = BuildSpecialNode(ad_param()->tape_, GetFakeZeroTensor(), graph_parameters[i]->abstract(),
                                             SpecialType::kZerosLikeType);
     auto func_node = std::make_shared<FunctionNode>(ad_param()->tape_, zeros_like_dout);
     // Copy to avoid corrupt real input grad info.
@@ -1023,10 +1027,6 @@ FuncGraphPtr AutoGradCellImpl::Finish(const tensor::TensorPtrList &weights, cons
   AnfNodePtrList params = ExtractParamters(weights, ad_param()->fg_);
   ReplacePrimalParameter(params, grad_attr.has_sens);
   PyNativeAlgo::Common::DumpGraphIR("before_final_opt.ir", ad_param()->tape_);
-  // Clear weights grad info
-  for (auto weight : weights) {
-    weight->set_auto_grad_meta_data(nullptr);
-  }
   return ad_param()->tape_;
 }
 
@@ -1039,7 +1039,10 @@ CNodePtr AutoGradCellImpl::ConstructBpropGraphInput(const GradParamPtr &grad_par
     for (size_t i = 0; i < grad_param->input_size; ++i) {
       if (PyNativeAlgo::Common::IsParam(grad_param->op_grad_info->input_value_grad_type[i])) {
         // To solve the input is a tuple like (parameter, ...)
-        auto parameter = MapParameter(grad_param->op_grad_info->input_value[i], grad_param->op_grad_info->input_abs[i]);
+        const auto &abs = grad_param->op_grad_info->input_abs[i];
+        // For infer shape depending value
+        abs->set_value(grad_param->op_grad_info->input_value[i]);
+        auto parameter = MapParameter(grad_param->op_grad_info->input_value[i], abs);
         MS_EXCEPTION_IF_NULL(parameter);
         (void)node_list.emplace_back(parameter);
         continue;
@@ -1069,6 +1072,7 @@ void AutoGradCellImpl::BuildKNodeListFromPrimalCNode(const ValuePtrList &input_v
                                                      const abstract::AbstractBasePtrList &input_abs,
                                                      AnfNodePtrList *const node_list) {
   for (size_t i = 0; i < input_value.size(); ++i) {
+    input_abs[i]->set_value(input_value[i]);
     (void)node_list->emplace_back(BuildKNodeForCNodeInput(input_value[i], input_abs[i]));
     MS_LOG(DEBUG) << "Get knode for input:  " << PyNativeAlgo::Common::GetIdByValue(input_value[i]);
   }
@@ -1481,7 +1485,7 @@ ParameterPtr AutoGradCellImpl::AddParameterNode(const tensor::TensorPtr &tensor,
   MS_EXCEPTION_IF_NULL(tensor);
   auto param = NewWeightParameter(tensor, abs);
   auto zeros_like_dout =
-    BuildSpecialNode(ad_param()->tape_, GetFakeZeroValue(), param->abstract(), SpecialType::kZerosLikeType);
+    BuildSpecialNode(ad_param()->tape_, GetFakeZeroTensor(), param->abstract(), SpecialType::kZerosLikeType);
   auto func_node = std::make_shared<FunctionNode>(ad_param()->tape_, zeros_like_dout);
   auto input_adjoint = std::make_shared<VariableAdjoint>(func_node, tensor, true);
   (void)ad_param()->variable_adjoint_set_.insert(input_adjoint);
