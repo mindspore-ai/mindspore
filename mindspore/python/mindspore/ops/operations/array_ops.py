@@ -5531,6 +5531,10 @@ class ScatterNdMin(_ScatterNdOp):
 
 class ScatterNonAliasingAdd(Primitive):
     """
+    The ScatterNonAliasingAdd Interface is deprecated from version 2.1.
+    Please use :class:`mindspore.ops.TensorScatterAdd` instead.
+    This interface may has precision error on Ascend and will be removed in a future version.
+
     Applies sparse addition to the input using individual values or slices.
 
     Using given values to update tensor value through the add operation, along with the input indices.
@@ -5557,7 +5561,7 @@ class ScatterNonAliasingAdd(Primitive):
                       is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend``
+            Deprecated
 
     Examples:
         >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
@@ -5575,6 +5579,7 @@ class ScatterNonAliasingAdd(Primitive):
         sig.make_sig('updates', dtype=sig.sig_dtype.T)
     )
 
+    @deprecated("2.1", "ops.ScatterNonAliasingAdd", False)
     @prim_attr_register
     def __init__(self):
         """Initialize ScatterNonAliasingAdd"""
