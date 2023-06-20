@@ -14,7 +14,7 @@
 # ============================================================================
 """Operations for sequence"""
 from mindspore.ops.primitive import Primitive, PrimitiveWithCheck, prim_attr_register
-import mindspore._checkparam  as validator
+import mindspore._checkparam as validator
 from mindspore.common import Tensor
 from mindspore._c_expression import Tensor as Tensor_
 

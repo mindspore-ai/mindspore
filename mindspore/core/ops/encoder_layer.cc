@@ -62,7 +62,9 @@ void EncoderLayer::set_position_bias(bool position_bias) {
 void EncoderLayer::set_scale(float scale) { (void)this->AddAttr(kScale, api::MakeValue(scale)); }
 void EncoderLayer::set_layer_norm(bool layer_norm) { (void)this->AddAttr(kLayerNorm, api::MakeValue(layer_norm)); }
 
-void EncoderLayer::set_act_type(ActType act_type) { (void)this->AddAttr(kActivationType, api::MakeValue(act_type)); }
+void EncoderLayer::set_act_type(ActType act_type) {
+  (void)this->AddAttr(kActivationType, api::MakeValue(static_cast<int32_t>(act_type)));
+}
 void EncoderLayer::set_use_past(bool use_past) { (void)this->AddAttr(kUsePast, api::MakeValue(use_past)); }
 void EncoderLayer::set_query_layer(bool query_layer) { (void)this->AddAttr(kQueryLayer, api::MakeValue(query_layer)); }
 void EncoderLayer::set_moe(bool moe) { (void)this->AddAttr(kMoe, api::MakeValue(moe)); }

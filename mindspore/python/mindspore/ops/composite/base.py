@@ -584,6 +584,7 @@ class _Grad(GradOperation_):
         elif self.pynative_:
             if not _pynative_executor.enable_grad():
                 raise RuntimeError("In no_grad context, you can not calculate gradient")
+
             @_wrap_func
             def after_grad(*args, **kwargs):
                 res = self._pynative_forward_run(fn, grad_, weights, args, kwargs)
