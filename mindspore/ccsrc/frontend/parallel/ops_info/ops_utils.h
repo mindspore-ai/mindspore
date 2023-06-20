@@ -142,6 +142,7 @@ constexpr char PARAM_NAME[] = "name";
 constexpr char RESHAPEINFO[] = "ReshapeInfo";
 constexpr char GETNEXTINFO[] = "GetNextInfo";
 constexpr char VIRTUALDATASETINFO[] = "VirtualDatasetInfo";
+constexpr char FUNC_PARAM[] = "func_param";
 
 constexpr char RELU_TYPE[] = "relu";
 constexpr char RELU6_TYPE[] = "relu6";

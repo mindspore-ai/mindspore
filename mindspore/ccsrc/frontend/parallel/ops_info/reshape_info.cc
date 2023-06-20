@@ -25,6 +25,7 @@
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
+#include "frontend/parallel/tensor_layout/tensor_transform.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "include/common/utils/convert_utils.h"
 #include "utils/log_adapter.h"
@@ -136,6 +137,10 @@ Status ReshapeInfo::ComputeReplaceOp() {
                  << ShapeToString(output_layout_.slice_shape().array());
   } else {
     RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution.InferTensorRedistributionOperatorList();
+    if (!is_generating_costs_) {
+      redistribution_oplist_ptr = TensorTransform::GetInstance()->OptimizeTensorRedistributionOperatorList(
+        redistribution_oplist_ptr, tensor_redistribution.input_shape());
+    }
     if (redistribution_oplist_ptr == nullptr) {
       if (is_generating_costs_) {
         MS_LOG(DEBUG) << name_ << "InferTensorRedistribution failed.";

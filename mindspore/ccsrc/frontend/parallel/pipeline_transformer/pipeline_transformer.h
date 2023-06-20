@@ -92,7 +92,7 @@ class PipelineTransformer {
   CNodePtr GraphOutNode(const AnfNodePtr &node, int tuple_index);
   bool IsPipelineCareNode(const CNodePtr &cnode) const;
   void RedundancyNode(const AnfNodePtr &node, mindspore::HashMap<CNodePtr, std::vector<AnfNodePtr>> *make_tuple_map);
-  bool IsRedundancyParameter(const AnfNodePtr &parameter);
+  bool IsRedundancyParameter(const AnfNodePtr &parameter, const std::vector<AnfNodePtr> &non_cloned_parameters);
   void ElimParameter();
   size_t GetBatchAxisForInput(const AnfNodeIndexSet &input_node_users) const;
   AnfNodePtr GetZeroOutputs(const FuncGraphPtr &graph);
