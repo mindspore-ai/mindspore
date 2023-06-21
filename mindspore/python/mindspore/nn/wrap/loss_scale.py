@@ -143,6 +143,13 @@ class DynamicLossScaleUpdateCell(Cell):
 
         Returns:
             float, the loss scale value.
+
+        Examples:
+            >>> from mindspore import nn
+            >>> manager = nn.DynamicLossScaleUpdateCell(loss_scale_value=212, scale_factor=2, scale_window=1000)
+            >>> output = manager.get_loss_scale()
+            >>> print(output)
+            212
         """
         return self.loss_scale_value
 
@@ -223,6 +230,13 @@ class FixedLossScaleUpdateCell(Cell):
 
         Returns:
             float, the loss scale value.
+
+        Examples:
+            >>> from mindspore import nn
+            >>> manager = nn.FixedLossScaleUpdateCell(loss_scale_value=212)
+            >>> output = manager.get_loss_scale()
+            >>> print(output)
+            212
         """
         return self.loss_scale_value
 
@@ -290,6 +304,11 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         >>> input = Tensor(np.ones([out_features, in_features]), mindspore.float32)
         >>> labels = Tensor(np.ones([out_features,]), mindspore.float32)
         >>> output = train_network(input, labels)
+        >>> status, scaling_sens = train_network.start_overflow_check(loss, train_network.scaling_sens)
+        >>> grads = train_network.grad(train_network.network, weights)(*inputs, scaling_sens_filled)
+        >>> grads = train_network.grad_reducer(grads)
+        >>> cond = train_network.get_overflow_status(status, grads)
+        >>> overflow = train_network.process_loss_scale(cond)
         >>>
         >>> #2) when the type of scale_sense is Tensor:
         >>> net = Net(in_features, out_features)
@@ -300,6 +319,8 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         >>> label = Tensor(np.zeros([size, out_features]).astype(np.float32))
         >>> scaling_sens = Tensor([1024], dtype=mindspore.float32)
         >>> train_network = nn.TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_sense=scaling_sens)
+        >>> scaling_sens = Tensor([1], dtype=mstype.float32)
+        >>> train_network.set_sense_scale(scaling_sens)
         >>> output = train_network(inputs, label)
         >>>
         >>> # update scaling sens and train the network

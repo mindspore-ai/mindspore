@@ -490,6 +490,17 @@ class RunContext:
 
     Args:
         original_args (dict): Holding the related information of model.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> cb_params = {}
+        >>> cb_params["cur_epoch_num"] = 4
+        >>> cb_params["epoch_num"] = 4
+        >>> cb_params["cur_step_num"] = 2
+        >>> cb_params["batch_num"] = 2
+        >>> cb_params["net_outputs"] = Tensor(2.0)
+        >>> run_context = RunContext(cb_params)
+        >>> whether_stop = run_context.get_stop_requested()
     """
     def __init__(self, original_args):
         if not isinstance(original_args, dict):

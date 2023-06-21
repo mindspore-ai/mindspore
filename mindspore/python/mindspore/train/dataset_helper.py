@@ -377,15 +377,54 @@ class DatasetHelper:
         return self.iter.get_sink_size()
 
     def stop_send(self):
-        """Stop send data about data sink."""
+        """
+        Stop send data about data sink.
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore as ms
+            >>> from mindspore import nn
+            >>> from mindspore import dataset as ds
+            >>>
+            >>> data = {"x": np.float32(np.random.rand(64, 10)), "y": np.random.randint(0, 5, (64,))}
+            >>> train_dataset = ds.NumpySlicesDataset(data=data).batch(32)
+            >>> set_helper = ms.DatasetHelper(train_dataset, dataset_sink_mode=False)
+            >>> set_helper.stop_send()
+        """
         self.iter.stop_send()
 
     def release(self):
-        """Free up resources about data sink."""
+        """
+        Free up resources about data sink.
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore as ms
+            >>> from mindspore import nn
+            >>> from mindspore import dataset as ds
+            >>>
+            >>> data = {"x": np.float32(np.random.rand(64, 10)), "y": np.random.randint(0, 5, (64,))}
+            >>> train_dataset = ds.NumpySlicesDataset(data=data).batch(32)
+            >>> set_helper = ms.DatasetHelper(train_dataset, dataset_sink_mode=False)
+            >>> set_helper.release()
+        """
         self.iter.release()
 
     def continue_send(self):
-        """Continue to send data to device at the beginning of epoch."""
+        """
+        Continue to send data to device at the beginning of epoch.
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore as ms
+            >>> from mindspore import nn
+            >>> from mindspore import dataset as ds
+            >>>
+            >>> data = {"x": np.float32(np.random.rand(64, 10)), "y": np.random.randint(0, 5, (64,))}
+            >>> train_dataset = ds.NumpySlicesDataset(data=data).batch(32)
+            >>> set_helper = ms.DatasetHelper(train_dataset, dataset_sink_mode=False)
+            >>> set_helper.continue_send()
+        """
         self.iter.continue_send()
 
     def _reset(self, step, epoch):

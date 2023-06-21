@@ -186,6 +186,11 @@ def pytype_to_dtype(obj):
 
     Raises:
         NotImplementedError: If the python type cannot be converted to MindSpore type.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> ms.dtype_to_nptype(bool)
+        mindspore.bool_
     """
 
     if isinstance(obj, np.dtype):
@@ -209,6 +214,11 @@ def get_py_obj_dtype(obj):
 
     Returns:
         Type of MindSpore type.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> ms.get_py_obj_dtype(1)
+        mindspore.int64
     """
     # Tensor
     if hasattr(obj, 'shape') and hasattr(obj, 'dtype') and isinstance(obj.dtype, typing.Type):
@@ -238,6 +248,11 @@ def dtype_to_nptype(type_):
 
     Returns:
         The data type of numpy.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> ms.dtype_to_nptype(ms.int8)
+        <class 'numpy.int8'>
     """
 
     return {
@@ -267,6 +282,11 @@ def dtype_to_pytype(type_):
 
     Returns:
         Type of python.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> ms.dtype_to_nptype(ms.bool_)
+        <class 'bool'>
     """
 
     return {

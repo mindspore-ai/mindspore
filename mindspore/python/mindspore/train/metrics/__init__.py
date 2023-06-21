@@ -104,6 +104,14 @@ def names():
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> ms.names()
+        ['F1', 'acc', 'accuracy', 'auc', 'bleu_score', 'confusion_matrix', 'confusion_matrix_metric',
+        'cosine_similarity', 'dice', 'hausdorff_distance', 'loss', 'mae', 'mean_surface_distance', 'mase',
+        'occlusion_sensitivity', 'perplexity', 'recall', 'roc', 'root_mean_square_distance', 'top_1_accuracy',
+        'top_5_accuracy', 'topk']
     """
     return sorted(__factory__.keys())
 

@@ -810,6 +810,10 @@ def reset_auto_parallel_context():
     - enable_alltoall: False.
     - pipeline_stages: 1.
     - fusion_threshold: 64.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> ms.reset_auto_parallel_context()
     """
     _reset_auto_parallel_context()
 
@@ -1476,6 +1480,10 @@ def reset_ps_context():
     - enable_ps: False.
 
     Meaning of each field and its default value refer to :func:`mindspore.set_ps_context`.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> ms.reset_ps_context()
     """
     _reset_ps_context()
 
