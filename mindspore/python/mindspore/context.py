@@ -270,9 +270,11 @@ class _Context:
                 - jit_compile (bool): ``False`` and ``True``.
                 - atomic_clean_policy (int): ``0`` and ``1``.
                 - op_precision_mode (str): config file path.
+                - parallel_speed_up_json_path(Union[str, None]): The path to the parallel speed up json file.
+                  If its value is None or '', it does not take effect. Default None.
         """
         ascend_cfg_set = ('precision_mode', 'jit_compile', 'atomic_clean_policy', 'matmul_allow_hf32',
-                          'conv_allow_hf32', 'op_precision_mode')
+                          'conv_allow_hf32', 'op_precision_mode', 'parallel_speed_up_json_path')
         ascend_cfg_modes = {'precision_mode': ["force_fp16", "allow_fp32_to_fp16", "allow_mix_precision",
                                                "must_keep_origin_dtype", "force_fp32", "force_lowerprecision",
                                                "allow_fp32_to_bf16", "allow_fp32_to_lowprecision",
@@ -280,16 +282,21 @@ class _Context:
                             'jit_compile': [True, False],
                             'atomic_clean_policy': [0, 1],
                             'matmul_allow_hf32': [True, False],
-                            'conv_allow_hf32': [True, False]}
+                            'conv_allow_hf32': [True, False],
+                            'op_precision_mode': (str,),
+                            'parallel_speed_up_json_path': (str, None)}
         for ascend_key, ascend_value in ascend_config.items():
             if ascend_key not in ascend_cfg_set:
                 raise ValueError(f"For 'context.set_context', the key of argument 'ascend_config' must be one of "
                                  f"{ascend_cfg_set}, but got {ascend_key}.")
             if ascend_key in ascend_cfg_modes:
                 supported_modes = ascend_cfg_modes.get(ascend_key)
-                if ascend_config[ascend_key] not in supported_modes:
+                if isinstance(supported_modes, list) and ascend_value not in supported_modes:
                     raise ValueError(f"For 'ascend_config', the value of argument {ascend_key} must be one of "
-                                     f"{supported_modes}, but got {ascend_config[ascend_key]}.")
+                                     f"{supported_modes}, but got {ascend_value}.")
+                if isinstance(supported_modes, tuple) and not isinstance(ascend_value, supported_modes):
+                    raise ValueError(f"For 'ascend_config', the type of argument {ascend_key} must be one of "
+                                     f"{supported_modes}, but got {type(ascend_value)}.")
             if ascend_key == 'precision_mode':
                 self.set_param(ms_ctx_param.precision_mode, ascend_value)
             if ascend_key == 'jit_compile':
@@ -302,14 +309,13 @@ class _Context:
                 self.set_param(ms_ctx_param.conv_allow_hf32, "1" if ascend_value else "0")
             if ascend_key == 'op_precision_mode':
                 op_precision_path = ascend_value
-                if not isinstance(op_precision_path, str) or op_precision_path.strip() == "":
-                    raise ValueError(f"For 'ascend_config', the 'op_precision_mode' is invalid type, "
-                                     f"it should be Non-empty string, but got '{op_precision_path}'.")
                 real_path = os.path.realpath(op_precision_path)
                 if not os.path.exists(real_path):
                     raise ValueError(f"For 'ascend_config', the 'op_precision_mode' is invalid path, "
                                      f"got '{op_precision_path}'.")
                 self.set_param(ms_ctx_param.op_precision_mode, ascend_value)
+            if ascend_key == 'parallel_speed_up_json_path':
+                self._set_speedup_config_path(ascend_value)
 
     def set_gpu_config(self, gpu_config):
         """
@@ -554,6 +560,37 @@ class _Context:
         if not isinstance(support, bool):
             raise TypeError(f"The attribute 'support_binary' should be a bool, but got {type(support)}.")
         self._support_binary = support
+
+    def _set_speedup_config_path(self, speedup_config_path):
+        """"Check and set speedup config for auto parallel."""
+        if speedup_config_path is None or speedup_config_path == "":
+            return
+        speedup_config_real_path = os.path.abspath(speedup_config_path)
+        if not os.path.exists(speedup_config_real_path):
+            raise ValueError(f"For 'ascend_config', the path to parallel_speed_up_json: "
+                             f"{speedup_config_real_path} does not exist, please check whether the "
+                             f"'parallel_speed_up_json_path' is correct.")
+        try:
+            valid_option = {"recompute_comm_overlap": ms_ctx_param.recompute_comm_overlap,
+                            "matmul_grad_comm_overlap": ms_ctx_param.matmul_grad_comm_overlap,
+                            "enable_task_opt": ms_ctx_param.enable_task_opt,
+                            "interleaved_matmul_comm": ms_ctx_param.interleaved_matmul_comm,
+                            "interleaved_layernorm_comm": ms_ctx_param.interleaved_layernorm_comm}
+            with open(speedup_config_real_path, 'r') as f:
+                speedup_config = json.load(f)
+                for k, v in speedup_config.items():
+                    if not isinstance(k, str):
+                        raise TypeError("key {} is not a str".format(k))
+                    if k not in valid_option:
+                        raise ValueError("key {} should be one of {}.".format(k, valid_option.keys()))
+                    if not isinstance(v, bool):
+                        raise TypeError("value {} is not a bool".format(v))
+                    self.set_param(valid_option.get(k), v)
+        except (TypeError, ValueError) as exo:
+            raise ValueError(str(exo) + "\nFor 'context.set_context', "
+                                        "open or load the 'speedup_config_path' file {} "
+                                        "failed, please check whether 'speedup_config_path' is json file and correct, "
+                                        "or may not have permission to read it.".format(speedup_config_real_path))
 
 
 def _context():
@@ -1141,8 +1178,8 @@ def set_context(**kwargs):
               memory_optimize_level is set 'O1'.
             - OFF: Turn off the memory Offload function.
         ascend_config (dict): Set the parameters specific to Ascend hardware platform. It is not set by default.
-            Currently, only setting `precision_mode`, `jit_compile` and `atomic_clean_policy` are supported on
-            Ascend910B hardware platform. The default value of `precision_mode`, `jit_compile` and
+            Currently, configurations except `parallel_speed_up_json_path` are currently only supported on Ascend910B
+            hardware platform. The default value of `precision_mode`, `jit_compile` and
             `atomic_clean_policy` are experimental parameters, may change in the future.
 
             - precision_mode (str): Mixed precision mode setting, on Ascend910B hardware platform, the default
@@ -1181,6 +1218,20 @@ def set_context(**kwargs):
             - conv_allow_hf32 (bool): Whether to convert FP32 to HF32 for Conv operators. Default value: ``True``.
             - op_precision_mode (str): Path to config file of op precision mode. For detailed information, please refer
               to <https://www.hiascend.com/>.
+            - parallel_speed_up_json_path(Union[str, None]): The path to the parallel speed up json file, configuration
+              can refer to `parallel_speed_up.json
+              <https://gitee.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_ .
+              If its value is None or '', it does not take effect. Default None.
+
+              - recompute_comm_overlap (bool): Enable overlap between recompute ops and communication ops if True.
+                Default: False.
+              - matmul_grad_comm_overlap (bool): Enable overlap between grad ops and communication ops if True.
+                Default: False.
+              - enable_task_opt (bool): Enable the optimizaton of the number of tasks for each communication if True.
+                Default: False.
+              - interleaved_matmul_comm (bool): Enable interleaved optimization of Matmul-Comm if True. Default: False.
+              - interleaved_layernorm_comm (bool): Enable interleaved optimization of LayerNorm-Comm if True.
+                Default: False.
         jit_syntax_level (int): Set JIT syntax level for graph compiling, triggered by GRAPH_MODE and @jit decorator.
             The value must be in [STRICT(``0``), COMPATIBLE(``1``), LAX(``2``)]. Default: LAX(``2``). All levels
             support all backends.
@@ -1256,6 +1307,7 @@ def set_context(**kwargs):
               - fft_tiling: This algorithm uses the Fast-Fourier Transform approach but splits the inputs into tiles.
                 A significant memory workspace is needed to store intermediate results but less than fft for large size
                 images. The results are deterministic.
+
     Raises:
         ValueError: If input key is not an attribute in context.
 

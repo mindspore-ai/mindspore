@@ -161,7 +161,7 @@ mindspore.set_context
 
           - ON：开启memory offload功能。在Ascend硬件平台，未设置环境变量“GRAPH_OP_RUN=1”时本参数不生效；设置memory_optimize_level='O1'时本参数不生效。
           - OFF：关闭memory offload功能。
-        - **ascend_config** (dict) - 设置Ascend硬件平台专用的参数，默认不设置。当前只仅支持在Ascend910B硬件平台设置，其他平台不生效。
+        - **ascend_config** (dict) - 设置Ascend硬件平台专用的参数，默认不设置。其中除了parallel_speed_up_json_path以外的配置当前只仅支持在Ascend910B硬件平台设置，其他平台不生效。
           precision_mode、jit_compile和atomic_clean_policy参数的默认值属于实验性质参数，将来可能会发生变化。
 
           - **precision_mode** (str): 混合精度模式设置，Ascend910B硬件平台训练默认值：以CANN设置的默认值为准。推理网络默认值： ``force_fp16`` 。其值范围如下：
@@ -186,6 +186,14 @@ mindspore.set_context
           - **matmul_allow_hf32** (bool): 是否为Matmul类算子使能FP32转换为HF32。默认值： ``False``。
           - **conv_allow_hf32** (bool): 是否为Conv类算子使能FP32转换为HF32。默认值： ``True``。
           - **op_precision_mode** (str): 算子精度模式配置文件的所在路径。如果您想了解更多详细信息, 请查询[昇腾社区](https://www.hiascend.com/)了解。
+          - **parallel_speed_up_json_path** (Union[str, None]): 并行加速配置文件，配置项可以参考 `parallel_speed_up.json <https://gitee.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_ 。
+            当设置为None时，表示不启用。
+
+            - **recompute_comm_overlap** (bool): 为True时表示开启反向重计算和通信掩盖。默认值：False。
+            - **matmul_grad_comm_overlap** (bool): 为True时表示开启反向Matmul和通信掩盖。默认值：False。
+            - **enable_task_opt** (bool): 为True时表示开启通信算子task数量优化。默认值：False。
+            - **interleaved_matmul_comm** (bool): 为True时表示开启Matmul-Comm的细粒度双副本优化。默认值：False。
+            - **interleaved_layernorm_comm** (bool): 为True时表示开启LayerNorm-Comm细粒度双副本优化。默认值：False。
         - **jit_syntax_level** (int) - 当通过GRAPH_MODE或者@jit装饰器触发图编译时，此选项用于设置JIT语法支持级别。
           其值必须在[STRICT(``0``)，COMPATIBLE(``1``)，LAX(``2``)]范围内，默认值为LAX(``2``)。全部级别都支持所有后端。
 

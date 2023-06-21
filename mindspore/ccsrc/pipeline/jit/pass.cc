@@ -49,6 +49,10 @@
 #include "frontend/parallel/pass/overlap_opt_shard_in_pipeline.h"
 #include "frontend/parallel/pass/slice_activation_in_cell_share_recompute.h"
 #include "frontend/parallel/pass/handle_group_info.h"
+#include "frontend/parallel/pass/overlap_recompute_and_grad_model_parallel.h"
+#include "frontend/parallel/pass/overlap_gradmatmul_and_gradallreduce.h"
+#include "frontend/parallel/pass/split_matmul_comm_elementwise_fp.h"
+#include "frontend/parallel/pass/split_layernorm_comm_fp.h"
 #include "frontend/optimizer/recompute.h"
 #include "frontend/optimizer/irpass/recompute.h"
 #include "frontend/optimizer/slice_activation_in_recompute.h"
@@ -724,6 +728,18 @@ bool MicroInterLeavedOrderControlPass(const ResourcePtr &resource) {
   return true;
 }
 
+bool SplitMatmulCommElementwiseOpFpPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::SplitMatmulCommElementwiseFp(resource->func_graph());
+  return true;
+}
+
+bool SplitLayerNormCommFpPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::SplitLayerNormCommFp(resource->func_graph());
+  return true;
+}
+
 bool CommOpAddAttrs(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   opt::CommOpAttrs(resource->func_graph());
@@ -742,9 +758,21 @@ bool OverlapOptShardInPipelinePass(const ResourcePtr &resource) {
   return true;
 }
 
+bool OverlapGradMatmulAndGradAllreduce(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::OverlapGradMatmulAndGradAllreduce(resource->func_graph());
+  return true;
+}
+
 bool HandleGroupInfoPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   parallel::HandleGroupInfo();
+  return true;
+}
+
+bool OverlapRecomputeAndGradModelParallel(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::OverlapRecomputeAndGradModelParallel(resource->func_graph());
   return true;
 }
 
@@ -991,7 +1019,11 @@ std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExec
                                    {"add_comm_op_reuse_tag", AddCommOpReusePass},
                                    {"overlap_opt_shard_in_pipeline", OverlapOptShardInPipelinePass},
                                    {"grouped_pairwise_exchange_alltoall", GroupedPairwiseExchangeAllToAllPass},
+                                   {"overlap_recompute_and_grad_model_parallel", OverlapRecomputeAndGradModelParallel},
+                                   {"split_matmul_comm_elemetwise", SplitMatmulCommElementwiseOpFpPass},
+                                   {"split_layernorm_comm", SplitLayerNormCommFpPass},
                                    // The pass cache hccl group, so the hccl group should be created before the pass
+                                   {"overlap_grad_matmul_and_grad_allreduce", OverlapGradMatmulAndGradAllreduce},
                                    {"handle_group_info", HandleGroupInfoPass}};
 
 std::vector<PassItem> kPynativePasses = {{"opt_a", OptPassAGroup},
