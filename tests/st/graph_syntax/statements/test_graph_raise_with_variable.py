@@ -15,11 +15,12 @@
 """ test graph raise """
 import os
 import pytest
+import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
+import mindspore.ops.operations as P
 from mindspore import Tensor, context, jit
 from mindspore import dtype as mstype
-import numpy as np
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -1199,3 +1200,33 @@ def test_raise_constant_folding_int64():
         res = foo(x)
         print("res:", res)
     assert "The input can not be 11." in str(raise_info_constant_int64.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_assert_tensor_join_assert():
+    """
+    Feature: graph raise.
+    Description: Test raise join in control flow.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.add = P.Add()
+
+        def construct(self, x, y):
+            output = self.add(x, y)
+            assert output == Tensor(8, ms.int32), f"The output is {output}, y is {y}"
+            return output
+
+    x = Tensor(2, ms.int32)
+    y = Tensor(3, ms.int32)
+    with pytest.raises(AssertionError) as err:
+        net = Net()
+        output = net(x, y)
+        print("output:", output)
+    assert "The output is 5, y is 3." in str(err)
