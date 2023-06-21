@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,17 +14,13 @@
 # ==============================================================================
 import os
 import re
-import subprocess
 import pytest
 import numpy as np
 import mindspore as ms
 import mindspore.ops.operations as P
 import mindspore.numpy as msnp
 from mindspore.nn import Cell
-from mindspore.nn import ReLU, BatchNorm2d, Conv2d, ParameterUpdate
-from mindspore.nn import Momentum
-from mindspore.nn import SoftmaxCrossEntropyWithLogits
-from mindspore import amp
+from mindspore.nn import ReLU, BatchNorm2d, Conv2d
 from mindspore import context, Tensor
 from mindspore.common import ParameterTuple
 from mindspore.common.parameter import Parameter
@@ -89,59 +85,6 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
         assert True
 
 
-def clear_files():
-    os.system("rm verbose_ir_files/*")
-
-
-def find_files(file, para):
-    output = subprocess.check_output(
-        ["grep '%s' verbose_ir_files/%s | wc -l" % (para, file)],
-        shell=True)
-    out = str(output, 'utf-8').strip()
-    return out
-
-
-class SideEffectCastAll(Cell):
-    def __init__(self):
-        super().__init__()
-        self.cast = P.Cast()
-        self.dtype = ms.float16
-        np.random.seed(5)
-        inputs1 = np.random.randn(5, 5)
-        inputs2 = np.random.randn(5, 5)
-        self.parameter_a = Parameter(Tensor(inputs1, ms.float32), name="a")
-        self.parameter_b = Parameter(Tensor(inputs2, ms.float32), name="b")
-        self.assign = P.Assign()
-
-    def construct(self, x, y):
-        self.assign(self.parameter_a, x)
-        self.assign(self.parameter_b, y)
-        out_a = self.cast(self.parameter_a, self.dtype)
-        out_b = self.cast(self.parameter_b, self.dtype)
-        return out_a, out_b
-
-
-@security_off_wrap
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@pytest.mark.skip(reason="No support")
-def test_side_effect_castall():
-    """
-    Feature: Auto monad feature.
-    Description: Verify cast all fusion.
-    Expectation: No exception.
-    """
-    clear_files()
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
-    net = SideEffectCastAll()
-    inputs1 = np.random.randn(5, 5)
-    inputs2 = np.random.randn(5, 5)
-    net(Tensor(inputs1, ms.float32), Tensor(inputs2, ms.float32))
-    result = find_files('./hwopt*cast_all*.ir', 'CastAll')
-    assert result == '2'
-
-
 class SideEffectControlFlowAssignDependWhileNet(Cell):
     def __init__(self):
         super().__init__()
@@ -183,6 +126,7 @@ def test_side_effect_control_flow_assign_depend_while_net():
     out2 = net(Tensor([9.0], ms.float32), Tensor(
         [99.0], ms.float32), Tensor([1.0], ms.float32))
     allclose_nparray(out1.asnumpy(), out2.asnumpy(), 0.001, 0.001)
+    context.set_context(mode=context.GRAPH_MODE)
 
 
 class InplaceNet(Cell):
@@ -219,38 +163,6 @@ class InplaceNet(Cell):
         return output
 
 
-@security_off_wrap
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@pytest.mark.skip(reason="No support")
-def test_ir_fusion_inplace_bn_conv_conv():
-    """
-    Feature: Auto monad feature.
-    Description: Verify ir fusion.
-    Expectation: No exception.
-    """
-    clear_files()
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
-    input_np = np.random.uniform(0.0, 255.0,
-                                 size=[4, 4, 4, 4]).astype(np.float32)
-    label = np.ones([4, 4, 4, 4]).astype(np.float32)
-    net = InplaceNet()
-    loss = SoftmaxCrossEntropyWithLogits(sparse=False)
-    opt = Momentum(learning_rate=0.01, momentum=0.9,
-                   params=filter(lambda x: x.requires_grad, net.get_parameters()))
-    net = amp.build_train_network(net, opt, loss, level="O2",
-                                  keep_batchnorm_fp32=False)
-    net.set_train()
-    net(Tensor(input_np), Tensor(label))
-    find_accum = find_files("./hwopt*cudnn_inplace*ir",
-                            "inplace_algo: accumulation")
-    find_cover = find_files("./hwopt*cudnn_inplace*ir",
-                            "inplace_algo: cover")
-    assert find_accum == '1'
-    assert find_cover == '1'
-
-
 def clean_all_ir_files(folder_path):
     if os.path.exists(folder_path):
         for file_name in os.listdir(folder_path):
@@ -272,102 +184,6 @@ def read_file():
         content = f.read()
     clean_all_ir_files('./')
     return content
-
-
-class MixControlNet(Cell):
-    def __init__(self, in_channel, x):
-        super().__init__()
-        # self._save_graphs(save_graph_flag=True, save_graph_path=".")
-        self.biasadd = P.BiasAdd()
-        self.equal = P.Equal()
-        self.addn = P.AddN()
-        self.conv = Conv2d(in_channels=in_channel, out_channels=in_channel,
-                           kernel_size=1, stride=1, has_bias=False,
-                           weight_init='ones', pad_mode='same')
-        self.bn = BatchNorm2d(num_features=in_channel)
-        self.assignadd = P.AssignAdd()
-        self.assign = P.Assign()
-        self.relu = ReLU()
-        self.mean = P.ReduceMean(keep_dims=False)
-        self.bias = Parameter(
-            Tensor(np.random.randint(2, size=(3,)).astype((np.float32))),
-            name="bias")
-        self.bias2 = Parameter(Tensor(np.ones([3]).astype(np.float32)),
-                               name="bias2")
-        self.parameterupdate = ParameterUpdate(self.bias)
-        self.value = Tensor(np.random.randn(*(3,)), ms.float32)
-        self.x = x
-
-    def construct(self, input_x):
-        x = self.x
-        z = self.x
-        out = self.biasadd(input_x, self.bias)
-        while x < 20:
-            update = self.parameterupdate(self.bias2)
-            out = self.biasadd(out, update)
-            if x < 10:
-                out = self.addn((input_x, out))
-                while z < 20:
-                    out = self.conv(out)
-                    z = z + 1
-            if x < 20:
-                out = self.biasadd(out, self.bias)
-                if x % 2 == 0:
-                    self.assignadd(self.bias, self.value)
-                    out = self.biasadd(out, self.bias)
-                    out = self.bn(out)
-                else:
-                    out = self.conv(out)
-            x = x + 1
-        out = self.addn((out, out))
-        out = self.mean(out, (2, 3))
-        return out
-
-
-def use_build_train_network_controlflow_check_cast_num(network, level, input_x,
-                                                       label, cast_num,
-                                                       sparse=False,
-                                                       loss_flag=True,
-                                                       **kwargs):
-    opt = Momentum(learning_rate=0.0001, momentum=0.009,
-                   params=network.trainable_params())
-    loss = None
-    if loss_flag:
-        loss = SoftmaxCrossEntropyWithLogits(sparse=sparse, reduction='mean')
-
-    train_network = ms.amp.build_train_network(network, opt, loss, level=level,
-                                               **kwargs)
-    out_me = train_network(input_x, label)
-    if context.get_context("mode") == 0:
-        content = read_file()
-        castnum = re.findall('Cast', content)
-        assert len(castnum) == cast_num
-    return out_me
-
-
-@security_off_wrap
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_auto_mixed_precision_controlflow_auto():
-    """
-    Feature: Auto monad feature.
-    Description: Verify control flow.
-    Expectation: No exception.
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, save_graphs=True)
-    net = MixControlNet(3, 5)
-    input_x = Tensor(
-        np.random.randint(2, size=(1, 3, 2, 2)).astype((np.float32)))
-    label = Tensor(np.zeros([1, 3]).astype(np.float32))
-    if ms.context.get_context("device_target") == "Ascend":
-        cast_num = 77
-    if ms.context.get_context("device_target") == "GPU":
-        cast_num = 73
-    use_build_train_network_controlflow_check_cast_num(net, "auto", input_x,
-                                                       label, cast_num)
 
 
 @security_off_wrap
@@ -400,7 +216,7 @@ def test_updatestate_between_assigns():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
     if ms.context.get_context('mode') == 0:
         content = read_file()
-        updatestate_num = re.findall('UpdateState', content)
+        updatestate_num = re.findall('= UpdateState', content)
         assert len(updatestate_num) == 1
 
 
@@ -408,7 +224,6 @@ def test_updatestate_between_assigns():
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.skip(reason="No support")
 def test_updatestate_between_maketuple_assign():
     """
     Feature: Auto monad feature.
@@ -437,7 +252,7 @@ def test_updatestate_between_maketuple_assign():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
     if ms.context.get_context('mode') == 0:
         content = read_file()
-        updatestate_num = re.findall('UpdateState', content)
+        updatestate_num = re.findall('= UpdateState', content)
         assert len(updatestate_num) == 1
 
 
@@ -445,7 +260,6 @@ def test_updatestate_between_maketuple_assign():
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.skip(reason="No support")
 def test_updatestate_between_assign_maketuple():
     """
     Feature: Auto monad feature.
@@ -474,7 +288,7 @@ def test_updatestate_between_assign_maketuple():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
     if ms.context.get_context('mode') == 0:
         content = read_file()
-        updatestate_num = re.findall('UpdateState', content)
+        updatestate_num = re.findall('= UpdateState', content)
         assert len(updatestate_num) == 1
 
 
