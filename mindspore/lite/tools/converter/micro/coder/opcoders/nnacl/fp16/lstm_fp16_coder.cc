@@ -232,8 +232,8 @@ int LstmFP16Coder::DoCode(CoderContext *context) {
   auto state_bias_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(static_cast<float16 *>(state_bias_));
   auto pro_bias_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(static_cast<float16 *>(bias_pro_ptr_));
 
-  code.CodeFunction("LstmFp16", output_tensor_, input_tensor_, weight_i_str, weight_h_str, weight_pro_str,
-                    input_bias_str, state_bias_str, pro_bias_str, output_hidden_state, output_cell_state, "buffer",
+  code.CodeFunction("LstmFp16", output_tensor_, input_tensor_, weight_i_str, weight_h_str, input_bias_str,
+                    state_bias_str, weight_pro_str, pro_bias_str, output_hidden_state, output_cell_state, "buffer",
                     "&lstm_param");
   context->AppendCode(code.str());
   return RET_OK;
