@@ -143,6 +143,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
     Note:
         The default value None of `input_data` works as a placeholder, it does not mean that we can create a NoneType
         Tensor.
+        Tensor with shape contains 0 is not fully tested and supported.
 
     Examples:
         >>> import numpy as np

@@ -343,7 +343,7 @@ def _check_save_obj_and_ckpt_file_name(save_obj, ckpt_file_name):
 
 
 def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
-                    async_save=False, append_dict=None, enc_key=None, enc_mode="AES-GCM", choice_func=None):
+                    async_save=False, append_dict=None, enc_key=None, enc_mode="AES-GCM", choice_func=None, **kwargs):
     """
     Save checkpoint to a specified file.
 
@@ -368,6 +368,10 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                                  If returns ``False`` , the Parameter that not matching the custom condition will not
                                  be saved. Default: ``None`` .
 
+
+    kwargs (dict): Configuration options dictionary.
+
+        - incremental (bool): Whether export checkpoint for MapParameter incrementally.
 
     Raises:
         TypeError: If the parameter `save_obj` is not `nn.Cell` or list type.
@@ -396,7 +400,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
     append_dict = _check_append_dict(append_dict)
     enc_key = Validator.check_isinstance('enc_key', enc_key, (type(None), bytes))
     enc_mode = Validator.check_isinstance('enc_mode', enc_mode, str)
-
+    map_param_inc = kwargs.get('incremental', False)
     logger.info("Execute the process of saving checkpoint files.")
 
     if isinstance(save_obj, nn.Cell):
@@ -422,7 +426,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
             each_param = {"name": key}
             if isinstance(value, MapParameter):
                 param_data = []
-                for export_data in value.export_data():
+                for export_data in value.export_data(map_param_inc):
                     param_data.append(Tensor(export_data))
                     each_param["data"] = param_data
                     param_list.append(each_param)

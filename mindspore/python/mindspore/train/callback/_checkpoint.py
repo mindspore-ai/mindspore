@@ -103,6 +103,10 @@ class CheckpointConfig:
                         mode, currently supports 'AES-GCM', 'AES-CBC' and 'SM4-CBC'. Default: ``'AES-GCM'`` .
         exception_save (bool): Whether to save the current checkpoint when an exception occurs. Default: ``False`` .
 
+    kwargs (dict): Configuration options dictionary.
+
+        - incremental (bool): whether export checkpoint for MapParameter incrementally.
+
     Raises:
         ValueError: If input parameter is not the correct type.
 
@@ -153,7 +157,8 @@ class CheckpointConfig:
                  append_info=None,
                  enc_key=None,
                  enc_mode='AES-GCM',
-                 exception_save=False):
+                 exception_save=False,
+                 **kwargs):
 
         if save_checkpoint_steps is not None:
             save_checkpoint_steps = Validator.check_non_negative_int(save_checkpoint_steps)
@@ -195,6 +200,7 @@ class CheckpointConfig:
         self._append_dict = self._handle_append_info(append_info)
         self._enc_key = Validator.check_isinstance('enc_key', enc_key, (type(None), bytes))
         self._enc_mode = Validator.check_isinstance('enc_mode', enc_mode, str)
+        self._map_param_inc = kwargs.get('incremental', False)
 
     @property
     def save_checkpoint_steps(self):
@@ -294,6 +300,16 @@ class CheckpointConfig:
             Dict, the information saved to checkpoint file.
         """
         return self._append_dict
+
+    @property
+    def map_param_inc(self):
+        """
+        Get the value of whether to save map Parameter incrementally.
+
+        Returns:
+            Bool, whether to save map Parameter incrementally.
+        """
+        return self._map_param_inc
 
     def get_checkpoint_policy(self):
         """
@@ -414,6 +430,7 @@ class ModelCheckpoint(Callback):
         self._append_step_num = self._append_dict.get("step_num") if "step_num" in self._append_dict else 0
         self._graph_saved = False
         self._need_flush_from_cache = True
+        self._map_param_inc = self._config.map_param_inc
 
     def step_end(self, run_context):
         """
@@ -521,7 +538,8 @@ class ModelCheckpoint(Callback):
                 self._append_dict["step_num"] = self._append_step_num + cb_params.cur_step_num
             network = self._config.saved_network if self._config.saved_network is not None else cb_params.train_network
             save_checkpoint(network, cur_file, self._config.integrated_save, self._config.async_save,
-                            self._append_dict, self._config.enc_key, self._config.enc_mode)
+                            self._append_dict, self._config.enc_key, self._config.enc_mode,
+                            incremental=self._map_param_inc)
 
             self._latest_ckpt_file_name = cur_file
 
