@@ -27,6 +27,7 @@
 #ifdef ENABLE_D
 #include "transform/acl_ir/acl_adapter_info.h"
 #endif
+#include "pipeline/pynative/pynative_utils.h"
 
 namespace mindspore {
 using runtime::DeviceAddressUtils;
@@ -357,7 +358,19 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
   }
   auto op_name = op_prim->name();
   graph_info += op_name;
-  bool has_hidden_side_effect = op_prim->HasAttr(GRAPH_FLAG_SIDE_EFFECT_HIDDEN);
+  bool has_hidden_side_effect;
+  {
+    PrimitiveReadLock read_lock(op_prim->shared_mutex());
+    has_hidden_side_effect = op_prim->HasAttr(GRAPH_FLAG_SIDE_EFFECT_HIDDEN);
+    // The value of the attribute affects the operator selection
+    const auto &attr_map = op_prim->attrs();
+    (void)std::for_each(attr_map.begin(), attr_map.end(), [&graph_info](const auto &element) {
+      if (element.first == kAttrInputNames || element.first == kAttrOutputNames) {
+        return;
+      }
+      graph_info.append(element.second->ToString());
+    });
+  }
   for (size_t index = 0; index < op_info.input_tensor.size(); ++index) {
     const auto &input_tensor = op_info.input_tensor[index];
     MS_EXCEPTION_IF_NULL(input_tensor);
@@ -397,14 +410,6 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
   if (has_hidden_side_effect) {
     graph_info.append(std::to_string(op_prim->id())).append("_");
   }
-  // The value of the attribute affects the operator selection
-  const auto &attr_map = op_prim->attrs();
-  (void)std::for_each(attr_map.begin(), attr_map.end(), [&graph_info](const auto &element) {
-    if (element.first == kAttrInputNames || element.first == kAttrOutputNames) {
-      return;
-    }
-    graph_info.append(element.second->ToString());
-  });
 
 #ifdef ENABLE_D
   // Ascend special info.

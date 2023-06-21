@@ -399,6 +399,7 @@ void Common::GetConstInputToAttr(const PrimitivePtr &op_prim, const std::string 
   if (op_name == prim::kPrimCustom->name()) {
     // Custom op needs to set reg dynamically
     mindspore::HashSet<size_t> attr_indexes;
+    PrimitiveReadLock read_lock(op_prim->shared_mutex());
     opt::GetCustomOpAttrIndex(op_prim, input_to_attr_index);
     return;
   }
@@ -604,6 +605,7 @@ void PyParser::SetPrim(const FrontendOpRunInfoPtr &op_run_info, const py::object
   if (!prim->HasPyObj()) {
     MS_LOG(EXCEPTION) << "Pyobj is empty";
   }
+  prim->EnableSharedMutex();
   op_run_info->op_grad_info->op_prim = prim;
   op_run_info->signatures = prim->signatures();
 }
