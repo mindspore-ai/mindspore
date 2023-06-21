@@ -1291,14 +1291,19 @@ def multinomial(input, num_samples, replacement=True, seed=None):
     """
     shape = _get_cache_prim(P.Shape)()
     reshape = _get_cache_prim(P.Reshape)()
-    const_utils.check_valid_dim(len(shape(input)), "multinomial")
+
+    def _check_valid_dim(dim, name):
+        if dim not in (1, 2):
+            raise ValueError(f"For '{name}', the dimension of inputs must be 1d or 2d, but got {dim}.")
+
+    _check_valid_dim(len(shape(input)), "multinomial")
     seed1, seed2 = _get_seed(seed, "multinomial")
     if not replacement:
         if shape(input)[-1] < num_samples:
-            const_utils.raise_value_error("For 'multinomial', the 'num_samples' must be less than "
-                                          "the last dimension of input without 'replacement', "
-                                          "but got 'num_samples': {} and "
-                                          "'replacement': {}".format(num_samples, replacement))
+            const_utils.raise_value_error(f"For 'multinomial', the 'num_samples' must be less than "
+                                          f"the last dimension of input without 'replacement', "
+                                          f"but got 'num_samples': {num_samples} and "
+                                          f"'replacement': {replacement}")
         n_dist = 1
         if len(shape(input)) > 1:
             n_dist = shape(input)[-2]

@@ -939,7 +939,7 @@ class Pad(Cell):
         return x
 
 
-@constexpr
+@_primexpr
 def bilinear(shape, size, scale, align_corners, prim_name=None):
     """Check input and calculate shape"""
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"

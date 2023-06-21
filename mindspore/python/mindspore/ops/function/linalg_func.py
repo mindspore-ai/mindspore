@@ -341,9 +341,9 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
             rtol = max(ops.Shape()(x)) * ops.Eps()(Tensor(1.0, x_dtype))
 
     if not inner.IsInstance()(rtol, mstype.tensor_type):
-        rtol = Tensor(rtol, mstype.float32)
+        rtol = F.cast(rtol, mstype.float32)
     if not inner.IsInstance()(atol, mstype.tensor_type):
-        atol = Tensor(atol, mstype.float32)
+        atol = F.cast(atol, mstype.float32)
 
     if not hermitian:
         s, u, v = linalg_ops.Svd()(x)
@@ -351,7 +351,7 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
         threshold = ops.Maximum()(atol.expand_dims(-1), rtol.expand_dims(-1) * max_singular_val)
         condition = s > threshold
         reciprocal_s_before = ops.Reciprocal()(s).broadcast_to(condition.shape)
-        zero = ops.Zeros()(condition.shape, s.dtype)
+        zero = F.zeros(condition.shape, s.dtype)
         s_pseudoinv = ops.Select()(condition, reciprocal_s_before, zero)
         output = ops.matmul(v * s_pseudoinv.expand_dims(-2), _nd_transpose(ops.Conj()(u)))
     else:
@@ -361,7 +361,7 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
         threshold = ops.Maximum()(atol.expand_dims(-1), rtol.expand_dims(-1) * max_singular_val)
         condition = s_abs > threshold
         reciprocal_s_before = ops.Reciprocal()(s)
-        zero = ops.Zeros()(condition.shape, s.dtype)
+        zero = F.zeros(condition.shape, s.dtype)
         s_pseudoinv = ops.Select()(condition, reciprocal_s_before, zero)
         output = ops.matmul(u * s_pseudoinv.expand_dims(-2), _nd_transpose(ops.Conj()(u)))
     return output

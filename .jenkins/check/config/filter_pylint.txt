@@ -82,7 +82,10 @@
 "mindspore/mindspore/python"                                                                                             "redefined-builtin"
 "mindspore/mindspore/python/mindspore/ops/function/array_func.py"                                                        "unidiomatic-typecheck"
 "mindspore/mindspore/python/mindspore/experimental/map_parameter.py"                                                     "protected-access"
-"mindspore/mindspore/python/mindspore/ops/_op_impl/aicpu/cast.py"                                                        "astroid-error"                  
+"mindspore/mindspore/python/mindspore/ops/_op_impl/aicpu/cast.py"                                                        "astroid-error"
+"mindspore/mindspore/python/mindspore/_checkparam.py"                                                                    "consider-using-enumerate"
+"mindspore/mindspore/python/mindspore/_extends/parse/standard_method.py"                                                 "consider-using-enumerate"
+"mindspore/mindspore/python/mindspore/ops/function/math_func.py"                                                         "consider-using-enumerate"
 
 # MindData
 "mindspore/mindspore/python/mindspore/dataset/__init__.py"                                                               "redefined-builtin"

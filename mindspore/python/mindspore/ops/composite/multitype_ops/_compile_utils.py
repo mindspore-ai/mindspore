@@ -32,6 +32,7 @@ from mindspore.common import Tensor, CSRTensor, COOTensor
 from mindspore.common import mutable
 from mindspore import ops
 from mindspore.ops.primitive import _primexpr
+from mindspore import _checkparam as validator
 
 slice_get_item = SliceGetItem()
 hyper_map = base.HyperMap()
@@ -1566,7 +1567,7 @@ def reduce_(a, reduce_fn, cmp_fn=None, axis=None, keepdims=False, initial=None, 
     ndim = F.rank(a)
     if dtype is None:
         dtype = F.dtype(a)
-    axes = const_utils.check_axis_valid_const(axis, ndim)
+    axes = validator.check_axis_valid(axis, ndim)
     if initial is not None:
         if ((isinstance(initial, Tensor) and F.rank(initial) > 0) or
                 not isinstance(initial, (int, float, bool, Tensor))):
@@ -1590,12 +1591,11 @@ def reduce_(a, reduce_fn, cmp_fn=None, axis=None, keepdims=False, initial=None, 
         ndim_orig = F.rank(a)
         # broadcasts input tensors
         shape_out = const_utils.infer_out_shape(F.shape(where), F.shape(a), F.shape(initial))
-        broadcast_to = P.BroadcastTo(shape_out)
         where = where.astype(mstype.float32)
-        where = broadcast_to(where)
+        where = F.broadcast_to(where, shape_out)
         where = where.astype(mstype.bool_)
-        a = broadcast_to(a)
-        initial = broadcast_to(initial)
+        a = F.broadcast_to(a, shape_out)
+        initial = F.broadcast_to(initial, shape_out)
         a = F.select(where, a, initial)
         axes = const_utils.real_axes(ndim_orig, F.rank(a), axes)
 

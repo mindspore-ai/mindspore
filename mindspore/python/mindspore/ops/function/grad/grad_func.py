@@ -22,15 +22,14 @@ from mindspore.common import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.nn.cell import Cell
 from mindspore.nn.grad.cell_grad import _LinearizeInner
-from mindspore.ops.primitive import constexpr
-from mindspore.ops.function.array_func import ones, expand_dims, size, reshape, broadcast_to, transpose
+from mindspore.ops.primitive import constexpr, _primexpr
+from mindspore.ops.function.array_func import ones, expand_dims, size, reshape, broadcast_to, transpose, zeros
 from mindspore.ops.composite import _Vmap, _Grad, _TaylorOperation, GradOperation
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
 
 cast = P.Cast()
 dtype = P.DType()
-zeros = P.Zeros()
 oneslike = P.OnesLike()
 
 
@@ -962,10 +961,13 @@ def vjp(fn, *inputs, has_aux=False):
     return res, wrap_container
 
 
-@constexpr
+@_primexpr
 def _jac_generate_target_dimension(x):
     """For given length = len(x), this method generates target dimension tuple (1, 2, 3,..., length, 0)."""
-    target_dimension = tuple(index + 1 for index, _ in enumerate(x[1:])) + (0,)
+    dim = ()
+    for index in range(len(x[1:])):
+        tuple += (index + 1,)
+    target_dimension = dim + (0,)
     return target_dimension
 
 

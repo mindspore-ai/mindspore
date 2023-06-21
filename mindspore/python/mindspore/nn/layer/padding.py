@@ -73,22 +73,22 @@ def _check(input_shape, padding, name):
     """
     def _check_len(input_shape, padding):
         if len(input_shape) < len(padding):
-            msg = "For '{}', the dimension of input must more than or equal to len(padding)/2, " \
-                "but got {}".format(name, len(input_shape))
+            msg = f"For '{name}', the dimension of input must more than or equal to len(padding)/2, " \
+                  f"but got {len(input_shape)}"
             raise ValueError(msg)
 
     def _check_item(item, input_shape, index, dim_name):
         if item < -input_shape[index]:
-            msg = "For '{}', the shape of input after padding must be positive, the input shape is {}, " \
-                  "value of parameter 'padding' applied to the {} dimension of input must " \
-                  "no less than -{}, but got {}".format(name, input_shape, dim_name, input_shape[index], item)
+            msg = f"For '{name}', the shape of input after padding must be positive, the input shape is " \
+                  f"{input_shape}, value of parameter 'padding' applied to the {dim_name} dimension of input must " \
+                  f"no less than -{input_shape[index]}, but got {item}"
             raise ValueError(msg)
 
     def _check_item_two(item0, item1, input_shape, index, dim_name):
         if input_shape[index] + item0 + item1 <= 0:
-            msg = "For '{}', the shape of input after padding must be positive, the input shape is {}, " \
-                  "but the {} dimension of input shape {} plus padding {} and {} resulted in a non-positive output " \
-                  "shape.".format(name, input_shape, dim_name, input_shape[index], item0, item1)
+            msg = f"For '{name}', the shape of input after padding must be positive, the input shape is " \
+                  f"{input_shape}, but the {dim_name} dimension of input shape {input_shape[index]} plus padding " \
+                  f"{item0} and {item1} resulted in a non-positive output shape."
             raise ValueError(msg)
 
     _check_len(input_shape, padding)
@@ -113,13 +113,14 @@ def _check(input_shape, padding, name):
     return padding
 
 
-@constexpr
+@_primexpr
 def _get_new_padding(padding):
     """get non-negative padding and make negative position."""
     new_padding = [[item[0], item[1]] for item in padding]
     start = [0 for i in range(len(new_padding))]
     end = [0 for i in range(len(new_padding))]
-    for index, item in enumerate(new_padding):
+    for index in range(len(new_padding)):
+        item = new_padding[index]
         if item[0] < 0:
             start[index] = item[0]
             new_padding[index][0] = 0
@@ -180,30 +181,30 @@ class _ConstantPadNd(Cell):
 
         elif isinstance(padding, tuple):
             if len(padding) % 2 != 0:
-                msg = "For '{}', the length of parameter 'padding' with tuple type must be a multiple of 2, " \
-                      "but got {}".format(name, len(padding))
+                msg = f"For '{name}', the length of parameter 'padding' with tuple type must be a multiple of 2, " \
+                      f"but got {len(padding)}"
                 raise ValueError(msg)
             if name == 'ConstantPad1d' and len(padding) != 2:
-                msg = "For '{}', the length of parameter 'padding' with tuple type must equal to 2." \
-                      "but got {}".format(name, len(padding))
+                msg = f"For '{name}', the length of parameter 'padding' with tuple type must equal to 2." \
+                      f"but got {len(padding)}"
                 raise ValueError(msg)
             if name in ['ConstantPad2d', 'ZeroPad2d'] and len(padding) > 4:
-                msg = "For '{}', the length of parameter 'padding' with tuple type must no more than 4." \
-                      "but got {}".format(name, len(padding))
+                msg = f"For '{name}', the length of parameter 'padding' with tuple type must no more than 4." \
+                      f"but got {len(padding)}"
                 raise ValueError(msg)
             if name == 'ConstantPad3d' and len(padding) > 6:
-                msg = "For '{}', the length of parameter 'padding' with tuple type must no more than 6." \
-                      "but got {}".format(name, len(padding))
+                msg = f"For '{name}', the length of parameter 'padding' with tuple type must no more than 6." \
+                      f"but got {len(padding)}"
                 raise ValueError(msg)
 
         else:
-            msg = "For '{}', the type of parameter 'padding' must be in [int, tuple], " \
-                  "but got {}".format(name, type(padding))
+            msg = f"For '{name}', the type of parameter 'padding' must be in [int, tuple], " \
+                  f"but got {type(padding)}"
             raise TypeError(msg)
 
         if not isinstance(value, (int, float)):
-            msg = "For '{}', the type of parameter 'value' must be in [int, float], " \
-                  "but got {}".format(name, type(value))
+            msg = f"For '{name}', the type of parameter 'value' must be in [int, float], " \
+                  f"but got {type(value)}"
             raise TypeError(msg)
 
         self.value = value

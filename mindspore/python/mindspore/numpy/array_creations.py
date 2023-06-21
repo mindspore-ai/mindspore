@@ -385,7 +385,7 @@ def full(shape, fill_value, dtype=None):
     return _convert_64_to_32(empty_compile(dtype, shape))
 
 
-@constexpr
+@_primexpr
 def _generate_shapes(shape):
     """Generate shapes for randn and rand."""
     if not shape:
