@@ -38,6 +38,7 @@
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
@@ -54,7 +55,14 @@ abstract::TupleShapePtr GeqrfInferShape(const PrimitivePtr &primitive, const std
     return std::make_shared<abstract::TupleShape>(shape_tuple);
   }
   auto ndim = a_shape.size();
-  (void)CheckAndConvertUtils::CheckInteger("ndim", SizeToLong(ndim), kGreaterEqual, kTwo, primitive->name());
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
+  if (is_ascend) {
+    (void)CheckAndConvertUtils::CheckInteger("ndim", SizeToLong(ndim), kEqual, kTwo, primitive->name());
+  } else {
+    (void)CheckAndConvertUtils::CheckInteger("ndim", SizeToLong(ndim), kGreaterEqual, kTwo, primitive->name());
+  }
   auto m = a_shape[ndim - 2];
   auto n = a_shape[ndim - 1];
   auto p = std::min(m, n);
