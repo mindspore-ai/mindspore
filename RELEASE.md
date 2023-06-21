@@ -8,7 +8,7 @@
 
 #### PyNative
 
-- [STABLE] Dynamic shape is fully supported on framework. For detailed operator support, refer to [Dynamic Shape Support Status of nn Interface](https://www.mindspore.cn/docs/en/r2.0/note/dynamic_shape_nn.html), [Dynamic Shape Support Status of ops Interface](https://www.mindspore.cn/docs/en/r2.0/note/dynamic_shape_func.html), and [Dynamic Shape Support Status of primitive Interface](https://www.mindspore.cn/docs/en/r2.0/note/dynamic_shape_primitive.html).
+- [STABLE] Dynamic shape is fully supported on framework. For detailed operator support, refer to [Dynamic Shape Support Status of nn Interface](https://www.mindspore.cn/docs/en/r2.0/note/dynamic_shape_nn.html), [Dynamic Shape Support Status of functional Interface](https://www.mindspore.cn/docs/en/r2.0/note/dynamic_shape_func.html), and [Dynamic Shape Support Status of primitive Interface](https://www.mindspore.cn/docs/en/r2.0/note/dynamic_shape_primitive.html).
 
 #### AutoParallel
 

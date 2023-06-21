@@ -3,6 +3,8 @@ mindspore.ops.primitive
 
 operators that can be used for constructor function of Cell
 
+For more information about dynamic shape support status, please refer to `Dynamic Shape Support Status of primitive Interface <https://mindspore.cn/docs/en/r2.0/note/dynamic_shape_primitive.html>`_ .
+
 .. code-block::
 
     import mindspore.ops as ops

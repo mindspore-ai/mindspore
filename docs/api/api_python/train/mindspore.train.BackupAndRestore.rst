@@ -18,11 +18,6 @@ mindspore.train.BackupAndRestore
         - **ValueError** - 如果 `save_freq` 参数不是'epoch'或str类型。
         - **ValueError** - 如果 `delete_checkpoint` 参数不是bool类型。
 
-    样例：
-
-    .. note::
-        运行以下样例之前，需自定义网络LeNet5和数据集准备函数create_dataset。详见 `网络构建 <https://www.mindspore.cn/tutorials/zh-CN/r2.0/beginner/model.html>`_ 和 `数据集 Dataset <https://www.mindspore.cn/tutorials/zh-CN/r2.0/beginner/dataset.html>`_ 。
-
     .. py:method:: on_train_begin(run_context)
 
         在训练开始时，加载备份的checkpoint文件。
