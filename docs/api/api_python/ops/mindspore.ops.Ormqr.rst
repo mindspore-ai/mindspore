@@ -21,7 +21,7 @@ mindspore.ops.Ormqr
         - **other** (Tensor) - shape :math:`(*, m, n)`，其中 `*` 表示Tensor在轴0上的长度为0或者大于0的batch维，其类型与 `x` 相同。
 
     输出：
-        - **y** (Tensor) - 数据类型与shape与 `other` 一致。
+        - **y** (Tensor) - 输出Tensor，数据类型与shape与 `other` 一致。
 
     异常：
         - **TypeError** - 如果 `x` ， `tau` 或者 `other` 不是Tensor。

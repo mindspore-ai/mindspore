@@ -847,7 +847,8 @@ class Multinomial(Primitive):
     Args:
         seed (int, optional): Random seed, must be non-negative. Default: ``0`` .
         seed2 (int, optional): Random seed2, must be non-negative. Default: ``0`` .
-        dtype(dtype, optional): The type of output, must be mstype.int32 or mstype.int64. Default: mstype.int32.
+        dtype(mindspore.dtype, optional): The type of output, must be ``mstype.int32`` or ``mstype.int64``.
+            Default: ``mstype.int32``.
 
     Inputs:
         - **x** (Tensor) - the input tensor containing the cumsum of probabilities, must be 1 or 2
@@ -1179,6 +1180,23 @@ class RandpermV2(Primitive):
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
+
+    Args:
+        dtype (mindspore.dtype, optional): The type of output.
+            Its value must be one of the following types: int32, int16, int8,
+            uint8, int64, float64, float32, float16. Default: mstype.int64.
+
+    Inputs:
+        - **n** (Union[Tensor, int]) - The input n Tensor with shape :math:`()` or :math:`(1,)`
+          and with data type of int64.
+        - **seed** (int, optional) - Random seed. Default: ``0`` . When `seed` is ``-1`` (only negative value),
+          `offset` is ``0``, it's determined by time.
+        - **offset** (int, optional) - Offset to generate random numbers. Priority is higher than random seed.
+          Default: ``0`` . It must be non-negative.
+
+    Outputs:
+        Tensor. Its shape is specified by the required args `n`. Its type is specified by `dtype`.
+        Otherwise is default.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
