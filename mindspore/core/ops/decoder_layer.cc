@@ -54,7 +54,9 @@ void DecoderLayer::set_position_bias2(bool position_bias2) {
 }
 void DecoderLayer::set_scale1(float scale1) { (void)this->AddAttr(kScale1, api::MakeValue(scale1)); }
 void DecoderLayer::set_scale2(float scale2) { (void)this->AddAttr(kScale2, api::MakeValue(scale2)); }
-void DecoderLayer::set_act_type(ActType act_type) { (void)this->AddAttr(kActivationType, api::MakeValue(act_type)); }
+void DecoderLayer::set_act_type(ActType act_type) {
+  (void)this->AddAttr(kActivationType, api::MakeValue(static_cast<int32_t>(act_type)));
+}
 void DecoderLayer::set_layer_norm(bool layer_norm) { (void)this->AddAttr(kLayerNorm, api::MakeValue(layer_norm)); }
 
 int64_t DecoderLayer::get_head_num() const {

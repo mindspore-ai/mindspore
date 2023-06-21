@@ -72,7 +72,7 @@ abstract::ShapePtr AdaptiveAvgPool3DGradInferShape(const PrimitivePtr &primitive
     MS_EXCEPTION_IF_NULL(value_ptr);
     auto value = CheckAndConvertUtils::CheckTensorIntValue("origin input shape", value_ptr, prim_name);
     for (int64_t i = 0; i < orig_input_shape_shape[0]; ++i) {
-      output_shape[i] = value[i] > 0 ? value[i] : static_cast<size_t>(1);
+      output_shape[i] = value[i] > 0 ? value[i] : static_cast<int64_t>(1);
     }
     return std::make_shared<abstract::Shape>(output_shape);
   } else {

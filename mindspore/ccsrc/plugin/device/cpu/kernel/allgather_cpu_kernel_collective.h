@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ALL_GATHER_CPU_KERNEL_COLLECTIVE_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ALL_GATHER_CPU_KERNEL_COLLECTIVE_H_
 
-#include <string>
 #include <vector>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"

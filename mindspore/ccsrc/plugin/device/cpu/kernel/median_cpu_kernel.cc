@@ -198,8 +198,8 @@ bool MedianCpuKernelMod::MedianCompute(const std::vector<AddressPtr> &inputs, co
     axis_ += static_cast<int>(input_dim_);
   }
   size_t dim_data_num = static_cast<size_t>(input_shape_[axis_]);
-  auto temp_median_vec = reinterpret_cast<T *>(workspace[kWorkSpaceTempMedianVecIndex]->addr);
-  auto temp_median_index_vec = reinterpret_cast<int64_t *>(workspace[kWorkSpaceTempMedianIndexVecIndex]->addr);
+  auto temp_median_vec = static_cast<T *>(workspace[kWorkSpaceTempMedianVecIndex]->addr);
+  auto temp_median_index_vec = static_cast<int64_t *>(workspace[kWorkSpaceTempMedianIndexVecIndex]->addr);
   size_t group = 1;
   size_t jump = 1;
   if (axis_ != 0) {
@@ -262,8 +262,8 @@ bool MedianCpuKernelMod::MedianComputeIgnoreNan(const std::vector<AddressPtr> &i
     axis_ += static_cast<int>(input_dim_);
   }
   size_t dim_data_num = static_cast<size_t>(input_shape_[axis_]);
-  auto temp_median_vec = reinterpret_cast<T *>(workspace[kWorkSpaceTempMedianVecIndex]->addr);
-  auto temp_median_index_vec = reinterpret_cast<int64_t *>(workspace[kWorkSpaceTempMedianIndexVecIndex]->addr);
+  auto temp_median_vec = static_cast<T *>(workspace[kWorkSpaceTempMedianVecIndex]->addr);
+  auto temp_median_index_vec = static_cast<int64_t *>(workspace[kWorkSpaceTempMedianIndexVecIndex]->addr);
   size_t group = 1;
   size_t jump = 1;
   if (axis_ != 0) {
@@ -287,7 +287,7 @@ bool MedianCpuKernelMod::MedianComputeIgnoreNan(const std::vector<AddressPtr> &i
         temp_median_vec[k] = *num_index;
       }
       nan_num = std::count_if(temp_median_vec, temp_median_vec + dim_data_num, IsNan<T>);
-      median_pos = static_cast<int64_t>((dim_data_num - nan_num - 1) / kHalf);
+      median_pos = static_cast<int64_t>((SizeToLong(dim_data_num) - nan_num - IntToLong(1)) / kHalf);
       std::nth_element(temp_median_index_vec, temp_median_index_vec + median_pos, temp_median_index_vec + dim_data_num,
                        [&temp_median_vec, dim_data_num](size_t pos1, size_t pos2) {
                          bool is_equal = false;
