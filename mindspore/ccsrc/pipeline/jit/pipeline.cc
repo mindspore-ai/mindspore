@@ -848,9 +848,6 @@ bool GraphExecutorPy::CompileInner(const py::object &source, const py::tuple &ar
 
   source_ = py::cast<std::string>(py::str(source));
   phase_ = py::cast<std::string>(phase);
-  if (phase_.find("export") != std::string::npos) {
-    (void)common::SetEnv("MS_DEV_JIT_SYNTAX_LEVEL", "0");  // Set level kCompatible later.
-  }
   PhaseManager::GetInstance().set_phase(phase_);
   auto obj_desc = GetObjDesc(source);
   MS_LOG(INFO) << "Start compiling, phase: " << phase_;
