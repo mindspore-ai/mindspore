@@ -32,16 +32,16 @@ ParallelWorker::~ParallelWorker() {
   if (enable_shared_thread_pool_) {
     ActivateByOtherPoolTask(nullptr);
   } else {
-    cond_var_.notify_one();
+    cond_var_->notify_one();
   }
-  if (thread_.joinable()) {
-    thread_.join();
+  if (thread_->joinable()) {
+    thread_->join();
   }
   pool_ = nullptr;
   parallel_pool_ = nullptr;
 }
 
-void ParallelWorker::CreateThread() { thread_ = std::thread(&ParallelWorker::ParallelRun, this); }
+void ParallelWorker::CreateThread() { thread_ = std::make_unique<std::thread>(&ParallelWorker::ParallelRun, this); }
 
 void ParallelWorker::ParallelRun() {
   if (!core_list_.empty()) {
@@ -79,7 +79,7 @@ void ParallelWorker::ParallelRun() {
 
 void ParallelWorker::WaitUntilActive() {
   std::unique_lock<std::mutex> _l(mutex_);
-  cond_var_.wait(_l, [&] { return active_num_ > 0 || !alive_; });
+  cond_var_->wait(_l, [&] { return active_num_ > 0 || !alive_; });
   if (active_num_ > 0) {
     active_num_--;
   }

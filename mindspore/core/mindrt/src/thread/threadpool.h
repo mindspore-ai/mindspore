@@ -78,7 +78,9 @@ typedef struct TaskSplit {
 class ThreadPool;
 class Worker {
  public:
-  explicit Worker(ThreadPool *pool, size_t index) : pool_(pool), worker_id_(index) {}
+  explicit Worker(ThreadPool *pool, size_t index) : pool_(pool), worker_id_(index) {
+    cond_var_ = std::make_unique<std::condition_variable>();
+  }
   virtual ~Worker();
   // create thread and start running at the same time
   virtual void CreateThread();
@@ -107,16 +109,23 @@ class Worker {
   float rhs_scale() const { return rhs_scale_; }
   HQueue<TaskSplit> *local_task_queue() { return local_task_queue_; }
 
-  std::thread::id thread_id() const { return thread_.get_id(); }
+  std::thread::id thread_id() const {
+    THREAD_TEST_TRUE(thread_ == nullptr);
+    return thread_->get_id();
+  }
 
 #ifdef _WIN32
   uint64_t core_id() { return core_id_; }
 #elif defined(BIND_CORE)
   void set_mask(const cpu_set_t &mask) { mask_ = mask; }
-  pthread_t handle() { return thread_.native_handle(); }
+  pthread_t handle() {
+    THREAD_TEST_TRUE(thread_ == nullptr);
+    return thread_->native_handle();
+  }
 #endif
   inline void set_alive(bool flag) { alive_ = flag; }
   inline bool alive() const { return alive_; }
+  void ReinitAfterFork();
 
  protected:
   void SetAffinity();
@@ -124,7 +133,7 @@ class Worker {
   virtual void WaitUntilActive();
 
   bool alive_{true};
-  std::thread thread_;
+  std::unique_ptr<std::thread> thread_{nullptr};
 #ifdef _WIN32
   uint64_t core_id_;
 #elif defined(BIND_CORE)
@@ -134,7 +143,7 @@ class Worker {
   std::atomic_int active_num_{0};
 
   std::mutex mutex_;
-  std::condition_variable cond_var_;
+  std::unique_ptr<std::condition_variable> cond_var_{nullptr};
 
   std::atomic<Task *> task_{nullptr};
   std::atomic_int task_id_{0};
@@ -182,6 +191,7 @@ class MS_CORE_API ThreadPool {
   void SetWorkerIdMap();
   // init task queues
   int TaskQueuesInit(size_t thread_num);
+  void ReinitAfterFork();
   const std::unordered_map<std::thread::id, size_t> &GetWorkerIdMap() const { return worker_ids_; }
   float GetServerCpuFrequence() const { return server_cpu_frequence; }
   inline size_t actor_thread_num() const { return actor_thread_num_; }
@@ -217,7 +227,7 @@ class MS_CORE_API ThreadPool {
   }
 
  protected:
-  ThreadPool() = default;
+  ThreadPool();
 
   int InitAffinityInfo();
 

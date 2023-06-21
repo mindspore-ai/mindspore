@@ -41,7 +41,7 @@ class ActorWorker : public Worker {
       std::lock_guard<std::mutex> _l(mutex_);
       alive_ = false;
     }
-    cond_var_.notify_one();
+    cond_var_->notify_one();
 
     bool terminate = false;
     int count = 0;
@@ -53,8 +53,8 @@ class ActorWorker : public Worker {
       }
     }
 
-    if (thread_.joinable()) {
-      thread_.join();
+    if (thread_->joinable()) {
+      thread_->join();
     }
     local_task_queue_ = nullptr;
   };

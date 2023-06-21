@@ -21,6 +21,7 @@
 #endif
 #include "utils/log_adapter.h"
 #include "utils/ms_exception.h"
+#include "mindrt/include/fork_utils.h"
 
 namespace mindspore {
 namespace pynative {
@@ -38,6 +39,15 @@ thread_local kThreadWaitLevel current_level_{kThreadWaitLevel::kLevelUnknown};
 #define LIKELY(x) __builtin_expect(!!(x), 1)
 #endif
 #endif
+
+AsyncQueue::AsyncQueue(std::string name, kThreadWaitLevel wait_level)
+    : name_(std::move(name)), wait_level_(wait_level) {
+  // If the fork occurs, thread resources are not forked to child processes, so
+  // we need to reinitialize threads in child processes.
+  ForkUtils::GetInstance().RegisterCallbacks(this, static_cast<void (AsyncQueue::*)()>(nullptr),
+                                             static_cast<void (AsyncQueue::*)()>(nullptr),
+                                             &AsyncQueue::ReinitAfterFork);
+}
 
 AsyncQueue::~AsyncQueue() { WorkerJoin(); }
 
@@ -69,7 +79,7 @@ void AsyncQueue::WorkerLoop() {
     std::shared_ptr<AsyncTask> task;
     {
       std::unique_lock<std::mutex> lock(task_mutex_);
-      task_cond_var_.wait(lock, [this]() { return !tasks_queque_.empty(); });
+      task_cond_var_->wait(lock, [this]() { return !tasks_queque_.empty(); });
       task = tasks_queque_.front();
     }
 
@@ -89,7 +99,7 @@ void AsyncQueue::WorkerLoop() {
 
       if (tasks_queque_.empty()) {
         MS_LOG(DEBUG) << "Task queue empty";
-        task_cond_var_.notify_all();
+        task_cond_var_->notify_all();
       }
     } catch (const std::exception &e) {
       MS_LOG(WARNING) << "Run task failed, error msg:" << e.what();
@@ -109,20 +119,23 @@ void AsyncQueue::WorkerLoop() {
           tasks_queque_.pop();
         }
 
-        task_cond_var_.notify_all();
+        task_cond_var_->notify_all();
       }
     }
   }
 }
 
 void AsyncQueue::Push(const std::shared_ptr<AsyncTask> &task) {
+  if (task_cond_var_ == nullptr) {
+    task_cond_var_ = std::make_unique<std::condition_variable>();
+  }
   if (worker_ == nullptr) {
-    worker_ = std::make_shared<std::thread>(&AsyncQueue::WorkerLoop, this);
+    worker_ = std::make_unique<std::thread>(&AsyncQueue::WorkerLoop, this);
   }
   // cppcheck-suppress unreadVariable
   std::lock_guard<std::mutex> lock(task_mutex_);
   tasks_queque_.push(task);
-  task_cond_var_.notify_all();
+  task_cond_var_->notify_all();
 }
 
 void AsyncQueue::Wait() {
@@ -142,7 +155,7 @@ void AsyncQueue::Wait() {
 
   MS_LOG(DEBUG) << "Start to wait thread " << name_;
   std::unique_lock<std::mutex> lock(task_mutex_);
-  task_cond_var_.wait(lock, [this]() { return tasks_queque_.empty(); });
+  task_cond_var_->wait(lock, [this]() { return tasks_queque_.empty(); });
   MsException::Instance().CheckException();
   MS_LOG(DEBUG) << "End to wait thread " << name_;
 }
@@ -169,10 +182,11 @@ void AsyncQueue::Clear() {
       tasks_queque_.push(task);
     }
 
-    task_cond_var_.notify_all();
+    task_cond_var_->notify_all();
   }
   // There is still one task in progress
   Wait();
+  ForkUtils::GetInstance().DeregCallbacks(this);
 }
 
 void AsyncQueue::Reset() {
@@ -208,7 +222,7 @@ void AsyncQueue::WorkerJoin() {
         std::lock_guard<std::mutex> lock(task_mutex_);
         auto task = std::make_shared<ExitTask>();
         tasks_queque_.push(task);
-        task_cond_var_.notify_all();
+        task_cond_var_->notify_all();
         MS_LOG(DEBUG) << "Push exit task and notify all";
       }
       worker_->join();
@@ -219,6 +233,18 @@ void AsyncQueue::WorkerJoin() {
     MS_LOG(ERROR) << "WorkerJoin failed: " << e.what();
   } catch (...) {
     MS_LOG(ERROR) << "WorkerJoin failed";
+  }
+}
+
+void AsyncQueue::ReinitAfterFork() {
+  MS_LOG(INFO) << "fork event detected in child process, worker thread will be recreated.";
+  if (task_cond_var_ != nullptr) {
+    task_cond_var_.release();
+    task_cond_var_ = std::make_unique<std::condition_variable>();
+  }
+  if (worker_ != nullptr) {
+    worker_.release();
+    worker_ = std::make_unique<std::thread>(&AsyncQueue::WorkerLoop, this);
   }
 }
 
@@ -253,17 +279,20 @@ void AsyncHqueue::WorkerLoop() {
     }
     if (UNLIKELY(spin_count_ > kMaxSpinCount)) {
       std::unique_lock<std::mutex> lock(task_mutex_);
-      task_cond_var_.wait(lock, [this]() { return !tasks_hqueque_.Empty() || !alive_; });
+      task_cond_var_->wait(lock, [this]() { return !tasks_hqueque_.Empty() || !alive_; });
       spin_count_ = 0;
     }
   }
 }
 
 void AsyncHqueue::Init() {
+  if (task_cond_var_ == nullptr) {
+    task_cond_var_ = std::make_unique<std::condition_variable>();
+  }
   if (!tasks_hqueque_.Init(kTaskQueueSize)) {
     MS_LOG(EXCEPTION) << "Init task queue failed.";
   }
-  worker_ = std::make_shared<std::thread>(&AsyncHqueue::WorkerLoop, this);
+  worker_ = std::make_unique<std::thread>(&AsyncHqueue::WorkerLoop, this);
 }
 
 void AsyncHqueue::Push(AsyncTask *task) {
@@ -276,7 +305,7 @@ void AsyncHqueue::Push(AsyncTask *task) {
   }
   if (UNLIKELY(status_.load() == kThreadIdle)) {
     status_.store(kThreadBusy);
-    task_cond_var_.notify_one();
+    task_cond_var_->notify_one();
   }
 }
 
@@ -299,10 +328,22 @@ void AsyncHqueue::WorkerJoin() {
     std::lock_guard<std::mutex> lock(task_mutex_);
     alive_ = false;
   }
-  task_cond_var_.notify_one();
+  task_cond_var_->notify_one();
 
   if (worker_->joinable()) {
     worker_->join();
+  }
+}
+
+void AsyncHqueue::ReinitAfterFork() {
+  MS_LOG(INFO) << "(AsyncHqueue)fork event detected in child process, worker thread will be recreated.";
+  if (task_cond_var_ != nullptr) {
+    task_cond_var_.release();
+    task_cond_var_ = std::make_unique<std::condition_variable>();
+  }
+  if (worker_ != nullptr) {
+    worker_.release();
+    worker_ = std::make_unique<std::thread>(&AsyncHqueue::WorkerLoop, this);
   }
 }
 }  // namespace pynative

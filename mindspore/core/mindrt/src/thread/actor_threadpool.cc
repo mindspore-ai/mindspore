@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <memory>
 #ifndef _MSC_VER
 #include <sched.h>
 #include <unistd.h>
@@ -23,7 +24,7 @@
 namespace mindspore {
 size_t ActorThreadPool::actor_queue_size_ = kMaxHqueueSize;
 
-void ActorWorker::CreateThread() { thread_ = std::thread(&ActorWorker::RunWithSpin, this); }
+void ActorWorker::CreateThread() { thread_ = std::make_unique<std::thread>(&ActorWorker::RunWithSpin, this); }
 
 void ActorWorker::RunWithSpin() {
   if (!core_list_.empty()) {
@@ -74,7 +75,7 @@ bool ActorWorker::ActorActive() {
     active_num_++;
     status_ = kThreadBusy;
   }
-  cond_var_.notify_one();
+  cond_var_->notify_one();
   return true;
 }
 
