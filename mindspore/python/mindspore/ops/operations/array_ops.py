@@ -628,6 +628,9 @@ class Reshape(PrimitiveWithCheck):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> reshape = ops.Reshape()
         >>> output = reshape(input_x, (3, 2))
@@ -706,6 +709,9 @@ class Shape(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
         >>> shape = ops.Shape()
         >>> output = shape(input_x)
@@ -731,6 +737,9 @@ class TensorShape(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
         >>> shape = ops.TensorShape()
         >>> output = shape(input_x)
@@ -791,6 +800,9 @@ class Squeeze(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
         >>> squeeze = ops.Squeeze(2)
         >>> output = squeeze(input_x)
@@ -1133,6 +1145,9 @@ class SparseGatherV2(PrimitiveWithCheck):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_params = Tensor(np.array([[1, 2, 7, 42], [3, 4, 54, 22], [2, 2, 55, 3]]), mindspore.float32)
         >>> input_indices = Tensor(np.array([1, 2]), mindspore.int32)
         >>> axis = 1
@@ -1261,6 +1276,9 @@ class Split(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> split = ops.Split(1, 2)
         >>> x = Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]), mindspore.int32)
         >>> print(x)
@@ -1308,6 +1326,9 @@ class Rank(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
         >>> rank = ops.Rank()
         >>> output = rank(input_tensor)
@@ -1346,6 +1367,9 @@ class Size(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
         >>> size = ops.Size()
         >>> output = size(input_x)
@@ -1416,6 +1440,9 @@ class MatrixDiagV3(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[8, 9, 0],
         ...                      [1, 2, 3],
         ...                      [0, 4, 5]]), mindspore.float32)
@@ -1477,6 +1504,9 @@ class MatrixDiagPartV3(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[1, 2, 3, 4],
         ...                      [5, 6, 7, 8],
         ...                      [9, 8, 7, 6]]), mindspore.float32)
@@ -1581,6 +1611,9 @@ class MatrixSetDiagV3(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[7, 7, 7, 7],
         ...                      [7, 7, 7, 7],
         ...                      [7, 7, 7, 7]]), mindspore.float32)
@@ -1637,6 +1670,8 @@ class MatrixBandPart(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> matrix_band_part = ops.MatrixBandPart()
         >>> x = np.ones([2, 4, 4]).astype(np.float32)
         >>> output = matrix_band_part(Tensor(x), 2, 1)
@@ -2932,6 +2967,8 @@ class ParallelConcat(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> data1 = Tensor(np.array([[0, 1]]).astype(np.int32))
         >>> data2 = Tensor(np.array([[2, 1]]).astype(np.int32))
         >>> op = ops.ParallelConcat()
@@ -3037,6 +3074,8 @@ class Stack(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> data1 = Tensor(np.array([0, 1]).astype(np.float32))
         >>> data2 = Tensor(np.array([2, 3]).astype(np.float32))
         >>> stack = ops.Stack()
@@ -3305,6 +3344,9 @@ class ReverseV2(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]), mindspore.int32)
         >>> op = ops.ReverseV2(axis=[1])
         >>> output = op(input_x)
@@ -3398,6 +3440,8 @@ class Select(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> select = ops.Select()
         >>> input_cond = Tensor([True, False])
         >>> input_x = Tensor([2,3], mindspore.float32)
@@ -3498,6 +3542,8 @@ class StridedSlice(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]],
         ...                   [[5, 5, 5], [6, 6, 6]]], mindspore.float32)
         >>> #         [[[1. 1. 1.]
@@ -4057,6 +4103,9 @@ class Mvlgamma(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[3, 4, 5], [4, 2, 6]]), mindspore.float32)
         >>> op = ops.Mvlgamma(p=3)
         >>> y = op(x)
@@ -4139,6 +4188,9 @@ class ScatterNd(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> op = ops.ScatterNd()
         >>> indices = Tensor(np.array([[0], [2]]), mindspore.int32)
         >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2],
@@ -5305,6 +5357,9 @@ class ScatterNdMul(_ScatterNdOp):
         ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops, Parameter
         >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
         >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
@@ -5367,6 +5422,9 @@ class ScatterNdDiv(_ScatterNdOp):
         ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops, Parameter
         >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
         >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
@@ -5429,6 +5487,9 @@ class ScatterNdMax(_ScatterNdOp):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops, Parameter
         >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
         >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
@@ -5493,6 +5554,9 @@ class ScatterNdMin(_ScatterNdOp):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops, Parameter
         >>> input_x = Parameter(Tensor(np.ones(8) * 10, mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
         >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
@@ -5623,6 +5687,9 @@ class SpaceToDepth(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.random.rand(1,3,2,2), mindspore.float32)
         >>> block_size = 2
         >>> space_to_depth = ops.SpaceToDepth(block_size)
@@ -6130,6 +6197,8 @@ class Meshgrid(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([1, 2, 3, 4]).astype(np.int32))
         >>> y = Tensor(np.array([5, 6, 7]).astype(np.int32))
         >>> z = Tensor(np.array([8, 9, 0, 1, 2]).astype(np.int32))
@@ -6229,6 +6298,9 @@ class ReverseSequence(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
         >>> seq_lengths = Tensor(np.array([1, 2, 3]))
         >>> reverse_sequence = ops.ReverseSequence(seq_dim=1)
@@ -6422,6 +6494,9 @@ class Sort(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), mindspore.float16)
         >>> sort = ops.Sort()
         >>> output = sort(x)
@@ -6621,6 +6696,8 @@ class Range(PrimitiveWithCheck):
         ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> start = Tensor(0, mstype.int32)
         >>> limit = Tensor(10, mstype.int32)
         >>> delta = Tensor(4, mstype.int32)
@@ -6739,6 +6816,9 @@ class MaskedFill(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input = Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)
         >>> mask = Tensor(np.array([True, True, False, True]), mindspore.bool_)
         >>> output = ops.MaskedFill()(input, mask, 0.5)
@@ -6780,6 +6860,9 @@ class MaskedScatter(Primitive):
         ``Ascend`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x= Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)
         >>> mask = Tensor(np.array([True, True, False, True]), mindspore.bool_)
         >>> updates = Tensor(np.array([5., 6., 7.]), mindspore.float32)
@@ -6814,6 +6897,9 @@ class MaskedSelect(PrimitiveWithCheck):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([1, 2, 3, 4]), mindspore.int32)
         >>> mask = Tensor(np.array([1, 0, 1, 0]), mindspore.bool_)
         >>> output = ops.MaskedSelect()(x, mask)
@@ -6869,6 +6955,9 @@ class SearchSorted(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> sorted_sequence = Tensor(np.array([[0, 1, 3, 5, 7], [2, 4, 6, 8, 10]]), mindspore.float32)
         >>> values = Tensor(np.array([[3, 6, 9], [3, 6, 9]]), mindspore.float32)
         >>> output = ops.SearchSorted()(sorted_sequence, values)
@@ -6972,6 +7061,9 @@ class TensorScatterUpdate(_TensorScatterOp):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
         >>> update = Tensor(np.array([1.0, 2.2]), mindspore.float32)
@@ -7042,6 +7134,9 @@ class TensorScatterMax(Primitive):
         ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> indices = Tensor(np.array([[0, 0], [0, 0]]), mindspore.int32)
         >>> updates = Tensor(np.array([1.0, 2.2]), mindspore.float32)
@@ -7087,6 +7182,9 @@ class TensorScatterMin(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> indices = Tensor(np.array([[0, 0], [0, 0]]), mindspore.int32)
         >>> updates = Tensor(np.array([1.0, 2.2]), mindspore.float32)
@@ -7135,6 +7233,9 @@ class TensorScatterSub(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> indices = Tensor(np.array([[0, 0], [0, 0]]), mindspore.int32)
         >>> updates = Tensor(np.array([1.0, 2.2]), mindspore.float32)
@@ -7183,6 +7284,9 @@ class TensorScatterAdd(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> indices = Tensor(np.array([[0, 0], [0, 0]]), mindspore.int32)
         >>> updates = Tensor(np.array([1.0, 2.2]), mindspore.float32)
@@ -7230,6 +7334,9 @@ class TensorScatterMul(_TensorScatterOp):
         ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> indices = Tensor(np.array([[0, 0], [0, 0]]), mindspore.int32)
         >>> updates = Tensor(np.array([1.0, 2.2]), mindspore.float32)
@@ -7277,6 +7384,9 @@ class TensorScatterDiv(_TensorScatterOp):
         ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> indices = Tensor(np.array([[0, 0], [0, 0]]), mindspore.int32)
         >>> updates = Tensor(np.array([1.0, 2.0]), mindspore.float32)
@@ -7890,6 +8000,8 @@ class RightShift(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> rightshift = ops.RightShift()
         >>> input_x = Tensor(np.array([1, 2, 3]).astype(np.uint8))
         >>> input_y = Tensor(np.array([1, 1, 1]).astype(np.uint8))
@@ -8740,6 +8852,8 @@ class PopulationCount(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor([0, 1, 3], mindspore.int16)
         >>> output = ops.PopulationCount()(input_x)
         >>> print(output)

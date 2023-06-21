@@ -1111,6 +1111,9 @@ class RandomShuffle(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> x = Tensor(np.array([1, 2, 3, 4]), mstype.float32)
         >>> shuffle = ops.RandomShuffle(seed=1, seed2=1)
         >>> output = shuffle(x)

@@ -7448,6 +7448,9 @@ class MatrixSolve(Primitive):
         ``Ascend`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> matrix = Tensor(np.array([[1.0  , 4.0],
         ...                       [2.0 , 7.0]]), mindspore.float32)
         >>> rhs = Tensor(np.array([[1.0]  , [3.0]]), mindspore.float32)
@@ -8280,6 +8283,9 @@ class Renorm(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]), mindspore.float32)
         >>> y = ops.Renorm(p=1, dim=0, maxnorm=5.)(x)
         >>> print(y)
@@ -8849,6 +8855,9 @@ class NanToNum(Primitive):
         ``Ascend`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> nan_to_num = ops.NanToNum()
         >>> x = Tensor(np.array([float('nan'), float('inf'), -float('inf'), 3.14]), mindspore.float32)
         >>> output = nan_to_num(x)
@@ -9152,6 +9161,8 @@ class Qr(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> qr_op = ops.Qr(full_matrices=False)
         >>> x = Tensor([[20., -31, 7], [4, 270, -90], [-8, 17, -32]], mstype.float32)
         >>> q, r = qr_op(x)
