@@ -7177,7 +7177,7 @@ def deepcopy(input_x):
 
     Examples:
         >>> input = Tensor([[0, 1], [2, 1]], dtype=mindspore.int32)
-        >>> output = ops.deepcopy(x)
+        >>> output = ops.deepcopy(input)
         >>> print(output)
         [[0 1]
          [2 1]]
