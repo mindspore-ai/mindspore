@@ -40,6 +40,7 @@ std::string CheckNdSupported(TypeId data_type, const std::vector<ShapeVector> &s
 }
 
 REGISTER_ACL_OP(MatMulV2).OutputSelector(&CheckNdSupported).set_precision_mode(FORCE_FP32);
+REGISTER_ACL_OP(MatMul).OutputSelector(&CheckNdSupported).set_precision_mode(FORCE_FP32);
 
 std::string CheckBMMNdSupported(TypeId data_type, const std::vector<ShapeVector> &shapes) {
   constexpr size_t special_bmm_size = 2;
