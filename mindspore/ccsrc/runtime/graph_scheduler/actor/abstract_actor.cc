@@ -274,7 +274,10 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
     SET_OPCONTEXT_SUCCESS_RET((*context));
   }
 
-  PROFILER_END(start_time, ProfilerModule::kRuntime, ProfilerEvent::kSendOutput, GetAID().Name(), false);
+  // Only the multi thread execution can profile the ProfilerEvent::kSendOutput.
+  if (ActorDispatcher::is_multi_thread_execution()) {
+    PROFILER_END(start_time, ProfilerModule::kRuntime, ProfilerEvent::kSendOutput, GetAID().Name(), false);
+  }
 }
 
 AbstractActor *AbstractActor::FetchSubActorInFusionActor(const std::string &sub_actor_name) const {

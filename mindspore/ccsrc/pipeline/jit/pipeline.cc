@@ -1405,7 +1405,12 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase) 
   HandleExceptionRethrow(
     [this, &res, &args, &phase]() {
       executor_running_ = true;
+
+      uint64_t start_time = 0;
+      PROFILER_START(start_time);
       res = RunInner(args, phase);
+      PROFILER_STAGE_END(start_time, runtime::ProfilerStage::kRunGraph);
+
       executor_running_ = false;
     },
     [this]() { executor_running_ = false; }, [this]() { executor_running_ = false; },

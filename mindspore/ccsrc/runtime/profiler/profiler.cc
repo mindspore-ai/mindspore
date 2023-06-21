@@ -42,8 +42,14 @@ static const char kJsonFileName[] = "RuntimeProfilerJson";
 static const char kSummaryInfoFileName[] = "RuntimeProfilerSummary";
 static const char kDetailInfoFileName[] = "RuntimeProfilerDetail";
 
+static const std::map<ProfilerStage, std::string> kProfilerStageString = {
+  {ProfilerStage::kDefault, "Default"},   {ProfilerStage::kPython, "Python"},
+  {ProfilerStage::kRunGraph, "RunGraph"}, {ProfilerStage::kRunGradGraph, "RunGradGraph"},
+  {ProfilerStage::kRunOp, "RunOp"},
+};
+
 static const std::map<ProfilerModule, std::string> kProfilerModuleString = {
-  {ProfilerModule::kPython, "Python"},
+  {ProfilerModule::kDefault, "Default"},
   {ProfilerModule::kRuntime, "RuntimeFramework"},
   {ProfilerModule::kPynative, "PynativeFramework"},
   {ProfilerModule::kKernel, "Kernel"},
@@ -148,6 +154,7 @@ void ProfilerAnalyzer::Clear() {
   json_infos_.clear();
   data_.clear();
   module_infos_.clear();
+  stage_infos_.clear();
 }
 
 uint64_t ProfilerAnalyzer::GetTimeStamp() {
@@ -182,9 +189,11 @@ void ProfilerAnalyzer::StartStep() {
 
   std::unique_lock<std::mutex> lock(data_mutex_);
   // Reset the saved data.
-  step_total_time_ = 0;
+  step_time_ = 0;
+  summary_total_time_ = 0;
   data_.clear();
   module_infos_.clear();
+  stage_infos_.clear();
 }
 
 void ProfilerAnalyzer::EndStep() {
@@ -208,16 +217,22 @@ void ProfilerAnalyzer::EndStep() {
   DumpSummaryData();
 
   // Reset the saved data.
-  step_total_time_ = 0;
+  step_time_ = 0;
+  summary_total_time_ = 0;
   data_.clear();
   module_infos_.clear();
+  stage_infos_.clear();
 }
 
 void ProfilerAnalyzer::SaveJsonData(const ProfilerDataPtr &data) {
   MS_EXCEPTION_IF_NULL(data);
   nlohmann::json json_data;
-  json_data[kJsonName] =
-    kProfilerModuleString.at(data->module_) + "::" + kProfilerEventString.at(data->event_) + "::" + data->op_name_;
+  if (data->is_stage_) {
+    json_data[kJsonName] = kProfilerStageString.at(data->stage_);
+  } else {
+    json_data[kJsonName] =
+      kProfilerModuleString.at(data->module_) + "::" + kProfilerEventString.at(data->event_) + "::" + data->op_name_;
+  }
   json_data[kJsonPh] = kJsonPhX;
   json_data[kJsonPid] = std::to_string(data->pid_);
   json_data[kJsonTid] = GetTidString(data->tid_);
@@ -228,15 +243,38 @@ void ProfilerAnalyzer::SaveJsonData(const ProfilerDataPtr &data) {
 }
 
 void ProfilerAnalyzer::AnalyzeSummaryData(const ProfilerDataPtr &data) {
-  MS_EXCEPTION_IF_NULL(data);
+  if (data->is_stage_) {
+    AnalyzeStageSummaryData(data);
+  } else {
+    AnalyzeModuleSummaryData(data);
+  }
+}
 
+void ProfilerAnalyzer::AnalyzeStageSummaryData(const ProfilerDataPtr &data) {
+  MS_EXCEPTION_IF_NULL(data);
+  if (stage_infos_.count(data->stage_) > 0) {
+    auto &stage_info = stage_infos_[data->stage_];
+    MS_EXCEPTION_IF_NULL(stage_info);
+    stage_info->AccumulateTime(data->dur_time_);
+    step_time_ += data->dur_time_;
+  } else {
+    auto stage_info =
+      std::make_shared<ProfilerStatisticsInfo>(kProfilerStageString.at(data->stage_), data->is_inner_event_);
+    stage_info->AccumulateTime(data->dur_time_);
+    step_time_ += data->dur_time_;
+    (void)stage_infos_.emplace(data->stage_, stage_info);
+  }
+}
+
+void ProfilerAnalyzer::AnalyzeModuleSummaryData(const ProfilerDataPtr &data) {
+  MS_EXCEPTION_IF_NULL(data);
   if (module_infos_.count(data->module_) > 0) {
     auto &module_info = module_infos_[data->module_];
     MS_EXCEPTION_IF_NULL(module_info);
     MS_EXCEPTION_IF_NULL(module_info->module_statistics_info_);
     if (!data->is_inner_event_) {
       module_info->module_statistics_info_->AccumulateTime(data->dur_time_);
-      step_total_time_ += data->dur_time_;
+      summary_total_time_ += data->dur_time_;
     }
     return AnalyzeEventSummaryData(&module_info->event_infos_, data);
   }
@@ -246,7 +284,7 @@ void ProfilerAnalyzer::AnalyzeSummaryData(const ProfilerDataPtr &data) {
     std::make_shared<ProfilerStatisticsInfo>(kProfilerModuleString.at(data->module_));
   if (!data->is_inner_event_) {
     module_info->module_statistics_info_->AccumulateTime(data->dur_time_);
-    step_total_time_ += data->dur_time_;
+    summary_total_time_ += data->dur_time_;
   }
   (void)module_infos_.emplace(data->module_, module_info);
   AnalyzeEventSummaryData(&module_info->event_infos_, data);
@@ -306,13 +344,15 @@ void ProfilerAnalyzer::DumpDetailData() {
     return;
   }
 
-  ofs << "[Step:" << step_ << " time:" << step_total_time_ << "us]\n";
+  ofs << "[Step:" << step_ << " step_time:" << step_time_ << "us, summary_total_time:" << summary_total_time_
+      << "us]\n";
   for (auto &data : data_) {
     MS_EXCEPTION_IF_NULL(data);
-    ofs << "module:" << kProfilerModuleString.at(data->module_) << ", event:" << kProfilerEventString.at(data->event_)
-        << ", op:" << data->op_name_ << ", start_time:" << data->start_time_ << ", end_time:" << data->end_time_
-        << ", dur_time:," << data->dur_time_ << ",us, tid:" << GetTidString(data->tid_) << ", pid:" << data->pid_
-        << "\n";
+    std::string title_name = data->is_stage_ ? ("stage:" + kProfilerStageString.at(data->stage_))
+                                             : ("module:" + kProfilerModuleString.at(data->module_));
+    ofs << title_name << ", event:" << kProfilerEventString.at(data->event_) << ", op:" << data->op_name_
+        << ", start_time:" << data->start_time_ << ", end_time:" << data->end_time_ << ", dur_time:," << data->dur_time_
+        << ",us, tid:" << GetTidString(data->tid_) << ", pid:" << data->pid_ << "\n";
   }
   ofs << "\n";
 
@@ -322,7 +362,9 @@ void ProfilerAnalyzer::DumpDetailData() {
 void ProfilerAnalyzer::DumpSummaryData() {
   // Fill the summary info.
   std::stringstream string_stream;
-  string_stream << "[Step:" << step_ << " time:" << step_total_time_ << "us]\n";
+  string_stream << "[Step:" << step_ << ", step_time:" << step_time_ << "us, summary_total_time:" << summary_total_time_
+                << "us]\n";
+  DumpStageSummaryData(string_stream);
   DumpModuleSummaryData(string_stream);
   std::cout << string_stream.str() << std::endl;
 
@@ -336,6 +378,31 @@ void ProfilerAnalyzer::DumpSummaryData() {
   ChangeFileMode(summary_info_file_name_, S_IRUSR);
 }
 
+void ProfilerAnalyzer::DumpStageSummaryData(std::stringstream &string_stream) {
+  // Order module info by total time.
+  std::multimap<uint64_t, ProfilerStatisticsInfo *, std::greater_equal<uint64_t>> order_stage_infos;
+  for (auto &stage_info : stage_infos_) {
+    auto &stage_statistics_info = stage_info.second;
+    MS_EXCEPTION_IF_NULL(stage_statistics_info);
+    stage_statistics_info->Average();
+    stage_statistics_info->CalculatePercent(step_time_);
+    (void)order_stage_infos.emplace(stage_statistics_info->total_time_, stage_statistics_info.get());
+  }
+
+  string_stream << "==========================================[Stage]==========================================\n";
+  for (auto &order_stage_info : order_stage_infos) {
+    auto &stage_statistics_info = order_stage_info.second;
+    string_stream << "Stage:" << stage_statistics_info->name_ << std::fixed << std::setprecision(kPrecisionDigits)
+                  << ", total_time:" << stage_statistics_info->total_time_
+                  << "us, average_time:" << stage_statistics_info->average_time_
+                  << "us, total_count:" << stage_statistics_info->count_
+                  << ", percent:" << stage_statistics_info->percent_ << "%\n";
+    string_stream << "\n";
+  }
+
+  string_stream << "\n";
+}
+
 void ProfilerAnalyzer::DumpModuleSummaryData(std::stringstream &string_stream) {
   // Order module info by total time.
   std::multimap<uint64_t, ProfilerModuleInfo *, std::greater_equal<uint64_t>> order_module_infos;
@@ -344,10 +411,11 @@ void ProfilerAnalyzer::DumpModuleSummaryData(std::stringstream &string_stream) {
     auto &module_statistics_info = module_info.second->module_statistics_info_;
     MS_EXCEPTION_IF_NULL(module_statistics_info);
     module_statistics_info->Average();
-    module_statistics_info->CalculatePercent(step_total_time_);
+    module_statistics_info->CalculatePercent(summary_total_time_);
     (void)order_module_infos.emplace(module_statistics_info->total_time_, module_info.second.get());
   }
 
+  string_stream << "==========================================[Module]==========================================\n";
   for (auto &order_module_info : order_module_infos) {
     auto &module_statistics_info = order_module_info.second->module_statistics_info_;
     string_stream << "Module:" << module_statistics_info->name_ << std::fixed << std::setprecision(kPrecisionDigits)
@@ -371,7 +439,7 @@ void ProfilerAnalyzer::DumpEventSummaryData(const std::map<ProfilerEvent, Profil
     auto &event_statistics_info = event_info.second->event_statistics_info_;
     MS_EXCEPTION_IF_NULL(event_statistics_info);
     event_statistics_info->Average();
-    event_statistics_info->CalculatePercent(step_total_time_);
+    event_statistics_info->CalculatePercent(summary_total_time_);
     if (event_statistics_info->is_inner_info_) {
       (void)order_inner_event_infos.emplace(event_statistics_info->total_time_, event_info.second.get());
     } else {
@@ -415,7 +483,7 @@ void ProfilerAnalyzer::DumpOpSummaryData(const mindspore::HashMap<std::string, P
     auto &op_statistics_info = op_info.second;
     MS_EXCEPTION_IF_NULL(op_statistics_info);
     op_statistics_info->Average();
-    op_statistics_info->CalculatePercent(step_total_time_);
+    op_statistics_info->CalculatePercent(summary_total_time_);
     (void)total_time_order_op_infos.emplace(op_statistics_info->total_time_, op_statistics_info.get());
     (void)average_time_order_op_infos.emplace(op_statistics_info->average_time_, op_statistics_info.get());
   }
