@@ -289,7 +289,7 @@ tensor::TensorPtr InputValue2Tensor(ValuePtr input_value) {
   // in order to emit litegraph node by gb.Value, convert the type of value to tensor anyway
   tensor::TensorPtr input_tensor = nullptr;
   if (input_value->isa<Int32Imm>() || input_value->isa<Int64Imm>()) {
-    auto input_num = GetValue<int64_t>(input_value);
+    auto input_num = AnfUtils::GetIntValue(input_value);
     input_tensor = std::make_shared<tensor::Tensor>(input_num);
   } else if (input_value->isa<ValueSequence>()) {
     auto input_seq = input_value->cast<ValueSequencePtr>()->value();
@@ -299,6 +299,8 @@ tensor::TensorPtr InputValue2Tensor(ValuePtr input_value) {
     input_tensor = std::make_shared<tensor::Tensor>(input_vec);
   } else if (input_value->isa<tensor::Tensor>()) {
     input_tensor = input_value->cast<tensor::TensorPtr>();
+  } else {
+    MS_LOG(EXCEPTION) << "Unsupported Type in InputValue2Tensor";
   }
   return input_tensor;
 }
@@ -360,9 +362,14 @@ inner::LiteGraphPtr GkUtils::AnfGraph2LiteGraph(const FuncGraphPtr &func_graph,
       } else {  // valuenode
         auto input_value_node = input_i->cast<ValueNodePtr>();
         auto input_value = input_value_node->value();
-        auto tensor = InputValue2Tensor(input_value);
-        MS_EXCEPTION_IF_NULL(tensor);
-        input_node = gb.Value(tensor);
+        constexpr size_t idx = 2;
+        if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem) && i == idx) {
+          input_node = std::make_shared<inner::ConstScalarNode>(input_value);
+        } else {
+          auto tensor = InputValue2Tensor(input_value);
+          MS_EXCEPTION_IF_NULL(tensor);
+          input_node = gb.Value(tensor);
+        }
       }
       inputs.push_back(input_node);
     }
