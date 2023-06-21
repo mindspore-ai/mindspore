@@ -177,6 +177,7 @@ class Adam(Optimizer):
                 denom = self.op_sqrt(max_exp_avg_sqs[i]) / bias_correction2_sqrt + eps
             else:
                 denom = self.op_sqrt(exp_avg_sq) / bias_correction2_sqrt + eps
+            F.depend(param, denom)
             next_param = param - self.op_mul(exp_avg / denom, step_size)
             F.assign(param, next_param)
 
