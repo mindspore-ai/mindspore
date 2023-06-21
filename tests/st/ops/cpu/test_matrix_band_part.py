@@ -73,7 +73,7 @@ def test_matrix_band_part_vmap(mode):
         Expectation: Success.
     """
     context.set_context(mode=mode, device_target="CPU")
-    os.environ['MS_AUTO_IDENTIFY_ENABLE'] = "0"
+    os.environ['MS_AUTO_DYNAMIC_SHAPE_ENABLE'] = "0"
     x = Tensor(np.ones((2, 2, 3, 5)).astype(np.float32))
     # Case 1
     lower = 1

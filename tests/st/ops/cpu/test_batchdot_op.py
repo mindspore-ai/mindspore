@@ -63,7 +63,7 @@ def _reference_batch_dot(x, y, axes):
 def test_batch_dot_fp32():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     np.random.seed(12876)
-    os.environ['MS_AUTO_IDENTIFY_ENABLE'] = "0"
+    os.environ['MS_AUTO_DYNAMIC_SHAPE_ENABLE'] = "0"
     # case 1
     shape_x1 = (3, 12, 5, 2, 3)
     shape_x2 = (3, 1, 7, 3, 2)

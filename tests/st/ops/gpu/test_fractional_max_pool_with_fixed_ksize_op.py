@@ -50,7 +50,7 @@ def test_fractionalmaxpoolwithfixedksize():
     Description: Test of input
     Expectation: The results are as expected
     """
-    os.environ['MS_AUTO_IDENTIFY_ENABLE'] = "0"
+    os.environ['MS_AUTO_DYNAMIC_SHAPE_ENABLE'] = "0"
     context_mode_types = [context.GRAPH_MODE, context.PYNATIVE_MODE]
     types_input1 = [np.float16, np.float32, np.int32, np.int64]
     types_input2 = [np.float16, np.float32]

@@ -21,7 +21,7 @@ import pytest
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_single
 def test_sit_optimizer_parallel():
-    os.environ['MS_AUTO_IDENTIFY_ENABLE'] = "0"
+    os.environ['MS_AUTO_DYNAMIC_SHAPE_ENABLE'] = "0"
     sh_path = os.path.split(os.path.realpath(__file__))[0]
     ret = os.system(f"sh {sh_path}/run_optimizer_parallel.sh")
     os.system(f"grep -E 'ERROR|error' {sh_path}/optimizer_parallel*/optimizer_parallel*log -C 3")

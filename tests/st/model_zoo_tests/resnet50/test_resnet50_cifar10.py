@@ -141,7 +141,7 @@ def test_resnet50_cifar10_gpu_performance():
     Description: test resnet50_cifar10_gpu performance
     Expectation: None
     """
-    os.environ['MS_AUTO_IDENTIFY_ENABLE'] = "0"
+    os.environ['MS_AUTO_DYNAMIC_SHAPE_ENABLE'] = "0"
     cur_path = os.getcwd()
     model_path = "{}/../../../../tests/models/official/cv".format(cur_path)
     model_name = "resnet"

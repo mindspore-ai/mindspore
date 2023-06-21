@@ -427,9 +427,9 @@ class _AutoIdentifyDynamicShape:
 
     def _is_enable_auto_identify_shape(self, args_list):
         """is enable auto identify shape"""
-        enable_auto_identify = os.getenv('MS_AUTO_IDENTIFY_ENABLE')
+        enable_auto_identify = os.getenv('MS_AUTO_DYNAMIC_SHAPE_ENABLE')
         if not enable_auto_identify:
-            enable_auto_identify = True
+            enable_auto_identify = False
         if ((enable_auto_identify is False or enable_auto_identify == "0")) or not self.check_input_args(args_list):
             return False
         return True
