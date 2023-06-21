@@ -1885,27 +1885,23 @@ TypePtr GetAnnotationType(const AnfNodePtr &node, const AbstractBasePtrList &arg
         }
       }
 
-      if (found) {
-        constexpr auto values_index = 2;
-        const auto &values_tuple_abs = dyn_cast<AbstractSequence>(args_abs_list[values_index]);
-        MS_EXCEPTION_IF_NULL(values_tuple_abs);
-        const auto &type_value_abs = values_tuple_abs->elements()[i];
-        if (type_value_abs == nullptr) {
-          MS_LOG(INFO) << "Not valid PyExecute CNode. node: " << node->DebugString() << ", key: " << type_var_str
-                       << ", values_tuple_abs: " << values_tuple_abs->ToString();
-          return nullptr;
-        }
-        if (!fallback::HasRealShape(type_value_abs) &&
-            fallback::HasRealType(type_value_abs)) {  // Only real type exists.
-          type_value = fallback::GetRealType<AbstractBase, Type>(type_value_abs);
-        } else {
-          type_value = type_value_abs->BuildValue();
-        }
-      } else {
+      if (!found) {
         MS_LOG(INFO) << "Not valid PyExecute CNode. node: " << node->DebugString() << ", keys: " << keys->ToString()
                      << ", not found " << type_var_str;
         return nullptr;
       }
+      constexpr auto values_index = 2;
+      const auto &values_tuple_abs = dyn_cast<AbstractSequence>(args_abs_list[values_index]);
+      MS_EXCEPTION_IF_NULL(values_tuple_abs);
+      const auto &type_value_abs = values_tuple_abs->elements()[i];
+      if (type_value_abs == nullptr) {
+        MS_LOG(INFO) << "Not valid PyExecute CNode. node: " << node->DebugString() << ", key: " << type_var_str
+                     << ", values_tuple_abs: " << values_tuple_abs->ToString();
+        return nullptr;
+      }
+      bool only_has_real_type = !fallback::HasRealShape(type_value_abs) && fallback::HasRealType(type_value_abs);
+      type_value =
+        only_has_real_type ? fallback::GetRealType<AbstractBase, Type>(type_value_abs) : type_value_abs->BuildValue();
     } else {  // PyInterpret
       constexpr auto local_dict_index = 2;
       const auto &local_dict_abs = args_abs_list[local_dict_index];
@@ -3138,7 +3134,7 @@ class CondEvaluator : public TransitionPrimEvaluator {
     return engine->ForwardConfig(out_conf, fn_conf);
   }
 
-  bool is_while_condition(const AnfNodePtr &flag_node) {
+  bool is_while_condition(const AnfNodePtr &flag_node) const {
     MS_EXCEPTION_IF_NULL(flag_node);
     auto vnode = GetValueNode(flag_node);
     MS_EXCEPTION_IF_NULL(vnode);
