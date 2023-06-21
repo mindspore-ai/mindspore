@@ -391,4 +391,5 @@ class SymbolTree:
             str, A new, unique name within a symbol tree in the format `name_n`, where `n` is a numeric subscript.
             If there is no name conflict when entered `name`, there is no numeric subscript.
         """
+        Validator.check_value_type("name", name, [str], "SymbolTree")
         return self._symbol_tree.unique_name(name)
