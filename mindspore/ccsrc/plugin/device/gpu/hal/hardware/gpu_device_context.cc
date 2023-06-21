@@ -69,6 +69,11 @@ namespace mindspore {
 namespace device {
 namespace gpu {
 namespace {
+const char kModelNameGPU[] = "GPU";
+const char kEventOptimizeGraph[] = "OptimizeGraph";
+const char kStageOptimizeWithoutDeviceInfo[] = "OptimizeWithoutDeviceInfo";
+const char kStageSetKernelInfo[] = "SetKernelInfo";
+const char kStageOptimizeWithDeviceInfo[] = "OptimizeWithDeviceInfo";
 std::string GetCurrentDir() {
 #ifndef _WIN32
   Dl_info dl_info;
@@ -350,14 +355,17 @@ void GPUKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
 
 void GPUKernelExecutor::OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
+  (void)profiler::CollectHostInfo(kModelNameGPU, kEventOptimizeGraph, kStageOptimizeWithoutDeviceInfo, 1, 0, 0);
   // Operator fusion optimization.
   FuseOperators(graph);
+  (void)profiler::CollectHostInfo(kModelNameGPU, kEventOptimizeGraph, kStageOptimizeWithoutDeviceInfo, 1, 0, 1);
 }
 
 void GPUKernelExecutor::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+  (void)profiler::CollectHostInfo(kModelNameGPU, kEventOptimizeGraph, kStageOptimizeWithDeviceInfo, 1, 0, 0);
   // Graph optimization relevant to device data format
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
@@ -400,6 +408,7 @@ void GPUKernelExecutor::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph)
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(graph);
   graph->SetExecOrderByDefault();
+  (void)profiler::CollectHostInfo(kModelNameGPU, kEventOptimizeGraph, kStageOptimizeWithDeviceInfo, 1, 0, 1);
 }
 
 void GPUKernelExecutor::FuseOperators(const KernelGraphPtr &graph) const {
@@ -673,6 +682,7 @@ void GPUKernelExecutor::UpdateKernelRefInfo(const KernelGraphPtr &graph) const {
 }
 
 void GPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
+  (void)profiler::CollectHostInfo(kModelNameGPU, kEventOptimizeGraph, kStageSetKernelInfo, 1, 0, 0);
   auto mng = graph->manager();
   if (mng == nullptr) {
     mng = Manage(graph, true);
@@ -704,6 +714,7 @@ void GPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
     graphkernel::BindValueToGraph().Run(graph);
     graph->SetExecOrderByDefault();
   }
+  (void)profiler::CollectHostInfo(kModelNameGPU, kEventOptimizeGraph, kStageSetKernelInfo, 1, 0, 1);
 }
 
 void GPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
