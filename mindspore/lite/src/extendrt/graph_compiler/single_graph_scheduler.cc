@@ -119,7 +119,7 @@ bool SingleGraphScheduler::HandleWeightForKernels() {
 
 Status SingleGraphScheduler::OptimizeTranspose(std::vector<InferKernel *> *kernels) {
   auto tensors = execution_flow_->GetTensors();
-  auto ret = lite::pass::RuntimeFormatPass(kernels, &tensors, compile_option_->format);
+  auto ret = lite::pass::DoFormatPass(kernels, &tensors, compile_option_->format);
   if (ret != RET_OK) {
     MS_LOG(INFO) << "Run Optimize transpose pass failed.";
     return kLiteError;
