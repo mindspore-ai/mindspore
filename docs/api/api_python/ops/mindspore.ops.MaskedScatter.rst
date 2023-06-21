@@ -11,8 +11,7 @@ mindspore.ops.MaskedScatter
     输入：
         - **x** (Tensor) - 被更新输入Tensor。
         - **mask** (Tensor[bool]) - 指示应修改或替换哪些元素的掩码Tensor， `mask` 和 `x` 的shape必须相等或者两者的shape可以广播。
-        - **updates** (Tensor) - 要散播到目标张量或数组中的值。其数据类型与 `x` 相同。 `updates` 中的元素数量必须大于等于 `mask` 中的True元素
-          的数量。
+        - **updates** (Tensor) - 要散播到目标张量或数组中的值。其数据类型与 `x` 相同。 `updates` 中的元素数量必须大于等于 `mask` 中的True元素的数量。
 
     输出：
         Tensor，其数据类型和shape与 `x` 相同。
