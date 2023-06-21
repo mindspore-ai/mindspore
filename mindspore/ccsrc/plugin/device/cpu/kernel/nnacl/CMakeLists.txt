@@ -113,6 +113,9 @@ set(KERNEL_AVX_FILE ${NNACL_DIR}/fp32/conv_sw_avx_fp32.c
                     ${NNACL_DIR}/fp32/conv_depthwise_avx_fp32.c)
 list(REMOVE_ITEM KERNEL_SRC ${KERNEL_AVX_FILE})
 
+set(KERNEL_ARM64_FILE ${NNACL_DIR}/fp32/conv_sw_arm64_fp32.c)
+list(REMOVE_ITEM KERNEL_SRC ${KERNEL_ARM64_FILE})
+
 if(NOT MSLITE_ENABLE_RUNTIME_PASS)
   list(REMOVE_ITEM KERNEL_SRC ${NNACL_DIR}/infer/shape_fusion_infer.c)
 endif()
@@ -163,6 +166,7 @@ endif()
 if(PLATFORM_ARM64)
     file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/assembly/arm64/*.S)
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
+    set(KERNEL_SRC ${KERNEL_SRC} ${KERNEL_ARM64_FILE})
 endif()
 
 if(PLATFORM_ARM32)

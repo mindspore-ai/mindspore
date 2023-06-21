@@ -33,6 +33,7 @@
 #endif
 #if defined(ENABLE_ARM64)
 #include "src/litert/kernel/cpu/fp32/convolution_depthwise_indirect_fp32.h"
+#include "src/litert/kernel/cpu/fp32/convolution_slidewindow_arm64_fp32.h"
 #endif
 #ifdef ENABLE_AVX
 #include "src/litert/kernel/cpu/fp32/convolution_slidewindow_avx_fp32.h"
@@ -233,6 +234,28 @@ bool ConvolutionDelegateCPUKernel::CheckAvxUseSWConv(const ConvParameter *conv_p
   return false;
 }
 
+bool ConvolutionDelegateCPUKernel::CheckArm64UseSWConv(const ConvParameter *conv_param) {
+  if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1) {
+    return false;
+  }
+  if (conv_param->input_channel_ > C128NUM) {
+    return false;
+  }
+  if (conv_param->kernel_h_ > C5NUM || conv_param->kernel_w_ > C5NUM) {
+    return false;
+  }
+  if (conv_param->dilation_h_ != 1 || conv_param->dilation_w_ != 1) {
+    return false;
+  }
+  if (conv_param->stride_w_ > C3NUM) {
+    return false;
+  }
+  if (conv_param->input_h_ / conv_param->kernel_h_ < C48NUM || conv_param->input_w_ / conv_param->kernel_w_ < C48NUM) {
+    return false;
+  }
+  return true;
+}
+
 kernel::LiteKernel *ConvolutionDelegateCPUKernel::CreateConv1x1MatmulKernel() {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
 
@@ -277,6 +300,14 @@ kernel::LiteKernel *ConvolutionDelegateCPUKernel::CpuConvFp32NHWCKernelSelect() 
 
   if (kernel == nullptr && CheckAvxUseSWConv(conv_param)) {
     kernel = new (std::nothrow) kernel::ConvolutionSWAVXCPUKernel(
+      op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
+      origin_weight_, origin_bias_);
+  }
+#endif
+
+#ifdef ENABLE_ARM64
+  if (kernel == nullptr && CheckArm64UseSWConv(conv_param)) {
+    kernel = new (std::nothrow) kernel::ConvolutionSWARM64CPUKernel(
       op_parameter_, in_tensors_, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_),
       origin_weight_, origin_bias_);
   }
