@@ -58,9 +58,6 @@ class Randperm(Primitive):
     Generates n random samples from 0 to n-1 without repeating. If `max_length` > n,
     the last `max_length-n` elements will be filled with `pad`.
 
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
     Args:
         max_length (int): Number of items expected to get and the number must be greater than 0. Default: 1.
         pad (int): The pad value to be filled. Default: -1.

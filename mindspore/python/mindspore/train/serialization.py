@@ -357,7 +357,9 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
     Examples:
         >>> import mindspore as ms
         >>>
-        >>> net = Net()
+        >>> # Define the network structure of LeNet5. Refer to
+        >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/lenet.py
+        >>> net = LeNet5()
         >>> ms.save_checkpoint(net, "lenet.ckpt")
     """
     ckpt_file_name = _check_save_obj_and_ckpt_file_name(save_obj, ckpt_file_name)
@@ -1034,7 +1036,9 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
     Examples:
         >>> import mindspore as ms
         >>>
-        >>> net = Net()
+        >>> # Define the network structure of LeNet5. Refer to
+        >>> # https://gitee.com/mindspore/docs/blob/r2.0/docs/mindspore/code/lenet.py
+        >>> net = LeNet5()
         >>> ckpt_file_name = "./checkpoint/LeNet5-1_32.ckpt"
         >>> param_dict = ms.load_checkpoint(ckpt_file_name, filter_prefix="conv1")
         >>> param_not_load, _ = ms.load_param_into_net(net, param_dict)

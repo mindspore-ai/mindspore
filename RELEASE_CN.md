@@ -8,7 +8,7 @@
 
 #### PyNative
 
-- [Stable] 全面支持动态shape，算子支持度详见[nn接口动态shape支持情况](https://www.mindspore.cn/docs/zh-CN/r2.0/note/dynamic_shape_nn.html)、[ops接口动态shape支持情况](https://www.mindspore.cn/docs/zh-CN/r2.0/note/dynamic_shape_func.html)和[算子动态shape支持情况](https://www.mindspore.cn/docs/zh-CN/r2.0/note/dynamic_shape_primitive.html)。
+- [Stable] 全面支持动态shape，算子支持度详见[nn接口动态shape支持情况](https://www.mindspore.cn/docs/zh-CN/r2.0/note/dynamic_shape_nn.html)、[functional接口动态shape支持情况](https://www.mindspore.cn/docs/zh-CN/r2.0/note/dynamic_shape_func.html)和[算子动态shape支持情况](https://www.mindspore.cn/docs/zh-CN/r2.0/note/dynamic_shape_primitive.html)。
 
 #### AutoParallel
 
