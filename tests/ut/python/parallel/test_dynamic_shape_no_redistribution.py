@@ -15,7 +15,7 @@
 import numpy as np
 
 import mindspore as ms
-from mindspore import context, Tensor, Parameter
+from mindspore import context, Tensor, Parameter, ops
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 from parallel.utils.utils import ParallelValidator, compile_net
@@ -68,6 +68,47 @@ class PadV3Net(Cell):
         return out
 
 
+class PadV3Net2(Cell):
+    def __init__(self, weight, strategy1=None, strategy2=None):
+        super().__init__()
+        self.add = P.Add().shard(strategy1)
+        self.pad = P.PadV3().shard(strategy2)
+        self.weight = Parameter(weight, "w1")
+        self.value = Tensor([0])
+        self.shape = P.Shape()
+        self.paddings = Tensor([0, 0, 0])
+        self.s = P.ScalarToTensor()
+        self.concat = P.Concat()
+
+    def construct(self, x):
+        out = self.add(x, self.weight)
+        shape = self.shape(out)[-1]
+        shape = Tensor([1024]) - self.s(shape, ms.int32)
+        paddings = self.concat((self.paddings, shape))
+        out = self.pad(out, paddings, self.value)
+        return out
+
+
+class PadV3Net3(Cell):
+    def __init__(self, weight, strategy1=None, strategy2=None):
+        super().__init__()
+        self.add = P.Add().shard(strategy1)
+        self.pad = P.PadV3().shard(strategy2)
+        self.weight = Parameter(weight, "w1")
+        self.value = Tensor([0])
+        self.shape = P.Shape()
+        self.paddings = Tensor([0, 0, 0], ms.int32)
+        self.s = P.ScalarToTensor()
+        self.concat = P.Concat()
+
+    def construct(self, x):
+        out = self.add(x, self.weight)
+        shape = P.Sub()(Tensor([1024]), ops.dyn_shape(out)[-1]).reshape((1,)).astype(ms.int32)
+        paddings = self.concat((self.paddings, shape))
+        out = self.pad(out, paddings, self.value)
+        return out
+
+
 def test_shape_sub():
     """
     Feature: test dynamic shape
@@ -102,6 +143,44 @@ def test_padv3_dynamic():
     input_x = Tensor(shape=[32, 16, None], dtype=ms.int32)
     weight = Tensor(np.ones([32, 16, 1]), dtype=ms.float32)
     net = PadV3Net(weight, strategy1, strategy2)
+    net.set_inputs(input_x)
+
+    phase = compile_net(net, input_x)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_node_inputs_has('PadV3-0', ['Add-0'])
+
+
+def test_padv3_paddings_concat_scalar_to_tensor_dynamic():
+    """
+    Feature: test dynamic shape
+    Description: no redistribution
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((1, 1, 1), (1, 1, 1))
+    strategy2 = ((1, 1, 1),)
+    input_x = Tensor(shape=[32, 16, None], dtype=ms.int32)
+    weight = Tensor(np.ones([32, 16, 1]), dtype=ms.float32)
+    net = PadV3Net2(weight, strategy1, strategy2)
+    net.set_inputs(input_x)
+
+    phase = compile_net(net, input_x)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_node_inputs_has('PadV3-0', ['Add-0'])
+
+
+def test_padv3_concat_tensor_shape_dynamic():
+    """
+    Feature: test dynamic shape
+    Description: no redistribution
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((1, 1, 1), (1, 1, 1))
+    strategy2 = ((1, 1, 1),)
+    input_x = Tensor(shape=[32, 16, None], dtype=ms.int32)
+    weight = Tensor(np.ones([32, 16, 1]), dtype=ms.float32)
+    net = PadV3Net3(weight, strategy1, strategy2)
     net.set_inputs(input_x)
 
     phase = compile_net(net, input_x)

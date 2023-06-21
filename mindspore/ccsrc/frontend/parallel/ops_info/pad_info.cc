@@ -34,16 +34,30 @@ Status PadV3Info::GetAttrs() {
   bool paddings_contiguous = GetBoolAttr(PADDINGS_CONTIGUOUS);
   MS_LOG(INFO) << name_ << ": the paddings_contiguous is " << paddings_contiguous;
 
-  if (input_value_.size() < PAD_V3_INPUT_VALUE_MIN_SIZE || input_value_[PADDINGS_INDEX] == nullptr) {
-    MS_LOG(ERROR) << name_ << ": the input_value[1] is null";
+  if (input_value_.size() != PAD_V3_INPUT_VALUE_SIZE) {
+    MS_LOG(ERROR) << name_ << ": the size of input_value must be " << PAD_V3_INPUT_VALUE_SIZE << ", but got "
+                  << input_value_.size();
     return FAILED;
   }
 
   std::vector<int64_t> paddings;
-  if (input_value_[PADDINGS_INDEX]->isa<tensor::Tensor>()) {
-    paddings = GetTensorValue(input_value_[PADDINGS_INDEX]);
+  if (input_value_[PADDINGS_INDEX] == nullptr) {
+    if (inputs_shape_.size() < (PAD_V3_INPUT_VALUE_SIZE - 1) || inputs_shape_[PADDINGS_INDEX][0] <= 1) {
+      MS_LOG(ERROR) << name_
+                    << ": the input value for paddings is null, and the inputs_shape[1][0] must be larger than 1, but "
+                       "the inputs_shape is"
+                    << inputs_shape_;
+      return FAILED;
+    }
+    // the paddings is a variable, cannot get its value, and construct the fake paddings
+    paddings = Shape(inputs_shape_[PADDINGS_INDEX][0], 1);
+    MS_LOG(INFO) << name_ << ": the input value for paddings is null, the fake paddings is " << paddings;
   } else {
-    paddings = GetValue<Shape>(input_value_[PADDINGS_INDEX]);
+    if (input_value_[PADDINGS_INDEX]->isa<tensor::Tensor>()) {
+      paddings = GetTensorValue(input_value_[PADDINGS_INDEX]);
+    } else {
+      paddings = GetValue<Shape>(input_value_[PADDINGS_INDEX]);
+    }
   }
 
   if (paddings.size() % PADDINGS_PAIR_SIZE != 0) {
