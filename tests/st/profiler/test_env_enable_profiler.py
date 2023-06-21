@@ -15,6 +15,7 @@
 import os
 import sys
 import shutil
+import csv
 from tests.security_utils import security_off_wrap
 import pytest
 
@@ -32,7 +33,7 @@ def cleanup():
 
 
 class CheckProfilerFiles:
-    def __init__(self, device_id, rank_id, profiler_path, device_target):
+    def __init__(self, device_id, rank_id, profiler_path, device_target, profile_framework='all'):
         """Arges init."""
         self.device_id = device_id
         self.rank_id = rank_id
@@ -44,6 +45,7 @@ class CheckProfilerFiles:
             self._check_gpu_profiling_file()
         else:
             self._check_cpu_profiling_file()
+        self._check_host_profiling_file(profile_framework=profile_framework)
 
     def _check_gpu_profiling_file(self):
         """Check gpu profiling file."""
@@ -84,6 +86,26 @@ class CheckProfilerFiles:
         cpu_profiler_files = (op_detail_file, op_type_file, timeline_file)
         for file in cpu_profiler_files:
             assert os.path.isfile(file)
+
+    def _check_host_profiling_file(self, profile_framework='all'):
+        host_dir = os.path.join(self.profiler_path, 'host_info')
+        if profile_framework is None:
+            assert not os.path.exists(host_dir)
+            return
+        timeline_file = os.path.join(host_dir, f'timeline_{self.rank_id}.json')
+        if profile_framework in ['all', 'time']:
+            assert os.path.isfile(timeline_file)
+        else:
+            assert not os.path.exists(timeline_file)
+        csv_file = os.path.join(host_dir, f'host_info_{self.rank_id}.csv')
+        assert os.path.isfile(csv_file)
+        with open(csv_file, 'r') as f:
+            f_reader = csv.reader(f)
+            header = next(f_reader)
+            assert header == ['tid', 'pid', 'parent_pid', 'module_name', 'event', 'stage', 'level', 'start_end',
+                              'custom_info', 'memory_usage', 'time_stamp']
+            for row in f_reader:
+                assert len(row) == 11
 
 
 class TestEnvEnableProfiler:
@@ -167,4 +189,46 @@ class TestEnvEnableProfiler:
             """
         )
         CheckProfilerFiles(self.device_id, self.rank_id, self.profiler_path, "Ascend")
+        assert status == 0
+
+    @pytest.mark.level1
+    @pytest.mark.platform_arm_ascend_training
+    @pytest.mark.platform_x86_ascend_training
+    @pytest.mark.env_onecard
+    @security_off_wrap
+    def test_host_profiler_none(self):
+        status = os.system(
+            """export MS_PROFILER_OPTIONS='{"start":true, "profile_memory":true, "profile_framework":null}';
+               python ./run_net.py --target=Ascend --mode=0;
+            """
+        )
+        CheckProfilerFiles(self.device_id, self.rank_id, self.profiler_path, "Ascend", None)
+        assert status == 0
+
+    @pytest.mark.level1
+    @pytest.mark.platform_arm_ascend_training
+    @pytest.mark.platform_x86_ascend_training
+    @pytest.mark.env_onecard
+    @security_off_wrap
+    def test_host_profiler_time(self):
+        status = os.system(
+            """export MS_PROFILER_OPTIONS='{"start":true, "profile_memory":true, "profile_framework":"time"}';
+               python ./run_net.py --target=Ascend --mode=0;
+            """
+        )
+        CheckProfilerFiles(self.device_id, self.rank_id, self.profiler_path, "Ascend", "time")
+        assert status == 0
+
+    @pytest.mark.level1
+    @pytest.mark.platform_arm_ascend_training
+    @pytest.mark.platform_x86_ascend_training
+    @pytest.mark.env_onecard
+    @security_off_wrap
+    def test_host_profiler_memory(self):
+        status = os.system(
+            """export MS_PROFILER_OPTIONS='{"start":true, "profile_memory":true, "profile_framework":"memory"}';
+               python ./run_net.py --target=Ascend --mode=0;
+            """
+        )
+        CheckProfilerFiles(self.device_id, self.rank_id, self.profiler_path, "Ascend", "memory")
         assert status == 0
