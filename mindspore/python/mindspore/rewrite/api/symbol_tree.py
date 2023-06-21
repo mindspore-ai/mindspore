@@ -273,16 +273,15 @@ class SymbolTree:
 
     def replace(self, old_node: Node, new_nodes: [Node]) -> Node:
         """
-        Replace `old_node` with a list of `new_nodes` .
+        Replace the `old_node` with nodes in the `new_nodes` list.
+
+        Nodes in `new_nodes` will be inserted into SymbolTree sequentially, and then `old_node` will be deleted.
 
         Note:
-
-            1. Replace support one-to-one replacement or one-to-multi replacement. If you need multi-to-multi
-               replacement, please refer to `PatternEngine`.
-            2. When applying one-to-multi replacement, Rewrite will insert all `new_nodes` into symbol_tree
-               sequentially.
-            3. Caller should maintain the topological relationship between each node in the `new_nodes` , as well as
-               the topological relationship between nodes in the `new_nodes` and nodes in the original tree.
+            - Replace support one-to-one replacement or one-to-multi replacement. If you need multi-to-multi
+              replacement, please refer to `PatternEngine`.
+            - Caller should maintain the topological relationship between each node in the `new_nodes` , as well as
+              the topological relationship between nodes in the `new_nodes` and nodes in the original tree.
 
         Args:
             old_node (Node): Node to be replaced.
