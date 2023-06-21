@@ -31,3 +31,4 @@
             - **MRMWriteDatasetError** - 创建MindRecord索引失败。
             - **TypeError** - 参数 `parallel_writer` 不是bool类型。
             - **IOError** - 参数 `source` 不存在。
+            - **ValueError** - CSV文件第一行是列名，每个字段均不能以数字开头。

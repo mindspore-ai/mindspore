@@ -36,7 +36,8 @@ __all__ = ['Cifar10ToMR']
 
 class Cifar10ToMR:
     """
-    A class to transform from cifar10 to MindRecord.
+    A class to transform from cifar10 which needs to be a Python version with a name
+    similar to: ``cifar-10-python.tar.gz`` to MindRecord.
 
     Args:
         source (str): The cifar10 directory to be transformed.

@@ -532,6 +532,12 @@ Status ShardIndexGenerator::ExecuteTransaction(const int &shard_no, sqlite3 *db,
 
 Status ShardIndexGenerator::WriteToDatabase() {
   fields_ = shard_header_.GetFields();
+  for (auto &field : fields_) {
+    // column name can't start with a number
+    CHECK_FAIL_RETURN_UNEXPECTED_MR(field.second[0] < '0' || field.second[0] > '9',
+                                    "Index field: " + field.second + " can't start with a number.");
+  }
+
   page_size_ = shard_header_.GetPageSize();
   header_size_ = shard_header_.GetHeaderSize();
   schema_count_ = shard_header_.GetSchemaCount();
@@ -564,7 +570,10 @@ void ShardIndexGenerator::DatabaseWriter() {
   int shard_no = task_++;
   while (shard_no < shard_header_.GetShardCount()) {
     sqlite3 *db = nullptr;
-    if (CreateDatabase(shard_no, &db).IsError()) {
+    Status st = CreateDatabase(shard_no, &db);
+    if (st.IsError()) {
+      // in thread, so we print error here
+      MS_LOG(ERROR) << st.ToString();
       write_success_ = false;
       return;
     }

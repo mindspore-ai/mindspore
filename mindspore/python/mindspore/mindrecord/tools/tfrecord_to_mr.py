@@ -82,6 +82,7 @@ class TFRecordToMR:
 
     Examples:
         >>> from mindspore.mindrecord import TFRecordToMR
+        >>> import tensorflow as tf
         >>>
         >>> tfrecord_file = "/path/to/tfrecord/file"
         >>> mindrecord_file = "/path/to/mindrecord/file"
