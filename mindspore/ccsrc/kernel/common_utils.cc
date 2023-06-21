@@ -200,6 +200,10 @@ inline InOutKernelTensors AbstractInOutFromDeviceAddress(
       input_tensor = input_tensors[input_idx];
     }
     const auto &input_device_address = inputs_device_address[input_idx];
+    if (input_device_address == nullptr) {
+      MS_LOG(WARNING) << "None input create None KernelTensor.";
+      continue;
+    }
     auto shape = input_device_address->host_shape();
     auto new_abstract =
       std::make_shared<abstract::AbstractTensor>(TypeIdToType(input_device_address->type_id()), shape);
