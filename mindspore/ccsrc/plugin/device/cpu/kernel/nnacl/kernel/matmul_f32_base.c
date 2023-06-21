@@ -262,8 +262,8 @@ int MatmulFp32Base_PackMatrixB(MatmulFp32Struct *matmul) {
 }
 
 int MatmulFp32Base_BackupConstMatrix(MatmulFp32Struct *matmul, MatrixInfo *matrix_info, int index) {
-  NNACL_CHECK_TRUE_RET(index < matmul->base_.in_size_, NNACL_ERR);
-  int backup_size = GetElementNum(matmul->base_.in_[index]) * (int)sizeof(float);
+  NNACL_CHECK_TRUE_RET(index < (int)matmul->base_.in_size_, NNACL_ERR);
+  size_t backup_size = (size_t)GetElementNum(matmul->base_.in_[index]) * sizeof(float);
   NNACL_CHECK_TRUE_RET(backup_size > 0, NNACL_ERR);
   matrix_info->origin_ptr_ = (float *)(matmul->base_.env_->alloc(matmul->base_.env_->allocator_, backup_size));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(matrix_info->origin_ptr_);
@@ -464,15 +464,16 @@ int MatmulFp32Base_PackBiasMatrix(MatmulFp32Struct *matmul) {
 int MatmulFp32Base_InitTmpOutBuffer(MatmulFp32Struct *matmul) {
   if (matmul->out_need_aligned_) {
     if (matmul->output_data_ != NULL) {
-      free(matmul->output_data_);
+      matmul->base_.env_->free(matmul->base_.env_->allocator_, matmul->output_data_);
     }
     // avx need to malloc dst aligned to C8NUM
     // avx512 need to malloc dst aligned to C16NUM
     int out_channel = matmul->compute_.col_;
     NNACL_CHECK_ZERO_RETURN_ERR(matmul->compute_.col_tile_);
     int oc_block_num = UP_DIV(out_channel, matmul->compute_.col_tile_);
-    int data_size = matmul->batch_ * matmul->compute_.row_ * oc_block_num * matmul->compute_.col_tile_ * sizeof(float);
-    matmul->output_data_ = (float *)(malloc(data_size));
+    int ele_num = matmul->batch_ * matmul->compute_.row_ * oc_block_num * matmul->compute_.col_tile_;
+    int data_size = ele_num * (int)sizeof(float);
+    matmul->output_data_ = (float *)(matmul->base_.env_->alloc(matmul->base_.env_->allocator_, data_size));
     NNACL_CHECK_NULL_RETURN_ERR(matmul->output_data_);
   }
   return NNACL_OK;
@@ -533,9 +534,8 @@ int matmul_f32_release(struct KernelBase *self) {
   MatmulFp32Struct *matmul = (MatmulFp32Struct *)self;
   MatmulFp32Base_FreeBatchOffset(matmul);
 
-  // packed const-matrix will be delete by framework.
   if (matmul->out_need_aligned_ && matmul->output_data_ != NULL) {
-    free(matmul->output_data_);
+    matmul->base_.env_->free(matmul->base_.env_->allocator_, matmul->output_data_);
     matmul->output_data_ = NULL;
   }
   if (matmul->matrix_c_.pack_ptr_ != NULL) {

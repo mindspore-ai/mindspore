@@ -39,7 +39,7 @@ int non_zero_compute(KernelBase *self) {
   for (int i = 0; i < GetElementNum(input); i += 1) {
     if (input_data[i]) {
       for (size_t j = 0; j < input->shape_size_; j++) {
-        output_data[non_zero_count + j * non_zero_nums] = coordiate_values[j];
+        output_data[non_zero_count + (int)j * non_zero_nums] = coordiate_values[j];
       }
       non_zero_count++;
     }

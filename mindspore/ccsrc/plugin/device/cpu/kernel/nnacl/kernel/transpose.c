@@ -67,7 +67,7 @@ int ResetTransposeStatus(TransposeStruct *transpose) {
 
   int trans_nd[MAX_TRANSPOSE_DIM_SIZE] = {0, 2, 1};
   int *perm_data;
-  if (in_tensor->shape_size_ != transpose->num_axes_) {
+  if ((int)in_tensor->shape_size_ != transpose->num_axes_) {
     perm_data = trans_nd;
     if (in_tensor->shape_size_ == C3NUM && transpose->num_axes_ == C4NUM) {
       transpose->num_axes_ = C3NUM;
@@ -76,7 +76,7 @@ int ResetTransposeStatus(TransposeStruct *transpose) {
       for (int i = 0; i < in_tensor->shape_size_; ++i) {
         trans_nd[i] = (int)in_tensor->shape_size_ - 1 - i;
       }
-      transpose->num_axes_ = in_tensor->shape_size_;
+      transpose->num_axes_ = (int)in_tensor->shape_size_;
     }
   } else {
     NNACL_CHECK_TRUE_RET(transpose->base_.in_size_ == TWO_TENSOR, NNACL_TRANSPOSE_INPUT_TENSOR_NUM_INVALID);
@@ -144,11 +144,11 @@ int TransposeOptimizeShape(TransposeStruct *transpose) {
   NNACL_CHECK_TRUE_RET(in_shape_temp_size == perm_temp_size, NNACL_TRANSPOSE_PERM_DELETE_DIMENSION_FAILED);
 
   // second step, fuse continuous dimension.;
-  size_t axis_num = in_shape_temp_size;
+  int axis_num = in_shape_temp_size;
   int *segments[MAX_TRANSPOSE_DIM_SIZE];
   int segment_sizes[MAX_TRANSPOSE_DIM_SIZE];
   int segments_size = 0;
-  for (size_t i = 0; i < axis_num;) {
+  for (int i = 0; i < axis_num;) {
     int segment[MAX_TRANSPOSE_DIM_SIZE];
     int segment_size = 0;
     segment[segment_size++] = perm_temp[i];
@@ -277,7 +277,7 @@ int transpose_resize(struct KernelBase *self) {
     return ret;
   }
 
-  transpose->is_valid_ = transpose->base_.in_[FIRST_INPUT]->shape_size_ == transpose->num_axes_;
+  transpose->is_valid_ = (int)transpose->base_.in_[FIRST_INPUT]->shape_size_ == transpose->num_axes_;
   if (!transpose->is_valid_) {
     return NNACL_OK;
   }

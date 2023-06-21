@@ -97,7 +97,7 @@ int SoftmaxCrossEntropyWithLogitsCPUKernel::ReSize() {
 
   size_t data_size = in_tensors_.at(0)->ElementsNum();
   set_workspace_size((data_size + static_cast<size_t>(dims.at(0))) * sizeof(float));
-  n_dim_ = 2;
+  n_dim_ = Num2;
   element_size_ = data_size;
   sm_params_.axis_ = 1;
   for (size_t i = 0; i < dims.size(); i++) input_shape_[i] = dims.at(i);

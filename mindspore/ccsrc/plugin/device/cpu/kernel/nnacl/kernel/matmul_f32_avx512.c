@@ -689,6 +689,7 @@ int MatmulFp32Avx512_ParallelRunByBatchColRowGEMM(MatmulFp32Struct *matmul, int 
 
 KernelBase *CreateMatmulFp32Avx512() {
   MatmulFp32Struct *matmul = (MatmulFp32Struct *)CreateMatmulFp32Base();
+  NNACL_MALLOC_CHECK_NULL_RETURN_NULL(matmul);
   matmul->matmul_type_ = kNotImplemented;
   matmul->check_thread_cutting_by_row_ = MatmulFp32Avx512_CheckThreadCuttingByRow;
   matmul->get_thread_cutting_policy_ = MatmulFp32Avx512_GetThreadCuttingPolicy;

@@ -175,7 +175,7 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Prepare() {
   for (unsigned int i = 0; i < dims.size(); i++) {
     param->input_shape_[i] = dims.at(i);
   }
-  if (this->in_tensors_.size() != 2) {
+  if (this->in_tensors_.size() != TWO_TENSOR) {
     MS_LOG(ERROR) << "sparse softmax entropy loss should have two inputs";
     return RET_ERROR;
   }
@@ -193,7 +193,7 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Prepare() {
       return RET_ERROR;
     }
   }
-  n_dim_ = 2;
+  n_dim_ = Num2;
   element_size_ = static_cast<int>(data_size);
   sm_params_->axis_ = 1;
   for (size_t i = 0; i < dims.size(); i++) {
