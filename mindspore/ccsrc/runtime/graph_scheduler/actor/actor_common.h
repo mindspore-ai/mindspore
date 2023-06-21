@@ -215,6 +215,7 @@ class ActorDispatcher {
   static void set_is_multi_thread_execution(bool is_multi_thread_execution) {
     is_multi_thread_execution_ = is_multi_thread_execution;
   }
+  static bool is_multi_thread_execution() { return is_multi_thread_execution_; }
 
   static bool is_memory_allocation_sync() { return is_memory_allocation_sync_; }
   static void set_is_memory_allocation_sync(bool is_memory_allocation_sync) {

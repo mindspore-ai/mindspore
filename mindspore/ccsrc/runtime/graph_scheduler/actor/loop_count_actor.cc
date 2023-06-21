@@ -91,7 +91,11 @@ void LoopCountActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
 }
 
 void LoopCountActor::SendOutput(OpContext<DeviceTensor> *const context) {
-  ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kSendOutput, GetAID().Name());
+  // Only the multi thread execution can profile the ProfilerEvent::kSendOutput.
+  if (ActorDispatcher::is_multi_thread_execution()) {
+    ProfilerRecorder profiler(ProfilerModule::kRuntime, ProfilerEvent::kSendOutput, GetAID().Name());
+  }
+
   // Send recorder info.
   if (recorder_aid_ != nullptr) {
     ActorDispatcher::Send(*recorder_aid_, &RecorderActor::RecordOnStepEnd, context);

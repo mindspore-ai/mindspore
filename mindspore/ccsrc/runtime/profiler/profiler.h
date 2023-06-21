@@ -35,7 +35,9 @@ namespace runtime {
 static const char kDefaultOpName[] = "Default";
 static const size_t kPercent = 100;
 
-enum class ProfilerModule { kPython, kRuntime, kPynative, kKernel, kOther };
+enum class ProfilerStage { kDefault, kPython, kRunGraph, kRunGradGraph, kRunOp };
+
+enum class ProfilerModule { kDefault, kRuntime, kPynative, kKernel, kOther };
 
 enum class ProfilerEvent {
   kDefault,
@@ -67,6 +69,7 @@ enum class ProfilerEvent {
     }                                                                       \
   } while (0);
 
+// Match PROFILER_START to use.
 #define PROFILER_END(start_time, module, event, op_name, is_inner_event)                                           \
   do {                                                                                                             \
     if (runtime::ProfilerAnalyzer::GetInstance().profiler_enable()) {                                              \
@@ -75,6 +78,16 @@ enum class ProfilerEvent {
       runtime::ProfilerAnalyzer::GetInstance().RecordData(                                                         \
         std::make_shared<runtime::ProfilerData>(module, event, brief_name, is_inner_event, start_time, end_time)); \
     }                                                                                                              \
+  } while (0);
+
+// Match PROFILER_START to use.
+#define PROFILER_STAGE_END(start_time, stage)                                  \
+  do {                                                                         \
+    if (runtime::ProfilerAnalyzer::GetInstance().profiler_enable()) {          \
+      auto end_time = runtime::ProfilerAnalyzer::GetInstance().GetTimeStamp(); \
+      runtime::ProfilerAnalyzer::GetInstance().RecordData(                     \
+        std::make_shared<runtime::ProfilerData>(stage, start_time, end_time)); \
+    }                                                                          \
   } while (0);
 
 // Record the profiler data by the constructor and destructor of this class.
@@ -94,7 +107,9 @@ class BACKEND_EXPORT ProfilerRecorder {
 struct ProfilerData {
   ProfilerData(ProfilerModule module, ProfilerEvent event, const std::string &op_name, bool is_inner_event,
                uint64_t start_time, uint64_t end_time)
-      : module_(module),
+      : is_stage_(false),
+        stage_(ProfilerStage::kDefault),
+        module_(module),
         event_(event),
         op_name_(op_name),
         is_inner_event_(is_inner_event),
@@ -104,6 +119,23 @@ struct ProfilerData {
     tid_ = std::this_thread::get_id();
     pid_ = getpid();
   }
+
+  ProfilerData(ProfilerStage stage, uint64_t start_time, uint64_t end_time)
+      : is_stage_(true),
+        stage_(stage),
+        module_(ProfilerModule::kDefault),
+        event_(ProfilerEvent::kDefault),
+        op_name_(""),
+        is_inner_event_(false),
+        start_time_(start_time),
+        end_time_(end_time) {
+    dur_time_ = end_time - start_time;
+    tid_ = std::this_thread::get_id();
+    pid_ = getpid();
+  }
+
+  bool is_stage_;
+  ProfilerStage stage_;
   ProfilerModule module_;
   ProfilerEvent event_;
   std::string op_name_;
@@ -180,6 +212,8 @@ class BACKEND_EXPORT ProfilerAnalyzer {
   // Process data.
   void SaveJsonData(const ProfilerDataPtr &data);
   void AnalyzeSummaryData(const ProfilerDataPtr &data);
+  void AnalyzeStageSummaryData(const ProfilerDataPtr &data);
+  void AnalyzeModuleSummaryData(const ProfilerDataPtr &data);
   void AnalyzeEventSummaryData(std::map<ProfilerEvent, ProfilerEventInfoPtr> *const event_infos,
                                const ProfilerDataPtr &data);
   void AnalyzeOpSummaryData(mindspore::HashMap<std::string, ProfilerStatisticsInfoPtr> *const op_infos,
@@ -189,6 +223,7 @@ class BACKEND_EXPORT ProfilerAnalyzer {
   void DumpJsonData();
   void DumpDetailData();
   void DumpSummaryData();
+  void DumpStageSummaryData(std::stringstream &string_stream);
   void DumpModuleSummaryData(std::stringstream &string_stream);
   void DumpEventSummaryData(const std::map<ProfilerEvent, ProfilerEventInfoPtr> &event_infos,
                             std::stringstream &string_stream);
@@ -197,12 +232,14 @@ class BACKEND_EXPORT ProfilerAnalyzer {
 
   // The relevant members of step.
   size_t step_{0};
-  uint64_t step_total_time_{0};
+  uint64_t step_time_{0};
+  uint64_t summary_total_time_{0};
   std::vector<ProfilerDataPtr> data_;
   std::mutex data_mutex_;
   nlohmann::json json_infos_;
   // The data analyzed level is module-->event-->op.
   std::map<ProfilerModule, ProfilerModuleInfoPtr> module_infos_;
+  std::map<ProfilerStage, ProfilerStatisticsInfoPtr> stage_infos_;
 
   // Save file name.
   std::string json_file_name_;
