@@ -41,6 +41,88 @@ constexpr auto kInputDim = 3;
 constexpr auto k2DHeightIndexNCHW = 2;
 constexpr auto k2DHeightIndexNHWC = 1;
 
+namespace {
+template <typename T>
+std::string GetArrayText(const T *values, const size_t len) {
+  std::ostringstream oss;
+  oss << "[";
+  for (size_t i = 0; i < len; ++i) {
+    if (i > 0) {
+      oss << ", ";
+    }
+    oss << values[i];
+  }
+  oss << "]";
+  return oss.str();
+}
+
+std::string GetConvBwdFilterInfo(const std::string &msg, const cudnnTensorDescriptor_t x_desc,
+                                 const cudnnTensorDescriptor_t dy_desc, const cudnnConvolutionDescriptor_t conv_desc,
+                                 const cudnnFilterDescriptor_t dw_desc) {
+  std::ostringstream oss;
+
+  oss << msg;
+
+  // get conv_desc info
+  {
+    int arrayLength;
+    int padA[kConv2dDimSize];
+    int strideA[kConv2dDimSize];
+    int dilationA[kConv2dDimSize];
+    cudnnConvolutionMode_t mode;
+    cudnnDataType_t computeType;
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetConvolutionNdDescriptor(conv_desc, kConv2dDimSize, &arrayLength, padA,
+                                                                        strideA, dilationA, &mode, &computeType),
+                                        "cudnnGetConvolutionNdDescriptor failed");
+
+    oss << " conv_desc: "
+        << "padA = " << GetArrayText(padA, arrayLength) << ", strideA = " << GetArrayText(strideA, arrayLength)
+        << ", dilationA = " << GetArrayText(dilationA, arrayLength) << ", computeType = " << computeType;
+  }
+
+  // get x_desc info
+  {
+    cudnnDataType_t dataType;
+    int nbDims;
+    int dimA[kInputDimSize];
+    int strideA[kInputDimSize];
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnGetTensorNdDescriptor(x_desc, kInputDimSize, &dataType, &nbDims, dimA, strideA),
+      "cudnnGetTensorNdDescriptor failed");
+    oss << " x_desc: "
+        << "dimA = " << GetArrayText(dimA, nbDims);
+  }
+
+  // get dy_desc info
+  {
+    cudnnDataType_t dataType;
+    int nbDims;
+    int dimA[kInputDimSize];
+    int strideA[kInputDimSize];
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnGetTensorNdDescriptor(dy_desc, kInputDimSize, &dataType, &nbDims, dimA, strideA),
+      "cudnnGetTensorNdDescriptor failed");
+    oss << " dy_desc: "
+        << "dimA = " << GetArrayText(dimA, nbDims);
+  }
+
+  // get dw_desc info
+  {
+    cudnnDataType_t dataType;
+    cudnnTensorFormat_t format;
+    int nbDims;
+    int filterDimA[kInputDimSize];
+    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
+      cudnnGetFilterNdDescriptor(dw_desc, kInputDimSize, &dataType, &format, &nbDims, filterDimA),
+      "cudnnGetFilterNdDescriptor failed");
+    oss << " dw_desc: "
+        << "filterDimA = " << GetArrayText(filterDimA, nbDims) << ", format = " << format;
+  }
+
+  return oss.str();
+}
+}  // namespace
+
 using KernelRunFunc = ConvGradFilterBkwGpuKernelMod::KernelRunFunc;
 const std::vector<std::pair<KernelAttr, KernelRunFunc>> &ConvGradFilterBkwGpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
@@ -204,7 +286,8 @@ void ConvGradFilterBkwGpuKernelMod::SelectAlgorithm(cudnnTensorDescriptor_t x_de
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnGetConvolutionBackwardFilterAlgorithm_v7(cudnn_handle_, x_desc_real, dy_desc_, conv_desc_, dw_desc_,
                                                     requested_algo_count, &returned_algo_count, &perf_results),
-      "GetConvolutionBackwardFilterAlgorithm failed");
+      GetConvBwdFilterInfo("GetConvolutionBackwardFilterAlgorithm failed:", x_desc_real, dy_desc_, conv_desc_,
+                           dw_desc_));
     algo_ = perf_results.algo;
   }
 #if CUDNN_VERSION < 8000
@@ -212,7 +295,8 @@ void ConvGradFilterBkwGpuKernelMod::SelectAlgorithm(cudnnTensorDescriptor_t x_de
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnGetConvolutionBackwardFilterAlgorithm(cudnn_handle_, x_desc_real, dy_desc_, conv_desc_, dw_desc_,
                                                  CUDNN_CONVOLUTION_BWD_FILTER_SPECIFY_WORKSPACE_LIMIT, 0, &algo_),
-      "GetConvolutionBackwardFilterAlgorithm failed");
+      GetConvBwdFilterInfo("GetConvolutionBackwardFilterAlgorithm failed", x_desc_real, dy_desc_, conv_desc_,
+                           dw_desc_));
   }
 #endif
   if (cudnn_data_type_ == CUDNN_DATA_HALF) {
@@ -240,14 +324,16 @@ void ConvGradFilterBkwGpuKernelMod::InitSizeLists() {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnGetConvolutionBackwardFilterWorkspaceSize(cudnn_handle_, padded_descriptor_, dy_desc_, conv_desc_, dw_desc_,
                                                      algo_, reinterpret_cast<size_t *>(&workspace_size_)),
-      "cudnnGetConvolutionBackwardFilterWorkspaceSize failed");
+      GetConvBwdFilterInfo("cudnnGetConvolutionBackwardFilterWorkspaceSize failed", padded_descriptor_, dy_desc_,
+                           conv_desc_, dw_desc_));
     workspace_size_list_.push_back(padded_size_);
   } else {
     if (!is_null_input_) {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
         cudnnGetConvolutionBackwardFilterWorkspaceSize(cudnn_handle_, x_desc_, dy_desc_, conv_desc_, dw_desc_, algo_,
                                                        reinterpret_cast<size_t *>(&workspace_size_)),
-        "cudnnGetConvolutionBackwardFilterWorkspaceSize failed");
+        GetConvBwdFilterInfo("cudnnGetConvolutionBackwardFilterWorkspaceSize failed", x_desc_, dy_desc_, conv_desc_,
+                             dw_desc_));
     }
   }
   (void)workspace_size_list_.insert(workspace_size_list_.begin(), workspace_size_);
