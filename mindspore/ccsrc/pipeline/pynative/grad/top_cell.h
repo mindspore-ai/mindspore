@@ -126,6 +126,8 @@ class TopCellInfo {
   inline size_t op_index() const { return op_index_; }
   inline void IncreaseOpIndex() { ++op_index_; }
   const TensorReplaceInfo &replace_info() { return replace_info_; }
+  inline const InputArgsInfoPtr input_args_info() { return input_args_info_; }
+  inline void set_input_args_info(const InputArgsInfoPtr &input_args_info) { input_args_info_ = input_args_info; }
   void DeleteParamNodeInfo(const FuncGraphPtr &g, const std::string &id) const;
   void SetParamNodeMapInGraphInfoMap(const std::string &id, const ParameterPtr &param, bool is_weight = false) const;
   void SetNodeMapInGraphInfoMap(const std::string &id, const AnfNodePtr &node, int64_t index = -1,
@@ -182,6 +184,7 @@ class TopCellInfo {
   CellIdWithBackwardHookOp cell_backward_hook_op_;
   TensorReplaceInfo replace_info_;
   mindspore::HashMap<tensor::TensorPtr, AutoGradMetaDataPtr> param_grad_info_;
+  InputArgsInfoPtr input_args_info_;
   bool use_dynamic_shape_process_{false};
 };
 using TopCellInfoPtr = std::shared_ptr<TopCellInfo>;

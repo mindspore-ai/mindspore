@@ -925,7 +925,8 @@ void AutoGradCellImpl::ProcessMetaFuncGraphOp(const GradParamPtr &grad_param, co
   op_grad_info->out_abs = cnode->abstract();
   op_grad_info->input_value_grad_type = grad_param->op_grad_info->input_value_grad_type;
   auto meta_graph_grad_param =
-    std::make_shared<GradParam>(op_grad_info, grad_param->grad_by_value, grad_param->use_dynamic_shape_process);
+    std::make_shared<GradParam>(op_grad_info, grad_param->grad_by_value, grad_param->use_dynamic_shape_process, cnode);
+  meta_graph_grad_param->is_control_flow = true;
   meta_graph_grad_param->is_ms_function_graph = true;
   meta_graph_grad_param->fg = grad_func_graph;
   meta_graph_grad_param->graph_cache_key = grad_param->graph_cache_key;
@@ -1002,6 +1003,7 @@ void AutoGradCellImpl::UpdateOutputNodeOfTopCell(const ValuePtr &sens_out) {
   MS_EXCEPTION_IF_NULL(sens_out);
   MS_LOG(DEBUG) << "Real output of top cell is " << PyNativeAlgo::Common::GetIdByValue(sens_out);
   ad_param()->sens_value_ = sens_out;
+  UpdateSensParameter(ad_param()->sens_value_);
 }
 
 FuncGraphPtr AutoGradCellImpl::Finish(const tensor::TensorPtrList &weights, const std::vector<size_t> &grad_position,
@@ -1441,18 +1443,11 @@ AbstractBasePtr AutoGradCellImpl::BuildForwardLastNode() {
     const auto &sens_tensor = ad_param()->sens_value_->cast<tensor::TensorPtr>();
     const auto &auto_grad_meta_data = sens_tensor->auto_grad_meta_data();
     MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
-    const auto &variable = auto_grad_meta_data->variable();
-    if (variable != nullptr) {
-      ad_param()->last_variable_ = variable;
-      return variable->fn()->accumulate_dout()->abstract();
-    }
     if (PyNativeAlgo::Common::IsConstant(auto_grad_meta_data->grad_type())) {
       sens_variable->set_is_need_grad(false);
     }
-    auto_grad_meta_data->set_variable(sens_variable);
-  } else {
-    UpdateNextEdge(fn, zeros_like_node, ad_param()->sens_value_, fn->accumulate_dout()->abstract());
   }
+  UpdateNextEdge(fn, zeros_like_node, ad_param()->sens_value_, fn->accumulate_dout()->abstract());
   (void)ad_param()->variable_adjoint_set_.insert(sens_variable);
   ad_param()->last_variable_ = sens_variable;
   return fn->accumulate_dout()->abstract();
@@ -1498,6 +1493,23 @@ AnfNodePtrList AutoGradCellImpl::ExtractParamters(const tensor::TensorPtrList we
     (void)params.emplace_back(std::move(parameter));
   }
   return params;
+}
+
+void AutoGradCellImpl::UpdateSensParameter(const ValuePtr &value) {
+  if (value->isa<tensor::Tensor>()) {
+    const auto &sens_tensor = value->cast<tensor::TensorPtr>();
+    const auto &auto_grad_meta_data = sens_tensor->auto_grad_meta_data();
+    MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
+    const auto variable = auto_grad_meta_data->variable();
+    if (auto_grad_meta_data->grad_type() == TensorGradType::kParameter && variable == nullptr) {
+      (void)AddParameterNode(sens_tensor, PyNativeAlgo::Common::SetAbstractValueToAnyValue(sens_tensor->ToAbstract()));
+    }
+  } else if (value->isa<ValueSequence>()) {
+    const auto &value_seq = value->cast<ValueSequencePtr>()->value();
+    for (size_t i = 0; i < value_seq.size(); ++i) {
+      UpdateSensParameter(value_seq[i]);
+    }
+  }
 }
 
 AnfNodePtr AutoGradCellImpl::MapParameter(const ValuePtr &value, const abstract::AbstractBasePtr &abs) {

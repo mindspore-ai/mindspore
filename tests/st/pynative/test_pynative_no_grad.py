@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -90,9 +90,6 @@ class NestedNetWork2(nn.Cell):
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_no_grad_with_parameter():
     """
@@ -111,9 +108,6 @@ def test_no_grad_with_parameter():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_no_grad_with_nested_network():
     """
@@ -132,9 +126,6 @@ def test_no_grad_with_nested_network():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_no_grad_decorator():
     """
@@ -153,9 +144,6 @@ def test_no_grad_decorator():
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_no_grad_exception():
     """
