@@ -5,7 +5,7 @@ import pytest
 
 import mindspore.context as context
 from tests.security_utils import security_off_wrap
-from .test_gpu_lenet import test_train_lenet, test_train_and_eval_lenet
+from .test_lenet import test_train_lenet, test_train_and_eval_lenet
 
 # create config file for RDR
 def create_config_file(path):

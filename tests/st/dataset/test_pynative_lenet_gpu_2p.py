@@ -25,5 +25,5 @@ def test_pynative_lenet_gpu_2p_mpi():
     Description: test PyNative LeNet 2P with mpirun
     Expectation: success, return_code==0
     """
-    return_code = os.system("mpirun -n 2 pytest -s test_gpu_lenet.py::test_train_net_fade_then_sink")
+    return_code = os.system("mpirun -n 2 pytest -s test_lenet.py::test_train_net_fade_then_sink")
     assert return_code == 0
