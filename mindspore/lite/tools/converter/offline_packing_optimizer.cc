@@ -123,38 +123,9 @@ TypeId GetDataType(const CNodePtr &cnode, const std::vector<Tensor *> &in_tensor
   return data_type;
 }
 
-void QuantParamTToQuantParam(const schema::QuantParamT &quant_param_t, lite::LiteQuantParam *quant_param) {
-  quant_param->inited = true;
-  quant_param->bitNum = quant_param_t.numBits;
-  quant_param->scale = quant_param_t.scale;
-  quant_param->zeroPoint = quant_param_t.zeroPoint;
-  quant_param->var_corr = quant_param_t.varCorr;
-  quant_param->mean_corr = quant_param_t.meanCorr;
-  quant_param->roundType = quant_param_t.roundType;
-  quant_param->multiplier = quant_param_t.multiplier;
-  quant_param->dstDtype = quant_param_t.dstDtype;
-  quant_param->min = quant_param_t.min;
-  quant_param->max = quant_param_t.max;
-}
-
-void AddQuantParams(Tensor *in_tensor, const std::vector<schema::QuantParamT> &quant_param_t) {
-  std::vector<lite::LiteQuantParam> lite_quant_params(quant_param_t.size());
-  for (size_t i = 0; i < lite_quant_params.size(); i++) {
-    QuantParamTToQuantParam(quant_param_t[i], &lite_quant_params[i]);
-  }
-  in_tensor->set_quant_params(lite_quant_params);
-}
-
 STATUS CreateLiteTensor(const CNodePtr &cnode, std::vector<Tensor *> *in_tensors, std::vector<Tensor *> *out_tensors) {
   std::vector<int> shape(0);
   mindspore::TypeId type_id = TypeId::kTypeUnknown;
-  auto quant_param_holder = GetCNodeQuantHolder(cnode);
-  std::vector<std::vector<schema::QuantParamT>> input_quant_params_vec;
-  std::vector<std::vector<schema::QuantParamT>> output_quant_params_vec;
-  if (quant_param_holder != nullptr) {
-    input_quant_params_vec = quant_param_holder->get_input_quant_params();
-    output_quant_params_vec = quant_param_holder->get_output_quant_params();
-  }
 
   // Generate input tensor.
   for (size_t i = kPrimIndex + 1; i < cnode->inputs().size(); i++) {
@@ -163,6 +134,7 @@ STATUS CreateLiteTensor(const CNodePtr &cnode, std::vector<Tensor *> *in_tensors
       return RET_ERROR;
     }
     void *tensor_data = nullptr;
+    std::vector<lite::LiteQuantParam> lite_quant_params;
     Category category = cnode->input(i)->isa<Parameter>() ? lite::Category::CONST_TENSOR : lite::Category::VAR;
 
     MS_CHECK_TRUE_MSG(GetCNodeOrParameterShapeVec(cnode->input(i), &shape) == RET_OK, RET_ERROR,
@@ -174,6 +146,13 @@ STATUS CreateLiteTensor(const CNodePtr &cnode, std::vector<Tensor *> *in_tensors
       if (param_node->has_default()) {
         auto tensor_info = std::static_pointer_cast<tensor::Tensor>(param_node->default_param());
         tensor_data = tensor_info->data().data();
+        auto quantization_params = tensor_info->quant_params();
+        if (!quantization_params.empty()) {
+          auto quantization_param = quantization_params.front();
+          auto scale_list_attr = quantization_param->GetAttr(quant::kScaleList);
+          auto scales = GetValue<std::vector<double>>(scale_list_attr);
+          lite_quant_params.resize(scales.size());
+        }
       }
     }
     auto in_tensor = new (std::nothrow) Tensor(type_id, shape);
@@ -182,17 +161,10 @@ STATUS CreateLiteTensor(const CNodePtr &cnode, std::vector<Tensor *> *in_tensors
     // Tensor data is managed by funcGraph.
     in_tensor->set_data(tensor_data, false);
     // Setup quant params.
-    if (type_id == TypeId::kNumberTypeInt8 && !input_quant_params_vec.empty()) {
-      AddQuantParams(in_tensor, input_quant_params_vec.front());
-      input_quant_params_vec.erase(input_quant_params_vec.begin());
-    }
+    in_tensor->set_quant_params(lite_quant_params);
     in_tensors->emplace_back(in_tensor);
     shape.clear();
     type_id = TypeId::kTypeUnknown;
-  }
-
-  if (!input_quant_params_vec.empty()) {
-    MS_LOG(WARNING) << cnode->fullname_with_scope() << " quant params' count are not equal to inputs' size";
   }
 
   // Generate output tensor.
@@ -205,10 +177,6 @@ STATUS CreateLiteTensor(const CNodePtr &cnode, std::vector<Tensor *> *in_tensors
   }
   auto out_tensor = new (std::nothrow) Tensor(type_id, shape);
   MS_CHECK_TRUE_MSG(out_tensor != nullptr, RET_ERROR, "Create output tensor failed.");
-  if (type_id == TypeId::kNumberTypeInt8 && !output_quant_params_vec.empty()) {
-    AddQuantParams(out_tensor, output_quant_params_vec.front());
-    output_quant_params_vec.erase(output_quant_params_vec.begin());
-  }
   out_tensors->emplace_back(out_tensor);
 
   if (in_tensors->size() != cnode->inputs().size() - 1 || out_tensors->empty()) {

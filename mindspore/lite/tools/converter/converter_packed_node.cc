@@ -74,8 +74,14 @@ int ReplaceMatMulFusionToCustom(schema::MetaGraphT *meta_graph, const std::uniqu
     MS_LOG(ERROR) << "param is nullptr.";
     return RET_ERROR;
   }
+  auto in_tensor = lite_kernel->in_tensors();
+  if (in_tensor.empty()) {
+    MS_LOG(ERROR) << "in tensors is empty.";
+    return RET_ERROR;
+  }
+  auto data_type = in_tensor.front()->data_type();
   auto matmul_param = reinterpret_cast<MatMulParameter *>(param);
-  if (matmul_param->matmul_type_ == kNotImplemented) {
+  if (matmul_param->matmul_type_ == kNotImplemented && data_type != kNumberTypeFloat32) {
     MS_LOG(ERROR) << "Unsupported matmul type, only support fp32 and dynamic quant int8.";
     return RET_ERROR;
   }
@@ -97,7 +103,6 @@ int ReplaceMatMulFusionToCustom(schema::MetaGraphT *meta_graph, const std::uniqu
   int b_batch;
   const void *pack_b_ptr = nullptr;
   size_t pack_b_size;
-  auto data_type = lite_kernel->out_tensors().front()->data_type();
   auto kernel_base = (reinterpret_cast<const mindspore::nnacl::NNACLKernel *>(lite_kernel))->Kernel();
 
   if (data_type == kNumberTypeFloat32) {
