@@ -35,6 +35,7 @@
 #include "pipeline/jit/resource.h"
 #include "pipeline/jit/action.h"
 #include "utils/ms_context.h"
+#include "include/backend/debug/profiler/profiling.h"
 
 namespace mindspore {
 namespace opt {
@@ -221,7 +222,10 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
               changes_since_last_renorm = true;
             }
           };
+          auto profiler_pass_name = name_ + ".r" + std::to_string(counter) + "." + pass_names_[i];
+          (void)profiler::CollectHostInfo(pipeline::kGraphCompile, pipeline::kOptimize, profiler_pass_name, 1, 0, 0);
           use_profile ? ProfileExecute(MsProfile::GetProfile()->Step(pass_names_[i]), opt_func) : opt_func();
+          (void)profiler::CollectHostInfo(pipeline::kGraphCompile, pipeline::kOptimize, profiler_pass_name, 1, 0, 1);
 #ifdef ENABLE_DUMP_IR
           DumpStep(func_graph, counter, i);
 #endif

@@ -59,6 +59,7 @@
 #include "load_mindir/infer_mindir.h"
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
+#include "include/backend/debug/profiler/profiling.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "include/backend/distributed/cluster/cluster_context.h"
 #include "include/backend/distributed/ps/ps_context.h"
@@ -735,11 +736,15 @@ bool AbstractSpecializeAction(const ResourcePtr &resource) {
 
   // Check isolated side-effect nodes.
   engine->set_check_side_effect(true);
+  (void)profiler::CollectHostInfo(kGraphCompile, kAbstractSpecialize, kAbstractAnalyze, 1, 0, 0);
   AnalysisResult result = AbstractAnalyze(resource, resource->func_graph(), GetArgsAbs(resource));
+  (void)profiler::CollectHostInfo(kGraphCompile, kAbstractSpecialize, kAbstractAnalyze, 1, 0, 1);
   // The top graph may be replaced by infer, update the top graph when the infer is done
   parse::Parser::UpdateTopFuncGraph(result.context->func_graph());
+  (void)profiler::CollectHostInfo(kGraphCompile, kAbstractSpecialize, kProgramSpecialize, 1, 0, 0);
   // Specialize
   FuncGraphPtr new_fg = ProgramSpecialize(resource, result.context->func_graph(), result.context);
+  (void)profiler::CollectHostInfo(kGraphCompile, kAbstractSpecialize, kProgramSpecialize, 1, 0, 1);
   resource->set_func_graph(new_fg);
   engine->set_check_side_effect(false);
 
@@ -763,6 +768,7 @@ bool OptimizeAction(const ResourcePtr &resource, const std::vector<PassItem> &pa
   size_t counter = 0;
   for (auto &pass : passes) {
     ProcessStatus::GetInstance().RecordStart(pass.first);
+    (void)profiler::CollectHostInfo(kGraphCompile, kOptimize, pass.first, 1, 0, 0);
     auto profile_context = MsProfile::GetProfile()->Step(pass.first);
     auto pass_func = [&pass, &resource, &counter]() {
       MS_LOG(DEBUG) << "Pass " << pass.first << " start ...";
@@ -793,6 +799,7 @@ bool OptimizeAction(const ResourcePtr &resource, const std::vector<PassItem> &pa
       MS_LOG(DEBUG) << "Pass " << pass.first << " end.";
     };
     ProfileExecute(profile_context, pass_func);
+    (void)profiler::CollectHostInfo(kGraphCompile, kOptimize, pass.first, 1, 0, 1);
     ProcessStatus::GetInstance().RecordEnd();
   }
 
@@ -1503,19 +1510,19 @@ static std::vector<ActionItem> CommonPipeline() {
   std::vector<ActionItem> actions;
 
   // Parse the python ast to ANF graph
-  (void)actions.emplace_back(std::make_pair("parse", ParseAction));
+  (void)actions.emplace_back(std::make_pair(kParse, ParseAction));
 
   // Resolve the python func
   static auto boost_parse = common::GetEnv("MS_DEV_BOOST_PARSE");
   if (boost_parse != "2" && boost_parse != "3") {
-    (void)actions.emplace_back(std::make_pair("symbol_resolve", SymbolResolveAction));
+    (void)actions.emplace_back(std::make_pair(kSymbolResolve, SymbolResolveAction));
   }
 
   // Notice: Temporary solution, to be implemented using Python Rewriter in the future.
   // Set mixed Precision flag in subgraph.
   static bool enable_set_mixed_precision_flag = (common::GetEnv("MS_DEV_AMP_ENABLE_ALL_FG") == "1");
   if (enable_set_mixed_precision_flag) {
-    (void)actions.emplace_back(std::make_pair("set_mixed_precision_flag", SetMixedPrecisionAction));
+    (void)actions.emplace_back(std::make_pair(kSetMixedPrecisionFlag, SetMixedPrecisionAction));
   }
 
   auto parallel_context = parallel::ParallelContext::GetInstance();
@@ -1525,31 +1532,31 @@ static std::vector<ActionItem> CommonPipeline() {
     parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel;
   static const auto combine_like_graphs = (common::GetEnv("COMBINE_LIKE_GRAPHS") == "1");
   if (!is_cluster_initialized && (!is_parallel_mode || combine_like_graphs) && pipeline::GetJitLevel() != "O0") {
-    (void)actions.emplace_back(std::make_pair("combine_like_graphs", CombineLikeGraphs));
+    (void)actions.emplace_back(std::make_pair(kCombineLikeGraphs, CombineLikeGraphs));
   }
 
   // Make the reusable cell to be the reusable function graph
   static bool enable_graph_reusing =
     (common::GetEnv("MS_DEV_CELL_REUSE") == "1" || common::GetEnv("MS_DEV_CELL_REUSE") == "2");
   if (enable_graph_reusing) {
-    (void)actions.emplace_back(std::make_pair("graph_reusing", GraphReusingAction));
+    (void)actions.emplace_back(std::make_pair(kGraphReusing, GraphReusingAction));
   }
 
-  (void)actions.emplace_back(std::make_pair("meta_unpack_prepare", MetaUnpackPrepareAction));
+  (void)actions.emplace_back(std::make_pair(kMetaUnpackPrepare, MetaUnpackPrepareAction));
   // Evaluate type and shape, and specialize.
-  (void)actions.emplace_back(std::make_pair("abstract_specialize", AbstractSpecializeAction));
+  (void)actions.emplace_back(std::make_pair(kAbstractSpecialize, AbstractSpecializeAction));
   // PackFunc Expand.
   if (common::GetEnv("MS_DEV_DISABLE_TRACE") != "on") {
-    (void)actions.emplace_back(std::make_pair("pack_expand", PackExpandAction));
+    (void)actions.emplace_back(std::make_pair(kPackExpand, PackExpandAction));
   }
   // Auto-monad for side-effects handling.
-  (void)actions.emplace_back(std::make_pair("auto_monad", AutoMonadAction));
+  (void)actions.emplace_back(std::make_pair(kAutoMonad, AutoMonadAction));
   // Do data structure simplifications and inline.
-  (void)actions.emplace_back(std::make_pair("inline", OptInlineAction));
+  (void)actions.emplace_back(std::make_pair(kInline, OptInlineAction));
   // Do prepositive auto parallel.
-  (void)actions.emplace_back(std::make_pair("pre_auto_parallel", AutoParallelAction));
+  (void)actions.emplace_back(std::make_pair(kPreAutoParallel, AutoParallelAction));
   // Do PipelineSplit action.
-  (void)actions.emplace_back(std::make_pair("pipeline_split", PipelineSplitAction));
+  (void)actions.emplace_back(std::make_pair(kPipelineSplit, PipelineSplitAction));
 
   return actions;
 }
@@ -1562,20 +1569,20 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
     actions = CommonPipeline();
 
     // Optimize
-    (void)actions.emplace_back(std::make_pair("optimize", VmOptimizeAction));
+    (void)actions.emplace_back(std::make_pair(kOptimize, VmOptimizeAction));
 
-    (void)actions.emplace_back(std::make_pair("auto_monad_reorder", OrderEnforceAction));
+    (void)actions.emplace_back(std::make_pair(kAutoMonadReorder, OrderEnforceAction));
 
     // Eliminate forward cnode for grad graph
-    (void)actions.emplace_back(std::make_pair("eliminate_forward_cnode", EliminateForwardCNode));
+    (void)actions.emplace_back(std::make_pair(kEliminateForwardCnode, EliminateForwardCNode));
 
     // Eliminate the virtual mirror node
-    (void)actions.emplace_back(std::make_pair("eliminate_special_op_node", EliminateSpecialOpNode));
-    (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
+    (void)actions.emplace_back(std::make_pair(kEliminateSpecialOpNode, EliminateSpecialOpNode));
+    (void)actions.emplace_back(std::make_pair(kValidate, ValidateAction));
   }
 
 #if defined(__linux__) && defined(WITH_BACKEND)
-  (void)actions.emplace_back(std::make_pair("distribtued_split", DistributedSplitAction));
+  (void)actions.emplace_back(std::make_pair(kDistribtuedSplit, DistributedSplitAction));
   if (ps::PSContext::instance()->is_worker()) {
     if (distributed::cluster::ClusterContext::instance()->initialized()) {
       MS_LOG(INFO) << "This worker is initialized. No need to add worker action.";
@@ -1590,10 +1597,10 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
   if (ms_context->backend_policy() != "ge") {
 #endif
     // Compile the ANF graph
-    (void)actions.emplace_back(std::make_pair("task_emit", TaskEmitAction));
+    (void)actions.emplace_back(std::make_pair(kTaskEmit, TaskEmitAction));
 
     // Execute the graph
-    (void)actions.emplace_back(std::make_pair("execute", ExecuteAction));
+    (void)actions.emplace_back(std::make_pair(kExecute, ExecuteAction));
 #ifndef WITH_BACKEND
   }
 #endif
@@ -1609,12 +1616,12 @@ std::vector<ActionItem> MindIRPipeline() {
   }
   std::vector<ActionItem> actions;
   // Set funcGraph loaded from MindIR to resource.
-  (void)actions.emplace_back(std::make_pair("load_mindir", SetMindIRGraphAction));
-  (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
+  (void)actions.emplace_back(std::make_pair(kLoadMindir, SetMindIRGraphAction));
+  (void)actions.emplace_back(std::make_pair(kValidate, ValidateAction));
   // Compile the ANF graph
-  (void)actions.emplace_back(std::make_pair("task_emit", TaskEmitAction));
+  (void)actions.emplace_back(std::make_pair(kTaskEmit, TaskEmitAction));
   // Execute the graph
-  (void)actions.emplace_back(std::make_pair("execute", ExecuteAction));
+  (void)actions.emplace_back(std::make_pair(kExecute, ExecuteAction));
   return actions;
 }
 }  // namespace pipeline

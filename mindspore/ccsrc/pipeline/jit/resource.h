@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,32 @@ const char kStepParallelGraph[] = "step_parallel";
 const char kOutput[] = "output";
 const char kPynativeGraphId[] = "graph_id";
 const char kActorInfo[] = "actor_info";
+const char kGraphCompile[] = "GraphCompile";
+const char kParse[] = "parse";
+const char kSymbolResolve[] = "symbol_resolve";
+const char kSetMixedPrecisionFlag[] = "set_mixed_precision_flag";
+const char kCombineLikeGraphs[] = "combine_like_graphs";
+const char kGraphReusing[] = "graph_reusing";
+const char kMetaUnpackPrepare[] = "meta_unpack_prepare";
+const char kAbstractSpecialize[] = "abstract_specialize";
+const char kPackExpand[] = "pack_expand";
+const char kAutoMonad[] = "auto_monad";
+const char kInline[] = "inline";
+const char kPreAutoParallel[] = "pre_auto_parallel";
+const char kPipelineSplit[] = "pipeline_split";
+const char kOptimize[] = "optimize";
+const char kAutoMonadReorder[] = "auto_monad_reorder";
+const char kEliminateForwardCnode[] = "eliminate_forward_cnode";
+const char kEliminateSpecialOpNode[] = "eliminate_special_op_node";
+const char kValidate[] = "validate";
+const char kLoadMindir[] = "load_mindir";
+const char kDistribtuedSplit[] = "distribtued_split";
+const char kTaskEmit[] = "task_emit";
+const char kExecute[] = "execute";
+const char kAbstractAnalyze[] = "AbstractAnalyze";
+const char kProgramSpecialize[] = "ProgramSpecialize";
+const char kCreateBackend[] = "create_backend";
+const char kPipelineClean[] = "pipeline_clean";
 
 class InferenceResource;
 
