@@ -275,6 +275,7 @@ class Node:
             >>> stree = SymbolTree.create(net)
             >>> node = stree.get_node("conv1")
             >>> node_type = node.get_node_type()
+            >>> print(node_type)
             NodeType.CallCell
         """
         return self._node.get_node_type()

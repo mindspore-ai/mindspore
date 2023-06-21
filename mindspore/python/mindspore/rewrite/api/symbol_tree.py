@@ -122,7 +122,7 @@ class SymbolTree:
             >>> net = LeNet5()
             >>> stree = SymbolTree.create(net)
             >>> print([node.get_name() for node in stree.nodes()])
-            ['input_x', 'conv1', 'relu', 'max_pool2d', 'conv2', 'relu_1', 'max_pool2d_1',
+            ['input_x', 'Expr', 'conv1', 'relu', 'max_pool2d', 'conv2', 'relu_1', 'max_pool2d_1',
              'flatten', 'fc1', 'relu_2', 'fc2', 'relu_3', 'fc3', 'return']
         """
         for node in self._symbol_tree.nodes():
