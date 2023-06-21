@@ -107,25 +107,34 @@ class Slice {
     if (step_ < -kIndexMax) {
       step_ = -kIndexMax;
     }
-    bool start_init_by_none = start_index->isa<abstract::AbstractNone>();
-    bool stop_init_by_none = stop_index->isa<abstract::AbstractNone>();
-    int64_t start_default;
-    int64_t stop_default;
-    if (step_ < 0) {
-      start_default = -1;
-      stop_default = -(dim_size_ + 1);
-      stop_ = stop_init_by_none ? stop_default : std::max(stop_default, GetValue<int64_t>(stop_index->BuildValue()));
-    } else {
-      start_default = 0;
-      stop_default = dim_size_;
-      stop_ = stop_init_by_none ? stop_default : std::min(stop_default, GetValue<int64_t>(stop_index->BuildValue()));
-    }
-    start_ = start_init_by_none ? start_default : GetValue<int64_t>(start_index->BuildValue());
+    start_ = NormalizeIndex(start_index, step_, dim_size_);
+    stop_ = NormalizeIndex(stop_index, -step_, dim_size_);
   }
 
   int64_t start() const { return start_; }
   int64_t stop() const { return stop_; }
   int64_t step() const { return step_; }
+
+  static inline int64_t NormalizeIndex(int64_t index, int64_t dim_size) {
+    int64_t new_index = index;
+    if (new_index < 0) {
+      MS_EXCEPTION_IF_ZERO("DimsSize should not be zero", dim_size);
+      return new_index < -dim_size ? 0 : (dim_size + (new_index % dim_size)) % dim_size;  // NOLINT
+    }
+    return new_index < dim_size ? new_index : dim_size;
+  }
+
+  static inline int64_t NormalizeIndex(const AbstractBasePtr &index, int64_t step, int64_t dim_size) {
+    int64_t normalized_index;
+    if (index->isa<abstract::AbstractScalar>()) {
+      normalized_index = NormalizeIndex(GetValue<int64_t>(index->BuildValue()), dim_size);
+    } else if (index->isa<abstract::AbstractNone>()) {
+      normalized_index = step > 0 ? 0 : dim_size;
+    } else {
+      MS_LOG(EXCEPTION) << "Slice index type must be int or none.";
+    }
+    return normalized_index;
+  }
 
   static void CheckSliceType(const AbstractBasePtr &abs) {
     if (abs->isa<abstract::AbstractScalar>()) {

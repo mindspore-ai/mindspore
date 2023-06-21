@@ -87,25 +87,27 @@ bool NormalizeSliceInfoCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   bool stop_by_none_init = init_by_none_addr[1] == 1;
   bool step_by_none_init = init_by_none_addr[2] == 1;
 
-  int64_t start = 0;
-  int64_t stop = 0;
+  int64_t start = start_addr[0];
+  int64_t stop = stop_addr[0];
   int64_t step = step_by_none_init ? 1 : step_addr[0];
-  int64_t start_default;
-  int64_t stop_default;
   if (step == 0) {
     MS_LOG(EXCEPTION) << "For 'slice', 'strides' cannot contain 0";
   }
-  if (step < 0) {
-    start_default = -1;
-    stop_default = -(dim_size + 1);
-    stop = stop_by_none_init ? stop_default : std::max(stop_default, stop_addr[0]);
-  } else {
-    start_default = 0;
-    stop_default = dim_size;
-    stop = stop_by_none_init ? stop_default : std::min(stop_default, stop_addr[0]);
+  if (start_by_none_init) {
+    start = 0;
+  } else if (start < 0) {
+    start = start < -dim_size ? 0 : (dim_size + (start % dim_size)) % dim_size;
+  } else if (start > 0) {
+    start = start < dim_size ? start : dim_size;
   }
 
-  start = start_by_none_init ? start_default : start_addr[0];
+  if (stop_by_none_init) {
+    stop = dim_size;
+  } else if (stop < 0) {
+    stop = stop < -dim_size ? 0 : (dim_size + (stop % dim_size)) % dim_size;
+  } else if (stop > 0) {
+    stop = stop < dim_size ? stop : dim_size;
+  }
   if ((start - stop) * step >= 0) {
     step = 1;
   }
