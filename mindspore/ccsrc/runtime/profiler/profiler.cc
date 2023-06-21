@@ -53,7 +53,6 @@ static const std::map<ProfilerModule, std::string> kProfilerModuleString = {
 static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
   {ProfilerEvent::kDefault, "Default"},
   {ProfilerEvent::kKernelInfer, "KernelInfer"},
-  {ProfilerEvent::kKernelInferInner, "KernelInferInner"},
   {ProfilerEvent::kKernelResize, "KernelResize"},
   {ProfilerEvent::kKernelLaunch, "KernelLaunch"},
   {ProfilerEvent::kKernelUpdate, "KernelUpdate"},
@@ -68,6 +67,9 @@ static const std::map<ProfilerEvent, std::string> kProfilerEventString = {
   {ProfilerEvent::kMemoryFree, "MemoryFree"},
   {ProfilerEvent::kCopyData, "CopyData"},
   {ProfilerEvent::kStreamSync, "StreamSync"},
+  // Inner event.
+  {ProfilerEvent::kKernelInferInner, "KernelInferInner"},
+  {ProfilerEvent::kKernelInferDataSync, "KernelInferDataSync"},
 };
 
 namespace {
@@ -363,28 +365,38 @@ void ProfilerAnalyzer::DumpEventSummaryData(const std::map<ProfilerEvent, Profil
                                             std::stringstream &string_stream) {
   // Order event info by total time.
   std::multimap<uint64_t, ProfilerEventInfo *, std::greater_equal<uint64_t>> order_event_infos;
+  std::multimap<uint64_t, ProfilerEventInfo *, std::greater_equal<uint64_t>> order_inner_event_infos;
   for (auto &event_info : event_infos) {
     MS_EXCEPTION_IF_NULL(event_info.second);
     auto &event_statistics_info = event_info.second->event_statistics_info_;
     MS_EXCEPTION_IF_NULL(event_statistics_info);
     event_statistics_info->Average();
     event_statistics_info->CalculatePercent(step_total_time_);
-    (void)order_event_infos.emplace(event_statistics_info->total_time_, event_info.second.get());
+    if (event_statistics_info->is_inner_info_) {
+      (void)order_inner_event_infos.emplace(event_statistics_info->total_time_, event_info.second.get());
+    } else {
+      (void)order_event_infos.emplace(event_statistics_info->total_time_, event_info.second.get());
+    }
   }
 
   for (auto &order_event_info : order_event_infos) {
     auto &event_statistics_info = order_event_info.second->event_statistics_info_;
-    std::string event_title = event_statistics_info->is_inner_info_ ? "EventInner:" : "Event:";
-    string_stream << "  " << event_title << event_statistics_info->name_ << std::fixed
+    string_stream << "  Event:" << event_statistics_info->name_ << std::fixed << std::setprecision(kPrecisionDigits)
+                  << ", total_time:" << event_statistics_info->total_time_
+                  << "us, average_time:" << event_statistics_info->average_time_
+                  << "us, total_count:" << event_statistics_info->count_
+                  << ", percent:" << event_statistics_info->percent_ << "%\n";
+    DumpOpSummaryData(order_event_info.second->op_infos_, string_stream);
+  }
+
+  // Inner event.
+  for (auto &order_inner_event_info : order_inner_event_infos) {
+    auto &event_statistics_info = order_inner_event_info.second->event_statistics_info_;
+    string_stream << "  EventInner:" << event_statistics_info->name_ << std::fixed
                   << std::setprecision(kPrecisionDigits) << ", total_time:" << event_statistics_info->total_time_
                   << "us, average_time:" << event_statistics_info->average_time_
-                  << "us, total_count:" << event_statistics_info->count_;
-    if (event_statistics_info->is_inner_info_) {
-      string_stream << "\n";
-    } else {
-      string_stream << ", percent:" << event_statistics_info->percent_ << "%\n";
-    }
-    DumpOpSummaryData(order_event_info.second->op_infos_, string_stream);
+                  << "us, total_count:" << event_statistics_info->count_ << "\n";
+    DumpOpSummaryData(order_inner_event_info.second->op_infos_, string_stream);
   }
 
   string_stream << "\n";

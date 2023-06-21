@@ -86,7 +86,7 @@ class CPUKernelExecutor : public KernelExecutor {
                                  const std::vector<AddressPtr> &outputs) const;
 #endif
   // Launch a kernel by 'KernelMod' of the kernel.
-  bool DoLaunchKernel(KernelMod *const kernel_mod, const std::vector<AddressPtr> &inputs,
+  bool DoLaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
                       const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const;
 
   void UpdateKernelRefInfo(const KernelGraphPtr &graph) const;

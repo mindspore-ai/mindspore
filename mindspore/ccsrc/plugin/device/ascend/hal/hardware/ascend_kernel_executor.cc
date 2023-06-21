@@ -31,6 +31,7 @@
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "acl/acl_rt.h"
 #include "plugin/device/ascend/hal/device/kernel_adjust.h"
+#include "runtime/profiler/profiler.h"
 
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"
@@ -376,14 +377,16 @@ bool AscendKernelExecutor::GetKernelRealInputs(const CNodePtr &kernel, const vec
 bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<AddressPtr> &inputs,
                                         const vector<AddressPtr> &workspace, const vector<AddressPtr> &outputs,
                                         size_t stream_id) const {
+  MS_EXCEPTION_IF_NULL(kernel);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto graph_id = AnfAlgo::GetGraphId(kernel.get());
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   KernelType kernel_type = AnfAlgo::GetKernelType(kernel);
-  MS_EXCEPTION_IF_NULL(kernel);
   (void)res_manager_->BindDeviceToCurrentThread(false);
 
+  uint64_t start_time = 0;
+  PROFILER_START(start_time);
   std::vector<AddressPtr> real_inputs;
   bool ret = GetKernelRealInputs(kernel, inputs, &real_inputs);
   if (!ret) {
@@ -447,7 +450,10 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
     kernel_dumper->OpLoadDumpInfo(kernel);
   }
 #endif
-  return PySyncRuning();
+  auto sync_ret = PySyncRuning();
+  PROFILER_END(start_time, runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelLaunch,
+               kernel->fullname_with_scope(), false);
+  return sync_ret;
 }
 
 bool AscendKernelExecutor::LaunchAtomicClean(const CNodePtr &node, const std::vector<AddressPtr> &workspace,

@@ -36,8 +36,6 @@ void DataSourceActor::Init() {
 }
 
 void DataSourceActor::FetchData(OpContext<DeviceTensor> *const context) {
-  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kRuntime, runtime::ProfilerEvent::kPreLaunch,
-                                     GetAID().Name());
   MS_LOG(INFO) << "Data source actor(" << GetAID().Name() << ") fetches data.";
   MS_EXCEPTION_IF_NULL(context);
   // Pop the data of last time.
@@ -155,8 +153,11 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
   // Copy data from device queue by data kernel launching.
   MS_EXCEPTION_IF_NULL(kernel_info_);
   try {
+    uint64_t start_time = 0;
+    PROFILER_START(start_time);
     auto ret = device_contexts_[0]->GetKernelExecutor(false)->LaunchKernel(
       data_kernel_, launch_info_.inputs_, launch_info_.workspaces_, launch_info_.outputs_, kernel_info_->stream_id());
+    PROFILER_END(start_time, ProfilerModule::kKernel, ProfilerEvent::kKernelLaunch, GetAID().Name(), false);
     if (!ret) {
       std::string error_info = "Launch kernel failed: " + data_kernel_->fullname_with_scope();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
@@ -174,6 +175,7 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
   }
 
   if (common::AnfAlgo::IsDynamicShape(data_kernel_)) {
+    ProfilerRecorder profiler(ProfilerModule::kKernel, ProfilerEvent::kKernelUpdate, GetAID().Name());
     AnfAlgo::UpdateInternalParameterShape(internal_parameters_, data_kernel_);
   }
   PostRun(context);
@@ -277,6 +279,8 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cons
   }
 
   // Copy data from host tensor to device tensor.
+  uint64_t start_time = 0;
+  PROFILER_START(start_time);
   for (size_t i = 0; i < host_tensors.size(); ++i) {
     auto &host_tensor = host_tensors[i];
     auto &device_tensor = device_tensors[i];
@@ -310,6 +314,8 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cons
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "SyncHostToDevice failed.");
     }
   }
+  PROFILER_END(start_time, ProfilerModule::kRuntime, ProfilerEvent::kCopyData, GetAID().Name(), false);
+
   host_queue_->Pop();
 
   PostRun(context);
