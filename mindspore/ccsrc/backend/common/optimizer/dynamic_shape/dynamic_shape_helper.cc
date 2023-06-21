@@ -143,6 +143,11 @@ tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(input_node_with_index.first);
   auto depended_value = CreateTensorMem(input_node_with_index);
+  if (IsPrimitiveCNode(input_node_with_index.first, prim::kPrimPyExecute)) {
+    MS_LOG(DEBUG) << "The input node is " << input_node_with_index.first->ToString()
+                  << ", use user data instead of address.";
+    return depended_value;
+  }
   // First use the data of args.
   if (args != nullptr) {
     auto input_device_address = reinterpret_cast<std::vector<device::DeviceAddress *> *>(args);
