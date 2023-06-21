@@ -15,7 +15,7 @@
 
 import pytest
 import mindspore as ms
-from mindspore import context
+from mindspore import context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -51,3 +51,24 @@ def test_round_cust_class():
     net = GetattrClassNet()
     out = net()
     assert out[0] == 100.91, out[1] == 100.91
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_round_var_tensor_set_digit():
+    """
+    Feature: JIT Fallback
+    Description: Test round() in fallback runtime
+    Expectation: No exception
+    """
+    @ms.jit
+    def foo(x):
+        return round(x, 1)
+
+    x = Tensor([-1, -2, -3])
+    with pytest.raises(TypeError) as e:
+        foo(x)
+    assert "When applying round() to tensor, only one tensor is supported as input" in str(e.value)

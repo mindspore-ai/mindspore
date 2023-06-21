@@ -92,6 +92,9 @@ EvalResultPtr InnerAbsEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const
 }
 
 bool InnerRoundEvaluator::CheckConst(const AbstractBasePtrList &args_abs_list) {
+  if (args_abs_list[0]->isa<AbstractTensor>()) {
+    return false;
+  }
   if (args_abs_list[0]->isa<AbstractSequence>()) {
     auto abs_seq = args_abs_list[0]->cast<AbstractSequencePtr>();
     const auto &elements = abs_seq->elements();
@@ -169,6 +172,9 @@ EvalResultPtr InnerRoundEvaluator::EvalPrim(const AnalysisEnginePtr &engine, con
     evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
     return infer_result;
   }
+  if (args_abs_list.size() == max_input_index) {
+    MS_EXCEPTION(TypeError) << "When applying round() to tensor, only one tensor is supported as input.";
+  }
   // Convert round ops.
   auto new_cnode = std::make_shared<CNode>(*cnode);
   new_cnode->set_input(0, NewValueNode(prim::kPrimRound));
@@ -190,6 +196,11 @@ EvalResultPtr InnerLenEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const
   if (args_abs_list[0]->isa<AbstractScalar>()) {
     auto const_value = args_abs_list[0]->BuildValue();
     MS_EXCEPTION_IF_NULL(const_value);
+    auto const_type = args_abs_list[0]->BuildType();
+    MS_EXCEPTION_IF_NULL(const_type);
+    if (const_value == kValueAny) {
+      MS_EXCEPTION(TypeError) << "object of type " << const_type->ToString() << " has no len().";
+    }
     auto py_x_data = ValueToPyData(const_value);
     py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
     py::object len_data = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_CONST_LEN, py_x_data);
@@ -216,14 +227,14 @@ EvalResultPtr InnerLenEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const
       AnfNodeConfigPtr fn_conf = engine->MakeConfig(pyexecute_node, out_conf->context(), out_conf->func_graph());
       return engine->ForwardConfig(out_conf, fn_conf);
     } else {
-      MS_EXCEPTION(TypeError) << "The len() only support Tensor, list, tuple, dict, and scalar const type in JIT"
+      MS_EXCEPTION(TypeError) << "The len() only supports types such as Tensor, list, tuple, dict, scalar in JIT "
                               << "kStrict mode, but got " << args_abs_list[0]->ToString() << ".";
     }
   } else if (args_abs_list[0]->isa<AbstractTensor>()) {
     new_cnode->set_input(0, NewValueNode(prim::kPrimArrayLen));
   } else {
-    MS_EXCEPTION(TypeError) << "The len() only support Tensor, list, tuple, dict, and scalar type, but got "
-                            << args_abs_list[0]->ToString() << ".";
+    MS_EXCEPTION(TypeError) << "The len() only supports types such as Tensor, list, tuple, dict, scalar, and numpy"
+                            << " ndarray, but got " << args_abs_list[0]->ToString() << ".";
   }
   AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
   return engine->ForwardConfig(out_conf, fn_conf);

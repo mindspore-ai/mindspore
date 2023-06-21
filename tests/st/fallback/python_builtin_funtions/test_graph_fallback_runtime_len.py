@@ -15,7 +15,7 @@
 
 import pytest
 import numpy as np
-from mindspore import Tensor, jit, context
+from mindspore import Tensor, jit, context, mutable
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -60,3 +60,23 @@ def test_len_numpy_string():
 
     out = foo()
     assert out[0] == 2, out[1] == 4
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_len_mutable():
+    """
+    Feature: JIT Fallback
+    Description: Test len() in fallback runtime
+    Expectation: No exception
+    """
+    @jit
+    def foo():
+        return len(mutable(2))
+
+    with pytest.raises(TypeError) as e:
+        foo()
+    assert "object of type Int64 has no len()." in str(e.value)
