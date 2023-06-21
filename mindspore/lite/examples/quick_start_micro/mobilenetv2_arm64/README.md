@@ -120,6 +120,11 @@ cmake -DCMAKE_BUILD_TYPE=Release \
 make
 ```
 
+若用户需要编译FP16工程，则在上述基础加上该编译选项:
+```bash
+-DENABLE_FP16=ON
+```
+
 此时在`mobilenetv2/build/src/`目录下生成了`libnet.a`，推理执行库，在`mobilenetv2/build`目录下生成了`benchmark`可执行文件。而对应的模型参数文件net.bin在生成的代码src目录下。
 
 ### 工程部署
