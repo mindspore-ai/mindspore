@@ -43,10 +43,7 @@ CoderGraph::~CoderGraph() {
 }
 
 int CoderGraph::ConvertTensors(bool enable_fp16) {
-  if (model_ == nullptr) {
-    MS_LOG(ERROR) << "Graph model is nullptr";
-    return RET_ERROR;
-  }
+  MS_CHECK_PTR(model_);
   std::vector<Tensor *> all_tensors;
   auto clear_tensors = [&all_tensors]() {
     std::for_each(all_tensors.begin(), all_tensors.end(), [](Tensor *&t) {
