@@ -129,7 +129,7 @@ def run_watchpoints(is_sync):
             compare_expect_actual_result(watchpoint_hits_test_4, 1, test_name)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -138,7 +138,7 @@ def test_sync_watchpoints():
     run_watchpoints(True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -202,7 +202,7 @@ def run_overflow_watchpoint(is_overflow):
             assert not watchpoint_hits_test
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -227,6 +227,7 @@ def compare_expect_actual_result(watchpoint_hits_list, test_index, test_name):
             expect_wp = expected_list[x + test_index][test_id]
             actual_wp = write_watchpoint_to_json(watchpoint_hits)
             assert actual_wp == expect_wp
+
 
 def print_watchpoint_hits(watchpoint_hits_list, test_index, is_print, test_name):
     """Print watchpoint hits."""

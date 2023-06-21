@@ -121,7 +121,7 @@ def run_multi_root_graph_dump(device, dump_mode, test_name):
             check_graph_structure(dump_file_path, execution_order_path, '1', ['1', '3', '5'])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @security_off_wrap
