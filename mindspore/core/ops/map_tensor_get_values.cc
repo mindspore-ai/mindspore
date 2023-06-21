@@ -35,8 +35,7 @@ namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(MapTensorGetValues, BaseOperator);
 
-abstract::ShapePtr MapTensorGetValuesInferShape(const PrimitivePtr &prim,
-                                                const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr MapTensorGetValuesInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   // Check argument abstracts.
   auto abs_map_tensor =
     CheckAndConvertUtils::CheckArgs<abstract::AbstractMapTensor>(kNameMapTensorGetValues, input_args, kInputIndex0);
@@ -51,7 +50,7 @@ abstract::ShapePtr MapTensorGetValuesInferShape(const PrimitivePtr &prim,
   return std::make_shared<abstract::Shape>(shape_vec);
 }
 
-TypePtr MapTensorGetValuesInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr MapTensorGetValuesInferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto abs_map_tensor =
     CheckAndConvertUtils::CheckArgs<abstract::AbstractMapTensor>(kNameMapTensorGetValues, input_args, kInputIndex0);
   auto map_tensor_type = abs_map_tensor->map_tensor_type();
@@ -60,7 +59,7 @@ TypePtr MapTensorGetValuesInferType(const PrimitivePtr &prim, const std::vector<
   return value_dtype;
 }
 
-AbstractBasePtr MapTensorGetValuesInfer(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+AbstractBasePtr MapTensorGetValuesInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   // Check number of arguments.

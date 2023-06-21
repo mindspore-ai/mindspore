@@ -34,8 +34,7 @@ namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(MapTensorErase, BaseOperator);
 
-abstract::ShapePtr MapTensorEraseInferShape(const PrimitivePtr &primitive,
-                                            const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr MapTensorEraseInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto abs_map_tensor =
     CheckAndConvertUtils::CheckArgs<abstract::AbstractMapTensor>(kNameMapTensorErase, input_args, kInputIndex0);
   auto key_tensor_shape = CheckAndConvertUtils::GetTensorInputShape(kNameMapTensorErase, input_args, kInputIndex1);
@@ -46,7 +45,7 @@ abstract::ShapePtr MapTensorEraseInferShape(const PrimitivePtr &primitive,
   return abs_map_tensor->shape();
 }
 
-TypePtr MapTensorEraseInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr MapTensorEraseInferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   auto abs_map_tensor =
     CheckAndConvertUtils::CheckArgs<abstract::AbstractMapTensor>(kNameMapTensorErase, input_args, kInputIndex0);
   // Get key dtype of the map tensor.

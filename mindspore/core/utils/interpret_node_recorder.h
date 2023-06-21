@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CORE_UTILS_InterpretNodeRecorder_H_
 #define MINDSPORE_CORE_UTILS_InterpretNodeRecorder_H_
 
-#include <string>
 #include "ir/anf.h"
 #include "utils/hash_set.h"
 #include "mindapi/base/macros.h"

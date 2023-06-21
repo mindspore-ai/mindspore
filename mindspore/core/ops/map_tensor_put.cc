@@ -108,7 +108,7 @@ TypePtr MapTensorPutInferType(const PrimitivePtr &prim, const std::vector<Abstra
   return map_tensor_abs->BuildType();
 }
 
-AbstractBasePtr MapTensorPutInfer(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+AbstractBasePtr MapTensorPutInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args) {
   return MapTensorPutInferInner(primitive, input_args);
 }

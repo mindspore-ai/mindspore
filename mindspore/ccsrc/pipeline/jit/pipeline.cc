@@ -298,7 +298,7 @@ AnfNodePtr GetRealOutput(const AnfNodePtr &node) {
   return node;
 }
 
-std::pair<py::object, bool> GetPyExecuteOutput(const AnfNodePtr &output, const BaseRef &value) {
+std::pair<py::object, bool> GetPyExecuteOutput(const AnfNodePtr &output) {
   static const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
   if (allow_fallback_runtime) {
     const auto &real_output = GetRealOutput(output);
@@ -1319,7 +1319,7 @@ std::pair<py::object, bool> GraphExecutorPy::GetPyExecuteOutputFromAddress(const
       AnfNodePtr real_node = AnfNodePtr(tensor_address->node_index().first.lock());
       if (real_node != nullptr) {
         MS_LOG(DEBUG) << "real_node:" << real_node->DebugString();
-        const auto &[py_res, has_real_output] = GetPyExecuteOutput(real_node, value);
+        const auto &[py_res, has_real_output] = GetPyExecuteOutput(real_node);
         if (has_real_output) {
           MS_LOG(DEBUG) << "py_res:" << py_res;
           return {py_res, true};
