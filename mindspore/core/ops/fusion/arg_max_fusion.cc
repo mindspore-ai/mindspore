@@ -78,21 +78,25 @@ BaseShapePtr ArgFusionInferShape(const PrimitivePtr &primitive, const std::vecto
   auto x_rank = shape_vector.size();
   // Get and calculate the real positive axis.
   auto axis_value = primitive->GetAttr(kAxis);
+  MS_EXCEPTION_IF_NULL(axis_value);
   auto axis = GetValue<int64_t>(axis_value);
   CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeLeft, {-x_rank, x_rank}, prim_name);
   axis = axis < 0 ? axis + SizeToLong(x_rank) : axis;
 
+  auto topk_value = primitive->GetAttr(kTopK);
+  int64_t topk = topk_value == nullptr ? 1 : GetValue<int64_t>(topk_value);
+  auto keep_dims_value = primitive->GetAttr(kKeepDims);
+  bool keep_dims = keep_dims_value != nullptr && GetValue<bool>(keep_dims_value);
   auto out_shape_vector = shape_vector;
-  auto topk = GetValue<int64_t>(primitive->GetAttr(kTopK));
-  auto keep_dims = GetValue<bool>(primitive->GetAttr(kKeepDims));
   if (topk == 1 && !keep_dims) {
     (void)out_shape_vector.erase(out_shape_vector.cbegin() + axis);
   } else {
     out_shape_vector[axis] = topk;
   }
 
+  auto out_max_value = primitive->GetAttr(kOutMaxValue);
+  bool out_max = out_max_value != nullptr && GetValue<bool>(out_max_value);
   auto out_shape_ptr = std::make_shared<abstract::Shape>(out_shape_vector);
-  auto out_max = GetValue<bool>(primitive->GetAttr(kOutMaxValue));
   if (out_max) {
     // two outputs: max indices, max value
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape_ptr, out_shape_ptr});
@@ -116,7 +120,8 @@ TypePtr ArgFusionInferType(const PrimitivePtr &primitive, const std::vector<Abst
                             << ".";
   }
 
-  auto out_max = GetValue<bool>(primitive->GetAttr(kOutMaxValue));
+  auto out_max_value = primitive->GetAttr(kOutMaxValue);
+  bool out_max = out_max_value != nullptr && GetValue<bool>(out_max_value);
   if (out_max) {
     // two outputs: max indices, max value
     return std::make_shared<Tuple>(std::vector<TypePtr>{kInt32, x_type});

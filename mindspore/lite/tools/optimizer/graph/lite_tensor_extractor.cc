@@ -299,6 +299,8 @@ int LiteTensorExtractor::GetCNodeInputAbstractLists(const CNodePtr &cnode, Abstr
     auto node = cnode->input(index);
     AbstractBasePtr abstract = nullptr;
     if (utils::isa<CNodePtr>(node)) {
+      // TupleGetItem should be ignored, calling an existing function GetCNodeInputAbstract.
+      // Will be removed when TupleGetItem infer is implemented.
       abstract = opt::GetCNodeInputAbstract(cnode, index)->Clone();
     } else {
       auto abs = node->abstract();
