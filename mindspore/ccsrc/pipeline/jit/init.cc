@@ -455,8 +455,8 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_offload_checkpoint", &OffloadContext::set_offload_checkpoint,
          "Set the checkpoint for offload destination, cpu or disk.")
     .def("offload_checkpoint", &OffloadContext::offload_checkpoint, "Get the checkpoint for offload destination.")
-    .def("set_offload_ddr_size", &OffloadContext::set_offload_ddr_size, "Set the ddr size for offload.")
-    .def("offload_ddr_size", &OffloadContext::offload_ddr_size, "Get the ddr size for offload.")
+    .def("set_offload_cpu_size", &OffloadContext::set_offload_cpu_size, "Set the cpu memory size for offload.")
+    .def("offload_cpu_size", &OffloadContext::offload_cpu_size, "Get the cpu memory size for offload.")
     .def("set_offload_disk_size", &OffloadContext::set_offload_disk_size, "Set the disk size for offload.")
     .def("offload_disk_size", &OffloadContext::offload_disk_size, "Get the disk size for offload.")
     .def("set_enable_aio", &OffloadContext::set_enable_aio, "Set the flag of whether enabling aio.")
@@ -473,8 +473,8 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("auto_offload", &OffloadContext::auto_offload, "Get the flag of whether auto offload")
     .def("set_host_mem_block_size", &OffloadContext::set_host_mem_block_size, "Set the block size for host memory pool")
     .def("host_mem_block_size", &OffloadContext::host_mem_block_size, "Get the block size of host memory pool")
-    .def("set_ddr_ratio", &OffloadContext::set_ddr_ratio, "Set the ddr usage ratio for offload strategy")
-    .def("ddr_ratio", &OffloadContext::ddr_ratio, "Get the ddr usage ratio of offload strategy")
+    .def("set_cpu_ratio", &OffloadContext::set_cpu_ratio, "Set the cpu memory usage ratio for offload strategy")
+    .def("cpu_ratio", &OffloadContext::cpu_ratio, "Get the cpu memory usage ratio of offload strategy")
     .def("set_hbm_ratio", &OffloadContext::set_hbm_ratio, "Set the hbm usage ratio for offload strategy")
     .def("hbm_ratio", &OffloadContext::hbm_ratio, "Get the hbm usage ratio of offload strategy");
 

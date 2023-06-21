@@ -139,12 +139,12 @@ struct SwapStrategy {
 class SwapContext {
  public:
   size_t hbm_mem_size_{0};
-  size_t ddr_mem_size_{0};
+  size_t cpu_mem_size_{0};
   size_t disk_mem_size_{0};
   bool parallel_for_comm_{false};
-  bool offload_param_to_ddr_{false};
+  bool offload_param_to_cpu_{false};
   bool offload_param_to_disk_{false};
-  bool offload_checkpoint_to_ddr_{false};
+  bool offload_checkpoint_to_cpu_{false};
   bool offload_checkpoint_to_disk_{false};
 };
 }  // namespace device

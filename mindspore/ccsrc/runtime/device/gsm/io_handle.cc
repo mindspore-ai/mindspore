@@ -110,7 +110,7 @@ bool IOHandle::WriteAsync(const std::string &file_name, const void *data, size_t
   *token = kInvalidAsyncIOToken;
   return file->PWrite(data, byte_num, kFileHeadOffset);
 }
-bool IOHandle::IsAligned(const void *data, size_t byte_num) {
+bool IOHandle::IsAligned(const void *data, const size_t byte_num) const {
   return ((byte_num & kAlignSize) == 0) && ((reinterpret_cast<size_t>(data) & kAlignSize) == 0);
 }
 

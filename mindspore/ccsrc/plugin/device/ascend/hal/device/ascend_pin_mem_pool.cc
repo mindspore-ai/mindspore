@@ -53,7 +53,7 @@ void AscendPinMemPool::PinnedMemAlloc(DeviceMemPtr *addr, size_t alloc_size) {
 bool AscendPinMemPool::FreeDeviceMem(const DeviceMemPtr &addr) {
   MS_EXCEPTION_IF_NULL(addr);
   if (pinned_mem_) {
-    aclrtFreeHost(addr);
+    (void)aclrtFreeHost(addr);
   } else {
     free(addr);
   }

@@ -33,7 +33,7 @@ namespace mindspore {
 namespace runtime {
 constexpr size_t kFirstVirtualNode = 0;
 constexpr size_t kSecondVirtualNodeOffset = 1;
-constexpr char kOffloadTargetDDR[] = "cpu";
+constexpr char kOffloadTargetCPU[] = "cpu";
 constexpr char kOffloadTargetDisk[] = "disk";
 namespace {
 ControlActor *GetCtrlActor(const ControlNodeParserPtr &parser, const KernelGraphPtr &graph,
@@ -159,16 +159,16 @@ std::shared_ptr<device::SwapContext> GetSwapContext() {
   const auto &swap_context = std::make_shared<device::SwapContext>();
   const auto max_hbm_size = context->get_param<float>(MS_CTX_MAX_DEVICE_MEMORY);
   swap_context->hbm_mem_size_ = FloatToSize(max_hbm_size * kGBToByte * offload_context->hbm_ratio());
-  swap_context->ddr_mem_size_ = static_cast<size_t>(offload_context->offload_ddr_size() * offload_context->ddr_ratio());
+  swap_context->cpu_mem_size_ = static_cast<size_t>(offload_context->offload_cpu_size() * offload_context->cpu_ratio());
   swap_context->disk_mem_size_ = offload_context->offload_disk_size();
-  MS_LOG(INFO) << "Hbm size:" << swap_context->hbm_mem_size_ << ", ddr size:" << swap_context->ddr_mem_size_
+  MS_LOG(INFO) << "Hbm size:" << swap_context->hbm_mem_size_ << ", cpu memory size:" << swap_context->cpu_mem_size_
                << ", disk size:" << swap_context->disk_mem_size_ << " to generate the offload strategy";
   if (!offload_context->auto_offload()) {
     const auto &offload_param = offload_context->offload_param();
-    swap_context->offload_param_to_ddr_ = (offload_param == kOffloadTargetDDR);
+    swap_context->offload_param_to_cpu_ = (offload_param == kOffloadTargetCPU);
     swap_context->offload_param_to_disk_ = (offload_param == kOffloadTargetDisk);
     const auto &offload_checkpoint = offload_context->offload_checkpoint();
-    swap_context->offload_checkpoint_to_ddr_ = (offload_checkpoint == kOffloadTargetDDR);
+    swap_context->offload_checkpoint_to_cpu_ = (offload_checkpoint == kOffloadTargetCPU);
     swap_context->offload_checkpoint_to_disk_ = (offload_checkpoint == kOffloadTargetDisk);
   }
   return swap_context;

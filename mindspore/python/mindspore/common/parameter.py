@@ -17,6 +17,8 @@
 from __future__ import absolute_import
 
 from copy import copy
+import time
+import os
 import sys
 import math
 import numbers
@@ -108,8 +110,6 @@ def _offload_if_config(data):
 
     offload_file_path = data.offload_file_path()
     if offload_file_path is None or offload_file_path == "":
-        import time
-        import os
         offload_dir = offload_context.get("offload_path", "./offload")
         offload_dir = os.path.relpath(offload_dir)
         if not os.path.exists(offload_dir):

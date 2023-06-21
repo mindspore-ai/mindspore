@@ -52,18 +52,18 @@ void OffloadContext::set_offload_checkpoint(const std::string &offload_checkpoin
   offload_checkpoint_ = offload_checkpoint;
 }
 
-void OffloadContext::set_offload_ddr_size(size_t offload_ddr_size) {
-  offload_ddr_size_ = offload_ddr_size;
-  ddr_size_configured_ = true;
+void OffloadContext::set_offload_cpu_size(size_t offload_cpu_size) {
+  offload_cpu_size_ = offload_cpu_size;
+  cpu_size_configured_ = true;
 }
 
-size_t OffloadContext::offload_ddr_size() {
-  if (offload_ddr_size_ == 0) {
-    offload_ddr_size_ = mindspore::GetSystemMemorySize(kMemAvailable);
-    MS_LOG(WARNING) << "Offload ddr size is not set, please set this via the context.set_offload_context() method.";
+size_t OffloadContext::offload_cpu_size() {
+  if (offload_cpu_size_ == 0) {
+    offload_cpu_size_ = mindspore::GetSystemMemorySize(kMemAvailable);
+    MS_LOG(INFO) << "Offload cpu size is not set, please set this via the context.set_offload_context() method.";
   }
-  auto retention_mem_size = std::min(kGBToByte, static_cast<size_t>(offload_ddr_size_ * kMemRetentionTate));
-  return offload_ddr_size_ - retention_mem_size;
+  auto retention_mem_size = std::min(kGBToByte, static_cast<size_t>(offload_cpu_size_ * kMemRetentionTate));
+  return offload_cpu_size_ - retention_mem_size;
 }
 
 void OffloadContext::set_offload_disk_size(size_t offload_disk_size) { offload_disk_size_ = offload_disk_size; }
@@ -93,7 +93,7 @@ void OffloadContext::set_auto_offload(bool auto_offload) { auto_offload_ = auto_
 
 void OffloadContext::set_host_mem_block_size(size_t host_mem_block_size) { host_mem_block_size_ = host_mem_block_size; }
 
-void OffloadContext::set_ddr_ratio(float ddr_ratio) { ddr_ratio_ = ddr_ratio; }
+void OffloadContext::set_cpu_ratio(float cpu_ratio) { cpu_ratio_ = cpu_ratio; }
 
 void OffloadContext::set_hbm_ratio(float hbm_ratio) { hbm_ratio_ = hbm_ratio; }
 
@@ -101,7 +101,7 @@ OffloadContext::OffloadContext()
     : offload_param_(kOffloadParam),
       offload_path_(kOffloadPath),
       offload_checkpoint_(kOffloadParam),
-      offload_ddr_size_(0),
+      offload_cpu_size_(0),
       offload_disk_size_(0),
       enable_aio_(true),
       aio_block_size_(kAioBlockSize),
@@ -109,7 +109,7 @@ OffloadContext::OffloadContext()
       enable_pinned_mem_(true),
       auto_offload_(true),
       host_mem_block_size_(kGBToByte),
-      ddr_size_configured_(false),
-      ddr_ratio_(1.0f),
+      cpu_size_configured_(false),
+      cpu_ratio_(1.0f),
       hbm_ratio_(1.0f) {}
 }  // namespace mindspore
