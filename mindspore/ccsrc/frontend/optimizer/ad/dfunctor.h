@@ -245,6 +245,10 @@ FuncGraphPtr KPrim::BpropToK(const T &primal, const FuncGraphPtr &bprop_fg, cons
 
   if constexpr (std::is_same<T, PrimitivePtr>::value) {
     PrimitivePtr primitive = primal;
+    auto prim_recompute_attr = primitive->GetAttr(kAttrRecompute);
+    if (prim_recompute_attr != nullptr && prim_recompute_attr->isa<BoolImm>() && GetValue<bool>(prim_recompute_attr)) {
+      cloned_bprop_fg->set_flag(FUNC_GRAPH_RECOMPUTE_GRAD_GRAPH, true);
+    }
     TransformArgsForPrimitive(mng, cloned_bprop_fg, primal, outer, &transf_args);
     (void)transf_args.insert(transf_args.cbegin(), NewValueNode(primal));
   } else {

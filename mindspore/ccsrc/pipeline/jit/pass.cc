@@ -52,6 +52,7 @@
 #include "frontend/parallel/pass/split_matmul_comm_elementwise_fp.h"
 #include "frontend/parallel/pass/split_layernorm_comm_fp.h"
 #include "frontend/optimizer/recompute.h"
+#include "frontend/optimizer/irpass/recompute.h"
 #include "frontend/optimizer/slice_activation_in_recompute.h"
 #include "frontend/optimizer/grouped_pairwise_exchange_alltoall.h"
 #include "frontend/optimizer/comm_op_attrs.h"
@@ -422,6 +423,14 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig recompute_prepare = opt::OptPassConfig({irpass.set_cell_output_no_recompute_});
   opt::OptPassConfig get_grad = opt::OptPassConfig({irpass.get_grad_eliminate_});
 
+  opt::OptPassConfig cell_reuse_cell_recompute_pass = opt::OptPassConfig(
+    {
+      irpass.add_recompute_primal_,
+      irpass.remove_not_recompute_node_,
+      irpass.add_recompute_depend_,
+    },
+    false, true);
+
   // Before adjusting map_a, check GetA1A2() and GetOptPynativeGradEpiloguePhases().
   OptPassGroupMap map_a({{"expand_dump_flag", opt::OptPassConfig(opt::irpass::ExpandDumpFlag())},
                          {"switch_simplify", opt::OptPassConfig({irpass.switch_simplify_})},
@@ -440,6 +449,8 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"virtual_dataset", virtual_dataset},
                          {"get_grad_eliminate_", get_grad},
                          {"virtual_output", opt::OptPassConfig({irpass.virtual_output_eliminate_})},
+                         {"cell_reuse_cell_primitive_pass", opt::OptPassConfig(opt::irpass::AddRecomputePrimitive)},
+                         {"cell_reuse_cell_recompute_pass", cell_reuse_cell_recompute_pass},
                          {"meta_fg_expand", opt::OptPassConfig(opt::irpass::ExpandMetaFg())},
                          {"after_resolve", after_resolve_pass},
                          {"a_after_grad", a_after_grad},
@@ -651,6 +662,11 @@ bool OptPassRNGroup(const ResourcePtr &resource) { return OptPassGroup(resource,
 bool OptPassGradEpilogueGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "opt_grad_epilogue"); }
 
 bool AddRecomputationPass(const ResourcePtr &resource) {
+  static const auto cell_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
+  static const auto cell_reuse = (cell_reuse_env == "1" || cell_reuse_env == "2");
+  if (cell_reuse) {
+    return true;
+  }
   MS_EXCEPTION_IF_NULL(resource);
   opt::InsertRecomputedNodes(resource->func_graph());
   return true;

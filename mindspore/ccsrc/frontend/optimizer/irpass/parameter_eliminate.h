@@ -87,7 +87,7 @@ static inline std::vector<CNodePtr> GetCallers(const FuncGraphPtr &fg) {
 static inline std::pair<FuncGraphPtr, std::vector<CNodePtr>> SearchFuncGraphCallers(
   const FuncGraphPtr &func_graph, bool eliminate_only_returned_parameter) {
   for (const auto &fg : func_graph->func_graphs_used_total()) {
-    if (fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE)) {
+    if (fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) || fg->has_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH)) {
       continue;
     }
     const auto &parameters = fg->parameters();
