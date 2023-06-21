@@ -31,6 +31,7 @@ namespace pynative {
 namespace {
 const mindspore::HashSet<std::string> kNotRealOP{
   kMakeTupleOpName,
+  kMakeListNewOpName,
   kTupleGetItemOpName,
   kStopGradientOpName,
   kUpdateStateOpName,
@@ -41,8 +42,8 @@ const mindspore::HashSet<std::string> kNotRealOP{
   kNPUGetFloatStatusOpName,
   kNPUClearFloatStatusOpName,
   kMirrorOperatorOpName,
-  kPyExecuteOpName,
-  kPyInterpretOpName,
+  kSequenceSliceOpName,
+  kSequenceMulOpName,
 };
 
 const mindspore::HashSet<std::string> kExpanderWhiteList{
@@ -84,31 +85,27 @@ FrontendOpRunInfoPtr GetOpRunInfo(const py::object &out, const py::args &args, c
   return op_run_info;
 }
 
-size_t GetOutputTensorNumForTuple(const CNodePtr &make_tuple) {
-  size_t output_num = 0;
-  MS_EXCEPTION_IF_NULL(make_tuple);
-  if (IsPrimitiveCNode(make_tuple, prim::kPrimMakeTuple)) {
-    for (size_t i = 1; i < make_tuple->size(); ++i) {
-      const auto &input_i = make_tuple->input(i);
-      MS_EXCEPTION_IF_NULL(input_i);
-      if (input_i->isa<CNode>()) {
-        auto cnode = input_i->cast<CNodePtr>();
-        MS_EXCEPTION_IF_NULL(cnode);
-        output_num += GetOutputTensorNumForTuple(cnode);
-      } else if (input_i->isa<Parameter>()) {
-        output_num += 1;
-      } else if (input_i->isa<ValueNode>()) {
-        auto v = input_i->cast<ValueNodePtr>();
-        MS_EXCEPTION_IF_NULL(v->value());
-        if (v->value()->isa<tensor::Tensor>()) {
-          output_num += 1;
-        }
-      }
-    }
-  } else {
-    output_num += AnfAlgo::GetOutputElementNum(make_tuple);
+size_t GetTensorNumFromAbstract(const abstract::AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
+  if (abs->isa<abstract::AbstractTensor>()) {
+    // Is a tensor
+    constexpr size_t kTensorOutputNum = 1;
+    return kTensorOutputNum;
+  } else if (abs->isa<abstract::AbstractSequence>()) {
+    const auto &abs_seq = abs->cast<abstract::AbstractSequencePtr>()->elements();
+    return std::accumulate(abs_seq.begin(), abs_seq.end(), 0, [](size_t out_num, const abstract::AbstractBasePtr &abs) {
+      return out_num + GetTensorNumFromAbstract(abs);
+    });
+  } else if (abs->isa<abstract::AbstractCSRTensor>()) {
+    // Currently, CSRTensor only supports 2-D matrix (shape has 2 values). 5 outputs = 3 Tensors + 2 shape values.
+    constexpr size_t kCSRTensorOutputNum = 5;
+    return kCSRTensorOutputNum;
+  } else if (abs->isa<abstract::AbstractCOOTensor>()) {
+    // Currently, COOTensor only supports 2-D matrix (shape has 2 values). 4 outputs = 2 Tensors + 2 shape values.
+    constexpr size_t kCOOTensorOutputNum = 4;
+    return kCOOTensorOutputNum;
   }
-  return output_num;
+  return 0;
 }
 
 // Modify the output node of func_graph to add forward nodes used in bprop graph.
@@ -220,13 +217,15 @@ void MsFunction::RunReplace(const CNodePtr &added_node, const ValuePtrList &tota
     auto cnode = input_i->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     MS_LOG(DEBUG) << "Replace output tensors for cnode: " << cnode->DebugString();
-    auto output_vnode = cnode->forward().first;
+    const auto &output_vnode = cnode->forward().first;
     MS_EXCEPTION_IF_NULL(output_vnode);
     MS_LOG(DEBUG) << "Old output value node: " << output_vnode->ToString();
+    MS_EXCEPTION_IF_NULL(output_vnode->abstract());
     bool is_tuple_out = output_vnode->abstract()->isa<abstract::AbstractSequence>();
-    size_t output_num = GetOutputTensorNumForTuple(cnode);
+    size_t output_num = GetTensorNumFromAbstract(cnode->abstract());
     if (output_num == 0) {
-      MS_LOG(EXCEPTION) << "The output value of forward cnode is empty";
+      MS_LOG(DEBUG) << "The output value out is not include tensor";
+      continue;
     }
     if (index + output_num > total_output_tensors.size()) {
       MS_LOG(EXCEPTION) << "The size of total_output_tensors: " << total_output_tensors.size()
@@ -332,7 +331,8 @@ void MsFunction::MakeCNodeForMsFunction(const FrontendOpRunInfoPtr &op_run_info,
 }
 
 void MsFunction::MakeAdjointForMsFunction(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
-                                          const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph) const {
+                                          const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph,
+                                          bool has_added_v) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(grad_executor);
 
@@ -349,12 +349,14 @@ void MsFunction::MakeAdjointForMsFunction(const FrontendOpRunInfoPtr &op_run_inf
   op_grad_info->input_value_grad_type = op_run_info->op_grad_info->input_value_grad_type;
   auto grad_param = std::make_shared<autograd::GradParam>(op_grad_info, !top_cell->is_high_order_top_cell(),
                                                           grad_executor->use_dynamic_shape_process());
-
   grad_param->is_control_flow = compile_info_.is_control_flow_;
+
+  grad_param->has_added_v = has_added_v;
   grad_param->is_ms_function_graph = true;
   // As long as the ms function is in the process of dynamic shape,
   // let it run actor execution to avoid backend pass
   grad_param->is_ms_function_self_dynamic_shape = compile_info_.is_dynamic_shape_;
+
   grad_param->fg = grad_graph;
   grad_param->source_fg = ms_func_graph;
   grad_param->graph_cache_key = graph_phase_;
@@ -399,10 +401,12 @@ void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, co
   MS_EXCEPTION_IF_NULL(grad_executor);
   // Step 1: Replace added cnode forward with actual output
   ValuePtr flatten_v = added_out_v;
+  bool added_v_is_empty = true;
   if (added_out_v != nullptr) {
     ValuePtrList total_output_tensors;
     PyNativeAlgo::DataConvert::FlattenValueSeqArg(added_out_v, &total_output_tensors);
     flatten_v = std::make_shared<ValueTuple>(total_output_tensors);
+    added_v_is_empty = total_output_tensors.empty();
     ReplaceAddedCnodeActualOutput(added_node, total_output_tensors);
   }
 
@@ -412,17 +416,21 @@ void MsFunction::GradMsFunctionInner(const FrontendOpRunInfoPtr &op_run_info, co
   grad_executor->UpdateTopCellForwardTensorInfoInBpropGraph(op_run_info->op_info, op_run_info->real_out);
 
   // Step 3: Update output tensors of added forward nodes, which are added to return node of ms_function func graph.
-  if (added_out_v != nullptr) {
-    // If ms function is not control flow, the ms function is executed by actor under dynamic shape
-    if (grad_executor->use_dynamic_shape_process() && !compile_info_.is_control_flow_) {
-      UpdateMsFunctionlForwardTensorInfoInBpropGraph(op_run_info->op_info + kAddedValue, flatten_v);
+  if (!added_v_is_empty) {
+    if (grad_executor->use_dynamic_shape_process()) {
+      // If ms function is not control flow, the ms function is executed by actor under dynamic shape, and valuenode
+      // will be updated
+      if (!compile_info_.is_control_flow_) {
+        UpdateMsFunctionlForwardTensorInfoInBpropGraph(op_run_info->op_info + kAddedValue, flatten_v);
+      }
     } else {
+      // Static shape will run by replace
       grad_executor->UpdateTopCellForwardTensorInfoInBpropGraph(op_run_info->op_info + kAddedValue, flatten_v);
     }
   }
 
   // Make Adjoint for grad graph
-  MakeAdjointForMsFunction(op_run_info, grad_executor, primal_func_graph, grad_graph);
+  MakeAdjointForMsFunction(op_run_info, grad_executor, primal_func_graph, grad_graph, !added_v_is_empty);
 
   auto node_info = std::make_shared<DynamicDetectNodeInfo>(nullptr, op_run_info->op_grad_info->input_abs,
                                                            op_run_info->base_op_run_info.abstract);
@@ -492,6 +500,7 @@ FuncGraphPtr MsFunction::ProcessMsFunctionFuncGraph(const FuncGraphPtr &ms_func_
     if (!unused_inputs.empty() && unused_inputs.find(INT_MAX) != unused_inputs.end() &&
         kExpanderWhiteList.find(prim->name()) == kExpanderWhiteList.end()) {
       MS_LOG(DEBUG) << "Prim " << prim->name() << " is not support by expander";
+      ms_function_compile_info_[graph_phase_].is_control_flow_ = true;
       return nullptr;
     }
     GetUsedCNodeInBpropGraph(cnode, unused_inputs, &node_list);

@@ -640,12 +640,11 @@ bool AutoGradCellImpl::KPynativeWithFProp(const GradParamPtr &grad_param) {
 CNodePtr AutoGradCellImpl::GetBPropCNode(const GradParamPtr &grad_param, const AnfNodePtrList &args,
                                          const FuncGraphPtr &bprop_graph, bool cache_hit, AnfNodePtr *const tape_dout) {
   AnfNodePtrList bprop_inputs(args.begin(), args.end());
-  if (grad_param->is_ms_function_graph) {
-    // Control flow not do value node replace
-    if (!cache_hit && grad_param->use_dynamic_shape_process && !grad_param->is_control_flow) {
-      const auto &ms_function = PyNativeAlgo::Common::GetPyNativeExecutor()->grad_executor()->ms_function();
-      ms_function->SaveForwardOutputTensorInfoInBpropGraph(bprop_graph);
-    }
+  bool is_ms_function_dynamic_shape = grad_param->is_ms_function_graph && grad_param->use_dynamic_shape_process;
+  // Save replace info in first time
+  if (!cache_hit && is_ms_function_dynamic_shape && grad_param->has_added_v) {
+    const auto &ms_function = PyNativeAlgo::Common::GetPyNativeExecutor()->grad_executor()->ms_function();
+    ms_function->SaveForwardOutputTensorInfoInBpropGraph(bprop_graph);
   }
 
   // Call by tape_
@@ -657,7 +656,7 @@ CNodePtr AutoGradCellImpl::GetBPropCNode(const GradParamPtr &grad_param, const A
   // get_bprop is a call node
   auto bprop_cnode = ad_param()->tape_->NewCNode(bprop_inputs);
   bprop_cnode->set_abstract(bprop_graph->output()->abstract());
-  if (grad_param->is_ms_function_graph && grad_param->use_dynamic_shape_process && !grad_param->is_control_flow) {
+  if (is_ms_function_dynamic_shape) {
     SetMsFunctionCallGraph(bprop_cnode, bprop_graph, grad_param->graph_cache_key);
   }
   // For replacing parameter and dout.
@@ -848,6 +847,7 @@ void AutoGradCellImpl::GradGraphByExpander(const GradParamPtr &grad_param) {
     if (!ret || outputs.empty()) {
       // Get bprop by meta graph
       if (grad_param->is_ms_function_graph && kMetaFuncGraphOp.find(prim->name()) != kMetaFuncGraphOp.end()) {
+        MS_LOG(DEBUG) << "Get bprop graph by meta function graph";
         ProcessMetaFuncGraphOp(grad_param, prim, cnode, input_value, out);
         continue;
       } else {
@@ -928,6 +928,9 @@ void AutoGradCellImpl::ProcessMetaFuncGraphOp(const GradParamPtr &grad_param, co
     std::make_shared<GradParam>(op_grad_info, grad_param->grad_by_value, grad_param->use_dynamic_shape_process, cnode);
   meta_graph_grad_param->is_control_flow = true;
   meta_graph_grad_param->is_ms_function_graph = true;
+  // Set to control flow just let it go by ad::Grad, because grad_func_graph with no abstract
+  meta_graph_grad_param->is_control_flow = true;
+  meta_graph_grad_param->cnode = cnode;
   meta_graph_grad_param->fg = grad_func_graph;
   meta_graph_grad_param->graph_cache_key = grad_param->graph_cache_key;
   if (!KPynativeWithFProp(meta_graph_grad_param)) {
@@ -1313,11 +1316,18 @@ CNodePtr AutoGradCellImpl::ConvertConstInputToAttr(const CNodePtr &cnode, const 
   MS_EXCEPTION_IF_NULL(cnode);
   const auto &prim = GetCNodePrimitive(cnode);
   if (prim == nullptr) {
-    MS_LOG(EXCEPTION) << "Should be primitive, but: " << cnode->DebugString();
+    MS_LOG(DEBUG) << "Get cnode not primitive " << cnode->DebugString();
+    return cnode;
   }
   mindspore::HashSet<size_t> input_to_attr = {};
-  PyNativeAlgo::Common::GetConstInputToAttr(prim, prim->name(), device_target, false, &input_to_attr);
+  PyNativeAlgo::Common::GetConstInputToAttr(prim, prim->name(), device_target, is_dynamic_shape, &input_to_attr);
   if (input_to_attr.empty()) {
+    for (size_t i = 1; i < cnode->size(); ++i) {
+      if (cnode->input(i)->isa<CNode>()) {
+        cnode->set_input(i,
+                         ConvertConstInputToAttr(cnode->input(i)->cast<CNodePtr>(), device_target, is_dynamic_shape));
+      }
+    }
     return cnode;
   }
   const auto &input_names = prim->GetAttr(kAttrInputNames);
@@ -1325,6 +1335,8 @@ CNodePtr AutoGradCellImpl::ConvertConstInputToAttr(const CNodePtr &cnode, const 
     MS_LOG(DEBUG) << "input_names are nullptr";
     return cnode;
   }
+
+  // Change to attr
   const auto &input_names_vec = GetValue<std::vector<std::string>>(input_names);
   AnfNodePtrList new_inputs{NewValueNode(prim)};
   for (size_t i = 0; i < cnode->size() - 1; ++i) {
@@ -1349,13 +1361,8 @@ CNodePtr AutoGradCellImpl::ConvertConstInputToAttr(const CNodePtr &cnode, const 
       new_inputs.emplace_back(input_node);
     }
   }
-  const auto &graph = cnode->func_graph();
-  MS_EXCEPTION_IF_NULL(graph);
-  auto new_cnode = NewCNode(new_inputs, graph);
-  new_cnode->set_abstract(cnode->abstract());
-  new_cnode->set_scope(cnode->scope());
-  new_cnode->set_attrs(cnode->attrs());
-  return new_cnode;
+  cnode->set_inputs(new_inputs);
+  return cnode;
 }
 
 void AutoGradCellImpl::UpdateNextEdges(const VariableAdjointPtr &variable, const std::vector<CNodePtr> &dins,

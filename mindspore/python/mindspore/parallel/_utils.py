@@ -415,7 +415,7 @@ def _grads_divided_by_device_num_if_recomputation(grads):
     """
     If in pynative parallel and full_batch is True, divide grads by device num to ensure that the gradients is correct.
     """
-    if not grads or not _is_pynative_parallel() or not _get_full_batch():
+    if grads is None or not _is_pynative_parallel() or not _get_full_batch():
         return grads
 
     device_num = Tensor(_get_device_num(), grads[0].dtype)

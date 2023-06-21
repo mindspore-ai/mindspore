@@ -357,6 +357,10 @@ GraphId GraphCompiler::CompileDynamicGraph(const GraphSegmentPtr &segment, const
   MS_LOG(INFO) << "Set kFlagEnableRunGraphBySingleOp: Dynamic shape or dynamic graph structure flag";
   graph->set_flag(kFlagEnableRunGraphBySingleOp, true);
 
+  auto kernel_executor = device_context->GetKernelExecutor(true);
+  if (kernel_executor != nullptr) {
+    kernel_executor->AddMindIRPass(graph);
+  }
   graph->SetExecOrderByDefault();
 
   graph->UpdateGraphAquireGilAttr();

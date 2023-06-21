@@ -68,6 +68,7 @@ struct GradParam {
   size_t input_size{0};
 
   // For ms function domain
+  bool has_added_v{false};
   bool is_ms_function_graph{false};
   bool is_ms_function_self_dynamic_shape{false};
 
