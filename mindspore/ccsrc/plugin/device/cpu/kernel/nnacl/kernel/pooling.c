@@ -144,6 +144,7 @@ int pooling_prepare(KernelBase *self) {
 KernelBase *CreatePooling(OpParameter *param, int data_type) {
   PoolingStruct *pooling = (PoolingStruct *)malloc(sizeof(PoolingStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(pooling);
+  memset(pooling, 0, sizeof(PoolingStruct));
   pooling->data_type_ = data_type;
   pooling->base_.release = pooling_release;
   pooling->base_.prepare = pooling_prepare;
