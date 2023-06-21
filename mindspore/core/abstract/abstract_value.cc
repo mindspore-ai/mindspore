@@ -261,6 +261,9 @@ std::string AbstractProblem::ToString() const {
 
 AbstractBasePtr AbstractFunction::Join(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(other);
+  if (other->isa<AbstractNegligible>()) {
+    return shared_from_base<AbstractBase>();
+  }
   auto other_func = dyn_cast<AbstractFunction>(other);
   if (other_func == nullptr) {
     AbstractTypeJoinLogging(shared_from_base<AbstractBase>(), other);
@@ -1149,6 +1152,9 @@ std::shared_ptr<AbstractSequence> AbstractSequence::DynamicLenSequenceJoin(const
 }
 
 AbstractBasePtr AbstractTuple::Join(const AbstractBasePtr &other) {
+  if (other->isa<AbstractNegligible>()) {
+    return shared_from_base<AbstractBase>();
+  }
   auto other_sequence = other->cast<AbstractTuplePtr>();
   if (other_sequence == nullptr) {
     AbstractTypeJoinLogging(shared_from_base<AbstractBase>(), other);
@@ -1178,6 +1184,9 @@ AbstractBasePtr AbstractTuple::Join(const AbstractBasePtr &other) {
 }
 
 AbstractBasePtr AbstractList::Join(const AbstractBasePtr &other) {
+  if (other->isa<AbstractNegligible>()) {
+    return shared_from_base<AbstractBase>();
+  }
   auto other_sequence = other->cast<AbstractListPtr>();
   if (other_sequence == nullptr) {
     AbstractTypeJoinLogging(shared_from_base<AbstractBase>(), other);
@@ -1314,7 +1323,9 @@ AbstractBasePtr AbstractTensor::Join(const AbstractBasePtr &other) {
   auto other_type = other->BuildType();
   MS_EXCEPTION_IF_NULL(other_type);
   MS_EXCEPTION_IF_NULL(element_);
-
+  if (other->isa<AbstractNegligible>()) {
+    return shared_from_base<AbstractBase>();
+  }
   // AbstractTensor join with AbstractUndetermined
   if (other_type->type_id() == kObjectTypeUndeterminedType) {
     auto other_undetermined_tensor = dyn_cast_ptr<AbstractUndetermined>(other);
@@ -1564,6 +1575,9 @@ TypePtr AbstractJTagged::BuildType() const {
 
 AbstractBasePtr AbstractJTagged::Join(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(other);
+  if (other->isa<AbstractNegligible>()) {
+    return shared_from_base<AbstractBase>();
+  }
   auto other_jtagged = dyn_cast_ptr<AbstractJTagged>(other);
   if (other_jtagged == nullptr) {
     AbstractTypeJoinLogging(shared_from_base<AbstractBase>(), other);
@@ -1623,6 +1637,9 @@ AbstractBasePtr AbstractRefTensor::Join(const std::shared_ptr<AbstractRefTensor>
   if (*this == *other) {
     return shared_from_base<AbstractRefTensor>();
   }
+  if (other->isa<AbstractNegligible>()) {
+    return shared_from_base<AbstractBase>();
+  }
   // Firstly, join the ref_key_value.
   auto joined_ref_key = ValueJoin(ref_key_value_, other->ref_key_value_);
   // Secondly , join the tensor value.
@@ -1636,6 +1653,9 @@ AbstractBasePtr AbstractRefTensor::Join(const AbstractBasePtr &other) {
   // Abstract ref join abstract ref
   if (other->isa<AbstractRefTensor>()) {
     return AbstractRefTensor::Join(other->cast<AbstractRefPtr>());
+  }
+  if (other->isa<AbstractNegligible>()) {
+    return shared_from_base<AbstractBase>();
   }
   // Abstract ref join other abstract are same to AbstractTensor::Join.
   auto joined_tensor = AbstractTensor::Join(other);
@@ -1684,6 +1704,9 @@ std::string AbstractNone::ToString() const {
 
 AbstractBasePtr AbstractNone::Join(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(other);
+  if (other->isa<AbstractNegligible>()) {
+    return shared_from_base<AbstractBase>();
+  }
   if (!other->isa<AbstractNone>()) {
     AbstractTypeJoinLogging(shared_from_base<AbstractBase>(), other);
   }
@@ -2119,6 +2142,9 @@ AbstractBasePtr AbstractMapTensor::Clone() const { return std::make_shared<Abstr
 
 AbstractBasePtr AbstractMapTensor::Join(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(other);
+  if (other->isa<AbstractNegligible>()) {
+    return shared_from_base<AbstractBase>();
+  }
   // Same pointer.
   if (this == other.get()) {
     return shared_from_base<AbstractMapTensor>();
