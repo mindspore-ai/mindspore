@@ -201,6 +201,7 @@ int MatmulFp32Arm64_ParallelRunByOC(MatmulFp32Struct *matmul, int task_id) {
 
 KernelBase *CreateMatmulFp32Arm64() {
   MatmulFp32Struct *matmul = (MatmulFp32Struct *)CreateMatmulFp32Base();
+  NNACL_MALLOC_CHECK_NULL_RETURN_NULL(matmul);
   matmul->matmul_type_ = kMatmulFp32Arm64Cpu;
   matmul->check_thread_cutting_by_row_ = MatmulFp32Arm64_CheckThreadCuttingByRow;
   matmul->init_global_varibale_ = MatmulFp32Arm64_InitGlobalVariable;

@@ -105,14 +105,14 @@ int AssignGatherIndicesData(GatherStruct *gather, bool is_indices_int32) {
 
 int InitGatherDynamicStatus(GatherStruct *gather) {
   int *in_shape = gather->base_.in_[FIRST_INPUT]->shape_;
-  int in_rank = gather->base_.in_[FIRST_INPUT]->shape_size_;
+  int in_rank = (int)gather->base_.in_[FIRST_INPUT]->shape_size_;
   NNACL_CHECK_TRUE_RET(gather->axis_ >= 0 && gather->axis_ < in_rank, NNACL_GATHER_AXIS_INVALID);
   gather->limit_ = in_shape[gather->axis_];
   gather->outer_size_ = 1;
   for (int i = 0; i < gather->axis_; ++i) {
     gather->outer_size_ *= in_shape[i];
   }
-  gather->byte_inner_size_ = DataTypeCSize(gather->base_.out_[OUTPUT_INDEX]->data_type_);
+  gather->byte_inner_size_ = (int)DataTypeCSize(gather->base_.out_[OUTPUT_INDEX]->data_type_);
   for (int i = gather->axis_ + 1; i < in_rank; ++i) {
     gather->byte_inner_size_ *= in_shape[i];
   }

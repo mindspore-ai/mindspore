@@ -384,7 +384,7 @@ void SetChannel(TensorC *tensor, int channel) {
 
 int GetSize(const TensorC *tensor) {
   int element_num = GetElementNum(tensor);
-  int data_type_size = DataTypeCSize(tensor->data_type_);
+  int data_type_size = (int)DataTypeCSize(tensor->data_type_);
   return element_num * data_type_size;
 }
 

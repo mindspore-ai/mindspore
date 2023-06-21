@@ -23,7 +23,7 @@
 bool CheckInferShapeDone(TensorC **in, int in_size, TensorC **out, int out_size) {
   for (int i = 0; i < in_size; i++) {
     TensorC *t = in[i];
-    for (int j = 0; j < t->shape_size_; j++) {
+    for (size_t j = 0; j < t->shape_size_; j++) {
       if (t->shape_[j] == -1) {
         return false;
       }
@@ -31,7 +31,7 @@ bool CheckInferShapeDone(TensorC **in, int in_size, TensorC **out, int out_size)
   }
   for (int i = 0; i < out_size; i++) {
     TensorC *t = out[i];
-    for (int j = 0; j < t->shape_size_; j++) {
+    for (size_t j = 0; j < t->shape_size_; j++) {
       if (t->shape_[j] == -1) {
         return false;
       }

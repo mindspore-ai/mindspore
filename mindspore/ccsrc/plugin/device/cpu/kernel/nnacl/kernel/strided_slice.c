@@ -173,7 +173,7 @@ bool StridedSliceMatchFastPattern(StridedSliceStruct *strided_slice) {
   int axis_list_size = 0;
   for (size_t i = 0; i < in_tensor->shape_size_; i++) {
     if (in_tensor->shape_[i] != out_tensor->shape_[i]) {
-      axis_list[axis_list_size++] = i;
+      axis_list[axis_list_size++] = (int)i;
     }
   }
   if (axis_list_size == 1) {
@@ -195,7 +195,7 @@ void StridedSliceInitFastRunParam(StridedSliceStruct *strided_slice) {
     strided_slice->outer_ *= in_shape[i];
   }
   for (size_t i = (size_t)strided_slice->split_axis_ + 1; i < input_tenspr->shape_size_; i++) {
-    strided_slice->inner_ *= in_shape[i];
+    strided_slice->inner_ *= (size_t)in_shape[i];
   }
 
   if (strided_slice->outer_ == 1) {
@@ -213,7 +213,7 @@ void StridedSliceInitFastRunParam(StridedSliceStruct *strided_slice) {
   strided_slice->cal_num_per_thread_ =
     strided_slice->parallel_on_split_axis_
       ? UP_DIV(out_shape[strided_slice->split_axis_], strided_slice->base_.thread_nr_)
-      : UP_DIV(strided_slice->outer_, strided_slice->base_.thread_nr_);
+      : UP_DIV((int)strided_slice->outer_, strided_slice->base_.thread_nr_);
 }
 
 int strided_slice_resize(KernelBase *self) {

@@ -70,11 +70,11 @@ int stack_resize(KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(input);
 
   int origin_axis = ((StackParameter *)self->param_)->axis_;
-  stack->axis_ = origin_axis < 0 ? origin_axis + input->shape_size_ + 1 : origin_axis;
+  stack->axis_ = origin_axis < 0 ? origin_axis + (int)input->shape_size_ + 1 : origin_axis;
 
   if (self->in_size_ == 1) {
     NNACL_CHECK_FALSE(GetElementNum(input) <= 0, NNACL_STACK_TENSOR_SHAPE_INVALID);
-    stack->copy_size_ = GetElementNum(input) * DataTypeCSize(stack->data_type_);
+    stack->copy_size_ = (size_t)GetElementNum(input) * DataTypeCSize(stack->data_type_);
     stack->outer_size_ = 1;
   } else {
     NNACL_CHECK_FALSE(input->shape_size_ < stack->axis_, NNACL_STACK_TENSOR_SHAPE_INVALID);

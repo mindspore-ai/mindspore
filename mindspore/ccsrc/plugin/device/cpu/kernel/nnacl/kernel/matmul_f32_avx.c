@@ -157,6 +157,7 @@ bool MatmulFp32Avx_CheckThreadCuttingByRow(MatmulFp32Struct *matmul) {
 
 KernelBase *CreateMatmulFp32Avx() {
   MatmulFp32Struct *matmul = (MatmulFp32Struct *)CreateMatmulFp32Base();
+  NNACL_MALLOC_CHECK_NULL_RETURN_NULL(matmul);
   matmul->matmul_type_ = kNotImplemented;
   matmul->init_global_varibale_ = MatmulFp32Avx_InitGlobalVariable;
   matmul->parallel_run_by_batch_ = MatmulFp32Avx_ParallelRunByBatch;

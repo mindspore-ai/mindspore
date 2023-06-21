@@ -712,13 +712,13 @@ typedef enum QuantTypeC {
   Quant_Max = Quant_QuantDynamic
 } QuantTypeC;
 
-typedef enum TensorCCategory {
+typedef enum TensorCategoryC {
   VarTensor,    // common tensor
   ConstTensor,  // const tensor
   ConstScalar,  // const scalar
   GraphInput,
   GraphOutput
-} TensorCCategory;
+} TensorCategoryC;
 
 typedef enum ReduceModeC {
   Reduce_Mean = 0,

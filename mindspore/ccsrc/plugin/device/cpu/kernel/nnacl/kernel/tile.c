@@ -46,7 +46,7 @@ int TileDoubleInputScenes(TileStruct *tile) {
 
 int SimpleTileImpl(TileStruct *tile, int task_id) {
   NNACL_CHECK_ZERO_RETURN_ERR(tile->base_.thread_nr_);
-  size_t unit = UP_DIV(tile->fast_outer_size_, tile->base_.thread_nr_);
+  size_t unit = UP_DIV(tile->fast_outer_size_, (size_t)tile->base_.thread_nr_);
   if (unit == 0 && task_id > 0) {
     return NNACL_OK;
   }
@@ -110,7 +110,7 @@ int tile_resize(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(input);
   NNACL_CHECK_NULL_RETURN_ERR(output);
 
-  tile->in_dim_ = input->shape_size_;
+  tile->in_dim_ = (int)input->shape_size_;
   NNACL_CHECK_TRUE_RET(tile->in_dim_ > 0 && tile->in_dim_ <= MAX_SHAPE_SIZE, NNACL_TILE_INPUT_SHAPE_INVALID);
   NNACL_CHECK_FALSE((int)output->shape_size_ < tile->in_dim_, NNACL_TILE_INPUT_SHAPE_INVALID);
 

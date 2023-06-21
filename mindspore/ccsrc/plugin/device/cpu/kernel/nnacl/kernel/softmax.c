@@ -67,12 +67,12 @@ int InitSoftmaxParam(SoftmaxStruct *softmax) {
   NNACL_CHECK_NULL_RETURN_ERR(in_tensor);
   int *in_shape = in_tensor->shape_;
 
-  softmax->n_dim_ = in_tensor->shape_size_;
+  softmax->n_dim_ = (int)in_tensor->shape_size_;
   int origin_axis = ((SoftmaxParameter *)softmax->base_.param_)->axis_;
   softmax->axis_ = origin_axis == -1 ? origin_axis + softmax->n_dim_ : origin_axis;
 
   NNACL_CHECK_TRUE_RET(softmax->axis_ >= 0, NNACL_SOFTMAX_AXIS_INVALID);
-  NNACL_CHECK_TRUE_RET(softmax->axis_ < in_tensor->shape_size_, NNACL_SOFTMAX_AXIS_INVALID);
+  NNACL_CHECK_TRUE_RET(softmax->axis_ < (int)in_tensor->shape_size_, NNACL_SOFTMAX_AXIS_INVALID);
 
   int out_plane_size = 1;
   for (int i = 0; i < softmax->axis_; ++i) {

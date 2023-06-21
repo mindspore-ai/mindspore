@@ -184,8 +184,8 @@ int ScaleInt8CPUKernel::InitQuantArgs() {
       quant_.output_activation_max_ = INT8_MAX;
       break;
     case schema::ActivationType_RELU6:
-      quant_.output_activation_min_ = 0;
-      quant_.output_activation_max_ = 6;
+      quant_.output_activation_min_ = RELU6_MIN_VAL;
+      quant_.output_activation_max_ = RELU6_MAX_VAL;
       break;
     case schema::ActivationType_NO_ACTIVATION:
       quant_.output_activation_min_ = INT8_MIN;
