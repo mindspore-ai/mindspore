@@ -151,6 +151,7 @@ void Parser::CheckFuncReturn(const FuncGraphPtr &fn) {
                  << ". FuncGraph: " << func_graph->ToString()
                  << ". We will add a 'return None' statement automatically.";
     // If the def function has no return statement, mean that return none.
+    TraceGuard trace_guard_none(fn->debug_info()->location());
     auto none_node = NewValueNode(kNone);
     auto return_node = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimReturn), none_node});
     func_graph->set_return(return_node);
@@ -714,6 +715,7 @@ FunctionBlockPtr Parser::ParseDefFunction(const py::object &node, const Function
     MS_LOG(INFO) << "Function must has 'return' statement, but missing in " << desc.cast<std::string>()
                  << ". FuncGraph: " << current_fg->ToString()
                  << ". We will add a 'return None' statement automatically.";
+    TraceGuard trace_guard_none(current_fg->debug_info()->location());
     auto none_node = NewValueNode(kNone);
     auto return_node = current_fg->NewCNodeInOrder({NewValueNode(prim::kPrimReturn), none_node});
     current_fg->set_return(return_node);
@@ -1791,6 +1793,7 @@ AnfNodePtr Parser::ProcessBoolOpValueList(const FunctionBlockPtr &block, const p
     MS_EXCEPTION_IF_NULL(b1->func_graph());
     MS_EXCEPTION_IF_NULL(b2->func_graph());
     b1->func_graph()->set_output(rest_node);
+    TraceGuard trace_guard(GetLocation(value_list[1]));
     b2->func_graph()->set_output(test_node);
 
     AnfNodePtr cond_node = block->ForceToCondNode(test_node);
@@ -2227,6 +2230,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
     CheckControlFlowAlterationInIf(&true_branch_graphs, true_block, true_end, after_block, block);
     // If the return_ is set, it has its own continuation block
     if (true_end->func_graph()->get_return() == nullptr) {
+      TraceGuard trace_guard_true(GetLocation(bodyNode));
       true_end->Jump(after_block, {});
       MS_LOG(DEBUG) << "The true_end block jump to after, true_block: " << true_block->ToString()
                     << ", true_end: " << true_end->ToString() << ", after: " << after_block->ToString();
@@ -2245,7 +2249,12 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
     CheckControlFlowAlterationInIf(&false_branch_graphs, false_block, false_end, after_block, block);
     // If the return_ is set, it has its own continuation block
     if (false_end->func_graph()->get_return() == nullptr) {
-      false_end->Jump(after_block, {});
+      if (py::len_hint(orelseNode) != 0) {
+        TraceGuard trace_guard_false(GetLocation(orelseNode));
+        false_end->Jump(after_block, {});
+      } else {
+        false_end->Jump(after_block, {});
+      }
       MS_LOG(DEBUG) << "The false_end block jump to after, false_block: " << false_block->ToString()
                     << ", false_end: " << false_end->ToString() << ", after: " << after_block->ToString();
       after_block->UpdateGlobalPyParam(false_end->global_py_params());

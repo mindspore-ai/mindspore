@@ -123,6 +123,7 @@ def test_and_different_type_variable_tensor():
     with pytest.raises(TypeError) as error_info:
         foo(Tensor([1]), Tensor([1.0]))
     assert "Cannot join the return values of different branches" in str(error_info.value)
+    assert "print(x and y)" in str(error_info.value)
 
 
 @pytest.mark.level1
@@ -188,6 +189,7 @@ def test_and_constant_and_variable_tensor_2():
     with pytest.raises(TypeError) as error_info:
         foo(Tensor([1]))
     assert "Cannot join the return values of different branches" in str(error_info.value)
+    assert "print(x and y)" in str(error_info.value)
 
 
 @pytest.mark.level1
