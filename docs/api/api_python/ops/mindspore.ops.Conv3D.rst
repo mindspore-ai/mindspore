@@ -41,7 +41,7 @@ mindspore.ops.Conv3D
     输入：
         - **x** (Tensor) - shape为 :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` 的Tensor。目前数据类型仅支持float16和float32。
         - **weight** (Tensor) - 若kernel shape为 :math:`(k_d, K_h, K_w)` ，则weight shape应为 :math:`(C_{out}, C_{in}/groups, k_d, K_h, K_w)` 。目前数据类型仅支持float16和float32。
-        - **bias** (Tensor) - shape为 :math:`C_{in}` 的Tensor。目前仅支持 ``None`` 。默认值： ``None`` 。
+        - **bias** (Tensor) - shape为 :math:`C_{out}` 的Tensor。如果 `bias` 为 ``None`` ，将不会添加偏置。默认值： ``None`` 。
 
     输出：
         Tensor，卷积后的值。shape为 :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})` 。

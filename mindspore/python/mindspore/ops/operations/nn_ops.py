@@ -8101,7 +8101,8 @@ class Conv3D(Primitive):
         - **weight** (Tensor) - Set size of kernel is :math:`(k_d, K_h, K_w)`, then the shape is
           :math:`(C_{out}, C_{in}/groups, k_d, K_h, K_w)`.
           Currently weight data type only support float16 and float32.
-        - **bias** (Tensor) - Tensor of shape :math:`C_{in}`. Currently, only support none.
+        - **bias** (Tensor) - Tensor of shape :math:`(C_{out})`. When bias is None, zeros will be used.
+          Default: ``None`` .
 
     Outputs:
         Tensor, the value that applied 3D convolution. The shape is :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
@@ -8215,6 +8216,8 @@ class Conv3D(Primitive):
         validator.check_value_type("group", group, (int,), self.name)
         validator.check_int_range(group, 1, out_channel, validator.INC_BOTH, "group", self.name)
         device_target = context.get_context("device_target")
+        if self.out_channel % group != 0:
+            raise ValueError("The argument 'group' should be divisible by 'out_channel'")
         if device_target == "Ascend" and group != 1:
             raise ValueError("On Ascend platform, group = 1 must be satisfied.")
 

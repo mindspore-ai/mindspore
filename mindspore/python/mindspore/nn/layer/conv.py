@@ -679,7 +679,7 @@ class Conv3d(_Conv):
                  bias_init=None,
                  data_format='NCDHW'):
         """Initialize Conv3d."""
-        if not in_channels % group == 0 and out_channels % group == 0:
+        if not (in_channels % group == 0 and out_channels % group == 0):
             raise ValueError("The argument 'group' should be divisible by 'in_channels' " \
                              "and 'out_channels'")
 

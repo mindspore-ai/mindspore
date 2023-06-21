@@ -5686,6 +5686,11 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         _check_conv_iterable_lengths(stride, dim=3, iter_name='stride')
     if isinstance(dilation, (tuple, list)):
         _check_conv_iterable_lengths(dilation, dim=3, iter_name='dilation')
+    input_shape = input.shape
+    in_channel = input_shape[1]
+    if not (in_channel % groups == 0 and out_channel % groups == 0):
+        raise ValueError("The argument 'groups' should be divisible by 'in_channel' " \
+                        "and 'out_channel'")
     if isinstance(padding, (list, tuple)):
         padding = _manipulate_padding(padding, dim=3)
     conv = _get_cache_prim(P.Conv3D)(out_channel, kernel_size, 1, pad_mode, padding, stride, dilation, groups, "NCDHW")
