@@ -528,7 +528,7 @@ FuncGraphPtr GenerateReusingGraph(const FuncGraphPtr &fg) {
     }
   }
   MS_LOG(DEBUG) << "The reusable graph parameter size: " << reusing_graph->parameters().size();
-  if (common::GetEnv("MS_DEV_GRAPH_REUSE") == "2") {
+  if (common::GetEnv("MS_DEV_CELL_REUSE") == "2") {
     reusing_graph->set_flag(FUNC_GRAPH_FLAG_NEED_BACKEND_INLINE, true);
   }
   return reusing_graph;
@@ -549,6 +549,7 @@ void ReplaceWithReusingGraph(const FuncGraphPtr &reusing_graph, const FuncGraphP
   origin_graph->set_output(out);
   MS_LOG(DEBUG) << "The original graph's new out: " << out->DebugString();
   origin_graph->erase_flag(FUNC_GRAPH_FLAG_NO_INLINE);
+  origin_graph->erase_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE);
 }
 
 void SetCalledSubGraphMixedPrecisionFlag(const FuncGraphPtr &func_graph) {
@@ -1509,7 +1510,7 @@ static std::vector<ActionItem> CommonPipeline() {
 
   // Make the reusable cell to be the reusable function graph
   static bool enable_graph_reusing =
-    (common::GetEnv("MS_DEV_GRAPH_REUSE") == "1" || common::GetEnv("MS_DEV_GRAPH_REUSE") == "2");
+    (common::GetEnv("MS_DEV_CELL_REUSE") == "1" || common::GetEnv("MS_DEV_CELL_REUSE") == "2");
   if (enable_graph_reusing) {
     (void)actions.emplace_back(std::make_pair("graph_reusing", GraphReusingAction));
   }
