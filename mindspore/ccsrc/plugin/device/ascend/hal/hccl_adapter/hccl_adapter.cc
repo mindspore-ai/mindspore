@@ -30,6 +30,7 @@
 #include "plugin/device/ascend/hal/hccl_adapter/converter.h"
 #include "include/backend/distributed/constants.h"
 #include "include/common/utils/parallel_context.h"
+#include "include/common/utils/anfalgo.h"
 
 static constexpr const auto kHcclPluginFileName = "libhccl_plugin.so";
 static constexpr const auto kHcclDeployModeEnv = "DEPLOY_MODE";
@@ -651,7 +652,24 @@ bool HcclAdapter::IsSameServer(const std::vector<uint32_t> &rank_ids) const {
   return ((max - min < kDeviceNumOfServer) && (min / kDeviceNumOfServer == max / kDeviceNumOfServer));
 }
 
-string HcclAdapter::GetHcomGroup(const string &original_group, const std::vector<uint32_t> &rank_ids) const {
+string HcclAdapter::GetHcomGroup(const CNodePtr &cnode) const {
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (!common::AnfAlgo::HasNodeAttr(kAttrGroup, cnode)) {
+    MS_LOG(EXCEPTION) << "Hcom node " << cnode->fullname_with_scope() << " has no group attribute.";
+  }
+
+  auto group_name = common::AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrGroup);
+  auto rank_ids = common::AnfAlgo::HasNodeAttr(kAttrGroupRankIds, cnode)
+                    ? common::AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(cnode, kAttrGroupRankIds)
+                    : std::vector<uint32_t>();
+  auto new_group = DoGetHcomGroup(group_name, rank_ids);
+  MS_LOG(INFO) << "hcom node: " << cnode->fullname_with_scope() << ", old group: " << group_name
+               << ", new group: " << new_group;
+
+  return new_group;
+}
+
+string HcclAdapter::DoGetHcomGroup(const string &original_group, const std::vector<uint32_t> &rank_ids) const {
   string communi_parallel_mode = parallel::ParallelContext::GetInstance()->communi_parallel_mode();
   if (communi_parallel_mode == parallel::kAllGroupParallel) {
     return original_group;

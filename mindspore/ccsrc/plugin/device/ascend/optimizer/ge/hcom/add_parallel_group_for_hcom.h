@@ -28,9 +28,6 @@ class AddParallelGroupForHcom : public PatternProcessPass {
       : PatternProcessPass("add_parallel_group_for_hcom", multigraph) {}
   ~AddParallelGroupForHcom() override = default;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
-
- private:
-  string GetHcomGroup(const CNodePtr &cnode) const;
 };
 }  // namespace opt
 }  // namespace mindspore
