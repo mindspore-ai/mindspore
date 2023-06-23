@@ -6456,10 +6456,25 @@ class GatherD(Primitive):
 
 class Identity(Primitive):
     """
-    The `mindspore.ops.Identity` interface is deprecated, please use the :func:`mindspore.ops.deepcopy` instead.
+    Returns a Tensor with the same shape and contents as the input.
+
+    Inputs:
+        - **x** (Tensor) - The shape of Tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is Number.
+
+    Outputs:
+        Tensor, the shape of tensor and the data type are the same as `x`, :math:`(x_1, x_2, ..., x_R)`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        Deprecated
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1, 2, 3, 4]), mindspore.int64)
+        >>> output = ops.Identity()(x)
+        >>> print(output)
+        [1 2 3 4]
     """
 
     @prim_attr_register
@@ -8042,8 +8057,8 @@ class IndexPut(Primitive):
         - **x2** (Tensor) - 1-D Tensor of the same type as `x1`. If the size of `x2` is 1,
           it will broadcast to the same size as `x1`.
         - **indices** (tuple[Tensor], list[Tensor]) - the indices of type int32 or int64, used to index into x1.
-        The rank of tensors in indices should be 1-D, size of indices should <= x1.rank and the tensors in indices
-        should be broadcastable.
+          The rank of tensors in indices should be 1-D, size of indices should <= x1.rank and the tensors in indices
+          should be broadcastable.
 
     Outputs:
         Tensor, has the same dtype and shape as `x1`.

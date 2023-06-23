@@ -98,7 +98,7 @@ def sparsify(f, arg_types, sparse_rules=None):
             non-sparse etc.) expected by `f`. If `arg_type` is a tuple, its length should be the same as the number of
             arguments for `f`; if `arg_type` is a dictionary, each key represents an index into the arguments, and
             arguments not referenced by the dictionary are considered to be non-sparse.
-        sparse_rules (Dict[str, SparseFunc], Optional): Additional sparse rules. Default: ``None`` .
+        sparse_rules (Dict[str, SparseFunc], optional): Additional sparse rules. Default: ``None`` .
     """
     os.environ["STREE_PYTHON_FALLBACK"] = "1"
     tree = SymbolTree.create(f)
