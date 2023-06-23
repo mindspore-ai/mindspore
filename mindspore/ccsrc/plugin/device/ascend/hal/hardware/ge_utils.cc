@@ -120,6 +120,7 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &
     transform::SetAnfGraph(checkpoint_name, anf_graph);
   }
 
+  transform::AddOptimizeGraph(graph_name);
   return true;
 }
 }  // namespace ascend

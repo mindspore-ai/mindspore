@@ -67,11 +67,19 @@ void GeDeviceContext::Initialize() {
   (void)rtGetIsHeterogenous(&is_heterogenous);
   ms_context->set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, is_heterogenous == 1);
   InitGe(ms_context);
+  if (ms_context->EnableAoeOnline()) {
+    transform::InitializeAoeUtil();
+  }
   initialized_ = true;
 }
 
 void GeDeviceContext::Destroy() {
-  (void)FinalizeGe(MsContext::GetInstance());
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->EnableAoeOnline()) {
+    transform::DestroyAoeUtil();
+  }
+  (void)FinalizeGe(ms_context);
   if (hccl::HcclAdapter::GetInstance().Inited()) {
     hccl::HcclAdapter::GetInstance().FinalizeHccl();
   }

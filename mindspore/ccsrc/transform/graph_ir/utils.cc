@@ -16,6 +16,7 @@
 #include "include/transform/graph_ir/utils.h"
 #include "mindspore/core/ops/other_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "transform/graph_ir/aoe_util.h"
 #include "transform/graph_ir/convert.h"
 #include "transform/graph_ir/op_adapter_map.h"
 #include "transform/graph_ir/op_adapter_util.h"
@@ -293,6 +294,12 @@ void SetAnfGraph(const std::string &name, const AnfGraphPtr &anf_graph_ptr) {
 FuncGraphPtr GetAnfGraph(uint32_t graph_id) { return DfGraphManager::GetInstance().GetAnfGraph(graph_id); }
 
 DfGraphWrapperPtr GetGraphByName(const std::string &name) { return DfGraphManager::GetInstance().GetGraphByName(name); }
+
+void AddOptimizeGraph(const std::string &name) { AoeUtil::GetInstance().AddOptimizeGraph(name); }
+
+void InitializeAoeUtil() { AoeUtil::GetInstance().Initialize(); }
+
+void DestroyAoeUtil() { AoeUtil::GetInstance().Destroy(); }
 
 // convert
 

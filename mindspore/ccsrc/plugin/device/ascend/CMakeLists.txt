@@ -122,12 +122,16 @@ if(MODE_ASCEND_ALL)
     find_library(AICPU_ASCEND_ENGINE aicpu_ascend_engine ${AICPU_CANN_ACL_PATH} ${AICPU_TOOLKIT_ACL_PATH})
     find_library(HOST_CPU_ENGINE host_cpu_engine ${AICPU_CANN_ACL_PATH} ${AICPU_TOOLKIT_ACL_PATH})
     find_library(AICPU_TF_ENGINE aicpu_tf_engine ${AICPU_CANN_ACL_PATH} ${AICPU_TOOLKIT_ACL_PATH})
+    find_library(AOE_TUNING libaoe_tuning.so ${ASCEND_AOE_PLUGIN_PATH})
 
     target_link_libraries(mindspore_ascend PRIVATE ${RUNTIME_LIB} ${TSDCLIENT} ${DATATRANSFER} ${ERROR_MANAGER}
             -Wl,--no-as-needed ${OPTILING} ${PLATFORM} ${ACL} ${ACL_TDT_CHANNEL} ${OPT_FEATURE} ${PROFILING}
             ${ACL_OP_COMPILER} ${CANN_KB} ${COMPRESS} ${OPSKERNEL} ${AICPU_ASCEND_ENGINE} ${HOST_CPU_ENGINE}
             ${AICPU_TF_ENGINE})
     target_link_libraries(mindspore_ascend PRIVATE ${adump_server})
+    if(${ASCEND_VERSION} STREQUAL "910" OR ${ASCEND_VERSION} STREQUAL "910b")
+        target_link_libraries(mindspore_ascend PRIVATE ${AOE_TUNING})
+    endif()
 endif()
 
 if(ENABLE_D)
