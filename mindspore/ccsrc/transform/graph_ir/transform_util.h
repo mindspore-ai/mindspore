@@ -58,14 +58,6 @@ class TransformUtil {
 
   /*
    * Parameters:
-   *     type: [MeDataType] the data type for ME tensor
-   * Return：
-   *     [size_t] the buff size for the type in ME
-   * */
-  static size_t GetDataTypeSize(const MeDataType &type);
-
-  /*
-   * Parameters:
    *     tensor: [MeTensorPtr] the me tensor to get description from
    *     format: [string] the data format in ME
    *     is_input: [bool] whether the tensor is used as input, default:false

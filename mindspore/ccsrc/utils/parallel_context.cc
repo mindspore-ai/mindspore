@@ -41,6 +41,8 @@ std::shared_ptr<ParallelContext> ParallelContext::GetInstance() {
 ParallelContext::ParallelContext() { Reset(); }
 
 void ParallelContext::Reset() {
+  micro_scheduling_ = false;
+  frontend_scheduling_ = false;
   gradients_mean_ = false;
   full_batch_ = false;
   full_batch_is_set_ = false;

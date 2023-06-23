@@ -114,32 +114,6 @@ GeDataType TransformUtil::ConvertDataType(const MeDataType &type) {
   }
 }
 
-static std::map<MeDataType, size_t> datatype_size_map = {
-  {MeDataType::kNumberTypeFloat16, sizeof(float) / 2},  // 1/2 of float
-  {MeDataType::kNumberTypeFloat32, sizeof(float)},
-  {MeDataType::kNumberTypeFloat64, sizeof(double)},
-  {MeDataType::kNumberTypeInt8, sizeof(int8_t)},
-  {MeDataType::kNumberTypeInt16, sizeof(int16_t)},
-  {MeDataType::kNumberTypeInt32, sizeof(int32_t)},
-  {MeDataType::kNumberTypeInt64, sizeof(int64_t)},
-  {MeDataType::kNumberTypeUInt8, sizeof(uint8_t)},
-  {MeDataType::kNumberTypeUInt16, sizeof(uint16_t)},
-  {MeDataType::kNumberTypeUInt32, sizeof(uint32_t)},
-  {MeDataType::kNumberTypeUInt64, sizeof(uint64_t)},
-  {MeDataType::kNumberTypeBool, sizeof(bool)},
-  {MeDataType::kNumberTypeFloat, sizeof(float)},
-  {MeDataType::kNumberTypeComplex64, sizeof(std::complex<float>)},
-  {MeDataType::kNumberTypeComplex128, sizeof(std::complex<double>)}};
-
-size_t TransformUtil::GetDataTypeSize(const MeDataType &type) {
-  if (datatype_size_map.find(type) != datatype_size_map.end()) {
-    return datatype_size_map[type];
-  } else {
-    MS_LOG(ERROR) << "Illegal tensor data type!";
-    return kErrorSize;
-  }
-}
-
 GeFormat TransformUtil::ConvertFormat(const string &format, const size_t shape_size) {
   static constexpr size_t k4dSize = 4;
   static const std::map<std::string, GeFormat> format_map = {
