@@ -71,6 +71,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<std::string>(MS_CTX_OP_PRECISION_MODE, "");
   set_param<std::string>(MS_CTX_ENV_CONFIG_PATH, "");
   set_param<std::string>(MS_CTX_TUNE_MODE, "NO_TUNE");
+  set_param<std::string>(MS_CTX_AOE_TUNE_MODE, "");
   set_param<std::string>(MS_CTX_GRAPH_KERNEL_FLAGS, "");
 
   set_param<uint32_t>(MS_CTX_TSD_REF, 0);
@@ -462,6 +463,14 @@ void MsContext::ResetContext() {
   // set device_target to 'CPU' as default.
   MS_LOG(INFO) << "Process " << getpid() << " config changed: 'device_target' is reset to 'CPU'.";
   SetDeviceTargetFromUser("CPU");
+}
+
+bool MsContext::EnableAoeOnline() {
+  std::string aoe_tune_mode = MsContext::GetInstance()->get_param<std::string>(MS_CTX_AOE_TUNE_MODE);
+  if (!aoe_tune_mode.compare("online")) {
+    return true;
+  }
+  return false;
 }
 
 template MS_CORE_API void MsContext::CheckReadStatus<bool>(MsCtxParam, const bool &) const;

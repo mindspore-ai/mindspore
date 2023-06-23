@@ -384,6 +384,14 @@ class _Context:
         if self.enable_debug_runtime and target == "CPU":
             self.set_backend_policy("vm")
 
+    def set_aoe_tune_mode(self, tune_mode):
+        candidate = ["online", "offline"]
+        if tune_mode in candidate:
+            self.set_param(ms_ctx_param.aoe_tune_mode, tune_mode)
+        else:
+            raise ValueError(f"For 'context.set_context', the argument 'aoe_tune_mode' must be in "
+                             f"['online', 'offline'], but got {tune_mode}.")
+
     def set_device_id(self, device_id):
         if device_id < 0 or device_id > 4095:
             raise ValueError(f"For 'context.set_context', the argument 'device_id' must be in range [0, 4095], "
@@ -505,6 +513,7 @@ class _Context:
         'mode': set_mode,
         'save_graphs_path': set_save_graphs_path,
         'device_target': set_device_target,
+        'aoe_tune_mode': set_aoe_tune_mode,
         'device_id': set_device_id,
         'max_call_depth': set_max_call_depth,
         'profiling_options': set_profiling_options,
@@ -922,7 +931,7 @@ def _check_target_specific_cfgs(device, arg_key):
 
 
 @args_type_check(mode=int, precompile_only=bool, device_target=str, device_id=int, save_graphs=(bool, int),
-                 save_graphs_path=str, enable_dump=bool,
+                 save_graphs_path=str, enable_dump=bool, aoe_tune_mode=str,
                  save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,
                  enable_auto_mixed_precision=bool, inter_op_parallel_num=int,
                  enable_graph_kernel=bool, reserve_class_name_in_scope=bool, check_bprop=bool,
