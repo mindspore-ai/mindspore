@@ -23,4 +23,5 @@ set(ASCEND_TOOLKIT_PLUGIN_PATH ${ASCEND_TOOLKIT_RUNTIME_PATH}/plugin/opskernel)
 
 # nnae packages (for rpath only)
 set(ASCEND_NNAE_RUNTIME_PATH ${ASCEND_PATH}/nnae/latest/lib64)
+set(ASCEND_AOE_PLUGIN_PATH ${ASCEND_PATH}/latest/lib64)
 set(ASCEND_NNAE_OPP_PATH ${ASCEND_PATH}/nnae/latest/opp/built-in/op_impl/ai_core/tbe/op_tiling)
