@@ -19,7 +19,7 @@
 
 namespace mindspore {
 namespace ps {
-const size_t kTimeoutLoopCount = 40;
+const size_t kTimeoutLoopCount = 80;
 const int64_t kLongestTimeToWait = 30;
 
 PsDataPrefetch &PsDataPrefetch::GetInstance() {
