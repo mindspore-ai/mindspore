@@ -358,12 +358,9 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         parameter_layout_dict = save_obj.parameter_layout_dict
         if _is_in_auto_parallel_mode() and not parameter_layout_dict:
             parameter_layout_dict = _get_parameter_layout()
-        if not _is_in_auto_parallel_mode():
-            save_obj.init_parameters_data()
+        save_obj.init_parameters_data()
         param_dict = OrderedDict()
         for _, param in save_obj.parameters_and_names():
-            if param.has_init:
-                continue
             param_dict[param.name] = param
         param_list = []
         for (key, value) in param_dict.items():
@@ -995,8 +992,7 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
 
     strict_load = Validator.check_bool(strict_load)
     logger.info("Execute the process of loading parameters into net.")
-    if not _is_in_auto_parallel_mode():
-        net.init_parameters_data()
+    net.init_parameters_data()
     param_not_load = []
     for _, param in net.parameters_and_names():
         if param.name in parameter_dict:
