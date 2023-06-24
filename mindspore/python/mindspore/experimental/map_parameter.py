@@ -17,6 +17,7 @@ from __future__ import absolute_import
 
 __all__ = ['MapParameter']
 
+import os
 import sys
 from copy import copy
 import numbers
@@ -256,9 +257,8 @@ class MapParameter(Parameter):
 
         Args:
             incremental (bool): False for full export, otherwise for incremental export. Default: False.
-            When exporting data incrementally, the value_array does not contain erased data, so the length of the
-            key_array and the length of the value_array may be inconsistent.The length of the key_array and the length
-            of the status_array are consistent.
+            When exporting data incrementally, the value_array does not contain unchanged data.The length
+            of the key_array and the length of the status_array are consistent.
 
         Returns:
             Tuple(key_array, value_array, status_array), The exported data as a tuple.
@@ -273,3 +273,23 @@ class MapParameter(Parameter):
             data (Tuple): The data tuple with key_array, value_array and status_array.
         """
         self._map_tensor.import_data(data)
+
+    def export_slice_data(self, incremental=False):
+        """
+        Export a slice data from this map parameter.
+        When MapParameter occupies a large memory, only one slice
+        of MapParameter is exported at a time (the default slice size is 1GB).
+
+        Args:
+            incremental (bool): False for full export, otherwise for incremental export. Default: False.
+            When exporting data incrementally, the value_array does not contain unchanged data.The length
+            of the key_array and the length of the status_array are consistent.
+
+        Returns:
+            Tuple(key_array, value_array, status_array, last_slice), The exported data as a tuple, and
+            the last_slice is bool variable and means whether finish export.
+        """
+        enable_persistent = "MS_EMBEDDING_REMOTE_CACHE_MEMORY_SIZE" in os.environ
+        if not enable_persistent:
+            return self._map_tensor.export_slice_data(incremental)
+        return self._map_tensor.export_persistent_slice_data(self.key, incremental)

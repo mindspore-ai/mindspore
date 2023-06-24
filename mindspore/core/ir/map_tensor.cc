@@ -130,7 +130,8 @@ void MapTensor::TransExportDataToTensor(const HashTableExportData &export_data) 
   }
 }
 
-MapTensor::ExportData MapTensor::ExportDataFromDevice(const DeviceSyncPtr &device_sync, bool incremental) const {
+MapTensor::ExportData MapTensor::ExportDataFromDevice(const DeviceSyncPtr &device_sync, bool incremental,
+                                                      bool *last_slice) const {
   auto user_data = device_sync->user_data();
   MS_EXCEPTION_IF_NULL(user_data);
   HashTableExportData export_data;
@@ -140,14 +141,22 @@ MapTensor::ExportData MapTensor::ExportDataFromDevice(const DeviceSyncPtr &devic
     if (!hash_table->is_dirty()) {
       return {key_tensor(), value_tensor(), status_tensor()};
     }
-    export_data = hash_table->Export(incremental);
+    if (last_slice) {
+      export_data = hash_table->ExportSlice(incremental, last_slice);
+    } else {
+      export_data = hash_table->Export(incremental);
+    }
   } else if (key_dtype() == TypeId::kNumberTypeInt64 && value_dtype() == TypeId::kNumberTypeFloat32) {
     const auto &hash_table = user_data->get<HashTable<int64_t, float>>(kUserDataData);
     MS_EXCEPTION_IF_NULL(hash_table);
     if (!hash_table->is_dirty()) {
       return {key_tensor(), value_tensor(), status_tensor()};
     }
-    export_data = hash_table->Export(incremental);
+    if (last_slice) {
+      export_data = hash_table->ExportSlice(incremental, last_slice);
+    } else {
+      export_data = hash_table->Export(incremental);
+    }
   } else {
     MS_LOG(EXCEPTION) << "UnSupported Map Tensor type: key type is " << TypeIdToType(key_dtype()) << ", value type is "
                       << TypeIdToType(value_dtype()) << ".";
@@ -197,6 +206,13 @@ MapTensor::ExportData MapTensor::Export(bool incremental) const {
   auto value_tensor = std::make_shared<Tensor>(value_dtype(), values_shape);
   auto status_tensor = std::make_shared<Tensor>(kNumberTypeInt, key_shape);
   return {key_tensor, value_tensor, status_tensor};
+}
+
+MapTensor::ExportData MapTensor::ExportSlice(bool incremental, bool *last_slice) {
+  MS_EXCEPTION_IF_NULL(last_slice);
+  DeviceSyncPtr device_sync = device_address();
+  MS_EXCEPTION_IF_NULL(device_sync);
+  return ExportDataFromDevice(device_sync, incremental, last_slice);
 }
 }  // namespace tensor
 }  // namespace mindspore

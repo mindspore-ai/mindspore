@@ -34,7 +34,15 @@ class MapTensorPy {
   static void UpdateFromNumpy(const MapTensorPtr &map_tensor,
                               const std::tuple<py::array, py::array, py::array> &numpy_data);
 
-  static std::tuple<py::array, py::array, py::array> ExportAsNumpy(const MapTensorPtr &map_tensor, bool full = false);
+  static std::tuple<py::array, py::array, py::array> ExportAsNumpy(const MapTensorPtr &map_tensor,
+                                                                   bool incremental = false);
+
+  static std::tuple<py::array, py::array, py::array, bool> ExportSliceAsNumpy(const MapTensorPtr &map_tensor,
+                                                                              bool incremental = false);
+
+  static std::tuple<py::array, py::array, py::array, bool> ExportPersistentSliceAsNumpy(const MapTensorPtr &map_tensor,
+                                                                                        int32_t param_key,
+                                                                                        bool incremental = false);
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_UTILS_MAP_TENSOR_PY_H_
