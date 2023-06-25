@@ -34,6 +34,7 @@ constexpr const char kNameBroadcast[] = "Broadcast";
 constexpr const char kNameBroadcastTo[] = "BroadcastTo";
 constexpr const char kNameBroadcastToD[] = "BroadcastToD";
 constexpr const char kNameAllgather[] = "AllGather";
+constexpr const char kNameAllToAllv[] = "AllToAllv";
 constexpr const char kNameReduceScatter[] = "ReduceScatter";
 constexpr const char kNameReduceSum[] = "ReduceSum";
 constexpr const char kNameIsFinite[] = "IsFinite";

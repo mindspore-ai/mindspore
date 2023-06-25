@@ -2767,6 +2767,26 @@ void DfGraphConvertor::ConvertAllReduce(const CNodePtr &node) {
   op_cache_[node.get()] = op;
 }
 
+void DfGraphConvertor::ConvertAllToAllv(const CNodePtr &node) {
+  OpAdapterPtr adpt = FindAdapter(node, training_);
+  if (adpt == nullptr) {
+    return;
+  }
+  auto op = adpt->generate(node);
+  MS_EXCEPTION_IF_NULL(op);
+  op_cache_[node.get()] = op;
+  AddCommAttrForHcclNode(node, op);
+  // set _is_inserted_by_ge attr to avoid mistaken delete
+  auto primitive = GetCNodePrimitive(node);
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto is_inserted_value = primitive->GetAttr("is_inserted_by_ge");
+  if (is_inserted_value == nullptr) {
+    return;
+  }
+  auto is_inserted = GetValue<bool>(is_inserted_value);
+  (void)op->SetAttr("_is_inserted_by_ge", is_inserted);
+}
+
 void DfGraphConvertor::ConvertHcclNode(const CNodePtr &node) {
   OpAdapterPtr adpt = FindAdapter(node, training_);
   if (adpt == nullptr) {
@@ -2923,7 +2943,7 @@ bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) 
       {prim::kPrimReduceScatter->name(), &DfGraphConvertor::ConvertHcclNode},
       {prim::kPrimSend->name(), &DfGraphConvertor::ConvertHcclNode},
       {prim::kPrimReceive->name(), &DfGraphConvertor::ConvertHcclNode},
-      {prim::kPrimAllToAllv->name(), &DfGraphConvertor::ConvertHcclNode},
+      {prim::kPrimAllToAllv->name(), &DfGraphConvertor::ConvertAllToAllv},
     };
 
   if (const auto it = auxiliary_node_converters.find(name); it != auxiliary_node_converters.cend()) {

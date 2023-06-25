@@ -214,6 +214,7 @@
 #include "plugin/device/ascend/optimizer/ge/maketuple_depend_remover.h"
 #include "plugin/device/ascend/optimizer/ge/hcom/add_parallel_group_for_hcom.h"
 #include "include/backend/debug/profiler/profiling.h"
+#include "plugin/device/ascend/optimizer/ge/all_to_all_v_for_ge.h"
 
 namespace mindspore {
 namespace opt {
@@ -630,6 +631,7 @@ void AscendBackendOptimizeGE(const std::shared_ptr<session::KernelGraph> &kernel
 #endif
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto opt_ge_pm = std::make_shared<PassManager>("opt_ge_pm");
+  opt_ge_pm->AddPass(std::make_shared<opt::AllToAllvForGE>());
   opt_ge_pm->AddPass(std::make_shared<opt::AddDependForAllGather>());
   opt_ge_pm->AddPass(std::make_shared<ConvertCondInputToScalar>());
   opt_ge_pm->AddPass(std::make_shared<opt::ConvertDataDependToControlDepend>());
