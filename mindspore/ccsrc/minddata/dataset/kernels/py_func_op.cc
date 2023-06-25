@@ -50,8 +50,10 @@ Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
   Status ret = Status(StatusCode::kSuccess, "PyFunc Call Succeed");
   {
+    RETURN_IF_NOT_OK(CollectOpInfoStart(this->Name(), "AcquireGIL"));
     // Acquire Python GIL
     py::gil_scoped_acquire gil_acquire;
+    RETURN_IF_NOT_OK(CollectOpInfoEnd(this->Name(), "AcquireGIL"));
     if (Py_IsInitialized() == 0) {
       ret = Status(StatusCode::kMDPythonInterpreterFailure, "Python Interpreter is finalized");
       goto ComputeReturn;

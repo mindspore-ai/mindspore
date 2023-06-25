@@ -34,4 +34,20 @@ Status CollectPipelineInfoEnd(const std::string &event, const std::string &stage
 #endif
   return Status::OK();
 }
+
+Status CollectOpInfoStart(const std::string &event, const std::string &stage,
+                          const std::map<std::string, std::string> &custom_info) {
+#if !defined(ENABLE_SECURITY) && !defined(ENABLE_ANDROID)
+  profiler::CollectHostInfo("dataset", event, stage, InfoLevel::kUser, InfoType::kTime, TimeType::kStart, custom_info);
+#endif
+  return Status::OK();
+}
+
+Status CollectOpInfoEnd(const std::string &event, const std::string &stage,
+                        const std::map<std::string, std::string> &custom_info) {
+#if !defined(ENABLE_SECURITY) && !defined(ENABLE_ANDROID)
+  profiler::CollectHostInfo("dataset", event, stage, InfoLevel::kUser, InfoType::kTime, TimeType::kEnd, custom_info);
+#endif
+  return Status::OK();
+}
 }  // namespace mindspore::dataset

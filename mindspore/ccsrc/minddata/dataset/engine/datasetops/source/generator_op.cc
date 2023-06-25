@@ -204,7 +204,9 @@ Status GeneratorOp::operator()() {
     bool eoe = false;
     TensorRow new_row;
     {
+      RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "AcquireGIL"));
       py::gil_scoped_acquire gil_acquire;
+      RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "AcquireGIL"));
       if (Py_IsInitialized() == 0) {
         RETURN_STATUS_ERROR(StatusCode::kMDPythonInterpreterFailure,
                             "[Internal ERROR] Python Interpreter is finalized");
@@ -213,7 +215,9 @@ Status GeneratorOp::operator()() {
 #ifndef ENABLE_SECURITY
         auto start = ProfilingTime::GetCurMilliSecond();
 #endif
+        RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "__next__"));
         RETURN_IF_NOT_OK(PyRowToTensorRow(generator_.attr("__next__")(), &new_row));
+        RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "__next__"));
 #ifndef ENABLE_SECURITY
         auto end = ProfilingTime::GetCurMilliSecond();
         if ((end - start) / num_parallel_workers_ > kGetItemTimeOutMilliSeconds) {
@@ -228,6 +232,7 @@ Status GeneratorOp::operator()() {
         eoe = e.matches(PyExc_StopIteration);
         // Pop up non StopIteration Python Exception
         if (!eoe) {
+          RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "__next__", {{"Flag", "Exception"}}));
           std::string traceback;
           try {
             // Construct python-like traceback
@@ -246,7 +251,7 @@ Status GeneratorOp::operator()() {
           e.restore();
           RETURN_STATUS_ERROR(StatusCode::kMDPyFuncException, traceback);
         }
-
+        RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "__next__", {{"Flag", "StopIteration"}}));
         // Restore exception to python
         e.restore();
 

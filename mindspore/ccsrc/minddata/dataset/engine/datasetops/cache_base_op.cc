@@ -74,7 +74,7 @@ Status CacheBase::FetchSamplesToWorkers() {
     tree_->LaunchWorkers(num_prefetchers_, std::bind(&CacheBase::Prefetcher, this, std::placeholders::_1), Name()));
   auto send_to_que = [](QueueList<std::unique_ptr<IOBlock>> &qList, int32_t worker_id,
                         std::vector<row_id_type> &keys) -> Status {
-    auto blk = std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone));
+    auto blk = std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kFlagNone));
     RETURN_IF_NOT_OK(qList[worker_id]->Add(std::move(blk)));
     return Status::OK();
   };
@@ -127,9 +127,9 @@ Status CacheBase::FetchSamplesToWorkers() {
     }
     // send the eoe
     RETURN_IF_NOT_OK(worker_in_queues_[static_cast<const int>((buf_cnt++) % num_workers_)]->Add(
-      std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
-    RETURN_IF_NOT_OK(prefetch_queues_[(prefetch_cnt++) % num_prefetchers_]->Add(
-      std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
+      std::make_unique<IOBlock>(IOBlock::kFlagEOE)));
+    RETURN_IF_NOT_OK(
+      prefetch_queues_[(prefetch_cnt++) % num_prefetchers_]->Add(std::make_unique<IOBlock>(IOBlock::kFlagEOE)));
     // If repeat but the not last repeat, wait for reset.
     if (!IsLastIteration()) {
       MS_LOG(DEBUG) << Name() << " Waiting for reset. Count " << wait_cnt << " Buffer sent " << buf_cnt;
@@ -150,11 +150,10 @@ Status CacheBase::FetchSamplesToWorkers() {
   } while (true);
   // Flow the eof before exit
   RETURN_IF_NOT_OK(worker_in_queues_[static_cast<const int>((buf_cnt++) % num_workers_)]->Add(
-    std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEof)));
+    std::make_unique<IOBlock>(IOBlock::kFlagEOF)));
   // Shutdown threads
   for (int32_t i = 0; i < num_workers_; i++) {
-    RETURN_IF_NOT_OK(
-      worker_in_queues_[i]->Add(std::make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kDeIoBlockNone)));
+    RETURN_IF_NOT_OK(worker_in_queues_[i]->Add(std::make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kFlagNone)));
   }
   // Dump the last epoch result (approximately) without waiting for the worker threads to come back.
   if (AllowCacheMiss()) {

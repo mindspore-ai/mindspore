@@ -32,10 +32,11 @@ namespace dataset {
 class IOBlock {
  public:
   enum IOBlockFlags : uint32_t {
-    kDeIoBlockNone = 0,
-    kDeIoBlockFlagEoe = 1u,       // end of IOBlocks for one epoch
-    kDeIoBlockFlagEof = 1u << 1,  // end of IOBlocks for entire program
-    kDeIoBlockFlagWait = 1u << 2  // control signal for workers to suspend operations
+    kFlagNone = 0,
+    kFlagEOE = 1U,        // end of IOBlocks for one epoch
+    kFlagEOF = 1U << 1,   // end of IOBlocks for entire program
+    kFlagWait = 1U << 2,  // control signal for workers to suspend operations
+    kFlagQuit = 1U << 3   // control signal for workers to quit
   };
 
   // Constructor of the IOBlock (1).  A simpler one for the case when the block only has 1 key.
@@ -68,19 +69,36 @@ class IOBlock {
 
   // Does this block have the eoe flag turned on?
   // @return T/F if the IOBlock is eoe
-  bool eoe() const { return static_cast<uint32_t>(io_block_flags_) & static_cast<uint32_t>(kDeIoBlockFlagEoe); }
+  bool eoe() const { return static_cast<uint32_t>(io_block_flags_) & static_cast<uint32_t>(kFlagEOE); }
 
   // Does this block have the eof flag turned on?
   // @return T/F if the IOBlock is eof
-  bool eof() const { return static_cast<uint32_t>(io_block_flags_) & static_cast<uint32_t>(kDeIoBlockFlagEof); }
+  bool eof() const { return static_cast<uint32_t>(io_block_flags_) & static_cast<uint32_t>(kFlagEOF); }
 
   // Does this block have the wait flag turned on?
   // @return T/F is the IOBlock is wait
-  bool wait() const { return static_cast<uint32_t>(io_block_flags_) & static_cast<uint32_t>(kDeIoBlockFlagWait); }
+  bool wait() const { return static_cast<uint32_t>(io_block_flags_) & static_cast<uint32_t>(kFlagWait); }
 
   // Adds a key to this block
   // @param key - The key to add to this block
   void AddKey(int64_t key) { index_keys_.push_back(key); }
+
+  std::string FlagName() {
+    switch (io_block_flags_) {
+      case IOBlockFlags::kFlagNone:
+        return "Data";
+      case IOBlockFlags::kFlagEOE:
+        return "EOE";
+      case IOBlockFlags::kFlagEOF:
+        return "EOF";
+      case IOBlockFlags::kFlagWait:
+        return "Wait";
+      case IOBlockFlags::kFlagQuit:
+        return "Quit";
+      default:
+        return "Unknown";
+    }
+  }
 
  protected:
   std::vector<int64_t> index_keys_;  // keys used for lookups to the meta info for the data

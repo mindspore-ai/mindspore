@@ -55,6 +55,23 @@ struct CBatchInfo {
   batchCtrl ctrl_;           // No control=0, EOE=1, EOF=2, Quit=3
   const int64_t get_batch_num() const { return batch_num_; }
   const int64_t get_epoch_num() const { return epoch_num_; }
+
+  std::string FlagName() {
+    switch (ctrl_) {
+      case batchCtrl::kNoCtrl:
+        return "Data";
+      case batchCtrl::kEOE:
+        return "EOE";
+      case batchCtrl::kEOF:
+        return "EOF";
+      case batchCtrl::kQuit:
+        return "Quit";
+      case batchCtrl::kWait:
+        return "Wait";
+      default:
+        return "Unknown";
+    }
+  }
 };
 
 class BatchOp : public ParallelOp<std::pair<std::unique_ptr<TensorQTable>, CBatchInfo>, TensorRow> {

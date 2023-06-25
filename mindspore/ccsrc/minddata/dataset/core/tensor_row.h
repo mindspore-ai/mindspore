@@ -37,12 +37,12 @@ class TensorRow {
 
   enum TensorRowFlags : uint32_t {
     kFlagNone = 0,
-    kFlagEOF = 1,         // The row is an eof end-of-data msg
-    kFlagEOE = 1u << 1,   // The row is an eoe end-of-epoch msg
-    kFlagWait = 1u << 2,  // The row is an control signal for workers to suspend operations
-    kFlagQuit = 1u << 3,  // The row is a control signal for workers to quit
-    kFlagSkip = 1u << 4,  // The row is a control signal for workers to skip this row
-    kFlagError = 1u << 5  // The row is an error row (needs to be replaced with another row or skipped, as per
+    kFlagEOE = 1U,        // The row is an eoe end-of-epoch msg
+    kFlagEOF = 1U << 1,   // The row is an eof end-of-data msg
+    kFlagWait = 1U << 2,  // The row is an control signal for workers to suspend operations
+    kFlagQuit = 1U << 3,  // The row is a control signal for workers to quit
+    kFlagSkip = 1U << 4,  // The row is a control signal for workers to skip this row
+    kFlagError = 1U << 5  // The row is an error row (needs to be replaced with another row or skipped, as per
                           //   ErrorSamplesMode config)
   };
 
@@ -252,6 +252,27 @@ class TensorRow {
   }
 
   const TensorRowFlags Flags() { return tensor_row_flag_; }
+
+  std::string FlagName() {
+    switch (tensor_row_flag_) {
+      case TensorRowFlags::kFlagNone:
+        return "Data";
+      case TensorRowFlags::kFlagEOE:
+        return "EOE";
+      case TensorRowFlags::kFlagEOF:
+        return "EOF";
+      case TensorRowFlags::kFlagWait:
+        return "Wait";
+      case TensorRowFlags::kFlagQuit:
+        return "Quit";
+      case TensorRowFlags::kFlagSkip:
+        return "Skip";
+      case TensorRowFlags::kFlagError:
+        return "Error";
+      default:
+        return "Unknown";
+    }
+  }
 
   explicit TensorRow(TensorRowFlags flag);
 

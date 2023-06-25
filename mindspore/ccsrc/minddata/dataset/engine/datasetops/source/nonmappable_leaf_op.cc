@@ -127,7 +127,10 @@ Status NonMappableLeafOp::WorkerEntry(int32_t worker_id) {
   TaskManager::FindMe()->Post();
 
   std::unique_ptr<FilenameBlock> io_block;
+  RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "WorkerGet"));
   RETURN_IF_NOT_OK(PopIoBlockQueue(worker_id, &io_block));
+  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerGet", {{"Flag", io_block->FlagName()}}));
+  RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "WorkerProcess"));
 
   while (!io_block->eof()) {
     if (!io_block->eoe()) {
@@ -137,16 +140,20 @@ Status NonMappableLeafOp::WorkerEntry(int32_t worker_id) {
         int64_t start_offset = io_block->GetStartOffset();
         int64_t end_offset = io_block->GetEndOffset();
         RETURN_IF_NOT_OK(LoadFile(filename, start_offset, end_offset, worker_id));
+        RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerProcess", {{"Flag", io_block->FlagName()}}));
         MS_LOG(DEBUG) << Name() << " operator worker " << worker_id << " loaded file " << filename << ".";
       }
     } else {
       TensorRow eoe = TensorRow(TensorRow::kFlagEOE);
+      RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerProcess", {{"Flag", io_block->FlagName()}}));
       RETURN_IF_NOT_OK(jagged_rows_connector_->Add(worker_id, std::move(eoe)));
     }
-
+    RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "WorkerGet"));
     RETURN_IF_NOT_OK(PopIoBlockQueue(worker_id, &io_block));
+    RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerGet", {{"Flag", io_block->FlagName()}}));
+    RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "WorkerProcess"));
   }
-
+  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WorkerProcess", {{"Flag", io_block->FlagName()}}));
   return Status::OK();
 }
 
@@ -154,7 +161,7 @@ Status NonMappableLeafOp::WorkerEntry(int32_t worker_id) {
 // When the worker pops this control indicator, it will shut itself down gracefully.
 Status NonMappableLeafOp::PostEndOfData() {
   for (int i = 0; i < num_workers_; ++i) {
-    std::unique_ptr<FilenameBlock> eof = std::make_unique<FilenameBlock>(IOBlock::kDeIoBlockFlagEof);
+    std::unique_ptr<FilenameBlock> eof = std::make_unique<FilenameBlock>(IOBlock::kFlagEOF);
     RETURN_IF_NOT_OK(PushIoBlockQueue(i, std::move(eof)));
   }
 
@@ -165,7 +172,7 @@ Status NonMappableLeafOp::PostEndOfData() {
 // pops this control indicator, it will wait until the next epoch starts and then resume execution.
 Status NonMappableLeafOp::PostEndOfEpoch(int32_t queue_index) {
   for (int i = 0; i < num_workers_; ++i) {
-    std::unique_ptr<FilenameBlock> eoe = std::make_unique<FilenameBlock>(IOBlock::kDeIoBlockFlagEoe);
+    std::unique_ptr<FilenameBlock> eoe = std::make_unique<FilenameBlock>(IOBlock::kFlagEOE);
     RETURN_IF_NOT_OK(PushIoBlockQueue((queue_index + i) % num_workers_, std::move(eoe)));
   }
 
