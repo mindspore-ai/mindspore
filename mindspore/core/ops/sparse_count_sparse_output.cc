@@ -135,8 +135,9 @@ TuplePtr SparseCountSparseOutputInferType(const PrimitivePtr &primitive,
 
 AbstractBasePtr SparseCountSparseOutputInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                              const std::vector<abstract::AbstractBasePtr> &input_args) {
-  return abstract::MakeAbstract(SparseCountSparseOutputInferShape(primitive, input_args),
-                                SparseCountSparseOutputInferType(primitive, input_args));
+  auto infer_type = SparseCountSparseOutputInferType(primitive, input_args);
+  auto infer_shape = SparseCountSparseOutputInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
 }
 }  // namespace
 
