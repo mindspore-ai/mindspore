@@ -4889,20 +4889,19 @@ def _manipulate_padding(padding, dim):
     return ms_padding
 
 
-def _manipulate_dilation(dilation):
-    """convert 1d dilation to 2d"""
-    if isinstance(dilation, int):
-        if dilation <= 0:
-            raise ValueError(f"For 'conv1d', dilation must be a positive int, but got {dilation}.")
-        return 1, dilation
-    if isinstance(dilation, (tuple, list)):
-        if len(dilation) != 1:
-            raise ValueError(f"For 'conv1d', dilation must be a tuple/list with 1 element or int, \
-            but got {dilation}.")
-        if dilation[0] <= 0:
-            raise ValueError(f"For 'conv1d', elements in dilation must be positive int, but got {dilation}.")
-        return 1, dilation[0]
-    raise ValueError(f"For 'conv1d', dilation must be an int or a tuple/list with 1 element, but got {dilation}.")
+def _dim_manipulation(x, name):
+    """convert 1d dilation, stride, etc. to 2d"""
+    if isinstance(x, int):
+        if x <= 0:
+            raise ValueError(f"For 'conv1d', {name} must be a positive int, but got {x}.")
+        return 1, x
+    if isinstance(x, (tuple, list)):
+        if len(x) != 1:
+            raise ValueError(f"For 'conv1d', {name} must be a tuple/list with 1 element or int, but got {x}.")
+        if x[0] <= 0:
+            raise ValueError(f"For 'conv1d', elements in {name} must be positive int, but got {x}.")
+        return 1, x[0]
+    raise ValueError(f"For 'conv1d', {name} must be an int or a tuple/list with 1 element, but got {x}.")
 
 
 def _check_conv_iterable_lengths(iterable, dim, iter_name):
@@ -5023,7 +5022,8 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         padding = (0, 0, padding[0], padding[0])
     else:
         raise TypeError(f"For 'conv1d', padding must be a tuple, list or int, but got {type(padding)}.")
-    dilation = _manipulate_dilation(dilation)
+    dilation = _dim_manipulation(dilation, name='dilation')
+    stride = _dim_manipulation(stride, name='stride')
     conv = _get_cache_prim(P.Conv2D)(out_channel, kernel_size, 1, pad_mode, padding, stride, dilation, groups, "NCHW")
     conv_res = conv(expanded_input, expanded_weight)
     squeezed_conv_res = sqz(conv_res)
