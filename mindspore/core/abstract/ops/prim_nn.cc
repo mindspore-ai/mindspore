@@ -285,29 +285,5 @@ AbstractBasePtr InferImplBiasDropoutAdd(const abstract::AnalysisEnginePtr &, con
   AbstractBasePtrList ret = {output_shape, output_shape};
   return std::make_shared<abstract::AbstractTuple>(ret);
 }
-
-AbstractBasePtr InferImplComputeAccidentalHits(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const AbstractBasePtrList &args_abs_list) {
-  // inputs: true_classes, sampled_candidates
-  const std::string op_name = primitive->name();
-  constexpr size_t size_expected = 2;
-  CheckArgsSize(op_name, args_abs_list, size_expected);
-  AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_abs_list, 0);
-
-  auto shape = input->shape();
-  if (shape->shape().size() != size_expected) {
-    MS_LOG(EXCEPTION) << "Rank of " << op_name << "'s input must be 2.";
-  }
-  ShapeVector indices_shape = {Shape::kShapeDimAny};
-  ShapeVector max_shape = {shape->shape()[0] * shape->shape()[1]};
-
-  auto indices = std::make_shared<AbstractTensor>(input->element(), std::make_shared<Shape>(indices_shape, max_shape));
-
-  auto weights = std::make_shared<AbstractTensor>(kFloat32, indices_shape);
-  weights->set_shape(std::make_shared<Shape>(indices_shape, max_shape));
-  // outputs: indices, ids, weights
-  AbstractBasePtrList elements = {indices, indices, weights};
-  return std::make_shared<AbstractTuple>(elements);
-}
 }  // namespace abstract
 }  // namespace mindspore

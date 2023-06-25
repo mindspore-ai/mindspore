@@ -144,8 +144,6 @@ MIND_API AbstractBasePtr InferImplCacheSwapTable(const AnalysisEnginePtr &, cons
                                                  const AbstractBasePtrList &args_abs_list);
 MIND_API AbstractBasePtr InferImplUpdateCache(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                               const AbstractBasePtrList &args_abs_list);
-MIND_API AbstractBasePtr InferImplComputeAccidentalHits(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                        const AbstractBasePtrList &args_abs_list);
 MIND_API AbstractBasePtr InferImplPadAndShift(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                               const AbstractBasePtrList &args_abs_list);
 MIND_API AbstractBasePtr InferImplDynamicAssign(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
