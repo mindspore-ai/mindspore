@@ -77,6 +77,21 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/securec/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/flatbuffers/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/flatbuffers/include/flatbuffers)
 
+if(MSVC AND NOT ENABLE_GPU)
+    find_program(CCACHE_EXE ccache)
+    if(CCACHE_EXE)
+        message(STATUS "using ccache to speed windows compilation.")
+        file(COPY ${CCACHE_EXE} DESTINATION ${CMAKE_BINARY_DIR}/cl.exe)
+        set(CMAKE_VS_GLOBALS
+            "CLToolExe=cl.exe"
+            "CLToolPath=${CMAKE_BINARY_DIR}"
+            "TrackFileAccess=false"
+            "UseMultiToolTask=true"
+            "DebugInformationFormat=OldStyle"
+        )
+    endif()
+endif()
+
 if(ENABLE_FAST_HASH_TABLE)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DENABLE_FAST_HASH_TABLE=1")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/robin_hood/include)
