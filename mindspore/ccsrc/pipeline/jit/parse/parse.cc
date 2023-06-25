@@ -41,6 +41,7 @@
 #include "include/common/fallback.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/python_adapter.h"
+#include "include/common/utils/convert_utils_py.h"
 
 namespace mindspore {
 namespace parse {
@@ -119,6 +120,19 @@ void Parser::BuildMethodMap() {
   expr_method_map_["GeneratorExp"] = &Parser::ParseListComp;  // We treat 'GeneratorExp' the same as 'ListComp'.
   expr_method_map_["JoinedStr"] = &Parser::ParseJoinedStr;
   expr_method_map_["FormattedValue"] = &Parser::ParseFormattedValue;
+  condition_method_map_["Attribute"] = &Parser::CheckAttributeConstantCond;
+  condition_method_map_["Name"] = &Parser::CheckNameConstantCond;
+  condition_method_map_["UnaryOp"] = &Parser::CheckUnaryOpConstantCond;
+  condition_method_map_["Compare"] = &Parser::CheckCompareConstantCond;
+  condition_method_map_["BoolOp"] = &Parser::CheckBoolOpConstantCond;
+  compare_method_map_["is"] = &Parser::CompareIs;
+  compare_method_map_["is not"] = &Parser::CompareIsNot;
+  compare_method_map_["=="] = &Parser::CompareEqual;
+  compare_method_map_["!="] = &Parser::CompareNotEqual;
+  compare_method_map_[">"] = &Parser::CompareGreater;
+  compare_method_map_[">="] = &Parser::CompareGreaterEqual;
+  compare_method_map_["<"] = &Parser::CompareLess;
+  compare_method_map_["<="] = &Parser::CompareLessEqual;
 }
 
 void Parser::UpdateTopFuncGraph(const FuncGraphPtr &func_graph) { top_func_graph_ = FuncGraphWeakPtr(func_graph); }
@@ -134,9 +148,9 @@ void Parser::CleanParserResource() {
   ScopeManager::GetInstance().ClearScope();
 }
 
-void Parser::CheckFuncReturn(const FuncGraphPtr &fn) {
+void Parser::CheckFuncReturn(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fn) {
   // Check whether the functions referred by this function and itself are missing 'return' statement
-  auto manager = Manage(fn, false);
+  MS_EXCEPTION_IF_NULL(manager);
   MS_EXCEPTION_IF_NULL(ast_);
   for (const auto &func_graph : manager->func_graphs()) {
     MS_EXCEPTION_IF_NULL(func_graph);
@@ -511,9 +525,10 @@ FuncGraphPtr Parser::ParseFuncGraph() {
       func_block_item->AttachIsolatedNodesBeforeReturn();
     }
   }
-  RemoveUnnecessaryPhis();
   MS_EXCEPTION_IF_NULL(fn_block);
-  CheckFuncReturn(fn_block->func_graph());
+  auto manager = Manage(fn_block->func_graph(), false);
+  RemoveUnnecessaryPhis(manager);
+  CheckFuncReturn(manager, fn_block->func_graph());
   TransformParallelCall();
   return fn_block->func_graph();
 }
@@ -809,7 +824,10 @@ FunctionBlockPtr Parser::ParseStatements(const FunctionBlockPtr &block, const py
     sub_block = next_block;
 
     static const auto boost_parse = common::GetEnv("MS_DEV_BOOST_PARSE");
-    if ((boost_parse != "2" && boost_parse != "3")) {
+    if (boost_parse != "0" && sub_block->is_dead_block()) {
+      break;
+    }
+    if (boost_parse == "0") {
       // Insert appropriate depended items for the function block if it has a return node
       if (sub_block->func_graph()->get_return() != nullptr || sub_block->is_dead_block()) {
         // If break is not the last expr.
@@ -1329,7 +1347,139 @@ std::vector<AnfNodePtr> Parser::ParseRaiseCall(const FunctionBlockPtr &block, co
   return {};
 }
 
-bool Parser::GetBoolObjForAstCompare(const py::object &node, bool *bool_res) {
+namespace {
+bool HandleIs(const std::shared_ptr<ParseFunctionAst> &ast, const py::object &left_obj,
+              const py::object &comparator_obj, bool *bool_res) {
+  auto comparator_type_name = ast->GetNodeType(comparator_obj)->node_name();
+  if (comparator_type_name != "NameConstant") {
+    return false;
+  }
+  // xxx is None, the comparator must be a NameConstant.
+  py::object name_constant_value = python_adapter::GetPyObjAttr(comparator_obj, "value");
+  MS_LOG(DEBUG) << "name_constant_value: " << py::str(name_constant_value);
+
+  // Compare with None.
+  if (py::isinstance<py::none>(name_constant_value)) {
+    *bool_res = py::isinstance<py::none>(left_obj);
+    return true;
+  }
+  // To add more NameConstants.
+  return false;
+}
+
+bool HandleEqual(const std::shared_ptr<ParseFunctionAst> &ast, const py::object &left_obj,
+                 const py::object &comparator_obj, bool *bool_res) {
+  auto comparator_type_name = ast->GetNodeType(comparator_obj)->node_name();
+  if (comparator_type_name != "Num" && comparator_type_name != "Str") {
+    return false;
+  }
+  if (comparator_type_name == "Num" && (py::isinstance<py::int_>(left_obj) || py::isinstance<py::float_>(left_obj))) {
+    py::object num_value = python_adapter::GetPyObjAttr(comparator_obj, "n");
+    MS_LOG(DEBUG) << "num_value: " << py::str(num_value);
+    if (!py::isinstance<py::int_>(num_value) && !py::isinstance<py::float_>(num_value)) {
+      return false;
+    }
+    *bool_res = left_obj.equal(num_value);
+    return true;
+  }
+  if (py::isinstance<py::str>(left_obj)) {
+    py::object str_value = python_adapter::GetPyObjAttr(comparator_obj, "s");
+    auto left_obj_str = left_obj.cast<std::string>();
+    *bool_res = (left_obj_str == str_value.cast<std::string>());
+    return true;
+  }
+  return false;
+}
+
+bool HandleGreater(const std::shared_ptr<ParseFunctionAst> &ast, const py::object &left_obj,
+                   const py::object &comparator_obj, bool *bool_res) {
+  auto comparator_type_name = ast->GetNodeType(comparator_obj)->node_name();
+  if (comparator_type_name != "Num" || (!py::isinstance<py::int_>(left_obj) && !py::isinstance<py::float_>(left_obj))) {
+    return false;
+  }
+  py::object num_value = python_adapter::GetPyObjAttr(comparator_obj, "n");
+  MS_LOG(DEBUG) << "num_value: " << py::str(num_value);
+
+  if (!py::isinstance<py::int_>(num_value) && !py::isinstance<py::float_>(num_value)) {
+    return false;
+  }
+  *bool_res = (left_obj > num_value);
+  return true;
+}
+}  // namespace
+
+bool Parser::CompareIs(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const {
+  return HandleIs(ast_, left_obj, comparator_obj, bool_res);
+}
+
+bool Parser::CompareIsNot(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const {
+  if (!HandleIs(ast_, left_obj, comparator_obj, bool_res)) {
+    return false;
+  }
+  *bool_res = !(*bool_res);
+  return true;
+}
+
+bool Parser::CompareEqual(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const {
+  return HandleEqual(ast_, left_obj, comparator_obj, bool_res);
+}
+
+bool Parser::CompareNotEqual(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const {
+  if (!HandleEqual(ast_, left_obj, comparator_obj, bool_res)) {
+    return false;
+  }
+  *bool_res = !(*bool_res);
+  return true;
+}
+
+bool Parser::CompareGreater(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const {
+  return HandleGreater(ast_, left_obj, comparator_obj, bool_res);
+}
+
+bool Parser::CompareGreaterEqual(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const {
+  bool greater = false;
+  bool equal = false;
+  if (!HandleGreater(ast_, left_obj, comparator_obj, &greater) ||
+      !HandleEqual(ast_, left_obj, comparator_obj, &equal)) {
+    return false;
+  }
+  if (greater || equal) {
+    *bool_res = true;
+  } else {
+    *bool_res = false;
+  }
+  return true;
+}
+
+bool Parser::CompareLess(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const {
+  bool greater = false;
+  bool equal = false;
+  if (!HandleGreater(ast_, left_obj, comparator_obj, &greater) ||
+      !HandleEqual(ast_, left_obj, comparator_obj, &equal)) {
+    return false;
+  }
+  if (greater || equal) {
+    *bool_res = false;
+  } else {
+    *bool_res = true;
+  }
+  return true;
+}
+
+bool Parser::CompareLessEqual(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const {
+  bool greater = false;
+  if (!HandleGreater(ast_, left_obj, comparator_obj, &greater)) {
+    return false;
+  }
+  if (greater) {
+    *bool_res = false;
+  } else {
+    *bool_res = true;
+  }
+  return true;
+}
+
+bool Parser::GetBoolObjForAstCompare(const FunctionBlockPtr &block, const py::object &node, bool *bool_res) const {
   MS_EXCEPTION_IF_NULL(bool_res);
   py::list ops = python_adapter::GetPyObjAttr(node, "ops");
   if (ops.size() != 1) {
@@ -1344,46 +1494,51 @@ bool Parser::GetBoolObjForAstCompare(const py::object &node, bool *bool_res) {
   constexpr size_t op_str_index = 2;
   std::string op_str = py::str(namespace_var[op_str_index]);
   MS_LOG(DEBUG) << "op: " << py::str(op) << ", " << op_str;
+  auto func_iter = compare_method_map_.find(op_str);
+  if (func_iter == compare_method_map_.end()) {
+    return false;
+  }
 
   py::object left = python_adapter::GetPyObjAttr(node, "left");
-  const auto left_obj = GetPyObjForAstAttr(left);
+  py::object left_obj;
+  auto arg_type = AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, left)));
+  if (arg_type == AST_SUB_TYPE_ATTRIBUTE) {
+    bool is_constant;
+    left_obj = GetPyObjForAstAttr(block, left, &is_constant);
+    if (!is_constant) {
+      return false;
+    }
+  } else {
+    MS_LOG(DEBUG) << "Not attribute, attr_ast_node: " << py::str(left);
+    py::object id = python_adapter::GetPyObjAttr(left, "id");
+    if (!py::isinstance<py::str>(id)) {
+      return false;
+    }
+    auto v_node = block->ReadVariable(id.cast<std::string>());
+    if (v_node == nullptr || !v_node->isa<ValueNode>()) {
+      return false;
+    }
+    MS_LOG(DEBUG) << "left value node: " << v_node->DebugString();
+    left_obj = ValueToPyData(v_node->cast_ptr<ValueNode>()->value());
+  }
   MS_LOG(DEBUG) << "left_obj: " << py::str(left_obj);
 
   py::list comparators = python_adapter::GetPyObjAttr(node, "comparators");
   if (comparators.size() != 1) {
     return false;
   }
-  // Must be NameConstant.
-  py::object comparator_obj = python_adapter::GetPyObjAttr(comparators[0], "value");
-  MS_LOG(DEBUG) << "comparator_obj: " << py::str(comparator_obj);
 
-  // Compare with None.
-  if (py::isinstance<py::none>(comparator_obj)) {
-    if (op_str == "is") {
-      *bool_res = py::isinstance<py::none>(left_obj);
-      return true;
-    }
-    if (op_str == "is not") {
-      *bool_res = !py::isinstance<py::none>(left_obj);
-      return true;
-    }
-  }
-  // Add more compare here.
-  return false;
+  return (this->*(func_iter->second))(left_obj, comparators[0], bool_res);
 }
 
-py::object Parser::GetPyObjForAstAttr(const py::object &attr_ast_node) {
-  auto arg_type = AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, attr_ast_node)));
-  if (arg_type != AST_SUB_TYPE_ATTRIBUTE) {
-    MS_LOG(DEBUG) << "Not attribute, attr_ast_node: " << py::str(attr_ast_node);
-    return py::none();
-  }
-
+py::object Parser::GetPyObjForAstAttr(const FunctionBlockPtr &block, const py::object &attr_ast_node,
+                                      bool *is_constant) const {
   auto attr_value = python_adapter::GetPyObjAttr(attr_ast_node, "value");
   auto attr_value_type =
     AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, attr_value)));
   if (attr_value_type != AST_SUB_TYPE_NAME) {
     MS_LOG(DEBUG) << "attr_value: " << py::str(attr_value);
+    *is_constant = false;
     return py::none();
   }
 
@@ -1392,6 +1547,11 @@ py::object Parser::GetPyObjForAstAttr(const py::object &attr_ast_node) {
   MS_LOG(DEBUG) << "attr name: " << value_name << "." << attr_name;
   py::object py_obj_attr_value = py::none();
   if (value_name != "self") {
+    auto node = block->ReadVariable(value_name);
+    if (node != nullptr && (node->isa<Parameter>() || IsPrimitiveCNode(node, prim::kPrimMixedPrecisionCast))) {
+      *is_constant = false;
+      return py::none();
+    }
     py::tuple attr_namespace_info = ast_->CallParserObjMethod(PYTHON_PARSE_GET_NAMESPACE_SYMBOL, value_name);
     constexpr size_t global_info_size = 4;
     // Handle nested function def.
@@ -1400,16 +1560,26 @@ py::object Parser::GetPyObjForAstAttr(const py::object &attr_ast_node) {
       py_obj_attr_value = attr_namespace_info[value_index];
     }
   } else {
+    auto iter = setattr_nodes_map_.find(value_name);
+    if (iter != setattr_nodes_map_.end()) {
+      if (iter->second.find(attr_name) != iter->second.end()) {
+        MS_LOG(DEBUG) << "The self." << attr_name << "has been modified.";
+        *is_constant = false;
+        return py::none();
+      }
+    }
     py_obj_attr_value = ast_->obj();
   }
   if (!py::isinstance<py::none>(py_obj_attr_value)) {
     auto attr_obj =
       python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_ATTR_FROM_OBJ, py_obj_attr_value, py::str(attr_name));
     if (!py::isinstance<py::none>(attr_obj)) {
+      *is_constant = true;
       return attr_obj;
     }
   }
   MS_LOG(DEBUG) << "Not found object for attribute, attr_ast_node: " << py::str(attr_ast_node);
+  *is_constant = false;
   return py::none();
 }
 
@@ -2158,33 +2328,119 @@ void Parser::CheckControlFlowAlterationInIf(std::pair<FunctionBlockPtr, Function
   }
 }
 
-// Return true if it's constant condition and the condition value returned by is_true_cond, otherwise return false.
-bool Parser::CheckConstantCondition(const py::object &test_node, bool *is_true_cond) {
-  static const auto boost_parse = common::GetEnv("MS_DEV_BOOST_PARSE");
-  if (boost_parse != "1" && boost_parse != "3") {
+// Check constant bool constant attr, such as:
+//   if self.has_bias
+bool Parser::CheckAttributeConstantCond(const FunctionBlockPtr &block, const py::object &test_node,
+                                        bool *is_true_cond) const {
+  bool is_constant;
+  auto attr_cond = GetPyObjForAstAttr(block, test_node, &is_constant);
+  if (!is_constant) {
     return false;
   }
-  MS_EXCEPTION_IF_NULL(is_true_cond);
-
-  // Check bool constant attr, such as:
-  //   if self.has_bias
-  auto attr_cond = GetPyObjForAstAttr(test_node);
-  if (py::isinstance<py::bool_>(attr_cond)) {
-    *is_true_cond = py::cast<bool>(attr_cond);
-    MS_LOG(DEBUG) << "Has constant condition, is_true_cond: " << is_true_cond;
-    return true;
+  if (!py::isinstance<py::bool_>(attr_cond)) {
+    return false;
   }
+  *is_true_cond = py::cast<bool>(attr_cond);
+  return true;
+}
 
-  // Check constant None compare result, such as:
-  //   if self.has_bias is None
+// Check constant local var, such as:
+//   if has_bias
+bool Parser::CheckNameConstantCond(const FunctionBlockPtr &block, const py::object &test_node,
+                                   bool *is_true_cond) const {
+  auto id = python_adapter::GetPyObjAttr(test_node, "id");
+  if (!py::isinstance<py::str>(id)) {
+    return false;
+  }
+  auto v_node = dyn_cast<ValueNode>(block->ReadVariable(id.cast<std::string>()));
+  if (v_node == nullptr || !v_node->value()->isa<BoolImm>()) {
+    return false;
+  }
+  *is_true_cond = GetValue<bool>(v_node->value());
+  return true;
+}
+
+// Check constant unary op result, such as:
+//   if not self.has_bias
+bool Parser::CheckUnaryOpConstantCond(const FunctionBlockPtr &block, const py::object &test_node,
+                                      bool *is_true_cond) const {
+  auto op = python_adapter::GetPyObjAttr(test_node, "op");
+  auto op_node_type = ast()->GetNodeType(op);
+  const auto &op_node_type_name = op_node_type->node_name();
+  MS_LOG(DEBUG) << "op_node_type_name: " << op_node_type_name;
+  if (op_node_type_name != "Not") {
+    return false;
+  }
+  auto operand = python_adapter::GetPyObjAttr(test_node, "operand");
+  auto check_constant_cond = CheckConstantCondition(block, operand, is_true_cond);
+  if (!check_constant_cond) {
+    return false;
+  }
+  *is_true_cond = !(*is_true_cond);
+  return true;
+}
+
+// Check constant compare result, such as:
+//   if self.has_bias is None
+bool Parser::CheckCompareConstantCond(const FunctionBlockPtr &block, const py::object &test_node,
+                                      bool *is_true_cond) const {
+  return GetBoolObjForAstCompare(block, test_node, is_true_cond);
+}
+
+// Check constant bool op result, such as:
+//   if self.has_bias is None and self.beta == 1
+bool Parser::CheckBoolOpConstantCond(const FunctionBlockPtr &block, const py::object &test_node,
+                                     bool *is_true_cond) const {
+  auto op = python_adapter::GetPyObjAttr(test_node, "op");
+  auto op_node_type = ast()->GetNodeType(op);
+  const auto &op_node_type_name = op_node_type->node_name();
+  MS_LOG(DEBUG) << "op_node_type_name: " << op_node_type_name;
+  py::list values = python_adapter::GetPyObjAttr(test_node, "values");
+  bool determined = false;
+  for (size_t i = 0; i < values.size(); ++i) {
+    bool sub_is_true_cond;
+    auto check_constant_cond = CheckConstantCondition(block, values[i], &sub_is_true_cond);
+    if (!check_constant_cond) {
+      return false;
+    }
+    if (op_node_type_name == "Or" && sub_is_true_cond) {
+      determined = true;
+      break;
+    } else if (op_node_type_name == "And" && !sub_is_true_cond) {
+      determined = true;
+      break;
+    }
+  }
+  if (op_node_type_name == "Or") {
+    *is_true_cond = determined;
+  } else if (op_node_type_name == "And") {
+    *is_true_cond = !determined;
+  }
+  return true;
+}
+
+// Return true if it's constant condition and the condition value returned by is_true_cond, otherwise return false.
+bool Parser::CheckConstantCondition(const FunctionBlockPtr &block, const py::object &test_node,
+                                    bool *is_true_cond) const {
+  static const auto boost_parse = common::GetEnv("MS_DEV_BOOST_PARSE");
+  if (boost_parse == "0") {
+    return false;
+  }
+  MS_EXCEPTION_IF_NULL(block);
+  MS_EXCEPTION_IF_NULL(is_true_cond);
   auto node_type = ast()->GetNodeType(test_node);
   const std::string &node_type_name = node_type->node_name();
-  if (node_type_name == "Compare" && GetBoolObjForAstCompare(test_node, is_true_cond)) {
-    MS_LOG(DEBUG) << "Has constant condition, is_true_cond: " << is_true_cond;
+  MS_LOG(DEBUG) << "node_type_name: " << node_type_name;
+
+  auto func_iter = condition_method_map_.find(node_type_name);
+  if (func_iter == condition_method_map_.end()) {
+    return false;
+  }
+  auto check_constant = (this->*(func_iter->second))(block, test_node, is_true_cond);
+  if (check_constant) {
+    MS_LOG(DEBUG) << "Has constant condition, is_true_cond: " << *is_true_cond;
     return true;
   }
-  // Add more constant condition check here.
-
   MS_LOG(DEBUG) << "Has no constant condition, test_node: " << py::str(test_node);
   return false;
 }
@@ -2195,7 +2451,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   MS_EXCEPTION_IF_NULL(block);
   py::object test_node = python_adapter::GetPyObjAttr(node, "test");
   bool is_true_cond = false;
-  bool is_bool_const_cond = CheckConstantCondition(test_node, &is_true_cond);
+  bool is_bool_const_cond = CheckConstantCondition(block, test_node, &is_true_cond);
 
   // Make condition node.
   AnfNodePtr bool_node = nullptr;
@@ -3776,13 +4032,12 @@ void RemoveJumpNodeArgs(const FunctionBlockPtr &block, const HashSet<size_t> &ne
   }
 }
 
-void Parser::RemoveUnnecessaryPhis() {
+void Parser::RemoveUnnecessaryPhis(const FuncGraphManagerPtr &manager) {
   // Merge all removable phis to one map;
   const auto &removable_phis = CalRemovablePhis();
   if (removable_phis->empty()) {
     return;
   }
-  const auto &manager = Manage(func_graph_, false);
   MS_EXCEPTION_IF_NULL(manager);
   // Replace all phi node as arg.
   ReplacePhiAsArg(*removable_phis, manager);

@@ -234,9 +234,10 @@ class Parser {
   std::vector<AnfNodePtr> ParseRaiseCall(const FunctionBlockPtr &block, const py::object &node);
   void ParseStrInError(const FunctionBlockPtr &block, const py::list &args, std::vector<AnfNodePtr> *str_nodes);
 
-  bool GetBoolObjForAstCompare(const py::object &node, bool *bool_res);
-  py::object GetPyObjForAstAttr(const py::object &attr_ast_node);
-  bool CheckConstantCondition(const py::object &test_node, bool *is_true_cond);
+  bool GetBoolObjForAstCompare(const FunctionBlockPtr &block, const py::object &node, bool *bool_res) const;
+  py::object GetPyObjForAstAttr(const FunctionBlockPtr &block, const py::object &attr_ast_node,
+                                bool *is_constant) const;
+  bool CheckConstantCondition(const FunctionBlockPtr &block, const py::object &test_node, bool *is_true_cond) const;
 
   FunctionBlockPtr MakeAssertErrorBlock(const FunctionBlockPtr &block, const py::object &node);
   AnfNodePtr ProcessAttributeWithClassMember(const FunctionBlockPtr &block, const py::object &node) const;
@@ -298,7 +299,7 @@ class Parser {
                                          std::map<AnfNodePtr, std::set<ParameterPtr>> *arg_to_phis);
   static std::shared_ptr<std::map<ParameterPtr, AnfNodePtr>> CollectRemovablePhiArgs(
     const std::map<ParameterPtr, std::set<AnfNodePtr>> &phi_to_args);
-  void RemoveUnnecessaryPhis();
+  void RemoveUnnecessaryPhis(const FuncGraphManagerPtr &manager);
   void ConvertGetattrNodes();
   // Write a new var.
   void WriteAssignVars(const FunctionBlockPtr &block, const py::object &target_object, const AnfNodePtr &value_node);
@@ -369,10 +370,24 @@ class Parser {
   void CheckReturnInLoop(const FunctionBlockPtr &block, const FunctionBlockPtr &body_block) const;
 
   // Check whether the functions referred by this function and itself are missing 'return' statement.
-  void CheckFuncReturn(const FuncGraphPtr &fn);
+  void CheckFuncReturn(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fn);
 
   // If the node is Parameter member of class.
   bool IsClassParameterMember(const py::object &target_obj, const AnfNodePtr &target_node) const;
+
+  bool CheckAttributeConstantCond(const FunctionBlockPtr &block, const py::object &test_node, bool *is_true_cond) const;
+  bool CheckNameConstantCond(const FunctionBlockPtr &block, const py::object &test_node, bool *is_true_cond) const;
+  bool CheckUnaryOpConstantCond(const FunctionBlockPtr &block, const py::object &test_node, bool *is_true_cond) const;
+  bool CheckCompareConstantCond(const FunctionBlockPtr &block, const py::object &test_node, bool *is_true_cond) const;
+  bool CheckBoolOpConstantCond(const FunctionBlockPtr &block, const py::object &test_node, bool *is_true_cond) const;
+  bool CompareIs(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const;
+  bool CompareIsNot(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const;
+  bool CompareEqual(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const;
+  bool CompareNotEqual(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const;
+  bool CompareGreater(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const;
+  bool CompareGreaterEqual(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const;
+  bool CompareLess(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const;
+  bool CompareLessEqual(const py::object &left_obj, const py::object &comparator_obj, bool *bool_res) const;
 
   // The shared_ptr will be hold by GraphManager, so just hold a weak ref here.
   static FuncGraphWeakPtr top_func_graph_;
@@ -391,10 +406,18 @@ class Parser {
   std::vector<FunctionBlockPtr> func_block_list_;
   using StmtFunc = FunctionBlockPtr (Parser::*)(const FunctionBlockPtr &block, const py::object &node);
   using ExprFunc = AnfNodePtr (Parser::*)(const FunctionBlockPtr &block, const py::object &node);
+  using CompareFunc = bool (Parser::*)(const py::object &left_obj, const py::object &comparator_obj,
+                                       bool *bool_res) const;
+  using ConditionFunc = bool (Parser::*)(const FunctionBlockPtr &block, const py::object &test_node,
+                                         bool *is_true_cond) const;
   // Define the function map to parse ast Statement.
   std::map<std::string, StmtFunc> stmt_method_map_;
   // Define the function map to parse ast expression.
   std::map<std::string, ExprFunc> expr_method_map_;
+  // Define the function map to parse compare expression.
+  std::map<std::string, CompareFunc> compare_method_map_;
+  // Define the function map to parse constant condition expression.
+  std::map<std::string, ConditionFunc> condition_method_map_;
   // Save current loops to support 'continue', 'break' statement.
   std::stack<Loop> loops_;
 

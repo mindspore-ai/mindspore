@@ -1557,8 +1557,8 @@ static std::vector<ActionItem> CommonPipeline() {
   (void)actions.emplace_back(std::make_pair(kParse, ParseAction));
 
   // Resolve the python func
-  static auto boost_parse = common::GetEnv("MS_DEV_BOOST_PARSE");
-  if (boost_parse != "2" && boost_parse != "3") {
+  static auto boost_parse = common::GetEnv("MS_DEV_GREED_PARSE");
+  if (boost_parse != "1") {
     (void)actions.emplace_back(std::make_pair(kSymbolResolve, SymbolResolveAction));
   }
 
