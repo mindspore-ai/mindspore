@@ -5,6 +5,9 @@ mindspore.nn.TransformerEncoder
 
     Transformer编码器模块，多层 `TransformerEncoderLayer` 的堆叠，包括MultiheadAttention层和FeedForward层。可以使用此模块构造BERT(https://arxiv.org/abs/1810.04805)模型。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **encoder_layer** (Cell) - TransformerEncoderLayer()的实例。
         - **num_layers** (int) - 编码器层数。
@@ -17,3 +20,6 @@ mindspore.nn.TransformerEncoder
 
     输出：
         Tensor。
+
+    异常：
+        - **AssertionError** - 如果 `src_key_padding_mask` 不是布尔或浮点类型。

@@ -5,6 +5,9 @@ mindspore.nn.Transformer
 
     Transformer模块，包括编码器和解码器。本模块与原论文的实现不同，原论文在LayerNorm前使用了残差模块。且默认的隐藏层激活函数为 `gelu` 。详情可见 `Attention is all you need <https://arxiv.org/pdf/1706.03762v5.pdf>`_ 。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **d_model** (int) - Encoder或Decoder输入的特征数。默认值：``512``。
         - **nhead** (int) - 注意力头的数量。默认值：``8``。
@@ -31,3 +34,7 @@ mindspore.nn.Transformer
 
     输出：
         Tensor。
+
+    异常：
+        - **ValueError** - 如果 `src` 和 `tgt` 的batch size不相等。
+        - **ValueError** - 如果 `src` 和 `tgt` 的特征数量必须和 `d_model` 的一致。

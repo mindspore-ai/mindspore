@@ -5,6 +5,9 @@ mindspore.nn.TransformerEncoderLayer
 
     Transformer的编码器层。Transformer编码器的单层实现，包括MultiheadAttention层和FeedForward层。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **d_model** (int) - 输入的特征数。
         - **nhead** (int) - 注意力头的数量。
@@ -22,3 +25,7 @@ mindspore.nn.TransformerEncoderLayer
 
     输出：
         Tensor。
+
+    异常：
+        - **ValueError** - 如果 `activation` 不是str 、 callable 或 Cell的子类。
+        - **ValueError** - 如果 `activation` 不是 :class:`mindspore.nn.ReLU` 、 :class:`mindspore.nn.GELU` 、 :func:`mindspore.ops.relu` or :func:`mindspore.ops.gelu` 的子类、"relu" 或 "gelu"。
