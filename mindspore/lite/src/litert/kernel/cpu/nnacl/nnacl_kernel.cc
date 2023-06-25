@@ -15,9 +15,9 @@
  */
 
 #include "nnacl/nnacl_kernel.h"
+#include "nnacl/cxx_utils.h"
 #include "src/tensor.h"
 #include "include/errorcode.h"
-#include "src/litert/thread_cost_model.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
@@ -172,7 +172,7 @@ int NNACLKernel::InitKernel(const TypeId &data_type, const lite::InnerContext *c
     MS_LOG(ERROR) << "NNACL create kernel failed.";
     return RET_ERROR;
   }
-  kernel_->update_thread_ = lite::UpdateThreadNum;
+  kernel_->update_thread_ = DefaultUpdateThreadNumPass;
   return RET_OK;
 }
 }  // namespace mindspore::nnacl

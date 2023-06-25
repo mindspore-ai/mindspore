@@ -16,6 +16,7 @@
 
 #include "nnacl/cxx_utils.h"
 #include "src/litert/pack_weight_manager.h"
+#include "src/litert/thread_cost_model.h"
 #include "thread/threadpool.h"
 #include "src/litert/inner_allocator.h"
 #include "src/common/log_adapter.h"
@@ -69,5 +70,15 @@ void DefaultFreeSharingPackData(void *manager, void *tensor_data) {
   }
   auto weight_manager = static_cast<mindspore::lite::PackWeightManager *>(manager);
   return weight_manager->Free(tensor_data);
+}
+
+int DefaultUpdateThreadNumPass(int32_t kernel_type, int64_t per_unit_load_num, int64_t per_unit_store_num,
+                               int64_t unit_num, int thread_num) {
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
+  int update_thread = lite::UpdateThreadNum(kernel_type, per_unit_load_num, per_unit_store_num, unit_num, thread_num);
+#else
+  int update_thread = thread_num > 0 ? thread_num : 1;
+#endif
+  return update_thread;
 }
 }  // namespace mindspore::nnacl
