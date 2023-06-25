@@ -67,7 +67,7 @@ class BucketBatchByLengthOp : public PipelineOp {
  private:
   Status ObtainElementLength(int32_t *out_element_length, TensorRow element);
 
-  Status PadAndBatchBucket(int32_t bucket_index, int32_t batch_size);
+  Status PadAndBatchBucket(int32_t bucket_index);
 
   Status ComputeColMap() override;
 

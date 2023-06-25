@@ -210,7 +210,7 @@ class MINDRECORD_API ShardReader {
                         std::shared_ptr<std::vector<std::vector<uint8_t>>> *blob_data_ptr);
 
   /// \brief get load mode
-  LoadMode GetLoadMode();
+  LoadMode GetLoadMode() const;
 
   /// \brief get next sample ids in slow load mode
   std::vector<int64_t> GetNextSampleIds();

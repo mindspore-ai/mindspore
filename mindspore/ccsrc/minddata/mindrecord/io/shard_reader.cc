@@ -1592,7 +1592,7 @@ const std::vector<int64_t> *ShardReader::GetSampleIds() {
   return &(this->tasks_.sample_ids_);
 }
 
-LoadMode ShardReader::GetLoadMode() { return load_mode_; }
+LoadMode ShardReader::GetLoadMode() const { return load_mode_; }
 
 std::vector<int64_t> ShardReader::GetNextSampleIds() { return tasks_.GetNextSampleIds(); }
 }  // namespace mindrecord
