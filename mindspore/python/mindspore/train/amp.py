@@ -528,14 +528,16 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
     config = dict(_config_level.get(level), **kwargs)
 
     if config["cast_model_type"] == mstype.float16:
+        _update_amp_status(network)
         network.to_float(mstype.float16)
 
         if config["keep_batchnorm_fp32"]:
             _do_keep_batchnorm_fp32(network)
     elif not config["keep_batchnorm_fp32"] and level == "O2":
+        _update_amp_status(network)
         network.to_float(mstype.float16)
     elif config["cast_model_type"] == mstype.float32 and level in ("O2", "O3"):
-        pass
+        _update_amp_status(network)
     else:
         network = auto_mixed_precision(network, level)
 
@@ -713,4 +715,6 @@ def _update_amp_status(network):
         if network.amp_converted:
             raise ValueError("Duplicate automatic mixed-precision operations detected. You may need "
                              "to set 'amp_level' to 'O0' when using 'Model' or 'build_train_network'.")
-        network.add_flags_recursive(amp_converted=True)
+    for cell in network.cells():
+        _update_amp_status(cell)
+    network.add_flags(amp_converted=True)
