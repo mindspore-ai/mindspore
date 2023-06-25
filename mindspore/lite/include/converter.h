@@ -92,6 +92,9 @@ class MS_API Converter {
   inline void SetDevice(const std::string &device);
   inline std::string GetDevice();
 
+  inline void SetProvider(const std::string &provider);
+  inline std::string GetProvider();
+
   /// \brief Convert model and save .ms format model into `output_file` that passed in constructor.
   Status Convert();
 
@@ -123,6 +126,8 @@ class MS_API Converter {
   std::vector<char> GetEncryptKeyChar() const;
   void SetDevice(const std::vector<char> &device);
   std::vector<char> GetDeviceChar();
+  void SetProvider(const std::vector<char> &provider);
+  std::vector<char> GetProviderChar();
   Status Convert(converter::FmkType fmk_type, const std::vector<char> &model_file, const std::vector<char> &output_file,
                  const std::vector<char> &weight_file);
   std::shared_ptr<ConverterPara> data_;
@@ -167,6 +172,10 @@ std::string Converter::GetEncryptKey() const { return CharToString(GetEncryptKey
 void Converter::SetDevice(const std::string &device) { SetDevice(StringToChar(device)); }
 
 std::string Converter::GetDevice() { return CharToString(GetDeviceChar()); }
+
+void Converter::SetProvider(const std::string &provider) { SetProvider(StringToChar(provider)); }
+
+std::string Converter::GetProvider() { return CharToString(GetProviderChar()); }
 
 Status Converter::Convert(converter::FmkType fmk_type, const std::string &model_file, const std::string &output_file,
                           const std::string &weight_file) {

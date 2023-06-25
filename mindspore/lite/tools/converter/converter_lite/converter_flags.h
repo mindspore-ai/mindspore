@@ -41,6 +41,7 @@ class Flags : public virtual mindspore::lite::FlagParser {
   int InitSaveFP16();
   int InitNoFusion();
   int InitOptimize();
+  int InitProvider();
   int InitSaveType();
   int InitOptimizeTransformer();
 
@@ -90,6 +91,7 @@ class Flags : public virtual mindspore::lite::FlagParser {
   bool encryption = false;
 #endif
   std::string device;
+  std::string provider;
   std::string optimizeTransformerStr;
   bool optimizeTransformer = false;
 };

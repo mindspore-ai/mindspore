@@ -39,6 +39,9 @@
 #endif
 #include "src/extendrt/utils/tensor_utils.h"
 #include "framework/common/ge_inner_error_codes.h"
+#include "src/extendrt/delegate/ascend_ge/aoe_api_tune_process.h"
+#include "extendrt/delegate/ascend_ge/ge_utils.h"
+#include "extendrt/delegate/ascend_ge/ge_dynamic_utils.h"
 
 namespace mindspore {
 namespace {
@@ -134,7 +137,7 @@ void GeGraphExecutor::GetGeSessionOptions(std::map<std::string, std::string> *ge
       MS_LOG(INFO) << "Set ge session option " << item.first << " to " << item.second;
     }
   }
-  auto ascend_info = GetAscendDeviceInfo();
+  auto ascend_info = GeUtils::GetAscendDeviceInfo(context_);
   if (ascend_info == nullptr) {
     MS_LOG(EXCEPTION) << "Failed to get ge session options, can not find ascend device context.";
   }
@@ -202,7 +205,7 @@ void GeGraphExecutor::GetGeGraphOptions(const FuncGraphPtr &anf_graph,
   MS_EXCEPTION_IF_NULL(anf_graph);
   MS_EXCEPTION_IF_NULL(ge_options_ptr);
   auto &ge_options = *ge_options_ptr;
-  auto ascend_device_info = this->GetAscendDeviceInfo();
+  auto ascend_device_info = GeUtils::GetAscendDeviceInfo(context_);
   if (ascend_device_info == nullptr) {
     MS_LOG(EXCEPTION) << "Failed to get graph session options, can not find ascend device context.";
   }
@@ -314,29 +317,65 @@ transform::TensorOrderMap GeGraphExecutor::GetParams(const FuncGraphPtr &anf_gra
   return res;
 }
 
-bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &anf_graph, const std::map<string, string> &compile_options,
-                                   uint32_t *graph_id) {
+bool GeGraphExecutor::UpdateGraphInputs(const FuncGraphPtr &graph) {
+  std::vector<ShapeVector> input_shapes = GeDynamicUtils::GetGraphInputShapes(context_, config_infos_);
+  if (input_shapes.empty()) {
+    MS_LOG(INFO) << "Not found input shape in AscendDeviceInfo or config file";
+    return true;
+  }
+  auto inputs = graph->get_inputs();
+  if (inputs.size() != input_shapes.size()) {
+    MS_LOG(WARNING) << "FuncGraph input size " << inputs.size() << " != input size " << input_shapes.size()
+                    << " in AscendDeviceInfo or config file " << input_shapes.size();
+    return false;
+  }
+  for (size_t i = 0; i < input_shapes.size(); i++) {
+    auto node = inputs[i];
+    auto input_shape = input_shapes[i];
+    auto para = node->cast<ParameterPtr>();
+    if (para == nullptr) {
+      MS_LOG(WARNING) << "Cast input to Parameter failed";
+      return false;
+    }
+    auto abstract = para->abstract();
+    if (abstract == nullptr) {
+      MS_LOG(WARNING) << "Get input abstract failed";
+      return false;
+    }
+    MS_LOG(INFO) << "Update shape of input " << i << " to " << input_shape;
+    abstract->set_shape(std::make_shared<abstract::Shape>(input_shape));
+  }
+  return true;
+}
+
+transform::DfGraphPtr GeGraphExecutor::CompileGraphCommon(const FuncGraphPtr &anf_graph,
+                                                          const std::map<string, string> &compile_options,
+                                                          std::map<std::string, std::string> *ge_options_ptr) {
   if (!CreateSession()) {
     MS_LOG(ERROR) << "Failed to create ge session";
-    return false;
+    return nullptr;
   }
   if (anf_graph == nullptr) {
     MS_LOG(ERROR) << "Input param graph is nullptr.";
-    return false;
+    return nullptr;
   }
-  if (graph_id == nullptr) {
-    MS_LOG(ERROR) << "Input param graph_id is nullptr.";
-    return false;
+  if (ge_options_ptr == nullptr) {
+    MS_LOG(ERROR) << "Input param ge_options_ptr is nullptr.";
+    return nullptr;
   }
+  auto &ge_options = *ge_options_ptr;
 #ifdef MSLITE_ENABLE_GRAPH_KERNEL
   auto param = ParseGraphKernelConfigs(config_infos_);
   if (GraphKernelOptimize(anf_graph, param) != lite::RET_OK) {
     MS_LOG(ERROR) << "Run graphkernel optimization failed.";
-    return false;
+    return nullptr;
   }
 #endif
-  std::map<std::string, std::string> ge_options;
   GetGeGraphOptions(anf_graph, &ge_options);
+  if (!UpdateGraphInputs(anf_graph)) {
+    MS_LOG(ERROR) << "Failed to update graph inputs";
+    return nullptr;
+  }
 
   transform::DfGraphPtr df_graph = nullptr;
   auto func_type = anf_graph->get_attr(kAttrFuncType);
@@ -349,7 +388,7 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &anf_graph, const std::map
     if (err_code != 0) {
       transform::ClearGraph();
       MS_LOG(ERROR) << "Convert df graph failed, err:" << err_code;
-      return false;
+      return nullptr;
     }
     auto init_graph = transform::GetInitGraph(converter);
     auto init_data_names = converter->GetInitDataNames();
@@ -357,21 +396,21 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &anf_graph, const std::map
       uint32_t init_graph_id = 0;
       if (!AddGraph(init_graph, {}, &init_graph_id)) {
         MS_LOG(ERROR) << "Failed to add init graph, graph name " << anf_graph->ToString();
-        return false;
+        return nullptr;
       }
       std::vector<tensor::TensorPtr> init_data_tensors;
       for (auto &item : init_data_names) {
         auto it = params_vals.find(item);
         if (it == params_vals.end()) {
           MS_LOG(ERROR) << "Cannot find parameter " << item << " in parameter map";
-          return false;
+          return nullptr;
         }
         init_data_tensors.push_back(it->second);
       }
       // copy init weight to device
       if (!RunGeInitGraph(init_graph_id, init_data_tensors)) {
         MS_LOG(ERROR) << "Failed to run init graph for " << anf_graph->ToString();
-        return false;
+        return nullptr;
       }
     } else {
       MS_LOG(INFO) << "There is no init graph for graph " << anf_graph->ToString();
@@ -380,8 +419,15 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &anf_graph, const std::map
   } else {
     df_graph = GetDataFlowGraph(anf_graph, ge_options);
   }
-  if (df_graph == nullptr) {
-    MS_LOG(ERROR) << "Get df graph failed.";
+  return df_graph;
+}
+
+bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &anf_graph, const std::map<string, string> &compile_options,
+                                   uint32_t *graph_id) {
+  std::map<std::string, std::string> ge_options;
+  auto df_graph = CompileGraphCommon(anf_graph, compile_options, &ge_options);
+  if (anf_graph == nullptr) {
+    MS_LOG(ERROR) << "Input param graph is nullptr.";
     return false;
   }
   uint32_t compute_graph_id = 0;
@@ -398,22 +444,48 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &anf_graph, const std::map
   return true;
 }
 
-std::shared_ptr<AscendDeviceInfo> GeGraphExecutor::GetAscendDeviceInfo() {
-  if (context_ == nullptr) {
-    MS_LOG(ERROR) << "Context cannot be nullptr";
-    return nullptr;
+bool GeGraphExecutor::AoeTuning(const FuncGraphPtr &anf_graph) {
+  std::map<std::string, std::string> ge_options;
+  auto df_graph = CompileGraphCommon(anf_graph, {}, &ge_options);
+  if (df_graph == nullptr) {
+    MS_LOG(ERROR) << "Input param graph is nullptr.";
+    return false;
   }
-  auto device_list = context_->MutableDeviceInfo();
-  auto itr =
-    std::find_if(device_list.begin(), device_list.end(), [](const std::shared_ptr<DeviceInfoContext> &device_info) {
-      return device_info->GetDeviceType() == DeviceType::kAscend;
-    });
-  if (itr == device_list.end()) {
-    MS_LOG(ERROR) << "Can not find ascend device context.";
-    return nullptr;
+  auto input_shapes_configs = GeDynamicUtils::GetGraphOneRealShapes(context_, config_infos_);
+  std::vector<tensor::TensorPtr> inputs;
+  std::vector<std::string> input_names;
+  FuncGraphUtils::GetFuncGraphInputsInfo(anf_graph, &inputs, &input_names);
+  if (!input_shapes_configs.empty() && input_shapes_configs.size() != inputs.size()) {
+    MS_LOG(ERROR) << "Input count " << input_shapes_configs.size()
+                  << " get from input_shape of AscendDeviceInfo or config file != input count " << inputs.size()
+                  << " ge from graph";
+    return false;
   }
-  auto ascend_device_info = (*itr)->Cast<AscendDeviceInfo>();
-  return ascend_device_info;
+  std::vector<::ge::Tensor> ge_inputs;
+  for (size_t i = 0; i < inputs.size(); i++) {
+    auto &input = inputs[i];
+    if (!input_shapes_configs.empty()) {
+      input = std::make_shared<tensor::Tensor>(input->data_type(), input_shapes_configs[i]);
+    } else if (GeDynamicUtils::IsDynamicInputShapes({input->shape_c()})) {
+      MS_LOG(ERROR) << "Input " << i << " is dynamic shape " << input->shape_c()
+                    << ", but there is no input shape specified in AscendDeviceInfo or config file";
+      return false;
+    }
+    MS_LOG(INFO) << "Input " << i << " shape " << input->shape_c() << ", datatype " << input->data_type();
+    auto ge_tensor = transform::TransformUtil::ConvertTensor(input, kOpFormat_NCHW);
+    if (ge_tensor == nullptr) {
+      MS_LOG(ERROR) << "Failed to converter input " << i << " ME Tensor to GE Tensor";
+      return false;
+    }
+    ge_inputs.emplace_back(*ge_tensor);
+  }
+  AoeApiTuning tuning;
+  auto status = tuning.AoeTurningGraph(ge_session_, df_graph, ge_inputs, context_, config_infos_);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "Failed to call AoeTurningGraph";
+    return false;
+  }
+  return true;
 }
 
 bool GeGraphExecutor::RunGeInitGraph(uint32_t init_graph_id, const std::vector<tensor::TensorPtr> &init_tensors) {

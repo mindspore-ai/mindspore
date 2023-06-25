@@ -32,6 +32,8 @@ class AscendGeExecutorPluginImplBase {
   virtual ~AscendGeExecutorPluginImplBase() = default;
 
   virtual Status AdaptGraph(FuncGraphPtr graph) const = 0;
+  virtual bool AoeTuning(const FuncGraphPtr &graph, const std::shared_ptr<mindspore::Context> &context,
+                         const ConfigInfos &config_infos) = 0;
 };
 
 class MS_API AscendGeExecutorPlugin {
@@ -39,6 +41,8 @@ class MS_API AscendGeExecutorPlugin {
   static AscendGeExecutorPlugin &GetInstance();
   bool Register();
   void AdaptGraph(FuncGraphPtr graph);
+  bool AoeTuning(const FuncGraphPtr &graph, const std::shared_ptr<mindspore::Context> &context,
+                 const ConfigInfos &config_infos);
 
  private:
   AscendGeExecutorPlugin();
