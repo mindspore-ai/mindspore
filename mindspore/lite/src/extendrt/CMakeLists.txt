@@ -50,9 +50,11 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/cpu/transpose_kernel_mod.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/infer_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/single_op_session.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/session/memory_offload_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/delegate_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/default_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/session/factory.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/memory_offload/infer_strategy_builder.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/infer_device_address.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/kernel_build_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/utils/tensor_utils.cc

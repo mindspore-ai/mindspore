@@ -40,35 +40,39 @@ class AclPassImpl {
   explicit AclPassImpl(const std::shared_ptr<ConverterPara> &param);
   ~AclPassImpl() = default;
 
-  bool Run(const FuncGraphPtr &func_graph);
+  virtual bool Run(const FuncGraphPtr &func_graph);
+
+ protected:
+  /* build func graph */
+  virtual STATUS BuildGraph(const FuncGraphPtr &func_graph);
+  /* pre or post pass */
+  STATUS PreProcGraph(const FuncGraphPtr &func_graph);
+  STATUS PostProcGraph(const FuncGraphPtr &func_graph);
+  /* map func graph */
+  STATUS DeparseGraph(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager);
+  STATUS ConvertGraphToOm(const FuncGraphPtr &func_graph, Buffer *om_data);
+  ParameterPtr CreateOmParameter(const FuncGraphPtr &func_graph, const Buffer &om);
 
  private:
   /* pre or post pass */
   bool IsDynamicInput();
   STATUS CommonPass(const FuncGraphPtr &func_graph);
   STATUS AdjustInvalidCnodeName(const FuncGraphPtr &func_graph);
-  STATUS PreProcGraph(const FuncGraphPtr &func_graph);
-  STATUS PostProcGraph(const FuncGraphPtr &func_graph);
   STATUS RemoveSingleInputConcatNode(const FuncGraphPtr &func_graph);
   STATUS MakeListToMakeTuple(const FuncGraphPtr &func_graph);
 
  private:
   /* map func graph */
-  STATUS DeparseGraph(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager);
   STATUS RunPrimitiveMapper(const FuncGraphPtr &func_graph);
   std::string AdjustCnodeName(const PrimitivePtr &prim);
 
  private:
   /* build func graph */
-  STATUS BuildGraph(const FuncGraphPtr &func_graph);
   STATUS SetGraphInputShape(const FuncGraphPtr &func_graph);
-  STATUS ConvertGraphToOm(const FuncGraphPtr &func_graph, Buffer *om_data);
-  ParameterPtr CreateOmParameter(const FuncGraphPtr &func_graph, const Buffer &om);
   STATUS SetAclModelOptions(const FuncGraphPtr &func_graph);
   std::shared_ptr<mindspore::Context> CreateModelContext();
   void SetAclModelInitOptions(const std::shared_ptr<AscendDeviceInfo> &ascend_info);
   void SetAclModelBuildOptions(const std::shared_ptr<AscendDeviceInfo> &ascend_info);
-
   STATUS MapperForOrgMindIR(const FuncGraphPtr &func_graph);
 
  private:
@@ -91,7 +95,7 @@ class AclPassImpl {
   STATUS PreQuantization(const FuncGraphPtr &func_graph);
   STATUS PostQuantization(const FuncGraphPtr &func_graph);
 
- private:
+ protected:
   std::shared_ptr<ConverterPara> param_;
   FmkType fmk_type_;
   ModelType export_mindir_;

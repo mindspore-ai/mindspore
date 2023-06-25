@@ -30,6 +30,7 @@ enum Category {
   CONST_SCALAR,  // weight scalar
   GRAPH_INPUT,
   GRAPH_OUTPUT,
+  PARAMETER,
 };
 
 Category TensorCategory(const int node_type, const size_t shape_num, const TypeId data_type, const size_t data_size);

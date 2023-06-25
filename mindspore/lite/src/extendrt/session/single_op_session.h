@@ -48,7 +48,7 @@ class SingleOpInferSession : public InferSession {
   void SetConfigInfo(const ConfigInfos &config_infos) { config_infos_ = config_infos; }
   void SetCustomAscendOpAttrs(const kernel::BaseOperatorPtr &op);
 
- private:
+ protected:
   Status OnNewInputShapes(const std::vector<ShapeVector> &new_shapes);
   Status BuildCustomAscendKernel(const CNodePtr &node);
   std::tuple<kernel::KernelModPtr, kernel::KernelArgs> BuildCustomAscendKernelImpl(const CNodePtr &node);

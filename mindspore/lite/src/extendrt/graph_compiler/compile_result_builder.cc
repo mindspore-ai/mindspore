@@ -25,6 +25,7 @@
 #include "ir/primitive.h"
 #include "ops/op_name.h"
 #include "ops/primitive_c.h"
+#include "src/extendrt/utils/func_graph_utils.h"
 
 using AbstractBasePtr = mindspore::abstract::AbstractBasePtr;
 using AbstractTensorPtr = mindspore::abstract::AbstractTensorPtr;
@@ -75,13 +76,14 @@ StatusCode CompileResultBuilder::BuildInputs(const AnfNodePtrList &inputs) {
   return kSuccess;
 }
 
-StatusCode CompileResultBuilder::BuildNodes(const GraphSegmentPtr &graph_segment) {
+StatusCode CompileResultBuilder::BuildNodes(const std::vector<AnfNodePtr> &nodes) {
   MS_ASSERT(graph_ != nullptr);
   if (graph_->NodeSize() > 0) {
     MS_LOG(ERROR) << "Please don't call BuildNodes twice.";
     return kLiteError;
   }
-  for (auto &node : graph_segment->nodes_) {
+
+  for (auto &node : nodes) {
     if (!utils::isa<CNodePtr>(node)) {
       continue;
     }
@@ -92,6 +94,10 @@ StatusCode CompileResultBuilder::BuildNodes(const GraphSegmentPtr &graph_segment
     }
   }
   return kSuccess;
+}
+
+StatusCode CompileResultBuilder::BuildNodes(const GraphSegmentPtr &graph_segment) {
+  return BuildNodes(graph_segment->nodes_);
 }
 
 StatusCode CompileResultBuilder::BuildOutputs(const AnfNodePtrList &outputs) {
@@ -463,6 +469,52 @@ StatusCode CompileResultBuilder::BuildNodeOutputTensor(const CNodePtr &cnode, co
     }
   }
   return kSuccess;
+}
+
+StatusCode CompileResultBuilder::BuildNodes(const FuncGraphPtr &func_graph) {
+  MS_ASSERT(func_graph != nullptr);
+  auto nodes = func_graph->TopoSort(func_graph->get_return());
+  if (nodes.empty()) {
+    MS_LOG(ERROR) << "There are no nodes in the graph";
+    return kLiteError;
+  }
+
+  return BuildNodes(nodes);
+}
+
+CompileResultPtr CompileResultBuilder::Build(const FuncGraphPtr &func_graph) {
+  graph_ = std::make_shared<CompileResult>(graph_format_);
+
+  if (BuildInputs(func_graph->get_inputs()) != kSuccess) {
+    MS_LOG(ERROR) << "Build graph inputs failed";
+    return nullptr;
+  }
+  if (BuildNodes(func_graph) != kSuccess) {
+    MS_LOG(ERROR) << "Build graph nodes failed";
+    return nullptr;
+  }
+
+  std::vector<AnfWithOutIndex> outputs_with_index;
+  FuncGraphUtils::GetFuncGraphOutputs(func_graph, &outputs_with_index);
+  AnfNodePtrList outputs;
+  outputs.resize(outputs_with_index.size());
+  for (auto output : outputs_with_index) {
+    if (output.second >= outputs.size()) {
+      MS_LOG(ERROR) << "Build graph nodes failed";
+      return nullptr;
+    }
+    outputs[output.second] = output.first;
+  }
+  if (BuildOutputs(outputs) != kSuccess) {
+    MS_LOG(ERROR) << "Build graph outputs failed";
+    return nullptr;
+  }
+  if (OptimizeGraph() != kSuccess) {
+    MS_LOG(ERROR) << "Optimize graph failed";
+    return nullptr;
+  }
+  graph_->Assemble();
+  return graph_;
 }
 }  // namespace lite
 }  // namespace mindspore
