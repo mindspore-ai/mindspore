@@ -4875,8 +4875,8 @@ def ormqr(input, tau, other, left=True, transpose=False):
         >>>                mindspore.float32)
         >>> tau = Tensor(np.array([1.55, 1.94, 3.0]), mindspore.float32)
         >>> other = Tensor(np.array([[-114.6, 10.9, 1.1],
-        >>>                          [-0.304, 38.07, 69.38],
-        >>>                          [-0.45, -0.17, 62]]), mindspore.float32)
+        ...                          [-0.304, 38.07, 69.38],
+        ...                          [-0.45, -0.17, 62]]), mindspore.float32)
         >>> output = ops.ormqr(input, tau, other)
         >>> print(output)
         [[  63.82713   -13.823125 -116.28614 ]
