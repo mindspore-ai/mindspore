@@ -603,6 +603,7 @@ namespace raiseutils {
 namespace {
 bool CheckIsStr(const AbstractBasePtr &abs) {
   auto scalar = abs->cast_ptr<abstract::AbstractScalar>();
+  MS_EXCEPTION_IF_NULL(scalar);
   auto scalar_type = scalar->BuildType();
   MS_EXCEPTION_IF_NULL(scalar_type);
   if (scalar_type->IsSameTypeId(String::kTypeId)) {
@@ -655,6 +656,7 @@ std::string GetTupleOrListString(const AbstractBasePtr &arg, const AnfNodePtr &i
     }
   }
   auto cnode = input->cast_ptr<CNode>();
+  MS_EXCEPTION_IF_NULL(cnode);
   bool not_variable = !has_variable;
   if (has_variable) {
     not_variable = (arg->BuildValue() != kValueAny) || IsValueNode<prim::DoSignaturePrimitive>(cnode->input(0));

@@ -19,7 +19,6 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_FALLBACK_REWRITRER_H_
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_FALLBACK_REWRITRER_H_
 
-#include <vector>
 #include "ir/anf.h"
 #include "frontend/operator/ops.h"
 #include "ir/manager.h"
