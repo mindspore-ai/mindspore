@@ -25,14 +25,13 @@
 #include "mindspore/core/ops/nn_ops.h"
 #include "frontend/parallel/pass/split_layernorm_comm_fp.h"
 #include "frontend/parallel/step_parallel.h"
-#include "frontend/parallel/graph_util/graph_info.h"
 #include "include/common/utils/utils.h"
 #include "ir/pattern_matcher.h"
 
 namespace mindspore {
 namespace parallel {
 namespace {
-static PrimitiveSet elementwise_op_white_list = {prim::kPrimCast, prim::kPrimGeLU, prim::kPrimFastGeLU};
+PrimitiveSet elementwise_op_white_list = {prim::kPrimCast, prim::kPrimGeLU, prim::kPrimFastGeLU};
 constexpr int64_t kLongZero = 0;
 constexpr int64_t kLongOne = 1;
 constexpr int64_t kLongTwo = 2;

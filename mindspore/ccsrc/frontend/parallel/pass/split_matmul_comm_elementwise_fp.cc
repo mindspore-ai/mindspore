@@ -29,7 +29,6 @@
 namespace mindspore {
 namespace parallel {
 namespace {
-PrimitiveSet elementwise_op_white_list = {prim::kPrimCast};
 constexpr int64_t kInt64Num0 = 0;
 constexpr int64_t kInt64Num1 = 1;
 constexpr int64_t kInt64Num2 = 2;
@@ -79,7 +78,7 @@ static void CopyAllAttrs(const CNodePtr &dst_cnode, const CNodePtr &src_cnode) {
   auto dst_prim_node = GetCNodePrimitive(dst_cnode);
   auto src_prim_node = GetCNodePrimitive(src_cnode);
   auto src_attrs = src_prim_node->attrs();
-  for (const auto attr : src_attrs) {
+  for (const auto &attr : src_attrs) {
     dst_prim_node->set_attr(attr.first, attr.second);
   }
 }
