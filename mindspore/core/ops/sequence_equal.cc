@@ -34,7 +34,7 @@ AbstractBasePtr SequenceEqualInferInner(const PrimitivePtr &primitive, const std
   constexpr size_t y_index = 1;
   auto x_abs = input_args[x_index];
   auto y_abs = input_args[y_index];
-  if (!x_abs->isa<abstract::AbstractSequence>() && !y_abs->isa<abstract::AbstractSequence>()) {
+  if ((!x_abs->isa<abstract::AbstractSequence>()) || (!y_abs->isa<abstract::AbstractSequence>())) {
     MS_EXCEPTION(TypeError) << "For primitive '" << prim_name << "', the input must be a list or tuple, "
                             << "but got: " << x_abs->ToString() << " and " << y_abs->ToString();
   }

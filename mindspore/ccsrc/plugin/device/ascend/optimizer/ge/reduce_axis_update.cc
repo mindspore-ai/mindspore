@@ -98,11 +98,50 @@ bool ReduceAxisUpdate::IsInputScalar(const AnfNodePtr &x_node) const {
   return x_shape.empty();
 }
 
+namespace {
+constexpr size_t kAxisIndex = 2;
+bool IsAxisEmptySequence(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_LOG(WARNING) << "node:" << node->DebugString() << " full name:" << node->fullname_with_scope();
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  const auto &cnode = node->cast<CNodePtr>();
+  if (cnode->inputs().size() <= kAxisIndex) {
+    return false;
+  }
+  const auto &axis_node = cnode->input(kAxisIndex);
+
+  if (axis_node == nullptr || (!axis_node->isa<ValueNode>())) {
+    return false;
+  }
+  const auto &value_node = axis_node->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  const auto &value = value_node->value();
+  if (value == nullptr) {
+    return false;
+  }
+  if (value->isa<ValueSequence>()) {
+    const auto &value_sequence = value->cast<ValueSequencePtr>();
+    MS_EXCEPTION_IF_NULL(value_sequence);
+    return value_sequence->size() == 0;
+  } else if (value->isa<tensor::Tensor>()) {
+    const auto &tensor = value->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    const auto &shapes = tensor->shape();
+    return shapes.size() == 1 && shapes[0] == 0;
+  }
+  return false;
+}
+}  // namespace
+
 bool ReduceAxisUpdate::CheckMatchedDAG(const PatternMap &, const FuncGraphPtr &graph, const AnfNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(INFO) << "Reduce node is " << node->DebugString() << ".";
 
-  if (common::AnfAlgo::IsNodeOutputDynamicShape(node)) {
+  // In control flow, empty tuples are sometimes set to dynamic len which are considered dynamic shapes, but they
+  // are not actually needed, so empty tuple scenarios are excluded here.
+  if (common::AnfAlgo::IsNodeOutputDynamicShape(node) && (!IsAxisEmptySequence(node))) {
     MS_LOG(INFO) << "The dimension of " << node->DebugString() << " is unknown.";
     return false;
   }
@@ -150,6 +189,22 @@ AnfNodePtr BuildAxis(const PatternMap &m) {
   auto new_axis_node = std::make_shared<ValueNode>(new_value);
   MS_EXCEPTION_IF_NULL(new_axis_node);
   new_axis_node->set_abstract(new_value->ToAbstract());
+
+  auto kernel_info = std::make_shared<device::KernelInfo>();
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  new_axis_node->set_kernel_info(kernel_info);
+  std::shared_ptr<kernel::KernelBuildInfo::KernelBuildInfoBuilder> builder =
+    std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  MS_EXCEPTION_IF_NULL(builder);
+  kernel_info->set_select_kernel_build_info(builder->Build());
+  kernel_info->GetMutableSelectKernelBuildInfo()->SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+  kernel_info->GetMutableSelectKernelBuildInfo()->SetOutputsFormat({kOpFormat_DEFAULT});
+  kernel_info->GetMutableSelectKernelBuildInfo()->SetOutputsDeviceType({TypeId::kNumberTypeInt64});
+  auto func_graph = node->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  kernel_graph->AddValueNodeToGraph(new_axis_node);
   return new_axis_node;
 }
 
