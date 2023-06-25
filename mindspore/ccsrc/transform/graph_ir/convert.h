@@ -210,7 +210,7 @@ class DfGraphConvertor {
   void ConvertSpaceBatchNd(const FuncGraphPtr anf_graph) const;
   AnfNodePtr CreateCast(const AnfNodePtr &input, const TypePtr &dst_type) const;
   void ConvertReshape(const CNodePtr &node);
-  void ConvertAllReduce(const CNodePtr &node);
+  void ConvertHcomFusionId(const CNodePtr &node);
   void ConvertHcclNode(const CNodePtr &node);
   void ConvertAllToAllv(const CNodePtr &node);
   void ConvertUniformReal(const CNodePtr &node);
