@@ -4745,7 +4745,7 @@ class MirrorPad(Primitive):
         self.mode = mode
 
 
-class ComputeAccidentalHits(PrimitiveWithCheck):
+class ComputeAccidentalHits(Primitive):
     r"""
     Compute accidental hits of sampled classes which match target classes.
 
@@ -4802,24 +4802,6 @@ class ComputeAccidentalHits(PrimitiveWithCheck):
         validator.check_value_type("num_true", num_true, [int], self.name)
         validator.check_number("num_true", num_true, 1, validator.GE, self.name)
         self.num_true = num_true
-
-    def check_shape(self, true_classes_shape, sampled_candidates_shape):
-        validator.check_int(len(true_classes_shape), 2, validator.EQ, 'dim of true_classes', self.name)
-        validator.check_int(len(sampled_candidates_shape), 1, validator.EQ, 'dim of sampled_candidates', self.name)
-        validator.check("true_classes shape[1]", true_classes_shape[1], "num_true",
-                        self.num_true, validator.EQ, self.name)
-
-        indices_len = -1
-        return (indices_len,), (indices_len,), (indices_len,)
-
-    def check_dtype(self, true_classes_type, sampled_candidates_type):
-        validator.check_subclass("true_classes_type", true_classes_type, mstype.tensor_type, self.name)
-        validator.check_subclass("sampled_candidates_type", sampled_candidates_type, mstype.tensor_type, self.name)
-        valid_types = (mstype.int32, mstype.int64)
-        validator.check_tensor_dtype_valid("true_classes_type", true_classes_type, valid_types, self.name)
-        validator.check_tensor_dtype_valid("sampled_candidates_type", sampled_candidates_type, valid_types, self.name)
-        weights_type = mstype.float32
-        return true_classes_type, true_classes_type, weights_type
 
 
 class ROIAlign(Primitive):
