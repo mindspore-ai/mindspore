@@ -958,12 +958,12 @@ test_case_math_ops = [
     }),
     ('Addmv', {
         'block': AddmvFunc(),
-        'desc_inputs': [Tensor(np.array([1, 1])),
-                        Tensor(np.array([[1, 2, 1], [1, 1, 1]])),
-                        Tensor(np.array([1, 1, 1]))],
-        'desc_bprop': [Tensor(np.array([1, 1])),
-                       Tensor(np.array([[1, 2, 1], [1, 1, 1]])),
-                       Tensor(np.array([1, 1, 1]))],
+        'desc_inputs': [Tensor(np.array([1, 1], np.int32)),
+                        Tensor(np.array([[1, 2, 1], [1, 1, 1]], np.int32)),
+                        Tensor(np.array([1, 1, 1], np.int32))],
+        'desc_bprop': [Tensor(np.array([1, 1], np.int32)),
+                       Tensor(np.array([[1, 2, 1], [1, 1, 1]], np.int32)),
+                       Tensor(np.array([1, 1, 1], np.int32))],
     }),
     ('Exp2', {
         'block': Exp2Func(),
