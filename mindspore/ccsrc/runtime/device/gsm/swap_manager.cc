@@ -29,6 +29,7 @@ constexpr char kLinuxAioLibName[] = "libaio_plugin.so";
 constexpr char kLinuxAioInstanceFuncName[] = "get_aio_instance";
 constexpr size_t kFirstSizeLevel = 0xFFFFFFFFFFFFFFFF << 24;  // 16M
 constexpr size_t kSizeLevelNum = 8;
+constexpr size_t kSwapMemAlignSize = 512;
 
 SwappableTensorCandidates::CandidateIter::CandidateIter(mindspore::device::SwappableTensorCandidates *candidates)
     : swappable_tensors_(candidates->swappable_tensors_),
@@ -214,7 +215,7 @@ bool SwapManager::SwapOutTemp(const std::pair<DeviceAddressStatus, StorageType> 
 
 void *SwapManager::AllocDeviceMemorySimply(const size_t &size) {
   MS_EXCEPTION_IF_NULL(device_memory_pool_);
-  return device_memory_pool_->AllocTensorMem(size);
+  return device_memory_pool_->AllocTensorMem(size + kSwapMemAlignSize);
 }
 
 void *SwapManager::AllocDeviceMemory(size_t size) {
