@@ -32,14 +32,11 @@ namespace mindspore {
 namespace kernel {
 class IdentityGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<IdentityGpuKernelMod> {
  public:
-  IdentityGpuKernelMod() { ResetResource(); }
+  IdentityGpuKernelMod() {}
   ~IdentityGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
-    if (is_null_input_) {
-      return true;
-    }
     cuda_stream_ = cuda_stream;
     return kernel_func_(this, inputs, workspace, outputs);
   }
@@ -47,22 +44,15 @@ class IdentityGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
-
   const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
-  void ResetResource() noexcept;
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
-  bool is_null_input_{false};
   void *cuda_stream_{nullptr};
 };
 }  // namespace kernel

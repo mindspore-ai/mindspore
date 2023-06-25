@@ -37,36 +37,11 @@ bool IdentityGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-int IdentityGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  ResetResource();
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
-    return ret;
-  }
-  auto input_shape = inputs[0]->GetShapeVector();
-  if (!IsValidShape(input_shape)) {
-    return KRET_UNKNOWN_SHAPE;
-  }
-  return KRET_OK;
-}
-
-void IdentityGpuKernelMod::ResetResource() noexcept {
-  is_null_input_ = false;
-  input_size_list_.clear();
-  output_size_list_.clear();
-  workspace_size_list_.clear();
-}
-
 template <typename T>
 bool IdentityGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                         const std::vector<AddressPtr> &outputs) {
-  if (is_null_input_) {
-    return true;
-  }
   T *input_addr = GetDeviceAddress<T>(inputs, 0);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
-
   cudaError_t ret = cudaMemcpyAsync(output_addr, input_addr, inputs[0]->size, cudaMemcpyDeviceToDevice,
                                     reinterpret_cast<cudaStream_t>(cuda_stream_));
   if (ret) {

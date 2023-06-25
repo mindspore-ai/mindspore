@@ -15,11 +15,11 @@
  */
 #include <cstdint>
 
-#include "plugin/device/gpu/kernel/arrays/zeroslike_gpu_kernel.h"
-#include "mindspore/core/ops/zeros_like.h"
-#include "mindspore/core/abstract/utils.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "kernel/common_utils.h"
+#include "mindspore/core/abstract/utils.h"
+#include "mindspore/core/ops/zeros_like.h"
+#include "plugin/device/gpu/kernel/arrays/zeroslike_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 namespace kernel {
@@ -40,73 +40,20 @@ bool ZerosLikeGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-int ZerosLikeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
-    return ret;
-  }
-  input_size_ = 1;
-  is_null_input_ = false;
-  auto shape_signed = inputs[kIndex0]->GetShapeVector();
-  auto input_shape = LongVecToSizeVec(shape_signed);
-  for (size_t i = 0; i < input_shape.size(); i++) {
-    input_size_ *= static_cast<size_t>(input_shape[i]);
-  }
-  return KRET_OK;
-}
-
 template <typename T>
 bool ZerosLikeGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &workspace,
                                          const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  if (is_null_input_) {
-    return true;
-  }
-  T *output_device_address = GetDeviceAddress<T>(outputs, 0);
-
+  void *output_device_address = outputs[kIndex0]->addr;
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     // have to use a float literal instead of an int literal because of ambiguous half() overload.
-    cudaMemsetAsync(output_device_address, static_cast<T>(0.0), input_size_ * sizeof(T),
-                    reinterpret_cast<cudaStream_t>(stream_ptr)),
+    cudaMemsetAsync(output_device_address, 0, inputs[kIndex0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
     "cudaMemset failed");
-
   return true;
 }
 
-bool ZerosLikeGpuKernelMod::LaunchKernelComplex64(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &workspace,
-                                                  const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  if (is_null_input_) {
-    return true;
-  }
-  utils::Complex<float> *output_device_address = GetDeviceAddress<utils::Complex<float>>(outputs, 0);
-
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    // have to use a float literal instead of an int literal because of ambiguous half() overload.
-    cudaMemsetAsync(output_device_address, 0, input_size_ * (sizeof(float) + sizeof(float)),
-                    reinterpret_cast<cudaStream_t>(stream_ptr)),
-    "cudaMemset failed");
-
-  return true;
-}
-
-bool ZerosLikeGpuKernelMod::LaunchKernelComplex128(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &workspace,
-                                                   const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  if (is_null_input_) {
-    return true;
-  }
-  utils::Complex<double> *output_device_address = GetDeviceAddress<utils::Complex<double>>(outputs, 0);
-
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    // have to use a float literal instead of an int literal because of ambiguous half() overload.
-    cudaMemsetAsync(output_device_address, 0, input_size_ * (sizeof(double) + sizeof(double)),
-                    reinterpret_cast<cudaStream_t>(stream_ptr)),
-    "cudaMemset failed");
-
-  return true;
-}
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
 
 std::vector<std::pair<KernelAttr, ZerosLikeGpuKernelMod::ZerosLikeLaunchFunc>> ZerosLikeGpuKernelMod::func_list_ = {
   {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
@@ -134,9 +81,9 @@ std::vector<std::pair<KernelAttr, ZerosLikeGpuKernelMod::ZerosLikeLaunchFunc>> Z
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
    &ZerosLikeGpuKernelMod::LaunchKernel<double>},
   {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-   &ZerosLikeGpuKernelMod::LaunchKernelComplex64},
+   &ZerosLikeGpuKernelMod::LaunchKernel<Complex<float>>},
   {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-   &ZerosLikeGpuKernelMod::LaunchKernelComplex128},
+   &ZerosLikeGpuKernelMod::LaunchKernel<Complex<double>>},
 };
 
 std::vector<KernelAttr> ZerosLikeGpuKernelMod::GetOpSupport() {

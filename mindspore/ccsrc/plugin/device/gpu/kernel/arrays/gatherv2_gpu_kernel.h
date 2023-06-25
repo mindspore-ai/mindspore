@@ -17,17 +17,17 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_GATHERV2_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_GATHERV2_GPU_KERNEL_H_
 
-#include <vector>
-#include <map>
-#include <utility>
 #include <algorithm>
+#include <map>
 #include <string>
-#include "plugin/device/gpu/kernel/gpu_kernel.h"
-#include "mindspore/core/ops/framework_ops.h"
-#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gatherv2.cuh"
+#include <utility>
+#include <vector>
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "mindspore/core/ops/framework_ops.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gatherv2.cuh"
+#include "plugin/device/gpu/kernel/gpu_kernel.h"
+#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -36,8 +36,8 @@ constexpr auto kGather = "Gather";
 constexpr auto kSparseGatherV2 = "SparseGatherV2";
 class GatherV2FwdGpuKernelMod : public NativeGpuKernelMod {
  public:
-  GatherV2FwdGpuKernelMod() { ResetResource(); }
-  explicit GatherV2FwdGpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) { ResetResource(); }
+  GatherV2FwdGpuKernelMod() {}
+  explicit GatherV2FwdGpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~GatherV2FwdGpuKernelMod() = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -51,17 +51,6 @@ class GatherV2FwdGpuKernelMod : public NativeGpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  void ResetResource() noexcept {
-    input_shapes_.clear();
-    indices_shapes_.clear();
-    output_shapes_.clear();
-    std::fill(dims_, dims_ + kIndex4, 0);
-    is_null_input_ = false;
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
-
   std::vector<KernelAttr> GetOpSupport() override;
 
   std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex2}; }
@@ -70,15 +59,6 @@ class GatherV2FwdGpuKernelMod : public NativeGpuKernelMod {
   template <typename T, typename S, typename G>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);
-
-  void InitSizeLists() {
-    auto input_size = std::accumulate(input_shapes_.begin(), input_shapes_.end(), 1, std::multiplies{});
-    auto indices_size = std::accumulate(indices_shapes_.begin(), indices_shapes_.end(), 1, std::multiplies{});
-    input_size_list_.push_back(LongToSize(input_size) * input_type_size_);
-    input_size_list_.push_back(LongToSize(indices_size) * indices_type_size_);
-    auto output_size = std::accumulate(output_shapes_.begin(), output_shapes_.end(), 1, std::multiplies{});
-    output_size_list_.push_back(LongToSize(output_size) * input_type_size_);
-  }
 
   void Reshape() {
     if (axis_ < 0) {
@@ -114,10 +94,10 @@ class GatherV2FwdGpuKernelMod : public NativeGpuKernelMod {
   static std::vector<std::pair<KernelAttr, GatherV2Func>> func_list_;
   GatherV2Func kernel_func_;
 
-  std::vector<int64_t> input_shapes_;
-  std::vector<int64_t> indices_shapes_;
-  std::vector<int64_t> output_shapes_;
-  size_t dims_[kIndex4] = {};
+  std::vector<int64_t> input_shapes_{};
+  std::vector<int64_t> indices_shapes_{};
+  std::vector<int64_t> output_shapes_{};
+  size_t dims_[kIndex4] = {0};
   int64_t axis_ = 0;
   int64_t batch_dims_{0};
   bool is_null_input_ = false;

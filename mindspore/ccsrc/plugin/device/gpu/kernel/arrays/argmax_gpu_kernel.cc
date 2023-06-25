@@ -24,7 +24,6 @@ bool ArgmaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   S bound = static_cast<S>(bound_);
   T *input_ptr = GetDeviceAddress<T>(inputs, 0);
   S *output_ptr = GetDeviceAddress<S>(outputs, 0);
-
   // call cuda kernel
   CalArgmax(input_ptr, bound, outer_size_, inner_size_, output_ptr, device_id_,
             reinterpret_cast<cudaStream_t>(stream_ptr));
@@ -84,10 +83,9 @@ bool ArgmaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
   kernel_func_ = func_list_[index].second;
   if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << tensor_attr;
     return false;
   }
-
-  Resize(base_operator, inputs, outputs);
   return true;
 }
 

@@ -56,32 +56,29 @@ abstract::ShapePtr ResizeNearestNeighborGradInferShape(const PrimitivePtr &primi
     MS_LOG(EXCEPTION) << "ResizeNearsetNeighborGrad's input num should be " << kResizeNearestNeighborGradInputNum
                       << ", but got " << input_args.size();
   }
+
   auto grad_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
   auto grad_shape = grad_shape_ptr->shape();
-  auto size_ptr = input_args[kResizeIdx]->BuildValue();
-  MS_EXCEPTION_IF_NULL(size_ptr);
-
-  std::vector<int64_t> size_v;
-  if (size_ptr->isa<tensor::Tensor>()) {
-    auto tensor_data = CheckAndConvertUtils::CheckTensorIntValue("input[size]", size_ptr, prim_name);
-    for (auto iter = tensor_data.begin(); iter != tensor_data.end(); ++iter) {
-      size_v.push_back(static_cast<int64_t>(*iter));
-    }
-  } else if (size_ptr->isa<ValueTuple>() && IsValueKnown(size_ptr)) {
-    std::vector<ValuePtr> size_vec = size_ptr->cast<ValueTuplePtr>()->value();
-    (void)std::transform(size_vec.begin(), size_vec.end(), std::back_inserter(size_v),
-                         [](const ValuePtr e) { return GetValue<int64_t>(e); });
-  } else if (size_ptr->isa<ValueAny>()) {
-    size_v.push_back(-1);
-    size_v.push_back(-1);
+  std::vector<int64_t> ret_shape;
+  if (IsDynamicRank(grad_shape)) {
+    ret_shape.push_back(abstract::Shape::kShapeDimAny);
+    ret_shape.push_back(abstract::Shape::kShapeDimAny);
   } else {
-    size_v = GetValue<std::vector<int64_t>>(size_ptr);
+    const int64_t kVALUE_4 = 4;
+    (void)CheckAndConvertUtils::CheckInteger("grads", SizeToLong(grad_shape.size()), kEqual, kVALUE_4, prim_name);
+    ret_shape.push_back(grad_shape[kInputIndex0]);
+    ret_shape.push_back(grad_shape[kInputIndex1]);
   }
 
-  std::vector<int64_t> ret_shape;
-  ret_shape.push_back(grad_shape[0]);
-  ret_shape.push_back(grad_shape[1]);
+  auto size_ptr = input_args[kResizeIdx]->BuildValue();
+  MS_EXCEPTION_IF_NULL(size_ptr);
+  std::vector<int64_t> size_v = GetShapeValue(primitive, input_args[kResizeIdx]);
+  if (!IsDynamicRank(size_v)) {
+    const int64_t kVALUE_2 = 2;
+    (void)CheckAndConvertUtils::CheckInteger("size", SizeToLong(size_v.size()), kEqual, kVALUE_2, prim_name);
+  }
   ret_shape.insert(ret_shape.end(), size_v.begin(), size_v.end());
+
   return std::make_shared<abstract::Shape>(ret_shape);
 }
 
