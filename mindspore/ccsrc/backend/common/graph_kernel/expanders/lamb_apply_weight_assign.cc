@@ -52,9 +52,9 @@ class LambApplyWeightAssign : public OpDesc {
     } else {
       value_min = std::pow(num_two, pow_fp16);
     }
-    auto data_min = gb.Const(value_min, dtype);
-    auto const_zero = gb.Const(0.0, dtype);
-    auto const_one = gb.Const(1.0, dtype);
+    auto data_min = gb.Tensor(value_min, dtype);
+    auto const_zero = gb.Tensor(0.0, dtype);
+    auto const_one = gb.Tensor(1.0, dtype);
 
     // w_norm >= 0, g_norm >= 0
     // ratio =  select(greater(w_norm, 0), select(greater(g_norm, 0), w_norm/g_norm, 1), 1)

@@ -419,7 +419,7 @@ class ExtraReduce1PatternTree : public PatternTree {
     }
     (void)std::copy(axis_set.begin(), axis_set.end(), std::back_inserter(axes));
     inner::GraphBuilder gb("");
-    auto new_axes_tensornode = gb.Const(axes);
+    auto new_axes_tensornode = gb.Tensor(axes);
     (*para_to_ref)['D'] = new_axes_tensornode;
     para_to_ref->erase('B');
     para_to_ref->erase('C');
@@ -532,7 +532,7 @@ class TransposePatternTree : public PatternTree {
                                             const std::shared_ptr<ParaMap> &para_to_ref) const override {
     inner::GraphBuilder gb("");
     auto out_shape = origin_root->shape;
-    auto out_shape_tensornode = gb.Const(out_shape);
+    auto out_shape_tensornode = gb.Tensor(out_shape);
     (*para_to_ref)['C'] = out_shape_tensornode;
     para_to_ref->erase('B');
     return para_to_ref;

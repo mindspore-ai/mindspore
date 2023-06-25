@@ -37,7 +37,7 @@ class Softsign : public OpDesc {
   NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &input_x = inputs[0];
     auto abs_x = gb.Abs(input_x);
-    auto const_one = gb.Const(1.0, input_x->type);
+    auto const_one = gb.Tensor(1.0, input_x->type);
     auto abs_x_add_one = gb.Add(abs_x, const_one);
     auto result = gb.Div(input_x, abs_x_add_one);
     return {result};

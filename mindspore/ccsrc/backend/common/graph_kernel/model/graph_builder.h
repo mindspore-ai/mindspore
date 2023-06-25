@@ -92,46 +92,52 @@ class GraphBuilder : public LiteGraph::GraphBuilderBase {
   NodePtr ReduceMax(const NodePtr &input, const std::vector<int64_t> &axis, const bool &keep_dims = false) const;
   NodePtr ReduceMin(const NodePtr &input, const std::vector<int64_t> &axis, const bool &keep_dims = false) const;
 
+  NodePtr TupleGetItem(const NodePtr &input, int64_t index) const;
+
   template <typename T>
-  NodePtr Const(T input, const TypeId &type_id) const {
-    tensor::TensorPtr const_input;
+  NodePtr Tensor(T input, const TypeId &type_id) const {
+    tensor::TensorPtr const_tensor;
     switch (type_id) {
       case kNumberTypeBool:
-        const_input = std::make_shared<tensor::Tensor>(static_cast<bool>(input), TypeIdToType(type_id));
+        const_tensor = std::make_shared<tensor::Tensor>(static_cast<bool>(input), TypeIdToType(type_id));
         break;
       case kNumberTypeInt:
       case kNumberTypeInt8:
       case kNumberTypeInt16:
       case kNumberTypeInt32:
       case kNumberTypeInt64:
-        const_input = std::make_shared<tensor::Tensor>(static_cast<int64_t>(input), TypeIdToType(type_id));
+        const_tensor = std::make_shared<tensor::Tensor>(static_cast<int64_t>(input), TypeIdToType(type_id));
         break;
       case kNumberTypeUInt:
       case kNumberTypeUInt8:
       case kNumberTypeUInt16:
       case kNumberTypeUInt32:
       case kNumberTypeUInt64:
-        const_input = std::make_shared<tensor::Tensor>(static_cast<uint64_t>(input), TypeIdToType(type_id));
+        const_tensor = std::make_shared<tensor::Tensor>(static_cast<uint64_t>(input), TypeIdToType(type_id));
         break;
       case kNumberTypeFloat:
       case kNumberTypeFloat16:
       case kNumberTypeFloat32:
       case kNumberTypeFloat64:
-        const_input = std::make_shared<tensor::Tensor>(static_cast<double>(input), TypeIdToType(type_id));
+        const_tensor = std::make_shared<tensor::Tensor>(static_cast<double>(input), TypeIdToType(type_id));
         break;
       default:
         MS_LOG(EXCEPTION) << "The input data type should be int, uint, float or bool, But Get :"
                           << TypeIdToString(type_id);
     }
-    return Value(const_input);
+    return Value(const_tensor);
   }
 
-  NodePtr Const(std::vector<int64_t> input) const {
-    auto const_input = std::make_shared<tensor::Tensor>(input);
-    return Value(const_input);
+  NodePtr Tensor(std::vector<int64_t> input) const {
+    auto const_tensor = std::make_shared<tensor::Tensor>(input);
+    return Value(const_tensor);
   }
 
-  NodePtr TupleGetItem(const NodePtr &input, int64_t index) const;
+  template <typename T>
+  NodePtr Scalar(const T &input) const {
+    auto const_scalar = MakeValue(input);
+    return std::make_shared<ConstScalarNode>(const_scalar);
+  }
 };
 }  // namespace mindspore::graphkernel::inner
 #endif

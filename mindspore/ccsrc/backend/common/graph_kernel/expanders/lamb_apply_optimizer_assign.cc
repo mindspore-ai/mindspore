@@ -51,7 +51,7 @@ class LambApplyOptimizerAssign : public OpDesc {
     auto next_m = gb.Add(mul_0_result, mul_1_result);
 
     auto shape = next_m->shape;
-    auto const_one = gb.Const(1.0, beta_2->type);
+    auto const_one = gb.Tensor(1.0, beta_2->type);
 
     auto beta_1_tensor = gb.BroadcastTo(beta_1, shape);
     auto beta_2_tensor = gb.BroadcastTo(beta_2, shape);

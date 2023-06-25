@@ -54,13 +54,13 @@ class ReduceFusion : public OpDesc {
     auto axis = GetAxisList(attrs_["axis"]);
     auto keep_dims = GetValue<bool>(attrs_["keep_dims"]);
     auto sum_res = gb.ReduceSum(input_x, axis, keep_dims);
-    auto coeff = gb.Const(GetValue<float>(attrs_["coeff"]), input_x->type);
+    auto coeff = gb.Tensor(GetValue<float>(attrs_["coeff"]), input_x->type);
     auto result = gb.Mul(sum_res, coeff);
     auto mode = GetValue<int64_t>(attrs_["mode"]);
     if (mode == ReduceMode::Reduce_Mean) {
       int64_t reduce_size = std::accumulate(axis.begin(), axis.end(), 1,
                                             [input_x](int64_t a, int64_t idx) { return a * input_x->shape[idx]; });
-      auto reduce_size_value = gb.Const(reduce_size, input_x->type);
+      auto reduce_size_value = gb.Tensor(reduce_size, input_x->type);
       auto mean_res = gb.Div(result, reduce_size_value);
       return {mean_res};
     }

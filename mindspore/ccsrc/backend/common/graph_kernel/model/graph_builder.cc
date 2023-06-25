@@ -25,7 +25,7 @@
 
 namespace mindspore::graphkernel::inner {
 NodePtr GraphBuilder::Reshape(const NodePtr &input, const ShapeVector &shape) const {
-  auto shape_tensor = Const(shape);
+  auto shape_tensor = Tensor(shape);
   return Emit("Reshape", {input, shape_tensor});
 }
 
@@ -35,7 +35,7 @@ NodePtr GraphBuilder::BroadcastTo(const NodePtr &input, const ShapeVector &shape
 }
 
 NodePtr GraphBuilder::Gather(const NodePtr &param, const NodePtr &indice, int64_t axis, int64_t batch_dims) const {
-  auto axis_tensor = Const(axis, kNumberTypeInt64);
+  auto axis_tensor = Tensor(axis, kNumberTypeInt64);
   return Emit("Gather", {param, indice, axis_tensor}, {{"batch_dims", MakeValue(batch_dims)}});
 }
 
@@ -45,37 +45,36 @@ NodePtr GraphBuilder::Concat(const NodePtrList &inputs, const int64_t &axis) con
 }
 
 NodePtr GraphBuilder::Transpose(const NodePtr &input, const ShapeVector &perm) const {
-  auto perm_tensor = Const(perm);
+  auto perm_tensor = Tensor(perm);
   return Emit("Transpose", {input, perm_tensor});
 }
 
 NodePtr GraphBuilder::ReduceSum(const NodePtr &input, const std::vector<int64_t> &axis, const bool &keep_dims) const {
-  auto reduce_axis = Const(axis);
+  auto reduce_axis = Tensor(axis);
   auto keep_dims_value = MakeValue(keep_dims);
   return Emit("ReduceSum", {input, reduce_axis}, {{"keep_dims", keep_dims_value}});
 }
 NodePtr GraphBuilder::ReduceMax(const NodePtr &input, const std::vector<int64_t> &axis, const bool &keep_dims) const {
-  auto reduce_axis = Const(axis);
+  auto reduce_axis = Tensor(axis);
   auto keep_dims_value = MakeValue(keep_dims);
   return Emit("ReduceMax", {input, reduce_axis}, {{"keep_dims", keep_dims_value}});
 }
 NodePtr GraphBuilder::ReduceMin(const NodePtr &input, const std::vector<int64_t> &axis, const bool &keep_dims) const {
-  auto reduce_axis = Const(axis);
+  auto reduce_axis = Tensor(axis);
   auto keep_dims_value = MakeValue(keep_dims);
   return Emit("ReduceMin", {input, reduce_axis}, {{"keep_dims", keep_dims_value}});
 }
 
 NodePtr GraphBuilder::TupleGetItem(const NodePtr &input, int64_t index) const {
-  auto index_value = MakeValue(index);
-  auto index_node = std::make_shared<ConstScalarNode>(index_value);
+  auto index_node = Scalar(index);
   return Emit("TupleGetItem", {input, index_node});
 }
 
 NodePtr GraphBuilder::StridedSlice(const NodePtr &input, const std::vector<int64_t> &begin,
                                    const std::vector<int64_t> &end, const std::vector<int64_t> &strides) const {
-  auto begin_node = Const(begin);
-  auto end_node = Const(end);
-  auto strides_node = Const(strides);
+  auto begin_node = Tensor(begin);
+  auto end_node = Tensor(end);
+  auto strides_node = Tensor(strides);
   return Emit("StridedSlice", {input, begin_node, end_node, strides_node},
               {{"shrink_axis_mask", MakeValue(static_cast<int64_t>(0))},
                {"begin_mask", MakeValue(static_cast<int64_t>(0))},

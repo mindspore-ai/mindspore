@@ -60,7 +60,7 @@ class VmapStackAssign : public OpDesc {
                                  {"N", MakeValue(static_cast<int64_t>(params_size_))},
                                  {kAttrDynInputSizes, MakeValue(dyn_input_sizes)}});
     auto assigned_param = gb.Assign(input_param, stacked_para);
-    auto result = gb.Emit("Depend", {gb.Reshape(gb.Const(kNumber1, kNumberTypeInt32), {kNumber1}), assigned_param});
+    auto result = gb.Emit("Depend", {gb.Reshape(gb.Tensor(kNumber1, kNumberTypeInt32), {kNumber1}), assigned_param});
     return {result};
   }
 

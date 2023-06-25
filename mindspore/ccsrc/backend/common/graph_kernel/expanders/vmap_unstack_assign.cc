@@ -55,7 +55,7 @@ class VmapUnstackAssign : public OpDesc {
       res.push_back(result);
     }
     auto res_tuple = gb.Emit("MakeTuple", res);
-    auto result = gb.Emit("Depend", {gb.Reshape(gb.Const(kNumber1, kNumberTypeInt32), {kNumber1}), res_tuple});
+    auto result = gb.Emit("Depend", {gb.Reshape(gb.Tensor(kNumber1, kNumberTypeInt32), {kNumber1}), res_tuple});
     return {result};
   }
 

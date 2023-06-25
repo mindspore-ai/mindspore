@@ -58,8 +58,8 @@ class InstanceNorm : public OpDesc {
     int64_t mean_cof_v = input->shape[LongToSize(kDimHeight + rank)] * input->shape[LongToSize(kDimWidth + rank)];
 
     // const
-    auto num = gb.Const(mean_cof_v, input->type);
-    auto eps = gb.Const(GetValue<float>(attrs_["epsilon"]), input->type);
+    auto num = gb.Tensor(mean_cof_v, input->type);
+    auto eps = gb.Tensor(GetValue<float>(attrs_["epsilon"]), input->type);
 
     // Calculate mean
     auto sum_res = gb.ReduceSum(input, reduce_axis, true);
