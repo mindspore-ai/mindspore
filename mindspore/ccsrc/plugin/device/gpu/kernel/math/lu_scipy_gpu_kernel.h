@@ -18,16 +18,16 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_LU_SCIPY_GPU_KERNEL_H_
 #include <cublas_v2.h>
 #include <cuda_runtime_api.h>
-#include <vector>
+#include <algorithm>
 #include <map>
 #include <string>
-#include <algorithm>
 #include <type_traits>
+#include <vector>
+#include "include/common/utils/convert_utils.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
-#include "include/common/utils/convert_utils.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -50,19 +50,22 @@ class LUGpuKernelMod : public NativeGpuKernelMod {
     if (pivot_on_) {
       batch_piv_output_addr = GetDeviceAddress<int>(outputs, kDim1);
     }
+    // workspace
     int *batch_permutation_addr = GetDeviceAddress<int>(outputs, kDim2);
     int *info_output_addr = GetDeviceAddress<int>(workspace, kDim0);
+    T *dev_transpose_work = GetDeviceAddress<T>(workspace, kDim1);
 
-    size_t *dev_transpose_shape = GetDeviceAddress<size_t>(workspace, kDim1);
-    size_t *dev_transpose_axis = GetDeviceAddress<size_t>(workspace, kDim2);
+    TransposeInfo info, work_info;
     constexpr size_t shape_2d = 2;
     size_t host_transpose_shape[shape_2d] = {m_, n_};
+    size_t host_wk_transpose_shape[shape_2d] = {n_, m_};
     size_t host_transpose_axis[shape_2d] = {1, 0};
-    T *dev_transpose_work = GetDeviceAddress<T>(workspace, kDim3);
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(dev_transpose_axis, host_transpose_axis, shape_2d * sizeof(size_t), cudaMemcpyHostToDevice,
-                      reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "malloc input shape workspace failed");
+    for (size_t i = 0; i < shape_2d; ++i) {
+      info.shape[i] = static_cast<int>(host_transpose_shape[i]);
+      info.perm[i] = static_cast<int>(host_transpose_axis[i]);
+      work_info.shape[i] = static_cast<int>(host_wk_transpose_shape[i]);
+      work_info.perm[i] = static_cast<int>(host_transpose_axis[i]);
+    }
 
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(batch_output_addr, batch_input_addr, batch_size_ * m_ * n_ * unit_size_, cudaMemcpyDeviceToDevice,
@@ -87,12 +90,7 @@ class LUGpuKernelMod : public NativeGpuKernelMod {
       T *output_addr = batch_output_addr + batch * m_ * n_;
       int *permutation_addr = batch_permutation_addr + batch * k_ * k_;
       int *piv_output_addr = batch_piv_output_addr + batch * k_;
-      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMemcpyAsync(dev_transpose_shape, host_transpose_shape, shape_2d * sizeof(size_t), cudaMemcpyHostToDevice,
-                        reinterpret_cast<cudaStream_t>(stream_ptr)),
-        "malloc input shape workspace failed");
-
-      CalTranspose(m_ * n_, output_addr, dev_transpose_shape, dev_transpose_axis, shape_2d, dev_transpose_work,
+      CalTranspose(m_ * n_, output_addr, info, shape_2d, dev_transpose_work,
                    reinterpret_cast<cudaStream_t>(stream_ptr));
 
       // 6.lu factorization according to cuSolver api, outputs have been written to input's matrix.
@@ -109,11 +107,7 @@ class LUGpuKernelMod : public NativeGpuKernelMod {
       } else {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the data type only should be float or double, right now.";
       }
-
-      size_t host_wk_transpose_shape[shape_2d] = {n_, m_};
-      cudaMemcpyAsync(dev_transpose_shape, host_wk_transpose_shape, shape_2d * sizeof(size_t), cudaMemcpyHostToDevice,
-                      reinterpret_cast<cudaStream_t>(stream_ptr));
-      CalTranspose(m_ * n_, dev_transpose_work, dev_transpose_shape, dev_transpose_axis, shape_2d, output_addr,
+      CalTranspose(m_ * n_, dev_transpose_work, work_info, shape_2d, output_addr,
                    reinterpret_cast<cudaStream_t>(stream_ptr));
       std::vector<int> host_permuted(k_, 0);
       std::vector<int> host_pivots(k_, 0);

@@ -21,10 +21,14 @@
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/reduce_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kDim0 = 0;
+constexpr size_t kDim1 = 1;
+constexpr size_t kDim3 = 3;
+}  // namespace
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 constexpr auto kReduceMean = "ReduceMean";
@@ -198,11 +202,12 @@ bool ArrayReduceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << " does not support this data type: " << kernel_attr;
   }
   kernel_func_ = kernel_attr_list_[kernel_type_][index].second;
+  unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
+  InferArrayReduceType();
 
   auto kernel_ptr = std::dynamic_pointer_cast<ops::Reduce>(base_operator);
   keep_dims_ = kernel_ptr->get_keep_dims();
   skip_mode_ = kernel_ptr->get_skip_mode();
-
   return true;
 }
 
@@ -230,7 +235,7 @@ void ArrayReduceGpuKernelMod::FormatAxis(const size_t dims, const std::vector<in
   }
 }
 
-void ArrayReduceGpuKernelMod::SimplyReduce(const ShapeVector input_shape, const std::vector<int> axis) {
+void ArrayReduceGpuKernelMod::SimplyReduce(const ShapeVector &input_shape, const std::vector<int> &axis) {
   std::vector<bool> bitmap(input_shape.size(), false);
   FormatAxis(input_shape.size(), axis, &bitmap);
   size_t dim_index = 0;
@@ -269,14 +274,8 @@ int ArrayReduceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   }
 
   auto inputA_shape = inputs[kIndex0]->GetDeviceShapeAdaptively();
+  input_num_ = SizeOf(inputA_shape);
 
-  input_num_ = 1;
-  for (size_t i = 0; i < inputA_shape.size(); i++) {
-    input_num_ *= inputA_shape[i];
-  }
-
-  input_shape_.clear();
-  input_shape_ = inputA_shape;
   std::vector<int64_t> attr_axis;
   if (!TryGetIntValue(inputs, kIndex1, kernel_name_, &attr_axis)) {
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << " can't get axis input! ";
@@ -302,11 +301,14 @@ int ArrayReduceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   }
 
   InferInAndOutDesc(inputA_shape, outputC_shape);
-  InferArrayReduceType();
   if (all_match_) {
     return KRET_OK;
   }
   SimplyReduce(inputA_shape, axis_);
+  auto dims = input_reshape_.size();
+  if (!(dims == kDim0 || (dims == kDim1 && !reduce_first_axis_) || dims <= kDim3)) {
+    workspace_size_list_.push_back(unit_size_ * input_num_);
+  }
   return KRET_OK;
 }
 
@@ -318,7 +320,7 @@ void ArrayReduceGpuKernelMod::InferInAndOutDesc(const ShapeVector &input_shape, 
   if (input_shape.size() <= split_dim) {
     ShapeNdTo4d(input_shape, &inputA);
   } else {
-    std::copy(input_shape.begin(), input_shape.end(), std::back_inserter(inputA));
+    inputA = input_shape;
   }
 
   if (axis_.empty()) {
@@ -343,7 +345,7 @@ void ArrayReduceGpuKernelMod::InferInAndOutDesc(const ShapeVector &input_shape, 
   if (outputC_shape.size() <= split_dim) {
     ShapeNdTo4d(outputC_shape, &outputC);
   } else {
-    std::copy(outputC_shape.begin(), outputC_shape.end(), std::back_inserter(outputC));
+    outputC = output_shape;
   }
 
   if (inputA == outputC) {
@@ -389,12 +391,30 @@ void ArrayReduceGpuKernelMod::GetTransposePerm(size_t *transpose_perm) {
   return;
 }
 
-void ArrayReduceGpuKernelMod::GetOriginShape(size_t *origin_shape) {
-  const size_t dims = input_reshape_.size();
-  for (size_t i = 0; i < dims; i++) {
-    origin_shape[i] = input_reshape_[i];
+void ArrayReduceGpuKernelMod::GetTransposeInfo(TransposeInfo *const info, const size_t dims,
+                                               size_t *const transpose_perm) {
+  for (size_t i = 0; i < dims; ++i) {
+    info->shape[i] = static_cast<int>(input_reshape_[i]);
+    info->perm[i] = static_cast<int>(transpose_perm[i]);
   }
   return;
+}
+
+std::vector<size_t> ArrayReduceGpuKernelMod::GetNewShape(const size_t dims) {
+  input_reshape_ = ToRowReduce();
+  size_t new_dim0 = 1;
+  size_t new_dim1 = 1;
+  std::vector<size_t> new_input_reshape;
+  const size_t identity_dims = (dims + !reduce_first_axis_) / 2;
+  for (size_t i = 0; i < identity_dims; i++) {
+    new_dim0 *= input_reshape_[i];
+  }
+  new_input_reshape.push_back(new_dim0);
+  for (size_t i = identity_dims; i < input_reshape_.size(); i++) {
+    new_dim1 *= input_reshape_[i];
+  }
+  new_input_reshape.push_back(new_dim1);
+  return new_input_reshape;
 }
 
 template <typename T>
@@ -406,80 +426,32 @@ bool ArrayReduceGpuKernelMod::LaunchComplexKernel(const std::vector<AddressPtr> 
   }
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
-  if (input_reshape_.size() == 0 || (input_reshape_.size() == 1 && !reduce_first_axis_)) {
+  if (input_reshape_.size() == kDim0 || (input_reshape_.size() == kDim1 && !reduce_first_axis_)) {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(output_addr, input_addr, input_num_ * sizeof(T), cudaMemcpyDeviceToDevice,
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
       "cudaMemcpyAsync output failed");
     return true;
   } else {
-    if ((input_reshape_.size() <= 3)) {
+    if ((input_reshape_.size() <= kDim3)) {
       auto status = ArrayReduceComplex(input_addr, input_reshape_, reduce_first_axis_, reduce_op_type_, output_addr,
                                        reinterpret_cast<cudaStream_t>(stream_ptr));
       CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
       return true;
     } else {
-      T *temp = nullptr;
-      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMalloc(reinterpret_cast<void **>(&temp), input_num_ * sizeof(T)),
-                                         "Malloc failed");
+      T *temp = GetDeviceAddress<T>(workspace, kIndex0);
       const size_t dims = input_reshape_.size();
-      size_t *origin_shape = reinterpret_cast<size_t *>(malloc(dims * sizeof(size_t)));
-      size_t *transpose_perm = reinterpret_cast<size_t *>(malloc(dims * sizeof(size_t)));
-
-      const size_t identity_dims = (dims + !reduce_first_axis_) / 2;
-
-      for (size_t i = 0; i < dims; i++) {
-        origin_shape[i] = input_reshape_[i];
-      }
-
-      for (size_t i = 0; i < identity_dims; i++) {
-        transpose_perm[i] = 2 * i + reduce_first_axis_;
-      }
-      for (size_t i = identity_dims; i < dims; i++) {
-        transpose_perm[i] = 2 * (i - identity_dims) + !reduce_first_axis_;
-      }
-
-      size_t *origin_shape_device = nullptr;
-      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMalloc(reinterpret_cast<void **>(&origin_shape_device), dims * sizeof(size_t)),
-        "Malloc 'origin_shape' failed.");
-      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMemcpyAsync(origin_shape_device, origin_shape, dims * sizeof(size_t), cudaMemcpyHostToDevice,
-                        reinterpret_cast<cudaStream_t>(stream_ptr)),
-        "Memcpy 'origin_shape' from host to device failed.");
-      free(origin_shape);
-
-      size_t *transpose_perm_device = nullptr;
-      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMalloc(reinterpret_cast<void **>(&transpose_perm_device), dims * sizeof(size_t)),
-        "Malloc 'transpose_perm' failed.");
-      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMemcpyAsync(transpose_perm_device, transpose_perm, dims * sizeof(size_t), cudaMemcpyHostToDevice,
-                        reinterpret_cast<cudaStream_t>(stream_ptr)),
-        "Memcpy 'transpose_perm' from host to device failed.");
-      free(transpose_perm);
-
-      CalTranspose(input_num_, input_addr, origin_shape_device, transpose_perm_device, input_reshape_.size(), temp,
+      size_t transpose_perm[dims] = {0};
+      GetTransposePerm(transpose_perm);
+      TransposeInfo info;
+      GetTransposeInfo(&info, dims, transpose_perm);
+      CalTranspose(input_num_, input_addr, info, input_reshape_.size(), temp,
                    reinterpret_cast<cudaStream_t>(stream_ptr));
-
-      input_reshape_ = ToRowReduce();
-
-      size_t new_dim0 = 1;
-      size_t new_dim1 = 1;
-      std::vector<size_t> new_input_reshape;
-      for (size_t i = 0; i < identity_dims; i++) {
-        new_dim0 *= input_reshape_[i];
-      }
-      new_input_reshape.push_back(new_dim0);
-      for (size_t i = identity_dims; i < input_reshape_.size(); i++) {
-        new_dim1 *= input_reshape_[i];
-      }
-      new_input_reshape.push_back(new_dim1);
+      auto new_input_reshape = GetNewShape(dims);
       reduce_first_axis_ = false;
       auto status = ArrayReduceComplex(temp, new_input_reshape, reduce_first_axis_, reduce_op_type_, output_addr,
                                        reinterpret_cast<cudaStream_t>(stream_ptr));
       CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
-      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaFree(temp), "Free temp failed.");
       return true;
     }
   }
@@ -495,81 +467,33 @@ bool ArrayReduceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   }
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
-  if (input_reshape_.size() == 0 ||
-      (input_reshape_.size() == 1 && !reduce_first_axis_)) {  // to-do, define the output when size == 1
+  if (input_reshape_.size() == kDim0 ||
+      (input_reshape_.size() == kDim1 && !reduce_first_axis_)) {  // to-do, define the output when size == 1
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(output_addr, input_addr, input_num_ * sizeof(T), cudaMemcpyDeviceToDevice,
                       reinterpret_cast<cudaStream_t>(stream_ptr)),
       "cudaMemcpyAsync output failed");
     return true;
   } else {
-    if ((input_reshape_.size() <= 3)) {
+    if ((input_reshape_.size() <= kDim3)) {
       auto status = ArrayReduce(input_addr, input_reshape_, reduce_first_axis_, reduce_op_type_, output_addr,
                                 reinterpret_cast<cudaStream_t>(stream_ptr));
       CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
       return true;
     } else {
-      T *temp = nullptr;
-      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMalloc(reinterpret_cast<void **>(&temp), input_num_ * sizeof(T)),
-                                         "Malloc failed");
+      T *temp = GetDeviceAddress<T>(workspace, kIndex0);
       const size_t dims = input_reshape_.size();
-      size_t *origin_shape = reinterpret_cast<size_t *>(malloc(dims * sizeof(size_t)));
-      size_t *transpose_perm = reinterpret_cast<size_t *>(malloc(dims * sizeof(size_t)));
-
-      const size_t identity_dims = (dims + !reduce_first_axis_) / 2;
-
-      for (size_t i = 0; i < dims; i++) {
-        origin_shape[i] = input_reshape_[i];
-      }
-
-      for (size_t i = 0; i < identity_dims; i++) {
-        transpose_perm[i] = 2 * i + reduce_first_axis_;
-      }
-      for (size_t i = identity_dims; i < dims; i++) {
-        transpose_perm[i] = 2 * (i - identity_dims) + !reduce_first_axis_;
-      }
-
-      size_t *origin_shape_device = nullptr;
-      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMalloc(reinterpret_cast<void **>(&origin_shape_device), dims * sizeof(size_t)),
-        "Malloc 'origin_shape' failed.");
-      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMemcpyAsync(origin_shape_device, origin_shape, dims * sizeof(size_t), cudaMemcpyHostToDevice,
-                        reinterpret_cast<cudaStream_t>(stream_ptr)),
-        "Memcpy 'origin_shape' from host to device failed.");
-      free(origin_shape);
-
-      size_t *transpose_perm_device = nullptr;
-      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMalloc(reinterpret_cast<void **>(&transpose_perm_device), dims * sizeof(size_t)),
-        "Malloc 'transpose_perm' failed.");
-      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-        cudaMemcpyAsync(transpose_perm_device, transpose_perm, dims * sizeof(size_t), cudaMemcpyHostToDevice,
-                        reinterpret_cast<cudaStream_t>(stream_ptr)),
-        "Memcpy 'transpose_perm' from host to device failed.");
-      free(transpose_perm);
-
-      CalTranspose(input_num_, input_addr, origin_shape_device, transpose_perm_device, input_reshape_.size(), temp,
+      size_t transpose_perm[dims] = {0};
+      GetTransposePerm(transpose_perm);
+      TransposeInfo info;
+      GetTransposeInfo(&info, dims, transpose_perm);
+      CalTranspose(input_num_, input_addr, info, input_reshape_.size(), temp,
                    reinterpret_cast<cudaStream_t>(stream_ptr));
-
-      input_reshape_ = ToRowReduce();
-
-      size_t new_dim0 = 1;
-      size_t new_dim1 = 1;
-      std::vector<size_t> new_input_reshape;
-      for (size_t i = 0; i < identity_dims; i++) {
-        new_dim0 *= input_reshape_[i];
-      }
-      new_input_reshape.push_back(new_dim0);
-      for (size_t i = identity_dims; i < input_reshape_.size(); i++) {
-        new_dim1 *= input_reshape_[i];
-      }
-      new_input_reshape.push_back(new_dim1);
+      auto new_input_reshape = GetNewShape(dims);
       reduce_first_axis_ = false;
       auto status = ArrayReduce(temp, new_input_reshape, reduce_first_axis_, reduce_op_type_, output_addr,
                                 reinterpret_cast<cudaStream_t>(stream_ptr));
       CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
-      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaFree(temp), "Free temp failed.");
       return true;
     }
   }

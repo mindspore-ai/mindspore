@@ -19,14 +19,14 @@
 
 #include <cuda_runtime_api.h>
 #include <cusparse.h>
-#include <vector>
 #include <map>
 #include <utility>
+#include <vector>
 #include "include/common/utils/anfalgo.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/dense_to_csr_sparse_matrix_gpu_kernel.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gathernd.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gathernd.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/dense_to_csr_sparse_matrix_gpu_kernel.cuh"
 
 namespace mindspore {
 namespace kernel {

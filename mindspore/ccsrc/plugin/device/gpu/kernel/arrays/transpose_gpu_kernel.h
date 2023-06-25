@@ -17,14 +17,13 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_TRANSPOSE_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_TRANSPOSE_H_
 
-#include <vector>
 #include <algorithm>
-#include <utility>
 #include <map>
+#include <utility>
+#include <vector>
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl_opt.cuh"
 namespace mindspore {
 namespace kernel {
 class TransposeGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<TransposeGpuKernelMod> {
@@ -60,10 +59,9 @@ class TransposeGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelpe
 
   void *stream_ptr_{nullptr};
   std::vector<int64_t> input_shape_;
-  std::vector<size_t> input_perm_;
+  std::vector<int64_t> input_perm_;
 
   size_t shape_size_{0};
-  size_t workspace_size_{0};
   bool is_null_input_;
   bool is_dynamic_perm_{false};
 };

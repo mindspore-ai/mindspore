@@ -15,12 +15,12 @@
  */
 
 #include "src/extendrt/delegate/tensorrt/op/tensorscatteradd_tensorrt.h"
-#include <numeric>
-#include <memory>
 #include <functional>
-#include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
+#include <memory>
+#include <numeric>
 #include "ops/tensor_scatter_add.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/tensor_scatter_arithmetic.cuh"
+#include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 
 namespace mindspore::lite {
 int TensorScatterAddTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
@@ -93,22 +93,18 @@ int TensorScatterAddPlugin::RunCudaTensorScatterAdd(const nvinfer1::PluginTensor
     indice_stride[i - 1] = indice_stride[i] * input_dims.d[i];
   }
 
-  int *indice_stride_dptr{nullptr};
-  cudaMalloc(&indice_stride_dptr, indice_stride.size() * sizeof(int));
-  cudaMemcpy(indice_stride_dptr, indice_stride.data(), indice_stride.size() * sizeof(int), cudaMemcpyHostToDevice);
-
-  int *input_shape_dptr{nullptr};
-  cudaMalloc(&input_shape_dptr, input_dims.nbDims * sizeof(int));
-  cudaMemcpy(input_shape_dptr, input_dims.d, input_dims.nbDims * sizeof(int), cudaMemcpyHostToDevice);
-
+  TensorScatterInfo<int> info;
+  for (size_t i = 0; i < indice_dim_1; ++i) {
+    info.indices_stride[i] = static_cast<int>(indice_stride[i]);
+  }
+  for (size_t i = 0; i < static_cast<size_t>(input_dims.nbDims); ++i) {
+    info.work_shape[i] = static_cast<int>(input_dims.d[i]);
+  }
   cudaMemcpy(outputs[0], inputs[0], input_num * sizeof(float), cudaMemcpyDeviceToDevice);
   TensorScatterArithmetic(TensorScatterArithmeticFunctionType::TENSOR_SCATTER_FUNC_ADD,
                           static_cast<const float *>(inputs[0]), static_cast<const int *>(inputs[1]),
                           static_cast<const float *>(inputs[INPUT_SIZE2]), static_cast<float *>(outputs[0]), block_size,
-                          update_num, input_num, indice_dim_0, indice_dim_1, indice_stride_dptr, input_shape_dptr,
-                          device_id_, stream);
-  cudaFree(indice_stride_dptr);
-  cudaFree(input_shape_dptr);
+                          update_num, input_num, indice_dim_0, indice_dim_1, info, device_id_, stream);
 
   return RET_OK;
 }

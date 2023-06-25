@@ -48,12 +48,6 @@ int BiasAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   if (ret != KRET_OK) {
     return ret;
   }
-  for (const auto &input : inputs) {
-    auto input_shape = input->GetShapeVector();
-    if (!IsValidShape(input_shape)) {
-      return KRET_UNKNOWN_SHAPE;
-    }
-  }
   input_shape_ = Convert2SizeTClipNeg(inputs[kIndex0]->GetShapeVector());
   bias_shape_ = Convert2SizeTClipNeg(inputs[kIndex1]->GetShapeVector());
   data_shape_ = input_shape_.size();

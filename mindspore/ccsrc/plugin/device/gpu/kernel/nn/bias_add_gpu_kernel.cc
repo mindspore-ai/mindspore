@@ -45,20 +45,9 @@ int BiasAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
-  for (const auto &input : inputs) {
-    auto input_shape = input->GetShapeVector();
-    if (!IsValidShape(input_shape)) {
-      return KRET_UNKNOWN_SHAPE;
-    }
-  }
   auto x_shape = LongVecToSizeVec(inputs[kIndex0]->GetShapeVector());
   auto num_dims = x_shape.size();
   is_null_input_ = CHECK_SHAPE_NULL(x_shape, kernel_name_, "input_x");
-  constexpr size_t min_num_dims = 2;
-  if (num_dims < min_num_dims) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input_x cannot be less than 2, but got "
-                      << num_dims;
-  }
 
   auto prim = base_operator->GetPrim();
   MS_EXCEPTION_IF_NULL(prim);
@@ -99,9 +88,6 @@ int BiasAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 template <typename T>
 bool BiasAddGpuKernelMod::ComputeNHWC(const T *src_addr, const T *bias_addr, T *output_addr, const size_t num_value,
                                       const size_t num_bias) {
-  if (num_bias == 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', 'bias' tensor shape not be 0, but got : " << num_bias;
-  }
   cudaStream_t stream = reinterpret_cast<cudaStream_t>(cuda_stream_);
   auto status = CalBiasAddNHWC<T>(num_value, num_bias, src_addr, bias_addr, output_addr, device_id_, stream);
   CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
@@ -112,7 +98,6 @@ template <typename T>
 bool BiasAddGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   VARIABLE_NOT_USED(workspace);
-  VARIABLE_NOT_USED(stream_ptr);
   cuda_stream_ = stream_ptr;
   if (is_null_input_) {
     return true;
@@ -132,16 +117,11 @@ bool BiasAddGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
   T *x_addr = GetDeviceAddress<T>(inputs, 0);
   T *b_addr = GetDeviceAddress<T>(inputs, 1);
   T *output_addr = GetDeviceAddress<T>(outputs, 0);
-
-  try {
-    const float alpha = 1;
-    const float beta = 0;
-    CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnOpTensor(cudnn_handle_, op_desc_, &alpha, x_desc_, x_addr, &alpha, b_desc_,
-                                                      b_addr, &beta, x_desc_, output_addr),
-                                        "cudnnOpTensor failed");
-  } catch (const std::exception &e) {
-    MS_LOG(EXCEPTION) << "Encountered an exception: " << e.what() << " when invoke cudnnOpTensor";
-  }
+  const float alpha = 1;
+  const float beta = 0;
+  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnOpTensor(cudnn_handle_, op_desc_, &alpha, x_desc_, x_addr, &alpha, b_desc_,
+                                                    b_addr, &beta, x_desc_, output_addr),
+                                      "cudnnOpTensor failed");
   return true;
 }
 

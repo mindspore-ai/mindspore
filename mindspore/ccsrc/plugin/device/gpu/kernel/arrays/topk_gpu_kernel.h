@@ -43,15 +43,10 @@ class TopKGpuKernelMod : public NativeGpuKernelMod {
     }
 
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
-    S *k = GetDeviceAddress<S>(inputs, 1);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
     S *indices = GetDeviceAddress<S>(outputs, 1);
 
-    S k_cut = 0;
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(&k_cut, k, sizeof(S), cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "cudaMemcpyAsync k_cut failed");
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaDeviceSynchronize(), "cudaDeviceSyncFailed - TopK");
+    S k_cut = static_cast<S>(k_);
 
     if (std::is_same<T, half>::value) {
       // remove later! urgent fix for bug: topk has incorrect output for float16
@@ -96,7 +91,6 @@ class TopKGpuKernelMod : public NativeGpuKernelMod {
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shapes, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shapes, kernel_name_, "output");
     if (input_shapes.empty() || is_null_input_) {
-      InitSizeLists();
       return KRET_OK;
     }
 

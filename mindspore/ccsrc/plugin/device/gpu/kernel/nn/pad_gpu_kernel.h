@@ -17,10 +17,10 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_PAD_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_PAD_GPU_KERNEL_H_
 
-#include <vector>
-#include <string>
 #include <map>
+#include <string>
 #include <utility>
+#include <vector>
 
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
@@ -56,21 +56,11 @@ class PadFwdGpuKernelMod : public NativeGpuKernelMod {
     input_rank_ = 0;
     input_size_ = 0;
     output_size_ = 0;
-    workspace_size_ = 0;
     is_null_input_ = false;
     kernel_name_ = "Pad";
     flattened_paddings_.clear();
     input_shape_.clear();
     strides_.clear();
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
-
-  void InitWorkspaceSizeLists() {
-    workspace_size_list_.push_back(input_rank_ * sizeof(size_t));       // input shape
-    workspace_size_list_.push_back(input_rank_ * sizeof(size_t));       // strides
-    workspace_size_list_.push_back(input_rank_ * sizeof(int32_t) * 2);  // paddings
   }
 
   template <typename T>
@@ -81,9 +71,9 @@ class PadFwdGpuKernelMod : public NativeGpuKernelMod {
   static std::vector<std::pair<KernelAttr, PadFunc>> func_list_;
   PadFunc kernel_func_;
   size_t input_rank_;
-  std::vector<int32_t> flattened_paddings_;
   std::vector<size_t> input_shape_;
-  std::vector<size_t> strides_;
+  std::vector<int> strides_;
+  std::vector<int> flattened_paddings_;
 
   // default
   size_t input_size_;

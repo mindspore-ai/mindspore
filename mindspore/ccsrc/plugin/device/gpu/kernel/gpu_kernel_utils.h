@@ -19,13 +19,13 @@
 
 #include <cublas_v2.h>
 #include <cuda_runtime_api.h>
+#include <numeric>
 #include <string>
 #include <vector>
-#include <numeric>
 #include "mindspore/core/utils/log_adapter.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -38,15 +38,13 @@ inline void MatrixTransposeND(const T *src, const std::vector<size_t> &host_shap
                       << " != " << host_axis.size();
   }
   const auto dims = host_shape.size();
-  const auto dims_data_size = dims * sizeof(size_t);
   const size_t src_size = std::accumulate(host_shape.begin(), host_shape.end(), size_t(1), std::multiplies{});
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(dev_shape, host_shape.data(), dims_data_size, cudaMemcpyHostToDevice, cuda_stream),
-    "For '" + kernel_name + "', it memcpy shape failed");
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(dev_axis, host_axis.data(), dims_data_size, cudaMemcpyHostToDevice, cuda_stream),
-    "For '" + kernel_name + "', it memcpy axis failed");
-  CalTranspose(src_size, src, dev_shape, dev_axis, dims, dst, cuda_stream);
+  TransposeInfo info;
+  for (size_t i = 0; i < host_shape.size(); ++i) {
+    info.shape[i] = static_cast<int>(host_shape[i]);
+    info.perm[i] = static_cast<int>(host_axis[i]);
+  }
+  CalTranspose(src_size, src, info, dims, dst, cuda_stream);
 }
 template <>
 inline void MatrixTransposeND(const cuComplex *src, const std::vector<size_t> &host_shape,

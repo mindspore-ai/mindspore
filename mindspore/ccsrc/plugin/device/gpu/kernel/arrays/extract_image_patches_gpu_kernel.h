@@ -17,17 +17,17 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_EXTRACT_IMAGE_PATCHES_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_EXTRACT_IMAGE_PATCHES_GPU_KERNEL_H_
 
-#include <string>
 #include <algorithm>
 #include <cmath>
-#include <vector>
 #include <map>
+#include <string>
 #include <utility>
+#include <vector>
+#include "ops/extract_image_patches.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/extract_image_patches_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl_opt.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/extract_image_patches_impl.cuh"
-#include "ops/extract_image_patches.h"
 
 namespace mindspore {
 namespace kernel {
@@ -66,40 +66,26 @@ class ExtractImagePatchesKernelMod : public NativeGpuKernelMod, public MatchKern
     T *output = GetDeviceAddress<T>(outputs, 0);
     T *t_input = GetDeviceAddress<T>(workspace, 0);
     T *t_output = GetDeviceAddress<T>(workspace, 1);
-    size_t *input_shape = GetDeviceAddress<size_t>(workspace, 2);
-    size_t *input_to_nhwc_axis = GetDeviceAddress<size_t>(workspace, 3);
-    size_t *t_output_shape = GetDeviceAddress<size_t>(workspace, 4);
-    size_t *t_output_to_nchw_axis = GetDeviceAddress<size_t>(workspace, 5);
-
-    const size_t shape_size = 4 * sizeof(size_t);
-    std::vector<size_t> to_nhwc_axis = {0, 2, 3, 1};
-    std::vector<size_t> to_nchw_axis = {0, 3, 1, 2};
-
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(input_shape, &input_shape_[0], shape_size, cudaMemcpyHostToDevice,
-                      reinterpret_cast<cudaStream_t>(stream_ptr_)),
-      "cudaMemcpyAsync input_shape_ failed");
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(input_to_nhwc_axis, &to_nhwc_axis[0], shape_size, cudaMemcpyHostToDevice,
-                      reinterpret_cast<cudaStream_t>(stream_ptr_)),
-      "cudaMemcpyAsync to_nhwc_axis failed");
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(t_output_shape, &t_output_shape_[0], shape_size, cudaMemcpyHostToDevice,
-                      reinterpret_cast<cudaStream_t>(stream_ptr_)),
-      "cudaMemcpyAsync t_output_shape_ failed");
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(t_output_to_nchw_axis, &to_nchw_axis[0], shape_size, cudaMemcpyHostToDevice,
-                      reinterpret_cast<cudaStream_t>(stream_ptr_)),
-      "cudaMemcpyAsync to_nchw_axis failed");
-    CalNCHW2NHWCInterface(input_size_, shape_size / sizeof(size_t), input, &input_shape_[0], &to_nhwc_axis[0],
-                          input_shape, input_to_nhwc_axis, t_input, reinterpret_cast<cudaStream_t>(stream_ptr_));
+    TransposeInfo InInfo;
+    TransposeInfo OutInfo;
+    std::vector<int64_t> to_nhwc_axis = {0, 2, 3, 1};
+    std::vector<int64_t> to_nchw_axis = {0, 3, 1, 2};
+    const size_t kValue4 = 4;
+    for (size_t i = 0; i < kValue4; ++i) {
+      InInfo.shape[i] = static_cast<int>(input_shape_[i]);
+      InInfo.perm[i] = static_cast<int>(to_nhwc_axis[i]);
+      OutInfo.shape[i] = static_cast<int>(t_output_shape_[i]);
+      OutInfo.perm[i] = static_cast<int>(to_nchw_axis[i]);
+    }
+    CalNCHW2NHWCInterface(input_size_, kValue4, input, &input_shape_[0], &to_nhwc_axis[0], InInfo, t_input,
+                          reinterpret_cast<cudaStream_t>(stream_ptr_));
     CalExtractImagePatchesNHWC(output_size_, stride_row_, stride_col_, rate_row_, rate_col_, output_cols_, need_batch_,
                                row_stride_, patch_stride_, other_stride_, input_row_size_, input_col_size_,
                                row_padding_top_, col_padding_left_, col_input_stride_, row_input_stride_,
                                patch_input_stride_, output_depth_, t_input, t_output,
                                reinterpret_cast<cudaStream_t>(stream_ptr_));
-    CalNHWC2NCHWInterface(output_size_, shape_size / sizeof(size_t), t_output, &t_output_shape_[0], &to_nchw_axis[0],
-                          t_output_shape, t_output_to_nchw_axis, output, reinterpret_cast<cudaStream_t>(stream_ptr_));
+    CalNHWC2NCHWInterface(output_size_, kValue4, t_output, &t_output_shape_[0], &to_nchw_axis[0], OutInfo, output,
+                          reinterpret_cast<cudaStream_t>(stream_ptr_));
     return true;
   }
 
@@ -126,9 +112,11 @@ class ExtractImagePatchesKernelMod : public NativeGpuKernelMod, public MatchKern
   int64_t row_input_stride_;
   int64_t patch_input_stride_;
   int64_t output_depth_;
+  int64_t patch_rows_eff_;
+  int64_t patch_cols_eff_;
   void *stream_ptr_ = nullptr;
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> t_output_shape_;
+  std::vector<int64_t> input_shape_;
+  std::vector<int64_t> t_output_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

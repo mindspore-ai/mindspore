@@ -18,8 +18,13 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SCATTER_ND_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
+template <typename S>
+struct ScatterNdInfo {
+  S indices_stride[8] = {0};
+  S shape[8] = {0};
+};
 template <typename T, typename S>
 CUDA_LIB_EXPORT void ScatterNd(S *indices, T *update, T *output, const size_t &block_size, const size_t &input_size,
                                const size_t &output_size, const size_t &indices_dim_0, const size_t &indices_dim_1,
-                               S *indices_stride, S *work_shape, cudaStream_t stream);
+                               const ScatterNdInfo<S> &info, cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SCATTER_ND_CUH_

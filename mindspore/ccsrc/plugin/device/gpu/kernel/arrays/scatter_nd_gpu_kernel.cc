@@ -75,29 +75,13 @@ bool ScatterNdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   S *indices = GetDeviceAddress<S>(inputs, 0);
   T *update = GetDeviceAddress<T>(inputs, 1);
   T *output = GetDeviceAddress<T>(outputs, 0);
-  S *indices_stride = GetDeviceAddress<S>(workspace, kIndex0);
-  S *work_shape = GetDeviceAddress<S>(workspace, kIndex1);
-
-  const size_t indices_len = sizeof(S) * vec_indices_stride_.size();
-  const size_t vec_work_len = sizeof(S) * attr_shape_.size();
-  std::vector<S> tmp_ind_stride;
-  (void)std::transform(vec_indices_stride_.begin(), vec_indices_stride_.end(), std::back_inserter(tmp_ind_stride),
-                       [](size_t x) { return static_cast<S>(x); });
-  std::vector<S> tmp_work_shape;
-  (void)std::transform(attr_shape_.begin(), attr_shape_.end(), std::back_inserter(tmp_work_shape),
-                       [](int64_t x) { return static_cast<S>(x); });
-
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(indices_stride, &tmp_ind_stride[0], indices_len, cudaMemcpyHostToDevice,
-                    reinterpret_cast<cudaStream_t>(stream_ptr_)),
-    "cudaMemcpy for indices_stride failed in "
-    "ScatterNdGpuKernelMod::LaunchKernel.");
-
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(work_shape, &tmp_work_shape[0], vec_work_len, cudaMemcpyHostToDevice,
-                    reinterpret_cast<cudaStream_t>(stream_ptr_)),
-    "cudaMemcpy for work_shape failed in "
-    "ScatterNdGpuKernelMod::LaunchKernel.");
+  ScatterNdInfo<S> info;
+  for (size_t i = 0; i < vec_indices_stride_.size(); ++i) {
+    info.indices_stride[i] = static_cast<S>(vec_indices_stride_[i]);
+  }
+  for (size_t i = 0; i < attr_shape_.size(); ++i) {
+    info.shape[i] = static_cast<S>(attr_shape_[i]);
+  }
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemsetAsync(output, static_cast<T>(0.0), output_size_list_[0], reinterpret_cast<cudaStream_t>(stream_ptr_)),
@@ -105,8 +89,8 @@ bool ScatterNdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
 
   const size_t input_size = input_size_list_[kIndex1] / sizeof(T);
   const size_t output_size = output_size_list_[kIndex0] / sizeof(T);
-  ScatterNd(indices, update, output, block_size_, input_size, output_size, indices_dim_0_, indices_dim_1_,
-            indices_stride, work_shape, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  ScatterNd(indices, update, output, block_size_, input_size, output_size, indices_dim_0_, indices_dim_1_, info,
+            reinterpret_cast<cudaStream_t>(stream_ptr_));
   return true;
 }
 
@@ -133,12 +117,6 @@ int ScatterNdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   }
 
   CalSize(inputs, outputs);
-  auto indices_unit_size = abstract::TypeIdSize(inputs[0]->GetDtype());
-  const size_t indices_len = indices_unit_size * vec_indices_stride_.size();
-  workspace_size_list_.push_back(indices_len);
-  const size_t vec_work_len = indices_unit_size * attr_shape_.size();
-  workspace_size_list_.push_back(vec_work_len);
-
   return KRET_OK;
 }
 

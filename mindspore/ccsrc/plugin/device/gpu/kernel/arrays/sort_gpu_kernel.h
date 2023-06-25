@@ -19,18 +19,18 @@
 #include <algorithm>
 #include <cstdint>
 #include <limits>
+#include <map>
+#include <memory>
 #include <utility>
 #include <vector>
-#include <memory>
-#include <map>
 
 #include "mindspore/core/ops/sort.h"
-#include "plugin/device/gpu/kernel/gpu_kernel.h"
-#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
+#include "plugin/device/gpu/kernel/arrays/fast_sort_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/eltwise_ops_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/topk_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/eltwise_ops_impl.cuh"
-#include "plugin/device/gpu/kernel/arrays/fast_sort_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/gpu_kernel.h"
+#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -118,9 +118,6 @@ class SortGpuKernelMod : public NativeGpuKernelMod {
       size_t indices_bytes = input_size_ * sizeof(int32_t);
       workspace_size_list_.push_back(input_bytes);
       workspace_size_list_.push_back(indices_bytes);
-      workspace_size_list_.push_back(input_rank_ * sizeof(size_t));
-      workspace_size_list_.push_back(input_rank_ * sizeof(size_t));
-      workspace_size_list_.push_back(input_rank_ * sizeof(size_t));
     }
     return KRET_OK;
   }

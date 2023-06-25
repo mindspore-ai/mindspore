@@ -17,10 +17,25 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_TRANSPOSE_IMPL_CUH_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_TRANSPOSE_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
-#define TRANSPOSE_MAX_DIMENSION 100
+#define TRANSPOSE_MAX_DIMENSION 26
+struct TransposeInfo {
+  // In Einsum, the shape's size may be 26
+  int shape[26] = {0};
+  int perm[26] = {0};
+};
+
 template <typename T>
-CUDA_LIB_EXPORT void CalTranspose(const size_t size, const T *input, const size_t *input_shape,
-                                  const size_t *input_axis, const size_t shape_size, T *output,
-                                  cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT void CalTranspose(const size_t size, const T *input, const TransposeInfo &info, const size_t shape_size,
+                                  T *output, cudaStream_t cuda_stream);
+
+template <typename T>
+CUDA_LIB_EXPORT void CalNHWC2NCHWInterface(const size_t size, const size_t shape_size, const T *d_input,
+                                           const int64_t *input_shape, const int64_t *input_axis,
+                                           const TransposeInfo &info, T *output, cudaStream_t cuda_stream);
+
+template <typename T>
+CUDA_LIB_EXPORT void CalNCHW2NHWCInterface(const size_t size, const size_t shape_size, const T *d_input,
+                                           const int64_t *input_shape, const int64_t *input_axis,
+                                           const TransposeInfo &info, T *output, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_TRANSPOSE_IMPL_CUH_

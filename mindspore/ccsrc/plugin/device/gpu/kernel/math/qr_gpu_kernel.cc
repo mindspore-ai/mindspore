@@ -85,6 +85,7 @@ int QrGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vect
   // transpose row and col
   for (size_t i = 0; i < input_dims_; ++i) {
     transpose_input_shape_[i] = x_shape[i];
+    transpose_q_shape_[i] = transpose_input_shape_[i];
     if (i == input_dims_ - kDim2) {
       transpose_input_axis_[i] = input_dims_ - kDim1;
     } else if (i == input_dims_ - kDim1) {
@@ -93,20 +94,20 @@ int QrGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vect
       transpose_input_axis_[i] = i;
     }
   }
+  transpose_q_shape_[input_dims_ - kDim2] = p_;
+  transpose_q_shape_[input_dims_ - kDim1] = m_;
 
   input_size_list_ = {total_size_ * unit_input_size_};
   output_size_list_ = {batch_size_ * m_ * p_ * unit_input_size_, batch_size_ * p_ * n_ * unit_input_size_};
-  workspace_size_list_ = {batch_size_ * sizeof(int),
-                          input_dims_ * sizeof(size_t),
-                          input_dims_ * sizeof(size_t),
-                          total_size_ * unit_input_size_,
-                          batch_size_ * m_ * p_ * unit_input_size_,
-                          batch_size_ * m_ * n_ * unit_input_size_,
-                          batch_size_ * n_ * unit_input_size_,
-                          batch_size_ * m_ * s_ * unit_input_size_,
-                          batch_size_ * m_ * n_ * unit_input_size_,
-                          kNum2 * sizeof(size_t),
-                          kNum2 * sizeof(size_t)};
+  workspace_size_list_ = {
+    batch_size_ * sizeof(int),
+    total_size_ * unit_input_size_,
+    batch_size_ * m_ * p_ * unit_input_size_,
+    batch_size_ * m_ * n_ * unit_input_size_,
+    batch_size_ * n_ * unit_input_size_,
+    batch_size_ * m_ * s_ * unit_input_size_,
+    batch_size_ * m_ * n_ * unit_input_size_,
+  };
 
   return 0;
 }
@@ -143,13 +144,20 @@ void QrGpuKernelMod::RunQr(T *d_input, T *d_A, T *d_tau, int *dev_info, T *d_out
 
 template <typename T>
 void QrGpuKernelMod::LaunchQr(T *d_input, T *d_A, T *d_tau, T *d_output_q, T *d_output_r, int *dev_info,
-                              size_t *d_transpose_shape, size_t *d_transpose_axis, T *d_output_r_t, T *output_r) {
+                              T *d_output_r_t, T *output_r) {
+  size_t transpose_shape[2] = {n_, m_};
+  size_t transpose_axis[2] = {1, 0};
+  TransposeInfo info;
+  const size_t kValue2 = 2;
+  for (size_t i = 0; i < kValue2; ++i) {
+    info.shape[i] = static_cast<int>(transpose_shape[i]);
+    info.perm[i] = static_cast<int>(transpose_axis[i]);
+  }
   for (size_t batch = 0; batch < batch_size_; ++batch) {
     cudaStream_t stream = reinterpret_cast<cudaStream_t>(cuda_stream_);
     RunQr(d_input + batch * m_ * n_, d_A + batch * m_ * s_, d_tau + batch * n_, dev_info + batch,
           d_output_q + batch * m_ * p_, d_output_r + batch * m_ * n_);
-    CalTranspose(m_ * n_, d_output_r + batch * m_ * n_, d_transpose_shape, d_transpose_axis, kNum2,
-                 d_output_r_t + batch * m_ * n_, stream);
+    CalTranspose(m_ * n_, d_output_r + batch * m_ * n_, info, kNum2, d_output_r_t + batch * m_ * n_, stream);
     CalTriu(p_ * n_, d_output_r_t + batch * m_ * n_, 0, p_, n_, output_r + batch * p_ * n_, device_id_, stream);
   }
 }
@@ -165,46 +173,24 @@ bool QrGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
   T *output_r = GetDeviceAddress<T>(outputs, kIndex1);
 
   int *dev_info = GetDeviceAddress<int>(workspace, kIndex0);
-  size_t *d_transpose_input_shape = GetDeviceAddress<size_t>(workspace, kIndex1);
-  size_t *d_transpose_input_axis = GetDeviceAddress<size_t>(workspace, kIndex2);
-  T *d_input = GetDeviceAddress<T>(workspace, kIndex3);
-  T *d_output_q = GetDeviceAddress<T>(workspace, kIndex4);
-  T *d_output_r = GetDeviceAddress<T>(workspace, kIndex5);
-  T *d_tau = GetDeviceAddress<T>(workspace, kIndex6);
-  T *d_A = GetDeviceAddress<T>(workspace, kIndex7);
-  T *d_output_r_t = GetDeviceAddress<T>(workspace, kIndex8);
-  size_t *d_transpose_shape = GetDeviceAddress<size_t>(workspace, kIndex9);
-  size_t *d_transpose_axis = GetDeviceAddress<size_t>(workspace, kIndex10);
+  T *d_input = GetDeviceAddress<T>(workspace, kIndex1);
+  T *d_output_q = GetDeviceAddress<T>(workspace, kIndex2);
+  T *d_output_r = GetDeviceAddress<T>(workspace, kIndex3);
+  T *d_tau = GetDeviceAddress<T>(workspace, kIndex4);
+  T *d_A = GetDeviceAddress<T>(workspace, kIndex5);
+  T *d_output_r_t = GetDeviceAddress<T>(workspace, kIndex6);
 
-  size_t transpose_shape[2] = {n_, m_};
-  size_t transpose_axis[2] = {1, 0};
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(d_transpose_input_axis, transpose_input_axis_,
-                                                     sizeof(size_t) * input_dims_, cudaMemcpyHostToDevice, stream),
-                                     "For Qr transpose_input_axis cuda memcpy failed!");
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(d_transpose_input_shape, transpose_input_shape_,
-                                                     sizeof(size_t) * input_dims_, cudaMemcpyHostToDevice, stream),
-                                     "For Qr transpose_input_shape cuda memcpy failed!");
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(d_transpose_shape, transpose_shape, sizeof(size_t) * kNum2, cudaMemcpyHostToDevice, stream),
-    "For Qr transpose_shape cuda memcpy failed!");
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(d_transpose_axis, transpose_axis, sizeof(size_t) * kNum2, cudaMemcpyHostToDevice, stream),
-    "For Qr transpose_axis cuda memcpy failed!");
-
-  CalTranspose(total_size_, input, d_transpose_input_shape, d_transpose_input_axis, input_dims_, d_input, stream);
-  LaunchQr(d_input, d_A, d_tau, d_output_q, d_output_r, dev_info, d_transpose_shape, d_transpose_axis, d_output_r_t,
-           output_r);
-
-  for (size_t i = 0; i < input_dims_; i++) {
-    transpose_q_shape_[i] = transpose_input_shape_[i];
+  TransposeInfo x_info, y_info;
+  for (size_t i = 0; i < input_dims_; ++i) {
+    x_info.shape[i] = static_cast<int>(transpose_input_shape_[i]);
+    x_info.perm[i] = static_cast<int>(transpose_input_axis_[i]);
+    y_info.shape[i] = static_cast<int>(transpose_q_shape_[i]);
+    y_info.perm[i] = static_cast<int>(transpose_input_axis_[i]);
   }
-  transpose_q_shape_[input_dims_ - kDim2] = p_;
-  transpose_q_shape_[input_dims_ - kDim1] = m_;
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(d_transpose_input_shape, transpose_q_shape_,
-                                                     sizeof(size_t) * input_dims_, cudaMemcpyHostToDevice, stream),
-                                     "cuda memcpy failed!");
-  CalTranspose(batch_size_ * m_ * p_, d_output_q, d_transpose_input_shape, d_transpose_input_axis, input_dims_,
-               output_q, stream);
+
+  CalTranspose(total_size_, input, x_info, input_dims_, d_input, stream);
+  LaunchQr(d_input, d_A, d_tau, d_output_q, d_output_r, dev_info, d_output_r_t, output_r);
+  CalTranspose(batch_size_ * m_ * p_, d_output_q, y_info, input_dims_, output_q, stream);
   return true;
 }
 

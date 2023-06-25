@@ -17,10 +17,10 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_BCE_WITH_LOGITS_LOSS_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_BCE_WITH_LOGITS_LOSS_KERNEL_H_
 
-#include <vector>
-#include <string>
 #include <map>
+#include <string>
 #include <utility>
+#include <vector>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 
@@ -43,12 +43,6 @@ class BCEWithLogitsLossKernelMod : public NativeGpuKernelMod {
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
  protected:
-  void InitWorkSpaceSizeLists() {
-    // extra space for holding extra array shape of input, for broadcasted
-    // weight and pos_weight
-    workspace_size_list_.push_back(input_size_ * type_id_size_);
-  }
-
   bool NeedBroadcast(ShapeVector *shape, const ShapeVector &result_shape) {
     // result_shape is larger that shape
     // and shape is able to broadcasted to result_shape

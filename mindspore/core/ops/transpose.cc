@@ -98,8 +98,7 @@ class TransposeInfer : public abstract::OpInferBase {
 
     auto p_value_raw = CheckAndGetPermValue(input_args, primitive);
     if (p_value_raw.empty()) {
-      ShapeVector out_shape;
-      (void)out_shape.insert(out_shape.end(), x_shape.size(), abstract::Shape::kShapeDimAny);
+      ShapeVector out_shape(x_shape.size(), abstract::Shape::kShapeDimAny);
       return std::make_shared<abstract::Shape>(out_shape);
     }
 
