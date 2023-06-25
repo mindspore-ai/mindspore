@@ -487,7 +487,8 @@ class TBERegOp(RegOp):
         op_name (str):kernel name.
 
     Examples:
-        >>> op_name_op_info = TBERegOp("OpName") \
+        >>> import mindspore.ops as ops
+        >>> op_name_op_info = ops.TBERegOp("OpName") \
         ...    .fusion_type("ELEMWISE") \
         ...    .async_flag(False) \
         ...    .binfile_name("op_name.so") \

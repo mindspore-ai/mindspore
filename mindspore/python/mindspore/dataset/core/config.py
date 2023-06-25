@@ -854,14 +854,17 @@ def set_debug_mode(debug_mode_flag: bool, debug_hook_list: list = None):
 
     Note:
         When debug_mode is enabled,
+
         - If random seed has not been set, will internally set the seed to 1.
-          so that debug mode execution of the dataset pipeline can produce deterministic results.
+          So that debug mode execution of the dataset pipeline can produce deterministic results.
+
         - The following configuration settings are ignored:
 
           - auto_offload (False is used.)
           - enable_autotune (False is used.)
           - error_samples_mode (ErrorSamplesMode.RETURN is used.)
           - num_parallel_workers (Value 1 is used.)
+
         - The `offload` parameter in `map` operation will be ignored.
         - The `python_multiprocessing` parameter in `GeneratorDataset`, `map`/`batch` operation will be ignored.
         - The `cache` parameter in Dataset loading API will be ignored.
@@ -908,7 +911,7 @@ def set_debug_mode(debug_mode_flag: bool, debug_hook_list: list = None):
         >>> ds.config.set_debug_mode(True)
         >>> dataset = ds.ImageFolderDataset(dataset_dir="/path/to/image_folder_dataset_directory")
         >>>
-        >>> # The debug hook is added after `Decode` operation.
+        >>> # The debug hook is added after Decode operation.
         >>> dataset = dataset.map([vision.Decode(), CustomizedHook(), vision.CenterCrop(100)])
     """
     if not isinstance(debug_mode_flag, bool):
