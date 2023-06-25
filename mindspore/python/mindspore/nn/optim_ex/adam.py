@@ -30,7 +30,7 @@ class Adam(Optimizer):
     The updating formulas are as follows:
 
     .. math::
-       \begin{aligned}
+        \begin{aligned}
             &\rule{110mm}{0.4pt}                                                                 \\
             &\textbf{input}      : \gamma \text{ (lr)}, \beta_1, \beta_2
                 \text{ (betas)},\theta_0 \text{ (params)},f(\theta) \text{ (objective)}          \\
@@ -40,7 +40,6 @@ class Adam(Optimizer):
                 v_0\leftarrow 0 \text{ (second moment)},\: \widehat{v_0}^{max}\leftarrow 0\\[-1.ex]
             &\rule{110mm}{0.4pt}                                                                 \\
             &\textbf{for} \: t=1 \: \textbf{to} \: \ldots \: \textbf{do}                         \\
-
             &\hspace{5mm}\textbf{if} \: \textit{maximize}:                                       \\
             &\hspace{10mm}g_t           \leftarrow   -\nabla_{\theta} f_t (\theta_{t-1})         \\
             &\hspace{5mm}\textbf{else}                                                           \\
@@ -67,15 +66,17 @@ class Adam(Optimizer):
     Args:
         params (Union[list(Parameter), list(dict)]): list of parameters to optimize or dicts defining
             parameter groups
-        lr (Union[int, float, Tensor]): learning rate. Default: 1e-3
+        lr (Union[int, float, Tensor]): learning rate. Default: ``1e-3``.
         betas (Tuple[float, float], optional): The exponential decay rate for the moment estimations.
-            Default: (0.9, 0.999).
+            Default: ``(0.9, 0.999)``.
         eps (float, optional): term added to the denominator to improve
-            numerical stability. Default: 1e-8.
-        weight_decay (float, optional): weight decay (L2 penalty). Default: 0.
-        amsgrad (bool, optional): whether to use the AMSGrad algorithm. Default: False.
+            numerical stability. Default: ``1e-8``.
+        weight_decay (float, optional): weight decay (L2 penalty). Default: ``0``.
+        amsgrad (bool, optional): whether to use the AMSGrad algorithm. Default: ``False``.
+
+    Keyword Args:
         maximize (bool, optional): maximize the params based on the objective, instead of minimizing.
-            Default: False.
+            Default: ``False``.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`.
@@ -83,18 +84,21 @@ class Adam(Optimizer):
     Raises:
         ValueError: If the learning rate is not int, float or Tensor.
         ValueError: If the learning rate is less than 0.
-        ValueError: If the eps is less than 0.0.
-        ValueError: If the betas not in the range of 0-1.
-        ValueError: If the weight decay is less than 0.
+        ValueError: If the `eps` is less than 0.0.
+        ValueError: If the `betas` not in the range of 0-1.
+        ValueError: If the `weight_decay` is less than 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> net = Net()
+        >>> import mindspore
+        >>> from mindspore import nn
+        >>> # Define the network structure of LeNet5. Refer to
+        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> net = LeNet5()
         >>> loss_fn = nn.MAELoss()
-        >>> optimizer = mindspore.nn.optim_ex.Adam(model.parameters(), lr=0.1, momentum=0.9)
-
+        >>> optimizer = nn.optim_ex.Adam(net.parameters(), lr=0.1, momentum=0.9)
         >>> def forward_fn(data, label):
         ...     logits = net(data)
         ...     loss = loss_fn(logits, label)
@@ -103,7 +107,6 @@ class Adam(Optimizer):
         ...     (loss, _), grads = grad_fn(data, label)
         ...     optimizer(grads)
         ...     return loss
-        >>> loss = train_step(data, label)
     """
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8,
                  weight_decay=0, amsgrad=False, *, maximize=False):

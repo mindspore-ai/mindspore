@@ -45,14 +45,16 @@ class SGD(Optimizer):
 
     Args:
         params (Union[list(Parameter), list(dict)]): list of parameters to optimize or dicts defining
-            parameter groups
-        lr (Union[int, float, Tensor]): learning rate
-        momentum (Union(int, float), optional): momentum factor. Default: 0.
-        weight_decay (float, optional): weight decay (L2 penalty). Default: 0.
-        dampening (Union(int, float), optional): dampening for momentum. Default: 0.
-        nesterov (bool, optional): enables Nesterov momentum. Default: False.
+            parameter groups.
+        lr (Union[int, float, Tensor]): learning rate.
+        momentum (Union[int, float], optional): momentum factor. Default: ``0``.
+        weight_decay (float, optional): weight decay (L2 penalty). Default: ``0``.
+        dampening (Union[int, float], optional): dampening for momentum. Default: ``0``.
+        nesterov (bool, optional): enables Nesterov momentum. Default: ``False``.
+
+    Keyword Args:
         maximize (bool, optional): maximize the params based on the objective, instead of minimizing.
-            Default: False.
+            Default: ``False``.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`.
@@ -60,19 +62,22 @@ class SGD(Optimizer):
     Raises:
         ValueError: If the learning rate is not int, float or Tensor.
         ValueError: If the learning rate is less than 0.
-        ValueError: If the momentum or weight_decay value is less than 0.0.
-        ValueError: If the momentum, dampening or weight_decay value is not int or float.
-        ValueError: If the nesterov and maximize is not bool.
-        ValueError: If the nesterov is true, momentum is not positive or dampening is not 0.0.
+        ValueError: If the `momentum` or `weight_decay` value is less than 0.0.
+        ValueError: If the `momentum`, `dampening` or `weight_decay` value is not int or float.
+        ValueError: If the `nesterov` and `maximize` is not bool.
+        ValueError: If the `nesterov` is true, `momentum` is not positive or `dampening` is not 0.0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> net = Net()
+        >>> import mindspore
+        >>> from mindspore import nn
+        >>> # Define the network structure of LeNet5. Refer to
+        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> net = LeNet5()
         >>> loss_fn = nn.MAELoss()
-        >>> optimizer = mindspore.nn.optim_ex.SGD(model.parameters(), lr=0.1, momentum=0.9)
-
+        >>> optimizer = nn.optim_ex.SGD(net.parameters(), lr=0.1, momentum=0.9)
         >>> def forward_fn(data, label):
         ...     logits = net(data)
         ...     loss = loss_fn(logits, label)
@@ -81,7 +86,6 @@ class SGD(Optimizer):
         ...     (loss, _), grads = grad_fn(data, label)
         ...     optimizer(grads)
         ...     return loss
-        >>> loss = train_step(data, label)
     """
     def __init__(self, params, lr, momentum=0, dampening=0, weight_decay=0, nesterov=False, *,
                  maximize=False):

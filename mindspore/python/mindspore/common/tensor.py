@@ -735,6 +735,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Returns:
             Tensor. A Tensor with the same type and shape of input.
 
+        Supported Platforms:
+            ``Ascend`` ``CPU``
+
         Examples:
             >>> import mindspore
             >>> import numpy as np
@@ -766,6 +769,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
         Returns:
             Tensor. A Tensor with the same type and shape of input.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> import mindspore
