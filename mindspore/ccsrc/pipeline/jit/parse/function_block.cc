@@ -640,7 +640,9 @@ void FunctionBlock::CollectRemovablePhi(const ParameterPtr &phi) {
   phi_args_[phi] = arg_nodes;
   if (arg_nodes.size() == 1) {
     auto arg_node = *arg_nodes.begin();
-    arg_node->set_debug_info(phi->debug_info());
+    if (arg_node->debug_info() == nullptr) {
+      arg_node->set_debug_info(phi->debug_info());
+    }
     MS_LOG(DEBUG) << "graph " << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " phi " << phi->ToString()
                   << " can be replaced with " << arg_node->DebugString();
     // Replace var with new one. This equal to statement in TR "v0 is immediately replaced by v1."

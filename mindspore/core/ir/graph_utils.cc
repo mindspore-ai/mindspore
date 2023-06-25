@@ -123,7 +123,7 @@ std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const CNodePtr &root) {
 // Search all CNode match the predicate in roots' graph only.
 CNodePtr BroadFirstSearchFirstOf(const std::vector<CNodePtr> &roots, const MatchFunc &match_predicate) {
   std::deque<CNodePtr> todo;
-  todo.insert(todo.end(), roots.begin(), roots.end());
+  (void)todo.insert(todo.end(), roots.begin(), roots.end());
   auto seen = NewSeenGeneration();
   while (!todo.empty()) {
     CNodePtr top = todo.front();
