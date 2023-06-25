@@ -43,6 +43,8 @@ class Assign(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> value = Tensor([2.0], mindspore.float32)
         >>> variable = mindspore.Parameter(Tensor([1.0], mindspore.float32), name="variable")
         >>> assign = ops.Assign()
