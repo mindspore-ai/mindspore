@@ -27,7 +27,7 @@ class Sigmoid : public OpDesc {
   static NodePtr Exec(const inner::GraphBuilder &gb, const NodePtrList &inputs) {
     const auto &input_x = inputs[0];
     auto dtype = input_x->type;
-    auto const_one = gb.Const(1.0, dtype);
+    auto const_one = gb.Tensor(1.0, dtype);
     auto neg_x = gb.Neg(input_x);
     auto exp_neg_x = gb.Exp(neg_x);
     auto add_exp = gb.Add(exp_neg_x, const_one);

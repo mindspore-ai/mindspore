@@ -51,7 +51,7 @@ class Adam : public OpDesc {
 
     // calc m_new : m_new = beta1 * m + (1 - beta1) * grad
     auto m_b = gb.Mul(beta1, m);
-    auto const_one = gb.Const(1.0, var->type);
+    auto const_one = gb.Tensor(1.0, var->type);
     auto m1_beta1 = gb.Sub(const_one, beta1);
     auto m_g = gb.Mul(m1_beta1, grad);
     auto m_new = gb.Add(m_b, m_g);

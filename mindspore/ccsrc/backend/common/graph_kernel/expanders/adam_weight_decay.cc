@@ -64,14 +64,14 @@ class AdamWeightDecay : public OpDesc {
   NodePtrList Compute() {
     // calc m_new : m_new = beta1 * m + (1 - beta1) * grad
     auto m_b = gb.Mul(beta1_, m_);
-    auto const_one1 = gb.Const(1.0, beta1_->type);
+    auto const_one1 = gb.Tensor(1.0, beta1_->type);
     auto m1_beta1 = gb.Sub(const_one1, beta1_);
     auto m_g = gb.Mul(m1_beta1, grad_);
     auto m_new = gb.Add(m_b, m_g);
 
     // calc v_new: v_new = beta2 * v + (1 - beta2) * grad * grad
     auto v_b = gb.Mul(beta2_, v_);
-    auto const_one2 = gb.Const(1.0, beta2_->type);
+    auto const_one2 = gb.Tensor(1.0, beta2_->type);
     auto m1_beta2 = gb.Sub(const_one2, beta2_);
     auto grad_mul = gb.Mul(grad_, grad_);
     auto v_g = gb.Mul(m1_beta2, grad_mul);

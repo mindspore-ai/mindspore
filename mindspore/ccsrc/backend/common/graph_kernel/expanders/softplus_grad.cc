@@ -39,7 +39,7 @@ class SoftplusGrad : public OpDesc {
     const auto &input_x = inputs[1];
     auto neg_x = gb.Neg(input_x);
     auto exp_neg_x = gb.Exp(neg_x);
-    auto const_one = gb.Const(1.0, input_x->type);
+    auto const_one = gb.Tensor(1.0, input_x->type);
     auto exp_neg_x_add_one = gb.Add(exp_neg_x, const_one);
     auto result = gb.Div(input_dy, exp_neg_x_add_one);
     return {result};

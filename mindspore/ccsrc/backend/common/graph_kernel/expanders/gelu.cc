@@ -34,16 +34,16 @@ class GeLU : public OpDesc {
     // cal y
     auto mul_0 = gb.Mul(input_x, input_x);
     auto pow_0 = gb.Mul(mul_0, input_x);
-    auto const_csvalue = gb.Const(csv_value, dtype);
+    auto const_csvalue = gb.Tensor(csv_value, dtype);
     auto mul_1 = gb.Mul(pow_0, const_csvalue);
     auto tanh_res = gb.Add(input_x, mul_1);
-    auto const_csvalue_sqrt_two_div_pi = gb.Const(csv_value_sqrt_two_div_pi, dtype);
+    auto const_csvalue_sqrt_two_div_pi = gb.Tensor(csv_value_sqrt_two_div_pi, dtype);
     auto y = gb.Mul(tanh_res, const_csvalue_sqrt_two_div_pi);
 
     // cal gelu(x)
     auto tanh_y = gb.Emit("Tanh", {y});
-    auto const_one = gb.Const(1, dtype);
-    auto const_half = gb.Const(0.5, dtype);
+    auto const_one = gb.Tensor(1, dtype);
+    auto const_half = gb.Tensor(0.5, dtype);
     auto tanh_y_add_one = gb.Add(tanh_y, const_one);
     auto mul_x = gb.Mul(input_x, tanh_y_add_one);
     auto result = gb.Mul(mul_x, const_half);

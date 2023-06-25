@@ -46,9 +46,9 @@ class Softplus : public OpDesc {
     // if x < t result = exp(x)
     // else result = log(1 + exp(x))
     auto exp_x = gb.Exp(input_x);
-    auto const_threshold = gb.Const(threshold, input_x->type);
-    auto const_neg_threshold = gb.Const(-threshold, input_x->type);
-    auto const_one = gb.Const(1.0, input_x->type);
+    auto const_threshold = gb.Tensor(threshold, input_x->type);
+    auto const_neg_threshold = gb.Tensor(-threshold, input_x->type);
+    auto const_one = gb.Tensor(1.0, input_x->type);
     auto exp_x_add_one = gb.Add(exp_x, const_one);
     auto result = gb.Log(exp_x_add_one);
     auto greater_neg_t = gb.Greater(input_x, const_neg_threshold);

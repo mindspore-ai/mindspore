@@ -40,7 +40,7 @@ class FusedBatchNorm : public OpDesc {
     const auto &bias = inputs[bias_index];
     const auto &mean = inputs[mean_index];
     const auto &var = inputs[var_index];
-    auto eps = gb.Const(GetValue<float>(attrs_["epsilon"]), input->type);
+    auto eps = gb.Tensor(GetValue<float>(attrs_["epsilon"]), input->type);
     auto fuse_scale = gb.Div(scale, gb.Sqrt(gb.Add(var, eps)));
     auto fuse_offset = gb.Sub(bias, gb.Mul(fuse_scale, mean));
     auto result = gb.Add(gb.Mul(input, fuse_scale), fuse_offset);

@@ -72,8 +72,8 @@ class LayerNormFusion : public OpDesc {
     }
 
     // const
-    auto num = gb.Const(mean_cof_v, input->type);
-    auto eps = gb.Const(GetValue<float>(attrs_["epsilon"]), input->type);
+    auto num = gb.Tensor(mean_cof_v, input->type);
+    auto eps = gb.Tensor(GetValue<float>(attrs_["epsilon"]), input->type);
 
     // Calculate mean
     auto sum_res = gb.ReduceSum(input, reduce_axis, true);

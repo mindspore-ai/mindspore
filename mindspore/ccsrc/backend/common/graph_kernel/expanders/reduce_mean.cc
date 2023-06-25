@@ -51,7 +51,7 @@ class ReduceMean : public OpDesc {
       }
     }
     auto sum_x = gb.ReduceSum(x, axis, GetValue<bool>(attrs_["keep_dims"]));
-    auto result = gb.Div(sum_x, gb.Const(sz, x->type));
+    auto result = gb.Div(sum_x, gb.Tensor(sz, x->type));
     return {result};
   }
 };
