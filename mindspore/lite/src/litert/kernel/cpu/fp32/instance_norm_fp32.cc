@@ -48,14 +48,24 @@ int InstanceNormCPUKernel::ReSize() {
   const auto &in_tensor = in_tensors_[FIRST_INPUT];
   const auto &gamma_tensor = in_tensors_[SECOND_INPUT];
   const auto &beta_tensor = in_tensors_[THIRD_INPUT];
-  auto channel = in_tensor->Channel();
-  CHECK_NOT_EQUAL_RETURN(gamma_tensor->ElementsNum(), channel);
-  CHECK_NOT_EQUAL_RETURN(beta_tensor->ElementsNum(), channel);
+  if (in_tensor->shape().size() == C3NUM) {
+    auto channel = in_tensor->shape()[C1NUM];
+    CHECK_NOT_EQUAL_RETURN(gamma_tensor->ElementsNum(), channel);
+    CHECK_NOT_EQUAL_RETURN(beta_tensor->ElementsNum(), channel);
 
-  param_->batch_ = in_tensor->Batch();
-  MS_CHECK_INT_MUL_NOT_OVERFLOW(in_tensor->Height(), in_tensor->Width(), RET_ERROR);
-  param_->inner_size_ = in_tensor->Height() * in_tensor->Width();
-  param_->channel_ = in_tensor->Channel();
+    param_->batch_ = in_tensor->shape()[C0NUM];
+    param_->inner_size_ = in_tensor->shape()[C2NUM];
+    param_->channel_ = channel;
+  } else {
+    auto channel = in_tensor->Channel();
+    CHECK_NOT_EQUAL_RETURN(gamma_tensor->ElementsNum(), channel);
+    CHECK_NOT_EQUAL_RETURN(beta_tensor->ElementsNum(), channel);
+
+    param_->batch_ = in_tensor->Batch();
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(in_tensor->Height(), in_tensor->Width(), RET_ERROR);
+    param_->inner_size_ = in_tensor->Height() * in_tensor->Width();
+    param_->channel_ = in_tensor->Channel();
+  }
   CHECK_LESS_RETURN(static_cast<int64_t>(in_tensors_.at(THIRD_INPUT)->Size()), param_->channel_);
   param_->op_parameter_.thread_num_ = MSMIN(UP_DIV(param_->channel_, C8NUM), op_parameter_->thread_num_);
   return RET_OK;
