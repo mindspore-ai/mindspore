@@ -850,6 +850,9 @@ class Transpose(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
         >>> input_perm = (0, 2, 1)
         >>> transpose = ops.Transpose()
@@ -943,6 +946,9 @@ class Unique(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops, nn
         >>> input_x = Tensor(np.array([1, 2, 5, 2]), mindspore.int32)
         >>> output = ops.Unique()(input_x)
         >>> print(output)
@@ -1009,6 +1015,9 @@ class UniqueConsecutive(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> x = Tensor(np.array([1, 1, 2, 2, 3, 1, 1, 2]), mstype.int32)
         >>> unique_consecutive = ops.UniqueConsecutive(True, True, None)
         >>> output, idx, counts = unique_consecutive(x)
@@ -1240,6 +1249,9 @@ class UniqueWithPad(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([1, 1, 2, 2, 3, 3, 4, 5]), mindspore.int32)
         >>> pad_num = 8
         >>> output = ops.UniqueWithPad()(x, pad_num)
@@ -1967,6 +1979,7 @@ class TupleToArray(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import ops
         >>> input_x = (1,2,3)
         >>> print(type(input_x))
         <class 'tuple'>
@@ -2040,6 +2053,8 @@ class ScalarToTensor(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import ops
         >>> op = ops.ScalarToTensor()
         >>> data = 1
         >>> output = op(data, mindspore.float32)
@@ -2441,6 +2456,9 @@ class Tile(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> tile = ops.Tile()
         >>> input_x = Tensor(np.array([[1, 2], [3, 4]]), mindspore.float32)
         >>> multiples = (2, 3)
@@ -3197,6 +3215,8 @@ class Unstack(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> unstack = ops.Unstack()
         >>> input_x = Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]))
         >>> output = unstack(input_x)
@@ -4516,6 +4536,9 @@ class ScatterNdUpdate(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> np_x = np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]])
         >>> input_x = mindspore.Parameter(Tensor(np_x, mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
@@ -4587,6 +4610,9 @@ class ScatterMax(_ScatterOpDynamic):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops, Parameter
         >>> input_x = Parameter(Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32),
         ...                     name="input_x")
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
@@ -4645,6 +4671,9 @@ class ScatterMin(_ScatterOpDynamic):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops, Parameter
         >>> input_x = Parameter(Tensor(np.array([[0.0, 1.0, 2.0], [0.0, 0.0, 0.0]]), mindspore.float32),
         ...                     name="input_x")
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
@@ -4703,6 +4732,9 @@ class ScatterAdd(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops, Parameter
         >>> input_x = Parameter(Tensor(np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mindspore.int32)
         >>> updates = Tensor(np.ones([2, 2, 3]), mindspore.float32)
@@ -4819,6 +4851,9 @@ class ScatterSub(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops, Parameter
         >>> input_x = Parameter(Tensor(np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[0, 1]]), mindspore.int32)
         >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]]), mindspore.float32)
@@ -4922,6 +4957,8 @@ class Triu(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[ 1,  2,  3,  4],
         ...                      [ 5,  6,  7,  8],
         ...                      [10, 11, 12, 13],
@@ -5007,6 +5044,9 @@ class ScatterMul(_ScatterOpDynamic):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import dtype as mstype
+        >>> from mindspore import Tensor, ops, Parameter
         >>> input_x = Parameter(Tensor(np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]), mstype.float32), name="x")
         >>> indices = Tensor(np.array([0, 1]), mstype.int32)
         >>> updates = Tensor(np.array([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]), mstype.float32)
@@ -5114,6 +5154,9 @@ class ScatterDiv(_ScatterOpDynamic):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import dtype as mstype
+        >>> from mindspore import Tensor, ops, Parameter
         >>> input_x = Parameter(Tensor(np.array([[6.0, 6.0, 6.0], [2.0, 2.0, 2.0]]), mstype.float32), name="x")
         >>> indices = Tensor(np.array([0, 1]), mstype.int32)
         >>> updates = Tensor(np.array([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]), mstype.float32)
@@ -5206,6 +5249,9 @@ class ScatterNdAdd(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops, Parameter
         >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
         >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
@@ -5280,6 +5326,9 @@ class ScatterNdSub(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops, Parameter
         >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
         >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
@@ -5632,6 +5681,9 @@ class ScatterNonAliasingAdd(Primitive):
             Deprecated
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops, Parameter
         >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
         >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
@@ -8163,6 +8215,8 @@ class Tril(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[ 1,  2,  3,  4],
         ...                      [ 5,  6,  7,  8],
         ...                      [10, 11, 12, 13],

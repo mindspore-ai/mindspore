@@ -33,6 +33,8 @@ class ScalarCast(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import ops
         >>> scalar_cast = ops.ScalarCast()
         >>> output = scalar_cast(255.0, mindspore.int32)
         >>> print(output)

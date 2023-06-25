@@ -491,6 +491,9 @@ class AssignAdd(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops, nn
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -538,6 +541,9 @@ class AssignSub(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops, nn
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -7992,6 +7998,9 @@ class Trace(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
         >>> trace = ops.Trace()
         >>> output = trace(x)
@@ -8710,6 +8719,8 @@ class TrilIndices(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import ops
+        >>> from mindspore import dtype as mstype
         >>> net = ops.TrilIndices(4, 3, -1, mstype.int64)
         >>> output = net()
         >>> print(output)
@@ -8950,6 +8961,8 @@ class TriuIndices(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import ops
+        >>> from mindspore import dtype as mstype
         >>> net = ops.TriuIndices(5, 4, 2, mstype.int64)
         >>> output = net()
         >>> print(output)
