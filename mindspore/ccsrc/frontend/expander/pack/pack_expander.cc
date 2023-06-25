@@ -149,7 +149,7 @@ py::object PackExpander::BeginFuncGraph(const py::object &obj, const py::args &i
   for (size_t i = 0; i < args.size(); ++i) {
     auto node = ConvertInput(args[i]);
     MS_EXCEPTION_IF_NULL(node);
-    node_inputs.emplace_back(node);
+    (void)node_inputs.emplace_back(node);
     outputs[i] = ConvertAbstractToParameter(node->abstract()->Clone());
   }
   auto node = up_graph->NewCNodeInOrder(node_inputs);
@@ -232,7 +232,7 @@ py::object PackExpander::Emit(const py::object &prim, const py::args &inputs) co
   for (size_t i = 0; i < inputs.size(); ++i) {
     auto node = ConvertInput(inputs[i]);
     MS_EXCEPTION_IF_NULL(node);
-    cnode_inputs.emplace_back(node);
+    (void)cnode_inputs.emplace_back(node);
   }
   auto cnode = EmitCNode(prim_py, cnode_inputs);
   return ConvertCNodeToPython(cnode);
@@ -282,7 +282,7 @@ AnfNodePtr PackExpander::ConvertInput(const py::object &arg) const {
     py::tuple tuple = py::cast<py::tuple>(arg);
     AnfNodePtrList cnode_inputs;
     for (size_t i = 0; i < tuple.size(); ++i) {
-      cnode_inputs.emplace_back(ConvertInput(tuple[i]));
+      (void)cnode_inputs.emplace_back(ConvertInput(tuple[i]));
     }
     if (py::hasattr(arg, "__parameter_tuple__")) {
       return EmitCNode(prim::kPrimMakeTuple, std::move(cnode_inputs));

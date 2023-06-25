@@ -23,7 +23,7 @@
 namespace mindspore::opt::irpass {
 class PackExpand {
  public:
-  bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer);
+  bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) const;
 };
 }  // namespace mindspore::opt::irpass
 

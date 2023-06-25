@@ -206,7 +206,7 @@ OpCompiler &OpCompiler::GetInstance() {
 }
 
 KernelGraphPtr OpCompiler::GenerateKernelGraph(const session::BackendOpRunInfoPtr &op_run_info,
-                                               device::DeviceContext *device_context) const {
+                                               const device::DeviceContext *device_context) const {
   MS_EXCEPTION_IF_NULL(session_);
   KernelGraphPtr graph;
   if (op_run_info->op_prim->name() == "PackFunc") {

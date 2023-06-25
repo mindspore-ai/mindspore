@@ -28,7 +28,7 @@ namespace mindspore {
 namespace expander {
 class COMMON_EXPORT PackNode : public Value {
  public:
-  explicit PackNode(AnfNodePtr node) : node_(node) {}
+  explicit PackNode(const AnfNodePtr node) : node_(node) {}
   PackNode() = default;
   virtual ~PackNode() = default;
   MS_DECLARE_PARENT(PackNode, Value);
@@ -49,7 +49,7 @@ using PackNodePtr = std::shared_ptr<PackNode>;
 class PackExpander {
  public:
   static std::shared_ptr<PackExpander> Instance() {
-    static std::shared_ptr<PackExpander> instance = std::make_shared<PackExpander>();
+    static const std::shared_ptr<PackExpander> instance = std::make_shared<PackExpander>();
     return instance;
   }
   PackExpander() = default;

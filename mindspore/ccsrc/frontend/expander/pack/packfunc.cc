@@ -68,7 +68,7 @@ FuncGraphPtr ExpandPackFunc(const PrimitivePtr &prim, const abstract::AbstractBa
     graph = expander->EndGraph(output);
     graph_map[abs_list] = graph;
   }
-  static bool dump_result = (common::GetEnv("MS_DEV_DUMP_PACK") == "on");
+  static const bool dump_result = (common::GetEnv("MS_DEV_DUMP_PACK") == "on");
   if (dump_result) {
     DumpIR("pack_func_" + key + ".ir", graph, true);
   }
@@ -88,7 +88,7 @@ class PackFuncInfer : public abstract::OpInferBase {
     return abs->BuildType();
   }
 
-  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     if (IsAbstractDynamicShape(input_args)) {
       MS_LOG(WARNING) << "Dynamic shape operator is not fully supported in trace graph capturing. Please check the "
