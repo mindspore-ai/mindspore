@@ -966,7 +966,7 @@ def _jac_generate_target_dimension(x):
     """For given length = len(x), this method generates target dimension tuple (1, 2, 3,..., length, 0)."""
     dim = ()
     for index in range(len(x[1:])):
-        tuple += (index + 1,)
+        dim += (index + 1,)
     target_dimension = dim + (0,)
     return target_dimension
 
