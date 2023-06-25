@@ -132,9 +132,11 @@ template <>
 __global__ void Average(const size_t size, const size_t divisor, half *output) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
 #if CUDA_VERSION >= 11000
-    output[pos] /= __ull2half_rn(divisor);
+    float ret = __half2float(output[pos]) / __ull2float_rn(divisor);
+    output[pos] = __float2half(ret);
 #else
-    output[pos] /= static_cast<half>(static_cast<float>(divisor));
+    float ret = static_cast<float>(output[pos]) / static_cast<float>(divisor);
+    output[pos] = static_cast<half>(ret);
 #endif  // CUDA_VERSION > 11000
   }
 }
@@ -516,7 +518,7 @@ __global__ __launch_bounds__(1024) void ColumnReduceTempToOutKernel(T *temp, int
 }
 
 template <typename T, typename Op>
-void CalReduceColumn16(const T *input, const size_t num_rows, const size_t num_cols, Op op, T init, T *output,
+void CalReduceColumn16(const T *input, const size_t num_rows, const size_t num_cols, Op op, T init, T *temp, T *output,
                        cudaStream_t cuda_stream) {
   int rows_per_warp = thread_per_warp / num_cols;
   const int block_y = std::min<int>(((num_rows + rows_per_warp - 1) / rows_per_warp), (1024 / thread_per_warp));
@@ -536,23 +538,19 @@ void CalReduceColumn16(const T *input, const size_t num_rows, const size_t num_c
   if (num_blocks.y == 1) {
     ColumnReduce16Kernel<<<num_blocks, num_threads, 0, cuda_stream>>>(input, output, num_rows, num_cols, op, init);
   } else {
-    T *temp_storage = nullptr;
-    (void)cudaMalloc(&temp_storage, sizeof(T) * num_cols * num_blocks.y);
-    ColumnReduce16Kernel<<<num_blocks, num_threads, 0, cuda_stream>>>(input, temp_storage, num_rows, num_cols, op,
-                                                                      init);
+    ColumnReduce16Kernel<<<num_blocks, num_threads, 0, cuda_stream>>>(input, temp, num_rows, num_cols, op, init);
 
     const int grid_x = (num_blocks.y * num_cols + thread_per_warp - 1) / thread_per_warp;
     dim3 new_num_blocks(grid_x, 1, 1);
     dim3 new_num_threads(128, 1, 1);
-    CleanupSegments<<<new_num_blocks, new_num_threads, 0, cuda_stream>>>(temp_storage, output, num_rows, num_cols,
-                                                                         num_blocks.y, op, init);
-    (void)cudaFree(temp_storage);
+    CleanupSegments<<<new_num_blocks, new_num_threads, 0, cuda_stream>>>(temp, output, num_rows, num_cols, num_blocks.y,
+                                                                         op, init);
   }
 }
 
 template <typename T, typename Op>
-void CalReduceColumn4096(const T *input, const size_t num_rows, const size_t num_cols, Op op, T init, T *output,
-                         cudaStream_t cuda_stream) {
+void CalReduceColumn4096(const T *input, const size_t num_rows, const size_t num_cols, Op op, T init, T *temp,
+                         T *output, cudaStream_t cuda_stream) {
   dim3 num_threads(thread_per_warp, std::min<int>(num_rows, (1024 / thread_per_warp)), 1);
   dim3 num_blocks((num_cols + thread_per_warp - 1) / thread_per_warp, 1, 1);
 
@@ -567,19 +565,16 @@ void CalReduceColumn4096(const T *input, const size_t num_rows, const size_t num
   if (num_blocks.y == 1) {
     ColumnReduceKernel<<<num_blocks, num_threads, 0, cuda_stream>>>(input, output, num_rows, num_cols, op, init);
   } else {
-    T *temp_storage = nullptr;
-    (void)cudaMalloc(&temp_storage, sizeof(T) * num_cols * num_blocks.y);
-    ColumnReduceKernel<<<num_blocks, num_threads, 0, cuda_stream>>>(input, temp_storage, num_rows, num_cols, op, init);
+    ColumnReduceKernel<<<num_blocks, num_threads, 0, cuda_stream>>>(input, temp, num_rows, num_cols, op, init);
 
     dim3 new_num_blocks((num_blocks.y * num_cols + thread_per_warp - 1) / thread_per_warp, 1, 1);
-    CleanupSegments<<<new_num_blocks, num_threads, 0, cuda_stream>>>(temp_storage, output, num_rows, num_cols,
-                                                                     num_blocks.y, op, init);
-    (void)cudaFree(temp_storage);
+    CleanupSegments<<<new_num_blocks, num_threads, 0, cuda_stream>>>(temp, output, num_rows, num_cols, num_blocks.y, op,
+                                                                     init);
   }
 }
 
 template <typename T, typename Op>
-void CalReduceToScalar(const T *input, const size_t size, T *output, Op op, T init, cudaStream_t cuda_stream) {
+void CalReduceToScalar(const T *input, const size_t size, T *temp, T *output, Op op, T init, cudaStream_t cuda_stream) {
   if (size <= 4096) {
     const int num_blocks = 1;
     const int num_threads = 256;
@@ -588,34 +583,27 @@ void CalReduceToScalar(const T *input, const size_t size, T *output, Op op, T in
   } else if (size <= 1 << 18) {
     const int num_threads = 256;
     const int num_blocks = std::min<int>(thread_per_warp, ((static_cast<int>(size) + num_threads - 1) / num_threads));
-    T *temp_storage = nullptr;
-    (void)cudaMalloc(&temp_storage, num_blocks * sizeof(T));
-    BlockReduceKernel<T, num_threads, Op>
-      <<<num_blocks, num_threads, 0, cuda_stream>>>(input, temp_storage, size, op, init);
+    BlockReduceKernel<T, num_threads, Op><<<num_blocks, num_threads, 0, cuda_stream>>>(input, temp, size, op, init);
     const int last_blocks = 1;
     const int num_rows = 1;
     const int num_cols = 1;
-    CleanupSegments<<<last_blocks, thread_per_warp, 0, cuda_stream>>>(temp_storage, output, num_rows, num_cols,
-                                                                      num_blocks, op, init);
-    cudaFree(temp_storage);
+    CleanupSegments<<<last_blocks, thread_per_warp, 0, cuda_stream>>>(temp, output, num_rows, num_cols, num_blocks, op,
+                                                                      init);
     return;
   }
   size_t temp_storage_size = 0;
-  auto reduce = [&](void *temp_storage) {
+  auto reduce = [&](T *temp_storage) {
     auto res = cub::DeviceReduce::Reduce(temp_storage, temp_storage_size, input, output, size, op, init, cuda_stream);
     if (res != cudaSuccess) {
       return;
     }
   };
   reduce(nullptr);
-  T *temp_storage;
-  (void)cudaMalloc(&temp_storage, temp_storage_size);
-  reduce(temp_storage);
-  cudaFree(temp_storage);
+  reduce(temp);
 }
 
 template <typename T, typename Op>
-void CalReduceRow(const T *input, const size_t num_rows, const size_t num_cols, Op op, T init, T *output,
+void CalReduceRow(const T *input, const size_t num_rows, const size_t num_cols, Op op, T init, T *temp, T *output,
                   cudaStream_t cuda_stream) {
   if (num_cols < 1024) {
     const int num_threads = 128;
@@ -629,7 +617,7 @@ void CalReduceRow(const T *input, const size_t num_rows, const size_t num_cols, 
   cub::TransformInputIterator<int, ComputeOffset, cub::CountingInputIterator<int>> transform_iter(counting_iter,
                                                                                                   computeoffset);
   size_t temp_storage_size = 0;
-  auto reduce = [&](void *temp_storage) {
+  auto reduce = [&](T *temp_storage) {
     auto res = cub::DeviceSegmentedReduce::Reduce(temp_storage, temp_storage_size, input, output, num_rows,
                                                   transform_iter, transform_iter + 1, op, init, cuda_stream);
     if (res != cudaSuccess) {
@@ -638,20 +626,17 @@ void CalReduceRow(const T *input, const size_t num_rows, const size_t num_cols, 
   };
 
   reduce(nullptr);
-  T *temp_storage = nullptr;
-  (void)cudaMalloc(&temp_storage, temp_storage_size);
 
-  reduce(temp_storage);
-  cudaFree(temp_storage);
+  reduce(temp);
 }
 
 template <typename T, typename Op>
-void CalReduceColumn(const T *input, const size_t dim0, const size_t dim1, Op op, T init, T *output,
+void CalReduceColumn(const T *input, const size_t dim0, const size_t dim1, Op op, T init, T *temp, T *output,
                      cudaStream_t cuda_stream) {
   if (dim1 <= 16) {
-    CalReduceColumn16(input, dim0, dim1, op, init, output, cuda_stream);
+    CalReduceColumn16(input, dim0, dim1, op, init, temp, output, cuda_stream);
   } else if (dim1 <= 4096) {
-    CalReduceColumn4096(input, dim0, dim1, op, init, output, cuda_stream);
+    CalReduceColumn4096(input, dim0, dim1, op, init, temp, output, cuda_stream);
   } else {
     const int num_threads = 128;
     const int num_blocks = (dim1 + num_threads - 1) / num_threads;
@@ -661,8 +646,8 @@ void CalReduceColumn(const T *input, const size_t dim0, const size_t dim1, Op op
 }
 
 template <typename T, typename Op>
-void CalReduce3DXZ(const T *input, const size_t dim0, const size_t dim1, const size_t dim2, Op op, T init, T *output,
-                   cudaStream_t cuda_stream) {
+void CalReduce3DXZ(const T *input, const size_t dim0, const size_t dim1, const size_t dim2, Op op, T init, T *temp,
+                   T *output, cudaStream_t cuda_stream) {
   ComputeOffset computeoffset(dim0 * dim2);
   cub::CountingInputIterator<int> counting_iter(0);
   cub::TransformInputIterator<int, ComputeOffset, cub::CountingInputIterator<int>> transform_iter(counting_iter,
@@ -672,7 +657,7 @@ void CalReduce3DXZ(const T *input, const size_t dim0, const size_t dim1, const s
   gatherIterType gather_iter(counting_iter, gather_op);
   PermutationInputIterator<T, gatherIterType> permute_iter(input, gather_iter);
   std::size_t temp_storage_size = 0;
-  auto reduce = [&](void *temp_storage_ptr) {
+  auto reduce = [&](T *temp_storage_ptr) {
     auto res = cub::DeviceSegmentedReduce::Reduce(temp_storage_ptr, temp_storage_size, permute_iter, output, dim1,
                                                   transform_iter, transform_iter + 1, op, init, cuda_stream);
     if (res != cudaSuccess) {
@@ -681,15 +666,12 @@ void CalReduce3DXZ(const T *input, const size_t dim0, const size_t dim1, const s
   };
 
   reduce(nullptr);
-  T *temp_storage = nullptr;
-  (void)cudaMalloc(&temp_storage, temp_storage_size);
-  reduce(temp_storage);
-  cudaFree(temp_storage);
+  reduce(temp);
 }
 
 template <typename T, typename Op>
-void CalReduce3DY(const T *input, const size_t dim0, const size_t dim1, const size_t dim2, Op op, T init, T *output,
-                  cudaStream_t cuda_stream) {
+void CalReduce3DY(const T *input, const size_t dim0, const size_t dim1, const size_t dim2, Op op, T init, T *temp,
+                  T *output, cudaStream_t cuda_stream) {
   int num_threads = 128;
   int n_group_in = dim1;
   int n_size = dim2;
@@ -700,9 +682,6 @@ void CalReduce3DY(const T *input, const size_t dim0, const size_t dim1, const si
     temp_storage_size += n_group_out * n_size;
     n_group_in = n_group_out;
   }
-  temp_storage_size *= dim0 * sizeof(T);
-  T *temp_storage = nullptr;
-  (void)cudaMalloc(&temp_storage, temp_storage_size);
 
   n_group_in = dim1;
   int temp_in_offset = -1;
@@ -711,8 +690,8 @@ void CalReduce3DY(const T *input, const size_t dim0, const size_t dim1, const si
   while (n_group_in >= 2 && n_group_in * n_size > num_threads) {
     int n_group_out = std::max(1, n_group_in / (2 * kUnroll));
     num_blocks = (static_cast<int>(dim0) * n_group_out * n_size + num_threads - 1) / num_threads;
-    ColumnReduceInToTempKernel<<<num_blocks, num_threads, 0, cuda_stream>>>(
-      temp_storage, temp_in_offset, temp_out_offset, input, dim0, n_group_in, dim2, op);
+    ColumnReduceInToTempKernel<<<num_blocks, num_threads, 0, cuda_stream>>>(temp, temp_in_offset, temp_out_offset,
+                                                                            input, dim0, n_group_in, dim2, op);
     n_group_in = n_group_out;
     temp_in_offset = temp_out_offset;
     temp_out_offset = temp_in_offset + dim0 * n_group_out * n_size;
@@ -726,12 +705,11 @@ void CalReduce3DY(const T *input, const size_t dim0, const size_t dim1, const si
     num_blocks = (static_cast<int>(dim0) * n_size + num_threads - 1) / num_threads;
   }
   ColumnReduceTempToOutKernel<<<num_blocks, num_threads, 2 * sizeof(T) * num_threads, cuda_stream>>>(
-    temp_storage, temp_in_offset, input, output, dim0, n_group_in, dim2, op);
-  cudaFree(temp_storage);
+    temp, temp_in_offset, input, output, dim0, n_group_in, dim2, op);
 }
 
 template <typename T, typename Op>
-void CalReduce3DYLight(const T *input, const size_t dim0, const size_t dim1, const size_t dim2, Op op, T init,
+void CalReduce3DYLight(const T *input, const size_t dim0, const size_t dim1, const size_t dim2, Op op, T init, T *temp,
                        T *output, cudaStream_t cuda_stream) {
   int threads_per_block = 128;
   int num_blocks = (dim0 * dim2 + threads_per_block - 1) / threads_per_block;
@@ -739,26 +717,26 @@ void CalReduce3DYLight(const T *input, const size_t dim0, const size_t dim1, con
 }
 
 template <typename T, typename Op>
-void ReduceImpl(const T *input, const std::vector<size_t> &input_reshape, const bool reduce_first_axis, Op op,
+void ReduceImpl(const T *input, const std::vector<size_t> &input_reshape, const bool reduce_first_axis, Op op, T *temp,
                 T *output, cudaStream_t cuda_stream) {
   T init = GetInit<T, Op>()();
   const size_t dim0 = input_reshape[0];
   const size_t dim1 = input_reshape.size() >= 2 ? input_reshape[1] : 1;
   const size_t dim2 = input_reshape.size() >= 3 ? input_reshape[2] : 1;
   if (input_reshape.size() == 1 && reduce_first_axis) {
-    CalReduceToScalar(input, dim0, output, op, init, cuda_stream);
+    CalReduceToScalar(input, dim0, temp, output, op, init, cuda_stream);
   } else if ((input_reshape.size() == 2) && (reduce_first_axis)) {
-    CalReduceColumn(input, dim0, dim1, op, init, output, cuda_stream);
+    CalReduceColumn(input, dim0, dim1, op, init, temp, output, cuda_stream);
   } else if ((input_reshape.size() == 2) && (!reduce_first_axis)) {
-    CalReduceRow(input, dim0, dim1, op, init, output, cuda_stream);
+    CalReduceRow(input, dim0, dim1, op, init, temp, output, cuda_stream);
   } else if ((input_reshape.size() == 3) && (reduce_first_axis)) {
-    CalReduce3DXZ(input, dim0, dim1, dim2, op, init, output, cuda_stream);
+    CalReduce3DXZ(input, dim0, dim1, dim2, op, init, temp, output, cuda_stream);
   } else if ((input_reshape.size() == 3) && (!reduce_first_axis)) {
     int num_per_thread = dim1 / (dim0 * dim2);
     if (num_per_thread >= 16) {
-      CalReduce3DY(input, dim0, dim1, dim2, op, init, output, cuda_stream);
+      CalReduce3DY(input, dim0, dim1, dim2, op, init, temp, output, cuda_stream);
     } else {
-      CalReduce3DYLight(input, dim0, dim1, dim2, op, init, output, cuda_stream);
+      CalReduce3DYLight(input, dim0, dim1, dim2, op, init, temp, output, cuda_stream);
     }
   } else {
     fprintf(stderr, "Invalid shapes and axis to reduce.");
@@ -768,46 +746,47 @@ void ReduceImpl(const T *input, const std::vector<size_t> &input_reshape, const 
 
 template <typename T>
 cudaError_t ArrayReduce(const T *input, const std::vector<size_t> &input_reshape, const bool reduce_first_axis,
-                        ReduceType_t type, T *output, cudaStream_t cuda_stream) {
+                        ReduceType_t type, T *temp, T *output, cudaStream_t cuda_stream) {
   switch (type) {
     case ReduceSum:
-      ReduceImpl<T, Sum<T>>(input, input_reshape, reduce_first_axis, Sum<T>(), output, cuda_stream);
+      ReduceImpl<T, Sum<T>>(input, input_reshape, reduce_first_axis, Sum<T>(), temp, output, cuda_stream);
       break;
     case ReduceMax:
-      ReduceImpl<T, Max<T>>(input, input_reshape, reduce_first_axis, Max<T>(), output, cuda_stream);
+      ReduceImpl<T, Max<T>>(input, input_reshape, reduce_first_axis, Max<T>(), temp, output, cuda_stream);
       break;
     case ReduceMin:
-      ReduceImpl<T, Min<T>>(input, input_reshape, reduce_first_axis, Min<T>(), output, cuda_stream);
+      ReduceImpl<T, Min<T>>(input, input_reshape, reduce_first_axis, Min<T>(), temp, output, cuda_stream);
       break;
     case ReduceProd:
-      ReduceImpl<T, Prod<T>>(input, input_reshape, reduce_first_axis, Prod<T>(), output, cuda_stream);
+      ReduceImpl<T, Prod<T>>(input, input_reshape, reduce_first_axis, Prod<T>(), temp, output, cuda_stream);
       break;
     case ReduceAll:
-      ReduceImpl<T, And>(input, input_reshape, reduce_first_axis, And(), output, cuda_stream);
+      ReduceImpl<T, And>(input, input_reshape, reduce_first_axis, And(), temp, output, cuda_stream);
       break;
     case ReduceAny:
-      ReduceImpl<T, Or>(input, input_reshape, reduce_first_axis, Or(), output, cuda_stream);
+      ReduceImpl<T, Or>(input, input_reshape, reduce_first_axis, Or(), temp, output, cuda_stream);
       break;
     case ReduceMean:
       size_t reduce_size = 1;
       size_t unreduce_size = 1;
-      if (input_reshape.size() == 1) {
+      size_t input_reshape_size = input_reshape.size();
+      if (input_reshape_size == 1) {
         reduce_size = input_reshape[0];
         unreduce_size = 1;
-      } else if ((input_reshape.size() == 2) && (reduce_first_axis)) {
+      } else if ((input_reshape_size == 2) && (reduce_first_axis)) {
         reduce_size = input_reshape[0];
         unreduce_size = input_reshape[1];
-      } else if ((input_reshape.size() == 2) && (!reduce_first_axis)) {
+      } else if ((input_reshape_size == 2) && (!reduce_first_axis)) {
         reduce_size = input_reshape[1];
         unreduce_size = input_reshape[0];
-      } else if ((input_reshape.size() == 3) && (reduce_first_axis)) {
+      } else if ((input_reshape_size == 3) && (reduce_first_axis)) {
         reduce_size = input_reshape[0] * input_reshape[2];
         unreduce_size = input_reshape[1];
-      } else if ((input_reshape.size() == 3) && (!reduce_first_axis)) {
+      } else if ((input_reshape_size == 3) && (!reduce_first_axis)) {
         reduce_size = input_reshape[1];
         unreduce_size = input_reshape[0] * input_reshape[2];
       }
-      ReduceImpl<T, Sum<T>>(input, input_reshape, reduce_first_axis, Sum<T>(), output, cuda_stream);
+      ReduceImpl<T, Sum<T>>(input, input_reshape, reduce_first_axis, Sum<T>(), temp, output, cuda_stream);
       Average<<<(unreduce_size + 256) / 256, 256, 0, cuda_stream>>>(unreduce_size, reduce_size, output);
       break;
   }
@@ -816,7 +795,7 @@ cudaError_t ArrayReduce(const T *input, const std::vector<size_t> &input_reshape
 
 template <typename T>
 cudaError_t ArrayReduceComplex(const T *input, const std::vector<size_t> &input_reshape, const bool reduce_first_axis,
-                               ReduceType_t type, T *output, cudaStream_t cuda_stream) {
+                               ReduceType_t type, T *temp, T *output, cudaStream_t cuda_stream) {
   switch (type) {
     case ReduceMax:
       break;
@@ -827,41 +806,42 @@ cudaError_t ArrayReduceComplex(const T *input, const std::vector<size_t> &input_
     case ReduceAny:
       break;
     case ReduceSum:
-      ReduceImpl<T, Sum<T>>(input, input_reshape, reduce_first_axis, Sum<T>(), output, cuda_stream);
+      ReduceImpl<T, Sum<T>>(input, input_reshape, reduce_first_axis, Sum<T>(), temp, output, cuda_stream);
       break;
     case ReduceProd:
-      ReduceImpl<T, Prod<T>>(input, input_reshape, reduce_first_axis, Prod<T>(), output, cuda_stream);
+      ReduceImpl<T, Prod<T>>(input, input_reshape, reduce_first_axis, Prod<T>(), temp, output, cuda_stream);
       break;
     case ReduceMean:
       size_t reduce_size = 1;
       size_t unreduce_size = 1;
-      if (input_reshape.size() == 1) {
+      size_t input_reshape_size = input_reshape.size();
+      if (input_reshape_size == 1) {
         reduce_size = input_reshape[0];
         unreduce_size = 1;
-      } else if ((input_reshape.size() == 2) && (reduce_first_axis)) {
+      } else if ((input_reshape_size == 2) && (reduce_first_axis)) {
         reduce_size = input_reshape[0];
         unreduce_size = input_reshape[1];
-      } else if ((input_reshape.size() == 2) && (!reduce_first_axis)) {
+      } else if ((input_reshape_size == 2) && (!reduce_first_axis)) {
         reduce_size = input_reshape[1];
         unreduce_size = input_reshape[0];
-      } else if ((input_reshape.size() == 3) && (reduce_first_axis)) {
+      } else if ((input_reshape_size == 3) && (reduce_first_axis)) {
         reduce_size = input_reshape[0] * input_reshape[2];
         unreduce_size = input_reshape[1];
-      } else if ((input_reshape.size() == 3) && (!reduce_first_axis)) {
+      } else if ((input_reshape_size == 3) && (!reduce_first_axis)) {
         reduce_size = input_reshape[1];
         unreduce_size = input_reshape[0] * input_reshape[2];
       }
-      ReduceImpl<T, Sum<T>>(input, input_reshape, reduce_first_axis, Sum<T>(), output, cuda_stream);
+      ReduceImpl<T, Sum<T>>(input, input_reshape, reduce_first_axis, Sum<T>(), temp, output, cuda_stream);
       Average<<<(unreduce_size + 256) / 256, 256, 0, cuda_stream>>>(unreduce_size, reduce_size, output);
       break;
   }
   CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
-#define ARRAY_REDUCE_REGISTER(T)                                                                               \
-  template CUDA_LIB_EXPORT cudaError_t ArrayReduce(const T *input, const std::vector<size_t> &input_reshape,   \
-                                                   const bool reduce_first_axis, ReduceType_t type, T *output, \
-                                                   cudaStream_t cuda_stream)
+#define ARRAY_REDUCE_REGISTER(T)                                                                             \
+  template CUDA_LIB_EXPORT cudaError_t ArrayReduce(const T *input, const std::vector<size_t> &input_reshape, \
+                                                   const bool reduce_first_axis, ReduceType_t type, T *temp, \
+                                                   T *output, cudaStream_t cuda_stream)
 
 ARRAY_REDUCE_REGISTER(float);
 ARRAY_REDUCE_REGISTER(double);
@@ -876,10 +856,10 @@ ARRAY_REDUCE_REGISTER(uint16_t);
 ARRAY_REDUCE_REGISTER(uint32_t);
 ARRAY_REDUCE_REGISTER(uint64_t);
 
-#define ARRAY_REDUCE_COMPLEX_REGISTER(T)                                                                              \
-  template CUDA_LIB_EXPORT cudaError_t ArrayReduceComplex(const T *input, const std::vector<size_t> &input_reshape,   \
-                                                          const bool reduce_first_axis, ReduceType_t type, T *output, \
-                                                          cudaStream_t cuda_stream)
+#define ARRAY_REDUCE_COMPLEX_REGISTER(T)                                                                            \
+  template CUDA_LIB_EXPORT cudaError_t ArrayReduceComplex(const T *input, const std::vector<size_t> &input_reshape, \
+                                                          const bool reduce_first_axis, ReduceType_t type, T *temp, \
+                                                          T *output, cudaStream_t cuda_stream)
 
 ARRAY_REDUCE_COMPLEX_REGISTER(Complex<float>);
 ARRAY_REDUCE_COMPLEX_REGISTER(Complex<double>);
