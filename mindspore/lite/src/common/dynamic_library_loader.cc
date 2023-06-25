@@ -47,7 +47,13 @@ int DynamicLibraryLoader::Open(const std::string &lib_path) {
   handler_ = LoadLibrary(real_path.c_str());
 #endif
   if (handler_ == nullptr) {
-    MS_LOG(ERROR) << "handler is nullptr.";
+#ifndef _WIN32
+    auto error = dlerror();
+    auto error_msg = error == nullptr ? "" : error;
+    MS_LOG(ERROR) << "handler is nullptr. " << error_msg;
+#else
+    MS_LOG(ERROR) << "handler is nullptr. " << GetLastError();
+#endif
     return RET_ERROR;
   }
   return RET_OK;
