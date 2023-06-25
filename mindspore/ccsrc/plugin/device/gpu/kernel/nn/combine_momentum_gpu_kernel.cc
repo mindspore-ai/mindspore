@@ -18,63 +18,91 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_TWO(CombineMomentum,
-                      KernelAttr()
-                        .AddAllSameAttr(true)
-                        .AddInputAttr(kNumberTypeFloat32)  // variable
-                        .AddInputAttr(kNumberTypeFloat32)  // accumulation
-                        .AddInputAttr(kNumberTypeFloat32)  // learning_rate
-                        .AddInputAttr(kNumberTypeFloat32)  // gradient
-                        .AddInputAttr(kNumberTypeFloat32)  // momentum
-                        .AddOutputAttr(kNumberTypeFloat32),
-                      CombineMomentumGpuKernelMod, float, float)
-MS_REG_GPU_KERNEL_TWO(CombineScaleMomentum,
-                      KernelAttr()
-                        .AddAllSameAttr(true)
-                        .AddInputAttr(kNumberTypeFloat32)  // scale
-                        .AddInputAttr(kNumberTypeFloat32)  // variable
-                        .AddInputAttr(kNumberTypeFloat32)  // accumulation
-                        .AddInputAttr(kNumberTypeFloat32)  // learning_rate
-                        .AddInputAttr(kNumberTypeFloat32)  // gradient
-                        .AddInputAttr(kNumberTypeFloat32)  // momentum
-                        .AddOutputAttr(kNumberTypeFloat32),
-                      CombineMomentumGpuKernelMod, float, float)
-MS_REG_GPU_KERNEL_TWO(CombineScaleMomentum,
-                      KernelAttr()
-                        .AddAllSameAttr(true)
-                        .AddInputAttr(kNumberTypeFloat32)  // scale
-                        .AddInputAttr(kNumberTypeFloat32)  // variable
-                        .AddInputAttr(kNumberTypeFloat32)  // accumulation
-                        .AddInputAttr(kNumberTypeFloat32)  // variable
-                        .AddInputAttr(kNumberTypeFloat32)  // accumulation
-                        .AddInputAttr(kNumberTypeFloat32)  // learning_rate
-                        .AddInputAttr(kNumberTypeFloat16)  // gradient
-                        .AddInputAttr(kNumberTypeFloat32)  // momentum
-                        .AddOutputAttr(kNumberTypeFloat32),
-                      CombineMomentumGpuKernelMod, float, half)
-MS_REG_GPU_KERNEL_TWO(CombineWeightDecayScaleMomentum,
-                      KernelAttr()
-                        .AddAllSameAttr(true)
-                        .AddInputAttr(kNumberTypeFloat32)  // weight decay
-                        .AddInputAttr(kNumberTypeFloat32)  // scale
-                        .AddInputAttr(kNumberTypeFloat32)  // variable
-                        .AddInputAttr(kNumberTypeFloat32)  // accumulation
-                        .AddInputAttr(kNumberTypeFloat32)  // learning_rate
-                        .AddInputAttr(kNumberTypeFloat32)  // gradient
-                        .AddInputAttr(kNumberTypeFloat32)  // momentum
-                        .AddOutputAttr(kNumberTypeFloat32),
-                      CombineMomentumGpuKernelMod, float, float)
-MS_REG_GPU_KERNEL_TWO(CombineWeightDecayScaleMomentum,
-                      KernelAttr()
-                        .AddAllSameAttr(true)
-                        .AddInputAttr(kNumberTypeFloat32)  // variable
-                        .AddInputAttr(kNumberTypeFloat32)  // accumulation
-                        .AddInputAttr(kNumberTypeFloat32)  // variable
-                        .AddInputAttr(kNumberTypeFloat32)  // accumulation
-                        .AddInputAttr(kNumberTypeFloat32)  // learning_rate
-                        .AddInputAttr(kNumberTypeFloat16)  // gradient
-                        .AddInputAttr(kNumberTypeFloat32)  // momentum
-                        .AddOutputAttr(kNumberTypeFloat32),
-                      CombineMomentumGpuKernelMod, float, half)
+MS_REG_GPU_KERNEL_THREE(CombineMomentum,
+                        KernelAttr()
+                          .AddAllSameAttr(true)
+                          .AddInputAttr(kNumberTypeFloat32)  // variable
+                          .AddInputAttr(kNumberTypeFloat32)  // accumulation
+                          .AddInputAttr(kNumberTypeFloat32)  // learning_rate
+                          .AddInputAttr(kNumberTypeFloat32)  // gradient
+                          .AddInputAttr(kNumberTypeFloat32)  // momentum
+                          .AddOutputAttr(kNumberTypeFloat32),
+                        CombineMomentumGpuKernelMod, float, float, float)
+MS_REG_GPU_KERNEL_THREE(CombineMomentum,
+                        KernelAttr()
+                          .AddAllSameAttr(true)
+                          .AddInputAttr(kNumberTypeFloat16)  // variable
+                          .AddInputAttr(kNumberTypeFloat16)  // accumulation
+                          .AddInputAttr(kNumberTypeFloat16)  // learning_rate
+                          .AddInputAttr(kNumberTypeFloat16)  // gradient
+                          .AddInputAttr(kNumberTypeFloat16)  // momentum
+                          .AddOutputAttr(kNumberTypeFloat16),
+                        CombineMomentumGpuKernelMod, half, half, half)
+MS_REG_GPU_KERNEL_THREE(CombineMomentum,
+                        KernelAttr()
+                          .AddAllSameAttr(true)
+                          .AddInputAttr(kNumberTypeFloat16)  // variable
+                          .AddInputAttr(kNumberTypeFloat16)  // accumulation
+                          .AddInputAttr(kNumberTypeFloat32)  // learning_rate
+                          .AddInputAttr(kNumberTypeFloat16)  // gradient
+                          .AddInputAttr(kNumberTypeFloat32)  // momentum
+                          .AddOutputAttr(kNumberTypeFloat16),
+                        CombineMomentumGpuKernelMod, half, float, half)
+MS_REG_GPU_KERNEL_THREE(CombineMomentum,
+                        KernelAttr()
+                          .AddAllSameAttr(true)
+                          .AddInputAttr(kNumberTypeFloat32)  // variable
+                          .AddInputAttr(kNumberTypeFloat32)  // accumulation
+                          .AddInputAttr(kNumberTypeFloat32)  // learning_rate
+                          .AddInputAttr(kNumberTypeFloat16)  // gradient
+                          .AddInputAttr(kNumberTypeFloat32)  // momentum
+                          .AddOutputAttr(kNumberTypeFloat32),
+                        CombineMomentumGpuKernelMod, float, float, half)
+MS_REG_GPU_KERNEL_THREE(CombineScaleMomentum,
+                        KernelAttr()
+                          .AddAllSameAttr(true)
+                          .AddInputAttr(kNumberTypeFloat32)  // scale
+                          .AddInputAttr(kNumberTypeFloat32)  // variable
+                          .AddInputAttr(kNumberTypeFloat32)  // accumulation
+                          .AddInputAttr(kNumberTypeFloat32)  // learning_rate
+                          .AddInputAttr(kNumberTypeFloat32)  // gradient
+                          .AddInputAttr(kNumberTypeFloat32)  // momentum
+                          .AddOutputAttr(kNumberTypeFloat32),
+                        CombineMomentumGpuKernelMod, float, float, float)
+MS_REG_GPU_KERNEL_THREE(CombineScaleMomentum,
+                        KernelAttr()
+                          .AddAllSameAttr(true)
+                          .AddInputAttr(kNumberTypeFloat32)  // scale
+                          .AddInputAttr(kNumberTypeFloat32)  // variable
+                          .AddInputAttr(kNumberTypeFloat32)  // accumulation
+                          .AddInputAttr(kNumberTypeFloat32)  // learning_rate
+                          .AddInputAttr(kNumberTypeFloat16)  // gradient
+                          .AddInputAttr(kNumberTypeFloat32)  // momentum
+                          .AddOutputAttr(kNumberTypeFloat32),
+                        CombineMomentumGpuKernelMod, float, float, half)
+MS_REG_GPU_KERNEL_THREE(CombineWeightDecayScaleMomentum,
+                        KernelAttr()
+                          .AddAllSameAttr(true)
+                          .AddInputAttr(kNumberTypeFloat32)  // weight decay
+                          .AddInputAttr(kNumberTypeFloat32)  // scale
+                          .AddInputAttr(kNumberTypeFloat32)  // variable
+                          .AddInputAttr(kNumberTypeFloat32)  // accumulation
+                          .AddInputAttr(kNumberTypeFloat32)  // learning_rate
+                          .AddInputAttr(kNumberTypeFloat32)  // gradient
+                          .AddInputAttr(kNumberTypeFloat32)  // momentum
+                          .AddOutputAttr(kNumberTypeFloat32),
+                        CombineMomentumGpuKernelMod, float, float, float)
+MS_REG_GPU_KERNEL_THREE(CombineWeightDecayScaleMomentum,
+                        KernelAttr()
+                          .AddAllSameAttr(true)
+                          .AddInputAttr(kNumberTypeFloat32)  // weight decay
+                          .AddInputAttr(kNumberTypeFloat32)  // scale
+                          .AddInputAttr(kNumberTypeFloat32)  // variable
+                          .AddInputAttr(kNumberTypeFloat32)  // accumulation
+                          .AddInputAttr(kNumberTypeFloat32)  // learning_rate
+                          .AddInputAttr(kNumberTypeFloat16)  // gradient
+                          .AddInputAttr(kNumberTypeFloat32)  // momentum
+                          .AddOutputAttr(kNumberTypeFloat32),
+                        CombineMomentumGpuKernelMod, float, float, half)
 }  // namespace kernel
 }  // namespace mindspore

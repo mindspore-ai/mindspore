@@ -44,6 +44,11 @@ const AnfNodePtr BatchNormSiluGradFusion::Process(const FuncGraphPtr &graph, con
                                                   const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
+  auto is_train = common::AnfAlgo::GetCNodePrimitive(node)->GetAttr("is_training");
+  MS_EXCEPTION_IF_NULL(is_train);
+  if (!GetValue<bool>(is_train)) {
+    return nullptr;
+  }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {

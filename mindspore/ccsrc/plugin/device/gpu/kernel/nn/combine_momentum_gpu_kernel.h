@@ -28,11 +28,11 @@ namespace kernel {
 constexpr int kCombineMomentumInputsNum = 5;
 constexpr int kCombineScaleMomentumInputsNum = 6;
 constexpr int kCombineWeightDecayMomentumInputsNum = 7;
-template <typename T, typename S>
+template <typename T, typename S, typename G>
 class CombineMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   CombineMomentumGpuKernelMod()
-      : element_num_(1), num_(0), input_num_(6), is_null_input_(false), kernel_name_("CombineMomentum") {}
+      : element_num_(1), combine_num_(0), input_num_(6), is_null_input_(false), kernel_name_("CombineMomentum") {}
   ~CombineMomentumGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
@@ -41,30 +41,30 @@ class CombineMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       return true;
     }
     auto stream = reinterpret_cast<cudaStream_t>(stream_ptr);
-    for (size_t i = 0; i < num_; i++) {
+    for (size_t i = 0; i < combine_num_; i++) {
       if (input_num_ == kCombineMomentumInputsNum) {
         T *variable = GetDeviceAddress<T>(inputs, i * input_num_);
         T *acc = GetDeviceAddress<T>(inputs, i * input_num_ + 1);
-        T *lr = GetDeviceAddress<T>(inputs, i * input_num_ + 2);
-        S *grad = GetDeviceAddress<S>(inputs, i * input_num_ + 3);
-        T *mom = GetDeviceAddress<T>(inputs, i * input_num_ + 4);
+        S *lr = GetDeviceAddress<S>(inputs, i * input_num_ + 2);
+        G *grad = GetDeviceAddress<G>(inputs, i * input_num_ + 3);
+        S *mom = GetDeviceAddress<S>(inputs, i * input_num_ + 4);
         MomentumUpdateVariable(elements_[i], variable, acc, lr, grad, mom, false, stream);
       } else if (input_num_ == kCombineScaleMomentumInputsNum) {
-        T *scale = GetDeviceAddress<T>(inputs, i * input_num_);
+        S *scale = GetDeviceAddress<S>(inputs, i * input_num_);
         T *variable = GetDeviceAddress<T>(inputs, i * input_num_ + 1);
         T *acc = GetDeviceAddress<T>(inputs, i * input_num_ + 2);
-        T *lr = GetDeviceAddress<T>(inputs, i * input_num_ + 3);
-        S *grad = GetDeviceAddress<S>(inputs, i * input_num_ + 4);
-        T *mom = GetDeviceAddress<T>(inputs, i * input_num_ + 5);
+        S *lr = GetDeviceAddress<S>(inputs, i * input_num_ + 3);
+        G *grad = GetDeviceAddress<G>(inputs, i * input_num_ + 4);
+        S *mom = GetDeviceAddress<S>(inputs, i * input_num_ + 5);
         FusedScaleMomentum(elements_[i], scale, variable, acc, lr, grad, mom, stream);
       } else if (input_num_ == kCombineWeightDecayMomentumInputsNum) {
-        T *weight_decay = GetDeviceAddress<T>(inputs, i * input_num_);
-        T *scale = GetDeviceAddress<T>(inputs, i * input_num_ + 1);
+        S *weight_decay = GetDeviceAddress<S>(inputs, i * input_num_);
+        S *scale = GetDeviceAddress<S>(inputs, i * input_num_ + 1);
         T *variable = GetDeviceAddress<T>(inputs, i * input_num_ + 2);
         T *acc = GetDeviceAddress<T>(inputs, i * input_num_ + 3);
-        T *lr = GetDeviceAddress<T>(inputs, i * input_num_ + 4);
-        S *grad = GetDeviceAddress<S>(inputs, i * input_num_ + 5);
-        T *mom = GetDeviceAddress<T>(inputs, i * input_num_ + 6);
+        S *lr = GetDeviceAddress<S>(inputs, i * input_num_ + 4);
+        G *grad = GetDeviceAddress<G>(inputs, i * input_num_ + 5);
+        S *mom = GetDeviceAddress<S>(inputs, i * input_num_ + 6);
         FusedWeightDecayScaleMomentum(elements_[i], weight_decay, scale, variable, acc, lr, grad, mom, stream);
       } else {
         MS_LOG(EXCEPTION) << "Combine kernel input num is invalid.";
@@ -75,7 +75,7 @@ class CombineMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   bool Init(const CNodePtr &kernel_node) override {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
-    num_ = GetAttr<size_t>(kernel_node, "n");
+    combine_num_ = GetAttr<size_t>(kernel_node, "combine_num");
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     if (kernel_name == kCombineMomentumOpName) {
       input_num_ = kCombineMomentumInputsNum;
@@ -86,7 +86,7 @@ class CombineMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     } else {
       MS_LOG(EXCEPTION) << "Combine kernel name is invalid.";
     }
-    for (size_t i = 0; i < num_; i++) {
+    for (size_t i = 0; i < combine_num_; i++) {
       auto variable_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i * input_num_ + input_num_ - 5);
       is_null_input_ = CHECK_SHAPE_NULL(variable_shape, kernel_name_,
                                         "input[" + std::to_string(i * input_num_ + input_num_ - 5) + "]");
@@ -118,7 +118,7 @@ class CombineMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  private:
   size_t element_num_;
   std::vector<size_t> elements_;
-  size_t num_;
+  size_t combine_num_;
   int input_num_;
   bool is_null_input_;
   std::string kernel_name_;
