@@ -118,14 +118,14 @@ def _insert_cast_operator_process(node, stree):
     new_cast_node = None
     # insert cast float16 before the primitive operators
     if issubclass(node.get_instance_type(), Primitive):
-        for idx in range(len(node.get_inputs())):
+        for idx, arg in enumerate(node.get_args()):
             position = stree.before(node)
             new_node = P.Cast()
-            arg = ms.rewrite.ScopedValue.create_name_values([node.get_inputs()[idx].get_targets()[0].value,
-                                                             "mindspore.float16"])
+            cast_args = ms.rewrite.ScopedValue.create_name_values([arg.value, "mindspore.float16"], [arg.scope, ""])
+            cast_targets = ms.rewrite.ScopedValue.create_name_values([arg.value], [arg.scope])
             new_cast_node = ms.rewrite.Node.create_call_cell(new_node,
-                                                             targets=['x_cast_{}'.format(node.get_name())],
-                                                             args=arg,
+                                                             targets=cast_targets,
+                                                             args=cast_args,
                                                              name='incast_{}{}'.format(node.get_name(), idx))
             stree.insert(position, new_cast_node)
             node.set_arg_by_node(idx, new_cast_node)
@@ -139,11 +139,11 @@ def _insert_cast_operator_process(node, stree):
     # insert cast float32 after the operators
     position = stree.after(node)
     new_node = P.Cast()
-    arg = ms.rewrite.ScopedValue.create_name_values([node.get_targets()[0].value,
-                                                     "mindspore.float32"])
+    cast_args = ms.rewrite.ScopedValue.create_name_values([node.get_targets()[0].value,
+                                                           "mindspore.float32"])
     new_cast_node = ms.rewrite.Node.create_call_cell(new_node,
-                                                     targets=['x_cast_{}'.format(node.get_name())],
-                                                     args=arg,
+                                                     targets=[node.get_targets()[0]],
+                                                     args=cast_args,
                                                      name='outcast_{}'.format(node.get_name()))
     # insert node & unique names
     stree.insert(position, new_cast_node)
