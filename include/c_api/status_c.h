@@ -45,6 +45,9 @@ typedef enum MSStatus {
   kMSStatusLiteNotSupport = kMSCompCodeLite | (0x0FFFFFFF & -7),       /**< Fail to support. */
   kMSStatusLiteThreadPoolError = kMSCompCodeLite | (0x0FFFFFFF & -8),  /**< Error occur in thread pool. */
   kMSStatusLiteUninitializedObj = kMSCompCodeLite | (0x0FFFFFFF & -9), /**< Object is not initialized. */
+  kMSStatusLiteFileError = kMSCompCodeLite | (0x0FFFFFFF & -10),       /**< Invalid file. */
+  kMSStatusLiteServiceDeny = kMSCompCodeLite | (0x0FFFFFFF & -11),     /**< Denial of service. */
+  kMSStatusLiteModelRebuild = kMSCompCodeLite | (0x0FFFFFFF & -12),    /**< Model has been built. */
 
   // Executor error code, range: [-100,-200)
   kMSStatusLiteOutOfTensorRange = kMSCompCodeLite | (0x0FFFFFFF & -100), /**< Failed to check range. */

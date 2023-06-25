@@ -44,17 +44,24 @@ class ModelC {
   LiteTensorImpl **GetOutputs(size_t *output_num);
 
  private:
+  Status RunGraph(const MSKernelCallBackC &before, const MSKernelCallBackC &after);
+  void ResetTensorData(std::vector<void *> old_data, std::vector<lite::Tensor *> tensors);
+  LiteTensorImpl *TensorToTensorImpl(mindspore::lite::Tensor *tensor);
+
+ private:
   std::shared_ptr<lite::LiteSession> session_ = nullptr;
   std::shared_ptr<const ContextC> context_ = nullptr;
   std::map<mindspore::lite::Tensor *, LiteTensorImpl *> tensor_map_;
   std::vector<LiteTensorImpl *> inputs_;
   std::vector<LiteTensorImpl *> outputs_;
-  Status RunGraph(const MSKernelCallBackC &before, const MSKernelCallBackC &after);
-  void ResetTensorData(std::vector<void *> old_data, std::vector<lite::Tensor *> tensors);
-  LiteTensorImpl *TensorToTensorImpl(mindspore::lite::Tensor *tensor);
+  bool is_already_built = false;
 };
 
 Status ModelC::Build(const void *model_data, size_t data_size, ModelType model_type, const ContextC *model_context) {
+  if (is_already_built) {
+    MS_LOG(ERROR) << "The model is already built.";
+    return kLiteModelRebuild;
+  }
   if (!PlatformInstructionSetSupportCheck()) {
     MS_LOG(ERROR) << "The platform exist don't support's instruction.";
     return kLiteNotSupport;
@@ -74,11 +81,17 @@ Status ModelC::Build(const void *model_data, size_t data_size, ModelType model_t
   ret = session_->LoadModelAndCompileByBuf(static_cast<const char *>(model_data), model_type, data_size);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Load and compile failed";
+    return static_cast<StatusCode>(ret);
   }
-  return static_cast<StatusCode>(ret);
+  is_already_built = true;
+  return static_cast<StatusCode>(kSuccess);
 }
 
 Status ModelC::Build(const std::string &model_path, ModelType model_type, const ContextC *model_context) {
+  if (is_already_built) {
+    MS_LOG(ERROR) << "The model is already built.";
+    return kLiteModelRebuild;
+  }
   if (!PlatformInstructionSetSupportCheck()) {
     MS_LOG(ERROR) << "The platform exist don't support's instruction.";
     return kLiteNotSupport;
@@ -97,8 +110,10 @@ Status ModelC::Build(const std::string &model_path, ModelType model_type, const 
   ret = session_->LoadModelAndCompileByPath(model_path, model_type);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Load and compile failed";
+    return static_cast<StatusCode>(ret);
   }
-  return static_cast<StatusCode>(ret);
+  is_already_built = true;
+  return static_cast<StatusCode>(kSuccess);
 }
 
 Status ModelC::Resize(const std::vector<LiteTensorImpl *> &inputs, const std::vector<std::vector<int64_t>> &shapes) {

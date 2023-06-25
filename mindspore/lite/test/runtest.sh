@@ -67,9 +67,6 @@ echo 'run common ut tests'
 ./lite-test --gtest_filter=TestNLLLossFp32*
 ./lite-test --gtest_filter=TestRaggedRangeFp32*
 
-
-
-
 # test cases of generic api
 ./lite-test --gtest_filter="GenericApiTest*"
 
@@ -130,6 +127,7 @@ echo 'Runtime config file test'
 echo 'run c api ut test'
 ./lite-test --gtest_filter="TensorCTest.*"
 ./lite-test --gtest_filter="ContextCTest.*"
+./lite-test --gtest_filter="ModelCApiTest.*"
 
 echo 'run bfc memory ut test'
 ./lite-test --gtest_filter="DynamicMemManagerTest.*"
