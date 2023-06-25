@@ -88,6 +88,7 @@ class Generator {
   // the origin file's permission
   mode_t origin_umask_ = 0000;
 #endif
+  size_t weight_size_ = 0;
 };
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GENERATOR_GENERATOR_H_
