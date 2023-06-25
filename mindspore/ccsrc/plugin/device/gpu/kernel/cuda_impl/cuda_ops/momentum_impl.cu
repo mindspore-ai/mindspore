@@ -104,14 +104,14 @@ struct MomentumUpdateVariableWithNesterovFunctor<float, float, half> {
   }
 };
 
-template <typename T, typename G>
+template <typename T, typename S, typename G>
 struct FusedMomentumWeightDecayScaleFunctor {
-  const T *learning_rate_;
-  const T *momentum_;
-  const T *weight_decay_;
-  const T *scale_;
-  FusedMomentumWeightDecayScaleFunctor(const T *learning_rate, const T *momentum, const T *weight_decay,
-                                       const T *scale) {
+  const S *learning_rate_;
+  const S *momentum_;
+  const S *weight_decay_;
+  const S *scale_;
+  FusedMomentumWeightDecayScaleFunctor(const S *learning_rate, const S *momentum, const S *weight_decay,
+                                       const S *scale) {
     this->learning_rate_ = learning_rate;
     this->momentum_ = momentum;
     this->weight_decay_ = weight_decay;
@@ -124,12 +124,32 @@ struct FusedMomentumWeightDecayScaleFunctor {
   }
 };
 
-template <typename T, typename G>
+template <>
+struct FusedMomentumWeightDecayScaleFunctor<half, float, half> {
+  const float *learning_rate_;
+  const float *momentum_;
+  const float *weight_decay_;
+  const float *scale_;
+  FusedMomentumWeightDecayScaleFunctor(const float *learning_rate, const float *momentum, const float *weight_decay,
+                                       const float *scale) {
+    this->learning_rate_ = learning_rate;
+    this->momentum_ = momentum;
+    this->weight_decay_ = weight_decay;
+    this->scale_ = scale;
+  }
+  __device__ __forceinline__ void operator()(half *variable, half *accumulation, const half *gradient) const {
+    half grad = (variable[0] * __float2half(weight_decay_[0]) + gradient[0]) * __float2half(scale_[0]);
+    accumulation[0] = __float2half(momentum_[0]) * accumulation[0] + grad;
+    variable[0] -= __float2half(learning_rate_[0]) * accumulation[0];
+  }
+};
+
+template <typename T, typename S, typename G>
 struct FusedMomentumScaleFunctor {
-  const T *learning_rate_;
-  const T *momentum_;
-  const T *scale_;
-  FusedMomentumScaleFunctor(const T *learning_rate, const T *momentum, const T *scale) {
+  const S *learning_rate_;
+  const S *momentum_;
+  const S *scale_;
+  FusedMomentumScaleFunctor(const S *learning_rate, const S *momentum, const S *scale) {
     this->learning_rate_ = learning_rate;
     this->momentum_ = momentum;
     this->scale_ = scale;
@@ -140,12 +160,28 @@ struct FusedMomentumScaleFunctor {
   }
 };
 
-template <typename T, typename G>
+template <>
+struct FusedMomentumScaleFunctor<half, float, half> {
+  const float *learning_rate_;
+  const float *momentum_;
+  const float *scale_;
+  FusedMomentumScaleFunctor(const float *learning_rate, const float *momentum, const float *scale) {
+    this->learning_rate_ = learning_rate;
+    this->momentum_ = momentum;
+    this->scale_ = scale;
+  }
+  __device__ __forceinline__ void operator()(half *variable, half *accumulation, half *gradient) const {
+    accumulation[0] = __float2half(momentum_[0]) * accumulation[0] + gradient[0] * __float2half(scale_[0]);
+    variable[0] -= __float2half(learning_rate_[0]) * accumulation[0];
+  }
+};
+
+template <typename T, typename S, typename G>
 struct FusedWeightDecayMomentumFunctor {
-  const T *learning_rate_;
-  const T *momentum_;
-  const T *weight_decay_;
-  FusedWeightDecayMomentumFunctor(const T *learning_rate, const T *momentum, const T *weight_decay) {
+  const S *learning_rate_;
+  const S *momentum_;
+  const S *weight_decay_;
+  FusedWeightDecayMomentumFunctor(const S *learning_rate, const S *momentum, const S *weight_decay) {
     this->learning_rate_ = learning_rate;
     this->momentum_ = momentum;
     this->weight_decay_ = weight_decay;
@@ -162,39 +198,39 @@ void MomentumUpdateVariable(const size_t size, T *variable, T *accumulation, con
                             const S *momentum, bool use_nesterov, cudaStream_t cuda_stream) {
   if (use_nesterov) {
     MomentumUpdateVariableWithNesterovFunctor<T, S, G> functor{learning_rate, momentum};
-    cuda::elementwise::UnaryInputBinaryOutput(functor, (uint)(size), variable, accumulation, gradient, cuda_stream);
+    cuda::elementwise::EltWiseCudaOpsFunc(functor, (uint)(size), variable, accumulation, gradient, cuda_stream);
   } else {
     MomentumUpdateVariableFunctor<T, S, G> functor{learning_rate, momentum};
-    cuda::elementwise::UnaryInputBinaryOutput(functor, (uint)(size), variable, accumulation, gradient, cuda_stream);
+    cuda::elementwise::EltWiseCudaOpsFunc(functor, (uint)(size), variable, accumulation, gradient, cuda_stream);
   }
 }
 
-template <typename T, typename G>
-void FusedWeightDecayScaleMomentum(const size_t size, T *weight_decay, T *scale, T *variable, T *accumulation,
-                                   const T *learning_rate, const G *gradient, const T *momentum,
+template <typename T, typename S, typename G>
+void FusedWeightDecayScaleMomentum(const size_t size, S *weight_decay, S *scale, T *variable, T *accumulation,
+                                   const S *learning_rate, const G *gradient, const S *momentum,
                                    cudaStream_t cuda_stream) {
-  FusedMomentumWeightDecayScaleFunctor<T, G> functor{learning_rate, momentum, weight_decay, scale};
-  cuda::elementwise::UnaryInputBinaryOutput(functor, (uint)(size), variable, accumulation, gradient, cuda_stream);
+  FusedMomentumWeightDecayScaleFunctor<T, S, G> functor{learning_rate, momentum, weight_decay, scale};
+  cuda::elementwise::EltWiseCudaOpsFunc(functor, (uint)(size), variable, accumulation, gradient, cuda_stream);
 }
 
-template <typename T, typename G>
-void FusedScaleMomentum(const size_t size, T *scale, T *variable, T *accumulation, const T *learning_rate,
-                        const G *gradient, const T *momentum, cudaStream_t cuda_stream) {
-  FusedMomentumScaleFunctor<T, G> functor{learning_rate, momentum, scale};
-  cuda::elementwise::UnaryInputBinaryOutput(functor, (uint)(size), variable, accumulation, gradient, cuda_stream);
+template <typename T, typename S, typename G>
+void FusedScaleMomentum(const size_t size, S *scale, T *variable, T *accumulation, const S *learning_rate,
+                        const G *gradient, const S *momentum, cudaStream_t cuda_stream) {
+  FusedMomentumScaleFunctor<T, S, G> functor{learning_rate, momentum, scale};
+  cuda::elementwise::EltWiseCudaOpsFunc(functor, (uint)(size), variable, accumulation, gradient, cuda_stream);
 }
 
-template <typename T, typename G>
-void FusedWeightDecayMomentum(const size_t size, T *weight_decay, T *variable, T *accumulation, const T *learning_rate,
-                              const G *gradient, const T *momentum, cudaStream_t cuda_stream) {
-  FusedWeightDecayMomentumFunctor<T, G> functor{learning_rate, momentum, weight_decay};
-  cuda::elementwise::UnaryInputBinaryOutput(functor, (uint)(size), variable, accumulation, gradient, cuda_stream);
+template <typename T, typename S, typename G>
+void FusedWeightDecayMomentum(const size_t size, S *weight_decay, T *variable, T *accumulation, const S *learning_rate,
+                              const G *gradient, const S *momentum, cudaStream_t cuda_stream) {
+  FusedWeightDecayMomentumFunctor<T, S, G> functor{learning_rate, momentum, weight_decay};
+  cuda::elementwise::EltWiseCudaOpsFunc(functor, (uint)(size), variable, accumulation, gradient, cuda_stream);
 }
 
 // CombineFusedScaleMomentum
-template <typename T, typename S>
-__global__ void CombineFusedMomentumScaleKernel(const size_t num, const size_t *element_num, T **scale, T **variable,
-                                                T **accumulation, T **learning_rate, S **gradient, T **momentum) {
+template <typename T, typename S, typename G>
+__global__ void CombineFusedMomentumScaleKernel(const size_t num, const size_t *element_num, S **scale, T **variable,
+                                                T **accumulation, S **learning_rate, G **gradient, S **momentum) {
   for (size_t idx = 0; idx < num; idx++) {
     for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (element_num[idx]); i += blockDim.x * gridDim.x) {
       accumulation[idx][i] = momentum[idx][0] * accumulation[idx][i] + static_cast<T>(gradient[idx][i]) * scale[idx][0];
@@ -203,9 +239,9 @@ __global__ void CombineFusedMomentumScaleKernel(const size_t num, const size_t *
   }
 }
 
-template <typename T, typename S>
-void CombineFusedScaleMomentum(const size_t max, const size_t num, const size_t *elements, T **scale, T **variable,
-                               T **accumulation, T **learning_rate, S **gradient, T **momentum,
+template <typename T, typename S, typename G>
+void CombineFusedScaleMomentum(const size_t max, const size_t num, const size_t *elements, S **scale, T **variable,
+                               T **accumulation, S **learning_rate, G **gradient, S **momentum,
                                cudaStream_t cuda_stream) {
   size_t thread_per_block = 256;
   size_t block_per_grid = (max + thread_per_block - 1) / thread_per_block;
@@ -215,10 +251,10 @@ void CombineFusedScaleMomentum(const size_t max, const size_t num, const size_t 
 // end CombineFusedScaleMomentum
 
 // CombineFusedWeightDecayScaleMomentum
-template <typename T, typename S>
+template <typename T, typename S, typename G>
 __global__ void CombineFusedMomentumWeightDecayScaleKernel(const size_t num, const size_t *element_num,
-                                                           T **weight_decay, T **scale, T **variable, T **accumulation,
-                                                           T **learning_rate, S **gradient, T **momentum) {
+                                                           S **weight_decay, S **scale, T **variable, T **accumulation,
+                                                           S **learning_rate, G **gradient, S **momentum) {
   for (size_t idx = 0; idx < num; idx++) {
     for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (element_num[idx]); i += blockDim.x * gridDim.x) {
       T grad = (variable[idx][i] * weight_decay[idx][0] + static_cast<T>(gradient[idx][i])) * scale[idx][0];
@@ -228,10 +264,10 @@ __global__ void CombineFusedMomentumWeightDecayScaleKernel(const size_t num, con
   }
 }
 
-template <typename T, typename S>
+template <typename T, typename S, typename G>
 void CombineFusedWeightDecayScaleMomentum(const size_t max, const size_t num, const size_t *element_num,
-                                          T **weight_decay, T **scale, T **variable, T **accumulation,
-                                          T **learning_rate, S **gradient, T **momentum, cudaStream_t cuda_stream) {
+                                          S **weight_decay, S **scale, T **variable, T **accumulation,
+                                          S **learning_rate, G **gradient, S **momentum, cudaStream_t cuda_stream) {
   size_t thread_per_block = 256;
   size_t block_per_grid = (max + thread_per_block - 1) / thread_per_block;
   CombineFusedMomentumWeightDecayScaleKernel<<<block_per_grid, thread_per_block, 0, cuda_stream>>>(
@@ -298,6 +334,14 @@ template CUDA_LIB_EXPORT void FusedWeightDecayScaleMomentum(const size_t element
                                                             float *variable, float *accumulation,
                                                             const float *learning_rate, const half *gradient,
                                                             const float *momentum, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void FusedWeightDecayScaleMomentum(const size_t element_num, half *weight_decay, half *scale,
+                                                            half *variable, half *accumulation,
+                                                            const half *learning_rate, const half *gradient,
+                                                            const half *momentum, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void FusedWeightDecayScaleMomentum(const size_t element_num, float *weight_decay, float *scale,
+                                                            half *variable, half *accumulation,
+                                                            const float *learning_rate, const half *gradient,
+                                                            const float *momentum, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void FusedWeightDecayMomentum(const size_t element_num, float *weight_decay, float *variable,
                                                        float *accumulation, const float *learning_rate,
                                                        const float *gradient, const float *momentum,
@@ -311,6 +355,12 @@ template CUDA_LIB_EXPORT void FusedScaleMomentum(const size_t element_num, float
                                                  const float *momentum, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void FusedScaleMomentum(const size_t element_num, float *scale, float *variable,
                                                  float *accumulation, const float *learning_rate, const half *gradient,
+                                                 const float *momentum, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void FusedScaleMomentum(const size_t element_num, half *scale, half *variable,
+                                                 half *accumulation, const half *learning_rate, const half *gradient,
+                                                 const half *momentum, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void FusedScaleMomentum(const size_t element_num, float *scale, half *variable,
+                                                 half *accumulation, const float *learning_rate, const half *gradient,
                                                  const float *momentum, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CombineFusedWeightDecayScaleMomentum(
   const size_t max, const size_t num, const size_t *elements, float **weight_decay, float **scale, float **variable,

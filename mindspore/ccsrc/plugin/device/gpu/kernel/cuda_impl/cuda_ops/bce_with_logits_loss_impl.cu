@@ -73,30 +73,30 @@ __global__ void FillAndBroadcast(const size_t size, const size_t shape_size, con
 }
 
 template <typename T>
-__global__ void BCEWithLogitsLossMain(size_t size, const T *predict, const T *target, const T *shape_broadcasted,
-                                      T *output) {
-  for (int pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
-    T max_value = -predict[pos];
+struct BCEWithLogitsLossMainFunctor {
+  BCEWithLogitsLossMainFunctor() {}
+  __device__ __forceinline__ void operator()(T *output, const T *predict, const T *target,
+                                             const T *shape_broadcasted) const {
+    T max_value = -predict[0];
     max_value = max_value > static_cast<T>(0) ? max_value : static_cast<T>(0);
-    const T log_weight = (shape_broadcasted[pos] - static_cast<T>(1)) * target[pos] + static_cast<T>(1);
-    output[pos] = (static_cast<T>(1) - target[pos]) * predict[pos] +
-                  log_weight * (log(exp(-max_value) + exp(-predict[pos] - max_value)) + max_value);
+    const T log_weight = (shape_broadcasted[0] - static_cast<T>(1)) * target[0] + static_cast<T>(1);
+    output[0] = (static_cast<T>(1) - target[0]) * predict[0] +
+                log_weight * (log(exp(-max_value) + exp(-predict[0] - max_value)) + max_value);
   }
-  return;
-}
+};
 
 template <>
-__global__ void BCEWithLogitsLossMain(size_t size, const half *predict, const half *target,
-                                      const half *shape_broadcasted, half *output) {
-  for (int pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
-    half max_value = -predict[pos];
+struct BCEWithLogitsLossMainFunctor<half> {
+  BCEWithLogitsLossMainFunctor() {}
+  __device__ __forceinline__ void operator()(half *output, const half *predict, const half *target,
+                                             const half *shape_broadcasted) const {
+    half max_value = -predict[0];
     max_value = max_value > static_cast<half>(0) ? max_value : static_cast<half>(0);
-    const half log_weight = (shape_broadcasted[pos] - static_cast<half>(1)) * target[pos] + static_cast<half>(1);
-    output[pos] = (static_cast<half>(1) - target[pos]) * predict[pos] +
-                  log_weight * (hlog(hexp(-max_value) + hexp(-predict[pos] - max_value)) + max_value);
+    const half log_weight = (shape_broadcasted[0] - static_cast<half>(1)) * target[0] + static_cast<half>(1);
+    output[0] = (static_cast<half>(1) - target[0]) * predict[0] +
+                log_weight * (hlog(hexp(-max_value) + hexp(-predict[0] - max_value)) + max_value);
   }
-  return;
-}
+};
 
 template <typename T>
 struct MulFunctor {
@@ -117,20 +117,21 @@ void CalBCEWithLogitsLoss(const size_t input_size, const T *predict, const T *ta
                                                                               pos_weight, shape_broadcasted);
   } else {
     FillWithoutBroadcastFunctor<T> functor;
-    cuda::elementwise::UnaryInputUnaryOutput(functor, (uint)(input_size), shape_broadcasted, pos_weight, cuda_stream);
+    cuda::elementwise::EltWiseCudaOpsFunc(functor, (uint)(input_size), shape_broadcasted, pos_weight, cuda_stream);
   }
-  BCEWithLogitsLossMain<<<GET_BLOCKS(input_size), GET_THREADS, 0, cuda_stream>>>(input_size, predict, target,
-                                                                                 shape_broadcasted, output);
+  BCEWithLogitsLossMainFunctor<T> loss_functor;
+  cuda::elementwise::EltWiseCudaOpsFunc(loss_functor, (uint)(input_size), output, predict, target, shape_broadcasted,
+                                        cuda_stream);
   if (weight_need_broadcast) {
     StrideInfo strides = CalBceStride(weight_shape, input_shape);
     FillAndBroadcast<<<GET_BLOCKS(input_size), GET_THREADS, 0, cuda_stream>>>(input_size, shape_size, strides, weight,
                                                                               shape_broadcasted);
   } else {
     FillWithoutBroadcastFunctor<T> functor;
-    cuda::elementwise::UnaryInputUnaryOutput(functor, (uint)(input_size), shape_broadcasted, pos_weight, cuda_stream);
+    cuda::elementwise::EltWiseCudaOpsFunc(functor, (uint)(input_size), shape_broadcasted, pos_weight, cuda_stream);
   }
   MulFunctor<T> functor;
-  cuda::elementwise::UnaryInputUnaryOutput(functor, (uint)(input_size), output, shape_broadcasted, cuda_stream);
+  cuda::elementwise::EltWiseCudaOpsFunc(functor, (uint)(input_size), output, shape_broadcasted, cuda_stream);
   return;
 }
 

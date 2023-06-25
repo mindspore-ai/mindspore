@@ -103,7 +103,7 @@ bool IsAligned() {
 }
 
 template <uint vec_size, typename T, typename... Args>
-bool IsAligned(const T *ptr, const Args *...others) {
+bool IsAligned(const T *ptr, const Args *... others) {
   return reinterpret_cast<uintptr_t>(ptr) % sizeof(Vec<T, vec_size>) == 0 && IsAligned<vec_size, Args...>(others...);
 }
 
@@ -143,8 +143,8 @@ GeneralApplyVec(const FunctorT &functor, Args... args[vec_size]) {
 
 template <uint vec_size, bool tail, typename Factory, typename OUT, typename... IN>
 __global__ void __launch_bounds__(kThreadsPerBlock)
-  DoApply(Factory factory, uint vec_nums, AlignVec<OUT, vec_size> *vec_out, const AlignVec<IN, vec_size> *...vec_in,
-          uint tail_nums, OUT *tail_out, const IN *...tail_in) {
+  DoApply(Factory factory, uint vec_nums, AlignVec<OUT, vec_size> *vec_out, const AlignVec<IN, vec_size> *... vec_in,
+          uint tail_nums, OUT *tail_out, const IN *... tail_in) {
   auto functor = factory();
   const uint global_tid = blockIdx.x * kThreadsPerBlock + threadIdx.x;
   for (uint i = global_tid; i < vec_nums; i += blockDim.x * gridDim.x) {
@@ -157,8 +157,8 @@ __global__ void __launch_bounds__(kThreadsPerBlock)
 
 template <uint vec_size, typename Factory, typename... Args>
 __global__ void __launch_bounds__(kThreadsPerBlock)
-  GeneralDoApply(Factory factory, uint vec_nums, AlignVec<Args, vec_size> *...vec_args, uint tail_nums,
-                 Args *...tail_args) {
+  GeneralDoApply(Factory factory, uint vec_nums, AlignVec<Args, vec_size> *... vec_args, uint tail_nums,
+                 Args *... tail_args) {
   auto functor = factory();
   const uint global_tid = blockIdx.x * kThreadsPerBlock + threadIdx.x;
   for (uint i = global_tid; i < vec_nums; i += blockDim.x * gridDim.x) {
@@ -170,7 +170,7 @@ __global__ void __launch_bounds__(kThreadsPerBlock)
 }
 
 template <uint vec_size, typename Factory, typename OUT, typename... IN>
-cudaError_t LaunchKernel(Factory factory, uint nums, OUT *out, const IN *...in, cudaStream_t stream) {
+cudaError_t LaunchKernel(Factory factory, uint nums, OUT *out, const IN *... in, cudaStream_t stream) {
   VectorizedConfig vectorized_config = GetVectorizedConfig(nums, vec_size);
   uint num_blocks = CUDA_BLOCKS_CAL(GET_CTX_DEVICE_ID, nums, kThreadsPerBlock);
   dim3 block{kThreadsPerBlock};
@@ -192,7 +192,7 @@ cudaError_t LaunchKernel(Factory factory, uint nums, OUT *out, const IN *...in, 
 }
 
 template <uint vec_size, typename Factory, typename... Args>
-cudaError_t LaunchKernel(Factory factory, uint nums, const Args *...args, cudaStream_t stream) {
+cudaError_t LaunchKernel(Factory factory, uint nums, const Args *... args, cudaStream_t stream) {
   VectorizedConfig vectorized_config = GetVectorizedConfig(nums, vec_size);
   uint num_blocks = CUDA_BLOCKS_CAL(GET_CTX_DEVICE_ID, nums, kThreadsPerBlock);
   dim3 block{kThreadsPerBlock};
@@ -206,7 +206,7 @@ cudaError_t LaunchKernel(Factory factory, uint nums, const Args *...args, cudaSt
 
 template <typename Factory, typename OUT, typename... IN>
 struct DoLaunch {
-  static cudaError_t Launch(Factory factory, uint n, OUT *out, const IN *...in, cudaStream_t stream) {
+  static cudaError_t Launch(Factory factory, uint n, OUT *out, const IN *... in, cudaStream_t stream) {
     constexpr uint max_pack_size = VecSize<OUT, IN...>();
     if (IsAligned<max_pack_size, OUT, IN...>(out, in...)) {
       return LaunchKernel<max_pack_size, Factory, OUT, IN...>(factory, n, out, in..., stream);
@@ -217,7 +217,7 @@ struct DoLaunch {
 
 template <typename Factory, typename... Args>
 struct GeneralLaunch {
-  static cudaError_t Launch(Factory factory, uint n, const Args *...args, cudaStream_t stream) {
+  static cudaError_t Launch(Factory factory, uint n, const Args *... args, cudaStream_t stream) {
     constexpr uint max_pack_size = VecSize<Args...>();
     if (IsAligned<max_pack_size, Args...>(args...)) {
       return LaunchKernel<max_pack_size, Factory, Args...>(factory, n, args..., stream);
@@ -270,43 +270,36 @@ inline cudaError_t Ternary(FunctorT functor, uint n, OUT *out, const IN *in, con
   return TernaryTransit(TransitFactory<FunctorT>(functor), n, out, in, in2, in3, stream);
 }
 
-template <typename Factory, typename OUT, typename IN>
-inline cudaError_t UnaryInputBinaryOutputTransit(Factory factory, uint n, OUT *out, OUT *out2, const IN *in,
-                                                 cudaStream_t stream) {
-  return GeneralLaunch<Factory, OUT, OUT, IN>::Launch(factory, n, out, out2, in, stream);
-}
-
 // API elementwise for input: [in1], output: [out1, out2].
-template <typename FunctorT, typename OUT, typename IN>
-inline cudaError_t UnaryInputBinaryOutput(FunctorT functor, uint n, OUT *out, OUT *out2, const IN *in,
-                                          cudaStream_t stream) {
-  return UnaryInputBinaryOutputTransit(TransitFactory<FunctorT>(functor), n, out, out2, in, stream);
-}
-
-template <typename Factory, typename OUT, typename IN, typename IN2>
-inline cudaError_t BinaryInputTernaryOutputTransit(Factory factory, uint n, OUT *out, OUT *out2, OUT *out3,
-                                                   const IN *in, const IN2 *in2, cudaStream_t stream) {
-  return GeneralLaunch<Factory, OUT, OUT, OUT, IN, IN2>::Launch(factory, n, out, out2, out3, in, in2, stream);
+template <typename FunctorT, typename OUT, typename OUT2, typename IN>
+inline cudaError_t EltWiseCudaOpsFunc(FunctorT functor, uint n, OUT *out, OUT2 *out2, const IN *in,
+                                      cudaStream_t stream) {
+  auto factory = TransitFactory<FunctorT>(functor);
+  return GeneralLaunch<TransitFactory<FunctorT>, OUT, OUT2, IN>::Launch(factory, n, out, out2, in, stream);
 }
 
 // API elementwise for input: [in1, in2], output: [out1, out2, out3].
-template <typename FunctorT, typename OUT, typename IN, typename IN2>
-inline cudaError_t BinaryInputTernaryOutput(FunctorT functor, uint n, OUT *out, OUT *out2, OUT *out3, const IN *in,
-                                            const IN2 *in2, cudaStream_t stream) {
-  return BinaryInputTernaryOutputTransit(TransitFactory<FunctorT>(functor), n, out, out2, out3, in, in2, stream);
-}
-
-template <typename Factory, typename OUT, typename IN>
-inline cudaError_t UnaryInputUnaryOutputTransit(Factory factory, uint n, OUT *out, const IN *in,
-                                                 cudaStream_t stream) {
-  return GeneralLaunch<Factory, OUT, IN>::Launch(factory, n, out, in, stream);
+template <typename FunctorT, typename OUT, typename OUT2, typename OUT3, typename IN, typename IN2>
+inline cudaError_t EltWiseCudaOpsFunc(FunctorT functor, uint n, OUT *out, OUT2 *out2, OUT3 *out3, const IN *in,
+                                      const IN2 *in2, cudaStream_t stream) {
+  auto factory = TransitFactory<FunctorT>(functor);
+  return GeneralLaunch<TransitFactory<FunctorT>, OUT, OUT2, OUT3, IN, IN2>::Launch(functor, n, out, out2, out3, in,
+                                                                                   stream);
 }
 
 // API elementwise for input: [in1], output: [out1].
 template <typename FunctorT, typename OUT, typename IN>
-inline cudaError_t UnaryInputUnaryOutput(FunctorT functor, uint n, OUT *out, const IN *in,
-                                          cudaStream_t stream) {
-  return UnaryInputUnaryOutputTransit(TransitFactory<FunctorT>(functor), n, out, in, stream);
+inline cudaError_t EltWiseCudaOpsFunc(FunctorT functor, uint n, OUT *out, const IN *in, cudaStream_t stream) {
+  auto factory = TransitFactory<FunctorT>(functor);
+  return GeneralLaunch<TransitFactory<FunctorT>, OUT, IN>::Launch(factory, n, out, in, stream);
+}
+
+// API elementwise for input: [in1, in2, in3], output: [out1].
+template <typename FunctorT, typename OUT, typename IN, typename IN2, typename IN3>
+inline cudaError_t EltWiseCudaOpsFunc(FunctorT functor, uint n, OUT *out, const IN *in, const IN2 *in2, const IN3 *in3,
+                                      cudaStream_t stream) {
+  auto factory = TransitFactory<FunctorT>(functor);
+  return GeneralLaunch<TransitFactory<FunctorT>, OUT, IN, IN2, IN3>::Launch(factory, n, out, in, in2, in3, stream);
 }
 }  // namespace elementwise
 }  // namespace cuda

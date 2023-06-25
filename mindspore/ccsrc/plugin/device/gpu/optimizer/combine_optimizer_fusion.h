@@ -25,9 +25,15 @@ namespace mindspore {
 namespace opt {
 class CombineOptimizerFusion : public Pass {
  public:
-  explicit CombineOptimizerFusion(const std::string &name) : Pass(kCombineOptimizerOpName) {}
+  explicit CombineOptimizerFusion(const std::string &name) : Pass(kCombineOptimizerOpName) { InitCombineOptimizer(); }
   ~CombineOptimizerFusion() override = default;
   bool Run(const FuncGraphPtr &graph) override;
+
+ private:
+  void InitCombineOptimizer();
+  bool CheckFuncGraph(const FuncGraphPtr &graph);
+  bool TransformOptimizerList(const std::vector<AnfNodePtr> &node_list,
+                              std::vector<std::vector<AnfNodePtr>> *deal_list);
 };
 }  // namespace opt
 }  // namespace mindspore

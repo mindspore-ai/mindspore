@@ -21,27 +21,56 @@
 #include "ir/primitive.h"
 #include "include/common/utils/utils.h"
 #include "include/backend/optimizer/helper.h"
+#include "include/backend/distributed/ps/ps_context.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace opt {
-std::unordered_map<std::string, std::string> kOptimizerMap = {
-  {kApplyMomentumOpName, kCombineMomentumOpName},
-  {kFusedScaleApplyMomentum, kCombineScaleMomentumOpName},
-  {kFusedWeightScaleApplyMomentum, kCombineWeightDecayScaleMomentumOpName}};
+#define REGISTER_COMBINE_OPTIMIZER_TYPE(M, T, S) M[T] = S
+std::unordered_map<std::string, std::string> kOptimizerMap;
 
-bool GetDealList(const std::vector<AnfNodePtr> &node_list, std::vector<std::vector<AnfNodePtr>> *deal_list) {
-  MS_EXCEPTION_IF_NULL(deal_list);
+void CombineOptimizerFusion::InitCombineOptimizer() {
+  REGISTER_COMBINE_OPTIMIZER_TYPE(kOptimizerMap, kApplyMomentumOpName, kCombineMomentumOpName);
+  REGISTER_COMBINE_OPTIMIZER_TYPE(kOptimizerMap, kFusedScaleApplyMomentum, kCombineScaleMomentumOpName);
+  REGISTER_COMBINE_OPTIMIZER_TYPE(kOptimizerMap, kFusedWeightScaleApplyMomentum,
+                                  kCombineWeightDecayScaleMomentumOpName);
+}
+
+bool CombineOptimizerFusion::CheckFuncGraph(const FuncGraphPtr &graph) {
+  std::unordered_map<std::string, std::vector<TypeId>> base_optimizer_input_types;
+  for (auto &node : graph->nodes()) {
+    if (node == nullptr || !node->isa<CNode>()) {
+      continue;
+    }
+    std::string node_name = common::AnfAlgo::GetCNodeName(node);
+    if (kOptimizerMap.find(node_name) == kOptimizerMap.end()) {
+      continue;
+    }
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
+    std::vector<TypeId> type_vec;
+    for (size_t i = 0; i < input_num; i++) {
+      type_vec.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(node, i));
+    }
+    if (base_optimizer_input_types.find(node_name) == base_optimizer_input_types.end()) {
+      base_optimizer_input_types[node_name] = type_vec;
+    } else if (type_vec != base_optimizer_input_types[node_name]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool CombineOptimizerFusion::TransformOptimizerList(const std::vector<AnfNodePtr> &node_list,
+                                                    std::vector<std::vector<AnfNodePtr>> *optimizer_node_lists) {
+  MS_EXCEPTION_IF_NULL(optimizer_node_lists);
+
   std::unordered_map<std::string, std::vector<AnfNodePtr>> optimizer_anf_map;
   for (auto item : kOptimizerMap) {
     std::vector<AnfNodePtr> vec;
     optimizer_anf_map[item.first] = vec;
   }
-
   for (auto &node : node_list) {
-    if (node == nullptr) {
-      continue;
-    }
-    if (!node->isa<CNode>()) {
+    if (node == nullptr || !node->isa<CNode>()) {
       continue;
     }
     std::string node_name = common::AnfAlgo::GetCNodeName(node);
@@ -52,22 +81,36 @@ bool GetDealList(const std::vector<AnfNodePtr> &node_list, std::vector<std::vect
   for (auto item : optimizer_anf_map) {
     auto optimizer_node_list = item.second;
     if (optimizer_node_list.size() > 1) {
-      deal_list->push_back(optimizer_node_list);
+      optimizer_node_lists->push_back(optimizer_node_list);
     }
   }
-  return deal_list->size() >= 1;
+  return optimizer_node_lists->size() >= 1;
 }
+
 bool CombineOptimizerFusion::Run(const FuncGraphPtr &graph) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto enable_ps = ps::PSContext::instance()->is_ps_mode();
+  auto server_mode = ps::PSContext::instance()->server_mode();
+  if (enable_ps || server_mode == mindspore::ps::kServerModePS) {
+    return false;
+  }
+
   MS_EXCEPTION_IF_NULL(graph);
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  std::vector<AnfNodePtr> node_list = TopoSort(graph->get_return());
-  // 1 get all the cast node
-  std::vector<std::vector<AnfNodePtr>> deal_list;
-  if (!GetDealList(node_list, &deal_list)) {
+
+  if (!CheckFuncGraph(graph)) {
     return false;
   }
-  for (auto optimizer_node_list : deal_list) {
+  std::vector<AnfNodePtr> node_list = TopoSort(graph->get_return());
+  // 1 get all the cast node
+  std::vector<std::vector<AnfNodePtr>> optimizer_node_lists;
+  if (!TransformOptimizerList(node_list, &optimizer_node_lists)) {
+    return false;
+  }
+
+  for (auto optimizer_node_list : optimizer_node_lists) {
     if (optimizer_node_list.size() == 0) {
       MS_LOG(EXCEPTION) << "The size of optimizer node list is zero.";
     }
@@ -82,12 +125,11 @@ bool CombineOptimizerFusion::Run(const FuncGraphPtr &graph) {
     auto prim = std::make_shared<Primitive>(combine_node_name);
     MS_EXCEPTION_IF_NULL(prim);
     inputs.push_back(NewValueNode(prim));
-
     // set inputs for combine optimizer node
     size_t input_num = common::AnfAlgo::GetInputTensorNum(optimizer_node_list[0]);
-    for (auto mom : optimizer_node_list) {
+    for (auto optimizer_node : optimizer_node_list) {
       for (size_t i = 0; i < input_num; i++) {
-        auto cnode = utils::cast<CNodePtr>(mom);
+        auto cnode = utils::cast<CNodePtr>(optimizer_node);
         MS_EXCEPTION_IF_NULL(cnode);
         inputs.push_back(common::AnfAlgo::GetInputNode(cnode, i));
       }
@@ -109,7 +151,7 @@ bool CombineOptimizerFusion::Run(const FuncGraphPtr &graph) {
     auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
     MS_EXCEPTION_IF_NULL(abstract_tuple);
     combine_optimizer_node->set_abstract(abstract_tuple);
-    common::AnfAlgo::SetNodeAttr("n", MakeValue(optimizer_node_list.size()), combine_optimizer_node);
+    common::AnfAlgo::SetNodeAttr("combine_num", MakeValue(optimizer_node_list.size()), combine_optimizer_node);
     // 3 replace all the cast by combine optimizer node
     for (size_t idx = 0; idx < optimizer_node_list.size(); ++idx) {
       if (!manager->Replace(optimizer_node_list[idx], combine_optimizer_node)) {
