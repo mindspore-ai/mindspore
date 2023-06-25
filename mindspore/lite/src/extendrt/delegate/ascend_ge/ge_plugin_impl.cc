@@ -22,5 +22,33 @@
 namespace mindspore {
 Status AscendGeExecutorPluginImpl::AdaptGraph(FuncGraphPtr graph) const { return GeUtils::AdaptGraph(graph); }
 
+bool AscendGeExecutorPluginImpl::AoeTuning(const FuncGraphPtr &graph,
+                                           const std::shared_ptr<mindspore::Context> &context,
+                                           const ConfigInfos &config_infos) {
+  auto ge_graph_executor = InitGeGraphExecutor(context, config_infos);
+  if (ge_graph_executor == nullptr) {
+    return false;
+  }
+  return ge_graph_executor->AoeTuning(graph);
+}
+
+std::shared_ptr<GeGraphExecutor> AscendGeExecutorPluginImpl::InitGeGraphExecutor(
+  const std::shared_ptr<mindspore::Context> &context, const ConfigInfos &config_infos) {
+  if (context == nullptr) {
+    MS_LOG(ERROR) << "Parameter context cannot be nullptr";
+    return nullptr;
+  }
+  auto ge_graph_executor = std::make_shared<mindspore::GeGraphExecutor>(context, config_infos);
+  if (ge_graph_executor == nullptr) {
+    MS_LOG(ERROR) << "Failed to create GeGraphExecutor";
+    return nullptr;
+  }
+  if (!ge_graph_executor->Init()) {
+    MS_LOG(ERROR) << "Failed to init ge graph executor";
+    return nullptr;
+  }
+  return ge_graph_executor;
+}
+
 AscendGeExecutorPluginImpl *CreateAscendGeExecutorPluginImpl() { return new AscendGeExecutorPluginImpl(); }
 }  // namespace mindspore

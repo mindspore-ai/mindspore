@@ -108,6 +108,7 @@ static const char *const kGraphCompilerCacheDirKey = "model_cache_dir";
 static const char *const kModifyMixList = "mixprecision_list_path";
 static const char *const kEnableCustomOp = "enable_custom_op";
 static const char *const kPluginCustomOps = "plugin_custom_ops";
+static const char *const kAoeMode = "aoe_mode";
 // ge options
 static const char *const kGeSessionOptionsSection = "ge_session_options";
 static const char *const kGeGraphOptionsSection = "ge_graph_options";
@@ -121,6 +122,13 @@ static const char *const kFfnFp16Key = "ffn_fp16";
 // lite inner group
 static const char *const kLiteInnerGroupSection = "lite_inner_group";
 static const char *const kLiteInnerGroupId = "group_id";
+// aoe section
+static const char *const kAoeGlobalOptionsSection = "aoe_global_options";
+static const char *const kAoeTuningOptionsSection = "aoe_tuning_options";
+// acl options
+static const char *const kAclOptionParam = "acl_option_cfg_param";
+static const char *const kAclInitOptionParam = "acl_init_options";
+static const char *const kAclBuildOptionParam = "acl_build_options";
 }  // namespace lite
 }  // namespace mindspore
 

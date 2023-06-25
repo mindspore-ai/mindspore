@@ -91,6 +91,7 @@ struct AclOptionCfgString {
   std::string buffer_optimize;
   std::string insert_op_config_file_path;
   std::string dynamic_image_size;
+  std::string dynamic_dims;
   std::string aoe_mode;
   std::string custom_opp_path;
   std::map<std::string, std::string> init_options_map;

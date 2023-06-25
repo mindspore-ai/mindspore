@@ -311,6 +311,20 @@ std::vector<char> Converter::GetDeviceChar() {
   return StringToChar(device);
 }
 
+void Converter::SetProvider(const std::vector<char> &provider) {
+  if (data_ != nullptr) {
+    data_->provider = CharToString(provider);
+  }
+}
+
+std::vector<char> Converter::GetProviderChar() {
+  std::string provider = "";
+  if (data_ != nullptr) {
+    provider = data_->provider;
+  }
+  return StringToChar(provider);
+}
+
 Status Converter::Convert() {
   if (data_ != nullptr) {
     Status ret = Status(static_cast<StatusCode>(lite::RunConverter(data_, nullptr, nullptr, false)));

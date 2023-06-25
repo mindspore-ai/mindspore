@@ -280,13 +280,9 @@ Status GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context, c
 
   std::map<std::string, std::string> ge_options;
   GetGeOptions(inst_context, context, &ge_options, config_info);
-  {
-    // Release GIL before calling into (potentially long-running) C++ code
-    mindspore::ScopedLongRunning long_running;
-    if (ge::GEInitialize(ge_options) != ge::GRAPH_SUCCESS) {
-      MS_LOG(ERROR) << "Initialize GE failed: " << ge::GEGetErrorMsg();
-      return kLiteError;
-    }
+  if (ge::GEInitialize(ge_options) != ge::GRAPH_SUCCESS) {
+    MS_LOG(ERROR) << "Initialize GE failed: " << ge::GEGetErrorMsg();
+    return kLiteError;
   }
   inst_context->increase_param<uint32_t>(MS_CTX_GE_REF);
   MS_LOG(INFO) << "Init ge successful, ge reference = " << inst_context->get_param<uint32_t>(MS_CTX_GE_REF) << ".";
@@ -393,6 +389,10 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   if (ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
     (*ge_options)["ge.socVersion"] = "Ascend310P3";
   }
+  // 0: False, dynamic and static graph compile with cann opp_kernel*.run，GE default for pytorch
+  // 1: True, dynamic and static graph online compiler op
+  // 2: Auto, dynamic compile with cann opp_kernel*.run, static graph online compiler op，GE default for others
+  (*ge_options)["ge.jit_compile"] = "2";
 }
 
 void GeDeviceContext::SetHcclOptions(const std::shared_ptr<Context> &context,
