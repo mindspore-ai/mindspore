@@ -344,13 +344,17 @@ void CodeMSModelBuildCommon(std::ofstream &ofs, const Configurator &config) {
 )RAW";
 }
 
-void CodeMSModelBuild(std::ofstream &ofs, const int model_index, const Configurator &config) {
+void CodeMSModelBuild(std::ofstream &ofs, const int model_index, const size_t weight_size, const Configurator &config) {
   ofs << "MSStatus MSModelBuild" << model_index
       << "(MSModelHandle model, const void *model_data, size_t data_size,\n"
          "                      const MSContextHandle model_context) {\n"
          "  if (model == NULL) {\n"
          "    return kMSStatusLiteParamInvalid;\n"
          "  }\n"
+         "  if (data_size != "
+      << weight_size
+      << ") {\n"
+         " return kMSStatusLiteInputParamInvalid;}\n"
          "  MicroModel *micro_model = (MicroModel *)model;\n"
          "  int ret = MSModelCreate"
       << model_index

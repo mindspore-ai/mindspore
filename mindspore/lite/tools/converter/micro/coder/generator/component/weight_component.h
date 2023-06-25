@@ -31,7 +31,8 @@ void CodeWeightFileHeader(std::ofstream &ofs, const std::unique_ptr<CoderContext
 void CodeModelParamsState(std::ofstream &ofs, const std::map<std::string, Tensor *> &weights);
 void CodeModelParamsData(std::ofstream &ofs, const std::map<std::string, Tensor *> &weights);
 
-void SaveDataToNet(const std::unique_ptr<CoderContext> &ctx, const std::string &net_file, bool keep_weight);
+void SaveDataToNet(const std::unique_ptr<CoderContext> &ctx, const std::string &net_file, bool keep_weight,
+                   size_t *weight_size);
 void CodeModelParamsForNet(std::ofstream &hofs, std::ofstream &cofs, const std::unique_ptr<CoderContext> &ctx,
                            const Configurator &config);
 

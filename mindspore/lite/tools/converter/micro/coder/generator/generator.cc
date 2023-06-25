@@ -443,7 +443,7 @@ int Generator::CodeMSModelImplement() {
   ofs << "MSModelHandle model" << ctx_->GetCurModelIndex() << " = &gModel" << ctx_->GetCurModelIndex() << ";\n\n";
 
   CodeMSModelCreate(ofs, ctx_, *config_);
-  CodeMSModelBuild(ofs, ctx_->GetCurModelIndex(), *config_);
+  CodeMSModelBuild(ofs, ctx_->GetCurModelIndex(), weight_size_, *config_);
   CodeCopyOutputsImplement(ofs, ctx_);
   if (config_->target() == kCortex_M) {
     CodeCortexCalcWorkspaceSize(ofs, ctx_);
@@ -484,7 +484,7 @@ int Generator::CodeWeightFile() {
     cofs << "unsigned char *" << ctx_->buffer_name() << " = 0; \n";
     cofs << "unsigned char *" << ctx_->weight_name() << " = 0; \n";
     std::string net_file = model_dir_ + "net" + std::to_string(ctx_->GetCurModelIndex()) + ".bin";
-    SaveDataToNet(ctx_, net_file, config_->keep_original_weight());
+    SaveDataToNet(ctx_, net_file, config_->keep_original_weight(), &weight_size_);
   } else {
     if (!ctx_->weight_buffer_size_code_blocks().empty()) {
       MS_LOG(ERROR) << "Weight init code generation error ";

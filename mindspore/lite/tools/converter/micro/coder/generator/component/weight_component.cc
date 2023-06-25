@@ -382,7 +382,8 @@ void CodeWeightExportFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext
       << "}\n";
 }
 
-void SaveDataToNet(const std::unique_ptr<CoderContext> &ctx, const std::string &net_file, bool keep_weight) {
+void SaveDataToNet(const std::unique_ptr<CoderContext> &ctx, const std::string &net_file, bool keep_weight,
+                   size_t *weight_size) {
   std::ofstream net(net_file, std::ios::out | std::ios::trunc | std::ios::binary);
   MS_CHECK_TRUE_WITHOUT_RET(net.is_open(), "net file open failed!");
   std::vector<Tensor *> save_tensors;
@@ -401,10 +402,15 @@ void SaveDataToNet(const std::unique_ptr<CoderContext> &ctx, const std::string &
     (void)std::transform(recorded_saved_tensors.begin(), recorded_saved_tensors.end(), std::back_inserter(save_tensors),
                          [](const std::pair<std::string, Tensor *> &item) { return item.second; });
   }
+  size_t size = 0;
   for (auto tensor : save_tensors) {
     if ((CheckConstantTensor(tensor)) && tensor->data() != nullptr) {
       net.write(reinterpret_cast<const char *>(tensor->data()), tensor->Size());
+      size += tensor->Size();
     }
+  }
+  if (weight_size != nullptr) {
+    *weight_size = size;
   }
   net.close();
 }

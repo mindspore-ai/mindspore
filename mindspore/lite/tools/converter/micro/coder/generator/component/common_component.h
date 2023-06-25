@@ -37,7 +37,7 @@ void CodeMSModelCreateDefault(std::ofstream &ofs);
 void CodeMSModelCreate(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config);
 void CodeMSModelBuildState(std::ofstream &ofs);
 void CodeMSModelBuildCommon(std::ofstream &ofs, const Configurator &config);
-void CodeMSModelBuild(std::ofstream &ofs, const int model_index, const Configurator &config);
+void CodeMSModelBuild(std::ofstream &ofs, const int model_index, const size_t weight_size, const Configurator &config);
 void CodeMSModelDestory(std::ofstream &ofs, const Configurator *config);
 void CodeMSModelPredictState(std::ofstream &ofs);
 void CodeMSModelPredictCommon(std::ofstream &ofs);
