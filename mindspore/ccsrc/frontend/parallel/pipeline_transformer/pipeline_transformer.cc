@@ -79,11 +79,11 @@ static TensorInfo GetTensorInfo(const std::pair<OperatorInfoPtr, int> &op_info_p
   }
 }
 
-static void SeparateParamBorder(const std::vector<AnfNodePtr> &nodes, bool send, std::vector<AnfNodePtr> *params,
-                                std::vector<AnfNodePtr> *borders) {
+static void SeparateParamBorder(const std::vector<AnfNodePtr> &nodes, bool send, std::vector<AnfNodePtr> *const params,
+                                std::vector<AnfNodePtr> *const borders) {
   std::vector<AnfNodePtr> real_comm_ops;
   if (send) {
-    std::transform(nodes.begin(), nodes.end(), std::back_inserter(real_comm_ops), [](const AnfNodePtr &n) {
+    (void)std::transform(nodes.begin(), nodes.end(), std::back_inserter(real_comm_ops), [](const AnfNodePtr &n) {
       const auto &cnode = n->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       const auto &real = cnode->input(INDEX_TWO)->cast<CNodePtr>();
@@ -654,7 +654,7 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer:
             AnfNodePtr recv;
             auto fg = enable_share_cell_ ? shared_cell_ : main_graph_;
             recv = InsertReceive(fg, parameter, node, user.second, stage_, *parameter_stage.begin(), micro, parameter);
-            recvs.push_back(recv);
+            (void)(recvs.push_back(recv));
           }
         }
       }
@@ -665,7 +665,8 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer:
 
 bool PipelineTransformer::GetStageByArgument(const CNodePtr &node, size_t index,
                                              const std::vector<AnfNodePtr> &parameters,
-                                             const NodeUsersMap &node_users_map, std::set<int64_t> *parameter_stage) {
+                                             const NodeUsersMap &node_users_map,
+                                             std::set<int64_t> *const parameter_stage) {
   if (!enable_share_cell_) {
     return false;
   }
@@ -1197,7 +1198,7 @@ void PipelineTransformer::SetNodeAbstract(const std::vector<AnfNodePtr> &nodes) 
   } else {
     AbstractBasePtrList abstract_list;
     abstract_list.resize(nodes.size());
-    std::transform(nodes.begin(), nodes.end(), abstract_list.begin(), [](const AnfNodePtr &node) {
+    (void)std::transform(nodes.begin(), nodes.end(), abstract_list.begin(), [](const AnfNodePtr &node) {
       auto cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       return GetRealAbstract(cnode->input(INDEX_ONE));
@@ -1277,8 +1278,8 @@ std::vector<AnfNodePtr> PipelineTransformer::FetchSend(const AnfNodePtr &node, b
     auto params = shared_cell_->parameters();
     auto iter = std::find(params.begin(), params.end(), param);
     if (iter != params.end()) {
-      size_t pos = std::distance(params.begin(), iter);
-      size_t input_pos = pos + 1;
+      auto pos = std::distance(params.begin(), iter);
+      auto input_pos = pos + 1;
       auto &front = shared_cell_users_.front();
       const auto &user = front->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(user);
@@ -1290,7 +1291,7 @@ std::vector<AnfNodePtr> PipelineTransformer::FetchSend(const AnfNodePtr &node, b
     }
     MS_EXCEPTION_IF_NULL(send_input);
     auto value = MakeValue(int64_t(0));
-    depends.emplace_back(GenNewSendFromOld(node, send_input, value));
+    (void)(depends.emplace_back(GenNewSendFromOld(node, send_input, value)));
     return depends;
   }
   for (auto &user : shared_cell_users_) {
@@ -1299,7 +1300,7 @@ std::vector<AnfNodePtr> PipelineTransformer::FetchSend(const AnfNodePtr &node, b
     auto value = cuser->GetPrimalAttr(MICRO);
     MS_EXCEPTION_IF_NULL(value);
     send_input = single_pipeline_end ? user : CreateTupleGetItemNode(main_graph_, user, end_index);
-    depends.emplace_back(GenNewSendFromOld(node, send_input, value));
+    (void)(depends.emplace_back(GenNewSendFromOld(node, send_input, value)));
   }
   return depends;
 }
@@ -1319,22 +1320,23 @@ void PipelineTransformer::HandleGraphOutputs(const std::vector<AnfNodePtr> &node
     (void)manager_->Replace(shared_cell_->output(), cdepend->input(INDEX_ONE));
   } else {
     std::vector<AnfNodePtr> rets;
-    std::transform(pipeline_ends.begin(), pipeline_ends.end(), std::back_inserter(rets), [](const AnfNodePtr &depend) {
-      const auto &cdepend = depend->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(cdepend);
-      return cdepend->input(INDEX_ONE);
-    });
+    (void)std::transform(pipeline_ends.begin(), pipeline_ends.end(), std::back_inserter(rets),
+                         [](const AnfNodePtr &depend) {
+                           const auto &cdepend = depend->cast<CNodePtr>();
+                           MS_EXCEPTION_IF_NULL(cdepend);
+                           return cdepend->input(INDEX_ONE);
+                         });
     auto out = CreateMakeTupleNode(shared_cell_, rets);
     (void)manager_->Replace(shared_cell_->output(), out);
   }
   for (auto &node : pipeline_params) {
     auto params = FetchSend(node, true, false, 0);
-    std::copy(params.begin(), params.end(), std::back_inserter(sends));
+    (void)std::copy(params.begin(), params.end(), std::back_inserter(sends));
   }
   for (size_t i = 0; i < ends_size; i++) {
     auto node = pipeline_ends[i];
     auto ends = FetchSend(node, false, single_pipeline_end, i);
-    std::copy(ends.begin(), ends.end(), std::back_inserter(sends));
+    (void)std::copy(ends.begin(), ends.end(), std::back_inserter(sends));
   }
   auto make_tuple = CreateMakeTupleNode(main_graph_, sends);
   auto zero_outputs = GetZeroOutputs(main_graph_);
@@ -1397,7 +1399,7 @@ std::vector<AnfNodePtr> PipelineTransformer::FetchRecv(const AnfNodePtr &node, b
     auto iter = std::find(params.begin(), params.end(), param);
     if (iter != params.end()) {
       auto pos = std::distance(params.begin(), iter);
-      size_t input_pos = pos + 1;
+      auto input_pos = pos + 1;
       auto &front = shared_cell_users_.front();
       const auto &user = front->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(user);
@@ -1413,7 +1415,7 @@ std::vector<AnfNodePtr> PipelineTransformer::FetchRecv(const AnfNodePtr &node, b
       recv_input = cnode->input(INDEX_ONE);
       recv = GenNewRecvFromOld(node, recv_input, value);
     }
-    recvs.emplace_back(recv);
+    (void)(recvs.emplace_back(recv));
     return recvs;
   }
   for (auto &user : shared_cell_users_) {
@@ -1422,7 +1424,7 @@ std::vector<AnfNodePtr> PipelineTransformer::FetchRecv(const AnfNodePtr &node, b
     auto value = cuser->GetPrimalAttr(MICRO);
     MS_EXCEPTION_IF_NULL(value);
     recv = GenNewRecvFromOld(node, virtual_param_, value);
-    recvs.emplace_back(recv);
+    (void)(recvs.emplace_back(recv));
   }
   return recvs;
 }
@@ -1455,10 +1457,10 @@ void PipelineTransformer::ResetSharedCellParamAndArgu(
     } else {
       new_params.push_back(param);
     }
-    reserved_param_index.insert(i);
+    (void)(reserved_param_index.insert(i));
   }
-  new_params.insert(new_params.end(), newly_added_params.begin(), newly_added_params.end());
-  new_params.insert(new_params.end(), monad_params.begin(), monad_params.end());
+  (void)(new_params.insert(new_params.end(), newly_added_params.begin(), newly_added_params.end()));
+  (void)(new_params.insert(new_params.end(), monad_params.begin(), monad_params.end()));
   MS_LOG(DEBUG) << "The shared cell origin params size is " << params.size() << ", new params size is "
                 << new_params.size();
   manager_->SetParameters(shared_cell_, new_params);
@@ -1483,14 +1485,14 @@ void PipelineTransformer::ResetSharedCellParamAndArgu(
     }
     auto newly_added_inputs = reserved_inputs;
     auto begins = pipeline_begins_fetched.at(user_index);
-    newly_added_inputs.insert(newly_added_inputs.end(), begins.begin(), begins.end());
-    newly_added_inputs.insert(newly_added_inputs.end(), monad_inputs.begin(), monad_inputs.end());
-    new_inputs.insert(new_inputs.end(), newly_added_inputs.begin(), newly_added_inputs.end());
+    (void)(newly_added_inputs.insert(newly_added_inputs.end(), begins.begin(), begins.end()));
+    (void)(newly_added_inputs.insert(newly_added_inputs.end(), monad_inputs.begin(), monad_inputs.end()));
+    (void)(new_inputs.insert(new_inputs.end(), newly_added_inputs.begin(), newly_added_inputs.end()));
     auto new_call = main_graph_->NewCNode(new_inputs);
     new_call->set_attrs(cuser->attrs());
     new_call->set_primal_attrs(cuser->primal_attrs());
     new_call->set_abstract(cuser->abstract());
-    manager_->Replace(user, new_call);
+    (void)manager_->Replace(user, new_call);
     user_index++;
   }
 }
@@ -1513,11 +1515,11 @@ void PipelineTransformer::HandleGraphInputs(const std::vector<AnfNodePtr> &recv_
     if (cnode->has_user_data(ORIGIN_INPUT_IS_PARAM)) {
       pipeline_params_with_param_input.push_back(node);
     } else {
-      reserved_inputs.insert(reserved_inputs.end(), recvs.begin(), recvs.end());
+      (void)(reserved_inputs.insert(reserved_inputs.end(), recvs.begin(), recvs.end()));
       need_link_to_new_param.push_back(node);
     }
   }
-  need_link_to_new_param.insert(need_link_to_new_param.end(), pipeline_begins.begin(), pipeline_begins.end());
+  (void)(need_link_to_new_param.insert(need_link_to_new_param.end(), pipeline_begins.begin(), pipeline_begins.end()));
 
   size_t begin_size = pipeline_begins.size();
   // The 0th dimension corresponds to shared_cell users
@@ -1575,8 +1577,8 @@ void PipelineTransformer::CutGraph() {
   MS_EXCEPTION_IF_NULL(graph);
   auto send_recv_cut_border = CutBorder(graph);
   std::vector<AnfNodePtr> send_ops;
-  send_ops.insert(send_ops.end(), send_recv_shared_param.first.begin(), send_recv_shared_param.first.end());
-  send_ops.insert(send_ops.end(), send_recv_cut_border.first.begin(), send_recv_cut_border.first.end());
+  (void)(send_ops.insert(send_ops.end(), send_recv_shared_param.first.begin(), send_recv_shared_param.first.end()));
+  (void)(send_ops.insert(send_ops.end(), send_recv_cut_border.first.begin(), send_recv_cut_border.first.end()));
   if (IsLastStage() && !enable_share_cell_) {
     return;
   }
@@ -1601,8 +1603,8 @@ void PipelineTransformer::CutGraph() {
     HandleGraphOutputs(send_ops);
   }
   std::vector<AnfNodePtr> recv_ops;
-  recv_ops.insert(recv_ops.end(), send_recv_shared_param.second.begin(), send_recv_shared_param.second.end());
-  recv_ops.insert(recv_ops.end(), send_recv_cut_border.second.begin(), send_recv_cut_border.second.end());
+  (void)(recv_ops.insert(recv_ops.end(), send_recv_shared_param.second.begin(), send_recv_shared_param.second.end()));
+  (void)(recv_ops.insert(recv_ops.end(), send_recv_cut_border.second.begin(), send_recv_cut_border.second.end()));
   HandleGraphInputs(recv_ops);
 }
 

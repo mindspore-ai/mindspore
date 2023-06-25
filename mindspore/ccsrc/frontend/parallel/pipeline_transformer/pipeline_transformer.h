@@ -112,7 +112,7 @@ class PipelineTransformer {
   // set shared_cell_ parameters, and call_input
   void HandleGraphInputs(const std::vector<AnfNodePtr> &recv_ops);
   bool GetStageByArgument(const CNodePtr &node, size_t index, const std::vector<AnfNodePtr> &parameters,
-                          const NodeUsersMap &node_users_map, std::set<int64_t> *parameter_stage);
+                          const NodeUsersMap &node_users_map, std::set<int64_t> *const parameter_stage);
   size_t GetBatchAxisForInput(const AnfNodeIndexSet &input_node_users) const;
   FuncGraphManagerPtr manager_;
   int64_t stage_;
