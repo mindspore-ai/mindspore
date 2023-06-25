@@ -64,6 +64,8 @@ int ConvBaseUpdateComputeInfo(ConvolutionBaseStruct *conv) {
   NNACL_CHECK_FALSE(compute->in_c_ != conv_param->input_channel_, NNACL_ERR);
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(compute->in_h_, compute->in_w_, NNACL_ERR);
   compute->in_hw_ = compute->in_h_ * compute->in_w_;
+  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(compute->in_hw_, compute->in_n_, NNACL_ERR);
+  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(compute->in_hw_ * compute->in_n_, compute->in_c_, NNACL_ERR);
 
   compute->out_n_ = GetBatch(output);
   compute->out_h_ = GetHeight(output);
@@ -72,6 +74,8 @@ int ConvBaseUpdateComputeInfo(ConvolutionBaseStruct *conv) {
   NNACL_CHECK_FALSE(compute->out_c_ != conv_param->output_channel_, NNACL_ERR);
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(compute->out_h_, compute->out_w_, NNACL_ERR);
   compute->out_hw_ = compute->out_h_ * compute->out_w_;
+  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(compute->out_hw_, compute->out_n_, NNACL_ERR);
+  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(compute->out_hw_ * compute->out_n_, compute->out_c_, NNACL_ERR);
 
   return ConvBaseUpdateParamInfo(compute, conv_param);
 }

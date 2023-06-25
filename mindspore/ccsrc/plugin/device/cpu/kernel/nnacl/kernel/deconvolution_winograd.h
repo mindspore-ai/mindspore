@@ -21,8 +21,23 @@
 #include "nnacl/kernel.h"
 #include "nnacl/kernel/convolution_base.h"
 
+#define kDeconvWinogradMaxPixel 3145728
+#define WINOGRAD_DEFAULT_UNIT 3
+#define WINOGRAD_DEFAULT_TILE 8
+#define WINOGRAD_MAX_COUNT 8
+
 typedef struct DeConvWinogradStruct {
   ConvolutionBaseStruct conv_;
+  DeConvParam param_;
+  int thread_num_hw_;
+  int thread_stride_hw_;
+  float *nhwc_input_;
+  float *nhwc_output_;
+  float *tile_input_;
+  float *tile_output_;
+  float *origin_input_;
+  float *nc4hw4_output_;
+  bool valid_weight_shape_;
 } DeConvWinogradStruct;
 
 #define NNACL_DECONV_WINOGRAD_HW_MAX 2000

@@ -171,6 +171,8 @@ int deconv_resize(KernelBase *self) {
   DeConvStruct *deconv = (DeConvStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(deconv);
 
+  (void)ConvBaseUpdateComputeInfo(&deconv->conv_);
+
   int ret = DeConvCheckvResizeValid(&deconv->conv_);
   if (ret != NNACL_OK) {
     return ret;

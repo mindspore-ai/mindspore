@@ -24,6 +24,7 @@
 #include "nnacl/tensor_c_utils.h"
 #include "nnacl/tensorlist_c_utils.h"
 
+bool CheckShaleValid(TensorC **tensors, int tensors_size);
 bool CheckInferShapeDone(TensorC **in, int in_size, TensorC **out, int out_size);
 
 #ifdef __cplusplus

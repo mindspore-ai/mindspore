@@ -21,6 +21,7 @@
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 #include "nnacl/conv_parameter.h"
+#include "nnacl/tensor_c_utils.h"
 
 #define ConvMinBlock 1
 
