@@ -4856,7 +4856,7 @@ class LogicalAnd(_LogicBinaryOp):
         >>> y = Tensor(np.array([True, False]), mindspore.bool_)
         >>> output = ops.LogicalAnd()(x, y)
         >>> print(output)
-        [True, False]
+        [True False]
     """
 
 
@@ -4902,7 +4902,7 @@ class LogicalOr(_LogicBinaryOp):
         >>> y = Tensor(np.array([True, False]), mindspore.bool_)
         >>> output = ops.LogicalOr()(x, y)
         >>> print(output)
-        [True, True]
+        [True True]
     """
 
 
