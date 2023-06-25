@@ -7024,7 +7024,7 @@ class _TensorScatterOp(PrimitiveWithInfer):
 
 
 class TensorScatterUpdate(_TensorScatterOp):
-    """
+    r"""
     Creates a new tensor by updating the positions in `input_x` indicated by
     `indices`, with values from `update`. This operation is almost equivalent to using
     `mindspore.ops.ScatterNdUpdate` , except that the updates are applied on `input_x` instead of a zero tensor.
@@ -7040,13 +7040,17 @@ class TensorScatterUpdate(_TensorScatterOp):
     are multiple index vectors in `indices` that correspond to the same position, the
     value of that position in the output will be nondeterministic.
 
+    .. math::
+        output[indices] = update
+
     Inputs:
-        - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
-          The shape is :math:`(N, *)` where :math:`*` means any number of additional dimensions.
+        - **input_x** (Tensor) - The input tensor. The dimension of input_x must be no less than indices.shape[-1].
+          The shape is :math:`(N, *)` where :math:`*` means,any number of additional dimensions.
+          The data type is Number.
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
           The rank must be at least 2.
-        - **update** (Tensor) - The tensor to update the input tensor, has the same type as input, and
-          :math:`update.shape = indices.shape[:-1]+input_x.shape[indices.shape[-1]:]`
+        - **update** (Tensor) - The tensor to update the input tensor, has the same type as `input_x`, and
+          :math:`update.shape = indices.shape[:-1]+input\_x.shape[indices.shape[-1]:]`
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -7210,12 +7214,15 @@ class TensorScatterMin(Primitive):
 
 
 class TensorScatterSub(Primitive):
-    """
+    r"""
     Creates a new tensor by subtracting the values from the positions in `input_x` indicated by
     `indices`, with values from `updates`. When multiple values are provided for the same
     index, the result of the update will be to subtract these values respectively. This operation is almost
     equivalent to using :class:`mindspore.ops.ScatterNdSub` , except that the updates are applied on output `Tensor`
     instead of input `Parameter`.
+
+    .. math::
+        output[indices] = input\_x - update
 
     Refer to :func:`mindspore.ops.tensor_scatter_sub` for more details.
 
@@ -7223,8 +7230,8 @@ class TensorScatterSub(Primitive):
         - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
           The rank must be at least 2.
-        - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
-          and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+        - **updates** (Tensor) - The tensor to update the input tensor, has the same type as `input_x`,
+          and the shape of `updates` should be equal to :math:indices.shape[:-1] + input\_x.shape[indices.shape[-1]:].
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -7312,11 +7319,14 @@ class TensorScatterAdd(Primitive):
 
 
 class TensorScatterMul(_TensorScatterOp):
-    """
+    r"""
     Creates a new tensor by multiplying the values from the positions in `input_x` indicated by
     `indices`, with values from `updates`. When multiple values are provided for the same
     index, the result of the update will be to multiply these values respectively.
     The updates are applied on output `Tensor` instead of input `Parameter`.
+
+    .. math::
+        output[indices] = input\_x \times update
 
     Refer to :func:`mindspore.ops.tensor_scatter_mul` for more details.
 
@@ -7324,8 +7334,8 @@ class TensorScatterMul(_TensorScatterOp):
         - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
           The rank must be at least 2.
-        - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
-          and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+        - **updates** (Tensor) - The tensor to update the input tensor, has the same type as `input_x`,
+          and the shape of `updates` should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.

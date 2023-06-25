@@ -3586,7 +3586,7 @@ def tensor_scatter_add(input_x, indices, updates):
 
 
 def tensor_scatter_sub(input_x, indices, updates):
-    """
+    r"""
     Creates a new tensor by subtracting the values from the positions in `input_x` indicated by
     `indices`, with values from `updates`. When multiple values are provided for the same
     index, the result of the update will be to subtract these values respectively. This operation is almost
@@ -3597,6 +3597,9 @@ def tensor_scatter_sub(input_x, indices, updates):
     there must be a corresponding value in `updates`. The shape of `updates` should be
     equal to the shape of `input_x[indices]`. For more details, see use cases.
 
+    .. math::
+        output[indices] = input\_x - update
+
     Note:
         On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
         the corresponding `updates` will not be updated to self tensor. On CPU, if some values of
@@ -3604,11 +3607,11 @@ def tensor_scatter_sub(input_x, indices, updates):
         not supported, if some values of the `indices` are out of bound, unknown errors may be caused.
 
     Args:
-        input_x (Tensor): The target tensor. The dimension of input_x must be no less than indices.shape[-1].
+        input_x (Tensor): The input tensor. The dimension of input_x must be no less than indices.shape[-1].
         indices (Tensor): The index of input tensor whose data type is int32 or int64.
             The rank must be at least 2.
-        updates (Tensor): The tensor to update the input tensor, has the same type as input,
-            and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+        updates (Tensor): The tensor to update the input tensor, has the same type as `input_x`,
+            and the shape of `updates` should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
 
     Returns:
         Tensor, has the same shape and type as `input_x`.
@@ -4860,7 +4863,7 @@ def scalar_cast(input_x, input_y):
 
 
 def tensor_scatter_mul(input_x, indices, updates):
-    """
+    r"""
     Creates a new tensor by multiplying the values from the positions in `input_x` indicated by
     `indices`, with values from `updates`. When divided values are provided for the same
     index, the result of the update will multiply these values respectively. Except that
@@ -4870,15 +4873,18 @@ def tensor_scatter_mul(input_x, indices, updates):
     there must be a corresponding value in `updates`. The shape of `updates` should be
     equal to the shape of `input_x[indices]`. For more details, see use cases.
 
+    .. math::
+        output[indices] = input\_x \times update
+
     Note:
         - If some values of the `indices` are out of bound, instead of raising an index error,
           the corresponding `updates` will not be updated to `input_x`.
 
     Args:
-        input_x (Tensor): The target tensor. The dimension of input_x must be no less than indices.shape[-1].
+        input_x (Tensor): The input tensor. The dimension of `input_x` must be no less than indices.shape[-1].
         indices (Tensor): The index of input tensor whose data type is int32 or int64. The rank must be at least 2.
-        updates (Tensor): The tensor to update the input tensor, has the same type as input,
-            and updates shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+        updates (Tensor): The tensor to update the input tensor, has the same type as `input_x`,
+        :math:and the shape of `updates` should be equal to indices.shape[:-1] + input\_x.shape[indices.shape[-1]:].
 
     Returns:
         Tensor, has the same shape and type as `input_x`.
@@ -4930,10 +4936,10 @@ def tensor_scatter_div(input_x, indices, updates):
           there is no 0 value in `updates`.
 
     Args:
-        input_x (Tensor): The target tensor. The dimension of input_x must be no less than indices.shape[-1].
+        input_x (Tensor): The input tensor. The dimension of `input_x` must be no less than indices.shape[-1].
         indices (Tensor): The index of input tensor whose data type is int32 or int64.
             The rank must be at least 2.
-        updates (Tensor): The tensor to update the input tensor, has the same type as input,
+        updates (Tensor): The tensor to update the `input_x` tensor, has the same type as `input_x`,
             and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
 
     Returns:
