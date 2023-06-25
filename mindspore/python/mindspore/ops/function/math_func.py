@@ -11066,13 +11066,13 @@ def sum(input, dim=None, keepdim=False, *, dtype=None):
     if not isinstance(keepdim, bool):
         raise TypeError("For 'sum', 'keepdim' must be bool.")
 
+    if dtype is not None:
+        input = input.astype(dtype)
     reduce_sum = P.ReduceSum(keep_dims=keepdim)
     if dim is not None:
         out = reduce_sum(input, dim)
     else:
         out = reduce_sum(input)
-    if dtype is not None:
-        out = out.astype(dtype)
     return out
 
 
