@@ -24,6 +24,7 @@ from types import FunctionType, MethodType
 import numpy
 
 from mindspore._checkparam import args_type_check
+from mindspore.common._auto_dynamic import is_auto_dynamic, convert_inputs_to_dynamic
 from mindspore import log as logger
 from mindspore.common.parameter import PARAMETER_NAME_DEFAULT
 from mindspore.common.hook_handle import HookHandle
@@ -931,6 +932,10 @@ class Cell(Cell_):
             args (tuple): Args of the Cell object.
             kwargs (dict): Kwargs of the Cell object.
         """
+        # this is used only for test
+        if is_auto_dynamic() and (self._dynamic_shape_inputs is None or self._dynamic_shape_inputs[0] is None):
+            self._dynamic_shape_inputs = convert_inputs_to_dynamic(*args)
+
         if self._dynamic_shape_inputs is None:
             compile_args = self.auto_identify_dynamic_shape.auto_dynamic_generate_compile_args(args)
             _cell_graph_executor.compile(self, phase=self.phase,
