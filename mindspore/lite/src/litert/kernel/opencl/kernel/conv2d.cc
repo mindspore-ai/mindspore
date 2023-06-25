@@ -67,6 +67,7 @@ int Conv2DOpenCLKernel::CheckSpecs() {
     case ActType_Relu6:
     case ActivationType_LEAKY_RELU:
     case ActivationType_TANH:
+    case ActivationType_SIGMOID:
       break;
     default: {
       MS_LOG(WARNING) << "Unsupported activation type " << param_->act_type_;

@@ -119,8 +119,8 @@ int ConcatOpenCLKernel::CheckSpecs() {
   if (axis_ < 0) {
     axis_ += in_tensors_.front()->shape().size();
   }
-  constexpr size_t max_axis = 3;
-  constexpr size_t min_axis = 0;
+  constexpr int max_axis = 3;
+  constexpr int min_axis = 0;
   if (axis_ < min_axis || axis_ > max_axis) {
     MS_LOG(WARNING) << " only support axis >= 0 and axis <= 3 ";
     return RET_ERROR;

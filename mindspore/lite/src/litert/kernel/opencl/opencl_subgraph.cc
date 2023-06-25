@@ -480,9 +480,7 @@ void OpenCLSubGraph::UnInit() {
   delete this->executor_;
 }
 
-int OpenCLSubGraph::ReSize() { return ReSize(false); }
-
-int OpenCLSubGraph::ReSize(bool interrupt) {
+int OpenCLSubGraph::ReSize() {
   for (auto kernel : nodes_) {
     if (kernel == nullptr) {
       MS_LOG(ERROR) << "input kernel is nullptr!";
@@ -501,12 +499,8 @@ int OpenCLSubGraph::ReSize(bool interrupt) {
   for (auto kernel : nodes_) {
     auto ret = kernel->ReSize();
     if (ret != RET_OK) {
-      MS_LOG(WARNING) << "ReSize " << kernel->name() << "failed!";
-      if (interrupt) {
-        return ret;
-      } else {
-        break;
-      }
+      MS_LOG(WARNING) << "ReSize " << kernel->name() << "failed!, ret:" << ret;
+      return ret;
     }
   }
   return RET_OK;

@@ -381,7 +381,7 @@ int LiteOpActor::InitInputData() {
   if (need_resize) {
     auto subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel_);
     ret = subgraph_kernel->ReSize();
-    MS_CHECK_FALSE_MSG(ret != RET_OK, ret, "Subgraph kernel Resize failed.");
+    MS_CHECK_FALSE_MSG((ret != RET_OK) && (ret != RET_INFER_INVALID), ret, "Subgraph kernel Resize failed.");
   }
   return RET_OK;
 }

@@ -1357,7 +1357,7 @@ int LiteSession::ReSizeKernels(const std::vector<kernel::KernelExec *> &kernels,
       if (kernel->subgraph_type() == kernel::kGpuFp16SubGraph || kernel->subgraph_type() == kernel::kGpuFp32SubGraph) {
 #if GPU_OPENCL
         auto sub_graph = reinterpret_cast<kernel::OpenCLSubGraph *>(kernel);
-        ret = sub_graph->ReSize(false);
+        ret = sub_graph->ReSize();
 #endif
       } else {
         auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);

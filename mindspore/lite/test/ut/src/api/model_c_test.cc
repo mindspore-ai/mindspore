@@ -30,6 +30,19 @@ void CreateCpuContext(MSContextHandle *context) {
   ASSERT_NE(cpu_device_info, nullptr);
   MSContextAddDeviceInfo(*context, cpu_device_info);
 }
+
+std::vector<MSShapeInfo> TransformTensorShapes(const std::vector<std::vector<int32_t>> &dims) {
+  std::vector<MSShapeInfo> shape_infos;
+  std::transform(dims.begin(), dims.end(), std::back_inserter(shape_infos), [&](auto &shapes) {
+    MSShapeInfo shape_info;
+    shape_info.shape_num = shapes.size();
+    for (size_t i = 0; i < shape_info.shape_num; i++) {
+      shape_info.shape[i] = shapes[i];
+    }
+    return shape_info;
+  });
+  return shape_infos;
+}
 }  // namespace
 
 TEST(ModelCApiTest, BuildFromBufferTwice) {
@@ -99,6 +112,46 @@ TEST(ModelCApiTest, BuildFromBufferAndFileTwice) {
   // 3. Build the model twice. Expect specific error code: kMSStatusLiteModelRebuild.
   status = MSModelBuildFromFile(model, model_file.c_str(), kMSModelTypeMindIR, context);
   ASSERT_EQ(status, kMSStatusLiteModelRebuild);
+
+  MSModelDestroy(&model);
+}
+
+TEST(ModelCApiTest, Resize) {
+  MSContextHandle context;
+  const std::string model_file = "./ml_face_isface.ms";
+
+  // 1. Create CPU context and build the model.
+  CreateCpuContext(&context);
+
+  auto model = MSModelCreate();
+  ASSERT_NE(model, nullptr);
+  auto status = MSModelBuildFromFile(model, model_file.c_str(), kMSModelTypeMindIR, context);
+  ASSERT_EQ(status, kMSStatusSuccess);
+
+  // 2. Invoke Resize() with GOOD input shapes. Expect specific ret code: kMSStatusSuccess.
+  auto inputs = MSModelGetInputs(model);
+  std::vector<MSShapeInfo> shape_infos = TransformTensorShapes({{3, 48, 48, 3}});
+  ASSERT_EQ(MSModelResize(model, inputs, shape_infos.data(), inputs.handle_num), kMSStatusSuccess);
+
+  MSModelDestroy(&model);
+}
+
+TEST(ModelCApiTest, ResizeWithBadDims) {
+  MSContextHandle context;
+  const std::string model_file = "./ml_face_isface.ms";
+
+  // 1. Create CPU context and build the model.
+  CreateCpuContext(&context);
+
+  auto model = MSModelCreate();
+  ASSERT_NE(model, nullptr);
+  auto status = MSModelBuildFromFile(model, model_file.c_str(), kMSModelTypeMindIR, context);
+  ASSERT_EQ(status, kMSStatusSuccess);
+
+  // 2. Invoke Resize() with BAD input shapes. Expect specific error code: kMSStatusLiteError.
+  auto inputs = MSModelGetInputs(model);
+  std::vector<MSShapeInfo> shape_infos = TransformTensorShapes({{1, 96, 96, 3}});
+  ASSERT_EQ(MSModelResize(model, inputs, shape_infos.data(), inputs.handle_num), kMSStatusLiteError);
 
   MSModelDestroy(&model);
 }
