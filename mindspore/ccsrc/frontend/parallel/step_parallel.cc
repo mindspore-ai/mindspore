@@ -1416,6 +1416,9 @@ static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &
   if (!enable_opt_shard) {
     return;
   }
+  if (ParameterIsCloned(parameter)) {
+    return;
+  }
 
   int32_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
   if (opt_shard_group.empty() &&
