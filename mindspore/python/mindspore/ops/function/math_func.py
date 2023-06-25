@@ -5824,7 +5824,6 @@ def addmv(input, mat, vec, *, beta=1, alpha=1):
         raise TypeError("For Addmv, inputs must be all tensors.")
     if dtypeop(mat) != dtypeop(vec):
         raise TypeError("For Addmv, the mat and vec should be the same dtype.")
-    _check_input_1d(input.shape, "input", "Addmv")
     _check_input_1d(vec.shape, "vec", "Addmv")
     _check_input_2d(mat.shape, "mat", "Addmv")
     _check_input_dtype("input", input_dtype,
@@ -5920,7 +5919,6 @@ def addr(x, vec1, vec2, *, beta=1, alpha=1):
         raise TypeError("For Addr, the vec1 and vec2 should be the same dtype.")
     _check_input_1d(vec1.shape, "vec1", "Addr")
     _check_input_1d(vec2.shape, "vec2", "Addr")
-    _check_input_2d(x.shape, "x", "Addr")
     _check_input_dtype("x", input_dtype,
                        [mstype.float16, mstype.float32, mstype.float64,
                         mstype.int16, mstype.int32, mstype.int64], "Addr")
