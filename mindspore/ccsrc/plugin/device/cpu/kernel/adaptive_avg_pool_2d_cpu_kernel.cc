@@ -60,8 +60,6 @@ bool AdaptiveAvgPool2DCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                          const std::vector<KernelTensorPtr> &outputs) {
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::AdaptiveAvgPool2D>(base_operator);
-  output_size_data_ = kernel_ptr->get_output_size();
   return true;
 }
 
@@ -74,6 +72,8 @@ int AdaptiveAvgPool2DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   }
   dtype_ = inputs[kIndex0]->GetDtype();
   input_dim_sizes_ = inputs[kIndex0]->GetShapeVector();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::AdaptiveAvgPool2D>(base_operator);
+  output_size_data_ = kernel_ptr->get_output_size();
   return KRET_OK;
 }
 
