@@ -44,6 +44,9 @@ class FormatOptimize {
 };
 using FormatOptimizePtr = std::shared_ptr<FormatOptimize>;
 
+int DoFormatPass(std::vector<mindspore::kernel::KernelExec *> *subgraph_list,
+                 std::vector<mindspore::lite::Tensor *> *tensors, mindspore::Format graph_format);
+
 int RuntimeFormatPass(std::vector<mindspore::kernel::KernelExec *> *subgraph_list,
                       std::vector<mindspore::lite::Tensor *> *tensors,
                       mindspore::Format format = mindspore::Format::NHWC);
