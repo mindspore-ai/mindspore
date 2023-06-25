@@ -522,6 +522,7 @@ Array操作
     mindspore.ops.diag
     mindspore.ops.diagflat
     mindspore.ops.diagonal
+    mindspore.ops.diagonal_scatter
     mindspore.ops.dyn_shape
     mindspore.ops.dsplit
     mindspore.ops.dstack
@@ -551,6 +552,8 @@ Array操作
     mindspore.ops.movedim
     mindspore.ops.narrow
     mindspore.ops.nan_to_num
+    mindspore.ops.nanmean
+    mindspore.ops.nanmedian
     mindspore.ops.nansum
     mindspore.ops.normal
     mindspore.ops.nonzero

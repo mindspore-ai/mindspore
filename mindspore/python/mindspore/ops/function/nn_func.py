@@ -1207,9 +1207,9 @@ def binary_cross_entropy_with_logits(logits, label, weight, pos_weight, reductio
 def dropout(input, p=0.5, training=True, seed=None):
     """
     During training, randomly zeroes some of the elements of the input tensor
-    with probability `p` from a Bernoulli distribution. It plays the role of
-    reducing neuron correlation and avoid overfitting. The meaning of probability
-    here is opposite to that in :class:`mindspore.ops.Dropout` and :class:`mindspore.nn.Dropout`.
+    with probability `p` from a Bernoulli distribution. It plays the role of reducing neuron correlation and
+    avoid overfitting. And the return will be multiplied by :math:`\frac{1}{1-p}` during training.
+    During the reasoning, this operation returns the same Tensor as the `x`.
 
     Args:
         input (Tensor): TThe input Tensor of shape :math:`(*, N)`, with data type of float16, float32 or float64.

@@ -100,6 +100,7 @@ mindspore.Tensor
     mindspore.Tensor.diag
     mindspore.Tensor.diagflat
     mindspore.Tensor.diagonal
+    mindspore.Tensor.diagonal_scatter
     mindspore.Tensor.diff
     mindspore.Tensor.digamma
     mindspore.Tensor.div
@@ -221,6 +222,8 @@ mindspore.Tensor
     mindspore.Tensor.multiply
     mindspore.Tensor.mvlgamma
     mindspore.Tensor.nan_to_num
+    mindspore.Tensor.nanmean
+    mindspore.Tensor.nanmedian
     mindspore.Tensor.nansum
     mindspore.Tensor.narrow
     mindspore.Tensor.nbytes
