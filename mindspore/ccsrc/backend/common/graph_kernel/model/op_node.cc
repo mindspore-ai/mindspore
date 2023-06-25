@@ -28,6 +28,7 @@
 #include "abstract/ops/primitive_infer_map.h"
 #include "utils/anf_utils.h"
 #include "utils/hash_map.h"
+#include "utils/check_convert_utils.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/common/graph_kernel/model/node.h"
 #include "backend/operator/ops_backend_infer_function.h"
@@ -457,8 +458,9 @@ DFormat TransposeOp::InferFormat(const NodePtrList &inputs, const DAttrs &attrs)
   if (inputs[0]->shape.size() != kRank4) {
     return kOpFormat_DEFAULT;
   }
-  CHECK_ATTR(attrs, "perm");
-  auto perm = GetListInt(attrs.find("perm")->second);
+  auto perm_node = inputs[1];
+  auto perm_tensor = perm_node->As<inner::ConstTensorNode>()->data();
+  auto perm = CheckAndConvertUtils::CheckTensorIntValue("permutation", perm_tensor, "Transpose");
   const auto &ori_format = inputs[0]->format;
   if (ori_format == kOpFormat_DEFAULT || ori_format == kOpFormat_NCHW) {
     std::vector<int64_t> nchw2nhwc = {0, 2, 3, 1};
