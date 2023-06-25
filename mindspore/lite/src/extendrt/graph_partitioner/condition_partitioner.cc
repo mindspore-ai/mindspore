@@ -102,23 +102,6 @@ void ConditionPartitioner::NodesToSegments(const std::vector<AnfNodePtr> &segmen
 
   AddSegment(segment_nodes, segments, node_to_segment);
   return;
-  // dynamic shape in Ascend without mindrt need to separate dynamic shape nodes to sub graph
-  // in lite partitioner, just add a new dynamic shape separator
-  //   MS_EXCEPTION_IF_NULL(segments);
-  //   MS_EXCEPTION_IF_NULL(node_to_segment);
-  //   std::set<AnfNodePtr> dynamic_nodes_set;
-  //   for (auto &node : segment_nodes) {
-  //     MS_EXCEPTION_IF_NULL(node);
-  //     auto cnode = node->cast<CNodePtr>();
-  //     if (common::AnfAlgo::IsNodeOutputDynamicShape(cnode)) {
-  //       (void)dynamic_nodes_set.insert(node);
-  //     }
-  //   }
-  //   if (dynamic_nodes_set.empty()) {
-  //     AddSegment(segment_nodes, segments, node_to_segment);
-  //     return;
-  //   }
-  //   SplitDynamicNodeSegment(segment_nodes, segments, node_to_segment, dynamic_nodes_set);
 }
 
 void ConditionPartitioner::AddSegment(const std::vector<AnfNodePtr> &nodes, std::vector<GraphSegmentPtr> *segments,
