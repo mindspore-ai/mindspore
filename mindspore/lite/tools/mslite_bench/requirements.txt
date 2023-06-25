@@ -1,0 +1,9 @@
+# required
+numpy>=1.17.0
+mindspore-lite==2.0.0
+
+# optional, install if you need
+tensorflow==1.15.0
+onnx==1.13.0
+onnxruntime==1.12.1
+paddlepaddle==2.5.0rc0
