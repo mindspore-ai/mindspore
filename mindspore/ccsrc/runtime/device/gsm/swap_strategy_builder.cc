@@ -401,7 +401,7 @@ void SwapStrategyBuilder::HandleFusedTensor() {
         span->current_index_ = end_index + 1;
         enable_parallel = EnoughSpaceForSpan(span, &mem_used_level0_, total_mem_level0_);
         if (enable_parallel) {
-          parallel_comm_ids_.emplace(kernel_id, std::make_pair(start_index, end_index));
+          (void)parallel_comm_ids_.emplace(kernel_id, std::make_pair(start_index, end_index));
         }
       }
     }
