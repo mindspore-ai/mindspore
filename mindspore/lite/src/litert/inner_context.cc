@@ -57,7 +57,7 @@ void InnerContext::InitExecEnv() {
   exec_env_.parallel_launch = nnacl::DefaultThreadPoolParallelLunch;
 }
 
-int InnerContext::CreateThreadPool() {
+int InnerContext::CreateThreadPool(bool is_control_flow) {
   if (this->thread_pool_ == nullptr) {
     bind_mode_ = Power_NoBind;
     if (this->IsDeviceTypeEnabled(DT_CPU)) {
@@ -74,7 +74,7 @@ int InnerContext::CreateThreadPool() {
       if (inter_op_parallel_num_ > 1) {
         thread_pool_ = ParallelThreadPool::CreateThreadPool(this->inter_op_parallel_num_, this->thread_num_,
                                                             this->affinity_core_list_, bind_mode_, runner_id_);
-      } else if (thread_num_ == 1 && !IsCpuFloat16Enabled()) {
+      } else if (thread_num_ == 1 && !IsCpuFloat16Enabled() && !is_control_flow) {
         thread_pool_ = ThreadPool::CreateThreadPool(thread_num_ - 1);
         thread_pool_->SetCpuAffinity(static_cast<mindspore::BindMode>(bind_mode_));
       } else {
@@ -89,19 +89,16 @@ int InnerContext::CreateThreadPool() {
       thread_pool_->SetCpuAffinity(static_cast<mindspore::BindMode>(bind_mode_));
 #endif
     }
+    MS_CHECK_TRUE_MSG(thread_pool_ != nullptr, RET_NULL_PTR, "Create Allocator failed");
+    InitExecEnv();
   }
-  MS_CHECK_TRUE_MSG(thread_pool_ != nullptr, RET_NULL_PTR, "Create Allocator failed");
+
   return RET_OK;
 }
 int InnerContext::Init() {
   if (this->IsValid() != RET_OK) {
     MS_LOG(ERROR) << "Context is not valid";
     return RET_NOT_SUPPORT;
-  }
-
-  if (CreateThreadPool()) {
-    MS_LOG(ERROR) << "CreateThreadPool failed.";
-    return RET_ERROR;
   }
 
   if (this->allocator == nullptr) {
@@ -124,8 +121,21 @@ int InnerContext::Init() {
     }
 #endif
   }
-  InitExecEnv();
+
+  if (CreateThreadPool(false)) {
+    MS_LOG(ERROR) << "CreateThreadPool failed.";
+    return RET_ERROR;
+  }
+
   return RET_OK;
+}
+
+void InnerContext::DeleteThreadPool() {
+  MS_LOG(INFO) << "delete ThreadPool.";
+  if (thread_pool_ != nullptr) {
+    delete thread_pool_;
+    thread_pool_ = nullptr;
+  }
 }
 
 InnerContext::~InnerContext() {
