@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@
 namespace mindspore {
 namespace opt {
 bool CheckMatmulNeighborNodes(const FuncGraphPtr &func_graph, const AnfNodePtr &up_node, const AnfNodePtr &down_node);
+bool CheckShapeDimInfo(const ShapeVector &shape);
 
 class ReshapeTransposeFusion : public PatternProcessPassWithSwitch {
  public:
