@@ -30,7 +30,7 @@ from mindspore.train.model import Model
 from mindspore.train.dataset_helper import connect_network_with_dataset
 from mindspore.parallel._utils import _need_to_full, _to_full_tensor
 from mindspore.common.dtype import pytype_to_dtype
-from mindspore._c_expression import init_exec_dataset, _set_dataset_mode_config
+from mindspore._c_expression import init_exec_dataset
 from mindspore.train.train_thor.dataset_helper import DatasetHelper
 
 
@@ -205,7 +205,6 @@ class ModelThor(Model):
             initial_epoch (int): Epoch at which to start train, it useful for resuming a previous training run.
                                  Default: 0.
         """
-        _set_dataset_mode_config('sink')
         valid_dataset, _, _ = valid_infos
         if valid_dataset:
             raise ValueError("Evaluation in training is currently not supported in the second-order scenario of thor.")

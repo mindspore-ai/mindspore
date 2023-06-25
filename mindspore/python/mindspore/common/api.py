@@ -1565,11 +1565,10 @@ class _CellGraphExecutor:
         """
         self._graph_executor.set_queue_name(queue_name)
 
-    def _set_dataset_mode(self, args_list):
+    def _set_dataset_mode(self, obj):
         """set dataset mode."""
-        # decide whether to sink based on whether the inputs is virtual or args_list is ()
-        if (args_list and isinstance(args_list[0], Tensor) and args_list[0].virtual_flag) or \
-                (args_list is not None and args_list == ()):
+        # decide whether to sink based on the sink_mode flag which is set in connect_network_with_dataset
+        if 'sink_mode' in obj.get_flags().keys() and obj.get_flags()['sink_mode'] is True:
             _set_dataset_mode_config('sink')
         else:
             _set_dataset_mode_config('normal')
@@ -1628,6 +1627,7 @@ class _CellGraphExecutor:
 
         obj.check_names()
         _check_full_batch()
+        self._set_dataset_mode(obj)
         self._set_compile_cache_dep_files(phase)
 
         enable_ge = context.get_context("enable_ge")
