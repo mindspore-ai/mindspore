@@ -60,6 +60,22 @@ bool CombineOptimizerFusion::CheckFuncGraph(const FuncGraphPtr &graph) {
   return true;
 }
 
+bool CombineOptimizerFusion::CheckCondition() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto enable_ps = ps::PSContext::instance()->is_ps_mode();
+  auto server_mode = ps::PSContext::instance()->server_mode();
+  if (enable_ps || server_mode == mindspore::ps::kServerModePS) {
+    return false;
+  }
+  auto ms_role = common::GetEnv(mindspore::ps::kEnvRole);
+  if (ms_role == mindspore::ps::kEnvRoleOfWorker || ms_role == mindspore::ps::kEnvRoleOfPServer ||
+      ms_role == mindspore::ps::kEnvRoleOfScheduler) {
+    return false;
+  }
+  return true;
+}
+
 bool CombineOptimizerFusion::TransformOptimizerList(const std::vector<AnfNodePtr> &node_list,
                                                     std::vector<std::vector<AnfNodePtr>> *optimizer_node_lists) {
   MS_EXCEPTION_IF_NULL(optimizer_node_lists);
@@ -88,17 +104,13 @@ bool CombineOptimizerFusion::TransformOptimizerList(const std::vector<AnfNodePtr
 }
 
 bool CombineOptimizerFusion::Run(const FuncGraphPtr &graph) {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto enable_ps = ps::PSContext::instance()->is_ps_mode();
-  auto server_mode = ps::PSContext::instance()->server_mode();
-  if (enable_ps || server_mode == mindspore::ps::kServerModePS) {
-    return false;
-  }
-
   MS_EXCEPTION_IF_NULL(graph);
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
+
+  if (!CheckCondition()) {
+    return false;
+  }
 
   if (!CheckFuncGraph(graph)) {
     return false;

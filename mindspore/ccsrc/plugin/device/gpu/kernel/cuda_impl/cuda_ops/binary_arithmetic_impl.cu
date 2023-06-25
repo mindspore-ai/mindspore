@@ -39,7 +39,7 @@ template <typename In0_t, typename In1_t, typename Out_t>
 struct BinaryFunc<BinaryOpType::kPow, In0_t, In1_t, Out_t, typename std::is_floating_point<Out_t>::type> {
   __device__ __host__ __forceinline__ BinaryFunc() {}
   __device__ __host__ __forceinline__ Out_t operator()(const In0_t &lhs, const In1_t &rhs) const {
-    return static_cast<Out_t>(pow(lhs, rhs));
+    return static_cast<Out_t>(pow(static_cast<double>(lhs), static_cast<double>(rhs)));
   }
 };
 template <>
