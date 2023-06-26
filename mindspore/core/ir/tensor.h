@@ -172,7 +172,9 @@ class MS_CORE_API TensorData {
   ///
   /// \param[in] data file path.
   /// \return Void.
-  virtual void set_file_path(const std::string &path) {}
+  virtual void set_file_path(const std::string &path) {
+    MS_LOG(INFO) << "Call default set file path, and do nothing with " << path << ".";
+  }
 
   /// \brief Get data saved file path.
   ///

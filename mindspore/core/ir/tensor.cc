@@ -403,7 +403,9 @@ class TensorDataImpl : public TensorData {
     try {
       RemoveOffloadFile();
     } catch (const std::exception &e) {
-      MS_LOG(ERROR) << "Exception when cleaning tensor. Error info " << e.what();
+      MS_LOG(ERROR) << "Exception occurred when cleaning tensor. Error info " << e.what();
+    } catch (...) {
+      MS_LOG(ERROR) << "Exception occurred when cleaning tensor.";
     }
   }
 
@@ -451,11 +453,14 @@ class TensorDataImpl : public TensorData {
       if (fs->FileExist(file_path_)) {
         auto file = fs->CreateWriteFile(file_path_, "r+");
         MS_EXCEPTION_IF_NULL(file);
-        bool success = file->PRead(data_.get(), nbytes(), 0);
+        bool success = file->PRead(data_.get(), data_size_ * sizeof(T), 0);
         if (!success) {
           MS_LOG(WARNING) << "Tensor load data from file: " << file_path_ << " failed!";
         }
-        file->Close();
+
+        if (!file->Close()) {
+          MS_LOG(WARNING) << "Close tensor file: " << file_path_ << " failed!";
+        }
       } else {
         MS_LOG(WARNING) << "Invalid tensor file path: " << file_path_;
       }
@@ -500,7 +505,9 @@ class TensorDataImpl : public TensorData {
       auto fs = mindspore::system::Env::GetFileSystem();
       MS_EXCEPTION_IF_NULL(fs);
       if (fs->FileExist(file_path_)) {
-        fs->DeleteFile(file_path_);
+        if (!fs->DeleteFile(file_path_)) {
+          MS_LOG(WARNING) << "Delete tensor file path: " << file_path_ << " failed!";
+        }
       } else {
         MS_LOG(WARNING) << "Invalid tensor file path: " << file_path_;
       }
@@ -842,6 +849,7 @@ Tensor::Tensor(TypeId origin_data_type, const ShapeVector &shape, size_t compres
 Tensor::~Tensor() {
   try {
     UnPinMemory();
+    pin_mem_register_ = nullptr;
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "Exception when destruct tensor. Error info " << e.what();
   }
@@ -1057,8 +1065,11 @@ bool Tensor::Offload(const std::string &file_path) {
   auto data_ptr = data_->data();
   auto file = fs->CreateWriteFile(file_path);
   MS_EXCEPTION_IF_NULL(file);
-  bool success = file->PWrite(data_ptr, data_->nbytes(), 0);
-  file->Close();
+  bool success = file->PWrite(data_ptr, LongToSize(data_->nbytes()), 0);
+  if (!file->Close()) {
+    MS_LOG(WARNING) << "Close tensor file: " << file_path << " failed!";
+  }
+
   if (!success) {
     MS_LOG(WARNING) << "Tensor write data to file: " << file_path << " failed!";
     return false;
@@ -1219,7 +1230,7 @@ void Tensor::PinMemory(PinnedMemRegister *pin_mem_register) {
     return;
   }
   pin_mem_register_ = pin_mem_register;
-  pin_mem_register_->RegisterPinnedMem(data_c(), data().nbytes());
+  pin_mem_register_->RegisterPinnedMem(data_c(), Size());
 }
 
 void Tensor::UnPinMemory() {

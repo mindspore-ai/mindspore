@@ -246,15 +246,15 @@ class PosixWriteFile : public WriteFile {
         length = left;
       }
       left -= length;
-      size_t r = 0;
+      ssize_t r = 0;
       if (read && read_buf != nullptr) {
         auto buff_p = static_cast<uint8_t *>(read_buf) + buff_offset;
-        r = pread(fd, buff_p, length, SizeToLong(offset + buff_offset));
+        r = pread(fd, buff_p, length, offset + buff_offset);
       } else if (write_buf != nullptr) {
         auto buff_p = static_cast<const uint8_t *>(write_buf) + buff_offset;
-        r = pwrite(fd, buff_p, length, SizeToLong(offset + buff_offset));
+        r = pwrite(fd, buff_p, length, offset + buff_offset);
       }
-      if (r != length) {
+      if (r >= 0 && LongToSize(r) != length) {
         MS_LOG(ERROR) << "File(" << file_name_ << ") IO ERROR. " << ErrnoToString(errno);
         return false;
       }
