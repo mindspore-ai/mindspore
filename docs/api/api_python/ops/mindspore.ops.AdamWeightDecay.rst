@@ -33,13 +33,13 @@ mindspore.ops.AdamWeightDecay
     输入：
         - **var** (Parameter) - 需要更新的权重。shape为 :math:`(N, *)` 其中 :math:`*` 表示任何数量的附加维度，数据类型可以是float16或float32。
         - **m** (Parameter) - 更新公式中的第一个动量矩阵，它的shape应该和 `var` 一致，数据类型可以是float16或float32。
-        - **v** (Parameter) - 更新公式中的第二个动量矩阵，shape和数据类型与 `m` 相同。
+        - **v** (Parameter) - 更新公式中的第二个动量矩阵，shape与 `m` 相同。
         - **lr** (float) - 更新公式中的 :math:`lr` 。其论文建议值为 :math:`10^{-8}` ，数据类型应为float32。
         - **beta1** (float) - 第一个动量矩阵的指数衰减率，数据类型应为float32。论文建议的值是 :math:`0.9` 。
         - **beta2** (float) - 第二个动量矩阵的指数衰减率，数据类型应为float32。论文建议的值是 :math:`0.999` 。
         - **epsilon** (float) - 添加到分母中的值，以提高数值稳定性，数据类型应为float32。
         - **decay** (float) - 权重衰减值，必须是具有float32数据类型的标量张量。默认值：``0.0`` 。
-        - **gradient** (Tensor) - 梯度，shape和数据类型与 `var` 相同。
+        - **gradient** (Tensor) - 梯度，shape与 `var` 相同。
 
     输出：
         3个张量的Tuple，为更新后的参数。

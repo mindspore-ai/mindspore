@@ -22,14 +22,14 @@
 
     输入：
         - **var** (Parameter) - 待更新的网络参数，为任意维度。数据类型为float32或float16。其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。
-        - **m** (Parameter) - 一阶矩，shape和数据类型与 `var` 相同。数据类型为float32或float16。
-        - **v** (Parameter) - 二阶矩。shape和类型与 `var` 相同。数据类型为float32或float16。
+        - **m** (Parameter) - 一阶矩，shape与 `var` 相同。数据类型为float32或float16。
+        - **v** (Parameter) - 二阶矩。shape与 `var` 相同。数据类型为float32或float16。
         - **beta1_power** (Union[Number, Tensor]) - :math:`beta_1^t` ，必须是Scalar。数据类型为float32或float16。
         - **lr** (Union[Number, Tensor]) - 学习率，公式中的 :math:`l` ，必须是Scalar。数据类型为float32或float16。
         - **beta1** (Union[Number, Tensor]) - 一阶矩的指数衰减率，必须是Scalar。数据类型为float32或float16。
         - **beta2** (Union[Number, Tensor]) - 二阶矩的指数衰减率，必须是Scalar。数据类型为float32或float16。
         - **epsilon** (Union[Number, Tensor]) - 加在分母上的值，以确保数值稳定，必须是Scalar。数据类型为float32或float16。
-        - **grad** (Tensor) - 为梯度，是一个Tensor，shape和数据类型与 `var` 相同。数据类型为float32或float16。
+        - **grad** (Tensor) - 为梯度，是一个Tensor，shape与 `var` 相同。数据类型为float32或float16。
 
     输出：
         3个Tensor组成的tuple，更新后的数据。
