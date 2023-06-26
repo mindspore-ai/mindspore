@@ -128,6 +128,13 @@ void TopCellInfo::AddParamGradInfo(const tensor::TensorPtr &tensor, const AutoGr
   param_grad_info_[tensor] = auto_grad_meta_data;
 }
 
+void TopCellInfo::ClearParamGradInfo() {
+  for (auto &params : param_grad_info_) {
+    params.first->set_auto_grad_meta_data(nullptr);
+  }
+  param_grad_info_.clear();
+}
+
 void TopCellInfo::Clear() {
   MS_LOG(DEBUG) << "Clear top cell info. Cell id " << cell_id_;
   hook_changed_ = false;

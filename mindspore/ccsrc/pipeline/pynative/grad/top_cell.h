@@ -136,12 +136,14 @@ class TopCellInfo {
   void ClearDeviceMemory() const;
   void Clear();
   void AddParamGradInfo(const tensor::TensorPtr &tensor, const AutoGradMetaDataPtr &auto_grad_meta_data);
-  void ClearParamGradInfo() { param_grad_info_.clear(); }
+  void ClearParamGradInfo();
   const mindspore::HashMap<tensor::TensorPtr, AutoGradMetaDataPtr> &param_grad_info() const { return param_grad_info_; }
   inline bool use_dynamic_shape_process() const { return use_dynamic_shape_process_; }
   inline void set_use_dynamic_shape_process(bool use_dynamic_shape_process) {
     use_dynamic_shape_process_ = use_dynamic_shape_process;
   }
+  inline void set_resume_flag(bool resume_flag) { resume_flag_ = resume_flag; }
+  const bool resume_flag() const { return resume_flag_; }
   void SaveTensorIdWithOpInfo(const std::string &op_info, const ValuePtr &v) {
     SetIdWithOpInfo(v, op_info, kIndex0, &(replace_info_.id_with_op_info));
   }
@@ -186,6 +188,8 @@ class TopCellInfo {
   mindspore::HashMap<tensor::TensorPtr, AutoGradMetaDataPtr> param_grad_info_;
   InputArgsInfoPtr input_args_info_;
   bool use_dynamic_shape_process_{false};
+  // Judge whether need resume param grad info.
+  bool resume_flag_{false};
 };
 using TopCellInfoPtr = std::shared_ptr<TopCellInfo>;
 }  // namespace pynative
