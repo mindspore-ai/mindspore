@@ -897,20 +897,21 @@ void GetBorderNode(std::vector<AnfNodePtr> *forward_start, std::vector<AnfNodePt
       if (prim->HasAttr(PARAMETER_MICRO)) {
         allreduce_params->push_back(node);
       }
-    } else {
-      if (cnode->HasPrimalAttr(PIPELINE_BEGIN)) {
-        if (IsPrimitiveCNode(cnode, prim::kPrimStridedSlice)) {
-          cnode->AddPrimalAttr(SLICE_INDEX, MakeValue(slice_index));
-          slice_index += 1;
-        }
-        forward_start->push_back(node);
+      continue;
+    }
+    // the return of cnode->HasPrimalAttr(kPrimalAttrForwardNodeName) is false.
+    if (cnode->HasPrimalAttr(PIPELINE_BEGIN)) {
+      if (IsPrimitiveCNode(cnode, prim::kPrimStridedSlice)) {
+        cnode->AddPrimalAttr(SLICE_INDEX, MakeValue(slice_index));
+        slice_index += 1;
       }
-      if (cnode->HasPrimalAttr(PIPELINE_END)) {
-        forward_end->push_back(node);
-      }
-      if (cnode->HasPrimalAttr(PIPELINE_PARAM)) {
-        forward_params->push_back(node);
-      }
+      forward_start->push_back(node);
+    }
+    if (cnode->HasPrimalAttr(PIPELINE_END)) {
+      forward_end->push_back(node);
+    }
+    if (cnode->HasPrimalAttr(PIPELINE_PARAM)) {
+      forward_params->push_back(node);
     }
   }
   std::sort((*backward_start).begin(), (*backward_start).end(), CompFunc);

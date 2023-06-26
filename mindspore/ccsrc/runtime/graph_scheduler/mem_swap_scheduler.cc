@@ -78,7 +78,7 @@ std::map<size_t, size_t> GetActionTensors(const std::shared_ptr<device::SwapActi
     MS_EXCEPTION_IF_NULL(tensor_info);
     std::vector<size_t> real_tensor_ids;
     if (tensor_info->fused_tensor_ids_.empty()) {
-      real_tensor_ids.emplace_back(tensor_info->tensor_id_);
+      (void)real_tensor_ids.emplace_back(tensor_info->tensor_id_);
     } else {
       real_tensor_ids = tensor_info->fused_tensor_ids_;
     }
@@ -96,7 +96,7 @@ std::map<size_t, size_t> GetActionTensors(const std::shared_ptr<device::SwapActi
       if (real_parameter_iter == real_parameters.end()) {
         const auto &output_addr = AnfAlgo::GetMutableOutputAddr(node, real_tensor_info->index_, false);
         tensor_indexes[real_tensor_id] = {fixed_device_address->size()};
-        fixed_device_address->emplace_back(output_addr.get());
+        (void)fixed_device_address->emplace_back(output_addr.get());
       } else {
         tensor_indexes[real_tensor_id] = {real_parameter_index->size()};
         real_parameter_index->emplace_back(real_parameter_iter->second);
@@ -105,7 +105,7 @@ std::map<size_t, size_t> GetActionTensors(const std::shared_ptr<device::SwapActi
     }
   }
   for (auto &tensor_index : tensor_indexes) {
-    if (is_real_parameter.count(tensor_index.first)) {
+    if (is_real_parameter.find(tensor_index.first) != is_real_parameter.end()) {
       tensor_index.second += fixed_device_address->size();
     }
   }
