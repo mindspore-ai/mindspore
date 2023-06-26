@@ -490,3 +490,58 @@ def test_setattr_with_augassign():
     net = SetattrNet()
     ret = net()
     assert ret == 13
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_setattr_in_control_flow():
+    """
+    Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
+    Description: Support 'obj.attr = value'.
+    Expectation: No exception.
+    """
+    class SetattrNet(nn.Cell):
+        def __init__(self):
+            super(SetattrNet, self).__init__()
+            self.x = 5
+
+        def construct(self):
+            while self.x > 0:
+                self.x = -2
+            return self.x
+
+    net = SetattrNet()
+    ret = net()
+    assert ret == -2
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_setattr_in_control_flow_2():
+    """
+    Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
+    Description: Support 'obj.attr = value'.
+    Expectation: No exception.
+    """
+    class SetattrNet(nn.Cell):
+        def __init__(self):
+            super(SetattrNet, self).__init__()
+            self.x = 4
+
+        def construct(self):
+            count = 0
+            while self.x:
+                count += 1
+                self.x -= 1
+            self.x = count
+            return self.x
+
+    net = SetattrNet()
+    ret = net()
+    assert ret == 4

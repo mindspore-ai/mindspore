@@ -1624,7 +1624,8 @@ AnfNodePtr Parser::ParseNull(const FunctionBlockPtr &block, const py::object &va
 // Process call attributes of class type define, eg: x.y()
 AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast Attribute";
-  MS_EXCEPTION_IF_NULL(block->func_graph());
+  auto cur_fg = block->func_graph();
+  MS_EXCEPTION_IF_NULL(cur_fg);
 
   // Process the get attr
   // Use the Primitive replace the operation resolve node (getattr),
@@ -1651,7 +1652,13 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
     if (setattr_node != nullptr) {  // If setattr before, should make the getattr call into PyExecute also.
       const auto &interpreted_obj = std::make_shared<InterpretedObject>(ast()->obj());
       AnfNodePtr value_node = NewValueNode(interpreted_obj);
-      return block->func_graph()->NewCNodeInOrder({op_node, value_node, attr_node, setattr_node});
+      auto prev_setattr_fg = setattr_node->func_graph();
+      MS_EXCEPTION_IF_NULL(prev_setattr_fg);
+      if (prev_setattr_fg != cur_fg) {
+        return cur_fg->NewCNodeInOrder({op_node, value_node, attr_node});
+      }
+      // Only add to new setattr node input if two nodes is in the same graph.
+      return cur_fg->NewCNodeInOrder({op_node, value_node, attr_node, setattr_node});
     } else {
       auto ret_node = ProcessAttributeWithClassMember(block, node);
       (void)getattr_nodes_map_["self"][attr_str].emplace_back(ret_node);
@@ -1678,7 +1685,7 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
     }
   }
   // Create the apply node
-  AnfNodePtr attr_cnode = block->func_graph()->NewCNodeInOrder({op_node, value_node, attr_node});
+  AnfNodePtr attr_cnode = cur_fg->NewCNodeInOrder({op_node, value_node, attr_node});
 
   // Directly resolve the symbol.
   if (IsValueNode<parse::NameSpace>(value_node)) {
@@ -3018,7 +3025,9 @@ void Parser::MakeSetAttrNode(const FunctionBlockPtr &block, const AnfNodePtr &ta
   (void)setattr_node_inputs.emplace_back(target_node);
   (void)setattr_node_inputs.emplace_back(NewValueNode(attr_str));
   (void)setattr_node_inputs.emplace_back(value_node);
-  auto setattr_node = block->func_graph()->NewCNodeInOrder(setattr_node_inputs);
+  auto fg = block->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+  auto setattr_node = fg->NewCNodeInOrder(setattr_node_inputs);
 
   // Update setattr_nodes_map.
   auto iter = setattr_nodes_map_.find(target_id_str);
@@ -3030,7 +3039,14 @@ void Parser::MakeSetAttrNode(const FunctionBlockPtr &block, const AnfNodePtr &ta
     // If found setattr node before, set it as new setattr node's input.
     auto iter_attr = iter->second.find(attr_str);
     if (iter_attr != iter->second.end()) {
-      setattr_node->add_input(iter_attr->second);
+      auto prev_node = iter_attr->second;
+      MS_EXCEPTION_IF_NULL(prev_node);
+      auto prev_node_fg = prev_node->func_graph();
+      MS_EXCEPTION_IF_NULL(prev_node_fg);
+      if (prev_node_fg == fg) {
+        // Only add to new setattr node input if two nodes is in the same graph.
+        setattr_node->add_input(iter_attr->second);
+      }
     }
     // Force update the setattr node to keep the newest one.
     (void)iter->second.insert_or_assign(attr_str, setattr_node);
