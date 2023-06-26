@@ -271,7 +271,7 @@ void ClusterContext::PostProcess() {
     // 2. Set this node's client ip address in this cluster.
     const std::string &client_ip_in_cluster = cgn->client_ip();
     MS_LOG(INFO) << "Client ip address in this cluster of this compute graph node is " << client_ip_in_cluster;
-    common::SetEnv(kEnvWorkerIp, client_ip_in_cluster.c_str());
+    (void)common::SetEnv(kEnvWorkerIp, client_ip_in_cluster.c_str());
 
     // 3. Set port range of this node.
     std::string port_range_pb = cgn->GetMetadata(kNodePortRange);
