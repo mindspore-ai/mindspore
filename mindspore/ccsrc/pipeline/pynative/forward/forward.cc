@@ -140,6 +140,7 @@ void ClonePrim(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(prim_py);
   auto new_adapter = std::make_shared<PrimitivePyAdapter>(*prim_py->adapter());
   auto new_prim = std::make_shared<PrimitivePy>(*(op_run_info->op_grad_info->op_prim->cast<PrimitivePyPtr>()));
+  new_prim->EnableSharedMutex();
   op_run_info->op_grad_info->op_prim = new_prim;
   MS_EXCEPTION_IF_NULL(new_adapter);
   new_adapter->set_attached_primitive(new_prim);
@@ -261,6 +262,12 @@ void UpdateStubTensor(const FrontendOpRunInfoPtr &op_run_info) {
     }
     op_run_info->stub_output->SetValue(op_run_info->real_out);
   }
+}
+
+bool EnableBackendAsync(const FrontendOpRunInfoPtr &op_run_info) {
+  static const std::set<std::string> kInvalidInferResultOp = {kDropoutOpName};
+  return kInvalidInferResultOp.find(op_run_info->base_op_run_info.op_name) == kInvalidInferResultOp.end() &&
+         !op_run_info->base_op_run_info.has_dynamic_output;
 }
 }  // namespace
 
@@ -391,7 +398,7 @@ void ForwardExecutor::RunOpFrontend(const FrontendOpRunInfoPtr &op_run_info) {
   }
 
   PrepareOpInputs(op_run_info);
-  if (!op_run_info->base_op_run_info.has_dynamic_output && EnablePipeline(op_run_info->base_op_run_info.op_name)) {
+  if (EnableBackendAsync(op_run_info) && EnablePipeline(op_run_info->base_op_run_info.op_name)) {
     PrepareOpOutputs(op_run_info);
     const auto &backend_op_run_info = CreateBackendOpRunInfo(op_run_info);
     DispatchBackendTask(op_run_info, backend_op_run_info);
@@ -701,6 +708,7 @@ void ForwardExecutor::ProcessAfterEndGraph(const py::object &obj, bool is_cell) 
 
 std::string ForwardExecutor::GetCurrentDeviceTarget(const PrimitivePtr &op_prim) const {
   MS_EXCEPTION_IF_NULL(op_prim);
+  PrimitiveReadLock read_lock(op_prim->shared_mutex());
   const auto &attr_map = op_prim->attrs();
   auto iter = attr_map.find("primitive_target");
   if (iter != attr_map.end()) {
