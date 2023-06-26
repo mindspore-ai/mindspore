@@ -5119,6 +5119,7 @@ class NPUAllocFloatStatus(Primitive):
         ``Ascend``
 
     Examples:
+        >>> from mindspore import ops
         >>> alloc_status = ops.NPUAllocFloatStatus()
         >>> output = alloc_status()
         >>> print(output)
