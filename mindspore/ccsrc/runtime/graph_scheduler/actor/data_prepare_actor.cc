@@ -695,6 +695,7 @@ void DataPrepareActor::PrepareDataForValueNodeTensor(const ValueNodePtr &node, c
     MS_EXCEPTION_IF_NULL(device_tensor);
     // If the ptr of device tensor is not nullptr, it indicates that the device data has been prepared.
     if (device_tensor->IsPtrValid()) {
+      CopyDataFromDeviceTensorStore(front_node, node, device_tensor, device_context, context);
       return;
     }
     MS_LOG(INFO) << "Prepare device data for value node: " << node->fullname_with_scope() << ", output index: " << i;
