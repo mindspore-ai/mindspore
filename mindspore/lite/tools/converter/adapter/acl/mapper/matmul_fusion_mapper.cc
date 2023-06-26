@@ -22,7 +22,6 @@
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "tools/converter/adapter/acl/common/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "tools/converter/quantizer/quant_param_holder.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "ops/batch_matmul.h"
 #include "ops/op_name.h"
@@ -41,8 +40,16 @@ constexpr size_t kInputBiasIdx = 3;
 }  // namespace
 STATUS MatMulFusionMapper::Mapper(const CNodePtr &cnode) {
   auto quant_holder = GetCNodeQuantHolder(cnode);
+  auto cnode_primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_CHECK_TRUE_MSG(cnode_primitive != nullptr, RET_NULL_PTR, "Primitive is nullptr.");
   if (quant_holder->quant_type() != quant::QUANT_NONE) {
     return QuantMapper(cnode);
+  } else if (cnode_primitive->HasAttr(quant::kQuantType)) {
+    auto quant_type_attr = cnode_primitive->GetAttr(quant::kQuantType);
+    auto quant_type = static_cast<quant::QuantType>(GetValue<int32_t>(quant_type_attr));
+    if (quant_type != quant::QUANT_NONE) {
+      return QuantMapper(cnode);
+    }
   } else if (opt::CheckPrimitiveType(cnode, prim::kPrimBatchMatMul)) {
     return RET_OK;
   }

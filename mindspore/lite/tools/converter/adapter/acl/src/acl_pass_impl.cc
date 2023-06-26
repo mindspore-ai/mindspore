@@ -1200,23 +1200,7 @@ STATUS AclPassImpl::PostQuantization(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "Infer shape pass failed.";
     return lite::RET_ERROR;
   }
-  // Remove QuantDtypeCast & unused format
-  for (auto &cnode : func_graph->GetOrderedCnodes()) {
-    if (opt::CheckPrimitiveType(cnode, prim::kPrimQuantDTypeCast)) {
-      auto manager = func_graph->manager();
-      if (manager == nullptr) {
-        manager = Manage(func_graph, true);
-      }
-      CHECK_NULL_RETURN(manager);
-      auto node_users = manager->node_users()[cnode];
-      for (auto &node_user : node_users) {
-        manager->SetEdge(node_user.first, node_user.second, cnode->input(1));
-      }
-    }
-    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-    CHECK_NULL_RETURN(prim);
-    prim->DelAttr("io_format");
-  }
+  // NCHW format and remove transpose
   auto value = func_graph->get_attr(ops::kFormat);
   if (value == nullptr || GetValue<int64_t>(value) == mindspore::NHWC) {
     if (!lite::RunOptimizerPass(func_graph, {kToNCHWFormatPass, "DecreaseTransposeAlgo"})) {
@@ -1224,10 +1208,14 @@ STATUS AclPassImpl::PostQuantization(const FuncGraphPtr &func_graph) {
       return lite::RET_ERROR;
     }
   }
+  if (RemoveQuantDtypeCast(func_graph) != RET_OK) {
+    MS_LOG(ERROR) << "Remove QuantDtypeCast failed.";
+    return lite::RET_ERROR;
+  }
   // Insert QuantDtypeCast for conv & fc
   for (auto &cnode : func_graph->GetOrderedCnodes()) {
     lite::quant::QuantType curr_quant_type;
-    if (GetQuantType(cnode, &curr_quant_type) != RET_OK) {
+    if (GetQuantTypeNew(cnode, &curr_quant_type) != RET_OK) {
       MS_LOG(ERROR) << "Get quant type failed, cnode name: " << cnode->fullname_with_scope();
       return RET_ERROR;
     }
@@ -1235,14 +1223,14 @@ STATUS AclPassImpl::PostQuantization(const FuncGraphPtr &func_graph) {
       continue;
     }
     lite::quant::InsertQuantNodeManager insert_node_manager;
-    auto ret = insert_node_manager.InsertAscendQuantNode(func_graph, cnode);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Insert AscendQuant node failed, cnode name: " << cnode->fullname_with_scope();
-      return ret;
-    }
-    ret = insert_node_manager.InsertAscendDeQuantNode(func_graph, cnode);
+    auto ret = insert_node_manager.InsertAscendDeQuantNode(func_graph, cnode);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Insert AscendDeQuant node failed, cnode name: " << cnode->fullname_with_scope();
+      return ret;
+    }
+    ret = insert_node_manager.InsertAscendQuantNode(func_graph, cnode);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Insert AscendQuant node failed, cnode name: " << cnode->fullname_with_scope();
       return ret;
     }
     ret = lite::UpdateDataType(cnode, kNumberTypeInt32);
@@ -1276,6 +1264,54 @@ STATUS AclPassImpl::Quantization(const FuncGraphPtr &func_graph) {
     return ret;
   }
   return lite::RET_OK;
+}
+
+STATUS AclPassImpl::RemoveQuantDtypeCast(const FuncGraphPtr &func_graph) {
+  auto manager = func_graph->manager();
+  if (manager == nullptr) {
+    manager = Manage(func_graph, true);
+  }
+  CHECK_NULL_RETURN(manager);
+  for (auto &cnode : func_graph->GetOrderedCnodes()) {
+    auto cnode_primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+    CHECK_NULL_RETURN(cnode_primitive);
+    if (opt::CheckPrimitiveType(cnode, prim::kPrimQuantDTypeCast)) {
+      if (cnode_primitive->HasAttr(lite::quant::kQuantParam)) {
+        auto pre_node = cnode->input(1);
+        if (pre_node->isa<CNode>()) {
+          auto pre_cnode = pre_node->cast<mindspore::CNodePtr>();
+          auto pre_cnode_primitive = GetValueNode<PrimitivePtr>(pre_cnode->input(0));
+          CHECK_NULL_RETURN(pre_cnode_primitive);
+          // If !pre_cnode_primitive->HasAttr(quant_param)
+          MS_LOG(INFO) << "Copy quant param from cnode: " << cnode->fullname_with_scope();
+          pre_cnode_primitive->AddAttr(lite::quant::kQuantParam, cnode_primitive->GetAttr(lite::quant::kQuantParam));
+        } else if (lite::IsGraphInput(pre_node)) {
+          auto node_users = manager->node_users()[cnode];
+          for (auto &node_user : node_users) {
+            manager->SetEdge(node_user.first, node_user.second, cnode->input(1));
+          }
+          for (auto &node_user : node_users) {
+            auto post_cnode = node_user.first->cast<CNodePtr>();
+            CHECK_NULL_RETURN(post_cnode);
+            auto post_cnode_primitive = GetValueNode<PrimitivePtr>(post_cnode->input(0));
+            auto quantization_param_value = cnode_primitive->GetAttr(lite::quant::kQuantParam);
+            CHECK_NULL_RETURN(quantization_param_value);
+            auto quantization_param_list = GetValue<std::vector<QuantizationParamPtr>>(quantization_param_value);
+            if (!quantization_param_list.empty()) {
+              MS_LOG(INFO) << "Copy quant param from cnode: " << cnode->fullname_with_scope();
+              post_cnode_primitive->AddAttr(lite::quant::kGraphInputQuantParam, quantization_param_list.front());
+            }
+          }
+        }
+      }
+      auto node_users = manager->node_users()[cnode];
+      for (auto &node_user : node_users) {
+        manager->SetEdge(node_user.first, node_user.second, cnode->input(1));
+      }
+    }
+    cnode_primitive->DelAttr("io_format");
+  }
+  return RET_OK;
 }
 
 bool AclPassImpl::Run(const FuncGraphPtr &func_graph) {

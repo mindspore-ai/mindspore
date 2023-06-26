@@ -23,6 +23,8 @@
 #include "tools/optimizer/common/format_utils.h"
 #include "nnacl/op_base.h"
 #include "ops/op_utils.h"
+#include "tools/common/node_util.h"
+#include "tools/converter/quantizer/quant_params.h"
 
 namespace mindspore {
 namespace opt {
@@ -143,13 +145,18 @@ STATUS DeleteRedundantTranspose::DoTransTransFusion(const FuncGraphPtr &func_gra
     return lite::RET_ERROR;
   }
   if ((pre_perm == kNH2NC && post_perm == kNC2NH) || (pre_perm == kNC2NH && post_perm == kNH2NC)) {
+    auto node_users = manager_->node_users()[cnode];
+    MS_LOG(INFO) << "node_users map size: " << node_users.size();
     if (!manager_->Replace(cnode, pre_cnode->input(1))) {
       MS_LOG(ERROR) << "replace old node failed, please check.";
       return lite::RET_ERROR;
-    } else {
-      func_graph->DropNode(cnode->input(kInputIndexTwo));
-      func_graph->DropNode(pre_cnode->input(kInputIndexTwo));
     }
+    if (CopyQuantParam(cnode, pre_cnode, node_users) != RET_OK) {
+      MS_LOG(ERROR) << "Copy quant param failed, please check.";
+      return lite::RET_ERROR;
+    }
+    func_graph->DropNode(cnode->input(kInputIndexTwo));
+    func_graph->DropNode(pre_cnode->input(kInputIndexTwo));
   }
   return lite::RET_OK;
 }
@@ -255,6 +262,57 @@ bool DeleteRedundantTranspose::Run(const FuncGraphPtr &func_graph) {
     return false;
   }
   return true;
+}
+
+// copy quant info from transpose to post_cnode or input_cnode
+STATUS DeleteRedundantTranspose::CopyQuantParam(const CNodePtr &cnode, const CNodePtr &pre_cnode,
+                                                const AnfNodeIndexSet &node_users) {
+  auto input_node = pre_cnode->input(Index1);
+  auto cnode_primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+  CHECK_NULL_RETURN(cnode_primitive);
+  auto pre_cnode_primitive = GetValueNode<PrimitivePtr>(pre_cnode->input(0));
+  CHECK_NULL_RETURN(pre_cnode_primitive);
+  if (lite::IsGraphInput(input_node)) {
+    for (auto &node_user : node_users) {
+      auto post_cnode = node_user.first->cast<CNodePtr>();
+      CHECK_NULL_RETURN(post_cnode);
+      auto post_cnode_primitive = GetValueNode<PrimitivePtr>(post_cnode->input(0));
+      CHECK_NULL_RETURN(post_cnode_primitive);
+      if (cnode_primitive->HasAttr(lite::quant::kQuantParam)) {
+        auto quantization_param_value = cnode_primitive->GetAttr(lite::quant::kQuantParam);
+        CHECK_NULL_RETURN(quantization_param_value);
+        auto quantization_param_list = GetValue<std::vector<QuantizationParamPtr>>(quantization_param_value);
+        if (!quantization_param_list.empty()) {
+          MS_LOG(INFO) << "Copy quant param to " << post_cnode->fullname_with_scope();
+          post_cnode_primitive->AddAttr(lite::quant::kGraphInputQuantParam, quantization_param_list.front());
+        }
+      }
+      if (pre_cnode_primitive->HasAttr(lite::quant::kQuantParam)) {
+        auto quantization_param_value = pre_cnode_primitive->GetAttr(lite::quant::kQuantParam);
+        CHECK_NULL_RETURN(quantization_param_value);
+        auto quantization_param_list = GetValue<std::vector<QuantizationParamPtr>>(quantization_param_value);
+        if (!quantization_param_list.empty()) {
+          MS_LOG(INFO) << "Copy quant param to " << post_cnode->fullname_with_scope();
+          post_cnode_primitive->AddAttr(lite::quant::kGraphInputQuantParam, quantization_param_list.front());
+        }
+      }
+    }
+  } else if (input_node->isa<mindspore::CNode>()) {
+    auto input_cnode = input_node->cast<mindspore::CNodePtr>();
+    CHECK_NULL_RETURN(input_cnode);
+    auto input_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
+    CHECK_NULL_RETURN(input_primitive);
+    if (cnode_primitive->HasAttr(lite::quant::kQuantParam)) {
+      input_primitive->AddAttr(lite::quant::kQuantParam, cnode_primitive->GetAttr(lite::quant::kQuantParam));
+    }
+    if (pre_cnode_primitive->HasAttr(lite::quant::kQuantParam)) {
+      input_primitive->AddAttr(lite::quant::kQuantParam, pre_cnode_primitive->GetAttr(lite::quant::kQuantParam));
+    }
+  } else {
+    MS_LOG(ERROR) << input_node->fullname_with_scope() << " Not supported type.";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 }  // namespace opt
 }  // namespace mindspore

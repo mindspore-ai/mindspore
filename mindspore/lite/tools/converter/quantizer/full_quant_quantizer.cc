@@ -218,7 +218,7 @@ int FullQuantQuantizer::QuantNodeCNode(const PrimitivePtr &input_cnode_primitive
       input_cnode_primitive->AddAttr(quant::kQuantParam, std::make_shared<ValueList>(quantization_list));
     }
   } else {
-    MS_LOG(WARNING) << input_node->fullname_with_scope() << " quant param already exist.";
+    MS_LOG(INFO) << input_node->fullname_with_scope() << " quant param already exist.";
   }
   return RET_OK;
 }
@@ -319,6 +319,7 @@ int FullQuantQuantizer::QuantNode(const FuncGraphPtr &func_graph) {
       continue;
     }
     auto op_name = cnode->fullname_with_scope();
+    MS_LOG(INFO) << "Quant node op name: " << op_name;
     auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
     if (primitive == nullptr) {
       MS_LOG(ERROR) << "primitive is nullptr";
