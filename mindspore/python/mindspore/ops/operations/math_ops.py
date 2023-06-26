@@ -249,18 +249,6 @@ class Add(_MathBinaryOp):
         >>> output = add(x, y)
         >>> print(output)
         [5. 5. 7.]
-        >>> # case 5: x and y are both of bool type, an Exception is raised
-        >>> add = ops.Add()
-        >>> x = Tensor(np.array([True, False, True]), mindspore.bool_)
-        >>> y = Tensor(np.array([True, False, True]), mindspore.bool_)
-        >>> output = add(x, y)
-        TypeError
-        >>> # case 6: none of x and y is Tensor, an Exception is raised
-        >>> add = ops.Add()
-        >>> x = 1.0
-        >>> y = 1.0
-        >>> output = add(x, y)
-        TypeError
     """
 
     @staticmethod
