@@ -142,7 +142,7 @@ def test_no_grad_decorator():
     np.testing.assert_almost_equal(gradients.asnumpy(), expect_grad.asnumpy())
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_no_grad_exception():
