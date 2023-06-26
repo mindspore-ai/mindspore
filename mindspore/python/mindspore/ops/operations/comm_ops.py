@@ -419,7 +419,7 @@ class ReduceScatter(Primitive):
 
     Args:
         op (str, optional): Specifies an operation used for element-wise reductions,
-                  like SUM and MAX. Default: ReduceOp.SUM.
+            like SUM and MAX. Default: ReduceOp.SUM.
         group (str, optional): The communication group to work on. Default: GlobalComm.WORLD_COMM_GROUP.
 
     Inputs:
