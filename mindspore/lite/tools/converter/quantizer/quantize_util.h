@@ -113,7 +113,11 @@ std::vector<schema::QuantParamT> ConvertQuantizationParamToQuantParamT(const Qua
 
 std::vector<schema::QuantParamT> GetInputNodeQuantParam(const CNodePtr &cnode, size_t index,
                                                         size_t multi_ouput_index = 0);
+STATUS SetInputNodeQuantParam(const CNodePtr &cnode, size_t index, const std::vector<schema::QuantParamT> &quant_param);
+
 tensor::TensorPtr GetNodeTensor(const AnfNodePtr &node);
+
+std::vector<schema::QuantParamT> CloneQuantParam(const std::vector<schema::QuantParamT> &src);
 
 template <typename T>
 int DeQuantData(const int8_t *tensor_data, int64_t elements_num, std::vector<mindspore::QuantParam> quant_params,

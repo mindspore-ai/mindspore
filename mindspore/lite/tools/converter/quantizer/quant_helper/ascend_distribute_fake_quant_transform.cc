@@ -45,9 +45,6 @@ AscendDistributeFakeQuantTransform::~AscendDistributeFakeQuantTransform() {}
 int AscendDistributeFakeQuantTransform::CalQuantParam(const CNodePtr &cnode, const tensor::TensorPtr &min_value,
                                                       const tensor::TensorPtr &max_value, int index) {
   MS_CHECK_TRUE_RET(cnode != nullptr, false);
-  auto quant_param_holder = GetCNodeQuantHolder(cnode);
-  MS_CHECK_TRUE_MSG(quant_param_holder != nullptr, false, "Primitive quant param holder nullptr.");
-
   std::vector<schema::QuantParamT> quant_params;
   // Ascend fake quant transform support PerLayer && PerChannel quant param
   if (min_value->ElementsNum() != max_value->ElementsNum()) {
@@ -74,8 +71,14 @@ int AscendDistributeFakeQuantTransform::CalQuantParam(const CNodePtr &cnode, con
     quant_params.push_back(quant_param);
   }
 
-  quant_param_holder->set_input_quant_param(index, quant_params);
-  quant_param_holder->set_quant_type(quant::QUANT_ALL);
+  if (SetInputNodeQuantParam(cnode, index, quant_params) != RET_OK) {
+    MS_LOG(ERROR) << "Failed to set input quant param.";
+    return RET_ERROR;
+  }
+  // set cnode quant_type
+  auto cnode_primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_CHECK_TRUE_MSG(cnode_primitive != nullptr, RET_NULL_PTR, "Primitive is nullptr.");
+  cnode_primitive->AddAttr(quant::kQuantType, MakeValue(static_cast<int>(quant::QUANT_ALL)));
   return RET_OK;
 }
 
@@ -265,11 +268,14 @@ int AscendDistributeFakeQuantTransform::MatMulWeightTranspose(const FuncGraphPtr
   lite::quant::InsertQuantNodeManager quant_manager;
   auto cnodes = func_graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
-    auto quant_param_holder = GetCNodeQuantHolder(cnode);
-    if (quant_param_holder == nullptr) {
+    auto cnode_primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+    MS_CHECK_TRUE_MSG(cnode_primitive != nullptr, RET_NULL_PTR, "Primitive is nullptr.");
+    if (!cnode_primitive->HasAttr(quant::kQuantType)) {
       continue;
     }
-    auto quant_type = quant_param_holder->quant_type();
+    auto quant_type_attr = cnode_primitive->GetAttr(quant::kQuantType);
+    auto quant_type = static_cast<quant::QuantType>(GetValue<int32_t>(quant_type_attr));
+
     if (quant_type != quant::QUANT_WEIGHT && quant_type != quant::QUANT_ALL) {
       MS_LOG(DEBUG) << "Invalid quant type, dont need transpose weight.";
       continue;

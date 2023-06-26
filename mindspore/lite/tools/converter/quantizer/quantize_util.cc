@@ -70,6 +70,10 @@ int GetQuantTypeNew(const CNodePtr &cnode, quant::QuantType *quant_type) {
     return RET_NULL_PTR;
   }
   auto quant_type_attr = primitive->GetAttr(quant::kQuantType);
+  if (quant_type_attr == nullptr) {
+    *quant_type = quant::QUANT_NONE;
+    return RET_OK;
+  }
   *quant_type = static_cast<quant::QuantType>(GetValue<int32_t>(quant_type_attr));
   return RET_OK;
 }
@@ -847,7 +851,10 @@ std::vector<schema::QuantParamT> GetInputNodeQuantParam(const CNodePtr &cnode, s
   MS_CHECK_TRUE_MSG(cnode_primitive != nullptr, {}, "Primitive is nullptr.");
   if (IsGraphInput(input_node)) {
     auto quantization_param_value = cnode_primitive->GetAttr(quant::kGraphInputQuantParam);
-    MS_CHECK_TRUE_MSG(quantization_param_value != nullptr, {}, "Graph input quant param Not exist.");
+    if (quantization_param_value == nullptr) {
+      MS_LOG(WARNING) << input_node->fullname_with_scope() << " quant param Not exist.";
+      return {};
+    }
     auto quantization_param = quantization_param_value->cast<mindspore::QuantizationParamPtr>();
     MS_CHECK_TRUE_MSG(quantization_param != nullptr, {}, "Graph input quant param Not exist.");
     return quant::ConvertQuantizationParamToQuantParamT(quantization_param);
@@ -859,8 +866,7 @@ std::vector<schema::QuantParamT> GetInputNodeQuantParam(const CNodePtr &cnode, s
     MS_CHECK_TRUE_MSG(quantization_param_value != nullptr, {}, "quantization_param_value is nullptr.");
     auto quantization_param_list = GetValue<std::vector<QuantizationParamPtr>>(quantization_param_value);
     if (quantization_param_list.size() <= multi_ouput_index) {
-      MS_LOG(WARNING) << input_cnode->fullname_with_scope() << " quant param is empty";
-      MS_LOG(WARNING) << "this node's input node: " << input_cnode->fullname_with_scope()
+      MS_LOG(WARNING) << "This node's input node: " << input_cnode->fullname_with_scope()
                       << "'s output quant_params size: " << quantization_param_list.size()
                       << ", but index: " << multi_ouput_index;
       return {};
@@ -884,6 +890,29 @@ std::vector<schema::QuantParamT> GetInputNodeQuantParam(const CNodePtr &cnode, s
   return {};
 }
 
+STATUS SetInputNodeQuantParam(const CNodePtr &cnode, size_t index,
+                              const std::vector<schema::QuantParamT> &quant_param) {
+  auto input_node = cnode->input(index);
+  CHECK_NULL_RETURN(input_node);
+  MS_CHECK_TRUE_MSG(input_node != nullptr, {}, "Anf node nullptr.");
+  if (IsGraphInput(input_node)) {
+    MS_LOG(WARNING) << "Graph input TODO.";
+  } else if (input_node->isa<mindspore::CNode>()) {
+    auto input_cnode = input_node->cast<mindspore::CNodePtr>();
+    auto input_cnode_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
+    MS_CHECK_TRUE_MSG(input_cnode_primitive != nullptr, RET_NULL_PTR, "Primitive is nullptr.");
+    auto quantization_param = ConvertQuantParamTToQuantizationParam(quant_param);
+    std::vector<ValuePtr> quantization_list{quantization_param};
+    input_cnode_primitive->AddAttr(quant::kQuantParam, std::make_shared<ValueList>(quantization_list));
+  } else if (input_node->isa<mindspore::Parameter>() || input_node->isa<mindspore::ValueNode>()) {
+    MS_LOG(WARNING) << "input node is Parameter ValueNode TODO.";
+  } else {
+    MS_LOG(WARNING) << input_node->fullname_with_scope() << " Not supported type.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 tensor::TensorPtr GetNodeTensor(const AnfNodePtr &node) {
   // Only Parameter or ValueNode Node has tensor
   if (node->isa<Parameter>()) {
@@ -895,5 +924,26 @@ tensor::TensorPtr GetNodeTensor(const AnfNodePtr &node) {
     return node->cast<ValueNodePtr>()->value()->cast<tensor::TensorPtr>();
   }
   return nullptr;
+}
+
+std::vector<schema::QuantParamT> CloneQuantParam(const std::vector<schema::QuantParamT> &src) {
+  MS_CHECK_TRUE_MSG(!src.empty(), {}, "Src is empty.");
+  std::vector<schema::QuantParamT> dst;
+  for (auto &quant_param : src) {
+    schema::QuantParamT quant_param_clone;
+    quant_param_clone.scale = quant_param.scale;
+    quant_param_clone.zeroPoint = quant_param.zeroPoint;
+    quant_param_clone.numBits = quant_param.numBits;
+    quant_param_clone.narrowRange = quant_param.narrowRange;
+    quant_param_clone.meanCorr = quant_param.meanCorr;
+    quant_param_clone.varCorr = quant_param.varCorr;
+    quant_param_clone.dstDtype = quant_param.dstDtype;
+    quant_param_clone.min = quant_param.min;
+    quant_param_clone.max = quant_param.max;
+    quant_param_clone.roundType = quant_param.roundType;
+    quant_param_clone.multiplier = quant_param.multiplier;
+    dst.push_back(quant_param_clone);
+  }
+  return dst;
 }
 }  // namespace mindspore::lite::quant

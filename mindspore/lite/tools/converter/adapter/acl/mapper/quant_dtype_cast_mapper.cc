@@ -18,7 +18,7 @@
 #include <memory>
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
-#include "tools/converter/quantizer/quant_param_holder.h"
+#include "tools/converter/quantizer/quantize_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "src/common/log_util.h"
 #include "ops/op_name.h"
@@ -43,12 +43,13 @@ STATUS QuantDTypeCastMapper::Mapper(const CNodePtr &cnode) {
   PrimitivePtr dst_prim = nullptr;
   if (cnode->inputs().size() == kQuantInputNum) {
     // map to Quant.
-    auto quant_params_holder_attr = src_prim->GetAttr("quant_params");
-    CHECK_NULL_RETURN(quant_params_holder_attr);
-    auto quant_params_holder = quant_params_holder_attr->cast<QuantParamHolderPtr>();
-    CHECK_NULL_RETURN(quant_params_holder);
-    MS_CHECK_TRUE_RET(!quant_params_holder->get_output_quant_params().empty(), RET_ERROR);
-    auto quant_param = quant_params_holder->get_output_quant_params().front();
+    auto quantization_param_value = src_prim->GetAttr(quant::kQuantParam);
+    auto quantization_param_list = GetValue<std::vector<QuantizationParamPtr>>(quantization_param_value);
+    if (quantization_param_list.empty()) {
+      MS_LOG(ERROR) << cnode->fullname_with_scope() << " quantization_param_list is empty.";
+      return lite::RET_ERROR;
+    }
+    auto quant_param = quant::ConvertQuantizationParamToQuantParamT(quantization_param_list.front());
     MS_CHECK_TRUE_RET(!quant_param.empty(), RET_ERROR);
     dst_prim = std::make_shared<acl::Quant>();
     CHECK_NULL_RETURN(dst_prim);

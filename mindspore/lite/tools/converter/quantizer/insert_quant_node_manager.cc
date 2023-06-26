@@ -363,6 +363,7 @@ int InsertQuantNodeManager::InsertForwardQuantNodeNew(const FuncGraphPtr &graph,
       return RET_NO_CHANGE;
     }
     auto quantization_param_value = input_cnode_primitive_c->GetAttr(quant::kQuantParam);
+    MS_CHECK_TRUE_MSG(quantization_param_value != nullptr, RET_ERROR, "quantization_param_value is nullptr.");
     auto quantization_param_list = GetValue<std::vector<QuantizationParamPtr>>(quantization_param_value);
     if (quantization_param_list.empty()) {
       MS_LOG(ERROR) << input_node->fullname_with_scope() << " quantization param Not exist.";
@@ -728,13 +729,11 @@ int InsertQuantNodeManager::InsertAscendAntiQuantNode(const FuncGraphPtr &func_g
     return RET_ERROR;
   }
 
-  auto curr_primitive_quant_param_holder = GetCNodeQuantHolder(primitive);
-  if (curr_primitive_quant_param_holder == nullptr ||
-      curr_primitive_quant_param_holder->get_input_quant_params().size() < input_index) {
-    MS_LOG(ERROR) << input_node->fullname_with_scope() << " quant param is invalid.";
+  auto input_quant_params = quant::GetInputNodeQuantParam(cnode, input_index);
+  if (input_quant_params.empty()) {
+    MS_LOG(ERROR) << cnode->fullname_with_scope() << " index: " << input_index << " quant param is empty.";
     return RET_ERROR;
   }
-  auto input_quant_params = curr_primitive_quant_param_holder->get_input_quant_params().at(input_index - kPrimOffset);
 
   // Insert cast node
   auto cast_cnode = NewCastNode(func_graph, input_node, dst_dtype);
@@ -1015,6 +1014,7 @@ ValueNodePtr InsertQuantNodeManager::NewQuantCastPrimitive(int src_type, int dst
   if (set_quant_flag) {
     prim->AddAttr(quant::kQuantType, MakeValue(static_cast<int>(quant::QUANT_ALL)));
   }
+  // Set quant param to quant_cast_cnode
   if (!output_quant_params.empty()) {
     auto quantization_ptr = quant::ConvertQuantParamTToQuantizationParam(output_quant_params);
     std::vector<ValuePtr> quantization_list = {quantization_ptr};
@@ -1024,32 +1024,40 @@ ValueNodePtr InsertQuantNodeManager::NewQuantCastPrimitive(int src_type, int dst
                     << input_node->fullname_with_scope();
   }
 
+  // Set quant param to input node, if input cnode has no quant param.
   if (!input_quant_params.empty()) {
     if (cast_node_type == kQuant) {
       if (IsGraphInput(input_node)) {
-        // Set input quant param into new cast cnode primitive
+        // Copy input quant param into new cast cnode primitive
         auto quantization_ptr = quant::ConvertQuantParamTToQuantizationParam(input_quant_params);
+        MS_CHECK_TRUE_MSG(quantization_ptr != nullptr, nullptr, "quantization_ptr is nullptr.");
         prim->AddAttr(quant::kGraphInputQuantParam, quantization_ptr);
       } else if (input_node->isa<mindspore::CNode>()) {
-        // Set input quant param into input cnode
+        // Copy input quant param into input cnode
         auto input_cnode = input_node->cast<mindspore::CNodePtr>();
         auto input_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
         MS_CHECK_TRUE_MSG(input_primitive != nullptr, nullptr, "Primitive is nullptr.");
-        std::vector<ValuePtr> quantization_list;
-        auto quantization_ptr = ConvertQuantParamTToQuantizationParam(input_quant_params);
-        quantization_list.push_back(quantization_ptr);
-        input_primitive->AddAttr(quant::kQuantParam, std::make_unique<ValueList>(quantization_list));
+        if (!input_primitive->HasAttr(quant::kQuantParam)) {
+          std::vector<ValuePtr> quantization_list;
+          auto quantization_ptr = ConvertQuantParamTToQuantizationParam(input_quant_params);
+          MS_CHECK_TRUE_MSG(quantization_ptr != nullptr, nullptr, "quantization_ptr is nullptr.");
+          quantization_list.push_back(quantization_ptr);
+          input_primitive->AddAttr(quant::kQuantParam, std::make_unique<ValueList>(quantization_list));
+        }
       }
     } else if (cast_node_type == kDeQuant) {
-      // Set input quant param into cnode
+      // Copy input quant param into cnode
       if (input_node->isa<mindspore::CNode>()) {
         auto input_cnode = input_node->cast<mindspore::CNodePtr>();
         auto input_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
         MS_CHECK_TRUE_MSG(input_primitive != nullptr, nullptr, "Primitive is nullptr.");
-        std::vector<ValuePtr> quantization_list;
-        auto quantization_ptr = ConvertQuantParamTToQuantizationParam(input_quant_params);
-        quantization_list.push_back(quantization_ptr);
-        input_primitive->AddAttr(quant::kQuantParam, std::make_unique<ValueList>(quantization_list));
+        if (!input_primitive->HasAttr(quant::kQuantParam)) {
+          std::vector<ValuePtr> quantization_list;
+          auto quantization_ptr = ConvertQuantParamTToQuantizationParam(input_quant_params);
+          MS_CHECK_TRUE_MSG(quantization_ptr != nullptr, nullptr, "quantization_ptr is nullptr.");
+          quantization_list.push_back(quantization_ptr);
+          input_primitive->AddAttr(quant::kQuantParam, std::make_unique<ValueList>(quantization_list));
+        }
       } else {
         MS_LOG(WARNING) << "New quant cast node kDeQuant, but input node is Not A CNode, input node: "
                         << input_node->fullname_with_scope();
@@ -1090,21 +1098,17 @@ int InsertQuantNodeManager::InsertAscendQuantNode(const FuncGraphPtr &func_graph
                                                   size_t input_index) {
   CHECK_NULL_RETURN(func_graph);
   CHECK_NULL_RETURN(cnode);
-  auto curr_quant_param_holder = GetCNodeQuantHolder(cnode);
-  CHECK_NULL_RETURN(curr_quant_param_holder);
-  auto input_quant_param = curr_quant_param_holder->get_input_quant_params();
-  if (input_quant_param.size() < kMinSize2) {
-    MS_LOG(ERROR) << cnode->fullname_with_scope() << " input quant params " << input_quant_param.size() << " < 2";
+  auto x_q_param_origin = quant::GetInputNodeQuantParam(cnode, input_index);
+  if (x_q_param_origin.size() != kPerTensor) {
+    MS_LOG(ERROR) << cnode->fullname_with_scope() << " x quant param size " << x_q_param_origin.size() << " != 1";
     return RET_ERROR;
   }
-  auto x_q_param = input_quant_param.at(input_index - kPrimOffset);
-  if (x_q_param.size() != kPerTensor) {
-    MS_LOG(ERROR) << cnode->fullname_with_scope() << " x quant param size " << x_q_param.size() << " != 1";
-    return RET_ERROR;
-  }
+  auto x_q_param = quant::CloneQuantParam(x_q_param_origin);
   x_q_param.at(0).scale = 1 / x_q_param.at(0).scale;
-  ValueNodePtr new_primitive = NewQuantCastPrimitive(kNumberTypeFloat32, kNumberTypeInt8, x_q_param, x_q_param);
-
+  auto input_node = cnode->input(input_index);
+  CHECK_NULL_RETURN(input_node);
+  ValueNodePtr new_primitive =
+    NewQuantCastPrimitive(kNumberTypeFloat32, kNumberTypeInt8, input_node, quant::kQuant, x_q_param, x_q_param);
   std::vector<AnfNodePtr> op_inputs = {new_primitive, cnode->input(input_index)};
   auto quant_cast_cnode = func_graph->NewCNode(op_inputs);
   CHECK_NULL_RETURN(quant_cast_cnode);
@@ -1127,26 +1131,24 @@ int InsertQuantNodeManager::InsertAscendQuantNode(const FuncGraphPtr &func_graph
   }
   CHECK_NULL_RETURN(manager);
   manager->SetEdge(cnode, input_index, quant_cast_cnode);
-  MS_LOG(INFO) << cnode->fullname_with_scope() << " Insert Ascend QuantNode.";
+  MS_LOG(INFO) << cnode->fullname_with_scope() << " Insert Ascend QuantNode, scale: " << x_q_param.at(0).scale;
   return RET_OK;
 }
 
 int InsertQuantNodeManager::InsertAscendDeQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   CHECK_NULL_RETURN(func_graph);
   CHECK_NULL_RETURN(cnode);
-  auto curr_quant_param_holder = GetCNodeQuantHolder(cnode);
-  CHECK_NULL_RETURN(curr_quant_param_holder);
-  auto input_quant_param = curr_quant_param_holder->get_input_quant_params();
-  if (input_quant_param.size() < kMinSize2) {
-    MS_LOG(ERROR) << cnode->fullname_with_scope() << " input quant params " << input_quant_param.size() << " < 2";
+  auto cnode_primitive = GetValueNode<PrimitivePtr>(cnode->input(kPrimIndex));
+  if (cnode_primitive == nullptr) {
+    MS_LOG(ERROR) << cnode->fullname_with_scope() << " primitive is nullptr.";
     return RET_ERROR;
   }
-  auto x_q_param = input_quant_param.at(0);
+  auto x_q_param = quant::GetInputNodeQuantParam(cnode, Index1);
   if (x_q_param.size() != kPerTensor) {
     MS_LOG(ERROR) << cnode->fullname_with_scope() << " x quant param size " << x_q_param.size() << " != 1";
     return RET_ERROR;
   }
-  auto w_q_params = input_quant_param.at(1);
+  auto w_q_params = quant::GetInputNodeQuantParam(cnode, Index2);
   if (w_q_params.empty()) {
     MS_LOG(ERROR) << cnode->fullname_with_scope() << " w quant param is empty.";
     return RET_ERROR;
@@ -1170,6 +1172,10 @@ int InsertQuantNodeManager::InsertAscendDeQuantNode(const FuncGraphPtr &func_gra
 
   prim_c->Init(kNumberTypeInt32, dtype);
   auto prim = prim_c->GetPrim();
+  // copy cnode quant param to dequant
+  if (cnode_primitive->HasAttr(quant::kQuantParam)) {
+    prim->AddAttr(quant::kQuantParam, cnode_primitive->GetAttr(quant::kQuantParam));
+  }
   auto quant_dtype_cast_primitive = NewValueNode(prim);
   std::vector<AnfNodePtr> op_inputs;
   op_inputs.push_back(quant_dtype_cast_primitive);
