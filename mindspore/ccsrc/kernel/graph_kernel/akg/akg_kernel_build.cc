@@ -15,10 +15,6 @@
  */
 #include "kernel/graph_kernel/akg/akg_kernel_build.h"
 
-#include <sys/shm.h>
-#include <fcntl.h>
-#include <unistd.h>
-
 #include <chrono>
 #include <algorithm>
 #include <map>

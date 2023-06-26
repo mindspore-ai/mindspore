@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_DYNAMIC_AKG_CPU_KERNEL_BUILD_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_DYNAMIC_AKG_CPU_KERNEL_BUILD_H_
 #include <string>
-#include <utility>
 #include <vector>
 #include "kernel/graph_kernel/dynamic_akg/dynamic_akg_kernel_build.h"
 #include "kernel/graph_kernel/graph_kernel_builder_manager.h"
@@ -40,7 +39,7 @@ class DynamicAkgCpuKernelBuilder : public DynamicAkgKernelBuilder {
 
  private:
   void SetCpuKernelModByName(const string &kernel_name, const GraphKernelJsonGenerator &json_generator,
-                             const AnfNodePtr &anf_node);
+                             const AnfNodePtr &anf_node) const;
 };
 
 REG_GRAPH_KERNEL_BUILDER(kCPUDevice, true, DynamicAkgCpuKernelBuilder);

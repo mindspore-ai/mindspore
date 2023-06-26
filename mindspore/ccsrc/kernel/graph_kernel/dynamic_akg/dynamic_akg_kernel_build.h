@@ -17,22 +17,13 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_DYNAMIC_AKG_KERNEL_BUILD_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_DYNAMIC_AKG_KERNEL_BUILD_H_
 
-#include <string>
-#include <utility>
 #include <vector>
-#include <map>
-#include <set>
-#include "nlohmann/json.hpp"
 #include "ir/anf.h"
-#include "kernel/kernel.h"
-#include "backend/common/session/kernel_build_client.h"
-#include "kernel/graph_kernel/graph_kernel_json_generator.h"
 #include "kernel/graph_kernel/graph_kernel_builder.h"
 
 namespace mindspore {
 namespace kernel {
 using graphkernel::GraphKernelJsonGenerator;
-using JsonNodePair = std::pair<GraphKernelJsonGenerator, AnfNodePtr>;
 
 class BACKEND_EXPORT DynamicAkgKernelBuilder : public GraphKernelBuilder {
  public:

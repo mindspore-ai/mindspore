@@ -326,7 +326,7 @@ void InferShapeForGraph(const CNodePtr &cnode, const FuncGraphPtr &func_graph,
       << args_spec_list.size() << " vs func_graph parameters: " << func_graph->parameters().size();
   }
   for (size_t i = 0; i < args_spec_list.size(); i++) {
-    node_abs_spec_map.emplace(func_graph->parameters()[i], args_spec_list[i]);
+    (void)node_abs_spec_map.emplace(func_graph->parameters()[i], args_spec_list[i]);
   }
   std::vector<AnfNodePtr> nodes = TopoSort(func_graph->get_return());
   for (auto &node : nodes) {
@@ -344,13 +344,13 @@ void InferShapeForGraph(const CNodePtr &cnode, const FuncGraphPtr &func_graph,
         auto input_node = prim_cnode->input(i);
         auto para_spec = node_abs_spec_map.find(input_node);
         if (para_spec != node_abs_spec_map.end()) {
-          cnode_args_spec_list.emplace_back(para_spec->second);
+          (void)cnode_args_spec_list.emplace_back(para_spec->second);
         } else {
-          cnode_args_spec_list.emplace_back(input_node->abstract());
+          (void)cnode_args_spec_list.emplace_back(input_node->abstract());
         }
       }
       opt::CppInferShape(cnode_primitive, cnode_args_spec_list, cnode);
-      node_abs_spec_map.emplace(node, cnode->abstract());
+      (void)node_abs_spec_map.emplace(node, cnode->abstract());
     } else {
       auto return_cnode = node->cast<CNodePtr>();
       auto return_spec = node_abs_spec_map.find(return_cnode->input(1));

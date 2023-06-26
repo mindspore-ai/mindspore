@@ -69,7 +69,7 @@ REG_BPROP_BUILDER("Eigh").SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex2);
 
   // helper functions
-  auto Adjoint = [=](const BpropIRBuilder *ib, NodePtr x) -> NodePtr {
+  auto Adjoint = [=](const BpropIRBuilder *ib, const NodePtr &x) -> NodePtr {
     auto conj = ib->Conj(x);
     auto shape = ib->GetShape(conj);
     ShapeVector perm;

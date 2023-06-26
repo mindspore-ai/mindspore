@@ -180,12 +180,12 @@ bool DynamicAkgCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const
     for (size_t i = 0; i < ndims_.size(); i++) {
       std::vector<int64_t> arg_size;
       arg_size.push_back(0);
-      arg_size.insert(arg_size.end(), shape_list_[i].begin(), shape_list_[i].end());
+      (void)arg_size.insert(arg_size.end(), shape_list_[i].begin(), shape_list_[i].end());
       std::vector<int64_t> strides_(ndims_[i], 1);
       for (int j = SizeToInt(ndims_[i]) - 2; j >= 0; j--) {
         strides_[j] = strides_[j + 1] * shape_list_[i][j + 1];
       }
-      arg_size.insert(arg_size.end(), strides_.begin(), strides_.end());
+      (void)arg_size.insert(arg_size.end(), strides_.begin(), strides_.end());
       arg_size_vec.push_back(arg_size);
     }
 

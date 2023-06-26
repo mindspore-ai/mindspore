@@ -15,26 +15,7 @@
  */
 #include "kernel/graph_kernel/dynamic_akg/dynamic_akg_kernel_build.h"
 
-#include <sys/shm.h>
-#include <fcntl.h>
-#include <unistd.h>
-
-#include <chrono>
-#include <algorithm>
-#include <map>
-#include <memory>
-#include <string>
-#include <unordered_set>
-#include <utility>
 #include <vector>
-#include <iostream>
-#include "ir/dtype.h"
-#include "ir/func_graph.h"
-#include "backend/common/graph_kernel/graph_kernel_flags.h"
-#include "kernel/common_utils.h"
-#include "kernel/graph_kernel/graph_kernel_json_generator.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
 namespace kernel {
