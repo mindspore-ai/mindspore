@@ -23,12 +23,12 @@
 
     输入：
         - **var** (Parameter) - 要更新的变量。数据类型为float64、float32或float16。如果 `var` 的数据类型为float16，则所有输入的数据类型必须与 `var` 相同。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
-        - **m** (Parameter) - 要更新的变量，shape和数据类型与 `var` 相同。
+        - **m** (Parameter) - 要更新的变量，shape与 `var` 相同。
         - **lr** (Union[Number, Tensor]) - 学习率，应该是Scalar或Tensor，数据类型为float64、float32或float16。
         - **logbase** (Union[Number, Tensor]) - 应该是Scalar或Tensor，数据类型为float64、float32或float16。
         - **sign_decay** (Union[Number, Tensor]) - 应该是Scalar或Tensor，数据类型为float64、float32或float16。
         - **beta** (Union[Number, Tensor]) - 指数衰减率，应该是Scalar或Tensor，数据类型为float64、float32或float16。
-        - **grad** (Tensor) - 梯度，shape和数据类型与 `var` 相同。
+        - **grad** (Tensor) - 梯度，shape与 `var` 相同。
 
     输出：
         2个Tensor组成的tuple，更新后的参数。

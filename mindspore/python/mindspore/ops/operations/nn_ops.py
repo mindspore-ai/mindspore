@@ -5027,7 +5027,7 @@ class AdamWeightDecay(Primitive):
         - **m** (Parameter) - The 1st moment vector in the updating formula,
           it should have the the shape as `var`. The data type can be float16 or float32.
         - **v** (Parameter) - The 2nd moment vector in the updating formula,
-          it should have the same shape and dtype as `m`.
+          it should have the same shape as `m`.
         - **lr** (float) - :math:`lr` in the updating formula. The paper suggested value is :math:`10^{-8}`,
           the data type should be float32.
         - **beta1** (float) - The exponential decay rate for the 1st moment estimations,
@@ -5038,7 +5038,7 @@ class AdamWeightDecay(Primitive):
           the data type should be float32.
         - **decay** (float) - The weight decay value, must be a scalar tensor with float32 data type.
           Default: ``0.0`` .
-        - **gradient** (Tensor) - Gradient, has the same shape and data type as `var`.
+        - **gradient** (Tensor) - Gradient, has the same shape as `var`.
 
     Outputs:
         Tuple of 3 Tensor, the updated parameters.
@@ -5829,10 +5829,10 @@ class ApplyAdaMax(Primitive):
     Inputs:
         - **var** (Parameter) - Variable to be updated. With float32 or float16 data type.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        - **m** (Parameter) - The 1st moment vector in the updating formula, has the same shape and type as `var`.
+        - **m** (Parameter) - The 1st moment vector in the updating formula, has the same shape as `var`.
           With float32 or float16 data type.
         - **v** (Parameter) - The 2nd moment vector in the updating formula. Mean square gradients
-          with the same shape and type as `var`. With float32 or float16 data type.
+          with the same shape as `var`. With float32 or float16 data type.
         - **beta1_power** (Union[Number, Tensor]) - :math:`beta_1^t` in the updating formula, must be a scalar.
           With float32 or float16 data type.
         - **lr** (Union[Number, Tensor]) - Learning rate, :math:`l` in the updating formula, must be a scalar.
@@ -5843,7 +5843,7 @@ class ApplyAdaMax(Primitive):
           must be a scalar. With float32 or float16 data type.
         - **epsilon** (Union[Number, Tensor]) - A small value added for numerical stability, must be a scalar.
           With float32 or float16 data type.
-        - **grad** (Tensor) - A tensor for gradient, has the same shape and type as `var`.
+        - **grad** (Tensor) - A tensor for gradient, has the same shape as `var`.
           With float32 or float16 data type.
 
     Outputs:
@@ -6631,7 +6631,7 @@ class ApplyPowerSign(Primitive):
         - **var** (Parameter) - Variable tensor to be updated. With float64, float32 or float16 data type.
           If data type of `var` is float16, all inputs must have the same data type as `var`.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        - **m** (Parameter) - Variable tensor to be updated, has the same shape and data type as `var`.
+        - **m** (Parameter) - Variable tensor to be updated, has the same shape as `var`.
         - **lr** (Union[Number, Tensor]) - The learning rate value, should be a scalar or Tensor
           with float64, float32 or float16 data type.
         - **logbase** (Union[Number, Tensor]) - Should be a scalar or Tensor with float64, float32 or float16 data type.
@@ -6639,7 +6639,7 @@ class ApplyPowerSign(Primitive):
           float16 data type.
         - **beta** (Union[Number, Tensor]) - The exponential decay rate, should be a scalar or Tensor
           with float64, float32 or float16 data type.
-        - **grad** (Tensor) - A tensor of the same shape and data type as `var`, for the gradient.
+        - **grad** (Tensor) - A tensor of the same shape as `var`, for the gradient.
 
     Outputs:
         Tuple of 2 Tensors, the updated parameters.
@@ -9583,9 +9583,9 @@ class ApplyAdamWithAmsgradV2(Primitive):
     Inputs:
         - **var** (Parameter) - Variable to be updated. The data type can be float16, float32 or float64.
         - **m** (Parameter) - The 1st moment vector in the updating formula,
-          the shape and data type value should be the same as `var`.
+          the shape should be the same as `var`.
         - **v** (Parameter) - The 2nd moment vector in the updating formula,
-          the shape and data type value should be the same as `var`.
+          the shape should be the same as `var`.
         - **vhat** (Parameter) - :math:`\hat v_t` in the updating formula,
           the shape and data type value should be the same as `var`.
         - **beta1_power** (Union[float, Tensor]) - :math:`beta_1^t(\beta_1^{t})` in the updating formula,
@@ -9599,7 +9599,7 @@ class ApplyAdamWithAmsgradV2(Primitive):
           The data type can be float16, float32 or float64.
         - **epsilon** (Union[float, Tensor]) - A value added to the denominator to ensure numerical stability.
           The data type can be float16, float32 or float64.
-        - **grad** (Tensor) - The gradient, has the same shape and data type as `var`.
+        - **grad** (Tensor) - The gradient, has the same shape as `var`.
 
     Outputs:
         Tuple of 4 Tensors, the updated parameters.
