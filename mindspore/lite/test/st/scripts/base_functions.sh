@@ -409,8 +409,14 @@ function Run_Benchmark() {
           cat adb_run_cmd.txt >> "$4"
           adb -s $8 shell < adb_run_cmd.txt >> "$4"
         else
-          echo 'MSLITE_BENCH_INPUT_NAMES=${input_names} ./benchmark --enableParallelPredict='${use_parallel_predict}' --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --accuracyThreshold='${acc_limit}' --interOpParallelNum='${inter_op_parallel_num}' --numThreads='${threads}' --modelType='${ms_model_type} >> "$4"
-          MSLITE_BENCH_INPUT_NAMES=${input_names} ./benchmark --enableParallelPredict=${use_parallel_predict} --modelFile=${model_file} --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=${output_file} --accuracyThreshold=${acc_limit} --interOpParallelNum=${inter_op_parallel_num} --numThreads=${threads} --modelType=${ms_model_type} >> "$4"
+          if [[ ${cfg_file_name} =~ "_reconstitution_cloud" ]]; then  #  for reconstitution extendrt
+            echo 'MSLITE_BENCH_INPUT_NAMES=${input_names} ./benchmark --enableParallelPredict='${use_parallel_predict}' --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --accuracyThreshold='${acc_limit}' --interOpParallelNum='${inter_op_parallel_num}' --numThreads='${threads}' --modelType='${ms_model_type} --provider=mindrt >> "$4"
+            MSLITE_BENCH_INPUT_NAMES=${input_names} ./benchmark --enableParallelPredict=${use_parallel_predict} --modelFile=${model_file} --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=${output_file} --accuracyThreshold=${acc_limit} --interOpParallelNum=${inter_op_parallel_num} --numThreads=${threads} --modelType=${ms_model_type} --provider=mindrt >> "$4"
+          else
+            echo 'MSLITE_BENCH_INPUT_NAMES=${input_names} ./benchmark --enableParallelPredict='${use_parallel_predict}' --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --accuracyThreshold='${acc_limit}' --interOpParallelNum='${inter_op_parallel_num}' --numThreads='${threads}' --modelType='${ms_model_type} >> "$4"
+            MSLITE_BENCH_INPUT_NAMES=${input_names} ./benchmark --enableParallelPredict=${use_parallel_predict} --modelFile=${model_file} --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=${output_file} --accuracyThreshold=${acc_limit} --interOpParallelNum=${inter_op_parallel_num} --numThreads=${threads} --modelType=${ms_model_type} >> "$4"
+          fi
+
         fi
         if [ $? = 0 ]; then
           if [[ ${extra_info} =~ "parallel_predict" ]]; then
