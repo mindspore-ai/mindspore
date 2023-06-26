@@ -72,4 +72,5 @@ ORIGIN_METHOD(HcomExecInitialize, HcclResult);
 ORIGIN_METHOD(HcomExecFinalize, HcclResult);
 ORIGIN_METHOD(HcomExecEnqueueOperation, HcclResult, ::HcomOperation, HExecCallBack);
 ORIGIN_METHOD(HcomExecEnqueueAllToAllV, HcclResult, ::HcomAllToAllVParams, HExecCallBack);
+ORIGIN_METHOD(HcomDestroy, HcclResult);
 #endif  // MINDSPORE_RUNTIME_HCCL_ADAPTER_PLUGIN_HCCL_PLUGIN_H
