@@ -19,12 +19,12 @@
 
     输入：
         - **var** (Parameter) - 要更新的权重。任意维度，其数据类型为float32或float16。其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。
-        - **m** (Parameter) - 要更新的权重，shape和数据类型与 `var` 相同。
+        - **m** (Parameter) - 要更新的权重，shape与 `var` 相同。
         - **lr** (Union[Number, Tensor]) - 学习率，必须是Scalar。数据类型为float32或float16。
         - **sign_decay** (Union[Number, Tensor]) - 必须是Scalar。数据类型为float32或float16。
         - **alpha** (Union[Number, Tensor]) - 必须是Scalar。数据类型为float32或float16。
         - **beta** (Union[Number, Tensor]) - 指数衰减率，必须是Scalar。数据类型为float32或float16。
-        - **grad** (Tensor) - 梯度，shape和数据类型与 `var` 相同。
+        - **grad** (Tensor) - 梯度，shape与 `var` 相同。
 
     输出：
         2个Tensor组成的tuple，更新后的数据。

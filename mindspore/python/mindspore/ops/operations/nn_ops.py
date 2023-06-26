@@ -6132,10 +6132,10 @@ class ApplyAdagradV2(Primitive):
     Inputs:
         - **var** (Parameter) - Variable to be updated. With float16 or float32 data type.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        - **accum** (Parameter) - Accumulation to be updated. The shape and data type must be the same as `var`.
+        - **accum** (Parameter) - Accumulation to be updated. The shape must be the same as `var`.
         - **lr** (Union[Number, Tensor]) - The learning rate value, must be a float number or
           a scalar tensor with float16 or float32 data type.
-        - **grad** (Tensor) - A tensor for gradient. The shape and data type must be the same as `var`.
+        - **grad** (Tensor) - A tensor for gradient. The shape must be the same as `var`.
 
     Outputs:
         Tuple of 2 Tensors, the updated parameters.
@@ -6243,8 +6243,8 @@ class SparseApplyAdagradV2(Primitive):
     Inputs:
         - **var** (Parameter) - Variable to be updated. The data type must be float16 or float32.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        - **accum** (Parameter) - Accumulation to be updated. The shape and data type must be the same as `var`.
-        - **grad** (Tensor) - Gradients has the same data type as `var` and
+        - **accum** (Parameter) - Accumulation to be updated. The shape must be the same as `var`.
+        - **grad** (Tensor) - Gradients has the same shape as `var` and
           :math:`grad.shape[1:] = var.shape[1:]` if var.shape > 1.
         - **indices** (Tensor) - A vector of indices into the first dimension of `var` and `accum`.
           The type must be int32 and :math:`indices.shape[0] = grad.shape[0]`.
@@ -6429,14 +6429,14 @@ class SparseApplyProximalAdagrad(Primitive):
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. The data type must be float16 or float32.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        - **accum** (Parameter) - Variable tensor to be updated, has the same shape and dtype as `var`.
+        - **accum** (Parameter) - Variable tensor to be updated, has the same shape as `var`.
         - **lr** (Union[Number, Tensor]) - The learning rate value, must be a float number or
           a scalar tensor with float16 or float32 data type. It must be positive.
         - **l1** (Union[Number, Tensor]) - l1 regularization strength, must be a float number or
           a scalar tensor with float16 or float32 data type. It must be non-negative.
         - **l2** (Union[Number, Tensor]) - l2 regularization strength, must be a float number or
           a scalar tensor with float16 or float32 data type. It must be non-negative.
-        - **grad** (Tensor) - A tensor of the same type as `var` and
+        - **grad** (Tensor) - A tensor must meet with
           :math:`grad.shape[1:] = var.shape[1:]` if var.shape > 1.
         - **indices** (Tensor) - A tensor of indices in the first dimension of `var` and `accum`.
           If there are duplicates in `indices`, the behavior is undefined. Must be one of the
@@ -6530,14 +6530,14 @@ class ApplyAddSign(Primitive):
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. With float16, float32 or float64 data type.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        - **m** (Parameter) - Variable tensor to be updated, has the same shape and data type as `var`.
+        - **m** (Parameter) - Variable tensor to be updated, has the same data type as `var`.
         - **lr** (Union[Number, Tensor]) - The learning rate value, must be a scalar.
           With float16, float32 or float64 data type.
         - **alpha** (Union[Number, Tensor]) - Must be a scalar. With float16, float32 or float64 data type.
         - **sign_decay** (Union[Number, Tensor]) - Must be a scalar. With float16, float32 or float64 data type.
         - **beta** (Union[Number, Tensor]) - The exponential decay rate, must be a scalar.
           With float16, float32 or float64 data type.
-        - **grad** (Tensor) - A tensor of the same shape and data type as `var`, for the gradient.
+        - **grad** (Tensor) - A tensor of the same shape as `var`, for the gradient.
 
     Outputs:
         Tuple of 2 Tensors, the updated parameters.
@@ -6722,7 +6722,7 @@ class ApplyGradientDescent(Primitive):
         - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **alpha** (Union[Number, Tensor]) - Scaling factor, must be a scalar. With float32 or float16 data type.
-        - **delta** (Tensor) - A tensor for the change, has the same shape and data type as `var`.
+        - **delta** (Tensor) - A tensor for the change, has the same shape as `var`.
 
     Outputs:
         Tensor, represents the updated `var`.
@@ -6931,8 +6931,8 @@ class ApplyFtrl(Primitive):
     Inputs:
         - **var** (Parameter) - The variable to be updated. The data type must be float16 or float32.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        - **accum** (Parameter) - The accumulation to be updated, must be same shape and data type as `var`.
-        - **linear** (Parameter) - The linear coefficient to be updated, must be same shape and data type as `var`.
+        - **accum** (Parameter) - The accumulation to be updated, must be same shape as `var`.
+        - **linear** (Parameter) - The linear coefficient to be updated, must be same shape as `var`.
         - **grad** (Tensor) - Gradient. The data type must be float16 or float32.
         - **lr** (Union[Number, Tensor]) - The learning rate value, must be positive. Default: ``0.001`` .
           It must be a float number or a scalar tensor with float16 or float32 data type.
@@ -7031,9 +7031,9 @@ class SparseApplyFtrl(Primitive):
     Inputs:
         - **var** (Parameter) - The variable to be updated. The data type must be float16 or float32.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        - **accum** (Parameter) - The accumulation to be updated, must be same data type and shape as `var`.
-        - **linear** (Parameter) - The linear coefficient to be updated, must be the same data type and shape as `var`.
-        - **grad** (Tensor) - A tensor of the same type as `var` and :math:`grad.shape[1:] = var.shape[1:]`
+        - **accum** (Parameter) - The accumulation to be updated, must be same shape as `var`.
+        - **linear** (Parameter) - The linear coefficient to be updated, must be the same shape as `var`.
+        - **grad** (Tensor) - A tensor must meet with :math:`grad.shape[1:] = var.shape[1:]`
           if var.shape > 1.
         - **indices** (Tensor) - A tensor of indices in the first dimension of `var` and `accum`.
           If there are duplicates in `indices`, the behavior is undefined.
