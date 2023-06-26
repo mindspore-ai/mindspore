@@ -40,7 +40,6 @@ OpParameter *PopulateArgMinParameter(const void *prim) {
   param->topk_ = value->top_k();
   param->out_value_ = value->out_max_value();
   param->keep_dims_ = value->keep_dims();
-  param->get_max_ = false;
   return reinterpret_cast<OpParameter *>(param);
 }
 

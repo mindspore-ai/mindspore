@@ -22,6 +22,7 @@
 #include "nnacl/common_func.h"
 #include "include/errorcode.h"
 #include "src/litert/lite_kernel.h"
+#include "nnacl/kernel/arg_min_max.h"
 
 namespace mindspore::kernel {
 class ArgMinMaxInt8CPUKernel : public LiteKernel {
@@ -39,6 +40,7 @@ class ArgMinMaxInt8CPUKernel : public LiteKernel {
  private:
   QuantArg *in_quant_arg_ = nullptr;
   QuantArg *out_quant_arg_ = nullptr;
+  ArgMinMaxComputeParam *compute_param_;
 };
 }  // namespace mindspore::kernel
 

@@ -66,8 +66,6 @@ OpParameter *PopulateArgMaxOpParameter(const BaseOperatorPtr &base_operator) {
     return nullptr;
   }
   param->keep_dims_ = GetValue<bool>(attr_keep_dims);
-
-  param->get_max_ = true;
   return reinterpret_cast<OpParameter *>(param);
 }
 

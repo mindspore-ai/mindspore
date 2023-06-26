@@ -19,6 +19,7 @@
 #include "nnacl/kernel/arithmetic.h"
 #include "nnacl/kernel/arithmetic_compare.h"
 #include "nnacl/kernel/arithmetic_self.h"
+#include "nnacl/kernel/arg_min_max.h"
 #include "nnacl/kernel/addn.h"
 #include "nnacl/kernel/biasadd.h"
 #include "nnacl/kernel/clip.h"
@@ -35,6 +36,7 @@
 #include "nnacl/kernel/matmul.h"
 #include "nnacl/kernel/non_zero.h"
 #include "nnacl/kernel/nllloss.h"
+#include "nnacl/kernel/prior_box.h"
 #include "nnacl/kernel/reshape.h"
 #include "nnacl/kernel/range.h"
 #include "nnacl/kernel/rank.h"
@@ -66,6 +68,8 @@ void init_vs_kernels_f16(KernelCreator **creators) {
   creators[PrimType_Activation][REGIST_DT(kNumberTypeFloat16)] = CreateActivation;
   creators[PrimType_AddFusion][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_AddN][REGIST_DT(kNumberTypeFloat16)] = CreateAddN;
+  creators[PrimType_ArgMinFusion][REGIST_DT(kNumberTypeFloat16)] = CreateArgMinMax;
+  creators[PrimType_ArgMaxFusion][REGIST_DT(kNumberTypeFloat16)] = CreateArgMinMax;
   creators[PrimType_Ceil][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_Concat][REGIST_DT(kNumberTypeFloat16)] = CreateConcatF16;
   creators[PrimType_Cos][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
@@ -134,6 +138,10 @@ void init_vs_kernels_a(KernelCreator **creators) {
   creators[PrimType_AddFusion][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
   creators[PrimType_AddFusion][REGIST_DT(kNumberTypeInt32)] = CreateArithmetic;
   creators[PrimType_AddN][REGIST_DT(kNumberTypeFloat32)] = CreateAddN;
+  creators[PrimType_ArgMinFusion][REGIST_DT(kNumberTypeInt32)] = CreateArgMinMax;
+  creators[PrimType_ArgMinFusion][REGIST_DT(kNumberTypeFloat32)] = CreateArgMinMax;
+  creators[PrimType_ArgMaxFusion][REGIST_DT(kNumberTypeInt32)] = CreateArgMinMax;
+  creators[PrimType_ArgMaxFusion][REGIST_DT(kNumberTypeFloat32)] = CreateArgMinMax;
   creators[PrimType_BiasAdd][REGIST_DT(kNumberTypeFloat32)] = CreateBiasAdd;
   creators[PrimType_Ceil][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
   creators[PrimType_Cos][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
@@ -214,6 +222,8 @@ void init_vs_kernels_i(KernelCreator **creators) {
   creators[PrimType_NotEqual][REGIST_DT(kNumberTypeInt32)] = CreateArithmeticCompare;
   creators[PrimType_NotEqual][REGIST_DT(kNumberTypeInt64)] = CreateArithmeticCompare;
   creators[PrimType_NonZero][REGIST_DT(kNumberTypeBool)] = CreateNonZero;
+  creators[PrimType_PriorBox][REGIST_DT(kNumberTypeFloat32)] = CreatePriorBox;
+  creators[PrimType_PriorBox][REGIST_DT(kNumberTypeInt8)] = CreatePriorBox;
 }
 
 void init_vs_kernels_r(KernelCreator **creators) {

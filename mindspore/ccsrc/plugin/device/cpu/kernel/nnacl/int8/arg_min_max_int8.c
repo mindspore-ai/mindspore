@@ -47,7 +47,7 @@ void SetOutputValue(float value, int32_t index, int8_t *output1, int8_t *output2
   }
 }
 
-void DoArgMinMaxQuant(const int8_t *input, int8_t *output1, int8_t *output2, const ArgMinMaxParameter *param,
+void DoArgMinMaxQuant(const int8_t *input, int8_t *output1, int8_t *output2, const ArgMinMaxComputeParam *param,
                       int pre_axis_count, int axis_count, int after_axis_count, const QuantArg *in_quant_arg,
                       const QuantArg *out_quant_arg) {
   bool out_value = param->out_value_;
@@ -83,7 +83,8 @@ void DoArgMinMaxQuant(const int8_t *input, int8_t *output1, int8_t *output2, con
 }
 
 void Int8ArgMinMaxQuant(const int8_t *input, int8_t *output1, int8_t *output2, const int32_t *in_shape,
-                        const ArgMinMaxParameter *param, const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
+                        const ArgMinMaxComputeParam *param, const QuantArg *in_quant_arg,
+                        const QuantArg *out_quant_arg) {
   int pre_axis_count = 1;
   int axis_count = 1;
   int after_axis_count = 1;
@@ -106,7 +107,7 @@ int8_t GetInt8Output(float real_out, float output_inverse_scale, int32_t output_
 }
 
 void Int8ArgMinMaxDim0(const int8_t *input, int8_t *output1, int8_t *output2, const int32_t *in_shape,
-                       ArgMinMaxParameter *param, const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
+                       ArgMinMaxComputeParam *param, const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
   bool out_value = param->out_value_;
   const float output_inverse_scale = 1.f / out_quant_arg->scale_;
   float bias = -in_quant_arg->zp_ * in_quant_arg->scale_;
@@ -132,7 +133,7 @@ void Int8ArgMinMaxDim0(const int8_t *input, int8_t *output1, int8_t *output2, co
 }
 
 void Int8ArgMinMaxDim1(const int8_t *input, int8_t *output1, int8_t *output2, const int32_t *in_shape,
-                       ArgMinMaxParameter *param, const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
+                       ArgMinMaxComputeParam *param, const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
   bool out_value = param->out_value_;
   const float output_inverse_scale = 1.f / out_quant_arg->scale_;
   float bias = -in_quant_arg->zp_ * in_quant_arg->scale_;
@@ -163,7 +164,7 @@ void Int8ArgMinMaxDim1(const int8_t *input, int8_t *output1, int8_t *output2, co
 }
 
 void Int8ArgMinMaxDim2(const int8_t *input, int8_t *output1, int8_t *output2, const int32_t *in_shape,
-                       ArgMinMaxParameter *param, const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
+                       ArgMinMaxComputeParam *param, const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
   bool out_value = param->out_value_;
   const float output_inverse_scale = 1.f / out_quant_arg->scale_;
   float bias = -in_quant_arg->zp_ * in_quant_arg->scale_;
@@ -198,7 +199,7 @@ void Int8ArgMinMaxDim2(const int8_t *input, int8_t *output1, int8_t *output2, co
 }
 
 void Int8ArgMinMaxDim3(const int8_t *input, int8_t *output1, int8_t *output2, const int32_t *in_shape,
-                       ArgMinMaxParameter *param, const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
+                       ArgMinMaxComputeParam *param, const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
   bool out_value = param->out_value_;
   const float output_inverse_scale = 1.f / out_quant_arg->scale_;
   float bias = -in_quant_arg->zp_ * in_quant_arg->scale_;

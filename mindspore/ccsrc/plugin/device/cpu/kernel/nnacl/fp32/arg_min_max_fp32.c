@@ -42,7 +42,7 @@
   }                                                                                                                \
                                                                                                                    \
   void ArgMaxTopK1##data_type(const DATA_TYPE *input, void *output, DATA_TYPE *output_value,                       \
-                              const ArgMinMaxParameter *param, int pre_axis_count, int axis_count,                 \
+                              const ArgMinMaxComputeParam *param, int pre_axis_count, int axis_count,              \
                               int after_axis_count) {                                                              \
     bool out_value = param->out_value_;                                                                            \
     DATA_TYPE *outputfp32 = (DATA_TYPE *)output;                                                                   \
@@ -73,7 +73,7 @@
   }                                                                                                                \
                                                                                                                    \
   void ArgMinTopK1##data_type(const DATA_TYPE *input, void *output, DATA_TYPE *output_value,                       \
-                              const ArgMinMaxParameter *param, int pre_axis_count, int axis_count,                 \
+                              const ArgMinMaxComputeParam *param, int pre_axis_count, int axis_count,              \
                               int after_axis_count) {                                                              \
     bool out_value = param->out_value_;                                                                            \
     DATA_TYPE *outputfp32 = (DATA_TYPE *)output;                                                                   \
@@ -104,7 +104,7 @@
   }                                                                                                                \
                                                                                                                    \
   void ArgMinMaxDim0##data_type(const DATA_TYPE *input, void *output, DATA_TYPE *output_value,                     \
-                                const int32_t *in_shape, const ArgMinMaxParameter *param,                          \
+                                const int32_t *in_shape, const ArgMinMaxComputeParam *param,                       \
                                 COMPARE_FUNCTION compare_func) {                                                   \
     DATA_TYPE *outputfp32 = (DATA_TYPE *)output;                                                                   \
     int32_t *outputint = (int32_t *)output;                                                                        \
@@ -131,7 +131,7 @@
   }                                                                                                                \
                                                                                                                    \
   void ArgMinMaxDim1##data_type(const DATA_TYPE *input, void *output, DATA_TYPE *output_value,                     \
-                                const int32_t *in_shape, const ArgMinMaxParameter *param,                          \
+                                const int32_t *in_shape, const ArgMinMaxComputeParam *param,                       \
                                 COMPARE_FUNCTION compare_func) {                                                   \
     DATA_TYPE *outputfp32 = (DATA_TYPE *)output;                                                                   \
     int32_t *outputint = (int32_t *)output;                                                                        \
@@ -163,7 +163,7 @@
   }                                                                                                                \
                                                                                                                    \
   void ArgMinMaxDim2##data_type(const DATA_TYPE *input, void *output, DATA_TYPE *output_value,                     \
-                                const int32_t *in_shape, const ArgMinMaxParameter *param,                          \
+                                const int32_t *in_shape, const ArgMinMaxComputeParam *param,                       \
                                 COMPARE_FUNCTION compare_func) {                                                   \
     int in_shape1 = in_shape[1];                                                                                   \
     int in_shape2 = in_shape[2];                                                                                   \
@@ -199,7 +199,7 @@
   }                                                                                                                \
                                                                                                                    \
   void ArgMinMaxDim3##data_type(const DATA_TYPE *input, void *output, DATA_TYPE *output_value,                     \
-                                const int32_t *in_shape, const ArgMinMaxParameter *param,                          \
+                                const int32_t *in_shape, const ArgMinMaxComputeParam *param,                       \
                                 COMPARE_FUNCTION compare_func) {                                                   \
     int in_shape1 = in_shape[1];                                                                                   \
     int in_shape2 = in_shape[2];                                                                                   \
@@ -238,7 +238,7 @@
   }                                                                                                                \
                                                                                                                    \
   void ArgMinMax##data_type##32(const DATA_TYPE *input, void *output, DATA_TYPE *output_value,                     \
-                                const int32_t *in_shape, const ArgMinMaxParameter *param) {                        \
+                                const int32_t *in_shape, const ArgMinMaxComputeParam *param) {                     \
     if (param->topk_ == 1) {                                                                                       \
       int pre_axis_count = 1;                                                                                      \
       int axis_count = 1;                                                                                          \

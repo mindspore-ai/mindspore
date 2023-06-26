@@ -36,6 +36,10 @@ ArgMinMaxInt8CPUKernel::~ArgMinMaxInt8CPUKernel() {
     free(out_quant_arg_);
     out_quant_arg_ = nullptr;
   }
+  if (compute_param_ != nullptr) {
+    free(compute_param_);
+    compute_param_ = nullptr;
+  }
 }
 
 int ArgMinMaxInt8CPUKernel::Prepare() {
@@ -49,9 +53,6 @@ int ArgMinMaxInt8CPUKernel::Prepare() {
                   << out_tensors_[0]->data_type();
     return RET_ERROR;
   }
-  auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
-  CHECK_NULL_RETURN(param);
-  param->data_type_ = static_cast<int32_t>(kNumberTypeInt8);
   in_quant_arg_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
   if (in_quant_arg_ == nullptr) {
     MS_LOG(ERROR) << "Malloc QuantArg for argmin or argmax int8 op failed!";
@@ -73,6 +74,19 @@ int ArgMinMaxInt8CPUKernel::Prepare() {
     MS_LOG(ERROR) << "Malloc QuantArg for argmin or argmax int8 op failed!";
     return RET_ERROR;
   }
+
+  compute_param_ = reinterpret_cast<ArgMinMaxComputeParam *>(sizeof(ArgMinMaxComputeParam));
+  if (compute_param_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc ArgMinMaxComputeParam for argmin or argmax int8 op failed!";
+    return RET_ERROR;
+  }
+  auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(param);
+  compute_param_->axis_ = param->axis_;
+  compute_param_->topk_ = param->topk_;
+  compute_param_->out_value_ = param->out_value_;
+  compute_param_->keep_dims_ = param->keep_dims_;
+
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -86,18 +100,18 @@ int ArgMinMaxInt8CPUKernel::ReSize() {
   auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
   CHECK_NULL_RETURN(param);
   int axis = param->axis_ < 0 ? param->axis_ + dims_size : param->axis_;
-  param->axis_ = axis;
-  param->dims_size_ = dims_size;
-  if (param->topk_ <= 0) {
+  compute_param_->axis_ = axis;
+  compute_param_->dims_size_ = dims_size;
+  if (compute_param_->topk_ <= 0) {
     MS_LOG(ERROR) << "Invalid topk " << param->topk_;
     return RET_ERROR;
   }
-  param->topk_ = MSMIN(param->topk_, in_shape.at(axis));
+  compute_param_->topk_ = MSMIN(param->topk_, in_shape.at(axis));
   CHECK_NULL_RETURN(in_shape.data());
-  ComputeStrides(in_shape.data(), param->in_strides_, in_shape.size());
+  ComputeStrides(in_shape.data(), compute_param_->in_strides_, in_shape.size());
   auto out_shape = out_tensors_.at(0)->shape();
   CHECK_NULL_RETURN(out_shape.data());
-  ComputeStrides(out_shape.data(), param->out_strides_, out_shape.size());
+  ComputeStrides(out_shape.data(), compute_param_->out_strides_, out_shape.size());
   return RET_OK;
 }
 
@@ -112,28 +126,26 @@ int ArgMinMaxInt8CPUKernel::Run() {
   }
   CHECK_NULL_RETURN(input_data);
   CHECK_NULL_RETURN(output_data);
-  auto in_shape = input->shape();
-  auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
-  CHECK_NULL_RETURN(in_shape.data());
-  CHECK_NULL_RETURN(param);
-  if (param->topk_ == 1) {
-    Int8ArgMinMaxQuant(input_data, output_data, output_value, in_shape.data(), param, in_quant_arg_, out_quant_arg_);
+  int *in_shape = input->ConvertToTensorC()->shape_;
+  CHECK_NULL_RETURN(in_shape);
+  if (compute_param_->topk_ == 1) {
+    Int8ArgMinMaxQuant(input_data, output_data, output_value, in_shape, compute_param_, in_quant_arg_, out_quant_arg_);
     return RET_OK;
   }
   CHECK_NULL_RETURN(in_quant_arg_);
   CHECK_NULL_RETURN(out_quant_arg_);
-  switch (param->axis_) {
+  switch (compute_param_->axis_) {
     case 0:
-      Int8ArgMinMaxDim0(input_data, output_data, output_value, in_shape.data(), param, in_quant_arg_, out_quant_arg_);
+      Int8ArgMinMaxDim0(input_data, output_data, output_value, in_shape, compute_param_, in_quant_arg_, out_quant_arg_);
       break;
     case 1:
-      Int8ArgMinMaxDim1(input_data, output_data, output_value, in_shape.data(), param, in_quant_arg_, out_quant_arg_);
+      Int8ArgMinMaxDim1(input_data, output_data, output_value, in_shape, compute_param_, in_quant_arg_, out_quant_arg_);
       break;
     case 2:
-      Int8ArgMinMaxDim2(input_data, output_data, output_value, in_shape.data(), param, in_quant_arg_, out_quant_arg_);
+      Int8ArgMinMaxDim2(input_data, output_data, output_value, in_shape, compute_param_, in_quant_arg_, out_quant_arg_);
       break;
     case 3:
-      Int8ArgMinMaxDim3(input_data, output_data, output_value, in_shape.data(), param, in_quant_arg_, out_quant_arg_);
+      Int8ArgMinMaxDim3(input_data, output_data, output_value, in_shape, compute_param_, in_quant_arg_, out_quant_arg_);
       break;
     default:
       MS_LOG(ERROR) << "axis is invalid";

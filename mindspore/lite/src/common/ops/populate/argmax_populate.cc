@@ -45,7 +45,6 @@ OpParameter *PopulateArgMaxParameter(const void *prim) {
   arg_param->topk_ = param->top_k();
   arg_param->out_value_ = param->out_max_value();
   arg_param->keep_dims_ = param->keep_dims();
-  arg_param->get_max_ = true;
   return reinterpret_cast<OpParameter *>(arg_param);
 }
 

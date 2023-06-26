@@ -23,12 +23,10 @@ class TestOpenCL_ArgMinMax : public CommonTest {};
 namespace {
 // PrimitiveType_ArgMinFusion: src/ops/populate/argmin_populate.cc
 // PrimitiveType_ArgMaxFusion: src/ops/populate/argmax_populate.cc
-OpParameter *CreateParameter(schema::PrimitiveType type, int axis, int topk, bool out_value, bool keep_dims = false,
-                             int axis_type = 0) {
+OpParameter *CreateParameter(schema::PrimitiveType type, int axis, int topk, bool out_value, bool keep_dims = false) {
   auto *param = test::CreateParameter<ArgMinMaxParameter>(type);
   param->axis_ = axis;
   param->topk_ = topk;
-  param->axis_type_ = axis_type;
   param->out_value_ = out_value;
   param->keep_dims_ = keep_dims;
   return reinterpret_cast<OpParameter *>(param);
