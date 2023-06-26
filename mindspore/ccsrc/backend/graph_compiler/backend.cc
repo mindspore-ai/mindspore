@@ -691,7 +691,7 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
   MS_LOG(INFO) << "Status record: end run actor: " << actor_info;
 }
 
-void MindRTBackend::RunMsGradGraph(const CNodePtr &kernel, const VectorRef &args, VectorRef *outputs) {
+void MindRTBackend::RunMsGradGraph(const CNodePtr &kernel, const VectorRef &args, VectorRef *outputs) const {
   MS_EXCEPTION_IF_NULL(kernel);
   auto ms_function_special_graph = kernel->user_data<pynative::MsFunctionCallGraph>();
   MS_EXCEPTION_IF_NULL(ms_function_special_graph);

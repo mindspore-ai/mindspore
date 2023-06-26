@@ -265,7 +265,7 @@ void MsFunction::ReplaceAddedCnodeActualOutput(const CNodePtr &added_node,
 }
 
 void MsFunction::GetInputArgsNode(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
-                                  const FuncGraphPtr &ms_func_graph, AnfNodePtrList *input_nodes) const {
+                                  AnfNodePtrList *input_nodes) const {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(input_nodes);
   MS_EXCEPTION_IF_NULL(grad_executor);
@@ -320,7 +320,7 @@ void MsFunction::MakeCNodeForMsFunction(const FrontendOpRunInfoPtr &op_run_info,
   // Get input node info of ms_function
   AnfNodePtrList input_nodes{NewValueNode(ms_func_graph)};
   MS_EXCEPTION_IF_NULL(grad_executor);
-  GetInputArgsNode(op_run_info, grad_executor, ms_func_graph, &input_nodes);
+  GetInputArgsNode(op_run_info, grad_executor, &input_nodes);
   // Get weights node info of ms_function.
   GetWeightsNode(op_run_info, grad_executor, ms_func_graph, &input_nodes);
   // Make a CNode which includes ms_function fprop graph and inputs node

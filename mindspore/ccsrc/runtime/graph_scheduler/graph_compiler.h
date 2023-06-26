@@ -120,7 +120,7 @@ class GraphCompiler {
                        const DeviceContext *device_context, device::RunMode run_mode, bool run_in_pynative = false);
 
   GraphId CompileDynamicGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs,
-                              const DeviceContext *device_context, bool has_ms_function_call_graph);
+                              const DeviceContext *device_context);
 
   // Construct kernel graph from function graph and compile kernel graph in Graph mode,
   // the detailed implementation of compiling graph is in 'CompileGraphImpl'.

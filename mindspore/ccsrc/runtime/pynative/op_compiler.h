@@ -91,7 +91,7 @@ class BACKEND_EXPORT OpCompiler {
   void BatchBuild(const std::vector<KernelGraphPtr> &graphs, const DeviceContext *device_context,
                   bool is_dynamic_shape = false);
 
-  std::string GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_info, const PrimitivePtr &op_prim);
+  std::string GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_info, const PrimitivePtr &op_prim) const;
 
   // Clear anf resources before process exit.
   void ClearAllCache();

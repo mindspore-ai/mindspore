@@ -1018,8 +1018,7 @@ void ReplaceValueNodeWithParameter(const FrontendOpRunInfoPtr &op_run_info) {
   }
 }
 
-void DataConvert::GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const std::string &device_target,
-                                 const TopCellInfoPtr &top_cell) {
+void DataConvert::GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const TopCellInfoPtr &top_cell) {
   MS_EXCEPTION_IF_NULL(op_run_info);
 
   (void)op_run_info->base_op_run_info.input_tensor.reserve(op_run_info->input_size);

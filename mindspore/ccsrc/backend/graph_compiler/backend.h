@@ -124,7 +124,7 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
   void RunGraphByActors(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
                         const VectorRef &args, VectorRef *outputs);
 
-  void RunMsGradGraph(const CNodePtr &kernel, const VectorRef &args, VectorRef *outputs);
+  void RunMsGradGraph(const CNodePtr &kernel, const VectorRef &args, VectorRef *outputs) const;
 
   void UpdateOutput(const session::BackendOpRunInfoPtr &op_run_info,
                     const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs) const;

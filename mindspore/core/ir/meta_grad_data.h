@@ -53,7 +53,7 @@ class AutoGradMetaData {
       : variable_(variable), parameter_(parameter), grad_type_(grad_type) {}
   VariableAdjointPtr variable() const { return variable_.lock(); }
   void set_variable(const VariableAdjointPtr &variable) { variable_ = variable; }
-  ParameterPtr parameter() { return parameter_.lock(); }
+  ParameterPtr parameter() const { return parameter_.lock(); }
   void set_parameter(const ParameterPtr &parameter) { parameter_ = parameter; }
   void set_k_node(const AnfNodePtr &k_node) { k_node_ = k_node; }
   AnfNodePtr k_node() const { return k_node_.lock(); }

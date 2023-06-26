@@ -124,8 +124,8 @@ class GradExecutor {
   void SaveForwardGraph(const ValuePtr &value, const string &value_id) const;
   void BackupInputTensorGradInfo(const ValuePtr &value);
   void SaveInputTensorGradInfo(const InputArgsInfoPtr &input_args_info);
-  void ClearParamGradInfo(const TopCellInfoPtr &top_cell);
-  void ResumeParamGradInfo(const TopCellInfoPtr &top_cell);
+  void ClearParamGradInfo(const TopCellInfoPtr &top_cell) const;
+  void ResumeParamGradInfo(const TopCellInfoPtr &top_cell) const;
   py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &obj, const py::object &weights,
                              const py::object &grad_hash_id, const py::args &args);
   TopCellInfoPtr GetAlreadyRunTopCell(const std::string &already_run_cell_id) const;
@@ -209,9 +209,9 @@ class GradExecutor {
   InputArgsInfoPtr GetInputArgsInfo(const py::object &obj, const py::args &args);
   void EndGraphInner(const py::object &obj, const py::object &out, const py::args &args);
   void EndGraphImpl(const InputArgsInfoPtr &input_args_info);
-  void SetForwardLastNodeInfo(const ValuePtr &v, const std::string &obj_id) const;
+  void SetForwardLastNodeInfo(const ValuePtr &v) const;
   void GetCustomBpropPrim(const py::object &obj, const py::args &args, const InputArgsInfoPtr &input_args_info);
-  void DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info, const std::string &out_id);
+  void DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info, const std::string &out_id) const;
   void CheckNeedCompileGraph(const InputArgsInfoPtr &input_args_info);
   void GetGradGraph(const autograd::GradAttr &grad_attr, const std::vector<tensor::TensorPtr> &w_args,
                     const std::vector<size_t> &p_args);
@@ -221,11 +221,11 @@ class GradExecutor {
   std::vector<tensor::TensorPtr> GetDefaultWeights() const;
   void CheckParamShapeAndType(const ParameterPtr &param_node, const abstract::AbstractBasePtr &input_abs,
                               const abstract::AbstractBasePtr &ir_abs) const;
-  void UpdateParamAbsByArgs(const std::vector<ValuePtr> &input_args, const FuncGraphPtr &bprop_graph);
+  void UpdateParamAbsByArgs(const std::vector<ValuePtr> &input_args, const FuncGraphPtr &bprop_graph) const;
   std::vector<size_t> GetGradPositionArgs(const py::object &grad_position, bool get_by_position) const;
   // Manage resource for construct forward graph.
   AnfNodePtr GetOutputNodeAsInput(const std::string &obj_id) const;
-  AnfNodePtr GetValueSequenceInput(const ValuePtr &v, const std::string &obj_id) const;
+  AnfNodePtr GetValueSequenceInput(const ValuePtr &v) const;
   AnfNodePtr CreateTupleGetItemNode(const std::string &obj_id,
                                     const std::pair<AnfNodePtr, std::vector<int64_t>> &out) const;
   bool IsNeedSaveDynamicDetectNodes(const TopCellInfoPtr &top_cell, bool use_dynamic_shape_process);
