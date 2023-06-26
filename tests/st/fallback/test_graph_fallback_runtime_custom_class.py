@@ -241,7 +241,6 @@ def test_resolve_cust_class():
     assert output == 200
 
 
-@pytest.mark.skip("PyExecute node can not be used in meta fg.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -257,7 +256,8 @@ def test_resolve_cust_ms_function_call_class():
     x = np.array([10, 10], np.float32)
     with pytest.raises(RuntimeError) as err:
         net(ms.Tensor(x))
-    assert "Nested execution during JIT execution is not supported." in str(err.value)
+    assert "Nested execution during JIT execution in 'UserDefinedMsFunctionCallNet.__call__' " \
+           "is not supported when 'UNet.construct' compile and execute." in str(err.value)
 
 
 class OuterNet(ms.nn.Cell):
