@@ -149,7 +149,16 @@ int ConvoWinoBaseUpdateThreadNumProcess(ConvolutionWinogradBaseStruct *winograd)
 
   int update_thread = UP_DIV(UP_DIV(winograd->conv_.compute_.out_hw_, C12NUM), ConvMinBlock);
   winograd->conv_.base_.thread_nr_ = NNACL_MIN(update_thread, winograd->conv_.base_.thread_nr_);
+  return NNACL_OK;
+}
 
+int ConvoWinoBaseUpdateThread(ConvolutionWinogradBaseStruct *winograd) {
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
+  ConvoWinoBaseUpdateThreadNumProcess(winograd);
+#else
+  KernelBase *base = &winograd->conv_.base_;
+  base->thread_nr_ = base->update_thread_(TC_PTYPE(PrimType_Conv2DFusion), 0, 0, 0, base->thread_nr_);
+#endif
   return NNACL_OK;
 }
 
@@ -236,6 +245,12 @@ int ConvWinoImpl(void *cdata, int task_id, float l, float r) {
   return conv->run_impl_(conv, task_id);
 }
 
+void ConvWinoBaseUpdateParam(ConvParameter *param, ConvolutionWinogradBaseStruct *winograd) {
+  param->input_unit_ = winograd->input_unit_;
+  param->output_unit_ = winograd->output_unit_;
+  param->tile_num_ = winograd->tile_num_;
+}
+
 int convolution_winograd_base_resize(KernelBase *self) {
   ConvolutionWinogradBaseStruct *winograd = (ConvolutionWinogradBaseStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(winograd);
@@ -250,7 +265,7 @@ int convolution_winograd_base_resize(KernelBase *self) {
     return ret;
   }
 
-  ret = ConvoWinoBaseUpdateThreadNumProcess(winograd);
+  ret = ConvoWinoBaseUpdateThread(winograd);
   if (ret != NNACL_OK) {
     return ret;
   }
@@ -261,6 +276,7 @@ int convolution_winograd_base_resize(KernelBase *self) {
   }
 
   winograd->conv_.out_format_ = self->out_[OUTPUT_INDEX]->format_;
+  ConvWinoBaseUpdateParam((ConvParameter *)self->param_, winograd);
   return NNACL_OK;
 }
 

@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_SRC_LITERT_KERNEL_CPU_NNACL_CXX_UTILS_H_
 
 #include <stddef.h>
+#include <stdint.h>
 
 namespace mindspore::nnacl {
 #ifdef __cplusplus
@@ -28,6 +29,8 @@ void DefaultAllocatorFree(void *allocator, void *ptr);
 int DefaultThreadPoolParallelLunch(void *threadPool, void *task, void *param, int taskNr);
 void *DefaultGetSharingPackData(void *manager, const void *tensor_data, const size_t size, bool *is_packed);
 void DefaultFreeSharingPackData(void *manager, void *tensor_data);
+int DefaultUpdateThreadNumPass(int32_t kernel_type, int64_t per_unit_load_num, int64_t per_unit_store_num,
+                               int64_t unit_num, int thread_num);
 #ifdef __cplusplus
 }
 #endif
