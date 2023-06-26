@@ -178,7 +178,7 @@ include(net.cmake)
 
 option(PLATFORM_ARM64 "build android arm64" OFF)
 option(PLATFORM_ARM32 "build android arm32" OFF)
-option(ENABLE_FP16 "generate micro code enable fp16" OFF)
+option(ENABLE_FP16 "enable fp32/fp16 datatype transform for inputs or outputs" OFF)
 
 if(PLATFORM_ARM64 OR PLATFORM_ARM32)
   add_compile_definitions(ENABLE_NEON)

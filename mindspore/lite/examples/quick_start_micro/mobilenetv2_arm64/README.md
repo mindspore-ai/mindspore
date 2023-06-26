@@ -120,7 +120,7 @@ cmake -DCMAKE_BUILD_TYPE=Release \
 make
 ```
 
-若用户需要编译FP16工程，则在上述基础加上该编译选项:
+若用户在编译工程时，需要框架自动对输入或输出进行fp32/fp16数据类型转换，则在上述基础加上该编译选项:
 ```bash
 -DENABLE_FP16=ON
 ```
