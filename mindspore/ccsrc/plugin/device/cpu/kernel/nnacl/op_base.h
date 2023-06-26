@@ -197,6 +197,8 @@
 #define DEFAULT_GROUP_NAME_LEN 101
 #define kValueThreshold6 6
 
+#define INVALID_SHAPE -1
+
 #define CLARGSINDEX0 0
 #define CLARGSINDEX1 1
 #define CLARGSINDEX2 2

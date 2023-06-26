@@ -570,7 +570,7 @@ int matmul_f32_prepare(struct KernelBase *self) {
   NNACL_CHECK_FALSE(matmul->base_.in_[FIRST_INPUT]->data_type_ != kNumberTypeFloat32, NNACL_INPUT_TENSOR_ERROR);
   NNACL_CHECK_FALSE(matmul->base_.in_[SECOND_INPUT]->data_type_ != kNumberTypeFloat32, NNACL_INPUT_TENSOR_ERROR);
 
-  if (matmul->base_.in_size_ == FOURTH_INPUT) {
+  if (matmul->base_.in_size_ == THREE_TENSOR) {
     NNACL_CHECK_FALSE(matmul->base_.in_[THIRD_INPUT]->data_type_ != kNumberTypeFloat32, NNACL_MATMUL_BIAS_INVALID);
     NNACL_CHECK_FALSE(self->in_[THIRD_INPUT]->data_ == NULL, NNACL_MATMUL_BIAS_INVALID);
   }

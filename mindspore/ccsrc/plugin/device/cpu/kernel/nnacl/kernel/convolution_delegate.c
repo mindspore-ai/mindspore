@@ -213,6 +213,7 @@ int convolution_delegate_resize(struct KernelBase *self) {
     convolution_delegate->convolution_->base_.release(&convolution_delegate->convolution_->base_);
     free(convolution_delegate->convolution_);
     convolution_delegate->convolution_ = NULL;
+    return ret;
   }
 
   ConvolutionDelegateFreeCopiedData(convolution_delegate);
