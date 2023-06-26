@@ -263,6 +263,7 @@ PrimitivePtr CastOperation::GetPrimByTypeId(const TypeId &type_id) const {
     MS_LOG(EXCEPTION) << "Pyobj is empty";
   }
   type_prim_cache_[type_id] = primitive;
+  primitive->EnableSharedMutex();
   return primitive;
 }
 
