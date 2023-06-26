@@ -382,14 +382,14 @@ class _AutoIdentifyDynamicShape:
         real_shape_cache = shape_cache_list[0]
         is_real_shape_exist, real_shape_input = self._find_compile_args_in_shape_cache(real_shape_cache, tensor_tuple,
                                                                                        "real")
-        if is_real_shape_exist:
+        if is_real_shape_exist and real_shape_input is not None:
             return real_shape_input
 
         # step3: if can not find cache in real_shape_cache, then generate it
         is_generalize_shape, compile_args = self._do_generalize_shape(real_shape_cache, tensor_tuple)
 
         # step4: if input type change or rank change, save shape into real_shape_cache and then return
-        if not is_generalize_shape:
+        if not is_generalize_shape and compile_args is None:
             real_shape_cache.add(tensor_tuple)
             return tensor_tuple
 
