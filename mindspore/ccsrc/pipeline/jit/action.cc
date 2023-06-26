@@ -736,15 +736,16 @@ bool AbstractSpecializeAction(const ResourcePtr &resource) {
 
   // Check isolated side-effect nodes.
   engine->set_check_side_effect(true);
+  // Analyze
   (void)profiler::CollectHostInfo(kGraphCompile, kAbstractSpecialize, kAbstractAnalyze, 1, 0, 0);
   AnalysisResult result = AbstractAnalyze(resource, resource->func_graph(), GetArgsAbs(resource));
   (void)profiler::CollectHostInfo(kGraphCompile, kAbstractSpecialize, kAbstractAnalyze, 1, 0, 1);
-  // The top graph may be replaced by infer, update the top graph when the infer is done
-  parse::Parser::UpdateTopFuncGraph(result.context->func_graph());
-  (void)profiler::CollectHostInfo(kGraphCompile, kAbstractSpecialize, kProgramSpecialize, 1, 0, 0);
   // Specialize
+  (void)profiler::CollectHostInfo(kGraphCompile, kAbstractSpecialize, kProgramSpecialize, 1, 0, 0);
   FuncGraphPtr new_fg = ProgramSpecialize(resource, result.context->func_graph(), result.context);
   (void)profiler::CollectHostInfo(kGraphCompile, kAbstractSpecialize, kProgramSpecialize, 1, 0, 1);
+  // Update the top func graph with the specialized graph.
+  parse::Parser::UpdateTopFuncGraph(new_fg);
   resource->set_func_graph(new_fg);
   engine->set_check_side_effect(false);
 
