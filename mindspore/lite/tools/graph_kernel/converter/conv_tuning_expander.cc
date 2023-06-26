@@ -36,11 +36,14 @@ bool IsSameNumberList(const std::vector<int64_t> &vec, int64_t n) {
   return std::all_of(vec.begin(), vec.end(), [n](int64_t i) { return i == n; });
 }
 
-bool InvalidConvAttr(const std::vector<int64_t> &kernel_size, const std::vector<int64_t> &stride,
-                     const std::vector<int64_t> &dilation) {
+bool InvalidConvAttr(const std::vector<int64_t> &kernel_size, const std::vector<int64_t> &pad,
+                     const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation) {
   constexpr int64_t one_kernel_size = 1;
   constexpr int64_t two_kernel_size = 2;
   constexpr int64_t winograd_kernel_size = 3;
+  if (!IsSameNumberList(pad, 0LL)) {
+    return true;
+  }
   if ((IsSameNumberList(kernel_size, one_kernel_size) || IsSameNumberList(kernel_size, two_kernel_size) ||
        IsSameNumberList(kernel_size, winograd_kernel_size)) &&
       IsSameNumberList(stride, 1LL) && IsSameNumberList(dilation, 1LL)) {
@@ -58,9 +61,10 @@ bool IsInvalidConv(const AnfNodePtr &node) {
   auto prim = GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(prim);
   const auto kernel_size = GetValue<std::vector<int64_t>>(prim->GetAttr("kernel_size"));
+  const auto pad = GetValue<std::vector<int64_t>>(prim->GetAttr("pad"));
   const auto stride = GetValue<std::vector<int64_t>>(prim->GetAttr("stride"));
   const auto dilation = GetValue<std::vector<int64_t>>(prim->GetAttr("dilation"));
-  if (InvalidConvAttr(kernel_size, stride, dilation)) {
+  if (InvalidConvAttr(kernel_size, pad, stride, dilation)) {
     return true;
   }
   return false;
