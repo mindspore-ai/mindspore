@@ -259,9 +259,9 @@ RedistributionOpListPtr TensorTransform::OptimizeTensorRedistributionOperatorLis
   for (auto pos : allconcat_pos_list) {
     // erase split concat
     redistribution_op_list->first.erase(redistribution_op_list->first.begin() + pos + kSize2);
-    redistribution_op_list->first.erase(redistribution_op_list->first.begin() + pos + kSize1);
+    (void)redistribution_op_list->first.erase(redistribution_op_list->first.begin() + pos + kSize1);
     redistribution_op_list->second.erase(redistribution_op_list->second.begin() + pos + kSize2);
-    redistribution_op_list->second.erase(redistribution_op_list->second.begin() + pos + kSize1);
+    (void)redistribution_op_list->second.erase(redistribution_op_list->second.begin() + pos + kSize1);
     // insert reshape before allgather
     Operator left_reshape_op = ConstructReshapeOp(left_reshape_op_list[pos]);
     redistribution_op_list->first.insert(redistribution_op_list->first.begin() + pos, left_reshape_op);

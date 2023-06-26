@@ -100,7 +100,7 @@ void MemorySwapActor::AllocDeviceContinuousMem(const std::vector<DeviceTensor *>
 void MemorySwapActor::Swap(device::StorageType to, const std::vector<DeviceTensor *> &device_tensors) {
   for (const auto &device_tensor : device_tensors) {
     MS_EXCEPTION_IF_NULL(device_tensor);
-    device_tensor->MoveTo(to, false, kDefaultStreamIndex);
+    (void)device_tensor->MoveTo(to, false, kDefaultStreamIndex);
   }
 }
 

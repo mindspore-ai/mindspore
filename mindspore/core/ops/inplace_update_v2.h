@@ -16,7 +16,6 @@
 
 #ifndef MINDSPORE_CORE_OPS_INPLACE_UPDATE_V2_H_
 #define MINDSPORE_CORE_OPS_INPLACE_UPDATE_V2_H_
-#include <algorithm>
 #include <map>
 #include <memory>
 #include <set>

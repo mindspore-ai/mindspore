@@ -1150,7 +1150,7 @@ AnfNodePtr PipelineTransformer::GetZeroOutputs(const FuncGraphPtr &graph) {
       // In case: tuple's input is also a tuple
       if (each_out_shapes.size() > 1) {
         auto temp_tuple = CreateTupleZeroTensor(real_out_cnode->input(i), each_out_shapes.size());
-        out_tuple_inputs.emplace_back(temp_tuple);
+        (void)out_tuple_inputs.emplace_back(temp_tuple);
         continue;
       }
       out_tuple_inputs.emplace_back(NewValueNode(CreateZeroseOutput(real_out_cnode->input(i), 0)));
