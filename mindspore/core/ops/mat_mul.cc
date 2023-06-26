@@ -98,8 +98,8 @@ class MatMulInfer : public abstract::OpInferBase {
     auto x_col = x_shp[(transpose_a ? 0 : 1)];
     auto y_row = y_shp[(transpose_b ? 1 : 0)];
     if (x_col != y_row && x_col >= 0 && y_row >= 0) {
-      MS_EXCEPTION(ValueError) << "MatMul shape error, got x_col: " << x_col << ", y_row: " << y_row
-                               << ". In MatMul x_col and y_row should be equal.";
+      MS_EXCEPTION(ValueError) << "For 'MatMul' the input dimensions must be equal, but got 'x1_col': " << x_col
+                               << " and 'x2_row': " << y_row << ".";
     }
 
     ShapeVector ret_shape;
@@ -153,6 +153,12 @@ class MatMulInfer : public abstract::OpInferBase {
       }
       x_type = out_type->cast<TypePtr>();
     }
+
+    const std::set valid_types = {kInt32, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
+    std::map<std::string, TypePtr> types;
+    (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
+    (void)types.emplace("y", input_args[kInputIndex1]->BuildType());
+    (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
     return x_type;
   }
 };
