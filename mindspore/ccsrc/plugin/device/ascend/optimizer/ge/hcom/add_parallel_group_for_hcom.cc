@@ -16,8 +16,6 @@
 
 #include "plugin/device/ascend/optimizer/ge/hcom/add_parallel_group_for_hcom.h"
 
-#include <vector>
-#include <algorithm>
 #include <memory>
 #include "include/common/utils/parallel_context.h"
 #include "include/common/utils/anfalgo.h"
