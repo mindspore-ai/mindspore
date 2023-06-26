@@ -57,6 +57,12 @@ PrimitiveCPtr OnnxReduceParser::Parse(const onnx::GraphProto &onnx_graph, const 
     prim->set_mode(mindspore::ReduceMode::Reduce_Sum_Square);
   } else if (type == "ReduceL2") {
     prim->set_mode(mindspore::ReduceMode::Reduce_L2);
+  } else if (type == "ReduceL1") {
+    prim->set_mode(mindspore::ReduceMode::Reduce_L1);
+  } else if (type == "ReduceLogSum") {
+    prim->set_mode(mindspore::ReduceMode::Reduce_Log_Sum);
+  } else if (type == "ReduceLogSumExp") {
+    prim->set_mode(mindspore::ReduceMode::Reduce_Log_Sum_Exp);
   } else {
     MS_LOG(ERROR) << "unsupported reduce type: " << type;
     return nullptr;
@@ -72,5 +78,8 @@ OnnxNodeRegistrar g_onnxReduceProdParser("ReduceProd", new OnnxReduceParser());
 OnnxNodeRegistrar g_onnxReduceSumParser("ReduceSum", new OnnxReduceParser());
 OnnxNodeRegistrar g_onnxReduceSumSquareParser("ReduceSumSquare", new OnnxReduceParser());
 OnnxNodeRegistrar g_onnxReduceL2Parser("ReduceL2", new OnnxReduceParser());
+OnnxNodeRegistrar g_onnxReduceL1Parser("ReduceL1", new OnnxReduceParser());
+OnnxNodeRegistrar g_onnxReduceLogSumParser("ReduceLogSum", new OnnxReduceParser());
+OnnxNodeRegistrar g_onnxReduceLogSumExpParser("ReduceLogSumExp", new OnnxReduceParser());
 }  // namespace lite
 }  // namespace mindspore

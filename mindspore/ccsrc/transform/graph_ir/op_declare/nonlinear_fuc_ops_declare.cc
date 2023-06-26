@@ -211,6 +211,12 @@ ATTR_MAP(LeakyRelu) = {{"alpha", ATTR_DESC(negative_slope, AnyTraits<float>())}}
 OUTPUT_MAP(LeakyRelu) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(LeakyRelu, prim::kPrimLeakyRelu->name(), ADPT_DESC(LeakyRelu))
 
+// Shrink
+INPUT_MAP(Shrink) = {{1, INPUT_DESC(input_x)}};
+ATTR_MAP(Shrink) = {{"lambd", ATTR_DESC(lambd, AnyTraits<float>())}, {"bias", ATTR_DESC(bias, AnyTraits<float>())}};
+OUTPUT_MAP(Shrink) = {{0, OUTPUT_DESC(output_y)}};
+REG_ADPT_DESC(Shrink, kShrinkOpName, ADPT_DESC(Shrink))
+
 // HardShrink
 INPUT_MAP(HardShrink) = {{1, INPUT_DESC(input_x)}};
 ATTR_MAP(HardShrink) = {{"lambd", ATTR_DESC(lambd, AnyTraits<float>())}};

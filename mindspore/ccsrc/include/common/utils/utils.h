@@ -422,6 +422,7 @@ constexpr auto kGRUV2HiddenGradCellOpName = "GRUV2HiddenGradCell";
 constexpr auto kGRUV2HiddenGradOpName = "GRUV2HiddenGrad";
 constexpr auto kHistogramFixedWidthOpName = "HistogramFixedWidth";
 constexpr auto kHistogramFixedWidthDOpName = "HistogramFixedWidthD";
+constexpr auto kShrinkOpName = "Shrink";
 constexpr auto kHShrinkOpName = "HShrink";
 constexpr auto kHardShrinkOpName = "HardShrink";
 constexpr auto kHShrinkGradOpName = "HShrinkGrad";

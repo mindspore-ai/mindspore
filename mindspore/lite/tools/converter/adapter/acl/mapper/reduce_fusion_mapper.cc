@@ -74,8 +74,29 @@ STATUS ReduceFusionMapper::Mapper(const CNodePtr &cnode) {
       lp_norm_op.set_axis(axes_vec);
     }
     dst_prim = lp_norm_op.GetPrim();
+  } else if (mode == static_cast<int64_t>(ReduceMode::Reduce_L1)) {
+    ops::LpNorm lp_norm_op;
+    auto axes_ptr = src_prim->GetAttr(ops::kAxes);
+    if (axes_ptr != nullptr) {
+      auto axes = GetValue<std::vector<int32_t>>(axes_ptr);
+      std::vector<int64_t> axes_vec;
+      std::transform(axes.begin(), axes.end(), std::back_inserter(axes_vec),
+                     [](int32_t x) { return static_cast<int64_t>(x); });
+      lp_norm_op.set_axis(axes_vec);
+    }
+    auto keep_dims_ptr = src_prim->GetAttr(ops::kKeepDims);
+    if (keep_dims_ptr != nullptr) {
+      auto keep_dims = GetValue<bool>(keep_dims_ptr);
+      lp_norm_op.set_keep_dims(keep_dims);
+    }
+    lp_norm_op.set_p(1);
+    dst_prim = lp_norm_op.GetPrim();
   } else if (mode == static_cast<int64_t>(ReduceMode::Reduce_Prod)) {
     dst_prim = std::make_shared<acl::DynamicReduceProd>();
+  } else if (mode == static_cast<int64_t>(ReduceMode::Reduce_Log_Sum)) {
+    dst_prim = std::make_shared<acl::ReduceLogSum>();
+  } else if (mode == static_cast<int64_t>(ReduceMode::Reduce_Log_Sum_Exp)) {
+    dst_prim = std::make_shared<acl::ReduceLogSumExp>();
   } else {
     MS_LOG(ERROR) << "Not support reduce mode " << static_cast<int64_t>(mode);
     return RET_ERROR;
