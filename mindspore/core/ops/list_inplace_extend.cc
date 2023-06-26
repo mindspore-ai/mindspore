@@ -81,7 +81,7 @@ AbstractBasePtr ListInplaceExtendInfer(const abstract::AnalysisEnginePtr &, cons
       if (target_shape_vec.size() == 1) {
         (void)new_element_shape.emplace_back(1);
       } else {
-        std::copy(target_shape_vec.begin() + 1, target_shape_vec.end(), std::back_inserter(new_element_shape));
+        (void)std::copy(target_shape_vec.begin() + 1, target_shape_vec.end(), std::back_inserter(new_element_shape));
       }
       auto new_element_abs =
         abstract::MakeAbstractTensor(std::make_shared<abstract::Shape>(new_element_shape), target_abs->BuildType());
