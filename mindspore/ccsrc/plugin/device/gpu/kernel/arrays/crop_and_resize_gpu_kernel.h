@@ -28,6 +28,7 @@
 namespace mindspore {
 namespace kernel {
 constexpr size_t kImgDimSize = 4;
+constexpr size_t kImgBIndex = 0;
 constexpr size_t kImgHIndex = 1;
 constexpr size_t kImgWIndex = 2;
 
@@ -35,7 +36,6 @@ constexpr size_t kBoxDimSize = 2;
 constexpr size_t kCropLengthSize = 2;
 constexpr size_t kOutputDimSize = 4;
 
-constexpr size_t kIndexForBatch = 0;
 constexpr size_t kIndexForHeight = 1;
 constexpr size_t kIndexForWidth = 2;
 constexpr size_t kIndexForChannel = 3;

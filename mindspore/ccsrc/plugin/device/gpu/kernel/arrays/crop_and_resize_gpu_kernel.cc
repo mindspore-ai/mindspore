@@ -67,6 +67,7 @@ int CropAndResizeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     return KRET_RESIZE_FAILED;
   }
 
+  batch_ = input_image_shape[kImgBIndex];
   input_height_ = input_image_shape[kImgHIndex];
   input_width_ = input_image_shape[kImgWIndex];
   // input boxes
@@ -104,7 +105,6 @@ int CropAndResizeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   }
 
   // set expected output params
-  batch_ = output_shape[kIndexForBatch];
   final_height_ = output_shape[kIndexForHeight];
   final_width_ = output_shape[kIndexForWidth];
   channel_ = output_shape[kIndexForChannel];
