@@ -232,7 +232,7 @@ MIND_API_OPERATOR_IMPL(ReservoirReplayBufferSample, BaseOperator);
 MIND_API_OPERATOR_IMPL(ReservoirReplayBufferDestroy, BaseOperator);
 
 namespace {
-BaseShapePtr CommonInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
+BaseShapePtr CommonInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &) {
   const ShapeVector &shape = {1};
   BaseShapePtr out_shape = std::make_shared<abstract::Shape>(shape);
   return out_shape;

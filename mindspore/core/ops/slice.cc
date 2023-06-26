@@ -70,7 +70,6 @@ abstract::ShapePtr SliceInferShape(const PrimitivePtr &primitive, const std::vec
   auto prim_name = primitive->name();
   MS_EXCEPTION_IF_CHECK_FAIL(input_args.size() == kSliceInputNum, "Slice inputs num error");
   auto input_x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
-  auto input_begin_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
   auto input_x_shape = input_x_shape_map[kShape];
   auto input_begin_value_ptr = input_args[kInputIndex1]->BuildValue();
   auto input_size_value_ptr = input_args[kInputIndex2]->BuildValue();
