@@ -16,33 +16,20 @@
 #include "include/common/debug/anf_ir_dump.h"
 
 namespace mindspore {
-void DumpIR(const std::string &, const FuncGraphPtr &, bool, LocDumpMode, const std::string &) {
-  static bool already_printed = false;
-  if (already_printed) {
-    return;
-  }
-  already_printed = true;
-  MS_LOG(WARNING) << "The functionality of dumping function graph IR is disabled, "
+#define PrintDeprecatedLog                                                          \
+  static bool already_printed = false;                                              \
+  if (already_printed) {                                                            \
+    return;                                                                         \
+  }                                                                                 \
+  already_printed = true;                                                           \
+  MS_LOG(WARNING) << "The functionality of dumping function graph IR is disabled, " \
                   << "please recompile source to enable it. See help of building script.";
-}
 
-void DumpIR(std::ostringstream &, const FuncGraphPtr &, bool, LocDumpMode) {
-  static bool already_printed = false;
-  if (already_printed) {
-    return;
-  }
-  already_printed = true;
-  MS_LOG(WARNING) << "The functionality of dumping function graph IR is disabled, "
-                  << "please recompile source to enable it. See help of building script.";
-}
+void DumpIR(const std::string &, const FuncGraphPtr &, bool, LocDumpMode, const std::string &) { PrintDeprecatedLog }
 
-void DumpIRForRDR(const std::string &, const FuncGraphPtr &, bool, LocDumpMode) {
-  static bool already_printed = false;
-  if (already_printed) {
-    return;
-  }
-  already_printed = true;
-  MS_LOG(WARNING) << "The functionality of dumping function graph IR is disabled, "
-                  << "please recompile source to enable it. See help of building script.";
-}
+void DumpIR(std::ostringstream &, const FuncGraphPtr &, bool, LocDumpMode) { PrintDeprecatedLog }
+
+void DumpIRForRDR(const std::string &, const FuncGraphPtr &, bool, LocDumpMode) { PrintDeprecatedLog }
+
+#undef PrintDeprecatedLog
 }  // namespace mindspore
