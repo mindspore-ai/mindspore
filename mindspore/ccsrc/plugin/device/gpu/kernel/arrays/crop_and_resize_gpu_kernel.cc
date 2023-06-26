@@ -90,6 +90,7 @@ int CropAndResizeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
                   << input_crop_size_shape_len;
     return KRET_RESIZE_FAILED;
   }
+
   if (input_crop_size_shape[0] != kCropLengthSize) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the length of crop_size must be 2, but got "
                   << input_crop_size_shape[0];
@@ -123,9 +124,10 @@ bool CropAndResizeGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   float *input_boxes = GetDeviceAddress<float>(inputs, 1);
   int *input_box_index = GetDeviceAddress<int>(inputs, 2);
   float *output = GetDeviceAddress<float>(outputs, 0);
-  CalCropAndResize(output_size_, input_image, input_boxes, input_box_index, batch_, input_height_, input_width_,
-                   final_height_, final_width_, channel_, method_, extrapolation_value_, output,
-                   reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto status = CalCropAndResize(output_size_, input_image, input_boxes, input_box_index, batch_, input_height_,
+                                 input_width_, final_height_, final_width_, channel_, method_, extrapolation_value_,
+                                 output, reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
   return true;
 }
 

@@ -19,8 +19,8 @@
 #include <cuda_runtime.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T>
-CUDA_LIB_EXPORT void CalCropAndResize(const size_t size, const T *input_image, float *input_boxes, int *input_box_index,
-                                      int batch, int input_height, int input_width, int final_height, int final_width,
-                                      int channel, int method, float extrapol_val, float *output,
-                                      cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalCropAndResize(const size_t size, const T *input_image, float *input_boxes,
+                                             int *input_box_index, int batch, int input_height, int input_width,
+                                             int final_height, int final_width, int channel, int method,
+                                             float extrapol_val, float *output, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CROP_AND_RESIZE_IMPL_CUH_
