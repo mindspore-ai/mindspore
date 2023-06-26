@@ -44,6 +44,7 @@ mindspore/mindspore/python/mindspore/ops/function/math_func.py:einsum
 mindspore/mindspore/python/mindspore/context.py:set_auto_parallel_context
 mindspore/mindspore/python/mindspore/common/tensor.py:__init__
 mindspore/mindspore/python/mindspore/common/parameter.py:set_data
+mindspore/mindspore/python/mindspore/ops/operations/array_ops.py:_compute_slicing_shape
 mindspore/mindspore/ccsrc/pybind_api/ir/tensor_py.cc:mindspore::tensor::GetDataType
 mindspore/mindspore/lite/src/litert/thread_pool.c:GetArch
 mindspore/mindspore/lite/src/litert/kernel/opencl/kernel/conv2d.cc:mindspore::kernel::UseWinograd4x4To6x6
