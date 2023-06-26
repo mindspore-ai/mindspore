@@ -59,6 +59,19 @@ def get_bprop_sequence_add(self):
     return bprop
 
 
+@bprop_getters.register(seq.SequenceUnstack)
+def get_bprop_sequence_unstack(self):
+    """Generate bprop for SequenceUnstack"""
+    axis = self.axis
+
+    def bprop(x, out, dout):
+        seq_unstack_grad = seq.SequenceStack(axis)
+        out = seq_unstack_grad(dout)
+        return (out,)
+
+    return bprop
+
+
 @bprop_getters.register(seq.SequenceSlice)
 def get_bprop_slice(self):
     """Generate bprop for SequenceSlice"""

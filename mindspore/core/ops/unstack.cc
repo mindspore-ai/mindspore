@@ -97,13 +97,15 @@ AbstractBasePtr UnstackInferInner(const PrimitivePtr &primitive, const std::vect
     shape = std::make_shared<abstract::Shape>(ShapeVector{abstract::Shape::kShapeRankAny});
   } else {  // the axis corresponding dim equals -1
     auto unstack_axis = GetUnstackAxis(x_shape, primitive);
-    shape = UnstackInferShape(x_shape, unstack_axis);
+    auto temp_shape = x_shape;
+    (void)temp_shape.erase(temp_shape.begin() + SizeToLong(unstack_axis));
+    shape = std::make_shared<abstract::Shape>(temp_shape);
   }
-  auto output = std::make_shared<abstract::AbstractTensor>(type, shape);
+  auto dtype = type->cast<TensorTypePtr>()->element();
+  auto output = std::make_shared<abstract::AbstractTensor>(dtype, shape);
   AbstractBasePtrList output_list = {output};
   auto output_abs_tuple = std::make_shared<abstract::AbstractTuple>(output_list);
-  output_abs_tuple->set_dynamic_len(true);
-  output_abs_tuple->set_dynamic_len_element_abs(output);
+  output_abs_tuple->CheckAndConvertToDynamicLenSequence();
   return output_abs_tuple;
 }
 }  // namespace

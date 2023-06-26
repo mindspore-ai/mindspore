@@ -1595,6 +1595,8 @@ ShapeVector AnfAlgo::GetOutputMaxShape(const AnfNodePtr &anf_node, size_t index)
     return GetShapeFromSequenceShape(sequeue_shape_ptr, index);
   } else if (shape->isa<abstract::NoShape>()) {
     return {};
+  } else if (shape->isa<abstract::DynamicSequenceShape>()) {
+    return {1};
   } else {
     MS_LOG(INTERNAL_EXCEPTION) << "Invalid shape type." << trace::DumpSourceLines(anf_node);
   }
