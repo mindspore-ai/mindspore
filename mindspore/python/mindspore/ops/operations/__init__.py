@@ -21,7 +21,7 @@ A collection of operators to build neural networks or to compute functions.
 
 from ._embedding_cache_ops import (CacheSwapTable, UpdateCache, MapCacheIdx, SubAndFilter,
                                    MapUniform, DynamicAssign, PadAndShift)
-from ._inner_ops import (MatmulDDS, DSDMatmul, Cummin, ExtractImagePatches)
+from ._inner_ops import (MatmulDDS, DSDMatmul, Cummin, ExtractImagePatches, SelectView, CopyWithSlice)
 from ._quant_ops import *
 from ._thor_ops import (CusBatchMatMul, CusCholeskyTrsm, CusFusedAbsMax1, CusImg2Col, CusMatMulCubeDenseLeft,
                         CusMatMulCubeFraczRightMul, CusMatMulCube, CusMatrixCombine, CusTranspose02314,
@@ -623,6 +623,8 @@ __all__ = [
     "DeformableOffsets",
     "Dense",
     "ExtractImagePatches",
+    "SelectView",
+    "CopyWithSlice",
     "FillDiagonal",
     "Fills",
     "Gcd",

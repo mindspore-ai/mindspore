@@ -80,6 +80,15 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
   // Clear resource when python exit.
   void ClearOpExecutorResource() const;
 
+  void RunViewKernelTask(const pynative::BaseOpRunInfo &base_op_run_info, const pynative::KernelTaskType &task_type,
+                         bool enable_async);
+
+  void RunAllocMemTask(DeviceContext *device_context, const tensor::TensorPtr &tensor, bool enable_async);
+
+  void RunContiguousTask(const tensor::TensorPtr &tensor, bool enable_async) override;
+
+  device::DeviceAddressPtr RunContiguousTaskByAddress(const device::DeviceAddressPtr &old_device_address,
+                                                      const TensorStorageInfoPtr &old_storage_info, bool enable_async);
   // Sync default stream in PyNative mode.
   void SyncStream();
 
@@ -140,6 +149,11 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
 
   // Clean the compilation cache to avoid memory leakage in dynamic shape scenarios.
   void ClearResource();
+
+  void RunViewKernelTaskAsyncImpl(const pynative::KernelTaskType &task_type, DeviceContext *device_context,
+                                  const device::DeviceAddressPtrList &input_addr_list,
+                                  const TensorStorageInfoPtrList &input_storage_list,
+                                  const device::DeviceAddressPtrList &output_addr_list);
 
   // Cache output tensor ref count of kernels for back propagation graph in PyNative mode.
   std::map<GraphId, std::map<KernelWithIndex, size_t>> cnode_ref_counts_;

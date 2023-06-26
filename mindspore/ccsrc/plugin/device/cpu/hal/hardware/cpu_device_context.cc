@@ -66,6 +66,7 @@
 #include "include/common/debug/anf_ir_dump.h"
 #endif
 #include "include/common/profiler.h"
+#include "plugin/device/cpu/hal/device/cpu_kernel_task.h"
 
 namespace mindspore {
 namespace device {
@@ -74,6 +75,20 @@ namespace {
 const char kModelNameCPU[] = "CPU";
 const char kEventOptimizeGraph[] = "OptimizeGraph";
 const char kStageSetKernelInfo[] = "SetKernelInfo";
+
+pynative::KernelTaskPtr GetTaskByTaskType(const pynative::KernelTaskType &task_type,
+                                          const std::shared_ptr<pynative::KernelTaskContext> &task_context) {
+  switch (task_type) {
+    case pynative::KernelTaskType::kCONTIGUOUS_TASK:
+      return std::make_shared<CpuContiguousKernelTask>(task_context);
+      break;
+    case pynative::KernelTaskType::kCOPY_TASK:
+      return std::make_shared<CpuCopyWithSliceKernelTask>(task_context);
+      break;
+    default:
+      MS_LOG(EXCEPTION) << "KernelTaskType is invalid, task_type:" << task_type;
+  }
+}
 }  // namespace
 using mindspore::kernel::KernelBuildInfo;
 
@@ -486,6 +501,26 @@ bool CPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<A
   MS_LOG(DEBUG) << "Begin launch kernel: " << kernel->fullname_with_scope();
   auto ret = DoLaunchKernel(kernel, inputs, workspace, outputs);
   MS_LOG(DEBUG) << "End launch kernel: " << kernel->fullname_with_scope();
+  return ret;
+}
+
+bool CPUKernelExecutor::ExecuteKernelTask(const pynative::KernelTaskType &task_type,
+                                          const device::DeviceAddressPtrList &input_addr_list,
+                                          const TensorStorageInfoPtrList &input_storage_list,
+                                          const device::DeviceAddressPtrList &output_addr_list) const {
+  auto task_context = std::make_shared<pynative::KernelTaskContext>(device_context_, input_addr_list,
+                                                                    input_storage_list, output_addr_list, nullptr);
+  auto task = GetTaskByTaskType(task_type, task_context);
+  MS_EXCEPTION_IF_NULL(task);
+
+  // TODO(wangchangheng): need PROFILER_END
+  // PROFILER_END(start_time, runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelLaunch,
+  // kernel->fullname_with_scope(), false);
+
+  auto ret = task->RunWithRet();
+  if (!ret) {
+    MS_LOG(EXCEPTION) << "Exec task failed, task_type:" << task_type;
+  }
   return ret;
 }
 

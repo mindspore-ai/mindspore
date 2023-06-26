@@ -16,6 +16,7 @@
 
 #include "pipeline/pynative/forward/forward_task.h"
 
+#include <string>
 #include <memory>
 #include "include/common/utils/tensor_future.h"
 #include "include/common/profiler.h"
@@ -51,6 +52,31 @@ void BackendTask::SetException(const std::exception_ptr &e) {
       promise->SetValue(std::make_shared<pynative::DeviceAddressFutureData>(nullptr, e));
     }
   }
+}
+
+void AllocViewMemBackendTask::Run() {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeBackendTask,
+                                     std::string("AllocView"), false);
+  run_func_(op_run_info_, input_tensor_, input_idx_);
+}
+
+void AllocViewMemBackendTask::SetException(const std::exception_ptr &e) {
+  if (op_run_info_ == nullptr) {
+    return;
+  }
+  op_run_info_->stub_output->SetException(e);
+}
+
+void ContiguousBackendTask::Run() {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeBackendTask,
+                                     std::string("Contiguous"), false);
+  run_func_(tensor_);
+}
+
+void ViewKernelBackendTask::Run() {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeBackendTask,
+                                     std::string("ViewKernel"), false);
+  run_func_(op_run_info_, task_type_);
 }
 }  // namespace pynative
 }  // namespace mindspore

@@ -1446,6 +1446,83 @@ REG_BPROP_BUILDER("Gather").SetUnusedInputs({i0, i3}).SetBody(BinopGatherCommon)
 REG_BPROP_BUILDER("GatherV2").SetUnusedInputs({i0, i3}).SetBody(BinopGatherCommon);
 
 REG_BPROP_BUILDER("Fill").SetUnusedInputs({i0, i1, i2, i3, i4}).SetBody(ReturnZeros);
+REG_BPROP_BUILDER("SelectView").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto idx = ib->GetInput(kIndex1);
+  auto axis = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto x_shp = ib->GetShape(x);
+  auto out_shp = ib->GetShape(dout);
+  auto indices = ib->Tensor(GetIntValue(idx), kInt64);
+  auto ori_indices = indices;  // indices may be changed latter.
+  auto ind_shp = ib->GetShape(indices);
+
+  int64_t axis_v = 0;
+  MS_EXCEPTION_IF_NULL(axis);
+  MS_EXCEPTION_IF_NULL(axis->abstract());
+  auto axis_tmp = axis->BuildValue();
+  MS_EXCEPTION_IF_NULL(axis_tmp);
+  axis_v = CheckRange(GetIntValue(axis), SizeToLong(x_shp.size()));
+  int64_t batch_dims = 0;
+
+  if (out_shp.empty()) {
+    dout = ib->Emit("ExpandDims", {dout, ib->Tensor(-1)});
+  } else {
+    dout = ib->ExpandDims(dout, axis_v);
+  }
+
+  auto is_axis_mutable = IsMutable(axis);
+  if ((!is_axis_mutable && (IsDynamicRank(x_shp) || IsDynamicRank(ind_shp) || IsDynamicRank(out_shp))) ||
+      (is_axis_mutable && (IsDynamic(x_shp) || IsDynamic(ind_shp) || IsDynamic(out_shp)))) {
+    auto batch_dims_tensor = ib->Tensor(batch_dims, kInt64);
+    if (ind_shp.empty()) {
+      indices = ib->Emit("ExpandDims", {indices, ib->Tensor(-1)});
+      auto out_shp1 = ib->ShapeCalc(g_regenerate_output, {x, indices, axis, batch_dims_tensor}, {kIndex2, kIndex3})[0];
+      dout = ib->Reshape(dout, out_shp1);
+    }
+
+    // Calculate perm.
+    auto perms = ib->ShapeCalc(g_perms, {x, dout, indices, axis, batch_dims_tensor}, {kIndex3, kIndex4});
+    const size_t perm_num = 2;
+    MS_EXCEPTION_IF_CHECK_FAIL(perms.size() == perm_num, "Perms number should be 2 for gradient of Gather.");
+    auto perm_1 = perms[0];
+    auto perm_2 = perms[1];
+    auto values_transpose = ib->Transpose(dout, perm_1);
+    NodePtr x_grad = nullptr;
+    if (batch_dims > 0) {
+      x_grad = CalBatchGather(ib, values_transpose, indices, x, axis_v, batch_dims);
+    } else {
+      auto num_segment = CalcNumSegment(ib, x, axis);
+      x_grad = ib->UnsortedSegmentSum(values_transpose, indices, num_segment);
+    }
+    x_grad = ib->Transpose(x_grad, perm_2);
+    return {x_grad, ib->OutZeros(ori_indices), ib->OutZeros(axis)};
+  }
+
+  if (ind_shp.empty()) {
+    indices = ib->Emit("ExpandDims", {indices, ib->Tensor(-1)});
+    ind_shp = ib->GetShape(indices);
+    auto out_shp1 = RegenerateOutputShape(x_shp, ind_shp, axis_v);
+    dout = ib->Reshape(dout, out_shp1);
+  }
+
+  if (ind_shp.empty()) {
+    indices = ib->Emit("ExpandDims", {indices, ib->Tensor(-1)});
+    ind_shp = ib->GetShape(indices);
+    auto out_shp1 = RegenerateOutputShape(x_shp, ind_shp, axis_v);
+    dout = ib->Reshape(dout, out_shp1);
+  }
+
+  out_shp = ib->GetShape(dout);
+  auto perm_1 = GenerateShapeIndex(out_shp, ind_shp, axis_v, batch_dims);
+  auto values_transpose = ib->Transpose(dout, perm_1);
+  NodePtr x_grad = nullptr;
+  auto num_segment = CalcNumSegment(ib, x, axis);
+  x_grad = ib->UnsortedSegmentSum(values_transpose, indices, num_segment);
+  auto perm_2 = GenerateInverseIndex(x_shp, axis_v, batch_dims);
+  auto params_grad = ib->Transpose(x_grad, perm_2);
+  return {params_grad, ib->OutZeros(ori_indices), ib->OutZeros(axis)};
+});
 
 REG_BPROP_BUILDER("MatrixBandPart").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   auto lower = ib->GetInput(kIndex1);
@@ -1877,6 +1954,11 @@ REG_BPROP_BUILDER("ScatterAddWithAxis").SetUnusedInputs({i0, i2, i3}).SetBody(BO
     update_grad = ib->GatherD(dout, ib->EmitValue(axis), indices);
   }
   return {dout, ib->OutZeros(indices), update_grad};
+});
+
+REG_BPROP_BUILDER("CopyWithSlice").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
+  auto dout = ib->GetInput(kIndex3);
+  return {ib->OutZeros(dout), dout};
 });
 
 REG_BPROP_BUILDER("Expand").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {

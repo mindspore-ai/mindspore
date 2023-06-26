@@ -2707,3 +2707,23 @@ class IsConstant(Primitive):
 
     def __call__(self, x):
         return True
+
+
+class SelectView(Primitive):
+    r"""
+        Select tensor of view
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['input_tensor', 'input_indices', 'axis'], outputs=['output'])
+
+
+class CopyWithSlice(Primitive):
+    r"""
+        Copy data to discontinuous tensor
+    """
+    @prim_attr_register
+    def __init__(self):
+        self.add_prim_attr('side_effect_mem', True)
+        self.init_prim_io_names(inputs=['x', 'y'], outputs=['x'])

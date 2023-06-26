@@ -28,6 +28,7 @@
 #include "backend/graph_compiler/backend.h"
 #include "ir/cell.h"
 #include "runtime/pynative/async/async_queue.h"
+#include "ops/view/view_strides_calculator.h"
 
 namespace mindspore {
 namespace pynative {
@@ -122,6 +123,27 @@ class ForwardExecutor {
   void PrepareOpInputs(const FrontendOpRunInfoPtr &op_run_info);
   void PrepareOpOutputs(const FrontendOpRunInfoPtr &op_run_info) const;
   void OpRunInfoUsePrimC(const FrontendOpRunInfoPtr &op_run_info) const;
+  void CreateInputAddressForViewOp(const FrontendOpRunInfoPtr &op_run_info);
+  void PrepareViewOpOutputs(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
+                            const TensorStorageInfoPtr &storage_info, const KernelTaskType &task_type);
+  void DispatchViewKernelTask(const FrontendOpRunInfoPtr &op_run_info, const KernelTaskType &task_type);
+  void ForwardRunViewKernelTask(const FrontendOpRunInfoPtr &op_run_info, const KernelTaskType &task_type,
+                                bool enable_async);
+  void ForwardOpGradImpl(const FrontendOpRunInfoPtr &op_run_info);
+
+  bool ProcessViewOp(const FrontendOpRunInfoPtr &op_run_info, const ops::StridesCalcFunc &func_info);
+  void RefreshTensorContiguous(const tensor::TensorPtr &tensor);
+  device::DeviceAddressPtr TensorContiguousCallback(const DeviceSyncPtr &device_address,
+                                                    const TensorStorageInfoPtr &storage_info);
+  void CreateViewOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs,
+                              const tensor::TensorPtr &input_tensor, const TensorStorageInfoPtr &storage_info,
+                              const KernelTaskType &task_type);
+
+  void DispatchAllocateMemTask(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
+                               const size_t &input_idx);
+  void CreateDeviceAddressForViewInput(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
+                                       const size_t &input_idx, bool enable_async);
+  void RunContiguousTask(const tensor::TensorPtr &tensor, bool enable_async);
 
  private:
   bool init_{false};

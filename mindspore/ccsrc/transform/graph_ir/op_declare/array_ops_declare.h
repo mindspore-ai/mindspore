@@ -20,6 +20,7 @@
 #include "inc/ops/array_ops.h"
 #include "inc/ops/selection_ops.h"
 #include "transform/graph_ir/custom_op_proto/cust_array_ops.h"
+#include "inc/ops/transformation_ops.h"
 #include "transform/graph_ir/op_declare/op_declare_macro.h"
 #include "utils/hash_map.h"
 
@@ -118,4 +119,10 @@ DECLARE_CUST_OP_USE_OUTPUT(MaskedSelectGrad)
 
 DECLARE_CUST_OP_ADAPTER(GatherDGradV2)
 DECLARE_CUST_OP_USE_OUTPUT(GatherDGradV2)
+
+DECLARE_OP_ADAPTER(AsStrided)
+DECLARE_OP_USE_OUTPUT(AsStrided)
+
+DECLARE_OP_ADAPTER(ViewCopy)
+DECLARE_OP_USE_OUTPUT(ViewCopy)
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_ARRAY_OPS_DECLARE_H_

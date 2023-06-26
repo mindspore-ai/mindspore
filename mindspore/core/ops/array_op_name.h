@@ -173,6 +173,7 @@ constexpr auto kUnsortedSegmentMinOpName = "UnsortedSegmentMin";
 constexpr auto kUnsortedSegmentMinDOpName = "UnsortedSegmentMinD";
 constexpr auto kUpdateCacheOpName = "UpdateCache";
 constexpr auto kBroadcastOpName = "Broadcast";
+constexpr auto kCopyWithScileOpName = "CopyWithSlice";
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_BASE_ARRAY_OP_NAME_H_

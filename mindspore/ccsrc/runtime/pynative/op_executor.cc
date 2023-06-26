@@ -88,6 +88,10 @@ void OpExecutor::PushOpRunTask(const std::shared_ptr<pynative::DeviceOpRunTask> 
   async_queue_.Push(op_run_task);
 }
 
+void OpExecutor::PushSimpleOpRunTask(const std::shared_ptr<pynative::AsyncTask> &op_run_task) {
+  async_queue_.Push(op_run_task);
+}
+
 std::vector<std::shared_ptr<pynative::DeviceOpBuildTask>> OpExecutor::PopOpBuildTasks() {
   std::unique_lock<std::mutex> lock(build_mutex_);
   auto build_tasks = op_build_tasks_;

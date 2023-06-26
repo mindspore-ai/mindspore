@@ -188,7 +188,9 @@ void InferOperation::DoInfer(const FrontendOpRunInfoPtr &op_run_info) {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeInfer,
                                      op_run_info->base_op_run_info.op_name, true);
   SetInputAbstract(op_run_info);
-  InferOutputAbstract(op_run_info);
+  if (!op_run_info->is_view_op) {
+    InferOutputAbstract(op_run_info);
+  }
 }
 
 void InferOperation::SetInputAbstract(const FrontendOpRunInfoPtr &op_run_info) {

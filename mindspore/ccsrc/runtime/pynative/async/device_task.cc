@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <string>
 #include "runtime/pynative/async/device_task.h"
 #include "include/common/profiler.h"
 
@@ -41,6 +42,18 @@ void DeviceOpRunTask::Run() {
   }
   MS_EXCEPTION_IF_NULL(run_func_);
   run_func_(context_);
+}
+
+void AllocViewMemDeviceTask::Run() {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeDeviceTask,
+                                     std::string("AllocView"), false);
+  run_func_(device_context_, tensor_);
+}
+
+void KernelDeviceTask::Run() {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeDeviceTask,
+                                     std::string("KernelTask"), false);
+  run_func_(task_type_, input_addr_list_, input_storage_list_, output_addr_list_, device_context_);
 }
 }  // namespace pynative
 }  // namespace mindspore

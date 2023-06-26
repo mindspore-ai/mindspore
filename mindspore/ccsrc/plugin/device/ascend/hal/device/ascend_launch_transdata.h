@@ -50,6 +50,7 @@ class AscendLaunchTransData : public AscendLaunchKernel {
 
   void LaunchOpKernel() override;
   void FreeLaunchDeviceMem() override;
+  void FreeWorkspaceDeviceMem();
 
  protected:
   TypeId dtype_;

@@ -70,7 +70,6 @@ struct BackendOpRunInfo {
   PrimitivePtr op_prim;
   bool is_infer = false;
   bool is_gradient_out = false;
-  std::vector<tensor::TensorPtr> output_tensors;
   std::vector<pynative::DeviceAddressPromisePtr> device_sync_promises;
 };
 using BackendOpRunInfoPtr = std::shared_ptr<BackendOpRunInfo>;

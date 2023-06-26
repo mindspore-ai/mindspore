@@ -544,6 +544,7 @@ tensor::TensorPtr Common::CreateFakeTensorWithoutDeviceAddress(const tensor::Ten
     t->set_param_info(tensor->param_info());
   }
   t->set_device_address(nullptr);
+  t->set_storage_info(nullptr);
   return t;
 }
 
@@ -556,6 +557,7 @@ ValuePtr Common::CreateFakeValueWithoutDeviceAddress(const ValuePtr &value) {
       t->set_param_info(v_t->param_info());
     }
     t->set_device_address(nullptr);
+    t->set_storage_info(nullptr);
     return t;
   } else if (value->isa<ValueSequence>()) {
     const auto &value_seq = value->cast<ValueSequencePtr>();

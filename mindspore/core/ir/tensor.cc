@@ -683,11 +683,13 @@ Tensor::Tensor(const Tensor &tensor)
       padding_type_(tensor.padding_type()),
       device_event_(tensor.device_event_),
       lazy_callback_(tensor.lazy_callback_),
+      contiguous_callback_(tensor.contiguous_callback_),
       pin_mem_register_(tensor.pin_mem_register_),
       auto_grad_meta_data_(tensor.auto_grad_meta_data_),
       compression_type_(tensor.compression_type_),
       tensor_name_(tensor.tensor_name_),
-      address_future_(tensor.address_future_) {
+      address_future_(tensor.address_future_),
+      storage_info_(tensor.storage_info_) {
   user_data_ = tensor.user_data_;
   set_device_info(tensor.device_info());
 }
@@ -710,11 +712,13 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
       padding_type_(tensor.padding_type()),
       device_event_(tensor.device_event_),
       lazy_callback_(tensor.lazy_callback_),
+      contiguous_callback_(tensor.contiguous_callback_),
       pin_mem_register_(tensor.pin_mem_register_),
       auto_grad_meta_data_(tensor.auto_grad_meta_data_),
       compression_type_(tensor.compression_type_),
       tensor_name_(tensor.tensor_name_),
-      address_future_(tensor.address_future_) {
+      address_future_(tensor.address_future_),
+      storage_info_(tensor.storage_info_) {
   user_data_ = tensor.user_data_;
   set_device_info(tensor.device_info());
 }
@@ -740,6 +744,7 @@ Tensor &Tensor::operator=(const Tensor &tensor) {
   device_event_ = tensor.device_event_;
   lazy_callback_ = tensor.lazy_callback_;
   pin_mem_register_ = tensor.pin_mem_register_;
+  contiguous_callback_ = tensor.contiguous_callback_;
   user_data_ = tensor.user_data_;
   auto_grad_meta_data_ = tensor.auto_grad_meta_data_;
   compression_type_ = tensor.compression_type_;
@@ -882,6 +887,11 @@ void Tensor::ExecuteLazyTask() const {
   if (lazy_callback_ != nullptr) {
     lazy_callback_();
   }
+
+  if (storage_info_ != nullptr && contiguous_callback_ != nullptr) {
+    this->device_sync_ = contiguous_callback_(this->device_address(), this->storage_info());
+    this->storage_info_ = nullptr;
+  }
 }
 
 DeviceSyncPtr Tensor::device_address() const {
@@ -909,6 +919,7 @@ void Tensor::set_device_address(const DeviceSyncPtr &device_sync, bool need_upda
 Tensor &Tensor::AssignValue(const Tensor &tensor) {
   if (this != &tensor) {
     lazy_callback_ = tensor.lazy_callback_;
+    contiguous_callback_ = tensor.contiguous_callback_;
     ExecuteLazyTask();
     MetaTensor::operator=(tensor);
     address_future_ = nullptr;

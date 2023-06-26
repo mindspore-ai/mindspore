@@ -234,4 +234,23 @@ CUST_INPUT_MAP(GatherDGradV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(index)}, {3,
 CUST_ATTR_MAP(GatherDGradV2) = {{"dim", ATTR_DESC(dim, AnyTraits<int64_t>())}};
 CUST_OUTPUT_MAP(GatherDGradV2) = {{0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(GatherDGradV2, prim::kPrimGatherDGradV2->name(), CUST_ADPT_DESC(GatherDGradV2))
+
+// AsStrided
+INPUT_MAP(AsStrided) = {
+  {1, INPUT_DESC(x)}, {2, INPUT_DESC(size)}, {3, INPUT_DESC(stride)}, {4, INPUT_DESC(storage_offset)}};
+ATTR_INPUT_MAP(AsStrided) = {{"size", "size"}, {"stride", "stride"}, {"storage_offset", "storage_offset"}};
+ATTR_MAP(AsStrided) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(AsStrided) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(AsStrided, kNameAsStrided, ADPT_DESC(AsStrided))
+
+// ViewCopy
+INPUT_MAP(ViewCopy) = {
+  {1, INPUT_DESC(dst)}, {2, INPUT_DESC(dst_size)}, {3, INPUT_DESC(dst_stride)}, {4, INPUT_DESC(dst_storage_offset)},
+  {5, INPUT_DESC(src)}, {6, INPUT_DESC(src_size)}, {7, INPUT_DESC(src_stride)}, {8, INPUT_DESC(src_storage_offset)}};
+ATTR_INPUT_MAP(ViewCopy) = {
+  {"dst_size", "dst_size"}, {"dst_stride", "dst_stride"}, {"dst_storage_offset", "dst_storage_offset"},
+  {"src_size", "src_size"}, {"src_stride", "src_stride"}, {"src_storage_offset", "src_storage_offset"}};
+ATTR_MAP(ViewCopy) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(ViewCopy) = {{0, OUTPUT_DESC(dst)}};
+REG_ADPT_DESC(ViewCopy, kNameViewCopy, ADPT_DESC(ViewCopy))
 }  // namespace mindspore::transform
