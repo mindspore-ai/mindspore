@@ -2810,10 +2810,7 @@ def logsigmoid(x):
         >>> print(output)
         [-0.31326166 -0.12692806 -0.04858734]
     """
-    output = _get_cache_prim(P.Mul)()(x, -1)
-    output = _get_cache_prim(P.Exp)()(output)
-    output = _get_cache_prim(P.Add)()(output, 1)
-    output = _get_cache_prim(P.Reciprocal)()(output)
+    output = _get_cache_prim(P.Sigmoid)()(x)
     ret = _get_cache_prim(P.Log)()(output)
     return ret
 
