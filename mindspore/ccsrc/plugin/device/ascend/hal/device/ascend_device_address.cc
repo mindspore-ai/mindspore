@@ -206,7 +206,9 @@ bool AscendDeviceAddress::SyncDeviceToHost(size_t size, void *const host_ptr) co
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
   BindDevice();
   SyncStream();
-  MoveToDevice(false);
+  if (!MoveToDevice(false)) {
+    MS_LOG(WARNING) << "Move data to device failed, check previous log for details.";
+  }
   CopyDeviceToHost(host_ptr, size);
   return true;
 }
@@ -215,7 +217,9 @@ bool AscendDeviceAddress::SyncHostToDevice(size_t size, const void *host_ptr) co
   MS_EXCEPTION_IF_NULL(host_ptr);
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
   BindDevice();
-  MoveToDevice(false);
+  if (!MoveToDevice(false)) {
+    MS_LOG(WARNING) << "Move data to device failed, check previous log for details.";
+  }
   CopyHostToDevice(host_ptr, size);
   return true;
 }
@@ -229,7 +233,9 @@ bool AscendDeviceAddress::SyncDeviceToHost(const ShapeVector &shape, size_t size
   }
   BindDevice();
   SyncStream();
-  MoveToDevice(false);
+  if (!MoveToDevice(false)) {
+    MS_LOG(WARNING) << "Move data to device failed, check previous log for details.";
+  }
   bool sync_ok = false;
   ShapeVector host_shape = shape;
   if (host_shape.empty()) {
@@ -412,7 +418,9 @@ bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size
     return true;
   }
   BindDevice();
-  MoveToDevice(false);
+  if (!MoveToDevice(false)) {
+    MS_LOG(WARNING) << "Move data to device failed, check previous log for details.";
+  }
   bool sync_ok = false;
   ShapeVector host_shape = shape;
   if (host_shape.empty()) {
@@ -552,7 +560,9 @@ bool AscendDeviceAddress::AsyncDeviceToDevice(const ShapeVector & /* shape */, s
   }
 
   BindDevice();
-  MoveToDevice(false);
+  if (!MoveToDevice(false)) {
+    MS_LOG(WARNING) << "Move data to device failed, check previous log for details.";
+  }
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -575,7 +585,9 @@ bool AscendDeviceAddress::AsyncHostToDevice(const ShapeVector & /* shape */, siz
                                             const void *host_ptr, size_t stream_id) const {
   MS_ERROR_IF_NULL(host_ptr);
   BindDevice();
-  MoveToDevice(false);
+  if (!MoveToDevice(false)) {
+    MS_LOG(WARNING) << "Move data to device failed, check previous log for details.";
+  }
   MS_ERROR_IF_NULL(ptr_);
   auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
   if (stream == nullptr) {
@@ -595,7 +607,10 @@ bool AscendDeviceAddress::AsyncDeviceToHost(const ShapeVector & /* shape */, siz
                                             void *host_ptr, size_t stream_id) const {
   MS_ERROR_IF_NULL(host_ptr);
   BindDevice();
-  MoveToDevice(false);
+  if (!MoveToDevice(false)) {
+    MS_LOG(ERROR) << "Move data to device failed, check previous log for details.";
+    return false;
+  }
   MS_ERROR_IF_NULL(ptr_);
   const auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
   MS_ERROR_IF_NULL(stream);

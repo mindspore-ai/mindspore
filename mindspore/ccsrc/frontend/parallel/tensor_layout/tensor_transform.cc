@@ -234,7 +234,6 @@ RedistributionOpListPtr TensorTransform::OptimizeTensorRedistributionOperatorLis
     if ((i > 0 && transform_op_list[i - 1].first == RESHAPE) &&
         (i < transform_op_list.size() - 1 && transform_op_list[i + 1].first == RESHAPE)) {
       auto src_shape = transform_op_list[i - 1].second;
-      auto dst_shape = transform_op_list[i + 1].second;
       auto new_axis = axis;
       auto new_src_shape = src_shape;
       for (int32_t j = axis - 1; j >= 0; --j) {
