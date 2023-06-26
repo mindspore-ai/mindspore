@@ -1,7 +1,7 @@
 mindspore.train.CheckpointConfig
 ================================
 
-.. py:class:: mindspore.train.CheckpointConfig(save_checkpoint_steps=1, save_checkpoint_seconds=0, keep_checkpoint_max=5, keep_checkpoint_per_n_minutes=0, integrated_save=True, async_save=False, saved_network=None, append_info=None, enc_key=None, enc_mode='AES-GCM', exception_save=False)
+.. py:class:: mindspore.train.CheckpointConfig(save_checkpoint_steps=1, save_checkpoint_seconds=0, keep_checkpoint_max=5, keep_checkpoint_per_n_minutes=0, integrated_save=True, async_save=False, saved_network=None, append_info=None, enc_key=None, enc_mode='AES-GCM', exception_save=False, **kwargs)
 
     保存checkpoint时的配置策略。
 
@@ -20,6 +20,8 @@ mindspore.train.CheckpointConfig
         - **enc_key** (Union[None, bytes]) - 用于加密的字节类型key。如果值为None，则不需要加密。默认值： ``None`` 。
         - **enc_mode** (str) - 仅当 `enc_key` 不设为None时，该参数有效。指定了加密模式，目前支持AES-GCM，AES-CBC和SM4-CBC。默认值： ``'AES-GCM'`` 。
         - **exception_save** (bool) - 当有异常发生时，是否保存当前checkpoint文件。默认值： ``False`` 。
+        - **kwargs** (dict) - 配置选项字典。
+            - incremental (bool): 是否可以增量导出MapParameter的检查点。
 
     异常：
         - **ValueError** - 输入参数的类型不正确。
