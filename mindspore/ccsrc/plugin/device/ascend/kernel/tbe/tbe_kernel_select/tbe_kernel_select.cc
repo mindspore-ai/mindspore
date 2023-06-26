@@ -261,6 +261,9 @@ bool TbeKernelSelect::FilterUnspportedMatMul(const KernelBuildInfoPtr &kernel_bu
 bool TbeKernelSelect::FilterInvalidShape(const KernelBuildInfoPtr &kernel_build_info,
                                          const std::vector<int64_t> &dynamic_inputs) {
   MS_EXCEPTION_IF_NULL(kernel_build_info);
+  if (common::AnfAlgo::GetInputTensorNum(cnode_ptr_) != kernel_build_info->GetInputNum()) {
+    return false;
+  }
   const auto &kernel_build_info_inputs_format = kernel_build_info->GetAllInputFormats();
   // dynamic input just need to check first input, because other inputs copy from 1th input;
   auto iter_num = dynamic_inputs.empty() ? kernel_build_info_inputs_format.size() : dynamic_inputs.size();
