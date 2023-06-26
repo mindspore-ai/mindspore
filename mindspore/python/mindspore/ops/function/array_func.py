@@ -3533,7 +3533,7 @@ def gather_nd(input_x, indices):
 
 
 def tensor_scatter_add(input_x, indices, updates):
-    """
+    r"""
     Creates a new tensor by adding the values from the positions in `input_x` indicated by
     `indices`, with values from `updates`. When multiple values are given for the same
     index, the updated result will be the sum of all values. This operation is almost
@@ -3544,18 +3544,23 @@ def tensor_scatter_add(input_x, indices, updates):
     there must be a corresponding value in `updates`. The shape of `updates` should be
     equal to the shape of `input_x[indices]`. For more details, see use cases.
 
+    .. math::
+        output\left [indices  \right ] = input\_x + update
+
     Note:
-        On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
-        the corresponding `updates` will not be updated to self tensor. On CPU, if some values of
-        the `indices` are out of bound, raising an index error. On Ascend, out of bound checking is
-        not supported, if some values of the `indices` are out of bound, unknown errors may be caused.
+        - On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
+          the corresponding `updates` will not be updated to self tensor.
+        - On CPU, if some values of the `indices` are out of bound, raising an index error.
+        - On Ascend, out of bound checking is not supported, if some values of the `indices` are out of bound,
+        unknown errors may be caused.
 
     Args:
-        input_x (Tensor): The target tensor. The dimension of input_x must be no less than indices.shape[-1].
+        input_x (Tensor): The input tensor. The dimension of input_x must be no less than indices.shape[-1].
         indices (Tensor): The index of input tensor whose data type is int32 or int64.
             The rank must be at least 2.
         updates (Tensor): The tensor to update the input tensor, has the same type as input,
-            and updates. Shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+            and updates. And the shape should be
+            equal to :math:`indices.shape[:-1] + input\_x.shape[indices.shape[-1]:]`.
 
     Returns:
         Tensor, has the same shape and type as `input_x`.
@@ -3563,7 +3568,7 @@ def tensor_scatter_add(input_x, indices, updates):
     Raises:
         TypeError: If dtype of `indices` is neither int32 nor int64.
         ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
-        RuntimeError: If a value of `indices` is not in `input_x`.
+        RuntimeError: If a value of `indices` is not in `input_x` on CPU backend.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3642,7 +3647,7 @@ def tensor_scatter_sub(input_x, indices, updates):
 
 
 def tensor_scatter_max(input_x, indices, updates):
-    """
+    r"""
     By comparing the value at the position indicated by `indices` in `input_x` with the value in the `updates`,
     the value at the index will eventually be equal to the largest one to create a new tensor.
 
@@ -3650,16 +3655,22 @@ def tensor_scatter_max(input_x, indices, updates):
     there must be a corresponding value in `updates`. The shape of `updates` should be
     equal to the shape of input_x[indices].
 
+    .. math::
+        output\left [indices  \right ] = \max(input\_x, update)
+
     Note:
-        If some values of the `indices` are out of bound, instead of raising an index error,
-        the corresponding `updates` will not be updated to `input_x`.
+        - On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
+          the corresponding `updates` will not be updated to self tensor.
+        - On CPU, if some values of the `indices` are out of bound, raising an index error.
+        - On Ascend, out of bound checking is not supported, if some values of the `indices` are out of bound,
+            unknown errors may be caused.
 
     Args:
-        input_x (Tensor): The target tensor. The dimension of input_x must be no less than indices.shape[-1].
-        indices (Tensor): The index of input tensor whose data type is int32 or int64.
+        input_x (Tensor): The input tensor. The dimension of `input_x` must be no less than indices.shape[-1].
+        indices (Tensor): The index of input tensor whose data type must be int32 or int64.
             The rank must be at least 2.
-        updates (Tensor): The tensor to update the input tensor, has the same type as input,
-            and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+        updates (Tensor): The tensor to update the `input_x` tensor, has the same type as input,
+            and updates.shape should be equal to :math:`indices.shape[:-1] + input\_x.shape[indices.shape[-1]:]`.
 
     Returns:
         Tensor, has the same shape and type as `input_x`.
@@ -3667,7 +3678,7 @@ def tensor_scatter_max(input_x, indices, updates):
     Raises:
         TypeError: If dtype of `indices` is neither int32 nor int64.
         ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
-        RuntimeError: If a value of `indices` is not in `input_x`.
+        RuntimeError: If a value of `indices` is not in `input_x` on CPU backend.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -3694,7 +3705,7 @@ def tensor_scatter_max(input_x, indices, updates):
 
 
 def tensor_scatter_min(input_x, indices, updates):
-    """
+    r"""
     By comparing the value at the position indicated by `indices` in `input_x` with the value in the `updates`,
     the value at the index will eventually be equal to the smallest one to create a new tensor.
 
@@ -3702,16 +3713,23 @@ def tensor_scatter_min(input_x, indices, updates):
     there must be a corresponding value in `updates`. The shape of `updates` should be
     equal to the shape of `input_x[indices]`. For more details, see case below.
 
+    .. math::
+        output\left [indices  \right ] = \min(input\_x, update)
+
     Note:
-        If some values of the `indices` are out of range, instead of raising an index error,
-        the corresponding `updates` will not be hw to `input_x`.
+        - On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
+          the corresponding `updates` will not be updated to self tensor.
+        - On CPU, if some values of the `indices` are out of bound, raising an index error.
+        - On Ascend, out of bound checking is not supported, if some values of the `indices` are out of bound,
+            unknown errors may be caused.
 
     Args:
-        input_x (Tensor): The input tensor. The dimension of input_x must be no less than indices.shape[-1].
+        input_x (Tensor): The input tensor. The dimension of `input_x` must be no less than indices.shape[-1].
         indices (Tensor): The index of input tensor whose data type is int32 or int64.
             The rank must be at least 2.
-        updates (Tensor): The tensor to update the input tensor, has the same type as input,
-            and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+        updates (Tensor): The tensor to update the input tensor, has the same type as `input_x`
+            And the shape of `updates` should be
+            equal to :math:`indices.shape[:-1] + input\_x.shape[indices.shape[-1]:]`.
 
     Returns:
         Tensor, has the same shape and type as `input_x`.
@@ -3719,7 +3737,7 @@ def tensor_scatter_min(input_x, indices, updates):
     Raises:
         TypeError: If dtype of `indices` is neither int32 nor int64.
         ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
-        RuntimeError: If a value of `indices` is not in `input_x`.
+        RuntimeError: If a value of `indices` is not in `input_x` on CPU backend.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4892,7 +4910,7 @@ def tensor_scatter_mul(input_x, indices, updates):
     Raises:
         TypeError: If dtype of `indices` is neither int32 nor int64.
         ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
-        RuntimeError: If a value of `indices` is not in `input_x`.
+        RuntimeError: If a value of `indices` is not in `input_x` on CPU backend.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -4919,7 +4937,7 @@ def tensor_scatter_mul(input_x, indices, updates):
 
 
 def tensor_scatter_div(input_x, indices, updates):
-    """
+    r"""
     Creates a new tensor by dividing the values from the positions in `input_x` indicated by
     `indices`, with values from `updates`. When divided values are provided for the same
     index, the result of the update will be to divided these values respectively. Except that
@@ -4929,18 +4947,25 @@ def tensor_scatter_div(input_x, indices, updates):
     there must be a corresponding value in `updates`. The shape of `updates` should be
     equal to the shape of `input_x[indices]`. For more details, see use cases.
 
+    .. math::
+        output\left [indices  \right ] = input\_x \div update
+
     Note:
-        - If some values of the `indices` are out of bound, instead of raising an index error,
-          the corresponding `updates` will not be updated to `input_x`.
+        - On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
+          the corresponding `updates` will not be updated to self tensor.
+        - On CPU, if some values of the `indices` are out of bound, raising an index error.
+        - On Ascend, out of bound checking is not supported, if some values of the `indices` are out of bound,
+            unknown errors may be caused.
         - The operator can't handle division by 0 exceptions, so the user needs to make sure
           there is no 0 value in `updates`.
 
     Args:
-        input_x (Tensor): The input tensor. The dimension of `input_x` must be no less than indices.shape[-1].
+        input_x (Tensor): The input tensor. The dimension of input_x must be no less than indices.shape[-1].
         indices (Tensor): The index of input tensor whose data type is int32 or int64.
             The rank must be at least 2.
-        updates (Tensor): The tensor to update the `input_x` tensor, has the same type as `input_x`,
-            and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+        updates (Tensor): The tensor to update the `input_x` tensor, has the same type as `input_x`.
+            And the shape of `updates` should be
+            equal to :math:`indices.shape[:-1] + input\_x.shape[indices.shape[-1]:]`.
 
     Returns:
         Tensor, has the same shape and type as `input_x`.

@@ -8,7 +8,7 @@
     `indices` 的最后一个轴是每个索引向量的深度。对于每个索引向量， `updates` 中必须有相应的值。 `updates` 的shape应该等于 `input_x[indices]` 的shape。有关更多详细信息，请参见使用用例。
 
     .. note::
-        如果indices中的值超出输入 `input_x` 索引范围：GPU平台上相应的 `updates` 不会更新到 `input_x` 且不会抛出索引错误；CPU平台上直接抛出索引错误；Ascend平台不支持越界检查，若越界可能会造成未知错误。
+        如果 `indices` 中的值超出输入 `input_x` 索引范围：GPU平台上相应的 `updates` 不会更新到 `input_x` 且不会抛出索引错误；CPU平台上直接抛出索引错误；Ascend平台不支持越界检查，若越界可能会造成未知错误。
 
     .. math::
         output\left [indices  \right ] = input\_x- update
