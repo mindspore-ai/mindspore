@@ -1136,7 +1136,7 @@ def randint_like(input, low, high, seed=None, *, dtype=None):
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype, it must be int type. If ``None`` ,
-            `mindspore.int64` will be used. Default: ``None`` .
+            the same dtype of `input` will be applied. Default: ``None`` .
 
     Returns:
         Tensor, with the designated shape and dtype, filled with random integers from low (inclusive)
