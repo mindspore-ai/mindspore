@@ -286,6 +286,10 @@ def _scalar_to_tensor(input_x):
 def tensor_item(data, *args):
     """Tensor getitem by index whose dtype is int or tuple with int."""
     # transform a.item(tuple(int)) -> a.item(int1,int2...intN)
+    if data.size == 1 and data.ndim == 0:
+        if args != (None,):
+            const_utils.raise_value_error("For item , the args of scalar Tensor should be None.")
+        return data
     if len(args) == 1 and isinstance(args[0], tuple):
         args = args[0]
 
