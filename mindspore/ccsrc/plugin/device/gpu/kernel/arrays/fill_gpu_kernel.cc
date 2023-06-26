@@ -52,40 +52,42 @@ const std::vector<std::pair<KernelAttr, FillGpuKernelMod::KernelRunFunc>> &FillG
     kNumberTypeFloat32, kNumberTypeFloat64, kNumberTypeUInt8,     kNumberTypeUInt16,    kNumberTypeUInt32,
     kNumberTypeUInt64,  kNumberTypeBool,    kNumberTypeComplex64, kNumberTypeComplex128};
 
-  std::pair<KernelAttr, FillGpuKernelMod::KernelRunFunc> type_pair;
-  for (auto i : shape_type_list) {
-    for (auto j : value_type_list) {
-      for (auto k : value_type_list) {
-        if (k == kNumberTypeInt8) {
-          type_pair = FILL_GPU_REG(i, j, k, int8_t);
-        } else if (k == kNumberTypeInt16) {
-          type_pair = FILL_GPU_REG(i, j, k, int16_t);
-        } else if (k == kNumberTypeInt32) {
-          type_pair = FILL_GPU_REG(i, j, k, int32_t);
-        } else if (k == kNumberTypeInt64) {
-          type_pair = FILL_GPU_REG(i, j, k, int64_t);
-        } else if (k == kNumberTypeFloat16) {
-          type_pair = FILL_GPU_REG(i, j, k, float16);
-        } else if (k == kNumberTypeFloat32) {
-          type_pair = FILL_GPU_REG(i, j, k, float);
-        } else if (k == kNumberTypeFloat64) {
-          type_pair = FILL_GPU_REG(i, j, k, double);
-        } else if (k == kNumberTypeUInt8) {
-          type_pair = FILL_GPU_REG(i, j, k, uint8_t);
-        } else if (k == kNumberTypeUInt16) {
-          type_pair = FILL_GPU_REG(i, j, k, uint16_t);
-        } else if (k == kNumberTypeUInt32) {
-          type_pair = FILL_GPU_REG(i, j, k, uint32_t);
-        } else if (k == kNumberTypeUInt64) {
-          type_pair = FILL_GPU_REG(i, j, k, uint64_t);
-        } else if (k == kNumberTypeBool) {
-          type_pair = FILL_GPU_REG(i, j, k, bool);
-        } else if (k == kNumberTypeComplex64) {
-          type_pair = FILL_GPU_REG(i, j, k, Complex<float>);
-        } else if (k == kNumberTypeComplex128) {
-          type_pair = FILL_GPU_REG(i, j, k, Complex<double>);
+  if (func_list.empty()) {
+    std::pair<KernelAttr, FillGpuKernelMod::KernelRunFunc> type_pair;
+    for (auto i : shape_type_list) {
+      for (auto j : value_type_list) {
+        for (auto k : value_type_list) {
+          if (k == kNumberTypeInt8) {
+            type_pair = FILL_GPU_REG(i, j, k, int8_t);
+          } else if (k == kNumberTypeInt16) {
+            type_pair = FILL_GPU_REG(i, j, k, int16_t);
+          } else if (k == kNumberTypeInt32) {
+            type_pair = FILL_GPU_REG(i, j, k, int32_t);
+          } else if (k == kNumberTypeInt64) {
+            type_pair = FILL_GPU_REG(i, j, k, int64_t);
+          } else if (k == kNumberTypeFloat16) {
+            type_pair = FILL_GPU_REG(i, j, k, float16);
+          } else if (k == kNumberTypeFloat32) {
+            type_pair = FILL_GPU_REG(i, j, k, float);
+          } else if (k == kNumberTypeFloat64) {
+            type_pair = FILL_GPU_REG(i, j, k, double);
+          } else if (k == kNumberTypeUInt8) {
+            type_pair = FILL_GPU_REG(i, j, k, uint8_t);
+          } else if (k == kNumberTypeUInt16) {
+            type_pair = FILL_GPU_REG(i, j, k, uint16_t);
+          } else if (k == kNumberTypeUInt32) {
+            type_pair = FILL_GPU_REG(i, j, k, uint32_t);
+          } else if (k == kNumberTypeUInt64) {
+            type_pair = FILL_GPU_REG(i, j, k, uint64_t);
+          } else if (k == kNumberTypeBool) {
+            type_pair = FILL_GPU_REG(i, j, k, bool);
+          } else if (k == kNumberTypeComplex64) {
+            type_pair = FILL_GPU_REG(i, j, k, Complex<float>);
+          } else if (k == kNumberTypeComplex128) {
+            type_pair = FILL_GPU_REG(i, j, k, Complex<double>);
+          }
+          func_list.emplace_back(type_pair);
         }
-        func_list.emplace_back(type_pair);
       }
     }
   }
