@@ -102,10 +102,9 @@ class CheckpointConfig:
         enc_mode (str): This parameter is valid only when enc_key is not set to None. Specifies the encryption
                         mode, currently supports 'AES-GCM', 'AES-CBC' and 'SM4-CBC'. Default: ``'AES-GCM'`` .
         exception_save (bool): Whether to save the current checkpoint when an exception occurs. Default: ``False`` .
+        kwargs (dict): Configuration options dictionary.
 
-    kwargs (dict): Configuration options dictionary.
-
-        - incremental (bool): whether export checkpoint for MapParameter incrementally.
+            - incremental (bool): whether export checkpoint for MapParameter incrementally.
 
     Raises:
         ValueError: If input parameter is not the correct type.

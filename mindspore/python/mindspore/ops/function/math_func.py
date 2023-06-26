@@ -272,7 +272,7 @@ def add(input, other):
         - One of the two inputs must be a Tensor, when the two inputs have different shapes,
           they must be able to broadcast to a common shape.
         - The two inputs can not be bool type at the same time,
-          [True, Tensor(True, mindspore.bool_), Tensor(np.array([True]), mindspore.bool_)] are all considered bool type.
+          [True, Tensor(True, bool_), Tensor(np.array([True]), bool_)] are all considered bool type.
         - The two inputs comply with the implicit type conversion rules to make the data types
           consistent.
 
@@ -806,7 +806,7 @@ def sub(input, other):
         - One of the two inputs must be a Tensor, when the two inputs have different shapes,
           they must be able to broadcast to a common shape.
         - The two inputs can not be bool type at the same time,
-          [True, Tensor(True, mindspore.bool_), Tensor(np.array([True]), mindspore.bool_)] are all considered bool type.
+          [True, Tensor(True, bool_), Tensor(np.array([True]), bool_)] are all considered bool type.
         - The two inputs comply with the implicit type conversion rules to make the data types
           consistent.
 
@@ -895,7 +895,7 @@ def mul(input, other):
         - One of the two inputs must be a Tensor, when the two inputs have different shapes,
           they must be able to broadcast to a common shape.
         - The two inputs can not be bool type at the same time,
-          [True, Tensor(True, mindspore.bool_), Tensor(np.array([True]), mindspore.bool_)] are all considered bool type.
+          [True, Tensor(True, bool_), Tensor(np.array([True]), bool_)] are all considered bool type.
         - The two inputs comply with the implicit type conversion rules to make the data types
           consistent.
 
@@ -947,7 +947,7 @@ def div(input, other, *, rounding_mode=None):
         - One of the two inputs must be a Tensor, when the two inputs have different shapes,
           they must be able to broadcast to a common shape.
         - The two inputs can not be bool type at the same time,
-          [True, Tensor(True, mindspore.bool_), Tensor(np.array([True]), mindspore.bool_)] are all considered bool type.
+          [True, Tensor(True, bool_), Tensor(np.array([True]), bool_)] are all considered bool type.
         - The two inputs comply with the implicit type conversion rules to make the data types
           consistent.
 

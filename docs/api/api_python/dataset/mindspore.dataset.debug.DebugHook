@@ -1,7 +1,7 @@
 mindspore.dataset.debug.DebugHook
 ==================================
 
-.. py:class:: mindspore.dataset.DebugHook(prev_op_name=None)
+.. py:class:: mindspore.dataset.debug.DebugHook(prev_op_name=None)
 
     数据集管道Python调试器钩子的基类。所有用户定义的钩子行为都必须继承这个基类。
 

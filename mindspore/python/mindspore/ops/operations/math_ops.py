@@ -193,7 +193,7 @@ class Add(_MathBinaryOp):
         - One of the two inputs must be a Tensor, when the two inputs have different shapes,
           they must be able to broadcast to a common shape.
         - The two inputs can not be bool type at the same time,
-          [True, Tensor(True, mindspore.bool_), Tensor(np.array([True]), mindspore.bool_)] are all considered bool type.
+          [True, Tensor(True, bool_), Tensor(np.array([True]), bool_)] are all considered bool type.
         - The two inputs comply with the implicit type conversion rules to make the data types
           consistent.
 
@@ -2249,7 +2249,7 @@ class Sub(_MathBinaryOp):
         - One of the two inputs must be a Tensor, when the two inputs have different shapes,
           they must be able to broadcast to a common shape.
         - The two inputs can not be bool type at the same time,
-          [True, Tensor(True, mindspore.bool_), Tensor(np.array([True]), mindspore.bool_)] are all considered bool type.
+          [True, Tensor(True, bool_), Tensor(np.array([True]), bool_)] are all considered bool type.
         - The two inputs comply with the implicit type conversion rules to make the data types
           consistent.
 
@@ -2301,7 +2301,7 @@ class Mul(_MathBinaryOp):
         - One of the two inputs must be a Tensor, when the two inputs have different shapes,
           they must be able to broadcast to a common shape.
         - The two inputs can not be bool type at the same time,
-          [True, Tensor(True, mindspore.bool_), Tensor(np.array([True]), mindspore.bool_)] are all considered bool type.
+          [True, Tensor(True, bool_), Tensor(np.array([True]), bool_)] are all considered bool type.
         - The two inputs comply with the implicit type conversion rules to make the data types
           consistent.
 
@@ -3460,7 +3460,7 @@ class Div(_MathBinaryOp):
         - One of the two inputs must be a Tensor, when the two inputs have different shapes,
           they must be able to broadcast to a common shape.
         - The two inputs can not be bool type at the same time,
-          [True, Tensor(True, mindspore.bool_), Tensor(np.array([True]), mindspore.bool_)] are all considered bool type.
+          [True, Tensor(True, bool_), Tensor(np.array([True]), bool_)] are all considered bool type.
         - The two inputs comply with the implicit type conversion rules to make the data types
           consistent.
 
@@ -9257,12 +9257,12 @@ class Ormqr(Primitive):
         transpose(bool, optional): controls whether the matrix Q is conjugate transposed or not.Default: ``False`` .
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape: (*, mn, k) where the value of mn depending on `left`,
-          When `left` is True, the value of mn is equal to m; otherwise, the value of mn is equal to n.
+        - **x** (Tensor) - Tensor of shape :math`(*, mn, k)` where the value of mn depending on `left`,
+          When `left` is ``True``, the value of mn is equal to m; otherwise, the value of mn is equal to n.
           and `*` is zero or more batch dimensions.
-        - **tau** (Tensor) - Tensor of shape (*, min(mn, k)) where `*` is zero or more batch dimensions,
+        - **tau** (Tensor) - Tensor of shape :math:`(*, min(mn, k))` where `*` is zero or more batch dimensions,
           and its type is the same as `x`.
-        - **other** (Tensor) - Tensor of shape (*, m, n) where `*` is zero or more batch dimensions,
+        - **other** (Tensor) - Tensor of shape :math:`(*, m, n)` where `*` is zero or more batch dimensions,
           and its type is the same as `x`.
 
     Outputs:

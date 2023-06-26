@@ -20,4 +20,3 @@ mindspore.ops.RandomCategorical
         - **TypeError** - 如果 `dtype` 不是以下之一：mstype.int16、mstype.int32、mstype.int64。
         - **TypeError** - 如果 `logits` 不是Tensor。
         - **TypeError** - 如果 `num_sample` 或者 `seed` 不是 int。
-f

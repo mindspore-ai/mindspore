@@ -367,11 +367,9 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                                  If returns ``True`` , the Parameter that matching the custom condition will be saved.
                                  If returns ``False`` , the Parameter that not matching the custom condition will not
                                  be saved. Default: ``None`` .
+        kwargs (dict): Configuration options dictionary.
 
-
-    kwargs (dict): Configuration options dictionary.
-
-        - incremental (bool): Whether export checkpoint for MapParameter incrementally.
+            - incremental (bool): Whether export checkpoint for MapParameter incrementally.
 
     Raises:
         TypeError: If the parameter `save_obj` is not `nn.Cell` or list type.
