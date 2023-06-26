@@ -86,7 +86,13 @@ class BACKEND_EXPORT LoadableDeviceAddress : public DeviceAddress {
 
  protected:
   DeviceContext *GetDeviceContext() const {
-    return DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
+    DeviceContext *device_context = nullptr;
+    try {
+      device_context = DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
+    } catch (const std::exception &e) {
+      return nullptr;
+    }
+    return device_context;
   }
 
   bool MoveToDevice(bool async, size_t stream_id = kDefaultStreamIndex) const;
