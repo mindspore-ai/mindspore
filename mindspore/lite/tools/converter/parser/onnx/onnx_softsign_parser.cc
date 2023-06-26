@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tools/converter/parser/onnx/onnx_cumsum_parser.h"
+
+#include "tools/converter/parser/onnx/onnx_softsign_parser.h"
 #include <memory>
-#include "ops/cumsum.h"
+#include "ops/softsign.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveCPtr OnnxCumSumParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto prim = std::make_unique<ops::CumSum>();
+PrimitiveCPtr OnnxSoftsignParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::Softsign>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  for (const auto &onnx_node_attr : onnx_node.attribute()) {
-    const auto &attribute_name = onnx_node_attr.name();
-    if (attribute_name == "exclusive") {
-      prim->set_exclusive(static_cast<bool>(onnx_node_attr.i()));
-    } else if (attribute_name == "reverse") {
-      prim->set_reverse(static_cast<bool>(onnx_node_attr.i()));
-    }
-  }
   return prim->GetPrim();
 }
 
-OnnxNodeRegistrar g_onnxCumSumParser("CumSum", new OnnxCumSumParser());
+OnnxNodeRegistrar g_onnxSignsoftParser("Softsign", new OnnxSoftsignParser());
 }  // namespace lite
 }  // namespace mindspore

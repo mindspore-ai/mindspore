@@ -81,4 +81,10 @@ ATTR_MAP(Multinomial) = {{"dtype", ATTR_DESC(dtype, AnyTraits<GEType>())},
                          {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
 OUTPUT_MAP(Multinomial) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Multinomial, prim::kPrimMultinomial->name(), ADPT_DESC(Multinomial))
+
+// Dropout
+INPUT_MAP(Dropout) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Dropout) = {{"dropout_ratio", ATTR_DESC(dropout_ratio, AnyTraits<float>())}};
+OUTPUT_MAP(Dropout) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Dropout, prim::kDropout, ADPT_DESC(Dropout))
 }  // namespace mindspore::transform

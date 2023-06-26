@@ -202,4 +202,10 @@ ATTR_MAP(QueueData) = {{"index", ATTR_DESC(index, AnyTraits<int64_t>())},
                        {"output_types", ATTR_DESC(output_types, AnyTraits<std::vector<GEType>>())},
                        {"output_shapes", ATTR_DESC(output_shapes, AnyTraits<std::vector<std::vector<int64_t>>>())}};
 REG_ADPT_DESC(QueueData, prim::kPrimQueueData->name(), ADPT_DESC(QueueData))
+
+// Size
+INPUT_MAP(Size) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Size) = {{"dtype", ATTR_DESC(dtype, AnyTraits<int64_t>())}};
+OUTPUT_MAP(Size) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Size, kNameSize, ADPT_DESC(Size))
 }  // namespace mindspore::transform
