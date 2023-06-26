@@ -60,11 +60,6 @@ static std::vector<std::string> GetAoeMode(const std::shared_ptr<AclModelOptions
   if (aoe_mode.find("operator tuning") != std::string::npos) {
     tune_mode.emplace_back("2");
   }
-  if (tune_mode.empty()) {
-    MS_LOG(ERROR) << "Aoe mode " << aoe_mode << " are invalid "
-                  << "; It should be in 'subgraph tuning, operator tuning'";
-    return tune_mode;
-  }
   return tune_mode;
 }
 
@@ -76,23 +71,31 @@ static Status ExecuteAoe(const std::shared_ptr<AclModelOptions> &options, const 
   std::map<std::string, std::string> init_options;
   std::map<std::string, std::string> build_options;
   std::tie(init_options, build_options) = options->GenAclOptions();
+  std::string aoe_options = options->GenAoeOptions(&aoe_modes);
   std::string dynamic_option;
-  if (build_options.find(ge::ir_option::DYNAMIC_BATCH_SIZE) != build_options.end()) {
+  if (build_options.find(ge::ir_option::DYNAMIC_BATCH_SIZE) != build_options.end() &&
+      aoe_options.find("dynamic_batch_size") == std::string::npos) {
     dynamic_option = " --dynamic_batch_size=\"" + build_options[ge::ir_option::DYNAMIC_BATCH_SIZE] + "\"";
-  } else if (build_options.find(ge::ir_option::DYNAMIC_IMAGE_SIZE) != build_options.end()) {
+  } else if (build_options.find(ge::ir_option::DYNAMIC_IMAGE_SIZE) != build_options.end() &&
+             aoe_options.find("dynamic_image_size") == std::string::npos) {
     dynamic_option = " --dynamic_image_size=\"" + build_options[ge::ir_option::DYNAMIC_IMAGE_SIZE] + "\"";
-  } else if (build_options.find(ge::ir_option::DYNAMIC_DIMS) != build_options.end()) {
-    dynamic_option = " --input_format=ND --dynamic_dims=\"" + build_options[ge::ir_option::DYNAMIC_DIMS] + "\"";
+  } else if (build_options.find(ge::ir_option::DYNAMIC_DIMS) != build_options.end() &&
+             aoe_options.find("dynamic_dims") == std::string::npos) {
+    dynamic_option = " --dynamic_dims=\"" + build_options[ge::ir_option::DYNAMIC_DIMS] + "\"";
+    if (aoe_options.find("input_format") == std::string::npos) {
+      dynamic_option += " --input_format=ND";
+    }
   }
   std::string input_shape;
-  if (build_options.find(ge::ir_option::INPUT_SHAPE) != build_options.end()) {
+  if (build_options.find(ge::ir_option::INPUT_SHAPE) != build_options.end() &&
+      aoe_options.find("input_shape") == std::string::npos) {
     input_shape = " --input_shape=\"" + build_options[ge::ir_option::INPUT_SHAPE] + "\"";
   }
   try {
     for (auto &mode : aoe_modes) {
       std::cout << "Start to " << kTuneModeMap.at(mode) << std::endl;
-      std::string cmd =
-        aoe_path + " --framework=1" + " --model=" + air_path + " --job_type=" + mode + dynamic_option + input_shape;
+      std::string cmd = aoe_path + " --framework=1" + " --model=" + air_path + " --job_type=" + mode + dynamic_option +
+                        input_shape + aoe_options;
       MS_LOG(DEBUG) << "Aoe cmd is " << cmd;
       auto fp = popen(cmd.c_str(), "r");
       std::string result;
@@ -126,7 +129,8 @@ Status AutoTuneProcess::AoeOfflineTurningGraph(const std::weak_ptr<AclModelOptio
     MS_LOG(ERROR) << "Option ptr is nullptr.";
     return kMCFailed;
   }
-  if (option_ptr->GetAoeMode().empty()) {
+  std::map<std::string, std::string> global_maps = option_ptr->GetAoeGlobalOptionsMap();
+  if (option_ptr->GetAoeMode().empty() && (global_maps.find("job_type") == global_maps.end())) {
     MS_LOG(DEBUG) << "Aoe mode is empty, no need to enable aoe.";
     return kSuccess;
   }
