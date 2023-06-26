@@ -22,6 +22,7 @@ import itertools
 import sys
 from numpy import dtype as nptype
 
+import mindspore.ops as ops
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
@@ -148,7 +149,7 @@ def count_nonzero(x, axis=None, keepdims=False):
         return ZERO_TENSOR
     if axis is None:
         axis = ()
-    return C.count_nonzero(x=x, axis=axis, keep_dims=keepdims)
+    return ops.count_nonzero(x=x, axis=axis, keep_dims=keepdims)
 
 
 def clip(x, xmin, xmax, dtype=None):
@@ -900,7 +901,7 @@ def tensordot(a, b, axes=2):
     """
     if F.rank(a)*F.rank(b) == 0 and axes == 0:
         return F.tensor_mul(a, b)
-    return C.tensor_dot(a, b, axes)
+    return ops.tensor_dot(a, b, axes)
 
 
 def std(x, axis=None, ddof=0, keepdims=False):

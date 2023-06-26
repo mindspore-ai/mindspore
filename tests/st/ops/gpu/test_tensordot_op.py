@@ -17,7 +17,7 @@ import pytest
 import numpy as np
 
 import mindspore
-from mindspore import Tensor
+from mindspore import Tensor, ops
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore.ops import composite as C
@@ -29,7 +29,7 @@ class NetTensorDot(nn.Cell):
         self.axes = axes
 
     def construct(self, x, y):
-        return C.tensor_dot(x, y, self.axes)
+        return ops.tensor_dot(x, y, self.axes)
 
 
 class GradNetwork(nn.Cell):

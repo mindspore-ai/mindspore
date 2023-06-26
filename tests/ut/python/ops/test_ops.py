@@ -582,7 +582,7 @@ class CountNonZero(nn.Cell):
         self.dtype = dtype
 
     def construct(self, input_x):
-        nonzero_num = C.count_nonzero(input_x, self.axis, self.keep_dims, self.dtype)
+        nonzero_num = ops.count_nonzero(input_x, self.axis, self.keep_dims, self.dtype)
         return nonzero_num
 
 

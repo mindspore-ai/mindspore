@@ -28,7 +28,8 @@ from mindspore.ops.operations.math_ops import Median
 from mindspore.ops.operations.array_ops import UniqueConsecutive
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool2D
 from mindspore.ops.operations.math_ops import Roll
-from mindspore.ops.composite.math_ops import mm, dot
+from mindspore.ops.composite.math_ops import mm
+from mindspore.ops.function.math_func import dot
 
 typeof = Primitive('typeof')
 hastype = Primitive('hastype')

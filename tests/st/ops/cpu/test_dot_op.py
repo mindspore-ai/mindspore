@@ -15,10 +15,9 @@
 
 import pytest
 import numpy as np
-from mindspore import Tensor
+from mindspore import Tensor, ops
 import mindspore.nn as nn
 import mindspore.context as context
-from mindspore.ops import composite as C
 from mindspore.common.initializer import initializer
 
 
@@ -27,7 +26,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 class NetDot(nn.Cell):
     def construct(self, x, y):
-        return C.dot(x, y)
+        return ops.dot(x, y)
 
 
 @pytest.mark.level0
