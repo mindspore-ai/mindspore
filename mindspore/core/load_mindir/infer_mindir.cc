@@ -45,7 +45,7 @@ class MindIREngine {
   using AbstractBasePtrListPtr = std::shared_ptr<AbstractBasePtrList>;
 
   void Init(const AbstractBasePtrList &args);
-  AbstractBasePtr InferPrimitiveShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_abs_list);
+  AbstractBasePtr InferPrimitiveShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_abs_list) const;
   void EvalCommonPrimitive(const PrimitivePtr &prim, const CNodePtr &node, const AbstractBasePtrListPtr &args);
   void EvalPartialPrimitive(const CNodePtr &node, const AbstractBasePtrListPtr &args);
   void EvalReturnPrimitive(const CNodePtr &node);
@@ -156,7 +156,8 @@ void MindIREngine::Init(const AbstractBasePtrList &args) {
 }
 
 // Infer primitive using C++ implement.
-AbstractBasePtr MindIREngine::InferPrimitiveShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_abs_list) {
+AbstractBasePtr MindIREngine::InferPrimitiveShape(const PrimitivePtr &prim,
+                                                  const AbstractBasePtrList &args_abs_list) const {
   MS_EXCEPTION_IF_NULL(prim);
   try {
     MS_LOG_TRY_CATCH_SCOPE;
