@@ -332,6 +332,7 @@ Reduction Functions
     mindspore.ops.histc
     mindspore.ops.logcumsumexp
     mindspore.ops.logsumexp
+    mindspore.ops.matrix_norm
     mindspore.ops.max
     mindspore.ops.mean
     mindspore.ops.median
@@ -342,6 +343,7 @@ Reduction Functions
     mindspore.ops.std_mean
     mindspore.ops.var
     mindspore.ops.var_mean
+    mindspore.ops.vector_norm
 
 Comparison Functions
 ^^^^^^^^^^^^^^^^^^^^
