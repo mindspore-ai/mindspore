@@ -17,6 +17,8 @@
 #include "src/control_flow/actor/switch_actor.h"
 #include <utility>
 #include <algorithm>
+#include <set>
+#include <vector>
 #include "mindrt/include/mindrt.hpp"
 #include "src/litert/kernel_exec_util.h"
 #include "src/common/tensor_util.h"
@@ -216,11 +218,15 @@ int LiteSwitchOpActor::PrepareOutputData() {
     MS_LOG(ERROR) << "lite actor prepare output data failed.";
     return RET_ERROR;
   }
+  std::vector<int> arrow_num_of_each_tensor(kernel_->out_tensors().size(), 0);
+  std::set<int> arrow_indexes;
   for (auto &branch_output_data_arrows : all_branch_output_data_arrows_) {
     std::vector<OpDataPtr<Tensor>> branch_outputs_data{};
     branch_outputs_data.resize(branch_output_data_arrows.size());
     for (size_t i = 0; i < branch_output_data_arrows.size(); i++) {
       auto &arrow = branch_output_data_arrows[i];
+      arrow_indexes.insert(arrow->from_output_index_);
+      ++arrow_num_of_each_tensor[arrow->from_output_index_];
       auto data =
         std::make_shared<OpData<Tensor>>(this->GetAID(), (kernel_->out_tensors()).at(arrow->from_output_index_),
                                          static_cast<int>(arrow->to_input_index_));
@@ -231,6 +237,9 @@ int LiteSwitchOpActor::PrepareOutputData() {
       branch_outputs_data.at(i) = data;
     }
     all_branchs_output_data_.push_back(branch_outputs_data);
+  }
+  for (auto index : arrow_indexes) {
+    kernel_->out_tensors().at(index)->set_init_ref_count(arrow_num_of_each_tensor[index]);
   }
   return RET_OK;
 }
