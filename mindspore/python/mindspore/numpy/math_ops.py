@@ -44,7 +44,7 @@ from mindspore.numpy.utils_const import _infer_out_shape, _check_axis_valid, _ge
     _is_shape_empty, _check_is_int, _expanded_shape, _check_axis_in_range, \
     _check_dtype, _list_comprehensions, _tuple_setitem, _add_unit_axes, _seq_prod, \
     _make_tensor, _promote_for_trigonometric, _raise_runtime_error, _max, _type_convert, \
-    _raise_unimplemented_error, _abs, _in, _tuple_slice, _check_is_inf
+    _raise_unimplemented_error, _abs, _in, _tuple_slice, _check_is_inf, _isscalar
 from mindspore.numpy.utils import _expand, _broadcast_to, _broadcast_to_shape, _check_input_tensor, \
     _to_tensor, _to_tensor_origin_dtype, _isnan
 from mindspore.ops.composite.multitype_ops._compile_utils import reduce_
@@ -483,12 +483,27 @@ def power(x1, x2, dtype=None):
         [ 1. 16.]
         [ 1. 16.]]
     """
+    def _check(min_val):
+        if min_val < 0:
+            raise ValueError("Integers to negative integer powers are not allowed.")
+
+    def get_type(x):
+        obj_type = F.typeof(x)
+        return_type = obj_type
+        if not isinstance(obj_type, Tensor) and _isscalar(obj_type):
+            return_type = obj_type
+        elif isinstance(x, Tensor):
+            return_type = x.dtype
+        else:
+            _raise_type_error("Expect inputs to be Tensor or scalar, but got ", obj_type)
+        return return_type
+
     int_list = [mstype.int8, mstype.int16, mstype.int32, mstype.int64, mstype.uint8, mstype.uint16, mstype.uint32,
                 mstype.uint64]
-    if x1.dtype not in int_list or x2.dtype not in int_list:
+    if get_type(x1) not in int_list or get_type(x2) not in int_list:
         return _apply_tensor_op(F.tensor_pow, x1, x2, dtype=dtype)
-    if x2.min() < 0:
-        raise ValueError("Integers to negative integer powers are not allowed.")
+    min_value = x2.min() if isinstance(x2, Tensor) else x2
+    _check(min_value)
     return _apply_tensor_op(F.tensor_pow, x1, x2, dtype=dtype)
 
 
