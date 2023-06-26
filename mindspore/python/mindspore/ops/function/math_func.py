@@ -1112,7 +1112,7 @@ def floor_divide(input, other):
         >>> output = ops.floor_divide(x, y)
         >>> print(output)
         [ 0  1 -1]
-        >>> x = Tensor(2.0, mindspore.complex64)
+        >>> x = Tensor(2.0, mindspore.float32)
         >>> y = Tensor(2.0, mindspore.float32)
         >>> output = ops.floor_divide(x, y)
         >>> print(output)
@@ -4740,7 +4740,7 @@ def nanmean(input, axis=None, keepdims=False, *, dtype=None):
 
     Keyword Args:
         dtype (mindspore.dtype, optional): The output Tensor data type. Default: ``None`` , the data type of output
-        Tensor is same as the input.
+            Tensor is same as the input.
 
     Returns:
         Tensor, the mean of input `input` in the given dimension axis, while ignoring NaNs.

@@ -12,6 +12,9 @@ mindspore.nn.MultiheadAttention
 
     如果query、key和value相同，则上述即为自注意力机制的计算过程。
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **embed_dim** (int) - 模型的总维数。
         - **num_heads** (int) - 并行注意力头的数量。`num_heads` 需要能够被 `embed_dim` 整除（每个头的维数为 `embed_dim // num_heads`）。
@@ -48,3 +51,7 @@ mindspore.nn.MultiheadAttention
           Shape为： :math:`(L, S)` ，当输入Batch数据时，Shape为 :math:`(N, L, S)`。其中 :math:`N` 为batch size， :math:`L` 为目标序列的长度，:math:`S` 为源序列长度。
           如果 `average_attn_weights=False` ，分别返回每个注意力头的值。当输入非Batch数据时，Shape为： :math:`(\text{num_heads}, L, S)` ，当输入Batch数据时，Shape为
           :math:`(N, \text{num_heads}, L, S)`。
+  
+    异常：
+        - **ValueError** - 如果 `embed_dim` 不能被 `num_heads` 整除。
+        - **TypeError** - 如果 `key_padding_mask` 不是bool或float类型。

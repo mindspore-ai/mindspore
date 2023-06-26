@@ -57,6 +57,9 @@ class MultiheadAttention(Cell):
 
     if query, key and value tensor is same, then it will be self attention.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         embed_dim (int): Total dimension of MultiheadAttention.
         num_heads (int): Number of attention heads. Note that `embed_dim` will be split
@@ -118,6 +121,10 @@ class MultiheadAttention(Cell):
           If `average_attn_weights=False`, returns attention weights per
           head of shape :math:`(\text{num_heads}, L, S)` when input is unbatched or
           :math:`(N, \text{num_heads}, L, S)` when input is batched.
+
+    Raises:
+        ValueError: If the init argument `embed_dim` is not divisible by `num_heads`.
+        ValueError: If the input argument `key_padding_mask` is not bool or floating types.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -241,6 +248,9 @@ class TransformerEncoderLayer(Cell):
     Transformer Encoder Layer. This is an implementation of the single layer of the transformer
     encoder layer, including multihead attention and feedward layer.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         d_model (int): The number of features in the input tensor.
         nhead (int): The number of heads in the MultiheadAttention modules.
@@ -264,6 +274,12 @@ class TransformerEncoderLayer(Cell):
 
     Outputs:
         Tensor.
+
+    Raises:
+        ValueError: If the init argument `activation` is not str, callable or Cell instance.
+        ValueError: If the init argument `activation` is not :class:`mindspore.nn.ReLU`,
+            :class:`mindspore.nn.GELU` instance, :func:`mindspore.ops.relu`,
+            :func:`mindspore.ops.gelu` instance, "relu" or "gelu" .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -351,6 +367,9 @@ class TransformerDecoderLayer(Cell):
     Transformer Decoder Layer. This is an implementation of the single layer of the transformer
     decoder layer, including self-attention, cross attention and feedward layer.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         d_model (int): The number of expected features in the input tensor.
         nhead (int): The number of heads in the MultiheadAttention modules.
@@ -378,6 +397,12 @@ class TransformerDecoderLayer(Cell):
 
     Outputs:
         Tensor.
+
+    Raises:
+        ValueError: If the init argument `activation` is not str, callable or Cell instance.
+        ValueError: If the init argument `activation` is not :class:`mindspore.nn.ReLU`,
+            :class:`mindspore.nn.GELU` instance, :func:`mindspore.ops.relu`,
+            :func:`mindspore.ops.gelu` instance, "relu" or "gelu" .
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -475,6 +500,9 @@ class TransformerEncoder(Cell):
     attention and feedforward layer. Users can build the
     BERT(https://arxiv.org/abs/1810.04805) model with corresponding parameters.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         encoder_layer (Cell): An instance of the TransformerEncoderLayer() class.
         num_layers (int): The number of encoder-layers in the encoder.
@@ -488,6 +516,9 @@ class TransformerEncoder(Cell):
 
     Outputs:
         Tensor.
+
+    Raises:
+        AssertionError: If the input argument `src_key_padding_mask` is not bool or floating types.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -531,6 +562,9 @@ class TransformerDecoder(Cell):
     r"""
     Transformer Decoder module with multi-layer stacked of `TransformerDecoderLayer`, including multihead self
     attention, cross attention and feedforward layer.
+
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
 
     Args:
         decoder_layer (Cell): An instance of the :class:`mindspore.nn.TransformerDecoderLayer` class.
@@ -595,6 +629,9 @@ class Transformer(Cell):
     the residual addition before the layer normalization. And the default hidden act is `gelu`.
     The details can be found in `Attention is all you need <https://arxiv.org/pdf/1706.03762v5.pdf>`_.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         d_model (int): The number of expected features in the inputs tensor. Default: ``512``.
         nhead (int): The number of heads in the MultiheadAttention modules. Default: ``8``.
@@ -630,6 +667,10 @@ class Transformer(Cell):
 
     Outputs:
         Tensor.
+
+    Raises:
+        ValueError: If the batch sizes of the init argument `src` and `tgt` are not equal.
+        ValueError: If the number of features of the init argument `src` and `tgt` is not equal to that of `d_model`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
