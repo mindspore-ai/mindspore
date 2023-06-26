@@ -34,6 +34,7 @@ constexpr int64_t kUSPSImageHeight = 16;
 constexpr int64_t kUSPSImageWidth = 16;
 constexpr int64_t kUSPSImageChannel = 1;
 constexpr int64_t kUSPSImageSize = kUSPSImageHeight * kUSPSImageWidth * kUSPSImageChannel;
+constexpr int32_t kNumColumns = 2;
 
 USPSOp::USPSOp(const std::string &dataset_dir, const std::string &usage, std::unique_ptr<DataSchema> data_schema,
                int32_t num_workers, int32_t worker_connector_size, int64_t num_samples, int32_t op_connector_size,
@@ -187,8 +188,8 @@ Status USPSOp::LoadFile(const std::string &data_file, int64_t start_offset, int6
       continue;
     }
 
-    TensorRow tRow(1, nullptr);
-    tRow.setPath({data_file});
+    TensorRow tRow(kNumColumns, nullptr);
+    tRow.setPath({data_file, data_file});
     Status rc = LoadTensor(&line, &tRow);
     if (rc.IsError()) {
       data_file_reader.close();
@@ -322,8 +323,7 @@ Status USPSOp::FillIOBlockQueue(const std::vector<int64_t> &i_keys) {
     }
     for (auto file_info : file_index) {
       if (NeedPushFileToBlockQueue(file_info.first, &start_offset, &end_offset, pre_count)) {
-        auto ioBlock =
-          std::make_unique<FilenameBlock>(file_info.second, start_offset, end_offset, IOBlock::kDeIoBlockNone);
+        auto ioBlock = std::make_unique<FilenameBlock>(file_info.second, start_offset, end_offset, IOBlock::kFlagNone);
         RETURN_IF_NOT_OK(PushIoBlockQueue(queue_index, std::move(ioBlock)));
         queue_index = (queue_index + 1) % num_workers_;
       }

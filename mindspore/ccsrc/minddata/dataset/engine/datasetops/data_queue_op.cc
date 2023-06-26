@@ -281,7 +281,9 @@ Status DataQueueOp::SendDataToAscend() {
         is_break_loop = true;
         continue;
       }
+      RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "PushToAscend"));
       RETURN_IF_NOT_OK(SendRowToTdt(curr_row, is_profiling_enable, &tdt_cost));
+      RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "PushToAscend", {{"Flag", curr_row.FlagName()}}));
       PrintEndInfoWhenFirstBatch(&first_push_flag_);
 #ifndef ENABLE_SECURITY
       ProfilingRecorder(is_profiling_enable, profiling_node, send_batch, tdt_cost, &batch_start_time, &end_time,
@@ -330,6 +332,7 @@ Status DataQueueOp::SendDataToAscend() {
         const double max_queue_memory = 2.;
         const size_t max_queue_size = 100;
         const int64_t send_interval = 1000;
+        RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "WaitForAscend"));
         while ((row_memory + CalMbufQueueMemory(queue_size) >= max_queue_memory || queue_size >= max_queue_size) &&
                queue_size != 0) {
           RETURN_IF_INTERRUPTED();
@@ -339,6 +342,7 @@ Status DataQueueOp::SendDataToAscend() {
           queue_size = ascend_data_queue_->QueryQueueSize();
           std::this_thread::sleep_for(std::chrono::microseconds(send_interval));
         }
+        RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "WaitForAscend"));
       }
 #ifndef ENABLE_SECURITY
       uint64_t queue_wait_end = ProfilingTime::GetCurMilliSecond();
@@ -347,8 +351,11 @@ Status DataQueueOp::SendDataToAscend() {
 #endif
     }
 
+    RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "PushToAscend"));
     // send epoch end flag: ACL_TENSOR_DATA_END_OF_SEQUENCE to tdt
     RETURN_IF_NOT_OK(SendEpochEndToAscend(curr_row, is_profiling_enable, &tdt_cost, &is_break_loop));
+    RETURN_IF_NOT_OK(
+      CollectOpInfoEnd(this->NameWithID(), "PushToAscend", {{"Flag", TensorRow(TensorRow::kFlagEOE).FlagName()}}));
 
 #ifndef ENABLE_SECURITY
     RecordProfilingData(is_profiling_enable, true, &connector_size, &connector_capacity, &send_batch);
@@ -612,7 +619,9 @@ Status DataQueueOp::PushDataToGPU() {
                             "[Internal ERROR] Failed to prefetch data in current PS mode(cache data when sending).");
       }
 #endif
+      RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "PushToGPU"));
       RETURN_IF_NOT_OK(RetryPushData(items, is_profiling_enable, &push_cost));
+      RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "PushToGPU", {{"Flag", "Data"}}));
 #ifndef ENABLE_SECURITY
       ProfilingRecorder(is_profiling_enable, profiling_node, send_batch, push_cost, &batch_start_time, &end_time,
                         gpu_connector_->capacity(), gpu_connector_->size());

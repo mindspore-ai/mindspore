@@ -230,20 +230,19 @@ Status CachePipelineRun::RunFirstEpoch() {
   int32_t worker_id = 0;
   for (auto i = start_row_; i <= end_row_; ++i) {
     keys.push_back(i);
-    auto blk = std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone));
+    auto blk = std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kFlagNone));
     RETURN_IF_NOT_OK(io_block_queues_[worker_id++ % num_workers]->Add(std::move(blk)));
     keys.clear();
   }
   if (!keys.empty()) {
-    auto blk = std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone));
+    auto blk = std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kFlagNone));
     RETURN_IF_NOT_OK(io_block_queues_[worker_id++ % num_workers]->Add(std::move(blk)));
     keys.clear();
   }
 
   // Shutdown threads and wait for them to come back.
   for (int32_t i = 0; i < num_workers; i++) {
-    RETURN_IF_NOT_OK(
-      io_block_queues_[i]->Add(std::make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kDeIoBlockNone)));
+    RETURN_IF_NOT_OK(io_block_queues_[i]->Add(std::make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kFlagNone)));
   }
   for (auto *pTask : worker_threads) {
     RETURN_IF_NOT_OK(pTask->Join(Task::WaitFlag::kBlocking));
@@ -375,20 +374,19 @@ Status CachePipelineRun::RunReadEpoch() {
   int32_t worker_id = 0;
   for (auto id : all_keys) {
     keys.push_back(id);
-    auto blk = std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone));
+    auto blk = std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kFlagNone));
     RETURN_IF_NOT_OK(io_block_queues_[worker_id++ % num_workers]->Add(std::move(blk)));
     keys.clear();
   }
   if (!keys.empty()) {
-    auto blk = std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone));
+    auto blk = std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kFlagNone));
     RETURN_IF_NOT_OK(io_block_queues_[worker_id++ % num_workers]->Add(std::move(blk)));
     keys.clear();
   }
 
   // Shutdown threads and wait for them to come back.
   for (int32_t i = 0; i < num_workers; i++) {
-    RETURN_IF_NOT_OK(
-      io_block_queues_[i]->Add(std::make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kDeIoBlockNone)));
+    RETURN_IF_NOT_OK(io_block_queues_[i]->Add(std::make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kFlagNone)));
   }
   for (auto *pTask : worker_threads) {
     RETURN_IF_NOT_OK(pTask->Join(Task::WaitFlag::kBlocking));

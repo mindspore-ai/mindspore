@@ -172,7 +172,7 @@ Status TreeAdapter::BuildExecutionTreeRecur(std::shared_ptr<DatasetNode> ir, std
 
 Status TreeAdapter::Build(std::shared_ptr<DatasetNode> root_ir, int64_t epoch_num) {
   RETURN_UNEXPECTED_IF_NULL(root_ir);
-  RETURN_IF_NOT_OK(CollectPipelineInfoStart("TreeAdapter", "Build"));
+  RETURN_IF_NOT_OK(CollectPipelineInfoStart("Pipeline", "Build"));
   // Create ExecutionTree
   tree_ = std::make_unique<ExecutionTree>();
 
@@ -190,14 +190,14 @@ Status TreeAdapter::Build(std::shared_ptr<DatasetNode> root_ir, int64_t epoch_nu
 
   // After the tree is prepared, the col_name_id_map can safely be obtained
   column_name_map_ = tree_->root()->column_name_id_map();
-  RETURN_IF_NOT_OK(CollectPipelineInfoEnd("TreeAdapter", "Build"));
+  RETURN_IF_NOT_OK(CollectPipelineInfoEnd("Pipeline", "Build"));
   return Status::OK();
 }
 
 Status TreeAdapter::Compile(const std::shared_ptr<DatasetNode> &input_ir, int32_t num_epochs, int64_t step,
                             const int64_t epoch_num) {
   RETURN_UNEXPECTED_IF_NULL(input_ir);
-  RETURN_IF_NOT_OK(CollectPipelineInfoStart("TreeAdapter", "Compile"));
+  RETURN_IF_NOT_OK(CollectPipelineInfoStart("Pipeline", "Compile"));
   input_ir_ = input_ir;
   tree_state_ = kCompileStateIRGraphBuilt;
   MS_LOG(INFO) << "Input plan:" << '\n' << *input_ir << '\n';
@@ -237,7 +237,7 @@ Status TreeAdapter::Compile(const std::shared_ptr<DatasetNode> &input_ir, int32_
 
   RETURN_IF_NOT_OK(Build(root_ir_, epoch_num));
   tree_state_ = kCompileStateReady;
-  RETURN_IF_NOT_OK(CollectPipelineInfoEnd("TreeAdapter", "Compile"));
+  RETURN_IF_NOT_OK(CollectPipelineInfoEnd("Pipeline", "Compile"));
   return Status::OK();
 }
 
@@ -254,7 +254,7 @@ Status TreeAdapter::AdjustReset(const int64_t epoch_num) {
 Status TreeAdapter::GetNext(TensorRow *row) {
   RETURN_UNEXPECTED_IF_NULL(tree_);
   RETURN_UNEXPECTED_IF_NULL(row);
-  RETURN_IF_NOT_OK(CollectPipelineInfoStart("TreeAdapter", "GetNext"));
+  RETURN_IF_NOT_OK(CollectPipelineInfoStart("Pipeline", "GetNext"));
   row->clear();  // make sure row is empty
 
   // When cur_db_ is a nullptr, it means this is the first call to get_next, launch ExecutionTree
@@ -278,6 +278,7 @@ Status TreeAdapter::GetNext(TensorRow *row) {
       profiling_manager_->RecordEndOfEpoch(cur_batch_num_);
     }
 #endif
+    RETURN_IF_NOT_OK(CollectPipelineInfoEnd("Pipeline", "GetNext", {{"Flag", row->FlagName()}}));
     return Status::OK();
   }
   if (row->eof()) {
@@ -300,7 +301,7 @@ Status TreeAdapter::GetNext(TensorRow *row) {
     tracing_->Record(CONNECTOR_DEPTH, cur_connector_capacity_, cur_batch_num_, cur_connector_size_, end_time);
   }
 #endif
-  RETURN_IF_NOT_OK(CollectPipelineInfoEnd("TreeAdapter", "GetNext"));
+  RETURN_IF_NOT_OK(CollectPipelineInfoEnd("Pipeline", "GetNext", {{"Flag", row->FlagName()}}));
   return Status::OK();
 }
 

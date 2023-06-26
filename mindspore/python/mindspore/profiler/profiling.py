@@ -89,11 +89,12 @@ def _environment_check():
 class ExecutionCalculator:
     """Calculate the average execution time and counts for each stage."""
 
-    def __init__(self, event, stage):
+    def __init__(self, event, stage, custom_info):
         self.event = event
         self.stage = stage
-        self.average_execution = 0
+        self.custom_info = custom_info
         self.count = 0
+        self.average_execution = 0
 
 
 def calculate_dataset_execution_time(input_file, output_file):
@@ -116,16 +117,18 @@ def calculate_dataset_execution_time(input_file, output_file):
                 if module_name != 'dataset':
                     continue
                 start_end = row['start_end']
-                stage = row['stage']
                 event = row['event']
+                stage = row['stage']
+                custom_info = row['custom_info']
                 event_stage_tid_pid = event + '_' + stage + '_' + row['tid'] + '_' + row['pid']
                 if start_end == '1' and event_stage_tid_pid in ts_map:
-                    title = row['event'] + '::' + row['stage']
+                    title = event + '::' + stage + '::' + custom_info
                     ts_end = int(row['time_stamp'])
                     ts = ts_map[event_stage_tid_pid]
                     dur = ts_end - ts
                     if title not in execution_time_map:
-                        execution_time_map[title] = ExecutionCalculator(event=event, stage=stage)
+                        execution_time_map[title] = ExecutionCalculator(event=event, stage=stage,
+                                                                        custom_info=custom_info)
                     execution_time_map[title].count += 1
                     execution_time_map[title].average_execution += \
                         (dur - execution_time_map[title].average_execution) / execution_time_map[title].count
@@ -145,13 +148,13 @@ def calculate_dataset_execution_time(input_file, output_file):
         for k, v in ts_map.items():
             logger.warning("event_stage_tid_pid: %s, time: %d us.", k, v)
     output_file = validate_and_normalize_path(output_file)
-    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
     modes = stat.S_IWUSR | stat.S_IRUSR
     with os.fdopen(os.open(output_file, flags, modes), 'w') as f:
         csv_writer = csv.writer(f)
-        csv_writer.writerow(['event', 'stage', 'average_time', 'count'])
+        csv_writer.writerow(['Operation', 'Stage', 'Occurrences', 'Avg. time (us)', 'Custom Info'])
         for _, v in execution_time_map.items():
-            csv_writer.writerow([v.event, v.stage, v.average_execution, v.count])
+            csv_writer.writerow([v.event, v.stage, v.count, v.average_execution, v.custom_info])
     logger.info('Successfully calculate the execution time and write it to file: %s.', output_file)
 
 

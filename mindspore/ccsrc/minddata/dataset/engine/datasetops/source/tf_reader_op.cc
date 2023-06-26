@@ -1248,20 +1248,20 @@ Status TFReaderOp::HelperIOBlockFiller(int32_t *queue_index, int32_t *key_index,
     if (*key_index % num_devices_ == device_id_ && *key_index < num_files_to_read) {
       *end_offset = static_cast<int>(total_rows_ /
                                      static_cast<int>(dataset_files_list_.size() / static_cast<size_t>(num_devices_)));
-      auto ioBlock = std::make_unique<FilenameBlock>(key, 0, *end_offset, IOBlock::kDeIoBlockNone);
+      auto ioBlock = std::make_unique<FilenameBlock>(key, 0, *end_offset, IOBlock::kFlagNone);
       RETURN_IF_NOT_OK(PushIoBlockQueue(*queue_index, std::move(ioBlock)));
       *queue_index = (*queue_index + 1) % num_workers_;
     }
     (*key_index)++;
   } else if (!equal_rows_per_shard_) {
     if ((*key_index)++ % num_devices_ == device_id_) {
-      auto ioBlock = std::make_unique<FilenameBlock>(key, kInvalidOffset, kInvalidOffset, IOBlock::kDeIoBlockNone);
+      auto ioBlock = std::make_unique<FilenameBlock>(key, kInvalidOffset, kInvalidOffset, IOBlock::kFlagNone);
       RETURN_IF_NOT_OK(PushIoBlockQueue(*queue_index, std::move(ioBlock)));
       *queue_index = (*queue_index + 1) % num_workers_;
     }
   } else {
     if (NeedPushFileToBlockQueue(file_name, start_offset, end_offset, *pre_count)) {
-      auto ioBlock = std::make_unique<FilenameBlock>(key, *start_offset, *end_offset, IOBlock::kDeIoBlockNone);
+      auto ioBlock = std::make_unique<FilenameBlock>(key, *start_offset, *end_offset, IOBlock::kFlagNone);
       RETURN_IF_NOT_OK(PushIoBlockQueue(*queue_index, std::move(ioBlock)));
       *queue_index = (*queue_index + 1) % num_workers_;
     }

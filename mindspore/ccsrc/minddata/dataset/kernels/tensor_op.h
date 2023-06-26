@@ -19,13 +19,15 @@
 #include <memory>
 #include <string>
 #include <vector>
+
 #include "nlohmann/json.hpp"
 
+#include "minddata/dataset/core/device_resource.h"
+#include "minddata/dataset/core/device_tensor.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_row.h"
+#include "minddata/dataset/engine/perf/info_collector.h"
 #include "minddata/dataset/util/status.h"
-#include "minddata/dataset/core/device_tensor.h"
-#include "minddata/dataset/core/device_resource.h"
 
 #define IO_CHECK(input, output)                             \
   do {                                                      \

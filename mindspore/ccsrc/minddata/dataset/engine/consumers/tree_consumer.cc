@@ -14,30 +14,33 @@
  * limitations under the License.
  */
 #include <algorithm>
+#include <map>
 #include <memory>
 #include <string>
-#include <map>
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
 #include "minddata/dataset/engine/consumers/tree_consumer.h"
 #include "minddata/dataset/engine/datasetops/data_queue_op.h"
 #include "minddata/dataset/engine/opt/pre/getter_pass.h"
 #ifndef ENABLE_SECURITY
 #include "minddata/dataset/engine/perf/auto_tune.h"
-#include "minddata/dataset/engine/perf/monitor.h"
+#endif
+#include "minddata/dataset/engine/perf/info_collector.h"
+#ifndef ENABLE_SECURITY
 #include "minddata/dataset/engine/perf/profiling.h"
 #endif
 #include "minddata/dataset/engine/tree_adapter.h"
-
 #ifndef ENABLE_ANDROID
-#include "minddata/mindrecord/include/shard_index_generator.h"
 #include "minddata/mindrecord/include/shard_header.h"
+#include "minddata/mindrecord/include/shard_index_generator.h"
 #include "minddata/mindrecord/include/shard_writer.h"
 #endif
 #ifdef WITH_BACKEND
 #include "utils/ms_context.h"
 #endif
+
 namespace mindspore {
 namespace dataset {
 #ifndef ENABLE_SECURITY
@@ -176,13 +179,16 @@ Status IteratorConsumer::Init(std::shared_ptr<DatasetNode> d) {
 
 Status IteratorConsumer::GetNextAsVector(std::vector<TensorPtr> *const out) {
   RETURN_UNEXPECTED_IF_NULL(out);
+  RETURN_IF_NOT_OK(CollectPipelineInfoStart("IteratorConsumer", "GetNextAsVector"));
   out->clear();
-
   TensorRow res;
   RETURN_IF_NOT_OK(tree_adapter_->GetNext(&res));
 
   // Return empty vector if there's no data
-  RETURN_OK_IF_TRUE(res.empty());
+  if (res.empty()) {
+    RETURN_IF_NOT_OK(CollectPipelineInfoEnd("IteratorConsumer", "GetNextAsVector", {{"Flag", res.FlagName()}}));
+    return Status::OK();
+  }
 
   // Filter meta column
   std::vector<size_t> to_keep_indices;
@@ -204,19 +210,23 @@ Status IteratorConsumer::GetNextAsVector(std::vector<TensorPtr> *const out) {
   std::sort(to_keep_indices.begin(), to_keep_indices.end());
   (void)std::transform(to_keep_indices.begin(), to_keep_indices.end(), std::back_inserter(*out),
                        [&res](const auto &it) { return std::move(res[it]); });
-
+  RETURN_IF_NOT_OK(CollectPipelineInfoEnd("IteratorConsumer", "GetNextAsVector"));
   return Status::OK();
 }
 
 Status IteratorConsumer::GetNextAsMap(std::unordered_map<std::string, TensorPtr> *const out_map) {
   RETURN_UNEXPECTED_IF_NULL(out_map);
-  out_map->clear();
+  RETURN_IF_NOT_OK(CollectPipelineInfoStart("IteratorConsumer", "GetNextAsMap"));
 
+  out_map->clear();
   TensorRow res;
   RETURN_IF_NOT_OK(tree_adapter_->GetNext(&res));
 
   // Return empty map if there's no data
-  RETURN_OK_IF_TRUE(res.empty());
+  if (res.empty()) {
+    RETURN_IF_NOT_OK(CollectPipelineInfoEnd("IteratorConsumer", "GetNextAsMap", {{"Flag", res.FlagName()}}));
+    return Status::OK();
+  }
 
   // Populate the out map from the row and return it
   for (const auto &colMap : tree_adapter_->GetColumnNameMap()) {
@@ -234,16 +244,24 @@ Status IteratorConsumer::GetNextAsMap(std::unordered_map<std::string, TensorPtr>
     err_msg += "\"" + std::string(kDftMetaColumnPrefix) + "\"";
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
+  RETURN_IF_NOT_OK(CollectPipelineInfoEnd("IteratorConsumer", "GetNextAsMap"));
   return Status::OK();
 }
 
 Status IteratorConsumer::GetNextAsOrderedPair(std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> *const vec) {
   CHECK_FAIL_RETURN_UNEXPECTED(vec != nullptr && vec->empty(), "vec is null or non-empty.");
+  RETURN_IF_NOT_OK(CollectPipelineInfoStart("IteratorConsumer", "GetNextAsOrderedPair"));
 
   TensorRow curr_row;
 
   RETURN_IF_NOT_OK(tree_adapter_->GetNext(&curr_row));
-  RETURN_OK_IF_TRUE(curr_row.empty());
+
+  // Return empty pair if there's no data
+  if (curr_row.empty()) {
+    RETURN_IF_NOT_OK(
+      CollectPipelineInfoEnd("IteratorConsumer", "GetNextAsOrderedPair", {{"Flag", curr_row.FlagName()}}));
+    return Status::OK();
+  }
 
   size_t num_cols = curr_row.size();  // num_cols is non-empty.
   // order the column names according to their ids
@@ -270,7 +288,7 @@ Status IteratorConsumer::GetNextAsOrderedPair(std::vector<std::pair<std::string,
 
   std::transform(column_order_.begin(), column_order_.end(), std::back_inserter(*vec),
                  [curr_row](const auto &col) { return std::make_pair(col.second, curr_row[col.first]); });
-
+  RETURN_IF_NOT_OK(CollectPipelineInfoEnd("IteratorConsumer", "GetNextAsOrderedPair"));
   return Status::OK();
 }
 
@@ -418,6 +436,7 @@ Status SaveToDisk::ValidateParams() {
 }
 
 Status SaveToDisk::Save() {
+  RETURN_IF_NOT_OK(CollectPipelineInfoStart("SaveToDisk", "Save"));
   std::vector<std::string> file_names;
   if (num_files_ == 1) {
     file_names.push_back(dataset_path_);
@@ -481,6 +500,7 @@ Status SaveToDisk::Save() {
 
   RETURN_IF_NOT_OK(mr_writer->Commit());
   RETURN_IF_NOT_OK(mindrecord::ShardIndexGenerator::Finalize(file_names));
+  RETURN_IF_NOT_OK(CollectPipelineInfoEnd("SaveToDisk", "Save"));
   return Status::OK();
 }
 
@@ -782,7 +802,10 @@ Status TreeGetters::Init(std::shared_ptr<DatasetNode> d) {
 
 Status TreeGetters::GetRow(TensorRow *row) {
   RETURN_UNEXPECTED_IF_NULL(row);
-  return tree_adapter_->GetNext(row);
+  RETURN_IF_NOT_OK(CollectPipelineInfoStart("TreeGetters", "GetRow"));
+  Status get_next_status = tree_adapter_->GetNext(row);
+  RETURN_IF_NOT_OK(CollectPipelineInfoEnd("TreeGetters", "GetRow"));
+  return get_next_status;
 }
 
 Status TreeGetters::GetOutputTypes(std::vector<DataType> *types) {
@@ -918,11 +941,13 @@ Status TreeGetters::GetFirstRowShapeAndType() {
 Status BuildVocabConsumer::Init(std::shared_ptr<DatasetNode> d) { return tree_adapter_->Compile(std::move(d), 1); }
 
 Status BuildVocabConsumer::Start() {
+  RETURN_IF_NOT_OK(CollectPipelineInfoStart("BuildVocabConsumer", "Start"));
   // Getting one row would trigger building the vocab
   TensorRow row;
   RETURN_IF_NOT_OK(tree_adapter_->GetNext(&row));
   // The returned row would EOE which is an empty row
   CHECK_FAIL_RETURN_UNEXPECTED(row.empty(), "BuildVocab: The fetched row from BuildVocab should be an EOE.");
+  RETURN_IF_NOT_OK(CollectPipelineInfoEnd("BuildVocabConsumer", "Start"));
   return Status::OK();
 }
 Status DatasetSizeGetter::GetDatasetSize(int64_t *size, bool estimate) {

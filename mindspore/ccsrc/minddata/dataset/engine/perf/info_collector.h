@@ -32,5 +32,11 @@ Status CollectPipelineInfoStart(const std::string &event, const std::string &sta
 
 Status CollectPipelineInfoEnd(const std::string &event, const std::string &stage,
                               const std::map<std::string, std::string> &custom_info = {});
+
+Status CollectOpInfoStart(const std::string &event, const std::string &stage,
+                          const std::map<std::string, std::string> &custom_info = {});
+
+Status CollectOpInfoEnd(const std::string &event, const std::string &stage,
+                        const std::map<std::string, std::string> &custom_info = {});
 }  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_PERF_INFO_COLLECTOR_H_
