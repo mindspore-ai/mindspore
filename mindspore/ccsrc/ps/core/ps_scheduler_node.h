@@ -26,7 +26,6 @@
 
 #include "ps/core/scheduler_node.h"
 #include "ps/core/node_info.h"
-#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace ps {

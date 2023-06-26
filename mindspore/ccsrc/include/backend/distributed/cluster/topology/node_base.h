@@ -22,7 +22,6 @@
 #include <memory>
 #include "include/backend/distributed/cluster/topology/common.h"
 #include "include/backend/distributed/cluster/topology/utils.h"
-#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace distributed {

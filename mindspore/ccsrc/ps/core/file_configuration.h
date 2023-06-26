@@ -33,7 +33,6 @@
 #include "utils/log_adapter.h"
 #include "ps/core/comm_util.h"
 #include "ps/core/configuration.h"
-#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace ps {

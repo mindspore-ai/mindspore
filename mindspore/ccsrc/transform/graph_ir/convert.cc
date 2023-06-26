@@ -2798,7 +2798,7 @@ void DfGraphConvertor::ConvertHcclNode(const CNodePtr &node) {
   op_cache_[node.get()] = op;
 }
 
-void DfGraphConvertor::AddCommAttrForHcclNode(const CNodePtr &node, const OperatorPtr &converted_op) {
+void DfGraphConvertor::AddCommAttrForHcclNode(const CNodePtr &node, const OperatorPtr &converted_op) const {
 #ifdef ENABLE_D
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(converted_op);
@@ -2810,7 +2810,7 @@ void DfGraphConvertor::AddCommAttrForHcclNode(const CNodePtr &node, const Operat
   auto comm = device::ascend::AscendCollectiveCommLib::GetInstance().HcclCommunicator(group);
   if (common::UseHostCollective() && !hccl::HcclAdapter::GetInstance().UseHcclCM()) {
     MS_EXCEPTION_IF_NULL(comm);
-    converted_op->SetAttr("comm", reinterpret_cast<int64_t>(comm));
+    (void)converted_op->SetAttr("comm", reinterpret_cast<int64_t>(comm));
   }
 #endif
 }
