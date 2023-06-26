@@ -15,7 +15,7 @@
     输入：
         - **var** (Parameter) - 要更新的变量，为任意维度，其数据类型为float32或float16。其shape为 :math:`(N, *)` ，其中 :math:`*` 为任意数量的额外维度。
         - **alpha** (Union[Number, Tensor]) - 调节系数，必须是Scalar。数据类型为float32或float16。
-        - **delta** (Tensor) - 变化的Tensor，shape和数据类型与 `var` 相同。
+        - **delta** (Tensor) - 变化的Tensor，shape与 `var` 相同。
 
     输出：
         Tensor，更新后的 `var` 。

@@ -17,8 +17,8 @@
 
     输入：
         - **var** (Parameter) - 要更新的权重。数据类型必须为float16或float32。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
-        - **accum** (Parameter) - 要更新的累积，shape和数据类型必须与 `var` 相同。
-        - **linear** (Parameter) - 要更新的线性系数，shape和数据类型必须与 `var` 相同。
+        - **accum** (Parameter) - 要更新的累积，shape必须与 `var` 相同。
+        - **linear** (Parameter) - 要更新的线性系数，shape必须与 `var` 相同。
         - **grad** (Tensor) - 梯度。数据类型必须为float16或float32。
         - **lr** (Union[Number, Tensor]) - 学习率，必须为正值。它必须是float或数据类型为float16或float32的Scalar的Tensor。默认值： ``0.001`` 。
         - **l1** (Union[Number, Tensor]) - l1正则化，必须大于或等于零。它必须是float类型或数据类型为float16或float32的Scalar的Tensor。默认值： ``0.0`` 。
