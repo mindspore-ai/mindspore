@@ -1688,7 +1688,7 @@ def logical_or(input, other):
         >>> y = Tensor(np.array([True, False]), mindspore.bool_)
         >>> output = ops.logical_or(x, y)
         >>> print(output)
-        [True, True]
+        [True True]
     """
     if isinstance(input, Tensor) and input.dtype != mstype.bool_:
         input = input.astype(mstype.bool_)
@@ -1750,7 +1750,7 @@ def logical_and(input, other):
         >>> y = Tensor(np.array([True, False]), mindspore.bool_)
         >>> output = ops.logical_and(x, y)
         >>> print(output)
-        [True, False]
+        [True False]
     """
     if isinstance(input, Tensor) and input.dtype != mstype.bool_:
         input = input.astype(mstype.bool_)
