@@ -350,12 +350,14 @@ void CodeMSModelBuild(std::ofstream &ofs, const int model_index, const size_t we
          "                      const MSContextHandle model_context) {\n"
          "  if (model == NULL) {\n"
          "    return kMSStatusLiteParamInvalid;\n"
-         "  }\n"
-         "  if (data_size != "
-      << weight_size
-      << ") {\n"
-         " return kMSStatusLiteInputParamInvalid;}\n"
-         "  MicroModel *micro_model = (MicroModel *)model;\n"
+         "  }\n";
+  if (config.changeable_weights_name().empty()) {
+    ofs << "  if (data_size != " << weight_size
+        << ") {\n"
+           "    return kMSStatusLiteInputParamInvalid;\n"
+           "  }\n";
+  }
+  ofs << "  MicroModel *micro_model = (MicroModel *)model;\n"
          "  int ret = MSModelCreate"
       << model_index
       << "(micro_model);\n"
