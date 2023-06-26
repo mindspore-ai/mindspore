@@ -211,6 +211,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/rts/*.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/hccl/*.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/bisheng/bisheng_kernel_build.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/bisheng/bisheng_kernel_mod.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/bisheng/custom_bisheng_kernel.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/bisheng/bisheng_kernel_factory.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/bisheng/bisheng_kernel_metadata.cc"
