@@ -213,7 +213,7 @@ bool IsConstant(const ValuePtr &value) {
   return true;
 }
 
-FuncGraphPtr OptimizeBpropBuilder(const FuncGraphPtr &bprop_func_graph) {
+FuncGraphPtr OptimizeBpropBuilder(const FuncGraphPtr &bprop_func_graph, bool is_controw_flow) {
   PyNativeAlgo::Common::DumpGraphIR("bprop_builder_before_opt.ir", bprop_func_graph);
   pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
   resource->set_func_graph(bprop_func_graph);
@@ -221,6 +221,11 @@ FuncGraphPtr OptimizeBpropBuilder(const FuncGraphPtr &bprop_func_graph) {
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(bprop_func_graph);
   auto after_opt_bg = pipeline::MsFunctionBpropGraphPass(resource, true);
+  if (is_controw_flow) {
+    for (const auto &g : manager->func_graphs()) {
+      g->set_flag(kFlagMsFunctionCallGraph, true);
+    }
+  }
   PyNativeAlgo::Common::DumpGraphIR("bprop_builder_after_opt.ir", after_opt_bg);
   return after_opt_bg;
 }
@@ -264,9 +269,11 @@ AnfNodePtr HandleRealToComplex(const TensorPtr &input, const AbstractBasePtr &ab
   return new_din;
 }
 
-void SetMsFunctionCallGraph(const CNodePtr &cnode, const FuncGraphPtr &call_graph, const std::string &cache_key) {
+void SetMsFunctionCallGraph(const CNodePtr &cnode, const FuncGraphPtr &call_graph, const std::string &cache_key,
+                            bool is_control_flow) {
   MS_EXCEPTION_IF_NULL(cnode);
   common::AnfAlgo::SetNodeAttr(kAttrMsFunctionCallNode, MakeValue(true), cnode);
+  // kFlagMsFunctionCallGraph is set true to avoid compilig call_graph whe compiling the main graph
   call_graph->set_flag(kFlagMsFunctionCallGraph, true);
   call_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
   pipeline::ResourcePtr resource;
@@ -279,14 +286,19 @@ void SetMsFunctionCallGraph(const CNodePtr &cnode, const FuncGraphPtr &call_grap
   } else {
     resource = it->second;
   }
-  auto fn = [resource, need_compile](const VectorRef &arg_list) -> VectorRef {
+  auto fn = [resource, need_compile, is_control_flow](const VectorRef &arg_list) -> VectorRef {
     if (need_compile) {
       MS_LOG(DEBUG) << "Start emit action for graph " << resource->func_graph()->ToString();
       auto manager = resource->manager();
       manager->AddFuncGraph(resource->func_graph(), true);
       resource->SetBackendAsync([]() { return compile::CreateBackend(); });
       resource->func_graph()->set_flag(kFlagIsPynativeBpropGraph, true);
-
+      // kFlagMsFunctionCallGraph is set false to compile sub graph in control flow
+      if (is_control_flow) {
+        for (const auto &g : manager->func_graphs()) {
+          g->set_flag(kFlagMsFunctionCallGraph, false);
+        }
+      }
       (void)TaskEmitAction(resource);
       (void)ExecuteAction(resource);
     }
@@ -657,7 +669,7 @@ CNodePtr AutoGradCellImpl::GetBPropCNode(const GradParamPtr &grad_param, const A
   auto bprop_cnode = ad_param()->tape_->NewCNode(bprop_inputs);
   bprop_cnode->set_abstract(bprop_graph->output()->abstract());
   if (is_ms_function_dynamic_shape) {
-    SetMsFunctionCallGraph(bprop_cnode, bprop_graph, grad_param->graph_cache_key);
+    SetMsFunctionCallGraph(bprop_cnode, bprop_graph, grad_param->graph_cache_key, grad_param->is_control_flow);
   }
   // For replacing parameter and dout.
   for (size_t i = 1; i < bprop_inputs.size(); ++i) {
@@ -725,7 +737,9 @@ CNodePtr AutoGradCellImpl::GetBPropFromFProp(const GradParamPtr &grad_param, con
     }
     bprop_builder->set_output(bprop_builder->NewCNode(actual_out));
     // Call pass for optimize graph, such as inline
-    after_opt_fg = OptimizeBpropBuilder(bprop_builder);
+    after_opt_fg =
+      OptimizeBpropBuilder(bprop_builder, grad_param->is_ms_function_graph && grad_param->use_dynamic_shape_process &&
+                                            grad_param->is_control_flow);
     if (grad_param->is_ms_function_graph || !grad_param->use_dynamic_shape_process) {
       pass_grad_graph_[grad_param->graph_cache_key] = BasicClone(after_opt_fg);
     }
@@ -925,8 +939,7 @@ void AutoGradCellImpl::ProcessMetaFuncGraphOp(const GradParamPtr &grad_param, co
   op_grad_info->out_abs = cnode->abstract();
   op_grad_info->input_value_grad_type = grad_param->op_grad_info->input_value_grad_type;
   auto meta_graph_grad_param =
-    std::make_shared<GradParam>(op_grad_info, grad_param->grad_by_value, grad_param->use_dynamic_shape_process, cnode);
-  meta_graph_grad_param->is_control_flow = true;
+    std::make_shared<GradParam>(op_grad_info, grad_param->grad_by_value, grad_param->use_dynamic_shape_process);
   meta_graph_grad_param->is_ms_function_graph = true;
   // Set to control flow just let it go by ad::Grad, because grad_func_graph with no abstract
   meta_graph_grad_param->is_control_flow = true;
@@ -1362,6 +1375,12 @@ CNodePtr AutoGradCellImpl::ConvertConstInputToAttr(const CNodePtr &cnode, const 
     }
   }
   cnode->set_inputs(new_inputs);
+  // If cast input is a cast
+  for (size_t i = 1; i < cnode->size(); ++i) {
+    if (cnode->input(i)->isa<CNode>()) {
+      cnode->set_input(i, ConvertConstInputToAttr(cnode->input(i)->cast<CNodePtr>(), device_target, is_dynamic_shape));
+    }
+  }
   return cnode;
 }
 

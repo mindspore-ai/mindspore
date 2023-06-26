@@ -27,7 +27,7 @@ class BpropTask : public AsyncTask {
  public:
   explicit BpropTask(const std::function<void(void)> &task) : AsyncTask(kBpropTask), run_task_(task) {}
   explicit BpropTask(std::function<void(void)> &&task) : AsyncTask(kBpropTask), run_task_(std::move(task)) {}
-  ~BpropTask() = default;
+  ~BpropTask() override = default;
   void Run() override;
 
  private:

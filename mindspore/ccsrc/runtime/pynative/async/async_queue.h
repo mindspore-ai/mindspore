@@ -103,6 +103,7 @@ class BACKEND_EXPORT AsyncHqueue final : public AsyncQueue {
   void Init();
   void Push(AsyncTask *task);
   void Wait() override;
+  void Clear() override;
   bool Empty() override;
   void WorkerJoin() override;
   void ReinitAfterFork() override;
@@ -113,6 +114,7 @@ class BACKEND_EXPORT AsyncHqueue final : public AsyncQueue {
   HQueue<AsyncTask> tasks_hqueque_;
   bool init_{false};
   bool alive_{true};
+  bool stop_{false};
   std::atomic_int status_{kThreadBusy};
   size_t spin_count_{0};
 };

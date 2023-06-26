@@ -266,21 +266,25 @@ void AsyncHqueue::WorkerLoop() {
     if (LIKELY(!tasks_hqueque_.Empty())) {
       auto task = tasks_hqueque_.Dequeue();
       if (LIKELY(task != nullptr)) {
-        task->Run();
+        if (!stop_) {
+          task->Run();
+        }
         delete task;
         spin_count_ = 0;
       }
+      continue;
     } else {
       if (spin_count_ == 0) {
         status_.store(kThreadIdle);
       }
       ++spin_count_;
-      std::this_thread::yield();
     }
-    if (UNLIKELY(spin_count_ > kMaxSpinCount)) {
+    if (UNLIKELY(spin_count_ == kMaxSpinCount)) {
       std::unique_lock<std::mutex> lock(task_mutex_);
       task_cond_var_->wait(lock, [this]() { return !tasks_hqueque_.Empty() || !alive_; });
       spin_count_ = 0;
+    } else {
+      std::this_thread::yield();
     }
   }
 }
@@ -303,8 +307,11 @@ void AsyncHqueue::Push(AsyncTask *task) {
   }
   while (!tasks_hqueque_.Enqueue(task)) {
   }
-  if (UNLIKELY(status_.load() == kThreadIdle)) {
+  if (status_.load() == kThreadIdle) {
     status_.store(kThreadBusy);
+  }
+  if (spin_count_ == kMaxSpinCount) {
+    std::unique_lock<std::mutex> lock(task_mutex_);
     task_cond_var_->notify_one();
   }
 }
@@ -315,6 +322,15 @@ void AsyncHqueue::Wait() {
   }
   while (status_.load() == kThreadBusy) {
   }
+}
+
+void AsyncHqueue::Clear() {
+  if (status_.load() == kThreadIdle) {
+    return;
+  }
+  stop_ = true;
+  Wait();
+  stop_ = false;
 }
 
 bool AsyncHqueue::Empty() { return tasks_hqueque_.Empty(); }
