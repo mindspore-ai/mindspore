@@ -33,14 +33,6 @@ __global__ void Copy(T *loss, T *tmp_loss, ReductionMode reduction, int input_si
   }
 }
 
-// copy array of equal size
-template <typename T>
-__global__ void CopyEqual(const T *src, T *dest, const int size) {
-  for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += blockDim.x * gridDim.x) {
-    dest[i] = src[i];
-  }
-}
-
 template <typename T>
 __global__ void AddTile(T *tmp_loss, int index) {
   tmp_loss[0] += tmp_loss[index];
@@ -93,31 +85,216 @@ __global__ void Divide(const half *numerator, const float *denominator, half *re
   result[0] = __float2half(result_float);
 }
 
-template <typename T>
-void Sum(T *array, const int &size, cudaStream_t stream) {
-  if (size % 2 == 1) {
-    AddTile<<<1, 1, 0, stream>>>(array, size - 1);
+template <unsigned int BlockDimX, typename T>
+__device__ __forceinline__ void WarpReduce(T *shared_data, const int tid) {
+  T local_data = shared_data[tid];
+  if (BlockDimX >= 32) {
+    local_data = local_data + __shfl_down_sync(0xFFFFFFFF, local_data, 16);
   }
-  for (int stride = size / 2; stride > 0; stride >>= 1) {
-    PartialSum<<<GET_BLOCKS(stride), GET_THREADS, 0, stream>>>(array, stride);
-    if (stride > 2 && stride % 2 == 1) {
-      AddTile<<<1, 1, 0, stream>>>(array, stride - 1);
-    }
+  if (BlockDimX >= 16) {
+    local_data = local_data + __shfl_down_sync(0xFFFFFFFF, local_data, 8);
+  }
+  if (BlockDimX >= 8) {
+    local_data = local_data + __shfl_down_sync(0xFFFFFFFF, local_data, 4);
+  }
+  if (BlockDimX >= 4) {
+    local_data = local_data + __shfl_down_sync(0xFFFFFFFF, local_data, 2);
+  }
+  if (BlockDimX >= 2) {
+    local_data = local_data + __shfl_down_sync(0xFFFFFFFF, local_data, 1);
+  }
+  if (tid == 0) {
+    shared_data[tid] = local_data;
   }
 }
 
-template <typename T, typename S>
-void Reduce(T *tmp_loss, const int &size, S *denom, const ReductionMode &reduction, T *output, cudaStream_t stream) {
-  // sum losses together
-  Sum(tmp_loss, size, stream);
-
-  if (reduction == ReductionMode::kMean) {
-    // mean reduction, divide sum by denominator, store result in output
-    Divide<<<1, 1, 0, stream>>>(tmp_loss, denom, output);
-  } else if (reduction == ReductionMode::kSum) {
-    // sum reduction, copy sum to output
-    CopyEqual<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(tmp_loss, output, size);
+template <unsigned int BlockDimX, typename T, typename S>
+__device__ __forceinline__ void BinaryWarpReduce(T *shared_data0, S *shared_data1, const int tid) {
+  T local_data0 = shared_data0[tid];
+  S local_data1 = shared_data1[tid];
+  if (BlockDimX >= 32) {
+    local_data0 = local_data0 + __shfl_down_sync(0xFFFFFFFF, local_data0, 16);
+    local_data1 = local_data1 + __shfl_down_sync(0xFFFFFFFF, local_data1, 16);
   }
+  if (BlockDimX >= 16) {
+    local_data0 = local_data0 + __shfl_down_sync(0xFFFFFFFF, local_data0, 8);
+    local_data1 = local_data1 + __shfl_down_sync(0xFFFFFFFF, local_data1, 8);
+  }
+  if (BlockDimX >= 8) {
+    local_data0 = local_data0 + __shfl_down_sync(0xFFFFFFFF, local_data0, 4);
+    local_data1 = local_data1 + __shfl_down_sync(0xFFFFFFFF, local_data1, 4);
+  }
+  if (BlockDimX >= 4) {
+    local_data0 = local_data0 + __shfl_down_sync(0xFFFFFFFF, local_data0, 2);
+    local_data1 = local_data1 + __shfl_down_sync(0xFFFFFFFF, local_data1, 2);
+  }
+  if (BlockDimX >= 2) {
+    local_data0 = local_data0 + __shfl_down_sync(0xFFFFFFFF, local_data0, 1);
+    local_data1 = local_data1 + __shfl_down_sync(0xFFFFFFFF, local_data1, 1);
+  }
+  if (tid == 0) {
+    shared_data0[tid] = local_data0;
+    shared_data1[tid] = local_data1;
+  }
+}
+
+template <unsigned int BlockDimX, typename T>
+__device__ __forceinline__ void BlockReduce(T *shared_data, const unsigned int tid) {
+  if (BlockDimX >= 1024) {
+    if (tid < 512) {
+      shared_data[tid] = shared_data[tid] + shared_data[tid + 512];
+    }
+    __syncthreads();
+  }
+  if (BlockDimX >= 512) {
+    if (tid < 256) {
+      shared_data[tid] = shared_data[tid] + shared_data[tid + 256];
+    }
+    __syncthreads();
+  }
+  if (BlockDimX >= 256) {
+    if (tid < 128) {
+      shared_data[tid] = shared_data[tid] + shared_data[tid + 128];
+    }
+    __syncthreads();
+  }
+  if (BlockDimX >= 128) {
+    if (tid < 64) {
+      shared_data[tid] = shared_data[tid] + shared_data[tid + 64];
+    }
+    __syncthreads();
+  }
+  if (BlockDimX >= 64) {
+    if (tid < 32) {
+      shared_data[tid] = shared_data[tid] + shared_data[tid + 32];
+    }
+  }
+  __syncthreads();
+
+  if (tid < 32) WarpReduce<BlockDimX>(shared_data, tid);
+
+  __syncthreads();
+}
+
+template <unsigned int BlockDimX, typename T, typename S>
+__device__ __forceinline__ void BinaryBlockReduce(T *shared_data0, S *shared_data1, const unsigned int tid) {
+  if (BlockDimX >= 1024) {
+    if (tid < 512) {
+      shared_data0[tid] = shared_data0[tid] + shared_data0[tid + 512];
+      shared_data1[tid] = shared_data1[tid] + shared_data1[tid + 512];
+    }
+    __syncthreads();
+  }
+  if (BlockDimX >= 512) {
+    if (tid < 256) {
+      shared_data0[tid] = shared_data0[tid] + shared_data0[tid + 256];
+      shared_data1[tid] = shared_data1[tid] + shared_data1[tid + 256];
+    }
+    __syncthreads();
+  }
+  if (BlockDimX >= 256) {
+    if (tid < 128) {
+      shared_data0[tid] = shared_data0[tid] + shared_data0[tid + 128];
+      shared_data1[tid] = shared_data1[tid] + shared_data1[tid + 128];
+    }
+    __syncthreads();
+  }
+  if (BlockDimX >= 128) {
+    if (tid < 64) {
+      shared_data0[tid] = shared_data0[tid] + shared_data0[tid + 64];
+      shared_data1[tid] = shared_data1[tid] + shared_data1[tid + 64];
+    }
+    __syncthreads();
+  }
+  if (BlockDimX >= 64) {
+    if (tid < 32) {
+      shared_data0[tid] = shared_data0[tid] + shared_data0[tid + 32];
+      shared_data1[tid] = shared_data1[tid] + shared_data1[tid + 32];
+    }
+  }
+  __syncthreads();
+
+  if (tid < 32) BinaryWarpReduce<BlockDimX>(shared_data0, shared_data1, tid);
+
+  __syncthreads();
+}
+
+template <unsigned int BlockDimX, typename T>
+__inline__ __device__ void Reduce(T *output, T *shared_data, const unsigned int tid) {
+  BlockReduce<BlockDimX>(shared_data, tid);
+
+  if (tid == 0) {
+    MsAtomicAdd(output, shared_data[0]);
+  }
+}
+
+template <unsigned int BlockDimX, typename T, typename S>
+__inline__ __device__ void BinaryReduce(T *output0, S *output1, T *shared_data0, S *shared_data1,
+                                           const unsigned int tid) {
+  BinaryBlockReduce<BlockDimX>(shared_data0, shared_data1, tid);
+
+  if (tid == 0) {
+    MsAtomicAdd(output0, shared_data0[0]);
+    MsAtomicAdd(output1, shared_data1[0]);
+  }
+}
+
+template<unsigned int BlockDimX, typename T, typename S, unsigned int sharedSize>
+__global__ void NLLLossNativeKernel(const T *logits, const int32_t *labels, const S *weights, T *loss, S *total_weight,
+                                       unsigned int label_size, unsigned int num_classes, int32_t ignore_index) {
+  unsigned int tid = threadIdx.x;
+  const S zero = static_cast<S>(0);
+  const S one = static_cast<S>(1);
+  __shared__ S shared_total_weight[sharedSize];
+  shared_total_weight[tid] = zero;
+  if (tid == 0 && blockIdx.x == 0) {
+    total_weight[0] = zero;
+  }
+
+  for (unsigned int gid = blockIdx.x * BlockDimX + tid, gridSize = BlockDimX * gridDim.x; gid < label_size;
+       gid += gridSize) {
+    int32_t label = labels[gid];
+    if (label != ignore_index) {
+      CUDA_KERNEL_ASSERT(label >= 0 && label < num_classes);
+      S weight = weights ? weights[label] : one;
+      T logit;
+      MultiplyDevice(weight, -(logits[gid * num_classes + label]), &logit);
+      loss[gid] = logit;
+      shared_total_weight[tid] = shared_total_weight[tid] + weight;
+    }
+  }
+  __syncthreads();
+  Reduce<BlockDimX>(total_weight, shared_total_weight, tid);
+}
+
+template<unsigned int BlockDimX, typename T, typename S, unsigned int sharedSize0, unsigned int sharedSize1>
+__global__ void NLLLossReduceKernel(const T *logits, const int32_t *labels, const S *weights, T *loss, S *total_weight,
+                                       unsigned int label_size, unsigned int num_classes, int32_t ignore_index) {
+  unsigned int tid = threadIdx.x;
+  const S one = static_cast<S>(1);
+  __shared__ T shared_loss[sharedSize0];
+  __shared__ S shared_total_weight[sharedSize1];
+  shared_loss[tid] = static_cast<T>(0);
+  shared_total_weight[tid] = static_cast<S>(0);
+  if (tid == 0 && blockIdx.x == 0) {
+    loss[0] = static_cast<S>(0);
+    total_weight[0] = static_cast<S>(0);
+  }
+
+  for (unsigned int gid = blockIdx.x * BlockDimX + tid, gridSize = BlockDimX * gridDim.x; gid < label_size;
+       gid += gridSize) {
+    int32_t label = labels[gid];
+    if (label != ignore_index) {
+      CUDA_KERNEL_ASSERT(label >= 0 && label < num_classes);
+      S weight = weights ? weights[label] : one;
+      T logit;
+      MultiplyDevice(weight, -(logits[gid * num_classes + label]), &logit);
+      shared_loss[tid] = shared_loss[tid] + logit;
+      shared_total_weight[tid] = shared_total_weight[tid] + weight;
+    }
+  }
+  __syncthreads();
+  BinaryReduce<BlockDimX>(loss, total_weight, shared_loss, shared_total_weight, tid);
 }
 
 template <typename T>
@@ -301,72 +478,43 @@ void BinaryCrossEntropyLossGrad(const int &input_size, const ReductionMode &redu
                                                                                        input_y, weight, dloss, dx);
 }
 
-// helper function to calculate single negative log likelihood
 template <typename T, typename S>
-__global__ void NLLLossKernel(const int n, const int c, const T *input, const int32_t *target, const S *weight,
-                              S *tmp_target_weight, T *output, int *ret_flag) {
-  int target_class;
-  int input_idx;
-
-  for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x) {
-    target_class = static_cast<int>(target[i]);
-    if (target_class < 0 || target_class > c) {
-      *ret_flag = -1;
-      return;
-    }
-
-    tmp_target_weight[i] = weight[target_class];  // fill tmp_target_weight for later summation
-
-    input_idx = c * i + target_class;
-
-    MultiplyDevice(-weight[target_class], input[input_idx], output + i);
-  }
-}
-
-template <typename T, typename S>
-int NLLLoss(const int n, const int c, const ReductionMode reduction, const T *input, const int32_t *target,
-            const S *weight, T *loss, S *total_weight, T *tmp_loss, S *tmp_target_weight, cudaStream_t stream) {
-  int *ret_flag_device = nullptr;
-  (void)cudaMalloc(&ret_flag_device, sizeof(int));
-  (void)cudaMemset(ret_flag_device, 0, sizeof(int));
-  int ret_flag_host;
-  if (reduction != ReductionMode::kNone) {
-    NLLLossKernel<<<GET_BLOCKS(n), GET_THREADS, 0, stream>>>(n, c, input, target, weight, tmp_target_weight, tmp_loss,
-                                                             ret_flag_device);
-    cudaDeviceSynchronize();
-    (void)cudaMemcpy(&ret_flag_host, ret_flag_device, sizeof(int), cudaMemcpyDeviceToHost);
-    // sum target weights after populating them
-    Sum(tmp_target_weight, n, stream);
-    // reduce tmp_loss
-    Reduce(tmp_loss, n, tmp_target_weight, reduction, loss, stream);
+cudaError_t NLLLoss(const T *logits, const int32_t *labels,
+                const S *weights, T *loss, S *total_weight,
+                unsigned int label_size, unsigned int num_classes,
+                const ReductionMode reduction, int32_t ignore_index, cudaStream_t stream) {
+  const unsigned int Threads = 512;
+  if (reduction == ReductionMode::kNone) {
+    const unsigned int sharedSize = Threads * sizeof(S) + 1;
+    NLLLossNativeKernel<Threads, T, S, sharedSize> <<<GET_BLOCKS(label_size), Threads, 0, stream>>>
+            (logits, labels, weights, loss, total_weight, label_size, num_classes, ignore_index);
   } else {
-    // no reduction, output directly to loss
-    NLLLossKernel<<<GET_BLOCKS(n), GET_THREADS, 0, stream>>>(n, c, input, target, weight, tmp_target_weight, loss,
-                                                             ret_flag_device);
-    (void)cudaMemcpy(&ret_flag_host, ret_flag_device, sizeof(int), cudaMemcpyDeviceToHost);
-    // sum target weights after populatin them
-    Sum(tmp_target_weight, n, stream);
+    const unsigned int sharedSize0 = Threads * sizeof(T) + 1;
+    const unsigned int sharedSize1 = Threads * sizeof(S) + 1;
+    NLLLossReduceKernel<Threads, T, S, sharedSize0, sharedSize1> <<<GET_BLOCKS(label_size), Threads, 0, stream>>>
+            (logits, labels, weights, loss, total_weight, label_size, num_classes, ignore_index);
+    if (reduction == ReductionMode::kMean) {
+      Divide<<<1, 1, 0, stream>>>(loss, total_weight, loss);
+    }
   }
-
-  if (ret_flag_host == -1) {
-    return ret_flag_host;
-  }
-
-  // copy sum of weight (tmp_target_weight[0]) to total_weight
-  CopyEqual<<<1, 1, 0, stream>>>(tmp_target_weight, total_weight, 1);
-  return 0;
+  cudaStreamSynchronize(stream);
+  cudaError_t status = cudaGetLastError();
+  return status;
 }
 
 template <typename T, typename S>
 __global__ void NLLLossGradKernel(const int n, const int c, const ReductionMode reduction, const T *input,
-                                  const int32_t *target, const S *weight, const S *total_weight, const T *dloss,
-                                  T *dinput) {
+                                  const int32_t *target, const S *weight, const S *total_weight, int32_t ignore_index,
+                                  const T *dloss, T *dinput) {
   int input_idx;
   int target_class;
   S tmp_quot;
   if (reduction == ReductionMode::kNone) {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x) {
       target_class = static_cast<int>(target[i]);
+      if (target_class == ignore_index) {
+        continue;
+      }
 
       input_idx = (i * c) + target_class;
 
@@ -375,6 +523,9 @@ __global__ void NLLLossGradKernel(const int n, const int c, const ReductionMode 
   } else if (reduction == ReductionMode::kMean) {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x) {
       target_class = static_cast<int>(target[i]);
+      if (target_class == ignore_index) {
+        continue;
+      }
 
       input_idx = (i * c) + target_class;
 
@@ -384,6 +535,9 @@ __global__ void NLLLossGradKernel(const int n, const int c, const ReductionMode 
   } else if (reduction == ReductionMode::kSum) {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n; i += blockDim.x * gridDim.x) {
       target_class = static_cast<int>(target[i]);
+      if (target_class == ignore_index) {
+        continue;
+      }
 
       input_idx = (i * c) + target_class;
 
@@ -394,13 +548,38 @@ __global__ void NLLLossGradKernel(const int n, const int c, const ReductionMode 
 
 template <typename T, typename S>
 void NLLLossGrad(const int n, const int c, const ReductionMode reduction, const T *input, const int32_t *target,
-                 const S *weight, const S *total_weight, const T *dloss, T *dinput, cudaStream_t stream) {
+                 const S *weight, const S *total_weight, const T *dloss, T *dinput, int32_t ignore_index,
+                 cudaStream_t stream) {
   int input_size = n * c;
   InitZero<<<GET_BLOCKS(input_size), GET_THREADS, 0, stream>>>(dinput, input_size);
 
   NLLLossGradKernel<<<GET_BLOCKS(n), GET_THREADS, 0, stream>>>(n, c, reduction, input, target, weight, total_weight,
-                                                               dloss, dinput);
+                                                               ignore_index, dloss, dinput);
 }
+
+template CUDA_LIB_EXPORT cudaError_t NLLLoss<half, half>(const half *logits, const int32_t *labels,
+                                                     const half *weights, half *loss,
+                                                     half *total_weight, const unsigned int label_size,
+                                                     const unsigned int num_classes, const ReductionMode reduction,
+                                                     int32_t ignore_index, cudaStream_t stream);
+
+template CUDA_LIB_EXPORT cudaError_t NLLLoss<half, float>(const half *logits, const int32_t *labels,
+                                                      const float *weights, half *loss,
+                                                      float *total_weight, unsigned int label_size,
+                                                      unsigned int num_classes, const ReductionMode reduction,
+                                                      int32_t ignore_index, cudaStream_t stream);
+
+template CUDA_LIB_EXPORT cudaError_t NLLLoss<float, half>(const float *logits, const int32_t *labels,
+                                                      const half *weights, float *loss,
+                                                      half *total_weight, unsigned int label_size,
+                                                      unsigned int num_classes, const ReductionMode reduction,
+                                                      int32_t ignore_index, cudaStream_t stream);
+
+template CUDA_LIB_EXPORT cudaError_t NLLLoss<float, float>(const float *logits, const int32_t *labels,
+                                                       const float *weights, float *loss,
+                                                       float *total_weight, unsigned int label_size,
+                                                       unsigned int num_classes, const ReductionMode reduction,
+                                                       int32_t ignore_index, cudaStream_t stream);
 
 template CUDA_LIB_EXPORT void KLDivLoss<float>(const int &input_size, const ReductionMode &reduction,
                                                const float *input_x, const float *input_y, float *loss, float *tmp_loss,
@@ -428,25 +607,15 @@ template CUDA_LIB_EXPORT void BinaryCrossEntropyLossGrad<float>(const int &input
                                                                 const float *weight, const float *dloss, float *dx,
                                                                 cudaStream_t stream);
 
-template CUDA_LIB_EXPORT int NLLLoss<float, float>(const int n, const int c, const ReductionMode reduction,
-                                                   const float *input, const int32_t *target, const float *weight,
-                                                   float *loss, float *total_weight, float *tmp_loss,
-                                                   float *tmp_target_weight, cudaStream_t stream);
-
-template CUDA_LIB_EXPORT int NLLLoss<float, half>(const int n, const int c, const ReductionMode reduction,
-                                                  const float *input, const int32_t *target, const half *weight,
-                                                  float *loss, half *total_weight, float *tmp_loss,
-                                                  half *tmp_target_weight, cudaStream_t stream);
-
 template CUDA_LIB_EXPORT void NLLLossGrad<float, float>(const int n, const int c, const ReductionMode reduction,
                                                         const float *input, const int32_t *target, const float *weight,
                                                         const float *total_weight, const float *dloss, float *dinput,
-                                                        cudaStream_t stream);
+                                                        int32_t ignore_index, cudaStream_t stream);
 
 template CUDA_LIB_EXPORT void NLLLossGrad<float, half>(const int n, const int c, const ReductionMode reduction,
                                                        const float *input, const int32_t *target, const half *weight,
                                                        const half *total_weight, const float *dloss, float *dinput,
-                                                       cudaStream_t stream);
+                                                       int32_t ignore_index, cudaStream_t stream);
 
 template CUDA_LIB_EXPORT void KLDivLoss<half>(const int &input_size, const ReductionMode &reduction,
                                               const half *input_x, const half *input_y, half *loss, half *tmp_loss,
@@ -465,22 +634,12 @@ template CUDA_LIB_EXPORT void BinaryCrossEntropyLossGrad<half>(const int &input_
                                                                const half *weight, const half *dloss, half *dx,
                                                                cudaStream_t stream);
 
-template CUDA_LIB_EXPORT int NLLLoss<half, half>(const int n, const int c, const ReductionMode reduction,
-                                                 const half *input, const int32_t *target, const half *weight,
-                                                 half *loss, half *total_weight, half *tmp_loss,
-                                                 half *tmp_target_weight, cudaStream_t stream);
-
-template CUDA_LIB_EXPORT int NLLLoss<half, float>(const int n, const int c, const ReductionMode reduction,
-                                                  const half *input, const int32_t *target, const float *weight,
-                                                  half *loss, float *total_weight, half *tmp_loss,
-                                                  float *tmp_target_weight, cudaStream_t stream);
-
 template CUDA_LIB_EXPORT void NLLLossGrad<half, half>(const int n, const int c, const ReductionMode reduction,
                                                       const half *input, const int32_t *target, const half *weight,
                                                       const half *total_weight, const half *dloss, half *dinput,
-                                                      cudaStream_t stream);
+                                                      int32_t ignore_index, cudaStream_t stream);
 
 template CUDA_LIB_EXPORT void NLLLossGrad<half, float>(const int n, const int c, const ReductionMode reduction,
                                                        const half *input, const int32_t *target, const float *weight,
                                                        const float *total_weight, const half *dloss, half *dinput,
-                                                       cudaStream_t stream);
+                                                       int32_t ignore_index, cudaStream_t stream);

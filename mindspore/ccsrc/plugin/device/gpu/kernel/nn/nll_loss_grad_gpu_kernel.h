@@ -70,6 +70,7 @@ class NLLLossGradGpuKernelMod : public NativeGpuKernelMod {
   int c_;
   bool is_null_input_;
   int num_dloss_;
+  int32_t ignore_index_;
 };
 }  // namespace kernel
 }  // namespace mindspore

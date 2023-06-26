@@ -71,6 +71,7 @@ class NLLLossCpuKernelMod : public NativeCpuKernelMod {
   static std::vector<std::pair<KernelAttr, NLLLossFunc>> func_list_;
   NLLLossStruct nllloss_param_{};
   ReductionType reduction_type_;
+  int32_t ignore_index_;
 };
 }  // namespace kernel
 }  // namespace mindspore

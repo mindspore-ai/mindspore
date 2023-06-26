@@ -35,7 +35,7 @@ class MIND_API NLLLossGrad : public BaseOperator {
   }
 
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.NLLLossGrad for the inputs.
-  void Init(const Reduction &reduction = Reduction::NONE);
+  void Init(const Reduction &reduction = Reduction::NONE, const int64_t ignore_index = -100);
 
   /// \brief Set reduction.
   void set_reduction(const Reduction &reduction);
@@ -44,6 +44,14 @@ class MIND_API NLLLossGrad : public BaseOperator {
   ///
   /// \return reduction.
   Reduction get_reduction() const;
+
+  /// \brief Set ignore_index.
+  void set_ignore_index(const int64_t ignore_index);
+
+  /// \brief Get ignore_index.
+  ///
+  /// \return ignore_index.
+  int64_t get_ignore_index() const;
 };
 }  // namespace ops
 }  // namespace mindspore

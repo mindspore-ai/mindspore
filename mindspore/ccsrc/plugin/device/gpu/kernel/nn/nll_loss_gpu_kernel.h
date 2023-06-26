@@ -37,9 +37,6 @@ class NLLLossGpuKernelMod : public NativeGpuKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
     MS_EXCEPTION_IF_NULL(kernel_func_);
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
@@ -47,16 +44,13 @@ class NLLLossGpuKernelMod : public NativeGpuKernelMod {
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void InitSizeLists();
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);
@@ -67,16 +61,11 @@ class NLLLossGpuKernelMod : public NativeGpuKernelMod {
   static std::vector<std::pair<KernelAttr, NLLLossLaunchFunc>> func_list_;
   NLLLossLaunchFunc kernel_func_;
 
-  bool is_null_input_;
-  size_t input_size_;
   ReductionMode reduction_;
-  size_t logits_data_size_;
-  size_t weight_data_size_;
-  size_t tmp_loss_size_;
-  size_t tmp_target_weight_size_;
-  int n_;
-  int c_;
   string kernel_name_;
+  unsigned int label_size_;
+  unsigned int num_classes_;
+  int32_t ignore_index_;
 };
 }  // namespace kernel
 }  // namespace mindspore

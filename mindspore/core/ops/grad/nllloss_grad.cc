@@ -145,7 +145,10 @@ class NLLLossGradInfer : public abstract::OpInferBase {
   }
 };
 
-void NLLLossGrad::Init(const Reduction &reduction) { set_reduction(reduction); }
+void NLLLossGrad::Init(const Reduction &reduction, const int64_t ignore_index) {
+  set_reduction(reduction);
+  set_ignore_index(ignore_index);
+}
 
 void NLLLossGrad::set_reduction(const Reduction &reduction) {
   std::string reduce;
@@ -165,6 +168,12 @@ Reduction NLLLossGrad::get_reduction() const {
   CheckAndConvertUtils::GetReductionEnumValue(value_ptr, &reduction);
   return Reduction(reduction);
 }
+
+void NLLLossGrad::set_ignore_index(const int64_t ignore_index) {
+  (void)this->AddAttr(kIgnoreIndex, api::MakeValue(ignore_index));
+}
+
+int64_t NLLLossGrad::get_ignore_index() const { return GetValue<int64_t>(GetAttr(kIgnoreIndex)); }
 
 MIND_API_OPERATOR_IMPL(NLLLossGrad, BaseOperator);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(NLLLossGrad, prim::kPrimNLLLossGrad, NLLLossGradInfer, false);

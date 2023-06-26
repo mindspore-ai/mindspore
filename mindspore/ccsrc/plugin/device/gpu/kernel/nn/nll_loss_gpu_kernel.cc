@@ -46,9 +46,7 @@ bool NLLLossGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
     return false;
   }
   kernel_func_ = func_list_[index].second;
-
-  logits_data_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
-  weight_data_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex2).dtype);
+  ignore_index_ = static_cast<int32_t>(kernel_ptr->get_ignore_index());
   return true;
 }
 
@@ -61,50 +59,26 @@ int NLLLossGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   }
 
   auto logits_shape = inputs[kIndex0]->GetShapeVector();
-  size_t kMinShapeSize = 2;
-  if (logits_shape.size() < kMinShapeSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of logits cannot be less than 2, but "
-                      << "got the " << logits_shape.size();
-  }
-
-  n_ = LongToInt(logits_shape[0]);
-  c_ = LongToInt(logits_shape[1]);
-  input_size_ = SizeOf(logits_shape);
-  if ((reduction_ == ReductionMode::kSum) || (reduction_ == ReductionMode::kMean)) {
-    tmp_loss_size_ = logits_data_size_ * n_;
-  }
-  tmp_target_weight_size_ = n_ * weight_data_size_;
-
-  InitSizeLists();
+  label_size_ = logits_shape[0];
+  num_classes_ = logits_shape[1];
   return KRET_OK;
 }
 
 template <typename T, typename S>
 bool NLLLossGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  T *input_device = GetDeviceAddress<T>(inputs, 0);
-  int32_t *target_device = GetDeviceAddress<int32_t>(inputs, 1);  // nll_loss only supports int32 target
-  S *weight_device = GetDeviceAddress<S>(inputs, 2);
-
-  T *loss_device = GetDeviceAddress<T>(outputs, 0);
-  S *total_weight_device = GetDeviceAddress<S>(outputs, 1);
-
-  T *tmp_loss_device = reduction_ != ReductionMode::kNone ? GetDeviceAddress<T>(workspace, 0)
-                                                          : GetPossiblyNullDeviceAddress<T>(workspace, 0);
-
-  S *tmp_target_weight_device = GetDeviceAddress<S>(workspace, 1);
-
-  int ret = NLLLoss(n_, c_, reduction_, input_device, target_device, weight_device, loss_device, total_weight_device,
-                    tmp_loss_device, tmp_target_weight_device, reinterpret_cast<cudaStream_t>(stream_ptr));
-  if (ret == -1) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the label must in scope[0, C-1]";
+  T *logits = GetDeviceAddress<T>(inputs, 0);
+  auto *labels = GetDeviceAddress<int32_t>(inputs, 1);
+  S *weights = GetDeviceAddress<S>(inputs, 2);
+  T *loss = GetDeviceAddress<T>(outputs, 0);
+  S *total_weight = GetDeviceAddress<S>(outputs, 1);
+  cudaError_t status = NLLLoss(logits, labels, weights, loss, total_weight, label_size_, num_classes_, reduction_,
+                               ignore_index_, reinterpret_cast<cudaStream_t>(stream_ptr));
+  if (status != cudaSuccess) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the label must in scope[0, C-1]";
+    return false;
   }
   return true;
-}
-
-void NLLLossGpuKernelMod::InitSizeLists() {
-  workspace_size_list_.push_back(tmp_loss_size_);
-  workspace_size_list_.push_back(tmp_target_weight_size_);
 }
 
 std::vector<std::pair<KernelAttr, NLLLossGpuKernelMod::NLLLossLaunchFunc>> NLLLossGpuKernelMod::func_list_ = {

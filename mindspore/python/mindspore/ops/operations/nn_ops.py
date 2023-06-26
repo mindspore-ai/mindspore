@@ -2847,6 +2847,8 @@ class NLLLoss(Primitive):
     Args:
         reduction (str): Apply specific reduction method to the output: ``"none"`` , ``"mean"`` , or ``"sum"`` .
           Default: ``"mean"`` .
+        ignore_index (int): Specifies a target value that is ignored
+            and does not contribute to the input gradient. Default: ``-100`` .
 
     Inputs:
         - **logits** (Tensor) - Input logits, with shape :math:`(N, C)`. Data type only supports float32 or float16.
@@ -2893,10 +2895,11 @@ class NLLLoss(Primitive):
     """
 
     @prim_attr_register
-    def __init__(self, reduction="mean"):
+    def __init__(self, reduction="mean", ignore_index=-100):
         """Initialize NLLLoss"""
         self.init_prim_io_names(inputs=['x', 'target', "weight"], outputs=['loss', 'total_weight'])
         self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
+        validator.check_value_type('ignore_index', ignore_index, [int], self.name)
 
 
 class SoftmaxCrossEntropyWithLogits(Primitive):

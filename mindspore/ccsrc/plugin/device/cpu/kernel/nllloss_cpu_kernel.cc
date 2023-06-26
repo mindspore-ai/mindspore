@@ -55,6 +55,7 @@ bool NLLLossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
                       << ", the attr 'reduction' only support 'mean', 'sum' and 'none', but got " << reduction;
   }
   reduction_type_ = pair->second;
+  ignore_index_ = static_cast<int32_t>(kernel_ptr->get_ignore_index());
   return true;
 }
 
@@ -89,15 +90,15 @@ bool NLLLossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
     MS_LOG(EXCEPTION) << "Nllloss does not support null input";
   }
 
-  for (int i = 0; i < nllloss_param_.batch_; i++) {
-    if (labels[i] < minLabelNum || labels[i] > nllloss_param_.class_num_) {
-      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the label must in scope[0, C-1], but got" << labels[i];
-    }
-  }
-
   float total_loss = 0.0;
   float tmp_total_weight = 0.0;
   for (int i = 0; i < nllloss_param_.batch_; i++) {
+    if (labels[i] == ignore_index_) {
+      continue;
+    }
+    if (labels[i] < minLabelNum || labels[i] > nllloss_param_.class_num_) {
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the label must in scope[0, C-1], but got" << labels[i];
+    }
     if (!(labels[i] < nllloss_param_.class_num_)) {
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                                << "', the labels should be smaller than the number of classes, but got " << labels[i];
