@@ -1129,6 +1129,11 @@ ValuePtr AbstractList::RealBuildValue() const {
   return ElementsBuildValue<ValueList>();
 }
 
+void AbstractList::CheckAndConvertToDynamicLenSequence(bool raise_exception) {
+  AbstractSequence::CheckAndConvertToDynamicLenSequence(raise_exception);
+  ClearListUserData();
+}
+
 std::shared_ptr<AbstractSequence> AbstractSequence::DynamicLenSequenceJoin(const AbstractSequencePtr &other) {
   auto other_dyn_sequence_abs = other;
   if (!dynamic_len() || !other->dynamic_len()) {

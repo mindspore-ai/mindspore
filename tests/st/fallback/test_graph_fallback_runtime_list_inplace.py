@@ -791,7 +791,7 @@ def test_list_inplace_reverse_with_variable_3():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_list_dynamic_len_list_inplace_op():
+def test_dynamic_len_list_inplace_op():
     """
     Feature: dynamic length list do not run inplace operation.
     Description: support list inplace ops.
@@ -807,3 +807,24 @@ def test_list_dynamic_len_list_inplace_op():
 
     out = foo()
     assert out == [2, 5, 1, 7]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_len_list_inplace_op_2():
+    """
+    Feature: dynamic length list do not run inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(a):
+        x = [1, 2, 3, 4]
+        y = x[a::]
+        return y
+
+    input_index = Tensor(2)
+    out = foo(input_index)
+    assert out == [3, 4]
