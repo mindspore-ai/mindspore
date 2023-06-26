@@ -47,6 +47,11 @@ bool FillDiagonalCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   }
   fill_value_ = kernel_ptr->get_fill_value();
   wrap_ = kernel_ptr->get_wrap();
+
+  if (IsOneOfUnsignedType(input_type_) && fill_value_ < 0) {
+    MS_LOG(ERROR) << "For " << kernel_name_ << ", [file_value] should be non_negative for input of unsigned type.";
+    return false;
+  }
   return true;
 }
 
@@ -64,8 +69,24 @@ int FillDiagonalCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 bool FillDiagonalCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                       const std::vector<kernel::AddressPtr> &workspace,
                                       const std::vector<kernel::AddressPtr> &outputs) {
-  if (input_type_ == kNumberTypeFloat32) {
+  if (input_type_ == kNumberTypeFloat16) {
+    return LaunchKernel<float16>(inputs, outputs);
+  } else if (input_type_ == kNumberTypeFloat32) {
     return LaunchKernel<float>(inputs, outputs);
+  } else if (input_type_ == kNumberTypeFloat64) {
+    return LaunchKernel<double>(inputs, outputs);
+  } else if (input_type_ == kNumberTypeUInt8) {
+    return LaunchKernel<uint8_t>(inputs, outputs);
+  } else if (input_type_ == kNumberTypeUInt16) {
+    return LaunchKernel<uint16_t>(inputs, outputs);
+  } else if (input_type_ == kNumberTypeUInt32) {
+    return LaunchKernel<uint32_t>(inputs, outputs);
+  } else if (input_type_ == kNumberTypeUInt64) {
+    return LaunchKernel<uint64_t>(inputs, outputs);
+  } else if (input_type_ == kNumberTypeInt8) {
+    return LaunchKernel<int8_t>(inputs, outputs);
+  } else if (input_type_ == kNumberTypeInt16) {
+    return LaunchKernel<int16_t>(inputs, outputs);
   } else if (input_type_ == kNumberTypeInt32) {
     return LaunchKernel<int32_t>(inputs, outputs);
   } else if (input_type_ == kNumberTypeInt64) {
@@ -126,7 +147,11 @@ bool FillDiagonalCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
 
 std::vector<KernelAttr> FillDiagonalCpuKernelMod::GetOpSupport() {
   static const std::vector<KernelAttr> support_list = {
+    KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
     KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+    KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt8),
+    KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+    KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
     KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
     KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64)};
   return support_list;

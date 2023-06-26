@@ -8577,7 +8577,7 @@ class FillDiagonal(Primitive):
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        fill_value (float): The value to fill the diagonal of `input_x`.
+        fill_value (Number): The value to fill the diagonal of `input_x`.
         wrap (bool, optional): Controls whether the diagonal elements continue onto the
             remaining rows in case of a tall matrix(A matrix has more rows than columns).
             Examples blow demonstrates how it works on a tall matrix if `wrap` is set ``True`` .
@@ -8585,13 +8585,11 @@ class FillDiagonal(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-          The data type must be float32, int32 or int64.
 
     Outputs:
         - **y** (Tensor) - Tensor, has the same shape and data type as the input `input_x`.
 
     Raises:
-        TypeError: If data type of `input_x` is not one of the following: float32, int32, int64.
         ValueError: If the dimension of `input_x` is not greater than 1.
         ValueError: If the size of each dimension is not equal, when the dimension is greater than 2.
 

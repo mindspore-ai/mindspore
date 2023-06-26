@@ -37,6 +37,7 @@
 namespace {
 const uint32_t kOutputNum = 1;
 const uint32_t kInputNum = 1;
+const int64_t kNum2 = 2;
 const char *kFFTWithSize = "FFTWithSize";
 }  // namespace
 
@@ -101,6 +102,30 @@ uint32_t FFTWithSizeCpuKernel::Compute(CpuKernelContext &ctx) {
       break;
     case DT_FLOAT:
       FFTWITHSIZE_SWITCH_DIM_CALCULATE(float, std::complex<float>, true,
+                                       false);  // rfft
+      break;
+    case DT_UINT8:
+      FFTWITHSIZE_SWITCH_DIM_CALCULATE(uint8_t, std::complex<float>, true,
+                                       false);  // rfft
+      break;
+    case DT_INT8:
+      FFTWITHSIZE_SWITCH_DIM_CALCULATE(int8_t, std::complex<float>, true,
+                                       false);  // rfft
+      break;
+    case DT_INT16:
+      FFTWITHSIZE_SWITCH_DIM_CALCULATE(int16_t, std::complex<float>, true,
+                                       false);  // rfft
+      break;
+    case DT_INT32:
+      FFTWITHSIZE_SWITCH_DIM_CALCULATE(int32_t, std::complex<float>, true,
+                                       false);  // rfft
+      break;
+    case DT_INT64:
+      FFTWITHSIZE_SWITCH_DIM_CALCULATE(int64_t, std::complex<float>, true,
+                                       false);  // rfft
+      break;
+    case DT_BOOL:
+      FFTWITHSIZE_SWITCH_DIM_CALCULATE(bool, std::complex<float>, true,
                                        false);  // rfft
       break;
     default:
@@ -201,9 +226,9 @@ class FFTInnerComputer<T1, T2, signal_ndim, true, true> {
       // compute the full fft tensor shape: full_fft_shape[-1] / 2 + 1
       Eigen::DSizes<Eigen::DenseIndex, signal_ndim + 1> temp_tensor_shape(tensor_shape);
       if (checked_signal_size.empty()) {
-        temp_tensor_shape[signal_ndim] = (temp_tensor_shape[signal_ndim] - 1) * 2;
+        temp_tensor_shape[signal_ndim] = (temp_tensor_shape[signal_ndim] - 1) * kNum2;
       } else {
-        if (checked_signal_size.back() / 2 + 1 == temp_tensor_shape[signal_ndim]) {
+        if (checked_signal_size.back() / kNum2 + 1 == temp_tensor_shape[signal_ndim]) {
           temp_tensor_shape[signal_ndim] = checked_signal_size.back();
         } else {
           KERNEL_LOG_ERROR(
@@ -284,7 +309,7 @@ class FFTInnerComputer<T1, T2, signal_ndim, true, false> {
       Eigen::DSizes<Eigen::DenseIndex, signal_ndim + 1> offsets;
       Eigen::DSizes<Eigen::DenseIndex, signal_ndim + 1> input_slice_sizes;
       for (auto i = 0; i <= signal_ndim; i++) {
-        input_slice_sizes[i] = (i == signal_ndim) ? (dims[i] / 2 + 1) : dims[i];
+        input_slice_sizes[i] = (i == signal_ndim) ? (dims[i] / kNum2 + 1) : dims[i];
       }
       out = full_fft.slice(offsets, input_slice_sizes);
     } else {
@@ -317,9 +342,6 @@ template <typename T1, typename T2, int signal_ndim, bool is_real, bool real_inv
 uint32_t FFTWithSizeCpuKernel::FFTWithSizeCompute(CpuKernelContext &ctx, bool onesided, bool inverse,
                                                   std::string normalized, std::vector<int64_t> &checked_signal_size) {
   auto input_x = reinterpret_cast<T1 *>(ctx.Input(0)->GetData());
-  for (int i = 0; i < 4; i++) {
-    std::cout << *(input_x + i) << std::endl;
-  }
   auto output_y = reinterpret_cast<T2 *>(ctx.Output(0)->GetData());
   auto x_shape_ptr = ctx.Input(0)->GetTensorShape();
   auto y_shape_ptr = ctx.Output(0)->GetTensorShape();
@@ -346,9 +368,6 @@ uint32_t FFTWithSizeCpuKernel::FFTWithSizeCompute(CpuKernelContext &ctx, bool on
   out = norm * out;
   T2 *out_ptr = out.data();
   auto out_count = out.size();
-  for (int i = 0; i < out_count; i++) {
-    std::cout << *(out_ptr + i) << std::endl;
-  }
   std::copy(out_ptr, out_ptr + out_count, output_y);
   y_shape.back() = out.dimensions().back();
   y_shape_ptr->SetDimSizes(y_shape);

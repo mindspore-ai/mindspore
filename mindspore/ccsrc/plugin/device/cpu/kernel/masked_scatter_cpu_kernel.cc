@@ -159,7 +159,13 @@ std::vector<std::pair<KernelAttr, MaskedScatterCpuKernelMod::MaskedScatterFunc>>
       .AddInputAttr(kNumberTypeBool)
       .AddInputAttr(kNumberTypeInt64)
       .AddOutputAttr(kNumberTypeInt64),
-    &MaskedScatterCpuKernelMod::LaunchKernel<int64_t>}};
+    &MaskedScatterCpuKernelMod::LaunchKernel<int64_t>},
+   {KernelAttr()
+      .AddInputAttr(kNumberTypeBool)
+      .AddInputAttr(kNumberTypeBool)
+      .AddInputAttr(kNumberTypeBool)
+      .AddOutputAttr(kNumberTypeBool),
+    &MaskedScatterCpuKernelMod::LaunchKernel<bool>}};
 
 std::vector<KernelAttr> MaskedScatterCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

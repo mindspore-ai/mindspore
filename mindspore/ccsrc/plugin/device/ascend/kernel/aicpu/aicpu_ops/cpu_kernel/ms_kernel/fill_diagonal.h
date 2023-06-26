@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef AICPU_KERNELS_NORMALIZED_MATRIX_POWER_H_
-#define AICPU_KERNELS_NORMALIZED_MATRIX_POWER_H_
+#ifndef AICPU_KERNELS_NORMALIZED_FILL_DIAGONAL_H_
+#define AICPU_KERNELS_NORMALIZED_FILL_DIAGONAL_H_
 
 #include "cpu_ops_kernel.h"
 
 namespace aicpu {
-class MatrixPowerCpuKernel : public CpuKernel {
+class FillDiagonalCpuKernel : public CpuKernel {
  public:
-  MatrixPowerCpuKernel() = default;
-  ~MatrixPowerCpuKernel() override = default;
-
- protected:
+  FillDiagonalCpuKernel() = default;
+  ~FillDiagonalCpuKernel() override = default;
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
   template <typename T>
-  uint32_t ComputeKernel(CpuKernelContext &ctx);
-  int powervalue_;
+  uint32_t FillDiag(int64_t input_dims, int64_t stride, int64_t height, int64_t width, const CpuKernelContext &ctx);
+  float fill_value_;
 };
 }  // namespace aicpu
 #endif

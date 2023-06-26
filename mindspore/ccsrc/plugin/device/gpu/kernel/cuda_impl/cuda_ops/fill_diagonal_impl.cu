@@ -16,6 +16,8 @@
 
 #include "fill_diagonal_impl.cuh"
 
+#include "include/cuda_fp16.h"
+
 template <typename T>
 __global__ void FillDiagonal(const size_t size, const float fill_value, const int64_t step_size, T *output) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
@@ -34,8 +36,23 @@ void CalFillDiagonal(const size_t size, const float fill_value, const int64_t st
 }
 
 template
+CUDA_LIB_EXPORT void CalFillDiagonal<half>(const size_t size, const float fill_value, const int64_t step_size,
+                                            half *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template
 CUDA_LIB_EXPORT void CalFillDiagonal<float>(const size_t size, const float fill_value, const int64_t step_size,
                                             float *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template
+CUDA_LIB_EXPORT void CalFillDiagonal<double>(const size_t size, const float fill_value, const int64_t step_size,
+                                            double *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template
+CUDA_LIB_EXPORT void CalFillDiagonal<uint8_t>(const size_t size, const float fill_value, const int64_t step_size,
+                                              uint8_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template
+CUDA_LIB_EXPORT void CalFillDiagonal<int8_t>(const size_t size, const float fill_value, const int64_t step_size,
+                                              int8_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
+template
+CUDA_LIB_EXPORT void CalFillDiagonal<int16_t>(const size_t size, const float fill_value, const int64_t step_size,
+                                              int16_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);
 template
 CUDA_LIB_EXPORT void CalFillDiagonal<int32_t>(const size_t size, const float fill_value, const int64_t step_size,
                                               int32_t *output, const uint32_t &device_id, cudaStream_t cuda_stream);

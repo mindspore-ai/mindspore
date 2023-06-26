@@ -355,6 +355,7 @@ constexpr auto kFillOpName = "Fill";
 constexpr auto kFillDOpName = "FillD";
 constexpr auto kFillV2OpName = "FillV2";
 constexpr auto kFillV2DOpName = "FillV2D";
+constexpr auto kFillDiagonalOpName = "FillDiagonal";
 constexpr auto kFSEDecodeOpName = "FSEDecode";
 constexpr auto kFive2FourOpName = "Five2Four";
 constexpr auto kFlattenOpName = "Flatten";
@@ -524,6 +525,7 @@ constexpr auto kLuUnpackGradOpName = "LuUnpackGrad";
 constexpr auto kMaskedFillOpName = "MaskedFill";
 constexpr auto kMaskedSelectOpName = "MaskedSelect";
 constexpr auto kMaskedSelectGradOpName = "MaskedSelectGrad";
+constexpr auto kMaskedScatterOpName = "MaskedScatter";
 constexpr auto kMatMulBiasAddFusionOpName = "MatMulBiasAddFusion";
 constexpr auto kMatMulBiasAddReluFusionOpName = "MatMulBiasAddReluFusion";
 constexpr auto kMatMulOpName = "MatMul";
@@ -1404,6 +1406,7 @@ COMMON_EXPORT bool IsOneOfHWSpecialFormat(const std::string &format);
 COMMON_EXPORT bool IsOneOfFormat(const std::string &format);
 COMMON_EXPORT bool IsOneOfServerFormatC04(const std::string &format);
 COMMON_EXPORT bool IsOneOfDynRankNeedPadShape(const std::string &format);
+COMMON_EXPORT bool IsOneOfUnsignedType(const TypeId &type_id);
 
 COMMON_EXPORT size_t GetSystemMemorySize(const std::string &key);
 

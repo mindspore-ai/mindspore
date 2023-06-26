@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef AICPU_KERNELS_NORMALIZED_MATRIX_POWER_H_
-#define AICPU_KERNELS_NORMALIZED_MATRIX_POWER_H_
+#ifndef AICPU_KERNELS_NORMALIZED_MASKED_SCATTER_H_
+#define AICPU_KERNELS_NORMALIZED_MASKED_SCATTER_H_
 
 #include "cpu_ops_kernel.h"
 
 namespace aicpu {
-class MatrixPowerCpuKernel : public CpuKernel {
+class MaskedScatterCpuKernel : public CpuKernel {
  public:
-  MatrixPowerCpuKernel() = default;
-  ~MatrixPowerCpuKernel() override = default;
-
- protected:
+  ~MaskedScatterCpuKernel() = default;
   uint32_t Compute(CpuKernelContext &ctx) override;
 
  private:
+  /**
+   * @brief compute for all types
+   * @param ctx cpu kernel context
+   * @return status if success
+   */
   template <typename T>
-  uint32_t ComputeKernel(CpuKernelContext &ctx);
-  int powervalue_;
+  uint32_t MaskedScatterCompute(CpuKernelContext &ctx);
+  uint32_t InputCheck(CpuKernelContext &ctx);
 };
 }  // namespace aicpu
 #endif

@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <iostream>
 #include <map>
+#include <functional>
 
 namespace {
 const uint32_t kInputNum = 1;
@@ -35,163 +36,95 @@ namespace aicpu {
 uint32_t MatrixPowerCpuKernel::Compute(CpuKernelContext &ctx) {
   KERNEL_HANDLE_ERROR(NormalCheck(ctx, kInputNum, kOutputNum), "MatrixPower normal check failed.");
   auto x_type = ctx.Input(0)->GetDataType();
-  if (x_type == DT_FLOAT) {
-    return ComputeKernel<float>(ctx);
-  } else {
-    return ComputeKernel<Eigen::half>(ctx);
+  AttrValue *power = ctx.GetAttr("n");
+  powervalue_ = power->GetInt();
+
+  switch (x_type) {
+    case DT_UINT8:
+      return ComputeKernel<uint8_t>(ctx);
+    case DT_INT8:
+      return ComputeKernel<int8_t>(ctx);
+    case DT_INT16:
+      return ComputeKernel<int16_t>(ctx);
+    case DT_INT32:
+      return ComputeKernel<int32_t>(ctx);
+    case DT_INT64:
+      return ComputeKernel<int64_t>(ctx);
+    case DT_FLOAT:
+      return ComputeKernel<float>(ctx);
+    case DT_DOUBLE:
+      return ComputeKernel<double>(ctx);
+    default:
+      KERNEL_LOG_ERROR("For MatrixPower, input type is not supported: %s", DTypeStr(x_type).c_str());
+      return KERNEL_STATUS_INNER_ERROR;
   }
 }
+
+template <typename T>
+using Matrix = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
 template <typename T>
 uint32_t MatrixPowerCpuKernel::ComputeKernel(CpuKernelContext &ctx) {
   Tensor *input_x = ctx.Input(0);
   Tensor *output_y = ctx.Output(0);
-  AttrValue *power = ctx.GetAttr("n");
-  int64_t powervalue = power->GetInt();
-  auto x_shape = input_x->GetTensorShape();
-  size_t batch = x_shape->GetDimSize(0);
-  size_t dim = x_shape->GetDimSize(1);
+  auto x_shape = input_x->GetTensorShape()->GetDimSizes();
+  size_t batch =
+    static_cast<size_t>(std::accumulate(x_shape.begin(), x_shape.end() - 2, 1, std::multiplies<int64_t>()));
+  size_t dim = static_cast<size_t>(x_shape.back());
   auto x_ptr = reinterpret_cast<T *>(input_x->GetData());
   auto y_ptr = reinterpret_cast<T *>(output_y->GetData());
-  int64_t data_num = ctx.Input(0)->NumElements() * sizeof(T);
+  int64_t data_num = ctx.Input(0)->NumElements();
 
-  if (powervalue < 0) {
-    powervalue = -powervalue;
-    if (data_num >= kParallelDataNum) {
-      uint32_t min_core_num = 1;
-      uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - 2);
-      if (max_core_num > batch) {
-        max_core_num = batch;
-      }
-      if (max_core_num == 0) {
-        max_core_num = 1;
-      }
-      int64_t NotInvertible = -1;
-      auto shard_matrix_power = [&](size_t start, size_t end) {
-        Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> A(dim, dim);
-        Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> B(dim, dim);
-        for (size_t i = start; i < end; i++) {
-          for (size_t p = 0; p < dim; p++) {
-            for (size_t q = 0; q < dim; q++) {
-              B(p, q) = (float)x_ptr[i * dim * dim + p * dim + q];
-            }
-          }
-          Eigen::FullPivLU<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>> LU(B);
-          if (!(LU.isInvertible())) {
-            NotInvertible = i;
-          }
-          A = LU.inverse();
-          B.setIdentity();
-          int64_t n = powervalue;
-          while (n > 0) {
-            if (n % 2 == 1) {
-              B = B * A;
-            }
-            n = n / 2;
-            A = A * A;
-          }
-          for (size_t p = 0; p < dim; p++) {
-            for (size_t q = 0; q < dim; q++) {
-              y_ptr[i * dim * dim + p * dim + q] = (T)B(p, q);
-            }
-          }
-        }
-      };
-      CpuKernelUtils::ParallelFor(ctx, batch, batch / max_core_num, shard_matrix_power);
-      KERNEL_CHECK_FALSE((NotInvertible < 0), KERNEL_STATUS_PARAM_INVALID,
-                         "The %d-th matrix of input tensor is singular, but got n is negative.", NotInvertible)
-    } else {
-      Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> A(dim, dim);
-      Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> B(dim, dim);
-      for (size_t i = 0; i < batch; i++) {
-        for (size_t p = 0; p < dim; p++) {
-          for (size_t q = 0; q < dim; q++) {
-            B(p, q) = (float)x_ptr[i * dim * dim + p * dim + q];
-          }
-        }
-        Eigen::FullPivLU<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>> LU(B);
-        KERNEL_CHECK_FALSE((LU.isInvertible()), KERNEL_STATUS_PARAM_INVALID,
-                           "The %d-th matrix of input tensor is singular, but got n is negative.", i)
-        A = LU.inverse();
-        B.setIdentity();
-        int64_t n = powervalue;
-        while (n > 0) {
-          if (n % 2 == 1) {
-            B = B * A;
-          }
-          n = n / 2;
-          A = A * A;
-        }
-        for (size_t p = 0; p < dim; p++) {
-          for (size_t q = 0; q < dim; q++) {
-            y_ptr[i * dim * dim + p * dim + q] = (T)B(p, q);
-          }
-        }
-      }
-    }
+  size_t max_core_num = std::min(batch, (size_t)aicpu::CpuKernelUtils::GetCPUNum(ctx) - 2);
+  max_core_num = max_core_num < 1 ? 1 : max_core_num;
+
+  std::function<aicpu::KernelStatus(Matrix<T> &)> inv;
+  if constexpr (std::is_integral_v<T>) {
+    inv = [](auto &A) {
+      KERNEL_LOG_ERROR("For MatrixPower, n < 0 is not supported for input of integer type.");
+      return KERNEL_STATUS_INNER_ERROR;
+    };
   } else {
-    if (data_num >= kParallelDataNum) {
-      uint32_t min_core_num = 1;
-      uint32_t max_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - 2);
-      if (max_core_num > batch) {
-        max_core_num = batch;
+    inv = [](auto &A) {
+      Eigen::FullPivLU<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> LU(A);
+      if (!(LU.isInvertible())) {
+        KERNEL_LOG_ERROR("For MatrixPower, negative power can not apply to singular matrix.");
+        return KERNEL_STATUS_INNER_ERROR;
       }
-      if (max_core_num == 0) {
-        max_core_num = 1;
+      A = LU.inverse();
+      return KERNEL_STATUS_OK;
+    };
+  }
+
+  auto status = KERNEL_STATUS_OK;
+  auto shard_matrix_power = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      size_t offset = i * dim * dim;
+      Matrix<T> A = Eigen::Map<Matrix<T>>(x_ptr + offset, dim, dim);
+      auto n = powervalue_;
+      if (n < 0) {
+        n = -n;
+        status = inv(A);
+        if (status != KERNEL_STATUS_OK) return;
       }
-      auto shard_matrix_power = [&](size_t start, size_t end) {
-        Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> A(dim, dim);
-        Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> B(dim, dim);
-        for (size_t i = start; i < end; i++) {
-          for (size_t p = 0; p < dim; p++) {
-            for (size_t q = 0; q < dim; q++) {
-              A(p, q) = (float)x_ptr[i * dim * dim + p * dim + q];
-            }
-          }
-          B.setIdentity();
-          int64_t n = powervalue;
-          while (n > 0) {
-            if (n % 2 == 1) {
-              B = B * A;
-            }
-            n = n / 2;
-            A = A * A;
-          }
-          for (size_t p = 0; p < dim; p++) {
-            for (size_t q = 0; q < dim; q++) {
-              y_ptr[i * dim * dim + p * dim + q] = (T)B(p, q);
-            }
-          }
+      Eigen::Map<Matrix<T>> B(y_ptr + offset, dim, dim);
+      B.setIdentity();
+      while (n > 0) {
+        if (n % 2 == 1) {
+          B = B * A;
         }
-      };
-      CpuKernelUtils::ParallelFor(ctx, batch, batch / max_core_num, shard_matrix_power);
-    } else {
-      Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> A(dim, dim);
-      Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> B(dim, dim);
-      for (size_t i = 0; i < batch; i++) {
-        for (size_t p = 0; p < dim; p++) {
-          for (size_t q = 0; q < dim; q++) {
-            A(p, q) = (float)x_ptr[i * dim * dim + p * dim + q];
-          }
-        }
-        B.setIdentity();
-        int64_t n = powervalue;
-        while (n > 0) {
-          if (n % 2 == 1) {
-            B = B * A;
-          }
-          n = n / 2;
-          A = A * A;
-        }
-        for (size_t p = 0; p < dim; p++) {
-          for (size_t q = 0; q < dim; q++) {
-            y_ptr[i * dim * dim + p * dim + q] = (T)B(p, q);
-          }
-        }
+        n = n / 2;
+        A = A * A;
       }
     }
+  };
+
+  if (data_num >= kParallelDataNum) {
+    CpuKernelUtils::ParallelFor(ctx, batch, batch / max_core_num, shard_matrix_power);
+  } else {
+    shard_matrix_power(0, batch);
   }
-  return KERNEL_STATUS_OK;
+  return status;
 }
 
 REGISTER_CPU_KERNEL(kMatrixPower, MatrixPowerCpuKernel);

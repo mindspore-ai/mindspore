@@ -88,7 +88,6 @@ constexpr auto kDropout3D = "Dropout3D";
 constexpr auto kNonMaxSuppressionV3 = "NonMaxSuppressionV3";
 constexpr auto kMaskedSelect = "MaskedSelect";
 constexpr auto kMaskedSelectGrad = "MaskedSelectGrad";
-constexpr auto kMaskedScatter = "MaskedScatter";
 constexpr auto kDynamicStitch = "DynamicStitch";
 constexpr auto kSort = "Sort";
 constexpr auto kSearchSorted = "SearchSorted";
@@ -205,7 +204,6 @@ constexpr auto kFmax = "Fmax";
 constexpr auto kGLU = "GLU";
 constexpr auto kFmin = "Fmin";
 constexpr auto kFillV2 = "FillV2";
-constexpr auto kFillDiagonal = "FillDiagonal";
 constexpr auto kArgmax = "Argmax";
 constexpr auto kArgmin = "Argmin";
 constexpr auto kResizeV2 = "ResizeV2";
@@ -233,7 +231,6 @@ constexpr auto kSTFT = "STFT";
 
 const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kMaskedFill,
-                                          kMaskedScatter,
                                           kGather,
                                           kSTFT,
                                           kGreater,
@@ -255,7 +252,6 @@ const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kIsNan,
                                           kLogMatrixDeterminant,
                                           kCross,
-                                          kFillDiagonal,
                                           kGridSampler2D,
                                           kGridSampler2DGrad,
                                           kGridSampler3D,

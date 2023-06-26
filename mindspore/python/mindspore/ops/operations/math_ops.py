@@ -6686,19 +6686,18 @@ class MatrixPower(Primitive):
         n (int) : The exponent, a required int.
 
     Inputs:
-        - **x** (Tensor) - A 3-D Tensor. Supported data types are float16 and float32.
-          The shape is :math:`(b, m, m)`, represents b m-D square matrices.
+        - **x** (Tensor) - A 3-D Tensor. The shape is :math:`(b, m, m)`, represents b m-D square matrices.
 
     Outputs:
         - **y** (Tensor) - A 3-D Tensor. Data type and shape are the same as `x`'s.
 
     Raises:
         TypeError: If the data type of `n` is not int.
-        TypeError: If the data type of `x` is neither float32 nor float16.
         TypeError: If x is not a Tensor.
         ValueError: If `x` is not a 3-D tensor.
         ValueError: If shape[1] and shape[2] of `x` are not the same.
         ValueError: If n is negative but got input x has singular matrices.
+        ValueError: If `n` < 0 and input is int type.
 
     Supported Platforms:
         ``Ascend`` ``CPU``

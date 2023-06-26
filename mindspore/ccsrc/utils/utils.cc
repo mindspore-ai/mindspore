@@ -189,6 +189,12 @@ bool IsOneOfComputeDepend(const std::string &name) {
   return iter != kComputeDepend.end();
 }
 
+bool IsOneOfUnsignedType(const TypeId &type_id) {
+  static const std::set<TypeId> unsigned_types{kNumberTypeUInt8, kNumberTypeUInt16, kNumberTypeUInt32,
+                                               kNumberTypeUInt64};
+  return unsigned_types.count(type_id) > 0;
+}
+
 bool IsOneOfHWSpecialFormat(const std::string &format) {
   static const std::set<std::string> kHWSpecialFormatSet = {
     kOpFormat_FRACTAL_Z_3D,   kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0,       kOpFormat_FRAC_NZ,
