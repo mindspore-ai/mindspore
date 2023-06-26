@@ -20,8 +20,12 @@ from mindspore import Tensor
 
 
 class Net(nn.Cell):
-    def construct(self, x):
-        return x.aminmax()
+    def __init__(self, axis=None):
+        super(Net, self).__init__()
+        self.axis = axis
+
+    def construct(self, x, keepdims):
+        return x.aminmax(axis=self.axis, keepdims=keepdims)
 
 
 @pytest.mark.level0
@@ -40,9 +44,25 @@ def test_tensor_aminmax(mode):
     """
     ms.set_context(mode=mode)
     x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), ms.float32)
-    net = Net()
-    output_min, output_max = net(x)
+    net = Net(0)
+    output_min, output_max = net(x, True)
     expect_min = Tensor(np.array([0.0]), ms.float32)
     expect_max = Tensor(np.array([0.7]), ms.float32)
+    assert np.allclose(output_min.asnumpy(), expect_min.asnumpy())
+    assert np.allclose(output_max.asnumpy(), expect_max.asnumpy())
+
+    x = Tensor(np.array([[0.0, 0.4, 0.6, 0.7, 0.1], [0.78, 0.97, 0.5, 0.82, 0.99]]), ms.float32)
+    net = Net()
+    output_min, output_max = net(x, True)
+    expect_min = Tensor(np.array([[0.0]]), ms.float32)
+    expect_max = Tensor(np.array([[0.99]]), ms.float32)
+    assert np.allclose(output_min.asnumpy(), expect_min.asnumpy())
+    assert np.allclose(output_max.asnumpy(), expect_max.asnumpy())
+
+    x = Tensor(np.array([[0.0, 0.4, 0.6, 0.7, 0.1], [0.78, 0.97, 0.5, 0.82, 0.99]]), ms.float32)
+    net = Net()
+    output_min, output_max = net(x, False)
+    expect_min = Tensor(np.array(0.0), ms.float32)
+    expect_max = Tensor(np.array(0.99), ms.float32)
     assert np.allclose(output_min.asnumpy(), expect_min.asnumpy())
     assert np.allclose(output_max.asnumpy(), expect_max.asnumpy())

@@ -5962,7 +5962,8 @@ def aminmax(input, *, axis=0, keepdims=False):
 
     Keyword Args:
         axis (int, optional): The dimension to reduce. The value range of `axis` is [-rank, rank),
-            where "rank" is the dimension of `input`. Default: ``0`` .
+            where "rank" is the dimension of `input`. If `axis` is None, computes the minimum and maximum value
+            along the entire input tensor. Default: ``0`` .
         keepdims (bool, optional): Whether to maintain dimension. When set to True, the output will keep the same
             dimension as the input, or the dimension specified by `axis` is reduced. Default: ``False`` .
 
@@ -5976,7 +5977,7 @@ def aminmax(input, *, axis=0, keepdims=False):
 
     Raises:
         TypeError: If `keepdims` is not a bool.
-        TypeError: If `axis` is not an int.
+        TypeError: If `axis` is not an int and not None.
         ValueError: If `axis` is not in range [-rank, rank).
 
     Supported Platforms:
@@ -5990,7 +5991,18 @@ def aminmax(input, *, axis=0, keepdims=False):
         >>> output2, output3 = ops.aminmax(x, axis=-1, keepdims=True)
         >>> print(output2, output3)
         [0.] [0.7]
+        >>> x = Tensor(np.array([[0.0, 0.4, 0.6, 0.7, 0.1], [0.78, 0.97, 0.5, 0.82, 0.99]]), mindspore.float32)
+        >>> output4, output5 = ops.aminmax(x, axis=None, keepdims=True)
+        >>> print(output4, output5)
+        [[0.]] [[0.99]]
     """
+    if axis is None:
+        output0, _ = ops.min(input, axis, keepdims)
+        output1, _ = ops.max(input, axis, keepdims)
+        if keepdims is True:
+            output0 = ops.reshape(output0, [1] * input.ndim)
+            output1 = ops.reshape(output1, [1] * input.ndim)
+        return output0, output1
     argmin_with_value_op = P.ArgMinWithValue(axis, keepdims)
     argmax_with_value_op = P.ArgMaxWithValue(axis, keepdims)
     _, output0 = argmin_with_value_op(input)

@@ -9,7 +9,7 @@ mindspore.ops.aminmax
         - **input** (Tensor) - 输入Tensor，可以是任意维度。设输入Tensor的shape为 :math:`(x_1, x_2, ..., x_N)` 。
 
     关键字参数：
-        - **axis** (int，可选) - 要进行规约计算的维度。 `axis` 必须在[-rank, rank)范围内，其中 “rank” 是 `input` 的维度。默认值： ``0`` 。
+        - **axis** (int，可选) - 要进行规约计算的维度。 `axis` 必须在[-rank, rank)范围内，其中 “rank” 是 `input` 的维度。如果 `axis` 是None，则计算整个输入Tensor的最大值和最小值。默认值： ``0`` 。
         - **keepdims** (bool，可选) - 是否保留维度。如果为 ``True`` ，则输出shape与输入shape一致，否则移除规约计算的维度 `axis` 。默认值： ``False`` 。
 
     返回：
@@ -20,5 +20,5 @@ mindspore.ops.aminmax
 
     异常：
         - **TypeError** - `keepdims` 不是bool类型。
-        - **TypeError** - `axis` 不是int类型。
+        - **TypeError** - `axis` 不是int类型也不是None。
         - **ValueError** - `axis` 不在[-rank, rank)范围内。
