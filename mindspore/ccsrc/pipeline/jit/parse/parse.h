@@ -481,7 +481,7 @@ class ParseFunctionAst {
 };
 
 // Update the graph flags
-bool UpdateFuncGraphFlags(const py::object &obj, const FuncGraphPtr &func_graph);
+bool UpdateFuncGraphFlags(const py::object &obj, const FuncGraphPtr &func_graph, bool is_construct_function = false);
 
 AnfNodePtr GetMixedPrecisionCastHelp(const FuncGraphPtr &func_graph, const AnfNodePtr &param);
 }  // namespace parse
