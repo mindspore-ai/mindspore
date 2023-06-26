@@ -33,6 +33,7 @@ namespace mindspore {
 using runtime::DeviceAddressUtils;
 namespace pynative {
 namespace {
+using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
 static std::vector<std::string> kNumStrCache;
 
 inline std::string GetNumString(int n) {
@@ -65,9 +66,9 @@ void CreateDeviceAddressWithoutWorkspace(const KernelGraphPtr &graph, const Devi
 }
 
 device::DeviceAddressPtr GetGraphMapToCacheAddress(
-  const std::map<device::DeviceAddressPtr, device::DeviceAddressPtr> &graph_map_to_cache,
-  const device::DeviceAddressPtr &device_address) {
-  auto iter = graph_map_to_cache.find(device_address);
+  const std::map<KernelWithIndex, device::DeviceAddressPtr> &graph_map_to_cache,
+  const KernelWithIndex &kernel_with_index) {
+  auto iter = graph_map_to_cache.find(kernel_with_index);
   if (iter != graph_map_to_cache.end()) {
     return iter->second;
   }
@@ -75,8 +76,8 @@ device::DeviceAddressPtr GetGraphMapToCacheAddress(
 }
 
 void CacheForGraphInputs(const OpCompilerInfoPtr &op_compiler_info,
-                         std::map<device::DeviceAddressPtr, device::DeviceAddressPtr> *graph_map_to_cache) {
-  MS_EXCEPTION_IF_NULL(graph_map_to_cache);
+                         std::map<KernelWithIndex, device::DeviceAddressPtr> *graph_map_cache) {
+  MS_EXCEPTION_IF_NULL(graph_map_cache);
   auto &graph = op_compiler_info->graph_;
   MS_EXCEPTION_IF_NULL(graph);
   auto device_context = op_compiler_info->device_context_;
@@ -86,18 +87,19 @@ void CacheForGraphInputs(const OpCompilerInfoPtr &op_compiler_info,
     MS_EXCEPTION_IF_NULL(input);
     auto node_address = AnfAlgo::GetMutableOutputAddr(input, 0);
     MS_EXCEPTION_IF_NULL(node_address);
-    auto cached_address = GetGraphMapToCacheAddress(*graph_map_to_cache, node_address);
+    auto kernel_with_index = std::make_pair(input, 0);
+    auto cached_address = GetGraphMapToCacheAddress(*graph_map_cache, kernel_with_index);
     if (cached_address == nullptr) {
       cached_address = runtime::DeviceAddressUtils::CloneEmptyDeviceAddress(node_address, device_context);
-      (*graph_map_to_cache)[node_address] = cached_address;
+      (*graph_map_cache)[kernel_with_index] = cached_address;
     }
     op_compiler_info->inputs_.emplace_back(cached_address);
   }
 }
 
 void CacheForGraphOutputs(const OpCompilerInfoPtr &op_compiler_info,
-                          std::map<device::DeviceAddressPtr, device::DeviceAddressPtr> *graph_map_to_cache) {
-  MS_EXCEPTION_IF_NULL(graph_map_to_cache);
+                          std::map<KernelWithIndex, device::DeviceAddressPtr> *graph_map_cache) {
+  MS_EXCEPTION_IF_NULL(graph_map_cache);
   auto &graph = op_compiler_info->graph_;
   MS_EXCEPTION_IF_NULL(graph);
   auto device_context = op_compiler_info->device_context_;
@@ -108,18 +110,18 @@ void CacheForGraphOutputs(const OpCompilerInfoPtr &op_compiler_info,
       continue;
     }
     auto node_address = AnfAlgo::GetMutableOutputAddr(item_with_index.first, item_with_index.second, false);
-    auto cached_address = GetGraphMapToCacheAddress(*graph_map_to_cache, node_address);
+    auto cached_address = GetGraphMapToCacheAddress(*graph_map_cache, item_with_index);
     if (cached_address == nullptr) {
       cached_address = runtime::DeviceAddressUtils::CloneEmptyDeviceAddress(node_address, device_context);
-      (*graph_map_to_cache)[node_address] = cached_address;
+      (*graph_map_cache)[item_with_index] = cached_address;
     }
     op_compiler_info->outputs_.emplace_back(cached_address);
   }
 }
 
 void CacheForGraphValueNodes(const OpCompilerInfoPtr &op_compiler_info,
-                             std::map<device::DeviceAddressPtr, device::DeviceAddressPtr> *graph_map_to_cache) {
-  MS_EXCEPTION_IF_NULL(graph_map_to_cache);
+                             std::map<KernelWithIndex, device::DeviceAddressPtr> *graph_map_cache) {
+  MS_EXCEPTION_IF_NULL(graph_map_cache);
   auto &graph = op_compiler_info->graph_;
   MS_EXCEPTION_IF_NULL(graph);
   const auto &value_nodes = graph->graph_value_nodes();
@@ -128,7 +130,7 @@ void CacheForGraphValueNodes(const OpCompilerInfoPtr &op_compiler_info,
       continue;
     }
     auto node_address = AnfAlgo::GetMutableOutputAddr(value_node, 0, false);
-    (*graph_map_to_cache)[node_address] = node_address;
+    (*graph_map_cache)[std::make_pair(value_node, 0)] = node_address;
 
     const auto &node_value = value_node->value();
     MS_EXCEPTION_IF_NULL(node_value);
@@ -143,8 +145,8 @@ void CacheForGraphValueNodes(const OpCompilerInfoPtr &op_compiler_info,
 }
 
 void CacheForGraphExecuteList(const OpCompilerInfoPtr &op_compiler_info,
-                              std::map<device::DeviceAddressPtr, device::DeviceAddressPtr> *graph_map_to_cache) {
-  MS_EXCEPTION_IF_NULL(graph_map_to_cache);
+                              std::map<KernelWithIndex, device::DeviceAddressPtr> *graph_map_cache) {
+  MS_EXCEPTION_IF_NULL(graph_map_cache);
   MS_EXCEPTION_IF_NULL(op_compiler_info);
   auto &graph = op_compiler_info->graph_;
   MS_EXCEPTION_IF_NULL(graph);
@@ -169,10 +171,10 @@ void CacheForGraphExecuteList(const OpCompilerInfoPtr &op_compiler_info,
       }
       session::KernelWithIndex kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i, false);
       auto node_address = AnfAlgo::GetMutableOutputAddr(kernel_with_index.first, kernel_with_index.second, false);
-      auto cached_address = GetGraphMapToCacheAddress(*graph_map_to_cache, node_address);
+      auto cached_address = GetGraphMapToCacheAddress(*graph_map_cache, kernel_with_index);
       if (cached_address == nullptr) {
         cached_address = runtime::DeviceAddressUtils::CloneEmptyDeviceAddress(node_address, device_context);
-        (*graph_map_to_cache)[node_address] = cached_address;
+        (*graph_map_cache)[kernel_with_index] = cached_address;
       }
       exe_kernel_info.inputs_device_address_.emplace_back(cached_address);
     }
@@ -181,10 +183,11 @@ void CacheForGraphExecuteList(const OpCompilerInfoPtr &op_compiler_info,
     auto output_num = AnfAlgo::GetOutputTensorNum(node);
     for (size_t i = 0; i < output_num; ++i) {
       auto node_address = AnfAlgo::GetMutableOutputAddr(node, i, false);
-      auto cached_address = GetGraphMapToCacheAddress(*graph_map_to_cache, node_address);
+      auto kernel_with_index = std::make_pair(node, i);
+      auto cached_address = GetGraphMapToCacheAddress(*graph_map_cache, kernel_with_index);
       if (cached_address == nullptr) {
         cached_address = runtime::DeviceAddressUtils::CloneEmptyDeviceAddress(node_address, device_context);
-        (*graph_map_to_cache)[node_address] = cached_address;
+        (*graph_map_cache)[kernel_with_index] = cached_address;
       }
       exe_kernel_info.outputs_device_address_.emplace_back(cached_address);
     }
@@ -233,7 +236,7 @@ void OpCompiler::ConvertGraphToExecuteInfo(const OpCompilerInfoPtr &op_compiler_
   op_compiler_info->outputs_.clear();
   op_compiler_info->execute_kernel_list_.clear();
 
-  std::map<device::DeviceAddressPtr, device::DeviceAddressPtr> graph_map_to_cache;
+  std::map<KernelWithIndex, device::DeviceAddressPtr> graph_map_to_cache;
 
   // Save all value nodes
   CacheForGraphValueNodes(op_compiler_info, &graph_map_to_cache);
