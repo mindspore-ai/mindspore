@@ -22,28 +22,28 @@ namespace mindspore::expander::bprop {
 REG_BPROP_BUILDERS_BEGIN(GradQuantOps)
 REG_BPROP_BUILDER("BNTrainingReduce").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
-  return {ib->ZerosLike(x)};
+  return {ib->OutZeros(x)};
 });
 
 REG_BPROP_BUILDER("MinMaxUpdatePerLayer").SetUnusedInputs({i0, i1, i2, i3, i4}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto x_min = ib->GetInput(kIndex1);
   auto x_max = ib->GetInput(kIndex2);
-  return {ib->ZerosLike(x), ib->ZerosLike(x_min), ib->ZerosLike(x_max)};
+  return {ib->OutZeros(x), ib->OutZeros(x_min), ib->OutZeros(x_max)};
 });
 
 REG_BPROP_BUILDER("MinMaxUpdatePerChannel").SetUnusedInputs({i0, i1, i2, i3, i4}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto x_min = ib->GetInput(kIndex1);
   auto x_max = ib->GetInput(kIndex2);
-  return {ib->ZerosLike(x), ib->ZerosLike(x_min), ib->ZerosLike(x_max)};
+  return {ib->OutZeros(x), ib->OutZeros(x_min), ib->OutZeros(x_max)};
 });
 
 REG_BPROP_BUILDER("WtsARQ").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
   auto w_min = ib->GetInput(kIndex1);
   auto w_max = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
-  return {dout, ib->ZerosLike(w_min), ib->ZerosLike(w_max)};
+  return {dout, ib->OutZeros(w_min), ib->OutZeros(w_max)};
 });
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

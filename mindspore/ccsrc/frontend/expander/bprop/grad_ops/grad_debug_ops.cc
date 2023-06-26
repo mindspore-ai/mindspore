@@ -22,25 +22,25 @@ REG_BPROP_BUILDERS_BEGIN(GradDebugOps)
 REG_BPROP_BUILDER("ScalarSummary").SetUnusedInputs({i1, i2, i3}).SetBody(BODYFUNC(ib) {
   auto tag = ib->GetInput(kIndex0);
   auto x = ib->GetInput(kIndex1);
-  return {tag, ib->ZerosLike(x)};
+  return {tag, ib->OutZeros(x)};
 });
 
 REG_BPROP_BUILDER("TensorSummary").SetUnusedInputs({i1, i2, i3}).SetBody(BODYFUNC(ib) {
   auto tag = ib->GetInput(kIndex0);
   auto x = ib->GetInput(kIndex1);
-  return {tag, ib->ZerosLike(x)};
+  return {tag, ib->OutZeros(x)};
 });
 
 REG_BPROP_BUILDER("ImageSummary").SetUnusedInputs({i1, i2, i3}).SetBody(BODYFUNC(ib) {
   auto tag = ib->GetInput(kIndex0);
   auto x = ib->GetInput(kIndex1);
-  return {tag, ib->ZerosLike(x)};
+  return {tag, ib->OutZeros(x)};
 });
 
 REG_BPROP_BUILDER("HistogramSummary").SetUnusedInputs({i1, i2, i3}).SetBody(BODYFUNC(ib) {
   auto tag = ib->GetInput(kIndex0);
   auto x = ib->GetInput(kIndex1);
-  return {tag, ib->ZerosLike(x)};
+  return {tag, ib->OutZeros(x)};
 });
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

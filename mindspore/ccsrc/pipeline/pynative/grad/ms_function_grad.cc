@@ -496,7 +496,7 @@ FuncGraphPtr MsFunction::ProcessMsFunctionFuncGraph(const FuncGraphPtr &ms_func_
       continue;
     }
     MS_LOG(DEBUG) << "Get cnode " << cnode->DebugString();
-    const auto &unused_inputs = BpropExpander().GetUnusedInputs(prim->name());
+    const auto &unused_inputs = BpropExpander::GetUnusedInputs(prim->name());
     if (!unused_inputs.empty() && unused_inputs.find(INT_MAX) != unused_inputs.end() &&
         kExpanderWhiteList.find(prim->name()) == kExpanderWhiteList.end()) {
       MS_LOG(DEBUG) << "Prim " << prim->name() << " is not support by expander";

@@ -23,18 +23,18 @@ REG_BPROP_BUILDERS_BEGIN(GradOtherOps)
 REG_BPROP_BUILDER("Assign").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  return {dout, ib->ZerosLike(y)};
+  return {dout, ib->OutZeros(y)};
 });
 
 REG_BPROP_BUILDER("InvertPermutation").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
-  return {ib->ZerosLike(x)};
+  return {ib->OutZeros(x)};
 });
 
 REG_BPROP_BUILDER("IOU").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
-  return {ib->ZerosLike(x), ib->ZerosLike(y)};
+  return {ib->OutZeros(x), ib->OutZeros(y)};
 });
 
 REG_BPROP_BUILDER("SyncBatchNorm").SetUnusedInputs({i2, i3, i4}).SetBody(BODYFUNC(ib) {
@@ -52,7 +52,7 @@ REG_BPROP_BUILDER("SyncBatchNorm").SetUnusedInputs({i2, i3, i4}).SetBody(BODYFUN
   auto dx = ib->TupleGetItem(out, 0);
   auto dscale = ib->TupleGetItem(out, 1);
   auto dbias = ib->TupleGetItem(out, 2);
-  return {dx, dscale, dbias, ib->ZerosLike(mean), ib->ZerosLike(variance)};
+  return {dx, dscale, dbias, ib->OutZeros(mean), ib->OutZeros(variance)};
 });
 
 REG_BPROP_BUILDER("GpuConvertToDynamicShape").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
@@ -65,7 +65,7 @@ REG_BPROP_BUILDER("_DynamicLossScale").SetUnusedInputs({i0, i2}).SetBody(BODYFUN
   auto dout = ib->GetInput(kIndex3);
   auto res = ib->Emit("Mul", {dout, loss_scale},
                       {{"split_overflow", MakeValue(true)}, {"layer_overflow", ib->GetAttr("layer")}});
-  return {res, ib->ZerosLike(loss_scale)};
+  return {res, ib->OutZeros(loss_scale)};
 });
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

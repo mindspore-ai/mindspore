@@ -27,46 +27,9 @@
 #include "ir/anf.h"
 #include "ir/primitive.h"
 #include "ops/base_operator.h"
-#include "abstract/ops/infer_functions.h"
-#include "ops/export_infer.h"
 
 namespace mindspore {
 namespace expander {
-using R = abstract::PrimitiveEvalImplMap::mapped_type;
-// this map will be removed soon since it's just a quick fix, some core/ops implemented the infer already but
-// did not register them into core/ops infer map.
-static abstract::PrimitiveEvalImplMap unreg_infer_map = {
-  {prim::kPrimFastGelu, R{ops::FastGeLUInfer, nullptr, true}},
-  {prim::kPrimFastGeluGrad, R{ops::FastGeLUGradInfer, nullptr, true}},
-  {prim::kPrimGelu, R{ops::GeLUInfer, nullptr, true}},
-  {prim::kPrimHardSwish, R{ops::HSwishInfer, nullptr, true}},
-  {prim::kPrimLarsV2Update, R{ops::LARSUpdateInfer, nullptr, true}},
-  {prim::kPrimLogSoftmaxV2, R{ops::LogSoftmaxInfer, nullptr, true}},
-  {prim::kPrimRelu6Grad, R{ops::ReLU6GradInferFunc, nullptr, true}},
-  {prim::kPrimSelu, R{ops::SeLUInfer, nullptr, true}},
-  {prim::kPrimGeluGrad, R{ops::GeLUGradInfer, nullptr, true}},
-  {prim::kPrimIou, R{ops::IouInferFunc, nullptr, true}},
-  {prim::kPrimArgMin, R{ops::ArgminV2Infer, nullptr, true}},
-  {prim::kPrimCeluV2, R{ops::CeLUInfer, nullptr, true}},
-  {prim::kPrimCumsum, R{ops::CumSumInfer, nullptr, true}},
-  {prim::kPrimDropOutDoMask, R{ops::DropoutDoMaskInfer, nullptr, true}},
-  {prim::kPrimGatherV2, R{ops::GatherInfer, nullptr, true}},
-  {prim::kPrimHardSwishGrad, R{ops::HSwishGradInfer, nullptr, true}},
-  {prim::kPrimPRelu, R{ops::PReLUInfer, nullptr, true}},
-  {prim::kPrimRelu, R{ops::ReLUInferFunc, nullptr, true}},
-  {prim::kPrimResizeBilinearV2Grad, R{ops::ResizeBilinearGradInfer, nullptr, true}},
-  {prim::kPrimSigmoidCrossEntropyWithLogitsV2, R{ops::BCEWithLogitsLossInfer, nullptr, true}},
-  {prim::kPrimSoftmaxV2, R{ops::SoftmaxInfer, nullptr, true}},
-  {prim::kPrimCast, R{abstract::InferImplCast, nullptr, true}},            // remove when Cast core/ops infer ready
-  {prim::kPrimBroadcast, R{abstract::InferImplBroadcast, nullptr, true}},  // remove when Broadcast core/ops infer ready
-  {prim::kPrimAllGather, R{abstract::InferImplAllGather, nullptr, true}},  // remove when AllGather core/ops infer ready
-  {prim::kPrimConcatOffset,
-   R{abstract::InferImplConcatOffset, nullptr, true}},  // remove when ConcatOffset core/ops infer ready
-  {prim::kPrimTransData, R{abstract::InferImplTransData, nullptr, true}},
-  {prim::kPrimAdamApplyOne, R{abstract::InferImplAdamApplyOne, nullptr, true}},
-  {prim::kPrimAdamApplyOneWithDecay, R{abstract::InferImplAdamApplyOneWithDecay, nullptr, true}},
-};
-
 void CppInfer::InferAnfnode(const AnfNodePtr &anfnode) const {
   if (anfnode->isa<ValueNode>()) {
     anfnode->set_abstract(anfnode->cast<ValueNodePtr>()->value()->ToAbstract());
@@ -87,22 +50,17 @@ void CppInfer::InferAnfnode(const AnfNodePtr &anfnode) const {
                          }
                          return abs;
                        });
-  AbstractBasePtr result = nullptr;
-  auto found = abstract::GetPrimitiveInferImpl(prim);
-  if (found.has_value() && found.value().IsImplInferShapeAndType()) {
-    result = found.value().InferShapeAndType(nullptr, prim, abs_list);
-  } else {
-    auto iter = unreg_infer_map.find(prim);
-    if (iter != unreg_infer_map.end()) {
-      auto infer = iter->second;
-      MS_EXCEPTION_IF_CHECK_FAIL(infer.IsImplInferShapeAndType(), "There is no infer-abstract implement!");
-      result = infer.InferShapeAndType(nullptr, prim, abs_list);
+  auto &infer_impl = CppInfer::infer_impl_cache()[prim];
+  if (infer_impl.Get() == nullptr) {
+    auto found = abstract::GetPrimitiveInferImpl(prim);
+    if (found.has_value() && found.value().IsImplInferShapeAndType()) {
+      infer_impl = found.value();
     } else {
       // manually throw an exception to avoid the critical log.
       throw std::runtime_error("The infer function of [" + prim->name() + "] is not defined.");
     }
   }
-  cnode->set_abstract(result);
+  cnode->set_abstract(infer_impl.InferShapeAndType(nullptr, prim, abs_list));
 }
 
 BaseShapePtr CppInfer::GetShape(const NodePtr &node) {

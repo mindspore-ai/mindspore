@@ -28,6 +28,83 @@
 namespace mindspore {
 namespace expander {
 namespace bprop {
+class PynativeIRBuilder : public BpropIRBuilder {
+ public:
+  PynativeIRBuilder(const std::string &name, const FuncGraphPtr &fg, const ExpanderInferPtr &infer, UserMap *users,
+                    const AnfNodePtr &dout)
+      : BpropIRBuilder(name, fg, infer), users_(users), dout_(dout) {
+    MS_EXCEPTION_IF_NULL(users);
+  }
+  ~PynativeIRBuilder() = default;
+
+  NodePtr OutZeros(const NodePtr &node) const override {
+    need_infer_ = false;
+    auto ret = Emit(prim::kZerosLike, {node});
+    need_infer_ = true;
+    return ret;
+  }
+
+ protected:
+  NodePtr EmitGetItemValue(const NodePtrList &inputs) const {
+    auto real_input = inputs[0]->get<ValueNodePtr>();
+    if (real_input != nullptr) {
+      auto real_input_value = real_input->value()->cast<ValueSequeuePtr>();
+      if (real_input_value != nullptr) {
+        auto item_idx = GetValue<int64_t>(inputs[1]->get<ValueNodePtr>()->value());
+        auto valuenode = NewValueNode((*real_input_value)[item_idx]);
+        valuenode->set_abstract(valuenode->value()->ToAbstract());
+        return NewNode(valuenode);
+      }
+    }
+    return nullptr;
+  }
+
+  NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) const override {
+    if (prim->name() == prim::kPrimShapeCalc->name()) {
+      // Manually throw an exception to terminate without critical log.
+      throw std::runtime_error("ShapeCalc is not supported in pynative mode.");
+    }
+    if (prim->name() == prim::kTupleGetItem) {
+      // if the getitem's real input is a ValueSequence, just return the real Value of that.
+      auto getitem_value = EmitGetItemValue(inputs);
+      if (getitem_value != nullptr) {
+        return getitem_value;
+      }
+    }
+    AnfNodePtrList cnode_inputs{NewValueNode(prim)};
+    cnode_inputs.reserve(inputs.size() + 1);
+    (void)std::transform(inputs.cbegin(), inputs.cend(), std::back_inserter(cnode_inputs),
+                         [](const NodePtr &inp) { return inp->get(); });
+    auto cnode = func_graph_->NewCNode(cnode_inputs);
+    if (scope_ != nullptr) {
+      cnode->set_scope(scope_);
+    }
+    auto node = NewNode(cnode->cast<AnfNodePtr>());
+    if (need_infer_) {
+      infer_->Infer(node);
+    }
+    // record the users
+    for (size_t i = 1; i < cnode_inputs.size(); i++) {
+      auto &inp = cnode_inputs[i];
+      if (inp == dout_ || inp->isa<Parameter>()) {
+        (void)users_->dout_user_[inp].emplace_back(cnode, i);
+      } else if (IsPrimitiveCNode(inp, prim::kPrimTupleGetItem)) {
+        // record the dout's successor getitem's users
+        auto getitem = inp->cast<CNodePtr>();
+        auto real_input = getitem->input(kIndex1);
+        if (real_input == dout_) {
+          (void)users_->tuple_getitem_user_[inp].emplace_back(cnode, i);
+        }
+      }
+    }
+    return node;
+  }
+
+  UserMap *users_;
+  AnfNodePtr dout_;
+  mutable bool need_infer_{true};
+};
+
 bool BpropExpander::Run(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_LOG(DEBUG) << "Begin building bprop for " << cnode->fullname_with_scope();
@@ -50,8 +127,8 @@ bool BpropExpander::Run(const CNodePtr &cnode) {
   return ret;
 }
 
-const mindspore::HashSet<size_t> &BpropExpander::GetUnusedInputs(const string &op_name) const {
-  auto handle = GetBpropHandle(op_name);
+const mindspore::HashSet<size_t> &BpropExpander::GetUnusedInputs(const string &op_name) {
+  auto handle = BpropIRBuilderFactory::Instance().GetBuilder(op_name);
   if (handle == nullptr) {
     MS_LOG(DEBUG) << "Bprop IRBuilder [" << op_name << "] is not registered in bprop expander.";
     static const mindspore::HashSet<size_t> no_handle{INT_MAX};
@@ -60,106 +137,41 @@ const mindspore::HashSet<size_t> &BpropExpander::GetUnusedInputs(const string &o
   return handle->unused_inputs;
 }
 
-void BpropExpander::ExtractInputs(const CNodePtr &cnode, const BpropIRBuilder *ir_builder) {
-  input_nodes_.reserve(cnode->size());
-  (void)std::transform(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(input_nodes_),
-                       [ir_builder](const AnfNodePtr &no) { return std::make_shared<Node>(no, ir_builder); });
-}
-
-std::unique_ptr<BpropIRBuilder> BpropExpander::CreateIRBuilder(const std::string &name, const CNodePtr &cnode) const {
-  auto infer = std::make_shared<CppInfer>();
-  return std::make_unique<BpropIRBuilder>(name, cnode->func_graph(), infer);
-}
-
 bool BpropExpander::RunBprop(const CNodePtr &cnode) {
   auto name = AnfUtils::GetCNodeName(cnode);
-  auto ir_builder = CreateIRBuilder(name, cnode);
-  ExtractInputs(cnode, ir_builder.get());
+  PynativeIRBuilder ir_builder(name, cnode->func_graph(), std::make_shared<CppInfer>(), users_, cnode->inputs().back());
+  input_nodes_.reserve(cnode->size());
+  (void)std::transform(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(input_nodes_),
+                       [&ir_builder](const AnfNodePtr &no) { return std::make_shared<Node>(no, &ir_builder); });
   auto &attrs = GetCNodePrimitive(cnode)->attrs();
-  auto handle = GetBpropHandle(name);
+  auto handle = BpropIRBuilderFactory::Instance().GetBuilder(name);
   if (handle == nullptr) {
     MS_LOG(DEBUG) << "Bprop IRBuilder [" << name << "] is not registered in bprop expander.";
     return false;
   }
-  output_nodes_ = ir_builder->Run(input_nodes_, attrs, *handle, GetCNodePrimitive(cnode)->instance_name());
+  output_nodes_ = ir_builder.Run(input_nodes_, attrs, *handle, GetCNodePrimitive(cnode)->instance_name());
   if (output_nodes_.empty()) {
     MS_LOG(DEBUG) << "The output nodes of bprop function [" << name << "] is empty.";
     return false;
   }
-  PostProcess(ir_builder.get());
+  PostProcess(cnode);
   DumpResult(name);
-  input_nodes_.clear();
   return true;
 }
 
-void BpropExpander::PostProcess(const BpropIRBuilder *ir_builder) const {
+void BpropExpander::PostProcess(const CNodePtr &cnode) const {
   outputs_->reserve(output_nodes_.size());
-  (void)std::transform(output_nodes_.cbegin(), output_nodes_.cend(), std::back_inserter(*outputs_),
-                       [ir_builder](const NodePtr &node) {
-                         if (!node->isa<ValueNode>()) {
-                           return node->get<CNodePtr>();
-                         }
-
-                         // A Value node gradient will loss the trace context in pynative, so emit a node.
-                         NodePtr new_node = nullptr;
-                         auto abs = node->abstract();
-                         MS_EXCEPTION_IF_NULL(abs);
-                         if (abs->isa<abstract::AbstractScalar>()) {
-                           new_node = ir_builder->Emit(prim::kZerosLike, {ir_builder->Tensor(0, abs->BuildType())});
-                         } else {
-                           new_node = ir_builder->Emit(prim::kZerosLike, {node});
-                         }
-
-                         return new_node->get<CNodePtr>();
-                       });
-  std::set<AnfNodePtr> visited;
-  // do not visit the inputs again.
-  (void)std::for_each(input_nodes_.cbegin(), input_nodes_.cend(),
-                      [&visited](const NodePtr &node) { (void)visited.insert(node->get()); });
-
-  std::queue<CNodePtr> que;
-  (void)std::for_each(outputs_->cbegin(), outputs_->cend(), [&que](const CNodePtr &cnode) { que.push(cnode); });
-
-  AnfNodePtr dout = input_nodes_.back()->get();
-  while (!que.empty()) {
-    auto node = que.front();
-    que.pop();
-
-    if (IsPrimitiveCNode(node, prim::kPrimShapeCalc)) {
-      // Manually throw an exception to terminate without critical log.
-      throw std::runtime_error("ShapeCalc do not support in pynative mode.");
-    }
-
-    for (size_t i = 1; i < node->size(); ++i) {
-      const auto &inp = node->input(i);
-      // record parameter's and dout's user
-      if (users_ != nullptr) {
-        if (inp == dout || inp->isa<Parameter>()) {
-          (void)((*users_).dout_user_[inp].emplace_back(node, i));
-        }
-      }
-      if (IsPrimitiveCNode(inp, prim::kPrimTupleGetItem)) {
-        auto getitem = inp->cast<CNodePtr>();
-        auto real_input = getitem->input(kIndex1);
-        // record the dout's successor getitem's users
-        if (users_ != nullptr && real_input == dout) {
-          (void)((*users_).tuple_getitem_user_[inp].emplace_back(node, i));
-        } else if (real_input->isa<ValueNode>()) {
-          // eliminate redundant getitem
-          auto real_input_value = real_input->cast<ValueNodePtr>()->value();
-          if (real_input_value->isa<ValueSequence>()) {
-            auto item_idx = GetValue<int64_t>(getitem->input(kIndex2)->cast<ValueNodePtr>()->value());
-            auto newnode = NewValueNode((*(real_input_value->cast<ValueSequencePtr>()))[item_idx]);
-            newnode->set_abstract(newnode->value()->ToAbstract());
-            node->set_input(i, newnode);
-            continue;  // do not visit the getitem again from this node
-          }
-        }
-      }
-      if (inp->isa<CNode>() && visited.count(inp) == 0) {
-        (void)visited.insert(inp);
-        que.push(inp->cast<CNodePtr>());
-      }
+  constexpr const size_t num_out_and_dout = 2;
+  if (output_nodes_.size() + num_out_and_dout != input_nodes_.size()) {
+    MS_LOG(EXCEPTION) << "For bprop [" << AnfUtils::GetCNodeName(cnode)
+                      << ", the output size should be equal to input size (exclude out and dout), but got "
+                      << output_nodes_.size() << " vs " << (input_nodes_.size() - num_out_and_dout);
+  }
+  for (size_t i = 0; i < output_nodes_.size(); i++) {
+    auto out = outputs_->emplace_back(output_nodes_[i]->get<CNodePtr>());
+    MS_EXCEPTION_IF_NULL(out);
+    if (IsPrimitiveCNode(out, prim::kPrimZerosLike)) {
+      out->set_abstract(input_nodes_[i]->get()->abstract()->Broaden());
     }
   }
 }
@@ -290,7 +302,7 @@ class GraphModeBuilder : public BpropIRBuilder {
   }
 
  protected:
-  NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) const {
+  NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) const override {
     if (prim->name() == "Switch") {
       has_ctrl_flow_ = true;
     }
