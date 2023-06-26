@@ -17,18 +17,19 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_ARRAY_REDUCE_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_ARRAY_REDUCE_GPU_KERNEL_H_
 
-#include <algorithm>
-#include <functional>
 #include <map>
 #include <string>
-#include <utility>
 #include <vector>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/reduce_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
+#include <algorithm>
+#include <functional>
+#include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/reduce_impl.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
 #include "utils/check_convert_utils.h"
+
 namespace mindspore {
 namespace kernel {
 class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
@@ -52,35 +53,46 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
  protected:
   void ResetResource() {
     reduce_op_type_ = ReduceSum;
-    need_skip_execute_ = false;
     keep_dims_ = false;
     skip_mode_ = false;
-    all_match_ = false;
     is_null_input_ = false;
     input_num_ = 1;
     input_size_ = 0;
-    output_size_ = 0;
-    workspace_size_ = 0;
     kernel_name_ = "ArrayReduce";
     axis_.clear();
     input_reshape_.clear();
     reduce_first_axis_ = false;
+    origin_shape_.clear();
+    transpose_perm_.clear();
+    need_transpose_ = false;
+    workspace_size_list_.clear();
+  }
+
+  void ResetShapeInfo() {
+    input_num_ = 1;
+    input_reshape_.clear();
+    workspace_size_list_.clear();
+    need_transpose_ = false;
+    origin_shape_.clear();
+    transpose_perm_.clear();
+    reduce_first_axis_ = false;
   }
 
   void InferArrayReduceType();
-  void FormatAxis(const size_t dims, const std::vector<int> &axis, std::vector<bool> *bitmap);
-  std::vector<size_t> ToRowReduce();
-  std::vector<size_t> GetNewShape(const size_t dims);
-  void GetTransposePerm(size_t *transpose_perm);
-  void GetTransposeInfo(TransposeInfo *const info, const size_t dims, size_t *const transpose_perm);
-  void SimplyReduce(const ShapeVector &input_shape, const std::vector<int> &axis);
-  void InferInAndOutDesc(const ShapeVector &input_shape, const ShapeVector &output_shape);
+  void FormatAxis(const size_t &dims, const std::vector<int64_t> &axis, std::vector<bool> *bitmap);
+  std::vector<size_t> GetNewShape();
+  std::vector<size_t> GetTransposePerm();
+  std::vector<size_t> SetOriginalShape();
+  void SimplyReduce(const ShapeVector &input_shape, const std::vector<int64_t> &axis);
+  TransposeInfo GetTransposeInfo();
 
   std::vector<KernelAttr> GetOpSupport() override;
   std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
+
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);
+
   template <typename T>
   bool LaunchComplexKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                            const std::vector<AddressPtr> &outputs, void *stream_ptr);
@@ -97,22 +109,19 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   ReduceType_t reduce_op_type_;
-
   std::vector<int> axis_;
   bool keep_dims_;
   bool skip_mode_;
-  bool need_skip_execute_;
-  bool all_match_;
   bool is_null_input_;
   size_t input_size_;
-  size_t output_size_;
-  size_t workspace_size_;
-  static constexpr size_t kAxisIndex_{1};
   std::string kernel_type_{"Unknown"};
   bool reduce_first_axis_;
   std::vector<size_t> input_reshape_;
   size_t input_num_;
-  size_t unit_size_;
+  std::vector<size_t> origin_shape_;
+  std::vector<size_t> transpose_perm_;
+  bool need_transpose_;
+  TransposeInfo transpose_info_;
 };
 }  // namespace kernel
 }  // namespace mindspore

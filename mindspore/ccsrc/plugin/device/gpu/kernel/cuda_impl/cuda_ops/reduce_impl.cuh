@@ -32,12 +32,12 @@ typedef enum {
 
 template <typename T>
 CUDA_LIB_EXPORT cudaError_t ArrayReduce(const T *input, const std::vector<size_t> &input_reshape,
-                                                 const bool reduce_first_axis, ReduceType_t type, T *output,
-                                                 cudaStream_t cuda_stream);
+                                        const bool reduce_first_axis, ReduceType_t type, T *temp, T *output,
+                                        cudaStream_t cuda_stream);
 
 template <typename T>
 CUDA_LIB_EXPORT cudaError_t ArrayReduceComplex(const T *input, const std::vector<size_t> &input_reshape,
-                                                      const bool reduce_first_axis, ReduceType_t type, T *output,
-                                                      cudaStream_t cuda_stream);
+                                               const bool reduce_first_axis, ReduceType_t type, T *temp, T *output,
+                                               cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_REDUCE_IMPL_CUH_
