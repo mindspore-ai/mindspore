@@ -152,6 +152,7 @@ SwapManager::SwapManager(size_t stream_id, mindspore::device::DynamicMemPoolBest
     max_file_size_ = offload_context->offload_disk_size();
   }
   candidates_.Init(size_level_num_);
+  (void)FileUtils::CreateNotExistDirs(offload_context->offload_path(), true);
 }
 
 template <class Input, class Output>
