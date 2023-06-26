@@ -56,12 +56,12 @@ __global__ void CropAndResize(const size_t size, const T *input_image, float *in
     if (final_height > 1) {
       target_y = y1 * (input_height - 1) + pos_y * scale_height;
     } else {
-      target_y = 0.5 * (y1 + y2) + (input_height - 1);
+      target_y = 0.5 * (y1 + y2) * (input_height - 1);
     }
     if (final_width > 1) {
       target_x = x1 * (input_width - 1) + pos_x * scale_width;
     } else {
-      target_x = 0.5 * (x1 + x2) + (input_width - 1);
+      target_x = 0.5 * (x1 + x2) * (input_width - 1);
     }
     // use extrapolation value if out of range
     if (((target_x < 0) || (target_x > input_width - 1)) || ((target_y < 0) || (target_y > input_height - 1))) {
