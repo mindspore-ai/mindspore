@@ -54,13 +54,36 @@ void VectorEmplace(std::vector<int64_t> *vec, size_t number, size_t dst_size) {
   }
 }
 
+void VectorEmplace(std::vector<int64_t> *vec, const std::vector<int64_t> &number_vec, size_t dst_size) {
+  if ((*vec).size() >= dst_size) {
+    return;
+  }
+
+  if (number_vec.size() != dst_size) {
+    MS_LOG(EXCEPTION) << "dst_size is not equal to number_vec.size(), dst_size:" << dst_size
+                      << ",  number_vec.size():" << number_vec.size();
+  }
+
+  for (size_t i = 0; i < dst_size - (*vec).size(); ++i) {
+    (void)vec->emplace_back(number_vec[i]);
+  }
+}
+
 bool CheckAttrIsNull(const PrimitivePtr &primitive) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto begin_mask = GetValue<int64_t>(primitive->GetAttr(kBeginMask));
-  auto end_mask = GetValue<int64_t>(primitive->GetAttr(kEndMask));
-  auto ellipsis_mask = GetValue<int64_t>(primitive->GetAttr(kEllipsisMask));
-  auto new_axis_mask = GetValue<int64_t>(primitive->GetAttr(kNewAxisMask));
-  auto shrink_axis_mask = GetValue<int64_t>(primitive->GetAttr(kShrinkAxisMask));
+  if (primitive == nullptr) {
+    return true;
+  }
+  auto tmp_begin_mask = primitive->GetAttr(kBeginMask);
+  auto tmp_end_mask = primitive->GetAttr(kEndMask);
+  auto tmp_ellipsis_mask = primitive->GetAttr(kEllipsisMask);
+  auto tmp_new_axis_mask = primitive->GetAttr(kNewAxisMask);
+  auto tmp_shrink_axis_mask = primitive->GetAttr(kShrinkAxisMask);
+
+  auto begin_mask = (tmp_begin_mask == nullptr ? 0 : GetValue<int64_t>(tmp_begin_mask));
+  auto end_mask = (tmp_end_mask == nullptr ? 0 : GetValue<int64_t>(tmp_end_mask));
+  auto ellipsis_mask = (tmp_ellipsis_mask == nullptr ? 0 : GetValue<int64_t>(tmp_ellipsis_mask));
+  auto new_axis_mask = (tmp_new_axis_mask == nullptr ? 0 : GetValue<int64_t>(tmp_new_axis_mask));
+  auto shrink_axis_mask = (tmp_shrink_axis_mask == nullptr ? 0 : GetValue<int64_t>(tmp_shrink_axis_mask));
   if (begin_mask == 0 && end_mask == 0 && ellipsis_mask == 0 && new_axis_mask == 0 && shrink_axis_mask == 0) {
     return true;
   }
@@ -71,6 +94,11 @@ TensorStorageInfoPtrList StridedSliceCalc(const PrimitivePtr &prim, const std::v
   if (!CheckAttrIsNull(prim) || inputs.size() != kStridedSliceInputsNum) {
     return {};
   }
+  MS_EXCEPTION_IF_NULL(inputs[0]);
+  MS_EXCEPTION_IF_NULL(inputs[1]);
+  MS_EXCEPTION_IF_NULL(inputs[2]);
+  MS_EXCEPTION_IF_NULL(inputs[3]);
+
   auto input_tensor = inputs[0]->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(input_tensor);
   auto size = input_tensor->shape().size();
@@ -78,7 +106,7 @@ TensorStorageInfoPtrList StridedSliceCalc(const PrimitivePtr &prim, const std::v
   auto old_shape = old_tensor_info->old_shape;
   auto old_strides = old_tensor_info->old_strides;
   auto old_storage_offset = old_tensor_info->old_offset;
-  if (inputs[1]->isa<tensor::Tensor>() || inputs[2]->isa<tensor::Tensor>() || inputs[2]->isa<tensor::Tensor>()) {
+  if (inputs[1]->isa<tensor::Tensor>() || inputs[2]->isa<tensor::Tensor>() || inputs[3]->isa<tensor::Tensor>()) {
     return {};
   }
   auto begin = GetValue<std::vector<int64_t>>(inputs[1]);
@@ -88,7 +116,7 @@ TensorStorageInfoPtrList StridedSliceCalc(const PrimitivePtr &prim, const std::v
     return {};
   }
   VectorEmplace(&begin, 0, size);
-  VectorEmplace(&end, size, size);
+  VectorEmplace(&end, input_tensor->shape(), size);
   VectorEmplace(&step, 1, size);
   ConvertNegToPos(&begin, &end, old_shape);
 

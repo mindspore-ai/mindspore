@@ -889,8 +889,9 @@ void Tensor::ExecuteLazyTask() const {
   }
 
   if (storage_info_ != nullptr && contiguous_callback_ != nullptr) {
-    this->device_sync_ = contiguous_callback_(this->device_address(), this->storage_info());
-    this->storage_info_ = nullptr;
+    address_future_ = nullptr;
+    device_sync_ = contiguous_callback_(device_address(), storage_info());
+    storage_info_ = nullptr;
   }
 }
 

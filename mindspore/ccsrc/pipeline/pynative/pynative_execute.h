@@ -25,7 +25,7 @@
 
 #include "pybind11/pybind11.h"
 #include "frontend/operator/composite/composite.h"
-
+#include "ir/anf.h"
 #include "mindrt/include/fork_utils.h"
 
 namespace mindspore::pynative {
@@ -85,6 +85,8 @@ class PyNativeExecutor : public std::enable_shared_from_this<PyNativeExecutor> {
   void SetJitCompileStatus(bool is_compiling, const std::string &phase) const;
   void WaitBeforeFork();
   void ReinitAfterFork();
+  py::object RunSliceOpStub(const std::vector<ValuePtr> &input_v,
+                            const std::vector<SliceOpInfoPtr> &slice_op_infos) const;
 
  private:
   PyNativeExecutor() {

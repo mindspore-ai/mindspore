@@ -102,7 +102,7 @@ bool CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl(const TensorStorageInfoPtr 
         self_addr[dst_offset + dst_storage_offset] = copy_src_addr[pos + src_storage_offset];
       }
     };
-    ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
+    ParallelLaunch(task, output_size, 0, this, pool_);
   } else if (dst_storage_info->is_contiguous && !src_is_contiguous) {
     const auto &input_shape = src_storage_info->shape;
     size_t src_ndim = src_storage_info->shape.size();
@@ -114,7 +114,7 @@ bool CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl(const TensorStorageInfoPtr 
         self_addr[pos + dst_storage_offset] = copy_src_addr[src_offset + src_storage_offset];
       }
     };
-    ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
+    ParallelLaunch(task, output_size, 0, this, pool_);
   } else {
     size_t dst_ndim = dst_storage_info->shape.size();
     auto dst_strides = dst_storage_info->strides;
@@ -129,7 +129,7 @@ bool CopyWithSliceCpuKernel::LaunchCopyWithSliceImpl(const TensorStorageInfoPtr 
         self_addr[dst_offset + dst_storage_offset] = copy_src_addr[src_offset + src_storage_offset];
       }
     };
-    ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
+    ParallelLaunch(task, output_size, 0, this, pool_);
   }
   return true;
 }

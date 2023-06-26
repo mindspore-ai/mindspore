@@ -38,6 +38,22 @@ void FrontendTask::SetException(const std::exception_ptr &e) {
   op_run_info_->stub_output->SetException(e);
 }
 
+void SliceOpFrontendTask::Run() {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeFrontendTask,
+                                     "Slice Op", false);
+  run_func_(input_values_, slice_op_infos_, requires_grad_, stub_output_);
+  input_values_.clear();
+  slice_op_infos_.clear();
+  stub_output_ = nullptr;
+}
+
+void SliceOpFrontendTask::SetException(const std::exception_ptr &e) {
+  if (stub_output_ == nullptr) {
+    return;
+  }
+  stub_output_->SetException(e);
+}
+
 void BackendTask::Run() {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeBackendTask,
                                      runtime::ProfilerRecorder::kNoName, false);
@@ -58,6 +74,8 @@ void AllocViewMemBackendTask::Run() {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeBackendTask,
                                      std::string("AllocView"), false);
   run_func_(op_run_info_, input_tensor_, input_idx_);
+  op_run_info_ = nullptr;
+  input_tensor_ = nullptr;
 }
 
 void AllocViewMemBackendTask::SetException(const std::exception_ptr &e) {
@@ -71,12 +89,14 @@ void ContiguousBackendTask::Run() {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeBackendTask,
                                      std::string("Contiguous"), false);
   run_func_(tensor_);
+  tensor_ = nullptr;
 }
 
 void ViewKernelBackendTask::Run() {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeBackendTask,
                                      std::string("ViewKernel"), false);
   run_func_(op_run_info_, task_type_);
+  op_run_info_ = nullptr;
 }
 }  // namespace pynative
 }  // namespace mindspore

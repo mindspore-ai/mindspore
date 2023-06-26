@@ -21,11 +21,10 @@
 #include "plugin/device/ascend/kernel/acl/acl_kernel_mod.h"
 #include "plugin/device/ascend/hal/device/ascend_launch_transdata.h"
 #include "runtime/device/ms_device_shape_transfer.h"
+#include "ops/op_name.h"
 
 namespace mindspore::device::ascend {
 namespace {
-constexpr auto kSize = "size";
-constexpr auto kStride = "stride";
 constexpr auto kStorageOffset = "storage_offset";
 constexpr auto kDstSize = "dst_size";
 constexpr auto kDstStride = "dst_stride";
@@ -65,6 +64,8 @@ struct AddressAndStorageInfo {
     auto shape_size = LongToSize(std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>()));
     return shape_size * GetTypeByte(TypeIdToType(addr->type_id()));
   }
+
+  std::string GetStorageInfoStr() { return (storage == nullptr ? "" : storage->ToString()); }
 };
 using AddressAndStorageInfoPtr = std::shared_ptr<AddressAndStorageInfo>;
 
@@ -154,14 +155,14 @@ bool AsStridedFunc(const AddressAndStorageInfoPtr &src_addr_info, const AddressA
   MS_EXCEPTION_IF_NULL(dst_addr_info->addr);
   MS_LOG(DEBUG) << "Start";
 
-  auto input = MallocMemoryForDeviceAddress(src_addr_info->addr, device_context);
+  auto input = MallocMemoryForDeviceAddressWithOffset(src_addr_info, device_context);
   auto output = MallocMemoryForDeviceAddress(dst_addr_info->addr, device_context);
 
   auto prim = std::make_shared<Primitive>(transform::kNameAsStrided);
-  prim->set_attr(kSize, MakeValue(src_addr_info->storage->shape));
-  prim->set_attr(kStride, MakeValue(src_addr_info->storage->strides));
-  // TODO(wangchangheng): 是不是设置成0
-  prim->set_attr(kStorageOffset, MakeValue(static_cast<int64_t>(src_addr_info->storage_offset())));
+  prim->set_attr(ops::kSize, MakeValue(src_addr_info->storage->shape));
+  prim->set_attr(ops::kStride, MakeValue(src_addr_info->storage->strides));
+  int64_t offset = 0;
+  prim->set_attr(kStorageOffset, MakeValue(offset));
 
   std::vector<std::string> input_device_formats = {src_addr_info->addr->format(), kOpFormat_DEFAULT, kOpFormat_DEFAULT,
                                                    kOpFormat_DEFAULT};
@@ -268,6 +269,11 @@ bool LaunchAsyncCopy(const AddressAndStorageInfoPtr &src_addr_info, const Addres
   auto src_addr = MallocMemoryForDeviceAddress(src_addr_info->addr, device_context);
   auto dst_addr = MallocMemoryForDeviceAddress(dst_addr_info->addr, device_context);
 
+  if (copy_size == 0) {
+    MS_LOG(DEBUG) << "copy_size is zero";
+    return true;
+  }
+
   MS_EXCEPTION_IF_NULL(src_addr_info->addr);
   auto type_size = GetTypeByte(TypeIdToType(src_addr_info->addr->type_id()));
 
@@ -312,20 +318,82 @@ bool LaunchTransData(const DeviceAddressPtr &input_address, const TensorStorageI
       groups = common::AnfAlgo::GetAttrGroups(node_idx.first, node_idx.second);
     }
   }
-  auto launch_trans_data = std::make_shared<AscendLaunchTransData>(
-    stream_ptr, input_address->type_id(), input_address->GetSize(), input_address->format(), kOpFormat_NCHW,
-    input_storage_info->ori_shape, groups);
-  MS_EXCEPTION_IF_NULL(launch_trans_data);
-  launch_trans_data->SetInputAddr(static_cast<uint8_t *>(input_address->GetMutablePtr()));
-  launch_trans_data->LaunchOpKernel();
-  auto output_addr_vec = launch_trans_data->GetKernelOutputAddr();
-  if (output_addr_vec.size() != 1) {
-    MS_LOG(EXCEPTION) << "output_addr_vec size is invalid:" << output_addr_vec.size();
+
+  auto src_addr = MallocMemoryForDeviceAddress(input_address, device_context);
+  auto dst_addr = MallocMemoryForDeviceAddress(output_address, device_context);
+
+  auto prim = std::make_shared<Primitive>(transform::kNameTransData);
+  prim->set_attr(ops::kSrcFormat, MakeValue(input_address->format()));
+  prim->set_attr(ops::kDstFormat, MakeValue(output_address->format()));
+  prim->set_attr(ops::kGroups, MakeValue(groups));
+
+  auto input_device_formats = {input_address->format()};
+  auto output_device_formats = {output_address->format()};
+  auto input_device_types = {input_address->type_id()};
+  auto output_device_types = {output_address->type_id()};
+  kernel::AclKernelModPtr transdata_kernel = std::make_shared<kernel::AclKernelMod>();
+  transdata_kernel->SetPrimitive(prim);
+  transdata_kernel->CreateAclConverter();
+  transdata_kernel->SetDeviceInfo(input_device_formats, output_device_formats, input_device_types, output_device_types);
+
+  transdata_kernel->PackageInput(0, "", &input_storage_info->ori_shape);
+  transdata_kernel->PackageOutput(0, input_storage_info->ori_shape);
+
+  MS_LOG(DEBUG) << "Begin launch kernel: " << prim->name();
+  auto ret = transdata_kernel->Launch({src_addr}, std::vector<AddressPtr>{}, {dst_addr}, stream_ptr);
+  MS_LOG(DEBUG) << "End launch kernel: " << prim->name();
+  if (!ret) {
+    MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << prim->name();
   }
-  output_address->set_ptr(output_addr_vec[0]);
-  launch_trans_data->FreeWorkspaceDeviceMem();
   MS_LOG(DEBUG) << "End";
 
+  return ret;
+}
+
+bool CopyBaseFormatDataDeviceToDevice(const AddressAndStorageInfoPtr &src_addr_info,
+                                      const AddressAndStorageInfoPtr &dst_addr_info,
+                                      const device::DeviceContext *device_context, void *stream_ptr);
+
+bool ContiguousViewCopySrcAddr(const AddressAndStorageInfoPtr &src_addr_info,
+                               const device::DeviceContext *device_context, void *stream_ptr) {
+  MS_LOG(DEBUG) << "Start";
+  MS_EXCEPTION_IF_NULL(src_addr_info);
+  MS_EXCEPTION_IF_NULL(src_addr_info->storage);
+  MS_EXCEPTION_IF_NULL(src_addr_info->addr);
+
+  const auto &dst_shape = src_addr_info->storage->shape;
+  auto tensor_size = SizeOf(dst_shape) * GetTypeByte(TypeIdToType(src_addr_info->addr->type_id()));
+  auto dst_addr = device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT,
+                                                                           src_addr_info->addr->type_id(), dst_shape);
+  dst_addr->set_device_shape(dst_shape);
+
+  auto dst_addr_info = std::make_shared<AddressAndStorageInfo>(dst_addr, nullptr);
+  auto ret = CopyBaseFormatDataDeviceToDevice(src_addr_info, dst_addr_info, device_context, stream_ptr);
+  if (!ret) {
+    MS_LOG(ERROR) << "CopyBaseFormatDataDeviceToDevice failed.";
+    return ret;
+  }
+
+  auto get_ori_stride = [](const std::vector<int64_t> &shape) -> std::vector<int64_t> {
+    if (shape.empty()) {
+      return {};
+    }
+
+    std::vector<int64_t> ret{1};
+    int64_t strides = 1;
+    for (int64_t i = shape.size() - 1; i > 0; i--) {
+      strides *= shape[i];
+      (void)ret.emplace(ret.begin(), strides);
+    }
+    return ret;
+  };
+
+  // Refresh contiguous address for src
+  src_addr_info->addr = dst_addr;
+  const auto &dst_strides = get_ori_stride(dst_shape);
+  src_addr_info->storage = std::make_shared<TensorStorageInfo>(dst_shape, dst_strides, 0, dst_shape, dst_strides, true);
+
+  MS_LOG(DEBUG) << "End";
   return true;
 }
 
@@ -340,10 +408,17 @@ bool CopyBaseFormatDataDeviceToDevice(const AddressAndStorageInfoPtr &src_addr_i
   auto src_size = src_addr_info->GetSize();
   auto dst_size = dst_addr_info->GetSize();
 
-  MS_LOG(DEBUG) << "Src is_contiguous:" << src_addr_info->is_contiguous()
-                << ", dst is_contiguous:" << dst_addr_info->is_contiguous() << ", input addr size:" << src_size
+  MS_LOG(DEBUG) << "Src storage info:" << src_addr_info->GetStorageInfoStr()
+                << ", dst storage info:" << dst_addr_info->GetStorageInfoStr() << ", input addr size:" << src_size
                 << ", output addr size:" << dst_size;
   if (!dst_addr_info->is_contiguous()) {
+    if (!src_addr_info->is_contiguous()) {
+      if (!ContiguousViewCopySrcAddr(src_addr_info, device_context, stream_ptr)) {
+        MS_LOG(ERROR) << "ContiguousViewCopySrcAddr failed.";
+        return false;
+      }
+    }
+
     auto ret = ViewCopyFunc(src_addr_info, dst_addr_info, device_context, stream_ptr);
     if (!ret) {
       MS_LOG(ERROR) << "ViewCopyFunc failed.";

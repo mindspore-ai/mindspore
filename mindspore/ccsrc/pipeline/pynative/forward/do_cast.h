@@ -34,6 +34,7 @@ class CastOperation {
   ~CastOperation() = default;
   void DoCast(const FrontendOpRunInfoPtr &op_run_info);
   void ClearRes();
+  ValuePtr DoNormalCast(const FrontendOpRunInfoPtr &cast_run_info, const ValuePtr &v, const TypeId &type_id) const;
 
  private:
   bool IsValueTypeInvalid(const ValuePtr &v) const;

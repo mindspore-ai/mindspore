@@ -59,6 +59,12 @@ class ForwardExecutor {
   // If sub is true, this function will not convert StubTensor to Tensor.
   // Used to reduce the overhead of StubTensor WaitValue.
   FrontendOpRunInfoPtr GenerateOpRunInfo(const py::args &args, bool stub = false);
+  ValuePtr RunSliceOpFrontend(const std::vector<ValuePtr> &input_values,
+                              const std::vector<SliceOpInfoPtr> &slice_op_infos, bool requires_grad,
+                              const stub::StubNodePtr &stub_output);
+  void DispatchSilceOpFrontendTask(const std::vector<ValuePtr> &input_values,
+                                   const std::vector<SliceOpInfoPtr> &slice_op_infos, bool requires_grad,
+                                   const stub::StubNodePtr &stub_output);
   void set_grad_executor(const GradExecutorPtr &grad_executor) { grad_executor_ = GradExecutorWeakPtr(grad_executor); }
   void ClearNodeAbsMap() const;
   void SetNodeAbsMapByValue(const FrontendOpRunInfoPtr &op_run_info) const;
@@ -123,9 +129,8 @@ class ForwardExecutor {
   void PrepareOpInputs(const FrontendOpRunInfoPtr &op_run_info);
   void PrepareOpOutputs(const FrontendOpRunInfoPtr &op_run_info) const;
   void OpRunInfoUsePrimC(const FrontendOpRunInfoPtr &op_run_info) const;
-  void CreateInputAddressForViewOp(const FrontendOpRunInfoPtr &op_run_info);
-  void PrepareViewOpOutputs(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
-                            const TensorStorageInfoPtr &storage_info, const KernelTaskType &task_type);
+  void CreateInputAddressForViewOp(const tensor::TensorPtr &input_tensor, const FrontendOpRunInfoPtr &op_run_info,
+                                   const size_t &input_idx);
   void DispatchViewKernelTask(const FrontendOpRunInfoPtr &op_run_info, const KernelTaskType &task_type);
   void ForwardRunViewKernelTask(const FrontendOpRunInfoPtr &op_run_info, const KernelTaskType &task_type,
                                 bool enable_async);
@@ -135,15 +140,19 @@ class ForwardExecutor {
   void RefreshTensorContiguous(const tensor::TensorPtr &tensor);
   device::DeviceAddressPtr TensorContiguousCallback(const DeviceSyncPtr &device_address,
                                                     const TensorStorageInfoPtr &storage_info);
-  void CreateViewOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::TensorPtr> *outputs,
-                              const tensor::TensorPtr &input_tensor, const TensorStorageInfoPtr &storage_info,
-                              const KernelTaskType &task_type);
+
+  void CreateViewOutputTensor(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
+                              const TensorStorageInfoPtr &storage_info);
 
   void DispatchAllocateMemTask(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
                                const size_t &input_idx);
   void CreateDeviceAddressForViewInput(const FrontendOpRunInfoPtr &op_run_info, const tensor::TensorPtr &input_tensor,
                                        const size_t &input_idx, bool enable_async);
   void RunContiguousTask(const tensor::TensorPtr &tensor, bool enable_async);
+  PrimitivePtr GetSlicePrimFromCache(const std::string &op_name, bool is_input_to_attr);
+  FrontendOpRunInfoPtr GenerateSliceOpRunInfo(const std::string &op_name, bool requires_grad,
+                                              const stub::StubNodePtr &stub_output);
+  void CreateViewOpOutputs(const FrontendOpRunInfoPtr &op_run_info, const TensorStorageInfoPtrList &storage_infos);
 
  private:
   bool init_{false};
@@ -159,6 +168,7 @@ class ForwardExecutor {
   MindrtBackendMap mindrt_backends_;
   AsyncQueuePtr frontend_queue_;
   AsyncQueuePtr backend_queue_;
+  mindspore::HashMap<std::string, PrimitivePtr> slice_prim_cache_;
 };
 }  // namespace pynative
 }  // namespace mindspore

@@ -461,6 +461,11 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
     def __setitem__(self, index, value):
         out = tensor_operator_registry.get('__setitem__')(self, index, value)
+        if isinstance(out, tuple):
+            if self.parent_tensor_ is not None and self.index_of_parent_ is not None:
+                self.parent_tensor_.__setitem__(self.index_of_parent_, out[0])
+                return self
+            return self
         self.assign_value(out)
         if self.parent_tensor_ is not None and self.index_of_parent_ is not None:
             self.parent_tensor_.__setitem__(self.index_of_parent_, self)
