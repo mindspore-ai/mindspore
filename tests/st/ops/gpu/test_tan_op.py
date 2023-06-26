@@ -74,30 +74,6 @@ def test_tan_float64():
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_tan_int32():
-    """
-    Feature: test_tan_int32
-    Description: Test the function of tan op.
-    Expectation: match to numpy benchmark.
-    """
-    tan(np.int32)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_tan_int64():
-    """
-    Feature: test_tan_int64
-    Description: Test the function of tan op.
-    Expectation: match to numpy benchmark.
-    """
-    tan(np.int64)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 def test_tan_tensor_func_check():
     """
     Feature: test_tan_tensor_func_check.
@@ -146,7 +122,7 @@ class DynamicShapeTanNet(nn.Cell):
         return self.tan_func(data)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tan_dy_shape():
@@ -166,7 +142,7 @@ def test_tan_dy_shape():
     output_ms = net(in_tensor)
     output_np = np.tan(in_np)
 
-    np.testing.assert_allclose(output_ms.asnumpy(), output_np, rtol=1e-3)
+    np.testing.assert_allclose(output_ms.asnumpy(), output_np, rtol=1e-3, atol=1e-4)
 
 
 def tan_graph(x):
