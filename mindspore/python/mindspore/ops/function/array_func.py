@@ -6304,7 +6304,7 @@ def _check_fold_param(param, param_name):
     """Check the parameters of fold op."""
     validator.check_value_type(param_name, param, [int, list, tuple], 'fold')
     param = (param, param) if isinstance(param, int) else param
-    validator.check(param_name + " size", len(param), "", 2, validator.EQ, 'fold')
+    validator.check_int(len(param), 2, validator.EQ, param_name, 'fold')
     if param_name == "padding":
         validator.check_non_negative_int_sequence(param, param_name, 'fold')
     else:
@@ -6341,15 +6341,17 @@ def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
             for height and width. If type is int, it means that height equal with width. Default: ``1`` .
 
     Returns:
-        A Tensor, with same type as `input` , format of the Tensor is :math:`(N, C, H, W)`.
+        A Tensor, with same type as `input`.
 
     Raises:
         TypeError: If `kernel_size`, `dilation`, `padding`, `stride` data type is not int, tuple or list.
         ValueError: If `kernel_size`, `dilation`, `stride` value is not
             greater than zero or elements number more than `2`.
         ValueError: If `padding` value is less than zero or elements number more than `2`.
-        ValueError: If `input.shape[2] != kernel_size[0] * kernel_size[1]`.
-        ValueError: If `input.shape[3]` does not match the calculated number of sliding blocks.
+        ValueError: In version 2.0rc1, If `input.shape[2] != kernel_size[0] * kernel_size[1]`.
+            In later versions, If `input.shape[1] != kernel_size[0] * kernel_size[1]`
+        ValueError: In version 2.0rc1, If `input.shape[3]` does not match the calculated number of sliding blocks.
+            In later versions, If `input.shape[2]` does not match the calculated number of sliding blocks.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
