@@ -136,7 +136,7 @@ int NNACLKernel::NNACLCheckArgs() {
     return RET_ERROR;
   }
 
-  if (op_parameter_->thread_num_ <= 0 || op_parameter_->thread_num_ >= MAX_THREAD_NUM) {
+  if (op_parameter_->thread_num_ <= 0 || op_parameter_->thread_num_ > MAX_THREAD_NUM) {
     MS_LOG(ERROR) << "NNACL check failed. Invalid thread number: " << op_parameter_->thread_num_;
     return RET_ERROR;
   }

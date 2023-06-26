@@ -40,7 +40,7 @@ class ArgMinMaxInt8CPUKernel : public LiteKernel {
  private:
   QuantArg *in_quant_arg_ = nullptr;
   QuantArg *out_quant_arg_ = nullptr;
-  ArgMinMaxComputeParam *compute_param_;
+  ArgMinMaxComputeParam *compute_param_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
