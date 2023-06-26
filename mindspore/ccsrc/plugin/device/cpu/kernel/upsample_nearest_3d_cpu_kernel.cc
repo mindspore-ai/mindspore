@@ -17,8 +17,8 @@
 #include "plugin/device/cpu/kernel/upsample_nearest_3d_cpu_kernel.h"
 #include <string>
 #include <utility>
-#include "ops/upsample_nearest_3d.h"
 #include "kernel/common_utils.h"
+#include "ops/upsample_nearest_3d.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -28,12 +28,14 @@ const float kValueZero = 0.;
 constexpr auto kUpsampleNearest3DInputsNum = 2;
 constexpr auto kUpsampleNearest3DOutputNum = 1;
 }  // namespace
-void UpsampleNearest3DCpuKernelMod::ComputeNearestIndex(int64_t *const indices, int64_t stride, int64_t input_szie,
-                                                        int64_t output_size, double scale) {
+void UpsampleNearest3DCpuKernelMod::ComputeNearestIndex(int64_t *const indices, const int64_t stride,
+                                                        const int64_t input_szie, const int64_t output_size,
+                                                        const double scale) const {
   auto loop = [&](int64_t begin, int64_t end) {
     for (int64_t out_idx = begin; out_idx < end; ++out_idx) {
-      int64_t in_idx = NearestIndex(out_idx, input_szie, output_size, scale);
-      indices[out_idx] = in_idx * stride;
+      size_t in_idx = NearestIndex(static_cast<size_t>(out_idx), static_cast<size_t>(input_szie),
+                                   static_cast<size_t>(output_size), scale);
+      indices[out_idx] = static_cast<int64_t>(in_idx) * stride;
     }
   };
   float block_size = 64.0;
@@ -118,10 +120,10 @@ bool UpsampleNearest3DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   int64_t *const d_helper = GetDeviceAddress<int64_t>(workspace, kIndex0);
   int64_t *const h_helper = GetDeviceAddress<int64_t>(workspace, kIndex1);
   int64_t *const w_helper = GetDeviceAddress<int64_t>(workspace, kIndex2);
-  (void)ComputeNearestIndex(d_helper, input_height * input_width, input_depth, output_depth,
-                            static_cast<double>(scales_[kIndex0]));
-  (void)ComputeNearestIndex(h_helper, input_width, input_height, output_height, static_cast<double>(scales_[kIndex1]));
-  (void)ComputeNearestIndex(w_helper, 1, input_width, output_width, static_cast<double>(scales_[kIndex2]));
+  ComputeNearestIndex(d_helper, input_height * input_width, input_depth, output_depth,
+                      static_cast<double>(scales_[kIndex0]));
+  ComputeNearestIndex(h_helper, input_width, input_height, output_height, static_cast<double>(scales_[kIndex1]));
+  ComputeNearestIndex(w_helper, 1, input_width, output_width, static_cast<double>(scales_[kIndex2]));
 
   auto loop3d = [&](int64_t begin, int64_t end) {
     int64_t n{0}, od{0}, oh{0};

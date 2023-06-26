@@ -17,8 +17,8 @@
 #include "plugin/device/cpu/kernel/upsample_trilinear_3d_cpu_kernel.h"
 #include <string>
 #include <utility>
-#include "ops/upsample_trilinear_3d.h"
 #include "kernel/common_utils.h"
+#include "ops/upsample_trilinear_3d.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -31,8 +31,8 @@ const double kValueZero = 0.;
 }  // namespace
 template <typename S>
 void UpsampleTrilinear3DCpuKernelMod::ComputeWeightsAndIndices(
-  UpsampleTrilinear3DCpuKernelMod::WeightsAndIndices<S> *const wi, S scale, int64_t out_idx, int64_t input_size,
-  int64_t output_size, int64_t stride) {
+  UpsampleTrilinear3DCpuKernelMod::WeightsAndIndices<S> *const wi, const S scale, const int64_t out_idx,
+  const int64_t input_size, const int64_t output_size, const int64_t stride) const {
   (void)ComputeSourceIndexAndLambda<S>(&(wi->id0), &(wi->id1), &(wi->lambda0), &(wi->lambda1), scale, out_idx,
                                        input_size, output_size, align_corners_);
   wi->Step(stride);
@@ -40,7 +40,8 @@ void UpsampleTrilinear3DCpuKernelMod::ComputeWeightsAndIndices(
 
 template <typename S>
 void UpsampleTrilinear3DCpuKernelMod::ComputeHelper(UpsampleTrilinear3DCpuKernelMod::WeightsAndIndices<S> *const helper,
-                                                    S scale, int64_t input_size, int64_t output_size, int64_t stride) {
+                                                    const S scale, const int64_t input_size, const int64_t output_size,
+                                                    const int64_t stride) const {
   auto loop = [&](int64_t begin, int64_t end) {
     for (int64_t out_idx = begin; out_idx < end; ++out_idx) {
       (void)ComputeWeightsAndIndices<S>(helper + out_idx, scale, out_idx, input_size, output_size, stride);
@@ -138,9 +139,9 @@ bool UpsampleTrilinear3DCpuKernelMod::LaunchKernel(const std::vector<kernel::Add
   const S height_scale = AreaPixelComputeScale<S>(input_height, output_height, align_corners_, scales_[kIndex1]);
   const S width_scale = AreaPixelComputeScale<S>(input_width, output_width, align_corners_, scales_[kIndex2]);
 
-  WeightsAndIndices<S> *const d_helper = reinterpret_cast<WeightsAndIndices<S> *>(workspace[kIndex0]->addr);
-  WeightsAndIndices<S> *const h_helper = reinterpret_cast<WeightsAndIndices<S> *>(workspace[kIndex1]->addr);
-  WeightsAndIndices<S> *const w_helper = reinterpret_cast<WeightsAndIndices<S> *>(workspace[kIndex2]->addr);
+  WeightsAndIndices<S> *const d_helper = static_cast<WeightsAndIndices<S> *>(workspace[kIndex0]->addr);
+  WeightsAndIndices<S> *const h_helper = static_cast<WeightsAndIndices<S> *>(workspace[kIndex1]->addr);
+  WeightsAndIndices<S> *const w_helper = static_cast<WeightsAndIndices<S> *>(workspace[kIndex2]->addr);
   (void)ComputeHelper<S>(d_helper, depth_scale, input_depth, output_depth, input_height * input_width);
   (void)ComputeHelper<S>(h_helper, height_scale, input_height, output_height, input_width);
   (void)ComputeHelper<S>(w_helper, width_scale, input_width, output_width, 1);

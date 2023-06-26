@@ -75,8 +75,8 @@ class MIND_API AGFillV2Infer : public abstract::OpInferBase {
     ShapeVector output_shape = GetShapeValue(primitive, input_args[0]);
     if (IsValueKnown(value_ptr)) {
       for (size_t i = 0; i < output_shape.size(); ++i) {
-        CheckAndConvertUtils::CheckInteger("the " + std::to_string(i) + "th dimension of input shape", output_shape[i],
-                                           kGreaterEqual, kDimZero, prim_name);
+        (void)CheckAndConvertUtils::CheckInteger("the " + std::to_string(i) + "th dimension of input shape",
+                                                 output_shape[i], kGreaterEqual, kDimZero, prim_name);
       }
     }
     output_shape = GetShapeValue(primitive, input_args[0]);

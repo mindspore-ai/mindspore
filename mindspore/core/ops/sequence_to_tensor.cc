@@ -183,7 +183,7 @@ class SequenceToTensorInfer : public abstract::OpInferBase {
     }
     const std::set<TypePtr> valid_types = {kBool,   kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,
                                            kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
-    CheckAndConvertUtils::CheckSubClass("dtype", dst_type, valid_types, prim_name);
+    (void)CheckAndConvertUtils::CheckSubClass("dtype", dst_type, valid_types, prim_name);
     return dst_type;
   }
 

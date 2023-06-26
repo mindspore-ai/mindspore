@@ -30,8 +30,8 @@ constexpr size_t kGrainSize = 32768;
 }  // namespace
 template <typename S>
 void UpsampleTrilinear3DGradCpuKernelMod::ComputeWeightsAndIndices(
-  UpsampleTrilinear3DGradCpuKernelMod::WeightsAndIndices<S> *const wi, S scale, int64_t out_idx, int64_t input_size,
-  int64_t output_size, int64_t stride) {
+  UpsampleTrilinear3DGradCpuKernelMod::WeightsAndIndices<S> *const wi, const S scale, const int64_t out_idx,
+  const int64_t input_size, const int64_t output_size, const int64_t stride) const {
   (void)ComputeSourceIndexAndLambda<S>(&(wi->id0), &(wi->id1), &(wi->lambda0), &(wi->lambda1), scale, out_idx,
                                        input_size, output_size, align_corners_);
   wi->Step(stride);
@@ -39,8 +39,8 @@ void UpsampleTrilinear3DGradCpuKernelMod::ComputeWeightsAndIndices(
 
 template <typename S>
 void UpsampleTrilinear3DGradCpuKernelMod::ComputeHelper(
-  UpsampleTrilinear3DGradCpuKernelMod::WeightsAndIndices<S> *const helper, S scale, int64_t input_size,
-  int64_t output_size, int64_t stride) {
+  UpsampleTrilinear3DGradCpuKernelMod::WeightsAndIndices<S> *const helper, const S scale, const int64_t input_size,
+  const int64_t output_size, const int64_t stride) const {
   auto loop = [&](int64_t begin, int64_t end) {
     for (int64_t out_idx = begin; out_idx < end; ++out_idx) {
       (void)ComputeWeightsAndIndices<S>(helper + out_idx, scale, out_idx, input_size, output_size, stride);
@@ -111,7 +111,7 @@ bool UpsampleTrilinear3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel:
     }
   }
   // the input grad of backward process is the output of forward process
-  auto grad_output_ptr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
+  auto grad_output_ptr = static_cast<T *>(inputs[kIndex0]->addr);
   const int64_t total = CPUKernelUtils::CalcElementNum(input_shape_);
   S *grad_input_ptr = nullptr;
   bool is_fp16 = std::is_same<T, float16>::value;
@@ -121,7 +121,7 @@ bool UpsampleTrilinear3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel:
     grad_input_copy.resize(total, 0);
     grad_input_ptr = grad_input_copy.data();
   } else {
-    grad_input_ptr = reinterpret_cast<S *>(outputs[kIndex0]->addr);
+    grad_input_ptr = static_cast<S *>(outputs[kIndex0]->addr);
     int ret = memset_s(outputs[kIndex0]->addr, outputs[kIndex0]->size, 0, outputs[kIndex0]->size);
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s error. Error no: " << ret;
@@ -145,9 +145,9 @@ bool UpsampleTrilinear3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel:
   const S height_scale = AreaPixelComputeScale<S>(input_height, output_height, align_corners_, scales_[kIndex1]);
   const S width_scale = AreaPixelComputeScale<S>(input_width, output_width, align_corners_, scales_[kIndex2]);
 
-  WeightsAndIndices<S> *const d_helper = reinterpret_cast<WeightsAndIndices<S> *>(workspace[kIndex0]->addr);
-  WeightsAndIndices<S> *const h_helper = reinterpret_cast<WeightsAndIndices<S> *>(workspace[kIndex1]->addr);
-  WeightsAndIndices<S> *const w_helper = reinterpret_cast<WeightsAndIndices<S> *>(workspace[kIndex2]->addr);
+  WeightsAndIndices<S> *const d_helper = static_cast<WeightsAndIndices<S> *>(workspace[kIndex0]->addr);
+  WeightsAndIndices<S> *const h_helper = static_cast<WeightsAndIndices<S> *>(workspace[kIndex1]->addr);
+  WeightsAndIndices<S> *const w_helper = static_cast<WeightsAndIndices<S> *>(workspace[kIndex2]->addr);
   (void)ComputeHelper<S>(d_helper, depth_scale, input_depth, output_depth, input_height * input_width);
   (void)ComputeHelper<S>(h_helper, height_scale, input_height, output_height, input_width);
   (void)ComputeHelper<S>(w_helper, width_scale, input_width, output_width, 1);
@@ -198,7 +198,7 @@ bool UpsampleTrilinear3DGradCpuKernelMod::LaunchKernel(const std::vector<kernel:
   ParallelLaunch(loop3d, static_cast<size_t>(channels), block_size);
   // memcopy and cast for fp16
   if (is_fp16) {
-    T *real_input_ptr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+    T *real_input_ptr = static_cast<T *>(outputs[kIndex0]->addr);
     auto task_fp16 = [&](int64_t begin, int64_t end) {
       for (int64_t idx = begin; idx < end; ++idx) {
         real_input_ptr[idx] = static_cast<T>(grad_input_ptr[idx]);

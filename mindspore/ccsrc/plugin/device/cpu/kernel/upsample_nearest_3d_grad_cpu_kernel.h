@@ -17,17 +17,16 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_UPSAMLE_NEAREST_3D_GRAD_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_UPSAMLE_NEAREST_3D_GRAD_CPU_KERNEL_H_
 
-#include <utility>
 #include <algorithm>
-#include <memory>
-#include <unordered_map>
-#include <vector>
 #include <map>
+#include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 #include "kernel/common_utils.h"
+#include "mindspore/core/ops/grad/upsample_nearest_3d_grad.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "mindspore/core/ops/grad/upsample_nearest_3d_grad.h"
 
 namespace mindspore {
 namespace kernel {
@@ -51,8 +50,9 @@ class UpsampleNearest3DGradCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void ComputeNearestIndex(int64_t *const indices, int64_t stride, int64_t input_szie, int64_t output_size,
-                           double scale);
+  void ComputeNearestIndex(int64_t *const indices, const int64_t stride, const int64_t input_szie,
+                           const int64_t output_size, const double scale) const;
+
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);

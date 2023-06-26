@@ -117,7 +117,7 @@ void UpsampleInterpolating3DGradCheck(const PrimitivePtr &primitive, const std::
                                       const ShapeVector &grad_shape, const ShapeVector &input_size) {
   auto prim_name = primitive->name();
   size_t scales_idx(kInputIndex3);
-  (void)UpdateAttrNoneList(primitive, input_args, &scales_idx, prim_name);
+  UpdateAttrNoneList(primitive, input_args, &scales_idx, prim_name);
 
   if (IsDynamicRank(input_size)) {
     return;
@@ -132,9 +132,9 @@ void UpsampleInterpolating3DGradCheck(const PrimitivePtr &primitive, const std::
   y_shape.push_back(input_size[kInputIndex1]);
 
   if (none_list[kInputIndex0] != kVALUE_2) {
-    (void)InferFromSize(primitive, input_args[kInputIndex2], prim_name, &y_shape);
+    InferFromSize(primitive, input_args[kInputIndex2], prim_name, &y_shape);
   } else if (none_list[kInputIndex0] != kVALUE_3) {
-    (void)InferFromScales(input_args[scales_idx], prim_name, input_size, &y_shape);
+    InferFromScales(input_args[scales_idx], prim_name, input_size, &y_shape);
   } else {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', something unexpected happened.";
   }
@@ -178,7 +178,7 @@ abstract::ShapePtr UpsampleInterpolating3DGradInferShape(const PrimitivePtr &pri
     (void)CheckAndConvertUtils::CheckInteger("the rank of grad_output", SizeToLong(grad_shape.size()), kEqual, kVALUE_5,
                                              prim_name);
   }
-  (void)UpsampleInterpolating3DGradCheck(primitive, input_args, grad_shape, input_size);
+  UpsampleInterpolating3DGradCheck(primitive, input_args, grad_shape, input_size);
   // Return the dinput shape
   return std::make_shared<abstract::Shape>(input_size);
 }
@@ -189,7 +189,7 @@ TypePtr UpsampleInterpolating3DGradInferType(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   std::set<TypePtr> valid_types(common_float_types);
   if (prim_name == "UpsampleNearest3DGrad") {
-    valid_types.insert(kUInt8);
+    (void)valid_types.insert(kUInt8);
   }
   TypePtr grad_type = input_args[kInputIndex0]->BuildType();
   return CheckAndConvertUtils::CheckTensorTypeValid("grad", grad_type, valid_types, prim_name);

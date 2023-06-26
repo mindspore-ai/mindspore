@@ -17,13 +17,9 @@
 #ifndef MINDSPORE_CORE_BASE_MATH_OPS_H_
 #define MINDSPORE_CORE_BASE_MATH_OPS_H_
 
-#include <iostream>
 #include <memory>
-#include <string>
 #include "ir/anf.h"
 #include "mindspore/core/ir/primitive.h"
-#include "utils/flags.h"
-#include "utils/hash_map.h"
 
 namespace mindspore {
 namespace prim {

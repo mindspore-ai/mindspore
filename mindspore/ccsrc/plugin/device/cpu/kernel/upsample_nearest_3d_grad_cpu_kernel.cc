@@ -29,12 +29,14 @@ constexpr auto kUpsampleNearest3DGradOutputNum = 1;
 // GRAIN_SIZE for Parallel
 constexpr size_t kGrainSize = 32768;
 }  // namespace
-void UpsampleNearest3DGradCpuKernelMod::ComputeNearestIndex(int64_t *const indices, int64_t stride, int64_t input_szie,
-                                                            int64_t output_size, double scale) {
+void UpsampleNearest3DGradCpuKernelMod::ComputeNearestIndex(int64_t *const indices, const int64_t stride,
+                                                            const int64_t input_szie, const int64_t output_size,
+                                                            const double scale) const {
   auto loop = [&](int64_t begin, int64_t end) {
     for (int64_t out_idx = begin; out_idx < end; ++out_idx) {
-      int64_t in_idx = NearestIndex(out_idx, input_szie, output_size, scale);
-      indices[out_idx] = in_idx * stride;
+      auto in_idx = NearestIndex(static_cast<size_t>(out_idx), static_cast<size_t>(input_szie),
+                                 static_cast<size_t>(output_size), scale);
+      indices[out_idx] = static_cast<int64_t>(in_idx) * stride;
     }
   };
   float block_size = 64.0;

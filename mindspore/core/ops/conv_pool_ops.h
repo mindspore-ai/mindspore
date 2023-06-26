@@ -17,9 +17,7 @@
 #ifndef MINDSPORE_CORE_BASE_CONV_POOL_OPS_H_
 #define MINDSPORE_CORE_BASE_CONV_POOL_OPS_H_
 
-#include <iostream>
 #include <memory>
-#include <string>
 #include "ir/anf.h"
 #include "ir/primitive.h"
 #include "utils/flags.h"

@@ -124,7 +124,7 @@ void GetOutputShape(const PrimitivePtr &primitive, const std::vector<AbstractBas
   auto prim_name = primitive->name();
   // none_list and idx
   size_t scales_idx(kInputIndex2);
-  (void)UpdateAttrNoneList(primitive, input_args, &scales_idx, prim_name);
+  UpdateAttrNoneList(primitive, input_args, &scales_idx, prim_name);
   auto none_list = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAttrNoneList));
   (void)CheckAndConvertUtils::CheckInteger("the length of non_list", SizeToLong(none_list.size()), kEqual, kVALUE_1,
                                            prim_name);
@@ -155,7 +155,7 @@ abstract::ShapePtr UpsampleInterpolating3DInferShape(const PrimitivePtr &primiti
     (void)y_shape.emplace_back(x_shape[kInputIndex0]);
     (void)y_shape.emplace_back(x_shape[kInputIndex1]);
   }
-  (void)GetOutputShape(primitive, input_args, x_shape, &y_shape);
+  GetOutputShape(primitive, input_args, x_shape, &y_shape);
 
   if (!IsDynamic(y_shape)) {
     for (size_t i = 0; i < y_shape.size(); i++) {
@@ -171,7 +171,7 @@ TypePtr UpsampleInterpolatingInferType(const PrimitivePtr &primitive, const std:
   auto prim_name = primitive->name();
   std::set<TypePtr> valid_types(common_float_types);
   if (prim_name == "UpsampleNearest3D") {
-    valid_types.insert(kUInt8);
+    (void)valid_types.insert(kUInt8);
   }
   return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[kInputIndex0]->BuildType(), valid_types, prim_name);
 }
