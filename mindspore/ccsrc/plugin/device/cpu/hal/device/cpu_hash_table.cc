@@ -262,7 +262,7 @@ bool CPUHashTable<Key, Value>::Import(const DataLenPair &input_data) {
   // status_tensor}
   static std::vector<DataLenPair> input_data_list;
   if (input_data_list.size() < kImportTensorNum) {
-    input_data_list.emplace_back(input_data);
+    (void)input_data_list.emplace_back(input_data);
   }
   if (input_data_list.size() != kImportTensorNum) {
     return true;
@@ -307,7 +307,7 @@ bool CPUHashTable<Key, Value>::Import(const DataLenPair &input_data) {
 
   // 4. Insert input keys and values to hash table.
   Status *statuses = new Status[keys_len];
-  std::fill_n(statuses, keys_len, Status::kUnchanged);
+  (void)std::fill_n(statuses, keys_len, Status::kUnchanged);
   if (!Insert(device_keys, keys_len / sizeof(Key), device_values, statuses, nullptr)) {
     FreeMemory(device_keys);
     FreeMemory(device_values);

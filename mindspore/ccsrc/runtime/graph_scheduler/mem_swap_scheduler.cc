@@ -100,7 +100,7 @@ std::map<size_t, size_t> GetActionTensors(const std::shared_ptr<device::SwapActi
       } else {
         tensor_indexes[real_tensor_id] = {real_parameter_index->size()};
         real_parameter_index->emplace_back(real_parameter_iter->second);
-        is_real_parameter.insert(real_tensor_id);
+        (void)is_real_parameter.insert(real_tensor_id);
       }
     }
   }
@@ -133,10 +133,10 @@ void GenActionIndexList(const std::map<size_t, size_t> &tensors_id_index_map,
       std::vector<size_t> indexes;
       std::transform(tensor_info->fused_tensor_ids_.begin(), tensor_info->fused_tensor_ids_.end(),
                      std::back_inserter(indexes), [&](size_t tensor_id) { return tensors_id_index_map.at(tensor_id); });
-      alloc_action_map.emplace_back(indexes);
+      (void)alloc_action_map.emplace_back(indexes);
     } else if (tensor_action->action_ != device::SwapActionType::kUnDefined) {
       const auto tensor_id = tensor_info->tensor_id_;
-      move_action_map[tensor_action->action_].emplace_back(tensors_id_index_map.at(tensor_id));
+      (void)move_action_map[tensor_action->action_].emplace_back(tensors_id_index_map.at(tensor_id));
     } else {
       MS_LOG(EXCEPTION) << "Undefined swap action type.";
     }
@@ -302,7 +302,7 @@ void MemSwapScheduler::BuildSwapActorForGraph(const KernelGraphPtr &graph, const
     const string swap_actor_name = kMemSwapActorNamePrefix + std::to_string(swap_actor_num++);
     auto swap_actor = std::make_shared<MemorySwapActor>(swap_actor_name, recorder_aid_, kDefaultStreamIndex,
                                                         fixed_device_address, device_context, actor_actions);
-    actors->emplace_back(swap_actor);
+    (void)actors->emplace_back(swap_actor);
     // Link data arrow from EntranceActor to MemorySwapActor later in Link
     data_dependency_[graph_id][swap_actor].swap(real_parameter_index);
     action_actor_map_[graph_id][iter.first] = swap_actor;

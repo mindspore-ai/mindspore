@@ -57,12 +57,10 @@ class BACKEND_EXPORT IOHandle {
   bool Write(const std::string &file_name, const void *data, size_t byte_num);
   bool ReadAsync(const std::string &file_name, void *data, size_t byte_num, AsyncIOToken *token);
   bool WriteAsync(const std::string &file_name, const void *data, size_t byte_num, AsyncIOToken *token);
-  bool Wait(AsyncIOToken sync_token);
+  bool Wait(AsyncIOToken sync_token) const;
 
  private:
   bool IsAligned(const void *data, size_t byte_num) const;
-
- private:
   AsyncIO *aio_{nullptr};
 };
 using IOHandlePtr = std::shared_ptr<IOHandle>;

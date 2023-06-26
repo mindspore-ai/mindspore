@@ -425,7 +425,7 @@ std::set<std::pair<AnfNodePtr, int>> FuncNodeUsersSet(const AnfNodePtr &paramete
     for (const auto &node_pair : users_skip_virtual_nodes) {
       auto func_node_users = FuncGraphNodeUsers(node_pair);
       if (func_node_users.empty()) {
-        all_node_users.insert(node_pair);
+        (void)all_node_users.insert(node_pair);
         continue;
       }
       for (const auto &func_node_user : func_node_users) {

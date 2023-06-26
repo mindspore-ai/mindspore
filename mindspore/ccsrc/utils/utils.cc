@@ -249,7 +249,7 @@ size_t GetSystemMemorySize(const std::string &key) {
       auto mem_size_begin_pos = line.find_last_of(" ", mem_size_end_pos - 1);
       if ((mem_size_end_pos != std::string::npos) && (mem_size_begin_pos != std::string::npos)) {
         auto mem_size_string = line.substr(mem_size_begin_pos, mem_size_end_pos - mem_size_begin_pos);
-        mem_size = LongToSize(std::atol(mem_size_string.c_str()));
+        mem_size = LongToSize(std::stol(mem_size_string));
       }
       break;
     }

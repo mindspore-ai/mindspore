@@ -216,7 +216,7 @@ class OperatorInfo {
   Status CreateGroupForOptShard(TensorLayout *tensor_layout, std::vector<Group> *groups);
   virtual void ReplaceNodeInputOrAttrs() {}
   void set_auto_parallel(bool is_auto_parallel) { is_auto_parallel_ = is_auto_parallel; }
-  bool repeated_num_in_dev_matrix_right() { return repeated_num_in_dev_matrix_right_; }
+  bool repeated_num_in_dev_matrix_right() const { return repeated_num_in_dev_matrix_right_; }
   void set_repeated_num_in_dev_matrix_right(bool is_right) { repeated_num_in_dev_matrix_right_ = is_right; }
 
   // Key for user data.
