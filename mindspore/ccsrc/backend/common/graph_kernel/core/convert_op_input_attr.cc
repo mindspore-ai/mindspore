@@ -76,6 +76,10 @@ bool ConvertOpUtils::CanConvertInputToAttr(const AnfNodePtr &node) {
           if (value == nullptr) {
             return false;
           }
+          auto tensor = value->cast<tensor::TensorPtr>();
+          if (tensor != nullptr && tensor->data().const_data() == nullptr) {
+            return false;
+          }
         }
       }
     }
