@@ -69,6 +69,11 @@ int CrossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
       }
     }
   }
+  if (dim_ < -static_cast<int64_t>(input1_shape_.size()) || dim_ > static_cast<int64_t>(input1_shape_.size()) - 1) {
+    MS_EXCEPTION(ValueError) << "For Cross, dim must be between " << -static_cast<int64_t>(input1_shape_.size())
+                             << " and " << static_cast<int64_t>(input1_shape_.size()) - 1 << " , but got " << dim_
+                             << ".";
+  }
   if (dim_ < 0) {
     dim_ = static_cast<int64_t>(input1_shape_.size()) + dim_;
   }
