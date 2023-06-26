@@ -44,20 +44,22 @@ mindspore.nn.optim_ex.AdamW
 
     参数：
         - **params** (Union[list[Parameter], list[dict]]) - 网络参数的列表或指定了参数组的列表。
-        - **lr** (Union[float, int, Tensor]) - 学习率。默认值：1e-3。
-        - **betas** (tuple(float, float), optional) - 动量矩阵的指数衰减率。参数范围（0.0,1.0）。默认值：(0.9, 0.999)。
-        - **eps** (float) - 加在分母上的值，以确保数值稳定。必须大于0。默认值：1e-8。
-        - **weight_decay** (float) - 权重衰减（L2 penalty）。默认值：1e-2。
-        - **amsgrad** (bool) - 是否使用AMSGrad算法。默认值：False。
-        - **maximize** (bool, optional) - 是否根据目标函数最大化网络参数。默认值：False。
+        - **lr** (Union[float, int, Tensor], 可选) - 学习率。默认值：``1e-3``。
+        - **betas** (tuple(float, float), 可选) - 动量矩阵的指数衰减率。参数范围（0.0,1.0）。默认值：``(0.9, 0.999)``。
+        - **eps** (float, 可选) - 加在分母上的值，以确保数值稳定。必须大于0。默认值：``1e-8``。
+        - **weight_decay** (float, 可选) - 权重衰减（L2 penalty）。默认值：``1e-2``。
+        - **amsgrad** (bool, 可选) - 是否使用AMSGrad算法。默认值：``False``。
+
+    关键字参数：
+        - **maximize** (bool, 可选) - 是否根据目标函数最大化网络参数。默认值：``False``。
 
     输入：
-        - **gradients** (tuple[Tensor]) - 网络权重的梯度。
+        - **gradients** (tuple[Tensor], 可选) - 网络权重的梯度。
 
     异常：
         - **ValueError** - 动量、阻尼或重量衰减值小于0.0。
-        - **ValueError** - 学习率不是int, float或Tensor。
+        - **ValueError** - 学习率不是int、float或Tensor。
         - **ValueError** - 学习率小于0。
-        - **ValueError** - ``eps`` 小于0。
-        - **ValueError** - ``betas`` 范围不在0-1之间。
-        - **ValueError** - ``weight_decay`` 小于0。
+        - **ValueError** - `eps` 小于0。
+        - **ValueError** - `betas` 范围不在0-1之间。
+        - **ValueError** - `weight_decay` 小于0。

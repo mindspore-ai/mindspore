@@ -54,12 +54,12 @@ def piecewise_constant_lr(milestone, learning_rates):
         >>>
         >>> milestone = [2, 5, 10]
         >>> learning_rates = [0.1, 0.05, 0.01]
-        >>> output = nn.piecewise_constant_lr(milestone, learning_rates)
+        >>> lr = nn.piecewise_constant_lr(milestone, learning_rates)
         >>> # learning_rates = 0.1  if step <= 2
         >>> # learning_rates = 0.05  if 2 < step <= 5
         >>> # learning_rates = 0.01  if 5 < step <= 10
-        >>> print(output)
-        [0.1, 0.1, 0.05, 0.05, 0.05, 0.01, 0.01, 0.01, 0.01, 0.01]
+        >>> net = nn.Dense(2, 3)
+        >>> optim = nn.SGD(net.trainable_params, learning_rate=lr)
     """
     validator.check_value_type('milestone', milestone, (tuple, list))
     validator.check_value_type('learning_rates', learning_rates, (tuple, list))
@@ -135,9 +135,9 @@ def exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, 
         >>> total_step = 6
         >>> step_per_epoch = 2
         >>> decay_epoch = 1
-        >>> output = nn.exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch)
-        >>> print(output)
-        [0.1, 0.1, 0.09000000000000001, 0.09000000000000001, 0.08100000000000002, 0.08100000000000002]
+        >>> lr = nn.exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch)
+        >>> net = nn.Dense(2, 3)
+        >>> optim = nn.SGD(net.trainable_params, learning_rate=lr)
     """
     _check_inputs(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair)
 
@@ -190,9 +190,9 @@ def natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, 
         >>> total_step = 6
         >>> step_per_epoch = 2
         >>> decay_epoch = 2
-        >>> output = nn.natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, True)
-        >>> print(output)
-        [0.1, 0.1, 0.1, 0.1, 0.016529888822158657, 0.016529888822158657]
+        >>> lr = nn.natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, True)
+        >>> net = nn.Dense(2, 3)
+        >>> optim = nn.SGD(net.trainable_params, learning_rate=lr)
     """
     _check_inputs(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair)
 
@@ -246,9 +246,9 @@ def inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, deca
         >>> total_step = 6
         >>> step_per_epoch = 1
         >>> decay_epoch = 1
-        >>> output = nn.inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, True)
-        >>> print(output)
-        [0.1, 0.06666666666666667, 0.05, 0.04, 0.03333333333333333, 0.028571428571428574]
+        >>> lr = nn.inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, True)
+        >>> net = nn.Dense(2, 3)
+        >>> optim = nn.SGD(net.trainable_params, learning_rate=lr)
     """
     _check_inputs(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair)
 
@@ -301,9 +301,9 @@ def cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch):
         >>> total_step = 6
         >>> step_per_epoch = 2
         >>> decay_epoch = 2
-        >>> output = nn.cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch)
-        >>> print(output)
-        [0.1, 0.1, 0.05500000000000001, 0.05500000000000001, 0.01, 0.01]
+        >>> lr = nn.cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch)
+        >>> net = nn.Dense(2, 3)
+        >>> optim = nn.SGD(net.trainable_params, learning_rate=lr)
     """
     if not isinstance(min_lr, float):
         raise TypeError("For 'cosine_decay_lr', the argument 'min_lr' must be type of float, "
@@ -377,15 +377,15 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
     Examples:
         >>> import mindspore.nn as nn
         >>>
-        >>> learning_rate = 0.1
+        >>> lr = 0.1
         >>> end_learning_rate = 0.01
         >>> total_step = 6
         >>> step_per_epoch = 2
         >>> decay_epoch = 2
         >>> power = 0.5
-        >>> r = nn.polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_epoch, decay_epoch, power)
-        >>> print(r)
-        [0.1, 0.1, 0.07363961030678928, 0.07363961030678928, 0.01, 0.01]
+        >>> lr = nn.polynomial_decay_lr(lr, end_learning_rate, total_step, step_per_epoch, decay_epoch, power)
+        >>> net = nn.Dense(2, 3)
+        >>> optim = nn.SGD(net.trainable_params, learning_rate=lr)
     """
     validator.check_positive_float(learning_rate, 'learning_rate')
     validator.check_is_float(learning_rate, 'learning_rate')
@@ -449,9 +449,9 @@ def warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch):
         >>> total_step = 6
         >>> step_per_epoch = 2
         >>> warmup_epoch = 2
-        >>> output = nn.warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch)
-        >>> print(output)
-        [0.0, 0.0, 0.05, 0.05, 0.1, 0.1]
+        >>> lr = nn.warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch)
+        >>> net = nn.Dense(2, 3)
+        >>> optim = nn.SGD(net.trainable_params, learning_rate=lr)
     """
     if not isinstance(learning_rate, float):
         raise TypeError("For 'warmup_lr', the argument 'learning_rate' must be type of float, "
