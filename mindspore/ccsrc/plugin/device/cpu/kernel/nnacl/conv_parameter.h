@@ -114,10 +114,10 @@ typedef struct ConvDwCalcParam {
 } ConvDwCalcParam;
 
 #define OUPUT_UNIT 2
-#define DECONV_WINOGRAD_DEFAULT_UNIT 3
-#define DECONV_WINOGRAD_DEFAULT_TILE 8
-#define DECONV_WINOGRAD_BUFFER_COUNT 8
-typedef struct DeConvWg {
+#define DECONV_WINOGRAD_DEFAULT_UNIT 3 /* # */
+#define DECONV_WINOGRAD_DEFAULT_TILE 8 /* # */
+#define DECONV_WINOGRAD_BUFFER_COUNT 8 /* # */
+typedef struct DeConvWg {              /* # */
   void *b_buffer_;
   void *AT_;
   void *BT_;
@@ -130,13 +130,13 @@ typedef struct DeConvWg {
   int o_;
 } DeConvWg;
 
-typedef struct DeConvWgABuffer {
+typedef struct DeConvWgABuffer { /* # */
   bool buf_init_;
   void *middle_buffer_;
   void *dest_buffer_;
 } DeConvWgABuffer;
 
-typedef struct DeConvComputeUnit {
+typedef struct DeConvComputeUnit { /* # */
   void *weight_;
   void *tmp_buffer_;
   int w_start_;
@@ -147,7 +147,7 @@ typedef struct DeConvComputeUnit {
   DeConvWg winograd_;
 } DeConvComputeUnit;
 
-typedef struct DeConvParam {
+typedef struct DeConvParam { /* # */
   DeConvComputeUnit *compute_units_;
   int compute_size_;
   DeConvWgABuffer a_buffer_[DECONV_WINOGRAD_BUFFER_COUNT];

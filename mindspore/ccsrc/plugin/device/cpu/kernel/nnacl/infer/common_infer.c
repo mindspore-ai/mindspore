@@ -20,6 +20,18 @@
 #include "nnacl/infer/infer_register.h"
 #include "nnacl/op_base.h"
 
+bool CheckShaleValid(TensorC **tensors, int tensors_size) {
+  for (int i = 0; i < tensors_size; i++) {
+    TensorC *t = tensors[i];
+    for (size_t j = 0; j < t->shape_size_; j++) {
+      if (t->shape_[j] == -1) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 bool CheckInferShapeDone(TensorC **in, int in_size, TensorC **out, int out_size) {
   for (int i = 0; i < in_size; i++) {
     TensorC *t = in[i];

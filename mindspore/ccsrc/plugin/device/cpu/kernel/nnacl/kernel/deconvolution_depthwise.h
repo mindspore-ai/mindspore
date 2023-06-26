@@ -23,6 +23,10 @@
 
 typedef struct DeConvDwStruct {
   ConvolutionBaseStruct conv_;
+  SlidingWindowParam sliding_;
+  bool need_align_;
+  float *packed_input_;
+  float *packed_output_;
 } DeConvDwStruct;
 
 ConvolutionBaseStruct *CreateDeConvDw(ConvParameter *param);
