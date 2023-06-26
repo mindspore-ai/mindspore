@@ -82,6 +82,36 @@ def test_auto_broaden_scalar_in_while():
     scalar_add_in_while()
 
 
+def test_auto_broaden_scalar_in_while_and_getitem():
+    """
+    Feature: Broaden scalar arg if it is an arg of no-expanding while header.
+    Description: Check whether scalar is broaden.
+    Expectation: list with variable index won't raise out of range error.
+    """
+    nums = [1, 2, 3]
+
+    @jit
+    def scalar_add_in_while_with_list_getitem(x, y, i):
+        j = 0
+        out = x
+
+        while i < 3:
+            if x + i < y:
+                out = out + x
+            else:
+                out = out + y
+            out = out + nums[j]
+        i = i + 1
+        j = j + 1
+        return out
+
+    ms.context.set_context(precompile_only=True)
+    i = Tensor(np.array(0), dtype=ms.int32)
+    x = Tensor(np.array(0), dtype=ms.int32)
+    y = Tensor(np.array(1), dtype=ms.int32)
+    scalar_add_in_while_with_list_getitem(x, y, i)
+
+
 def test_mutable_list_in_while():
     """
     Feature: Broaden mutable(list) arg if it is an arg of no-expanding while header.

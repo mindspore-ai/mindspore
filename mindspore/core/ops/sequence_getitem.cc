@@ -74,6 +74,7 @@ AbstractBasePtr SequenceGetItemInnerInfer(const PrimitivePtr &primitive,
     CheckAndConvertUtils::CheckAbstractTypeAndShapeSame(elements, "For " + op_name + ", when index is not constant");
     auto ret = elements[0];
     MS_EXCEPTION_IF_NULL(ret);
+    SetSequenceElementsUseFlagsRecursively(queue, true);
     return abstract::AbstractBroaden(ret);
   }
   // For constant index, return input[index] of sequence.
