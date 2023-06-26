@@ -467,6 +467,8 @@ class Print(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn
         >>> class PrintDemo(nn.Cell):
         ...     def __init__(self):
         ...         super(PrintDemo, self).__init__()

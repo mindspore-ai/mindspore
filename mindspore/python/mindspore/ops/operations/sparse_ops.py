@@ -437,6 +437,8 @@ class SparseToDense(Primitive):
         ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> indices = Tensor([[0, 1], [1, 2]])
         >>> values = Tensor([1, 2], dtype=mindspore.float32)
         >>> sparse_shape = (3, 4)
