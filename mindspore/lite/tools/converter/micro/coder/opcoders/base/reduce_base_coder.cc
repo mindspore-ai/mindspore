@@ -82,11 +82,8 @@ int ReduceBaseCoder::Init() {
     num_axes_ = axes_ptr->ElementsNum();
     MS_CHECK_PTR(axes_ptr->MutableData());
     MS_CHECK_RET_CODE(memcpy_s(axes_, sizeof(axes_), axes_ptr->MutableData(), axes_ptr->Size()), "memcpy_s failed");
-  } else {
-    //    num_axes_ = reduce_param->num_axes_;
-    //    MS_CHECK_RET_CODE(memcpy_s(axes_, sizeof(axes_), reduce_param->axes_, sizeof(reduce_param->axes_)),
-    //                      "memcpy_s failed!");
   }
+
   mode_ = reduce_param->mode_;
   reduce_to_end_ = reduce_param->reduce_to_end_;
   MS_CHECK_RET_CODE(CheckInputsOutputs(), "CheckInputsOutputs failed!");
