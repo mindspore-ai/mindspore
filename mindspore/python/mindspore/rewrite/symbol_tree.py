@@ -482,7 +482,7 @@ class SymbolTree(Observer, Observable):
             return []
         if real_node.get_node_type() == NodeType.Output:
             return []
-        return self._topo_mgr.get_node_users(real_node)
+        return TopoManager.get_node_users(real_node)
 
     def before(self, node_or_name: Union[Node, str]) -> Position:
         """

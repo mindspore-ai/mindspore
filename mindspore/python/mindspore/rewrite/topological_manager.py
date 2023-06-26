@@ -29,7 +29,8 @@ class TopoManager(Observable):
         # symbol_tree is used for dump() to use nodes(), so it can be symbol tree or cell container.
         self.symbol_tree = symbol_tree
 
-    def get_node_users(self, node: Node) -> [Tuple[Node, int]]:
+    @staticmethod
+    def get_node_users(node: Node) -> [Tuple[Node, int]]:
         """
         Get all nodes which depend on node.
 
