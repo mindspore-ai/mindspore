@@ -280,10 +280,9 @@ void RetryPeakItemFromDataQueue(const AnfNodePtr &data_kernel, const std::shared
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   uint32_t op_timeout = ms_context->get_param<uint32_t>(MS_CTX_OP_TIMEOUT);
-  uint32_t trys = op_timeout / POP_TIMEOUT_SECONDS;
-  while (front_ret == DataQueueStatus::TIMEOUT && trys > 0) {
+  time_t start_time = time(nullptr);
+  while (front_ret == DataQueueStatus::TIMEOUT && ((time(nullptr) - start_time) < op_timeout || op_timeout == 0)) {
     front_ret = data_queue->FrontAsync(data);
-    trys--;
   }
   if (front_ret != DataQueueStatus::SUCCESS) {
     if (front_ret == DataQueueStatus::TIMEOUT) {

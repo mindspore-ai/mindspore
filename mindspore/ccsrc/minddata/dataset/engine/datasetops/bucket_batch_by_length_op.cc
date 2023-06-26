@@ -73,7 +73,7 @@ Status BucketBatchByLengthOp::operator()() {
       buckets_[bucket_index]->push_back(current_row);
 
       if (buckets_[bucket_index]->size() == bucket_batch_sizes_[bucket_index]) {
-        RETURN_IF_NOT_OK(PadAndBatchBucket(bucket_index, bucket_batch_sizes_[bucket_index]));
+        RETURN_IF_NOT_OK(PadAndBatchBucket(bucket_index));
       }
 
       RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&current_row));
@@ -83,7 +83,7 @@ Status BucketBatchByLengthOp::operator()() {
     if (!drop_remainder_) {
       for (int i = 0; i < bucket_boundaries_.size(); i++) {
         if (!buckets_[i]->empty()) {
-          RETURN_IF_NOT_OK(PadAndBatchBucket(i, buckets_[i]->size()));
+          RETURN_IF_NOT_OK(PadAndBatchBucket(i));
         }
       }
     }
@@ -128,7 +128,7 @@ Status BucketBatchByLengthOp::ObtainElementLength(int32_t *out_element_length, T
   return Status::OK();
 }
 
-Status BucketBatchByLengthOp::PadAndBatchBucket(int32_t bucket_index, int32_t batch_size) {
+Status BucketBatchByLengthOp::PadAndBatchBucket(int32_t bucket_index) {
   std::unique_ptr<TensorQTable> *bucket = &buckets_[bucket_index];
 
   PadInfo pad_info_copy = pad_info_;
