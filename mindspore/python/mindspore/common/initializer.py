@@ -768,7 +768,9 @@ class TruncatedNormal(Initializer):
 
     Args:
         sigma (float): The standard deviation of Truncated Normal distribution. Default: ``0.01`` .
-
+        mean (float): The mean of Truncated Normal distribution. Default: ``0.0`` .
+        a (float): The lower bound of the truncated interval. Default: ``-2.0`` .
+        b (float): The upper bound of the truncated interval. Default: ``2.0`` .
 
     Examples:
         >>> import mindspore
@@ -778,8 +780,8 @@ class TruncatedNormal(Initializer):
         >>> w2 = Parameter(initializer('truncatedNormal', [1, 2, 3], mindspore.float32))
     """
 
-    def __init__(self, sigma=0.01, mean=0.0, a=-2, b=2):
-        super(TruncatedNormal, self).__init__(sigma=sigma)
+    def __init__(self, sigma=0.01, mean=0.0, a=-2.0, b=2.0):
+        super(TruncatedNormal, self).__init__(sigma=sigma, mean=mean, a=a, b=b)
         self.sigma = sigma
         self.mean = mean
         self.a = a

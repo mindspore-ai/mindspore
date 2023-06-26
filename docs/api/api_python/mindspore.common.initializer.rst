@@ -37,12 +37,15 @@ mindspore.common.initializer
         - **TypeError** - 参数 `init` 的类型不正确。
         - **ValueError** - 当 `init` 传入Tensor对象时， `init` 的shape与形参 `shape` 内的数值不一致。
 
-.. py:class:: mindspore.common.initializer.TruncatedNormal(sigma=0.01)
+.. py:class:: mindspore.common.initializer.TruncatedNormal(sigma=0.01, mean=0.0, a=-2.0, b=2.0)
 
     生成一个服从截断正态（高斯）分布的随机数组用于初始化Tensor。
 
     参数：
         - **sigma** (float) - 截断正态分布的标准差，默认值： ``0.01`` 。
+        - **mean** (float) - 截断正态分布的平均值，默认值： ``0.0`` 。
+        - **a** (float) - 截断区间的下界，默认值： ``-2.0`` 。
+        - **b** (float) - 截断区间的上界，默认值： ``2.0`` 。
 
 .. py:class:: mindspore.common.initializer.Normal(sigma=0.01, mean=0.0)
 
