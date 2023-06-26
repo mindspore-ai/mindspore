@@ -256,7 +256,7 @@ std::vector<int64_t> ComputeInferShape(const PrimitivePtr &primitive, const std:
       }
       if (j < shrink_axis_pos.size() && shrink_axis_pos[j] == 1) {
         if (!(-x_shape[i] <= start && start < x_shape[i]) || strides < 0) {
-          MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the 'strides[" << j << "]' cannot be "
+          MS_EXCEPTION(IndexError) << "For '" << primitive->name() << "', the 'strides[" << j << "]' cannot be "
                                    << "negative number and 'begin[" << j << "]' must be in [-" << x_shape[i] << ", "
                                    << x_shape[i] << ") when 'shrink_axis_mask' is greater than 0, but got 'strides["
                                    << j << "]': " << strides << ", 'begin[" << j << "]': " << start << ".";
