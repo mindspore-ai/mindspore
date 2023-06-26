@@ -18,6 +18,7 @@
 #include "nnacl/nnacl_common.h"
 #include "nnacl/op_base.h"
 #include "nnacl/kernel/default_kernel_base.h"
+#include "nnacl/tensor_c_utils.h"
 
 #define kGatherMinCostPerThread 16384
 

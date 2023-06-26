@@ -20,6 +20,7 @@
 #include "nnacl/op_base.h"
 #include "nnacl/errorcode.h"
 #include "nnacl/tensor_c.h"
+#include "nnacl/tensor_c_utils.h"
 
 static int groupnorm_resize(struct KernelBase *self);
 static int groupnorm_prepare(struct KernelBase *self);

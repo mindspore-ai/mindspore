@@ -18,6 +18,7 @@
 #include "nnacl/kernel/default_kernel_base.h"
 #include "nnacl/range_parameter.h"
 #include "nnacl/fp32/range_fp32.h"
+#include "nnacl/tensor_c_utils.h"
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/range_fp16.h"
 #endif

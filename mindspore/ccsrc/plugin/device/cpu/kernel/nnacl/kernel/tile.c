@@ -16,6 +16,7 @@
 
 #include "nnacl/kernel/tile.h"
 #include "nnacl/tile_parameter.h"
+#include "nnacl/tensor_c_utils.h"
 #include "nnacl/nnacl_common.h"
 #include "nnacl/op_base.h"
 #include "nnacl/base/tile_base.h"

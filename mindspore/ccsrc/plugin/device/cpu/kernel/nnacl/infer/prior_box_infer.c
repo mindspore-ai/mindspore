@@ -17,6 +17,7 @@
 #include "nnacl/infer/prior_box_infer.h"
 #include <math.h>
 #include "nnacl/infer/infer_register.h"
+#include "nnacl/tensor_c_utils.h"
 
 int PriorBoxInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                        OpParameter *parameter) {

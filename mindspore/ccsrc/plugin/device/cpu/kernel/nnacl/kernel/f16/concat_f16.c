@@ -18,6 +18,7 @@
 #include "nnacl/kernel/concat.h"
 #include "nnacl/fp16/cast_fp16.h"
 #include "nnacl/fp16/utils_fp16.h"
+#include "nnacl/tensor_c_utils.h"
 
 typedef struct ConcatF16Struct {
   ConcatStruct concat_;

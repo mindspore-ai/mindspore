@@ -16,6 +16,7 @@
 
 #include "nnacl/kernel/size.h"
 #include "nnacl/kernel/default_kernel_base.h"
+#include "nnacl/tensor_c_utils.h"
 
 int size_compute(KernelBase *self) {
   TensorC *in_tensor = self->in_[FIRST_INPUT];

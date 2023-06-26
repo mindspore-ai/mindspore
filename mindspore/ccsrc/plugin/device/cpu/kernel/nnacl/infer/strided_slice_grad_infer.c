@@ -16,6 +16,7 @@
 
 #include "nnacl/infer/strided_slice_grad_infer.h"
 #include "nnacl/infer/infer_register.h"
+#include "nnacl/tensor_c_utils.h"
 
 bool StridedSliceCheckInputs(const TensorC *const *inputs, size_t inputs_size) {
   for (size_t i = 1; i < inputs_size; ++i) {

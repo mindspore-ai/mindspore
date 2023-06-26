@@ -17,6 +17,7 @@
 #include "nnacl/kernel/zeros_like.h"
 #include "nnacl/kernel/default_kernel_base.h"
 #include "nnacl/common_func.h"
+#include "nnacl/tensor_c_utils.h"
 
 int zeros_like_compute(KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(self);

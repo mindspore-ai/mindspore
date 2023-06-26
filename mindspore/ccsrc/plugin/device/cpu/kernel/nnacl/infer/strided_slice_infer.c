@@ -17,6 +17,7 @@
 #include "nnacl/infer/strided_slice_infer.h"
 #include "nnacl/infer/infer_register.h"
 #include "nnacl/op_base.h"
+#include "nnacl/tensor_c_utils.h"
 
 const size_t kStridedSliceOutputNum = 1;
 const size_t kStridedSliceInputNum = 1;

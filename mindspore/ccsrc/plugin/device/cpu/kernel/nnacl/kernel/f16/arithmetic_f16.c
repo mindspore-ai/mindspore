@@ -18,6 +18,7 @@
 #include "nnacl/fp16/cast_fp16.h"
 #include "nnacl/fp16/arithmetic_fp16.h"
 #include "nnacl/fp16/utils_fp16.h"
+#include "nnacl/tensor_c_utils.h"
 
 void InitArithmeticF16RunFunction(KernelBase *base) {
   ArithmeticF16Struct *arithmetic_f16 = (ArithmeticF16Struct *)base;

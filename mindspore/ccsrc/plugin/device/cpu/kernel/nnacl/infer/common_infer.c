@@ -19,6 +19,8 @@
 #include <string.h>
 #include "nnacl/infer/infer_register.h"
 #include "nnacl/op_base.h"
+#include "nnacl/tensor_c_utils.h"
+#include "nnacl/tensorlist_c_utils.h"
 
 bool CheckShaleValid(TensorC **tensors, int tensors_size) {
   for (int i = 0; i < tensors_size; i++) {

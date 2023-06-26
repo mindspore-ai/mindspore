@@ -16,6 +16,7 @@
 
 #include "nnacl/infer/slice_infer.h"
 #include "nnacl/infer/infer_register.h"
+#include "nnacl/tensor_c_utils.h"
 
 static bool CheckInputsDataType(const TensorC *const *inputs, size_t inputs_size) {
   // not support data_type of slice's begin and size is not int32

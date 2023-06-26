@@ -18,7 +18,6 @@
 #define NNACL_TENSORLIST_C_UTILS_H_
 
 #include <stddef.h>
-#include "nnacl/errorcode.h"
 #include "nnacl/op_base.h"
 #include "nnacl/tensorlist_c.h"
 #include "nnacl/infer/common_infer.h"

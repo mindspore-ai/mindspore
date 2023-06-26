@@ -17,6 +17,7 @@
 #include "nnacl/infer/arithmetic_grad_infer.h"
 #include "nnacl/arithmetic_parameter.h"
 #include "nnacl/infer/infer_register.h"
+#include "nnacl/tensor_c_utils.h"
 
 /*
  * the Arithmetic Grad op include AddGrad, SubGrad, MulGrad, DivGrad, MaximumGrad, MinimumGrad

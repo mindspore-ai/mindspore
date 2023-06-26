@@ -18,6 +18,8 @@
 #include "nnacl/kernel/convolution_slidewindow.h"
 #include "nnacl/fp32/conv_depthwise_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"
+#include "nnacl/tensor_c.h"
+#include "nnacl/tensor_c_utils.h"
 
 int ConvSWInitTmpBuffer(ConvolutionSWStruct *conv_sw) {
   TensorC *input_tensor = conv_sw->conv_.base_.in_[FIRST_INPUT];

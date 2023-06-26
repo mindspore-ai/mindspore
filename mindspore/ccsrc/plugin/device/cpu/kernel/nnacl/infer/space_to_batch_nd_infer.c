@@ -17,6 +17,7 @@
 #include "nnacl/infer/space_to_batch_nd_infer.h"
 #include <limits.h>
 #include "nnacl/infer/infer_register.h"
+#include "nnacl/tensor_c_utils.h"
 
 int SpaceSetOutputShapeFromParam(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
                                  size_t outputs_size, const OpParameter *parameter) {

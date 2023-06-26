@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/depthwise_conv2d_infer.h"
+#include "nnacl/tensor_c_utils.h"
 
 int DepthwiseConv2dInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                               OpParameter *parameter) {

@@ -18,6 +18,7 @@
 #include <math.h>
 #include "nnacl/infer/infer_register.h"
 #include "nnacl/range_parameter.h"
+#include "nnacl/tensor_c_utils.h"
 
 int RangeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                     OpParameter *parameter) {

@@ -19,6 +19,7 @@
 #include "nnacl/nnacl_common.h"
 #include "nnacl/fp32/arithmetic_fp32.h"
 #include "nnacl/fp32/mul_fp32.h"
+#include "nnacl/tensor_c_utils.h"
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/arithmetic_fp16.h"
 #endif

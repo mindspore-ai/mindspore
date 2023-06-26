@@ -18,6 +18,7 @@
 #include <math.h>
 #include "nnacl/kernel/default_kernel_base.h"
 #include "nnacl/fp32/prior_box_fp32.h"
+#include "nnacl/tensor_c_utils.h"
 
 int PriorBoxInitOutput(PriorBoxStruct *prior_box, const PriorBoxParameter *param, const float *different_aspect_ratios,
                        int different_aspect_ratios_size) {

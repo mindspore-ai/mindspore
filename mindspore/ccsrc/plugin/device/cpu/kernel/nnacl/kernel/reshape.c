@@ -16,6 +16,7 @@
 
 #include "nnacl/kernel/reshape.h"
 #include "nnacl/kernel/default_kernel_base.h"
+#include "nnacl/tensor_c_utils.h"
 
 int kMinCostPerThread = 16384;
 

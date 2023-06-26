@@ -18,6 +18,7 @@
 #include "nnacl/kernel/convolution_base.h"
 #include "nnacl/fp32/conv_depthwise_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"
+#include "nnacl/tensor_c.h"
 
 int ConvDwSWAVXInitPackedInputOutput(ConvolutionDepthwiseSWAVXStruct *conv_dw) {
   conv_dw->input_need_align_ = (conv_dw->conv_.compute_.in_c_ % conv_dw->oc_tile_ != 0);

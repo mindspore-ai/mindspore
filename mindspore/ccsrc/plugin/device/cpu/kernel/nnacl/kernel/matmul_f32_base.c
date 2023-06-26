@@ -17,6 +17,7 @@
 #include "nnacl/kernel/matmul_f32_base.h"
 #include "nnacl/fp32/pack_fp32.h"
 #include "nnacl/fp32/matmul_fp32.h"
+#include "nnacl/tensor_c_utils.h"
 #include "nnacl/op_base.h"
 #if defined(ENABLE_AVX512)
 #include "nnacl/kernel/matmul_f32_avx512.h"
@@ -515,7 +516,7 @@ int matmul_f32_resize(KernelBase *self) {
   int ret = matmul->init_parameter_(matmul);
   NNACL_CHECK_FALSE(ret != NNACL_OK, ret);
   if (self->train_session_) {
-    self->work_size_ = (matmul->matrix_a_.pack_size_ + matmul->matrix_b_.pack_size_) * sizeof(float);
+    self->work_size_ = (matmul->matrix_a_.pack_size_ + matmul->matrix_b_.pack_size_) * (int)sizeof(float);
   }
 
   matmul->get_thread_cutting_policy_(matmul);

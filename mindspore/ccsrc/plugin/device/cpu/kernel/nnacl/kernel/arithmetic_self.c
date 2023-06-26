@@ -17,6 +17,7 @@
 #include "nnacl/kernel/arithmetic_self.h"
 #include "nnacl/fp32/arithmetic_self_fp32.h"
 #include "nnacl/kernel/default_kernel_base.h"
+#include "nnacl/tensor_c_utils.h"
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/arithmetic_self_fp16.h"
 #endif

@@ -15,6 +15,7 @@
  */
 #include "nnacl/infer/conv2d_infer.h"
 #include "nnacl/infer/infer_register.h"
+#include "nnacl/tensor_c_utils.h"
 
 int ConvInferShape(int input_h, int input_w, int *output_h, int *output_w, ConvParameter *param) {
   int kernel_w = param->kernel_w_;

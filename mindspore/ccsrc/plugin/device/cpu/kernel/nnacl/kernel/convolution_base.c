@@ -16,6 +16,7 @@
 
 #include "nnacl/kernel/convolution_base.h"
 #include "nnacl/conv_parameter.h"
+#include "nnacl/tensor_c_utils.h"
 
 int ConvBaseUpdateParamInfo(ConvComputeParam *compute, ConvParameter *conv_param) {
   compute->stride_h_ = conv_param->stride_h_;

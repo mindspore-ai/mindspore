@@ -17,6 +17,7 @@
 #include "nnacl/fp16/utils_fp16.h"
 #include "nnacl/fp16/common_func_fp16.h"
 #include "nnacl/fp16/cast_fp16.h"
+#include "nnacl/tensor_c_utils.h"
 
 void *GetOrAllocFp16Data(TensorC *t, ExecEnv *env, bool cast) {
   if (t->data_type_ == kNumberTypeFloat16) {
