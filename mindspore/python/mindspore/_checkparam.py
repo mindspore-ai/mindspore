@@ -957,6 +957,7 @@ def is_stub_tensor(tensor):
 
 
 def is_pack_tensor(tensor):
+    """Whether it is a PackTensor."""
     return hasattr(tensor, "__pack__")
 
 

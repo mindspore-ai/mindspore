@@ -97,6 +97,7 @@ class _PackSourceBuilder:
         self._generate_pack_op()
 
     def get_code_source(self):
+        """Return Pack Python code"""
         if isinstance(self.original_fn, types.MethodType):
             new_src = "def {0}_wrap(self, *args, **kwargs):\n    return self.{0}(*args, **kwargs)".format(
                 self.pack_fn_name)

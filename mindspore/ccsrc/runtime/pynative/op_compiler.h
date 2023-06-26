@@ -101,7 +101,7 @@ class BACKEND_EXPORT OpCompiler {
   ~OpCompiler() = default;
   DISABLE_COPY_AND_ASSIGN(OpCompiler);
   KernelGraphPtr GenerateKernelGraph(const session::BackendOpRunInfoPtr &op_run_info,
-                                     device::DeviceContext *device_context) const;
+                                     const device::DeviceContext *device_context) const;
 
   void ConvertGraphToExecuteInfo(const OpCompilerInfoPtr &op_compiler_info);
   // All operators shared the same session.

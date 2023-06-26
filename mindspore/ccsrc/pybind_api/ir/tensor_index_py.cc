@@ -1343,7 +1343,7 @@ py::object TensorIndex::GetItemByTuple(const ShapeVector &data_shape, const std:
   if (need_expand_dim) {
     data_transfer_types.emplace_back(static_cast<int>(ValueTransferType::kReshape));
     new_data_shape = std::get<new_data_shape_index>(expand_dim_info);
-    data_transfer_args.emplace_back(VectorToPyTuple(new_data_shape));
+    (void)data_transfer_args.emplace_back(VectorToPyTuple(new_data_shape));
     new_tuple_indexes = std::get<new_tuple_indexes_index>(expand_dim_info);  // NOLINT
   }
   constexpr int min_data_dim = 1;

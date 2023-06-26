@@ -23,14 +23,14 @@
 #include "frontend/expander/pack/packfunc.h"
 
 namespace mindspore::opt::irpass {
-bool PackExpand::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) {
+bool PackExpand::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) const {
   auto manager = optimizer->manager();
   MS_EXCEPTION_IF_NULL(manager);
   auto &all_nodes = manager->all_nodes();
   AnfNodePtrList pack_nodes;
   for (auto &node : all_nodes) {
     if (IsPrimitiveCNode(node, prim::kPrimPackFunc)) {
-      pack_nodes.emplace_back(node);
+      (void)pack_nodes.emplace_back(node);
     }
   }
   for (auto &node : pack_nodes) {
@@ -43,7 +43,7 @@ bool PackExpand::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &
     auto fg = expander::ExpandPackFunc(prim, args_abs);
     auto node_input = cnode->inputs();
     node_input[0] = NewValueNode(fg);
-    manager->Replace(node, node->func_graph()->NewCNodeInOrder(node_input));
+    (void)manager->Replace(node, node->func_graph()->NewCNodeInOrder(node_input));
   }
   manager->KeepRoots({func_graph});
   return !pack_nodes.empty();
