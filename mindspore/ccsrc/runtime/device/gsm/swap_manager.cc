@@ -195,7 +195,9 @@ bool SwapManager::SwapOutTemp(const std::pair<DeviceAddressStatus, StorageType> 
     if (candidate->status() == DeviceAddressStatus::kInDevice && candidate->GetPtr() == nullptr) {
       return false;
     }
-    candidate->MoveTo(swap_out_to, false, kDefaultStreamIndex);
+    if (!candidate->MoveTo(swap_out_to, false, kDefaultStreamIndex)) {
+      return false;
+    }
     (*output) = (this->*allocate_func)(input);
     return success(*output);
   };

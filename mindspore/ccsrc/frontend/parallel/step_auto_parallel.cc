@@ -644,8 +644,7 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
 }
 
 void PreProcessPreCastForSP(const OperatorInfoPtr &prev_op_info, const OperatorInfoPtr &node_op_info,
-                            const CNodePtr &cnode, const CNodePtr &prev_cnode, const EdgePtr edge_ptr,
-                            size_t input_index) {
+                            const CNodePtr &cnode, const EdgePtr edge_ptr, size_t input_index) {
   if (IsPrimitiveCNode(cnode, prim::kPrimMatMul) && input_index == INDEX_TWO) {
     prev_op_info->set_repeated_num_in_dev_matrix_right(false);
     prev_op_info->ClearStrategyCost();
@@ -710,7 +709,7 @@ void CreateEdgeBetweenTwoOps(const OperatorInfoPtr &prev_op_info, const Operator
   prev_op_info->AddSuccEdge(edge_ptr);
   entire_costgraph->AddEdge(prev_op_info, node_op_info, edge_ptr);
   if (use_sp && prev_prim->name() == CAST) {
-    PreProcessPreCastForSP(prev_op_info, node_op_info, cnode, prev_cnode, edge_ptr, input_index);
+    PreProcessPreCastForSP(prev_op_info, node_op_info, cnode, edge_ptr, input_index);
   }
   MS_LOG(INFO) << "Successfully adding the edge between " << prev_op_info->name() << " and " << node_op_info->name();
   (*edge_count)++;

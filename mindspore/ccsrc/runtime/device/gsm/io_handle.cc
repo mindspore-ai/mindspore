@@ -22,6 +22,7 @@
 #endif
 #include <memory>
 #include "utils/system/env.h"
+#include "utils/file_utils.h"
 #include "include/common/utils/offload_context.h"
 
 namespace mindspore {
@@ -42,12 +43,17 @@ void IOHandle::LoadAio(const std::string &aio_shared_lib_name, const std::string
     return;
   }
 #else
-  auto handle = dlopen(aio_shared_lib_name.c_str(), RTLD_NOW);
+  auto real_path = FileUtils::GetRealPath(aio_shared_lib_name.c_str());
+  if (!real_path.has_value()) {
+    MS_LOG(ERROR) << "The aio path " << aio_shared_lib_name << " is invalid";
+    return;
+  }
+  auto handle = dlopen(real_path.value().c_str(), RTLD_NOW);
   if (handle == nullptr) {
     MS_LOG(WARNING) << "Loading " << aio_shared_lib_name << " failed. Error message: " << dlerror();
     return;
   }
-  auto get_aio_instance = reinterpret_cast<AsyncIO *(*)()>(dlsym(handle, instance_func_name.c_str()));
+  auto get_aio_instance = reinterpret_cast<AsyncIO *(*)()>(dlsym(handle, real_path.value().c_str()));
   if (get_aio_instance == nullptr) {
     MS_LOG(WARNING) << "Getting function " << instance_func_name << " from " << aio_shared_lib_name
                     << " failed. Error message: " << dlerror();
