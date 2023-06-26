@@ -237,7 +237,7 @@ RedistributionOpListPtr TensorTransform::OptimizeTensorRedistributionOperatorLis
       auto new_axis = axis;
       auto new_src_shape = src_shape;
       for (int32_t j = axis - 1; j >= 0; --j) {
-        if (src_shape[j] != 1) {
+        if (src_shape[IntToSize(j)] != 1) {
           continue;
         }
         new_src_shape.erase(new_src_shape.begin() + j);
@@ -257,7 +257,7 @@ RedistributionOpListPtr TensorTransform::OptimizeTensorRedistributionOperatorLis
   std::reverse(allconcat_pos_list.begin(), allconcat_pos_list.end());
   for (auto pos : allconcat_pos_list) {
     // erase split concat
-    redistribution_op_list->first.erase(redistribution_op_list->first.begin() + pos + kSize2);
+    (void)redistribution_op_list->first.erase(redistribution_op_list->first.begin() + pos + kSize2);
     (void)redistribution_op_list->first.erase(redistribution_op_list->first.begin() + pos + kSize1);
     redistribution_op_list->second.erase(redistribution_op_list->second.begin() + pos + kSize2);
     (void)redistribution_op_list->second.erase(redistribution_op_list->second.begin() + pos + kSize1);

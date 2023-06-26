@@ -69,7 +69,7 @@ void SwappableTensorCandidates::CandidateIter::Next() {
       continue;
     }
     if (current_candidate.first.lock() == nullptr) {
-      all_swappable_tensors_.erase(current_candidate.second);
+      (void)all_swappable_tensors_.erase(current_candidate.second);
       current_candidate.second = nullptr;
       null_index_.at(current_size_level_).push(current_candidate_idx_);
       valid_idx = next_idx();

@@ -133,7 +133,7 @@ bool MapTensorGetGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
 
     return hash_table_ptr->Insert(reinterpret_cast<KeyType *>(inputs.at(kIndex1)->addr),
                                   inputs.at(kIndex1)->size / sizeof(KeyType),
-                                  reinterpret_cast<float *>(inputs.at(kIndex2)->addr), nullptr);
+                                  static_cast<float *>(inputs.at(kIndex2)->addr), nullptr);
   } else {
     MS_LOG(EXCEPTION) << "CPU hash table does not support value type:" << value_type;
   }

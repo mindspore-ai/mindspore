@@ -119,7 +119,7 @@ bool LoadableDeviceAddress::MoveToHost(bool async, size_t stream_id) const {
       status_ = DeviceAddressStatus::kInFileToHost;
     } else {
       if (storage_info_.file_name_mutable_) {
-        swap_manager->DeleteFile(storage_info_.file_name_);
+        (void)swap_manager->DeleteFile(storage_info_.file_name_);
         storage_info_.file_name_ = "";
       }
       status_ = DeviceAddressStatus::kInHost;
@@ -343,7 +343,7 @@ bool LoadableDeviceAddress::Wait() const {
   }
   if (status_ == DeviceAddressStatus::kInFileToHost) {
     if (storage_info_.file_name_mutable_) {
-      swap_manager->DeleteFile(storage_info_.file_name_);
+      (void)swap_manager->DeleteFile(storage_info_.file_name_);
       storage_info_.file_name_ = "";
     }
     status_ = DeviceAddressStatus::kInHost;
