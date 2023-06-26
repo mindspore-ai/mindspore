@@ -466,6 +466,10 @@ void RunOpHardwareOptimize(const KernelGraphPtr &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
+  if (kernel_graph->has_attr(kAttrPackFunction)) {
+    kernel_graph->SetKernelObjectTypesForUnrealNodes();
+    pm->AddPass(std::make_shared<opt::InsertTypeTransformOp>("insert_type_transform_op"));
+  }
   pm->AddPass(std::make_shared<opt::ReducePrecisionFusion>("reduce_precision"));
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
