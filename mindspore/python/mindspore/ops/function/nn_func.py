@@ -6477,16 +6477,11 @@ def mse_loss(input, target, reduction='mean'):
     if reduction == 'none':
         reduce_flag = False
 
-    limit = ops.fill(mstype.int32, (), len(x.shape))
-    perm = _get_cache_prim(P.Range)()(Tensor(0, mstype.int32),
-                                      limit,
-                                      Tensor(1, mstype.int32))
-
     if reduce_flag and average_flag:
-        x = _get_cache_prim(P.ReduceMean)()(x, perm)
+        x = _get_cache_prim(P.ReduceMean)()(x, _get_axis(x))
 
     if reduce_flag and not average_flag:
-        x = _get_cache_prim(P.ReduceSum)()(x, perm)
+        x = _get_cache_prim(P.ReduceSum)()(x, _get_axis(x))
 
     return _get_cache_prim(P.Cast)()(x, input_dtype)
 
