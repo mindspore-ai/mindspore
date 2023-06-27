@@ -68,6 +68,10 @@ void OverlapOptShardInPipeline(const FuncGraphPtr &graph) {
     return;
   }
   MS_EXCEPTION_IF_NULL(graph);
+  if (!IsTraining(graph->manager())) {
+    MS_LOG(INFO) << "Skip overlap in Evaluation.";
+    return;
+  }
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   if (!parallel::IsAutoParallelCareGraph(graph) ||
