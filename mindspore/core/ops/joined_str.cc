@@ -27,16 +27,15 @@ namespace mindspore {
 namespace ops {
 class JoinedStrInfer : public abstract::OpInferBase {
  public:
-  BaseShapePtr InferShape(const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) const override {
+  BaseShapePtr InferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &) const override {
     return std::make_shared<abstract::NoShape>();
   }
 
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+  TypePtr InferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &) const override {
     return std::make_shared<String>();
   }
 
-  ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+  ValuePtr InferValue(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) const override {
     std::string res;
     for (const auto &arg : input_args) {
       auto arg_value = arg->BuildValue();

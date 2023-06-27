@@ -66,7 +66,9 @@ abstract::AbstractListPtr GenerateAbstractList(const BaseShapePtr &base_shape, c
                                      << type->ToString();
   }
   auto shape_list = base_shape->cast_ptr<abstract::ListShape>();
+  MS_EXCEPTION_IF_NULL(shape_list);
   auto type_list = type->cast_ptr<List>();
+  MS_EXCEPTION_IF_NULL(type_list);
   if (shape_list->size() != type_list->size()) {
     MS_INTERNAL_EXCEPTION(ValueError) << "For GenerateAbstractList, the shape and type size should be the same, "
                                       << "but got shape size: " << shape_list->size()

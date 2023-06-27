@@ -452,7 +452,7 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
   }
 
   if (auto primitive = GetValueNode<PrimitivePtr>(inputs[0])) {
-    primitive->AddAttr(kAttrListStartIndex, MakeValue(list_start_index));
+    (void)primitive->AddAttr(kAttrListStartIndex, MakeValue(list_start_index));
     InferShapeForPrimitive(cnode, primitive, args_spec_list, has_py_execute_data);
   } else if (auto func_graph = GetValueNode<FuncGraphPtr>(inputs[0])) {
     InferShapeForGraph(cnode, func_graph, args_spec_list);

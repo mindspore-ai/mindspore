@@ -940,8 +940,8 @@ AbstractBasePtrList RectifyAbstractFromTupleInputStructural(const ValuePtr &tupl
       (void)rectifyed_abs_list.emplace_back(RectifyEmptyTupleAbstract(item));
     }
     std::vector<size_t> list_start_vec;
-    std::transform(list_start.begin(), list_start.end(), std::back_inserter(list_start_vec),
-                   [](const ValuePtr val) { return GetValue<size_t>(val); });
+    (void)std::transform(list_start.begin(), list_start.end(), std::back_inserter(list_start_vec),
+                         [](const ValuePtr val) { return GetValue<size_t>(val); });
     auto [abs, offset] = RectifyAbstractFromStructuralAttr(item, input_abstract, list_start_vec, input_index);
     input_index += offset;
     (void)rectifyed_abs_list.emplace_back(abs);
