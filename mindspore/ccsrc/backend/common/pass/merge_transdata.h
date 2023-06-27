@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_MERGE_TRANSDATA_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_MERGE_TRANSDATA_H_
 #include <string>
-#include <vector>
 #include <set>
 #include "include/backend/visible.h"
 #include "include/backend/optimizer/pass.h"
