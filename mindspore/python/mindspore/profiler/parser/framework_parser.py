@@ -67,6 +67,8 @@ class FrameworkParser:
         output_path (str): The directory of the parsed file. Default: `./`.
     """
     _regex_framework = r'Framework\.(?P<data_type>.+)\.(?P<device_id>\d).+'
+    _host_regex_framework = r'Framework\.(?P<data_type>.+)\.+'
+    _match_framework_file = r'Framework*[0-9]'
     _graph_attr_name = [
         'input_format', 'input_data_type', 'input_shape', 'output_format',
         'output_data_type', 'output_shape'
@@ -306,17 +308,25 @@ class FrameworkParser:
             ProfilerFileNotFoundException: If the framework files are not found.
         """
         data_dir = os.path.join(profiling_path, 'data')
-        if not os.path.isdir(data_dir):
+        host_data_dir = os.path.join(profiling_path, '../host/data')
+        if not os.path.isdir(data_dir) and not os.path.isdir(host_data_dir):
             raise ProfilerDirNotFoundException(data_dir)
 
         framework_path_dict = defaultdict(list)
-        for file in Path(data_dir).glob(r'Framework*[0-9]'):
+        file_list = [f for f in Path(data_dir).glob(self._match_framework_file)]
+        if not file_list:
+            file_list = [f for f in Path(host_data_dir).glob(self._match_framework_file)]
+
+        for file in file_list:
             file_name = file.name
+
             match = re.search(self._regex_framework, file_name)
             if match is None:
-                logger.warning("Profiler does not support to analyse file(%s), this file name format is not %s, "
-                               "skip this file.", file.resolve(), self._regex_framework)
-                continue
+                match = re.search(self._host_regex_framework, file_name)
+                if match is None:
+                    logger.warning("Profiler does not support to analyse file(%s), this file name format is not %s, "
+                                   "skip this file.", file.resolve(), self._regex_framework)
+                    continue
 
             if match['data_type'] not in FileDataType.members():
                 logger.warning("Profiler does not support to analyse file(%s), this file data type is %s, "
