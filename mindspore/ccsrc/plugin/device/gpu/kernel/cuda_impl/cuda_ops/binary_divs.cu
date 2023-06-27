@@ -61,8 +61,8 @@ struct BinaryFunc<BinaryOpType::kXdivy, In0_t, In1_t, Complex<Out_t>> {
     Complex<Out_t> res(0.0, 0.0);
     Complex<Out_t> complex_lhs(lhs);
     Complex<Out_t> complex_rhs(rhs);
-    if ((complex_lhs.real() >= Eps<float>() && complex_lhs.real() <= -Eps<float>()) ||
-        (complex_lhs.imag() >= Eps<float>() && complex_lhs.imag() <= -Eps<float>())) {
+    if ((complex_lhs.real() >= Eps<float>() || complex_lhs.real() <= -Eps<float>()) ||
+        (complex_lhs.imag() >= Eps<float>() || complex_lhs.imag() <= -Eps<float>())) {
       res = complex_lhs / complex_rhs;
     }
     return res;
