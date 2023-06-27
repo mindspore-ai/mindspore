@@ -22,7 +22,7 @@ namespace mindspore::dataset {
 Status CollectPipelineInfoStart(const std::string &event, const std::string &stage,
                                 const std::map<std::string, std::string> &custom_info) {
 #if !defined(ENABLE_SECURITY) && !defined(ENABLE_ANDROID)
-  profiler::CollectHostInfo("dataset", event, stage, InfoLevel::kUser, InfoType::kAll, TimeType::kStart, custom_info);
+  profiler::CollectHostInfo("Dataset", event, stage, InfoLevel::kUser, InfoType::kAll, TimeType::kStart, custom_info);
 #endif
   return Status::OK();
 }
@@ -30,7 +30,7 @@ Status CollectPipelineInfoStart(const std::string &event, const std::string &sta
 Status CollectPipelineInfoEnd(const std::string &event, const std::string &stage,
                               const std::map<std::string, std::string> &custom_info) {
 #if !defined(ENABLE_SECURITY) && !defined(ENABLE_ANDROID)
-  profiler::CollectHostInfo("dataset", event, stage, InfoLevel::kUser, InfoType::kAll, TimeType::kEnd, custom_info);
+  profiler::CollectHostInfo("Dataset", event, stage, InfoLevel::kUser, InfoType::kAll, TimeType::kEnd, custom_info);
 #endif
   return Status::OK();
 }
@@ -38,7 +38,8 @@ Status CollectPipelineInfoEnd(const std::string &event, const std::string &stage
 Status CollectOpInfoStart(const std::string &event, const std::string &stage,
                           const std::map<std::string, std::string> &custom_info) {
 #if !defined(ENABLE_SECURITY) && !defined(ENABLE_ANDROID)
-  profiler::CollectHostInfo("dataset", event, stage, InfoLevel::kUser, InfoType::kTime, TimeType::kStart, custom_info);
+  profiler::CollectHostInfo("Dataset", event, stage, InfoLevel::kDeveloper, InfoType::kTime, TimeType::kStart,
+                            custom_info);
 #endif
   return Status::OK();
 }
@@ -46,7 +47,8 @@ Status CollectOpInfoStart(const std::string &event, const std::string &stage,
 Status CollectOpInfoEnd(const std::string &event, const std::string &stage,
                         const std::map<std::string, std::string> &custom_info) {
 #if !defined(ENABLE_SECURITY) && !defined(ENABLE_ANDROID)
-  profiler::CollectHostInfo("dataset", event, stage, InfoLevel::kUser, InfoType::kTime, TimeType::kEnd, custom_info);
+  profiler::CollectHostInfo("Dataset", event, stage, InfoLevel::kDeveloper, InfoType::kTime, TimeType::kEnd,
+                            custom_info);
 #endif
   return Status::OK();
 }
