@@ -59,7 +59,7 @@ def test_reduce_mean(dtype, shape, axis, keep_dims):
 
     expect = np.mean(x, axis=axis, keepdims=keep_dims)
     diff = abs(output.asnumpy() - expect)
-    error = np.ones(shape=expect.shape) * 1.0e-5
+    error = np.ones(shape=expect.shape) * (1.0e-5 if dtype != np.float16 else 1.0e-3)
     assert np.all(diff < error)
     assert output.shape == expect.shape
 
