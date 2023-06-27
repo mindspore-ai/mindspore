@@ -103,9 +103,9 @@ typedef struct MatmulFp32Struct {
   void (*get_thread_cutting_policy_)(struct MatmulFp32Struct *matmul);
   void (*get_thread_cutting_info_by_row_)(struct MatmulFp32Struct *matmul);
 
-  void *pack_weight_manager_;
-  void *(*get_pack_data_by_sharing_weight_)(void *manager, const void *tensor_data, const size_t size, bool *is_packed);
-  void (*free_by_sharing_weight_)(void *manager, void *tensor_data);
+  void *shaing_manager_;
+  void *(*get_sharing_weight_)(void *manager, const void *tensor_data, const size_t size, bool *is_packed);
+  void (*free_sharing_weight_)(void *manager, void *tensor_data);
 
   void (*gemm_not_pack_fun_)(const float *a, const float *b, float *c, const float *bias, int m, int k, int act_type);
 

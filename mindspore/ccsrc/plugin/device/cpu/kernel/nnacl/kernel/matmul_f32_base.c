@@ -208,8 +208,8 @@ int MatmulFp32Base_PackMatrixA(MatmulFp32Struct *matmul) {
     void *data = NULL;
     size_t data_size = (size_t)(matmul->matrix_a_.pack_size_) * sizeof(float);
     if (matmul->is_sharing_pack_) {
-      data = matmul->get_pack_data_by_sharing_weight_(matmul->pack_weight_manager_,
-                                                      matmul->base_.in_[FIRST_INPUT]->data_, data_size, &is_packed);
+      TensorC *a_matrix = matmul->base_.in_[FIRST_INPUT];
+      data = matmul->get_sharing_weight_(matmul->shaing_manager_, a_matrix->data_, data_size, &is_packed);
     } else {
       data = malloc(data_size);
     }
@@ -248,8 +248,8 @@ int MatmulFp32Base_PackMatrixB(MatmulFp32Struct *matmul) {
     void *data = NULL;
     size_t data_size = (size_t)(matmul->matrix_b_.pack_size_) * sizeof(float);
     if (matmul->is_sharing_pack_) {
-      data = matmul->get_pack_data_by_sharing_weight_(matmul->pack_weight_manager_,
-                                                      matmul->base_.in_[SECOND_INPUT]->data_, data_size, &is_packed);
+      TensorC *b_matrix = matmul->base_.in_[SECOND_INPUT];
+      data = matmul->get_sharing_weight_(matmul->shaing_manager_, b_matrix->data_, data_size, &is_packed);
     } else {
       data = malloc(data_size);
     }
@@ -545,7 +545,7 @@ int matmul_f32_release(struct KernelBase *self) {
   }
   if (matmul->a_const_) {
     if (matmul->is_sharing_pack_) {
-      matmul->free_by_sharing_weight_(matmul->pack_weight_manager_, matmul->matrix_a_.pack_ptr_);
+      matmul->free_sharing_weight_(matmul->shaing_manager_, matmul->matrix_a_.pack_ptr_);
     } else {
       free(matmul->matrix_a_.pack_ptr_);
     }
@@ -555,7 +555,7 @@ int matmul_f32_release(struct KernelBase *self) {
       return NNACL_OK;
     }
     if (matmul->is_sharing_pack_) {
-      matmul->free_by_sharing_weight_(matmul->pack_weight_manager_, matmul->matrix_b_.pack_ptr_);
+      matmul->free_sharing_weight_(matmul->shaing_manager_, matmul->matrix_b_.pack_ptr_);
     } else {
       free(matmul->matrix_b_.pack_ptr_);
     }

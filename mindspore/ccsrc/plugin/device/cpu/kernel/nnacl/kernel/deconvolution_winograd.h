@@ -16,6 +16,9 @@
 #ifndef NNACL_KERNEL_DECONVOLUTION_WINOGRAD_H_
 #define NNACL_KERNEL_DECONVOLUTION_WINOGRAD_H_
 
+#ifndef ENABLE_MCU
+#ifndef _WIN32
+#include <pthread.h>
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
@@ -29,6 +32,7 @@
 typedef struct DeConvWinogradStruct {
   ConvolutionBaseStruct conv_;
   DeConvParam param_;
+  pthread_mutex_t lock_;
   int thread_num_hw_;
   int thread_stride_hw_;
   float *nhwc_input_;
@@ -43,5 +47,6 @@ typedef struct DeConvWinogradStruct {
 #define NNACL_DECONV_WINOGRAD_HW_MAX 2000
 
 ConvolutionBaseStruct *CreateDeConvWinograd(ConvParameter *param);
-
+#endif
+#endif
 #endif  // NNACL_KERNEL_DECONVOLUTION_WINOGRAD_H_

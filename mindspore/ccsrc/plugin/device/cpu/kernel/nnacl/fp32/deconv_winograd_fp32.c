@@ -699,9 +699,7 @@ int DeconvWgPost(const float *tile_out, float *nc4hw4_output, const ConvParamete
 #else
   int tile_num = C4NUM;
 #endif
-  if (deconv_param->in_tile_w_count_ == 0) {
-    return NNACL_ERR;
-  }
+
   /* merge */
   int src_unit_stride = deconv_param->oc_up_ * DECONV_WINOGRAD_DEFAULT_TILE;
 

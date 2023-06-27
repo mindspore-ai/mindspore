@@ -32,11 +32,11 @@ int ConvolutionKernel::Prepare() {
   }
 
   ConvolutionBaseStruct *conv = reinterpret_cast<ConvolutionBaseStruct *>(kernel_);
-  conv->pack_weight_manager_ = lite::PackWeightManager::GetInstance();
-  conv->get_pack_data_by_sharing_weight_ = nnacl::DefaultGetSharingPackData;
-  conv->free_by_sharing_weight_ = nnacl::DefaultFreeSharingPackData;
-  conv->is_sharing_pack_ = true;
+  conv->shaing_manager_ = lite::PackWeightManager::GetInstance();
+  conv->get_sharing_weight_ = nnacl::DefaultGetSharingPackData;
+  conv->free_sharing_weight_ = nnacl::DefaultFreeSharingPackData;
   conv->infershape_done_ = InferShapeDone();
+  conv->is_sharing_pack_ = true;
 
   int ret = kernel_->prepare(kernel_);
   if (ret != RET_OK) {

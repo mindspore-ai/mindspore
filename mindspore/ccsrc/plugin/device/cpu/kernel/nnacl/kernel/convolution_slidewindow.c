@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#ifdef ENABLE_AVX
+#if defined(ENABLE_AVX) || defined(ENABLE_ARM64)
 #include "nnacl/kernel/convolution_slidewindow.h"
 #include "nnacl/fp32/conv_depthwise_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"
@@ -233,5 +233,4 @@ int convolution_sw_prepare(KernelBase *self) {
 
   return ConvBaseInitConvWeightBias(&conv_sw->conv_);
 }
-
 #endif

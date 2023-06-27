@@ -31,6 +31,8 @@
 #endif
 #ifdef ENABLE_ARM64
 #include "nnacl/kernel/convolution_depthwise_indirect.h"
+#include "nnacl/kernel/convolution_sw_arm64.h"
+#include "nnacl/fp32/conv_sw_arm64_fp32.h"
 #endif
 #if defined(ENABLE_ARM) || (defined(ENABLE_SSE) && !defined(ENABLE_AVX))
 #include "nnacl/kernel/convolution_depthwise_3x3.h"
@@ -141,6 +143,12 @@ ConvolutionBaseStruct *ConvolutionDelegateConvNHWCKernelSelect(ConvolutionDelega
   }
 #endif
 
+#ifdef ENABLE_ARM64
+  if (conv == NULL && CheckArm64UseSWConv(conv_param)) {
+    conv = CreateConvolutionSWARM64(conv_param);
+  }
+#endif
+
   if (conv == NULL) {
     if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1) {
       conv = CreateConvolution1x1(conv_param);
@@ -174,9 +182,9 @@ ConvolutionBaseStruct *ConvolutionDelegateConvolutionSelect(ConvolutionDelegateS
   conv->base_.update_thread_ = convolution_delegate->conv_.base_.update_thread_;
 
   conv->infershape_done_ = convolution_delegate->conv_.infershape_done_;
-  conv->pack_weight_manager_ = convolution_delegate->conv_.pack_weight_manager_;
-  conv->get_pack_data_by_sharing_weight_ = convolution_delegate->conv_.get_pack_data_by_sharing_weight_;
-  conv->free_by_sharing_weight_ = convolution_delegate->conv_.free_by_sharing_weight_;
+  conv->shaing_manager_ = convolution_delegate->conv_.shaing_manager_;
+  conv->get_sharing_weight_ = convolution_delegate->conv_.get_sharing_weight_;
+  conv->free_sharing_weight_ = convolution_delegate->conv_.free_sharing_weight_;
   conv->is_sharing_pack_ = convolution_delegate->conv_.is_sharing_pack_;
 
   conv->origin_weight_ = convolution_delegate->origin_weight_;

@@ -94,7 +94,6 @@ class ConvolutionDelegateCPUKernel : public LiteKernel {
   kernel::LiteKernel *CreateConv1x1MatmulKernel();
   bool CheckAvxUseSW1x1Conv(const ConvParameter *conv_param);
   bool CheckAvxUseSWConv(const ConvParameter *conv_param);
-  bool CheckArm64UseSWConv(const ConvParameter *conv_param);
   // If inferShape process can't complete in Init part, initialization of weight and bis will be implemented in runtime
   // via Resize() API. However,data of const tensor(weight and bias) doesn't exist anymore in runtime stage.Thus,
   // copying data of const tensor is necessary. Otherwise, just pass origin raw pointer of data.
