@@ -2507,7 +2507,9 @@ void DfGraphConvertor::ConvertTopK(const CNodePtr &node) {
   MS_LOG(INFO) << "Convert TopK second input's type from int64 to int32.";
   auto value_ptr = node->input(2)->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(value_ptr);
-  if (value_ptr->isa<tensor::Tensor>()) {
+  auto input_value = value_ptr->value();
+  MS_EXCEPTION_IF_NULL(input_value);
+  if (input_value->isa<tensor::Tensor>()) {
     // tensor case is already converted to int32 in TransDependValueToInt32
     return;
   }
@@ -2515,7 +2517,6 @@ void DfGraphConvertor::ConvertTopK(const CNodePtr &node) {
   ss << "op" << value_ptr.get();
   op_draw_name_[value_ptr.get()] = ss.str();
   compute_sout_ << ss.str() << "[label= \"" << value_ptr->value()->ToString() << "\" shape=ellipse]" << endl;
-  auto input_value = value_ptr->value();
   auto int64_value = GetValue<int64_t>(input_value);
   OpAdapterPtr adpt = FindAdapter(value_ptr, training_);
   MS_EXCEPTION_IF_NULL(adpt);
