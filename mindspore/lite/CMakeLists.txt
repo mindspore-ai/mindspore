@@ -677,6 +677,8 @@ include(${TOP_DIR}/cmake/utils.cmake)
 include(${TOP_DIR}/cmake/dependency_utils.cmake)
 include(${TOP_DIR}/cmake/dependency_securec.cmake)
 
+find_and_use_mold()
+
 # include(${TOP_DIR}/cmake/external_libs/flatbuffers.cmake)
 set(MSLITE_DEPS_FLATBUFFERS on)
 
