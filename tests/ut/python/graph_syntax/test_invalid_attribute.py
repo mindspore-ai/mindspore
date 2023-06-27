@@ -17,7 +17,7 @@ import pytest
 
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
-from mindspore import context, Tensor
+from mindspore import context, Tensor, Parameter
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -60,3 +60,23 @@ def test_int_invalid_attr():
     with pytest.raises(AttributeError) as err_info:
         ShapeNet()(1)
     assert "'Int' object has no attribute 'shape'" in str(err_info.value)
+
+
+def test_create_parameter_instance():
+    """
+    Feature: Create Parameter instance.
+    Description: Create Parameter instance in graph mode, expect raise exception.
+    Expectation: ValueError exception raise.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+
+        def construct(self, x):
+            return Parameter(x, name="weight")
+
+    with pytest.raises(ValueError):
+        x = Tensor([1, 2, 3])
+        net = Net()
+        net(x)
