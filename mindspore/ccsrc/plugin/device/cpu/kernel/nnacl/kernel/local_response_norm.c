@@ -17,6 +17,7 @@
 #include "nnacl/kernel/local_response_norm.h"
 #include "nnacl/kernel/default_kernel_base.h"
 #include "nnacl/fp32/local_response_norm_fp32.h"
+#include "nnacl/tensor_c_utils.h"
 
 int LocalResponseNormRun(void *cdata, int task_id, float l, float r) {
   LocalResponseNormStruct *lrn = (LocalResponseNormStruct *)cdata;

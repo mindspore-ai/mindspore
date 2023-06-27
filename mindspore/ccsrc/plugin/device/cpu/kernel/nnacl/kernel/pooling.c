@@ -18,6 +18,7 @@
 #include <float.h>
 #include "nnacl/pooling_parameter.h"
 #include "nnacl/fp32/pooling_fp32.h"
+#include "nnacl/tensor_c_utils.h"
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/pooling_fp16.h"
 #endif

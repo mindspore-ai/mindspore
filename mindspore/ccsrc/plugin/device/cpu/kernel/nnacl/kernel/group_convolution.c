@@ -17,6 +17,7 @@
 #include "nnacl/kernel/group_convolution.h"
 #include "nnacl/kernel/convolution_delegate.h"
 #include "nnacl/base/conv_common_base.h"
+#include "nnacl/tensor_c_utils.h"
 
 int GroupConvBasePrepare(GroupConvolutionStruct *group_conv) {
   for (int i = 0; i < group_conv->group_; ++i) {

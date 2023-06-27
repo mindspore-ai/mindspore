@@ -19,6 +19,7 @@
 #include <limits.h>
 #include "nnacl/infer/infer_register.h"
 #include "nnacl/nnacl_common.h"
+#include "nnacl/tensor_c_utils.h"
 
 int HandleTwoInputs(const TensorC *const *inputs, ResizeParameter *param) {
   const TensorC *input = inputs[0];

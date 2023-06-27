@@ -19,6 +19,7 @@
 #include "nnacl/stack_parameter.h"
 #include "nnacl/nnacl_common.h"
 #include "nnacl/base/stack_base.h"
+#include "nnacl/tensor_c_utils.h"
 
 static inline int GetCopyNum(const int *in_shape, int axis, int n_dim) {
   int copy_num = 1;
@@ -77,9 +78,9 @@ int stack_resize(KernelBase *self) {
     stack->copy_size_ = (size_t)GetElementNum(input) * DataTypeCSize(stack->data_type_);
     stack->outer_size_ = 1;
   } else {
-    NNACL_CHECK_FALSE(input->shape_size_ < stack->axis_, NNACL_STACK_TENSOR_SHAPE_INVALID);
-    stack->copy_size_ =
-      (size_t)GetCopyNum(input->shape_, stack->axis_, input->shape_size_) * DataTypeCSize(stack->data_type_);
+    NNACL_CHECK_FALSE((int)input->shape_size_ < stack->axis_, NNACL_STACK_TENSOR_SHAPE_INVALID);
+    size_t copy_num = (size_t)GetCopyNum(input->shape_, stack->axis_, input->shape_size_);
+    stack->copy_size_ = copy_num * DataTypeCSize(stack->data_type_);
     stack->outer_size_ = GetOuterSize(input->shape_, stack->axis_);
   }
 

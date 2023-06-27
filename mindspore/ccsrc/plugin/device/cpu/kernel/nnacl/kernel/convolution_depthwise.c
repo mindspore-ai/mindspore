@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/kernel/convolution_depthwise.h"
+#include "nnacl/tensor_c_utils.h"
 #include "nnacl/base/conv_common_base.h"
 #include "nnacl/fp32/conv_depthwise_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"

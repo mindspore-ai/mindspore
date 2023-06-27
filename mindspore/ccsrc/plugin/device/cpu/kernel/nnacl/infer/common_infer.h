@@ -21,15 +21,9 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
-#include "nnacl/tensor_c_utils.h"
-#include "nnacl/tensorlist_c_utils.h"
 
 bool CheckShaleValid(TensorC **tensors, int tensors_size);
 bool CheckInferShapeDone(TensorC **in, int in_size, TensorC **out, int out_size);
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #define EPSILON_VALUE 1e-6
 
@@ -47,6 +41,10 @@ typedef struct VectorC {
   size_t max_size_;
   size_t per_malloc_size_;
 } VectorC;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int CheckAugmentNull(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      const OpParameter *parameter);

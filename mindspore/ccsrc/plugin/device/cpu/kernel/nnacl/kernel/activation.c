@@ -19,6 +19,7 @@
 #include "nnacl/op_base.h"
 #include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/kernel/default_kernel_base.h"
+#include "nnacl/tensor_c_utils.h"
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/activation_fp16.h"
 #endif

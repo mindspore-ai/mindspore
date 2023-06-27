@@ -16,6 +16,7 @@
 #ifdef ENABLE_SSE
 #include "nnacl/kernel/convolution_im2col_sse.h"
 #include "nnacl/fp32/pack_fp32.h"
+#include "nnacl/tensor_c.h"
 
 void ConvIm2ColSSEInitGlobalVariable(ConvolutionBaseStruct *conv) {
   ConvolutionIm2ColBaseStruct *conv_im2col = (ConvolutionIm2ColBaseStruct *)conv;

@@ -18,6 +18,7 @@
 #include "nnacl/kernel/convolution_im2col_avx512.h"
 #include "nnacl/fp32/conv_im2col_avx512_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"
+#include "nnacl/tensor_c.h"
 
 void ConvIm2ColAVX512InitGlobalVariable(ConvolutionBaseStruct *conv) {
   ConvolutionIm2ColBaseStruct *conv_im2col = (ConvolutionIm2ColBaseStruct *)conv;

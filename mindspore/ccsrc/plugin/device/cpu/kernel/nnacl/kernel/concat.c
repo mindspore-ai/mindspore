@@ -19,6 +19,7 @@
 #include "nnacl/tensor_c.h"
 #include "nnacl/op_base.h"
 #include "nnacl/nnacl_common.h"
+#include "nnacl/tensor_c_utils.h"
 
 #define kConcatMinCostPerThread 16384
 

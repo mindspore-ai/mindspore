@@ -16,6 +16,7 @@
 
 #include "nnacl/kernel/f16/stack_f16.h"
 #include "nnacl/fp16/cast_fp16.h"
+#include "nnacl/tensor_c_utils.h"
 
 void *StackF16InitBuffer(KernelBase *base, TensorC *t, bool init) {
   if (init == false) {

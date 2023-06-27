@@ -16,6 +16,7 @@
 
 #include "nnacl/kernel/ones_like.h"
 #include "nnacl/kernel/default_kernel_base.h"
+#include "nnacl/tensor_c_utils.h"
 
 #define ApproximateOnesLike(output, data_size) \
   for (size_t i = 0; i < data_size; ++i) {     \

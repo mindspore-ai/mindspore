@@ -16,6 +16,7 @@
 
 #include "nnacl/kernel/f16/reduce_f16.h"
 #include "nnacl/fp16/reduce_fp16.h"
+#include "nnacl/tensor_c_utils.h"
 
 typedef struct ReduceF16Compute {
   int type_;

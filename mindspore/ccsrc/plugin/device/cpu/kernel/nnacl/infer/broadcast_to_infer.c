@@ -16,6 +16,7 @@
 
 #include "nnacl/infer/broadcast_to_infer.h"
 #include "nnacl/infer/infer_register.h"
+#include "nnacl/tensor_c_utils.h"
 
 int GetShapeByType(const TensorC *shape_tensor, int shape_size, int *dst_shape) {
   if (shape_tensor == NULL || dst_shape == NULL) {

@@ -21,6 +21,7 @@
 #include "nnacl/fp32/strided_slice_fp32.h"
 #include "nnacl/kernel/reshape.h"
 #include "nnacl/kernel/default_kernel_base.h"
+#include "nnacl/tensor_c_utils.h"
 
 #define MinStridedSlicePerThread 16384
 
@@ -192,7 +193,7 @@ void StridedSliceInitFastRunParam(StridedSliceStruct *strided_slice) {
   strided_slice->outer_ = 1;
   strided_slice->inner_ = 1;
   for (int i = 0; i < strided_slice->split_axis_; ++i) {
-    strided_slice->outer_ *= in_shape[i];
+    strided_slice->outer_ *= (size_t)in_shape[i];
   }
   for (size_t i = (size_t)strided_slice->split_axis_ + 1; i < input_tenspr->shape_size_; i++) {
     strided_slice->inner_ *= (size_t)in_shape[i];

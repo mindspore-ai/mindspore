@@ -16,6 +16,7 @@
 
 #include "nnacl/infer/batch_to_space_infer.h"
 #include "nnacl/infer/infer_register.h"
+#include "nnacl/tensor_c_utils.h"
 
 int SetOutputShapeFromParam(const TensorC *const *inputs, TensorC **outputs, const OpParameter *parameter) {
   int input_shape[MAX_SHAPE_SIZE] = {0};

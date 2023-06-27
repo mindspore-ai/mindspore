@@ -16,6 +16,7 @@
 
 #include "nnacl/kernel/addn.h"
 #include "nnacl/fp32/add_fp32.h"
+#include "nnacl/tensor_c_utils.h"
 #include "nnacl/kernel/default_kernel_base.h"
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/arithmetic_fp16.h"

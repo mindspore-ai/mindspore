@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/kernel/deconvolution.h"
+#include "nnacl/tensor_c_utils.h"
 #include "nnacl/kernel/deconvolution_winograd.h"
 #include "nnacl/kernel/deconvolution_depthwise.h"
 #include "nnacl/fp32/pack_fp32.h"

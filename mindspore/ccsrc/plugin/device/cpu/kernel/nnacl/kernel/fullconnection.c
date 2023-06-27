@@ -70,6 +70,7 @@ KernelBase *CreateFullconnection(OpParameter *param, int data_type) {
   KernelBase *kernel = NULL;
   if (data_type == kNumberTypeFloat32) {
     kernel = CreateMatmulFp32();
+    NNACL_MALLOC_CHECK_NULL_RETURN_NULL(kernel);
     kernel->prepare = fullconnection_prepare;
     kernel->resize = fullconnection_resize;
   }

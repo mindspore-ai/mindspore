@@ -18,6 +18,7 @@
 #include "nnacl/fill_parameter.h"
 #include "nnacl/op_base.h"
 #include "nnacl/nnacl_common.h"
+#include "nnacl/tensor_c_utils.h"
 #include "nnacl/base/fill_base.h"
 #include "nnacl/kernel/default_kernel_base.h"
 #ifdef ENABLE_FP16

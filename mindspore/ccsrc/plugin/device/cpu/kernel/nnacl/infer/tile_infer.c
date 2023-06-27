@@ -18,6 +18,7 @@
 #include <limits.h>
 #include "nnacl/infer/infer_register.h"
 #include "nnacl/tile_parameter.h"
+#include "nnacl/tensor_c_utils.h"
 
 void TileParamCaffe2Tflite(TileParameter *param, size_t out_shape_size) {
   if (param->dims_size_ != 0) {

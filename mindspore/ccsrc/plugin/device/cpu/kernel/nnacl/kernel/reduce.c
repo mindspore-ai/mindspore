@@ -19,6 +19,7 @@
 #include "nnacl/fp32/reduce_fp32.h"
 #include "nnacl/kernel/reshape.h"
 #include "nnacl/nnacl_common.h"
+#include "nnacl/tensor_c_utils.h"
 
 void InitialReduceKernelList(KernelBase *base) {
   ReduceStruct *reduce = (ReduceStruct *)base;

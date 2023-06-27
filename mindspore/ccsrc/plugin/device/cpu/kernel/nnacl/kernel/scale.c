@@ -18,6 +18,7 @@
 #include "nnacl/common_func.h"
 #include "nnacl/scale_parameter.h"
 #include "nnacl/fp32/scale_fp32.h"
+#include "nnacl/tensor_c_utils.h"
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/utils_fp16.h"
 #include "nnacl/fp16/scale_fp16.h"

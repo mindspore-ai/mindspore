@@ -16,6 +16,7 @@
 
 #include "nnacl/kernel/non_zero.h"
 #include "nnacl/kernel/default_kernel_base.h"
+#include "nnacl/tensor_c_utils.h"
 
 int non_zero_compute(KernelBase *self) {
   TensorC *input = self->in_[FIRST_INPUT];

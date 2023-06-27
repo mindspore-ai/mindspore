@@ -16,6 +16,7 @@
 
 #include "nnacl/infer/where_infer.h"
 #include "nnacl/infer/infer_register.h"
+#include "nnacl/tensor_c_utils.h"
 
 static size_t GetAxisout(const TensorC *input0, const TensorC *input1, const TensorC *input2, size_t index) {
   if (input0->shape_[index] == input1->shape_[index] && input0->shape_[index] != input2->shape_[index]) {

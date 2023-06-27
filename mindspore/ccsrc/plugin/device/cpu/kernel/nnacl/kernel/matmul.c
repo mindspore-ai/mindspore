@@ -106,14 +106,14 @@ int Matmul_InitBroadcastParams(MatmulFp32Struct *matmul) {
     int delta = i;
     int a_offset = 0;
     int b_offset = 0;
-    for (size_t j = 0; j < max_dim_size - DIMENSION_2D; ++j) {
+    for (int j = 0; j < max_dim_size - Num2; ++j) {
       if (j > 0) {
         delta = delta % batch_sizes[j];
       }
       if (j >= (MAX_SHAPE_SIZE - 1)) {
         return NNACL_ERR;
       }
-      if (j < (max_dim_size - DIMENSION_3D)) {
+      if (j < (max_dim_size - Num3)) {
         a_offset +=
           (delta / batch_sizes[j + 1] * a_shape[j] / NNACL_MAX(a_shape[j], b_shape[j])) * a_batch_sizes[j + 1];
         b_offset +=
@@ -164,6 +164,7 @@ KernelBase *CreateMatmul(OpParameter *param, int data_type) {
   KernelBase *kernel = NULL;
   if (data_type == kNumberTypeFloat32) {
     kernel = CreateMatmulFp32();
+    NNACL_MALLOC_CHECK_NULL_RETURN_NULL(kernel);
     kernel->prepare = matmul_prepare;
     kernel->resize = matmul_resize;
     kernel->release = matmul_release;

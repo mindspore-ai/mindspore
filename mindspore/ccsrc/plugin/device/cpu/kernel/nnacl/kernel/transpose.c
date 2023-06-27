@@ -19,6 +19,7 @@
 #include "nnacl/fp32/pack_fp32.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel/default_kernel_base.h"
+#include "nnacl/tensor_c_utils.h"
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/pack_fp16.h"
 #include "nnacl/fp16/transpose_fp16.h"
@@ -69,11 +70,11 @@ int ResetTransposeStatus(TransposeStruct *transpose) {
   int *perm_data;
   if ((int)in_tensor->shape_size_ != transpose->num_axes_) {
     perm_data = trans_nd;
-    if (in_tensor->shape_size_ == C3NUM && transpose->num_axes_ == C4NUM) {
-      transpose->num_axes_ = C3NUM;
+    if (in_tensor->shape_size_ == Num3 && transpose->num_axes_ == Num4) {
+      transpose->num_axes_ = Num3;
     }
     if (transpose->num_axes_ == 0) {
-      for (int i = 0; i < in_tensor->shape_size_; ++i) {
+      for (size_t i = 0; i < in_tensor->shape_size_; ++i) {
         trans_nd[i] = (int)in_tensor->shape_size_ - 1 - i;
       }
       transpose->num_axes_ = (int)in_tensor->shape_size_;
@@ -104,6 +105,15 @@ int ResetTransposeStatus(TransposeStruct *transpose) {
     transpose->perm_[i] = perm_data[i];
   }
   return NNACL_OK;
+}
+
+void TransposeFreeSegments(int **segments, int segments_size) {
+  for (int i = 0; i < segments_size; i++) {
+    if (segments[i] != NULL) {
+      free(segments[i]);
+      segments[i] = NULL;
+    }
+  }
 }
 
 int TransposeOptimizeShape(TransposeStruct *transpose) {
@@ -161,7 +171,10 @@ int TransposeOptimizeShape(TransposeStruct *transpose) {
     }
 
     segments[segments_size] = malloc(segment_size * sizeof(int));
-    NNACL_MALLOC_CHECK_NULL_RETURN_ERR(segments[segments_size]);
+    if (segments[segments_size] == NULL) {
+      TransposeFreeSegments(segments, segments_size);
+      return NNACL_NULL_PTR;
+    }
     memcpy(segments[segments_size], segment, segment_size * sizeof(int));
     segment_sizes[segments_size] = segment_size;
     segments_size++;
@@ -178,18 +191,10 @@ int TransposeOptimizeShape(TransposeStruct *transpose) {
       transpose->perm_[i] += (segments[j][FIRST_INPUT] < segments[i][FIRST_INPUT] ? 1 : 0);
     }
     for (int k = 0; k < segment_sizes[i]; ++k) {
-      NNACL_CHECK_INT_MUL_NOT_OVERFLOW(transpose->in_shape_[transpose->perm_[i]], in_shape_temp[segments[i][k]],
-                                       NNACL_ERR);
       transpose->in_shape_[transpose->perm_[i]] *= in_shape_temp[segments[i][k]];
     }
   }
-
-  for (int i = 0; i < segments_size; i++) {
-    if (segments[i] != NULL) {
-      free(segments[i]);
-      segments[i] = NULL;
-    }
-  }
+  TransposeFreeSegments(segments, segments_size);
   return NNACL_OK;
 }
 

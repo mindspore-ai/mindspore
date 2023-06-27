@@ -16,6 +16,7 @@
 
 #include "nnacl/kernel/convolution_delegate.h"
 #include "nnacl/conv_parameter.h"
+#include "nnacl/tensor_c_utils.h"
 #include "nnacl/base/conv_common_base.h"
 #include "nnacl/kernel/group_convolution.h"
 #include "nnacl/kernel/convolution_depthwise.h"
