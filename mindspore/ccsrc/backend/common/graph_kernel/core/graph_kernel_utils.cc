@@ -316,15 +316,20 @@ inner::LiteGraphPtr GkUtils::AnfGraph2LiteGraph(const FuncGraphPtr &func_graph,
   auto todos = TopoSort(func_graph->output());
   const auto &params = func_graph->parameters();
   auto cb = Callback::Instance();
-  auto ExtractBuildInfo = [&cb](const AnfNodePtr &node) {
-    auto shape = cb->GetOutputShape(node, 0);
-    auto type = cb->GetOutputType(node, 0);
-    auto format = cb->GetOutputFormat(node, 0);
-    return inner::NodeBase({shape, type, format});
+  auto ExtractBuildInfo = [&cb](const AnfNodePtr &node) -> inner::NodeBaseList {
+    inner::NodeBaseList listinfo;
+    size_t output_num = AnfUtils::GetOutputTensorNum(node);
+    for (size_t i = 0; i < output_num; ++i) {
+      auto shape = cb->GetOutputShape(node, i);
+      auto type = cb->GetOutputType(node, i);
+      auto format = cb->GetOutputFormat(node, i);
+      listinfo.push_back(inner::NodeBase({shape, type, format}));
+    }
+    return listinfo;
   };
   // set inputs
   for (auto &p : params) {
-    node_map[p] = gb.Parameter(ExtractBuildInfo(p));
+    node_map[p] = gb.Parameter(ExtractBuildInfo(p)[0]);
   }
   // set ops
   for (auto node : todos) {
@@ -332,7 +337,7 @@ inner::LiteGraphPtr GkUtils::AnfGraph2LiteGraph(const FuncGraphPtr &func_graph,
     if (cnode == nullptr) {
       continue;
     }
-    if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
+    if (node == func_graph->output() && IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
       break;
     }
     auto prim = GetCNodePrimitive(cnode);

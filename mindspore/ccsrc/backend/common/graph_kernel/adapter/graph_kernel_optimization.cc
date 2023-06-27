@@ -62,6 +62,7 @@
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
 #include "backend/common/graph_kernel/compact_tensor_liveness.h"
 #include "backend/common/graph_kernel/core/convert_op_input_attr.h"
+#include "backend/common/graph_kernel/core/graph_kernel_op_combiner.h"
 
 #ifdef ENABLE_AKG
 #include "backend/common/graph_kernel/graph_kernel_build.h"
@@ -109,6 +110,10 @@ PassManagerPtr GraphKernelOptimizer::Cluster() const {
 
   // Expand complex basic kernels to composite kernels
   pm->Add(std::make_shared<GraphKernelExpanderWithPy>(), OptLevel_1);
+
+  if (GraphKernelFlags::GetInstance().enable_parallel_op_combine) {
+    pm->Add(std::make_shared<GraphKernelOpCombiner>(), OptLevel_2);
+  }
 
   // Cluster basic kernels and composite kernels
   pm->Add(std::make_shared<GraphKernelCluster>(), OptLevel_1);

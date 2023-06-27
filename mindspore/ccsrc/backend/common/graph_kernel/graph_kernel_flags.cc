@@ -319,6 +319,7 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   reg.AddFlag("enable_lite_conv_tuning", &enable_lite_conv_tuning);
   reg.AddFlag("enable_vectorization", &enable_vectorization);
   reg.AddFlag("enable_dynamic_shape_fusion", &enable_dynamic_shape_fusion);
+  reg.AddFlag("enable_parallel_op_combine", &enable_parallel_op_combine);
 
   // Integer flags
   reg.AddFlag("reduce_fuse_depth", &reduce_fuse_depth);

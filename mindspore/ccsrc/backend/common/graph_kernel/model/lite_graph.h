@@ -72,6 +72,8 @@ class LiteGraph::GraphBuilderBase {
   NodePtr Emit(const std::string &op, const NodePtrList &inputs, const DAttrs &attrs = {}) const;
 
   // Create op node with given baseinfo.
+  NodePtr Op(const std::string &op, const NodeBaseList &baseinfolist, const NodePtrList &inputs,
+             const DAttrs &attrs = {}) const;
   NodePtr Op(const std::string &op, const NodeBase &baseinfo, const NodePtrList &inputs,
              const DAttrs &attrs = {}) const;
   LiteGraphPtr Get() const { return graph_; }
