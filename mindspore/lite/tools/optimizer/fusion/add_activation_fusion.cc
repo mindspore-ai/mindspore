@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,6 +81,13 @@ const AnfNodePtr AddActivationFusion::Process(const FuncGraphPtr &func_graph, co
         add_primitive->AddAttr("quant_params", add_quant_params_holder);
       }
     }
+  }
+
+  // compatible support: copy the output quant params of activation to add node
+  if (act_primitive->HasAttr(lite::quant::kQuantParam)) {
+    auto quantization_param_value = act_primitive->GetAttr(lite::quant::kQuantParam);
+    MS_CHECK_TRUE_MSG(quantization_param_value != nullptr, nullptr, "quantization_param_value is nullptr.");
+    add_primitive->AddAttr(lite::quant::kQuantParam, quantization_param_value);
   }
   return add_cnode;
 }

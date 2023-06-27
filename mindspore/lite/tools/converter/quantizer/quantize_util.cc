@@ -893,10 +893,12 @@ std::vector<schema::QuantParamT> GetInputNodeQuantParam(const CNodePtr &cnode, s
 STATUS SetInputNodeQuantParam(const CNodePtr &cnode, size_t index,
                               const std::vector<schema::QuantParamT> &quant_param) {
   auto input_node = cnode->input(index);
-  CHECK_NULL_RETURN(input_node);
-  MS_CHECK_TRUE_MSG(input_node != nullptr, {}, "Anf node nullptr.");
+  MS_CHECK_TRUE_MSG(input_node != nullptr, RET_NULL_PTR, "Anf node nullptr.");
   if (IsGraphInput(input_node)) {
-    MS_LOG(WARNING) << "Graph input TODO.";
+    auto cnode_primitive = GetValueNode<PrimitivePtr>(cnode->input(kPrimIndex));
+    MS_CHECK_TRUE_MSG(cnode_primitive != nullptr, RET_NULL_PTR, "Primitive is nullptr.");
+    auto quantization_param = quant::ConvertQuantParamTToQuantizationParam(quant_param);
+    cnode_primitive->AddAttr(quant::kGraphInputQuantParam, quantization_param);
   } else if (input_node->isa<mindspore::CNode>()) {
     auto input_cnode = input_node->cast<mindspore::CNodePtr>();
     auto input_cnode_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
@@ -905,7 +907,11 @@ STATUS SetInputNodeQuantParam(const CNodePtr &cnode, size_t index,
     std::vector<ValuePtr> quantization_list{quantization_param};
     input_cnode_primitive->AddAttr(quant::kQuantParam, std::make_shared<ValueList>(quantization_list));
   } else if (input_node->isa<mindspore::Parameter>() || input_node->isa<mindspore::ValueNode>()) {
-    MS_LOG(WARNING) << "input node is Parameter ValueNode TODO.";
+    tensor::TensorPtr input_tensor = quant::GetNodeTensor(input_node);
+    MS_CHECK_TRUE_MSG(input_tensor != nullptr, RET_NULL_PTR, "Get node tensor failed.");
+    auto quantization_param = quant::ConvertQuantParamTToQuantizationParam(quant_param);
+    CHECK_NULL_RETURN(quantization_param);
+    input_tensor->set_quant_param(std::vector<std::shared_ptr<mindspore::QuantizationParam>>{quantization_param});
   } else {
     MS_LOG(WARNING) << input_node->fullname_with_scope() << " Not supported type.";
     return RET_ERROR;

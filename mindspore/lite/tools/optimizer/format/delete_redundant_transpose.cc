@@ -265,6 +265,7 @@ bool DeleteRedundantTranspose::Run(const FuncGraphPtr &func_graph) {
 STATUS DeleteRedundantTranspose::CopyQuantParam(const CNodePtr &cnode, const CNodePtr &pre_cnode,
                                                 const AnfNodeIndexSet &node_users) {
   auto input_node = pre_cnode->input(Index1);
+  CHECK_NULL_RETURN(input_node);
   auto cnode_primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   CHECK_NULL_RETURN(cnode_primitive);
   auto pre_cnode_primitive = GetValueNode<PrimitivePtr>(pre_cnode->input(0));
@@ -296,7 +297,6 @@ STATUS DeleteRedundantTranspose::CopyQuantParam(const CNodePtr &cnode, const CNo
     }
   } else if (input_node->isa<mindspore::CNode>()) {
     auto input_cnode = input_node->cast<mindspore::CNodePtr>();
-    CHECK_NULL_RETURN(input_cnode);
     auto input_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
     CHECK_NULL_RETURN(input_primitive);
     if (cnode_primitive->HasAttr(lite::quant::kQuantParam)) {

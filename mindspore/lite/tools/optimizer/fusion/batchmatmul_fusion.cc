@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include "ops/fusion/mat_mul_fusion.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/quantizer/quant_param_holder.h"
+#include "tools/converter/quantizer/quantize_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
 #include "nnacl/op_base.h"
@@ -111,10 +112,11 @@ std::shared_ptr<ops::MatMulFusion> BuildMatMulPrim(const CNodePtr &stack_cnode) 
   MS_CHECK_TRUE_RET(fullconnect_cnode != nullptr, nullptr);
   auto fc_prim = GetValueNode<PrimitiveCPtr>(fullconnect_cnode->input(0));
   MS_ASSERT(fc_prim != nullptr);
-  lite::QuantParamsVector rmatmul_quant_params;
-  auto rmatmul_quant_params_valueptr = fc_prim->GetAttr("quant_params");
-  lite::QuantParamsVector output_quant_params;
 
+  // quant param in QuantParamHolder
+  lite::QuantParamsVector rmatmul_quant_params;
+  lite::QuantParamsVector output_quant_params;
+  auto rmatmul_quant_params_valueptr = fc_prim->GetAttr("quant_params");
   MS_CHECK_TRUE_RET(rmatmul_quant_params_valueptr != nullptr, nullptr);
   auto rmatmul_quant_params_holder = rmatmul_quant_params_valueptr->cast<lite::QuantParamHolderPtr>();
   if (rmatmul_quant_params_holder == nullptr) {
@@ -129,6 +131,13 @@ std::shared_ptr<ops::MatMulFusion> BuildMatMulPrim(const CNodePtr &stack_cnode) 
   auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(rmatmul_quant_params, output_quant_params);
   MS_CHECK_TRUE_RET(quant_params_holder != nullptr, nullptr);
   (void)matmul_prim_c->AddAttr("quant_params", quant_params_holder);
+
+  // compatible support: quant param in QuantizationParam, only copy output quant param
+  if (fc_prim->HasAttr(lite::quant::kQuantParam)) {
+    auto quantization_param_value = fc_prim->GetAttr(lite::quant::kQuantParam);
+    MS_CHECK_TRUE_MSG(quantization_param_value != nullptr, nullptr, "quantization_param_value is nullptr.");
+    (void)matmul_prim_c->AddAttr(lite::quant::kQuantParam, quantization_param_value);
+  }
   return matmul_cvalue;
 }
 

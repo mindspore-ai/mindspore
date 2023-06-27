@@ -41,15 +41,30 @@ STATUS QuantDTypeCastMapper::Mapper(const CNodePtr &cnode) {
   }
 
   PrimitivePtr dst_prim = nullptr;
+  std::vector<schema::QuantParamT> quant_param;
   if (cnode->inputs().size() == kQuantInputNum) {
     // map to Quant.
-    auto quantization_param_value = src_prim->GetAttr(quant::kQuantParam);
-    auto quantization_param_list = GetValue<std::vector<QuantizationParamPtr>>(quantization_param_value);
-    if (quantization_param_list.empty()) {
-      MS_LOG(ERROR) << cnode->fullname_with_scope() << " quantization_param_list is empty.";
-      return lite::RET_ERROR;
+    // quant param in QuantParamHolder
+    if (src_prim->HasAttr("quant_params")) {
+      MS_LOG(INFO) << "Get quant param from QuantParamHolder, cnode name: " << cnode->fullname_with_scope();
+      auto quant_params_holder_attr = src_prim->GetAttr("quant_params");
+      CHECK_NULL_RETURN(quant_params_holder_attr);
+      auto quant_params_holder = quant_params_holder_attr->cast<QuantParamHolderPtr>();
+      CHECK_NULL_RETURN(quant_params_holder);
+      MS_CHECK_TRUE_RET(!quant_params_holder->get_output_quant_params().empty(), RET_ERROR);
+      quant_param = quant_params_holder->get_output_quant_params().front();
     }
-    auto quant_param = quant::ConvertQuantizationParamToQuantParamT(quantization_param_list.front());
+    // quant param in QuantizationParam
+    if (src_prim->HasAttr(quant::kQuantParam)) {
+      MS_LOG(INFO) << "Get quant param from QuantizationParam, cnode name : " << cnode->fullname_with_scope();
+      auto quantization_param_value = src_prim->GetAttr(quant::kQuantParam);
+      auto quantization_param_list = GetValue<std::vector<QuantizationParamPtr>>(quantization_param_value);
+      if (quantization_param_list.empty()) {
+        MS_LOG(ERROR) << cnode->fullname_with_scope() << " quantization_param_list is empty.";
+        return lite::RET_ERROR;
+      }
+      quant_param = quant::ConvertQuantizationParamToQuantParamT(quantization_param_list.front());
+    }
     MS_CHECK_TRUE_RET(!quant_param.empty(), RET_ERROR);
     dst_prim = std::make_shared<acl::Quant>();
     CHECK_NULL_RETURN(dst_prim);
@@ -57,6 +72,10 @@ STATUS QuantDTypeCastMapper::Mapper(const CNodePtr &cnode) {
     dst_prim->AddAttr("offset", MakeValue(static_cast<float>(quant_param.front().zeroPoint)));
     MS_LOG(INFO) << cnode->fullname_with_scope() << " scale:" << quant_param.front().scale;
     MS_LOG(INFO) << cnode->fullname_with_scope() << " offset:" << quant_param.front().zeroPoint;
+    if (quant_param.front().scale < 1.0) {
+      MS_LOG(WARNING) << cnode->fullname_with_scope()
+                      << " scale less than 1.0, scale value:" << quant_param.front().scale;
+    }
   } else if (cnode->inputs().size() == kDequantInputNum) {
     // map to Dequant.
     dst_prim = std::make_shared<acl::Dequant>();

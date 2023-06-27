@@ -143,7 +143,6 @@ int Calibrator::AddQuantizedOp(const CNodePtr &cnode) {
     auto tuple = std::reinterpret_pointer_cast<abstract::AbstractTuple>(cnode->abstract());
     MS_CHECK_TRUE_MSG(tuple != nullptr, RET_ERROR, "tuple is nullptr");
     auto elements = tuple->elements();
-    MS_CHECK_GT(elements.size(), 1, RET_ERROR);
     for (size_t i = 0; i < elements.size(); i++) {
       std::unique_ptr<DataDistribution> output_diverg = std::make_unique<DataDistribution>(
         cnode, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, activation_quant_method_, symmetric_);

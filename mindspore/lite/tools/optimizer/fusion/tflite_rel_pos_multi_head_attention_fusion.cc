@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include <utility>
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/quantizer/quant_param_holder.h"
+#include "tools/converter/quantizer/quantize_util.h"
 #include "mindspore/core/ops/transpose.h"
 #include "nnacl/op_base.h"
 
@@ -285,11 +286,16 @@ CNodePtr TfliteRelPosMultiHeadAttentionFusion::CreateRelPosMultiHeadAttentionNod
                                              bias_v,
                                              bias_o};
   auto new_node = func_graph->NewCNode(new_node_inputs);
+  if (SetQuantParamNewForAttentionNode(new_node, equiv) != lite::RET_OK) {
+    MS_LOG(ERROR) << "set quant param for attehtion node failed.";
+    return nullptr;
+  }
   MS_CHECK_TRUE_RET(new_node != nullptr, nullptr);
   new_node->set_fullname_with_scope(base_name);
   return new_node;
 }
 
+// quant param in QuantParamHolder
 int TfliteRelPosMultiHeadAttentionFusion::SetQuantParamForAttentionNode(const PrimitivePtr &prim,
                                                                         const EquivPtr &equiv) const {
   MS_ASSERT(prim != nullptr && equiv != nullptr);
@@ -350,6 +356,94 @@ int TfliteRelPosMultiHeadAttentionFusion::SetQuantParamForAttentionNode(const Pr
   }
 
   prim->AddAttr("quant_params", quant_params_holder);
+  return lite::RET_OK;
+}
+
+// compatible support: quant param in QuantizationParam
+int TfliteRelPosMultiHeadAttentionFusion::SetQuantParamNewForAttentionNode(const CNodePtr &cnode,
+                                                                           const EquivPtr &equiv) const {
+  CHECK_NULL_RETURN(cnode);
+  CHECK_NULL_RETURN(equiv);
+
+  auto query_prim = GetValueNode<PrimitivePtr>(utils::cast<AnfNodePtr>((*equiv)[query_prim_]));
+  MS_CHECK_TRUE_RET(query_prim != nullptr, lite::RET_ERROR);
+  if (query_prim->HasAttr(lite::quant::kQuantParam)) {
+    auto quantization_param_value = query_prim->GetAttr(lite::quant::kQuantParam);
+    MS_CHECK_TRUE_MSG(quantization_param_value != nullptr, RET_ERROR, "quantization_param_value is nullptr.");
+    auto quantization_param_list = GetValue<std::vector<QuantizationParamPtr>>(quantization_param_value);
+    if (quantization_param_list.size() > 1) {
+      auto quant_param = lite::quant::ConvertQuantizationParamToQuantParamT(quantization_param_list.at(1));
+      auto ret = lite::quant::SetInputNodeQuantParam(cnode, kWeightQueryIndex + lite::quant::kPrimOffset, quant_param);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "set input quant param for attehtion node failed.";
+        return ret;
+      }
+    }
+  }
+
+  auto key_prim = GetValueNode<PrimitivePtr>(utils::cast<AnfNodePtr>((*equiv)[key_prim_]));
+  MS_CHECK_TRUE_RET(key_prim != nullptr, lite::RET_ERROR);
+  if (key_prim->HasAttr(lite::quant::kQuantParam)) {
+    auto quantization_param_value = key_prim->GetAttr(lite::quant::kQuantParam);
+    MS_CHECK_TRUE_MSG(quantization_param_value != nullptr, RET_ERROR, "quantization_param_value is nullptr.");
+    auto quantization_param_list = GetValue<std::vector<QuantizationParamPtr>>(quantization_param_value);
+    if (quantization_param_list.size() > 1) {
+      auto quant_param = lite::quant::ConvertQuantizationParamToQuantParamT(quantization_param_list.at(1));
+      auto ret = lite::quant::SetInputNodeQuantParam(cnode, kWeightKeyIndex + lite::quant::kPrimOffset, quant_param);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "set input quant param for attehtion node failed.";
+        return ret;
+      }
+    }
+  }
+
+  auto value_prim = GetValueNode<PrimitivePtr>(utils::cast<AnfNodePtr>((*equiv)[value_prim_]));
+  MS_CHECK_TRUE_RET(value_prim != nullptr, lite::RET_ERROR);
+  if (value_prim->HasAttr(lite::quant::kQuantParam)) {
+    auto quantization_param_value = value_prim->GetAttr(lite::quant::kQuantParam);
+    MS_CHECK_TRUE_MSG(quantization_param_value != nullptr, RET_ERROR, "quantization_param_value is nullptr.");
+    auto quantization_param_list = GetValue<std::vector<QuantizationParamPtr>>(quantization_param_value);
+    if (quantization_param_list.size() > 1) {
+      auto quant_param = lite::quant::ConvertQuantizationParamToQuantParamT(quantization_param_list.at(1));
+      auto ret = lite::quant::SetInputNodeQuantParam(cnode, kWeightValueIndex + lite::quant::kPrimOffset, quant_param);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "set input quant param for attehtion node failed.";
+        return ret;
+      }
+    }
+  }
+
+  auto pos_prim = GetValueNode<PrimitivePtr>(utils::cast<AnfNodePtr>((*equiv)[pos_prim_]));
+  MS_CHECK_TRUE_RET(pos_prim != nullptr, lite::RET_ERROR);
+  if (pos_prim->HasAttr(lite::quant::kQuantParam)) {
+    auto quantization_param_value = pos_prim->GetAttr(lite::quant::kQuantParam);
+    MS_CHECK_TRUE_MSG(quantization_param_value != nullptr, RET_ERROR, "quantization_param_value is nullptr.");
+    auto quantization_param_list = GetValue<std::vector<QuantizationParamPtr>>(quantization_param_value);
+    if (quantization_param_list.size() > 1) {
+      auto quant_param = lite::quant::ConvertQuantizationParamToQuantParamT(quantization_param_list.at(1));
+      auto ret = lite::quant::SetInputNodeQuantParam(cnode, kWeightPosIndex + lite::quant::kPrimOffset, quant_param);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "set input quant param for attehtion node failed.";
+        return ret;
+      }
+    }
+  }
+
+  auto output_prim = GetValueNode<PrimitivePtr>(utils::cast<AnfNodePtr>((*equiv)[output_prim_]));
+  MS_CHECK_TRUE_RET(output_prim != nullptr, lite::RET_ERROR);
+  if (output_prim->HasAttr(lite::quant::kQuantParam)) {
+    auto quantization_param_value = output_prim->GetAttr(lite::quant::kQuantParam);
+    MS_CHECK_TRUE_MSG(quantization_param_value != nullptr, RET_ERROR, "quantization_param_value is nullptr.");
+    auto quantization_param_list = GetValue<std::vector<QuantizationParamPtr>>(quantization_param_value);
+    if (quantization_param_list.size() > 1) {
+      auto quant_param = lite::quant::ConvertQuantizationParamToQuantParamT(quantization_param_list.at(1));
+      auto ret = lite::quant::SetInputNodeQuantParam(cnode, kWeightOutputIndex + lite::quant::kPrimOffset, quant_param);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "set input quant param for attehtion node failed.";
+        return ret;
+      }
+    }
+  }
   return lite::RET_OK;
 }
 
