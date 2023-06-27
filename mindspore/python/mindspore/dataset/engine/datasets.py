@@ -3571,7 +3571,7 @@ class MapDataset(UnionBaseDataset):
         return op_name
 
     @staticmethod
-    def __construct_debug_hook(previous_op_name=None):
+    def __construct_debug_hook(previous_op_name=None, is_first_op=False):
         """
         Wrap debug hook into FuncWrapper.
         """
@@ -3582,6 +3582,7 @@ class MapDataset(UnionBaseDataset):
                 # making deep copy to allow each debug hook instance hold unique variables
                 new_fn = copy.deepcopy(fn)
                 new_fn.set_previous_op_name(previous_op_name)
+                new_fn.set_is_first(is_first_op)
                 inserted_func = transforms.py_transforms_util.FuncWrapper(new_fn)
                 inserted_func.implementation = Implementation.PY
                 inserted_functions.append(inserted_func)
@@ -3703,7 +3704,8 @@ class MapDataset(UnionBaseDataset):
         """
         if not get_debug_mode():
             return operations
-        inserted_operations = self.__construct_debug_hook()
+        first_op_name = self.__parse_op_name(operations[0])
+        inserted_operations = self.__construct_debug_hook(first_op_name, is_first_op=True)
         for op in operations:
             inserted_operations.append(op)
             op_name = self.__parse_op_name(op)
