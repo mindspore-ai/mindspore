@@ -332,6 +332,10 @@ Status ModelImpl::BuildByBufferImpl(const void *model_buff, size_t model_size, M
     MS_LOG(ERROR) << "Model has been called Build";
     return kLiteModelRebuild;
   }
+  if (model_context == nullptr) {
+    MS_LOG(ERROR) << "Invalid context pointers.";
+    return kLiteError;
+  }
   SetMsContext();
   auto thread_num = model_context->GetThreadNum();
   if (thread_num < 0) {
@@ -394,6 +398,10 @@ Status ModelImpl::Build(const FuncGraphPtr &func_graph, const std::shared_ptr<Co
   if (session_) {
     MS_LOG(ERROR) << "Model has been called Build";
     return kLiteModelRebuild;
+  }
+  if (model_context == nullptr) {
+    MS_LOG(ERROR) << "Invalid context pointers.";
+    return kLiteError;
   }
   SetMsContext();
   auto thread_num = model_context->GetThreadNum();
