@@ -810,7 +810,7 @@ class Squeeze(Primitive):
         [[1. 1.]
          [1. 1.]
          [1. 1.]]
-        >>> input_x = Tensor(2.1+2j mindspore.complex64)
+        >>> input_x = Tensor(2.1+2j, mindspore.complex64)
         >>> squeeze = ops.Squeeze()
         >>> output = squeeze(input_x)
         >>> print(output)
