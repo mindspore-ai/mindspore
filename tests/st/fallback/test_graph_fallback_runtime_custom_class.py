@@ -256,7 +256,7 @@ def test_resolve_cust_ms_function_call_class():
     x = np.array([10, 10], np.float32)
     with pytest.raises(RuntimeError) as err:
         net(ms.Tensor(x))
-    assert "Nested execution during JIT execution in 'UserDefinedMsFunctionCallNet.__call__' " \
+    assert "Nested execution during JIT execution for 'UserDefinedMsFunctionCallNet.__call__' " \
            "is not supported when 'UNet.construct' compile and execute." in str(err.value)
 
 

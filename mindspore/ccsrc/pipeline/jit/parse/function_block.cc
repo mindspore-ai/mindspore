@@ -600,6 +600,7 @@ std::set<AnfNodePtr> FunctionBlock::SearchAllArgsOfPhiNode(const std::string &va
 
   if (not_defined_branch.second != nullptr) {
     if (!defined_branch.empty()) {
+      TraceGuard trace_guard(phi->debug_info()->location());
       CheckVariableNotDefined(not_defined_branch, var);
     }
     MS_EXCEPTION(NameError) << "The name '" << var << "' is not defined, or not supported in graph mode.";
