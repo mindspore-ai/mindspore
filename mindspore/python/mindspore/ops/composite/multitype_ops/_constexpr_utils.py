@@ -113,7 +113,7 @@ def make_empty_slice():
     return slice(None, None, None)
 
 
-@constexpr
+@_primexpr
 def _deep_list(array_like, dim_size=None):
     """convert nested tuple/list mixtures to pure nested list"""
     if dim_size is not None:
@@ -155,7 +155,7 @@ def _deep_tensor_to_nparray(array_like):
     return array_like
 
 
-@constexpr
+@_primexpr
 def check_range(x, dim_size):
     if dim_size is None:
         return x
@@ -166,7 +166,7 @@ def check_range(x, dim_size):
     return x
 
 
-@constexpr
+@_primexpr
 def make_tensor(a, dtype=mstype.int64, data_shape=None, dim_size=None):
     """
     Converts the input to tensor.

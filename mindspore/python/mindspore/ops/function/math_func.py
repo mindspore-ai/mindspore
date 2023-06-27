@@ -2148,7 +2148,7 @@ def cov(input, *, correction=1, fweights=None, aweights=None):
         w_sum = w.sum()
         avg = (input_x * w).sum(1) / _get_default_div_type(w_sum)
     else:
-        w_sum = ops.cast(num_observations, dtype=mstype.int64)
+        w_sum = ops.cast(num_observations, mstype.int64)
         avg = input_x.sum(1) / _get_default_div_type(w_sum)
 
     if w is not None and aweights is not None and correction != 0:
@@ -5050,9 +5050,9 @@ def logspace(start, end, steps, base=10, *, dtype=mstype.float32):
         [1.e+01 1.e+02 1.e+03 1.e+04 1.e+05 1.e+06 1.e+07 1.e+08 1.e+09 1.e+10]
     """
     if isinstance(start, float):
-        start = ops.cast(start, dtype=mstype.float32)
+        start = ops.cast(start, mstype.float32)
     if isinstance(end, float):
-        end = ops.cast(end, dtype=mstype.float32)
+        end = ops.cast(end, mstype.float32)
     logspace_ = _get_cache_prim(P.LogSpace)(steps, base, dtype)
     return logspace_(start, end)
 
@@ -11099,7 +11099,7 @@ def imag(input):
     return _get_cache_prim(P.Imag)()(input)
 
 
-@constexpr
+@_primexpr
 def _check_repeat_in_axis(axis, x_ndim, prim_name):
     """check repeat dim in axis"""
     if isinstance(axis, (list, tuple)):

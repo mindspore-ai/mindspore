@@ -5506,7 +5506,7 @@ def triu(input, diagonal=0): # pylint: disable=redefined-outer-name
     return _get_cache_prim(P.Triu)(diagonal)(input)
 
 
-@constexpr
+@_primexpr
 def _canonicalize_axis(axis, ndim):
     """
     Check axes are within the number of dimensions of tensor x and normalize the negative axes.
