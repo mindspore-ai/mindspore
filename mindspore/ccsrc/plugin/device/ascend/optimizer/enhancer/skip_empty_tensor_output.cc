@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/optimizer/enhancer/skip_empty_tensor_output.h"
 #include <vector>
 #include <memory>
+#include <algorithm>
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/optimizer/helper.h"
@@ -29,7 +30,7 @@ size_t GetAllEmptyTensorOutputNum(const AnfNodePtr &node) {
   auto output_num = AnfUtils::GetOutputTensorNum(node);
   for (size_t i = 0; i < output_num; ++i) {
     auto output_shape = common::AnfAlgo::GetOutputInferShape(node, i);
-    if (output_shape.size() != 1 || output_shape[0] != 0) {
+    if (std::none_of(output_shape.cbegin(), output_shape.cend(), [](int64_t dim) { return dim == 0; })) {
       return 0;
     }
   }
