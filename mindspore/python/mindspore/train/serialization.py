@@ -61,7 +61,7 @@ from mindspore.parallel._parallel_serialization import _convert_to_list, _conver
     _restore_group_info_list
 from mindspore.train._utils import read_proto
 from mindspore._c_expression import load_mindir, _encrypt, _decrypt, _is_cipher_file, dynamic_obfuscate_mindir, \
-    split_mindir, _set_dataset_mode_config
+    split_mindir
 from ..ops.operations._opaque_predicate_registry import add_opaque_predicate, clean_funcs
 
 tensor_to_ms_type = {"Int8": mstype.int8, "UInt8": mstype.uint8, "Int16": mstype.int16, "UInt16": mstype.uint16,
@@ -1483,7 +1483,6 @@ def _export(net, file_name, file_format, *inputs, **kwargs):
     logger.info("exporting model file:%s format:%s.", file_name, file_format)
     if "obf_config" in kwargs and file_format != "MINDIR":
         raise ValueError(f"Dynamic obfuscation only support for MindIR format, but got {file_format} format.")
-    _set_dataset_mode_config('normal')
     if file_format == 'AIR':
         _save_air(net, file_name, *inputs, **kwargs)
     elif file_format == 'ONNX':
