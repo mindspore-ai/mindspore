@@ -95,7 +95,7 @@ bool CPUHashTable<Key, Value>::Find(const Key *keys, size_t key_num, bool insert
       // allocate memory for value
       auto value_addr = reinterpret_cast<Value *>(AllocateMemory(value_size_));
       MS_EXCEPTION_IF_NULL(value_addr);
-      values_.emplace(key, std::make_pair(reinterpret_cast<Value *>(value_addr), Status::kModified));
+      values_.emplace(key, std::make_pair(static_cast<Value *>(value_addr), Status::kModified));
       if (initializer_ == kNormalDistribution) {
         // initialize normal distribution parameter
         const double mean = 0.0;
@@ -127,7 +127,7 @@ bool CPUHashTable<Key, Value>::Find(const Key *keys, size_t key_num, bool insert
       // if there's no key in values_
       auto value_addr = reinterpret_cast<Value *>(AllocateMemory(value_size_));
       MS_EXCEPTION_IF_NULL(value_addr);
-      values_.emplace(key, std::make_pair(reinterpret_cast<Value *>(value_addr), Status::kModified));
+      values_.emplace(key, std::make_pair(static_cast<Value *>(value_addr), Status::kModified));
       for (size_t k = 0; k < value_dim_; ++k) {
         value_addr[k] = default_value_;
       }

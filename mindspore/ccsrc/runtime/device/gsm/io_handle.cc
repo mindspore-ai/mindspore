@@ -53,7 +53,8 @@ void IOHandle::LoadAio(const std::string &aio_shared_lib_name, const std::string
     MS_LOG(WARNING) << "Loading " << aio_shared_lib_name << " failed. Error message: " << dlerror();
     return;
   }
-  auto get_aio_instance = reinterpret_cast<AsyncIO *(*)()>(dlsym(handle, real_path.value().c_str()));
+  void *get_aio_instance_ptr = dlsym(handle, instance_func_name.c_str());
+  auto get_aio_instance = reinterpret_cast<AsyncIO *(*)()>(get_aio_instance_ptr);
   if (get_aio_instance == nullptr) {
     MS_LOG(WARNING) << "Getting function " << instance_func_name << " from " << aio_shared_lib_name
                     << " failed. Error message: " << dlerror();
@@ -82,7 +83,7 @@ bool IOHandle::Read(const std::string &file_name, void *data, size_t byte_num) {
   return file->PRead(data, byte_num, kFileHeadOffset);
 }
 
-bool IOHandle::Write(const std::string &file_name, const void *data, size_t byte_num) {
+bool IOHandle::Write(const std::string &file_name, const void *data, size_t byte_num) const {
   if (aio_ != nullptr && IsAligned(data, byte_num)) {
     return aio_->Write(file_name, data, byte_num);
   }
