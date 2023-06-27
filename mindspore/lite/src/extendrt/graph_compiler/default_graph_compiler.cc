@@ -44,7 +44,7 @@ std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::Compile(Fu
   MS_LOG(INFO) << "DefaultGraphCompiler::Compile";
 
   inner_context_ = ContextUtils::Convert(context_.get());
-  if (inner_context_->Init() != RET_OK) {
+  if (inner_context_ == nullptr || inner_context_->Init() != RET_OK) {
     MS_LOG(ERROR) << "DefaultGraphCompiler::Compile init inner context failed";
     return nullptr;
   }
