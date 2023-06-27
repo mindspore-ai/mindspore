@@ -92,8 +92,6 @@ class SGD(Optimizer):
         if momentum < 0.0:
             raise ValueError("Invalid momentum value: {}".format(momentum))
         momentum = float(momentum)
-        Validator.check_value_type("dampening", dampening, [int, float], self.cls_name)
-        dampening = float(dampening)
         Validator.check_value_type("nesterov", nesterov, [bool], self.cls_name)
         Validator.check_value_type("maximize", maximize, [bool], self.cls_name)
 
@@ -101,7 +99,9 @@ class SGD(Optimizer):
                         weight_decay=weight_decay, nesterov=nesterov,
                         maximize=maximize, grad_centralization=False)
         super(SGD, self).__init__(params, defaults)
-
+        for group in self.param_groups:
+            Validator.check_value_type("dampening", group["dampening"], [int, float], self.cls_name)
+            group["dampening"] = float(group["dampening"])
         if nesterov and (momentum <= 0.0 or dampening != 0.0):
             raise ValueError("For 'SGD', if 'nesterov' is true, 'momentum' must be > 0.0 and 'dampening' must "
                              "equal to 0.0, but got 'momentum' {}, 'dampening' {}".format(momentum, dampening))
