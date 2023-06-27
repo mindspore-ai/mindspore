@@ -712,6 +712,9 @@ void GradExecutor::MakeNewTopGraph(const InputArgsInfoPtr &input_args_info) {
   auto resource = std::make_shared<pipeline::Resource>();
   MS_EXCEPTION_IF_NULL(input_args_info);
   const auto &obj_id_with_grad_order = GetAlreadyRunCellId(input_args_info->obj_id);
+  // To fix scene that user calls twice forward network with grad flag, and then call grad() interface.
+  // We need to clear last top cell's parameters grad info to avoid influencing construct bprop graph of current top
+  // cell.
   ClearParamGradInfo(top_cell_);
   top_cell_ = std::make_shared<TopCellInfo>(input_args_info->is_high_order_top_cell, input_args_info->grad_order,
                                             obj_id_with_grad_order, input_args_info->cell_id,
@@ -1019,6 +1022,7 @@ void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::ob
   top_cell()->set_input_args_info(nullptr);
   SetBpropGraphJitLevel(obj);
   bool weight_param_is_tuple = true;
+  // If current cell's parameter info has been cleared, we need resume its parameter grad info to construct bprop graph.
   ResumeParamGradInfo(top_cell());
   auto w_args = GetWeightsArgs(weights, &weight_param_is_tuple);
   auto p_args = GetGradPositionArgs(grad_position, grad->get_by_position_);

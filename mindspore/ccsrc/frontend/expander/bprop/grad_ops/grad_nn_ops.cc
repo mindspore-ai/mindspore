@@ -1861,15 +1861,7 @@ REG_BPROP_BUILDER("PadV3").SetUnusedInputs({i0, i1, i3}).SetBody(BODYFUNC(ib) {
 
   if (mode == "constant") {
     MS_EXCEPTION_IF_NULL(paddings);
-    MS_EXCEPTION_IF_NULL(paddings->abstract());
-    auto pad = paddings->abstract()->BuildValue();
-    MS_EXCEPTION_IF_NULL(pad);
-    std::vector<int64_t> pad_value;
-    if (pad->isa<tensor::Tensor>()) {
-      pad_value = CheckAndConvertUtils::CheckTensorIntValue("paddings value", pad, "PadV3");
-    } else {
-      pad_value = CheckAndConvertUtils::CheckTupleInt("paddings tuple value", pad, "PadV3");
-    }
+    auto pad_value = GetIntList(paddings);
     (void)std::transform(pad_value.begin(), pad_value.end(), pad_value.begin(), [](const int64_t &c) { return -c; });
     auto constant_values = ib->GetInput(kIndex2);
     dx = ib->Emit("PadV3", {dout, ib->Tensor(pad_value), ib->ZerosLike(constant_values)},
