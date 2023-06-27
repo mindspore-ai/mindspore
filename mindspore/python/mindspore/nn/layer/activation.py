@@ -157,7 +157,6 @@ class Softmin(Cell):
         >>> output = softmin(x)
         >>> print(output)
         [0.2341  0.636  0.0862  0.01165  0.03168 ]
-        >>> assert(1.0 == output.sum())
     """
 
     def __init__(self, axis=-1):
@@ -196,7 +195,9 @@ class Softmax2d(Cell):
         >>> softmax2d = nn.Softmax2d()
         >>> output = softmax2d(x)
         >>> print(output)
-        [[[[0.258, 0.28]], [[0.316, 0.342]], [[0.426, 0.378]]]
+        [[[[0.25838965 0.28001308]]
+        [[0.31559783 0.34200877]]
+        [[0.42601252 0.37797815]]]]
     """
 
     def __init__(self):
@@ -262,7 +263,6 @@ class Softmax(Cell):
         >>> output = softmax(x)
         >>> print(output)
         [0.03168 0.01166 0.0861  0.636   0.2341 ]
-        >>> assert(1.0 == output.sum())
     """
 
     def __init__(self, axis=-1):
