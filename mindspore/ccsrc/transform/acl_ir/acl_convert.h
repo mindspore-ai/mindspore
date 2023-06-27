@@ -209,6 +209,7 @@ class AttrToInputConverter : public AttrHelper<AttrToInputConverter> {
   }
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<int64_t> &, AclConverter *, TensorParams *param) {
+    MS_EXCEPTION_IF_NULL(param);
     auto real_val = static_cast<int32_t>(GetValue<int64_t>(value));
     tensor_ = std::make_shared<tensor::Tensor>(real_val);
     param->data_type = TypeId::kNumberTypeInt32;
@@ -234,6 +235,7 @@ class AttrToInputConverter : public AttrHelper<AttrToInputConverter> {
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<uint8_t>> &, AclConverter *,
                     TensorParams *param) {
+    MS_EXCEPTION_IF_NULL(param);
     std::vector<uint8_t> array_list;
     ConvertValueSequenceToList(value, &array_list);
     std::vector<int32_t> array_list_int32;
@@ -246,6 +248,7 @@ class AttrToInputConverter : public AttrHelper<AttrToInputConverter> {
 
   void ConvertValue(const ValuePtr &value, const AttrDeclType<std::vector<int64_t>> &, AclConverter *,
                     TensorParams *param) {
+    MS_EXCEPTION_IF_NULL(param);
     std::vector<int64_t> array_list;
     ConvertValueSequenceToList(value, &array_list);
     std::vector<int32_t> array_list_int32;
