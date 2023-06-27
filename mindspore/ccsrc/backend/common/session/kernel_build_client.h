@@ -86,21 +86,21 @@ class BACKEND_EXPORT KernelBuildClient {
   void Request(const std::string &req) {
     if (!init_) {
       MS_LOG(EXCEPTION) << "Try to send request before Open(). For more details, please refer to this FAQ: "
-                        << "https://mindspore.cn/tutorials/experts/zh-CN/master/debug/mindrt_debug.html";
+                        << "https://www.mindspore.cn/tutorials/zh-CN/master/advanced/error_analysis/mindrt_debug.html";
     }
     *dp_ << req;
   }
   std::string Response() {
     if (!init_) {
       MS_LOG(EXCEPTION) << "Try to get response before Open(). For more details, please refer to this FAQ: "
-                        << "https://mindspore.cn/tutorials/experts/zh-CN/master/debug/mindrt_debug.html";
+                        << "https://www.mindspore.cn/tutorials/zh-CN/master/advanced/error_analysis/mindrt_debug.html";
     }
     std::string res;
     *dp_ >> res;
     // Filter out the interference
     if (res.empty()) {
       MS_LOG(EXCEPTION) << "Response is empty. For more details, please refer to this FAQ: "
-                        << "https://mindspore.cn/tutorials/experts/zh-CN/master/debug/mindrt_debug.html";
+                        << "https://www.mindspore.cn/tutorials/zh-CN/master/advanced/error_analysis/mindrt_debug.html";
     }
     auto start = res.find(kTag);
     if (start == std::string::npos) {

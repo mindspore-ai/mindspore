@@ -6,7 +6,7 @@ MindSpore的ReWrite模块为用户提供了基于自定义规则，对网络的�
 --------
 
 ReWrite完整示例请参考
-`rewrite_example.py <https://gitee.com/mindspore/mindspore/tree/master/docs/api/api_python/rewrite_example.py>`_ 。
+`rewrite_example.py <https://gitee.com/mindspore/mindspore/blob/master/docs/api/api_python/rewrite_example.py>`_ 。
 该样例代码的主要功能包括：怎么通过网络创建SymbolTree，并且对SymbolTree中的节点进行插入、删除、替换等操作，
 其中还包含了对子网络的修改和通过模式匹配进行节点替换。
 
