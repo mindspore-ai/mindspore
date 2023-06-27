@@ -182,7 +182,7 @@ std::vector<std::vector<int>> ComputeUniqueConsecutiveByAxis(const T *input, int
       info.perm[i] = static_cast<int>(i);
     }
   }
-  CalTranspose(num_elements, input, info, shape_size, indices_data, cuda_stream);
+  (void)CalTranspose(num_elements, input, info, shape_size, indices_data, cuda_stream);
 
   // Inverse indices.
   int64_t num_inp = input_shape[axis];

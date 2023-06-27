@@ -143,7 +143,9 @@ class EighGpuKernelMod : public NativeGpuKernelMod {
         info.shape[i] = static_cast<int>(input_shape[i]);
         info.perm[i] = input_axis[i];
       }
-      CalTranspose(m_ * m_, w_v_addr, info, kShape2dDims, output_v_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+      auto status =
+        CalTranspose(m_ * m_, w_v_addr, info, kShape2dDims, output_v_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_LAUNCH_STATUS(status, "Transpose called by " + kernel_name_);
     }
 
     device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(d_work);

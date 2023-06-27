@@ -64,44 +64,53 @@ __global__ void TransposeKernel(const size_t size, const T *input, const Transpo
 }
 
 template <typename T>
-void CalTranspose(const size_t size, const T *input, const TransposeInfo &info, const size_t shape_size, T *output,
-                  cudaStream_t cuda_stream) {
+cudaError_t CalTranspose(const size_t size, const T *input, const TransposeInfo &info, const size_t shape_size,
+                         T *output, cudaStream_t cuda_stream) {
   TransposeKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input, info, shape_size, output);
+  CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
-template CUDA_LIB_EXPORT void CalTranspose<bool>(const size_t size, const bool *input, const TransposeInfo &info,
-                                                 const size_t shape_size, bool *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTranspose<double>(const size_t size, const double *input, const TransposeInfo &info,
-                                                   const size_t shape_size, double *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTranspose<float>(const size_t size, const float *input, const TransposeInfo &info,
-                                                  const size_t shape_size, float *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTranspose<half>(const size_t size, const half *input, const TransposeInfo &info,
-                                                 const size_t shape_size, half *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTranspose<int64_t>(const size_t size, const int64_t *input, const TransposeInfo &info,
-                                                    const size_t shape_size, int64_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTranspose<int>(const size_t size, const int *input, const TransposeInfo &info,
-                                                const size_t shape_size, int *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTranspose<int16_t>(const size_t size, const int16_t *input, const TransposeInfo &info,
-                                                    const size_t shape_size, int16_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTranspose<int8_t>(const size_t size, const int8_t *input, const TransposeInfo &info,
-                                                   const size_t shape_size, int8_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTranspose<uint64_t>(const size_t size, const uint64_t *input,
-                                                     const TransposeInfo &info, const size_t shape_size,
-                                                     uint64_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTranspose<uint32_t>(const size_t size, const uint32_t *input,
-                                                     const TransposeInfo &info, const size_t shape_size,
-                                                     uint32_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTranspose<uint16_t>(const size_t size, const uint16_t *input,
-                                                     const TransposeInfo &info, const size_t shape_size,
-                                                     uint16_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTranspose<uint8_t>(const size_t size, const uint8_t *input, const TransposeInfo &info,
-                                                    const size_t shape_size, uint8_t *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTranspose<Complex<float>>(const size_t size, const Complex<float> *input,
+template CUDA_LIB_EXPORT cudaError_t CalTranspose<bool>(const size_t size, const bool *input, const TransposeInfo &info,
+                                                        const size_t shape_size, bool *output,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTranspose<double>(const size_t size, const double *input,
+                                                          const TransposeInfo &info, const size_t shape_size,
+                                                          double *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTranspose<float>(const size_t size, const float *input,
+                                                         const TransposeInfo &info, const size_t shape_size,
+                                                         float *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTranspose<half>(const size_t size, const half *input, const TransposeInfo &info,
+                                                        const size_t shape_size, half *output,
+                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTranspose<int64_t>(const size_t size, const int64_t *input,
                                                            const TransposeInfo &info, const size_t shape_size,
-                                                           Complex<float> *output, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTranspose<Complex<double>>(const size_t size, const Complex<double> *input,
+                                                           int64_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTranspose<int>(const size_t size, const int *input, const TransposeInfo &info,
+                                                       const size_t shape_size, int *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTranspose<int16_t>(const size_t size, const int16_t *input,
+                                                           const TransposeInfo &info, const size_t shape_size,
+                                                           int16_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTranspose<int8_t>(const size_t size, const int8_t *input,
+                                                          const TransposeInfo &info, const size_t shape_size,
+                                                          int8_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTranspose<uint64_t>(const size_t size, const uint64_t *input,
                                                             const TransposeInfo &info, const size_t shape_size,
-                                                            Complex<double> *output, cudaStream_t cuda_stream);
+                                                            uint64_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTranspose<uint32_t>(const size_t size, const uint32_t *input,
+                                                            const TransposeInfo &info, const size_t shape_size,
+                                                            uint32_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTranspose<uint16_t>(const size_t size, const uint16_t *input,
+                                                            const TransposeInfo &info, const size_t shape_size,
+                                                            uint16_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTranspose<uint8_t>(const size_t size, const uint8_t *input,
+                                                           const TransposeInfo &info, const size_t shape_size,
+                                                           uint8_t *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTranspose<Complex<float>>(const size_t size, const Complex<float> *input,
+                                                                  const TransposeInfo &info, const size_t shape_size,
+                                                                  Complex<float> *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalTranspose<Complex<double>>(const size_t size, const Complex<double> *input,
+                                                                   const TransposeInfo &info, const size_t shape_size,
+                                                                   Complex<double> *output, cudaStream_t cuda_stream);
 
 // Optimize nchw2nhwc && nhwc2nchw with tiling and shared memory.
 // Firstly, combined 2 dims hw together, treat input and output as 3D tensor.

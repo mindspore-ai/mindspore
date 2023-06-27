@@ -25,8 +25,8 @@ struct TransposeInfo {
 };
 
 template <typename T>
-CUDA_LIB_EXPORT void CalTranspose(const size_t size, const T *input, const TransposeInfo &info, const size_t shape_size,
-                                  T *output, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT cudaError_t CalTranspose(const size_t size, const T *input, const TransposeInfo &info,
+                                         const size_t shape_size, T *output, cudaStream_t cuda_stream);
 
 template <typename T>
 CUDA_LIB_EXPORT void CalNHWC2NCHWInterface(const size_t size, const size_t shape_size, const T *d_input,
