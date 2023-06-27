@@ -59,6 +59,7 @@ int MeshgridGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
     return ret;
   }
 
+  input_shapes_.clear();
   input_size_ = 1;
   input_count_ = static_cast<size_t>(input_size_list_.size());
   for (size_t i = 0; i < input_count_; i++) {
