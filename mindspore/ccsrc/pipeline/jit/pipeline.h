@@ -171,6 +171,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   std::map<std::string, py::dict> stra_dict_;
   std::string phase_{""};
   std::string source_{""};
+  std::string obj_desc_{""};
   std::map<std::string, std::string> jit_config_;
   std::map<std::string, size_t> phase_to_num_op_info_;
   std::string queue_name_;

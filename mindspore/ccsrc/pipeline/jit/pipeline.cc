@@ -849,11 +849,11 @@ bool GraphExecutorPy::CompileInner(const py::object &source, const py::tuple &ar
   source_ = py::cast<std::string>(py::str(source));
   phase_ = py::cast<std::string>(phase);
   PhaseManager::GetInstance().set_phase(phase_);
-  auto obj_desc = GetObjDesc(source);
+  obj_desc_ = GetObjDesc(source);
   MS_LOG(INFO) << "Start compiling, phase: " << phase_;
   MS_LOG(DEBUG) << "source: {" << source_ << "}\nargs: " << py::str(const_cast<py::tuple &>(args))
                 << "\nkwargs: " << py::str(const_cast<py::dict &>(kwargs));
-  EventMessage::PrintCompileStartMsg(phase_, obj_desc);
+  EventMessage::PrintCompileStartMsg(phase_, obj_desc_);
 
   ExecutorInfoPtr executor_info = std::make_shared<ExecutorInfo>();
   ResourcePtr resource = std::make_shared<Resource>(source);
@@ -905,7 +905,7 @@ bool GraphExecutorPy::CompileInner(const py::object &source, const py::tuple &ar
   mindspore::RDR::Snapshot();
 #endif
   CleanCompileRes(resource);
-  EventMessage::PrintCompileEndMsg(phase_, obj_desc);
+  EventMessage::PrintCompileEndMsg(phase_, obj_desc_);
   PhaseManager::GetInstance().ClearPhase();
   MS_LOG(INFO) << "Finish compiling.";
   return true;
@@ -1004,9 +1004,8 @@ bool GraphExecutorPy::Compile(const py::object &source, const py::tuple &args, c
   HandleExceptionRethrow(
     [this, &res, &source, &args, &kwargs, &phase, use_vm]() {
       if (executor_running_) {
-        MS_LOG(EXCEPTION) << "Nested execution during JIT execution is not supported."
-                          << "\n\touter phase: " << phase_ << "\n\touter source: " << source_
-                          << "\n\tinner phase: " << py::cast<std::string>(phase) << "\n\tinner source: " << source;
+        MS_LOG(EXCEPTION) << "Nested execution during JIT execution in " << GetObjDesc(source) << " is not supported "
+                          << "when " << obj_desc_ << " compile and execute.";
       }
       ProcessStatus::GetInstance().RecordStart(kGraphCompile);
       std::map<std::string, std::string> custom_info;
