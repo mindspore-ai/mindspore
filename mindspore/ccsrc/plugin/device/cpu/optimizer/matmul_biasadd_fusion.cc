@@ -49,7 +49,7 @@ AnfNodePtr MatMulBiasAddFusionCPU::CreateMatmulWithBias(const FuncGraphPtr &grap
   }
 
   std::vector<AnfNodePtr> inputs;
-  (void)inputs.emplace_back(NewValueNode(std::make_shared<Primitive>(kMatMulBiasAddFusionOpName)));
+  (void)inputs.emplace_back(NewValueNode(std::make_shared<Primitive>(kFusedMatMulBiasAddName)));
   (void)inputs.emplace_back(GetAnfNodeByVar(equiv, x0_));
   (void)inputs.emplace_back(GetAnfNodeByVar(equiv, x1_));
   (void)inputs.emplace_back(GetAnfNodeByVar(equiv, x2_));

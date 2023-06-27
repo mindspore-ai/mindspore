@@ -237,7 +237,6 @@ void CPUKernelExecutor::OptimizeMindIR(const KernelGraphPtr &graph) const {
   pm->AddPass(std::make_shared<opt::SoftmaxGradFusionCpu>("softmax_grad_fusion_cpu"));
   // Match MatMul+BiasAdd+ReLU first, if no match, then match MatMul+BiasAdd
   pm->AddPass(std::make_shared<opt::MatMulBiasAddReluFusionCPU>("matmul_biasadd_relu_fusion_cpu"));
-  pm->AddPass(std::make_shared<opt::MatMulBiasAddFusionCPU>("matmul_biasadd_fusion_cpu"));
   pm->AddPass(std::make_shared<opt::DynamicSequenceOpsAdaptation>());
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(graph);
