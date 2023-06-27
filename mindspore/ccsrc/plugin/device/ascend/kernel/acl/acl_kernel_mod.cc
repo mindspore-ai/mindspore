@@ -20,9 +20,11 @@
 #include <map>
 #include <set>
 #include "ir/tensor.h"
+#include "runtime/stream.h"
 #include "runtime/device/kernel_runtime.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "transform/acl_ir/acl_helper.h"
+#include "abstract/ops/primitive_infer_map.h"
 
 namespace mindspore {
 namespace kernel {
@@ -36,6 +38,28 @@ std::string MsTensorDescString(const TensorParams &param) {
   ss << ", Device Format = " << param.dev_format;
   ss << ", Device Shape = " << VectorToString(param.dev_shape);
   return ss.str();
+}
+
+tensor::TensorPtr GetDependValueTensor(const AddressPtr &address, const TypeId type, const ShapeVector &shape,
+                                       void *stream_ptr) {
+  MS_EXCEPTION_IF_NULL(stream_ptr);
+  if (address != nullptr && address->addr != nullptr) {
+    auto tensor = std::make_shared<tensor::Tensor>(type, shape);
+    MS_EXCEPTION_IF_NULL(tensor);
+    auto status = aclrtMemcpyAsync(tensor->data_c(), tensor->Size(), address->addr, address->size,
+                                   ACL_MEMCPY_DEVICE_TO_HOST, stream_ptr);
+    if (status != ACL_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "aclrtMemcpyAsync depend tensor failed! tensor size is " << tensor->Size()
+                        << " and address size is " << address->size;
+    }
+    auto sync_status = rtStreamSynchronize(stream_ptr);
+    if (sync_status != RT_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "rtStreamSynchronize depend tensor failed! tensor size is " << tensor->Size()
+                        << " and address size is " << address->size;
+    }
+    return tensor;
+  }
+  return nullptr;
 }
 }  // namespace
 
@@ -179,6 +203,29 @@ bool AclKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   if (stream_ptr == nullptr) {
     MS_LOG(ERROR) << "stream_ptr should not be nullptr.";
     return false;
+  }
+
+  if (need_convert_host_tensor_) {
+    auto anf_node = anf_node_.lock();
+    MS_EXCEPTION_IF_NULL(anf_node);
+    auto cnode = anf_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    std::set<int64_t> depend_list = abstract::GetValueDependArgIndices(cnode);
+    inputs_on_host_.clear();
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      if (depend_list.find(i) != depend_list.end()) {
+        auto input_param = input_params_.at(i);
+        auto depended_value = GetDependValueTensor(inputs[i], input_param.data_type, input_param.ori_shape, stream_ptr);
+        if (depended_value == nullptr) {
+          continue;
+        }
+        auto emplace_ret = inputs_on_host_.try_emplace(i, depended_value);
+        if (!emplace_ret.second) {
+          MS_LOG(EXCEPTION) << "Insert depended value to map failed.";
+        }
+      }
+    }
+    need_convert_host_tensor_ = false;
   }
 
   MS_EXCEPTION_IF_NULL(converter_);
