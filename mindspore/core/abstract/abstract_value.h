@@ -1242,7 +1242,7 @@ class MS_CORE_API AbstractList final : public AbstractSequence {
   /// \brief Get corresponding list user data.
   ///
   /// \return The corresponding list user data.
-  UserDataPtr list_user_data() { return list_user_data_; }
+  UserDataPtr list_user_data() const { return list_user_data_; }
 
   /// \brief Check and convert the list to dynamic length list.
   void CheckAndConvertToDynamicLenSequence(bool raise_exception = true) override;
