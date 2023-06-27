@@ -64,7 +64,7 @@
 #include "backend/common/graph_kernel/value_graph_binder.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/device/gpu/hal/device/gpu_pin_mem_pool.h"
-#include "runtime/profiler/profiler.h"
+#include "include/common/profiler.h"
 
 namespace mindspore {
 namespace device {

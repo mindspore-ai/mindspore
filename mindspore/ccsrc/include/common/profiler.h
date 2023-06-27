@@ -28,16 +28,26 @@
 #include "utils/ms_utils.h"
 #include "utils/hash_map.h"
 #include "utils/log_adapter.h"
-#include "include/backend/visible.h"
+#include "include/common/visible.h"
 
 namespace mindspore {
 namespace runtime {
 static const char kDefaultOpName[] = "Default";
 static const size_t kPercent = 100;
 
-enum class ProfilerStage { kDefault, kPython, kRunGraph, kRunGradGraph, kRunOp };
+enum class ProfilerStage {
+  kDefault,
+  kPython,
+  kRunGraph,
+  kRunGradGraph,
+  kRunOp,
+  kAsnumpy,
+  kCompileGradGraph,
+  kWaitPipeline,
+  kSyncStream,
+};
 
-enum class ProfilerModule { kDefault, kRuntime, kPynative, kKernel, kOther };
+enum class ProfilerModule { kDefault, kRuntime, kPynative, kKernel, kPython, kOther };
 
 enum class ProfilerEvent {
   kDefault,
@@ -60,6 +70,15 @@ enum class ProfilerEvent {
   // Inner event is not counted in the total time.
   kKernelInferInner,
   kKernelInferDataSync,
+
+  // PyNative Pipeline
+  kPyNativeFrontendTask,
+  kPyNativeBackendTask,
+  kPyNativeDeviceTask,
+  kPyNativeBpropTask,
+  // PyNative inner Event
+  kPyNativeCast,
+  kPyNativeInfer,
 };
 
 #define PROFILER_START(start_time)                                          \
@@ -91,7 +110,7 @@ enum class ProfilerEvent {
   } while (0);
 
 // Record the profiler data by the constructor and destructor of this class.
-class BACKEND_EXPORT ProfilerRecorder {
+class COMMON_EXPORT ProfilerRecorder {
  public:
   ProfilerRecorder(ProfilerModule module, ProfilerEvent event, const std::string &op_name, bool is_inner_event = false);
   ~ProfilerRecorder();
@@ -102,6 +121,16 @@ class BACKEND_EXPORT ProfilerRecorder {
   std::string op_name_;
   uint64_t start_time_;
   bool is_inner_event_;
+};
+
+class COMMON_EXPORT ProfilerStageRecorder {
+ public:
+  explicit ProfilerStageRecorder(ProfilerStage stage);
+  ~ProfilerStageRecorder();
+
+ private:
+  ProfilerStage stage_;
+  uint64_t start_time_;
 };
 
 struct ProfilerData {
@@ -185,7 +214,7 @@ struct ProfilerModuleInfo {
 };
 using ProfilerModuleInfoPtr = std::shared_ptr<ProfilerModuleInfo>;
 
-class BACKEND_EXPORT ProfilerAnalyzer {
+class COMMON_EXPORT ProfilerAnalyzer {
  public:
   static ProfilerAnalyzer &GetInstance() noexcept;
 
@@ -218,6 +247,7 @@ class BACKEND_EXPORT ProfilerAnalyzer {
                                const ProfilerDataPtr &data);
   void AnalyzeOpSummaryData(mindspore::HashMap<std::string, ProfilerStatisticsInfoPtr> *const op_infos,
                             const ProfilerDataPtr &data);
+  void AddPythonSummaryData();
 
   // Dump data.
   void DumpJsonData();
@@ -233,7 +263,9 @@ class BACKEND_EXPORT ProfilerAnalyzer {
   // The relevant members of step.
   size_t step_{0};
   uint64_t step_time_{0};
-  uint64_t summary_total_time_{0};
+  size_t step_stack_{0};
+  uint64_t step_start_time_{0};
+  uint64_t module_total_time_{0};
   std::vector<ProfilerDataPtr> data_;
   std::mutex data_mutex_;
   nlohmann::json json_infos_;

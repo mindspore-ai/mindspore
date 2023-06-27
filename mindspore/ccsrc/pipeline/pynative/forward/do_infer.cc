@@ -19,6 +19,7 @@
 #include "frontend/operator/ops_front_infer_function.h"
 #include "backend/operator/ops_backend_infer_function.h"
 #include "pybind_api/gil_scoped_long_running.h"
+#include "include/common/profiler.h"
 
 namespace mindspore {
 namespace pynative {
@@ -130,6 +131,8 @@ void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) cons
 }
 
 void InferOperation::DoInfer(const FrontendOpRunInfoPtr &op_run_info) {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeInfer,
+                                     op_run_info->base_op_run_info.op_name, true);
   SetInputAbstract(op_run_info);
   InferOutputAbstract(op_run_info);
 }

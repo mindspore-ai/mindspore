@@ -31,7 +31,7 @@
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "acl/acl_rt.h"
 #include "plugin/device/ascend/hal/device/kernel_adjust.h"
-#include "runtime/profiler/profiler.h"
+#include "include/common/profiler.h"
 
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"

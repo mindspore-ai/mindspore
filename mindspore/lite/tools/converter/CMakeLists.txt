@@ -20,6 +20,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
     set(CCSRC_SRC ${CCSRC_SRC}
         ${CCSRC_DIR}/ps/ps_context.cc
         ${CCSRC_DIR}/common/thread_pool.cc
+        ${CCSRC_DIR}/common/profiler.cc
         ${CCSRC_DIR}/plugin/device/cpu/kernel/cpu_kernel.cc
         ${CCSRC_DIR}/distributed/cluster/dummy_cluster_context.cc
         ${CCSRC_DIR}/kernel/common_utils.cc
@@ -35,7 +36,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CCSRC_DIR}/runtime/device/kernel_runtime_manager.cc
         ${CCSRC_DIR}/runtime/hardware/device_context_manager.cc
         ${CCSRC_DIR}/runtime/device/convert_tensor_utils.cc
-        ${CCSRC_DIR}/runtime/profiler/profiler.cc
         ${CCSRC_DIR}/utils/comm_manager.cc
         ${CCSRC_DIR}/backend/common/session/exec_order_builder.cc
         ${CCSRC_DIR}/backend/common/session/kernel_graph.cc

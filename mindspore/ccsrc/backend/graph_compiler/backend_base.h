@@ -30,7 +30,7 @@
 #include "runtime/hardware/device_context.h"
 #include "backend/graph_compiler/segment_runner.h"
 #include "runtime/graph_scheduler/actor/actor_set.h"
-#include "runtime/profiler/profiler.h"
+#include "include/common/profiler.h"
 
 namespace mindspore {
 namespace compile {

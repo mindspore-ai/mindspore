@@ -17,9 +17,13 @@
 #include "pipeline/pynative/grad/bprop_task.h"
 #include "utils/log_adapter.h"
 #include "pybind_api/gil_scoped_long_running.h"
+#include "include/common/profiler.h"
+
 namespace mindspore {
 namespace pynative {
 void BpropTask::Run() {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeBpropTask,
+                                     std::string(), false);
   MS_LOG(DEBUG) << "run construct bprop task";
   run_task_();
   MS_LOG(DEBUG) << "finish construct bprop task";

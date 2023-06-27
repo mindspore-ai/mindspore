@@ -1137,6 +1137,8 @@ void MindRTBackend::RunOp(const session::BackendOpRunInfoPtr &op_run_info, Vecto
     pynative::OpCompiler::GetInstance().Compile(op_run_info, &single_op_cache_hit, device_name_, device_id_);
   MS_EXCEPTION_IF_NULL(op_compiler_info);
   if (runtime::OpExecutor::GetInstance().ActorInQueue(op_compiler_info->graph_id_)) {
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kWaitTaskFinish,
+                                       op_run_info->base_op_run_info.op_name, true);
     runtime::OpExecutor::GetInstance().Wait();
   }
 

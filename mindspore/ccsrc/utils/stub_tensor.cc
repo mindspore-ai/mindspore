@@ -17,6 +17,7 @@
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/stub_tensor.h"
 #include "pybind_api/gil_scoped_long_running.h"
+#include "include/common/profiler.h"
 
 namespace mindspore {
 namespace stub {
@@ -96,6 +97,7 @@ void StubNode::SetException(const std::exception_ptr &e_ptr) {
 }
 
 AbstractBasePtr StubNode::WaitAbstract() {
+  runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kWaitPipeline);
   // cppcheck-suppress unreadVariable
   GilReleaseWithCheck gil_release;
   std::unique_lock<std::mutex> lock(mutex_);
@@ -109,6 +111,7 @@ AbstractBasePtr StubNode::WaitAbstract() {
 }
 
 ValuePtr StubNode::WaitValue() {
+  runtime::ProfilerStageRecorder recorder(runtime::ProfilerStage::kWaitPipeline);
   // cppcheck-suppress unreadVariable
   GilReleaseWithCheck gil_release;
   std::unique_lock<std::mutex> lock(mutex_);
