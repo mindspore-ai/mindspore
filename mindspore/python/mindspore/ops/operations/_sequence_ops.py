@@ -877,6 +877,7 @@ class SequenceConcat(Primitive):
     @prim_attr_register
     def __init__(self, axis=0):
         """Initialize SequenceConcat"""
+        super(SequenceConcat, self).__init__("axis")
         self.axis = axis
         validator.check_value_type("axis", axis, [int], self.name)
 
