@@ -31,6 +31,7 @@ def get_x_and_y(tensor):
 
 
 def to_2channel(real, imag, dtype=None):
+    """combine real and image data to a complex number"""
     if dtype is not None and dtype == mindspore.complex64:
         return to_complex(real, imag)
     if dtype is not None and (dtype != real.dtype or dtype != imag.dtype):
