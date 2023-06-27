@@ -282,11 +282,11 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   MS_EXCEPTION_IF_NULL(device_context);
   MS_LOG(INFO) << "Status record: start compile graph.";
   auto nodes = segment->nodes_;
-  auto device_terget = device_context->GetDeviceType();
+  auto device_target = device_context->GetDeviceType();
   // Generate kernel graph.
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageConstructKernelGraph, 1, 0, 0);
   KernelGraphPtr graph =
-    session_->ConstructKernelGraph(nodes, outputs, device_terget, true, IsEnableZeroCopy(run_in_pynative));
+    session_->ConstructKernelGraph(nodes, outputs, device_target, true, IsEnableZeroCopy(run_in_pynative));
   (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageConstructKernelGraph, 1, 0, 1);
   MS_EXCEPTION_IF_NULL(graph);
   SetRunGraphBySingleOpFlag(graph);
@@ -303,6 +303,15 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   if (manager) {
     manager->AddFuncGraph(graph);
     graph->set_manager(manager);
+  }
+  if (MsContext::GetInstance()->backend_policy() == "ge" && device_target == device::DeviceType::kAscend) {
+    MS_EXCEPTION_IF_NULL(device_context->graph_executor_);
+    if (!device_context->graph_executor_->CompileGraph(graph, {})) {
+      MS_LOG(EXCEPTION) << "Compile graph failed: " << graph->graph_id();
+    }
+    graph->CacheGraphOutputToFrontNodeWithIndex({graph->output()}, outputs);
+    graph->set_front_outputs(outputs);
+    return graph->graph_id();
   }
   session_->SetInputNodeUsage(graph, manager);
   graph->SetOptimizerFlag();
@@ -349,9 +358,9 @@ GraphId GraphCompiler::CompileDynamicGraph(const GraphSegmentPtr &segment, const
   MS_EXCEPTION_IF_NULL(device_context);
   MS_LOG(INFO) << "Status record: start compile graph.";
   auto nodes = segment->nodes_;
-  auto device_terget = device_context->GetDeviceType();
+  auto device_target = device_context->GetDeviceType();
   // Generate kernel graph.
-  KernelGraphPtr graph = session_->ConstructKernelGraph(nodes, outputs, device_terget, true, false);
+  KernelGraphPtr graph = session_->ConstructKernelGraph(nodes, outputs, device_target, true, false);
   MS_EXCEPTION_IF_NULL(graph);
 
   // Dynamic shape or dynamic graph structure flag.
