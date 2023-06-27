@@ -185,8 +185,8 @@ void UpdateOutputStubNodeValue(const FrontendOpRunInfoPtr &op_run_info, const Va
 }
 
 BackendOpRunInfoPtr CreateBackendOpRunInfo(const FrontendOpRunInfoPtr &op_run_info) {
-  auto backend_op_run_info =
-    std::make_shared<BackendOpRunInfo>(op_run_info->base_op_run_info, op_run_info->op_grad_info->op_prim, true, false);
+  auto backend_op_run_info = std::make_shared<BackendOpRunInfo>(
+    op_run_info->base_op_run_info, std::make_shared<Primitive>(*op_run_info->op_grad_info->op_prim), true, false);
   backend_op_run_info->output_tensors = op_run_info->output_tensors;
   // Need to update promise in backend task.
   backend_op_run_info->device_sync_promises = std::move(op_run_info->device_sync_promises);
