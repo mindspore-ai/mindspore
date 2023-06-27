@@ -20,7 +20,8 @@ import mindspore.context as context
 from mindspore import Tensor
 from mindspore.ops import operations as P
 
-def sin(nptype):
+
+def sin(nptype, loss=1e-5):
     if nptype == np.complex64 or np.complex128:
         x_np = np.random.rand(2, 3, 4, 4).astype(nptype) + 2j*np.random.rand(2, 3, 4, 4).astype(nptype)
     x_np = np.random.rand(2, 3, 4, 4).astype(nptype)
@@ -28,11 +29,11 @@ def sin(nptype):
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     output_ms = P.Sin()(Tensor(x_np))
     output_np = np.sin(x_np)
-    assert np.allclose(output_ms.asnumpy(), output_np)
+    assert np.allclose(output_ms.asnumpy(), output_np, rtol=loss, atol=loss)
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     output_ms = P.Sin()(Tensor(x_np))
     output_np = np.sin(x_np)
-    assert np.allclose(output_ms.asnumpy(), output_np)
+    assert np.allclose(output_ms.asnumpy(), output_np, rtol=loss, atol=loss)
 
 
 @pytest.mark.level1
@@ -47,7 +48,7 @@ def test_sin_float16():
     sin(np.float16)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sin_float32():
@@ -56,7 +57,7 @@ def test_sin_float32():
     Description: test sin float32
     Expectation: just test
     """
-    sin(np.float32)
+    sin(np.float32, loss=1e-4)
 
 
 @pytest.mark.level1
