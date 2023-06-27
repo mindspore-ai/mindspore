@@ -8,7 +8,7 @@ mindspore.nn.optim_ex.Adam
     更新公式如下：
 
     .. math::
-       \begin{aligned}
+        \begin{aligned}
             &\rule{110mm}{0.4pt}                                                                 \\
             &\textbf{input}      : \gamma \text{ (lr)}, \beta_1, \beta_2
                 \text{ (betas)},\theta_0 \text{ (params)},f(\theta) \text{ (objective)}          \\
@@ -18,7 +18,6 @@ mindspore.nn.optim_ex.Adam
                 v_0\leftarrow 0 \text{ (second moment)},\: \widehat{v_0}^{max}\leftarrow 0\\[-1.ex]
             &\rule{110mm}{0.4pt}                                                                 \\
             &\textbf{for} \: t=1 \: \textbf{to} \: \ldots \: \textbf{do}                         \\
-
             &\hspace{5mm}\textbf{if} \: \textit{maximize}:                                       \\
             &\hspace{10mm}g_t           \leftarrow   -\nabla_{\theta} f_t (\theta_{t-1})         \\
             &\hspace{5mm}\textbf{else}                                                           \\
@@ -40,7 +39,7 @@ mindspore.nn.optim_ex.Adam
             &\rule{110mm}{0.4pt}                                                          \\[-1.ex]
             &\bf{return} \:  \theta_t                                                     \\[-1.ex]
             &\rule{110mm}{0.4pt}                                                          \\[-1.ex]
-       \end{aligned}
+        \end{aligned}
 
     参数：
         - **params** (Union[list[Parameter], list[dict]]) - 网络参数的列表或指定了参数组的列表。

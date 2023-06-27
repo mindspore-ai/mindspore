@@ -1205,14 +1205,14 @@ def binary_cross_entropy_with_logits(logits, label, weight, pos_weight, reductio
 
 
 def dropout(input, p=0.5, training=True, seed=None):
-    """
+    r"""
     During training, randomly zeroes some of the elements of the input tensor
     with probability `p` from a Bernoulli distribution. It plays the role of reducing neuron correlation and
     avoid overfitting. And the return will be multiplied by :math:`\frac{1}{1-p}` during training.
     During the reasoning, this operation returns the same Tensor as the `x`.
 
     Args:
-        input (Tensor): TThe input Tensor of shape :math:`(*, N)`, with data type of float16, float32 or float64.
+        input (Tensor): The input Tensor of shape :math:`(*, N)`, with data type of float16, float32 or float64.
         p (float, optional): The dropping rate, between 0 and 1, e.g. p = 0.1,
             means dropping out 10% of input units. Default: ``0.5`` .
         training (bool): Apply dropout if is True. Default: ``True``.

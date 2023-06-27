@@ -50,6 +50,6 @@ mindspore.ops.norm
         - **ValueError** - `dim` 的两个元素在标准化过后取值相同。
         - **ValueError** - `dim` 的任意元素超出索引。
 
-    ..note::
+    .. note::
         - 当前暂不支持复数。
         - 当ord为 `2` , `-2` or `nuc` 时，不支持在 ``Ascend`` 平台上运行。
