@@ -446,7 +446,6 @@ Status ShardReader::ConvertLabelToJson(const std::vector<std::vector<std::string
     }
   }
 
-  fs->close();
   return Status::OK();
 }
 
@@ -468,7 +467,8 @@ Status ShardReader::ConvertJsonValue(const std::vector<std::string> &label, cons
   }
   return Status::OK();
 }
-Status ShardReader::ReadAllRowsInShard(int shard_id, const std::string &sql, const std::vector<std::string> &columns,
+Status ShardReader::ReadAllRowsInShard(int shard_id, const int32_t &consumer_id, const std::string &sql,
+                                       const std::vector<std::string> &columns,
                                        std::shared_ptr<std::vector<std::vector<std::vector<uint64_t>>>> offset_ptr,
                                        std::shared_ptr<std::vector<std::vector<json>>> col_val_ptr) {
   auto db = database_paths_[shard_id];
@@ -486,29 +486,9 @@ Status ShardReader::ReadAllRowsInShard(int shard_id, const std::string &sql, con
   MS_LOG(DEBUG) << "Succeed to get " << labels.size() << " records from shard " << std::to_string(shard_id)
                 << " index.";
 
-  std::string file_name = file_paths_[shard_id];
-  auto realpath = FileUtils::GetRealPath(file_name.c_str());
-  if (!realpath.has_value()) {
-    sqlite3_free(errmsg);
-    sqlite3_close(db);
-    RETURN_STATUS_UNEXPECTED_MR("Invalid file, failed to get the realpath of mindrecord files. Please check file: " +
-                                file_name);
-  }
-
-  std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
-  if (!all_in_index_) {
-    fs->open(realpath.value(), std::ios::in | std::ios::binary);
-    if (!fs->good()) {
-      sqlite3_free(errmsg);
-      sqlite3_close(db);
-      RETURN_STATUS_UNEXPECTED_MR(
-        "Invalid file, failed to open files for reading mindrecord files. Please check file path, permission and open "
-        "files limit(ulimit -a): " +
-        file_name);
-    }
-  }
   sqlite3_free(errmsg);
-  return ConvertLabelToJson(labels, fs, offset_ptr, shard_id, columns, col_val_ptr);
+  return ConvertLabelToJson(labels, file_streams_random_[consumer_id][shard_id], offset_ptr, shard_id, columns,
+                            col_val_ptr);
 }
 
 Status ShardReader::GetAllClasses(const std::string &category_field,
@@ -585,7 +565,8 @@ Status ShardReader::ReadAllRowGroup(const std::vector<std::string> &columns,
 
   std::vector<std::thread> thread_read_db = std::vector<std::thread>(shard_count_);
   for (int x = 0; x < shard_count_; x++) {
-    thread_read_db[x] = std::thread(&ShardReader::ReadAllRowsInShard, this, x, sql, columns, offset_ptr, col_val_ptr);
+    thread_read_db[x] =
+      std::thread(&ShardReader::ReadAllRowsInShard, this, x, 0, sql, columns, offset_ptr, col_val_ptr);
   }
 
   for (int x = 0; x < shard_count_; x++) {
@@ -596,7 +577,7 @@ Status ShardReader::ReadAllRowGroup(const std::vector<std::string> &columns,
 }
 
 Status ShardReader::ReadRowGroupByShardIDAndSampleID(const std::vector<std::string> &columns, const uint32_t &shard_id,
-                                                     const uint32_t &sample_id,
+                                                     const int32_t &consumer_id, const uint32_t &sample_id,
                                                      std::shared_ptr<ROW_GROUPS> *row_group_ptr) {
   RETURN_UNEXPECTED_IF_NULL_MR(row_group_ptr);
   std::string fields = "ROW_GROUP_ID, PAGE_OFFSET_BLOB, PAGE_OFFSET_BLOB_END";
@@ -617,7 +598,7 @@ Status ShardReader::ReadRowGroupByShardIDAndSampleID(const std::vector<std::stri
 
   std::string sql = "SELECT " + fields + " FROM INDEXES WHERE ROW_ID = " + std::to_string(sample_id);
 
-  RETURN_IF_NOT_OK_MR(ReadAllRowsInShard(shard_id, sql, columns, offset_ptr, col_val_ptr));
+  RETURN_IF_NOT_OK_MR(ReadAllRowsInShard(shard_id, consumer_id, sql, columns, offset_ptr, col_val_ptr));
   *row_group_ptr = std::make_shared<ROW_GROUPS>(std::move(*offset_ptr), std::move(*col_val_ptr));
   return Status::OK();
 }
@@ -1371,7 +1352,7 @@ Status ShardReader::ConsumerOneTask(int64_t task_id, uint32_t consumer_id,
     // read the meta from index
     std::shared_ptr<ROW_GROUPS> row_group_ptr;
     RETURN_IF_NOT_OK_MR(
-      ReadRowGroupByShardIDAndSampleID(selected_columns_, shard_id, sample_id_in_shard, &row_group_ptr));
+      ReadRowGroupByShardIDAndSampleID(selected_columns_, shard_id, consumer_id, sample_id_in_shard, &row_group_ptr));
     auto &offsets = std::get<0>(*row_group_ptr);
     auto &local_columns = std::get<1>(*row_group_ptr);
 
