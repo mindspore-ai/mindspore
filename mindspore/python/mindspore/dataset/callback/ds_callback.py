@@ -54,8 +54,8 @@ class DSCallback:
         >>> # Start dataset pipeline
         >>> iterator = dataset.create_tuple_iterator(num_epochs=2)
         >>> for i in range(2):
-        >>>     for d in iterator:
-        >>>         pass
+        ...     for d in iterator:
+        ...         pass
         callback: start dataset pipeline
         callback: epoch begin, we are in epoch 1
         callback: epoch end, we are in epoch 1
