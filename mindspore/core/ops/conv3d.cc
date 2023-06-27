@@ -392,50 +392,6 @@ class Conv3DInfer : public abstract::OpInferBase {
         *w_out = 1 + (x_w + pad_left + pad_right - kernel_w - (kernel_w - 1) * (dilation_w - 1)) / stride_w;
       }
     }
-
-    CheckPadList(kernel_size, dilation, pad_list);
-  }
-
-  void CheckPadList(const std::vector<int64_t> &kernel_size, const std::vector<int64_t> &dilation,
-                    std::vector<int64_t> *pad_list) const {
-    int64_t kernel_d = kernel_size[kIndex0];
-    int64_t kernel_h = kernel_size[kIndex1];
-    int64_t kernel_w = kernel_size[kIndex2];
-    int64_t dilation_d = dilation[kIndex0];
-    int64_t dilation_h = dilation[kIndex1];
-    int64_t dilation_w = dilation[kIndex2];
-    int64_t pad_head = pad_list->at(kIndex0);
-    int64_t pad_tail = pad_list->at(kIndex1);
-    int64_t pad_top = pad_list->at(kIndex2);
-    int64_t pad_bottom = pad_list->at(kIndex3);
-    int64_t pad_left = pad_list->at(kIndex4);
-    int64_t pad_right = pad_list->at(kIndex5);
-    int64_t filter_d = (kernel_d - 1) * dilation_d + 1;
-    int64_t filter_h = (kernel_h - 1) * dilation_h + 1;
-    int64_t filter_w = (kernel_w - 1) * dilation_w + 1;
-    if (pad_head < 0 || pad_head >= filter_d) {
-      MS_EXCEPTION(ValueError) << "For 'Conv3D', pad head must be in range [0, " << filter_d << "), but got "
-                               << pad_head;
-    }
-    if (pad_tail < 0 || pad_tail >= filter_d) {
-      MS_EXCEPTION(ValueError) << "For 'Conv3D', pad tail must be in range [0, " << filter_d << "), but got "
-                               << pad_tail;
-    }
-    if (pad_top < 0 || pad_top >= filter_h) {
-      MS_EXCEPTION(ValueError) << "For 'Conv3D', pad top must be in range [0, " << filter_h << "), but got " << pad_top;
-    }
-    if (pad_bottom < 0 || pad_bottom >= filter_h) {
-      MS_EXCEPTION(ValueError) << "For 'Conv3D', pad bottom must be in range [0, " << filter_h << "), but got "
-                               << pad_bottom;
-    }
-    if (pad_left < 0 || pad_left >= filter_w) {
-      MS_EXCEPTION(ValueError) << "For 'Conv3D', pad left must be in range [0, " << filter_w << "), but got "
-                               << pad_left;
-    }
-    if (pad_right < 0 || pad_right >= filter_w) {
-      MS_EXCEPTION(ValueError) << "For 'Conv3D', pad right must be in range [0, " << filter_w << "), but got "
-                               << pad_right;
-    }
   }
 
   int64_t ConvOutputLength(const int64_t input_length, const int64_t kernel_size, const int64_t stride_size,
