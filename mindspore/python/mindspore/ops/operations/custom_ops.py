@@ -460,6 +460,7 @@ class Custom(ops.PrimitiveWithInfer):
         self._func_compile_attrs = {}
         self._is_ms_kernel = False
 
+        self._check_platform()
         self._check_func()
         self._update_func_info(reg_info)
         self.add_prim_attr("func_name", self.func_name)
@@ -586,6 +587,10 @@ class Custom(ops.PrimitiveWithInfer):
             if 'function ' + func not in jl:
                 raise Exception("{}, function {} is not found in source file {}!"
                                 .format(self.log_prefix, func, source_file))
+
+    def _check_platform(self):
+        if platform.system() != 'Linux':
+            raise Exception("Custom op only supported on Linux platform currently.")
 
     def _check_func(self):
         """Check the validity of func_type and type of func"""
