@@ -186,7 +186,8 @@ std::vector<KernelAttr> CSRSparseMatrixToSparseTensorCpuKernelMod::GetOpSupport(
     ADD_KERNEL(Int64, Int64, Int64, Int64, Float32, Int64, Float32, Int64),
     ADD_KERNEL(Int64, Int64, Int64, Int64, Float64, Int64, Float64, Int64),
     ADD_KERNEL(Int64, Int64, Int64, Int64, Complex64, Int64, Complex64, Int64),
-    ADD_KERNEL(Int64, Int64, Int64, Int64, Complex128, Int64, Complex128, Int64)};
+    ADD_KERNEL(Int64, Int64, Int64, Int64, Complex128, Int64, Complex128, Int64),
+    ADD_KERNEL(Int64, Int64, Int64, Int64, Int64, Int64, Float64, Int64)};
 
   return kernel_attr_list;
 }
