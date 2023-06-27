@@ -53,7 +53,7 @@ const char kStepParallelGraph[] = "step_parallel";
 const char kOutput[] = "output";
 const char kPynativeGraphId[] = "graph_id";
 const char kActorInfo[] = "actor_info";
-const char kGraphCompile[] = "GraphCompile";
+const char kCompiler[] = "Compiler";
 const char kParse[] = "parse";
 const char kSymbolResolve[] = "symbol_resolve";
 const char kSetMixedPrecisionFlag[] = "set_mixed_precision_flag";
@@ -79,8 +79,6 @@ const char kAbstractAnalyze[] = "AbstractAnalyze";
 const char kProgramSpecialize[] = "ProgramSpecialize";
 const char kCreateBackend[] = "create_backend";
 const char kPipelineClean[] = "pipeline_clean";
-
-class InferenceResource;
 
 using BuiltInTypeMap = mindspore::HashMap<int64_t, mindspore::HashMap<std::string, Any>>;
 

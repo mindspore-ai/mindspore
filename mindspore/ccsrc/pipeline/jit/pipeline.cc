@@ -818,7 +818,7 @@ void GraphExecutorPy::ParallelPostProcess(const std::string &phase, bool use_com
 void GraphExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
   MS_LOG(INFO) << "Clean compile resource start";
   ProcessStatus::GetInstance().RecordStart(kPipelineClean);
-  (void)profiler::CollectHostInfo(kGraphCompile, kPipelineClean, "", 1, 0, 0);
+  (void)profiler::CollectHostInfo(kCompiler, kPipelineClean, kPipelineClean, 0, 0, 0);
   abstract::AnalysisContext::ClearContext();
   ClearCurConvertInput();
   ad::PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();
@@ -827,7 +827,7 @@ void GraphExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
   ReclaimOptimizer();
   resource->Clean();
   FuncGraphLoopBreaker::Inst().CleanMetaFuncGraphCache();
-  (void)profiler::CollectHostInfo(kGraphCompile, kPipelineClean, "", 1, 0, 1);
+  (void)profiler::CollectHostInfo(kCompiler, kPipelineClean, kPipelineClean, 0, 0, 1);
   ProcessStatus::GetInstance().RecordEnd();
   expander::ClearAllCache();
   MS_LOG(INFO) << "Clean compile resource end";
@@ -876,7 +876,7 @@ bool GraphExecutorPy::CompileInner(const py::object &source, const py::tuple &ar
   auto actions = GetPipeline(resource, phase_, use_vm);
   std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, FilterActions(actions, phase_));
 
-  (void)profiler::CollectHostInfo(kGraphCompile, kCreateBackend, "", 1, 0, 0);
+  (void)profiler::CollectHostInfo(kCompiler, kCreateBackend, kCreateBackend, 0, 0, 0);
   if (pip->NeedCreateBackend()) {
     // Create backend asynchronously.
     resource->SetBackendAsync([]() {
@@ -888,7 +888,7 @@ bool GraphExecutorPy::CompileInner(const py::object &source, const py::tuple &ar
       return backend;
     });
   }
-  (void)profiler::CollectHostInfo(kGraphCompile, kCreateBackend, "", 1, 0, 1);
+  (void)profiler::CollectHostInfo(kCompiler, kCreateBackend, kCreateBackend, 0, 0, 1);
 
   // Get the parameters items and add the value to args_abs.
   abstract::AbstractBasePtrList args_abs;
@@ -1019,12 +1019,12 @@ bool GraphExecutorPy::Compile(const py::object &source, const py::tuple &args, c
         MS_LOG(EXCEPTION) << "Nested execution during JIT execution in " << GetObjDesc(source) << " is not supported "
                           << "when " << obj_desc_ << " compile and execute.";
       }
-      ProcessStatus::GetInstance().RecordStart(kGraphCompile);
+      ProcessStatus::GetInstance().RecordStart(kCompiler);
       std::map<std::string, std::string> custom_info;
       custom_info["phase"] = py::cast<std::string>(phase);
-      (void)profiler::CollectHostInfo(kGraphCompile, kGraphCompile, "", 1, 0, 0, custom_info);
+      (void)profiler::CollectHostInfo(kCompiler, kCompiler, kCompiler, 1, 0, 0, custom_info);
       res = CompileInner(source, args, kwargs, phase, use_vm);
-      (void)profiler::CollectHostInfo(kGraphCompile, kGraphCompile, "", 1, 0, 1, custom_info);
+      (void)profiler::CollectHostInfo(kCompiler, kCompiler, kCompiler, 1, 0, 1, custom_info);
       ProcessStatus::GetInstance().RecordEnd();
       ProcessStatus::GetInstance().Print();
     },
@@ -1204,14 +1204,14 @@ void Pipeline::Run() {
       dump_time.Record(action.first, GetTime(), true);
 #endif
       ProcessStatus::GetInstance().RecordStart(action.first);
-      (void)profiler::CollectHostInfo(kGraphCompile, action.first, "", 1, 0, 0);
+      (void)profiler::CollectHostInfo(kCompiler, action.first, action.first, 0, 0, 0);
       bool result = true;
       ProfileExecute(MsProfile::GetProfile()->Step(action.first), [&result, &action, this]() {
         MS_LOG(INFO) << "Status record: start " << action.first << " action.";
         result = action.second(resource_);
         MS_LOG(INFO) << "Status record: end " << action.first << " action.";
       });
-      (void)profiler::CollectHostInfo(kGraphCompile, action.first, "", 1, 0, 1);
+      (void)profiler::CollectHostInfo(kCompiler, action.first, action.first, 0, 0, 1);
       ProcessStatus::GetInstance().RecordEnd();
       if (action.first == "task_emit") {
         SetLoopCount(resource_);
