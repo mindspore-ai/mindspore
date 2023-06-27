@@ -20,7 +20,6 @@ All these class are pre-defined for users for basic debugging purpose.
 import collections
 import numpy as np
 from PIL import Image
-from mindspore import log as logger
 from mindspore.dataset.debug.debug_hook import DebugHook
 
 
@@ -34,17 +33,18 @@ class PrintMetaDataHook(DebugHook):
     def compute(self, *args):
         for col_idx, col in enumerate(*args):
             log_message = "Column {}. ".format(col_idx)
-            # log type
-            log_message += "The type is [{}].".format(type(col))
 
             # log shape/size
             if isinstance(col, np.ndarray):
+                log_message += "The dtype is [{}].".format(col.dtype)
                 log_message += " The shape is [{}].".format(col.shape)
             elif isinstance(col, Image.Image):
+                log_message += "The type is [{}].".format(type(col))
                 log_message += " The shape is [{}].".format(col.size)
             elif isinstance(col, collections.abc.Sized):
+                log_message += "The type is [{}].".format(type(col))
                 log_message += " The size is [{}].".format(len(col))
-            logger.info(log_message)
+            print(log_message, flush=True)
         return args
 
 
@@ -63,5 +63,5 @@ class PrintDataHook(DebugHook):
                 log_message += "The data is [{}].".format(data)
             else:
                 log_message += "The data is [{}].".format(col)
-            logger.info(log_message)
+            print(log_message, flush=True)
         return args

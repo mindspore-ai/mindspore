@@ -18,7 +18,6 @@ class DebugHook is not exposed to users as an external API.
 """
 
 from abc import ABC, abstractmethod
-from mindspore import log as logger
 
 
 class DebugHook(ABC):
@@ -56,14 +55,20 @@ class DebugHook(ABC):
     """
     def __init__(self, prev_op_name=None):
         self.prev_op_name = prev_op_name
+        self.is_first_op = None
 
     def __call__(self, *args):
-        # log op name
-        if self.prev_op_name:
-            log_message = "Debugging the output of the operation [{}].".format(self.prev_op_name)
+        # If insert debug function into map, like [Decode(), debug_fun(), Resize],
+        # the debug_fun does not have self.prev_op_name, so skip the common print.
+        if not self.prev_op_name:
+            pass
         else:
-            log_message = "Debugging the input of the first operation."
-        logger.info(log_message)
+            # log op name
+            if self.is_first_op:
+                log_message = "[Dataset debugger] Print the [INPUT] of the operation [{}].".format(self.prev_op_name)
+            else:
+                log_message = "[Dataset debugger] Print the [OUTPUT] of the operation [{}].".format(self.prev_op_name)
+            print(log_message, flush=True)
 
         ######################## NOTE ########################
         # Add a breakpoint to the following line to inspect
@@ -84,7 +89,9 @@ class DebugHook(ABC):
         raise RuntimeError("compute() is not overridden in subclass of class DebugHook.")
 
     def set_previous_op_name(self, prev_op_name):
-        """
-        Set prev_op_name.
-        """
+        # Set prev_op_name.
         self.prev_op_name = prev_op_name
+
+    def set_is_first(self, is_first_op):
+        # Set op is the first in map.
+        self.is_first_op = is_first_op
