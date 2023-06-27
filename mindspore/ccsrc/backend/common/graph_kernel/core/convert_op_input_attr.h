@@ -59,7 +59,7 @@ class GraphKernelInputToAttrConverter : public opt::Pass {
  private:
   bool SetConstInputToAttr(const AnfNodePtr &graph_kernel_node) const;
   bool EliminateConstInput(const AnfNodePtr &graph_kernel_node) const;
-  bool Process(const FuncGraphPtr &func_graph);
+  bool Process(const FuncGraphPtr &func_graph) const;
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_CONVERT_OP_INPUT_ATTR_H_
