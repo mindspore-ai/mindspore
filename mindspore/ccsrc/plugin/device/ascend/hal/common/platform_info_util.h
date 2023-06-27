@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_RUNTIME_HARDWARE_ASCEND_PLATFORM_INFO_UTILS_H_
 #include <string>
 
-#include "common/util/platform_info.h"
+#include "external/platform/platform_info.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore::device::ascend {

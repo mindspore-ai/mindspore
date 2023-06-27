@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "common/util/platform_info.h"
-#include "common/util/platform_info_def.h"
+#include "external/platform/platform_info.h"
+#include "external/platform/platform_info_def.h"
 
 namespace fe {
 PlatformInfoManager &PlatformInfoManager::Instance() {

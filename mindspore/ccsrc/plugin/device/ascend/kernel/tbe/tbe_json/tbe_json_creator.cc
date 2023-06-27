@@ -20,7 +20,7 @@
 #include <utility>
 #include <algorithm>
 #include "mindspore/core/ops/framework_ops.h"
-#include "common/util/platform_info.h"
+#include "external/platform/platform_info.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_adapter.h"
