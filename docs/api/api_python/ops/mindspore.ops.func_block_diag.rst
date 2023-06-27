@@ -1,7 +1,7 @@
 mindspore.ops.block_diag
 =========================
 
-.. py:function:: mindspore.ops.block_diag(inputs)
+.. py:function:: mindspore.ops.block_diag(*inputs)
 
     基于输入Tensor创建块对角矩阵。
 

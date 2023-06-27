@@ -3,7 +3,7 @@ mindspore.ops.cdist
 
 .. py:function:: mindspore.ops.cdist(x1, x2, p=2.0)
 
-    计算两个Tensor每对列向量之间的p-norm距离。
+    计算两个Tensor每对行向量之间的p-norm距离。
 
     .. note::
         Ascend上支持的输入数据类型为[float16, float32]，CPU上支持的输入数据类型为[float16, float32]，GPU上支持的输入数据类型为[float32, float64]。
