@@ -113,6 +113,8 @@ MSTensorPtr create_tensor(DataType data_type, const std::vector<int64_t> &shape)
     MS_LOG(ERROR) << "create tensor failed.";
     return {};
   }
+  mindspore::Format data_format = NCHW;
+  tensor->SetFormat(data_format);
   return MSTensorPtr(tensor);
 }
 
