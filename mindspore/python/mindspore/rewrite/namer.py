@@ -130,7 +130,8 @@ class NodeNamer(Namer):
         if isinstance(node_or_name, Node):
             origin_name = node_or_name.get_name()
             if origin_name is None or not origin_name:
-                if node_or_name.get_node_type() in (NodeType.CallCell, NodeType.CallPrimitive, NodeType.CallFunction):
+                if node_or_name.get_node_type() in (NodeType.CallCell, NodeType.CallPrimitive, NodeType.CallFunction,
+                                                    NodeType.Tree):
                     if not isinstance(node_or_name, Node):
                         raise TypeError("node_or_name should be Node, got: ", type(node_or_name))
                     targets = node_or_name.get_targets()
@@ -143,6 +144,10 @@ class NodeNamer(Namer):
                     origin_name = node_or_name.get_instance().__name__
                 elif node_or_name.get_node_type() == NodeType.Input:
                     origin_name = "parameter"
+                elif node_or_name.get_node_type() == NodeType.Output:
+                    origin_name = "return"
+                elif node_or_name.get_node_type() == NodeType.MathOps:
+                    origin_name = "math_ops"
                 else:
                     raise RuntimeError("Node type unsupported:", node_or_name.get_node_type())
         elif isinstance(node_or_name, str):
