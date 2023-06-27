@@ -119,6 +119,9 @@ def adaptive_avg_pool2d(input, output_size):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> # case 1: output_size=(None, 2)
         >>> input = Tensor(np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
         ...                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
@@ -196,6 +199,9 @@ def adaptive_avg_pool3d(input, output_size):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> # case 1: output_size=(3, 3, 4)
         >>> output_size=(3, 3, 4)
         >>> input_val = np.random.randn(4, 3, 5, 6, 7)
@@ -282,6 +288,9 @@ def avg_pool1d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.random.randint(0, 10, [1, 3, 6]), mindspore.float32)
         >>> output = ops.avg_pool1d(input_x, kernel_size=6, stride=1)
         >>> print(output.shape)
@@ -430,6 +439,9 @@ def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), mindspore.float32)
         >>> output = ops.avg_pool2d(x, kernel_size=2, stride=1)
         >>> print(output)
@@ -535,6 +547,9 @@ def avg_pool3d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.arange(1 * 2 * 2 * 2 * 3).reshape((1, 2, 2, 2, 3)), mindspore.float16)
         >>> output = ops.avg_pool3d(input_x, kernel_size=2, stride=1)
         >>> print(output)
@@ -605,6 +620,9 @@ def adaptive_max_pool1d(input, output_size):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input = Tensor(np.random.randint(0, 10, [1, 3, 6]), mindspore.float32)
         >>> output = ops.adaptive_max_pool1d(input, output_size=2)
         >>> print(output.shape)
@@ -706,6 +724,9 @@ def adaptive_max_pool2d(input, output_size, return_indices=False):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> # case 1: output_size=(None, 2)
         >>> input = Tensor(np.array([[[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
         ...                             [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
@@ -847,6 +868,8 @@ def max_unpool1d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[2, 4, 6, 8]]).astype(np.float32))
         >>> indices = Tensor(np.array([[1, 3, 5, 7]]).astype(np.int64))
         >>> output = ops.max_unpool1d(x, indices, kernel_size =2, stride=2, padding=0)
@@ -968,6 +991,8 @@ def max_unpool2d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[[[0, 1], [8, 9]]]]).astype(np.float32))
         >>> indices = Tensor(np.array([[[[0, 1], [2, 3]]]]).astype(np.int64))
         >>> output = ops.max_unpool2d(x, indices, kernel_size=1, stride=1, padding=0)
@@ -1071,6 +1096,8 @@ def max_unpool3d(x, indices, kernel_size, stride=None, padding=0, output_size=No
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[[[[0, 1], [8, 9]]]]]).astype(np.float32))
         >>> indices= Tensor(np.array([[[[[0, 1], [2, 3]]]]]).astype(np.int64))
         >>> output = ops.max_unpool3d(x, indices, kernel_size=2, stride=1, padding=0)
@@ -1191,6 +1218,9 @@ def binary_cross_entropy_with_logits(logits, label, weight, pos_weight, reductio
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> logits = Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]), mindspore.float32)
         >>> label = Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]), mindspore.float32)
         >>> weight = Tensor(np.array([1.0, 1.0, 1.0]), mindspore.float32)
@@ -1231,6 +1261,8 @@ def dropout(input, p=0.5, training=True, seed=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> input = Tensor(((20, 16), (50, 50)), mindspore.float32)
         >>> output = ops.dropout(input, p=0.5)
         >>> print(output.shape)
@@ -1325,6 +1357,9 @@ def dropout1d(input, p=0.5, training=True):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.random.randn(4, 3), mindspore.float32)
         >>> output = ops.dropout1d(input_x, 0.5)
         >>> print(output.shape)
@@ -1397,6 +1432,9 @@ def dropout2d(input, p=0.5, training=True):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input = Tensor(np.ones([2, 1, 2, 3]), mindspore.float32)
         >>> output = ops.dropout2d(input, 0.5)
         >>> print(output.shape)
@@ -1446,6 +1484,9 @@ def dropout3d(input, p=0.5, training=True):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input = Tensor(np.ones([2, 1, 2, 1, 2]), mindspore.float32)
         >>> output = ops.dropout3d(input, 0.5)
         >>> print(output.shape)
@@ -1684,6 +1725,9 @@ def fractional_max_pool3d(input, kernel_size, output_size=None, output_ratio=Non
         ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
         ...            .reshape([1, 1, 2, 2, 4]), mstype.float32)
         >>> _random_samples = Tensor(np.array([0.7, 0.7, 0.7]).reshape([1, 1, 3]), mstype.float32)
@@ -1777,6 +1821,9 @@ def kl_div(logits, labels, reduction='mean'):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> logits = Tensor(np.array([0.2, 0.7, 0.1]), mindspore.float32)
         >>> labels = Tensor(np.array([0., 1., 0.]), mindspore.float32)
         >>> output = mindspore.ops.kl_div(logits, labels, 'mean')
@@ -2519,6 +2566,9 @@ def soft_margin_loss(input, target, reduction='mean'):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> logits = Tensor(np.array([[0.3, 0.7], [0.5, 0.5]]), mindspore.float32)
         >>> labels = Tensor(np.array([[-1, 1], [1, -1]]), mindspore.float32)
         >>> output = ops.soft_margin_loss(logits, labels)
@@ -2845,6 +2895,8 @@ def dense(input, weight, bias=None):
         ``Ascend`` ``GPU``  ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input = mindspore.Tensor([[-1., 1., 2.], [-3., -3., 1.]], mindspore.float32)
         >>> weight = mindspore.Tensor([[-2., -2., -2.], [0., -1., 0.]], mindspore.float32)
         >>> bias = mindspore.Tensor([0., 1.], mindspore.float32)
@@ -2906,6 +2958,8 @@ def bidense(input1, input2, weight, bias=None):
         ``Ascend`` ``GPU``  ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> input1 = mindspore.Tensor([[-1.1283, 1.2603],
         ...                            [0.0214, 0.7801],
         ...                            [-1.2086, 1.2849]], mindspore.float32)
@@ -3024,6 +3078,9 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> x = Tensor(np.ones((4, 3, 10, 10)), mstype.float32)
         >>> kh, kw = 3, 3
         >>> weight = Tensor(np.ones((5, 3, kh, kw)), mstype.float32)
@@ -3566,6 +3623,9 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> # Case 1: Indices labels
         >>> inputs = mindspore.Tensor(np.random.randn(3, 5), mindspore.float32)
         >>> target = mindspore.Tensor(np.array([1, 0, 4]), mindspore.int32)
@@ -3661,7 +3721,9 @@ def nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', l
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> inputs = mindspore.Tensor(np.random.randn(3, 5), mindspore.float32)
         >>> target = mindspore.Tensor(np.array([1, 0, 4]), mindspore.int32)
         >>> output = ops.nll_loss(inputs, target)
@@ -3782,6 +3844,8 @@ def l1_loss(input, target, reduction='mean'):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> x = ms.Tensor([[1, 2, 3], [4, 5, 6]], mstype.float32)
         >>> target = ms.Tensor([[6, 5, 4], [3, 2, 1]], mstype.float32)
         >>> output = ops.l1_loss(x, target, reduction="mean")
@@ -3848,6 +3912,9 @@ def smooth_l1_loss(input, target, beta=1.0, reduction='none'):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> labels = Tensor(np.array([1, 2, 2]), mindspore.float32)
         >>> output = ops.smooth_l1_loss(logits, labels)
@@ -4057,6 +4124,9 @@ def lrn(x, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5, norm_region="ACROSS_CH
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[[[0.1], [0.2]],
         ...                       [[0.3], [0.4]]]]), mindspore.float32)
         >>> output = ops.lrn(input_x)
@@ -4254,6 +4324,9 @@ def cosine_embedding_loss(input1, input2, target, margin=0.0, reduction="mean"):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> intput1 = Tensor(np.array([[0.3, 0.8], [0.4, 0.3]]), mindspore.float32)
         >>> intput2 = Tensor(np.array([[0.4, 1.2], [-0.4, -0.9]]), mindspore.float32)
         >>> target = Tensor(np.array([1, -1]), mindspore.int32)
@@ -4344,6 +4417,9 @@ def max_pool3d(x, kernel_size, stride=None, padding=0, dilation=1, ceil_mode=Fal
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.arange(2 * 1 * 2 * 2 * 2).reshape((2, 1, 2, 2, 2)), mindspore.float32)
         >>> output_tensor, argmax = ops.max_pool3d(x, kernel_size=2, stride=1, padding=1, return_indices=True)
         >>> print(output_tensor.shape)
@@ -4499,6 +4575,9 @@ def ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, reducti
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> log_probs = Tensor(np.array([[[0.3, 0.6, 0.6]],
         ...                              [[0.9, 0.4, 0.2]]]).astype(np.float32))
         >>> targets = Tensor(np.array([[0, 1]]), mstype.int32)
@@ -4772,6 +4851,9 @@ def ctc_greedy_decoder(inputs, sequence_length, merge_repeated=True):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> inputs = Tensor(np.array([[[0.6, 0.4, 0.2], [0.8, 0.6, 0.3]],
         ...                           [[0.0, 0.6, 0.0], [0.5, 0.4, 0.5]]]), mindspore.float32)
         >>> sequence_length = Tensor(np.array([2, 2]), mindspore.int32)
@@ -4996,6 +5078,9 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.arange(64).reshape((4, 4, 4)), mindspore.float32)
         >>> weight = Tensor(np.arange(8).reshape((2, 2, 2)), mindspore.float32)
         >>> bias = Tensor([-0.12345, 2.7683], ms.float32)
@@ -5126,6 +5211,9 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.ones([10, 32, 32, 32]), mindspore.float32)
         >>> weight = Tensor(np.ones([32, 32, 3, 3]), mindspore.float32)
         >>> output = ops.conv2d(x, weight)
@@ -5288,6 +5376,8 @@ def huber_loss(input, target, reduction='mean', delta=1.0):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor([1, 2, 10, 2], mindspore.float32)
         >>> target = Tensor([1, 5, 1, 20], mindspore.float32)
         >>> output = ops.huber_loss(x, target, reduction="mean", delta=2)
@@ -5347,6 +5437,9 @@ def adaptive_avg_pool1d(input, output_size):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input = Tensor(np.random.randint(0, 10, [1, 3, 6]), mindspore.float32)
         >>> output = ops.adaptive_avg_pool1d(input, output_size=2)
         >>> print(output.shape)
@@ -5443,6 +5536,8 @@ def batch_norm(input_x, running_mean, running_var, weight, bias, training=False,
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor([[1.0, 2.0], [3.0, 4.0]], mindspore.float32)
         >>> running_mean = Tensor([0.5, 1.5], mindspore.float32)
         >>> running_var = Tensor([0.1, 0.2], mindspore.float32)
@@ -5479,6 +5574,9 @@ def bias_add(input_x, bias):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.arange(6).reshape((2, 3)), mindspore.float32)
         >>> bias = Tensor(np.random.random(3).reshape((3)), mindspore.float32)
         >>> output = ops.bias_add(input_x, bias)
@@ -5544,6 +5642,9 @@ def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> logits = Tensor(np.array([0.2, 0.7, 0.1]), mindspore.float32)
         >>> labels = Tensor(np.array([0., 1., 0.]), mindspore.float32)
         >>> weight = Tensor(np.array([1, 2, 2]), mindspore.float32)
@@ -5678,6 +5779,9 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.ones([16, 3, 10, 32, 32]), mindspore.float16)
         >>> weight = Tensor(np.ones([32, 3, 4, 3, 3]), mindspore.float16)
         >>> output = ops.conv3d(x, weight, pad_mode="same", padding=0, stride=1, dilation=1, groups=1)
@@ -5945,6 +6049,9 @@ def multi_margin_loss(input, target, p=1, margin=1, weight=None, reduction='mean
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> inputs = Tensor(np.ones(shape=[3, 3]), mindspore.float32)
         >>> target = Tensor(np.array([1, 2, 1]), mindspore.int64)
         >>> weight = Tensor(np.array([1, 1, 1]), mindspore.float32)
@@ -6010,6 +6117,9 @@ def multilabel_margin_loss(input, target, reduction='mean'):
         ``Ascend`` ``GPU``
 
     Examples:
+       >>> import mindspore
+       >>> import numpy as np
+       >>> from mindspore import Tensor, ops
        >>> inputs = Tensor(np.array([[0.1, 0.2, 0.4, 0.8], [0.2, 0.3, 0.5, 0.7]]), mindspore.float32)
        >>> target = Tensor(np.array([[1, 2, 0, 3], [2, 3, -1, 1]]), mindspore.int32)
        >>> output = ops.multilabel_margin_loss(inputs, target)
@@ -6062,6 +6172,7 @@ def multilabel_soft_margin_loss(input, target, weight=None, reduction='mean'):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
         >>> input = Tensor([[0.3, 0.6, 0.6], [0.9, 0.4, 0.2]])
         >>> target = Tensor([[0.0, 0.0, 1.0], [0.0, 0.0, 1.0]])
         >>> loss = ops.multilabel_soft_margin_loss(input, target, reduction='mean')
@@ -6448,6 +6559,9 @@ def mse_loss(input, target, reduction='mean'):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> labels = Tensor(np.array([[1, 1, 1], [1, 2, 2]]), mindspore.float32)
         >>> output = ops.mse_loss(logits, labels, reduction='none')
@@ -6562,6 +6676,9 @@ def triplet_margin_loss(anchor, positive, negative, margin=1.0, p=2, eps=1e-06, 
         ``GPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> anchor = Tensor(np.array([[0.3, 0.7], [0.5, 0.5]]), mindspore.float32)
         >>> positive = Tensor(np.array([[0.4, 0.6], [0.4, 0.6]]), mindspore.float32)
         >>> negative = Tensor(np.array([[0.2, 0.9], [0.3, 0.7]]), mindspore.float32)
@@ -6971,6 +7088,9 @@ def max_pool2d(x, kernel_size, stride=None, padding=0, dilation=1, return_indice
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.arange(20 * 16 * 50 * 32).reshape((20, 16, 50, 32)), mindspore.float32)
         >>> output_tensor, argmax = ops.max_pool2d(x, kernel_size=(3, 2), stride=(2, 1), return_indices=True)
         >>> print(output_tensor.shape)
