@@ -2817,7 +2817,7 @@ static void MoveMicroMirrorOutCallFunc(const FuncGraphPtr &root) {
     if (curr_param_iter == sub_graph_parameters.end()) {
       MS_LOG(EXCEPTION) << "Cannot find param " << param_anf_node->DebugString() << " in current sub_graph";
     }
-    size_t curr_param_index = curr_param_iter - sub_graph_parameters.begin();
+    size_t curr_param_index = static_cast<size_t>(curr_param_iter - sub_graph_parameters.begin());
     AnfNodePtr call_nodes_common_param_input = nullptr;
     FuncGraphPtr call_nodes_func_graph = nullptr;
     for (const auto &node_pair : call_cnodes_map) {

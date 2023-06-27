@@ -125,7 +125,7 @@ void OverlapOptShardInPipeline(const FuncGraphPtr &graph) {
   auto depend_node = graph->NewCNode(depend_inputs);
   depend_node->set_abstract(first_receive_cnode->abstract()->Clone());
   depend_node->AddAttr("RecAllGatherDepend", MakeValue(True));
-  manager->Replace(first_receive_cnode, depend_node);
+  (void)manager->Replace(first_receive_cnode, depend_node);
 }
 }  // namespace parallel
 }  // namespace mindspore

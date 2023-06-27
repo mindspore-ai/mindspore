@@ -865,7 +865,7 @@ AnfNodePtr RefParameterToActualParameter(const AnfNodePtr &node) {
   if (curr_param_iter == sub_graph_parameters.end()) {
     MS_LOG(EXCEPTION) << "Cannot find param " << node_param_ptr->DebugString() << " in current sub_graph";
   }
-  size_t curr_param_index = curr_param_iter - sub_graph_parameters.begin();
+  size_t curr_param_index = static_cast<size_t>(curr_param_iter - sub_graph_parameters.begin());
   for (const auto &node_pair : call_cnodes_map) {
     if (!node_pair.first->first->isa<CNode>() || node_pair.first->second > 0) {
       continue;

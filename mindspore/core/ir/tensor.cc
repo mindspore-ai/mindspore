@@ -457,7 +457,6 @@ class TensorDataImpl : public TensorData {
         if (!success) {
           MS_LOG(WARNING) << "Tensor load data from file: " << file_path_ << " failed!";
         }
-
         if (!file->Close()) {
           MS_LOG(WARNING) << "Close tensor file: " << file_path_ << " failed!";
         }
@@ -1069,7 +1068,6 @@ bool Tensor::Offload(const std::string &file_path) {
   if (!file->Close()) {
     MS_LOG(WARNING) << "Close tensor file: " << file_path << " failed!";
   }
-
   if (!success) {
     MS_LOG(WARNING) << "Tensor write data to file: " << file_path << " failed!";
     return false;
