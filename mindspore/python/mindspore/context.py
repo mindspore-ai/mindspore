@@ -1090,8 +1090,6 @@ def set_context(**kwargs):
 
             - mem_Reuse: controls whether the memory reuse function is turned on. When set to ``True`` ,
               the memory reuse function is turned on. When set to ``False`` , the memory reuse function is turned off.
-              For more details, please refer to `Configure RDR and memory reuse
-              <https://www.mindspore.cn/tutorials/experts/en/master/debug/custom_debug.html>`_ .
 
         precompile_only (bool): Whether to only precompile the network. Default: ``False`` .
             If set to ``True`` , the network will only be compiled, not executed.
@@ -1119,7 +1117,7 @@ def set_context(**kwargs):
             If enable_graph_kernel is set to ``True`` , acceleration can be enabled.
             For details of graph kernel fusion, please check
             `Enabling Graph Kernel Fusion
-            <https://www.mindspore.cn/tutorials/experts/en/master/debug/graph_fusion_engine.html>`_.
+            <https://www.mindspore.cn/tutorials/experts/en/master/optimize/graph_fusion_engine.html>`_.
         graph_kernel_flags (str):
             Optimization options of graph kernel fusion, and the priority is higher when it conflicts
             with enable_graph_kernel. Only for experienced users.
