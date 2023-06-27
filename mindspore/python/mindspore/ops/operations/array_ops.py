@@ -7274,7 +7274,7 @@ class TensorScatterSub(Primitive):
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
           The rank must be at least 2.
         - **updates** (Tensor) - The tensor to update the input tensor, has the same type as `input_x`,
-          and the shape of `updates` should be equal to :math:indices.shape[:-1] + input\_x.shape[indices.shape[-1]:].
+          and the shape of `updates` should be equal to :math:`indices.shape[:-1] + input\_x.shape[indices.shape[-1]:]`.
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.

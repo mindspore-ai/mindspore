@@ -124,7 +124,7 @@ class MultiheadAttention(Cell):
 
     Raises:
         ValueError: If the init argument `embed_dim` is not divisible by `num_heads`.
-        ValueError: If the input argument `key_padding_mask` is not bool or floating types.
+        TypeError: If the input argument `key_padding_mask` is not bool or floating types.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

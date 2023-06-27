@@ -18,6 +18,7 @@ mindspore.ops.matrix_band_part
 
     异常：
         - **TypeError** - `x` 不是一个Tensor。
+        - **TypeError** - `x` 的类型无效。
         - **TypeError** - `lower` 不是一个数值或者Tensor。
         - **TypeError** - `upper` 不是一个数值或者Tensor。
         - **TypeError** - `lower` 的数据类型不是int32或int64。

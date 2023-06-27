@@ -3663,7 +3663,7 @@ def tensor_scatter_max(input_x, indices, updates):
           the corresponding `updates` will not be updated to self tensor.
         - On CPU, if some values of the `indices` are out of bound, raising an index error.
         - On Ascend, out of bound checking is not supported, if some values of the `indices` are out of bound,
-            unknown errors may be caused.
+          unknown errors may be caused.
 
     Args:
         input_x (Tensor): The input tensor. The dimension of `input_x` must be no less than indices.shape[-1].
@@ -3721,7 +3721,7 @@ def tensor_scatter_min(input_x, indices, updates):
           the corresponding `updates` will not be updated to self tensor.
         - On CPU, if some values of the `indices` are out of bound, raising an index error.
         - On Ascend, out of bound checking is not supported, if some values of the `indices` are out of bound,
-            unknown errors may be caused.
+          unknown errors may be caused.
 
     Args:
         input_x (Tensor): The input tensor. The dimension of `input_x` must be no less than indices.shape[-1].
@@ -4914,7 +4914,8 @@ def tensor_scatter_mul(input_x, indices, updates):
         input_x (Tensor): The input tensor. The dimension of `input_x` must be no less than indices.shape[-1].
         indices (Tensor): The index of input tensor whose data type is int32 or int64. The rank must be at least 2.
         updates (Tensor): The tensor to update the input tensor, has the same type as `input_x`,
-        :math:and the shape of `updates` should be equal to indices.shape[:-1] + input\_x.shape[indices.shape[-1]:].
+            and the shape of `updates` should be equal to
+            :math:`indices.shape[:-1] + input\_x.shape[indices.shape[-1]:]`.
 
     Returns:
         Tensor, has the same shape and type as `input_x`.
@@ -4967,7 +4968,7 @@ def tensor_scatter_div(input_x, indices, updates):
           the corresponding `updates` will not be updated to self tensor.
         - On CPU, if some values of the `indices` are out of bound, raising an index error.
         - On Ascend, out of bound checking is not supported, if some values of the `indices` are out of bound,
-            unknown errors may be caused.
+          unknown errors may be caused.
         - The operator can't handle division by 0 exceptions, so the user needs to make sure
           there is no 0 value in `updates`.
 

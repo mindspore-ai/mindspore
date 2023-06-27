@@ -11,7 +11,7 @@ mindspore.ops.RandpermV2
         这是一个实验性API，后续可能修改或删除。
 
     参数：
-        - **dtype** (mindspore.dtype, 可选) - 输出的类型。必须是以下类型之一：int32、int16、int8、uint8、int64、float64、float32、float16。默认值：``mstype.int64`` 。
+        - **dtype** (mindspore.dtype, 可选) - 输出的类型。必须是以下类型之一：int32、int16、int8、uint8、int64、float64、float32、float16。默认值： ``mstype.int64`` 。
 
 
     输入：
