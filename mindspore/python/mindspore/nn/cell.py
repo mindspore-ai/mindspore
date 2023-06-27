@@ -1282,10 +1282,8 @@ class Cell(Cell_):
         for _, param in self.parameters_and_names(expand=expand):
             yield param
 
+    # pylint: disable=missing-docstring
     def check_names_and_refresh_name(self):
-        """
-        Check the names of cell parameters and try to refresh.
-        """
         if not hasattr(self, "_params"):
             return
         all_name = [i.name for i in dict(self.parameters_and_names()).values()]
