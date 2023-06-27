@@ -75,8 +75,8 @@ static TensorInfo GetTensorInfo(const std::pair<OperatorInfoPtr, int> &op_info_p
   }
 }
 
-static void SeparateParamBorder(const std::vector<AnfNodePtr> &nodes, bool send, std::vector<AnfNodePtr> *params,
-                                std::vector<AnfNodePtr> *borders) {
+static void SeparateParamBorder(const std::vector<AnfNodePtr> &nodes, bool send, std::vector<AnfNodePtr> *const params,
+                                std::vector<AnfNodePtr> *const borders) {
   std::vector<AnfNodePtr> real_comm_ops;
   if (send) {
     std::transform(nodes.begin(), nodes.end(), std::back_inserter(real_comm_ops), [](const AnfNodePtr &n) {
@@ -661,7 +661,8 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer:
 
 bool PipelineTransformer::GetStageByArgument(const CNodePtr &node, size_t index,
                                              const std::vector<AnfNodePtr> &parameters,
-                                             const NodeUsersMap &node_users_map, std::set<int64_t> *parameter_stage) {
+                                             const NodeUsersMap &node_users_map,
+                                             std::set<int64_t> *const parameter_stage) {
   if (!enable_share_cell_) {
     return false;
   }
@@ -1128,7 +1129,7 @@ tensor::TensorPtr CreateZeroseOutput(const AnfNodePtr &node, size_t index) {
   return zero_tensor;
 }
 
-AnfNodePtr PipelineTransformer::GetZeroOutputs(const FuncGraphPtr &graph) {
+AnfNodePtr PipelineTransformer::GetZeroOutputs(const FuncGraphPtr &graph) const {
   AnfNodePtr node = GetRealKernelNode(graph->output(), -1).first;
   MS_EXCEPTION_IF_NULL(node);
   std::vector<AnfNodePtr> out_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
@@ -1252,9 +1253,9 @@ std::vector<AnfNodePtr> PipelineTransformer::FetchSend(const AnfNodePtr &node, b
     auto params = shared_cell_->parameters();
     auto iter = std::find(params.begin(), params.end(), param);
     if (iter != params.end()) {
-      size_t pos = std::distance(params.begin(), iter);
-      size_t input_pos = pos + 1;
+      size_t input_pos = std::distance(params.begin(), iter) + 1;
       auto &front = shared_cell_users_.front();
+      MS_EXCEPTION_IF_NULL(front);
       const auto &user = front->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(user);
       send_input = user->input(input_pos);
@@ -1374,6 +1375,7 @@ std::vector<AnfNodePtr> PipelineTransformer::FetchRecv(const AnfNodePtr &node, b
       auto pos = std::distance(params.begin(), iter);
       size_t input_pos = pos + 1;
       auto &front = shared_cell_users_.front();
+      MS_EXCEPTION_IF_NULL(front);
       const auto &user = front->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(user);
       recv_input = user->input(input_pos);
