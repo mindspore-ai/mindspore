@@ -829,7 +829,8 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         Get the item at the specified index of the tensor.
 
         Note:
-            Tensor.item returns a Tensor scalar instead of a Python scalar.
+            Tensor.item returns a Tensor scalar instead of a Python scalar. And if the tensor is a Tensor scalar,
+            Tensor.item will return the numpy.ndarray.
 
         Args:
             index (Union[None, int, tuple(int)]): The index in Tensor. Default: ``None``.
@@ -844,12 +845,14 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
-            >>> import numpy as np
+            >>> import mindspore as ms
             >>> from mindspore import Tensor
-            >>> x = Tensor(np.array([[1,2,3],[4,5,6]], dtype=np.float32))
-            >>> x = x.item((0,1))
-            >>> print(x)
+            >>> x = Tensor([[1, 2, 3], [4, 5, 6]], ms.float32)
+            >>> print(x.item((0, 1)))
             2.0
+            >>> x = Tensor(1.2, ms.float32)
+            >>> print(x.item())
+            1.2
         """
         output = tensor_operator_registry.get('item')(self, index)
         return output

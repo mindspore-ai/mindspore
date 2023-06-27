@@ -283,13 +283,19 @@ def _scalar_to_tensor(input_x):
     return ops.add(input_x, mutable(Tensor(0)))
 
 
+@_primexpr
+def _check_scalar_tensor_args(args):
+    """For the item, check that the index of the scalar tensor is set."""
+    if args != (None,) and args != ():
+        const_utils.raise_value_error("For item, the index of scalar Tensor should not be set.")
+
+
 def tensor_item(data, *args):
     """Tensor getitem by index whose dtype is int or tuple with int."""
     # transform a.item(tuple(int)) -> a.item(int1,int2...intN)
-    if data.size == 1 and data.ndim == 0:
-        if args != (None,):
-            const_utils.raise_value_error("For item , the args of scalar Tensor should be None.")
-        return data
+    if data.ndim == 0:
+        _check_scalar_tensor_args(args)
+        return data.asnumpy()
     if len(args) == 1 and isinstance(args[0], tuple):
         args = args[0]
 
