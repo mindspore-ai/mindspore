@@ -1311,7 +1311,7 @@ void AutoGradCellImpl::ConvertValueNodeValueToTensor(const AnfNodePtr &din) {
     const auto &valuenode = din->cast<ValueNodePtr>();
     const auto &value = valuenode->value();
     MS_EXCEPTION_IF_NULL(value);
-    if (value->isa<tensor::Tensor>() || value->isa<Number>()) {
+    if (value->isa<tensor::Tensor>() || value->isa<Number>() || value->isa<None>()) {
       return;
     }
     tensor::TensorPtr tensor_ptr;

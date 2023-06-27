@@ -155,7 +155,7 @@ uint32_t UpsampleTrilinear3dGradCpuKernel::Compute(CpuKernelContext &ctx) {
       res = UpsampleTrilinear3dGradCompute<Eigen::half, float>(ctx);
       break;
     case DT_FLOAT:
-      res = UpsampleTrilinear3dGradCompute<float, double>(ctx);
+      res = UpsampleTrilinear3dGradCompute<float, float>(ctx);
       break;
     case DT_DOUBLE:
       res = UpsampleTrilinear3dGradCompute<double, double>(ctx);
