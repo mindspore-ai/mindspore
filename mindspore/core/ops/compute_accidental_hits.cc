@@ -20,6 +20,8 @@
 #include <functional>
 #include <map>
 
+#include "ops/op_name.h"
+#include "ops/array_ops.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "utils/check_convert_utils.h"
 #include "ops/primitive_c.h"
@@ -31,8 +33,6 @@
 #include "ir/dtype/tensor_type.h"
 #include "ir/primitive.h"
 #include "mindapi/base/shape_vector.h"
-#include "mindspore/core/ops/array_ops.h"
-#include "ops/op_name.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
@@ -41,8 +41,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr size_t kInput1Dim = 2;
-constexpr size_t kInput2Dim = 1;
+constexpr int64_t kInput1Dim = 2;
+constexpr int64_t kInput2Dim = 1;
 
 abstract::TupleShapePtr ComputeAccidentalHitsInferShape(const PrimitivePtr &primitive,
                                                         const std::vector<AbstractBasePtr> &input_args) {
@@ -60,9 +60,9 @@ abstract::TupleShapePtr ComputeAccidentalHitsInferShape(const PrimitivePtr &prim
     return std::make_shared<abstract::TupleShape>(dyn_rank_shape);
   }
 
-  auto true_classes_rank = true_classes_shape.size();
+  auto true_classes_rank = SizeToLong(true_classes_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("dim of true_classes", true_classes_rank, kEqual, kInput1Dim, prim_name);
-  auto sampled_candidates_rank = sampled_candidates_shape.size();
+  auto sampled_candidates_rank = SizeToLong(sampled_candidates_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("dim of sampled_candidates", sampled_candidates_rank, kEqual, kInput2Dim,
                                            prim_name);
 
