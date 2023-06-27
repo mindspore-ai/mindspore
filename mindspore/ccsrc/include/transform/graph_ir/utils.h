@@ -46,6 +46,9 @@ bool IsPartialCNode(const AnfNodePtr node);
 bool IsInitDataSetQueueNode(const AnfNodePtr &node);
 
 void ClearGeSessionAndRunner();
+void InitializeAoeUtil();
+void DestroyAoeUtil();
+
 // convert_type
 std::vector<GeTensorPtr> ConvertInputTensors(const std::vector<MeTensorPtr> &me_tensors, const std::string &format);
 std::vector<MeTensorPtr> ConvertGeTensors(const std::vector<GeTensorPtr> &ge_tensors);
@@ -65,6 +68,7 @@ BACKEND_EXPORT void ClearGraph();
 BACKEND_EXPORT Status AddGraph(const std::string &name, const DfGraphPtr &graph, const OptionMap &options = {});
 BACKEND_EXPORT void SetAnfGraph(const std::string &name, const AnfGraphPtr &anf_graph_ptr);
 BACKEND_EXPORT DfGraphWrapperPtr GetGraphByName(const std::string &name);
+BACKEND_EXPORT void AddOptimizeGraph(const std::string &name);
 
 FuncGraphPtr GetAnfGraph(uint32_t graph_id);
 

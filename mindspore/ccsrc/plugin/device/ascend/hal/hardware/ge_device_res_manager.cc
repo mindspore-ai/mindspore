@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/ascend/hal/hardware/ge_device_res_manager.h"
+#include "plugin/device/ascend/hal/hardware/ge_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_memory_manager.h"
 #include "include/transform/graph_ir/utils.h"
 
@@ -75,6 +76,8 @@ void GeDeviceResManager::GeSetContextOptions(const std::shared_ptr<MsContext> &m
 
 void GeDeviceResManager::CreateSessionAndGraphRunner(bool is_training) {
   std::shared_ptr<::ge::Session> sess = transform::GetGeSession();
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
   if (sess == nullptr) {
     transform::SessionOptions options;
     if (is_training) {
@@ -87,8 +90,6 @@ void GeDeviceResManager::CreateSessionAndGraphRunner(bool is_training) {
     }
 
     options["ge.enablePrintOpPass"] = "0";
-    auto ms_context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(ms_context);
     GeSetContextOptions(ms_context, &options);
 
     sess = transform::NewSession(options);
@@ -97,6 +98,9 @@ void GeDeviceResManager::CreateSessionAndGraphRunner(bool is_training) {
 
   transform::GraphRunnerOptions options;
   options.sess_ptr = sess;
+  if (ms_context->EnableAoeOnline()) {
+    transform::DfGraphManager::GetInstance().AoeGeGraph();
+  }
   auto graph_runner = transform::NewGraphRunner(options);
   transform::SetGraphRunner(graph_runner);
 }

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "transform/graph_ir/df_graph_manager.h"
-
 #include <sstream>
 
+#include "transform/graph_ir/df_graph_manager.h"
+#include "transform/graph_ir/aoe_util.h"
 #ifndef ENABLE_LITE_ACL
 #include "include/common/utils/python_adapter.h"
 #endif
@@ -199,6 +199,36 @@ void DfGraphManager::DeleteGraphRunner() noexcept {
     graph_runner_ptr_ = nullptr;
     MS_LOG(INFO) << "Delete GraphRunner success";
   }
+}
+
+void DfGraphManager::AoeGeGraph() {
+  std::set<string> wait_optimize_graphs_ = AoeUtil::GetInstance().GetWaitOptimizeGraph();
+  if (wait_optimize_graphs_.empty()) {
+    return;
+  }
+  MS_LOG(DEBUG) << "start optimized graph";
+  std::set<string> optimized_graph_names_;
+#ifndef ENABLE_LITE_ACL
+  py::gil_scoped_release release;
+#endif
+
+  for (auto &graph_name : wait_optimize_graphs_) {
+    auto wrapper = GetGraphByName(graph_name);
+    if (AoeUtil::GetInstance().IsSaveOptimizedGraph(wrapper->id_)) {
+      continue;
+    }
+    Status status = AoeUtil::GetInstance().AoeOnlineGeGraph(GetGeSession(), wrapper->graph_ptr_);
+    if (status == FAILED) {
+      MS_LOG(ERROR) << "AOE tuning failed, graph name is " << graph_name << " id :" << wrapper->id_;
+      return;
+    }
+    AoeUtil::GetInstance().SaveOptimizedGraph(wrapper->id_);
+    optimized_graph_names_.insert(graph_name);
+    MS_LOG(DEBUG) << "Optimized Graph " << graph_name << " success";
+  }
+  AoeUtil::GetInstance().RemoveWaitOptimizedGraph(optimized_graph_names_);
+  optimized_graph_names_.clear();
+  MS_LOG(DEBUG) << "optimized graph end";
 }
 }  // namespace transform
 }  // namespace mindspore
