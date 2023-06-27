@@ -133,6 +133,7 @@ void HcclAdapter::InitPlugin() {
   hccl_exec_enqueue_op_ = DlsymFuncObj(HcomExecEnqueueOperation, plugin_handle_);
   hccl_exec_enqueue_all_to_all_v_ = DlsymFuncObj(HcomExecEnqueueAllToAllV, plugin_handle_);
   launch_hccl_all_to_allv_ = DlsymFuncObj(HcclAlltoAllV, plugin_handle_);
+  hcom_destroy_ = DlsymFuncObj(HcomDestroy, plugin_handle_);
 }
 
 void HcclAdapter::FinalizePlugin() {
@@ -164,6 +165,7 @@ void HcclAdapter::FinalizePlugin() {
   hccl_exec_enqueue_op_ = nullptr;
   hccl_exec_enqueue_all_to_all_v_ = nullptr;
   launch_hccl_all_to_allv_ = nullptr;
+  hcom_destroy_ = nullptr;
   (void)dlclose(plugin_handle_);
   plugin_handle_ = nullptr;
 }
@@ -267,6 +269,9 @@ bool HcclAdapter::FinalizeHccl() {
   (void)FinalizeHcclExec();
   (void)FinalizeKernelInfoStore();
   (void)FinalizeHcclComm();
+  if (hcom_destroy_ != nullptr) {
+    hcom_destroy_();
+  }
   FinalizePlugin();
   init_flag_ = false;
   MS_LOG(INFO) << "Destroy hccl adapter success.";

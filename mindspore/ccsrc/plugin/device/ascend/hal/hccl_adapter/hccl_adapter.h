@@ -127,6 +127,7 @@ class HcclAdapter {
   FinalizeHcomGraphAdapterFunObj finalize_hcom_graph_adapter_ = nullptr;
   GetHcclKernelInfoStoreFunObj get_hccl_kernel_info_store_ = nullptr;
   GetAllKernelBuilderFunObj get_all_kernel_builder_ = nullptr;
+  HcomDestroyFunObj hcom_destroy_ = nullptr;
 
   HcclCommInitClusterInfoFunObj init_hccl_comm_ = nullptr;
   HcclCommDestroyFunObj finalize_hccl_comm_ = nullptr;
