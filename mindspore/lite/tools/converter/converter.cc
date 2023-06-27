@@ -57,7 +57,7 @@
 #include "tools/common/parse_config_utils.h"
 #include "tools/converter/converter_packed_node.h"
 #include "tools/converter/config_parser/cpu_option_param_parser.h"
-#include "ir/func_graph_cloner.h"
+#include "tools/converter/export_model.h"
 
 namespace mindspore {
 std::map<std::string, Format> StrToEnumFormatMap = {{"NHWC", Format::NHWC}, {"NCHW", Format::NCHW}};
@@ -1127,7 +1127,8 @@ int ConverterImpl::SaveMindIRModel(FuncGraphPtr graph, const std::shared_ptr<Con
     new_param->fmk_type = converter::kFmkTypeMs;
     new_param->save_type = kMindIR;
 
-    auto mirror_graph = BasicClone(graph, true);
+    std::map<FuncGraphPtr, FuncGraphPtr> cloned_func_graph;
+    auto mirror_graph = lite::CloneFuncGraph(graph, new_param, &cloned_func_graph);
     if (mirror_graph == nullptr) {
       MS_LOG(ERROR) << "Mirror graph is nullptr";
       return RET_ERROR;
