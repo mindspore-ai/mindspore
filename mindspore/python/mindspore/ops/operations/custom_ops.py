@@ -491,14 +491,7 @@ class Custom(ops.PrimitiveWithInfer):
         self._register_info(reg_info)
 
         if func_type == "akg":
-            self.add_prim_attr('func_source_str', self.func_source_str)
-            if "ir_builder" in self.func_source_str:
-                self.func_type = "ir_builder"
-            elif "compute" in self.func_source_str:
-                self.func_type = "tvm_compute"
-            else:
-                self.func_type = "hybrid"
-                self._hybrid_func_analyser()
+            self._set_akg_kernel_type()
 
         if not self.bprop and self.func_type == "hybrid":
             self._hybrid_autodiff(func_type)
@@ -567,6 +560,16 @@ class Custom(ops.PrimitiveWithInfer):
 
     def get_bprop(self):
         return self.bprop
+
+    def _set_akg_kernel_type(self):
+        self.add_prim_attr('func_source_str', self.func_source_str)
+        if "ir_builder" in self.func_source_str:
+            self.func_type = "ir_builder"
+        elif "compute" in self.func_source_str:
+            self.func_type = "tvm_compute"
+        else:
+            self.func_type = "hybrid"
+            self._hybrid_func_analyser()
 
     def _check_julia_func(self):
         """Check the validity of julia func"""
@@ -730,7 +733,7 @@ class Custom(ops.PrimitiveWithInfer):
                     continue
                 if isinstance(reg_info_item, str):
                     reg_info_item = json.loads(reg_info_item)
-                prefix = prefix + "_" + reg_info_item.get("op_name", "")
+                prefix = "_".join([prefix, reg_info_item.get("op_name", "")])
             self.uniq_name = prefix + "_" + self.func_name
         else:
             raise TypeError("For '{}', 'func' must be of type function or str, but got {}"
