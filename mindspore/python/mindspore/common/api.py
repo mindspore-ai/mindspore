@@ -1563,7 +1563,8 @@ class _CellGraphExecutor:
         """
         self._graph_executor.set_queue_name(queue_name)
 
-    def _set_dataset_mode(self, obj):
+    @staticmethod
+    def _set_dataset_mode(obj):
         """set dataset mode."""
         # decide whether to sink based on the sink_mode flag which is set in connect_network_with_dataset
         if 'sink_mode' in obj.get_flags().keys() and obj.get_flags()['sink_mode'] is True:
