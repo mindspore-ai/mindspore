@@ -194,7 +194,7 @@ def get_bprop_sparse_softmax_cross_entropy_with_logits(self):
 
 
 @bprop_getters.register(rl_ops.GRUV2)
-def get_bppro_gru_v2(self):
+def get_bprop_gru_v2(self):
     """Grad definition for `GRUV2` operation."""
     gru_grad_v2 = G.GRUV2Grad(
         self.input_size,
@@ -205,14 +205,13 @@ def get_bppro_gru_v2(self):
         self.dropout
     )
 
-    def bpro(x, hx, w, seq_length, out, dout):
+    def bprop(x, hx, w, seq_length, out, dout):
         y, hy, reverse, _ = out
         dy, dhy, _, _ = dout
         dx, dhx, dw = gru_grad_v2(x, hx, w, seq_length, y, hy, dy, dhy, reverse)
-        dx_all = (dx, dhx, dw, (0))
-        return dx_all
+        return tuple((dx, dhx, dw, (0)))
 
-    return bpro
+    return bprop
 
 
 @bprop_getters.register(rl_ops.CudnnGRU)
