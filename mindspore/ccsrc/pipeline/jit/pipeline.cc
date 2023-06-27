@@ -104,6 +104,7 @@
 
 #include "pybind_api/ir/log_adapter_py.h"  // Only include one-time in the whole project.
 #include "pybind_api/ir/py_execute_py.h"   // Only include one-time in the whole project.
+#include "include/common/utils/compile_cache_context.h"
 
 namespace mindspore {
 // namespace to support intermediate representation definition
@@ -781,6 +782,7 @@ void GraphExecutorPy::InitCompileCacheInfo(const ResourcePtr &resource, const st
   static size_t idx = 0;
   MS_EXCEPTION_IF_NULL(resource);
   resource->GetCompileCacheResource(compile_cache_dep_files_, weights_, queue_name_, idx++, &compile_cache_consistent_);
+  CompileCacheContext::GetInstance().SetCompileId(idx);
 #ifdef ENABLE_PROFILE
   double t2 = GetTime();
   MsProfile::StatTime("LoadCachedFuncGraph", t2 - t1);
@@ -860,7 +862,17 @@ bool GraphExecutorPy::CompileInner(const py::object &source, const py::tuple &ar
   InitCompileCacheInfo(resource, phase_);
   bool use_compile_cache = resource->EnableCompileCache() && resource->func_graph();
   ConfigManager::GetInstance().ResetQueue(queue_name_);
-
+  auto &compile_cache_context = CompileCacheContext::GetInstance();
+  compile_cache_context.SetUseCompileCache(use_compile_cache);
+  if (compile_cache_context.UseCompileCache()) {
+    auto graph = resource->func_graph();
+    MS_LOG(INFO) << "Set front graph " << graph->ToString();
+    CompileCacheContext::GetInstance().SetFrontGraph(graph);
+  }
+  if (resource->EnableCompileCache()) {
+    MS_LOG(WARNING) << "compile cache dir: " << GetCompileCacheDir();
+    CompileCacheContext::GetInstance().SetCompileCacheDir(GetCompileCacheDir());
+  }
   auto actions = GetPipeline(resource, phase_, use_vm);
   std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, FilterActions(actions, phase_));
 
@@ -1181,7 +1193,10 @@ void Pipeline::Run() {
   MS_LOG(INFO) << "Pipeline run";
   MS_EXCEPTION_IF_NULL(resource_);
   FuncGraphPtr user_graph = nullptr;
-  ProfileExecute(MsProfile::GetProfile(), [&user_graph, this]() {
+  auto iter = std::find_if(actions_.begin(), actions_.end(),
+                           [](const ActionItem &item) { return item.first == kDistributedSplit; });
+  std::string cache_action = iter != actions_.end() ? kDistributedSplit : kValidate;
+  ProfileExecute(MsProfile::GetProfile(), [&user_graph, this, cache_action]() {
     size_t i = 0;
     for (auto &action : actions_) {
 #ifdef ENABLE_TIMELINE
@@ -1200,7 +1215,7 @@ void Pipeline::Run() {
       ProcessStatus::GetInstance().RecordEnd();
       if (action.first == "task_emit") {
         SetLoopCount(resource_);
-      } else if (action.first == "validate") {
+      } else if (action.first == cache_action) {
         CheckInterpretNodeLineInfos();
         CacheValidateFuncGraph(resource_);
 #ifndef ENABLE_SECURITY

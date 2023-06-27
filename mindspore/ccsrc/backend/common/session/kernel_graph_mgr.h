@@ -65,6 +65,7 @@ class BACKEND_EXPORT KernelGraphMgr {
                                                     std::vector<KernelGraphPtr> *all_out_graph,
                                                     DeviceType device_target);
 
+  std::shared_ptr<KernelGraph> ConstructKernelGraph(std::vector<KernelGraphPtr> *all_out_graph);
   std::shared_ptr<KernelGraph> ConstructPackKernelGraph(const FuncGraphPtr &func_graph,
                                                         std::vector<KernelGraphPtr> *all_out_graph,
                                                         DeviceType device_target);
@@ -94,6 +95,9 @@ class BACKEND_EXPORT KernelGraphMgr {
   GraphId GraphSum() const { return graph_sum_; }
   void ClearPartialParameterMap() { partial_parameters_map_.clear(); }
 
+  mindspore::HashMap<FuncGraph *, KernelGraphPtr> GetFrontBackendGraphMap() const { return front_backend_graph_map_; }
+  void CacheKernelGraph(const KernelGraphPtr &kg);
+
  private:
   void GetCNodeInfo(const CNodePtr &cnode, std::vector<AnfNodePtr> *cnode_inputs) const;
   void GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, std::vector<AnfNodePtr> *cnode_inputs,
@@ -117,6 +121,8 @@ class BACKEND_EXPORT KernelGraphMgr {
   void AddParameterToGraphInputs(const std::vector<AnfNodePtr> &parameters, KernelGraph *graph) const;
   void SetReturnNode(const AnfNodePtr &node, KernelGraph *graph);
   void FlattenTuple(const CNodePtr &node);
+  bool ParseKernelGraphNodesAndAttrs(const nlohmann::json &model_json);
+  void HandleGraphInputsOutputs(const nlohmann::json &graph_json, KernelGraph *graph);
 
  protected:
   CNodePtr ConstructOutput(const AnfNodePtrList &outputs, const std::shared_ptr<KernelGraph> &graph);

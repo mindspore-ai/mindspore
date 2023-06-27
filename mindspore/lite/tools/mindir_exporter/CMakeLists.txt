@@ -22,9 +22,11 @@ add_library(mindir_serializer_mid OBJECT
         ${MINDIR_EXPORTER_SRC_LIST}
         )
 add_dependencies(mindir_serializer_mid fbs_src fbs_inner_src)
-
+file(STRINGS "${TOP_DIR}/version.txt" VERSION)
+add_definitions(-DVERSION=\"${VERSION}\")
 add_library(ccsrc_debug_common_mid_ OBJECT
         ${CCSRC_DIR}/common/debug/common.cc
+        ${CCSRC_DIR}/common/debug/mindir_exporter.cc
         )
 
 target_link_libraries(mindir_serializer_mid

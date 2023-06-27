@@ -29,7 +29,6 @@ namespace mindspore {
 static const int MAX_DIRECTORY_LENGTH = 1024;
 static const int MAX_FILENAME_LENGTH = 128;
 static const int MAX_OS_FILENAME_LENGTH = 255;
-static const char kCOMPILER_CACHE_PATH[] = "MS_COMPILER_CACHE_PATH";
 
 class COMMON_EXPORT Common {
  public:

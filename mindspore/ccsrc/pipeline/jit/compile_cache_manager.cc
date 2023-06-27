@@ -33,26 +33,54 @@
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "include/backend/distributed/cluster/cluster_context.h"
 #endif
+#include "include/common/utils/compile_cache_context.h"
 
 namespace mindspore {
+#ifndef MINDIR_EXPORT_TENSOR_LAYOUT_CLIP
+void BuildLayout(const FuncGraphPtr &func_graph, mind_ir::ModelProto *model) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(model);
+  std::vector<AnfNodePtr> graph_params = func_graph->parameters();
+  mind_ir::ParallelProto *parallel_proto = model->mutable_parallel();
+  for (auto para : graph_params) {
+    std::string name = std::static_pointer_cast<Parameter>(para)->name();
+    auto tensor_layout = para->user_data<parallel::TensorLayout>();
+    if (tensor_layout == nullptr) {
+      MS_LOG(INFO) << "GetParameterLayout nullptr name = " << name;
+    } else {
+      mind_ir::LayoutProto *layoutProto = parallel_proto->add_layout();
+
+      // Get all the information for layput
+      auto device_arrangement = tensor_layout->device_arrangement().array();
+      auto tensor_map = tensor_layout->tensor_map().array();
+      auto slice_shape = tensor_layout->slice_shape().array();
+      int64_t field_size = tensor_layout->get_field_size();
+      bool uniform_split = tensor_layout->uniform_split();
+      std::string opt_shard_group = tensor_layout->opt_shard_group();
+      if (!opt_shard_group.empty()) {
+        slice_shape = tensor_layout->opt_shard_slice_shape();
+      }
+      // Save all information to Layout Proto
+      layoutProto->set_name(name);
+      for (auto device_arrangement_element : device_arrangement) {
+        layoutProto->add_device_arrangement_int(device_arrangement_element);
+      }
+      for (auto tensor_map_element : tensor_map) {
+        layoutProto->add_tensor_map_int(tensor_map_element);
+      }
+      for (auto slice_shape_element : slice_shape) {
+        layoutProto->add_slice_shape_int(slice_shape_element);
+      }
+      layoutProto->set_field_size(field_size);
+      layoutProto->set_uniform_split(uniform_split);
+      layoutProto->set_opt_shard_group(opt_shard_group);
+    }
+  }
+}
+#endif
 namespace pipeline {
 namespace {
-constexpr char kCompileCacheSubDir[] = "graph_cache";
-constexpr char kCompileCacheFileName[] = "compile_cache";
-constexpr char kCompileCacheFileSuffix[] = ".mindir";
-constexpr char kDepFilesHashPath[] = "compile_dependency.hash";
-constexpr char kRoleServer[] = "server_";
-constexpr char kRolePServer[] = "pserver_";
-constexpr char kRolePScheduler[] = "pscheduler_";
-constexpr char kGroupCkptFileName[] = "group.ckpt";
-
-std::string GetCompileCacheDir() {
-  static const std::string user_defined_path = Common::GetUserDefineCachePath();
-  static const uint32_t rank_id = IsStandAlone() ? 0 : GetRank();
-  static const std::string compile_cache_dir =
-    user_defined_path + "rank_" + std::to_string(rank_id) + "/" + kCompileCacheSubDir;
-  return compile_cache_dir;
-}
+std::string GetGraphCacheDir() { return GetCompileCacheDir() + "/" + kGraphCacheSubDir; }
 
 std::string GetRole() {
 #if defined(__linux__) && defined(WITH_BACKEND)
@@ -69,16 +97,15 @@ std::string GetRole() {
 }
 
 std::string GetCompileCachePath(size_t idx) {
-  return GetCompileCacheDir() + "/" + GetRole() + kCompileCacheFileName + "_" + std::to_string(idx) +
-         kCompileCacheFileSuffix;
+  return GetGraphCacheDir() + "/" + GetRole() + kCompileCacheFileName + "_" + std::to_string(idx) + kMindIrSuffix;
 }
 
 std::string GetDepFilesHashPath() {
-  static const std::string dep_files_hash_path = GetCompileCacheDir() + "/" + GetRole() + kDepFilesHashPath;
+  static const std::string dep_files_hash_path = GetGraphCacheDir() + "/" + GetRole() + kDepFilesHashPath;
   return dep_files_hash_path;
 }
 
-std::string GetGroupCkptSavePath() { return GetCompileCacheDir() + "/" + kGroupCkptFileName; }
+std::string GetGroupCkptSavePath() { return GetGraphCacheDir() + "/" + kGroupCkptFileName; }
 
 std::string GetCompileDepFilesHash(const py::list &dep_files) {
   MS_LOG(DEBUG) << "Dependency files size: " << dep_files.size();
@@ -126,13 +153,26 @@ std::pair<FuncGraphPtr, LayoutMap> LoadFuncGraphFromMindIR(const py::dict &weigh
   MindIRLoader mindir_loader;
   mindir_loader.set_weights_value_map(GenerateWeightsValueMap(weights));
   mindir_loader.set_has_parallel_info(has_parallel_info);
-  auto fg = mindir_loader.LoadMindIR(realpath.value());
+  mindspore::HashMap<std::string, AnfNodePtr> name_to_node;
+  auto fg = mindir_loader.LoadMindIR(realpath.value(), &name_to_node);
+  CompileCacheContext::GetInstance().SetFrontNameToFrontNode(name_to_node);
   return std::make_pair(fg, mindir_loader.layout_map());
 }
 
 bool ExportFuncGraphToMindIR(const FuncGraphPtr &fg, const FuncGraphPtr &layout_fg, size_t idx) {
   std::string compile_cache_path = GetCompileCachePath(idx);
-  return DumpBinaryProto(fg, compile_cache_path, layout_fg);
+  auto proto = GenBinaryProto(fg);
+  if (proto == nullptr) {
+    MS_LOG(ERROR) << "Get binary proto for graph " << fg->ToString() << " failed.";
+    return false;
+  }
+#ifndef MINDIR_EXPORT_TENSOR_LAYOUT_CLIP
+  if (layout_fg) {
+    BuildLayout(layout_fg, proto.get());
+  }
+#endif
+  MindIRExporter mindir_exporter;
+  return mindir_exporter.SaveProtoToFile(proto.get(), compile_cache_path);
 }
 
 bool ExportDepFilesHash(const std::string &compile_cache_dep_files_hash) {
@@ -173,15 +213,27 @@ bool CreateParallelGroupsByCkptFile() {
 }
 }  // namespace
 
-void CompileCacheManager::CacheFuncGraph(const FuncGraphPtr &fg, const FuncGraphPtr &layout_fg) const {
+std::string GetCompileCacheDir() {
+  static const std::string user_defined_path = Common::GetUserDefineCachePath();
+  static const uint32_t rank_id = IsStandAlone() ? 0 : GetRank();
+  static const std::string compile_cache_dir = user_defined_path + "rank_" + std::to_string(rank_id);
+  return compile_cache_dir;
+}
+
+void CompileCacheManager::CacheFuncGraph(const FuncGraphPtr &fg, const FuncGraphPtr &layout_fg) {
   if (fg == nullptr) {
     MS_LOG(ERROR) << "The func_graph to be cached is null.";
     return;
   }
+
+  SetCompileCacheDir(GetCompileCacheDir());
+
   if (!ExportFuncGraphToMindIR(fg, layout_fg, compile_cache_id_)) {
     MS_LOG(ERROR) << "Failed to cache graph: " << fg->ToString();
     return;
   }
+  MS_LOG(INFO) << "Set front graph for caching backend graph.";
+  CompileCacheContext::GetInstance().SetFrontGraph(fg);
   if (compile_cache_id_ == 0 && !ExportDepFilesHash(compile_cache_dep_files_hash_)) {
     MS_LOG(ERROR) << "Failed to cache the dependency files hash";
   }

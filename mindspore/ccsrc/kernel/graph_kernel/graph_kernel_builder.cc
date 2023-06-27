@@ -96,7 +96,7 @@ void KernelPool::LockMng::Unlock() const noexcept {
 std::string KernelPool::GetTmpKeyPath() const {
   std::string config_path = MsContext::GetInstance()->get_param<std::string>(MS_CTX_COMPILE_CACHE_PATH);
   if (config_path.empty()) {
-    config_path = common::GetEnv(kCOMPILER_CACHE_PATH);
+    config_path = common::GetEnv(kCompilerCachePath);
   }
   if (config_path.empty()) {
     char cwd[PATH_MAX];

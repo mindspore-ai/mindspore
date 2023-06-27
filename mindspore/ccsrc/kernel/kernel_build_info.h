@@ -110,9 +110,9 @@ class BACKEND_EXPORT KernelBuildInfo {
 
   void SetOutputElementsKernelObjectType(const std::vector<KernelObjectType> &output_elements_kernel_object_type);
 
-  std::vector<std::string> GetAllOutputReshapeType() const;
+  const std::vector<std::string> &GetAllOutputReshapeType() const;
 
-  std::vector<std::string> GetAllInputReshapeType() const;
+  const std::vector<std::string> &GetAllInputReshapeType() const;
 
   std::string core_type() const { return core_type_; }
 
@@ -234,6 +234,8 @@ class BACKEND_EXPORT KernelBuildInfo::KernelBuildInfoBuilder {
   void SetInputsKernelObjectType(const std::vector<KernelObjectType> &input_kernel_object_type);
 
   void SetOutputsKernelObjectType(const std::vector<KernelObjectType> &output_kernel_object_type);
+
+  void SetOutputElementsKernelObjectType(const std::vector<KernelObjectType> &output_elements_kernel_object_type);
 
   void SetCoreType(const std::string &core_type);
 

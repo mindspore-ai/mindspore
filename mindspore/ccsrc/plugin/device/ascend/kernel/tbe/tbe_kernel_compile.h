@@ -83,6 +83,7 @@ class TbeKernelCompileManager {
   JsonNameMap TbeFusionOpCompile(const std::vector<FusionScopeInfo> &fusion_scopes);
   void ClearFailedLog() { failed_log_.clear(); }
   std::string failed_log() { return failed_log_; }
+  void SetFusionOpsKernelIOSizeInfo(const std::vector<CNodePtr> &node_list);
 
  private:
   TbeKernelCompileManager() = default;

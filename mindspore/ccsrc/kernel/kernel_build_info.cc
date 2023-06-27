@@ -143,6 +143,10 @@ const std::vector<std::string> &KernelBuildInfo::GetAllInputFormats() const { re
 
 const std::vector<std::string> &KernelBuildInfo::GetAllOutputFormats() const { return outputs_format_; }
 
+const std::vector<std::string> &KernelBuildInfo::GetAllInputReshapeType() const { return input_reshape_type_; }
+
+const std::vector<std::string> &KernelBuildInfo::GetAllOutputReshapeType() const { return output_reshape_type_; }
+
 const std::vector<TypeId> &KernelBuildInfo::GetAllInputDeviceTypes() const { return inputs_device_type_; }
 
 const std::vector<TypeId> &KernelBuildInfo::GetAllOutputDeviceTypes() const { return outputs_device_type_; }
@@ -368,6 +372,12 @@ void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputsKernelObjectType(
   const std::vector<KernelObjectType> &outputs_kernel_object_type) {
   MS_EXCEPTION_IF_NULL(kernel_build_info_);
   kernel_build_info_->outputs_kernel_object_type_ = outputs_kernel_object_type;
+}
+
+void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputElementsKernelObjectType(
+  const std::vector<KernelObjectType> &output_elements_kernel_object_type) {
+  MS_EXCEPTION_IF_NULL(kernel_build_info_);
+  kernel_build_info_->output_elements_kernel_object_type_ = output_elements_kernel_object_type;
 }
 
 std::shared_ptr<KernelBuildInfo> KernelBuildInfo::KernelBuildInfoBuilder::Build() { return kernel_build_info_; }

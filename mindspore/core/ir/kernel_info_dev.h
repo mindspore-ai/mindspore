@@ -50,6 +50,8 @@ class RuntimeCache {
     (void)prev_node_output_map_.insert(pr);
   }
 
+  std::map<size_t, std::pair<AnfNodeWeakPtr, size_t>> GetPrevOutputs() const { return prev_node_output_map_; }
+
   void update_prev_node_output(size_t index, const std::pair<AnfNodePtr, size_t> &output) {
     if (prev_node_output_map_.find(index) == prev_node_output_map_.end()) {
       MS_LOG(DEBUG) << "Index:" << index << " not in prev node map";
@@ -66,7 +68,7 @@ class RuntimeCache {
     is_real_kernel_ = Uncached;
   }
 
-  std::string device_target() { return device_target_; }
+  std::string device_target() const { return device_target_; }
 
   void set_device_target(const std::string &target) { device_target_ = target; }
   bool is_valid() const { return is_valid_; }

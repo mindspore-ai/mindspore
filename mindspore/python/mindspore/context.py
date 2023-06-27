@@ -161,7 +161,6 @@ class _Context:
         self._context_switches = _ContextSwitchInfo(False)
         self._context_handle = MSContext.get_instance()
         self._support_binary = False
-        self.enable_compile_cache = None
 
     def __getattribute__(self, attr):
         value = object.__getattribute__(self, attr)

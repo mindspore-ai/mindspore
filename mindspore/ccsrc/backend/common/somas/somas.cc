@@ -43,7 +43,6 @@ using mindspore::profiler::ascend::TensorMemory;
 #endif
 namespace mindspore {
 namespace somas {
-constexpr auto kRetryIntervalSeconds = 500;
 constexpr auto kRefNodeTensorNum = 2;
 constexpr auto kOnlyOneDestinationNode = 1;
 constexpr auto kOnlyTwoDestinationNode = 2;

@@ -236,7 +236,7 @@ void TbeUtils::SaveJsonInfo(const std::string &json_name, const std::string &inf
   }
   auto realpath = Common::CreatePrefixPath(path, true);
   if (!realpath.has_value()) {
-    MS_LOG(WARNING) << "Invalid environment variable '" << kCOMPILER_CACHE_PATH
+    MS_LOG(WARNING) << "Invalid environment variable '" << kCompilerCachePath
                     << "' and invalid arg compile_cache_path in context, the path is: " << realpath.value()
                     << ". Please check (1) whether the path exists, "
                     << "(2) whether the path has the access permission, (3) whether the path is too long. ";

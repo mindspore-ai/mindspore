@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include "load_mindir/load_model.h"
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <cstring>
@@ -25,7 +25,6 @@
 #include <stack>
 #include <utility>
 #include <nlohmann/json.hpp>
-#include "load_mindir/load_model.h"
 #include "mindspore/core/ops/structure_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
@@ -277,7 +276,48 @@ AnfNodePtr NewValueNodeWithAbstract(const T &value) {
   node->set_abstract(value->ToAbstract());
   return node;
 }
+
+FuncGraphPtr FindGraphByName(const std::vector<FuncGraphPtr> &graphs, const std::string &name) {
+  auto iter = std::find_if(graphs.begin(), graphs.end(), [&name](const auto &g) { return g->ToString() == name; });
+  if (iter != graphs.end()) {
+    return *iter;
+  }
+  return nullptr;
+}
+
+bool CheckModelConfigureInfo(const mind_ir::ModelProto &model_proto) {
+  if (!model_proto.has_producer_name()) {
+    MS_LOG(ERROR) << "Parse model producer name from pb file failed!";
+    return false;
+  }
+  const auto &producer_name = model_proto.producer_name();
+  MS_LOG(INFO) << "Producer name: " << producer_name;
+
+  if (!model_proto.has_model_version()) {
+    MS_LOG(ERROR) << "Parse model producer version from pb file failed!";
+    return false;
+  }
+  const auto &model_version = model_proto.model_version();
+  MS_LOG(INFO) << "Producer version: " << model_version;
+
+  int64_t mind_ir_version = 0;
+  if (model_proto.has_mind_ir_version()) {
+    mind_ir_version = model_proto.mind_ir_version();
+  }
+  if (!mind_ir::Version_IsValid(mind_ir_version)) {
+    MS_LOG(EXCEPTION) << "This software can only support the maximum mind ir version: " << mind_ir::Version_MAX
+                      << ", please install the latest version to support the mind ir version: " << mind_ir_version;
+  }
+  if (model_proto.has_little_endian()) {
+    if (model_proto.little_endian() != common::IsLittleByteOrder()) {
+      MS_LOG(ERROR) << "The byte order of export MindIr device and load MindIr device is not same!";
+      return false;
+    }
+  }
+  return true;
+}
 }  // namespace
+
 namespace {
 class MSANFModelParser {
  public:
@@ -285,9 +325,11 @@ class MSANFModelParser {
   ~MSANFModelParser() = default;
 
   static void LoadTensorMapClear();
-  FuncGraphPtr Parse(const mind_ir::ModelProto &model_proto, const std::map<std::string, ValuePtr> &weights = {});
+  FuncGraphPtr Parse(const mind_ir::ModelProto &model_proto, const std::map<std::string, ValuePtr> &weights = {},
+                     mindspore::HashMap<std::string, AnfNodePtr> *name_to_node = nullptr);
+  bool Parse(const mind_ir::ModelProto &model_proto, const std::vector<FuncGraphPtr> &graphs,
+             mindspore::HashMap<std::string, AnfNodePtr> *name_to_node = nullptr);
   const LayoutMap ParseLayout(const mind_ir::ModelProto &model_proto);
-  bool MSANFParseModelConfigureInfo(const mind_ir::ModelProto &model_proto);
 
   void SetLite() { is_lite_ = true; }
   bool IsLite() const { return is_lite_; }
@@ -301,6 +343,7 @@ class MSANFModelParser {
   abstract::AbstractBasePtr BuildAbstractFunction(const mind_ir::AttributeProto &attr_proto);
   void CorrectFuncGraph(const FuncGraphPtr &root);
   bool BuildFuncGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
+  bool BuildKernelGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
   bool BuildAttrForFuncGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
   bool BuildAttrForCNode(const CNodePtr &cnode, const mind_ir::NodeProto &node_proto);
   ValuePtr GetValueFromAttributeProto(const mind_ir::AttributeProto &attr_proto);
@@ -359,9 +402,6 @@ class MSANFModelParser {
   static void SetIncTensor(const std::string &tensor_name, const tensor::TensorPtr &tensor);
 
   FuncGraphPtr top_graph_ = nullptr;
-  std::string producer_name_;
-  std::string model_version_;
-  std::string ir_version_;
   bool is_lite_ = false;
   bool abstract_valid_ = false;
   mindspore::HashMap<std::string, AnfNodePtr> anfnode_build_map_;
@@ -371,6 +411,7 @@ class MSANFModelParser {
   std::string mindir_dec_mode_;
   bool little_endian_ = common::IsLittleByteOrder();
   std::map<std::string, std::unique_ptr<Byte[]>> tenor_data_;
+  bool is_kernel_graph_{false};
 };
 
 ValuePtr MSANFModelParser::GetValueFromAttributeProto(const mind_ir::AttributeProto &attr_proto) {
@@ -682,7 +723,8 @@ bool MSANFModelParser::BuildParameterForFuncGraph(const ParameterPtr &node,
     MS_LOG(ERROR) << "mind_ir TensorProto has no name!";
     return false;
   }
-  string debug_info_name = ParseParameterName(parameter_proto.name());
+  const auto &unique_name = parameter_proto.name();
+  string debug_info_name = ParseParameterName(unique_name);
   auto debug_info_ptr = std::make_shared<NodeDebugInfo>(debug_info_name);
   node->set_debug_info(debug_info_ptr);
   node->set_name(debug_info_name);
@@ -690,7 +732,7 @@ bool MSANFModelParser::BuildParameterForFuncGraph(const ParameterPtr &node,
   ParamInfoPtr param_info = std::make_shared<ParamInfo>();
   param_info->set_name(debug_info_name);
 
-  MS_LOG(DEBUG) << "Load parameter name: " << parameter_proto.name();
+  MS_LOG(DEBUG) << "Load parameter name: " << unique_name;
   auto tensor = GenerateTensorPtrFromTensorProto(parameter_proto);
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "Build tensor failed from the parameter proto.";
@@ -1019,6 +1061,9 @@ bool MSANFModelParser::ImportParametersForGraph(const FuncGraphPtr &outputFuncGr
   MS_LOG(INFO) << "All inputs size is: " << importProto.input_size();
   for (int i = 0; i < importProto.input_size(); ++i) {
     const mind_ir::ValueInfoProto &input_proto = importProto.input(i);
+    if (is_kernel_graph_ && anfnode_build_map_.count(input_proto.name()) > 0) {
+      continue;
+    }
     if (!BuildInputForFuncGraph(outputFuncGraph->add_parameter(), input_proto)) {
       MS_LOG(ERROR) << "Build input for funcgraph fail at index: " << i;
       return false;
@@ -1028,6 +1073,9 @@ bool MSANFModelParser::ImportParametersForGraph(const FuncGraphPtr &outputFuncGr
   MS_LOG(INFO) << "All Parameters size is: " << importProto.parameter_size();
   for (int i = 0; i < importProto.parameter_size(); ++i) {
     const mind_ir::TensorProto &parameter_proto = importProto.parameter(i);
+    if (is_kernel_graph_ && anfnode_build_map_.count(parameter_proto.name()) > 0) {
+      continue;
+    }
     if (!BuildParameterForFuncGraph(outputFuncGraph->add_parameter(), parameter_proto)) {
       MS_LOG(ERROR) << "Build parameter for funcgraph fail at index: " << i;
       return false;
@@ -1201,6 +1249,10 @@ bool MSANFModelParser::SetPrimitiveAttrWithType(const PrimitivePtr &prim, const 
     return false;
   }
   const std::string &op_type = prim->name();
+  if (is_kernel_graph_) {
+    (void)prim->AddAttr(attr_name, value);
+    return true;
+  }
   CheckAndConvertUtils::ConvertAttrValueInLoad(op_type, attr_name, &value);
   // Compatible with older versions.
   if (op_type == "HistogramFixedWidth" && attr_name == "dtype" && value->isa<StringImm>()) {
@@ -1236,6 +1288,10 @@ bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const mind
       if (ref_attr_name.find("value0") != std::string::npos) {
         ValuePtr res = ObtainCNodeAttrInSingleScalarForm(attr_proto);
         const std::string &op_type = prim->name();
+        if (is_kernel_graph_) {
+          (void)prim->AddAttr(attr_name, res);
+          break;
+        }
         CheckAndConvertUtils::ConvertAttrValueInLoad(op_type, attr_name, &res);
         if (op_type == "HistogramFixedWidth" && attr_name == "dtype" && res->isa<StringImm>()) {
           auto str_dtype = GetValue<std::string>(res);
@@ -1805,7 +1861,7 @@ CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFunc
     inputs.push_back(anfNode);
   }
 
-  CNodePtr cnode_ptr = outputFuncGraph->NewCNode(inputs);
+  CNodePtr cnode_ptr = outputFuncGraph->FuncGraph::NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(cnode_ptr);
   if (anfnode_build_map_.count(node_name) > 0) {
     MS_LOG(INTERNAL_EXCEPTION) << "Duplicate CNode name: " << node_name;
@@ -1845,13 +1901,13 @@ bool MSANFModelParser::BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGra
       inputs.push_back(anfNode);
       elem.push_back(anfNode->abstract());
     }
-    auto maketuple_ptr = outputFuncGraph->NewCNode(inputs);
+    auto maketuple_ptr = outputFuncGraph->FuncGraph::NewCNode(inputs);
     MS_EXCEPTION_IF_NULL(maketuple_ptr);
     maketuple_ptr->set_abstract(std::make_shared<abstract::AbstractTuple>(elem));
     inputs.clear();
     inputs.push_back(NewValueNode(prim::kPrimReturn));
     inputs.push_back(maketuple_ptr);
-    auto return_node = outputFuncGraph->NewCNode(inputs);
+    auto return_node = outputFuncGraph->FuncGraph::NewCNode(inputs);
     MS_EXCEPTION_IF_NULL(return_node);
     return_node->set_abstract(maketuple_ptr->abstract());
     return_node->set_load_flag(true);
@@ -1859,19 +1915,24 @@ bool MSANFModelParser::BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGra
     MS_LOG(DEBUG) << "Construct funcgraph finined, all success.";
     return true;
   } else if (importProto.output_size() == 1) {
-    inputs.push_back(NewValueNode(prim::kPrimReturn));
-    auto nodeName = importProto.output(0).name();
-    auto anfNode = GetAnfNode(nodeName);
-    if (anfNode == nullptr) {
-      MS_LOG(ERROR) << "Miss return node: " << nodeName;
+    auto graph_name = importProto.name();
+    const auto &return_node_input0 = NewValueNode(prim::kPrimReturn);
+    anfnode_build_map_[graph_name + kReturnPrimNode] = return_node_input0;
+    inputs.push_back(return_node_input0);
+    auto node_name = importProto.output(0).name();
+    auto anf_node = GetAnfNode(node_name);
+    if (anf_node == nullptr) {
+      MS_LOG(ERROR) << "Miss return node: " << node_name;
       return false;
     }
-    inputs.push_back(anfNode);
-    auto return_node = outputFuncGraph->NewCNode(inputs);
+    inputs.push_back(anf_node);
+    anfnode_build_map_[node_name] = anf_node;
+    auto return_node = outputFuncGraph->FuncGraph::NewCNode(inputs);
     MS_EXCEPTION_IF_NULL(return_node);
-    return_node->set_abstract(anfNode->abstract());
+    return_node->set_abstract(anf_node->abstract());
     return_node->set_load_flag(true);
     outputFuncGraph->set_return(return_node);
+    anfnode_build_map_[graph_name + kReturnNode] = return_node;
     MS_LOG(DEBUG) << "Construct funcgraph finined, all success!";
     return true;
   }
@@ -1886,6 +1947,9 @@ bool MSANFModelParser::ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph,
   CNodePtr cnode_ptr = nullptr;
   for (int i = 0; i < importProto.node_size(); ++i) {
     const mind_ir::NodeProto &node_proto = importProto.node(i);
+    if (is_kernel_graph_ && anfnode_build_map_.count(node_proto.output(0)) > 0) {
+      continue;
+    }
     const std::string &node_type = node_proto.op_type();
     if (node_type == kConstantValueNode) {
       if (!BuildValueNodeForFuncGraph(node_proto)) {
@@ -1900,7 +1964,6 @@ bool MSANFModelParser::ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph,
       return false;
     }
   }
-
   return BuildReturnForFuncGraph(outputFuncGraph, importProto);
 }
 
@@ -1918,68 +1981,69 @@ bool MSANFModelParser::BuildAttrForFuncGraph(const FuncGraphPtr &outputFuncGraph
   return true;
 }
 
-bool MSANFModelParser::BuildFuncGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto) {
-  MS_EXCEPTION_IF_NULL(outputFuncGraph);
-  GraphDebugInfoPtr debug_info_ptr = outputFuncGraph->debug_info();
+bool MSANFModelParser::BuildFuncGraph(const FuncGraphPtr &output_graph, const mind_ir::GraphProto &import_proto) {
+  MS_EXCEPTION_IF_NULL(output_graph);
+  GraphDebugInfoPtr debug_info_ptr = output_graph->debug_info();
   MS_EXCEPTION_IF_NULL(debug_info_ptr);
-  if (importProto.has_name()) {
-    debug_info_ptr->set_name(importProto.name());
+  if (import_proto.has_name()) {
+    debug_info_ptr->set_name(import_proto.name());
   } else {
     MS_LOG(ERROR) << "FuncGraph under converting has not name!";
+    return false;
   }
-  if (importProto.has_bprop_hash()) {
-    outputFuncGraph->set_bprop_hash(importProto.bprop_hash());
-  }
-
-  if (importProto.has_bprop_filepath()) {
-    outputFuncGraph->set_bprop_filepath(importProto.bprop_filepath());
+  if (import_proto.has_bprop_hash()) {
+    output_graph->set_bprop_hash(import_proto.bprop_hash());
   }
 
-  if (!BuildAttrForFuncGraph(outputFuncGraph, importProto)) {
+  if (import_proto.has_bprop_filepath()) {
+    output_graph->set_bprop_filepath(import_proto.bprop_filepath());
+  }
+  if (!BuildAttrForFuncGraph(output_graph, import_proto)) {
     MS_LOG(ERROR) << "Build attribute for graph fail!";
   }
-
-  if (!ImportParametersForGraph(outputFuncGraph, importProto)) {
+  if (!ImportParametersForGraph(output_graph, import_proto)) {
     MS_LOG(ERROR) << "Import parameters for graph fail!";
     return false;
   }
-  if (!ImportMapParametersForGraph(outputFuncGraph, importProto)) {
+  if (!ImportMapParametersForGraph(output_graph, import_proto)) {
     MS_LOG(ERROR) << "Import map parameters for graph failed!";
     return false;
   }
-  if (ImportNodesForGraph(outputFuncGraph, importProto)) {
-    MS_LOG(DEBUG) << "Success to parse graph: " << outputFuncGraph->ToString() << ": " << outputFuncGraph.get();
+  if (ImportNodesForGraph(output_graph, import_proto)) {
+    MS_LOG(DEBUG) << "Success to parse graph: " << output_graph->ToString() << ": " << output_graph.get();
     return true;
   }
   MS_LOG(ERROR) << "Failed to parse nodes. ";
   return false;
 }
 
-bool MSANFModelParser::MSANFParseModelConfigureInfo(const mind_ir::ModelProto &model_proto) {
-  if (!model_proto.has_producer_name()) {
-    MS_LOG(ERROR) << "Parse model producer name from pb file failed!";
+bool MSANFModelParser::BuildKernelGraph(const FuncGraphPtr &output_graph, const mind_ir::GraphProto &import_proto) {
+  MS_EXCEPTION_IF_NULL(output_graph);
+  if (!import_proto.has_name()) {
+    MS_LOG(ERROR) << "KernelGraph under converting has not name!";
     return false;
   }
-  producer_name_ = model_proto.producer_name();
-  MS_LOG(INFO) << "producer_name: " << producer_name_;
+  GraphDebugInfoPtr debug_info_ptr = output_graph->debug_info();
+  MS_EXCEPTION_IF_NULL(debug_info_ptr);
+  debug_info_ptr->set_name(import_proto.name());
 
-  if (!model_proto.has_model_version()) {
-    MS_LOG(ERROR) << "Parse model producer version from pb file failed!";
+  if (!BuildAttrForFuncGraph(output_graph, import_proto)) {
+    MS_LOG(ERROR) << "Build attribute for graph fail!";
+  }
+  if (!ImportParametersForGraph(output_graph, import_proto)) {
+    MS_LOG(ERROR) << "Import parameters for graph fail!";
     return false;
   }
-  model_version_ = model_proto.model_version();
-  MS_LOG(INFO) << "producer_version: " << model_version_;
-
-  int64_t mind_ir_version = 0;
-  if (model_proto.has_mind_ir_version()) {
-    mind_ir_version = model_proto.mind_ir_version();
+  if (!ImportMapParametersForGraph(output_graph, import_proto)) {
+    MS_LOG(ERROR) << "Import map parameters for graph failed!";
+    return false;
   }
-  if (!mind_ir::Version_IsValid(mind_ir_version)) {
-    MS_LOG(EXCEPTION) << "This software can only support the maximum mind ir version: " << mind_ir::Version_MAX
-                      << ", please install the latest version to support the mind ir version: " << mind_ir_version;
+  if (ImportNodesForGraph(output_graph, import_proto)) {
+    MS_LOG(DEBUG) << "Success to parse graph: " << output_graph->ToString();
+    return true;
   }
-
-  return true;
+  MS_LOG(ERROR) << "Failed to parse nodes. ";
+  return false;
 }
 
 bool MSANFModelParser::SetValueForTopGraphParameter(const FuncGraphPtr &topGraph,
@@ -2014,20 +2078,13 @@ bool MSANFModelParser::SetValueForTopGraphParameter(const FuncGraphPtr &topGraph
 }
 
 FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto,
-                                     const std::map<std::string, ValuePtr> &weights) {
+                                     const std::map<std::string, ValuePtr> &weights,
+                                     mindspore::HashMap<std::string, AnfNodePtr> *name_to_node) {
   if (IsLite()) {
     abstract_valid_ = true;
   }
-
-  if (!MSANFParseModelConfigureInfo(model_proto)) {
-    MS_LOG(ERROR) << "Parse configuration info for pb file failed!";
-  }
-
-  if (model_proto.has_little_endian()) {
-    if (model_proto.little_endian() != this->little_endian()) {
-      MS_LOG(ERROR) << "The byte order of export MindIr device and load MindIr device is not same!";
-      return nullptr;
-    }
+  if (name_to_node) {
+    anfnode_build_map_ = *name_to_node;
   }
 
   FuncGraphPtr dstGraph = std::make_shared<FuncGraph>();
@@ -2086,7 +2143,9 @@ FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto,
     }
     MS_LOG(DEBUG) << "Parse pb to build FuncGraph Success! graph: " << graph_proto.name() << ": " << graph.get();
   }
-
+  if (name_to_node) {
+    *name_to_node = anfnode_build_map_;
+  }
   // Release resource
   anfnode_build_map_.clear();
 
@@ -2095,6 +2154,70 @@ FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto,
     CorrectFuncGraph(dstGraph);
   }
   return dstGraph;
+}
+
+bool MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto, const std::vector<FuncGraphPtr> &graphs,
+                             mindspore::HashMap<std::string, AnfNodePtr> *name_to_node) {
+  is_kernel_graph_ = graphs.front()->type_name() == kKernelGraphTypeName;
+  if (name_to_node) {
+    anfnode_build_map_ = *name_to_node;
+  }
+  for (int i = 0; i < model_proto.primitives_size(); ++i) {
+    if (!BuildPrimitiveNode(model_proto.primitives(i))) {
+      MS_LOG(ERROR) << "Parse primitives info for pb file failed! " << model_proto.primitives(i).DebugString();
+      return false;
+    }
+  }
+  const mind_ir::GraphProto &graph_build = model_proto.graph();
+  const auto &root = FindGraphByName(graphs, graph_build.name());
+  MS_EXCEPTION_IF_NULL(root);
+
+  // Forward declare FuncGraph name
+  // Compatible with the previous proto.
+  if (graph_build.has_name()) {
+    anfnode_build_map_[graph_build.name()] = NewValueNodeWithAbstract(root);
+  }
+  for (int i = 0; i < model_proto.functions_size(); ++i) {
+    const auto &graph_proto = model_proto.functions(i);
+    if (!graph_proto.has_name()) {
+      MS_LOG(ERROR) << "The function has not a name. Please export mindIR again. ";
+      return false;
+    }
+    const auto &graph_name = graph_proto.name();
+    if (anfnode_build_map_.count(graph_name) > 0) {
+      MS_LOG(ERROR) << "There is a duplication function graph name: " << graph_proto.name();
+      return false;
+    }
+    const auto &graph = FindGraphByName(graphs, graph_name);
+    MS_EXCEPTION_IF_NULL(graph);
+    auto debug_info = graph->debug_info();
+    debug_info->set_name(graph_name);
+    anfnode_build_map_[graph_name] = NewValueNodeWithAbstract(graph);
+  }
+
+  // Parser the proto.
+  if (!BuildKernelGraph(root, graph_build)) {
+    MS_LOG(ERROR) << "Build funcgraph failed!";
+    return false;
+  }
+  MS_LOG(DEBUG) << "Parse pb to build FuncGraph Success! graph: " << graph_build.name() << ": " << root.get();
+  top_graph_ = root;
+  for (int i = 0; i < model_proto.functions_size(); ++i) {
+    const auto &graph_proto = model_proto.functions(i);
+    FuncGraphPtr graph = GetValueNode<FuncGraphPtr>(anfnode_build_map_[graph_proto.name()]);
+    if (!BuildKernelGraph(graph, graph_proto)) {
+      MS_LOG(ERROR) << "Build funcgraph failed!";
+      return false;
+    }
+    MS_LOG(DEBUG) << "Parse pb to build FuncGraph Success! graph: " << graph_proto.name() << ": " << graph.get();
+  }
+  if (name_to_node) {
+    *name_to_node = anfnode_build_map_;
+  }
+  // Release resource
+  anfnode_build_map_.clear();
+
+  return true;
 }
 
 const LayoutMap MSANFModelParser::ParseLayout(const mind_ir::ModelProto &model_proto) {
@@ -2472,7 +2595,10 @@ FuncGraphPtr MindIRLoader::LoadMindIR(const void *buffer, const size_t &size) {
     MS_LOG(ERROR) << "ParseFromArray failed.";
     return nullptr;
   }
-
+  if (!CheckModelConfigureInfo(model)) {
+    MS_LOG(ERROR) << "Check configuration info for pb file failed!";
+    return nullptr;
+  }
   MSANFModelParser model_parser;
   InitModelParser(&model_parser, this);
   FuncGraphPtr func_graph = model_parser.Parse(model);
@@ -2480,10 +2606,11 @@ FuncGraphPtr MindIRLoader::LoadMindIR(const void *buffer, const size_t &size) {
   return func_graph;
 }
 
-FuncGraphPtr MindIRLoader::LoadMindIR(const std::string &file_name) {
+mindspore::HashMap<std::string, AnfNodePtr> anfnode_build_map_;
+FuncGraphPtr MindIRLoader::LoadMindIR(const std::string &file_name,
+                                      mindspore::HashMap<std::string, AnfNodePtr> *name_to_node) {
   if (file_name.length() > PATH_MAX) {
-    MS_LOG(ERROR) << "The length of the file name exceeds the limit.";
-    return nullptr;
+    MS_LOG(EXCEPTION) << "The length of the file name exceeds the limit.";
   }
   char abs_path_buff[PATH_MAX];
   vector<string> files;
@@ -2492,12 +2619,18 @@ FuncGraphPtr MindIRLoader::LoadMindIR(const std::string &file_name) {
   _fullpath(abs_path_buff, file_name.c_str(), PATH_MAX);
 #else
   if (!realpath(file_name.c_str(), abs_path_buff)) {
-    MS_LOG(ERROR) << "Load MindIR get absolute path of " << file_name << " failed, errno is: " << ErrnoToString(errno);
+    MS_LOG(EXCEPTION) << "Load MindIR get absolute path of " << file_name
+                      << " failed, errno is: " << ErrnoToString(errno);
   }
 #endif
   // Read graph
   mind_ir::ModelProto origin_model;
   if (!ParseModelProto(&origin_model, std::string(abs_path_buff), this)) {
+    return nullptr;
+  }
+
+  if (!CheckModelConfigureInfo(origin_model)) {
+    MS_LOG(ERROR) << "Check configuration info for pb file failed!";
     return nullptr;
   }
   // Load parameter into graph
@@ -2544,7 +2677,7 @@ FuncGraphPtr MindIRLoader::LoadMindIR(const std::string &file_name) {
   auto mindir_path = std::string(abs_path_buff);
   model_parser.SetMindIRPath(mindir_path.substr(0, mindir_path.rfind("/")));
   InitModelParser(&model_parser, this);
-  FuncGraphPtr dstgraph_ptr = model_parser.Parse(origin_model, weights_value_map_);
+  FuncGraphPtr dstgraph_ptr = model_parser.Parse(origin_model, weights_value_map_, name_to_node);
   if (has_parallel_info_) {
     layout_map_ = model_parser.ParseLayout(origin_model);
   }
@@ -2558,12 +2691,45 @@ FuncGraphPtr MindIRLoader::LoadMindIR(const void *buffer, const size_t &size, co
     MS_LOG(ERROR) << "ParseFromArray failed.";
     return nullptr;
   }
-
+  if (!CheckModelConfigureInfo(model)) {
+    MS_LOG(ERROR) << "Check configuration info for pb file failed!";
+    return nullptr;
+  }
   MSANFModelParser model_parser;
   InitModelParser(&model_parser, this);
   model_parser.SetMindIRPath(mindir_path);
   FuncGraphPtr func_graph = model_parser.Parse(model);
   return func_graph;
+}
+
+bool MindIRLoader::LoadMindIR(const std::string &file_name, const std::vector<FuncGraphPtr> &graphs,
+                              mindspore::HashMap<std::string, AnfNodePtr> *name_to_node) {
+  if (file_name.length() > PATH_MAX) {
+    MS_LOG(ERROR) << "The length of the file name exceeds the limit.";
+    return false;
+  }
+  char abs_path_buff[PATH_MAX];
+#ifdef _WIN32
+  _fullpath(abs_path_buff, file_name.c_str(), PATH_MAX);
+#else
+  if (!realpath(file_name.c_str(), abs_path_buff)) {
+    MS_LOG(EXCEPTION) << "Load MindIR get absolute path of " << file_name
+                      << " failed, errno is: " << ErrnoToString(errno);
+  }
+#endif
+  mind_ir::ModelProto model_proto;
+  // Read graph
+  if (!ParseModelProto(&model_proto, std::string(abs_path_buff), this)) {
+    return false;
+  }
+  if (!CheckModelConfigureInfo(model_proto)) {
+    MS_LOG(ERROR) << "Check configuration info for pb file failed!";
+    return false;
+  }
+  MSANFModelParser model_parser;
+  InitModelParser(&model_parser, this);
+  model_parser.Parse(model_proto, graphs, name_to_node);
+  return true;
 }
 
 std::shared_ptr<std::vector<char>> ReadProtoFile(const std::string &file) {
