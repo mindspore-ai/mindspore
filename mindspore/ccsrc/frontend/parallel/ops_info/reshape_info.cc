@@ -114,6 +114,32 @@ Status ReshapeInfo::GetParameterInput() {
   return SUCCESS;
 }
 
+std::vector<int64_t> ReshapeInfo::GetInputShape(const AnfNodePtr &shape_input_node) {
+  MS_EXCEPTION_IF_NULL(shape_input_node);
+  Shape origin_dst_shape;
+  if (shape_input_node->isa<ValueNode>()) {
+    auto shape_input_value_node = shape_input_node->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(shape_input_value_node);
+    auto shape_input_value = shape_input_value_node->value();
+    MS_EXCEPTION_IF_NULL(shape_input_value);
+    origin_dst_shape = GetValue<std::vector<int64_t>>(shape_input_value);
+  } else if (IsPrimitiveCNode(shape_input_node, prim::kPrimMakeTuple)) {
+    auto shape_input_cnode = shape_input_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(shape_input_cnode);
+    for (size_t i = 1; i < shape_input_cnode->inputs().size(); ++i) {
+      auto input_node = shape_input_cnode->input(i);
+      MS_EXCEPTION_IF_NULL(input_node);
+      auto input_value_node = input_node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(input_value_node);
+      origin_dst_shape.push_back(GetValue<int64_t>(input_value_node->value()));
+    }
+  } else {
+    MS_LOG(EXCEPTION) << name_ << ": input shape must be either Tuple or MakeTuple cnode, but got "
+                      << shape_input_node->fullname_with_scope();
+  }
+  return origin_dst_shape;
+}
+
 Status ReshapeInfo::ComputeReplaceOp() {
   RankList dev_list = stage_device_list();
   TensorRedistribution tensor_redistribution(!is_generating_costs_, true);
@@ -152,8 +178,7 @@ Status ReshapeInfo::ComputeReplaceOp() {
     int64_t shape_dim = 2;
     auto value = replace_op_.front().second.second.front().first.second;
     Shape dst_shape = GetValue<std::vector<int64_t>>(value);
-    Shape origin_dst_shape =
-      GetValue<std::vector<int64_t>>(cnode_->input(LongToSize(shape_dim))->cast<ValueNodePtr>()->value());
+    Shape origin_dst_shape = GetInputShape(cnode_->input(LongToSize(shape_dim)));
     if (dst_shape.size() == origin_dst_shape.size()) {
       for (size_t i = 0; i < dst_shape.size(); ++i) {
         if (origin_dst_shape[i] != dst_shape[i] && origin_dst_shape[i] != -1) {
