@@ -158,7 +158,7 @@ def calculate_dataset_execution_time(input_file, output_file):
     logger.info('Successfully calculate the execution time and write it to file: %s.', output_file)
 
 
-def parse_host_info(input_file, output_file, is_develop_user=False):
+def parse_host_info(input_file, output_file, is_develop_user=True):
     r"""
     Parse the host info into timeline file, so as to show on UI.
 
