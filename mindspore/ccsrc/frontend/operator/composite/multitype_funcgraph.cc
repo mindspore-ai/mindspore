@@ -172,7 +172,7 @@ const std::tuple<py::function, bool, size_t> MultitypeFuncGraph::SignMatch(const
 }
 
 const std::string MultitypeFuncGraph::PrintMatchFailLog(const TypeListMap<py::function>, const TypePtrList &types,
-                                                        size_t match_max_idx) {
+                                                        size_t match_max_idx, bool has_any) {
   std::ostringstream buffer1;
   py::list types_list;
   bool external_flag = false;
@@ -188,6 +188,12 @@ const std::string MultitypeFuncGraph::PrintMatchFailLog(const TypeListMap<py::fu
     } else {
       buffer1 << types_to_int << ">";
     }
+  }
+  if (has_any && match_max_idx >= types_list.size()) {
+    MS_LOG(INTERNAL_EXCEPTION)
+      << "In the inputs of operation '" << name_
+      << "', there are unsupported syntax in graph mode. Those codes would be fallen back to python interpreter, "
+      << "which is not supported for operation '" << name_ << "'.";
   }
 
   std::ostringstream buffer2;
@@ -266,7 +272,7 @@ FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
     }
   }
 
-  auto match_fail_log = PrintMatchFailLog(fn_cache_py_, types, match_max_idx);
+  auto match_fail_log = PrintMatchFailLog(fn_cache_py_, types, match_max_idx, has_any);
   MS_LOG(EXCEPTION) << match_fail_log;
 }
 }  // namespace prim

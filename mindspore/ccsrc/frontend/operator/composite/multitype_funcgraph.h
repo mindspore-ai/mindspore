@@ -53,7 +53,8 @@ class MultitypeFuncGraph : public MetaFuncGraph {
 
  private:
   const std::tuple<py::function, bool, size_t> SignMatch(const TypePtrList &types);
-  const std::string PrintMatchFailLog(const TypeListMap<py::function>, const TypePtrList &types, size_t match_max_idx);
+  const std::string PrintMatchFailLog(const TypeListMap<py::function>, const TypePtrList &types, size_t match_max_idx,
+                                      bool has_any);
   TypeListMap<specialize_fn> fn_cache_;
   TypeListMap<py::function> fn_cache_py_;
   std::string doc_url_;
