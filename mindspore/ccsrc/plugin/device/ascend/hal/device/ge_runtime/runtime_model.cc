@@ -27,6 +27,12 @@
 #ifdef ENABLE_DUMP_IR
 #include "include/common/debug/rdr/recorder_manager.h"
 #endif
+#ifndef ENABLE_SECURITY
+#include "plugin/device/ascend/hal/device/profiling/profiling_utils.h"
+#include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
+using mindspore::device::ascend::ProfilingManager;
+using mindspore::device::ascend::ProfilingUtils;
+#endif
 
 namespace mindspore::ge::model_runner {
 RuntimeModel::~RuntimeModel() {
@@ -189,8 +195,21 @@ void RuntimeModel::Load(uint32_t device_id, uint64_t session_id, const std::shar
 
 void RuntimeModel::DistributeTask() {
   MS_LOG(INFO) << "DistributeTask start.";
+
+#ifndef ENABLE_SECURITY
+  if (ProfilingManager::GetInstance().IsProfilingInitialized()) {
+    ProfilingUtils::RecordModelLoad(rt_model_handle_);
+  }
+#endif
+
   for (auto &task : task_list_) {
     MS_EXCEPTION_IF_NULL(task);
+
+#ifndef ENABLE_SECURITY
+    if (ProfilingManager::GetInstance().IsProfilingInitialized()) {
+      ProfilingUtils::RecordLaunchTaskBegin(task->task_name(), false);
+    }
+#endif
     task->set_model_handle(rt_model_handle_);
     task->Distribute();
     std::string task_info = task->DebugString();
@@ -213,11 +232,21 @@ void RuntimeModel::DistributeTask() {
     if (task->task_name() == kEndGraph) {
       (void)end_graph_info_map_.emplace(task_id, stream_id);
     }
+
+#ifndef ENABLE_SECURITY
+    if (ProfilingManager::GetInstance().IsProfilingInitialized()) {
+      ProfilingUtils::ReportTask(task->task_name(), false);
+    }
+#endif
   }
   if (task_list_.empty()) {
     MS_LOG(EXCEPTION) << "Task list is empty";
   }
-
+#ifndef ENABLE_SECURITY
+  if (ProfilingManager::GetInstance().IsProfilingInitialized()) {
+    ProfilingUtils::RecordModelLoad(rt_model_handle_);
+  }
+#endif
   MS_LOG(INFO) << "DistributeTask success.";
 }
 

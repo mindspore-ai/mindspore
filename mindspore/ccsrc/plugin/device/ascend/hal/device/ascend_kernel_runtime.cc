@@ -43,6 +43,8 @@
 #include "kernel/oplib/op_info_utils.h"
 #include "common/plugin/opp_so_manager.h"
 #ifndef ENABLE_SECURITY
+#include "toolchain/prof_api.h"
+#include "include/backend/debug/profiler/profiling.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_utils.h"
 #endif
@@ -71,7 +73,6 @@
 #include "include/common/debug/rdr/recorder_manager.h"
 #endif
 
-#include "include/backend/debug/profiler/profiling.h"
 #include "kernel/common_utils.h"
 #include "plugin/device/ascend/hal/common/platform_info_util.h"
 #ifndef ENABLE_SECURITY
@@ -581,6 +582,12 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph &graph) {
   ModelRunner::Instance().LoadDavinciModel(device_id_, model_iter->first, model_iter->first, model_iter->second);
 
 #ifndef ENABLE_SECURITY
+  if (ProfilingManager::GetInstance().IsProfilingInitialized()) {
+    ProfilingUtils::GetGraphNodes(graph);
+  }
+#endif
+
+#ifndef ENABLE_SECURITY
   std::function<void *()> model_handle =
     std::bind(&ModelRunner::GetModelHandle, &ModelRunner::Instance(), model_iter->first);
   DistributeDebugTask(graph, NOT_NULL(model_handle));
@@ -601,27 +608,6 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph &graph) {
   }
 
 #ifndef ENABLE_SECURITY
-  if (ProfilingManager::GetInstance().IsProfilingInitialized()) {
-    auto task_ids = ModelRunner::Instance().GetTaskIdList(model_iter->first);
-    auto stream_ids = ModelRunner::Instance().GetStreamIdList(model_iter->first);
-    uint32_t rt_model_id = 0;
-    rtModel_t rt_model_handle = ModelRunner::Instance().GetModelHandle(model_iter->first);
-    rtError_t rt_model_ret = rtModelGetId(rt_model_handle, &rt_model_id);
-    if (rt_model_ret != RT_ERROR_NONE) {
-      MS_LOG(WARNING) << "[profiler] Call rt api rtModelGetId failed, ret: " << rt_model_ret;
-    } else {
-      MS_LOG(INFO) << "[profiler] Call rt api rtModelGetId success, rt_model_id: " << rt_model_id;
-    }
-    // Report data directly if profiling is start
-    if (ProfilingUtils::ValidComputeGraph(graph)) {
-      if (ProfilingManager::GetInstance().IsProfilingStart()) {
-        ProfilingUtils::ReportProfilingData(task_ids, stream_ids, graph.graph_id(), rt_model_id);
-      } else {
-        // Cache data and save when profiling is start
-        ProfilingUtils::SetReportProfilingData(task_ids, stream_ids, graph.graph_id(), rt_model_id);
-      }
-    }
-  }
   LaunchDataDump(graph.graph_id());
 #endif
 

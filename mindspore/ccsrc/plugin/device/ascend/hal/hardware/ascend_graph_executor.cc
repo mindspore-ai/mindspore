@@ -29,9 +29,10 @@
 #include "plugin/device/ascend/optimizer/ir_fission/add_status_input_for_random_operator.h"
 #include "ir/anf.h"
 #include "kernel/oplib/oplib.h"
-#include "include/backend/debug/profiler/profiling.h"
 #ifndef ENABLE_SECURITY
+#include "include/backend/debug/profiler/profiling.h"
 #include "plugin/device/ascend/hal/profiler/memory_profiling.h"
+#include "plugin/device/ascend/hal/device/profiling/profiling_utils.h"
 using mindspore::profiler::ascend::MemoryProfiling;
 #endif
 
@@ -284,6 +285,12 @@ bool AscendGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<
   MS_EXCEPTION_IF_NULL(runtime_instance_);
   runtime_instance_->SetContext();
   device::KernelAdjust::GetInstance().LoadDeviceLoopCtrlParameters(kernel_graph);
+
+#ifndef ENABLE_SECURITY
+  if (ProfilingManager::GetInstance().IsProfilingInitialized()) {
+    ProfilingUtils::RecordModelExecute(kernel_graph);
+  }
+#endif
   auto ret = ExecuteGraph(kernel_graph);
   if (!ret) {
     MS_LOG(EXCEPTION) << "Run task for graph:" << kernel_graph->ToString()
@@ -295,6 +302,12 @@ bool AscendGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<
   PROF_END(launch_graph);
   profiler::CollectHostInfo("Ascend", "RunGraph", "AscendRunGraph_" + kernel_graph->ToString(), 1, 0, 1);
   MS_LOG(INFO) << "Status record: end launch graph. graph id: " << kernel_graph->graph_id();
+
+#ifndef ENABLE_SECURITY
+  if (ProfilingManager::GetInstance().IsProfilingInitialized()) {
+    ProfilingUtils::RecordModelExecute(kernel_graph);
+  }
+#endif
   return ret;
 }
 
