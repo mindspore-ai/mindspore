@@ -30,10 +30,6 @@ typedef struct GroupConvolutionStruct {
   TypeIdC data_type_;
   int group_;
 
-  int input_shape_[DIMENSION_4D];
-  int output_shape_[DIMENSION_4D];
-  int filter_shape_[DIMENSION_4D];
-
   void *origin_input_data_;
   void *origin_output_data_;
 
@@ -42,10 +38,10 @@ typedef struct GroupConvolutionStruct {
   float *sub_out_src_;
   float *sub_out_dst_;
 
-  int sub_in_channel_;
-  int ori_in_channel_;
-  int sub_out_channel_;
-  int ori_out_channel_;
+  int sub_in_c_;
+  int ori_in_c_;
+  int sub_out_c_;
+  int ori_out_c_;
 } GroupConvolutionStruct;
 
 KernelBase *CreateGroupConvolution(ConvParameter *conv_param, TypeIdC data_type);

@@ -22,29 +22,18 @@ int ConvSW1x1Prepare(ConvolutionSW1x1Struct *sw_1x1) {
   MatmulFp32Struct *matmul = (MatmulFp32Struct *)sw_1x1->matmul_;
   NNACL_CHECK_NULL_RETURN_ERR(matmul);
 
-  if (sw_1x1->conv_.infershape_done_ || matmul->a_const_) {
-    TensorC *input_tensor = sw_1x1->conv_.base_.in_[FIRST_INPUT];
-    matmul->compute_.row_ = GetBatch(input_tensor) * GetHeight(input_tensor) * GetWidth(input_tensor);
-    matmul->compute_.deep_ = GetChannel(input_tensor);
-  }
+  sw_1x1->matmul_->compute_.deep_ = sw_1x1->conv_.compute_.in_c_;
+  sw_1x1->matmul_->compute_.col_ = sw_1x1->conv_.compute_.out_c_;
+  sw_1x1->matmul_->compute_.row_ = sw_1x1->conv_.compute_.in_hw_ * sw_1x1->conv_.compute_.in_n_;
 
-  if (sw_1x1->conv_.infershape_done_ || matmul->b_const_) {
-    TensorC *weight_tensor = sw_1x1->conv_.base_.in_[SECOND_INPUT];
-    matmul->compute_.col_ = GetBatch(weight_tensor);
-    matmul->compute_.deep_ = GetChannel(weight_tensor);
-  }
-
+  matmul->batch_ = 1;
   matmul->a_batch_ = 1;
   matmul->b_batch_ = 1;
-  matmul->batch_ = 1;
 
   int ret = MatmulFP32Base_MallocBatchOffset(sw_1x1->matmul_);
   if (ret != NNACL_OK) {
     return ret;
   }
-
-  ((MatMulParameter *)matmul->base_.param_)->a_transpose_ = false;
-  ((MatMulParameter *)matmul->base_.param_)->b_transpose_ = true;
 
   return sw_1x1->matmul_->base_.prepare(&sw_1x1->matmul_->base_);
 }
@@ -66,16 +55,6 @@ int convolution_sw1x1_resize(KernelBase *self) {
   ConvolutionSW1x1Struct *sw_1x1 = (ConvolutionSW1x1Struct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(sw_1x1);
   NNACL_CHECK_NULL_RETURN_ERR(sw_1x1->matmul_);
-
-  MatMulParameter *matmul_param = (MatMulParameter *)sw_1x1->matmul_->base_.param_;
-  NNACL_CHECK_NULL_RETURN_ERR(matmul_param);
-
-  TensorC *input_tensor = self->in_[FIRST_INPUT];
-  matmul_param->row_ = GetBatch(input_tensor) * GetHeight(input_tensor) * GetWidth(input_tensor);
-  matmul_param->deep_ = GetChannel(input_tensor);
-
-  TensorC *weight_tensor = self->in_[SECOND_INPUT];
-  matmul_param->col_ = GetBatch(weight_tensor);
 
   sw_1x1->matmul_->base_.in_ = self->in_;
   sw_1x1->matmul_->base_.in_size_ = self->in_size_;
@@ -142,17 +121,13 @@ ConvolutionBaseStruct *CreateConvolutionSW1x1(ConvParameter *conv_param) {
 
   MatMulParameter *matmul_param = (MatMulParameter *)malloc(sizeof(MatMulParameter));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(matmul_param);
-  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_param->output_h_, conv_param->output_w_, NULL);
-  matmul_param->row_ = conv_param->output_h_ * conv_param->output_w_;
-  matmul_param->col_ = conv_param->output_channel_;
-  matmul_param->deep_ = conv_param->input_channel_;
-  matmul_param->batch = conv_param->input_batch_;
   matmul_param->op_parameter_ = conv_param->op_parameter_;
   matmul_param->act_type_ = conv_param->act_type_;
   matmul_param->a_transpose_ = false;
   matmul_param->b_transpose_ = true;
 
   KernelBase *matmul = CreateMatmulFp32();
+  NNACL_MALLOC_CHECK_NULL_RETURN_NULL(matmul);
   matmul->param_ = (OpParameter *)matmul_param;
   ((MatmulFp32Struct *)matmul)->is_sharing_pack_ = false;
   sw_1x1->matmul_ = (MatmulFp32Struct *)matmul;
