@@ -236,6 +236,12 @@ class Node:
             belong_symbol_tree.set_node_arg_by_node(self._node, arg_idx, src_node.get_handler(), out_idx)
 
     def get_targets(self) -> [ScopedValue]:
+        """
+        Gets a list of output values for the current node.
+
+        Returns:
+            A list of outputs of type ``ScopedValue`` .
+        """
         return self._node.get_targets()
 
     def get_name(self) -> str:
