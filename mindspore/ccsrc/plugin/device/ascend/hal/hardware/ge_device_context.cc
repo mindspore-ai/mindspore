@@ -184,7 +184,8 @@ void GeDeviceContext::SetAscendConfig(const std::shared_ptr<MsContext> &ms_conte
     (*ge_options)["ge.jit_compile"] = ms_context_ptr->get_param<std::string>(MS_CTX_ENABLE_JIT_COMPILE);
     MS_LOG(INFO) << "Set jit_compile " << ms_context_ptr->get_param<std::string>(MS_CTX_ENABLE_JIT_COMPILE) << ".";
   } else {
-    MS_LOG(INFO) << "The default value of jit_compile is set by CANN.";
+    (*ge_options)["ge.jit_compile"] = "2";
+    MS_LOG(INFO) << "The default value of jit_compile is set to 2.";
   }
 
   if (auto atomic_clean_policy = ms_context_ptr->get_param<std::string>(MS_CTX_ATOMIC_CLEAN_POLICY);
