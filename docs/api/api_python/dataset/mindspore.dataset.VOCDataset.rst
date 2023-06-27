@@ -46,6 +46,10 @@ mindspore.dataset.VOCDataset
         - **ValueError** - 与 `usage` 参数相关的txt文件不存在。
         - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。
 
+    教程样例：
+        - `使用数据Pipeline加载 & 处理数据集
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     .. note::
         - 当参数 `extra_metadata` 为True时，还需使用 `rename` 操作删除额外数据列 '_meta-filename'的前缀 '_meta-'，
           否则迭代得到的数据行中不会出现此额外数据列。

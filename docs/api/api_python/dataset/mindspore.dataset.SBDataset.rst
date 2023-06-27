@@ -34,6 +34,10 @@ mindspore.dataset.SBDataset
         - **ValueError** - `usage` 不是 ``'train'`` 、 ``'val'`` 、 ``'train_noval'`` 或 ``'all'`` 。
         - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。
 
+    教程样例：
+        - `使用数据Pipeline加载 & 处理数据集
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     .. note:: 此数据集可以指定参数 `sampler` ，但参数 `sampler` 和参数 `shuffle` 的行为是互斥的。下表展示了几种合法的输入参数组合及预期的行为。
 
     .. list-table:: 配置 `sampler` 和 `shuffle` 的不同组合得到的预期排序结果
