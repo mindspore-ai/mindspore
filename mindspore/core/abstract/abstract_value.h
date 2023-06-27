@@ -1084,7 +1084,7 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   void set_dynamic_len_element_abs(const AbstractBasePtr &dynamic_len_element_abs);
 
   /// \brief Check and convert the sequence to dynamic length sequence.
-  void CheckAndConvertToDynamicLenSequence(bool raise_exception = true);
+  virtual void CheckAndConvertToDynamicLenSequence(bool raise_exception = true);
 
   std::shared_ptr<AbstractSequence> BroadenToDynamicLenSequence();
 
@@ -1243,6 +1243,9 @@ class MS_CORE_API AbstractList final : public AbstractSequence {
   ///
   /// \return The corresponding list user data.
   UserDataPtr list_user_data() { return list_user_data_; }
+
+  /// \brief Check and convert the list to dynamic length list.
+  void CheckAndConvertToDynamicLenSequence(bool raise_exception = true) override;
 
  protected:
   ValuePtr RealBuildValue() const override;
