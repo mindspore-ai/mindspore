@@ -1237,7 +1237,7 @@ void KernelRuntime::GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod
   auto cnode = kernel->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto cnode_name = common::AnfAlgo::GetCNodeName(cnode);
-  if (cnode_name == kMemSetOpName || cnode_name == kDynamicAtomicAddrCleanOpName) {
+  if (cnode_name == kMemSetOpName) {
     return GenAddrCleanLaunchArgs(cnode, &(kernel_launch_info->inputs_));
   }
   auto ms_context = MsContext::GetInstance();
@@ -1469,7 +1469,7 @@ void KernelRuntime::AssignKernelAddress(const std::shared_ptr<MemScheduler> &mem
   auto cnode = kernel->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto cnode_name = common::AnfAlgo::GetCNodeName(cnode);
-  if (cnode_name == kMemSetOpName || cnode_name == kDynamicAtomicAddrCleanOpName) {
+  if (cnode_name == kMemSetOpName) {
     return GenAddrCleanLaunchArgs(cnode, &(kernel_launch_info->inputs_), mem_scheduler);
   }
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);

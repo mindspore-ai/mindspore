@@ -325,6 +325,10 @@ void OpTilingCalculateAdapter::ConvertAtomicCompileInfo(const CNodePtr &node, ::
     std::string atomic_info_key = std::to_string(std::hash<std::string>()(atomic_compile_info));
     (void)::ge::AttrUtils::SetStr(*(*op_desc), ATOMIC_COMPILE_INFO_KEY, atomic_info_key);
     (void)::ge::AttrUtils::SetStr(*(*op_desc), ATOMIC_COMPILE_INFO_JSON, atomic_compile_info);
+    if (common::AnfAlgo::HasNodeAttr(kAttrTbeOpAtomicDtypes, node)) {
+      auto dtype_list = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrTbeOpAtomicDtypes);
+      (void)::ge::AttrUtils::SetListInt(*(*op_desc), kAttrTbeOpAtomicDtypes, dtype_list);
+    }
   }
   // clean output
   if (has_output) {

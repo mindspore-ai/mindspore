@@ -328,11 +328,7 @@ CNodePtr NewAtomicOp(const CNodePtr &pre_node, const std::vector<AnfNodePtr> &fu
   PrimitivePtr clear_zero_prim = nullptr;
   auto is_dynamic = common::AnfAlgo::IsDynamicShape(pre_node);
   MS_LOG(DEBUG) << "Create AtomicClean node with dynamic shape or not: " << is_dynamic;
-  if (is_dynamic) {
-    clear_zero_prim = std::make_shared<Primitive>(kDynamicAtomicAddrCleanOpName);
-  } else {
-    clear_zero_prim = std::make_shared<Primitive>(kMemSetOpName);
-  }
+  clear_zero_prim = std::make_shared<Primitive>(kMemSetOpName);
   MS_EXCEPTION_IF_NULL(clear_zero_prim);
   auto new_value_node = NewValueNode(clear_zero_prim);
   MS_EXCEPTION_IF_NULL(new_value_node);
@@ -360,58 +356,58 @@ void InsertFusionAtomicOp(const CNodePtr &first_clear_node, const std::vector<An
                           const std::vector<int64_t> &clean_size_list, CleanOpsMap *clean_ops) {
   MS_EXCEPTION_IF_NULL(first_clear_node);
   MS_EXCEPTION_IF_NULL(clean_ops);
-  auto clear_zero = NewAtomicOp(first_clear_node, fusion_clear_inputs);
-  if (common::AnfAlgo::GetCNodeName(clear_zero) == kMemSetOpName) {
-    common::AnfAlgo::SetNodeAttr(kAttrSizes, MakeValue(clean_size_list), clear_zero);
+  auto mem_set = NewAtomicOp(first_clear_node, fusion_clear_inputs);
+  if (common::AnfAlgo::GetBooleanAttr(mem_set, kAttrOutputIsDynamicShape)) {
+    common::AnfAlgo::SetNodeAttr(kAttrSizes, MakeValue(std::vector<int64_t>(clean_size_list.size(), -1)), mem_set);
   } else {
-    common::AnfAlgo::SetNodeAttr(kAttrAtomicAddMemSize, MakeValue(clean_size_list), clear_zero);
+    common::AnfAlgo::SetNodeAttr(kAttrSizes, MakeValue(clean_size_list), mem_set);
   }
   if (common::AnfAlgo::HasNodeAttr(kAttrDtypes, first_clear_node)) {
-    common::AnfAlgo::CopyNodeAttr(kAttrDtypes, first_clear_node, clear_zero);
+    common::AnfAlgo::CopyNodeAttr(kAttrDtypes, first_clear_node, mem_set);
   } else {
-    common::AnfAlgo::SetNodeAttr(kAttrDtypes, MakeValue(std::vector<int64_t>{}), clear_zero);
+    common::AnfAlgo::SetNodeAttr(kAttrDtypes, MakeValue(std::vector<int64_t>{}), mem_set);
   }
   if (common::AnfAlgo::HasNodeAttr(kAttrValuesInt, first_clear_node)) {
-    common::AnfAlgo::CopyNodeAttr(kAttrValuesInt, first_clear_node, clear_zero);
+    common::AnfAlgo::CopyNodeAttr(kAttrValuesInt, kAttrValuesInt, first_clear_node, mem_set);
   } else {
-    common::AnfAlgo::SetNodeAttr(kAttrValuesInt, MakeValue(std::vector<int64_t>{}), clear_zero);
+    common::AnfAlgo::SetNodeAttr(kAttrValuesInt, MakeValue(std::vector<int64_t>{}), mem_set);
   }
   if (common::AnfAlgo::HasNodeAttr(kAttrValuesFloat, first_clear_node)) {
-    common::AnfAlgo::CopyNodeAttr(kAttrValuesFloat, first_clear_node, clear_zero);
+    common::AnfAlgo::CopyNodeAttr(kAttrValuesFloat, kAttrValuesFloat, first_clear_node, mem_set);
   } else {
-    common::AnfAlgo::SetNodeAttr(kAttrValuesFloat, MakeValue(std::vector<float>{}), clear_zero);
+    common::AnfAlgo::SetNodeAttr(kAttrValuesFloat, MakeValue(std::vector<float>{}), mem_set);
   }
-  AnfAlgo::SetStreamDistinctionLabel(AnfAlgo::GetStreamDistinctionLabel(first_clear_node.get()), clear_zero.get());
-  (void)(*clean_ops)[first_clear_node].emplace_back(clear_zero);
+  AnfAlgo::SetStreamDistinctionLabel(AnfAlgo::GetStreamDistinctionLabel(first_clear_node.get()), mem_set.get());
+  (void)(*clean_ops)[first_clear_node].emplace_back(mem_set);
 }
 
 void InsertAtomicOpForNormalOp(const mindspore::CNodePtr &pre_node, CleanOpsMap *clean_ops) {
   MS_EXCEPTION_IF_NULL(pre_node);
   MS_EXCEPTION_IF_NULL(clean_ops);
-  auto clear_zero = NewAtomicOp(pre_node, {pre_node});
+  auto mem_set = NewAtomicOp(pre_node, {pre_node});
   auto clean_size = GetClearSize(pre_node);
-  if (common::AnfAlgo::GetCNodeName(clear_zero) == kMemSetOpName) {
-    common::AnfAlgo::SetNodeAttr(kAttrSizes, MakeValue(clean_size), clear_zero);
+  if (common::AnfAlgo::GetBooleanAttr(mem_set, kAttrOutputIsDynamicShape)) {
+    common::AnfAlgo::SetNodeAttr(kAttrSizes, MakeValue(std::vector<int64_t>(clean_size.size(), -1)), mem_set);
   } else {
-    common::AnfAlgo::SetNodeAttr(kAttrAtomicAddMemSize, MakeValue(clean_size), clear_zero);
+    common::AnfAlgo::SetNodeAttr(kAttrSizes, MakeValue(clean_size), mem_set);
   }
   if (common::AnfAlgo::HasNodeAttr(kAttrTbeOpAtomicDtypes, pre_node)) {
-    common::AnfAlgo::CopyNodeAttr(kAttrTbeOpAtomicDtypes, kAttrDtypes, pre_node, clear_zero);
+    common::AnfAlgo::CopyNodeAttr(kAttrTbeOpAtomicDtypes, kAttrDtypes, pre_node, mem_set);
   } else {
-    common::AnfAlgo::SetNodeAttr(kAttrDtypes, MakeValue(std::vector<int64_t>{}), clear_zero);
+    common::AnfAlgo::SetNodeAttr(kAttrDtypes, MakeValue(std::vector<int64_t>{}), mem_set);
   }
   if (common::AnfAlgo::HasNodeAttr(kAttrTbeOpAtomicInt64Values, pre_node)) {
-    common::AnfAlgo::CopyNodeAttr(kAttrTbeOpAtomicInt64Values, kAttrValuesInt, pre_node, clear_zero);
+    common::AnfAlgo::CopyNodeAttr(kAttrTbeOpAtomicInt64Values, kAttrValuesInt, pre_node, mem_set);
   } else {
-    common::AnfAlgo::SetNodeAttr(kAttrValuesInt, MakeValue(std::vector<int64_t>{}), clear_zero);
+    common::AnfAlgo::SetNodeAttr(kAttrValuesInt, MakeValue(std::vector<int64_t>{}), mem_set);
   }
   if (common::AnfAlgo::HasNodeAttr(kAttrTbeOpAtomicFloatValues, pre_node)) {
-    common::AnfAlgo::CopyNodeAttr(kAttrTbeOpAtomicFloatValues, kAttrValuesFloat, pre_node, clear_zero);
+    common::AnfAlgo::CopyNodeAttr(kAttrTbeOpAtomicFloatValues, kAttrValuesFloat, pre_node, mem_set);
   } else {
-    common::AnfAlgo::SetNodeAttr(kAttrValuesFloat, MakeValue(std::vector<float>{}), clear_zero);
+    common::AnfAlgo::SetNodeAttr(kAttrValuesFloat, MakeValue(std::vector<float>{}), mem_set);
   }
-  AnfAlgo::SetStreamDistinctionLabel(AnfAlgo::GetStreamDistinctionLabel(pre_node.get()), clear_zero.get());
-  (void)(*clean_ops)[pre_node].emplace_back(clear_zero);
+  AnfAlgo::SetStreamDistinctionLabel(AnfAlgo::GetStreamDistinctionLabel(pre_node.get()), mem_set.get());
+  (void)(*clean_ops)[pre_node].emplace_back(mem_set);
 }
 
 void SpecialAkgOps(const std::string &op_name, const CNodePtr &node, CleanOpsMap *clean_ops) {

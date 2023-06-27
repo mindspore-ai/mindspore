@@ -1094,7 +1094,7 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph &grap
   for (size_t i = 0; i < kernels.size(); ++i) {
     auto &kernel = kernels[i];
     MS_EXCEPTION_IF_NULL(kernel);
-    if (common::AnfAlgo::GetCNodeName(kernel) == kDynamicAtomicAddrCleanOpName) {
+    if (common::AnfAlgo::GetCNodeName(kernel) == kMemSetOpName) {
       continue;
     }
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);

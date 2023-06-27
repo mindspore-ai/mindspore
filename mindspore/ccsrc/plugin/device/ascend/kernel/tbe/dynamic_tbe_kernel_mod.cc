@@ -156,7 +156,7 @@ int DynamicTbeKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 
     optiling::utils::OpRunInfo atomic_op_info(-1, true, 0);
     if (::optiling::EnableAtomicRt2Tiling(ge_node->GetOpDesc())) {
-      ret = optiling::AtomicRtParseAndTiling(ge_op, platform_infos, op_run_info_v2);
+      ret = optiling::AtomicRtParseAndTiling(ge_op, platform_infos, atomic_op_info);
     } else {
       ret = optiling::OpAtomicCalculateV2(*ge_node, atomic_op_info);
     }
