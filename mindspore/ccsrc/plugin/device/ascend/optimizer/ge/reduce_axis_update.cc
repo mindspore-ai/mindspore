@@ -101,7 +101,6 @@ namespace {
 constexpr size_t kAxisIndex = 2;
 bool IsAxisEmptySequence(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  MS_LOG(WARNING) << "node:" << node->DebugString() << " full name:" << node->fullname_with_scope();
   if (!node->isa<CNode>()) {
     return false;
   }
