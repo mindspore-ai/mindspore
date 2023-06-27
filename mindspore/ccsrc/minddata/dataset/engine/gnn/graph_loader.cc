@@ -261,7 +261,15 @@ Status GraphLoader::WorkerEntry(int32_t worker_id) {
   TaskManager::FindMe()->Post();
   auto task_content_ptr = std::make_shared<mindrecord::TASK_CONTENT>(
     mindrecord::TaskType::kCommonTask, std::vector<std::tuple<std::vector<uint8_t>, mindrecord::json>>());
-  RETURN_IF_NOT_OK(shard_reader_->GetNextById(row_id_++, worker_id, &task_content_ptr));
+  {
+    // judge row_id_ and row_id_++ must be an automatic operation
+    std::lock_guard<std::mutex> lck(mutex_);
+    // finish get all data from mindrecord
+    if (row_id_ >= shard_reader_->GetNumRows()) {
+      return Status::OK();
+    }
+    RETURN_IF_NOT_OK(shard_reader_->GetNextById(row_id_++, worker_id, &task_content_ptr));
+  }
   ShardTuple rows = task_content_ptr->second;
   while (rows.empty() == false) {
     RETURN_IF_INTERRUPTED();
