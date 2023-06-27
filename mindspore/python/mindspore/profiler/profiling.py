@@ -114,7 +114,7 @@ def calculate_dataset_execution_time(input_file, output_file):
         for row in csv.DictReader(f):
             try:
                 module_name = row['module_name']
-                if module_name != 'dataset':
+                if module_name != 'Dataset':
                     continue
                 start_end = row['start_end']
                 event = row['event']
