@@ -1193,14 +1193,14 @@ def test_tensor_assign_bool_index_exception():
     with pytest.raises(ValueError):
         net2(Ta, u_tensor_error)
     net3 = TensorAssignWithBoolTensorIndexError()
-    with pytest.raises(IndexError):
+    with pytest.raises(ValueError):
         net3(Ta, Tb, Tc, u_tensor)
-    with pytest.raises(IndexError):
+    with pytest.raises(ValueError):
         net3(Ta, Tb, Tc, u_scalar)
     net4 = TensorAssignWithBoolTensorIndex2Error()
-    with pytest.raises(IndexError):
+    with pytest.raises(ValueError):
         net4(Ta, u_tensor)
-    with pytest.raises(IndexError):
+    with pytest.raises(ValueError):
         net4(Ta, u_scalar)
 
 
