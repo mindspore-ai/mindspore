@@ -75,6 +75,7 @@
 #include "runtime/device/stream_synchronizer.h"
 #include "include/common/profiler.h"
 #include "include/backend/distributed/collective/collective_manager.h"
+#include "include/backend/distributed/recovery/recovery_context.h"
 #include "include/common/utils/dynamic_obfuscation/dynamic_obfuscation.h"
 #include "include/common/utils/dynamic_obfuscation/registry_opaque_predicate.h"
 #include "mindspore/ccsrc/plugin/device/cpu/kernel/pyexecute/py_execute_cpu_kernel.h"
@@ -1380,9 +1381,15 @@ AbstractBasePtrList GetSeqElementsAbs(const AbstractBasePtr &abs, size_t len) {
     return AbstractBasePtrList(len, nullptr);
   }
   if (abs_seq->size() != len) {
-    MS_LOG(INTERNAL_EXCEPTION) << "The output python object sequence size should equal to abstract sequence size "
-                               << "but got python object sequence size: " << len
-                               << " and abstract sequence size: " << abs_seq->size();
+    bool need_recovery = distributed::recovery::RecoveryContext::GetInstance()->enable_recovery() &&
+                         distributed::recovery::RecoveryContext::GetInstance()->need_reset();
+    if (need_recovery) {
+      MS_LOG(WARNING) << "This is recovery scenario and output could be empty. Do not throw exception.";
+    } else {
+      MS_LOG(INTERNAL_EXCEPTION) << "The output python object sequence size should equal to abstract sequence size "
+                                 << "but got python object sequence size: " << len
+                                 << " and abstract sequence size: " << abs_seq->size();
+    }
   }
   return abs_seq->elements();
 }

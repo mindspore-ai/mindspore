@@ -213,9 +213,12 @@ MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
     MS_EXCEPTION_IF_NULL(message);
     return message.release();
   } else {
-    MS_LOG(INFO) << "The node: " << node_id << " have been recovered.";
     auto node_info = nodes_[node_id];
     MS_EXCEPTION_IF_NULL(node_info);
+    node_info->host_ip = host_ip;
+    MS_LOG(WARNING) << "The node: " << node_id << " have been recovered. IP address: " << host_ip
+                    << ", rank id: " << node_info->rank_id;
+    (void)metadata_.insert(std::make_pair(node_info->role + node_info->node_id, std::to_string(node_info->rank_id)));
 
     RegistrationRespMessage reg_resp_msg;
     reg_resp_msg.set_success(true);
@@ -458,6 +461,12 @@ void MetaServerNode::UpdateTopoState() {
 
 bool MetaServerNode::TransitionToInitialized() {
   if (nodes_.size() == total_node_num_) {
+    // After all nodes are successfully registered, reassign rank ids so they could be continuous.
+    ReassignNodeRank();
+
+    // Assign port range for each node after cluster is initialized.
+    AssignPortRange();
+
     // Persist the cluster metadata into storage through configuration.
     if (recovery::IsEnableRecovery() && configuration_ != nullptr && configuration_->Empty()) {
       if (!Persist()) {
@@ -466,12 +475,6 @@ bool MetaServerNode::TransitionToInitialized() {
     }
     topo_state_ = TopoState::kInitialized;
     MS_LOG(INFO) << "The cluster topology has been constructed successfully.";
-
-    // After all nodes are successfully registered, reassign rank ids so they could be continuous.
-    ReassignNodeRank();
-
-    // Assign port range for each node after cluster is initialized.
-    AssignPortRange();
     return true;
   }
   return false;
