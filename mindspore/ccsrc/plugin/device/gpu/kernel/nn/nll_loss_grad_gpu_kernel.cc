@@ -47,6 +47,7 @@ bool NLLLossGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
     return false;
   }
   kernel_func_ = func_list_[index].second;
+  ignore_index_ = static_cast<int32_t>(kernel_ptr->get_ignore_index());
 
   return true;
 }
@@ -86,7 +87,7 @@ bool NLLLossGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   T *dinput_device = GetDeviceAddress<T>(outputs, 0);
 
   NLLLossGrad(n_, c_, reduction_, input_device, target_device, weight_device, total_weight_device, dloss_device,
-              dinput_device, reinterpret_cast<cudaStream_t>(stream_ptr));
+              dinput_device, ignore_index_, reinterpret_cast<cudaStream_t>(stream_ptr));
 
   return true;
 }

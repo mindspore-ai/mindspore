@@ -75,6 +75,7 @@ class NLLLossGradCpuKernelMod : public NativeCpuKernelMod {
  private:
   NLLLossStruct nllloss_param_{};
   ReductionType reduction_type_;
+  int32_t ignore_index_;
 };
 }  // namespace kernel
 }  // namespace mindspore

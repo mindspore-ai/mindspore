@@ -56,6 +56,7 @@ bool NLLLossGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   }
 
   reduction_type_ = pair->second;
+  ignore_index_ = static_cast<int32_t>(kernel_ptr->get_ignore_index());
   return true;
 }
 
@@ -92,6 +93,9 @@ bool NLLLossGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   }
   (void)memset(logits_grad, 0, nllloss_param_.batch_ * nllloss_param_.class_num_ * sizeof(float));
   for (int i = 0; i < nllloss_param_.batch_; i++) {
+    if (labels[i] == ignore_index_) {
+      continue;
+    }
     if (!(labels[i] < nllloss_param_.class_num_)) {
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_
                                << "', the labels should be smaller than the number of classes, but got " << labels[i];

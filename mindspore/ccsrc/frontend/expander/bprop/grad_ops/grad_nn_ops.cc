@@ -627,8 +627,8 @@ REG_BPROP_BUILDER("NLLLoss").SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex4);
   auto total_weight = ib->TupleGetItem(out, 1);
   auto dout_x = ib->TupleGetItem(dout, 0);
-  auto dx =
-    ib->Emit("NLLLossGrad", {x, dout_x, target, weight, total_weight}, {{"reduction", ib->GetAttr("reduction")}});
+  auto dx = ib->Emit("NLLLossGrad", {x, dout_x, target, weight, total_weight},
+                     {{"reduction", ib->GetAttr("reduction")}, {"ignore_index", ib->GetAttr("ignore_index")}});
   return {dx, ib->OutZeros(target), ib->OutZeros(weight)};
 });
 

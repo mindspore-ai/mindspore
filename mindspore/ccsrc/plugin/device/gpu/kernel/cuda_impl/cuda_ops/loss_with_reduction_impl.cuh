@@ -40,12 +40,12 @@ template <typename T>
 CUDA_LIB_EXPORT void KLDivLossGrad(const int &input_size, const ReductionMode &reduction, const T *input_x,
                                    const T *input_y, const T *dloss, T *dx, cudaStream_t stream);
 template <typename T, typename S>
-CUDA_LIB_EXPORT int NLLLoss(const int n, const int c, const ReductionMode reduction, const T *input,
-                             const int32_t *target, const S *weight, T *loss, S *total_weight, T *tmp_loss,
-                             S *tmp_target_weight, cudaStream_t stream);
+CUDA_LIB_EXPORT cudaError_t NLLLoss(const T *logits, const int32_t *labels, const S *weights, T *loss, S *total_weight,
+                                       unsigned int label_size, unsigned int num_classes, const ReductionMode reduction,
+                                       int32_t ignore_index, cudaStream_t stream);
 template <typename T, typename S>
 CUDA_LIB_EXPORT void NLLLossGrad(const int n, const int c, const ReductionMode reduction, const T *input,
                                  const int32_t *target, const S *weight, const S *total_weight, const T *dloss,
-                                 T *dinput, cudaStream_t stream);
+                                 T *dinput, int32_t ignore_index, cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_LOSS_WITH_REDUCTION_IMPL_CUH_

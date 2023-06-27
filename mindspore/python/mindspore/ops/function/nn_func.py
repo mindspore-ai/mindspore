@@ -3582,7 +3582,8 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
     class_dim = 0 if input.ndim == 1 else 1
     if target.dtype in [mstype.float32, mstype.float16]:
         return _cross_entropy(input, target, class_dim, weight, reduction, label_smoothing)
-    return nll_loss(_innner_log_softmax(input, class_dim), target, weight, ignore_index, reduction, label_smoothing)
+    _log_softmax = _get_cache_prim(P.LogSoftmax)(class_dim)
+    return nll_loss(_log_softmax(input), target, weight, ignore_index, reduction, label_smoothing)
 
 
 def _cross_entropy(inputs, target, target_dim, weight=None, reduction='mean', label_smoothing=0.0):
@@ -3666,7 +3667,18 @@ def nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', l
     """
     ndim = inputs.ndim
     if ndim == 2:
-        ret = _nll_loss(inputs, target, -1, weight, ignore_index, reduction, label_smoothing)
+        if label_smoothing == 0.0:
+            if weight is None:
+                _ones_op = _get_cache_prim(P.Ones)()
+                weight = _ones_op(inputs.shape[ndim - 1], inputs.dtype)
+            _nll_loss_op = _get_cache_prim(P.NLLLoss)(reduction, ignore_index)
+            ret = _nll_loss_op(inputs, target, weight)[0]
+            if reduction == 'none':
+                n = inputs.shape[0]
+                out_size = (n,) + inputs.shape[2:]
+                ret = ret.view(out_size)
+        else:
+            ret = _nll_loss(inputs, target, -1, weight, ignore_index, reduction, label_smoothing)
     elif ndim == 4:
         ret = _nll_loss(inputs, target, 1, weight, ignore_index, reduction, label_smoothing)
     elif ndim == 1:

@@ -123,7 +123,10 @@ class NLLLossInfer : public abstract::OpInferBase {
   }
 };
 
-void NLLLoss::Init(const Reduction &reduction) { this->set_reduction(reduction); }
+void NLLLoss::Init(const Reduction &reduction, const int64_t ignore_index) {
+  this->set_reduction(reduction);
+  this->set_ignore_index(ignore_index);
+}
 
 void NLLLoss::set_reduction(const Reduction &reduction) {
   std::string reduce;
@@ -143,6 +146,12 @@ Reduction NLLLoss::get_reduction() const {
   CheckAndConvertUtils::GetReductionEnumValue(value_ptr, &reduction);
   return Reduction(reduction);
 }
+
+void NLLLoss::set_ignore_index(const int64_t ignore_index) {
+  (void)this->AddAttr(kIgnoreIndex, api::MakeValue(ignore_index));
+}
+
+int64_t NLLLoss::get_ignore_index() const { return GetValue<int64_t>(GetAttr(kIgnoreIndex)); }
 REGISTER_PRIMITIVE_OP_INFER_IMPL(NLLLoss, prim::kPrimNLLLoss, NLLLossInfer, false);
 }  // namespace ops
 }  // namespace mindspore
