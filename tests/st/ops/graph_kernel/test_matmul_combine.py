@@ -67,9 +67,7 @@ def run():
     for exp, out in zip(expect, output):
         expect_np = exp.asnumpy().copy()
         output_np = out.asnumpy().copy()
-        if not np.allclose(expect_np, output_np, 1.e-4, 1.e-7):
-            return false
-    return true
+        assert np.allclose(expect_np, output_np, 1.e-4, 1.e-7)
 
 
 @pytest.mark.level1
@@ -84,7 +82,7 @@ def test_parallel_matmul_combine_ascend():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     context.set_context(graph_kernel_flags="--enable_parallel_op_combine=1 --opt_level=1")
-    assert run()
+    run()
 
 
 @pytest.mark.level1
@@ -98,4 +96,4 @@ def test_parallel_matmul_combine_gpu():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     context.set_context(graph_kernel_flags="--enable_parallel_op_combine=1 --opt_level=1")
-    assert run()
+    run()
