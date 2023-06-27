@@ -264,11 +264,11 @@ void CollectHostInfo(const std::string &module_name, const std::string &event, c
   auto profiler_manager = profiler::ProfilerManager::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_manager);
   if (!profiler_manager->GetProfilingEnableFlag()) {
-    MS_LOG(INFO) << "Profiler is not enabled, no need to record Host info.";
+    MS_LOG(DEBUG) << "Profiler is not enabled, no need to record Host info.";
     return;
   }
   if (!profiler_manager->EnableCollectHost()) {
-    MS_LOG(INFO) << "Profiler profile_framework is not enabled, no need to record Host info.";
+    MS_LOG(DEBUG) << "Profiler profile_framework is not enabled, no need to record Host info.";
     return;
   }
   auto output_path = profiler_manager->ProfileDataPath();
