@@ -2562,7 +2562,7 @@ class Reciprocal(PrimitiveWithCheck):
         >>> output = reciprocal(x)
         >>> print(output)
         [1.   0.5  0.25]
-        >>> x = Tensor(2.1+2j, mindspore.float32)
+        >>> x = Tensor(2.1+2j, mindspore.complex64)
         >>> reciprocal = ops.Reciprocal()
         >>> output = reciprocal(x)
         >>> print(output)
