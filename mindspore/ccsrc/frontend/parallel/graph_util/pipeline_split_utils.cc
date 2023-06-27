@@ -864,10 +864,8 @@ void GetBorderNode(std::vector<AnfNodePtr> *forward_start, std::vector<AnfNodePt
   int64_t slice_index = 0;
   auto all_nodes = DeepScopedGraphSearch(root->get_return());
   for (auto &node : all_nodes) {
-    if (!node->isa<CNode>()) {
-      continue;
-    }
-    if (IsPrimitiveCNode(node, prim::kPrimDepend) || IsPrimitiveCNode(node, prim::kPrimZerosLike)) {
+    if (!node->isa<CNode>() || IsPrimitiveCNode(node, prim::kPrimDepend) ||
+        IsPrimitiveCNode(node, prim::kPrimZerosLike)) {
       continue;
     }
     auto prim = GetCNodePrimitive(node);

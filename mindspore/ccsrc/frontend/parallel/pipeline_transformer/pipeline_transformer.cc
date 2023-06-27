@@ -1153,7 +1153,7 @@ AnfNodePtr PipelineTransformer::GetZeroOutputs(const FuncGraphPtr &graph) {
         (void)out_tuple_inputs.emplace_back(temp_tuple);
         continue;
       }
-      out_tuple_inputs.emplace_back(NewValueNode(CreateZeroseOutput(real_out_cnode->input(i), 0)));
+      (void)out_tuple_inputs.emplace_back(NewValueNode(CreateZeroseOutput(real_out_cnode->input(i), 0)));
     }
   }
   if (out_tuple_inputs.size() > INDEX_ONE) {

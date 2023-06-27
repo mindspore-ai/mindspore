@@ -2851,7 +2851,7 @@ static void MoveMicroMirrorOutCallFunc(const FuncGraphPtr &root) {
     }
 
     // Remove MicroMirror in call_func
-    manager->Replace(micro_mirror, micro_mirror->input(kIndex1));
+    (void)manager->Replace(micro_mirror, micro_mirror->input(kIndex1));
   }
 }
 
