@@ -48,8 +48,8 @@ class AngleAtomEnergyInfer : public abstract::OpInferBase {
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     auto prim_name = primitive->name();
-    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, kInputNum,
-                                             prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual,
+                                             SizeToLong(kInputNum), prim_name);
     auto uint_crd_f_shape_ptr = input_args[kInputIndex0]->BuildShape();
     auto uint_crd_f_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(uint_crd_f_shape_ptr)[kShape];
     if (!IsDynamic(uint_crd_f_shape)) {
@@ -100,8 +100,8 @@ class AngleAtomEnergyInfer : public abstract::OpInferBase {
 
  private:
   static constexpr size_t kInputNum = 7;
-  static constexpr size_t kTwo = 2;
-  static constexpr size_t kThree = 3;
+  static constexpr int64_t kTwo = 2;
+  static constexpr int64_t kThree = 3;
 };
 
 void AngleAtomEnergy::Init(const int64_t angle_numbers) { this->set_angle_numbers(angle_numbers); }
