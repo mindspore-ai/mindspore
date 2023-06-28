@@ -178,6 +178,16 @@ NodePtrList BpropSparseDenseCwiseCommon(const BpropIRBuilder *ib, const std::str
   NodePtrList d_all = {ib->OutZeros(x1_indices), dx1, ib->OutZeros(x1_shape), dx2};
   return d_all;
 }
+
+NodePtr BpropCSRMulDivCommon(const BpropIRBuilder *ib, const NodePtr &indices, const NodePtr &indptr,
+                             const NodePtr &dense, const NodePtr &dense_grad_value) {
+  auto indices_shape = ib->GetShape(indices);
+  auto row = ib->CSR2COO(indptr, ib->Value(indices_shape.at(0)));
+  int64_t axis = -1;
+  auto coo_idx = ib->Stack({row, indices}, axis);
+  auto dense_grad = ib->TensorScatterUpdate(ib->ZerosLike(dense), coo_idx, dense_grad_value);
+  return dense_grad;
+}
 }  // namespace
 REG_BPROP_BUILDERS_BEGIN(GradSparseOps)
 REG_BPROP_BUILDER("SparseToDense").SetUnusedInputs({i1, i2, i3}).SetBody(BODYFUNC(ib) {
@@ -331,11 +341,7 @@ REG_BPROP_BUILDER("CSRMul").SetUnusedInputs({i5}).SetBody(BODYFUNC(ib) {
     dense_grad =
       ib->Emit("CSRReduceSum", {indptr, indices, dense_grad_value, shape, ib->Value(static_cast<int64_t>(1))});
   } else {
-    auto indices_shape = ib->GetShape(indices);
-    auto row = ib->CSR2COO(indptr, ib->Value(indices_shape.at(0)));
-    int64_t axis = -1;
-    auto coo_idx = ib->Stack({row, indices}, axis);
-    dense_grad = ib->TensorScatterUpdate(ib->ZerosLike(dense), coo_idx, dense_grad_value);
+    dense_grad = BpropCSRMulDivCommon(ib, indices, indptr, dense, dense_grad_value);
   }
   return {ib->OutZeros(indptr), ib->OutZeros(indices), csr_tensor_grad_value, ib->OutZeros(ib->Value<int64_t>(0)),
           dense_grad};
@@ -382,11 +388,7 @@ REG_BPROP_BUILDER("CSRDiv").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
     dense_grad =
       ib->Emit("CSRReduceSum", {indptr, indices, dense_grad_value, shape_node, ib->Value(static_cast<int64_t>(1))});
   } else {
-    auto indices_shape = ib->GetShape(indices);
-    auto row = ib->CSR2COO(indptr, ib->Value(indices_shape.at(0)));
-    int64_t axis = -1;
-    auto coo_idx = ib->Stack({row, indices}, axis);
-    dense_grad = ib->TensorScatterUpdate(ib->ZerosLike(dense), coo_idx, dense_grad_value);
+    dense_grad = BpropCSRMulDivCommon(ib, indices, indptr, dense, dense_grad_value);
   }
   return {ib->OutZeros(indptr), ib->OutZeros(indices), csr_tensor_grad_value, ib->OutZeros(ib->Value<int64_t>(0)),
           dense_grad};
