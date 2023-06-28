@@ -41,7 +41,7 @@
 #include "nlohmann/json.hpp"
 #include "runtime/device/memory_manager.h"
 #include "plugin/device/ascend/hal/common/platform_info_util.h"
-#include "tiling/op_tiling_rt2.h"
+#include "common/op_tiling/op_tiling_rt2.h"
 #include "graph/utils/node_utils.h"
 
 namespace mindspore::kernel {
