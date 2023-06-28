@@ -47,7 +47,7 @@ class ReduceMean : public OpDesc {
     int64_t sz = 1;
     for (size_t i = 0; i < x->shape.size(); ++i) {
       if (std::find(axis.begin(), axis.end(), SizeToLong(i)) != axis.end()) {
-        sz *= SizeToLong(x->shape[i]);
+        sz *= x->shape[i];
       }
     }
     auto sum_x = gb.ReduceSum(x, axis, GetValue<bool>(attrs_["keep_dims"]));

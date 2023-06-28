@@ -1255,8 +1255,6 @@ REG_BPROP_BUILDER("BatchToSpaceND").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(i
 REG_BPROP_BUILDER("BroadcastTo").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
-  auto broadcast_shape = ib->GetAttr<ShapeVector>("shape");
-
   auto x_shape = ib->GetShape(x);
   auto dout_shape = ib->GetShape(dout);
 
