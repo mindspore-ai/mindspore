@@ -20,5 +20,6 @@ namespace mindspore {
 namespace transform {
 REGISTER_ACL_OP(MaskedSelect).set_is_need_retrieve_output_shape();
 REGISTER_ACL_OP(Unique).set_is_need_retrieve_output_shape();
+REGISTER_ACL_OP(NonMaxSuppressionV3).set_is_need_retrieve_output_shape();
 }  // namespace transform
 }  // namespace mindspore
