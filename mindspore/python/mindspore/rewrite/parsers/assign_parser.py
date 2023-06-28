@@ -105,7 +105,7 @@ class AssignParser(Parser):
             return ScopedValue.create_naming_value(node.attr, scope.id)
         if isinstance(node, ast.Tuple):
             return AssignParser._create_scopedvalue_from_tuple_ast(node)
-        if isinstance(node, ast.Constant):
+        if isinstance(node, (ast.Constant, ast.NameConstant)):
             return ScopedValue.create_variable_value(node.value)
         if isinstance(node, ast.Num):
             return ScopedValue.create_variable_value(node.n)
