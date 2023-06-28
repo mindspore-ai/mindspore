@@ -59,7 +59,7 @@ TEST_F(TestLocalFileStorage, test_local_file_storage) {
   size_t max_block_len = 160;
   config_map.emplace(kMaxBlockLength, std::to_string(max_block_len));
 
-  std::unique_ptr<StorageBase> local_file = std::make_unique<LocalFile<int, float>>(config_map);
+  std::unique_ptr<StorageBase<int, float>> local_file = std::make_unique<LocalFile<int, float>>(config_map);
   EXPECT_NE(local_file, nullptr);
   EXPECT_NO_THROW(local_file->Initialize());
 
@@ -98,13 +98,20 @@ TEST_F(TestLocalFileStorage, test_local_file_storage) {
                                    {values_to_read.data(), values_to_write.size() * sizeof(float)}));
   EXPECT_EQ(values_to_read, values_to_write);
 
+  std::unique_ptr<std::vector<int>> all_keys = nullptr;
+  EXPECT_NO_THROW((all_keys = local_file->GetAllKeys()));
+  EXPECT_NE(all_keys, nullptr);
+  std::sort(all_keys->begin(), all_keys->end());
+  EXPECT_EQ(*all_keys, keys);
+
   int key_not_exist = -1;
   float value_not_exist = 0.0;
   // Test writing values length is not equal keys length.
   EXPECT_THROW(local_file->Write({&key_not_exist, sizeof(int)}, {&value_not_exist, 1}), std::runtime_error);
 
   // Test reading a key which doesn't exist in file.
-  EXPECT_THROW(local_file->Read({&key_not_exist, sizeof(int)}, {&value_not_exist, sizeof(float)}), std::runtime_error);
+  EXPECT_NO_THROW(
+    local_file->Read({&key_not_exist, sizeof(int)}, {values_to_read.data(), embedding_dim * sizeof(float)}));
 
   // Test readding values length is less than keys length.
   EXPECT_THROW(local_file->Read({&key_not_exist, sizeof(int)}, {&value_not_exist, 1}), std::runtime_error);

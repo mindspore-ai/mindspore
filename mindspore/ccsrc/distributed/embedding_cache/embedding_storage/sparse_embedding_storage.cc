@@ -17,10 +17,13 @@
 #include "distributed/embedding_cache/embedding_storage/sparse_embedding_storage.h"
 #include <memory>
 #include <vector>
+#include <algorithm>
 
 namespace mindspore {
 namespace distributed {
 namespace storage {
+constexpr size_t kMegaByteToByteRate = static_cast<size_t>(1) << 20;
+
 template <typename KeyType, typename ValueType, typename Allocator>
 void SparseEmbeddingStorage<KeyType, ValueType, Allocator>::Initialize(const DeviceAddress *device_address) {
   MS_EXCEPTION_IF_NULL(device_address);
@@ -291,6 +294,104 @@ bool SparseEmbeddingStorage<KeyType, ValueType, Allocator>::InsertMissCacheFromM
   }
 
   return true;
+}
+
+template <typename KeyType, typename ValueType, typename Allocator>
+std::vector<std::shared_ptr<std::vector<char>>> SparseEmbeddingStorage<KeyType, ValueType, Allocator>::ExportSlice(
+  bool, bool *last_slice, size_t slice_size_in_mega_bytes) {
+  MS_EXCEPTION_IF_NULL(last_slice);
+  // Only support fully export currently.
+  // 1. Export data in host cache.
+  if (!this->finish_export_element_in_host_mem_) {
+    return hash_table_->ExportSlice(false, &this->finish_export_element_in_host_mem_, slice_size_in_mega_bytes);
+  }
+
+  // 2. Export data in storage.
+  static KeyType *deduplicated_keys_in_storage = nullptr;
+  static size_t deduplicated_keys_num;
+  if (this->keys_in_storage_ == nullptr) {
+    this->keys_in_storage_ = this->storage_->GetAllKeys();
+    MS_EXCEPTION_IF_NULL(this->keys_in_storage_);
+    deduplicated_keys_num = std::count_if(this->keys_in_storage_->begin(), this->keys_in_storage_->end(),
+                                          [this](KeyType key) { return !this->cache_->Exists(key); });
+    if (deduplicated_keys_num == 0) {
+      *last_slice = true;
+      this->keys_in_storage_ = nullptr;
+      return {std::make_shared<std::vector<char>>(0), std::make_shared<std::vector<char>>(0),
+              std::make_shared<std::vector<char>>(0)};
+    }
+
+    deduplicated_keys_in_storage = this->template AllocateMemory<KeyType>(deduplicated_keys_num * sizeof(KeyType));
+    MS_EXCEPTION_IF_NULL(deduplicated_keys_in_storage);
+    size_t index = 0;
+    for (size_t i = 0; i < this->keys_in_storage_->size(); ++i) {
+      if (!this->cache_->Exists(this->keys_in_storage_->at(i))) {
+        deduplicated_keys_in_storage[index] = this->keys_in_storage_->at(i);
+        ++index;
+      }
+    }
+  }
+
+  size_t slice_size = slice_size_in_mega_bytes * kMegaByteToByteRate / (this->embedding_dim_ * sizeof(ValueType));
+  if (slice_size == 0) {
+    MS_LOG(EXCEPTION) << "The parameter[slice_size_in_mega_bytes] " << slice_size_in_mega_bytes
+                      << " should be greater than the length in meta bytes of one element in storage: "
+                      << (this->embedding_dim_ * sizeof(ValueType)) / kMegaByteToByteRate;
+  }
+  if (this->end_ == 0) {
+    this->end_ = std::min(this->begin_ + slice_size, deduplicated_keys_num);
+  }
+
+  auto ret = ReadSliceFromStorage(deduplicated_keys_in_storage);
+  *last_slice = (this->end_ == deduplicated_keys_num);
+  // Update the iterator and record status.
+  UpdateExportStatus(*last_slice, slice_size, deduplicated_keys_num);
+  if (*last_slice) {
+    this->FreeMemory(deduplicated_keys_in_storage);
+  }
+
+  return ret;
+}
+
+template <typename KeyType, typename ValueType, typename Allocator>
+std::vector<std::shared_ptr<std::vector<char>>>
+SparseEmbeddingStorage<KeyType, ValueType, Allocator>::ReadSliceFromStorage(KeyType *keys_in_storage) const {
+  MS_EXCEPTION_IF_NULL(keys_in_storage);
+
+  if (this->end_ < this->begin_) {
+    MS_LOG(EXCEPTION) << "Invalid export position parameter, begin: " << this->begin_ << ", end: " << this->end_;
+  }
+  const size_t size = this->end_ - this->begin_;
+  auto keys = std::make_shared<std::vector<char>>(size * sizeof(KeyType));
+  auto keys_data = reinterpret_cast<KeyType *>(keys->data());
+  auto values = std::make_shared<std::vector<char>>(size * this->embedding_dim_ * sizeof(ValueType));
+  auto values_data = reinterpret_cast<ValueType *>(values->data());
+  auto statuses = std::make_shared<std::vector<char>>(size * sizeof(HashTableElementStatus));
+
+  auto ret = memcpy_s(keys_data, size * sizeof(KeyType), keys_in_storage + this->begin_, size * sizeof(KeyType));
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "Memcpy failed, errno[" << ret << "].";
+  }
+
+  // Read from storage
+  this->storage_->Read({keys_data, size * sizeof(KeyType)},
+                       {values_data, size * this->embedding_dim_ * sizeof(ValueType)});
+
+  return {keys, values, statuses};
+}
+
+template <typename KeyType, typename ValueType, typename Allocator>
+void SparseEmbeddingStorage<KeyType, ValueType, Allocator>::UpdateExportStatus(
+  bool last_slice, size_t slice_size, size_t deduplicated_keys_num_in_storage) {
+  if (last_slice) {
+    this->begin_ = 0;
+    this->end_ = 0;
+    this->keys_in_storage_ = nullptr;
+    this->finish_export_element_in_host_mem_ = false;
+  } else {
+    this->begin_ += slice_size;
+    this->end_ = std::min(this->begin_ + slice_size, deduplicated_keys_num_in_storage);
+  }
 }
 
 template class SparseEmbeddingStorage<int32_t, bool>;

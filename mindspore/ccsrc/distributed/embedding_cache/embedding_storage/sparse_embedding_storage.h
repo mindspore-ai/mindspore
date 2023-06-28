@@ -18,6 +18,8 @@
 #define MINDSPORE_CCSRC_DISTRIBUTED_EMBEDDING_CACHE_SPARSE_EMBEDDING_STORAGE_EMBEDDING_STORAGE_H_
 
 #include <string>
+#include <memory>
+#include <vector>
 
 #include "distributed/embedding_cache/embedding_storage/embedding_storage.h"
 #include "runtime/device/hash_table.h"
@@ -74,6 +76,12 @@ class SparseEmbeddingStorage : public EmbeddingStorage<KeyType, ValueType, Alloc
    */
   bool Put(const ConstDataWithLen &keys, const ConstDataWithLen &values) override;
 
+  /**
+   * @brief To export a slice from the storage, the size is specified by the parameter 'slice_size_in_mega_bytes' in MB.
+   */
+  std::vector<std::shared_ptr<std::vector<char>>> ExportSlice(bool incremental, bool *last_slice,
+                                                              size_t slice_size_in_mega_bytes) override;
+
  private:
   /**
    * @brief Query cache to analyse the information of cache hit and miss keys. Access an element of the cache generally
@@ -118,6 +126,22 @@ class SparseEmbeddingStorage : public EmbeddingStorage<KeyType, ValueType, Alloc
    */
   bool InsertMissCacheFromMemory(const KeyType *keys, const size_t *cache_miss_offsets, size_t cache_miss_cnt,
                                  const ValueType *values);
+
+  /**
+   * @brief Read slice data from storage.
+   * @param[in] `keys_in_storage`: The array records all keys which only exist in storage.
+   * @return The byte sequence of data read form storage.
+   */
+  std::vector<std::shared_ptr<std::vector<char>>> ReadSliceFromStorage(KeyType *keys_in_storage) const;
+
+  /**
+   * @brief Update begin and end iterator and some record status.
+   * @param[in] `last_slice`: Indicate whether the slice by export is the last slice, that is,
+   * the export is complete.
+   * @param[in] `slice_size`: The number of elements in a slice to export.
+   * @param[in] `deduplicated_keys_num_in_storage`: The total keys number which only exist in storage.
+   */
+  void UpdateExportStatus(bool last_slice, size_t slice_size, size_t deduplicated_keys_num_in_storage);
 
   // The base pointer to the hash table of the embedding table parameter.
   // All embeddings in host cache is recorded in it.

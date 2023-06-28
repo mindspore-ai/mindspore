@@ -17,6 +17,9 @@
 #ifndef aMINDSPORE_CCSRC_DISTRIBUTED_EMBEDDING_CACHE_EMBEDDING_STORAGE_ABSTRACT_EMBEDDING_STORAGE_H_
 #define aMINDSPORE_CCSRC_DISTRIBUTED_EMBEDDING_CACHE_EMBEDDING_STORAGE_ABSTRACT_EMBEDDING_STORAGE_H_
 
+#include <memory>
+#include <vector>
+
 #include "include/backend/distributed/persistent/storage/storage.h"
 #include "include/backend/device_address.h"
 #include "include/backend/visible.h"
@@ -25,6 +28,7 @@ namespace mindspore {
 namespace distributed {
 namespace storage {
 using mindspore::device::DeviceAddress;
+constexpr size_t kDefaultSliceSizeInMB = 1024;
 
 /**
  * @brief AbstractEmbeddingStorage is encapsulated within the Huge Embedding Table's lookup and update interface. It
@@ -75,6 +79,20 @@ class AbstractEmbeddingStorage {
    * @return Whether the function was successfully executed.
    */
   virtual bool Put(const ConstDataWithLen &keys, const ConstDataWithLen &values) = 0;
+
+  /**
+   * @brief To export a slice from the storage, the size is specified by the parameter 'slice_size_in_mega_bytes' in MB.
+   * The default value of 1024 means that the value of the exported slice occupies 1024MB of memory.
+   * @param[in] `incremental`: Determine whether export in incremental or full manner, true
+   * for incremental export, false for full export
+   * @param[out] `last_slice`: A bool is returned to indicate whether the slice by export is the last slice, that is,
+   * the export is complete.
+   * @param[in] `slice_size_in_mega_bytes`: Assign host memory in MB that the value of the exported slice occupies,
+   * default 1024MB.
+   * @return The byte sequence of export data.
+   */
+  virtual std::vector<std::shared_ptr<std::vector<char>>> ExportSlice(
+    bool incremental, bool *last_slice, size_t slice_size_in_mega_bytes = kDefaultSliceSizeInMB) = 0;
 };
 }  // namespace storage
 }  // namespace distributed

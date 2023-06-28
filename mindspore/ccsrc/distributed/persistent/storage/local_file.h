@@ -37,7 +37,7 @@ constexpr size_t DEFAULT_MAX_BLOCK_LENGTH = 128 << 20;
 
 // File type persistence storage implementation class.
 template <typename KeyType = int32_t, typename ValueType = float>
-class LocalFile : public StorageBase {
+class LocalFile : public StorageBase<KeyType, ValueType> {
  public:
   explicit LocalFile(const std::map<std::string, std::string> &storage_config);
   ~LocalFile() override = default;
@@ -75,6 +75,9 @@ class LocalFile : public StorageBase {
   // Parameter[out] `values`: The values corresponding to keys need to read, containing data pointer and data buffer
   // length.
   void Read(const ConstDataWithLen &keys, const DataWithLen &values) override;
+
+  // Dump all keys of all key-value pairs in storage.
+  std::unique_ptr<std::vector<KeyType>> GetAllKeys() const override;
 
  private:
   // Create blocks and block metas and write input data to block files.

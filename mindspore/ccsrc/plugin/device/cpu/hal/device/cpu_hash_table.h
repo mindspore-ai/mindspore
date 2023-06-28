@@ -74,6 +74,9 @@ class CPUHashTable : public HashTable<Key, Value> {
 
   HashTableExportData Export(bool incremental) override;
 
+  // Export a slice from the hash table, the size is specified by the parameter 'slice_size_in_mega_bytes' in MB.
+  HashTableExportData ExportSlice(bool incremental, bool *last_slice, size_t slice_size_in_mega_bytes) override;
+
   size_t capacity() const override;
 
   size_t size() const override;
@@ -83,11 +86,12 @@ class CPUHashTable : public HashTable<Key, Value> {
   bool Clear() override;
 
  private:
-  // Export all keys, values and status of the hash table.
-  HashTableExportData ExportFully();
+  // Export all keys, values and status of the hash table in the iterator interval [begin, end).
+  HashTableExportData ExportSliceFully(size_t begin, size_t end);
 
-  // Export the keys, values and status which are modified since last import or export.
-  HashTableExportData ExportIncrementally();
+  // Export the keys, values and status in the iterator interval [begin, end) which are modified or erased since last
+  // import or export.
+  HashTableExportData ExportSliceIncrementally(size_t begin, size_t end);
 
   // Allocate host memory from dynamic memory pool.
   void *AllocateMemory(size_t size) const;
@@ -112,6 +116,11 @@ class CPUHashTable : public HashTable<Key, Value> {
   // The flag records whether the elements of the hash table have changed since the last export, true means that there
   // has been a change.
   bool is_dirty_{true};
+
+  // Record the position of slice export, the elements in the iterator interval [begin_, end_) of hash table will be
+  // exported.
+  size_t begin_{0};
+  size_t end_{0};
 };
 }  // namespace cpu
 }  // namespace device

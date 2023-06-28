@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_DISTRIBUTED_EMBEDDING_CACHE_EMBEDDING_STORAGE_EMBEDDING_STORAGE_H_
 
 #include <memory>
+#include <vector>
 
 #include "include/backend/distributed/embedding_cache/embedding_storage/abstract_embedding_storage.h"
 #include "distributed/embedding_cache/allocator.h"
@@ -85,6 +86,21 @@ class EmbeddingStorage : public AbstractEmbeddingStorage {
    */
   bool Put(const ConstDataWithLen &keys, const ConstDataWithLen &values) override { return true; }
 
+  /**
+   * @brief To export a slice from the storage, the size is specified by the parameter 'slice_size_in_mega_bytes' in MB.
+   * @param[in] `incremental`: Determine whether export in incremental or full manner, true
+   * for incremental export, false for full export
+   * @param[out] `last_slice`: A bool is returned to indicate whether the slice by export is the last slice, that is,
+   * the export is complete.
+   * @param[in] `slice_size_in_mega_bytes`: Assign host memory in MB that the value of the exported slice occupies,
+   * default 1024MB.
+   * @return The byte sequence of export data.
+   */
+  std::vector<std::shared_ptr<std::vector<char>>> ExportSlice(bool incremental, bool *last_slice,
+                                                              size_t slice_size_in_mega_bytes) override {
+    return std::vector<std::shared_ptr<std::vector<char>>>();
+  }
+
  protected:
   /**
    * @brief Allocate host memory use alloc_.
@@ -109,7 +125,7 @@ class EmbeddingStorage : public AbstractEmbeddingStorage {
   std::unique_ptr<CacheType> cache_;
 
   // The persistent storage(such as local file) used to record all non-hot spot embeddings.
-  std::unique_ptr<StorageBase> storage_;
+  std::unique_ptr<StorageBase<KeyType, ValueType>> storage_;
 
   // The unique key for embedding table.
   int32_t embedding_key_;
@@ -123,6 +139,17 @@ class EmbeddingStorage : public AbstractEmbeddingStorage {
 
   // The common allocator used to alloacte host memory.
   AllocatorType alloc_;
+
+  // Record all key in storage, used to optimize the performance of ExportSlice.
+  std::unique_ptr<std::vector<KeyType>> keys_in_storage_{nullptr};
+
+  // Record whether finish all elements in host memory of storage.
+  bool finish_export_element_in_host_mem_{false};
+
+  // Record the position of slice export, the elements in the iterator interval [begin_, end_) of storage will be
+  // exported.
+  size_t begin_{0};
+  size_t end_{0};
 };
 }  // namespace storage
 }  // namespace distributed
