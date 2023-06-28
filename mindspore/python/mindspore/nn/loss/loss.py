@@ -2299,9 +2299,6 @@ class NLLLoss(LossBase):
         self.reduction = reduction
 
     def construct(self, logits, labels):
-        _check_is_tensor('logits', logits, self.cls_name)
-        _check_is_tensor('labels', labels, self.cls_name)
-        _check_nll_loss_inputs(logits.shape, labels.shape, logits.dtype, labels.dtype, self.cls_name)
         return F.nll_loss(logits, labels, self.weight, self.ignore_index, self.reduction)
 
 

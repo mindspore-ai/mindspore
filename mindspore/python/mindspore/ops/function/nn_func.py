@@ -3638,11 +3638,9 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
     check_int_const(ignore_index, 'ignore_index', "cross_entropy_loss")
     check_non_negative_float_const(label_smoothing, 'label_smoothing', "cross_entropy_loss")
     check_string_const(reduction, ['none', 'mean', 'sum'], 'reduction', "cross_entropy_loss")
-
-    class_dim = 0 if input.ndim == 1 else 1
     if target.dtype in [mstype.float32, mstype.float16]:
-        return _cross_entropy(input, target, class_dim, weight, reduction, label_smoothing)
-    _log_softmax = _get_cache_prim(P.LogSoftmax)(class_dim)
+        return _cross_entropy(input, target, 0 if input.ndim == 1 else 1, weight, reduction, label_smoothing)
+    _log_softmax = _get_cache_prim(P.LogSoftmax)(0 if input.ndim == 1 else 1)
     return nll_loss(_log_softmax(input), target, weight, ignore_index, reduction, label_smoothing)
 
 
@@ -3729,10 +3727,9 @@ def nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', l
     """
     ndim = inputs.ndim
     if ndim == 2:
-        if label_smoothing == 0.0:
+        if label_smoothing == 0.0 and not is_ascend_backend():
             if weight is None:
-                _ones_op = _get_cache_prim(P.Ones)()
-                weight = _ones_op(inputs.shape[ndim - 1], inputs.dtype)
+                weight = inputs[0] * 0 + 1
             _nll_loss_op = _get_cache_prim(P.NLLLoss)(reduction, ignore_index)
             ret = _nll_loss_op(inputs, target, weight)[0]
             if reduction == 'none':

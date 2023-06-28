@@ -1,7 +1,7 @@
 mindspore.ops.NLLLoss
 ======================
 
-.. py:class:: mindspore.ops.NLLLoss(reduction="mean")
+.. py:class:: mindspore.ops.NLLLoss(reduction="mean", ignore_index=-100)
 
     获取预测值和目标值之间的负对数似然损失。
 
@@ -24,6 +24,7 @@ mindspore.ops.NLLLoss
 
     参数：
         - **reduction** (str) - 指定应用于输出结果的计算方式，比如 ``"none'`` 、 ``"mean"`` ， ``"sum"`` ，默认值： ``"mean"`` 。
+        - **ignore_index** (int) - 指定标签中需要忽略的值(一般为填充值)，使其不对梯度产生影响。默认值： ``-100`` 。
 
     输入：
         - **logits** (Tensor) - 输入预测值，shape为 :math:`(N, C)` 。数据类型仅支持float32或float16。
