@@ -60,7 +60,7 @@ class ROIAlignInfer : public abstract::OpInferBase {
       out_c = abstract::Shape::kShapeDimAny;
     } else {
       constexpr int64_t kFeatureShapeSize = 4;
-      (void)CheckAndConvertUtils::CheckInteger("rank of feature shape", SizeToLong(feature_shape.size()), kLessEqual,
+      (void)CheckAndConvertUtils::CheckInteger("rank of feature shape", SizeToLong(feature_shape.size()), kEqual,
                                                kFeatureShapeSize, op_name);
       out_c = feature_shape[kInputIndex1];
     }
