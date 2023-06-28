@@ -27,36 +27,9 @@ bool IsBinaryBroadcast(const std::vector<int64_t> &in0_shape, const std::vector<
   return false;
 }
 
-void SimplifyBinaryBroadcastShape(const std::vector<int64_t> &in0_shape, const std::vector<int64_t> &in1_shape,
-                                  const std::vector<int64_t> &out_shape, std::vector<int64_t> *simplified_in0_shape,
-                                  std::vector<int64_t> *simplified_in1_shape,
-                                  std::vector<int64_t> *simplified_out_shape) {
-  size_t out_rank = out_shape.size();
-  size_t l_rank = in0_shape.size();
-  size_t r_rank = in1_shape.size();
-  size_t l_offset = out_rank - l_rank;
-  std::vector<int64_t> aligned_in0_shape(in0_shape);
-  std::vector<int64_t> aligned_in1_shape(in1_shape);
-  std::vector<int64_t> aligned_out_shape(out_shape);
-  if (aligned_in0_shape.size() == 0) {
-    aligned_in0_shape.emplace_back(1);
-  }
-  if (aligned_in1_shape.size() == 0) {
-    aligned_in1_shape.emplace_back(1);
-  }
-  if (aligned_out_shape.size() == 0) {
-    aligned_out_shape.emplace_back(1);
-  }
-  // broadcast shape
-  if (l_offset > 0) {
-    std::vector<int64_t> insert_lft(l_offset, 1);
-    aligned_in0_shape.insert(aligned_in0_shape.begin(), insert_lft.begin(), insert_lft.end());
-  }
-  size_t r_offset = out_rank - r_rank;
-  if (r_offset > 0) {
-    std::vector<int64_t> insert_rht(r_offset, 1);
-    aligned_in1_shape.insert(aligned_in1_shape.begin(), insert_rht.begin(), insert_rht.end());
-  }
+void CalSimplifyShape(const std::vector<int64_t> &aligned_in0_shape, const std::vector<int64_t> &aligned_in1_shape,
+                      const std::vector<int64_t> &aligned_out_shape, std::vector<int64_t> *simplified_in0_shape,
+                      std::vector<int64_t> *simplified_in1_shape, std::vector<int64_t> *simplified_out_shape) {
   // simplify shape
   simplified_in0_shape->clear();
   simplified_in1_shape->clear();
@@ -111,6 +84,40 @@ void SimplifyBinaryBroadcastShape(const std::vector<int64_t> &in0_shape, const s
     simplified_in1_shape->emplace_back(in1_merged);
     simplified_out_shape->emplace_back(out_merged);
   }
+}
+
+void SimplifyBinaryBroadcastShape(const std::vector<int64_t> &in0_shape, const std::vector<int64_t> &in1_shape,
+                                  const std::vector<int64_t> &out_shape, std::vector<int64_t> *simplified_in0_shape,
+                                  std::vector<int64_t> *simplified_in1_shape,
+                                  std::vector<int64_t> *simplified_out_shape) {
+  size_t out_rank = out_shape.size();
+  size_t l_rank = in0_shape.size();
+  size_t r_rank = in1_shape.size();
+  size_t l_offset = out_rank - l_rank;
+  std::vector<int64_t> aligned_in0_shape(in0_shape);
+  std::vector<int64_t> aligned_in1_shape(in1_shape);
+  std::vector<int64_t> aligned_out_shape(out_shape);
+  if (aligned_in0_shape.size() == 0) {
+    aligned_in0_shape.emplace_back(1);
+  }
+  if (aligned_in1_shape.size() == 0) {
+    aligned_in1_shape.emplace_back(1);
+  }
+  if (aligned_out_shape.size() == 0) {
+    aligned_out_shape.emplace_back(1);
+  }
+  // broadcast shape
+  if (l_offset > 0) {
+    std::vector<int64_t> insert_lft(l_offset, 1);
+    aligned_in0_shape.insert(aligned_in0_shape.begin(), insert_lft.begin(), insert_lft.end());
+  }
+  size_t r_offset = out_rank - r_rank;
+  if (r_offset > 0) {
+    std::vector<int64_t> insert_rht(r_offset, 1);
+    aligned_in1_shape.insert(aligned_in1_shape.begin(), insert_rht.begin(), insert_rht.end());
+  }
+  CalSimplifyShape(aligned_in0_shape, aligned_in1_shape, aligned_out_shape, simplified_in0_shape, simplified_in1_shape,
+                   simplified_out_shape);
 }
 
 void SimplifyBroadcastToShape(const std::vector<int64_t> &inp_shape, const std::vector<int64_t> &out_shape,

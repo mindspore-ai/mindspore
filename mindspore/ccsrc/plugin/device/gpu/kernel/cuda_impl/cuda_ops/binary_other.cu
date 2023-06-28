@@ -139,8 +139,8 @@ template <typename T>
 struct BinaryFunc<BinaryOpType::kAbsGrad, T, T, T> {
   __device__ __host__ __forceinline__ BinaryFunc() {}
   __device__ __forceinline__ T operator()(const T &lhs, const T &rhs) const {
-    T zero = 0;
-    return lhs < -Eps<T>() ? -rhs : lhs > Eps<T>() ? rhs : zero;
+    T zero = 0.0;
+    return lhs < zero ? -rhs : lhs > zero ? rhs : zero;
   }
 };
 REGISTER_BINARY_OP_CUDA_FUNC_FLOAT_TYPE(BinaryOpType::kAbsGrad);

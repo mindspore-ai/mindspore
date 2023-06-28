@@ -21,6 +21,9 @@
 #include <vector>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 bool IsBinaryBroadcast(const std::vector<int64_t> &in0_shape, const std::vector<int64_t> &in1_shape);
+void CalSimplifyShape(const std::vector<int64_t> &aligned_in0_shape, const std::vector<int64_t> &aligned_in1_shape,
+                      const std::vector<int64_t> &aligned_out_shape, std::vector<int64_t> *simplified_in0_shape,
+                      std::vector<int64_t> *simplified_in1_shape, std::vector<int64_t> *simplified_out_shape);
 void SimplifyBinaryBroadcastShape(const std::vector<int64_t> &in0_shape, const std::vector<int64_t> &in1_shape,
                                   const std::vector<int64_t> &out_shape, std::vector<int64_t> *simplified_in0_shape,
                                   std::vector<int64_t> *simplified_in1_shape,

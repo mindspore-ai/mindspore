@@ -41,7 +41,9 @@ template <typename T>
 struct BinaryFunc<BinaryOpType::kFloorMod, T, T, T, typename std::is_floating_point<T>::type> {
   __device__ __host__ __forceinline__ BinaryFunc() {}
   __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) const {
-    return lhs - floor(lhs / rhs) * rhs;
+    T res = lhs - floorf(lhs / rhs) * rhs;
+    res = (abs(res) > 1e-9) && ((res < 0.0) != (rhs < 0.0)) ? res + rhs : res;
+    return res;
   }
 };
 template <>
@@ -50,15 +52,18 @@ struct BinaryFunc<BinaryOpType::kFloorMod, half, half, half> {
   __device__ __host__ __forceinline__ half operator()(const half &lhs, const half &rhs) const {
     float l = __half2float(lhs);
     float r = __half2float(rhs);
-    return __float2half_rn(l - floorf(l / r) * r);
+    float res = l - floorf(l / r) * r;
+    res = (abs(res) > 1e-9) && ((res < 0.0) != (r < 0.0)) ? res + r : res;
+    return __float2half_rn(res);
   }
 };
 
 template <typename T>
 struct BinaryFunc<BinaryOpType::kFloorMod, T, T, T, typename std::is_integral<T>::type> {
   __device__ __host__ __forceinline__ BinaryFunc() {}
-  __device__ __host__ __forceinline__ uint32_t operator()(const uint32_t &lhs, const uint32_t &rhs) const {
-    T res = lhs - floor(static_cast<float>(lhs) / static_cast<float>(rhs)) * rhs;
+  __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) const {
+    T res = lhs - floor(static_cast<double>(lhs) / static_cast<double>(rhs)) * rhs;
+    res = (res > 1e-9) && ((res < 0.0) != (rhs < 0.0)) ? res + rhs : res;
     return res;
   }
 };
