@@ -135,16 +135,16 @@ bool OrmqrGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
     y_info.shape[i] = static_cast<int>(transpose_output_shape_[i]);
   }
   size_t trans_size = static_cast<size_t>(batch_size_ * x_m_ * x_n_);
-  CalTranspose(trans_size, x, x_info, x_shape_.size(), d_x, reinterpret_cast<cudaStream_t>(cuda_stream_));
-
+  auto s1 = CalTranspose(trans_size, x, x_info, x_shape_.size(), d_x, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_LAUNCH_STATUS(s1, "Transpose called by " + kernel_name_);
   trans_size = static_cast<size_t>(batch_size_ * m_ * n_);
-  CalTranspose(trans_size, other, o_info, other_shape_.size(), d_other, reinterpret_cast<cudaStream_t>(cuda_stream_));
-
+  auto s2 =
+    CalTranspose(trans_size, other, o_info, other_shape_.size(), d_other, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_LAUNCH_STATUS(s2, "Transpose called by " + kernel_name_);
   RunOrmqr(d_x, tau, d_other, dev_info);
-
-  CalTranspose(trans_size, d_other, y_info, other_shape_.size(), output_y,
-               reinterpret_cast<cudaStream_t>(cuda_stream_));
-
+  auto s3 = CalTranspose(trans_size, d_other, y_info, other_shape_.size(), output_y,
+                         reinterpret_cast<cudaStream_t>(cuda_stream_));
+  CHECK_CUDA_LAUNCH_STATUS(s3, "Transpose called by " + kernel_name_);
   return true;
 }
 

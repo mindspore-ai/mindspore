@@ -106,7 +106,8 @@ bool TransposeGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     CalNCHW2NHWCInterface(size, shape_size_, input, h_input_shape, h_input_axis, info, output,
                           reinterpret_cast<cudaStream_t>(stream_ptr_));
   } else {
-    CalTranspose(size, input, info, shape_size_, output, reinterpret_cast<cudaStream_t>(stream_ptr_));
+    auto status = CalTranspose(size, input, info, shape_size_, output, reinterpret_cast<cudaStream_t>(stream_ptr_));
+    CHECK_CUDA_LAUNCH_STATUS(status, kernel_name_);
   }
   return true;
 }

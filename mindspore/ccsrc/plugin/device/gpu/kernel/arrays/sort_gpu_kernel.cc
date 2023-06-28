@@ -68,8 +68,9 @@ bool SortGpuKernelMod<int32_t, half>::LaunchKernel(const std::vector<AddressPtr>
   }
 
   // transpose so that desired dimension to sort along becomes the last one
-  CalTranspose<half>(input_size_, intermediate_input_device, InInfo, input_rank_, intermediate_output_device,
-                     reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto s1 = CalTranspose<half>(input_size_, intermediate_input_device, InInfo, input_rank_, intermediate_output_device,
+                               reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_LAUNCH_STATUS(s1, "Transpose called by " + kernel_name_);
   intermediate_input_device = intermediate_output_device;
   intermediate_output_device = intermediate_input_device == output_device ? temp_output_device : output_device;
 
@@ -80,12 +81,14 @@ bool SortGpuKernelMod<int32_t, half>::LaunchKernel(const std::vector<AddressPtr>
   std::swap(intermediate_input_device, intermediate_output_device);
 
   // transpose the sorted output back to the original input shape
-  CalTranspose<half>(input_size_, intermediate_input_device, TrInfo, input_rank_, intermediate_output_device,
-                     reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto s2 = CalTranspose<half>(input_size_, intermediate_input_device, TrInfo, input_rank_, intermediate_output_device,
+                               reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_LAUNCH_STATUS(s2, "Transpose called by " + kernel_name_);
 
   // transpose the indices back to the original input shape
-  CalTranspose(input_size_, temp_indices_device, TrInfo, input_rank_, indices_device,
-               reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto s3 = CalTranspose(input_size_, temp_indices_device, TrInfo, input_rank_, indices_device,
+                         reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_LAUNCH_STATUS(s3, "Transpose called by " + kernel_name_);
 
   // negate back the sorted values if we negated prior to sorting
   if (!descending_) {
@@ -135,8 +138,9 @@ bool SortGpuKernelMod<int32_t, float>::LaunchKernel(const std::vector<AddressPtr
   }
 
   // transpose so that desired dimension to sort along becomes the last one
-  CalTranspose<float>(input_size_, intermediate_input_device, InInfo, input_rank_, intermediate_output_device,
-                      reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto s4 = CalTranspose<float>(input_size_, intermediate_input_device, InInfo, input_rank_, intermediate_output_device,
+                                reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_LAUNCH_STATUS(s4, "Transpose called by " + kernel_name_);
   intermediate_input_device = intermediate_output_device;
   intermediate_output_device = intermediate_input_device == output_device ? temp_output_device : output_device;
 
@@ -147,12 +151,14 @@ bool SortGpuKernelMod<int32_t, float>::LaunchKernel(const std::vector<AddressPtr
   std::swap(intermediate_input_device, intermediate_output_device);
 
   // transpose the sorted output back to the original input shape
-  CalTranspose<float>(input_size_, intermediate_input_device, TrInfo, input_rank_, intermediate_output_device,
-                      reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto s5 = CalTranspose<float>(input_size_, intermediate_input_device, TrInfo, input_rank_, intermediate_output_device,
+                                reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_LAUNCH_STATUS(s5, "Transpose called by " + kernel_name_);
 
   // transpose the indices back to the original input shape
-  CalTranspose(input_size_, temp_indices_device, TrInfo, input_rank_, indices_device,
-               reinterpret_cast<cudaStream_t>(stream_ptr));
+  auto s6 = CalTranspose(input_size_, temp_indices_device, TrInfo, input_rank_, indices_device,
+                         reinterpret_cast<cudaStream_t>(stream_ptr));
+  CHECK_CUDA_LAUNCH_STATUS(s6, "Transpose called by " + kernel_name_);
 
   // negate back the sorted values if we negated prior to sorting
   if (!descending_) {

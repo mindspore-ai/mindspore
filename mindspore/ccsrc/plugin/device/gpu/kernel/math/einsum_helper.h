@@ -518,7 +518,7 @@ class EinsumHelper {
     for (size_t i = 0; i < operate_dims; ++i) {
       info.perm[i] = static_cast<int>(operate_info[i]);
     }
-    CalTranspose<T>(size, input_ptr, info, dims, output_ptr, reinterpret_cast<cudaStream_t>(stream_ptr));
+    (void)CalTranspose<T>(size, input_ptr, info, dims, output_ptr, reinterpret_cast<cudaStream_t>(stream_ptr));
   }
   bool SegLeftEquation(const std::string &left_equation, const std::vector<std::vector<int64_t>> &input_shapes) {
     size_t cur_element = 0;

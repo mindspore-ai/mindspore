@@ -133,7 +133,9 @@ class EighcGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       info.shape[i] = static_cast<int>(input_shape[i]);
       info.perm[i] = static_cast<int>(input_axis[i]);
     }
-    CalTranspose(m_ * m_, output_v_addr, info, kShape2dDims, w_v_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto s1 =
+      CalTranspose(m_ * m_, output_v_addr, info, kShape2dDims, w_v_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CHECK_CUDA_LAUNCH_STATUS(s1, "Transpose called by " + kernel_name_);
 
     int lwork = 0;
     void *d_work = nullptr;
@@ -163,7 +165,9 @@ class EighcGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     RealToComplex(m_, reinterpret_cast<D *>(w_w_c_addr), reinterpret_cast<D *>(output_w_addr),
                   reinterpret_cast<cudaStream_t>(stream_ptr));
     if (compute_eigen_vectors_) {
-      CalTranspose(m_ * m_, w_v_addr, info, kShape2dDims, output_v_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+      auto s2 =
+        CalTranspose(m_ * m_, w_v_addr, info, kShape2dDims, output_v_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_LAUNCH_STATUS(s2, "Transpose called by " + kernel_name_);
     }
     device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(d_work);
     int info_gpu = 0;

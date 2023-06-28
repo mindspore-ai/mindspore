@@ -44,7 +44,7 @@ inline void MatrixTransposeND(const T *src, const std::vector<size_t> &host_shap
     info.shape[i] = static_cast<int>(host_shape[i]);
     info.perm[i] = static_cast<int>(host_axis[i]);
   }
-  CalTranspose(src_size, src, info, dims, dst, cuda_stream);
+  (void)CalTranspose(src_size, src, info, dims, dst, cuda_stream);
 }
 template <>
 inline void MatrixTransposeND(const cuComplex *src, const std::vector<size_t> &host_shape,

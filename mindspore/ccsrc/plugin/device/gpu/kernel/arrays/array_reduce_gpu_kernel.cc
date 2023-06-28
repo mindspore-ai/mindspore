@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
+#include "plugin/device/gpu/kernel/arrays/array_reduce_gpu_kernel.h"
 #include <memory>
-#include "ops/reduce.h"
 #include "mindspore/core/ops/math_ops.h"
+#include "ops/reduce.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
-#include "plugin/device/gpu/kernel/arrays/array_reduce_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/reduce_impl.cuh"
 
 namespace mindspore {
@@ -404,8 +404,9 @@ bool ArrayReduceGpuKernelMod::LaunchComplexKernel(const std::vector<AddressPtr> 
     if (need_transpose_) {
       T *input_transposed = GetDeviceAddress<T>(workspace, kIndex1);
       auto dims = origin_shape_.size();
-      CalTranspose(input_num_, input_addr, transpose_info_, dims, input_transposed,
-                   reinterpret_cast<cudaStream_t>(stream_ptr));
+      auto transpose_status = CalTranspose(input_num_, input_addr, transpose_info_, dims, input_transposed,
+                                           reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_LAUNCH_STATUS(transpose_status, "Transpose called by " + kernel_name_);
       input = input_transposed;
     }
     input = need_transpose_ ? input : input_addr;
@@ -440,8 +441,9 @@ bool ArrayReduceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     if (need_transpose_) {
       T *input_transposed = GetDeviceAddress<T>(workspace, kIndex1);
       auto dims = origin_shape_.size();
-      CalTranspose(input_num_, input_addr, transpose_info_, dims, input_transposed,
-                   reinterpret_cast<cudaStream_t>(stream_ptr));
+      auto transpose_status = CalTranspose(input_num_, input_addr, transpose_info_, dims, input_transposed,
+                                           reinterpret_cast<cudaStream_t>(stream_ptr));
+      CHECK_CUDA_LAUNCH_STATUS(transpose_status, "Transpose called by " + kernel_name_);
       input = input_transposed;
     }
     input = need_transpose_ ? input : input_addr;
