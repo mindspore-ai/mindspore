@@ -147,9 +147,9 @@ class MemoryUsageParser:
                 continue
 
             graph_parser = GraphMemoryParser(graph_proto, self._points, self._framework)
-            graph = graph_parser.parse_graph()
-            if graph:
-                self._graphs_dict[graph_id] = graph
+            graph, model_id = graph_parser.parse_graph()
+            if graph and model_id != -1:
+                self._graphs_dict[model_id] = graph
 
             # update global memory usage data
             self._peak_mem = max(self._peak_mem, graph_parser.peak_mem)
@@ -191,6 +191,12 @@ class GraphMemoryParser:
         self._mem_change = []
         self.breakdowns = []
         self._lifetime = []
+        # compatible with original mode
+        self._multi_graph = False
+        if not isinstance(self._points, dict):
+            raise TypeError("Input points data must be dict!")
+        if not self._points.get("fp_start"):
+            self._multi_graph = True
 
     @staticmethod
     def _remove_duplicate_tensors(node):
@@ -221,12 +227,13 @@ class GraphMemoryParser:
     def parse_graph(self):
         """Parse memory usage data for subgraphs."""
         graph_dict = {}
+        model_id = -1
         self.graph = Graph(self._graph_proto)
         # process tensors in the graph
         tensors_proto = self._graph_proto.tensor_mems
         if not tensors_proto:
             logger.info('No tensor in graph %s, skipped.', self.graph.graph_id)
-            return graph_dict
+            return graph_dict, model_id
         self._parse_tensors(tensors_proto)
 
         # calculate memory usage of the graph by number of nodes and details of tensors
@@ -251,7 +258,7 @@ class GraphMemoryParser:
         self.graph.breakdowns = [self.breakdowns[self.tensor_node_id]]
 
         # update fp_start and bp_end
-        point_id = self._locate_fp_bp_id()
+        point_id, model_id = self._locate_fp_bp_id()
         self.graph.fp_start = point_id.get('fp_start')
         self.graph.bp_end = point_id.get('bp_end')
 
@@ -262,7 +269,7 @@ class GraphMemoryParser:
         self.deallocations = len(self.tensors)
         self.peak_mem = max(max(self._mem_change), self.peak_mem)
 
-        return graph_dict
+        return graph_dict, model_id
 
     def _parse_tensors(self, tensors_proto):
         """Parse tensors."""
@@ -371,12 +378,30 @@ class GraphMemoryParser:
 
     def _locate_fp_bp_id(self):
         """Locate the node id of fp_start and bp_end in graph."""
+        model_id = 0
+        if not self._multi_graph:
+            point_id = self._match_graph_fpbp(self._points)
+        else:
+            for mod_id, points in self._points.items():
+                if not isinstance(points, dict) or not mod_id.startswith("model"):
+                    raise RuntimeError("Inputs points is invalid!")
+                point_id = self._match_graph_fpbp(points)
+                if point_id.get("fp_start"):
+                    model_id = int(mod_id.split("_")[-1])
+                    break
+        if not point_id.get("fp_start") or not point_id.get("bp_end"):
+            model_id = -1
+
+        return point_id, model_id
+
+    def _match_graph_fpbp(self, points):
+        "Match model_id and graph_id"
         point_id = {
             'fp_start': None,
             'bp_end': None
         }
-        fp_start = self._points.get('fp_start') if self._points else None
-        bp_end = self._points.get('bp_end') if self._points else None
+        fp_start = points.get('fp_start')
+        bp_end = points.get('bp_end')
         fp_name = fp_start.split('/')[-1] if fp_start else ""
         bp_name = bp_end.split('/')[-1] if bp_end else ""
         if fp_name in self.nodes:

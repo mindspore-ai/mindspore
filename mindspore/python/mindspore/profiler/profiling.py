@@ -52,6 +52,7 @@ from mindspore.profiler.parser.hccl_parser import HcclParser
 from mindspore.profiler.parser.op_intermediate_parser import OPIntermediateParser
 from mindspore.profiler.parser.msadvisor_analyzer import Msadvisor
 from mindspore.profiler.parser.profiler_info import ProfilerInfo
+from mindspore.profiler.parser.ascend_msprof_exporter import AscendMsprofExporter
 from mindspore.common.api import _pynative_executor
 
 INIT_OP_NAME = 'Default/InitDataSetQueue'
@@ -340,6 +341,7 @@ class Profiler:
         self._rank_size = 1
         self._rank_id = 0
         self._ascend_profiler = None
+        self._ascend_msprof_exporter = None
         self._timeline_size_limit_byte = 500 * 1024 * 1024  # 500MB
         self._parallel_strategy = True
         _environment_check()
@@ -662,6 +664,7 @@ class Profiler:
 
         if self._device_target == DeviceTarget.ASCEND.value:
             self._ascend_profiler = c_expression.Profiler.get_instance("Ascend")
+            self._ascend_msprof_exporter = AscendMsprofExporter(self._output_path)
         self._get_devid_rankid_and_devtarget()
 
     def _init_profiler_info(self):
@@ -739,6 +742,7 @@ class Profiler:
         # use context interface to open profiling, for the new mindspore version(after 2020.5.21)
         self._ascend_profiler = c_expression.Profiler.get_instance("Ascend")
         self._ascend_profiler.init(self._output_path, int(self._dev_id), self._ascend_profiling_options)
+        self._ascend_msprof_exporter = AscendMsprofExporter(self._output_path)
         base_profiling_container_path = os.path.join(self._output_path, "container")
         container_path = os.path.join(base_profiling_container_path, self._dev_id)
         data_path = os.path.join(container_path, "data")
@@ -898,6 +902,8 @@ class Profiler:
             self.stop()
         else:
             logger.info("No need to stop profiler because profiler has been stopped.")
+        # export op data before analyse
+        self._ascend_msprof_exporter.export(self._start_time)
         self._ascend_graph_analyse()
 
     def _ascend_timeline_analyse(self, aicpu_data_parser, optime_parser, source_path):
