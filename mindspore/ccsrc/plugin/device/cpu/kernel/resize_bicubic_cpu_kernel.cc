@@ -15,12 +15,12 @@
  */
 
 #include "plugin/device/cpu/kernel/resize_bicubic_cpu_kernel.h"
-#include <limits>
 #include <algorithm>
+#include <limits>
 #include <utility>
-#include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "kernel/common_utils.h"
 #include "mindspore/core/ops/resize_bicubic.h"
+#include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
@@ -242,9 +242,8 @@ static float Compute_1D(const float *values_, const float xw_0, const float xw_1
 }
 
 template <typename T1>
-void CalSwitch(const WeightsAndIndices &x_wai, float *cached_value, const ResizerState &RS,
-               const WeightsAndIndices &y_wai, const T1 *y_ptr_0, const T1 *y_ptr_1, const T1 *y_ptr_2,
-               const T1 *y_ptr_3) {
+void CalSwitch(const WeightsAndIndices &x_wai, float *cached_value, const WeightsAndIndices &y_wai, const T1 *y_ptr_0,
+               const T1 *y_ptr_1, const T1 *y_ptr_2, const T1 *y_ptr_3) {
   switch (x_wai.advance) {
     case caseid3:
       cached_value[static_cast<size_t>(0)] = cached_value[static_cast<size_t>(1)];
@@ -298,7 +297,7 @@ void ResizeBicubicCPUKernelMod::interpolate_with_caching(const T1 *input_data, c
       const T1 *y_ptr_3 = input_b_ptr + y_wai.index_3 * RS.in_width;
       for (int64_t x = 0; x < RS.out_width; ++x) {
         const WeightsAndIndices &x_wai = x_wais[static_cast<size_t>(x)];
-        (void)CalSwitch(x_wai, cached_value.data(), RS, y_wai, y_ptr_0, y_ptr_1, y_ptr_2, y_ptr_3);
+        CalSwitch(x_wai, cached_value.data(), y_wai, y_ptr_0, y_ptr_1, y_ptr_2, y_ptr_3);
         output_y_ptr[x] = static_cast<T2>(
           Compute_1D(cached_value.data(), x_wai.weight_0, x_wai.weight_1, x_wai.weight_2, x_wai.weight_3));
       }

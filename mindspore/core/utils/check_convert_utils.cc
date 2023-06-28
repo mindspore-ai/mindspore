@@ -16,20 +16,19 @@
 
 #include "utils/check_convert_utils.h"
 
+#include <algorithm>
+#include <functional>
+#include <iterator>
+#include <map>
+#include <set>
+#include <typeinfo>
 #include <utility>
 #include <vector>
-#include <algorithm>
-#include <typeinfo>
-#include <functional>
-#include <set>
-#include <map>
-#include <iterator>
 
 #include "abstract/abstract_value.h"
-#include "ir/dtype/type.h"
-#include "ir/dtype/tensor_type.h"
 #include "ir/dtype.h"
-#include "utils/ms_context.h"
+#include "ir/dtype/tensor_type.h"
+#include "ir/dtype/type.h"
 #include "ir/primitive.h"
 #include "ir/scalar.h"
 #include "ir/tensor.h"
@@ -39,6 +38,7 @@
 #include "mindapi/base/types.h"
 #include "ops/op_name.h"
 #include "utils/convert_utils_base.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 static std::map<std::string, int64_t> DataFormatToEnumMap = {
@@ -999,14 +999,14 @@ std::vector<double> CheckAndConvertUtils::CheckTensorFloatValue(const std::strin
   size_t data_size = input_tensor->DataSize();
   auto tensor_type = input_tensor->Dtype();
   if (tensor_type->type_id() == kNumberTypeFloat32) {
-    auto data_c = reinterpret_cast<float *>(input_tensor->data_c());
+    auto data_c = static_cast<float *>(input_tensor->data_c());
     MS_EXCEPTION_IF_NULL(data_c);
     for (size_t i = 0; i < data_size; i++) {
       tensor_value.push_back(static_cast<double>(*data_c));
       ++data_c;
     }
   } else if (tensor_type->type_id() == kNumberTypeFloat64) {
-    auto tensor_data = reinterpret_cast<double *>(input_tensor->data_c());
+    auto tensor_data = static_cast<double *>(input_tensor->data_c());
     MS_EXCEPTION_IF_NULL(tensor_data);
     tensor_value = {tensor_data, tensor_data + data_size};
   } else {

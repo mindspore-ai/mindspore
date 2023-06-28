@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CORE_OPS_DROPOUT_GRAD_H_
 #define MINDSPORE_CORE_OPS_DROPOUT_GRAD_H_
 #include <memory>
-#include <vector>
 
 #include "mindapi/base/types.h"
 #include "ops/base_operator.h"

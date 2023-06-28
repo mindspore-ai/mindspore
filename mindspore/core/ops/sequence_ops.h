@@ -17,14 +17,12 @@
 #ifndef MINDSPORE_CORE_BASE_SEQUENCE_OPS_H_
 #define MINDSPORE_CORE_BASE_SEQUENCE_OPS_H_
 
-#include <iostream>
 #include <memory>
 #include <string>
 #include "ir/anf.h"
 #include "ir/primitive.h"
 #include "ir/value.h"
 #include "utils/flags.h"
-#include "utils/hash_map.h"
 
 namespace mindspore {
 namespace prim {

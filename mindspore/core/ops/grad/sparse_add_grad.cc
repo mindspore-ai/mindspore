@@ -132,10 +132,11 @@ class MIND_API SparseAddGradInfer : public abstract::OpInferBase {
     const std::set<TypePtr> indices_valid_types = {kInt64};
     const std::set<TypePtr> values_valid_types = {kInt8,    kInt16,   kInt32,     kInt64,
                                                   kFloat32, kFloat64, kComplex64, kComplex128};
-    CheckAndConvertUtils::CheckTensorTypeValid("backprop_val_grad", bvg->BuildType(), values_valid_types, name);
-    CheckAndConvertUtils::CheckTensorTypeValid("x1_indices", x1_indices->BuildType(), indices_valid_types, name);
-    CheckAndConvertUtils::CheckTensorTypeValid("x2_indices", x2_indices->BuildType(), indices_valid_types, name);
-    CheckAndConvertUtils::CheckTensorTypeValid("sum_indices", sum_indices->BuildType(), indices_valid_types, name);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("backprop_val_grad", bvg->BuildType(), values_valid_types, name);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("x1_indices", x1_indices->BuildType(), indices_valid_types, name);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("x2_indices", x2_indices->BuildType(), indices_valid_types, name);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("sum_indices", sum_indices->BuildType(), indices_valid_types,
+                                                     name);
 
     auto type = bvg->BuildType();
     return std::make_shared<Tuple>(std::vector<TypePtr>{type, type});

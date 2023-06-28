@@ -19,14 +19,14 @@
 
 #include <algorithm>
 #include <map>
-#include <string>
 #include <memory>
-#include <vector>
+#include <string>
 #include <utility>
+#include <vector>
 #include "kernel/common_utils.h"
+#include "mindspore/core/ops/grad/upsample_trilinear_3d_grad.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "mindspore/core/ops/grad/upsample_trilinear_3d_grad.h"
 
 namespace mindspore {
 namespace kernel {
@@ -52,7 +52,8 @@ class UpsampleTrilinear3DGradCpuKernelMod : public NativeCpuKernelMod {
  private:
   template <typename T>
   struct WeightsAndIndices {
-    void operator()(int64_t *const input_index0, int64_t *const input_index1, T *const lambda_0, T *const lambda_1) {
+    void operator()(int64_t *const input_index0, int64_t *const input_index1, T *const lambda_0,
+                    T *const lambda_1) const {
       *input_index0 = id0;
       *input_index1 = id1;
       *lambda_0 = lambda0;
@@ -69,12 +70,12 @@ class UpsampleTrilinear3DGradCpuKernelMod : public NativeCpuKernelMod {
   };
 
   template <typename S>
-  void ComputeWeightsAndIndices(WeightsAndIndices<S> *const wi, S scale, int64_t out_idx, int64_t input_size,
-                                int64_t output_size, int64_t stride);
+  void ComputeWeightsAndIndices(WeightsAndIndices<S> *const wi, const S scale, const int64_t out_idx,
+                                const int64_t input_size, const int64_t output_size, const int64_t stride) const;
 
   template <typename S>
-  void ComputeHelper(WeightsAndIndices<S> *const helper, S scale, int64_t input_size, int64_t output_size,
-                     int64_t stride);
+  void ComputeHelper(WeightsAndIndices<S> *const helper, const S scale, const int64_t input_size,
+                     const int64_t output_size, const int64_t stride) const;
 
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,

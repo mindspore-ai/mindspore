@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CORE_OPS_NON_MAX_SUPPRESSION_V3_H_
 #define MINDSPORE_CORE_OPS_NON_MAX_SUPPRESSION_V3_H_
 
-#include <algorithm>
 #include <map>
 #include <memory>
 #include <string>
