@@ -43,6 +43,9 @@ class SGD(Optimizer):
 
     Here : where p, v and u denote the parameters, accum, and momentum respectively.
 
+    .. warning::
+        This is an experimental API that is subject to change.
+
     Args:
         params (Union[list(Parameter), list(dict)]): list of parameters to optimize or dicts defining
             parameter groups.
