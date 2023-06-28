@@ -204,8 +204,34 @@ class GradientFreeze:
         total_steps (int): Steps of the whole training.
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, Parameter, nn
+        >>> import mindspore.ops as ops
+        >>> from mindspore.nn import WithLossCell
+        >>> from mindspore import dtype as mstype
+        >>> from mindspore import boost
+
+        >>> class Net(nn.Cell):
+        ...    def __init__(self, in_features, out_features):
+        ...        super(Net, self).__init__()
+        ...        self.weight = Parameter(Tensor(np.ones([in_features, out_features]).astype(np.float32)),
+        ...                                name='weight')
+        ...        self.matmul = ops.MatMul()
+        ...
+        ...    def construct(self, x):
+        ...        output = self.matmul(x, self.weight)
+        ...        return output
+
+        >>> size, in_features, out_features = 16, 16, 10
+        >>> net = Net(in_features, out_features)
+        >>> loss = nn.MSELoss()
+        >>> optimizer = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+        >>> net_with_loss = WithLossCell(net, loss)
         >>> gradient_freeze_class = boost.GradientFreeze(10, 1, 0.5, 2000)
-        >>> network, optimizer = gradient_freeze_class.freeze_generate(network, optimizer)
+        >>> network, optimizer = gradient_freeze_class.freeze_generate(net_with_loss, optimizer)
+        >>> inputs = Tensor(np.ones([size, in_features]).astype(np.float32))
+        >>> label = Tensor(np.zeros([size, out_features]).astype(np.float32))
+        >>> output = train_network(inputs, label)
     """
     def __init__(self, param_groups, freeze_type, freeze_p, total_steps):
         self._param_groups = param_groups
