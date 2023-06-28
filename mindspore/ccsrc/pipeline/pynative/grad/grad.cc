@@ -337,18 +337,55 @@ FuncGraphPtr BpropGraphFinalOpt(const FuncGraphPtr &bprop_graph, bool has_contro
   return after_opt_bg;
 }
 
-void SetGraphInputArgs(const std::vector<ValuePtr> &input_vec, const pipeline::ResourcePtr &res,
+void ProcessTupleSens(const FuncGraphPtr &bprop_graph, const InputArgsInfoPtr &input_args_info) {
+  MS_EXCEPTION_IF_NULL(input_args_info);
+  auto bprop_params = bprop_graph->parameters();
+  auto sens_param = bprop_params[input_args_info->input_size];
+  MS_EXCEPTION_IF_NULL(sens_param->abstract());
+  const auto &sens_abstract = sens_param->abstract();
+  MS_EXCEPTION_IF_NULL(sens_abstract);
+  if (!sens_abstract->isa<abstract::AbstractSequence>()) {
+    MS_LOG(EXCEPTION) << "Get wrong sens " << sens_param->abstract()->ToString();
+  }
+  auto it = std::find(bprop_params.begin(), bprop_params.end(), sens_param);
+  bprop_params.erase(it);
+  bprop_graph->set_parameters(bprop_params);
+  const auto &abs_seq = sens_abstract->cast<abstract::AbstractSequencePtr>();
+  AnfNodePtrList make_tuple{NewValueNode(prim::kPrimMakeTuple)};
+  for (size_t i = 0; i < abs_seq->size(); ++i) {
+    auto plant_param = bprop_graph->add_parameter();
+    plant_param->set_abstract(abs_seq->elements()[i]);
+    (void)make_tuple.emplace_back(plant_param);
+  }
+  auto make_tuple_sens = bprop_graph->NewCNode(make_tuple);
+  make_tuple_sens->set_abstract(sens_abstract);
+  auto manager = bprop_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto tr = manager->Transact();
+  (void)tr.Replace(sens_param, make_tuple_sens);
+  tr.Commit();
+}
+
+void SetGraphInputArgs(const std::vector<ValuePtr> &input_vec, const pipeline::ResourcePtr &res, bool is_tuple_sens,
                        VectorRef *const arg_list) {
   MS_EXCEPTION_IF_NULL(arg_list);
-  std::transform(input_vec.begin(), input_vec.end(), std::back_inserter(*arg_list),
-                 [](const ValuePtr &v) { return v; });
   MS_EXCEPTION_IF_NULL(res);
   auto graph = res->func_graph();
   MS_EXCEPTION_IF_NULL(graph);
   AnfNodePtrList graph_params = graph->parameters();
   std::size_t graph_params_size = graph_params.size();
+  auto input_arg_list = input_vec;
+  if (is_tuple_sens) {
+    input_arg_list.clear();
+    graph_params_size -= 1;
+    PyNativeAlgo::DataConvert::FlattenArgs(input_vec, &input_arg_list, true);
+  }
+  std::transform(input_arg_list.begin(), input_arg_list.end(), std::back_inserter(*arg_list),
+                 [](const ValuePtr &v) { return v; });
+
   if ((*arg_list).size() != graph_params_size) {
     // Maybe have some default parameter for input
+    MS_LOG(DEBUG) << "Get args size " << (*arg_list).size() << ", graph param size " << graph_params_size;
     for (std::size_t i = (*arg_list).size(); i < graph_params_size; ++i) {
       MS_EXCEPTION_IF_NULL(graph_params[i]);
       auto param_ptr = (graph_params[i])->cast_ptr<Parameter>();
@@ -1094,6 +1131,9 @@ void GradExecutor::GetGradGraph(const autograd::GradAttr &grad_attr, const std::
   if (top_cell()->has_control_flow()) {
     (void)opt::EnvironConversion(resource);
   }
+  if (grad_attr.has_sens && top_input_args_info_->input_arg_value_vec.back()->isa<ValueSequence>()) {
+    ProcessTupleSens(bprop_graph, top_input_args_info_);
+  }
   PyNativeAlgo::Common::DumpGraphIR("launch_bprop_graph.ir", bprop_graph);
   top_cell()->SaveForwardOutputTensorInfoInBpropGraph(resource->func_graph());
   resource->SetBackendAsync([]() { return compile::CreateBackend(); });
@@ -1312,7 +1352,10 @@ py::object GradExecutor::RunGradGraph() {
   MS_EXCEPTION_IF_NULL(resource);
   MS_LOG(DEBUG) << "Run cell id " << top_input_args_info_->cell_id << ", resource ptr " << resource.get();
   VectorRef arg_list;
-  SetGraphInputArgs(top_input_args_info_->input_arg_value_vec, resource, &arg_list);
+  SetGraphInputArgs(
+    top_input_args_info_->input_arg_value_vec, resource,
+    top_input_args_info_->has_sens && top_input_args_info_->input_arg_value_vec.back()->isa<ValueSequence>(),
+    &arg_list);
   MS_LOG(DEBUG) << "Convert args size " << top_input_args_info_->input_arg_value_vec.size() << ", graph param size "
                 << arg_list.size();
   compile::VmEvalFuncPtr run = resource->GetResult(pipeline::kOutput).cast<compile::VmEvalFuncPtr>();
