@@ -21,6 +21,7 @@
 #include "pybind11/pybind11.h"
 #include "pybind_api/ir/primitive_py.h"
 #include "ir/anf.h"
+#include "ir/cell.h"
 #include "ir/func_graph.h"
 #include "ir/value.h"
 
@@ -63,15 +64,20 @@ class PackExpander {
   py::object Emit(const py::object &prim, const py::args &inputs) const;
   static bool is_pynative_mode;
 
+  bool SetMixedPrecision(const py::object &obj);
+  void RecoverMixedPrecision();
+
  private:
   AnfNodePtr EmitCNode(const PrimitivePtr &prim, const AnfNodePtrList &cnode_inputs) const;
   AnfNodePtr ConvertInput(const py::object &arg) const;
   AnfNodePtr CNodeInfer(const CNodePtr &cnode) const;
   py::object ConvertCNodeToPython(const AnfNodePtr &node) const;
   py::object ConvertAbstractToParameter(const AbstractBasePtr &abs) const;
+  void SetMixedPrecisionFlagToGraph() const;
 
   std::stack<FuncGraphPtr> graphs_;
   std::stack<AnfNodePtr> func_graph_node_;
+  std::stack<MixedPrecisionType> mix_precision_types_;
 };
 
 void RegPackExpanderPy(const py::module *m);

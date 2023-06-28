@@ -46,7 +46,7 @@ from mindspore._check_jit_forbidden_api import jit_forbidden_register
 from mindspore.common._decorator import deprecated
 from mindspore._checkparam import is_pack_tensor
 from mindspore._c_expression import PackExpander
-from mindspore.ops._packfunc import _convert_tensor
+from mindspore.ops._packfunc import _convert_tensor, _SetMixedPrecision
 
 
 def _check_args(args):
@@ -383,7 +383,8 @@ class Cell(Cell_):
                 res.append(self._cast_mixed_precision_inputs(item, dst_type))
             elif isinstance(item, float):
                 res.append(self.cast(item, dst_type))
-            elif hasattr(item, "dtype") and item.dtype in {mstype.float16, mstype.float32, mstype.float64}:
+            elif hasattr(item, "dtype") and item.dtype in {mstype.float16, mstype.float32, mstype.float64} and \
+                item.dtype != dst_type:
                 res.append(self.cast(item, dst_type))
             else:
                 res.append(item)
@@ -2290,17 +2291,27 @@ class Cell(Cell_):
 
     def _run_packfunc(self, *args, **kwargs):
         """ Run Packed Cell in Pack."""
-        args = self.auto_cast_inputs(args)
+        args = self._mixed_precision_cast(args)
         if hasattr(self, "bprop") or hasattr(self, "_pipeline_stage"):
             expander = PackExpander.get_instance()
             args = expander.begin_graph(self, *args)
             args = [_convert_tensor(a) for a in args]
-            output = self._run_construct(args, kwargs)
+            with _SetMixedPrecision(self):
+                output = self._run_construct(args, kwargs)
             ret = expander.end_graph(output)
             output = _convert_tensor(ret)
         else:
-            output = self._run_construct(args, kwargs)
+            with _SetMixedPrecision(self):
+                output = self._run_construct(args, kwargs)
         return output
+
+    def _mixed_precision_cast(self, inputs):
+        mixed_type = self.get_mixed_precision_type()
+        if mixed_type == MixedPrecisionType.NOTSET:
+            return inputs
+        cast_type = mstype.float16 if mixed_type == MixedPrecisionType.FP16 else mstype.float32
+        cast_inputs = self._cast_mixed_precision_inputs(inputs, cast_type)
+        return cast_inputs
 
 
 class GraphCell(Cell):

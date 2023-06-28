@@ -63,29 +63,40 @@ class PackFunc(Primitive):
 
     expander = PackExpander.get_instance()
 
-    def __init__(self, fun, unique_key, is_pynative_mode=False):
+    def __init__(self, fun, unique_key, cell_obj, is_pynative_mode=False):
         super(PackFunc, self).__init__(self.__class__.__name__)
         self.func = fun
         self.kwargs = {}
         self.add_prim_attr("unique_key", unique_key)
         self.add_prim_attr("is_pynative_mode", is_pynative_mode)
+        self.cell_obj = cell_obj
 
     def __call__(self, *args, **kwargs):
         if _RunOpHook.current and _RunOpHook.current.hook is PackFunc._trace_run_op:
+            if self.cell_obj is not None:
+                args = (self.cell_obj, *args)
             return self.func(*args, **kwargs)
         self.kwargs = kwargs
         return super().__call__(*args)
 
     def __expand__(self, args):
-        with _RunOpHook(PackFunc._trace_run_op):
-            fun_args = [_convert_tensor(a) for a in args]
-            ret = self.func(*fun_args, **self.kwargs)
-        return ret
+        if self.cell_obj is not None:
+            args = (self.cell_obj, *args)
+            with _SetMixedPrecision(self.cell_obj):
+                ret = self._run_op(args)
+            return ret
+        return self._run_op(args)
 
     @staticmethod
     def _trace_run_op(obj, args):
         ret = PackFunc.expander.emit(obj, *args)
         return _convert_tensor(ret)
+
+    def _run_op(self, args):
+        with _RunOpHook(PackFunc._trace_run_op):
+            fun_args = [_convert_tensor(a) for a in args]
+            ret = self.func(*fun_args, **self.kwargs)
+        return ret
 
 
 class _PackSourceBuilder:
@@ -111,11 +122,24 @@ class _PackSourceBuilder:
         if isinstance(self.original_fn, types.MethodType):
             obj = self.original_fn.__self__
             key = "%d_ID%d" % (id(obj), id(fn))
-            setattr(obj, self.pack_fn_name, PackFunc(
-                lambda *args_, **kwarg_: fn(obj, *args_, **kwarg_), key))
+            setattr(obj, self.pack_fn_name, PackFunc(fn, key, obj))
         else:
             key = str(id(fn))
-            fn.__globals__[self.pack_fn_name] = PackFunc(fn, key)
+            fn.__globals__[self.pack_fn_name] = PackFunc(fn, key, None)
+
+
+class _SetMixedPrecision:
+    """"Set MixedPrecison by the Cell"""
+    def __init__(self, cell_obj):
+        self.mixed_precision_change = False
+        self.cell_obj = cell_obj
+
+    def __enter__(self):
+        self.mixed_precision_change = PackFunc.expander.set_mixed_precision(self.cell_obj)
+
+    def __exit__(self, *err):
+        if self.mixed_precision_change:
+            PackFunc.expander.recover_mixed_precision()
 
 
 def pack(fn):
@@ -127,11 +151,10 @@ def pack(fn):
         if args and not isinstance(args[0], Tensor) and hasattr(args[0], fn.__name__):
             obj = args[0]
             key = "%d_ID%d" % (id(obj), id(fn))
-            res = PackFunc(
-                lambda *args_, **kwarg_: fn(obj, *args_, **kwarg_), key, True)(*args[1:], **kwargs)
+            res = PackFunc(fn, key, obj, True)(*args[1:], **kwargs)
         else:
             key = str(id(fn))
-            res = PackFunc(fn, key, True)(*args, **kwargs)
+            res = PackFunc(fn, key, None, True)(*args, **kwargs)
         return res
     _pack_wrap.pack_fn = fn
     return _pack_wrap
