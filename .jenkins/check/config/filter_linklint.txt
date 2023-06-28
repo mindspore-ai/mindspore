@@ -67,3 +67,7 @@ https://gitee.com/mindspore/mindspore/blob/master/docs/api/api_python/samples/da
 https://gitee.com/mindspore/mindspore/blob/master/docs/api/api_python/samples/dataset/dataset_gallery.ipynb
 https://gitee.com/mindspore/mindspore/blob/master/docs/api/api_python/samples/dataset/text_gallery.ipynb
 https://gitee.com/mindspore/mindspore/blob/master/docs/api/api_python/samples/dataset/vision_gallery.ipynb
+https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/rewrite/rewrite_tutorial.html
+https://www.mindspore.cn/docs/en/master/api_python/samples/rewrite/rewrite_tutorial.html
+https://gitee.com/mindspore/mindspore/blob/master/docs/api/api_python/samples/rewrite/rewrite_tutorial.md
+https://gitee.com/mindspore/mindspore/blob/master/docs/api/api_python_en/samples/rewrite/rewrite_tutorial.md
