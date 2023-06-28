@@ -200,6 +200,15 @@ void GraphKernelOptimizer::Run(const FuncGraphPtr &func_graph) {
   GkUtils::UpdateFuncGraphManager(mng, func_graph);
   (void)optimizer->Optimize(func_graph);
 }
+
+std::string UpdateFlags(const std::string &device, const std::string &graph_kernel_flags) {
+  std::string res = graph_kernel_flags;
+  if (device.find("Ascend") != std::string::npos &&
+      graph_kernel_flags.find("enable_dynamic_shape_fusion") == std::string::npos) {
+    res += " --enable_dynamic_shape_fusion";
+  }
+  return res;
+}
 }  // namespace graphkernel
 
 lite::STATUS GraphKernelOptimize(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param) {
@@ -208,7 +217,8 @@ lite::STATUS GraphKernelOptimize(const FuncGraphPtr &func_graph, const std::shar
 #endif
     if (param != nullptr && !param->graphKernelParam.graph_kernel_flags.empty()) {
       std::map<std::string, std::string> jit_config;
-      jit_config["graph_kernel_flags"] = param->graphKernelParam.graph_kernel_flags;
+      jit_config["graph_kernel_flags"] =
+        graphkernel::UpdateFlags(param->device, param->graphKernelParam.graph_kernel_flags);
       graphkernel::GraphKernelFlags::SaveJitConfig(jit_config);
     }
     if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {

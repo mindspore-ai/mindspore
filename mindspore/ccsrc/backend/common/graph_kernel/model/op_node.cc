@@ -415,12 +415,21 @@ std::vector<DShape> ElemwiseOp::InferShape(const NodePtrList &inputs, const DAtt
 }
 
 DFormat ElemwiseOp::InferFormat(const NodePtrList &inputs, const DAttrs &) {
-  auto it = std::find_if(inputs.begin(), inputs.end(),
-                         [](const NodePtr &i) { return i->format != kOpFormat_DEFAULT && i->tensor_size() > 1; });
-  if (it == inputs.end()) {
-    return inputs.empty() ? kOpFormat_DEFAULT : inputs[0]->format;
+  if (inputs.empty()) {
+    return kOpFormat_DEFAULT;
   }
-  return (*it)->format;
+  auto first_format = inputs[0]->format;
+  for (const auto &inp : inputs) {
+    auto cur_format = inp->format;
+    if (cur_format.find("FRACTAL") != std::string::npos) {
+      // special format
+      return cur_format;
+    }
+    if (cur_format != first_format && inp->tensor_size() != 1) {
+      return cur_format;
+    }
+  }
+  return first_format;
 }
 
 std::vector<DShape> ArgReduceOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {

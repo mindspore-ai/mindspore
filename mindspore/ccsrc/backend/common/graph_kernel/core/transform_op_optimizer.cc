@@ -213,6 +213,16 @@ class MinCut {
   std::vector<MinCutEdge> edges_;
   std::vector<Edge> original_edges_;
 };
+
+bool IsDynamicShapeGraph(const inner::LiteGraphPtr &litegraph) {
+  MS_EXCEPTION_IF_NULL(litegraph);
+  for (auto &op : litegraph->ops()) {
+    if (IsDynamic(op->shape)) {
+      return true;
+    }
+  }
+  return false;
+}
 }  // namespace
 
 using inner::LiteGraph;
@@ -253,7 +263,7 @@ bool TransformOp::IsTransformOp(const NodePtr &node) {
 
 bool TransformOp::NeedInsert(const NodePtr &input_node) const {
   // a trick, if the node's size of 1, it's not need to insert transform op.
-  return input_node->tensor_size() > 1;
+  return input_node->tensor_size() != 1;
 }
 
 FormatType TransformOp::GetFormatType(const std::string &fmt) {
@@ -722,6 +732,10 @@ std::vector<TransformOpPtr> TransformOpOptimizer::CreateOpHandles(const LiteGrap
   HashSet<size_t> handle_hash;
   std::vector<TransformOpPtr> handles;
   for (auto &creator : supported_ops_) {
+    if (creator.Name() == "Reshape" && IsDynamicShapeGraph(litegraph)) {
+      // skip dynamic shape
+      continue;
+    }
     for (auto &op : litegraph->ops()) {
       if (creator.IsTransOp(op)) {
         auto handle = creator.CreateHandle(op);

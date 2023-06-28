@@ -34,26 +34,43 @@ class ReduceMean : public OpDesc {
   ~ReduceMean() = default;
 
  protected:
-  NodePtrList Expand(const NodePtrList &inputs) override {
-    const auto &x = inputs[0];
-    auto rank = SizeToLong(x->shape.size());
-    auto axis = GetAxisList(attrs_["axis"]);
-    (void)std::for_each(axis.begin(), axis.end(), [rank](auto &a) { a = a < 0 ? a + rank : a; });
-    if (axis.empty()) {
+  bool CheckInputs() override {
+    const auto &x = inputs_info_[0];
+    auto x_shape = x.shape;
+    if (x_shape.empty() || IsDynamicRank(x_shape)) {
+      return false;
+    }
+    axis_ = GetAxisList(attrs_["axis"]);
+    auto rank = SizeToLong(x_shape.size());
+    (void)std::for_each(axis_.begin(), axis_.end(), [rank](auto &a) { a = a < 0 ? a + rank : a; });
+    if (axis_.empty()) {
       for (int64_t i = 0; i < rank; ++i) {
-        axis.push_back(i);
+        axis_.push_back(i);
       }
     }
+    for (const auto &a : axis_) {
+      if (x_shape.at(LongToSize(a)) < 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  NodePtrList Expand(const NodePtrList &inputs) override {
+    const auto &x = inputs[0];
     int64_t sz = 1;
     for (size_t i = 0; i < x->shape.size(); ++i) {
-      if (std::find(axis.begin(), axis.end(), SizeToLong(i)) != axis.end()) {
+      if (std::find(axis_.begin(), axis_.end(), SizeToLong(i)) != axis_.end()) {
         sz *= x->shape[i];
       }
     }
-    auto sum_x = gb.ReduceSum(x, axis, GetValue<bool>(attrs_["keep_dims"]));
+    auto sum_x = gb.ReduceSum(x, axis_, GetValue<bool>(attrs_["keep_dims"]));
     auto result = gb.Div(sum_x, gb.Tensor(sz, x->type));
     return {result};
   }
+
+ private:
+  std::vector<int64_t> axis_;
 };
 EXPANDER_OP_DESC_REGISTER("ReduceMean", ReduceMean);
 }  // namespace mindspore::graphkernel::expanders

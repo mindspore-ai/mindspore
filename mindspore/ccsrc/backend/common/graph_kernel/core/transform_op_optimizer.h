@@ -71,6 +71,7 @@ class TransformOpCreator {
   ~TransformOpCreator() = default;
 
   bool IsTransOp(const NodePtr &node) const;
+  std::string Name() const { return op_name_; }
   TransformOpPtr CreateHandle(const NodePtr &node) const { return func_(node); }
 
  private:
