@@ -35,23 +35,24 @@
 
 namespace mindspore::graphkernel {
 const std::unordered_map<std::string, HashSet<size_t>> &ConvertOpUtils::GetOpIndexInfo() {
-  static std::unordered_map<std::string, HashSet<size_t>> op_idx_info_ = {{prim::kPrimReshape->name(), {1}},
-                                                                          {prim::kPrimReduceMax->name(), {1}},
-                                                                          {prim::kPrimExpandDims->name(), {1}},
-                                                                          {prim::kPrimReduceMin->name(), {1}},
-                                                                          {prim::kPrimReduceSum->name(), {1}},
-                                                                          {prim::kPrimTranspose->name(), {1}},
-                                                                          {prim::kPrimTile->name(), {1}},
-                                                                          {prim::kPrimReduceMean->name(), {1}},
-                                                                          {prim::kPrimSlice->name(), {1, 2}},
-                                                                          {prim::kPrimStridedSlice->name(), {1, 2, 3}},
-                                                                          {prim::kPrimOneHot->name(), {1}},
-                                                                          {prim::kPrimReduceFusion->name(), {1}},
-                                                                          {prim::kPrimConstantOfShape->name(), {0}},
-                                                                          {prim::kPrimGather->name(), {2}},
-                                                                          {prim::kPrimTupleGetItem->name(), {1}},
-                                                                          {prim::kPrimUnsortedSegmentSum->name(), {2}},
-                                                                          {prim::kPrimCumSum->name(), {1}}};
+  static const std::unordered_map<std::string, HashSet<size_t>> op_idx_info_ = {
+    {prim::kPrimReshape->name(), {1}},
+    {prim::kPrimReduceMax->name(), {1}},
+    {prim::kPrimExpandDims->name(), {1}},
+    {prim::kPrimReduceMin->name(), {1}},
+    {prim::kPrimReduceSum->name(), {1}},
+    {prim::kPrimTranspose->name(), {1}},
+    {prim::kPrimTile->name(), {1}},
+    {prim::kPrimReduceMean->name(), {1}},
+    {prim::kPrimSlice->name(), {1, 2}},
+    {prim::kPrimStridedSlice->name(), {1, 2, 3}},
+    {prim::kPrimOneHot->name(), {1}},
+    {prim::kPrimReduceFusion->name(), {1}},
+    {prim::kPrimConstantOfShape->name(), {0}},
+    {prim::kPrimGather->name(), {2}},
+    {prim::kPrimTupleGetItem->name(), {1}},
+    {prim::kPrimUnsortedSegmentSum->name(), {2}},
+    {prim::kPrimCumSum->name(), {1}}};
   return op_idx_info_;
 }
 
@@ -294,7 +295,7 @@ bool GraphKernelInputToAttrConverter::EliminateConstInput(const AnfNodePtr &grap
   return changed;
 }
 
-bool GraphKernelInputToAttrConverter::Process(const FuncGraphPtr &func_graph) {
+bool GraphKernelInputToAttrConverter::Process(const FuncGraphPtr &func_graph) const {
   bool changed = false;
   auto todos = TopoSort(func_graph->get_return());
   for (auto iter = todos.crbegin(); iter != todos.crend(); ++iter) {

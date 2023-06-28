@@ -52,7 +52,7 @@ CNodePtr ExpanderDecorator::QuickCloneCNode(const AnfNodePtr &node, bool clone_p
 AnfNodePtr DependValueDeco::Run(const AnfNodePtr &node) {
   auto cnode = QuickCloneCNode(node);
   MS_EXCEPTION_IF_NULL(cnode);
-  ConvertOpUtils::AddConstInputToAttr(cnode, input_idx_);
+  (void)ConvertOpUtils::AddConstInputToAttr(cnode, input_idx_);
   return decorated_->Run(cnode);
 }
 

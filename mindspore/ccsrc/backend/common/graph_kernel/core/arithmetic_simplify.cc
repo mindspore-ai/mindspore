@@ -421,8 +421,8 @@ class ExtraReduce1PatternTree : public PatternTree {
     inner::GraphBuilder gb("");
     auto new_axes_tensornode = gb.Tensor(axes);
     (*para_to_ref)['D'] = new_axes_tensornode;
-    para_to_ref->erase('B');
-    para_to_ref->erase('C');
+    (void)para_to_ref->erase('B');
+    (void)para_to_ref->erase('C');
     return para_to_ref;
   }
 
@@ -492,6 +492,16 @@ class TransposePatternTree : public PatternTree {
   explicit TransposePatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
   ~TransposePatternTree() = default;
 
+  std::shared_ptr<ParaMap> UpdateParameters(const inner::NodePtr &origin_root,
+                                            const std::shared_ptr<ParaMap> &para_to_ref) const override {
+    inner::GraphBuilder gb("");
+    auto out_shape = origin_root->shape;
+    auto out_shape_tensornode = gb.Tensor(out_shape);
+    (*para_to_ref)['C'] = out_shape_tensornode;
+    (void)para_to_ref->erase('B');
+    return para_to_ref;
+  }
+
  protected:
   bool CheckAttributes(const inner::NodePtr &origin_root) const override {
     auto input_shape = origin_root->input(0)->shape;
@@ -528,16 +538,6 @@ class TransposePatternTree : public PatternTree {
     return true;
   }
 
-  std::shared_ptr<ParaMap> UpdateParameters(const inner::NodePtr &origin_root,
-                                            const std::shared_ptr<ParaMap> &para_to_ref) const override {
-    inner::GraphBuilder gb("");
-    auto out_shape = origin_root->shape;
-    auto out_shape_tensornode = gb.Tensor(out_shape);
-    (*para_to_ref)['C'] = out_shape_tensornode;
-    para_to_ref->erase('B');
-    return para_to_ref;
-  }
-
   mindspore::HashMap<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &origin_root) override {
     auto attrs_map = PatternTree::SetAttributes(origin_root);
     attrs_map[this->rhs_root()] = {{"format", MakeValue(origin_root->format)}};
@@ -551,19 +551,19 @@ class ReshapePatternTree : public PatternTree {
   explicit ReshapePatternTree(const std::string &pattern_str) : PatternTree(pattern_str) {}
   ~ReshapePatternTree() = default;
 
+  std::shared_ptr<ParaMap> UpdateParameters(const inner::NodePtr &origin_root,
+                                            const std::shared_ptr<ParaMap> &para_to_ref) const override {
+    MS_EXCEPTION_IF_NULL(para_to_ref);
+    (void)para_to_ref->erase('B');
+    (void)origin_root;
+    return para_to_ref;
+  }
+
  protected:
   mindspore::HashMap<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &origin_root) override {
     auto attrs_map = PatternTree::SetAttributes(origin_root);
     attrs_map[this->rhs_root()] = {{"format", MakeValue(origin_root->format)}};
     return attrs_map;
-  }
-
-  std::shared_ptr<ParaMap> UpdateParameters(const inner::NodePtr &origin_root,
-                                            const std::shared_ptr<ParaMap> &para_to_ref) const override {
-    MS_EXCEPTION_IF_NULL(para_to_ref);
-    para_to_ref->erase('B');
-    (void)origin_root;
-    return para_to_ref;
   }
 };
 

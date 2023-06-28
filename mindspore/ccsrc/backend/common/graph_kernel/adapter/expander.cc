@@ -310,11 +310,11 @@ FuncGraphPtr PyExpander::ExpandToGraphByCallPyFn(const CNodePtr &node) {
   // e.g. : the axis input of reducesum, the shape input of reshape, etc. This issue left over from history.
   // Therefore, we need to convert those attributes to input here.
   auto nodes = TopoSort(func_graph->get_return());
-  for (const auto &node : nodes) {
-    if (ConvertOpUtils::ConvertAttrToInput(node)) {
+  for (const auto &n : nodes) {
+    if (ConvertOpUtils::ConvertAttrToInput(n)) {
       auto cb = Callback::Instance();
       MS_EXCEPTION_IF_NULL(cb);
-      auto cnode = dyn_cast<CNode>(node);
+      auto cnode = dyn_cast<CNode>(n);
       auto output_shape = cb->GetOutputShape(cnode, 0);
       auto output_type = cb->GetOutputType(cnode, 0);
       auto output_format = cb->GetOutputFormat(cnode, 0);

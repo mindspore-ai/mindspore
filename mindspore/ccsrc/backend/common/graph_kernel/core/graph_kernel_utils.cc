@@ -294,8 +294,8 @@ tensor::TensorPtr InputValue2Tensor(ValuePtr input_value) {
   } else if (input_value->isa<ValueSequence>()) {
     auto input_seq = input_value->cast<ValueSequencePtr>()->value();
     std::vector<int64_t> input_vec;
-    std::transform(input_seq.begin(), input_seq.end(), std::back_inserter(input_vec),
-                   [](auto v) { return AnfUtils::GetIntValue(v); });
+    (void)std::transform(input_seq.begin(), input_seq.end(), std::back_inserter(input_vec),
+                         [](auto v) { return AnfUtils::GetIntValue(v); });
     input_tensor = std::make_shared<tensor::Tensor>(input_vec);
   } else if (input_value->isa<tensor::Tensor>()) {
     input_tensor = input_value->cast<tensor::TensorPtr>();
