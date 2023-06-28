@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,20 +26,6 @@
 
 namespace mindspore {
 namespace opt {
-namespace {
-bool CheckShapeDimInfo(const ShapeVector &shape) {
-  constexpr size_t kShape2Dim = 2;
-  if (shape.empty()) {
-    return false;
-  }
-  if (shape.size() == 1 && shape[0] % SizeToLong(kCubeSize) != 0) {
-    return false;
-  }
-  return !(shape.size() >= kShape2Dim && (shape[shape.size() - 1] % SizeToLong(kCubeSize) != 0 ||
-                                          shape[shape.size() - kShape2Dim] % SizeToLong(kCubeSize) != 0));
-}
-}  // namespace
-
 const BaseRef TransposeReshapeFusion::DefinePattern() const {
   const auto prim_reshape = std::make_shared<Primitive>(prim::kPrimReshape->name());
   VectorRef transpose({prim::kPrimTransposeD, input_varptr_});

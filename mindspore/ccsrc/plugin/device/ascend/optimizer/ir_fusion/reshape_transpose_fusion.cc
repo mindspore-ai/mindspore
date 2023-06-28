@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 #include <vector>
 #include <memory>
 #include <utility>
+#include <functional>
 #include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "include/backend/anf_runtime_algorithm.h"
@@ -27,20 +28,25 @@
 
 namespace mindspore {
 namespace opt {
-namespace {
 bool CheckShapeDimInfo(const ShapeVector &shape) {
   if (shape.empty()) {
     return false;
   }
-  constexpr auto kShapeSize1 = 1;
-  constexpr auto kShapeSize2 = 2;
+  constexpr int64_t kMaxShapeSize = 2147483648;  // 2G
+  size_t shape_size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
+  if (shape_size >= kMaxShapeSize) {
+    MS_LOG(DEBUG) << "Shape total size is greater equal than 2G, skip fusion.";
+    return false;
+  }
+
+  constexpr size_t kShapeSize1 = 1;
+  constexpr size_t kShapeSize2 = 2;
   if (shape.size() == kShapeSize1 && shape[0] % SizeToLong(kCubeSize) != 0) {
     return false;
   }
   return !(shape.size() >= kShapeSize2 && (shape[shape.size() - 1] % SizeToLong(kCubeSize) != 0 ||
                                            shape[shape.size() - kShapeSize2] % SizeToLong(kCubeSize) != 0));
 }
-}  // namespace
 
 bool CheckMatmulNeighborNodes(const FuncGraphPtr &func_graph, const AnfNodePtr &up_node, const AnfNodePtr &down_node) {
   MS_EXCEPTION_IF_NULL(func_graph);
