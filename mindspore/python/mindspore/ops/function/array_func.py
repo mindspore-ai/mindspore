@@ -1629,6 +1629,9 @@ def flatten(input, order='C', *, start_dim=1, end_dim=-1):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.ones(shape=[1, 2, 3, 4]), mindspore.float32)
         >>> output = ops.flatten(input_x)
         >>> print(output.shape)
@@ -6355,6 +6358,9 @@ def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> x = Tensor(input_data=np.random.rand(16, 64, 25), dtype=mstype.float32)
         >>> output_size = Tensor(input_data=[8, 8], dtype=mstype.int32)
         >>> output = ops.fold(x, output_size, [2, 2], [2, 2], [2, 2], [2, 2])
@@ -6452,6 +6458,9 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.random.rand(4, 4, 32, 32), mindspore.float64)
         >>> output = ops.unfold(x, kernel_size=3, dilation=1, stride=1)
         >>> print(output.shape)
