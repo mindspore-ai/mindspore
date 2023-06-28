@@ -83,17 +83,17 @@ KernelModPtr BiShengOpBuild(const AnfNodePtr &anf_node) {
   if (!kernel_mod->GetWorkspaceFunc().empty()) {
     BiShengKernelArgs bisheng_args;
     for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(cnode); ++i) {
-      bisheng_args.input_shapes.emplace_back(AnfAlgo::GetInputDeviceShape(cnode, i));
+      (void)bisheng_args.input_shapes.emplace_back(AnfAlgo::GetInputDeviceShape(cnode, i));
     }
     for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(cnode); ++i) {
-      bisheng_args.output_shapes.emplace_back(AnfAlgo::GetOutputDeviceShape(cnode, i));
+      (void)bisheng_args.output_shapes.emplace_back(AnfAlgo::GetOutputDeviceShape(cnode, i));
     }
     std::vector<size_t> workspace_size_list;
     for (const auto &func : kernel_mod->GetWorkspaceFunc()) {
       MS_EXCEPTION_IF_NULL(func);
       auto workspace_size = func(bisheng_args);
       if (workspace_size != 0) {
-        workspace_size_list.emplace_back(workspace_size);
+        (void)workspace_size_list.emplace_back(workspace_size);
       }
     }
     kernel_mod->SetWorkspaceSizeList(workspace_size_list);
