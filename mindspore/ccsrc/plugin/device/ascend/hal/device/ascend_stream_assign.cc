@@ -1006,8 +1006,9 @@ void AscendStreamAssign::AssignAllNodesStream(const NotNull<KernelGraphPtr> &gra
   auto iter = graph_stream_num_.begin();
   while (total_stream_num > max_stream_count_ - kReservedStreamNum) {
     if (iter == graph_stream_num_.end()) {
-      MS_LOG(EXCEPTION) << "Total stream number " << total_stream_num << " exceeds the limit of " << max_stream_count_
-                        << ", search details information in mindspore's FAQ.";
+      MS_LOG(EXCEPTION) << "Stream isn't enough! Total stream number " << total_stream_num << " exceeds the limit of "
+                        << max_stream_count_
+                        << ". For more details, please refer to 'Stream isn't enough' at https://www.mindspore.cn";
     }
     if (ModelRunner::Instance().GetModelStatus(iter->first) == ge::model_runner::ModelStatus::EXECUTED) {
       ModelRunner::Instance().UnloadModel(iter->first);
