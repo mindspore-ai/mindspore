@@ -8614,7 +8614,7 @@ class Polar(Primitive):
         >>> print(output)
         [-0.9899925 +0.14112001j -1.30728724-1.51360499j]
         >>> x1 = Tensor(2.1, mindspore.float32)
-        >>> x1 = Tensor(2.1, mindspore.float32)
+        >>> x2 = Tensor(2.1, mindspore.float32)
         >>> output = polar(x1, x2)
         >>> print(output)
         (-1.0601766+1.8127397j)
