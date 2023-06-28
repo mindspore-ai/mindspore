@@ -1116,6 +1116,63 @@ bool ExistSwitchRef(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr
   return false;
 }
 
+bool SetModeForControlFlow(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &all_nodes, bool pynative_mode,
+                           compile::Backend *backend_ptr) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(backend_ptr);
+  auto set_ctx = [&context_ptr, &backend_ptr](bool task_sink, bool is_multi_graph_sink, bool enable_loop_sink) {
+    context_ptr->set_param<bool>(MS_CTX_ENABLE_TASK_SINK, task_sink);
+    context_ptr->set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, is_multi_graph_sink);
+    context_ptr->set_param<bool>(MS_CTX_ENABLE_LOOP_SINK, enable_loop_sink);
+    backend_ptr->set_is_multi_graph_sink(is_multi_graph_sink);
+  };
+  // GRAPH | Closure\ENV\While scenario : KernelByKernel path in MindRT.
+  auto graphs = func_graph->func_graphs_used_total();
+  (void)graphs.insert(func_graph);
+  bool exist_control_flow = ExistControlFlow(func_graph);
+  bool exist_func = exist_control_flow && HasIncorporateCall(all_nodes);
+  if (exist_func) {
+    if (!pynative_mode) {
+      MS_LOG(INFO) << "Run graph mode with sub graph sink because graph exist control flow and incorporate call.";
+      set_ctx(true, false, false);
+    } else {
+      MS_LOG(INFO) << "Run graph mode with kernel by kernel because graph exist control flow and incorporate call.";
+      set_ctx(false, false, false);
+    }
+    return false;
+  }
+  bool exist_while =
+    std::any_of(graphs.cbegin(), graphs.cend(), [](const FuncGraphPtr &fg) { return fg->recursive(); });
+  MS_LOG(INFO) << func_graph->ToString() << " exist_while: " << exist_while;
+  static const bool is_enable_ge = (common::GetEnv("MS_ENABLE_GE") == "1");
+  if (!is_enable_ge && (exist_while || ExistSwitchRef(func_graph, all_nodes))) {
+    if (!pynative_mode) {
+      MS_LOG(INFO) << "Run graph mode with sub graph sink because graph exist while or switch ref.";
+      set_ctx(true, false, false);
+    } else {
+      MS_LOG(INFO) << "Run graph mode with kernel by kernel because graph exist while or switch ref.";
+      set_ctx(false, false, false);
+    }
+    return false;
+  }
+  // Multiple device targets scenario.
+  if (func_graph->exist_multi_target()) {
+    // Heterogeneous scenario + ControlFlow : KernelByKernel path in MindRT.
+    if (exist_control_flow && pynative_mode) {
+      MS_LOG(INFO) << "Run graph mode with kernel by kernel because graph exist multi device target and control flow.";
+      set_ctx(false, false, false);
+      return false;
+    }
+    // GRAPH | Heterogeneous scenario : No control flow, subgraph sink path in MindRT.
+    MS_LOG(INFO) << "Run graph mode with subgraph sink because graph exist multi device target.";
+    set_ctx(true, false, false);
+    return false;
+  }
+  return true;
+}
+
 void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -1133,6 +1190,7 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
   graphkernel::GraphKernelFlags::SaveJitConfig(pipeline::GraphExecutorPy::GetInstance()->jit_config());
 
   const auto &all_nodes = TopoSort(func_graph->return_node(), SuccDeeperSimple, AlwaysInclude);
+
   // GPU/CPU no need set any context.
   if (!ExistTarget(all_nodes, kAscendDevice)) {
     return;
@@ -1160,48 +1218,7 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
     set_ctx(false, false, false);
     return;
   }
-
-  // GRAPH | Closure\ENV\While scenario : KernelByKernel path in MindRT.
-  auto graphs = func_graph->func_graphs_used_total();
-  (void)graphs.insert(func_graph);
-  bool exist_control_flow = ExistControlFlow(func_graph);
-  bool exist_func = exist_control_flow && HasIncorporateCall(all_nodes);
-  if (exist_func) {
-    if (!pynative_mode) {
-      MS_LOG(INFO) << "Run graph mode with sub graph sink because graph exist control flow and incorporate call.";
-      set_ctx(true, false, false);
-    } else {
-      MS_LOG(INFO) << "Run graph mode with kernel by kernel because graph exist control flow and incorporate call.";
-      set_ctx(false, false, false);
-    }
-    return;
-  }
-  bool exist_while =
-    std::any_of(graphs.cbegin(), graphs.cend(), [](const FuncGraphPtr &fg) { return fg->recursive(); });
-  MS_LOG(INFO) << func_graph->ToString() << " exist_while: " << exist_while;
-  static const bool is_enable_ge = (common::GetEnv("MS_ENABLE_GE") == "1");
-  if (!is_enable_ge && (exist_while || ExistSwitchRef(func_graph, all_nodes))) {
-    if (!pynative_mode) {
-      MS_LOG(INFO) << "Run graph mode with sub graph sink because graph exist while or switch ref.";
-      set_ctx(true, false, false);
-    } else {
-      MS_LOG(INFO) << "Run graph mode with kernel by kernel because graph exist while or switch ref.";
-      set_ctx(false, false, false);
-    }
-    return;
-  }
-
-  // Multiple device targets scenario.
-  if (func_graph->exist_multi_target()) {
-    // Heterogeneous scenario + ControlFlow : KernelByKernel path in MindRT.
-    if (exist_control_flow && pynative_mode) {
-      MS_LOG(INFO) << "Run graph mode with kernel by kernel because graph exist multi device target and control flow.";
-      set_ctx(false, false, false);
-      return;
-    }
-    // GRAPH | Heterogeneous scenario : No control flow, subgraph sink path in MindRT.
-    MS_LOG(INFO) << "Run graph mode with subgraph sink because graph exist multi device target.";
-    set_ctx(true, false, false);
+  if (!SetModeForControlFlow(func_graph, all_nodes, pynative_mode, backend_ptr)) {
     return;
   }
 
@@ -1377,7 +1394,6 @@ bool DistributedSplitAction(const ResourcePtr &resource) {
     std::make_shared<parallel::GraphSplitter>(func_graph, node->rank_id(), node_role);
   MS_EXCEPTION_IF_NULL(splitter);
   splitter->Run();
-
   // Renomalize: Infer shape and Set abstract for all nodes in graph.
   if (func_graph->has_flag(kFlagNeedRenormalize)) {
     abstract::AbstractBasePtrList args_abs;
@@ -1582,18 +1598,18 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
     // Eliminate the virtual mirror node
     (void)actions.emplace_back(std::make_pair(kEliminateSpecialOpNode, EliminateSpecialOpNode));
     (void)actions.emplace_back(std::make_pair(kValidate, ValidateAction));
-  }
 
 #if defined(__linux__) && defined(WITH_BACKEND)
-  (void)actions.emplace_back(std::make_pair(kDistribtuedSplit, DistributedSplitAction));
-  if (ps::PSContext::instance()->is_worker()) {
-    if (distributed::cluster::ClusterContext::instance()->initialized()) {
-      MS_LOG(INFO) << "This worker is initialized. No need to add worker action.";
-    } else {
-      std::string server_mode = ps::PSContext::instance()->server_mode();
+    (void)actions.emplace_back(std::make_pair(kDistribtuedSplit, DistributedSplitAction));
+    if (ps::PSContext::instance()->is_worker()) {
+      if (distributed::cluster::ClusterContext::instance()->initialized()) {
+        MS_LOG(INFO) << "This worker is initialized. No need to add worker action.";
+      } else {
+        std::string server_mode = ps::PSContext::instance()->server_mode();
+      }
     }
-  }
 #endif
+  }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
 #ifndef WITH_BACKEND

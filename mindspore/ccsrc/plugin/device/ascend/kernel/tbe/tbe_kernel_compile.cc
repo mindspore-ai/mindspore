@@ -46,6 +46,7 @@
 #include "include/common/utils/utils.h"
 #include "include/common/utils/json_operation_utils.h"
 #include "include/backend/debug/profiler/profiling.h"
+#include "include/common/utils/compile_cache_context.h"
 
 namespace mindspore {
 namespace kernel {
@@ -474,6 +475,28 @@ void TbeKernelCompileManager::SaveIOSizeInfo(const nlohmann::json &json, const s
   kernel_io_size_info_[json_name] = info;
 }
 
+void TbeKernelCompileManager::SetFusionOpsKernelIOSizeInfo(const std::vector<CNodePtr> &node_list) {
+  auto &context = CompileCacheContext::GetInstance();
+  for (const auto &node : node_list) {
+    if (!common::AnfAlgo::HasNodeAttr(kAttrIsUBFusionOp, node) ||
+        !common::AnfAlgo::GetNodeAttr<bool>(node, kAttrIsUBFusionOp)) {
+      continue;
+    }
+    auto full_name = node->fullname_with_scope();
+    const auto &cached_io_size_info = context.GetIOSizeInfo(full_name);
+    if (cached_io_size_info.json_name.empty()) {
+      continue;
+    }
+    KernelIOSizeInfo io_size_info;
+    const auto &json_name = cached_io_size_info.json_name;
+    full_name_to_json_name_[full_name] = json_name;
+    io_size_info.json_name = json_name;
+    io_size_info.input_size_list = cached_io_size_info.input_size_list;
+    io_size_info.output_size_list = cached_io_size_info.output_size_list;
+    kernel_io_size_info_[json_name] = io_size_info;
+  }
+}
+
 void TbeKernelCompileManager::SaveTaskInfo(const bool is_dynamic, const nlohmann::json &json,
                                            const std::string &json_name, const std::string &full_name, int task_id,
                                            int64_t scope_id) {
@@ -830,6 +853,12 @@ void TbeKernelCompileManager::TbePreBuild(const KernelGraphPtr &kernel_graph) {
 
 std::pair<std::vector<CNodePtr>, std::vector<CNodePtr>> TbeKernelCompileManager::TbeSingleOpCompile(
   const std::vector<CNodePtr> &node_list) {
+  auto &context = CompileCacheContext::GetInstance();
+  if (context.FusionOpBuildInfoFlag()) {
+    MS_LOG(INFO) << "Set fusion ops kernel io size info.";
+    SetFusionOpsKernelIOSizeInfo(node_list);
+  }
+
   profiler::CollectHostInfo("Ascend", "Operator Compilation", "CreateAscendKernel_TbeSingleOpCompile", 0, 0, 0);
   MS_LOG(INFO) << "Single op parallel build start.";
   auto job_type = is_tune_flag_ ? kTune : kCompile;
@@ -852,6 +881,7 @@ JsonNameMap TbeKernelCompileManager::TbeFusionOpCompile(const std::vector<Fusion
   success_fusion_ops_.clear();
   nlohmann::json fusion_op;
   nlohmann::json build_json;
+  auto &context = CompileCacheContext::GetInstance();
   for (const auto &fusion_scope_iter : fusion_scopes) {
     fusion_op.clear();
     build_json.clear();
@@ -865,6 +895,14 @@ JsonNameMap TbeKernelCompileManager::TbeFusionOpCompile(const std::vector<Fusion
     // save all fusion ops to filter those compile succeed ops
     all_fusion_ops_[fusion_scope_iter.scope_id] = full_name;
     SaveIOSizeInfo(fusion_op, json_name, fusion_scope_iter.output_nodes);
+    if (CompileCacheEnable() && (kernel_io_size_info_.find(json_name) != kernel_io_size_info_.end())) {
+      const auto &io_size_info = kernel_io_size_info_[json_name];
+      CachedIOSizeInfo cached_io_size_info;
+      cached_io_size_info.json_name = json_name;
+      cached_io_size_info.input_size_list = io_size_info.input_size_list;
+      cached_io_size_info.output_size_list = io_size_info.output_size_list;
+      context.PushFullnameIoSizeInfo(full_name, cached_io_size_info);
+    }
     if (tbe::TbeUtils::SearchCache(json_name, false) != nullptr) {
       // cache exist, no need compile
       continue;

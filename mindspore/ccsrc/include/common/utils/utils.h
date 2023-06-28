@@ -1269,6 +1269,8 @@ constexpr auto kFakeTensorListPos = "fake_tensor_list_pos";
 
 // env key
 constexpr auto kGraphOpRun = "GRAPH_OP_RUN";
+constexpr auto kCompilerCacheEnable = "MS_COMPILER_CACHE_ENABLE";
+constexpr auto kCompilerCachePath = "MS_COMPILER_CACHE_PATH";
 
 // some size
 const size_t kShape4dDims = 4;
@@ -1392,6 +1394,79 @@ constexpr auto kOpFormat_ND_RNN_BIAS = "ND_RNN_BIAS";
 constexpr auto kSliceStart = "start";
 constexpr auto kSliceStop = "stop";
 constexpr auto kSliceStep = "step";
+
+// graph type
+constexpr auto kFuncGraphTypeName = "FuncGraph";
+constexpr auto kKernelGraphTypeName = "KernelGraph";
+
+// compile cache
+constexpr auto kUniqueCacheName = "UniqueCacheName";
+constexpr auto kDistributedSplit = "distribtued_split";
+constexpr auto kValidate = "validate";
+constexpr auto kGraphId = "graph_id";
+constexpr auto kBackendFrontAnf = "backend_front_anf";
+constexpr auto kInternalParameterToFrontNode = "internal_parameter_to_front_node";
+constexpr auto kOutInRef = "out_in_ref";
+constexpr auto kIsFeatureMap = "is_feature_map";
+constexpr auto kGraphValueNodes = "graph_value_nodes";
+constexpr auto kExecutionOrder = "execution_order";
+constexpr auto kChildGraphOrder = "child_graph_order";
+constexpr auto kRunMode = "run_mode";
+constexpr auto kIsLoopCountSink = "is_loop_count_sink";
+constexpr auto kIsDynamicShape = "is_dynamic_shape";
+constexpr auto kInputs = "inputs";
+constexpr auto kParameters = "parameters";
+constexpr auto kChildGraphResult = "child_graph_result";
+constexpr auto kDeviceTarget = "device_target";
+constexpr auto kRootGraphId = "root_graph_id";
+constexpr auto kExecutable = "executable";
+constexpr auto kValidInputs = "valid_inputs";
+constexpr auto kNeedInline = "need_inline";
+constexpr auto kStartLabel = "start_label";
+constexpr auto kEndGoto = "end_goto";
+constexpr auto kPreGraphs = "pre_graphs";
+constexpr auto kPostGraphs = "post_graphs";
+constexpr auto kHasRecursiveCall = "has_recursive_call";
+constexpr auto kHasSubgraphMultiCall = "has_subgraph_multicall";
+constexpr auto kIsNeedGil = "is_need_gil";
+constexpr auto kIsFromSingleOp = "is_from_single_op";
+constexpr auto kCommSubGraphIds = "comm_sub_graph_ids";
+constexpr auto kNodesKernelInfo = "nodes_kernel_info";
+constexpr auto kAllInputFormat = "all_input_format";
+constexpr auto kAllOutputFormat = "all_output_format";
+constexpr auto kAllInputDeviceType = "all_input_device_type";
+constexpr auto kAllOutputDeviceType = "all_output_device_type";
+constexpr auto kAllInputReshapeType = "all_input_reshape_type";
+constexpr auto kAllOutputReshapeType = "all_output_reshape_type";
+constexpr auto kOutputDataDesc = "output_data_desc";
+constexpr auto kCoreType = "core_type";
+constexpr auto kRuntimeCacheValid = "runtime_cache_valid";
+constexpr auto kRuntimeCacheDeviceTarget = "runtime_cache_device_target";
+constexpr auto kRuntimeCacheOutputTensorNum = "runtime_cache_output_tensor_num";
+constexpr auto kRuntimeCacheIsRealKernel = "runtime_cache_is_real_kernel";
+constexpr auto kRuntimeCachePrevOutputs = "runtime_cache_prev_outputs";
+constexpr auto kCorrespondFrontendGraph = "correspond_frontend_graph";
+constexpr auto kReturnNode = "_return_node";
+constexpr auto kReturnPrimNode = "_return_prim_node";
+constexpr auto kOriginDataFormat = "origin_data_format";
+constexpr auto kKernelType = "kernel_type";
+constexpr auto kOpType = "op_type";
+constexpr auto kFusionType = "fusion_type";
+constexpr auto kOpPattern = "op_pattern";
+constexpr auto kProcessor = "processor";
+constexpr auto kKernelBuildInfoValid = "kernel_build_info_valid";
+constexpr auto kInputKernelObjectTypes = "input_kernel_object_types";
+constexpr auto kOutputKernelObjectTypes = "output_kernel_object_types";
+constexpr auto kOutputElementsKernelObjectTypes = "output_elements_kernel_object_types";
+constexpr auto kInputSizeList = "input_size_list";
+constexpr auto kOutputSizeList = "output_size_list";
+constexpr auto kJsonName = "json_name";
+constexpr auto kHasSelectKernelBuildInfo = "has_select_kernel_build_info";
+constexpr auto kBackendParamToFrontendParamIndex = "backend_param_to_frontend_param_index_";
+constexpr auto kLabelNum = "label_num";
+constexpr auto kParameterUniqueNameToName = "param_unique_name_to_name";
+constexpr auto kRefInOutMap = "ref_in_out_map";
+constexpr auto kRetryIntervalSeconds = 500;
 
 COMMON_EXPORT bool IsOneOfCustomAkgType(const std::string &name);
 COMMON_EXPORT bool IsOneOfOperator(const std::string &name);

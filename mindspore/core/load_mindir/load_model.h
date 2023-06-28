@@ -68,7 +68,10 @@ class MS_CORE_API MindIRLoader {
   const LayoutMap &layout_map() const { return layout_map_; }
   FuncGraphPtr LoadMindIR(const void *buffer, const size_t &size);
   FuncGraphPtr LoadMindIR(const void *buffer, const size_t &size, const std::string &mindir_path);
-  FuncGraphPtr LoadMindIR(const std::string &file_name);
+  FuncGraphPtr LoadMindIR(const std::string &file_name,
+                          mindspore::HashMap<std::string, AnfNodePtr> *name_to_node = nullptr);
+  bool LoadMindIR(const std::string &file_name, const std::vector<FuncGraphPtr> &graphs,
+                  mindspore::HashMap<std::string, AnfNodePtr> *name_to_node = nullptr);
   std::vector<FuncGraphPtr> LoadMindIRs(const std::vector<std::string> &file_names);
   std::vector<std::string> LoadPreprocess(const std::string &file_name);
   bool is_lite() const { return is_lite_; }

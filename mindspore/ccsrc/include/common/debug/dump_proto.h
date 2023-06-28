@@ -26,6 +26,7 @@
 #include <set>
 #include <list>
 #include <unordered_map>
+#include <vector>
 
 #include "utils/hash_map.h"
 #include "ir/tensor.h"
@@ -112,7 +113,9 @@ class IrExporter {
   explicit IrExporter(IrExportBuilderPtr builder) : builder_(std::move(builder)) {}
   virtual ~IrExporter() = default;
   std::string GetDumpString(const FuncGraphPtr &func_graph);
-  ModelProtoPtr GetDumpProto(const FuncGraphPtr &func_graph, const FuncGraphPtr &param_layout_fg = nullptr);
+  ModelProtoPtr GetDumpProto(const FuncGraphPtr &func_graph);
+  ModelProtoPtr GetDumpProto(const FuncGraphPtr &root_graph, const std::vector<FuncGraphPtr> &child_graphs,
+                             const std::vector<AnfNodePtr> &isolated_nodes);
 
  private:
   IrExportBuilderPtr builder_;
@@ -127,16 +130,15 @@ class IrExportBuilder {
   std::string GetProtoString() const;
   void BuildModelInfo();
   bool BuildModel(const FuncGraphPtr &func_graph);
+  bool BuildModel(const FuncGraphPtr &root_graph, const std::vector<FuncGraphPtr> &child_graphs,
+                  const std::vector<AnfNodePtr> &isolated_nodes);
   ModelProtoPtr Model() { return model_; }
-
-#ifndef MINDIR_EXPORT_TENSOR_LAYOUT_CLIP
-  void BuildLayout(const FuncGraphPtr &func_graph);
-#endif
-
   bool BuildFuncGraph(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto);
   bool BuildFuncGraphAttrs(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto);
   bool BuildParameters(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto);
   bool BuildNodes(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto);
+  bool BuildIsolatedNodes(const std::vector<AnfNodePtr> &isolated_nodes);
+  bool BuildIsolatedCNode(const AnfNodePtr &node, std::set<AnfNodePtr> *visited);
   bool BuildOutput(const CNodePtr &node, mind_ir::GraphProto *const graph_proto);
   bool BuildCNode(const CNodePtr &node, mind_ir::GraphProto *const graph_proto);
   bool BuildValueNode(const ValueNodePtr &node, const std::string &node_name, mind_ir::GraphProto *const graph_proto);
@@ -197,26 +199,25 @@ class IrExportBuilder {
   bool top_graph{true};
   std::map<FuncGraphPtr, mind_ir::GraphProto *> graph_protos_;
   bool incremental_{false};
+  bool is_kernel_graph_{false};
 };
 
 COMMON_EXPORT std::string GetFuncGraphProtoString(const FuncGraphPtr &func_graph);
 
 std::string GetOnnxProtoString(const FuncGraphPtr &func_graph);
 
-std::string GetBinaryProtoString(const FuncGraphPtr &func_graph, const bool &incremental = false);
+COMMON_EXPORT std::string GetBinaryProtoString(const FuncGraphPtr &func_graph, const bool &incremental = false);
 
-bool DumpBinaryProto(const FuncGraphPtr &func_graph, const std::string &file_path,
-                     const FuncGraphPtr &param_layout_fg = nullptr);
+COMMON_EXPORT ModelProtoPtr GenBinaryProto(const FuncGraphPtr &func_graph);
 
-void GetAllFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs);
-
-bool DeleteDirRecursively(const std::string &dir_name);
-
+COMMON_EXPORT bool DumpBinaryProto(const FuncGraphPtr &func_graph, const std::string &file_path);
+COMMON_EXPORT bool DumpBinaryProto(const FuncGraphPtr &root_graph, const std::vector<FuncGraphPtr> &child_graphs,
+                                   const std::vector<AnfNodePtr> &isolated_nodes, const std::string &file_path);
 COMMON_EXPORT void DumpIRProto(const FuncGraphPtr &func_graph, const std::string &suffix);
 
 COMMON_EXPORT std::string GetFuncGraphProtoJsonString(const FuncGraphPtr &func_graph);
 
-class MindIRExporter {
+class COMMON_EXPORT MindIRExporter {
  public:
   MindIRExporter() {}
   explicit MindIRExporter(bool is_export_model) { is_export_model_ = is_export_model; }

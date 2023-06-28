@@ -566,6 +566,30 @@ KernelObjectType AnfRuntimeAlgorithm::GetOutputKernelObjectType(const AnfNodePtr
   return output_kernel_obj_types[output_idx];
 }
 
+std::vector<KernelObjectType> AnfRuntimeAlgorithm::GetOutputElementsKernelObjectTypes(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto build_info = kernel_info->select_kernel_build_info();
+  if (build_info == nullptr) {
+    MS_LOG(EXCEPTION) << "Empty build info for node:" << node->fullname_with_scope()
+                      << ", debug name:" << node->DebugString();
+  }
+  return build_info->GetAllOutputElementsKernelObjectTypes();
+}
+
+bool AnfRuntimeAlgorithm::GetValid(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto build_info = kernel_info->select_kernel_build_info();
+  if (build_info == nullptr) {
+    MS_LOG(EXCEPTION) << "Empty build info for node:" << node->fullname_with_scope()
+                      << ", debug name:" << node->DebugString();
+  }
+  return build_info->valid();
+}
+
 bool AnfRuntimeAlgorithm::IsRealSquenceOutput(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   std::vector<KernelObjectType> objects = GetOutputKernelObjectTypes(node);
@@ -689,6 +713,28 @@ std::string AnfRuntimeAlgorithm::GetOutputReshapeType(const AnfNodePtr &node, si
     return "";
   }
   return build_info->GetOutputReshapeType(output_idx);
+}
+
+std::vector<std::string> AnfRuntimeAlgorithm::GetAllInputReshapeType(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto build_info = kernel_info->select_kernel_build_info();
+  if (build_info == nullptr || build_info->IsInputDefaultPadding()) {
+    return {};
+  }
+  return build_info->GetAllInputReshapeType();
+}
+
+std::vector<std::string> AnfRuntimeAlgorithm::GetAllOutputReshapeType(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto build_info = kernel_info->select_kernel_build_info();
+  if (build_info == nullptr || build_info->IsOutputDefaultPadding()) {
+    return {};
+  }
+  return build_info->GetAllOutputReshapeType();
 }
 
 TypeId AnfRuntimeAlgorithm::GetOutputDeviceDataType(const AnfNodePtr &node, size_t output_idx) {
@@ -930,6 +976,27 @@ void AnfRuntimeAlgorithm::SetCoreType(const AnfNodePtr &node, const std::string 
   MS_EXCEPTION_IF_NULL(builder);
   builder->SetCoreType(core_type);
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), node.get());
+}
+
+std::string AnfRuntimeAlgorithm::GetCoreType(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!AnfUtils::IsRealKernel(node)) {
+    return "";
+  }
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto build_info = kernel_info->select_kernel_build_info();
+  MS_EXCEPTION_IF_NULL(build_info);
+  return build_info->core_type();
+}
+
+kernel::OpType AnfRuntimeAlgorithm::GetOpType(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto build_info = kernel_info->select_kernel_build_info();
+  MS_EXCEPTION_IF_NULL(build_info);
+  return build_info->op_type();
 }
 
 void AnfRuntimeAlgorithm::SetOutputDataDesc(const AnfNodePtr &node, const std::vector<nlohmann::json> &desc) {
@@ -2187,5 +2254,18 @@ void AnfRuntimeAlgorithm::UpdateValueNodeShape(const AnfNodePtr &node) {
   MS_LOG(INFO) << "Set abstract for node:" << node->DebugString() << "from:" << node->abstract()->ToString()
                << " to:" << abstract_tuple->ToString();
   node->set_abstract(abstract_tuple);
+}
+
+bool AnfRuntimeAlgorithm::HasSelectKernelBuildInfo(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  if (kernel_info == nullptr) {
+    return false;
+  }
+  auto build_info = kernel_info->select_kernel_build_info();
+  if (build_info == nullptr) {
+    return false;
+  }
+  return true;
 }
 }  // namespace mindspore::session

@@ -90,10 +90,16 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   // get output kernel object type
   static std::vector<KernelObjectType> GetOutputKernelObjectTypes(const AnfNodePtr &node);
   static KernelObjectType GetOutputKernelObjectType(const AnfNodePtr &node, size_t output_idx);
+  // get output kernel object type
+  static std::vector<KernelObjectType> GetOutputElementsKernelObjectTypes(const AnfNodePtr &node);
   // Get Input Padding Axis
   static std::string GetInputReshapeType(const AnfNodePtr &node, size_t input_idx);
   // Get Output Padding Axis
   static std::string GetOutputReshapeType(const AnfNodePtr &node, size_t output_idx);
+  // Get all input reshape shape of anf node
+  static std::vector<std::string> GetAllInputReshapeType(const AnfNodePtr &node);
+  // Get all output reshape shape of anf node
+  static std::vector<std::string> GetAllOutputReshapeType(const AnfNodePtr &node);
   // get output select data type of anf node
   static TypeId GetOutputDeviceDataType(const AnfNodePtr &node, size_t output_idx);
   // get input select data type of anf node
@@ -134,10 +140,16 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   // get fusion type:AICORE,AICPU...
   static std::string GetFusionType(const AnfNodePtr &node);
   static void SetFusionType(const AnfNodePtr &node, const std::string &type);
+  // get KernelBuildInfoValid
+  static bool GetValid(const AnfNodePtr &node);
+
   static void SetOutputDataDesc(const AnfNodePtr &node, const std::vector<nlohmann::json> &desc);
   static std::vector<nlohmann::json> GetOutputDataDesc(const AnfNodePtr &node);
   // core type
   static void SetCoreType(const AnfNodePtr &node, const std::string &core_type);
+  static std::string GetCoreType(const AnfNodePtr &node);
+  // op type
+  static kernel::OpType GetOpType(const AnfNodePtr &node);
   // set select kernel_build_info
   static void SetSelectKernelBuildInfo(const kernel::KernelBuildInfoPtr &select_kernel_build_info, AnfNode *node);
   // get select kernel_build_info
@@ -244,6 +256,7 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static bool IsSummaryNode(const AnfNodePtr &node);
   static tensor::TensorPtr SequenceToTensor(const ValuePtr &value);
   static void UpdateValueNodeShape(const AnfNodePtr &node);
+  static bool HasSelectKernelBuildInfo(const AnfNodePtr &node);
 };
 }  // namespace session
 

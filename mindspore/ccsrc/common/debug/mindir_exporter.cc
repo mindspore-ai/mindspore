@@ -25,6 +25,78 @@
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "mindspore/core/ops/structure_ops.h"
+#include "include/common/utils/compile_cache_context.h"
+
+namespace {
+using mindspore::CNodePtr;
+using mindspore::FileUtils;
+using mindspore::FuncGraph;
+using mindspore::FuncGraphPtr;
+using mindspore::ValueNode;
+using mindspore::ValueNodePtr;
+
+void GetAllFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs) {
+  MS_ASSERT(all_func_graphs != nullptr);
+  MS_ASSERT(func_graph != nullptr);
+  if (all_func_graphs->find(func_graph) == all_func_graphs->end()) {
+    all_func_graphs->insert(func_graph);
+  } else {
+    return;
+  }
+  auto nodes = mindspore::TopoSort(func_graph->get_return());
+  for (auto &node : nodes) {
+    if (mindspore::IsValueNode<FuncGraph>(node)) {
+      MS_ASSERT(node->cast<ValueNodePtr>() != nullptr);
+      MS_ASSERT(node->cast<ValueNodePtr>()->value() != nullptr);
+      MS_ASSERT((node->cast<ValueNodePtr>()->value())->cast<FuncGraphPtr>() != nullptr);
+      auto new_fg = (node->cast<ValueNodePtr>()->value())->cast<FuncGraphPtr>();
+      GetAllFuncGraphs(new_fg, all_func_graphs);
+    }
+    if (mindspore::utils::isa<CNodePtr>(node)) {
+      auto cnode = node->cast<CNodePtr>();
+      MS_ASSERT(cnode != nullptr);
+      for (auto &input : cnode->inputs()) {
+        if (input->isa<ValueNode>()) {
+          if (mindspore::IsValueNode<FuncGraph>(input)) {
+            MS_ASSERT(input->cast<ValueNodePtr>() != nullptr);
+            MS_ASSERT(input->cast<ValueNodePtr>()->value() != nullptr);
+            MS_ASSERT((input->cast<ValueNodePtr>()->value())->cast<FuncGraphPtr>() != nullptr);
+            auto new_fg = (input->cast<ValueNodePtr>()->value())->cast<FuncGraphPtr>();
+            GetAllFuncGraphs(new_fg, all_func_graphs);
+          }
+        }
+      }
+    }
+  }
+}
+
+bool DeleteDirRecursively(const std::string &dir_name) {
+  DIR *dir = opendir(dir_name.c_str());
+  dirent *dirent = nullptr;
+  std::vector<std::string> file_names{};
+  while ((dirent = readdir(dir)) != 0) {
+    if (strcmp(dirent->d_name, ".") != 0 && strcmp(dirent->d_name, "..") != 0) {
+      file_names.emplace_back(dirent->d_name);
+    }
+  }
+  for (auto &file_name : file_names) {
+    auto file_path = dir_name + "/" + file_name;
+    auto real_file_path = FileUtils::GetRealPath(file_path.c_str());
+    if (!real_file_path.has_value()) {
+      MS_LOG(ERROR) << "Cannot get pwd path";
+      return false;
+    }
+    auto result = unlink(real_file_path.value().c_str());
+    if (result != 0) {
+      closedir(dir);
+      MS_LOG(ERROR) << "Delete the file(" << real_file_path.value() << ") failed." << mindspore::ErrnoToString(errno);
+      return false;
+    }
+  }
+  closedir(dir);
+  return true;
+}
+};  // namespace
 
 namespace mindspore {
 bool IrExportBuilder::SetAbstractFuncToAttributeProto(const abstract::AbstractBasePtr &abstract,
@@ -103,7 +175,9 @@ bool IrExportBuilder::BuildPrimitives() {
       mind_ir::AttributeProto *attr_proto = prim_proto->add_attribute();
       attr_proto->set_name(attr.first);
       auto attr_value = attr.second;
-      CheckAndConvertUtils::ConvertAttrValueInExport(prim->name(), attr.first, &attr_value);
+      if (!is_kernel_graph_) {
+        CheckAndConvertUtils::ConvertAttrValueInExport(prim->name(), attr.first, &attr_value);
+      }
       if (!SetValueToAttributeProto(attr_value, attr_proto)) {
         MS_LOG(ERROR) << "Set value to AttributeProto failed.";
         return false;
@@ -121,7 +195,7 @@ std::string IrExporter::GetDumpString(const FuncGraphPtr &func_graph) {
   return builder_->GetProtoString();
 }
 
-ModelProtoPtr IrExporter::GetDumpProto(const FuncGraphPtr &func_graph, const FuncGraphPtr &param_layout_fg) {
+ModelProtoPtr IrExporter::GetDumpProto(const FuncGraphPtr &func_graph) {
   if ((builder_ == nullptr) || (func_graph == nullptr)) {
     MS_LOG(EXCEPTION) << "Input params is null.";
   }
@@ -133,13 +207,18 @@ ModelProtoPtr IrExporter::GetDumpProto(const FuncGraphPtr &func_graph, const Fun
   if (!builder_->BuildModel(func_graph)) {
     return nullptr;
   }
+  return builder_->Model();
+}
 
-#ifndef MINDIR_EXPORT_TENSOR_LAYOUT_CLIP
-  // Export layout information
-  if (param_layout_fg) {
-    builder_->BuildLayout(param_layout_fg);
+ModelProtoPtr IrExporter::GetDumpProto(const FuncGraphPtr &root_graph, const std::vector<FuncGraphPtr> &child_graphs,
+                                       const std::vector<AnfNodePtr> &isolated_nodes) {
+  // Export model info
+  builder_->BuildModelInfo();
+
+  // Export model and return string
+  if (!builder_->BuildModel(root_graph, child_graphs, isolated_nodes)) {
+    return nullptr;
   }
-#endif
   return builder_->Model();
 }
 
@@ -158,47 +237,71 @@ void IrExportBuilder::BuildModelInfo() {
   model_->set_mind_ir_version(mind_ir::Version_MAX);
 }
 
-#ifndef MINDIR_EXPORT_TENSOR_LAYOUT_CLIP
-void IrExportBuilder::BuildLayout(const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  std::vector<AnfNodePtr> graph_params = func_graph->parameters();
-  mind_ir::ParallelProto *parallel_proto = model_->mutable_parallel();
-  for (auto para : graph_params) {
-    std::string name = std::static_pointer_cast<Parameter>(para)->name();
-    auto tensor_layout = para->user_data<parallel::TensorLayout>();
-    if (tensor_layout == nullptr) {
-      MS_LOG(INFO) << "GetParameterLayout nullptr name = " << name;
-    } else {
-      mind_ir::LayoutProto *layoutProto = parallel_proto->add_layout();
+// build model for kernel graph
+bool IrExportBuilder::BuildModel(const FuncGraphPtr &root_graph, const std::vector<FuncGraphPtr> &child_graphs,
+                                 const std::vector<AnfNodePtr> &isolated_nodes) {
+  MS_EXCEPTION_IF_NULL(root_graph);
+  is_kernel_graph_ = root_graph->type_name() == kKernelGraphTypeName;
+  nodeName_.clear();
+  node_name_map_.clear();
+  primitive_name_map_.clear();
 
-      // Get all the information for layput
-      auto device_arrangement = tensor_layout->device_arrangement().array();
-      auto tensor_map = tensor_layout->tensor_map().array();
-      auto slice_shape = tensor_layout->slice_shape().array();
-      int64_t field_size = tensor_layout->get_field_size();
-      bool uniform_split = tensor_layout->uniform_split();
-      std::string opt_shard_group = tensor_layout->opt_shard_group();
-      if (!opt_shard_group.empty()) {
-        slice_shape = tensor_layout->opt_shard_slice_shape();
-      }
-      // Save all information to Layout Proto
-      layoutProto->set_name(name);
-      for (auto device_arrangement_element : device_arrangement) {
-        layoutProto->add_device_arrangement_int(device_arrangement_element);
-      }
-      for (auto tensor_map_element : tensor_map) {
-        layoutProto->add_tensor_map_int(tensor_map_element);
-      }
-      for (auto slice_shape_element : slice_shape) {
-        layoutProto->add_slice_shape_int(slice_shape_element);
-      }
-      layoutProto->set_field_size(field_size);
-      layoutProto->set_uniform_split(uniform_split);
-      layoutProto->set_opt_shard_group(opt_shard_group);
+  // Because param may be called across graphs, build params of all graphs first.
+  auto build_params_attrs = [this](const FuncGraphPtr &graph, mind_ir::GraphProto *const proto) {
+    if (!BuildParameters(graph, proto)) {
+      MS_LOG(ERROR) << "Build graph parameters failed.";
+      return false;
+    }
+    if (!BuildFuncGraphAttrs(graph, proto)) {
+      MS_LOG(ERROR) << "Build graph parameters attrs failed.";
+      return false;
+    }
+    return true;
+  };
+
+  (void)nodeName_.insert(root_graph->ToString());
+  auto root_graph_proto = model_->mutable_graph();
+  // build root graph params
+  top_graph = true;
+  if (!(build_params_attrs(root_graph, root_graph_proto))) {
+    return false;
+  }
+  root_graph_proto->set_name(root_graph->ToString());
+  graph_protos_[root_graph] = root_graph_proto;
+  // build child graph params
+  top_graph = false;
+  for (const auto &graph : child_graphs) {
+    auto func_proto = model_->add_functions();
+    func_proto->set_name(graph->ToString());
+    (void)nodeName_.insert(graph->ToString());
+    if (!(build_params_attrs(graph, func_proto))) {
+      return false;
+    }
+    graph_protos_[graph] = func_proto;
+  }
+  // build nodes for root_graph, then child_graph
+  if (!BuildNodes(root_graph, root_graph_proto)) {
+    return false;
+  }
+  for (const auto &graph : child_graphs) {
+    if (!BuildNodes(graph, graph_protos_[graph])) {
+      return false;
     }
   }
+  if (!BuildIsolatedNodes(isolated_nodes)) {
+    return false;
+  }
+  // build primitives
+  if (!BuildPrimitives()) {
+    return false;
+  }
+  // Release resource
+  nodeName_.clear();
+  node_name_map_.clear();
+  primitive_name_map_.clear();
+  graph_protos_.clear();
+  return true;
 }
-#endif
 
 bool IrExportBuilder::BuildModel(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -222,6 +325,11 @@ bool IrExportBuilder::BuildModel(const FuncGraphPtr &func_graph) {
   std::set<FuncGraphPtr> graphVisited;
   (void)graphVisited.insert(func_graph);
   top_graph = false;
+
+  auto &context = CompileCacheContext::GetInstance();
+  const auto &child_graphs = context.GetChileGraphs();
+  std::transform(child_graphs.begin(), child_graphs.end(), std::back_inserter(todo_),
+                 [](const FuncGraphPtr &g) { return g; });
   while (!todo_.empty()) {
     FuncGraphPtr fg = todo_.back();
     todo_.pop_back();
@@ -249,6 +357,7 @@ bool IrExportBuilder::BuildModel(const FuncGraphPtr &func_graph) {
   node_name_map_.clear();
   primitive_name_map_.clear();
   graph_protos_.clear();
+  MS_LOG(INFO) << "BuildModel end.";
   return true;
 }
 
@@ -323,8 +432,10 @@ bool IrExportBuilder::ExportWeight(const ParameterPtr &param, const std::string 
 bool IrExportBuilder::BuildParameters(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(graph_proto);
+  auto &context = CompileCacheContext::GetInstance();
   auto param_size = func_graph->parameters().size();
-  MS_LOG(DEBUG) << "func graph parameter num:" << param_size << ", fv param num:" << func_graph->fv_param_count();
+  MS_LOG(DEBUG) << "func graph: " << func_graph->ToString() << " parameter num:" << param_size
+                << ", fv param num:" << func_graph->fv_param_count();
   for (size_t param_counter = 0; param_counter < param_size; ++param_counter) {
     auto &item = func_graph->parameters()[param_counter];
     MS_EXCEPTION_IF_NULL(item);
@@ -333,9 +444,17 @@ bool IrExportBuilder::BuildParameters(const FuncGraphPtr &func_graph, mind_ir::G
       MS_LOG(ERROR) << "Parameter: '" << item->ToString() << "' could not cast to parameter.";
       return false;
     }
-
+    if (is_kernel_graph_ && (node_name_map_.find(param) != node_name_map_.end() || param->func_graph() != func_graph)) {
+      continue;
+    }
     std::string param_name = GetUniqueNodeName(param);
-    if (top_graph && param_counter >= param_size - func_graph->fv_param_count()) {
+    param->set_user_data<std::string>(kUniqueCacheName, std::make_shared<std::string>(param_name));
+    if (is_kernel_graph_ && context.IsBackendParamGenFromFrontendParam(param)) {
+      (void)nodeName_.insert(param_name);
+      continue;
+    }
+    if (top_graph &&
+        (param_counter >= param_size - func_graph->fv_param_count() || (is_kernel_graph_ && param->has_default()))) {
       if (!ExportWeight(param, param_name, graph_proto)) {
         MS_LOG(ERROR) << "Failed to export parameter weight:" << param->DebugString();
       }
@@ -688,6 +807,9 @@ bool IrExportBuilder::BuildNodes(const FuncGraphPtr &func_graph, mind_ir::GraphP
       MS_LOG(DEBUG) << "Node: '" << node->ToString() << "' is not cnode";
       continue;
     }
+    if (is_kernel_graph_ && (node_name_map_.find(node) != node_name_map_.end() || node->func_graph() != func_graph)) {
+      continue;
+    }
     auto cnode = node->cast<CNodePtr>();
     if (cnode == func_graph->get_return()) {
       if (!BuildOutput(cnode, graph_proto)) {
@@ -710,21 +832,134 @@ bool IrExportBuilder::BuildNodes(const FuncGraphPtr &func_graph, mind_ir::GraphP
   return true;
 }
 
+bool IrExportBuilder::BuildIsolatedCNode(const AnfNodePtr &node, std::set<AnfNodePtr> *visited) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto iter = node_name_map_.find(node);
+  if (iter != node_name_map_.end()) {
+    return true;
+  }
+  MS_EXCEPTION_IF_NULL(visited);
+  if (visited->find(node) != visited->end()) {
+    MS_LOG(ERROR) << "There is a cycle when build node " << node->DebugString();
+    return false;
+  }
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  const auto &cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  const auto &graph = cnode->func_graph();
+  if (!graph) {
+    MS_LOG(ERROR) << "The isolated node " << node->DebugString() << " is not belongs to any graph.";
+    return false;
+  }
+  auto graph_proto = graph_protos_[graph];
+  auto input_size = cnode->size();
+  std::vector<string> input_names;
+  // build input nodes
+  for (size_t i = 1; i < input_size; i++) {
+    auto input = cnode->input(i);
+    MS_EXCEPTION_IF_NULL(input);
+    if (input->isa<Parameter>()) {
+      MS_LOG(ERROR) << "Only support that the isolated node's input is cnode or value_node, but the input is "
+                    << input->DebugString();
+      return false;
+    }
+    std::string node_name;
+    if (input->isa<ValueNode>()) {
+      auto input_graph = input->func_graph();
+      auto input_proto = input_graph ? graph_protos_[input_graph] : graph_proto;
+      MS_EXCEPTION_IF_NULL(input_proto);
+      node_name = BuildInputNode(input, input_proto);
+    } else {
+      if (!BuildIsolatedCNode(input, visited)) {
+        MS_LOG(ERROR) << "Build input node for " << input->DebugString() << " failed.";
+        return false;
+      }
+      node_name = GetUniqueNodeName(input);
+    }
+    if (node_name.empty()) {
+      MS_LOG(ERROR) << "Build input node for " << input->DebugString() << " failed.";
+      return false;
+    }
+    input->set_user_data<std::string>(kUniqueCacheName, std::make_shared<std::string>(node_name));
+    input_names.push_back(node_name);
+  }
+  // build cnode
+  auto output_name = GetUniqueNodeName(cnode);
+  cnode->set_user_data<std::string>(kUniqueCacheName, std::make_shared<std::string>(output_name));
+  if (nodeName_.count(output_name) > 0) {
+    MS_LOG(INFO) << "There is a duplicate name: " << output_name;
+    return true;
+  }
+  mind_ir::NodeProto *node_proto = graph_proto->add_node();
+  (void)nodeName_.insert(output_name);
+  node_proto->add_output(output_name);
+  node_proto->set_name(output_name);
+  node_proto->set_domain(cnode->fullname_with_scope());
+  AnfNodePtr op = cnode->input(0);
+  std::string type_name = GetOpTypeName(op);
+  if (type_name.empty()) {
+    MS_LOG(ERROR) << "Get op type name for " << op->DebugString() << " failed.";
+    return false;
+  }
+  node_proto->set_op_type(type_name);
+  if (!SetAbstractToNodeProto(cnode, node_proto)) {
+    MS_LOG(DEBUG) << "Fail to export abstract of the node: " << node->DebugString();
+  }
+  (void)std::for_each(input_names.begin(), input_names.end(),
+                      [&node_proto](const string &name) { node_proto->add_input(name); });
+  if (!BuildCNodeAttr(cnode, node_proto)) {
+    MS_LOG(ERROR) << "Set value to node attr to node proto failed.";
+    return false;
+  }
+  visited->insert(node);
+  return true;
+}
+
+bool IrExportBuilder::BuildIsolatedNodes(const std::vector<AnfNodePtr> &isolated_nodes) {
+  for (const auto &node : isolated_nodes) {
+    if (!node->isa<CNode>()) {
+      MS_LOG(ERROR) << "Only support that the isolated node is cnode, but the node is " << node->DebugString();
+      return false;
+    }
+    if (mindspore::IsPrimitiveCNode(node, mindspore::prim::kPrimReturn)) {
+      MS_LOG(ERROR) << "Only support that the isolated node is not return node, but the node is "
+                    << node->DebugString();
+      return false;
+    }
+    std::set<AnfNodePtr> visited;
+    if (!BuildIsolatedCNode(node, &visited)) {
+      MS_LOG(ERROR) << "Build isolated node " << node->DebugString() << " failed.";
+      return false;
+    }
+  }
+
+  return true;
+}
+
 bool IrExportBuilder::BuildOutput(const CNodePtr &node, mind_ir::GraphProto *const graph_proto) {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(graph_proto);
   const int OutputSize = 2;
   if (node->size() != OutputSize) {
     MS_LOG(ERROR) << "Number of inputs of return node is not equal to 2.";
     return false;
   }
+  auto graph_name = graph_proto->name();
+  node->set_user_data<std::string>(kUniqueCacheName, std::make_shared<std::string>(graph_name + kReturnNode));
   AnfNodePtr arg = node->input(1);
-  std::string node_name = BuildInputNode(arg, graph_proto);
+  auto node_name = BuildInputNode(arg, graph_proto);
+  arg->set_user_data<std::string>(kUniqueCacheName, std::make_shared<std::string>(node_name));
   if (node_name.empty()) {
     MS_LOG(ERROR) << "Build input node failed for arg " << arg->DebugString();
     return false;
   }
   mind_ir::ValueInfoProto *output_proto = graph_proto->add_output();
   output_proto->set_name(node_name);
+  // for return node primitive export
+  AnfNodePtr op = node->input(0);
+  op->set_user_data<std::string>(kUniqueCacheName, std::make_shared<std::string>(graph_name + kReturnPrimNode));
   return SetValueInfoProto(arg, output_proto);
 }
 
@@ -739,7 +974,10 @@ std::string IrExportBuilder::GetOpTypeName(const AnfNodePtr &node) {
         do_sign_prim->function()->isa<MetaFuncGraph>()) {
       type_name = "REF::MetaFuncGraph::" + do_sign_prim->function()->cast_ptr<MetaFuncGraph>()->name();
     } else {
-      type_name = "REF::" + GetPrimitiveUniqueName(prim);
+      const auto &unique_name = GetPrimitiveUniqueName(prim);
+      type_name = "REF::" + unique_name;
+      // for valuenode export
+      node->set_user_data<std::string>(kUniqueCacheName, std::make_shared<std::string>(unique_name));
     }
   } else if (IsValueNode<FuncGraph>(node)) {
     FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(node);
@@ -880,6 +1118,7 @@ bool IrExportBuilder::BuildCNode(const CNodePtr &node, mind_ir::GraphProto *cons
   for (size_t i = 1; i < inputs_size; i++) {
     auto input = node->input(i);
     std::string node_name = BuildInputNode(input, graph_proto);
+    input->set_user_data<std::string>(kUniqueCacheName, std::make_shared<std::string>(node_name));
     if (node_name.empty()) {
       MS_LOG(ERROR) << "Build input node for " << input->DebugString() << " failed.";
       return false;
@@ -889,10 +1128,12 @@ bool IrExportBuilder::BuildCNode(const CNodePtr &node, mind_ir::GraphProto *cons
 
   // Build cnode
   std::string output_name = GetUniqueNodeName(node);
+  node->set_user_data<std::string>(kUniqueCacheName, std::make_shared<std::string>(output_name));
   if (nodeName_.count(output_name) > 0) {
     MS_LOG(INFO) << "There is a duplicate name: " << output_name;
     return true;
   }
+
   mind_ir::NodeProto *node_proto = graph_proto->add_node();
   (void)nodeName_.insert(output_name);
   node_proto->add_output(output_name);
@@ -962,8 +1203,11 @@ std::string IrExportBuilder::GetUniqueNodeName(const AnfNodePtr &node) {
   if (IsValueNode<FuncGraph>(node)) {
     FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(node);
     todo_.push_back(fg);
-    return fg->ToString();
+    auto name = fg->ToString();
+    node->set_user_data<std::string>(kUniqueCacheName, std::make_shared<std::string>(name));
+    return name;
   }
+
   std::string node_name = GetNodeName(node);
   // Compatible before. CNode = FuncGraphName:CNodeName:index ,Parameter = FuncGraphName:ParameterName
   if (node->isa<CNode>()) {
@@ -974,6 +1218,7 @@ std::string IrExportBuilder::GetUniqueNodeName(const AnfNodePtr &node) {
     node_name = node_name + "_" + std::to_string(GetUniqueID());
   }
   node_name_map_[node] = node_name;
+  // node->set_user_data<std::string>(kUniqueCacheName, std::make_shared<std::string>(node_name));
   return node_name;
 }
 
@@ -1458,16 +1703,49 @@ std::string GetBinaryProtoString(const FuncGraphPtr &func_graph, const bool &inc
   return ret;
 }
 
-bool DumpBinaryProto(const FuncGraphPtr &func_graph, const std::string &file_path,
-                     const FuncGraphPtr &param_layout_fg) {
+ModelProtoPtr GenBinaryProto(const FuncGraphPtr &func_graph) {
   auto exporter = std::make_shared<IrExporter>(std::make_shared<IrExportBuilder>());
-  auto proto = exporter->GetDumpProto(func_graph, param_layout_fg);
+  return exporter->GetDumpProto(func_graph);
+}
+
+bool DumpBinaryProto(const FuncGraphPtr &func_graph, const std::string &file_path) {
+  auto exporter = std::make_shared<IrExporter>(std::make_shared<IrExportBuilder>());
+  auto proto = exporter->GetDumpProto(func_graph);
   MindIRExporter mindir_exporter;
   if (proto == nullptr) {
     MS_LOG(ERROR) << "Get binary proto for graph " << func_graph->ToString() << " failed.";
     return false;
   }
   return mindir_exporter.SaveProtoToFile(proto.get(), file_path);
+}
+
+bool DumpBinaryProto(const FuncGraphPtr &root_graph, const std::vector<FuncGraphPtr> &child_graphs,
+                     const std::vector<AnfNodePtr> &isolated_nodes, const std::string &file_path) {
+  auto exporter = std::make_shared<IrExporter>(std::make_shared<IrExportBuilder>());
+  auto proto = exporter->GetDumpProto(root_graph, child_graphs, isolated_nodes);
+  if (proto == nullptr) {
+    MS_LOG(ERROR) << "Get binary proto for graph " << root_graph->ToString() << " failed.";
+    return false;
+  }
+  auto realpath = Common::CreatePrefixPath(file_path, true);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path of file " << file_path << " failed.";
+    return false;
+  }
+  ChangeFileMode(realpath.value(), S_IWUSR);
+  std::ofstream fout(realpath.value());
+  if (!fout.is_open()) {
+    MS_LOG(ERROR) << "Open the file '" << realpath.value() << "' failed!" << ErrnoToString(errno);
+    return false;
+  }
+  if (!proto->SerializeToOstream(&fout)) {
+    MS_LOG(ERROR) << "Failed to write the mindir proto to file " << realpath.value();
+    fout.close();
+    return false;
+  }
+  fout.close();
+  ChangeFileMode(realpath.value(), S_IRUSR);
+  return true;
 }
 
 bool MindIRExporter::ParserPath(const std::string &output_path) {
@@ -1566,33 +1844,6 @@ bool MindIRExporter::CreateParameterDir() {
   }
 
   ChangeFileMode(dir_name_, S_IWUSR | S_IRUSR | S_IXUSR);
-  return true;
-}
-
-bool DeleteDirRecursively(const std::string &dir_name) {
-  DIR *dir = opendir(dir_name.c_str());
-  dirent *dirent = nullptr;
-  std::vector<std::string> file_names{};
-  while ((dirent = readdir(dir)) != 0) {
-    if (strcmp(dirent->d_name, ".") != 0 && strcmp(dirent->d_name, "..") != 0) {
-      file_names.emplace_back(dirent->d_name);
-    }
-  }
-  for (auto &file_name : file_names) {
-    auto file_path = dir_name + "/" + file_name;
-    auto real_file_path = FileUtils::GetRealPath(file_path.c_str());
-    if (!real_file_path.has_value()) {
-      MS_LOG(ERROR) << "Cannot get pwd path";
-      return false;
-    }
-    auto result = unlink(real_file_path.value().c_str());
-    if (result != 0) {
-      closedir(dir);
-      MS_LOG(ERROR) << "Delete the file(" << real_file_path.value() << ") failed." << ErrnoToString(errno);
-      return false;
-    }
-  }
-  closedir(dir);
   return true;
 }
 
@@ -1733,7 +1984,7 @@ bool MindIRExporter::ChangeParaDataFile(const std::string &file) {
 
 bool MindIRExporter::IsSystemLittleEndidan() const {
   int check = 0x01;
-  auto address = reinterpret_cast<char *>(&check);
+  auto address = reinterpret_cast<int8_t *>(&check);
   return *address == 0x01;
 }
 
@@ -1853,40 +2104,5 @@ bool MindIRExporter::ParamDict(const FuncGraphPtr &func_graph) {
     }
   }
   return true;
-}
-
-void GetAllFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs) {
-  MS_ASSERT(all_func_graphs != nullptr);
-  MS_ASSERT(func_graph != nullptr);
-  if (all_func_graphs->find(func_graph) == all_func_graphs->end()) {
-    all_func_graphs->insert(func_graph);
-  } else {
-    return;
-  }
-  auto nodes = TopoSort(func_graph->get_return());
-  for (auto &node : nodes) {
-    if (IsValueNode<FuncGraph>(node)) {
-      MS_ASSERT(node->cast<ValueNodePtr>() != nullptr);
-      MS_ASSERT(node->cast<ValueNodePtr>()->value() != nullptr);
-      MS_ASSERT((node->cast<ValueNodePtr>()->value())->cast<FuncGraphPtr>() != nullptr);
-      auto new_fg = (node->cast<ValueNodePtr>()->value())->cast<FuncGraphPtr>();
-      GetAllFuncGraphs(new_fg, all_func_graphs);
-    }
-    if (utils::isa<CNodePtr>(node)) {
-      auto cnode = node->cast<CNodePtr>();
-      MS_ASSERT(cnode != nullptr);
-      for (auto &input : cnode->inputs()) {
-        if (input->isa<ValueNode>()) {
-          if (IsValueNode<FuncGraph>(input)) {
-            MS_ASSERT(input->cast<ValueNodePtr>() != nullptr);
-            MS_ASSERT(input->cast<ValueNodePtr>()->value() != nullptr);
-            MS_ASSERT((input->cast<ValueNodePtr>()->value())->cast<FuncGraphPtr>() != nullptr);
-            auto new_fg = (input->cast<ValueNodePtr>()->value())->cast<FuncGraphPtr>();
-            GetAllFuncGraphs(new_fg, all_func_graphs);
-          }
-        }
-      }
-    }
-  }
 }
 }  // namespace mindspore

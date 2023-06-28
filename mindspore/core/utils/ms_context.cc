@@ -52,6 +52,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
 #ifndef ENABLE_SECURITY
   set_param<int>(MS_CTX_SAVE_GRAPHS_FLAG, 0);
   set_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH, ".");
+  set_param<bool>(MS_CTX_ENABLE_COMPILE_CACHE, false);
   set_param<std::string>(MS_CTX_COMPILE_CACHE_PATH, "");
 #else
   // Need set a default value for arrays even if running in the security mode.

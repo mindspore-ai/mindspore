@@ -632,7 +632,7 @@ class _MindsporeFunctionExecutor:
     def _set_compile_cache_dep_files(self):
         # If enable compile cache, get the dependency files list
         enable_compile_cache = context.get_context("enable_compile_cache")
-        if enable_compile_cache is None:
+        if enable_compile_cache is not True and enable_compile_cache != "1":
             enable_compile_cache = os.getenv('MS_COMPILER_CACHE_ENABLE')
         if enable_compile_cache is True or enable_compile_cache == "1":
             self._graph_executor.set_compile_cache_dep_files(_get_compile_cache_dep_files())
@@ -1586,7 +1586,7 @@ class _CellGraphExecutor:
     def _set_compile_cache_dep_files(self, phase):
         # If enable compile cache, get the dependency files list
         enable_compile_cache = context.get_context("enable_compile_cache")
-        if enable_compile_cache is None:
+        if enable_compile_cache is not True and enable_compile_cache != "1":
             enable_compile_cache = os.getenv('MS_COMPILER_CACHE_ENABLE')
         if "train" in phase and (enable_compile_cache is True or enable_compile_cache == "1"):
             self._graph_executor.set_compile_cache_dep_files(_get_compile_cache_dep_files())

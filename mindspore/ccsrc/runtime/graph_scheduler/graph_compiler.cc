@@ -55,6 +55,7 @@
 #include "runtime/graph_scheduler/embedding_cache_scheduler.h"
 #endif
 #include "include/common/profiler.h"
+#include "include/common/utils/compile_cache_context.h"
 
 namespace mindspore {
 namespace runtime {
@@ -78,6 +79,58 @@ void SetSummaryNodesRefCount(const KernelGraph *graph) {
     device_address->set_original_ref_count(SIZE_MAX);
     device_address->ResetRefCount();
   }
+}
+
+bool UseCacheToCompileGraph(const FuncGraphPtr &func_graph, const device::DeviceType &device_type) {
+  if (!CompileCacheEnable()) {
+    return false;
+  }
+#if defined(__linux__) && defined(WITH_BACKEND)
+  // compile cache does not support PS and cluster.
+  if (ps::PSContext::instance()->is_ps_mode() || distributed::cluster::ClusterContext::instance()->initialized()) {
+    return false;
+  }
+#endif
+  auto &context = CompileCacheContext::GetInstance();
+  if (context.FrontGraph() != func_graph) {
+    return false;
+  }
+  if (!context.UseCompileCache()) {
+    return false;
+  }
+  if (MsContext::GetInstance()->backend_policy() == "ge") {
+    return false;
+  }
+  if (device_type != device::DeviceType::kAscend) {
+    return false;
+  }
+  return true;
+}
+
+bool ExportCompileCache(const FuncGraphPtr &func_graph, const device::DeviceType &device_type) {
+  if (!CompileCacheEnable()) {
+    return false;
+  }
+#if defined(__linux__) && defined(WITH_BACKEND)
+  // compile cache does not support PS and cluster.
+  if (ps::PSContext::instance()->is_ps_mode() || distributed::cluster::ClusterContext::instance()->initialized()) {
+    return false;
+  }
+#endif
+  auto &context = CompileCacheContext::GetInstance();
+  if (context.FrontGraph() != func_graph) {
+    return false;
+  }
+  if (context.UseCompileCache()) {
+    return false;
+  }
+  if (MsContext::GetInstance()->backend_policy() == "ge") {
+    return false;
+  }
+  if (device_type != device::DeviceType::kAscend) {
+    return false;
+  }
+  return true;
 }
 }  // namespace
 
@@ -402,18 +455,17 @@ GraphId GraphCompiler::CompileDynamicGraph(const GraphSegmentPtr &segment, const
   return graph_id;
 }
 
-GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func_graph,
-                                                        const DeviceContext *device_context) {
-  MS_EXCEPTION_IF_NULL(session_);
+KernelGraphPtr GraphCompiler::ConstructKernelGraphForGraphRunMode(const FuncGraphPtr &func_graph,
+                                                                  const DeviceContext *device_context,
+                                                                  std::vector<KernelGraphPtr> *const all_graphs,
+                                                                  bool *const need_return_ahead) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(device_context);
-  MS_LOG(INFO) << "Status record: start compile graph.";
-  // Generate kernel graph.
-  std::vector<KernelGraphPtr> all_graphs;
+  MS_EXCEPTION_IF_NULL(all_graphs);
   auto device_target = device_context->GetDeviceType();
-  KernelGraphPtr root_graph = session_->ConstructKernelGraph(func_graph, &all_graphs, device_target);
+  KernelGraphPtr root_graph = session_->ConstructKernelGraph(func_graph, all_graphs, device_target);
   MS_EXCEPTION_IF_NULL(root_graph);
-  for (const auto &graph : all_graphs) {
+  for (const auto &graph : *all_graphs) {
     MS_EXCEPTION_IF_NULL(graph);
     MS_LOG(INFO) << "Set root graph for graph: " << graph->graph_id() << " to: " << root_graph->graph_id() << ".";
     graph->set_root_graph_id(root_graph->graph_id());
@@ -435,7 +487,7 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
   if (MsContext::GetInstance()->backend_policy() == "ge" && (jit_level == "O3" || jit_level == "")) {
     auto manager = MakeManager();
     MS_EXCEPTION_IF_NULL(manager);
-    for (const auto &graph : all_graphs) {
+    for (const auto &graph : *all_graphs) {
       MS_EXCEPTION_IF_NULL(graph);
       manager->AddFuncGraph(graph);
       graph->set_manager(manager);
@@ -445,9 +497,11 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
       MS_LOG(EXCEPTION) << "Compile graph failed: " << root_graph->graph_id();
     }
     root_graph->CacheGraphOutputToFrontNodeWithIndex({root_graph->output()}, {func_graph->output()});
-    return root_graph->graph_id();
+    *need_return_ahead = true;
   }
-
+  if (*need_return_ahead) {
+    return root_graph;
+  }
   // set executing sink true in graph mode
   root_graph->set_run_mode(device::RunMode::kGraphMode);
   root_graph->set_is_loop_count_sink(true);
@@ -455,20 +509,45 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
   // Embedding cache need global step of compute graph, can not enable loop sink, move loop control to loop count actor.
   if (ps::PSContext::instance()->cache_enable()) {
     root_graph->set_is_loop_count_sink(false);
-    for (const auto &graph : all_graphs) {
+    for (const auto &graph : *all_graphs) {
       MS_EXCEPTION_IF_NULL(graph);
       graph->set_is_loop_count_sink(false);
     }
   }
 #endif
-
   root_graph->SetInputNodes();
+  return root_graph;
+}
 
-  GraphId graph_id = 0;
+GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func_graph,
+                                                        const DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(session_);
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_LOG(INFO) << "Status record: start compile graph.";
+  // Generate kernel graph.
+  std::vector<KernelGraphPtr> all_graphs;
+  auto device_target = device_context->GetDeviceType();
+  KernelGraphPtr root_graph;
+  bool need_return_ahead = false;
+  if (UseCacheToCompileGraph(func_graph, device_target)) {
+    root_graph = session_->ConstructKernelGraph(&all_graphs);
+    use_cache_to_compile_graph_ = true;
+  } else {
+    root_graph = ConstructKernelGraphForGraphRunMode(func_graph, device_context, &all_graphs, &need_return_ahead);
+  }
+  GraphId graph_id = root_graph->graph_id();
+  if (need_return_ahead) {
+    return graph_id;
+  }
+  if (ExportCompileCache(func_graph, device_target)) {
+    export_compile_cache_ = true;
+  }
   if (!func_graph->has_flag(kFlagPyNativeRunInGraph)) {
     graph_id = CompileGraphImpl(root_graph, device_context);
-  } else {
-    graph_id = root_graph->graph_id();
+  }
+  if (CompileCacheEnable()) {
+    CompileCacheContext::GetInstance().Clear();
   }
   // Set summary nodes for all graphs.
   session_->SetSummaryNodesForAllGraphs(root_graph.get(), all_graphs);
@@ -494,7 +573,6 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
     }
     root_graph->set_front_outputs({func_graph->output()});
   }
-
   MS_LOG(INFO) << "Status record: end compile graph. graph id: " << graph_id;
   return graph_id;
 }
@@ -503,28 +581,32 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
                                         bool run_in_pynative) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(device_context);
-  const auto &ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
   MS_EXCEPTION_IF_NULL(session_);
-
-#ifdef ENABLE_DUMP_IR
-  auto context = MsContext::GetInstance();
+  const auto &context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  if (context->CanDump(kIntroductory)) {
-    // Dump .pb graph before graph optimization.
-    DumpIRProto(graph, "before_opt_" + std::to_string(graph->graph_id()));
-  }
+  if (use_cache_to_compile_graph_) {
+    auto &compile_cache_context = CompileCacheContext::GetInstance();
+    compile_cache_context.SetFusionOpBuildInfoFlag(true);
+    device_context->GetKernelExecutor(false)->CreateKernel(graph->execution_order());
+    compile_cache_context.SetFusionOpBuildInfoFlag(false);
+  } else {
+#ifdef ENABLE_DUMP_IR
+    if (context->CanDump(kIntroductory)) {
+      // Dump .pb graph before graph optimization.
+      DumpIRProto(graph, "before_opt_" + std::to_string(graph->graph_id()));
+    }
 #endif
-  MS_EXCEPTION_IF_NULL(device_context->GetKernelExecutor(false));
-  // Execute optimization pass.
-  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageOptimizeGraph, 1, 0, 0);
-  device_context->GetKernelExecutor(false)->OptimizeGraph(graph);
-  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageOptimizeGraph, 1, 0, 1);
-  // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
-  // 'KernelMod' is real executive object of kernel.
-  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageCreateKernel, 1, 0, 0);
-  device_context->GetKernelExecutor(false)->CreateKernel(graph->execution_order());
-  (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageCreateKernel, 1, 0, 1);
+    MS_EXCEPTION_IF_NULL(device_context->GetKernelExecutor(false));
+    // Execute optimization pass.
+    (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageOptimizeGraph, 1, 0, 0);
+    device_context->GetKernelExecutor(false)->OptimizeGraph(graph);
+    (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageOptimizeGraph, 1, 0, 1);
+    // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
+    // 'KernelMod' is real executive object of kernel.
+    (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageCreateKernel, 1, 0, 0);
+    device_context->GetKernelExecutor(false)->CreateKernel(graph->execution_order());
+    (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageCreateKernel, 1, 0, 1);
+  }
 
   // Kernels that are not supported by other device can be backed off and rebuilt on the CPU.
 #ifdef WITH_BACKEND
@@ -570,6 +652,9 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
     profiler_manage_inst->SetNetDynamicShapeStatus();
   }
 
+  if (export_compile_cache_) {
+    session_->CacheKernelGraph(graph);
+  }
   // Adjust kernel graph before run graph.
   device_context->GetKernelExecutor(false)->PreprocessBeforeRun(graph);
   graph->UpdateInternalParameter();

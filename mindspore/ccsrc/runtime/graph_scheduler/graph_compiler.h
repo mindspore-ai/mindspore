@@ -195,10 +195,16 @@ class GraphCompiler {
 
   // Set Graph's dependencies for pre_graph and post_graph.
   void SetGraphDependency(const KernelGraphPtr &graph, const GraphSegmentPtr &segment) const;
+  KernelGraphPtr ConstructKernelGraphForGraphRunMode(const FuncGraphPtr &func_graph,
+                                                     const DeviceContext *device_context,
+                                                     std::vector<KernelGraphPtr> *const all_graphs,
+                                                     bool *const need_return_ahead);
 
   // The member variable 'session_' will be removed after removing session module.
   // Now all the GraphCompiler share the same 'session_'.
   session::SessionPtr session_;
+  bool use_cache_to_compile_graph_ = false;
+  bool export_compile_cache_ = false;
 };
 
 }  // namespace runtime

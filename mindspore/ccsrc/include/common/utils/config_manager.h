@@ -112,7 +112,7 @@ class COMMON_EXPORT ConfigManager {
   void ResetIterNum() noexcept;
 
   void ResetQueue(const std::string &queue_name) noexcept;
-
+  std::string QueueName() const { return queue_name_; }
   std::map<std::string, std::string> ge_initialize_options_;
 
   int64_t gpu_loopsink_size() const { return gpu_loopsink_size_; }

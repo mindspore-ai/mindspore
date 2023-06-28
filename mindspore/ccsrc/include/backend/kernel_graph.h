@@ -266,6 +266,8 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   // used to dump ir
   std::string ToString() const override;
 
+  bool FrontendNodeExistInFrontBackendMap(const AnfNodePtr &frontend_anf);
+
   void set_start_label(const CNodePtr &start_label) { start_label_ = start_label; }
   CNodePtr get_start_label() { return start_label_; }
   void set_end_goto(const CNodePtr &end_goto) { end_goto_ = end_goto; }
@@ -373,6 +375,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
       post_graphs_[graph->graph_id()] = graph;
     }
   }
+  mindspore::HashMap<uint32_t, std::weak_ptr<session::KernelGraph>> GetPostGraphs() const { return post_graphs_; }
 
   bool IsPreGraphFinished() const { return pre_graphs_.size() == pre_graph_finished_count_; }
   bool IsPostGraphFinished() const {
@@ -462,6 +465,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   void set_is_from_single_op(bool is_from_single_op) { is_from_single_op_ = is_from_single_op; }
   bool is_from_single_op() const { return is_from_single_op_; }
   void set_run_mode(device::RunMode run_mode) { run_mode_ = run_mode; }
+  device::RunMode RunMode() const { return run_mode_; }
   bool is_graph_run_mode() const { return run_mode_ == device::RunMode::kGraphMode; }
   bool is_loop_count_sink() const { return is_loop_count_sink_; }
   void set_is_loop_count_sink(bool is_loop_count_sink) { is_loop_count_sink_ = is_loop_count_sink; }
@@ -474,11 +478,18 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
     }
     return iter->second;
   }
+  HashMap<AnfNodePtr, AnfWithOutIndex> InternalParameterToFrontNodeMap() const {
+    return internal_parameter_to_front_node_map_;
+  }
+  void SetInternalParameterToFrontNodeMap(const HashMap<AnfNodePtr, AnfWithOutIndex> &ipf_map) {
+    internal_parameter_to_front_node_map_ = ipf_map;
+  }
 
   AnfNodePtrList front_outputs() const { return front_outputs_; }
   void set_front_outputs(const AnfNodePtrList &outputs) { front_outputs_ = outputs; }
   bool IsCommSubGraph(uint32_t id) const { return comm_sub_graph_ids_.find(id) != comm_sub_graph_ids_.end(); }
   void RecordNewCommSubGraphId(uint32_t id) { comm_sub_graph_ids_.insert(id); }
+  std::set<uint32_t> CommSubGraphIds() const { return comm_sub_graph_ids_; }
 
   // somas total memory size
   SomasInfo *MutableSomasInfo() const { return somas_info_.get(); }
