@@ -432,11 +432,11 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
       MS_EXCEPTION_IF_NULL(first_tenspr);
       auto first_dtype = first_tenspr->data_type();
       std::vector<ShapeVector> input_shapes;
-      std::transform(op_info.input_tensor.begin(), op_info.input_tensor.end(), std::back_inserter(input_shapes),
-                     [](const auto &tensor) {
-                       MS_EXCEPTION_IF_NULL(tensor);
-                       return tensor->shape();
-                     });
+      (void)std::transform(op_info.input_tensor.begin(), op_info.input_tensor.end(), std::back_inserter(input_shapes),
+                           [](const auto &tensor) {
+                             MS_EXCEPTION_IF_NULL(tensor);
+                             return tensor->shape();
+                           });
       auto format = func(first_dtype, input_shapes);
       graph_info += format;
     }

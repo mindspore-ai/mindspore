@@ -29,7 +29,7 @@ namespace ops {
 namespace {
 constexpr size_t kIndexK = 2;
 constexpr size_t kIndexS = 4;
-constexpr size_t kInputNumber = 7;
+constexpr int64_t kInputNumber = 7;
 constexpr int64_t kTotalShapeSize = 3;
 }  // namespace
 MIND_API_OPERATOR_IMPL(WKV, BaseOperator);

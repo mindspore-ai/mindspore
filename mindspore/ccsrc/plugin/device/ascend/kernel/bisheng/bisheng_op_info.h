@@ -413,10 +413,10 @@ class BishengOpInfoRegister : public BishengOpInfoRegisterHelper {
     return *this;
   }
   BishengOpInfoRegister<T> &DataTypeFormat(const std::vector<std::pair<std::string, std::string>> &args,
-                                           typename T::Func &&func, const std::string &&func_name = {}) {
+                                           typename T::Func &&func, const std::string &func_name = {}) {
     auto attr = BishengOpInfoRegisterHelper::DataTypeFormat(args);
     func_list_.emplace_back(attr, std::move(func));
-    func_name_list_.emplace_back(std::move(func_name));
+    func_name_list_.emplace_back(func_name);
     return *this;
   }
   BishengOpInfoRegister<T> &Tiling(const typename T::TilingFunc &tiling_func) {
