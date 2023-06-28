@@ -2862,6 +2862,7 @@ def dense(input, weight, bias=None):
 
 @_primexpr
 def check_dense_inputs_same_shape(input1_shape, input2_shape, prim_name=None):
+    """check bidense input Tensors' shape"""
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if input1_shape[:-1] != input2_shape[:-1]:
         raise ValueError(f"{msg_prefix} dimensions except the last of 'input1' must be same as 'input2', but got "
