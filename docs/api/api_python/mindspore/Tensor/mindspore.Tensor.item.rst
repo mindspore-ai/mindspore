@@ -6,7 +6,7 @@ mindspore.Tensor.item
     获取Tensor中指定索引的元素。
 
     .. note::
-        Tensor.item返回的是Tensor标量，而不是Python标量。
+        Tensor.item返回的是Tensor标量，而不是Python标量。如果这个Tensor是一个Tensor标量，Tensor.item返回的是numpy.ndarray。
 
     参数：
         - **index** (Union[None, int, tuple(int)]) - Tensor的索引。默认值： ``None`` 。
