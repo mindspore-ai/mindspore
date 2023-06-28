@@ -24,10 +24,10 @@ import numpy as np
 from mindspore import log as logger
 import mindspore.ops as ops
 from mindspore.common import dtype as mstype
-from mindspore.ops.primitive import constexpr
-from mindspore.ops.primitive import _primexpr
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
+from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
+from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.ops.operations._inner_ops import Cummin, TileSize
 from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations.math_ops import Logit
@@ -120,8 +120,8 @@ tensor_lt = P.Less()
 tensor_le = P.LessEqual()
 tensor_gt = P.Greater()
 tensor_ge = P.GreaterEqual()
-not_equal_ = P.NotEqual()
 transpose_ = P.Transpose()
+not_equal_ = P.NotEqual()
 cast_ = P.Cast()
 
 #####################################
@@ -185,6 +185,9 @@ xlogy_ = P.Xlogy()
 square_ = P.Square()
 sqrt_ = P.Sqrt()
 cumsum_ = P.CumSum()
+shape_ = P.Shape()
+reshape_ = P.Reshape()
+dtype_ = P.DType()
 
 #####################################
 # Element-wise Operation Functions.
@@ -12040,6 +12043,740 @@ def ifftn(input, s=None, dim=None, norm=None):  # pylint: disable=redefined-oute
                                       ifftninput.dim_permute, ifftninput.out_sizes)
 
 
+@_primexpr
+def _check_validate_axis(axis, name):
+    def _check(axis):
+        if isinstance(axis, (tuple, list)):
+            for idx, item in enumerate(axis):
+                validator.check_value_type("axis[%d]" % idx, item, [int], name)
+    _check(axis)
+    axis = validator.check_value_type('axis', axis, [int, tuple, list], name)
+    return axis
+
+
+@constexpr
+def _check_validate_keepdims(keep_dims, name):
+    keep_dims = validator.check_value_type('keep_dims', keep_dims, [bool], name)
+    return keep_dims
+
+
+def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
+    r"""
+    Count number of nonzero elements across axis of input tensor.
+
+    Args:
+        x (Tensor): Input data is used to count non-zero numbers. With shape
+            :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        axis (Union[int, tuple(int), list(int)], optional): The dimensions to reduce.
+            Default: ``()`` , reduce all dimensions.
+        keep_dims (bool, optional): Whether to maintain dimensions specified by `axis`.
+            If true, keep these reduced dimensions and the length is 1.
+            If false, don't keep these dimensions. Default: ``False`` .
+        dtype (Union[Number, mindspore.bool\_], optional): The data type of the output tensor.
+            Default: ``mstype.int32`` .
+
+    Returns:
+          Tensor, number of nonzero element across axis specified by `axis`.
+          The data type is specified by `dtype`.
+
+    Raises:
+        TypeError: If `axis` is not int, tuple or list.
+        ValueError: If any value in `axis` is not in range [-x.ndim, x.ndim).
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import Tensor, ops
+        >>> import numpy as np
+        >>> # case 1: each value specified.
+        >>> x = Tensor(np.array([[0, 1, 0], [1, 1, 0]]).astype(np.float32))
+        >>> nonzero_num = ops.count_nonzero(x=x, axis=[0, 1], keep_dims=True, dtype=mindspore.int32)
+        >>> print(nonzero_num)
+        [[3]]
+        >>> # case 2: all value is default.
+        >>> nonzero_num = ops.count_nonzero(x=x)
+        >>> print(nonzero_num)
+        3
+        >>> # case 3: axis value was specified 0.
+        >>> nonzero_num = ops.count_nonzero(x=x, axis=[0,])
+        >>> print(nonzero_num)
+        [1 2 0]
+        >>> # case 4: axis value was specified 1.
+        >>> nonzero_num = ops.count_nonzero(x=x, axis=[1,])
+        >>> print(nonzero_num)
+        [1 2]
+        >>> # case 5: keep_dims value was specified.
+        >>> nonzero_num = ops.count_nonzero(x=x,  keep_dims=True)
+        >>> print(nonzero_num)
+        [[3]]
+        >>> # case 6: keep_dims and axis value was specified.
+        >>> nonzero_num = ops.count_nonzero(x=x, axis=[0,], keep_dims=True)
+        >>> print(nonzero_num)
+        [[1 2 0]]
+    """
+
+    const_utils.check_type_valid(dtype_(x), mstype.number_type, 'input x')
+    axis = _check_validate_axis(axis, "count_nonzero")
+    keep_dims = _check_validate_keepdims(keep_dims, "count_nonzero")
+    const_utils.check_type_valid(dtype, mstype.number_type + (mstype.bool_,), 'dtype')
+
+    reduce_sum = _get_cache_prim(P.ReduceSum)(keep_dims)
+
+    tensor_0 = ops.zeros(x.shape, x.dtype)
+    nonzero_bool = not_equal_(x, tensor_0)
+    # ReduceSum only support float16 or float32 tensor.
+    nonzero_val = cast_(nonzero_bool, mstype.float32)
+    nonzero_num = cast_(reduce_sum(nonzero_val, axis), dtype)
+
+    return nonzero_num
+
+
+@_primexpr
+def _int_to_tuple_conv(axes):
+    """
+    Converts ints to tuples in input axes, expected by most validation checks.
+    """
+    for x in [0, 1]:
+        if isinstance(axes[x], int):
+            axes[x] = (axes[x],)
+    return axes
+
+
+@_primexpr
+def _check_axes(axes, prim_name=None):
+    """
+    Check for validity and type of axes passed to function.
+    """
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+    validator.check_value_type('axes', axes, [int, tuple, list], "tensor dot")
+    if not isinstance(axes, int):
+        axes = list(axes)  # to avoid immutability issues
+        if len(axes) != 2:
+            raise ValueError(f"{msg_prefix} dimension of 'axes' must be 2, but got 'axes': {axes}.")
+        axes = _int_to_tuple_conv(axes)  # convert before length checks
+        if len(axes[0]) != len(axes[1]):
+            raise ValueError(f"{msg_prefix} first and second dim of 'axes' have to be the same size/length, "
+                             f"but got 'axes': {axes}.")
+        if len(axes[0]) != len(set(axes[0])) or len(axes[1]) != len(set(axes[1])):
+            raise ValueError(f"{msg_prefix} 'axes' cannot have duplicating values, but got {axes}.")
+    return axes
+
+
+@constexpr
+def _typecheck_input(x1_type, x2_type, prim_name=None):
+    """
+    Check input tensor types to be valid and confirm they are the same type.
+    """
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+    const_utils.check_type_valid(x1_type, [mstype.float32, mstype.float16], 'x1')
+    const_utils.check_type_valid(x2_type, [mstype.float32, mstype.float16], 'x2')
+    if x1_type != x2_type:
+        raise TypeError(f"{msg_prefix} inputs must be the same type, but got x1_type: {x1_type} "
+                        f"and x2_type: {x2_type}.")
+
+
+@_primexpr
+def _axes_int_check(x1_shape, x2_shape, axes, prim_name=None):
+    """
+    Convert from single int axes to 2d tuple if required
+    """
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+
+    def _check_lt_zero(axes):
+        if axes < 0:
+            raise ValueError(f"{msg_prefix} 'axes' must be at least 0, but got {axes}.")
+
+    def _check_len(axes, x1_shape, x2_shape):
+        if axes > len(x1_shape) or axes > len(x2_shape):
+            raise ValueError(f"{msg_prefix} 'axes' cannot be greater than the length of 'x1_shape' and 'x2_shape', "
+                             f"but got 'axes': {axes}, 'x1_shape': {x1_shape}, 'x2_shape': {x2_shape}.")
+
+
+    if isinstance(axes, int):
+        _check_lt_zero(axes)
+        if axes == 0:
+            # outer product, no input validation required
+            return [], []
+        _check_len(axes, x1_shape, x2_shape)
+        x1_ind = tuple(range(len(x1_shape))[-1 * axes:])
+        x2_ind = tuple(range(len(x2_shape))[:axes])
+        axes = tuple((x1_ind, x2_ind))
+        axes = _int_to_tuple_conv(axes)
+    return axes
+
+
+@_primexpr
+def _validate_axes(x1_shape, x2_shape, axes, prim_name=None):
+    """
+    Checks for axes having the correct length according to input, for any value in axis
+    being out of range with given shape and also checking for compatible axes values
+    with given inputs.
+    """
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+
+    def _check_len(axes_len, shape_dim_len, x_axes):
+        if axes_len > shape_dim_len:
+            raise ValueError(f"{msg_prefix} length of element {x_axes} in 'axes' must be less than or equal to "
+                             f"{shape_dim_len}, but got {axes_len}.")
+
+    def _check_axes_value(x_axes, min_val, max_val):
+        for _, x_value in enumerate(x_axes):
+            if x_value > max_val or x_value < min_val:
+                raise ValueError(f"{msg_prefix} value in 'axes' must be in range: [{min_val}, {max_val}], "
+                                 f"but got {x_value}.")
+
+    shapes = [x1_shape, x2_shape]
+
+    # axis length check
+    for ix_input, x_axes in enumerate(axes):
+        axes_len = len(x_axes)
+        shape_dim_len = len(shapes[ix_input])
+        _check_len(axes_len, shape_dim_len, x_axes)
+
+    # axis values range check
+    for ix_input, x_axes in enumerate(axes):
+        comp_shape = shapes[ix_input]
+        max_val = len(comp_shape) - 1
+        min_val = -1 * len(comp_shape)
+        _check_axes_value(x_axes, min_val, max_val)
+
+    # check axis value with input shape - both ways for axis valid
+    invalid_a = False
+    invalid_b = False
+    for i in range(len(axes[0])):  # sizes already validated
+        if x1_shape[axes[0][i]] != x2_shape[axes[1][i]]:
+            invalid_a = True
+        if x1_shape[axes[0][i]] != x2_shape[axes[1][len(axes[0]) - 1 - i]]:
+            invalid_b = True
+
+    def _check(invalid_a, invalid_b, x1_shape, x2_shape, axes):
+        if invalid_a and invalid_b:
+            raise ValueError(f"{msg_prefix} 'i' should exist such that 'x1_shape[axes[0][i]]' is equal to "
+                             f"'x2_shape[axes[1][i]]' or 'x2_shape[axes[1][len(axes[0])-1-i]]', but got "
+                             f"'x1_shape': {x1_shape}, 'x2_shape': {x2_shape}, 'axes': {axes}.")
+
+    _check(invalid_a, invalid_b, x1_shape, x2_shape, axes)
+
+
+@_primexpr
+def _calc_new_shape(shape, axes, position=0):
+    """
+    Calculate transpose and reshape parameters for input transformations,
+    'position' refers to whether tensor is first or second in the op.
+    """
+    contraction_axes = tuple(i if i >= 0 else i + len(shape) for i in axes[position])
+    prod_contraction = 1
+    for i in contraction_axes:
+        prod_contraction *= shape[i]
+    free_axes = tuple(i for i in range(len(shape)) if i not in contraction_axes)
+    free_dims = tuple(shape[i] if shape[i] is not None else -1 for i in free_axes)
+    prod_free = 1
+    for free_dim in free_dims:
+        prod_free *= free_dim
+
+    transpose_perm = contraction_axes + free_axes if position else free_axes + contraction_axes
+    new_shape = (prod_contraction, prod_free) if position else (prod_free, prod_contraction)
+    return new_shape, transpose_perm, free_dims
+
+
+def tensor_dot(x1, x2, axes):
+    """
+    Computation of Tensor contraction on arbitrary axes between tensors `a` and `b`.
+
+    Contraction allows for the summation of products of elements of `a` and `b` on specified axes.
+    The same number of axes must be specified for both x1 and x2, and values must be within range
+    of number of dims of both `a` and `b`.
+
+    Selected dims in both inputs must also match.
+
+    axes = 0 leads to outer product.
+    axes = 1 leads to normal matrix multiplication when inputs both 2D.
+    axes = 1 is the same as axes = ((1,),(0,)) where both `a` and `b` are 2D.
+    axes = 2 is the same as axes = ((1,2),(0,1)) where both `a` and `b` are 3D.
+
+    Args:
+        x1 (Tensor): First tensor in tensor_dot with datatype float16 or float32
+        x2 (Tensor): Second tensor in tensor_dot with datatype float16 or float32
+        axes (Union[int, tuple(int), tuple(tuple(int)), list(list(int))]): Single value or
+            tuple/list of length 2 with dimensions specified for `a` and `b` each. If single value `N` passed,
+            automatically picks up last N dims from `a` input shape and first N dims from `b` input shape in order
+            as axes for each respectively.
+
+    Returns:
+        Tensor, the shape of the output tensor is :math:`(N + M)`, where :math:`N` and :math:`M` are the free axes not
+        contracted in both inputs.
+
+    Raises:
+        TypeError: If `x1` or `x2` is not a Tensor.
+        TypeError: If `axes` is not one of the following: int, tuple, list.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import Tensor, ops
+        >>> import mindspore
+        >>> import numpy as np
+        >>> input_x1 = Tensor(np.ones(shape=[1, 2, 3]), mindspore.float32)
+        >>> input_x2 = Tensor(np.ones(shape=[3, 1, 2]), mindspore.float32)
+        >>> output = ops.tensor_dot(input_x1, input_x2, ((0,1),(1,2)))
+        >>> print(output)
+        [[2. 2. 2]
+         [2. 2. 2]
+         [2. 2. 2]]
+    """
+    transpose_op = _get_cache_prim(P.Transpose)()
+    matmul_op = _get_cache_prim(P.MatMul)(False, False)
+    # input validity checks
+    x1_shape = shape_(x1)
+    x2_shape = shape_(x2)
+    axes = _check_axes(axes, 'tensor_dot')
+    # input compatibility check & axes format update
+    axes = _axes_int_check(x1_shape, x2_shape, axes, 'tensor_dot')
+    _validate_axes(x1_shape, x2_shape, axes, 'tensor_dot')
+    x1_reshape_fwd, x1_transpose_fwd, x1_ret = _calc_new_shape(x1_shape, axes, 0)
+    x2_reshape_fwd, x2_transpose_fwd, x2_ret = _calc_new_shape(x2_shape, axes, 1)
+    output_shape = x1_ret + x2_ret  # combine free axes from both inputs
+    # run tensor_dot op
+    x1_transposed = transpose_op(x1, x1_transpose_fwd)
+    x2_transposed = transpose_op(x2, x2_transpose_fwd)
+    x1_reshaped = reshape_(x1_transposed, x1_reshape_fwd)
+    x2_reshaped = reshape_(x2_transposed, x2_reshape_fwd)
+    mul_result = matmul_op(x1_reshaped, x2_reshaped)
+    final_result = reshape_(mul_result, output_shape)
+    return final_result
+
+
+def vecdot(x, y, *, axis=-1):
+    r"""
+    Calculates the dot product of two batches of vectors across the specified dimension.
+
+    The formula of calculation is as follows.
+    :math:`\bar{x_{i}}` represents the conjugate for complex vectors, and it is the raw value for real vectors.
+
+    .. math::
+
+        \sum_{i=1}^{n} \bar{x_{i}}{y_{i}}
+
+    Args:
+        x (Tensor): First batch of vectors. The shape of Tensor is :math:`(*,N)`
+            where :math:`*` means, any number of additional dimensions. Supporting broadcasting.
+            The dtype of Tensor should be one of the following types: float, double, int, complex64 and complex128.
+        y (Tensor): Second batch of vectors. The shape of Tensor is :math:`(*,N)`
+            where :math:`*` means, any number of additional dimensions. Supporting broadcasting.
+            The dtype of Tensor should be one of the following types: float, double, int, complex64 and complex128.
+        axis (int): Dimension across which to calculate the dot product. Default: ``-1`` .
+
+    Returns:
+        Tensor, the shape is almost same as the shape of Tensor after broadcasting,
+        while the specified dimension `axis` in shape has been removed.
+
+    Raises:
+        TypeError: If `x` or `y` is not a Tensor.
+        TypeError: If type of `axis` is not int.
+        ValueError: If `axis` is out of range.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    .. note::
+        Currently, complex numbers are not supported on GPU.
+
+    Examples:
+        >>> import mindspore as ms
+        >>> from mindspore import ops
+        >>> x = ms.Tensor([[1, 3], [5, 7], [9, 8]], dtype=ms.float32)
+        >>> y = ms.Tensor([[4, 5], [6, 7], [3, 2]], dtype=ms.float32)
+        >>> output = ops.vecdot(x, y, axis=-1)
+        >>> print(output)
+        [19. 79. 43.]
+    """
+    if (not isinstance(x, Tensor)) or (not isinstance(y, Tensor)):
+        raise TypeError("For vecdot, x or y must be Tensor.")
+    if not isinstance(axis, int):
+        raise TypeError(f"For vecdot, the dim should be int, but got {type(axis)}.")
+    ndim = x.ndim if x.ndim > y.ndim else y.ndim
+    if (axis < -ndim) or (axis >= ndim):
+        raise ValueError(f"For vecdot, the dim is out of range.")
+    if (x.dtype == mstype.complex64) or (x.dtype == mstype.complex128):
+        x = x.conj()
+    result = x * y
+    result = result.sum(axis=axis)
+    return result
+
+
+@_primexpr
+def _check_invalid_input(x1_shape, x2_shape, prim_name=None):
+    msg_prefix = f"For \\\'{prim_name}\\\', the" if prim_name else "The"
+    if len(x1_shape) < 2 or len(x2_shape) < 2:
+        raise ValueError(f"{msg_prefix} inputs x1, x2 should have \\\'dimension >= 2\\\',"
+                         f"but got \\\'len(x1_shape)\\\': ({len(x1_shape)})"
+                         f" and \\\'len(x2_shape)\\\': ({len(x2_shape)}).")
+
+
+@constexpr
+def _typecheck_input_dot(x1_type, x2_type, prim_name=None):
+    """
+    Check input tensor types to be valid and confirm they are the same type for dot and batch dot ops.
+    """
+    msg_prefix = f"For \\\'{prim_name}\\\', the" if prim_name else "The"
+    const_utils.check_type_valid(x1_type, [mstype.float16, mstype.float32], 'x1')
+    const_utils.check_type_valid(x2_type, [mstype.float16, mstype.float32], 'x2')
+    if x1_type != x2_type:
+        raise TypeError(f"{msg_prefix} inputs must be the same type, but got "
+                        f"x1_type: {x1_type} and x2_type: {x2_type}.")
+
+
+@_primexpr
+def _get_transpose_shape(x2_shape):
+    x2_shape_range = tuple(range(len(x2_shape)))
+    x2_shape_transpose = x2_shape_range[-2:-1] + x2_shape_range[:-2] + x2_shape_range[-1:]
+    return x2_shape_transpose
+
+
+def dot(input, other):
+    """
+    Computation a dot product between samples in two tensors.
+
+    Args:
+        input (Tensor): First tensor in Dot op with datatype float16 or float32.
+            The rank must be greater than or equal to 2.
+        other (Tensor): Second tensor in Dot op with datatype float16 or float32.
+            The rank must be greater than or equal to 2.
+
+    Returns:
+        Tensor, dot product of input and other.
+
+    Raises:
+        TypeError: If type of input and other are not the same.
+        TypeError: If dtype of input or other is not float16 or float32.
+        ValueError: If rank of input or other less than 2.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> input = Tensor(np.ones(shape=[2, 3]), mindspore.float32)
+        >>> other = Tensor(np.ones(shape=[1, 3, 2]), mindspore.float32)
+        >>> output = ops.dot(input, other)
+        >>> print(output)
+        [[[3. 3.]]
+         [[3. 3.]]]
+        >>> print(output.shape)
+        (2, 1, 2)
+        >>> input = Tensor(np.ones(shape=[1, 2, 3]), mindspore.float32)
+        >>> other = Tensor(np.ones(shape=[1, 3, 2]), mindspore.float32)
+        >>> output = ops.dot(input, other)
+        >>> print(output)
+        [[[[3. 3.]]
+          [[3. 3.]]]]
+        >>> print(output.shape)
+        (1, 2, 1, 2)
+        >>> input = Tensor(np.ones(shape=[1, 2, 3]), mindspore.float32)
+        >>> other = Tensor(np.ones(shape=[2, 3, 2]), mindspore.float32)
+        >>> output = ops.dot(input, other)
+        >>> print(output)
+        [[[[3. 3.]
+           [3. 3.]]
+          [[3. 3.]
+           [3. 3.]]]]
+        >>> print(output.shape)
+        (1, 2, 2, 2)
+        >>> input = Tensor(np.ones(shape=[3, 2, 3]), mindspore.float32)
+        >>> other = Tensor(np.ones(shape=[2, 1, 3, 2]), mindspore.float32)
+        >>> output = ops.dot(input, other)
+        >>> print(output)
+        [[[[[3. 3.]]
+           [[3. 3.]]]
+          [[[3. 3.]]
+           [[3. 3.]]]]
+         [[[[3. 3.]]
+           [[3. 3.]]]
+          [[[3. 3.]]
+           [[3. 3.]]]]
+         [[[[3. 3.]]
+           [[3. 3.]]]
+          [[[3. 3.]]
+           [[3. 3.]]]]]
+        >>> print(output.shape)
+        (3, 2, 2, 1, 2)
+    """
+    transpose_op = _get_cache_prim(P.Transpose)()
+    matmul_op = _get_cache_prim(P.MatMul)(False, False)
+    input_shape = shape_(input)
+    other_shape = shape_(other)
+    input_type = dtype_(input)
+    other_type = dtype_(other)
+    _typecheck_input_dot(input_type, other_type, 'dot')
+    _check_invalid_input(input_shape, other_shape, 'dot')
+
+    if len(input_shape) > 2 or len(other_shape) > 2:
+        other_shape_transpose = _get_transpose_shape(other_shape)
+        other_transpose = transpose_op(other, other_shape_transpose)
+        input_reshape = reshape_(input, (-1, input_shape[-1]))
+        other_reshape = reshape_(other_transpose, (other_shape[-2], -1))
+        mul_result = matmul_op(input_reshape, other_reshape)
+        reshape_shape = input_shape[:-1] + other_shape[:-2] + other_shape[-1:]
+        reshape_shape = (-1,) + reshape_shape[1:]
+        return reshape_(mul_result, reshape_shape)
+    return matmul_op(input, other)
+
+
+@_primexpr
+def _get_batch_size(x1_shape, x2_shape, prim_name=None):
+    """
+    Get batch sizes from two inputs
+    """
+    def _check():
+        msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+        if len(x1_shape) < 2 or len(x2_shape) < 2:
+            raise ValueError(f"{msg_prefix} inputs x1, x2 should have 'dimension >= 2', "
+                             f"but got 'len(x1_shape)': ({len(x1_shape)}) and 'len(x2_shape)': ({len(x2_shape)}).")
+    _check()
+    return x1_shape[0], x2_shape[0]
+
+
+@constexpr
+def _typecheck_input_batch_dot(x1_type, x2_type, prim_name=None):
+    """
+    Check input tensor types to be valid and confirm they are the same type for batch dot ops.
+    """
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+    const_utils.check_type_valid(x1_type, [mstype.float32], 'x1')
+    const_utils.check_type_valid(x2_type, [mstype.float32], 'x2')
+    if x1_type != x2_type:
+        raise TypeError(f"{msg_prefix} inputs must be the same type, but got x1_type: {x1_type} and "
+                        f"x2_type: {x2_type}.")
+
+
+@_primexpr
+def _check_axes_for_batch_dot(x1_shape, x2_shape, axes, prim_name=None):
+    """
+    Check whether axes are valid and cast axes from tuple to list
+    """
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+
+    def _check_1(axes):
+        if 0 in axes:
+            raise ValueError(f"{msg_prefix} 'axes' cannot contain 0, but got axes: {axes}.")
+        if len(axes) != 2:
+            raise ValueError(f"{msg_prefix} length of 'axes' must be equal to 2, but got {len(axes)}.")
+
+    def _check_2(axes, x1_shape, x2_shape):
+        if axes[0] > len(x1_shape) or axes[1] > len(x2_shape):
+            raise ValueError(f"{msg_prefix} axes[0] must be less than or equal to len(x1_shape), "
+                             f"and axes[1] must be less than or equal to len(x2_shape)."
+                             f"But got 'axes': {axes}, 'x1_shape': {x1_shape}, 'x2_shape': {x2_shape}.")
+
+    def _check_3(axes, x1_shape, x2_shape):
+        if axes == 0:
+            raise ValueError(f"{msg_prefix} 'axes' should not be equal to 0, but got {axes}.")
+
+        if axes > len(x1_shape) or axes > len(x2_shape):
+            raise ValueError(f"{msg_prefix} 'axes' cannot be greater than the length of 'x1_shape' and 'x2_shape', "
+                             f"but got 'axes': {axes}, 'x1_shape': {x1_shape}, 'x2_shape': {x2_shape}.")
+
+    if axes is None:
+        if len(x2_shape) == 2:
+            axes = [len(x1_shape) - 1, len(x2_shape) - 1]
+        else:
+            axes = [len(x1_shape) - 1, len(x2_shape) - 2]
+
+    if isinstance(axes, (list, tuple)):
+        _check_1(axes)
+        if isinstance(axes, tuple):
+            axes = list(axes)
+        validator.check_value_type('axes[0]', axes[0], [int], 'batch_dot')
+        validator.check_value_type('axes[1]', axes[1], [int], 'batch_dot')
+        # Reverse if axis < 0
+        if axes[0] < 0:
+            axes[0] += len(x1_shape)
+        if axes[1] < 0:
+            axes[1] += len(x2_shape)
+        validator.check_non_negative_int(axes[0], 'reversed axes[0]', 'batch_dot')
+        validator.check_non_negative_int(axes[1], 'reversed axes[1]', 'batch_dot')
+        _check_2(axes, x1_shape, x2_shape)
+    elif isinstance(axes, int):
+        _check_3(axes, x1_shape, x2_shape)
+        if axes < 0:
+            axes = [axes + len(x1_shape), axes + len(x2_shape)]
+            validator.check_non_negative_int(axes[0], 'reversed axes', 'batch_dot')
+        else:
+            axes = [axes, axes]
+    else:
+        raise ValueError(f"{msg_prefix} type of 'axes' must be one of those: int, tuple(int), list(int), "
+                         f"but got {type(axes).__name__}.")
+    return axes
+
+
+@_primexpr
+def _calc_new_shape_batchdot(shape, axes, position=0):
+    """
+    Calculate transpose and reshape parameters for input transformations,
+    'position' refers to whether tensor is first or second in the op.
+    """
+    axis = axes[position]
+    contraction_axes = tuple([axis])
+    prod_contraction = 1
+    for i in contraction_axes:
+        prod_contraction *= shape[i]
+    free_axes = tuple(i for i in range(1, len(shape)) if i not in contraction_axes)
+    free_dims = tuple(shape[i] for i in free_axes)
+    prod_free = 1
+    for free_dim in free_dims:
+        prod_free *= free_dim
+
+    transpose_perm = contraction_axes + free_axes if position else free_axes + contraction_axes
+    transpose_perm = tuple([0]) + transpose_perm
+    new_shape = (prod_contraction, prod_free) if position else (prod_free, prod_contraction)
+    new_shape = tuple([shape[0]]) + new_shape
+    return new_shape, transpose_perm, free_dims
+
+
+@_primexpr
+def _check_batch_size(x1_batch_size, x2_batch_size, prim_name=None):
+    """
+    Check whether batch size of two inputs are the same
+    """
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+    if x1_batch_size != x2_batch_size:
+        raise ValueError(f"{msg_prefix} inputs 'x1', 'x2' should have the same batch sizes, but got "
+                         f"'x1_batch_size': {x1_batch_size} and 'x2_batch_size': {x2_batch_size}.")
+
+
+@_primexpr
+def _get_output_shape(batch_size, x1_ret, x2_ret):
+    """
+    Compute output shape for batch dot
+    """
+    output_shape = tuple([batch_size]) + x1_ret + x2_ret
+    return output_shape
+
+
+def batch_dot(x1, x2, axes=None):
+    """
+    Computation of batch dot product between samples in two tensors containing batch dims.
+
+    .. math::
+        output = x1[batch, :] * x2[batch, :]
+
+    Args:
+        x1 (Tensor): First tensor in Batch Dot op with datatype float32 and the rank of `x1` must be greater
+          than or equal to 2.
+        x2 (Tensor): Second tensor in Batch Dot op with datatype float32. The datatype of `x2` should
+          be same as `x1` and the rank of `x2` must be greater than or equal to 2.
+        axes (Union[int, tuple(int), list(int)]): Single value or tuple/list of length 2 with dimensions
+          specified for `a` and `b` each. If single value `N` passed, automatically picks up last N dims from
+          `a` input shape and last N dimensions from `b` input shape in order as axes for each respectively.
+          Default: ``None`` .
+
+    Returns:
+        Tensor, batch dot product of `x1` and `x2`. For example, the Shape of output
+        for input `x1` shapes :math:`(batch, d1, axes, d2)` and
+        `x2` shapes :math:`(batch, d3, axes, d4)` is :math:`(batch, d1, d2, d3, d4)`,
+        where d1 and d2 means any number.
+
+    Raises:
+        TypeError: If type of x1 and x2 are not the same.
+        TypeError: If dtype of x1 or x2 is not float32.
+        ValueError: If rank of x1 or x2 less than 2.
+        ValueError: If batch dim used in axes.
+        ValueError: If len(axes) less than 2.
+        ValueError: If axes is not one of those: None, int, (int, int).
+        ValueError: If axes reversed from negative int is too low for dimensions of input arrays.
+        ValueError: If axes value is too high for dimensions of input arrays.
+        ValueError: If batch size of x1 and x2 are not the same.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import Tensor, ops
+        >>> import numpy as np
+        >>> x1 = Tensor(np.ones(shape=[2, 2, 3]), mindspore.float32)
+        >>> x2 = Tensor(np.ones(shape=[2, 3, 2]), mindspore.float32)
+        >>> axes = (-1, -2)
+        >>> output = ops.batch_dot(x1, x2, axes)
+        >>> print(output)
+        [[[3. 3.]
+          [3. 3.]]
+         [[3. 3.]
+          [3. 3.]]]
+        >>> x1 = Tensor(np.ones(shape=[2, 2]), mindspore.float32)
+        >>> x2 = Tensor(np.ones(shape=[2, 3, 2]), mindspore.float32)
+        >>> axes = (1, 2)
+        >>> output = ops.batch_dot(x1, x2, axes)
+        >>> print(output)
+        [[2. 2. 2.]
+         [2. 2. 2.]]
+        >>> print(output.shape)
+        (2, 3)
+        >>> x1 = Tensor(np.ones(shape=[6, 2, 3, 4]), mindspore.float32)
+        >>> x2 = Tensor(np.ones(shape=[6, 5, 4, 8]), mindspore.float32)
+        >>> output = ops.batch_dot(x1, x2)
+        >>> print(output.shape)
+        (6, 2, 3, 5, 8)
+        >>> x1 = Tensor(np.ones(shape=[2, 2, 4]), mindspore.float32)
+        >>> x2 = Tensor(np.ones(shape=[2, 5, 4, 5]), mindspore.float32)
+        >>> output = ops.batch_dot(x1, x2)
+        >>> print(output.shape)
+        (2, 2, 5, 5)
+
+    """
+    transpose_op = _get_cache_prim(P.Transpose)()
+    batch_matmul_op = _get_cache_prim(P.BatchMatMul)()
+    squeeze_one_op = _get_cache_prim(P.Squeeze)(1)
+    squeeze_minus_one_op = _get_cache_prim(P.Squeeze)(-1)
+    # input validity checks
+    x1_shape = shape_(x1)
+    x2_shape = shape_(x2)
+    x1_dim_num = len(x1_shape)
+    x2_dim_num = len(x2_shape)
+    x1_type = dtype_(x1)
+    x2_type = dtype_(x2)
+
+    x1_batch_size, x2_batch_size = _get_batch_size(x1_shape, x2_shape, 'batch_dot')
+
+    _typecheck_input_batch_dot(x1_type, x2_type, 'batch_dot')
+    _check_batch_size(x1_batch_size, x2_batch_size, 'batch_dot')
+    axes = _check_axes_for_batch_dot(x1_shape, x2_shape, axes, 'batch_dot')
+
+    if x1_dim_num == 2:
+        x1 = F.expand_dims(x1, 1)
+        axes[0] += 1
+    if x2_dim_num == 2:
+        x2 = F.expand_dims(x2, 2)
+
+    x1_shape = shape_(x1)
+    x2_shape = shape_(x2)
+
+    x1_reshape_fwd, x1_transpose_fwd, x1_ret = _calc_new_shape_batchdot(x1_shape, axes, 0)
+    x2_reshape_fwd, x2_transpose_fwd, x2_ret = _calc_new_shape_batchdot(x2_shape, axes, 1)
+    output_shape = _get_output_shape(x1_batch_size, x1_ret, x2_ret)
+
+    x1_transposed = transpose_op(x1, x1_transpose_fwd)
+    x2_transposed = transpose_op(x2, x2_transpose_fwd)
+    x1_reshaped = reshape_(x1_transposed, x1_reshape_fwd)
+    x2_reshaped = reshape_(x2_transposed, x2_reshape_fwd)
+
+    # Batch matmal op part
+    mul_result = batch_matmul_op(x1_reshaped, x2_reshaped)
+
+    final_result = reshape_(mul_result, output_shape)
+
+    # if the original dims are expanded, restore them from 3 to 2
+    if x1_dim_num == 2:
+        final_result = squeeze_one_op(final_result)
+    elif x2_dim_num == 2:
+        final_result = squeeze_minus_one_op(final_result)
+
+    return final_result
+
+
 __all__ = [
     'addn',
     'absolute',
@@ -12309,5 +13046,10 @@ __all__ = [
     'ifft',
     'ifft2',
     'ifftn',
+    'count_nonzero',
+    'tensor_dot',
+    'vecdot',
+    'dot',
+    'batch_dot',
 ]
 __all__.sort()

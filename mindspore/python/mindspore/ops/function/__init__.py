@@ -438,6 +438,11 @@ from .math_func import (
     ifft,
     ifft2,
     ifftn,
+    count_nonzero,
+    tensor_dot,
+    vecdot,
+    dot,
+    batch_dot,
 )
 from .nn_func import (
     adaptive_avg_pool1d,
