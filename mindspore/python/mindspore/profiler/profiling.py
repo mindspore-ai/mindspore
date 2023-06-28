@@ -426,25 +426,23 @@ class Profiler:
 
         Examples:
             >>> from mindspore import Profiler
+            >>> from mindspore import nn
+            >>> from mindspore import Model
+            >>> # Profiler init.
+            >>> profiler = Profiler()
+            >>> # Train Model or eval Model, taking LeNet5 as an example
+            >>> # Refer to https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> net = LeNet5()
+            >>> optimizer = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+            >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
+            >>> dataloader = create_dataset()
+            >>> model = Model(net, loss, optimizer)
+            >>> model.train(5, dataloader, dataset_sink_mode=False)
             >>>
-            ...     # Profiler init.
-            ...     profiler = Profiler()
-            ...
-            ...     # Train Model or eval Model, taking LeNet5 as an example
-            ...     # Refer to https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
-            ...     net = LeNet5()
-            ...     train(net)
-            ...
-            ...     # Profiler end
-            ...     profiler.analyse()
-            ...
-            ...     profiler.op_analyse(op_name=["BiasAdd", "Conv2D"])
-            ...
-            >>> from mindspore import Profiler
+            >>> # Profiler end
+            >>> profiler.analyse()
             >>>
-            ...     # Profiler init.
-            ...     profiler = Profiler(output_path="my_profiler_path")
-            ...     profiler.op_analyse(op_name="Conv2D")
+            >>> profiler.op_analyse(op_name=["BiasAdd", "Conv2D"])
         """
         if self._device_target == 'ascend':
             raise RuntimeError("The Interface 'Profiler.op_analyse()' is not supported on Ascend currently.")
@@ -523,27 +521,28 @@ class Profiler:
             RuntimeError: If the start_profile parameter is not set or is set to True.
 
         Examples:
-             >>> class StopAtStep(Callback):
-             ...     def __init__(self, start_step, stop_step):
-             ...         super(StopAtStep, self).__init__()
-             ...         self.start_step = start_step
-             ...         self.stop_step = stop_step
-             ...         self.profiler = Profiler(start_profile=False)
-             ...
-             ...     def step_begin(self, run_context):
-             ...         cb_params = run_context.original_args()
-             ...         step_num = cb_params.cur_step_num
-             ...         if step_num == self.start_step:
-             ...             self.profiler.start()
-             ...
-             ...     def step_end(self, run_context):
-             ...         cb_params = run_context.original_args()
-             ...         step_num = cb_params.cur_step_num
-             ...         if step_num == self.stop_step:
-             ...             self.profiler.stop()
-             ...
-             ...     def end(self, run_context):
-             ...         self.profiler.analyse()
+            >>> from mindpsore.train import Callback
+            >>> class StopAtStep(Callback):
+            ...     def __init__(self, start_step, stop_step):
+            ...         super(StopAtStep, self).__init__()
+            ...         self.start_step = start_step
+            ...         self.stop_step = stop_step
+            ...         self.profiler = Profiler(start_profile=False)
+            ...
+            ...     def step_begin(self, run_context):
+            ...         cb_params = run_context.original_args()
+            ...         step_num = cb_params.cur_step_num
+            ...         if step_num == self.start_step:
+            ...             self.profiler.start()
+            ...
+            ...     def step_end(self, run_context):
+            ...         cb_params = run_context.original_args()
+            ...         step_num = cb_params.cur_step_num
+            ...         if step_num == self.stop_step:
+            ...             self.profiler.stop()
+            ...
+            ...     def end(self, run_context):
+            ...         self.profiler.analyse()
         """
         if self._msprof_enable:
             return
@@ -588,27 +587,28 @@ class Profiler:
             RuntimeError: If the profiler has not started, this function is disabled.
 
         Examples:
-             >>> class StopAtEpoch(Callback):
-             ...     def __init__(self, start_epoch, stop_epoch):
-             ...         super(StopAtEpoch, self).__init__()
-             ...         self.start_epoch = start_epoch
-             ...         self.stop_epoch = stop_epoch
-             ...         self.profiler = Profiler(start_profile=False)
-             ...
-             ...     def epoch_begin(self, run_context):
-             ...         cb_params = run_context.original_args()
-             ...         epoch_num = cb_params.cur_epoch_num
-             ...         if epoch_num == self.start_epoch:
-             ...             self.profiler.start()
-             ...
-             ...     def epoch_end(self, run_context):
-             ...         cb_params = run_context.original_args()
-             ...         epoch_num = cb_params.cur_epoch_num
-             ...         if epoch_num == self.stop_epoch:
-             ...             self.profiler.stop()
-             ...
-             ...     def end(self, run_context):
-             ...         self.profiler.analyse()
+            >>> from mindpsore.train import Callback
+            >>> class StopAtEpoch(Callback):
+            ...     def __init__(self, start_epoch, stop_epoch):
+            ...         super(StopAtEpoch, self).__init__()
+            ...         self.start_epoch = start_epoch
+            ...         self.stop_epoch = stop_epoch
+            ...         self.profiler = Profiler(start_profile=False)
+            ...
+            ...     def epoch_begin(self, run_context):
+            ...         cb_params = run_context.original_args()
+            ...         epoch_num = cb_params.cur_epoch_num
+            ...         if epoch_num == self.start_epoch:
+            ...             self.profiler.start()
+            ...
+            ...     def epoch_end(self, run_context):
+            ...         cb_params = run_context.original_args()
+            ...         epoch_num = cb_params.cur_epoch_num
+            ...         if epoch_num == self.stop_epoch:
+            ...             self.profiler.stop()
+            ...
+            ...     def end(self, run_context):
+            ...         self.profiler.analyse()
         """
         if self._msprof_enable:
             return

@@ -362,9 +362,6 @@ class SummaryRecord:
             ...     with ms.SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") \
             ...             as summary_record:
             ...         result = summary_record.record(step=2)
-            ...         print(result)
-            ...
-            True
         """
         logger.debug("SummaryRecord step is %r.", step)
         Validator.check_value_type(arg_name='step', arg_value=step, valid_types=int)
