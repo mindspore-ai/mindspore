@@ -2131,11 +2131,11 @@ EvalResultPtr MakeListEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abstr
   return res;
 }
 
-std::shared_ptr<py::list> GetPyListObjectFromNode(const AnfNodePtr &node) {
+std::shared_ptr<py::list> GetPySeqObjectFromNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  if (fallback::HasPyListObject(node)) {
+  if (fallback::HasPySeqObject(node)) {
     MS_LOG(DEBUG) << "Current PyExecute node has python list object";
-    return fallback::GetPyListObject<AnfNode, py::list>(node);
+    return fallback::GetPySeqObject<AnfNode, py::list>(node);
   }
   // If a PyExecute node with list abstract has no python list object attach it on the node,
   // it means it is a list inplace operation node on make_list node.
@@ -2153,11 +2153,11 @@ std::shared_ptr<py::list> GetPyListObjectFromNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(value_input_cnode);
   constexpr size_t list_index = 1;
   auto first_list_input = value_input_cnode->input(list_index);
-  if (!fallback::HasPyListObject(first_list_input)) {
+  if (!fallback::HasPySeqObject(first_list_input)) {
     MS_LOG(INTERNAL_EXCEPTION) << "Node " << first_list_input->DebugString() << " should have python list object, "
                                << "but not found.";
   }
-  return fallback::GetPyListObject<AnfNode, py::list>(first_list_input);
+  return fallback::GetPySeqObject<AnfNode, py::list>(first_list_input);
 }
 
 EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_abs_list,
@@ -2210,7 +2210,7 @@ EvalResultPtr PyExecuteEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abst
     MS_LOG(DEBUG) << "shape: " << shape->ToString();
     if (preset_type->isa<List>()) {
       AbstractListPtr res_list = fallback::GenerateAbstractList(shape, preset_type, true);
-      auto list_obj = GetPyListObjectFromNode(node);
+      auto list_obj = GetPySeqObjectFromNode(node);
       res_list->set_list_py_obj<py::list>(list_obj);
       res = res_list;
     } else {

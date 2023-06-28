@@ -990,10 +990,10 @@ class AfterOptARewriter : public BaseRewriter {
 
     auto list_node_input = GenerateTupleInput(node);
 
-    if (!fallback::HasPyListObject(node->abstract())) {
+    if (!fallback::HasPySeqObject(node->abstract())) {
       MS_LOG(EXCEPTION) << "MakeList node: " << node->DebugString() << " do not have python list object.";
     }
-    py::list list_object = *fallback::GetPyListObject<AbstractBase, py::list>(node->abstract());
+    py::list list_object = *fallback::GetPySeqObject<AbstractBase, py::list>(node->abstract());
     const std::string list_obj_str_prefix = "__list_py_object_";
     auto list_obj_id = fallback::GetPyObjectPtrStr(list_object);
     MS_LOG(DEBUG) << "Current python object id: " << list_obj_id;
@@ -1027,7 +1027,7 @@ class AfterOptARewriter : public BaseRewriter {
     // Set real type and shape
     fallback::SetRealType(res, list_abs->BuildType());
     fallback::SetRealShape(res, list_abs->BuildShape());
-    fallback::SetPyListObject<AnfNode, py::list>(res, std::make_shared<py::list>(list_object));
+    fallback::SetPySeqObject<AnfNode, py::list>(res, std::make_shared<py::list>(list_object));
 
     MS_LOG(DEBUG) << "Convert make_list node to PyExecute node: " << res->DebugString();
     return res;
@@ -1091,7 +1091,7 @@ class AfterOptARewriter : public BaseRewriter {
     fallback::SetRealType(res, list_abs->BuildType());
     fallback::SetRealShape(res, list_abs->BuildShape());
     if (list_abs->has_list_py_obj()) {
-      fallback::SetPyListObject<AnfNode, py::list>(res, list_abs->list_py_obj<py::list>());
+      fallback::SetPySeqObject<AnfNode, py::list>(res, list_abs->list_py_obj<py::list>());
     }
 
     MS_LOG(DEBUG) << "Convert list inplace append node to PyExecute node: " << res->DebugString();
@@ -1160,7 +1160,7 @@ class AfterOptARewriter : public BaseRewriter {
     fallback::SetRealType(res, list_abs->BuildType());
     fallback::SetRealShape(res, list_abs->BuildShape());
     if (list_abs->has_list_py_obj()) {
-      fallback::SetPyListObject<AnfNode, py::list>(res, list_abs->list_py_obj<py::list>());
+      fallback::SetPySeqObject<AnfNode, py::list>(res, list_abs->list_py_obj<py::list>());
     }
 
     MS_LOG(DEBUG) << "Convert list inplace insert node to PyExecute node: " << res->DebugString();
@@ -1226,7 +1226,7 @@ class AfterOptARewriter : public BaseRewriter {
     fallback::SetRealType(res, list_abs->BuildType());
     fallback::SetRealShape(res, list_abs->BuildShape());
     if (list_abs->has_list_py_obj()) {
-      fallback::SetPyListObject<AnfNode, py::list>(res, list_abs->list_py_obj<py::list>());
+      fallback::SetPySeqObject<AnfNode, py::list>(res, list_abs->list_py_obj<py::list>());
     }
 
     MS_LOG(DEBUG) << "Convert list inplace pop node to PyExecute node: " << res->DebugString();
@@ -1286,7 +1286,7 @@ class AfterOptARewriter : public BaseRewriter {
     fallback::SetRealType(res, list_abs->BuildType());
     fallback::SetRealShape(res, list_abs->BuildShape());
     if (list_abs->has_list_py_obj()) {
-      fallback::SetPyListObject<AnfNode, py::list>(res, list_abs->list_py_obj<py::list>());
+      fallback::SetPySeqObject<AnfNode, py::list>(res, list_abs->list_py_obj<py::list>());
     }
 
     MS_LOG(DEBUG) << "Convert list inplace reverse node to PyExecute node: " << res->DebugString();
@@ -1344,7 +1344,7 @@ class AfterOptARewriter : public BaseRewriter {
     // Set real type and shape
     fallback::SetRealType(res, list_abs->BuildType());
     fallback::SetRealShape(res, list_abs->BuildShape());
-    fallback::SetPyListObject<AnfNode, py::list>(res, std::make_shared<py::list>(list_object));
+    fallback::SetPySeqObject<AnfNode, py::list>(res, std::make_shared<py::list>(list_object));
 
     MS_LOG(DEBUG) << "Convert list inplace clear node to PyExecute node: " << res->DebugString();
     return res;
@@ -1943,7 +1943,7 @@ class AfterOptARewriter : public BaseRewriter {
     // Set real type, shape and corresponding list python object.
     fallback::SetRealType(res, list_abs->BuildType());
     fallback::SetRealShape(res, list_abs->BuildShape());
-    fallback::SetPyListObject<AnfNode, py::list>(res, std::make_shared<py::list>(list_object));
+    fallback::SetPySeqObject<AnfNode, py::list>(res, std::make_shared<py::list>(list_object));
     return res;
   }
 

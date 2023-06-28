@@ -104,7 +104,7 @@ std::shared_ptr<U> GetRealShape(const std::shared_ptr<T> &owner) {
 }
 
 template <typename T>
-bool HasPyListObject(const std::shared_ptr<T> &owner) {
+bool HasPySeqObject(const std::shared_ptr<T> &owner) {
   if constexpr (std::is_base_of<abstract::AbstractBase, T>()) {
     auto owner_abs_list = dyn_cast<abstract::AbstractList>(owner);
     if (owner_abs_list == nullptr) {
@@ -117,7 +117,7 @@ bool HasPyListObject(const std::shared_ptr<T> &owner) {
 }
 
 template <typename T, typename U>
-void SetPyListObject(const std::shared_ptr<T> &owner, const std::shared_ptr<U> &data) {
+void SetPySeqObject(const std::shared_ptr<T> &owner, const std::shared_ptr<U> &data) {
   if constexpr (std::is_base_of<abstract::AbstractBase, T>()) {
     auto owner_abs_list = dyn_cast<abstract::AbstractList>(owner);
     if (owner_abs_list == nullptr) {
@@ -130,7 +130,7 @@ void SetPyListObject(const std::shared_ptr<T> &owner, const std::shared_ptr<U> &
 }
 
 template <typename T, typename U>
-std::shared_ptr<U> GetPyListObject(const std::shared_ptr<T> &owner) {
+std::shared_ptr<U> GetPySeqObject(const std::shared_ptr<T> &owner) {
   if constexpr (std::is_base_of<abstract::AbstractBase, T>()) {
     auto owner_abs_list = dyn_cast<abstract::AbstractList>(owner);
     if (owner_abs_list == nullptr) {
