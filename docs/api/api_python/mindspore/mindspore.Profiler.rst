@@ -3,7 +3,7 @@ mindspore.Profiler
 
 .. py:class:: mindspore.Profiler(**kwargs)
 
-    MindSpore用户能够通过该类对神经网络的性能进行采集。可以通过导入 `mindspore.Profiler` 然后初始化Profiler对象以开始分析，使用 `Profiler.analyse()` 停止收集和分析。可通过Mindinsight工具可视化分析结果。目前，Profiler支持AICORE算子、AICPU算子、HostCPU算子、内存、设备通信、集群等数据的分析。
+    MindSpore用户能够通过该类对神经网络的性能进行采集。可以通过导入 `mindspore.Profiler` 然后初始化Profiler对象以开始分析，使用 `Profiler.analyse()` 停止收集并分析结果。可通过Mindinsight工具可视化分析结果。目前，Profiler支持AICORE算子、AICPU算子、HostCPU算子、内存、设备通信、集群等数据的分析。
 
     参数：
         - **output_path** (str, 可选) - 表示输出数据的路径。默认值： ``"./data"`` 。
@@ -29,8 +29,8 @@ mindspore.Profiler
           - False: 异步方式，算子耗时为从CPU发送到GPU的耗时。这种方式能减少因增加Profiler对整体训练时间的影响。
 
         - **data_process** (bool, 可选) -（Ascend/GPU）表示是否收集数据准备性能数据，默认值： ``True`` 。
-        - **timeline_limit** (int, 可选) - 设置限制timeline文件存储上限大小（单位M），使用此参数时， `op_time` 必须设置成 ``True`` 。默认值： ``500`` 。
-        - **profile_framework** (str, 可选) - 是否需要收集Host侧的内存和时间，可选参数为["all", "time", "memory", None]。默认值：``"all"``。
+        - **timeline_limit** (int, 可选) -（Ascend/GPU）设置限制timeline文件存储上限大小（单位M），使用此参数时， `op_time` 必须设置成 ``True`` 。默认值： ``500`` 。
+        - **profile_framework** (str, 可选) -（Ascend/GPU）是否需要收集Host侧的内存和时间，可选参数为["all", "time", "memory", None]。开启后，会在指定的profiler目录下生成子目录host_info，存放收集到的Host侧的内存和时间文件。默认值：``"all"``。
 
     异常：
         - **RuntimeError** - 当CANN的版本与MindSpore版本不匹配时，生成的ascend_job_id目录结构MindSpore无法解析。

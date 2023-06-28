@@ -262,10 +262,12 @@ class Profiler:
               This method can reduce the impact of adding profiler on overall training time.
         data_process (bool, optional): (Ascend/GPU) Whether to collect data to prepare performance data.
             Default value: ``True`` .
-        timeline_limit (int, optional): Set the maximum storage size of the timeline file (unit M). When using this
-            parameter, `op_time` must be set to True. Default value: ``500`` .
-        profile_framework (str, optional): Whether to collect host memory and time, it must be one of ["all", "time",
-            "memory", None]. Default: "all".
+        timeline_limit (int, optional): (Ascend/GPU) Set the maximum storage size of the timeline file (unit M).
+            When using this parameter, `op_time` must be set to True. Default value: ``500`` .
+        profile_framework (str, optional): (Ascend/GPU) Whether to collect host memory and time, it must be one of
+            ["all", "time", "memory", None]. When is enabled, a subdirectory host_info will be generated in the
+            specified profiler directory, which stores the collected memory and time files on the Host side.
+            Default: "all".
 
     Raises:
         RuntimeError: When the version of CANN does not match the version of MindSpore,
