@@ -590,8 +590,7 @@ void MindRTBackendBase::CompileGraph(const GraphSegmentPtr &segment, device::Run
     MS_EXCEPTION_IF_NULL(context_ptr);
     GraphId graph_id;
     if (root_graph_->has_flag(kFlagEnableRunGraphBySingleOp)) {
-      graph_id = graph_compiler_->CompileDynamicGraph(segment, outputs, device_context,
-                                                      root_graph_->has_flag(kFlagPyNativeWithMsFunctionCallGraph));
+      graph_id = graph_compiler_->CompileDynamicGraph(segment, outputs, device_context);
     } else {
       graph_id =
         graph_compiler_->CompileGraph(segment, outputs, device_context, run_mode, ms_execution_mode_ == kPynativeMode);

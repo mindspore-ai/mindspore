@@ -749,8 +749,7 @@ ValuePtr ForwardExecutor::RunOpInMs(const FrontendOpRunInfoPtr &op_run_info,
 void ForwardExecutor::PrepareOpInputs(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   CheckIfNeedSyncForHeterogeneous(op_run_info->base_op_run_info.device_target);
-  PyNativeAlgo::DataConvert::GetInputTensor(op_run_info, op_run_info->base_op_run_info.device_target,
-                                            op_run_info->requires_grad ? grad()->top_cell() : nullptr);
+  PyNativeAlgo::DataConvert::GetInputTensor(op_run_info, op_run_info->requires_grad ? grad()->top_cell() : nullptr);
 }
 
 void ForwardExecutor::PrepareOpOutputs(const FrontendOpRunInfoPtr &op_run_info) {

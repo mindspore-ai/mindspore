@@ -55,7 +55,7 @@ class MsFunction {
   void ReplaceAddedCnodeActualOutput(const CNodePtr &added_node, const ValuePtrList &total_output_tensors) const;
   // Make CNode for ms_function forward graph.
   void GetInputArgsNode(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
-                        const FuncGraphPtr &ms_func_graph, AnfNodePtrList *input_nodes) const;
+                        AnfNodePtrList *input_nodes) const;
   void GetWeightsNode(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
                       const FuncGraphPtr &ms_func_graph, AnfNodePtrList *input_nodes) const;
   void MakeCNodeForMsFunction(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,

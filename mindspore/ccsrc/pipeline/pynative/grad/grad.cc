@@ -730,7 +730,7 @@ void GradExecutor::MakeNewTopGraph(const InputArgsInfoPtr &input_args_info) {
   MS_LOG(DEBUG) << "New top graph, fg ptr " << fg.get() << " resource ptr " << resource.get();
 }
 
-void GradExecutor::SetForwardLastNodeInfo(const ValuePtr &v, const std::string &obj_id) const {
+void GradExecutor::SetForwardLastNodeInfo(const ValuePtr &v) const {
   MS_EXCEPTION_IF_NULL(v);
   auto value = v;
   if (v->isa<tensor::CSRTensor>()) {
@@ -816,14 +816,14 @@ void GradExecutor::EndGraphImpl(const InputArgsInfoPtr &input_args_info) {
   if (input_args_info->is_grad_topest_cell && is_top_cell_end) {
     MS_LOG(DEBUG) << "Cur top last cell " << input_args_info->cell_id;
     (void)PopHighOrderGraphStack();
-    SetForwardLastNodeInfo(input_args_info->out_value, out_id);
+    SetForwardLastNodeInfo(input_args_info->out_value);
     top_cell()->ClearCellHookOp();
   }
   // Checkout whether need to compile graph when each top cell has run finished
   if (is_top_cell_end) {
     // In high grad cases, the output of the internal graph may be a tuple, and node needs to be created in the getobj
     if (!input_args_info->is_grad_topest_cell) {
-      SetForwardLastNodeInfo(input_args_info->out_value, out_id);
+      SetForwardLastNodeInfo(input_args_info->out_value);
     }
     top_cell()->CheckSubCellHookChanged();
     CheckNeedCompileGraph(input_args_info);
@@ -831,7 +831,7 @@ void GradExecutor::EndGraphImpl(const InputArgsInfoPtr &input_args_info) {
   }
 }
 
-void GradExecutor::DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info, const std::string &out_id) {
+void GradExecutor::DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info, const std::string &out_id) const {
   MS_EXCEPTION_IF_NULL(input_args_info);
   if (!input_args_info->has_custom_bprop || custom_bprop_cell_count_ != 0) {
     return;
@@ -1198,7 +1198,8 @@ void GradExecutor::CheckParamShapeAndType(const ParameterPtr &param_node, const 
   }
 }
 
-void GradExecutor::UpdateParamAbsByArgs(const std::vector<ValuePtr> &input_args, const FuncGraphPtr &bprop_graph) {
+void GradExecutor::UpdateParamAbsByArgs(const std::vector<ValuePtr> &input_args,
+                                        const FuncGraphPtr &bprop_graph) const {
   MS_EXCEPTION_IF_NULL(bprop_graph);
   const auto &bprop_params = bprop_graph->parameters();
   // bprop_params include inputs, parameters and sens, should be more than inputs size
@@ -1547,7 +1548,7 @@ AnfNodePtr GradExecutor::GetInput(const ValuePtr &v, const string &obj_id) const
   }
   // A tuple returns in this case: x = op1, y = op2, return (x, y)
   // or a scalar or (scalar, tensor)
-  node = GetValueSequenceInput(v, obj_id);
+  node = GetValueSequenceInput(v);
   if (node != nullptr) {
     return node;
   }
@@ -1607,7 +1608,7 @@ AnfNodePtr GradExecutor::GetOutputNodeAsInput(const std::string &obj_id) const {
   return CreateTupleGetItemNode(obj_id, it->second);
 }
 
-AnfNodePtr GradExecutor::GetValueSequenceInput(const ValuePtr &v, const std::string &obj_id) const {
+AnfNodePtr GradExecutor::GetValueSequenceInput(const ValuePtr &v) const {
   MS_EXCEPTION_IF_NULL(v);
   if (!v->isa<ValueSequence>()) {
     return nullptr;
@@ -1627,7 +1628,7 @@ AnfNodePtr GradExecutor::GetValueSequenceInput(const ValuePtr &v, const std::str
     const std::string &id = PyNativeAlgo::Common::GetIdByValue(v_arg);
     (void)inputs.emplace_back(GetInput(v_arg, id));
     (void)abs_list.emplace_back(PyNativeAlgo::Common::SetAbstractValueToAnyValue(v_arg->ToAbstract()));
-    (void)GetValueSequenceInput(v_arg, id);
+    (void)GetValueSequenceInput(v_arg);
   }
   // Create make tuple node and record to graph info map.
   auto cnode = curr_g()->NewCNode(inputs);
@@ -1922,7 +1923,7 @@ void GradExecutor::BackupInputTensorGradInfo(const ValuePtr &value) {
   }
 }
 
-void GradExecutor::ClearParamGradInfo(const TopCellInfoPtr &top_cell) {
+void GradExecutor::ClearParamGradInfo(const TopCellInfoPtr &top_cell) const {
   if (top_cell == nullptr || top_cell->param_grad_info().empty()) {
     return;
   }
@@ -1932,7 +1933,7 @@ void GradExecutor::ClearParamGradInfo(const TopCellInfoPtr &top_cell) {
   top_cell->set_resume_flag(true);
 }
 
-void GradExecutor::ResumeParamGradInfo(const TopCellInfoPtr &top_cell) {
+void GradExecutor::ResumeParamGradInfo(const TopCellInfoPtr &top_cell) const {
   if (top_cell == nullptr || !top_cell->resume_flag() || top_cell->param_grad_info().empty()) {
     return;
   }

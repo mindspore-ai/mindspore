@@ -346,7 +346,8 @@ void OpCompiler::BatchBuild(const std::vector<KernelGraphPtr> &graphs, const Dev
   }
 }
 
-std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_info, const PrimitivePtr &op_prim) {
+std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_info,
+                                             const PrimitivePtr &op_prim) const {
   MS_EXCEPTION_IF_NULL(op_prim);
   if (op_info.input_tensor.size() != op_info.input_mask.size()) {
     MS_LOG(EXCEPTION) << "Input tensors size " << op_info.input_tensor.size()

@@ -219,8 +219,8 @@ class AutoGradCellImpl {
   ParameterPtr NewWeightParameter(const tensor::TensorPtr &tensor, const abstract::AbstractBasePtr &abs);
   ParameterPtr AddParameterNode(const tensor::TensorPtr &tensor, const abstract::AbstractBasePtr &abs);
   AnfNodePtr MapParameter(const ValuePtr &value, const abstract::AbstractBasePtr &abs);
-  ParameterPtr ExtractParameter(const tensor::TensorPtr &tensor);
-  AnfNodePtrList ExtractParamters(const tensor::TensorPtrList weights, const FuncGraphPtr &fg);
+  ParameterPtr ExtractParameter(const tensor::TensorPtr &tensor) const;
+  AnfNodePtrList ExtractParamters(const tensor::TensorPtrList weights);
   void UpdateSensParameter(const ValuePtr &value);
   AnfNodePtr TraceShape(const FunctionNodePtr &fn, const ValuePtr &out_value, const abstract::AbstractBasePtr &out_abs,
                         const tensor::TensorPtr &input_tensor, const AnfNodePtr &din);

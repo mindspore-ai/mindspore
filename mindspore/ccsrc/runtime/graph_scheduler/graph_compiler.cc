@@ -17,6 +17,7 @@
 #include "runtime/graph_scheduler/graph_compiler.h"
 #include <numeric>
 #include <map>
+#include <list>
 #include <utility>
 #include <algorithm>
 #include <functional>
@@ -352,7 +353,7 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
 }
 
 GraphId GraphCompiler::CompileDynamicGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs,
-                                           const DeviceContext *device_context, bool has_ms_function_call_graph) {
+                                           const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(session_);
   MS_EXCEPTION_IF_NULL(segment);
   MS_EXCEPTION_IF_NULL(device_context);

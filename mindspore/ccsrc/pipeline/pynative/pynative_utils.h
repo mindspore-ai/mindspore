@@ -86,8 +86,7 @@ struct DataConvert {
   static ValuePtr VectorRefToValue(const VectorRef &vec_ref, bool requires_grad, bool is_out_sequence);
   static void FlattenValueSeqArg(const ValuePtr &v, std::vector<ValuePtr> *flatten_v);
   static void FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<ValuePtr> *flatten_v, bool has_sens);
-  static void GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const std::string &device_target,
-                             const TopCellInfoPtr &top_cell);
+  static void GetInputTensor(const FrontendOpRunInfoPtr &op_run_info, const TopCellInfoPtr &top_cell);
   static void ConvertCSRTensorToTensorList(const FrontendOpRunInfoPtr &op_run_info,
                                            const tensor::CSRTensorPtr &csr_tensor, const TopCellInfoPtr &top_cell,
                                            size_t index);

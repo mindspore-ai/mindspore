@@ -781,7 +781,7 @@ FuncGraphPtr AutoGradCellImpl::GradFuncGraph(const GradParamPtr &grad_param) {
                                  ad_param()->last_node_, 0, false, {prim::kPrimTupleGetItem, prim::kPrimMakeTuple})
                                  .first;
     }
-    if (!ad_param()->anfnode_to_variable_adjoint_.count(ad_param()->last_node_)) {
+    if (ad_param()->anfnode_to_variable_adjoint_.count(ad_param()->last_node_) == 0) {
       MS_LOG(EXCEPTION) << "Can not find last node" << ad_param()->last_node_->DebugString();
     }
     ad_param()->last_variable_ = ad_param()->anfnode_to_variable_adjoint_[ad_param()->last_node_];
@@ -1038,7 +1038,7 @@ FuncGraphPtr AutoGradCellImpl::Finish(const tensor::TensorPtrList &weights, cons
   }
   SetOutput(weights, grad_position, grad_attr);
   // Replace Parameter of primal func graph with parameter of ad_param()->tape_;
-  AnfNodePtrList params = ExtractParamters(weights, ad_param()->fg_);
+  AnfNodePtrList params = ExtractParamters(weights);
   ReplacePrimalParameter(params, grad_attr.has_sens);
   PyNativeAlgo::Common::DumpGraphIR("before_final_opt.ir", ad_param()->tape_);
   return ad_param()->tape_;
@@ -1516,7 +1516,7 @@ ParameterPtr AutoGradCellImpl::AddParameterNode(const tensor::TensorPtr &tensor,
   return param;
 }
 
-AnfNodePtrList AutoGradCellImpl::ExtractParamters(const tensor::TensorPtrList weights, const FuncGraphPtr &fg) {
+AnfNodePtrList AutoGradCellImpl::ExtractParamters(const tensor::TensorPtrList weights) {
   AnfNodePtrList params;
   for (auto weight : weights) {
     auto parameter = ExtractParameter(weight);
@@ -1589,7 +1589,7 @@ AnfNodePtr AutoGradCellImpl::MapParameter(const ValuePtr &value, const abstract:
   }
 }
 
-ParameterPtr AutoGradCellImpl::ExtractParameter(const tensor::TensorPtr &tensor) {
+ParameterPtr AutoGradCellImpl::ExtractParameter(const tensor::TensorPtr &tensor) const {
   MS_EXCEPTION_IF_NULL(tensor);
   const auto &auto_grad_meta_data = tensor->auto_grad_meta_data();
   if (auto_grad_meta_data != nullptr && PyNativeAlgo::Common::IsParam(auto_grad_meta_data->grad_type())) {
@@ -1782,7 +1782,6 @@ OrderedSet<VariableAdjointPtr>::reverse_iterator AutoGradCellImpl::GetLastNodeRe
 void AutoGradCellImpl::BackPropagate() {
   const auto &last_node_reverse_iter = GetLastNodeReverseIter();
   for (auto iter = last_node_reverse_iter; iter != ad_param()->variable_adjoint_set_.rend(); ++iter) {
-    // MS_LOG(DEBUG) << "BackPropagate cnode: " << iter->first->DebugString();
     const auto &variable = *iter;
     if (!variable->is_need_propagate() || !variable->is_need_grad()) {
       MS_LOG(DEBUG) << "No need grad, variable is: " << variable->ToString();
