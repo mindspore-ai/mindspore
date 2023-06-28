@@ -30,6 +30,8 @@ ParallelOpConcatenater::ParallelOpConcatenater(const std::string &op_name, uint6
                                                const std::string &layout)
     : ParallelOpCombiner(op_name, min_num_branches, layout) {}
 
+ParallelOpConcatenater::~ParallelOpConcatenater() {}
+
 bool ParallelOpConcatenater::IsArgCompatible(const AnfNodePtr a, const AnfNodePtr b) {
   auto cnode_a = a->cast<CNodePtr>();
   auto cnode_b = b->cast<CNodePtr>();
@@ -68,9 +70,9 @@ AnfNodePtr ParallelOpConcatenater::MakeCombinedAnfNodePtrFromFollowingOps(const 
   if (GetCNodePrimitive(orig_node)->name() == prim::kReshape) {
     new_node = GraphBuilder::NewReshapeNode(main_graph_, overall_inputs, orig_node);
   } else if (GetCNodePrimitive(orig_node)->name() == prim::kTranspose) {
-    new_node = GraphBuilder::NewTransposeNode(main_graph_, overall_inputs, orig_node);
+    new_node = GraphBuilder::NewTransposeNode(main_graph_, overall_inputs);
   } else {
-    new_node = GraphBuilder::NewElemwiseNoAttrNode(main_graph_, overall_inputs, orig_node);
+    new_node = GraphBuilder::NewElemwiseNoAttrNode(main_graph_, overall_inputs);
   }
   MS_EXCEPTION_IF_CHECK_FAIL(AutoUpdateInfo(new_node), "AutoUpdateInfo fail");
   return new_node;
@@ -100,7 +102,7 @@ void ParallelOpConcatenater::UpdateGroupOutput(const AnfNodePtr &data, const Gro
   }
   auto ew_plan = plans_[depth];
   auto split_node = GraphBuilder::NewSplitNode(main_graph_, data, ew_plan.split_out_idx, branches.size());
-  MS_EXCEPTION_IF_CHECK_FAIL(AutoUpdateInfo(split_node, branches.size()), "AutoUpdateInfo fail");
+  MS_EXCEPTION_IF_CHECK_FAIL(AutoUpdateInfo(split_node), "AutoUpdateInfo fail");
   main_graph_->AddNode(split_node);
   auto mng = main_graph_->manager();
   for (size_t i = 0; i < branches.size(); ++i) {
@@ -112,7 +114,7 @@ void ParallelOpConcatenater::UpdateGroupOutput(const AnfNodePtr &data, const Gro
     AnfNodePtrList gt_inputs{NewValueNode(prim::kPrimTupleGetItem), split_node, gt_idx};
     auto new_out = main_graph_->NewCNode(gt_inputs);
     new_out->set_abstract(target->abstract()->Clone());
-    mng->Replace(target, new_out);
+    (void)mng->Replace(target, new_out);
   }
   return;
 }
@@ -141,11 +143,11 @@ ConcatenatePlan ParallelOpConcatenater::GetElemWiseFollowingPlan(const Group &br
     }
     return base_idx - rank_diff;
   };
-  ew_plan.concat_in_idx = UpdateIdx(last_plan.in_shape, ew_plan.in_shape, last_plan.concat_in_idx);
+  ew_plan.concat_in_idx = static_cast<int>(UpdateIdx(last_plan.in_shape, ew_plan.in_shape, last_plan.concat_in_idx));
   Branch b0 = branches[0];
   auto op = b0.ops[depth];
   ew_plan.out_shape = cb->GetOutputInferShape(op, 0);
-  ew_plan.split_out_idx = UpdateIdx(last_plan.out_shape, ew_plan.out_shape, last_plan.split_out_idx);
+  ew_plan.split_out_idx = static_cast<int>(UpdateIdx(last_plan.out_shape, ew_plan.out_shape, last_plan.split_out_idx));
   MS_LOG(DEBUG) << "EW plan: " << ew_plan.concat_in_idx << ", " << ew_plan.split_out_idx << ", " << ew_plan.out_shape;
   return ew_plan;
 }

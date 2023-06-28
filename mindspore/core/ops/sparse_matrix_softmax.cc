@@ -41,7 +41,7 @@ inline void CheckSparseMartrixShape(const size_t sparse_shape_size, const size_t
   }
 }
 
-abstract::TupleShapePtr SparseMatrixSoftmaxInferShape(const PrimitivePtr &,
+abstract::TupleShapePtr SparseMatrixSoftmaxInferShape(const PrimitivePtr &primitive,
                                                       const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const std::string op_name = primitive->name();
