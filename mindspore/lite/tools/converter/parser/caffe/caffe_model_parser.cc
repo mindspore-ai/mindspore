@@ -175,6 +175,13 @@ api::FuncGraphPtr CaffeModelParser::Parse(const converter::ConverterParameters &
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
   }
+
+  graph->set_manager(nullptr);
+  static auto root_func_manager = Manage(graph);
+  if (root_func_manager == nullptr) {
+    MS_LOG(ERROR) << "root_func_manager is nullptr.";
+    return nullptr;
+  }
   return res_graph_;
 }
 
