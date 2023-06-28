@@ -145,9 +145,7 @@ struct BinaryFunc<BinaryOpType::kTruncateDiv, T, T, T, typename std::is_floating
 template <>
 struct BinaryFunc<BinaryOpType::kTruncateDiv, half, half, half> {
   __device__ __host__ __forceinline__ BinaryFunc() {}
-  __device__ __forceinline__ half operator()(const half &lhs, const half &rhs) const {
-    return __float2half_rn(trunc(__half2float(lhs) / __half2float(rhs)));
-  }
+  __device__ __forceinline__ half operator()(const half &lhs, const half &rhs) const { return htrunc(lhs / rhs); }
 };
 template <typename T>
 struct BinaryFunc<BinaryOpType::kTruncateDiv, T, T, T, typename std::is_integral<T>::type> {
