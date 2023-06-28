@@ -49,6 +49,7 @@
 #include "pipeline/jit/pipeline.h"
 #include "mindspore/core/utils/parallel_node_check.h"
 #include "frontend/parallel/step_parallel_utils.h"
+#include "mindspore/core/ops/nn_ops.h"
 
 namespace mindspore {
 namespace parallel {
@@ -1582,6 +1583,40 @@ std::shared_ptr<TensorLayout> CreateParameterLayout(const AnfNodePtr &node) {
     MS_LOG(EXCEPTION) << "Create tensor layout for parameter failed.";
   }
   return std::make_shared<TensorLayout>(input_tensor_layout);
+}
+
+// temporary method for handling StandardNormal Insertion in opt graph
+void InsertUniformRealForTaggedNodes(const FuncGraphManagerPtr &manager, const std::vector<AnfNodePtr> &all_nodes) {
+  for (auto &node : all_nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto primitive = GetCNodePrimitive(node);
+    if (primitive == nullptr) {
+      continue;
+    }
+    if (common::AnfAlgo::IsCommunicationOp(node)) {
+      continue;
+    }
+    auto comm_prim = common::AnfAlgo::GetCNodePrimitive(node);
+    if (comm_prim->HasAttr("insert_rand")) {
+      MS_LOG(INFO) << "Insert UniformReal to node" << node->DebugString();
+      std::vector<AnfNodePtr> inputShape = {NewValueNode(prim::kPrimShape), node->cast<CNodePtr>()->input(kIndex1)};
+      auto inputShapeNode = node->func_graph()->NewCNode(inputShape);
+
+      std::vector<AnfNodePtr> uniformReal = {NewValueNode(prim::kPrimUniformReal), inputShapeNode->cast<AnfNodePtr>()};
+      auto uniformRealNode = node->func_graph()->NewCNode(uniformReal);
+
+      auto uniformRealPrim = GetCNodePrimitive(uniformRealNode);
+      auto attrs = uniformRealPrim->attrs();
+      attrs["seed"] = MakeValue<int64_t>(0);
+      attrs["seed2"] = MakeValue<int64_t>(0);
+      uniformRealPrim->SetAttrs(attrs);
+
+      manager->SetEdge(node, 1, uniformRealNode);
+    }
+  }
 }
 }  // namespace parallel
 }  // namespace mindspore
