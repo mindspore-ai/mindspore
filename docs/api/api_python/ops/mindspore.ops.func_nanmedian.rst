@@ -3,11 +3,10 @@ mindspore.ops.nanmedian
 
 .. py:function:: mindspore.ops.nanmedian(input, axis=-1, keepdims=False)
 
-    计算 `input` 指定维度元素的中值和索引，忽略NaN。如果降维中的所有元素都是NaN，则结果将是NaN。
+    计算 `input` 指定维度元素的中值和索引，忽略NaN。如果指定维度中的所有元素都是NaN，则结果将是NaN。
 
     .. warning::
-        - 如果 `input` 的中值不唯一，则 `indices` 不一定包含第一个出现的中值。
-        - 该接口的具体实现方式和后端类型相关，CPU和GPU的返回值可能不相同。
+        如果 `input` 的中值不唯一，则 `indices` 不一定包含第一个出现的中值。
 
     参数：
         - **input** (Tensor) - 计算中值和索引的输入Tensor。

@@ -4684,13 +4684,12 @@ def median(input, axis=-1, keepdims=False):
 
 def nanmedian(input, axis=-1, keepdims=False):
     r"""
-    Computes the median and indices of `input` , ignoring NaN.
-    If all elements in the reduced dimensions are NaN, the result will be NaN.
+    Computes the median and indices of `input` in specified dimension, ignoring NaN.
+    If all elements in the specified dimensions are NaN, the result will be NaN.
 
     .. warning::
-        - `indices` does not necessarily contain the first occurrence of each median value found in the `input`,
+        `indices` does not necessarily contain the first occurrence of each median value found in the `input`,
           unless it is unique.
-        - The specific implementation of this API is device-specific. The results may be different on CPU and GPU.
 
     Args:
         input (Tensor): The input tensor to calculate the median and indices.
@@ -4712,7 +4711,7 @@ def nanmedian(input, axis=-1, keepdims=False):
         ValueError: If `axis` is not in range of [-r, r) which `r` means the rank of `input`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> import mindspore
@@ -4732,8 +4731,8 @@ def nanmedian(input, axis=-1, keepdims=False):
 
 def nanmean(input, axis=None, keepdims=False, *, dtype=None):
     r"""
-    Computes the mean of `input` , ignoring NaN.
-    If all elements in the reduced dimensions are NaN, the result will be NaN.
+    Computes the mean of `input` in specified dimension, ignoring NaN.
+    If all elements in the specified dimensions are NaN, the result will be NaN.
 
     Args:
         input (Tensor): The input tensor to calculate the mean.
