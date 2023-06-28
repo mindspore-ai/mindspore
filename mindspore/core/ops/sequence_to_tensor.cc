@@ -190,7 +190,7 @@ class SequenceToTensorInfer : public abstract::OpInferBase {
   ValuePtr InferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
     auto prim_name = primitive->name();
-    constexpr size_t input_len = 2;
+    constexpr int64_t input_len = 2;
     (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_len,
                                              prim_name);
     auto elem = abstract::CheckArg<abstract::AbstractSequence>(prim_name, input_args, 0);
