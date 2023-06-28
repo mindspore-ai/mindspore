@@ -2927,6 +2927,8 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
 
   HandleAdaFactorOpt(root);
 
+  InsertUniformRealForTaggedNodes(manager, all_nodes);
+
   auto adasum_param_tensor_layout_map = AdaSumParamTensorLayout(root);
   bool is_apply_adasum = HandleAdaSum(root, all_nodes, &adasum_param_tensor_layout_map);
 
