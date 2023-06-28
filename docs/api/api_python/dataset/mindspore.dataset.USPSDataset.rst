@@ -32,6 +32,10 @@ mindspore.dataset.USPSDataset
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
         - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。
 
+    教程样例：
+        - `使用数据Pipeline加载 & 处理数据集
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     **关于USPS数据集：**
     
     USPS是美国邮政服务公司从信封中自动扫描的数字数据集，包含总共9,298个16×16像素灰度样本。

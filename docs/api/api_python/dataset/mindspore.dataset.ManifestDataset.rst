@@ -30,6 +30,10 @@
         - **RuntimeError** - `class_indexing` 参数的类型不是dict。
         - **ValueError** - `shard_id` 参数值错误（小于0或者大于等于 `num_shards`）。
 
+    教程样例：
+        - `使用数据Pipeline加载 & 处理数据集
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     .. note::
         - 如果 `decode` 参数的值为 ``False`` ，则得到的 `image` 列的shape为[undecoded_image_size]，如果为 ``True`` 则 `image` 列的shape为 :math:`[H,W,C]` 。
         - 此数据集可以指定参数 `sampler` ，但参数 `sampler` 和参数 `shuffle` 的行为是互斥的。下表展示了几种合法的输入参数组合及预期的行为。

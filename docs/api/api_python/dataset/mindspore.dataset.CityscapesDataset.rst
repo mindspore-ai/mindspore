@@ -23,6 +23,10 @@ mindspore.dataset.CityscapesDataset
         - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号。默认值： ``None`` 。只有当指定了 `num_shards` 时才能指定此参数。
         - **cache** (:class:`~.dataset.DatasetCache`, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/dataset/cache.html>`_ 。默认值： ``None`` ，不使用缓存。
 
+    教程样例：
+        - `使用数据Pipeline加载 & 处理数据集
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     异常：
         - **RuntimeError** - `dataset_dir` 路径下不包含任何数据文件。
         - **RuntimeError** - 同时指定了 `sampler` 和 `shuffle` 参数。

@@ -154,6 +154,10 @@ class Caltech101Dataset(GeneratorDataset):
         ValueError: If `target_type` is not ``'category'``, ``'annotation'`` or ``'all'`` .
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
@@ -320,6 +324,10 @@ class Caltech256Dataset(MappableDataset, VisionBaseDataset):
         ValueError: If `target_type` is not ``'category'``, ``'annotation'`` or ``'all'``.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
@@ -453,6 +461,10 @@ class CelebADataset(MappableDataset, VisionBaseDataset):
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `usage` is not ``'train'``, ``'valid'``, ``'test'`` or ``'all'``.
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
@@ -625,6 +637,10 @@ class Cifar10Dataset(MappableDataset, VisionBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `usage` is not ``'train'`` , ``'test'`` or ``'all'`` .
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
@@ -758,6 +774,10 @@ class Cifar100Dataset(MappableDataset, VisionBaseDataset):
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `usage` is not ``'train'`` , ``'test'`` or ``'all'`` .
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
@@ -895,6 +915,10 @@ class CityscapesDataset(MappableDataset, VisionBaseDataset):
         ValueError: If `quality_mode` is not ``'fine'`` or ``'coarse'``.
         ValueError: If `usage` is invalid.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
@@ -1107,6 +1131,10 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
         ValueError: If `annotation_file` is not exist.
         ValueError: If `dataset_dir` is not exist.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - Column '[_meta-filename, dtype=string]' won't be output unless an explicit rename dataset op is added
@@ -1324,6 +1352,10 @@ class DIV2KDataset(MappableDataset, VisionBaseDataset):
             not equal to ``4``.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
@@ -1503,6 +1535,10 @@ class EMnistDataset(MappableDataset, VisionBaseDataset):
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
@@ -1639,6 +1675,10 @@ class FakeImageDataset(MappableDataset, VisionBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
@@ -1730,6 +1770,10 @@ class FashionMnistDataset(MappableDataset, VisionBaseDataset):
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
@@ -1857,6 +1901,10 @@ class FlickrDataset(MappableDataset, VisionBaseDataset):
         ValueError: If `dataset_dir` is not exist.
         ValueError: If `annotation_file` is not exist.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
@@ -2101,6 +2149,10 @@ class Flowers102Dataset(GeneratorDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
@@ -2271,6 +2323,10 @@ class Food101Dataset(MappableDataset, VisionBaseDataset):
         ValueError: If the value of `usage` is not ``'train'``, ``'test'``, or ``'all'``.
         ValueError: If `dataset_dir` is not exist.
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
@@ -2412,6 +2468,10 @@ class ImageFolderDataset(MappableDataset, VisionBaseDataset):
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         RuntimeError: If `class_indexing` is not a dictionary.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The shape of the image column is [image_size] if `decode` flag is ``False``, or [H,W,C] otherwise.
@@ -2573,6 +2633,10 @@ class KITTIDataset(MappableDataset, VisionBaseDataset):
         ValueError: If `dataset_dir` is not exist.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
@@ -2714,6 +2778,10 @@ class KMnistDataset(MappableDataset, VisionBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
@@ -2842,6 +2910,10 @@ class LFWDataset(MappableDataset, VisionBaseDataset):
         RuntimeError: If `num_shards` is specified but shard_id is None.
         RuntimeError: If `shard_id` is specified but num_shards is None.
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards` ).
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
@@ -3003,6 +3075,10 @@ class LSUNDataset(MappableDataset, VisionBaseDataset):
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards` ).
         ValueError: If `usage` or `classes` is invalid (not in specific types).
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
@@ -3145,6 +3221,10 @@ class ManifestDataset(MappableDataset, VisionBaseDataset):
         RuntimeError: If class_indexing is not a dictionary.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Note:
         - The shape of the image column is [image_size] if `decode` flag is ``False``, or :math:`[H,W,C]` otherwise.
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
@@ -3285,6 +3365,10 @@ class MnistDataset(MappableDataset, VisionBaseDataset):
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
@@ -3407,6 +3491,10 @@ class OmniglotDataset(MappableDataset, VisionBaseDataset):
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - This dataset can take in a sampler. `sampler` and `shuffle` are mutually exclusive.
@@ -3551,6 +3639,10 @@ class PhotoTourDataset(MappableDataset, VisionBaseDataset):
             ``"notredame_harris"``, ``"yosemite_harris"`` or ``"liberty_harris"``.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive. The table
@@ -3697,6 +3789,10 @@ class Places365Dataset(MappableDataset, VisionBaseDataset):
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
         ValueError: If `usage` is not ``"train-standard"``, ``"train-challenge"`` or ``"val"``.
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Note:
         - This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
@@ -3837,6 +3933,10 @@ class QMnistDataset(MappableDataset, VisionBaseDataset):
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
@@ -4037,6 +4137,10 @@ class RenderedSST2Dataset(MappableDataset, VisionBaseDataset):
         ValueError: If `usage` is not ``'train'``, ``'test'``, ``'val'`` or ``'all'``.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
@@ -4254,6 +4358,10 @@ class SBDataset(GeneratorDataset):
         ValueError: If `usage` is not ``'train'``, ``'val'``, ``'train_noval'`` or ``'all'``.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Note:
         - This dataset can take in a sampler. `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
@@ -4385,6 +4493,10 @@ class SBUDataset(MappableDataset, VisionBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Note:
         - This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
@@ -4501,6 +4613,10 @@ class SemeionDataset(MappableDataset, VisionBaseDataset):
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
@@ -4633,6 +4749,10 @@ class STL10Dataset(MappableDataset, VisionBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Note:
         - This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
@@ -4764,6 +4884,10 @@ class SUN397Dataset(MappableDataset, VisionBaseDataset):
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
@@ -4944,6 +5068,10 @@ class SVHNDataset(GeneratorDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Note:
         - This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
@@ -5065,6 +5193,10 @@ class USPSDataset(SourceDataset, VisionBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Examples:
         >>> import mindspore.dataset as ds
         >>> usps_dataset_dir = "/path/to/usps_dataset_directory"
@@ -5179,6 +5311,10 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
         ValueError: If `task` is ``'Segmentation'`` but `class_indexing` is not ``None``.
         ValueError: If txt related to mode is not exist.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - Column '[_meta-filename, dtype=string]' won't be output unless an explicit rename dataset op
@@ -5374,6 +5510,10 @@ class WIDERFaceDataset(MappableDataset, VisionBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `annotation_file` is not exist.
         ValueError: If `dataset_dir` is not exist.
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
