@@ -127,10 +127,10 @@ void SwappableTensorCandidates::Add(const DeviceAddressPtr &candidate) {
   if (candidate == nullptr) {
     return;
   }
-  all_swappable_tensors_.insert(candidate.get());
+  (void)all_swappable_tensors_.insert(candidate.get());
   const auto size_level = GetSizeLevel(candidate->GetSize());
   if (null_index_[size_level].empty()) {
-    swappable_tensors_[size_level].emplace_back(std::make_pair(candidate, candidate.get()));
+    (void)swappable_tensors_[size_level].emplace_back(std::make_pair(candidate, candidate.get()));
     return;
   }
   const auto idx = null_index_[size_level].front();

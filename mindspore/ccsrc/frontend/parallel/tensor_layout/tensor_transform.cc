@@ -263,8 +263,8 @@ RedistributionOpListPtr TensorTransform::OptimizeTensorRedistributionOperatorLis
     (void)redistribution_op_list->second.erase(redistribution_op_list->second.begin() + pos + kSize1);
     // insert reshape before allgather
     Operator left_reshape_op = ConstructReshapeOp(left_reshape_op_list[pos]);
-    redistribution_op_list->first.insert(redistribution_op_list->first.begin() + pos, left_reshape_op);
-    redistribution_op_list->second.insert(redistribution_op_list->second.begin() + pos, {false, 0});
+    (void)redistribution_op_list->first.insert(redistribution_op_list->first.begin() + pos, left_reshape_op);
+    (void)redistribution_op_list->second.insert(redistribution_op_list->second.begin() + pos, {false, 0});
   }
   return redistribution_op_list;
 }
