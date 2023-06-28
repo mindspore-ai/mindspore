@@ -35,6 +35,7 @@ std::shared_ptr<DeviceSync> DeviceAddressFuture::Get() {
   if (future_.valid()) {
     GilReleaseWithCheck gil_release;
     auto future_data = future_.get();
+    MS_EXCEPTION_IF_NULL(future_data);
     if (future_data->GetException() != nullptr) {
       std::rethrow_exception(future_data->GetException());
     }

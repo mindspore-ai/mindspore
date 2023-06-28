@@ -84,11 +84,7 @@ std::optional<abstract::StandardPrimitiveImplReg> GetPyNativePrimitiveInferImpl(
     return iter->second;
   }
 
-  auto find = abstract::GetPrimitiveInferImpl(primitive);
-  if (find.has_value()) {
-    return find.value();
-  }
-  return std::optional<abstract::StandardPrimitiveImplReg>();
+  return abstract::GetPrimitiveInferImpl(primitive);
 }
 }  // namespace
 
@@ -104,8 +100,18 @@ void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) cons
   if (!eval_impl.has_value() && GetOutputAbstractByCache(op_run_info)) {
     return;
   }
+
   // Cache miss to call the infer function
   prim->BeginRecordAddAttr();
+
+  // Cannot find any c++ infer
+  if (!eval_impl.has_value()) {
+    py::gil_scoped_acquire acquire;
+    CallPyInferFunc(prim, op_run_info);
+    MS_EXCEPTION_IF_NULL(op_run_info->base_op_run_info.abstract);
+    prim->EndRecordAddAttr();
+    return;
+  }
 
   // the WhileList ops should be constant fold in Pynative mode.
   if (!eval_impl->IsInWhiteList() && eval_impl->IsImplInferValue()) {
@@ -118,16 +124,10 @@ void InferOperation::PynativeInfer(const FrontendOpRunInfoPtr &op_run_info) cons
   }
 
   // Call Cpp infer
-  auto infer_res = eval_impl->InferShapeAndType(nullptr, prim, op_run_info->op_grad_info->input_abs);
+  op_run_info->base_op_run_info.abstract =
+    eval_impl->InferShapeAndType(nullptr, prim, op_run_info->op_grad_info->input_abs);
+  MS_EXCEPTION_IF_NULL(op_run_info->base_op_run_info.abstract);
   prim->EndRecordAddAttr();
-  if (infer_res == nullptr) {
-    py::gil_scoped_acquire acquire;
-    CallPyInferFunc(prim, op_run_info);
-    if (op_run_info->base_op_run_info.abstract != nullptr) {
-      return;
-    }
-  }
-  op_run_info->base_op_run_info.abstract = infer_res;
 }
 
 void InferOperation::DoInfer(const FrontendOpRunInfoPtr &op_run_info) {
