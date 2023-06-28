@@ -35,6 +35,7 @@ if(ENABLE_D OR ENABLE_ACL)
     else()
       set(OPS_INC_DIR ${GRAPHENGINE_PATH}/third_party/fwkacllib/inc/ops)
     endif()
+    file(GLOB_RECURSE CUSTOM_OPS_INC_LIST ${CMAKE_CURRENT_SOURCE_DIR}/custom_op_proto/*.h)
     message("CANN ops include path: " ${OPS_INC_DIR})
     file(GLOB_RECURSE OPS_INC_LIST ${OPS_INC_DIR}/*.h)
     # remove god.h
@@ -43,6 +44,8 @@ if(ENABLE_D OR ENABLE_ACL)
     # remove repeated head file
     list(REMOVE_ITEM OPS_INC_LIST "${OPS_INC_DIR}/outfeed_ops.h")
     list(REMOVE_ITEM OPS_INC_LIST "${OPS_INC_DIR}/nn_pooling_ops.h")
+    #append custom op
+    list(APPEND OPS_INC_LIST ${CUSTOM_OPS_INC_LIST})
     set(OPS_PROTO_OBJECTS)
     foreach(op ${OPS_INC_LIST})
         get_filename_component(op_inc_file_name ${op} NAME_WE)
