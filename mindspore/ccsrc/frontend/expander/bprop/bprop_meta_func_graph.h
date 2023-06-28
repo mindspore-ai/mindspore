@@ -19,7 +19,6 @@
 
 #include <string>
 #include <memory>
-#include <vector>
 #include "ir/meta_func_graph.h"
 #include "frontend/expander/bprop/bprop.h"
 #include "frontend/expander/utils.h"

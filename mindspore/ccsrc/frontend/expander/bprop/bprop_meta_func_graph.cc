@@ -16,6 +16,7 @@
 #include "frontend/expander/bprop/bprop_meta_func_graph.h"
 
 #include <unordered_set>
+#include <vector>
 #include "include/common/utils/utils.h"
 #include "frontend/expander/bprop/bprop.h"
 #include "include/common/utils/python_adapter.h"
@@ -100,7 +101,7 @@ bool CanExpand(const std::string &name) {
   if (common::GetEnv("MS_DEV_DISABLE_EXPANDER_BPROP") == name) {
     return false;
   }
-  if (g_blacklist.count(name)) {
+  if (g_blacklist.count(name) != 0) {
     return false;
   }
   return true;

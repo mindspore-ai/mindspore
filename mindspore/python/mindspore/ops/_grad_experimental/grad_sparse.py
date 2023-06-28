@@ -109,8 +109,7 @@ def get_bprop_sparse_tensor_dense_matmul(self):
         values_grad = F.reduce_sum(parts_a * parts_b, -1)
         if is_half:
             values_grad = P.Cast()(values_grad, mstype.float16)
-        res = (zeros_like(indices), values_grad, zeros_like(dense_shape), dense_grad)
-        return res
+        return tuple((zeros_like(indices), values_grad, zeros_like(dense_shape), dense_grad))
     return bprop
 
 

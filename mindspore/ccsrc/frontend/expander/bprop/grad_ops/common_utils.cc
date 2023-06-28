@@ -653,7 +653,7 @@ NodePtr ArgminOrArgmaxGrad(const BpropIRBuilder *ib, const NodePtr &x, const int
   auto out_0 = ib->TupleGetItem(new_out, 0);
   NodePtr depth = ib->Value<int64_t>(1);
   if (!x_shape.empty()) {
-    depth = ib->TupleGetItem(ib->Shape(x), x_axis);
+    depth = ib->TupleGetItem(ib->Shape(x), LongToSize(x_axis));
   }
   if (x_axis >= 0) {
     auto onehot_axis = x_axis;
