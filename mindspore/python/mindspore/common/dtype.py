@@ -341,12 +341,17 @@ class QuantDtype(enum.Enum):
     """
     An enum for quant datatype, contains `INT1` ~ `INT16`, `UINT1` ~ `UINT16`.
 
-    `QuantDtype` is defined in `mindspore/common/dtype.py`, use command below to import:
+    `QuantDtype` is defined in `dtype.py <https://gitee.com/mindspore/mindspore/blob/master/mindspore/python/mindspore/
+    common/dtype.py>`_, use command below to import:
 
     .. code-block::
 
         from mindspore import QuantDtype
 
+    Tutorial Examples:
+        - `Quantization algorithm in Golden Stick
+          <https://www.mindspore.cn/golden_stick/docs/en/master/quantization/slb.html
+          #applying-the-quantization-algorithm>`_
     """
     INT1 = 0
     INT2 = 1
@@ -387,9 +392,17 @@ class QuantDtype(enum.Enum):
 
     def value(self) -> int:
         """
-        Return value of `QuantDtype`.
+        Return value of `QuantDtype`. This interface is currently used to serialize or deserialize `QuantDtype`
+        primarily.
 
         Returns:
             An int as value of `QuantDtype`.
+
+        Examples:
+            >>> from mindspore import QuantDtype
+            >>> print(QuantDtype.INT8.value())
+            7
+            >>> print(QuantDtype.UINT16.value())
+            115
         """
         return self._value_
