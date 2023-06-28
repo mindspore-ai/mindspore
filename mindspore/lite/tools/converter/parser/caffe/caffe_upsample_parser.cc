@@ -37,7 +37,7 @@ PrimitiveCPtr CaffeUpsampleParser::Parse(const caffe::LayerParameter &proto, con
       MS_LOG(ERROR) << "The scale of upsample must be > 0";
       return nullptr;
     }
-    std::vector<float> scales = {1, scale, scale, 1};
+    std::vector<float> scales = {scale, scale};
     (void)prim_c->AddAttr("scale", MakeValue(scales));
   }
   (void)prim_c->AddAttr(ops::kOriginalOpName, MakeValue("Upsample"));
