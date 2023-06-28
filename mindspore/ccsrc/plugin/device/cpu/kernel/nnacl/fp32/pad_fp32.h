@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_FP32_PAD_H_
-#define MINDSPORE_NNACL_FP32_PAD_H_
+#ifndef NNACL_FP32_PAD_FP32_H_
+#define NNACL_FP32_PAD_FP32_H_
 
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
@@ -24,16 +24,15 @@
 #include "nnacl/op_base.h"
 #include "nnacl/pad_parameter.h"
 
+int GetInputFlattenIndex(int out_flatten_index, const int32_t *input_shape, const int *in_strides,
+                         const int *out_strides, const int *paddings, int mirror_offset);
 #ifdef __cplusplus
 extern "C" {
 #endif
 void Pad(const float *input_data, float *output_data, const int32_t *input_shape, const int32_t *output_shape,
          const int32_t *paddings, int tid, int thread_num);
-void MirrorPad(const float *input_data, float *output_data, const int32_t *input_shape, const PadParameter *pad_param,
-               int begin, int end);
-
-int TransOut2InputDimIndex(int out_dim_index, int left_pad, int in_dim, int offset);
-int GetInputFlattenIndex(int out_flatten_index, const int32_t *input_shape, const PadParameter *pad_param);
+void MirrorPad(const float *input_data, float *output_data, const int32_t *input_shape, const int *in_strides,
+               const int *out_strides, const int *paddings, int mirror_offset, int begin, int end);
 #ifdef __cplusplus
 }
 #endif

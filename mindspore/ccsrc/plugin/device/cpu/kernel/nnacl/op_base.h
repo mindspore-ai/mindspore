@@ -704,6 +704,13 @@ typedef enum PadType { Pad_pad, Pad_same, Pad_valid } PadType;
 typedef enum EltwiseType { Eltwise_PROD, Eltwise_SUM, Eltwise_MAXIMUM, Eltwise_UNKNOWN } EltwiseType;
 typedef enum RoundingMode { Rounding_No, Rounding_Away_from_zero, Rounding_Up } RoundingMode;
 
+typedef enum PaddingModeC {
+  PaddingMode_Constant,
+  PaddingMode_Reflect,
+  PaddingMode_Symmetric,
+  PaddingMode_Mode_Reserved,
+} PaddingModeC;
+
 typedef enum QuantTypeC {
   Quant_None = 0,
   Quant_AwareTraining = 1,

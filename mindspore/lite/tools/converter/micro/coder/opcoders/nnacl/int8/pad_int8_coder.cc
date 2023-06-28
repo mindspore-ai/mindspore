@@ -41,7 +41,7 @@ int PadInt8Coder::Prepare(CoderContext *context) {
     MS_LOG(ERROR) << "Input shape size not match padding length.";
     return RET_ERROR;
   }
-  PadQuantArg *pad_quant_args = &pad_param_->pad_quant_arg_;
+  PadQuantArg *pad_quant_args = &pad_quant_arg_;
   pad_quant_args->in_quant_args_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
   if (pad_quant_args->in_quant_args_ == nullptr) {
     return RET_MEMORY_FAILED;
@@ -168,18 +168,18 @@ int PadInt8Coder::CheckPaddings(const int *paddings, int length, const int *inpu
 }
 
 int PadInt8Coder::CalculateStrides() {
-  pad_param_->in_strides[COMM_SHAPE_SIZE - 1] = 1;
+  in_strides[COMM_SHAPE_SIZE - 1] = 1;
   for (auto i = COMM_SHAPE_SIZE - 2; i >= 0; --i) {
-    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(in_dims_[i + 1], pad_param_->in_strides[i + 1]), RET_ERROR, "mul overflow");
-    pad_param_->in_strides[i] = in_dims_[i + 1] * pad_param_->in_strides[i + 1];
+    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(in_dims_[i + 1], in_strides[i + 1]), RET_ERROR, "mul overflow");
+    in_strides[i] = in_dims_[i + 1] * in_strides[i + 1];
   }
   for (auto i = 0; i < COMM_SHAPE_SIZE; ++i) {
     out_dims_[i] = in_dims_[i] + pad_param_->paddings_[i * kDouble] + pad_param_->paddings_[i * kDouble + 1];
   }
-  pad_param_->out_strides[COMM_SHAPE_SIZE - 1] = 1;
+  out_strides[COMM_SHAPE_SIZE - 1] = 1;
   for (auto i = COMM_SHAPE_SIZE - 2; i >= 0; --i) {
-    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(out_dims_[i + 1], pad_param_->out_strides[i + 1]), RET_ERROR, "mul overflow");
-    pad_param_->out_strides[i] = out_dims_[i + 1] * pad_param_->out_strides[i + 1];
+    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(out_dims_[i + 1], out_strides[i + 1]), RET_ERROR, "mul overflow");
+    out_strides[i] = out_dims_[i + 1] * out_strides[i + 1];
   }
   return RET_OK;
 }
@@ -197,7 +197,7 @@ int PadInt8Coder::HandleMirrorPad() {
   if (ret != RET_OK) {
     return ret;
   }
-  pad_param_->mirror_offset_ = pad_param_->pad_mode_ == static_cast<int>(schema::PaddingMode_REFLECT) ? 1 : 0;
+  mirror_offset_ = pad_param_->pad_mode_ == static_cast<int>(schema::PaddingMode_REFLECT) ? 1 : 0;
   return RET_OK;
 }
 
@@ -214,26 +214,18 @@ int PadInt8Coder::DoCode(CoderContext *const context) {
 
   code << "int in_dims[" << COMM_SHAPE_SIZE << "]=" << ToString(in_dims_) << ";\n";
   if (pad_param_->pad_mode_ == static_cast<int>(schema::PaddingMode_CONSTANT)) {
-    code.CodeFunction("memset", output_tensor_, pad_param_->pad_quant_arg_.constant_value_[0], output_tensor_->Size());
+    code.CodeFunction("memset", output_tensor_, pad_quant_arg_.constant_value_[0], output_tensor_->Size());
     code << "int out_dims[" << COMM_SHAPE_SIZE << "]=" << ToString(out_dims_) << ";\n";
     code << "int paddings[" << MAX_PAD_SIZE << "]=" << ToString(pad_param_->paddings_) << ";\n";
-
     code.CodeFunction("PadConstant4D", input_tensor_, output_tensor_, "in_dims", "out_dims", "paddings", 0, 1);
   } else {
     if (HandleMirrorPad() != RET_OK) {
       MS_LOG(ERROR) << "Handle mirror pad failed.";
       return RET_ERROR;
     }
-    code << "QuantArg in_quant_args[1]={{" << pad_param_->pad_quant_arg_.in_quant_args_->scale_ << ","
-         << pad_param_->pad_quant_arg_.in_quant_args_->zp_ << "}};\n";
-    code << "QuantArg out_quant_args[1]={{" << pad_param_->pad_quant_arg_.out_quanr_args_->scale_ << ","
-         << pad_param_->pad_quant_arg_.out_quanr_args_->zp_ << "}};\n";
-    code << "unsigned char constant_value[1]={{" << pad_param_->pad_quant_arg_.constant_value_ << "}};\n";
-
-    pad_param_->op_parameter_.thread_num_ = 1;
     code.CodeStruct("param", *pad_param_);
-    code.CodeFunction("MirrorPadInt8", input_tensor_, output_tensor_, "in_dims", "&param", 0,
-                      output_tensor_->ElementsNum());
+    code.CodeFunction("MirrorPadInt8", input_tensor_, output_tensor_, "in_dims", mirror_offset_, in_strides,
+                      out_strides, pad_param_->paddings_, 0, output_tensor_->ElementsNum());
   }
 
   context->AppendCode(code.str());

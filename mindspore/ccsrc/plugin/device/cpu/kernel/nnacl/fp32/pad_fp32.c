@@ -61,23 +61,23 @@ int TransOut2InputDimIndex(int out_dim_index, int left_pad, int in_dim, int offs
   return MSMAX(index_sum - out_dim_index, 0);
 }
 
-int GetInputFlattenIndex(int out_flatten_index, const int32_t *input_shape, const PadParameter *pad_param) {
+int GetInputFlattenIndex(int out_flatten_index, const int32_t *input_shape, const int *in_strides,
+                         const int *out_strides, const int *paddings, int mirror_offset) {
   int in_flatten_index = 0;
   for (int i = 0; i < DEFAULT_PAD_NDIMS; ++i) {
-    int left_pad = pad_param->paddings_[i * 2];
-    NNACL_CHECK_ZERO_RETURN_ERR(pad_param->out_strides[i]);
-    int out_dim_index = out_flatten_index / pad_param->out_strides[i];
-    out_flatten_index %= pad_param->out_strides[i];
-    int in_dim_index = TransOut2InputDimIndex(out_dim_index, left_pad, input_shape[i], pad_param->mirror_offset_);
-    in_flatten_index += in_dim_index * pad_param->in_strides[i];
+    int left_pad = paddings[i * 2];
+    NNACL_CHECK_ZERO_RETURN_ERR(out_strides[i]);
+    int out_dim_index = out_flatten_index / out_strides[i];
+    out_flatten_index %= out_strides[i];
+    int in_dim_index = TransOut2InputDimIndex(out_dim_index, left_pad, input_shape[i], mirror_offset);
+    in_flatten_index += in_dim_index * in_strides[i];
   }
   return in_flatten_index;
 }
 
-void MirrorPad(const float *input_data, float *output_data, const int32_t *input_shape, const PadParameter *pad_param,
-               int begin, int end) {
-  int i = 0;
-  for (i = begin; i < end; ++i) {
-    output_data[i] = input_data[GetInputFlattenIndex(i, input_shape, pad_param)];
+void MirrorPad(const float *input_data, float *output_data, const int32_t *input_shape, const int *in_strides,
+               const int *out_strides, const int *paddings, int mirror_offset, int begin, int end) {
+  for (int i = begin; i < end; ++i) {
+    output_data[i] = input_data[GetInputFlattenIndex(i, input_shape, in_strides, out_strides, paddings, mirror_offset)];
   }
 }

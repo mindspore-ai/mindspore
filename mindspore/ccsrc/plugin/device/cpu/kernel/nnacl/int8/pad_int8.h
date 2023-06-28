@@ -26,8 +26,8 @@ extern "C" {
 #endif
 int PadConstant4D(const int8_t *in_data, int8_t *out_data, const int32_t *in_dims, const int32_t *out_dims,
                   const int32_t *paddings, const int tid, const int thread_num);
-void MirrorPadInt8(const int8_t *input_data, int8_t *output_data, const int32_t *input_shape,
-                   const PadParameter *pad_param, int begin, int end);
+void MirrorPadInt8(const int8_t *in, int8_t *out, const int32_t *input_shape, int mirror_offset, const int *in_strides,
+                   const int *out_strides, const int *paddings, int begin, int end);
 #ifdef __cplusplus
 }
 #endif
