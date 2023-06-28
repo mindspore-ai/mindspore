@@ -207,8 +207,8 @@ bool NeedDiscardTensorProperties(const std::string &op_device_target,
 }
 
 bool AclSupportFormat(const std::string &format) {
-  static std::set<std::string> default_support = {kOpFormat_DEFAULT, kOpFormat_ND,    kOpFormat_NCHW,
-                                                  kOpFormat_NHWC,    kOpFormat_NDHWC, kOpFormat_NCDHW};
+  static const std::set<std::string> default_support = {kOpFormat_DEFAULT, kOpFormat_ND,    kOpFormat_NCHW,
+                                                        kOpFormat_NHWC,    kOpFormat_NDHWC, kOpFormat_NCDHW};
   return default_support.find(format) != default_support.end();
 }
 
