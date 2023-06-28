@@ -137,6 +137,7 @@ void TopCellInfo::ClearParamGradInfo() {
 
 void TopCellInfo::Clear() {
   MS_LOG(DEBUG) << "Clear top cell info. Cell id " << cell_id_;
+  auto_grad_cell_ptr_ = nullptr;
   hook_changed_ = false;
   is_init_kpynative_ = false;
   need_compile_graph_ = false;
