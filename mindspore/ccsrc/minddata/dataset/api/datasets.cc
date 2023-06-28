@@ -202,11 +202,11 @@ std::shared_ptr<PullIterator> Dataset::CreatePullBasedIterator() {
   return iter;
 }
 
-#ifndef ENABLE_ANDROID
 // Function to return a transferred Node that transfers data through a device.
 bool Dataset::DeviceQueueCharIF(const std::vector<char> &queue_name, const std::vector<char> &device_type,
                                 int32_t device_id, int32_t num_epochs, bool send_epoch_end, int32_t total_batches,
                                 bool create_data_info_queue) {
+#ifndef ENABLE_ANDROID
   Status rc;
 
   // Build and launch tree
@@ -244,8 +244,13 @@ bool Dataset::DeviceQueueCharIF(const std::vector<char> &queue_name, const std::
   }
 
   return true;
+#else
+  MS_LOG(ERROR) << "DeviceQueueCharIF is not support for Android.";
+  return false;
+#endif
 }
 
+#ifndef ENABLE_ANDROID
 // Function to create the saver, which will build and launch the execution tree and save data
 bool Dataset::SaveCharIF(const std::vector<char> &dataset_path, int32_t num_files,
                          const std::vector<char> &dataset_type) {
