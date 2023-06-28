@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
+#include <algorithm>
 #include "runtime/pynative/op_runtime_info.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/anf_runtime_algorithm.h"
@@ -52,7 +53,7 @@ bool AscendKernelMod::IsOutputAllEmptyTensor() {
   MS_EXCEPTION_IF_NULL(node);
   for (size_t i = 0; i < output_size_list_.size(); ++i) {
     auto output_shape = common::AnfAlgo::GetOutputInferShape(node, i);
-    if (output_shape.size() != 1 || output_shape[0] != 0) {
+    if (std::none_of(output_shape.cbegin(), output_shape.cend(), [](int64_t dim) { return dim == 0; })) {
       is_output_all_empty_tensor_ = false;
       return false;
     }
