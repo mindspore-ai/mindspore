@@ -32,6 +32,10 @@ mindspore.dataset.SST2Dataset
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **ValueError** - `shard_id` 参数值错误，小于0或者大于等于 `num_shards` 。
 
+    教程样例：
+        - `使用数据Pipeline加载 & 处理数据集
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     **关于SST2数据集：**
 
     Stanford Sentiment Treebank是一个具有完全标记解析树的语料库，可以对语言中情感的合成效果进行完整的分析。

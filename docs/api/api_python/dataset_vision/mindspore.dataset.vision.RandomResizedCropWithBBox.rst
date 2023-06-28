@@ -28,3 +28,7 @@ mindspore.dataset.vision.RandomResizedCropWithBBox
         - **ValueError** - 当 `ratio` 为负数。
         - **ValueError** - 当 `max_attempts` 不为正数。
         - **RuntimeError** 当输入图像的shape不为<H, W>或<H, W, C>。
+
+    教程样例：
+        - `视觉变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_

@@ -35,6 +35,10 @@
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。
 
+    教程样例：
+        - `使用数据Pipeline加载 & 处理数据集
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     .. note::
         - 需要用户提前在云存储上创建同步用的目录，然后通过 `sync_obs_path` 指定。
         - 如果线下训练，建议为每次训练设置 `BATCH_JOB_ID` 环境变量。

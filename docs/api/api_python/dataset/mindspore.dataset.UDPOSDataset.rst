@@ -30,6 +30,10 @@ mindspore.dataset.UDPOSDataset
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
 
+    教程样例：
+        - `使用数据Pipeline加载 & 处理数据集
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     **关于UDPOS数据集：**
 
     UDPOS是一个解析的文本语料库数据集，用于阐明句法或者语义句子结构。

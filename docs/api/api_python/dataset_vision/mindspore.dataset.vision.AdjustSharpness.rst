@@ -13,3 +13,7 @@ mindspore.dataset.vision.AdjustSharpness
         - **TypeError** - 如果 `sharpness_factor` 不是float类型。
         - **ValueError** - 如果 `sharpness_factor` 小于0。
         - **RuntimeError** - 如果输入图像的形状不是<H, W, C>或<H, W>。
+
+    教程样例：
+        - `视觉变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_

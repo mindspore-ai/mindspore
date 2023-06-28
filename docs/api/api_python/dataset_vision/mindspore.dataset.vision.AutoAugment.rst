@@ -31,3 +31,7 @@ mindspore.dataset.vision.AutoAugment
         - **TypeError** - 如果 `interpolation` 不是 :class:`mindspore.dataset.vision.Inter` 类型。
         - **TypeError** - 如果 `fill_value` 不是整数或长度为3的元组。
         - **RuntimeError** - 如果给定的张量shape不是<H, W, C>。
+
+    教程样例：
+        - `视觉变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_

@@ -31,6 +31,10 @@ mindspore.dataset.AmazonReviewDataset
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
 
+    教程样例：
+        - `使用数据Pipeline加载 & 处理数据集
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     **关于AmazonReview数据集：**
 
     Amazon Review Full数据集包括来自亚马逊的评论数据。这些数据跨越18年，包括截止至2013年3月的约3500万条评论。评论数据包括产品和用户信息、产品评级和产品评论。

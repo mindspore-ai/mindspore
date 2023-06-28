@@ -16,3 +16,7 @@ mindspore.dataset.vision.MixUpBatch
         - **TypeError** - 如果 `alpha` 不是float类型。
         - **ValueError** - 如果 `alpha` 不是正数。
         - **RuntimeError** - 如果输入图像的shape不是 <N, H, W, C> 或 <N, C, H, W>。
+
+    教程样例：
+        - `视觉变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_

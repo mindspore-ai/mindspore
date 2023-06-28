@@ -31,6 +31,10 @@ mindspore.dataset.DBpediaDataset
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
         - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。
 
+    教程样例：
+        - `使用数据Pipeline加载 & 处理数据集
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     **关于DBpedia数据集：**
 
     DBpedia数据集包括14个类，超过63万个文本样本，train.csv中有56万样本，test.csv中有7万测试样本。

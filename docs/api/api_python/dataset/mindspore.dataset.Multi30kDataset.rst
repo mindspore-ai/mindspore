@@ -37,6 +37,10 @@ mindspore.dataset.Multi30kDataset
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。
 
+    教程样例：
+        - `使用数据Pipeline加载 & 处理数据集
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     **关于Multi30k数据集：**
 
     Multi30k是一个多语言的计算机视觉数据集，包含了约3.1万个以多种语言描述的标准图像。

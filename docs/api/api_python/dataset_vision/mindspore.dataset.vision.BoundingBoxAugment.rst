@@ -14,3 +14,7 @@ mindspore.dataset.vision.BoundingBoxAugment
         - **TypeError** - 如果 `ratio` 不是float类型。
         - **ValueError** - 如果 `ratio` 不在 [0.0, 1.0] 范围内。
         - **RuntimeError** - 如果给定的边界框无效。
+
+    教程样例：
+        - `视觉变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_

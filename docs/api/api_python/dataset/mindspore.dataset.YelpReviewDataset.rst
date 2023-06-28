@@ -31,6 +31,10 @@ mindspore.dataset.YelpReviewDataset
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
 
+    教程样例：
+        - `使用数据Pipeline加载 & 处理数据集
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     **关于YelpReview数据集：**
 
     Yelp Review Full数据集包括来自Yelp的评论数据。这些数据时从2015年的Yelp数据集挑战赛数据中提取的，主要用于文本分类。

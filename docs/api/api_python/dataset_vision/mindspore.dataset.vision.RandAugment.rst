@@ -36,3 +36,7 @@ mindspore.dataset.vision.RandAugment
         - **TypeError** - 如果 `fill_value` 不是int或tuple[int, int, int]类型。
         - **ValueError** - 如果 `fill_value` 取值不在[0, 255]范围。
         - **RuntimeError** - 如果输入图像的形状不是 <H, W, C>。
+
+    教程样例：
+        - `视觉变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_

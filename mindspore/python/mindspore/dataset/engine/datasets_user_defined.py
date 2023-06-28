@@ -560,6 +560,10 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
         ValueError: If shard_id is specified but `num_shards` is None.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Note:
         - If you configure `python_multiprocessing=True` (Default: ``True`` ) and `num_parallel_workers>1`
           (default: ``1`` ) indicates that the multi-process mode is started for data load acceleration.
@@ -948,6 +952,10 @@ class NumpySlicesDataset(GeneratorDataset):
         ValueError: If shard_id is specified but `num_shards` is None.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Examples:
         >>> import mindspore.dataset as ds
         >>> # 1) Input data can be a list
@@ -1009,6 +1017,10 @@ class PaddedDataset(GeneratorDataset):
         TypeError: If padded_samples is not an instance of list.
         TypeError: If the element of padded_samples is not an instance of dict.
         ValueError: If the padded_samples is empty.
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds

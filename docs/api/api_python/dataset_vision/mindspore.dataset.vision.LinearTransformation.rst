@@ -17,3 +17,7 @@ mindspore.dataset.vision.LinearTransformation
     异常：
         - **TypeError** - 当 `transformation_matrix` 的类型不为 :class:`numpy.ndarray` 。
         - **TypeError** - 当 `mean_vector` 的类型不为 :class:`numpy.ndarray` 。
+
+    教程样例：
+        - `视觉变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_

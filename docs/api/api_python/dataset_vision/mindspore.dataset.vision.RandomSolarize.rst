@@ -11,3 +11,7 @@ mindspore.dataset.vision.RandomSolarize
     异常：
         - **TypeError** - 当 `threshold` 的类型不为tuple。
         - **ValueError** - 当 `threshold` 取值不在[0, 255]范围内。
+
+    教程样例：
+        - `视觉变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_

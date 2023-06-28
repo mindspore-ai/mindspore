@@ -30,6 +30,10 @@ mindspore.dataset.CoNLL2000Dataset
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
 
+    教程样例：
+        - `使用数据Pipeline加载 & 处理数据集
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     **关于CoNLL2000数据集：**
 
     CoNLL2000分块数据集由华尔街日报语料库第15-20节的文本组成。

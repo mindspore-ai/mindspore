@@ -275,7 +275,7 @@ def add(input, other):
         - One of the two inputs must be a Tensor, when the two inputs have different shapes,
           they must be able to broadcast to a common shape.
         - The two inputs can not be bool type at the same time,
-          [True, Tensor(True, bool_), Tensor(np.array([True]), bool_)] are all considered bool type.
+          [True, Tensor(True, bool\_), Tensor(np.array([True]), bool\_)] are all considered bool type.
         - The two inputs comply with the implicit type conversion rules to make the data types
           consistent.
 
@@ -285,8 +285,8 @@ def add(input, other):
             `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
             `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
         other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
-            the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
-            When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
+            the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool.
+            When the first input is Scalar, the second input must be a Tensor whose data type is number or bool.
 
     Returns:
         Tensor, the shape is the same as the one of the input `input` , `other` after broadcasting,
@@ -809,7 +809,7 @@ def sub(input, other):
         - One of the two inputs must be a Tensor, when the two inputs have different shapes,
           they must be able to broadcast to a common shape.
         - The two inputs can not be bool type at the same time,
-          [True, Tensor(True, bool_), Tensor(np.array([True]), bool_)] are all considered bool type.
+          [True, Tensor(True, bool\_), Tensor(np.array([True]), bool\_)] are all considered bool type.
         - The two inputs comply with the implicit type conversion rules to make the data types
           consistent.
 
@@ -819,8 +819,8 @@ def sub(input, other):
             `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
             `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
         other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
-            the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
-            When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
+            the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool.
+            When the first input is Scalar, the second input must be a Tensor whose data type is number or bool.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting,
@@ -898,7 +898,7 @@ def mul(input, other):
         - One of the two inputs must be a Tensor, when the two inputs have different shapes,
           they must be able to broadcast to a common shape.
         - The two inputs can not be bool type at the same time,
-          [True, Tensor(True, bool_), Tensor(np.array([True]), bool_)] are all considered bool type.
+          [True, Tensor(True, bool\_), Tensor(np.array([True]), bool\_)] are all considered bool type.
         - The two inputs comply with the implicit type conversion rules to make the data types
           consistent.
 
@@ -908,8 +908,8 @@ def mul(input, other):
             `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
             `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
         other (Union[Tensor, number.Number, bool]): The second input, when the first input is a Tensor,
-            the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
-            When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
+            the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool.
+            When the first input is Scalar, the second input must be a Tensor whose data type is number or bool.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting,
@@ -943,14 +943,14 @@ def multiply(input, other):
 
 
 def div(input, other, *, rounding_mode=None):
-    """
+    r"""
     Divides the first input tensor by the second input tensor in floating-point type element-wise.
 
     Note:
         - One of the two inputs must be a Tensor, when the two inputs have different shapes,
           they must be able to broadcast to a common shape.
         - The two inputs can not be bool type at the same time,
-          [True, Tensor(True, bool_), Tensor(np.array([True]), bool_)] are all considered bool type.
+          [True, Tensor(True, bool\_), Tensor(np.array([True]), bool\_)] are all considered bool type.
         - The two inputs comply with the implicit type conversion rules to make the data types
           consistent.
 

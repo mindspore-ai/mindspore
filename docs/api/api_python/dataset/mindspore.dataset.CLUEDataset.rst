@@ -175,6 +175,10 @@ mindspore.dataset.CLUEDataset
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
 
+    教程样例：
+        - `使用数据Pipeline加载 & 处理数据集
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     **关于CLUE数据集：**
 
     CLUE，又名中文语言理解测评基准，包含许多有代表性的数据集，涵盖单句分类、句对分类和机器阅读理解等任务。

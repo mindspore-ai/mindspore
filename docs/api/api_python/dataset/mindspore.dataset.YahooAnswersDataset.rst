@@ -31,6 +31,10 @@ mindspore.dataset.YahooAnswersDataset
         - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
 
+    教程样例：
+        - `使用数据Pipeline加载 & 处理数据集
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     **关于YahooAnswers数据集：**
 
     YahooAnswers数据集包含10个类的63万个文本样本。

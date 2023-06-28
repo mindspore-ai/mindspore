@@ -32,3 +32,7 @@ mindspore.dataset.vision.RandomCropDecodeResize
         - **ValueError** - 如果 `ratio` 为负数。
         - **ValueError** - 如果 `max_attempts` 不是正数。
         - **RuntimeError** - 如果输入图像不是一维序列。
+
+    教程样例：
+        - `视觉变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_

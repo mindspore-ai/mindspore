@@ -14,3 +14,7 @@ mindspore.dataset.vision.AdjustSaturation
         - **ValueError** - 如果 `saturation_factor` 小于0。
         - **RuntimeError** - 如果输入图像的形状不是<H, W, C>。
         - **RuntimeError** - 如果输入图像的通道数不是3。
+
+    教程样例：
+        - `视觉变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_

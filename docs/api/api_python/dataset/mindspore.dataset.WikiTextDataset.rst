@@ -31,6 +31,10 @@ mindspore.dataset.WikiTextDataset
         - **ValueError** - `num_samples` 参数值错误，小于0。
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
 
+    教程样例：
+        - `使用数据Pipeline加载 & 处理数据集
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     **关于WikiText数据集：**
 
     WikiText数据集是一个包含1亿字的英语词典。

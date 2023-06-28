@@ -12,3 +12,7 @@ mindspore.dataset.vision.RandomSharpness
         - **TypeError** - 如果 `degree` 的类型不为list或tuple。
         - **ValueError** - 如果 `degree` 为负数。
         - **ValueError** - 如果 `degree` 采用 (max, min) 格式而不是 (min, max)。
+
+    教程样例：
+        - `视觉变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_

@@ -18,3 +18,7 @@ mindspore.dataset.vision.ResizeWithBBox
         - **TypeError** - 当 `interpolation` 的类型不为 :class:`mindspore.dataset.vision.Inter` 。
         - **ValueError** - 当 `size` 不为正数。
         - **RuntimeError** - 如果输入的Tensor不是 <H, W> 或 <H, W, C> 格式。
+
+    教程样例：
+        - `视觉变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_

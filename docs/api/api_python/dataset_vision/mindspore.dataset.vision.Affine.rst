@@ -30,3 +30,7 @@ mindspore.dataset.vision.Affine
         - **TypeError** - 如果 `resample` 不是 :class:`mindspore.dataset.vision.Inter` 的类型。
         - **TypeError** - 如果 `fill_value` 不是int或tuple[int, int, int]类型。
         - **RuntimeError** - 如果输入图像的shape不是 <H, W> 或 <H, W, C>。
+
+    教程样例：
+        - `视觉变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_

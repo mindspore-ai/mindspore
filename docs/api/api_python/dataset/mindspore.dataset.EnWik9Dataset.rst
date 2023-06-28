@@ -28,6 +28,10 @@ mindspore.dataset.EnWik9Dataset
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
 
+    教程样例：
+        - `使用数据Pipeline加载 & 处理数据集
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     **关于EnWik9数据集：**
 
     EnWik9的数据是一系列UTF-8编码的XML，主要由英文文本组成。数据集包含243,426篇文章标题，其中85,560个被重定向以修复丢失的网页链接，其余是常规文章。
