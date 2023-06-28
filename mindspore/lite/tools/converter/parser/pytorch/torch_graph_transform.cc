@@ -183,10 +183,10 @@ bool FlattenInputsTuple(Graph *graph) {
   return true;
 }
 
-std::shared_ptr<Graph> TorchGraphTransform(const Module &module) {
-  module.eval();                               // eval to expand function call
-  module = torch::jit::freeze_module(module);  // freeze module
-  auto torch_graph = module.get_method("forward").graph();
+std::shared_ptr<Graph> TorchGraphTransform(Module *module) {
+  module->eval();                                 // eval to expand function call
+  auto mod = torch::jit::freeze_module(*module);  // freeze module
+  auto torch_graph = mod.get_method("forward").graph();
   if (torch_graph == nullptr) {
     return nullptr;
   }

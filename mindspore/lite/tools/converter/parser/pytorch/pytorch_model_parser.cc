@@ -115,7 +115,7 @@ STATUS PytorchModelParser::InitOriginModel(const std::string &model_file) {
   }
 
   auto module = torch::jit::load(model_path);
-  torch_model_ = torch::jit::TorchGraphTransform(module);
+  torch_model_ = torch::jit::TorchGraphTransform(&module);
   MS_CHECK_TRUE_RET(torch_model_ != nullptr, RET_ERROR);
   return RET_OK;
 }
@@ -296,8 +296,8 @@ STATUS CopyDataFromTorchTensor(char *dst_data, const at::Tensor &torch_tensor, T
   return RET_OK;
 }
 
-STATUS ConvertConstNode(const torch::jit::Node *torch_node, const FuncGraphPtr &anf_graph,
-                        std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map) {
+STATUS PytorchModelParser::ConvertConstNode(const torch::jit::Node *torch_node, const FuncGraphPtr &anf_graph,
+                                            std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map) {
   ParameterPtr parameter = nullptr;
   auto output = torch_node->output();
   auto type_kind = output->type()->kind();

@@ -45,6 +45,8 @@ class PytorchModelParser : public converter::ModelParser {
   STATUS ConvertGraphOutputs(const FuncGraphPtr &anf_graph);
   STATUS ConvertNodes(const FuncGraphPtr &anf_graph);
   STATUS TorchModelAdjust(const FuncGraphPtr &anf_graph);
+  STATUS ConvertConstNode(const torch::jit::Node *torch_node, const FuncGraphPtr &anf_graph,
+                          std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map);
   static tensor::TensorPtr ConvertTorchTensor(const at::Tensor &torch_tensor);
 
   std::shared_ptr<torch::jit::Graph> torch_model_;
