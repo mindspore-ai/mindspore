@@ -259,7 +259,7 @@ AnfNodePtr MoveKCallerToBprop(const FuncGraphManagerPtr &manager, const FuncGrap
     if (origin_bprop_getter != nullptr) {
       auto new_bprop_getter = bprop_fg->NewCNodeInOrder(
         {NewValueNode(prim::kPrimTupleGetItem), new_k_fg_caller, NewValueNode(static_cast<int64_t>(1))});
-      manager->Replace(origin_bprop_getter, new_bprop_getter);
+      (void)manager->Replace(origin_bprop_getter, new_bprop_getter);
     }
     return new_k_fg_caller;
   }
@@ -341,11 +341,11 @@ void AddDependNodes(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg, 
     auto new_k_fg_caller = MoveKCallerToBprop(manager, bprop_fg, dependencies[i].first, depend_inputs);
     auto forward_getter = GetForwardGetter(manager, dependencies[i].first);
     if (forward_getter == nullptr) {
-      manager->Replace(dependencies[i].first, new_k_fg_caller);
+      (void)manager->Replace(dependencies[i].first, new_k_fg_caller);
     } else {
       auto new_forward_getter = bprop_fg->NewCNode(
         {NewValueNode(prim::kPrimTupleGetItem), new_k_fg_caller, NewValueNode(static_cast<int64_t>(0))});
-      manager->Replace(forward_getter, new_forward_getter);
+      (void)manager->Replace(forward_getter, new_forward_getter);
     }
   }
 }

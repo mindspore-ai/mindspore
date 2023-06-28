@@ -72,7 +72,7 @@ class ReplaceApplicator : public AnfVisitor {
     return nullptr;
   }
 
-  bool NoInline(const FuncGraphPtr &fg) {
+  bool NoInline(const FuncGraphPtr &fg) const {
     if (fg == nullptr || fg->has_flag(FUNC_GRAPH_FLAG_NO_INLINE) || fg->has_flag(FUNC_GRAPH_FLAG_DEFER_INLINE) ||
         fg->stub() || *(fg->switch_input()) || *(fg->switch_layer_input())) {
       return true;
