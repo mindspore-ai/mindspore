@@ -30,8 +30,8 @@ namespace mindspore {
 namespace lite {
 InferKernel *SingleGraphScheduler::Schedule(const CompileResultPtr &node_list) {
   // infer shape
-  auto infer_ret = lite::FallBackInferShape(node_list, compile_option_->format, context_.get());
-  if (infer_ret != RET_OK && infer_ret != lite::RET_INFER_INVALID) {
+  auto infer_ret = FallBackInferShape(node_list, compile_option_->graph_format, context_.get());
+  if (infer_ret != RET_OK && infer_ret != RET_INFER_INVALID) {
     MS_LOG(ERROR) << "InferShape CompileResult node failed.";
     return nullptr;
   }
@@ -43,7 +43,7 @@ InferKernel *SingleGraphScheduler::Schedule(const CompileResultPtr &node_list) {
   execution_flow_->SetTensors(node_list->GetTensors());
   execution_flow_->SetContext(context_);
   auto schedule_ret = SelectKernel(node_list);
-  if (schedule_ret != lite::RET_OK) {
+  if (schedule_ret != RET_OK) {
     MS_LOG(ERROR) << "Scheduler CompileResult to kernels failed.";
     return nullptr;
   }
@@ -76,20 +76,20 @@ int SingleGraphScheduler::SelectKernel(const CompileResultPtr &node_list) {
   kernel_selector_ = kernel::CreateKernelSelector(compile_option_);
   std::vector<InferKernel *> kernels;
   for (const auto &node : node_list->GetNodes()) {
-    MSLITE_CHECK_PTR_RETURN(node, lite::RET_NULL_PTR);
+    MSLITE_CHECK_PTR_RETURN(node, RET_NULL_PTR);
     auto kernel_exec =
-      kernel_selector_->CreateKernel({node->GetType(), node->GetKernelAttr(), compile_option_->format,
+      kernel_selector_->CreateKernel({node->GetType(), node->GetKernelAttr(), compile_option_->graph_format,
                                       compile_option_->backend, node->GetBaseOperator(), node->GetCNode()},
                                      node->GetInputs(), node->GetOutputs(), context_.get());
     if (kernel_exec == nullptr) {
       MS_LOG(ERROR) << "Create kernel exec for node: " << node->GetName() << " failed.";
-      return lite::RET_NOT_SUPPORT;
+      return RET_NOT_SUPPORT;
     }
     kernel_exec->set_name(node->GetName());
     kernels.push_back(kernel_exec);
   }
   execution_flow_->SetKernels(kernels);
-  return lite::RET_OK;
+  return RET_OK;
 }
 
 bool SingleGraphScheduler::HandleWeightForKernels() {
@@ -108,7 +108,7 @@ bool SingleGraphScheduler::HandleWeightForKernels() {
         continue;
       }
       auto ret = CastConstTensorData(input, compile_option_->datatype, context_->device_and_pkg_support_fp16_);
-      if (ret != lite::RET_OK) {
+      if (ret != RET_OK) {
         MS_LOG(ERROR) << "Cast data for tensor: " << input->tensor_name() << " failed.";
         return false;
       }
@@ -119,7 +119,7 @@ bool SingleGraphScheduler::HandleWeightForKernels() {
 
 Status SingleGraphScheduler::OptimizeTranspose(std::vector<InferKernel *> *kernels) {
   auto tensors = execution_flow_->GetTensors();
-  auto ret = lite::pass::DoFormatPass(kernels, &tensors, compile_option_->format);
+  auto ret = pass::DoFormatPass(kernels, &tensors, compile_option_->graph_format);
   if (ret != RET_OK) {
     MS_LOG(INFO) << "Run Optimize transpose pass failed.";
     return kLiteError;

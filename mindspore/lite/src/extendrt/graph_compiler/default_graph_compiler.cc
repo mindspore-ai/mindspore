@@ -33,12 +33,29 @@
 #include "ops/op_name.h"
 #include "src/extendrt/graph_compiler/compile_result_builder.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "src/common/common.h"
 
 namespace mindspore::lite {
 static const std::vector<PrimitivePtr> ms_infer_cut_list = {prim::kPrimReturn,   prim::kPrimPartial,
                                                             prim::kPrimSwitch,   prim::kPrimMakeTuple,
                                                             prim::kPrimBpropCut, prim::kPrimSwitchLayer};
 static constexpr auto ms_infer_backend_name = "mindspore_lite_backend";
+
+void DefaultGraphCompiler::InitCompileOption(const FuncGraphPtr &graph) {
+  if (option_ != nullptr) {
+    MS_LOG(INFO) << "CompileOption is already inited.";
+    return;
+  }
+  option_ = std::make_shared<CompileOption>();
+  auto format_value = graph->get_attr(mindspore::ops::kFormat);
+  if (format_value != nullptr) {
+    option_->graph_format = Format(GetValue<int64_t>(format_value));
+  }
+  auto input_format_value = graph->get_attr(kInputFormat);
+  if (input_format_value != nullptr) {
+    option_->graph_input_format = Format(GetValue<int32_t>(input_format_value));
+  }
+}
 
 std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::Compile(FuncGraphPtr graph) {
   MS_LOG(INFO) << "DefaultGraphCompiler::Compile";
@@ -49,11 +66,7 @@ std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::Compile(Fu
     return nullptr;
   }
 
-  option_ = std::make_shared<CompileOption>();
-  auto format_value = graph->get_attr(mindspore::ops::kFormat);
-  if (format_value != nullptr) {
-    option_->format = Format(GetValue<int64_t>(format_value));
-  }
+  InitCompileOption(graph);
 
   MS_LOG(DEBUG) << "DefaultGraphCompiler::Compile Partition FunctionGraph Begin";
   auto graph_segments = Partition(graph);
@@ -87,7 +100,7 @@ std::vector<GraphSegmentPtr> DefaultGraphCompiler::Partition(const FuncGraphPtr 
 
 CompileResultPtr DefaultGraphCompiler::Compile(const GraphSegmentPtr &segment, const std::vector<AnfNodePtr> &inputs,
                                                const std::vector<AnfNodePtr> &outputs) {
-  auto builder = std::make_shared<CompileResultBuilder>(option_->format);
+  auto builder = std::make_shared<CompileResultBuilder>(option_);
   return builder->Build(segment, inputs, outputs);
 }
 
@@ -198,7 +211,7 @@ std::shared_ptr<infer::abstract::ExecutionPlan> DefaultGraphCompiler::NonCFGComp
       auto it = std::find_if(graph_inputs.begin(), graph_inputs.end(),
                              [&input_node](const AnfNodePtr &node) { return node == input_node; });
       if (it != graph_inputs.end()) {
-        input_tensor->set_category(lite::GRAPH_INPUT);
+        input_tensor->set_category(GRAPH_INPUT);
         graph_input_tensors.emplace_back(input_tensor);
       }
     }
@@ -261,7 +274,7 @@ InferTensor *DefaultGraphCompiler::CreateTensor(const AnfNodePtr &node) {
     std::vector<int> lite_shape;
     std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(lite_shape),
                    [](int64_t dim) { return static_cast<int>(dim); });
-    auto lite_tensor = new lite::Tensor(data_type, lite_shape);
+    auto lite_tensor = new InferTensor(data_type, lite_shape);
     if (lite_tensor == nullptr) {
       MS_LOG(ERROR) << "DefaultGraphCompiler::CreateTensor new tensor failed, may be memory is not enough";
       return nullptr;

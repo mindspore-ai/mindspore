@@ -105,6 +105,23 @@ bool VectorReplace(std::vector<T> *vec, T srcElement, T dstElement) {
 }
 
 template <typename T>
+std::string ShapeVectorToStr(const std::vector<T> &shape) {
+  std::ostringstream oss;
+  bool first_dim = true;
+  oss << "[";
+  for (auto &x : shape) {
+    if (!first_dim) {
+      oss << ", ";
+    } else {
+      first_dim = false;
+    }
+    oss << x;
+  }
+  oss << "]";
+  return oss.str();
+}
+
+template <typename T>
 bool CommonCheckTensorType(const std::vector<T *> &tensors, size_t index, TypeId input_type) {
   if (tensors.at(index) == nullptr) {
     MS_LOG(ERROR) << "Tensors index: " << index << " is a nullptr";

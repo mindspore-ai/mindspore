@@ -81,7 +81,9 @@ Status MemoryOffloadInferSession::BuildCustomAscendKernel(const CNodePtr &cnode,
 
 Status MemoryOffloadInferSession::CompileGraph(FuncGraphPtr graph, const void *data, size_t size, uint32_t *) {
   MS_LOG(INFO) << "MemoryOffloadInferSession::CompileGraph";
-  lite::CompileResultBuilder compiler(NCHW);
+  auto compile_option = std::make_shared<CompileOption>();
+  compile_option->graph_format = NCHW;
+  lite::CompileResultBuilder compiler(compile_option);
   lite::CompileResultPtr compile_result_ = compiler.Build(graph);
   if (compile_result_ == nullptr) {
     MS_LOG(ERROR) << "Failed to build compile result";

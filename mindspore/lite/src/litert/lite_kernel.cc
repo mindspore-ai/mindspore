@@ -16,7 +16,6 @@
 
 #include "src/litert/lite_kernel.h"
 #include <algorithm>
-#include "src/tensor.h"
 #include "src/common/utils.h"
 #include "src/litert/infer_manager.h"
 
@@ -39,6 +38,25 @@ void LiteKernel::FreeWorkspace() {
   }
   workspace_ = nullptr;
   ws_allocated_ = false;
+}
+
+int LiteKernel::InferShape() {
+  auto ret = lite::KernelInferShape(in_tensors_, out_tensors_, op_parameter_, ms_context_->allocator);
+#ifdef Debug
+  std::ostringstream oss;
+  oss << "LiteKernel(" << this->name() << ") InferShape ret: " << ret << ", shape:";
+  bool first_output = true;
+  for (auto &output : out_tensors_) {
+    if (first_output) {
+      first_output = false;
+    } else {
+      oss << ", ";
+    }
+    oss << lite::ShapeVectorToStr(output->shape());
+  }
+  MS_LOG(INFO) << oss.str();
+#endif
+  return ret;
 }
 
 int LiteKernel::PreProcess() {

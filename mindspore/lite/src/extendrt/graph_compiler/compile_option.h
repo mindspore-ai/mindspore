@@ -18,15 +18,19 @@
 #define MINDSPORE_LITE_SRC_EXTENDRT_GRAPH_COMPILER_COMPILE_OPTION_H
 
 #include <string>
+#include <memory>
 #include "mindapi/base/format.h"
 #include "mindapi/base/type_id.h"
 #include "src/extendrt/kernel/kernel_spec_infos.h"
 
 namespace mindspore::lite {
 struct CompileOption {
-  Format format{Format::NHWC};
+  Format graph_format{Format::NCHW};
+  Format graph_input_format{Format::NCHW};
   std::string backend{kernel::kBackendCPU};
   TypeId datatype{kNumberTypeFloat32};
 };
+
+using CompileOptionPtr = std::shared_ptr<CompileOption>;
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_GRAPH_COMPILER_COMPILE_OPTION_H

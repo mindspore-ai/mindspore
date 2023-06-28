@@ -28,6 +28,7 @@ namespace infer::abstract {
 using Tensor = mindspore::lite::Tensor;
 }
 using InferTensor = infer::abstract::Tensor;
+using InferTensorPtr = std::shared_ptr<InferTensor>;
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_INFER_TENSOR_H_
