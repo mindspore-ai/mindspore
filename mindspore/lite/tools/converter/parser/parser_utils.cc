@@ -294,7 +294,7 @@ int UnifyVariableConvWeight(const FuncGraphPtr &graph, const AnfNodePtr &weight_
           MS_LOG(ERROR) << "fetch shape from abstract failed.";
           return RET_ERROR;
         }
-        if (!weight_shape.empty()) {
+        if (!lite::JudgeDynamicShape(weight_shape)) {
           if (weight_shape.size() != opt::kInputSizeFour) {
             MS_LOG(ERROR) << "conv weight shape is invalid, which is not 4D, now is " << weight_shape.size();
             return RET_ERROR;
@@ -397,7 +397,7 @@ int HandleConstConvWeightShared(const FuncGraphPtr &graph, const AnfNodePtr &wei
 
       auto weight_shape = weight_value->shape();
       ShapeVector shape;
-      if (!weight_shape.empty()) {
+      if (!lite::JudgeDynamicShape(weight_shape)) {
         if (weight_shape.size() != opt::kInputSizeFour) {
           MS_LOG(ERROR) << "conv weight shape is invalid, which is not 4D, now is " << weight_shape.size();
           return RET_ERROR;
