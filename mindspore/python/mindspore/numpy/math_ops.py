@@ -483,15 +483,6 @@ def power(x1, x2, dtype=None):
         [ 1. 16.]
         [ 1. 16.]]
     """
-    def _check(min_val):
-        if min_val < 0:
-            raise ValueError("Integers to negative integer powers are not allowed.")
-
-    int_list = [mstype.int8, mstype.int16, mstype.int32, mstype.int64, mstype.uint8, mstype.uint16, mstype.uint32,
-                mstype.uint64]
-    if x1.dtype not in int_list or x2.dtype not in int_list:
-        return _apply_tensor_op(F.tensor_pow, x1, x2, dtype=dtype)
-    _check(x2.min())
     return _apply_tensor_op(F.tensor_pow, x1, x2, dtype=dtype)
 
 
