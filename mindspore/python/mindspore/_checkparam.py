@@ -561,6 +561,7 @@ def check_str_by_regular(target, reg=None, flag=re.ASCII, prim_name=None):
     return True
 
 
+# pylint: disable=missing-docstring
 def check_str_and_none_by_regular(target, reg=None, flag=re.ASCII, prim_name=None):
     if reg is None:
         # Named string regular expression
