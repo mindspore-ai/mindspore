@@ -246,7 +246,6 @@ class COMMON_EXPORT MindIRExporter {
   bool CreateParameterDir();
   std::shared_ptr<Parameter> GetFgParaAccordingToProtoName(const std::string &proto_name);
   bool ChangeParaDataFile(const std::string &file);
-  bool IsSystemLittleEndidan() const;
   std::string CreateExternalPath(const std::string &external_file);
 
  private:

@@ -59,29 +59,16 @@ void CompileCacheContext::SetChildGraphs(const std::vector<FuncGraphPtr> &child_
   child_graphs_ = child_graphs;
 }
 
-void CompileCacheContext::SetGraphExecutionOrder(const FuncGraphPtr &graph, const std::vector<CNodePtr> &orders) {
-  auto iter = graph_execution_order_map_.find(graph);
-  if (iter != graph_execution_order_map_.end()) {
-    return;
-  }
-  graph_execution_order_map_[graph] = orders;
-}
-
-std::vector<CNodePtr> CompileCacheContext::GraphExecutionOrder(const FuncGraphPtr &graph) const {
-  auto iter = graph_execution_order_map_.find(graph);
-  if (iter != graph_execution_order_map_.end()) {
+std::string CompileCacheContext::GetBackendGraphCachePath(const FuncGraphPtr &front_graph) const {
+  auto iter = front_graph_to_backend_graph_cache_path_.find(front_graph);
+  if (iter != front_graph_to_backend_graph_cache_path_.end()) {
     return iter->second;
   }
-  return {};
+  return "";
 }
 
-std::string CompileCacheContext::GetBackendGraphDir() {
-  return CompileCacheDir() + "/" + mindspore::kBackendGraphCacheSubDir;
-}
-
-std::string CompileCacheContext::GetKernelGraphCachePath(size_t frontend_idx) {
-  const auto &dir = GetBackendGraphDir();
-  return dir + "/" + kCompileCacheFileName + "_" + std::to_string(frontend_idx);
+void CompileCacheContext::InsertBackendGraphCachePath(const FuncGraphPtr &front_graph, const std::string &path) {
+  front_graph_to_backend_graph_cache_path_[front_graph] = path;
 }
 
 void CompileCacheContext::AddBackendGraphToFrontendGraph(const FuncGraphPtr &backend_graph, FuncGraph *frontend_graph) {
@@ -118,14 +105,11 @@ void CompileCacheContext::Clear() {
   front_graph_ = nullptr;
   use_compile_cache_ = false;
   fusion_op_build_info_flag_ = false;
-  compile_id_ = 0;
-  compile_cache_dir_ = "";
-  role_ = "";
   child_graphs_.clear();
-  graph_execution_order_map_.clear();
   backend_graph_to_frontend_graph_.clear();
   fullname_io_size.clear();
+  front_graph_to_backend_graph_cache_path_.clear();
   backend_param_gen_from_frontend_param_.clear();
-  param_name_to_node_.clear();
+  ps_or_cluster_mode_ = false;
 }
 }  // namespace mindspore

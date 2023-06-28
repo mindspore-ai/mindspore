@@ -343,7 +343,6 @@ class MSANFModelParser {
   abstract::AbstractBasePtr BuildAbstractFunction(const mind_ir::AttributeProto &attr_proto);
   void CorrectFuncGraph(const FuncGraphPtr &root);
   bool BuildFuncGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
-  bool BuildKernelGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
   bool BuildAttrForFuncGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
   bool BuildAttrForCNode(const CNodePtr &cnode, const mind_ir::NodeProto &node_proto);
   ValuePtr GetValueFromAttributeProto(const mind_ir::AttributeProto &attr_proto);
@@ -2017,35 +2016,6 @@ bool MSANFModelParser::BuildFuncGraph(const FuncGraphPtr &output_graph, const mi
   return false;
 }
 
-bool MSANFModelParser::BuildKernelGraph(const FuncGraphPtr &output_graph, const mind_ir::GraphProto &import_proto) {
-  MS_EXCEPTION_IF_NULL(output_graph);
-  if (!import_proto.has_name()) {
-    MS_LOG(ERROR) << "KernelGraph under converting has not name!";
-    return false;
-  }
-  GraphDebugInfoPtr debug_info_ptr = output_graph->debug_info();
-  MS_EXCEPTION_IF_NULL(debug_info_ptr);
-  debug_info_ptr->set_name(import_proto.name());
-
-  if (!BuildAttrForFuncGraph(output_graph, import_proto)) {
-    MS_LOG(ERROR) << "Build attribute for graph fail!";
-  }
-  if (!ImportParametersForGraph(output_graph, import_proto)) {
-    MS_LOG(ERROR) << "Import parameters for graph fail!";
-    return false;
-  }
-  if (!ImportMapParametersForGraph(output_graph, import_proto)) {
-    MS_LOG(ERROR) << "Import map parameters for graph failed!";
-    return false;
-  }
-  if (ImportNodesForGraph(output_graph, import_proto)) {
-    MS_LOG(DEBUG) << "Success to parse graph: " << output_graph->ToString();
-    return true;
-  }
-  MS_LOG(ERROR) << "Failed to parse nodes. ";
-  return false;
-}
-
 bool MSANFModelParser::SetValueForTopGraphParameter(const FuncGraphPtr &topGraph,
                                                     const std::map<std::string, ValuePtr> &weights) {
   size_t fv_param_count = 0;
@@ -2162,6 +2132,29 @@ bool MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto, const std::
   if (name_to_node) {
     anfnode_build_map_ = *name_to_node;
   }
+  auto build_params_attrs = [this](const FuncGraphPtr &output_graph, const mind_ir::GraphProto &import_proto) {
+    MS_EXCEPTION_IF_NULL(output_graph);
+    if (!import_proto.has_name()) {
+      MS_LOG(ERROR) << "KernelGraph under converting has not name!";
+      return false;
+    }
+    GraphDebugInfoPtr debug_info_ptr = output_graph->debug_info();
+    MS_EXCEPTION_IF_NULL(debug_info_ptr);
+    debug_info_ptr->set_name(import_proto.name());
+
+    if (!BuildAttrForFuncGraph(output_graph, import_proto)) {
+      MS_LOG(ERROR) << "Build attribute for graph fail!";
+    }
+    if (!ImportParametersForGraph(output_graph, import_proto)) {
+      MS_LOG(ERROR) << "Import parameters for graph fail!";
+      return false;
+    }
+    if (!ImportMapParametersForGraph(output_graph, import_proto)) {
+      MS_LOG(ERROR) << "Import map parameters for graph failed!";
+      return false;
+    }
+    return true;
+  };
   for (int i = 0; i < model_proto.primitives_size(); ++i) {
     if (!BuildPrimitiveNode(model_proto.primitives(i))) {
       MS_LOG(ERROR) << "Parse primitives info for pb file failed! " << model_proto.primitives(i).DebugString();
@@ -2172,10 +2165,13 @@ bool MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto, const std::
   const auto &root = FindGraphByName(graphs, graph_build.name());
   MS_EXCEPTION_IF_NULL(root);
 
-  // Forward declare FuncGraph name
-  // Compatible with the previous proto.
   if (graph_build.has_name()) {
     anfnode_build_map_[graph_build.name()] = NewValueNodeWithAbstract(root);
+  }
+  top_graph_ = root;
+  if (!build_params_attrs(root, graph_build)) {
+    MS_LOG(ERROR) << "Build funcgraph params and attrs failed.";
+    return false;
   }
   for (int i = 0; i < model_proto.functions_size(); ++i) {
     const auto &graph_proto = model_proto.functions(i);
@@ -2193,23 +2189,28 @@ bool MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto, const std::
     auto debug_info = graph->debug_info();
     debug_info->set_name(graph_name);
     anfnode_build_map_[graph_name] = NewValueNodeWithAbstract(graph);
+    if (!build_params_attrs(graph, graph_proto)) {
+      MS_LOG(ERROR) << "Build funcgraph params and attrs failed.";
+      return false;
+    }
   }
 
   // Parser the proto.
-  if (!BuildKernelGraph(root, graph_build)) {
-    MS_LOG(ERROR) << "Build funcgraph failed!";
+  if (!ImportNodesForGraph(root, graph_build)) {
+    MS_LOG(ERROR) << "Build funcgraph " << graph_build.name() << " value node and cnode failed.";
     return false;
+  } else {
+    MS_LOG(DEBUG) << "Parse pb to build FuncGraph Success! graph: " << graph_build.name();
   }
-  MS_LOG(DEBUG) << "Parse pb to build FuncGraph Success! graph: " << graph_build.name() << ": " << root.get();
-  top_graph_ = root;
   for (int i = 0; i < model_proto.functions_size(); ++i) {
     const auto &graph_proto = model_proto.functions(i);
     FuncGraphPtr graph = GetValueNode<FuncGraphPtr>(anfnode_build_map_[graph_proto.name()]);
-    if (!BuildKernelGraph(graph, graph_proto)) {
-      MS_LOG(ERROR) << "Build funcgraph failed!";
+    if (!ImportNodesForGraph(graph, graph_proto)) {
+      MS_LOG(ERROR) << "Build funcgraph " << graph_proto.name() << " value node and cnode failed.";
       return false;
+    } else {
+      MS_LOG(DEBUG) << "Parse pb to build FuncGraph Success! graph: " << graph_build.name();
     }
-    MS_LOG(DEBUG) << "Parse pb to build FuncGraph Success! graph: " << graph_proto.name() << ": " << graph.get();
   }
   if (name_to_node) {
     *name_to_node = anfnode_build_map_;

@@ -20,14 +20,13 @@
 #include <string>
 #include <memory>
 #include "pybind11/pybind11.h"
+#include "include/backend/kernel_graph.h"
 #include "ir/func_graph.h"
 #include "load_mindir/load_model.h"
 
 namespace mindspore {
 namespace pipeline {
 namespace py = pybind11;
-
-std::string GetCompileCacheDir();
 
 // A class for loading and caching the func_graph.
 class CompileCacheManager {
@@ -53,15 +52,12 @@ class CompileCacheManager {
 
   void SetCompileCacheDir(const std::string &dir) { compile_cache_dir_ = dir; }
   std::string CompileCacheDir() const { return compile_cache_dir_; }
-  void SetRole(const std::string &role) { role_ = role; }
-  std::string Role() const { return role_; }
 
  private:
   size_t compile_cache_id_;
   std::string compile_cache_dep_files_hash_;
   LayoutMap layout_map_;
   std::string compile_cache_dir_;
-  std::string role_;
 };
 using CompileCacheManagerPtr = std::shared_ptr<CompileCacheManager>;
 }  // namespace pipeline

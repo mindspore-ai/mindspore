@@ -1148,21 +1148,19 @@ void KernelGraphMgr::CacheKernelGraph(const KernelGraphPtr &kg) {
   MS_EXCEPTION_IF_NULL(kg);
   auto &context = CompileCacheContext::GetInstance();
   auto fg = context.FrontGraph();
-  if (fg == nullptr) {
-    MS_LOG(ERROR) << "The frontend graph to be cached is null";
-    return;
+  if (!fg) {
+    MS_LOG(EXCEPTION) << "The frontend graph to be cached is null";
   }
-  if (kg == nullptr) {
-    MS_LOG(ERROR) << "The backend graph to be cached is null";
-    return;
+  if (!kg) {
+    MS_LOG(EXCEPTION) << "The backend graph to be cached is null";
   }
   std::vector<AnfNodePtr> temp_nodes;
   std::map<KernelGraphPtr, std::vector<AnfNodePtr>> isolated_nodes_map;
   HandleParamExistCorrespondFrontendParam(kg);
   GetIsolatedNodes(kg, &temp_nodes);
   isolated_nodes_map[kg] = temp_nodes;
-  auto compile_id = context.CompileId();
-  std::string mindir_path = context.GetKernelGraphCachePath(compile_id) + kMindIrSuffix;
+  auto cache_path = context.GetBackendGraphCachePath(fg);
+  std::string mindir_path = cache_path + kMindIrSuffix;
   std::set<KernelGraphPtr> visit;
   std::set<KernelGraphPtr> child_graphs;
   GetAllChildGraph(kg, &visit, &child_graphs);
@@ -1184,7 +1182,7 @@ void KernelGraphMgr::CacheKernelGraph(const KernelGraphPtr &kg) {
   }
   std::for_each(front_backend_graph_map_.begin(), front_backend_graph_map_.end(),
                 [&context](const auto &fb) { context.AddBackendGraphToFrontendGraph(fb.second, fb.first); });
-  std::string json_path = context.GetKernelGraphCachePath(compile_id) + kJsonSuffix;
+  std::string json_path = cache_path + kJsonSuffix;
   if (!DumpKernelGraphJson(kg, child_graphs, isolated_nodes_map, json_path)) {
     MS_LOG(ERROR) << "Failed to cache kernel graph to json.";
     return;
@@ -2117,13 +2115,11 @@ void ResetGetNextSharedName(const FuncGraphPtr &graph) {
 std::shared_ptr<KernelGraph> KernelGraphMgr::ConstructKernelGraph(std::vector<KernelGraphPtr> *all_out_graph) {
   MS_LOG(WARNING) << "Use the compile cache to construct kernel graph, Be aware of correctness risks.";
   auto &context = CompileCacheContext::GetInstance();
-  auto compile_id = context.CompileId();
-  auto cache_path = context.GetKernelGraphCachePath(compile_id);
-  std::string mindir_path = cache_path + kMindIrSuffix;
-  auto real_path = Common::CreatePrefixPath(mindir_path, true);
-  if (!CheckPath(real_path)) {
-    MS_LOG(EXCEPTION) << "The mindir path is " << mindir_path << ", and it is a invalid path!";
+  auto frontend_graph = context.FrontGraph();
+  if (!frontend_graph) {
+    MS_LOG(EXCEPTION) << "The frontend graph is null";
   }
+  auto cache_path = context.GetBackendGraphCachePath(frontend_graph);
   std::string json_path = cache_path + kJsonSuffix;
   nlohmann::json model_json;
   auto load_json_success = LoadJson(json_path, &model_json);
@@ -2132,6 +2128,7 @@ std::shared_ptr<KernelGraph> KernelGraphMgr::ConstructKernelGraph(std::vector<Ke
   }
   // construct kernel graph and its params that exist correspond frontend param
   MS_LOG(DEBUG) << "Construct kernel graph and its params that exist correspond frontend param.";
+  mindspore::HashMap<std::string, AnfNodePtr> name_to_node;
   for (size_t i = 0; i < model_json.size(); i++) {
     auto kernel_graph = NewKernelGraph();
     all_out_graph->push_back(kernel_graph);
@@ -2155,7 +2152,7 @@ std::shared_ptr<KernelGraph> KernelGraphMgr::ConstructKernelGraph(std::vector<Ke
                     << ", new node = " << param_unique_name;
       auto new_parameter = CreateNewParameter(front_param, kernel_graph.get());
       kernel_graph->FrontBackendMapAdd(front_param, new_parameter);
-      context.InsertParamNameToNode(param_unique_name, new_parameter);
+      name_to_node[param_unique_name] = new_parameter;
     }
   }
 
@@ -2164,7 +2161,11 @@ std::shared_ptr<KernelGraph> KernelGraphMgr::ConstructKernelGraph(std::vector<Ke
                  [](const KernelGraphPtr &g) { return g; });
 
   MindIRLoader mindir_loader;
-  mindspore::HashMap<std::string, AnfNodePtr> name_to_node = context.GetParamNameToNodeMap();
+  std::string mindir_path = cache_path + kMindIrSuffix;
+  auto real_path = Common::CreatePrefixPath(mindir_path, true);
+  if (!CheckPath(real_path)) {
+    MS_LOG(EXCEPTION) << "The mindir path is " << mindir_path << ", and it is a invalid path!";
+  }
   if (!mindir_loader.LoadMindIR(real_path.value(), graphs_for_load, &name_to_node)) {
     MS_LOG(EXCEPTION) << "Load mindir from " << real_path.value() << " failed.";
   }

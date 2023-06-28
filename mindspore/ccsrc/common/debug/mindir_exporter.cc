@@ -214,7 +214,6 @@ ModelProtoPtr IrExporter::GetDumpProto(const FuncGraphPtr &root_graph, const std
                                        const std::vector<AnfNodePtr> &isolated_nodes) {
   // Export model info
   builder_->BuildModelInfo();
-
   // Export model and return string
   if (!builder_->BuildModel(root_graph, child_graphs, isolated_nodes)) {
     return nullptr;
@@ -1977,15 +1976,9 @@ bool MindIRExporter::ChangeParaDataFile(const std::string &file) {
     return false;
   }
   char front_info[OFFSET]{0};
-  front_info[0] = IsSystemLittleEndidan();
+  front_info[0] = common::IsLittleByteOrder();
   (void)data_fs_->write(front_info, OFFSET);
   return true;
-}
-
-bool MindIRExporter::IsSystemLittleEndidan() const {
-  int check = 0x01;
-  auto address = reinterpret_cast<int8_t *>(&check);
-  return *address == 0x01;
 }
 
 bool MindIRExporter::PreProcSaveTogether(const FuncGraphPtr &func_graph) {
