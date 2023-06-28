@@ -581,8 +581,14 @@ build_lite() {
         fi
       fi
       make package
+      local package_wheel=${MSLITE_ENABLE_PACKAGE_WHEEL}
+      if [[ ("${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE}" == "on") || ("${MSLITE_ENABLE_CLOUD_INFERENCE}" == "on") || ("${MSLITE_ENABLE_SERVER_INFERENCE}" == "on") ]] && [[ ${MSLITE_ENABLE_PACKAGE_WHEEL} == "" ]]; then
+        package_wheel=on
+      fi
       if [[ "${local_lite_platform}" == "x86_64" && "X$CMAKE_TOOLCHAIN_FILE" == "X" ]]; then
-        build_python_wheel_package "x86_64"
+        if [[ "${package_wheel}" == "on" ]]; then
+          build_python_wheel_package "x86_64"
+        fi
         if [ "${JAVA_HOME}" ]; then
           echo -e "\e[31mJAVA_HOME=$JAVA_HOME  \e[0m"
           build_lite_jni_and_jar "${CMAKE_ARGS}" "x86_64"
@@ -591,7 +597,9 @@ build_lite() {
             echo -e "\e[31mIf you want to compile the JAR package, please set $JAVA_HOME. For example: export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64 \e[0m"
         fi
       elif [[ "${local_lite_platform}" == "arm64" ]] && [[ "${machine}" == "aarch64" ]]; then
-        build_python_wheel_package "aarch64"
+        if [[ "${package_wheel}" == "on" ]]; then
+          build_python_wheel_package "aarch64"
+        fi
         if [ "${JAVA_HOME}" ]; then
           echo -e "\e[31mJAVA_HOME=$JAVA_HOME  \e[0m"
           build_lite_jni_and_jar "${CMAKE_ARGS}" "aarch64"
