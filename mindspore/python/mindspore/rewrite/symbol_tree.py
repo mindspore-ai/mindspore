@@ -865,6 +865,7 @@ class SymbolTree(Observer, Observable):
         self._topo_mgr.on_update_arg_by_node(real_dst_node, arg_idx, real_src_node, out_idx)
 
     def unique_name(self, name: str):
+        """Get a unique name in the symboltree"""
         return self._target_namer.get_name(name)
 
     def set_node_target(self, node: Union[Node, str], index: int, target: Union[ScopedValue, str]):

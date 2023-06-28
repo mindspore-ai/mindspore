@@ -107,6 +107,15 @@ class TargetNamer(Namer):
     Used for unique-ing targets of node.
     """
     def get_unique_name(self, origin_name: str) -> str:
+        """
+        Get unique name from 'origin_name'.
+
+        Args:
+            origin_name (str): Origin name which may be duplicated.
+
+        Returns:
+            A string represents unique-name.
+        """
         return super(TargetNamer, self).get_name(origin_name)
 
 

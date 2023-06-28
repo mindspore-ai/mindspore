@@ -49,6 +49,85 @@ class TopoManager(Observable):
                     results.append(user)
         return results
 
+    @staticmethod
+    def on_update_target(node: Node, index: int, old_target: ScopedValue, new_target: ScopedValue):
+        """
+        Update node's dicts while updating target of node.
+
+        Args:
+            node (Node): An instance of Node whose target being updated.
+            arg_idx (int): An int indicates which target of node being updated.
+            old_target (ScopedValue): An instance of ScopedValue represents old target.
+            new_target (ScopedValue): An instance of ScopedValue represents new target.
+        """
+        # Update old_target provider node's target_user dict & old arg's user nodes' arg_providers dict
+        old_provider = TopoManager._get_value_provider(node, old_target)
+        if old_provider:
+            for user in node.get_target_users(index):
+                old_provider[0].append_target_users(old_provider[1], user)
+                user[0].set_arg_providers(user[1], old_provider)
+        else:
+            for user in node.get_target_users(index):
+                user[0].set_arg_providers(user[1], ())
+        # Update new_target node's target_users dict & new user nodes' arg_providers dict
+        node.get_target_users().clear()
+        provider = TopoManager._get_value_provider(node, new_target)
+        if provider:
+            TopoManager._update_target_users_by_node(node, index, provider)
+        else:
+            TopoManager._update_target_users_by_value(node, index, new_target)
+
+    @staticmethod
+    def _update_target_users_by_value(node, index, value: ScopedValue):
+        """
+        Update node's _target_users by ScopedValue when insert a new node.
+        This function is called when target is not found in previous nodes, which means a new target name is set.
+        """
+        search_node = node.get_next()
+        while search_node is not None:
+            if search_node.get_normalized_args() is not None:
+                for arg_index, arg in enumerate(search_node.get_normalized_args().values()):
+                    if arg == value:
+                        node.append_target_users(index, (search_node, arg_index))
+                        search_node.set_arg_providers(arg_index, (node, index))
+            if search_node.get_targets() is not None:
+                for _, target in enumerate(search_node.get_targets()):
+                    if target == value:
+                        return
+            search_node = search_node.get_next()
+        return
+
+    @staticmethod
+    def _update_target_users_by_node(node, index, provider: (Node, int)):
+        """
+        Update node's _target_users by previous node when insert a new node.
+        This function is called when target is found in previous nodes, which means a repeat target name is set.
+        """
+        nodes_before_insert = []
+        search_node = provider[0].get_next()
+        while search_node is not None:
+            nodes_before_insert.append(search_node)
+            if search_node == node:
+                break
+            search_node = search_node.get_next()
+        provider_target_users = provider[0].get_target_users(provider[1])
+        for user in provider_target_users:
+            if user[0] not in nodes_before_insert:
+                node.append_target_users(index, user)
+                provider_target_users.remove(user)
+                user[0].set_arg_providers(user[1], (node, index))
+
+    @staticmethod
+    def _get_value_provider(node, value: ScopedValue):
+        node = node.get_prev()
+        while node is not None:
+            if node.get_targets() is not None:
+                for index, target in enumerate(node.get_targets()):
+                    if target == value:
+                        return (node, index)
+            node = node.get_prev()
+        return ()
+
     def topo_changed(self):
         """
         The function is executed when an Event.TopologicalChangeEvent event is received.
@@ -65,17 +144,17 @@ class TopoManager(Observable):
         """
         if node.get_normalized_args() is not None:
             for index, arg in enumerate(node.get_normalized_args().values()):
-                provider = self._get_value_provider(node, arg)
+                provider = TopoManager._get_value_provider(node, arg)
                 if provider:
                     node.set_arg_providers(index, provider)
                     provider[0].append_target_users(provider[1], (node, index))
         if node.get_targets() is not None:
             for index, target in enumerate(node.get_targets()):
-                provider = self._get_value_provider(node, target)
+                provider = TopoManager._get_value_provider(node, target)
                 if provider:
-                    self._update_target_users_by_node(node, index, provider)
+                    TopoManager._update_target_users_by_node(node, index, provider)
                 else:
-                    self._update_target_users_by_value(node, index, target)
+                    TopoManager._update_target_users_by_value(node, index, target)
         self.topo_changed()
 
     def on_erase_node(self, node: Node):
@@ -90,7 +169,7 @@ class TopoManager(Observable):
         for index, target_users in node.get_target_users().items():
             if not target_users:
                 continue
-            prev_provider = self._get_value_provider(node, node.get_targets()[index])
+            prev_provider = TopoManager._get_value_provider(node, node.get_targets()[index])
             if not prev_provider:
                 logger.warning(f"Node {node.get_name()}'s target {index} is used in node "
                                f"{target_users[0][0].get_name()}'s arg {target_users[0][1]}, "
@@ -128,7 +207,7 @@ class TopoManager(Observable):
             new_arg (ScopedValue): An instance of ScopedValue represents new argument.
         """
         # Update old arg's provider node's target_users.
-        old_provider = self._get_value_provider(node, old_arg)
+        old_provider = TopoManager._get_value_provider(node, old_arg)
         if old_provider:
             old_provider_target_users = old_provider[0].get_target_users(old_provider[1])
             for target_user in old_provider_target_users:
@@ -136,39 +215,12 @@ class TopoManager(Observable):
                     old_provider_target_users.remove(target_user)
                     break
         # Update new arg's provider node's target_users.
-        provider = self._get_value_provider(node, new_arg)
+        provider = TopoManager._get_value_provider(node, new_arg)
         if provider:
             provider[0].append_target_users(provider[1], (node, arg_idx))
         # Update current node's arg_providers.
         node.set_arg_providers(arg_idx, provider)
         self.topo_changed()
-
-    def on_update_target(self, node: Node, index: int, old_target: ScopedValue, new_target: ScopedValue):
-        """
-        Update node's dicts while updating target of node.
-
-        Args:
-            node (Node): An instance of Node whose target being updated.
-            arg_idx (int): An int indicates which target of node being updated.
-            old_target (ScopedValue): An instance of ScopedValue represents old target.
-            new_target (ScopedValue): An instance of ScopedValue represents new target.
-        """
-        # Update old_target provider node's target_user dict & old arg's user nodes' arg_providers dict
-        old_provider = self._get_value_provider(node, old_target)
-        if old_provider:
-            for user in node.get_target_users(index):
-                old_provider[0].append_target_users(old_provider[1], user)
-                user[0].set_arg_providers(user[1], old_provider)
-        else:
-            for user in node.get_target_users(index):
-                user[0].set_arg_providers(user[1], ())
-        # Update new_target node's target_users dict & new user nodes' arg_providers dict
-        node.get_target_users().clear()
-        provider = self._get_value_provider(node, new_target)
-        if provider:
-            self._update_target_users_by_node(node, index, provider)
-        else:
-            self._update_target_users_by_value(node, index, new_target)
 
     def on_update_arg_by_node(self, dst_node: Node, arg_idx: int, src_node: Node, out_idx: int):
         """
@@ -222,51 +274,3 @@ class TopoManager(Observable):
         dump_str += tabulate(node_specs, headers=['node type', 'name', 'codes', 'arg providers', 'target users'])
         dump_str += '\n' + "=" * (82 + len(title)) + '\n'
         return dump_str
-
-    def _update_target_users_by_value(self, node, index, value: ScopedValue):
-        """
-        Update node's _target_users by ScopedValue when insert a new node.
-        This function is called when target is not found in previous nodes, which means a new target name is set.
-        """
-        search_node = node.get_next()
-        while search_node is not None:
-            if search_node.get_normalized_args() is not None:
-                for arg_index, arg in enumerate(search_node.get_normalized_args().values()):
-                    if arg == value:
-                        node.append_target_users(index, (search_node, arg_index))
-                        search_node.set_arg_providers(arg_index, (node, index))
-            if search_node.get_targets() is not None:
-                for _, target in enumerate(search_node.get_targets()):
-                    if target == value:
-                        return
-            search_node = search_node.get_next()
-        return
-
-    def _update_target_users_by_node(self, node, index, provider: (Node, int)):
-        """
-        Update node's _target_users by previous node when insert a new node.
-        This function is called when target is found in previous nodes, which means a repeat target name is set.
-        """
-        nodes_before_insert = []
-        search_node = provider[0].get_next()
-        while search_node is not None:
-            nodes_before_insert.append(search_node)
-            if search_node == node:
-                break
-            search_node = search_node.get_next()
-        provider_target_users = provider[0].get_target_users(provider[1])
-        for user in provider_target_users:
-            if user[0] not in nodes_before_insert:
-                node.append_target_users(index, user)
-                provider_target_users.remove(user)
-                user[0].set_arg_providers(user[1], (node, index))
-
-    def _get_value_provider(self, node, value: ScopedValue):
-        node = node.get_prev()
-        while node is not None:
-            if node.get_targets() is not None:
-                for index, target in enumerate(node.get_targets()):
-                    if target == value:
-                        return (node, index)
-            node = node.get_prev()
-        return ()
