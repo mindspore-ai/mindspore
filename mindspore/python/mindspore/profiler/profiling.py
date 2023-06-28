@@ -641,7 +641,6 @@ class Profiler:
 
     def _profiler_init(self, kwargs):
         """Initialize variables when profiler is enabled by environment variables."""
-        logger.warning("Profiler init.")
         options = kwargs.get("env_enable")
         self._has_started = True
         self._start_time = options.get("start_time")
@@ -663,7 +662,6 @@ class Profiler:
 
         if self._device_target == DeviceTarget.ASCEND.value:
             self._ascend_profiler = c_expression.Profiler.get_instance("Ascend")
-            logger.warning("Got ascend_profiler.")
         self._get_devid_rankid_and_devtarget()
 
     def _init_profiler_info(self):
@@ -694,7 +692,6 @@ class Profiler:
             self._gpu_profiler_init(kwargs)
 
         elif self._device_target and self._device_target == DeviceTarget.ASCEND.value:
-            logger.warning("ascend_profiler init.")
             self._ascend_profiler_init(kwargs)
 
     def _cpu_profiler_init(self, kwargs):
@@ -726,7 +723,6 @@ class Profiler:
         # Setup and start MindData Profiling
         if self._data_process:
             self._md_profiler = cde.GlobalContext.profiling_manager()
-            logger.warning("md_profiler init.")
             self._md_profiler.init()
         self._init_time = int(time.time() * 10000000)
         logger.info("Profiling: profiling init time: %d", self._init_time)
@@ -742,7 +738,6 @@ class Profiler:
             raise ValueError(msg)
         # use context interface to open profiling, for the new mindspore version(after 2020.5.21)
         self._ascend_profiler = c_expression.Profiler.get_instance("Ascend")
-        logger.warning("ascend_profiler init.")
         self._ascend_profiler.init(self._output_path, int(self._dev_id), self._ascend_profiling_options)
         base_profiling_container_path = os.path.join(self._output_path, "container")
         container_path = os.path.join(base_profiling_container_path, self._dev_id)
@@ -1470,7 +1465,10 @@ class Profiler:
 
         self._dev_id = dev_id
         self._device_target = device_target.lower()
-        self._rank_id = rank_id
+        if device_target == DeviceTarget.GPU.value:
+            self._rank_id = dev_id
+        else:
+            self._rank_id = rank_id
 
     def _get_output_path(self, kwargs):
         """Get output path of profiling data."""
@@ -1536,9 +1534,9 @@ class Profiler:
         self._timeline_size_limit_byte = timeline_limit * 1024 * 1024
         self._profile_framework = kwargs.pop("profile_framework", "all")
         if self._profile_framework not in ["memory", "time", "all", None]:
-            raise RuntimeError(
-                f"For '{self.__class__.__name__}', the parameter data_process must be one of ['memory',"
-                f" 'time', 'all', None]，but got {self._profile_framework}.")
+            logger.warning(f"For '{self.__class__.__name__}', the parameter profile_framework must be one of ['memory',"
+                           f" 'time', 'all', None]，but got {self._profile_framework}, it will be set to 'all'.")
+            self._profile_framework = "all"
 
     def _analyse_hccl_info(self):
         """Analyse hccl info."""

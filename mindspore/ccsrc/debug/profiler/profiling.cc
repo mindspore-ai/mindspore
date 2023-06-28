@@ -32,6 +32,10 @@ constexpr auto HostDataHeader =
   "tid,pid,parent_pid,module_name,event,stage,level,start_end,custom_info,memory_usage,time_stamp\n";
 const auto kVmRSS = "VmRSS";
 std::mutex file_line_mutex;
+static bool log_once = false;
+const int profile_all = 0;
+const int profile_memory = 1;
+const int profile_time = 2;
 #endif
 std::map<std::string, std::shared_ptr<Profiler>> &Profiler::GetInstanceMap() {
   static std::map<std::string, std::shared_ptr<Profiler>> instance_map = {};
@@ -263,8 +267,11 @@ void CollectHostInfo(const std::string &module_name, const std::string &event, c
 #else
   auto profiler_manager = profiler::ProfilerManager::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_manager);
-  if (!profiler_manager->GetProfilingEnableFlag()) {
+  if (!log_once && !profiler_manager->GetProfilingEnableFlag()) {
     MS_LOG(DEBUG) << "Profiler is not enabled, no need to record Host info.";
+    log_once = true;
+    return;
+  } else if (log_once) {
     return;
   }
   if (!profiler_manager->EnableCollectHost()) {
@@ -296,7 +303,8 @@ void CollectHostInfo(const std::string &module_name, const std::string &event, c
     uint64_t time_stamp = static_cast<uint64_t>(ns);
     host_profile_data.time_stamp = time_stamp;
   }
-  if (profiler_manager->NeedCollectHostMemory()) {
+  if ((profile_framework == profile_all || profile_framework == profile_memory) &&
+      profiler_manager->NeedCollectHostMemory()) {
     ProcessStatus process_status = ProcessStatus::GetInstance();
     uint64_t memory_usage = process_status.GetMemoryCost(kVmRSS);
     host_profile_data.memory_usage = memory_usage;
@@ -311,6 +319,11 @@ void CollectHostInfo(const std::string &module_name, const std::string &event, c
 void WriteHostDataToFile(const HostProfileData &host_profile_data, const std::string &output_path) {
   std::string file_name = "host_info_0.csv";
   std::string rank_id = common::GetEnv("RANK_ID");
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice) {
+    rank_id = std::to_string(context->get_param<uint32_t>(MS_CTX_DEVICE_ID));
+  }
   if (!rank_id.empty()) {
     file_name = "host_info_" + rank_id + ".csv";
   }
@@ -351,7 +364,7 @@ void WriteHostDataToFile(const HostProfileData &host_profile_data, const std::st
   }
   csv.WriteToCsv(host_profile_data.memory_usage);
   csv.WriteToCsv(host_profile_data.time_stamp, true);
-  MS_LOG(INFO) << "Write file finished. File path is: " << csv_file;
+  MS_LOG(DEBUG) << "Write file finished. File path is: " << csv_file;
 }
 #endif
 }  // namespace profiler
