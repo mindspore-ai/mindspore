@@ -757,7 +757,6 @@ def test_return_nested_dict_with_parameter_constant1():
     assert out == [{'params': (net.x, net.y), 'a': 1, 'b': False}, {'params': net.x, 'a': 2}]
 
 
-@pytest.mark.skip('Not support list to PyExecute yet.')
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -812,7 +811,6 @@ def test_return_nested_dict_with_parameter_constant3():
     assert out == {'params': (net.x, net.y), 'a': 1, 'b': {'params': net.x, 'a': 2}}
 
 
-@pytest.mark.skip(reason="List object can not pass PyExecute output.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

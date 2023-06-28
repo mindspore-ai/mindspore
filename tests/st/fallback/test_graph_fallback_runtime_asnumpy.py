@@ -148,7 +148,6 @@ def test_jit_tensor_asnumpy():
     print(res)
 
 
-@pytest.mark.skip(reason="No support yet.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

@@ -444,7 +444,6 @@ def test_return_list_from_third_party():
     assert res == [1, 2, 3, 4]
 
 
-@pytest.mark.skip(reason="Getattr for interpret node failed.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -507,7 +506,6 @@ def test_return_list_from_dict_attribute():
     assert res[1] == [Tensor([1]), 2]
 
 
-@pytest.mark.skip(reason="Return dict change the abstract.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

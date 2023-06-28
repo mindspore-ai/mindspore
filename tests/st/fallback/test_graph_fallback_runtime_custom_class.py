@@ -89,7 +89,6 @@ class SelfObjectGetattrNet(ms.nn.Cell):
         return x
 
 
-@pytest.mark.skip(reason="Stuck by ScopedLongRunning() invocation in forward.cc during JIT Fallback Python running.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -136,7 +135,6 @@ class GlobalObjectGetattrNet(ms.nn.Cell):
         return x
 
 
-@pytest.mark.skip(reason="Stuck by ScopedLongRunning() invocation in forward.cc during JIT Fallback Python running.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -216,13 +214,11 @@ class UNet(ms.nn.Cell):
         self.net = net
 
     def construct(self, x):
-        out = x * x
         out = self.net(x)
         out = out + out
         return out
 
 
-@pytest.mark.skip(reason="No support PyExecute Add.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
