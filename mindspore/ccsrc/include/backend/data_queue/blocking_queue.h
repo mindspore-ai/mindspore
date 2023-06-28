@@ -51,7 +51,7 @@ class BACKEND_EXPORT BlockingQueue {
   std::condition_variable not_empty_cond_;
   std::shared_ptr<DataQueue> queue_;
   const size_t kPushTimeoutMicroseconds = 100;
-  const size_t kPopTimeoutSeconds = 30;
+  const size_t kPopTimeoutSeconds = 1;
 };
 }  // namespace device
 }  // namespace mindspore
