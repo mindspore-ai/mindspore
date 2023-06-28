@@ -1042,6 +1042,7 @@ void GradExecutor::GradNetInner(const prim::GradOperationPtr &grad, const py::ob
       GilReleaseWithCheck release_gil;
       async_executor_->Clear();
     }
+    top_cell()->ClearParamGradInfo();
     AsyncClearTopCell();
     set_top_cell(already_run_top_cell);
     top_cell()->UpdateTopCellInfo(false, false, false);
@@ -1421,7 +1422,7 @@ void GradExecutor::MakeNestedCnode(bool has_custom_bprop, const std::vector<Valu
   RecordNestedGraph(first_grad_fg, inner_graph_info, forward_args, out_value);
 
   // Get input values
-  PyNativeAlgo::Common::SetGraphInputAndWeightsInfo(op_run_info, first_grad_fg);
+  PyNativeAlgo::Common::SetGraphInputAndWeightsInfo(op_run_info, first_grad_fg, top_cell());
   auto grad_fg = first_grad_fg;
   if (has_call_graph) {
     auto r = std::make_shared<pipeline::Resource>();

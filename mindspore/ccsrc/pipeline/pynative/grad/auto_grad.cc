@@ -623,15 +623,17 @@ bool AutoGradCellImpl::KPynativeWithFProp(const GradParamPtr &grad_param) {
           continue;
         }
       }
-      // Valuenode, cnode
-      (void)args_node_list.emplace_back(PyNativeAlgo::Common::CreateValueNodeByValue(
-        grad_param->op_grad_info->input_value[i], grad_param->op_grad_info->input_abs[i]->Clone()));
+      // Valuenode, node
+      const auto value_node = PyNativeAlgo::Common::CreateValueNodeByValue(
+        grad_param->op_grad_info->input_value[i], grad_param->op_grad_info->input_abs[i]->Clone());
+      auto cnode = PyNativeAlgo::Common::ConvertValueSequenceToMakeTuple(value_node, ad_param()->tape_);
+      (void)args_node_list.emplace_back(cnode);
     }
     bprop_cnode = GetBpropGraphCNode(grad_param, args_node_list, &dout);
   } else {
     k_node = BuildKNode(NewValueNode(grad_param->source_fg), grad_param, false);
-    BuildKNodeListFromPrimalCNode(grad_param->op_grad_info->input_value, grad_param->op_grad_info->input_abs,
-                                  &args_node_list);
+    BuildKNodeListForHighOrderGraph(grad_param->op_grad_info->input_value, grad_param->op_grad_info->input_abs,
+                                    &args_node_list);
     bprop_cnode = GetBpropGraphCNode(grad_param, args_node_list, &dout);
   }
   auto fn = std::make_shared<FunctionNode>(ad_param()->tape_, dout);
@@ -1082,6 +1084,25 @@ void AutoGradCellImpl::BuildKNodeListFromPrimalCNode(const ValuePtrList &input_v
                                                      AnfNodePtrList *const node_list) {
   for (size_t i = 0; i < input_value.size(); ++i) {
     (void)node_list->emplace_back(BuildKNodeForCNodeInput(input_value[i], input_abs[i]));
+    MS_LOG(DEBUG) << "Get knode for input:  " << PyNativeAlgo::Common::GetIdByValue(input_value[i]);
+  }
+}
+
+void AutoGradCellImpl::BuildKNodeListForHighOrderGraph(const ValuePtrList &input_value,
+                                                       const abstract::AbstractBasePtrList &input_abs,
+                                                       AnfNodePtrList *const node_list) {
+  for (size_t i = 0; i < input_value.size(); ++i) {
+    const auto knode = BuildKNodeForCNodeInput(input_value[i], input_abs[i]);
+    // Convert value sequence to make tuple, so that finalpass can elimnate tuplegetitem.
+    // BuildKnodeForTuplgeGetItem now do not support input is valuesequence.
+    if (knode->isa<ValueNode>()) {
+      auto value_node = knode->cast<ValueNodePtr>();
+      (void)node_list->emplace_back(
+        PyNativeAlgo::Common::ConvertValueSequenceToMakeTuple(value_node, ad_param()->tape_));
+    } else {
+      (void)node_list->emplace_back(knode);
+    }
+
     MS_LOG(DEBUG) << "Get knode for input:  " << PyNativeAlgo::Common::GetIdByValue(input_value[i]);
   }
 }
