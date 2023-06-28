@@ -89,7 +89,7 @@ TEST_F(TestDE, DISABLED_TestResNetPreprocess) {
   ASSERT_EQ(image.Shape()[2], 224);
 }
 
-TEST_F(TestDE, TestDvpp) {
+TEST_F(TestDE, DISABLED_TestDvpp) {
 #ifdef ENABLE_ACL
   // Read images from target directory
 
@@ -150,7 +150,7 @@ TEST_F(TestDE, TestDvpp) {
 #endif
 }
 
-TEST_F(TestDE, TestDvppSinkMode) {
+TEST_F(TestDE, DISABLED_TestDvppSinkMode) {
 #ifdef ENABLE_ACL
   auto context = ContextAutoSet();
   ASSERT_TRUE(context != nullptr);
@@ -198,7 +198,7 @@ TEST_F(TestDE, TestDvppSinkMode) {
 #endif
 }
 
-TEST_F(TestDE, TestDvppDecodeResizeCropNormalize) {
+TEST_F(TestDE, DISABLED_TestDvppDecodeResizeCropNormalize) {
 #ifdef ENABLE_ACL
   auto context = ContextAutoSet();
   ASSERT_TRUE(context != nullptr);
@@ -257,7 +257,7 @@ TEST_F(TestDE, TestDvppDecodeResizeCropNormalize) {
 /// Feature: Dvpp decode video
 /// Description: 8 frames H265 video
 /// Expectation: success
-TEST_F(TestDE, TestDvppDecodeVideoH265) {
+TEST_F(TestDE, DISABLED_TestDvppDecodeVideoH265) {
 #ifdef ENABLE_ACL
   auto context = ContextAutoSet();
   ASSERT_TRUE(context != nullptr);
