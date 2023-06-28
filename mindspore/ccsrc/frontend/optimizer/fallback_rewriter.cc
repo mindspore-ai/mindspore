@@ -1739,7 +1739,9 @@ class AfterOptARewriter : public BaseRewriter {
       return fallback::ConvertMsClassObjectToPyExecute(fg, value, value_node);
     }
     if (value->isa<parse::InterpretedObject>()) {
-      return fallback::ConvertInterpretedObjectToPyExecute(fg, value, value_node);
+      const auto interpreted_value = dyn_cast<parse::InterpretedObject>(value);
+      const std::string &key = interpreted_value->name();
+      return fallback::ConvertPyObjectToPyExecute(fg, key, interpreted_value->obj(), value_node, true);
     }
     if (value->isa<ValueTuple>()) {
       return GetPyExecuteFromValueSequence(fg, value_node, value->cast<ValueSequencePtr>(), prim::kPrimMakeTuple,
@@ -1947,7 +1949,9 @@ class AfterOptARewriter : public BaseRewriter {
 
   AnfNodePtr ConvertInterpretedObjectValue(const ValueNodePtr &node, const parse::InterpretedObjectPtr &value) const {
     // Convert InterpretedObject value node to PyExecute CNode.
-    return fallback::ConvertInterpretedObjectToPyExecute(root_graph_, value, node);
+    const auto interpreted_value = dyn_cast<parse::InterpretedObject>(value);
+    const std::string &key = interpreted_value->name();
+    return fallback::ConvertPyObjectToPyExecute(root_graph_, key, interpreted_value->obj(), node, true);
   }
 
   AnfNodePtr ConvertValueNode(const ValueNodePtr &value_node, const ValuePtr &value) override {

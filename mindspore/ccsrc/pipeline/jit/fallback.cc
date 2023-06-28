@@ -192,12 +192,39 @@ AnfNodePtr ConvertPyObjectToPyExecute(const FuncGraphPtr &fg, const std::string 
   return interpreted_cnode;
 }
 
-AnfNodePtr ConvertInterpretedObjectToPyExecute(const FuncGraphPtr &fg, const ValuePtr &value, const AnfNodePtr &node) {
-  const auto &interpreted_value = dyn_cast<parse::InterpretedObject>(value);
-  if (interpreted_value == nullptr) {
-    return nullptr;
+AnfNodePtr ConvertPyObjectToPyInterpret(const FuncGraphPtr &fg, const std::string &key, const py::object value,
+                                        const AnfNodePtr &node, bool replace) {
+  auto prim = NewValueNode(prim::kPrimPyInterpret);
+  auto value_node_key = ConvertRealStrToUnicodeStr(key, 0);
+  std::stringstream script_buffer;
+  script_buffer << "__import__('mindspore')._extends.parse.get_local_variable(" << value_node_key << ")";
+  const std::string &script = script_buffer.str();
+  auto script_str = std::make_shared<parse::Script>(script);
+  auto script_node = NewValueNode(script_str);
+
+  py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+  constexpr auto python_get_dict = "get_global_params";
+  const auto &global_dict = python_adapter::CallPyModFn(mod, python_get_dict);
+  ValuePtr globals_converted_value = nullptr;
+  if (!parse::ConvertData(global_dict, &globals_converted_value)) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Convert data failed";
   }
-  return ConvertPyObjectToPyExecute(fg, interpreted_value->name(), interpreted_value->obj(), node, true);
+  auto global_dict_node = NewValueNode(globals_converted_value);
+  // Set the value node into dict firstly.
+  SetPyObjectToLocalVariable(value_node_key, value);
+
+  // Build new CNode for value node.
+  ValuePtrList keys({std::make_shared<StringImm>(value_node_key)});
+  ValuePtrList values({std::make_shared<StringImm>(value_node_key)});
+  auto make_dict_op = NewValueNode(prim::kPrimMakeDict);
+  auto key_tuple = NewValueNode(std::make_shared<ValueTuple>(keys));
+  auto value_tuple = NewValueNode(std::make_shared<ValueTuple>(values));
+  auto local_dict_node = fg->NewCNode({make_dict_op, key_tuple, value_tuple});
+  auto interpret_node = fg->NewCNode({prim, script_node, global_dict_node, local_dict_node});
+  if (replace) {
+    fg->ReplaceInOrder(node, interpret_node);
+  }
+  return interpret_node;
 }
 
 AnfNodePtr ConvertMsClassObjectToPyExecute(const FuncGraphPtr &fg, const ValuePtr &value, const AnfNodePtr &node) {

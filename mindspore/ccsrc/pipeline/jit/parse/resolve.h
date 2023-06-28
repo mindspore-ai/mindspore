@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,6 +129,9 @@ class InterpretedObject final : public PyObjectWrapper {
     return std::make_shared<abstract::AbstractScalar>(shared_from_base<InterpretedObject>(),
                                                       std::make_shared<External>());
   }
+  void set_has_converted(bool has_converted) { has_converted_ = has_converted; }
+  bool has_converted() { return has_converted_; }
+  bool has_converted_ = false;
 };
 using InterpretedObjectPtr = std::shared_ptr<InterpretedObject>;
 
