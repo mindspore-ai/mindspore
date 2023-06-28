@@ -193,6 +193,7 @@ inline uint32_t SparseSoftmaxCrossEntropyWithLogitsCompute(const CpuKernelContex
     }
   }
   // Eigen::Array
+  muilt_core_flag = true;  // Float Needs rectification
   if (muilt_core_flag) {
     std::int64_t per_unit_size{batch_size / std::min(std::max(1L, cores - 2L), batch_size)};
     auto shard = [&](size_t begin, size_t end) {
