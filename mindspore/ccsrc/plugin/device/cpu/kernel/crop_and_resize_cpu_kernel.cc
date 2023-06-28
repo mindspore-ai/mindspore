@@ -117,6 +117,69 @@ int CropAndResizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 template <typename T>
+void CropAndResizeCpuKernelMod::BilinearResize(T *input_image, float target_x, float target_y, size_t pos,
+                                               int box_index, int pos_channel, float *output) {
+  const int top_y_index = FloatToInt(floorf(target_y));
+  const int bottom_y_index = FloatToInt(ceilf(target_y));
+  const int left_x_index = FloatToInt(floorf(target_x));
+  const int right_x_index = FloatToInt(ceilf(target_x));
+
+  const float top_left = static_cast<float>(
+    input_image[((box_index * input_height_ + top_y_index) * input_width_ + left_x_index) * channel_ + pos_channel]);
+  const float top_right = static_cast<float>(
+    input_image[((box_index * input_height_ + top_y_index) * input_width_ + right_x_index) * channel_ + pos_channel]);
+  const float bottom_left = static_cast<float>(
+    input_image[((box_index * input_height_ + bottom_y_index) * input_width_ + left_x_index) * channel_ + pos_channel]);
+  const float bottom_right = static_cast<float>(
+    input_image[((box_index * input_height_ + bottom_y_index) * input_width_ + right_x_index) * channel_ +
+                pos_channel]);
+  const float top = top_left + (top_right - top_left) * (target_x - left_x_index);
+  const float bottom = bottom_left + (bottom_right - bottom_left) * (target_x - left_x_index);
+  output[pos] = top + (bottom - top) * (target_y - top_y_index);
+}
+
+template <typename T>
+void CropAndResizeCpuKernelMod::BilinearV2Resize(T *input_image, float y1, float x1, float y2, float x2, int pos_y,
+                                                 int pos_x, size_t pos, int box_index, int pos_channel, float *output) {
+  const float HALF = 0.5;
+  int y1h = FloatToInt(y1 * input_height_);
+  int x1w = FloatToInt(x1 * input_width_);
+  int y2h = FloatToInt(y2 * input_height_);
+  int x2w = FloatToInt(x2 * input_width_);
+  int w = ((x2w - x1w + 1) > 1) ? x2w - x1w + 1 : 1;
+  int h = ((y2h - y1h + 1) > 1) ? y2h - y1h + 1 : 1;
+
+  float y_point = (pos_y + HALF) * (h / IntToFloat(final_height_)) - HALF;
+  int top_y_index = std::min(std::max(0, FloatToInt(floorf(y_point))), h - 1);
+  int bottom_y_index = std::min(std::max(0, FloatToInt(ceilf(y_point))), h - 1);
+
+  float x_point = (pos_x + HALF) * (w / IntToFloat(final_width_)) - HALF;
+  int left_x_index = std::min(std::max(0, FloatToInt(floorf(x_point))), w - 1);
+  int right_x_index = std::min(std::max(0, FloatToInt(ceilf(x_point))), w - 1);
+
+  const float y_lerp = y_point - top_y_index;
+  const float x_lerp = x_point - left_x_index;
+
+  const int y_top_index = std::max(0, y1h + top_y_index);
+  const int y_bottom_index = std::max(0, y1h + bottom_y_index);
+  const int x_left_index = std::max(0, x1w + left_x_index);
+  const int x_right_index = std::max(0, x1w + right_x_index);
+
+  const float top_left = static_cast<float>(
+    input_image[((box_index * input_height_ + y_top_index) * input_width_ + x_left_index) * channel_ + pos_channel]);
+  const float top_right = static_cast<float>(
+    input_image[((box_index * input_height_ + y_top_index) * input_width_ + x_right_index) * channel_ + pos_channel]);
+  const float bottom_left = static_cast<float>(
+    input_image[((box_index * input_height_ + y_bottom_index) * input_width_ + x_left_index) * channel_ + pos_channel]);
+  const float bottom_right = static_cast<float>(
+    input_image[((box_index * input_height_ + y_bottom_index) * input_width_ + x_right_index) * channel_ +
+                pos_channel]);
+
+  output[pos] = top_left * (1 - y_lerp) * (1 - x_lerp) + bottom_right * y_lerp * x_lerp +
+                top_right * (1 - y_lerp) * x_lerp + bottom_left * y_lerp * (1 - x_lerp);
+}
+
+template <typename T>
 bool CropAndResizeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                              const std::vector<kernel::AddressPtr> &outputs) {
   auto *input_image = reinterpret_cast<T *>(inputs[IMAGE]->addr);
@@ -150,9 +213,9 @@ bool CropAndResizeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
       float scale_height = final_height_ > 1 ? (y2 - y1) * (input_height_ - 1) / (final_height_ - 1) : 0;
       float scale_width = final_width_ > 1 ? (x2 - x1) * (input_width_ - 1) / (final_width_ - 1) : 0;
       float target_y =
-        final_height_ > 1 ? y1 * (input_height_ - 1) + pos_y * scale_height : HALF * (y1 + y2) + (input_height_ - 1);
+        final_height_ > 1 ? y1 * (input_height_ - 1) + pos_y * scale_height : HALF * (y1 + y2) * (input_height_ - 1);
       float target_x =
-        final_width_ > 1 ? x1 * (input_width_ - 1) + pos_x * scale_width : HALF * (x1 + x2) + (input_width_ - 1);
+        final_width_ > 1 ? x1 * (input_width_ - 1) + pos_x * scale_width : HALF * (x1 + x2) * (input_width_ - 1);
 
       //  use extrapolation value if out of range
       if (((target_x < 0) || (target_x > input_width_ - 1)) || ((target_y < 0) || (target_y > input_height_ - 1))) {
@@ -164,65 +227,10 @@ bool CropAndResizeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
 
       if (method_ == BILINEAR) {
         // Bilinear
-        const int top_y_index = FloatToInt(floorf(target_y));
-        const int bottom_y_index = FloatToInt(ceilf(target_y));
-        const int left_x_index = FloatToInt(floorf(target_x));
-        const int right_x_index = FloatToInt(ceilf(target_x));
-
-        const float top_left = static_cast<float>(
-          input_image[((box_index * input_height_ + top_y_index) * input_width_ + left_x_index) * channel_ +
-                      pos_channel]);
-        const float top_right = static_cast<float>(
-          input_image[((box_index * input_height_ + top_y_index) * input_width_ + right_x_index) * channel_ +
-                      pos_channel]);
-        const float bottom_left = static_cast<float>(
-          input_image[((box_index * input_height_ + bottom_y_index) * input_width_ + left_x_index) * channel_ +
-                      pos_channel]);
-        const float bottom_right = static_cast<float>(
-          input_image[((box_index * input_height_ + bottom_y_index) * input_width_ + right_x_index) * channel_ +
-                      pos_channel]);
-        const float top = top_left + (top_right - top_left) * (target_x - left_x_index);
-        const float bottom = bottom_left + (bottom_right - bottom_left) * (target_x - left_x_index);
-        output[pos] = top + (bottom - top) * (target_y - top_y_index);
+        BilinearResize<T>(input_image, target_x, target_y, pos, box_index, pos_channel, output);
       } else if (method_ == BILINEAR_V2) {
-        int y1h = FloatToInt(y1 * input_height_);
-        int x1w = FloatToInt(x1 * input_width_);
-        int y2h = FloatToInt(y2 * input_height_);
-        int x2w = FloatToInt(x2 * input_width_);
-        int w = ((x2w - x1w + 1) > 1) ? x2w - x1w + 1 : 1;
-        int h = ((y2h - y1h + 1) > 1) ? y2h - y1h + 1 : 1;
-
-        float y_point = (pos_y + HALF) * (h / IntToFloat(final_height_)) - HALF;
-        int top_y_index = std::min(std::max(0, FloatToInt(floorf(y_point))), h - 1);
-        int bottom_y_index = std::min(std::max(0, FloatToInt(ceilf(y_point))), h - 1);
-
-        float x_point = (pos_x + HALF) * (w / IntToFloat(final_width_)) - HALF;
-        int left_x_index = std::min(std::max(0, FloatToInt(floorf(x_point))), w - 1);
-        int right_x_index = std::min(std::max(0, FloatToInt(ceilf(x_point))), w - 1);
-
-        const float y_lerp = y_point - top_y_index;
-        const float x_lerp = x_point - left_x_index;
-
-        const int y_top_index = std::max(0, y1h + top_y_index);
-        const int y_bottom_index = std::max(0, y1h + bottom_y_index);
-        const int x_left_index = std::max(0, x1w + left_x_index);
-        const int x_right_index = std::max(0, x1w + right_x_index);
-
-        const float top_left = static_cast<float>(
-          input_image[((box_index * input_height_ + y_top_index) * input_width_ + x_left_index) * channel_ +
-                      pos_channel]);
-        const float top_right = static_cast<float>(
-          input_image[((box_index * input_height_ + y_top_index) * input_width_ + x_right_index) * channel_ +
-                      pos_channel]);
-        const float bottom_left = static_cast<float>(
-          input_image[((box_index * input_height_ + y_bottom_index) * input_width_ + x_left_index) * channel_ +
-                      pos_channel]);
-        const float bottom_right = static_cast<float>(
-          input_image[((box_index * input_height_ + y_bottom_index) * input_width_ + x_right_index) * channel_ +
-                      pos_channel]);
-
-        output[pos] = top_left * (1 - y_lerp) * (1 - x_lerp) + bottom_right * y_lerp * x_lerp +
-                      top_right * (1 - y_lerp) * x_lerp + bottom_left * y_lerp * (1 - x_lerp);
+        BilinearV2Resize(input_image, y1, x1, y2, x2, pos_y, pos_x, pos, box_index, pos_channel, output);
+        // BilinearV2
       } else {
         // Nearest Neighbour
         const int closest_x_index = FloatToInt(roundf(target_x));
