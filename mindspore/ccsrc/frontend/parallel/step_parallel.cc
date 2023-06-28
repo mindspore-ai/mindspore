@@ -2554,6 +2554,10 @@ bool CreateGroupsByCkptFile(const std::string &file) {
 
 static void ReorderForPipelineSplit(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager,
                                     int64_t pipeline_stages) {
+  std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
+  if (parallel_mode != kAutoParallel && parallel_mode != kSemiAutoParallel) {
+    return;
+  }
   if (!root->has_flag(BACKWARD) && pipeline_stages > 1) {
     root->set_flag(BACKWARD, true);
     if (IsTraining(manager)) {
@@ -2635,13 +2639,15 @@ static void InsertAllReduceForNormValue(const AnfNodePtr &res_node) {
   auto sqrt_node = find_node;
   auto cur_stage_rank_list = g_device_manager->GetDeviceListInThisStage();
   Group cur_stage_device_list;
-  if (g_device_manager->CreateGroup(cur_stage_rank_list, &cur_stage_device_list) != SUCCESS) {
-    MS_LOG(EXCEPTION) << "Create the communication group for allreduce in calculating global norm failed, "
-                         "the rank_list is: "
-                      << cur_stage_rank_list;
+  if (cur_stage_rank_list.size() > 1) {
+    if (g_device_manager->CreateGroup(cur_stage_rank_list, &cur_stage_device_list) != SUCCESS) {
+      MS_LOG(EXCEPTION) << "Create the communication group for allreduce in calculating global norm failed, "
+                           "the rank_list is: "
+                        << cur_stage_rank_list;
+    }
+    InsertAllReduceToNodeInput(sqrt_node->cast<CNodePtr>(), cur_stage_device_list.name(), PARALLEL_GLOBALNORM);
+    MS_LOG(INFO) << "Insert the AllReduce for global norm value in stages succeed.";
   }
-  InsertAllReduceToNodeInput(sqrt_node->cast<CNodePtr>(), cur_stage_device_list.name(), PARALLEL_GLOBALNORM);
-  MS_LOG(INFO) << "Insert the AllReduce for global norm value in stages succeed.";
   if (pipeline_stages > 1) {
     MS_LOG(INFO) << "Insert the AllReduce for global norm value between stages succeed.";
     auto ranks_between_stages = g_device_manager->GetDeviceListBetweenStage();
