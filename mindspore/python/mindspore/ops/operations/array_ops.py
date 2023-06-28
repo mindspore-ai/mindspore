@@ -7676,7 +7676,8 @@ class TensorScatterElements(Primitive):
         self.init_prim_io_names(inputs=['data', 'indices', 'updates'], outputs=['y'])
         target = context.get_context("device_target")
         if reduction != 'none' and target.lower() == "ascend":
-            raise ValueError(f"Currently Ascend device_target only support `reduction`='none', "
+            raise ValueError(f"For '{self.name}', "
+                             f"Currently Ascend device_target only support `reduction`='none', "
                              f"but got {reduction}")
 
 
