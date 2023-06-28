@@ -31,6 +31,10 @@
 
 namespace mindspore {
 namespace ps {
+namespace {
+constexpr uint16_t kDefaultSchedPort = 6667;
+constexpr uint16_t kDefaultSchedManagerPort = 11202;
+}  // namespace
 PSContext::PSContext()
     : ps_enabled_(false),
       is_worker_(false),
@@ -40,11 +44,11 @@ PSContext::PSContext()
       worker_num_(0),
       server_num_(0),
       scheduler_host_("0.0.0.0"),
-      scheduler_port_(6667),
+      scheduler_port_(kDefaultSchedPort),
       role_(kEnvRoleOfNotPS),
       server_mode_(""),
       cluster_config_(nullptr),
-      scheduler_manage_port_(11202),
+      scheduler_manage_port_(kDefaultSchedManagerPort),
       config_file_path_(""),
       node_id_(""),
       enable_ssl_(false),

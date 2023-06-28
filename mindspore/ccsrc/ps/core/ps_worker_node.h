@@ -19,7 +19,6 @@
 
 #include <memory>
 #include "ps/core/abstract_ps_node.h"
-#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace ps {

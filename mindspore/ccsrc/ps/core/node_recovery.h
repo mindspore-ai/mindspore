@@ -26,7 +26,6 @@
 #include "include/backend/distributed/ps/constants.h"
 #include "utils/log_adapter.h"
 #include "ps/core/file_configuration.h"
-#include "include/backend/distributed/ps/ps_context.h"
 #include "ps/core/abstract_node.h"
 
 namespace mindspore {

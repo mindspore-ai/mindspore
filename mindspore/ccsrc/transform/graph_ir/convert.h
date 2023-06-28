@@ -200,7 +200,7 @@ class DfGraphConvertor {
   void ConvertAllReduce(const CNodePtr &node);
   void ConvertHcclNode(const CNodePtr &node);
   void ConvertAllToAllv(const CNodePtr &node);
-  void AddCommAttrForHcclNode(const CNodePtr &node, const OperatorPtr &converted_op);
+  void AddCommAttrForHcclNode(const CNodePtr &node, const OperatorPtr &converted_op) const;
   void ConvertOCRRecPreHandle(const CNodePtr &node);
   void ConvertConv2D(const CNodePtr &node);
   void ConvertDynamicStitch(const CNodePtr &node);

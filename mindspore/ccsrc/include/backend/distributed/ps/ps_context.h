@@ -35,7 +35,7 @@ constexpr char kEnvRoleOfNotPS[] = "MS_NOT_PS";
 constexpr size_t kMaxPasswordLen = 1024;
 
 namespace core {
-class ClusterConfig;
+struct ClusterConfig;
 }  // namespace core
 
 class BACKEND_EXPORT PSContext {

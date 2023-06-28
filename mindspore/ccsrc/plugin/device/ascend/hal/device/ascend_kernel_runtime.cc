@@ -114,6 +114,59 @@ void AscendEnableDynamicRuntimeCache(const session::KernelGraph *graph) {
     runtime_cache.runtime_cache().set_is_valid(true);
   }
 }
+
+void WriteEvent(const CNodePtr &cnode, std::ofstream *ofs) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(ofs);
+  if (common::AnfAlgo::HasNodeAttr(kAttrEventId, cnode)) {
+    *ofs << common::AnfAlgo::GetNodeAttr<uint32_t>(cnode, kAttrEventId) << ", ";
+  } else {
+    *ofs << ", ";
+  }
+}
+
+void WriteLabel(const CNodePtr &cnode, std::ofstream *ofs) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(ofs);
+  if (common::AnfAlgo::HasNodeAttr(kAttrLabelIndex, cnode)) {
+    *ofs << common::AnfAlgo::GetNodeAttr<uint32_t>(cnode, kAttrLabelIndex) << ", ";
+  } else if (common::AnfAlgo::HasNodeAttr(kAttrLabelSwitchList, cnode)) {
+    auto label_list = common::AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(cnode, kAttrLabelSwitchList);
+    std::string label_str = "\"";
+    for (size_t i = 0; i < label_list.size(); ++i) {
+      label_str += std::to_string(label_list[i]) + (i + 1 < label_list.size() ? ", " : "\", ");
+    }
+    *ofs << label_str;
+  } else {
+    *ofs << ", ";
+  }
+}
+
+void WriteActiveStream(const CNodePtr &cnode, std::ofstream *ofs) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(ofs);
+  std::string active_stream_str;
+  if (common::AnfAlgo::HasNodeAttr(kAttrActiveStreamList, cnode)) {
+    auto stream_list = common::AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(cnode, kAttrActiveStreamList);
+    active_stream_str = "\"";
+    for (size_t j = 0; j < stream_list.size(); ++j) {
+      active_stream_str += std::to_string(stream_list[j]) + (j + 1 < stream_list.size() ? ", " : "\", ");
+    }
+    *ofs << active_stream_str;
+  } else {
+    *ofs << ", ";
+  }
+}
+
+void WriteGroup(const CNodePtr &cnode, std::ofstream *ofs) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(ofs);
+  if (AnfAlgo::GetKernelType(cnode) == HCCL_KERNEL && common::AnfAlgo::HasNodeAttr(kAttrGroup, cnode)) {
+    *ofs << common::AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrGroup) << ", ";
+  } else {
+    *ofs << ", ";
+  }
+}
 }  // namespace
 
 struct TbeLaunchKernelModRegister {
@@ -840,7 +893,7 @@ void AscendKernelRuntime::DumpDebugInfoFile(const session::KernelGraph &graph) {
   ofs << "Index, Op Name, Stream ID (MindSpore), Stream ID (Runtime), Task ID (Runtime), Event ID (MindSpore), "
       << "Label ID (MindSpore), Active Stream ID (MindSpore), Group Name" << std::endl;
   for (size_t i = 0; i < graph.execution_order().size(); ++i) {
-    CNodePtr cur_cnode_ptr = graph.execution_order()[i];
+    const CNodePtr &cur_cnode_ptr = graph.execution_order()[i];
     MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
     ofs << i << ", ";
     ofs << cur_cnode_ptr->UniqueName() << ", ";
@@ -857,42 +910,11 @@ void AscendKernelRuntime::DumpDebugInfoFile(const session::KernelGraph &graph) {
     } else {
       ofs << "NOT FOUND, NOT FOUND, ";
     }
-    if (common::AnfAlgo::HasNodeAttr(kAttrEventId, cur_cnode_ptr)) {
-      ofs << common::AnfAlgo::GetNodeAttr<uint32_t>(cur_cnode_ptr, kAttrEventId) << ", ";
-    } else {
-      ofs << ", ";
-    }
-    if (common::AnfAlgo::HasNodeAttr(kAttrLabelIndex, cur_cnode_ptr)) {
-      ofs << common::AnfAlgo::GetNodeAttr<uint32_t>(cur_cnode_ptr, kAttrLabelIndex) << ", ";
-    } else if (common::AnfAlgo::HasNodeAttr(kAttrLabelSwitchList, cur_cnode_ptr)) {
-      auto label_list = common::AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(cur_cnode_ptr, kAttrLabelSwitchList);
-      std::string label_str = "\"";
-      for (size_t j = 0; j < label_list.size(); ++j) {
-        label_str += std::to_string(label_list[j]) + (j + 1 < label_list.size() ? ", " : "\", ");
-      }
-      ofs << label_str;
-    } else {
-      ofs << ", ";
-    }
+    WriteEvent(cur_cnode_ptr, &ofs);
+    WriteLabel(cur_cnode_ptr, &ofs);
+    WriteActiveStream(cur_cnode_ptr, &ofs);
+    WriteGroup(cur_cnode_ptr, &ofs);
 
-    std::string active_stream_str;
-    if (common::AnfAlgo::HasNodeAttr(kAttrActiveStreamList, cur_cnode_ptr)) {
-      auto stream_list = common::AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(cur_cnode_ptr, kAttrActiveStreamList);
-      active_stream_str = "\"";
-      for (size_t j = 0; j < stream_list.size(); ++j) {
-        active_stream_str += std::to_string(stream_list[j]) + (j + 1 < stream_list.size() ? ", " : "\", ");
-      }
-      ofs << active_stream_str;
-    } else {
-      ofs << ", ";
-    }
-
-    if (AnfAlgo::GetKernelType(cur_cnode_ptr) == HCCL_KERNEL &&
-        common::AnfAlgo::HasNodeAttr(kAttrGroup, cur_cnode_ptr)) {
-      ofs << common::AnfAlgo::GetNodeAttr<std::string>(cur_cnode_ptr, kAttrGroup) << ", ";
-    } else {
-      ofs << ", ";
-    }
     ofs << std::endl;
   }
   MS_LOG(ERROR) << "Execute order has saved at " << file;

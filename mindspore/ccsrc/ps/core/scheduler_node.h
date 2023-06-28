@@ -41,7 +41,6 @@
 #include "ps/core/communicator/http_server.h"
 #include "ps/core/recovery_base.h"
 #include "distributed/cluster/actor_route_table_service.h"
-#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace ps {
