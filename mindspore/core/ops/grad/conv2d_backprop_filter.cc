@@ -77,8 +77,9 @@ void SetConv2dPadList(const PrimitivePtr &primitive, const std::vector<int64_t> 
 
   auto attr_pad_list_prt = primitive->GetAttr(kPadList);
   MS_EXCEPTION_IF_NULL(attr_pad_list_prt);
-  int64_t pad_mode;
-  CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr(kPadMode), &pad_mode, true);
+  int64_t pad_mode_value;
+  CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr(kPadMode), &pad_mode_value, true);
+  PadMode pad_mode{pad_mode_value};
 
   ShapeVector pad_list(kCon2dPadSize, Shape::kShapeDimAny);
   auto is_valid_pad_attr = [&attr_pad_list_prt]() -> bool {
@@ -114,7 +115,7 @@ abstract::ShapePtr Conv2DBackpropFilterInferShape(const PrimitivePtr &primitive,
   auto format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr(kFormat));
   // normalize shape to NCHW format
   auto normalize_shape = [&format](const ShapeVector &shape) -> ShapeVector {
-    if (format == Format::NCHW) {
+    if (format == static_cast<int64_t>(Format::NCHW)) {
       return shape;
     }
     // convert NHWC to NCHW format

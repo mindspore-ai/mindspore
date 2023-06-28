@@ -151,9 +151,10 @@ def parse_ini_to_json(ini_file_paths_arg, outfile_path_arg):
     aicpu_ops_info = parse_ini_files(ini_file_paths_arg)
     try:
         check_op_info(aicpu_ops_info)
-        write_json_file(aicpu_ops_info, outfile_path_arg)
     except KeyError:
         print("bad format key value, failed to generate json file")
+    else:
+        write_json_file(aicpu_ops_info, outfile_path_arg)
 
 
 if __name__ == '__main__':

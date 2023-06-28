@@ -174,7 +174,7 @@ void GetAtomicWorkspaceAndOutputIndex(const kernel::NodeBaseInfo &node_base_info
     if (idx >= params_size) {
       continue;
     }
-    tmp.emplace_back(parameters_indexes[idx]);
+    (void)tmp.emplace_back(parameters_indexes[idx]);
     if (parameters_indexes[idx] != 0) {
       *workspace_atomic_flag = true;
     }

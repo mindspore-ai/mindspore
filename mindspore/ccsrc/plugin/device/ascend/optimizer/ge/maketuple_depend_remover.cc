@@ -63,7 +63,7 @@ void MakeTupleDependRemover::DefineSrcPattern(SrcPattern *src_pattern) {
 }
 
 void MakeTupleDependRemover::DefineDstPattern(DstPattern *dst_pattern) {
-  (*dst_pattern).AddCNode(dep_input, {kV, kXs}, SelectInput);
+  (void)(*dst_pattern).AddCNode(dep_input, {kV, kXs}, SelectInput);
 }
 }  // namespace opt
 }  // namespace mindspore
