@@ -1225,9 +1225,11 @@ def set_context(**kwargs):
                 When the memory of the network exceeds the limit, you may try this cleaning policy, but it may cause
                 performance loss.
             - matmul_allow_hf32 (bool): Whether to convert FP32 to HF32 for Matmul operators. Default value: ``False``.
+              For detailed information, please refer to `Ascend community <https://www.hiascend.com/>`_ .
             - conv_allow_hf32 (bool): Whether to convert FP32 to HF32 for Conv operators. Default value: ``True``.
+              For detailed information, please refer to `Ascend community <https://www.hiascend.com/>`_ .
             - op_precision_mode (str): Path to config file of op precision mode. For detailed information, please refer
-              to <https://www.hiascend.com/>.
+              to `Ascend community <https://www.hiascend.com/>`_ .
             - parallel_speed_up_json_path(Union[str, None]): The path to the parallel speed up json file, configuration
               can refer to `parallel_speed_up.json
               <https://gitee.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_ .

@@ -5031,6 +5031,12 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         padding = (0, 0, padding[0], padding[0])
     else:
         raise TypeError(f"For 'conv1d', padding must be a tuple, list or int, but got {type(padding)}.")
+    input_shape = input.shape
+    in_channel = input_shape[1]
+    if not (in_channel % groups == 0 and out_channel % groups == 0):
+        raise ValueError(f"The argument 'groups' should be divisible by 'in_channel' " \
+                         f"and 'out_channel', but got group:{groups}, in_channel:{in_channel}, " \
+                         f"out_channel:{out_channel}.")
     dilation = _dim_manipulation(dilation, name='dilation')
     stride = _dim_manipulation(stride, name='stride')
     conv = _get_cache_prim(P.Conv2D)(out_channel, kernel_size, 1, pad_mode, padding, stride, dilation, groups, "NCHW")
@@ -5040,6 +5046,9 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
         return squeezed_conv_res
     if not isinstance(bias, Tensor):
         raise TypeError(f"For 'conv1d', the 'bias' must be a Tensor, but got {type(bias)}.")
+    if bias.shape[0] != out_channel:
+        raise TypeError(f"For 'conv1d',  given weight of size {weight_shape}, expected bias to be 1-dimensional with " \
+                        f"{out_channel} elements, but got bias of size {bias[0]} instead.")
     output = bias_add(squeezed_conv_res, bias)
     return output
 
@@ -5150,11 +5159,20 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     weight_shape = weight.shape
     out_channel = weight_shape[0]
     kernel_size = weight_shape[2:4]
+    input_shape = input.shape
+    in_channel = input_shape[1]
+    if not (in_channel % groups == 0 and out_channel % groups == 0):
+        raise ValueError(f"The argument 'groups' should be divisible by 'in_channel' " \
+                         f"and 'out_channel', but got group:{groups}, in_channel:{in_channel}, " \
+                         f"out_channel:{out_channel}.")
     conv = _get_cache_prim(P.Conv2D)(out_channel, kernel_size, 1, pad_mode, padding, stride, dilation, groups, "NCHW")
     if bias is None:
         return conv(input, weight)
     if not isinstance(bias, Tensor):
         raise TypeError(f"For 'conv2d', the 'bias' must be a Tensor, but got {type(bias)}.")
+    if bias.shape[0] != out_channel:
+        raise TypeError(f"For 'conv2d',  Given weight of size {weight_shape}, expected bias to be 1-dimensional with " \
+                        f"{out_channel} elements, but got bias of size {bias.shape[0]} instead.")
     conv_result = conv(input, weight)
     output = bias_add(conv_result, bias)
     return output
