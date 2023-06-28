@@ -52,6 +52,7 @@ KernelModPtr AclOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
     const auto &shape = common::AnfAlgo::GetOutputInferShape(cnode, i);
     kernel_mod_ptr->PackageOutput(i, shape);
   }
+  kernel_mod_ptr->SetNeedConvertHostTensor(true);
 
   return kernel_mod_ptr;
 }

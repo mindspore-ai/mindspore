@@ -59,6 +59,7 @@ class AclKernelMod : public AscendKernelMod {
   void PackageInput(const size_t idx, const std::string &format, ShapeVector *shape);
   void PackageOutput(const size_t idx, const ShapeVector &shape);
   void SetPrimitive(const PrimitivePtr &primitive);
+  void SetNeedConvertHostTensor(const bool convert_flag) { need_convert_host_tensor_ = convert_flag; }
 
  protected:
   std::string DebugString() const;
@@ -80,6 +81,8 @@ class AclKernelMod : public AscendKernelMod {
 
   std::vector<std::string> ms_attr_str_;
   transform::AclConverterPtr converter_;
+
+  bool need_convert_host_tensor_{false};
 };
 
 using AclKernelModPtr = std::shared_ptr<AclKernelMod>;
