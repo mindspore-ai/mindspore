@@ -42,12 +42,14 @@
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
 int64_t CTCLossV2::get_blank() const { return GetValue<int64_t>(GetAttr(kAttrBlank)); }
 std::string CTCLossV2::get_reduction() const { return GetValue<std::string>(GetAttr(kAttrReduction)); }
 bool CTCLossV2::get_zero_infinity() const { return GetValue<bool>(GetAttr(kAttrZeroInfinity)); }
+constexpr int64_t kAlignSize = 8;
 namespace {
 void CheckInputLengthType(const std::string &arg_name, const AbstractBasePtr &input_arg,
                           const std::set<TypePtr> &valid_type, const std::string &prim_name) {
@@ -103,6 +105,11 @@ abstract::TupleShapePtr CTCLossV2InferShape(const PrimitivePtr &primitive,
   int64_t S = targets_shape[kIndex1];
 
   int64_t padded_S = (S == abstract::Shape::kShapeDimAny) ? abstract::Shape::kShapeDimAny : (kMulti * S + 1);
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+    padded_S = (padded_S + kAlignSize - 1) / kAlignSize * kAlignSize;
+  }
   abstract::ShapePtr neg_log_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{N});
   abstract::ShapePtr log_alpha_shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{N, T, padded_S});
 
