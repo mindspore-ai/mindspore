@@ -9145,12 +9145,9 @@ def inner(input, other):
     """
     x_dim = input.ndim
     other_dim = other.ndim
-    x_dtype = input.dtype
 
     if x_dim == 0 or other_dim == 0:
         output = input * other
-        if output.dtype != input.dtype:
-            return output.astype(x_dtype)
         return output
 
     x_shape = input.shape
@@ -9158,7 +9155,7 @@ def inner(input, other):
     if x_shape[-1] != other_shape[-1]:
         raise ValueError(f"For 'inner', the last dimension of 'input' and 'other' must be the same, \
                          but got input.shape: {x_shape} and other.shape: {other_shape}.")
-    return C.tensor_dot(input, other, axes=(-1, -1))
+    return ops.tensor_dot(input, other, axes=(-1, -1))
 
 
 def bmm(input_x, mat2):
