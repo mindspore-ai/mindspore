@@ -23,12 +23,6 @@
 #include "acl/acl_rt.h"
 #include "cxx_api/model/aoe/auto_tune_process.h"
 #include "plugin/device/ascend/optimizer/ge_optimization.h"
-#if defined(ENABLE_CLOUD_FUSION_INFERENCE)
-#include "tools/mindir_exporter/mindir_serializer.h"
-#include "extendrt/cxx_api/file_utils.h"
-#include "include/common/debug/common.h"
-#include "load_mindir/load_model.h"
-#endif
 
 namespace mindspore {
 namespace {
@@ -191,149 +185,6 @@ Status ModelConverter::SaveModel(const ge::ModelBufferData &model) const {
   return kSuccess;
 }
 
-#if defined(ENABLE_CLOUD_FUSION_INFERENCE)
-static bool RemoveTempMindIRDir(std::string path_name, bool is_split) {
-  auto fs = system::Env::GetFileSystem();
-  if (fs == nullptr) {
-    MS_LOG(ERROR) << "Get filesystem is nullptr.";
-    return false;
-  }
-  std::string graph_name = path_name + ".mindir";
-  bool success = true;
-  if (is_split) {
-    graph_name = path_name + "_graph.mindir";
-    std::string data_dir_name = path_name + "/" + path_name + "_variables";
-    std::string data_name = data_dir_name + "/data_0";
-    success = fs->DeleteFile(data_name);
-    if (!success) {
-      return false;
-    }
-    success = fs->DeleteDir(data_dir_name);
-    if (!success) {
-      return false;
-    }
-  }
-  success = fs->DeleteFile(path_name + "/" + graph_name);
-  if (!success) {
-    return false;
-  }
-  return fs->DeleteDir(path_name);
-}
-
-Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
-  MultiProcess multi_process;
-  Buffer buffer_ret;
-  const size_t file_name_len = 12;
-  std::string rand_name = Common::GetRandomStr(file_name_len);
-  const std::string dir_prefix = "./" + rand_name;
-  const std::string out_graph_path = dir_prefix + "/" + rand_name;
-
-  // Create temporary dir in local directory
-  auto fs = system::Env::GetFileSystem();
-  if (fs == nullptr) {
-    MS_LOG(ERROR) << "Get filesystem is nullptr.";
-    return buffer_ret;
-  }
-  fs->CreateDir(dir_prefix);
-
-  auto param = std::make_shared<ConverterPara>();
-  param->output_file = out_graph_path;
-  int ret = lite::MindIRSerialize(param, func_graph, false, nullptr, nullptr);
-  if (ret != lite::RET_OK) {
-    MS_LOG(ERROR) << "Export to mindir failed";
-    return buffer_ret;
-  }
-  MS_LOG(DEBUG) << "Temporary mindir has been written with name: " << out_graph_path;
-
-  auto parent_process = [&buffer_ret](MultiProcess *multi_process) -> Status {
-    MS_EXCEPTION_IF_NULL(multi_process);
-
-    // receive convert model result from child
-    CreateBufferCall call = [&buffer_ret](size_t msg_len) -> uint8_t * {
-      (void)buffer_ret.ResizeData(msg_len);
-      return static_cast<uint8_t *>(buffer_ret.MutableData());
-    };
-    auto status = multi_process->ReceiveMsg(call);
-    if (status != kSuccess) {
-      MS_LOG_ERROR << "Receive result model from child process failed";
-      return status;
-    }
-    return kSuccess;
-  };
-  auto child_process = [this, &dir_prefix, &out_graph_path](MultiProcess *multi_process) -> Status {
-    MS_EXCEPTION_IF_NULL(multi_process);
-
-    std::string real_path_str;
-    char real_path_mem[PATH_MAX] = {0};
-
-    // For split saved models, model name has _graph suffix.
-    std::string model_file_path_regular = out_graph_path + ".mindir";
-    std::string model_file_path_split = out_graph_path + "_graph.mindir";
-    std::string selected_file_path = model_file_path_regular;
-
-    // Check if model with regular naming exists, choose split naming if not.
-    bool is_split = false;
-    auto real_path_ret = realpath(common::SafeCStr(model_file_path_regular), real_path_mem);
-    if (real_path_ret == nullptr) {
-      selected_file_path = model_file_path_split;
-      is_split = true;
-    }
-
-    // Load model by file
-    Buffer buffer = ReadFile(selected_file_path);
-    MindIRLoader mindir_loader(true, nullptr, 0, kDecModeAesGcm, false);
-    auto func_graph = mindir_loader.LoadMindIR(buffer.Data(), buffer.DataSize(), dir_prefix);
-    // Clean up created temp file.
-    if (!RemoveTempMindIRDir(dir_prefix, is_split)) {
-      MS_LOG(ERROR) << "Removing temporary mindir failed...please check serialized files.";
-      return kMCFailed;
-    }
-    if (func_graph == nullptr) {
-      MS_LOG(ERROR) << "Fail to load model, function graph is nullptr.";
-      return kMCFailed;
-    }
-
-    auto df_graph = ConvertFuncGraphToAIR(func_graph);
-    if (df_graph == nullptr) {
-      MS_LOG(ERROR) << "Convert FuncGraph to AscendIR failed.";
-      return kMCFailed;
-    }
-
-    std::map<std::string, std::string> init_options;
-    std::map<std::string, std::string> build_options;
-    auto option = options_.lock();
-    if (option != nullptr) {
-      std::tie(init_options, build_options) = option->GenAclOptions();
-    }
-    if (AutoTuneProcess::AoeOfflineTurningGraph(options_, df_graph) != kSuccess) {
-      MS_LOG(ERROR) << "Aoe tune graph failed.";
-      return kMCFailed;
-    }
-    Buffer model_result = BuildAirModel(df_graph, init_options, build_options);
-    if (model_result.DataSize() == 0) {
-      MS_LOG(ERROR) << "Convert model from MindIR to OM failed";
-      return kMCFailed;
-    }
-
-    // send result model to parent
-    auto status = multi_process->SendMsg(model_result.Data(), model_result.DataSize());
-    if (status != kSuccess) {
-      MS_LOG_ERROR << "Send result model to parent process failed";
-      return status;
-    }
-    return kSuccess;
-  };
-  ClearCurrentRtCtx();
-  auto status = multi_process.MainProcess(parent_process, child_process);
-  if (status != kSuccess) {
-    MS_LOG_ERROR << "Convert MindIR model to OM model failed";
-  } else {
-    MS_LOG_INFO << "Convert MindIR model to OM model success";
-  }
-  return buffer_ret;
-}
-
-#else
 Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
   MultiProcess multi_process;
   Buffer buffer_ret;
@@ -406,7 +257,6 @@ Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
   }
   return buffer_ret;
 }
-#endif
 
 Buffer ModelConverter::LoadAscendIRInner(const Buffer &model_data) {
   ge::Model load_model = ge::Model("loadmodel", "version2");
