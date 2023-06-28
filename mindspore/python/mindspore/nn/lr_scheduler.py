@@ -31,13 +31,12 @@ class LRScheduler():
     r"""
     Basic class of learning rate schedule.
 
-    Note:
-        This is an experimental lr scheduler module that must be
-        used with optimizers in `nn.optim_ex`.
+    .. warning::
+        This is an experimental lr scheduler module that is subject to change.
+        This module must be used with optimizers in `nn.optim_ex`.
 
     Args:
-        optimizer (Optimizer): The optimizer instance. For more information, please
-            refer to :class:`mindspore.nn.optim_ex.Optimizer` .
+        optimizer (Optimizer): The optimizer instance.
         last_epoch (int, optional): The epoch/step number. Default: ``-1``.
         verbose (bool, optional): Whether to print lr information. Default: ``False``.
 
@@ -110,13 +109,12 @@ class StepLR(LRScheduler):
     step_size epochs. Notice that such decay can happen simultaneously with
     other changes to the learning rate from outside this scheduler.
 
-    Note:
-        This is an experimental lr scheduler that must be
-        used with optimizers in `nn.optim_ex`.
+    .. warning::
+        This is an experimental lr scheduler module that is subject to change.
+        This module must be used with optimizers in `nn.optim_ex`.
 
     Args:
-        optimizer (Optimizer): Wrapped optimizer. For more information, please
-            refer to :class:`mindspore.nn.optim_ex.Optimizer` .
+        optimizer (Optimizer): Wrapped optimizer.
         step_size (int): Period of learning rate decay.
         gamma (float, optional): Multiplicative factor of learning rate decay.
             Default: ``0.1``.
@@ -176,13 +174,12 @@ class LinearLR(LRScheduler):
     Notice that such decay can happen simultaneously with other changes to the learning rate
     from outside this scheduler.
 
-    Note:
-        This is an experimental lr scheduler that must be
-        used with optimizers in `nn.optim_ex`.
+    .. warning::
+        This is an experimental lr scheduler module that is subject to change.
+        This module must be used with optimizers in `nn.optim_ex`.
 
     Args:
-        optimizer (Optimizer): Wrapped optimizer. For more information, please
-            refer to :class:`mindspore.nn.optim_ex.Optimizer` .
+        optimizer (Optimizer): Wrapped optimizer.
         start_factor (float, optional): The number we multiply learning rate in the first epoch.
             The multiplication factor changes towards end_factor in the following epochs.
             Default: 1./3.

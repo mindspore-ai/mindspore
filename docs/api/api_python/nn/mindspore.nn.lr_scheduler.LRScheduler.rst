@@ -5,11 +5,11 @@ mindspore.nn.lr_scheduler.LRScheduler
 
     动态学习率的基类。
 
-    .. note::
+    .. warning::
         这是一个实验性的动态学习率模块，需要和 `nn.optim_ex` 下的优化器配合使用。
 
     参数：
-        - **optimizer** (Optimizer) - 优化器实例。详见 :class:`mindspore.nn.optim_ex.Optimizer` 。
+        - **optimizer** (Optimizer) - 优化器实例。
         - **last_epoch** (int，可选) - epoch/step数。默认值：``-1``。
         - **verbose** (bool，可选) - 是否打印学习率。默认值：``False``。
 
