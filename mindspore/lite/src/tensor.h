@@ -37,8 +37,12 @@ namespace mindspore {
 namespace lite {
 #define STATIC_ALLOCATION -271964
 #define RUNTIME_REFCOUNT 0x9999
+#define OPENCL_ALLOCATOR_REFCOUNT -10000
 #define IS_STATIC_ALLOCATOR(allocator) ((allocator != nullptr) && (allocator->RefCount(nullptr) == STATIC_ALLOCATION))
 #define IS_RUNTIME_ALLOCATOR(allocator) ((allocator != nullptr) && (allocator->RefCount(nullptr) == RUNTIME_REFCOUNT))
+#define IS_OPENCL_ALLOCATOR(allocator) \
+  ((allocator != nullptr) && (allocator->RefCount(nullptr) == OPENCL_ALLOCATOR_REFCOUNT))
+
 struct LiteQuantParam {
   double scale;
   int32_t zeroPoint;
