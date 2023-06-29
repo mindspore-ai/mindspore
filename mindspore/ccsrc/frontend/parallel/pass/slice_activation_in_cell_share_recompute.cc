@@ -248,7 +248,7 @@ void SliceReuseRecomputedActivationNodes(const FuncGraphPtr &graph) {
         ref_node = allgather_depend;
       }
       auto allgather_cnode = CreateAllGatherNode(ref_node, groups);
-      manager->Replace(ref_node, allgather_cnode);
+      (void)manager->Replace(ref_node, allgather_cnode);
     }
   }
 }

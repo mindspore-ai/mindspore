@@ -425,7 +425,7 @@ std::set<std::pair<AnfNodePtr, int>> FuncNodeUsersSet(const AnfNodePtr &paramete
         continue;
       }
       for (const auto &func_node_user : func_node_users) {
-        all_node_users.insert(func_node_user);
+        (void)all_node_users.insert(func_node_user);
       }
     }
   }

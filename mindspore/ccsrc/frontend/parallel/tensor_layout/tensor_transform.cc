@@ -50,13 +50,13 @@ void TensorTransform::InitTransforOperator() {
   transform_operator_[SPLIT] = [this](auto op_pair) { return ExtractSplitOp(op_pair); };
   transform_operator_[CONCAT] = [this](auto op_pair) { return ExtractConcatOp(op_pair); };
   transform_operator_[STRIDEDSLICE] = [this](auto op_pair) { return ExtractStridedSliceOp(op_pair); };
-  infer_shape_operator_[RESHAPE] = [this](Shape ori_shape, std::vector<int64_t> op_pair) {
+  infer_shape_operator_[RESHAPE] = [this](const Shape &ori_shape, const std::vector<int64_t> &op_pair) {
     return InferReshapeOp(ori_shape, op_pair);
   };
-  infer_shape_operator_[ALL_GATHER] = [this](Shape ori_shape, std::vector<int64_t> op_pair) {
+  infer_shape_operator_[ALL_GATHER] = [this](const Shape &ori_shape, const std::vector<int64_t> &op_pair) {
     return InferAllGatherOp(ori_shape, op_pair);
   };
-  infer_shape_operator_[STRIDEDSLICE] = [this](Shape ori_shape, std::vector<int64_t> op_pair) {
+  infer_shape_operator_[STRIDEDSLICE] = [this](const Shape &ori_shape, const std::vector<int64_t> &op_pair) {
     return InferStridedSliceOp(ori_shape, op_pair);
   };
   inited_function_ = true;
@@ -288,7 +288,7 @@ RedistributionOpListPtr TensorTransform::OptimizeTensorRedistributionOperatorLis
       continue;
     }
     auto src_shape = shape_list[i];
-    src_shape[LongToSize(axis)] = src_shape[LongToSize(axis)] / (transform_op_list[i].second.size() - 1);
+    src_shape[LongToSize(axis)] = src_shape[LongToSize(axis)] / SizeToLong(transform_op_list[i].second.size() - 1);
     auto new_axis = axis;
     auto new_src_shape = src_shape;
     for (int32_t j = axis - 1; j >= 0; --j) {
@@ -311,14 +311,14 @@ RedistributionOpListPtr TensorTransform::OptimizeTensorRedistributionOperatorLis
   std::reverse(allconcat_pos_list.begin(), allconcat_pos_list.end());
   for (auto pos : allconcat_pos_list) {
     // erase split concat
-    redistribution_op_list->first.erase(redistribution_op_list->first.begin() + pos + kSize2);
-    redistribution_op_list->first.erase(redistribution_op_list->first.begin() + pos + kSize1);
-    redistribution_op_list->second.erase(redistribution_op_list->second.begin() + pos + kSize2);
-    redistribution_op_list->second.erase(redistribution_op_list->second.begin() + pos + kSize1);
+    (void)redistribution_op_list->first.erase(redistribution_op_list->first.begin() + pos + kSize2);
+    (void)redistribution_op_list->first.erase(redistribution_op_list->first.begin() + pos + kSize1);
+    (void)redistribution_op_list->second.erase(redistribution_op_list->second.begin() + pos + kSize2);
+    (void)redistribution_op_list->second.erase(redistribution_op_list->second.begin() + pos + kSize1);
     // insert reshape before allgather
     Operator left_reshape_op = ConstructReshapeOp(left_reshape_op_list[pos]);
-    redistribution_op_list->first.insert(redistribution_op_list->first.begin() + pos, left_reshape_op);
-    redistribution_op_list->second.insert(redistribution_op_list->second.begin() + pos, {false, 0});
+    (void)redistribution_op_list->first.insert(redistribution_op_list->first.begin() + pos, left_reshape_op);
+    (void)redistribution_op_list->second.insert(redistribution_op_list->second.begin() + pos, {false, 0});
   }
   return redistribution_op_list;
 }
