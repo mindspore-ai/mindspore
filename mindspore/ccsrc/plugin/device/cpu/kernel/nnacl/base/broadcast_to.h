@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_FP32_BROADCAST_TO_H_
-#define MINDSPORE_NNACL_FP32_BROADCAST_TO_H_
+#ifndef NNACL_FP32_BROADCAST_TO_H_
+#define NNACL_FP32_BROADCAST_TO_H_
 
 #include "nnacl/broadcast_to_parameter.h"
 
@@ -31,4 +31,4 @@ int BroadcastToSize128(const void *input, BroadcastShapeInfo *shape_info, void *
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FP32_BROADCAST_TO_H_
+#endif  //  NNACL_FP32_BROADCAST_TO_H_

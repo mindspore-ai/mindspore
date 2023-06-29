@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_NNACL_SPLIT_BASE_H_
-#define NNACL_NNACL_SPLIT_BASE_H_
+#ifndef NNACL_BASE_SPLIT_BASE_H_
+#define NNACL_BASE_SPLIT_BASE_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/split_parameter.h"
@@ -29,4 +29,4 @@ int DoSplit(const void *in_data, void **out_data, const int *input_shape, int of
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_NNACL_SPLIT_BASE_H_
+#endif  // NNACL_BASE_SPLIT_BASE_H_

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_BASE_SPACE_TO_DEPTH_BASE_H_
-#define MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_BASE_SPACE_TO_DEPTH_BASE_H_
+#ifndef NNACL_BASE_SPACE_TO_DEPTH_BASE_H_
+#define NNACL_BASE_SPACE_TO_DEPTH_BASE_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/space_to_depth_parameter.h"
@@ -28,4 +28,4 @@ int SpaceToDepthForNHWC(const void *input, void *output, const int *in_shape, co
 }
 #endif
 
-#endif  // MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_BASE_SPACE_TO_DEPTH_BASE_H_
+#endif  // NNACL_BASE_SPACE_TO_DEPTH_BASE_H_

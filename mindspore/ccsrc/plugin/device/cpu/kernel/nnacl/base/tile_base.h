@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_BASE_TILE_H_
-#define MINDSPORE_NNACL_BASE_TILE_H_
+#ifndef NNACL_BASE_TILE_BASE_H_
+#define NNACL_BASE_TILE_BASE_H_
 
 #include "nnacl/kernel/tile.h"
 #include "nnacl/tile_parameter.h"
@@ -29,4 +29,4 @@ void TileSimple(void *input_data, void *output_data, size_t begin, size_t end, c
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_BASE_TILE_H_
+#endif  // NNACL_BASE_TILE_BASE_H_

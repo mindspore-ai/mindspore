@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_BATCH_TO_SPACE_BASE_H_
-#define MINDSPORE_NNACL_BATCH_TO_SPACE_BASE_H_
+#ifndef NNACL_BATCH_TO_SPACE_BASE_H_
+#define NNACL_BATCH_TO_SPACE_BASE_H_
 
 #include <string.h>
 #include "nnacl/op_base.h"
@@ -30,4 +30,4 @@ void BatchToSpaceForNHWC(const void *input, void *output, const int *in_shape, i
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_BATCH_TO_SPACE_BASE_H_
+#endif  // NNACL_BATCH_TO_SPACE_BASE_H_

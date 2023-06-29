@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_GATHER_D_BASE_H_
-#define MINDSPORE_NNACL_GATHER_D_BASE_H_
+#ifndef NNACL_GATHER_D_BASE_H_
+#define NNACL_GATHER_D_BASE_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/errorcode.h"
@@ -52,4 +52,4 @@ GATHER_D_IMPL_DECLARATION(float16_t, int64_t);
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_GATHER_D_BASE_H_
+#endif  // NNACL_GATHER_D_BASE_H_

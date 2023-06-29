@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_UNSTACK_H_
-#define MINDSPORE_NNACL_UNSTACK_H_
+#ifndef NNACL_BASE_UNSTACK_BASE_H_
+#define NNACL_BASE_UNSTACK_BASE_H_
 
 #include <string.h>
 #include "nnacl/op_base.h"
@@ -29,4 +29,4 @@ void Unstack(const void *input, void **output, const UnstackParameter *para, int
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_UNSTACK_H_
+#endif  // NNACL_BASE_UNSTACK_BASE_H_

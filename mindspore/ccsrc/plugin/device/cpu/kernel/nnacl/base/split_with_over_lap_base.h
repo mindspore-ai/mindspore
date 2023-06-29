@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_NNACL_SPLIT_WITH_OVER_LAP_BASE_H_
-#define MINDSPORE_NNACL_NNACL_SPLIT_WITH_OVER_LAP_BASE_H_
+#ifndef NNACL_SPLIT_WITH_OVER_LAP_BASE_H_
+#define NNACL_SPLIT_WITH_OVER_LAP_BASE_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/split_parameter.h"
@@ -30,4 +30,4 @@ int DoSplitWithOverlapParallel(const char *in_data, char **out_data, int slice_i
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_NNACL_SPLIT_WITH_OVER_LAP_BASE_H_
+#endif  // NNACL_NNACL_SPLIT_WITH_OVER_LAP_BASE_H_

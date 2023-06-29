@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_GATHER_BASE_H_
-#define MINDSPORE_NNACL_GATHER_BASE_H_
+#ifndef NNACL_GATHER_BASE_H_
+#define NNACL_GATHER_BASE_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/errorcode.h"
@@ -29,4 +29,4 @@ int Gather(const void *input, int64_t outer_size, int64_t byte_inner_size, int64
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_GATHER_BASE_H_
+#endif  // NNACL_GATHER_BASE_H_

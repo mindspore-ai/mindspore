@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_DEPTH_TO_SPACE_H_
-#define MINDSPORE_NNACL_DEPTH_TO_SPACE_H_
+#ifndef NNACL_DEPTH_TO_SPACE_H_
+#define NNACL_DEPTH_TO_SPACE_H_
 
 #include <string.h>
 #include "nnacl/depth_to_space_parameter.h"
@@ -28,4 +28,4 @@ void DepthToSpaceCRDForNHWC(const void *input, void *output, const int *in_shape
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_DEPTH_TO_SPACE_H_
+#endif  // NNACL_DEPTH_TO_SPACE_H_

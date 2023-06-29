@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_STACK_H_
-#define MINDSPORE_NNACL_STACK_H_
+#ifndef NNACL_BASE_STACK_BASE_H_
+#define NNACL_BASE_STACK_BASE_H_
 
 #include <string.h>
 #include "nnacl/op_base.h"
@@ -27,4 +27,4 @@ void Stack(void **inputs, void *output, size_t input_num, size_t copy_size, int 
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_NNACL_STACK_H_
+#endif  // NNACL_BASE_STACK_BASE_H_

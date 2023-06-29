@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_BASE_CONV_DEPTHWISE_BASE_H_
-#define MINDSPORE_NNACL_BASE_CONV_DEPTHWISE_BASE_H_
+#ifndef NNACL_BASE_CONV_DEPTHWISE_BASE_H_
+#define NNACL_BASE_CONV_DEPTHWISE_BASE_H_
 
 #include "nnacl/conv_parameter.h"
 
@@ -38,4 +38,4 @@ bool CheckIfUseWinograd(int *output_unit, const ConvParameter *conv_param);
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_BASE_CONV_DEPTHWISE_BASE_H_
+#endif  // NNACL_BASE_CONV_DEPTHWISE_BASE_H_
