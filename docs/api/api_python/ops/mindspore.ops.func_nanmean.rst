@@ -3,7 +3,7 @@ mindspore.ops.nanmean
 
 .. py:function:: mindspore.ops.nanmean(input, axis=None, keepdims=False, *, dtype=None)
 
-    计算 `input` 指定维度元素的平均值，忽略NaN。如果降维中的所有元素都是NaN，则结果将是NaN。
+    计算 `input` 指定维度元素的平均值，忽略NaN。如果指定维度中的所有元素都是NaN，则结果将是NaN。
 
     参数：
         - **input** (Tensor) - 计算平均值的输入Tensor。
