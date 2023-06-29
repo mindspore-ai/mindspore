@@ -83,7 +83,7 @@ class LRScheduler():
         Display the current learning rate.
         """
         if is_verbose:
-            print('Adjusting learning rate of group %s to %s.'%(group, lr.value()))
+            print('Adjusting learning rate of group %s to %s.' % (group, lr.value()))
 
     def get_last_lr(self):
         """
