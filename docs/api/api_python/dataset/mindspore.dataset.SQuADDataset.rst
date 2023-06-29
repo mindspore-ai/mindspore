@@ -35,6 +35,10 @@ mindspore.dataset.SQuADDataset
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。
 
+    教程样例：
+        - `使用数据Pipeline加载 & 处理数据集
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     **关于SQuAD数据集：**
 
     SQuAD（Stanford Question Answering Dataset）是一个阅读理解数据集，由众人对一组维基百科文章提出的问题组成，

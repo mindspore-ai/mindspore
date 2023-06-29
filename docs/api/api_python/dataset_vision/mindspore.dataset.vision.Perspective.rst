@@ -23,3 +23,7 @@ mindspore.dataset.vision.Perspective
         - **TypeError** - 如果 `end_points` 不是Sequence[Sequence[int, int]]类型。
         - **TypeError** - 当 `interpolation` 的类型不为 :class:`mindspore.dataset.vision.Inter` 。
         - **RuntimeError** - 如果输入图像的形状不是 <H, W> 或 <H, W, C>。
+
+    教程样例：
+        - `视觉变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_

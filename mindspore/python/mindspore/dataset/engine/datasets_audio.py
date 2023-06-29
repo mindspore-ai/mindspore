@@ -75,6 +75,10 @@ class CMUArcticDataset(MappableDataset, AudioBaseDataset):
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Note:
         - Not support :class:`mindspore.dataset.PKSampler` for `sampler` parameter yet.
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
@@ -211,6 +215,10 @@ class GTZANDataset(MappableDataset, AudioBaseDataset):
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - Not support :class:`mindspore.dataset.PKSampler` for `sampler` parameter yet.
@@ -349,6 +357,10 @@ class LibriTTSDataset(MappableDataset, AudioBaseDataset):
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - Not support :class:`mindspore.dataset.PKSampler` for `sampler` parameter yet.
@@ -497,6 +509,10 @@ class LJSpeechDataset(MappableDataset, AudioBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
@@ -640,6 +656,10 @@ class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.
@@ -772,6 +792,10 @@ class TedliumDataset(MappableDataset, AudioBaseDataset):
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.
@@ -972,6 +996,10 @@ class YesNoDataset(MappableDataset, AudioBaseDataset):
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - This dataset can take in a `sampler` . `sampler` and `shuffle` are mutually exclusive.

@@ -12,3 +12,7 @@ mindspore.dataset.vision.Decode
         - **RuntimeError** - 如果输入图像不是一维序列。
         - **RuntimeError** - 如果输入数据不是合法的图像字节数据。
         - **RuntimeError** - 如果输入数据已经是解码的图像数据。
+
+    教程样例：
+        - `视觉变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_

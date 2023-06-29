@@ -20,3 +20,7 @@ mindspore.dataset.vision.RandomPerspective
         - **TypeError** - 当 `interpolation` 的类型不为 :class:`mindspore.dataset.vision.Inter` 。
         - **ValueError** - 当 `distortion_scale` 取值不在[0.0, 1.0]范围内。
         - **ValueError** - 当 `prob` 取值不在[0.0, 1.0]范围内。
+
+    教程样例：
+        - `视觉变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_

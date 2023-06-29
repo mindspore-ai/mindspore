@@ -21,3 +21,7 @@ mindspore.dataset.vision.Normalize
         - **ValueError** - 如果 `mean` 不在 [0.0, 255.0] 范围内。
         - **ValueError** - 如果 `std` 不在 (0.0, 255.0] 范围内。
         - **RuntimeError** - 如果给定的tensor format不是<H, W>或<...,H, W, C>。
+
+    教程样例：
+        - `视觉变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_

@@ -79,6 +79,10 @@ class AGNewsDataset(SourceDataset, TextBaseDataset):
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Examples:
         >>> import mindspore.dataset as ds
         >>> ag_news_dataset_dir = "/path/to/ag_news_dataset_file"
@@ -182,6 +186,10 @@ class AmazonReviewDataset(SourceDataset, TextBaseDataset):
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -423,6 +431,10 @@ class CLUEDataset(SourceDataset, TextBaseDataset):
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Examples:
         >>> import mindspore.dataset as ds
         >>> clue_dataset_dir = ["/path/to/clue_dataset_file"] # contains 1 or multiple clue files
@@ -518,6 +530,10 @@ class CoNLL2000Dataset(SourceDataset, TextBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -615,6 +631,10 @@ class DBpediaDataset(SourceDataset, TextBaseDataset):
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Examples:
         >>> import mindspore.dataset as ds
         >>> dbpedia_dataset_dir = "/path/to/dbpedia_dataset_directory"
@@ -709,6 +729,10 @@ class EnWik9Dataset(SourceDataset, TextBaseDataset):
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Examples:
         >>> import mindspore.dataset as ds
         >>> en_wik9_dataset_dir = "/path/to/en_wik9_dataset"
@@ -795,6 +819,10 @@ class IMDBDataset(MappableDataset, TextBaseDataset):
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Note:
         - The shape of the test column.
@@ -952,6 +980,10 @@ class IWSLT2016Dataset(SourceDataset, TextBaseDataset):
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Examples:
         >>> import mindspore.dataset as ds
         >>> iwslt2016_dataset_dir = "/path/to/iwslt2016_dataset_dir"
@@ -1080,6 +1112,10 @@ class IWSLT2017Dataset(SourceDataset, TextBaseDataset):
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Examples:
         >>> import mindspore.dataset as ds
         >>> iwslt2017_dataset_dir = "/path/to/iwslt2017_dataset_dir"
@@ -1185,6 +1221,10 @@ class Multi30kDataset(SourceDataset, TextBaseDataset):
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Examples:
         >>> import mindspore.dataset as ds
         >>> multi30k_dataset_dir = "/path/to/multi30k_dataset_directory"
@@ -1286,6 +1326,10 @@ class PennTreebankDataset(SourceDataset, TextBaseDataset):
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Examples:
         >>> import mindspore.dataset as ds
         >>> penn_treebank_dataset_dir = "/path/to/penn_treebank_dataset_directory"
@@ -1384,6 +1428,10 @@ class SogouNewsDataset(SourceDataset, TextBaseDataset):
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Examples:
         >>> import mindspore.dataset as ds
         >>> sogou_news_dataset_dir = "/path/to/sogou_news_dataset_dir"
@@ -1478,6 +1526,10 @@ class SQuADDataset(SourceDataset, TextBaseDataset):
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -1593,6 +1645,10 @@ class SST2Dataset(SourceDataset, TextBaseDataset):
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Examples:
         >>> import mindspore.dataset as ds
         >>> sst2_dataset_dir = "/path/to/sst2_dataset_directory"
@@ -1692,6 +1748,10 @@ class TextFileDataset(SourceDataset, TextBaseDataset):
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Examples:
         >>> import mindspore.dataset as ds
         >>> text_file_list = ["/path/to/text_file_dataset_file"] # contains 1 or multiple text files
@@ -1753,6 +1813,10 @@ class UDPOSDataset(SourceDataset, TextBaseDataset):
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -1834,6 +1898,10 @@ class WikiTextDataset(SourceDataset, TextBaseDataset):
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
         ValueError: If `num_samples` is invalid (< 0).
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     About WikiTextDataset dataset:
 
@@ -1926,6 +1994,10 @@ class YahooAnswersDataset(SourceDataset, TextBaseDataset):
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -2024,6 +2096,10 @@ class YelpReviewDataset(SourceDataset, TextBaseDataset):
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
 
     Examples:
         >>> import mindspore.dataset as ds

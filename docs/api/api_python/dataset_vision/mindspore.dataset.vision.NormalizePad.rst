@@ -19,3 +19,7 @@ mindspore.dataset.vision.NormalizePad
         - **ValueError** - 如果 `mean` 不在 [0.0, 255.0] 范围内。
         - **ValueError** - 如果 `std` 不在范围内 (0.0, 255.0]。
         - **RuntimeError** - 如果输入图像的shape不是 <H, W>, <H, W, C> 或 <C, H, W>。
+
+    教程样例：
+        - `视觉变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_

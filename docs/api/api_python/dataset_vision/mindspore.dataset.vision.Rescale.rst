@@ -14,3 +14,7 @@ mindspore.dataset.vision.Rescale
     异常：
         - **TypeError** - 当 `rescale` 的类型不为float。
         - **TypeError** - 当 `shift` 的类型不为float。
+
+    教程样例：
+        - `视觉变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_

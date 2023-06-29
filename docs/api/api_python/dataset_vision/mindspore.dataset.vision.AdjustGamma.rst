@@ -19,3 +19,7 @@ mindspore.dataset.vision.AdjustGamma
         - **TypeError** - 如果 `gamma` 不是浮点类型。
         - **ValueError** - 如果 `gamma` 小于0。
         - **RuntimeError** - 如果给定的张量形状不是<H, W>或<..., H, W, C>。
+
+    教程样例：
+        - `视觉变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_

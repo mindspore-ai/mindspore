@@ -26,3 +26,7 @@ mindspore.dataset.vision.RandomRotation
         - **TypeError** - 当 `fill_value` 的类型不为int或tuple[int]。
         - **ValueError** - 当 `fill_value` 取值不在[0, 255]范围内。
         - **RuntimeError** - 当输入图像的shape不为<H, W>或<H, W, C>。
+
+    教程样例：
+        - `视觉变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_

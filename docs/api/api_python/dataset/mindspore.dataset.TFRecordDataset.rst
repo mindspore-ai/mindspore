@@ -42,4 +42,8 @@ mindspore.dataset.TFRecordDataset
         - **ValueError** - `compression_type` 有效但是数据集文件数量小于 `num_shards` 。
         - **ValueError** - `num_samples` 小于0。
 
+    教程样例：
+        - `使用数据Pipeline加载 & 处理数据集
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
+
 .. include:: mindspore.dataset.api_list_nlp.rst

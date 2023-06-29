@@ -20,3 +20,7 @@ mindspore.dataset.vision.SlicePatches
         - **ValueError** - 当 `num_width` 不为正数。
         - **ValueError** - 当 `fill_value` 不在 [0, 255]范围内。
         - **RuntimeError** - 如果输入的Tensor不是 <H, W> 或<H, W, C> 格式。
+
+    教程样例：
+        - `视觉变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_

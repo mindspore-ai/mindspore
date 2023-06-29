@@ -4065,6 +4065,10 @@ class RandomDataset(SourceDataset, VisionBaseDataset):
         TypeError: If `shuffle` is not of type bool.
         TypeError: If `columns_list` is not of type list.
 
+    Tutorial Examples:
+        - `Load & Process Data With Dataset Pipeline
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     Examples:
         >>> from mindspore import dtype as mstype
         >>> import mindspore.dataset as ds

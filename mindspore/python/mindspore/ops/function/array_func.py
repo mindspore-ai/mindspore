@@ -3555,7 +3555,7 @@ def tensor_scatter_add(input_x, indices, updates):
           the corresponding `updates` will not be updated to self tensor.
         - On CPU, if some values of the `indices` are out of bound, raising an index error.
         - On Ascend, out of bound checking is not supported, if some values of the `indices` are out of bound,
-        unknown errors may be caused.
+          unknown errors may be caused.
 
     Args:
         input_x (Tensor): The input tensor. The dimension of input_x must be no less than indices.shape[-1].

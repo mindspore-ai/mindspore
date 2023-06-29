@@ -30,6 +30,10 @@ mindspore.dataset.PennTreebankDataset
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
 
+    教程样例：
+        - `使用数据Pipeline加载 & 处理数据集
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     **关于PennTreebank数据集：**
 
     Penn Treebank (PTB) 数据集，广泛用于 NLP（自然语言处理）的机器学习研究。

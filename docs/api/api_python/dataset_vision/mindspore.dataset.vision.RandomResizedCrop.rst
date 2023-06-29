@@ -31,3 +31,7 @@ mindspore.dataset.vision.RandomResizedCrop
         - **ValueError** - 当 `scale` 为负数。
         - **ValueError** - 当 `ratio` 为负数。
         - **ValueError** - 当 `max_attempts` 不为正数。
+
+    教程样例：
+        - `视觉变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_

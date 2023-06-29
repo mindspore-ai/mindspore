@@ -29,6 +29,10 @@ mindspore.dataset.AGNewsDataset
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
 
+    教程样例：
+        - `使用数据Pipeline加载 & 处理数据集
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/dataset_gallery.html>`_
+
     **关于AGNews数据集：**
 
     AG是一个大型合集，具有超过100万篇新闻文章。这些新闻文章是由ComeToMyHead在持续1年多的活动中，从2000多个新闻来源收集的。ComeToMyHead是一个学术新闻搜索引擎，自2004年7月以来一直在运营。

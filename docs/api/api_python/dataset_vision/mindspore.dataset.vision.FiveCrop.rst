@@ -11,3 +11,7 @@ mindspore.dataset.vision.FiveCrop
     异常：
         - **TypeError** - 当 `size` 的类型不为int或Sequence[int, int]。
         - **ValueError** - 当 `size` 不为正数。
+
+    教程样例：
+        - `视觉变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_

@@ -28,3 +28,7 @@ mindspore.dataset.vision.Erase
         - **ValueError** - 如果 `value` 中元素的值不在[0, 255]范围。
         - **TypeError** - 如果 `inplace` 不是bool类型。
         - **RuntimeError** - 如果输入图像的形状不是 <H, W, C>。
+
+  教程样例：
+        - `视觉变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_

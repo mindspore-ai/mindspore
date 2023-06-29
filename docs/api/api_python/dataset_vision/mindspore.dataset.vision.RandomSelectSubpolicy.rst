@@ -10,3 +10,7 @@ mindspore.dataset.vision.RandomSelectSubpolicy
 
     异常：
         - **TypeError** - 当 `policy` 包含无效数据处理操作。
+
+    教程样例：
+        - `视觉变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_
