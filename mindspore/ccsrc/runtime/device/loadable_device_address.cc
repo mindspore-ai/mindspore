@@ -257,7 +257,7 @@ void LoadableDeviceAddress::ReleaseResource() {
     const auto swap_manager = device_context->device_res_manager_->swap_manager();
     MS_EXCEPTION_IF_NULL(swap_manager);
     if (!storage_info_.file_name_.empty() && storage_info_.file_name_mutable_) {
-      swap_manager->DeleteFile(storage_info_.file_name_);
+      (void)swap_manager->DeleteFile(storage_info_.file_name_);
     }
     if (storage_info_.host_ptr_ != nullptr && storage_info_.host_ptr_mutable_) {
       swap_manager->FreeHostMemory(storage_info_.host_ptr_);

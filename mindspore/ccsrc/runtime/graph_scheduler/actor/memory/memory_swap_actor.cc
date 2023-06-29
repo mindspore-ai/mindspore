@@ -66,7 +66,7 @@ std::vector<DeviceTensor *> MemorySwapActor::GetDeviceTensors(const std::vector<
       MS_LOG(EXCEPTION) << "Device tensor index[" << index << "] out of range[" << device_tensors_to_swap_.size()
                         << "].";
     }
-    device_tensors.emplace_back(device_tensors_to_swap_[index]);
+    (void)device_tensors.emplace_back(device_tensors_to_swap_[index]);
   }
   return device_tensors;
 }
