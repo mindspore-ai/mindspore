@@ -265,7 +265,7 @@ void UpdateStubTensor(const FrontendOpRunInfoPtr &op_run_info) {
 }
 
 bool EnableBackendAsync(const FrontendOpRunInfoPtr &op_run_info) {
-  static const std::set<std::string> kInvalidInferResultOp = {kDropoutOpName};
+  static const std::set<std::string> kInvalidInferResultOp = {kDropoutOpName, kMaxPoolWithArgmaxOpName};
   return kInvalidInferResultOp.find(op_run_info->base_op_run_info.op_name) == kInvalidInferResultOp.end() &&
          !op_run_info->base_op_run_info.has_dynamic_output;
 }
