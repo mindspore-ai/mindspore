@@ -415,15 +415,24 @@ def _grads_divided_by_device_num_if_recomputation(grads):
     """
     If in pynative parallel and full_batch is True, divide grads by device num to ensure that the gradients is correct.
     """
-    if grads is None or not _is_pynative_parallel() or not _get_full_batch():
+    if not _is_pynative_parallel() or not _get_full_batch():
         return grads
 
-    device_num = Tensor(_get_device_num(), grads[0].dtype)
+    device_num = _get_device_num()
     logger.info(f"In PyNative mode, when parallel mode is in "
                 f"({context.ParallelMode.SEMI_AUTO_PARALLEL}, {context.ParallelMode.AUTO_PARALLEL}) and "
                 f"full_batch is Ture, the gradients will be automatically divided by device_num({device_num}).")
-    new_grads = ()
-    for grad in grads:
-        new_grads += (grad / device_num,)
 
+    if not isinstance(grads, (tuple, Tensor)):
+        raise ValueError(f"The type of grads must be either Tuple[Tensor] or Tensor, but got {type(grads)}.")
+
+    if isinstance(grads, tuple):
+        new_grads = ()
+        if grads:
+            device_num_tensor = Tensor(device_num, grads[0].dtype)
+            for grad in grads:
+                new_grads += (grad / device_num_tensor,)
+    else:
+        device_num_tensor = Tensor(device_num, grads.dtype)
+        new_grads = grads / device_num_tensor
     return new_grads
