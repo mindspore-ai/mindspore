@@ -8164,6 +8164,9 @@ class Conv3D(Primitive):
         """Initialize Conv3D"""
         self.init_prim_io_names(inputs=['x', 'w'], outputs=['output'])
         self.kernel_size = _check_3d_int_or_tuple('kernel_size', kernel_size, self.name)
+        if isinstance(kernel_size, int):
+            self.kernel_size = (kernel_size,) * 3
+        self.add_prim_attr('kernel_size', self.kernel_size)
         self.stride = _check_3d_int_or_tuple('stride', stride, self.name, allow_five=False, ret_five=True)
         self.add_prim_attr('strides', self.stride)
         target = context.get_context("device_target")
@@ -8692,6 +8695,8 @@ class Conv3DTranspose(Primitive):
         self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
         self.add_prim_attr('out_channel', self.out_channel)
         self.kernel_size = _check_3d_int_or_tuple('kernel_size', kernel_size, self.name)
+        if isinstance(kernel_size, int):
+            self.kernel_size = (kernel_size,) * 3
         self.add_prim_attr('kernel_size', self.kernel_size)
         self.stride = _check_3d_int_or_tuple('stride', stride, self.name, allow_five=False,
                                              ret_five=True)
