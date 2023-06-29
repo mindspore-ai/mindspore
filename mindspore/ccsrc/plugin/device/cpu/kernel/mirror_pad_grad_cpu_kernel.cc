@@ -136,13 +136,12 @@ void MirrorPadGradCpuKernelMod::slice(std::vector<int64_t> extents, std::vector<
                                       const std::vector<AddressPtr> &outputs) {
   auto *outputs_addr = static_cast<T *>(outputs[0]->addr);
   auto inputs_addr = reinterpret_cast<T *>(inputs.data());
-
-  const size_t length = IntToSize(output_size_);
-  auto copy_size = int64_t(sizeof(T)) * extents[dims_ - 1];
-  for (size_t i = 0; i < length; i += extents[dims_ - 1]) {
-    std::vector<int64_t> pos(dims_, 0);
-    auto idx = i / extents[dims_ - 1];
-    for (int j = dims_ - 2; j >= 0; --j) {
+  size_t index = LongToSize(dims_ - 1);
+  auto copy_size = sizeof(T) * LongToSize(extents[index]);
+  for (int64_t i = 0; i < output_size_; i += extents[index]) {
+    std::vector<int64_t> pos(LongToSize(dims_), 0);
+    auto idx = i / extents[index];
+    for (int j = LongToInt(dims_ - 2); j >= 0; --j) {
       if (idx == 0) {
         break;
       }
@@ -153,7 +152,7 @@ void MirrorPadGradCpuKernelMod::slice(std::vector<int64_t> extents, std::vector<
     for (size_t j = 0; j < pos.size(); j++) {
       input_index += (pos[j] + rhs_offsets[j]) * input_strides[j];
     }
-    int ret = memcpy_s(outputs_addr + i, copy_size, inputs_addr + input_index, copy_size);
+    int ret = memcpy_s(outputs_addr + LongToSize(i), copy_size, inputs_addr + LongToSize(input_index), copy_size);
     if (ret != 0) {
       MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
     }
