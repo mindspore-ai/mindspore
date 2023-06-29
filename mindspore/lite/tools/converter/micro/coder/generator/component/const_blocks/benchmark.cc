@@ -44,6 +44,9 @@ const char benchmark_source[] = R"RAW(/**
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef ENABLE_FP16
+#include <arm_neon.h>
+#endif
 
 #define kMaxThreadNum 4
 #define kBindDefault 1
@@ -96,6 +99,14 @@ void PrintTensorHandle(MSTensorHandle tensor) {
       printf("\n");
     } break;
     case kMSDataTypeNumberTypeFloat16:
+#ifdef ENABLE_FP16
+    {
+      for (size_t i = 0; i < element_num; i++) {
+        printf("%.6f, ", ((float16_t *)data)[i]);
+      }
+      printf("\n");
+    } break;
+#endif
     case kMSDataTypeNumberTypeInt16: {
       for (size_t i = 0; i < element_num; i++) {
         printf("%" PRId16, ((int16_t *)data)[i]);

@@ -56,8 +56,9 @@ class MemoryAllocator {
   /*
    * assign model's input, original weights and all tensors memory addr
    */
-  int Assign(const std::vector<Tensor *> &inputs, const std::vector<std::unique_ptr<OperatorCoder>> &nodes,
-             const std::vector<Tensor *> &all_tensors, const std::string &changeable_weights_name = {});
+  int Assign(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs,
+             const std::vector<std::unique_ptr<OperatorCoder>> &nodes, const std::vector<Tensor *> &all_tensors,
+             const std::string &changeable_weights_name = {});
 
   // allocator holds the space malloced by opcoders, will free before session coder destroy
   void Free();
@@ -149,7 +150,7 @@ class MemoryAllocator {
   std::map<Tensor *, std::pair<Tensor *, std::string>> auxiliary_weights() const { return auxiliary_weights_; }
 
  private:
-  int AssignTensors(const std::vector<std::unique_ptr<OperatorCoder>> &nodes);
+  int AssignTensors(const std::vector<std::unique_ptr<OperatorCoder>> &nodes, const std::vector<Tensor *> &outputs);
   void AssignGraphInputs(const std::vector<Tensor *> &inputs);
   void AssignWorkspaces(void *addr, size_t size);
   int RecordOriginWeightsAddr(const std::vector<Tensor *> &all_tensors,

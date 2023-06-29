@@ -166,10 +166,11 @@ int MemoryAllocator::RecordOriginWeightsAddr(const std::vector<Tensor *> &all_te
   return RET_OK;
 }
 
-int MemoryAllocator::AssignTensors(const std::vector<std::unique_ptr<OperatorCoder>> &nodes) {
+int MemoryAllocator::AssignTensors(const std::vector<std::unique_ptr<OperatorCoder>> &nodes,
+                                   const std::vector<Tensor *> &outputs) {
   // intend to support multi memory assign algorithm
   auto manager = std::make_unique<MemoryManager>();
-  int ret = manager->AssignMemory(nodes);
+  int ret = manager->AssignMemory(nodes, outputs);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "assign memory failed";
     return RET_ERROR;
@@ -181,7 +182,7 @@ int MemoryAllocator::AssignTensors(const std::vector<std::unique_ptr<OperatorCod
   return RET_OK;
 }
 
-int MemoryAllocator::Assign(const std::vector<Tensor *> &inputs,
+int MemoryAllocator::Assign(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs,
                             const std::vector<std::unique_ptr<OperatorCoder>> &nodes,
                             const std::vector<Tensor *> &all_tensors, const std::string &changeable_weights_name) {
   AssignGraphInputs(inputs);
@@ -189,7 +190,7 @@ int MemoryAllocator::Assign(const std::vector<Tensor *> &inputs,
     MS_LOG(ERROR) << "RecordOriginWeightsAddr failed.";
     return RET_ERROR;
   }
-  return AssignTensors(nodes);
+  return AssignTensors(nodes, outputs);
 }
 
 void MemoryAllocator::MarkSharedWeight(const Tensor *src, void *pack_weight) {

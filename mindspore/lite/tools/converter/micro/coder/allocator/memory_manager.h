@@ -46,13 +46,13 @@ class MemoryManager {
   MemoryManager() = default;
   ~MemoryManager() = default;
 
-  int AssignMemory(const std::vector<std::unique_ptr<OperatorCoder>> &nodes);
+  int AssignMemory(const std::vector<std::unique_ptr<OperatorCoder>> &nodes, const std::vector<Tensor *> &outputs);
   size_t GetAllocatedSize() const;
   std::map<Tensor *, size_t> variables_offset() { return variables_offset_; }
 
  private:
   void AssignOutputs(const std::unique_ptr<OperatorCoder> &node);
-  void ReleaseInputs(const std::unique_ptr<OperatorCoder> &node);
+  void ReleaseInputs(const std::unique_ptr<OperatorCoder> &node, const std::vector<Tensor *> &outputs);
 
   void SplitMembuf(size_t index, size_t size);
   void MergeMembuf();
