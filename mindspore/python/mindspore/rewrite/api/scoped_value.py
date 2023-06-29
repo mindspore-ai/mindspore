@@ -31,6 +31,7 @@ class ValueType(Enum):
     StringValue = 0
     IntValue = 1
     FloatValue = 2
+    NoneValue = 3
     # container type
     TupleValue = 20
     ListValue = 21
@@ -81,6 +82,8 @@ class ScopedValue:
             >>> print(variable)
             2
         """
+        if value is None:
+            return cls(ValueType.NoneValue, "", value)
         if isinstance(value, int):
             return cls(ValueType.IntValue, "", value)
         if isinstance(value, float):

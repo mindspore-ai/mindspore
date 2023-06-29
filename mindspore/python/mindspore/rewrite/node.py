@@ -1121,8 +1121,8 @@ class Node:
             if len(self._normalized_args_keys) != 1:
                 raise RuntimeError("self._normalized_args_keys should have 1 elements")
             arg = self._normalized_args.get(self._normalized_args_keys[0])
-            if arg.type not in (ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue):
-                raise RuntimeError("arg should be an IntValue, FloatValue or StringValue")
+            if arg.type not in (ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue, ValueType.NoneValue):
+                raise RuntimeError("arg should be an IntValue, FloatValue, StringValue or NoneValue")
             if arg.scope != "":
                 raise RuntimeError("arg.scope should be empty")
             assign_value.value = arg.value
