@@ -404,6 +404,7 @@ set(BACKEND_SUB_COMP
         backend/common/session
         backend/common/somas
         backend/common/graph_kernel
+        backend/common/op_evaluator
         backend/graph_compiler
         backend/operator
         runtime/collective
