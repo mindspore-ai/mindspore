@@ -396,6 +396,10 @@ MSStatus MSModelResize(MSModelHandle model, const MSTensorHandleArray inputs, MS
   std::vector<std::vector<int64_t>> vec_dims;
   for (size_t i = 0; i < shape_info_num; i++) {
     std::vector<int64_t> shape(shape_infos[i].shape, shape_infos[i].shape + shape_infos[i].shape_num);
+    if (std::any_of(shape.begin(), shape.end(), [](int64_t val) { return val < 0 || val > INT32_MAX; })) {
+      MS_LOG(ERROR) << "Invalid shape: " << shape << ", each dimension must be in [0, INT32_MAX]";
+      return kMSStatusLiteInputParamInvalid;
+    }
     vec_dims.push_back(shape);
   }
   auto impl = static_cast<mindspore::ModelC *>(model);
