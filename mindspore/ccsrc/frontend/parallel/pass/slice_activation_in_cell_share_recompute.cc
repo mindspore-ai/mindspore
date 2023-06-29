@@ -112,16 +112,20 @@ CNodePtr CreateSliceNode(const CNodePtr &activation_cnode, const std::vector<par
                     << "The slice would not activate to this node: " << activation_cnode->DebugString();
     return nullptr;
   }
-  int64_t group_deivce_num = SizeToLong(group.GetDevNum());
+  int64_t group_device_num = SizeToLong(group.GetDevNum());
+  if (group_device_num == 0) {
+    MS_LOG(ERROR) << "The device num of group should not be 0.";
+    return nullptr;
+  }
   std::vector<int64_t> slice_begin(out_shape_element.size(), 0);
-  slice_begin[0] = (local_rank_id % group_deivce_num) * (out_shape_element[0] / group_deivce_num);
+  slice_begin[0] = (local_rank_id % group_device_num) * (out_shape_element[0] / group_device_num);
   std::vector<int64_t> slice_end = out_shape_element;
-  slice_end[0] = (local_rank_id % group_deivce_num + 1) * (out_shape_element[0] / group_deivce_num);
+  slice_end[0] = (local_rank_id % group_device_num + 1) * (out_shape_element[0] / group_device_num);
   std::vector<int64_t> slice_strides(out_shape_element.size(), 1);
   CNodePtr slice_cnode = CreateStridedSliceCNode(slice_begin, slice_end, slice_strides, activation_cnode);
   slice_cnode->set_abstract(activation_cnode->abstract()->Clone());
   std::vector<int64_t> slice_shape = out_shape_element;
-  slice_shape[0] = out_shape_element[0] / group_deivce_num;
+  slice_shape[0] = out_shape_element[0] / group_device_num;
   std::shared_ptr<abstract::BaseShape> slice_base_shape = std::make_shared<abstract::Shape>(slice_shape);
   slice_cnode->abstract()->set_shape(slice_base_shape);
   slice_cnode->AddAttr("recompute_slice", MakeValue(true));
