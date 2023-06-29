@@ -99,6 +99,8 @@ struct UnaryFunc<ElwiseOpType::kRound, double, double> {
     return nearbyint(val);
   }
 };
+
+REGISTER_UNARY_OP_CUDA_FUNC_INT_TYPE(ElwiseOpType::kRound);
 REGISTER_UNARY_OP_CUDA_FUNC_FLOAT_TYPE(ElwiseOpType::kRound);
 
 template <typename Type>
