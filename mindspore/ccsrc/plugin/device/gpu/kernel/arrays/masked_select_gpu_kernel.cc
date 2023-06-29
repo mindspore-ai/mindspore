@@ -120,16 +120,16 @@ int MaskedSelectGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   auto broadcast_shape = GetBroadcastShape(x_shape, y_shape);
   size_t offset_x = broadcast_shape.size() - x_shape.size();
   for (size_t i = 0; i < x_shape.size(); ++i) {
-    input_shape_[i + offset_x] = LongToSize(x_shape[i]);
+    input_shape_[i + offset_x] = x_shape[i];
   }
 
   size_t offset_y = broadcast_shape.size() - y_shape.size();
   for (size_t j = 0; j < y_shape.size(); ++j) {
-    mask_shape_[j + offset_y] = LongToSize(y_shape[j]);
+    mask_shape_[j + offset_y] = y_shape[j];
   }
 
   for (size_t k = 0; k < broadcast_shape.size(); ++k) {
-    broadcast_shape_[k] = LongToSize(broadcast_shape[k]);
+    broadcast_shape_[k] = broadcast_shape[k];
   }
 
   // size and broadcast type
@@ -191,7 +191,7 @@ bool MaskedSelectGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
 
   // kernel
   MaskedSelect(input_ptr, mask_ptr, index_ptr, input_shape_, mask_shape_, broadcast_shape_, input_broadcast_ptr,
-               mask_broadcast_ptr, output_ptr, cuda_stream_);
+               mask_broadcast_ptr, output_ptr, device_id_, cuda_stream_);
 
   // The last element of index_ptr is the final output size of MaskedSelect.
   // e.g., the index(prefix sum) is [0, 0, 1, 2, 2], so the real_output_size_ is 2

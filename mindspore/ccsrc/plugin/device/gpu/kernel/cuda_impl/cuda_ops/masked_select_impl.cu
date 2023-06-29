@@ -18,6 +18,7 @@
 #include <cub/cub.cuh>
 #include <algorithm>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_to_impl.cuh"
 
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
@@ -29,33 +30,6 @@ struct BoolToSize {
 };
 
 __device__ __forceinline__ size_t Index(const size_t &index, const size_t &dim) { return dim == 1 ? 0 : index; }
-
-// BroadcastTo
-template <typename T>
-__global__ void BroadcastToKernel(size_t i0, size_t i1, size_t i2, size_t i3, size_t i4, size_t i5, size_t i6,
-                                  size_t o0, size_t o1, size_t o2, size_t o3, size_t o4, size_t o5, size_t o6,
-                                  const T *input_addr, T *output_addr) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < o0 * o1 * o2 * o3 * o4 * o5 * o6;
-       pos += blockDim.x * gridDim.x) {
-    size_t i = pos / (o1 * o2 * o3 * o4 * o5 * o6) % o0;
-    size_t j = pos / (o2 * o3 * o4 * o5 * o6) % o1;
-    size_t k = pos / (o3 * o4 * o5 * o6) % o2;
-    size_t l = pos / (o4 * o5 * o6) % o3;
-    size_t m = pos / (o5 * o6) % o4;
-    size_t n = pos / o6 % o5;
-    size_t o = pos % o6;
-
-    size_t input_idx = Index(i, i0) * i1 * i2 * i3 * i4 * i5 * i6;
-    input_idx += Index(j, i1) * i2 * i3 * i4 * i5 * i6;
-    input_idx += Index(k, i2) * i3 * i4 * i5 * i6;
-    input_idx += Index(l, i3) * i4 * i5 * i6;
-    input_idx += Index(m, i4) * i5 * i6;
-    input_idx += Index(n, i5) * i6;
-    input_idx += Index(o, i6);
-
-    output_addr[pos] = input_addr[input_idx];
-  }
-}
 
 template <typename T>
 __global__ void MaskedSelectKernel(const T *input_ptr, const size_t *index_ptr, T *output_ptr, size_t index_size) {
@@ -69,27 +43,33 @@ __global__ void MaskedSelectKernel(const T *input_ptr, const size_t *index_ptr, 
   }
 }
 
-// the i is input shape, the j is mask shape, the o is broadcast shape
 template <typename T>
-void MaskedSelect(const T *input_ptr, const bool *mask_ptr, size_t *index_ptr, const std::vector<size_t> i,
-                  const std::vector<size_t> j, const std::vector<size_t> o, T *input_broadcast_ptr,
-                  bool *mask_broadcast_ptr, T *output_ptr, cudaStream_t cuda_stream) {
-  size_t broadcast_size = o[0] * o[1] * o[2] * o[3] * o[4] * o[5] * o[6];
+void MaskedSelect(T *input_ptr, bool *mask_ptr, size_t *index_ptr, const std::vector<int64_t> input_shape,
+                  const std::vector<int64_t> mask_shape, const std::vector<int64_t> broadcast_shape,
+                  T *input_broadcast_ptr, bool *mask_broadcast_ptr, T *output_ptr, size_t device_id,
+                  cudaStream_t cuda_stream) {
   const T *last_input = nullptr;
   const bool *last_mask = nullptr;
+  size_t dim_size = broadcast_shape.size();
+  UnaryBroadcastStrideInfo input_strides = UnaryBroadcastCalStride(dim_size, input_shape, broadcast_shape);
+  UnaryBroadcastStrideInfo mask_strides = UnaryBroadcastCalStride(dim_size, mask_shape, broadcast_shape);
+  size_t output_num = 1;
+  for (auto val : broadcast_shape) {
+    output_num *= val;
+  }
+  size_t thread_num = output_num > 1024 ? 1024 : output_num;
 
   if (input_broadcast_ptr != nullptr) {
-    BroadcastToKernel<<<GET_BLOCKS(broadcast_size), GET_THREADS, 0, cuda_stream>>>(
-      i[0], i[1], i[2], i[3], i[4], i[5], i[6], o[0], o[1], o[2], o[3], o[4], o[5], o[6], input_ptr,
-      input_broadcast_ptr);
+    BroadcastToCpyCuda<<<CUDA_BLOCKS_CAL(device_id, output_num, thread_num), thread_num, 0, cuda_stream>>>(
+      dim_size, output_num, input_strides, input_ptr, input_broadcast_ptr);
     last_input = input_broadcast_ptr;
   } else {
     last_input = input_ptr;
   }
 
   if (mask_broadcast_ptr != nullptr) {
-    BroadcastToKernel<<<GET_BLOCKS(broadcast_size), GET_THREADS, 0, cuda_stream>>>(
-      j[0], j[1], j[2], j[3], j[4], j[5], j[6], o[0], o[1], o[2], o[3], o[4], o[5], o[6], mask_ptr, mask_broadcast_ptr);
+    BroadcastToCpyCuda<<<CUDA_BLOCKS_CAL(device_id, output_num, thread_num), thread_num, 0, cuda_stream>>>(
+      dim_size, output_num, mask_strides, mask_ptr, mask_broadcast_ptr);
     last_mask = mask_broadcast_ptr;
   } else {
     last_mask = mask_ptr;
@@ -99,92 +79,100 @@ void MaskedSelect(const T *input_ptr, const bool *mask_ptr, size_t *index_ptr, c
   BoolToSize op;
   cub::TransformInputIterator<size_t, BoolToSize, const bool *> iter(last_mask, op);
   size_t temp_storage_bytes = 0;
-  (void)cub::DeviceScan::InclusiveSum(nullptr, temp_storage_bytes, iter, index_ptr, broadcast_size, cuda_stream);
+  (void)cub::DeviceScan::InclusiveSum(nullptr, temp_storage_bytes, iter, index_ptr, output_num, cuda_stream);
   void *d_temp_storage = nullptr;
   (void)cudaMalloc(&d_temp_storage, temp_storage_bytes);
-  (void)cub::DeviceScan::InclusiveSum(d_temp_storage, temp_storage_bytes, iter, index_ptr, broadcast_size, cuda_stream);
+  (void)cub::DeviceScan::InclusiveSum(d_temp_storage, temp_storage_bytes, iter, index_ptr, output_num, cuda_stream);
 
   // Extract the first index to appear and transform into output index
-  MaskedSelectKernel<<<GET_BLOCKS(broadcast_size), GET_THREADS, 0, cuda_stream>>>(last_input, index_ptr, output_ptr,
-                                                                                  broadcast_size);
+  MaskedSelectKernel<<<GET_BLOCKS(output_num), GET_THREADS, 0, cuda_stream>>>(last_input, index_ptr, output_ptr,
+                                                                              output_num);
   (void)cudaFree(d_temp_storage);
 }
 
-template CUDA_LIB_EXPORT void MaskedSelect<uint8_t>(const uint8_t *input_ptr, const bool *mask_ptr, size_t *index_ptr,
-                                                    const std::vector<size_t> input_shape,
-                                                    const std::vector<size_t> mask_shape,
-                                                    const std::vector<size_t> broadcast_shape,
+template CUDA_LIB_EXPORT void MaskedSelect<uint8_t>(uint8_t *input_ptr, bool *mask_ptr, size_t *index_ptr,
+                                                    const std::vector<int64_t> input_shape,
+                                                    const std::vector<int64_t> mask_shape,
+                                                    const std::vector<int64_t> broadcast_shape,
                                                     uint8_t *input_broadcast_ptr, bool *mask_broadcast_ptr,
-                                                    uint8_t *output_ptr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MaskedSelect<uint16_t>(const uint16_t *input_ptr, const bool *mask_ptr, size_t *index_ptr,
-                                                     const std::vector<size_t> input_shape,
-                                                     const std::vector<size_t> mask_shape,
-                                                     const std::vector<size_t> broadcast_shape,
+                                                    uint8_t *output_ptr, size_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MaskedSelect<uint16_t>(uint16_t *input_ptr, bool *mask_ptr, size_t *index_ptr,
+                                                     const std::vector<int64_t> input_shape,
+                                                     const std::vector<int64_t> mask_shape,
+                                                     const std::vector<int64_t> broadcast_shape,
                                                      uint16_t *input_broadcast_ptr, bool *mask_broadcast_ptr,
-                                                     uint16_t *output_ptr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MaskedSelect<uint32_t>(const uint32_t *input_ptr, const bool *mask_ptr, size_t *index_ptr,
-                                                     const std::vector<size_t> input_shape,
-                                                     const std::vector<size_t> mask_shape,
-                                                     const std::vector<size_t> broadcast_shape,
+                                                     uint16_t *output_ptr, size_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MaskedSelect<uint32_t>(uint32_t *input_ptr, bool *mask_ptr, size_t *index_ptr,
+                                                     const std::vector<int64_t> input_shape,
+                                                     const std::vector<int64_t> mask_shape,
+                                                     const std::vector<int64_t> broadcast_shape,
                                                      uint32_t *input_broadcast_ptr, bool *mask_broadcast_ptr,
-                                                     uint32_t *output_ptr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MaskedSelect<uint64_t>(const uint64_t *input_ptr, const bool *mask_ptr, size_t *index_ptr,
-                                                     const std::vector<size_t> input_shape,
-                                                     const std::vector<size_t> mask_shape,
-                                                     const std::vector<size_t> broadcast_shape,
+                                                     uint32_t *output_ptr, size_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MaskedSelect<uint64_t>(uint64_t *input_ptr, bool *mask_ptr, size_t *index_ptr,
+                                                     const std::vector<int64_t> input_shape,
+                                                     const std::vector<int64_t> mask_shape,
+                                                     const std::vector<int64_t> broadcast_shape,
                                                      uint64_t *input_broadcast_ptr, bool *mask_broadcast_ptr,
-                                                     uint64_t *output_ptr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MaskedSelect<int8_t>(const int8_t *input_ptr, const bool *mask_ptr, size_t *index_ptr,
-                                                   const std::vector<size_t> input_shape,
-                                                   const std::vector<size_t> mask_shape,
-                                                   const std::vector<size_t> broadcast_shape,
+                                                     uint64_t *output_ptr, size_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MaskedSelect<int8_t>(int8_t *input_ptr, bool *mask_ptr, size_t *index_ptr,
+                                                   const std::vector<int64_t> input_shape,
+                                                   const std::vector<int64_t> mask_shape,
+                                                   const std::vector<int64_t> broadcast_shape,
                                                    int8_t *input_broadcast_ptr, bool *mask_broadcast_ptr,
-                                                   int8_t *output_ptr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MaskedSelect<int16_t>(const int16_t *input_ptr, const bool *mask_ptr, size_t *index_ptr,
-                                                    const std::vector<size_t> input_shape,
-                                                    const std::vector<size_t> mask_shape,
-                                                    const std::vector<size_t> broadcast_shape,
+                                                   int8_t *output_ptr, size_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MaskedSelect<int16_t>(int16_t *input_ptr, bool *mask_ptr, size_t *index_ptr,
+                                                    const std::vector<int64_t> input_shape,
+                                                    const std::vector<int64_t> mask_shape,
+                                                    const std::vector<int64_t> broadcast_shape,
                                                     int16_t *input_broadcast_ptr, bool *mask_broadcast_ptr,
-                                                    int16_t *output_ptr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MaskedSelect<int32_t>(const int32_t *input_ptr, const bool *mask_ptr, size_t *index_ptr,
-                                                    const std::vector<size_t> input_shape,
-                                                    const std::vector<size_t> mask_shape,
-                                                    const std::vector<size_t> broadcast_shape,
+                                                    int16_t *output_ptr, size_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MaskedSelect<int32_t>(int32_t *input_ptr, bool *mask_ptr, size_t *index_ptr,
+                                                    const std::vector<int64_t> input_shape,
+                                                    const std::vector<int64_t> mask_shape,
+                                                    const std::vector<int64_t> broadcast_shape,
                                                     int32_t *input_broadcast_ptr, bool *mask_broadcast_ptr,
-                                                    int32_t *output_ptr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MaskedSelect<int64_t>(const int64_t *input_ptr, const bool *mask_ptr, size_t *index_ptr,
-                                                    const std::vector<size_t> input_shape,
-                                                    const std::vector<size_t> mask_shape,
-                                                    const std::vector<size_t> broadcast_shape,
+                                                    int32_t *output_ptr, size_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MaskedSelect<int64_t>(int64_t *input_ptr, bool *mask_ptr, size_t *index_ptr,
+                                                    const std::vector<int64_t> input_shape,
+                                                    const std::vector<int64_t> mask_shape,
+                                                    const std::vector<int64_t> broadcast_shape,
                                                     int64_t *input_broadcast_ptr, bool *mask_broadcast_ptr,
-                                                    int64_t *output_ptr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MaskedSelect<half>(const half *input_ptr, const bool *mask_ptr, size_t *index_ptr,
-                                                 const std::vector<size_t> input_shape,
-                                                 const std::vector<size_t> mask_shape,
-                                                 const std::vector<size_t> broadcast_shape, half *input_broadcast_ptr,
-                                                 bool *mask_broadcast_ptr, half *output_ptr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MaskedSelect<float>(const float *input_ptr, const bool *mask_ptr, size_t *index_ptr,
-                                                  const std::vector<size_t> input_shape,
-                                                  const std::vector<size_t> mask_shape,
-                                                  const std::vector<size_t> broadcast_shape, float *input_broadcast_ptr,
-                                                  bool *mask_broadcast_ptr, float *output_ptr,
-                                                  cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MaskedSelect<double>(const double *input_ptr, const bool *mask_ptr, size_t *index_ptr,
-                                                   const std::vector<size_t> input_shape,
-                                                   const std::vector<size_t> mask_shape,
-                                                   const std::vector<size_t> broadcast_shape,
+                                                    int64_t *output_ptr, size_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MaskedSelect<half>(half *input_ptr, bool *mask_ptr, size_t *index_ptr,
+                                                 const std::vector<int64_t> input_shape,
+                                                 const std::vector<int64_t> mask_shape,
+                                                 const std::vector<int64_t> broadcast_shape, half *input_broadcast_ptr,
+                                                 bool *mask_broadcast_ptr, half *output_ptr, size_t device_id,
+                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MaskedSelect<float>(float *input_ptr, bool *mask_ptr, size_t *index_ptr,
+                                                  const std::vector<int64_t> input_shape,
+                                                  const std::vector<int64_t> mask_shape,
+                                                  const std::vector<int64_t> broadcast_shape,
+                                                  float *input_broadcast_ptr, bool *mask_broadcast_ptr,
+                                                  float *output_ptr, size_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MaskedSelect<double>(double *input_ptr, bool *mask_ptr, size_t *index_ptr,
+                                                   const std::vector<int64_t> input_shape,
+                                                   const std::vector<int64_t> mask_shape,
+                                                   const std::vector<int64_t> broadcast_shape,
                                                    double *input_broadcast_ptr, bool *mask_broadcast_ptr,
-                                                   double *output_ptr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MaskedSelect<bool>(const bool *input_ptr, const bool *mask_ptr, size_t *index_ptr,
-                                                 const std::vector<size_t> input_shape,
-                                                 const std::vector<size_t> mask_shape,
-                                                 const std::vector<size_t> broadcast_shape, bool *input_broadcast_ptr,
-                                                 bool *mask_broadcast_ptr, bool *output_ptr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MaskedSelect<Complex<float>>(
-  const Complex<float> *input_ptr, const bool *mask_ptr, size_t *index_ptr, const std::vector<size_t> input_shape,
-  const std::vector<size_t> mask_shape, const std::vector<size_t> broadcast_shape, Complex<float> *input_broadcast_ptr,
-  bool *mask_broadcast_ptr, Complex<float> *output_ptr, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void MaskedSelect<Complex<double>>(
-  const Complex<double> *input_ptr, const bool *mask_ptr, size_t *index_ptr, const std::vector<size_t> input_shape,
-  const std::vector<size_t> mask_shape, const std::vector<size_t> broadcast_shape, Complex<double> *input_broadcast_ptr,
-  bool *mask_broadcast_ptr, Complex<double> *output_ptr, cudaStream_t cuda_stream);
+                                                   double *output_ptr, size_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MaskedSelect<bool>(bool *input_ptr, bool *mask_ptr, size_t *index_ptr,
+                                                 const std::vector<int64_t> input_shape,
+                                                 const std::vector<int64_t> mask_shape,
+                                                 const std::vector<int64_t> broadcast_shape, bool *input_broadcast_ptr,
+                                                 bool *mask_broadcast_ptr, bool *output_ptr, size_t device_id,
+                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MaskedSelect<Complex<float>>(Complex<float> *input_ptr, bool *mask_ptr, size_t *index_ptr,
+                                                           const std::vector<int64_t> input_shape,
+                                                           const std::vector<int64_t> mask_shape,
+                                                           const std::vector<int64_t> broadcast_shape,
+                                                           Complex<float> *input_broadcast_ptr,
+                                                           bool *mask_broadcast_ptr, Complex<float> *output_ptr,
+                                                           size_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MaskedSelect<Complex<double>>(Complex<double> *input_ptr, bool *mask_ptr,
+                                                            size_t *index_ptr, const std::vector<int64_t> input_shape,
+                                                            const std::vector<int64_t> mask_shape,
+                                                            const std::vector<int64_t> broadcast_shape,
+                                                            Complex<double> *input_broadcast_ptr,
+                                                            bool *mask_broadcast_ptr, Complex<double> *output_ptr,
+                                                            size_t device_id, cudaStream_t cuda_stream);

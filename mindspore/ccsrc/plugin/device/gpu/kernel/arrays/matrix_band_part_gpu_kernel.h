@@ -62,8 +62,8 @@ class MatrixBandPartGpuKernelMod : public NativeGpuKernelMod {
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
   template <typename T, typename LU>
   bool LaunchKernelNotBroadcast(const T *x_ptr, const LU *lower_ptr, const LU *upper_ptr, T *output_ptr);
-  void BroadcastShape(const std::vector<size_t> &x_shape, const std::vector<size_t> &lower_shape,
-                      const std::vector<size_t> &upper_shape, const std::vector<size_t> &output_shape);
+  void BroadcastShape(const std::vector<int64_t> &x_shape, const std::vector<int64_t> &lower_shape,
+                      const std::vector<int64_t> &upper_shape, const std::vector<int64_t> &output_shape);
   using MatrixBandPartFunc = std::function<bool(MatrixBandPartGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                                 const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, MatrixBandPartFunc>> func_list_;
@@ -78,10 +78,10 @@ class MatrixBandPartGpuKernelMod : public NativeGpuKernelMod {
   int64_t lower_{0};
   int64_t upper_{0};
   bool need_broadcast_;
-  std::vector<size_t> broadcast_x_shape_;
-  std::vector<size_t> broadcast_lower_shape_;
-  std::vector<size_t> broadcast_upper_shape_;
-  std::vector<size_t> broadcast_output_shape_;
+  std::vector<int64_t> broadcast_x_shape_;
+  std::vector<int64_t> broadcast_lower_shape_;
+  std::vector<int64_t> broadcast_upper_shape_;
+  std::vector<int64_t> broadcast_output_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

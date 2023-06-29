@@ -16,6 +16,8 @@
 #include "random_gamma_grad_impl.cuh"
 #include <limits>
 #include <algorithm>
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/binary_common.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_to_impl.cuh"
 
 template <typename T>
 __device__ inline T polevl(const T x, const T A[], size_t len) {
@@ -86,7 +88,7 @@ __device__ inline Intype IgammacContinuedFraction(Intype aSingle, Intype xSingle
   Intype pkm1 = xSingle + 1;
   Intype qkm1 = z_plus_two * xSingle;
   Intype ans = pkm1 / qkm1;
-  Intype dqkm1_da = - xSingle;
+  Intype dqkm1_da = -xSingle;
   Intype dans_da = (dpkm1_da - ans * dqkm1_da) / qkm1;
   for (size_t i = 0; i < 2000; i++) {
     c_plus_one += 1;
@@ -158,37 +160,20 @@ __global__ void RandomGammaGradKernel(const T *alpha, const T *sample, T *output
 __device__ __forceinline__ size_t Index(const size_t &index, const size_t &dim) { return dim == 1 ? 0 : index; }
 
 template <typename T>
-__global__ void BroadcastRandomGammaGradKernel(size_t i0, size_t i1, size_t i2, size_t i3, size_t i4, size_t i5,
-                                               size_t i6, size_t j0, size_t j1, size_t j2, size_t j3, size_t j4,
-                                               size_t j5, size_t j6, size_t o0, size_t o1, size_t o2, size_t o3,
-                                               size_t o4, size_t o5, size_t o6, const T *alpha, const T *sample,
-                                               T *output) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < o0 * o1 * o2 * o3 * o4 * o5 * o6;
-       pos += blockDim.x * gridDim.x) {
-    size_t i = pos / (o1 * o2 * o3 * o4 * o5 * o6) % o0;
-    size_t j = pos / (o2 * o3 * o4 * o5 * o6) % o1;
-    size_t k = pos / (o3 * o4 * o5 * o6) % o2;
-    size_t l = pos / (o4 * o5 * o6) % o3;
-    size_t m = pos / (o5 * o6) % o4;
-    size_t n = pos / o6 % o5;
-    size_t o = pos % o6;
-
-    size_t inputx_idx = Index(i, i0) * i1 * i2 * i3 * i4 * i5 * i6;
-    inputx_idx += Index(j, i1) * i2 * i3 * i4 * i5 * i6;
-    inputx_idx += Index(k, i2) * i3 * i4 * i5 * i6;
-    inputx_idx += Index(l, i3) * i4 * i5 * i6;
-    inputx_idx += Index(m, i4) * i5 * i6;
-    inputx_idx += Index(n, i5) * i6;
-    inputx_idx += Index(o, i6);
-
-    size_t inputy_idx = Index(i, j0) * j1 * j2 * j3 * j4 * j5 * j6;
-    inputy_idx += Index(j, j1) * j2 * j3 * j4 * j5 * j6;
-    inputy_idx += Index(k, j2) * j3 * j4 * j5 * j6;
-    inputy_idx += Index(l, j3) * j4 * j5 * j6;
-    inputy_idx += Index(m, j4) * j5 * j6;
-    inputy_idx += Index(n, j5) * j6;
-    inputy_idx += Index(o, j6);
-    output[pos] = GammaSingle<T>(alpha[inputx_idx], sample[inputy_idx]);
+__global__ void BroadcastRandomGammaGradKernel(size_t dim_size, size_t output_num, BinaryBroadcastStrideInfo strides,
+                                               const T *alpha, const T *sample, T *output) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < output_num; pos += blockDim.x * gridDim.x) {
+    int64_t cur_out_idx = 0;
+    size_t cur_pos = pos;
+    size_t in0_pos = 0;
+    size_t in1_pos = 0;
+    for (int idx = 0; idx < dim_size; ++idx) {
+      cur_out_idx = cur_pos / strides.out_stride[idx];
+      in0_pos += cur_out_idx * strides.in0_stride[idx];
+      in1_pos += cur_out_idx * strides.in1_stride[idx];
+      cur_pos -= cur_out_idx * strides.out_stride[idx];
+    }
+    output[pos] = GammaSingle<T>(alpha[in0_pos], sample[in1_pos]);
   }
 }
 
@@ -200,28 +185,26 @@ void CalRandomGammaGrad(const T *alpha, const T *sample, T *output, int elements
   (void)cudaGetDeviceProperties(&prop, device_id);
   int max_blocks = prop.multiProcessorCount;
   int block_num = std::min(static_cast<int>(((elements - 1) / thread_num) + 1), max_blocks);
-  RandomGammaGradKernel<<<block_num, thread_num, 0, cuda_stream>>>(alpha, sample,
-    output, elements);
+  RandomGammaGradKernel<<<block_num, thread_num, 0, cuda_stream>>>(alpha, sample, output, elements);
 }
 
 template <typename T>
-void BroadcastRandomGammaGrad(const std::vector<size_t> &alpha_shape, const std::vector<size_t> &sample_shape,
-                              const std::vector<size_t> &output_shape, const T *alpha, const T *sample, T *output,
+void BroadcastRandomGammaGrad(const std::vector<int64_t> &alpha_shape, const std::vector<int64_t> &sample_shape,
+                              const std::vector<int64_t> &output_shape, const T *alpha, const T *sample, T *output,
                               const uint32_t &device_id, cudaStream_t cuda_stream) {
-  size_t size = 1;
-  for (auto d : output_shape) {
-    size *= d;
+  size_t dim_size = output_shape.size();
+  size_t output_num = 1;
+  for (auto val : output_shape) {
+    output_num *= val;
   }
-  int thread_num = 1024 < size ? 1024 : size;
+  BinaryBroadcastStrideInfo strides = BinaryBroadcastCalStride(dim_size, alpha_shape, sample_shape, output_shape);
+  int thread_num = 1024 < output_num ? 1024 : output_num;
   cudaDeviceProp prop;
   (void)cudaGetDeviceProperties(&prop, device_id);
   int max_blocks = prop.multiProcessorCount;
-  int block_num = std::min(static_cast<int>(((size - 1) / thread_num) + 1), max_blocks);
-  BroadcastRandomGammaGradKernel<<<block_num, thread_num, 0, cuda_stream>>>(
-    alpha_shape[0], alpha_shape[1], alpha_shape[2], alpha_shape[3], alpha_shape[4], alpha_shape[5], alpha_shape[6],
-    sample_shape[0], sample_shape[1], sample_shape[2], sample_shape[3], sample_shape[4], sample_shape[5],
-    sample_shape[6], output_shape[0], output_shape[1], output_shape[2], output_shape[3], output_shape[4],
-    output_shape[5], output_shape[6], alpha, sample, output);
+  int block_num = std::min(static_cast<int>(((output_num - 1) / thread_num) + 1), max_blocks);
+  BroadcastRandomGammaGradKernel<<<block_num, thread_num, 0, cuda_stream>>>(dim_size, output_num, strides, alpha,
+                                                                            sample, output);
 }
 
 template CUDA_LIB_EXPORT void CalRandomGammaGrad<double>(const double *alpha, const double *sample, double *output,
@@ -231,10 +214,13 @@ template CUDA_LIB_EXPORT void CalRandomGammaGrad<float>(const float *alpha, cons
                                                         int elements, const uint32_t &device_id,
                                                         cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void BroadcastRandomGammaGrad<double>(const std::vector<size_t> &, const std::vector<size_t> &,
-                                                               const std::vector<size_t> &, const double *,
+template CUDA_LIB_EXPORT void BroadcastRandomGammaGrad<double>(const std::vector<int64_t> &,
+                                                               const std::vector<int64_t> &,
+                                                               const std::vector<int64_t> &, const double *,
                                                                const double *, double *, const uint32_t &,
                                                                cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void BroadcastRandomGammaGrad<float>(const std::vector<size_t> &, const std::vector<size_t> &,
-                                                              const std::vector<size_t> &, const float *, const float *,
-                                                              float *, const uint32_t &, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void BroadcastRandomGammaGrad<float>(const std::vector<int64_t> &,
+                                                              const std::vector<int64_t> &,
+                                                              const std::vector<int64_t> &, const float *,
+                                                              const float *, float *, const uint32_t &,
+                                                              cudaStream_t cuda_stream);

@@ -22,18 +22,13 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/binary_types.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/binary_common.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/elementswise_pub_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_to_impl.cuh"
 
 constexpr uint kThreadsPerBlock = 512;
 
 template <typename T, size_t VecSize>
 struct Vec {
   T data[VecSize];
-};
-
-struct BinaryBroadcastStrideInfo {
-  size_t in0_stride[8];
-  size_t in1_stride[8];
-  size_t out_stride[8];
 };
 
 enum class ScalarOption {
@@ -88,25 +83,6 @@ __global__ void BinaryWithoutBroadcastNoScalar(BinaryFunc<OP, In0_t, In1_t, Out_
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < out_num; pos += blockDim.x * gridDim.x) {
     out[pos] = func(in0[pos], in1[pos]);
   }
-}
-
-static BinaryBroadcastStrideInfo BinaryBroadcastCalStride(const size_t dim_size, const std::vector<int64_t> &in0_shape,
-                                                          const std::vector<int64_t> &in1_shape,
-                                                          const std::vector<int64_t> &out_shape) {
-  BinaryBroadcastStrideInfo strides;
-  strides.in0_stride[dim_size - 1] = 1;
-  strides.in1_stride[dim_size - 1] = 1;
-  strides.out_stride[dim_size - 1] = 1;
-  for (int64_t idx = dim_size - 2; idx >= 0; --idx) {
-    strides.out_stride[idx] = out_shape[idx + 1] * strides.out_stride[idx + 1];
-    strides.in0_stride[idx] = in0_shape[idx + 1] * strides.in0_stride[idx + 1];
-    strides.in1_stride[idx] = in1_shape[idx + 1] * strides.in1_stride[idx + 1];
-  }
-  for (size_t idx = 0; idx < dim_size; ++idx) {
-    strides.in0_stride[idx] = (in0_shape[idx] == 1) ? 0 : strides.in0_stride[idx];
-    strides.in1_stride[idx] = (in1_shape[idx] == 1) ? 0 : strides.in1_stride[idx];
-  }
-  return strides;
 }
 
 template <BinaryOpType OP, typename In0_t, typename In1_t, typename Out_t>

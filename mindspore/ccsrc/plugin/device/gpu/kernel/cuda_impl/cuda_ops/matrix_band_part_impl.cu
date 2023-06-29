@@ -17,6 +17,7 @@
 #include <cuda_runtime.h>
 #include <algorithm>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_to_impl.cuh"
 
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
@@ -52,51 +53,23 @@ __global__ void MatrixBandPartKernel(const int size, const T *x_ptr, const int m
 __device__ __forceinline__ size_t Index(const size_t &index, const size_t &dim) { return dim == 1 ? 0 : index; }
 
 template <typename T, typename LU>
-__global__ void MatrixBandPartKernelBroadcast(const size_t size, size_t x0, size_t x1, size_t x2, size_t x3, size_t x4,
-                                              size_t x5, size_t x6, size_t x7, size_t l0, size_t l1, size_t l2,
-                                              size_t l3, size_t l4, size_t l5, size_t l6, size_t l7, size_t u0,
-                                              size_t u1, size_t u2, size_t u3, size_t u4, size_t u5, size_t u6,
-                                              size_t u7, size_t o0, size_t o1, size_t o2, size_t o3, size_t o4,
-                                              size_t o5, size_t o6, size_t o7, const T *x_ptr, const size_t m,
+__global__ void MatrixBandPartKernelBroadcast(const size_t dim_size, const size_t size,
+                                              TrinaryBroadcastStrideInfo strides, const T *x_ptr, const size_t m,
                                               const size_t n, const LU *lower_ptr, const LU *upper_ptr, T *output_ptr) {
   auto zero = static_cast<T>(0.0);
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
-    size_t i = pos / (o1 * o2 * o3 * o4 * o5 * o6 * o7) % o0;
-    size_t j = pos / (o2 * o3 * o4 * o5 * o6 * o7) % o1;
-    size_t k = pos / (o3 * o4 * o5 * o6 * o7) % o2;
-    size_t l = pos / (o4 * o5 * o6 * o7) % o3;
-    size_t mm = pos / (o5 * o6 * o7) % o4;
-    size_t nn = pos / (o6 * o7) % o5;
-    size_t o = pos / o7 % o6;
-    size_t p = pos % o7;
-
-    size_t x_index = Index(i, x0) * x1 * x2 * x3 * x4 * x5 * x6 * x7;
-    x_index += Index(j, x1) * x2 * x3 * x4 * x5 * x6 * x7;
-    x_index += Index(k, x2) * x3 * x4 * x5 * x6 * x7;
-    x_index += Index(l, x3) * x4 * x5 * x6 * x7;
-    x_index += Index(mm, x4) * x5 * x6 * x7;
-    x_index += Index(nn, x5) * x6 * x7;
-    x_index += Index(o, x6) * x7;
-    x_index += Index(p, x7);
-
-    size_t l_index = Index(i, l0) * l1 * l2 * l3 * l4 * l5 * l6 * l7;
-    l_index += Index(j, l1) * l2 * l3 * l4 * l5 * l6 * l7;
-    l_index += Index(k, l2) * l3 * l4 * l5 * l6 * l7;
-    l_index += Index(l, l3) * l4 * l5 * l6 * l7;
-    l_index += Index(mm, l4) * l5 * l6 * l7;
-    l_index += Index(nn, l5) * l6 * l7;
-    l_index += Index(o, l6) * l7;
-    l_index += Index(p, l7);
-
-    size_t u_index = Index(i, u0) * u1 * u2 * u3 * u4 * u5 * u6 * u7;
-    u_index += Index(j, u1) * u2 * u3 * u4 * u5 * u6 * u7;
-    u_index += Index(k, u2) * u3 * u4 * u5 * u6 * u7;
-    u_index += Index(l, u3) * u4 * u5 * u6 * u7;
-    u_index += Index(mm, u4) * u5 * u6 * u7;
-    u_index += Index(nn, u5) * u6 * u7;
-    u_index += Index(o, u6) * u7;
-    u_index += Index(p, u7);
-
+    int64_t cur_out_idx = 0;
+    size_t cur_pos = pos;
+    size_t x_index = 0;
+    size_t l_index = 0;
+    size_t u_index = 0;
+    for (int idx = 0; idx < dim_size; ++idx) {
+      cur_out_idx = cur_pos / strides.out_stride[idx];
+      x_index += cur_out_idx * strides.in0_stride[idx];
+      l_index += cur_out_idx * strides.in1_stride[idx];
+      u_index += cur_out_idx * strides.in2_stride[idx];
+      cur_pos -= cur_out_idx * strides.out_stride[idx];
+    }
     const size_t last_two_dim_offset = pos % (m * n);
     int64_t ii = static_cast<int64_t>(last_two_dim_offset / n);
     int64_t jj = static_cast<int64_t>(last_two_dim_offset % n);
@@ -129,23 +102,18 @@ void MatrixBandPart(const size_t output_outer_size, const T *x_ptr, const size_t
 }
 
 template <typename T, typename LU>
-void MatrixBandPartBroadcast(const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-                             const std::vector<size_t> &broadcast_lower_shape,
-                             const std::vector<size_t> &broadcast_upper_shape,
-                             const std::vector<size_t> &broadcast_output_shape, const T *x_ptr, const size_t m,
+void MatrixBandPartBroadcast(const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+                             const std::vector<int64_t> &broadcast_lower_shape,
+                             const std::vector<int64_t> &broadcast_upper_shape,
+                             const std::vector<int64_t> &broadcast_output_shape, const T *x_ptr, const size_t m,
                              const size_t n, const LU *lower_ptr, const LU *upper_ptr, T *output_ptr,
                              const uint32_t &device_id, cudaStream_t cuda_stream) {
+  const size_t dim_size = broadcast_output_shape.size();
+  TrinaryBroadcastStrideInfo strides = TrinaryBroadcastCalStride(dim_size, broadcast_x_shape, broadcast_lower_shape,
+                                                                 broadcast_upper_shape, broadcast_output_shape);
   MatrixBandPartKernelBroadcast<<<CUDA_BLOCKS(device_id, output_element_num), CUDA_THREADS(device_id), 0,
-                                  cuda_stream>>>(
-    output_element_num, broadcast_x_shape[0], broadcast_x_shape[1], broadcast_x_shape[2], broadcast_x_shape[3],
-    broadcast_x_shape[4], broadcast_x_shape[5], broadcast_x_shape[6], broadcast_x_shape[7], broadcast_lower_shape[0],
-    broadcast_lower_shape[1], broadcast_lower_shape[2], broadcast_lower_shape[3], broadcast_lower_shape[4],
-    broadcast_lower_shape[5], broadcast_lower_shape[6], broadcast_lower_shape[7], broadcast_upper_shape[0],
-    broadcast_upper_shape[1], broadcast_upper_shape[2], broadcast_upper_shape[3], broadcast_upper_shape[4],
-    broadcast_upper_shape[5], broadcast_upper_shape[6], broadcast_upper_shape[7], broadcast_output_shape[0],
-    broadcast_output_shape[1], broadcast_output_shape[2], broadcast_output_shape[3], broadcast_output_shape[4],
-    broadcast_output_shape[5], broadcast_output_shape[6], broadcast_output_shape[7], x_ptr, m, n, lower_ptr, upper_ptr,
-    output_ptr);
+                                  cuda_stream>>>(dim_size, output_element_num, strides, x_ptr, m, n, lower_ptr,
+                                                 upper_ptr, output_ptr);
 }
 
 template CUDA_LIB_EXPORT void MatrixBandPart<char>(const size_t output_outer_size, const char *x_ptr, const size_t m,
@@ -208,171 +176,171 @@ template CUDA_LIB_EXPORT void MatrixBandPart<bool>(const size_t output_outer_siz
                                                    cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<char, int32_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const char *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const char *x_ptr, const size_t m, const size_t n,
   const int32_t *lower_ptr, const int32_t *upper_ptr, char *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<int16_t, int32_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const int16_t *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const int16_t *x_ptr, const size_t m, const size_t n,
   const int32_t *lower_ptr, const int32_t *upper_ptr, int16_t *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<int32_t, int32_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const int32_t *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const int32_t *x_ptr, const size_t m, const size_t n,
   const int32_t *lower_ptr, const int32_t *upper_ptr, int32_t *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<int64_t, int32_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const int64_t *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const int64_t *x_ptr, const size_t m, const size_t n,
   const int32_t *lower_ptr, const int32_t *upper_ptr, int64_t *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<unsigned char, int32_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const unsigned char *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const unsigned char *x_ptr, const size_t m, const size_t n,
   const int32_t *lower_ptr, const int32_t *upper_ptr, unsigned char *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<uint16_t, int32_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const uint16_t *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const uint16_t *x_ptr, const size_t m, const size_t n,
   const int32_t *lower_ptr, const int32_t *upper_ptr, uint16_t *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<uint32_t, int32_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const uint32_t *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const uint32_t *x_ptr, const size_t m, const size_t n,
   const int32_t *lower_ptr, const int32_t *upper_ptr, uint32_t *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<uint64_t, int32_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const uint64_t *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const uint64_t *x_ptr, const size_t m, const size_t n,
   const int32_t *lower_ptr, const int32_t *upper_ptr, uint64_t *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<half, int32_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const half *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const half *x_ptr, const size_t m, const size_t n,
   const int32_t *lower_ptr, const int32_t *upper_ptr, half *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<float, int32_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const float *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const float *x_ptr, const size_t m, const size_t n,
   const int32_t *lower_ptr, const int32_t *upper_ptr, float *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<double, int32_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const double *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const double *x_ptr, const size_t m, const size_t n,
   const int32_t *lower_ptr, const int32_t *upper_ptr, double *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<Complex<float>, int32_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const Complex<float> *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const Complex<float> *x_ptr, const size_t m, const size_t n,
   const int32_t *lower_ptr, const int32_t *upper_ptr, Complex<float> *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<Complex<double>, int32_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const Complex<double> *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const Complex<double> *x_ptr, const size_t m, const size_t n,
   const int32_t *lower_ptr, const int32_t *upper_ptr, Complex<double> *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<bool, int32_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const bool *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const bool *x_ptr, const size_t m, const size_t n,
   const int32_t *lower_ptr, const int32_t *upper_ptr, bool *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<char, int64_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const char *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const char *x_ptr, const size_t m, const size_t n,
   const int64_t *lower_ptr, const int64_t *upper_ptr, char *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<int16_t, int64_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const int16_t *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const int16_t *x_ptr, const size_t m, const size_t n,
   const int64_t *lower_ptr, const int64_t *upper_ptr, int16_t *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<int32_t, int64_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const int32_t *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const int32_t *x_ptr, const size_t m, const size_t n,
   const int64_t *lower_ptr, const int64_t *upper_ptr, int32_t *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<int64_t, int64_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const int64_t *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const int64_t *x_ptr, const size_t m, const size_t n,
   const int64_t *lower_ptr, const int64_t *upper_ptr, int64_t *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<unsigned char, int64_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const unsigned char *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const unsigned char *x_ptr, const size_t m, const size_t n,
   const int64_t *lower_ptr, const int64_t *upper_ptr, unsigned char *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<uint16_t, int64_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const uint16_t *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const uint16_t *x_ptr, const size_t m, const size_t n,
   const int64_t *lower_ptr, const int64_t *upper_ptr, uint16_t *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<uint32_t, int64_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const uint32_t *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const uint32_t *x_ptr, const size_t m, const size_t n,
   const int64_t *lower_ptr, const int64_t *upper_ptr, uint32_t *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<uint64_t, int64_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const uint64_t *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const uint64_t *x_ptr, const size_t m, const size_t n,
   const int64_t *lower_ptr, const int64_t *upper_ptr, uint64_t *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<half, int64_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const half *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const half *x_ptr, const size_t m, const size_t n,
   const int64_t *lower_ptr, const int64_t *upper_ptr, half *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<float, int64_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const float *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const float *x_ptr, const size_t m, const size_t n,
   const int64_t *lower_ptr, const int64_t *upper_ptr, float *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<double, int64_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const double *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const double *x_ptr, const size_t m, const size_t n,
   const int64_t *lower_ptr, const int64_t *upper_ptr, double *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<Complex<float>, int64_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const Complex<float> *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const Complex<float> *x_ptr, const size_t m, const size_t n,
   const int64_t *lower_ptr, const int64_t *upper_ptr, Complex<float> *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<Complex<double>, int64_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const Complex<double> *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const Complex<double> *x_ptr, const size_t m, const size_t n,
   const int64_t *lower_ptr, const int64_t *upper_ptr, Complex<double> *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void MatrixBandPartBroadcast<bool, int64_t>(
-  const size_t output_element_num, const std::vector<size_t> &broadcast_x_shape,
-  const std::vector<size_t> &broadcast_lower_shape, const std::vector<size_t> &broadcast_upper_shape,
-  const std::vector<size_t> &broadcast_output_shape, const bool *x_ptr, const size_t m, const size_t n,
+  const size_t output_element_num, const std::vector<int64_t> &broadcast_x_shape,
+  const std::vector<int64_t> &broadcast_lower_shape, const std::vector<int64_t> &broadcast_upper_shape,
+  const std::vector<int64_t> &broadcast_output_shape, const bool *x_ptr, const size_t m, const size_t n,
   const int64_t *lower_ptr, const int64_t *upper_ptr, bool *output_ptr, const uint32_t &device_id,
   cudaStream_t cuda_stream);
