@@ -90,7 +90,7 @@ class BACKEND_EXPORT SwapManager {
   void AddSwappingTensor(const DeviceAddress *device_address);
 
   void SetSwappableBeforeMemAllocate(const std::vector<DeviceAddress *> &inputs,
-                                     const std::vector<DeviceAddress *> &outputs);
+                                     const std::vector<DeviceAddress *> &outputs) const;
   void SetSwappableBeforeMemFree(const std::vector<DeviceAddress *> &inputs,
                                  const std::vector<DeviceAddress *> &outputs, const KernelInfo *kernel_info);
   PinMemPool *GetPinMemPool() { return pin_mem_pool_; }

@@ -131,8 +131,9 @@ void GenActionIndexList(const std::map<size_t, size_t> &tensors_id_index_map,
     MS_EXCEPTION_IF_NULL(tensor_info);
     if (tensor_action->action_ == device::SwapActionType::kAllocHBM) {
       std::vector<size_t> indexes;
-      std::transform(tensor_info->fused_tensor_ids_.begin(), tensor_info->fused_tensor_ids_.end(),
-                     std::back_inserter(indexes), [&](size_t tensor_id) { return tensors_id_index_map.at(tensor_id); });
+      (void)std::transform(tensor_info->fused_tensor_ids_.begin(), tensor_info->fused_tensor_ids_.end(),
+                           std::back_inserter(indexes),
+                           [&](size_t tensor_id) { return tensors_id_index_map.at(tensor_id); });
       (void)alloc_action_map.emplace_back(indexes);
     } else if (tensor_action->action_ != device::SwapActionType::kUnDefined) {
       const auto tensor_id = tensor_info->tensor_id_;
@@ -141,14 +142,14 @@ void GenActionIndexList(const std::map<size_t, size_t> &tensors_id_index_map,
       MS_LOG(EXCEPTION) << "Undefined swap action type.";
     }
   }
-  std::transform(alloc_action_map.begin(), alloc_action_map.end(), std::back_inserter(*actor_actions),
-                 [](const std::vector<size_t> &tensor_idxes) {
-                   return std::make_pair(device::SwapActionType::kAllocHBM, tensor_idxes);
-                 });
-  std::transform(move_action_map.begin(), move_action_map.end(), std::back_inserter(*actor_actions),
-                 [](const std::pair<device::SwapActionType, vector<size_t>> &action) {
-                   return std::make_pair(action.first, action.second);
-                 });
+  (void)std::transform(alloc_action_map.begin(), alloc_action_map.end(), std::back_inserter(*actor_actions),
+                       [](const std::vector<size_t> &tensor_idxes) {
+                         return std::make_pair(device::SwapActionType::kAllocHBM, tensor_idxes);
+                       });
+  (void)std::transform(move_action_map.begin(), move_action_map.end(), std::back_inserter(*actor_actions),
+                       [](const std::pair<device::SwapActionType, vector<size_t>> &action) {
+                         return std::make_pair(action.first, action.second);
+                       });
 }
 
 std::shared_ptr<device::SwapContext> GetSwapContext() {
@@ -195,7 +196,7 @@ void MemSwapScheduler::GetRealParameters(const KernelGraphPtr &graph, const Cont
     if (parser->IsControlFlowDataArrow(graph, input)) {
       const auto &front_node = GetFrontNodeByKernelGraph(input, graph.get());
       const size_t index = source_actor->FetchNodePosition(front_node);
-      real_parameters.insert({input, index});
+      (void)real_parameters.insert({input, index});
     }
   }
   real_parameters_[graph->graph_id()].swap(real_parameters);
