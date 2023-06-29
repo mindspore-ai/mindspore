@@ -34,7 +34,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-BaseShapePtr ScatterElementsInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+BaseShapePtr ScatterElementsInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   return input_args[0]->BuildShape();
 }
 
