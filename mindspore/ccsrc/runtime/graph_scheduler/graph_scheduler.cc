@@ -87,7 +87,7 @@ constexpr char kNumaEnableEnv2[] = "DATASET_ENABLE_NUMA";
 // For the transform state synchronization.
 constexpr char kTransformFinishPrefix[] = "TRANSFORM_FINISH_";
 constexpr char kTransformFinishReady[] = "1";
-static const size_t kRetry = 20;
+static const size_t kRetry = 200;
 static const size_t kInterval = 3;
 
 bool GetNeedSyncStream(const GraphCompilerInfo &graph_compiler_info) {
@@ -243,8 +243,9 @@ bool QueryFinishTransform(const std::string &actor_set_name) {
   uint32_t worker_num = ClusterContext::instance()->node_num(distributed::kEnvRoleOfWorker);
 
   while (--retry > 0) {
+    success = true;
     for (uint32_t i = 0; i < worker_num; ++i) {
-      auto key = kTransformFinishPrefix + std::to_string(cgn->rank_id()) + "_" + actor_set_name;
+      auto key = kTransformFinishPrefix + std::to_string(i) + "_" + actor_set_name;
       auto value = cgn->GetMetadata(key);
       if (value != kTransformFinishReady) {
         MS_LOG(WARNING) << "Waiting for the rank " << i << " to finish the transform stage.";

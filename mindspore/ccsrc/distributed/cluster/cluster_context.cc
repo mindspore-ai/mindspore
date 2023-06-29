@@ -193,7 +193,7 @@ bool ClusterContext::BuildCluster() {
   };
   EXECUTE_WITH_RETRY(check_func, retry_num, topology::kExecuteInterval, "Topology build timed out.");
 
-  MS_LOG(INFO) << "Cluster is successfully initialized.";
+  MS_LOG(WARNING) << "Cluster is successfully initialized.";
   PostProcess();
   return true;
 }
