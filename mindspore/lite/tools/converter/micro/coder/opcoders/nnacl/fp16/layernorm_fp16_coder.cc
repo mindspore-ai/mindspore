@@ -32,16 +32,15 @@ int LayerNormFP16Coder::Prepare(CoderContext *const context) {
 
 int LayerNormFP16Coder::DoCode(CoderContext *const context) {
   NNaclFp32Serializer code;
-  code.CodeStruct("layer_norm_parm", *param_);
+  code.CodeStruct("layer_norm_compute_parm", compute_);
   Collect(context, {"nnacl/fp16/layer_norm_fp16.h"}, {"layer_norm_fp16.c"});
-
   if (output_tensors_.size() == C3NUM) {
     code.CodeFunction("LayerNormFp16", input_tensor_, input_tensors_.at(SECOND_INPUT), input_tensors_.at(THIRD_INPUT),
                       output_tensor_, output_tensors_.at(SECOND_INPUT), output_tensors_.at(THIRD_INPUT),
-                      "&layer_norm_parm", 0);
+                      "&layer_norm_compute_parm", 0, 1);
   } else if (output_tensors_.size() == 1) {
     code.CodeFunction("LayerNormFp16", input_tensor_, input_tensors_.at(SECOND_INPUT), input_tensors_.at(THIRD_INPUT),
-                      output_tensor_, "NULL", "NULL", "&layer_norm_parm", 0);
+                      output_tensor_, "NULL", "NULL", "&layer_norm_compute_parm", 0, 1);
   } else {
     MS_LOG(ERROR) << "LayerNorm should have 1 or 3 output tensors";
     return RET_ERROR;

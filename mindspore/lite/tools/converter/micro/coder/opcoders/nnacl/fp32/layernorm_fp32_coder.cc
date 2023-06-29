@@ -27,48 +27,55 @@ constexpr size_t kOutputNum = 3;
 int LayerNormFP32Coder::Prepare(CoderContext *const context) {
   param_ = reinterpret_cast<LayerNormParameter *>(parameter_);
   param_->op_parameter_.thread_num_ = 1;
+
+  compute_.epsilon_ = param_->epsilon_;
+  compute_.elementwise_affine_ = param_->elementwise_affine_;
+  compute_.begin_norm_axis_ = param_->begin_norm_axis_;
+  compute_.begin_params_axis_ = param_->begin_params_axis_;
+
   auto shape = input_tensor_->shape();
-  param_->begin_norm_axis_ = param_->begin_norm_axis_ >= 0 ? param_->begin_norm_axis_
-                                                           : param_->begin_norm_axis_ + static_cast<int>(shape.size());
-  param_->begin_params_axis_ = param_->begin_params_axis_ >= 0
-                                 ? param_->begin_params_axis_
-                                 : param_->begin_params_axis_ + static_cast<int>(shape.size());
-  MS_CHECK_LT(param_->begin_norm_axis_, static_cast<int>(shape.size()), RET_ERROR);
-  MS_CHECK_LT(param_->begin_params_axis_, static_cast<int>(shape.size()), RET_ERROR);
-  param_->norm_outer_size_ = 1;
-  for (int i = 0; i < param_->begin_norm_axis_; ++i) {
-    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(param_->norm_outer_size_, shape.at(i)), RET_ERROR, "mul overflow.");
-    param_->norm_outer_size_ *= shape.at(i);
+  compute_.begin_norm_axis_ = compute_.begin_norm_axis_ >= 0
+                                ? compute_.begin_norm_axis_
+                                : compute_.begin_norm_axis_ + static_cast<int>(shape.size());
+  compute_.begin_params_axis_ = compute_.begin_params_axis_ >= 0
+                                  ? compute_.begin_params_axis_
+                                  : compute_.begin_params_axis_ + static_cast<int>(shape.size());
+  MS_CHECK_LT(compute_.begin_norm_axis_, static_cast<int>(shape.size()), RET_ERROR);
+  MS_CHECK_LT(compute_.begin_params_axis_, static_cast<int>(shape.size()), RET_ERROR);
+  compute_.norm_outer_size_ = 1;
+  for (int i = 0; i < compute_.begin_norm_axis_; ++i) {
+    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(compute_.norm_outer_size_, shape.at(i)), RET_ERROR, "mul overflow.");
+    compute_.norm_outer_size_ *= shape.at(i);
   }
-  param_->norm_inner_size_ = 1;
-  for (size_t i = param_->begin_norm_axis_; i < shape.size(); ++i) {
-    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(param_->norm_inner_size_, shape.at(i)), RET_ERROR, "mul overflow.");
-    param_->norm_inner_size_ *= shape.at(i);
+  compute_.norm_inner_size_ = 1;
+  for (size_t i = compute_.begin_norm_axis_; i < shape.size(); ++i) {
+    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(compute_.norm_inner_size_, shape.at(i)), RET_ERROR, "mul overflow.");
+    compute_.norm_inner_size_ *= shape.at(i);
   }
-  param_->params_outer_size_ = 1;
-  for (int i = 0; i < param_->begin_params_axis_; ++i) {
-    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(param_->params_outer_size_, shape.at(i)), RET_ERROR, "mul overflow.");
-    param_->params_outer_size_ *= shape.at(i);
+  compute_.params_outer_size_ = 1;
+  for (int i = 0; i < compute_.begin_params_axis_; ++i) {
+    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(compute_.params_outer_size_, shape.at(i)), RET_ERROR, "mul overflow.");
+    compute_.params_outer_size_ *= shape.at(i);
   }
-  param_->params_inner_size_ = 1;
-  for (size_t i = param_->begin_params_axis_; i < shape.size(); ++i) {
-    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(param_->params_inner_size_, shape.at(i)), RET_ERROR, "mul overflow.");
-    param_->params_inner_size_ *= shape.at(i);
+  compute_.params_inner_size_ = 1;
+  for (size_t i = compute_.begin_params_axis_; i < shape.size(); ++i) {
+    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(compute_.params_inner_size_, shape.at(i)), RET_ERROR, "mul overflow.");
+    compute_.params_inner_size_ *= shape.at(i);
   }
   return RET_OK;
 }
 
 int LayerNormFP32Coder::DoCode(CoderContext *const context) {
   NNaclFp32Serializer code;
-  code.CodeStruct("layer_norm_parm", *param_);
+  code.CodeStruct("layer_norm_compute_parm", compute_);
   Collect(context, {"nnacl/fp32/layer_norm_fp32.h"}, {"layer_norm_fp32.c"});
   if (output_tensors_.size() == kOutputNum) {
     code.CodeFunction("LayerNorm", input_tensor_, input_tensors_.at(SECOND_INPUT), input_tensors_.at(THIRD_INPUT),
                       output_tensor_, output_tensors_.at(SECOND_INPUT), output_tensors_.at(THIRD_INPUT),
-                      "&layer_norm_parm", 0);
+                      "&layer_norm_compute_parm", 0, 1);
   } else if (output_tensors_.size() == 1) {
     code.CodeFunction("LayerNorm", input_tensor_, input_tensors_.at(SECOND_INPUT), input_tensors_.at(THIRD_INPUT),
-                      output_tensor_, "NULL", "NULL", "&layer_norm_parm", 0);
+                      output_tensor_, "NULL", "NULL", "&layer_norm_compute_parm", 0, 1);
   } else {
     return RET_ERROR;
   }

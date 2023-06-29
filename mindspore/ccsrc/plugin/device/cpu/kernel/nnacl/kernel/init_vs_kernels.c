@@ -33,6 +33,7 @@
 #include "nnacl/kernel/group_norm.h"
 #include "nnacl/kernel/log_softmax.h"
 #include "nnacl/kernel/local_response_norm.h"
+#include "nnacl/kernel/layer_norm.h"
 #include "nnacl/kernel/matmul.h"
 #include "nnacl/kernel/non_zero.h"
 #include "nnacl/kernel/nllloss.h"
@@ -92,6 +93,7 @@ void InitVSKernelF16(KernelCreator **creators) {
   creators[PrimType_GreaterEqual][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticCompareF16;
   creators[PrimType_Less][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticCompareF16;
   creators[PrimType_LessEqual][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticCompareF16;
+  creators[PrimType_LayerNormFusion][REGIST_DT(kNumberTypeFloat16)] = CreateLayerNorm;
   creators[PrimType_LogicalAnd][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_LogicalOr][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_Log][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
@@ -193,6 +195,7 @@ void InitVSKernelA(KernelCreator **creators) {
 
 void InitVSKernelI(KernelCreator **creators) {
   creators[PrimType_IsFinite][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
+  creators[PrimType_LayerNormFusion][REGIST_DT(kNumberTypeFloat32)] = CreateLayerNorm;
   creators[PrimType_Less][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticCompare;
   creators[PrimType_Less][REGIST_DT(kNumberTypeInt32)] = CreateArithmeticCompare;
   creators[PrimType_LessEqual][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticCompare;

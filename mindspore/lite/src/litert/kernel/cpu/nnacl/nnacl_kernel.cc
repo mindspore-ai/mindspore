@@ -47,7 +47,7 @@ int NNACLKernel::Prepare() {
 
   int ret = kernel_->Prepare(kernel_);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "NNACL prepare failed. Kernel: " << name() << ", rer: " << ret;
+    MS_LOG(ERROR) << "NNACL prepare failed. Kernel: " << name() << ", ret: " << ret;
     return ret;
   }
 
@@ -65,7 +65,7 @@ int NNACLKernel::ReSize() {
 
   int ret = kernel_->Resize(kernel_);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "NNACL resize failed. Kernel: " << name() << ", rer: " << ret;
+    MS_LOG(ERROR) << "NNACL resize failed. Kernel: " << name() << ", ret: " << ret;
     return ret;
   }
   return RET_OK;
@@ -80,7 +80,7 @@ int NNACLKernel::Run() {
 
   int ret = kernel_->Compute(kernel_);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "NNACL compute failed. Kernel: " << name() << ", rer: " << ret;
+    MS_LOG(ERROR) << "NNACL compute failed. Kernel: " << name() << ", ret: " << ret;
     return ret;
   }
   return RET_OK;

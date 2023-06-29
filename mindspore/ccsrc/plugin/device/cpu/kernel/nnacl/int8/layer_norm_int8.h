@@ -19,13 +19,14 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/layer_norm_parameter.h"
 #include "nnacl/int8/fixed_point.h"
+#include "nnacl/kernel/layer_norm.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 int LayerNormInt8(const int8_t *src_data, const float *gamma_data, const float *beta_data, int8_t *dst_data,
-                  const LayerNormParameter *param, const LayerNormQuantArg *quant, int task_id);
+                  const LayerNormComputeParam *param, const LayerNormQuantArg *quant, int task_id, int thread_num);
 
 #ifdef __cplusplus
 }

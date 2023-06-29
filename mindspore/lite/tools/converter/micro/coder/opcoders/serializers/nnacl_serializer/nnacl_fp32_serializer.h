@@ -51,6 +51,7 @@
 #include "nnacl/unstack_parameter.h"
 #include "nnacl/kernel/scale.h"
 #include "nnacl/kernel/pooling.h"
+#include "nnacl/kernel/layer_norm.h"
 
 namespace mindspore::lite::micro::nnacl {
 class NNaclFp32Serializer : public Serializer {
@@ -81,7 +82,7 @@ class NNaclFp32Serializer : public Serializer {
   void CodeStruct(const std::string &name, const ActivationParameter &activation_parameter);
   void CodeStruct(const std::string &name, const OpParameter &op_param);
   void CodeStruct(const std::string &name, const SplitParameter &split_parameter);
-  void CodeStruct(const std::string &name, const LayerNormParameter &param);
+  void CodeStruct(const std::string &name, const LayerNormComputeParam &param);
   void CodeStruct(const std::string &name, const BroadcastShapeInfo &param);
   void CodeStruct(const std::string &name, const CustomGruParameter &param);
   void CodeStruct(const std::string &name, const SlidingWindowParam &param);

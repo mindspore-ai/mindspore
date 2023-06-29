@@ -713,6 +713,12 @@ typedef enum PaddingModeC {
   PaddingMode_Mode_Reserved,
 } PaddingModeC;
 
+typedef enum ElementwiseModeC {
+  Elementwise_Not = 0,
+  Elementwise_Per_Channel = 1,
+  Elementwise_Per_Num = 2
+} ElementwiseModeC;
+
 typedef enum QuantTypeC {
   Quant_None = 0,
   Quant_AwareTraining = 1,

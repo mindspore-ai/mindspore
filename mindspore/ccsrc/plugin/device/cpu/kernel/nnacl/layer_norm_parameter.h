@@ -18,25 +18,13 @@
 
 #include "nnacl/op_base.h"
 #include "nnacl/int8/quantize.h"
-enum ElementwiseMode { ELEMENTWISE_NOT = 0, ELEMENTWISE_PER_CHANNEL = 1, ELEMENTWISE_PER_NUM = 2 };
+
 typedef struct LayerNormParameter {
-  // Primitive parameter
   OpParameter op_parameter_;
   float epsilon_;
-  enum ElementwiseMode elementwise_mode_;
   bool elementwise_affine_;
   int begin_norm_axis_;
   int begin_params_axis_;
-  // shape correlative
-  int norm_inner_size_;
-  int norm_outer_size_;
-  int params_inner_size_;
-  int params_outer_size_;
-  int normalized_dims_;
-  int normalized_shape_[MAX_SHAPE_SIZE];
-  // other parameter
-  int thread_count_;
-  int thread_outsize_;
 } LayerNormParameter;
 
 typedef struct LayerNormQuantArg {

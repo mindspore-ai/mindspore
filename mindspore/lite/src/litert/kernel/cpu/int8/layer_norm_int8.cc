@@ -27,6 +27,10 @@ constexpr int min_layernorm_input = 3;
 constexpr int min_layernorm_output = 1;
 }  // namespace
 LayerNormInt8CPUKernel::~LayerNormInt8CPUKernel() {
+  if (compute_ != nullptr) {
+    free(compute_);
+    compute_ = nullptr;
+  }
   if (quant_param_ != nullptr) {
     free(quant_param_);
     quant_param_ = nullptr;
@@ -51,6 +55,16 @@ int LayerNormInt8CPUKernel::SetQuantArgs() {
   const auto &output_params = output->quant_params();
   MS_CHECK_TRUE_MSG(!input_params.empty(), RET_ERROR, "Input quant param cannot be empty.");
   MS_CHECK_TRUE_MSG(!output_params.empty(), RET_ERROR, "Output quant param cannot be empty.");
+  compute_ = reinterpret_cast<LayerNormComputeParam *>(malloc(sizeof(LayerNormComputeParam)));
+  if (compute_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc LayerNormComputeParam for LayerNorm int8 op failed!";
+    return RET_ERROR;
+  }
+  compute_->epsilon_ = param_->epsilon_;
+  compute_->elementwise_affine_ = param_->elementwise_affine_;
+  compute_->begin_norm_axis_ = param_->begin_norm_axis_;
+  compute_->begin_params_axis_ = param_->begin_params_axis_;
+
   quant_param_ = reinterpret_cast<LayerNormQuantArg *>(malloc(sizeof(LayerNormQuantArg)));
   if (quant_param_ == nullptr) {
     MS_LOG(ERROR) << "Malloc LayerNormQuantArg for LayerNorm int8 op failed!";
@@ -127,33 +141,34 @@ int LayerNormInt8CPUKernel::Prepare() {
 
 int LayerNormInt8CPUKernel::ReSize() {
   auto shape = in_tensors_.front()->shape();
-  param_->begin_norm_axis_ =
-    param_->begin_norm_axis_ > 0 ? param_->begin_norm_axis_ : param_->begin_norm_axis_ + shape.size();
-  param_->begin_params_axis_ =
-    param_->begin_params_axis_ > 0 ? param_->begin_params_axis_ : param_->begin_params_axis_ + shape.size();
+  compute_->begin_norm_axis_ =
+    compute_->begin_norm_axis_ > 0 ? compute_->begin_norm_axis_ : compute_->begin_norm_axis_ + shape.size();
+  compute_->begin_params_axis_ =
+    compute_->begin_params_axis_ > 0 ? compute_->begin_params_axis_ : compute_->begin_params_axis_ + shape.size();
 
-  param_->norm_outer_size_ = 1;
-  for (int i = 0; i < param_->begin_norm_axis_; ++i) {
-    param_->norm_outer_size_ *= shape.at(i);
+  compute_->norm_outer_size_ = 1;
+  for (int i = 0; i < compute_->begin_norm_axis_; ++i) {
+    compute_->norm_outer_size_ *= shape.at(i);
   }
-  param_->norm_inner_size_ = 1;
-  for (size_t i = param_->begin_norm_axis_; i < shape.size(); ++i) {
-    param_->norm_inner_size_ *= shape.at(i);
+  compute_->norm_inner_size_ = 1;
+  for (size_t i = compute_->begin_norm_axis_; i < shape.size(); ++i) {
+    compute_->norm_inner_size_ *= shape.at(i);
   }
-  param_->params_outer_size_ = 1;
-  for (int i = 0; i < param_->begin_params_axis_; ++i) {
-    param_->params_outer_size_ *= shape.at(i);
+  compute_->params_outer_size_ = 1;
+  for (int i = 0; i < compute_->begin_params_axis_; ++i) {
+    compute_->params_outer_size_ *= shape.at(i);
   }
-  param_->params_inner_size_ = 1;
-  for (size_t i = param_->begin_params_axis_; i < shape.size(); ++i) {
-    param_->params_inner_size_ *= shape.at(i);
+  compute_->params_inner_size_ = 1;
+  for (size_t i = compute_->begin_params_axis_; i < shape.size(); ++i) {
+    compute_->params_inner_size_ *= shape.at(i);
   }
-  param_->op_parameter_.thread_num_ = MSMIN(param_->norm_outer_size_, op_parameter_->thread_num_);
+  param_->op_parameter_.thread_num_ = MSMIN(compute_->norm_outer_size_, op_parameter_->thread_num_);
   return RET_OK;
 }
 
 int LayerNormInt8CPUKernel::DoExecute(int task_id) {
-  auto ret = LayerNormInt8(src_ptr_, gamma_ptr_, beta_ptr_, dst_ptr_, param_, quant_param_, task_id);
+  auto ret = LayerNormInt8(src_ptr_, gamma_ptr_, beta_ptr_, dst_ptr_, compute_, quant_param_, task_id,
+                           param_->op_parameter_.thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DoExecute task id " << task_id << " failed.";
     return ret;
