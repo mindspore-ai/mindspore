@@ -21,12 +21,15 @@ from mindspore import log as logger
 from tests.st.model_zoo_tests import utils
 
 
-def init_files():
+def init_files(path_prefix=""):
     cur_path = os.getcwd()
     model_path = "{}/../../../../tests/models/official/cv".format(cur_path)
     model_name = "yolov5"
-    utils.copy_files(model_path, cur_path, model_name)
-    cur_model_path = os.path.join(cur_path, model_name)
+    cur_model_path = os.path.join(cur_path, path_prefix)
+    if not os.path.exists(cur_model_path):
+        os.mkdir(cur_model_path)
+    utils.copy_files(model_path, cur_model_path, model_name)
+    cur_model_path = os.path.join(cur_model_path, model_name)
     # pylint: disable=anomalous-backslash-in-string
     old_list = ["gt_shape\[1\]"]
     # pylint: disable=anomalous-backslash-in-string
@@ -63,18 +66,31 @@ def check_and_print_when_fail(to_check, expect, rtol, atol):
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_yolov5_dynamic_gpu():
+def test_yolov5_dynamic_gpu_graph():
     """
     Feature: yolov5_dynamic
     Description: test yolov5_dynamic run
     Expectation: loss is same with the expect
     """
-    cur_model_path = init_files()
+    cur_model_path = init_files("graph")
     loss_list = run_yolov5_dynamic_case(cur_model_path, "GPU")
     expect_loss = [7200.505, 544.873, 600.88]
     # Different gpu device (such as V100 and 3090) lead to some differences
     # in the calculation results, so only the first 2 steps is compared
     check_and_print_when_fail(loss_list[:2], expect_loss[:2], 1e-1, 1e-1)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_yolov5_dynamic_gpu_pynative():
+    """
+    Feature: yolov5_dynamic
+    Description: test yolov5_dynamic run
+    Expectation: loss is same with the expect
+    """
+    cur_model_path = init_files("pynative")
+    expect_loss = [7200.505, 544.873, 600.88]
     loss_list_pynative = run_yolov5_dynamic_case(cur_model_path, "GPU", "PYNATIVE")
     check_and_print_when_fail(loss_list_pynative[:2], expect_loss[:2], 1e-1, 1e-1)
 
