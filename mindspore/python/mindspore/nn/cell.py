@@ -160,7 +160,6 @@ class Cell(Cell_):
         self.to_float_fp16 = False
         self.ge_init = False
         self.ge_sync_data = False
-        self.amp_converted = False
         self.auto_identify_dynamic_shape = _AutoIdentifyDynamicShape()
 
 
