@@ -1301,72 +1301,62 @@ EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, con
     MS_LOG(WARNING) << "Location's expr is empty, node: " << out_conf->node()->DebugString(debug_recursive_level);
     return nullptr;
   }
-  auto owner_abs = args_abs_list[0];
-  auto owner_value = owner_abs->BuildValue();
-  auto owner_node = cnode->input(1);
-  MS_LOG(DEBUG) << "expr: " << expr << ", for node: " << out_conf->node()->DebugString(debug_recursive_level)
-                << ", owner_value: " << owner_value->ToString();
-  if (owner_value->isa<parse::InterpretedObject>()) {
-    const auto &interpreted_value = dyn_cast<parse::InterpretedObject>(owner_value);
-    const auto &key = interpreted_value->name();
-    owner_node = fallback::ConvertPyObjectToPyExecute(fg, key, interpreted_value->obj(), owner_node, true);
-  }
-
-  constexpr auto internal_getattr_owner_str = "__internal_getattr_owner__";
-  std::stringstream script_buffer;
-  script_buffer << internal_getattr_owner_str;
   // Check "x.xxx"
-  auto pos = expr.rfind('.');
-  if (pos == std::string::npos) {
-    // Check "getattr(x, 'xxx')"
-    constexpr auto get_attr_expr = "getattr";
-    pos = expr.find(get_attr_expr);
-    if (pos == std::string::npos) {
-      MS_LOG(INTERNAL_EXCEPTION) << "The expression is wrong: " << expr;
+  auto point_pos = expr.rfind('.');
+  // Check "getattr(x, name[, default])". The input x may be obj.attr, name may be string or other node.
+  constexpr auto get_attr_expr = "getattr";
+  auto getattr_pos = expr.find(get_attr_expr);
+
+  // Only has point
+  if (point_pos != std::string::npos && getattr_pos == std::string::npos) {
+    constexpr auto internal_getattr_owner_str = "__internal_getattr_owner__";
+    std::stringstream script_buffer;
+    script_buffer << internal_getattr_owner_str;
+    script_buffer << expr.substr(point_pos);
+    const auto script_getattr_str = std::make_shared<StringImm>(script_buffer.str());
+    std::vector<ValuePtr> key_list;
+    const auto owner_str = std::make_shared<StringImm>(internal_getattr_owner_str);
+    (void)key_list.emplace_back(owner_str);
+    const auto key_tuple = std::make_shared<ValueTuple>(key_list);
+    auto owner_abs = args_abs_list[0];
+    auto owner_value = owner_abs->BuildValue();
+    auto owner_node = cnode->input(1);
+    MS_LOG(DEBUG) << "expr: " << expr << ", for node: " << out_conf->node()->DebugString(debug_recursive_level)
+                  << ", owner_value: " << owner_value->ToString();
+    if (owner_value->isa<parse::InterpretedObject>()) {
+      const auto &interpreted_value = dyn_cast<parse::InterpretedObject>(owner_value);
+      const auto &key = interpreted_value->name();
+      owner_node = fallback::ConvertPyObjectToPyExecute(fg, key, interpreted_value->obj(), owner_node, true);
     }
-    pos = expr.find(", ", pos);
-    if (pos == std::string::npos) {
-      MS_LOG(INTERNAL_EXCEPTION) << "The expression is wrong: " << expr;
+    std::vector<AnfNodePtr> value_list{NewValueNode(prim::kPrimMakeTuple)};
+    (void)value_list.emplace_back(owner_node);
+    const auto value_tuple_node = fg->NewCNode(value_list);
+    AnfNodePtr getattr_node = nullptr;
+    constexpr auto args_size = 3;
+    if (args_abs_list.size() == args_size) {  // Has setattr node as input.
+      const auto &getattr_cnode = fallback::CreatePyExecuteCNode(cnode, NewValueNode(script_getattr_str),
+                                                                 NewValueNode(key_tuple), value_tuple_node);
+      getattr_cnode->add_input(cnode->input(args_size));
+      getattr_node = getattr_cnode;
+    } else {
+      getattr_node = fallback::CreatePyExecuteCNode(cnode, NewValueNode(script_getattr_str), NewValueNode(key_tuple),
+                                                    value_tuple_node);
     }
-    constexpr auto get_attr_call_input_sep_num = 3;
-    pos += get_attr_call_input_sep_num;
-    auto end_pos = expr.find(")", pos);
-    if (end_pos == std::string::npos) {
-      MS_LOG(INTERNAL_EXCEPTION) << "The expression is wrong: " << expr;
-    }
-    script_buffer << "." << expr.substr(pos, end_pos - pos - 1);
-  } else {
-    script_buffer << expr.substr(pos);
+    auto eng = out_conf->engine();
+    MS_EXCEPTION_IF_NULL(eng);
+    auto fn_conf = eng->MakeConfig(getattr_node, out_conf->context(), out_conf->func_graph());
+    return eng->ForwardConfig(out_conf, fn_conf);
+  } else if (getattr_pos != std::string::npos ||
+             (point_pos != std::string::npos && getattr_pos != std::string::npos && getattr_pos < point_pos)) {
+    // Convert getattr(x, 'xxx', default) to PyExecute("getattr(x, 'xxx', default)", local_keys, local_values).
+    auto pyexecute_node = fallback::ConvertCNodeToPyExecuteForPrim(cnode, get_attr_expr);
+    MS_LOG(DEBUG) << "Convert: " << cnode->DebugString() << " -> " << pyexecute_node->DebugString();
+    auto eng = out_conf->engine();
+    MS_EXCEPTION_IF_NULL(eng);
+    auto fn_conf = eng->MakeConfig(pyexecute_node, out_conf->context(), out_conf->func_graph());
+    return eng->ForwardConfig(out_conf, fn_conf);
   }
-  MS_LOG(DEBUG) << "script: " << script_buffer.str();
-
-  const auto script_getattr_str = std::make_shared<StringImm>(script_buffer.str());
-  std::vector<ValuePtr> key_list;
-  const auto owner_str = std::make_shared<StringImm>(internal_getattr_owner_str);
-  (void)key_list.emplace_back(owner_str);
-  const auto key_tuple = std::make_shared<ValueTuple>(key_list);
-
-  std::vector<AnfNodePtr> value_list{NewValueNode(prim::kPrimMakeTuple)};
-  (void)value_list.emplace_back(owner_node);
-  const auto value_tuple_node = fg->NewCNode(value_list);
-
-  AnfNodePtr getattr_node = nullptr;
-  constexpr auto args_size = 3;
-  if (args_abs_list.size() == args_size) {  // Has setattr node as input.
-    const auto &getattr_cnode = fallback::CreatePyExecuteCNode(cnode, NewValueNode(script_getattr_str),
-                                                               NewValueNode(key_tuple), value_tuple_node);
-    getattr_cnode->add_input(cnode->input(args_size));
-    getattr_node = getattr_cnode;
-  } else {
-    getattr_node = fallback::CreatePyExecuteCNode(cnode, NewValueNode(script_getattr_str), NewValueNode(key_tuple),
-                                                  value_tuple_node);
-  }
-  MS_LOG(DEBUG) << "getattr_node: " << getattr_node->DebugString(debug_recursive_level);
-
-  auto eng = out_conf->engine();
-  MS_EXCEPTION_IF_NULL(eng);
-  auto fn_conf = eng->MakeConfig(getattr_node, out_conf->context(), out_conf->func_graph());
-  return eng->ForwardConfig(out_conf, fn_conf);
+  MS_LOG(INTERNAL_EXCEPTION) << "The getattr expression is wrong: " << expr;
 }
 
 EvalResultPtr InterpretSetAttrNode(const AbstractBasePtrList &args_abs_list, const AnfNodeConfigPtr &out_conf) {
