@@ -26,6 +26,7 @@
 #include "src/litert/kernel/cpu/fp32/group_convolution_fp32.h"
 #include "src/litert/kernel/cpu/fp32/convolution_sw_1x1_fp32.h"
 #include "nnacl/base/conv_common_base.h"
+#include "nnacl/fp32/conv_sw_arm64_fp32.h"
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
 #if defined(ENABLE_ARM) || (defined(ENABLE_SSE) && !defined(ENABLE_AVX))
@@ -232,28 +233,6 @@ bool ConvolutionDelegateCPUKernel::CheckAvxUseSWConv(const ConvParameter *conv_p
     }
   }
   return false;
-}
-
-bool ConvolutionDelegateCPUKernel::CheckArm64UseSWConv(const ConvParameter *conv_param) {
-  if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1) {
-    return false;
-  }
-  if (conv_param->input_channel_ > C128NUM) {
-    return false;
-  }
-  if (conv_param->kernel_h_ > C5NUM || conv_param->kernel_w_ > C5NUM) {
-    return false;
-  }
-  if (conv_param->dilation_h_ != 1 || conv_param->dilation_w_ != 1) {
-    return false;
-  }
-  if (conv_param->stride_w_ > C3NUM) {
-    return false;
-  }
-  if (conv_param->input_h_ / conv_param->kernel_h_ < C48NUM || conv_param->input_w_ / conv_param->kernel_w_ < C48NUM) {
-    return false;
-  }
-  return true;
 }
 
 kernel::LiteKernel *ConvolutionDelegateCPUKernel::CreateConv1x1MatmulKernel() {

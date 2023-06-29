@@ -131,9 +131,18 @@ int GroupConvCreatorSetShapeOfTensors(GroupConvolutionStruct *group_conv) {
   return NNACL_OK;
 }
 
-int GroupConvCreatorGetSingleConvParam(GroupConvolutionStruct *group_conv, KernelBase *new_conv, int group_id) {
+int GroupConvSetSubConvInfo(GroupConvolutionStruct *group_conv, KernelBase *new_conv, int group_id) {
   NNACL_CHECK_NULL_RETURN_ERR(group_conv);
   NNACL_CHECK_NULL_RETURN_ERR(new_conv);
+
+  ConvolutionBaseStruct *sub_conv = (ConvolutionBaseStruct *)new_conv;
+  (void)ConvBaseUpdateParamInfo(&sub_conv->compute_, &group_conv->new_conv_param_);
+
+  sub_conv->infershape_done_ = group_conv->conv_base_.infershape_done_;
+  sub_conv->shaing_manager_ = group_conv->conv_base_.shaing_manager_;
+  sub_conv->get_sharing_weight_ = group_conv->conv_base_.get_sharing_weight_;
+  sub_conv->free_sharing_weight_ = group_conv->conv_base_.free_sharing_weight_;
+  sub_conv->is_sharing_pack_ = group_conv->conv_base_.is_sharing_pack_;
 
   new_conv->env_ = group_conv->conv_base_.base_.env_;
   new_conv->param_ = &group_conv->new_conv_param_.op_parameter_;
@@ -336,7 +345,7 @@ int group_convolution_prepare(KernelBase *self) {
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(new_conv);
     group_conv->group_convs_[i] = new_conv;
 
-    int ret = GroupConvCreatorGetSingleConvParam(group_conv, new_conv, i);
+    int ret = GroupConvSetSubConvInfo(group_conv, new_conv, i);
     if (ret != NNACL_OK) {
       return ret;
     }

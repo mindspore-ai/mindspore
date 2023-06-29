@@ -291,6 +291,10 @@ ConvolutionBaseStruct *CreateDeConv(ConvParameter *param) {
 }
 
 ConvolutionBaseStruct *SelectDeConv(ConvParameter *conv_param) {
+  ConvolutionBaseStruct *kernel = NULL;
+
+#ifndef ENABLE_MCU
+#ifndef _WIN32
   bool param_winograd_fit = (conv_param->stride_h_ > 1 || conv_param->stride_w_ > 1) &&
                             (conv_param->dilation_w_ == 1 && conv_param->dilation_h_ == 1);
 
@@ -303,10 +307,13 @@ ConvolutionBaseStruct *SelectDeConv(ConvParameter *conv_param) {
   bool in_size_winograd_fit = true;
 #endif
 
-  ConvolutionBaseStruct *kernel = NULL;
   if (param_winograd_fit && size_winograd_fit && in_size_winograd_fit) {
     kernel = CreateDeConvWinograd(conv_param);
-  } else {
+  }
+#endif
+#endif
+
+  if (kernel == NULL) {
     kernel = CreateDeConv(conv_param);
   }
 

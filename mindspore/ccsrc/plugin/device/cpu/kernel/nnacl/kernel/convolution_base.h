@@ -45,9 +45,9 @@ typedef struct ConvolutionBaseStruct {
   int (*run_impl_)(struct ConvolutionBaseStruct *conv, int task_id);
 
   bool is_sharing_pack_;
-  void *pack_weight_manager_;
-  void (*free_by_sharing_weight_)(void *manager, void *tensor_data);
-  void *(*get_pack_data_by_sharing_weight_)(void *manager, const void *tensor_data, const size_t size, bool *is_packed);
+  void *shaing_manager_;
+  void (*free_sharing_weight_)(void *manager, void *tensor_data);
+  void *(*get_sharing_weight_)(void *manager, const void *tensor_data, const size_t size, bool *is_packed);
 } ConvolutionBaseStruct;
 
 int ConvBaseUpdateParamInfo(ConvComputeParam *compute, ConvParameter *conv_param);

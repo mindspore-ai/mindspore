@@ -29,10 +29,13 @@ class NNACLKernel : public kernel::LiteKernel {
                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~NNACLKernel() override;
-
   int Prepare() override;
   int ReSize() override;
   int Run() override;
+
+ public:
+  /* Execute after NNACLKernel creation
+   * Create KernelBase */
   int InitKernel(const TypeId &data_type, const lite::InnerContext *ctx);
   const KernelBase *Kernel() const { return kernel_; }
 

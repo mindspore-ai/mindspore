@@ -86,7 +86,7 @@ void ConvBaseRelease(ConvolutionBaseStruct *conv) {
     if (!conv->is_sharing_pack_) {
       conv->base_.env_->free(conv->base_.env_->allocator_, conv->packed_weight_);
     } else {
-      conv->free_by_sharing_weight_(conv->pack_weight_manager_, conv->packed_weight_);
+      conv->free_sharing_weight_(conv->shaing_manager_, conv->packed_weight_);
     }
     conv->packed_weight_ = NULL;
   }
@@ -166,10 +166,13 @@ int ConvBaseCheckResizeValid(ConvolutionBaseStruct *conv) {
 }
 
 void *ConvBaseGetConvPackWeightData(ConvolutionBaseStruct *conv, int data_size) {
+  TensorC *weight_tensor = conv->base_.in_[SECOND_INPUT];
+  bool const_fit = weight_tensor->category_ != ConstTensor && weight_tensor->category_ != ConstScalar;
+  bool group_fit = ((ConvParameter *)conv->base_.param_)->group_ > 1;
+  bool sharing_fit = conv->get_sharing_weight_ == NULL;
+
   void *data = NULL;
-  ConvParameter *conv_param = (ConvParameter *)conv->base_.param_;
-  if (conv_param->group_ > 1 || (conv->base_.in_[SECOND_INPUT]->category_ != ConstTensor &&
-                                 conv->base_.in_[SECOND_INPUT]->category_ != ConstScalar)) {
+  if (sharing_fit || const_fit || group_fit) {
     if (data_size <= 0) {
       return NULL;
     }
@@ -177,8 +180,7 @@ void *ConvBaseGetConvPackWeightData(ConvolutionBaseStruct *conv, int data_size) 
     conv->weight_is_packed_ = false;
     conv->is_sharing_pack_ = false;
   } else {
-    data = conv->get_pack_data_by_sharing_weight_(conv->pack_weight_manager_, conv->base_.in_[FIRST_INPUT]->data_,
-                                                  data_size, &conv->weight_is_packed_);
+    data = conv->get_sharing_weight_(conv->shaing_manager_, weight_tensor->data_, data_size, &conv->weight_is_packed_);
   }
   return data;
 }

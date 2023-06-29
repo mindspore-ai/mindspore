@@ -36,9 +36,9 @@ int MatmulKernel::Prepare() {
   }
 
   MatmulFp32Struct *matmul = reinterpret_cast<MatmulFp32Struct *>(kernel_);
-  matmul->pack_weight_manager_ = lite::PackWeightManager::GetInstance();
-  matmul->get_pack_data_by_sharing_weight_ = nnacl::DefaultGetSharingPackData;
-  matmul->free_by_sharing_weight_ = nnacl::DefaultFreeSharingPackData;
+  matmul->shaing_manager_ = lite::PackWeightManager::GetInstance();
+  matmul->get_sharing_weight_ = nnacl::DefaultGetSharingPackData;
+  matmul->free_sharing_weight_ = nnacl::DefaultFreeSharingPackData;
   matmul->is_sharing_pack_ = true;
   matmul->infer_shape_ = InferShapeDone();
   matmul->a_const_ = in_tensors_[FIRST_INPUT]->IsConst() && !op_parameter_->is_train_session_;

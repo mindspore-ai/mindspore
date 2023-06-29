@@ -17,6 +17,28 @@
 #include "nnacl/fp32/conv_sw_arm64_fp32.h"
 #include "nnacl/fp32/conv_sw.h"
 
+bool CheckArm64UseSWConv(const ConvParameter *conv_param) {
+  if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1) {
+    return false;
+  }
+  if (conv_param->input_channel_ > C128NUM) {
+    return false;
+  }
+  if (conv_param->kernel_h_ > C5NUM || conv_param->kernel_w_ > C5NUM) {
+    return false;
+  }
+  if (conv_param->dilation_h_ != 1 || conv_param->dilation_w_ != 1) {
+    return false;
+  }
+  if (conv_param->stride_w_ > C3NUM) {
+    return false;
+  }
+  if (conv_param->input_h_ / conv_param->kernel_h_ < C48NUM || conv_param->input_w_ / conv_param->kernel_w_ < C48NUM) {
+    return false;
+  }
+  return true;
+}
+
 typedef void (*SWConvKernel)(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
                              size_t kernel_w, size_t act_flag, size_t oc_algin, size_t ic_algin, size_t in_kw_step,
                              size_t in_kh_step, size_t in_sw_step, size_t kw_remainder, size_t write_mode);

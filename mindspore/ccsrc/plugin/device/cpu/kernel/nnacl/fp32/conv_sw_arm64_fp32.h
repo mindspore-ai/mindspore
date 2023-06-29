@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP32_CONV_SW_ARM64_H_
-#define MINDSPORE_NNACL_FP32_CONV_SW_ARM64_H_
+#ifndef NNACL_FP32_CONV_SW_ARM64_FP32_H_
+#define NNACL_FP32_CONV_SW_ARM64_FP32_H_
 #include "nnacl/pack.h"
 #include "nnacl/op_base.h"
 #include "nnacl/common_func.h"
@@ -24,9 +24,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+bool CheckArm64UseSWConv(const ConvParameter *conv_param);
 void ConvSWArm64Fp32(const float *input_data, const float *packed_weight, const float *bias_data, float *output_data,
                      int task_id, ConvParameter *conv_param, SlidingWindowParam *sw_param);
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_NNACL_FP32_CONV_SW_ARM64_H_
+#endif  // NNACL_FP32_CONV_SW_ARM64_FP32_H_

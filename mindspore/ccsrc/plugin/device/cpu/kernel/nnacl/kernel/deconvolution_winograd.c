@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#ifndef ENABLE_MCU
+#ifndef _WIN32
 #include "nnacl/kernel/deconvolution_winograd.h"
 #include "nnacl/infer/common_infer.h"
 #include "nnacl/fp32/deconv_winograd_fp32.h"
@@ -92,7 +93,9 @@ int DeConvWinogradInitParameter(DeConvWinogradStruct *deconv) {
   ConvComputeParam *compute = &deconv->conv_.compute_;
 
   param->in_tile_w_count_ = UP_DIV(compute->in_w_, WINOGRAD_DEFAULT_UNIT);
+  NNACL_CHECK_ZERO_RETURN_ERR(param->in_tile_w_count_);
   param->in_tile_h_count_ = UP_DIV(compute->in_h_, WINOGRAD_DEFAULT_UNIT);
+  NNACL_CHECK_ZERO_RETURN_ERR(param->in_tile_h_count_);
   param->in_tile_count_ = UP_DIV(param->in_tile_w_count_ * param->in_tile_h_count_, WINOGRAD_DEFAULT_TILE);
 
   deconv->conv_.base_.thread_nr_ = NNACL_MAX(1, deconv->conv_.base_.thread_nr_);
@@ -170,13 +173,10 @@ int DeConvWgFp32Run(void *cdata, int task_id, float l, float r) {
       return ret;
     }
 
-    // need lock
-    ret = DeconvWgPost(tile_out, deconv->nc4hw4_output_, conv_param, param, cal_count, tile_index);
-    if (ret != NNACL_OK) {
-      return ret;
-    }
+    (void)pthread_mutex_lock(&deconv->lock_);
+    (void)DeconvWgPost(tile_out, deconv->nc4hw4_output_, conv_param, param, cal_count, tile_index);
+    (void)pthread_mutex_unlock(&deconv->lock_);
   }
-
   return NNACL_OK;
 }
 
@@ -538,3 +538,5 @@ ConvolutionBaseStruct *CreateDeConvWinograd(ConvParameter *param) {
   deconv_winograd->conv_.base_.compute = deconv_winograd_compute;
   return &deconv_winograd->conv_;
 }
+#endif
+#endif
