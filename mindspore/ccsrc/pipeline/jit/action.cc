@@ -737,13 +737,13 @@ bool AbstractSpecializeAction(const ResourcePtr &resource) {
   // Check isolated side-effect nodes.
   engine->set_check_side_effect(true);
   // Analyze
-  (void)profiler::CollectHostInfo(kGraphCompile, kAbstractSpecialize, kAbstractAnalyze, 1, 0, 0);
+  (void)profiler::CollectHostInfo(kCompiler, kAbstractSpecialize, kAbstractAnalyze, 0, 0, 0);
   AnalysisResult result = AbstractAnalyze(resource, resource->func_graph(), GetArgsAbs(resource));
-  (void)profiler::CollectHostInfo(kGraphCompile, kAbstractSpecialize, kAbstractAnalyze, 1, 0, 1);
+  (void)profiler::CollectHostInfo(kCompiler, kAbstractSpecialize, kAbstractAnalyze, 0, 0, 1);
   // Specialize
-  (void)profiler::CollectHostInfo(kGraphCompile, kAbstractSpecialize, kProgramSpecialize, 1, 0, 0);
+  (void)profiler::CollectHostInfo(kCompiler, kAbstractSpecialize, kProgramSpecialize, 0, 0, 0);
   FuncGraphPtr new_fg = ProgramSpecialize(resource, result.context->func_graph(), result.context);
-  (void)profiler::CollectHostInfo(kGraphCompile, kAbstractSpecialize, kProgramSpecialize, 1, 0, 1);
+  (void)profiler::CollectHostInfo(kCompiler, kAbstractSpecialize, kProgramSpecialize, 0, 0, 1);
   // Update the top func graph with the specialized graph.
   parse::Parser::UpdateTopFuncGraph(new_fg);
   resource->set_func_graph(new_fg);
@@ -769,7 +769,7 @@ bool OptimizeAction(const ResourcePtr &resource, const std::vector<PassItem> &pa
   size_t counter = 0;
   for (auto &pass : passes) {
     ProcessStatus::GetInstance().RecordStart(pass.first);
-    (void)profiler::CollectHostInfo(kGraphCompile, kOptimize, pass.first, 1, 0, 0);
+    (void)profiler::CollectHostInfo(kCompiler, kOptimize, pass.first, 0, 0, 0);
     auto profile_context = MsProfile::GetProfile()->Step(pass.first);
     auto pass_func = [&pass, &resource, &counter]() {
       MS_LOG(DEBUG) << "Pass " << pass.first << " start ...";
@@ -800,7 +800,7 @@ bool OptimizeAction(const ResourcePtr &resource, const std::vector<PassItem> &pa
       MS_LOG(DEBUG) << "Pass " << pass.first << " end.";
     };
     ProfileExecute(profile_context, pass_func);
-    (void)profiler::CollectHostInfo(kGraphCompile, kOptimize, pass.first, 1, 0, 1);
+    (void)profiler::CollectHostInfo(kCompiler, kOptimize, pass.first, 0, 0, 1);
     ProcessStatus::GetInstance().RecordEnd();
   }
 

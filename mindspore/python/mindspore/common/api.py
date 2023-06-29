@@ -242,7 +242,7 @@ def _get_parameter_layout():
     graph_executor = GraphExecutor_.get_instance()
     layout = dict()
 
-    for phases in jit_compile_cache:
+    for phases in jit_compile_cache.values():
         for phase in phases:
             layout.update(graph_executor.get_parameter_layout(phase))
     return layout

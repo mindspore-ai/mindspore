@@ -223,9 +223,9 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
             }
           };
           auto profiler_pass_name = name_ + ".r" + std::to_string(counter) + "." + pass_names_[i];
-          (void)profiler::CollectHostInfo(pipeline::kGraphCompile, pipeline::kOptimize, profiler_pass_name, 1, 0, 0);
+          (void)profiler::CollectHostInfo(pipeline::kCompiler, pipeline::kOptimize, profiler_pass_name, 0, 0, 0);
           use_profile ? ProfileExecute(MsProfile::GetProfile()->Step(pass_names_[i]), opt_func) : opt_func();
-          (void)profiler::CollectHostInfo(pipeline::kGraphCompile, pipeline::kOptimize, profiler_pass_name, 1, 0, 1);
+          (void)profiler::CollectHostInfo(pipeline::kCompiler, pipeline::kOptimize, profiler_pass_name, 0, 0, 1);
 #ifdef ENABLE_DUMP_IR
           DumpStep(func_graph, counter, i);
 #endif
