@@ -19,7 +19,11 @@ set(DATASET_CORE_SRC_FILES
 ms_protobuf_generate(EXAMPLE_SRCS EXAMPLE_HDRS example.proto)
 ms_protobuf_generate(FEATURE_SRCS FEATURE_HDRS feature.proto)
 add_library(core OBJECT ${DATASET_CORE_SRC_FILES} ${EXAMPLE_SRCS} ${FEATURE_SRCS})
-add_dependencies(core mindspore::protobuf)
+if(ENABLE_NATIVE_PROTOBUF)
+  add_dependencies(core ${PROTOBUF_LIB})
+else()
+  add_dependencies(core mindspore::protobuf)
+endif()
 
 if(ENABLE_PYTHON)
   target_include_directories(core PRIVATE ${pybind11_INCLUDE_DIRS})
