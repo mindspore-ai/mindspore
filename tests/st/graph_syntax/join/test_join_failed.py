@@ -19,7 +19,7 @@ import mindspore as ms
 from mindspore import jit, nn, Tensor, context
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_if_branch_have_two_return():
@@ -45,7 +45,7 @@ def test_if_branch_have_two_return():
     assert "return 0" in str(ex.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_if_branch_has_one_return():
@@ -71,7 +71,7 @@ def test_if_branch_has_one_return():
     assert "return 0" in str(ex.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_if_branch_has_no_return():
@@ -97,7 +97,7 @@ def test_if_branch_has_no_return():
     assert "a = 0" in str(ex.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_while_body_has_return():
@@ -120,7 +120,7 @@ def test_while_body_has_return():
     assert "return 0" in str(ex.value)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_switch_layer_join_failed():

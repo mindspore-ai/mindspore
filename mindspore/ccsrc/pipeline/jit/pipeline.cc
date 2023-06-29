@@ -1016,7 +1016,7 @@ bool GraphExecutorPy::Compile(const py::object &source, const py::tuple &args, c
   HandleExceptionRethrow(
     [this, &res, &source, &args, &kwargs, &phase, use_vm]() {
       if (executor_running_) {
-        MS_LOG(EXCEPTION) << "Nested execution during JIT execution in " << GetObjDesc(source) << " is not supported "
+        MS_LOG(EXCEPTION) << "Nested execution during JIT execution for " << GetObjDesc(source) << " is not supported "
                           << "when " << obj_desc_ << " compile and execute.";
       }
       ProcessStatus::GetInstance().RecordStart(kGraphCompile);

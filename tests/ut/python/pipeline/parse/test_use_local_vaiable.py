@@ -41,6 +41,7 @@ def test_use_local_variable_in_if_true_branch():
         net(Tensor([1], mstype.float32))
     assert "The local variable 'y' is not defined in false branch, " \
            "but defined in true branch." in str(err.value)
+    assert "return y" in str(err.value)
 
 
 def test_use_local_variable_in_if_false_branch():
@@ -62,6 +63,7 @@ def test_use_local_variable_in_if_false_branch():
         net(Tensor([1], mstype.float32))
     assert "The local variable 'y' is not defined in true branch, " \
            "but defined in false branch." in str(err.value)
+    assert "return y" in str(err.value)
 
 
 def test_use_local_variable_in_while_body_branch():
@@ -81,6 +83,7 @@ def test_use_local_variable_in_while_body_branch():
         net(Tensor([1], mstype.float32))
     assert "The local variable 'y' defined in the 'while' loop body " \
            "cannot be used outside of the loop body." in str(err.value)
+    assert "return y" in str(err.value)
 
 
 def test_use_local_variable_in_def_if():
@@ -103,6 +106,7 @@ def test_use_local_variable_in_def_if():
         net(Tensor([1], mstype.float32))
     assert "The local variable 'y' is not defined in false branch, " \
            "but defined in true branch." in str(err.value)
+    assert "return y" in str(err.value)
 
 
 def test_use_local_variable_in_def_while():
@@ -125,6 +129,7 @@ def test_use_local_variable_in_def_while():
         net(Tensor([1], mstype.float32))
     assert "The local variable 'y' defined in the 'while' loop body " \
            "cannot be used outside of the loop body." in str(err.value)
+    assert "return y" in str(err.value)
 
 
 def test_use_local_variable_in_while_with_nested_for():
@@ -147,6 +152,7 @@ def test_use_local_variable_in_while_with_nested_for():
         net(Tensor([1], mstype.float32))
     assert "The local variable 'y' defined in the 'for' loop body " \
            "cannot be used outside of the loop body." in str(err.value)
+    assert "return y" in str(err.value)
 
 
 def test_use_local_variable_in_if_with_nested_for():
@@ -169,6 +175,7 @@ def test_use_local_variable_in_if_with_nested_for():
         net(Tensor([1], mstype.float32))
     assert "The local variable 'y' defined in the 'for' loop body " \
            "cannot be used outside of the loop body." in str(err.value)
+    assert "return y" in str(err.value)
 
 
 def test_function_args_same_name():
