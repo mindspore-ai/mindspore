@@ -42,7 +42,7 @@ std::pair<float, float> GetFloatMinMaxValueWithSSE(const float *data, int size) 
   int index = 0;
   int block_max_size = size - block_size + 1;
   for (; index < block_max_size; index += block_size) {
-    load_data = _mm_load_ps(p + index);
+    load_data = _mm_loadu_ps(p + index);
     min_vals = _mm_min_ps(min_vals, load_data);
     max_vals = _mm_max_ps(max_vals, load_data);
   }
