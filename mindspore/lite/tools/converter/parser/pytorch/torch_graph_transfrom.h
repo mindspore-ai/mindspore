@@ -29,7 +29,7 @@
 
 namespace torch {
 namespace jit {
-std::shared_ptr<Graph> TorchGraphTransform(const Module &module);
+std::shared_ptr<Graph> TorchGraphTransform(Module *module);
 }  // namespace jit
 }  // namespace torch
 

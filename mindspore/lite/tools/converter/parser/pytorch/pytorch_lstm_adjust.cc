@@ -22,6 +22,8 @@
 #include "utils/check_convert_utils.h"
 #include "nnacl/op_base.h"
 #include "ops/op_utils.h"
+#include "mindspore/core/ops/nn_ops.h"
+#include "mindspore/core/ops/sequence_ops.h"
 
 namespace mindspore {
 namespace opt {

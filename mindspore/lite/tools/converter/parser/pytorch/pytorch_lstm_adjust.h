@@ -21,8 +21,7 @@
 #include <set>
 #include <string>
 #include <unordered_map>
-#include "mindspore/core/ops/nn_ops.h"
-#include "mindspore/core/ops/sequence_ops.h"
+#include "ops/lstm.h"
 #include "include/common/utils/utils.h"
 #include "tools/optimizer/common/format_utils.h"
 
