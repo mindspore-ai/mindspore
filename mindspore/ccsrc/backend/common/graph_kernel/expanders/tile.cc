@@ -32,6 +32,10 @@ class Tile : public OpDesc {
     const auto &x = inputs_info_[0];
     auto x_shape = x.shape;
     auto multiples = GetAxisList(attrs_["multiples"]);
+    if (IsDynamicRank(x_shape)) {
+      MS_LOG(INFO) << "Skip dynamic rank case";
+      return false;
+    }
     if (multiples.size() < x_shape.size()) {
       MS_LOG(INFO) << "For 'Tile', the length of 'multiples' should be greater than or equal to the length of input "
                       "'x' shape, but got "

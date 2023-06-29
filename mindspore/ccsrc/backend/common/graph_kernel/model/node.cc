@@ -112,6 +112,9 @@ void Node::RemoveUser(Node *const user, size_t index) {
 }
 
 size_t Node::tensor_size(bool in_bytes) const {
+  if (IsDynamic(this->shape)) {
+    return 0;
+  }
   size_t size = LongToSize(abstract::ShapeSize(this->shape));
   return in_bytes ? abstract::TypeIdSize(this->type) * size : size;
 }

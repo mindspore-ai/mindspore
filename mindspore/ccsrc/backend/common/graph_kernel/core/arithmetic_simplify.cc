@@ -428,8 +428,10 @@ class ExtraReduce1PatternTree : public PatternTree {
 
  protected:
   bool CheckAttributes(const inner::NodePtr &origin_root) const override {
+    auto first_reduce_shape = origin_root->input(0)->shape;
     return (GetValue<bool>((origin_root->inputs()[0])->attrs().find("keep_dims")->second) ==
-            GetValue<bool>(origin_root->attrs().find("keep_dims")->second));
+              GetValue<bool>(origin_root->attrs().find("keep_dims")->second) &&
+            !IsDynamicRank(first_reduce_shape));
   }
   mindspore::HashMap<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &origin_root) override {
     auto attrs_map = PatternTree::SetAttributes(origin_root);
@@ -505,6 +507,10 @@ class TransposePatternTree : public PatternTree {
  protected:
   bool CheckAttributes(const inner::NodePtr &origin_root) const override {
     auto input_shape = origin_root->input(0)->shape;
+    if (IsDynamicRank(input_shape)) {
+      MS_LOG(DEBUG) << "Skip dynamic rank case";
+      return false;
+    }
     auto perm_tensornode = std::dynamic_pointer_cast<inner::ConstTensorNode>(origin_root->input(1));
     MS_EXCEPTION_IF_NULL(perm_tensornode);
     auto perm =
@@ -531,7 +537,7 @@ class TransposePatternTree : public PatternTree {
     for (const auto &axes : exchange_axes) {
       auto l = axes.first < axes.second ? axes.first : axes.second;
       auto r = axes.first < axes.second ? axes.second : axes.first;
-      if (std::count_if(input_shape.begin() + l, input_shape.begin() + r + 1, [](int64_t s) { return s > 1; }) > 1) {
+      if (std::count_if(input_shape.begin() + l, input_shape.begin() + r + 1, [](int64_t s) { return s != 1; }) > 1) {
         return false;
       }
     }

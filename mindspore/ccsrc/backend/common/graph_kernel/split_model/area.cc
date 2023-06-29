@@ -23,6 +23,13 @@ EdgeRelation GetRelation(const PrimOpPtr &node, const NodePtr &input) {
   if (node->compute_type() != NodePattern::ELEMWISE) {
     return EdgeRelation::INJECTIVE;
   }
+  if (node->inputs().size() == 1) {
+    // single input elemwise op has no broadcast
+    return EdgeRelation::INJECTIVE;
+  }
+  if (IsDynamic(input->shape)) {
+    return EdgeRelation::BROADCAST;
+  }
   // naively set the edge relation to "broadcast" if the result shape is not equal to the input shape.
   return (node->shape == input->shape) ? EdgeRelation::INJECTIVE : EdgeRelation::BROADCAST;
 }
