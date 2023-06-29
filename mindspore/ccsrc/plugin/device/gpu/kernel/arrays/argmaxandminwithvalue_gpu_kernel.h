@@ -98,6 +98,17 @@ class ArgMaxAndMinWithValueGpuKernelMod : public NativeGpuKernelMod {
         << outputs.size();
     }
 
+    small_ = (kernel_name_ == "ArgMinWithValue") ? true : false;
+    return true;
+  }
+
+  bool InitSize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                const std::vector<KernelTensorPtr> &outputs) {
+    MS_EXCEPTION_IF_NULL(inputs[0]);
+    auto shape = Convert2SizeTClipNeg(inputs[0]->GetShapeVector());
+    MS_EXCEPTION_IF_NULL(outputs[0]);
+    auto output_shape = Convert2SizeTClipNeg(outputs[0]->GetShapeVector());
+    int64_t dims = SizeToLong(shape.size());
     if (kernel_name_ == "ArgMinWithValue") {
       auto kernel_ptr = std::dynamic_pointer_cast<ops::ArgMinWithValue>(base_operator);
       MS_EXCEPTION_IF_NULL(kernel_ptr);
@@ -107,17 +118,6 @@ class ArgMaxAndMinWithValueGpuKernelMod : public NativeGpuKernelMod {
       MS_EXCEPTION_IF_NULL(kernel_ptr);
       axis_ = kernel_ptr->axis();
     }
-    small_ = (kernel_name_ == "ArgMinWithValue") ? true : false;
-    return true;
-  }
-
-  bool InitSize(const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &inputs,
-                const std::vector<KernelTensorPtr> &outputs) {
-    MS_EXCEPTION_IF_NULL(inputs[0]);
-    auto shape = Convert2SizeTClipNeg(inputs[0]->GetShapeVector());
-    MS_EXCEPTION_IF_NULL(outputs[0]);
-    auto output_shape = Convert2SizeTClipNeg(outputs[0]->GetShapeVector());
-    int64_t dims = SizeToLong(shape.size());
     is_zero_dim_ = (dims == 0);
 
     if (is_zero_dim_) {
