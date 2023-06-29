@@ -8587,7 +8587,7 @@ class FillDiagonal(Primitive):
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        fill_value (Number): The value to fill the diagonal of `input_x`.
+        fill_value (float): The value to fill the diagonal of `input_x`.
         wrap (bool, optional): Controls whether the diagonal elements continue onto the
             remaining rows in case of a tall matrix(A matrix has more rows than columns).
             Examples blow demonstrates how it works on a tall matrix if `wrap` is set ``True`` .
