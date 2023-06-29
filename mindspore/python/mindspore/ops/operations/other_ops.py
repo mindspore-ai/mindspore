@@ -23,6 +23,8 @@ from mindspore.common._decorator import deprecated
 from mindspore.ops.primitive import Primitive, PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register
 from mindspore.ops.operations._pyfunc_registry import add_pyfunc
 from mindspore._c_expression import typing
+from mindspore.ops.operations.array_ops import Identity
+from mindspore.ops._primitive_cache import _get_cache_prim
 
 
 class Assign(Primitive):
@@ -83,6 +85,9 @@ class Load(PrimitiveWithCheck):
     def __init__(self):
         """Initialize Load."""
         self.init_prim_io_names(inputs=['ref', 'u'], outputs=['output'])
+
+    def __call__(self, *args):
+        return _get_cache_prim(Identity)()(args[0])
 
     def check_dtype(self, variable):
         if variable != mstype.type_refkey:
