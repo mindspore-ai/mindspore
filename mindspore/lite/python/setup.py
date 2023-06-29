@@ -43,6 +43,11 @@ def _get_package_data():
         'lite_split.py', 'lib/*.so*', '.commit_id', 'include/api/*', 'include/api/callback/*', 'include/api/metrics/*',
         'include/mindapi/base/*', 'include/registry/converter_context.h', 'include/converter.h', 'custom_kernels/**'
     ]
+    custom_ops_data = ['custom_kernels/*', 'custom_kernels/*/*', 'custom_kernels/*/*/*', 'custom_kernels/*/*/*/*',
+                       'custom_kernels/*/*/*/*/*', 'custom_kernels/*/*/*/*/*/*', 'custom_kernels/*/*/*/*/*/*/*',
+                       'custom_kernels/*/*/*/*/*/*/*/*', 'custom_kernels/*/*/*/*/*/*/*/*/*',
+                       'custom_kernels/*/*/*/*/*/*/*/*/*/*']
+    pkg_data.extend(custom_ops_data)
     if os.getenv('MSLITE_ENABLE_CLOUD_INFERENCE') == "on":
         pkg_data.append('lite_infer.py')
     if is_enable_akg():
