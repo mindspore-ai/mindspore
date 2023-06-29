@@ -1264,7 +1264,6 @@ REG_BPROP_BUILDER("BroadcastTo").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) 
   }
 
   auto x_shape_node = ib->Shape(x, true);
-  auto broadcast_shape_node = ib->Shape(dout, true);
   auto broadcast_axes = ib->BroadcastGradientArgs(dout, x);
   MS_EXCEPTION_IF_CHECK_FAIL(!broadcast_axes.empty(), "BroadcastGradientArgs out should not be empty!");
   auto reduction_axes = broadcast_axes[kIndex1];
@@ -1984,7 +1983,7 @@ DEF_PURE_SHAPE_CALC(g_segment_mean)
                         << x_rank;
     }
     ShapeVector rank_shape(x_rank - 1, 1LL);
-    ones_shape.insert(ones_shape.end(), rank_shape.begin(), rank_shape.end());
+    (void)ones_shape.insert(ones_shape.end(), rank_shape.begin(), rank_shape.end());
     return {ones_shape};
   })
   .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &unknown_inputs) -> std::vector<int64_t> {

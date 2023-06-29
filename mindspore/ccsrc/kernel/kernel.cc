@@ -256,7 +256,7 @@ void KernelTensor::SetDtype(const TypePtr &dtype) {
   info.base_->set_type(dtype);
 }
 
-void KernelTensor::SetShapeVector(const std::vector<int64_t> &shape) {
+void KernelTensor::SetShapeVector(const std::vector<int64_t> &shape) const {
   auto base_shape_ptr = GetBaseShape();
   if (base_shape_ptr == nullptr || !base_shape_ptr->isa<abstract::Shape>()) {
     return;

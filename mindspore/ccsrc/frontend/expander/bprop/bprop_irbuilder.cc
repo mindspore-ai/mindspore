@@ -70,9 +70,12 @@ class BroadcastGradientArgsShapeCalc : public ShapeCalcFunctor {
 REG_FUNCTOR("ShapeCalc_BroadcastGradientArgs", BroadcastGradientArgsShapeCalc);
 
 NodePtrList BpropIRBuilder::BroadcastGradientArgs(const NodePtr &s0, const NodePtr &s1, size_t shift) const {
-  auto check_shp_valid_func = [shift](size_t i, const ShapeVector &shape) -> bool {
+  auto check_shp_valid_func = [shift](size_t, const ShapeVector &shape) -> bool {
     ShapeVector broadcast_shape;
-    broadcast_shape.insert(broadcast_shape.end(), shape.begin(), shape.end() - std::min(shape.size(), shift));
+    size_t end_idx = shape.size() - std::min(shape.size(), shift);
+    for (size_t i = 0; i < end_idx; ++i) {
+      broadcast_shape.push_back(shape[i]);
+    }
     return !IsDynamic(broadcast_shape);
   };
 
