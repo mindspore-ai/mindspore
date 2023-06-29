@@ -828,3 +828,50 @@ def test_dynamic_len_list_inplace_op_2():
     input_index = Tensor(2)
     out = foo(input_index)
     assert out == [3, 4]
+
+
+global_list_all_str = ['a', 'b', 'c']
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_with_all_str():
+    """
+    Feature: dynamic length list do not run inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit
+    def foo():
+        global_list_all_str.extend(['d', 'e'])
+        return global_list_all_str
+
+    out = foo()
+    assert id(out) == id(global_list_all_str)
+    assert global_list_all_str == ['a', 'b', 'c', 'd', 'e']
+
+
+global_tuple_with_list_all_str = (['a', 'b', 'c'], 1, 2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_inplace_with_all_str_2():
+    """
+    Feature: dynamic length list do not run inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit
+    def foo():
+        x = global_tuple_with_list_all_str[0]
+        x.extend(['d', 'e'])
+        return x
+
+    out = foo()
+    assert id(global_tuple_with_list_all_str[0]) == id(out)
+    assert global_tuple_with_list_all_str == (['a', 'b', 'c', 'd', 'e'], 1, 2)

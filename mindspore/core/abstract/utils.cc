@@ -166,7 +166,7 @@ AbstractBasePtr AbstractBroaden(const AbstractBasePtr &abs) {
     auto arg_type = abs->BuildType();
     MS_EXCEPTION_IF_NULL(arg_type);
     auto abs_scalar = abs->cast<AbstractScalarPtr>();
-    if (arg_type->isa<Number>()) {
+    if (arg_type->isa<Number>() || arg_type->isa<String>()) {
       abs_scalar->set_is_variable(true);
     }
   }

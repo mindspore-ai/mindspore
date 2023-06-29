@@ -93,9 +93,9 @@ AnfNodePtr Resolver::operator()(const OptimizerPtr &optimizer, const AnfNodePtr 
     if (IsValueNode<TypeNull>(ret)) {
       return nullptr;
     }
-    if (fallback::HasPyListObject(node)) {
+    if (fallback::HasPySeqObject(node)) {
       MS_LOG(DEBUG) << "Resolved node has python object, attach it to the node after resolve.";
-      fallback::SetPyListObject<AnfNode, py::list>(ret, fallback::GetPyListObject<AnfNode, py::list>(node));
+      fallback::SetPySeqObject<AnfNode, py::list>(ret, fallback::GetPySeqObject<AnfNode, py::list>(node));
     }
     return ret;
   };

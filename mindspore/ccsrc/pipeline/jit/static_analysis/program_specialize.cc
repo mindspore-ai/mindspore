@@ -1264,10 +1264,10 @@ void UpdateInputsUserData(const CNodePtr &cnode, const std::vector<AnfNodePtr> &
       const auto &real_type = fallback::GetRealShape<AbstractBase, BaseShape>(old_input_abs);
       fallback::SetRealShape<AnfNode, BaseShape>(new_inputs[i], real_type);
     }
-    if (fallback::HasPyListObject(old_input_abs)) {
+    if (fallback::HasPySeqObject(old_input_abs)) {
       MS_LOG(DEBUG) << "Inherit python list object from old input abstract.";
-      auto list_py_obj = fallback::GetPyListObject<AbstractBase, py::list>(old_input_abs);
-      fallback::SetPyListObject<AbstractBase, py::list>(new_inputs[i]->abstract(), list_py_obj);
+      auto list_py_obj = fallback::GetPySeqObject<AbstractBase, py::list>(old_input_abs);
+      fallback::SetPySeqObject<AbstractBase, py::list>(new_inputs[i]->abstract(), list_py_obj);
     }
   }
 }
