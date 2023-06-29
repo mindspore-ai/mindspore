@@ -425,7 +425,7 @@ std::unique_ptr<std::vector<KeyType>> LocalFile<KeyType, ValueType>::GetAllKeys(
     keys_vec->at(index) = item.first;
     ++index;
   }
-  return std::move(keys_vec);
+  return keys_vec;
 }
 
 template class LocalFile<int32_t, bool>;
