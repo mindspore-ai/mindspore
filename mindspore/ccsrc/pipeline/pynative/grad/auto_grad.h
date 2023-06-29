@@ -264,6 +264,7 @@ class AutoGradCellImpl {
   void ConvertValueNodeValueToTensor(const AnfNodePtr &din);
   CNodePtr ConvertConstInputToAttr(const CNodePtr &cnode, const std::string &device_target,
                                    bool is_dynamic_shape = false);
+  void ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node);
 
   // Last cnode of this Cell, may be a primitive op or cell with user defined bprop.
   AdParamPtr ad_param_{nullptr};

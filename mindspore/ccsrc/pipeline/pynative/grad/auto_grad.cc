@@ -1329,6 +1329,36 @@ void AutoGradCellImpl::ConvertValueNodeValueToTensor(const AnfNodePtr &din) {
   }
 }
 
+void AutoGradCellImpl::ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node) {
+  if (!node->isa<CNode>() || IsPrimitiveCNode(node, prim::kPrimMakeTuple) ||
+      IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+    return;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  if (std::any_of(cnode->inputs().begin() + 1, cnode->inputs().end(),
+                  [](const AnfNodePtr &node) { return node->abstract()->isa<abstract::AbstractSequence>(); })) {
+    AnfNodePtrList plant_inputs;
+    std::vector<int64_t> dyn_input_sizes;
+    (void)plant_inputs.emplace_back(common::AnfAlgo::GetCNodePrimitiveNode(cnode));
+    for (size_t i = 1; i < cnode->size(); ++i) {
+      const auto &input_node = cnode->input(i);
+      if (common::AnfAlgo::CheckPrimitiveType(input_node, prim::kPrimMakeTuple)) {
+        auto dyn_input_size = opt::SplitTupleInputs(ad_param()->tape_, input_node, &plant_inputs);
+        (void)dyn_input_sizes.emplace_back(dyn_input_size);
+      } else {
+        (void)plant_inputs.emplace_back(input_node);
+        (void)dyn_input_sizes.emplace_back(-1);
+      }
+    }
+    // If there is dynamic input, set the dyn_input_sizes as an attribute and update the inputs.
+    if (std::any_of(dyn_input_sizes.begin(), dyn_input_sizes.end(), [](int64_t s) { return s >= 0; })) {
+      common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), cnode);
+      MS_LOG(DEBUG) << "Change node to dynamic len " << cnode->DebugString();
+      cnode->set_inputs(plant_inputs);
+    }
+  }
+}
+
 CNodePtr AutoGradCellImpl::ConvertConstInputToAttr(const CNodePtr &cnode, const std::string &device_target,
                                                    bool is_dynamic_shape) {
   MS_EXCEPTION_IF_NULL(cnode);
@@ -1807,6 +1837,7 @@ void AutoGradCellImpl::BackPropagate() {
     for (const auto &next_edge : next_edges) {
       const auto &last_variable = next_edge.first;
       const auto &din = next_edge.second;
+      ConvertMakeTupleInputToDynamicInput(din);
       last_variable->fn()->UpdateAccumulativeDout(din);
       last_variable->set_is_need_propagate(true);
     }
