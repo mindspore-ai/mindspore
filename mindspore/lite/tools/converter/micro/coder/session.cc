@@ -96,7 +96,7 @@ int CoderSession::PassArgsToContext(const std::string &model_name) {
 int CoderSession::Preprocess() {
   // assign memory
   std::vector<lite::Tensor *> inputs = coder_graph_->input_tensors();
-  int ret = allocator_->Assign(inputs, op_coders_, coder_graph_->all_tensors(),
+  int ret = allocator_->Assign(inputs, coder_graph_->output_tensors(), op_coders_, coder_graph_->all_tensors(),
                                Configurator::GetInstance()->changeable_weights_name());
   MS_CHECK_RET_CODE(ret, "assign memory failed");
 

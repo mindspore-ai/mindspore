@@ -27,11 +27,12 @@ static size_t AlignMemorySize(size_t size) {
   return ((size + kDefaultMemAlignSize - 1) / kDefaultMemAlignSize) * kDefaultMemAlignSize;
 }
 
-int MemoryManager::AssignMemory(const std::vector<std::unique_ptr<OperatorCoder>> &nodes) {
+int MemoryManager::AssignMemory(const std::vector<std::unique_ptr<OperatorCoder>> &nodes,
+                                const std::vector<Tensor *> &outputs) {
   for (const auto &node : nodes) {
     AssignOutputs(node);
     StoreMembufListInfo(node);
-    ReleaseInputs(node);
+    ReleaseInputs(node, outputs);
   }
   return RET_OK;
 }
@@ -70,7 +71,7 @@ void MemoryManager::AssignOutputs(const std::unique_ptr<OperatorCoder> &node) {
   }
 }
 
-void MemoryManager::ReleaseInputs(const std::unique_ptr<OperatorCoder> &node) {
+void MemoryManager::ReleaseInputs(const std::unique_ptr<OperatorCoder> &node, const std::vector<Tensor *> &outputs) {
   // release node input and workspace
   for (const auto &input : node->input_tensors()) {
     if (input == nullptr) {
@@ -78,6 +79,10 @@ void MemoryManager::ReleaseInputs(const std::unique_ptr<OperatorCoder> &node) {
       return;
     }
     if (input->category() != Category::VAR && input->data() != nullptr) {
+      continue;
+    }
+    bool is_output = std::any_of(outputs.begin(), outputs.end(), [&input](Tensor *tensor) { return tensor == input; });
+    if (is_output) {
       continue;
     }
     input->DecRefCount();
