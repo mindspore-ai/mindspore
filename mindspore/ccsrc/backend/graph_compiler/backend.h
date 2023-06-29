@@ -109,7 +109,7 @@ class BACKEND_EXPORT MindRTBackend : public MindRTBackendBase {
   // Dispatch task and execute the task in another thread.
   void DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs, const OpCompilerInfoPtr &op_compiler_info,
                       const session::BackendOpRunInfoPtr &op_run_info);
-  void DispatchOpTaskDynamic(bool single_op_cache_hit, VectorRef *outputs, const OpCompilerInfoPtr &op_compiler_info,
+  void DispatchOpTaskDynamic(VectorRef *outputs, const OpCompilerInfoPtr &op_compiler_info,
                              const session::BackendOpRunInfoPtr &op_run_info,
                              const vector<device::DeviceAddressPtr> &device_address_list);
 

@@ -65,7 +65,7 @@ class BACKEND_EXPORT ThreadTimeline {
   // The unit of timestamps in the Timeline JSON file is required to be microseconds.
   static uint64_t GetTime();
 
-  void Record(const TimelineObj &obj);
+  void Record(const TimelineObj &obj) const noexcept;
 
   // Parse the Timeline JSON.
   void Parse();

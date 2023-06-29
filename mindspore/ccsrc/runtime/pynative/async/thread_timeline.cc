@@ -74,7 +74,7 @@ void ThreadTimeline::Init() {
   start_ = ThreadTimeline::GetTime();
 }
 
-void ThreadTimeline::Record(const TimelineObj &obj) { t_timeline_data_.emplace_back(obj); }
+void ThreadTimeline::Record(const TimelineObj &obj) const noexcept { t_timeline_data_.emplace_back(obj); }
 
 void ThreadTimeline::Combine() {
   thread_local static bool combined = false;

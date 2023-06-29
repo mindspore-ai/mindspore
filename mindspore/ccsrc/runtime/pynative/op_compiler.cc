@@ -229,7 +229,7 @@ KernelGraphPtr OpCompiler::GenerateKernelGraph(const session::BackendOpRunInfoPt
   return graph;
 }
 
-void OpCompiler::ConvertGraphToExecuteInfo(const OpCompilerInfoPtr &op_compiler_info) {
+void OpCompiler::ConvertGraphToExecuteInfo(const OpCompilerInfoPtr &op_compiler_info) const {
   MS_LOG(DEBUG) << "ConvertGraphToExecuteInfo";
   MS_EXCEPTION_IF_NULL(op_compiler_info);
   op_compiler_info->inputs_.clear();

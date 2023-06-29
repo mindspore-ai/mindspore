@@ -614,8 +614,7 @@ void UpdateTensorCache(const DeviceContext *device_context, const device::Device
   cached_device_address->set_ptr(input_device_address->GetMutablePtr());
 }
 
-void UpdateOutputDeviceInfo(const std::vector<device::DeviceAddressPtr> &device_addressess,
-                            const device::DeviceContext *device_context, const CNodePtr &kernel) {
+void UpdateOutputDeviceInfo(const std::vector<device::DeviceAddressPtr> &device_addressess, const CNodePtr &kernel) {
   MS_EXCEPTION_IF_NULL(kernel);
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
@@ -940,7 +939,7 @@ void LaunchKernelsDynamic(const pynative::OpCompilerInfoPtr &op_compiler_info,
     auto workspaces = CreateKernelWorkspaceAddressDynamic(device_context, kernel, &workspace_device_address);
 
     // Update output tensor shape
-    UpdateOutputDeviceInfo(execute_kernel.outputs_device_address_, device_context, kernel);
+    UpdateOutputDeviceInfo(execute_kernel.outputs_device_address_, kernel);
 
     // Malloc output tensor memory
     auto outputs = MallocOutputMemoryForDeviceAddress(execute_kernel.outputs_device_address_, device_context,
