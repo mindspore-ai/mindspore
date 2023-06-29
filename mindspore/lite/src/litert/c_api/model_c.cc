@@ -173,7 +173,15 @@ Status ModelC::Predict(const MSTensorHandle *inputs, size_t input_num, MSTensorH
       MS_LOG(ERROR) << "Tensor " << user_input->Name() << " has no data.";
       return kLiteInputTensorError;
     }
-    old_data.push_back(real_input->data());
+
+    // GPU tensor can't manipulate CPU memory which the user provides.
+    // When model input is GPU tensor and user input is NOT GPU data,
+    // just free model input's data for late GPU Tensor filling.
+    if (IS_OPENCL_ALLOCATOR(real_input->allocator()) && (!IS_OPENCL_ALLOCATOR(user_input->GetAllocator()))) {
+      real_input->FreeData();
+    }
+    old_data.push_back(real_input->data());  // Save original data in model tensors.
+
     if (real_input->data_type() == kObjectTypeString) {
       std::vector<int32_t> shape;
       std::transform(user_input->Shape().begin(), user_input->Shape().end(), std::back_inserter(shape),
@@ -187,7 +195,14 @@ Status ModelC::Predict(const MSTensorHandle *inputs, size_t input_num, MSTensorH
           MS_LOG(ERROR) << "Tensor " << user_input->Name() << " has wrong data size.";
           return kLiteInputTensorError;
         }
-        real_input->set_data(user_input->MutableData());
+        if (!IS_OPENCL_ALLOCATOR(real_input->allocator())) {
+          real_input->set_data(user_input->MutableData());
+        } else {
+          // Use outside CPU data to fill GPU Tensor.
+          auto dst_data = real_input->MutableData();
+          auto src_data = user_input->MutableData();
+          (void)memcpy(dst_data, src_data, real_input->Size());
+        }
       }
     }
   }

@@ -302,7 +302,7 @@ void OpenCLAllocator::Free(void *buf) {
 }
 int OpenCLAllocator::RefCount(void *buf) {
   if (buf == nullptr) {
-    return -1;
+    return OPENCL_ALLOCATOR_REFCOUNT;
   }
   Lock();
   auto iter = allocated_list_.find(buf);
