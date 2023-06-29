@@ -6906,10 +6906,10 @@ class MaskedScatter(Primitive):
         >>> import mindspore
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
-        >>> x= Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)
+        >>> input_x = Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)
         >>> mask = Tensor(np.array([True, True, False, True]), mindspore.bool_)
         >>> updates = Tensor(np.array([5., 6., 7.]), mindspore.float32)
-        >>> output = ops.MaskedScatter()(input_X, mask, updates)
+        >>> output = ops.MaskedScatter()(input_x, mask, updates)
         >>> print(output)
         [5. 6. 3. 7.]
     """

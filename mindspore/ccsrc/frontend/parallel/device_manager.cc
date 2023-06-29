@@ -344,7 +344,7 @@ std::string DeviceManager::FindRankListNameByHashName(const std::string &hash_na
   }
   std::map<std::string, std::string>::const_iterator iter = group_to_rank_.find(hash_name);
   if (iter == group_to_rank_.cend()) {
-    MS_LOG(WARNING) << "Can not find the rank list name by hash name: " << hash_name;
+    MS_LOG(INFO) << "Can not find the rank list name by hash name: " << hash_name;
     return tmp;
   }
   return iter->second;
