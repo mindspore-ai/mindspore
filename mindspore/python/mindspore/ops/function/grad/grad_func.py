@@ -138,9 +138,7 @@ def grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=False):
     Examples:
         >>> import numpy as np
         >>> import mindspore
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, ops
-        >>> from mindspore import grad
+        >>> from mindspore import Tensor, ops, nn, grad
         >>>
         >>> # Cell object to be differentiated
         >>> class Net(nn.Cell):
@@ -384,10 +382,8 @@ def get_grad(gradients, identifier):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import numpy as np
         >>> import mindspore
-        >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, ops
+        >>> from mindspore import Tensor, nn
         >>> from mindspore import grad, get_grad
         >>>
         >>>  # Cell object to be differentiated

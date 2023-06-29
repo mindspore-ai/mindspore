@@ -96,7 +96,6 @@ def tensor(input_data=None, dtype=None, shape=None, init=None, internal=False, c
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import numpy as np
         >>> import mindspore as ms
         >>> from mindspore import jit, tensor
         >>> @jit
@@ -1174,6 +1173,8 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
+            >>> from mindspore import Tensor
+            >>> from mindspore import dtype as mstype
             >>> a = Tensor([[1, 2, 3], [2, 3, 4]], mstype.float32)
             >>> b = Tensor([1, 1, 1, 1, 1, 1], mstype.float32)
             >>> output = a.view_as(b)
@@ -2099,6 +2100,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
+            >>> import numpy as np
+            >>> import mindspore
+            >>> from mindspore import Tensor
             >>> x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
             >>> output, index = x.argmax_with_value()
             >>> print(output, index)
@@ -2146,6 +2150,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
+            >>> import numpy as np
+            >>> import mindspore
+            >>> from mindspore import Tensor
             >>> x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
             >>> output, index = x.argmin_with_value()
             >>> print(output, index)
@@ -3300,6 +3307,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
+            >>> import numpy as np
+            >>> import mindspore
+            >>> from mindspore import Tensor
             >>> x = Tensor(np.random.randn(3, 3, 3, 3, 3, 3), mindspore.float32)
             >>> output = x.sum_to_size((1, 3, 1, 3))
             >>> print(output.shape)
@@ -3816,6 +3826,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
+            >>> import numpy as np
+            >>> import mindspore
+            >>> from mindspore import Tensor
             >>> input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
             >>> input_x = Tensor(input_np)
             >>> dtype = mindspore.int32
@@ -3838,6 +3851,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
+            >>> import numpy as np
+            >>> import mindspore
+            >>> from mindspore import Tensor
             >>> input_x = Tensor(np.ones([2,2]), mindspore.float32)
             >>> output = input_x.bool()
             >>> print(output.dtype)
@@ -3857,6 +3873,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
+            >>> import numpy as np
+            >>> import mindspore
+            >>> from mindspore import Tensor
             >>> input_x = Tensor(np.ones([2,2]), mindspore.int32)
             >>> output = input_x.float()
             >>> print(output.dtype)
@@ -3876,6 +3895,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
+            >>> import numpy as np
+            >>> import mindspore
+            >>> from mindspore import Tensor
             >>> input_x = Tensor(np.ones([2,2]), mindspore.int32)
             >>> output = input_x.half()
             >>> print(output.dtype)
@@ -3895,6 +3917,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
+            >>> import numpy as np
+            >>> import mindspore
+            >>> from mindspore import Tensor
             >>> input_x = Tensor(np.ones([2,2]), mindspore.float32)
             >>> output = input_x.int()
             >>> print(output.dtype)
@@ -3914,6 +3939,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
+            >>> import numpy as np
+            >>> import mindspore
+            >>> from mindspore import Tensor
             >>> input_x = Tensor(np.ones([2,2]), mindspore.int32)
             >>> output = input_x.long()
             >>> print(output.dtype)
@@ -4162,7 +4190,6 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
 
         Examples:
             >>> import mindspore as ms
-            >>> from mindspore import Tensor
             >>> x = ms.Tensor([1, 2, 3], ms.int64)
             >>> y = ms.Tensor([1, 2, 3], ms.uint64)
             >>> output = x.is_signed()
@@ -4361,6 +4388,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
+            >>> import numpy as np
+            >>> import mindspore
+            >>> from mindspore import Tensor
             >>> x = Tensor(np.array([1, 2, 3]), mindspore.float32)
             >>> output = x.new_zeros((2, 2))
             >>> print(output)
@@ -4395,6 +4425,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
+            >>> import numpy as np
+            >>> import mindspore
+            >>> from mindspore import Tensor
             >>> x = Tensor(np.array([1, 2, 3]), mindspore.float32)
             >>> output = x.new_ones((2, 2))
             >>> print(output)
@@ -4490,6 +4523,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             ``GPU`` ``CPU``
 
         Examples:
+            >>> import numpy as np
+            >>> import mindspore
+            >>> from mindspore import Tensor
             >>> x = Tensor(np.asarray(np.complex(1.3 + 0.4j)), mindspore.complex64)
             >>> output = x.imag()
             >>> print(output)
@@ -4584,6 +4620,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             ``Ascend`` ``CPU``
 
         Examples:
+            >>> import numpy as np
+            >>> import mindspore
+            >>> from mindspore import Tensor
             >>> x = Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)
             >>> mask = Tensor(np.array([True, True, False, True]), mindspore.bool_)
             >>> tensor = Tensor(np.array([5., 6., 7.]), mindspore.float32)
@@ -4631,6 +4670,9 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             ``Ascend`` ``CPU``
 
         Examples:
+            >>> import numpy as np
+            >>> import mindspore
+            >>> from mindspore import Tensor
             >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6]]).astype(np.int32))
             >>> values = Tensor(np.array([3]).astype(np.int32))
             >>> indices = [Tensor(np.array([0, 1, 1]).astype(np.int32)), Tensor(np.array([1, 2, 1]).astype(np.int32))]

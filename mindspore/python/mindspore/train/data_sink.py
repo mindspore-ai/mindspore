@@ -175,7 +175,7 @@ def data_sink(fn, dataset, sink_size=1, jit_config=None, input_signature=None):
         ...     out = x + y
         ...     return out
         >>>
-        >>> sink_process = ms.train.data_sink(func_net, dataset, sink_size=1)
+        >>> sink_process = ms.data_sink(func_net, dataset, sink_size=1)
         >>> for _ in range(2):
         ...     out = sink_process()
         ...     print(out)

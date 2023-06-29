@@ -180,8 +180,8 @@ class SummaryLandscape:
     Examples:
         >>> import mindspore as ms
         >>> import mindspore.nn as nn
-        >>> from mindspore.nn import Loss, Accuracy
-        >>> from mindspore.train import Model, SummaryCollector, SummaryLandscape
+        >>> from mindspore.train import Model, Accuracy, Loss
+        >>> from mindspore import SummaryCollector, SummaryLandscape
         >>>
         >>> if __name__ == '__main__':
         ...     # If the device_target is Ascend, set the device_target to "Ascend"

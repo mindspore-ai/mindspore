@@ -5154,7 +5154,7 @@ class NPUGetFloatStatus(Primitive):
         >>> import numpy as np
         >>> import mindspore.nn as nn
         >>> from mindspore import ops
-        >>> from mindspore.common import dtype as mstype
+        >>> from mindspore import dtype as mstype
         >>> from mindspore.common.tensor import Tensor
         >>> class Net(nn.Cell):
         ...     def __init__(self):
@@ -5219,7 +5219,7 @@ class NPUClearFloatStatus(Primitive):
         >>> import numpy as np
         >>> import mindspore.nn as nn
         >>> from mindspore import ops
-        >>> from mindspore.common import dtype as mstype
+        >>> from mindspore import dtype as mstype
         >>> from mindspore.common.tensor import Tensor
         >>> class Net(nn.Cell):
         ...     def __init__(self):
@@ -7883,7 +7883,7 @@ class Cross(Primitive):
         >>> import mindspore
         >>> import numpy as np
         >>> from mindspore import Tensor
-        >>> from mindspore.common import dtype as mstype
+        >>> from mindspore import dtype as mstype
         >>> import mindspore.ops as ops
         >>> cross = ops.Cross(dim = 0)
         >>> x1 = Tensor([1, 2, 3], mstype.int8)

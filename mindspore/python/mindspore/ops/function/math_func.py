@@ -6416,7 +6416,7 @@ def frac(x):
     Examples:
         >>> import mindspore
         >>> from mindspore import Tensor
-        >>> from mindspore.common import dtype as mstype
+        >>> from mindspore import dtype as mstype
         >>> import mindspore.ops as ops
         >>> x = Tensor([2, 4.2, -2.5], mstype.float16)
         >>> output = ops.frac(x)

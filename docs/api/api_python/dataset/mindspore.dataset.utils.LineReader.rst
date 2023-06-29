@@ -8,9 +8,10 @@ mindspore.dataset.utils.LineReader
     该类缓存基于行的文件元信息，可以让用户方便的获取文件总行数、读取文件指定行内容等。
 
     该类提供如下方法：
-    - len() - 返回文件的总行数。
-    - readline(line) - 打开文件并读取文件的第line行。
-    - close() - 关闭文件句柄。
+
+    - len()：返回文件的总行数。
+    - readline(line)：打开文件并读取文件的第line行。
+    - close()：关闭文件句柄。
 
     参数：
         - **filename** (str) - 基于行的文件名。

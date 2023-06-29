@@ -182,10 +182,8 @@ class Parameter(Tensor_):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Parameter, Tensor
-        >>> import mindspore.ops as ops
-        >>> import mindspore.nn as nn
         >>> import mindspore
+        >>> from mindspore import Parameter, Tensor, ops, nn
         >>>
         >>> class Net(nn.Cell):
         ...     def __init__(self):

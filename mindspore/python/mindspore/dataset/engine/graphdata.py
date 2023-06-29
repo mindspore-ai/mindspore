@@ -505,10 +505,10 @@ class GraphData:
             node_feature_type and edge_feature_type.
 
         Examples:
-        >>> from mindspore.dataset import GraphData
-        >>>
-        >>> g = GraphData("/path/to/testdata", 2)
-        >>> graph_info = g.graph_info()
+            >>> from mindspore.dataset import GraphData
+            >>>
+            >>> g = GraphData("/path/to/testdata", 2)
+            >>> graph_info = g.graph_info()
         """
         if self._working_mode == 'server':
             raise Exception("This method is not supported when working mode is server.")

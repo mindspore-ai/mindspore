@@ -207,17 +207,18 @@ def shard(fn, in_strategy, out_strategy=None, parameter_plan=None, device="Ascen
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor, set_context, set_auto_parallel_context, shard, PYNATIVE_MODE
+        >>> import mindspore as ms
+        >>> from mindspore import Tensor
         >>> from mindspore.communication import init
-        >>> set_context(mode=PYNATIVE_MODE)
+        >>> ms.set_context(mode=ms.PYNATIVE_MODE)
         >>> init()
-        >>> set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="sharding_propagation",
+        >>> ms.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="sharding_propagation",
         ...                           device_num=2)
         >>> def test_shard(x, y):
         ...     return x + y
         >>> x = Tensor(np.ones(shape=(32, 10)))
         >>> y = Tensor(np.ones(shape=(32, 10)))
-        >>> output = shard(test_shard, in_strategy=((2, 1), (2, 1)))(x, y)
+        >>> output = ms.shard(test_shard, in_strategy=((2, 1), (2, 1)))(x, y)
         >>> print(output.shape)
         (32, 10)
 

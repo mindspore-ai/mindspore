@@ -167,7 +167,6 @@ class SparseTensor(COOTensor_):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.nn as nn
         >>> from mindspore import Tensor, SparseTensor
         >>> indices = Tensor([[0, 1], [1, 2]])
         >>> values = Tensor([1, 2], dtype=ms.float32)
@@ -251,7 +250,6 @@ class COOTensor(COOTensor_):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.nn as nn
         >>> from mindspore import Tensor, COOTensor
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=ms.int32)
         >>> values = Tensor([1, 2], dtype=ms.float32)
@@ -384,7 +382,6 @@ class COOTensor(COOTensor_):
 
         Examples:
             >>> import mindspore as ms
-            >>> import mindspore.ops as ops
             >>> from mindspore import Tensor, COOTensor
             >>> x_indices = Tensor([[0, 0, 1], [1, 1, 2]], dtype=ms.int64)
             >>> x_values = Tensor([1, 5, 4], dtype=ms.float32)
@@ -919,9 +916,9 @@ class CSRTensor(CSRTensor_):
             >>> a = CSRTensor(indptr, indices, values_a, dense_shape)
             >>> b = CSRTensor(indptr, indices, values_b, dense_shape)
             >>> print(a.add(b, alpha, beta))
-                CSRTensor(shape=[2, 4], dtype=Float32, \
-                          indptr=Tensor(shape=[3], dtype=Int32, value=[0 1 2]), \
-                          indices=Tensor(shape=[2], dtype=Int32, value=[0 1]), \
-                          values=Tensor(shape=[2], dtype=Float32, value=[ 3.00000000e+00  3.00000000e+00]))
+            CSRTensor(shape=[2, 4], dtype=Float32,
+                      indptr=Tensor(shape=[3], dtype=Int32, value=[0 1 2]),
+                      indices=Tensor(shape=[2], dtype=Int32, value=[0 1]),
+                      values=Tensor(shape=[2], dtype=Float32, value=[ 3.00000000e+00  3.00000000e+00]))
         """
         return tensor_operator_registry.get('csr_add')(self, b, alpha, beta)

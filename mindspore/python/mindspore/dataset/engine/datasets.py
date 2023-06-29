@@ -4181,11 +4181,11 @@ class Schema:
             ValueError: If column type is unknown.
 
         Examples:
-        >>> import mindspore.dataset as ds
-        >>> from mindspore import dtype as mstype
-        >>>
-        >>> schema = ds.Schema()
-        >>> schema.add_column('col_1d', de_type=mstype.int64, shape=[2])
+            >>> import mindspore.dataset as ds
+            >>> from mindspore import dtype as mstype
+            >>>
+            >>> schema = ds.Schema()
+            >>> schema.add_column('col_1d', de_type=mstype.int64, shape=[2])
         """
         if isinstance(de_type, typing.Type):
             de_type = mstype_to_detype(de_type)

@@ -42,7 +42,7 @@ mindspore.nn.optim_ex.Adam
 
     参数：
         - **params** (Union[list(Parameter), list(dict)]) - 网络参数的列表或指定了参数组的列表。
-        - **lr** (Union[float, int, Tensor], 可选) - 学习率。默认值：``1e-3``。
+        - **lr** (Union[int, float, Tensor], 可选) - 学习率。默认值：``1e-3``。
         - **betas** (Tuple[float, float], 可选) - 动量矩阵的指数衰减率。参数范围(0.0, 1.0)。默认值：``(0.9, 0.999)``。
         - **eps** (float, 可选) - 加在分母上的值，以确保数值稳定。必须大于0。默认值：``1e-8``。
         - **weight_decay** (float, 可选) - 权重衰减（L2 penalty）。默认值：``0.0``。

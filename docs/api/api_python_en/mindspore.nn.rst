@@ -412,8 +412,8 @@ LRScheduler subclass dynamically changes the learning rate by calling the `step`
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.nn.lr_scheduler.StepLR
     mindspore.nn.lr_scheduler.LinearLR
+    mindspore.nn.lr_scheduler.StepLR
 
 Image Processing Layer
 ----------------------

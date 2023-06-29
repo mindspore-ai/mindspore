@@ -102,12 +102,8 @@ def mutable(input_data, dynamic_len=False):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore.nn as nn
-        >>> import mindspore.ops as ops
-        >>> from mindspore.common import mutable
-        >>> from mindspore.common import dtype as mstype
-        >>> from mindspore import Tensor
-        >>> from mindspore import context
+        >>> from mindspore import mutable, nn, ops, Tensor, context
+        >>> from mindspore import dtype as mstype
         >>> context.set_context(mode=context.GRAPH_MODE)
         >>> class Net(nn.Cell):
         ...     def __init__(self):

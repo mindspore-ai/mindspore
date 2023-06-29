@@ -445,7 +445,7 @@ class GetNextSingleOp(Cell):
         >>> import mindspore
         >>> from mindspore import ops, nn
         >>> from mindspore import dataset as ds
-        >>> from mindspore.common import dtype as mstype
+        >>> from mindspore import dtype as mstype
         >>>
         >>> data_path =  "/path/to/MNIST_Data/train/"
         >>> train_dataset = ds.MnistDataset(data_path, num_samples=10)
