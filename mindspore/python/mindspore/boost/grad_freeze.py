@@ -210,7 +210,7 @@ class GradientFreeze:
         >>> from mindspore.nn import WithLossCell
         >>> from mindspore import dtype as mstype
         >>> from mindspore import boost
-
+        >>>
         >>> class Net(nn.Cell):
         ...    def __init__(self, in_features, out_features):
         ...        super(Net, self).__init__()
@@ -221,7 +221,6 @@ class GradientFreeze:
         ...    def construct(self, x):
         ...        output = self.matmul(x, self.weight)
         ...        return output
-
         >>> size, in_features, out_features = 16, 16, 10
         >>> net = Net(in_features, out_features)
         >>> loss = nn.MSELoss()

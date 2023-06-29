@@ -10,3 +10,7 @@ mindspore.dataset.audio.Gain
 
     异常：
         - **TypeError** - 当 `gain_db` 的类型不为float。
+
+    教程样例：
+        - `音频变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/audio_gallery.html>`_

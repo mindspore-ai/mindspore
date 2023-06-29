@@ -1,7 +1,7 @@
 mindspore.ops.matrix_norm
 =========================
 
-.. py:function:: matrix_norm(A, ord='fro', axis=(-2, -1), keepdims=False, *, dtype=None)
+.. py:function:: mindspore.ops.matrix_norm(A, ord='fro', axis=(-2, -1), keepdims=False, *, dtype=None)
 
     返回给定Tensor在指定维度上的矩阵范数。
 

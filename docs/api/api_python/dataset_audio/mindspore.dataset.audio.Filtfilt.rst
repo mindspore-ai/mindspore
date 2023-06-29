@@ -18,3 +18,7 @@ mindspore.dataset.audio.Filtfilt
         - **ValueError** - 当 `a_coeffs` 与 `b_coeffs` 维度不同。
         - **TypeError** - 当 `clamp` 的类型不为bool。
         - **RuntimeError** - 当输入音频的shape不为<..., time>。
+
+    教程样例：
+        - `音频变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/audio_gallery.html>`_

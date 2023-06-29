@@ -123,6 +123,10 @@ class AdjustBrightness(ImageTensorOperation, PyTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.AdjustBrightness(brightness_factor=2.0)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_adjust_brightness
@@ -171,6 +175,10 @@ class AdjustContrast(ImageTensorOperation, PyTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.AdjustContrast(contrast_factor=2.0)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_adjust_contrast
@@ -229,6 +237,10 @@ class AdjustGamma(ImageTensorOperation, PyTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.AdjustGamma(gamma=10.0, gain=1.0)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_adjust_gamma
@@ -278,6 +290,10 @@ class AdjustHue(ImageTensorOperation, PyTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.AdjustHue(hue_factor=0.2)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_adjust_hue
@@ -327,6 +343,10 @@ class AdjustSaturation(ImageTensorOperation, PyTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.AdjustSaturation(saturation_factor=2.0)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_adjust_saturation
@@ -375,6 +395,10 @@ class AdjustSharpness(ImageTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.AdjustSharpness(sharpness_factor=2.0)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_adjust_sharpness
@@ -438,6 +462,10 @@ class Affine(ImageTensorOperation):
         >>>
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=affine_list, input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_affine
@@ -518,6 +546,10 @@ class AutoAugment(ImageTensorOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_auto_augment
@@ -564,6 +596,10 @@ class AutoContrast(ImageTensorOperation, PyTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.AutoContrast(cutoff=10.0, ignore=[10, 20])]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_auto_contrast
@@ -623,6 +659,10 @@ class BoundingBoxAugment(ImageTensorOperation):
         >>> image_folder_dataset = image_folder_dataset.map(operations=[bbox_aug_op],
         ...                                                 input_columns=["image", "bbox"],
         ...                                                 output_columns=["image", "bbox"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_bounding_box_augment_cpp
@@ -673,6 +713,10 @@ class CenterCrop(ImageTensorOperation, PyTensorOperation):
         >>> transforms_list2 = [vision.Decode(), vision.CenterCrop((60, 40))]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list2,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_center_crop
@@ -768,6 +812,10 @@ class ConvertColor(ImageTensorOperation):
         >>> convert_op = vision.ConvertColor(mode.ConvertMode.COLOR_RGB2BGR)
         >>> image_folder_dataset = image_folder_dataset.map(operations=convert_op,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_convert_color
@@ -812,6 +860,10 @@ class Crop(ImageTensorOperation):
         >>> transforms_list = [decode_op, crop_op]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_crop
@@ -863,6 +915,10 @@ class CutMixBatch(ImageTensorOperation):
         >>> image_folder_dataset = image_folder_dataset.batch(5)
         >>> image_folder_dataset = image_folder_dataset.map(operations=cutmix_batch_op,
         ...                                                 input_columns=["image", "label"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_cut_mix_batch_c
@@ -906,6 +962,10 @@ class CutOut(ImageTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.CutOut(80, num_patches=10)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_cutout_new
@@ -953,6 +1013,10 @@ class Decode(ImageTensorOperation, PyTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.RandomHorizontalFlip()]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_decode
@@ -1013,6 +1077,10 @@ class Equalize(ImageTensorOperation, PyTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.Equalize()]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     def __init__(self):
@@ -1075,6 +1143,10 @@ class Erase(ImageTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.Erase(10,10,10,10)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_erase
@@ -1123,6 +1195,10 @@ class FiveCrop(PyTensorOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_five_crop
@@ -1177,6 +1253,10 @@ class GaussianBlur(ImageTensorOperation):
         >>> transforms_list = [vision.Decode(to_pil=True), vision.GaussianBlur(3, 3)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_gaussian_blur
@@ -1223,6 +1303,10 @@ class Grayscale(PyTensorOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_num_channels
@@ -1263,6 +1347,10 @@ class HorizontalFlip(ImageTensorOperation):
         >>> transforms_list = [vision.Decode(to_pil=True), vision.HorizontalFlip()]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     def __init__(self):
@@ -1300,6 +1388,10 @@ class HsvToRgb(PyTensorOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_hsv_to_rgb
@@ -1347,6 +1439,10 @@ class HWC2CHW(ImageTensorOperation):
         ...                    vision.HWC2CHW()]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     def __init__(self):
@@ -1376,6 +1472,10 @@ class Invert(ImageTensorOperation, PyTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.Invert()]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     def __init__(self):
@@ -1436,6 +1536,10 @@ class LinearTransformation(PyTensorOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_linear_transform
@@ -1502,6 +1606,10 @@ class MixUp(PyTensorOperation):
         >>> image_folder_dataset = image_folder_dataset.map(
         ...     operations=py_vision.MixUp(batch_size=batch_size, alpha=0.2),
         ...     input_columns=["image", "label"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_mix_up
@@ -1570,6 +1678,10 @@ class MixUpBatch(ImageTensorOperation):
         >>> image_folder_dataset = image_folder_dataset.batch(5)
         >>> image_folder_dataset = image_folder_dataset.map(operations=mixup_batch_op,
         ...                                                 input_columns=["image", "label"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_mix_up_batch_c
@@ -1619,6 +1731,10 @@ class Normalize(ImageTensorOperation):
         >>> transforms_list = [decode_op, normalize_op]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_normalize
@@ -1735,6 +1851,10 @@ class Pad(ImageTensorOperation, PyTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.Pad([100, 100, 100, 100])]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_pad
@@ -1809,6 +1929,10 @@ class PadToSize(ImageTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.PadToSize([256, 256])]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_pad_to_size
@@ -1874,6 +1998,10 @@ class Perspective(ImageTensorOperation, PyTensorOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_perspective
@@ -1929,6 +2057,10 @@ class Posterize(ImageTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.Posterize(4)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_posterize
@@ -1990,6 +2122,10 @@ class RandAugment(ImageTensorOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> transforms_list = [vision.Decode(), vision.RandAugment()]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list, input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_rand_augment
@@ -2038,6 +2174,10 @@ class RandomAdjustSharpness(ImageTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.RandomAdjustSharpness(2.0, 0.5)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_adjust_sharpness
@@ -2125,6 +2265,10 @@ class RandomAffine(ImageTensorOperation, PyTensorOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_affine
@@ -2228,6 +2372,10 @@ class RandomAutoContrast(ImageTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.RandomAutoContrast(cutoff=0.0, ignore=None, prob=0.5)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_auto_contrast
@@ -2272,6 +2420,10 @@ class RandomColor(ImageTensorOperation, PyTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.RandomColor((0.5, 2.0))]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_positive_degrees
@@ -2346,6 +2498,10 @@ class RandomColorAdjust(ImageTensorOperation, PyTensorOperation):
         >>> transforms_list = [decode_op, transform_op]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_color_adjust
@@ -2452,6 +2608,10 @@ class RandomCrop(ImageTensorOperation, PyTensorOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_crop
@@ -2548,6 +2708,10 @@ class RandomCropDecodeResize(ImageTensorOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_resize_crop
@@ -2637,6 +2801,10 @@ class RandomCropWithBBox(ImageTensorOperation):
         >>> transforms_list = [decode_op, random_crop_with_bbox_op]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_crop
@@ -2689,6 +2857,10 @@ class RandomEqualize(ImageTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.RandomEqualize(0.5)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_prob
@@ -2752,6 +2924,10 @@ class RandomErasing(PyTensorOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_erasing
@@ -2810,6 +2986,10 @@ class RandomGrayscale(PyTensorOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_prob
@@ -2864,6 +3044,10 @@ class RandomHorizontalFlip(ImageTensorOperation, PyTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.RandomHorizontalFlip(0.75)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_prob
@@ -2911,6 +3095,10 @@ class RandomHorizontalFlipWithBBox(ImageTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.RandomHorizontalFlipWithBBox(0.70)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_prob
@@ -2947,6 +3135,10 @@ class RandomInvert(ImageTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.RandomInvert(0.5)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_prob
@@ -2983,6 +3175,10 @@ class RandomLighting(ImageTensorOperation, PyTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.RandomLighting(0.1)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_alpha
@@ -3044,6 +3240,10 @@ class RandomPerspective(PyTensorOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_perspective
@@ -3103,6 +3303,10 @@ class RandomPosterize(ImageTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.RandomPosterize((6, 8))]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_posterize
@@ -3179,6 +3383,10 @@ class RandomResizedCrop(ImageTensorOperation, PyTensorOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_resize_crop
@@ -3269,6 +3477,10 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_resize_crop
@@ -3320,6 +3532,10 @@ class RandomResize(ImageTensorOperation):
         >>> transforms_list2 = [vision.Decode(), vision.RandomResize((40, 60))]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list2,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_resize
@@ -3370,6 +3586,10 @@ class RandomResizeWithBBox(ImageTensorOperation):
         >>> transforms_list2 = [vision.Decode(), vision.RandomResizeWithBBox((80, 60))]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list2,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_resize
@@ -3439,6 +3659,10 @@ class RandomRotation(ImageTensorOperation, PyTensorOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_rotation
@@ -3520,6 +3744,10 @@ class RandomSelectSubpolicy(ImageTensorOperation):
         ...            (vision.RandomColorAdjust(), 0.2)]]
         >>> image_folder_dataset = image_folder_dataset.map(operations=vision.RandomSelectSubpolicy(policy),
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_select_subpolicy_op
@@ -3567,6 +3795,10 @@ class RandomSharpness(ImageTensorOperation, PyTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.RandomSharpness(degrees=(0.2, 1.9))]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_positive_degrees
@@ -3617,6 +3849,10 @@ class RandomSolarize(ImageTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.RandomSolarize(threshold=(10,100))]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_random_solarize
@@ -3653,6 +3889,10 @@ class RandomVerticalFlip(ImageTensorOperation, PyTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.RandomVerticalFlip(0.25)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_prob
@@ -3700,6 +3940,10 @@ class RandomVerticalFlipWithBBox(ImageTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.RandomVerticalFlipWithBBox(0.20)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_prob
@@ -3739,6 +3983,10 @@ class Rescale(ImageTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.Rescale(1.0 / 255.0, -1.0)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_rescale
@@ -3794,6 +4042,10 @@ class Resize(ImageTensorOperation, PyTensorOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_resize_interpolation
@@ -3878,6 +4130,10 @@ class ResizedCrop(ImageTensorOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_resized_crop
@@ -3937,6 +4193,10 @@ class ResizeWithBBox(ImageTensorOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_resize_interpolation
@@ -3980,6 +4240,10 @@ class RgbToHsv(PyTensorOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_rgb_to_hsv
@@ -4051,6 +4315,10 @@ class Rotate(ImageTensorOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_rotate
@@ -4120,6 +4388,10 @@ class SlicePatches(ImageTensorOperation):
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"],
         ...                                                 output_columns=cols)
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_slice_patches
@@ -4160,6 +4432,10 @@ class Solarize(ImageTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.Solarize(threshold=(10, 100))]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_solarize
@@ -4207,6 +4483,10 @@ class TenCrop(PyTensorOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_ten_crop
@@ -4254,6 +4534,10 @@ class ToNumpy(PyTensorOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     def __init__(self):
@@ -4301,6 +4585,10 @@ class ToPIL(PyTensorOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     def __init__(self):
@@ -4350,6 +4638,10 @@ class ToTensor(ImageTensorOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_to_tensor
@@ -4400,6 +4692,10 @@ class ToType(TypeCast):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
 
@@ -4450,6 +4746,10 @@ class TrivialAugmentWide(ImageTensorOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_trivial_augment_wide
@@ -4505,6 +4805,10 @@ class UniformAugment(CompoundOperation):
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_uniform_augment
@@ -4548,6 +4852,10 @@ class VerticalFlip(ImageTensorOperation):
         >>> transforms_list = [vision.Decode(), vision.VerticalFlip()]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
+
+    Tutorial Examples:
+        - `Illustration of vision transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     def __init__(self):

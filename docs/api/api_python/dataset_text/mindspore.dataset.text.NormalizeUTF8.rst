@@ -23,3 +23,7 @@ mindspore.dataset.text.NormalizeUTF8
 
     异常：
         - **TypeError** - 参数 `normalize_form` 的类型不是 :class:`mindspore.dataset.text.NormalizeForm` 。
+
+    教程样例：
+        - `文本变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/text_gallery.html>`_

@@ -15,3 +15,7 @@ mindspore.dataset.text.ToVectors
         - **TypeError** - 如果 `unk_init` 不是序列。
         - **TypeError** - 如果 `unk_init` 的元素不是float或int类型。
         - **TypeError** - 如果 `lower_case_backup` 不是bool类型。
+
+    教程样例：
+        - `文本变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/text_gallery.html>`_

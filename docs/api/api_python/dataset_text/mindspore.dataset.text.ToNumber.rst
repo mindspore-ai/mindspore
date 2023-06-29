@@ -15,3 +15,7 @@ mindspore.dataset.text.ToNumber
     异常：
         - **TypeError** - 参数 `data_type` 不是 :class:`mindspore.dtype` 类型。
         - **RuntimeError** - 字符串类型转换失败，或类型转换时出现溢出。
+
+    教程样例：
+        - `文本变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/text_gallery.html>`_

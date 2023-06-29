@@ -181,12 +181,12 @@ class LinearLR(LRScheduler):
     Args:
         optimizer (Optimizer): Wrapped optimizer.
         start_factor (float, optional): The number we multiply learning rate in the first epoch.
-            The multiplication factor changes towards end_factor in the following epochs.
-            Default: 1./3.
+            The multiplication factor changes towards `end_factor` in the following epochs.
+            Default: ``1.0 /3``.
         end_factor (float, optional): The number we multiply learning rate at the end of linear changing
-            process. Default: 1.0.
+            process. Default: ``1.0``.
         total_iters (int, optional): The number of iterations that multiplicative factor reaches to 1.
-            Default: 5.
+            Default: ``5``.
         last_epoch (int, optional): The index of the last epoch. Default: ``-1``.
         verbose (bool, optional): If ``True``, prints a message to stdout for
             each update. Default: ``False``.

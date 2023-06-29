@@ -36,3 +36,7 @@ mindspore.dataset.text.BertTokenizer
         - **TypeError** - 当 `normalization_form` 的类型不为 :class:`mindspore.dataset.text.NormalizeForm` 。
         - **TypeError** - 当 `preserve_unused_token` 的类型不为bool。
         - **TypeError** - 当 `with_offsets` 的类型不为bool。
+
+    教程样例：
+        - `文本变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/text_gallery.html>`_

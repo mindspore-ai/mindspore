@@ -8,3 +8,7 @@ mindspore.dataset.text.CaseFold
     支持的输入规范化形式详见 `ICU_Normalizer2 <https://unicode-org.github.io/icu-docs/apidoc/released/icu4c/classicu_1_1Normalizer2.html>`_ 。
 
     .. note:: Windows平台尚不支持 `CaseFold` 。
+
+    教程样例：
+        - `文本变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/text_gallery.html>`_

@@ -12,3 +12,7 @@ mindspore.dataset.text.AddToken
     异常：
         - **TypeError** - 如果 `token` 的类型不为str。
         - **TypeError** - 如果 `begin` 的类型不为bool。
+
+    教程样例：
+        - `文本变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/text_gallery.html>`_

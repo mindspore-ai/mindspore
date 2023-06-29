@@ -60,7 +60,8 @@ class Adam(Optimizer):
        \end{aligned}
 
     .. warning::
-        This is an experimental API that is subject to change.
+        This is an experimental optimizer API that is subject to change.
+        This module must be used with lr scheduler module in `nn.lr_scheduler`.
 
     Args:
         params (Union[list(Parameter), list(dict)]): list of parameters to optimize or dicts defining
@@ -81,8 +82,8 @@ class Adam(Optimizer):
         - **gradients** (tuple[Tensor]) - The gradients of `params`.
 
     Raises:
-        ValueError: If the learning rate is not int, float or Tensor.
-        ValueError: If the learning rate is less than 0.
+        ValueError: If the `lr` is not int, float or Tensor.
+        ValueError: If the `lr` is less than 0.
         ValueError: If the `eps` is less than 0.0.
         ValueError: If the `betas` not in the range of 0-1.
         ValueError: If the `weight_decay` is less than 0.

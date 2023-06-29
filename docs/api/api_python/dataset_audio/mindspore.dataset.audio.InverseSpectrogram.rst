@@ -34,3 +34,7 @@ mindspore.dataset.audio.InverseSpectrogram
         - **TypeError** - 如果 `center` 的类型不为bool。
         - **TypeError** - 如果 `pad_mode` 的类型不为 :class:`mindspore.dataset.audio.BorderType` 。
         - **TypeError** - 如果 `onesided` 的类型不为bool。
+
+    教程样例：
+        - `音频变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/audio_gallery.html>`_

@@ -40,3 +40,7 @@ mindspore.dataset.audio.GriffinLim
         - **TypeError** - 如果 `rand_init` 的类型不为bool。        
         - **RuntimeError** - 当 `n_fft` 指定的FFT长度不小于 `length` 指定的输出波形长度。
         - **RuntimeError** - 当 `win_length` 指定的窗口长度不小于 `n_fft` 指定的FFT长度。
+
+    教程样例：
+        - `音频变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/audio_gallery.html>`_

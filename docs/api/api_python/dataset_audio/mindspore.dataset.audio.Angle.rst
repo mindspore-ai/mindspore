@@ -9,3 +9,7 @@ mindspore.dataset.audio.Angle
 
     异常：
         - **RuntimeError** - 当输入音频的shape不为<..., complex=2>。
+
+    教程样例：
+        - `音频变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/audio_gallery.html>`_

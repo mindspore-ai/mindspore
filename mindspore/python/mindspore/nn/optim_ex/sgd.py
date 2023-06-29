@@ -44,12 +44,13 @@ class SGD(Optimizer):
     Here : where p, v and u denote the parameters, accum, and momentum respectively.
 
     .. warning::
-        This is an experimental API that is subject to change.
+        This is an experimental optimizer API that is subject to change.
+        This module must be used with lr scheduler module in `nn.lr_scheduler`.
 
     Args:
         params (Union[list(Parameter), list(dict)]): list of parameters to optimize or dicts defining
             parameter groups.
-        lr (Union[int, float, Tensor]): learning rate.
+        lr (Union[float, int, Tensor]): learning rate.
         momentum (Union[int, float], optional): momentum factor. Default: ``0``.
         weight_decay (float, optional): weight decay (L2 penalty). Default: ``0``.
         dampening (Union[int, float], optional): dampening for momentum. Default: ``0``.

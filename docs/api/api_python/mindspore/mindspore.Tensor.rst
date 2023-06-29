@@ -18,7 +18,7 @@ mindspore.Tensor
 
     .. note::
         `input_data` 的默认值 ``None`` 只作为一个占位符，并不意味着可以创建一个NoneType的Tensor。
-        当前对`shape`中包含0的Tensor支持的不完善。
+        当前对 `shape` 中包含0的Tensor支持的不完善。
 
 .. mscnautosummary::
     :toctree: Tensor

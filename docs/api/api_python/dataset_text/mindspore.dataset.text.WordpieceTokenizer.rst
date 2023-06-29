@@ -19,3 +19,7 @@ mindspore.dataset.text.WordpieceTokenizer
         - **TypeError** - 当 `unknown_token` 的类型不为str。
         - **TypeError** - 当 `with_offsets` 的类型不为bool。
         - **ValueError** - 当 `max_bytes_per_token` 为负数。
+
+    教程样例：
+        - `文本变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/text_gallery.html>`_

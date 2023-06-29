@@ -10,3 +10,7 @@ mindspore.dataset.text.PythonTokenizer
 
     异常：
         - **TypeError** - 参数 `tokenizer` 不是一个可调用的Python对象。
+
+    教程样例：
+        - `文本变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/text_gallery.html>`_

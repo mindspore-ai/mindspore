@@ -3786,7 +3786,7 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
         - On Ascend, the reduction only support set to "none" for now.
         - On Ascend, the data type of `input_x` must be float16 or float32.
 
-    Note::
+    Note:
         If some values of the `indices` exceed the upper or lower bounds of the index of `input_x`, instead of raising
         an index error, the corresponding `updates` will not be updated to `input_x`.
 

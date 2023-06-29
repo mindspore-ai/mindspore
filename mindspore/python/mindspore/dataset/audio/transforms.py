@@ -95,6 +95,10 @@ class AllpassBiquad(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.AllpassBiquad(44100, 200.0)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_allpass_biquad
@@ -152,6 +156,10 @@ class AmplitudeToDB(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.AmplitudeToDB(stype=ScaleType.POWER)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_amplitude_to_db
@@ -187,6 +195,10 @@ class Angle(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Angle()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     def parse(self):
@@ -234,6 +246,10 @@ class BandBiquad(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.BandBiquad(44100, 200.0)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_band_biquad
@@ -295,6 +311,10 @@ class BandpassBiquad(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.BandpassBiquad(44100, 200.0)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_bandpass_biquad
@@ -351,6 +371,10 @@ class BandrejectBiquad(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.BandrejectBiquad(44100, 200.0)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_bandreject_biquad
@@ -405,6 +429,10 @@ class BassBiquad(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.BassBiquad(44100, 100.0)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_bass_biquad
@@ -450,6 +478,10 @@ class Biquad(TensorOperation):
         >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
         >>> biquad_op = audio.Biquad(0.01, 0.02, 0.13, 1, 0.12, 0.3)
         >>> waveform_filtered = biquad_op(waveform)
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_biquad
@@ -492,6 +524,10 @@ class ComplexNorm(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.ComplexNorm()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_complex_norm
@@ -553,6 +589,10 @@ class ComputeDeltas(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.ComputeDeltas(win_length=7, pad_mode=BorderType.EDGE)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_compute_deltas
@@ -596,6 +636,10 @@ class Contrast(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Contrast()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_contrast
@@ -629,6 +673,10 @@ class DBToAmplitude(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.DBToAmplitude(0.5, 0.5)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_db_to_amplitude
@@ -666,6 +714,10 @@ class DCShift(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.DCShift(0.5, 0.02)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_dc_shift
@@ -702,6 +754,10 @@ class DeemphBiquad(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.DeemphBiquad(44100)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_deemph_biquad
@@ -752,6 +808,10 @@ class DetectPitchFrequency(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.DetectPitchFrequency(30, 0.1, 3, 5, 25)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_detect_pitch_frequency
@@ -802,6 +862,10 @@ class Dither(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Dither()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_dither
@@ -844,6 +908,10 @@ class EqualizerBiquad(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.EqualizerBiquad(44100, 1500, 5.5, 0.7)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_equalizer_biquad
@@ -900,6 +968,10 @@ class Fade(AudioTensorOperation):
         >>> dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Fade(fade_in_len=3, fade_out_len=2, fade_shape=FadeShape.LINEAR)]
         >>> dataset = dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_fade
@@ -943,6 +1015,10 @@ class Filtfilt(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Filtfilt(a_coeffs, b_coeffs)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_lfilter
@@ -1011,6 +1087,10 @@ class Flanger(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Flanger(44100)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_flanger
@@ -1072,6 +1152,10 @@ class FrequencyMasking(AudioTensorOperation):
         >>> transforms = [audio.FrequencyMasking(freq_mask_param=1)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
 
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+
     .. image:: frequency_masking_original.png
 
     .. image:: frequency_masking.png
@@ -1110,6 +1194,10 @@ class Gain(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Gain(1.2)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_gain
@@ -1174,6 +1262,10 @@ class GriffinLim(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.GriffinLim(n_fft=400)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_griffin_lim
@@ -1225,6 +1317,10 @@ class HighpassBiquad(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.HighpassBiquad(44100, 1500, 0.7)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_highpass_biquad
@@ -1289,6 +1385,10 @@ class InverseMelScale(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.InverseMelScale(20, 3, 16000, 0, 8000, 10)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_inverse_mel_scale
@@ -1368,6 +1468,10 @@ class InverseSpectrogram(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.InverseSpectrogram(1, 400, 400, 200)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_inverse_spectrogram
@@ -1451,6 +1555,10 @@ class LFCC(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.LFCC()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_lfcc
@@ -1519,6 +1627,10 @@ class LFilter(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.LFilter(a_coeffs, b_coeffs)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_lfilter
@@ -1572,6 +1684,10 @@ class LowpassBiquad(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.LowpassBiquad(4000, 1500, 0.7)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_lowpass_biquad
@@ -1605,6 +1721,10 @@ class Magphase(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Magphase()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_magphase
@@ -1641,6 +1761,10 @@ class MaskAlongAxis(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.MaskAlongAxis(0, 10, 0.5, 1)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_mask_along_axis
@@ -1686,6 +1810,10 @@ class MaskAlongAxisIID(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.MaskAlongAxisIID(5, 0.5, 2)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_mask_along_axis_iid
@@ -1747,6 +1875,10 @@ class MelScale(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.MelScale(4000, 1500, 0.7)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_mel_scale
@@ -1842,6 +1974,10 @@ class MelSpectrogram(AudioTensorOperation):
         ...                                    normalized=False, center=True, pad_mode=BorderType.REFLECT, \
         ...                                    onesided=True, norm=NormType.SLANEY,  mel_scale=MelType.HTK)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_mel_spectrogram
@@ -1923,6 +2059,10 @@ class MFCC(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.MFCC(4000, 1500, 2)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_mfcc
@@ -1985,6 +2125,10 @@ class MuLawDecoding(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.MuLawDecoding()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_mu_law_coding
@@ -2017,6 +2161,10 @@ class MuLawEncoding(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.MuLawEncoding()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_mu_law_coding
@@ -2057,6 +2205,10 @@ class Overdrive(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Overdrive()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_overdrive
@@ -2113,6 +2265,10 @@ class Phaser(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Phaser(44100)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_phaser
@@ -2157,6 +2313,10 @@ class PhaseVocoder(AudioTensorOperation):
         >>> phase_advance = np.random.random([44, 1])
         >>> transforms = [audio.PhaseVocoder(rate=2, phase_advance=phase_advance)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_phase_vocoder
@@ -2212,6 +2372,10 @@ class PitchShift(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.PitchShift(sample_rate=16000,n_steps=4)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_pitch_shift
@@ -2278,6 +2442,10 @@ class Resample(AudioTensorOperation):
         ...                              resample_method=ResampleMethod.SINC_INTERPOLATION,
         ...                              lowpass_filter_width=6, rolloff=0.99, beta=None)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_resample
@@ -2321,6 +2489,10 @@ class RiaaBiquad(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.RiaaBiquad(44100)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_riaa_biquad
@@ -2362,6 +2534,10 @@ class SlidingWindowCmn(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.SlidingWindowCmn()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_sliding_window_cmn
@@ -2422,6 +2598,10 @@ class SpectralCentroid(TensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.SpectralCentroid(44100)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_spectral_centroid
@@ -2489,6 +2669,10 @@ class Spectrogram(TensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Spectrogram()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_spectrogram
@@ -2551,6 +2735,10 @@ class TimeMasking(AudioTensorOperation):
         >>> transforms = [audio.TimeMasking(time_mask_param=1)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
 
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
+
     .. image:: time_masking_original.png
 
     .. image:: time_masking.png
@@ -2602,6 +2790,10 @@ class TimeStretch(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.TimeStretch()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
 
     .. image:: time_stretch_rate1.5.png
 
@@ -2656,6 +2848,10 @@ class TrebleBiquad(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.TrebleBiquad(44100, 200.0)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_treble_biquad
@@ -2756,6 +2952,10 @@ class Vad(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Vad(sample_rate=600)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_vad
@@ -2825,6 +3025,10 @@ class Vol(AudioTensorOperation):
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.Vol(gain=10, gain_type=GainType.DB)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+
+    Tutorial Examples:
+        - `Illustration of audio transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_
     """
 
     @check_vol

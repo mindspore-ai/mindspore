@@ -18,3 +18,7 @@ mindspore.dataset.audio.MaskAlongAxisIID
         - **TypeError** - 当 `axis` 的类型不为int。
         - **ValueError** - 当 `axis` 取值不在[1, 2]范围内。
         - **RuntimeError** - 当输入音频的shape不为<..., freq, time>。
+
+    教程样例：
+        - `音频变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/audio_gallery.html>`_

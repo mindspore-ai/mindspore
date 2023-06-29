@@ -37,10 +37,13 @@ mindspore.nn.optim_ex.Adam
             &\bf{return} \:  \theta_t                                                     \\[-1.ex]
         \end{aligned}
 
+    .. warning::
+        这是一个实验性的优化器接口，需要和 `nn.lr_scheduler` 下的动态学习率接口配合使用。
+
     参数：
-        - **params** (Union[list[Parameter], list[dict]]) - 网络参数的列表或指定了参数组的列表。
+        - **params** (Union[list(Parameter), list(dict)]) - 网络参数的列表或指定了参数组的列表。
         - **lr** (Union[float, int, Tensor], 可选) - 学习率。默认值：``1e-3``。
-        - **betas** (tuple(float, float), 可选) - 动量矩阵的指数衰减率。参数范围（0.0,1.0）。默认值：``(0.9, 0.999)``。
+        - **betas** (Tuple[float, float], 可选) - 动量矩阵的指数衰减率。参数范围(0.0, 1.0)。默认值：``(0.9, 0.999)``。
         - **eps** (float, 可选) - 加在分母上的值，以确保数值稳定。必须大于0。默认值：``1e-8``。
         - **weight_decay** (float, 可选) - 权重衰减（L2 penalty）。默认值：``0.0``。
         - **amsgrad** (bool, 可选) - 是否使用AMSGrad算法。默认值：``False``。
@@ -52,7 +55,6 @@ mindspore.nn.optim_ex.Adam
         - **gradients** (tuple[Tensor]) - 网络权重的梯度。
 
     异常：
-        - **ValueError** - 动量、阻尼或重量衰减值小于0.0。
         - **ValueError** - 学习率不是int、float或Tensor。
         - **ValueError** - 学习率小于0。
         - **ValueError** - `eps` 小于0。
