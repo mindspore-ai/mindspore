@@ -124,7 +124,7 @@ def _update_param(param, new_param, strict_load):
         if param.data.dtype != new_param.data.dtype:
             if _type_convert(param, new_param, strict_load):
                 new_tensor = Tensor(new_param.data.asnumpy(), param.data.dtype)
-                param.set_data(new_tensor)
+                param.set_data(new_tensor, param.sliced)
                 return
 
             logger.critical("Failed to combine the net and the parameters for param %s.", param.name)
