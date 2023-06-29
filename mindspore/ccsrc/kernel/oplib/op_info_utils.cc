@@ -500,7 +500,7 @@ bool OpInfoUtils::ParseCommonItem(const nlohmann::json &item, const OpInfoPtr &o
     }
     auto func = parse_common_funcs.find(key);
     if (func == parse_common_funcs.end()) {
-      MS_LOG(WARNING) << "Parse common key: " << iter.key() << " not found, json: " << item.dump();
+      MS_LOG(INFO) << "Parse common key: " << iter.key() << " not found, json: " << item.dump();
       continue;
     }
     if (!func->second(*iter, op_info_ptr)) {
