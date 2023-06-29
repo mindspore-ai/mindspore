@@ -16,8 +16,8 @@
 
 #include "kernel/kernel.h"
 
-#include <functional>
 #include <algorithm>
+#include <functional>
 #include <iterator>
 #include <numeric>
 #include "kernel/common_utils.h"

@@ -15,25 +15,25 @@
  */
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNEL_H_
-#include <vector>
-#include <string>
-#include <memory>
 #include <map>
-#include <set>
+#include <memory>
 #include <optional>
-#include <variant>
+#include <set>
+#include <string>
 #include <utility>
-#include "nlohmann/json.hpp"
-#include "ir/anf.h"
-#include "ir/dtype.h"
-#include "include/common/utils/utils.h"
-#include "mindspore/core/ops/base_operator.h"
-#include "ir/tensor.h"
+#include <variant>
+#include <vector>
 #include "abstract/dshape.h"
-#include "utils/log_adapter.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "include/api/format.h"
 #include "include/backend/visible.h"
+#include "include/common/utils/utils.h"
+#include "ir/anf.h"
+#include "ir/dtype.h"
+#include "ir/tensor.h"
+#include "mindspore/core/ops/base_operator.h"
+#include "nlohmann/json.hpp"
+#include "utils/log_adapter.h"
 
 #ifdef _MSC_VER
 #undef OPAQUE

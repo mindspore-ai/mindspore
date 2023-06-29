@@ -16,12 +16,12 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_UPSAMPLE_TRILINEAR_3D_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_UPSAMPLE_TRILINEAR_3D_GPU_KERNEL_H_
 
-#include <iostream>
 #include <algorithm>
-#include <vector>
+#include <iostream>
 #include <map>
 #include <string>
 #include <utility>
+#include <vector>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -43,7 +43,10 @@ class UpsampleTrilinear3DGpuKernelMod : public NativeGpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
+ protected:
   std::vector<KernelAttr> GetOpSupport() override;
+
+  std::vector<size_t> GetLaunchIgnoredInputAddressIdx() const override { return {kIndex1}; }
 
  private:
   template <typename T, typename S>
