@@ -62,13 +62,13 @@ class TilingPacking {
   template <typename T>
   inline static void PackTiling(std::vector<uint8_t> *dst, const T &data) {
     auto src = reinterpret_cast<const uint8_t *>(&data);
-    dst->insert(dst->end(), src, src + sizeof(T));
+    (void)dst->insert(dst->end(), src, src + sizeof(T));
   }
 
   template <typename T>
   inline static void PackTiling(std::vector<uint8_t> *dst, const std::vector<T> &data) {
     auto src = reinterpret_cast<const uint8_t *>(data.data());
-    dst->insert(dst->end(), src, src + data.size() * sizeof(T));
+    (void)dst->insert(dst->end(), src, src + data.size() * sizeof(T));
   }
 };
 
