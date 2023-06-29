@@ -39,6 +39,9 @@ bool IsBpropNode(const AnfNodePtr &node) {
   if (!node->isa<CNode>()) {
     return false;
   }
+  if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+    return IsBpropNode(node->cast<CNodePtr>()->input(1));
+  }
   return node->fullname_with_scope().find(kGradientsFlag) == 0;
 }
 
