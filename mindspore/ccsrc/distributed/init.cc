@@ -30,22 +30,28 @@ bool Initialize() {
   // If this process participates in the cluster building, we need to initialize cluster context.
   if (common::UseDynamicCluster()) {
     if (!InitializeCluster()) {
-      MS_LOG(EXCEPTION) << "Failed to initialize distributed training.";
+      MS_LOG(EXCEPTION) << "Failed to initialize distributed training because some nodes  in the cluster are not "
+                           "successfully launched. "
+                           "Please check log of each node to find out which is the first one to throw exception. You "
+                           "can search 'is timed out' in Scheduler's log to see which node is offline.";
     }
   }
 
   // Initialize the collective manager regardless of whether the cluster is initialized or not.
   if (!InitializeCollective()) {
-    MS_LOG(EXCEPTION) << "Failed to initialize collective communication.";
+    MS_LOG(EXCEPTION) << "Failed to initialize collective communication because some nodes in the cluster are not "
+                         "successfully launched. Please check "
+                         "log of each node to find out which is the first one to throw exception. You can search 'is "
+                         "timed out' in Scheduler's log to see which node is offline.";
   }
 
   // If this is a scheduler node, it does not need to execute other codes like graph compiling and running. We should
   // finalize it immediately.
   if (cluster::ClusterContext::instance()->initialized() &&
       cluster::ClusterContext::instance()->node_role() == kEnvRoleOfScheduler) {
-    MS_LOG(INFO) << "Start finalizing the cluster instance.";
+    MS_LOG(INFO) << "Scheduler starts to wait for cluster to exit.";
     (void)cluster::ClusterContext::instance()->Finalize(UINT32_MAX);
-    MS_LOG(INFO) << "End finalizing the cluster instance.";
+    MS_LOG(INFO) << "Scheduler ends waiting for cluster to exit.";
     exit(0);
     return true;
   }
