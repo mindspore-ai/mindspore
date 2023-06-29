@@ -561,6 +561,10 @@ class ModelGroup:
     The `ModelGroup` class is used to define a MindSpore model group,
     facilitating multiple models to share workspace memory or weights(including constants and variables) memory.
 
+    Args:
+       flags (ModelGroupFlag, optional): Indicates the type of the model group.
+           Default: ``ModelGroupFlag.SHARE_WEIGHT``.
+
     Examples:
         >>> # Multi models share workspace memory
         >>> import mindspore_lite as mslite
@@ -630,7 +634,8 @@ class ModelGroup:
 
     def cal_max_size_of_workspace(self, model_type, context):
         """
-        Calculate the max workspace of the added models.
+        Calculate the max workspace of the added models. Only valid when the type of `ModelGroup` is
+        ``ModelGroupFlag.SHARE_WORKSPACE``.
 
         Args:
            model_type (ModelType): model_type Define The type of model file.
