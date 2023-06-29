@@ -19,6 +19,5 @@ mindspore.ops.FillDiagonal
         - **y** (Tensor) - Tensor，和输入 `input_x` 具有相同的shape和dtype。
 
     异常：
-        - **TypeError** - 如果 `input_x` 的dtype不是：float32、int32或者int64。
         - **ValueError** - 如果 `input_x` 的维度没有大于1。
         - **ValueError** - 当维度大于2时，每个轴的大小不相等。
