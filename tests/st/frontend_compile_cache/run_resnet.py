@@ -124,20 +124,19 @@ def set_parameter():
         ms.set_context(mode=ms.GRAPH_MODE, device_target=target, save_graphs=config.save_graphs,
                        save_graphs_path=rank_save_graphs_path)
 
-    if config.run_distribute:
-        device_id = int(os.getenv('DEVICE_ID'))
-        ms.set_context(device_id=device_id)
-        ms.reset_auto_parallel_context()
-        ms.set_auto_parallel_context(device_num=config.device_num, parallel_mode=ms.ParallelMode.SEMI_AUTO_PARALLEL,
-                                     gradients_mean=True)
-        ms.set_auto_parallel_context(pipeline_stages=2, dataset_strategy="full_batch")
-        set_algo_parameters(elementwise_op_strategy_follow=True)
-        if config.net_name == "resnet50" or config.net_name == "se-resnet50":
-            if config.boost_mode not in ["O1", "O2"]:
-                ms.set_auto_parallel_context(all_reduce_fusion_config=config.all_reduce_fusion_config)
-        elif config.net_name in ["resnet101", "resnet152"]:
+    device_id = int(os.getenv('DEVICE_ID'))
+    ms.set_context(device_id=device_id)
+    ms.reset_auto_parallel_context()
+    ms.set_auto_parallel_context(device_num=config.device_num, parallel_mode=ms.ParallelMode.SEMI_AUTO_PARALLEL,
+                                 gradients_mean=True)
+    ms.set_auto_parallel_context(pipeline_stages=2, dataset_strategy="full_batch")
+    set_algo_parameters(elementwise_op_strategy_follow=True)
+    if config.net_name == "resnet50" or config.net_name == "se-resnet50":
+        if config.boost_mode not in ["O1", "O2"]:
             ms.set_auto_parallel_context(all_reduce_fusion_config=config.all_reduce_fusion_config)
-        init()
+    elif config.net_name in ["resnet101", "resnet152"]:
+        ms.set_auto_parallel_context(all_reduce_fusion_config=config.all_reduce_fusion_config)
+    init()
 
 
 def load_pre_trained_checkpoint():
