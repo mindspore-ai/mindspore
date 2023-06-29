@@ -14,7 +14,7 @@
 # ============================================================================
 """msprof PROF data export api file"""
 import os
-from subprocess import CalledProcessError
+from subprocess import CalledProcessError, TimeoutExpired
 from subprocess import Popen, PIPE
 from typing import List
 import json
@@ -70,7 +70,6 @@ class AscendMsprofExporter:
         self._device_path = None
         self._model_ids = None
         self._iter_ids = None
-        self._export_cmd = [self._msprof_cmd, "--export=on"]
         self._check_msprof_env()
 
     @staticmethod
@@ -101,14 +100,21 @@ class AscendMsprofExporter:
         self._export_whole_prof(self._output_path, trace_file)
         self._check_export_files(self._device_path, trace_file)
 
+    def get_job_dir(self):
+        """Return matched PROF directory path. Call this function after exporting profiling data."""
+        return self._output_path
+
     def _run_cmd(self, cmd: List[str], raise_error=True):
         """run msprof tool shell command"""
         try:
             proc = Popen(cmd, stdout=PIPE, stderr=PIPE, text=True)
+        except (FileNotFoundError, PermissionError, CalledProcessError) as exc:
+            raise RuntimeError(exc)
+        try:
+            outs, errs = proc.communicate(timeout=300)
+        except TimeoutExpired:
+            proc.kill()
             outs, errs = proc.communicate()
-        except (FileNotFoundError, PermissionError, CalledProcessError):
-            msg = "{} command was not found! Make sure it has been added to the path.".format(cmd[0])
-            raise RuntimeError(msg)
         logger.info(outs)
         if raise_error and errs != self._null_info:
             raise RuntimeError(errs)
@@ -116,7 +122,7 @@ class AscendMsprofExporter:
 
     def _export_helper(self, **kwargs):
         """msprof export helper"""
-        export_cmd = [val for val in self._export_cmd]
+        export_cmd = [self._msprof_cmd, "--export=on"]
         output = kwargs.get("output")
         model_id = kwargs.get("model_id")
         iter_id = kwargs.get("iter_id")
@@ -225,7 +231,7 @@ class AscendMsprofExporter:
             return False
 
         msprof_path = None
-        envs = os.environ.copy()
+        envs = os.environ
         if envs.get("ASCEND_TOOLKIT_HOME"):
             temp_path = os.path.join(envs.get("ASCEND_TOOLKIT_HOME"), "bin")
             if _check_msprof(temp_path):
@@ -243,7 +249,6 @@ class AscendMsprofExporter:
                         break
         if msprof_path:
             envs["PATH"] = msprof_path + ":" + envs.get("PATH", "")
-            os.environ.update(envs)
         else:
             raise FileNotFoundError("The msprof command was not found!")
 
