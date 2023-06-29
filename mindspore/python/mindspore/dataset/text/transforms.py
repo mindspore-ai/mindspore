@@ -126,6 +126,10 @@ class AddToken(TextTensorOperation):
         >>> # +---------------------------+
         >>> # | ['TOKEN', 'a', 'b', 'c', 'd', 'e'] |
         >>> # +---------------------------+
+
+    Tutorial Examples:
+        - `Illustration of text transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
     """
 
     @check_add_token
@@ -189,6 +193,10 @@ class JiebaTokenizer(TextTensorOperation):
         >>> tokenizer_op = text.JiebaTokenizer(jieba_hmm_file, jieba_mp_file, mode=JiebaMode.MP, with_offsets=True)
         >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
         ...                                           output_columns=["token", "offsets_start", "offsets_limit"])
+
+    Tutorial Examples:
+        - `Illustration of text transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
     """
 
     @check_jieba_init
@@ -370,6 +378,10 @@ class Lookup(TextTensorOperation):
         >>> text_file_list = ["/path/to/text_file_dataset_file"]
         >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
         >>> text_file_dataset = text_file_dataset.map(operations=[lookup])
+
+    Tutorial Examples:
+        - `Illustration of text transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
     """
 
     @check_lookup
@@ -427,6 +439,10 @@ class Ngram(TextTensorOperation):
         >>> text_file_list = ["/path/to/text_file_dataset_file"]
         >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
         >>> text_file_dataset = text_file_dataset.map(operations=ngram_op)
+
+    Tutorial Examples:
+        - `Illustration of text transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
     """
 
     @check_ngram
@@ -464,6 +480,10 @@ class PythonTokenizer:
         >>> text_file_list = ["/path/to/text_file_dataset_file"]
         >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
         >>> text_file_dataset = text_file_dataset.map(operations=text.PythonTokenizer(my_tokenizer))
+
+    Tutorial Examples:
+        - `Illustration of text transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
     """
 
     @check_python_tokenizer
@@ -524,6 +544,10 @@ class SentencePieceTokenizer(TextTensorOperation):
         >>> text_file_list = ["/path/to/text_file_dataset_file"]
         >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
         >>> text_file_dataset = text_file_dataset.map(operations=tokenizer)
+
+    Tutorial Examples:
+        - `Illustration of text transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
     """
 
     @check_sentence_piece_tokenizer
@@ -572,6 +596,10 @@ class SlidingWindow(TextTensorOperation):
         >>> # |   [2, 3, 4], |
         >>> # |   [3, 4, 5]] |
         >>> # +--------------+
+
+    Tutorial Examples:
+        - `Illustration of text transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
     """
 
     @check_slidingwindow
@@ -612,6 +640,10 @@ class ToNumber(TextTensorOperation):
         >>> dataset = ds.NumpySlicesDataset(data)
         >>> to_number_op = text.ToNumber(mstype.int8)
         >>> dataset = dataset.map(operations=to_number_op)
+
+    Tutorial Examples:
+        - `Illustration of text transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
     """
 
     @check_to_number
@@ -657,6 +689,10 @@ class ToVectors(TextTensorOperation):
         >>> text_file_list = ["/path/to/text_file_dataset_file"]
         >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
         >>> text_file_dataset = text_file_dataset.map(operations=[to_vectors])
+
+    Tutorial Examples:
+        - `Illustration of text transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
     """
 
     @check_to_vectors
@@ -702,6 +738,10 @@ class Truncate(TextTensorOperation):
         >>> # +------------------------+
         >>> # |  ['a', 'b', 'c', 'd']  |
         >>> # +------------------------+
+
+    Tutorial Examples:
+        - `Illustration of text transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
     """
 
     @check_truncate
@@ -745,6 +785,10 @@ class TruncateSequencePair(TextTensorOperation):
         >>> # +-----------+-----------+
         >>> # |  [1, 2]   |  [4, 5]   |
         >>> # +-----------+-----------+
+
+    Tutorial Examples:
+        - `Illustration of text transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
     """
 
     @check_pair_truncate
@@ -784,6 +828,10 @@ class UnicodeCharTokenizer(TextTensorOperation):
         >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
         >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
         ...                                           output_columns=["token", "offsets_start", "offsets_limit"])
+
+    Tutorial Examples:
+        - `Illustration of text transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
     """
 
     @check_with_offsets
@@ -839,6 +887,10 @@ class WordpieceTokenizer(TextTensorOperation):
         >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
         >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
         ...                                           output_columns=["token", "offsets_start", "offsets_limit"])
+
+    Tutorial Examples:
+        - `Illustration of text transforms
+          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
     """
 
     @check_wordpiece_tokenizer
@@ -929,6 +981,10 @@ if platform.system().lower() != 'windows':
             ...                                    with_offsets=True)
             >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
             ...                                           output_columns=["token", "offsets_start", "offsets_limit"])
+
+        Tutorial Examples:
+            - `Illustration of text transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
         """
 
         @check_basic_tokenizer
@@ -1030,6 +1086,10 @@ if platform.system().lower() != 'windows':
             >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
             ...                                               output_columns=["token", "offsets_start",
             ...                                                               "offsets_limit"])
+
+        Tutorial Examples:
+            - `Illustration of text transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
         """
 
         @check_bert_tokenizer
@@ -1075,6 +1135,10 @@ if platform.system().lower() != 'windows':
             >>> text_file_list = ["/path/to/text_file_dataset_file"]
             >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
             >>> text_file_dataset = text_file_dataset.map(operations=case_op)
+
+        Tutorial Examples:
+            - `Illustration of text transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
         """
 
         def parse(self):
@@ -1100,6 +1164,10 @@ if platform.system().lower() != 'windows':
             >>> text_file_list = ["/path/to/text_file_dataset_file"]
             >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
             >>> text_file_dataset = text_file_dataset.map(operations=replace_op)
+
+        Tutorial Examples:
+            - `Illustration of text transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
         """
 
         def parse(self):
@@ -1140,6 +1208,10 @@ if platform.system().lower() != 'windows':
             >>> text_file_list = ["/path/to/text_file_dataset_file"]
             >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
             >>> text_file_dataset = text_file_dataset.map(operations=normalize_op)
+
+        Tutorial Examples:
+            - `Illustration of text transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
         """
 
         def __init__(self, normalize_form=NormalizeForm.NFKC):
@@ -1187,6 +1259,10 @@ if platform.system().lower() != 'windows':
             >>> text_file_list = ["/path/to/text_file_dataset_file"]
             >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_list)
             >>> text_file_dataset = text_file_dataset.map(operations=replace_op)
+
+        Tutorial Examples:
+            - `Illustration of text transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
         """
 
         @check_regex_replace
@@ -1243,6 +1319,10 @@ if platform.system().lower() != 'windows':
             >>> tokenizer_op = text.RegexTokenizer(delim_pattern, with_offsets=True)
             >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
             ...                                           output_columns=["token", "offsets_start", "offsets_limit"])
+
+        Tutorial Examples:
+            - `Illustration of text transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
         """
 
         @check_regex_tokenizer
@@ -1292,6 +1372,10 @@ if platform.system().lower() != 'windows':
             >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
             ...                                           output_columns=["token", "offsets_start", "offsets_limit"])
 
+        Tutorial Examples:
+            - `Illustration of text transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
+
         """
 
         @check_unicode_script_tokenizer
@@ -1339,6 +1423,10 @@ if platform.system().lower() != 'windows':
             >>> tokenizer_op = text.WhitespaceTokenizer(with_offsets=True)
             >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
             ...                                           output_columns=["token", "offsets_start", "offsets_limit"])
+
+        Tutorial Examples:
+            - `Illustration of text transforms
+              <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_
         """
 
         @check_with_offsets

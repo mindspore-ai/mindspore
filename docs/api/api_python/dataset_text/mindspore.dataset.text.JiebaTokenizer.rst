@@ -26,6 +26,10 @@ mindspore.dataset.text.JiebaTokenizer
         - **TypeError** - 参数 `hmm_path` 和 `mp_path` 类型不为str。
         - **TypeError** - 参数 `with_offsets` 类型不为bool。
 
+    教程样例：
+        - `文本变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/text_gallery.html>`_
+
     .. py:method:: add_dict(user_dict)
 
         将用户定义的词添加到 `JiebaTokenizer` 的字典中。

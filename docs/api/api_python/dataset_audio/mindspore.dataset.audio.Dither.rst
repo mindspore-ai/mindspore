@@ -15,3 +15,7 @@ mindspore.dataset.audio.Dither
         - **TypeError** - 当 `density_function` 的类型不为 :class:`mindspore.dataset.audio.DensityFunction` 。
         - **TypeError** - 当 `noise_shaping` 的类型不为bool。
         - **RuntimeError** - 当输入音频的shape不为<..., time>。
+
+    教程样例：
+        - `音频变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/audio_gallery.html>`_

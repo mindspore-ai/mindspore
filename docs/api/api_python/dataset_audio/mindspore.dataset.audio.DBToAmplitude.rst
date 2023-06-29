@@ -12,3 +12,7 @@ mindspore.dataset.audio.DBToAmplitude
     异常：
         - **TypeError** - 如果 `ref` 不是float类型。
         - **TypeError** - 如果 `power` 不是float类型。
+
+    教程样例：
+        - `音频变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/audio_gallery.html>`_

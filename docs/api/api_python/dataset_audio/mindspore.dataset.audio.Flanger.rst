@@ -38,3 +38,7 @@ mindspore.dataset.audio.Flanger
         - **TypeError** - 当 `modulation` 的类型不为 :class:`mindspore.dataset.audio.Modulation` 。
         - **TypeError** - 当 `interpolation` 的类型不为 :class:`mindspore.dataset.audio.Interpolation` 。
         - **RuntimeError** - 当输入音频的shape不为<..., channel, time>。
+
+    教程样例：
+        - `音频变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/audio_gallery.html>`_

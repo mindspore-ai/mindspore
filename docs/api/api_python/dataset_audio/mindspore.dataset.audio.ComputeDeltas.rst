@@ -30,3 +30,7 @@ mindspore.dataset.audio.ComputeDeltas
         - **ValueError** - 当 `win_length` 小于3。
         - **TypeError** - 当 `pad_mode` 的类型不为 :class:`mindspore.dataset.audio.BorderType` 。
         - **RuntimeError** - 当输入音频的shape不为<..., freq, time>。
+
+    教程样例：
+        - `音频变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/audio_gallery.html>`_

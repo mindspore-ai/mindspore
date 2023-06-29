@@ -16,3 +16,7 @@ mindspore.dataset.text.Lookup
         - **TypeError** - 参数 `vocab` 类型不为 :class:`mindspore.dataset.text.Vocab` 。
         - **TypeError** - 参数 `unknown_token` 类型不为str。
         - **TypeError** - 参数 `data_type` 类型不为 :class:`mindspore.dtype` 。
+
+    教程样例：
+        - `文本变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/text_gallery.html>`_

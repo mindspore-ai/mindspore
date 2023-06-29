@@ -19,3 +19,7 @@ mindspore.dataset.text.RegexTokenizer
         - **TypeError** - 参数 `delim_pattern` 的类型不是str。
         - **TypeError** - 参数 `keep_delim_pattern` 的类型不是str。
         - **TypeError** - 参数 `with_offsets` 的类型不是bool。
+
+    教程样例：
+        - `文本变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/text_gallery.html>`_

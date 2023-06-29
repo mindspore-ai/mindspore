@@ -18,3 +18,7 @@ mindspore.dataset.audio.Contrast
         - **TypeError** - 当 `enhancement_amount` 的类型不为float。
         - **ValueError** - 当 `enhancement_amount` 取值不在[0, 100]范围内。
         - **RuntimeError** - 当输入音频的shape不为<..., time>。
+
+    教程样例：
+        - `音频变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/audio_gallery.html>`_

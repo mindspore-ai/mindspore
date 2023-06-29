@@ -23,3 +23,7 @@ mindspore.dataset.text.Ngram
         - **ValueError** - 参数 `left_pad` 不是一个长度2的Tuple[str, int]。
         - **ValueError** - 参数 `right_pad` 不是一个长度2的Tuple[str, int]。
         - **TypeError** - 参数 `separator` 的类型不是str。
+
+    教程样例：
+        - `文本变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/text_gallery.html>`_

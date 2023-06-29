@@ -13,3 +13,7 @@ mindspore.dataset.audio.RiaaBiquad
     异常：
         - **TypeError** - 当 `quantization_channels` 的类型不为int。
         - **ValueError** - 当 `quantization_channels` 不为 ``44100`` 、 ``48000`` 、 ``88200`` 、 ``96000`` 中的任何一个。
+
+    教程样例：
+        - `音频变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/audio_gallery.html>`_

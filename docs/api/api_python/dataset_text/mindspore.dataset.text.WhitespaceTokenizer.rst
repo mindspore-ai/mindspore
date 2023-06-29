@@ -12,3 +12,7 @@ mindspore.dataset.text.WhitespaceTokenizer
 
     异常：
         - **TypeError** - 参数 `with_offsets` 的类型不为bool。
+
+    教程样例：
+        - `文本变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/text_gallery.html>`_

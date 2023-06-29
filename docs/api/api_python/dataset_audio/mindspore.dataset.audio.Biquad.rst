@@ -23,3 +23,7 @@ mindspore.dataset.audio.Biquad
         - **TypeError** - 如果 `a1` 不是float类型。
         - **TypeError** - 如果 `a2` 不是float类型。
         - **ValueError** - 如果 `a0` 为0。
+
+    教程样例：
+        - `音频变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/audio_gallery.html>`_

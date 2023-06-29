@@ -37,3 +37,7 @@ mindspore.dataset.audio.MFCC
         - **ValueError** - 如果 `sample_rate` 为负数。
         - **ValueError** - 如果 `n_mfcc` 为负数。
         - **ValueError** - 如果 `dct_type` 不为 ``2`` 。
+
+    教程样例：
+        - `音频变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/audio_gallery.html>`_

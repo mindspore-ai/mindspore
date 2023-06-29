@@ -58,12 +58,13 @@ class AdamW(Optimizer):
        \end{aligned}
 
     .. warning::
-        This is an experimental API that is subject to change.
+        This is an experimental optimizer API that is subject to change.
+        This module must be used with lr scheduler module in `nn.lr_scheduler`.
 
     Args:
         params (Union[list(Parameter), list(dict)]): list of parameters to optimize or dicts defining
             parameter groups
-        lr (Union[int, float, Tensor]): learning rate. Default: ``1e-3``.
+        lr (Union[int, float, Tensor], optional): learning rate. Default: ``1e-3``.
         betas (Tuple[float, float], optional): The exponential decay rate for the moment estimations.
             Default: ``(0.9, 0.999)``.
         eps (float, optional): term added to the denominator to improve

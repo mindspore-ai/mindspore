@@ -17,3 +17,7 @@ mindspore.dataset.text.SentencePieceTokenizer
     异常：
         - **TypeError** - 参数 `mode` 的类型不是字符串或 :class:`mindspore.dataset.text.SentencePieceVocab` 。
         - **TypeError** - 参数 `out_type` 的类型不是 :class:`mindspore.dataset.text.SPieceTokenizerOutType` 。
+
+    教程样例：
+        - `文本变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/text_gallery.html>`_

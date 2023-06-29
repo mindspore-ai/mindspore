@@ -28,3 +28,7 @@
         - **TypeError** - 当 `preserve_unused_token` 的类型不为bool。
         - **TypeError** - 当 `with_offsets` 的类型不为bool。
         - **RuntimeError** - 当输入Tensor的数据类型不为str。
+
+    教程样例：
+        - `文本变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/text_gallery.html>`_

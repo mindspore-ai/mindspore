@@ -38,3 +38,7 @@ mindspore.dataset.audio.InverseMelScale
         - **TypeError** - 如果 `sgdargs` 的类型不为dict。
         - **TypeError** - 如果 `norm` 的类型不为 :class:`mindspore.dataset.audio.NormType` 。
         - **TypeError** - 如果 `mel_type` 的类型不为 :class:`mindspore.dataset.audio.MelType` 。
+
+    教程样例：
+        - `音频变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/audio_gallery.html>`_

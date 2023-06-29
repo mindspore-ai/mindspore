@@ -19,3 +19,7 @@ mindspore.dataset.audio.Vol
         - **ValueError** - 当 `gain_type` 为 ``GainType.AMPLITUDE`` 时，`gain` 为负数。
         - **ValueError** - 当 `gain_type` 为 ``GainType.POWER`` 时，`gain` 不为正数。
         - **RuntimeError** - 当输入音频的shape不为<..., time>。
+
+    教程样例：
+        - `音频变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/audio_gallery.html>`_

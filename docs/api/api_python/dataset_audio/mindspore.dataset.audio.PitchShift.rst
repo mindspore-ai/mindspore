@@ -27,3 +27,7 @@ mindspore.dataset.audio.PitchShift
         - **ValueError** - 如果 `n_fft` 为负数。
         - **ValueError** - 如果 `win_length` 不是正数。
         - **ValueError** - 如果 `hop_length` 不是正数。
+
+    教程样例：
+        - `音频变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/audio_gallery.html>`_

@@ -10,7 +10,7 @@ mindspore.nn.lr_scheduler.LinearLR
 
     参数：
         - **optimizer** (Optimizer) - 优化器实例。
-        - **start_factor** (int，可选) - 初始的乘法因子值，后续向 `end_factor` 进行线性变化。默认值：``1./3``。
+        - **start_factor** (int，可选) - 初始的乘法因子值，后续向 `end_factor` 进行线性变化。默认值：``1.0 /3``。
         - **end_factor** (int，可选) - 线性变化过程结束时的乘法因子值。默认值：``1.0``。
         - **total_iters** (int，可选) - 迭代的次数。默认值：``5``。
         - **last_epoch** (int，可选) - epoch/step数。默认值：``-1``。

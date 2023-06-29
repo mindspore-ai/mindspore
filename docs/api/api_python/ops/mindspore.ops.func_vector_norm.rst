@@ -1,7 +1,7 @@
 mindspore.ops.vector_norm
 =========================
 
-.. py:function:: vector_norm(x, ord=2, axis=None, keepdim=False, *, dtype=None)
+.. py:function:: mindspore.ops.vector_norm(x, ord=2, axis=None, keepdim=False, *, dtype=None)
 
     返回给定Tensor在指定维度上的向量范数。
 

@@ -15,3 +15,7 @@ mindspore.dataset.audio.MaskAlongAxis
         - **ValueError** - `mask_start` 参数值错误（小于0）。
         - **ValueError** - `mask_width` 参数值错误（小于1）。
         - **ValueError** - `axis` 参数类型错误或者值错误，不属于 [1, 2]。
+
+    教程样例：
+        - `音频变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/audio_gallery.html>`_

@@ -64,3 +64,7 @@ mindspore.dataset.audio.Vad
         - **TypeError** - 当 `lp_lifter_freq` 的类型不为float。
         - **ValueError** - 当 `lp_lifter_freq` 不为正数。
         - **RuntimeError** - 当输入音频的shape不为<..., time>。
+
+    教程样例：
+        - `音频变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/audio_gallery.html>`_

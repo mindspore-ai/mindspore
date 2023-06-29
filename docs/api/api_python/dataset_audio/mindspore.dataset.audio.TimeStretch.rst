@@ -21,6 +21,10 @@ mindspore.dataset.audio.TimeStretch
         - **ValueError** - 当 `fixed_rate` 不为正数。
         - **RuntimeError** - 当输入音频的shape不为<..., freq, num_frame, complex=2>。
 
+    教程样例：
+        - `音频变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/audio_gallery.html>`_
+
     .. image:: time_stretch_rate1.5.png
 
     .. image:: time_stretch_original.png

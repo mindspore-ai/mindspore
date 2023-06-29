@@ -13,3 +13,7 @@ mindspore.dataset.text.SlidingWindow
         - **TypeError** - 参数 `width` 的类型不为int。
         - **ValueError** - 参数 `width` 的值不为正数。
         - **TypeError** - 参数 `axis` 的类型不为int。
+
+    教程样例：
+        - `文本变换样例库
+          <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/text_gallery.html>`_

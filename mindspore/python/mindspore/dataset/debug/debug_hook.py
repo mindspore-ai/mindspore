@@ -31,7 +31,7 @@ class DebugHook(ABC):
     Args:
         prev_op_name (str, optional): name of the operation before current debugging point. Default: ``None``.
 
-    Example:
+    Examples:
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.debug as debug
         >>>
