@@ -2580,6 +2580,9 @@ def tanh(input):
         ``Ascend`` ``GPU``  ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
         >>> output = ops.tanh(input)
         >>> print(output)
@@ -6067,6 +6070,8 @@ def cdist(x1, x2, p=2.0):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32))
         >>> y = Tensor(np.array([[[3.0, 3.0], [3.0, 3.0]]]).astype(np.float32))
         >>> output = ops.cdist(x, y, 2.0)
@@ -7360,6 +7365,7 @@ def dist(input, other, p=2):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor([[[1.0, 1.0], [2.0, 2.0]]])
         >>> input_y = Tensor([[[3.0, 3.0], [3.0, 3.0]]])
         >>> out = ops.dist(input_x, input_y)
@@ -8681,6 +8687,9 @@ def gumbel_softmax(logits, tau=1, hard=False, dim=-1):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> output = ops.gumbel_softmax(input_x, 1.0, True, -1)
         >>> print(output.shape)

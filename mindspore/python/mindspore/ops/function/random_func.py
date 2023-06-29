@@ -385,6 +385,8 @@ def uniform_candidate_sampler(true_classes,
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> data = Tensor(np.array([[1], [3], [4], [6], [3]], dtype=np.int64))
         >>> output1, output2, output3 = ops.uniform_candidate_sampler(data, 1, 3, False, 4, 1)
         >>> print(output1.shape)
@@ -588,6 +590,8 @@ def choice_with_mask(input_x, count=256, seed=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.ones(shape=[240000, 4]).astype(np.bool))
         >>> output_y, output_mask = ops.choice_with_mask(input_x)
         >>> result = output_y.shape

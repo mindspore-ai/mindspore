@@ -1308,6 +1308,9 @@ def celu(x, alpha=1.0):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([-2.0, -1.0, 1.0, 2.0]), mindspore.float32)
         >>> output = ops.celu(x, alpha=1.0)
         >>> print(output)
@@ -1524,6 +1527,9 @@ def fast_gelu(x):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> output = ops.fast_gelu(x)
         >>> print(output)
@@ -1881,6 +1887,9 @@ def hardshrink(x, lambd=0.5):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[ 0.5,  1,  2.0], [0.0533,0.0776,-2.1233]]), mindspore.float32)
         >>> output = ops.hardshrink(x)
         >>> print(output)
@@ -2105,6 +2114,9 @@ def hardswish(x):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> output = ops.hardswish(x)
         >>> print(output)
@@ -2523,6 +2535,9 @@ def softsign(x):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([0, -1, 2, 30, -30]), mindspore.float32)
         >>> output = ops.softsign(x)
         >>> print(output)
@@ -2613,6 +2628,9 @@ def softmax(x, axis=-1, *, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
         >>> output = ops.softmax(x)
         >>> print(output)
@@ -2661,6 +2679,9 @@ def softmin(x, axis=-1, *, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> output = ops.softmin(x)
         >>> print(output)
@@ -2789,6 +2810,9 @@ def selu(input_x):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> output = ops.selu(input_x)
         >>> print(output)
@@ -2822,6 +2846,9 @@ def sigmoid(input):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
         >>> output = ops.sigmoid(input)
         >>> print(output)
@@ -2855,6 +2882,9 @@ def logsigmoid(x):
         ``Ascend`` ``GPU``  ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
         >>> output = ops.logsigmoid(x)
         >>> print(output)
@@ -3136,6 +3166,8 @@ def pdist(input, p=2.0):
         ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]]).astype(np.float32))
         >>> y = ops.pdist(x, p=2.0)
         >>> print(y)
@@ -3323,6 +3355,9 @@ def relu(input):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> output = ops.relu(input_x)
         >>> print(output)
@@ -3357,6 +3392,9 @@ def relu6(x):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> result = ops.relu6(input_x)
         >>> print(result)
@@ -3404,6 +3442,9 @@ def prelu(x, weight):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.arange(-6, 6).reshape((2, 3, 2)), mindspore.float32)
         >>> weight = Tensor(np.array([0.1, 0.6, -0.3]), mindspore.float32)
         >>> output = ops.prelu(x, weight)
@@ -3454,6 +3495,9 @@ def rrelu(input, lower=1.0 / 8, upper=1.0 / 3):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[-1.0, 4.0], [2.0, 0]]), mindspore.float32)
         >>> output = ops.rrelu(x)
         >>> print(output)
@@ -3965,6 +4009,8 @@ def threshold(input, thr, value):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> inputs = mindspore.Tensor([0.0, 2, 3], mindspore.float32)
         >>> outputs = ops.threshold(inputs, 1, 100)
         >>> print(outputs)
@@ -4013,6 +4059,9 @@ def leaky_relu(input, alpha=0.2):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> print(ops.leaky_relu(x, alpha=0.2))
         [[-0.2  4.  -1.6]
@@ -4090,6 +4139,9 @@ def log_softmax(logits, axis=-1):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> logits = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
         >>> output = ops.log_softmax(logits)
         >>> print(output)
@@ -4176,6 +4228,9 @@ def mish(x):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> output = ops.mish(input_x)
         >>> print(output)
@@ -5295,6 +5350,9 @@ def hardsigmoid(input):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([ -3.5,  0,  4.3]), mindspore.float32)
         >>> output = ops.hardsigmoid(x)
         >>> print(output)
@@ -5334,6 +5392,8 @@ def hardtanh(input, min_val=-1.0, max_val=1.0):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor([-1, -2, 0, 2, 1], mindspore.float16)
         >>> output = ops.hardtanh(x, min_val=-1.0, max_val=1.0)
         >>> print(output)
@@ -6011,6 +6071,7 @@ def glu(x, axis=-1):
         ``Ascend`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
         >>> input = Tensor([[0.1,0.2,0.3,0.4],[0.5,0.6,0.7,0.8]])
         >>> output = ops.glu(input)
         >>> print(output)
@@ -6272,6 +6333,9 @@ def elu(input_x, alpha=1.0):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> output = ops.elu(x)
         >>> print(output)
@@ -6319,6 +6383,8 @@ def gelu(input_x, approximate='none'):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor([1.0, 2.0, 3.0], mindspore.float32)
         >>> result = ops.gelu(x)
         >>> print(result)
