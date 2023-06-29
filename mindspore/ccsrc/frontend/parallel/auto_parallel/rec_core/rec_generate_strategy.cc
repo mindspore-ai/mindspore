@@ -1236,13 +1236,13 @@ Dimensions CopyIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<O
 
 Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                                           Dimensions basic_stra) {
-  Strategies stra;
   MS_EXCEPTION_IF_NULL(ops[iter_ops]);
 
   if (iter_ops >= ops.size()) {
     MS_LOG(EXCEPTION) << "Failure: Operators' elements out of range.";
   }
 
+  Strategies stra;
   if (basic_stra.size() == 0) {
     for (size_t iter_op_inputs = 0; iter_op_inputs < (size_t)ops[iter_ops]->inputs_tensor_info().size();
          iter_op_inputs++) {
@@ -1281,10 +1281,10 @@ Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<Oper
   if (type == SOFTMAX || type == LOG_SOFTMAX) {
     return PrepareSoftMax(ops, iter_ops, basic_stra);
   }
-  if (ops[iter_ops]->type() == FLATTEN) {
+  if (type == FLATTEN) {
     return PrepareDataParallel(ops, iter_ops);
   }
-  if (ops[iter_ops]->type() == LAYER_NORM) {
+  if (type == LAYER_NORM) {
     return PrepareLayerNorm(ops, iter_ops, basic_stra);
   }
   if (type == BATCH_MATMUL) {

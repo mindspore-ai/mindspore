@@ -285,6 +285,9 @@ std::vector<AnfNodePtr> GetFirstTargetInputs(const std::vector<CNodePtr> &origin
         continue;
       }
       auto input_cnode = input->cast<CNodePtr>();
+      if (!IsBpropNode(input_cnode)) {
+        continue;
+      }
       if (target_nodes.find(input_cnode) != target_nodes.end() ||
           recomputed_origin_nodes.find(input_cnode) != recomputed_origin_nodes.end()) {
         continue;
