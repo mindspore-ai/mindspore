@@ -30,7 +30,7 @@ namespace {
 constexpr size_t kIndexK = 2;
 constexpr size_t kIndexV = 3;
 constexpr int64_t kTotalShapeSize = 3;
-constexpr size_t kInuputNumber = 5;
+constexpr int64_t kInuputNumber = 5;
 constexpr size_t kOutputNumber = 4;
 }  // namespace
 MIND_API_OPERATOR_IMPL(WKVGrad, BaseOperator);
