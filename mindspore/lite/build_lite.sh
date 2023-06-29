@@ -823,10 +823,12 @@ build_aar() {
     local minddata_so=${LITE_JAVA_PATH}/java/app/libs/arm64-v8a/libminddata-lite.so
     if [ -e "${minddata_so}" ]; then
       cp ${LITE_JAVA_PATH}/java/app/build/outputs/aar/mindspore-lite.aar ${BASEPATH}/output/mindspore-lite-full-${VERSION_STR}.aar
-      sha256sum ${BASEPATH}/output/mindspore-lite-full-${VERSION_STR}.aar > ${BASEPATH}/output/mindspore-lite-full-${VERSION_STR}.aar.sha256
+      cd ${BASEPATH}/output
+      sha256sum mindspore-lite-full-${VERSION_STR}.aar > mindspore-lite-full-${VERSION_STR}.aar.sha256
     else
       cp ${LITE_JAVA_PATH}/java/app/build/outputs/aar/mindspore-lite.aar ${BASEPATH}/output/mindspore-lite-${VERSION_STR}.aar
-      sha256sum ${BASEPATH}/output/mindspore-lite-${VERSION_STR}.aar > ${BASEPATH}/output/mindspore-lite-${VERSION_STR}.aar.sha256
+      cd ${BASEPATH}/output
+      sha256sum mindspore-lite-${VERSION_STR}.aar > mindspore-lite-${VERSION_STR}.aar.sha256
     fi
 }
 
