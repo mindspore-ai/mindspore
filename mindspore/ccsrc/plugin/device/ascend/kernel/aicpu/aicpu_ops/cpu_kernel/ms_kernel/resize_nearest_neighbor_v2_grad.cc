@@ -98,6 +98,29 @@ void ResizeNearestNeighborV2GradCpuKernel::InnerCompute(
   }
 }
 
+template <>
+void ResizeNearestNeighborV2GradCpuKernel::InnerCompute(
+  Eigen::Index y, Eigen::Index out_y, Eigen::Index x,
+  Eigen::TensorMap<Eigen::Tensor<Eigen::half, kValue4, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned> grads_4d,
+  Eigen::TensorMap<Eigen::Tensor<Eigen::half, kValue4, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned> y_4d) {
+  const Eigen::Index out_x =
+    std::min((align_corners) ? static_cast<Eigen::Index>(roundf(Scaler(x, width_scale, half_pixel_centers)))
+                             : static_cast<Eigen::Index>(floorf(Scaler(x, width_scale, half_pixel_centers))),
+             out_width - 1);
+  for (Eigen::Index b = 0; b < batch_size; ++b) {
+    for (Eigen::Index c = 0; c < channels; ++c) {
+      if (data_format == "NHWC") {
+        y_4d(b, out_y, out_x, c) = static_cast<Eigen::half>(static_cast<float>(y_4d(b, out_y, out_x, c)) +
+                                                            static_cast<float>(grads_4d(b, y, x, c)));
+      } else {
+        // data_format = NCHW
+        y_4d(b, c, out_y, out_x) = static_cast<Eigen::half>(static_cast<float>(y_4d(b, c, out_y, out_x)) +
+                                                            static_cast<float>(grads_4d(b, c, y, x)));
+      }
+    }
+  }
+}
+
 uint32_t ResizeNearestNeighborV2GradCpuKernel::Compute(CpuKernelContext &ctx) {
   if (ResizeNearestNeighborV2GradParamCheck(ctx) != KERNEL_STATUS_OK) {
     return KERNEL_STATUS_PARAM_INVALID;
