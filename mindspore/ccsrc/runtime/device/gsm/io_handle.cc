@@ -43,12 +43,7 @@ void IOHandle::LoadAio(const std::string &aio_shared_lib_name, const std::string
     return;
   }
 #else
-  auto real_path = FileUtils::GetRealPath(aio_shared_lib_name.c_str());
-  if (!real_path.has_value()) {
-    MS_LOG(ERROR) << "The aio path " << aio_shared_lib_name << " is invalid";
-    return;
-  }
-  auto handle = dlopen(real_path.value().c_str(), RTLD_NOW);
+  auto handle = dlopen(aio_shared_lib_name.c_str(), RTLD_NOW);
   if (handle == nullptr) {
     MS_LOG(WARNING) << "Loading " << aio_shared_lib_name << " failed. Error message: " << dlerror();
     return;

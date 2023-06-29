@@ -361,7 +361,7 @@ void SwapManager::AddSwappingTensor(const mindspore::device::DeviceAddress *devi
 }
 
 void SwapManager::SetSwappableBeforeMemAllocate(const std::vector<DeviceAddress *> &inputs,
-                                                const std::vector<DeviceAddress *> &outputs) {
+                                                const std::vector<DeviceAddress *> &outputs) const {
   for (const auto &device_address : inputs) {
     if (device_address == nullptr) {
       continue;
@@ -378,7 +378,7 @@ void SwapManager::SetSwappableBeforeMemAllocate(const std::vector<DeviceAddress 
 
 void SwapManager::SetSwappableBeforeMemFree(const std::vector<DeviceAddress *> &inputs,
                                             const std::vector<DeviceAddress *> &outputs,
-                                            const mindspore::device::KernelInfo *kernel_info) {
+                                            const mindspore::device::KernelInfo *kernel_info) const {
   for (const auto &device_address : inputs) {
     if (device_address == nullptr) {
       continue;

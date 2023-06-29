@@ -87,11 +87,7 @@ class BACKEND_EXPORT LoadableDeviceAddress : public DeviceAddress {
  protected:
   DeviceContext *GetDeviceContext() const {
     DeviceContext *device_context = nullptr;
-    try {
-      device_context = DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
-    } catch (const std::exception &e) {
-      return nullptr;
-    }
+    device_context = DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
     return device_context;
   }
 
