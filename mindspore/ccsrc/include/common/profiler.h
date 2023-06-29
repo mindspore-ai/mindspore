@@ -134,6 +134,19 @@ class COMMON_EXPORT ProfilerStageRecorder {
 };
 
 struct ProfilerData {
+  ProfilerData(const ProfilerData &other)
+      : is_stage_(other.is_stage_),
+        stage_(other.stage_),
+        module_(other.module_),
+        event_(other.event_),
+        op_name_(other.op_name_),
+        is_inner_event_(other.is_inner_event_),
+        start_time_(other.start_time_),
+        end_time_(other.end_time_),
+        dur_time_(other.dur_time_),
+        tid_(other.tid_),
+        pid_(other.pid_) {}
+
   ProfilerData(ProfilerModule module, ProfilerEvent event, const std::string &op_name, bool is_inner_event,
                uint64_t start_time, uint64_t end_time)
       : is_stage_(false),
@@ -240,6 +253,7 @@ class COMMON_EXPORT ProfilerAnalyzer {
 
   // Process data.
   void SaveJsonData(const ProfilerDataPtr &data);
+  void GenerateSummaryData();
   void AnalyzeSummaryData(const ProfilerDataPtr &data);
   void AnalyzeStageSummaryData(const ProfilerDataPtr &data);
   void AnalyzeModuleSummaryData(const ProfilerDataPtr &data);
@@ -269,6 +283,8 @@ class COMMON_EXPORT ProfilerAnalyzer {
   std::vector<ProfilerDataPtr> data_;
   std::mutex data_mutex_;
   nlohmann::json json_infos_;
+  // Summary data that removed non-overlapping ranges from data_.
+  std::map<ProfilerModule, std::vector<ProfilerDataPtr>> summary_data_;
   // The data analyzed level is module-->event-->op.
   std::map<ProfilerModule, ProfilerModuleInfoPtr> module_infos_;
   std::map<ProfilerStage, ProfilerStatisticsInfoPtr> stage_infos_;

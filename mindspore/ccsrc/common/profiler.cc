@@ -183,6 +183,7 @@ void ProfilerAnalyzer::Clear() {
   // Reset the saved data.
   json_infos_.clear();
   data_.clear();
+  summary_data_.clear();
   module_infos_.clear();
   stage_infos_.clear();
 }
@@ -228,9 +229,49 @@ void ProfilerAnalyzer::StartStep() {
   step_time_ = 0;
   module_total_time_ = 0;
   data_.clear();
+  summary_data_.clear();
   module_infos_.clear();
   stage_infos_.clear();
   step_start_time_ = GetTimeStamp();
+}
+
+void ProfilerAnalyzer::GenerateSummaryData() {
+  if (data_.empty()) {
+    return;
+  }
+
+  std::map<ProfilerModule, std::map<uint64_t, ProfilerDataPtr>> ordered_data;
+  for (auto &data : data_) {
+    (void)ordered_data[data->module_].emplace(data->start_time_, data);
+  }
+
+  for (const auto &data_item : ordered_data) {
+    ProfilerDataPtr last_data = nullptr;
+    for (const auto &[start_time, data] : data_item.second) {
+      // Skip stage and inner event data.
+      if (data->is_stage_ || data->is_inner_event_) {
+        (void)summary_data_[data->module_].emplace_back(data);
+        continue;
+      }
+      // last_data is null or current range is not in last range, add current range and update last_data.
+      if (last_data == nullptr || start_time >= last_data->end_time_) {
+        (void)summary_data_[data->module_].emplace_back(data);
+        last_data = data;
+        continue;
+      }
+      // Current range is in last range, just skip.
+      if (data->end_time_ <= last_data->end_time_) {
+        continue;
+      }
+      // Process overlapping range of current range, data need deep copy.
+      auto data_ptr = std::make_shared<ProfilerData>(*data);
+      data_ptr->op_name_ += "_overlapping";
+      data_ptr->start_time_ = last_data->end_time_;
+      data_ptr->dur_time_ = data_ptr->end_time_ - data_ptr->start_time_;
+      (void)summary_data_[data_ptr->module_].emplace_back(data_ptr);
+      last_data = data_ptr;
+    }
+  }
 }
 
 void ProfilerAnalyzer::EndStep() {
@@ -257,7 +298,14 @@ void ProfilerAnalyzer::EndStep() {
   for (auto &data : data_) {
     MS_EXCEPTION_IF_NULL(data);
     SaveJsonData(data);
-    AnalyzeSummaryData(data);
+  }
+
+  // Process overlapping time ranges.
+  GenerateSummaryData();
+  for (const auto &data_iter : summary_data_) {
+    for (const auto &data : data_iter.second) {
+      AnalyzeSummaryData(data);
+    }
   }
 
   AddPythonSummaryData();
@@ -270,6 +318,7 @@ void ProfilerAnalyzer::EndStep() {
   step_time_ = 0;
   module_total_time_ = 0;
   data_.clear();
+  summary_data_.clear();
   module_infos_.clear();
   stage_infos_.clear();
 }
