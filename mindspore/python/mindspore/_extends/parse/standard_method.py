@@ -2782,6 +2782,9 @@ def floor(x):
 
 
 def floor_divide(input, other):
+    r"""
+    Divides the first input tensor by the second input tensor element-wise and round down to the closest integer.
+    """
     return F.floor_divide(input, other)
 
 
