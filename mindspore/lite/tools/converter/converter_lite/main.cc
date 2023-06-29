@@ -51,8 +51,8 @@ int main(int argc, const char **argv) {
       return ret;
     }
 
-    int multi_model_argc = 2;
-    if (argc <= multi_model_argc) {
+    constexpr int kMultiModeArgc = 2;
+    if (argc <= kMultiModeArgc) {
       if (flags.configFile.empty()) {
         MS_LOG(ERROR) << "Flag missing. When in single model scenario, fmk/modelFile/outputFile flags are necessary. "
                          "When in multi model scenario, configFile flag is necessary.";
@@ -108,8 +108,9 @@ int main(int argc, const char **argv) {
 
 #ifndef Debug
   } catch (const std::exception &e) {
-    std::cout << e.what() << std::endl;
-    std::cout << "encounter an unknown error, please verify the input model file or build the debug version\n";
+    std::cerr << e.what() << std::endl;
+    std::cerr << "encounter an unknown error, please verify the input model file or build the debug version."
+              << std::endl;
     return mindspore::kLiteError;
   }
 #endif

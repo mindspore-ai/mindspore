@@ -185,17 +185,17 @@ int Flags::InitInTensorShape() const {
       name += ":" + string_split[i];
     }
     if (name.empty()) {
-      MS_LOG(ERROR) << "input tensor name is empty";
+      MS_LOG(ERROR) << "input tensor name is empty!";
       return lite::RET_INPUT_PARAM_INVALID;
     }
     auto dim_strs = string_split[string_split.size() - 1];
     if (dim_strs.empty()) {
-      MS_LOG(ERROR) << "input tensor dim string is empty";
+      MS_LOG(ERROR) << "input tensor dim string is empty!";
       return lite::RET_INPUT_PARAM_INVALID;
     }
     auto dims = lite::StrSplit(dim_strs, std::string(","));
     if (dims.empty()) {
-      MS_LOG(ERROR) << "input tensor dim is empty";
+      MS_LOG(ERROR) << "input tensor dim is empty!";
       return lite::RET_INPUT_PARAM_INVALID;
     }
     for (const auto &dim : dims) {
@@ -231,7 +231,7 @@ int Flags::InitGraphOutputFormat() {
   if (StrToEnumFormatMap.find(this->graphOutputFormatStr) != StrToEnumFormatMap.end()) {
     graphOutputFormat = StrToEnumFormatMap.at(this->graphOutputFormatStr);
   } else if (!this->graphOutputFormatStr.empty()) {
-    MS_LOG(ERROR) << "graph input format is invalid.";
+    MS_LOG(ERROR) << "graph input format [" << graphOutputFormatStr << "] is invalid!";
     return RET_INPUT_PARAM_INVALID;
   }
   return RET_OK;

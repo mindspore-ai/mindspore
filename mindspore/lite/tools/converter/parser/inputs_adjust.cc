@@ -23,11 +23,13 @@
 
 namespace mindspore::lite {
 namespace {
+constexpr int kBuildInputFlagOne = 1;
 constexpr int kBuildInputFlagTwo = 2;
 constexpr int kBuildInputFlagThree = 3;
 constexpr int kBuildInputFlagFour = 4;
 constexpr int kBuildInputFlagFive = 5;
 }  // namespace
+
 STATUS InputAdjust::AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int input_num,
                                    const std::string &attr_name, int flag) {
   MS_ASSERT(cnode != nullptr);
@@ -54,7 +56,7 @@ STATUS InputAdjust::AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePt
   }
   AnfNodePtr param_node = nullptr;
   switch (flag) {
-    case 1: {
+    case kBuildInputFlagOne: {
       MS_CHECK_TRUE_MSG(!opt::CastToInt(value_ptr).empty(), RET_ERROR, "value is empty");
       auto value_data = opt::CastToInt(value_ptr).front();
       param_node =
@@ -86,14 +88,15 @@ STATUS InputAdjust::AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePt
       break;
     }
     default: {
-      MS_LOG(ERROR) << "Error attr flag";
+      MS_LOG(ERROR) << "Error attr flag!" << flag;
       return lite::RET_ERROR;
     }
   }
   if (param_node == nullptr) {
-    MS_LOG(ERROR) << "Build parameter failed.";
+    MS_LOG(ERROR) << "Build parameter failed!node: " << (cnode->fullname_with_scope() + "_" + attr_name);
     return lite::RET_ERROR;
   }
+
   auto manager = func_graph->manager();
   MS_ASSERT(manager != nullptr);
   auto tr = manager->Transact();
@@ -152,7 +155,7 @@ bool InputAdjust::Run(const FuncGraphPtr &func_graph) {
                  : AddAttrToInput(func_graph, cnode, opt::kInputIndexTwo, "scale", kBuildInputFlagFive);
     }
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
-      MS_LOG(ERROR) << "adjust input pass is failed.";
+      MS_LOG(ERROR) << "adjust input pass is failed!ret = " << status;
       return false;
     }
   }
