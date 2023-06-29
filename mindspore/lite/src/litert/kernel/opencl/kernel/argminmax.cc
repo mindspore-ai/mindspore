@@ -203,7 +203,8 @@ int ArgMinMaxOpenCLKernel::Prepare() {
   compute_.get_max_ = (type() == PrimitiveType_ArgMaxFusion);
   compute_.axis_ = (param->axis_ + compute_.dims_size_) % compute_.dims_size_;
   compute_.axis_ = GetBroadcastGpuAxis(compute_.dims_size_, compute_.axis_);
-  compute_.keep_dims_ = param->keep_dims_ || param->topk_ > 1 || compute_.dims_size_ == out_tensors_[0]->shape().size();
+  compute_.keep_dims_ = param->keep_dims_ || (param->topk_ > 1) ||
+                        (compute_.dims_size_ == static_cast<int32_t>(out_tensors_[0]->shape().size()));
 
   ret = InitWeights();
   if (ret != RET_OK) {

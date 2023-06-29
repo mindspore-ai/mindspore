@@ -53,7 +53,6 @@ class OpenCLSubGraph : public SubGraphKernel {
   int RunPass();
   int Prepare() override;
   int ReSize() override;
-  int ReSize(bool interrupt);
   int Execute() override;
   int Execute(const KernelCallBack &before, const KernelCallBack &after) override;
 
