@@ -20,6 +20,7 @@
 #include "include/common/utils/utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "include/common/utils/parallel_context.h"
 
 namespace mindspore {
 namespace opt {
@@ -52,6 +53,28 @@ bool InsertDependForAllGather::Run(const FuncGraphPtr &graph) {
     new_input->set_abstract(common::AnfAlgo::GetInputNode(next_cnode, 0)->abstract());
     common::AnfAlgo::SetNodeInput(next_cnode, new_input, 0);
     changed = true;
+    if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) {
+      continue;
+    }
+    std::vector<AnfNodePtr> make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple)};
+    auto next_cnode_inputs = next_cnode->inputs();
+    std::copy(next_cnode_inputs.begin() + 1, next_cnode_inputs.end(), std::back_inserter(make_tuple_inputs));
+    std::vector<AnfNodePtr> next_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
+                                           current_node, graph->NewCNode(make_tuple_inputs)};
+    auto cur_new_input = graph->NewCNode(next_inputs);
+    cur_new_input->AddAttr("opt_shard_depend", MakeValue(true));
+    if (current_node->isa<CNode>()) {
+      auto manager = graph->manager();
+      auto cur_node_users = manager->node_users()[current_node];
+      for (const auto &allgather_node_user : cur_node_users) {
+        if (!IsPrimitiveCNode(allgather_node_user.first) ||
+            IsPrimitiveCNode(allgather_node_user.first, prim::kPrimDepend)) {
+          continue;
+        }
+        auto allgather_node_user_cnode = allgather_node_user.first->cast<CNodePtr>();
+        common::AnfAlgo::SetNodeInput(allgather_node_user_cnode, cur_new_input, 0);
+      }
+    }
   }
   return changed;
 }
