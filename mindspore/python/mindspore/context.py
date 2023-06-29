@@ -877,6 +877,8 @@ def set_offload_context(offload_config):
             - offload_path (str):  The path of offload.
             - offload_cpu_size (str):  The cpu memory size for offload. The format is "xxGB".
             - offload_disk_size (str): The disk size for offload. The format is "xxGB"
+            - hbm_ratio (float): The ratio that can be used based on the maximum device memory. The range is (0,1].
+            - cpu_ratio (float): The ratio that can be used based on the maximum host memory. The range is (0,1].
             - enable_aio (bool): The flag of whether enabling aio. Default: ``True``.
             - aio_block_size (str): The size of aio block. The format is "xxGB"
             - aio_queue_depth (int): The depth of aio queue.
