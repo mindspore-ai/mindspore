@@ -687,6 +687,7 @@ def convert_tupleslice_to_tensor(tuple_index):
 
 
 def judge_tuple_index_dim_check_error(index_dim, data_dim):
+    """raise IndexError when tuple_index's dim is invalid"""
     if index_dim > data_dim:
         raise IndexError(f"The dim of index cannot be greater than indexed data, but got "
                          f"dim of index:{index_dim}, dim of data:{data_dim}")
