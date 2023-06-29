@@ -51,6 +51,8 @@ class TfliteRelPosMultiHeadAttentionFusion : public MultiHeadAttentionFusion {
 
   int SetQuantParamForAttentionNode(const PrimitivePtr &prim, const EquivPtr &equiv) const;
 
+  int SetQuantParamNewForAttentionNode(const CNodePtr &cnode, const EquivPtr &equiv) const;
+
   const VectorRef DefineRelativeShiftPattern(const BaseRef &input) const;
 
  private:

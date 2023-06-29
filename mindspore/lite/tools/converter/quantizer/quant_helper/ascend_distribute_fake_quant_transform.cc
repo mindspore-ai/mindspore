@@ -279,6 +279,7 @@ int AscendDistributeFakeQuantTransform::MatMulWeightTranspose(const FuncGraphPtr
       continue;
     }
     auto quant_type_attr = cnode_primitive->GetAttr(quant::kQuantType);
+    MS_CHECK_TRUE_MSG(quant_type_attr != nullptr, RET_NULL_PTR, "quant_type attr not exist.");
     auto quant_type = static_cast<quant::QuantType>(GetValue<int32_t>(quant_type_attr));
 
     if (quant_type != quant::QUANT_WEIGHT && quant_type != quant::QUANT_ALL) {

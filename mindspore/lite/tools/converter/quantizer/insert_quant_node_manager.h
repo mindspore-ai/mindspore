@@ -107,8 +107,6 @@ class InsertQuantNodeManager {
                                      bool set_quant_flag = true);
 
   ValueNodePtr NewQuantCastPrimitive(int src_type, int dst_type, const AnfNodePtr &input_node,
-                                     const CastNodeType &cast_node_type,
-                                     const std::vector<schema::QuantParamT> &input_quant_params,
                                      const std::vector<schema::QuantParamT> &output_quant_params, int axis = 0,
                                      bool set_quant_flag = true);
 

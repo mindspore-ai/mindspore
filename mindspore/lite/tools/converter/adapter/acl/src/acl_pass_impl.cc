@@ -1282,7 +1282,6 @@ STATUS AclPassImpl::RemoveQuantDtypeCast(const FuncGraphPtr &func_graph) {
           auto pre_cnode = pre_node->cast<mindspore::CNodePtr>();
           auto pre_cnode_primitive = GetValueNode<PrimitivePtr>(pre_cnode->input(0));
           CHECK_NULL_RETURN(pre_cnode_primitive);
-          // If !pre_cnode_primitive->HasAttr(quant_param)
           MS_LOG(INFO) << "Copy quant param from cnode: " << cnode->fullname_with_scope();
           pre_cnode_primitive->AddAttr(lite::quant::kQuantParam, cnode_primitive->GetAttr(lite::quant::kQuantParam));
         } else if (lite::IsGraphInput(pre_node)) {
