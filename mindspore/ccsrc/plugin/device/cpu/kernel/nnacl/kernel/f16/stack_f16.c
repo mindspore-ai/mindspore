@@ -66,7 +66,7 @@ void StackF16FreeBuffer(StackF16Struct *stack_f16) {
   stack_f16->init_ = NULL;
 }
 
-int stack_f16_compute(KernelBase *self) {
+int StackF16Compute(KernelBase *self) {
   StackF16Struct *stack_f16 = (StackF16Struct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(stack_f16);
 
@@ -86,10 +86,10 @@ KernelBase *CreateStackF16(OpParameter *param, int data_type) {
   StackStruct *stack = &stack_f16->stack_;
   stack->buffers_ = NULL;
   stack->data_type_ = data_type;
-  stack->base_.release = stack_release;
-  stack->base_.prepare = stack_prepare;
-  stack->base_.resize = stack_resize;
-  stack->base_.compute = stack_f16_compute;
+  stack->base_.release_ = StackRelease;
+  stack->base_.prepare_ = StackPrepare;
+  stack->base_.resize_ = StackResize;
+  stack->base_.compute_ = StackF16Compute;
   return (KernelBase *)stack;
 }
 

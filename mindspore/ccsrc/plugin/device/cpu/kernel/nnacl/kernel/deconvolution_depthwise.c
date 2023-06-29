@@ -198,9 +198,9 @@ ConvolutionBaseStruct *CreateDeConvDw(ConvParameter *param) {
 
   deconv_dw->conv_.pack_weight_ = DeConvDwPackWeight;
   deconv_dw->conv_.malloc_weight_bias_ = DeConvDwMallocWeightBiasData;
-  deconv_dw->conv_.base_.prepare = deconv_dw_prepare;
-  deconv_dw->conv_.base_.resize = deconv_dw_resize;
-  deconv_dw->conv_.base_.release = default_release;
-  deconv_dw->conv_.base_.compute = deconv_dw_compute;
+  deconv_dw->conv_.base_.prepare_ = deconv_dw_prepare;
+  deconv_dw->conv_.base_.resize_ = deconv_dw_resize;
+  deconv_dw->conv_.base_.release_ = DefaultRelease;
+  deconv_dw->conv_.base_.compute_ = deconv_dw_compute;
   return &deconv_dw->conv_;
 }

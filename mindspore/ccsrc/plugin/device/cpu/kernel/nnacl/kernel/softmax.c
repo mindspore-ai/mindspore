@@ -53,7 +53,7 @@ int SoftmaxLastAxisRun(void *cdata, int task_id, float l, float r) {
   return SoftmaxLastAxis((float *)input_ptr + offset, (float *)output_ptr + offset, end - begin, channel);
 }
 
-int softmax_release(struct KernelBase *self) {
+int SoftmaxRelease(struct KernelBase *self) {
   SoftmaxStruct *softmax = (SoftmaxStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(softmax);
   if (softmax->sum_data_ != NULL) {
@@ -90,7 +90,7 @@ int InitSoftmaxParam(SoftmaxStruct *softmax) {
   softmax->in_plane_size_ = in_plane_size;
   softmax->out_plane_size_ = out_plane_size;
 
-  (void)softmax_release(&softmax->base_);
+  (void)SoftmaxRelease(&softmax->base_);
   if (softmax->in_plane_size_ > 1) {
     NNACL_CHECK_INT_MUL_NOT_OVERFLOW(out_plane_size, in_plane_size, NNACL_ERR);
     int sum_data_size = out_plane_size * in_plane_size;
@@ -101,7 +101,7 @@ int InitSoftmaxParam(SoftmaxStruct *softmax) {
   return NNACL_OK;
 }
 
-int softmax_resize(struct KernelBase *self) {
+int SoftmaxResize(struct KernelBase *self) {
   SoftmaxStruct *softmax = (SoftmaxStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(softmax);
   InitSoftmaxParam(softmax);
@@ -115,7 +115,7 @@ int softmax_resize(struct KernelBase *self) {
   return NNACL_OK;
 }
 
-int softmax_compute(struct KernelBase *self) {
+int SoftmaxCompute(struct KernelBase *self) {
   SoftmaxStruct *softmax = (SoftmaxStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(softmax);
 
@@ -147,10 +147,10 @@ KernelBase *CreateSoftmax(OpParameter *param, int data_type) {
 
   softmax->sum_data_ = NULL;
   softmax->data_type_ = data_type;
-  softmax->base_.release = softmax_release;
-  softmax->base_.prepare = default_prepare_1in_1out;
-  softmax->base_.resize = softmax_resize;
-  softmax->base_.compute = softmax_compute;
+  softmax->base_.release_ = SoftmaxRelease;
+  softmax->base_.prepare_ = DefaultPrepare1In1Out;
+  softmax->base_.resize_ = SoftmaxResize;
+  softmax->base_.compute_ = SoftmaxCompute;
   return (KernelBase *)softmax;
 }
 

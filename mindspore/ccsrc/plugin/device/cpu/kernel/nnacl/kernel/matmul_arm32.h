@@ -14,22 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_KERNEL_MATMUL_F32_BASE_H_
-#define NNACL_KERNEL_MATMUL_F32_BASE_H_
+#ifndef NNACL_KERNEL_MATMUL_ARM32_H_
+#define NNACL_KERNEL_MATMUL_ARM32_H_
 
+#ifdef ENABLE_ARM32
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
-#include "nnacl/matmul_parameter.h"
-#include "nnacl/kernel/matmul_base.h"
+#include "nnacl/kernel.h"
 
-void MatmulFp32Base_GetThreadCuttingPolicy(MatmulFp32Struct *matmul);
-void MatmulFp32Base_FreeBatchOffset(MatmulFp32Struct *matmul);
-int MatmulFP32Base_MallocBatchOffset(MatmulFp32Struct *matmul);
-int MatmulFp32Base_InitParameter(MatmulFp32Struct *matmul);
-int matmul_f32_prepare(KernelBase *self);
-int matmul_f32_resize(KernelBase *self);
-int matmul_f32_release(KernelBase *self);
-KernelBase *CreateMatmulFp32Base();
-KernelBase *CreateMatmulFp32();
+KernelBase *CreateMatmulARM32();
 
-#endif  // NNACL_KERNEL_MATMUL_F32_BASE_H_
+#endif
+#endif  // NNACL_KERNEL_MATMUL_ARM32_H_

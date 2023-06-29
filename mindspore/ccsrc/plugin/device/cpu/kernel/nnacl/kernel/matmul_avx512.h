@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_KERNEL_MATMUL_F32_ARM64_H_
-#define NNACL_KERNEL_MATMUL_F32_ARM64_H_
-
-#ifdef ENABLE_ARM64
+#ifndef NNACL_KERNEL_MATMUL_AVX512_H_
+#define NNACL_KERNEL_MATMUL_AVX512_H_
+#ifdef ENABLE_AVX512
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 
-KernelBase *CreateMatmulFp32Arm64();
+KernelBase *CreateMatmulAVX512();
 
 #endif
-#endif  // NNACL_KERNEL_MATMUL_F32_ARM64_H_
+#endif  // NNACL_KERNEL_MATMUL_AVX512_H_

@@ -33,7 +33,7 @@ typedef struct SoftmaxStruct {
 
 int InitSoftmaxParam(SoftmaxStruct *softmax);
 int softmax_prepare(struct KernelBase *self);
-int softmax_release(struct KernelBase *self);
+int SoftmaxRelease(struct KernelBase *self);
 KernelBase *CreateSoftmax(OpParameter *param, int data_type);
 
 #endif  // NNACL_KERNEL_SOFTMAX_H_

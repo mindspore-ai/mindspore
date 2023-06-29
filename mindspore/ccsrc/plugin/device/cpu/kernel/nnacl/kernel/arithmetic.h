@@ -89,9 +89,9 @@ typedef struct ArithmeticStruct {
 } ArithmeticStruct;
 
 KernelBase *CreateArithmetic(OpParameter *param, int data_type);
-int arithmetic_prepare(struct KernelBase *self);
-int arithmetic_release(struct KernelBase *self);
-int arithmetic_compute(struct KernelBase *self);
-int arithmetic_resize(struct KernelBase *self);
+int ArithmeticPrepare(struct KernelBase *self);
+int ArithmeticRelease(struct KernelBase *self);
+int ArithmeticCompute(struct KernelBase *self);
+int ArithmeticResize(struct KernelBase *self);
 
 #endif  // NNACL_KERNEL_ARITHMETIC_H_

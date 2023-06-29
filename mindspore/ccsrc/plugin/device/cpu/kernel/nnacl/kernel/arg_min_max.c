@@ -23,7 +23,7 @@
 #include "nnacl/fp16/arg_min_max_fp16.h"
 #endif
 
-int arg_min_max_prepare(KernelBase *self) {
+int ArgMinMaxPrepare(KernelBase *self) {
   ArgMinMaxStruct *arg_min_max = (ArgMinMaxStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(arg_min_max);
   ArgMinMaxParameter *param = (ArgMinMaxParameter *)self->param_;
@@ -38,7 +38,7 @@ int arg_min_max_prepare(KernelBase *self) {
   return NNACL_OK;
 }
 
-int arg_min_max_resize(KernelBase *self) {
+int ArgMinMaxResize(KernelBase *self) {
   ArgMinMaxStruct *arg_min_max = (ArgMinMaxStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(arg_min_max);
   ArgMinMaxComputeParam *compute = &arg_min_max->compute_;
@@ -58,7 +58,7 @@ int arg_min_max_resize(KernelBase *self) {
   return NNACL_OK;
 }
 
-int arg_min_max_compute(KernelBase *self) {
+int ArgMinMaxCompute(KernelBase *self) {
   ArgMinMaxStruct *arg_min_max = (ArgMinMaxStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(arg_min_max);
   ArgMinMaxParameter *param = (ArgMinMaxParameter *)self->param_;
@@ -111,10 +111,10 @@ KernelBase *CreateArgMinMax(OpParameter *param, int data_type) {
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(arg_min_max);
   memset(arg_min_max, 0, sizeof(ArgMinMaxStruct));
 
-  arg_min_max->base_.prepare = arg_min_max_prepare;
-  arg_min_max->base_.resize = arg_min_max_resize;
-  arg_min_max->base_.release = default_release;
-  arg_min_max->base_.compute = arg_min_max_compute;
+  arg_min_max->base_.prepare_ = ArgMinMaxPrepare;
+  arg_min_max->base_.resize_ = ArgMinMaxResize;
+  arg_min_max->base_.release_ = DefaultRelease;
+  arg_min_max->base_.compute_ = ArgMinMaxCompute;
   return (KernelBase *)arg_min_max;
 }
 

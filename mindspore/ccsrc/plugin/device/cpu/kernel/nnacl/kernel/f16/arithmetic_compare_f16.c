@@ -69,12 +69,12 @@ int ArithmeticCompareF16DoExecute(KernelBase *base, const void *input0, const vo
   return arithmetic_compare_f16->functions_.compute_((const float16_t *)input0, (const float16_t *)input1,
                                                      (uint8_t *)output, size);
 }
-int arithmetic_compare_f16_compute(KernelBase *self) {
+int ArithmeticCompareF16Compute(KernelBase *self) {
   ArithmeticStruct *arithmetic = (ArithmeticStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(arithmetic);
   arithmetic->in_data_size_ = DataTypeCSize(self->in_[FIRST_INPUT]->data_type_);
   arithmetic->out_data_size_ = DataTypeCSize(self->out_[OUTPUT_INDEX]->data_type_);
-  return arithmetic_f16_compute(self);
+  return ArithmeticF16Compute(self);
 }
 
 KernelBase *CreateArithmeticCompareF16(OpParameter *param, int data_type) {
@@ -90,10 +90,10 @@ KernelBase *CreateArithmeticCompareF16(OpParameter *param, int data_type) {
   arithmetic->c_matrix_.batch_post_sum_ = NULL;
   arithmetic->broadcast_buffer_[FIRST_INPUT] = NULL;
   arithmetic->broadcast_buffer_[SECOND_INPUT] = NULL;
-  arithmetic->base_.prepare = arithmetic_prepare;
-  arithmetic->base_.resize = arithmetic_f16_resize;
-  arithmetic->base_.release = arithmetic_release;
-  arithmetic->base_.compute = arithmetic_compare_f16_compute;
+  arithmetic->base_.prepare_ = ArithmeticPrepare;
+  arithmetic->base_.resize_ = ArithmeticF16Resize;
+  arithmetic->base_.release_ = ArithmeticRelease;
+  arithmetic->base_.compute_ = ArithmeticCompareF16Compute;
 
   arithmetic->execute_ = ArithmeticCompareF16DoExecute;
   arithmetic->tile_function_ = TileOneDimensionFp16;

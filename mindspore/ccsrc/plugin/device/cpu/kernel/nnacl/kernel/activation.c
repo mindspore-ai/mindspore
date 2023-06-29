@@ -30,7 +30,7 @@ typedef struct ActivationStruct {
   ActType act_type_;
 } ActivationStruct;
 
-int activation_resize(struct KernelBase *self) {
+int ActivationResize(struct KernelBase *self) {
   ActivationStruct *activation = (ActivationStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(activation);
   self->thread_nr_ = self->update_thread_(TC_TYPE(PrimType_Activation, activation->act_type_), 1, 1,
@@ -154,7 +154,7 @@ int activation_do_compute(void *cdata, int task_id, float l, float r) {
   }
 }
 
-int activation_compute(struct KernelBase *self) {
+int ActivationCompute(struct KernelBase *self) {
   return self->env_->parallel_launch(self->env_->thread_pool_, activation_do_compute, self, self->thread_nr_);
 }
 
@@ -182,10 +182,10 @@ KernelBase *CreateActivation(OpParameter *param, int data_type) {
 
   activation->data_type_ = data_type;
   activation->act_type_ = act->type_;
-  activation->base.prepare = default_prepare_1in_1out;
-  activation->base.resize = activation_resize;
-  activation->base.release = default_release;
-  activation->base.compute = activation_compute;
+  activation->base.prepare_ = DefaultPrepare1In1Out;
+  activation->base.release_ = DefaultRelease;
+  activation->base.resize_ = ActivationResize;
+  activation->base.compute_ = ActivationCompute;
   return (KernelBase *)activation;
 }
 

@@ -15,10 +15,11 @@
  */
 
 #include "nnacl/kernel/fullconnection.h"
-#include "nnacl/kernel/matmul_f32_base.h"
+#include "nnacl/kernel/matmul_base.h"
+#include "nnacl/kernel/matmul_create.h"
 
-int fullconnection_prepare(KernelBase *self) {
-  MatmulFp32Struct *matmul = (MatmulFp32Struct *)self;
+int FullConnectionPrepare(KernelBase *self) {
+  MatmulStruct *matmul = (MatmulStruct *)self;
 
   NNACL_CHECK_FALSE(self->in_size_ < C2NUM, NNACL_ERR);
   NNACL_CHECK_FALSE(self->out_size_ < C1NUM, NNACL_ERR);
@@ -43,16 +44,16 @@ int fullconnection_prepare(KernelBase *self) {
   param->a_transpose_ = false;
   param->b_transpose_ = true;
 
-  int ret = MatmulFP32Base_MallocBatchOffset(matmul);
+  int ret = MatmulBaseMallocBatchOffset(matmul);
   if (ret != NNACL_OK) {
     return ret;
   }
 
-  return matmul_f32_prepare(self);
+  return MatmulBasePrepare(self);
 }
 
-int fullconnection_resize(KernelBase *self) {
-  MatmulFp32Struct *matmul = (MatmulFp32Struct *)self;
+int FullConnectionResize(KernelBase *self) {
+  MatmulStruct *matmul = (MatmulStruct *)self;
   NNACL_CHECK_TRUE_RET(self->out_[0]->shape_size_ > 0, NNACL_ERR);
 
   int row = 1;
@@ -63,16 +64,16 @@ int fullconnection_resize(KernelBase *self) {
   matmul->compute_.col_ = (self->out_[OUTPUT_INDEX]->shape_)[self->out_[0]->shape_size_ - 1];
   matmul->compute_.deep_ = self->in_[SECOND_INPUT]->shape_[SECOND_INPUT];
 
-  return matmul_f32_resize(self);
+  return MatmulBaseResize(self);
 }
 
 KernelBase *CreateFullconnection(OpParameter *param, int data_type) {
   KernelBase *kernel = NULL;
   if (data_type == kNumberTypeFloat32) {
-    kernel = CreateMatmulFp32();
+    kernel = CreateMatmulKernel();
     NNACL_MALLOC_CHECK_NULL_RETURN_NULL(kernel);
-    kernel->prepare = fullconnection_prepare;
-    kernel->resize = fullconnection_resize;
+    kernel->prepare_ = FullConnectionPrepare;
+    kernel->resize_ = FullConnectionResize;
   }
   return kernel;
 }

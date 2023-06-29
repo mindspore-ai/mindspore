@@ -1,0 +1,82 @@
+/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "nnacl/kernel/matmul_create.h"
+#include "nnacl/kernel/matmul_base.h"
+#if defined(ENABLE_AVX512)
+#include "nnacl/kernel/matmul_avx512.h"
+#include "nnacl/intrinsics/ms_simd_cpu_info.h"
+#endif
+
+#if defined(ENABLE_AVX)
+#include "nnacl/kernel/matmul_avx.h"
+#endif
+
+#if defined(ENABLE_SSE)
+#include "nnacl/kernel/matmul_sse.h"
+#endif
+
+#if defined(ENABLE_ARM32)
+#include "nnacl/kernel/matmul_arm32.h"
+#endif
+
+#if defined(ENABLE_ARM64)
+#include "nnacl/kernel/matmul_arm64.h"
+#endif
+
+KernelBase *CreateMatmulKernel() {
+  KernelBase *matmul = NULL;
+
+#if defined(ENABLE_AVX512)
+  AVX512_HARDWARE_SELF_AWARENESS_BEGIN
+  matmul = CreateMatmulAVX512();
+  if (matmul != NULL) {
+    return matmul;
+  }
+  AVX512_HARDWARE_SELF_AWARENESS_END
+#endif
+
+#if defined(ENABLE_AVX)
+  matmul = CreateMatmulAVX();
+  if (matmul != NULL) {
+    return matmul;
+  }
+#endif
+
+#if defined(ENABLE_SSE)
+  matmul = CreateMatmulSSE();
+  if (matmul != NULL) {
+    return matmul;
+  }
+#endif
+
+#if defined(ENABLE_ARM64)
+  matmul = CreateMatmulARM64();
+  if (matmul != NULL) {
+    return matmul;
+  }
+#endif
+
+#if defined(ENABLE_ARM32)
+  matmul = CreateMatmulARM32();
+  if (matmul != NULL) {
+    return matmul;
+  }
+#endif
+
+  matmul = CreateMatmulBase();
+  return matmul;
+}

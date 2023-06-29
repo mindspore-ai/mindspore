@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef NNACL_KERNEL_MATMUL_CREATE_H_
+#define NNACL_KERNEL_MATMUL_CREATE_H_
 
-#ifndef NNACL_KERNEL_MATMUL_F32_AVX_H_
-#define NNACL_KERNEL_MATMUL_F32_AVX_H_
-
-#ifdef ENABLE_AVX
 #include "nnacl/op_base.h"
-#include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 
-KernelBase *CreateMatmulFp32Avx();
+KernelBase *CreateMatmulKernel();
 
-#endif
-#endif  // NNACL_KERNEL_MATMUL_F32_AVX_H_
+#endif  // NNACL_KERNEL_MATMUL_CREATE_H_

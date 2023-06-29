@@ -217,7 +217,7 @@ void StridedSliceInitFastRunParam(StridedSliceStruct *strided_slice) {
       : UP_DIV((int)strided_slice->outer_, strided_slice->base_.thread_nr_);
 }
 
-int strided_slice_resize(KernelBase *self) {
+int StridedSliceResize(KernelBase *self) {
   StridedSliceStruct *strided_slice = (StridedSliceStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(strided_slice);
 
@@ -245,7 +245,7 @@ int strided_slice_resize(KernelBase *self) {
   return NNACL_OK;
 }
 
-int strided_slice_compute(KernelBase *self) {
+int StridedSliceCompute(KernelBase *self) {
   StridedSliceStruct *strided_slice = (StridedSliceStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(strided_slice);
 
@@ -263,10 +263,10 @@ KernelBase *CreateStridedSlice(OpParameter *param, int data_type) {
   StridedSliceStruct *strided_slice = (StridedSliceStruct *)malloc(sizeof(StridedSliceStruct));
   NNACL_CHECK_NULL_RETURN_NULL(strided_slice);
   strided_slice->data_type_ = data_type;
-  strided_slice->base_.release = default_release;
-  strided_slice->base_.prepare = default_prepare_1in_1out;
-  strided_slice->base_.resize = strided_slice_resize;
-  strided_slice->base_.compute = strided_slice_compute;
+  strided_slice->base_.release_ = DefaultRelease;
+  strided_slice->base_.prepare_ = DefaultPrepare1In1Out;
+  strided_slice->base_.resize_ = StridedSliceResize;
+  strided_slice->base_.compute_ = StridedSliceCompute;
   return (KernelBase *)strided_slice;
 }
 

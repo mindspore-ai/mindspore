@@ -17,6 +17,7 @@
 #include "nnacl/kernel/f16/reduce_f16.h"
 #include "nnacl/fp16/reduce_fp16.h"
 #include "nnacl/tensor_c_utils.h"
+#include "nnacl/kernel/default_kernel_base.h"
 
 typedef struct ReduceF16Compute {
   int type_;
@@ -101,10 +102,10 @@ KernelBase *CreateReduceF16(OpParameter *param, int data_type) {
 
   ReduceStruct *reduce = &reduce_f16->reduce_;
   reduce->data_type_ = data_type;
-  reduce->base_.release = reduce_release;
-  reduce->base_.prepare = reduce_prepare;
-  reduce->base_.resize = reduce_resize;
-  reduce->base_.compute = reduce_compute;
+  reduce->base_.release_ = DefaultRelease;
+  reduce->base_.prepare_ = ReducePrepare;
+  reduce->base_.resize_ = ReduceResize;
+  reduce->base_.compute_ = ReduceCompute;
 
   reduce->handle_sum_square_ = HandleReduceF16ASumAndSumSquare;
   reduce->calculate_coeff_ = CalculateReduceF16CoeffOutput;

@@ -34,8 +34,8 @@ typedef struct StackStruct {
 
 KernelBase *CreateStack(OpParameter *param, int data_type);
 int StackRun(void *cdata, int task_id, float l, float r);
-int stack_release(KernelBase *self);
-int stack_prepare(KernelBase *self);
-int stack_resize(KernelBase *self);
+int StackRelease(KernelBase *self);
+int StackPrepare(KernelBase *self);
+int StackResize(KernelBase *self);
 
 #endif  // NNACL_KERNEL_STACK_H_

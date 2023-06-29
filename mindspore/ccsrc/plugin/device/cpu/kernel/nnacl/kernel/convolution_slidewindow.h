@@ -36,10 +36,10 @@ typedef struct ConvolutionSWStruct {
   float *input_data_;
 } ConvolutionSWStruct;
 
-int convolution_sw_prepare(KernelBase *self);
-int convolution_sw_compute(KernelBase *self);
-int convolution_sw_resize(KernelBase *self);
-int convolution_sw_release(KernelBase *self);
+int ConvolutionSWPrepare(KernelBase *self);
+int ConvolutionSWCompute(KernelBase *self);
+int ConvolutionSWResize(KernelBase *self);
+int ConvolutionSWRelease(KernelBase *self);
 void ConvSWPackWeight(ConvolutionBaseStruct *conv);
 int ConvSWMallocWeightBiasData(ConvolutionBaseStruct *conv);
 #endif

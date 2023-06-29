@@ -74,7 +74,7 @@ int RunPriorBox(void *cdata, int task_id, float l, float r) {
   return PriorBox(prior_box->output_, output_data, GetSize(output_tensor), task_id, prior_box->base_.thread_nr_);
 }
 
-int prior_box_release(KernelBase *self) {
+int PriorBoxRelease(KernelBase *self) {
   PriorBoxStruct *prior_box = (PriorBoxStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(prior_box);
   if (prior_box->output_ != NULL) {
@@ -85,7 +85,7 @@ int prior_box_release(KernelBase *self) {
   return NNACL_OK;
 }
 
-int prior_box_resize(KernelBase *self) {
+int PriorBoxResize(KernelBase *self) {
   PriorBoxStruct *prior_box = (PriorBoxStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(prior_box);
   PriorBoxParameter *param = (PriorBoxParameter *)self->param_;
@@ -133,7 +133,7 @@ int prior_box_resize(KernelBase *self) {
     }
   }
 
-  prior_box_release(self);
+  PriorBoxRelease(self);
   int size = Num4 + Num4 + different_aspect_ratios_size;
   size = size * prior_box->fmap_h_ * prior_box->fmap_w_ * param->min_sizes_size;
   size = size + UP_ROUND(GetHeight(output_tensor), COMM_SHAPE_SIZE);
@@ -170,7 +170,7 @@ int prior_box_resize(KernelBase *self) {
   return NNACL_OK;
 }
 
-int prior_box_compute(KernelBase *self) {
+int PriorBoxCompute(KernelBase *self) {
   return self->env_->parallel_launch(self->env_->thread_pool_, RunPriorBox, self, self->thread_nr_);
 }
 
@@ -179,10 +179,10 @@ KernelBase *CreatePriorBox(OpParameter *param, int data_type) {
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(prior_box);
   memset(prior_box, 0, sizeof(PriorBoxStruct));
 
-  prior_box->base_.prepare = default_prepare_2in_1out;
-  prior_box->base_.resize = prior_box_resize;
-  prior_box->base_.release = prior_box_release;
-  prior_box->base_.compute = prior_box_compute;
+  prior_box->base_.prepare_ = DefaultPrepare2In1Out;
+  prior_box->base_.resize_ = PriorBoxResize;
+  prior_box->base_.release_ = PriorBoxRelease;
+  prior_box->base_.compute_ = PriorBoxCompute;
   return (KernelBase *)prior_box;
 }
 

@@ -19,7 +19,7 @@
 #include "nnacl/common_func.h"
 #include "nnacl/tensor_c_utils.h"
 
-int zeros_like_compute(KernelBase *self) {
+int ZerosLikeCompute(KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(self);
   TensorC *output = self->out_[OUTPUT_INDEX];
   NNACL_CHECK_NULL_RETURN_ERR(output);
@@ -31,10 +31,10 @@ int zeros_like_compute(KernelBase *self) {
 KernelBase *CreateZerosLike(OpParameter *param, int data_type) {
   ZerosLikeStruct *zeros_like = (ZerosLikeStruct *)malloc(sizeof(ZerosLikeStruct));
   NNACL_CHECK_NULL_RETURN_NULL(zeros_like);
-  zeros_like->base_.release = default_release;
-  zeros_like->base_.prepare = default_prepare_1in_1out;
-  zeros_like->base_.resize = default_resize;
-  zeros_like->base_.compute = zeros_like_compute;
+  zeros_like->base_.release_ = DefaultRelease;
+  zeros_like->base_.prepare_ = DefaultPrepare1In1Out;
+  zeros_like->base_.resize_ = DefaultResize;
+  zeros_like->base_.compute_ = ZerosLikeCompute;
   return (KernelBase *)zeros_like;
 }
 

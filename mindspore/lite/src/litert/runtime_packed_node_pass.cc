@@ -17,7 +17,7 @@
 #include "nnacl/op_base.h"
 #include "nnacl/matmul_parameter.h"
 #include "nnacl/nnacl_kernel.h"
-#include "nnacl/kernel/matmul_base.h"
+#include "nnacl/kernel/matmul_struct.h"
 
 using RecoveryWeightFunc = void (*)(void *, void *, int, int, bool);
 namespace mindspore {
@@ -262,7 +262,7 @@ int PackedMatmulKernelExec(kernel::KernelExec *kernel_exec, const std::vector<Te
   auto param = reinterpret_cast<MatMulParameter *>(kernel_exec->op_parameter());
   const KernelBase *kernel_base = reinterpret_cast<const nnacl::NNACLKernel *>(kernel_exec->kernel())->Kernel();
   if (dst_tensor->data_type() == kNumberTypeFloat32) {
-    const MatmulFp32Struct *matmul = reinterpret_cast<const MatmulFp32Struct *>(kernel_base);
+    const MatmulStruct *matmul = reinterpret_cast<const MatmulStruct *>(kernel_base);
     if (matmul->matmul_type_ == kNotImplemented) {
       return RecoveryPackedWeight(dst_tensor, static_cast<int>(kernel->quant_type()), dst_tensor->data_type(),
                                   schema::PrimitiveType_MatMulFusion, pack_info);

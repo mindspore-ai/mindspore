@@ -23,7 +23,7 @@ int GroupConvBasePrepare(GroupConvolutionStruct *group_conv) {
   for (int i = 0; i < group_conv->group_; ++i) {
     KernelBase *sub_conv = group_conv->group_convs_[i];
     NNACL_CHECK_NULL_RETURN_ERR(sub_conv);
-    int ret = sub_conv->prepare(sub_conv);
+    int ret = sub_conv->prepare_(sub_conv);
     if (ret != NNACL_OK) {
       return ret;
     }
@@ -162,21 +162,21 @@ int GroupConvSetSubConvInfo(GroupConvolutionStruct *group_conv, KernelBase *new_
   // create new input for each group
   int ret = GroupConvCreatorNewInputTensor(group_conv, new_conv);
   if (ret != NNACL_OK) {
-    group_conv->conv_base_.base_.release((KernelBase *)group_conv);
+    group_conv->conv_base_.base_.release_((KernelBase *)group_conv);
     return ret;
   }
 
   // const tensor
   ret = GroupConvCreatorNewConstTensor(group_conv, new_conv, group_id);
   if (ret != NNACL_OK) {
-    group_conv->conv_base_.base_.release((KernelBase *)group_conv);
+    group_conv->conv_base_.base_.release_((KernelBase *)group_conv);
     return ret;
   }
 
   // create new output tensor
   ret = GroupConvCreatorNewOutputTensor(group_conv, new_conv);
   if (ret != NNACL_OK) {
-    group_conv->conv_base_.base_.release((KernelBase *)group_conv);
+    group_conv->conv_base_.base_.release_((KernelBase *)group_conv);
     return ret;
   }
   return NNACL_OK;
@@ -261,7 +261,7 @@ void GroupConvUpdateShape(GroupConvolutionStruct *group_conv) {
   return;
 }
 
-int group_convolution_resize(KernelBase *self) {
+int GroupConvolutionResize(KernelBase *self) {
   GroupConvolutionStruct *group_conv = (GroupConvolutionStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(group_conv);
 
@@ -273,7 +273,7 @@ int group_convolution_resize(KernelBase *self) {
 
   for (int i = 0; i < group_conv->group_; ++i) {
     group_conv->group_convs_[i]->thread_nr_ = self->thread_nr_;
-    int ret = group_conv->group_convs_[i]->resize(group_conv->group_convs_[i]);
+    int ret = group_conv->group_convs_[i]->resize_(group_conv->group_convs_[i]);
     if (ret != NNACL_OK) {
       return ret;
     }
@@ -281,7 +281,7 @@ int group_convolution_resize(KernelBase *self) {
   return NNACL_OK;
 }
 
-int group_convolution_compute(KernelBase *self) {
+int GroupConvolutionCompute(KernelBase *self) {
   GroupConvolutionStruct *group_conv = (GroupConvolutionStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(group_conv);
 
@@ -307,7 +307,7 @@ int group_convolution_compute(KernelBase *self) {
     }
 
     // sun kernels run
-    ret = group_conv->group_convs_[i]->compute(group_conv->group_convs_[i]);
+    ret = group_conv->group_convs_[i]->compute_(group_conv->group_convs_[i]);
     if (ret != NNACL_OK) {
       return ret;
     }
@@ -327,7 +327,7 @@ int group_convolution_compute(KernelBase *self) {
   return NNACL_OK;
 }
 
-int group_convolution_prepare(KernelBase *self) {
+int GroupConvolutionPrepare(KernelBase *self) {
   NNACL_CHECK_FALSE(self->in_size_ < TWO_TENSOR, NNACL_INPUT_TENSOR_ERROR);
   NNACL_CHECK_FALSE(self->out_size_ != ONE_TENSOR, NNACL_OUTPUT_TENSOR_ERROR);
   GroupConvolutionStruct *group_conv = (GroupConvolutionStruct *)self;
@@ -353,7 +353,7 @@ int group_convolution_prepare(KernelBase *self) {
   return GroupConvBasePrepare(group_conv);
 }
 
-int group_convolution_release(KernelBase *self) {
+int GroupConvolutionRelease(KernelBase *self) {
   GroupConvolutionStruct *group_conv = (GroupConvolutionStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(group_conv);
   ConvParameter *conv_param = (ConvParameter *)self->param_;
@@ -407,9 +407,9 @@ KernelBase *CreateGroupConvolution(ConvParameter *conv_param, TypeIdC data_type)
 
   group_conv->data_type_ = data_type;
   group_conv->group_ = conv_param->group_;
-  group_conv->conv_base_.base_.compute = group_convolution_compute;
-  group_conv->conv_base_.base_.resize = group_convolution_resize;
-  group_conv->conv_base_.base_.prepare = group_convolution_prepare;
-  group_conv->conv_base_.base_.release = group_convolution_release;
+  group_conv->conv_base_.base_.compute_ = GroupConvolutionCompute;
+  group_conv->conv_base_.base_.resize_ = GroupConvolutionResize;
+  group_conv->conv_base_.base_.prepare_ = GroupConvolutionPrepare;
+  group_conv->conv_base_.base_.release_ = GroupConvolutionRelease;
   return (KernelBase *)group_conv;
 }

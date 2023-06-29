@@ -25,7 +25,7 @@
 #include "nnacl/fp16/fill_fp16.h"
 #endif
 
-int fill_resize(struct KernelBase *self) {
+int FillResize(struct KernelBase *self) {
   FillStruct *fill = (FillStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(fill);
   fill->base_.thread_nr_ = fill->base_.update_thread_(TC_PTYPE(PrimType_Fill), 0, 1,
@@ -69,7 +69,7 @@ int fill_do_compute(void *cdata, int task_id, float l, float r) {
   return ret;
 }
 
-int fill_compute(struct KernelBase *self) {
+int FillCompute(struct KernelBase *self) {
   FillStruct *fill = (FillStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(fill);
 
@@ -84,10 +84,10 @@ int fill_compute(struct KernelBase *self) {
 KernelBase *CreateFill(OpParameter *param, int data_type) {
   FillStruct *fill = (FillStruct *)malloc(sizeof(FillStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(fill);
-  fill->base_.prepare = default_prepare_2in_1out;
-  fill->base_.resize = fill_resize;
-  fill->base_.release = default_release;
-  fill->base_.compute = fill_compute;
+  fill->base_.prepare_ = DefaultPrepare2In1Out;
+  fill->base_.resize_ = FillResize;
+  fill->base_.release_ = DefaultRelease;
+  fill->base_.compute_ = FillCompute;
   return (KernelBase *)fill;
 }
 

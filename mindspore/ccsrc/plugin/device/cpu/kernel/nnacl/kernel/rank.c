@@ -17,7 +17,7 @@
 #include "nnacl/kernel/rank.h"
 #include "nnacl/kernel/default_kernel_base.h"
 
-int rank_compute(KernelBase *self) {
+int RankCompute(KernelBase *self) {
   size_t rank = self->in_[FIRST_INPUT]->shape_size_;
   void *output_data = self->out_[OUTPUT_INDEX]->data_;
   if (self->in_[FIRST_INPUT]->data_type_ == kNumberTypeFloat16) {
@@ -33,10 +33,10 @@ int rank_compute(KernelBase *self) {
 KernelBase *CreateRank(OpParameter *param, int data_type) {
   RankStruct *rank = (RankStruct *)malloc(sizeof(RankStruct));
   NNACL_CHECK_NULL_RETURN_NULL(rank);
-  rank->base_.release = default_release;
-  rank->base_.prepare = default_prepare_1in_1out;
-  rank->base_.resize = default_resize;
-  rank->base_.compute = rank_compute;
+  rank->base_.release_ = DefaultRelease;
+  rank->base_.prepare_ = DefaultPrepare1In1Out;
+  rank->base_.resize_ = DefaultResize;
+  rank->base_.compute_ = RankCompute;
   return (KernelBase *)rank;
 }
 

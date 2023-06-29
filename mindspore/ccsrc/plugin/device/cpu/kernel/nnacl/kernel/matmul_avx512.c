@@ -15,8 +15,8 @@
  */
 
 #ifdef ENABLE_AVX512
-#include "nnacl/kernel/matmul_f32_avx512.h"
-#include "nnacl/kernel/matmul_f32_base.h"
+#include "nnacl/kernel/matmul_avx512.h"
+#include "nnacl/kernel/matmul_base.h"
 #include "nnacl/fp32/pack_fp32.h"
 #include "nnacl/fp32/matmul_fp32.h"
 #include "nnacl/fp32/matmul_avx512_fp32.h"
@@ -24,7 +24,7 @@
 
 #define MIN_CALC_COST 24576 /* 1 x 6 x 64x 64 */
 
-void MatmulFp32Avx512_BatchRowThreadCut(MatmulFp32Struct *matmul) {
+void MatmulAVX512BatchRowThreadCut(MatmulStruct *matmul) {
   // BatchCut
   matmul->compute_.batch_stride_ = DOWN_DIV(matmul->batch_, matmul->base_.thread_nr_);
 
@@ -48,7 +48,7 @@ void MatmulFp32Avx512_BatchRowThreadCut(MatmulFp32Struct *matmul) {
   }
 }
 
-void MatmulFp32Avx512_BatchColThreadCut(MatmulFp32Struct *matmul) {
+void MatmulAVX512BatchColThreadCut(MatmulStruct *matmul) {
   // BatchCut
   matmul->compute_.batch_stride_ = DOWN_DIV(matmul->batch_, matmul->base_.thread_nr_);
 
@@ -67,7 +67,7 @@ void MatmulFp32Avx512_BatchColThreadCut(MatmulFp32Struct *matmul) {
   }
 }
 
-void MatmulFp32Avx512_BatchColRowSliceThreadCut(MatmulFp32Struct *matmul) {
+void MatmulAVX512BatchColRowSliceThreadCut(MatmulStruct *matmul) {
   // BatchCut
   matmul->compute_.batch_stride_ = DOWN_DIV(matmul->batch_, matmul->base_.thread_nr_);
 
@@ -175,7 +175,7 @@ void MatmulFp32Avx512_BatchColRowSliceThreadCut(MatmulFp32Struct *matmul) {
   }
 }
 
-void MatmulFp32Avx512_GetThreadCuttingPolicy(MatmulFp32Struct *matmul) {
+void MatmulAVX512GetThreadCuttingPolicy(MatmulStruct *matmul) {
   size_t total_cost = (size_t)(matmul->batch_) * (size_t)(matmul->compute_.row_) * (size_t)(matmul->compute_.col_) *
                       (size_t)(matmul->compute_.deep_);
 
@@ -183,14 +183,14 @@ void MatmulFp32Avx512_GetThreadCuttingPolicy(MatmulFp32Struct *matmul) {
   matmul->base_.thread_nr_ = MSMAX(NNACL_MIN((int)(total_cost / MIN_CALC_COST), matmul->base_.thread_nr_), C1NUM);
 
   if (matmul->compute_.deep_ < C128NUM) {
-    return MatmulFp32Base_GetThreadCuttingPolicy(matmul);
+    return MatmulBaseGetThreadCuttingPolicy(matmul);
   }
 
   for (int i = 0; i < SPLIT_COUNT; i++) {
     matmul->matmul_slice_count_[i] = 0;
   }
   if (matmul->compute_.col_ == 1 && !matmul->a_const_) {
-    MatmulFp32Avx512_BatchRowThreadCut(matmul);
+    MatmulAVX512BatchRowThreadCut(matmul);
     if (matmul->compute_.deep_ == 1) {
       matmul->gemm_not_pack_fun_ = GemmIsNotPack;
     } else {
@@ -198,7 +198,7 @@ void MatmulFp32Avx512_GetThreadCuttingPolicy(MatmulFp32Struct *matmul) {
     }
     matmul->parallel_run_ = matmul->parallel_run_by_gepdot_;
   } else if (matmul->compute_.row_ == 1 && !matmul->b_const_ && matmul->compute_.col_ <= C128NUM) {
-    MatmulFp32Avx512_BatchColThreadCut(matmul);
+    MatmulAVX512BatchColThreadCut(matmul);
     if (matmul->compute_.deep_ == 1) {
       matmul->parallel_run_ = matmul->parallel_run_by_row1_deep1_gepdot_;
       if (matmul->matrix_c_.pack_ptr_ != NULL) {
@@ -210,13 +210,13 @@ void MatmulFp32Avx512_GetThreadCuttingPolicy(MatmulFp32Struct *matmul) {
     }
     matmul->parallel_run_ = matmul->parallel_run_by_gepm_;
   } else {
-    MatmulFp32Avx512_BatchColRowSliceThreadCut(matmul);
+    MatmulAVX512BatchColRowSliceThreadCut(matmul);
     matmul->parallel_run_ = matmul->parallel_run_by_batch_col_row_gemm_;
   }
   return;
 }
 
-bool MatmulFp32Avx512_CheckThreadCuttingByRow(MatmulFp32Struct *matmul) {
+bool MatmulAVX512CheckThreadCuttingByRow(MatmulStruct *matmul) {
   if (matmul->b_batch_ != C1NUM) {
     return false;
   }
@@ -239,7 +239,7 @@ bool MatmulFp32Avx512_CheckThreadCuttingByRow(MatmulFp32Struct *matmul) {
   return NNACL_MIN(matmul->compute_.row_num_ / matmul->compute_.row_min_unit_, matmul->base_.thread_nr_) >
          NNACL_MIN(matmul->compute_.col_step_ / matmul->compute_.col_min_unit_, matmul->base_.thread_nr_);
 }
-void MatmulFp32Avx512_InitGlobalVariable(MatmulFp32Struct *matmul) {
+void MatmulAVX512InitGlobalVariable(MatmulStruct *matmul) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
   matmul->matrix_a_pack_fun_ = param->a_transpose_ ? RowMajor2ColMajorParallel : RowMajor2RowMajorParallel;
   matmul->matrix_b_pack_fun_ = param->b_transpose_ ? RowMajor2Col64MajorParallel : RowMajor2Row64MajorParallel;
@@ -263,12 +263,12 @@ void MatmulFp32Avx512_InitGlobalVariable(MatmulFp32Struct *matmul) {
     matmul->out_need_aligned_ = false;
   }
 }
-int MatmulFp32Avx512_InitParameter(MatmulFp32Struct *matmul) {
+int MatmulAVX512InitParameter(MatmulStruct *matmul) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
   MatmulComputeParam *compute = &matmul->compute_;
 
   if (compute->deep_ < C128NUM) {
-    return MatmulFp32Base_InitParameter(matmul);
+    return MatmulBaseInitParameter(matmul);
   }
 
   matmul->init_global_varibale_(matmul);
@@ -313,7 +313,7 @@ int MatmulFp32Avx512_InitParameter(MatmulFp32Struct *matmul) {
   return NNACL_OK;
 }
 
-int MatmulFp32Avx512_ParallelRunByRow(MatmulFp32Struct *matmul, int task_id) {
+int MatmulAVX512ParallelRunByRow(MatmulStruct *matmul, int task_id) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
   NNACL_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
 
@@ -347,7 +347,7 @@ int MatmulFp32Avx512_ParallelRunByRow(MatmulFp32Struct *matmul, int task_id) {
   return NNACL_OK;
 }
 
-int MatmulFp32Avx512_ParallelRunByOC(MatmulFp32Struct *matmul, int task_id) {
+int MatmulAVX512ParallelRunByOC(MatmulStruct *matmul, int task_id) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
   NNACL_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
   MatmulComputeParam *compute = &matmul->compute_;
@@ -393,7 +393,7 @@ int MatmulFp32Avx512_ParallelRunByOC(MatmulFp32Struct *matmul, int task_id) {
   return NNACL_OK;
 }
 
-int MatmulFp32Avx512_ParallelRunByBatch(MatmulFp32Struct *matmul, int task_id) {
+int MatmulAVX512ParallelRunByBatch(MatmulStruct *matmul, int task_id) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
   MatmulComputeParam *compute = &matmul->compute_;
   ActType act = param->act_type_;
@@ -430,7 +430,7 @@ int MatmulFp32Avx512_ParallelRunByBatch(MatmulFp32Struct *matmul, int task_id) {
   return NNACL_OK;
 }
 
-int MatmulFp32Avx512_ParallelRunByGEPM(MatmulFp32Struct *matmul, int task_id) {
+int MatmulAVX512ParallelRunByGEPM(MatmulStruct *matmul, int task_id) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
   NNACL_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
 
@@ -476,7 +476,7 @@ int MatmulFp32Avx512_ParallelRunByGEPM(MatmulFp32Struct *matmul, int task_id) {
   }
   return NNACL_OK;
 }
-int MatmulFp32Avx512_ParallelRunByGEMM(MatmulFp32Struct *matmul, int task_id) {
+int MatmulAVX512ParallelRunByGEMM(MatmulStruct *matmul, int task_id) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
   NNACL_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
 
@@ -546,7 +546,7 @@ int MatmulFp32Avx512_ParallelRunByGEMM(MatmulFp32Struct *matmul, int task_id) {
   return NNACL_OK;
 }
 
-int MatmulFp32Avx512_ParallelRunByGEPDOT(MatmulFp32Struct *matmul, int task_id) {
+int MatmulAVX512ParallelRunByGEPDOT(MatmulStruct *matmul, int task_id) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
   NNACL_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
   MatmulComputeParam *compute = &matmul->compute_;
@@ -589,7 +589,7 @@ int MatmulFp32Avx512_ParallelRunByGEPDOT(MatmulFp32Struct *matmul, int task_id) 
   return NNACL_OK;
 }
 
-int MatmulFp32Avx512_ParallelRunByRow1Deep1GEPDOT(MatmulFp32Struct *matmul, int task_id) {
+int MatmulAVX512ParallelRunByRow1Deep1GEPDOT(MatmulStruct *matmul, int task_id) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
   NNACL_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
 
@@ -635,7 +635,7 @@ int MatmulFp32Avx512_ParallelRunByRow1Deep1GEPDOT(MatmulFp32Struct *matmul, int 
   return NNACL_OK;
 }
 
-int MatmulFp32Avx512_ParallelRunByBatchColRowGEMM(MatmulFp32Struct *matmul, int task_id) {
+int MatmulAVX512ParallelRunByBatchColRowGEMM(MatmulStruct *matmul, int task_id) {
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
   NNACL_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
 
@@ -687,22 +687,22 @@ int MatmulFp32Avx512_ParallelRunByBatchColRowGEMM(MatmulFp32Struct *matmul, int 
   return NNACL_OK;
 }
 
-KernelBase *CreateMatmulFp32Avx512() {
-  MatmulFp32Struct *matmul = (MatmulFp32Struct *)CreateMatmulFp32Base();
+KernelBase *CreateMatmulAVX512() {
+  MatmulStruct *matmul = (MatmulStruct *)CreateMatmulBase();
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(matmul);
   matmul->matmul_type_ = kNotImplemented;
-  matmul->check_thread_cutting_by_row_ = MatmulFp32Avx512_CheckThreadCuttingByRow;
-  matmul->get_thread_cutting_policy_ = MatmulFp32Avx512_GetThreadCuttingPolicy;
-  matmul->init_parameter_ = MatmulFp32Avx512_InitParameter;
-  matmul->init_global_varibale_ = MatmulFp32Avx512_InitGlobalVariable;
-  matmul->parallel_run_by_oc_ = MatmulFp32Avx512_ParallelRunByOC;
-  matmul->parallel_run_by_row_ = MatmulFp32Avx512_ParallelRunByRow;
-  matmul->parallel_run_by_batch_ = MatmulFp32Avx512_ParallelRunByBatch;
-  matmul->parallel_run_by_gemm_ = MatmulFp32Avx512_ParallelRunByGEMM;
-  matmul->parallel_run_by_gepm_ = MatmulFp32Avx512_ParallelRunByGEPM;
-  matmul->parallel_run_by_gepdot_ = MatmulFp32Avx512_ParallelRunByGEPDOT;
-  matmul->parallel_run_by_batch_col_row_gemm_ = MatmulFp32Avx512_ParallelRunByBatchColRowGEMM;
-  matmul->parallel_run_by_row1_deep1_gepdot_ = MatmulFp32Avx512_ParallelRunByRow1Deep1GEPDOT;
+  matmul->check_thread_cutting_by_row_ = MatmulAVX512CheckThreadCuttingByRow;
+  matmul->get_thread_cutting_policy_ = MatmulAVX512GetThreadCuttingPolicy;
+  matmul->init_parameter_ = MatmulAVX512InitParameter;
+  matmul->init_global_varibale_ = MatmulAVX512InitGlobalVariable;
+  matmul->parallel_run_by_oc_ = MatmulAVX512ParallelRunByOC;
+  matmul->parallel_run_by_row_ = MatmulAVX512ParallelRunByRow;
+  matmul->parallel_run_by_batch_ = MatmulAVX512ParallelRunByBatch;
+  matmul->parallel_run_by_gemm_ = MatmulAVX512ParallelRunByGEMM;
+  matmul->parallel_run_by_gepm_ = MatmulAVX512ParallelRunByGEPM;
+  matmul->parallel_run_by_gepdot_ = MatmulAVX512ParallelRunByGEPDOT;
+  matmul->parallel_run_by_batch_col_row_gemm_ = MatmulAVX512ParallelRunByBatchColRowGEMM;
+  matmul->parallel_run_by_row1_deep1_gepdot_ = MatmulAVX512ParallelRunByRow1Deep1GEPDOT;
   return (KernelBase *)matmul;
 }
 #endif

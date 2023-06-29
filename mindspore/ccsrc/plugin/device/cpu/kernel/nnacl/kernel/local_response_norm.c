@@ -58,7 +58,7 @@ int LocalResponseNormRun(void *cdata, int task_id, float l, float r) {
   return LocalResponseNorm(input_ptr, count, channel, output_ptr, param);
 }
 
-int lrn_compute(KernelBase *self) {
+int LrnCompute(KernelBase *self) {
   return self->env_->parallel_launch(self->env_->thread_pool_, LocalResponseNormRun, self, self->thread_nr_);
 }
 
@@ -67,10 +67,10 @@ KernelBase *CreateLocalResponseNorm(OpParameter *param, int data_type) {
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(lrn);
   memset(lrn, 0, sizeof(LocalResponseNormStruct));
 
-  lrn->base_.prepare = default_prepare_1in_1out;
-  lrn->base_.release = default_release;
-  lrn->base_.resize = default_resize;
-  lrn->base_.compute = lrn_compute;
+  lrn->base_.prepare_ = DefaultPrepare1In1Out;
+  lrn->base_.release_ = DefaultRelease;
+  lrn->base_.resize_ = DefaultResize;
+  lrn->base_.compute_ = LrnCompute;
   return (KernelBase *)lrn;
 }
 

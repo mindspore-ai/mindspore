@@ -23,7 +23,7 @@
     output[i] = 1;                             \
   }
 
-int ones_like_compute(KernelBase *self) {
+int OnesLikeCompute(KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(self);
   TensorC *output_tensor = self->out_[OUTPUT_INDEX];
   NNACL_CHECK_NULL_RETURN_ERR(output_tensor);
@@ -55,10 +55,10 @@ KernelBase *CreateOnesLike(OpParameter *param, int data_type) {
   OnesLikeStruct *ones_like = (OnesLikeStruct *)malloc(sizeof(OnesLikeStruct));
   NNACL_CHECK_NULL_RETURN_NULL(ones_like);
   ones_like->data_type_ = data_type;
-  ones_like->base_.release = default_release;
-  ones_like->base_.prepare = default_prepare_1in_1out;
-  ones_like->base_.resize = default_resize;
-  ones_like->base_.compute = ones_like_compute;
+  ones_like->base_.release_ = DefaultRelease;
+  ones_like->base_.prepare_ = DefaultPrepare1In1Out;
+  ones_like->base_.resize_ = DefaultResize;
+  ones_like->base_.compute_ = OnesLikeCompute;
   return (KernelBase *)ones_like;
 }
 

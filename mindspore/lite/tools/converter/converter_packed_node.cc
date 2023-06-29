@@ -23,7 +23,7 @@
 #include "mindspore/core/ops/op_name.h"
 #include "src/litert/kernel/cpu/fp32/matmul_fp32.h"
 #include "src/litert/kernel/cpu/nnacl/nnacl_kernel.h"
-#include "nnacl/kernel/matmul_base.h"
+#include "nnacl/kernel/matmul_struct.h"
 
 namespace mindspore {
 namespace {
@@ -106,7 +106,7 @@ int ReplaceMatMulFusionToCustom(schema::MetaGraphT *meta_graph, const std::uniqu
   auto kernel_base = (reinterpret_cast<const mindspore::nnacl::NNACLKernel *>(lite_kernel))->Kernel();
 
   if (data_type == kNumberTypeFloat32) {
-    const MatmulFp32Struct *matmul = reinterpret_cast<const MatmulFp32Struct *>(kernel_base);
+    const MatmulStruct *matmul = reinterpret_cast<const MatmulStruct *>(kernel_base);
     if (matmul->matmul_type_ == kMatmulFp32BaseCpu || matmul->matmul_type_ == kMatmulFp32Arm64Cpu) {
       b_batch = matmul->b_batch_;
       pack_b_size = b_batch * matmul->compute_.col_align_ * matmul->compute_.deep_ * sizeof(float);

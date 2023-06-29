@@ -61,10 +61,10 @@ int reshape_compute(struct KernelBase *self) {
 KernelBase *CreateReshape(OpParameter *param, int data_type) {
   ReshapeStruct *reshape = (ReshapeStruct *)malloc(sizeof(ReshapeStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(reshape);
-  reshape->base_.release = default_release;
-  reshape->base_.prepare = default_prepare_1in_1out;
-  reshape->base_.resize = reshape_resize;
-  reshape->base_.compute = reshape_compute;
+  reshape->base_.release_ = DefaultRelease;
+  reshape->base_.prepare_ = DefaultPrepare1In1Out;
+  reshape->base_.resize_ = reshape_resize;
+  reshape->base_.compute_ = reshape_compute;
   return (KernelBase *)reshape;
 }
 

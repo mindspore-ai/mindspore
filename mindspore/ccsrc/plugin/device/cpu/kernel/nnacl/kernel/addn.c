@@ -81,7 +81,7 @@ int AddNComputeNoParallel(AddNStruct *addn) {
   return NNACL_OK;
 }
 
-int addn_resize(struct KernelBase *self) {
+int AddnResize(struct KernelBase *self) {
   AddNStruct *addn = (AddNStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(addn);
 
@@ -90,7 +90,7 @@ int addn_resize(struct KernelBase *self) {
   return NNACL_OK;
 }
 
-int addn_compute(struct KernelBase *self) {
+int AddnCompute(struct KernelBase *self) {
   AddNStruct *addn = (AddNStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(addn);
 
@@ -133,10 +133,10 @@ KernelBase *CreateAddN(OpParameter *param, int data_type) {
   AddNStruct *addn = (AddNStruct *)malloc(sizeof(AddNStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(addn);
   addn->data_type_ = data_type;
-  addn->base_.prepare = default_prepare_1in_1out;
-  addn->base_.resize = addn_resize;
-  addn->base_.release = default_release;
-  addn->base_.compute = addn_compute;
+  addn->base_.prepare_ = DefaultPrepare1In1Out;
+  addn->base_.resize_ = AddnResize;
+  addn->base_.release_ = DefaultRelease;
+  addn->base_.compute_ = AddnCompute;
   return (KernelBase *)addn;
 }
 

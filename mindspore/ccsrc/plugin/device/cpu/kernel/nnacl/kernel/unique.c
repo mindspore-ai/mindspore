@@ -22,7 +22,7 @@
 #include "nnacl/fp16/unique_fp16.h"
 #endif
 
-int unique_compute(KernelBase *self) {
+int UniqueCompute(KernelBase *self) {
   TensorC *input = self->in_[FIRST_INPUT];
   NNACL_CHECK_NULL_RETURN_ERR(input);
   TensorC *output0 = self->out_[Index0];
@@ -54,10 +54,10 @@ KernelBase *CreateUnique(OpParameter *param, int data_type) {
   UniqueStruct *unique = (UniqueStruct *)malloc(sizeof(UniqueStruct));
   NNACL_CHECK_NULL_RETURN_NULL(unique);
   unique->data_type_ = data_type;
-  unique->base_.release = default_release;
-  unique->base_.prepare = default_prepare_1in_2out;
-  unique->base_.resize = default_resize;
-  unique->base_.compute = unique_compute;
+  unique->base_.release_ = DefaultRelease;
+  unique->base_.prepare_ = DefaultPrepare1In2Out;
+  unique->base_.resize_ = DefaultResize;
+  unique->base_.compute_ = UniqueCompute;
   return (KernelBase *)unique;
 }
 

@@ -70,7 +70,7 @@ void InitArithmeticRunFunction(KernelBase *self) {
   }
 }
 
-int arithmetic_release(struct KernelBase *self) {
+int ArithmeticRelease(struct KernelBase *self) {
   ArithmeticStruct *arithmetic = (ArithmeticStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(arithmetic);
   for (int i = 0; i < TWO_TENSOR; i++) {
@@ -552,11 +552,11 @@ int ArithmeticChooseThreadCuttingStrategy(ArithmeticStruct *arithmetic) {
   return NNACL_OK;
 }
 
-int arithmetic_resize(struct KernelBase *self) {
+int ArithmeticResize(struct KernelBase *self) {
   ArithmeticStruct *arithmetic = (ArithmeticStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(arithmetic);
 
-  arithmetic_release(&arithmetic->base_);
+  ArithmeticRelease(&arithmetic->base_);
 
   NNACL_CHECK_TRUE_RET(arithmetic->in_data_size_ != 0, NNACL_UNSUPPORTED_DATA_TYPE);
   NNACL_CHECK_TRUE_RET(arithmetic->out_data_size_ != 0, NNACL_UNSUPPORTED_DATA_TYPE);
@@ -582,7 +582,7 @@ int arithmetic_resize(struct KernelBase *self) {
   return ArithmeticChooseThreadCuttingStrategy(arithmetic);
 }
 
-int arithmetic_prepare(struct KernelBase *self) {
+int ArithmeticPrepare(struct KernelBase *self) {
   ArithmeticStruct *arithmetic = (ArithmeticStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(arithmetic);
 
@@ -621,7 +621,7 @@ int arithmetic_prepare(struct KernelBase *self) {
   return NNACL_OK;
 }
 
-int arithmetic_compute(struct KernelBase *self) {
+int ArithmeticCompute(struct KernelBase *self) {
   ArithmeticStruct *arithmetic = (ArithmeticStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(arithmetic);
   NNACL_CHECK_FALSE(self->in_[FIRST_INPUT]->data_type_ != self->in_[SECOND_INPUT]->data_type_,
@@ -662,10 +662,10 @@ KernelBase *CreateArithmetic(OpParameter *param, int data_type) {
   arithmetic->tile_function_ = TileOneDimensionFp32;
   arithmetic->init_function_ = InitArithmeticRunFunction;
   arithmetic->execute_ = ArithmeticDoExecute;
-  arithmetic->base_.prepare = arithmetic_prepare;
-  arithmetic->base_.resize = arithmetic_resize;
-  arithmetic->base_.release = arithmetic_release;
-  arithmetic->base_.compute = arithmetic_compute;
+  arithmetic->base_.prepare_ = ArithmeticPrepare;
+  arithmetic->base_.resize_ = ArithmeticResize;
+  arithmetic->base_.release_ = ArithmeticRelease;
+  arithmetic->base_.compute_ = ArithmeticCompute;
   return (KernelBase *)arithmetic;
 }
 

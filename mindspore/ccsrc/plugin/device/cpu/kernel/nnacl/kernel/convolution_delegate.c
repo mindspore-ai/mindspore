@@ -206,7 +206,7 @@ void ConvolutionDelegateFreeCopiedData(ConvolutionDelegateStruct *convolution_de
   convolution_delegate->need_free_bias_ = false;
 }
 
-int convolution_delegate_resize(struct KernelBase *self) {
+int ConvolutionDelegateResize(struct KernelBase *self) {
   ConvolutionDelegateStruct *convolution_delegate = (ConvolutionDelegateStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(convolution_delegate);
 
@@ -217,19 +217,19 @@ int convolution_delegate_resize(struct KernelBase *self) {
 
   (void)ConvBaseUpdateComputeInfo(convolution_delegate->convolution_);
 
-  int ret = convolution_delegate->convolution_->base_.prepare(&convolution_delegate->convolution_->base_);
+  int ret = convolution_delegate->convolution_->base_.prepare_(&convolution_delegate->convolution_->base_);
   if (ret != NNACL_OK) {
-    convolution_delegate->convolution_->base_.release(&convolution_delegate->convolution_->base_);
+    convolution_delegate->convolution_->base_.release_(&convolution_delegate->convolution_->base_);
     free(convolution_delegate->convolution_);
     convolution_delegate->convolution_ = NULL;
     return ret;
   }
 
   ConvolutionDelegateFreeCopiedData(convolution_delegate);
-  return convolution_delegate->convolution_->base_.resize(&convolution_delegate->convolution_->base_);
+  return convolution_delegate->convolution_->base_.resize_(&convolution_delegate->convolution_->base_);
 }
 
-int convolution_delegate_prepare(struct KernelBase *self) {
+int ConvolutionDelegatePrepare(struct KernelBase *self) {
   ConvolutionDelegateStruct *convolution_delegate = (ConvolutionDelegateStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(convolution_delegate);
 
@@ -247,35 +247,35 @@ int convolution_delegate_prepare(struct KernelBase *self) {
   return ConvolutionDelegateGetWeightAndBias(convolution_delegate);
 }
 
-int convolution_delegate_release(struct KernelBase *self) {
+int ConvolutionDelegateRelease(struct KernelBase *self) {
   ConvolutionDelegateStruct *convolution_delegate = (ConvolutionDelegateStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(convolution_delegate);
   int ret = NNACL_OK;
   if (convolution_delegate->convolution_ != NULL) {
-    ret = convolution_delegate->convolution_->base_.release(&convolution_delegate->convolution_->base_);
+    ret = convolution_delegate->convolution_->base_.release_(&convolution_delegate->convolution_->base_);
     free(convolution_delegate->convolution_);
     convolution_delegate->convolution_ = NULL;
   }
   return ret;
 }
 
-int convolution_delegate_compute(struct KernelBase *self) {
+int ConvolutionDelegateCompute(struct KernelBase *self) {
   ConvolutionDelegateStruct *convolution_delegate = (ConvolutionDelegateStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(convolution_delegate);
   NNACL_CHECK_NULL_RETURN_ERR(convolution_delegate->convolution_);
 
   convolution_delegate->convolution_->base_.workspace_ = convolution_delegate->conv_.base_.workspace_;
-  return convolution_delegate->convolution_->base_.compute(&convolution_delegate->convolution_->base_);
+  return convolution_delegate->convolution_->base_.compute_(&convolution_delegate->convolution_->base_);
 }
 
 KernelBase *CreateConvlutionDelegate(ConvParameter *conv_param) {
   ConvolutionDelegateStruct *delegate = (ConvolutionDelegateStruct *)malloc(sizeof(ConvolutionDelegateStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(delegate);
   memset(delegate, 0, sizeof(ConvolutionDelegateStruct));
-  delegate->conv_.base_.prepare = convolution_delegate_prepare;
-  delegate->conv_.base_.resize = convolution_delegate_resize;
-  delegate->conv_.base_.release = convolution_delegate_release;
-  delegate->conv_.base_.compute = convolution_delegate_compute;
+  delegate->conv_.base_.prepare_ = ConvolutionDelegatePrepare;
+  delegate->conv_.base_.resize_ = ConvolutionDelegateResize;
+  delegate->conv_.base_.release_ = ConvolutionDelegateRelease;
+  delegate->conv_.base_.compute_ = ConvolutionDelegateCompute;
   return (KernelBase *)delegate;
 }
 

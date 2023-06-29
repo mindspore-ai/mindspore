@@ -21,7 +21,7 @@
 #include "nnacl/fp16/ragged_range_fp16.h"
 #endif
 
-int ragged_range_compute(KernelBase *self) {
+int RaggedRangeCompute(KernelBase *self) {
   RaggedRangeStruct *ragged_range = (RaggedRangeStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(ragged_range);
 
@@ -48,7 +48,7 @@ int ragged_range_compute(KernelBase *self) {
   return NNACL_OK;
 }
 
-int ragged_range_resize(KernelBase *self) {
+int RaggedRangeResize(KernelBase *self) {
   RaggedRangeStruct *ragged_range = (RaggedRangeStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(ragged_range);
 
@@ -62,10 +62,10 @@ int ragged_range_resize(KernelBase *self) {
 KernelBase *CreateRaggedRange(OpParameter *param, int data_type) {
   RaggedRangeStruct *ragged_range = (RaggedRangeStruct *)malloc(sizeof(RaggedRangeStruct));
   NNACL_CHECK_NULL_RETURN_NULL(ragged_range);
-  ragged_range->base_.release = default_release;
-  ragged_range->base_.prepare = default_prepare_3in_2out;
-  ragged_range->base_.resize = ragged_range_resize;
-  ragged_range->base_.compute = ragged_range_compute;
+  ragged_range->base_.release_ = DefaultRelease;
+  ragged_range->base_.prepare_ = DefaultPrepare3In2Out;
+  ragged_range->base_.resize_ = RaggedRangeResize;
+  ragged_range->base_.compute_ = RaggedRangeCompute;
   return (KernelBase *)ragged_range;
 }
 

@@ -65,9 +65,8 @@ typedef struct ReduceStruct {
 } ReduceStruct;
 
 KernelBase *CreateReduce(OpParameter *param, int data_type);
-int reduce_prepare(KernelBase *self);
-int reduce_release(KernelBase *self);
-int reduce_resize(KernelBase *self);
-int reduce_compute(KernelBase *self);
+int ReducePrepare(KernelBase *self);
+int ReduceResize(KernelBase *self);
+int ReduceCompute(KernelBase *self);
 
 #endif  // NNACL_KERNEL_RESHAPE_H_

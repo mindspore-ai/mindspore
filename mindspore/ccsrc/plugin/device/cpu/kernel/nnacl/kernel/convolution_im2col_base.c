@@ -150,14 +150,14 @@ void ConvIm2ColBaseInitGlobalVariable(ConvolutionBaseStruct *conv) {
   conv_im2col->row_major_to_col_nmajor_ = RowMajor2Col8Major;
 }
 
-int convolution_im2col_base_release(KernelBase *self) {
+int ConvolutionIm2colBaseRelease(KernelBase *self) {
   ConvolutionBaseStruct *conv = (ConvolutionBaseStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(conv);
   ConvBaseRelease(conv);
   return NNACL_OK;
 }
 
-int convolution_im2col_base_compute(KernelBase *self) {
+int ConvolutionIm2colBaseCompute(KernelBase *self) {
   ConvolutionIm2ColBaseStruct *conv_im2col = (ConvolutionIm2ColBaseStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(conv_im2col);
 
@@ -184,7 +184,7 @@ int convolution_im2col_base_compute(KernelBase *self) {
   return ret;
 }
 
-int convolution_im2col_base_resize(KernelBase *self) {
+int ConvolutionIm2colBaseResize(KernelBase *self) {
   ConvolutionBaseStruct *conv = (ConvolutionBaseStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(conv);
 
@@ -201,7 +201,7 @@ int convolution_im2col_base_resize(KernelBase *self) {
   return ConvIm2ColBaseUpdateThreadNumProcess(self, TC_PTYPE(PrimType_Conv2DFusion), 0, 0, 0);
 }
 
-int convolution_im2col_base_prepare(KernelBase *self) {
+int ConvolutionIm2colBasePrepare(KernelBase *self) {
   NNACL_CHECK_FALSE(self->in_size_ < TWO_TENSOR, NNACL_INPUT_TENSOR_ERROR);
   NNACL_CHECK_FALSE(self->out_size_ < ONE_TENSOR, NNACL_OUTPUT_TENSOR_ERROR);
 
@@ -233,10 +233,10 @@ ConvolutionBaseStruct *CreateConvIm2ColBase(ConvParameter *conv_param) {
   conv_im2col->conv_.pack_weight_ = ConvIm2ColBasePackWeight;
   conv_im2col->conv_.init_global_variable_ = ConvIm2ColBaseInitGlobalVariable;
 
-  conv_im2col->conv_.base_.compute = convolution_im2col_base_compute;
-  conv_im2col->conv_.base_.prepare = convolution_im2col_base_prepare;
-  conv_im2col->conv_.base_.resize = convolution_im2col_base_resize;
-  conv_im2col->conv_.base_.release = convolution_im2col_base_release;
+  conv_im2col->conv_.base_.compute_ = ConvolutionIm2colBaseCompute;
+  conv_im2col->conv_.base_.prepare_ = ConvolutionIm2colBasePrepare;
+  conv_im2col->conv_.base_.resize_ = ConvolutionIm2colBaseResize;
+  conv_im2col->conv_.base_.release_ = ConvolutionIm2colBaseRelease;
 
   return (ConvolutionBaseStruct *)conv_im2col;
 }

@@ -36,7 +36,7 @@ typedef struct ArithmeticF16Struct {
 } ArithmeticF16Struct;
 
 KernelBase *CreateArithmeticF16(OpParameter *param, int data_type);
-int arithmetic_f16_resize(KernelBase *self);
-int arithmetic_f16_compute(KernelBase *self);
+int ArithmeticF16Resize(KernelBase *self);
+int ArithmeticF16Compute(KernelBase *self);
 
 #endif  // MINDSPORE_NNACL_KERNEL_F16_ARITHMETIC_F16_H_

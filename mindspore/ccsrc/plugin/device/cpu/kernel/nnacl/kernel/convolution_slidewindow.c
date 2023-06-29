@@ -137,7 +137,7 @@ int ConvSWImpl(void *cdata, int task_id, float l, float r) {
   return conv_sw->conv_.run_impl_(&conv_sw->conv_, task_id);
 }
 
-int convolution_sw_compute(KernelBase *self) {
+int ConvolutionSWCompute(KernelBase *self) {
   ConvolutionSWStruct *conv_sw = (ConvolutionSWStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(conv_sw);
 
@@ -172,14 +172,14 @@ int convolution_sw_compute(KernelBase *self) {
   return NNACL_OK;
 }
 
-int convolution_sw_release(KernelBase *self) {
+int ConvolutionSWRelease(KernelBase *self) {
   ConvolutionBaseStruct *conv = (ConvolutionBaseStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(conv);
   ConvBaseRelease(conv);
   return NNACL_OK;
 }
 
-int convolution_sw_resize(KernelBase *self) {
+int ConvolutionSWResize(KernelBase *self) {
   ConvolutionSWStruct *conv_sw = (ConvolutionSWStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(conv_sw);
   ConvParameter *conv_param = (ConvParameter *)self->param_;
@@ -204,7 +204,7 @@ int convolution_sw_resize(KernelBase *self) {
   return NNACL_OK;
 }
 
-int convolution_sw_prepare(KernelBase *self) {
+int ConvolutionSWPrepare(KernelBase *self) {
   ConvolutionSWStruct *conv_sw = (ConvolutionSWStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(conv_sw);
 

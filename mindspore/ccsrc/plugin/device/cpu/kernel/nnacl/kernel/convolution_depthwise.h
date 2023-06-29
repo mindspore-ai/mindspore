@@ -30,7 +30,7 @@ typedef struct ConvolutionDepthwiseStruct {
   float *output_ptr_;
 } ConvolutionDepthwiseStruct;
 
-int convolution_depthwise_release(KernelBase *self);
+int ConvolutionDepthwiseRelease(KernelBase *self);
 KernelBase *CreateConvDw(ConvParameter *conv);
 
 #endif  // NNACL_KERNEL_CONVOLLUTION_DEPTHWISE_H_

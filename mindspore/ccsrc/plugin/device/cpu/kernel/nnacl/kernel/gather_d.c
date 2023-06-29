@@ -19,12 +19,13 @@
 #include "nnacl/tensor_c_utils.h"
 #include "nnacl/op_base.h"
 #include "nnacl/base/gather_d_base.h"
+#include "nnacl/kernel/default_kernel_base.h"
 
 typedef struct GatherDStru {
   KernelBase base;
 } GatherDStru;
 
-int gather_d_prepare(struct KernelBase *self) {
+int GatherDPrepare(struct KernelBase *self) {
   GatherDStru *gather_d = (GatherDStru *)self;
   NNACL_CHECK_NULL_RETURN_ERR(gather_d);
   GatherParameter *param = (GatherParameter *)gather_d->base.param_;
@@ -35,7 +36,7 @@ int gather_d_prepare(struct KernelBase *self) {
   return NNACL_OK;
 }
 
-int gather_d_resize(struct KernelBase *self) {
+int GatherDResize(struct KernelBase *self) {
   GatherDStru *gather_d = (GatherDStru *)self;
   NNACL_CHECK_NULL_RETURN_ERR(gather_d);
   GatherParameter *param = (GatherParameter *)gather_d->base.param_;
@@ -49,9 +50,7 @@ int gather_d_resize(struct KernelBase *self) {
   return NNACL_OK;
 }
 
-int gather_d_release(struct KernelBase *self) { return NNACL_OK; }
-
-int gather_d_compute(struct KernelBase *self) {
+int GatherDCompute(struct KernelBase *self) {
   GatherDStru *gather_d_stru = (GatherDStru *)self;
   NNACL_CHECK_NULL_RETURN_ERR(gather_d_stru);
   GatherParameter *param = (GatherParameter *)gather_d_stru->base.param_;
@@ -113,10 +112,10 @@ int gather_d_compute(struct KernelBase *self) {
 KernelBase *CreateGatherD(OpParameter *param, int data_type) {
   GatherDStru *gather_d = (GatherDStru *)malloc(sizeof(GatherDStru));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(gather_d);
-  gather_d->base.prepare = gather_d_prepare;
-  gather_d->base.resize = gather_d_resize;
-  gather_d->base.release = gather_d_release;
-  gather_d->base.compute = gather_d_compute;
+  gather_d->base.prepare_ = GatherDPrepare;
+  gather_d->base.resize_ = GatherDResize;
+  gather_d->base.release_ = DefaultRelease;
+  gather_d->base.compute_ = GatherDCompute;
   return (KernelBase *)gather_d;
 }
 

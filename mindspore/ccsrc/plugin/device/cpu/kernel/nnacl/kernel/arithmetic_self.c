@@ -154,10 +154,10 @@ KernelBase *CreateArithmeticSelf(OpParameter *param, int data_type) {
   ArithmeticSelfGetArithmeticSelfFunction(arithmetic_self, param->type_);
   ArithmeticSelfGetArithmeticSelfF16Function(arithmetic_self, param->type_);
   arithmetic_self->op_type_ = param->type_;
-  arithmetic_self->base_.prepare = arithmetic_self_prepare;
-  arithmetic_self->base_.resize = arithmetic_self_resize;
-  arithmetic_self->base_.release = default_release;
-  arithmetic_self->base_.compute = arithmetic_self_compute;
+  arithmetic_self->base_.prepare_ = arithmetic_self_prepare;
+  arithmetic_self->base_.resize_ = arithmetic_self_resize;
+  arithmetic_self->base_.release_ = DefaultRelease;
+  arithmetic_self->base_.compute_ = arithmetic_self_compute;
   return (KernelBase *)arithmetic_self;
 }
 
