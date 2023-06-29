@@ -135,7 +135,6 @@ def test_fallback_add_meta_3():
     assert np.allclose(ret.asnumpy(), Tensor([5, 6, 7]).asnumpy())
 
 
-@pytest.mark.skip(reason="List object can not pass PyExecute output.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -334,7 +333,6 @@ def test_fallback_compare_meta_2():
     assert ret == [True, True, True, True]
 
 
-@pytest.mark.skip(reason="List object can not pass PyExecute output.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -637,7 +635,6 @@ def test_fallback_meta_fg_not_support_type_floordiv():
     assert "unsupported operand type" in str(err.value)
 
 
-@pytest.mark.skip(reason="list is converted to tuple before fallback")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -658,7 +655,7 @@ def test_fallback_meta_fg_not_support_type_greater_equal_1():
     net = InnerClass()
     with pytest.raises(TypeError) as err:
         net()
-    assert "unsupported operand type" in str(err.value)
+    assert "'>=' not supported between instances of 'list' and 'tuple'." in str(err.value)
 
 
 @pytest.mark.level0

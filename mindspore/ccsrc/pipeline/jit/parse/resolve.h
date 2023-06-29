@@ -130,7 +130,9 @@ class InterpretedObject final : public PyObjectWrapper {
                                                       std::make_shared<External>());
   }
   void set_has_converted(bool has_converted) { has_converted_ = has_converted; }
-  bool has_converted() { return has_converted_; }
+  bool has_converted() const { return has_converted_; }
+
+ private:
   bool has_converted_ = false;
 };
 using InterpretedObjectPtr = std::shared_ptr<InterpretedObject>;

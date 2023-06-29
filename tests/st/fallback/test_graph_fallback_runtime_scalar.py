@@ -164,7 +164,6 @@ def test_int_asnumpy():
     assert out == 5
 
 
-@pytest.mark.skip(reason="No support by now.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

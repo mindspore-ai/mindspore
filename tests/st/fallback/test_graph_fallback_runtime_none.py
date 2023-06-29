@@ -397,7 +397,6 @@ def test_none_is_inner_function_output():
     check_output(cap.output, patterns)
 
 
-@pytest.mark.skip("PyExecute condition is wrong.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -433,7 +432,6 @@ def test_none_is_output_of_function_with_side_effect_is():
     assert res == 4
 
 
-@pytest.mark.skip("PyExecute condition is wrong.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -492,7 +490,6 @@ def test_none_is_input_of_dict_return():
     assert out == {'y': 'a', 'u': 9, 'v': False, 'w': None}
 
 
-@pytest.mark.skip(reason="List object can not pass PyExecute output.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -752,7 +749,6 @@ def test_none_in_nest_tuple():
     assert out == (None, ("a", None))
 
 
-@pytest.mark.skip("PyExecute condition is wrong.")
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

@@ -50,7 +50,6 @@ def test_return_interpret_object():
     assert np.all(output[3], np.array([1, 2, 3, 4]))
 
 
-@pytest.mark.skip(reason="not support now")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -116,7 +115,6 @@ def test_numpy_asarray_with_variable_scene():
     assert output == np.array([1, 2])
 
 
-@pytest.mark.skip(reason="not support now")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -137,7 +135,6 @@ def test_in_with_none():
     assert foo()
 
 
-@pytest.mark.skip(reason="not support now")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -270,7 +267,6 @@ def test_star_to_compress_input():
     assert ret[1] == [2, 3, 4]
 
 
-@pytest.mark.skip(reason="not support now")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
