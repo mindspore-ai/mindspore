@@ -157,11 +157,23 @@ class MS_CORE_API MapTensor final : public Tensor {
   /// \return The exported data.
   ExportData Export(bool incremental = false) const;
 
+  /// \brief Exported slice data from MapTensor.
+  ///
+  /// \param[in] incremental [bool] False for incremental export, true for full export.
+  /// \param[out] last_slice [bool *] Point a bool variable which indicates whether the slice by export is the last
+  /// slice, that is, the export is complete and all slices are exported.
+  /// \return The exported data.
+  ExportData ExportSlice(bool incremental, bool *last_slice);
+
   /// \brief Exported MapTensor data from device.
   ///
+  /// \param[in] device_sync [DeviceSyncPtr] The device resource synchronizer(such as DeviceAddress).
   /// \param[in] incremental [bool] True for incremental export, false for full export.
+  /// \param[out] last_slice [bool *] Point a bool variable which indicates whether the slice by export is the last
+  /// slice, that is, the export is complete and all slices are exported. nullptr indicates that slice export is
+  /// disabled.
   /// \return The exported data.
-  ExportData ExportDataFromDevice(const DeviceSyncPtr &device_sync, bool incremental) const;
+  ExportData ExportDataFromDevice(const DeviceSyncPtr &device_sync, bool incremental, bool *last_slice = nullptr) const;
 
   /// \brief Get three tensor length from device data with tensor shape and type.
   ///

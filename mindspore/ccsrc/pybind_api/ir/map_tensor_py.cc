@@ -22,6 +22,7 @@
 #include "pybind_api/ir/tensor_py.h"
 #include "include/common/pybind_api/api_register.h"
 #include "include/common/utils/python_adapter.h"
+#include "mindspore/ccsrc/include/backend/distributed/embedding_cache/embedding_cache_utils.h"
 #include "pipeline/jit/parse/parse_base.h"
 #include "utils/hash_set.h"
 #include "utils/log_adapter.h"
@@ -74,6 +75,29 @@ std::tuple<py::array, py::array, py::array> MapTensorPy::ExportAsNumpy(const Map
   auto data = map_tensor->Export(incremental);
   return std::make_tuple(TensorPy::AsNumpy(*data.key_tensor), TensorPy::AsNumpy(*data.value_tensor),
                          TensorPy::AsNumpy(*data.status_tensor));
+}
+
+std::tuple<py::array, py::array, py::array, bool> MapTensorPy::ExportSliceAsNumpy(const MapTensorPtr &map_tensor,
+                                                                                  bool incremental) {
+  MS_EXCEPTION_IF_NULL(map_tensor);
+  bool last_slice = false;
+  auto data = map_tensor->ExportSlice(incremental, &last_slice);
+  return std::make_tuple(TensorPy::AsNumpy(*data.key_tensor), TensorPy::AsNumpy(*data.value_tensor),
+                         TensorPy::AsNumpy(*data.status_tensor), last_slice);
+}
+
+std::tuple<py::array, py::array, py::array, bool> MapTensorPy::ExportPersistentSliceAsNumpy(
+  const MapTensorPtr &map_tensor, int32_t param_key, bool incremental) {
+  MS_EXCEPTION_IF_NULL(map_tensor);
+  bool last_slice = false;
+  auto storage = embedding_storage_manager.Get(param_key);
+  MS_EXCEPTION_IF_NULL(storage);
+  auto slice_data = storage->ExportSlice(incremental, &last_slice);
+  map_tensor->TransExportDataToTensor(slice_data);
+
+  return std::make_tuple(TensorPy::AsNumpy(*(map_tensor->key_tensor())),
+                         TensorPy::AsNumpy(*(map_tensor->value_tensor())),
+                         TensorPy::AsNumpy(*(map_tensor->status_tensor())), last_slice);
 }
 
 static tensor::TensorPtr PyMapTensorGetKeys(const MapTensorPtr &map_tensor) {
@@ -130,6 +154,8 @@ void RegMapTensor(const py::module *m) {
     .def_property_readonly("size", &MapTensor::size)
     .def("export_data", &MapTensorPy::ExportAsNumpy)
     .def("import_data", &MapTensorPy::UpdateFromNumpy)
+    .def("export_slice_data", &MapTensorPy::ExportSliceAsNumpy)
+    .def("export_persistent_slice_data", &MapTensorPy::ExportPersistentSliceAsNumpy)
     .def("__str__", &MapTensor::ToString)
     .def("__repr__", &MapTensor::ToString)
     .def("get_keys", &PyMapTensorGetKeys)
