@@ -48,6 +48,7 @@ def test_save_random_ckpt(mode):
     Description: save and load random ckpt
     Expectation: Success.
     """
+    context.set_context(mode=context.GRAPH_MODE)
     x = Tensor(np.array([3, 9, 4, 1]).astype(np.float32))
     net = Net(3)
     out00, out01 = net(x)

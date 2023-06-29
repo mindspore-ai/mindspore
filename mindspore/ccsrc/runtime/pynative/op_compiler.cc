@@ -395,7 +395,7 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
 
   // Operator with hidden side effect.
   if (has_hidden_side_effect) {
-    graph_info.append(std::to_string(op_prim->id())).append("_");
+    graph_info.append("r_").append(std::to_string(op_info.py_prim_id_)).append("_");
   }
   // The value of the attribute affects the operator selection
   const auto &attr_map = op_prim->attrs();

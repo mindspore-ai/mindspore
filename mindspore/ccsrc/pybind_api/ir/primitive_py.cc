@@ -37,6 +37,11 @@ constexpr auto kBpropAttrName = "bprop";
 constexpr auto kCellHookAttrName = "cell_hook";
 constexpr auto kCellIDAttrName = "cell_id";
 constexpr auto kCustomOpBpropAttrName = "custom_op_bprop";
+static uint64_t MakeId() {
+  // Use atomic to make id generator thread safe.
+  static std::atomic<uint64_t> last_id{1};
+  return last_id.fetch_add(1, std::memory_order_relaxed);
+}
 std::map<std::string, std::string> kOpAttrNameReplaceMap = {
   {"data_format", "format"},
 };
@@ -581,12 +586,13 @@ py::object PrimitivePy::RunInferValue(const py::tuple &args) {
 
 void PrimitivePy::ClearHookRes() { hook_grad_.clear(); }
 
-PrimitivePyAdapter::PrimitivePyAdapter(const py::str &name) : name_(name) {}
+PrimitivePyAdapter::PrimitivePyAdapter(const py::str &name) : id_(MakeId()), name_(name) {}
 
 PrimitivePyAdapter::PrimitivePyAdapter(const PrimitivePyAdapter &adapter)
     : const_prim_(adapter.const_prim_),
       inplace_prim_(adapter.inplace_prim_),
       backward_hook_fn_key_(adapter.backward_hook_fn_key_),
+      id_(adapter.id_),
       name_(adapter.name_),
       instance_name_(adapter.instance_name_),
       prim_type_(adapter.prim_type_),
@@ -602,6 +608,7 @@ PrimitivePyAdapter &PrimitivePyAdapter::operator=(const PrimitivePyAdapter &othe
   const_prim_ = other.const_prim_;
   inplace_prim_ = other.inplace_prim_;
   backward_hook_fn_key_ = other.backward_hook_fn_key_;
+  id_ = other.id_;
   name_ = other.name_;
   instance_name_ = other.instance_name_;
   prim_type_ = other.prim_type_;

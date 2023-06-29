@@ -109,6 +109,7 @@ class PrimitivePyAdapter {
   void set_instance_name(const std::string &s);
   void set_attached_primitive(const PrimitivePyPtr &prim);
   PrimitivePyPtr attached_primitive() const { return attached_primitive_.lock(); }
+  uint64_t id() const { return id_; }
   std::string name() const { return name_; }
   void set_name(const std::string &name) { name_ = name; }
 
@@ -140,6 +141,7 @@ class PrimitivePyAdapter {
   bool const_prim_{false};
   bool inplace_prim_{false};
   int backward_hook_fn_key_{-1};
+  uint64_t id_;
   std::string name_;
   std::string instance_name_;
   PrimType prim_type_{kPrimTypeBuiltIn};
