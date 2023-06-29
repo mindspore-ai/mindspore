@@ -110,64 +110,59 @@ class MS_CORE_API AnfNode : public Base {
   ///
   /// \param[in] func_graph The FuncGraph to which this AnfNode belongs.
   /// \param[in] debug_info The debug info to be used for this AnfNode.
-  AnfNode(const FuncGraphPtr &func_graph, NodeDebugInfoPtr &&debug_info)
-      : func_graph_(FuncGraphWeakPtr(func_graph)),
-        abstract_(nullptr),
-        debug_info_(std::move(debug_info)),
-        fullname_with_scope_(""),
-        scope_(ScopeManager::GetInstance().GetCurrentScope()) {}
+  AnfNode(const FuncGraphPtr &func_graph, NodeDebugInfoPtr &&debug_info);
 
   /// \brief Constructor.
   ///
   /// \param[in] func_graph The FuncGraph to which this AnfNode belongs.
-  explicit AnfNode(const FuncGraphPtr &func_graph) : AnfNode(func_graph, std::make_shared<NodeDebugInfo>()) {}
+  explicit AnfNode(const FuncGraphPtr &func_graph);
 
   /// \brief Destructor.
   ~AnfNode() override = default;
   MS_DECLARE_PARENT(AnfNode, Base);
 
   /// \brief Use the method of the AnfIrVisitor class to process the node.
-  virtual void accept(AnfIrVisitor *) {}
+  virtual void accept(AnfIrVisitor *);
 
   /// \brief Obtain the FuncGraph to which this AnfNode belongs.
   ///
   /// \return The FuncGraph to which this AnfNode belongs.
-  FuncGraphPtr func_graph() const { return func_graph_.lock(); }
+  FuncGraphPtr func_graph() const;
 
   /// \brief Set the FuncGraph to which this AnfNode belongs.
   ///
   /// \param[in] func_graph The input FuncGraph.
-  virtual void set_func_graph(const FuncGraphPtr &func_graph) { func_graph_ = FuncGraphWeakPtr(func_graph); }
+  virtual void set_func_graph(const FuncGraphPtr &func_graph);
 
   /// \brief Obtain the scope namespace of this AnfNode.
   ///
   /// \return The scope namespace.
-  ScopePtr scope() { return scope_; }
+  ScopePtr scope();
 
   /// \brief Set the scope namespace of this AnfNode.
   ///
   /// \param[in] scope New scope namespace.
-  void set_scope(const ScopePtr &scope) { scope_ = scope; }
+  void set_scope(const ScopePtr &scope);
 
   /// \brief Obtain device kernel program information.
   ///
   /// \return Device kernel program information.
-  const KernelInfoDevice *kernel_info() const { return kernel_info_ptr().get(); }
+  const KernelInfoDevice *kernel_info() const;
 
   /// \brief Obtain device kernel program information.
   ///
   /// \return Device kernel program information.
-  KernelInfoDevice *kernel_info() { return kernel_info_ptr().get(); }
+  KernelInfoDevice *kernel_info();
 
   /// \brief Obtain the pointer of KernelInfoDevice.
   ///
   /// \return The pointer of KernelInfoDevice.
-  KernelInfoDevicePtr kernel_info_ptr() const { return user_data<KernelInfoDevice>(kKernelInfoKey); }
+  KernelInfoDevicePtr kernel_info_ptr() const;
 
   /// \brief Set device kernel program information.
   ///
   /// \param[in] kernel_info New device kernel program information.
-  void set_kernel_info(const KernelInfoDevicePtr &kernel_info) { set_user_data(kKernelInfoKey, kernel_info); }
+  void set_kernel_info(const KernelInfoDevicePtr &kernel_info);
 
   /// \brief Obtain the inferred abstract value of this AnfNode.
   ///
@@ -182,24 +177,12 @@ class MS_CORE_API AnfNode : public Base {
   /// \brief Obtain the debugging information of this AnfNode.
   ///
   /// \return The debugging information of this AnfNode.
-  NodeDebugInfoPtr debug_info() {
-    MS_EXCEPTION_IF_NULL(debug_info_);
-    if (debug_info_->get_node() == nullptr) {
-      debug_info_->set_node(shared_from_base<AnfNode>());
-    }
-    return debug_info_;
-  }
+  NodeDebugInfoPtr debug_info();
 
   /// \brief Set the debugging information of this AnfNode.
   ///
   /// \return New debugging information.
-  void set_debug_info(const NodeDebugInfoPtr &debug_info) {
-    MS_EXCEPTION_IF_NULL(debug_info);
-    debug_info_ = debug_info;
-    if (debug_info_->get_node() == nullptr) {
-      debug_info_->set_node(shared_from_base<AnfNode>());
-    }
-  }
+  void set_debug_info(const NodeDebugInfoPtr &debug_info);
 
   /// \brief Obtain the type of the element in this AnfNode.
   ///
@@ -211,81 +194,76 @@ class MS_CORE_API AnfNode : public Base {
   /// \return The shape of the element.
   BaseShapePtr Shape() const;
 
-  std::size_t hash() const override final { return PointerHash<AnfNode>{}(this); }
+  std::size_t hash() const final;
 
   /// \brief Obtain detailed information about scope namespace.
   ///
   /// \return Detailed information about scope namespace.
-  virtual std::string fullname_with_scope() { return ""; }
+  virtual std::string fullname_with_scope();
 
   /// \brief Obtain the unique name of this AnfNode.
   ///
   /// \return The unique name of this AnfNode.
-  std::string UniqueName() { return fullname_with_scope() + "_" + UniqueId(); }
+  std::string UniqueName();
 
   /// \brief Obtain the display information of this AnfNode.
   ///
   /// \param[in] recursive_level Recursion level when displayed.
   /// \return Information to be displayed.
-  virtual std::string DebugString(int recursive_level = 1) const { return ToString(); }
+  virtual std::string DebugString(int recursive_level = 1) const;
 
   /// \brief Obtain the display information of this AnfNode.
   ///
   /// \param[in] recursive Whether to display AnfNode recursively.
   /// \return Information to be displayed.
-  virtual std::string DebugString(bool recursive) const { return DebugString(recursive ? 1 : 0); }
+  virtual std::string DebugString(bool recursive) const;
 
   std::string ToString() const override;
 
-  void dump() const override { std::cout << DebugString() << std::endl; }
+  void dump() const override;
 
   /// \brief Obtain the unique id of the debug information of this AnfNode.
   ///
   /// \return Unique id.
-  std::string UniqueId() { return std::to_string(debug_info()->unique_id()); }
+  std::string UniqueId();
 
   /// \brief Obtain the unique id through copied traced information.
   ///
   /// \return Unique id.
-  std::string UniqueIdThroughCopy() { return std::to_string(debug_info()->unique_id_through_copy()); }
+  std::string UniqueIdThroughCopy();
 
   /// \brief Determine whether two AnfNodes are the same.
   ///
   /// \param[in] other Another ANfNode.
   /// \return True if the same, otherwise False.
-  virtual bool operator==(const AnfNode &other) const { return &other == this; }
+  virtual bool operator==(const AnfNode &other) const;
 
   /// \brief Obtain the display information of this AnfNode.
   ///
   /// \param[in] os Output stream.
   /// \param[in] node AnfNode to be displayed.
   /// \return Output stream.
-  friend std::ostream &operator<<(std::ostream &os, const AnfNode &node) {
-    os << node.ToString();
-    return os;
-  }
+  friend std::ostream &operator<<(std::ostream &os, const AnfNode &node);
 
   /// \brief Check if there is an interpret node.
   ///
   /// \return True if there is an interpret node, otherwise false.
-  bool interpret() const { return interpret_flags_[kInterpret]; }
+  bool interpret() const;
 
   /// \brief Whether to use interpretation
   ///
   /// \param[in] interpret Boolean.
-  void set_interpret(const bool &interpret) { interpret_flags_[kInterpret] = interpret; }
+  void set_interpret(const bool &interpret);
 
   /// \brief Check if there is an interpret node related to the unsupported internal type.
   ///
   /// \return True if there is an interpret node related to the unsupported internal type, otherwise false.
-  bool interpret_internal_type() { return interpret_flags_[kInterpretInternalType]; }
+  bool interpret_internal_type();
 
   /// \brief Whether there is an interpret node with unsupported internal type.
   ///
   /// \param[in] interpret_internal_type Boolean.
-  void set_interpret_internal_type(const bool &interpret_internal_type) {
-    interpret_flags_[kInterpretInternalType] = interpret_internal_type;
-  }
+  void set_interpret_internal_type(const bool &interpret_internal_type);
 
   SeenNum seen_{0};
   SeenNum extra_seen_{0};
@@ -338,11 +316,7 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   ///
   /// \param[in] inputs Input nodes of this Cnode.
   /// \param[in] func_graph_as_var The FuncGraph of type VarPtr to which this CNode belongs,
-  CNode(const std::vector<AnfNodePtr> &inputs, const VarPtr &func_graph_as_var) : AnfNode(nullptr), inputs_(inputs) {
-    primal_attrs_ = PrimalAttrManager::GetInstance().GetCurrentPrimalAttr();
-    primal_debug_infos_ = PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo();
-    set_user_data(kFuncGraphVarKey, func_graph_as_var);
-  }
+  CNode(const std::vector<AnfNodePtr> &inputs, const VarPtr &func_graph_as_var);
 
   /// \brief Constructor.
   ///
@@ -365,7 +339,7 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   /// \brief Obtain the size of input nodes of this CNode.
   ///
   /// \return Size of input nodes.
-  const size_t size() const { return inputs_.size(); }
+  const size_t size() const;
 
   /// \brief Get the input node of the given index.
   ///
@@ -376,7 +350,7 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   /// \brief Get the input nodes.
   ///
   /// \return The input nodes of this CNode.
-  const std::vector<AnfNodePtr> &inputs() const { return inputs_; }
+  const std::vector<AnfNodePtr> &inputs() const;
 
   /// \brief Add the input node to this CNode.
   ///
@@ -401,141 +375,122 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   ///
   /// \param[in] forward The cnode value.
   /// \param[in] id The id.
-  void set_forward(const ValueNodePtr &forward, const std::string &id) {
-    set_user_data(kOutputValueKey, std::make_shared<OutputValue>(forward, id));
-  }
+  void set_forward(const ValueNodePtr &forward, const std::string &id);
 
   /// \brief Get the record of output value of this CNode.
   ///
   /// \return The output value of this CNode.
-  const OutputValue &forward() const {
-    static const OutputValue empty_value;
-    auto ptr = user_data<OutputValue>(kOutputValueKey);
-    if (ptr == nullptr) {
-      return empty_value;
-    }
-    return *ptr;
-  }
+  const OutputValue &forward() const;
 
   /// \brief Check if stop_gradient is set.
   ///
   /// \return True if stop_gradient is set, otherwise false.
-  bool stop_gradient() const { return flags_[kStopGradient]; }
+  bool stop_gradient() const;
 
   /// \brief Set stop_gradient.
   ///
   /// \param[in] stop_gradient Boolean.
-  void set_stop_gradient(bool stop_gradient) { flags_[kStopGradient] = stop_gradient; }
+  void set_stop_gradient(bool stop_gradient);
 
   std::string fullname_with_scope() override;
 
   /// \brief Set fullname_with_scope for this CNode.
   ///
   /// \param[in] full_name The fullname_with_scope.
-  void set_fullname_with_scope(const std::string full_name) { fullname_with_scope_ = full_name; }
+  void set_fullname_with_scope(const std::string full_name);
 
   std::string DebugString(int recursive_level = 1) const override;
-  std::string DebugString(bool recursive) const override { return DebugString(recursive ? 1 : 0); }
+  std::string DebugString(bool recursive) const override;
 
   /// \brief Set in_forward_flag for this CNode.
   ///
   /// \param[in] flag Boolean.
-  void set_in_forward_flag(bool flag) { flags_[kInForwardFlag] = flag; }
+  void set_in_forward_flag(bool flag);
   /// \brief Check if in_forward_flag is set.
   ///
   /// \return True if in_forward_flag is set, otherwise false.
-  bool in_forward_flag() const { return flags_[kInForwardFlag]; }
+  bool in_forward_flag() const;
 
   /// \brief Check if the primitive of this CNode is load.
   ///
   /// \param[in] is_load Boolean.
-  void set_load_flag(bool is_load) { flags_[kIsLoad] = is_load; }
+  void set_load_flag(bool is_load);
   /// \brief Check if is_load_ is set.
   ///
   /// \return True if is_load_ is set, otherwise false.
-  bool get_load_flag() const { return flags_[kIsLoad]; }
+  bool get_load_flag() const;
 
   /// \brief Get func_graph_as_var of this CNode.
   ///
   /// \return func_graph_as_var.
-  VarPtr func_graph_as_var() const { return user_data<Var>(kFuncGraphVarKey); }
+  VarPtr func_graph_as_var() const;
 
   /// \brief Get all attributes of this CNode.
   ///
   /// \return Attributes of this CNode.
-  const mindspore::HashMap<std::string, ValuePtr> &attrs() const { return attrs_; }
-  void set_attrs(const mindspore::HashMap<std::string, ValuePtr> &attrs) {
-    attrs_.insert(attrs.cbegin(), attrs.cend());
-  }
+  const mindspore::HashMap<std::string, ValuePtr> &attrs() const;
+  void set_attrs(const mindspore::HashMap<std::string, ValuePtr> &attrs);
 
   /// \brief Add a new attribute to this CNode.
   ///
   /// \param[in] name The name of the new attribute.
   /// \param[in] attr The value of the new attribute.
-  void AddAttr(const std::string &name, const ValuePtr &attr) { attrs_[name] = attr; }
+  void AddAttr(const std::string &name, const ValuePtr &attr);
 
   /// \brief Erase the attribute with the given name.
   ///
   /// \param[in] name The name of attribute.
-  void EraseAttr(const std::string &name) { (void)attrs_.erase(name); }
+  void EraseAttr(const std::string &name);
 
   /// \brief Get the attribute with the given name.
   ///
   /// \param[in] name The name of attribute.
   /// \return Attribute.
-  ValuePtr GetAttr(const std::string &name) const {
-    auto iter = attrs_.find(name);
-    return iter == attrs_.cend() ? nullptr : iter->second;
-  }
+  ValuePtr GetAttr(const std::string &name) const;
 
   /// \brief Check whether this CNode has an attribute with the given name.
   ///
   /// \param[in] name The name of attribute.
   /// \return Boolean.
-  bool HasAttr(const std::string &name) const { return attrs_.find(name) != attrs_.cend(); }
+  bool HasAttr(const std::string &name) const;
 
   /// \brief Get the number of input tensors.
   ///
   /// \return The number of input tensors.
-  ssize_t input_tensor_num() const { return input_tensor_num_; }
+  ssize_t input_tensor_num() const;
 
   /// \brief Get the primal attributes of this CNode.
   ///
   /// \return The primal attributes.
-  const mindspore::HashMap<std::string, ValuePtr> &primal_attrs() const { return primal_attrs_; }
+  const mindspore::HashMap<std::string, ValuePtr> &primal_attrs() const;
 
   /// \brief Set the primal attributes of this CNode.
   ///
   /// \param[in] attrs The primal attributes.
-  void set_primal_attrs(const mindspore::HashMap<std::string, ValuePtr> &attrs) {
-    primal_attrs_.insert(attrs.cbegin(), attrs.cend());
-  }
+  void set_primal_attrs(const mindspore::HashMap<std::string, ValuePtr> &attrs);
 
   /// \brief Add the primal attribute to this CNode.
   ///
   /// \param[in] name The name of the attribute.
   /// \param[in] attr The attribute.
-  void AddPrimalAttr(const std::string &name, const ValuePtr &attr) { primal_attrs_[name] = attr; }
+  void AddPrimalAttr(const std::string &name, const ValuePtr &attr);
 
   /// \brief Erase the primal attribute with the given name.
   ///
   /// \param[in] name The name of the attribute.
-  void ErasePrimalAttr(const std::string &name) { (void)primal_attrs_.erase(name); }
+  void ErasePrimalAttr(const std::string &name);
 
   /// \brief Get the primal attribute with the given name.
   ///
   /// \param[in] name The name of the attribute.
   /// \return The primal attribute with the given name.
-  ValuePtr GetPrimalAttr(const std::string &name) const {
-    auto iter = primal_attrs_.find(name);
-    return iter == primal_attrs_.cend() ? nullptr : iter->second;
-  }
+  ValuePtr GetPrimalAttr(const std::string &name) const;
 
   /// \brief Check whether this CNode has an attribute with the given name.
   ///
   /// \param[in] name The name of the attribute.
   /// \return True if it exists, otherwise false.
-  bool HasPrimalAttr(const std::string &name) const { return primal_attrs_.find(name) != primal_attrs_.end(); }
+  bool HasPrimalAttr(const std::string &name) const;
 
   /// \brief Get primal debug information.
   ///
@@ -552,43 +507,32 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   /// \param[in] debug_info A debug information.
   void AddPrimalDebugInfo(const NodeDebugInfoPtr &debug_info);
 
-  void CloneCNodeInfo(const CNodePtr &node) {
-    MS_EXCEPTION_IF_NULL(node);
-    set_abstract(node->abstract());
-    set_forward(node->forward().first, node->forward().second);
-    set_attrs(node->attrs());
-    set_primal_attrs(node->primal_attrs());
-    set_load_flag(node->get_load_flag());
-    CloneUserData(node);
-    set_kernel_info(node->kernel_info_ptr());
-    set_primal_debug_infos(node->primal_debug_infos());
-    set_fused_debug_infos(node->fused_debug_infos());
-  }
+  void CloneCNodeInfo(const CNodePtr &node);
 
   /// \brief Set the number of input tensors.
   ///
   /// \param[in] The number of input tensors.
-  void set_input_tensor_num(ssize_t input_tensor_num) { input_tensor_num_ = input_tensor_num; }
+  void set_input_tensor_num(ssize_t input_tensor_num);
 
   /// \brief Is effect have been handled.
   ///
   /// \return True if effect have been handled, otherwise false.
-  bool IsEffectHandled() const { return flags_[kEffectHandled]; }
+  bool IsEffectHandled() const;
 
   /// \brief Set effect handled or not.
   ///
   /// \param[in] handled Boolean.
-  void SetEffectHandled(bool handled) { flags_[kEffectHandled] = handled; }
+  void SetEffectHandled(bool handled);
 
   /// \brief Get the debug infos of fused nodes.
   ///
   /// \return A vector of debug infos.
-  NodeDebugInfoSet fused_debug_infos() const { return fused_debug_infos_; }
+  NodeDebugInfoSet fused_debug_infos() const;
 
   /// \brief Set the debug infos for CNode.
   ///
   /// \param fused_debug_infos The debug infos to be set.
-  void set_fused_debug_infos(const NodeDebugInfoSet &fused_debug_infos) { fused_debug_infos_ = fused_debug_infos; }
+  void set_fused_debug_infos(const NodeDebugInfoSet &fused_debug_infos);
 
   /// \brief Add a node's debug info or fused debug info.
   ///
@@ -613,12 +557,12 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   /// \brief Check whether contains a input or indirect input, which is Depend CNode with isolated side-effect node.
   ///
   /// \return True if contains, otherwise false.
-  bool has_side_effect_node() const { return has_side_effect_node_; }
+  bool has_side_effect_node() const;
 
   /// \brief Set whether contains a input or indirect input, which is Depend CNode with isolated side-effect node.
   ///
   /// \param[in] has_side_effect_node Boolean.
-  void set_has_side_effect_node(bool has_side_effect_node) { has_side_effect_node_ = has_side_effect_node; }
+  void set_has_side_effect_node(bool has_side_effect_node);
 
  private:
   static constexpr size_t kStopGradient = 0;
@@ -669,16 +613,9 @@ class MS_CORE_API ANode : public AnfNode {
 // default_param_value_: used to hold the inputting tensor of the model.
 class MS_CORE_API Parameter final : public ANode {
  public:
-  /// \brief Constructor.
-  ///
-  /// \param[in] func_graph The FuncGraph to which this Parameter belongs.
-  explicit Parameter(const FuncGraphPtr &func_graph) : ANode(func_graph) {}
+  explicit Parameter(const FuncGraphPtr &func_graph);
 
-  /// \brief Constructor.
-  ///
-  /// \param[in] func_graph The FuncGraph to which this Parameter belongs.
-  /// \param[in] debug_info The debug info to be used for this Parameter.
-  Parameter(const FuncGraphPtr &func_graph, NodeDebugInfoPtr &&debug_info) : ANode(func_graph, std::move(debug_info)) {}
+  Parameter(const FuncGraphPtr &func_graph, NodeDebugInfoPtr &&debug_info);
 
   /// \brief Destructor.
   ~Parameter() override = default;
@@ -690,32 +627,29 @@ class MS_CORE_API Parameter final : public ANode {
   /// \brief Get the name of this Parameter.
   ///
   /// \return The name.
-  std::string name() const { return name_; }
+  std::string name() const;
 
   /// \brief Set the name of this Parameter.
   ///
   /// \param[in] The name.
-  void set_name(const std::string &name) { name_ = name; }
+  void set_name(const std::string &name);
 
-  std::string fullname_with_scope() override { return name(); }
+  std::string fullname_with_scope() override;
 
   /// \brief Check if there is a default parameter.
   ///
   /// \return True if this Parameter has a default parameter, otherwise false.
-  bool has_default() const { return has_default_; }
+  bool has_default() const;
 
   /// \brief Set the default parameter.
   ///
   /// \param[in] param The default parameter.
-  void set_default_param(const ValuePtr &param) {
-    default_param_ = param;
-    has_default_ = true;
-  }
+  void set_default_param(const ValuePtr &param);
 
   /// \brief Get the default parameter.
   ///
   /// \return The default parameter.
-  const ValuePtr &default_param() const { return default_param_; }
+  const ValuePtr &default_param() const;
 
   /// \brief Get the parameter information.
   ///
@@ -723,89 +657,78 @@ class MS_CORE_API Parameter final : public ANode {
   ParamInfoPtr param_info() const;
 
   /// \brief Increase used_graph_count.
-  void IncreaseUsedGraphCount() { used_graph_count_++; }
+  void IncreaseUsedGraphCount();
   /// \brief Decrease used_graph_count.
-  void DecreaseUsedGraphCount() { used_graph_count_--; }
+  void DecreaseUsedGraphCount();
   /// \brief Get used_graph_count.
   ///
   /// \return used_graph_count.
-  int used_graph_count() const { return used_graph_count_; }
+  int used_graph_count() const;
 
-  bool is_top_graph_param() const { return is_top_graph_param_; }
-  void set_is_top_graph_param(bool flag) { is_top_graph_param_ = flag; }
+  bool is_top_graph_param() const;
+  void set_is_top_graph_param(bool flag);
 
-  bool operator==(const AnfNode &other) const override {
-    if (!other.isa<Parameter>()) {
-      return false;
-    }
-    auto p = static_cast<const Parameter &>(other);
-    if (name_.length() > 0 && p.name_.length() > 0) {
-      return p.name_ == name_;
-    }
-    return shared_from_this() == other.shared_from_this();
-  }
+  bool operator==(const AnfNode &other) const override;
 
   /// \brief This parameter is not used in graph with id.
   ///
   /// \param[in] graph_id The graph id.
-  void SetNotUsedByRealKernelInGraph(uint32_t graph_id) { (void)not_used_in_graphs_.insert(graph_id); }
+  void SetNotUsedByRealKernelInGraph(uint32_t graph_id);
 
   /// \brief Check if this Parameter is used in graph with id.
   ///
   /// \param[in] graph_id True if used, otherwise false.
-  bool IsUsedByRealKernelInGraph(uint32_t graph_id) const {
-    return not_used_in_graphs_.find(graph_id) == not_used_in_graphs_.end();
-  }
+  bool IsUsedByRealKernelInGraph(uint32_t graph_id) const;
 
   /// \brief Set whether this Parameter has a dynamic shape.
   ///
   /// \param[in] flag Boolean.
-  void set_has_dynamic_shape(bool flag) { has_dynamic_shape_ = flag; }
+  void set_has_dynamic_shape(bool flag);
 
   /// \brief Check whether this Parameter has a dynamic shape.
   ///
   /// \return True if this Parameter has a dynamic shape, otherwise false.
-  bool has_dynamic_shape() const { return has_dynamic_shape_; }
+  bool has_dynamic_shape() const;
 
   /// \brief Set whether this Parameter is dynamic len.
   ///
   /// \param[in] flag Boolean.
-  void set_dynamic_len(bool flag) { is_dynamic_len_ = flag; }
+  void set_dynamic_len(bool flag);
 
   /// \brief Check whether this Parameter is dynamic len.
   ///
   /// \return True if this Parameter is dynamic len, otherwise false.
-  bool dynamic_len() const { return is_dynamic_len_; }
+  bool dynamic_len() const;
 
   /// \brief Set groups attr in FRACTAL_Z format.
   ///
   /// \param[in] fracz_group Groups attr in FRACTAL_Z format.
-  void set_fracz_group(int64_t fracz_group) { format_attrs_.fracz_group = fracz_group; }
+  void set_fracz_group(int64_t fracz_group);
 
   /// \brief Get groups attr in FRACTAL_Z format.
   ///
   /// \return Groups attr in FRACTAL_Z format.
-  int64_t fracz_group() const { return format_attrs_.fracz_group; }
+  int64_t fracz_group() const;
 
   /// \brief Set input_size attr in FracNZ_RNN or ND_RNN_Bias format.
   ///
   /// \param[in] input_size input_size attr in FracNZ_RNN or ND_RNN_Bias format.
-  void set_input_size(int64_t input_size) { format_attrs_.input_size = input_size; }
+  void set_input_size(int64_t input_size);
 
   /// \brief Get input_size attr in FracNZ_RNN or ND_RNN_Bias format.
   ///
   /// \return input_size attr in FracNZ_RNN or ND_RNN_Bias format.
-  int64_t input_size() const { return format_attrs_.input_size; }
+  int64_t input_size() const;
 
   /// \brief Set hidden_size attr in FracNZ_RNN or ND_RNN_Bias format.
   ///
   /// \param[in] hidden_size hidden_size attr in FracNZ_RNN or ND_RNN_Bias format.
-  void set_hidden_size(int64_t hidden_size) { format_attrs_.hidden_size = hidden_size; }
+  void set_hidden_size(int64_t hidden_size);
 
   /// \brief Get hidden_size attr in FracNZ_RNN or ND_RNN_Bias format.
   ///
   /// \return hidden_size attr in FracNZ_RNN or ND_RNN_Bias format.
-  int64_t hidden_size() const { return format_attrs_.hidden_size; }
+  int64_t hidden_size() const;
 
  private:
   struct FormatAttr {
@@ -838,12 +761,12 @@ class MS_CORE_API Value : public Base {
   /// \brief Constructor of Value.
   ///
   /// \param[in] t The type of this Value.
-  explicit Value(const TypePtr t) : type_(t) {}
+  explicit Value(const TypePtr t);
 
   /// \brief Constructor of Value.
   ///
   /// \param[in] other Another Value.
-  Value(const Value &other) : Base(other) { this->type_ = other.type_; }
+  Value(const Value &other);
 
   /// \brief Destructor.
   ~Value() override = default;
@@ -852,14 +775,12 @@ class MS_CORE_API Value : public Base {
   /// \brief Get the type of this Value.
   ///
   /// \return The type.
-  TypePtr type() const { return type_; }
+  TypePtr type() const;
 
   /// \brief Get the abstract value of Value.
   ///
   /// \return Abstract value of Value.
-  virtual abstract::AbstractBasePtr ToAbstract() {
-    MS_LOG(INTERNAL_EXCEPTION) << "ToAbstract error : The class " << type_name() << "has no implement ToAbstract yet.";
-  }
+  virtual abstract::AbstractBasePtr ToAbstract();
 
   /// \brief Check whether the input is the current Value object.
   ///
@@ -871,13 +792,7 @@ class MS_CORE_API Value : public Base {
   ///
   /// \param[in] other The Value object to be compared.
   /// \return Whether the input is the current Value object.
-  Value &operator=(const Value &other) {
-    if (&other == this) {
-      return *this;
-    }
-    this->type_ = other.type_;
-    return *this;
-  }
+  Value &operator=(const Value &other);
 
  protected:
   TypePtr type_{nullptr};
@@ -890,78 +805,69 @@ class MS_CORE_API ValueNode final : public ANode {
   /// \brief Constructor of ValueNode.
   ///
   /// \param[in] value The value of this ValueNode.
-  explicit ValueNode(const ValuePtr &value) : value_(value) {}
+  explicit ValueNode(const ValuePtr &value);
 
   /// \brief Constructor of ValueNode.
   ///
   /// \param[in] value The value of this ValueNode.
   /// \param[in] debug_info The debug info to be used for this ValueNode.
-  ValueNode(const ValuePtr &value, NodeDebugInfoPtr &&debug_info)
-      : ANode(nullptr, std::move(debug_info)), value_(value) {}
+  ValueNode(const ValuePtr &value, NodeDebugInfoPtr &&debug_info);
 
   /// \brief Destructor.
   ~ValueNode() override = default;
   MS_DECLARE_PARENT(ValueNode, ANode);
 
-  void set_func_graph(const FuncGraphPtr &) override {
-    MS_INTERNAL_EXCEPTION(ValueError) << "ValueNode should not set its func_graph.";
-  }
+  void set_func_graph(const FuncGraphPtr &) override;
 
   void accept(AnfIrVisitor *v) override;
 
   /// \brief Set the value of this ValueNode.
   ///
   /// \param[in] value The value.
-  void set_value(const ValuePtr &value) { value_ = value; }
+  void set_value(const ValuePtr &value);
 
   /// \brief Get the value of this ValueNode.
   ///
   /// \return The value.
-  const ValuePtr &value() const { return value_; }
+  const ValuePtr &value() const;
 
   std::string fullname_with_scope() override;
 
   /// \brief Set whether this ValueNode has a new value.
   ///
   /// \param[in] flag Whether this ValueNode has a new value.
-  void set_has_new_value(bool flag) { has_new_value_ = flag; }
+  void set_has_new_value(bool flag);
 
   /// \brief Check whether this ValueNode has a new value.
   ///
   /// \return Whether this ValueNode has a new value.
-  bool has_new_value() const { return has_new_value_; }
+  bool has_new_value() const;
 
   /// \brief Get the count of graphs using this ValueNode.
   ///
   /// \return The count of graphs using this ValueNode.
-  size_t used_graph_count() const { return used_graph_count_; }
+  size_t used_graph_count() const;
 
   /// \brief Set the count of groups using this ValueNode.
   ///
   /// \param[in] group The count of groups using this ValueNode.
-  void set_fracz_group(int64_t group) { format_attr_.fracz_group = group; }
+  void set_fracz_group(int64_t group);
 
   /// \brief Get groups attr in FRACTAL_Z format.
   ///
   /// \return Groups attr in FRACTAL_Z format.
-  int64_t fracz_group() const { return format_attr_.fracz_group; }
+  int64_t fracz_group() const;
 
   /// \brief Set the count of graphs using this ValueNode.
   ///
   /// \param[in] used_graph_count The count of graphs using this ValueNode.
-  void set_used_graph_count(size_t used_graph_count) { used_graph_count_ = used_graph_count; }
+  void set_used_graph_count(size_t used_graph_count);
 
   std::string ToString() const override;
   std::string DebugString(int recursive_level = 1) const override;
-  std::string DebugString(bool recursive) const override { return DebugString(recursive ? 1 : 0); }
+  std::string DebugString(bool recursive) const override;
 
-  bool operator==(const AnfNode &other) const override {
-    if (!other.isa<ValueNode>()) {
-      return false;
-    }
-    auto v = static_cast<const ValueNode &>(other);
-    return *v.value() == *value();
-  }
+  bool operator==(const AnfNode &other) const override;
   friend std::ostream &operator<<(std::ostream &os, const ValueNodePtr &node) {
     MS_EXCEPTION_IF_NULL(node);
     os << node->ToString();
@@ -1099,7 +1005,7 @@ MS_CORE_API bool IsPolyNode(const AnfNodePtr &node);
 
 // Used to check whether a ValueNode has some kind of value.
 template <typename T>
-inline bool IsValueNode(const AnfNodePtr &node) {
+bool IsValueNode(const AnfNodePtr &node) {
   auto value_node = dyn_cast_ptr<ValueNode>(node);
   if (value_node == nullptr) {
     return false;

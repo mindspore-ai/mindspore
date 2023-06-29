@@ -388,6 +388,13 @@ set(TFLITE_FBS_FILES
 ms_build_flatbuffers_lite(TFLITE_FBS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/parser/tflite/ tflite_fbs_src
         ${CMAKE_BINARY_DIR}/schema "inner")
 
+set(LITE_SRC
+        ${LITE_SRC}
+        ${CORE_DIR}/abstract/abstract_value.cc
+        ${CORE_DIR}/ir/anf.cc
+        ${CORE_DIR}/base/base.cc
+        )
+
 set_property(SOURCE ${CONVERTER_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 set_property(SOURCE ${CCSRC_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 set_property(SOURCE ${LITE_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)

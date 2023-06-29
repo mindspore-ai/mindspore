@@ -55,32 +55,21 @@ class MS_CORE_API Base : public std::enable_shared_from_this<Base> {
   /// \param[in] other Define another instance of Base.
   ///
   /// \return The instance of Base.
-  Base(const Base &other) : std::enable_shared_from_this<Base>(other) {}
+  Base(const Base &other);
 
   /// \brief The operator overloading for "==".
   ///
   /// \param[in] rhs Define the right operand of "==".
   ///
   /// \return The comparison result.
-  virtual bool operator==(const Base &rhs) {
-    if (this == &rhs) {
-      return true;
-    }
-    return false;
-  }
+  virtual bool operator==(const Base &rhs);
 
   /// \brief The copy assignment operator of Base.
   ///
   /// \param[in] Define another instance of Base.
   ///
   /// \return The instance of Base.
-  Base &operator=(const Base &other) {
-    if (this == &other) {
-      return *this;
-    }
-    user_data_ = other.user_data_;
-    return *this;
-  }
+  Base &operator=(const Base &other);
 
   /// \brief The destructor of Base.
   virtual ~Base() = default;
@@ -88,44 +77,44 @@ class MS_CORE_API Base : public std::enable_shared_from_this<Base> {
   /// \brief Get the hash value of this object.
   ///
   /// \return The hash value.
-  virtual std::size_t hash() const { return tid(); }
+  virtual std::size_t hash() const;
 
   /// \brief Get the string representation of this object.
   ///
   /// \return The string representation.
-  virtual std::string ToString() const { return type_name(); }
+  virtual std::string ToString() const;
 
   /// \brief Export the string representation to the standard output stream.
-  virtual void dump() const { std::cout << ToString() << std::endl; }
+  virtual void dump() const;
 
   /// \brief Get the text representation of this object.
   ///
   /// \return The text representation.
-  virtual std::string DumpText() const { return ToString(); }
+  virtual std::string DumpText() const;
 
   /// \brief Judge whether this object is an instance of class with the given type id.
   ///
   /// \param[in] tid Define a type id.
   ///
   /// \return The result of the judgment.
-  virtual bool IsFromTypeId(uint32_t tid) const { return Base::IsDerivedFrom(tid); }
+  virtual bool IsFromTypeId(uint32_t tid) const;
 
   /// \brief Judge whether the type id of this object is same as the given type id.
   ///
   /// \param[in] tid Define a type id.
   ///
   /// \return The result of the judgment.
-  virtual bool IsSameTypeId(uint32_t tid) const { return tid == Base::kTypeId; }
+  virtual bool IsSameTypeId(uint32_t tid) const;
 
   /// \brief Get the type name of this object.
   ///
   /// \return The type name.
-  virtual std::string type_name() const { return "Base"; }
+  virtual std::string type_name() const;
 
   /// \brief Get the type id of this object.
   ///
   /// \return The type id.
-  virtual uint32_t tid() const { return Base::kTypeId; }
+  virtual uint32_t tid() const;
 
   /// \brief Judge whether this class is derived from class with the given type id.
   ///
@@ -133,14 +122,14 @@ class MS_CORE_API Base : public std::enable_shared_from_this<Base> {
   ///
   /// \return The result of the judgment.
 
-  static bool IsDerivedFrom(uint32_t tid) ALWAYS_INLINE { return tid == Base::kTypeId; }
+  static bool IsDerivedFrom(uint32_t tid);
 
   /// \brief Judge whether this object is an instance of a given class which is derived from Base.
   ///
   /// \return The result of the judgment.
   template <typename T,
             typename std::enable_if<!is_shared_ptr<T>::value && std::is_base_of<Base, T>::value, T>::type * = nullptr>
-  inline bool isa() const {
+  bool isa() const {
     if constexpr (std::is_final<T>::value) {
       return this->IsSameTypeId(T::kTypeId);
     } else {
@@ -152,7 +141,7 @@ class MS_CORE_API Base : public std::enable_shared_from_this<Base> {
   ///
   /// \return If success, a shared_ptr of the given class will be returned. Otherwise a nullptr will be returned.
   template <typename T, typename U = typename std::enable_if<is_shared_ptr<T>::value, typename T::element_type>::type>
-  inline T cast() {
+  T cast() {
     if (isa<U>()) {
       return std::static_pointer_cast<U>(shared_from_this());
     }
@@ -163,7 +152,7 @@ class MS_CORE_API Base : public std::enable_shared_from_this<Base> {
   ///
   /// \return If success, a raw pointer of the given class will be returned. Otherwise a nullptr will be returned.
   template <typename T, typename U = typename std::enable_if<std::is_base_of<Base, T>::value>::type>
-  inline T *cast_ptr() {
+  T *cast_ptr() {
     if (isa<T>()) {
       return static_cast<T *>(this);
     }
@@ -208,7 +197,7 @@ class MS_CORE_API Base : public std::enable_shared_from_this<Base> {
   ///
   /// \param[in] key The key of user data.
   /// \return True if it exists, otherwise false.
-  bool has_user_data(const std::string &key) const { return user_data_.has(key); }
+  bool has_user_data(const std::string &key) const;
 
   /// \brief Check if there is user data.
   ///
@@ -221,17 +210,17 @@ class MS_CORE_API Base : public std::enable_shared_from_this<Base> {
   /// \brief Clone user data.
   ///
   /// \param[in] other used to copy user data.
-  void CloneUserData(const std::shared_ptr<Base> &other) { user_data_ = other->user_data_; }
+  void CloneUserData(const std::shared_ptr<Base> &other);
 
   /// \brief Clone user data.
   ///
   /// \param[in] other used to copy.
-  void CloneUserData(const UserData &other) { user_data_ = other; }
+  void CloneUserData(const UserData &other);
 
   /// \brief Get user data.
   ///
   /// \return User data.
-  const UserData &GetUserData() const { return user_data_; }
+  const UserData &GetUserData() const;
 
  protected:
   /// \brief Get the shared_ptr of Base.
@@ -249,7 +238,7 @@ using BasePtr = std::shared_ptr<Base>;
 using BaseWeakPtr = std::weak_ptr<Base>;
 
 template <typename T, typename U>
-inline T *cast(U *source) {
+T *cast(U *source) {
   if (source != nullptr && source->template isa<T>()) {
     return static_cast<T *>(source);
   }
@@ -259,7 +248,7 @@ inline T *cast(U *source) {
 template <
   typename T, typename U,
   typename std::enable_if<std::is_base_of<Base, T>::value && std::is_base_of<Base, U>::value, T>::type * = nullptr>
-inline std::shared_ptr<T> dyn_cast(const std::shared_ptr<U> &r) {
+std::shared_ptr<T> dyn_cast(const std::shared_ptr<U> &r) {
   if (r != nullptr && r->template isa<T>()) {
     return std::static_pointer_cast<T>(r);
   }
@@ -269,7 +258,7 @@ inline std::shared_ptr<T> dyn_cast(const std::shared_ptr<U> &r) {
 template <
   typename T, typename U,
   typename std::enable_if<std::is_base_of<Base, T>::value && std::is_base_of<Base, U>::value, T>::type * = nullptr>
-inline T *dyn_cast_ptr(const std::shared_ptr<U> &r) {
+T *dyn_cast_ptr(const std::shared_ptr<U> &r) {
   if (r != nullptr && r->template isa<T>()) {
     return static_cast<T *>(r.get());
   }
