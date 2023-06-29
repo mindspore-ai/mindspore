@@ -34,13 +34,13 @@
 namespace mindspore {
 namespace ops {
 namespace {
-BaseShapePtr ScatterElementsInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+BaseShapePtr ScatterElementsInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) {
   return input_args[0]->BuildShape();
 }
 
 TypePtr ScatterElementsInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   const std::string op_name = primitive->name();
-  constexpr size_t kScatterElementsArgSize = 3;
+  constexpr int64_t kScatterElementsArgSize = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kScatterElementsArgSize, op_name);
   return input_args[0]->BuildType();
 }

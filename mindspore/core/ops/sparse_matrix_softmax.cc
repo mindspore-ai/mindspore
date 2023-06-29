@@ -41,7 +41,7 @@ inline void CheckSparseMartrixShape(const size_t sparse_shape_size, const size_t
   }
 }
 
-abstract::TupleShapePtr SparseMatrixSoftmaxInferShape(const PrimitivePtr &primitive,
+abstract::TupleShapePtr SparseMatrixSoftmaxInferShape(const PrimitivePtr &,
                                                       const std::vector<AbstractBasePtr> &input_args) {
   auto dense_shape_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];

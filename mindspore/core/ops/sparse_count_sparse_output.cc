@@ -43,7 +43,7 @@ namespace ops {
 using mindspore::abstract::AbstractTensor;
 using mindspore::abstract::AbstractTuple;
 namespace {
-abstract::TupleShapePtr SparseCountSparseOutputInferShape(const PrimitivePtr &primitive,
+abstract::TupleShapePtr SparseCountSparseOutputInferShape(const PrimitivePtr &,
                                                           const std::vector<AbstractBasePtr> &input_args) {
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];

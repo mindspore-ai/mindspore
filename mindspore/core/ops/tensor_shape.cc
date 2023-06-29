@@ -57,9 +57,7 @@ BaseShapePtr TensorShapeInferShape(const PrimitivePtr &primitive, const std::vec
   return std::make_shared<abstract::Shape>(tensor_shp);
 }
 
-TypePtr TensorShapeInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  return kInt64;
-}
+TypePtr TensorShapeInferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &) { return kInt64; }
 
 abstract::AbstractBasePtr TensorShapeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const std::vector<abstract::AbstractBasePtr> &input_args) {

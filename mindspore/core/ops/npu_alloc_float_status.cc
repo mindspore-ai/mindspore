@@ -33,8 +33,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-BaseShapePtr NPUAllocFloatStatusInferShape(const PrimitivePtr &primitive,
-                                           const std::vector<AbstractBasePtr> &input_args) {
+BaseShapePtr NPUAllocFloatStatusInferShape(const PrimitivePtr &, const std::vector<AbstractBasePtr> &) {
   ShapeVector output_shape;
   constexpr int64_t kFloatStatusNum = 8;
   output_shape.push_back(kFloatStatusNum);
@@ -49,7 +48,7 @@ TypePtr NPUAllocFloatStatusInferType(const PrimitivePtr &primitive, const std::v
   return kTensorTypeFP32;
 }
 
-AbstractBasePtr NPUAllocFloatStatusInfer(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+AbstractBasePtr NPUAllocFloatStatusInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(NPUAllocFloatStatusInferShape(primitive, input_args),
                                 NPUAllocFloatStatusInferType(primitive, input_args));
