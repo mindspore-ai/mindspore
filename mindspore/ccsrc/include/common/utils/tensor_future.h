@@ -35,6 +35,9 @@ class COMMON_EXPORT DeviceAddressFuture : public tensor::FutureBase<DeviceSync> 
       : tensor::FutureBase<DeviceSync>(std::move(future)) {}
   ~DeviceAddressFuture() override;
   std::shared_ptr<DeviceSync> Get() override;
+
+ private:
+  std::once_flag once_flag_;
 };
 
 class COMMON_EXPORT DeviceAddressPromise {
