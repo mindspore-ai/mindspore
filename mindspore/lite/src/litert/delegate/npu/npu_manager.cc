@@ -20,6 +20,7 @@
 #include "include/hiai_ir_build.h"
 #include "include/HiAiModelManagerService.h"
 #include "src/common/file_utils.h"
+#include "src/common/mmap_utils.h"
 
 namespace mindspore::lite {
 constexpr int MAX_MODEL_NUM = 20;
@@ -69,6 +70,10 @@ void NPUManager::Reset() {
   for (const auto &model_map : models_) {
     auto model = model_map.second;
     if (!model->is_freed_) {
+      UnmapMmapBuffer(const_cast<void *>(static_cast<const void *>(model->model_buffer_data_->data)),
+                      model->model_buffer_data_->length);
+      model->model_buffer_data_->data = nullptr;
+      model->model_buffer_data_->length = 0;
       ir_build.ReleaseModelBuff(*model->model_buffer_data_);
       model->is_freed_ = true;
     }
@@ -129,6 +134,51 @@ bool NPUManager::IsKirinChip() {
   }
   int kirin_number = std::stoi(match_result[1]);
   return kirin_number >= KIRIN_VERSION_985 || kirin_number == KIRIN_VERSION_810 || kirin_number == KIRIN_VERSION_820;
+}
+
+int NPUManager::StoreCache(const std::string &cache_om_name,
+                           const std::shared_ptr<domi::ModelBufferData> &model_buffer_data) {
+  // Store .om Cache
+  if (cache_dir_.empty()) {
+    return RET_OK;
+  }
+  if (CreateDir(&cache_dir_) != RET_OK) {
+    MS_LOG(ERROR) << "Create cache_file folder failed.";
+    return RET_ERROR;
+  }
+  auto real_cache_dir = RealPath(cache_dir_.c_str());
+  if (real_cache_dir.empty()) {
+    MS_LOG(ERROR) << "Invalid cache directory";
+    return RET_ERROR;
+  }
+  if (WriteToBin(real_cache_dir + "/" + cache_om_name, model_buffer_data->data, model_buffer_data->length) != RET_OK) {
+    MS_LOG(ERROR) << "Store Cache failed for model: " << cache_om_name;
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+std::shared_ptr<domi::ModelBufferData> NPUManager::LoadCache(const std::string &cache_om_name) {
+  // Load .om Cache
+  if (cache_dir_.empty()) {
+    return nullptr;
+  }
+  auto real_cache_dir = RealPath(cache_dir_.c_str());
+  if (real_cache_dir.empty()) {
+    MS_LOG(ERROR) << "Invalid cache directory.";
+    return nullptr;
+  }
+  auto cache_om_path = real_cache_dir + "/" + cache_om_name;
+  size_t len;
+  auto buf = ReadFileByMmap(cache_om_path, &len);
+  if (buf == nullptr) {
+    MS_LOG(WARNING) << "The Cache om model does not exist.";
+    return nullptr;
+  }
+  auto model_buffer_data = std::make_shared<domi::ModelBufferData>();
+  model_buffer_data->data = buf;
+  model_buffer_data->length = static_cast<uint32_t>(len);
+  return model_buffer_data;
 }
 
 int NPUManager::AddModel(std::shared_ptr<domi::ModelBufferData> model_buffer_data, const std::string &model_name,

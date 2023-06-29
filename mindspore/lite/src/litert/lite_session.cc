@@ -1033,7 +1033,18 @@ int LiteSession::CreateTensorRTDelegate() {
 
 int LiteSession::CreateNPUDelegate() {
 #if SUPPORT_NPU
-  delegate_ = std::make_shared<NPUDelegate>(context_->GetDeviceInfo(DT_NPU).npu_device_info_);
+  std::string model_cache_dir;
+  if (config_info_ != nullptr) {
+    auto common_context_iter = config_info_->find(kCommonContextSection);
+    if (common_context_iter != config_info_->end()) {
+      auto common_context = common_context_iter->second;
+      auto model_cache_dir_iter = common_context.find(kGraphCompilerCacheDirKey);
+      if (model_cache_dir_iter != common_context.end()) {
+        model_cache_dir = model_cache_dir_iter->second;
+      }
+    }
+  }
+  delegate_ = std::make_shared<NPUDelegate>(context_->GetDeviceInfo(DT_NPU).npu_device_info_, model_cache_dir);
   if (delegate_ == nullptr) {
     MS_LOG(ERROR) << "New delegate_ failed";
     return RET_ERROR;

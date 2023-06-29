@@ -114,6 +114,8 @@ Status NPUDelegate::Init() {
     npu_manager_ = nullptr;
     return mindspore::kLiteNotSupport;
   }
+  npu_manager_->SetGraphCacheDir(cache_dir_);
+
   pass_manager_ = new (std::nothrow) NPUPassManager();
   if (pass_manager_ == nullptr) {
     delete npu_manager_;

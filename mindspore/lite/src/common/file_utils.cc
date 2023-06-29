@@ -234,7 +234,7 @@ std::string RealPath(const char *path) {
   return res;
 }
 
-int CreateOutputDir(std::string *file_path) {
+int CreateDir(std::string *file_path) {
   if (file_path->empty()) {
     MS_LOG(ERROR) << "input file path is empty.";
     return RET_ERROR;
@@ -263,6 +263,14 @@ int CreateOutputDir(std::string *file_path) {
         return RET_ERROR;
       }
     }
+  }
+  return RET_OK;
+}
+
+int CreateOutputDir(std::string *file_path) {
+  if (CreateDir(file_path) != RET_OK) {
+    MS_LOG(ERROR) << "Create file dir failed";
+    return RET_ERROR;
   }
 
   int count = 0;

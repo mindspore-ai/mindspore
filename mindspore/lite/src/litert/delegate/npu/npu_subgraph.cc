@@ -125,25 +125,35 @@ std::shared_ptr<domi::ModelBufferData> NPUSubGraph::BuildIRModel() {
     MS_LOG(ERROR) << "Build NPU output operator failed.";
     return nullptr;
   }
-  graph.SetInputs(subgraph_input_ops_).SetOutputs(subgraph_output_ops_);
-  ge::Model model(GetOMModelName(), mindspore::Version());
-  model.SetGraph(graph);
-  domi::HiaiIrBuild ir_build;
-  auto om_model_buff = std::make_shared<domi::ModelBufferData>();
-  if (om_model_buff == nullptr) {
-    MS_LOG(ERROR) << "OM model buffer is nullptr.";
-    return nullptr;
+  // For om Cache, StoreCache
+  auto om_model_buffer = npu_manager_->LoadCache(GetOMModelName());
+  if (om_model_buffer == nullptr) {
+    // No om Cache, build IR model.
+    graph.SetInputs(subgraph_input_ops_).SetOutputs(subgraph_output_ops_);
+    ge::Model model(GetOMModelName(), mindspore::Version());
+    model.SetGraph(graph);
+    domi::HiaiIrBuild ir_build;
+    om_model_buffer = std::make_shared<domi::ModelBufferData>();
+    if (om_model_buffer == nullptr) {
+      MS_LOG(ERROR) << "OM model buffer is nullptr.";
+      return nullptr;
+    }
+    if (!ir_build.CreateModelBuff(model, *om_model_buffer)) {
+      MS_LOG(ERROR) << "Create model buffer failed.";
+      return nullptr;
+    }
+    if (!ir_build.BuildIRModel(model, *om_model_buffer)) {
+      MS_LOG(ERROR) << "Build IR model failed.";
+      ir_build.ReleaseModelBuff(*om_model_buffer);
+      return nullptr;
+    }
+    if (npu_manager_->StoreCache(GetOMModelName(), om_model_buffer) != RET_OK) {
+      MS_LOG(ERROR) << "Store Cache failed.";
+      ir_build.ReleaseModelBuff(*om_model_buffer);
+      return nullptr;
+    }
   }
-  if (!ir_build.CreateModelBuff(model, *om_model_buff)) {
-    MS_LOG(ERROR) << "Create model buffer failed.";
-    return nullptr;
-  }
-  if (!ir_build.BuildIRModel(model, *om_model_buff)) {
-    MS_LOG(ERROR) << "Build IR model failed.";
-    ir_build.ReleaseModelBuff(*om_model_buff);
-    return nullptr;
-  }
-  return om_model_buff;
+  return om_model_buffer;
 }
 
 int NPUSubGraph::Execute() { return executor_->Run(inputs(), outputs(), all_tensors_from_out_ops_, out_ops_); }
@@ -255,13 +265,31 @@ int NPUSubGraph::BuildNPUOutputOp() {
 
 std::string NPUSubGraph::GetOMModelName() { return this->name_ + ".om"; }
 
+std::string NPUSubGraph::GetModelHash() {
+  if (npu_ops_.empty()) {
+    return "";
+  }
+  std::string npu_ops_name;
+  for (auto &npu_op : npu_ops_) {
+    npu_ops_name += npu_op->name();
+  }
+  std::hash<std::string> hash;
+  auto hash_model = hash(npu_ops_name);
+  return std::to_string(hash_model);
+}
+
 int NPUSubGraph::Init() {
   auto ret = GetGraphInOutOps();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Get NPU subgraph input and output ops failed.";
     return RET_ERROR;
   }
-  name_ = "kNpuSubGraph" + std::to_string(npu_manager_->SubGraphIndex());
+  auto model_hash = GetModelHash();
+  if (!model_hash.empty()) {
+    name_ = model_hash;
+  } else {
+    name_ = "kNpuSubGraph" + std::to_string(npu_manager_->SubGraphIndex());
+  }
   auto model_buffer_data = BuildIRModel();
   if (model_buffer_data == nullptr) {
     MS_LOG(ERROR) << "Build IR model failed.";

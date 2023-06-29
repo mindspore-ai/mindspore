@@ -74,6 +74,13 @@ class NPUManager {
 
   static bool CheckDDKVerGreatEqual(const std::string &spec_version);
 
+  // for cache
+  std::shared_ptr<domi::ModelBufferData> LoadCache(const std::string &cache_om_name);
+
+  int StoreCache(const std::string &cache_om_name, const std::shared_ptr<domi::ModelBufferData> &model_buffer_data);
+
+  void SetGraphCacheDir(const std::string &cache_dir) { cache_dir_ = cache_dir; }
+
  private:
   bool IsKirinChip();
 
@@ -90,6 +97,7 @@ class NPUManager {
   std::unordered_map<std::string, std::shared_ptr<SubGraphModel>> models_;
   std::vector<std::shared_ptr<hiai::AiModelMngerClient>> clients_;
   int frequency_ = 0;
+  std::string cache_dir_{};
 };
 
 }  // namespace mindspore::lite

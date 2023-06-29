@@ -65,6 +65,8 @@ class NPUSubGraph : public kernel::Kernel {
 
   std::string GetOMModelName();
 
+  std::string GetModelHash();
+
   bool is_compiled_ = false;
 
   std::vector<ge::Operator> subgraph_input_ops_;
