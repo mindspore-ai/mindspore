@@ -13,7 +13,7 @@ mindspore.ops.FillDiagonal
         - **wrap** (bool，可选) - 控制对于一个高矩阵（即矩阵的行数大于列数），对角线元素是否继续延伸到剩余的行。具体效果详见下方代码样例。默认值： ``False`` 。
 
     输入：
-        - **input_x** (Tensor) - shape为 :math:`(x_1, x_2, ..., x_R)` ，其数据类型必须为：float32、int32或者int64。
+        - **input_x** (Tensor) - shape为 :math:`(x_1, x_2, ..., x_R)` 。
 
     输出：
         - **y** (Tensor) - Tensor，和输入 `input_x` 具有相同的shape和dtype。

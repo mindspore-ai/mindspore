@@ -125,7 +125,7 @@ class StepLR(LRScheduler):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
-    Example:
+    Examples:
         >>> import mindspore
         >>> from mindspore import nn
         >>> # Define the network structure of LeNet5. Refer to
@@ -198,7 +198,7 @@ class LinearLR(LRScheduler):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
-    Example:
+    Examples:
         >>> import mindspore
         >>> from mindspore.nn.lr_scheduler import LinearLR
         >>> from mindspore import nn
