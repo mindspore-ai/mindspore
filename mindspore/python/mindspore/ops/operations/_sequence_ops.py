@@ -396,7 +396,7 @@ class ListToTensor(Primitive):
     def __call__(self, x, dtype):
         if x is not None and None not in x and isinstance(x, list):
             return Tensor(x, dtype)
-        return None
+        raise RuntimeError(f"input must be list, but got {x}")
 
 
 class TensorToTuple(PrimitiveWithCheck):

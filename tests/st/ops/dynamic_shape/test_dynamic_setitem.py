@@ -20,6 +20,8 @@ from mindspore.ops.composite import GradOperation
 from mindspore.nn import Cell
 import mindspore.common.dtype as mstype
 
+context.set_context(mode=context.GRAPH_MODE)
+
 
 class _Grad(Cell):
     def __init__(self, grad, network, wrt_params=False, real_inputs_count=None):
@@ -167,11 +169,6 @@ def test_dynamic_setitem_int_number():
     value = 88.0
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
-    context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(ms_net, np_net)
-    fact.forward_cmp()
-    fact.grad_impl()
-    context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
     fact.grad_impl()
@@ -194,11 +191,6 @@ def test_dynamic_setitem_int_tensor():
         (1 * 3)).astype(np.float32), mstype.float32)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value.asnumpy())
-    context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(ms_net, np_net)
-    fact.forward_cmp()
-    fact.grad_impl()
-    context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
     fact.grad_impl()
@@ -220,17 +212,12 @@ def test_dynamic_setitem_int_sequence():
     value = (1.0, Tensor(5, mstype.float32), 8.0)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
-    context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(ms_net, np_net)
-    fact.forward_cmp()
-    fact.grad_impl()
-    context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -247,11 +234,6 @@ def test_dynamic_setitem_tensor_number():
     value = 88.0
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index.asnumpy(), value)
-    context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(ms_net, np_net)
-    fact.forward_cmp()
-    fact.grad_impl()
-    context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
     fact.grad_impl()
@@ -275,17 +257,12 @@ def test_dynamic_setitem_tensor_tensor():
         (1 * 3)).astype(np.float32), mstype.float32)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index.asnumpy(), value.asnumpy())
-    context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(ms_net, np_net)
-    fact.forward_cmp()
-    fact.grad_impl()
-    context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -302,11 +279,6 @@ def test_dynamic_setitem_tensor_sequence():
     value = (1.0, Tensor(5, mstype.float32), 8.0)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index.asnumpy(), value)
-    context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(ms_net, np_net)
-    fact.forward_cmp()
-    fact.grad_impl()
-    context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
     fact.grad_impl()
@@ -328,7 +300,6 @@ def test_dynamic_setitem_none_number():
     value = 88.0
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
-    context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
     fact.grad_impl()
@@ -351,7 +322,6 @@ def test_dynamic_setitem_none_tensor():
         (1 * 3)).astype(np.float32), mstype.float32)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value.asnumpy())
-    context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
     fact.grad_impl()
@@ -373,7 +343,6 @@ def test_dynamic_setitem_none_sequence():
     value = (1.0, Tensor(5, mstype.float32), 8.0)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
-    context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
     fact.grad_impl()
@@ -395,7 +364,6 @@ def test_dynamic_setitem_ellipsis_number():
     value = 88.0
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
-    context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
     fact.grad_impl()
@@ -418,7 +386,6 @@ def test_dynamic_setitem_ellipsis_tensor():
         (1 * 3)).astype(np.float32), mstype.float32)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value.asnumpy())
-    context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
     fact.grad_impl()
@@ -440,13 +407,12 @@ def test_dynamic_setitem_ellipsis_sequence():
     value = (1.0, Tensor(5, mstype.float32), 8.0)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
-    context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -462,7 +428,6 @@ def test_dynamic_setitem_bool_number():
     value = 88.0
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
-    context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
     fact.grad_impl()
@@ -485,7 +450,6 @@ def test_dynamic_setitem_bool_tensor():
         (1 * 3)).astype(np.float32), mstype.float32)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value.asnumpy())
-    context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
     fact.grad_impl()
@@ -507,13 +471,12 @@ def test_dynamic_setitem_bool_sequence():
     value = (1.0, Tensor(5, mstype.float32), 8.0)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
-    context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -529,11 +492,6 @@ def test_dynamic_setitem_list_number():
     value = 88.0
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
-    context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(ms_net, np_net)
-    fact.forward_cmp()
-    fact.grad_impl()
-    context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
     fact.grad_impl()
@@ -556,17 +514,12 @@ def test_dynamic_setitem_list_tensor():
         (1 * 3)).astype(np.float32), mstype.float32)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value.asnumpy())
-    context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(ms_net, np_net)
-    fact.forward_cmp()
-    fact.grad_impl()
-    context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -582,11 +535,6 @@ def test_dynamic_setitem_list_sequence():
     value = (1.0, Tensor(5, mstype.float32), 8.0)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
-    context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(ms_net, np_net)
-    fact.forward_cmp()
-    fact.grad_impl()
-    context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
     fact.grad_impl()
@@ -608,17 +556,12 @@ def test_dynamic_setitem_slice_sequence():
     value = (1.0, Tensor(5, mstype.float32), 8.0)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
-    context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(ms_net, np_net)
-    fact.forward_cmp()
-    fact.grad_impl()
-    context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
     fact.grad_impl()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -646,10 +589,6 @@ def test_dynamic_rank_setitem_slice_int():
     axis_np = np.array([0, 1])
     ms_net = TensorDynamciSetItem()
     np_net = NpSetItem()
-    context.set_context(mode=context.PYNATIVE_MODE)
-    fact = DynamicRankCommonFunc(ms_net, np_net, input_np, axis_np)
-    fact.forward_cmp()
-    context.set_context(mode=context.GRAPH_MODE)
     fact = DynamicRankCommonFunc(ms_net, np_net, input_np, axis_np)
     fact.forward_cmp()
     fact.grad_impl()
