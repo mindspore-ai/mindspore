@@ -39,6 +39,9 @@ bool IsBpropNode(const AnfNodePtr &node) {
   if (!node->isa<CNode>()) {
     return false;
   }
+  if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+    return IsBpropNode(node->cast<CNodePtr>()->input(1));
+  }
   return node->fullname_with_scope().find(kGradientsFlag) == 0;
 }
 
@@ -279,6 +282,9 @@ std::vector<AnfNodePtr> GetFirstTargetInputs(const std::vector<CNodePtr> &origin
         continue;
       }
       auto input_cnode = input->cast<CNodePtr>();
+      if (!IsBpropNode(input_cnode)) {
+        continue;
+      }
       if (target_nodes.find(input_cnode) != target_nodes.end() ||
           recomputed_origin_nodes.find(input_cnode) != recomputed_origin_nodes.end()) {
         continue;

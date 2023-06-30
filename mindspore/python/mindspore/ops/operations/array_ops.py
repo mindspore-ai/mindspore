@@ -1729,9 +1729,15 @@ class FillV2(PrimitiveWithCheck):
     def infer_value(self, dims, x):
         if isinstance(dims, (Tensor, Tensor_)):
             dims = dims.asnumpy()
+        if isinstance(dims, tuple):
+            dims = np.array(dims)
         if isinstance(x, (Tensor, Tensor_)):
             x = x.asnumpy()
         if dims is not None and None not in dims and x is not None:
+            # Return None when the size exceeds the threshold, the hard code will be removed later.
+            threshold = 512 * 1024 * 1024
+            if dims.prod() >= threshold:
+                return None
             ret = np.full(dims, x)
             return Tensor(ret)
         return None
