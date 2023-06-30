@@ -204,7 +204,6 @@
     mindspore.Tensor.masked_scatter
     mindspore.Tensor.masked_select
     mindspore.Tensor.matmul
-    mindspore.Tensor.matrix_power
     mindspore.Tensor.max
     mindspore.Tensor.maximum
     mindspore.Tensor.mean
