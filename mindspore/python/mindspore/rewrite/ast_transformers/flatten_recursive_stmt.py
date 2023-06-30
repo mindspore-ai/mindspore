@@ -108,6 +108,10 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
             if isinstance(todos, list):
                 new_list = []
                 for todo in todos:
+                    # Starred expression(e.g. *args) cannot be flatten.
+                    if isinstance(todo, ast.Starred):
+                        new_list.append(todo)
+                        continue
                     new_target_name, new_node = FlattenRecursiveStmt._create_new_assign_node(todo, target_names)
                     if id(new_node) == id(todo):
                         new_list.append(todo)
