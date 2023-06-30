@@ -69,6 +69,9 @@ ADD_CONVERTER_TBE_OP(SelectV2)
 ADD_CONVERTER_TBE_OP(ScatterNdUpdate)
 ADD_CONVERTER_TBE_OP(Triu)
 ADD_CONVERTER_TBE_OP(AscendAntiQuant)
+ADD_CONVERTER_TBE_OP(Shrink)
+ADD_CONVERTER_TBE_OP(ReduceLogSumExp)
+ADD_CONVERTER_TBE_OP(ReduceLogSum)
 }  // namespace acl
 }  // namespace lite
 }  // namespace mindspore

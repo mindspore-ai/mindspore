@@ -118,4 +118,18 @@ OUTPUT_MAP(ReduceProd) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ReduceProd, prim::kPrimReduceProd->name(), ADPT_DESC(ReduceProd))
 REG_ADPT_DESC(DynamicReduceProd, kNameDynamicReduceProd, ADPT_DESC(ReduceProd))
 REG_ADPT_DESC(ReduceProdD, prim::kPrimReduceProdD->name(), ADPT_DESC(ReduceProd))
+
+// ReduceLogSumExp
+INPUT_MAP(ReduceLogSumExp) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
+ATTR_INPUT_MAP(ReduceLogSumExp) = {{"axis", "axes"}};
+ATTR_MAP(ReduceLogSumExp) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+OUTPUT_MAP(ReduceLogSumExp) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ReduceLogSumExp, kNameReduceLogSumExp, ADPT_DESC(ReduceLogSumExp))
+
+// ReduceLogSum
+INPUT_MAP(ReduceLogSum) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
+ATTR_INPUT_MAP(ReduceLogSum) = {{"axis", "axes"}};
+ATTR_MAP(ReduceLogSum) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+OUTPUT_MAP(ReduceLogSum) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ReduceLogSum, kNameReduceLogSum, ADPT_DESC(ReduceLogSum))
 }  // namespace mindspore::transform

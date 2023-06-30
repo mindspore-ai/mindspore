@@ -447,7 +447,8 @@ constexpr const char kNameTopKV2[] = "TopKV2";
 constexpr const char kNameGridSampler2D[] = "GridSampler2D";
 constexpr const char kNameLeftShift[] = "LeftShift";
 constexpr const char kNameRightShift[] = "RightShift";
-
+constexpr const char kNameReduceLogSumExp[] = "ReduceLogSumExp";
+constexpr const char kNameReduceLogSum[] = "ReduceLogSum";
 class OpAdapterDesc;
 
 class OpAdapterMap {
