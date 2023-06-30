@@ -482,7 +482,6 @@ constexpr char MOD[] = "Mod";
 constexpr char BATCH_MATMUL[] = "BatchMatMul";
 constexpr char EXPAND_DIMS[] = "ExpandDims";
 constexpr char SQUARE[] = "Square";
-constexpr char BATCHMATMUL[] = "BatchMatMul";
 constexpr char TOPK[] = "TopK";
 constexpr char IN_TOPK[] = "InTopK";
 constexpr char GATHER_ND[] = "GatherNd";
