@@ -4560,6 +4560,8 @@ def grid_sample(input, grid, mode='bilinear', padding_mode='zeros', align_corner
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.arange(16).reshape((2, 2, 2, 2)).astype(np.float32))
         >>> grid = Tensor(np.arange(0.2, 1, 0.1).reshape((2, 2, 1, 2)).astype(np.float32))
         >>> output = ops.grid_sample(input_x, grid, mode='bilinear', padding_mode='zeros',

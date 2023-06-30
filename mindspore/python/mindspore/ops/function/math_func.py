@@ -214,6 +214,9 @@ def addn(x):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> y = Tensor(np.array([4, 5, 6]), mindspore.float32)
         >>> output = ops.addn([x, y, x, y])
@@ -245,6 +248,9 @@ def abs(input):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input = Tensor(np.array([-1.0, 1.0, 0.0]), mindspore.float32)
         >>> output = ops.abs(input)
         >>> print(output)
@@ -299,6 +305,8 @@ def add(input, other):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> # case 1: x and y are both Tensor.
         >>> x = Tensor(np.array([1, 2, 3]).astype(np.float32))
         >>> y = Tensor(np.array([4, 5, 6]).astype(np.float32))
@@ -346,6 +354,9 @@ def addcdiv(input, tensor1, tensor2, value=1):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_data = Tensor(np.array([1, 1, 1, 1]), mindspore.float32)
         >>> x1 = Tensor(np.array([1, 2, 3, 4]), mindspore.float32)
         >>> x2 = Tensor(np.array([4, 3, 2, 1]), mindspore.float32)
@@ -387,6 +398,9 @@ def addcmul(input, tensor1, tensor2, value=1):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_data = Tensor(np.array([1, 1, 1]), mindspore.float32)
         >>> x1 = Tensor(np.array([[1], [2], [3]]), mindspore.float32)
         >>> x2 = Tensor(np.array([[1, 2, 3]]), mindspore.float32)
@@ -420,6 +434,8 @@ def angle(input):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> input = Tensor([-1.5 + 7.8j, 3 + 5.75j], mindspore.complex64)
         >>> output = ops.angle(input)
         >>> print(output)
@@ -458,6 +474,8 @@ def bincount(input, weights=None, minlength=0):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> x = Tensor([2, 4, 1, 0, 0], dtype=mstype.int64)
         >>> print(ops.bincount(x, minlength=7))
         [2. 1. 1. 0. 1. 0. 0.]
@@ -524,6 +542,8 @@ def bucketize(input, boundaries, *, right=False):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input = Tensor(np.array([[3, 6, 9], [3, 6, 9]]))
         >>> boundaries = list(np.array([1., 3., 5., 7., 9.]))
         >>> output = ops.bucketize(input, boundaries, right=True)
@@ -558,6 +578,9 @@ def exp2(input):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([2, 3, 4]), mindspore.float32)
         >>> output = ops.exp2(x)
         >>> print(output)
@@ -593,6 +616,9 @@ def argmin(input, axis=None, keepdims=False):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([2.0, 3.1, 1.2]), mindspore.float32)
         >>> index = ops.argmin(input_x)
         >>> print(index)
@@ -635,6 +661,9 @@ def neg(input):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input = Tensor(np.array([1, 2, -1, 2, 0, -3.5]), mindspore.float32)
         >>> output = ops.neg(input)
         >>> print(output)
@@ -698,6 +727,9 @@ def numel(input):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
         >>> print(ops.numel(input_x))
         4
@@ -725,6 +757,9 @@ def permute(input, axis):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
         >>> input_perm = (0, 2, 1)
         >>> print(ops.permute(input_x, input_perm))
@@ -760,6 +795,9 @@ def ceil(input):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([1.1, 2.5, -1.5]), mindspore.float32)
         >>> output = ops.ceil(x)
         >>> print(output)
@@ -789,6 +827,9 @@ def round(input):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input = Tensor(np.array([0.8, 1.5, 2.3, 2.5, -4.5]), mindspore.float32)
         >>> output = ops.round(input)
         >>> print(output)
@@ -833,6 +874,9 @@ def sub(input, other):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> other = Tensor(np.array([4, 5, 6]), mindspore.int32)
         >>> output = ops.sub(input, other)
@@ -867,6 +911,9 @@ def subtract(input, other, *, alpha=1):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input = Tensor(np.array([4, 5, 6]), mindspore.float32)
         >>> y = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> z = ops.subtract(input, y, alpha=1)
@@ -923,6 +970,9 @@ def mul(input, other):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
         >>> y = Tensor(np.array([4.0, 5.0, 6.0]), mindspore.float32)
         >>> output = ops.mul(x, y)
@@ -987,6 +1037,9 @@ def div(input, other, *, rounding_mode=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
         >>> y = Tensor(np.array([4.0, 5.0, 6.0]), mindspore.float32)
         >>> output = ops.div(x, y)
@@ -10009,6 +10062,9 @@ def iou(anchor_boxes, gt_boxes, mode='iou'):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> anchor_boxes = Tensor(np.random.randint(1.0, 5.0, [3, 4]), mindspore.float16)
         >>> gt_boxes = Tensor(np.random.randint(1.0, 5.0, [3, 4]), mindspore.float16)
         >>> mode = 'iou'
