@@ -24,8 +24,6 @@
 
 namespace mindspore {
 namespace transform {
-static uint32_t CustomInferFunc(const Operator &) { return 0; }
-
 static ge::graphStatus CustomAkgOpInferFunc(Operator &op) {
   // output_names
   std::vector<std::string> output_names;
@@ -212,7 +210,7 @@ OperatorPtr OpAdapterImpl::GenerateCustomOp(const AnfNodePtr anf) {
     op->CustomInferFuncRegister(CustomAkgOpInferFunc);
     RegisterAkgOp(prim, op_type);
   } else {
-    op->CustomInferFuncRegister(CustomInferFunc);
+    MS_LOG(INFO) << "For custom operators, users need to define and implement the Infershape function by themselves.";
   }
 
   return op;
@@ -743,7 +741,7 @@ int OpAdapterImpl::SetCustomOpAttr(const CusOperatorPtr &op, const PrimitivePtr 
   ValueType value_type = SINGLE_VALUE;
   for (auto item : prim->attrs()) {
     if (item.second->isa<Int32Imm>()) {
-      (void)op->SetAttr(item.first, GetValue<int64_t>(item.second));
+      (void)op->SetAttr(item.first, GetValue<int32_t>(item.second));
     } else if (item.second->isa<Int64Imm>()) {
       (void)op->SetAttr(item.first, GetValue<int64_t>(item.second));
     } else if (item.second->isa<StringImm>()) {
