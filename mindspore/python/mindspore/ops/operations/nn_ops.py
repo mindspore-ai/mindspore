@@ -10629,6 +10629,9 @@ class MaxPoolWithArgmaxV2(Primitive):
         \text{output}(N_i, C_j, h, w) = \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value and argmax
             value, is an int number that represents height and width of the kernel, or a tuple of
