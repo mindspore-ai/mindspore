@@ -31,7 +31,6 @@
 namespace mindspore {
 namespace parallel {
 namespace {
-PrimitiveSet elementwise_op_white_list = {prim::kPrimCast, prim::kPrimGeLU, prim::kPrimFastGeLU};
 constexpr int64_t kLongZero = 0;
 constexpr int64_t kLongOne = 1;
 constexpr int64_t kLongTwo = 2;
@@ -193,7 +192,7 @@ static bool IsCareNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (!IsOneOfPrimitiveCNode(cnode, elementwise_op_white_list)) {
+  if (!IsOneOfPrimitiveCNode(cnode, {prim::kPrimCast, prim::kPrimGeLU, prim::kPrimFastGeLU})) {
     return false;
   }
   const auto &node_user = cnode->func_graph()->manager()->node_users()[cnode];
@@ -290,7 +289,7 @@ static void ExpandSliceRangeToRight(const FuncGraphPtr &func_graph, const FuncGr
     auto next_cnode = node_users.front().first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(next_cnode);
     auto next_cnode_prim = GetCNodePrimitive(next_cnode);
-    if (!IsOneOfPrimitiveCNode(next_cnode, elementwise_op_white_list)) {
+    if (!IsOneOfPrimitiveCNode(next_cnode, {prim::kPrimCast, prim::kPrimGeLU, prim::kPrimFastGeLU})) {
       return;
     }
 

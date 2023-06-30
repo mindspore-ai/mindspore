@@ -925,7 +925,7 @@ bool IsSplittableOperator(const std::string &op_name) {
      CHECK_VALID, INVERT, SCATTER_ADD, SCATTER_DIV, SCATTER_MUL, SCATTER_MAX, SCATTER_MIN, SCATTER_SUB, UNIQUE_WITH_PAD,
      POPULATION_COUNT, IDENTITY, BESSELI0, BESSELI1, BESSELJ0, BESSELJ1, CUM_MAX, CUM_MIN, HYPOT, IGAMMA, IGAMMAC,
      LEFT_SHIFT, RIGHT_SHIFT, NEXT_AFTER, ZETA, REVERSEV2, LGAMMA, TRUNC, BETAINC, GCD, CHOLESKY, CONV3D, MAXPOOL_3D,
-     AVGPOOL_3D};
+     AVGPOOL_3D, FILLV2};
   // clang-format on
 
   auto iter = splittable_op.find(op_name);
@@ -1234,8 +1234,8 @@ OperatorInfoPtr CreateOperatorInfo(const CNodePtr &cnode) {
   auto &inputs = cnode->inputs();
   std::vector<ValuePtr> input_value;
   for (size_t index = 1; index < inputs.size(); ++index) {
-    if (inputs[index]->isa<ValueNode>()) {
-      input_value.push_back(GetValueNode(inputs[index]));
+    if (inputs[index]->isa<ValueNode>() || inputs[index]->isa<tensor::Tensor>()) {
+      (void)input_value.emplace_back(GetValueNode(inputs[index]));
       continue;
     } else if (IsPrimitiveCNode(inputs[index], prim::kPrimMakeTuple)) {
       auto make_tuple_value = GetMakeTupleValue(inputs[index]);

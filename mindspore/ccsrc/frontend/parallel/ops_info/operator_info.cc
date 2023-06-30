@@ -1168,7 +1168,7 @@ Status PrepareStrategyBase(int64_t stage_id, size_t dev_num, const Shapes &input
 }
 
 std::shared_ptr<Strategies> OperatorInfo::GenerateBatchStrategies() {
-  if (inputs_shape_.empty() && InferAttrs() != SUCCESS) {
+  if (InferAttrs() != SUCCESS) {
     MS_LOG(EXCEPTION) << name_ << ": Infer attrs failed";
   }
   ComputeBatchSplitFlagList();

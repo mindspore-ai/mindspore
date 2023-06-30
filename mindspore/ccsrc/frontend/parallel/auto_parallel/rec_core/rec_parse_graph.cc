@@ -432,7 +432,7 @@ void EliminateAuxOutgoingAuxInput(size_t node_index, const std::shared_ptr<Graph
           auto iter_j =
             find(outgoing_auxinputs->begin(), outgoing_auxinputs->end(), graph->nodes[node_index].node_in[j]);
           size_t index_remove = LongToSize(std::distance(outgoing_auxinputs->begin(), iter_j));
-          (void)outgoing_auxinputs_index->erase(outgoing_auxinputs_index->begin() + index_remove);
+          (void)outgoing_auxinputs_index->erase(outgoing_auxinputs_index->begin() + SizeToLong(index_remove));
           (void)outgoing_auxinputs->erase(iter_j);
         } else {
           outgoing_auxinputs->push_back(graph->nodes[node_index].node_in[j]);
@@ -447,7 +447,7 @@ void EliminateAuxOutgoingAuxInput(size_t node_index, const std::shared_ptr<Graph
           auto iter_aux_j =
             find(outgoing_auxinputs->begin(), outgoing_auxinputs->end(), graph->nodes[node_index].node_in_aux[j]);
           size_t index_remove = LongToSize(std::distance(outgoing_auxinputs->begin(), iter_aux_j));
-          (void)outgoing_auxinputs_index->erase(outgoing_auxinputs_index->begin() + index_remove);
+          (void)outgoing_auxinputs_index->erase(outgoing_auxinputs_index->begin() + SizeToLong(index_remove));
           (void)outgoing_auxinputs->erase(iter_aux_j);
         } else {
           outgoing_auxinputs->push_back(graph->nodes[node_index].node_in_aux[j]);
