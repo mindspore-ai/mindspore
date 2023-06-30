@@ -27,6 +27,11 @@ bool CompileCacheEnable() {
   return enable;
 }
 
+CompileCacheContext &CompileCacheContext::GetInstance() noexcept {
+  static CompileCacheContext instance;
+  return instance;
+}
+
 AnfNodePtr CompileCacheContext::FindFrontNodeByFrontName(const std::string &name) const {
   auto iter = front_name_to_front_node_.find(name);
   if (iter != front_name_to_front_node_.end()) {
