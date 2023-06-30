@@ -125,7 +125,7 @@ def _update_param(param, new_param, strict_load):
         if param.data.dtype != new_param.data.dtype:
             if _type_convert(param, new_param, strict_load):
                 new_tensor = Tensor(new_param.data.asnumpy(), param.data.dtype)
-                param.set_data(new_tensor)
+                param.set_data(new_tensor, param.sliced)
                 return
 
             logger.critical("Failed to combine the net and the parameters for param %s.", param.name)
@@ -1705,7 +1705,7 @@ def _msfunc_info(net, *inputs):
 
 def _cell_info(net, incremental, *inputs):
     """Get mindir stream and net dict of cell"""
-    phase_name = "predict" if _is_in_auto_parallel_mode() else "export.mindir"
+    phase_name = "export.mindir"
     graph_id, _ = _executor.compile(net, *inputs, phase=phase_name, do_convert=False)
     # pylint: disable=protected-access
     mindir_stream = _executor._get_func_graph_proto(net, graph_id, 'mind_ir', incremental=incremental)
