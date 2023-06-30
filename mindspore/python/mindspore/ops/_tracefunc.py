@@ -142,11 +142,44 @@ class _SetMixedPrecision:
             PackFunc.expander.recover_mixed_precision()
 
 
-def pack(fn):
-    """Create an pack func from a python function"""
+def trace(fn):
+    """
+    Create a traceable function from a python function. The python function will be traced with fake tensor to
+    capture the corresponding runtime graph at compilation phase.Tracing is ideal for some scenarios to reduce
+    python overhead or graph compilation time.
+
+    Note:
+        - Dynamic control flow and other tensor data dependent scenarios are not supported.
+        - dynamic shape operator is not fully supported.
+
+    Args:
+        fn (Function) - The Python function to be compiled into a graph. The return value of the function must be
+        a Tensor or a Tuple containing Tensors. When a network's construct is traced, only its forward method is traced.
+
+    Returns:
+        Function, if `fn` is not None, returns a callable function that will execute the compiled function; If `fn` is
+        None, returns a decorator and when this decorator invokes with a single `fn` argument, the callable function is
+        equal to the case when `fn` is not None.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import Tensor, nn
+        >>> from mindspore.common import trace
+        ...
+        >>> class Net(nn.Cell):
+        ...     @trace
+        ...     def construct(self, x, y):
+        ...         return x + y
+        >>> x = Tensor([1, 1, 3, 3])
+        >>> y = Tensor([1, 1, 3, 3])
+        >>> net = Net()
+        >>> output = net(x, y)
+    """
 
     @functools.wraps(fn)
-    def _pack_wrap(*args, **kwargs):
+    def _trace_wrap(*args, **kwargs):
         args, kwargs = _handle_func_args(fn, *args, **kwargs)
         if args and not isinstance(args[0], Tensor) and hasattr(args[0], fn.__name__):
             obj = args[0]
@@ -156,5 +189,5 @@ def pack(fn):
             key = str(id(fn))
             res = PackFunc(fn, key, None, True)(*args, **kwargs)
         return res
-    _pack_wrap.pack_fn = fn
-    return _pack_wrap
+    _trace_wrap.pack_fn = fn
+    return _trace_wrap
