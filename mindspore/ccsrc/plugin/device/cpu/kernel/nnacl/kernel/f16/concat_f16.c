@@ -29,7 +29,7 @@ int ConcatEnsureFp16InputsAndOutput(ConcatF16Struct *concat_f16) {
   ConcatStruct *concat = &concat_f16->concat_;
 
   int tmp_buffer_size = (concat->base_.in_size_ + concat->base_.out_size_) * sizeof(float16_t *);
-  concat_f16->tmp_buffer_ = concat->base_.env_->alloc(concat->base_.env_->allocator_, tmp_buffer_size);
+  concat_f16->tmp_buffer_ = concat->base_.env_->Alloc(concat->base_.env_->allocator_, tmp_buffer_size);
   NNACL_CHECK_NULL_RETURN_ERR(concat_f16->tmp_buffer_);
   memset(concat_f16->tmp_buffer_, 0, tmp_buffer_size);
 
@@ -65,13 +65,13 @@ int ConcatFp16Run(void *cdata, int task_id, float l, float r) {
 void ConcatF16FreeTmpBuffer(ConcatF16Struct *concat_f16) {
   for (int i = 0; i < (concat_f16->concat_.base_.in_size_ + concat_f16->concat_.base_.out_size_); i++) {
     if (concat_f16->tmp_buffer_[i] != NULL) {
-      concat_f16->concat_.base_.env_->free(concat_f16->concat_.base_.env_->allocator_, concat_f16->tmp_buffer_[i]);
+      concat_f16->concat_.base_.env_->Free(concat_f16->concat_.base_.env_->allocator_, concat_f16->tmp_buffer_[i]);
     }
     concat_f16->tmp_buffer_[i] = NULL;
   }
 
   if (concat_f16->tmp_buffer_ != NULL) {
-    concat_f16->concat_.base_.env_->free(concat_f16->concat_.base_.env_->allocator_, concat_f16->tmp_buffer_);
+    concat_f16->concat_.base_.env_->Free(concat_f16->concat_.base_.env_->allocator_, concat_f16->tmp_buffer_);
   }
   concat_f16->tmp_buffer_ = NULL;
 }
@@ -92,7 +92,7 @@ int ConcatF16Compute(KernelBase *self) {
   }
 
   NNACL_CHECK_NULL_RETURN_ERR(concat->output_);
-  ret = self->env_->parallel_launch(self->env_->thread_pool_, ConcatFp16Run, self, self->thread_nr_);
+  ret = self->env_->ParallelLaunch(self->env_->thread_pool_, ConcatFp16Run, self, self->thread_nr_);
   if (ret == NNACL_OK) {
     TensorC *output_tensor = concat->base_.out_[FIRST_INPUT];
     if (output_tensor->data_type_ == kNumberTypeFloat32 || output_tensor->data_type_ == kNumberTypeFloat) {
@@ -119,10 +119,10 @@ KernelBase *CreateConcatF16(OpParameter *param, int data_type) {
   concat->inner_sizes_ = NULL;
   concat->inputs_ptr_ = NULL;
   concat->is_with_data_ = NULL;
-  concat->base_.prepare_ = ConcatPepare;
-  concat->base_.resize_ = ConcatResize;
-  concat->base_.release_ = ConcatRelease;
-  concat->base_.compute_ = ConcatF16Compute;
+  concat->base_.Prepare = ConcatPepare;
+  concat->base_.Resize = ConcatResize;
+  concat->base_.Release = ConcatRelease;
+  concat->base_.Compute = ConcatF16Compute;
   concat_f16->tmp_buffer_ = NULL;
   return (KernelBase *)concat;
 }

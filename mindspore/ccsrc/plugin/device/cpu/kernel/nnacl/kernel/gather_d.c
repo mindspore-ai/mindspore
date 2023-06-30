@@ -112,10 +112,10 @@ int GatherDCompute(struct KernelBase *self) {
 KernelBase *CreateGatherD(OpParameter *param, int data_type) {
   GatherDStru *gather_d = (GatherDStru *)malloc(sizeof(GatherDStru));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(gather_d);
-  gather_d->base.prepare_ = GatherDPrepare;
-  gather_d->base.resize_ = GatherDResize;
-  gather_d->base.release_ = DefaultRelease;
-  gather_d->base.compute_ = GatherDCompute;
+  gather_d->base.Prepare = GatherDPrepare;
+  gather_d->base.Resize = GatherDResize;
+  gather_d->base.Release = DefaultRelease;
+  gather_d->base.Compute = GatherDCompute;
   return (KernelBase *)gather_d;
 }
 

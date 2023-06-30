@@ -90,10 +90,10 @@ KernelBase *CreateArithmeticCompareF16(OpParameter *param, int data_type) {
   arithmetic->c_matrix_.batch_post_sum_ = NULL;
   arithmetic->broadcast_buffer_[FIRST_INPUT] = NULL;
   arithmetic->broadcast_buffer_[SECOND_INPUT] = NULL;
-  arithmetic->base_.prepare_ = ArithmeticPrepare;
-  arithmetic->base_.resize_ = ArithmeticF16Resize;
-  arithmetic->base_.release_ = ArithmeticRelease;
-  arithmetic->base_.compute_ = ArithmeticCompareF16Compute;
+  arithmetic->base_.Prepare = ArithmeticPrepare;
+  arithmetic->base_.Resize = ArithmeticF16Resize;
+  arithmetic->base_.Release = ArithmeticRelease;
+  arithmetic->base_.Compute = ArithmeticCompareF16Compute;
 
   arithmetic->execute_ = ArithmeticCompareF16DoExecute;
   arithmetic->tile_function_ = TileOneDimensionFp16;

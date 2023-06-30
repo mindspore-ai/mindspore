@@ -131,13 +131,13 @@ int ArithmeticSelfRun(void *cdata, int task_id, float l, float r) {
 int arithmetic_self_resize(KernelBase *self) {
   ArithmeticSelfStruct *arithmetic_self = (ArithmeticSelfStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(arithmetic_self);
-  self->thread_nr_ = arithmetic_self->base_.update_thread_(TC_PTYPE(arithmetic_self->op_type_), 1, 1,
-                                                           GetElementNum(self->out_[OUTPUT_INDEX]), self->thread_nr_);
+  self->thread_nr_ = arithmetic_self->base_.UpdateThread(TC_PTYPE(arithmetic_self->op_type_), 1, 1,
+                                                         GetElementNum(self->out_[OUTPUT_INDEX]), self->thread_nr_);
   return NNACL_OK;
 }
 
 int arithmetic_self_compute(KernelBase *self) {
-  return self->env_->parallel_launch(self->env_->thread_pool_, ArithmeticSelfRun, self, self->thread_nr_);
+  return self->env_->ParallelLaunch(self->env_->thread_pool_, ArithmeticSelfRun, self, self->thread_nr_);
 }
 
 int arithmetic_self_prepare(KernelBase *self) {
@@ -154,10 +154,10 @@ KernelBase *CreateArithmeticSelf(OpParameter *param, int data_type) {
   ArithmeticSelfGetArithmeticSelfFunction(arithmetic_self, param->type_);
   ArithmeticSelfGetArithmeticSelfF16Function(arithmetic_self, param->type_);
   arithmetic_self->op_type_ = param->type_;
-  arithmetic_self->base_.prepare_ = arithmetic_self_prepare;
-  arithmetic_self->base_.resize_ = arithmetic_self_resize;
-  arithmetic_self->base_.release_ = DefaultRelease;
-  arithmetic_self->base_.compute_ = arithmetic_self_compute;
+  arithmetic_self->base_.Prepare = arithmetic_self_prepare;
+  arithmetic_self->base_.Resize = arithmetic_self_resize;
+  arithmetic_self->base_.Release = DefaultRelease;
+  arithmetic_self->base_.Compute = arithmetic_self_compute;
   return (KernelBase *)arithmetic_self;
 }
 

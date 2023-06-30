@@ -38,9 +38,9 @@ int ConvolutionKernel::Prepare() {
   conv->infershape_done_ = InferShapeDone();
   conv->is_sharing_pack_ = true;
 
-  int ret = kernel_->prepare_(kernel_);
+  int ret = kernel_->Prepare(kernel_);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "NNACL convolution resize_ failed. ret=" << ret;
+    MS_LOG(ERROR) << "NNACL convolution Resize failed. ret=" << ret;
     return ret;
   }
 

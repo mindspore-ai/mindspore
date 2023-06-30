@@ -75,35 +75,35 @@ int ArithmeticRelease(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(arithmetic);
   for (int i = 0; i < TWO_TENSOR; i++) {
     if (arithmetic->broadcast_buffer_[i] != NULL) {
-      self->env_->free(self->env_->allocator_, arithmetic->broadcast_buffer_[i]);
+      self->env_->Free(self->env_->allocator_, arithmetic->broadcast_buffer_[i]);
       arithmetic->broadcast_buffer_[i] = NULL;
     }
   }
 
   for (int i = 0; i < arithmetic->block_boundary_infos_size_; i++) {
     if (arithmetic->block_boundary_infos_[i].a_offset_ != NULL) {
-      self->env_->free(self->env_->allocator_, arithmetic->block_boundary_infos_[i].a_offset_);
+      self->env_->Free(self->env_->allocator_, arithmetic->block_boundary_infos_[i].a_offset_);
       arithmetic->block_boundary_infos_[i].a_offset_ = NULL;
     }
     if (arithmetic->block_boundary_infos_[i].b_offset_ != NULL) {
-      self->env_->free(self->env_->allocator_, arithmetic->block_boundary_infos_[i].b_offset_);
+      self->env_->Free(self->env_->allocator_, arithmetic->block_boundary_infos_[i].b_offset_);
       arithmetic->block_boundary_infos_[i].b_offset_ = NULL;
     }
   }
   arithmetic->block_boundary_infos_size_ = 0;
 
   if (arithmetic->a_matrix_.batch_post_sum_ != NULL) {
-    self->env_->free(self->env_->allocator_, arithmetic->a_matrix_.batch_post_sum_);
+    self->env_->Free(self->env_->allocator_, arithmetic->a_matrix_.batch_post_sum_);
     arithmetic->a_matrix_.batch_post_sum_ = NULL;
   }
 
   if (arithmetic->b_matrix_.batch_post_sum_ != NULL) {
-    self->env_->free(self->env_->allocator_, arithmetic->b_matrix_.batch_post_sum_);
+    self->env_->Free(self->env_->allocator_, arithmetic->b_matrix_.batch_post_sum_);
     arithmetic->b_matrix_.batch_post_sum_ = NULL;
   }
 
   if (arithmetic->c_matrix_.batch_post_sum_ != NULL) {
-    self->env_->free(self->env_->allocator_, arithmetic->c_matrix_.batch_post_sum_);
+    self->env_->Free(self->env_->allocator_, arithmetic->c_matrix_.batch_post_sum_);
     arithmetic->c_matrix_.batch_post_sum_ = NULL;
   }
   return NNACL_OK;
@@ -251,7 +251,7 @@ void ResetArithmeticMatric(KernelBase *base, ArithmeticMatrixInfo *matrix) {
   matrix->shape_size_ = 0;
 
   if (matrix->batch_post_sum_ != NULL) {
-    base->env_->free(base->env_->allocator_, matrix->batch_post_sum_);
+    base->env_->Free(base->env_->allocator_, matrix->batch_post_sum_);
     matrix->batch_post_sum_ = NULL;
   }
 }
@@ -400,7 +400,7 @@ int ArithmeticBroadCastConstTensor(ArithmeticStruct *arithmetic) {
     if (arithmetic->in_elements_num0_ != arithmetic->out_elements_num_ && prefer_explicit_broadcast) {
       exist_broadcast_ = true;
 
-      arithmetic->a_matrix_.data_ = arithmetic->base_.env_->alloc(arithmetic->base_.env_->allocator_, buffer_size);
+      arithmetic->a_matrix_.data_ = arithmetic->base_.env_->Alloc(arithmetic->base_.env_->allocator_, buffer_size);
       NNACL_MALLOC_CHECK_NULL_RETURN_ERR(arithmetic->a_matrix_.data_);
       arithmetic->broadcast_buffer_[Index0] = arithmetic->a_matrix_.data_;
 
@@ -422,7 +422,7 @@ int ArithmeticBroadCastConstTensor(ArithmeticStruct *arithmetic) {
     if (arithmetic->in_elements_num1_ != arithmetic->out_elements_num_ && prefer_explicit_broadcast) {
       exist_broadcast_ = true;
 
-      arithmetic->b_matrix_.data_ = arithmetic->base_.env_->alloc(arithmetic->base_.env_->allocator_, buffer_size);
+      arithmetic->b_matrix_.data_ = arithmetic->base_.env_->Alloc(arithmetic->base_.env_->allocator_, buffer_size);
       NNACL_MALLOC_CHECK_NULL_RETURN_ERR(arithmetic->b_matrix_.data_);
       arithmetic->broadcast_buffer_[Index1] = arithmetic->b_matrix_.data_;
 
@@ -467,21 +467,21 @@ int ArithmeticComputeOfflineInfo(ArithmeticStruct *arithmetic) {
     arithmetic->c_matrix_.inner_size_ *= arithmetic->c_matrix_.shape_[i];
   }
 
-  arithmetic->a_matrix_.batch_post_sum_ = arithmetic->base_.env_->alloc(
+  arithmetic->a_matrix_.batch_post_sum_ = arithmetic->base_.env_->Alloc(
     arithmetic->base_.env_->allocator_, (arithmetic->a_matrix_.shape_size_ + 1) * sizeof(int));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(arithmetic->a_matrix_.batch_post_sum_);
   for (int i = 0; i < arithmetic->a_matrix_.shape_size_ + 1; i++) {
     arithmetic->a_matrix_.batch_post_sum_[i] = 1;
   }
 
-  arithmetic->b_matrix_.batch_post_sum_ = arithmetic->base_.env_->alloc(
+  arithmetic->b_matrix_.batch_post_sum_ = arithmetic->base_.env_->Alloc(
     arithmetic->base_.env_->allocator_, (arithmetic->b_matrix_.shape_size_ + 1) * sizeof(int));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(arithmetic->b_matrix_.batch_post_sum_);
   for (int i = 0; i < arithmetic->b_matrix_.shape_size_ + 1; i++) {
     arithmetic->b_matrix_.batch_post_sum_[i] = 1;
   }
 
-  arithmetic->c_matrix_.batch_post_sum_ = arithmetic->base_.env_->alloc(
+  arithmetic->c_matrix_.batch_post_sum_ = arithmetic->base_.env_->Alloc(
     arithmetic->base_.env_->allocator_, (arithmetic->c_matrix_.shape_size_ + 1) * sizeof(int));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(arithmetic->c_matrix_.batch_post_sum_);
   for (int i = 0; i < arithmetic->c_matrix_.shape_size_ + 1; i++) {
@@ -518,8 +518,8 @@ int ArithmeticComputeOfflineInfo(ArithmeticStruct *arithmetic) {
 int ArithmeticChooseThreadCuttingStrategy(ArithmeticStruct *arithmetic) {
   int total_num = GetElementNum(arithmetic->base_.out_[OUTPUT_INDEX]);
   arithmetic->base_.thread_nr_ =
-    arithmetic->base_.update_thread_(TC_TYPE(arithmetic->primitive_type_, arithmetic->functions_.activation_type_), 1,
-                                     1, total_num, arithmetic->base_.thread_nr_);
+    arithmetic->base_.UpdateThread(TC_TYPE(arithmetic->primitive_type_, arithmetic->functions_.activation_type_), 1, 1,
+                                   total_num, arithmetic->base_.thread_nr_);
 
   int64_t block_size = UP_DIV(total_num, arithmetic->base_.thread_nr_);
   int64_t split_point = 0;
@@ -538,10 +538,10 @@ int ArithmeticChooseThreadCuttingStrategy(ArithmeticStruct *arithmetic) {
 
     int max_offset_size = block_boundary_info.batch_end_ - block_boundary_info.batch_begin_ + TWO_TENSOR;
     block_boundary_info.a_offset_ =
-      (int *)arithmetic->base_.env_->alloc(arithmetic->base_.env_->allocator_, max_offset_size * sizeof(int));
+      (int *)arithmetic->base_.env_->Alloc(arithmetic->base_.env_->allocator_, max_offset_size * sizeof(int));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(block_boundary_info.a_offset_);
     block_boundary_info.b_offset_ =
-      (int *)arithmetic->base_.env_->alloc(arithmetic->base_.env_->allocator_, max_offset_size * sizeof(int));
+      (int *)arithmetic->base_.env_->Alloc(arithmetic->base_.env_->allocator_, max_offset_size * sizeof(int));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(block_boundary_info.b_offset_);
 
     arithmetic->block_boundary_infos_[arithmetic->block_boundary_infos_size_++] = block_boundary_info;
@@ -644,7 +644,7 @@ int ArithmeticCompute(struct KernelBase *self) {
   arithmetic->c_matrix_.data_ = self->out_[OUTPUT_INDEX]->data_;
   NNACL_CHECK_NULL_RETURN_ERR(arithmetic->c_matrix_.data_);
 
-  return self->env_->parallel_launch(self->env_->thread_pool_, ArithmeticRun, self, self->thread_nr_);
+  return self->env_->ParallelLaunch(self->env_->thread_pool_, ArithmeticRun, self, self->thread_nr_);
 }
 
 KernelBase *CreateArithmetic(OpParameter *param, int data_type) {
@@ -662,10 +662,10 @@ KernelBase *CreateArithmetic(OpParameter *param, int data_type) {
   arithmetic->tile_function_ = TileOneDimensionFp32;
   arithmetic->init_function_ = InitArithmeticRunFunction;
   arithmetic->execute_ = ArithmeticDoExecute;
-  arithmetic->base_.prepare_ = ArithmeticPrepare;
-  arithmetic->base_.resize_ = ArithmeticResize;
-  arithmetic->base_.release_ = ArithmeticRelease;
-  arithmetic->base_.compute_ = ArithmeticCompute;
+  arithmetic->base_.Prepare = ArithmeticPrepare;
+  arithmetic->base_.Resize = ArithmeticResize;
+  arithmetic->base_.Release = ArithmeticRelease;
+  arithmetic->base_.Compute = ArithmeticCompute;
   return (KernelBase *)arithmetic;
 }
 

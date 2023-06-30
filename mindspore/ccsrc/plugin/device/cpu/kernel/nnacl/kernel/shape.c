@@ -33,10 +33,10 @@ int shape_compute(struct KernelBase *self) {
 KernelBase *CreateShape(OpParameter *param, int data_type) {
   ShapeStruct *shape = (ShapeStruct *)malloc(sizeof(ShapeStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(shape);
-  shape->base_.release_ = DefaultRelease;
-  shape->base_.prepare_ = DefaultPrepare1In1Out;
-  shape->base_.resize_ = DefaultResize;
-  shape->base_.compute_ = shape_compute;
+  shape->base_.Release = DefaultRelease;
+  shape->base_.Prepare = DefaultPrepare1In1Out;
+  shape->base_.Resize = DefaultResize;
+  shape->base_.Compute = shape_compute;
   return (KernelBase *)shape;
 }
 

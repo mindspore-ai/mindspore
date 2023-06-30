@@ -132,10 +132,10 @@ KernelBase *CreateArithmeticCompare(OpParameter *param, int data_type) {
   arithmetic->tile_function_ = TileOneDimensionFp32;
   arithmetic->init_function_ = InitArithmeticCompareRunFunction;
   arithmetic->execute_ = ArithmeticCompareExecute;
-  arithmetic->base_.prepare_ = ArithmeticPrepare;
-  arithmetic->base_.resize_ = ArithmeticCompareResize;
-  arithmetic->base_.release_ = ArithmeticRelease;
-  arithmetic->base_.compute_ = ArithmeticCompute;
+  arithmetic->base_.Prepare = ArithmeticPrepare;
+  arithmetic->base_.Resize = ArithmeticCompareResize;
+  arithmetic->base_.Release = ArithmeticRelease;
+  arithmetic->base_.Compute = ArithmeticCompute;
   return (KernelBase *)arithmetic_compare;
 }
 

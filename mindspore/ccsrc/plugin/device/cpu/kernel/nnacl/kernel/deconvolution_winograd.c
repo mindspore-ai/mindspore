@@ -302,10 +302,10 @@ int DeConvWinogradInitDataParam(DeConvWinogradStruct *deconv) {
   ExecEnv *env = deconv->conv_.base_.env_;
   NNACL_CHECK_NULL_RETURN_ERR(env);
   if (deconv->conv_.bias_data_ != NULL) {
-    env->free(env->allocator_, deconv->conv_.bias_data_);
+    env->Free(env->allocator_, deconv->conv_.bias_data_);
     deconv->conv_.bias_data_ = NULL;
   }
-  deconv->conv_.bias_data_ = env->alloc(env->allocator_, param->oc_up_ * sizeof(float));
+  deconv->conv_.bias_data_ = env->Alloc(env->allocator_, param->oc_up_ * sizeof(float));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(deconv->conv_.bias_data_);
   (void)memset(deconv->conv_.bias_data_, 0, param->oc_up_ * sizeof(float));
 
@@ -322,7 +322,7 @@ int DeConvWinogradInitRunBuf(DeConvWinogradStruct *deconv) {
   ExecEnv *env = deconv->conv_.base_.env_;
 
   int size = deconv->param_.oc_up_ * deconv->conv_.compute_.out_hw_;
-  deconv->nc4hw4_output_ = (float *)env->alloc(env->allocator_, size * sizeof(float));
+  deconv->nc4hw4_output_ = (float *)env->Alloc(env->allocator_, size * sizeof(float));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(deconv->nc4hw4_output_);
 
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(deconv->param_.out_tile_w_, deconv->param_.out_tile_h_, NNACL_ERR);
@@ -333,7 +333,7 @@ int DeConvWinogradInitRunBuf(DeConvWinogradStruct *deconv) {
   int tile_oc_up = WINOGRAD_DEFAULT_TILE * deconv->param_.oc_up_;
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(total_out_tile_hw, tile_oc_up, NNACL_ERR);
   size = total_out_tile_hw * tile_oc_up;
-  deconv->tile_output_ = (float *)env->alloc(env->allocator_, size * sizeof(float));
+  deconv->tile_output_ = (float *)env->Alloc(env->allocator_, size * sizeof(float));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(deconv->tile_output_);
 
   return NNACL_OK;
@@ -343,12 +343,12 @@ void DeConvWinogradFreeRunBuf(DeConvWinogradStruct *deconv) {
   ExecEnv *env = deconv->conv_.base_.env_;
 
   if (deconv->nc4hw4_output_ != NULL) {
-    env->free(env->allocator_, deconv->nc4hw4_output_);
+    env->Free(env->allocator_, deconv->nc4hw4_output_);
     deconv->nc4hw4_output_ = NULL;
   }
 
   if (deconv->tile_output_ != NULL) {
-    env->free(env->allocator_, deconv->tile_output_);
+    env->Free(env->allocator_, deconv->tile_output_);
     deconv->tile_output_ = NULL;
   }
 }
@@ -509,14 +509,14 @@ int deconv_winograd_compute(KernelBase *self) {
     deconv->nhwc_output_ = src_out + batch_index * output_chw;
 
     (void)memset(deconv->nc4hw4_output_, 0, compute_->out_hw_ * param->oc_div_ * compute_->tile_num_ * sizeof(float));
-    ret = self->env_->parallel_launch(self->env_->thread_pool_, DeConvWgFp32Run, self, self->thread_nr_);
+    ret = self->env_->ParallelLaunch(self->env_->thread_pool_, DeConvWgFp32Run, self, self->thread_nr_);
     if (ret != NNACL_OK) {
       DeConvWinogradFreeRunBuf(deconv);
       return ret;
     }
 
     /* post bias activate and nhwc */
-    ret = self->env_->parallel_launch(self->env_->thread_pool_, DeConvWgPostFp32Run, self, self->thread_nr_);
+    ret = self->env_->ParallelLaunch(self->env_->thread_pool_, DeConvWgPostFp32Run, self, self->thread_nr_);
     if (ret != NNACL_OK) {
       DeConvWinogradFreeRunBuf(deconv);
       return ret;
@@ -532,10 +532,10 @@ ConvolutionBaseStruct *CreateDeConvWinograd(ConvParameter *param) {
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(deconv_winograd);
   memset(deconv_winograd, 0, sizeof(DeConvWinogradStruct));
 
-  deconv_winograd->conv_.base_.prepare_ = deconv_winograd_prepare;
-  deconv_winograd->conv_.base_.resize_ = deconv_winograd_resize;
-  deconv_winograd->conv_.base_.release_ = deconv_winograd_release;
-  deconv_winograd->conv_.base_.compute_ = deconv_winograd_compute;
+  deconv_winograd->conv_.base_.Prepare = deconv_winograd_prepare;
+  deconv_winograd->conv_.base_.Resize = deconv_winograd_resize;
+  deconv_winograd->conv_.base_.Release = deconv_winograd_release;
+  deconv_winograd->conv_.base_.Compute = deconv_winograd_compute;
   return &deconv_winograd->conv_;
 }
 #endif

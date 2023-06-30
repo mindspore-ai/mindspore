@@ -27,11 +27,11 @@ int DeConvMallocWeightBiasData(ConvolutionBaseStruct *conv) {
   int output_aligned_size = UP_ROUND(conv->compute_.out_c_, C8NUM) * sizeof(float);
   size_t pack_weight_size = conv->compute_.in_c_ * conv->compute_.kernel_hw_ * output_aligned_size;
   if (!conv->base_.train_session_) {
-    conv->packed_weight_ = conv->base_.env_->alloc(conv->base_.env_->allocator_, pack_weight_size);
+    conv->packed_weight_ = conv->base_.env_->Alloc(conv->base_.env_->allocator_, pack_weight_size);
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv->packed_weight_);
   }
   if (conv->bias_data_ == NULL) {
-    conv->bias_data_ = conv->base_.env_->alloc(conv->base_.env_->allocator_, output_aligned_size);
+    conv->bias_data_ = conv->base_.env_->Alloc(conv->base_.env_->allocator_, output_aligned_size);
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv->bias_data_);
   }
   memset(conv->bias_data_, 0, output_aligned_size);
@@ -122,15 +122,15 @@ void DeConvFreeRunBuf(DeConvStruct *deconv) {
   NNACL_CHECK_NULL_RETURN_VOID(env);
 
   if (deconv->pack_output_ != NULL) {
-    env->free(env->allocator_, deconv->pack_output_);
+    env->Free(env->allocator_, deconv->pack_output_);
     deconv->pack_output_ = NULL;
   }
   if (deconv->tmp_buffer_ != NULL) {
-    env->free(env->allocator_, deconv->tmp_buffer_);
+    env->Free(env->allocator_, deconv->tmp_buffer_);
     deconv->tmp_buffer_ = NULL;
   }
   if (deconv->pack_input_ != NULL) {
-    env->free(env->allocator_, deconv->pack_input_);
+    env->Free(env->allocator_, deconv->pack_input_);
     deconv->pack_input_ = NULL;
   }
 }
@@ -140,15 +140,15 @@ int DeConvInitRunBuf(DeConvStruct *deconv) {
   NNACL_CHECK_NULL_RETURN_ERR(env);
 
   int pack_output_size = UP_ROUND(deconv->conv_.compute_.out_c_, C8NUM) * deconv->conv_.compute_.out_hw_;
-  deconv->pack_output_ = (float *)env->alloc(env->allocator_, pack_output_size * sizeof(float));
+  deconv->pack_output_ = (float *)env->Alloc(env->allocator_, pack_output_size * sizeof(float));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(deconv->pack_output_);
 
   int tmp_buffer_size = deconv->matmul_.row_align_ * deconv->matmul_.col_align_;
-  deconv->tmp_buffer_ = (float *)env->alloc(env->allocator_, tmp_buffer_size * sizeof(float));
+  deconv->tmp_buffer_ = (float *)env->Alloc(env->allocator_, tmp_buffer_size * sizeof(float));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(deconv->tmp_buffer_);
 
   int pack_input_size = deconv->matmul_.row_align_ * deconv->matmul_.deep_;
-  deconv->pack_input_ = (float *)env->alloc(env->allocator_, pack_input_size * sizeof(float));
+  deconv->pack_input_ = (float *)env->Alloc(env->allocator_, pack_input_size * sizeof(float));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(deconv->pack_input_);
 
   return NNACL_OK;
@@ -226,7 +226,7 @@ int deconv_compute(KernelBase *self) {
     RowMajor2Col12Major(deconv->input_ptr_, deconv->pack_input_, deconv->matmul_.row_, deconv->matmul_.deep_);
 #endif
 
-    error_code = self->env_->parallel_launch(self->env_->thread_pool_, DeConvRun, self, self->thread_nr_);
+    error_code = self->env_->ParallelLaunch(self->env_->thread_pool_, DeConvRun, self, self->thread_nr_);
     if (error_code != NNACL_OK) {
       DeConvFreeRunBuf(deconv);
       return error_code;
@@ -283,10 +283,10 @@ ConvolutionBaseStruct *CreateDeConv(ConvParameter *param) {
   memset(deconv, 0, sizeof(DeConvStruct));
   deconv->conv_.malloc_weight_bias_ = DeConvMallocWeightBiasData;
   deconv->conv_.pack_weight_ = DeConvPackWeight;
-  deconv->conv_.base_.prepare_ = deconv_prepare;
-  deconv->conv_.base_.resize_ = deconv_resize;
-  deconv->conv_.base_.release_ = deconv_release;
-  deconv->conv_.base_.compute_ = deconv_compute;
+  deconv->conv_.base_.Prepare = deconv_prepare;
+  deconv->conv_.base_.Resize = deconv_resize;
+  deconv->conv_.base_.Release = deconv_release;
+  deconv->conv_.base_.Compute = deconv_compute;
   return &deconv->conv_;
 }
 
@@ -332,7 +332,7 @@ KernelBase *CreateConvolutionTranspose(OpParameter *param, int data_type) {
   } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
     conv = CreateDeConvDw(conv_param);
   }
-
+  NNACL_MALLOC_CHECK_NULL_RETURN_NULL(conv);
   ConvBaseUpdateParamInfo(&conv->compute_, conv_param);
   return &conv->base_;
 }

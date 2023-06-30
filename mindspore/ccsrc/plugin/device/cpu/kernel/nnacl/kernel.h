@@ -22,17 +22,18 @@
 typedef struct ExecEnv {
   void *allocator_;
   void *thread_pool_;
-  void *(*alloc)(void *allocator, size_t sz);
-  void (*free)(void *allocator, void *ptr);
-  int (*parallel_launch)(void *thread_pool, void *task, void *param, int task_num);
+  void *(*Alloc)(void *allocator, size_t sz);
+  void (*Free)(void *allocator, void *ptr);
+  int (*ParallelLaunch)(void *thread_pool, void *task, void *param, int task_num);
 } ExecEnv;
 
 typedef struct KernelBase {
-  int (*release_)(struct KernelBase *self);
-  int (*prepare_)(struct KernelBase *self);
-  int (*compute_)(struct KernelBase *self);
-  int (*resize_)(struct KernelBase *self);
-  int (*infershape)(struct KernelBase *self);
+  int (*Release)(struct KernelBase *self);
+  int (*Prepare)(struct KernelBase *self);
+  int (*Compute)(struct KernelBase *self);
+  int (*Resize)(struct KernelBase *self);
+  int (*InferShape)(struct KernelBase *self);
+  int (*UpdateThread)(int32_t type, int64_t load, int64_t store, int64_t unit, int thread);
   OpParameter *param_;
   int thread_nr_;
   ExecEnv *env_;
@@ -43,7 +44,6 @@ typedef struct KernelBase {
   bool train_session_;
   void *workspace_; /* only used in train */
   int work_size_;   /* only used in train */
-  int (*update_thread_)(int32_t type, int64_t load, int64_t store, int64_t unit, int thread);
 } KernelBase;
 
 #ifdef _MSC_VER

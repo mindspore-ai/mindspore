@@ -78,7 +78,7 @@ int PriorBoxRelease(KernelBase *self) {
   PriorBoxStruct *prior_box = (PriorBoxStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(prior_box);
   if (prior_box->output_ != NULL) {
-    self->env_->free(self->env_->allocator_, prior_box->output_);
+    self->env_->Free(self->env_->allocator_, prior_box->output_);
     prior_box->output_ = NULL;
     prior_box->output_size_ = 0;
   }
@@ -108,7 +108,7 @@ int PriorBoxResize(KernelBase *self) {
   prior_box->step_h_ = param->step_h > 0.0f ? param->step_h : (float)(image_h) / prior_box->fmap_h_;
 
   float *different_aspect_ratios =
-    (float *)self->env_->alloc(self->env_->allocator_, param->aspect_ratios_size * sizeof(float) * Num2);
+    (float *)self->env_->Alloc(self->env_->allocator_, param->aspect_ratios_size * sizeof(float) * Num2);
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(different_aspect_ratios);
   different_aspect_ratios[Index0] = 1.0f;
   int different_aspect_ratios_size = 1;
@@ -139,7 +139,7 @@ int PriorBoxResize(KernelBase *self) {
   size = size + UP_ROUND(GetHeight(output_tensor), COMM_SHAPE_SIZE);
   size = size * sizeof(float);
   NNACL_CHECK_MALLOC_SIZE(size);
-  prior_box->output_ = (float *)self->env_->alloc(self->env_->allocator_, size);
+  prior_box->output_ = (float *)self->env_->Alloc(self->env_->allocator_, size);
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(prior_box->output_);
   prior_box->output_size_ = 0;
 
@@ -171,7 +171,7 @@ int PriorBoxResize(KernelBase *self) {
 }
 
 int PriorBoxCompute(KernelBase *self) {
-  return self->env_->parallel_launch(self->env_->thread_pool_, RunPriorBox, self, self->thread_nr_);
+  return self->env_->ParallelLaunch(self->env_->thread_pool_, RunPriorBox, self, self->thread_nr_);
 }
 
 KernelBase *CreatePriorBox(OpParameter *param, int data_type) {
@@ -179,10 +179,10 @@ KernelBase *CreatePriorBox(OpParameter *param, int data_type) {
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(prior_box);
   memset(prior_box, 0, sizeof(PriorBoxStruct));
 
-  prior_box->base_.prepare_ = DefaultPrepare2In1Out;
-  prior_box->base_.resize_ = PriorBoxResize;
-  prior_box->base_.release_ = PriorBoxRelease;
-  prior_box->base_.compute_ = PriorBoxCompute;
+  prior_box->base_.Prepare = DefaultPrepare2In1Out;
+  prior_box->base_.Resize = PriorBoxResize;
+  prior_box->base_.Release = PriorBoxRelease;
+  prior_box->base_.Compute = PriorBoxCompute;
   return (KernelBase *)prior_box;
 }
 

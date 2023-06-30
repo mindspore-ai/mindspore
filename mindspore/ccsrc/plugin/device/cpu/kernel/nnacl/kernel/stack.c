@@ -47,7 +47,7 @@ int StackRelease(KernelBase *self) {
   StackStruct *stack = (StackStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(stack);
   if (stack->buffers_ != NULL) {
-    self->env_->free(self->env_->allocator_, stack->buffers_);
+    self->env_->Free(self->env_->allocator_, stack->buffers_);
     stack->buffers_ = NULL;
   }
   return NNACL_OK;
@@ -59,7 +59,7 @@ int StackPrepare(KernelBase *self) {
   NNACL_CHECK_FALSE(self->in_size_ < ONE_TENSOR, NNACL_ERR);
   NNACL_CHECK_FALSE(self->out_size_ < ONE_TENSOR, NNACL_ERR);
   stack->buffers_ =
-    (void **)self->env_->alloc(self->env_->allocator_, (self->in_size_ + self->out_size_) * sizeof(void *));
+    (void **)self->env_->Alloc(self->env_->allocator_, (self->in_size_ + self->out_size_) * sizeof(void *));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(stack->buffers_);
   return NNACL_OK;
 }
@@ -84,8 +84,8 @@ int StackResize(KernelBase *self) {
     stack->outer_size_ = GetOuterSize(input->shape_, stack->axis_);
   }
 
-  self->thread_nr_ = self->update_thread_(TC_PTYPE(PrimType_Stack), stack->copy_size_, stack->copy_size_,
-                                          GetElementNum(self->out_[OUTPUT_INDEX]), self->thread_nr_);
+  self->thread_nr_ = self->UpdateThread(TC_PTYPE(PrimType_Stack), stack->copy_size_, stack->copy_size_,
+                                        GetElementNum(self->out_[OUTPUT_INDEX]), self->thread_nr_);
   self->thread_nr_ = NNACL_MIN(UP_DIV(stack->outer_size_, NNACL_STACK_STEP), self->thread_nr_);
   return NNACL_OK;
 }
@@ -119,7 +119,7 @@ int StackCompute(KernelBase *self) {
   }
   stack->buffers_[self->in_size_] = self->out_[OUTPUT_INDEX]->data_;
   NNACL_CHECK_NULL_RETURN_ERR(stack->buffers_[self->in_size_]);
-  return self->env_->parallel_launch(self->env_->thread_pool_, StackRun, self, self->thread_nr_);
+  return self->env_->ParallelLaunch(self->env_->thread_pool_, StackRun, self, self->thread_nr_);
 }
 
 KernelBase *CreateStack(OpParameter *param, int data_type) {
@@ -127,10 +127,10 @@ KernelBase *CreateStack(OpParameter *param, int data_type) {
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(stack);
   stack->buffers_ = NULL;
   stack->data_type_ = data_type;
-  stack->base_.release_ = StackRelease;
-  stack->base_.prepare_ = StackPrepare;
-  stack->base_.resize_ = StackResize;
-  stack->base_.compute_ = StackCompute;
+  stack->base_.Release = StackRelease;
+  stack->base_.Prepare = StackPrepare;
+  stack->base_.Resize = StackResize;
+  stack->base_.Compute = StackCompute;
   return (KernelBase *)stack;
 }
 

@@ -272,7 +272,7 @@ int TransposeCompute(struct KernelBase *self) {
   if (self->thread_nr_ == 1) {
     return TransposeComputeinSingleThread(transpose);
   }
-  return self->env_->parallel_launch(self->env_->thread_pool_, TransposeImpl, self, self->thread_nr_);
+  return self->env_->ParallelLaunch(self->env_->thread_pool_, TransposeImpl, self, self->thread_nr_);
 }
 
 int TransposeResize(struct KernelBase *self) {
@@ -318,10 +318,10 @@ KernelBase *CreateTranspose(OpParameter *param, int data_type) {
   transpose->nhwc2nchw_ = PackNHWCToNCHWFp32;
   transpose->optimize_ = TransposeDimsFp32;
   transpose->compute_ = DoTransposeFp32;
-  transpose->base_.release_ = DefaultRelease;
-  transpose->base_.prepare_ = DefaultPrepare1In1Out;
-  transpose->base_.resize_ = TransposeResize;
-  transpose->base_.compute_ = TransposeCompute;
+  transpose->base_.Release = DefaultRelease;
+  transpose->base_.Prepare = DefaultPrepare1In1Out;
+  transpose->base_.Resize = TransposeResize;
+  transpose->base_.Compute = TransposeCompute;
 #ifdef ENABLE_FP16
   if (data_type == kNumberTypeFloat16) {
     transpose->nhwc2nchw_ = PackNHWCToNCHWFp16;

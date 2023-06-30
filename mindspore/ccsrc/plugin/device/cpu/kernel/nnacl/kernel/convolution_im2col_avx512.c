@@ -42,16 +42,16 @@ int ConvIm2ColAVX512InitTmpBuffer(struct ConvolutionIm2ColBaseStruct *conv_im2co
   size_t unit_size = total_kernel_chw * conv_im2col->row_tile_;
 
   if (conv_im2col->packed_input_ != NULL) {
-    env->free(env->allocator_, conv_im2col->packed_input_);
+    env->Free(env->allocator_, conv_im2col->packed_input_);
     conv_im2col->packed_input_ = NULL;
   }
-  conv_im2col->packed_input_ = env->alloc(env->allocator_, unit_size * sizeof(float));
+  conv_im2col->packed_input_ = env->Alloc(env->allocator_, unit_size * sizeof(float));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_im2col->packed_input_);
 
   conv_im2col->output_need_align_ = compute->out_c_ % conv_im2col->oc_tile_ != 0;
   if (conv_im2col->output_need_align_) {
     if (conv_im2col->tmp_output_ != NULL) {
-      env->free(env->allocator_, conv_im2col->tmp_output_);
+      env->Free(env->allocator_, conv_im2col->tmp_output_);
       conv_im2col->tmp_output_ = NULL;
     }
 
@@ -62,7 +62,7 @@ int ConvIm2ColAVX512InitTmpBuffer(struct ConvolutionIm2ColBaseStruct *conv_im2co
     NNACL_CHECK_INT_MUL_NOT_OVERFLOW(output_bhw, oc_algin, NNACL_ERR);
     size_t pack_output_size = output_bhw * compute->out_w_ * oc_algin;
 
-    conv_im2col->tmp_output_ = env->alloc(env->allocator_, pack_output_size * sizeof(float));
+    conv_im2col->tmp_output_ = env->Alloc(env->allocator_, pack_output_size * sizeof(float));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_im2col->tmp_output_);
   }
 
@@ -115,7 +115,7 @@ int convolution_im2col_avx512_compute(KernelBase *self) {
     return ret;
   }
 
-  ret = self->env_->parallel_launch(self->env_->thread_pool_, ConvIm2ColBaseImpl, self, self->thread_nr_);
+  ret = self->env_->ParallelLaunch(self->env_->thread_pool_, ConvIm2ColBaseImpl, self, self->thread_nr_);
 
   if (conv_im2col->output_need_align_) {
     PackNHWCXToNHWCFp32(conv_im2col->tmp_output_, output_addr, conv_im2col->conv_.compute_.out_n_,
@@ -139,10 +139,10 @@ ConvolutionBaseStruct *CreateConvIm2ColAVX512(ConvParameter *conv_param) {
   conv_im2col->conv_.run_impl_ = ConvIm2ColAVX512RunImpl;
   conv_im2col->conv_.pack_weight_ = ConvIm2ColBasePackWeight;
 
-  conv_im2col->conv_.base_.compute_ = convolution_im2col_avx512_compute;
-  conv_im2col->conv_.base_.prepare_ = ConvolutionIm2colBasePrepare;
-  conv_im2col->conv_.base_.resize_ = ConvolutionIm2colBaseResize;
-  conv_im2col->conv_.base_.release_ = ConvolutionIm2colBaseRelease;
+  conv_im2col->conv_.base_.Compute = convolution_im2col_avx512_compute;
+  conv_im2col->conv_.base_.Prepare = ConvolutionIm2colBasePrepare;
+  conv_im2col->conv_.base_.Resize = ConvolutionIm2colBaseResize;
+  conv_im2col->conv_.base_.Release = ConvolutionIm2colBaseRelease;
 
   return (ConvolutionBaseStruct *)conv_im2col;
 }

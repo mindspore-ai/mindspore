@@ -112,7 +112,7 @@ int AddnCompute(struct KernelBase *self) {
     }
   }
 
-  int ret = self->env_->parallel_launch(self->env_->thread_pool_, AddNLaunch, self, self->thread_nr_);
+  int ret = self->env_->ParallelLaunch(self->env_->thread_pool_, AddNLaunch, self, self->thread_nr_);
   if (ret != NNACL_OK) {
     return ret;
   }
@@ -121,7 +121,7 @@ int AddnCompute(struct KernelBase *self) {
     addn->in1_addr_ = self->in_[i]->data_;
     NNACL_CHECK_NULL_RETURN_ERR(addn->in1_addr_);
     addn->in2_addr_ = addn->out_addr_;
-    ret = self->env_->parallel_launch(self->env_->thread_pool_, AddNLaunch, self, self->thread_nr_);
+    ret = self->env_->ParallelLaunch(self->env_->thread_pool_, AddNLaunch, self, self->thread_nr_);
     if (ret != NNACL_OK) {
       return ret;
     }
@@ -133,10 +133,10 @@ KernelBase *CreateAddN(OpParameter *param, int data_type) {
   AddNStruct *addn = (AddNStruct *)malloc(sizeof(AddNStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(addn);
   addn->data_type_ = data_type;
-  addn->base_.prepare_ = DefaultPrepare1In1Out;
-  addn->base_.resize_ = AddnResize;
-  addn->base_.release_ = DefaultRelease;
-  addn->base_.compute_ = AddnCompute;
+  addn->base_.Prepare = DefaultPrepare1In1Out;
+  addn->base_.Resize = AddnResize;
+  addn->base_.Release = DefaultRelease;
+  addn->base_.Compute = AddnCompute;
   return (KernelBase *)addn;
 }
 

@@ -81,7 +81,7 @@ int ArgMinMaxCompute(KernelBase *self) {
   if (arg_min_max->arg_elements_alloc_) {
     int arg_size = in_tensor->shape_[arg_min_max->compute_.axis_] * sizeof(ArgElement);
     NNACL_CHECK_MALLOC_SIZE(arg_size);
-    arg_min_max->compute_.arg_elements_ = (ArgElement *)self->env_->alloc(self->env_->allocator_, arg_size);
+    arg_min_max->compute_.arg_elements_ = (ArgElement *)self->env_->Alloc(self->env_->allocator_, arg_size);
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(arg_min_max->compute_.arg_elements_);
   }
 
@@ -100,7 +100,7 @@ int ArgMinMaxCompute(KernelBase *self) {
   }
 
   if (arg_min_max->arg_elements_alloc_) {
-    self->env_->free(self->env_->allocator_, arg_min_max->compute_.arg_elements_);
+    self->env_->Free(self->env_->allocator_, arg_min_max->compute_.arg_elements_);
     arg_min_max->compute_.arg_elements_ = NULL;
   }
   return ret;
@@ -111,10 +111,10 @@ KernelBase *CreateArgMinMax(OpParameter *param, int data_type) {
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(arg_min_max);
   memset(arg_min_max, 0, sizeof(ArgMinMaxStruct));
 
-  arg_min_max->base_.prepare_ = ArgMinMaxPrepare;
-  arg_min_max->base_.resize_ = ArgMinMaxResize;
-  arg_min_max->base_.release_ = DefaultRelease;
-  arg_min_max->base_.compute_ = ArgMinMaxCompute;
+  arg_min_max->base_.Prepare = ArgMinMaxPrepare;
+  arg_min_max->base_.Resize = ArgMinMaxResize;
+  arg_min_max->base_.Release = DefaultRelease;
+  arg_min_max->base_.Compute = ArgMinMaxCompute;
   return (KernelBase *)arg_min_max;
 }
 

@@ -63,16 +63,16 @@ int ExpPrepare(struct KernelBase *self) {
 }
 
 int ExpCompute(struct KernelBase *self) {
-  return self->env_->parallel_launch(self->env_->thread_pool_, ExpRunImpl, self, self->thread_nr_);
+  return self->env_->ParallelLaunch(self->env_->thread_pool_, ExpRunImpl, self, self->thread_nr_);
 }
 
 KernelBase *CreateExp(OpParameter *param, int data_type) {
   ExpStruct *exp = (ExpStruct *)malloc(sizeof(ExpStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(exp);
-  exp->base_.prepare_ = ExpPrepare;
-  exp->base_.resize_ = ExpResize;
-  exp->base_.release_ = DefaultRelease;
-  exp->base_.compute_ = ExpCompute;
+  exp->base_.Prepare = ExpPrepare;
+  exp->base_.Resize = ExpResize;
+  exp->base_.Release = DefaultRelease;
+  exp->base_.Compute = ExpCompute;
   exp->exp_compute_ = ExpFusionFp32;
 #ifdef ENABLE_FP16
   if (data_type == kNumberTypeFloat16) {

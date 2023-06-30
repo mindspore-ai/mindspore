@@ -77,10 +77,10 @@ int TrilCompute(KernelBase *self) {
 KernelBase *CreateTril(OpParameter *param, int data_type) {
   TrilStruct *tril = (TrilStruct *)malloc(sizeof(TrilStruct));
   NNACL_CHECK_NULL_RETURN_NULL(tril);
-  tril->base_.release_ = DefaultRelease;
-  tril->base_.prepare_ = DefaultPrepare1In1Out;
-  tril->base_.resize_ = DefaultResize;
-  tril->base_.compute_ = TrilCompute;
+  tril->base_.Release = DefaultRelease;
+  tril->base_.Prepare = DefaultPrepare1In1Out;
+  tril->base_.Resize = DefaultResize;
+  tril->base_.Compute = TrilCompute;
   return (KernelBase *)tril;
 }
 

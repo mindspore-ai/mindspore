@@ -99,13 +99,13 @@ int CopyReduceyInputToOutput(ReduceStruct *reduce) {
   reshape_struct.block_size_ = block_size;
   reshape_struct.total_size_ = total_size;
   reshape_struct.base_.thread_nr_ = tmp_thread_num;
-  return reduce->base_.env_->parallel_launch(reduce->base_.env_->thread_pool_, ParallelReshape, &reshape_struct,
-                                             tmp_thread_num);
+  return reduce->base_.env_->ParallelLaunch(reduce->base_.env_->thread_pool_, ParallelReshape, &reshape_struct,
+                                            tmp_thread_num);
 }
 
 int MallocReduceTmpBuffer(ReduceStruct *reduce) {
   for (int i = 0; i < reduce->data_buffers_size_; i++) {
-    reduce->data_buffers_[i] = reduce->base_.env_->alloc(
+    reduce->data_buffers_[i] = reduce->base_.env_->Alloc(
       reduce->base_.env_->allocator_, reduce->data_buffer_sizes_[i] * DataTypeCSize(reduce->data_type_));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(reduce->data_buffers_[i]);
   }
@@ -115,7 +115,7 @@ int MallocReduceTmpBuffer(ReduceStruct *reduce) {
 void FreeReduceTmpBuffer(ReduceStruct *reduce) {
   for (int i = 0; i < reduce->data_buffers_size_; i++) {
     if (reduce->data_buffers_[i] != NULL) {
-      reduce->base_.env_->free(reduce->base_.env_->allocator_, reduce->data_buffers_[i]);
+      reduce->base_.env_->Free(reduce->base_.env_->allocator_, reduce->data_buffers_[i]);
     }
     reduce->data_buffers_[i] = NULL;
   }
@@ -343,13 +343,13 @@ int ReduceResize(struct KernelBase *self) {
   ReduceCalculateInnerOuterSize(reduce);
 
   if (reduce->num_axes_ == 1) {
-    self->thread_nr_ = self->update_thread_(
+    self->thread_nr_ = self->UpdateThread(
       TC_TYPE(PrimType_ReduceFusion, ((ReduceParameter *)reduce->base_.param_)->mode_),
       reduce->inner_sizes_[Index0] * reduce->axis_sizes_[Index0],
       reduce->inner_sizes_[Index0] * reduce->axis_sizes_[Index0], reduce->outer_sizes_[Index0], self->thread_nr_);
   } else {
-    self->thread_nr_ = self->update_thread_(TC_TYPE(PrimType_ReduceFusion, Reduce_Max + 1), 0, 0,
-                                            GetElementNum(self->out_[OUTPUT_INDEX]), self->thread_nr_);
+    self->thread_nr_ = self->UpdateThread(TC_TYPE(PrimType_ReduceFusion, Reduce_Max + 1), 0, 0,
+                                          GetElementNum(self->out_[OUTPUT_INDEX]), self->thread_nr_);
   }
   return NNACL_OK;
 }
@@ -382,7 +382,7 @@ int ReduceCompute(struct KernelBase *self) {
     reduce->axis_size_ = reduce->axis_sizes_[i];
     NNACL_CHECK_FALSE(reduce->axis_size_ == 0, NNACL_REDUCE_AXIS_SIZE_ERROR);
 
-    ret = self->env_->parallel_launch(self->env_->thread_pool_, ReduceImpl, self, self->thread_nr_);
+    ret = self->env_->ParallelLaunch(self->env_->thread_pool_, ReduceImpl, self, self->thread_nr_);
     if (ret != NNACL_OK) {
       FreeReduceTmpBuffer(reduce);
       return ret;
@@ -404,10 +404,10 @@ KernelBase *CreateReduce(OpParameter *param, int data_type) {
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(reduce);
   memset(reduce, 0, sizeof(ReduceStruct));
   reduce->data_type_ = data_type;
-  reduce->base_.release_ = DefaultRelease;
-  reduce->base_.prepare_ = ReducePrepare;
-  reduce->base_.resize_ = ReduceResize;
-  reduce->base_.compute_ = ReduceCompute;
+  reduce->base_.Release = DefaultRelease;
+  reduce->base_.Prepare = ReducePrepare;
+  reduce->base_.Resize = ReduceResize;
+  reduce->base_.Compute = ReduceCompute;
   reduce->handle_sum_square_ = HandleReduceASumAndSumSquare;
   reduce->calculate_coeff_ = CalculateReduceCoeffOutput;
   reduce->init_kernel_list_ = InitialReduceKernelList;

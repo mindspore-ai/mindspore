@@ -144,7 +144,7 @@ int Conv1x1MallocWeightBiasData(ConvolutionBaseStruct *conv) {
 
   if (conv->base_.in_size_ == THREE_TENSOR) {
     size = UP_ROUND(conv->compute_.out_c_, conv_1x1->col_tile_) * sizeof(float);
-    conv->bias_data_ = conv->base_.env_->alloc(conv->base_.env_->allocator_, size);
+    conv->bias_data_ = conv->base_.env_->Alloc(conv->base_.env_->allocator_, size);
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv->bias_data_);
     memset(conv->bias_data_, 0, size);
   }
@@ -153,7 +153,7 @@ int Conv1x1MallocWeightBiasData(ConvolutionBaseStruct *conv) {
 
 void Conv1x1FreeTmpBuffer(Convolution1x1Struct *conv_1x1) {
   if (conv_1x1->pre_trans_input_ && conv_1x1->input_ptr_ != NULL) {
-    conv_1x1->conv_.base_.env_->free(conv_1x1->conv_.base_.env_->allocator_, conv_1x1->input_ptr_);
+    conv_1x1->conv_.base_.env_->Free(conv_1x1->conv_.base_.env_->allocator_, conv_1x1->input_ptr_);
     conv_1x1->input_ptr_ = NULL;
   }
   return;
@@ -201,7 +201,7 @@ int InitConv1x1Param(Convolution1x1Struct *conv_1x1) {
     (conv_param->pad_u_ != 0 || conv_param->pad_l_ != 0 || conv_param->stride_h_ != 1 || conv_param->stride_w_ != 1);
   if (conv_1x1->pre_trans_input_) {
     NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_1x1->matmul_param_.row_, conv_1x1->matmul_param_.deep_, NNACL_ERR);
-    conv_1x1->input_ptr_ = (float *)(conv_1x1->conv_.base_.env_->alloc(
+    conv_1x1->input_ptr_ = (float *)(conv_1x1->conv_.base_.env_->Alloc(
       conv_1x1->conv_.base_.env_->allocator_,
       conv_1x1->matmul_param_.row_ * conv_1x1->matmul_param_.deep_ * sizeof(float)));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_1x1->input_ptr_);
@@ -304,7 +304,7 @@ int Convolution1x1Compute(KernelBase *self) {
     pack_input_size = conv_1x1->matmul_param_.row_align_ * conv_1x1->matmul_param_.deep_;
   }
   conv_1x1->pack_input_ =
-    (float *)conv_1x1->conv_.base_.env_->alloc(conv_1x1->conv_.base_.env_->allocator_, pack_input_size * sizeof(float));
+    (float *)conv_1x1->conv_.base_.env_->Alloc(conv_1x1->conv_.base_.env_->allocator_, pack_input_size * sizeof(float));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_1x1->pack_input_);
 
   int ret = ConvBaseRepackWeight(&conv_1x1->conv_);
@@ -329,11 +329,11 @@ int Convolution1x1Compute(KernelBase *self) {
       conv_1x1->input_ptr_ = tmp_in;
     }
     if (conv_1x1->multi_thread_by_hw_) {
-      ret = self->env_->parallel_launch(self->env_->thread_pool_, Conv1x1RunHw, self, self->thread_nr_);
+      ret = self->env_->ParallelLaunch(self->env_->thread_pool_, Conv1x1RunHw, self, self->thread_nr_);
     } else {
       Conv1x1PackMatmulInput(conv_1x1->input_ptr_, conv_1x1->pack_input_, conv_1x1->matmul_param_.row_,
                              conv_1x1->matmul_param_.deep_);
-      ret = self->env_->parallel_launch(self->env_->thread_pool_, Conv1x1Run, self, self->thread_nr_);
+      ret = self->env_->ParallelLaunch(self->env_->thread_pool_, Conv1x1Run, self, self->thread_nr_);
     }
     if (ret != NNACL_OK) {
       break;
@@ -341,7 +341,7 @@ int Convolution1x1Compute(KernelBase *self) {
   }
 
   if (conv_1x1->pack_input_ != NULL) {
-    self->env_->free(self->env_->allocator_, conv_1x1->pack_input_);
+    self->env_->Free(self->env_->allocator_, conv_1x1->pack_input_);
     conv_1x1->pack_input_ = NULL;
   }
   return ret;
@@ -356,10 +356,10 @@ ConvolutionBaseStruct *CreateConvolution1x1(ConvParameter *conv_param) {
   conv1x1->conv_.malloc_weight_bias_ = Conv1x1MallocWeightBiasData;
   conv1x1->conv_.pack_weight_ = Conv1x1PackWeight;
 
-  conv1x1->conv_.base_.resize_ = Convolution1x1Resize;
-  conv1x1->conv_.base_.prepare_ = Convolution1x1Prepare;
-  conv1x1->conv_.base_.release_ = Convolution1x1Release;
-  conv1x1->conv_.base_.compute_ = Convolution1x1Compute;
+  conv1x1->conv_.base_.Resize = Convolution1x1Resize;
+  conv1x1->conv_.base_.Prepare = Convolution1x1Prepare;
+  conv1x1->conv_.base_.Release = Convolution1x1Release;
+  conv1x1->conv_.base_.Compute = Convolution1x1Compute;
 
   return (ConvolutionBaseStruct *)conv1x1;
 }

@@ -150,7 +150,7 @@ int ScaleInitScaleOffset(ScaleStruct *scale) {
     scale->malloc_offset_ = true;
     int malloc_size = GetElementNum(scale_tensor) * data_type_size;
     NNACL_CHECK_MALLOC_SIZE(malloc_size);
-    scale->offset_ = scale->base_.env_->alloc(scale->base_.env_->allocator_, malloc_size);
+    scale->offset_ = scale->base_.env_->Alloc(scale->base_.env_->allocator_, malloc_size);
     memset(scale->offset_, 0, malloc_size);
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(scale->offset_);
   }
@@ -164,7 +164,7 @@ int ScaleInitScaleOffset(ScaleStruct *scale) {
     scale->malloc_scale_ = true;
     int malloc_size = GetElementNum(scale_tensor) * data_type_size;
     NNACL_CHECK_MALLOC_SIZE(malloc_size);
-    scale->scale_ = scale->base_.env_->alloc(scale->base_.env_->allocator_, malloc_size);
+    scale->scale_ = scale->base_.env_->Alloc(scale->base_.env_->allocator_, malloc_size);
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(scale->scale_);
     (void)memcpy(scale->scale_, scale_tensor->data_, malloc_size);
   } else {
@@ -183,7 +183,7 @@ int ScaleInitScaleOffset(ScaleStruct *scale) {
     scale->malloc_offset_ = true;
     int malloc_size = GetElementNum(offset_tensor) * data_type_size;
     NNACL_CHECK_MALLOC_SIZE(malloc_size);
-    scale->offset_ = scale->base_.env_->alloc(scale->base_.env_->allocator_, malloc_size);
+    scale->offset_ = scale->base_.env_->Alloc(scale->base_.env_->allocator_, malloc_size);
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(scale->scale_);
     (void)memcpy(scale->offset_, offset_tensor->data_, malloc_size);
   } else {
@@ -219,13 +219,13 @@ int scale_release(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(scale);
 
   if (scale->malloc_scale_ && scale->scale_ != NULL) {
-    self->env_->free(self->env_->allocator_, scale->scale_);
+    self->env_->Free(self->env_->allocator_, scale->scale_);
     scale->scale_ = NULL;
     scale->malloc_scale_ = false;
   }
 
   if (scale->malloc_offset_ && scale->offset_ != NULL) {
-    self->env_->free(self->env_->allocator_, scale->offset_);
+    self->env_->Free(self->env_->allocator_, scale->offset_);
     scale->offset_ = NULL;
     scale->malloc_offset_ = false;
   }
@@ -293,7 +293,7 @@ int scale_compute(struct KernelBase *self) {
     NNACL_CHECK_NULL_RETURN_ERR(scale->offset_);
   }
 
-  return self->env_->parallel_launch(self->env_->thread_pool_, ScaleRun, self, self->thread_nr_);
+  return self->env_->ParallelLaunch(self->env_->thread_pool_, ScaleRun, self, self->thread_nr_);
 }
 
 int scale_prepare(struct KernelBase *self) {
@@ -322,10 +322,10 @@ KernelBase *CreateScale(OpParameter *param, int data_type) {
   scale->offset_ = NULL;
   scale->malloc_scale_ = false;
   scale->malloc_offset_ = false;
-  scale->base_.prepare_ = scale_prepare;
-  scale->base_.resize_ = scale_resize;
-  scale->base_.compute_ = scale_compute;
-  scale->base_.release_ = scale_release;
+  scale->base_.Prepare = scale_prepare;
+  scale->base_.Resize = scale_resize;
+  scale->base_.Compute = scale_compute;
+  scale->base_.Release = scale_release;
   return (KernelBase *)scale;
 }
 

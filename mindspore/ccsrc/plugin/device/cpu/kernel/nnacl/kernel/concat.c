@@ -35,7 +35,7 @@ int DoConcat(ConcatStruct *concat, int task_id) {
 
   size_t src_buf_size = concat->base_.in_size_ * sizeof(uint8_t *);
   NNACL_CHECK_MALLOC_SIZE(src_buf_size);
-  uint8_t **src = (uint8_t **)concat->base_.env_->alloc(concat->base_.env_->allocator_, src_buf_size);
+  uint8_t **src = (uint8_t **)concat->base_.env_->Alloc(concat->base_.env_->allocator_, src_buf_size);
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(src);
   for (size_t i = 0; i < concat->base_.in_size_; ++i) {
     if (concat->is_with_data_[i]) {
@@ -50,7 +50,7 @@ int DoConcat(ConcatStruct *concat, int task_id) {
     if (input_index == end_index) {
       memcpy(out, src[input_index] + concat->block_boundary_infos_[task_id].begin_point_,
              concat->block_boundary_infos_[task_id].end_point_ - concat->block_boundary_infos_[task_id].begin_point_);
-      concat->base_.env_->free(concat->base_.env_->allocator_, src);
+      concat->base_.env_->Free(concat->base_.env_->allocator_, src);
       return NNACL_OK;
     }
     int64_t size = concat->inner_sizes_[input_index] - concat->block_boundary_infos_[task_id].begin_point_;
@@ -62,7 +62,7 @@ int DoConcat(ConcatStruct *concat, int task_id) {
       out += concat->inner_sizes_[input_index];
     }
     memcpy(out, src[input_index], concat->block_boundary_infos_[task_id].end_point_);
-    concat->base_.env_->free(concat->base_.env_->allocator_, src);
+    concat->base_.env_->Free(concat->base_.env_->allocator_, src);
     return NNACL_OK;
   }
   for (int i = 0; i < input_index; ++i) {
@@ -92,7 +92,7 @@ int DoConcat(ConcatStruct *concat, int task_id) {
   }
   memcpy(out, src[end_index], concat->block_boundary_infos_[task_id].end_point_);
 
-  concat->base_.env_->free(concat->base_.env_->allocator_, src);
+  concat->base_.env_->Free(concat->base_.env_->allocator_, src);
   return NNACL_OK;
 }
 
@@ -161,7 +161,7 @@ int ChooseConcatThreadCuttingStrategy(ConcatStruct *concat) {
   int64_t block_size = all_bytes / thread_count;
   int64_t remain_byte = all_bytes - block_size * thread_count;
   int64_t *pre_sum =
-    (int64_t *)concat->base_.env_->alloc(concat->base_.env_->allocator_, concat->base_.in_size_ * sizeof(int64_t));
+    (int64_t *)concat->base_.env_->Alloc(concat->base_.env_->allocator_, concat->base_.in_size_ * sizeof(int64_t));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(pre_sum);
   int64_t init_sum = 0;
   for (size_t i = 0; i < concat->base_.in_size_; ++i) {
@@ -193,7 +193,7 @@ int ChooseConcatThreadCuttingStrategy(ConcatStruct *concat) {
   }
 
   concat->base_.thread_nr_ = concat->block_size_;
-  concat->base_.env_->free(concat->base_.env_->allocator_, pre_sum);
+  concat->base_.env_->Free(concat->base_.env_->allocator_, pre_sum);
   return NNACL_OK;
 }
 
@@ -221,12 +221,12 @@ int ConcatPepare(KernelBase *self) {
   ConcatStruct *concat = (ConcatStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(concat);
 
-  concat->inputs_ptr_ = self->env_->alloc(self->env_->allocator_, self->in_size_ * sizeof(uint8_t *));
+  concat->inputs_ptr_ = self->env_->Alloc(self->env_->allocator_, self->in_size_ * sizeof(uint8_t *));
   NNACL_CHECK_NULL_RETURN_ERR(concat->inputs_ptr_);
-  concat->is_with_data_ = self->env_->alloc(self->env_->allocator_, self->in_size_ * sizeof(bool));
+  concat->is_with_data_ = self->env_->Alloc(self->env_->allocator_, self->in_size_ * sizeof(bool));
   NNACL_CHECK_NULL_RETURN_ERR(concat->is_with_data_);
   concat->inner_sizes_ =
-    self->env_->alloc(self->env_->allocator_, (self->in_size_ + self->out_size_) * sizeof(int64_t));
+    self->env_->Alloc(self->env_->allocator_, (self->in_size_ + self->out_size_) * sizeof(int64_t));
   NNACL_CHECK_NULL_RETURN_ERR(concat->inner_sizes_);
 
   return NNACL_OK;
@@ -236,13 +236,13 @@ int ConcatRelease(KernelBase *self) {
   ConcatStruct *concat = (ConcatStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(concat);
   if (concat->inputs_ptr_ != NULL) {
-    self->env_->free(self->env_->allocator_, concat->inputs_ptr_);
+    self->env_->Free(self->env_->allocator_, concat->inputs_ptr_);
   }
   if (concat->is_with_data_ != NULL) {
-    self->env_->free(self->env_->allocator_, concat->is_with_data_);
+    self->env_->Free(self->env_->allocator_, concat->is_with_data_);
   }
   if (concat->inner_sizes_ != NULL) {
-    self->env_->free(self->env_->allocator_, concat->inner_sizes_);
+    self->env_->Free(self->env_->allocator_, concat->inner_sizes_);
   }
   return NNACL_OK;
 }
@@ -264,7 +264,7 @@ int ConcatCompute(KernelBase *self) {
 
   concat->output_ = self->out_[FIRST_INPUT]->data_;
   NNACL_CHECK_NULL_RETURN_ERR(concat->output_);
-  return self->env_->parallel_launch(self->env_->thread_pool_, ConcatRun, self, self->thread_nr_);
+  return self->env_->ParallelLaunch(self->env_->thread_pool_, ConcatRun, self, self->thread_nr_);
 }
 
 KernelBase *CreateConcat(OpParameter *param, int data_type) {
@@ -275,10 +275,10 @@ KernelBase *CreateConcat(OpParameter *param, int data_type) {
   concat->inner_sizes_ = NULL;
   concat->inputs_ptr_ = NULL;
   concat->is_with_data_ = NULL;
-  concat->base_.prepare_ = ConcatPepare;
-  concat->base_.resize_ = ConcatResize;
-  concat->base_.release_ = ConcatRelease;
-  concat->base_.compute_ = ConcatCompute;
+  concat->base_.Prepare = ConcatPepare;
+  concat->base_.Resize = ConcatResize;
+  concat->base_.Release = ConcatRelease;
+  concat->base_.Compute = ConcatCompute;
   return (KernelBase *)concat;
 }
 

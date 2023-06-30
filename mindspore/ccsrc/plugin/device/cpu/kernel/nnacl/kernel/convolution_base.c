@@ -84,7 +84,7 @@ int ConvBaseUpdateComputeInfo(ConvolutionBaseStruct *conv) {
 void ConvBaseRelease(ConvolutionBaseStruct *conv) {
   if (!conv->base_.train_session_) {
     if (!conv->is_sharing_pack_) {
-      conv->base_.env_->free(conv->base_.env_->allocator_, conv->packed_weight_);
+      conv->base_.env_->Free(conv->base_.env_->allocator_, conv->packed_weight_);
     } else {
       conv->free_sharing_weight_(conv->shaing_manager_, conv->packed_weight_);
     }
@@ -92,7 +92,7 @@ void ConvBaseRelease(ConvolutionBaseStruct *conv) {
   }
 
   if (conv->bias_data_ != NULL) {
-    conv->base_.env_->free(conv->base_.env_->allocator_, conv->bias_data_);
+    conv->base_.env_->Free(conv->base_.env_->allocator_, conv->bias_data_);
     conv->bias_data_ = NULL;
   }
 }
@@ -176,7 +176,7 @@ void *ConvBaseGetConvPackWeightData(ConvolutionBaseStruct *conv, int data_size) 
     if (data_size <= 0) {
       return NULL;
     }
-    data = conv->base_.env_->alloc(conv->base_.env_->allocator_, data_size);
+    data = conv->base_.env_->Alloc(conv->base_.env_->allocator_, data_size);
     conv->weight_is_packed_ = false;
     conv->is_sharing_pack_ = false;
   } else {

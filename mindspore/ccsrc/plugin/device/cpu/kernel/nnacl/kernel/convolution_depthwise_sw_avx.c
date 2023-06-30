@@ -33,7 +33,7 @@ int ConvDwSWAVXInitPackedInputOutput(ConvolutionDepthwiseSWAVXStruct *conv_dw) {
     int input_bhw = conv_dw->conv_.compute_.in_n_ * conv_dw->conv_.compute_.in_hw_;
     NNACL_CHECK_INT_MUL_NOT_OVERFLOW(input_bhw, conv_dw->oc_tile_ * ic_algin, NNACL_ERR);
     int pack_input_size = input_bhw * conv_dw->oc_tile_ * ic_algin;
-    conv_dw->packed_input_ = (float *)env->alloc(env->allocator_, pack_input_size * sizeof(float));
+    conv_dw->packed_input_ = (float *)env->Alloc(env->allocator_, pack_input_size * sizeof(float));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_dw->packed_input_);
   }
 
@@ -43,7 +43,7 @@ int ConvDwSWAVXInitPackedInputOutput(ConvolutionDepthwiseSWAVXStruct *conv_dw) {
     int output_bhw = conv_dw->conv_.compute_.out_n_ * conv_dw->conv_.compute_.out_hw_;
     NNACL_CHECK_INT_MUL_NOT_OVERFLOW(output_bhw, conv_dw->oc_tile_ * oc_algin, NNACL_ERR);
     int pack_output_size = output_bhw * conv_dw->oc_tile_ * oc_algin;
-    conv_dw->packed_output_ = (float *)env->alloc(env->allocator_, pack_output_size * sizeof(float));
+    conv_dw->packed_output_ = (float *)env->Alloc(env->allocator_, pack_output_size * sizeof(float));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_dw->packed_output_);
   }
 
@@ -78,7 +78,7 @@ int ConvDwSWAVXMallocWeightBiasData(ConvolutionBaseStruct *conv) {
   if (conv->base_.in_size_ == THREE_TENSOR) {
     int bias_size = oc_algin * conv_dw->oc_tile_;
     NNACL_CHECK_MALLOC_SIZE(bias_size * sizeof(float));
-    conv->bias_data_ = conv->base_.env_->alloc(conv->base_.env_->allocator_, bias_size * sizeof(float));
+    conv->bias_data_ = conv->base_.env_->Alloc(conv->base_.env_->allocator_, bias_size * sizeof(float));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv->bias_data_);
     memset(conv->bias_data_, 0, bias_size * sizeof(float));
   }
@@ -98,12 +98,12 @@ int ConvDwSWAvxRun(void *cdata, int task_id, float l, float r) {
 
 void ConvDwSWAVXFreePackedInputOutput(ConvolutionDepthwiseSWAVXStruct *conv_dw) {
   if (conv_dw->input_need_align_) {
-    conv_dw->conv_.base_.env_->free(conv_dw->conv_.base_.env_->allocator_, conv_dw->packed_input_);
+    conv_dw->conv_.base_.env_->Free(conv_dw->conv_.base_.env_->allocator_, conv_dw->packed_input_);
     conv_dw->packed_input_ = NULL;
     conv_dw->input_need_align_ = false;
   }
   if (conv_dw->output_need_align_) {
-    conv_dw->conv_.base_.env_->free(conv_dw->conv_.base_.env_->allocator_, conv_dw->packed_output_);
+    conv_dw->conv_.base_.env_->Free(conv_dw->conv_.base_.env_->allocator_, conv_dw->packed_output_);
     conv_dw->packed_output_ = NULL;
     conv_dw->output_need_align_ = false;
   }
@@ -146,7 +146,7 @@ int ConvolutionDepthwiseSWAVXCompute(KernelBase *self) {
     conv_dw->packed_output_ = output_ptr;
   }
 
-  ret = self->env_->parallel_launch(self->env_->thread_pool_, ConvDwSWAvxRun, self, self->thread_nr_);
+  ret = self->env_->ParallelLaunch(self->env_->thread_pool_, ConvDwSWAvxRun, self, self->thread_nr_);
 
   if (conv_dw->output_need_align_) {
     PackNHWCXToNHWCFp32(conv_dw->packed_output_, output_ptr, conv_dw->conv_.compute_.out_n_,
@@ -207,10 +207,10 @@ KernelBase *CreateConvDwSWAVX(ConvParameter *conv_param) {
   conv_dw->conv_.pack_weight_ = ConvDwSWAVXPackWeight;
   conv_dw->conv_.malloc_weight_bias_ = ConvDwSWAVXMallocWeightBiasData;
 
-  conv_dw->conv_.base_.prepare_ = ConvolutionDepthwiseSWAVXPrepare;
-  conv_dw->conv_.base_.compute_ = ConvolutionDepthwiseSWAVXCompute;
-  conv_dw->conv_.base_.resize_ = ConvolutionDepthwiseSWAVXResize;
-  conv_dw->conv_.base_.release_ = ConvolutionDepthwiseSWAVXRelease;
+  conv_dw->conv_.base_.Prepare = ConvolutionDepthwiseSWAVXPrepare;
+  conv_dw->conv_.base_.Compute = ConvolutionDepthwiseSWAVXCompute;
+  conv_dw->conv_.base_.Resize = ConvolutionDepthwiseSWAVXResize;
+  conv_dw->conv_.base_.Release = ConvolutionDepthwiseSWAVXRelease;
   return (KernelBase *)conv_dw;
 }
 #endif

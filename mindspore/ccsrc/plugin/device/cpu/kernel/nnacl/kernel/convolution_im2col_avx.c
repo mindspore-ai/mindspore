@@ -37,17 +37,17 @@ int ConvIm2ColAVXInitTmpBuffer(ConvolutionIm2ColBaseStruct *conv_im2col) {
   NNACL_CHECK_NULL_RETURN_ERR(env);
 
   if (conv_im2col->packed_input_ != NULL) {
-    env->free(env->allocator_, conv_im2col->packed_input_);
+    env->Free(env->allocator_, conv_im2col->packed_input_);
     conv_im2col->packed_input_ = NULL;
   }
-  conv_im2col->packed_input_ = env->alloc(env->allocator_, unit_size * sizeof(float));
+  conv_im2col->packed_input_ = env->Alloc(env->allocator_, unit_size * sizeof(float));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_im2col->packed_input_);
 
   if (conv_im2col->col_major_input_ != NULL) {
-    env->free(env->allocator_, conv_im2col->col_major_input_);
+    env->Free(env->allocator_, conv_im2col->col_major_input_);
     conv_im2col->col_major_input_ = NULL;
   }
-  conv_im2col->col_major_input_ = env->alloc(env->allocator_, unit_size * sizeof(float));
+  conv_im2col->col_major_input_ = env->Alloc(env->allocator_, unit_size * sizeof(float));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_im2col->col_major_input_);
 
   conv_im2col->output_need_align_ =
@@ -59,10 +59,10 @@ int ConvIm2ColAVXInitTmpBuffer(ConvolutionIm2ColBaseStruct *conv_im2col) {
     int pack_output_size = output_bhw * conv_im2col->oc_tile_ * oc_algin;
 
     if (conv_im2col->tmp_output_ != NULL) {
-      env->free(env->allocator_, conv_im2col->tmp_output_);
+      env->Free(env->allocator_, conv_im2col->tmp_output_);
       conv_im2col->tmp_output_ = NULL;
     }
-    conv_im2col->tmp_output_ = env->alloc(env->allocator_, pack_output_size * sizeof(float));
+    conv_im2col->tmp_output_ = env->Alloc(env->allocator_, pack_output_size * sizeof(float));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_im2col->tmp_output_);
   }
   return NNACL_OK;
@@ -115,7 +115,7 @@ int convolution_im2col_avx_compute(KernelBase *self) {
     return ret;
   }
 
-  ret = self->env_->parallel_launch(self->env_->thread_pool_, ConvIm2ColBaseImpl, self, self->thread_nr_);
+  ret = self->env_->ParallelLaunch(self->env_->thread_pool_, ConvIm2ColBaseImpl, self, self->thread_nr_);
 
   if (conv_im2col->output_need_align_) {
     PackNC8HW8AlignedToNC8HW8NotAlignedFp32(conv_im2col->tmp_output_, output_addr, conv_im2col->conv_.compute_.out_n_,
@@ -141,10 +141,10 @@ ConvolutionBaseStruct *CreateConvIm2ColAVX(ConvParameter *conv_param) {
   conv_im2col->conv_.run_impl_ = ConvIm2ColAVXRunImpl;
   conv_im2col->conv_.pack_weight_ = ConvIm2ColBasePackWeight;
 
-  conv_im2col->conv_.base_.compute_ = convolution_im2col_avx_compute;
-  conv_im2col->conv_.base_.prepare_ = ConvolutionIm2colBasePrepare;
-  conv_im2col->conv_.base_.resize_ = ConvolutionIm2colBaseResize;
-  conv_im2col->conv_.base_.release_ = ConvolutionIm2colBaseRelease;
+  conv_im2col->conv_.base_.Compute = convolution_im2col_avx_compute;
+  conv_im2col->conv_.base_.Prepare = ConvolutionIm2colBasePrepare;
+  conv_im2col->conv_.base_.Resize = ConvolutionIm2colBaseResize;
+  conv_im2col->conv_.base_.Release = ConvolutionIm2colBaseRelease;
 
   return (ConvolutionBaseStruct *)conv_im2col;
 }

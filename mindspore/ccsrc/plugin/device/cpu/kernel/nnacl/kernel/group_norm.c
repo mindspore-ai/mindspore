@@ -112,17 +112,17 @@ static int groupnorm_do_compute(void *param, int task_id, float lhs_scale, float
 }
 
 static int GroupNormCompute(struct KernelBase *self) {
-  return self->env_->parallel_launch(self->env_->thread_pool_, groupnorm_do_compute, self, self->param_->thread_num_);
+  return self->env_->ParallelLaunch(self->env_->thread_pool_, groupnorm_do_compute, self, self->param_->thread_num_);
 }
 
 KernelBase *CreateGroupNorm(OpParameter *param, int data_type) {
   GroupNormStru *groupnorm = (GroupNormStru *)malloc(sizeof(GroupNormStru));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(groupnorm);
 
-  groupnorm->base.prepare_ = GroupNormPrepare;
-  groupnorm->base.resize_ = GroupNormResize;
-  groupnorm->base.release_ = GroupNormRelease;
-  groupnorm->base.compute_ = GroupNormCompute;
+  groupnorm->base.Prepare = GroupNormPrepare;
+  groupnorm->base.Resize = GroupNormResize;
+  groupnorm->base.Release = GroupNormRelease;
+  groupnorm->base.Compute = GroupNormCompute;
 
   return (void *)groupnorm;
 }

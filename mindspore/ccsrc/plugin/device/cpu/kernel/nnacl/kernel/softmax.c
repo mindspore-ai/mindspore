@@ -57,7 +57,7 @@ int SoftmaxRelease(struct KernelBase *self) {
   SoftmaxStruct *softmax = (SoftmaxStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(softmax);
   if (softmax->sum_data_ != NULL) {
-    self->env_->free(self->env_->allocator_, softmax->sum_data_);
+    self->env_->Free(self->env_->allocator_, softmax->sum_data_);
   }
   softmax->sum_data_ = NULL;
   return NNACL_OK;
@@ -95,7 +95,7 @@ int InitSoftmaxParam(SoftmaxStruct *softmax) {
     NNACL_CHECK_INT_MUL_NOT_OVERFLOW(out_plane_size, in_plane_size, NNACL_ERR);
     int sum_data_size = out_plane_size * in_plane_size;
     NNACL_CHECK_INT_MUL_NOT_OVERFLOW(sum_data_size, (int)DataTypeCSize(softmax->data_type_), NNACL_ERR);
-    softmax->sum_data_ = env->alloc(env->allocator_, sum_data_size * DataTypeCSize(softmax->data_type_));
+    softmax->sum_data_ = env->Alloc(env->allocator_, sum_data_size * DataTypeCSize(softmax->data_type_));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(softmax->sum_data_);
   }
   return NNACL_OK;
@@ -109,9 +109,8 @@ int SoftmaxResize(struct KernelBase *self) {
   TensorC *in_tensor = self->in_[FIRST_INPUT];
   int *in_shape = in_tensor->shape_;
 
-  self->thread_nr_ =
-    self->update_thread_(TC_PTYPE(PrimType_Softmax), in_shape[softmax->axis_], in_shape[softmax->axis_],
-                         GetElementNum(self->out_[OUTPUT_INDEX]), self->thread_nr_);
+  self->thread_nr_ = self->UpdateThread(TC_PTYPE(PrimType_Softmax), in_shape[softmax->axis_], in_shape[softmax->axis_],
+                                        GetElementNum(self->out_[OUTPUT_INDEX]), self->thread_nr_);
   return NNACL_OK;
 }
 
@@ -120,7 +119,7 @@ int SoftmaxCompute(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(softmax);
 
   if (softmax->in_plane_size_ == 1) {
-    return self->env_->parallel_launch(self->env_->thread_pool_, SoftmaxLastAxisRun, softmax, self->thread_nr_);
+    return self->env_->ParallelLaunch(self->env_->thread_pool_, SoftmaxLastAxisRun, softmax, self->thread_nr_);
   }
 
   void *input_ptr = self->in_[FIRST_INPUT]->data_;
@@ -147,10 +146,10 @@ KernelBase *CreateSoftmax(OpParameter *param, int data_type) {
 
   softmax->sum_data_ = NULL;
   softmax->data_type_ = data_type;
-  softmax->base_.release_ = SoftmaxRelease;
-  softmax->base_.prepare_ = DefaultPrepare1In1Out;
-  softmax->base_.resize_ = SoftmaxResize;
-  softmax->base_.compute_ = SoftmaxCompute;
+  softmax->base_.Release = SoftmaxRelease;
+  softmax->base_.Prepare = DefaultPrepare1In1Out;
+  softmax->base_.Resize = SoftmaxResize;
+  softmax->base_.Compute = SoftmaxCompute;
   return (KernelBase *)softmax;
 }
 

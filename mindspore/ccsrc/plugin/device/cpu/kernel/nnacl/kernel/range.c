@@ -60,10 +60,10 @@ int RangeCompute(KernelBase *self) {
 KernelBase *CreateRange(OpParameter *param, int data_type) {
   RangeStruct *range = (RangeStruct *)malloc(sizeof(RangeStruct));
   NNACL_CHECK_NULL_RETURN_NULL(range);
-  range->base_.release_ = DefaultRelease;
-  range->base_.prepare_ = DefaultPrepare1In1Out;
-  range->base_.resize_ = DefaultResize;
-  range->base_.compute_ = RangeCompute;
+  range->base_.Release = DefaultRelease;
+  range->base_.Prepare = DefaultPrepare1In1Out;
+  range->base_.Resize = DefaultResize;
+  range->base_.Compute = RangeCompute;
   return (KernelBase *)range;
 }
 

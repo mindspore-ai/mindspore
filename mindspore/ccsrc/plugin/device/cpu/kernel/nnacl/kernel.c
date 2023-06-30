@@ -87,7 +87,8 @@ KernelBase *CreateKernel(OpParameter *param, TensorC **ins, size_t in_size, Tens
     return NULL;
   }
 
-  kernel_base->infershape = NNACLKernelInferShape;
+  kernel_base->InferShape = NNACLKernelInferShape;
+  kernel_base->UpdateThread = DefaultThreadUpdate;
   kernel_base->env_ = env;
   kernel_base->param_ = param;
   kernel_base->thread_nr_ = param->thread_num_;
@@ -96,7 +97,6 @@ KernelBase *CreateKernel(OpParameter *param, TensorC **ins, size_t in_size, Tens
   kernel_base->in_size_ = in_size;
   kernel_base->out_ = outs;
   kernel_base->out_size_ = out_size;
-  kernel_base->update_thread_ = DefaultThreadUpdate;
 
   int ret = NNACLCheckKernelBase(kernel_base);
   if (ret != NNACL_OK) {

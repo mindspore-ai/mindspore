@@ -66,7 +66,8 @@ int PadInitMirrorPadBlock(PadStruct *pad) {
   int region_size = GetStride(pad_region_stride, pad_region, pad_region_size);
 
   /* init mirror block info */
-  pad->mirror_pad_block_ = (MirrorPadBlock *)malloc(remain_size * region_size * sizeof(MirrorPadBlock));
+  int max_block_size = remain_size * region_size * sizeof(MirrorPadBlock);
+  pad->mirror_pad_block_ = (MirrorPadBlock *)pad->base_.env_->Alloc(pad->base_.env_->allocator_, max_block_size);
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(pad->mirror_pad_block_);
 
   // 0: center, 1: left, 2: right
@@ -326,7 +327,7 @@ int PadCompute(KernelBase *self) {
         }
       }
     }
-    ret = self->env_->parallel_launch(self->env_->thread_pool_, PadImpl, self, self->thread_nr_);
+    ret = self->env_->ParallelLaunch(self->env_->thread_pool_, PadImpl, self, self->thread_nr_);
     return ret;
   }
 
@@ -336,9 +337,9 @@ int PadCompute(KernelBase *self) {
     return ret;
   }
 
-  ret = self->env_->parallel_launch(self->env_->thread_pool_, MirrorPadImpl, self, self->thread_nr_);
+  ret = self->env_->ParallelLaunch(self->env_->thread_pool_, MirrorPadImpl, self, self->thread_nr_);
 
-  self->env_->free(self->env_->allocator_, pad->mirror_pad_block_);
+  self->env_->Free(self->env_->allocator_, pad->mirror_pad_block_);
   pad->mirror_pad_block_ = NULL;
   pad->mirror_pad_block_size_ = 0;
   return ret;
@@ -394,10 +395,10 @@ KernelBase *CreatePad(OpParameter *param, int data_type) {
   pad->paddings_size_ = pad_param->padding_length;
   memcpy(pad->paddings_, pad_param->paddings_, MAX_PAD_SIZE * sizeof(int));
 
-  pad->base_.release_ = DefaultRelease;
-  pad->base_.prepare_ = PadPrepare;
-  pad->base_.resize_ = PadResize;
-  pad->base_.compute_ = PadCompute;
+  pad->base_.Release = DefaultRelease;
+  pad->base_.Prepare = PadPrepare;
+  pad->base_.Resize = PadResize;
+  pad->base_.Compute = PadCompute;
   return (KernelBase *)pad;
 }
 

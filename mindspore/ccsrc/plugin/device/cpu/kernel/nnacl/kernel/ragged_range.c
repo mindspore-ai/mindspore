@@ -62,10 +62,10 @@ int RaggedRangeResize(KernelBase *self) {
 KernelBase *CreateRaggedRange(OpParameter *param, int data_type) {
   RaggedRangeStruct *ragged_range = (RaggedRangeStruct *)malloc(sizeof(RaggedRangeStruct));
   NNACL_CHECK_NULL_RETURN_NULL(ragged_range);
-  ragged_range->base_.release_ = DefaultRelease;
-  ragged_range->base_.prepare_ = DefaultPrepare3In2Out;
-  ragged_range->base_.resize_ = RaggedRangeResize;
-  ragged_range->base_.compute_ = RaggedRangeCompute;
+  ragged_range->base_.Release = DefaultRelease;
+  ragged_range->base_.Prepare = DefaultPrepare3In2Out;
+  ragged_range->base_.Resize = RaggedRangeResize;
+  ragged_range->base_.Compute = RaggedRangeCompute;
   return (KernelBase *)ragged_range;
 }
 

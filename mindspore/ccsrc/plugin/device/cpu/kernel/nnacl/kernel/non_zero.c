@@ -34,7 +34,7 @@ int NonZeroCompute(KernelBase *self) {
   int non_zero_nums = output->shape_[Index1];
   int non_zero_count = 0;
 
-  int *coordiate_values = (int *)self->env_->alloc(self->env_->allocator_, input->shape_size_ * sizeof(int));
+  int *coordiate_values = (int *)self->env_->Alloc(self->env_->allocator_, input->shape_size_ * sizeof(int));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(coordiate_values);
 
   for (int i = 0; i < GetElementNum(input); i += 1) {
@@ -59,10 +59,10 @@ int NonZeroCompute(KernelBase *self) {
 KernelBase *CreateNonZero(OpParameter *param, int data_type) {
   NonZeroStruct *non_zero = (NonZeroStruct *)malloc(sizeof(NonZeroStruct));
   NNACL_CHECK_NULL_RETURN_NULL(non_zero);
-  non_zero->base_.release_ = DefaultRelease;
-  non_zero->base_.prepare_ = DefaultPrepare2In1Out;
-  non_zero->base_.resize_ = DefaultResize;
-  non_zero->base_.compute_ = NonZeroCompute;
+  non_zero->base_.Release = DefaultRelease;
+  non_zero->base_.Prepare = DefaultPrepare2In1Out;
+  non_zero->base_.Resize = DefaultResize;
+  non_zero->base_.Compute = NonZeroCompute;
   return (KernelBase *)non_zero;
 }
 
