@@ -65,7 +65,7 @@ class InplaceAssignBuilder : public opt::Pass {
 
  private:
   std::vector<InplaceAssignUserInfo> FindOriginCNodeUsers(
-    const FuncGraphPtr &main_graph, const AnfNodePtr &composite_node,
+    const AnfNodePtr &composite_node,
     const std::vector<std::pair<InplaceAssignerInfo, AnfNodePtr>> &info_and_inplace_assignee_addr,
     const FuncGraphManagerPtr &mng) const;
 };

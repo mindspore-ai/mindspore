@@ -18,7 +18,6 @@
 #define MINDSPORE_CORE_MINDAPI_BASE_FORMAT_H_
 
 #include <cstdint>
-#include <map>
 #include <vector>
 #include <string>
 

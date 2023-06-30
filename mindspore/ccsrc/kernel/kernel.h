@@ -303,7 +303,7 @@ class BACKEND_EXPORT KernelTensor {
     info.format = format;
   }
   void SetMetaType(const TypeId meta_type) { meta_type_ = meta_type; }
-  void SetShapeVector(const ShapeVector &shape);
+  void SetShapeVector(const ShapeVector &shape) const;
 
   // max shape is only used in compute-depended ops
   ShapeVector GetMaxShape() const;
