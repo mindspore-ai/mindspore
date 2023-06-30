@@ -11,6 +11,9 @@ mindspore.ops.MaxPoolWithArgmaxV2
         \text{output}(N_i, C_j, h, w) = \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 times\ w + n)
 
+    .. warning::
+        这是一个实验性API，后续可能修改或删除。
+
     参数：
         - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小。由一个整数或者两个整数组成的tuple，分别表示高和宽。
         - **strides** (Union[int, tuple[int]], 可选) - 池化操作的移动步长。由一个整数或者两个整数组成的tuple，分别表示在高和宽方向上的移动步长。默认值：None。表示取 `kernel_size` 的值。
