@@ -252,14 +252,17 @@ void LoadableDeviceAddress::ReleaseResource() {
     return;
   }
 
-  auto device_context = GetDeviceContext();
-  if (device_context != nullptr) {
+  const bool need_delete_file = !storage_info_.file_name_.empty() && storage_info_.file_name_mutable_;
+  const bool need_free_host = storage_info_.host_ptr_ != nullptr && storage_info_.host_ptr_mutable_;
+  if (need_delete_file || need_free_host) {
+    auto device_context = GetDeviceContext();
+    MS_EXCEPTION_IF_NULL(device_context);
     const auto swap_manager = device_context->device_res_manager_->swap_manager();
     MS_EXCEPTION_IF_NULL(swap_manager);
-    if (!storage_info_.file_name_.empty() && storage_info_.file_name_mutable_) {
+    if (need_delete_file) {
       (void)swap_manager->DeleteFile(storage_info_.file_name_);
     }
-    if (storage_info_.host_ptr_ != nullptr && storage_info_.host_ptr_mutable_) {
+    if (need_free_host) {
       swap_manager->FreeHostMemory(storage_info_.host_ptr_);
     }
   }

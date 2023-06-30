@@ -138,10 +138,8 @@ bool AioPlugin::Init(const AsyncIOConf &conf) {
     return false;
   }
   pending_events_ = new size_t[kMaxPendingAIO];
-  if (memset(pending_events_, 0, kMaxPendingAIO * sizeof(size_t))) {
-    for (size_t i = 0; i < kMaxPendingAIO; ++i) {
-      pending_events_[i] = 0;
-    }
+  for (size_t i = 0; i < kMaxPendingAIO; ++i) {
+    pending_events_[i] = 0;
   }
   inited_ = true;
   return true;

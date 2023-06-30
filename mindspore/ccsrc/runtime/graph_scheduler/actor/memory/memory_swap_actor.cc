@@ -87,8 +87,12 @@ void MemorySwapActor::AllocDeviceContinuousMem(const std::vector<DeviceTensor *>
         device_tensors[i]->GetPtr() != nullptr) {
       const auto original_ptr = device_tensors[i]->GetMutablePtr();
       device_tensors[i]->set_ptr(device_ptrs[i]);
-      device_tensors[i]->SyncDeviceToDevice(device_tensors[i]->host_shape(), device_tensors[i]->GetSize(),
-                                            device_tensors[i]->type_id(), original_ptr, device_tensors[i]->format());
+      if (!device_tensors[i]->SyncDeviceToDevice(device_tensors[i]->host_shape(), device_tensors[i]->GetSize(),
+                                                 device_tensors[i]->type_id(), original_ptr,
+                                                 device_tensors[i]->format())) {
+        MS_LOG(EXCEPTION) << "Copy data for continuous memory failed, src addr: " << original_ptr << ", dst addr: "
+                          << ", size: " << device_tensors[i]->GetSize();
+      }
       device_contexts_[0]->device_res_manager_->FreeMemory(original_ptr);
     } else {
       device_tensors[i]->set_ptr(device_ptrs[i]);
