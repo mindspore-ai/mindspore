@@ -120,7 +120,7 @@ std::map<std::string, std::vector<std::pair<KernelAttr, ElementwiseOpsGpuKernel:
     {"Expm1", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kExpm1), REGISTER_UNARY_COMPLEX_TYPE(ElwiseOpType::kExpm1)}},
     {"Mish", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kMish)}},
     {"Softsign", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kSoftsign)}},
-    {"Trunc", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kTrunc)}},
+    {"Trunc", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kTrunc), REGISTER_UNARY_ALL_INT_TYPE(ElwiseOpType::kTrunc)}},
     {"Floor", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kFloor)}},
     {"Ceil", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kCeil)}},
     {"Round", {REGISTER_UNARY_FLOAT_TYPE(ElwiseOpType::kRound)}},
