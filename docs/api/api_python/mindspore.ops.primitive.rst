@@ -396,7 +396,6 @@ Reduction算子
     mindspore.ops.Ger
     mindspore.ops.MatMul
     mindspore.ops.MatrixInverse
-    mindspore.ops.MatrixPower
     mindspore.ops.Ormqr
     mindspore.ops.Orgqr
     mindspore.ops.Svd
@@ -543,7 +542,6 @@ Array操作
     mindspore.ops.StridedSlice
     mindspore.ops.TensorScatterAdd
     mindspore.ops.TensorScatterDiv
-    mindspore.ops.TensorScatterElements
     mindspore.ops.TensorScatterMax
     mindspore.ops.TensorScatterMin
     mindspore.ops.TensorScatterMul
