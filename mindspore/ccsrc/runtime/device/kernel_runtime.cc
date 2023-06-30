@@ -155,7 +155,8 @@ bool KernelRuntime::NodeOutputDeviceAddressExist(const AnfNodePtr &kernel, size_
     // In subgraph sink mode, if the kernel does not need allocate memory, it cannot be skipped.
     const auto &address = AnfAlgo::GetOutputAddr(kernel, index, IsNeedAllocMem(kernel, index));
     MS_EXCEPTION_IF_NULL(address);
-    return address->GetDeviceType() == GetTargetDeviceType();
+    return address->GetDeviceType() == GetTargetDeviceType() &&
+           address->format() == AnfAlgo::GetOutputFormat(kernel, 0);
   }
   return false;
 }
