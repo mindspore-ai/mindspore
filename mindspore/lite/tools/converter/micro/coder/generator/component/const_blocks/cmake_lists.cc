@@ -96,12 +96,16 @@ set(HEADER_PATH ${PKG_PATH}/runtime)
 
 option(PLATFORM_ARM64 "build android arm64" OFF)
 option(PLATFORM_ARM32 "build android arm32" OFF)
+option(ENABLE_FP16 "enable fp32/fp16 datatype transform for inputs or outputs" OFF)
 
 add_compile_definitions(NOT_USE_STL)
 
 if(PLATFORM_ARM64 OR PLATFORM_ARM32)
   add_compile_definitions(ENABLE_NEON)
   add_compile_definitions(ENABLE_ARM)
+  if(ENABLE_FP16)
+    add_compile_definitions(ENABLE_FP16)
+  endif()
 endif()
 
 if(PLATFORM_ARM64)
