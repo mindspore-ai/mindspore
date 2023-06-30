@@ -180,10 +180,33 @@ REG_BPROP_BUILDER("DynamicBroadcastTo").SetBody([](const BpropIRBuilder *ib) -> 
 });
 
 REG_BPROP_BUILDER("SiLU").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
-  auto out = ib->GetInput(kIndex0);
+  auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Emit("SiLUGrad", {dout, out});
+  auto dx = ib->Emit("SiLUGrad", {dout, x});
   return {dx};
 });
+
+REG_BPROP_BUILDER("SiLUGrad").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  auto grad = ib->GetInput(kIndex0);
+  auto y = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  auto sig = ib->Emit("Sigmoid", {y});
+  auto mul0 = ib->Mul(grad, y);
+  auto sig_grad1 = ib->Emit("SigmoidGrad", {sig, dout});
+  auto mul1 = ib->Mul(grad, sig_grad1);
+  auto mul2 = ib->Mul(mul0, dout);
+  auto mul3 = ib->Mul(ib->Tensor(2, ib->GetDtype(sig)), sig);
+  auto sub1 = ib->Sub(ib->Tensor(1, ib->GetDtype(mul3)), mul3);
+  auto mul4 = ib->Mul(mul2, sub1);
+  auto mul5 = ib->Mul(grad, dout);
+  auto add1 = ib->Add(mul4, mul5);
+  auto sig_grad2 = ib->Emit("SigmoidGrad", {sig, add1});
+  auto add2 = ib->Add(mul1, sig_grad2);
+  auto mul6 = ib->Mul(sig, dout);
+  auto mul7 = ib->Mul(y, sig_grad1);
+  auto add3 = ib->Add(mul6, mul7);
+  return {add3, add2};
+});
+
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop
