@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_UNSORTED_SEGMENT_SUM_BASE_H_
-#define MINDSPORE_NNACL_UNSORTED_SEGMENT_SUM_BASE_H_
+#ifndef NNACL_BASE_UNSORTED_SEGMENT_SUM_BASE_H_
+#define NNACL_BASE_UNSORTED_SEGMENT_SUM_BASE_H_
 
 #include "nnacl/op_base.h"
 
@@ -35,4 +35,4 @@ int UnsortedSegmentSum_float_int64_t(const float *input, int unit_num, int input
 #ifdef __cplusplus
 }
 #endif
-#endif  //  MINDSPORE_NNACL_UNSORTED_SEGMENT_SUM_BASE_H_
+#endif  //  NNACL_BASE_UNSORTED_SEGMENT_SUM_BASE_H_

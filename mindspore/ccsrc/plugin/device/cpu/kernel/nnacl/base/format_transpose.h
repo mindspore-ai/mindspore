@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_FORMAT_TRANSPOSE_H_
-#define MINDSPORE_NNACL_FORMAT_TRANSPOSE_H_
+#ifndef NNACL_FORMAT_TRANSPOSE_H_
+#define NNACL_FORMAT_TRANSPOSE_H_
 
 #include "nnacl/op_base.h"
 
@@ -27,4 +27,4 @@ int TransData(void *src_data, void *dst_data, const FormatC src_format, const Fo
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FILL_BASE_H_
+#endif  // NNACL_FILL_BASE_H_

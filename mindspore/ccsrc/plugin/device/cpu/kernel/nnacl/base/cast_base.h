@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_BASE_CAST_BASE_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_BASE_CAST_BASE_H_
+#ifndef NNACL_BASE_CAST_BASE_H_
+#define NNACL_BASE_CAST_BASE_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/nnacl_common.h"
@@ -141,4 +141,4 @@ inline void Float32ToUint8(const float *input, uint8_t *output, int number) {
 }
 #endif
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_BASE_CAST_BASE_H_
+#endif  // NNACL_BASE_CAST_BASE_H_

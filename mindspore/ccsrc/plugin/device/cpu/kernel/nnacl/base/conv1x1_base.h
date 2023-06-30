@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_BASE_CONV1X1_BASE_H_
-#define MINDSPORE_NNACL_BASE_CONV1X1_BASE_H_
+#ifndef NNACL_BASE_CONV1X1_BASE_H_
+#define NNACL_BASE_CONV1X1_BASE_H_
 
 #include "nnacl/conv_parameter.h"
 
@@ -29,4 +29,4 @@ void Conv1x1InputPack(const void *src_ptr, void *dst_ptr, ConvParameter *conv_pa
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_BASE_CONV1X1_BASE_H_
+#endif  // NNACL_BASE_CONV1X1_BASE_H_

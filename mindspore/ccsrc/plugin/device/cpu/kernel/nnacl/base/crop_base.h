@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_BASE_CROP_BASE_H_
-#define MINDSPORE_NNACL_BASE_CROP_BASE_H_
+#ifndef NNACL_BASE_CROP_BASE_H_
+#define NNACL_BASE_CROP_BASE_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/crop_parameter.h"
@@ -32,4 +32,4 @@ int CropPadOffset(int input_dim, CropParameter *crop_para, int64_t *in_offset);
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_BASE_CROP_BASE_H_
+#endif  // NNACL_BASE_CROP_BASE_H_
