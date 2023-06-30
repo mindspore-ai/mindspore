@@ -1139,7 +1139,7 @@ def set_context(**kwargs):
                 ParallelFusion and so on. Optimizations of this level are radical and unstable in some scenarios.
                 Be caution when using this level.
 
-            - dump_as_text: dumps detail info as text files. Default: ``false`` .
+            - dump_as_text: dumps detail info as text files. Default: ``False`` .
 
             More options can refer to the implementation code.
         enable_reduce_precision (bool): Whether to enable precision reduction.

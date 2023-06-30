@@ -128,7 +128,7 @@ void LogMatrixDeterminantCpuKernelMod::LaunchLogMatrixDeterminant(const std::vec
       input_num *= shape_x_[i];
     }
     int64_t matrix_num = input_num / size_mm;
-    int64_t data_size = input_num * sizeof(T);
+    int64_t data_size = input_num * static_cast<int64_t>(sizeof(T));
 
     if (data_size <= kParallelDataNums) {
       for (int64_t i = 0; i < matrix_num; i++) {
