@@ -55,10 +55,10 @@ KernelBase *CreateOnesLike(OpParameter *param, int data_type) {
   OnesLikeStruct *ones_like = (OnesLikeStruct *)malloc(sizeof(OnesLikeStruct));
   NNACL_CHECK_NULL_RETURN_NULL(ones_like);
   ones_like->data_type_ = data_type;
-  ones_like->base_.release_ = DefaultRelease;
-  ones_like->base_.prepare_ = DefaultPrepare1In1Out;
-  ones_like->base_.resize_ = DefaultResize;
-  ones_like->base_.compute_ = OnesLikeCompute;
+  ones_like->base_.Release = DefaultRelease;
+  ones_like->base_.Prepare = DefaultPrepare1In1Out;
+  ones_like->base_.Resize = DefaultResize;
+  ones_like->base_.Compute = OnesLikeCompute;
   return (KernelBase *)ones_like;
 }
 

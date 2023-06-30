@@ -24,7 +24,7 @@ void *StackF16InitBuffer(KernelBase *base, TensorC *t, bool init) {
   }
 
   int ele_num = GetElementNum(t);
-  void *f16_buffer = base->env_->alloc(base->env_->allocator_, ele_num * sizeof(float16_t));
+  void *f16_buffer = base->env_->Alloc(base->env_->allocator_, ele_num * sizeof(float16_t));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(f16_buffer);
   Float32ToFloat16(t->data_, f16_buffer, ele_num);
   return f16_buffer;
@@ -32,7 +32,7 @@ void *StackF16InitBuffer(KernelBase *base, TensorC *t, bool init) {
 
 int StackF16InitMallocFlags(StackF16Struct *stack_f16) {
   KernelBase *base = (KernelBase *)stack_f16;
-  stack_f16->init_ = base->env_->alloc(base->env_->allocator_, (base->in_size_ + base->out_size_) * sizeof(bool));
+  stack_f16->init_ = base->env_->Alloc(base->env_->allocator_, (base->in_size_ + base->out_size_) * sizeof(bool));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(stack_f16->init_);
 
   for (size_t i = 0; i < base->in_size_; ++i) {
@@ -57,12 +57,12 @@ void StackF16FreeBuffer(StackF16Struct *stack_f16) {
 
   for (size_t i = 0; i < (stack_f16->stack_.base_.in_size_ + stack_f16->stack_.base_.out_size_); ++i) {
     if (stack_f16->init_[i]) {
-      stack_f16->stack_.base_.env_->free(stack_f16->stack_.base_.env_->allocator_, stack_f16->stack_.buffers_[i]);
+      stack_f16->stack_.base_.env_->Free(stack_f16->stack_.base_.env_->allocator_, stack_f16->stack_.buffers_[i]);
     }
     stack_f16->stack_.buffers_[i] = NULL;
   }
 
-  stack_f16->stack_.base_.env_->free(stack_f16->stack_.base_.env_->allocator_, stack_f16->init_);
+  stack_f16->stack_.base_.env_->Free(stack_f16->stack_.base_.env_->allocator_, stack_f16->init_);
   stack_f16->init_ = NULL;
 }
 
@@ -75,7 +75,7 @@ int StackF16Compute(KernelBase *self) {
     return ret;
   }
 
-  ret = self->env_->parallel_launch(self->env_->thread_pool_, StackRun, self, self->thread_nr_);
+  ret = self->env_->ParallelLaunch(self->env_->thread_pool_, StackRun, self, self->thread_nr_);
   StackF16FreeBuffer(stack_f16);
   return ret;
 }
@@ -86,10 +86,10 @@ KernelBase *CreateStackF16(OpParameter *param, int data_type) {
   StackStruct *stack = &stack_f16->stack_;
   stack->buffers_ = NULL;
   stack->data_type_ = data_type;
-  stack->base_.release_ = StackRelease;
-  stack->base_.prepare_ = StackPrepare;
-  stack->base_.resize_ = StackResize;
-  stack->base_.compute_ = StackF16Compute;
+  stack->base_.Release = StackRelease;
+  stack->base_.Prepare = StackPrepare;
+  stack->base_.Resize = StackResize;
+  stack->base_.Compute = StackF16Compute;
   return (KernelBase *)stack;
 }
 

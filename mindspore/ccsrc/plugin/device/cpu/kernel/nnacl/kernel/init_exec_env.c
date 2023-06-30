@@ -38,9 +38,9 @@ int NNACLDefaultParallelLunch(void *threadPool, void *task, void *param, int tas
 }
 
 void InitDefaultExecEnv(void) {
-  nnacl_default_env.free = NNACLDefaultFree;
-  nnacl_default_env.alloc = NNACLDefaultAlloc;
-  nnacl_default_env.parallel_launch = NNACLDefaultParallelLunch;
+  nnacl_default_env.Free = NNACLDefaultFree;
+  nnacl_default_env.Alloc = NNACLDefaultAlloc;
+  nnacl_default_env.ParallelLaunch = NNACLDefaultParallelLunch;
 }
 
 void CheckExecEnv(KernelBase *base) {

@@ -36,8 +36,8 @@ typedef struct ConvolutionBaseStruct {
 
   void *packed_weight_;
   void *bias_data_;
-  void *origin_weight_;  // do not free
-  void *origin_bias_;    // do not free
+  void *origin_weight_;  // do not Free
+  void *origin_bias_;    // do not Free
 
   void (*init_global_variable_)(struct ConvolutionBaseStruct *conv_im2col);
   int (*malloc_weight_bias_)(struct ConvolutionBaseStruct *conv_base);

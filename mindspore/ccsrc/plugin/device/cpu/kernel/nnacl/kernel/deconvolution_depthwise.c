@@ -31,7 +31,7 @@ int DeConvDwInitPackedInputOutput(DeConvDwStruct *deconv_dw) {
   int input_bhw = compute->in_n_ * compute->in_hw_;
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(input_bhw, ic4, NNACL_ERR);
   int pack_input_size = input_bhw * ic4;
-  deconv_dw->packed_input_ = (float *)env->alloc(env->allocator_, pack_input_size * sizeof(float));
+  deconv_dw->packed_input_ = (float *)env->Alloc(env->allocator_, pack_input_size * sizeof(float));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(deconv_dw->packed_input_);
 
   int oc4 = UP_ROUND(compute->out_c_, compute->tile_num_);
@@ -39,7 +39,7 @@ int DeConvDwInitPackedInputOutput(DeConvDwStruct *deconv_dw) {
   int output_bhw = compute->out_n_ * compute->out_hw_;
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(output_bhw, oc4, NNACL_ERR);
   int pack_output_size = output_bhw * oc4;
-  deconv_dw->packed_output_ = (float *)env->alloc(env->allocator_, pack_output_size * sizeof(float));
+  deconv_dw->packed_output_ = (float *)env->Alloc(env->allocator_, pack_output_size * sizeof(float));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(deconv_dw->packed_output_);
   memset(deconv_dw->packed_output_, 0, pack_output_size * sizeof(float));
 
@@ -69,7 +69,7 @@ int DeConvDwMallocWeightBiasData(ConvolutionBaseStruct *conv) {
 
   if (deconv_dw->conv_.bias_data_ == NULL) {
     NNACL_CHECK_MALLOC_SIZE(oc4 * sizeof(float));
-    deconv_dw->conv_.bias_data_ = conv->base_.env_->alloc(conv->base_.env_->allocator_, oc4 * sizeof(float));
+    deconv_dw->conv_.bias_data_ = conv->base_.env_->Alloc(conv->base_.env_->allocator_, oc4 * sizeof(float));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(deconv_dw->conv_.bias_data_);
   }
   memset(deconv_dw->conv_.bias_data_, 0, oc4 * sizeof(float));
@@ -86,9 +86,9 @@ void DeConvDwFreePackedInputOutput(DeConvDwStruct *deconv_dw) {
   if (deconv_dw->need_align_) {
     ExecEnv *env = deconv_dw->conv_.base_.env_;
 
-    env->free(env->allocator_, deconv_dw->packed_input_);
+    env->Free(env->allocator_, deconv_dw->packed_input_);
     deconv_dw->packed_input_ = NULL;
-    env->free(env->allocator_, deconv_dw->packed_output_);
+    env->Free(env->allocator_, deconv_dw->packed_output_);
     deconv_dw->packed_output_ = NULL;
   }
 }
@@ -181,7 +181,7 @@ int deconv_dw_compute(KernelBase *self) {
     memset(deconv_dw->packed_output_, 0, GetSize(out_tensor));
   }
 
-  ret = self->env_->parallel_launch(self->env_->thread_pool_, DeconvDwRun, self, self->thread_nr_);
+  ret = self->env_->ParallelLaunch(self->env_->thread_pool_, DeconvDwRun, self, self->thread_nr_);
 
   if (deconv_dw->need_align_) {
     PackNHWCXToNHWCFp32(deconv_dw->packed_output_, out_data, compute->out_n_, compute->out_hw_, compute->out_c_,
@@ -198,9 +198,9 @@ ConvolutionBaseStruct *CreateDeConvDw(ConvParameter *param) {
 
   deconv_dw->conv_.pack_weight_ = DeConvDwPackWeight;
   deconv_dw->conv_.malloc_weight_bias_ = DeConvDwMallocWeightBiasData;
-  deconv_dw->conv_.base_.prepare_ = deconv_dw_prepare;
-  deconv_dw->conv_.base_.resize_ = deconv_dw_resize;
-  deconv_dw->conv_.base_.release_ = DefaultRelease;
-  deconv_dw->conv_.base_.compute_ = deconv_dw_compute;
+  deconv_dw->conv_.base_.Prepare = deconv_dw_prepare;
+  deconv_dw->conv_.base_.Resize = deconv_dw_resize;
+  deconv_dw->conv_.base_.Release = DefaultRelease;
+  deconv_dw->conv_.base_.Compute = deconv_dw_compute;
   return &deconv_dw->conv_;
 }

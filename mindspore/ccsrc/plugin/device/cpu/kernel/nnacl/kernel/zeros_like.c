@@ -31,10 +31,10 @@ int ZerosLikeCompute(KernelBase *self) {
 KernelBase *CreateZerosLike(OpParameter *param, int data_type) {
   ZerosLikeStruct *zeros_like = (ZerosLikeStruct *)malloc(sizeof(ZerosLikeStruct));
   NNACL_CHECK_NULL_RETURN_NULL(zeros_like);
-  zeros_like->base_.release_ = DefaultRelease;
-  zeros_like->base_.prepare_ = DefaultPrepare1In1Out;
-  zeros_like->base_.resize_ = DefaultResize;
-  zeros_like->base_.compute_ = ZerosLikeCompute;
+  zeros_like->base_.Release = DefaultRelease;
+  zeros_like->base_.Prepare = DefaultPrepare1In1Out;
+  zeros_like->base_.Resize = DefaultResize;
+  zeros_like->base_.Compute = ZerosLikeCompute;
   return (KernelBase *)zeros_like;
 }
 

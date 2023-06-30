@@ -57,7 +57,7 @@ int ConvDwIndirectMallocPackedInput(ConvolutionDepthwiseIndirectStruct *conv_dw)
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_input_bhw, conv_dw->div_flag_ * IC_DIV, NNACL_ERR);
   int pack_input_size = conv_input_bhw * conv_dw->div_flag_ * IC_DIV;
   conv_dw->packed_input_ =
-    conv_dw->conv_.base_.env_->alloc(conv_dw->conv_.base_.env_->allocator_, pack_input_size * sizeof(float));
+    conv_dw->conv_.base_.env_->Alloc(conv_dw->conv_.base_.env_->allocator_, pack_input_size * sizeof(float));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_dw->packed_input_);
   return NNACL_OK;
 }
@@ -143,10 +143,10 @@ int ConvolutionDepthwiseIndirectCompute(KernelBase *self) {
   ConvDwInitIndirection(conv_dw->indirect_buffer_, conv_dw->packed_input_, conv_dw->zero_ptr_, conv_param,
                         conv_dw->step_h_, conv_dw->step_w_);
 
-  ret = self->env_->parallel_launch(self->env_->thread_pool_, ConvDwIndirectRun, self, self->thread_nr_);
+  ret = self->env_->ParallelLaunch(self->env_->thread_pool_, ConvDwIndirectRun, self, self->thread_nr_);
 
   if (conv_dw->conv_.compute_.in_c_ % conv_dw->div_flag_ != 0) {
-    self->env_->free(self->env_->allocator_, conv_dw->packed_input_);
+    self->env_->Free(self->env_->allocator_, conv_dw->packed_input_);
   }
   return ret;
 }
@@ -220,10 +220,10 @@ KernelBase *CreateConvDwIndirect(ConvParameter *conv_param) {
   conv_dw->conv_.pack_weight_ = ConvDwIndirectPackWeight;
   conv_dw->conv_.malloc_weight_bias_ = ConvDwIndirectMallocWeightBiasData;
 
-  conv_dw->conv_.base_.compute_ = ConvolutionDepthwiseIndirectCompute;
-  conv_dw->conv_.base_.resize_ = ConvolutionDepthwiseIndirectResize;
-  conv_dw->conv_.base_.prepare_ = ConvolutionDepthwiseIndirectPrepare;
-  conv_dw->conv_.base_.release_ = ConvolutionDepthwiseIndirectRelease;
+  conv_dw->conv_.base_.Compute = ConvolutionDepthwiseIndirectCompute;
+  conv_dw->conv_.base_.Resize = ConvolutionDepthwiseIndirectResize;
+  conv_dw->conv_.base_.Prepare = ConvolutionDepthwiseIndirectPrepare;
+  conv_dw->conv_.base_.Release = ConvolutionDepthwiseIndirectRelease;
 
   return (KernelBase *)conv_dw;
 }

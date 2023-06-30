@@ -166,9 +166,9 @@ KernelBase *CreateMatmul(OpParameter *param, int data_type) {
   if (data_type == kNumberTypeFloat32) {
     kernel = CreateMatmulKernel();
     NNACL_MALLOC_CHECK_NULL_RETURN_NULL(kernel);
-    kernel->prepare_ = MatmulPrepare;
-    kernel->resize_ = MatmulResize;
-    kernel->release_ = MatmulRelease;
+    kernel->Prepare = MatmulPrepare;
+    kernel->Resize = MatmulResize;
+    kernel->Release = MatmulRelease;
   }
   return kernel;
 }

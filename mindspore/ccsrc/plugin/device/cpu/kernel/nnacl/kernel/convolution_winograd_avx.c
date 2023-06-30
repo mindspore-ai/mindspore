@@ -34,10 +34,10 @@ ConvolutionWinogradBaseStruct *CreateConvWinogradAVX(ConvParameter *conv_param) 
   winograd->config_input_output_ = ConvWinoBaseConfigInputOutput;
   winograd->conv_.init_global_variable_ = ConvWinoAVXInitGlobalVariable;
 
-  winograd->conv_.base_.prepare_ = ConvolutionWinogradBasePrepare;
-  winograd->conv_.base_.resize_ = ConvolutionWinogradBaseResize;
-  winograd->conv_.base_.release_ = ConvolutionWinogradBaseRelease;
-  winograd->conv_.base_.compute_ = ConvolutionWinogradBaseCompute;
+  winograd->conv_.base_.Prepare = ConvolutionWinogradBasePrepare;
+  winograd->conv_.base_.Resize = ConvolutionWinogradBaseResize;
+  winograd->conv_.base_.Release = ConvolutionWinogradBaseRelease;
+  winograd->conv_.base_.Compute = ConvolutionWinogradBaseCompute;
   return winograd;
 }
 #endif

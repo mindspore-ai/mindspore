@@ -134,7 +134,7 @@ int TileResize(struct KernelBase *self) {
 
   if (tile->one_dim_tile_) {
     self->thread_nr_ =
-      self->update_thread_(TC_TYPE(PrimType_TileFusion, 0), 0, 0, tile->fast_outer_size_, self->thread_nr_);
+      self->UpdateThread(TC_TYPE(PrimType_TileFusion, 0), 0, 0, tile->fast_outer_size_, self->thread_nr_);
   }
   return NNACL_OK;
 }
@@ -157,7 +157,7 @@ int TileCompute(struct KernelBase *self) {
   NNACL_CHECK_TRUE_RET(tile->data_size_ > 0, NNACL_UNSUPPORTED_DATA_TYPE);
 
   if (tile->one_dim_tile_) {
-    return self->env_->parallel_launch(self->env_->thread_pool_, SimpleTile, self, self->thread_nr_);
+    return self->env_->ParallelLaunch(self->env_->thread_pool_, SimpleTile, self, self->thread_nr_);
   }
 
   Tile(tile->input_addr_, tile->output_addr_, tile);
@@ -168,10 +168,10 @@ KernelBase *CreateTile(OpParameter *param, int data_type) {
   TileStruct *tile = (TileStruct *)malloc(sizeof(TileStruct));
   NNACL_CHECK_NULL_RETURN_NULL(tile);
   tile->resize_done_ = false;
-  tile->base_.release_ = DefaultRelease;
-  tile->base_.prepare_ = DefaultPrepare1In1Out;
-  tile->base_.resize_ = TileResize;
-  tile->base_.compute_ = TileCompute;
+  tile->base_.Release = DefaultRelease;
+  tile->base_.Prepare = DefaultPrepare1In1Out;
+  tile->base_.Resize = TileResize;
+  tile->base_.Compute = TileCompute;
   return (KernelBase *)tile;
 }
 

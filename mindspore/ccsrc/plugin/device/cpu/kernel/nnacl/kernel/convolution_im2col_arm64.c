@@ -62,10 +62,10 @@ ConvolutionBaseStruct *CreateConvIm2ColARM64(ConvParameter *conv_param) {
   conv_im2col->conv_.run_impl_ = ConvIm2ColARM64RunImpl;
   conv_im2col->conv_.pack_weight_ = ConvIm2ColBasePackWeight;
 
-  conv_im2col->conv_.base_.compute_ = ConvolutionIm2colBaseCompute;
-  conv_im2col->conv_.base_.prepare_ = ConvolutionIm2colBasePrepare;
-  conv_im2col->conv_.base_.resize_ = ConvolutionIm2colBaseResize;
-  conv_im2col->conv_.base_.release_ = ConvolutionIm2colBaseRelease;
+  conv_im2col->conv_.base_.Compute = ConvolutionIm2colBaseCompute;
+  conv_im2col->conv_.base_.Prepare = ConvolutionIm2colBasePrepare;
+  conv_im2col->conv_.base_.Resize = ConvolutionIm2colBaseResize;
+  conv_im2col->conv_.base_.Release = ConvolutionIm2colBaseRelease;
 
   return (ConvolutionBaseStruct *)conv_im2col;
 }

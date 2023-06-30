@@ -77,10 +77,10 @@ int TriuCompute(KernelBase *self) {
 KernelBase *CreateTriu(OpParameter *param, int data_type) {
   TriuStruct *triu = (TriuStruct *)malloc(sizeof(TriuStruct));
   NNACL_CHECK_NULL_RETURN_NULL(triu);
-  triu->base_.release_ = DefaultRelease;
-  triu->base_.prepare_ = DefaultPrepare1In1Out;
-  triu->base_.resize_ = DefaultResize;
-  triu->base_.compute_ = TriuCompute;
+  triu->base_.Release = DefaultRelease;
+  triu->base_.Prepare = DefaultPrepare1In1Out;
+  triu->base_.Resize = DefaultResize;
+  triu->base_.Compute = TriuCompute;
   return (KernelBase *)triu;
 }
 

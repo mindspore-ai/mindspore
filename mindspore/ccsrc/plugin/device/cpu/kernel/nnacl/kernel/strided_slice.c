@@ -81,8 +81,8 @@ int StridedSliceFastRun(StridedSliceStruct *strided_slice) {
 
   NNACL_CHECK_NULL_RETURN_ERR(strided_slice->base_.in_[FIRST_INPUT]->data_);
   NNACL_CHECK_NULL_RETURN_ERR(strided_slice->base_.in_[OUTPUT_INDEX]->data_);
-  return strided_slice->base_.env_->parallel_launch(strided_slice->base_.env_->thread_pool_, StridedSliceFaseRun,
-                                                    strided_slice, strided_slice->base_.thread_nr_);
+  return strided_slice->base_.env_->ParallelLaunch(strided_slice->base_.env_->thread_pool_, StridedSliceFaseRun,
+                                                   strided_slice, strided_slice->base_.thread_nr_);
 }
 
 bool StridedSliceMatchInOutShapeEqualPattern(StridedSliceStruct *strided_slice) {
@@ -149,8 +149,8 @@ int StridedSliceSoftCopyInputToOutput(StridedSliceStruct *strided_slice) {
     reshape.block_size_ = block_size;
     reshape.total_size_ = total_size;
     reshape.base_.thread_nr_ = strided_slice->base_.thread_nr_;
-    return strided_slice->base_.env_->parallel_launch(strided_slice->base_.env_->thread_pool_, ParallelReshape,
-                                                      &reshape, strided_slice->base_.thread_nr_);
+    return strided_slice->base_.env_->ParallelLaunch(strided_slice->base_.env_->thread_pool_, ParallelReshape, &reshape,
+                                                     strided_slice->base_.thread_nr_);
   }
   return NNACL_OK;
 }
@@ -207,7 +207,7 @@ void StridedSliceInitFastRunParam(StridedSliceStruct *strided_slice) {
     strided_slice->parallel_on_outer_ = true;
   }
 
-  strided_slice->base_.thread_nr_ = strided_slice->base_.update_thread_(
+  strided_slice->base_.thread_nr_ = strided_slice->base_.UpdateThread(
     TC_TYPE(PrimType_StridedSlice, strided_slice->parallel_on_outer_), 1, 1,
     GetElementNum(strided_slice->base_.out_[OUTPUT_INDEX]), strided_slice->base_.thread_nr_);
 
@@ -263,10 +263,10 @@ KernelBase *CreateStridedSlice(OpParameter *param, int data_type) {
   StridedSliceStruct *strided_slice = (StridedSliceStruct *)malloc(sizeof(StridedSliceStruct));
   NNACL_CHECK_NULL_RETURN_NULL(strided_slice);
   strided_slice->data_type_ = data_type;
-  strided_slice->base_.release_ = DefaultRelease;
-  strided_slice->base_.prepare_ = DefaultPrepare1In1Out;
-  strided_slice->base_.resize_ = StridedSliceResize;
-  strided_slice->base_.compute_ = StridedSliceCompute;
+  strided_slice->base_.Release = DefaultRelease;
+  strided_slice->base_.Prepare = DefaultPrepare1In1Out;
+  strided_slice->base_.Resize = StridedSliceResize;
+  strided_slice->base_.Compute = StridedSliceCompute;
   return (KernelBase *)strided_slice;
 }
 

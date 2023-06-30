@@ -28,8 +28,8 @@
 int FillResize(struct KernelBase *self) {
   FillStruct *fill = (FillStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(fill);
-  fill->base_.thread_nr_ = fill->base_.update_thread_(TC_PTYPE(PrimType_Fill), 0, 1,
-                                                      GetSize(fill->base_.out_[OUTPUT_INDEX]), fill->base_.thread_nr_);
+  fill->base_.thread_nr_ = fill->base_.UpdateThread(TC_PTYPE(PrimType_Fill), 0, 1,
+                                                    GetSize(fill->base_.out_[OUTPUT_INDEX]), fill->base_.thread_nr_);
 
   NNACL_CHECK_NULL_RETURN_ERR(fill->base_.out_[OUTPUT_INDEX]);
   fill->data_size_ = (int)GetElementNum(fill->base_.out_[OUTPUT_INDEX]);
@@ -78,16 +78,16 @@ int FillCompute(struct KernelBase *self) {
   fill->out_ptr_ = (void *)fill->base_.out_[OUTPUT_INDEX]->data_;
   NNACL_CHECK_NULL_RETURN_ERR(fill->out_ptr_);
 
-  return self->env_->parallel_launch(self->env_->thread_pool_, fill_do_compute, fill, fill->base_.thread_nr_);
+  return self->env_->ParallelLaunch(self->env_->thread_pool_, fill_do_compute, fill, fill->base_.thread_nr_);
 }
 
 KernelBase *CreateFill(OpParameter *param, int data_type) {
   FillStruct *fill = (FillStruct *)malloc(sizeof(FillStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(fill);
-  fill->base_.prepare_ = DefaultPrepare2In1Out;
-  fill->base_.resize_ = FillResize;
-  fill->base_.release_ = DefaultRelease;
-  fill->base_.compute_ = FillCompute;
+  fill->base_.Prepare = DefaultPrepare2In1Out;
+  fill->base_.Resize = FillResize;
+  fill->base_.Release = DefaultRelease;
+  fill->base_.Compute = FillCompute;
   return (KernelBase *)fill;
 }
 

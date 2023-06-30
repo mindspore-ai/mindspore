@@ -55,16 +55,16 @@ int reshape_resize(struct KernelBase *self) {
 }
 
 int reshape_compute(struct KernelBase *self) {
-  return self->env_->parallel_launch(self->env_->thread_pool_, ParallelReshape, self, self->thread_nr_);
+  return self->env_->ParallelLaunch(self->env_->thread_pool_, ParallelReshape, self, self->thread_nr_);
 }
 
 KernelBase *CreateReshape(OpParameter *param, int data_type) {
   ReshapeStruct *reshape = (ReshapeStruct *)malloc(sizeof(ReshapeStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(reshape);
-  reshape->base_.release_ = DefaultRelease;
-  reshape->base_.prepare_ = DefaultPrepare1In1Out;
-  reshape->base_.resize_ = reshape_resize;
-  reshape->base_.compute_ = reshape_compute;
+  reshape->base_.Release = DefaultRelease;
+  reshape->base_.Prepare = DefaultPrepare1In1Out;
+  reshape->base_.Resize = reshape_resize;
+  reshape->base_.Compute = reshape_compute;
   return (KernelBase *)reshape;
 }
 

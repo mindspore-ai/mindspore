@@ -68,7 +68,7 @@ int LogSoftmaxResize(struct KernelBase *self) {
     SoftmaxStruct *softmax = &log_softmax->softmax_;
 
     int sum_data_size = softmax->in_plane_size_ * softmax->out_plane_size_ * in->shape_[softmax->axis_];
-    softmax->sum_data_ = self->env_->alloc(self->env_->allocator_, sum_data_size * DataTypeCSize(softmax->data_type_));
+    softmax->sum_data_ = self->env_->Alloc(self->env_->allocator_, sum_data_size * DataTypeCSize(softmax->data_type_));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(softmax->sum_data_);
   }
   return NNACL_OK;
@@ -79,7 +79,7 @@ int LogSoftmaxCompute(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(log_softmax);
 
   if (log_softmax->softmax_.in_plane_size_ == 1) {
-    return self->env_->parallel_launch(self->env_->thread_pool_, LogSoftmaxLastAxisRun, self, self->thread_nr_);
+    return self->env_->ParallelLaunch(self->env_->thread_pool_, LogSoftmaxLastAxisRun, self, self->thread_nr_);
   }
 
   TensorC *in = self->in_[FIRST_INPUT];
@@ -109,10 +109,10 @@ KernelBase *CreateLogSoftmax(OpParameter *param, int data_type) {
 
   log_softmax->softmax_.sum_data_ = NULL;
   log_softmax->softmax_.data_type_ = data_type;
-  log_softmax->softmax_.base_.prepare_ = DefaultPrepare1In1Out;
-  log_softmax->softmax_.base_.release_ = SoftmaxRelease;
-  log_softmax->softmax_.base_.resize_ = LogSoftmaxResize;
-  log_softmax->softmax_.base_.compute_ = LogSoftmaxCompute;
+  log_softmax->softmax_.base_.Prepare = DefaultPrepare1In1Out;
+  log_softmax->softmax_.base_.Release = SoftmaxRelease;
+  log_softmax->softmax_.base_.Resize = LogSoftmaxResize;
+  log_softmax->softmax_.base_.Compute = LogSoftmaxCompute;
   return (KernelBase *)log_softmax;
 }
 

@@ -71,7 +71,7 @@ int ConvDwMallocWeightBiasData(ConvolutionBaseStruct *conv) {
 
   NNACL_CHECK_MALLOC_SIZE(conv->compute_.out_c_ * sizeof(float));
   if (conv->bias_data_ == NULL) {
-    conv->bias_data_ = conv->base_.env_->alloc(conv->base_.env_->allocator_, conv->compute_.out_c_ * sizeof(float));
+    conv->bias_data_ = conv->base_.env_->Alloc(conv->base_.env_->allocator_, conv->compute_.out_c_ * sizeof(float));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv->bias_data_);
   }
   memset(conv->bias_data_, 0, conv->compute_.out_c_ * sizeof(float));
@@ -86,13 +86,13 @@ int ConvDwInitConvDwCalcInfo(ConvolutionDepthwiseStruct *conv_dw) {
 
   (void)ConvolutionDepthwiseRelease((KernelBase *)conv_dw);
 
-  conv_dw->dw_param_.num_pixels_ = env->alloc(env->allocator_, compute->kernel_w_ * sizeof(int));
+  conv_dw->dw_param_.num_pixels_ = env->Alloc(env->allocator_, compute->kernel_w_ * sizeof(int));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_dw->dw_param_.num_pixels_);
 
-  conv_dw->dw_param_.out_w_start_ = env->alloc(env->allocator_, compute->kernel_w_ * sizeof(int));
+  conv_dw->dw_param_.out_w_start_ = env->Alloc(env->allocator_, compute->kernel_w_ * sizeof(int));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_dw->dw_param_.out_w_start_);
 
-  conv_dw->dw_param_.out_w_end_ = env->alloc(env->allocator_, compute->kernel_w_ * sizeof(int));
+  conv_dw->dw_param_.out_w_end_ = env->Alloc(env->allocator_, compute->kernel_w_ * sizeof(int));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_dw->dw_param_.out_w_end_);
 
   int *num_pixels = (int *)(conv_dw->dw_param_.num_pixels_);
@@ -163,7 +163,7 @@ int ConvolutionDepthwiseCompute(KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(conv_dw->dw_param_.out_w_start_);
   NNACL_CHECK_NULL_RETURN_ERR(conv_dw->dw_param_.out_w_end_);
 
-  return self->env_->parallel_launch(self->env_->thread_pool_, ConvDwRun, self, self->thread_nr_);
+  return self->env_->ParallelLaunch(self->env_->thread_pool_, ConvDwRun, self, self->thread_nr_);
 }
 
 int ConvolutionDepthwiseResize(KernelBase *self) {
@@ -190,15 +190,15 @@ int ConvolutionDepthwiseRelease(KernelBase *self) {
   ConvolutionDepthwiseStruct *conv_dw = (ConvolutionDepthwiseStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(conv_dw);
   if (conv_dw->dw_param_.num_pixels_ != NULL) {
-    self->env_->free(self->env_->allocator_, conv_dw->dw_param_.num_pixels_);
+    self->env_->Free(self->env_->allocator_, conv_dw->dw_param_.num_pixels_);
     conv_dw->dw_param_.num_pixels_ = NULL;
   }
   if (conv_dw->dw_param_.out_w_start_ != NULL) {
-    self->env_->free(self->env_->allocator_, conv_dw->dw_param_.out_w_start_);
+    self->env_->Free(self->env_->allocator_, conv_dw->dw_param_.out_w_start_);
     conv_dw->dw_param_.out_w_start_ = NULL;
   }
   if (conv_dw->dw_param_.out_w_end_ != NULL) {
-    self->env_->free(self->env_->allocator_, conv_dw->dw_param_.out_w_end_);
+    self->env_->Free(self->env_->allocator_, conv_dw->dw_param_.out_w_end_);
     conv_dw->dw_param_.out_w_end_ = NULL;
   }
 
@@ -213,9 +213,9 @@ KernelBase *CreateConvDw(ConvParameter *conv) {
 
   conv_dw->conv_.pack_weight_ = ConvDwPackWeight;
   conv_dw->conv_.malloc_weight_bias_ = ConvDwMallocWeightBiasData;
-  conv_dw->conv_.base_.prepare_ = ConvolutionDepthwisePrepare;
-  conv_dw->conv_.base_.compute_ = ConvolutionDepthwiseCompute;
-  conv_dw->conv_.base_.resize_ = ConvolutionDepthwiseResize;
-  conv_dw->conv_.base_.release_ = ConvolutionDepthwiseRelease;
+  conv_dw->conv_.base_.Prepare = ConvolutionDepthwisePrepare;
+  conv_dw->conv_.base_.Compute = ConvolutionDepthwiseCompute;
+  conv_dw->conv_.base_.Resize = ConvolutionDepthwiseResize;
+  conv_dw->conv_.base_.Release = ConvolutionDepthwiseRelease;
   return (KernelBase *)conv_dw;
 }

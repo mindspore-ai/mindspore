@@ -33,7 +33,7 @@ NNACLKernel::~NNACLKernel() {
   }
 
   if (kernel_ != nullptr) {
-    kernel_->release_(kernel_);
+    kernel_->Release(kernel_);
 
     free(kernel_);
     kernel_ = nullptr;
@@ -45,7 +45,7 @@ int NNACLKernel::Prepare() {
     return RET_ERROR;
   }
 
-  int ret = kernel_->prepare_(kernel_);
+  int ret = kernel_->Prepare(kernel_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "NNACL prepare failed. ret=" << ret;
     return ret;
@@ -63,7 +63,7 @@ int NNACLKernel::ReSize() {
   }
   UpdateTensorC();
 
-  int ret = kernel_->resize_(kernel_);
+  int ret = kernel_->Resize(kernel_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "NNACL resize failed. ret=" << ret;
     return ret;
@@ -78,7 +78,7 @@ int NNACLKernel::Run() {
   UpdateTensorC();
   kernel_->workspace_ = workspace();
 
-  int ret = kernel_->compute_(kernel_);
+  int ret = kernel_->Compute(kernel_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "NNACL run failed. ret=" << ret;
     return ret;
@@ -166,13 +166,12 @@ int NNACLKernel::InitKernel(const TypeId &data_type, const lite::InnerContext *c
   }
 
   UpdateTensorC();
-  kernel_ =
-    CreateKernel(op_parameter_, in_, in_size_, out_, out_size_, data_type, const_cast<ExecEnv *>(ctx->GetExecEnv()));
+  kernel_ = CreateKernel(op_parameter_, in_, in_size_, out_, out_size_, data_type, exec_env_);
   if (kernel_ == nullptr) {
     MS_LOG(ERROR) << "NNACL create kernel failed.";
     return RET_ERROR;
   }
-  kernel_->update_thread_ = DefaultUpdateThreadNumPass;
+  kernel_->UpdateThread = DefaultUpdateThreadNumPass;
   return RET_OK;
 }
 }  // namespace mindspore::nnacl

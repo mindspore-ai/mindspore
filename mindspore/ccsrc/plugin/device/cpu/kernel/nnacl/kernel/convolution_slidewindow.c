@@ -35,7 +35,7 @@ int ConvSWInitTmpBuffer(ConvolutionSWStruct *conv_sw) {
     int input_bhw = compute->in_n_ * conv_sw->conv_.compute_.in_hw_;
     NNACL_CHECK_INT_MUL_NOT_OVERFLOW(input_bhw, ic_block_num * conv_sw->in_tile_, NNACL_ERR);
 
-    conv_sw->input_data_ = (float *)conv_sw->conv_.base_.env_->alloc(
+    conv_sw->input_data_ = (float *)conv_sw->conv_.base_.env_->Alloc(
       conv_sw->conv_.base_.env_->allocator_, input_bhw * ic_block_num * conv_sw->in_tile_ * sizeof(float));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_sw->input_data_);
 
@@ -54,7 +54,7 @@ int ConvSWInitTmpBuffer(ConvolutionSWStruct *conv_sw) {
     NNACL_CHECK_INT_MUL_NOT_OVERFLOW(compute->out_n_, compute->out_hw_, NNACL_ERR);
     int output_bhw = compute->out_n_ * compute->out_hw_;
     NNACL_CHECK_INT_MUL_NOT_OVERFLOW(output_bhw, oc_block_num * conv_sw->oc_tile_, NNACL_ERR);
-    conv_sw->output_data_ = (float *)conv_sw->conv_.base_.env_->alloc(
+    conv_sw->output_data_ = (float *)conv_sw->conv_.base_.env_->Alloc(
       conv_sw->conv_.base_.env_->allocator_, output_bhw * oc_block_num * conv_sw->oc_tile_ * sizeof(float));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_sw->output_data_);
   }
@@ -67,12 +67,12 @@ void ConvSWFreeTmpBuffer(ConvolutionSWStruct *conv_sw) {
   NNACL_CHECK_NULL_RETURN_VOID(conv_param);
 
   if (conv_sw->output_data_ != NULL && conv_sw->oc_res_ != 0) {
-    conv_sw->conv_.base_.env_->free(conv_sw->conv_.base_.env_->allocator_, conv_sw->output_data_);
+    conv_sw->conv_.base_.env_->Free(conv_sw->conv_.base_.env_->allocator_, conv_sw->output_data_);
     conv_sw->output_data_ = NULL;
   }
   if (conv_sw->input_data_ != NULL && conv_sw->ic_res_ != 0 && conv_param->kernel_w_ == 1 &&
       conv_param->kernel_h_ == 1) {
-    conv_sw->conv_.base_.env_->free(conv_sw->conv_.base_.env_->allocator_, conv_sw->input_data_);
+    conv_sw->conv_.base_.env_->Free(conv_sw->conv_.base_.env_->allocator_, conv_sw->input_data_);
     conv_sw->input_data_ = NULL;
   }
 }
@@ -153,7 +153,7 @@ int ConvolutionSWCompute(KernelBase *self) {
     return ret;
   }
 
-  ret = self->env_->parallel_launch(self->env_->thread_pool_, ConvSWImpl, self, self->thread_nr_);
+  ret = self->env_->ParallelLaunch(self->env_->thread_pool_, ConvSWImpl, self, self->thread_nr_);
   if (ret != NNACL_OK) {
     ConvSWFreeTmpBuffer(conv_sw);
     return ret;

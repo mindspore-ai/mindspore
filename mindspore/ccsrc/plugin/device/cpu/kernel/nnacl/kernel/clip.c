@@ -41,7 +41,7 @@ int GetClipMinMaxValue(TensorC *tensor, float *data) {
 int ClipResize(struct KernelBase *self) {
   ClipStruct *clip = (ClipStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(clip);
-  clip->base_.thread_nr_ = clip->base_.update_thread_(
+  clip->base_.thread_nr_ = clip->base_.UpdateThread(
     TC_PTYPE(PrimType_Clip), 1, 1, GetElementNum(clip->base_.out_[FIRST_INPUT]), clip->base_.thread_nr_);
   return NNACL_OK;
 }
@@ -103,16 +103,16 @@ int ClipCompute(struct KernelBase *self) {
     return NNACL_CLIP_MINMAX_VALUE_INVALID;
   }
 
-  return self->env_->parallel_launch(self->env_->thread_pool_, clip_do_compute, clip, clip->base_.thread_nr_);
+  return self->env_->ParallelLaunch(self->env_->thread_pool_, clip_do_compute, clip, clip->base_.thread_nr_);
 }
 
 KernelBase *CreateClip(OpParameter *param, int data_type) {
   ClipStruct *clip = (ClipStruct *)malloc(sizeof(ClipStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(clip);
-  clip->base_.prepare_ = DefaultPrepare1In1Out;
-  clip->base_.resize_ = ClipResize;
-  clip->base_.release_ = DefaultRelease;
-  clip->base_.compute_ = ClipCompute;
+  clip->base_.Prepare = DefaultPrepare1In1Out;
+  clip->base_.Resize = ClipResize;
+  clip->base_.Release = DefaultRelease;
+  clip->base_.Compute = ClipCompute;
   return (KernelBase *)clip;
 }
 

@@ -77,17 +77,17 @@ int CropCompute(struct KernelBase *self) {
     return NNACL_OK;
   }
 
-  return self->env_->parallel_launch(self->env_->thread_pool_, CropLaunch, self, self->thread_nr_);
+  return self->env_->ParallelLaunch(self->env_->thread_pool_, CropLaunch, self, self->thread_nr_);
 }
 
 KernelBase *CreateCrop(OpParameter *param, int data_type) {
   CropStruct *crop = (CropStruct *)malloc(sizeof(CropStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(crop);
   memset(crop, 0, sizeof(CropStruct));
-  crop->base_.prepare_ = DefaultPrepare1In1Out;
-  crop->base_.resize_ = CropResize;
-  crop->base_.release_ = DefaultRelease;
-  crop->base_.compute_ = CropCompute;
+  crop->base_.Prepare = DefaultPrepare1In1Out;
+  crop->base_.Resize = CropResize;
+  crop->base_.Release = DefaultRelease;
+  crop->base_.Compute = CropCompute;
   return (KernelBase *)crop;
 }
 

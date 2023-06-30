@@ -54,10 +54,10 @@ KernelBase *CreateUnique(OpParameter *param, int data_type) {
   UniqueStruct *unique = (UniqueStruct *)malloc(sizeof(UniqueStruct));
   NNACL_CHECK_NULL_RETURN_NULL(unique);
   unique->data_type_ = data_type;
-  unique->base_.release_ = DefaultRelease;
-  unique->base_.prepare_ = DefaultPrepare1In2Out;
-  unique->base_.resize_ = DefaultResize;
-  unique->base_.compute_ = UniqueCompute;
+  unique->base_.Release = DefaultRelease;
+  unique->base_.Prepare = DefaultPrepare1In2Out;
+  unique->base_.Resize = DefaultResize;
+  unique->base_.Compute = UniqueCompute;
   return (KernelBase *)unique;
 }
 

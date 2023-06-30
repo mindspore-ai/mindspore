@@ -102,10 +102,10 @@ KernelBase *CreateReduceF16(OpParameter *param, int data_type) {
 
   ReduceStruct *reduce = &reduce_f16->reduce_;
   reduce->data_type_ = data_type;
-  reduce->base_.release_ = DefaultRelease;
-  reduce->base_.prepare_ = ReducePrepare;
-  reduce->base_.resize_ = ReduceResize;
-  reduce->base_.compute_ = ReduceCompute;
+  reduce->base_.Release = DefaultRelease;
+  reduce->base_.Prepare = ReducePrepare;
+  reduce->base_.Resize = ReduceResize;
+  reduce->base_.Compute = ReduceCompute;
 
   reduce->handle_sum_square_ = HandleReduceF16ASumAndSumSquare;
   reduce->calculate_coeff_ = CalculateReduceF16CoeffOutput;

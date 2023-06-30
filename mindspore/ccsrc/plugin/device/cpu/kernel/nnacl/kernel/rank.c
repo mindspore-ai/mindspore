@@ -33,10 +33,10 @@ int RankCompute(KernelBase *self) {
 KernelBase *CreateRank(OpParameter *param, int data_type) {
   RankStruct *rank = (RankStruct *)malloc(sizeof(RankStruct));
   NNACL_CHECK_NULL_RETURN_NULL(rank);
-  rank->base_.release_ = DefaultRelease;
-  rank->base_.prepare_ = DefaultPrepare1In1Out;
-  rank->base_.resize_ = DefaultResize;
-  rank->base_.compute_ = RankCompute;
+  rank->base_.Release = DefaultRelease;
+  rank->base_.Prepare = DefaultPrepare1In1Out;
+  rank->base_.Resize = DefaultResize;
+  rank->base_.Compute = RankCompute;
   return (KernelBase *)rank;
 }
 

@@ -53,10 +53,10 @@ int NlllossPrepare(KernelBase *self) {
 KernelBase *CreateNLLLoss(OpParameter *param, int data_type) {
   NLLLossStruct *nllloss = (NLLLossStruct *)malloc(sizeof(NLLLossStruct));
   NNACL_CHECK_NULL_RETURN_NULL(nllloss);
-  nllloss->base_.release_ = DefaultRelease;
-  nllloss->base_.prepare_ = NlllossPrepare;
-  nllloss->base_.resize_ = DefaultResize;
-  nllloss->base_.compute_ = NlllossCompute;
+  nllloss->base_.Release = DefaultRelease;
+  nllloss->base_.Prepare = NlllossPrepare;
+  nllloss->base_.Resize = DefaultResize;
+  nllloss->base_.Compute = NlllossCompute;
   return (KernelBase *)nllloss;
 }
 

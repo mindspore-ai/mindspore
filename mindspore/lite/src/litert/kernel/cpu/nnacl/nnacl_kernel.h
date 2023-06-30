@@ -27,7 +27,9 @@ class NNACLKernel : public kernel::LiteKernel {
  public:
   explicit NNACLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : LiteKernel(parameter, inputs, outputs, ctx) {}
+      : LiteKernel(parameter, inputs, outputs, ctx) {
+    exec_env_ = const_cast<ExecEnv *>(ctx->GetExecEnv());
+  }
   ~NNACLKernel() override;
   int Prepare() override;
   int ReSize() override;
@@ -47,6 +49,7 @@ class NNACLKernel : public kernel::LiteKernel {
   int NNACLCheckArgs();
 
  protected:
+  ExecEnv *exec_env_ = nullptr;
   KernelBase *kernel_ = nullptr;
   TensorC **in_ = nullptr;
   TensorC **out_ = nullptr;

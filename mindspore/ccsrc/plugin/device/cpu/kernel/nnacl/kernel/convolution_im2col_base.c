@@ -58,7 +58,7 @@ int ConvIm2ColBaseMallocWeightBiasData(ConvolutionBaseStruct *conv) {
 
   if (conv->bias_data_ == NULL) {
     NNACL_CHECK_MALLOC_SIZE(oc_block_num * sizeof(float));
-    conv->bias_data_ = conv->base_.env_->alloc(conv->base_.env_->allocator_, oc_block_num * sizeof(float));
+    conv->bias_data_ = conv->base_.env_->Alloc(conv->base_.env_->allocator_, oc_block_num * sizeof(float));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv->bias_data_);
   }
   memset(conv->bias_data_, 0, oc_block_num * sizeof(float));
@@ -87,15 +87,15 @@ void ConvIm2ColBaseFreeTmpBuffer(ConvolutionIm2ColBaseStruct *conv_im2col) {
   NNACL_CHECK_NULL_RETURN_VOID(env);
 
   if (conv_im2col->packed_input_ != NULL) {
-    env->free(env->allocator_, conv_im2col->packed_input_);
+    env->Free(env->allocator_, conv_im2col->packed_input_);
     conv_im2col->packed_input_ = NULL;
   }
   if (conv_im2col->col_major_input_ != NULL) {
-    env->free(env->allocator_, conv_im2col->col_major_input_);
+    env->Free(env->allocator_, conv_im2col->col_major_input_);
     conv_im2col->col_major_input_ = NULL;
   }
   if (conv_im2col->output_need_align_ && conv_im2col->tmp_output_ != NULL) {
-    env->free(env->allocator_, conv_im2col->tmp_output_);
+    env->Free(env->allocator_, conv_im2col->tmp_output_);
     conv_im2col->tmp_output_ = NULL;
     conv_im2col->output_need_align_ = false;
   }
@@ -115,19 +115,19 @@ int ConvIm2ColBaseInitTmpBuffer(ConvolutionIm2ColBaseStruct *conv_im2col) {
   int unit_size = total_kernel_chw * conv_im2col->row_tile_;
 
   if (conv_im2col->packed_input_ != NULL) {
-    conv->base_.env_->free(conv->base_.env_->allocator_, conv_im2col->packed_input_);
+    conv->base_.env_->Free(conv->base_.env_->allocator_, conv_im2col->packed_input_);
     conv_im2col->packed_input_ = NULL;
   }
   conv_im2col->packed_input_ =
-    (float *)conv->base_.env_->alloc(conv->base_.env_->allocator_, unit_size * sizeof(float));
+    (float *)conv->base_.env_->Alloc(conv->base_.env_->allocator_, unit_size * sizeof(float));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_im2col->packed_input_);
 
   if (conv_im2col->col_major_input_ != NULL) {
-    conv->base_.env_->free(conv->base_.env_->allocator_, conv_im2col->col_major_input_);
+    conv->base_.env_->Free(conv->base_.env_->allocator_, conv_im2col->col_major_input_);
     conv_im2col->col_major_input_ = NULL;
   }
   conv_im2col->col_major_input_ =
-    (float *)conv->base_.env_->alloc(conv->base_.env_->allocator_, unit_size * sizeof(float));
+    (float *)conv->base_.env_->Alloc(conv->base_.env_->allocator_, unit_size * sizeof(float));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_im2col->col_major_input_);
 
   return NNACL_OK;
@@ -179,7 +179,7 @@ int ConvolutionIm2colBaseCompute(KernelBase *self) {
     return ret;
   }
 
-  ret = self->env_->parallel_launch(self->env_->thread_pool_, ConvIm2ColBaseImpl, self, self->thread_nr_);
+  ret = self->env_->ParallelLaunch(self->env_->thread_pool_, ConvIm2ColBaseImpl, self, self->thread_nr_);
   ConvIm2ColBaseFreeTmpBuffer(conv_im2col);
   return ret;
 }
@@ -233,10 +233,10 @@ ConvolutionBaseStruct *CreateConvIm2ColBase(ConvParameter *conv_param) {
   conv_im2col->conv_.pack_weight_ = ConvIm2ColBasePackWeight;
   conv_im2col->conv_.init_global_variable_ = ConvIm2ColBaseInitGlobalVariable;
 
-  conv_im2col->conv_.base_.compute_ = ConvolutionIm2colBaseCompute;
-  conv_im2col->conv_.base_.prepare_ = ConvolutionIm2colBasePrepare;
-  conv_im2col->conv_.base_.resize_ = ConvolutionIm2colBaseResize;
-  conv_im2col->conv_.base_.release_ = ConvolutionIm2colBaseRelease;
+  conv_im2col->conv_.base_.Compute = ConvolutionIm2colBaseCompute;
+  conv_im2col->conv_.base_.Prepare = ConvolutionIm2colBasePrepare;
+  conv_im2col->conv_.base_.Resize = ConvolutionIm2colBaseResize;
+  conv_im2col->conv_.base_.Release = ConvolutionIm2colBaseRelease;
 
   return (ConvolutionBaseStruct *)conv_im2col;
 }

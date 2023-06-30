@@ -43,7 +43,7 @@ int MatmulKernel::Prepare() {
   matmul->infer_shape_ = InferShapeDone();
   matmul->a_const_ = in_tensors_[FIRST_INPUT]->IsConst() && !op_parameter_->is_train_session_;
   matmul->b_const_ = in_tensors_[SECOND_INPUT]->IsConst() && !op_parameter_->is_train_session_;
-  int ret = kernel_->prepare_(kernel_);
+  int ret = kernel_->Prepare(kernel_);
   if (ret != RET_OK) {
     return ret;
   }
@@ -65,7 +65,7 @@ int MatmulKernel::ReSize() {
 #endif
 
   UpdateTensorC();
-  auto ret = kernel_->resize_(kernel_);
+  auto ret = kernel_->Resize(kernel_);
   set_workspace_size(kernel_->work_size_);
   return ret;
 }

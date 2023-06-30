@@ -78,7 +78,7 @@ int AssignGatherIndicesData(GatherStruct *gather, bool is_indices_int32) {
 
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(gather->indices_size_, (int)(sizeof(int)), NNACL_ERR);
   gather->indices_data_ =
-    (int *)(gather->base_.env_->alloc(gather->base_.env_->allocator_, gather->indices_size_ * sizeof(int)));
+    (int *)(gather->base_.env_->Alloc(gather->base_.env_->allocator_, gather->indices_size_ * sizeof(int)));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(gather->indices_data_);
 
   switch (indices_tensor->data_type_) {
@@ -129,8 +129,8 @@ void GatherUpdateThreadNumProcess(GatherStruct *gather) {
   }
 
   gather->base_.thread_nr_ =
-    gather->base_.update_thread_(TC_PTYPE(PrimType_Gather), 0, gather->byte_inner_size_,
-                                 GetSize(gather->base_.out_[OUTPUT_INDEX]), gather->base_.thread_nr_);
+    gather->base_.UpdateThread(TC_PTYPE(PrimType_Gather), 0, gather->byte_inner_size_,
+                               GetSize(gather->base_.out_[OUTPUT_INDEX]), gather->base_.thread_nr_);
   return;
 }
 
@@ -214,10 +214,10 @@ int GatherCompute(struct KernelBase *self) {
     return ret;
   }
 
-  ret = self->env_->parallel_launch(self->env_->thread_pool_, GatherRun, gather, gather->base_.thread_nr_);
+  ret = self->env_->ParallelLaunch(self->env_->thread_pool_, GatherRun, gather, gather->base_.thread_nr_);
 
   if (!is_indices_int32) {
-    self->env_->free(self->env_->allocator_, gather->indices_data_);
+    self->env_->Free(self->env_->allocator_, gather->indices_data_);
     gather->indices_data_ = NULL;
   }
   return ret;
@@ -228,10 +228,10 @@ KernelBase *CreateGather(OpParameter *param, int data_type) {
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(gather);
   gather->indices_data_ = NULL;
   gather->block_infos_size_ = 0;
-  gather->base_.prepare_ = GatherPrepare;
-  gather->base_.resize_ = GatherResize;
-  gather->base_.release_ = DefaultRelease;
-  gather->base_.compute_ = GatherCompute;
+  gather->base_.Prepare = GatherPrepare;
+  gather->base_.Resize = GatherResize;
+  gather->base_.Release = DefaultRelease;
+  gather->base_.Compute = GatherCompute;
   return (KernelBase *)gather;
 }
 

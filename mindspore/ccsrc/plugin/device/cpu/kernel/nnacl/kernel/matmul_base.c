@@ -167,8 +167,8 @@ int MatmulBasePackMatrixBImpl(MatmulStruct *matmul) {
     }
     matmul->pack_b_src_ = src_ptr + i * matmul->compute_.deep_ * matmul->compute_.col_;
     matmul->pack_b_dst_ = matmul->matrix_b_.pack_ptr_ + i * matmul->compute_.deep_ * matmul->compute_.col_align_;
-    int ret = matmul->base_.env_->parallel_launch(matmul->base_.env_->thread_pool_, MatmulFp32PackMatrixBRun, matmul,
-                                                  matmul->base_.thread_nr_);
+    int ret = matmul->base_.env_->ParallelLaunch(matmul->base_.env_->thread_pool_, MatmulFp32PackMatrixBRun, matmul,
+                                                 matmul->base_.thread_nr_);
     NNACL_CHECK_FALSE(ret != NNACL_OK, ret);
   }
   return NNACL_OK;
@@ -183,7 +183,7 @@ int MatmulBasePackMatrixA(MatmulStruct *matmul) {
     if (matmul->base_.train_session_) {
       matmul->matrix_a_.pack_ptr_ = (float *)(matmul->base_.workspace_);
     } else {
-      matmul->matrix_a_.pack_ptr_ = (float *)(matmul->base_.env_->alloc(matmul->base_.env_->allocator_,
+      matmul->matrix_a_.pack_ptr_ = (float *)(matmul->base_.env_->Alloc(matmul->base_.env_->allocator_,
                                                                         matmul->matrix_a_.pack_size_ * sizeof(float)));
     }
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(matmul->matrix_a_.pack_ptr_);
@@ -219,7 +219,7 @@ int MatmulBasePackMatrixB(MatmulStruct *matmul) {
     if (matmul->base_.train_session_) {
       matmul->matrix_b_.pack_ptr_ = (float *)(matmul->base_.workspace_) + matmul->matrix_a_.pack_size_;
     } else {
-      matmul->matrix_b_.pack_ptr_ = (float *)(matmul->base_.env_->alloc(matmul->base_.env_->allocator_,
+      matmul->matrix_b_.pack_ptr_ = (float *)(matmul->base_.env_->Alloc(matmul->base_.env_->allocator_,
                                                                         matmul->matrix_b_.pack_size_ * sizeof(float)));
     }
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(matmul->matrix_b_.pack_ptr_);
@@ -250,7 +250,7 @@ int MatmulBaseBackupConstMatrix(MatmulStruct *matmul, MatrixInfo *matrix_info, i
   NNACL_CHECK_TRUE_RET(index < (int)matmul->base_.in_size_, NNACL_ERR);
   size_t backup_size = (size_t)GetElementNum(matmul->base_.in_[index]) * sizeof(float);
   NNACL_CHECK_TRUE_RET(backup_size > 0, NNACL_ERR);
-  matrix_info->origin_ptr_ = (float *)(matmul->base_.env_->alloc(matmul->base_.env_->allocator_, backup_size));
+  matrix_info->origin_ptr_ = (float *)(matmul->base_.env_->Alloc(matmul->base_.env_->allocator_, backup_size));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(matrix_info->origin_ptr_);
   void *src_ptr = matmul->base_.in_[index]->data_;
   NNACL_CHECK_NULL_RETURN_ERR(src_ptr);
@@ -439,7 +439,7 @@ int MatmulBasePackBiasMatrix(MatmulStruct *matmul) {
     (void)memset(matmul->matrix_c_.pack_ptr_ + bias_num, 0, (matmul->matrix_c_.pack_size_ - bias_num) * sizeof(float));
   }
   if (matmul->matrix_c_.has_origin_) {
-    matmul->base_.env_->free(matmul->base_.env_->allocator_, matmul->matrix_c_.origin_ptr_);
+    matmul->base_.env_->Free(matmul->base_.env_->allocator_, matmul->matrix_c_.origin_ptr_);
     matmul->matrix_c_.origin_ptr_ = NULL;
     matmul->matrix_c_.has_origin_ = false;
   }
@@ -449,7 +449,7 @@ int MatmulBasePackBiasMatrix(MatmulStruct *matmul) {
 int MatmulBaseInitTmpOutBuffer(MatmulStruct *matmul) {
   if (matmul->out_need_aligned_) {
     if (matmul->output_data_ != NULL) {
-      matmul->base_.env_->free(matmul->base_.env_->allocator_, matmul->output_data_);
+      matmul->base_.env_->Free(matmul->base_.env_->allocator_, matmul->output_data_);
     }
     // avx need to malloc dst aligned to C8NUM
     // avx512 need to malloc dst aligned to C16NUM
@@ -458,7 +458,7 @@ int MatmulBaseInitTmpOutBuffer(MatmulStruct *matmul) {
     int oc_block_num = UP_DIV(out_channel, matmul->compute_.col_tile_);
     int ele_num = matmul->batch_ * matmul->compute_.row_ * oc_block_num * matmul->compute_.col_tile_;
     int data_size = ele_num * (int)sizeof(float);
-    matmul->output_data_ = (float *)(matmul->base_.env_->alloc(matmul->base_.env_->allocator_, data_size));
+    matmul->output_data_ = (float *)(matmul->base_.env_->Alloc(matmul->base_.env_->allocator_, data_size));
     NNACL_CHECK_NULL_RETURN_ERR(matmul->output_data_);
   }
   return NNACL_OK;
@@ -481,7 +481,7 @@ bool MatmulBaseCheckThreadCuttingByRow() { return false; }
 void MatmulBaseFreePackedMatrixA(KernelBase *self) {
   MatmulStruct *matmul = (MatmulStruct *)self;
   if (matmul->matrix_a_.need_pack_ && !matmul->base_.train_session_ && matmul->matrix_a_.pack_ptr_ != NULL) {
-    self->env_->free(self->env_->allocator_, matmul->matrix_a_.pack_ptr_);
+    self->env_->Free(self->env_->allocator_, matmul->matrix_a_.pack_ptr_);
   }
   matmul->matrix_a_.pack_ptr_ = NULL;
 }
@@ -489,7 +489,7 @@ void MatmulBaseFreePackedMatrixA(KernelBase *self) {
 void MatmulBaseFreePackedMatrixB(KernelBase *self) {
   MatmulStruct *matmul = (MatmulStruct *)self;
   if (matmul->matrix_b_.need_pack_ && !matmul->base_.train_session_ && matmul->matrix_b_.pack_ptr_ != NULL) {
-    matmul->base_.env_->free(matmul->base_.env_->allocator_, matmul->matrix_b_.pack_ptr_);
+    matmul->base_.env_->Free(matmul->base_.env_->allocator_, matmul->matrix_b_.pack_ptr_);
   }
   matmul->matrix_b_.pack_ptr_ = NULL;
 }
@@ -520,7 +520,7 @@ int MatmulBaseRelease(struct KernelBase *self) {
   MatmulBaseFreeBatchOffset(matmul);
 
   if (matmul->out_need_aligned_ && matmul->output_data_ != NULL) {
-    matmul->base_.env_->free(matmul->base_.env_->allocator_, matmul->output_data_);
+    matmul->base_.env_->Free(matmul->base_.env_->allocator_, matmul->output_data_);
     matmul->output_data_ = NULL;
   }
   if (matmul->matrix_c_.pack_ptr_ != NULL) {
@@ -608,7 +608,7 @@ int MatmulBaseCompute(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(matmul->matrix_a_.pack_ptr_);
   NNACL_CHECK_NULL_RETURN_ERR(matmul->matrix_b_.pack_ptr_);
 
-  int ret = self->env_->parallel_launch(self->env_->thread_pool_, MatmulFp32Run, self, self->thread_nr_);
+  int ret = self->env_->ParallelLaunch(self->env_->thread_pool_, MatmulFp32Run, self, self->thread_nr_);
   NNACL_CHECK_FALSE(ret != NNACL_OK, ret);
 
   if (matmul->out_need_aligned_) {
@@ -640,10 +640,10 @@ KernelBase *CreateMatmulBase() {
   MatmulStruct *matmul = (MatmulStruct *)malloc(sizeof(MatmulStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(matmul);
   memset(matmul, 0, sizeof(MatmulStruct));
-  matmul->base_.prepare_ = MatmulBasePrepare;
-  matmul->base_.resize_ = MatmulBaseResize;
-  matmul->base_.release_ = MatmulBaseRelease;
-  matmul->base_.compute_ = MatmulBaseCompute;
+  matmul->base_.Prepare = MatmulBasePrepare;
+  matmul->base_.Resize = MatmulBaseResize;
+  matmul->base_.Release = MatmulBaseRelease;
+  matmul->base_.Compute = MatmulBaseCompute;
   InitMatrixInfo(&(matmul->matrix_a_));
   InitMatrixInfo(&(matmul->matrix_b_));
   InitMatrixInfo(&(matmul->matrix_c_));

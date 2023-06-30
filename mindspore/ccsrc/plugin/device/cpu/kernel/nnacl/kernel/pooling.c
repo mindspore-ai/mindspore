@@ -86,7 +86,7 @@ int PoolingImpl(void *cdata, int task_id, float l, float r) {
 }
 
 int PoolingCompute(KernelBase *self) {
-  return self->env_->parallel_launch(self->env_->thread_pool_, PoolingImpl, self, self->thread_nr_);
+  return self->env_->ParallelLaunch(self->env_->thread_pool_, PoolingImpl, self, self->thread_nr_);
 }
 
 int PoolingResize(KernelBase *self) {
@@ -146,10 +146,10 @@ KernelBase *CreatePooling(OpParameter *param, int data_type) {
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(pooling);
   memset(pooling, 0, sizeof(PoolingStruct));
   pooling->data_type_ = data_type;
-  pooling->base_.release_ = DefaultRelease;
-  pooling->base_.prepare_ = PoolingPrepare;
-  pooling->base_.resize_ = PoolingResize;
-  pooling->base_.compute_ = PoolingCompute;
+  pooling->base_.Release = DefaultRelease;
+  pooling->base_.Prepare = PoolingPrepare;
+  pooling->base_.Resize = PoolingResize;
+  pooling->base_.Compute = PoolingCompute;
   return (KernelBase *)pooling;
 }
 

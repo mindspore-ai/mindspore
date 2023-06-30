@@ -52,9 +52,9 @@ InnerContext::InnerContext() {
 void InnerContext::InitExecEnv() {
   exec_env_.allocator_ = this->allocator.get();
   exec_env_.thread_pool_ = this->thread_pool_;
-  exec_env_.alloc = nnacl::DefaultAllocatorMalloc;
-  exec_env_.free = nnacl::DefaultAllocatorFree;
-  exec_env_.parallel_launch = nnacl::DefaultThreadPoolParallelLunch;
+  exec_env_.Alloc = nnacl::DefaultAllocatorMalloc;
+  exec_env_.Free = nnacl::DefaultAllocatorFree;
+  exec_env_.ParallelLaunch = nnacl::DefaultThreadPoolParallelLunch;
 }
 
 int InnerContext::CreateThreadPool(bool is_control_flow) {

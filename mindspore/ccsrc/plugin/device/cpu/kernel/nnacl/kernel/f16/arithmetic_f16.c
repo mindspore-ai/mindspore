@@ -86,20 +86,20 @@ int ArithmeticF16Resize(KernelBase *self) {
       NNACL_CHECK_NULL_RETURN_ERR(t->data_);
       void *f32_data = t->data_;
       t->data_type_ = kNumberTypeFloat16;
-      t->data_ = self->env_->alloc(self->env_->allocator_, GetSize(t));
+      t->data_ = self->env_->Alloc(self->env_->allocator_, GetSize(t));
       NNACL_MALLOC_CHECK_NULL_RETURN_ERR(self->in_[FIRST_INPUT]->data_);
       Float32ToFloat16((float *)(f32_data), (float16_t *)(t->data_), GetElementNum(t));
-      self->env_->free(self->env_->allocator_, f32_data);
+      self->env_->Free(self->env_->allocator_, f32_data);
     }
     if (arithmetic->b_matrix_.is_const_ && self->in_[SECOND_INPUT]->data_type_ == kNumberTypeFloat32) {
       TensorC *t = self->in_[SECOND_INPUT];
       NNACL_CHECK_NULL_RETURN_ERR(t->data_);
       void *f32_data = t->data_;
       t->data_type_ = kNumberTypeFloat16;
-      t->data_ = self->env_->alloc(self->env_->allocator_, GetSize(t));
+      t->data_ = self->env_->Alloc(self->env_->allocator_, GetSize(t));
       NNACL_MALLOC_CHECK_NULL_RETURN_ERR(self->in_[FIRST_INPUT]->data_);
       Float32ToFloat16((float *)(f32_data), (float16_t *)(t->data_), GetElementNum(t));
-      self->env_->free(self->env_->allocator_, f32_data);
+      self->env_->Free(self->env_->allocator_, f32_data);
     }
   }
   return ArithmeticResize(self);
@@ -108,7 +108,7 @@ int ArithmeticF16Resize(KernelBase *self) {
 void FreeArithmeticF16Buffers(ArithmeticF16Struct *arithmetic_f16) {
   for (int i = 0; i < THREE_TENSOR; i++) {
     if (arithmetic_f16->tmp_buffer_[i] != NULL) {
-      arithmetic_f16->arithmetic_.base_.env_->free(arithmetic_f16->arithmetic_.base_.env_->allocator_,
+      arithmetic_f16->arithmetic_.base_.env_->Free(arithmetic_f16->arithmetic_.base_.env_->allocator_,
                                                    arithmetic_f16->tmp_buffer_[i]);
       arithmetic_f16->tmp_buffer_[i] = NULL;
     }
@@ -168,10 +168,10 @@ KernelBase *CreateArithmeticF16(OpParameter *param, int data_type) {
   arithmetic->c_matrix_.batch_post_sum_ = NULL;
   arithmetic->broadcast_buffer_[FIRST_INPUT] = NULL;
   arithmetic->broadcast_buffer_[SECOND_INPUT] = NULL;
-  arithmetic->base_.prepare_ = ArithmeticPrepare;
-  arithmetic->base_.resize_ = ArithmeticF16Resize;
-  arithmetic->base_.release_ = ArithmeticRelease;
-  arithmetic->base_.compute_ = ArithmeticF16Compute;
+  arithmetic->base_.Prepare = ArithmeticPrepare;
+  arithmetic->base_.Resize = ArithmeticF16Resize;
+  arithmetic->base_.Release = ArithmeticRelease;
+  arithmetic->base_.Compute = ArithmeticF16Compute;
 
   arithmetic->execute_ = ArithmeticF16DoExecute;
   arithmetic->tile_function_ = TileOneDimensionFp16;

@@ -87,8 +87,8 @@ int MatmulARM64PackMatrixAImplOpt(MatmulStruct *matmul) {
   if (pack.thread_ == 1) {
     return MatmulARM64PackMatrixAImplOptPack(&pack, 0, 0, 1);
   }
-  return matmul->base_.env_->parallel_launch(matmul->base_.env_->thread_pool_, MatmulARM64PackMatrixAImplOptPack, &pack,
-                                             pack.thread_);
+  return matmul->base_.env_->ParallelLaunch(matmul->base_.env_->thread_pool_, MatmulARM64PackMatrixAImplOptPack, &pack,
+                                            pack.thread_);
 }
 
 bool MatmulARM64CheckThreadCuttingByRow(MatmulStruct *matmul) {

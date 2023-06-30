@@ -36,7 +36,7 @@ int ConvSW1x1Prepare(ConvolutionSW1x1Struct *sw_1x1) {
     return ret;
   }
 
-  return sw_1x1->matmul_->base_.prepare_(&sw_1x1->matmul_->base_);
+  return sw_1x1->matmul_->base_.Prepare(&sw_1x1->matmul_->base_);
 }
 
 int ConvolutionSW1x1Compute(KernelBase *self) {
@@ -49,7 +49,7 @@ int ConvolutionSW1x1Compute(KernelBase *self) {
   sw_1x1->matmul_->base_.out_ = self->out_;
   sw_1x1->matmul_->base_.out_size_ = self->out_size_;
   sw_1x1->matmul_->base_.workspace_ = self->workspace_;
-  return sw_1x1->matmul_->base_.compute_(&sw_1x1->matmul_->base_);
+  return sw_1x1->matmul_->base_.Compute(&sw_1x1->matmul_->base_);
 }
 
 int ConvolutionSW1x1Resize(KernelBase *self) {
@@ -62,7 +62,7 @@ int ConvolutionSW1x1Resize(KernelBase *self) {
   sw_1x1->matmul_->base_.out_ = self->out_;
   sw_1x1->matmul_->base_.out_size_ = self->out_size_;
   sw_1x1->matmul_->base_.workspace_ = self->workspace_;
-  return sw_1x1->matmul_->base_.resize_(&sw_1x1->matmul_->base_);
+  return sw_1x1->matmul_->base_.Resize(&sw_1x1->matmul_->base_);
 }
 
 int ConvolutionSW1x1Prepare(KernelBase *self) {
@@ -115,10 +115,10 @@ ConvolutionBaseStruct *CreateConvolutionSW1x1(ConvParameter *conv_param) {
   memset(sw_1x1, 0, sizeof(ConvolutionSW1x1Struct));
 
   sw_1x1->conv_.is_sharing_pack_ = false;
-  sw_1x1->conv_.base_.compute_ = ConvolutionSW1x1Compute;
-  sw_1x1->conv_.base_.resize_ = ConvolutionSW1x1Resize;
-  sw_1x1->conv_.base_.prepare_ = ConvolutionSW1x1Prepare;
-  sw_1x1->conv_.base_.release_ = ConvolutionSW1x1Release;
+  sw_1x1->conv_.base_.Compute = ConvolutionSW1x1Compute;
+  sw_1x1->conv_.base_.Resize = ConvolutionSW1x1Resize;
+  sw_1x1->conv_.base_.Prepare = ConvolutionSW1x1Prepare;
+  sw_1x1->conv_.base_.Release = ConvolutionSW1x1Release;
 
   MatMulParameter *matmul_param = (MatMulParameter *)malloc(sizeof(MatMulParameter));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(matmul_param);

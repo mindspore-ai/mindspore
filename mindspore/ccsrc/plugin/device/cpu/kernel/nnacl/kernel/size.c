@@ -32,10 +32,10 @@ int size_compute(KernelBase *self) {
 KernelBase *CreateSize(OpParameter *param, int data_type) {
   SizeStruct *size = (SizeStruct *)malloc(sizeof(SizeStruct));
   NNACL_CHECK_NULL_RETURN_NULL(size);
-  size->base_.release_ = DefaultRelease;
-  size->base_.prepare_ = DefaultPrepare1In1Out;
-  size->base_.resize_ = DefaultResize;
-  size->base_.compute_ = size_compute;
+  size->base_.Release = DefaultRelease;
+  size->base_.Prepare = DefaultPrepare1In1Out;
+  size->base_.Resize = DefaultResize;
+  size->base_.Compute = size_compute;
   return (KernelBase *)size;
 }
 
