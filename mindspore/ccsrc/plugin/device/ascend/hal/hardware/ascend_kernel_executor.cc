@@ -209,7 +209,7 @@ void AscendKernelExecutor::SetAtomicCleanToNodes(const KernelGraphPtr &graph,
 
 void AscendKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
-  profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "", 1, 0, 0);
+  profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "PreprocessBeforeRun", 1, 0, 0);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
 #ifdef ENABLE_DEBUGGER
@@ -223,7 +223,7 @@ void AscendKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const 
   } else {
     PreprocessBeforeRunGraph(kernel_graph);
   }
-  profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "", 1, 0, 1);
+  profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "PreprocessBeforeRun", 1, 0, 1);
 }
 
 void AscendKernelExecutor::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const {
