@@ -80,8 +80,7 @@ uint32_t FractionalMaxPool3DWithFixedKsizeCpuKernel::GetInputAndCheck(CpuKernelC
 }
 
 template <typename random_sample_t>
-static std::vector<int> generate_intervals(random_sample_t random_sample, int input_size, int output_size,
-                                           int kernel_size) {
+std::vector<int> generate_intervals(random_sample_t random_sample, int input_size, int output_size, int kernel_size) {
   std::vector<int> sequence(output_size);
   if (output_size > 1) {
     random_sample_t alpha =
@@ -90,6 +89,22 @@ static std::vector<int> generate_intervals(random_sample_t random_sample, int in
     for (int i = 0; i < output_size - 1; ++i) {
       sequence[i] = static_cast<int>((static_cast<random_sample_t>(i) + random_sample) * alpha) -
                     static_cast<int>(random_sample * alpha);
+    }
+  }
+  sequence[output_size - 1] = input_size - kernel_size;
+
+  return sequence;
+}
+
+template <>
+std::vector<int> generate_intervals(Eigen::half random_sample, int input_size, int output_size, int kernel_size) {
+  std::vector<int> sequence(output_size);
+  if (output_size > 1) {
+    float alpha = static_cast<float>(input_size - kernel_size) / static_cast<float>(output_size - 1);
+
+    for (int i = 0; i < output_size - 1; ++i) {
+      sequence[i] = static_cast<int>((static_cast<float>(i) + static_cast<float>(random_sample)) * alpha) -
+                    static_cast<int>(static_cast<float>(random_sample) * alpha);
     }
   }
   sequence[output_size - 1] = input_size - kernel_size;
