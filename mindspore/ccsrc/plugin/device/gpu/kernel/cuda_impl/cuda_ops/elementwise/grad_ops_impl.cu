@@ -109,7 +109,7 @@ REGISTER_BINARY_OP_CUDA_FUNC_COMPLEX_TYPE(ElwiseOpType::kSigmoidGrad);
 template <typename In0_t, typename In1_t, typename Out_t>
 struct BinaryFunc<ElwiseOpType::kSiLUGrad, In0_t, In1_t, Out_t> {
   DEVICE_HOST BinaryFunc() {}
-  DEVICE Out_t operator()(const In0_t input, const In1_t dout) const {
+  DEVICE Out_t operator()(const In0_t dout, const In1_t input) const {
     Out_t one{1};
     Out_t mid = one / (one + cuda::elwise::Exp<In0_t>(-input));
     return dout * mid * (one + input * (one - mid));
