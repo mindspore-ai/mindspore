@@ -6138,6 +6138,9 @@ class MatrixInverse(Primitive):
     Returns the inverse of the input matrix. If the matrix is irreversible, an error may be reported or an unknown
     result may be returned.
 
+    .. warning::
+        This is an experimental API that is subject to change or deletion.
+
     Note:
         The parameter 'adjoint' is only supporting False right now, because complex number is not supported at present.
 
