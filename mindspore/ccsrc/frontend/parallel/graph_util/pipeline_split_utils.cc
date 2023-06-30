@@ -421,7 +421,7 @@ std::set<std::pair<AnfNodePtr, int>> FuncNodeUsersSet(const AnfNodePtr &paramete
     for (const auto &node_pair : users_skip_virtual_nodes) {
       auto func_node_users = FuncGraphNodeUsers(node_pair);
       if (func_node_users.empty()) {
-        all_node_users.insert(node_pair);
+        (void)all_node_users.insert(node_pair);
         continue;
       }
       for (const auto &func_node_user : func_node_users) {
@@ -860,10 +860,8 @@ void GetBorderNode(std::vector<AnfNodePtr> *forward_start, std::vector<AnfNodePt
   int64_t slice_index = 0;
   auto all_nodes = DeepScopedGraphSearch(root->get_return());
   for (auto &node : all_nodes) {
-    if (!node->isa<CNode>()) {
-      continue;
-    }
-    if (IsPrimitiveCNode(node, prim::kPrimDepend) || IsPrimitiveCNode(node, prim::kPrimZerosLike)) {
+    if (!node->isa<CNode>() || IsPrimitiveCNode(node, prim::kPrimDepend) ||
+        IsPrimitiveCNode(node, prim::kPrimZerosLike)) {
       continue;
     }
     auto prim = GetCNodePrimitive(node);
