@@ -204,7 +204,7 @@ bool SwapManager::SwapOutTemp(const std::pair<DeviceAddressStatus, StorageType> 
     return success(*output);
   };
   auto lower_bound_candidate = candidates_.GetLowerBoundCandidate(total_size);
-  if (swap_temp_func(lower_bound_candidate)) {
+  if (lower_bound_candidate != nullptr && swap_temp_func(lower_bound_candidate)) {
     return true;
   }
   for (auto iter = candidates_.Begin(); !iter.IsEnd(); iter.Next()) {
