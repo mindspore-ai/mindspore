@@ -19,6 +19,7 @@
 #include "nnacl/pooling_parameter.h"
 #include "nnacl/fp32/pooling_fp32.h"
 #include "nnacl/tensor_c_utils.h"
+#include "nnacl/kernel/default_kernel_base.h"
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/pooling_fp16.h"
 #endif
@@ -84,13 +85,11 @@ int PoolingImpl(void *cdata, int task_id, float l, float r) {
   return NNACL_UNSUPPORTED_DATA_TYPE;
 }
 
-int pooling_compute(KernelBase *self) {
+int PoolingCompute(KernelBase *self) {
   return self->env_->parallel_launch(self->env_->thread_pool_, PoolingImpl, self, self->thread_nr_);
 }
 
-int pooling_release(KernelBase *self) { return NNACL_OK; }
-
-int pooling_resize(KernelBase *self) {
+int PoolingResize(KernelBase *self) {
   PoolingStruct *pooling = (PoolingStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(pooling);
   TensorC *in_tensor = self->in_[FIRST_INPUT];
@@ -118,7 +117,7 @@ int pooling_resize(KernelBase *self) {
   return NNACL_OK;
 }
 
-int pooling_prepare(KernelBase *self) {
+int PoolingPrepare(KernelBase *self) {
   NNACL_CHECK_FALSE(self->in_size_ < 1, NNACL_ERR);
   NNACL_CHECK_FALSE(self->out_size_ < 1, NNACL_ERR);
 
@@ -147,10 +146,10 @@ KernelBase *CreatePooling(OpParameter *param, int data_type) {
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(pooling);
   memset(pooling, 0, sizeof(PoolingStruct));
   pooling->data_type_ = data_type;
-  pooling->base_.release = pooling_release;
-  pooling->base_.prepare = pooling_prepare;
-  pooling->base_.resize = pooling_resize;
-  pooling->base_.compute = pooling_compute;
+  pooling->base_.release_ = DefaultRelease;
+  pooling->base_.prepare_ = PoolingPrepare;
+  pooling->base_.resize_ = PoolingResize;
+  pooling->base_.compute_ = PoolingCompute;
   return (KernelBase *)pooling;
 }
 

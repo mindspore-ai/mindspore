@@ -322,10 +322,10 @@ KernelBase *CreateScale(OpParameter *param, int data_type) {
   scale->offset_ = NULL;
   scale->malloc_scale_ = false;
   scale->malloc_offset_ = false;
-  scale->base_.prepare = scale_prepare;
-  scale->base_.resize = scale_resize;
-  scale->base_.compute = scale_compute;
-  scale->base_.release = scale_release;
+  scale->base_.prepare_ = scale_prepare;
+  scale->base_.resize_ = scale_resize;
+  scale->base_.compute_ = scale_compute;
+  scale->base_.release_ = scale_release;
   return (KernelBase *)scale;
 }
 

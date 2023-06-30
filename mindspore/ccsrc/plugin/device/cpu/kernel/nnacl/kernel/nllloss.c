@@ -19,7 +19,7 @@
 #include "nnacl/fp32/nllloss_fp32.h"
 #include "nnacl/nllloss_parameter.h"
 
-int nllloss_compute(KernelBase *self) {
+int NlllossCompute(KernelBase *self) {
   NLLLossStruct *nllloss = (NLLLossStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(nllloss);
   float *logits = self->in_[Index0]->data_;
@@ -38,7 +38,7 @@ int nllloss_compute(KernelBase *self) {
   return NLLLoss(logits, labels, weight, loss, total_weight, nllloss, reduction_type);
 }
 
-int nllloss_prepare(KernelBase *self) {
+int NlllossPrepare(KernelBase *self) {
   NNACL_CHECK_FALSE(self->in_size_ < THREE_TENSOR, NNACL_ERR);
   NNACL_CHECK_FALSE(self->out_size_ < TWO_TENSOR, NNACL_ERR);
   NLLLossStruct *nllloss = (NLLLossStruct *)self;
@@ -53,10 +53,10 @@ int nllloss_prepare(KernelBase *self) {
 KernelBase *CreateNLLLoss(OpParameter *param, int data_type) {
   NLLLossStruct *nllloss = (NLLLossStruct *)malloc(sizeof(NLLLossStruct));
   NNACL_CHECK_NULL_RETURN_NULL(nllloss);
-  nllloss->base_.release = default_release;
-  nllloss->base_.prepare = nllloss_prepare;
-  nllloss->base_.resize = default_resize;
-  nllloss->base_.compute = nllloss_compute;
+  nllloss->base_.release_ = DefaultRelease;
+  nllloss->base_.prepare_ = NlllossPrepare;
+  nllloss->base_.resize_ = DefaultResize;
+  nllloss->base_.compute_ = NlllossCompute;
   return (KernelBase *)nllloss;
 }
 

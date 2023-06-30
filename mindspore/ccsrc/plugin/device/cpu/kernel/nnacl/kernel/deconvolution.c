@@ -283,10 +283,10 @@ ConvolutionBaseStruct *CreateDeConv(ConvParameter *param) {
   memset(deconv, 0, sizeof(DeConvStruct));
   deconv->conv_.malloc_weight_bias_ = DeConvMallocWeightBiasData;
   deconv->conv_.pack_weight_ = DeConvPackWeight;
-  deconv->conv_.base_.prepare = deconv_prepare;
-  deconv->conv_.base_.resize = deconv_resize;
-  deconv->conv_.base_.release = deconv_release;
-  deconv->conv_.base_.compute = deconv_compute;
+  deconv->conv_.base_.prepare_ = deconv_prepare;
+  deconv->conv_.base_.resize_ = deconv_resize;
+  deconv->conv_.base_.release_ = deconv_release;
+  deconv->conv_.base_.compute_ = deconv_compute;
   return &deconv->conv_;
 }
 

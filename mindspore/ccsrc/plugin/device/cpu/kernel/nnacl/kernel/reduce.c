@@ -20,6 +20,7 @@
 #include "nnacl/kernel/reshape.h"
 #include "nnacl/nnacl_common.h"
 #include "nnacl/tensor_c_utils.h"
+#include "nnacl/kernel/default_kernel_base.h"
 
 void InitialReduceKernelList(KernelBase *base) {
   ReduceStruct *reduce = (ReduceStruct *)base;
@@ -312,7 +313,7 @@ void ReduceDecideIfOnlyCopy(ReduceStruct *reduce) {
   return;
 }
 
-int reduce_prepare(struct KernelBase *self) {
+int ReducePrepare(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(self);
   ReduceStruct *reduce = (ReduceStruct *)self;
 
@@ -328,9 +329,7 @@ int reduce_prepare(struct KernelBase *self) {
   return NNACL_OK;
 }
 
-int reduce_release(struct KernelBase *self) { return NNACL_OK; }
-
-int reduce_resize(struct KernelBase *self) {
+int ReduceResize(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(self);
   ReduceStruct *reduce = (ReduceStruct *)self;
 
@@ -355,7 +354,7 @@ int reduce_resize(struct KernelBase *self) {
   return NNACL_OK;
 }
 
-int reduce_compute(struct KernelBase *self) {
+int ReduceCompute(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(self);
   ReduceStruct *reduce = (ReduceStruct *)self;
   NNACL_CHECK_FALSE(self->in_[FIRST_INPUT]->data_type_ != reduce->data_type_, NNACL_ERR);
@@ -405,10 +404,10 @@ KernelBase *CreateReduce(OpParameter *param, int data_type) {
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(reduce);
   memset(reduce, 0, sizeof(ReduceStruct));
   reduce->data_type_ = data_type;
-  reduce->base_.release = reduce_release;
-  reduce->base_.prepare = reduce_prepare;
-  reduce->base_.resize = reduce_resize;
-  reduce->base_.compute = reduce_compute;
+  reduce->base_.release_ = DefaultRelease;
+  reduce->base_.prepare_ = ReducePrepare;
+  reduce->base_.resize_ = ReduceResize;
+  reduce->base_.compute_ = ReduceCompute;
   reduce->handle_sum_square_ = HandleReduceASumAndSumSquare;
   reduce->calculate_coeff_ = CalculateReduceCoeffOutput;
   reduce->init_kernel_list_ = InitialReduceKernelList;

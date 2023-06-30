@@ -15,9 +15,10 @@
  */
 
 #include "nnacl/kernel/matmul.h"
-#include "nnacl/kernel/matmul_f32_base.h"
+#include "nnacl/kernel/matmul_base.h"
+#include "nnacl/kernel/matmul_create.h"
 
-void Matmul_InitShapeA(MatmulFp32Struct *matmul) {
+void MatmulInitShapeA(MatmulStruct *matmul) {
   int *a_shape = matmul->base_.in_[kInputIndex]->shape_;
   size_t a_shape_size = matmul->base_.in_[kInputIndex]->shape_size_;
   int batch = 1;
@@ -31,7 +32,7 @@ void Matmul_InitShapeA(MatmulFp32Struct *matmul) {
   matmul->compute_.deep_ = param->a_transpose_ ? a_shape[a_shape_size - C2NUM] : a_shape[a_shape_size - 1];
 }
 
-void Matmul_InitShapeB(MatmulFp32Struct *matmul) {
+void MatmulInitShapeB(MatmulStruct *matmul) {
   int *b_shape = matmul->base_.in_[kWeightIndex]->shape_;
   size_t b_shape_size = matmul->base_.in_[kWeightIndex]->shape_size_;
   int batch = 1;
@@ -45,7 +46,7 @@ void Matmul_InitShapeB(MatmulFp32Struct *matmul) {
   matmul->compute_.deep_ = param->b_transpose_ ? b_shape[b_shape_size - 1] : b_shape[b_shape_size - C2NUM];
 }
 
-int Matmul_InitBroadcastParams(MatmulFp32Struct *matmul) {
+int MatmulInitBroadcastParams(MatmulStruct *matmul) {
   TensorC *a = matmul->base_.in_[FIRST_INPUT];
   TensorC *b = matmul->base_.in_[SECOND_INPUT];
 
@@ -96,8 +97,8 @@ int Matmul_InitBroadcastParams(MatmulFp32Struct *matmul) {
   }
   matmul->batch_ = out_batch;
 
-  MatmulFp32Base_FreeBatchOffset(matmul);
-  int ret = MatmulFP32Base_MallocBatchOffset(matmul);
+  MatmulBaseFreeBatchOffset(matmul);
+  int ret = MatmulBaseMallocBatchOffset(matmul);
   if (ret != NNACL_OK) {
     return ret;
   }
@@ -129,45 +130,45 @@ int Matmul_InitBroadcastParams(MatmulFp32Struct *matmul) {
   return NNACL_OK;
 }
 
-int matmul_prepare(KernelBase *self) {
+int MatmulPrepare(KernelBase *self) {
   NNACL_CHECK_FALSE(self->in_size_ < C2NUM, NNACL_ERR);
   NNACL_CHECK_FALSE(self->out_size_ < C1NUM, NNACL_ERR);
 
-  MatmulFp32Struct *matmul = (MatmulFp32Struct *)self;
+  MatmulStruct *matmul = (MatmulStruct *)self;
   if (matmul->a_const_ || matmul->infer_shape_) {
-    Matmul_InitShapeA(matmul);
+    MatmulInitShapeA(matmul);
   }
 
   if (matmul->b_const_ || matmul->infer_shape_) {
-    Matmul_InitShapeB(matmul);
+    MatmulInitShapeB(matmul);
   }
 
-  return matmul_f32_prepare(self);
+  return MatmulBasePrepare(self);
 }
 
-int matmul_resize(KernelBase *self) {
-  MatmulFp32Struct *matmul = (MatmulFp32Struct *)self;
-  Matmul_InitShapeA(matmul);
-  Matmul_InitShapeB(matmul);
+int MatmulResize(KernelBase *self) {
+  MatmulStruct *matmul = (MatmulStruct *)self;
+  MatmulInitShapeA(matmul);
+  MatmulInitShapeB(matmul);
 
-  int ret = Matmul_InitBroadcastParams(matmul);
+  int ret = MatmulInitBroadcastParams(matmul);
   NNACL_CHECK_FALSE(ret != NNACL_OK, ret);
-  return matmul_f32_resize(self);
+  return MatmulBaseResize(self);
 }
 
-int matmul_release(KernelBase *self) {
-  MatmulFp32Base_FreeBatchOffset((MatmulFp32Struct *)self);
-  return matmul_f32_release(self);
+int MatmulRelease(KernelBase *self) {
+  MatmulBaseFreeBatchOffset((MatmulStruct *)self);
+  return MatmulBaseRelease(self);
 }
 
 KernelBase *CreateMatmul(OpParameter *param, int data_type) {
   KernelBase *kernel = NULL;
   if (data_type == kNumberTypeFloat32) {
-    kernel = CreateMatmulFp32();
+    kernel = CreateMatmulKernel();
     NNACL_MALLOC_CHECK_NULL_RETURN_NULL(kernel);
-    kernel->prepare = matmul_prepare;
-    kernel->resize = matmul_resize;
-    kernel->release = matmul_release;
+    kernel->prepare_ = MatmulPrepare;
+    kernel->resize_ = MatmulResize;
+    kernel->release_ = MatmulRelease;
   }
   return kernel;
 }

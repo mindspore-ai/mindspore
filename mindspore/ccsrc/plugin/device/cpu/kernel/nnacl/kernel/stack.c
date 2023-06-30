@@ -43,7 +43,7 @@ static inline int GetOuterSize(const int *in_shape, int axis) {
   return outer_size;
 }
 
-int stack_release(KernelBase *self) {
+int StackRelease(KernelBase *self) {
   StackStruct *stack = (StackStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(stack);
   if (stack->buffers_ != NULL) {
@@ -53,7 +53,7 @@ int stack_release(KernelBase *self) {
   return NNACL_OK;
 }
 
-int stack_prepare(KernelBase *self) {
+int StackPrepare(KernelBase *self) {
   StackStruct *stack = (StackStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(stack);
   NNACL_CHECK_FALSE(self->in_size_ < ONE_TENSOR, NNACL_ERR);
@@ -64,7 +64,7 @@ int stack_prepare(KernelBase *self) {
   return NNACL_OK;
 }
 
-int stack_resize(KernelBase *self) {
+int StackResize(KernelBase *self) {
   StackStruct *stack = (StackStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(stack);
   TensorC *input = self->in_[FIRST_INPUT];
@@ -109,7 +109,7 @@ int StackRun(void *cdata, int task_id, float l, float r) {
   return NNACL_OK;
 }
 
-int stack_compute(KernelBase *self) {
+int StackCompute(KernelBase *self) {
   StackStruct *stack = (StackStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(stack);
 
@@ -127,10 +127,10 @@ KernelBase *CreateStack(OpParameter *param, int data_type) {
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(stack);
   stack->buffers_ = NULL;
   stack->data_type_ = data_type;
-  stack->base_.release = stack_release;
-  stack->base_.prepare = stack_prepare;
-  stack->base_.resize = stack_resize;
-  stack->base_.compute = stack_compute;
+  stack->base_.release_ = StackRelease;
+  stack->base_.prepare_ = StackPrepare;
+  stack->base_.resize_ = StackResize;
+  stack->base_.compute_ = StackCompute;
   return (KernelBase *)stack;
 }
 

@@ -260,7 +260,7 @@ int TransposeImpl(void *cdata, int task_id, float l, float r) {
   return TransposeComputeinMultiThread(transpose, task_id);
 }
 
-int transpose_compute(struct KernelBase *self) {
+int TransposeCompute(struct KernelBase *self) {
   TransposeStruct *transpose = (TransposeStruct *)self;
   if (!transpose->is_valid_) {
     return TransposeCopyInputToOutput(transpose);
@@ -275,7 +275,7 @@ int transpose_compute(struct KernelBase *self) {
   return self->env_->parallel_launch(self->env_->thread_pool_, TransposeImpl, self, self->thread_nr_);
 }
 
-int transpose_resize(struct KernelBase *self) {
+int TransposeResize(struct KernelBase *self) {
   TransposeStruct *transpose = (TransposeStruct *)self;
   int ret = ResetTransposeStatus(transpose);
   if (ret != NNACL_OK) {
@@ -318,10 +318,10 @@ KernelBase *CreateTranspose(OpParameter *param, int data_type) {
   transpose->nhwc2nchw_ = PackNHWCToNCHWFp32;
   transpose->optimize_ = TransposeDimsFp32;
   transpose->compute_ = DoTransposeFp32;
-  transpose->base_.release = default_release;
-  transpose->base_.prepare = default_prepare_1in_1out;
-  transpose->base_.resize = transpose_resize;
-  transpose->base_.compute = transpose_compute;
+  transpose->base_.release_ = DefaultRelease;
+  transpose->base_.prepare_ = DefaultPrepare1In1Out;
+  transpose->base_.resize_ = TransposeResize;
+  transpose->base_.compute_ = TransposeCompute;
 #ifdef ENABLE_FP16
   if (data_type == kNumberTypeFloat16) {
     transpose->nhwc2nchw_ = PackNHWCToNCHWFp16;

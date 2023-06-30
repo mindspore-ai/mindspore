@@ -20,7 +20,7 @@
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 #include "nnacl/kernel/convolution_base.h"
-#include "nnacl/kernel/matmul_base.h"
+#include "nnacl/kernel/matmul_struct.h"
 
 typedef struct DeConvStruct {
   ConvolutionBaseStruct conv_;

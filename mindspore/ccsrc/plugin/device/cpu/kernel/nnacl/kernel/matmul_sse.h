@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_KERNEL_MATMUL_F32_SSE_H_
-#define NNACL_KERNEL_MATMUL_F32_SSE_H_
+#ifndef NNACL_KERNEL_MATMUL_SSE_H_
+#define NNACL_KERNEL_MATMUL_SSE_H_
 #ifdef ENABLE_SSE
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 
-KernelBase *CreateMatmulFp32Sse();
+KernelBase *CreateMatmulSSE();
 
 #endif
-#endif  // NNACL_KERNEL_MATMUL_F32_SSE_H_
+#endif  // NNACL_KERNEL_MATMUL_SSE_H_

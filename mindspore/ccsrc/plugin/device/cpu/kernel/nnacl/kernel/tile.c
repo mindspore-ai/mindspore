@@ -89,7 +89,7 @@ int TileFillOneDimTileParam(TileStruct *tile) {
   return NNACL_OK;
 }
 
-int tile_resize(struct KernelBase *self) {
+int TileResize(struct KernelBase *self) {
   TileStruct *tile = (TileStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(tile);
   TileParameter *param = (TileParameter *)(self->param_);
@@ -139,7 +139,7 @@ int tile_resize(struct KernelBase *self) {
   return NNACL_OK;
 }
 
-int tile_compute(struct KernelBase *self) {
+int TileCompute(struct KernelBase *self) {
   TileStruct *tile = (TileStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(tile);
   tile->input_addr_ = (uint8_t *)(self->in_[FIRST_INPUT]->data_);
@@ -148,7 +148,7 @@ int tile_compute(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(tile->output_addr_);
 
   if (!tile->resize_done_) {
-    int ret = tile_resize(self);
+    int ret = TileResize(self);
     NNACL_CHECK_FALSE(ret != NNACL_OK, ret);
     NNACL_CHECK_FALSE(tile->resize_done_ == false, NNACL_TILE_RESIZE_IN_RUNTIME_FAILED);
   }
@@ -168,10 +168,10 @@ KernelBase *CreateTile(OpParameter *param, int data_type) {
   TileStruct *tile = (TileStruct *)malloc(sizeof(TileStruct));
   NNACL_CHECK_NULL_RETURN_NULL(tile);
   tile->resize_done_ = false;
-  tile->base_.release = default_release;
-  tile->base_.prepare = default_prepare_1in_1out;
-  tile->base_.resize = tile_resize;
-  tile->base_.compute = tile_compute;
+  tile->base_.release_ = DefaultRelease;
+  tile->base_.prepare_ = DefaultPrepare1In1Out;
+  tile->base_.resize_ = TileResize;
+  tile->base_.compute_ = TileCompute;
   return (KernelBase *)tile;
 }
 

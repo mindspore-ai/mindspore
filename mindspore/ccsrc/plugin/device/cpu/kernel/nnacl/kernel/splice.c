@@ -68,10 +68,10 @@ int splice_compute(struct KernelBase *self) {
 KernelBase *CreateSplice(OpParameter *param, int data_type) {
   SpliceStruct *splice = (SpliceStruct *)malloc(sizeof(SpliceStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(splice);
-  splice->base_.release = default_release;
-  splice->base_.prepare = default_prepare_1in_1out;
-  splice->base_.resize = default_resize;
-  splice->base_.compute = splice_compute;
+  splice->base_.release_ = DefaultRelease;
+  splice->base_.prepare_ = DefaultPrepare1In1Out;
+  splice->base_.resize_ = DefaultResize;
+  splice->base_.compute_ = splice_compute;
   return (KernelBase *)splice;
 }
 

@@ -179,7 +179,7 @@ int ChooseGatherThreadCuttingStrategy(GatherStruct *gather) {
   return NNACL_OK;
 }
 
-int gather_resize(KernelBase *self) {
+int GatherResize(KernelBase *self) {
   GatherStruct *gather = (GatherStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(gather);
 
@@ -189,7 +189,7 @@ int gather_resize(KernelBase *self) {
   return ChooseGatherThreadCuttingStrategy(gather);
 }
 
-int gather_prepare(struct KernelBase *self) {
+int GatherPrepare(struct KernelBase *self) {
   GatherStruct *gather = (GatherStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(gather);
   NNACL_CHECK_FALSE(self->in_size_ < THREE_TENSOR, NNACL_GATHER_INPUT_TENSOR_INVALID);
@@ -200,7 +200,7 @@ int gather_prepare(struct KernelBase *self) {
   return NNACL_OK;
 }
 
-int gather_compute(struct KernelBase *self) {
+int GatherCompute(struct KernelBase *self) {
   GatherStruct *gather = (GatherStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(gather);
 
@@ -228,10 +228,10 @@ KernelBase *CreateGather(OpParameter *param, int data_type) {
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(gather);
   gather->indices_data_ = NULL;
   gather->block_infos_size_ = 0;
-  gather->base_.prepare = gather_prepare;
-  gather->base_.resize = gather_resize;
-  gather->base_.release = default_release;
-  gather->base_.compute = gather_compute;
+  gather->base_.prepare_ = GatherPrepare;
+  gather->base_.resize_ = GatherResize;
+  gather->base_.release_ = DefaultRelease;
+  gather->base_.compute_ = GatherCompute;
   return (KernelBase *)gather;
 }
 

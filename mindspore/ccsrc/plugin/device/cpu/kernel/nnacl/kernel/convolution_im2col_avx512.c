@@ -139,10 +139,10 @@ ConvolutionBaseStruct *CreateConvIm2ColAVX512(ConvParameter *conv_param) {
   conv_im2col->conv_.run_impl_ = ConvIm2ColAVX512RunImpl;
   conv_im2col->conv_.pack_weight_ = ConvIm2ColBasePackWeight;
 
-  conv_im2col->conv_.base_.compute = convolution_im2col_avx512_compute;
-  conv_im2col->conv_.base_.prepare = convolution_im2col_base_prepare;
-  conv_im2col->conv_.base_.resize = convolution_im2col_base_resize;
-  conv_im2col->conv_.base_.release = convolution_im2col_base_release;
+  conv_im2col->conv_.base_.compute_ = convolution_im2col_avx512_compute;
+  conv_im2col->conv_.base_.prepare_ = ConvolutionIm2colBasePrepare;
+  conv_im2col->conv_.base_.resize_ = ConvolutionIm2colBaseResize;
+  conv_im2col->conv_.base_.release_ = ConvolutionIm2colBaseRelease;
 
   return (ConvolutionBaseStruct *)conv_im2col;
 }

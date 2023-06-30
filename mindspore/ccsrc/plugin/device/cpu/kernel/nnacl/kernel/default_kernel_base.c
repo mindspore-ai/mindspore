@@ -16,34 +16,34 @@
 
 #include "nnacl/kernel/default_kernel_base.h"
 
-int default_prepare_3in_2out(KernelBase *self) {
+int DefaultPrepare3In2Out(KernelBase *self) {
   NNACL_CHECK_FALSE(self->in_size_ < THREE_TENSOR, NNACL_ERR);
   NNACL_CHECK_FALSE(self->out_size_ < TWO_TENSOR, NNACL_ERR);
   return NNACL_OK;
 }
 
-int default_prepare_1in_2out(KernelBase *self) {
+int DefaultPrepare1In2Out(KernelBase *self) {
   NNACL_CHECK_FALSE(self->in_size_ < ONE_TENSOR, NNACL_ERR);
   NNACL_CHECK_FALSE(self->out_size_ < TWO_TENSOR, NNACL_ERR);
   return NNACL_OK;
 }
 
-int default_prepare_1in_1out(KernelBase *self) {
+int DefaultPrepare1In1Out(KernelBase *self) {
   NNACL_CHECK_FALSE(self->in_size_ < ONE_TENSOR, NNACL_ERR);
   NNACL_CHECK_FALSE(self->out_size_ < ONE_TENSOR, NNACL_ERR);
   return NNACL_OK;
 }
 
-int default_prepare_2in_1out(KernelBase *self) {
+int DefaultPrepare2In1Out(KernelBase *self) {
   NNACL_CHECK_FALSE(self->in_size_ < ONE_TENSOR, NNACL_ERR);
   NNACL_CHECK_FALSE(self->out_size_ < ONE_TENSOR, NNACL_ERR);
   return NNACL_OK;
 }
 
-int default_resize(KernelBase *self) {
+int DefaultResize(KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(self->in_[FIRST_INPUT]);
   NNACL_CHECK_NULL_RETURN_ERR(self->out_[OUTPUT_INDEX]);
   return NNACL_OK;
 }
 
-int default_release(KernelBase *self) { return NNACL_OK; }
+int DefaultRelease(KernelBase *self) { return NNACL_OK; }

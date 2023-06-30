@@ -33,7 +33,7 @@ NNACLKernel::~NNACLKernel() {
   }
 
   if (kernel_ != nullptr) {
-    kernel_->release(kernel_);
+    kernel_->release_(kernel_);
 
     free(kernel_);
     kernel_ = nullptr;
@@ -45,7 +45,7 @@ int NNACLKernel::Prepare() {
     return RET_ERROR;
   }
 
-  int ret = kernel_->prepare(kernel_);
+  int ret = kernel_->prepare_(kernel_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "NNACL prepare failed. ret=" << ret;
     return ret;
@@ -63,7 +63,7 @@ int NNACLKernel::ReSize() {
   }
   UpdateTensorC();
 
-  int ret = kernel_->resize(kernel_);
+  int ret = kernel_->resize_(kernel_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "NNACL resize failed. ret=" << ret;
     return ret;
@@ -78,7 +78,7 @@ int NNACLKernel::Run() {
   UpdateTensorC();
   kernel_->workspace_ = workspace();
 
-  int ret = kernel_->compute(kernel_);
+  int ret = kernel_->compute_(kernel_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "NNACL run failed. ret=" << ret;
     return ret;

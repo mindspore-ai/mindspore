@@ -24,11 +24,11 @@
 #include "nnacl/conv_parameter.h"
 #include "nnacl/kernel/convolution_base.h"
 #include "nnacl/matmul_parameter.h"
-#include "nnacl/kernel/matmul_base.h"
+#include "nnacl/kernel/matmul_struct.h"
 
 typedef struct ConvolutionSW1x1Struct {
   ConvolutionBaseStruct conv_;
-  MatmulFp32Struct *matmul_;
+  MatmulStruct *matmul_;
 } ConvolutionSW1x1Struct;
 
 ConvolutionBaseStruct *CreateConvolutionSW1x1(ConvParameter *conv_param);

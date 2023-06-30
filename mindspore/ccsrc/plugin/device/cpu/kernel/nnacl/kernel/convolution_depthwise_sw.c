@@ -94,7 +94,7 @@ void ConvDwSWPackWeight(ConvolutionBaseStruct *conv) {
   PackNCHWToNC4HW4Fp32(origin_weight, conv->packed_weight_, 1, conv->compute_.kernel_hw_, conv->compute_.out_c_);
 }
 
-int convolution_depthwise_sw_resize(KernelBase *self) {
+int ConvolutionDepthwiseSWResize(KernelBase *self) {
   ConvolutionDepthwiseSWStruct *conv_dw = (ConvolutionDepthwiseSWStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(conv_dw);
   int ret = ConvBasePrepare(&conv_dw->conv_);
@@ -111,7 +111,7 @@ int convolution_depthwise_sw_resize(KernelBase *self) {
   return NNACL_OK;
 }
 
-int convolution_depthwise_sw_compute(KernelBase *self) {
+int ConvolutionDepthwiseSWCompute(KernelBase *self) {
   ConvolutionDepthwiseSWStruct *conv_dw = (ConvolutionDepthwiseSWStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(conv_dw);
 
@@ -157,7 +157,7 @@ int convolution_depthwise_sw_compute(KernelBase *self) {
   return ret;
 }
 
-int convolution_depthwise_sw_prepare(KernelBase *self) {
+int ConvolutionDdepthwiseSWPrepare(KernelBase *self) {
   NNACL_CHECK_FALSE(self->in_size_ < TWO_TENSOR, NNACL_INPUT_TENSOR_ERROR);
   NNACL_CHECK_FALSE(self->out_size_ < ONE_TENSOR, NNACL_OUTPUT_TENSOR_ERROR);
 
@@ -178,7 +178,7 @@ int convolution_depthwise_sw_prepare(KernelBase *self) {
   return ConvBaseInitConvWeightBias(&conv_dw->conv_);
 }
 
-int convolution_depthwise_sw_release(KernelBase *self) {
+int ConvolutionDepthwiseSWRelease(KernelBase *self) {
   ConvolutionBaseStruct *conv = (ConvolutionBaseStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(conv);
   ConvBaseRelease(conv);
@@ -192,9 +192,9 @@ KernelBase *CreateConvDwSW(ConvParameter *conv_param) {
 
   conv_dw->conv_.malloc_weight_bias_ = ConvDwSWMallocWeightBiasData;
   conv_dw->conv_.pack_weight_ = ConvDwSWPackWeight;
-  conv_dw->conv_.base_.resize = convolution_depthwise_sw_resize;
-  conv_dw->conv_.base_.compute = convolution_depthwise_sw_compute;
-  conv_dw->conv_.base_.prepare = convolution_depthwise_sw_prepare;
-  conv_dw->conv_.base_.release = convolution_depthwise_sw_release;
+  conv_dw->conv_.base_.resize_ = ConvolutionDepthwiseSWResize;
+  conv_dw->conv_.base_.compute_ = ConvolutionDepthwiseSWCompute;
+  conv_dw->conv_.base_.prepare_ = ConvolutionDdepthwiseSWPrepare;
+  conv_dw->conv_.base_.release_ = ConvolutionDepthwiseSWRelease;
   return (KernelBase *)conv_dw;
 }

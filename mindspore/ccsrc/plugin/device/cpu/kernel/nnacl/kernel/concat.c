@@ -197,7 +197,7 @@ int ChooseConcatThreadCuttingStrategy(ConcatStruct *concat) {
   return NNACL_OK;
 }
 
-int concat_resize(KernelBase *self) {
+int ConcatResize(KernelBase *self) {
   ConcatStruct *concat = (ConcatStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(concat);
   ConcatParameter *param = (ConcatParameter *)concat->base_.param_;
@@ -217,7 +217,7 @@ int concat_resize(KernelBase *self) {
   return ChooseConcatThreadCuttingStrategy(concat);
 }
 
-int concat_prepare(KernelBase *self) {
+int ConcatPepare(KernelBase *self) {
   ConcatStruct *concat = (ConcatStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(concat);
 
@@ -232,7 +232,7 @@ int concat_prepare(KernelBase *self) {
   return NNACL_OK;
 }
 
-int concat_release(KernelBase *self) {
+int ConcatRelease(KernelBase *self) {
   ConcatStruct *concat = (ConcatStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(concat);
   if (concat->inputs_ptr_ != NULL) {
@@ -247,7 +247,7 @@ int concat_release(KernelBase *self) {
   return NNACL_OK;
 }
 
-int concat_compute(KernelBase *self) {
+int ConcatCompute(KernelBase *self) {
   ConcatStruct *concat = (ConcatStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(concat);
   if (concat->outer_size_ == 0 || concat->inner_sizes_[self->in_size_] == 0) {
@@ -275,10 +275,10 @@ KernelBase *CreateConcat(OpParameter *param, int data_type) {
   concat->inner_sizes_ = NULL;
   concat->inputs_ptr_ = NULL;
   concat->is_with_data_ = NULL;
-  concat->base_.prepare = concat_prepare;
-  concat->base_.resize = concat_resize;
-  concat->base_.release = concat_release;
-  concat->base_.compute = concat_compute;
+  concat->base_.prepare_ = ConcatPepare;
+  concat->base_.resize_ = ConcatResize;
+  concat->base_.release_ = ConcatRelease;
+  concat->base_.compute_ = ConcatCompute;
   return (KernelBase *)concat;
 }
 

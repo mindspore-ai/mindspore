@@ -28,10 +28,10 @@ typedef struct ExecEnv {
 } ExecEnv;
 
 typedef struct KernelBase {
-  int (*release)(struct KernelBase *self);
-  int (*prepare)(struct KernelBase *self);
-  int (*compute)(struct KernelBase *self);
-  int (*resize)(struct KernelBase *self);
+  int (*release_)(struct KernelBase *self);
+  int (*prepare_)(struct KernelBase *self);
+  int (*compute_)(struct KernelBase *self);
+  int (*resize_)(struct KernelBase *self);
   int (*infershape)(struct KernelBase *self);
   OpParameter *param_;
   int thread_nr_;

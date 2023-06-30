@@ -43,10 +43,10 @@ int ConvIm2ColBaseImpl(void *cdata, int task_id, float l, float r);
 void ConvIm2ColBaseFreeTmpBuffer(ConvolutionIm2ColBaseStruct *conv_im2col);
 void ConvIm2ColBasePackWeight(ConvolutionBaseStruct *conv);
 int ConvIm2ColBaseRunImpl(ConvolutionBaseStruct *conv, int task_id);
-int convolution_im2col_base_compute(KernelBase *self);
-int convolution_im2col_base_prepare(KernelBase *self);
-int convolution_im2col_base_resize(KernelBase *self);
-int convolution_im2col_base_release(KernelBase *self);
+int ConvolutionIm2colBaseCompute(KernelBase *self);
+int ConvolutionIm2colBasePrepare(KernelBase *self);
+int ConvolutionIm2colBaseResize(KernelBase *self);
+int ConvolutionIm2colBaseRelease(KernelBase *self);
 ConvolutionBaseStruct *CreateConvIm2ColBase(ConvParameter *conv_param);
 
 #endif  // NNACL_KERNEL_CONVOLLUTION_IM2COL_BASE_H_

@@ -25,7 +25,7 @@ typedef struct ExpStruct {
   float in_scale_;
   float out_scale_;
   int element_num_;
-  int (*ExpCompute)(const void *in, void *out, const struct ExpStruct *exp, int task_id);
+  int (*exp_compute_)(const void *in, void *out, const struct ExpStruct *exp, int task_id);
 } ExpStruct;
 
 KernelBase *CreateExp(OpParameter *param, int data_type);

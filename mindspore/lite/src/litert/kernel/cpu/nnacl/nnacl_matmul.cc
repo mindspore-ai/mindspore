@@ -17,7 +17,7 @@
 #include "nnacl/nnacl_matmul.h"
 #include "nnacl/nnacl_manager.h"
 #include "include/errorcode.h"
-#include "nnacl/kernel/matmul_f32_base.h"
+#include "nnacl/kernel/matmul_base.h"
 #include "nnacl/cxx_utils.h"
 #include "src/litert/pack_weight_manager.h"
 #if defined(PARALLEL_INFERENCE) && defined(ENABLE_MINDRT)
@@ -35,7 +35,7 @@ int MatmulKernel::Prepare() {
     return RET_ERROR;
   }
 
-  MatmulFp32Struct *matmul = reinterpret_cast<MatmulFp32Struct *>(kernel_);
+  MatmulStruct *matmul = reinterpret_cast<MatmulStruct *>(kernel_);
   matmul->shaing_manager_ = lite::PackWeightManager::GetInstance();
   matmul->get_sharing_weight_ = nnacl::DefaultGetSharingPackData;
   matmul->free_sharing_weight_ = nnacl::DefaultFreeSharingPackData;
@@ -43,7 +43,7 @@ int MatmulKernel::Prepare() {
   matmul->infer_shape_ = InferShapeDone();
   matmul->a_const_ = in_tensors_[FIRST_INPUT]->IsConst() && !op_parameter_->is_train_session_;
   matmul->b_const_ = in_tensors_[SECOND_INPUT]->IsConst() && !op_parameter_->is_train_session_;
-  int ret = kernel_->prepare(kernel_);
+  int ret = kernel_->prepare_(kernel_);
   if (ret != RET_OK) {
     return ret;
   }
@@ -56,7 +56,7 @@ int MatmulKernel::Prepare() {
 
 int MatmulKernel::ReSize() {
   CHECK_NULL_RETURN(kernel_);
-  MatmulFp32Struct *matmul = reinterpret_cast<MatmulFp32Struct *>(kernel_);
+  MatmulStruct *matmul = reinterpret_cast<MatmulStruct *>(kernel_);
 
   matmul->model_thread_nr_ = kernel_->thread_nr_;
 #if defined(PARALLEL_INFERENCE) && defined(ENABLE_MINDRT)
@@ -65,14 +65,14 @@ int MatmulKernel::ReSize() {
 #endif
 
   UpdateTensorC();
-  auto ret = kernel_->resize(kernel_);
+  auto ret = kernel_->resize_(kernel_);
   set_workspace_size(kernel_->work_size_);
   return ret;
 }
 
 int MatmulKernel::PreparePackedWeight(const lite::Tensor *tensor) {
   CHECK_NULL_RETURN(kernel_);
-  MatmulFp32Struct *matmul = reinterpret_cast<MatmulFp32Struct *>(kernel_);
+  MatmulStruct *matmul = reinterpret_cast<MatmulStruct *>(kernel_);
   matmul->weight_is_packed_ = true;
   return RET_OK;
 }

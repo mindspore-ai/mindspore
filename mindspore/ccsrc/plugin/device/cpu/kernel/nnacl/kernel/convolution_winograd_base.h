@@ -56,10 +56,10 @@ void ConvWinoBasePackWeight(ConvolutionBaseStruct *conv);
 int ConvWinoBaseConfigInputOutput(ConvolutionWinogradBaseStruct *winograd);
 int ConvWinoBaseRunImpl(ConvolutionBaseStruct *conv, int task_id);
 int ConvWinoBaseMallocWeightBiasData(ConvolutionBaseStruct *conv);
-int convolution_winograd_base_prepare(KernelBase *self);
-int convolution_winograd_base_resize(KernelBase *self);
-int convolution_winograd_base_release(KernelBase *self);
-int convolution_winograd_base_compute(KernelBase *self);
+int ConvolutionWinogradBasePrepare(KernelBase *self);
+int ConvolutionWinogradBaseResize(KernelBase *self);
+int ConvolutionWinogradBaseRelease(KernelBase *self);
+int ConvolutionWinogradBaseCompute(KernelBase *self);
 ConvolutionWinogradBaseStruct *CreateConvWinogradBase(ConvParameter *conv_param);
 
 #endif  // NNACL_KERNEL_CONVOLLUTION_WINOGRAD_BASE_H_

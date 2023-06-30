@@ -17,6 +17,7 @@
 #include "nnacl/kernel/crop.h"
 #include "nnacl/base/crop_base.h"
 #include "nnacl/fp32/crop_fp32.h"
+#include "nnacl/kernel/default_kernel_base.h"
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/crop_fp16.h"
 #endif
@@ -44,13 +45,7 @@ int CropLaunch(void *cdata, int task_id, float l, float r) {
   return NNACL_OK;
 }
 
-int crop_prepare(struct KernelBase *self) {
-  NNACL_CHECK_FALSE(self->in_size_ < ONE_TENSOR, NNACL_INPUT_TENSOR_ERROR);
-  NNACL_CHECK_FALSE(self->out_size_ < ONE_TENSOR, NNACL_OUTPUT_TENSOR_ERROR);
-  return NNACL_OK;
-}
-
-int crop_resize(struct KernelBase *self) {
+int CropResize(struct KernelBase *self) {
   TensorC *in_tensor = self->in_[FIRST_INPUT];
   NNACL_CHECK_NULL_RETURN_ERR(in_tensor);
   TensorC *out_tensor = self->out_[OUTPUT_INDEX];
@@ -65,9 +60,7 @@ int crop_resize(struct KernelBase *self) {
   return CropPadOffset(in_tensor->shape_size_, crop_param, crop->in_offset_);
 }
 
-int crop_release(struct KernelBase *self) { return NNACL_OK; }
-
-int crop_compute(struct KernelBase *self) {
+int CropCompute(struct KernelBase *self) {
   TensorC *in_tensor = self->in_[FIRST_INPUT];
   NNACL_CHECK_NULL_RETURN_ERR(in_tensor);
   TensorC *out_tensor = self->out_[OUTPUT_INDEX];
@@ -91,10 +84,10 @@ KernelBase *CreateCrop(OpParameter *param, int data_type) {
   CropStruct *crop = (CropStruct *)malloc(sizeof(CropStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(crop);
   memset(crop, 0, sizeof(CropStruct));
-  crop->base_.prepare = crop_prepare;
-  crop->base_.resize = crop_resize;
-  crop->base_.release = crop_release;
-  crop->base_.compute = crop_compute;
+  crop->base_.prepare_ = DefaultPrepare1In1Out;
+  crop->base_.resize_ = CropResize;
+  crop->base_.release_ = DefaultRelease;
+  crop->base_.compute_ = CropCompute;
   return (KernelBase *)crop;
 }
 

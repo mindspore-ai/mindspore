@@ -532,10 +532,10 @@ ConvolutionBaseStruct *CreateDeConvWinograd(ConvParameter *param) {
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(deconv_winograd);
   memset(deconv_winograd, 0, sizeof(DeConvWinogradStruct));
 
-  deconv_winograd->conv_.base_.prepare = deconv_winograd_prepare;
-  deconv_winograd->conv_.base_.resize = deconv_winograd_resize;
-  deconv_winograd->conv_.base_.release = deconv_winograd_release;
-  deconv_winograd->conv_.base_.compute = deconv_winograd_compute;
+  deconv_winograd->conv_.base_.prepare_ = deconv_winograd_prepare;
+  deconv_winograd->conv_.base_.resize_ = deconv_winograd_resize;
+  deconv_winograd->conv_.base_.release_ = deconv_winograd_release;
+  deconv_winograd->conv_.base_.compute_ = deconv_winograd_compute;
   return &deconv_winograd->conv_;
 }
 #endif

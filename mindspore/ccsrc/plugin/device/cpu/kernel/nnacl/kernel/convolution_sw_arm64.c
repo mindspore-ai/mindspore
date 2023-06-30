@@ -49,10 +49,10 @@ ConvolutionBaseStruct *CreateConvolutionSWARM64(ConvParameter *conv_param) {
   sw->conv_.pack_weight_ = ConvSWPackWeight;
   sw->conv_.malloc_weight_bias_ = ConvSWMallocWeightBiasData;
 
-  sw->conv_.base_.compute = convolution_sw_compute;
-  sw->conv_.base_.prepare = convolution_sw_prepare;
-  sw->conv_.base_.release = convolution_sw_release;
-  sw->conv_.base_.resize = convolution_sw_resize;
+  sw->conv_.base_.compute_ = ConvolutionSWCompute;
+  sw->conv_.base_.prepare_ = ConvolutionSWPrepare;
+  sw->conv_.base_.release_ = ConvolutionSWRelease;
+  sw->conv_.base_.resize_ = ConvolutionSWResize;
 
   return (ConvolutionBaseStruct *)sw;
 }

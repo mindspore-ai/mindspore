@@ -62,7 +62,7 @@
 #include "nnacl/kernel/f16/stack_f16.h"
 #endif
 
-void init_vs_kernels_f16(KernelCreator **creators) {
+void InitVSKernelF16(KernelCreator **creators) {
 #ifdef ENABLE_FP16
   creators[PrimType_Abs][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_Activation][REGIST_DT(kNumberTypeFloat16)] = CreateActivation;
@@ -129,7 +129,7 @@ void init_vs_kernels_f16(KernelCreator **creators) {
 #endif
 }
 
-void init_vs_kernels_a(KernelCreator **creators) {
+void InitVSKernelA(KernelCreator **creators) {
   creators[PrimType_Abs][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
   creators[PrimType_Abs][REGIST_DT(kNumberTypeInt32)] = CreateArithmeticSelf;
   creators[PrimType_Activation][REGIST_DT(kNumberTypeFloat32)] = CreateActivation;
@@ -189,7 +189,7 @@ void init_vs_kernels_a(KernelCreator **creators) {
   creators[PrimType_GroupNormFusion][REGIST_DT(kNumberTypeFloat32)] = CreateGroupNorm;
 }
 
-void init_vs_kernels_i(KernelCreator **creators) {
+void InitVSKernelI(KernelCreator **creators) {
   creators[PrimType_IsFinite][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
   creators[PrimType_Less][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticCompare;
   creators[PrimType_Less][REGIST_DT(kNumberTypeInt32)] = CreateArithmeticCompare;
@@ -226,7 +226,7 @@ void init_vs_kernels_i(KernelCreator **creators) {
   creators[PrimType_PriorBox][REGIST_DT(kNumberTypeInt8)] = CreatePriorBox;
 }
 
-void init_vs_kernels_r(KernelCreator **creators) {
+void InitVSKernelR(KernelCreator **creators) {
   creators[PrimType_RaggedRange][REGIST_DT(kNumberTypeInt32)] = CreateRaggedRange;
   creators[PrimType_RaggedRange][REGIST_DT(kNumberTypeFloat32)] = CreateRaggedRange;
   creators[PrimType_Range][REGIST_DT(kNumberTypeFloat32)] = CreateRange;
@@ -313,8 +313,8 @@ void init_vs_kernels_r(KernelCreator **creators) {
 }
 
 void init_vs_kernels(KernelCreator **creators) {
-  init_vs_kernels_a(creators);
-  init_vs_kernels_i(creators);
-  init_vs_kernels_r(creators);
-  init_vs_kernels_f16(creators);
+  InitVSKernelA(creators);
+  InitVSKernelI(creators);
+  InitVSKernelR(creators);
+  InitVSKernelF16(creators);
 }

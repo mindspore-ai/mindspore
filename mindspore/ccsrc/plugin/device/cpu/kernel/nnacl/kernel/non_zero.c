@@ -18,7 +18,7 @@
 #include "nnacl/kernel/default_kernel_base.h"
 #include "nnacl/tensor_c_utils.h"
 
-int non_zero_compute(KernelBase *self) {
+int NonZeroCompute(KernelBase *self) {
   TensorC *input = self->in_[FIRST_INPUT];
   NNACL_CHECK_NULL_RETURN_ERR(input);
   TensorC *output = self->out_[OUTPUT_INDEX];
@@ -59,10 +59,10 @@ int non_zero_compute(KernelBase *self) {
 KernelBase *CreateNonZero(OpParameter *param, int data_type) {
   NonZeroStruct *non_zero = (NonZeroStruct *)malloc(sizeof(NonZeroStruct));
   NNACL_CHECK_NULL_RETURN_NULL(non_zero);
-  non_zero->base_.release = default_release;
-  non_zero->base_.prepare = default_prepare_2in_1out;
-  non_zero->base_.resize = default_resize;
-  non_zero->base_.compute = non_zero_compute;
+  non_zero->base_.release_ = DefaultRelease;
+  non_zero->base_.prepare_ = DefaultPrepare2In1Out;
+  non_zero->base_.resize_ = DefaultResize;
+  non_zero->base_.compute_ = NonZeroCompute;
   return (KernelBase *)non_zero;
 }
 

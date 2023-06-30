@@ -107,12 +107,12 @@ int ArithmeticCompareExecute(KernelBase *base, const void *input0, const void *i
   return NNACL_UNSUPPORTED_DATA_TYPE;
 }
 
-int arithmetic_compare_resize(KernelBase *self) {
+int ArithmeticCompareResize(KernelBase *self) {
   ArithmeticStruct *arithmetic = (ArithmeticStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(arithmetic);
   arithmetic->in_data_size_ = DataTypeCSize(self->in_[FIRST_INPUT]->data_type_);
   arithmetic->out_data_size_ = DataTypeCSize(self->out_[OUTPUT_INDEX]->data_type_);
-  return arithmetic_resize(self);
+  return ArithmeticResize(self);
 }
 
 KernelBase *CreateArithmeticCompare(OpParameter *param, int data_type) {
@@ -132,10 +132,10 @@ KernelBase *CreateArithmeticCompare(OpParameter *param, int data_type) {
   arithmetic->tile_function_ = TileOneDimensionFp32;
   arithmetic->init_function_ = InitArithmeticCompareRunFunction;
   arithmetic->execute_ = ArithmeticCompareExecute;
-  arithmetic->base_.prepare = arithmetic_prepare;
-  arithmetic->base_.resize = arithmetic_compare_resize;
-  arithmetic->base_.release = arithmetic_release;
-  arithmetic->base_.compute = arithmetic_compute;
+  arithmetic->base_.prepare_ = ArithmeticPrepare;
+  arithmetic->base_.resize_ = ArithmeticCompareResize;
+  arithmetic->base_.release_ = ArithmeticRelease;
+  arithmetic->base_.compute_ = ArithmeticCompute;
   return (KernelBase *)arithmetic_compare;
 }
 

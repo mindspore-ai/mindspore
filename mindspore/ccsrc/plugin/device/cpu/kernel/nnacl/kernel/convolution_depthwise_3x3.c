@@ -69,7 +69,7 @@ int ConvDw3x3MallocWeightBiasData(ConvolutionBaseStruct *conv) {
   return NNACL_OK;
 }
 
-int convolution_depthwise_3x3_resize(KernelBase *self) {
+int ConvolutionDepthwise3x3Resize(KernelBase *self) {
   ConvolutionBaseStruct *conv = (ConvolutionBaseStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(conv);
   int ret = ConvBasePrepare(conv);
@@ -80,7 +80,7 @@ int convolution_depthwise_3x3_resize(KernelBase *self) {
   return NNACL_OK;
 }
 
-int convolution_depthwise_3x3_prepare(KernelBase *self) {
+int ConvolutionDepthwise3x3Prepare(KernelBase *self) {
   NNACL_CHECK_FALSE(self->in_size_ < TWO_TENSOR, NNACL_INPUT_TENSOR_ERROR);
   NNACL_CHECK_FALSE(self->out_size_ < ONE_TENSOR, NNACL_OUTPUT_TENSOR_ERROR);
 
@@ -99,7 +99,7 @@ int convolution_depthwise_3x3_prepare(KernelBase *self) {
   return ConvBaseInitConvWeightBias(&conv_dw->conv_);
 }
 
-int convolution_depthwise_3x3_compute(KernelBase *self) {
+int ConvolutionDepthwise3x3Compute(KernelBase *self) {
   ConvolutionDepthwise3x3Struct *conv_dw = (ConvolutionDepthwise3x3Struct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(conv_dw);
 
@@ -131,7 +131,7 @@ int convolution_depthwise_3x3_compute(KernelBase *self) {
   return ret;
 }
 
-int convolution_depthwise_3x3_release(KernelBase *self) {
+int ConvolutionDepthwise3x3Release(KernelBase *self) {
   ConvolutionBaseStruct *conv = (ConvolutionBaseStruct *)self;
   ConvBaseRelease(conv);
   return NNACL_OK;
@@ -144,10 +144,10 @@ KernelBase *CreateConvDw3x3(ConvParameter *conv_param) {
   memset(conv_dw, 0, sizeof(ConvolutionDepthwise3x3Struct));
   conv_dw->conv_.pack_weight_ = ConvDw3x3PackWeight;
   conv_dw->conv_.malloc_weight_bias_ = ConvDw3x3MallocWeightBiasData;
-  conv_dw->conv_.base_.resize = convolution_depthwise_3x3_resize;
-  conv_dw->conv_.base_.prepare = convolution_depthwise_3x3_prepare;
-  conv_dw->conv_.base_.compute = convolution_depthwise_3x3_compute;
-  conv_dw->conv_.base_.release = convolution_depthwise_3x3_release;
+  conv_dw->conv_.base_.resize_ = ConvolutionDepthwise3x3Resize;
+  conv_dw->conv_.base_.prepare_ = ConvolutionDepthwise3x3Prepare;
+  conv_dw->conv_.base_.compute_ = ConvolutionDepthwise3x3Compute;
+  conv_dw->conv_.base_.release_ = ConvolutionDepthwise3x3Release;
 
   return (KernelBase *)conv_dw;
 }

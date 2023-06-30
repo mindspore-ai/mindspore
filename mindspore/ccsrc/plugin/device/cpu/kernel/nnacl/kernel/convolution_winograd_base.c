@@ -110,7 +110,7 @@ void ConvWinoBasePackWeight(ConvolutionBaseStruct *conv) {
   ConvWinoBaseWinogradFilterTransform(winograd, (float *)origin_weight);
 }
 
-int convolution_winograd_base_prepare(KernelBase *self) {
+int ConvolutionWinogradBasePrepare(KernelBase *self) {
   NNACL_CHECK_FALSE(self->in_size_ < TWO_TENSOR, NNACL_INPUT_TENSOR_ERROR);
   NNACL_CHECK_FALSE(self->out_size_ < ONE_TENSOR, NNACL_OUTPUT_TENSOR_ERROR);
 
@@ -251,7 +251,7 @@ void ConvWinoBaseUpdateParam(ConvParameter *param, ConvolutionWinogradBaseStruct
   param->tile_num_ = winograd->tile_num_;
 }
 
-int convolution_winograd_base_resize(KernelBase *self) {
+int ConvolutionWinogradBaseResize(KernelBase *self) {
   ConvolutionWinogradBaseStruct *winograd = (ConvolutionWinogradBaseStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(winograd);
 
@@ -280,7 +280,7 @@ int convolution_winograd_base_resize(KernelBase *self) {
   return NNACL_OK;
 }
 
-int convolution_winograd_base_compute(KernelBase *self) {
+int ConvolutionWinogradBaseCompute(KernelBase *self) {
   ConvolutionWinogradBaseStruct *winograd = (ConvolutionWinogradBaseStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(winograd);
 
@@ -301,7 +301,7 @@ int convolution_winograd_base_compute(KernelBase *self) {
   return ret;
 }
 
-int convolution_winograd_base_release(KernelBase *self) {
+int ConvolutionWinogradBaseRelease(KernelBase *self) {
   ConvolutionBaseStruct *conv = (ConvolutionBaseStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(conv);
   ConvBaseRelease(conv);
@@ -317,9 +317,9 @@ ConvolutionWinogradBaseStruct *CreateConvWinogradBase(ConvParameter *conv_param)
   winograd->config_input_output_ = ConvWinoBaseConfigInputOutput;
   winograd->conv_.init_global_variable_ = ConvWinoBaseInitGlobalVariable;
 
-  winograd->conv_.base_.prepare = convolution_winograd_base_prepare;
-  winograd->conv_.base_.resize = convolution_winograd_base_resize;
-  winograd->conv_.base_.release = convolution_winograd_base_release;
-  winograd->conv_.base_.compute = convolution_winograd_base_compute;
+  winograd->conv_.base_.prepare_ = ConvolutionWinogradBasePrepare;
+  winograd->conv_.base_.resize_ = ConvolutionWinogradBaseResize;
+  winograd->conv_.base_.release_ = ConvolutionWinogradBaseRelease;
+  winograd->conv_.base_.compute_ = ConvolutionWinogradBaseCompute;
   return (ConvolutionWinogradBaseStruct *)winograd;
 }

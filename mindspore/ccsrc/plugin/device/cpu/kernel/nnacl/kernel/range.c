@@ -23,7 +23,7 @@
 #include "nnacl/fp16/range_fp16.h"
 #endif
 
-int range_compute(KernelBase *self) {
+int RangeCompute(KernelBase *self) {
   TensorC *input = self->in_[FIRST_INPUT];
   NNACL_CHECK_NULL_RETURN_ERR(input);
   TensorC *output = self->out_[OUTPUT_INDEX];
@@ -60,10 +60,10 @@ int range_compute(KernelBase *self) {
 KernelBase *CreateRange(OpParameter *param, int data_type) {
   RangeStruct *range = (RangeStruct *)malloc(sizeof(RangeStruct));
   NNACL_CHECK_NULL_RETURN_NULL(range);
-  range->base_.release = default_release;
-  range->base_.prepare = default_prepare_1in_1out;
-  range->base_.resize = default_resize;
-  range->base_.compute = range_compute;
+  range->base_.release_ = DefaultRelease;
+  range->base_.prepare_ = DefaultPrepare1In1Out;
+  range->base_.resize_ = DefaultResize;
+  range->base_.compute_ = RangeCompute;
   return (KernelBase *)range;
 }
 

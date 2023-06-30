@@ -25,7 +25,13 @@
 #include "nnacl/fp16/exp_fp16.h"
 #endif
 
-int exp_resize(struct KernelBase *self) {
+int ExpRunImpl(void *cdata, int task_id, float l, float r) {
+  ExpStruct *exp = (ExpStruct *)cdata;
+  NNACL_CHECK_NULL_RETURN_ERR(exp);
+  return exp->exp_compute_(exp->base_.in_[0]->data_, exp->base_.out_[0]->data_, exp, task_id);
+}
+
+int ExpResize(struct KernelBase *self) {
   ExpStruct *exp = (ExpStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(exp);
   ExpParameter *param = (ExpParameter *)exp->base_.param_;
@@ -34,7 +40,7 @@ int exp_resize(struct KernelBase *self) {
   return NNACL_OK;
 }
 
-int exp_prepare(struct KernelBase *self) {
+int ExpPrepare(struct KernelBase *self) {
   ExpStruct *exp = (ExpStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(exp);
   ExpParameter *param = (ExpParameter *)exp->base_.param_;
@@ -56,27 +62,21 @@ int exp_prepare(struct KernelBase *self) {
   return NNACL_OK;
 }
 
-int exp_do_compute(void *cdata, int task_id, float l, float r) {
-  ExpStruct *exp = (ExpStruct *)cdata;
-  NNACL_CHECK_NULL_RETURN_ERR(exp);
-  return exp->ExpCompute(exp->base_.in_[0]->data_, exp->base_.out_[0]->data_, exp, task_id);
-}
-
-int exp_compute(struct KernelBase *self) {
-  return self->env_->parallel_launch(self->env_->thread_pool_, exp_do_compute, self, self->thread_nr_);
+int ExpCompute(struct KernelBase *self) {
+  return self->env_->parallel_launch(self->env_->thread_pool_, ExpRunImpl, self, self->thread_nr_);
 }
 
 KernelBase *CreateExp(OpParameter *param, int data_type) {
   ExpStruct *exp = (ExpStruct *)malloc(sizeof(ExpStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(exp);
-  exp->base_.prepare = exp_prepare;
-  exp->base_.resize = exp_resize;
-  exp->base_.release = default_release;
-  exp->base_.compute = exp_compute;
-  exp->ExpCompute = ExpFusionFp32;
+  exp->base_.prepare_ = ExpPrepare;
+  exp->base_.resize_ = ExpResize;
+  exp->base_.release_ = DefaultRelease;
+  exp->base_.compute_ = ExpCompute;
+  exp->exp_compute_ = ExpFusionFp32;
 #ifdef ENABLE_FP16
   if (data_type == kNumberTypeFloat16) {
-    exp->ExpCompute = ExpFusionFp16;
+    exp->exp_compute_ = ExpFusionFp16;
   }
 #endif
   return (KernelBase *)exp;

@@ -73,7 +73,7 @@ int ArithmeticF16DoExecute(KernelBase *base, const void *input0, const void *inp
                                              size);
 }
 
-int arithmetic_f16_resize(KernelBase *self) {
+int ArithmeticF16Resize(KernelBase *self) {
   ArithmeticF16Struct *arithmetic_f16 = (ArithmeticF16Struct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(arithmetic_f16);
   ArithmeticStruct *arithmetic = (ArithmeticStruct *)self;
@@ -102,7 +102,7 @@ int arithmetic_f16_resize(KernelBase *self) {
       self->env_->free(self->env_->allocator_, f32_data);
     }
   }
-  return arithmetic_resize(self);
+  return ArithmeticResize(self);
 }
 
 void FreeArithmeticF16Buffers(ArithmeticF16Struct *arithmetic_f16) {
@@ -115,7 +115,7 @@ void FreeArithmeticF16Buffers(ArithmeticF16Struct *arithmetic_f16) {
   }
 }
 
-int arithmetic_f16_compute(KernelBase *self) {
+int ArithmeticF16Compute(KernelBase *self) {
   ArithmeticF16Struct *arithmetic_f16 = (ArithmeticF16Struct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(arithmetic_f16);
 
@@ -144,7 +144,7 @@ int arithmetic_f16_compute(KernelBase *self) {
   arithmetic_f16->tmp_buffer_[THIRD_INPUT] =
     out_data_type == kNumberTypeFloat16 ? NULL : arithmetic_f16->arithmetic_.c_matrix_.data_;
 
-  int ret = arithmetic_compute(self);
+  int ret = ArithmeticCompute(self);
   if (ret == NNACL_OK && out_data_type == kNumberTypeFloat32) {
     NNACL_CHECK_NULL_RETURN_ERR(arithmetic_f16->arithmetic_.c_matrix_.data_);
     NNACL_CHECK_NULL_RETURN_ERR(self->out_[OUTPUT_INDEX]->data_);
@@ -168,10 +168,10 @@ KernelBase *CreateArithmeticF16(OpParameter *param, int data_type) {
   arithmetic->c_matrix_.batch_post_sum_ = NULL;
   arithmetic->broadcast_buffer_[FIRST_INPUT] = NULL;
   arithmetic->broadcast_buffer_[SECOND_INPUT] = NULL;
-  arithmetic->base_.prepare = arithmetic_prepare;
-  arithmetic->base_.resize = arithmetic_f16_resize;
-  arithmetic->base_.release = arithmetic_release;
-  arithmetic->base_.compute = arithmetic_f16_compute;
+  arithmetic->base_.prepare_ = ArithmeticPrepare;
+  arithmetic->base_.resize_ = ArithmeticF16Resize;
+  arithmetic->base_.release_ = ArithmeticRelease;
+  arithmetic->base_.compute_ = ArithmeticF16Compute;
 
   arithmetic->execute_ = ArithmeticF16DoExecute;
   arithmetic->tile_function_ = TileOneDimensionFp16;

@@ -53,7 +53,7 @@ int LogSoftmaxLastAxisRun(void *cdata, int task_id, float l, float r) {
   return NNACL_OK;
 }
 
-int log_softmax_resize(struct KernelBase *self) {
+int LogSoftmaxResize(struct KernelBase *self) {
   LogSoftmaxStruct *log_softmax = (LogSoftmaxStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(log_softmax);
 
@@ -74,7 +74,7 @@ int log_softmax_resize(struct KernelBase *self) {
   return NNACL_OK;
 }
 
-int log_softmax_compute(struct KernelBase *self) {
+int LogSoftmaxCompute(struct KernelBase *self) {
   LogSoftmaxStruct *log_softmax = (LogSoftmaxStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(log_softmax);
 
@@ -109,10 +109,10 @@ KernelBase *CreateLogSoftmax(OpParameter *param, int data_type) {
 
   log_softmax->softmax_.sum_data_ = NULL;
   log_softmax->softmax_.data_type_ = data_type;
-  log_softmax->softmax_.base_.prepare = default_prepare_1in_1out;
-  log_softmax->softmax_.base_.release = softmax_release;
-  log_softmax->softmax_.base_.resize = log_softmax_resize;
-  log_softmax->softmax_.base_.compute = log_softmax_compute;
+  log_softmax->softmax_.base_.prepare_ = DefaultPrepare1In1Out;
+  log_softmax->softmax_.base_.release_ = SoftmaxRelease;
+  log_softmax->softmax_.base_.resize_ = LogSoftmaxResize;
+  log_softmax->softmax_.base_.compute_ = LogSoftmaxCompute;
   return (KernelBase *)log_softmax;
 }
 

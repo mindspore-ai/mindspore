@@ -76,7 +76,7 @@ void ConcatF16FreeTmpBuffer(ConcatF16Struct *concat_f16) {
   concat_f16->tmp_buffer_ = NULL;
 }
 
-int concat_f16_compute(KernelBase *self) {
+int ConcatF16Compute(KernelBase *self) {
   ConcatF16Struct *concat_f16 = (ConcatF16Struct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(concat_f16);
   ConcatStruct *concat = &concat_f16->concat_;
@@ -119,10 +119,10 @@ KernelBase *CreateConcatF16(OpParameter *param, int data_type) {
   concat->inner_sizes_ = NULL;
   concat->inputs_ptr_ = NULL;
   concat->is_with_data_ = NULL;
-  concat->base_.prepare = concat_prepare;
-  concat->base_.resize = concat_resize;
-  concat->base_.release = concat_release;
-  concat->base_.compute = concat_f16_compute;
+  concat->base_.prepare_ = ConcatPepare;
+  concat->base_.resize_ = ConcatResize;
+  concat->base_.release_ = ConcatRelease;
+  concat->base_.compute_ = ConcatF16Compute;
   concat_f16->tmp_buffer_ = NULL;
   return (KernelBase *)concat;
 }

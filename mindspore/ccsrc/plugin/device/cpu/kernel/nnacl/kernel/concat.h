@@ -45,8 +45,8 @@ typedef struct ConcatStruct {
 
 KernelBase *CreateConcat(OpParameter *param, int data_type);
 int DoConcat(ConcatStruct *concat, int task_id);
-int concat_prepare(KernelBase *self);
-int concat_release(KernelBase *self);
-int concat_resize(KernelBase *self);
+int ConcatPepare(KernelBase *self);
+int ConcatRelease(KernelBase *self);
+int ConcatResize(KernelBase *self);
 
 #endif  // NNACL_KERNEL_CONCAT_H_

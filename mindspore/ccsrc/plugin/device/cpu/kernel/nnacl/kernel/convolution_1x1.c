@@ -211,7 +211,7 @@ int InitConv1x1Param(Convolution1x1Struct *conv_1x1) {
   return NNACL_OK;
 }
 
-int convolution_1x1_resize(KernelBase *self) {
+int Convolution1x1Resize(KernelBase *self) {
   Convolution1x1Struct *conv_1x1 = (Convolution1x1Struct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(conv_1x1);
 
@@ -234,7 +234,7 @@ int convolution_1x1_resize(KernelBase *self) {
   return NNACL_OK;
 }
 
-int convolution_1x1_prepare(KernelBase *self) {
+int Convolution1x1Prepare(KernelBase *self) {
   NNACL_CHECK_FALSE(self->in_size_ < TWO_TENSOR, NNACL_INPUT_TENSOR_ERROR);
   NNACL_CHECK_FALSE(self->out_size_ < ONE_TENSOR, NNACL_OUTPUT_TENSOR_ERROR);
 
@@ -269,7 +269,7 @@ int convolution_1x1_prepare(KernelBase *self) {
   return NNACL_OK;
 }
 
-int convolution_1x1_release(KernelBase *self) {
+int Convolution1x1Release(KernelBase *self) {
   Convolution1x1Struct *conv_1x1 = (Convolution1x1Struct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(conv_1x1);
   Conv1x1FreeTmpBuffer(conv_1x1);
@@ -277,7 +277,7 @@ int convolution_1x1_release(KernelBase *self) {
   return NNACL_OK;
 }
 
-int convolution_1x1_compute(KernelBase *self) {
+int Convolution1x1Compute(KernelBase *self) {
   Convolution1x1Struct *conv_1x1 = (Convolution1x1Struct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(conv_1x1);
   ConvParameter *conv_param = (ConvParameter *)self->param_;
@@ -356,10 +356,10 @@ ConvolutionBaseStruct *CreateConvolution1x1(ConvParameter *conv_param) {
   conv1x1->conv_.malloc_weight_bias_ = Conv1x1MallocWeightBiasData;
   conv1x1->conv_.pack_weight_ = Conv1x1PackWeight;
 
-  conv1x1->conv_.base_.resize = convolution_1x1_resize;
-  conv1x1->conv_.base_.prepare = convolution_1x1_prepare;
-  conv1x1->conv_.base_.release = convolution_1x1_release;
-  conv1x1->conv_.base_.compute = convolution_1x1_compute;
+  conv1x1->conv_.base_.resize_ = Convolution1x1Resize;
+  conv1x1->conv_.base_.prepare_ = Convolution1x1Prepare;
+  conv1x1->conv_.base_.release_ = Convolution1x1Release;
+  conv1x1->conv_.base_.compute_ = Convolution1x1Compute;
 
   return (ConvolutionBaseStruct *)conv1x1;
 }

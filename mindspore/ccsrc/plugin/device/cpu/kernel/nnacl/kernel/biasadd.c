@@ -85,7 +85,7 @@ int BiasRun(void *cdata, int task_id, float l, float r) {
   return NNACL_OK;
 }
 
-int biasadd_resize(struct KernelBase *self) {
+int BiasAddResize(struct KernelBase *self) {
   BiasAddStruct *bias_add = (BiasAddStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(bias_add);
 
@@ -114,17 +114,17 @@ int biasadd_resize(struct KernelBase *self) {
   return ChooseBiasThreadCuttingStrategy(self);
 }
 
-int biasadd_compute(struct KernelBase *self) {
+int BiasAddCompute(struct KernelBase *self) {
   return self->env_->parallel_launch(self->env_->thread_pool_, BiasRun, self, self->thread_nr_);
 }
 
 KernelBase *CreateBiasAdd(OpParameter *param, int data_type) {
   BiasAddStruct *bias_add = (BiasAddStruct *)malloc(sizeof(BiasAddStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(bias_add);
-  bias_add->base_.prepare = default_prepare_2in_1out;
-  bias_add->base_.resize = biasadd_resize;
-  bias_add->base_.release = default_release;
-  bias_add->base_.compute = biasadd_compute;
+  bias_add->base_.prepare_ = DefaultPrepare2In1Out;
+  bias_add->base_.resize_ = BiasAddResize;
+  bias_add->base_.release_ = DefaultRelease;
+  bias_add->base_.compute_ = BiasAddCompute;
   return (KernelBase *)bias_add;
 }
 

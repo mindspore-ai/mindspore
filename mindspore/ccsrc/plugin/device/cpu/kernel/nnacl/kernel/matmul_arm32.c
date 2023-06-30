@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 
-#ifdef ENABLE_SSE
-#include "nnacl/kernel/matmul_f32_sse.h"
-#include "nnacl/kernel/matmul_f32_base.h"
-#include "nnacl/fp32/matmul_fp32.h"
+#ifdef ENABLE_ARM32
+#include "nnacl/kernel/matmul_arm32.h"
+#include "nnacl/kernel/matmul_base.h"
 #include "nnacl/fp32/pack_fp32.h"
+#include "nnacl/fp32/matmul_fp32.h"
 
-void MatmulFp32Sse_InitGlobalVariable(MatmulFp32Struct *matmul) {
-  MatMulParameter *param = (MatMulParameter *)matmul->base_.param_;
+void MatmulARM32InitGlobalVariable(MatmulStruct *matmul) {
+  MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
   matmul->matrix_a_.need_pack_ = true;
   matmul->matrix_b_.need_pack_ = true;
-  matmul->matrix_a_pack_fun_ = param->a_transpose_ ? RowMajor2Row4MajorParallel : RowMajor2Col4MajorParallel;
-  matmul->matrix_b_pack_fun_ = param->b_transpose_ ? RowMajor2Col8MajorParallel : RowMajor2Row8MajorParallel;
-  matmul->compute_.row_tile_ = C4NUM;
-  matmul->compute_.col_tile_ = C8NUM;
-  matmul->compute_.col_min_unit_ = C8NUM;
+  matmul->matrix_a_pack_fun_ = param->a_transpose_ ? RowMajor2Row12MajorParallel : RowMajor2Col12MajorParallel;
+  matmul->matrix_b_pack_fun_ = param->b_transpose_ ? RowMajor2Col4MajorParallel : RowMajor2Row4MajorParallel;
+  matmul->compute_.row_tile_ = C12NUM;
+  matmul->compute_.col_tile_ = C4NUM;
+  matmul->compute_.col_min_unit_ = C4NUM;
 }
 
-int MatmulFp32Sse_ParallelRunByBatch(MatmulFp32Struct *matmul, int task_id) {
-  MatMulParameter *param = (MatMulParameter *)matmul->base_.param_;
+int MatmulARM32ParallelRunByBatch(MatmulStruct *matmul, int task_id) {
+  MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
   MatmulComputeParam *compute = &matmul->compute_;
   ActType act = param->act_type_;
 
@@ -47,12 +47,12 @@ int MatmulFp32Sse_ParallelRunByBatch(MatmulFp32Struct *matmul, int task_id) {
     const float *a = matmul->matrix_a_.pack_ptr_ + matmul->a_offset_[index] * compute->row_align_ * compute->deep_;
     const float *b = matmul->matrix_b_.pack_ptr_ + matmul->b_offset_[index] * compute->deep_ * compute->col_align_;
     float *c = matmul->output_data_ + index * compute->row_ * compute->col_step_;
-    float *bias = (matmul->matrix_c_.pack_ptr_ == NULL) ? NULL : matmul->matrix_c_.pack_ptr_;
 
+    float *bias = (matmul->matrix_c_.pack_ptr_ == NULL) ? NULL : matmul->matrix_c_.pack_ptr_;
     if (func_flag == 0) {
       MatMulOpt(a, b, c, bias, act, compute->deep_, compute->row_, compute->col_step_, compute->col_, OutType_Nhwc);
     } else if (func_flag == C1NUM) {
-      MatVecMulFp32Block8(a, b, c, bias, act, compute->deep_, compute->col_step_);
+      MatVecMulFp32Block4(a, b, c, bias, act, compute->deep_, compute->col_step_);
     } else {
       MatVecMulNoPackFp32(a, b, c, bias, act, compute->deep_, compute->col_step_, compute->col_step_);
     }
@@ -60,9 +60,9 @@ int MatmulFp32Sse_ParallelRunByBatch(MatmulFp32Struct *matmul, int task_id) {
   return NNACL_OK;
 }
 
-int MatmulFp32Sse_ParallelRunByOC(MatmulFp32Struct *matmul, int task_id) {
+int MatmulARM32ParallelRunByOC(MatmulStruct *matmul, int task_id) {
   NNACL_CHECK_FALSE(task_id < 0 || task_id >= matmul->base_.thread_nr_, NNACL_ERR);
-  MatMulParameter *param = (MatMulParameter *)matmul->base_.param_;
+  MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
   MatmulComputeParam *compute = &matmul->compute_;
   ActType act = param->act_type_;
 
@@ -90,7 +90,7 @@ int MatmulFp32Sse_ParallelRunByOC(MatmulFp32Struct *matmul, int task_id) {
     if (func_flag == 0) {
       MatMulOpt(a, b, c, bias, act, compute->deep_, compute->row_, compute_oc, compute->col_, OutType_Nhwc);
     } else if (func_flag == C1NUM) {
-      MatVecMulFp32Block8(a, b, c, bias, act, compute->deep_, compute_oc);
+      MatVecMulFp32Block4(a, b, c, bias, act, compute->deep_, compute_oc);
     } else {
       MatVecMulNoPackFp32(a, b, c, bias, act, compute->deep_, compute_oc, compute->col_step_);
     }
@@ -98,13 +98,13 @@ int MatmulFp32Sse_ParallelRunByOC(MatmulFp32Struct *matmul, int task_id) {
   return NNACL_OK;
 }
 
-KernelBase *CreateMatmulFp32Sse() {
-  MatmulFp32Struct *matmul = (MatmulFp32Struct *)CreateMatmulFp32Base();
+KernelBase *CreateMatmulARM32() {
+  MatmulStruct *matmul = (MatmulStruct *)CreateMatmulBase();
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(matmul);
   matmul->matmul_type_ = kNotImplemented;
-  matmul->init_global_varibale_ = MatmulFp32Sse_InitGlobalVariable;
-  matmul->parallel_run_by_oc_ = MatmulFp32Sse_ParallelRunByOC;
-  matmul->parallel_run_by_batch_ = MatmulFp32Sse_ParallelRunByBatch;
+  matmul->init_global_varibale_ = MatmulARM32InitGlobalVariable;
+  matmul->parallel_run_by_batch_ = MatmulARM32ParallelRunByBatch;
+  matmul->parallel_run_by_oc_ = MatmulARM32ParallelRunByOC;
   return (KernelBase *)matmul;
 }
 #endif
