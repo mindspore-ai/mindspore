@@ -1112,12 +1112,12 @@ def jit_class(cls):
         >>> print(out)
         20
     """
-
+    from mindspore import nn
     # Check if cls is of type class.
     if not inspect.isclass(cls):
         raise TypeError(f'Decorator jit_class can only be used for class type, but got {cls}.')
     # Check if cls is nn.Cell.
-    if issubclass(cls, ms.nn.Cell):
+    if issubclass(cls, nn.Cell):
         raise TypeError(f"Decorator jit_class is used for user-defined classes and cannot be used for nn.Cell: {cls}.")
     setattr(cls, '__ms_class__', True)
     return cls

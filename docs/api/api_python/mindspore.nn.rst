@@ -21,6 +21,7 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.GraphCell
     mindspore.nn.LossBase
     mindspore.nn.Optimizer
+    mindspore.nn.optim_ex.Optimizer
 
 容器
 -----------
@@ -386,7 +387,7 @@ LRScheduler类
     net = LeNet5()
     loss_fn = nn.MAELoss()
     optimizer = nn.optim_ex.Adam(net.parameters(), lr=0.1, momentum=0.9)
-    scheduler = nn.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
+    scheduler = nn.StepLR(optimizer, step_size=30, gamma=0.1)
     def forward_fn(data, label):
         logits = net(data)
         loss = loss_fn(logits, label)
@@ -407,8 +408,9 @@ LRScheduler类
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.nn.lr_scheduler.LinearLR
-    mindspore.nn.lr_scheduler.StepLR
+    mindspore.nn.StepLR
+    mindspore.nn.LinearLR
+    mindspore.nn.LRScheduler
 
 图像处理层
 -----------

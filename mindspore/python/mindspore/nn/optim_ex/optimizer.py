@@ -34,7 +34,8 @@ class Optimizer(Cell):
     r"""Base class for all optimizers.
 
     .. warning::
-        This is an experimental API that is subject to change.
+        This is an experimental optimizer API that is subject to change.
+        This module must be used with lr scheduler module in `nn.lr_scheduler`.
 
     Args:
         params (Union[list(Parameter), list(dict)]): an iterable of :class:`Parameter` s or

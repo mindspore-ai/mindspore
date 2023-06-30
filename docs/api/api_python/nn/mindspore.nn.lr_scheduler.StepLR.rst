@@ -1,7 +1,7 @@
-mindspore.nn.lr_scheduler.StepLR
+mindspore.nn.StepLR
 ==================================
 
-.. py:class:: mindspore.nn.lr_scheduler.StepLR(optimizer, step_size, gamma=0.5, last_epoch=-1, verbose=False)
+.. py:class:: mindspore.nn.StepLR(optimizer, step_size, gamma=0.5, last_epoch=-1, verbose=False)
 
     每 `step_size` 个epoch按 `gamma` 衰减每个参数组的学习率。`StepLR` 对于学习率的衰减可能与外部对于学习率的改变同时发生。
 
