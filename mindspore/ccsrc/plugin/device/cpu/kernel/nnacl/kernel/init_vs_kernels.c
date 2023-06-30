@@ -37,6 +37,7 @@
 #include "nnacl/kernel/non_zero.h"
 #include "nnacl/kernel/nllloss.h"
 #include "nnacl/kernel/prior_box.h"
+#include "nnacl/kernel/pad.h"
 #include "nnacl/kernel/reshape.h"
 #include "nnacl/kernel/range.h"
 #include "nnacl/kernel/rank.h"
@@ -97,10 +98,11 @@ void InitVSKernelF16(KernelCreator **creators) {
   creators[PrimType_LogSoftmax][REGIST_DT(kNumberTypeFloat16)] = CreateLogSoftmax;
   creators[PrimType_LogicalNot][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_Maximum][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
-  creators[PrimType_Neg][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_Minimum][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_MulFusion][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
+  creators[PrimType_Neg][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_NotEqual][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticCompareF16;
+  creators[PrimType_PadFusion][REGIST_DT(kNumberTypeFloat16)] = CreatePad;
   creators[PrimType_Reshape][REGIST_DT(kNumberTypeFloat16)] = CreateReshape;
   creators[PrimType_RealDiv][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticF16;
   creators[PrimType_ReduceFusion][REGIST_DT(kNumberTypeFloat16)] = CreateReduceF16;
@@ -222,6 +224,7 @@ void InitVSKernelI(KernelCreator **creators) {
   creators[PrimType_NotEqual][REGIST_DT(kNumberTypeInt32)] = CreateArithmeticCompare;
   creators[PrimType_NotEqual][REGIST_DT(kNumberTypeInt64)] = CreateArithmeticCompare;
   creators[PrimType_NonZero][REGIST_DT(kNumberTypeBool)] = CreateNonZero;
+  creators[PrimType_PadFusion][REGIST_DT(kNumberTypeFloat32)] = CreatePad;
   creators[PrimType_PriorBox][REGIST_DT(kNumberTypeFloat32)] = CreatePriorBox;
   creators[PrimType_PriorBox][REGIST_DT(kNumberTypeInt8)] = CreatePriorBox;
 }

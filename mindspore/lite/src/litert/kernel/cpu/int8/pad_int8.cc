@@ -33,22 +33,22 @@ constexpr size_t kMirrorPadInputSize = 2;
 }
 
 void PadInt8CPUKernel::FreeQuantParam() {
-  if (pad_param_->pad_quant_arg_.in_quant_args_ != nullptr) {
-    free(pad_param_->pad_quant_arg_.in_quant_args_);
-    pad_param_->pad_quant_arg_.in_quant_args_ = nullptr;
+  if (pad_quant_arg_.in_quant_args_ != nullptr) {
+    free(pad_quant_arg_.in_quant_args_);
+    pad_quant_arg_.in_quant_args_ = nullptr;
   }
-  if (pad_param_->pad_quant_arg_.out_quanr_args_ != nullptr) {
-    free(pad_param_->pad_quant_arg_.out_quanr_args_);
-    pad_param_->pad_quant_arg_.out_quanr_args_ = nullptr;
+  if (pad_quant_arg_.out_quanr_args_ != nullptr) {
+    free(pad_quant_arg_.out_quanr_args_);
+    pad_quant_arg_.out_quanr_args_ = nullptr;
   }
-  if (pad_param_->pad_quant_arg_.constant_value_ != nullptr) {
-    free(pad_param_->pad_quant_arg_.constant_value_);
-    pad_param_->pad_quant_arg_.constant_value_ = nullptr;
+  if (pad_quant_arg_.constant_value_ != nullptr) {
+    free(pad_quant_arg_.constant_value_);
+    pad_quant_arg_.constant_value_ = nullptr;
   }
 }
 
 int PadInt8CPUKernel::SetQuantParam() {
-  PadQuantArg *pad_quant_args = &pad_param_->pad_quant_arg_;
+  PadQuantArg *pad_quant_args = &pad_quant_arg_;
   pad_quant_args->in_quant_args_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
   if (pad_quant_args->in_quant_args_ == nullptr) {
     return RET_MEMORY_FAILED;
@@ -173,23 +173,23 @@ int PadInt8CPUKernel::HandleMirrorPad() {
   if (ret != RET_OK) {
     return ret;
   }
-  pad_param_->mirror_offset_ = pad_param_->pad_mode_ == static_cast<int>(schema::PaddingMode_REFLECT) ? 1 : 0;
+  mirror_offset_ = pad_param_->pad_mode_ == static_cast<int>(schema::PaddingMode_REFLECT) ? 1 : 0;
   return RET_OK;
 }
 
 int PadInt8CPUKernel::CalculateStrides() {
-  pad_param_->in_strides[COMM_SHAPE_SIZE - 1] = 1;
+  in_strides[COMM_SHAPE_SIZE - 1] = 1;
   for (auto i = COMM_SHAPE_SIZE - 2; i >= 0; --i) {
-    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(in_dims_[i + 1], pad_param_->in_strides[i + 1]), RET_ERROR, "mul overflow");
-    pad_param_->in_strides[i] = in_dims_[i + 1] * pad_param_->in_strides[i + 1];
+    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(in_dims_[i + 1], in_strides[i + 1]), RET_ERROR, "mul overflow");
+    in_strides[i] = in_dims_[i + 1] * in_strides[i + 1];
   }
   for (auto i = 0; i < COMM_SHAPE_SIZE; ++i) {
     out_dims_[i] = in_dims_[i] + pad_param_->paddings_[i * 2] + pad_param_->paddings_[i * 2 + 1];
   }
-  pad_param_->out_strides[COMM_SHAPE_SIZE - 1] = 1;
+  out_strides[COMM_SHAPE_SIZE - 1] = 1;
   for (auto i = COMM_SHAPE_SIZE - 2; i >= 0; --i) {
-    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(out_dims_[i + 1], pad_param_->out_strides[i + 1]), RET_ERROR, "mul overflow");
-    pad_param_->out_strides[i] = out_dims_[i + 1] * pad_param_->out_strides[i + 1];
+    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(out_dims_[i + 1], out_strides[i + 1]), RET_ERROR, "mul overflow");
+    out_strides[i] = out_dims_[i + 1] * out_strides[i + 1];
   }
   return RET_OK;
 }
@@ -210,17 +210,17 @@ int PadInt8CPUKernel::ExtendPaddings(int *paddings, int length, const int *ori_p
 int PadInt8CPUKernel::RunMirrorPadImpl(int task_id) {
   auto input = in_tensors_.at(0);
   auto output = out_tensors_.at(0);
-  auto input_data = reinterpret_cast<int8_t *>(input->MutableData());
-  CHECK_NULL_RETURN(input_data);
-  auto output_data = reinterpret_cast<int8_t *>(output->MutableData());
-  CHECK_NULL_RETURN(output_data);
+  auto in = reinterpret_cast<int8_t *>(input->MutableData());
+  CHECK_NULL_RETURN(in);
+  auto out = reinterpret_cast<int8_t *>(output->MutableData());
+  CHECK_NULL_RETURN(out);
 
   MS_CHECK_FALSE_MSG(op_parameter_->thread_num_ == 0, RET_ERROR, "div zero");
   MS_CHECK_GT(output->ElementsNum(), 0, RET_ERROR);
   int unit = UP_DIV(output->ElementsNum(), op_parameter_->thread_num_);
   int begin = unit * task_id;
   int end = MSMIN(begin + unit, output->ElementsNum());
-  MirrorPadInt8(input_data, output_data, in_dims_, pad_param_, begin, end);
+  MirrorPadInt8(in, out, in_dims_, mirror_offset_, in_strides, out_strides, pad_param_->paddings_, begin, end);
   return RET_OK;
 }
 
@@ -298,7 +298,7 @@ int PadInt8CPUKernel::Run() {
     return RET_OK;
   }
   if (pad_param_->pad_mode_ == static_cast<int>(schema::PaddingMode_CONSTANT)) {
-    memset(out_data_, pad_param_->pad_quant_arg_.constant_value_[0],
+    memset(out_data_, pad_quant_arg_.constant_value_[0],
            static_cast<size_t>(out_tensors_[0]->ElementsNum()) * sizeof(int8_t));
     error_code = ParallelLaunch(this->ms_context_, PadInt8Impl, this, op_parameter_->thread_num_);
     if (error_code != RET_OK) {

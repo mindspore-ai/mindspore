@@ -259,11 +259,9 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const LeakyReluQua
                  relu_quant_arg.input_dim_, relu_quant_arg.element_num, relu_quant_arg.thread_num_);
 }
 
-void NNaclInt8Serializer::CodeStruct(const std::string &name, const PadParameter &batchnorm_parameter) {
-  CodeBaseStruct("PadParameter", name, batchnorm_parameter.op_parameter_, ToString(batchnorm_parameter.paddings_),
-                 batchnorm_parameter.pad_mode_, batchnorm_parameter.constant_value_, batchnorm_parameter.padding_length,
-                 ToString(batchnorm_parameter.in_strides), ToString(batchnorm_parameter.out_strides),
-                 batchnorm_parameter.mirror_offset_, "{in_quant_args, out_quant_args, constant_value}");
+void NNaclInt8Serializer::CodeStruct(const std::string &name, const PadParameter &pad_parameter) {
+  CodeBaseStruct("PadParameter", name, pad_parameter.op_parameter_, ToString(pad_parameter.paddings_),
+                 pad_parameter.pad_mode_, pad_parameter.constant_value_, pad_parameter.padding_length);
 }
 
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const GatherQuantArg &batchnorm_parameter) {

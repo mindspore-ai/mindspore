@@ -28,24 +28,11 @@ typedef struct PadQuantArg {
 } PadQuantArg;
 
 typedef struct PadParameter {
-  // Primitive parameter
   OpParameter op_parameter_;
   int paddings_[MAX_PAD_SIZE];
   int pad_mode_;
   float constant_value_;
-  // shape correlative
   int padding_length;
-  // other parameter
-  int in_strides[DEFAULT_PAD_NDIMS];
-  int out_strides[DEFAULT_PAD_NDIMS];
-  int mirror_offset_;
-  PadQuantArg pad_quant_arg_;
 } PadParameter;
-
-typedef struct MirrorPadBlock {
-  int out_offset_;
-  int out_stride_[DEFAULT_PAD_NDIMS];
-  int size_[DEFAULT_PAD_NDIMS];
-} MirrorPadBlock;
 
 #endif  // NNACL_PAD_PARAMETER_H_

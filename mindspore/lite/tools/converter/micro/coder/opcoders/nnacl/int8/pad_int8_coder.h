@@ -32,19 +32,17 @@ class PadInt8Coder final : public OperatorCoder {
       : OperatorCoder(in_tensors, out_tensors, node, node_index, target) {}
 
   ~PadInt8Coder() override {
-    if (pad_param_) {
-      if (pad_param_->pad_quant_arg_.in_quant_args_ != nullptr) {
-        free(pad_param_->pad_quant_arg_.in_quant_args_);
-        pad_param_->pad_quant_arg_.in_quant_args_ = nullptr;
-      }
-      if (pad_param_->pad_quant_arg_.out_quanr_args_ != nullptr) {
-        free(pad_param_->pad_quant_arg_.out_quanr_args_);
-        pad_param_->pad_quant_arg_.out_quanr_args_ = nullptr;
-      }
-      if (pad_param_->pad_quant_arg_.constant_value_ != nullptr) {
-        free(pad_param_->pad_quant_arg_.constant_value_);
-        pad_param_->pad_quant_arg_.constant_value_ = nullptr;
-      }
+    if (pad_quant_arg_.in_quant_args_ != nullptr) {
+      free(pad_quant_arg_.in_quant_args_);
+      pad_quant_arg_.in_quant_args_ = nullptr;
+    }
+    if (pad_quant_arg_.out_quanr_args_ != nullptr) {
+      free(pad_quant_arg_.out_quanr_args_);
+      pad_quant_arg_.out_quanr_args_ = nullptr;
+    }
+    if (pad_quant_arg_.constant_value_ != nullptr) {
+      free(pad_quant_arg_.constant_value_);
+      pad_quant_arg_.constant_value_ = nullptr;
     }
   }
 
@@ -62,6 +60,11 @@ class PadInt8Coder final : public OperatorCoder {
   PadParameter *pad_param_ = nullptr;
   int in_dims_[COMM_SHAPE_SIZE] = {0};
   int out_dims_[COMM_SHAPE_SIZE] = {0};
+
+  int in_strides[DEFAULT_PAD_NDIMS];
+  int out_strides[DEFAULT_PAD_NDIMS];
+  int mirror_offset_;
+  PadQuantArg pad_quant_arg_;
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_INT8_PAD_INT8_CODER_H_

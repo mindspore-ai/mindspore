@@ -130,8 +130,7 @@ TEST_F(TestActivationFp32, HSwishFp32) {
   op_param.op_parameter_.thread_num_ = ctx.thread_num_;
   ASSERT_EQ(lite::RET_OK, ctx.Init());
 
-  auto kernel =
-    nnacl::NNACLKernelRegistry(reinterpret_cast<OpParameter *>(&op_param), inputs_tensor, outputs_tensor, &ctx, desc);
+  auto kernel = nnacl::NNACLKernelRegistry(&op_param.op_parameter_, inputs_tensor, outputs_tensor, &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
   auto ret = kernel->Prepare();
