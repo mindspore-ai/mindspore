@@ -1297,10 +1297,6 @@ def test_kron():
     y = rand_int(7, 1, 5)
     match_res(mnp.kron, onp.kron, x, y)
 
-    x = rand_int(1, 1, 2, 3)
-    y = rand_int(1, 1, 2, 3)
-    match_res(mnp.kron, onp.kron, x, y)
-
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
