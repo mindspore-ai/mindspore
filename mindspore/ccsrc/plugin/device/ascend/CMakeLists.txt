@@ -131,9 +131,6 @@ if(MODE_ASCEND_ALL)
             ${PROFILING} ${ACL_OP_COMPILER} ${CANN_KB} ${COMPRESS} ${OPSKERNEL} ${AICPU_ASCEND_ENGINE}
             ${HOST_CPU_ENGINE} ${AICPU_TF_ENGINE})
     target_link_libraries(mindspore_ascend PRIVATE ${adump_server})
-    if(${ASCEND_VERSION} STREQUAL "910" OR ${ASCEND_VERSION} STREQUAL "910b")
-        target_link_libraries(mindspore_ascend PRIVATE ${AOE_TUNING})
-    endif()
 endif()
 
 if(ENABLE_D)
