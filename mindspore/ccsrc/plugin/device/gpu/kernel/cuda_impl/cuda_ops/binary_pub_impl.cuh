@@ -21,6 +21,14 @@
 #include "include/cuda_fp16.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/binary_types.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/binary_common.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/elementswise_pub_impl.cuh"
+
+constexpr uint kThreadsPerBlock = 512;
+
+template <typename T, size_t VecSize>
+struct Vec {
+  T data[VecSize];
+};
 
 struct BinaryBroadcastStrideInfo {
   size_t in0_stride[8];
@@ -28,59 +36,13 @@ struct BinaryBroadcastStrideInfo {
   size_t out_stride[8];
 };
 
-template <typename T, size_t VecSize>
-struct Vec {
-  T data[VecSize];
-};
-constexpr size_t kMaxVecBytes = 128 / 8;
-constexpr size_t kMaxVecSize = 4;
-constexpr size_t MsMin(size_t a, size_t b) { return a < b ? a : b; }
-
-template <typename T>
-constexpr size_t VecSize() {
-  return MsMin(kMaxVecBytes / sizeof(T), kMaxVecSize);
-}
-
-template <typename T, typename U, typename... Args>
-constexpr size_t VecSize() {
-  return MsMin(VecSize<T>(), VecSize<U, Args...>());
-}
 enum class ScalarOption {
   NoScalar = 0,
   In0Scalar = 1,
   In1Scalar = 2,
 };
 
-template <BinaryOpType OP, typename In0_t, typename In1_t, typename Out_t, size_t vec_num>
-__device__ void ApplyVec(BinaryFunc<OP, In0_t, In1_t, Out_t> func, ScalarOption scalar_option, In0_t *in0_addr,
-                         In1_t *in1_addr, Out_t *out_addr) {
-  Vec<Out_t, vec_num> out_vec;
-  if (scalar_option == ScalarOption::NoScalar) {
-    Vec<In0_t, vec_num> in0_vec = reinterpret_cast<Vec<In0_t, vec_num> *>(in0_addr)[0];
-    Vec<In1_t, vec_num> in1_vec = reinterpret_cast<Vec<In1_t, vec_num> *>(in1_addr)[0];
-#pragma unroll
-    for (size_t idx = 0; idx < vec_num; ++idx) {
-      out_vec.data[idx] = func(in0_vec.data[idx], in1_vec.data[idx]);
-    }
-  } else if (scalar_option == ScalarOption::In0Scalar) {
-    In0_t in0_data = in0_addr[0];
-    Vec<In1_t, vec_num> in1_vec = reinterpret_cast<Vec<In1_t, vec_num> *>(in1_addr)[0];
-#pragma unroll
-    for (size_t idx = 0; idx < vec_num; ++idx) {
-      out_vec.data[idx] = func(in0_data, in1_vec.data[idx]);
-    }
-  } else {
-    Vec<In0_t, vec_num> in0_vec = reinterpret_cast<Vec<In0_t, vec_num> *>(in0_addr)[0];
-    In1_t in1_data = in1_addr[0];
-#pragma unroll
-    for (size_t idx = 0; idx < vec_num; ++idx) {
-      out_vec.data[idx] = func(in0_vec.data[idx], in1_data);
-    }
-  }
-  Vec<Out_t, vec_num> *out_data = reinterpret_cast<Vec<Out_t, vec_num> *>(out_addr);
-  out_data[0] = out_vec;
-}
-static __device__ Vec<size_t, 2> CalInposByOutPos(size_t out_pos, size_t dim_size,
+static __device__ Vec<size_t, 2> CalInPosByOutPos(size_t out_pos, size_t dim_size,
                                                   const BinaryBroadcastStrideInfo &strides) {
   Vec<size_t, 2> in_pos = {0, 0};
   size_t tmp_idx = 0;
@@ -92,67 +54,45 @@ static __device__ Vec<size_t, 2> CalInposByOutPos(size_t out_pos, size_t dim_siz
   }
   return in_pos;
 }
+
 template <BinaryOpType OP, typename In0_t, typename In1_t, typename Out_t>
-__global__ void BinaryWithBroadcastNoVecCuda(BinaryFunc<OP, In0_t, In1_t, Out_t> func, size_t dim_size,
-                                             size_t total_threads, BinaryBroadcastStrideInfo strides, In0_t *in0,
-                                             In1_t *in1, Out_t *out) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < total_threads; pos += blockDim.x * gridDim.x) {
-    Vec<size_t, 2> in_pos = CalInposByOutPos(pos, dim_size, strides);
+__global__ void BinaryWithBroadcastKernel(BinaryFunc<OP, In0_t, In1_t, Out_t> func, size_t dim_size, size_t out_num,
+                                          BinaryBroadcastStrideInfo strides, In0_t *in0, In1_t *in1, Out_t *out) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < out_num; pos += blockDim.x * gridDim.x) {
+    Vec<size_t, 2> in_pos = CalInPosByOutPos(pos, dim_size, strides);
     out[pos] = func(in0[in_pos.data[0]], in1[in_pos.data[1]]);
   }
 }
+
 template <BinaryOpType OP, typename In0_t, typename In1_t, typename Out_t>
-__global__ void BinaryWithoutBroadcastNoVecCuda(BinaryFunc<OP, In0_t, In1_t, Out_t> func, ScalarOption scalar_option,
-                                                size_t total_threads, In0_t *in0, In1_t *in1, Out_t *out) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < total_threads; pos += blockDim.x * gridDim.x) {
-    In0_t in0_data = (scalar_option == ScalarOption::In0Scalar) ? in0[0] : in0[pos];
-    In1_t in1_data = (scalar_option == ScalarOption::In1Scalar) ? in1[0] : in1[pos];
-    out[pos] = func(in0_data, in1_data);
+__global__ void BinaryWithoutBroadcastIn0Scalar(BinaryFunc<OP, In0_t, In1_t, Out_t> func, size_t out_num, In0_t *in0,
+                                                In1_t *in1, Out_t *out) {
+  In0_t in0_scalar = in0[0];
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < out_num; pos += blockDim.x * gridDim.x) {
+    out[pos] = func(in0_scalar, in1[pos]);
   }
 }
-template <BinaryOpType OP, typename In0_t, typename In1_t, typename Out_t, size_t vec_num>
-__global__ void BinaryBroadcastVecWithoutTailCuda(BinaryFunc<OP, In0_t, In1_t, Out_t> func, ScalarOption scalar_option,
-                                                  size_t dim_size, size_t total_threads,
-                                                  BinaryBroadcastStrideInfo strides, In0_t *in0, In1_t *in1,
-                                                  Out_t *out) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < total_threads; pos += blockDim.x * gridDim.x) {
-    size_t out_pos = pos * vec_num;
-    Vec<size_t, 2> in_pos = CalInposByOutPos(out_pos, dim_size, strides);
-    ApplyVec<OP, In0_t, In1_t, Out_t, vec_num>(func, scalar_option, in0 + in_pos.data[0], in1 + in_pos.data[1],
-                                               out + out_pos);
+
+template <BinaryOpType OP, typename In0_t, typename In1_t, typename Out_t>
+__global__ void BinaryWithoutBroadcastIn1Scalar(BinaryFunc<OP, In0_t, In1_t, Out_t> func, size_t out_num, In0_t *in0,
+                                                In1_t *in1, Out_t *out) {
+  In1_t in1_scalar = in1[0];
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < out_num; pos += blockDim.x * gridDim.x) {
+    out[pos] = func(in0[pos], in1_scalar);
   }
 }
-template <BinaryOpType OP, typename In0_t, typename In1_t, typename Out_t, size_t vec_num>
-__global__ void BinaryBroadcastVecWithTailCuda(BinaryFunc<OP, In0_t, In1_t, Out_t> func, ScalarOption scalar_option,
-                                               size_t dim_size, size_t total_threads, size_t step, size_t tail_num,
-                                               BinaryBroadcastStrideInfo strides, In0_t *in0, In1_t *in1, Out_t *out) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < total_threads; pos += blockDim.x * gridDim.x) {
-    size_t out_pos = pos * vec_num + pos / step * tail_num;
-    Vec<size_t, 2> in_pos = CalInposByOutPos(out_pos, dim_size, strides);
-    if ((pos + 1) % step != 0) {
-      ApplyVec<OP, In0_t, In1_t, Out_t, vec_num>(func, scalar_option, in0 + in_pos.data[0], in1 + in_pos.data[1],
-                                                 out + out_pos);
-    } else {
-      switch (tail_num) {
-        case 1:
-          ApplyVec<OP, In0_t, In1_t, Out_t, vec_num + 1>(func, scalar_option, in0 + in_pos.data[0],
-                                                         in1 + in_pos.data[1], out + out_pos);
-          break;
-        case 2:
-          ApplyVec<OP, In0_t, In1_t, Out_t, vec_num + 2>(func, scalar_option, in0 + in_pos.data[0],
-                                                         in1 + in_pos.data[1], out + out_pos);
-          break;
-        case 3:
-          ApplyVec<OP, In0_t, In1_t, Out_t, vec_num + 3>(func, scalar_option, in0 + in_pos.data[0],
-                                                         in1 + in_pos.data[1], out + out_pos);
-          break;
-      }
-    }
+
+template <BinaryOpType OP, typename In0_t, typename In1_t, typename Out_t>
+__global__ void BinaryWithoutBroadcastNoScalar(BinaryFunc<OP, In0_t, In1_t, Out_t> func, size_t out_num, In0_t *in0,
+                                               In1_t *in1, Out_t *out) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < out_num; pos += blockDim.x * gridDim.x) {
+    out[pos] = func(in0[pos], in1[pos]);
   }
 }
+
 static BinaryBroadcastStrideInfo BinaryBroadcastCalStride(const size_t dim_size, const std::vector<int64_t> &in0_shape,
                                                           const std::vector<int64_t> &in1_shape,
-                                                          const std::vector<int64_t> &out_shape, const size_t vec_num) {
+                                                          const std::vector<int64_t> &out_shape) {
   BinaryBroadcastStrideInfo strides;
   strides.in0_stride[dim_size - 1] = 1;
   strides.in1_stride[dim_size - 1] = 1;
@@ -168,67 +108,39 @@ static BinaryBroadcastStrideInfo BinaryBroadcastCalStride(const size_t dim_size,
   }
   return strides;
 }
+
 template <BinaryOpType OP, typename In0_t, typename In1_t, typename Out_t>
-cudaError_t BinaryWithBroadcast(BinaryFunc<OP, In0_t, In1_t, Out_t> func, ScalarOption scalar_option,
-                                const size_t out_num, const std::vector<int64_t> &in0_shape,
-                                const std::vector<int64_t> &in1_shape, const std::vector<int64_t> &out_shape,
-                                In0_t *in0, In1_t *in1, Out_t *out, size_t device_id, cudaStream_t cuda_stream) {
-  size_t vec_thread_num = 8 * 8 * 32;
+cudaError_t BinaryWithBroadcast(BinaryFunc<OP, In0_t, In1_t, Out_t> func, size_t out_num,
+                                const std::vector<int64_t> &in0_shape, const std::vector<int64_t> &in1_shape,
+                                const std::vector<int64_t> &out_shape, In0_t *in0, In1_t *in1, Out_t *out,
+                                size_t device_id, cudaStream_t cuda_stream) {
   const size_t dim_size = out_shape.size();
-  constexpr size_t vec_num = VecSize<In0_t, In1_t, Out_t>();
-  size_t total_threads = out_num / out_shape.back();
-  if (out_num > vec_thread_num && vec_num > 1) {
-    if (out_shape.back() == 2) {
-      BinaryBroadcastStrideInfo strides = BinaryBroadcastCalStride(dim_size, in0_shape, in1_shape, out_shape, 2);
-      size_t thread_num = total_threads > 1024 ? 1024 : total_threads;
-      BinaryBroadcastVecWithoutTailCuda<OP, In0_t, In1_t, Out_t, 2>
-        <<<CUDA_BLOCKS_CAL(device_id, total_threads, thread_num), thread_num, 0, cuda_stream>>>(
-          func, scalar_option, dim_size, total_threads, strides, in0, in1, out);
-      CHECK_CUDA_LAUNCH_SUCCESS();
-    } else if (out_shape.back() == 3) {
-      BinaryBroadcastStrideInfo strides = BinaryBroadcastCalStride(dim_size, in0_shape, in1_shape, out_shape, 3);
-      size_t total_threads = out_shape[0] * strides.out_stride[0];
-      size_t thread_num = total_threads > 1024 ? 1024 : total_threads;
-      BinaryBroadcastVecWithoutTailCuda<OP, In0_t, In1_t, Out_t, 3>
-        <<<CUDA_BLOCKS_CAL(device_id, total_threads, thread_num), thread_num, 0, cuda_stream>>>(
-          func, scalar_option, dim_size, total_threads, strides, in0, in1, out);
-      CHECK_CUDA_LAUNCH_SUCCESS();
-    } else {
-      BinaryBroadcastStrideInfo strides = BinaryBroadcastCalStride(dim_size, in0_shape, in1_shape, out_shape, vec_num);
-      size_t step = out_shape.back() / vec_num;
-      total_threads *= step;
-      size_t tail_num = out_shape.back() % vec_num;
-      size_t thread_num = total_threads > 1024 ? 1024 : total_threads;
-      if (tail_num == 0) {
-        BinaryBroadcastVecWithoutTailCuda<OP, In0_t, In1_t, Out_t, vec_num>
-          <<<CUDA_BLOCKS_CAL(device_id, total_threads, thread_num), thread_num, 0, cuda_stream>>>(
-            func, scalar_option, dim_size, total_threads, strides, in0, in1, out);
-        CHECK_CUDA_LAUNCH_SUCCESS();
-      } else {
-        BinaryBroadcastVecWithTailCuda<OP, In0_t, In1_t, Out_t, vec_num>
-          <<<CUDA_BLOCKS_CAL(device_id, total_threads, thread_num), thread_num, 0, cuda_stream>>>(
-            func, scalar_option, dim_size, total_threads, step, tail_num, strides, in0, in1, out);
-        CHECK_CUDA_LAUNCH_SUCCESS();
-      }
-    }
-  } else {
-    BinaryBroadcastStrideInfo strides = BinaryBroadcastCalStride(dim_size, in0_shape, in1_shape, out_shape, 1);
-    total_threads *= out_shape.back();
-    size_t thread_num = total_threads > 1024 ? 1024 : total_threads;
-    BinaryWithBroadcastNoVecCuda<OP, In0_t, In1_t, Out_t>
-      <<<CUDA_BLOCKS_CAL(device_id, total_threads, thread_num), thread_num, 0, cuda_stream>>>(
-        func, dim_size, total_threads, strides, in0, in1, out);
-    CHECK_CUDA_LAUNCH_SUCCESS();
-  }
+  BinaryBroadcastStrideInfo strides = BinaryBroadcastCalStride(dim_size, in0_shape, in1_shape, out_shape);
+  size_t thread_num = out_num > kThreadsPerBlock ? kThreadsPerBlock : out_num;
+  BinaryWithBroadcastKernel<OP, In0_t, In1_t, Out_t>
+    <<<CUDA_BLOCKS_CAL(device_id, out_num, thread_num), thread_num, 0, cuda_stream>>>(func, dim_size, out_num, strides,
+                                                                                      in0, in1, out);
+  CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
 template <BinaryOpType OP, typename In0_t, typename In1_t, typename Out_t>
-cudaError_t BinaryWithoutBroadcast(BinaryFunc<OP, In0_t, In1_t, Out_t> func, ScalarOption scalar_option, size_t nums,
+cudaError_t BinaryWithoutBroadcast(BinaryFunc<OP, In0_t, In1_t, Out_t> func, ScalarOption scalar_option, size_t out_num,
                                    Out_t *out, In0_t *in0, In1_t *in1, size_t device_id, cudaStream_t cuda_stream) {
-  size_t thread_num = nums > 1024 ? 1024 : nums;
-  BinaryWithoutBroadcastNoVecCuda<OP, In0_t, In1_t, Out_t>
-    <<<CUDA_BLOCKS_CAL(device_id, nums, thread_num), thread_num, 0, cuda_stream>>>(func, scalar_option, nums, in0, in1,
-                                                                                   out);
+  size_t thread_num = out_num > kThreadsPerBlock ? kThreadsPerBlock : out_num;
+  if (scalar_option == ScalarOption::In0Scalar) {
+    BinaryWithoutBroadcastIn0Scalar<OP, In0_t, In1_t, Out_t>
+      <<<CUDA_BLOCKS_CAL(device_id, out_num, thread_num), thread_num, 0, cuda_stream>>>(func, out_num, in0, in1, out);
+  } else if (scalar_option == ScalarOption::In1Scalar) {
+    BinaryWithoutBroadcastIn1Scalar<OP, In0_t, In1_t, Out_t>
+      <<<CUDA_BLOCKS_CAL(device_id, out_num, thread_num), thread_num, 0, cuda_stream>>>(func, out_num, in0, in1, out);
+  } else {
+    if (out_num < 32 * kThreadsPerBlock) {
+      BinaryWithoutBroadcastNoScalar<OP, In0_t, In1_t, Out_t>
+        <<<CUDA_BLOCKS_CAL(device_id, out_num, thread_num), thread_num, 0, cuda_stream>>>(func, out_num, in0, in1, out);
+    } else {
+      cuda::elementwise::Binary(func, out_num, out, in0, in1, cuda_stream);
+    }
+  }
   CHECK_CUDA_LAUNCH_SUCCESS();
 }
 
@@ -242,16 +154,11 @@ cudaError_t BinaryOpWithBroadcastCudaFunc(const bool is_broadcast, const std::ve
   for (auto val : out_shape) {
     out_num *= val;
   }
-  ScalarOption scalar_option = ScalarOption::NoScalar;
   if (is_broadcast) {
-    if (in0_shape.back() == 1) {
-      scalar_option = ScalarOption::In0Scalar;
-    } else if (in1_shape.back() == 1) {
-      scalar_option = ScalarOption::In1Scalar;
-    }
-    return BinaryWithBroadcast<OP, In0_t, In1_t, Out_t>(func, scalar_option, out_num, in0_shape, in1_shape, out_shape,
-                                                        in0, in1, out, device_id, cuda_stream);
+    return BinaryWithBroadcast<OP, In0_t, In1_t, Out_t>(func, out_num, in0_shape, in1_shape, out_shape, in0, in1, out,
+                                                        device_id, cuda_stream);
   } else {
+    ScalarOption scalar_option = ScalarOption::NoScalar;
     if (in0_shape.size() == 1 && in0_shape[0] == 1) {
       scalar_option = ScalarOption::In0Scalar;
     }

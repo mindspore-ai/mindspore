@@ -42,6 +42,25 @@ struct BinaryFunc<BinaryOpType::kPow, In0_t, In1_t, Out_t, typename std::is_floa
     return static_cast<Out_t>(pow(static_cast<double>(lhs), static_cast<double>(rhs)));
   }
 };
+
+template <typename In0_t, typename In1_t, typename Out_t>
+struct BinaryFunc<BinaryOpType::kPow, In0_t, In1_t, Out_t, typename std::is_integral<Out_t>::type> {
+  __device__ __host__ __forceinline__ BinaryFunc() {}
+  __device__ __host__ __forceinline__ Out_t operator()(const In0_t &lhs, const In1_t &rhs) const {
+    Out_t ret = 1;
+    In0_t base = lhs;
+    In1_t exp = rhs;
+    while (exp) {
+      if (exp & 1) {
+        ret *= base;
+      }
+      base *= base;
+      exp /= 2;
+    }
+    return ret;
+  }
+};
+
 template <>
 struct BinaryFunc<BinaryOpType::kPow, half, half, half> {
   __device__ __host__ __forceinline__ BinaryFunc() {}
@@ -49,33 +68,6 @@ struct BinaryFunc<BinaryOpType::kPow, half, half, half> {
     return __float2half(pow(__half2float(lhs), __half2float(rhs)));
   }
 };
-
-#define POW_INTEGER_IMPL(T)                                                        \
-  template <>                                                                      \
-  struct BinaryFunc<BinaryOpType::kPow, T, T, T> {                                 \
-    __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) { \
-      T ret = 1;                                                                   \
-      T base = lhs;                                                                \
-      T exp = rhs;                                                                 \
-      while (exp) {                                                                \
-        if (exp & 1) {                                                             \
-          ret *= base;                                                             \
-        }                                                                          \
-        base *= base;                                                              \
-        exp /= 2;                                                                  \
-      }                                                                            \
-      return ret;                                                                  \
-    }                                                                              \
-  };
-
-POW_INTEGER_IMPL(uint8_t)
-POW_INTEGER_IMPL(uint16_t)
-POW_INTEGER_IMPL(uint32_t)
-POW_INTEGER_IMPL(uint64_t)
-POW_INTEGER_IMPL(int8_t)
-POW_INTEGER_IMPL(int16_t)
-POW_INTEGER_IMPL(int32_t)
-POW_INTEGER_IMPL(int64_t)
 
 template <typename In0_t, typename In1_t, typename Out_t>
 struct BinaryFunc<BinaryOpType::kPow, In0_t, In1_t, Complex<Out_t>> {
