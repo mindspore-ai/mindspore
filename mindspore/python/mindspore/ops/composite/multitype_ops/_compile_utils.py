@@ -295,7 +295,7 @@ def tensor_item(data, *args):
     # transform a.item(tuple(int)) -> a.item(int1,int2...intN)
     if data.ndim == 0:
         _check_scalar_tensor_args(args)
-        return data.asnumpy()
+        return data
     if len(args) == 1 and isinstance(args[0], tuple):
         args = args[0]
 

@@ -50,7 +50,7 @@ def test_tensor_item(mode):
     net = Net()
     output = net(x)
     expect_output = 1.2
-    assert np.allclose(output, expect_output)
+    assert np.allclose(output.asnumpy(), expect_output)
 
     x = ms.Tensor([[1, 2, 3], [4, 5, 6]], ms.float32)
     net = Net((0, 1))
