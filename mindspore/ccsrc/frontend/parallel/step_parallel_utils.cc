@@ -1371,7 +1371,14 @@ ParameterMap NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_
       auto input_parameter = input->cast<ParameterPtr>();
       if (input_parameter->has_default()) {
         (void)param_names.emplace_back(std::make_pair(input_parameter->name(), input_parameter));
+        continue;
       }
+      auto actual_param_node = RefParameterToActualParameter(input_parameter);
+      if (!actual_param_node) {
+        continue;
+      }
+      auto actual_param = actual_param_node->cast<ParameterPtr>();
+      (void)param_names.emplace_back(std::make_pair(actual_param->name(), actual_param));
     } else if (input->isa<CNode>()) {
       CNodePtr cnode = input->cast<CNodePtr>();
       if (!IsValueNode<Primitive>(cnode->input(0))) {
