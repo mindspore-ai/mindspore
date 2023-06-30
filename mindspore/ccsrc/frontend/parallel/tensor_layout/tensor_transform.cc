@@ -240,7 +240,7 @@ RedistributionOpListPtr TensorTransform::OptimizeTensorRedistributionOperatorLis
         if (src_shape[IntToSize(j)] != 1) {
           continue;
         }
-        new_src_shape.erase(new_src_shape.begin() + j);
+        (void)new_src_shape.erase(new_src_shape.begin() + j);
         new_axis -= 1;
       }
       MS_LOG(INFO) << "src_shape:" << src_shape << ", new_src_shape:" << new_src_shape << ", axis:" << axis
@@ -259,7 +259,7 @@ RedistributionOpListPtr TensorTransform::OptimizeTensorRedistributionOperatorLis
     // erase split concat
     (void)redistribution_op_list->first.erase(redistribution_op_list->first.begin() + pos + kSize2);
     (void)redistribution_op_list->first.erase(redistribution_op_list->first.begin() + pos + kSize1);
-    redistribution_op_list->second.erase(redistribution_op_list->second.begin() + pos + kSize2);
+    (void)redistribution_op_list->second.erase(redistribution_op_list->second.begin() + pos + kSize2);
     (void)redistribution_op_list->second.erase(redistribution_op_list->second.begin() + pos + kSize1);
     // insert reshape before allgather
     Operator left_reshape_op = ConstructReshapeOp(left_reshape_op_list[pos]);
