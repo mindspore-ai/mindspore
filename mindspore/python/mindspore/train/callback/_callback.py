@@ -493,7 +493,7 @@ class RunContext:
         original_args (dict): Holding the related information of model.
 
     Examples:
-        >>> import mindspore as ms
+        >>> from mindspore import Tensor, RunContext
         >>> cb_params = {}
         >>> cb_params["cur_epoch_num"] = 4
         >>> cb_params["epoch_num"] = 4
