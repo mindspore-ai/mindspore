@@ -9012,6 +9012,7 @@ def matmul(input, other):
         not supported.
         On GPU, the supported dtypes are np.float16 and np.float32.
         On CPU, the supported dtypes are np.float16 and np.float32.
+        The dtype of `input` and `other` must be same.
 
     Args:
         input (Tensor): Input tensor, scalar not allowed.

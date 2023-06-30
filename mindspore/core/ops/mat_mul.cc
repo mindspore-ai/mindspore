@@ -142,9 +142,8 @@ class MatMulInfer : public abstract::OpInferBase {
     if (x_type->type_id() != y_type->type_id()) {
       MS_EXCEPTION(TypeError) << "For '" << op_name
                               << "', the type of 'x2' should be same as 'x1', but got 'x1' with type "
-                              << x_type->type_name() << " and 'x2' with type " << y_type->type_name() << ".";
+                              << x_type->ToString() << " and 'x2' with type " << y_type->ToString() << ".";
     }
-
     if (primitive->HasAttr("cast_type")) {
       auto out_type = primitive->GetAttr("cast_type");
       MS_EXCEPTION_IF_NULL(out_type);

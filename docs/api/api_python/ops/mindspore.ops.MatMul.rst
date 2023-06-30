@@ -12,7 +12,7 @@ mindspore.ops.MatMul
     其中， :math:`i,j` 表示输出的第i行和第j列元素。
 
     .. note::
-        对于 :math:`N * M` 不能被16整除的情况下，在Ascend环境上性能会比较差。
+        对于 :math:`N * M` 不能被16整除的情况下，在Ascend环境上性能会比较差。输入Tensor的数据类型必须一致。
 
     参数：
         - **transpose_a** (bool) - 如果为 ``True`` ，则在相乘之前转置 `a`。默认值： ``False`` 。
