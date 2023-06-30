@@ -175,7 +175,7 @@ def test_pyfunc_pynative():
     Expectation: the result match with numpy result
     """
     sys = platform.system()
-    if sys == 'Windows':
+    if sys != 'Linux':
         pass
     else:
         context.set_context(mode=context.PYNATIVE_MODE, device_target='CPU')
