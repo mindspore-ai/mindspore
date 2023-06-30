@@ -115,6 +115,9 @@ def eig(A):
         ``Ascend`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[1.0, 0.0], [0.0, 2.0]]), mindspore.float32)
         >>> u, v = ops.eig(input_x)
         >>> print(u)
