@@ -100,7 +100,7 @@ if __name__ == "__main__":
         for line in ls:
             file_path = os.path.join(bprop_mindir_export_dir, line)
             if file_path.endswith(".mindir") and os.path.isfile(file_path):
-                os.chmod(file_path, 0o664)
+                os.chmod(file_path, 0o644)
                 shutil.copy(file_path, bprop_mindir_src_dir)
                 logging.info("copied: %s", file_path)
 
