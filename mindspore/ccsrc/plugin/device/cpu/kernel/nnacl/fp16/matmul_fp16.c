@@ -410,13 +410,16 @@ void VecMatmulFp16(const float16_t *a, const float16_t *b, float16_t *c, const f
     int di = 0;
     for (; di < depth - C8NUM + 1; di += C8NUM) {
       float16x8_t av = vld1q_f16(a + di);
-      float16x8_t bv_0[C8NUM];
-      for (int i = 0; i < C8NUM; ++i) {
-        bv_0[i] = vld1q_f16(bv_base);
+      float16x8_t bv_0;
+      float16x8_t bv_1;
+      for (int i = 0; i < C8NUM; i += C2NUM) {
+        bv_0 = vld1q_f16(bv_base);                // bv_i为一行,8列数据
+        acc_0 = vfmaq_n_f16(acc_0, bv_0, av[i]);  // av[i]为向量中的一个值
         bv_base += C8NUM;
-      }
-      for (int i = 0; i < C8NUM; ++i) {
-        acc_0 = vfmaq_n_f16(acc_0, bv_0[i], av[i]);
+
+        bv_1 = vld1q_f16(bv_base);                    // bv_i为一行,8列数据
+        acc_0 = vfmaq_n_f16(acc_0, bv_1, av[i + 1]);  // av[i]为向量中的一个值
+        bv_base += C8NUM;
       }
     }
     if (di < depth) {

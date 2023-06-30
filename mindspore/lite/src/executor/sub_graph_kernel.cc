@@ -515,11 +515,7 @@ void CpuFp16SubGraph::FreeOriginInputData() {
       }
     }
     // free data_store
-    if (this->context_->allocator != nullptr) {
-      this->context_->allocator->Free(data_store);
-    } else {
-      free(data_store);
-    }
+    free(data_store);
     data_store = nullptr;
   }
   this->origin_input_data_.clear();
@@ -539,21 +535,22 @@ int CpuFp16SubGraph::PreProcess() {
       auto tensor_own_data = tensor->own_data();
       tensor->set_data(nullptr);
       tensor->set_data_type(TypeId::kNumberTypeFloat16);
-      auto ret = tensor->MallocData();
-      if (RET_OK != ret) {
+      auto tmp_data = malloc(tensor->Size());
+      if (tmp_data == nullptr) {
         MS_LOG(ERROR) << "malloc data failed";
         this->FreeOriginInputData();
         return RET_ERROR;
       }
+      tensor->set_data(tmp_data);
       MS_ASSERT(tensor->data() != nullptr);
       Float32ToFloat16_fp16_handler(float32_data, tensor->data(), tensor->ElementsNum(), support_fp16_);
-      auto *data_store = DataStore::CreateDataStore(float32_data, tensor_own_data, tensor->allocator().get(),
-                                                    this->context_->allocator.get());
+      auto *data_store = DataStore::CreateDataStore(float32_data, tensor_own_data, tensor->allocator().get());
       if (data_store == nullptr) {
         MS_LOG(ERROR) << "Create DataStore failed";
         this->FreeOriginInputData();
         return RET_ERROR;
       }
+      tensor->set_allocator(nullptr);
       origin_input_data_.emplace_back(data_store);
     } else {
       origin_input_data_.emplace_back(nullptr);
@@ -584,8 +581,8 @@ int CpuFp16SubGraph::PostProcess() {
       MS_ASSERT(float16_data != nullptr);
       tensor->set_data(nullptr);
       tensor->set_data_type(TypeId::kNumberTypeFloat32);
-      auto ret = tensor->MallocData();
-      if (ret != RET_OK) {
+      auto tmp_data = malloc(tensor->Size());
+      if (tmp_data == nullptr) {
         MS_LOG(ERROR) << "malloc data failed";
         if (this->context_ != nullptr && this->context_->allocator != nullptr) {
           this->context_->allocator->Free(float16_data);
@@ -594,6 +591,7 @@ int CpuFp16SubGraph::PostProcess() {
         }
         return RET_ERROR;
       }
+      tensor->set_data(tmp_data);
       MS_ASSERT(tensor->data() != nullptr);
       Float16ToFloat32_fp16_handler(float16_data, tensor->data(), tensor->ElementsNum(), support_fp16_);
       if (tensor->allocator() != nullptr) {
@@ -601,6 +599,7 @@ int CpuFp16SubGraph::PostProcess() {
       } else {
         free(float16_data);
       }
+      tensor->set_allocator(nullptr);
     }
   }
   MS_ASSERT(this->origin_input_data_.size() == this->in_tensors().size());
@@ -611,7 +610,7 @@ int CpuFp16SubGraph::PostProcess() {
     if (tensor->data_type() == kNumberTypeFloat16 && origin_tensor_data != nullptr) {
       if (!origin_tensor_data->own_data_ || (tensor->data() != nullptr)) {
         MS_ASSERT(tensor != nullptr);
-        tensor->FreeData();
+        free(tensor->data());
         MS_ASSERT(origin_tensor_data->data_ != nullptr);
         tensor->set_data(origin_tensor_data->data_, origin_tensor_data->own_data_);
         tensor->set_data_type(kNumberTypeFloat32);
