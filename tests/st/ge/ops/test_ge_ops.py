@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
 import pytest
 import tests.st.ge.ge_test_utils as utils
 
@@ -27,9 +26,7 @@ def test_broadcast_gradient_args():
     Description: inputs are two shapes
     Expectation: the result is correct
     """
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     utils.run_testcase('broadcast_gradient_args')
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 @pytest.mark.level1
@@ -42,9 +39,7 @@ def test_conv2d_backprop_filter():
     Description: inputs are integers
     Expectation: the result is correct
     """
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     utils.run_testcase('conv2d_backprop_filter')
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 @pytest.mark.level1
@@ -57,9 +52,7 @@ def test_conv2d_backprop_input():
     Description: inputs are integers
     Expectation: the result is correct
     """
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     utils.run_testcase('conv2d_backprop_input')
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 @pytest.mark.level1
@@ -72,9 +65,7 @@ def test_conv2d_transpose():
     Description: inputs are integers
     Expectation: the result is correct
     """
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     utils.run_testcase('conv2d_transpose')
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 @pytest.mark.level1
@@ -87,9 +78,7 @@ def test_dynamic_broadcast_to():
     Description: inputs are data and shape
     Expectation: the result is correct
     """
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     utils.run_testcase('dynamic_broadcast_to')
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 @pytest.mark.level1
@@ -102,6 +91,4 @@ def test_unique():
     Description: inputs are integers
     Expectation: the result is correct
     """
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     utils.run_testcase('unique')
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'

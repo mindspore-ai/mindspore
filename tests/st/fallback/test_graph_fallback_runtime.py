@@ -661,3 +661,26 @@ def test_pyexecute_raise_error_with_dynamic_length_sequence_2():
         input_x = Tensor(np.arange(6).reshape(3, 2).astype(np.float32))
         net(input_x)
     assert "does not match the shape" in str(err.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_parse_subscript():
+    """
+    Feature: JIT Fallback
+    Description: Test Interpret node in subscript in graph mode.
+    Expectation: No exception.
+    """
+
+    class Network(nn.Cell):
+        def construct(self):
+            x = [Tensor([11]), Tensor([22]), Tensor([33])]
+            y = x[Tensor([0])] + x[Tensor([1])] + x[Tensor([2])]
+            return y
+
+    net = Network()
+    out = net()
+    assert out.asnumpy() == 66

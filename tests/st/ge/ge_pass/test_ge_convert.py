@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
 import pytest
 import tests.st.ge.ge_test_utils as utils
 
@@ -27,9 +26,7 @@ def test_convert_return():
     Description: test Return node
     Expectation: success
     """
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     utils.run_testcase('ge_convert', 'test_convert_return')
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 @pytest.mark.level0
@@ -42,9 +39,7 @@ def test_convert_update_state():
     Description: test UpdateState node
     Expectation: success
     """
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     utils.run_testcase('ge_convert', 'test_convert_update_state')
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 @pytest.mark.level1
@@ -57,9 +52,7 @@ def test_convert_load():
     Description: test Load node
     Expectation: success
     """
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     utils.run_testcase('ge_convert', 'test_convert_load')
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 @pytest.mark.level1
@@ -72,9 +65,7 @@ def test_convert_make_tuple():
     Description: test MakeTuple node
     Expectation: success
     """
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     utils.run_testcase('ge_convert', 'test_convert_make_tuple')
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 @pytest.mark.level1
@@ -87,9 +78,7 @@ def test_convert_tuple_get_item():
     Description: test TupleGetItem node
     Expectation: success
     """
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     utils.run_testcase('ge_convert', 'test_convert_tuple_get_item')
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 @pytest.mark.level0
@@ -102,9 +91,7 @@ def test_convert_make_tuple_make_tuple():
     Description: test MakeTuple's input is MakeTuple
     Expectation: success
     """
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     utils.run_testcase('ge_convert', 'test_convert_make_tuple_make_tuple')
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
 def test_convert_tuple_get_item_dynamic_output():
