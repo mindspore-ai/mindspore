@@ -56,6 +56,7 @@ class StubTensor:
     init = _stub_member("init", None)
     init_finished = _stub_member("init_finished", False)
     virtual_flag = _stub_member("virtual_flag", False)
+    adapter_flag = _stub_member("adapter_flag", False)
     parent_tensor_ = _stub_member("parent_tensor_", None)
     index_of_parent_ = _stub_member("index_of_parent_", None)
     slice_num_of_persistent_data_ = _stub_member("slice_num_of_persistent_data_", None)

@@ -600,6 +600,16 @@ def get_adapter_tensor_attr(name):
     return None, False
 
 
+def is_adapter_tensor_class(cls):
+    """Check if cls is adapter tensor type."""
+    return cls in (Tensor, ms_adapter_registry.tensor)
+
+
+def is_adapter_parameter_class(cls):
+    """Check if cls is adapter parameter type."""
+    return cls in (Parameter, ms_adapter_registry.parameter)
+
+
 def get_ms_class_name(cls):
     """Get the name of the class instance decorated with jit_class."""
     if isinstance(cls, type):

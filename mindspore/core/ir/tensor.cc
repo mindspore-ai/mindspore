@@ -943,6 +943,9 @@ abstract::AbstractBasePtr Tensor::ToAbstract() {
   } else {
     abs_tensor->set_value(shared_from_base<Tensor>());
   }
+  if (is_adapter()) {
+    abs_tensor->set_is_adapter(true);
+  }
   return abs_tensor;
 }
 

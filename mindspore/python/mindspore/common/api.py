@@ -1134,10 +1134,8 @@ def set_adapter_config(config):
         raise TypeError(f"The input argument of 'set_adapter_config' should be a dict, but got {config}.")
     for key, value in config.items():
         if key == "Tensor":
-            setattr(value, "__adapter_tensor__", True)
             ms_adapter_registry.register_tensor(value)
         elif key == "Parameter":
-            setattr(value, "__adapter_tensor__", True)
             ms_adapter_registry.register_parameter(value)
         elif key == "convert_object_map":
             ms_adapter_registry.register_convert_map(value)
