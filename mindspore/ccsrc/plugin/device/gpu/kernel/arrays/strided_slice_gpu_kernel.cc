@@ -58,10 +58,6 @@ int StridedSliceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 
   auto shape_signed = inputs[0]->GetShapeVector();
   input_shape_ = Convert2SizeTClipNeg(shape_signed);
-  null_output_ = CHECK_SHAPE_NULL(input_shape_, kernel_name_, "input");
-  if (null_output_) {
-    return true;
-  }
   if (input_shape_.size() > MAX_DIMS) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than " << MAX_DIMS
                       << ", but got " << input_shape_.size();
