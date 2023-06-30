@@ -313,7 +313,8 @@ inner::LiteGraphPtr GkUtils::AnfGraph2LiteGraph(const FuncGraphPtr &func_graph,
   }
   inner::GraphBuilder gb(name);
   std::map<AnfNodePtr, inner::NodePtr> node_map;
-  auto todos = TopoSort(func_graph->output());
+  auto todos = TopoSort(func_graph->output(), SuccIncoming,
+                        [](const AnfNodePtr &node) { return node->isa<CNode>() ? FOLLOW : EXCLUDE; });
   const auto &params = func_graph->parameters();
   auto cb = Callback::Instance();
   auto ExtractBuildInfo = [&cb](const AnfNodePtr &node) -> inner::NodeBaseList {
@@ -334,40 +335,33 @@ inner::LiteGraphPtr GkUtils::AnfGraph2LiteGraph(const FuncGraphPtr &func_graph,
   // set ops
   for (auto node : todos) {
     auto cnode = node->cast<CNodePtr>();
-    if (cnode == nullptr) {
-      continue;
-    }
+    MS_EXCEPTION_IF_NULL(cnode);
     if (node == func_graph->output() && IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
       break;
     }
     auto prim = GetCNodePrimitive(cnode);
     MS_EXCEPTION_IF_NULL(prim);
     inner::NodePtrList inputs;
-    for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+    for (size_t i = 1; i < cnode->size(); ++i) {
       auto input_i = cnode->input(i);
       const auto iter = node_map.find(input_i);
-      inner::NodePtr input_node = nullptr;
-      if (iter != node_map.end()) {  // parameter or cnode
+      if (iter != node_map.end()) {
+        // input is parameter or cnode
         if (input_i->isa<Parameter>()) {
-          auto value = input_i->abstract()->BuildValue();
-          auto tensor = value->cast<tensor::TensorPtr>();
-          if (tensor != nullptr && tensor->data().const_data() != nullptr) {
-            auto prim_name = GetCNodePrimitive(cnode)->name();
-            if (ConvertOpUtils::NeedConvert(prim_name, i - 1)) {
-              input_node = gb.Value(tensor);
-            } else {
-              input_node = iter->second;
-            }
-          } else {
-            input_node = iter->second;
+          auto tensor = input_i->abstract()->BuildValue()->cast<tensor::TensorPtr>();
+          if (tensor != nullptr && tensor->data().const_data() != nullptr &&
+              ConvertOpUtils::NeedConvert(AnfUtils::GetCNodeName(cnode), i - 1)) {
+            inputs.push_back(gb.Value(tensor));
+            continue;
           }
-        } else {
-          input_node = iter->second;
         }
-      } else {  // valuenode
+        inputs.push_back(iter->second);
+      } else {
+        // input is valuenode
         auto input_value_node = input_i->cast<ValueNodePtr>();
         auto input_value = input_value_node->value();
         constexpr size_t idx = 2;
+        inner::NodePtr input_node;
         if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem) && i == idx) {
           input_node = std::make_shared<inner::ConstScalarNode>(input_value);
         } else {
@@ -375,8 +369,8 @@ inner::LiteGraphPtr GkUtils::AnfGraph2LiteGraph(const FuncGraphPtr &func_graph,
           MS_EXCEPTION_IF_NULL(tensor);
           input_node = gb.Value(tensor);
         }
+        inputs.push_back(input_node);
       }
-      inputs.push_back(input_node);
     }
     auto op = gb.Op(AnfUtils::GetCNodeName(node), ExtractBuildInfo(node), inputs, prim->attrs());
     node_map[node] = op;

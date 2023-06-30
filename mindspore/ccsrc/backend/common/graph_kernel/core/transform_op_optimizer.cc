@@ -455,7 +455,7 @@ class Mutator {
     }
     for (auto &user : node->users()) {
       for (auto user_idx : user.second) {
-        VisitNode(user.first->shared_from_this(), user_idx);
+        VisitNode(user.first->shared_from_this(), SizeToInt(user_idx));
       }
     }
   }
@@ -481,7 +481,7 @@ class Mutator {
     if (index < 0) {
       for (const auto &user : node->users()) {
         for (auto user_idx : user.second) {
-          VisitNode(user.first->shared_from_this(), user_idx);
+          VisitNode(user.first->shared_from_this(), SizeToInt(user_idx));
         }
       }
     }
@@ -674,7 +674,7 @@ class Mutator {
   std::set<NodePtr> flexible_ops_;
   std::set<NodePtr> trans_ops_;
   std::set<NodePtr> visited_;
-  std::map<NodePtr, std::set<size_t>> inflexible_ops_;  // no transop and no flexibleop, record the visit index.
+  std::map<NodePtr, std::set<int>> inflexible_ops_;  // no transop and no flexibleop, record the visit index.
 
   std::map<NodeWithIndex, FormatType> fmt_type;
   std::map<NodeWithIndex, size_t> node_id_;
@@ -688,7 +688,7 @@ bool TransformOpOptimizer::Process(const LiteGraphPtr &litegraph, const Transfor
   auto &ops = litegraph->ops();
   bool changed = false;
   auto check_is_trans_op = [&op_handle](const NodePtr &node) { return op_handle->IsTransformOp(node); };
-  size_t ori_trans_op_num = std::count_if(ops.begin(), ops.end(), check_is_trans_op);
+  size_t ori_trans_op_num = static_cast<size_t>(std::count_if(ops.begin(), ops.end(), check_is_trans_op));
   size_t new_trans_op_num = 0;
   std::set<NodePtr> nodes_may_change;
   for (auto &op : ops) {
