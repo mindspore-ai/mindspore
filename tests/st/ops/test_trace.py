@@ -18,7 +18,7 @@ import pytest
 
 import mindspore as ms
 from mindspore import nn, Tensor
-from mindspore.ops._packfunc import pack
+from mindspore.ops._tracefunc import trace
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 
@@ -28,10 +28,10 @@ from mindspore.ops import operations as P
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_pack_basic_cell(mode):
+def test_trace_basic_cell(mode):
     """
-    Feature: pack of cell
-    Description: Verify the result of pack
+    Feature: trace of cell
+    Description: Verify the result of trace
     Expectation: success
     """
     class Net(nn.Cell):
@@ -39,7 +39,7 @@ def test_pack_basic_cell(mode):
             super(Net, self).__init__()
             self.arg_max = P.ArgMaxWithValue()
 
-        @pack
+        @trace
         def construct(self, x, y):
             if F.is_sequence_shape_unknown(x.shape):
                 z = x + y
@@ -63,10 +63,10 @@ def test_pack_basic_cell(mode):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_pack_python_infer_cell():
+def test_trace_python_infer_cell():
     """
-    Feature: pack of cell
-    Description: Verify the result of pack
+    Feature: trace of cell
+    Description: Verify the result of trace
     Expectation: success
     """
     class Net(nn.Cell):
@@ -74,11 +74,11 @@ def test_pack_python_infer_cell():
             super(Net, self).__init__()
             self.choleskytrsm = P.CholeskyTrsm()
 
-        @pack
+        @trace
         def construct(self, x, y):
             z = self.choleskytrsm(x) + y
             return z * z
-    @pack
+    @trace
     def func(x, k):
         z = x[0] * x[0]
         z[2] = z[1]

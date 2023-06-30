@@ -46,7 +46,7 @@ from mindspore._check_jit_forbidden_api import jit_forbidden_register
 from mindspore.common._decorator import deprecated
 from mindspore._checkparam import is_pack_tensor
 from mindspore._c_expression import PackExpander
-from mindspore.ops._packfunc import _convert_tensor, _SetMixedPrecision
+from mindspore.ops._tracefunc import _convert_tensor, _SetMixedPrecision
 
 
 def _check_args(args):
@@ -628,7 +628,7 @@ class Cell(Cell_):
             kwargs = bound_arguments.kwargs
 
         if args and is_pack_tensor(args[0]):
-            return self._run_packfunc(*args, **kwargs)
+            return self._run_tracefunc(*args, **kwargs)
 
         self.check_names_and_refresh_name()
         # Run in Graph mode.
@@ -2286,7 +2286,7 @@ class Cell(Cell_):
                         f"The {index + 1}th input of 'set_inputs' or tuple(list) in 'set_inputs' must be the same with "
                         f"network's input, but got set_inputs: {set_input} and network's input: {net_input}.")
 
-    def _run_packfunc(self, *args, **kwargs):
+    def _run_tracefunc(self, *args, **kwargs):
         """ Run Packed Cell in Pack."""
         args = self._mixed_precision_cast(args)
         if hasattr(self, "bprop") or hasattr(self, "_pipeline_stage"):
