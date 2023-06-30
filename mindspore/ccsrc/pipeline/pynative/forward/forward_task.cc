@@ -29,7 +29,12 @@ void FrontendTask::Run() {
   op_run_info_ = nullptr;
 }
 
-void FrontendTask::SetException(const std::exception_ptr &e) { op_run_info_->stub_output->SetException(e); }
+void FrontendTask::SetException(const std::exception_ptr &e) {
+  if (op_run_info_ == nullptr) {
+    return;
+  }
+  op_run_info_->stub_output->SetException(e);
+}
 
 void BackendTask::Run() {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeBackendTask,
