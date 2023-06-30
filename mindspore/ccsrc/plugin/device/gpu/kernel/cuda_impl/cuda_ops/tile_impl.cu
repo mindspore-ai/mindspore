@@ -72,7 +72,7 @@ cudaError_t CalTile(const std::vector<size_t> inp_shape, const std::vector<size_
   for (auto val : out_shape) {
     output_size *= val;
   }
-  size_t thread_num = output_size > 1024 ? 1024 : output_size;
+  size_t thread_num = output_size > 512 ? 512 : output_size;
   Tile<<<CUDA_BLOCKS_CAL(GET_CTX_DEVICE_ID, output_size, thread_num), thread_num, 0, cuda_stream>>>(
     output_size, out_shape.size(), strides, input, output);
   CHECK_CUDA_LAUNCH_SUCCESS();
