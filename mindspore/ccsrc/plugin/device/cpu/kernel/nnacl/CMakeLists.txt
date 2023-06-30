@@ -8,6 +8,7 @@ include_directories(${NNACL_SIMD_DIR}/..)
 file(GLOB SIMD_CONFIG_HEADER
     ${NNACL_DIR}/base/*_simd.h.in
     ${NNACL_DIR}/fp32/*_simd.h.in
+    ${NNACL_DIR}/fp32/online_fusion/*_simd.h.in
     ${NNACL_DIR}/fp32_grad/*_simd.h.in
 )
 function(generate_simd_header_code)

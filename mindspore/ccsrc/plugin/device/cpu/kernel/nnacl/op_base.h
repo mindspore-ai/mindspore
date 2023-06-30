@@ -555,6 +555,7 @@ enum PrimType {
   PrimType_Inner_DecoderLayer = 10008,
   PrimType_Inner_UsePastEmbedding = 10009,
   PrimType_Inner_CustomGru = 10010,
+  PrimType_Inner_CastGatherReduceFusion = 10011,
   PrimType_InnerOpMax,
   PrimType_InnerOpMin = PrimType_Inner_ToFormat
 };

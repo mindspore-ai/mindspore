@@ -137,6 +137,8 @@ OpParameter *PopulateCustomParameter(const void *prim) {
     return reinterpret_cast<OpParameter *>(param);
   } else if (type == "CustomGRU") {
     return CreateCustomGruParameter();
+  } else if (type == "CastGatherReduceFusion") {
+    return CreateParam(PrimType_Inner_CastGatherReduceFusion);
   } else {
     MS_LOG(ERROR) << "Unsupported custom type: " << type;
   }

@@ -42,9 +42,20 @@ int OnlineFusionPass::InitOnlineFusion() {
     tensors_ = &search_subgrap_->tensors_;
     context_ = search_subgrap_->context_;
     model_ = search_subgrap_->model_;
+    src_tensors_ = search_subgrap_->src_tensors_;
     return RET_OK;
   }
   return RET_ERROR;
+}
+
+std::vector<std::vector<uint32_t>> OnlineFusionPass::GetFrontNodeIndex(LiteGraph::Node *cur_node) {
+  std::vector<std::vector<uint32_t>> front_node;
+  auto &cur_node_output_tensor_indices = cur_node->input_indices_;
+  for (auto &cur_node_output_tensor_indice : cur_node_output_tensor_indices) {
+    auto &cur_node_output_tensor = tensors_->at(cur_node_output_tensor_indice);
+    front_node.emplace_back(cur_node_output_tensor.in_nodes_);
+  }
+  return front_node;
 }
 
 std::vector<std::vector<uint32_t>> OnlineFusionPass::GetNextNodeIndex(LiteGraph::Node *cur_node) {
