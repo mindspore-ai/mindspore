@@ -1055,7 +1055,8 @@ class Gather(Primitive):
         - **input_params** (Tensor) - The original Tensor. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
         - **input_indices** (Tensor) - Index tensor to be sliced, the shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
           Specifies the indices of elements of the original Tensor. The data type can be int32 or int64.
-        - **axis** (int) - Specifies the dimension index to gather indices.
+        - **axis** (Union(int, Tensor[int])) - Specifies the dimension index to gather indices.
+          When axis is Tensor, the size must be 1.
 
     Outputs:
         Tensor, the shape of tensor is
@@ -1142,13 +1143,11 @@ class SparseGatherV2(PrimitiveWithCheck):
         - **input_indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
           Specifies the indices of elements of the original Tensor, must be in the range
           `[0, input_params.shape[axis])`.
-        - **axis** (int) - Specifies the dimension index to gather indices.
+        - **axis** (Union(int, Tensor[int])) - Specifies the dimension index to gather indices.
+          When axis is Tensor, the size must be 1.
 
     Outputs:
         Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
-
-    Raises:
-        TypeError: If `axis` is not an int.
 
     Supported Platforms:
         ``Ascend`` ``GPU``

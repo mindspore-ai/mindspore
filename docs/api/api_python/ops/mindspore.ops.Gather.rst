@@ -13,7 +13,7 @@ mindspore.ops.Gather
     输入：
         - **input_params** (Tensor) - 原始Tensor，shape为 :math:`(x_1, x_2, ..., x_R)` 。
         - **input_indices** (Tensor) - 要切片的索引Tensor，shape为 :math:`(y_1, y_2, ..., y_S)` 。指定原始Tensor中要切片的索引。数据类型必须是int32或int64。
-        - **axis** (int) - 指定要切片的维度索引。
+        - **axis** (Union(int, Tensor[int])) - 指定要切片的维度索引。axis是Tensor的时候，size必须是1。
 
     输出：
         Tensor，shape为 :math:`input\_params.shape[:axis] + input\_indices.shape + input\_params.shape[axis + 1:]` 。
