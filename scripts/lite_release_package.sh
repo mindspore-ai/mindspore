@@ -45,7 +45,6 @@ function linux_release_package()
 {
     mkdir -p ${output_path}/release/linux/nnie/
     mkdir -p ${output_path}/release/linux/x86_64/
-    mkdir -p ${output_path}/release/linux/x86_64/tensorrt/
     mkdir -p ${output_path}/release/linux/aarch64/
     mkdir -p ${output_path}/release/linux/x86_64/ascend/
     mkdir -p ${output_path}/release/linux/aarch64/ascend/
@@ -60,7 +59,6 @@ function linux_release_package()
     cp ${input_path}/linux_aarch64/mindspore*.tar.gz* ${output_path}/release/linux/aarch64/
     cp ${input_path}/centos_x86/ascend/mindspore*.tar.gz* ${output_path}/release/linux/x86_64/ascend/
     cp ${input_path}/linux_aarch64/ascend/mindspore*.tar.gz* ${output_path}/release/linux/aarch64/ascend/
-    cp ${input_path}/centos_x86/tensorrt/mindspore*.tar.gz* ${output_path}/release/linux/x86_64/tensorrt/
     cp -r ${input_path}/centos_x86/server/* ${output_path}/release/linux/x86_64/server/
     cp -r ${input_path}/linux_aarch64/server/* ${output_path}/release/linux/aarch64/server/
     cp -r ${input_path}/centos_x86/cloud_fusion/* ${output_path}/release/linux/x86_64/cloud_fusion/
