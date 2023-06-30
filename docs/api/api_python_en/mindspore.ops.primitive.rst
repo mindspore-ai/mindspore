@@ -394,7 +394,6 @@ Linear Algebraic Operator
     mindspore.ops.Ger
     mindspore.ops.MatMul
     mindspore.ops.MatrixInverse
-    mindspore.ops.MatrixPower
     mindspore.ops.Ormqr
     mindspore.ops.Orgqr
     mindspore.ops.Svd
@@ -541,7 +540,6 @@ Array Operation
     mindspore.ops.StridedSlice
     mindspore.ops.TensorScatterAdd
     mindspore.ops.TensorScatterDiv
-    mindspore.ops.TensorScatterElements
     mindspore.ops.TensorScatterMax
     mindspore.ops.TensorScatterMin
     mindspore.ops.TensorScatterMul
