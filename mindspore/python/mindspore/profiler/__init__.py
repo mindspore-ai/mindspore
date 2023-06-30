@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ Users can visualize the results using the MindInsight tool.
 Now, Profiler supports AICORE operator, AICPU operator, HostCPU operator, memory,
 correspondence, cluster, etc data analysis.
 """
-from mindspore.profiler.profiling import Profiler, parse_host_info, calculate_dataset_execution_time
+from mindspore.profiler.profiling import Profiler
 from mindspore.profiler.envprofiling import EnvProfiler
 
-__all__ = ["Profiler", "EnvProfiler", "parse_host_info", "calculate_dataset_execution_time"]
+__all__ = ["Profiler", "EnvProfiler"]

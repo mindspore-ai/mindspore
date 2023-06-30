@@ -1,4 +1,4 @@
-# Copyright 2022 Huawei Technologies Co., Ltd
+# Copyright 2022-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ class CheckProfilerFiles:
             f_reader = csv.reader(f)
             header = next(f_reader)
             assert header == ['tid', 'pid', 'parent_pid', 'module_name', 'event', 'stage', 'level', 'start_end',
-                              'custom_info', 'memory_usage', 'time_stamp']
+                              'custom_info', 'memory_usage(kB)', 'time_stamp(us)']
             for row in f_reader:
                 assert len(row) == 11
 

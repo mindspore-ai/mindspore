@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ struct HostProfileData {
   int level = 0;
   int start_end = 0;
   std::map<std::string, std::string> custom_info;
-  uint64_t memory_usage = 0;
+  int64_t memory_usage = 0;
   uint64_t time_stamp = 0;
 };
 
@@ -85,7 +85,7 @@ class BACKEND_EXPORT ProfilerManager {
   bool GetNetDynamicShapeStatus() const { return is_dynamic_shape_net_; }
   void SetNetDynamicShapeStatus() { is_dynamic_shape_net_ = true; }
   std::string ProfileDataPath() const;
-  void SetProfileFramework(std::string profile_framework);
+  void SetProfileFramework(const std::string &profile_framework);
   bool NeedCollectHostTime() const;
   bool NeedCollectHostMemory() const;
   bool EnableCollectHost() const;

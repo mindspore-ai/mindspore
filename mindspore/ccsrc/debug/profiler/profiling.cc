@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ namespace mindspore {
 namespace profiler {
 #ifdef __linux__
 constexpr auto HostDataHeader =
-  "tid,pid,parent_pid,module_name,event,stage,level,start_end,custom_info,memory_usage,time_stamp\n";
+  "tid,pid,parent_pid,module_name,event,stage,level,start_end,custom_info,memory_usage(kB),time_stamp(us)\n";
 const auto kVmRSS = "VmRSS";
 std::mutex file_line_mutex;
 static bool log_once = false;
@@ -247,7 +247,9 @@ std::string ProfilerManager::ProfileDataPath() const {
   return "";
 }
 
-void ProfilerManager::SetProfileFramework(std::string profile_framework) { profile_framework_ = profile_framework; }
+void ProfilerManager::SetProfileFramework(const std::string &profile_framework) {
+  profile_framework_ = profile_framework;
+}
 
 bool ProfilerManager::NeedCollectHostTime() const {
   return profile_framework_ == "all" || profile_framework_ == "time";
@@ -306,7 +308,7 @@ void CollectHostInfo(const std::string &module_name, const std::string &event, c
   if ((profile_framework == profile_all || profile_framework == profile_memory) &&
       profiler_manager->NeedCollectHostMemory()) {
     ProcessStatus process_status = ProcessStatus::GetInstance();
-    uint64_t memory_usage = process_status.GetMemoryCost(kVmRSS);
+    int64_t memory_usage = process_status.GetMemoryCost(kVmRSS);
     host_profile_data.memory_usage = memory_usage;
   }
   std::lock_guard<std::mutex> lock(file_line_mutex);
