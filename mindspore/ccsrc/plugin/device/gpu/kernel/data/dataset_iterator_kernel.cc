@@ -94,6 +94,8 @@ int DatasetIteratorKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 
 void DatasetIteratorKernelMod::InitSizeLists() { return; }
 
+const uint32_t log_interval_step = 30;  // log info in each 30s when getnext timeout
+
 bool DatasetIteratorKernelMod::ReadDevice(std::vector<DataQueueItem> *data) {
   uint64_t start_time_stamp = 0;
   uint32_t queue_size = 0;
@@ -101,7 +103,11 @@ bool DatasetIteratorKernelMod::ReadDevice(std::vector<DataQueueItem> *data) {
   auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);
 #endif
-  int repeat = 0;
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  uint32_t op_timeout = ms_context->get_param<uint32_t>(MS_CTX_OP_TIMEOUT);
+  uint32_t time_cost = 0;
+  uint32_t log_interval = log_interval_step;
   while (true) {
 #ifndef ENABLE_SECURITY
     profiling_enable_ = profiler_inst->GetDataProcessEnableFlag();
@@ -110,6 +116,7 @@ bool DatasetIteratorKernelMod::ReadDevice(std::vector<DataQueueItem> *data) {
       queue_size = DataQueueMgr::GetInstance().Size(queue_name_);
     }
 #endif
+    time_t start_time = time(nullptr);
     auto ret = DataQueueMgr::GetInstance().Front(queue_name_, data);
     if (ret == device::DataQueueStatus::SUCCESS) {
 #ifndef ENABLE_SECURITY
@@ -126,9 +133,12 @@ bool DatasetIteratorKernelMod::ReadDevice(std::vector<DataQueueItem> *data) {
                            "configure dynamic dims of input data before running the network";
     }
     if (ret == device::DataQueueStatus::TIMEOUT) {
-      repeat++;
-      if (repeat < 10) {
-        MS_LOG(INFO) << "Waiting for data...(" << repeat << " / 10)";
+      time_cost += (time(nullptr) - start_time);
+      if (time_cost < op_timeout) {
+        if (time_cost > log_interval) {
+          MS_LOG(INFO) << "The op_timeout is: " << std::to_string(op_timeout) << ", continue waiting for data...";
+          log_interval += log_interval_step;
+        }
         continue;
       } else {
 #ifdef ENABLE_DUMP_IR
