@@ -683,7 +683,9 @@ def set_auto_parallel_context(**kwargs):
         search_mode (str): There are three kinds of shard strategy search modes: ``"recursive_programming"`` ,
                      ``"dynamic_programming"`` and ``"sharding_propagation"`` . Default: ``"dynamic_programming"`` .
 
-                     - recursive_programming: Recursive programming search mode.
+                     - recursive_programming: Recursive programming search mode. In order to obtain optimal performance,
+                       it is recommended that users set the batch size to be greater than or equal to the product of
+                       the number of devices and the number of multi-copy parallelism.
 
                      - dynamic_programming: Dynamic programming search mode.
 
