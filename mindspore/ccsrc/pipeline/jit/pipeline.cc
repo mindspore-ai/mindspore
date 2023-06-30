@@ -1018,7 +1018,8 @@ bool GraphExecutorPy::Compile(const py::object &source, const py::tuple &args, c
     [this, &res, &source, &args, &kwargs, &phase, use_vm]() {
       if (executor_running_) {
         MS_LOG(EXCEPTION) << "Nested execution during JIT execution for " << GetObjDesc(source) << " is not supported "
-                          << "when " << obj_desc_ << " compile and execute.";
+                          << "when " << obj_desc_ << " compile and execute. For more details, please refer to "
+                          << "https://www.mindspore.cn/search?inputValue=Nested%20execution";
       }
       ProcessStatus::GetInstance().RecordStart(kCompiler);
       std::map<std::string, std::string> custom_info;
