@@ -814,7 +814,7 @@ class Squeeze(Primitive):
         >>> squeeze = ops.Squeeze()
         >>> output = squeeze(input_x)
         >>> print(output)
-        2.1+2j
+        (2.1+2j)
     """
 
     @prim_attr_register
