@@ -33,6 +33,8 @@
 
 namespace mindspore {
 namespace parallel {
+constexpr char KEmptyMirrorOpNum[] = "empty_mirror_ops";
+
 Status CustomInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 Status CustomInfo::InferAsLossDivisor() {
@@ -71,6 +73,24 @@ Status CustomInfo::InferDevMatrixShape() {
   if (dev_matrix_shape_.empty()) {
     MS_LOG(ERROR) << name_ << ": can't find dev matrix shape from attrs in Custom Op";
     return FAILED;
+  }
+  return SUCCESS;
+}
+
+Status CustomInfo::InferMirrorOps() {
+  if (OperatorInfo::InferMirrorOps() != SUCCESS) {
+    return FAILED;
+  }
+  if (mirror_ops_.empty()) {
+    return SUCCESS;
+  }
+  auto empty_mirror_ops_iter = attrs_.find(KEmptyMirrorOpNum);
+  if (empty_mirror_ops_iter != attrs_.end()) {
+    MS_EXCEPTION_IF_NULL(empty_mirror_ops_iter->second);
+    auto empty_mirror_ops_ = GetValue<int64_t>(empty_mirror_ops_iter->second);
+    for (int64_t idx = 0; idx < empty_mirror_ops_; idx++) {
+      (void)mirror_ops_.emplace_back(OperatorVector());
+    }
   }
   return SUCCESS;
 }
