@@ -525,7 +525,7 @@ class Profiler:
             RuntimeError: If the start_profile parameter is not set or is set to True.
 
         Examples:
-            >>> from mindpsore.train import Callback
+            >>> from mindspore.train import Callback
             >>> class StopAtStep(Callback):
             ...     def __init__(self, start_step, stop_step):
             ...         super(StopAtStep, self).__init__()
@@ -591,7 +591,7 @@ class Profiler:
             RuntimeError: If the profiler has not started, this function is disabled.
 
         Examples:
-            >>> from mindpsore.train import Callback
+            >>> from mindspore.train import Callback
             >>> class StopAtEpoch(Callback):
             ...     def __init__(self, start_epoch, stop_epoch):
             ...         super(StopAtEpoch, self).__init__()
