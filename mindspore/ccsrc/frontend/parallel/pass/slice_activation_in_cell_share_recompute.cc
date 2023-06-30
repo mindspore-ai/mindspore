@@ -229,7 +229,7 @@ void SliceReuseRecomputedActivationNodes(const FuncGraphPtr &graph) {
       // create depend for slice
       if (!slice_rely_node) {
         auto slice_depend = CreateDependNode(slice_rely_node, slice_cnode, "slice_activation_depend");
-        manager->Replace(slice_rely_node, slice_depend);
+        (void)manager->Replace(slice_rely_node, slice_depend);
       }
 
       // handle allgather node
@@ -240,7 +240,7 @@ void SliceReuseRecomputedActivationNodes(const FuncGraphPtr &graph) {
       if (i > 1) {
         auto allgather_rely_node = recompute_graph_inputs.front();
         auto allgather_depend = CreateDependNode(ref_node, allgather_rely_node, "allgather_activation_depend");
-        manager->Replace(ref_node, allgather_depend);
+        (void)manager->Replace(ref_node, allgather_depend);
         ref_node = allgather_depend;
       }
       auto allgather_cnode = CreateAllGatherNode(ref_node, groups);
