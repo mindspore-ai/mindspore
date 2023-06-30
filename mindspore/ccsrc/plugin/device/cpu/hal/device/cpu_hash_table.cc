@@ -93,9 +93,9 @@ bool CPUHashTable<Key, Value>::Find(const Key *keys, size_t key_num, bool insert
     // Insert key-value pair into values_ by default_value or initializer
     if (!initializer_.empty()) {
       // allocate memory for value
-      auto value_addr = reinterpret_cast<Value *>(AllocateMemory(value_size_));
+      auto value_addr = static_cast<Value *>(AllocateMemory(value_size_));
       MS_EXCEPTION_IF_NULL(value_addr);
-      values_.emplace(key, std::make_pair(static_cast<Value *>(value_addr), Status::kModified));
+      (void)values_.emplace(key, std::make_pair(static_cast<Value *>(value_addr), Status::kModified));
       if (initializer_ == kNormalDistribution) {
         // initialize normal distribution parameter
         const double mean = 0.0;
@@ -125,9 +125,9 @@ bool CPUHashTable<Key, Value>::Find(const Key *keys, size_t key_num, bool insert
       }
     } else {
       // if there's no key in values_
-      auto value_addr = reinterpret_cast<Value *>(AllocateMemory(value_size_));
+      auto value_addr = static_cast<Value *>(AllocateMemory(value_size_));
       MS_EXCEPTION_IF_NULL(value_addr);
-      values_.emplace(key, std::make_pair(static_cast<Value *>(value_addr), Status::kModified));
+      (void)values_.emplace(key, std::make_pair(static_cast<Value *>(value_addr), Status::kModified));
       for (size_t k = 0; k < value_dim_; ++k) {
         value_addr[k] = default_value_;
       }
@@ -155,7 +155,7 @@ bool CPUHashTable<Key, Value>::Insert(const Key *keys, size_t key_num, const Val
     if (iter == values_.end()) {
       auto value_addr = AllocateMemory(value_size_);
       MS_EXCEPTION_IF_NULL(value_addr);
-      iter = values_.emplace(key, std::make_pair(reinterpret_cast<Value *>(value_addr), Status::kModified)).first;
+      iter = values_.emplace(key, std::make_pair(static_cast<Value *>(value_addr), Status::kModified)).first;
     }
 
     // Do the insertion copy.
@@ -188,7 +188,7 @@ bool CPUHashTable<Key, Value>::Insert(const Key *keys, size_t key_num, const Val
     if (iter == values_.end()) {
       auto value_addr = AllocateMemory(value_size_);
       MS_EXCEPTION_IF_NULL(value_addr);
-      iter = values_.emplace(key, std::make_pair(reinterpret_cast<Value *>(value_addr), statuses[i])).first;
+      iter = values_.emplace(key, std::make_pair(static_cast<Value *>(value_addr), statuses[i])).first;
     }
 
     auto ret = memcpy_s(iter->second.first, value_size_, values + (i * value_dim_), value_size_);
