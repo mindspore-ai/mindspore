@@ -1266,6 +1266,8 @@ class SymbolTree(Observer, Observable):
                 i += 1
         if not tmp_module:
             logger.error(f"load module {tmp_module_name} failed.")
+        # Save new module to sys.modules to support inspect.getsource().
+        sys.modules[tmp_module_name] = tmp_module
         network_cls = getattr(tmp_module, self._opt_cls_name)
         if network_cls is None:
             raise RuntimeError("Can not find network class:", self._opt_cls_name)
