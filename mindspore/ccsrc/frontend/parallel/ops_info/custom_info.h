@@ -47,7 +47,7 @@ class CustomInfo : public OperatorInfo {
   Status InferTensorMap() override;
   Status GetAttrs() override { return SUCCESS; }
   Status InferAsLossDivisor() override;
-
+  Status InferMirrorOps() override;
   Status CheckStrategy(const StrategyPtr & /* strategy */) override { return SUCCESS; }
 };
 }  // namespace parallel
