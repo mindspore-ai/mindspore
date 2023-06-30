@@ -16,6 +16,7 @@
 
 #include "src/litert/pass/online_fusion/cast_gather_reduce_fusion_pass.h"
 #include <vector>
+#include "src/litert/pass/online_fusion/online_fusion_utils.h"
 #include "src/common/ops/populate/populate_register.h"
 #include "nnacl/split_parameter.h"
 #include "nnacl/reduce_parameter.h"
@@ -140,18 +141,6 @@ int CastGatherReduceOnlineFusionPass::CreateCastGatherReduceCustomNode(LiteGraph
   node->input_indices_ = *new_input_indices;
   node->output_indices_ = model_->graph_.all_nodes_.at(subgraph->ends_.front())->output_indices_;
   return RET_OK;
-}
-
-bool IsIntScalarValue(lite::Tensor *tensor, int value) {
-  if ((tensor->shape().size() == 0 || (tensor->shape().size() == 1 && tensor->shape().at(0) == 1)) &&
-      (tensor->data_type() == TypeId::kNumberTypeInt32 || tensor->data_type() == TypeId::kNumberTypeInt)) {
-    auto data = static_cast<int *>(tensor->data())[0];
-    if (data != value) {
-      return false;
-    }
-    return true;
-  }
-  return false;
 }
 
 bool CastGatherReduceOnlineFusionPass::SatifyGatherReduceParse(SearchSubGraph::Subgraph *subgraph, uint32_t in_node,
