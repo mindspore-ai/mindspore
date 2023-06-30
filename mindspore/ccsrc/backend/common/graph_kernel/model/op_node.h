@@ -90,6 +90,7 @@ class ReshapeOp : public PrimOp {
  public:
   explicit ReshapeOp(const std::string &op) : PrimOp(op, ComputeType::RESHAPE) {}
   ~ReshapeOp() = default;
+  NodePtr InferValue(const NodePtrList &inputs, const DAttrs &) override;
 
  protected:
   DFormat InferFormat(const NodePtrList &, const DAttrs &attrs) override {

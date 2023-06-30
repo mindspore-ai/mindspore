@@ -213,7 +213,6 @@ tensor::TensorPtr PrimOp::CalcByOperator(const NodePtrList &inputs, const DAttrs
   }
   if (inputs.size() == unary_input_num) {
     mindspore::HashMap<std::string, std::function<TM(const TM &)>> func_map = {
-      {"Reshape", [](const TM &a) { return a; }},
       {"Exp", [](const TM &a) { return exp(a); }},
       {"Reciprocal",
        [](const TM &a) {
@@ -330,6 +329,15 @@ NodePtr PrimOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs) {
     res = InferValueWithAbstract(primc, inputs_abstract);
   }
   return res == nullptr ? nullptr : std::make_shared<ConstTensorNode>(res);
+}
+
+NodePtr ReshapeOp::InferValue(const NodePtrList &inputs, const DAttrs &) {
+  if (inputs[0]->NodeType() != NType::Tensor) {
+    return nullptr;
+  }
+  void *tensor_data = inputs[0]->As<inner::ConstTensorNode>()->data()->data_c();
+  tensor::TensorPtr result_tensor = std::make_shared<tensor::Tensor>(this->type, this->shape, tensor_data, this->type);
+  return std::make_shared<ConstTensorNode>(result_tensor);
 }
 
 // default format shape to fractal_Nz format shape
