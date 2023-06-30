@@ -3368,7 +3368,7 @@ class DataFormatDimMap(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >> import mindspore
+        >>> import mindspore
         >>> from mindspore import Tensor, ops
         >>> input_x = Tensor([0, 1, 2, 3], mindspore.int32)
         >>> dfdm = ops.DataFormatDimMap()
@@ -4218,7 +4218,7 @@ class GetNext(Primitive):
         >>> import mindspore
         >>> from mindspore import ops
         >>> from mindspore import dataset as ds
-        >>> from mindspore.common import dtype as mstype
+        >>> from mindspore import dtype as mstype
         >>> data_path = "/path/to/MNIST_Data/train/"
         >>> train_dataset = ds.MnistDataset(data_path, num_samples=10)
         >>> dataset_helper = mindspore.DatasetHelper(train_dataset, dataset_sink_mode=True)

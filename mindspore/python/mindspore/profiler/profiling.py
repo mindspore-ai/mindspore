@@ -284,7 +284,6 @@ class Profiler:
         >>> import mindspore.dataset as ds
         >>> from mindspore import Profiler
         >>>
-        >>>
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -300,7 +299,7 @@ class Profiler:
         ...     optimizer = nn.Momentum(net.trainable_params(), 1, 0.9)
         ...     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
         ...     data = ds.GeneratorDataset(generator, ["data", "label"])
-        ...     model = ms.Model(net, loss, optimizer)
+        ...     model = ms.train.Model(net, loss, optimizer)
         ...     model.train(1, data)
         >>>
         >>> if __name__ == '__main__':

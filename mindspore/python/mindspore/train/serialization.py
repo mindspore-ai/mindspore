@@ -811,12 +811,14 @@ def obfuscate_model(obf_config, **kwargs):
         ValueError: If `original_model_path` is not exist or `original_model_path` is not end with '.mindir'.
 
     Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
         >>> obf_config = {'original_model_path': "./net.mindir",
         ...          'save_model_path': "./obf_net",
         ...          'model_inputs': [input1, ],
         ...          'obf_ratio': 0.1, 'obf_random_seed': 173262358423}
-        >>> obfuscate_model(obf_config)
-        >>> obf_func = load("obf_net.mindir")
+        >>> ms.obfuscate_model(obf_config)
+        >>> obf_func = ms.load("obf_net.mindir")
         >>> obf_net = nn.GraphCell(obf_func, obf_random_seed=173262358423)
         >>> print(obf_net(input1).asnumpy())
     """
@@ -1868,9 +1870,7 @@ def parse_print(print_file_name):
     Examples:
         >>> import numpy as np
         >>> import mindspore as ms
-        >>> import mindspore.ops as ops
-        >>> from mindspore import nn
-        >>> from mindspore import Tensor
+        >>> from mindspore import nn, Tensor, ops
         >>> ms.set_context(mode=ms.GRAPH_MODE, print_file_path='log.data')
         >>> class PrintInputTensor(nn.Cell):
         ...         def __init__(self):
@@ -1885,8 +1885,7 @@ def parse_print(print_file_name):
         >>> net = PrintInputTensor()
         >>> net(input_pra)
         >>>
-        >>> import mindspore
-        >>> data = mindspore.parse_print('./log.data')
+        >>> data = ms.parse_print('./log.data')
         >>> print(data)
         ['print:', Tensor(shape=[2, 4], dtype=Float32, value=
         [[ 1.00000000e+00,  2.00000000e+00,  3.00000000e+00,  4.00000000e+00],
@@ -2047,7 +2046,8 @@ def restore_group_info_list(group_info_file_name):
         TypeError: group_info_file_name is not str.
 
     Examples:
-        >>> restore_list = restore_group_info_list("./group_info.pb")
+        >>> import mindspore as ms
+        >>> ms.restore_list = restore_group_info_list("./group_info.pb")
     """
     if not isinstance(group_info_file_name, str):
         raise TypeError(f"For 'restore_group_info_list', the argument 'group_info_file_name' should be str, "
@@ -2077,10 +2077,11 @@ def build_searched_strategy(strategy_filename):
 
     Raises:
         ValueError: Strategy file is incorrect.
-        TypeError: strategy_filename is not a string.
+        TypeError: `strategy_filename` is not a string.
 
     Examples:
-        >>> strategy = build_searched_strategy("./strategy_train.ckpt")
+        >>> import mindspore as ms
+        >>> strategy = ms.build_searched_strategy("./strategy_train.ckpt")
     """
     return _build_searched_strategy(strategy_filename)
 
@@ -2471,7 +2472,8 @@ def convert_model(mindir_file, convert_file, file_format):
         ValueError: If the parameter `file_format` is not "ONNX".
 
     Examples:
-        >>> convert_model("lenet.mindir", "lenet.onnx", "ONNX")
+        >>> import mindspore as ms
+        >>> ms.convert_model("lenet.mindir", "lenet.onnx", "ONNX")
     """
     Validator.check_file_name_by_regular(mindir_file)
     Validator.check_file_name_by_regular(convert_file)

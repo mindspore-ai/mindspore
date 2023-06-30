@@ -64,10 +64,9 @@ def set_seed(seed):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore.ops as ops
-        >>> from mindspore import Tensor, set_seed, Parameter
-        >>> from mindspore.common.initializer import initializer
         >>> import mindspore as ms
+        >>> from mindspore import Tensor, set_seed, Parameter, ops
+        >>> from mindspore.common.initializer import initializer
         >>> # Note: (1) Please make sure the code is running in PYNATIVE MODE;
         >>> # (2) Because Composite-level ops need parameters to be Tensors, for below examples,
         >>> # when using ops.uniform operator, minval and maxval are initialised as:

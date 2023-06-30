@@ -322,7 +322,7 @@ def auto_mixed_precision(network, amp_level="O0"):
         ValueError: If amp level is not supported.
 
     Examples:
-        >>> from mindspore import amp, nn
+        >>> from mindspore import amp
         >>> # Define the network structure of LeNet5. Refer to
         >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> network = LeNet5()
@@ -638,7 +638,7 @@ def custom_mixed_precision(network, *, white_list=None, black_list=None):
         ValueError: Both `white_list` and `black_list` are provided.
 
     Examples:
-        >>> from mindspore import amp
+        >>> from mindspore import amp, nn
         >>> # Define the network structure of LeNet5. Refer to
         >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()

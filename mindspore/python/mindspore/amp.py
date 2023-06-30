@@ -110,6 +110,8 @@ def all_finite(inputs):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import amp, Tensor
+        >>> import numpy as np
         >>> x = (Tensor(np.array([np.log(-1), 1, np.log(0)])), Tensor(np.array([1.0])))
         >>> output = amp.all_finite(x)
 
@@ -183,6 +185,9 @@ class StaticLossScaler(LossScaler):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import amp, Tensor
+        >>> import numpy as np
         >>> loss_scaler = amp.StaticLossScaler(scale_value=2**10)
         >>> loss_value = Tensor([1.], mindspore.float32)
         >>> scaled_loss_value = loss_scaler.scale(loss_value)
@@ -259,6 +264,9 @@ class DynamicLossScaler(LossScaler):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import amp, Tensor
+        >>> import numpu as np
         >>> loss_scaler = amp.DynamicLossScaler(scale_value=2**10, scale_factor=2, scale_window=1)
         >>> grads = (Tensor(np.array([np.log(-1), 1.0]), mindspore.float16),
         ...             Tensor(np.array([0.2]), mindspore.float16))

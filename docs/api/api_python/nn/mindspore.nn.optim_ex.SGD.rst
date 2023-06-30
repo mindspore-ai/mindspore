@@ -25,7 +25,7 @@ mindspore.nn.optim_ex.SGD
 
     参数：
         - **params** (Union[list(Parameter), list(dict)]) - 网络参数的列表或指定了参数组的列表。
-        - **lr** (Union[float, int, Tensor]) - 学习率。
+        - **lr** (Union[int, float, Tensor]) - 学习率。
         - **momentum** (Union[int, float], 可选) - 动量值。默认值：``0``。
         - **weight_decay** (float, 可选) - 权重衰减（L2 penalty），必须大于等于0。默认值：``0.0``。
         - **dampening** (Union[int, float], 可选) - 动量的阻尼值。默认值：``0``。

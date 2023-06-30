@@ -50,8 +50,9 @@ def merge_pipeline_strategys(src_strategy_dirs, dst_strategy_file):
         NotADirectoryError: `src_strategy_dirs` is not a directory.
 
     Examples:
+        >>> import mindspore ms
         >>> # src_strategy_dir/stra0.ckpt, src_strategy_dir/stra1.ckpt ... src_strategy_dir/stra127.ckpt
-        >>> merge_pipeline_strategys("./src_strategy_dir", "./dst_strategy.ckpt")
+        >>> ms.merge_pipeline_strategys("./src_strategy_dir", "./dst_strategy.ckpt")
 
     """
     dst_strategy_dir, _ = os.path.split(dst_strategy_file)
@@ -98,8 +99,9 @@ def rank_list_for_transform(rank_id, src_strategy_file=None, dst_strategy_file=N
         TypeError: `rank_id` is not a int.
 
     Examples:
+        >>> import mindspore as ms
         >>> rank_id = 0
-        >>> rank_list = rank_list_for_transform(rank_id, "./src_strategy.ckpt", "./dst_strategy.ckpt")
+        >>> rank_list = ms.rank_list_for_transform(rank_id, "./src_strategy.ckpt", "./dst_strategy.ckpt")
         >>> checkpoint_files_map = {}
         >>> for rank in rank_list:
         ...     checkpoint_files_map[rank] = "./pangu{}-100_2.ckpt".format(rank)
@@ -164,14 +166,15 @@ def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_
         TypeError: `save_checkpoint_file_name` is not a string.
 
     Examples:
+        >>> import mindspore as ms
         >>> dst_device_num = 8
         >>> for rank_id in range(dst_device_num):
-        ...     rank_list = rank_list_for_transform(rank_id, "./src_strategy.ckpt", "./dst_strategy.ckpt")
+        ...     rank_list = ms.rank_list_for_transform(rank_id, "./src_strategy.ckpt", "./dst_strategy.ckpt")
         ...     checkpoint_files_map = {}
         ...     for rank in rank_list:
         ...         checkpoint_files_map[rank] = "./origin_checkpoint_rank{}/pangu{}-100_2.ckpt".format(rank)
         ...     save_checkpoint_file_name = "./new_checkpoint_rank{}/pangu{}-100_2.ckpt".format(rank_id)
-        ...     transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_file_name,
+        ...     ms.transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_file_name,
         ...                                  "./src_strategy.ckpt", "./dst_strategy.ckpt")
 
     """
@@ -249,7 +252,8 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
         TypeError: `src_strategy_file` or `dst_strategy_file` is not a string.
 
     Examples:
-        >>> transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, "dst_checkpoint",
+        >>> import mindspore as ms
+        >>> ms.transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, "dst_checkpoint",
         ...                       "./src_strategy.ckpt", "./dst_strategy.ckpt")
 
     """

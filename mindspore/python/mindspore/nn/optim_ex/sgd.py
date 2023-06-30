@@ -50,7 +50,7 @@ class SGD(Optimizer):
     Args:
         params (Union[list(Parameter), list(dict)]): list of parameters to optimize or dicts defining
             parameter groups.
-        lr (Union[float, int, Tensor]): learning rate.
+        lr (Union[int, float, Tensor]): learning rate.
         momentum (Union[int, float], optional): momentum factor. Default: ``0``.
         weight_decay (float, optional): weight decay (L2 penalty). Default: ``0``.
         dampening (Union[int, float], optional): dampening for momentum. Default: ``0``.

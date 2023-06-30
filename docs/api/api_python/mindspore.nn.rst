@@ -407,8 +407,8 @@ LRScheduler类
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.nn.lr_scheduler.StepLR
     mindspore.nn.lr_scheduler.LinearLR
+    mindspore.nn.lr_scheduler.StepLR
 
 图像处理层
 -----------

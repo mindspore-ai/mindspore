@@ -27,9 +27,10 @@ class LineReader:
     This class is used to hold the line offsets of line based file.
 
     The following functionality is provided:
-    - len() - return the number of lines in the file
-    - readline(line) - open file handle (if not opened yet), and read a line in the file
-    - close() - close the file handle opened in readline
+
+    - len(): return the number of lines in the file
+    - readline(line): open file handle (if not opened yet), and read a line in the file
+    - close(): close the file handle opened in readline
 
     Args:
         filename (str): line based file to be loaded.

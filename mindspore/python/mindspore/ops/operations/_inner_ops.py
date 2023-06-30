@@ -2111,7 +2111,7 @@ class MixedPrecisionCast(Primitive):
     Examples:
         >>> import numpy as np
         >>> from mindspore import Tensor
-        >>> from mindspore.common import dtype as mstype
+        >>> from mindspore import dtype as mstype
         >>> from mindspore.ops.operations import _inner_ops as inner
         >>> x = Tensor(np.ones([2, 3], dtype=np.float32))
         >>> out = inner.MixedPrecisionCast(mstype.float16, x)
