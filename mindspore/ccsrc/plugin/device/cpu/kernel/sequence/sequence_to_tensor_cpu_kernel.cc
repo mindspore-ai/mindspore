@@ -117,12 +117,17 @@ std::vector<std::pair<KernelAttr, SeqToTensorCpuKernelMod::SeqToTensorFunc>>
   SeqToTensorCpuKernelMod::scalar_func_list_ = {
     ADD_SCALAR_KERNEL(Float32, Float32, float, float),  ADD_SCALAR_KERNEL(Float32, Float64, float, double),
     ADD_SCALAR_KERNEL(Float32, Int32, float, int32_t),  ADD_SCALAR_KERNEL(Float32, Int64, float, int64_t),
+    ADD_SCALAR_KERNEL(Float32, Bool, float, bool),      ADD_SCALAR_KERNEL(Float64, Bool, double, bool),
     ADD_SCALAR_KERNEL(Float64, Float32, double, float), ADD_SCALAR_KERNEL(Float64, Float64, double, double),
     ADD_SCALAR_KERNEL(Float64, Int32, double, int32_t), ADD_SCALAR_KERNEL(Float64, Int64, double, int64_t),
     ADD_SCALAR_KERNEL(Int32, Float32, int32_t, float),  ADD_SCALAR_KERNEL(Int32, Float64, int32_t, double),
     ADD_SCALAR_KERNEL(Int32, Int32, int32_t, int32_t),  ADD_SCALAR_KERNEL(Int32, Int64, int32_t, int64_t),
+    ADD_SCALAR_KERNEL(Int32, Bool, int32_t, bool),      ADD_SCALAR_KERNEL(Int64, Bool, int64_t, bool),
     ADD_SCALAR_KERNEL(Int64, Float32, int64_t, float),  ADD_SCALAR_KERNEL(Int64, Float64, int64_t, double),
-    ADD_SCALAR_KERNEL(Int64, Int32, int64_t, int32_t),  ADD_SCALAR_KERNEL(Int64, Int64, int64_t, int64_t)};
+    ADD_SCALAR_KERNEL(Int64, Int32, int64_t, int32_t),  ADD_SCALAR_KERNEL(Int64, Int64, int64_t, int64_t),
+    ADD_SCALAR_KERNEL(Bool, Float32, bool, float),      ADD_SCALAR_KERNEL(Bool, Float64, bool, double),
+    ADD_SCALAR_KERNEL(Bool, Int32, bool, int32_t),      ADD_SCALAR_KERNEL(Bool, Int64, bool, int64_t),
+    ADD_SCALAR_KERNEL(Bool, Bool, bool, bool)};
 
 std::vector<KernelAttr> SeqToTensorCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
