@@ -23,8 +23,37 @@ struct UnaryFunc<ElwiseOpType::kAbs, Type, Type> {
     return cuda::elwise::Abs<Type>(val);
   }
 };
+template <>
+struct UnaryFunc<ElwiseOpType::kAbs, uint8_t, uint8_t> {
+  DEVICE_HOST UnaryFunc() {}
+  DEVICE uint8_t operator()(const uint8_t val) const {
+    return val;
+  }
+};
+template <>
+struct UnaryFunc<ElwiseOpType::kAbs, uint16_t, uint16_t> {
+  DEVICE_HOST UnaryFunc() {}
+  DEVICE uint16_t operator()(const uint16_t val) const {
+    return val;
+  }
+};
+template <>
+struct UnaryFunc<ElwiseOpType::kAbs, uint32_t, uint32_t> {
+  DEVICE_HOST UnaryFunc() {}
+  DEVICE uint32_t operator()(const uint32_t val) const {
+    return val;
+  }
+};
+template <>
+struct UnaryFunc<ElwiseOpType::kAbs, uint64_t, uint64_t> {
+  DEVICE_HOST UnaryFunc() {}
+  DEVICE uint64_t operator()(const uint64_t val) const {
+    return val;
+  }
+};
 REGISTER_UNARY_OP_CUDA_FUNC_BOOL_TYPE(ElwiseOpType::kAbs);
 REGISTER_UNARY_OP_CUDA_FUNC_INT_TYPE(ElwiseOpType::kAbs);
+REGISTER_UNARY_OP_CUDA_FUNC_UINT_TYPE(ElwiseOpType::kAbs);
 REGISTER_UNARY_OP_CUDA_FUNC_FLOAT_TYPE(ElwiseOpType::kAbs);
 REGISTER_UNARY_OP_CUDA_FUNC_COMPLEX_TYPE(ElwiseOpType::kAbs);
 template <typename Type>
