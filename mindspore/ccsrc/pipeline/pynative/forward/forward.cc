@@ -70,7 +70,6 @@ ValuePtr ShallowCopyValue(const FrontendOpRunInfoPtr &op_run_info, const ValuePt
   }
 }
 
-/// TODO(caifubi): delete and throw exception in Init().
 ValuePtr CopyTensorValueWithNewId(const ValuePtr &v) {
   MS_EXCEPTION_IF_NULL(v);
   if (v->isa<tensor::Tensor>()) {
@@ -91,30 +90,6 @@ ValuePtr CopyTensorValueWithNewId(const ValuePtr &v) {
   } else {
     return v;
   }
-}
-
-MsBackendPolicy GetBackendPolicy(const std::string &device_target) {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  MsBackendPolicy backend_policy = kMsBackendVmOnly;
-  if (device_target == kAscendDevice) {
-    if (ms_context->backend_policy() == "ge") {
-      MS_LOG(EXCEPTION) << "In PyNative mode, not support ge backend!";
-    }
-#ifdef WITH_BACKEND
-    const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-      {kAscendDevice, ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
-    MS_EXCEPTION_IF_NULL(device_context);
-    MS_EXCEPTION_IF_NULL(device_context->GetDeprecatedInterface());
-
-    if (!device_context->GetDeprecatedInterface()->IsTsdOpened(ms_context)) {
-      if (!device_context->GetDeprecatedInterface()->OpenTsd(ms_context)) {
-        MS_LOG(EXCEPTION) << "Open tsd failed";
-      }
-    }
-#endif
-  }
-  return backend_policy;
 }
 
 void UpdateOutputStubNodeAbs(const FrontendOpRunInfoPtr &op_run_info) {
@@ -548,20 +523,15 @@ compile::MindRTBackendPtr ForwardExecutor::GetMindRtBackend(const string &cur_de
 ValuePtr ForwardExecutor::RunOpWithBackendPolicy(const FrontendOpRunInfoPtr &op_run_info,
                                                  const BackendOpRunInfoPtr &backend_op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  ValuePtr result;
-  auto backend_policy = GetBackendPolicy(device_target_);
-  if (backend_policy == kMsBackendVmOnly) {
 #ifndef ENABLE_TEST
-    if (IsVmOp(op_run_info->base_op_run_info.op_name)) {
-      result = RunOpInVM(op_run_info);
-    } else {
-      result = RunOpInMs(op_run_info, backend_op_run_info);
-    }
-#else
-    result = RunOpInVM(op_run_info);
-#endif
+  if (IsVmOp(op_run_info->base_op_run_info.op_name)) {
+    return RunOpInVM(op_run_info);
+  } else {
+    return RunOpInMs(op_run_info, backend_op_run_info);
   }
-  return result;
+#else
+  return RunOpInVM(op_run_info);
+#endif
 }
 
 ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) const {
