@@ -1,4 +1,9 @@
 set(protobuf_USE_STATIC_LIBS ON)
+set(ENABLE_NATIVE_PROTOBUF "off")
+if(EXISTS ${TOP_DIR}/mindspore/lite/providers/protobuf/native_protobuf.cfg)
+    set(ENABLE_NATIVE_PROTOBUF "on")
+    file(STRINGS ${TOP_DIR}/mindspore/lite/providers/protobuffer/native_protobuffer.cfg native_protobuffer_path)
+endif()
 if(BUILD_LITE)
     if(MSVC)
         set(protobuf_CXXFLAGS "${CMAKE_CXX_FLAGS}")
@@ -88,7 +93,6 @@ mindspore_add_pkg(protobuf
         PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2021-22570.patch
         PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2022-1941.patch)
 endif()
-
 include_directories(${protobuf_INC})
 include_directories(${CMAKE_BINARY_DIR}/proto_py)
 add_library(mindspore::protobuf ALIAS protobuf::protobuf)
@@ -98,6 +102,16 @@ if(MSVC)
     set(CMAKE_STATIC_LIBRARY_PREFIX, ${_ms_tmp_CMAKE_STATIC_LIBRARY_PREFIX})
 endif()
 
+if(ENABLE_NATIVE_PROTOBUF)
+    set(PROTOC ${native_protobuffer_path}/bin/protoc)
+    set(PROTOBUF_LIB ${native_protobuffer_path}/lib/libprotobuf.so.3.13.0.0)
+    set(protobuf_LIBPATH ${native_protobuffer_path}/lib)
+    set(protobuf_INC ${native_protobuffer_path}/include)
+
+    include_directories(${protobuf_INC})
+    message("protobuf_INC : ${protobuf_INC}")
+    set(CMAKE_CXX_FLAGS  ${_ms_tmp_CMAKE_CXX_FLAGS})
+endif()
 function(common_protobuf_generate path c_var h_var)
     if(NOT ARGN)
         message(SEND_ERROR "Error: ms_protobuf_generate() called without any proto files")
@@ -115,6 +129,16 @@ function(common_protobuf_generate path c_var h_var)
 
         list(APPEND ${c_var} "${path}/${file_name}.pb.cc")
         list(APPEND ${h_var} "${path}/${file_name}.pb.h")
+        if(ENABLE_NATIVE_PROTOBUF)
+            add_custom_command(
+            OUTPUT "${path}/${file_name}.pb.cc" "${path}/${file_name}.pb.h"
+            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${path}"
+            COMMAND ${CMAKE_COMMAND} -E env "LD_LIBRARY_PATH=${protobuf_LIBPATH}" ${PROTOC} -I${file_dir}
+            --cpp_out=${path} ${abs_file}
+            DEPENDS ${PROTOC} ${abs_file}
+            COMMENT "Running C++ protocol buffer compiler on ${file}" VERBATIM)
+        else()
         add_custom_command(
                 OUTPUT "${path}/${file_name}.pb.cc" "${path}/${file_name}.pb.h"
                 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
@@ -122,6 +146,7 @@ function(common_protobuf_generate path c_var h_var)
                 COMMAND protobuf::protoc -I${file_dir} --cpp_out=${path} ${abs_file}
                 DEPENDS protobuf::protoc ${abs_file}
                 COMMENT "Running C++ protocol buffer compiler on ${file}" VERBATIM)
+        endif()
     endforeach()
 
     set_source_files_properties(${${c_var}} ${${h_var}} PROPERTIES GENERATED TRUE)

@@ -109,7 +109,9 @@ set(CORE_SRC_LIST
         ${CMAKE_CURRENT_SOURCE_DIR}/abstract/utils.cc
         )
 add_library(mindspore_core SHARED ${CORE_OBJECT_LIST})
-if(NOT TARGET_AOS_ARM)
+if(ENABLE_NATIVE_PROTOBUF)
+    target_link_libraries(mindspore_core PRIVATE ${PROTOBUF_LIB})
+elseif(NOT TARGET_AOS_ARM)
     target_link_libraries(mindspore_core PRIVATE mindspore::protobuf)
 endif()
 target_link_libraries(mindspore_core PRIVATE securec)
