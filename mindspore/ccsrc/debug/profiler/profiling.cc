@@ -271,7 +271,7 @@ void CollectHostInfo(const std::string &module_name, const std::string &event, c
     MS_LOG(DEBUG) << "Profiler is not enabled, no need to record Host info.";
     log_once = true;
     return;
-  } else if (log_once) {
+  } else if (!profiler_manager->GetProfilingEnableFlag()) {
     return;
   }
   if (!profiler_manager->EnableCollectHost()) {
