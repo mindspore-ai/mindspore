@@ -437,7 +437,11 @@
     "SquareSumV1",
     "SplitVD",
     "BiasAddGrad",
-    "SoftmaxCrossEntropyWithLogits"
+    "SoftmaxCrossEntropyWithLogits",
+    "BNTrainingReduceGrad",
+    "BNTrainingReduce",
+    "BNTrainingUpdateGrad",
+    "BNTrainingUpdate"
   ],
   "SkipNodesComments": {
     "Im2col": "not support int8, uint8, float16 in op json, need add pass",
@@ -480,7 +484,11 @@
     "AvgPool": "not support strides > 63.",
     "GatherNd": "Can't call check_supported function.",
     "Eye": "Failed to access aicore's Eye. The attr `dtype` require special treatment like Cast, and the default value of the attr `batch_shape` can't be processed appropriately.",
-    "BNInfer" : "unknownshape_format increase new format 'NCHW', will affect kernel select"
+    "BNInfer" : "unknownshape_format increase new format 'NCHW', will affect kernel select",
+    "BNTrainingReduceGrad": "dynamic impl failed",
+    "BNTrainingReduce": "dynamic impl failed",
+    "BNTrainingUpdateGrad": "dynamic impl failed",
+    "BNTrainingUpdate": "dynamic impl failed"
   },
   "SkipNodes": [
     "Im2col",
