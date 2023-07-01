@@ -327,7 +327,7 @@ std::vector<std::pair<AnfNodePtr, int>> FuncGraphNodeUsers(const std::pair<AnfNo
     auto param = fg_parameters[IntToSize(node_pair.second - 1)];
     auto manager = fg->manager();
     auto param_node_users = manager->node_users()[param];
-    std::copy(param_node_users.begin(), param_node_users.end(), std::back_inserter(func_users_vector));
+    (void)std::copy(param_node_users.begin(), param_node_users.end(), std::back_inserter(func_users_vector));
   }
   return func_users_vector;
 }

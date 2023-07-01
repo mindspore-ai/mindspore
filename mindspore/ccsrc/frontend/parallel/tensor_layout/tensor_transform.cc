@@ -292,10 +292,10 @@ RedistributionOpListPtr TensorTransform::OptimizeTensorRedistributionOperatorLis
     auto new_axis = axis;
     auto new_src_shape = src_shape;
     for (int32_t j = axis - 1; j >= 0; --j) {
-      if (src_shape[j] != 1) {
+      if (src_shape[IntToSize(j)] != 1) {
         continue;
       }
-      new_src_shape.erase(new_src_shape.begin() + j);
+      (void)new_src_shape.erase(new_src_shape.begin() + j);
       new_axis -= 1;
     }
     MS_LOG(INFO) << "src_shape:" << src_shape << ", new_src_shape:" << new_src_shape << ", axis:" << axis
