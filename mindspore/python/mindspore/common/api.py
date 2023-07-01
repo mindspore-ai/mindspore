@@ -41,7 +41,7 @@ from mindspore._c_expression import GraphExecutor_, Tensor, CSRTensor, RowTensor
     _ms_memory_recycle, _bind_device_ctx
 from mindspore.parallel._ps_context import _is_role_sched
 from mindspore.parallel._utils import _check_full_batch, _get_parameter_broadcast, _is_pynative_parallel, \
-    _get_pipeline_stages, _is_in_auto_parallel_mode
+    _is_in_auto_parallel_mode
 from mindspore import _checkparam as Validator
 from mindspore._checkparam import is_stub_tensor
 from mindspore.common._utils import is_shape_unknown
@@ -1401,8 +1401,6 @@ class _CellGraphExecutor:
         elif 'skip_auto_parallel_compile' not in obj.get_flags().keys():
             obj.parameter_layout_dict = self._graph_executor.get_parameter_layout(phase)
             obj.parallel_parameter_name_list = self._graph_executor.get_parallel_parameter_name_list(phase)
-            if _get_pipeline_stages() > 1 and (not hasattr(obj, "is_first_iteration") or not obj.is_first_iteration):
-                obj.remove_redundant_parameters()
 
         if not do_convert:
             return phase, True
