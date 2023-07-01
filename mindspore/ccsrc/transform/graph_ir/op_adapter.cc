@@ -25,8 +25,6 @@
 
 namespace mindspore {
 namespace transform {
-static uint32_t CustomInferFunc(const Operator &) { return 0; }
-
 ge::graphStatus CustomAkgOpInferFunc(ge::Operator &op);
 
 // check a Custom node is an akg kernel, it should be called in the case of node is a Custom node.
@@ -167,7 +165,7 @@ OperatorPtr OpAdapterImpl::GenerateCustomOp(const AnfNodePtr anf) {
     op->CustomInferFuncRegister(CustomAkgOpInferFunc);
     RegisterAkgOp(prim, op_type);
   } else {
-    op->CustomInferFuncRegister(CustomInferFunc);
+    MS_LOG(INFO) << "For custom operators, users need to define and implement the Infershape function by themselves.";
   }
 
   return op;

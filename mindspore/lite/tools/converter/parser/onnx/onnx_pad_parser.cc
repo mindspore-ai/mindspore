@@ -63,14 +63,17 @@ PrimitiveCPtr OnnxPadParser::Parse(const onnx::GraphProto &onnx_graph, const onn
     } else if (attribute_name == "value") {
       has_value = true;
       prim->set_constant_value(onnx_node_attr.f());
+      if (onnx_node_attr.f() != 0) {
+        prim_c->AddAttr(kNamePadContiguous, MakeValue(true));
+      }
     }
   }
   if (padding_mode == mindspore::PaddingMode::CONSTANT && !has_value &&
       onnx_node.input().size() < kInputSizeWithConstantValue) {
     prim->set_constant_value(0);
+  } else {
+    prim_c->AddAttr(kNamePadContiguous, MakeValue(true));
   }
-  prim_c->AddAttr(kNamePadContiguous, MakeValue(true));
-
   return prim->GetPrim();
 }
 
