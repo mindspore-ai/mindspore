@@ -65,6 +65,7 @@ void GetMeRetDataType(const AbstractBasePtr &cnode_data, std::vector<TypeId> *me
   if (cnode_data->isa<abstract::AbstractScalar>()) {
     TypeId me_type = cnode_data->BuildType()->type_id();
     (void)me_types->emplace_back(me_type);
+    return;
   }
   auto abstract_tuple = cnode_data->cast<abstract::AbstractTuplePtr>();
   MS_EXCEPTION_IF_NULL(abstract_tuple);
