@@ -19,7 +19,7 @@ from subprocess import Popen, PIPE
 from typing import List
 import json
 from json.decoder import JSONDecodeError
-import pandas as pd
+import csv
 import mindspore as ms
 from mindspore import log as logger
 from mindspore.communication import get_rank
@@ -68,8 +68,8 @@ class AscendMsprofExporter:
         self._prof_paths = []
         self._output_path = None
         self._device_path = None
-        self._model_ids = None
-        self._iter_ids = None
+        self._model_ids = []
+        self._iter_ids = []
         self._check_msprof_env()
 
     @staticmethod
@@ -139,9 +139,15 @@ class AscendMsprofExporter:
         if self._model_ids and self._iter_ids:
             return
         self._check_readable(trace_file)
-        df = pd.read_csv(trace_file)
-        self._model_ids = list(df.get(self._csv_header_model_id))
-        self._iter_ids = list(df.get(self._csv_header_iter_id))
+        with open(trace_file, "r") as f:
+            reader = csv.reader(f)
+            for idx, row in enumerate(reader):
+                if idx == 0:
+                    model_idx = row.index(self._csv_header_model_id)
+                    iter_idx = row.index(self._csv_header_iter_id)
+                else:
+                    self._model_ids.append(int(row[model_idx]))
+                    self._iter_ids.append(int(row[iter_idx]))
 
     def _check_export_files(self, device_path: str, trace_file: str):
         """Check the existence of op_summary & op_statistic files."""
