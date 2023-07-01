@@ -239,7 +239,7 @@ class MS_CORE_API MsContext {
   }
 
   void ResetContext();  // Reset ms context. Only called in child process after fork occurs.
-  bool EnableAoeOnline();
+  bool EnableAoeOnline() const;
 
  private:
   void RefreshExecutionMode();

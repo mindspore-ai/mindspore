@@ -466,12 +466,9 @@ void MsContext::ResetContext() {
   SetDeviceTargetFromUser("CPU");
 }
 
-bool MsContext::EnableAoeOnline() {
+bool MsContext::EnableAoeOnline() const {
   std::string aoe_tune_mode = MsContext::GetInstance()->get_param<std::string>(MS_CTX_AOE_TUNE_MODE);
-  if (!aoe_tune_mode.compare("online")) {
-    return true;
-  }
-  return false;
+  return aoe_tune_mode == "online";
 }
 
 template MS_CORE_API void MsContext::CheckReadStatus<bool>(MsCtxParam, const bool &) const;

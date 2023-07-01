@@ -29,6 +29,7 @@ HcclTask::HcclTask(const ModelContext &model_context, const std::shared_ptr<Hccl
       task_info_(task_info),
       stream_(nullptr),
       workspace_mem_(nullptr),
+      task_id_(0),
       rt_model_handle_(nullptr),
       priority_(0),
       secondary_stream_list_() {

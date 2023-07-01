@@ -314,6 +314,31 @@ class AscendEnvChecker(EnvChecker):
         self.ascend_opp_path_check = "/op"
         self.v = ""
 
+    @staticmethod
+    def _concat_variable(env_name, env_value):
+        if os.environ[env_name]:
+            os.environ[env_name] = env_value + ":" + os.environ[env_name]
+        else:
+            os.environ[env_name] = env_value
+
+    @staticmethod
+    def _check_and_set_env(env_name, env_value, is_append=False):
+        """check and set environment variable by its name"""
+        if env_value is None:
+            return True
+
+        if not Path(env_value).is_dir():
+            logger.error(
+                f"No such directory: {env_value}. Please check if Ascend AI software package (Ascend Data Center"
+                " Solution) is installed correctly.")
+            return False
+
+        if is_append:
+            AscendEnvChecker._concat_variable(env_name, os.environ[env_name])
+        else:
+            os.environ[env_name] = env_value
+        return True
+
     def check_env(self):
         self._check_env()
 
@@ -379,10 +404,7 @@ class AscendEnvChecker(EnvChecker):
             os.environ['ASCEND_CUSTOM_OPP_PATH'] = curr_path + "/../lib/plugin/ascend/custom_aicpu_ops"
         plugin_dir = os.path.dirname(self.library_path)
         akg_dir = os.path.join(plugin_dir, "ascend")
-        if os.getenv('LD_LIBRARY_PATH'):
-            os.environ['LD_LIBRARY_PATH'] = akg_dir + ":" + os.environ['LD_LIBRARY_PATH']
-        else:
-            os.environ['LD_LIBRARY_PATH'] = akg_dir
+        AscendEnvChecker._concat_variable('LD_LIBRARY_PATH', akg_dir)
 
         if not self.tbe_path:
             self._check_env()
@@ -407,10 +429,7 @@ class AscendEnvChecker(EnvChecker):
 
         if Path(self.op_impl_path).is_dir():
             # python path for sub process
-            if os.getenv('PYTHONPATH'):
-                os.environ['PYTHONPATH'] = self.op_impl_path + ":" + os.environ['PYTHONPATH']
-            else:
-                os.environ['PYTHONPATH'] = self.op_impl_path
+            AscendEnvChecker._concat_variable('PYTHONPATH', self.op_impl_path)
             # sys path for this process
             sys.path.append(self.op_impl_path)
 
@@ -421,32 +440,11 @@ class AscendEnvChecker(EnvChecker):
                 "Center Solution) is installed correctly.")
             return
 
-        if Path(self.cce_path).is_dir():
-            os.environ['PATH'] = self.cce_path + ":" + os.environ['PATH']
-        else:
-            logger.error(
-                f"No such directory: {self.cce_path}. Please check if Ascend AI software package (Ascend Data Center "
-                "Solution) is installed correctly.")
+        if not AscendEnvChecker._check_and_set_env('PATH', self.cce_path, True):
             return
-
-        if self.op_path is None:
-            pass
-        elif Path(self.op_path).is_dir():
-            os.environ['ASCEND_OPP_PATH'] = self.op_path
-        else:
-            logger.error(
-                f"No such directory: {self.op_path}. Please check if Ascend AI software package (Ascend Data Center "
-                "Solution) is installed correctly.")
+        if not AscendEnvChecker._check_and_set_env('ASCEND_OPP_PATH', self.op_path):
             return
-
-        if self.aicpu_path is None:
-            pass
-        elif Path(self.aicpu_path).is_dir():
-            os.environ['ASCEND_AICPU_PATH'] = self.aicpu_path
-        else:
-            logger.error(
-                f"No such directory: {self.aicpu_path}. Please check if Ascend AI software package (Ascend Data Center"
-                " Solution) is installed correctly.")
+        if not AscendEnvChecker._check_and_set_env('ASCEND_AICPU_PATH', self.aicpu_path):
             return
 
     def _check_env(self):

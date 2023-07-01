@@ -238,7 +238,7 @@ void GenSeedAttrsMap(const CNodePtr &node, RandomNode *random_node) {
   auto attrs = op_info->attrs_ptr();
   for (const auto &attr : attrs) {
     std::string lower_attr_name = attr->name();
-    std::transform(lower_attr_name.begin(), lower_attr_name.end(), lower_attr_name.begin(), ::tolower);
+    (void)std::transform(lower_attr_name.begin(), lower_attr_name.end(), lower_attr_name.begin(), ::tolower);
     if (lower_attr_name.find("seed") == std::string::npos) {
       continue;
     }

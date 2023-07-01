@@ -118,7 +118,8 @@ void MuxRecvAscendKernel::InitServer() {
 
       std::lock_guard<std::mutex> lock(mtx_);
       // Update the source rank id for this send/recv communication.
-      src_rank_ = atoi(message->body.c_str());
+      constexpr auto decimal = 10;
+      src_rank_ = static_cast<int>(std::strtol(message->body.c_str(), nullptr, decimal));
 
       MessageBase *response = new MessageBase();
       response->name = ACTIVATE;

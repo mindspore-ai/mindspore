@@ -272,49 +272,40 @@ class _Context:
                 - parallel_speed_up_json_path(Union[str, None]): The path to the parallel speed up json file.
                   If its value is None or '', it does not take effect. Default None.
         """
-        ascend_cfg_set = ('precision_mode', 'jit_compile', 'atomic_clean_policy', 'matmul_allow_hf32',
-                          'conv_allow_hf32', 'op_precision_mode', 'parallel_speed_up_json_path')
-        ascend_cfg_modes = {'precision_mode': ["force_fp16", "allow_fp32_to_fp16", "allow_mix_precision",
-                                               "must_keep_origin_dtype", "force_fp32", "force_lowerprecision",
-                                               "allow_fp32_to_bf16", "allow_fp32_to_lowprecision",
-                                               "allow_mix_precision_fp16", "allow_mix_precision_bf16"],
-                            'jit_compile': [True, False],
-                            'atomic_clean_policy': [0, 1],
-                            'matmul_allow_hf32': [True, False],
-                            'conv_allow_hf32': [True, False],
-                            'op_precision_mode': (str,),
-                            'parallel_speed_up_json_path': (str, None)}
+        ascend_cfg_modes = {
+            'precision_mode': ["force_fp16", "allow_fp32_to_fp16", "allow_mix_precision", "must_keep_origin_dtype",
+                               "force_fp32", "force_lowerprecision", "allow_fp32_to_bf16",
+                               "allow_fp32_to_lowprecision", "allow_mix_precision_fp16", "allow_mix_precision_bf16"],
+            'jit_compile': [True, False],
+            'atomic_clean_policy': [0, 1],
+            'matmul_allow_hf32': [True, False],
+            'conv_allow_hf32': [True, False],
+            'op_precision_mode': (str,),
+            'parallel_speed_up_json_path': (str, None)
+        }
+        ascend_cfg_setters = {
+            'precision_mode': self._get_ascend_config_setter('precision_mode'),
+            'jit_compile': self._get_ascend_config_setter('jit_compile', lambda v: "1" if v else "0"),
+            'atomic_clean_policy': self._get_ascend_config_setter('atomic_clean_policy', str),
+            'matmul_allow_hf32': self._get_ascend_config_setter('matmul_allow_hf32', lambda v: "1" if v else "0"),
+            'conv_allow_hf32': self._get_ascend_config_setter('conv_allow_hf32', lambda v: "1" if v else "0"),
+            'op_precision_mode': self._set_op_precision_mode,
+            'parallel_speed_up_json_path': self._set_speedup_config_path
+        }
+        ascend_cfg_set = tuple(ascend_cfg_modes.keys())
         for ascend_key, ascend_value in ascend_config.items():
             if ascend_key not in ascend_cfg_set:
                 raise ValueError(f"For 'context.set_context', the key of argument 'ascend_config' must be one of "
                                  f"{ascend_cfg_set}, but got {ascend_key}.")
-            if ascend_key in ascend_cfg_modes:
-                supported_modes = ascend_cfg_modes.get(ascend_key)
-                if isinstance(supported_modes, list) and ascend_value not in supported_modes:
-                    raise ValueError(f"For 'ascend_config', the value of argument {ascend_key} must be one of "
-                                     f"{supported_modes}, but got {ascend_value}.")
-                if isinstance(supported_modes, tuple) and not isinstance(ascend_value, supported_modes):
-                    raise ValueError(f"For 'ascend_config', the type of argument {ascend_key} must be one of "
-                                     f"{supported_modes}, but got {type(ascend_value)}.")
-            if ascend_key == 'precision_mode':
-                self.set_param(ms_ctx_param.precision_mode, ascend_value)
-            if ascend_key == 'jit_compile':
-                self.set_param(ms_ctx_param.jit_compile, "1" if ascend_value else "0")
-            if ascend_key == 'atomic_clean_policy':
-                self.set_param(ms_ctx_param.atomic_clean_policy, str(ascend_value))
-            if ascend_key == 'matmul_allow_hf32':
-                self.set_param(ms_ctx_param.matmul_allow_hf32, "1" if ascend_value else "0")
-            if ascend_key == 'conv_allow_hf32':
-                self.set_param(ms_ctx_param.conv_allow_hf32, "1" if ascend_value else "0")
-            if ascend_key == 'op_precision_mode':
-                op_precision_path = ascend_value
-                real_path = os.path.realpath(op_precision_path)
-                if not os.path.exists(real_path):
-                    raise ValueError(f"For 'ascend_config', the 'op_precision_mode' is invalid path, "
-                                     f"got '{op_precision_path}'.")
-                self.set_param(ms_ctx_param.op_precision_mode, ascend_value)
-            if ascend_key == 'parallel_speed_up_json_path':
-                self._set_speedup_config_path(ascend_value)
+            supported_modes = ascend_cfg_modes.get(ascend_key)
+            if isinstance(supported_modes, list) and ascend_value not in supported_modes:
+                raise ValueError(f"For 'ascend_config', the value of argument {ascend_key} must be one of "
+                                 f"{supported_modes}, but got {ascend_value}.")
+            if isinstance(supported_modes, tuple) and not isinstance(ascend_value, supported_modes):
+                raise ValueError(f"For 'ascend_config', the type of argument {ascend_key} must be one of "
+                                 f"{supported_modes}, but got {type(ascend_value)}.")
+            cfg_setter = ascend_cfg_setters.get(ascend_key)
+            cfg_setter(ascend_value)
 
     def set_gpu_config(self, gpu_config):
         """
@@ -384,6 +375,12 @@ class _Context:
             self.set_backend_policy("vm")
 
     def set_aoe_tune_mode(self, tune_mode):
+        """
+        Set aoe tune mode, support "online" and "offline".
+
+        Args:
+            tune_mode (str): "online" and "offline".
+        """
         candidate = ["online", "offline"]
         if tune_mode in candidate:
             self.set_param(ms_ctx_param.aoe_tune_mode, tune_mode)
@@ -568,6 +565,22 @@ class _Context:
         if not isinstance(support, bool):
             raise TypeError(f"The attribute 'support_binary' should be a bool, but got {type(support)}.")
         self._support_binary = support
+
+    def _get_ascend_config_setter(self, ascend_key, trans_fn=None):
+        def _config_setter(ascend_value):
+            self.set_param(ms_ctx_param.__members__[ascend_key], trans_fn(ascend_value))
+
+        if trans_fn is None:
+            trans_fn = lambda x: x
+        return _config_setter
+
+    def _set_op_precision_mode(self, ascend_value):
+        op_precision_path = ascend_value
+        real_path = os.path.realpath(op_precision_path)
+        if not os.path.exists(real_path):
+            raise ValueError(f"For 'ascend_config', the 'op_precision_mode' is invalid path, "
+                             f"got '{op_precision_path}'.")
+        self.set_param(ms_ctx_param.op_precision_mode, ascend_value)
 
     def _set_speedup_config_path(self, speedup_config_path):
         """"Check and set speedup config for auto parallel."""
