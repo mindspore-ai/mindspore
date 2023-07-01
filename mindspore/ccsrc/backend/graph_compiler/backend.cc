@@ -980,8 +980,7 @@ void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs,
   }
 }
 
-void MindRTBackend::DispatchOpTaskDynamic(bool single_op_cache_hit, VectorRef *outputs,
-                                          const OpCompilerInfoPtr &op_compiler_info,
+void MindRTBackend::DispatchOpTaskDynamic(VectorRef *outputs, const OpCompilerInfoPtr &op_compiler_info,
                                           const session::BackendOpRunInfoPtr &op_run_info,
                                           const vector<device::DeviceAddressPtr> &device_address_list) {
   MS_EXCEPTION_IF_NULL(op_compiler_info);
@@ -1105,7 +1104,7 @@ void MindRTBackend::RunOpImplDynamic(bool single_op_cache_hit, const OpCompilerI
       op_compiler_info, op_run_info->base_op_run_info.abstract);
     // Create output tensor
     UpdateOutputDynamic(op_run_info, op_compiler_info, device_address_list, outputs);
-    DispatchOpTaskDynamic(single_op_cache_hit, outputs, op_compiler_info, op_run_info, device_address_list);
+    DispatchOpTaskDynamic(outputs, op_compiler_info, op_run_info, device_address_list);
     return;
   }
   MS_LOG(DEBUG) << "Async exec disabled, op: " << op_run_info->base_op_run_info.op_name;

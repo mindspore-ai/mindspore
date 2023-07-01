@@ -581,14 +581,12 @@ void UpdateOutputDeviceShape(const std::vector<device::DeviceAddressPtr> &output
   }
 }
 
-kernel::KernelArgs InferOp(const CNodePtr &cnode, const pynative::ExecuteKernelInfo &execute_kernel,
-                           const std::vector<tensor::TensorPtr> &input_tensors) {
+kernel::KernelArgs GetKernelArgsForNode(const CNodePtr &cnode, const pynative::ExecuteKernelInfo &execute_kernel,
+                                        const kernel::KernelArgs &kernel_args) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
   MS_EXCEPTION_IF_NULL(kernel_mod);
 
-  kernel::KernelArgs kernel_args;
-  InferShape(&kernel_args.depend_tensor_map, execute_kernel, input_tensors);
   UpdateOutputDeviceShape(execute_kernel.outputs_device_address_, cnode->abstract());
 
   auto kernel_type = AnfAlgo::GetKernelType(cnode);
@@ -602,6 +600,18 @@ kernel::KernelArgs InferOp(const CNodePtr &cnode, const pynative::ExecuteKernelI
   } else {
     return kernel_args;
   }
+}
+
+kernel::KernelArgs InferOp(const CNodePtr &cnode, const pynative::ExecuteKernelInfo &execute_kernel,
+                           const std::vector<tensor::TensorPtr> &input_tensors) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+
+  kernel::KernelArgs kernel_args;
+  InferShape(&kernel_args.depend_tensor_map, execute_kernel, input_tensors);
+
+  return GetKernelArgsForNode(cnode, execute_kernel, kernel_args);
 }
 
 kernel::KernelArgs SetOpArgs(const CNodePtr &cnode, const pynative::ExecuteKernelInfo &execute_kernel,
@@ -621,19 +631,8 @@ kernel::KernelArgs SetOpArgs(const CNodePtr &cnode, const pynative::ExecuteKerne
       }
     }
   }
-  UpdateOutputDeviceShape(execute_kernel.outputs_device_address_, cnode->abstract());
 
-  auto kernel_type = AnfAlgo::GetKernelType(cnode);
-  if (auto kernel_mod_type = kernel_mod->GetKernelModType();
-      (IsCpuGpuKernelMod(kernel_mod_type) || kernel_type == ACL_KERNEL)) {
-    auto update = kernel::AbstractArgsFromDeviceAddress(kernel_mod, execute_kernel.inputs_device_address_,
-                                                        execute_kernel.outputs_device_address_, cnode->abstract());
-    update.depend_tensor_map = std::move(kernel_args.depend_tensor_map);
-    kernel::SetInputsByDependMap(update.depend_tensor_map, &update.inputs, IsCpuKernelMod(kernel_mod_type));
-    return update;
-  } else {
-    return kernel_args;
-  }
+  return GetKernelArgsForNode(cnode, execute_kernel, kernel_args);
 }
 
 CustomActorNodeManager &CustomActorNodeManager::Instance() {
