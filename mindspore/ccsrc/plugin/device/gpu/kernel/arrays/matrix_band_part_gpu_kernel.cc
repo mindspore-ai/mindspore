@@ -43,10 +43,10 @@ bool MatrixBandPartGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-void MatrixBandPartGpuKernelMod::BroadcastShape(const std::vector<size_t> &x_shape,
-                                                const std::vector<size_t> &lower_shape,
-                                                const std::vector<size_t> &upper_shape,
-                                                const std::vector<size_t> &output_shape) {
+void MatrixBandPartGpuKernelMod::BroadcastShape(const std::vector<int64_t> &x_shape,
+                                                const std::vector<int64_t> &lower_shape,
+                                                const std::vector<int64_t> &upper_shape,
+                                                const std::vector<int64_t> &output_shape) {
   broadcast_x_shape_.clear();
   broadcast_lower_shape_.clear();
   broadcast_upper_shape_.clear();
@@ -55,8 +55,8 @@ void MatrixBandPartGpuKernelMod::BroadcastShape(const std::vector<size_t> &x_sha
   broadcast_lower_shape_.resize(kMaxDims, 1);
   broadcast_upper_shape_.resize(kMaxDims, 1);
   broadcast_output_shape_.resize(kMaxDims, 1);
-  auto expanded_lower_shape = ops::GetExpandedShape<size_t>(lower_shape, output_shape.size());
-  auto expanded_upper_shape = ops::GetExpandedShape<size_t>(upper_shape, output_shape.size());
+  auto expanded_lower_shape = ops::GetExpandedShape<int64_t>(lower_shape, output_shape.size());
+  auto expanded_upper_shape = ops::GetExpandedShape<int64_t>(upper_shape, output_shape.size());
 
   for (size_t i = 0; i < output_shape.size(); i++) {
     broadcast_output_shape_[i] = output_shape[i];
@@ -92,10 +92,10 @@ int MatrixBandPartGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   auto lower_shape_temp = inputs.at(kIndex1)->GetShapeVector();
   auto upper_shape_temp = inputs.at(kIndex2)->GetShapeVector();
   auto output_shape_temp = outputs.at(kIndex0)->GetShapeVector();
-  std::vector<size_t> x_shape{};
-  std::vector<size_t> lower_shape{};
-  std::vector<size_t> upper_shape{};
-  std::vector<size_t> output_shape{};
+  std::vector<int64_t> x_shape{};
+  std::vector<int64_t> lower_shape{};
+  std::vector<int64_t> upper_shape{};
+  std::vector<int64_t> output_shape{};
   (void)std::transform(x_shape_temp.begin(), x_shape_temp.end(), std::back_inserter(x_shape), LongToSize);
   (void)std::transform(lower_shape_temp.begin(), lower_shape_temp.end(), std::back_inserter(lower_shape), LongToSize);
   (void)std::transform(upper_shape_temp.begin(), upper_shape_temp.end(), std::back_inserter(upper_shape), LongToSize);

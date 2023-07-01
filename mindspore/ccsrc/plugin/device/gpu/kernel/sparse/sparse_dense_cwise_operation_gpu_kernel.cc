@@ -196,10 +196,10 @@ bool SparseDenseCwiseOperationGpuKernelMod::LaunchKernel(const std::vector<Addre
   } else if (dense_dims_ <= dimension_) {
     size_t offset_x = sparse_shape.size() - dense_shape_.size();
     for (size_t i = 0; i < dense_shape_.size(); ++i) {
-      i_[i + offset_x] = LongToSize(dense_shape_[i]);
+      i_[i + offset_x] = dense_shape_[i];
     }
     for (size_t j = 0; j < sparse_shape.size(); ++j) {
-      o_[j] = LongToSize(sparse_shape[j]);
+      o_[j] = sparse_shape[j];
     }
 
     for (int64_t i = dense_dims_ - 1; i >= 0; --i) {

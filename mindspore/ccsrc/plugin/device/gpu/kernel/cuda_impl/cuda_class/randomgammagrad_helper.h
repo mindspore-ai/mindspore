@@ -134,9 +134,9 @@ class RandomGammaGradHelperGpuKernel : public GpuKernelHelperBase {
   }
 
  private:
-  std::vector<size_t> lhs_shape_;
-  std::vector<size_t> rhs_shape_;
-  std::vector<size_t> output_shape_;
+  std::vector<int64_t> lhs_shape_;
+  std::vector<int64_t> rhs_shape_;
+  std::vector<int64_t> output_shape_;
   bool need_broadcast_;
   bool is_null_input_;
   size_t output_num_;

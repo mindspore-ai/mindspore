@@ -36,8 +36,7 @@ CUDA_LIB_EXPORT void CalSparseDenseCwiseOperationNoBcastCompute(
 template <typename T>
 CUDA_LIB_EXPORT void CalSparseDenseCwiseOperationBcastCompute(
   const enum SparseDenseCwiseOperationFunctionType &func_type, const int64_t *x1_indices, const T *x1_values,
-  const int64_t *x1_shape, const T *x2, T *y, const std::vector<size_t> i, const std::vector<size_t> o,
-  const int64_t dimension, const int64_t value_nums, const uint32_t &device_id,
-  cudaStream_t cuda_stream);
+  const int64_t *x1_shape, const T *x2, T *y, const std::vector<int64_t> i, const std::vector<int64_t> o,
+  const int64_t dimension, const int64_t value_nums, const uint32_t &device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SPARSE_DENSE_CWISE_OPERATION_IMPL_CUH_

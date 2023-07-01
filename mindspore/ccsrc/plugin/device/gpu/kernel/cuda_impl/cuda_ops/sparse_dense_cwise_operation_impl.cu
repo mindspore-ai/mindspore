@@ -17,32 +17,23 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/sparse_dense_cwise_operation_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_to_impl.cuh"
 
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
 __device__ __forceinline__ size_t Index(const size_t &index, const size_t &dim) { return dim == 1 ? 0 : index; }
 
-__device__ int BroadcastToKernel(size_t i0, size_t i1, size_t i2, size_t i3, size_t i4, size_t i5, size_t i6,
-                                 size_t o0, size_t o1, size_t o2, size_t o3, size_t o4, size_t o5, size_t o6,
-                                 int index_out) {
-    size_t i = index_out / (o1 * o2 * o3 * o4 * o5 * o6) % o0;
-    size_t j = index_out / (o2 * o3 * o4 * o5 * o6) % o1;
-    size_t k = index_out / (o3 * o4 * o5 * o6) % o2;
-    size_t l = index_out / (o4 * o5 * o6) % o3;
-    size_t m = index_out / (o5 * o6) % o4;
-    size_t n = index_out / o6 % o5;
-    size_t o = index_out % o6;
-
-    size_t input_idx = Index(i, i0) * i1 * i2 * i3 * i4 * i5 * i6;
-    input_idx += Index(j, i1) * i2 * i3 * i4 * i5 * i6;
-    input_idx += Index(k, i2) * i3 * i4 * i5 * i6;
-    input_idx += Index(l, i3) * i4 * i5 * i6;
-    input_idx += Index(m, i4) * i5 * i6;
-    input_idx += Index(n, i5) * i6;
-    input_idx += Index(o, i6);
-
-    return static_cast<int>(input_idx);
+__device__ int BroadcastToKernel(size_t dim_size, UnaryBroadcastStrideInfo strides, int index_out) {
+  int64_t cur_out_idx = 0;
+  size_t cur_pos = index_out;
+  size_t inp_pos = 0;
+  for (int idx = 0; idx < dim_size; ++idx) {
+    cur_out_idx = cur_pos / strides.output_stride[idx];
+    inp_pos += cur_out_idx * strides.input_stride[idx];
+    cur_pos -= cur_out_idx * strides.output_stride[idx];
+  }
+  return static_cast<int>(inp_pos);
 }
 
 // specSpecializations of complex types
@@ -155,11 +146,9 @@ __global__ void SparseDenseCwiseDivNoBcastGpuKernel(const int64_t *x1_indices, c
 }
 
 __global__ void SparseDenseCwiseAddBcastGpuKernel(const int64_t *x1_indices, const Complex<float> *x1_values,
-                                                    const int64_t *x1_shape, const Complex<float> *x2,
-                                                    Complex<float> *y, const int64_t dimension,
-                                                    const int64_t value_nums, size_t i0, size_t i1, size_t i2,
-                                                    size_t i3, size_t i4, size_t i5, size_t i6, size_t o0,
-                                                    size_t o1, size_t o2, size_t o3, size_t o4, size_t o5, size_t o6) {
+                                                  const int64_t *x1_shape, const Complex<float> *x2, Complex<float> *y,
+                                                  const int64_t dimension, const int64_t value_nums, size_t dim_size,
+                                                  UnaryBroadcastStrideInfo strides) {
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < value_nums; i += blockDim.x * gridDim.x) {
     int index = 0;
     for (int64_t j = 0; j < dimension - 1; j++) {
@@ -170,17 +159,15 @@ __global__ void SparseDenseCwiseAddBcastGpuKernel(const int64_t *x1_indices, con
       index += c * x1_indices[j + i * dimension];
     }
     index += x1_indices[(i + 1) * dimension - 1];
-    index = BroadcastToKernel(i0, i1, i2, i3, i4, i5, i6, o0, o1, o2, o3, o4, o5, o6, index);
+    index = BroadcastToKernel(dim_size, strides, index);
     y[i] = Complex<float>(x1_values[i].real() + x2[index].real(), x1_values[i].imag() + x2[index].imag());
   }
 }
 
 __global__ void SparseDenseCwiseMulBcastGpuKernel(const int64_t *x1_indices, const Complex<float> *x1_values,
-                                                    const int64_t *x1_shape, const Complex<float> *x2,
-                                                    Complex<float> *y, const int64_t dimension,
-                                                    const int64_t value_nums, size_t i0, size_t i1, size_t i2,
-                                                    size_t i3, size_t i4, size_t i5, size_t i6, size_t o0,
-                                                    size_t o1, size_t o2, size_t o3, size_t o4, size_t o5, size_t o6) {
+                                                  const int64_t *x1_shape, const Complex<float> *x2, Complex<float> *y,
+                                                  const int64_t dimension, const int64_t value_nums, size_t dim_size,
+                                                  UnaryBroadcastStrideInfo strides) {
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < value_nums; i += blockDim.x * gridDim.x) {
     int index = 0;
     for (int64_t j = 0; j < dimension - 1; j++) {
@@ -191,17 +178,15 @@ __global__ void SparseDenseCwiseMulBcastGpuKernel(const int64_t *x1_indices, con
       index += c * x1_indices[j + i * dimension];
     }
     index += x1_indices[(i + 1) * dimension - 1];
-    index = BroadcastToKernel(i0, i1, i2, i3, i4, i5, i6, o0, o1, o2, o3, o4, o5, o6, index);
+    index = BroadcastToKernel(dim_size, strides, index);
     y[i] = Complex<float>(x1_values[i].real() + x2[index].real(), x1_values[i].imag() + x2[index].imag());
   }
 }
 
 __global__ void SparseDenseCwiseDivBcastGpuKernel(const int64_t *x1_indices, const Complex<float> *x1_values,
-                                                    const int64_t *x1_shape, const Complex<float> *x2,
-                                                    Complex<float> *y, const int64_t dimension,
-                                                    const int64_t value_nums, size_t i0, size_t i1, size_t i2,
-                                                    size_t i3, size_t i4, size_t i5, size_t i6, size_t o0,
-                                                    size_t o1, size_t o2, size_t o3, size_t o4, size_t o5, size_t o6) {
+                                                  const int64_t *x1_shape, const Complex<float> *x2, Complex<float> *y,
+                                                  const int64_t dimension, const int64_t value_nums, size_t dim_size,
+                                                  UnaryBroadcastStrideInfo strides) {
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < value_nums; i += blockDim.x * gridDim.x) {
     int index = 0;
     for (int64_t j = 0; j < dimension - 1; j++) {
@@ -212,17 +197,15 @@ __global__ void SparseDenseCwiseDivBcastGpuKernel(const int64_t *x1_indices, con
       index += c * x1_indices[j + i * dimension];
     }
     index += x1_indices[(i + 1) * dimension - 1];
-    index = BroadcastToKernel(i0, i1, i2, i3, i4, i5, i6, o0, o1, o2, o3, o4, o5, o6, index);
+    index = BroadcastToKernel(dim_size, strides, index);
     y[i] = Complex<float>(x1_values[i].real() + x2[index].real(), x1_values[i].imag() + x2[index].imag());
   }
 }
 
 __global__ void SparseDenseCwiseAddBcastGpuKernel(const int64_t *x1_indices, const Complex<double> *x1_values,
-                                                    const int64_t *x1_shape, const Complex<double> *x2,
-                                                    Complex<double> *y, const int64_t dimension,
-                                                    const int64_t value_nums, size_t i0, size_t i1, size_t i2,
-                                                    size_t i3, size_t i4, size_t i5, size_t i6, size_t o0,
-                                                    size_t o1, size_t o2, size_t o3, size_t o4, size_t o5, size_t o6) {
+                                                  const int64_t *x1_shape, const Complex<double> *x2,
+                                                  Complex<double> *y, const int64_t dimension, const int64_t value_nums,
+                                                  size_t dim_size, UnaryBroadcastStrideInfo strides) {
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < value_nums; i += blockDim.x * gridDim.x) {
     int index = 0;
     for (int64_t j = 0; j < dimension - 1; j++) {
@@ -233,17 +216,15 @@ __global__ void SparseDenseCwiseAddBcastGpuKernel(const int64_t *x1_indices, con
       index += c * x1_indices[j + i * dimension];
     }
     index += x1_indices[(i + 1) * dimension - 1];
-    index = BroadcastToKernel(i0, i1, i2, i3, i4, i5, i6, o0, o1, o2, o3, o4, o5, o6, index);
+    index = BroadcastToKernel(dim_size, strides, index);
     y[i] = Complex<double>(x1_values[i].real() + x2[index].real(), x1_values[i].imag() + x2[index].imag());
   }
 }
 
 __global__ void SparseDenseCwiseMulBcastGpuKernel(const int64_t *x1_indices, const Complex<double> *x1_values,
-                                                    const int64_t *x1_shape, const Complex<double> *x2,
-                                                    Complex<double> *y, const int64_t dimension,
-                                                    const int64_t value_nums, size_t i0, size_t i1, size_t i2,
-                                                    size_t i3, size_t i4, size_t i5, size_t i6, size_t o0,
-                                                    size_t o1, size_t o2, size_t o3, size_t o4, size_t o5, size_t o6) {
+                                                  const int64_t *x1_shape, const Complex<double> *x2,
+                                                  Complex<double> *y, const int64_t dimension, const int64_t value_nums,
+                                                  size_t dim_size, UnaryBroadcastStrideInfo strides) {
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < value_nums; i += blockDim.x * gridDim.x) {
     int index = 0;
     for (int64_t j = 0; j < dimension - 1; j++) {
@@ -254,17 +235,15 @@ __global__ void SparseDenseCwiseMulBcastGpuKernel(const int64_t *x1_indices, con
       index += c * x1_indices[j + i * dimension];
     }
     index += x1_indices[(i + 1) * dimension - 1];
-    index = BroadcastToKernel(i0, i1, i2, i3, i4, i5, i6, o0, o1, o2, o3, o4, o5, o6, index);
+    index = BroadcastToKernel(dim_size, strides, index);
     y[i] = Complex<double>(x1_values[i].real() + x2[index].real(), x1_values[i].imag() + x2[index].imag());
   }
 }
 
 __global__ void SparseDenseCwiseDivBcastGpuKernel(const int64_t *x1_indices, const Complex<double> *x1_values,
-                                                    const int64_t *x1_shape, const Complex<double> *x2,
-                                                    Complex<double> *y, const int64_t dimension,
-                                                    const int64_t value_nums, size_t i0, size_t i1, size_t i2,
-                                                    size_t i3, size_t i4, size_t i5, size_t i6, size_t o0,
-                                                    size_t o1, size_t o2, size_t o3, size_t o4, size_t o5, size_t o6) {
+                                                  const int64_t *x1_shape, const Complex<double> *x2,
+                                                  Complex<double> *y, const int64_t dimension, const int64_t value_nums,
+                                                  size_t dim_size, UnaryBroadcastStrideInfo strides) {
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < value_nums; i += blockDim.x * gridDim.x) {
     int index = 0;
     for (int64_t j = 0; j < dimension - 1; j++) {
@@ -275,7 +254,7 @@ __global__ void SparseDenseCwiseDivBcastGpuKernel(const int64_t *x1_indices, con
       index += c * x1_indices[j + i * dimension];
     }
     index += x1_indices[(i + 1) * dimension - 1];
-    index = BroadcastToKernel(i0, i1, i2, i3, i4, i5, i6, o0, o1, o2, o3, o4, o5, o6, index);
+    index = BroadcastToKernel(dim_size, strides, index);
     y[i] = Complex<double>(x1_values[i].real() + x2[index].real(), x1_values[i].imag() + x2[index].imag());
   }
 }
@@ -339,9 +318,8 @@ __global__ void SparseDenseCwiseDivNoBcastGpuKernel(const int64_t *x1_indices, c
 template <typename T>
 __global__ void SparseDenseCwiseAddBcastGpuKernel(const int64_t *x1_indices, const T *x1_values,
                                                   const int64_t *x1_shape, const T *x2, T *y, const int64_t dimension,
-                                                  const int64_t value_nums, size_t i0, size_t i1, size_t i2, size_t i3,
-                                                  size_t i4, size_t i5, size_t i6, size_t o0, size_t o1, size_t o2,
-                                                  size_t o3, size_t o4, size_t o5, size_t o6) {
+                                                  const int64_t value_nums, size_t dim_size,
+                                                  UnaryBroadcastStrideInfo strides) {
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < value_nums; i += blockDim.x * gridDim.x) {
     int index = 0;
     for (int64_t j = 0; j < dimension - 1; j++) {
@@ -352,7 +330,7 @@ __global__ void SparseDenseCwiseAddBcastGpuKernel(const int64_t *x1_indices, con
       index += c * x1_indices[j + i * dimension];
     }
     index += x1_indices[(i + 1) * dimension - 1];
-    index = BroadcastToKernel(i0, i1, i2, i3, i4, i5, i6, o0, o1, o2, o3, o4, o5, o6, index);
+    index = BroadcastToKernel(dim_size, strides, index);
     y[i] = static_cast<T>(x1_values[i] + x2[index]);
   }
 }
@@ -360,9 +338,8 @@ __global__ void SparseDenseCwiseAddBcastGpuKernel(const int64_t *x1_indices, con
 template <typename T>
 __global__ void SparseDenseCwiseMulBcastGpuKernel(const int64_t *x1_indices, const T *x1_values,
                                                   const int64_t *x1_shape, const T *x2, T *y, const int64_t dimension,
-                                                  const int64_t value_nums, size_t i0, size_t i1, size_t i2, size_t i3,
-                                                  size_t i4, size_t i5, size_t i6, size_t o0, size_t o1, size_t o2,
-                                                  size_t o3, size_t o4, size_t o5, size_t o6) {
+                                                  const int64_t value_nums, size_t dim_size,
+                                                  UnaryBroadcastStrideInfo strides) {
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < value_nums; i += blockDim.x * gridDim.x) {
     int index = 0;
     for (int64_t j = 0; j < dimension - 1; j++) {
@@ -373,7 +350,7 @@ __global__ void SparseDenseCwiseMulBcastGpuKernel(const int64_t *x1_indices, con
       index += c * x1_indices[j + i * dimension];
     }
     index += x1_indices[(i + 1) * dimension - 1];
-    index = BroadcastToKernel(i0, i1, i2, i3, i4, i5, i6, o0, o1, o2, o3, o4, o5, o6, index);
+    index = BroadcastToKernel(dim_size, strides, index);
     y[i] = static_cast<T>(x1_values[i] * x2[index]);
   }
 }
@@ -381,9 +358,8 @@ __global__ void SparseDenseCwiseMulBcastGpuKernel(const int64_t *x1_indices, con
 template <typename T>
 __global__ void SparseDenseCwiseDivBcastGpuKernel(const int64_t *x1_indices, const T *x1_values,
                                                   const int64_t *x1_shape, const T *x2, T *y, const int64_t dimension,
-                                                  const int64_t value_nums, size_t i0, size_t i1, size_t i2, size_t i3,
-                                                  size_t i4, size_t i5, size_t i6, size_t o0, size_t o1, size_t o2,
-                                                  size_t o3, size_t o4, size_t o5, size_t o6) {
+                                                  const int64_t value_nums, size_t dim_size,
+                                                  UnaryBroadcastStrideInfo strides) {
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < value_nums; i += blockDim.x * gridDim.x) {
     int index = 0;
     for (int64_t j = 0; j < dimension - 1; j++) {
@@ -394,7 +370,7 @@ __global__ void SparseDenseCwiseDivBcastGpuKernel(const int64_t *x1_indices, con
       index += c * x1_indices[j + i * dimension];
     }
     index += x1_indices[(i + 1) * dimension - 1];
-    index = BroadcastToKernel(i0, i1, i2, i3, i4, i5, i6, o0, o1, o2, o3, o4, o5, o6, index);
+    index = BroadcastToKernel(dim_size, strides, index);
     y[i] = static_cast<T>(x1_values[i] / x2[index]);
   }
 }
@@ -472,29 +448,25 @@ void CalSparseDenseCwiseOperationNoBcastCompute(const enum SparseDenseCwiseOpera
 template <typename T>
 void CalSparseDenseCwiseOperationBcastCompute(const enum SparseDenseCwiseOperationFunctionType &func_type,
                                               const int64_t *x1_indices, const T *x1_values, const int64_t *x1_shape,
-                                              const T *x2, T *y, const std::vector<size_t> i,
-                                              const std::vector<size_t> o, const int64_t dimension,
+                                              const T *x2, T *y, const std::vector<int64_t> i,
+                                              const std::vector<int64_t> o, const int64_t dimension,
                                               const int64_t value_nums, const uint32_t &device_id,
                                               cudaStream_t cuda_stream) {
+  const size_t dim_size = o.size();
+  UnaryBroadcastStrideInfo strides = UnaryBroadcastCalStride(dim_size, i, o);
   switch (func_type) {
     case SPARSE_DENSE_CWISE_OPERATION_FUNC_ADD:
       return SparseDenseCwiseAddBcastGpuKernel<<<CUDA_BLOCKS(device_id, value_nums), CUDA_THREADS(device_id), 0,
-                                                   cuda_stream>>>(x1_indices, x1_values, x1_shape, x2, y,
-                                                                  dimension, value_nums, i[0], i[1], i[2], i[3],
-                                                                  i[4], i[5], i[6], o[0], o[1], o[2], o[3],
-                                                                  o[4], o[5], o[6]);
+                                                 cuda_stream>>>(x1_indices, x1_values, x1_shape, x2, y, dimension,
+                                                                value_nums, dim_size, strides);
     case SPARSE_DENSE_CWISE_OPERATION_FUNC_MUL:
       return SparseDenseCwiseMulBcastGpuKernel<<<CUDA_BLOCKS(device_id, value_nums), CUDA_THREADS(device_id), 0,
-                                                   cuda_stream>>>(x1_indices, x1_values, x1_shape, x2, y,
-                                                                  dimension, value_nums, i[0], i[1], i[2], i[3],
-                                                                  i[4], i[5], i[6], o[0], o[1], o[2], o[3],
-                                                                  o[4], o[5], o[6]);
+                                                 cuda_stream>>>(x1_indices, x1_values, x1_shape, x2, y, dimension,
+                                                                value_nums, dim_size, strides);
     case SPARSE_DENSE_CWISE_OPERATION_FUNC_DIV:
       return SparseDenseCwiseDivBcastGpuKernel<<<CUDA_BLOCKS(device_id, value_nums), CUDA_THREADS(device_id), 0,
-                                                   cuda_stream>>>(x1_indices, x1_values, x1_shape, x2, y,
-                                                                  dimension, value_nums, i[0], i[1], i[2], i[3],
-                                                                  i[4], i[5], i[6], o[0], o[1], o[2], o[3],
-                                                                  o[4], o[5], o[6]);
+                                                 cuda_stream>>>(x1_indices, x1_values, x1_shape, x2, y, dimension,
+                                                                value_nums, dim_size, strides);
     default:
       break;
   }
@@ -569,79 +541,67 @@ template CUDA_LIB_EXPORT void CalSparseDenseCwiseOperationNoBcastCompute<Complex
 
 template CUDA_LIB_EXPORT void CalSparseDenseCwiseOperationBcastCompute<int8_t>(
   const enum SparseDenseCwiseOperationFunctionType &func_type, const int64_t *x1_indices, const int8_t *x1_values,
-  const int64_t *x1_shape, const int8_t *x2, int8_t *y, const std::vector<size_t> i, const std::vector<size_t> o,
-  const int64_t dimension, const int64_t value_nums, const uint32_t &device_id,
-  cudaStream_t cuda_stream);
+  const int64_t *x1_shape, const int8_t *x2, int8_t *y, const std::vector<int64_t> i, const std::vector<int64_t> o,
+  const int64_t dimension, const int64_t value_nums, const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void CalSparseDenseCwiseOperationBcastCompute<int16_t>(
   const enum SparseDenseCwiseOperationFunctionType &func_type, const int64_t *x1_indices, const int16_t *x1_values,
-  const int64_t *x1_shape, const int16_t *x2, int16_t *y, const std::vector<size_t> i, const std::vector<size_t> o,
-  const int64_t dimension, const int64_t value_nums, const uint32_t &device_id,
-  cudaStream_t cuda_stream);
+  const int64_t *x1_shape, const int16_t *x2, int16_t *y, const std::vector<int64_t> i, const std::vector<int64_t> o,
+  const int64_t dimension, const int64_t value_nums, const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void CalSparseDenseCwiseOperationBcastCompute<int32_t>(
   const enum SparseDenseCwiseOperationFunctionType &func_type, const int64_t *x1_indices, const int32_t *x1_values,
-  const int64_t *x1_shape, const int32_t *x2, int32_t *y, const std::vector<size_t> i, const std::vector<size_t> o,
-  const int64_t dimension, const int64_t value_nums, const uint32_t &device_id,
-  cudaStream_t cuda_stream);
+  const int64_t *x1_shape, const int32_t *x2, int32_t *y, const std::vector<int64_t> i, const std::vector<int64_t> o,
+  const int64_t dimension, const int64_t value_nums, const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void CalSparseDenseCwiseOperationBcastCompute<int64_t>(
   const enum SparseDenseCwiseOperationFunctionType &func_type, const int64_t *x1_indices, const int64_t *x1_values,
-  const int64_t *x1_shape, const int64_t *x2, int64_t *y, const std::vector<size_t> i, const std::vector<size_t> o,
-  const int64_t dimension, const int64_t value_nums, const uint32_t &device_id,
-  cudaStream_t cuda_stream);
+  const int64_t *x1_shape, const int64_t *x2, int64_t *y, const std::vector<int64_t> i, const std::vector<int64_t> o,
+  const int64_t dimension, const int64_t value_nums, const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void CalSparseDenseCwiseOperationBcastCompute<uint8_t>(
   const enum SparseDenseCwiseOperationFunctionType &func_type, const int64_t *x1_indices, const uint8_t *x1_values,
-  const int64_t *x1_shape, const uint8_t *x2, uint8_t *y, const std::vector<size_t> i, const std::vector<size_t> o,
-  const int64_t dimension, const int64_t value_nums, const uint32_t &device_id,
-  cudaStream_t cuda_stream);
+  const int64_t *x1_shape, const uint8_t *x2, uint8_t *y, const std::vector<int64_t> i, const std::vector<int64_t> o,
+  const int64_t dimension, const int64_t value_nums, const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void CalSparseDenseCwiseOperationBcastCompute<uint16_t>(
   const enum SparseDenseCwiseOperationFunctionType &func_type, const int64_t *x1_indices, const uint16_t *x1_values,
-  const int64_t *x1_shape, const uint16_t *x2, uint16_t *y, const std::vector<size_t> i, const std::vector<size_t> o,
-  const int64_t dimension, const int64_t value_nums, const uint32_t &device_id,
-  cudaStream_t cuda_stream);
+  const int64_t *x1_shape, const uint16_t *x2, uint16_t *y, const std::vector<int64_t> i, const std::vector<int64_t> o,
+  const int64_t dimension, const int64_t value_nums, const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void CalSparseDenseCwiseOperationBcastCompute<uint32_t>(
   const enum SparseDenseCwiseOperationFunctionType &func_type, const int64_t *x1_indices, const uint32_t *x1_values,
-  const int64_t *x1_shape, const uint32_t *x2, uint32_t *y, const std::vector<size_t> i, const std::vector<size_t> o,
-  const int64_t dimension, const int64_t value_nums, const uint32_t &device_id,
-  cudaStream_t cuda_stream);
+  const int64_t *x1_shape, const uint32_t *x2, uint32_t *y, const std::vector<int64_t> i, const std::vector<int64_t> o,
+  const int64_t dimension, const int64_t value_nums, const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void CalSparseDenseCwiseOperationBcastCompute<uint64_t>(
   const enum SparseDenseCwiseOperationFunctionType &func_type, const int64_t *x1_indices, const uint64_t *x1_values,
-  const int64_t *x1_shape, const uint64_t *x2, uint64_t *y, const std::vector<size_t> i, const std::vector<size_t> o,
-  const int64_t dimension, const int64_t value_nums, const uint32_t &device_id,
-  cudaStream_t cuda_stream);
+  const int64_t *x1_shape, const uint64_t *x2, uint64_t *y, const std::vector<int64_t> i, const std::vector<int64_t> o,
+  const int64_t dimension, const int64_t value_nums, const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void CalSparseDenseCwiseOperationBcastCompute<half>(
   const enum SparseDenseCwiseOperationFunctionType &func_type, const int64_t *x1_indices, const half *x1_values,
-  const int64_t *x1_shape, const half *x2, half *y, const std::vector<size_t> i, const std::vector<size_t> o,
-  const int64_t dimension, const int64_t value_nums, const uint32_t &device_id,
-  cudaStream_t cuda_stream);
+  const int64_t *x1_shape, const half *x2, half *y, const std::vector<int64_t> i, const std::vector<int64_t> o,
+  const int64_t dimension, const int64_t value_nums, const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void CalSparseDenseCwiseOperationBcastCompute<float>(
   const enum SparseDenseCwiseOperationFunctionType &func_type, const int64_t *x1_indices, const float *x1_values,
-  const int64_t *x1_shape, const float *x2, float *y, const std::vector<size_t> i, const std::vector<size_t> o,
-  const int64_t dimension, const int64_t value_nums, const uint32_t &device_id,
-  cudaStream_t cuda_stream);
+  const int64_t *x1_shape, const float *x2, float *y, const std::vector<int64_t> i, const std::vector<int64_t> o,
+  const int64_t dimension, const int64_t value_nums, const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void CalSparseDenseCwiseOperationBcastCompute<double>(
   const enum SparseDenseCwiseOperationFunctionType &func_type, const int64_t *x1_indices, const double *x1_values,
-  const int64_t *x1_shape, const double *x2, double *y, const std::vector<size_t> i, const std::vector<size_t> o,
-  const int64_t dimension, const int64_t value_nums, const uint32_t &device_id,
-  cudaStream_t cuda_stream);
+  const int64_t *x1_shape, const double *x2, double *y, const std::vector<int64_t> i, const std::vector<int64_t> o,
+  const int64_t dimension, const int64_t value_nums, const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void CalSparseDenseCwiseOperationBcastCompute<Complex<float>>(
   const enum SparseDenseCwiseOperationFunctionType &func_type, const int64_t *x1_indices,
   const Complex<float> *x1_values, const int64_t *x1_shape, const Complex<float> *x2, Complex<float> *y,
-  const std::vector<size_t> i, const std::vector<size_t> o, const int64_t dimension,
-  const int64_t value_nums, const uint32_t &device_id, cudaStream_t cuda_stream);
+  const std::vector<int64_t> i, const std::vector<int64_t> o, const int64_t dimension, const int64_t value_nums,
+  const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void CalSparseDenseCwiseOperationBcastCompute<Complex<double>>(
   const enum SparseDenseCwiseOperationFunctionType &func_type, const int64_t *x1_indices,
   const Complex<double> *x1_values, const int64_t *x1_shape, const Complex<double> *x2, Complex<double> *y,
-  const std::vector<size_t> i, const std::vector<size_t> o, const int64_t dimension,
-  const int64_t value_nums, const uint32_t &device_id, cudaStream_t cuda_stream);
-
+  const std::vector<int64_t> i, const std::vector<int64_t> o, const int64_t dimension, const int64_t value_nums,
+  const uint32_t &device_id, cudaStream_t cuda_stream);

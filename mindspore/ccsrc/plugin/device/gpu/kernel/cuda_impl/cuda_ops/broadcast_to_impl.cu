@@ -19,10 +19,7 @@
 #include <vector>
 #include "include/cuda_fp16.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
-struct UnaryBroadcastStrideInfo {
-  size_t input_stride[8];
-  size_t output_stride[8];
-};
+
 // copy
 template <typename T>
 __global__ void BroadcastToCpyCuda(size_t dim_size, size_t output_num, UnaryBroadcastStrideInfo strides, T *input,
@@ -40,22 +37,72 @@ __global__ void BroadcastToCpyCuda(size_t dim_size, size_t output_num, UnaryBroa
   }
 }
 
-template <typename T>
-cudaError_t BroadcastTo(const std::vector<int64_t> &inp_shape, const std::vector<int64_t> &out_shape, T *input,
-                        T *output, size_t device_id, cudaStream_t cuda_stream) {
-  const size_t dim_size = out_shape.size();
+UnaryBroadcastStrideInfo UnaryBroadcastCalStride(const size_t dim_size, const std::vector<int64_t> &inp_shape,
+                                                 const std::vector<int64_t> &out_shape) {
   UnaryBroadcastStrideInfo strides;
-  size_t output_num = out_shape.back();
   strides.input_stride[dim_size - 1] = 1;
   strides.output_stride[dim_size - 1] = 1;
   for (int64_t idx = dim_size - 2; idx >= 0; --idx) {
     strides.output_stride[idx] = out_shape[idx + 1] * strides.output_stride[idx + 1];
     strides.input_stride[idx] = inp_shape[idx + 1] * strides.input_stride[idx + 1];
-    output_num *= out_shape[idx];
   }
   for (size_t idx = 0; idx < dim_size; ++idx) {
     strides.input_stride[idx] = (inp_shape[idx] == 1) ? 0 : strides.input_stride[idx];
   }
+  return strides;
+}
+
+BinaryBroadcastStrideInfo BinaryBroadcastCalStride(const size_t dim_size, const std::vector<int64_t> &in0_shape,
+                                                   const std::vector<int64_t> &in1_shape,
+                                                   const std::vector<int64_t> &out_shape) {
+  BinaryBroadcastStrideInfo strides;
+  strides.in0_stride[dim_size - 1] = 1;
+  strides.in1_stride[dim_size - 1] = 1;
+  strides.out_stride[dim_size - 1] = 1;
+  for (int64_t idx = dim_size - 2; idx >= 0; --idx) {
+    strides.out_stride[idx] = out_shape[idx + 1] * strides.out_stride[idx + 1];
+    strides.in0_stride[idx] = in0_shape[idx + 1] * strides.in0_stride[idx + 1];
+    strides.in1_stride[idx] = in1_shape[idx + 1] * strides.in1_stride[idx + 1];
+  }
+  for (size_t idx = 0; idx < dim_size; ++idx) {
+    strides.in0_stride[idx] = (in0_shape[idx] == 1) ? 0 : strides.in0_stride[idx];
+    strides.in1_stride[idx] = (in1_shape[idx] == 1) ? 0 : strides.in1_stride[idx];
+  }
+  return strides;
+}
+
+TrinaryBroadcastStrideInfo TrinaryBroadcastCalStride(const size_t dim_size, const std::vector<int64_t> &in0_shape,
+                                                     const std::vector<int64_t> &in1_shape,
+                                                     const std::vector<int64_t> &in2_shape,
+                                                     const std::vector<int64_t> &out_shape) {
+  TrinaryBroadcastStrideInfo strides;
+  strides.in0_stride[dim_size - 1] = 1;
+  strides.in1_stride[dim_size - 1] = 1;
+  strides.in2_stride[dim_size - 1] = 1;
+  strides.out_stride[dim_size - 1] = 1;
+  for (int64_t idx = dim_size - 2; idx >= 0; --idx) {
+    strides.out_stride[idx] = out_shape[idx + 1] * strides.out_stride[idx + 1];
+    strides.in0_stride[idx] = in0_shape[idx + 1] * strides.in0_stride[idx + 1];
+    strides.in1_stride[idx] = in1_shape[idx + 1] * strides.in1_stride[idx + 1];
+    strides.in2_stride[idx] = in2_shape[idx + 1] * strides.in2_stride[idx + 1];
+  }
+  for (size_t idx = 0; idx < dim_size; ++idx) {
+    strides.in0_stride[idx] = (in0_shape[idx] == 1) ? 0 : strides.in0_stride[idx];
+    strides.in1_stride[idx] = (in1_shape[idx] == 1) ? 0 : strides.in1_stride[idx];
+    strides.in2_stride[idx] = (in2_shape[idx] == 1) ? 0 : strides.in2_stride[idx];
+  }
+  return strides;
+}
+
+template <typename T>
+cudaError_t BroadcastTo(const std::vector<int64_t> &inp_shape, const std::vector<int64_t> &out_shape, T *input,
+                        T *output, size_t device_id, cudaStream_t cuda_stream) {
+  const size_t dim_size = out_shape.size();
+  size_t output_num = 1;
+  for (auto val : out_shape) {
+    output_num *= val;
+  }
+  UnaryBroadcastStrideInfo strides = UnaryBroadcastCalStride(dim_size, inp_shape, out_shape);
   size_t thread_num = output_num > 1024 ? 1024 : output_num;
   BroadcastToCpyCuda<T><<<CUDA_BLOCKS_CAL(device_id, output_num, thread_num), thread_num, 0, cuda_stream>>>(
     dim_size, output_num, strides, input, output);

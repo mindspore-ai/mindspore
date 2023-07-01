@@ -78,8 +78,8 @@ class SparseDenseCwiseOperationGpuKernelMod : public NativeGpuKernelMod,
   int64_t dense_num_;
   SparseDenseCwiseOperationFunctionType op_func_type_{SPARSE_DENSE_CWISE_OPERATION_INVALID_TYPE};
   std::vector<int64_t> dense_shape_;
-  std::vector<size_t> i_ = {1, 1, 1, 1, 1, 1, 1};
-  std::vector<size_t> o_ = {1, 1, 1, 1, 1, 1, 1};
+  std::vector<int64_t> i_ = {1, 1, 1, 1, 1, 1, 1};
+  std::vector<int64_t> o_ = {1, 1, 1, 1, 1, 1, 1};
   // default values
   size_t data_unit_size_; /* size of T */
 };

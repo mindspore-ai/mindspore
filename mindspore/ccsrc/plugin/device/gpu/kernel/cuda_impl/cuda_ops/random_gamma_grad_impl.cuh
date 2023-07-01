@@ -24,8 +24,8 @@ CUDA_LIB_EXPORT void CalRandomGammaGrad(const T *alpha, const T *sample, T *outp
                                         const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void BroadcastRandomGammaGrad(const std::vector<size_t> &, const std::vector<size_t> &,
-                                              const std::vector<size_t> &, const T *, const T *, T *,
-                                              const uint32_t &, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT void BroadcastRandomGammaGrad(const std::vector<int64_t> &, const std::vector<int64_t> &,
+                                              const std::vector<int64_t> &, const T *, const T *, T *, const uint32_t &,
+                                              cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_RANDOM_GAMMA_GRAD_IMPL_CUH_
