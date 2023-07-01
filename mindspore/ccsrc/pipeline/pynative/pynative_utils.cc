@@ -608,6 +608,7 @@ void PyParser::SetPrim(const FrontendOpRunInfoPtr &op_run_info, const py::object
   prim->EnableSharedMutex();
   op_run_info->op_grad_info->op_prim = prim;
   op_run_info->signatures = prim->signatures();
+  op_run_info->base_op_run_info.py_prim_id_ = adapter->id();
 }
 
 void PyParser::ParseOpInputByPythonObj(const FrontendOpRunInfoPtr &op_run_info, const py::list &op_inputs, bool stub) {
