@@ -617,8 +617,6 @@ bool AutoGradCellImpl::KPynativeWithFProp(const GradParamPtr &grad_param) {
   if (grad_param->grad_by_value) {
     for (size_t i = 0; i < grad_param->input_size; ++i) {
       if (PyNativeAlgo::Common::IsParam(grad_param->op_grad_info->input_value_grad_type[i])) {
-        const auto &abs = grad_param->op_grad_info->input_abs[i];
-        abs->set_value(grad_param->op_grad_info->input_value[i]);
         auto parameter = MapParameter(grad_param->op_grad_info->input_value[i], grad_param->op_grad_info->input_abs[i]);
         if (parameter != nullptr) {
           (void)args_node_list.emplace_back(parameter);
@@ -1053,10 +1051,7 @@ CNodePtr AutoGradCellImpl::ConstructBpropGraphInput(const GradParamPtr &grad_par
     for (size_t i = 0; i < grad_param->input_size; ++i) {
       if (PyNativeAlgo::Common::IsParam(grad_param->op_grad_info->input_value_grad_type[i])) {
         // To solve the input is a tuple like (parameter, ...)
-        const auto &abs = grad_param->op_grad_info->input_abs[i];
-        // For infer shape depending value
-        abs->set_value(grad_param->op_grad_info->input_value[i]);
-        auto parameter = MapParameter(grad_param->op_grad_info->input_value[i], abs);
+        auto parameter = MapParameter(grad_param->op_grad_info->input_value[i], grad_param->op_grad_info->input_abs[i]);
         MS_EXCEPTION_IF_NULL(parameter);
         (void)node_list.emplace_back(parameter);
         continue;
@@ -1086,7 +1081,6 @@ void AutoGradCellImpl::BuildKNodeListFromPrimalCNode(const ValuePtrList &input_v
                                                      const abstract::AbstractBasePtrList &input_abs,
                                                      AnfNodePtrList *const node_list) {
   for (size_t i = 0; i < input_value.size(); ++i) {
-    input_abs[i]->set_value(input_value[i]);
     (void)node_list->emplace_back(BuildKNodeForCNodeInput(input_value[i], input_abs[i]));
     MS_LOG(DEBUG) << "Get knode for input:  " << PyNativeAlgo::Common::GetIdByValue(input_value[i]);
   }
