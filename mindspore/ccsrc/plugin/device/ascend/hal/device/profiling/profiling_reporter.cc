@@ -33,53 +33,6 @@ namespace ascend {
 constexpr uint32_t kProfilingModelStartLogId = 0;
 constexpr uint32_t kProfilingModelEndLogId = 1;
 
-// GE task info task_type
-enum class TaskInfoTaskType {
-  MSPROF_AI_CORE = 0,
-  MSPROF_AI_CPU = 1,
-  MSPROF_AIV = 2,
-  MSPROF_HCCL = 10,
-  MSPROF_RTS = 11,
-  MSPROF_UNKNOWN_TYPE = 1000,
-};
-
-// MS kernel to GE task info task_type
-static std::map<KernelType, TaskInfoTaskType> KernelType2TaskTypeEnum{
-  {KernelType::TBE_KERNEL, TaskInfoTaskType::MSPROF_AI_CORE},
-  {KernelType::AKG_KERNEL, TaskInfoTaskType::MSPROF_AI_CORE},
-  {KernelType::AICPU_KERNEL, TaskInfoTaskType::MSPROF_AI_CPU},
-  {KernelType::RT_KERNEL, TaskInfoTaskType::MSPROF_RTS},
-  {KernelType::HCCL_KERNEL, TaskInfoTaskType::MSPROF_HCCL},
-  {KernelType::HOST_KERNEL, TaskInfoTaskType::MSPROF_UNKNOWN_TYPE},
-  {KernelType::CPU_KERNEL, TaskInfoTaskType::MSPROF_UNKNOWN_TYPE},
-  {KernelType::GPU_KERNEL, TaskInfoTaskType::MSPROF_UNKNOWN_TYPE},
-  {KernelType::BISHENG_KERNEL, TaskInfoTaskType::MSPROF_UNKNOWN_TYPE},
-  {KernelType::ACL_KERNEL, TaskInfoTaskType::MSPROF_UNKNOWN_TYPE},
-  {KernelType::UNKNOWN_KERNEL_TYPE, TaskInfoTaskType::MSPROF_UNKNOWN_TYPE}};
-
-// 0 means unknown format
-static std::map<string, uint32_t> OpFormat2Index{{kOpFormat_DEFAULT, 1},
-                                                 {kOpFormat_NC1KHKWHWC0, 2},
-                                                 {kOpFormat_ND, 3},
-                                                 {kOpFormat_NCHW, 4},
-                                                 {kOpFormat_NHWC, 5},
-                                                 {kOpFormat_HWCN, 6},
-                                                 {kOpFormat_NC1HWC0, 7},
-                                                 {kOpFormat_FRAC_Z, 8},
-                                                 {kOpFormat_C1HWNCoC0, 9},
-                                                 {kOpFormat_FRAC_NZ, 10},
-                                                 {kOpFormat_NC1HWC0_C04, 11},
-                                                 {kOpFormat_FRACTAL_Z_C04, 12},
-                                                 {kOpFormat_NDHWC, 13},
-                                                 {kOpFormat_FRACTAL_ZN_LSTM, 14},
-                                                 {kOpFormat_FRACTAL_ZN_RNN, 15},
-                                                 {kOpFormat_ND_RNN_BIAS, 16},
-                                                 {kOpFormat_NDC1HWC0, 17},
-                                                 {kOpFormat_NCDHW, 18},
-                                                 {kOpFormat_FRACTAL_Z_3D, 19},
-                                                 {kOpFormat_DHWNC, 20},
-                                                 {kOpFormat_DHWCN, 21}};
-
 bool ProfilingReporter::CheckStreamTaskValid() const {
   if (cnode_list_.size() != stream_ids_.size() || cnode_list_.size() != task_ids_.size()) {
     MS_LOG(ERROR) << "CNode size is not equal stream size or not equal task size, "

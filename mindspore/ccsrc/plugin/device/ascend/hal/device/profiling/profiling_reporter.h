@@ -39,6 +39,61 @@ using std::pair;
 using std::string;
 using std::vector;
 
+const uint32_t MSPROF_DIFFERENCE = 200;
+
+// GE task info task_type
+enum class TaskInfoTaskType {
+  TASK_TYPE_AI_CORE = 0,
+  TASK_TYPE_AI_CPU = 1,
+  TASK_TYPE_AIV = 2,
+  TASK_TYPE_WRITE_BACK = 3,
+  TASK_TYPE_MIX_AIC = 4,
+  TASK_TYPE_MIX_AIV = 5,
+  TASK_TYPE_FFTS_PLUS = 6,
+  TASK_TYPE_DSA = 7,
+  TASK_TYPE_DVPP = 8,
+  TASK_TYPE_HCCL = 9,
+  MSPROF_RTS = 11,
+  MSPROF_UNKNOWN_TYPE = 1000,
+};
+
+// MS kernel to GE task info task_type
+static std::map<KernelType, TaskInfoTaskType> KernelType2TaskTypeEnum{
+  {KernelType::TBE_KERNEL, TaskInfoTaskType::TASK_TYPE_AI_CORE},
+  {KernelType::AKG_KERNEL, TaskInfoTaskType::TASK_TYPE_AI_CORE},
+  {KernelType::AICPU_KERNEL, TaskInfoTaskType::TASK_TYPE_AI_CPU},
+  {KernelType::RT_KERNEL, TaskInfoTaskType::MSPROF_RTS},
+  {KernelType::HCCL_KERNEL, TaskInfoTaskType::TASK_TYPE_HCCL},
+  {KernelType::HOST_KERNEL, TaskInfoTaskType::MSPROF_UNKNOWN_TYPE},
+  {KernelType::CPU_KERNEL, TaskInfoTaskType::MSPROF_UNKNOWN_TYPE},
+  {KernelType::GPU_KERNEL, TaskInfoTaskType::MSPROF_UNKNOWN_TYPE},
+  {KernelType::BISHENG_KERNEL, TaskInfoTaskType::MSPROF_UNKNOWN_TYPE},
+  {KernelType::ACL_KERNEL, TaskInfoTaskType::MSPROF_UNKNOWN_TYPE},
+  {KernelType::UNKNOWN_KERNEL_TYPE, TaskInfoTaskType::MSPROF_UNKNOWN_TYPE}};
+
+// 0 means unknown format
+static std::map<string, uint32_t> OpFormat2Index{{kOpFormat_DEFAULT, 1},
+                                                 {kOpFormat_NC1KHKWHWC0, 2},
+                                                 {kOpFormat_ND, 3},
+                                                 {kOpFormat_NCHW, 4},
+                                                 {kOpFormat_NHWC, 5},
+                                                 {kOpFormat_HWCN, 6},
+                                                 {kOpFormat_NC1HWC0, 7},
+                                                 {kOpFormat_FRAC_Z, 8},
+                                                 {kOpFormat_C1HWNCoC0, 9},
+                                                 {kOpFormat_FRAC_NZ, 10},
+                                                 {kOpFormat_NC1HWC0_C04, 11},
+                                                 {kOpFormat_FRACTAL_Z_C04, 12},
+                                                 {kOpFormat_NDHWC, 13},
+                                                 {kOpFormat_FRACTAL_ZN_LSTM, 14},
+                                                 {kOpFormat_FRACTAL_ZN_RNN, 15},
+                                                 {kOpFormat_ND_RNN_BIAS, 16},
+                                                 {kOpFormat_NDC1HWC0, 17},
+                                                 {kOpFormat_NCDHW, 18},
+                                                 {kOpFormat_FRACTAL_Z_3D, 19},
+                                                 {kOpFormat_DHWNC, 20},
+                                                 {kOpFormat_DHWCN, 21}};
+
 class StepPointDesc {
  public:
   StepPointDesc(string op_name, uint32_t tag) : op_name_(std::move(op_name)), tag_(tag) {}
@@ -79,7 +134,6 @@ class ProfilingReporter {
   vector<uint32_t> stream_ids_;
   vector<uint32_t> task_ids_;
   std::map<string, int> node_name_index_map_;
-  const uint32_t MSPROF_DIFFERENCE = 200;
   const uint32_t DEFAULT_CONTEXT_ID = 4294967295;
 
   bool CheckStreamTaskValid() const;

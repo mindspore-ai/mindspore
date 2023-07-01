@@ -48,6 +48,7 @@
 #include "plugin/device/ascend/hal/device/dump/ascend_dump.h"
 #include "include/backend/debug/data_dump/overflow_dumper.h"
 #include "include/backend/debug/profiler/profiling.h"
+#include "plugin/device/ascend/hal/device/profiling/profiling_utils.h"
 
 using Adx::AdxRegDumpProcessCallBack;
 using mindspore::device::ascend::ProfilingManager;
@@ -380,9 +381,6 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
   MS_EXCEPTION_IF_NULL(kernel);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  auto graph_id = AnfAlgo::GetGraphId(kernel.get());
-  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  KernelType kernel_type = AnfAlgo::GetKernelType(kernel);
   (void)res_manager_->BindDeviceToCurrentThread(false);
 
   uint64_t start_time = 0;
@@ -407,6 +405,12 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
     auto register_dumper = debug::OverflowDumper::GetInstance(kAscendDevice);
     register_dumper->Init();
     register_dumper->OpDebugRegisterForStream(kernel);
+  }
+#endif
+#ifndef ENABLE_SECURITY
+  if (ProfilingManager::GetInstance().IsProfilingInitialized()) {
+    ProfilingUtils::RecordLaunchTaskBegin(kernel->fullname_with_scope(), true);
+    ProfilingUtils::InitReportNode(kernel);
   }
 #endif
   bool is_dynamic_shape = common::AnfAlgo::IsDynamicShape(kernel);
@@ -438,10 +442,8 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
     }
   }
 #ifndef ENABLE_SECURITY
-  auto ascend_instance = profiler::ascend::AscendProfiler::GetInstance();
-  MS_EXCEPTION_IF_NULL(ascend_instance);
   if (ProfilingManager::GetInstance().IsProfilingInitialized()) {
-    ascend_instance->GetNodeTaskIdStreamId(kernel, graph_id, UintToInt(device_id), kernel_type, kernel_mod->task_id());
+    ProfilingUtils::ReportTask(kernel->fullname_with_scope(), true);
   }
 #endif
 #ifdef ENABLE_DEBUGGER
