@@ -73,6 +73,8 @@ tensor_to_np_type = {"Int8": np.int8, "UInt8": np.uint8, "Int16": np.int16, "UIn
                      "Int32": np.int32, "UInt32": np.uint32, "Int64": np.int64, "UInt64": np.uint64,
                      "Float16": np.float16, "Float32": np.float32, "Float64": np.float64, "Bool": np.bool_, "str": "U"}
 
+np_type_convert = {"int32": np.int32, "float32": np.float32, "float16": np.float16, "float64": np.float64}
+
 mindir_to_tensor_type = {1: mstype.float32, 2: mstype.uint8, 3: mstype.int8, 4: mstype.uint16,
                          5: mstype.int16, 6: mstype.int32, 7: mstype.int64, 10: mstype.float16,
                          11: mstype.float64, 12: mstype.uint32, 13: mstype.uint64}
@@ -206,7 +208,7 @@ def _save_weight(checkpoint_dir, model_name, iteration, params):
         logger.warning(f"Checkpoint dir: '{checkpoint_dir}' is not existed.")
 
 
-def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
+def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM", map_param_inc=False):
     """Execute the process of saving checkpoint into file."""
     try:
         with _ckpt_mutex:
@@ -223,7 +225,7 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
                         _write_random_seed(name, value, f)
                         continue
                     if value[0] == "mapparameter":
-                        _write_mapparameter(name, value, f)
+                        _write_mapparameter(name, value, f, map_param_inc)
                         continue
                     if value[0] == "offload_parameter":
                         new_value = value[1:]
@@ -289,18 +291,23 @@ def _write_parameter_data(name, value, f, enc_key, plain_data):
             plain_data.write(checkpoint_list.SerializeToString())
 
 
-def _write_mapparameter(name, value, f):
+def _write_mapparameter(name, value, f, map_param_inc=False):
     """Write map parameter into protobuf file."""
-    checkpoint_list = Checkpoint()
-    param_value = checkpoint_list.value.add()
-    param_value.tag = name
-    map_tensor = param_value.maptensor
-    for v in value[1:]:
-        tensor = map_tensor.tensor.add()
-        tensor.dims.extend(v[0])
-        tensor.tensor_type = v[1]
-        tensor.tensor_content = v[2].tobytes()
+    while True:
+        logger.info("Checkpoint save map_parameter.")
+        data_map_slice = value[1].export_slice_data(map_param_inc)
+        checkpoint_list = Checkpoint()
+        param_value = checkpoint_list.value.add()
+        param_value.tag = name
+        map_tensor = param_value.maptensor
+        for numpy_data in data_map_slice[:3]:
+            tensor_pro = map_tensor.tensor.add()
+            tensor_pro.dims.extend(numpy_data.shape)
+            tensor_pro.tensor_type = str(numpy_data.dtype)
+            tensor_pro.tensor_content = numpy_data.reshape(-1).tobytes()
         f.write(checkpoint_list.SerializeToString())
+        if data_map_slice[3]:
+            break
 
 
 def _write_hugeparameter(name, value, f):
@@ -403,6 +410,8 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
 
     if isinstance(save_obj, nn.Cell):
         if save_obj.ge_init and not save_obj.ge_sync_data:
+            from mindspore.train.callback._callback import set_cur_net
+            set_cur_net(save_obj)
             save_obj.exec_checkpoint_graph()
         parameter_layout_dict = save_obj.parameter_layout_dict
         if _is_in_auto_parallel_mode() and not parameter_layout_dict:
@@ -423,11 +432,8 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         for (key, value) in param_dict.items():
             each_param = {"name": key}
             if isinstance(value, MapParameter):
-                param_data = []
-                for export_data in value.export_data(map_param_inc):
-                    param_data.append(Tensor(export_data))
-                    each_param["data"] = param_data
-                    param_list.append(each_param)
+                each_param["data"] = value
+                param_list.append(each_param)
                 continue
 
             if value.data.is_persistent_data():
@@ -477,15 +483,17 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                 continue
             key = param["name"]
             data_list[key] = []
+            if isinstance(param["data"], MapParameter):
+                data_list[param["name"]].append("mapparameter")
+                data_list[param["name"]].append(param["data"])
+                continue
             if isinstance(param["data"], list):
                 if param["data"][0] == "persistent_data":
                     _save_param_list_data(data_list, key, param)
                 elif param["data"][0] == "offload_parameter":
                     data_list[key].append("offload_parameter")
                     _save_param_list_data(data_list, key, param)
-                else:
-                    _save_mapparameter(data_list, param)
-                continue
+
             if isinstance(param["data"], str):
                 data_list[key].append([0])
                 data_list[key].append('str')
@@ -511,25 +519,9 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         thr = Thread(target=_exec_save, args=(ckpt_file_name, data_copy, enc_key, enc_mode), name="asyn_save_ckpt")
         thr.start()
     else:
-        _exec_save(ckpt_file_name, data_list, enc_key, enc_mode)
+        _exec_save(ckpt_file_name, data_list, enc_key, enc_mode, map_param_inc)
 
     logger.info("Saving checkpoint process is finished.")
-
-
-def _save_mapparameter(data_list, param):
-    """Save map parameter into save_obj."""
-    data_list[param["name"]].append("mapparameter")
-    for value in param["data"]:
-        dims = []
-        tmp_list = []
-        for dim in value.shape:
-            dims.append(dim)
-        tmp_list.append(dims)
-        tensor_type = str(value.dtype)
-        tmp_list.append(tensor_type)
-        data = value.asnumpy().reshape(-1)
-        tmp_list.append(data)
-        data_list[param["name"]].append(tmp_list)
 
 
 def _save_param_list_data(data_list, key, param):
@@ -963,6 +955,8 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
     parameter_dict = {}
     try:
         param_data_list = []
+        map_data_list = [[], [], []]
+        map_shape_list = [0, 0, 0]
         if specify_prefix:
             logger.warning("For load_checkpoint, this parameter `specity_prefix` will be deprecated, "
                            "please use `choice_func` instead.")
@@ -979,7 +973,11 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
                     choice_func is not None and not choice_func(element.tag):
                 continue
             if element.tensor.ByteSize() == 0:
-                _load_mapparameter(element, parameter_dict)
+                _load_map_parameter(checkpoint_list, element, element_id,
+                                    map_data_list, map_shape_list, parameter_dict)
+                if element.tag in parameter_dict:
+                    map_data_list = [[], [], []]
+                    map_shape_list = [0, 0, 0]
                 continue
             data = element.tensor.tensor_content
             data_type = element.tensor.tensor_type
@@ -1024,6 +1022,36 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
         load_param_into_net(net, parameter_dict, strict_load)
 
     return parameter_dict
+
+
+def _load_map_parameter(checkpoint_list, element, element_id, map_data_list,
+                        map_shape_list, parameter_dict):
+    """load map parameter."""
+    logger.info("Checkpoint load map_parameter.")
+    if (element_id != len(checkpoint_list.value) - 1) and \
+            element.tag == checkpoint_list.value[element_id + 1].tag:
+        for index, tensor in enumerate(element.maptensor.tensor):
+            data = tensor.tensor_content
+            data_type = tensor.tensor_type
+            np_type = np_type_convert.get(data_type)
+            element_data = np.frombuffer(data, np_type)
+            map_data_list[index].append(element_data)
+            map_shape_list[index] += tensor.dims[0]
+    else:
+        map_array = []
+        for index, tensor in enumerate(element.maptensor.tensor):
+            data = tensor.tensor_content
+            data_type = tensor.tensor_type
+            np_type = np_type_convert.get(data_type)
+            element_data = np.frombuffer(data, np_type)
+            map_data_list[index].append(element_data)
+            new_data = b"".join(map_data_list[index])
+            param_data = np.frombuffer(new_data, np_type)
+            dims = tensor.dims
+            dims[0] += map_shape_list[index]
+            param_data = param_data.reshape(list(dims))
+            map_array.append(param_data)
+        parameter_dict[element.tag] = map_array
 
 
 def _check_ckpt_file_name(ckpt_file_name):
@@ -1108,20 +1136,6 @@ def _whether_load_param(specify_prefix, filter_prefix, param_name):
     return whether_load
 
 
-def _load_mapparameter(element, parameter_dict):
-    """Load map parameter from ckpt file."""
-    map_array = []
-    for tensor in element.maptensor.tensor:
-        data = tensor.tensor_content
-        data_type = tensor.tensor_type
-        np_type = tensor_to_np_type.get(data_type)
-        element_data = np.frombuffer(data, np_type)
-        dims = tensor.dims
-        param_data = element_data.reshape(list(dims))
-        map_array.append(param_data)
-    parameter_dict[element.tag] = map_array
-
-
 def load_param_into_net(net, parameter_dict, strict_load=False):
     """
     Load parameters into network, return parameter list that are not loaded in the network.
@@ -1171,7 +1185,7 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
         net._add_attr("random_op_snapshot", parameter_dict["random_op"])
         parameter_dict.pop("random_op")
     for key, value in parameter_dict.items():
-        if not isinstance(key, str) or not isinstance(value, (Parameter, str)):
+        if not isinstance(key, str) or not isinstance(value, (Parameter, str, list)):
             logger.critical("Load parameters into net failed.")
             msg = ("For 'parameter_dict', the element in the argument 'parameter_dict' should be a "
                    "'str' and 'Parameter' , but got {} and {}.".format(type(key), type(value)))
@@ -1184,6 +1198,9 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
     ckpt_not_load = list(parameter_dict.keys())
     for _, param in net.parameters_and_names():
         if param.name in parameter_dict:
+            if isinstance(param, MapParameter):
+                param.import_data(parameter_dict[param.name])
+                continue
             new_param = copy.deepcopy(parameter_dict[param.name])
             _update_param(param, new_param, strict_load)
             ckpt_not_load.remove(param.name)
@@ -1306,34 +1323,6 @@ def _get_merged_param_data(net, parameter_layout_dict, param_name, param_data, i
     if mp_weight and integrated_save:
         param_data = _reshape_param_data(param_data, dev_mat, tensor_map)
     return param_data
-
-
-def _fill_param_into_net(net, parameter_list):
-    """
-    Fills parameter_list into net.
-
-    Args:
-        net (Cell): train network.
-        parameter_list (list): parameters list from ge callback.
-    """
-    parameter_dict = {}
-    while parameter_list:
-        tmp_param = parameter_list.pop(0)
-        param_name = tmp_param["name"]
-        param_data = tmp_param["data"]
-        if isinstance(param_data, Parameter):
-            param_data.init_data()
-        np_val = param_data.asnumpy()
-
-        if np_val.shape == (1,):
-            parameter_dict[param_name] = Parameter(np_val, name=param_name)
-        elif np_val.shape == ():
-            parameter_dict[param_name] = Parameter(Tensor(np_val.tolist(), mstype.pytype_to_dtype(np_val.dtype)),
-                                                   name=param_name)
-        else:
-            parameter_dict[param_name] = Parameter(Tensor(np_val), name=param_name)
-
-    load_param_into_net(net, parameter_dict, strict_load=True)
 
 
 def export(net, *inputs, file_name, file_format, **kwargs):

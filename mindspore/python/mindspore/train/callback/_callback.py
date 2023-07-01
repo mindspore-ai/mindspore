@@ -20,8 +20,9 @@ import numpy as np
 
 from mindspore.common.tensor import Tensor
 from mindspore import log as logger
-from mindspore.train.serialization import _fill_param_into_net
 from mindspore.train.summary.summary_record import _cache_summary_tensor_data
+from mindspore.common.parameter import Parameter
+from mindspore.train.serialization import load_param_into_net
 
 CUR_NET = None
 
@@ -36,6 +37,34 @@ def set_cur_net(net):
     """
     global CUR_NET
     CUR_NET = net
+
+
+def _fill_param_into_net(net, parameter_list):
+    """
+    Fills parameter_list into net.
+
+    Args:
+        net (Cell): train network.
+        parameter_list (list): parameters list from ge callback.
+    """
+    parameter_dict = {}
+    while parameter_list:
+        tmp_param = parameter_list.pop(0)
+        param_name = tmp_param["name"]
+        param_data = tmp_param["data"]
+        if isinstance(param_data, Parameter):
+            param_data.init_data()
+        np_val = param_data.asnumpy()
+
+        if np_val.shape == (1,):
+            parameter_dict[param_name] = Parameter(np_val, name=param_name)
+        elif np_val.shape == ():
+            parameter_dict[param_name] = Parameter(Tensor(np_val.tolist(), mstype.pytype_to_dtype(np_val.dtype)),
+                                                   name=param_name)
+        else:
+            parameter_dict[param_name] = Parameter(Tensor(np_val), name=param_name)
+
+    load_param_into_net(net, parameter_dict, strict_load=True)
 
 
 def checkpoint_cb_for_save_op(parameter_list):
