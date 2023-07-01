@@ -1,4 +1,4 @@
-# Copyright 2020-2022 Huawei Technologies Co., Ltd
+# Copyright 2020-2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -97,7 +97,35 @@ class ExecutionCalculator:
         self.average_execution = 0
 
 
-def calculate_dataset_execution_time(input_file, output_file):
+def _calculate_dataset_item(row, execution_time_map, ts_map):
+    """Calculate dataset execution time for one row."""
+    start_end = row['start_end']
+    event = row['event']
+    stage = row['stage']
+    custom_info = row['custom_info']
+    event_stage_tid_pid = event + '_' + stage + '_' + row['tid'] + '_' + row['pid']
+    if start_end == '1' and event_stage_tid_pid in ts_map:
+        title = event + '::' + stage + '::' + custom_info
+        ts_end = int(row['time_stamp(us)'])
+        ts = ts_map[event_stage_tid_pid]
+        dur = ts_end - ts
+        if title not in execution_time_map:
+            execution_time_map[title] = ExecutionCalculator(event=event, stage=stage,
+                                                            custom_info=custom_info)
+        execution_time_map[title].count += 1
+        execution_time_map[title].average_execution += \
+            (dur - execution_time_map[title].average_execution) / execution_time_map[title].count
+        del ts_map[event_stage_tid_pid]
+    elif start_end == '0':
+        ts = int(row['time_stamp(us)'])
+        ts_map[event_stage_tid_pid] = ts
+    elif start_end == '2':
+        logger.info("It is a instant event, skip to calculate execution time. item: %s.", row)
+    else:
+        logger.warning("Can not map the start time for item: %s.", row)
+
+
+def _calculate_dataset_execution_time(input_file, output_file):
     r"""
     Parse the host info into timeline file, so as to show on UI.
 
@@ -116,30 +144,7 @@ def calculate_dataset_execution_time(input_file, output_file):
                 module_name = row['module_name']
                 if module_name != 'Dataset':
                     continue
-                start_end = row['start_end']
-                event = row['event']
-                stage = row['stage']
-                custom_info = row['custom_info']
-                event_stage_tid_pid = event + '_' + stage + '_' + row['tid'] + '_' + row['pid']
-                if start_end == '1' and event_stage_tid_pid in ts_map:
-                    title = event + '::' + stage + '::' + custom_info
-                    ts_end = int(row['time_stamp'])
-                    ts = ts_map[event_stage_tid_pid]
-                    dur = ts_end - ts
-                    if title not in execution_time_map:
-                        execution_time_map[title] = ExecutionCalculator(event=event, stage=stage,
-                                                                        custom_info=custom_info)
-                    execution_time_map[title].count += 1
-                    execution_time_map[title].average_execution += \
-                        (dur - execution_time_map[title].average_execution) / execution_time_map[title].count
-                    del ts_map[event_stage_tid_pid]
-                elif start_end == '0':
-                    ts = int(row['time_stamp'])
-                    ts_map[event_stage_tid_pid] = ts
-                elif start_end == '2':
-                    logger.info("It is a instant event, skip to calculate execution time. item: %s.", row)
-                else:
-                    logger.warning("Can not map the start time for item: %s.", row)
+                _calculate_dataset_item(row, execution_time_map, ts_map)
             except KeyError as e:
                 logger.error("Error occur when analyse line: %s, Details is: %s", row, e)
                 continue
@@ -158,7 +163,38 @@ def calculate_dataset_execution_time(input_file, output_file):
     logger.info('Successfully calculate the execution time and write it to file: %s.', output_file)
 
 
-def parse_host_info(input_file, output_file, is_develop_user=True):
+def _extract_timeline_item(row, time_line, ts_map):
+    """Process one row, try to extract a timeline item."""
+    start_end = row['start_end']
+    event_stage_tid_pid = row['event'] + '_' + row['stage'] + '_' + row['tid'] + '_' + row['pid']
+    # map start and end, put the mapped event into timeline.
+    if start_end == '1' and event_stage_tid_pid in ts_map:
+        title = row['event'] + '::' + row['stage']
+        event = {'name': title, 'cat': row['module_name']}
+        ts_end = int(row['time_stamp(us)'])
+        ts = ts_map[event_stage_tid_pid]
+        event['ts'] = ts
+        event['dur'] = ts_end - ts
+        event['ph'] = 'X'
+        event['pid'] = row['pid']
+        event['tid'] = row['tid']
+        event['args'] = {'parent_pid': row['parent_pid']}
+        time_line.append(event)
+        del ts_map[event_stage_tid_pid]
+    elif start_end == '0':
+        ts = int(row['time_stamp(us)'])
+        ts_map[event_stage_tid_pid] = ts
+    # Put the instance event into timeline.
+    elif start_end == '2':
+        title = row['event'] + '::' + row['stage']
+        event = {'name': title, 'cat': row['module_name'], 'ts': int(row['time_stamp(us)']), 'ph': 'i',
+                 'pid': row['pid'], 'tid': row['tid'], 'args': {'parent_pid': row['parent_pid']}}
+        time_line.append(event)
+    else:
+        logger.warning("Can not map the start time for item: %s.", row)
+
+
+def _parse_host_info(input_file, output_file, is_develop_user=True):
     r"""
     Parse the host info into timeline file, so as to show on UI.
 
@@ -177,31 +213,7 @@ def parse_host_info(input_file, output_file, is_develop_user=True):
                 level = row['level']
                 if level == '0' and not is_develop_user:
                     continue
-                start_end = row['start_end']
-                event_stage_tid_pid = row['event'] + '_' + row['stage'] + '_' + row['tid'] + '_' + row['pid']
-                if start_end == '1' and event_stage_tid_pid in ts_map:
-                    title = row['event'] + '::' + row['stage']
-                    event = {'name': title, 'cat': row['module_name']}
-                    ts_end = int(row['time_stamp'])
-                    ts = ts_map[event_stage_tid_pid]
-                    event['ts'] = ts
-                    event['dur'] = ts_end - ts
-                    event['ph'] = 'X'
-                    event['pid'] = row['pid']
-                    event['tid'] = row['tid']
-                    event['args'] = {'parent_pid': row['parent_pid']}
-                    time_line.append(event)
-                    del ts_map[event_stage_tid_pid]
-                elif start_end == '0':
-                    ts = int(row['time_stamp'])
-                    ts_map[event_stage_tid_pid] = ts
-                elif start_end == '2':
-                    title = row['event'] + '::' + row['stage']
-                    event = {'name': title, 'cat': row['module_name'], 'ts': int(row['time_stamp']), 'ph': 'i',
-                             'pid': row['pid'], 'tid': row['tid'], 'args': {'parent_pid': row['parent_pid']}}
-                    time_line.append(event)
-                else:
-                    logger.warning("Can not map the start time for item: %s.", row)
+                _extract_timeline_item(row, time_line, ts_map)
             except KeyError as e:
                 logger.error("Error occur when analyse line: %s, Details is: %s", row, e)
                 continue
@@ -209,6 +221,20 @@ def parse_host_info(input_file, output_file, is_develop_user=True):
         logger.warning("Only start time is record for these items:")
         for k, v in ts_map.items():
             logger.warning("event_stage_tid_pid: %s, time: %d us.", k, v)
+            last_dash = k.rfind('_')
+            if last_dash == -1:
+                logger.error("Can't find pid in the event_stage_tid_pid string: %s", k)
+                continue
+            second_last_dash = k.rfind('_', 0, last_dash - 1)
+            if second_last_dash == -1:
+                logger.error("Can't find tid in the event_stage_tid_pid string: %s", k)
+                continue
+            pid = k[last_dash + 1:]
+            tid = k[second_last_dash + 1: last_dash]
+            title = k[:second_last_dash]
+            unfinished_timeline = {'name': title, 'pid': pid, 'tid': tid, 'ph': 'B', 'ts': int(v)}
+            time_line.append(unfinished_timeline)
+
     timeline_file = validate_and_normalize_path(output_file)
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
     modes = stat.S_IWUSR | stat.S_IRUSR
@@ -470,10 +496,17 @@ class Profiler:
                 return message
         return op_info
 
-    def analyse(self):
+    def analyse(self, offline_path=None):
         """
         Collect and analyze training performance data, support calls during and after training. The example shows above.
+
+        Args:
+            offline_path (Union[str, None]): The data path which need to be analysed with offline mode. Offline mode is
+            used in abnormal exit scenario. This parameter should be set to None for online mode. Default: None.
         """
+        if offline_path:
+            _offline_parse(offline_path)
+            return
         if self._msprof_enable:
             return
 
@@ -1581,6 +1614,32 @@ class Profiler:
         host_info_file = os.path.join(self._output_path, 'host_info', csv_file_name)
         timeline_file = os.path.join(self._output_path, 'host_info', json_file_name)
         dataset_execution_file = os.path.join(self._output_path, 'host_info', dataset_file_name)
-        parse_host_info(host_info_file, timeline_file)
-        calculate_dataset_execution_time(host_info_file, dataset_execution_file)
+        _parse_host_info(host_info_file, timeline_file)
+        _calculate_dataset_execution_time(host_info_file, dataset_execution_file)
         logger.info("Profile HostInfo finished.")
+
+
+def _offline_parse(offline_path):
+    """Parse data in abnormal scenario, only support for host_info at present."""
+    logger.info("Profiling HostInfo offline start.")
+    host_dir = os.path.join(offline_path, 'profiler', 'host_info')
+    host_dir = validate_and_normalize_path(host_dir)
+    if not os.path.exists(host_dir):
+        logger.error("Host info directory: %s not exist.", host_dir)
+        return
+    files = os.listdir(host_dir)
+    for file in files:
+        if not file.startswith("host_info_") or not file.endswith(".csv"):
+            continue
+        rank_id = file.split('_')[-1].split('.')[0]
+        if not rank_id.isdigit():
+            logger.info("Cannot get rank_id from file: %s, skip it", file)
+            return
+        json_file_name = 'timeline_' + rank_id + '.json'
+        dataset_file_name = 'dataset_' + rank_id + '.csv'
+        host_info_file = os.path.join(host_dir, file)
+        timeline_file = os.path.join(host_dir, json_file_name)
+        dataset_execution_file = os.path.join(host_dir, dataset_file_name)
+        _parse_host_info(host_info_file, timeline_file)
+        _calculate_dataset_execution_time(host_info_file, dataset_execution_file)
+    logger.info("Profile HostInfo offline finished.")
