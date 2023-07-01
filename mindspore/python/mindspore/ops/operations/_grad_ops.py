@@ -2109,11 +2109,13 @@ class NLLLossGrad(PrimitiveWithInfer):
     """Computes the gradients of `NLLLoss`."""
 
     @prim_attr_register
-    def __init__(self, reduction="mean"):
+    def __init__(self, reduction="mean", ignore_index=-100):
         """Initialize NLLLoss"""
         self.init_prim_io_names(inputs=['x', 'loss_grad', 'target', 'weight', 'total_weight'], outputs=['x_grad'])
         self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
+        self.ignore_index = ignore_index
         self.add_prim_attr('reduction', self.reduction)
+        self.add_prim_attr('ignore_index', self.ignore_index)
 
 
 class SmoothL1LossGrad(Primitive):
