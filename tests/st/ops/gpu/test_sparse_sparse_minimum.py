@@ -64,7 +64,7 @@ def sparse_sparse_minimum_pynative(loss):
     assert np.allclose(n.asnumpy(), expected_n, loss1, loss1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sparse_sparse_maximum_graph_float32():

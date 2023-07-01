@@ -34,7 +34,7 @@ class RandomShuffleNet(nn.Cell):
         return self.random_shuffle(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -57,7 +57,7 @@ def test_random_shuffle_op_dtype(mode, dtype):
     assert output.shape == expect_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -79,7 +79,7 @@ def test_random_shuffle_op_tensor(mode, shape):
     assert output.shape == expect_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -119,7 +119,7 @@ def test_random_shuffle_op_dynamic_shape(mode):
     assert (output_dyn.asnumpy() == out.asnumpy()).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

@@ -97,7 +97,7 @@ def test_bounding_box_encode_functional():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bounding_box_encode_functional_modes():

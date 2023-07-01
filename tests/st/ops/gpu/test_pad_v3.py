@@ -53,7 +53,7 @@ class NetDynamic(nn.Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_padv3_circular_dynamic_shape_3d():
@@ -79,7 +79,7 @@ def test_padv3_circular_dynamic_shape_3d():
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_padv3_circular_dynamic_shape_4d():
@@ -104,7 +104,7 @@ def test_padv3_circular_dynamic_shape_4d():
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_padv3_circular_dynamic_shape_5d():
@@ -130,7 +130,7 @@ def test_padv3_circular_dynamic_shape_5d():
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_padv3_constant():
@@ -151,7 +151,7 @@ def test_padv3_constant():
     np.testing.assert_almost_equal(expect, res_ms)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_padv3_reflect():
@@ -171,7 +171,7 @@ def test_padv3_reflect():
     np.testing.assert_almost_equal(expect, res_ms)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_padv3_edge():
@@ -191,7 +191,7 @@ def test_padv3_edge():
     np.testing.assert_almost_equal(expect, res_ms)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_padv3_vmap():
@@ -211,7 +211,7 @@ def test_padv3_vmap():
     np.testing.assert_almost_equal(output.asnumpy(), expect_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_padv3_x_padding_dynamic_shape():
@@ -243,7 +243,7 @@ def test_padv3_x_padding_dynamic_shape():
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_padv3_x_dynamic_shape():
@@ -274,7 +274,7 @@ def test_padv3_x_dynamic_shape():
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_padv3_padding_dynamic_shape():

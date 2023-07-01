@@ -75,7 +75,7 @@ def test_sspaddmm_dyn():
         assert out[i].asnumpy().shape == expect_shapes[i]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sspaddmm_input_int32():

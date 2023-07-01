@@ -54,7 +54,7 @@ def hamming_window_pynative(periodic, loss):
     assert np.allclose(hamming_window_output.asnumpy(), hamming_window_expect.numpy().astype(np.float32), loss, loss)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_blackman_window_graph_int32_true_float32():

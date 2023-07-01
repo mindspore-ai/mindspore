@@ -56,7 +56,7 @@ def polar_pynative(loss):
     assert np.allclose(output.asnumpy(), expected, loss, loss)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_polar_graph_float():

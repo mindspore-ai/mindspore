@@ -247,7 +247,7 @@ def test_unsorted_segment_arithmetic_mul_d(func, data_type, index_type):
     np.testing.assert_array_almost_equal(graph_output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['min', 'max'])
@@ -274,7 +274,7 @@ def test_tensor_check(func):
     np.testing.assert_array_almost_equal(output_ms.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['min', 'max', 'sum'])
@@ -355,7 +355,7 @@ def test_vmap(func):
     np.testing.assert_allclose(output.asnumpy(), expected, rtol=1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['min', 'max', 'sum'])

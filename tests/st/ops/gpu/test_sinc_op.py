@@ -49,7 +49,7 @@ def test_sinc_input_float32_output_float32():
     assert np.allclose(output_ms.asnumpy(), expect.astype(np.float32), 0.001, 0.001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sinc_input_float64_output_float64():

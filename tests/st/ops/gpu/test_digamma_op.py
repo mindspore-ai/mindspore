@@ -56,7 +56,7 @@ def digamma(dtype, input_x, loss):
     assert np.allclose(digamma_output.asnumpy(), digamma_expect.numpy().astype(nptype), loss, loss)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_digamma_graph_true_float16():
@@ -82,7 +82,7 @@ def test_digamma_graph_true_float32():
     digamma(dtype="float32", input_x=input_x, loss=1.0e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_digamma_graph_true_float64():

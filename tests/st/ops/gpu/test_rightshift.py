@@ -56,7 +56,7 @@ def test_rightshift_dyn():
     assert out.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_rightshift_1d():

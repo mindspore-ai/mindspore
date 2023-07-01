@@ -31,6 +31,7 @@ class Net(nn.Cell):
     def construct(self):
         return self.cast(self.x, self.dtype)
 
+
 def test_net_f32_bool():
     x = np.random.randn(3, 4).astype(np.float32)
     x[:, 1] = 0
@@ -39,6 +40,7 @@ def test_net_f32_bool():
     print(output.asnumpy())
     print(Tensor(x).dtype)
     print(output.dtype)
+
 
 def test_net_f16_bool():
     x = np.random.randn(3, 4).astype(np.float16)
@@ -49,6 +51,7 @@ def test_net_f16_bool():
     print(Tensor(x).dtype)
     print(output.dtype)
 
+
 def test_net_f64_bool():
     x = np.random.randn(3, 4).astype(np.float64)
     x[:, 1] = 0
@@ -58,6 +61,7 @@ def test_net_f64_bool():
     print(Tensor(x).dtype)
     print(output.dtype)
 
+
 def test_net_int16_float16():
     x = np.random.randint(-512, 512, size=(3, 4)).astype(np.int16)
     net = Net(Tensor(x), mstype.float16)
@@ -65,6 +69,7 @@ def test_net_int16_float16():
     print(output.asnumpy())
     print(Tensor(x).dtype)
     print(output.dtype)
+
 
 def test_net_int64_float16():
     x = np.random.randint(-512, 512, size=(3, 4)).astype(np.int64)

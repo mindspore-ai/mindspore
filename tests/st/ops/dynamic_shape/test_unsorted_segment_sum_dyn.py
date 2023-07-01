@@ -115,7 +115,7 @@ def test_uss_dyn_cpu_beta():
     dyn_case_beta()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_uss_dyn_gpu_beta():

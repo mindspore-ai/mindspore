@@ -108,7 +108,7 @@ def test_seq_slice_mutable():
     assert np.allclose(out, ex)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_seq_slice_mutable_typeerror():
@@ -129,7 +129,7 @@ def test_seq_slice_mutable_typeerror():
         net(x, a, b)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_seq_slice_neg_step():

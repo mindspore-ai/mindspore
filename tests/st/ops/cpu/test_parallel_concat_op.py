@@ -59,7 +59,7 @@ def parallel_concat_pynative(loss):
     assert np.allclose(out_ms.asnumpy(), expected, loss, loss)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sparse_segment_sqrt_n_grad_graph_float32_int32_int32():

@@ -48,7 +48,7 @@ def getu(a_lu, pivots):
     return a_lu_torch.grad
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_lu_unpack_grad_graph_float():
@@ -104,7 +104,7 @@ def test_lu_unpack_grad_pynative_float():
     assert np.allclose(a_u_torch, torch.tensor(u_grad_mindspore.asnumpy()), atol=loss)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_lu_unpack_grad_pynative_float_error():

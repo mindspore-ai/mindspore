@@ -31,7 +31,7 @@ class NetNthElement(nn.Cell):
         return self.nth_element(x, k)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_nth_element_1d():

@@ -50,7 +50,7 @@ def test_polygamma_1d_a_1_int64_float16():
     assert np.allclose(z_ms.asnumpy(), expect.astype(np.float16), 0.001, 0.001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_polygamma_1d_a_1_int64_float32():
@@ -86,7 +86,7 @@ def test_polygamma_1d_a_1_int64_float64():
     assert np.allclose(z_ms.asnumpy(), expect, 0.00001, 0.00001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_polygamma_1d_a_2_int64_float16():
@@ -104,7 +104,7 @@ def test_polygamma_1d_a_2_int64_float16():
     assert np.allclose(z_ms.asnumpy(), expect.astype(np.float16), 0.001, 0.001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_polygamma_1d_a_2_int64_float32():
@@ -122,7 +122,7 @@ def test_polygamma_1d_a_2_int64_float32():
     assert np.allclose(z_ms.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_polygamma_1d_a_2_int64_float64():

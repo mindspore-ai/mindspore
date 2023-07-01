@@ -46,6 +46,7 @@ def test_net_fp32():
     assert (output[0].asnumpy() == expect_y_result).all()
     assert (output[1].asnumpy() == expect_idx_result).all()
 
+
 def test_net_fp16():
     x = Tensor(np.array([1, 5, 2, 2]), mstype.float16)
     uniq = Net()
@@ -58,6 +59,7 @@ def test_net_fp16():
 
     assert (output[0].asnumpy() == expect_y_result).all()
     assert (output[1].asnumpy() == expect_idx_result).all()
+
 
 def test_net_int32():
     x = Tensor(np.array([1, 2, 5, 2]), mstype.int32)

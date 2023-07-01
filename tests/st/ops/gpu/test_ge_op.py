@@ -36,7 +36,7 @@ class GreaterEqualFunc(nn.Cell):
         return ops.ge(*inputs)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -60,7 +60,7 @@ def test_greater_equal_op_dtype_1(mode, dtype):
     assert np.allclose(outputs.asnumpy(), [False, True, True])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -84,7 +84,7 @@ def test_greater_equal_op_dtype_2(mode, dtype):
     assert np.allclose(outputs.asnumpy(), [False, True, True])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -130,7 +130,7 @@ def test_greater_equal_op_functional(mode):
     assert np.allclose(outputs.asnumpy(), [False, True, True])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])

@@ -100,7 +100,7 @@ def test_adaptive_max_pool3d_grad_fp32():
     assert np.allclose(expect_result, output.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_adaptive_max_pool3d_grad_fp64():

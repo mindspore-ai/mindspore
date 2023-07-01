@@ -139,7 +139,7 @@ def multilabel_margin_loss_grad_template(nptype_input, reduction):
         assert x_grad_np.dtype == expected_x_grad.dtype
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_multilabel_margin_loss_graph():
@@ -156,7 +156,7 @@ def test_multilabel_margin_loss_graph():
         multilabel_margin_loss_template(np.float64, reduction)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_multilabel_margin_loss_grad_graph():
@@ -172,7 +172,7 @@ def test_multilabel_margin_loss_grad_graph():
         multilabel_margin_loss_grad_template(np.float64, reduction)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_multilabel_margin_loss_pynative():
