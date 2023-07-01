@@ -532,6 +532,11 @@ void TbeJsonCreator::GenDescJson(const AnfNodePtr &anf_node, size_t node_out_idx
   format = tbe::TbeAdapter::FormatPass(format, ori_shape.size());
   auto def_format = TbeJsonUtils::IsNeedChangeDefaultFormat(anf_node) ? kOpFormat_NCDHW : kOpFormat_NCHW;
   format = (def_format == kOpFormat_NCDHW && !IsOneOf3DFormat(format)) ? kOpFormat_NCDHW : format;
+  if (anf_node->isa<CNode>() && common::AnfAlgo::IsDynamicRankNode(anf_node)) {
+    if (common::AnfAlgo::HasNodeAttr(kAttrDstFormat, anf_node->cast<CNodePtr>())) {
+      format = common::AnfAlgo::GetNodeAttr<std::string>(anf_node->cast<CNodePtr>(), kAttrDstFormat);
+    }
+  }
 
   (*output_desc)[kJDataType] = tbe::TypeIdToString(AnfAlgo::GetOutputDeviceDataType(anf_node, node_out_idx));
   (*output_desc)[kJDtype] = GetJsonValue<std::string>(*output_desc, kJDataType);
