@@ -432,12 +432,7 @@ bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size
       CopyHostToDevice(host_ptr, size);
       sync_ok = true;
     } else if (type_id_ == kNumberTypeFloat32 && type == kNumberTypeFloat64) {
-      if (mem_offloaded()) {
-        DoubleToFloat(offload_ptr_, host_ptr, size_ / sizeof(float));
-        sync_ok = true;
-      } else {
-        sync_ok = Float64ToFloatAndSyncHostToDevice(ptr_, size_, host_ptr, size);
-      }
+      sync_ok = Float64ToFloatAndSyncHostToDevice(ptr_, size_, host_ptr, size);
     } else {
       auto shape_size = abstract::ShapeSize(host_shape);
       const trans::TypeIdArgs type_args{host_ptr, shape_size, type, type_id_, size};
