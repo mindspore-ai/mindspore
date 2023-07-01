@@ -49,10 +49,7 @@ class COMMON_EXPORT CompileCacheContext {
  public:
   CompileCacheContext(const CompileCacheContext &) = delete;
   CompileCacheContext &operator=(const CompileCacheContext &) = delete;
-  static CompileCacheContext &GetInstance() noexcept {
-    static CompileCacheContext instance;
-    return instance;
-  }
+  static CompileCacheContext &GetInstance() noexcept;
   void SetFrontNameToFrontNode(const HashMap<std::string, AnfNodePtr> &map) { front_name_to_front_node_ = map; }
   AnfNodePtr FindFrontNodeByFrontName(const std::string &name) const;
   void ClearFrontNameToFrontNode() { front_name_to_front_node_.clear(); }

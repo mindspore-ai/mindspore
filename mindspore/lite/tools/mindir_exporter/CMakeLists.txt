@@ -26,6 +26,7 @@ file(STRINGS "${TOP_DIR}/version.txt" VERSION)
 add_definitions(-DVERSION=\"${VERSION}\")
 add_library(ccsrc_debug_common_mid_ OBJECT
         ${CCSRC_DIR}/common/debug/common.cc
+        ${CCSRC_DIR}/utils/compile_cache_context.cc
         ${CCSRC_DIR}/common/debug/mindir_exporter.cc
         )
 
