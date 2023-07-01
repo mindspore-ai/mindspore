@@ -36,6 +36,7 @@
 #include "utils/shape_utils.h"
 #include "utils/ordered_set.h"
 #include "utils/system/env.h"
+#include "utils/temp_file_manager.h"
 
 namespace mindspore {
 namespace tensor {
@@ -501,15 +502,8 @@ class TensorDataImpl : public TensorData {
  private:
   void RemoveOffloadFile() {
     if (!file_path_.empty()) {
-      auto fs = mindspore::system::Env::GetFileSystem();
-      MS_EXCEPTION_IF_NULL(fs);
-      if (fs->FileExist(file_path_)) {
-        if (!fs->DeleteFile(file_path_)) {
-          MS_LOG(WARNING) << "Delete tensor file path: " << file_path_ << " failed!";
-        }
-      } else {
-        MS_LOG(WARNING) << "Invalid tensor file path: " << file_path_;
-      }
+      TempFileManager::GetInstance().RemoveFile(file_path_);
+      TempFileManager::GetInstance().UnRegister(file_path_);
       file_path_ = "";
     }
   }
@@ -1064,6 +1058,7 @@ bool Tensor::Offload(const std::string &file_path) {
   auto data_ptr = data_->data();
   auto file = fs->CreateWriteFile(file_path);
   MS_EXCEPTION_IF_NULL(file);
+  TempFileManager::GetInstance().Register(file_path);
   bool success = file->PWrite(data_ptr, LongToSize(data_->nbytes()), 0);
   if (!file->Close()) {
     MS_LOG(WARNING) << "Close tensor file: " << file_path << " failed!";

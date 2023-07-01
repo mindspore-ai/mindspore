@@ -22,6 +22,7 @@
 
 #include "include/common/utils/offload_context.h"
 #include "utils/file_utils.h"
+#include "utils/temp_file_manager.h"
 
 namespace mindspore {
 namespace device {
@@ -297,6 +298,7 @@ bool SwapManager::CreateFile(const std::string &file_name, size_t file_size) {
   }
   current_used_file_size_ += file_size;
   file_size_[file_name] = file_size;
+  TempFileManager::GetInstance().Register(file_name);
   return io_handle_->CreateSwapFile(file_name);
 }
 
@@ -309,6 +311,7 @@ bool SwapManager::DeleteFile(const std::string &file_name) {
     current_used_file_size_ -= iter->second;
     iter->second = 0;
   }
+  TempFileManager::GetInstance().UnRegister(file_name);
   return io_handle_->DeleteSwapFile(file_name);
 }
 
