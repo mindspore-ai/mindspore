@@ -413,7 +413,7 @@ class GraphMemoryParser:
 
     def _process_memory_breakdowns(self):
         """Process memory breakdowns for each node."""
-        self.breakdowns = [[] for _ in range(len(self.nodes))]
+        self.breakdowns = [[] for _ in range(len(self._lifetime))]
         for index, breakdown in enumerate(self._lifetime):
             for t_id in breakdown:
                 tensor = self.tensors.get(t_id)
