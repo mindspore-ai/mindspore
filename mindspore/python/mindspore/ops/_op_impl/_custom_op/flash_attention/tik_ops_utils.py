@@ -267,18 +267,26 @@ class TikOpsUtils:
 
     def calc_vec_rec(self, vec_ub, vec_len):
         """cal the reciprocal of a vector"""
+        dtype = vec_ub.dtype
         vec_len_aligned = self.up_align_to_K0(vec_len)
-        vec_rec_ub = self.tik_instance.Tensor(FP16, (vec_len_aligned,), scope=UB, name="li_new_rec_ub")
+        vec_rec_ub = self.tik_instance.Tensor(dtype, (vec_len_aligned,), scope=UB, name="li_new_rec_ub")
+        try:
+            dtype_size = DTYPE_SIZE[dtype]
+        except KeyError:
+            raise ValueError("The argument 'dtype' is not valid.")
+        mask_len = 256 // dtype_size
+        block_len = 32 // dtype_size
+        work_size = 8 // dtype_size
+
         with self.tik_instance.new_stmt_scope(disable_sync=False):
-            repeat_times = vec_len // 128
+            repeat_times = vec_len // mask_len
             if repeat_times > 0:
-                mask_len = 128
                 dst_rep_stride = 8
                 src_rep_stride = 8
-                block_len = 16  # src dtype is float16
+
                 src_extent_size = (repeat_times - 1) * src_rep_stride * block_len + mask_len
                 wk_size_unit = ((src_extent_size + block_len - 1) // block_len) * block_len
-                wk_size = 4 * wk_size_unit
+                wk_size = work_size * wk_size_unit
                 # 定义work_tensor
                 work_tensor_ub = self.tik_instance.Tensor(
                     "float32", (wk_size,), name="work_tensor_ub", scope=UB
@@ -294,9 +302,9 @@ class TikOpsUtils:
                     src_rep_stride,
                 )
 
-            mask_len = vec_len - repeat_times * 128
+            mask_len = vec_len - repeat_times * mask_len
             if mask_len > 0:
-                wk_size = 4 * ((mask_len + 16 - 1) // 16) * 16
+                wk_size = work_size * ((mask_len + block_len - 1) // block_len) * block_len
                 work_tensor_ub2 = self.tik_instance.Tensor(
                     "float32", (wk_size,), name="work_tensor_ub2", scope=UB
                 )
@@ -311,7 +319,7 @@ class TikOpsUtils:
                 )
         return vec_rec_ub
 
-    def row_sum_cube_impl(self, matrix_l1_K1MK0_ed, rowsum_ub, m, k):
+    def row_sum_cube_impl(self, matrix_l1_K1MK0_ed, rowsum_ub, m, k, precision_type):
         """用cube实现矩阵行和：右乘一个shape=(n,1)全一矩阵
         :param matrix_l1_K1MK0_ed: input tensor with shape (K1, M, K0)
         :param rowsum_ub: output tensor stores the row sum of input tensor.
@@ -335,16 +343,20 @@ class TikOpsUtils:
         # 调用matmul实现rowsum，结果shape=(m, 16)，取每行的第一个数
         with self.tik_instance.new_stmt_scope(disable_sync=False):
             row_sum_ub_N1MN0 = self.matmul_compute(matrix_l1_K1MK0_ed, right_all_one_matrix_l1, m, k, 16,
-                                                   N1MN0_to_MN=False)
+                                                   N1MN0_to_MN=False, precision_type=precision_type)
             row_sum_ub_MN_ed = row_sum_ub_N1MN0.reshape((M, 16))
-            # row_sum_ub_MN_ed 先转置，然后取一行, 替换原来按行操作: lij_ub[i].set_as(row_sum_ub_MN_ed[i, 0])
-            row_sum_ub_trans = self.tik_instance.Tensor(FP16, (16, M), name="row_sum_ub_trans", scope=UB)
-            row_sum_ub_trans = self.transpose_matrix(row_sum_ub_MN_ed, row_sum_ub_trans, M, True)
-            self.cont_data_mv_1_bust(dst=rowsum_ub, src=row_sum_ub_trans, burst=M // 16)
+            if precision_type == FP32:
+                for idx in range(0, m):
+                    cur_row_sum = self.tik_instance.Scalar(FP32, init_value=row_sum_ub_MN_ed[idx, 0])
+                    rowsum_ub[idx].set_as(cur_row_sum)
+            else:
+                row_sum_ub_trans = self.tik_instance.Tensor(FP16, (16, M), name="row_sum_ub_trans", scope=UB)
+                row_sum_ub_trans = self.transpose_matrix(row_sum_ub_MN_ed, row_sum_ub_trans, M, True)
+                self.cont_data_mv_1_bust(dst=rowsum_ub, src=row_sum_ub_trans, burst=M // 16)
 
         return rowsum_ub
 
-    def matmul_compute(self, A_l1, B_l1, m, k, n, N1MN0_to_MN=True):
+    def matmul_compute(self, A_l1, B_l1, m, k, n, N1MN0_to_MN=True, precision_type=FP16):
         """calculate matrix multiplication A_l1 * B_l1, and move the result to C_ub,
         then rearrange C_ub
         :param A_l1: input tensor in L1 with shape of (K1, M, K0)
@@ -358,7 +370,7 @@ class TikOpsUtils:
         K0 = self.get_K0(A_l1.dtype)
         M = self.up_align_to_K0(m)
         N = self.up_align_to_K0(n)
-        C_ub = self.tik_instance.Tensor(FP16, (N // 16, M, 16), name="C_ub", scope=UB)
+        C_ub = self.tik_instance.Tensor(precision_type, (N // 16, M, 16), name="C_ub", scope=UB)
         try:
             dtype_size = DTYPE_SIZE[FP32]
         except KeyError:
@@ -373,7 +385,6 @@ class TikOpsUtils:
             self.tik_instance.tensor_mov(C_ub, C_l0c, "m", 1, M * N * dtype_size // 1024, 0, 0)
         if N1MN0_to_MN:
             return self.N1MN0_TO_MN(C_ub)
-
         return C_ub
 
     def move_vector_from_gm_to_ub(self, dst_tensor, src_tensor, gm_offset, vec_len):
@@ -383,16 +394,21 @@ class TikOpsUtils:
         :param gm_offset:
         :return:
         """
-        full_tik_blk_num, tail_num = divmod(vec_len, 16)
+        try:
+            dtype_size = DTYPE_SIZE[src_tensor.dtype]
+        except KeyError:
+            raise ValueError("The argument 'src_tensor dtype' is not valid.")
+        a_burst_num = 32 // dtype_size
+        full_tik_blk_num, tail_num = divmod(vec_len, a_burst_num)
         with self.tik_instance.if_scope(full_tik_blk_num > 0):
             self.cont_data_mv_1_bust(dst=dst_tensor, src=src_tensor[gm_offset],
                                      burst=full_tik_blk_num)
         # 地址回退处理尾部数据
         with self.tik_instance.if_scope(tail_num > 0):
-            offset = vec_len - 16
-            last_blk_ub = self.tik_instance.Tensor(FP16, (16,), name="last_blk_ub", scope=UB)
+            offset = vec_len - a_burst_num
+            last_blk_ub = self.tik_instance.Tensor(FP16, (a_burst_num,), name="last_blk_ub", scope=UB)
             self.cont_data_mv_1_bust(dst=last_blk_ub, src=src_tensor[gm_offset + offset], burst=1)
-            with self.tik_instance.for_range(0, 16) as idx:  # offset非32bytes对齐，无法用datamove
+            with self.tik_instance.for_range(0, a_burst_num) as idx:  # offset非32bytes对齐，无法用datamove
                 dst_tensor[offset + idx].set_as(last_blk_ub[idx])
 
     def move_vector_from_ub_to_gm(self, dst_tensor, src_tensor, gm_offset, block_h):
@@ -403,15 +419,20 @@ class TikOpsUtils:
         :param block_h:
         :return:
         """
-        full_tik_blk_num = block_h // 16
+        try:
+            dtype_size = DTYPE_SIZE[src_tensor.dtype]
+        except KeyError:
+            raise ValueError("The argument 'src_tensor dtype' is not valid.")
+        a_burst_num = 32 // dtype_size
+        full_tik_blk_num = block_h // a_burst_num
         with self.tik_instance.if_scope(full_tik_blk_num > 0):
             self.cont_data_mv_1_bust(dst=dst_tensor[gm_offset], src=src_tensor,
                                      burst=full_tik_blk_num)
-        tail_num = block_h % 16
+        tail_num = block_h % a_burst_num
         with self.tik_instance.if_scope(tail_num > 0):
-            offset = block_h - 16
-            tmp_ub = self.tik_instance.Tensor(FP16, (16,), name="tmp_ub", scope=UB)
-            with self.tik_instance.for_range(0, 16) as idx:
+            offset = block_h - a_burst_num
+            tmp_ub = self.tik_instance.Tensor(FP16, (a_burst_num,), name="tmp_ub", scope=UB)
+            with self.tik_instance.for_range(0, a_burst_num) as idx:
                 tmp_ub[idx].set_as(src_tensor[offset + idx])
             self.cont_data_mv_1_bust(dst=dst_tensor[gm_offset + offset], src=tmp_ub, burst=1)
 

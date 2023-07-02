@@ -19,13 +19,14 @@ from mindspore.ops._op_impl._custom_op.flash_attention.tiling_strategy.strategy 
 
 class XunfeiTiling(TilingStrategy):
     """A tiling strategy implementation for xunfei ipt model shape"""
+
     @classmethod
     def strategy_name(cls):
         return "xunfei"
 
     def tiling(self) -> TilingPara:
-        self.Br = 128
-        self.Bc = 128
+        self.Br = min(128, self.Nq)
+        self.Bc = min(128, self.N)
 
         self.Tr = self.Nq // self.Br
         self.Tc = self.N // self.Bc
