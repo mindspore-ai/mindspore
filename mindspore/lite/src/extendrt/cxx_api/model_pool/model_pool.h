@@ -119,6 +119,8 @@ class ModelPool {
 
   Status CheckSharingThreadPoolParam(const ModelPoolConfig &model_pool_config);
 
+  Status ParseDeviceIds(const std::shared_ptr<RunnerConfig> &runner_config, ModelPoolConfig *model_pool_config);
+
  private:
   // different workers get tasks from different task queues.
   // currently task queues are distinguished according to different numa node numbers.

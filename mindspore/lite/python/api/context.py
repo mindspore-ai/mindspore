@@ -867,3 +867,29 @@ class _Parallel:
             if not os.path.exists(config_path):
                 raise ValueError(f"Set parallel failed, config_path does not exist!")
             self._runner_config.set_config_path(config_path)
+
+    @property
+    def device_ids(self):
+        """Get the device id list."""
+        return self._runner_config.get_device_ids()
+
+    @device_ids.setter
+    def device_ids(self, device_ids):
+        """
+        Set the device id list.
+
+        Args:
+            device_ids(list): A `ModelParallelRunner` contains multiple workers, set the device id of each
+                worker based on the device_ids sequence. If the device_ids length is less than workers_num,
+                the worker will distribute evenly to each device.
+
+        Raises:
+            TypeError: `device_ids` is not a list.
+            TypeError: `device_ids` is a list, but the elements are not int.
+            ValueError: element of `device_ids` is less than 0.
+        """
+        check_list_of_element("device_ids", device_ids, int, enable_none=False)
+        for _, element in enumerate(device_ids):
+            if element < 0:
+                raise ValueError(f"Set parallel failed, device_ids contain a negative number.")
+        self._runner_config.set_device_ids(device_ids)

@@ -191,6 +191,8 @@ void ModelParallelRunnerPyBind(const py::module &m) {
     .def("get_workers_num", &RunnerConfig::GetWorkersNum)
     .def("set_context", &RunnerConfig::SetContext)
     .def("get_context", &RunnerConfig::GetContext)
+    .def("set_device_ids", &RunnerConfig::SetDeviceIds)
+    .def("get_device_ids", &RunnerConfig::GetDeviceIds)
     .def("get_context_info",
          [](RunnerConfig &runner_config) {
            const auto &context = runner_config.GetContext();

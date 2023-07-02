@@ -17,6 +17,7 @@
 #include <jni.h>
 #include "common/log_adapter.h"
 #include "include/api/model_parallel_runner.h"
+#include "common/jni_utils.h"
 
 extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_config_RunnerConfig_createRunnerConfig(JNIEnv *env,
                                                                                              jobject thiz) {
@@ -141,6 +142,45 @@ extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_RunnerConfig_setConf
   env->DeleteLocalRef(classMapEntry);
   pointer->SetConfigInfo(str_section, configInfo);
   env->ReleaseStringUTFChars(section, c_section);
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_RunnerConfig_setDeviceIds(JNIEnv *env, jobject thiz,
+                                                                                      jstring runner_config_ptr,
+                                                                                      jintArray device_ids) {
+  auto *pointer = reinterpret_cast<mindspore::RunnerConfig *>(runner_config_ptr);
+  if (pointer == nullptr) {
+    MS_LOG(ERROR) << "runner config pointer from java is nullptr";
+    return;
+  }
+  if (device_ids == nullptr) {
+    MS_LOG(ERROR) << "device_ids from java is nullptr";
+    return;
+  }
+  int32_t array_len = env->GetArrayLength(device_ids);
+  jboolean is_copy = JNI_FALSE;
+  int *device_id_value = env->GetIntArrayElements(device_ids, &is_copy);
+  std::vector<int> c_device_ids(device_id_value, device_id_value + array_len);
+  std::vector<uint32_t> u_device_ids;
+  std::transform(c_device_ids.begin(), c_device_ids.end(), std::back_inserter(u_device_ids),
+                 [](int j) { return static_cast<uint32_t>(j); });
+  pointer->SetDeviceIds(u_device_ids);
+  env->ReleaseIntArrayElements(device_ids, device_id_value, 0);
+  env->DeleteLocalRef(device_ids);
+}
+
+extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_config_RunnerConfig_getDeviceIds(JNIEnv *env, jobject thiz,
+                                                                                         jlong runner_config_ptr) {
+  auto *runner_config = reinterpret_cast<mindspore::RunnerConfig *>(runner_config_ptr);
+  if (runner_config == nullptr) {
+    MS_LOG(ERROR) << "runner config pointer from java is nullptr";
+    return nullptr;
+  }
+  std::vector<uint32_t> u_device_ids = runner_config->GetDeviceIds();
+  std::vector<int32_t> c_device_ids;
+  std::transform(u_device_ids.begin(), u_device_ids.end(), std::back_inserter(c_device_ids),
+                 [](uint32_t j) { return static_cast<int32_t>(j); });
+  jobject device_ids = newObjectArrayList<int32_t>(env, c_device_ids, "java/lang/Integer", "(I)V");
+  return device_ids;
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_RunnerConfig_free(JNIEnv *env, jobject thiz,

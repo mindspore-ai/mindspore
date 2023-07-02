@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 #include <map>
+#include <vector>
 #include "include/api/model_parallel_runner.h"
 namespace mindspore {
 struct RunnerConfig::Data {
@@ -25,6 +26,7 @@ struct RunnerConfig::Data {
   std::shared_ptr<Context> context = nullptr;
   std::map<std::string, std::map<std::string, std::string>> config_info;
   std::string config_path = "";
+  std::vector<uint32_t> device_ids;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_POOL_RUNNER_CONFIG_H_
