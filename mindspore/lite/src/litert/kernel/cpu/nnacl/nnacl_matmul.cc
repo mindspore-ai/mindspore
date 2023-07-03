@@ -45,6 +45,7 @@ int MatmulKernel::Prepare() {
   matmul->b_const_ = in_tensors_[SECOND_INPUT]->IsConst() && !op_parameter_->is_train_session_;
   int ret = kernel_->Prepare(kernel_);
   if (ret != RET_OK) {
+    MS_LOG(ERROR) << "NNACL matmul/fc prepare failed. Kernel: " << name() << ", ret: " << ret;
     return ret;
   }
 
@@ -66,6 +67,9 @@ int MatmulKernel::ReSize() {
 
   UpdateTensorC();
   auto ret = kernel_->Resize(kernel_);
+  if (ret != NNACL_OK) {
+    MS_LOG(ERROR) << "NNACL matmul/fc resize failed. Kernel: " << name() << ", ret: " << ret;
+  }
   set_workspace_size(kernel_->work_size_);
   return ret;
 }

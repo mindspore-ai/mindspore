@@ -75,7 +75,7 @@ int ResetTransposeStatus(TransposeStruct *transpose) {
     }
     if (transpose->num_axes_ == 0) {
       for (size_t i = 0; i < in_tensor->shape_size_; ++i) {
-        trans_nd[i] = (int)in_tensor->shape_size_ - 1 - i;
+        trans_nd[i] = (int)in_tensor->shape_size_ - 1 - (int)i;
       }
       transpose->num_axes_ = (int)in_tensor->shape_size_;
     }

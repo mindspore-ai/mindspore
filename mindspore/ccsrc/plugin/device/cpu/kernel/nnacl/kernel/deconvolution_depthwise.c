@@ -80,7 +80,7 @@ int DeConvDwMallocWeightBiasData(ConvolutionBaseStruct *conv) {
 void DeConvDwPackWeight(ConvolutionBaseStruct *conv) {
   void *origin_weight = conv->base_.train_session_ ? conv->base_.in_[SECOND_INPUT]->data_ : conv->origin_weight_;
   NNACL_CHECK_NULL_RETURN_VOID(origin_weight);
-  PackNCHWToNC4HW4Fp32(origin_weight, conv->pack_weight_, 1, conv->compute_.kernel_hw_, conv->compute_.out_c_);
+  PackNCHWToNC4HW4Fp32(origin_weight, conv->packed_weight_, 1, conv->compute_.kernel_hw_, conv->compute_.out_c_);
 }
 
 void DeConvDwFreePackedInputOutput(DeConvDwStruct *deconv_dw) {

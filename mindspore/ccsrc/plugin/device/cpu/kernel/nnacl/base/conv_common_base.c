@@ -106,19 +106,19 @@ bool CheckAvxUseSW1x1Conv(const ConvParameter *conv_param) {
   return false;
 }
 
-bool CheckAvxUseSWConv(const ConvParameter *conv_param) {
+bool CheckAvxUseSWConv(const ConvParameter *conv_param, int thread_nr_) {
   if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1) {
     NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_param->input_w_, conv_param->input_h_, false);
     if (conv_param->pad_d_ == 0 && conv_param->pad_l_ == 0 && conv_param->pad_r_ == 0 && conv_param->pad_u_ == 0 &&
         conv_param->stride_h_ == 1 && conv_param->stride_w_ == 1 && conv_param->input_channel_ % C8NUM == 0 &&
-        (conv_param->input_w_ * conv_param->input_h_ >= conv_param->thread_num_)) {
+        (conv_param->input_w_ * conv_param->input_h_ >= thread_nr_)) {
       return true;
     }
   } else {
     if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ > C128NUM) {  // conv1d kernel
       return false;
     } else if (conv_param->input_channel_ / conv_param->op_parameter_.thread_num_ <= C16NUM &&
-               conv_param->input_h_ >= conv_param->thread_num_ &&
+               conv_param->input_h_ >= thread_nr_ &&
                (conv_param->kernel_h_ < C7NUM || conv_param->input_h_ / conv_param->kernel_h_ >= C4NUM) &&
                (conv_param->kernel_w_ < C7NUM || conv_param->input_w_ / conv_param->kernel_w_ >= C4NUM)) {
       return true;

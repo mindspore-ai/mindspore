@@ -15,6 +15,28 @@
  */
 #include "nnacl/fp32/triu_tril_fp32.h"
 
+int TriuTrilGetCalculateNum(KernelBase *self, int64_t *mul, int64_t *height, int64_t *width) {
+  TensorC *input_tensor = self->in_[FIRST_INPUT];
+  NNACL_CHECK_NULL_RETURN_ERR(input_tensor);
+  for (size_t i = 0; i < input_tensor->shape_size_; i++) {
+    if (input_tensor->shape_[i] <= 0) {
+      return NNACL_TRIU_TRIL_INPUT_SHAPE_ERROR;
+    }
+  }
+
+  int input_hw_dims = Num2;
+  NNACL_CHECK_FALSE(input_tensor->shape_size_ < DIMENSION_2D, NNACL_TRIU_INPUT_DIMS_INVALID);
+
+  *mul = 1;
+  for (size_t i = 0; i < input_tensor->shape_size_ - input_hw_dims; i++) {
+    *mul *= input_tensor->shape_[i];
+  }
+  *height = input_tensor->shape_[input_tensor->shape_size_ - Num2];
+  *width = input_tensor->shape_[input_tensor->shape_size_ - Num1];
+
+  return NNACL_OK;
+}
+
 int TriuTrilGetKValue(KernelBase *self, int64_t *k) {
   if (self->in_size_ <= 1) {
     *k = 0;

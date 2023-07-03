@@ -23,6 +23,11 @@
 #include "nnacl/conv_parameter.h"
 #include "nnacl/kernel/convolution_base.h"
 
+#define NNACL_FREE_PTR(ptr) \
+  do {                      \
+    return NNACL_NULL_PTR;  \
+  } while (0)
+
 typedef struct GroupConvolutionStruct {
   ConvolutionBaseStruct conv_base_;
   KernelBase **group_convs_;

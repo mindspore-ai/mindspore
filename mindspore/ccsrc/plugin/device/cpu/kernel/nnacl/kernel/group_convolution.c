@@ -353,6 +353,36 @@ int GroupConvolutionPrepare(KernelBase *self) {
   return GroupConvBasePrepare(group_conv);
 }
 
+void GroupConvReleaseSubConv(KernelBase *current_conv) {
+  (void)current_conv->Release(current_conv);
+
+  if (current_conv->in_ != NULL) {
+    for (int j = 0; j < current_conv->in_size_; j++) {
+      if (IsConst(current_conv->in_[j])) {
+        free(current_conv->in_[j]->data_);
+        current_conv->in_[j]->data_ = NULL;
+      }
+      if (current_conv->in_[j] != NULL) {
+        free(current_conv->in_[j]);
+        current_conv->in_[j] = NULL;
+      }
+    }
+    free(current_conv->in_);
+    current_conv->in_ = NULL;
+  }
+
+  if (current_conv->out_ != NULL) {
+    for (int j = 0; j < current_conv->out_size_; j++) {
+      if (current_conv->out_[j] != NULL) {
+        free(current_conv->out_[j]);
+        current_conv->out_[j] = NULL;
+      }
+    }
+    free(current_conv->out_);
+    current_conv->out_ = NULL;
+  }
+}
+
 int GroupConvolutionRelease(KernelBase *self) {
   GroupConvolutionStruct *group_conv = (GroupConvolutionStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(group_conv);
@@ -362,34 +392,7 @@ int GroupConvolutionRelease(KernelBase *self) {
   if (group_conv->group_convs_ != NULL) {
     for (int i = 0; i < conv_param->group_; i++) {
       if (group_conv->group_convs_[i] != NULL) {
-        KernelBase *current_conv = group_conv->group_convs_[i];
-
-        if (current_conv->in_ != NULL) {
-          for (int j = 0; j < current_conv->in_size_; j++) {
-            if (IsConst(current_conv->in_[j])) {
-              free(current_conv->in_[j]->data_);
-              current_conv->in_[j]->data_ = NULL;
-            }
-            if (current_conv->in_[j] != NULL) {
-              free(current_conv->in_[j]);
-              current_conv->in_[j] = NULL;
-            }
-          }
-          free(current_conv->in_);
-          current_conv->in_ = NULL;
-        }
-
-        if (current_conv->out_ != NULL) {
-          for (int j = 0; j < current_conv->out_size_; j++) {
-            if (current_conv->out_[j] != NULL) {
-              free(current_conv->out_[j]);
-              current_conv->out_[j] = NULL;
-            }
-          }
-          free(current_conv->out_);
-          current_conv->out_ = NULL;
-        }
-
+        GroupConvReleaseSubConv(group_conv->group_convs_[i]);
         free(group_conv->group_convs_[i]);
         group_conv->group_convs_[i] = NULL;
       }

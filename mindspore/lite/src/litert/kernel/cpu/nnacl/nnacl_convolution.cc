@@ -40,7 +40,7 @@ int ConvolutionKernel::Prepare() {
 
   int ret = kernel_->Prepare(kernel_);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "NNACL convolution Resize failed. ret=" << ret;
+    MS_LOG(ERROR) << "NNACL convolution prepare failed. Kernel: " << name() << ", ret: " << ret;
     return ret;
   }
 
