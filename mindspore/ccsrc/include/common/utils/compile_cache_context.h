@@ -29,6 +29,7 @@ namespace mindspore {
 constexpr char kGraphCacheSubDir[] = "graph_cache";
 constexpr char kBackendGraphCacheSubDir[] = "backend_graph_cache";
 constexpr char kCompileCacheFileName[] = "compile_cache";
+constexpr char kBackendCompileCacheFileName[] = "backend_compile_cache";
 constexpr char kMindIrSuffix[] = ".mindir";
 constexpr char kJsonSuffix[] = ".json";
 constexpr char kDepFilesHashPath[] = "compile_dependency.hash";
@@ -44,7 +45,6 @@ struct CachedIOSizeInfo {
 };
 
 COMMON_EXPORT bool CompileCacheEnable();
-
 class COMMON_EXPORT CompileCacheContext {
  public:
   CompileCacheContext(const CompileCacheContext &) = delete;
@@ -69,26 +69,13 @@ class COMMON_EXPORT CompileCacheContext {
   void SetFrontGraph(const FuncGraphPtr &graph) { front_graph_ = graph; }
   FuncGraphPtr FrontGraph() const { return front_graph_; }
 
-  size_t CompileId() const { return compile_id_; }
-  void SetCompileId(const size_t &compile_id) { compile_id_ = compile_id; }
-
-  void SetCompileCacheDir(const std::string &dir) { compile_cache_dir_ = dir; }
-  std::string CompileCacheDir() const { return compile_cache_dir_; }
-  void SetRole(const std::string &role) { role_ = role; }
-  std::string Role() const { return role_; }
-
   void SetChildGraphs(const std::vector<FuncGraphPtr> &child_graphs);
   std::vector<FuncGraphPtr> GetChileGraphs() const { return child_graphs_; }
-
   void ClearChildGraphs() { child_graphs_.clear(); }
 
-  void SetGraphExecutionOrder(const FuncGraphPtr &graph, const std::vector<CNodePtr> &orders);
-  std::vector<CNodePtr> GraphExecutionOrder(const FuncGraphPtr &graph) const;
-  void ClearGraphExecutionOrder() { graph_execution_order_map_.clear(); }
-
-  std::string GetBackendGraphDir();
-
-  std::string GetKernelGraphCachePath(size_t frontend_idx);
+  // acquire backend graph cache path according to its correspond front_graph
+  std::string GetBackendGraphCachePath(const FuncGraphPtr &front_graph) const;
+  void InsertBackendGraphCachePath(const FuncGraphPtr &front_graph, const std::string &path);
 
   void AddBackendGraphToFrontendGraph(const FuncGraphPtr &backend_graph, FuncGraph *frontend_graph);
   FuncGraph *GetFrontendGraphByBackendGraph(const FuncGraphPtr &graph) const;
@@ -96,13 +83,12 @@ class COMMON_EXPORT CompileCacheContext {
   void PushFullnameIoSizeInfo(const std::string &fullname, const CachedIOSizeInfo &io_size);
   CachedIOSizeInfo GetIOSizeInfo(const std::string &fullname) const;
 
-  void InsertParamNameToNode(const std::string &name, const AnfNodePtr &node) { param_name_to_node_[name] = node; }
-  mindspore::HashMap<std::string, AnfNodePtr> GetParamNameToNodeMap() const { return param_name_to_node_; }
-
   void InsertBackendParamGenFromFrontendParam(const AnfNodePtr &node);
   bool IsBackendParamGenFromFrontendParam(const AnfNodePtr &node) const {
     return backend_param_gen_from_frontend_param_.count(node);
   }
+  bool PsOrClusterMode() const { return ps_or_cluster_mode_; }
+  void SetPsOrClusterMode(bool mode) { ps_or_cluster_mode_ = mode; }
   void Clear();
 
  private:
@@ -116,17 +102,14 @@ class COMMON_EXPORT CompileCacheContext {
   FuncGraphPtr front_graph_;
   bool use_compile_cache_{false};
   bool fusion_op_build_info_flag_{false};
-  size_t compile_id_{0};
-  std::string compile_cache_dir_;
-  std::string role_;
   // key is parent funcgarph, values is child funcgraph.
   std::vector<FuncGraphPtr> child_graphs_;
-  std::map<FuncGraphPtr, std::vector<CNodePtr>> graph_execution_order_map_;
   HashMap<FuncGraphPtr, FuncGraph *> backend_graph_to_frontend_graph_;
+  HashMap<FuncGraphPtr, std::string> front_graph_to_backend_graph_cache_path_;
   std::map<std::string, CachedIOSizeInfo> fullname_io_size;
   // param is a backend node but we can find its correspond frontend param.
   mindspore::HashSet<AnfNodePtr> backend_param_gen_from_frontend_param_;
-  mindspore::HashMap<std::string, AnfNodePtr> param_name_to_node_;
+  bool ps_or_cluster_mode_{false};
 };
 }  // namespace mindspore
 

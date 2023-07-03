@@ -65,6 +65,9 @@ mindspore::MSTensor ReadFileToTensor(const std::string &file) {
   return buf;
 }
 
+/// Feature: test resnet preprocess
+/// Description: test resnet preprocess
+/// Expectation: success
 TEST_F(TestDE, DISABLED_TestResNetPreprocess) {
   // Read images
   auto image = ReadFileToTensor("./data/dataset/apple.jpg");
@@ -89,7 +92,10 @@ TEST_F(TestDE, DISABLED_TestResNetPreprocess) {
   ASSERT_EQ(image.Shape()[2], 224);
 }
 
-TEST_F(TestDE, DISABLED_TestDvpp) {
+/// Feature: test dvpp
+/// Description: test dvpp
+/// Expectation: success
+TEST_F(TestDE, TestDvpp) {
 #ifdef ENABLE_ACL
   // Read images from target directory
 
@@ -149,8 +155,11 @@ TEST_F(TestDE, DISABLED_TestDvpp) {
   */
 #endif
 }
-
-TEST_F(TestDE, DISABLED_TestDvppSinkMode) {
+  
+/// Feature: test dvpp sink mode
+/// Description: test dvpp sink mode
+/// Expectation: success
+TEST_F(TestDE, TestDvppSinkMode) {
 #ifdef ENABLE_ACL
   auto context = ContextAutoSet();
   ASSERT_TRUE(context != nullptr);
@@ -198,7 +207,10 @@ TEST_F(TestDE, DISABLED_TestDvppSinkMode) {
 #endif
 }
 
-TEST_F(TestDE, DISABLED_TestDvppDecodeResizeCropNormalize) {
+/// Feature: test dvpp decode resize crop normalize
+/// Description: test dvpp decode resize crop normalize
+/// Expectation: success
+TEST_F(TestDE, TestDvppDecodeResizeCropNormalize) {
 #ifdef ENABLE_ACL
   auto context = ContextAutoSet();
   ASSERT_TRUE(context != nullptr);
@@ -257,7 +269,10 @@ TEST_F(TestDE, DISABLED_TestDvppDecodeResizeCropNormalize) {
 /// Feature: Dvpp decode video
 /// Description: 8 frames H265 video
 /// Expectation: success
-TEST_F(TestDE, DISABLED_TestDvppDecodeVideoH265) {
+TEST_F(TestDE, TestDvppDecodeVideoH265) {
+  /// Feature: test dvpp decode video
+  /// Description: test dvpp decode video
+  /// Expectation: success
 #ifdef ENABLE_ACL
   auto context = ContextAutoSet();
   ASSERT_TRUE(context != nullptr);

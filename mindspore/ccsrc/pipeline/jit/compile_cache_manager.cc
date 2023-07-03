@@ -32,6 +32,7 @@
 
 #if defined(__linux__) && defined(WITH_BACKEND)
 #include "include/backend/distributed/cluster/cluster_context.h"
+#include "include/backend/distributed/ps/ps_context.h"
 #endif
 #include "include/common/utils/compile_cache_context.h"
 
@@ -80,6 +81,13 @@ void BuildLayout(const FuncGraphPtr &func_graph, mind_ir::ModelProto *model) {
 #endif
 namespace pipeline {
 namespace {
+std::string GetCompileCacheDir() {
+  static const std::string user_defined_path = Common::GetUserDefineCachePath();
+  static const uint32_t rank_id = IsStandAlone() ? 0 : GetRank();
+  static const std::string compile_cache_dir = user_defined_path + "rank_" + std::to_string(rank_id);
+  return compile_cache_dir;
+}
+
 std::string GetGraphCacheDir() { return GetCompileCacheDir() + "/" + kGraphCacheSubDir; }
 
 std::string GetRole() {
@@ -98,6 +106,10 @@ std::string GetRole() {
 
 std::string GetCompileCachePath(size_t idx) {
   return GetGraphCacheDir() + "/" + GetRole() + kCompileCacheFileName + "_" + std::to_string(idx) + kMindIrSuffix;
+}
+
+std::string GetBackendCompileCachePathWithoutExtension(size_t idx) {
+  return GetGraphCacheDir() + "/" + GetRole() + kBackendCompileCacheFileName + "_" + std::to_string(idx);
 }
 
 std::string GetDepFilesHashPath() {
@@ -155,7 +167,16 @@ std::pair<FuncGraphPtr, LayoutMap> LoadFuncGraphFromMindIR(const py::dict &weigh
   mindir_loader.set_has_parallel_info(has_parallel_info);
   mindspore::HashMap<std::string, AnfNodePtr> name_to_node;
   auto fg = mindir_loader.LoadMindIR(realpath.value(), &name_to_node);
-  CompileCacheContext::GetInstance().SetFrontNameToFrontNode(name_to_node);
+  auto &context = CompileCacheContext::GetInstance();
+  context.SetFrontNameToFrontNode(name_to_node);
+  context.SetFrontGraph(fg);
+  context.InsertBackendGraphCachePath(fg, GetBackendCompileCachePathWithoutExtension(idx));
+#if defined(__linux__) && defined(WITH_BACKEND)
+  // compile cache does not support PS or cluster.
+  if (ps::PSContext::instance()->is_ps_mode() || distributed::cluster::ClusterContext::instance()->initialized()) {
+    context.SetPsOrClusterMode(true);
+  }
+#endif
   return std::make_pair(fg, mindir_loader.layout_map());
 }
 
@@ -169,6 +190,15 @@ bool ExportFuncGraphToMindIR(const FuncGraphPtr &fg, const FuncGraphPtr &layout_
 #ifndef MINDIR_EXPORT_TENSOR_LAYOUT_CLIP
   if (layout_fg) {
     BuildLayout(layout_fg, proto.get());
+  }
+#endif
+  auto &context = CompileCacheContext::GetInstance();
+  context.SetFrontGraph(fg);
+  context.InsertBackendGraphCachePath(fg, GetBackendCompileCachePathWithoutExtension(idx));
+#if defined(__linux__) && defined(WITH_BACKEND)
+  // compile cache does not support PS or cluster.
+  if (ps::PSContext::instance()->is_ps_mode() || distributed::cluster::ClusterContext::instance()->initialized()) {
+    context.SetPsOrClusterMode(true);
   }
 #endif
   MindIRExporter mindir_exporter;
@@ -213,13 +243,6 @@ bool CreateParallelGroupsByCkptFile() {
 }
 }  // namespace
 
-std::string GetCompileCacheDir() {
-  static const std::string user_defined_path = Common::GetUserDefineCachePath();
-  static const uint32_t rank_id = IsStandAlone() ? 0 : GetRank();
-  static const std::string compile_cache_dir = user_defined_path + "rank_" + std::to_string(rank_id);
-  return compile_cache_dir;
-}
-
 void CompileCacheManager::CacheFuncGraph(const FuncGraphPtr &fg, const FuncGraphPtr &layout_fg) {
   if (fg == nullptr) {
     MS_LOG(ERROR) << "The func_graph to be cached is null.";
@@ -232,8 +255,6 @@ void CompileCacheManager::CacheFuncGraph(const FuncGraphPtr &fg, const FuncGraph
     MS_LOG(ERROR) << "Failed to cache graph: " << fg->ToString();
     return;
   }
-  MS_LOG(INFO) << "Set front graph for caching backend graph.";
-  CompileCacheContext::GetInstance().SetFrontGraph(fg);
   if (compile_cache_id_ == 0 && !ExportDepFilesHash(compile_cache_dep_files_hash_)) {
     MS_LOG(ERROR) << "Failed to cache the dependency files hash";
   }
@@ -310,11 +331,13 @@ FuncGraphPtr CompileCacheManager::GetCachedFuncGraph(const FuncGraphManagerPtr &
       break;
     }
   }
+#ifdef ENABLE_DUMP_IR
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   if (context->CanDump(kIntroductory)) {
     DumpIR("cache_loaded_graph_" + std::to_string(compile_cache_id_) + ".ir", fg);
   }
+#endif
   return fg;
 }
 

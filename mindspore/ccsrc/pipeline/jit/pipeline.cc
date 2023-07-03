@@ -783,7 +783,6 @@ void GraphExecutorPy::InitCompileCacheInfo(const ResourcePtr &resource, const st
   static size_t idx = 0;
   MS_EXCEPTION_IF_NULL(resource);
   resource->GetCompileCacheResource(compile_cache_dep_files_, weights_, queue_name_, idx++, &compile_cache_consistent_);
-  CompileCacheContext::GetInstance().SetCompileId(idx);
 #ifdef ENABLE_PROFILE
   double t2 = GetTime();
   MsProfile::StatTime("LoadCachedFuncGraph", t2 - t1);
@@ -865,15 +864,6 @@ bool GraphExecutorPy::CompileInner(const py::object &source, const py::tuple &ar
   ConfigManager::GetInstance().ResetQueue(queue_name_);
   auto &compile_cache_context = CompileCacheContext::GetInstance();
   compile_cache_context.SetUseCompileCache(use_compile_cache);
-  if (compile_cache_context.UseCompileCache()) {
-    auto graph = resource->func_graph();
-    MS_LOG(INFO) << "Set front graph " << graph->ToString();
-    CompileCacheContext::GetInstance().SetFrontGraph(graph);
-  }
-  if (resource->EnableCompileCache()) {
-    MS_LOG(WARNING) << "compile cache dir: " << GetCompileCacheDir();
-    CompileCacheContext::GetInstance().SetCompileCacheDir(GetCompileCacheDir());
-  }
   auto actions = GetPipeline(resource, phase_, use_vm);
   std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, FilterActions(actions, phase_));
 
@@ -1043,7 +1033,7 @@ bool GraphExecutorPy::Compile(const py::object &source, const py::tuple &args, c
   return res;
 }
 
-void CacheValidateFuncGraph(const ResourcePtr &resource) {
+void CacheFuncGraph(const ResourcePtr &resource) {
   if (!resource->EnableCompileCache()) {
     return;
   }
@@ -1218,7 +1208,7 @@ void Pipeline::Run() {
         SetLoopCount(resource_);
       } else if (action.first == cache_action) {
         CheckInterpretNodeLineInfos();
-        CacheValidateFuncGraph(resource_);
+        CacheFuncGraph(resource_);
 #ifndef ENABLE_SECURITY
 #ifdef WITH_BACKEND
         MS_EXCEPTION_IF_NULL(MsContext::GetInstance());

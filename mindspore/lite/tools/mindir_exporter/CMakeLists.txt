@@ -35,3 +35,4 @@ target_link_libraries(mindir_serializer_mid
         ccsrc_debug_common_mid_
         mindir_proto_mid
         )
+

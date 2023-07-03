@@ -17,10 +17,10 @@
 #include "runtime/graph_scheduler/graph_compiler.h"
 #include <numeric>
 #include <map>
-#include <list>
 #include <utility>
 #include <algorithm>
 #include <functional>
+#include <list>
 #include "runtime/graph_scheduler/graph_scheduler.h"
 #include "runtime/device/device_address_utils.h"
 #include "runtime/pynative/op_executor.h"
@@ -85,14 +85,11 @@ bool UseCacheToCompileGraph(const FuncGraphPtr &func_graph, const device::Device
   if (!CompileCacheEnable()) {
     return false;
   }
-#if defined(__linux__) && defined(WITH_BACKEND)
-  // compile cache does not support PS and cluster.
-  if (ps::PSContext::instance()->is_ps_mode() || distributed::cluster::ClusterContext::instance()->initialized()) {
-    return false;
-  }
-#endif
   auto &context = CompileCacheContext::GetInstance();
   if (context.FrontGraph() != func_graph) {
+    return false;
+  }
+  if (context.PsOrClusterMode()) {
     return false;
   }
   if (!context.UseCompileCache()) {
@@ -111,14 +108,11 @@ bool ExportCompileCache(const FuncGraphPtr &func_graph, const device::DeviceType
   if (!CompileCacheEnable()) {
     return false;
   }
-#if defined(__linux__) && defined(WITH_BACKEND)
-  // compile cache does not support PS and cluster.
-  if (ps::PSContext::instance()->is_ps_mode() || distributed::cluster::ClusterContext::instance()->initialized()) {
-    return false;
-  }
-#endif
   auto &context = CompileCacheContext::GetInstance();
   if (context.FrontGraph() != func_graph) {
+    return false;
+  }
+  if (context.PsOrClusterMode()) {
     return false;
   }
   if (context.UseCompileCache()) {
@@ -586,9 +580,11 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   MS_EXCEPTION_IF_NULL(context);
   if (use_cache_to_compile_graph_) {
     auto &compile_cache_context = CompileCacheContext::GetInstance();
+    (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageCreateKernel, 1, 0, 0);
     compile_cache_context.SetFusionOpBuildInfoFlag(true);
     device_context->GetKernelExecutor(false)->CreateKernel(graph->execution_order());
     compile_cache_context.SetFusionOpBuildInfoFlag(false);
+    (void)profiler::CollectHostInfo(kModelNameRuntime, kEventCompileGraph, kStageCreateKernel, 1, 0, 1);
   } else {
 #ifdef ENABLE_DUMP_IR
     if (context->CanDump(kIntroductory)) {
