@@ -54,14 +54,23 @@ abstract::TupleShapePtr EigInferShape(const PrimitivePtr &primitive, const std::
   constexpr size_t kColIndex = 1;
   auto const &x_shape_list = x_shape->shape();
   const size_t x_rank = x_shape_list.size();
+  // support dynamic rank
+  if (IsDynamicRank(x_shape_list)) {
+    auto unknown_rank_ptr = std::make_shared<abstract::Shape>(std::vector<int64_t>{abstract::Shape::kShapeRankAny});
+    return std::make_shared<abstract::TupleShape>(
+      std::vector<abstract::BaseShapePtr>{unknown_rank_ptr, unknown_rank_ptr});
+  }
   if (x_rank < kDefaultRank) {
     MS_EXCEPTION(ValueError) << "For Eig, x should be at least rank 2"
                              << ", but got a " << x_rank << "-D Tensor.";
   }
-  if (x_shape_list[x_rank - kRowIndex] != x_shape_list[x_rank - kColIndex]) {
-    MS_EXCEPTION(ValueError) << "For Eig, x should be square(squares)"
-                             << ", but got " << x_shape_list[x_rank - kRowIndex] << " × "
-                             << x_shape_list[x_rank - kColIndex] << " matrix(matrices).";
+  // support dynamic shape
+  if (!IsDynamic(x_shape_list)) {
+    if (x_shape_list[x_rank - kRowIndex] != x_shape_list[x_rank - kColIndex]) {
+      MS_EXCEPTION(ValueError) << "For Eig, x should be square(squares)"
+                               << ", but got " << x_shape_list[x_rank - kRowIndex] << " × "
+                               << x_shape_list[x_rank - kColIndex] << " matrix(matrices).";
+    }
   }
   auto compute_v = GetValue<bool>(primitive->GetAttr("compute_v"));
   std::vector<BaseShapePtr> shapes_list;
@@ -91,9 +100,9 @@ TuplePtr EigInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, op_name);
   std::vector<TypePtr> types_list;
   if (*(x_type->cast<TensorTypePtr>()->element()) == *(kFloat32)) {
-    types_list = {kComplex64, kComplex64};
+    types_list = {std::make_shared<TensorType>(kComplex64), std::make_shared<TensorType>(kComplex64)};
   } else if (*(x_type->cast<TensorTypePtr>()->element()) == *(kFloat64)) {
-    types_list = {kComplex128, kComplex128};
+    types_list = {std::make_shared<TensorType>(kComplex128), std::make_shared<TensorType>(kComplex128)};
   } else {
     types_list = {x_type, x_type};
   }
