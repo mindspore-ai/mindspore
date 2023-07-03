@@ -30,6 +30,7 @@
 
 namespace mindspore {
 namespace parallel {
+constexpr size_t MATMUL_DIM = 2;
 class MatMulBase : public OperatorInfo {
  public:
   // Generate all strategies and the corresponding cost for this MatMul operator
@@ -48,6 +49,8 @@ class MatMulBase : public OperatorInfo {
   Status InferTensorMap() override;
   Status InferTensorLayout(TensorLayouts *inputs_layout, TensorLayouts *outputs_layout);
   Status GetAttrs() override;
+  Status CheckBatchDimensions(const Dimensions &long_strategy, const Dimensions &short_strategy);
+  Shape GetCommonShape(const Dimensions &mat_a_strategy, const Dimensions &mat_b_strategy);
 
   bool candidate_flag_ = false;
   bool transpose_a_ = false;
@@ -69,6 +72,9 @@ class MatMul : public MatMulBase {
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status CheckOutputStrategy(const StrategyPtr &out_strategy) override;
+
+ private:
+  void CheckPCLMatMul(const Shape &mat_a_strategy, const Shape &mat_b_strategy);
 };
 
 class MatMulInfo : public MatMul {
@@ -77,6 +83,7 @@ class MatMulInfo : public MatMul {
              const PrimitiveAttrs &attrs)
       : MatMul(name, inputs_shape, outputs_shape, attrs) {}
   ~MatMulInfo() override = default;
+  std::shared_ptr<Strategies> GenerateBatchStrategies() override;
 };
 
 class BatchMatMulInfo : public MatMul {
