@@ -6048,9 +6048,9 @@ class ApplyAdagrad(Primitive):
     Inputs:
         - **var** (Parameter) - Variable to be updated. With float or complex data type.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-        - **accum** (Parameter) - Accumulation to be updated. The shape and data type must be the same as `var`.
+        - **accum** (Parameter) - Accumulation to be updated. The shape must be the same as `var`.
         - **lr** (Union[Number, Tensor]) - The learning rate value, must be a scalar. With float or complex data type.
-        - **grad** (Tensor) - A tensor for gradient. The shape and data type must be the same as `var`.
+        - **grad** (Tensor) - A tensor for gradient. The shape must be the same as `var`.
 
     Outputs:
         Tuple of 2 Tensors, the updated parameters.
@@ -8991,10 +8991,10 @@ class ApplyAdagradDA(Primitive):
         - **var** (Parameter) - Variable to be updated. The data type must be float16 or float32.
           The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
         - **gradient_accumulator** (Parameter) - The dict of mutable tensor :math:`grad\_accum`. Must have the same
-          shape and dtype as `var`.
+          shape as `var`.
         - **gradient_squared_accumulator** (Parameter) - The dict of mutable tensor :math:`grad\_squared\_accum`.
-          Must have the same shape and dtype as `var`.
-        - **grad** (Tensor) - A tensor for gradient. Must have the same shape and dtype as `var`.
+          Must have the same shape as `var`.
+        - **grad** (Tensor) - A tensor for gradient. Must have the same shape as `var`.
         - **lr** ([Number, Tensor]) - Scaling factor. Must be a scalar. With float32 or float16 data type.
         - **l1** ([Number, Tensor]) -  L1 regularization. Must be a scalar. With float32 or float16 data type.
         - **l2** ([Number, Tensor]) -  L2 regularization. Must be a scalar. With float32 or float16 data type.

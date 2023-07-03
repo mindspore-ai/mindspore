@@ -20,9 +20,9 @@ mindspore.ops.ApplyAdagrad
 
     输入：
         - **var** (Parameter) - 要更新的权重。数据类型为float32或float16。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
-        - **accum** (Parameter) - 要更新的累积。shape和数据类型必须与 `var` 相同。
+        - **accum** (Parameter) - 要更新的累积。shape必须与 `var` 相同。
         - **lr** (Union[Number, Tensor]) - 学习率，必须是Scalar。数据类型为float32或float16。
-        - **grad** (Tensor) - 梯度，为一个Tensor。shape和数据类型必须与 `var` 相同。
+        - **grad** (Tensor) - 梯度，为一个Tensor。shape必须与 `var` 相同。
 
     输出：
         2个Tensor组成的tuple，更新后的数据。
