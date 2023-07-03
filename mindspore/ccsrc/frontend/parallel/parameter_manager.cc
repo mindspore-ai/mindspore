@@ -1612,7 +1612,7 @@ void InsertUniformRealForTaggedNodes(const FuncGraphManagerPtr &manager, const s
       auto attrs = uniformRealPrim->attrs();
       attrs["seed"] = MakeValue<int64_t>(0);
       attrs["seed2"] = MakeValue<int64_t>(0);
-      uniformRealPrim->SetAttrs(attrs);
+      (void)uniformRealPrim->SetAttrs(attrs);
 
       manager->SetEdge(node, 1, uniformRealNode);
     }
