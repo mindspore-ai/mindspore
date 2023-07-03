@@ -120,6 +120,8 @@ OpParameter *PopulateCustomParameter(const void *prim) {
 
     param->op_parameter_.type_ = PrimType_Inner_SplitReduceConcatFusion;
     return reinterpret_cast<OpParameter *>(param);
+  } else if (type == "ReduceConcatFusion") {
+    return CreateParam(PrimType_Inner_ReduceConcatFusion);
   } else if (type == "EncoderLayer") {
     return CreateParam(PrimType_Inner_EncoderLayer);
   } else if (type == "DecoderLayer") {
@@ -127,14 +129,7 @@ OpParameter *PopulateCustomParameter(const void *prim) {
   } else if (type == "UsePastEmbedding") {
     return CreateParam(PrimType_Inner_UsePastEmbedding);
   } else if (type == "FSEDecode") {
-    auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
-    if (param == nullptr) {
-      MS_LOG(ERROR) << "malloc FSEDecode failed.";
-      return nullptr;
-    }
-    memset(param, 0, sizeof(OpParameter));
-    param->type_ = PrimType_Inner_FseDecode;
-    return reinterpret_cast<OpParameter *>(param);
+    return CreateParam(PrimType_Inner_FseDecode);
   } else if (type == "CustomGRU") {
     return CreateCustomGruParameter();
   } else if (type == "CastGatherReduceFusion") {
