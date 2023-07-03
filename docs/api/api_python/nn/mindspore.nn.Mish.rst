@@ -7,3 +7,8 @@ mindspore.nn.Mish
 
     更多参考详见 :func:`mindspore.ops.mish`。
 
+    Mish函数图：
+
+    .. image:: images/Mish.png
+        :align: center
+

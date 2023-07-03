@@ -340,8 +340,10 @@ class ELU(Cell):
 
     where :math:`x_i` represents the element of the input and :math:`\alpha` represents the `alpha` parameter.
 
-    The picture about ELU looks like this `ELU <https://en.wikipedia.org/wiki/
-    Activation_function#/media/File:Activation_elu.svg>`_.
+    ELU Activation Function Graph:
+
+    .. image:: images/ELU.png
+        :align: center
 
     Args:
         alpha (float): The alpha value of ELU, the data type is float. Default: ``1.0`` .
@@ -393,7 +395,7 @@ class ReLU(Cell):
 
     ReLU Activation Function Graph:
 
-    .. image:: images/relu.png
+    .. image:: images/ReLU.png
         :align: center
 
     Inputs:
@@ -489,6 +491,11 @@ class LeakyReLU(Cell):
 
     For more details, see `Rectifier Nonlinearities Improve Neural Network Acoustic Models
     <https://ai.stanford.edu/~amaas/papers/relu_hybrid_icml2013_final.pdf>`_.
+
+    LeakyReLU Activation Function Graph:
+
+    .. image:: images/LeakyReLU.png
+        :align: center
 
     Args:
         alpha (Union[int, float]): Slope of the activation function at x < 0. Default: ``0.2`` .
@@ -699,6 +706,11 @@ class Tanh(Cell):
         tanh(x_i) = \frac{\exp(x_i) - \exp(-x_i)}{\exp(x_i) + \exp(-x_i)} = \frac{\exp(2x_i) - 1}{\exp(2x_i) + 1},
 
     where :math:`x_i` is an element of the input Tensor.
+
+    Tanh Activation Function Graph:
+
+    .. image:: images/Tanh.png
+        :align: center
 
     Inputs:
         - **x** (Tensor) - Tensor of any dimension, input with data type of float16 or float32.
@@ -981,8 +993,10 @@ class Sigmoid(Cell):
 
     where :math:`x_i` is the element of the input.
 
-    The picture about Sigmoid looks like this `Sigmoid <https://en.wikipedia.org/wiki/
-    Sigmoid_function#/media/File:Logistic-curve.svg>`_.
+    Sigmoid Activation Function Graph:
+
+    .. image:: images/Sigmoid.png
+        :align: center
 
     Inputs:
         - **input_x** (Tensor) - Tensor of any dimension, the data type is
@@ -1192,6 +1206,11 @@ class HSigmoid(Cell):
     .. math::
         \text{hsigmoid}(x_{i}) = \max(0, \min(1, \frac{x_{i} + 3}{6})),
 
+    HSigmoid Activation Function Graph:
+
+    .. image:: images/HSigmoid.png
+        :align: center
+
     Inputs:
         - **input_x** (Tensor) - The input of HSigmoid. Tensor of any dimension.
 
@@ -1234,6 +1253,11 @@ class LogSigmoid(Cell):
         \text{logsigmoid}(x_{i}) = \log(\frac{1}{1 + \exp(-x_i)}),
 
     where :math:`x_{i}` is the element of the input.
+
+    LogSigmoid Activation Function Graph:
+
+    .. image:: images/LogSigmoid.png
+        :align: center
 
     Inputs:
         - **x** (Tensor) - The input of LogSigmoid with data type of float16 or float32.
@@ -1466,6 +1490,11 @@ class Mish(Cell):
     Computes MISH(A Self Regularized Non-Monotonic Neural Activation Function) of input tensors element-wise.
 
     Refer to :func:`mindspore.ops.mish` for more details.
+
+    Mish Activation Function Graph:
+
+    .. image:: images/Mish.png
+        :align: center
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

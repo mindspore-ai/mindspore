@@ -167,6 +167,7 @@ class ConvertNetUtils:
 
         Supported Platforms:
             ``Ascend`` ``GPU``
+
         Examples:
             >>> import mindspore as ms
             >>> from mindspore import nn
