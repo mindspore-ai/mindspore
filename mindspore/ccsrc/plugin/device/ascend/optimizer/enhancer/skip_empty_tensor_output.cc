@@ -37,19 +37,21 @@ size_t GetAllEmptyTensorOutputNum(const AnfNodePtr &node) {
   return output_num;
 }
 
-AnfNodePtr CreateEmptyTensorValueNode(const KernelGraphPtr &graph, const TypeId &type_id) {
-  auto empty_tensor = std::make_shared<tensor::Tensor>(type_id, std::vector<int64_t>{0});
+AnfNodePtr CreateEmptyTensorValueNode(const KernelGraphPtr &graph, const TypeId &type_id,
+                                      const ShapeVector &output_shape) {
+  auto empty_tensor = std::make_shared<tensor::Tensor>(type_id, output_shape);
   return graph->NewValueNode(empty_tensor);
 }
 
 AnfNodePtr CreateEmptyTensorOutputNode(const KernelGraphPtr &graph, const AnfNodePtr &node, size_t output_num) {
   if (output_num == 1) {
-    return CreateEmptyTensorValueNode(graph, common::AnfAlgo::GetOutputInferDataType(node, 0));
+    return CreateEmptyTensorValueNode(graph, common::AnfAlgo::GetOutputInferDataType(node, 0),
+                                      common::AnfAlgo::GetOutputInferShape(node, 0));
   }
   std::vector<AnfNodePtr> empty_tensor_outputs;
   for (size_t i = 0; i < output_num; ++i) {
-    (void)empty_tensor_outputs.emplace_back(
-      CreateEmptyTensorValueNode(graph, common::AnfAlgo::GetOutputInferDataType(node, i)));
+    (void)empty_tensor_outputs.emplace_back(CreateEmptyTensorValueNode(
+      graph, common::AnfAlgo::GetOutputInferDataType(node, i), common::AnfAlgo::GetOutputInferShape(node, i)));
   }
   return CreateMakeTupleNode(graph, empty_tensor_outputs);
 }
