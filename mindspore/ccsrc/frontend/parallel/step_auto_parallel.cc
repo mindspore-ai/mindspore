@@ -311,6 +311,27 @@ void AddOperatorToIgnoreCandidates(const PrimitivePtr &prim, const OperatorInfoP
   }
 }
 
+bool GenerateStrategiesByOperatorInfoPtr(const OperatorInfoPtr &operator_info) {
+  Status retGenStra;
+  auto attrs = operator_info->attrs();
+  if (AttrFound(attrs, STRATEGY_GEN_MODE) && GetValue<std::string>(attrs[STRATEGY_GEN_MODE]) == kDataParallel) {
+    MS_LOG(INFO) << "generating batch parallel strategy...";
+    auto prim = std::make_shared<Primitive>(operator_info->name());
+    StrategyPtr strategyPtr = parallel::GenerateBatchParallelStrategy(operator_info, prim);
+    retGenStra = operator_info->SetCostUnderStrategy(strategyPtr);
+    attrs = prim->attrs();
+    operator_info->addAttr(IN_STRATEGY, attrs[GEN_STRATEGY]);  // for d-rec
+  } else {
+    MS_LOG(INFO) << "auto-searching strategy...";
+    retGenStra = operator_info->GenerateStrategies(0);
+  }
+  if (retGenStra != SUCCESS) {
+    MS_LOG(ERROR) << "Strategy search for Operator " << operator_info->name() << " failed.";
+    return false;
+  }
+  return true;
+}
+
 OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &cnode, bool is_last_nodes,
                                       StrategyMap *stra_map) {
   MS_EXCEPTION_IF_NULL(prim);
@@ -364,21 +385,8 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
   // Compute split_flag_list_, indicating which input has batch dimension. This is ONLY used for preparation for
   // BatchParallelInfo operator
   operator_info->ComputeBatchSplitFlagList();
-  Status retGenStra;
-  if (AttrFound(attrs, STRATEGY_GEN_MODE) && GetValue<std::string>(attrs[STRATEGY_GEN_MODE]) == kDataParallel) {
-    MS_LOG(INFO) << "generating batch parallel strategy...";
-    StrategyPtr strategyPtr = parallel::GenerateBatchParallelStrategy(operator_info, prim);
-    retGenStra = operator_info->SetCostUnderStrategy(strategyPtr);
-    attrs = prim->attrs();
-    operator_info->addAttr(IN_STRATEGY, attrs[GEN_STRATEGY]);  // for d-rec
-  } else {
-    MS_LOG(INFO) << "auto-searching strategy...";
-    retGenStra = operator_info->GenerateStrategies(0);
-  }
-
-  if (retGenStra != SUCCESS) {
-    MS_LOG(ERROR) << "Strategy search for Operator " << operator_info->name() << " failed.";
-    return nullptr;
+  if ((ParallelContext::GetInstance()->strategy_search_mode() != kRecursiveProgramming)) {
+    GenerateStrategiesByOperatorInfoPtr(operator_info);
   }
 
   bool use_sp_and_dataset = ((ParallelContext::GetInstance()->strategy_search_mode() == kShardingPropagation) ||
@@ -1003,6 +1011,11 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
     if (!FindReshapePreNodeStraCosts(pre_node, &pre_operator_info, &is_prev_param, &out_index, 0)) {
       MS_LOG(EXCEPTION) << "FindReshapePreNodeStraCosts for reshape failed";
     }
+    // 如果是双递归的话枚举reshape和前向算子的策略
+    if (ParallelContext::GetInstance()->strategy_search_mode() == kRecursiveProgramming) {
+      GenerateStrategiesByOperatorInfoPtr(operator_info);
+      GenerateStrategiesByOperatorInfoPtr(pre_operator_info);
+    }
     if (is_prev_param) {
       auto reshape_info1 = std::dynamic_pointer_cast<ReshapeInfo>(operator_info);
       reshape_info1->SetCostForReshapeWithParameter();
@@ -1026,6 +1039,10 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
     reshape_info->set_pre_operator_index(out_index);
     if (!next_ops_index.empty()) {
       for (auto &op_index : next_ops_index) {
+        // 如果是双递归的话枚举reshape的后向算子的策略
+        if (ParallelContext::GetInstance()->strategy_search_mode() == kRecursiveProgramming) {
+          GenerateStrategiesByOperatorInfoPtr(op_index.first);
+        }
         auto op_cost = op_index.first->strategy_cost();
         (void)next_costs_index.emplace_back(std::make_pair(op_cost, op_index.second));
       }
@@ -1324,8 +1341,6 @@ void ReInitCostGraph(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPt
   }
 
   ReshapeCostCompute(all_nodes);
-
-  ConstructCostGraphEdges(all_nodes);
 }
 
 Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root) {
@@ -1346,8 +1361,6 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
     }
   }
   ReshapeCostCompute(all_nodes);
-  ConstructCostGraphEdges(all_nodes);
-
   auto ops = entire_costgraph->GetOperators();
   std::vector<std::vector<std::string>> input_tensor_names = entire_costgraph->get_inputs_tensor_name_list();
   // Needed by rec_parser 2
