@@ -57,6 +57,10 @@ MS_LITE:
     include/api/model_parallel_runner.h
     mindspore/lite/
     cmake/package_lite.cmake
+    mindspore/core/mindrt/src/thread/parallel_thread_pool_manager.cc
+    mindspore/core/mindrt/src/thread/parallel_thread_pool_manager.h
+    mindspore/core/mindrt/src/thread/parallel_threadpool.cc
+    mindspore/core/mindrt/src/thread/parallel_threadpool.h
 MS_CLOUD_UT:
     tests/ut
 MS_CLOUD_UT_CPP:
@@ -84,3 +88,25 @@ MS_DOCS:
     Third_Party_Open_Source_Software
 MS_MSVC:
     mindspore/msvc
+MSLITE_CLOUD_FUSION:
+    mindspore/lite/src/extendrt
+    mindspore/lite/src/infer
+    mindspore/lite/examples/cloud_infer
+MSLITE_DEVICE:
+    mindspore/lite/tools/converter/micro
+    mindspore/lite/src/train
+    mindspore/lite/examples/train_lenet_cpp
+    mindspore/lite/examples/train_lenet_java
+    mindspore/lite/examples/transfer_learning
+    mindspore/lite/src/litert/kernel/gpu
+
+# No task match below rules yet:
+# MSLITE_CPU:
+#     mindspore/lite/src/extendrt/kernel/cpu
+# MSLITE_GPU:
+#     mindspore/lite/src/extendrt/kernel/cuda
+# MSLITE_MALI:
+#     mindspore/lite/src/extendrt/kernel/gpu
+# MSLITE_ASCEND:
+#     mindspore/lite/src/extendrt/kernel/ascend
+#     mindspore/lite/src/litert/kernel/ascend
