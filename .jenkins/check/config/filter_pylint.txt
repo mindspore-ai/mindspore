@@ -213,3 +213,4 @@
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_tik/sample/"                              "bad-whitespace"
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_dsl/sample/"                              "bad-continuation"
 "mindspore/mindspore/lite/tools/kernel_builder/ascend/tbe_tik/sample/"                              "bad-continuation"
+"mindspore/mindspore/lite/tools/kernel_builder/ascend_new/tbe/impl/"                              "no-else-return"
