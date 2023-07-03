@@ -31,7 +31,7 @@ class CsvWriter {
   CsvWriter() = default;
   ~CsvWriter();
   DISABLE_COPY_AND_ASSIGN(CsvWriter)
-  bool OpenFile(const std::string &path, const std::string &header = "");
+  bool OpenFile(const std::string &path, const std::string &header = "", bool trunc = false);
   void CloseFile() noexcept;
   template <typename T>
   void WriteToCsv(const T &val, bool end_line = false) {

@@ -29,7 +29,7 @@ CsvWriter &CsvWriter::GetInstance() {
   return instance;
 }
 
-bool CsvWriter::OpenFile(const std::string &path, const std::string &header) {
+bool CsvWriter::OpenFile(const std::string &path, const std::string &header, bool trunc) {
   if (file_.is_open() && path == file_path_str_) {
     return true;
   }
@@ -47,7 +47,7 @@ bool CsvWriter::OpenFile(const std::string &path, const std::string &header) {
   MS_EXCEPTION_IF_NULL(fs);
   bool first_time_opening = !fs->FileExist(file_path_value);
   ChangeFileMode(file_path_value, S_IWUSR);
-  if (first_time_opening) {
+  if (first_time_opening || trunc) {
     // remove any possible output from previous runs
     file_.open(file_path_value, std::ios::out | std::ios::trunc | std::ios::binary);
   } else {
@@ -57,7 +57,7 @@ bool CsvWriter::OpenFile(const std::string &path, const std::string &header) {
     MS_LOG(WARNING) << "Open file " << file_path_value << " failed." << ErrnoToString(errno);
     return false;
   }
-  if (first_time_opening) {
+  if (first_time_opening || trunc) {
     file_ << header;
     (void)file_.flush();
     file_path_str_ = path;

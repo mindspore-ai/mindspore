@@ -33,6 +33,7 @@ constexpr auto HostDataHeader =
 const auto kVmRSS = "VmRSS";
 std::mutex file_line_mutex;
 static bool log_once = false;
+static bool first_open_file = true;
 const int profile_all = 0;
 const int profile_memory = 1;
 const int profile_time = 2;
@@ -334,7 +335,10 @@ void WriteHostDataToFile(const HostProfileData &host_profile_data, const std::st
   CsvWriter &csv = CsvWriter::GetInstance();
   int retry = 2;
   while (retry > 0) {
-    if (csv.OpenFile(csv_file, HostDataHeader)) {
+    if (first_open_file && csv.OpenFile(csv_file, HostDataHeader, true)) {
+      first_open_file = false;
+      break;
+    } else if (csv.OpenFile(csv_file, HostDataHeader)) {
       break;
     }
     retry--;

@@ -236,7 +236,7 @@ def _parse_host_info(input_file, output_file, is_develop_user=True):
             time_line.append(unfinished_timeline)
 
     timeline_file = validate_and_normalize_path(output_file)
-    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
     modes = stat.S_IWUSR | stat.S_IRUSR
     with os.fdopen(os.open(timeline_file, flags, modes), 'w') as json_file:
         json.dump(time_line, json_file)
