@@ -56,8 +56,7 @@
 #include "ops/space_to_depth.h"
 #include "ops/grid_sampler_2d.h"
 
-namespace mindspore {
-namespace lite {
+namespace mindspore::lite {
 namespace {
 static const std::set<std::string> FormatAwareOp = {ops::kNameAdam,
                                                     ops::kNameApplyMomentum,
@@ -88,31 +87,9 @@ static const std::set<std::string> FormatAwareOp = {ops::kNameAdam,
                                                     ops::kNameSpaceToBatchND,
                                                     ops::kNameSpaceToDepth};
 
-bool SetDTAndShapeFromAbTensorToLiteTensor(const AbstractBasePtr &abstract, lite::Tensor *tensor) {
-  if (!utils::isa<mindspore::abstract::AbstractTensorPtr>(abstract)) {
-    MS_LOG(ERROR) << "The abstract should be tensor, but got abstract : " << abstract;
-    return false;
-  }
-  ShapeVector shape_vector;
-  TypeId data_type = kTypeUnknown;
-  auto ret = TensorAdapter::GetDTAndShapeFromAbTensor(utils::cast<mindspore::abstract::AbstractTensorPtr>(abstract),
-                                                      &data_type, &shape_vector);
-  if (ret != kSuccess) {
-    MS_LOG(ERROR) << "Get dtype and shape from abstract failed, abstract : " << abstract;
-    return false;
-  }
-  std::vector<int32_t> int32_shape;
-  std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(int32_shape),
-                 [](const auto &shape) { return static_cast<int32_t>(shape); });
-  tensor->set_data_type(data_type);
-  tensor->set_shape(int32_shape);
-  tensor->set_format(NHWC);
-  return true;
-}
-
 constexpr int kNCHW2NHWC = 0;
 constexpr int kNHWC2NCHW = 1;
-void TransposeShape(Tensor *tensor, int transpose_type) {
+void TransposeShape(InferTensor *tensor, int transpose_type) {
   if (MS_UNLIKELY(tensor == nullptr)) {
     return;
   }
@@ -141,13 +118,88 @@ void TransposeShape(Tensor *tensor, int transpose_type) {
   }
 }
 
-void TransposeShape(std::vector<Tensor *> *tensors, int transpose_type) {
+void TransposeShape(std::vector<InferTensor *> *tensors, int transpose_type) {
   if (MS_UNLIKELY(tensors == nullptr)) {
     return;
   }
   for (auto *tensor : *tensors) {
     TransposeShape(tensor, transpose_type);
   }
+}
+
+int SyncInferRetToLiteTensor(const CompileNode &node) {
+  auto cnode = node.GetCNode();
+  MS_ASSERT(cnode != nullptr);
+  auto abstract = cnode->abstract();
+  if (utils::isa<mindspore::abstract::AbstractSequencePtr>(abstract)) {
+    auto elements = utils::cast<mindspore::abstract::AbstractSequencePtr>(abstract)->elements();
+    if (elements.size() != node.OutputSize()) {
+      MS_LOG(ERROR) << "The cnode output size: " << elements.size()
+                    << " is not equal to lite tensors size: " << node.OutputSize();
+      return RET_ERROR;
+    }
+    for (size_t i = 0; i < elements.size(); i++) {
+      if (!TensorAdapter::SetDTAndShapeFromAbTensorToLiteTensor(elements[i], node.GetOutput(i))) {
+        MS_LOG(ERROR) << "Sync infershape result from Abstract to InferTensor failed, abstract : " << node.GetName();
+        return RET_ERROR;
+      }
+    }
+    return RET_OK;
+  }
+  if (utils::isa<mindspore::abstract::AbstractTensorPtr>(abstract)) {
+    if (!TensorAdapter::SetDTAndShapeFromAbTensorToLiteTensor(abstract, node.GetOutput(0))) {
+      MS_LOG(ERROR) << "Sync infershape result from Abstract to InferTensor failed, abstract : " << node.GetName();
+      return RET_ERROR;
+    }
+    return RET_OK;
+  }
+  MS_LOG(ERROR) << "Unsupported abstract type: " << abstract;
+  return RET_ERROR;
+}
+
+int SyncInferRetToCNode(const CompileNode &node) {
+  auto cnode = node.GetCNode();
+  MS_ASSERT(cnode != nullptr);
+  const auto &outputs = node.GetOutputs();
+  if (outputs.empty()) {
+    return RET_OK;
+  }
+  auto abstract = cnode->abstract();
+  if (utils::isa<abstract::AbstractTuplePtr>(abstract)) {
+    auto abs_tuple = utils::cast<abstract::AbstractTuplePtr>(abstract);
+    MS_ASSERT(abs_tuple != nullptr);
+    if (abs_tuple->elements().size() != outputs.size()) {
+      MS_LOG(ERROR) << "Node(" << node.GetName() << ") has " << outputs.size()
+                    << " output tensor(s), but its AbstractTuple has " << abs_tuple->elements().size()
+                    << " element(s).";
+      return RET_ERROR;
+    }
+    for (size_t i = 0; i < outputs.size(); i++) {
+      if (!TensorAdapter::SetDTAndShapeFromLiteTensorToAbTensor(*outputs[i], abs_tuple->elements()[i])) {
+        MS_LOG(ERROR) << "Sync infershape result from InferTensor to Abstract failed, " << node.GetName();
+        return RET_ERROR;
+      }
+    }
+    cnode->set_abstract(abs_tuple);
+    return RET_OK;
+  }
+  if (utils::isa<mindspore::abstract::AbstractTensorPtr>(abstract)) {
+    if (outputs.size() != 1) {
+      MS_LOG(ERROR) << "Node(" << node.GetName() << ")'s abstract is an AbstractTensor but has " << outputs.size()
+                    << " output tensor(s).";
+      return RET_ERROR;
+    }
+    auto abs_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract);
+    MS_ASSERT(abs_tensor != nullptr);
+    if (!TensorAdapter::SetDTAndShapeFromLiteTensorToAbTensor(*outputs[0], abs_tensor)) {
+      MS_LOG(ERROR) << "Sync infershape result from InferTensor to Abstract failed, " << node.GetName();
+      return RET_ERROR;
+    }
+    cnode->set_abstract(abs_tensor);
+    return RET_OK;
+  }
+  MS_LOG(ERROR) << "Unsupported abstract type: " << abstract;
+  return RET_ERROR;
 }
 
 int InferShapeByNNACL(CompileNode *node, OpParameter *op_parameter, Format format, InferContext *context) {
@@ -176,9 +228,22 @@ int InferShapeByNNACL(CompileNode *node, OpParameter *op_parameter, Format forma
       TransposeShape(&outputs, kNHWC2NCHW);
     }
   }
+  if (infer_ret != RET_OK && infer_ret != RET_INFER_INVALID) {
+    return infer_ret;
+  }
   if (infer_ret == RET_INFER_INVALID) {
     for (auto *output : outputs) {
       output->set_shape({abstract::Shape::kShapeRankAny});
+    }
+  }
+  auto ret = SyncInferRetToCNode(*node);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Sync infershape result from InferTensor to Abstract failed: " << node->GetName();
+    return ret;
+  }
+  if (infer_ret == RET_INFER_INVALID) {
+    for (auto *output : outputs) {
+      output->set_shape({-1});
     }
   }
   return infer_ret;
@@ -193,88 +258,90 @@ int InferShapeByOps(CompileNode *node, Format format) {
   auto cnode = node->GetCNode();
   if (cnode == nullptr) {
     MS_LOG(ERROR) << "cnode is nullptr";
-    return lite::RET_ERROR;
+    return RET_ERROR;
   }
   auto anf_prim = GetValueNode<std::shared_ptr<Primitive>>(cnode->input(0));
   if (anf_prim == nullptr) {
     MS_LOG(ERROR) << "primitive is nullptr";
-    return lite::RET_ERROR;
+    return RET_ERROR;
   }
   (void)anf_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(static_cast<int64_t>(format)));
-  auto ret = node_infer_shape->InferShapeByOps(cnode, true);
-  if (ret != lite::RET_OK) {  // invalid is no need to sync output shape from abstract
-    return ret;
+  //  return {-1} when infer-invalid currently. But we should support {-2} and {-1, -1, -1} in NNACL in future.
+  auto infer_ret = node_infer_shape->InferShapeByOps(cnode, true);
+  if (infer_ret != RET_OK && infer_ret != RET_INFER_INVALID) {
+    return infer_ret;
   }
 
-  auto abstract = cnode->abstract();
-  if (utils::isa<mindspore::abstract::AbstractSequencePtr>(abstract)) {
-    auto elements = utils::cast<mindspore::abstract::AbstractSequencePtr>(abstract)->elements();
-    if (elements.size() != node->OutputSize()) {
-      MS_LOG(ERROR) << "The cnode output size: " << elements.size()
-                    << " is not equal to lite tensors size: " << node->OutputSize();
-      return lite::RET_ERROR;
-    }
-    for (size_t i = 0; i < elements.size(); i++) {
-      if (!SetDTAndShapeFromAbTensorToLiteTensor(elements[i], node->GetOutput(i))) {
-        MS_LOG(ERROR) << "Set tensor info from abstract failed, abstract : " << elements[i];
-        return lite::RET_ERROR;
-      }
-    }
-    return lite::RET_OK;
+  auto ret = SyncInferRetToLiteTensor(*node);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Sync infershape result from Abstract to InferTensor failed: " << node->GetName();
+    return ret;
   }
-  if (utils::isa<mindspore::abstract::AbstractTensorPtr>(abstract)) {
-    if (!SetDTAndShapeFromAbTensorToLiteTensor(abstract, node->GetOutput(0))) {
-      MS_LOG(ERROR) << "Set tensor info from abstract failed, abstract : " << abstract;
-      return lite::RET_ERROR;
+  return infer_ret;
+}
+
+inline void DumpInferResult(const CompileNode &node, int infer_ret) {
+#ifdef Debug
+  std::ostringstream oss;
+  oss << "FallBackInferShape(" << node.GetName() << ") InferShape ret: " << infer_ret << ", shape:";
+  bool first_output = true;
+  for (auto &output : node.GetOutputs()) {
+    if (first_output) {
+      first_output = false;
+    } else {
+      oss << ", ";
     }
-    return lite::RET_OK;
+    oss << ShapeVectorToStr(output->shape());
   }
-  MS_LOG(ERROR) << "Unsupported abstract type: " << abstract;
-  return lite::RET_ERROR;
+  MS_LOG(INFO) << oss.str();
+#endif
 }
 }  // namespace
+
+int FallBackInferShape(const FuncGraphPtr &graph, Format format, InferContext *context) { return RET_ERROR; }
 
 int FallBackInferShape(const CompileResultPtr &node_list, Format format, InferContext *context) {
   for (const auto &node : node_list->GetNodes()) {
     MSLITE_CHECK_PTR_RETURN(node, false);
     auto base_operator = node->GetBaseOperator();
     MSLITE_CHECK_PTR_RETURN(base_operator, false);
-    auto op_parameter = lite::OperatorPopulateRegistry::GetInstance()->CreatePopulateByOp(base_operator);
+    auto op_parameter = OperatorPopulateRegistry::GetInstance()->CreatePopulateByOp(base_operator);
     auto iter = FormatAwareOp.find(node->GetType().PBType());
+    int infer_ret;
     // Format-not-aware op should infer in format indicated by format attr of mindir.
     if (iter != FormatAwareOp.end()) {
       if (op_parameter != nullptr) {
-        auto ret = InferShapeByNNACL(node, op_parameter, format, context);
+        infer_ret = InferShapeByNNACL(node, op_parameter, format, context);
         free(op_parameter);
-        if (ret != lite::RET_OK && ret != lite::RET_INFER_INVALID) {
+        if (infer_ret != RET_OK && infer_ret != RET_INFER_INVALID) {
           MS_LOG(ERROR) << "Infer kernel failed for op: " << node->GetName();
-          return ret;
+          return infer_ret;
         }
       } else {
-        auto ret = InferShapeByOps(node, format);
-        if (ret != lite::RET_OK && ret != lite::RET_INFER_INVALID) {
+        infer_ret = InferShapeByOps(node, format);
+        if (infer_ret != RET_OK && infer_ret != RET_INFER_INVALID) {
           MS_LOG(ERROR) << "Infer kernel failed for op: " << node->GetName();
-          return ret;
+          return infer_ret;
         }
       }
     } else {  // non-format-aware op not care about format, could infershape by NNACL or OPS
       if (op_parameter != nullptr) {
-        auto ret = InferShapeByNNACL(node, op_parameter, NHWC, context);
+        infer_ret = InferShapeByNNACL(node, op_parameter, NHWC, context);
         free(op_parameter);
-        if (ret != lite::RET_OK && ret != lite::RET_INFER_INVALID) {
+        if (infer_ret != RET_OK && infer_ret != RET_INFER_INVALID) {
           MS_LOG(ERROR) << "Infer kernel failed for op: " << node->GetName();
-          return ret;
+          return infer_ret;
         }
       } else {
-        auto ret = InferShapeByOps(node, NCHW);
-        if (ret != lite::RET_OK && ret != lite::RET_INFER_INVALID) {
+        infer_ret = InferShapeByOps(node, NCHW);
+        if (infer_ret != RET_OK && infer_ret != RET_INFER_INVALID) {
           MS_LOG(ERROR) << "Infer kernel failed for op: " << node->GetName();
-          return ret;
+          return infer_ret;
         }
       }
     }
+    DumpInferResult(*node, infer_ret);
   }
   return RET_OK;
 }
-}  // namespace lite
-}  // namespace mindspore
+}  // namespace mindspore::lite

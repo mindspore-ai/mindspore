@@ -21,7 +21,6 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include "src/extendrt/tensor.h"
 #include "ops/base_operator.h"
 #include "utils/hash_map.h"
 #include "include/api/status.h"
@@ -55,7 +54,7 @@ inline std::string DumpIntShape(const std::vector<int> &shape) {
   return oss.str();
 }
 
-inline std::string DumpTensor(const Tensor *tensor, int indent = 0) {
+inline std::string DumpTensor(const InferTensor *tensor, int indent = 0) {
   std::ostringstream oss;
   oss << GenIndent(indent) << "Tensor <name:" << tensor->tensor_name() << ", dtype:" << tensor->data_type()
       << ", format:" << tensor->format() << ", shape:" << DumpIntShape(tensor->shape()) << ">";
@@ -126,14 +125,14 @@ CompileNode *CompileNode::Create(CNodePtr cnode) {
   return node;
 }
 
-void CompileNode::AppendInputTensor(Tensor *tensor) {
+void CompileNode::AppendInputTensor(InferTensor *tensor) {
   if (tensor->tensor_name().empty()) {
     tensor->set_tensor_name(this->name_ + "_in_" + std::to_string(this->inputs_.size()));
   }
   this->inputs_.emplace_back(tensor);
 }
 
-void CompileNode::AppendOutputTensor(Tensor *tensor) {
+void CompileNode::AppendOutputTensor(InferTensor *tensor) {
   if (tensor->tensor_name().empty()) {
     tensor->set_tensor_name(this->name_ + "_out_" + std::to_string(this->outputs_.size()));
   }
@@ -158,9 +157,9 @@ std::string CompileNode::Dump(int indent) const {
   return oss.str();
 }
 
-void CompileNode::ReplaceInputTensor(Tensor *dst, Tensor *src) {
+void CompileNode::ReplaceInputTensor(InferTensor *dst, InferTensor *src) {
   std::replace_if(
-    inputs_.begin(), inputs_.end(), [&src](Tensor *ele) { return ele == src; }, dst);
+    inputs_.begin(), inputs_.end(), [&src](InferTensor *ele) { return ele == src; }, dst);
 }
 
 CompileNode *CompileResult::GetNode(const std::string &name) {
@@ -187,7 +186,7 @@ std::vector<CompileNode *> &CompileResult::GetMutableNodes() {
   }
   return nodes_;
 }
-std::vector<Tensor *> &CompileResult::GetMutableInputs() {
+std::vector<InferTensor *> &CompileResult::GetMutableInputs() {
   if (assembled_) {
     MS_LOG(EXCEPTION) << "CompileResult not mutable after build.";
   }
@@ -232,7 +231,7 @@ StatusCode CompileResult::AppendArgNode(CompileNode *node) {
   return kSuccess;
 }
 
-StatusCode CompileResult::AppendTensor(Tensor *tensor) {
+StatusCode CompileResult::AppendTensor(InferTensor *tensor) {
   if (assembled_) {
     MS_LOG(EXCEPTION) << "CompileResult not mutable after build.";
   }
@@ -252,7 +251,7 @@ StatusCode CompileResult::AppendTensor(Tensor *tensor) {
   return kSuccess;
 }
 
-StatusCode CompileResult::AppendInputTensor(Tensor *tensor, bool is_borrow) {
+StatusCode CompileResult::AppendInputTensor(InferTensor *tensor, bool is_borrow) {
   if (assembled_) {
     MS_LOG(EXCEPTION) << "CompileResult not mutable after build.";
   }
@@ -271,7 +270,7 @@ StatusCode CompileResult::AppendInputTensor(Tensor *tensor, bool is_borrow) {
   return kSuccess;
 }
 
-StatusCode CompileResult::AppendOutputTensor(Tensor *tensor, bool is_borrow) {
+StatusCode CompileResult::AppendOutputTensor(InferTensor *tensor, bool is_borrow) {
   if (assembled_) {
     MS_LOG(EXCEPTION) << "CompileResult not mutable after build.";
   }
@@ -289,7 +288,7 @@ StatusCode CompileResult::AppendOutputTensor(Tensor *tensor, bool is_borrow) {
   return kSuccess;
 }
 
-StatusCode CompileResult::AppendNodeInputTensor(const CompileNode *compile_node, Tensor *tensor, bool is_borrow) {
+StatusCode CompileResult::AppendNodeInputTensor(const CompileNode *compile_node, InferTensor *tensor, bool is_borrow) {
   if (compile_node == nullptr) {
     MS_LOG(ERROR) << "Input compile_node is nullptr";
     return kLiteInputParamInvalid;
@@ -297,7 +296,8 @@ StatusCode CompileResult::AppendNodeInputTensor(const CompileNode *compile_node,
   return AppendNodeInputTensor(compile_node->GetName(), tensor, is_borrow);
 }
 
-StatusCode CompileResult::AppendNodeInputTensor(const std::string &node_name, Tensor *input_tensor, bool is_borrow) {
+StatusCode CompileResult::AppendNodeInputTensor(const std::string &node_name, InferTensor *input_tensor,
+                                                bool is_borrow) {
   if (assembled_) {
     MS_LOG(EXCEPTION) << "CompileResult not mutable after build.";
   }
@@ -318,7 +318,7 @@ StatusCode CompileResult::AppendNodeInputTensor(const std::string &node_name, Te
   return kSuccess;
 }
 
-StatusCode CompileResult::AppendNodeOutputTensor(const CompileNode *compile_node, Tensor *tensor, bool is_borrow) {
+StatusCode CompileResult::AppendNodeOutputTensor(const CompileNode *compile_node, InferTensor *tensor, bool is_borrow) {
   if (compile_node == nullptr) {
     MS_LOG(ERROR) << "Input compile_node is nullptr";
     return kLiteInputParamInvalid;
@@ -326,7 +326,8 @@ StatusCode CompileResult::AppendNodeOutputTensor(const CompileNode *compile_node
   return AppendNodeOutputTensor(compile_node->GetName(), tensor, is_borrow);
 }
 
-StatusCode CompileResult::AppendNodeOutputTensor(const std::string &node_name, Tensor *output_tensor, bool is_borrow) {
+StatusCode CompileResult::AppendNodeOutputTensor(const std::string &node_name, InferTensor *output_tensor,
+                                                 bool is_borrow) {
   if (assembled_) {
     MS_LOG(EXCEPTION) << "CompileResult not mutable after build.";
   }

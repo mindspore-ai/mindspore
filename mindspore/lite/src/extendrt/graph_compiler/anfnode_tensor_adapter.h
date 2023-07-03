@@ -20,7 +20,7 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
-#include "src/extendrt/tensor.h"
+#include "src/infer/tensor.h"
 #include "abstract/abstract_value.h"
 #include "ir/anf.h"
 #include "include/api/status.h"
@@ -38,26 +38,35 @@ class TensorAdapter {
     }
   }
 
-  Tensor *ToTensor(const std::string &tensor_name = "");
+  InferTensor *ToTensor(const std::string &tensor_name = "");
 
-  static TensorAdapterPtr Create(const ParameterPtr &param_node);
-  static TensorAdapterPtr Create(const ValueNodePtr &value_node);
-  static TensorAdapterPtr Create(const mindspore::abstract::AbstractTensorPtr &abstract);
-  static TensorAdapterPtr Create(const mindspore::abstract::AbstractBasePtr &abstract);
+  static TensorAdapterPtr Create(const ParameterPtr &param_node, Format format = DEFAULT_FORMAT);
+  static TensorAdapterPtr Create(const ValueNodePtr &value_node, Format format = DEFAULT_FORMAT);
+  static TensorAdapterPtr Create(const mindspore::abstract::AbstractTensorPtr &abstract,
+                                 Format format = DEFAULT_FORMAT);
+  static TensorAdapterPtr Create(const mindspore::abstract::AbstractBasePtr &abstract, Format format = DEFAULT_FORMAT);
 
-  static Tensor *Convert2Tensor(const ParameterPtr &param_node, const std::string &tensor_name = "");
-  static Tensor *Convert2Tensor(const ValueNodePtr &value_node, const std::string &tensor_name = "");
-  static Tensor *Convert2Tensor(const mindspore::abstract::AbstractTensorPtr &abstract,
-                                const std::string &tensor_name = "");
-  static Tensor *Convert2Tensor(const mindspore::abstract::AbstractBasePtr &abstract,
-                                const std::string &tensor_name = "");
+  static InferTensor *Convert2Tensor(const ParameterPtr &param_node, const std::string &tensor_name = "",
+                                     Format format = DEFAULT_FORMAT);
+  static InferTensor *Convert2Tensor(const ValueNodePtr &value_node, const std::string &tensor_name = "",
+                                     Format format = DEFAULT_FORMAT);
+  static InferTensor *Convert2Tensor(const mindspore::abstract::AbstractTensorPtr &abstract,
+                                     const std::string &tensor_name = "", Format format = DEFAULT_FORMAT);
+  static InferTensor *Convert2Tensor(const mindspore::abstract::AbstractBasePtr &abstract,
+                                     const std::string &tensor_name = "", Format format = DEFAULT_FORMAT);
 
   static StatusCode GetDTAndShapeFromAbTensor(const mindspore::abstract::AbstractTensorPtr &abstract, TypeId *data_type,
                                               ShapeVector *shape_vector);
+  static StatusCode SetDTAndShapeFromAbTensor(const TypeId &data_type, const ShapeVector &shape,
+                                              const mindspore::abstract::AbstractTensorPtr &abstract);
+  static StatusCode SetDTAndShapeFromAbTensor(const TypeId &data_type, const std::vector<int> &shape,
+                                              const mindspore::abstract::AbstractTensorPtr &abstract);
+
+  static bool SetDTAndShapeFromAbTensorToLiteTensor(const AbstractBasePtr &abstract, InferTensor *tensor);
+  static bool SetDTAndShapeFromLiteTensorToAbTensor(const InferTensor &tensor, const AbstractBasePtr &abstract);
 
  private:
-  static StatusCode GetDTAndShapeFromParameter(const ParameterPtr &param_node, TypeId *data_type,
-                                               ShapeVector *shape_vector);
+  static StatusCode GetDTAndShapeFromParameter(const ParameterPtr &param_node, TypeId *data_type, ShapeVector *shape);
 
   static TensorAdapterPtr CreateFromTensorValueNode(const ValueNodePtr &value_node);
 

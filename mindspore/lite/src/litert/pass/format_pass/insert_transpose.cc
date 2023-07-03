@@ -97,8 +97,18 @@ int InsertTranspose::RunPass(kernel::SubGraphKernel *graph, std::vector<lite::Te
     for (size_t i = 0; i < kernel->out_kernels().size(); i++) {
       auto ret = InsertPostTranspose(graph, kernel, tensors, TransInfoPair(kernel_format, format_), i);
       if (ret != RET_OK) {
-        MS_LOG(ERROR) << "Insert pre transpose for op: " << kernel->name() << ", index: " << i << ", failed";
+        MS_LOG(ERROR) << "Insert post transpose for op: " << kernel->name() << ", index: " << i << ", failed";
         return RET_ERROR;
+      }
+    }
+    // graph output node has no output kernels, take care of these nodes
+    if (IsContain(graph->out_nodes(), kernel)) {
+      for (size_t i = 0; i < kernel->out_tensors().size(); i++) {
+        auto ret = InsertPostTranspose(graph, kernel, tensors, TransInfoPair(kernel_format, format_), i);
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << "Insert post transpose for op: " << kernel->name() << ", index: " << i << ", failed";
+          return RET_ERROR;
+        }
       }
     }
 

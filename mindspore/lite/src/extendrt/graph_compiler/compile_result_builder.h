@@ -20,9 +20,11 @@
 #include <memory>
 #include <set>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include "src/extendrt/graph_compiler/compile_result.h"
-#include "src/extendrt/tensor.h"
+#include "src/extendrt/graph_compiler/compile_option.h"
+#include "src/infer/tensor.h"
 #include "abstract/abstract_value.h"
 #include "ir/anf.h"
 #include "include/api/status.h"
@@ -31,7 +33,9 @@ namespace mindspore {
 namespace lite {
 class CompileResultBuilder {
  public:
-  explicit CompileResultBuilder(Format graph_format) : graph_format_(graph_format) {}
+  explicit CompileResultBuilder(CompileOptionPtr option) : compile_option_(std::move(option)) {
+    MS_EXCEPTION_IF_NULL(compile_option_);
+  }
   ~CompileResultBuilder() = default;
   CompileResultPtr Build(const GraphSegmentPtr &graph_segment, const AnfNodePtrList &inputs,
                          const AnfNodePtrList &outputs);
@@ -52,18 +56,19 @@ class CompileResultBuilder {
   StatusCode AppendInputValueNodeToInputs(const ValueNodePtr &value_node, const CompileNode *compile_node);
   // methods about tensor
   static StatusCode CreateTensorsFromAbstract(const mindspore::abstract::AbstractBasePtr &abstract,
-                                              std::vector<std::unique_ptr<Tensor>> *results);
+                                              std::vector<std::unique_ptr<InferTensor>> *results,
+                                              Format format = DEFAULT_FORMAT);
   StatusCode BuildNodeOutputTensor(const CNodePtr &cnode, const CompileNode *compile_node);
   // methods about optimize
   StatusCode RemoveSeqGetItemNode();
   StatusCode RemoveMakeSeqNode();
   StatusCode RemoveDependNode();
   // Replace `index`th output tensor of `node` by `dst_tensor` tensor.
-  void IsolateTensor(Tensor *dst_tensor, const CompileNode *node, size_t index);
+  void IsolateTensor(InferTensor *dst_tensor, const CompileNode *node, size_t index);
 
  private:
   CompileResultPtr graph_ = nullptr;
-  Format graph_format_{DEFAULT_FORMAT};
+  CompileOptionPtr compile_option_{nullptr};
   std::set<std::string> input_names_{};
 };
 }  // namespace lite

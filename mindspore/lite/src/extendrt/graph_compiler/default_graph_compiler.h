@@ -36,6 +36,7 @@ class DefaultGraphCompiler : public infer::abstract::GraphCompiler {
   std::shared_ptr<infer::abstract::ExecutionPlan> Compile(FuncGraphPtr graph) override;
 
  protected:
+  void InitCompileOption(const FuncGraphPtr &graph);
   std::shared_ptr<infer::abstract::ExecutionPlan> NonCFGCompile(const std::vector<GraphSegmentPtr> &graph_segments,
                                                                 const FuncGraphPtr &func_graph);
 
@@ -59,7 +60,7 @@ class DefaultGraphCompiler : public infer::abstract::GraphCompiler {
   SingleGraphSchedulerPtr scheduler_{nullptr};
   const std::shared_ptr<Context> &context_;
   InferContextPtr inner_context_{nullptr};
-  std::shared_ptr<CompileOption> option_{nullptr};
+  CompileOptionPtr option_{nullptr};
 };
 }  // namespace mindspore::lite
 

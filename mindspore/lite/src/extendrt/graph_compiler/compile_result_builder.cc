@@ -39,14 +39,14 @@ StatusCode CompileResultBuilder::BuildInputs(const AnfNodePtrList &inputs) {
     MS_LOG(ERROR) << "Please don't call BuildOutputs twice.";
     return kLiteError;
   }
-  std::vector<std::unique_ptr<Tensor>> results;
+  std::vector<std::unique_ptr<InferTensor>> results;
   for (auto &input : inputs) {
     results.clear();
     auto parameter = utils::cast<ParameterPtr>(input);
     if (parameter != nullptr && parameter->has_default()) {
       continue;  // TransformSegmentToAnfGraph puts all input and weight into 'inputs'. In inference, we skip weight.
     }
-    auto ret = CreateTensorsFromAbstract(input->abstract(), &results);
+    auto ret = CreateTensorsFromAbstract(input->abstract(), &results, compile_option_->graph_input_format);
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "Create tensors from abstract of segments input failed, input : "
                     << input->fullname_with_scope();
@@ -127,7 +127,7 @@ StatusCode CompileResultBuilder::BuildOutputs(const AnfNodePtrList &outputs) {
   return kSuccess;
 }
 
-void CompileResultBuilder::IsolateTensor(Tensor *dst_tensor, const CompileNode *node, size_t index) {
+void CompileResultBuilder::IsolateTensor(InferTensor *dst_tensor, const CompileNode *node, size_t index) {
   if (node == nullptr || index >= node->OutputSize()) {
     return;
   }
@@ -143,7 +143,7 @@ void CompileResultBuilder::IsolateTensor(Tensor *dst_tensor, const CompileNode *
   // used as outputs of graph
   auto &inputs = graph_->GetMutableInputs();
   std::replace_if(
-    inputs.begin(), inputs.end(), [&src_tensor](Tensor *ele) { return ele == src_tensor; }, dst_tensor);
+    inputs.begin(), inputs.end(), [&src_tensor](InferTensor *ele) { return ele == src_tensor; }, dst_tensor);
 }
 
 StatusCode CompileResultBuilder::RemoveMakeSeqNode() {
@@ -250,7 +250,7 @@ StatusCode CompileResultBuilder::OptimizeGraph() {
 
 CompileResultPtr CompileResultBuilder::Build(const GraphSegmentPtr &graph_segment, const AnfNodePtrList &inputs,
                                              const AnfNodePtrList &outputs) {
-  graph_ = std::make_shared<CompileResult>(graph_format_);
+  graph_ = std::make_shared<CompileResult>();
   if (BuildInputs(inputs) != kSuccess) {
     MS_LOG(ERROR) << "Build graph inputs failed";
     return nullptr;
@@ -328,7 +328,7 @@ StatusCode CompileResultBuilder::AppendInputParameterToInputs(const ParameterPtr
   if (format_value != nullptr) {
     tensor_from_param->set_format(static_cast<Format>(GetValue<int64_t>(format_value)));
   } else {
-    tensor_from_param->set_format(graph_format_);
+    tensor_from_param->set_format(compile_option_->graph_format);
   }
   auto ret = graph_->AppendNodeInputTensor(compile_node, tensor_from_param);
   if (ret != kSuccess) {
@@ -357,7 +357,7 @@ StatusCode CompileResultBuilder::AppendInputValueNodeToInputs(const ValueNodePtr
   if (format_value != nullptr) {
     tensor_from_value->set_format(static_cast<Format>(GetValue<int64_t>(format_value)));
   } else {
-    tensor_from_value->set_format(graph_format_);
+    tensor_from_value->set_format(compile_option_->graph_format);
   }
   auto ret = graph_->AppendNodeInputTensor(compile_node, tensor_from_value);
   if (ret != kSuccess) {
@@ -407,7 +407,8 @@ StatusCode CompileResultBuilder::CreateAndAppendNode(const CNodePtr &cnode) {
 }
 
 StatusCode CompileResultBuilder::CreateTensorsFromAbstract(const AbstractBasePtr &abstract,
-                                                           std::vector<std::unique_ptr<Tensor>> *results) {
+                                                           std::vector<std::unique_ptr<InferTensor>> *results,
+                                                           Format format) {
   if (results == nullptr) {
     MS_LOG(ERROR) << "Result is nullptr.";
     return kLiteInputParamInvalid;
@@ -417,23 +418,23 @@ StatusCode CompileResultBuilder::CreateTensorsFromAbstract(const AbstractBasePtr
   if (utils::isa<AbstractSequencePtr>(abstract)) {
     auto elements = utils::cast<AbstractSequencePtr>(abstract)->elements();
     for (auto &element : elements) {
-      auto tensor = TensorAdapter::Convert2Tensor(element);
+      auto tensor = TensorAdapter::Convert2Tensor(element, "", format);
       if (tensor == nullptr) {
         MS_LOG(ERROR) << "Create tensor from abstract failed, abstract : " << element;
         return kLiteError;
       }
-      results->emplace_back(std::unique_ptr<Tensor>(tensor));
+      results->emplace_back(std::unique_ptr<InferTensor>(tensor));
     }
     return kSuccess;
   }
   // single output abstract
   if (utils::isa<AbstractTensorPtr>(abstract)) {
-    auto tensor = TensorAdapter::Convert2Tensor(abstract);
+    auto tensor = TensorAdapter::Convert2Tensor(abstract, "", format);
     if (tensor == nullptr) {
       MS_LOG(ERROR) << "Create tensor from abstract failed, abstract : " << abstract;
       return kLiteError;
     }
-    results->emplace_back(std::unique_ptr<Tensor>(tensor));
+    results->emplace_back(std::unique_ptr<InferTensor>(tensor));
     return kSuccess;
   }
   MS_LOG(ERROR) << "Unsupported abstract: " << abstract;
@@ -449,7 +450,7 @@ StatusCode CompileResultBuilder::BuildNodeOutputTensor(const CNodePtr &cnode, co
     MS_LOG(ERROR) << "Input compile_node is nullptr.";
     return kLiteInputParamInvalid;
   }
-  std::vector<std::unique_ptr<Tensor>> results;
+  std::vector<std::unique_ptr<InferTensor>> results;
   auto ret = CreateTensorsFromAbstract(cnode->abstract(), &results);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Create tensors from output abstract of cnode failed, cnode : " << cnode->fullname_with_scope();
@@ -483,7 +484,7 @@ StatusCode CompileResultBuilder::BuildNodes(const FuncGraphPtr &func_graph) {
 }
 
 CompileResultPtr CompileResultBuilder::Build(const FuncGraphPtr &func_graph) {
-  graph_ = std::make_shared<CompileResult>(graph_format_);
+  graph_ = std::make_shared<CompileResult>();
 
   if (BuildInputs(func_graph->get_inputs()) != kSuccess) {
     MS_LOG(ERROR) << "Build graph inputs failed";
@@ -498,7 +499,7 @@ CompileResultPtr CompileResultBuilder::Build(const FuncGraphPtr &func_graph) {
   FuncGraphUtils::GetFuncGraphOutputs(func_graph, &outputs_with_index);
   AnfNodePtrList outputs;
   outputs.resize(outputs_with_index.size());
-  for (auto output : outputs_with_index) {
+  for (auto &output : outputs_with_index) {
     if (output.second >= outputs.size()) {
       MS_LOG(ERROR) << "Build graph nodes failed";
       return nullptr;
