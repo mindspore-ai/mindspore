@@ -94,7 +94,6 @@ int SoftmaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   // calculate size
   input_size_ = type_id_size_ * input_element_num;
   output_size_ = input_size_;
-  workspace_size_ = shape_size_ * sizeof(size_t);
   InitSizeLists();
   return KRET_OK;
 }
