@@ -23,6 +23,7 @@ import numpy as np
 import pytest
 
 import mindspore.dataset as ds
+import mindspore.dataset.transforms as transforms
 import mindspore.dataset.vision as vision
 from mindspore import log as logger
 
@@ -310,9 +311,27 @@ def test_usps_usage():
         assert ds.USPSDataset(all_files_path, usage="test").get_dataset_size() == 3
 
 
+def test_usps_with_map():
+    """
+    Feature: USPSDataset
+    Description: Test doing map operation on USPSDataset
+    Expectation: The dataset is processed as expected
+    """
+    dataset = ds.USPSDataset(DATA_DIR)
+    random_crop = vision.RandomCrop((10, 10))
+    dataset = dataset.map(random_crop, input_columns=["image"])
+    type_cast = transforms.TypeCast(np.float32)
+    dataset = dataset.map(type_cast, input_columns=["label"])
+    count = 0
+    for _ in dataset.create_dict_iterator(num_epochs=1):
+        count += 1
+    assert count == 6
+
+
 if __name__ == '__main__':
     test_usps_content_check()
     test_usps_basic()
     test_usps_exception()
     test_usps_visualize(plot=True)
     test_usps_usage()
+    test_usps_with_map()
