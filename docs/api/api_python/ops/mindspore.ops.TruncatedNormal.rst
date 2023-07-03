@@ -9,12 +9,16 @@ mindspore.ops.TruncatedNormal
 
     .. note::
         - `shape` 所含元素的值必须大于零。输出长度必须不超过1000000。
-        - 当 `seed` 或 `seed2` 被赋予一个非零值时，该值将被用作种子。否则，将使用一个随机种子。
+        - 随机种子：通过一些复杂的数学算法，可以得到一组有规律的随机数，而随机种子就是这个随机数的初始值。随机种子相同，得到的随机数就不会改变。
+        - 全局的随机种子和算子层的随机种子都没设置或都设置为0：完全随机。
+        - 全局的随机种子设置了，算子层的随机种子未设置：采用全局的随机种子和0拼接。
+        - 全局的随机种子未设置，算子层的随机种子设置了：使用0和算子层的随机种子拼接。
+        - 全局的随机种子和算子层的随机种子都设置了：全局的随机种子和算子层的随机种子拼接。
 
     参数：
-        - **seed** (int，可选) - 随机数种子。默认值：0。
-        - **seed2** (int，可选) - 另一个随机种子，避免发生冲突。默认值：0。
-        - **dtype** (mindspore.dtype，可选) - 指定输出类型。可选值为：mindspore.float16、mindspore.float32和mindspore.float64。默认值：mindspore.float32。
+        - **seed** (int，可选) - 算子层的随机种子，用于生成随机数。必须是非负的。默认值： ``0`` 。
+        - **seed2** (int，可选) - 全局的随机种子，和算子层的随机种子共同决定最终生成的随机数。必须是非负的。默认值： ``0`` 。
+        - **dtype** (mindspore.dtype，可选) - 指定输出类型。可选值为： ``mindspore.float16`` 、 ``mindspore.float32`` 和 ``mindspore.float64`` 。默认值： ``mindspore.float32`` 。
 
     输入：
         - **shape** (Tensor) - 生成Tensor的shape。数据类型必须是mindspore.int32或者mindspore.int64。

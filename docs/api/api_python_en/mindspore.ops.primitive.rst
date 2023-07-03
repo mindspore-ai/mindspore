@@ -82,7 +82,6 @@ Neural Network
     mindspore.ops.ResizeBicubic
     mindspore.ops.ResizeBilinear
     mindspore.ops.ResizeNearestNeighbor
-    mindspore.ops.ResizeNearestNeighborV2
 
 Loss Function
 ^^^^^^^^^^^^^
