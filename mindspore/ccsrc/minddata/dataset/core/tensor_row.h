@@ -253,7 +253,7 @@ class TensorRow {
 
   const TensorRowFlags Flags() { return tensor_row_flag_; }
 
-  std::string FlagName() {
+  std::string FlagName() const {
     switch (tensor_row_flag_) {
       case TensorRowFlags::kFlagNone:
         return "Data";
