@@ -793,6 +793,8 @@ def adaptive_max_pool3d(input, output_size, return_indices=False):
         ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input = Tensor(np.arange(0,36).reshape((1, 3, 3, 4)).astype(np.float32))
         >>> output_size = (1, 1, 2)
         >>> output = ops.adaptive_max_pool3d(input, output_size, True)
@@ -1613,6 +1615,9 @@ def fractional_max_pool2d(input, kernel_size, output_size=None, output_ratio=Non
         ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> input = Tensor(np.array([0.3220, 0.9545, 0.7879, 0.0975, 0.3698,
         ...                            0.5135, 0.5740, 0.3435, 0.1895, 0.8764,
         ...                            0.9581, 0.4760, 0.9014, 0.8522, 0.3664,
@@ -3566,6 +3571,7 @@ def mirror_pad(input_x, paddings, mode):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor([[1,2,3], [4,5,6], [7,8,9]])
         >>> mode = "REFLECT"
         >>> paddings = Tensor([[1, 1], [2, 2]])
@@ -4097,6 +4103,9 @@ def intopk(x1, x2, k):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> x1 = Tensor(np.array([[1, 8, 5, 2, 7], [4, 9, 1, 3, 5]]), mindspore.float32)
         >>> x2 = Tensor(np.array([1, 3]), mindspore.int32)
         >>> output = ops.intopk(x1, x2, 3)
@@ -5005,6 +5014,9 @@ def conv3d_transpose(inputs, weight, pad_mode='valid', padding=0, stride=1, dila
         TypeError: If data type of dout and weight is not float16.
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor
         >>> dout = Tensor(np.ones([32, 16, 10, 32, 32]), mindspore.float16)
         >>> weight = Tensor(np.ones([16, 3, 4, 6, 2]), mindspore.float16)
         >>> output = conv3d_transpose(dout, weight)
@@ -5952,6 +5964,9 @@ def pixel_shuffle(input, upscale_factor):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import ops
         >>> input_x = np.arange(3 * 2 * 9 * 4 * 4).reshape((3, 2, 9, 4, 4))
         >>> input_x = mindspore.Tensor(input_x, mindspore.dtype.int32)
         >>> output = ops.pixel_shuffle(input_x, 3)
@@ -6014,6 +6029,9 @@ def pixel_unshuffle(input, downscale_factor):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = np.arange(8 * 8).reshape((1, 1, 8, 8))
         >>> input_x = mindspore.Tensor(input_x, mindspore.dtype.int32)
         >>> output = ops.pixel_unshuffle(input_x, 2)
@@ -6431,6 +6449,9 @@ def channel_shuffle(x, groups):
         ``Ascend`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> group = 2
         >>> x = Tensor(np.arange(1* 4 * 2 * 2).reshape(1, 4, 2, 2).astype(np.int16))
         >>> y = mindspore.ops.channel_shuffle(x, group)
