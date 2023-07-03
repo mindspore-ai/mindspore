@@ -954,6 +954,20 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         """
         return self.slice_num_of_persistent_data_
 
+    def slice_scatter(self, src, axis=0, start=None, end=None, step=1):
+        """
+        For details, please refer to :func:`mindspore.ops.slice_scatter`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('slice_scatter')(self, src, axis, start, end, step)
+
+    def select_scatter(self, src, axis, index):
+        """
+        For details, please refer to :func:`mindspore.ops.select_scatter`.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('select_scatter')(self, src, axis, index)
+
     def histc(self, bins=100, min=0., max=0.):
         """
         For details, please refer to :func:`mindspore.ops.histc`.

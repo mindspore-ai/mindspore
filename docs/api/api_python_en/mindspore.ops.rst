@@ -571,11 +571,13 @@ Array Operation
     mindspore.ops.scatter
     mindspore.ops.scatter_nd
     mindspore.ops.select
+    mindspore.ops.select_scatter
     mindspore.ops.sequence_mask
     mindspore.ops.shape
     mindspore.ops.shuffle
     mindspore.ops.size
     mindspore.ops.slice
+    mindspore.ops.slice_scatter
     mindspore.ops.sort
     mindspore.ops.space_to_batch_nd
     mindspore.ops.sparse_segment_mean

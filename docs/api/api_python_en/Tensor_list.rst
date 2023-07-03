@@ -278,6 +278,7 @@
     mindspore.Tensor.scatter_sub
     mindspore.Tensor.searchsorted
     mindspore.Tensor.select
+    mindspore.Tensor.select_scatter
     mindspore.Tensor.set_const_arg
     mindspore.Tensor.sgn
     mindspore.Tensor.shape
@@ -289,6 +290,7 @@
     mindspore.Tensor.sinc
     mindspore.Tensor.sinh
     mindspore.Tensor.size
+    mindspore.Tensor.slice_scatter
     mindspore.Tensor.slogdet
     mindspore.Tensor.sort
     mindspore.Tensor.split
