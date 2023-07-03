@@ -86,6 +86,8 @@ STATUS AclOptionParamParser::ParseCommon(const AclOptionCfgString &acl_option_st
   acl_option_cfg->custom_opp_path = acl_option_string.custom_opp_path;
   acl_option_cfg->init_options_map = acl_option_string.init_options_map;
   acl_option_cfg->build_options_map = acl_option_string.build_options_map;
+  acl_option_cfg->aoe_global_options_map = acl_option_string.aoe_global_options_map;
+  acl_option_cfg->aoe_tuning_options_map = acl_option_string.aoe_tuning_options_map;
   return RET_OK;
 }
 

@@ -36,6 +36,8 @@ constexpr auto kRegistry = "registry";
 constexpr auto kAclOptionParam = "acl_option_cfg_param";
 constexpr auto kAclInitOptionParam = "acl_init_options";
 constexpr auto kAclBuildOptionParam = "acl_build_options";
+constexpr auto kAoeGlobalOptionParam = "aoe_global_options";
+constexpr auto kAoeTuningOptionParam = "aoe_tuning_options";
 constexpr auto kMicroParam = "micro_param";
 constexpr auto kCpuOptionParam = "cpu_option_cfg_param";
 constexpr auto kCustomOppPath = "custom_opp_path";
@@ -482,6 +484,18 @@ int ConfigFileParser::ParseAclOptionCfgString(const std::map<std::string, std::m
     const auto &map = maps.at(kAclBuildOptionParam);
     for (const auto &item : map) {
       acl_option_cfg_string_.build_options_map.emplace(item.first, item.second);
+    }
+  }
+  if (maps.find(kAoeGlobalOptionParam) != maps.end()) {
+    const auto &map = maps.at(kAoeGlobalOptionParam);
+    for (const auto &item : map) {
+      acl_option_cfg_string_.aoe_global_options_map.emplace(item.first, item.second);
+    }
+  }
+  if (maps.find(kAoeTuningOptionParam) != maps.end()) {
+    const auto &map = maps.at(kAoeTuningOptionParam);
+    for (const auto &item : map) {
+      acl_option_cfg_string_.aoe_tuning_options_map.emplace(item.first, item.second);
     }
   }
   return RET_OK;

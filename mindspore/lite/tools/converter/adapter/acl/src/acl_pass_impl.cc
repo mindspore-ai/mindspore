@@ -817,6 +817,8 @@ STATUS AclPassImpl::SetAclModelOptions(const FuncGraphPtr &func_graph) {
   options_->SetAoeMode(user_options_cfg_.aoe_mode);
   options_->SetInitOptionsMap(user_options_cfg_.init_options_map);
   options_->SetBuildOptionsMap(user_options_cfg_.build_options_map);
+  options_->SetAoeGlobalOptionsMap(user_options_cfg_.aoe_global_options_map);
+  options_->SetAoeTuningOptionsMap(user_options_cfg_.aoe_tuning_options_map);
   MS_LOG(INFO) << "Set acl model options success.";
   return lite::RET_OK;
 }

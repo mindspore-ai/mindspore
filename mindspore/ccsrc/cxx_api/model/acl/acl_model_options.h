@@ -37,6 +37,7 @@ class MS_API AclModelOptions {
 
   // return tuple<init_options, build_options>
   std::tuple<std::map<std::string, std::string>, std::map<std::string, std::string>> GenAclOptions() const;
+  std::string GenAoeOptions(std::vector<std::string> *aoe_modes);
   void SetFirstGraph(bool is_first_graph) noexcept { first_graph_flag_ = is_first_graph; }
   void SetOmFilePath(const std::string &file_path) noexcept { om_file_path_ = file_path; }
   std::string GetOmFilePath() const { return om_file_path_; }
@@ -47,6 +48,13 @@ class MS_API AclModelOptions {
   std::string GetInputShape() const { return input_shape_; }
   void SetInitOptionsMap(std::map<std::string, std::string> init_options) { init_options_map_ = init_options; }
   void SetBuildOptionsMap(std::map<std::string, std::string> build_options) { build_options_map_ = build_options; }
+  void SetAoeGlobalOptionsMap(std::map<std::string, std::string> global_options) {
+    aoe_global_options_map_ = global_options;
+  }
+  void SetAoeTuningOptionsMap(std::map<std::string, std::string> tuning_options) {
+    aoe_tuning_options_map_ = tuning_options;
+  }
+  std::map<std::string, std::string> GetAoeGlobalOptionsMap() const { return aoe_global_options_map_; }
 
  private:
   std::string output_node_;  // todo: at convert.cc::BuildGraph(), no atc options
@@ -65,6 +73,8 @@ class MS_API AclModelOptions {
   std::map<int, std::vector<int>> input_shape_map_;
   std::map<std::string, std::string> init_options_map_;
   std::map<std::string, std::string> build_options_map_;
+  std::map<std::string, std::string> aoe_global_options_map_;
+  std::map<std::string, std::string> aoe_tuning_options_map_;
   // other options
   uint32_t device_id_{0};
   std::optional<bool> first_graph_flag_{false};

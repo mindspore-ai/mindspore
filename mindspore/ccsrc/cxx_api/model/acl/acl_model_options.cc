@@ -184,6 +184,34 @@ std::tuple<std::map<std::string, std::string>, std::map<std::string, std::string
   return {init_options, build_options};
 }
 
+std::string AclModelOptions::GenAoeOptions(std::vector<std::string> *aoe_modes) {
+  std::string res;
+  std::map<std::string, std::string> aoe_options = aoe_global_options_map_;
+  aoe_options.insert(aoe_tuning_options_map_.begin(), aoe_tuning_options_map_.end());
+  if (aoe_options.find("job_type") != aoe_options.end()) {
+    aoe_modes->clear();
+    aoe_modes->emplace_back(aoe_options.at("job_type"));
+  }
+  if (aoe_modes->empty()) {
+    MS_LOG(ERROR) << "Aoe mode are invalid "
+                  << "; It should be 'subgraph tuning, operator tuning' in aoe_mode, or '1, 2' in job_type";
+  }
+
+  for (auto item : aoe_options) {
+    if (item.first == "job_type" || item.first == "framework" || item.first == "model") {
+      continue;
+    }
+    if (item.second.empty()) {
+      res += " --" + item.first;
+    } else {
+      res += " --" + item.first + "=" + item.second;
+    }
+  }
+
+  MS_LOG(INFO) << "aoe_options: " << res;
+  return res;
+}
+
 std::string AclModelOptions::GenAclOptionsKey() const {
   auto [init_options, build_options] = GenAclOptions();
   std::string key_str;
