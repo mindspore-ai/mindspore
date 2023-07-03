@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
 import numpy as np
 from mindspore.nn import Cell, GraphCell
 from mindspore import ops, nn
@@ -66,15 +65,14 @@ def test_mindir_export_none():
         def __init__(self):
             super(TestCell, self).__init__()
             self.relu = ops.ReLU()
+
         def construct(self, x):
             return self.relu(x), None, None
 
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     input_tensor = Tensor(np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]))
     net = TestCell()
     export(net, input_tensor, file_name="none_net", file_format='MINDIR')
     graph = load("none_net.mindir")
-    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
     assert graph is not None
 
 
@@ -86,11 +84,13 @@ def test_mindir_export_parameter_as_tensor():
     """
     input_np_x = np.random.randn(3).astype(np.float32)
     input_np_x_param = Parameter(input_np_x)
+
     class Net(Cell):
         def __init__(self):
             super(Net, self).__init__()
             self.relu = nn.ReLU()
             self.x = Parameter(Tensor(input_np_x))
+
         def construct(self, x):
             x = x + x
             x = x * self.x
