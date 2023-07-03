@@ -21,7 +21,7 @@ import json
 from json.decoder import JSONDecodeError
 import csv
 import mindspore as ms
-from mindspore import log as logger
+from mindspore import log as logger, context
 from mindspore.communication import get_rank
 from mindspore.profiler.common.util import get_file_path
 
@@ -70,6 +70,7 @@ class AscendMsprofExporter:
         self._device_path = None
         self._model_ids = []
         self._iter_ids = []
+        self._mode = ms.get_context("mode")
         self._check_msprof_env()
 
     @staticmethod
@@ -97,8 +98,9 @@ class AscendMsprofExporter:
         if not self._output_path:
             raise FileNotFoundError("Do not found valid profiling directory")
         trace_file = self._get_device_trace_file(self._output_path, self._device_path)
-        self._export_whole_prof(self._output_path, trace_file)
-        self._check_export_files(self._device_path, trace_file)
+        if trace_file and self._mode == context.GRAPH_MODE:
+            self._export_whole_prof(self._output_path, trace_file)
+            self._check_export_files(self._device_path, trace_file)
 
     def get_job_dir(self):
         """Return matched PROF directory path. Call this function after exporting profiling data."""
@@ -213,9 +215,8 @@ class AscendMsprofExporter:
 
         step_trace_file = get_file_path(summary_path, self._step_trace_mark)
 
-        if not step_trace_file:
-            msg = "Do not found step trace csv file in {}. Make sure " \
-                "the model is trained in GRAPH_MODE.".format(self._output_path)
+        if not step_trace_file and self._mode == context.GRAPH_MODE:
+            msg = "Do not found step trace csv file in {}.".format(self._output_path)
             raise FileNotFoundError(msg)
 
         return step_trace_file
