@@ -277,7 +277,6 @@ class COMMON_EXPORT ProfilerAnalyzer {
   // The relevant members of step.
   size_t step_{0};
   uint64_t step_time_{0};
-  size_t step_stack_{0};
   uint64_t step_start_time_{0};
   uint64_t module_total_time_{0};
   std::vector<ProfilerDataPtr> data_;

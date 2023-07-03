@@ -217,11 +217,6 @@ void ProfilerAnalyzer::StartStep() {
     return;
   }
 
-  ++step_stack_;
-  if (step_stack_ != 1) {
-    return;
-  }
-
   ++step_;
 
   std::unique_lock<std::mutex> lock(data_mutex_);
@@ -276,14 +271,6 @@ void ProfilerAnalyzer::GenerateSummaryData() {
 
 void ProfilerAnalyzer::EndStep() {
   if (!profiler_enable_) {
-    return;
-  }
-
-  if (step_stack_ == 0) {
-    return;
-  }
-  step_stack_--;
-  if (step_stack_ != 0) {
     return;
   }
 
