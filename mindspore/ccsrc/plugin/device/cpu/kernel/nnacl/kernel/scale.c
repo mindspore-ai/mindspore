@@ -214,7 +214,7 @@ int ScaleCheckInputsOutputs(KernelBase *self) {
   return NNACL_OK;
 }
 
-int scale_release(struct KernelBase *self) {
+int ScaleRelease(struct KernelBase *self) {
   ScaleStruct *scale = (ScaleStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(scale);
 
@@ -232,7 +232,7 @@ int scale_release(struct KernelBase *self) {
   return NNACL_OK;
 }
 
-int scale_resize(struct KernelBase *self) {
+int ScaleResize(struct KernelBase *self) {
   ScaleStruct *scale = (ScaleStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(scale);
 
@@ -260,7 +260,7 @@ int scale_resize(struct KernelBase *self) {
   return NNACL_OK;
 }
 
-int scale_compute(struct KernelBase *self) {
+int ScaleCompute(struct KernelBase *self) {
   ScaleStruct *scale = (ScaleStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(scale);
 
@@ -296,7 +296,7 @@ int scale_compute(struct KernelBase *self) {
   return self->env_->ParallelLaunch(self->env_->thread_pool_, ScaleRun, self, self->thread_nr_);
 }
 
-int scale_prepare(struct KernelBase *self) {
+int ScalePrepare(struct KernelBase *self) {
   ScaleStruct *scale = (ScaleStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(scale);
 
@@ -322,10 +322,10 @@ KernelBase *CreateScale(OpParameter *param, int data_type) {
   scale->offset_ = NULL;
   scale->malloc_scale_ = false;
   scale->malloc_offset_ = false;
-  scale->base_.Prepare = scale_prepare;
-  scale->base_.Resize = scale_resize;
-  scale->base_.Compute = scale_compute;
-  scale->base_.Release = scale_release;
+  scale->base_.Prepare = ScalePrepare;
+  scale->base_.Resize = ScaleResize;
+  scale->base_.Compute = ScaleCompute;
+  scale->base_.Release = ScaleRelease;
   return (KernelBase *)scale;
 }
 

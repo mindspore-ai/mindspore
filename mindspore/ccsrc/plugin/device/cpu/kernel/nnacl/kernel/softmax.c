@@ -90,7 +90,7 @@ int InitSoftmaxParam(SoftmaxStruct *softmax) {
   softmax->in_plane_size_ = in_plane_size;
   softmax->out_plane_size_ = out_plane_size;
 
-  (void)SoftmaxRelease(&softmax->base_);
+  (void)softmax->base_.Release(&softmax->base_);
   if (softmax->in_plane_size_ > 1) {
     NNACL_CHECK_INT_MUL_NOT_OVERFLOW(out_plane_size, in_plane_size, NNACL_ERR);
     int sum_data_size = out_plane_size * in_plane_size;

@@ -94,7 +94,7 @@ void DeConvDwFreePackedInputOutput(DeConvDwStruct *deconv_dw) {
   }
 }
 
-int deconv_dw_prepare(KernelBase *self) {
+int DeConvDwPrepare(KernelBase *self) {
   DeConvDwStruct *deconv_dw = (DeConvDwStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(deconv_dw);
   ConvComputeParam *compute = &deconv_dw->conv_.compute_;
@@ -125,7 +125,33 @@ int deconv_dw_prepare(KernelBase *self) {
   return NNACL_OK;
 }
 
-int deconv_dw_resize(KernelBase *self) {
+void DeConvDwUpdateParam(ConvolutionBaseStruct *conv) {
+  TensorC *input = conv->base_.in_[FIRST_INPUT];
+  TensorC *output = conv->base_.out_[OUTPUT_INDEX];
+
+  ConvParameter *conv_param = (ConvParameter *)conv->base_.param_;
+  conv_param->thread_num_ = conv->base_.thread_nr_;
+  conv_param->input_batch_ = GetBatch(output);
+  conv_param->input_h_ = GetHeight(output);
+  conv_param->input_w_ = GetWidth(output);
+  conv_param->input_channel_ = GetChannel(output);
+  conv_param->output_batch_ = GetBatch(input);
+  conv_param->output_h_ = GetHeight(input);
+  conv_param->output_w_ = GetWidth(input);
+  conv_param->output_channel_ = GetChannel(input);
+
+  ConvComputeParam *compute = &conv->compute_;
+  compute->in_n_ = GetBatch(output);
+  compute->in_h_ = GetHeight(output);
+  compute->in_w_ = GetWidth(output);
+  compute->in_c_ = GetChannel(output);
+  compute->out_n_ = GetBatch(input);
+  compute->out_h_ = GetHeight(input);
+  compute->out_w_ = GetWidth(input);
+  compute->out_c_ = GetChannel(input);
+}
+
+int DeConvDwResize(KernelBase *self) {
   DeConvDwStruct *deconv_dw = (DeConvDwStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(deconv_dw);
 
@@ -136,20 +162,20 @@ int deconv_dw_resize(KernelBase *self) {
     return ret;
   }
 
-  ret = ConvBasePrepare(&deconv_dw->conv_);
-  if (ret != NNACL_OK) {
-    return ret;
-  }
-
   int tile_num = deconv_dw->conv_.compute_.tile_num_;
+  DeConvDwUpdateParam(&deconv_dw->conv_);
   (void)InitSlidingParamConvDw(&deconv_dw->sliding_, (ConvParameter *)self->param_, tile_num);
   self->thread_nr_ = NNACL_MIN(self->thread_nr_, UP_DIV(deconv_dw->conv_.compute_.out_c_, tile_num));
   deconv_dw->need_align_ = deconv_dw->conv_.compute_.in_c_ % tile_num != 0;
 
+  ret = ConvBasePrepare(&deconv_dw->conv_);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
   return NNACL_OK;
 }
 
-int deconv_dw_compute(KernelBase *self) {
+int DeConvDwCompute(KernelBase *self) {
   DeConvDwStruct *deconv_dw = (DeConvDwStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(deconv_dw);
   ConvComputeParam *compute = &deconv_dw->conv_.compute_;
@@ -199,9 +225,9 @@ ConvolutionBaseStruct *CreateDeConvDw(ConvParameter *param) {
 
   deconv_dw->conv_.pack_weight_ = DeConvDwPackWeight;
   deconv_dw->conv_.malloc_weight_bias_ = DeConvDwMallocWeightBiasData;
-  deconv_dw->conv_.base_.Prepare = deconv_dw_prepare;
-  deconv_dw->conv_.base_.Resize = deconv_dw_resize;
+  deconv_dw->conv_.base_.Prepare = DeConvDwPrepare;
+  deconv_dw->conv_.base_.Resize = DeConvDwResize;
   deconv_dw->conv_.base_.Release = DefaultRelease;
-  deconv_dw->conv_.base_.Compute = deconv_dw_compute;
+  deconv_dw->conv_.base_.Compute = DeConvDwCompute;
   return &deconv_dw->conv_;
 }
