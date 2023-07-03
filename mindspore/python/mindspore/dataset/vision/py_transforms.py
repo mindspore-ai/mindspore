@@ -23,13 +23,12 @@ import numbers
 import random
 
 import numpy as np
-from PIL import Image
 
 import mindspore.dataset.transforms.py_transforms as py_transforms
 from . import py_transforms_util as util
 from .c_transforms import parse_padding
 from .py_transforms_util import is_pil
-from .utils import Border, Inter
+from .utils import Border, Inter, ANTIALIAS, CUBIC, LINEAR, NEAREST
 from .validators import check_adjust_gamma, check_alpha, check_auto_contrast, check_center_crop, check_cutout, \
     check_five_crop, check_hsv_to_rgb, check_linear_transform, check_mix_up, check_normalize_py, \
     check_normalizepad_py, check_num_channels, check_pad, check_positive_degrees, check_prob, check_random_affine, \
@@ -42,16 +41,10 @@ DE_PY_BORDER_TYPE = {Border.CONSTANT: 'constant',
                      Border.REFLECT: 'reflect',
                      Border.SYMMETRIC: 'symmetric'}
 
-if Image.__version__ >= "9.1.0":
-    DE_PY_INTER_MODE = {Inter.NEAREST: Image.Resampling.NEAREST,
-                        Inter.ANTIALIAS: Image.Resampling.LANCZOS,
-                        Inter.LINEAR: Image.Resampling.BILINEAR,
-                        Inter.CUBIC: Image.Resampling.BICUBIC}
-else:
-    DE_PY_INTER_MODE = {Inter.NEAREST: Image.NEAREST,
-                        Inter.ANTIALIAS: Image.ANTIALIAS,
-                        Inter.LINEAR: Image.LINEAR,
-                        Inter.CUBIC: Image.CUBIC}
+DE_PY_INTER_MODE = {Inter.NEAREST: NEAREST,
+                    Inter.ANTIALIAS: ANTIALIAS,
+                    Inter.LINEAR: LINEAR,
+                    Inter.CUBIC: CUBIC}
 
 
 class AdjustGamma(py_transforms.PyTensorOperation):
@@ -983,7 +976,7 @@ class RandomAffine(py_transforms.PyTensorOperation):
         self.translate = translate
         self.scale_ranges = scale
         self.shear = shear
-        self.resample = DE_PY_INTER_MODE[resample]
+        self.resample = DE_PY_INTER_MODE.get(resample)
         self.fill_value = fill_value
 
     def __call__(self, img):
@@ -1469,7 +1462,7 @@ class RandomPerspective(py_transforms.PyTensorOperation):
     def __init__(self, distortion_scale=0.5, prob=0.5, interpolation=Inter.BICUBIC):
         self.distortion_scale = distortion_scale
         self.prob = prob
-        self.interpolation = DE_PY_INTER_MODE[interpolation]
+        self.interpolation = DE_PY_INTER_MODE.get(interpolation)
 
     def __call__(self, img):
         """
@@ -1545,7 +1538,7 @@ class RandomResizedCrop(py_transforms.PyTensorOperation):
         self.size = size
         self.scale = scale
         self.ratio = ratio
-        self.interpolation = DE_PY_INTER_MODE[interpolation]
+        self.interpolation = DE_PY_INTER_MODE.get(interpolation)
         self.max_attempts = max_attempts
 
     def __call__(self, img):
@@ -1617,7 +1610,7 @@ class RandomRotation(py_transforms.PyTensorOperation):
     @check_random_rotation
     def __init__(self, degrees, resample=Inter.NEAREST, expand=False, center=None, fill_value=0):
         self.degrees = degrees
-        self.resample = DE_PY_INTER_MODE[resample]
+        self.resample = DE_PY_INTER_MODE.get(resample)
         self.expand = expand
         self.center = center
         self.fill_value = fill_value
@@ -1767,7 +1760,7 @@ class Resize(py_transforms.PyTensorOperation):
     @check_resize_interpolation
     def __init__(self, size, interpolation=Inter.BILINEAR):
         self.size = size
-        self.interpolation = DE_PY_INTER_MODE[interpolation]
+        self.interpolation = DE_PY_INTER_MODE.get(interpolation)
         self.random = False
 
     def __call__(self, img):
