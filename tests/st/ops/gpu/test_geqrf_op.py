@@ -34,7 +34,7 @@ class GeqrfNet(nn.Cell):
         return self.geqrf(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_geqrf_rank2_double_fp():
@@ -59,7 +59,7 @@ def test_geqrf_rank2_double_fp():
     assert np.allclose(expect_tau, tau.asnumpy(), rtol=RTOL, atol=ATOL)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_geqrf_rank3_float_fp():

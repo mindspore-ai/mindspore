@@ -19,7 +19,7 @@ from mindspore.ops.operations import array_ops as P
 import mindspore.common.dtype as ms
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_conjugate_transpose_bool_3x3():
@@ -38,7 +38,7 @@ def test_conjugate_transpose_bool_3x3():
     np.testing.assert_almost_equal(conjugate_transpose_ms_out, expected_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_conjugate_transpose_float64_3x3():
@@ -77,7 +77,7 @@ def test_conjugate_transpose_float32_4x4():
     np.testing.assert_almost_equal(conjugate_transpose_ms_out, expected_out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_conjugate_transpose_int32_2x2x2():

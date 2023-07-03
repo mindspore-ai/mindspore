@@ -35,7 +35,7 @@ def test_half_tensor_api():
     assert dtype_op(output) == ms.float16
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_half_tensor_api_modes():

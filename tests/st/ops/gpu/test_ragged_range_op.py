@@ -35,7 +35,7 @@ class RaggedRangeNet(Cell):
         return self.ragged_range(starts, limits, deltas)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ragged_range_int():
@@ -81,7 +81,7 @@ def test_ragged_range_float():
     np.testing.assert_array_equal(rt_dense_values.asnumpy(), rt_dense_values_expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ragged_range_int64():
@@ -104,7 +104,7 @@ def test_ragged_range_int64():
     np.testing.assert_array_equal(rt_dense_values.asnumpy(), rt_dense_values_expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ragged_range_float64():
@@ -127,7 +127,7 @@ def test_ragged_range_float64():
     np.allclose(rt_dense_values.asnumpy(), rt_dense_values_expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ragged_range_negative_delta():
@@ -150,7 +150,7 @@ def test_ragged_range_negative_delta():
     np.allclose(rt_dense_values.asnumpy(), rt_dense_values_expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ragged_range_empty_result():
@@ -173,7 +173,7 @@ def test_ragged_range_empty_result():
     np.allclose(rt_dense_values.asnumpy(), rt_dense_values_expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ragged_range_empty_input():
@@ -194,7 +194,7 @@ def test_ragged_range_empty_input():
     np.allclose(rt_dense_values.asnumpy(), rt_dense_values_expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ragged_range_neither_0d_nor_1d():
@@ -215,7 +215,7 @@ def test_ragged_range_neither_0d_nor_1d():
         _pynative_executor.sync()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ragged_range_invalid_arg_zero_delta():
@@ -232,7 +232,7 @@ def test_ragged_range_invalid_arg_zero_delta():
         _pynative_executor.sync()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ragged_range_shapes_mismatch():
@@ -251,7 +251,7 @@ def test_ragged_range_shapes_mismatch():
         _pynative_executor.sync()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ragged_range_not_tensor():
@@ -271,7 +271,7 @@ def test_ragged_range_not_tensor():
         _pynative_executor.sync()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ragged_range_not_the_same_type():
@@ -290,7 +290,7 @@ def test_ragged_range_not_the_same_type():
         _pynative_executor.sync()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ragged_range_tsplits_invalid_type():

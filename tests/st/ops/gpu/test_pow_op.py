@@ -32,7 +32,7 @@ class Net(Cell):
         return self.ops(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_real_datatypes():
@@ -68,7 +68,7 @@ def test_real_datatypes():
         assert out.shape == expect.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_complex_datatypes():
@@ -126,4 +126,3 @@ def test_pow_dynamic_shape():
     expect = np.power(x_np, y_np)
     assert np.allclose(output.asnumpy(), expect)
     assert output.asnumpy().shape == expect.shape
- 

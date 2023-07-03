@@ -28,9 +28,9 @@ from mindspore.common.api import jit
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 
-class CdistTEST(nn.Cell):
+class CdistNet(nn.Cell):
     def __init__(self, p):
-        super(CdistTEST, self).__init__()
+        super(CdistNet, self).__init__()
         self.cdist = P.Cdist(p)
 
     def construct(self, x1, x2):
@@ -40,13 +40,13 @@ class CdistTEST(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_CdistP2_float32():
+def test_cdist_p_2_float32():
     """
     Feature: Cdist cpu kernel
     Description: test the cdist p = 2.0.
     Expectation: the output[0] is same as numpy
     """
-    cdist = CdistTEST(2.)
+    cdist = CdistNet(2.)
     x1 = Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32))
     x2 = Tensor(np.array([[[3.0, 3.0], [3.0, 3.0]]]).astype(np.float32))
     output = cdist(x1, x2)
@@ -59,13 +59,13 @@ def test_CdistP2_float32():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_CdistP0_float32():
+def test_cdist_p_0_float32():
     """
     Feature: Cdist cpu kernel
     Description: test the cdist p = 0.0.
     Expectation: the output[0] is same as numpy
     """
-    cdist = CdistTEST(0.)
+    cdist = CdistNet(0.)
     x1 = Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32))
     x2 = Tensor(np.array([[[3.0, 3.0], [3.0, 3.0]]]).astype(np.float32))
     output = cdist(x1, x2)
@@ -77,13 +77,13 @@ def test_CdistP0_float32():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_CdistP1_float32():
+def test_cdist_p_1_float32():
     """
     Feature: Cdist cpu kernel
     Description: test the cdist p = 1.0.
     Expectation: the output[0] is same as numpy
     """
-    cdist = CdistTEST(1.)
+    cdist = CdistNet(1.)
     x1 = Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32))
     x2 = Tensor(np.array([[[3.0, 3.0], [3.0, 3.0]]]).astype(np.float32))
     output = cdist(x1, x2)
@@ -95,13 +95,13 @@ def test_CdistP1_float32():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_CdistP8_float32():
+def test_cdist_p_8_float32():
     """
     Feature: Cdist cpu kernel
     Description: test the cdist p = 8.0.
     Expectation: the output[0] is same as numpy
     """
-    cdist = CdistTEST(8.)
+    cdist = CdistNet(8.)
     x1 = Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32))
     x2 = Tensor(np.array([[[3.0, 3.0], [3.0, 3.0]]]).astype(np.float32))
     output = cdist(x1, x2)
@@ -114,13 +114,13 @@ def test_CdistP8_float32():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_CdistPinf_float32():
+def test_cdist_p_inf_float32():
     """
     Feature: Cdist cpu kernel
     Description: test the cdist p = inf.
     Expectation: the output[0] is same as numpy
     """
-    cdist = CdistTEST(float('inf'))
+    cdist = CdistNet(float('inf'))
     x1 = Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32))
     x2 = Tensor(np.array([[[3.0, 3.0], [3.0, 3.0]]]).astype(np.float32))
     output = cdist(x1, x2)
@@ -132,7 +132,7 @@ def test_CdistPinf_float32():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_cdist_p2_float32_func():
+def test_cdist_p_2_float32_func():
     """
     Feature: Cdist cpu kernel
     Description: test the cdist p = 2.0.

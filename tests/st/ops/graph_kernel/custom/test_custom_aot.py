@@ -484,7 +484,7 @@ def add_mul_div_bprop(source, execf, source_prop, execf_prop):
     assert np.allclose(expect_dy, dy_np, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_add_mul_div_bprop_graph():

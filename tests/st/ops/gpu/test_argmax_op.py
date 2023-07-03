@@ -124,7 +124,7 @@ def test_functional_argmax(mode):
     assert np.allclose(output.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_argmax_dynamic_shape():
@@ -156,7 +156,7 @@ def test_argmax_dynamic_shape():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_argmax_support_types():

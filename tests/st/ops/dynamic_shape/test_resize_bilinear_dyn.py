@@ -95,7 +95,7 @@ def test_resize_bilinear_cpu():
     case_input_dyn(context.PYNATIVE_MODE, "CPU")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_resize_bilinear_gpu_fp64():
@@ -121,7 +121,7 @@ def test_resize_bilinear_cpu_fp64():
     case_input_dyn(context.PYNATIVE_MODE, "CPU", "float64")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_resize_bilinear_gpu_fp16():

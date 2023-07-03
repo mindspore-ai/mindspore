@@ -31,7 +31,7 @@ class NetAngle(nn.Cell):
         return self.angle(a)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_angle_pynative():
@@ -54,7 +54,7 @@ def test_angle_pynative():
     assert np.allclose(output.asnumpy(), expect, 1e-5, 1e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_angle_graph():

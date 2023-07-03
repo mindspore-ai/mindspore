@@ -264,7 +264,7 @@ def test_hybrid_gpu_graph_mode():
     hybrid_custom_inplace_assign_two_outputs()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_hybrid_gpu_pynative_mode():

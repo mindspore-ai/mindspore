@@ -30,7 +30,7 @@ class NetLogNormalReverse(nn.Cell):
         return self.log_normal_reverse(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_log_normal_reverse_float16_4d():
@@ -86,7 +86,7 @@ def test_log_normal_reverse_float32_3d():
     assert output.shape == expect
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_log_normal_reverse_float64_2d():
@@ -114,7 +114,7 @@ def test_log_normal_reverse_float64_2d():
     assert output.shape == expect
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_log_normal_reverse_invalid_input_type():

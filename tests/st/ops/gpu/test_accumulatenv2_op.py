@@ -65,7 +65,7 @@ def test_accumulate_n_v2_pynative_float32():
     pynative_net()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_accumulate_n_v2_graph_float64():

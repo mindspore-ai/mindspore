@@ -58,7 +58,7 @@ class NetWithSparseGatherV2(nn.Cell):
         return self.gather(self.weight1, indices, self.axis) + self.weight2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_adam():
@@ -120,7 +120,7 @@ def test_lazy_adam():
     assert np.allclose(output.asnumpy(), expected_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_adam_offload_acc():
@@ -203,7 +203,7 @@ def test_apply_adam_witm_adam_op_vmap():
     np.testing.assert_allclose(ms_var, np_var, rtol=error, atol=error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_adam_net_with_map_tensor():

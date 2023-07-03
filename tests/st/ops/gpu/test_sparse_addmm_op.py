@@ -31,7 +31,7 @@ class SparseAddmmNet(nn.Cell):
         return self.sparse_addmm(input_indices, input_values, input_shape, x2_dense, x3_dense, alpha, beta)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sparse_addmm_input_int32():
@@ -57,7 +57,7 @@ def test_sparse_addmm_input_int32():
     assert np.allclose(y_dense.asnumpy(), y_dense_expect.astype(np.int32), 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sparse_addmm_input_int64():

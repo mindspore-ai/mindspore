@@ -468,7 +468,7 @@ class BiasAddDynamic(nn.Cell):
         return output
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bias_add_dynamic_two_inputs():
@@ -570,7 +570,7 @@ def test_dx_op():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dx_nd_op():
@@ -616,7 +616,7 @@ def test_dx_nd_op():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dw_op():
@@ -658,7 +658,7 @@ def test_dw_op():
     assert np.all(-diff < db_error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dw_nd_op():

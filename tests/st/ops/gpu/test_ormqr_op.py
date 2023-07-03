@@ -29,7 +29,7 @@ class OrmqrNet(nn.Cell):
         return self.ormqr(x, tau, other)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ormqr_rank2_right_double_fp():
@@ -56,7 +56,7 @@ def test_ormqr_rank2_right_double_fp():
     assert np.allclose(expect, output_py, rtol=1.e-5, atol=1.e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ormqr_rank3_left_double_fp():

@@ -31,7 +31,7 @@ class Net(nn.Cell):
         return self.bincount(array, size, weights)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bincount_graph():
@@ -73,7 +73,7 @@ def test_bincount_pynative():
         assert np.allclose(output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bincount_no_weights():
@@ -92,7 +92,7 @@ def test_bincount_no_weights():
     assert np.allclose(output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bincount_bigdata():

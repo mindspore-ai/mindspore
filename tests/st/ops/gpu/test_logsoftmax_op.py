@@ -67,7 +67,7 @@ class Grad(nn.Cell):
         return gout
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -114,7 +114,7 @@ def test_logsoftmaxgrad(mode):
     assert np.allclose(dx[0].asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -143,7 +143,7 @@ def test_logsoftmaxgrad_4d_lastdim(mode):
     assert np.allclose(dx[0].asnumpy(), expect, atol=1e-5, rtol=1e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -173,7 +173,7 @@ def test_logsoftmaxgrad_4d_dim1(mode):
     assert np.allclose(dx[0].asnumpy(), expect, atol=1e-5, rtol=1e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -220,7 +220,7 @@ def test_logsoftmaxgrad1(mode):
     assert np.allclose(dx[0].asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -270,7 +270,7 @@ def test_logsoftmaxgrad1_dynamic_shape(mode):
     assert np.allclose(dx_out[0].asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_logsoftmaxgrad_vmap():

@@ -110,7 +110,7 @@ class PrintTypes(nn.Cell):
 
 
 @security_off_wrap
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -129,7 +129,7 @@ def test_print_multiple_types(mode):
 
 
 @security_off_wrap
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -146,7 +146,7 @@ def test_print_dtype(mode, dtype):
 
 
 @security_off_wrap
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -227,7 +227,7 @@ def test_print_tensor_dtype_in_nested_tuple(mode):
     net(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_print_abs():

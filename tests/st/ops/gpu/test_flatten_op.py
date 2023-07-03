@@ -237,7 +237,7 @@ def test_flatten_vmap():
     np.testing.assert_allclose(output.asnumpy(), output_np, rtol=1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -282,7 +282,7 @@ def test_flatten_op_nn(mode):
     assert np.allclose(expect, out.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -305,7 +305,7 @@ def test_ops_flatten(mode):
     assert net(x, start_dim=2, end_dim=-2).shape == (1, 2, 3, 4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -323,7 +323,7 @@ def test_nn_flatten(mode):
     assert out2.shape == (24,)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -342,7 +342,7 @@ def test_tensor_flatten(mode):
     assert out2.shape == (1, 2, 12)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -363,7 +363,7 @@ def test_flatten_order(mode):
     assert np.all(out_f.asnumpy() == [1, 3, 2, 4])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
@@ -389,7 +389,7 @@ def test_ops_flatten_single_element(mode):
         NetFlattenOps()(y, start_dim=2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_nn_flatten_single_element():
@@ -405,7 +405,7 @@ def test_nn_flatten_single_element():
         nn.Flatten()(Tensor([1]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_ops_flatten_invalid_input():
@@ -422,7 +422,7 @@ def test_ops_flatten_invalid_input():
         NetFlattenOps()(x, end_dim=True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_ops_flatten_dynamic_shape():
@@ -443,7 +443,7 @@ def test_ops_flatten_dynamic_shape():
     print(out.shape)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 def test_ops_flatten_dynamic_rank():

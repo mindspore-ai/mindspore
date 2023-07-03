@@ -31,7 +31,7 @@ class LgammaNet(nn.Cell):
         return self.lgamma(input_x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_lgamma_graph_float16():
@@ -48,7 +48,7 @@ def test_lgamma_graph_float16():
 
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_lgamma_graph_float32():
@@ -65,7 +65,7 @@ def test_lgamma_graph_float32():
     assert np.allclose(z_ms.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_lgamma_graph_float64():

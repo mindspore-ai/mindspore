@@ -53,7 +53,7 @@ def space_to_batch_nd_test_case(nptype, block_size=2, input_shape=(1, 1, 4, 4)):
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_space_to_batch_nd_graph():

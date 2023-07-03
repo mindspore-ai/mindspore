@@ -56,7 +56,7 @@ def test_quantile_fp32():
     assert np.allclose(output, expect_output, ertol_loss)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.skip(reason="I6NEX6, I6NEJF")

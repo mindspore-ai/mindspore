@@ -322,7 +322,7 @@ class BatchMatMulTestNet(Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchmatmul_type_float16():
@@ -397,7 +397,7 @@ def test_batchmatmul_type_float64():
     assert str(float64_out.dtype) == "Float64"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchmatmul_type_int8():
@@ -423,7 +423,7 @@ def test_batchmatmul_type_int8():
         assert str(out.dtype) == "Int32"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchmatmul_type_complex64():
@@ -467,7 +467,7 @@ def test_batchmatmul_type_complex64():
         assert str(out.dtype) == "Complex64"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchmatmul_type_complex128():

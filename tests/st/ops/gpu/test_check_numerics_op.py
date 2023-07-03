@@ -101,7 +101,7 @@ def test_check_numerics_graph_float32():
     check_numerics(loss=1.0e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_check_numerics_pynative_float64():

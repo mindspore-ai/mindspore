@@ -33,7 +33,7 @@ class BiasAddGradNet(nn.Cell):
         return self.op(dout)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("data_type", [np.float16, np.float32])
@@ -50,7 +50,7 @@ def test_bias_add_grad2d(data_type):
     assert np.all(output.asnumpy() == expect_output), "bias_add_grad execute failed, please check current code commit"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("data_type", [np.float16, np.float32])
@@ -67,7 +67,7 @@ def test_bias_add_grad4d(data_type):
     assert np.all(output.asnumpy() == expect_output), "bias_add_grad execute failed, please check current code commit"
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("data_type", [np.float16, np.float32])

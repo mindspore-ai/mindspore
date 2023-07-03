@@ -37,7 +37,7 @@ def search_sorted_pynative(loss):
     assert np.allclose(output.asnumpy(), expect, loss, loss)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_search_sorted_graph_int32():

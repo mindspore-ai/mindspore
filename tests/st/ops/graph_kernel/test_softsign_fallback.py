@@ -95,7 +95,7 @@ def test_sofsign_gpu_pynative_mode():
     softsign_compare([2, 3, 2], np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sofsign_gpu_graph_mode():
