@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-const int MAX_LENGTH = 100000;
+const int MAX_LENGTH = 200000000;
 
 void SparseMatrixSparseMatMulCheckInteger(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
@@ -123,7 +123,8 @@ abstract::TupleShapePtr SparseMatrixSparseMatMulInferShape(const PrimitivePtr &p
 
   ShapeVector col_shape = {abstract::Shape::kShapeDimAny};
   ShapeVector values_shape = {abstract::Shape::kShapeDimAny};
-  ShapeVector infer_shape_max = {MAX_LENGTH};
+  int64_t max_length = MAX_LENGTH;
+  ShapeVector infer_shape_max = {max_length};
   y_col_shape = std::make_shared<abstract::Shape>(col_shape, infer_shape_max);
   y_values_shape = std::make_shared<abstract::Shape>(values_shape, infer_shape_max);
 
