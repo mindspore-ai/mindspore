@@ -8495,13 +8495,18 @@ class FFTWithSize(Primitive):
     Args:
         signal_ndim (int): The number of dimensions in each signal, this controls how many dimensions
             of the fourier transform are realized, can only be 1, 2 or 3.
-        inverse (bool): Whether it is the inverse transformation.
-        real (bool): Whether it is the real transformation.
+        inverse (bool): Whether it is the inverse transformation, used to select from FFT and RFFT or IFFT and IRFFT.
 
-            - "inverse:False real:False" corresponds to FFT.
-            - "inverse:True real:False" corresponds to IFFT.
-            - "inverse:False real:True" corresponds to RFFT.
-            - "inverse:True real:True" corresponds to IRFFT.
+            - when set to ``True``: IFFT and IRFFT.
+            - when set to ``False``: FFT and RFFT.
+
+        real (bool): Whether it is the real transformation, combines with `inverse` to select a specific
+            transformation mode:
+
+            - `inverse` is ``False`` ,  `real` is ``False`` : corresponds to FFT.
+            - `inverse` is ``True`` , `real` is ``False`` : corresponds to IFFT.
+            - `inverse` is ``False`` , `real` is ``True`` : corresponds to RFFT.
+            - `inverse` is ``True`` , `real` is ``True``  : corresponds to IRFFT.
 
         norm (str, optional): The normalization, optional values: [ ``"backward"`` , ``"forward"`` , ``"ortho"`` ].
             Default value: ``"backward"`` .

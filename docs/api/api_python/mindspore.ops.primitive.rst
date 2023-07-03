@@ -87,7 +87,6 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
     mindspore.ops.ResizeBicubic
     mindspore.ops.ResizeBilinear
     mindspore.ops.ResizeNearestNeighbor
-    mindspore.ops.ResizeNearestNeighborV2
     mindspore.ops.UpsampleNearest3D
     mindspore.ops.UpsampleTrilinear3D
 

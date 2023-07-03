@@ -82,12 +82,22 @@ class TruncatedNormal(Primitive):
 
     Note:
         - The value of `shape` must be greater than zero. The output length can not exceed 1000000.
-        - When `seed` or `seed2` is assigned a non-zero value, that value will be used as the seed.
-          Otherwise, a random seed will be used instead.
+        - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
+          and the random seed is the initial value of this random number. If the random seed is the same in two
+          separate calls, the random number generated will not change.
+        - Global random seed and operator-level random seed are not set or both set to 0: behavior is completely random.
+        - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
+          with 0 to generate random number.
+        - Global random seed is not set, operator-level random seed is set: 0
+          splices with the operator-level random seed to generate random number.
+        - Both Global random and operator-level random seed are set: the global random seed will splice with the
+          operator-level random seed to generate random number.
 
     Args:
-        seed (int, optional): Random number seed. Default: 0.
-        seed2 (int, optional): The second seed to avoid seed collision. Default: 0.
+        seed (int, optional): The operator-level random seed, used to generate random numbers,
+            must be non-negative. Default: ``0`` .
+        seed2 (int, optional): The global random seed, which combines with the operator-level
+            random seed to determine the final generated random number, must be non-negative. Default: ``0`` .
         dtype (mindspore.dtype, optional): Specified output data type. Must be one of the following types:
             mindspore.float16, mindspore.float32 and mindspore.float64. Default: mindspore.float32.
 
@@ -140,9 +150,23 @@ class StandardNormal(Primitive):
 
     Refer to :func:`mindspore.ops.standard_normal` for more details.
 
+    Note:
+        - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
+          and the random seed is the initial value of this random number. If the random seed is the same in two
+          separate calls, the random number generated will not change.
+        - Global random seed and operator-level random seed are not set or both set to 0: behavior is completely random.
+        - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
+          with 0 to generate random number.
+        - Global random seed is not set, operator-level random seed is set: 0
+          splices with the operator-level random seed to generate random number.
+        - Both Global random and operator-level random seed are set: the global random seed will splice with the
+          operator-level random seed to generate random number.
+
     Args:
-        seed (int): Random seed, must be non-negative. Default: ``0`` .
-        seed2 (int): Random seed2, must be non-negative. A second seed to avoid seed collision. Default: ``0`` .
+        seed (int, optional): The operator-level random seed, used to generate random numbers,
+            must be non-negative. Default: ``0`` .
+        seed2 (int, optional): The global random seed, which combines with the operator-level
+            random seed to determine the final generated random number, must be non-negative. Default: ``0`` .
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
@@ -182,9 +206,23 @@ class StandardLaplace(Primitive):
     .. math::
         \text{f}(x) = \frac{1}{2}\exp(-|x|)
 
+    Note:
+        - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
+          and the random seed is the initial value of this random number. If the random seed is the same in two
+          separate calls, the random number generated will not change.
+        - Global random seed and operator-level random seed are not set or both set to 0: behavior is completely random.
+        - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
+          with 0 to generate random number.
+        - Global random seed is not set, operator-level random seed is set: 0
+          splices with the operator-level random seed to generate random number.
+        - Both Global random and operator-level random seed are set: the global random seed will splice with the
+          operator-level random seed to generate random number.
+
     Args:
-        seed (int): Random seed. Default: ``0`` .
-        seed2 (int): Random seed2. Default: ``0`` .
+        seed (int, optional): The operator-level random seed, used to generate random numbers,
+            must be non-negative. Default: ``0`` .
+        seed2 (int, optional): The global random seed, which combines with the operator-level
+            random seed to determine the final generated random number, must be non-negative. Default: ``0`` .
 
     Inputs:
         - **shape** (Union[tuple, Tensor]) - The shape of random tensor to be generated. Only constant value is allowed
@@ -226,17 +264,17 @@ class RandomGamma(Primitive):
     r"""
     Produces random positive floating-point values x, distributed according to probability density function:
 
-    .. note::
-        - Random seed: A set of regular random numbers can be obtained through some complex mathematical algorithms,
-          and the random seed is the initial value of this random number. If the random seed is the same, the random
-          number obtained will not change.
-        - Global random seed and operator-level random seed are not set: Use the default value as the random seed.
+    Note:
+        - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
+          and the random seed is the initial value of this random number. If the random seed is the same in two
+          separate calls, the random number generated will not change.
+        - Global random seed and operator-level random seed are not set or both set to 0: behavior is completely random.
         - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
-          with a randomly generated seed.
-        - Global random seed is not set, operator-level random seed is set: The default global random seed is used,
-          and splices with the operator-level random seed.
-        - Both Global random and operator-level random seed are set: The global random seed will splice with the
-          operator-level random seed.
+          with 0 to generate random number.
+        - Global random seed is not set, operator-level random seed is set: 0
+          splices with the operator-level random seed to generate random number.
+        - Both Global random and operator-level random seed are set: the global random seed will splice with the
+          operator-level random seed to generate random number.
 
     Args:
         seed (int, optional): The operator-level random seed, used to generate random numbers,
@@ -340,23 +378,23 @@ class Gamma(PrimitiveWithInfer):
     .. math::
         \text{P}(x|α,β) = \frac{\exp(-x/β)}{{β^α}\cdot{\Gamma(α)}}\cdot{x^{α-1}}
 
-    .. note::
-        - Random seed: A set of regular random numbers can be obtained through some complex mathematical algorithms,
-          and the random seed is the initial value of this random number. If the random seed is the same, the random
-          number obtained will not change.
-        - Global random seed and operator-level random seed are not set: Use the default value as the random seed.
+    Note:
+        - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
+          and the random seed is the initial value of this random number. If the random seed is the same in two
+          separate calls, the random number generated will not change.
+        - Global random seed and operator-level random seed are not set or both set to 0: behavior is completely random.
         - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
-          with a randomly generated seed.
-        - Global random seed is not set, operator-level random seed is set: The default global random seed is used,
-          and splices with the operator-level random seed.
-        - Both Global random and operator-level random seed are set: The global random seed will splice with the
-          operator-level random seed.
+          with 0 to generate random number.
+        - Global random seed is not set, operator-level random seed is set: 0
+          splices with the operator-level random seed to generate random number.
+        - Both Global random and operator-level random seed are set: the global random seed will splice with the
+          operator-level random seed to generate random number.
 
     Args:
-        seed (int): The operator-level random seed, used to generate random numbers, must be non-negative.
-            Default: ``0`` .
-        seed2 (int): The global random seed and it will combile with the operator-level random seed to determine the
-            final generated random number, must be non-negative. Default: ``0`` .
+        seed (int, optional): The operator-level random seed, used to generate random numbers,
+            must be non-negative. Default: ``0`` .
+        seed2 (int, optional): The global random seed, which combines with the operator-level
+            random seed to determine the final generated random number, must be non-negative. Default: ``0`` .
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
@@ -429,12 +467,22 @@ class ParameterizedTruncatedNormal(Primitive):
 
     Note:
         - The value in tensor `min` must be strictly less than `max` at any position after broadcasting.
-        - When `seed` or `seed2` is assigned a non-zero value, that value will be used as the seed.
-          Otherwise, a random seed will be used instead.
+        - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
+          and the random seed is the initial value of this random number. If the random seed is the same in two
+          separate calls, the random number generated will not change.
+        - Global random seed and operator-level random seed are not set or both set to 0: behavior is completely random.
+        - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
+          with 0 to generate random number.
+        - Global random seed is not set, operator-level random seed is set: 0
+          splices with the operator-level random seed to generate random number.
+        - Both Global random and operator-level random seed are set: the global random seed will splice with the
+          operator-level random seed to generate random number.
 
     Args:
-        seed (int, optional): Random number seed. Default: ``0`` .
-        seed2 (int, optional): The second seed to avoid seed collision. Default: ``0`` .
+        seed (int, optional): The operator-level random seed, used to generate random numbers,
+            must be non-negative. Default: ``0`` .
+        seed2 (int, optional): The global random seed, which combines with the operator-level
+            random seed to determine the final generated random number, must be non-negative. Default: ``0`` .
 
     Inputs:
         - **shape** (Tensor) - The shape of random tensor to be generated.
@@ -501,9 +549,23 @@ class Poisson(PrimitiveWithInfer):
     .. math::
         \text{P}(i|μ) = \frac{\exp(-μ)μ^{i}}{i!}
 
+    Note:
+        - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
+          and the random seed is the initial value of this random number. If the random seed is the same in two
+          separate calls, the random number generated will not change.
+        - Global random seed and operator-level random seed are not set or both set to 0: behavior is completely random.
+        - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
+          with 0 to generate random number.
+        - Global random seed is not set, operator-level random seed is set: 0
+          splices with the operator-level random seed to generate random number.
+        - Both Global random and operator-level random seed are set: the global random seed will splice with the
+          operator-level random seed to generate random number.
+
     Args:
-        seed (int): Random seed, must be non-negative. Default: ``0`` .
-        seed2 (int): Random seed2, must be non-negative. Default: ``0`` .
+        seed (int, optional): The operator-level random seed, used to generate random numbers,
+            must be non-negative. Default: ``0`` .
+        seed2 (int, optional): The global random seed, which combines with the operator-level
+            random seed to determine the final generated random number, must be non-negative. Default: ``0`` .
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
@@ -566,11 +628,23 @@ class RandomPoisson(Primitive):
     .. math::
         \text{P}(i|μ) = \frac{\exp(-μ)μ^{i}}{i!}
 
-    Args:
-        seed (int, optional): Random number seed. If either `seed` or `seed2` are set to be non-zero,
-            the seed is set by the given seed. Otherwise, it is seeded by a random seed. Default: ``0`` .
-        seed2 (int, optional): A second seed to avoid seed collision. Default: ``0`` .
+    Note:
+        - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
+          and the random seed is the initial value of this random number. If the random seed is the same in two
+          separate calls, the random number generated will not change.
+        - Global random seed and operator-level random seed are not set or both set to 0: behavior is completely random.
+        - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
+          with 0 to generate random number.
+        - Global random seed is not set, operator-level random seed is set: 0
+          splices with the operator-level random seed to generate random number.
+        - Both Global random and operator-level random seed are set: the global random seed will splice with the
+          operator-level random seed to generate random number.
 
+    Args:
+        seed (int, optional): The operator-level random seed, used to generate random numbers,
+            must be non-negative. Default: ``0`` .
+        seed2 (int, optional): The global random seed, which combines with the operator-level
+            random seed to determine the final generated random number, must be non-negative. Default: ``0`` .
         dtype (mindspore.dtype, optional): The type of output. Default: ``mstype.int64`` .
 
     Inputs:
@@ -630,11 +704,22 @@ class UniformInt(Primitive):
 
     Note:
         - The number in tensor minval must be strictly less than maxval at any position after broadcasting.
-        - If neither `seed` nor `seed2` is assigned a non-zero value, a randomly generated seed is used instead.
+        - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
+          and the random seed is the initial value of this random number. If the random seed is the same in two
+          separate calls, the random number generated will not change.
+        - Global random seed and operator-level random seed are not set or both set to 0: behavior is completely random.
+        - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
+          with 0 to generate random number.
+        - Global random seed is not set, operator-level random seed is set: 0
+          splices with the operator-level random seed to generate random number.
+        - Both Global random and operator-level random seed are set: the global random seed will splice with the
+          operator-level random seed to generate random number.
 
     Args:
-        seed (int): Random seed, must be non-negative. Default: ``0`` .
-        seed2 (int): Random seed2, must be non-negative. A second seed to avoid seed collision. Default: ``0`` .
+        seed (int, optional): The operator-level random seed, used to generate random numbers,
+            must be non-negative. Default: ``0`` .
+        seed2 (int, optional): The global random seed, which combines with the operator-level
+            random seed to determine the final generated random number, must be non-negative. Default: ``0`` .
 
     Inputs:
         - **shape** (Union[tuple, Tensor]) - The shape of random tensor to be generated. Only constant value is allowed.
@@ -682,20 +767,23 @@ class UniformReal(Primitive):
     r"""
     Produces random floating-point values, uniformly distributed to the interval [0, 1).
 
-    Args:
-        seed (int): The operator-level random seed, used to generate random numbers, must be non-negative.
-            Default: ``0`` .
-        seed2 (int): The global random seed and it will combile with the operator-level random seed to determine the
-            final generated random number, must be non-negative. Default: ``0`` .
-
-    .. note::
-        - Global random seed and operator-level random seed are not set: Use a randomly generated seed.
+    Note:
+        - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
+          and the random seed is the initial value of this random number. If the random seed is the same in two
+          separate calls, the random number generated will not change.
+        - Global random seed and operator-level random seed are not set or both set to 0: behavior is completely random.
         - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
-          with a randomly generated seed.
-        - Global random seed is not set, operator-level random seed is set: The default global random seed is used,
-          and splices with the operator-level random seed.
-        - Both Global random and operator-level random seed are set: The global random seed will splice with the
-          operator-level random seed.
+          with 0 to generate random number.
+        - Global random seed is not set, operator-level random seed is set: 0
+          splices with the operator-level random seed to generate random number.
+        - Both Global random and operator-level random seed are set: the global random seed will splice with the
+          operator-level random seed to generate random number.
+
+    Args:
+        seed (int, optional): The operator-level random seed, used to generate random numbers,
+            must be non-negative. Default: ``0`` .
+        seed2 (int, optional): The global random seed, which combines with the operator-level
+            random seed to determine the final generated random number, must be non-negative. Default: ``0`` .
 
     Inputs:
         - **shape** (Union[tuple, Tensor]) - The shape of tensor to be generated. Only constant value is allowed.
@@ -736,11 +824,24 @@ class RandomChoiceWithMask(Primitive):
 
     Refer to :func:`mindspore.ops.choice_with_mask` for more details.
 
+    Note:
+        - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
+          and the random seed is the initial value of this random number. If the random seed is the same in two
+          separate calls, the random number generated will not change.
+        - Global random seed and operator-level random seed are not set or both set to 0: behavior is completely random.
+        - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
+          with 0 to generate random number.
+        - Global random seed is not set, operator-level random seed is set: 0
+          splices with the operator-level random seed to generate random number.
+        - Both Global random and operator-level random seed are set: the global random seed will splice with the
+          operator-level random seed to generate random number.
+
     Args:
         count (int, optional): Number of items expected to get and the number must be greater than 0. Default: ``256`` .
-        seed (int, optional): Seed is used as entropy source for Random number engines generating
-            pseudo-random numbers. Default: ``0`` .
-        seed2 (int, optional): Second seed to avoid collision. Default: ``0`` .
+        seed (int, optional): The operator-level random seed, used to generate random numbers,
+            must be non-negative. Default: ``0`` .
+        seed2 (int, optional): The global random seed, which combines with the operator-level
+            random seed to determine the final generated random number, must be non-negative. Default: ``0`` .
 
     Inputs:
         - **input_x** (Tensor[bool]) - The input tensor.
@@ -841,12 +942,24 @@ class Multinomial(Primitive):
     row of tensor input.
 
     Note:
-        The rows of input do not need to sum to one (in which case we use the values as weights),
-        but must be non-negative, finite and have a non-zero sum.
+        - The rows of input do not need to sum to one (in which case we use the values as weights),
+          but must be non-negative, finite and have a non-zero sum.
+        - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
+          and the random seed is the initial value of this random number. If the random seed is the same in two
+          separate calls, the random number generated will not change.
+        - Global random seed and operator-level random seed are not set or both set to 0: behavior is completely random.
+        - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
+          with 0 to generate random number.
+        - Global random seed is not set, operator-level random seed is set: 0
+          splices with the operator-level random seed to generate random number.
+        - Both Global random and operator-level random seed are set: the global random seed will splice with the
+          operator-level random seed to generate random number.
 
     Args:
-        seed (int, optional): Random seed, must be non-negative. Default: ``0`` .
-        seed2 (int, optional): Random seed2, must be non-negative. Default: ``0`` .
+        seed (int, optional): The operator-level random seed, used to generate random numbers,
+            must be non-negative. Default: ``0`` .
+        seed2 (int, optional): The global random seed, which combines with the operator-level
+            random seed to determine the final generated random number, must be non-negative. Default: ``0`` .
         dtype(mindspore.dtype, optional): The type of output, must be ``mstype.int32`` or ``mstype.int64``.
             Default: ``mstype.int32``.
 
@@ -1091,12 +1204,23 @@ class RandomShuffle(Primitive):
     r"""
     Randomly shuffles a Tensor along its first dimension.
 
+    Note:
+        - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
+          and the random seed is the initial value of this random number. If the random seed is the same in two
+          separate calls, the random number generated will not change.
+        - Global random seed and operator-level random seed are not set or both set to 0: behavior is completely random.
+        - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
+          with 0 to generate random number.
+        - Global random seed is not set, operator-level random seed is set: 0
+          splices with the operator-level random seed to generate random number.
+        - Both Global random and operator-level random seed are set: the global random seed will splice with the
+          operator-level random seed to generate random number.
+
     Args:
-        seed (int, optional): Random seed. If `seed` or `seed2` is set to non-zero, the random number generator
-            will be seeded by the given seed. Otherwise, it will be seeded randomly.
-            The `seed` must be non-negative. Default: ``0`` .
-        seed2 (int, optional): A second seed to avoid seed collision. If `seed` is 0, the `seed2` will be used as
-            the seed of the random generator. It must be non-negative. Default: ``0`` .
+        seed (int, optional): The operator-level random seed, used to generate random numbers,
+            must be non-negative. Default: ``0`` .
+        seed2 (int, optional): The global random seed, which combines with the operator-level
+            random seed to determine the final generated random number, must be non-negative. Default: ``0`` .
 
     Inputs:
         - **x** (Tensor) - The Tensor need be shuffled.
