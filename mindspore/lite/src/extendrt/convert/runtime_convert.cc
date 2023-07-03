@@ -22,6 +22,10 @@
 #include "tools/converter/cxx_api/converter_para.h"
 #include "tools/converter/config_parser/config_file_parser.h"
 
+namespace {
+constexpr auto kAscendProviderGe = "ge";
+}
+
 static int ParseShapeStrToShapeMap(const std::string &input_shape_str,
                                    std::vector<std::vector<int64_t>> *input_shapes) {
   std::vector<int64_t> shape;
@@ -165,6 +169,10 @@ int RuntimeConvert(const mindspore::api::FuncGraphPtr &graph, const std::shared_
   auto device_list = context->MutableDeviceInfo();
   for (auto &device : device_list) {
     if (device->GetDeviceType() == mindspore::kAscend) {
+      if (device->GetProvider() == kAscendProviderGe) {
+        param->ascendGeOptionCfg.enable_fusion = true;
+        continue;
+      }
       param->aclModelOptionCfgParam.offline = false;
       param->device = "Ascend310";
       param->no_fusion = false;

@@ -44,6 +44,10 @@ struct GraphKernelCfg {
   std::string graph_kernel_flags;
 };
 
+struct AscendGeOptionCfg {
+  bool enable_fusion;
+};
+
 struct ConverterPara {
   converter::FmkType fmk_type;
   std::string model_file;
@@ -91,6 +95,7 @@ struct ConverterPara {
   lite::acl::AclModelOptionCfg aclModelOptionCfgParam;
   lite::micro::MicroParam microParam;
   ParallelSplitConfig parallel_split_config;
+  AscendGeOptionCfg ascendGeOptionCfg;
   std::string device;
   CpuOptionCfg cpuOptionCfgParam;
   lite::quant::TransformQuantParam transformQuantParam;
