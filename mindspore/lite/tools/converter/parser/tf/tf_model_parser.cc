@@ -1096,99 +1096,101 @@ bool TFModelParser::IsEmptyTfFunction(const CNodePtr &anf_node, std::string bran
     auto &tf_sub_signature = tf_sub_fuction.signature();
     auto &sub_graph_name = tf_sub_signature.name();
 
-    if (branch_name == sub_graph_name) {
-      auto &tf_sub_signature_output_arg = tf_sub_signature.output_arg();
-      if (tf_sub_signature_output_arg.size() != 1) {
+    if (branch_name != sub_graph_name) {
+      continue;
+    }
+    auto &tf_sub_signature_output_arg = tf_sub_signature.output_arg();
+    if (tf_sub_signature_output_arg.size() != 1) {
+      return false;
+    }
+    auto &tf_sub_signature_output_name = tf_sub_signature_output_arg.Get(0).name();
+    auto input_arg_size = tf_sub_signature.input_arg_size();
+    if (tf_sub_fuction.node_def_size() == 0) {
+      for (int index = 0; index < input_arg_size; index++) {
+        auto &input_arg = tf_sub_signature.input_arg(index);
+        if (input_arg.name() == tf_sub_signature_output_name &&
+            ineffective_if_op_map_.find(anf_node) == ineffective_if_op_map_.end()) {
+          ineffective_if_op_map_[anf_node] = index + C2NUM;
+          return true;
+        }
+      }
+    } else if (tf_sub_fuction.node_def_size() == 1) {
+      auto &node_def = tf_sub_fuction.node_def(0);
+      if (!TensorFlowUtils::OutputIsInputOp(node_def.name())) {
         return false;
       }
-      auto &tf_sub_signature_output_name = tf_sub_signature_output_arg.Get(0).name();
-      auto input_arg_size = tf_sub_signature.input_arg_size();
-      if (tf_sub_fuction.node_def_size() == 0) {
-        for (int index = 0; index < input_arg_size; index++) {
-          auto &input_arg = tf_sub_signature.input_arg(index);
-          if (input_arg.name() == tf_sub_signature_output_name) {
-            if (ineffective_if_op_map_.find(anf_node) == ineffective_if_op_map_.end()) {
-              ineffective_if_op_map_[anf_node] = index + C2NUM;
-              return true;
-            }
-          }
-        }
-      } else if (tf_sub_fuction.node_def_size() == 1) {
-        auto &node_def = tf_sub_fuction.node_def(0);
-        if (!TensorFlowUtils::OutputIsInputOp(node_def.name())) {
-          return false;
-        }
-        for (int index = 0; index < input_arg_size; index++) {
-          auto &input_arg = tf_sub_signature.input_arg(index);
-          if (input_arg.name() == node_def.input(0)) {
-            auto output_name = node_def.name();
-            transform(output_name.begin(), output_name.end(), output_name.begin(), ::tolower);
-            if (output_name == tf_sub_signature_output_name) {
-              if (ineffective_if_op_map_.find(anf_node) == ineffective_if_op_map_.end()) {
-                ineffective_if_op_map_[anf_node] = index + C2NUM;
-                return true;
-              }
-            }
+      for (int index = 0; index < input_arg_size; index++) {
+        auto &input_arg = tf_sub_signature.input_arg(index);
+        if (input_arg.name() == node_def.input(0)) {
+          auto output_name = node_def.name();
+          transform(output_name.begin(), output_name.end(), output_name.begin(), ::tolower);
+          if (output_name == tf_sub_signature_output_name &&
+              ineffective_if_op_map_.find(anf_node) == ineffective_if_op_map_.end()) {
+            ineffective_if_op_map_[anf_node] = index + C2NUM;
+            return true;
           }
         }
       }
     }
   }
   return false;
-}
+}  // namespace lite
 
 bool TFModelParser::IsIneffectiveIfOp(const CNodePtr &anf_node, const string &op_type,
                                       const tensorflow::NodeDef &node_def) {
-  if (op_type == "If") {
-    lite::DataInfo if_cond_info;
-    auto if_cond = anf_node->input(1);
-    if (if_cond == nullptr) {
+  if (op_type != "If") {
+    return false;
+  }
+  lite::DataInfo if_cond_info;
+  auto if_cond = anf_node->input(1);
+  if (if_cond == nullptr) {
+    return false;
+  }
+  int status = lite::RET_ERROR;
+  if (if_cond->isa<Parameter>()) {
+    status = lite::FetchDataFromParameterNode(anf_node, 1, converter::kFmkTypeMs, &if_cond_info, true);
+  } else if (utils::isa<CNodePtr>(if_cond)) {
+    auto input_cnode = if_cond->cast<CNodePtr>();
+    if (input_cnode == nullptr) {
       return false;
     }
-    int status = lite::RET_ERROR;
-    if (if_cond->isa<Parameter>()) {
-      status = lite::FetchDataFromParameterNode(anf_node, 1, converter::kFmkTypeMs, &if_cond_info, true);
-    } else if (utils::isa<CNodePtr>(if_cond)) {
-      auto input_cnode = if_cond->cast<CNodePtr>();
-      if (input_cnode == nullptr) {
-        return false;
-      }
-      if (!opt::CheckPrimitiveType(input_cnode, prim::kPrimConstant)) {
-        return false;
-      }
-
-      auto input_cnode_in1 = input_cnode->input(1);
-      if (input_cnode_in1 == nullptr) {
-        return false;
-      }
-      if (input_cnode_in1->isa<Parameter>()) {
-        status = lite::FetchDataFromParameterNode(input_cnode, 1, converter::kFmkTypeMs, &if_cond_info, true);
-      } else if (input_cnode_in1->isa<ValueNode>()) {
-        status = lite::FetchDataFromValueNode(input_cnode, 1, converter::kFmkTypeMs, false, &if_cond_info, true);
-      }
+    if (!opt::CheckPrimitiveType(input_cnode, prim::kPrimConstant)) {
+      return false;
     }
 
-    if (status == lite::RET_OK) {
-      if (static_cast<TypeId>(if_cond_info.data_type_) == kNumberTypeBool && if_cond_info.data_.size() == 1) {
-        tensorflow::AttrValue attr_value;
-        if (static_cast<bool>(if_cond_info.data_[0])) {
-          if (TensorFlowUtils::FindAttrValue(node_def, "then_branch", &attr_value)) {
-            auto then_name = attr_value.func().name();
-            if (IsEmptyTfFunction(anf_node, then_name)) {
-              return true;
-            }
-          }
-        } else {
-          if (TensorFlowUtils::FindAttrValue(node_def, "else_branch", &attr_value)) {
-            auto else_name = attr_value.func().name();
-            if (IsEmptyTfFunction(anf_node, else_name)) {
-              return true;
-            }
-          }
+    auto input_cnode_in1 = input_cnode->input(1);
+    if (input_cnode_in1 == nullptr) {
+      return false;
+    }
+    if (input_cnode_in1->isa<Parameter>()) {
+      status = lite::FetchDataFromParameterNode(input_cnode, 1, converter::kFmkTypeMs, &if_cond_info, true);
+    } else if (input_cnode_in1->isa<ValueNode>()) {
+      status = lite::FetchDataFromValueNode(input_cnode, 1, converter::kFmkTypeMs, false, &if_cond_info, true);
+    }
+  }
+
+  if (status != lite::RET_OK) {
+    return false;
+  }
+  if (static_cast<TypeId>(if_cond_info.data_type_) == kNumberTypeBool && if_cond_info.data_.size() == 1) {
+    tensorflow::AttrValue attr_value;
+    if (static_cast<bool>(if_cond_info.data_[0])) {
+      if (TensorFlowUtils::FindAttrValue(node_def, "then_branch", &attr_value)) {
+        auto then_name = attr_value.func().name();
+        if (IsEmptyTfFunction(anf_node, then_name)) {
+          return true;
+        }
+      }
+    } else {
+      if (TensorFlowUtils::FindAttrValue(node_def, "else_branch", &attr_value)) {
+        auto else_name = attr_value.func().name();
+        if (IsEmptyTfFunction(anf_node, else_name)) {
+          return true;
         }
       }
     }
   }
+
   return false;
 }
 
