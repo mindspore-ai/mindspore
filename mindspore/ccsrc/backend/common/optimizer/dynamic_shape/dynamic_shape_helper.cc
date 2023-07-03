@@ -594,7 +594,7 @@ kernel::KernelArgs GetKernelArgsForNode(const CNodePtr &cnode, const pynative::E
       (IsCpuGpuKernelMod(kernel_mod_type) || kernel_type == ACL_KERNEL)) {
     auto update = kernel::AbstractArgsFromDeviceAddress(kernel_mod, execute_kernel.inputs_device_address_,
                                                         execute_kernel.outputs_device_address_, cnode->abstract());
-    update.depend_tensor_map = std::move(kernel_args.depend_tensor_map);
+    update.depend_tensor_map = kernel_args.depend_tensor_map;
     kernel::SetInputsByDependMap(update.depend_tensor_map, &update.inputs, IsCpuKernelMod(kernel_mod_type));
     return update;
   } else {

@@ -343,13 +343,13 @@ void ProfilerAnalyzer::SaveJsonData(const ProfilerDataPtr &data) {
 
 void ProfilerAnalyzer::AddPythonSummaryData() {
   uint64_t python_time = step_time_;
-  std::for_each(stage_infos_.begin(), stage_infos_.end(),
-                [&python_time](const std::pair<ProfilerStage, ProfilerStatisticsInfoPtr> &iter) {
-                  python_time -= iter.second->total_time_;
-                });
+  (void)std::for_each(stage_infos_.begin(), stage_infos_.end(),
+                      [&python_time](const std::pair<ProfilerStage, ProfilerStatisticsInfoPtr> &iter) {
+                        python_time -= iter.second->total_time_;
+                      });
   auto stage_info = std::make_shared<ProfilerStatisticsInfo>(kProfilerStageString.at(ProfilerStage::kPython), false);
   stage_info->AccumulateTime(python_time);
-  stage_infos_.emplace(ProfilerStage::kPython, stage_info);
+  (void)stage_infos_.emplace(ProfilerStage::kPython, stage_info);
 
   auto module_info = std::make_shared<ProfilerModuleInfo>();
   module_info->module_statistics_info_ =

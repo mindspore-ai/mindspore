@@ -93,7 +93,7 @@ void CacheForGraphInputs(const OpCompilerInfoPtr &op_compiler_info,
       cached_address = runtime::DeviceAddressUtils::CloneEmptyDeviceAddress(node_address, device_context);
       (*graph_map_cache)[kernel_with_index] = cached_address;
     }
-    op_compiler_info->inputs_.emplace_back(cached_address);
+    (void)op_compiler_info->inputs_.emplace_back(cached_address);
   }
 }
 
@@ -115,7 +115,7 @@ void CacheForGraphOutputs(const OpCompilerInfoPtr &op_compiler_info,
       cached_address = runtime::DeviceAddressUtils::CloneEmptyDeviceAddress(node_address, device_context);
       (*graph_map_cache)[item_with_index] = cached_address;
     }
-    op_compiler_info->outputs_.emplace_back(cached_address);
+    (void)op_compiler_info->outputs_.emplace_back(cached_address);
   }
 }
 
@@ -166,7 +166,7 @@ void CacheForGraphExecuteList(const OpCompilerInfoPtr &op_compiler_info,
     auto input_num = common::AnfAlgo::GetInputTensorNum(node);
     for (size_t i = 0; i < input_num; ++i) {
       if (common::AnfAlgo::IsNoneInput(node, i)) {
-        exe_kernel_info.inputs_device_address_.emplace_back(nullptr);
+        (void)exe_kernel_info.inputs_device_address_.emplace_back(nullptr);
         continue;
       }
       session::KernelWithIndex kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(node, i, false);
@@ -176,7 +176,7 @@ void CacheForGraphExecuteList(const OpCompilerInfoPtr &op_compiler_info,
         cached_address = runtime::DeviceAddressUtils::CloneEmptyDeviceAddress(node_address, device_context);
         (*graph_map_cache)[kernel_with_index] = cached_address;
       }
-      exe_kernel_info.inputs_device_address_.emplace_back(cached_address);
+      (void)exe_kernel_info.inputs_device_address_.emplace_back(cached_address);
     }
 
     // Save outputs
@@ -189,10 +189,10 @@ void CacheForGraphExecuteList(const OpCompilerInfoPtr &op_compiler_info,
         cached_address = runtime::DeviceAddressUtils::CloneEmptyDeviceAddress(node_address, device_context);
         (*graph_map_cache)[kernel_with_index] = cached_address;
       }
-      exe_kernel_info.outputs_device_address_.emplace_back(cached_address);
+      (void)exe_kernel_info.outputs_device_address_.emplace_back(cached_address);
     }
 
-    op_compiler_info->execute_kernel_list_.emplace_back(exe_kernel_info);
+    (void)op_compiler_info->execute_kernel_list_.emplace_back(exe_kernel_info);
   }
 }
 
@@ -427,7 +427,7 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
 
   // Operator with hidden side effect.
   if (has_hidden_side_effect) {
-    graph_info.append("r_").append(std::to_string(op_info.py_prim_id_)).append("_");
+    (void)graph_info.append("r_").append(std::to_string(op_info.py_prim_id_)).append("_");
   }
 
 #ifdef ENABLE_D

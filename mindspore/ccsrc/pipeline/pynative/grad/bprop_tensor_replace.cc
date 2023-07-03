@@ -34,7 +34,7 @@ void SaveForwardTensorForReplace(const ValuePtr &value, const TensorIdWithOpInfo
         return;
       }
       MS_EXCEPTION_IF_NULL(op_info_with_tensor_object);
-      (*op_info_with_tensor_object)[it->second.first].emplace_back(std::make_pair(it->second.second, tensor));
+      (void)(*op_info_with_tensor_object)[it->second.first].emplace_back(std::make_pair(it->second.second, tensor));
       MS_LOG(DEBUG) << "Save forward tensor " << tensor.get() << " id " << tensor->id()
                     << " device address: " << tensor->device_address() << " shape and dtype "
                     << tensor->GetShapeAndDataTypeInfo();

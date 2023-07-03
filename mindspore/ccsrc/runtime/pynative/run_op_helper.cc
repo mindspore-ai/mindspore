@@ -480,7 +480,7 @@ kernel::AddressPtrList CreateKernelWorkspaceAddressDynamic(
         !device_context->device_res_manager_->AllocateMemory(device_address.get())) {
       MS_LOG(EXCEPTION) << "Allocate dynamic workspace memory failed";
     }
-    workspace_device_address->emplace_back(device_address);
+    (void)workspace_device_address->emplace_back(device_address);
     (void)workspaces.emplace_back(
       std::make_shared<kernel::Address>(device_address->GetMutablePtr(), device_address->GetSize()));
     MS_LOG(DEBUG) << "workspace[" << i << "]:" << workspaces.back()->addr << " size:" << workspaces.back()->size;
@@ -542,7 +542,7 @@ kernel::AddressPtrList MallocInputMemoryForDeviceAddress(const std::vector<devic
   kernel::AddressPtrList ret;
   for (auto &device_address : device_addressess) {
     if (!device_address) {
-      ret.emplace_back(std::make_shared<kernel::Address>());
+      (void)ret.emplace_back(std::make_shared<kernel::Address>());
       continue;
     }
     if (device_address->GetPtr() == nullptr) {
@@ -563,7 +563,7 @@ kernel::AddressPtrList MallocOutputMemoryForDeviceAddress(
   for (auto &device_address : device_addressess) {
     MS_EXCEPTION_IF_NULL(device_address);
     if (device_address->GetPtr() == nullptr) {
-      alloc_output_device_address->emplace_back(device_address);
+      (void)alloc_output_device_address->emplace_back(device_address);
       if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
         MS_LOG(EXCEPTION) << "Allocate device memory failed!";
       }
@@ -816,7 +816,7 @@ void UpdateOutputAddressForRef(const OpCompilerInfoPtr &op_compiler_info,
     }
 
     // Ref
-    ref_node_cache->emplace_back(input_address);
+    (void)ref_node_cache->emplace_back(input_address);
   }
 }
 
@@ -828,17 +828,17 @@ std::vector<tensor::TensorPtr> GetAllInputTensor(
   for (auto &device_address : device_address_list) {
     auto iter = address_map_to_tensor.find(device_address);
     if (iter != address_map_to_tensor.end()) {
-      ret.emplace_back(iter->second);
+      (void)ret.emplace_back(iter->second);
       continue;
     }
 
     iter = value_map_to_tensor.find(device_address);
     if (iter != value_map_to_tensor.end()) {
-      ret.emplace_back(iter->second);
+      (void)ret.emplace_back(iter->second);
       continue;
     }
 
-    ret.emplace_back(nullptr);
+    (void)ret.emplace_back(nullptr);
   }
 
   return ret;

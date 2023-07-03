@@ -383,8 +383,8 @@ void SetGraphInputArgs(const std::vector<ValuePtr> &input_vec, const pipeline::R
     input_arg_list.clear();
     PyNativeAlgo::DataConvert::FlattenArgs(input_vec, &input_arg_list, true);
   }
-  std::transform(input_arg_list.begin(), input_arg_list.end(), std::back_inserter(*arg_list),
-                 [](const ValuePtr &v) { return v; });
+  (void)std::transform(input_arg_list.begin(), input_arg_list.end(), std::back_inserter(*arg_list),
+                       [](const ValuePtr &v) { return v; });
   size_t arg_size = (*arg_list).size();
   if (arg_size != graph_params_size) {
     // Maybe have some default parameter for input

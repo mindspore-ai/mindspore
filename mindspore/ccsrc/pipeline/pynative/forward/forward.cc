@@ -179,7 +179,7 @@ void TransformOutputValues(const FrontendOpRunInfoPtr &op_run_info) {
       output_tensor->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
       output_tensor->auto_grad_meta_data()->set_grad_type(TensorGradType::kOpOutput);
     }
-    output_values.emplace_back(output_tensor);
+    (void)output_values.emplace_back(output_tensor);
   }
   auto result_value = std::make_shared<ValueTuple>(output_values);
   if (result_value->size() == 1 && op_run_info->base_op_run_info.abstract != nullptr &&
@@ -195,7 +195,7 @@ void CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::Ten
   auto create_tensor = [&outputs, &device_sync_promises](const TypePtr &type, const ShapeVector &shape_vector) {
     auto output_tensor = std::make_shared<tensor::Tensor>(type->type_id(), shape_vector);
     output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().WaitAll(); });
-    outputs->emplace_back(output_tensor);
+    (void)outputs->emplace_back(output_tensor);
     MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
 
     DeviceAddressPromisePtr promise =
@@ -297,6 +297,7 @@ void ForwardExecutor::ReInit() {
 
 void ForwardExecutor::Init() {
   // Single op run with out cell or function packed
+  // cppcheck-suppress unreadVariable
   if (MS_UNLIKELY(infer_operation()->only_single_op_run())) {
     ReInit();
   }
@@ -337,7 +338,7 @@ void ForwardExecutor::DispatchBackendTask(const FrontendOpRunInfoPtr &op_run_inf
   static auto run_backend_with_grad = [this](const FrontendOpRunInfoPtr &op_run_info,
                                              const session::BackendOpRunInfoPtr &backend_op_run_info) {
     // Update tensor device address in backend.
-    RunOpBackendInner(op_run_info, backend_op_run_info);
+    (void)RunOpBackendInner(op_run_info, backend_op_run_info);
 
     if (!op_run_info->requires_grad) {
       MS_LOG(DEBUG) << "Grad flag is false";
@@ -674,8 +675,7 @@ void ForwardExecutor::ProcessBeforeEndGraph(const py::object &obj, bool is_cell)
 
 void ForwardExecutor::ProcessAfterEndGraph(const py::object &obj, bool is_cell) const {
   if (IsFirstCell()) {
-    auto forward_task =
-      std::make_shared<FrontendTask>([this](const FrontendOpRunInfoPtr &op_run_info) { ClearNodeAbsMap(); }, nullptr);
+    auto forward_task = std::make_shared<FrontendTask>([this](...) { ClearNodeAbsMap(); }, nullptr);
     frontend_queue_->Push(forward_task);
   }
   PrintPyObjInfo(obj, kEnd, is_cell);
@@ -726,7 +726,7 @@ void ForwardExecutor::PrepareOpInputs(const FrontendOpRunInfoPtr &op_run_info) {
   PyNativeAlgo::DataConvert::GetInputTensor(op_run_info, op_run_info->requires_grad ? grad()->top_cell() : nullptr);
 }
 
-void ForwardExecutor::PrepareOpOutputs(const FrontendOpRunInfoPtr &op_run_info) {
+void ForwardExecutor::PrepareOpOutputs(const FrontendOpRunInfoPtr &op_run_info) const {
   CreateOutputTensor(op_run_info->base_op_run_info.abstract, &op_run_info->output_tensors,
                      &op_run_info->device_sync_promises);
   TransformOutputValues(op_run_info);

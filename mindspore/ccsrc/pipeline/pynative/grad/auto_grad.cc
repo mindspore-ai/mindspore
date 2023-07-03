@@ -155,14 +155,14 @@ AnfNodePtr BuildSpecialNode(const FuncGraphPtr &tape, const ValuePtr &value, con
   } else if (value->isa<ValueDictionary>()) {
     const auto &dic_v = value->cast<ValueDictionaryPtr>()->value();
     std::vector<ValuePtr> v_list;
-    std::transform(dic_v.begin(), dic_v.end(), std::back_inserter(v_list),
-                   [](const std::pair<ValuePtr, ValuePtr> &elem) { return elem.second; });
+    (void)std::transform(dic_v.begin(), dic_v.end(), std::back_inserter(v_list),
+                         [](const std::pair<ValuePtr, ValuePtr> &elem) { return elem.second; });
     MS_EXCEPTION_IF_NULL(abs);
     const auto &abs_dict = abs->cast<abstract::AbstractDictionaryPtr>();
     MS_EXCEPTION_IF_NULL(abs_dict);
     abstract::AbstractBasePtrList abs_list;
-    std::transform(abs_dict->elements().begin(), abs_dict->elements().end(), std::back_inserter(abs_list),
-                   [](const auto &elem) { return elem.second; });
+    (void)std::transform(abs_dict->elements().begin(), abs_dict->elements().end(), std::back_inserter(abs_list),
+                         [](const auto &elem) { return elem.second; });
     return BuildSpecialNode(tape, std::make_shared<ValueTuple>(v_list),
                             std::make_shared<abstract::AbstractTuple>(abs_list), type);
   } else {
@@ -250,6 +250,7 @@ AnfNodePtr HandleRealToComplex(const TensorPtr &input, const AbstractBasePtr &ab
   }
   din_type = din_type->cast_ptr<TensorType>()->element();
   MS_EXCEPTION_IF_NULL(din_type);
+  // cppcheck-suppress unreadVariable
   if (MS_LIKELY(din_type->type_id() != kNumberTypeComplex64 && din_type->type_id() != kNumberTypeComplex128)) {
     return din;
   }
@@ -285,7 +286,7 @@ void SetMsFunctionCallGraph(const CNodePtr &cnode, const FuncGraphPtr &call_grap
   if (need_compile) {
     resource = std::make_shared<pipeline::Resource>();
     resource->set_func_graph(call_graph);
-    ms_function_call_graph_compile_cache_.emplace(cache_key, resource);
+    (void)ms_function_call_graph_compile_cache_.emplace(cache_key, resource);
   } else {
     resource = it->second;
   }
@@ -552,7 +553,7 @@ AutoGradCellImpl::AutoGradCellImpl(const std::vector<ValuePtr> &input_param_valu
       input_adjoint->set_is_need_grad(false);
     }
     (void)cell_inputs_.emplace_back(std::make_pair(input_parameter, input_adjoint));
-    ad_param()->variable_adjoint_set_.insert(input_adjoint);
+    (void)ad_param()->variable_adjoint_set_.insert(input_adjoint);
   }
   device_target_ = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
 }
@@ -587,6 +588,7 @@ bool AutoGradCellImpl::KPynativeOp(const GradParamPtr &grad_param) {
   std::vector<CNodePtr> outputs;
   if (!is_custom_prim) {
     auto ret = BpropExpander(&outputs, &ad_param()->users_).Run(input_node);
+    // cppcheck-suppress unreadVariable
     if (MS_UNLIKELY(!ret || outputs.empty())) {
       MS_LOG(DEBUG) << "Expander has no bprop of this prim: " << prim->name();
       BuildCustomBpropCNode(input_node, prim, &outputs);
@@ -594,6 +596,7 @@ bool AutoGradCellImpl::KPynativeOp(const GradParamPtr &grad_param) {
   } else {
     BuildBPropCutCNode(input_node, prim, &outputs);
   }
+  // cppcheck-suppress unreadVariable
   if (MS_UNLIKELY(outputs.empty())) {
     MS_LOG(DEBUG) << "This op has not custom bprop: " << prim->name();
     BuildFakeBpropCNode(input_node, &outputs);
@@ -1009,7 +1012,7 @@ ValuePtrList AutoGradCellImpl::GetInputArgs(const CNodePtr &cnode, AnfNodePtrLis
       // In case of ms function forward graph and pynative bprop graph used same valuenode
       auto new_v_node = PyNativeAlgo::Common::CreateValueNodeByValue(v_node->value(), v_node->abstract());
       (void)cnode_inputs->emplace_back(new_v_node);
-      input_value.emplace_back(v_node->value());
+      (void)input_value.emplace_back(v_node->value());
     } else {
       // Make Fake value
       auto v = MakeValue(0);
@@ -1345,7 +1348,7 @@ void AutoGradCellImpl::ConvertValueNodeValueToTensor(const AnfNodePtr &din) {
   }
 }
 
-void AutoGradCellImpl::ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node) {
+void AutoGradCellImpl::ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node) const {
   if (!node->isa<CNode>() || IsPrimitiveCNode(node, prim::kPrimMakeTuple) ||
       IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
     return;
@@ -1422,7 +1425,7 @@ CNodePtr AutoGradCellImpl::ConvertConstInputToAttr(const CNodePtr &cnode, const 
       }
       prim->set_attr(input_names_vec[i], value);
     } else {
-      new_inputs.emplace_back(input_node);
+      (void)new_inputs.emplace_back(input_node);
     }
   }
   cnode->set_inputs(new_inputs);
@@ -1562,7 +1565,7 @@ ParameterPtr AutoGradCellImpl::AddParameterNode(const tensor::TensorPtr &tensor,
   return param;
 }
 
-AnfNodePtrList AutoGradCellImpl::ExtractParamters(const tensor::TensorPtrList weights) {
+AnfNodePtrList AutoGradCellImpl::ExtractParamters(const tensor::TensorPtrList weights) const {
   AnfNodePtrList params;
   for (auto weight : weights) {
     auto parameter = ExtractParameter(weight);
@@ -1726,7 +1729,7 @@ void AutoGradCellImpl::BuildBPropCutCNode(const CNodePtr &cnode, const Primitive
         {NewValueNode(prim::kPrimTupleGetItem), bprop_cut_cnode, NewValueNode(static_cast<int64_t>(i - 1))});
       MS_EXCEPTION_IF_NULL(cnode->input(i)->abstract());
       din->set_abstract(cnode->input(i)->abstract());
-      abs_list.emplace_back(cnode->input(i)->abstract());
+      (void)abs_list.emplace_back(cnode->input(i)->abstract());
       (void)outputs->emplace_back(din);
     }
   }

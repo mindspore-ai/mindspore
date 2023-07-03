@@ -74,7 +74,7 @@ void ThreadTimeline::Init() {
   start_ = ThreadTimeline::GetTime();
 }
 
-void ThreadTimeline::Record(const TimelineObj &obj) const noexcept { t_timeline_data_.emplace_back(obj); }
+void ThreadTimeline::Record(const TimelineObj &obj) const noexcept { (void)t_timeline_data_.emplace_back(obj); }
 
 void ThreadTimeline::Combine() {
   thread_local static bool combined = false;
@@ -83,7 +83,7 @@ void ThreadTimeline::Combine() {
   }
   std::unique_lock<std::mutex> lock(combine_mutex_);
   for (auto &item : t_timeline_data_) {
-    timeline_data_map_[item.tid_].emplace_back(item);
+    (void)timeline_data_map_[item.tid_].emplace_back(item);
   }
   combined = true;
 }
@@ -115,8 +115,8 @@ void ThreadTimeline::Parse() {
       record_end[kStrTid] = TidToString(item.tid_);
       record_end[kStrTs] = item.ts_end_ - start_;
 
-      out.emplace_back(record_start);
-      out.emplace_back(record_end);
+      (void)out.emplace_back(record_start);
+      (void)out.emplace_back(record_end);
     }
   }
   DumpJson(out.dump());

@@ -116,6 +116,7 @@ class PrimitivePyAdapter {
   struct PrimitiveUserData {
     py::object obj;
     ~PrimitiveUserData() {
+      // cppcheck-suppress unreadVariable
       py::gil_scoped_acquire acquire_gil;
       obj = py::none();
     }

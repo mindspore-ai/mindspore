@@ -25,8 +25,8 @@ DeviceAddressFuture::~DeviceAddressFuture() {
   if (future_.valid()) {
     try {
       (void)future_.get();
-    } catch (...) {
-      MS_LOG(INFO) << "Find error and ignore when destroy future";
+    } catch (const std::exception &e) {
+      MS_LOG(INFO) << "Find error and ignore when destroy future:" << e.what();
     }
   }
 }
@@ -34,6 +34,7 @@ DeviceAddressFuture::~DeviceAddressFuture() {
 std::shared_ptr<DeviceSync> DeviceAddressFuture::Get() {
   std::call_once(once_flag_, [this]() {
     if (future_.valid()) {
+      // cppcheck-suppress unreadVariable
       GilReleaseWithCheck gil_release;
       auto future_data = future_.get();
       MS_EXCEPTION_IF_NULL(future_data);

@@ -85,7 +85,7 @@ REG_BPROP_BUILDER("_MirrorOperator").SetUnusedInputs({i0, i1}).SetBody([](const 
               {"fusion", ib->GetAttr("fusion")},
               {"no_eliminate", MakeValue(true)}};
   if (ib->GetAttr("parameter") != nullptr) {
-    attrs.insert({"parameter", ib->GetAttr("parameter")});
+    (void)attrs.insert({"parameter", ib->GetAttr("parameter")});
   }
   auto dx = ib->Emit(kAllReduceOpName, {dout}, attrs);
   auto ins_name = ib->GetInstanceName();

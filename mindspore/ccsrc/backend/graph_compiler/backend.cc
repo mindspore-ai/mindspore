@@ -1078,7 +1078,7 @@ void GetIgnoreSyncHostToDeviceList(const OpCompilerInfoPtr &op_compiler_info) {
       if (index >= input_device_address_list.size()) {
         continue;
       }
-      op_compiler_info->ignore_host_to_device_inputs_.emplace(input_device_address_list[index]);
+      (void)op_compiler_info->ignore_host_to_device_inputs_.emplace(input_device_address_list[index]);
     }
   }
 }

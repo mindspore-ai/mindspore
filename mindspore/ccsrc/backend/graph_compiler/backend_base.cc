@@ -108,9 +108,9 @@ namespace {
 void FlattenValue(const BaseRef &arg, ValuePtrList *flatted_value) {
   MS_EXCEPTION_IF_NULL(flatted_value);
   if (utils::isa<tensor::Tensor>(arg)) {
-    flatted_value->emplace_back(utils::cast<TensorPtr>(arg));
+    (void)flatted_value->emplace_back(utils::cast<TensorPtr>(arg));
   } else if (utils::isa<Scalar>(arg)) {
-    flatted_value->emplace_back(ScalarToTensor(utils::cast<ScalarPtr>(arg)));
+    (void)flatted_value->emplace_back(ScalarToTensor(utils::cast<ScalarPtr>(arg)));
   } else if (utils::isa<ValueSequencePtr>(arg)) {
     auto value_sequence = utils::cast<ValueSequencePtr>(arg);
     MS_EXCEPTION_IF_NULL(value_sequence);

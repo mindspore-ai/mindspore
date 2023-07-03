@@ -195,7 +195,7 @@ inline InOutKernelTensors AbstractInOutFromDeviceAddress(
   for (size_t input_idx = 0; input_idx < input_num; ++input_idx) {
     if (input_idx >= input_tensors.size()) {
       input_tensor = std::make_shared<KernelTensor>();
-      input_tensors.emplace_back(input_tensor);
+      (void)input_tensors.emplace_back(input_tensor);
     } else {
       input_tensor = input_tensors[input_idx];
     }
@@ -221,7 +221,7 @@ inline InOutKernelTensors AbstractInOutFromDeviceAddress(
   for (size_t output_idx = 0; output_idx < output_num; ++output_idx) {
     if (output_idx >= output_tensors.size()) {
       output_tensor = std::make_shared<KernelTensor>();
-      output_tensors.emplace_back(output_tensor);
+      (void)output_tensors.emplace_back(output_tensor);
     } else {
       output_tensor = output_tensors[output_idx];
     }
