@@ -353,8 +353,6 @@ def thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0
         >>> model = ms.ConvertModelUtils.convert_to_thor_model(model=model, network=net, loss_fn=loss, optimizer=optim,
         ...                                                 loss_scale_manager=loss_scale, metrics={'acc'},
         ...                                                 amp_level="O2", keep_batchnorm_fp32=False)
-        >>> loss_cb = ms.LossMonitor()
-        >>> model.train(1, dataset, callbacks=loss_cb, sink_size=4, dataset_sink_mode=True)
 
     """
     context.set_context(max_call_depth=10000)

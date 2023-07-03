@@ -466,7 +466,7 @@ class Conv2dThor(_ConvThor):
             matrix_g = self.cube_matmul(dout, dout)
             normalizer = self.cast(normalizer, mstype.float32)
             matrix_g = self.mul(matrix_g, 1.0 / normalizer)
-            self.g_normalizer = Parameter(normalizer)
+            self.g_normalizer = self.reshape(Tensor(normalizer), (1,))
             self.matrix_g_cov = matrix_g
         else:
             dout = self.reduce_mean(dout, 0)
@@ -477,7 +477,7 @@ class Conv2dThor(_ConvThor):
             dout = self.cast(dout, mstype.float32)
             matrix_g = self.matmul(dout, dout)
             matrix_g = self.mul(matrix_g, 1.0 / normalizer)
-            self.g_normalizer = Parameter(normalizer)
+            self.g_normalizer = self.reshape(Tensor(normalizer), (1,))
             self.matrix_g_cov = matrix_g
         return out
 
@@ -493,7 +493,7 @@ class Conv2dThor(_ConvThor):
                 matrix_a = self.cube_matmul(matrix_a, matrix_a)
                 normalizer = self.cast(normalizer, mstype.float32)
                 matrix_a = self.mul(matrix_a, 1.0 / normalizer)
-                self.a_normalizer = Parameter(normalizer)
+                self.a_normalizer = self.reshape(Tensor(normalizer), (1,))
                 self.matrix_a_cov = matrix_a
                 weight = self.cast(self.weight, mstype.float16)
                 output = self.conv2d(x, weight)
@@ -509,7 +509,7 @@ class Conv2dThor(_ConvThor):
                 matrix_a = self.cast(matrix_a, mstype.float32)
                 matrix_a = self.matmul(matrix_a, matrix_a)
                 matrix_a = self.mul(matrix_a, 1.0 / normalizer)
-                self.a_normalizer = Parameter(normalizer)
+                self.a_normalizer = self.reshape(Tensor(normalizer), (1,))
                 self.matrix_a_cov = matrix_a
                 output = self.conv2d(x, self.weight)
                 output = self.getG(output)
