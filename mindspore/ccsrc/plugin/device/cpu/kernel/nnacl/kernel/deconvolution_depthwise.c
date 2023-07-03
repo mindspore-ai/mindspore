@@ -18,6 +18,7 @@
 #include "nnacl/kernel/default_kernel_base.h"
 #include "nnacl/fp32/conv_depthwise_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"
+#include "nnacl/kernel/deconvolution.h"
 
 int DeConvDwInitPackedInputOutput(DeConvDwStruct *deconv_dw) {
   if (!deconv_dw->need_align_) {
@@ -130,7 +131,7 @@ int deconv_dw_resize(KernelBase *self) {
 
   (void)ConvBaseUpdateComputeInfo(&deconv_dw->conv_);
 
-  int ret = ConvBaseCheckResizeValid(&deconv_dw->conv_);
+  int ret = DeConvCheckvResizeValid(&deconv_dw->conv_);
   if (ret != NNACL_OK) {
     return ret;
   }

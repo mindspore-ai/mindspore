@@ -19,6 +19,7 @@
 #include "nnacl/infer/common_infer.h"
 #include "nnacl/fp32/deconv_winograd_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"
+#include "nnacl/kernel/deconvolution.h"
 
 void DeConvWinogradFreeResizeBuf(DeConvWinogradStruct *deconv) {
   DeConvParam *param = &deconv->param_;
@@ -422,7 +423,7 @@ int deconv_winograd_resize(KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(deconv);
   (void)ConvBaseUpdateComputeInfo(&deconv->conv_);
 
-  int ret = ConvBaseCheckResizeValid(&deconv->conv_);
+  int ret = DeConvCheckvResizeValid(&deconv->conv_);
   if (ret != NNACL_OK) {
     return ret;
   }

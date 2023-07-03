@@ -18,10 +18,10 @@
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
-#include "mindspore/lite/src/litert/kernel/cpu/fp32/deconvolution_fp32.h"
 #include "nnacl/fp32/deconv_fp32.h"
 #include "nnacl/op_base.h"
 #include "src/litert/tensor_category.h"
+#include "nnacl/nnacl_manager.h"
 
 namespace mindspore {
 class TestDeConvolutionFp32 : public mindspore::CommonTest {
@@ -468,6 +468,9 @@ int DeConvTestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tens
   conv_param->stride_h_ = conv_param->stride_w_ = 2;
   conv_param->dilation_h_ = conv_param->dilation_w_ = 1;
   conv_param->pad_u_ = conv_param->pad_l_ = 1;
+  conv_param->input_channel_ = in_t->Channel();
+  conv_param->output_channel_ = out_t->Channel();
+  conv_param->group_ = 1;
   return out_t->ElementsNum();
 }
 
@@ -483,11 +486,16 @@ TEST_F(TestDeConvolutionFp32, DeConvTest1) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   float *correct;
   int total_size = DeConvTestInit1(&inputs_, &outputs_, deconv_param, &correct);
-  auto *deconv =
-    new kernel::DeConvolutionCPUKernel(reinterpret_cast<OpParameter *>(deconv_param), inputs_, outputs_, ctx);
 
-  deconv->Prepare();
-  deconv->Run();
+  deconv_param->op_parameter_.type_ = PrimType_Conv2dTransposeFusion;
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, PrimType_Conv2dTransposeFusion};
+  auto deconv = nnacl::NNACLKernelRegistry(&deconv_param->op_parameter_, inputs_, outputs_, ctx, desc);
+  ASSERT_NE(deconv, nullptr);
+
+  int ret = deconv->Prepare();
+  EXPECT_EQ(0, ret);
+  ret = deconv->Run();
+  EXPECT_EQ(0, ret);
 
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
   delete deconv;
@@ -538,6 +546,9 @@ int DeConvTestInit2(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tens
   conv_param->stride_h_ = conv_param->stride_w_ = 2;
   conv_param->dilation_h_ = conv_param->dilation_w_ = 1;
   conv_param->pad_u_ = conv_param->pad_l_ = 1;
+  conv_param->input_channel_ = in_t->Channel();
+  conv_param->output_channel_ = out_t->Channel();
+  conv_param->group_ = 1;
   return out_t->ElementsNum();
 }
 
@@ -553,11 +564,17 @@ TEST_F(TestDeConvolutionFp32, DeConvTest2) {
   deconv_param->op_parameter_.thread_num_ = 1;
   deconv_param->op_parameter_.is_zero_shape_ = false;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  auto *deconv =
-    new kernel::DeConvolutionCPUKernel(reinterpret_cast<OpParameter *>(deconv_param), inputs_, outputs_, ctx);
 
-  deconv->Prepare();
-  deconv->Run();
+  deconv_param->op_parameter_.type_ = PrimType_Conv2dTransposeFusion;
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, PrimType_Conv2dTransposeFusion};
+  auto deconv = nnacl::NNACLKernelRegistry(&deconv_param->op_parameter_, inputs_, outputs_, ctx, desc);
+  ASSERT_NE(deconv, nullptr);
+
+  int ret = deconv->Prepare();
+  EXPECT_EQ(0, ret);
+  ret = deconv->Run();
+  EXPECT_EQ(0, ret);
+
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
 
   delete deconv;
@@ -619,6 +636,9 @@ int DeConvTestInit3(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tens
   conv_param->stride_h_ = conv_param->stride_w_ = 3;
   conv_param->dilation_h_ = conv_param->dilation_w_ = 2;
   conv_param->pad_u_ = conv_param->pad_l_ = 0;
+  conv_param->input_channel_ = in_t->Channel();
+  conv_param->output_channel_ = in_t->Channel();
+  conv_param->group_ = 1;
   return out_t->ElementsNum();
 }
 
@@ -634,11 +654,17 @@ TEST_F(TestDeConvolutionFp32, DeConvTest3) {
   deconv_param->op_parameter_.thread_num_ = 2;
   deconv_param->op_parameter_.is_zero_shape_ = false;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  auto *deconv =
-    new kernel::DeConvolutionCPUKernel(reinterpret_cast<OpParameter *>(deconv_param), inputs_, outputs_, ctx);
 
-  deconv->Prepare();
-  deconv->Run();
+  deconv_param->op_parameter_.type_ = PrimType_Conv2dTransposeFusion;
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, PrimType_Conv2dTransposeFusion};
+  auto deconv = nnacl::NNACLKernelRegistry(&deconv_param->op_parameter_, inputs_, outputs_, ctx, desc);
+  ASSERT_NE(deconv, nullptr);
+
+  int ret = deconv->Prepare();
+  EXPECT_EQ(0, ret);
+  ret = deconv->Run();
+  EXPECT_EQ(0, ret);
+
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
 
   delete deconv;
