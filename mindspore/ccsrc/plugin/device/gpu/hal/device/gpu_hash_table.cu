@@ -778,7 +778,9 @@ HashTableExportData GPUHashTable<Key, Value, Allocator>::ExportSlice(bool increm
   MS_EXCEPTION_IF_NULL(last_slice);
 
   *last_slice = true;
-  return Export(incremental);
+  auto ret = Export(incremental);
+  is_dirty_ = true;
+  return ret;
 }
 
 template <typename Key, typename Value, typename Allocator>

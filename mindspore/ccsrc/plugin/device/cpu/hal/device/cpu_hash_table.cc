@@ -442,7 +442,6 @@ HashTableExportData CPUHashTable<Key, Value>::ExportSlice(bool incremental, bool
   MS_EXCEPTION_IF_NULL(last_slice);
   if (size() == 0) {
     *last_slice = true;
-    is_dirty_ = false;
     return HashTableExportData();
   }
 
@@ -467,7 +466,6 @@ HashTableExportData CPUHashTable<Key, Value>::ExportSlice(bool incremental, bool
 
   *last_slice = (end_ == size());
   if (*last_slice) {
-    is_dirty_ = false;
     begin_ = 0;
     end_ = 0;
   } else {

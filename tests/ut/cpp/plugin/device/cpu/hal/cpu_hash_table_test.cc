@@ -329,7 +329,7 @@ TEST_F(TestCPUHashTable, test_cpu_hash_table_export_slice) {
     incre_export_data.push_back(ret);
   }
 
-  EXPECT_FALSE(hash_table.is_dirty());
+  EXPECT_TRUE(hash_table.is_dirty());
 
   EXPECT_EQ(full_export_data.size(), incre_export_data.size());
   EXPECT_EQ(full_export_data.size(), key_num / slice_num);
