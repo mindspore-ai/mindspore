@@ -101,7 +101,7 @@ abstract::ShapePtr BCEWithLogitsLossInferShape(const PrimitivePtr &primitive,
   auto weight_shape_shape = weight_shape_map[kShape];
   auto pos_weight_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape());
   auto pos_weight_shape = pos_weight_shape_map[kShape];
-  (void)GpuShapeCheck(primitive, logits_shape, weight_shape_shape, pos_weight_shape);
+  GpuShapeCheck(primitive, logits_shape, weight_shape_shape, pos_weight_shape);
 
   auto value_ptr = primitive->GetAttr(kReduction);
   MS_EXCEPTION_IF_NULL(value_ptr);

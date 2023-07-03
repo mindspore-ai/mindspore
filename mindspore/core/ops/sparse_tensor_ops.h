@@ -18,7 +18,6 @@
 #define MINDSPORE_CORE_BASE_SPARSE_TENSOR_OPS_H_
 
 #include <memory>
-#include <string>
 #include "ir/anf.h"
 #include "ir/primitive.h"
 #include "utils/hash_map.h"
