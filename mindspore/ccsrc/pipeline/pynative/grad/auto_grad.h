@@ -255,6 +255,8 @@ class AutoGradCellImpl {
   AnfNodePtr BuildKNode(const AnfNodePtr &prim, const GradParamPtr &grad_param, bool from_single_op);
   void BuildKNodeListFromPrimalCNode(const ValuePtrList &op_args, const abstract::AbstractBasePtrList &input_abs,
                                      AnfNodePtrList *const node_list);
+  void BuildKNodeListForHighOrderGraph(const ValuePtrList &op_args, const abstract::AbstractBasePtrList &input_abs,
+                                       AnfNodePtrList *const node_list);
   AnfNodePtr BuildKNodeForCNodeInput(const AnfNodePtr &input_node);
   AnfNodePtr BuildKNodeForCNodeInput(const ValuePtr &input, const abstract::AbstractBasePtr &abs);
   AnfNodePtr BuildKNodeForMakeTuple(const AnfNodePtr &input_node);

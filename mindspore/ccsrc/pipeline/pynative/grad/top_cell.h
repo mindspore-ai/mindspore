@@ -137,7 +137,9 @@ class TopCellInfo {
   void Clear();
   void AddParamGradInfo(const tensor::TensorPtr &tensor, const AutoGradMetaDataPtr &auto_grad_meta_data);
   void ClearParamGradInfo();
-  const mindspore::HashMap<tensor::TensorPtr, AutoGradMetaDataPtr> &param_grad_info() const { return param_grad_info_; }
+  const mindspore::OrderedMap<tensor::TensorPtr, AutoGradMetaDataPtr> &param_grad_info() const {
+    return param_grad_info_;
+  }
   inline bool use_dynamic_shape_process() const { return use_dynamic_shape_process_; }
   inline void set_use_dynamic_shape_process(bool use_dynamic_shape_process) {
     use_dynamic_shape_process_ = use_dynamic_shape_process;
@@ -185,7 +187,7 @@ class TopCellInfo {
   // Each cell object has two backward hook ops.
   CellIdWithBackwardHookOp cell_backward_hook_op_;
   TensorReplaceInfo replace_info_;
-  mindspore::HashMap<tensor::TensorPtr, AutoGradMetaDataPtr> param_grad_info_;
+  mindspore::OrderedMap<tensor::TensorPtr, AutoGradMetaDataPtr> param_grad_info_;
   InputArgsInfoPtr input_args_info_;
   bool use_dynamic_shape_process_{false};
   // Judge whether need resume param grad info.

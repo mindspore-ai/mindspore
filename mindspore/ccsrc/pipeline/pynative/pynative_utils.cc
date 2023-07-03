@@ -530,7 +530,8 @@ TensorGradType Common::SetTensorGradInfo(const tensor::TensorPtr &tensor, const 
   return TensorGradType::kConstant;
 }
 
-void Common::SetGraphInputAndWeightsInfo(const FrontendOpRunInfoPtr &op_run_info, const FuncGraphPtr &func_graph) {
+void Common::SetGraphInputAndWeightsInfo(const FrontendOpRunInfoPtr &op_run_info, const FuncGraphPtr &func_graph,
+                                         const TopCellInfoPtr &top_cell) {
   MS_EXCEPTION_IF_NULL(func_graph);
   const auto &original_params = func_graph->parameters();
   size_t params_size = original_params.size();
@@ -539,7 +540,7 @@ void Common::SetGraphInputAndWeightsInfo(const FrontendOpRunInfoPtr &op_run_info
   for (size_t i = 0; i < params_size; ++i) {
     if (i < op_run_info->input_size) {  // non-weights node.
       op_run_info->op_grad_info->input_value_grad_type[i] =
-        SetValueGradInfo(op_run_info->op_grad_info->input_value[i], nullptr, TensorGradType::kConstant);
+        SetValueGradInfo(op_run_info->op_grad_info->input_value[i], top_cell, TensorGradType::kConstant);
       if (need_add_input_abs) {
         (void)op_run_info->op_grad_info->input_abs.emplace_back(original_params[i]->abstract());
       }
@@ -551,7 +552,7 @@ void Common::SetGraphInputAndWeightsInfo(const FrontendOpRunInfoPtr &op_run_info
     MS_EXCEPTION_IF_NULL(tensor_value);
     (void)op_run_info->op_grad_info->input_value.emplace_back(tensor_value);
     (void)op_run_info->op_grad_info->input_value_grad_type.emplace_back(
-      PyNativeAlgo::Common::SetTensorGradInfo(tensor_value, nullptr));
+      PyNativeAlgo::Common::SetTensorGradInfo(tensor_value, top_cell));
     (void)op_run_info->op_grad_info->input_abs.emplace_back(param->abstract());
     MS_LOG(DEBUG) << "Set graph weight parameter " << param->DebugString() << ". Its default value is "
                   << tensor_value->ToString() << ". Its name is: " << param->name();

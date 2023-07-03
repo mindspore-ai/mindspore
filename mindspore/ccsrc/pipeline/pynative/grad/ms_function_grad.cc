@@ -337,7 +337,7 @@ void MsFunction::MakeAdjointForMsFunction(const FrontendOpRunInfoPtr &op_run_inf
   MS_EXCEPTION_IF_NULL(grad_executor);
 
   const auto &top_cell = grad_executor->top_cell();
-  PyNativeAlgo::Common::SetGraphInputAndWeightsInfo(op_run_info, ms_func_graph);
+  PyNativeAlgo::Common::SetGraphInputAndWeightsInfo(op_run_info, ms_func_graph, top_cell);
   RecordForwardGraphForMsFunction(op_run_info, grad_executor, ms_func_graph);
   // Connect grad graph of ms_function to context.
   (void)PyNativeAlgo::Common::SetValueGradInfo(op_run_info->real_out, top_cell, TensorGradType::kOpOutput);
