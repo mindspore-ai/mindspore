@@ -114,7 +114,10 @@ class AscendMsprofExporter:
             outs, errs = proc.communicate(timeout=300)
         except TimeoutExpired:
             proc.kill()
-            outs, errs = proc.communicate()
+            msg = "The possible cause is that too much data is collected " \
+                "and the export time is too long."
+            logger.error(msg)
+            raise TimeoutError(msg)
         logger.info(outs)
         if raise_error and errs != self._null_info:
             raise RuntimeError(errs)
