@@ -17,7 +17,6 @@
 #include "ops/grad/roi_align_grad.h"
 
 #include <algorithm>
-#include <memory>
 #include <set>
 #include <string>
 #include <vector>
