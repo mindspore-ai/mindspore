@@ -2344,7 +2344,7 @@ template <typename T>
 const T AbstractSparseTensor::GetAbsPtrAt(size_t index) const {
   if (index >= size()) {
     MS_LOG(EXCEPTION) << "Index should be in range of [0, " << size() << "), but got " << index
-                      << " for abstract: " << ToString();
+                      << " for abstract: " << type_name();
   }
   AbstractBasePtr base = elements()[index];
   MS_EXCEPTION_IF_NULL(base);
@@ -2506,9 +2506,15 @@ AbstractBasePtr AbstractCOOTensor::PartialBroaden() const { return Broaden(); }
 
 std::string AbstractCOOTensor::ToString() const {
   std::ostringstream buffer;
+  auto indices_ = GetAbsPtrAt<abstract::AbstractTensorPtr>(kIndicesIdx);
+  auto values_ = GetAbsPtrAt<abstract::AbstractTensorPtr>(kValuesIdx);
+  auto shape_ = GetAbsPtrAt<abstract::AbstractTensorPtr>(size() - 1);
+  MS_EXCEPTION_IF_NULL(indices_);
+  MS_EXCEPTION_IF_NULL(values_);
+  MS_EXCEPTION_IF_NULL(shape_);
   buffer << type_name() << "("
-         << "indices: " << indices()->ToString() << ", values" << values()->ToString()
-         << ", dense_shape: " << shape()->ToString();
+         << "indices: " << indices_->ToString() << ", values" << values_->ToString()
+         << ", dense_shape: " << shape_->ToString();
   return buffer.str();
 }
 
@@ -2559,9 +2565,17 @@ AbstractBasePtr AbstractCSRTensor::PartialBroaden() const { return Broaden(); }
 
 std::string AbstractCSRTensor::ToString() const {
   std::ostringstream buffer;
+  auto indptr_ = GetAbsPtrAt<abstract::AbstractTensorPtr>(kIndptrIdx);
+  auto indices_ = GetAbsPtrAt<abstract::AbstractTensorPtr>(kIndicesIdx);
+  auto values_ = GetAbsPtrAt<abstract::AbstractTensorPtr>(kValuesIdx);
+  auto shape_ = GetAbsPtrAt<abstract::AbstractTensorPtr>(size() - 1);
+  MS_EXCEPTION_IF_NULL(indptr_);
+  MS_EXCEPTION_IF_NULL(indices_);
+  MS_EXCEPTION_IF_NULL(values_);
+  MS_EXCEPTION_IF_NULL(shape_);
   buffer << type_name() << "("
-         << "indptr: " << indptr()->ToString() << ", indices: " << indices()->ToString() << ", values"
-         << values()->ToString() << ", dense_shape: " << shape()->ToString();
+         << "indptr: " << indptr_->ToString() << ", indices: " << indices_->ToString() << ", values"
+         << values_->ToString() << ", dense_shape: " << shape_->ToString();
   return buffer.str();
 }
 
