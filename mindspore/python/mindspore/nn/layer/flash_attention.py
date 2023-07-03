@@ -17,14 +17,17 @@ A FlashAttention Layer.
 """
 import math
 
-import mindspore.nn as nn
-from mindspore import Tensor
-from mindspore import dtype as mstype
+from mindspore.common.tensor import Tensor
+from mindspore.common import dtype as mstype
 from mindspore import ops
+from mindspore.nn.cell import Cell
+import mindspore.numpy as mnp
 from mindspore.ops.operations.flash_attention_ops import FlashAttentionPrimitive
 
+__all__ = ['FlashAttention']
 
-class FlashAttention(nn.Cell):
+
+class FlashAttention(Cell):
     """Flash Attention Layer.
 
     This function contains the flash attention primitives used in FlashAttention (see paper)
@@ -47,7 +50,8 @@ class FlashAttention(nn.Cell):
             Default 1.
         mp(int): model parallel.
             Default 1.
-
+        high_precision(bool): This mode has higher precision but some performance loss.
+            Default False.
     Inputs:
       - **q** (Tensor) - Tensor query (:class:`mstype.fp16` [batch_size, head_num, seq_length, head_dim])
       - **k** (Tensor) - Tensor key (:class:`mstype.fp16` [batch_size, head_num, seq_length, head_dim])
@@ -88,12 +92,14 @@ class FlashAttention(nn.Cell):
                  tiling_stgy_name="xunfei",
                  dp=1,
                  mp=1,
+                 high_precision=False,
                  ):
         super(FlashAttention, self).__init__()
         self.flash_attention = FlashAttentionPrimitive(
             prev_block_num=prev_block_num,
             next_block_num=next_block_num,
-            tiling_stgy_name=tiling_stgy_name
+            tiling_stgy_name=tiling_stgy_name,
+            high_precision=high_precision
         )
         self.flash_attention.add_prim_attr("primitive_target", "Ascend")
 
@@ -101,12 +107,14 @@ class FlashAttention(nn.Cell):
         self.dim_mask = Tensor([1 for _ in range(head_dim)], dtype=mstype.int8)
         self.scale_mul = ops.Mul().shard(((dp, mp, 1, 1), (1,)))
 
-        self.keep_prob = Tensor(1 - dropout_rate, dtype=mstype.float16)
-        self.fill_v2 = ops.FillV2().shard(((dp, mp, 1, 1), ()))
-        self.tensor_one = Tensor(1.0, mstype.float16)
-        self.drop_gen_mask = ops.DropoutGenMask()
-        self.do_dropout = ops.DropoutDoMask().shard(((dp, mp, 1, 1),))
-        self.depend = ops.Depend()
+        self.dropout_rate = dropout_rate
+        if self.dropout_rate > 1e-5:
+            self.keep_prob = Tensor(1 - self.dropout_rate, dtype=mstype.float16)
+            self.fill_v2 = ops.FillV2().shard(((dp, mp, 1, 1), ()))
+            self.tensor_one = Tensor(1.0, mstype.float16)
+            self.drop_gen_mask = ops.DropoutGenMask()
+            self.do_dropout = ops.DropoutDoMask().shard(((dp, mp, 1, 1),))
+            self.depend = ops.Depend()
 
     def shard(self, in_strategy=None, out_strategy=None):
         """Distributed configuration of FlashAttention
@@ -139,12 +147,30 @@ class FlashAttention(nn.Cell):
         :return: o          [bsz, head_num, seq_len, head_dim]
         """
         q = self.scale_mul(q, self.scale_factor)
-        bsz, head_num, seq_len, _ = q.shape
-
-        drop_mask_bits = self.drop_gen_mask((bsz, head_num, seq_len, seq_len), self.keep_prob)
-        ones = self.fill_v2((bsz, head_num, seq_len, seq_len), self.tensor_one)
-        ones = self.depend(ones, q)
-        drop_mask = self.do_dropout(ones, drop_mask_bits, self.keep_prob)
-
-        o, _, _ = self.flash_attention(q, k, v, self.dim_mask, attn_mask, drop_mask, alibi_mask)
+        bsz, head_num, seq_len, head_dim = q.shape
+        _, k_head_num, _, _ = k.shape
+        _, v_head_num, _, _ = v.shape
+        if head_num != k_head_num or head_num != v_head_num:
+            raise ValueError(
+                "the head_num of query, key and value must be the same, "
+                "If different head_num are used, users need to change themselves to be same by tile.")
+        if self.dropout_rate > 1e-5:
+            drop_mask_bits = self.drop_gen_mask((bsz, head_num, seq_len, seq_len), self.keep_prob)
+            ones = self.fill_v2((bsz, head_num, seq_len, seq_len), self.tensor_one)
+            ones = self.depend(ones, q)
+            drop_mask = self.do_dropout(ones, drop_mask_bits, self.keep_prob)
+        else:
+            drop_mask = None
+        if head_dim > 304:
+            raise ValueError(
+                "the head_dim must be less than 304, otherwise the ub would be OOM.")
+        if head_dim % 16 != 0:
+            padding_size = 16 - head_dim % 16
+            q = mnp.pad(q, ((0, 0), (0, 0), (0, 0), (0, padding_size)), constant_values=0)
+            k = mnp.pad(k, ((0, 0), (0, 0), (0, 0), (0, padding_size)), constant_values=0)
+            v = mnp.pad(v, ((0, 0), (0, 0), (0, 0), (0, padding_size)), constant_values=0)
+            o, _, _ = self.flash_attention(q, k, v, self.dim_mask, attn_mask, drop_mask, alibi_mask)
+            o = ops.slice(o, [0, 0, 0, 0], [bsz, head_num, seq_len, head_dim])
+        else:
+            o, _, _ = self.flash_attention(q, k, v, self.dim_mask, attn_mask, drop_mask, alibi_mask)
         return o

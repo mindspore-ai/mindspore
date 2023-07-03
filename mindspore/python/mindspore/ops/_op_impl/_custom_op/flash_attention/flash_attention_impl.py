@@ -30,8 +30,9 @@ cus_flash_atten_op_info = TBERegOp("FlashAttentionPrimitive") \
     .binfile_name("flash_attention.so") \
     .compute_cost(10) \
     .kernel_name(KERNEL_NAME) \
-    .attr("prev_block_num", "required", "int", "all", "65536")\
+    .attr("prev_block_num", "required", "int", "all", "65536") \
     .attr("next_block_num", "required", "int", "all", "65536") \
+    .attr("high_precision", "required", "bool", "all", "false") \
     .attr("tiling_stgy_name", "required", "str", "all", "xunfei") \
     .input(0, "q", False, "required", "all") \
     .input(1, "k", False, "required", "all") \
@@ -53,15 +54,26 @@ cus_flash_atten_op_info = TBERegOp("FlashAttentionPrimitive") \
                   DataType.F16_Default,
                   DataType.F16_Default,
                   DataType.F16_Default) \
+    .dtype_format(DataType.F16_Default,
+                  DataType.F16_Default,
+                  DataType.F16_Default,
+                  DataType.I8_Default,
+                  DataType.F16_Default,
+                  DataType.F16_Default,
+                  DataType.F16_Default,
+                  DataType.F16_Default,
+                  DataType.F32_Default,
+                  DataType.F16_Default) \
     .get_op_info()
 
 
 # Binding kernel info with the kernel implementation.
 @op_info_register(cus_flash_atten_op_info)
 def flash_attention_impl(query, key, value, dim_mask, attn_mask, dropout_mask, alibi_mask, y, l,
-                         m, prev_block_num, next_block_num, tiling_stgy_name):
+                         m, prev_block_num, next_block_num, high_precision, tiling_stgy_name):
     flash_attention(query, key, value, dim_mask, attn_mask, dropout_mask, alibi_mask,
                     y, l, m, prev_block_num, next_block_num,
+                    high_precision=high_precision,
                     kernel_name=KERNEL_NAME,
                     tiling_stgy_name=tiling_stgy_name)
 
@@ -77,6 +89,7 @@ cus_flash_atten_grad_op_info = TBERegOp("FlashAttentionGradPrimitive") \
     .kernel_name(GRAD_KERNEL_NAME) \
     .attr("prev_block_num", "required", "int", "all", "65536")\
     .attr("next_block_num", "required", "int", "all", "65536")\
+    .attr("high_precision", "required", "bool", "all", "false") \
     .attr("tiling_stgy_name", "required", "str", "all", "xunfei")\
     .input(0, "q", False, "required", "all") \
     .input(1, "k", False, "required", "all") \
@@ -103,18 +116,33 @@ cus_flash_atten_grad_op_info = TBERegOp("FlashAttentionGradPrimitive") \
                   DataType.F16_Default,
                   DataType.F16_Default,
                   DataType.F16_Default,
+                  DataType.F32_Default,
+                  DataType.F32_Default,
+                  DataType.F32_Default) \
+    .dtype_format(DataType.F16_Default,
                   DataType.F16_Default,
                   DataType.F16_Default,
-                  DataType.F16_Default) \
+                  DataType.F16_Default,
+                  DataType.F16_Default,
+                  DataType.F32_Default,
+                  DataType.F16_Default,
+                  DataType.I8_Default,
+                  DataType.F16_Default,
+                  DataType.F16_Default,
+                  DataType.F16_Default,
+                  DataType.F32_Default,
+                  DataType.F32_Default,
+                  DataType.F32_Default) \
     .get_op_info()
 
 
 # Binding kernel info with the kernel implementation.
 @op_info_register(cus_flash_atten_grad_op_info)
 def flash_attention_grad_impl(q, k, v, o, dout, l, m, dim_mask, attn_mask, dropout_mask, alibi_mask,
-                              dq, dk, dv, prev_block_num,
-                              next_block_num, tiling_stgy_name="xunfei"):
+                              dq, dk, dv, prev_block_num, next_block_num,
+                              high_precision, tiling_stgy_name="xunfei"):
     flash_attention_grad(q, k, v, o, dout, l, m, dim_mask, attn_mask, dropout_mask, alibi_mask,
-                         dq, dk, dv, prev_block_num,
-                         next_block_num, kernel_name=GRAD_KERNEL_NAME,
+                         dq, dk, dv, prev_block_num, next_block_num,
+                         high_precision=high_precision,
+                         kernel_name=GRAD_KERNEL_NAME,
                          tiling_stgy_name=tiling_stgy_name)

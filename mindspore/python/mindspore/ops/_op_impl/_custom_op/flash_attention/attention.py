@@ -16,13 +16,14 @@
 from abc import ABCMeta
 from abc import abstractmethod
 from functools import partial
+from collections import defaultdict
 
 import te.platform as tbe_platform
 from tbe import tik
 from tbe.common.platform import get_soc_spec
-from tbe.common.platform import set_current_compile_soc_info
 
 from mindspore.ops._op_impl._custom_op.flash_attention.constants import FP16
+from mindspore.ops._op_impl._custom_op.flash_attention.constants import FP32
 from mindspore.ops._op_impl._custom_op.flash_attention.constants import GM
 from mindspore.ops._op_impl._custom_op.flash_attention.constants import INT8
 from mindspore.ops._op_impl._custom_op.flash_attention.constants import MASK_FILL_VALUE
@@ -32,8 +33,6 @@ from mindspore.ops._op_impl._custom_op.flash_attention.tiling_strategy.strategy 
 from mindspore.ops._op_impl._custom_op.flash_attention.tiling_strategy.strategy import TilingStrategy
 from mindspore.ops._op_impl._custom_op.flash_attention.tiling_strategy.xunfei_tiling import XunfeiTiling
 
-set_current_compile_soc_info("Ascend910")  # 默认310
-
 
 class FlashAttention(metaclass=ABCMeta):
     """The base class of FlashAttention"""
@@ -42,6 +41,7 @@ class FlashAttention(metaclass=ABCMeta):
                  tiling_stgy_cls,
                  prev_block_num=65536,
                  next_block_num=65536,
+                 high_precision=False,
                  disable_debug=True):
         """
         Init parameter shape
@@ -81,6 +81,12 @@ class FlashAttention(metaclass=ABCMeta):
         self.K0 = 16
         self.prev_block_num = prev_block_num
         self.next_block_num = next_block_num
+        self.high_precision = high_precision
+        if self.high_precision:
+            self.precision_type = FP32
+        else:
+            self.precision_type = FP16
+
         if tiling_stgy_cls is None:
             self.tiling_stgy = XunfeiTiling(self.Nq, self.N, self.d)
         else:
@@ -129,6 +135,66 @@ class FlashAttention(metaclass=ABCMeta):
     @abstractmethod
     def collect_outputs(self):
         raise NotImplementedError
+
+    def get_core_bath_info(self):
+        """
+        Get batch start and batch number of each NPU core.
+        :return: Tensor([[core_1_batch_start, core_1_batch_num],...,[core_m_batch_start,
+        core_m_batch_num]]), Tensor([[[core_1_batch_1_Tr_start, core_1_batch_1_Tr_end],...[core_1_batch_n_Tr_start,
+        core_1_batch_n_Tr_end]],...,[[core_m_batch_1_Tr_start, core_m_batch_1_Tr_end],...[core_m_batch_n_Tr_start,
+        core_m_batch_n_Tr_end]]
+        """
+        if self.core_num > self.B * self.Tr:
+            self.core_num = self.B * self.Tr
+
+        task_idx_to_batch_tr_idx = dict()
+        for task_idx in range(self.B * self.Tr):
+            batch_idx = task_idx // self.Tr
+            tr_idx = task_idx % self.Tr
+            task_idx_to_batch_tr_idx[task_idx] = [batch_idx, tr_idx]
+
+        core_idx_to_batch_idx = defaultdict(lambda: [100000, -1])
+        core_idx_to_tr_idx = defaultdict(lambda: defaultdict(lambda: [100000, -1]))
+        task_start = 0
+        avg_task_num_per_core, remain_task = divmod(self.B * self.Tr, self.core_num)
+
+        for core_idx in range(self.core_num):
+            cur_core_task_num = avg_task_num_per_core
+            if core_idx < remain_task:
+                cur_core_task_num += 1
+            task_end = task_start + cur_core_task_num
+            for task_idx in range(task_start, task_end):
+                try:
+                    batch_idx, tr_idx = task_idx_to_batch_tr_idx[task_idx]
+                except KeyError:
+                    raise ValueError("The argument 'task_idx' is not valid.")
+                batch_start_end_pair = core_idx_to_batch_idx[core_idx]
+                if batch_idx < batch_start_end_pair[0]:
+                    batch_start_end_pair[0] = batch_idx
+                if batch_idx > batch_start_end_pair[1]:
+                    batch_start_end_pair[1] = batch_idx
+                tr_start_end_pair = core_idx_to_tr_idx[core_idx][batch_idx]
+                if tr_idx < tr_start_end_pair[0]:
+                    tr_start_end_pair[0] = tr_idx
+                if tr_idx > tr_start_end_pair[1]:
+                    tr_start_end_pair[1] = tr_idx
+            task_start = task_end
+
+        core_idx_to_batch_info = self.tik_instance.Tensor(
+            "int32", (self.core_num, 2), name="core_idx_to_batch_info", scope=UB
+        )
+        core_idx_to_tr_info = self.tik_instance.Tensor(
+            "int32", (self.core_num, self.B, 2), name="core_idx_to_tr_info", scope=UB
+        )
+        for core_idx in core_idx_to_batch_idx:
+            batch_start, batch_end = core_idx_to_batch_idx[core_idx]
+            core_idx_to_batch_info[core_idx, 0] = batch_start
+            core_idx_to_batch_info[core_idx, 1] = batch_end - batch_start + 1
+            for batch_idx in core_idx_to_tr_idx[core_idx]:
+                tr_start, tr_end = core_idx_to_tr_idx[core_idx][batch_idx]
+                core_idx_to_tr_info[core_idx, batch_idx, 0] = tr_start
+                core_idx_to_tr_info[core_idx, batch_idx, 1] = tr_end + 1
+        return core_idx_to_batch_info, core_idx_to_tr_info
 
     def get_attn_mask_gm_offset(self, batch_start, batch_idx, h, w, block_h, block_h_idx, block_w, block_w_idx):
         if self.att_mask_shape[0] == 1:
@@ -231,11 +297,17 @@ class FlashAttention(metaclass=ABCMeta):
             self.tik_instance.h_add(Sij_ub, Sij_ub, att_mask_ub)
 
     def do_dropout_mask(self, Pij_ub, dropout_mask_gm_offset, kv_blk_h_aligned, kv_blk_height,
-                        q_blk_h_aligned, q_blk_height):
+                        q_blk_h_aligned, q_blk_height, precision_type=FP16):
         """load drop mask from gm to ub, then mul it by Pij"""
         with self.tik_instance.new_stmt_scope(disable_sync=False):
             dropout_mask_ub = self.tik_instance.Tensor(FP16, (q_blk_h_aligned, kv_blk_h_aligned),
                                                        scope=UB, name="drop_mask_ub")
             self.tik_instance.data_move(dropout_mask_ub, self.drop_mask_gm[dropout_mask_gm_offset], 0,
                                         q_blk_height, kv_blk_height // 16, (self.N - kv_blk_height) // 16, 0)
-            self.tik_instance.h_mul(Pij_ub, Pij_ub, dropout_mask_ub)
+            if precision_type == FP32:
+                dropout_mask_ub_fp32 = self.tik_instance.Tensor(FP32, (q_blk_h_aligned, kv_blk_h_aligned),
+                                                                scope=UB, name="dropout_mask_ub_fp32")
+                self.tik_instance.h_cast(dropout_mask_ub_fp32, dropout_mask_ub, "none")
+                self.tik_instance.h_mul(Pij_ub, Pij_ub, dropout_mask_ub_fp32)
+            else:
+                self.tik_instance.h_mul(Pij_ub, Pij_ub, dropout_mask_ub)
