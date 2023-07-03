@@ -26,6 +26,57 @@
 
 namespace mindspore {
 namespace opt {
+namespace {
+bool InsertDependForAllGatherParallel(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &all_gather_node,
+                                      const std::vector<AnfNodePtr> &allgather_succ_nodes,
+                                      const std::vector<AnfNodePtr> &allgather_second_succ_nodes) {
+  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) {
+    MS_LOG(DEBUG) << "AllGather parallel optimization is not required in pipeline parallel mode.";
+    return false;
+  }
+  bool changed = false;
+  for (size_t i = 1; i < all_gather_node.size(); i++) {
+    MS_EXCEPTION_IF_NULL(all_gather_node[i]);
+    if (allgather_second_succ_nodes[i] == nullptr || allgather_succ_nodes[i] == nullptr) {
+      MS_LOG(DEBUG) << "AllGather has no successor node or second successor node, AllGather name: "
+                    << all_gather_node[i]->fullname_with_scope();
+      continue;
+    }
+    if (!IsPrimitiveCNode(allgather_succ_nodes[i], prim::kPrimLoad)) {
+      MS_LOG(DEBUG) << "AllGather successor node it not Load, but is: "
+                    << allgather_succ_nodes[i]->fullname_with_scope()
+                    << ", AllGather node:" << all_gather_node[i]->fullname_with_scope();
+      continue;
+    }
+    AnfNodePtr another_input = nullptr;
+    auto second_succ_cnode = allgather_second_succ_nodes[i]->cast<CNodePtr>();
+    auto succ_cnode = allgather_succ_nodes[i]->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(second_succ_cnode);
+    MS_EXCEPTION_IF_NULL(succ_cnode);
+    for (size_t j = 1; j < second_succ_cnode->inputs().size(); j++) {
+      auto succ_input = second_succ_cnode->input(j);
+      if (succ_input != allgather_succ_nodes[i]) {
+        another_input = succ_input;
+        break;
+      }
+    }
+    if (another_input == nullptr) {
+      MS_LOG(DEBUG) << "AllGather second successor node has no other input, AllGather name: "
+                    << all_gather_node[i]->fullname_with_scope()
+                    << ", second successor node: " << second_succ_cnode->fullname_with_scope();
+      continue;
+    }
+
+    std::vector<AnfNodePtr> new_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
+                                          common::AnfAlgo::GetInputNode(succ_cnode, 0), another_input};
+    auto new_input_depend = graph->NewCNode(new_inputs);
+    new_input_depend->set_abstract(succ_cnode->abstract());
+    common::AnfAlgo::SetNodeInput(succ_cnode, new_input_depend, 0);
+    changed = true;
+  }
+  return changed;
+}
+
 AnfNodePtr GetFirstNextUsers(const FuncGraphPtr &graph, const AnfNodePtr &input,
                              std::map<AnfNodePtr, size_t> node_index_map, std::vector<AnfNodePtr> all_nodes) {
   auto manager = graph->manager();
@@ -61,6 +112,7 @@ AnfNodePtr GetFirstNextUsers(const FuncGraphPtr &graph, const AnfNodePtr &input,
                 << ", successor node: " << succ_node->fullname_with_scope();
   return succ_node;
 }
+}  // namespace
 
 bool AddDependForAllGather::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -103,45 +155,9 @@ bool AddDependForAllGather::Run(const FuncGraphPtr &graph) {
     common::AnfAlgo::SetNodeInput(next_cnode, new_input, 0);
     changed = true;
   }
+  changed = changed ||
+            InsertDependForAllGatherParallel(graph, all_gather_node, allgather_succ_nodes, allgather_second_succ_nodes);
 
-  if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() > 1) {
-    MS_LOG(DEBUG) << "AllGather parallel optimization is not required in pipeline parallel mode.";
-    return changed;
-  }
-
-  for (size_t i = 1; i < all_gather_node.size(); i++) {
-    MS_EXCEPTION_IF_NULL(all_gather_node[i]);
-    if (allgather_second_succ_nodes[i] == nullptr || allgather_succ_nodes[i] == nullptr) {
-      MS_LOG(DEBUG) << "AllGather has no successor node or second successor node, AllGather name: "
-                    << all_gather_node[i]->fullname_with_scope();
-      continue;
-    }
-    AnfNodePtr another_input = nullptr;
-    auto second_succ_cnode = allgather_second_succ_nodes[i]->cast<CNodePtr>();
-    auto succ_cnode = allgather_succ_nodes[i]->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(second_succ_cnode);
-    MS_EXCEPTION_IF_NULL(succ_cnode);
-    for (size_t j = 1; j < second_succ_cnode->inputs().size(); j++) {
-      auto succ_input = second_succ_cnode->input(j);
-      if (succ_input != allgather_succ_nodes[i]) {
-        another_input = succ_input;
-        break;
-      }
-    }
-    if (another_input == nullptr) {
-      MS_LOG(DEBUG) << "AllGather second successor node has no other input, AllGather name: "
-                    << all_gather_node[i]->fullname_with_scope()
-                    << ", second successor node: " << second_succ_cnode->fullname_with_scope();
-      continue;
-    }
-
-    std::vector<AnfNodePtr> new_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
-                                          common::AnfAlgo::GetInputNode(succ_cnode, 0), another_input};
-    auto new_input_depend = graph->NewCNode(new_inputs);
-    new_input_depend->set_abstract(succ_cnode->abstract());
-    common::AnfAlgo::SetNodeInput(succ_cnode, new_input_depend, 0);
-    changed = true;
-  }
   return changed;
 }
 }  // namespace opt
