@@ -224,6 +224,11 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const UnstackParam
                         param.axis_dim_, param.after_dims_);
 }
 
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const FillStruct &param) {
+  CodeBaseStruct<false>("FillParameter", name, "{}", param.thread_sz_count_, param.thread_sz_stride_, param.data_size_,
+                        param.src_data_, param.out_ptr_, param.thread_count_);
+}
+
 void NNaclFp32Serializer::CodeArrayStruct(const std::string &name, TensorC *tensorC, std::vector<Tensor *> tensor) {
   std::vector<std::string> tensor_names;
   int size = tensor.size();

@@ -52,6 +52,7 @@
 #include "nnacl/kernel/scale.h"
 #include "nnacl/kernel/pooling.h"
 #include "nnacl/kernel/layer_norm.h"
+#include "nnacl/kernel/fill.h"
 
 namespace mindspore::lite::micro::nnacl {
 class NNaclFp32Serializer : public Serializer {
@@ -87,6 +88,7 @@ class NNaclFp32Serializer : public Serializer {
   void CodeStruct(const std::string &name, const CustomGruParameter &param);
   void CodeStruct(const std::string &name, const SlidingWindowParam &param);
   void CodeStruct(const std::string &name, const UnstackParameter &param);
+  void CodeStruct(const std::string &name, const FillStruct &param);
   void CodeStruct(const std::string &name, const int *list, int size);
   void CodeArrayStruct(const std::string &name, TensorC *tensorC, std::vector<Tensor *> tensor);
 
