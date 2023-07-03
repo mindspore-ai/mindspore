@@ -80,7 +80,7 @@ BaseShapePtr ArgFusionInferShape(const PrimitivePtr &primitive, const std::vecto
   auto axis_value = primitive->GetAttr(kAxis);
   MS_EXCEPTION_IF_NULL(axis_value);
   auto axis = GetValue<int64_t>(axis_value);
-  CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeLeft, {-x_rank, x_rank}, prim_name);
+  CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeLeft, {-1 * x_rank, x_rank}, prim_name);
   axis = axis < 0 ? axis + SizeToLong(x_rank) : axis;
 
   auto topk_value = primitive->GetAttr(kTopK);
@@ -91,7 +91,7 @@ BaseShapePtr ArgFusionInferShape(const PrimitivePtr &primitive, const std::vecto
   if (topk == 1 && !keep_dims) {
     (void)out_shape_vector.erase(out_shape_vector.cbegin() + axis);
   } else {
-    out_shape_vector[axis] = topk;
+    out_shape_vector[LongToSize(axis)] = topk;
   }
 
   auto out_max_value = primitive->GetAttr(kOutMaxValue);

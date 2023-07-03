@@ -81,6 +81,7 @@ void Activation::Init(const float alpha, const float min_val, const float max_va
 }
 
 class ActivationInfer : public abstract::OpInferBase {
+ public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     MS_EXCEPTION_IF_NULL(primitive);
