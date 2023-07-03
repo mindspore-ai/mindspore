@@ -20,7 +20,7 @@
 #include "nnacl/conv_parameter.h"
 
 bool CheckAvxUseSW1x1Conv(const ConvParameter *conv_param);
-bool CheckAvxUseSWConv(const ConvParameter *conv_param);
+bool CheckAvxUseSWConv(const ConvParameter *conv_param, int thread_nr_);
 
 #ifdef __cplusplus
 extern "C" {

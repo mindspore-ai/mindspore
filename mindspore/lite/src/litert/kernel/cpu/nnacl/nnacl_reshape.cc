@@ -43,7 +43,7 @@ int ReshapeKernel::Run() {
 
   if (in_tensor->data_type() != out_tensor->data_type() || in_tensor->data() == nullptr ||
       in_tensor->Size() != out_tensor->Size()) {
-    MS_LOG(ERROR) << "Invalid param in reshape";
+    MS_LOG(ERROR) << "NNACL check reshape parameter failed. Kernel: " << name();
     return RET_ERROR;
   }
 

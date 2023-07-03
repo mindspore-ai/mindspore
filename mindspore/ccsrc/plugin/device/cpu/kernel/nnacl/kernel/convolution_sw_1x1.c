@@ -20,17 +20,15 @@
 #include "nnacl/kernel/matmul_create.h"
 
 int ConvSW1x1Prepare(ConvolutionSW1x1Struct *sw_1x1) {
-  MatmulStruct *matmul = (MatmulStruct *)sw_1x1->matmul_;
-  NNACL_CHECK_NULL_RETURN_ERR(matmul);
+  sw_1x1->matmul_->batch_ = 1;
+  sw_1x1->matmul_->a_batch_ = 1;
+  sw_1x1->matmul_->b_batch_ = 1;
 
   sw_1x1->matmul_->compute_.deep_ = sw_1x1->conv_.compute_.in_c_;
   sw_1x1->matmul_->compute_.col_ = sw_1x1->conv_.compute_.out_c_;
   sw_1x1->matmul_->compute_.row_ = sw_1x1->conv_.compute_.in_hw_ * sw_1x1->conv_.compute_.in_n_;
 
-  matmul->batch_ = 1;
-  matmul->a_batch_ = 1;
-  matmul->b_batch_ = 1;
-
+  MatmulBaseFreeBatchOffset(sw_1x1->matmul_);
   int ret = MatmulBaseMallocBatchOffset(sw_1x1->matmul_);
   if (ret != NNACL_OK) {
     return ret;
@@ -94,13 +92,14 @@ int ConvolutionSW1x1Release(KernelBase *self) {
   ConvolutionSW1x1Struct *sw_1x1 = (ConvolutionSW1x1Struct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(sw_1x1);
 
-  MatmulBaseFreeBatchOffset(sw_1x1->matmul_);
-
   if (sw_1x1->matmul_ != NULL) {
+    (void)sw_1x1->matmul_->base_.Release(&sw_1x1->matmul_->base_);
+
     if (sw_1x1->matmul_->base_.param_ != NULL) {
       free(sw_1x1->matmul_->base_.param_);
       sw_1x1->matmul_->base_.param_ = NULL;
     }
+
     free(sw_1x1->matmul_);
     sw_1x1->matmul_ = NULL;
   }

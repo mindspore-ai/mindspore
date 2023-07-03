@@ -138,7 +138,7 @@ ConvolutionBaseStruct *ConvolutionDelegateConvNHWCKernelSelect(ConvolutionDelega
     conv = CreateConvolutionSW1x1(conv_param);
   }
 
-  if (conv == NULL && CheckAvxUseSWConv(conv_param)) {
+  if (conv == NULL && CheckAvxUseSWConv(conv_param, convolution_delegate->conv_.base_.thread_nr_)) {
     conv = CreateConvolutionSWAVX(conv_param);
   }
 #endif
@@ -219,9 +219,7 @@ int ConvolutionDelegateResize(struct KernelBase *self) {
 
   int ret = convolution_delegate->convolution_->base_.Prepare(&convolution_delegate->convolution_->base_);
   if (ret != NNACL_OK) {
-    convolution_delegate->convolution_->base_.Release(&convolution_delegate->convolution_->base_);
-    free(convolution_delegate->convolution_);
-    convolution_delegate->convolution_ = NULL;
+    self->Release(self);
     return ret;
   }
 
@@ -250,13 +248,12 @@ int ConvolutionDelegatePrepare(struct KernelBase *self) {
 int ConvolutionDelegateRelease(struct KernelBase *self) {
   ConvolutionDelegateStruct *convolution_delegate = (ConvolutionDelegateStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(convolution_delegate);
-  int ret = NNACL_OK;
   if (convolution_delegate->convolution_ != NULL) {
-    ret = convolution_delegate->convolution_->base_.Release(&convolution_delegate->convolution_->base_);
+    (void)convolution_delegate->convolution_->base_.Release(&convolution_delegate->convolution_->base_);
     free(convolution_delegate->convolution_);
     convolution_delegate->convolution_ = NULL;
   }
-  return ret;
+  return NNACL_OK;
 }
 
 int ConvolutionDelegateCompute(struct KernelBase *self) {

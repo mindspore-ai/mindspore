@@ -41,15 +41,11 @@ void MatmulBaseFreeBatchOffset(MatmulStruct *matmul) {
 
 int MatmulBaseMallocBatchOffset(MatmulStruct *matmul) {
   matmul->a_offset_ = malloc(matmul->batch_ * sizeof(int));
-  if (matmul->a_offset_ == NULL) {
-    return NNACL_MALLOC_BUFFER_FAILED;
-  }
+  NNACL_MALLOC_CHECK_NULL_RETURN_ERR(matmul->a_offset_);
   memset(matmul->a_offset_, 0, matmul->batch_ * sizeof(int));
 
   matmul->b_offset_ = malloc(matmul->batch_ * sizeof(int));
-  if (matmul->b_offset_ == NULL) {
-    return NNACL_MALLOC_BUFFER_FAILED;
-  }
+  NNACL_MALLOC_CHECK_NULL_RETURN_ERR(matmul->b_offset_);
   memset(matmul->b_offset_, 0, matmul->batch_ * sizeof(int));
   return NNACL_OK;
 }

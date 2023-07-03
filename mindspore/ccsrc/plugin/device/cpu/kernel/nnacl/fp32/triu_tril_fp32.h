@@ -23,6 +23,7 @@
 extern "C" {
 #endif
 
+int TriuTrilGetCalculateNum(KernelBase *self, int64_t *mul, int64_t *height, int64_t *width);
 int TriuTrilGetKValue(KernelBase *self, int64_t *k);
 
 void TriuByte8(const void *src, void *dst, int64_t k, int64_t height, int64_t width, int64_t out_elems);
