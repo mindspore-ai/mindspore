@@ -473,8 +473,14 @@ def create_instance(cls_type, params=None):
     return obj
 
 
-def convert_class_to_function(cls_str):
+def convert_class_to_function(cls_str, cls_obj):
     """Convert class to function."""
+    if issubclass(cls_obj, (Parameter, ops.MultitypeFuncGraph)):
+        raise ValueError(f"Failed to compile in GRAPH_MODE because creating {cls_str} instances is not " \
+                         f"supported in 'construct' or @jit decorated function. Try to create {cls_str} " \
+                         f"instances external such as initialized in the method '__init__' before assigning. " \
+                         f"For more details, please refer to " \
+                         f"https://www.mindspore.cn/docs/zh-CN/master/design/dynamic_graph_and_static_graph.html \n")
     return convert_class_to_function_map.get(cls_str)
 
 

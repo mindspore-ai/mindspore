@@ -17,7 +17,7 @@ import pytest
 
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
-from mindspore import context, Tensor, Parameter
+from mindspore import context, Tensor, Parameter, ops
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -78,5 +78,23 @@ def test_create_parameter_instance():
 
     with pytest.raises(ValueError):
         x = Tensor([1, 2, 3])
+        net = Net()
+        net(x)
+
+
+def test_create_multitype_funcgraph_instance():
+    """
+    Feature: Create MultitypeFuncGraph instance.
+    Description: Create MultitypeFuncGraph instance in graph mode, expect raise exception.
+    Expectation: ValueError exception raise.
+    """
+
+    class Net(nn.Cell):
+        def construct(self, x):
+            add = ops.MultitypeFuncGraph('add')
+            return add(x, 1)
+
+    with pytest.raises(ValueError):
+        x = Tensor([1])
         net = Net()
         net(x)
