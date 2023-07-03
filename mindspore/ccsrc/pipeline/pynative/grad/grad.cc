@@ -2108,6 +2108,16 @@ void GradExecutor::CheckGraphDynamic(const ValuePtrList &inputs, const DynamicDe
     top_cell()->set_use_dynamic_shape_process(use_dynamic_shape_process);
     py::gil_scoped_acquire gil_acquire;
     (void)cell_id_with_dynamic_detect_nodes_.erase(top_cell()->obj_id_with_grad_order());
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    if (context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE)) {
+      MS_LOG(WARNING) << "Detect dynamic shape or dynamic graph structure, the python stack is:";
+      py::gil_scoped_acquire acquire_gil;
+      py::exec(R"(
+                  import traceback
+                  traceback.print_stack()
+                  )");
+    }
   }
 }
 }  // namespace pynative

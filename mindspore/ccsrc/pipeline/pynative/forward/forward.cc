@@ -165,6 +165,10 @@ BackendOpRunInfoPtr CreateBackendOpRunInfo(const FrontendOpRunInfoPtr &op_run_in
   backend_op_run_info->output_tensors = op_run_info->output_tensors;
   // Need to update promise in backend task.
   backend_op_run_info->device_sync_promises = std::move(op_run_info->device_sync_promises);
+  // Erase RandomOp cache avoid memory leak.
+  if (AnfAlgo::NeedEraseCache(backend_op_run_info->op_prim)) {
+    op_run_info->base_op_run_info.need_earse_cache = true;
+  }
   return backend_op_run_info;
 }
 

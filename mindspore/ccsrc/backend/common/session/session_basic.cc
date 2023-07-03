@@ -637,6 +637,9 @@ void SessionBasic::ReleaseForwardOpOutput(const std::vector<tensor::TensorPtr> &
                                           std::map<std::string, size_t> *forward_op_output_tensor_id) const {
   MS_EXCEPTION_IF_NULL(forward_op_output_tensor_id);
   for (const auto &tensor : input_tensors) {
+    if (!tensor->is_forward_output()) {
+      continue;
+    }
     auto it = forward_op_output_tensor_id->find(tensor->id());
     if (it != forward_op_output_tensor_id->end()) {
       if (--(it->second) == 0) {

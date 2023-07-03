@@ -257,6 +257,7 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static tensor::TensorPtr SequenceToTensor(const ValuePtr &value);
   static void UpdateValueNodeShape(const AnfNodePtr &node);
   static bool HasSelectKernelBuildInfo(const AnfNodePtr &node);
+  static bool NeedEraseCache(const PrimitivePtr &prim);
 };
 }  // namespace session
 
