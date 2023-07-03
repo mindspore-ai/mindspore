@@ -15,7 +15,10 @@ mindspore.nn.Sigmoid
 
     其中 :math:`x_i` 是输入的元素。
 
-    关于Sigmoid的图例见 `Sigmoid <https://en.wikipedia.org/wiki/Sigmoid_function#/media/File:Logistic-curve.svg>`_ 。
+    Sigmoid函数图：
+
+    .. image:: images/Sigmoid.png
+        :align: center
 
     输入：
         - **input_x** (Tensor) - 数据类型为float16、float32、float64、complex64或complex128的Sigmoid输入。任意维度的Tensor。

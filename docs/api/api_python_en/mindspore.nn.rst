@@ -407,7 +407,7 @@ LRScheduler subclass dynamically changes the learning rate by calling the `step`
             train_step(data, label)
         scheduler.step()
 
-.. mscnplatformautosummary::
+.. msplatformautosummary::
     :toctree: nn
     :nosignatures:
     :template: classtemplate.rst

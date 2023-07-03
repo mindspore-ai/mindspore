@@ -16,7 +16,10 @@ mindspore.nn.ELU
 
     其中，:math:`x_i` 表示输入的元素，:math:`\alpha` 表示 `alpha` 参数。
 
-    ELU相关图参见 `ELU <https://en.wikipedia.org/wiki/Activation_function#/media/File:Activation_elu.svg>`_  。
+    ELU函数图：
+
+    .. image:: images/ELU.png
+        :align: center
 
     参数：
         - **alpha** (`float`) - ELU的alpha值，数据类型为浮点数。默认值： ``1.0`` 。

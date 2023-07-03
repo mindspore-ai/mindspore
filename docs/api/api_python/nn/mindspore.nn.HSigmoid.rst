@@ -10,6 +10,11 @@ mindspore.nn.HSigmoid
     .. math::
         \text{hsigmoid}(x_{i}) = \max(0, \min(1, \frac{x_{i} + 3}{6})),
 
+    HSigmoid函数图：
+
+    .. image:: images/HSigmoid.png
+        :align: center
+
     输入：
         - **input_x** (Tensor) - Hard Sigmoid的输入，任意维度的Tensor。
 

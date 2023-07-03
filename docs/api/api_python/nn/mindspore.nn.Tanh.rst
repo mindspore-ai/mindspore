@@ -12,6 +12,11 @@ mindspore.nn.Tanh
 
     其中 :math:`x_i` 是输入Tensor的元素。
 
+    Tanh函数图：
+
+    .. image:: images/Tanh.png
+        :align: center
+
     输入：
         - **x** (Tensor) - 任意维度的Tensor，数据类型为float16或float32的输入。
 
