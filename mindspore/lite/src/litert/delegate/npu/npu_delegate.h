@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <map>
+#include <string>
 #include "include/api/delegate.h"
 #include "src/litert/delegate/npu/npu_manager.h"
 #include "src/litert/delegate/npu/pass/npu_pass_manager.h"
@@ -28,7 +29,10 @@
 namespace mindspore::lite {
 class NPUDelegate : public Delegate {
  public:
-  explicit NPUDelegate(NpuDeviceInfo device_info) : Delegate() { frequency_ = device_info.frequency_; }
+  explicit NPUDelegate(NpuDeviceInfo device_info, const std::string &cache_dir) : Delegate() {
+    frequency_ = device_info.frequency_;
+    cache_dir_ = cache_dir;
+  }
 
   ~NPUDelegate() override;
 
@@ -48,6 +52,7 @@ class NPUDelegate : public Delegate {
   NPUPassManager *pass_manager_ = nullptr;
   std::map<schema::PrimitiveType, NPUGetOp> op_func_lists_;
   int frequency_ = 0;
+  std::string cache_dir_{};
 };
 }  // namespace mindspore::lite
 

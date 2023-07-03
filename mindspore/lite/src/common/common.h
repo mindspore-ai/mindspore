@@ -86,6 +86,9 @@ static const char *const kInnerModelIDKey = "inner_model_id";
 static const char *const kInnerRunnerIDKey = "inner_runner_id";
 static const char *const kInnerNumaIDKey = "inner_numa_id";
 static const char *const kInnerWorkerNumKey = "inner_worker_num";
+
+// common context
+static const char *const kCommonContextSection = "common_context";
 // gpu context
 static const char *const kGPUContextSection = "gpu_context";
 static const char *const kInputShapeKey = "input_shape";

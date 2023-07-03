@@ -54,6 +54,8 @@ char *ReadFile(const char *file, size_t *size, std::shared_ptr<Allocator> alloca
 
 std::string RealPath(const char *path);
 
+int CreateDir(std::string *file_path);
+
 int CreateOutputDir(std::string *file_path);
 
 template <typename T>
