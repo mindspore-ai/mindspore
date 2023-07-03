@@ -67,7 +67,13 @@ Buffer ReadFile(const std::string &file) {
   }
 
   (void)ifs.seekg(0, std::ios::end);
-  size_t size = static_cast<size_t>(ifs.tellg());
+  auto tellg_size = ifs.tellg();
+  if (tellg_size < 0) {
+    MS_LOG(ERROR) << "Malloc buf failed, file: " << real_path;
+    ifs.close();
+    return buffer;
+  }
+  size_t size = static_cast<size_t>(tellg_size);
   buffer.ResizeData(size);
   if (buffer.DataSize() != size) {
     MS_LOG(ERROR) << "Malloc buf failed, file: " << real_path;
