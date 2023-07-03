@@ -29,9 +29,9 @@ mindspore.ops.ApplyAdagradDA
 
     输入：
         - **var** (Parameter) - 要更新的变量。数据类型必须为float16或float32。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
-        - **gradient_accumulator** (Parameter) - 要更新累积的梯度，为公式中的 :math:`grad\_accum` 。shape和数据类型必须与 `var` 相同。
-        - **gradient_squared_accumulator** (Parameter) - 要更新的平方累积的梯度， 为公式中的 :math:`grad\_squared\_accum` 。shape和数据类型必须与 `var` 相同。
-        - **grad** (Tensor) - 梯度，为一个Tensor。shape和数据类型必须与 `var` 相同。
+        - **gradient_accumulator** (Parameter) - 要更新累积的梯度，为公式中的 :math:`grad\_accum` 。shape必须与 `var` 相同。
+        - **gradient_squared_accumulator** (Parameter) - 要更新的平方累积的梯度， 为公式中的 :math:`grad\_squared\_accum` 。shape必须与 `var` 相同。
+        - **grad** (Tensor) - 梯度，为一个Tensor。shape必须与 `var` 相同。
         - **lr** ([Number, Tensor]) - 学习率。必须是Scalar。数据类型为float32或float16。
         - **l1** ([Number, Tensor]) - L1正则化。必须是Scalar。数据类型为float32或float16。
         - **l2** ([Number, Tensor]) - L2正则化。必须是Scalar。数据类型为float32或float16。
