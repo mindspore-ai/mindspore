@@ -20,7 +20,6 @@ const char PYTHON_PRIMITIVE_FLAG[] = "__primitive_flag__";
 const char PYTHON_CELL_AS_LIST[] = "__cell_as_list__";
 const char PYTHON_MS_CLASS[] = "__ms_class__";
 const char PYTHON_JIT_FORBIDDEN[] = "__jit_forbidden__";
-const char PYTHON_ADAPTER_TENSOR[] = "__adapter_tensor__";
 const char PYTHON_CLASS_MEMBER_NAMESPACE[] = "__class_member_namespace__";
 const char PYTHON_FUNCTION_FORBID_REUSE[] = "__function_forbid_reuse__";
 }  // namespace mindspore

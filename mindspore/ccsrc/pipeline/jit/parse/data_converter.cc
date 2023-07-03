@@ -25,7 +25,6 @@
 #include "frontend/operator/composite/composite.h"
 #include "ir/func_graph_cloner.h"
 #include "ir/cell.h"
-#include "ir/adapter_tensor.h"
 #include "utils/symbolic.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/utils.h"
@@ -50,8 +49,6 @@ using COOTensor = mindspore::tensor::COOTensor;
 using COOTensorPtr = mindspore::tensor::COOTensorPtr;
 using MapTensor = mindspore::tensor::MapTensor;
 using MapTensorPtr = mindspore::tensor::MapTensorPtr;
-using AdapterTensor = mindspore::tensor::AdapterTensor;
-using AdapterTensorPtr = mindspore::tensor::AdapterTensorPtr;
 
 using InstanceCheckFunc = std::function<bool(const py::object &)>;
 using InstanceConvertFunc = std::function<ValuePtr(const py::object &, bool, const TypePtr &)>;
@@ -198,33 +195,6 @@ FuncGraphPtr ConvertToBpropCut(const py::object &obj) {
 }
 
 namespace {
-bool IsAdapterTensor(const py::object &obj) {
-  if (!py::hasattr(obj, PYTHON_ADAPTER_TENSOR)) {
-    return false;
-  }
-  // Only class instances are considered.
-  if (data_converter::IsClassType(obj)) {
-    return false;
-  }
-  // Check if the attribute is true.
-  return py::getattr(obj, PYTHON_ADAPTER_TENSOR).cast<bool>();
-}
-
-ValuePtr ConvertAdapterTensor(const py::object &obj) {
-  // Use class AdapterTensor instead of Tensor to avoid circular dependencies.
-  MS_LOG(DEBUG) << "Converting adapter tensor";
-  // AdapterParameter inherits from ms.Parameter.
-  if (py::hasattr(obj, "__parameter__")) {
-    return std::make_shared<AdapterTensor>(obj.cast<TensorPtr>());
-  }
-  // AdapterTensor inherits from StubTensor.
-  if (IsStubTensor(obj)) {
-    auto stub_tensor = ConvertStubTensor(obj);
-    return std::make_shared<AdapterTensor>(stub_tensor);
-  }
-  MS_LOG(EXCEPTION) << "AdapterTensor should inherit from StubTensor.";
-}
-
 ValuePtr ConvertTuple(const py::object &obj, bool use_signature) {
   MS_LOG(DEBUG) << "Converting python tuple";
   auto tuple = obj.cast<py::tuple>();
@@ -630,27 +600,12 @@ ValuePtr ObjCast(const py::object &obj) {
   return obj.cast<T>();
 }
 
-ValuePtr ConvertTensor(const py::object &obj) {
-  if (IsAdapterTensor(obj)) {
-    return ConvertAdapterTensor(obj);
-  }
-  return ObjCast<TensorPtr>(obj);
-}
-
-ValuePtr ConvertStub(const py::object &obj) {
-  auto stub_tensor = ConvertStubTensor(obj);
-  if (IsAdapterTensor(obj)) {
-    return std::make_shared<AdapterTensor>(stub_tensor);
-  }
-  return stub_tensor;
-}
-
 static const std::vector<DataConverterPtr> &GetDataConverters() {
   // Convert data by python object type.
   static const std::vector<DataConverterPtr> data_converters{
     // AdapterTensor needs to be processed before Tensor because it inherits from Tensor.
-    std::make_shared<ByFuncDataConverter>(IsStubTensor, ConvertStub),
-    std::make_shared<ByTypeDataConverter<Tensor>>(ConvertTensor),
+    std::make_shared<ByFuncDataConverter>(IsStubTensor, ConvertStubTensor),
+    std::make_shared<ByTypeDataConverter<Tensor>>(ObjCast<TensorPtr>),
     std::make_shared<ByTypeDataConverter<py::tuple>>(ConvertTuple),
     std::make_shared<ByTypeDataConverter<py::list>>(ConvertList),
     std::make_shared<ByTypeDataConverter<py::bool_>>(PyCast<BoolImm, bool>),

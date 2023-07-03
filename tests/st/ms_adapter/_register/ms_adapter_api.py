@@ -59,6 +59,7 @@ class Tensor(StubTensor):
                 super(Tensor, self).__init__(tensor=input_data)
             else:
                 raise ValueError(f"Tensor init data type is invalid: {type(input_data)}")
+            self.adapter_flag = True
             return
 
         if dtype is not None:
@@ -80,6 +81,7 @@ class Tensor(StubTensor):
                         dtype = mstype.float32
                 init_tensor = ms_Tensor(input_data=_input_data, dtype=dtype)
         super(Tensor, self).__init__(tensor=init_tensor)
+        self.adapter_flag = True
 
     @property
     def attr(self):
@@ -132,6 +134,11 @@ class Parameter(ms.Parameter):
         if obj.has_init:
             obj.init_mode = data
         return obj
+
+    def __init__(self, data, name=None, requires_grad=True, layerwise_parallel=False, parallel_optimizer=True):
+        self.adapter_flag = True
+        super().__init__(default_input=data, name=name, requires_grad=requires_grad,
+                         layerwise_parallel=layerwise_parallel, parallel_optimizer=parallel_optimizer)
 
     @staticmethod
     def _get_base_class(input_class):

@@ -22,7 +22,6 @@ extern const char PYTHON_PRIMITIVE_FLAG[];
 extern const char PYTHON_CELL_AS_LIST[];
 extern const char PYTHON_MS_CLASS[];
 extern const char PYTHON_JIT_FORBIDDEN[];
-extern const char PYTHON_ADAPTER_TENSOR[];
 extern const char PYTHON_CLASS_MEMBER_NAMESPACE[];
 extern const char PYTHON_FUNCTION_FORBID_REUSE[];
 }  // namespace mindspore

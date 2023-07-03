@@ -209,31 +209,30 @@ bool IsAdapterTensor(const AbstractBasePtr &x) {
   return x->cast<abstract::AbstractTensorPtr>()->is_adapter();
 }
 
-bool HasAdapterTensorClassType(const AbstractBasePtr &cmp, bool is_parameter) {
+bool CheckIsInstanceForAdapter(const AbstractBasePtr &x, const AbstractBasePtr &cmp) {
   if (cmp->isa<abstract::AbstractTuple>()) {
     const auto &elements = cmp->cast<abstract::AbstractTuplePtr>()->elements();
-    return std::any_of(elements.begin(), elements.end(), [=](const AbstractBasePtr &element) {
-      return HasAdapterTensorClassType(element, is_parameter);
-    });
+    return std::any_of(elements.begin(), elements.end(),
+                       [=](const AbstractBasePtr &element) { return CheckIsInstanceForAdapter(x, element); });
   }
   auto cmp_value = cmp->BuildValue();
   MS_EXCEPTION_IF_NULL(cmp_value);
   if (cmp_value->isa<parse::ClassType>()) {
     auto class_obj = cmp_value->cast<parse::ClassTypePtr>()->obj();
+    py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
     // isinstance(tensor_x, Tensor) -> true, isinstance(tensor_x, Parameter) -> false.
     // isinstance(parameter_x, Tensor) -> true, isinstance(parameter_x, Parameter) -> true.
-    if (py::hasattr(class_obj, PYTHON_ADAPTER_TENSOR) || py::hasattr(class_obj, "adapter_flag")) {
-      return is_parameter || !py::hasattr(class_obj, "__parameter__");
+    bool is_cmp_tensor =
+      python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_IS_ADAPTER_TENSOR_CLASS, class_obj).cast<bool>();
+    if (is_cmp_tensor) {
+      return true;
     }
+    bool is_x_parameter = x->isa<abstract::AbstractRefTensor>();
+    bool is_cmp_parameter =
+      python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_IS_ADAPTER_PARAMETER_CLASS, class_obj).cast<bool>();
+    return is_x_parameter && is_cmp_parameter;
   }
   return false;
-}
-
-bool CheckIsInstanceForAdapter(const AbstractBasePtr &x, const AbstractBasePtr &cmp) {
-  if (x->isa<abstract::AbstractRefTensor>()) {
-    return HasAdapterTensorClassType(cmp, true);
-  }
-  return HasAdapterTensorClassType(cmp, false);
 }
 
 bool CheckPythonIsInstance(const py::object &x, const AbstractBasePtr &cmp, const py::module &mod, bool is_const) {
