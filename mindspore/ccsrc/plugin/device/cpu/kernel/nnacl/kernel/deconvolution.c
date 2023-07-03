@@ -22,6 +22,7 @@
 #include "nnacl/fp32/deconv_fp32.h"
 #include "nnacl/fp32/matmul_fp32.h"
 #include "nnacl/fp32/matmul_avx_fp32.h"
+#include "nnacl/kernel/default_kernel_base.h"
 
 int DeConvMallocWeightBiasData(ConvolutionBaseStruct *conv) {
   int output_aligned_size = UP_ROUND(conv->compute_.out_c_, C8NUM) * sizeof(float);
@@ -168,7 +169,7 @@ int DeConvCheckvResizeValid(ConvolutionBaseStruct *conv) {
   return NNACL_OK;
 }
 
-int deconv_resize(KernelBase *self) {
+int DeConvResize(KernelBase *self) {
   DeConvStruct *deconv = (DeConvStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(deconv);
 
@@ -192,7 +193,7 @@ int deconv_resize(KernelBase *self) {
   return NNACL_OK;
 }
 
-int deconv_compute(KernelBase *self) {
+int DeConvCompute(KernelBase *self) {
   DeConvStruct *deconv = (DeConvStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(deconv);
 
@@ -237,9 +238,7 @@ int deconv_compute(KernelBase *self) {
   return NNACL_OK;
 }
 
-int deconv_release(KernelBase *self) { return NNACL_OK; }
-
-int deconv_prepare(KernelBase *self) {
+int DeConvPrepare(KernelBase *self) {
   NNACL_CHECK_FALSE(self->in_size_ < TWO_TENSOR, NNACL_ERR);
   NNACL_CHECK_FALSE(self->out_size_ < ONE_TENSOR, NNACL_ERR);
   DeConvStruct *deconv = (DeConvStruct *)self;
@@ -283,10 +282,10 @@ ConvolutionBaseStruct *CreateDeConv(ConvParameter *param) {
   memset(deconv, 0, sizeof(DeConvStruct));
   deconv->conv_.malloc_weight_bias_ = DeConvMallocWeightBiasData;
   deconv->conv_.pack_weight_ = DeConvPackWeight;
-  deconv->conv_.base_.Prepare = deconv_prepare;
-  deconv->conv_.base_.Resize = deconv_resize;
-  deconv->conv_.base_.Release = deconv_release;
-  deconv->conv_.base_.Compute = deconv_compute;
+  deconv->conv_.base_.Prepare = DeConvPrepare;
+  deconv->conv_.base_.Resize = DeConvResize;
+  deconv->conv_.base_.Release = DefaultRelease;
+  deconv->conv_.base_.Compute = DeConvCompute;
   return &deconv->conv_;
 }
 

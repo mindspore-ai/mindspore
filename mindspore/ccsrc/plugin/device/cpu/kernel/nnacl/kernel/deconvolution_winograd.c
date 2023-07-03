@@ -375,7 +375,7 @@ int InitTrainComputeInit(DeConvWinogradStruct *deconv) {
   return NNACL_OK;
 }
 
-int deconv_winograd_prepare(KernelBase *self) {
+int DeConvWinogradPrepare(KernelBase *self) {
   NNACL_CHECK_FALSE(self->in_size_ < TWO_TENSOR, NNACL_ERR);
   NNACL_CHECK_FALSE(self->out_size_ < ONE_TENSOR, NNACL_ERR);
 
@@ -418,7 +418,7 @@ int deconv_winograd_prepare(KernelBase *self) {
   return NNACL_OK;
 }
 
-int deconv_winograd_resize(KernelBase *self) {
+int DeConvWinogradResize(KernelBase *self) {
   DeConvWinogradStruct *deconv = (DeConvWinogradStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(deconv);
   (void)ConvBaseUpdateComputeInfo(&deconv->conv_);
@@ -462,7 +462,7 @@ int deconv_winograd_resize(KernelBase *self) {
   return NNACL_OK;
 }
 
-int deconv_winograd_release(KernelBase *self) {
+int DeConvWinogradRelease(KernelBase *self) {
   DeConvWinogradStruct *deconv = (DeConvWinogradStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(deconv);
 
@@ -476,7 +476,7 @@ int deconv_winograd_release(KernelBase *self) {
   return NNACL_OK;
 }
 
-int deconv_winograd_compute(KernelBase *self) {
+int DeConvWinogradCompute(KernelBase *self) {
   DeConvWinogradStruct *deconv = (DeConvWinogradStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(deconv);
   DeConvParam *param = &deconv->param_;
@@ -533,10 +533,10 @@ ConvolutionBaseStruct *CreateDeConvWinograd(ConvParameter *param) {
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(deconv_winograd);
   memset(deconv_winograd, 0, sizeof(DeConvWinogradStruct));
 
-  deconv_winograd->conv_.base_.Prepare = deconv_winograd_prepare;
-  deconv_winograd->conv_.base_.Resize = deconv_winograd_resize;
-  deconv_winograd->conv_.base_.Release = deconv_winograd_release;
-  deconv_winograd->conv_.base_.Compute = deconv_winograd_compute;
+  deconv_winograd->conv_.base_.Prepare = DeConvWinogradPrepare;
+  deconv_winograd->conv_.base_.Resize = DeConvWinogradResize;
+  deconv_winograd->conv_.base_.Release = DeConvWinogradRelease;
+  deconv_winograd->conv_.base_.Compute = DeConvWinogradCompute;
   return &deconv_winograd->conv_;
 }
 #endif

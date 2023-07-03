@@ -128,7 +128,7 @@ int ArithmeticSelfRun(void *cdata, int task_id, float l, float r) {
   return ArithmeticSelfExecute(arithmetic_self, task_id);
 }
 
-int arithmetic_self_resize(KernelBase *self) {
+int ArithmeticSelfResize(KernelBase *self) {
   ArithmeticSelfStruct *arithmetic_self = (ArithmeticSelfStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(arithmetic_self);
   self->thread_nr_ = arithmetic_self->base_.UpdateThread(TC_PTYPE(arithmetic_self->op_type_), 1, 1,
@@ -136,11 +136,11 @@ int arithmetic_self_resize(KernelBase *self) {
   return NNACL_OK;
 }
 
-int arithmetic_self_compute(KernelBase *self) {
+int ArithmeticSelfCompute(KernelBase *self) {
   return self->env_->ParallelLaunch(self->env_->thread_pool_, ArithmeticSelfRun, self, self->thread_nr_);
 }
 
-int arithmetic_self_prepare(KernelBase *self) {
+int ArithmeticSelfPrepare(KernelBase *self) {
   NNACL_CHECK_FALSE(self->in_size_ != ONE_TENSOR, NNACL_INPUT_TENSOR_ERROR);
   NNACL_CHECK_FALSE(self->out_size_ != ONE_TENSOR, NNACL_OUTPUT_TENSOR_ERROR);
   NNACL_CHECK_FALSE(self->out_[OUTPUT_INDEX]->category_ == ConstTensor, NNACL_OUTPUT_TENSOR_ERROR);
@@ -154,10 +154,10 @@ KernelBase *CreateArithmeticSelf(OpParameter *param, int data_type) {
   ArithmeticSelfGetArithmeticSelfFunction(arithmetic_self, param->type_);
   ArithmeticSelfGetArithmeticSelfF16Function(arithmetic_self, param->type_);
   arithmetic_self->op_type_ = param->type_;
-  arithmetic_self->base_.Prepare = arithmetic_self_prepare;
-  arithmetic_self->base_.Resize = arithmetic_self_resize;
+  arithmetic_self->base_.Prepare = ArithmeticSelfPrepare;
+  arithmetic_self->base_.Resize = ArithmeticSelfResize;
   arithmetic_self->base_.Release = DefaultRelease;
-  arithmetic_self->base_.Compute = arithmetic_self_compute;
+  arithmetic_self->base_.Compute = ArithmeticSelfCompute;
   return (KernelBase *)arithmetic_self;
 }
 
