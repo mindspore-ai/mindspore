@@ -316,10 +316,10 @@ class AscendEnvChecker(EnvChecker):
 
     @staticmethod
     def _concat_variable(env_name, env_value):
-        if os.environ[env_name]:
-            os.environ[env_name] = env_value + ":" + os.environ[env_name]
-        else:
+        if os.getenv(env_name) is None:
             os.environ[env_name] = env_value
+        else:
+            os.environ[env_name] = env_value + ":" + os.environ[env_name]
 
     @staticmethod
     def _check_and_set_env(env_name, env_value, is_append=False):
@@ -334,7 +334,7 @@ class AscendEnvChecker(EnvChecker):
             return False
 
         if is_append:
-            AscendEnvChecker._concat_variable(env_name, os.environ[env_name])
+            AscendEnvChecker._concat_variable(env_name, env_value)
         else:
             os.environ[env_name] = env_value
         return True
