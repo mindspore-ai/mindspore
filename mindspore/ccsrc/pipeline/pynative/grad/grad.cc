@@ -347,16 +347,20 @@ void ProcessTupleSens(const FuncGraphPtr &bprop_graph, const InputArgsInfoPtr &i
   if (!sens_abstract->isa<abstract::AbstractSequence>()) {
     MS_LOG(EXCEPTION) << "Get wrong sens " << sens_param->abstract()->ToString();
   }
+  MS_LOG(DEBUG) << "Process tuple sens " << sens_param->DebugString();
   auto it = std::find(bprop_params.begin(), bprop_params.end(), sens_param);
-  bprop_params.erase(it);
-  bprop_graph->set_parameters(bprop_params);
+  it = bprop_params.erase(it);
   const auto &abs_seq = sens_abstract->cast<abstract::AbstractSequencePtr>();
   AnfNodePtrList make_tuple{NewValueNode(prim::kPrimMakeTuple)};
+  AnfNodePtrList new_param;
   for (size_t i = 0; i < abs_seq->size(); ++i) {
     auto plant_param = bprop_graph->add_parameter();
     plant_param->set_abstract(abs_seq->elements()[i]);
     (void)make_tuple.emplace_back(plant_param);
+    (void)new_param.emplace_back(plant_param);
   }
+  bprop_params.insert(it, new_param.begin(), new_param.end());
+  bprop_graph->set_parameters(bprop_params);
   auto make_tuple_sens = bprop_graph->NewCNode(make_tuple);
   make_tuple_sens->set_abstract(sens_abstract);
   auto manager = bprop_graph->manager();
@@ -377,24 +381,23 @@ void SetGraphInputArgs(const std::vector<ValuePtr> &input_vec, const pipeline::R
   auto input_arg_list = input_vec;
   if (is_tuple_sens) {
     input_arg_list.clear();
-    graph_params_size -= 1;
     PyNativeAlgo::DataConvert::FlattenArgs(input_vec, &input_arg_list, true);
   }
   std::transform(input_arg_list.begin(), input_arg_list.end(), std::back_inserter(*arg_list),
                  [](const ValuePtr &v) { return v; });
-
-  if ((*arg_list).size() != graph_params_size) {
+  size_t arg_size = (*arg_list).size();
+  if (arg_size != graph_params_size) {
     // Maybe have some default parameter for input
     MS_LOG(DEBUG) << "Get args size " << (*arg_list).size() << ", graph param size " << graph_params_size;
-    for (std::size_t i = (*arg_list).size(); i < graph_params_size; ++i) {
+    for (std::size_t i = arg_size; i < graph_params_size; ++i) {
       MS_EXCEPTION_IF_NULL(graph_params[i]);
       auto param_ptr = (graph_params[i])->cast_ptr<Parameter>();
       MS_EXCEPTION_IF_NULL(param_ptr);
       if (!param_ptr->has_default()) {
-        MS_LOG(EXCEPTION) << "Parameter[" << i << "] has no default param";
+        MS_LOG(EXCEPTION) << "Parameter[" << i << "] has no default param, " << param_ptr->DebugString();
       }
       if (!param_ptr->default_param()->isa<tensor::Tensor>()) {
-        MS_LOG(EXCEPTION) << "Parameter[" << param_ptr->ToString()
+        MS_LOG(EXCEPTION) << "Parameter[" << param_ptr->DebugString()
                           << "] is not initialized, need to call `.init_data()`";
       }
       arg_list->push_back(param_ptr->default_param());
@@ -1392,7 +1395,7 @@ void GradExecutor::MakeNestedCnode(bool has_custom_bprop, const std::vector<Valu
     ClearGradRes();
     return;
   }
-
+  MS_LOG(DEBUG) << "Do high grad";
   auto first_grad_fg = cur_run_bprop_graph;
   if (has_custom_bprop) {
     first_grad_fg = curr_g();

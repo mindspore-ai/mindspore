@@ -266,7 +266,7 @@ void AsyncHqueue::WorkerLoop() {
     if (LIKELY(!tasks_hqueque_.Empty())) {
       auto task = tasks_hqueque_.Dequeue();
       if (LIKELY(task != nullptr)) {
-        if (!stop_) {
+        if (LIKELY(!stop_)) {
           task->Run();
         }
         delete task;
@@ -279,8 +279,9 @@ void AsyncHqueue::WorkerLoop() {
       }
       ++spin_count_;
     }
-    if (UNLIKELY(spin_count_ == kMaxSpinCount)) {
+    if (spin_count_ == kMaxSpinCount) {
       std::unique_lock<std::mutex> lock(task_mutex_);
+      status_.store(kThreadIdle);
       task_cond_var_->wait(lock, [this]() { return !tasks_hqueque_.Empty() || !alive_; });
       spin_count_ = 0;
     } else {
