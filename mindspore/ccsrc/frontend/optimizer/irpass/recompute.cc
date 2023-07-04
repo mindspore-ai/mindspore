@@ -361,7 +361,7 @@ bool AddRecomputePrimitive(const FuncGraphPtr &root, const opt::OptimizerPtr &op
   MS_EXCEPTION_IF_NULL(manager);
   bool changed = false;
   auto all_node = TopoSort(root->get_return(), SuccDeeperSimple, AlwaysInclude);
-  for (auto iter = all_node.crbegin(); iter != all_node.crend(); iter++) {
+  for (auto iter = all_node.crbegin(); iter != all_node.crend(); (void)iter++) {
     auto node = *iter;
     if (!IsPrimitiveCNode(*iter, prim::kPrimTupleGetItem)) {
       continue;

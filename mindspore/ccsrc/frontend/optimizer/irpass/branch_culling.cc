@@ -146,8 +146,10 @@ void RunSwitchNodeReplace(const FuncGraphManagerPtr &manager, std::vector<std::p
     if (IsPrimitiveCNode(item.second, prim::kPrimReturn)) {
       func_graph->set_output(item.second->cast<CNodePtr>()->input(1));
     } else if (!manager->Replace(item.first, item.second)) {
+      constexpr auto kDebugStrDepth = 2;
       MS_LOG(INTERNAL_EXCEPTION) << "TransformGraphDependNode replace node failed original:"
-                                 << item.first->DebugString(2) << " to new: " << item.second->DebugString(2);
+                                 << item.first->DebugString(kDebugStrDepth)
+                                 << " to new: " << item.second->DebugString(kDebugStrDepth);
     }
   }
 }
