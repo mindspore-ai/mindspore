@@ -30,7 +30,7 @@ std::mutex cyl_bessel_mux_;
 
 // Compute the thread nums.
 Status CountThreadNums(size_t input_size, float block_size, size_t *task_num, size_t *once_compute_size) {
-  CHECK_FAIL_RETURN_UNEXPECTED(block_size != 0, "Invalid data, the value of 'block_size' should not be 0, but got 0.");
+  CHECK_FAIL_RETURN_UNEXPECTED(block_size > 0, "Invalid data, the value of 'block_size' should be greater than 0.");
   size_t audio_thread_num = 4;
   size_t thread_num =
     input_size < block_size * audio_thread_num ? std::ceil(input_size / block_size) : audio_thread_num;
