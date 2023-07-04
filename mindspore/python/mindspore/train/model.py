@@ -50,6 +50,7 @@ from mindspore.common.api import _pynative_executor
 from mindspore.dataset.core.config import get_debug_mode
 from mindspore.dataset.engine.datasets import _set_training_dataset, _reset_training_dataset
 from mindspore.train import amp
+from mindspore._c_expression import _framework_profiler_step_start, _framework_profiler_step_end
 
 
 def _transfer_tensor_to_tuple(inputs):
@@ -66,6 +67,17 @@ class _StepSync(Callback):
     @staticmethod
     def step_end(run_context):
         _pynative_executor.sync()
+
+
+class _FrameworkProfilerCallback(Callback):
+    """
+    Profiler callback of framework for training.
+    """
+    def step_begin(self, run_context):
+        _framework_profiler_step_start()
+
+    def step_end(self, run_context):
+        _framework_profiler_step_end()
 
 
 def _save_final_ckpt(func):
@@ -581,9 +593,10 @@ class Model:
         cb_params.train_dataset = train_dataset
         cb_params.list_callback = self._transform_callbacks(callbacks)
         valid_infos = (valid_dataset, valid_frequency, valid_dataset_sink_mode)
+        cb_params.list_callback.insert(0, _FrameworkProfilerCallback())
         if context.get_context("mode") == context.PYNATIVE_MODE:
             cb_params.list_callback.insert(0, _StepSync())
-            callbacks = cb_params.list_callback
+        callbacks = cb_params.list_callback
         cb_params.train_dataset_element = None
         cb_params.network = self._network
         # Embedding cache server only run one step.

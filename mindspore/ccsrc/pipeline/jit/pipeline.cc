@@ -1420,7 +1420,6 @@ std::pair<py::object, bool> GraphExecutorPy::GetPyExecuteData(const py::object &
 }
 
 py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase) {
-  runtime::ProfilerAnalyzer::GetInstance().StartStep();
   py::object res;
   HandleExceptionRethrow(
     [this, &res, &args, &phase]() {
@@ -1435,7 +1434,6 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase) 
     },
     [this]() { executor_running_ = false; }, [this]() { executor_running_ = false; },
     [this]() { executor_running_ = false; }, nullptr, true);
-  runtime::ProfilerAnalyzer::GetInstance().EndStep();
   return res;
 }
 

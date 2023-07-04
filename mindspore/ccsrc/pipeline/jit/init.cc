@@ -52,6 +52,7 @@
 #include "include/backend/debug/profiler/profiling.h"
 #endif
 #include "frontend/expander/pack/pack_expander.h"
+#include "include/common/profiler.h"
 
 namespace py = pybind11;
 
@@ -106,6 +107,15 @@ void RegHostProfile(py::module *m) {
          py::arg("level") = py::int_(0), py::arg("profile_framework") = py::int_(0),
          py::arg("start_end") = py::int_(PROFILER_RECORD_STAMP), py::arg("custom_info") = py::dict());
 }
+
+void RegFrameworkProfiler(py::module *m) {
+  m->def(
+     "_framework_profiler_step_start", []() { runtime::ProfilerAnalyzer::GetInstance().StartStep(); },
+     "Profiler step start")
+    .def(
+      "_framework_profiler_step_end", []() { runtime::ProfilerAnalyzer::GetInstance().EndStep(); },
+      "Profiler step end");
+}
 }  // namespace profiler
 }  // namespace mindspore
 #endif  // ENABLE_SECURITY
@@ -136,6 +146,7 @@ void RegModule(py::module *m) {
   mindspore::profiler::RegProfilerManager(m);
   mindspore::profiler::RegProfiler(m);
   mindspore::profiler::RegHostProfile(m);
+  mindspore::profiler::RegFrameworkProfiler(m);
 #endif
 #ifdef _MSC_VER
   mindspore::abstract::RegPrimitiveFrontEval();
