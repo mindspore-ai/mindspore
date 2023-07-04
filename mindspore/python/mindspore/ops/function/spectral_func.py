@@ -64,6 +64,8 @@ def blackman_window(window_length, periodic=True, *, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> window_length = Tensor(10, mindspore.int32)
         >>> output = ops.blackman_window(window_length, periodic=True, dtype=mindspore.float32)
         >>> print(output)
@@ -126,6 +128,8 @@ def bartlett_window(window_length, periodic=True, *, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> window_length = Tensor(5, mstype.int32)
         >>> output = ops.bartlett_window(window_length, periodic=True, dtype=mstype.float32)
         >>> print(output)

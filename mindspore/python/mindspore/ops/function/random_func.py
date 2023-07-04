@@ -203,6 +203,8 @@ def multinomial_with_replacement(x, seed, offset, numsamples, replacement=False)
         ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> x = Tensor([[0., 9., 4., 0.]], mstype.float32)
         >>> output = ops.multinomial_with_replacement(x, 2, 5, 2, True)
         >>> print(output)
@@ -492,6 +494,9 @@ def shuffle(x, seed=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import dtype as mstype
         >>> x = Tensor(np.array([1, 2, 3, 4]), mstype.float32)
         >>> output = ops.shuffle(x, seed=1)
         >>> print(output)
@@ -650,6 +655,7 @@ def randperm(n, seed=0, offset=0, dtype=mstype.int64):
         ``CPU``
 
     Examples:
+        >>> from mindspore import ops
         >>> n = 4
         >>> seed = 0
         >>> offset = 0

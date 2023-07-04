@@ -627,6 +627,8 @@ def coo_concat(sp_input, concat_dim=0):
         ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor, ops, COOTensor
+        >>> from mindspore import dtype as mstype
         >>> indices0 = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values0 = Tensor([1, 2], dtype=mstype.int32)
         >>> shape0 = (3, 4)
