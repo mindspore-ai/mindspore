@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace abstract {
-bool InnerAbsEvaluator::CheckConst(const AbstractBasePtrList &args_abs_list) {
+bool InnerAbsEvaluator::CheckConst(const AbstractBasePtrList &args_abs_list) const {
   if (args_abs_list[0]->isa<AbstractSequence>()) {
     auto abs_seq = args_abs_list[0]->cast<AbstractSequencePtr>();
     const auto &elements = abs_seq->elements();
@@ -91,7 +91,7 @@ EvalResultPtr InnerAbsEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const
   return engine->ForwardConfig(out_conf, fn_conf);
 }
 
-bool InnerRoundEvaluator::CheckConst(const AbstractBasePtrList &args_abs_list) {
+bool InnerRoundEvaluator::CheckConst(const AbstractBasePtrList &args_abs_list) const {
   if (args_abs_list[0]->isa<AbstractTensor>()) {
     return false;
   }
@@ -135,7 +135,7 @@ EvalResultPtr InnerRoundEvaluator::EvalPrim(const AnalysisEnginePtr &engine, con
                                             const ConfigPtr &, const AnfNodeConfigPtr &out_conf) {
   // round(1.909, None) = round(1.909) = 2, round(1.909, 2) = 1.91
   constexpr size_t max_input_index = 2;
-  if (args_abs_list.size() < 0 || args_abs_list.size() > max_input_index) {
+  if (args_abs_list.size() == 0 || args_abs_list.size() > max_input_index) {
     MS_LOG(INTERNAL_EXCEPTION) << "round() requires 1 or 2 arguments.";
   }
   auto cnode = out_conf->node()->cast<CNodePtr>();

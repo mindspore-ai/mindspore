@@ -19,10 +19,8 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_JIT_STATIC_ANALYSIS_BUILTIN_PRIM_H_
 #define MINDSPORE_CCSRC_PIPELINE_JIT_STATIC_ANALYSIS_BUILTIN_PRIM_H_
 
-#include <algorithm>
 #include <memory>
 #include <string>
-#include <vector>
 
 #include "utils/hash_map.h"
 #include "pipeline/jit/static_analysis/evaluator.h"
@@ -37,7 +35,7 @@ class InnerAbsEvaluator : public TransitionPrimEvaluator {
   MS_DECLARE_PARENT(InnerAbsEvaluator, TransitionPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
                          const AnfNodeConfigPtr &out_conf) override;
-  bool CheckConst(const AbstractBasePtrList &args_abs_list);
+  bool CheckConst(const AbstractBasePtrList &args_abs_list) const;
 };
 
 class InnerRoundEvaluator : public TransitionPrimEvaluator {
@@ -47,7 +45,7 @@ class InnerRoundEvaluator : public TransitionPrimEvaluator {
   MS_DECLARE_PARENT(InnerRoundEvaluator, TransitionPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list, const ConfigPtr &,
                          const AnfNodeConfigPtr &out_conf) override;
-  bool CheckConst(const AbstractBasePtrList &args_abs_list);
+  bool CheckConst(const AbstractBasePtrList &args_abs_list) const;
 };
 
 class InnerLenEvaluator : public TransitionPrimEvaluator {
