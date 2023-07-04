@@ -74,27 +74,25 @@ abstract::AbstractBasePtr GetnextInferShapeInner(const PrimitivePtr &primitive) 
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(GetNext, BaseOperator);
-AbstractBasePtr GetNextInferInner(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  return GetnextInferShapeInner(primitive);
-}
+AbstractBasePtr GetNextInferInner(const PrimitivePtr &primitive) { return GetnextInferShapeInner(primitive); }
 
 abstract::BaseShapePtr GetnextInferShape(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto abs = GetNextInferInner(prim, input_args);
+  auto abs = GetNextInferInner(prim);
   auto shape = abs->BuildShape();
   MS_EXCEPTION_IF_NULL(shape);
   return shape;
 }
 
 TypePtr GetnextInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto abs = GetNextInferInner(prim, input_args);
+  auto abs = GetNextInferInner(prim);
   auto type = abs->BuildType();
   MS_EXCEPTION_IF_NULL(type);
   return type;
 }
 
-AbstractBasePtr GetNextInfer(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+AbstractBasePtr GetNextInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
-  return GetNextInferInner(primitive, input_args);
+  return GetNextInferInner(primitive);
 }
 
 // AG means auto generated
