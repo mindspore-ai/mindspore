@@ -20,7 +20,7 @@ mindspore.ops.pdist
 
     异常：
         - **TypeError** - `input` 不是Tensor。
-        - **TypeError** - `input` 的数据类型不是float16，float32，float64。
+        - **TypeError** - `input` 的数据类型不是float16、float32、float64。
         - **TypeError** - `p` 不是float。
         - **ValueError** - `p` 是负数。
         - **ValueError** - `input` 的维度小于2。
