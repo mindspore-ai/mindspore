@@ -81,7 +81,7 @@ void GeDeviceContext::Destroy() {
   }
   (void)FinalizeGe(ms_context);
   if (hccl::HcclAdapter::GetInstance().Inited()) {
-    hccl::HcclAdapter::GetInstance().FinalizeHccl();
+    (void)hccl::HcclAdapter::GetInstance().FinalizeHccl();
   }
   if (deprecated_interface_ != nullptr) {
     (void)deprecated_interface_->CloseTsd(MsContext::GetInstance(), true);

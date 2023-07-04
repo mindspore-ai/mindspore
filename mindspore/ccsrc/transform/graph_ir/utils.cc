@@ -271,6 +271,20 @@ MeTensorPtr ConvertGeTensor(const GeTensorPtr &tensor, const TypeId &me_type) {
 
 std::shared_ptr<transform::GraphRunner> GetGraphRunner() { return DfGraphManager::GetInstance().GetGraphRunner(); }
 
+std::shared_ptr<transform::GraphRunner> CheckAndGetGraphRunner(const transform::RunOptions &run_options) {
+  if (transform::GetGraphByName(run_options.name) == nullptr) {
+    MS_LOG(WARNING) << "Can not find " << run_options.name
+                    << " sub graph, don't need data init subgraph in INFER mode.";
+    return nullptr;
+  }
+
+  auto graph_runner = transform::GetGraphRunner();
+  if (graph_runner == nullptr) {
+    MS_LOG(EXCEPTION) << "Can not found GraphRunner.";
+  }
+  return graph_runner;
+}
+
 std::shared_ptr<::ge::Session> GetGeSession() { return DfGraphManager::GetInstance().GetGeSession(); }
 
 void SetGeSession(const std::shared_ptr<::ge::Session> &sess_ptr) {

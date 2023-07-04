@@ -32,7 +32,7 @@
 
 namespace mindspore {
 namespace ps::core {
-class ClusterConfig;
+struct ClusterConfig;
 }  // namespace ps::core
 namespace distributed {
 namespace cluster {

@@ -122,21 +122,16 @@ std::vector<transform::GeTensorPtr> GetInputTensors(const FuncGraphPtr &anf_grap
 void RunGEInitGraph(const FuncGraphPtr &anf_graph) {
   MS_LOG(DEBUG) << "ExecInitGraph start.";
 
-  std::vector<transform::GeTensorPtr> ge_outputs;
   transform::RunOptions run_options;
-
   run_options.name = "init_subgraph." + anf_graph->ToString();
-  if (transform::GetGraphByName(run_options.name) == nullptr) {
-    MS_LOG(WARNING) << "Can not find " << run_options.name
-                    << " sub graph, don't need data init subgraph in INFER mode.";
-    return;
-  }
-  auto graph_runner = transform::GetGraphRunner();
+
+  auto graph_runner = transform::CheckAndGetGraphRunner(run_options);
   if (graph_runner == nullptr) {
-    MS_LOG(EXCEPTION) << "Can not found GraphRunner.";
+    return;
   }
 
   std::vector<transform::GeTensorPtr> ge_tensors;
+  std::vector<transform::GeTensorPtr> ge_outputs;
   {
     // Release GIL before calling into (potentially long-running) C++ code
     mindspore::ScopedLongRunning long_running;

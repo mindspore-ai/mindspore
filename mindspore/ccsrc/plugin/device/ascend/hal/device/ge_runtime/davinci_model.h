@@ -19,9 +19,12 @@
 
 #include <memory>
 #include <vector>
+#include <string>
+#include <tuple>
 #include "runtime/base.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
 
+using RuntimeInfo = std::tuple<uint32_t, uint32_t, void *, std::string>;
 namespace mindspore::ge::model_runner {
 class DavinciModel {
  public:

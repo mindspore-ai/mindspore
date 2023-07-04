@@ -118,7 +118,7 @@ int CropAndResizeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 
 template <typename T>
 void CropAndResizeCpuKernelMod::BilinearResize(T *input_image, float target_x, float target_y, size_t pos,
-                                               int box_index, int pos_channel, float *output) {
+                                               int box_index, int pos_channel, float *output) const {
   const int top_y_index = FloatToInt(floorf(target_y));
   const int bottom_y_index = FloatToInt(ceilf(target_y));
   const int left_x_index = FloatToInt(floorf(target_x));
@@ -140,7 +140,8 @@ void CropAndResizeCpuKernelMod::BilinearResize(T *input_image, float target_x, f
 
 template <typename T>
 void CropAndResizeCpuKernelMod::BilinearV2Resize(T *input_image, float y1, float x1, float y2, float x2, int pos_y,
-                                                 int pos_x, size_t pos, int box_index, int pos_channel, float *output) {
+                                                 int pos_x, size_t pos, int box_index, int pos_channel,
+                                                 float *output) const {
   const float HALF = 0.5;
   int y1h = FloatToInt(y1 * input_height_);
   int x1w = FloatToInt(x1 * input_width_);

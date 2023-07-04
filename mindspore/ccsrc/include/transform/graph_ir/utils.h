@@ -60,6 +60,7 @@ MeTensorPtr ConvertGeTensor(const GeTensorPtr &tensor, const TypeId &me_type);
 
 // df graph manager
 std::shared_ptr<transform::GraphRunner> GetGraphRunner();
+std::shared_ptr<transform::GraphRunner> CheckAndGetGraphRunner(const transform::RunOptions &run_options);
 BACKEND_EXPORT std::shared_ptr<::ge::Session> GetGeSession();
 BACKEND_EXPORT void SetGeSession(const std::shared_ptr<::ge::Session> &sess_ptr);
 BACKEND_EXPORT GraphRunnerPtr NewGraphRunner(const GraphRunnerOptions &options);

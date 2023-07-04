@@ -33,7 +33,7 @@ bool CheckShapeDimInfo(const ShapeVector &shape) {
     return false;
   }
   constexpr int64_t kMaxShapeSize = 2147483648;  // 2G
-  size_t shape_size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
+  size_t shape_size = SizeOf(shape);
   if (shape_size >= kMaxShapeSize) {
     MS_LOG(DEBUG) << "Shape total size is greater equal than 2G, skip fusion.";
     return false;

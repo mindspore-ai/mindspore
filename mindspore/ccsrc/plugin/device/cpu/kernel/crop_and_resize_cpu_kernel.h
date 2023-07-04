@@ -70,11 +70,11 @@ class CropAndResizeCpuKernelMod : public NativeCpuKernelMod {
 
   template <typename T>
   void BilinearResize(T *input_image, float target_x, float target_y, size_t pos, int box_index, int pos_channel,
-                      float *output);
+                      float *output) const;
 
   template <typename T>
   void BilinearV2Resize(T *input_image, float y1, float x1, float y2, float x2, int pos_y, int pos_x, size_t pos,
-                        int box_index, int pos_channel, float *output);
+                        int box_index, int pos_channel, float *output) const;
 
   using CropAndResizeFunc = std::function<bool(CropAndResizeCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                                const std::vector<kernel::AddressPtr> &)>;

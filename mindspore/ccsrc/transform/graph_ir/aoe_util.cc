@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <cxxabi.h>
 #include <set>
 #include <string>
 #ifdef ENABLE_AOE
@@ -73,9 +72,9 @@ AoeUtil &AoeUtil::GetInstance() {
   return instance;
 }
 
+#ifdef ENABLE_AOE
 Status AoeUtil::AoeGeGraph(::ge::Session *ge_session, const transform::DfGraphPtr &graph,
                            const std::map<::ge::AscendString, ::ge::AscendString> &tuningOptions) {
-#ifdef ENABLE_AOE
   uint64_t sessionId = 0;
   Aoe::AoeStatus status = Aoe::AoeCreateSession(sessionId);
   if (status != Aoe::AOE_SUCCESS) {
@@ -111,11 +110,16 @@ Status AoeUtil::AoeGeGraph(::ge::Session *ge_session, const transform::DfGraphPt
     MS_LOG(ERROR) << "AoeDestroySession failed.";
     return FAILED;
   }
-#endif
   return SUCCESS;
 }
+#else
+Status AoeUtil::AoeGeGraph(::ge::Session *, const transform::DfGraphPtr &,
+                           const std::map<::ge::AscendString, ::ge::AscendString> &) const {
+  return SUCCESS;
+}
+#endif
 
-Status AoeUtil::AoeOnlineGeGraph(std::shared_ptr<::ge::Session> ge_session, const transform::DfGraphPtr &graph) {
+Status AoeUtil::AoeOnlineGeGraph(const std::shared_ptr<::ge::Session> &ge_session, const transform::DfGraphPtr &graph) {
   MS_LOG(DEBUG) << "AoeOnlineGeGraph start.";
   if (ge_session == nullptr) {
     MS_LOG(ERROR) << "sess is null";
