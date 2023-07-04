@@ -340,8 +340,12 @@ std::vector<nlohmann::json> SaveAnfIndexToAnfIndexMap(const std::map<AnfWithOutI
   std::vector<nlohmann::json> ret_json;
   for (const auto &i : save_map) {
     nlohmann::json iter_json;
-    const auto &first_name = GetAnfUniqueCacheName(i.first.first);
-    const auto &second_name = GetAnfUniqueCacheName(i.second.first);
+    const auto &first_name = GetAnfUniqueCacheName(i.first.first, false);
+    const auto &second_name = GetAnfUniqueCacheName(i.second.first, false);
+    // allow some node not to be exported to mindir.
+    if (first_name.empty() || second_name.empty()) {
+      continue;
+    }
     iter_json.push_back(first_name);
     iter_json.push_back(i.first.second);
     iter_json.push_back(second_name);
@@ -364,16 +368,8 @@ nlohmann::json SaveValueSet(const HashSet<ValueNodePtr> &save_anfs) {
   return iter_json;
 }
 
-nlohmann::json SaveCnodeVec(const std::vector<CNodePtr> &save_anfs) {
-  nlohmann::json iter_json;
-  for (const auto &i : save_anfs) {
-    const auto &name = GetAnfUniqueCacheName(i);
-    iter_json.emplace_back(name);
-  }
-  return iter_json;
-}
-
-nlohmann::json SaveAnfVec(const std::vector<AnfNodePtr> &save_anfs) {
+template <typename T>
+nlohmann::json SaveAnfVec(const std::vector<T> &save_anfs) {
   nlohmann::json ret_json;
   for (const auto &i : save_anfs) {
     const auto &name = GetAnfUniqueCacheName(i);
@@ -603,7 +599,7 @@ nlohmann::json GenKernelGraphJson(const KernelGraphPtr &kg, const std::vector<An
   if (!graph_value_nodes.empty()) {
     kg_json[kGraphValueNodes] = graph_value_nodes;
   }
-  const auto &exec_order_json = SaveCnodeVec(kg->execution_order());
+  const auto &exec_order_json = SaveAnfVec(kg->execution_order());
   if (!exec_order_json.empty()) {
     kg_json[kExecutionOrder] = exec_order_json;
   }
@@ -1154,16 +1150,26 @@ void KernelGraphMgr::CacheKernelGraph(const KernelGraphPtr &kg) {
   if (!kg) {
     MS_LOG(EXCEPTION) << "The backend graph to be cached is null";
   }
+  std::set<KernelGraphPtr> visit;
+  std::set<KernelGraphPtr> child_graphs;
+  GetAllChildGraph(kg, &visit, &child_graphs);
+#ifdef ENABLE_DUMP_IR
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->CanDump(kIntroductory)) {
+    DumpIR("compile_cache_" + kg->ToString() + ".ir", kg);
+    for (auto &graph : child_graphs) {
+      DumpIR("compile_cache_" + graph->ToString() + ".ir", graph);
+    }
+  }
+#endif
   std::vector<AnfNodePtr> temp_nodes;
   std::map<KernelGraphPtr, std::vector<AnfNodePtr>> isolated_nodes_map;
   HandleParamExistCorrespondFrontendParam(kg);
   GetIsolatedNodes(kg, &temp_nodes);
   isolated_nodes_map[kg] = temp_nodes;
   auto cache_path = context.GetBackendGraphCachePath(fg);
-  std::string mindir_path = cache_path + kMindIrSuffix;
-  std::set<KernelGraphPtr> visit;
-  std::set<KernelGraphPtr> child_graphs;
-  GetAllChildGraph(kg, &visit, &child_graphs);
+  const std::string &mindir_path = cache_path + kMindIrSuffix;
   for (const auto &graph : child_graphs) {
     temp_nodes.clear();
     HandleParamExistCorrespondFrontendParam(graph);
@@ -1182,21 +1188,11 @@ void KernelGraphMgr::CacheKernelGraph(const KernelGraphPtr &kg) {
   }
   std::for_each(front_backend_graph_map_.begin(), front_backend_graph_map_.end(),
                 [&context](const auto &fb) { context.AddBackendGraphToFrontendGraph(fb.second, fb.first); });
-  std::string json_path = cache_path + kJsonSuffix;
+  const std::string &json_path = cache_path + kJsonSuffix;
   if (!DumpKernelGraphJson(kg, child_graphs, isolated_nodes_map, json_path)) {
     MS_LOG(ERROR) << "Failed to cache kernel graph to json.";
     return;
   }
-#ifdef ENABLE_DUMP_IR
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->CanDump(kIntroductory)) {
-    DumpIR("compile_cache_" + kg->ToString() + ".ir", kg);
-    for (auto &graph : child_graphs) {
-      DumpIR("compile_cache_" + graph->ToString() + ".ir", graph);
-    }
-  }
-#endif
   context.Clear();
 }
 
