@@ -83,7 +83,7 @@ class IOBlock {
   // @param key - The key to add to this block
   void AddKey(int64_t key) { index_keys_.push_back(key); }
 
-  std::string FlagName() {
+  std::string FlagName() const {
     switch (io_block_flags_) {
       case IOBlockFlags::kFlagNone:
         return "Data";

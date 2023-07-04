@@ -12315,7 +12315,7 @@ def fftn(input, s=None, dim=None, norm=None):  # pylint: disable=redefined-outer
     r"""
     Calculates the N dimensional discrete Fourier transform of `input`.
 
-   Args:
+    Args:
         input (Tensor): The input tensor.
         s (Tuple[int], optional): Signal size in the transformed dimensions.
             If given, each dimension `dim[i]` will either be zero-padded or trimmed to the length `s[i]` before

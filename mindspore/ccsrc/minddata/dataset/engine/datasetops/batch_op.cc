@@ -166,7 +166,7 @@ Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *tensor_row_dequeu
   for (size_t i = 0; i < num_columns; i++) {
     std::shared_ptr<Tensor> batched_tensor;
     RETURN_IF_NOT_OK(ConvertRowsToTensor(tensor_row_dequeue, &batched_tensor, batch_size, i, contains_per_batch_map));
-    (void)batched_tensor_row->emplace_back(batched_tensor);
+    batched_tensor_row->emplace_back(batched_tensor);
   }
 
   return Status::OK();

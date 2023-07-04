@@ -56,7 +56,7 @@ struct CBatchInfo {
   const int64_t get_batch_num() const { return batch_num_; }
   const int64_t get_epoch_num() const { return epoch_num_; }
 
-  std::string FlagName() {
+  std::string FlagName() const {
     switch (ctrl_) {
       case batchCtrl::kNoCtrl:
         return "Data";
