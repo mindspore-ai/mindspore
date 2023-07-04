@@ -282,9 +282,10 @@ void LoadAnfKernelInfoFromJson(const nlohmann::json &kernel_infos_json) {
         io_size.json_name = kernel_info_value[kJsonName];
         const auto &input_size_list = kernel_info_value[kInputSizeList];
         const auto &output_size_list = kernel_info_value[kOutputSizeList];
-        io_size.input_size_list.insert(io_size.input_size_list.end(), input_size_list.begin(), input_size_list.end());
-        io_size.output_size_list.insert(io_size.output_size_list.end(), output_size_list.begin(),
-                                        output_size_list.end());
+        (void)(io_size.input_size_list.insert(io_size.input_size_list.end(), input_size_list.begin(),
+                                              input_size_list.end()));
+        (void)(io_size.output_size_list.insert(io_size.output_size_list.end(), output_size_list.begin(),
+                                               output_size_list.end()));
         context.PushFullnameIoSizeInfo(node->fullname_with_scope(), io_size);
       } else {
         MS_LOG(EXCEPTION) << "Load node " << node->DebugString() << " kernel_io_size_info failed.";
@@ -331,7 +332,7 @@ std::vector<nlohmann::json> SaveAnfToAnfIndexMap(const HashMap<AnfNodePtr, AnfWi
     iter_json.push_back(first_name);
     iter_json.push_back(second_name);
     iter_json.push_back(i.second.second);
-    ret_json.emplace_back(iter_json);
+    (void)(ret_json.emplace_back(iter_json));
   }
   return ret_json;
 }
@@ -350,7 +351,7 @@ std::vector<nlohmann::json> SaveAnfIndexToAnfIndexMap(const std::map<AnfWithOutI
     iter_json.push_back(i.first.second);
     iter_json.push_back(second_name);
     iter_json.push_back(i.second.second);
-    ret_json.emplace_back(iter_json);
+    (void)(ret_json.emplace_back(iter_json));
   }
   return ret_json;
 }
@@ -363,7 +364,7 @@ nlohmann::json SaveValueSet(const HashSet<ValueNodePtr> &save_anfs) {
     if (name.empty()) {
       continue;
     }
-    iter_json.emplace_back(name);
+    (void)(iter_json.emplace_back(name));
   }
   return iter_json;
 }
@@ -373,7 +374,7 @@ nlohmann::json SaveAnfVec(const std::vector<T> &save_anfs) {
   nlohmann::json ret_json;
   for (const auto &i : save_anfs) {
     const auto &name = GetAnfUniqueCacheName(i);
-    ret_json.emplace_back(name);
+    (void)(ret_json.emplace_back(name));
   }
   return ret_json;
 }
@@ -383,7 +384,7 @@ nlohmann::json SaveGraphVec(const std::vector<std::weak_ptr<KernelGraph>> &save_
   for (const auto &i : save_anfs) {
     const auto &ptr = i.lock();
     MS_EXCEPTION_IF_NULL(ptr);
-    ret_json.emplace_back(ptr->graph_id());
+    (void)(ret_json.emplace_back(ptr->graph_id()));
   }
   return ret_json;
 }
@@ -412,12 +413,12 @@ std::vector<nlohmann::json> SavePrevOutputs(const std::map<size_t, std::pair<Anf
     iter_json.push_back(i.first);
     iter_json.push_back(name);
     iter_json.push_back(i.second.second);
-    ret_json.emplace_back(iter_json);
+    ret_json.push_back(iter_json);
   }
   return ret_json;
 }
 
-void SaveKernelInfoRuntimeCache(KernelInfoDevice *kernel_info, nlohmann::json *single_json) {
+void SaveKernelInfoRuntimeCache(KernelInfoDevice *kernel_info, nlohmann::json *const single_json) {
   MS_EXCEPTION_IF_NULL(kernel_info);
   MS_EXCEPTION_IF_NULL(single_json);
   const auto &rt = kernel_info->runtime_cache().runtime_cache();
@@ -498,8 +499,8 @@ nlohmann::json SaveAnfKernelInfo(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(device_kernel_info);
   nlohmann::json out_in_ref_json;
   const auto &out_in_ref = device_kernel_info->out_in_ref_map();
-  std::for_each(out_in_ref.begin(), out_in_ref.end(),
-                [&out_in_ref_json](const auto &iter) { out_in_ref_json[iter.first] = iter.second; });
+  (void)(std::for_each(out_in_ref.begin(), out_in_ref.end(),
+                       [&out_in_ref_json](const auto &iter) { out_in_ref_json[iter.first] = iter.second; }));
   if (!out_in_ref_json.empty()) {
     single_json[kOutInRef] = out_in_ref_json;
   }
@@ -550,14 +551,15 @@ nlohmann::json SaveBackendParamToFrontendParamIndex(const KernelGraphPtr &kernel
 }
 
 void SaveNodesKernelInfoAndParamsName(const KernelGraphPtr &kg, const std::vector<AnfNodePtr> &isolated_nodes,
-                                      nlohmann::json *kg_json) {
+                                      nlohmann::json *const kg_json) {
   std::vector<AnfNodePtr> nodes = TopoSort(kg->get_return(), SuccIncoming, AlwaysInclude);
   nlohmann::json kernels_info_json;
-  nodes.insert(nodes.end(), isolated_nodes.begin(), isolated_nodes.end());
+  (void)(nodes.insert(nodes.end(), isolated_nodes.begin(), isolated_nodes.end()));
   const auto &params = kg->parameters();
   std::vector<AnfNodePtr> isolated_params;
-  std::set_difference(params.begin(), params.end(), nodes.begin(), nodes.end(), std::back_inserter(isolated_params));
-  nodes.insert(nodes.end(), isolated_params.begin(), isolated_params.end());
+  (void)(std::set_difference(params.begin(), params.end(), nodes.begin(), nodes.end(),
+                             std::back_inserter(isolated_params)));
+  (void)(nodes.insert(nodes.end(), isolated_params.begin(), isolated_params.end()));
   nlohmann::json param_unique_name_to_name;
   for (const auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
@@ -691,9 +693,9 @@ void GetAllChildGraph(const KernelGraphPtr &kg, std::set<KernelGraphPtr> *visit,
   for (auto iter : order) {
     auto graph = iter.lock();
     MS_EXCEPTION_IF_NULL(graph);
-    graphs->insert(graph);
+    (void)(graphs->insert(graph));
   }
-  visit->insert(kg);
+  (void)(visit->insert(kg));
 
   for (auto &i : order) {
     GetAllChildGraph(i.lock(), visit, graphs);
@@ -713,8 +715,8 @@ void GetIsolatedNodes(const KernelGraphPtr &kg, std::vector<AnfNodePtr> *isolate
     possible_isolated.push_back(end);
   }
   auto topo_nodes = TopoSort(kg->get_return(), SuccIncoming, AlwaysInclude);
-  std::set_difference(possible_isolated.begin(), possible_isolated.end(), topo_nodes.begin(), topo_nodes.end(),
-                      std::back_inserter(*isolated_nodes));
+  (void)(std::set_difference(possible_isolated.begin(), possible_isolated.end(), topo_nodes.begin(), topo_nodes.end(),
+                             std::back_inserter(*isolated_nodes)));
 }
 
 void HandleParamExistCorrespondFrontendParam(const KernelGraphPtr &graph) {
@@ -1179,15 +1181,15 @@ void KernelGraphMgr::CacheKernelGraph(const KernelGraphPtr &kg) {
   std::vector<AnfNodePtr> isolated_nodes;
   for (const auto &iter : isolated_nodes_map) {
     const auto &nodes = iter.second;
-    isolated_nodes.insert(isolated_nodes.end(), nodes.begin(), nodes.end());
+    (void)(isolated_nodes.insert(isolated_nodes.end(), nodes.begin(), nodes.end()));
   }
   std::vector<FuncGraphPtr> child_graphs_for_dump(child_graphs.begin(), child_graphs.end());
   if (!DumpBinaryProto(kg, child_graphs_for_dump, isolated_nodes, mindir_path)) {
     MS_LOG(ERROR) << "Failed to cache kernel graph to mindir: " << fg->ToString();
     return;
   }
-  std::for_each(front_backend_graph_map_.begin(), front_backend_graph_map_.end(),
-                [&context](const auto &fb) { context.AddBackendGraphToFrontendGraph(fb.second, fb.first); });
+  (void)(std::for_each(front_backend_graph_map_.begin(), front_backend_graph_map_.end(),
+                       [&context](const auto &fb) { context.AddBackendGraphToFrontendGraph(fb.second, fb.first); }));
   const std::string &json_path = cache_path + kJsonSuffix;
   if (!DumpKernelGraphJson(kg, child_graphs, isolated_nodes_map, json_path)) {
     MS_LOG(ERROR) << "Failed to cache kernel graph to json.";
@@ -1869,7 +1871,7 @@ void KernelGraphMgr::ConstructKernelGraphInner(const FuncGraphPtr &func_graph,
   graph->set_parameters(graph->inputs());
 }
 
-void KernelGraphMgr::HandleGraphInputsOutputs(const nlohmann::json &graph_json, KernelGraph *graph) {
+void HandleGraphInputsOutputs(const nlohmann::json &graph_json, KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto &context = CompileCacheContext::GetInstance();
   const auto &inputs_json = graph_json[kInputs];
@@ -1895,8 +1897,8 @@ void KernelGraphMgr::HandleGraphInputsOutputs(const nlohmann::json &graph_json, 
     const auto &valid_inputs_json = graph_json[kValidInputs];
     auto mutable_valid_inputs = graph->MutableValidInputs();
     std::vector<bool> valid_inputs;
-    std::transform(valid_inputs_json.begin(), valid_inputs_json.end(), std::back_inserter(valid_inputs),
-                   [](const auto &val) { return val; });
+    (void)(std::transform(valid_inputs_json.begin(), valid_inputs_json.end(), std::back_inserter(valid_inputs),
+                          [](const auto &val) { return val; }));
     *mutable_valid_inputs = valid_inputs;
   }
   const auto &front_graph_name = graph_json[kCorrespondFrontendGraph];
@@ -2153,8 +2155,8 @@ std::shared_ptr<KernelGraph> KernelGraphMgr::ConstructKernelGraph(std::vector<Ke
   }
 
   std::vector<FuncGraphPtr> graphs_for_load;
-  std::transform(all_out_graph->begin(), all_out_graph->end(), std::back_inserter(graphs_for_load),
-                 [](const KernelGraphPtr &g) { return g; });
+  (void)(std::transform(all_out_graph->begin(), all_out_graph->end(), std::back_inserter(graphs_for_load),
+                        [](const KernelGraphPtr &g) { return g; }));
 
   MindIRLoader mindir_loader;
   std::string mindir_path = cache_path + kMindIrSuffix;

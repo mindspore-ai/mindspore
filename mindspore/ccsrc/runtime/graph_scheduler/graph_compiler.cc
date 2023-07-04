@@ -81,7 +81,7 @@ void SetSummaryNodesRefCount(const KernelGraph *graph) {
   }
 }
 
-bool UseCacheToCompileGraph(const FuncGraphPtr &func_graph, const device::DeviceType &device_type) {
+bool EnableBackendCompileCache(const FuncGraphPtr &func_graph, const device::DeviceType &device_type) {
   if (!CompileCacheEnable()) {
     return false;
   }
@@ -90,9 +90,6 @@ bool UseCacheToCompileGraph(const FuncGraphPtr &func_graph, const device::Device
     return false;
   }
   if (context.PsOrClusterMode()) {
-    return false;
-  }
-  if (!context.UseCompileCache()) {
     return false;
   }
   if (MsContext::GetInstance()->backend_policy() == "ge") {
@@ -104,24 +101,23 @@ bool UseCacheToCompileGraph(const FuncGraphPtr &func_graph, const device::Device
   return true;
 }
 
-bool ExportCompileCache(const FuncGraphPtr &func_graph, const device::DeviceType &device_type) {
-  if (!CompileCacheEnable()) {
+bool UseCacheToCompileGraph(const FuncGraphPtr &func_graph, const device::DeviceType &device_type) {
+  if (!EnableBackendCompileCache(func_graph, device_type)) {
     return false;
   }
   auto &context = CompileCacheContext::GetInstance();
-  if (context.FrontGraph() != func_graph) {
+  if (!context.UseCompileCache()) {
     return false;
   }
-  if (context.PsOrClusterMode()) {
+  return true;
+}
+
+bool ExportCompileCache(const FuncGraphPtr &func_graph, const device::DeviceType &device_type) {
+  if (!EnableBackendCompileCache(func_graph, device_type)) {
     return false;
   }
+  auto &context = CompileCacheContext::GetInstance();
   if (context.UseCompileCache()) {
-    return false;
-  }
-  if (MsContext::GetInstance()->backend_policy() == "ge") {
-    return false;
-  }
-  if (device_type != device::DeviceType::kAscend) {
     return false;
   }
   return true;

@@ -122,7 +122,6 @@ class BACKEND_EXPORT KernelGraphMgr {
   void SetReturnNode(const AnfNodePtr &node, KernelGraph *graph);
   void FlattenTuple(const CNodePtr &node);
   bool ParseKernelGraphNodesAndAttrs(const nlohmann::json &model_json);
-  void HandleGraphInputsOutputs(const nlohmann::json &graph_json, KernelGraph *graph);
 
  protected:
   CNodePtr ConstructOutput(const AnfNodePtrList &outputs, const std::shared_ptr<KernelGraph> &graph);

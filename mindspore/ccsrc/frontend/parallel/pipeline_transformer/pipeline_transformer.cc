@@ -1278,9 +1278,9 @@ std::vector<AnfNodePtr> PipelineTransformer::FetchSend(const AnfNodePtr &node, b
     auto params = shared_cell_->parameters();
     auto iter = std::find(params.begin(), params.end(), param);
     if (iter != params.end()) {
-      auto pos = std::distance(params.begin(), iter);
-      auto input_pos = pos + 1;
+      auto input_pos = std::distance(params.begin(), iter) + 1;
       auto &front = shared_cell_users_.front();
+      MS_EXCEPTION_IF_NULL(front);
       const auto &user = front->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(user);
       send_input = user->input(input_pos);
@@ -1401,6 +1401,7 @@ std::vector<AnfNodePtr> PipelineTransformer::FetchRecv(const AnfNodePtr &node, b
       auto pos = std::distance(params.begin(), iter);
       auto input_pos = pos + 1;
       auto &front = shared_cell_users_.front();
+      MS_EXCEPTION_IF_NULL(front);
       const auto &user = front->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(user);
       recv_input = user->input(input_pos);
