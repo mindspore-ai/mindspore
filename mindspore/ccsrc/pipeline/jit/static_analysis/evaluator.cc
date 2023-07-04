@@ -78,7 +78,9 @@ TypePtr GetArgsUniqueDtype(const AbstractBasePtrList &args_abs_list) {
     }
     // Check default dtype if it's AbstractAny(AbstractTensor)
     if (arg->isa<abstract::AbstractAny>()) {
-      if (!arg->cast_ptr<abstract::AbstractAny>()->supposed_tensor_dtype()) {
+      auto any_arg = arg->cast_ptr<abstract::AbstractAny>();
+      MS_EXCEPTION_IF_NULL(any_arg);
+      if (!any_arg->supposed_tensor_dtype()) {
         continue;
       }
     }
