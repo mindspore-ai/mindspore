@@ -17,7 +17,7 @@
 #include "nnacl/fp16/one_hot_fp16.h"
 #include "nnacl/errorcode.h"
 int OneHotToFp16(const int *indices, float16_t on_value, float16_t off_value, float16_t *output,
-                 const OneHotParameter *one_hot_param, const int tid, const int thread_num) {
+                 const OneHotStruct *one_hot_param, const int tid, const int thread_num) {
   if (indices == NULL || one_hot_param == NULL || output == NULL) {
     return NNACL_NULL_PTR;
   }

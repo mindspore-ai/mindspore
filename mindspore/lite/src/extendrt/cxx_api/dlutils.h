@@ -21,6 +21,7 @@
 #include "src/common/file_utils.h"
 #if !defined(_WIN32) && !defined(_WIN64)
 #include <dlfcn.h>
+#include <string.h>
 #include <dirent.h>
 #include <memory>
 #include <fstream>

@@ -132,6 +132,7 @@
 #define ONE_TENSOR 1
 #define TWO_TENSOR 2
 #define THREE_TENSOR 3
+#define FOUR_TENSOR 4
 
 #define Index0 0
 #define Index1 1
