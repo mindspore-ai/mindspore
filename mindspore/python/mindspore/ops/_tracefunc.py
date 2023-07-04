@@ -15,6 +15,7 @@
 """Context for PackFunc"""
 import functools
 import types
+import textwrap
 from mindspore.common.tensor import Tensor
 from mindspore.ops.primitive import _RunOpHook, Primitive
 from mindspore._c_expression import PackExpander, PackNode
@@ -24,7 +25,7 @@ from mindspore.common.api import _handle_func_args
 
 
 class _PackTensor(StubTensor):
-    """stub tensor for expander trace"""
+    """pack tensor for expander trace"""
 
     def __setitem__(self, index, value):
         out = tensor_operator_registry.get('__setitem__')(self, index, value)
@@ -34,7 +35,7 @@ class _PackTensor(StubTensor):
         return self
 
     def __pack__(self):
-        """For parse check."""
+        """for parse check."""
 
     def stub_sync(self):
         """subclass hook for Tensor"""
@@ -66,21 +67,21 @@ class PackFunc(Primitive):
     def __init__(self, fun, unique_key, cell_obj, is_pynative_mode=False):
         super(PackFunc, self).__init__(self.__class__.__name__)
         self.func = fun
+        self.cell_obj = cell_obj
         self.kwargs = {}
         self.add_prim_attr("unique_key", unique_key)
         self.add_prim_attr("is_pynative_mode", is_pynative_mode)
-        self.cell_obj = cell_obj
 
     def __call__(self, *args, **kwargs):
         if _RunOpHook.current and _RunOpHook.current.hook is PackFunc._trace_run_op:
-            if self.cell_obj is not None:
+            if self.cell_obj:
                 args = (self.cell_obj, *args)
             return self.func(*args, **kwargs)
         self.kwargs = kwargs
         return super().__call__(*args)
 
     def __expand__(self, args):
-        if self.cell_obj is not None:
+        if self.cell_obj:
             args = (self.cell_obj, *args)
             with _SetMixedPrecision(self.cell_obj):
                 ret = self._run_op(args)
@@ -103,39 +104,47 @@ class _PackSourceBuilder:
     """Generation Pack Python code by method"""
 
     def __init__(self, original_fn):
+        """Initialize the _PackSourceBuilder"""
         self.original_fn = original_fn
+        self.is_method = isinstance(self.original_fn, types.MethodType)
         self.pack_fn_name = f"_{original_fn.__name__}_pack"
         self._generate_pack_op()
 
     def get_code_source(self):
         """Return Pack Python code"""
-        if isinstance(self.original_fn, types.MethodType):
-            new_src = "def {0}_wrap(self, *args, **kwargs):\n    return self.{0}(*args, **kwargs)".format(
-                self.pack_fn_name)
+        if self.is_method:
+            new_src = textwrap.dedent(f"""
+                def {self.pack_fn_name}_wrap(self, *args, **kwargs):
+                    return self.{self.pack_fn_name}(*args, **kwargs)
+                """)
         else:
-            new_src = "def {0}_wrap(*args, **kwargs):\n    return {0}(*args, **kwargs)".format(
-                self.pack_fn_name)
+            new_src = textwrap.dedent(f"""
+                def {self.pack_fn_name}_wrap(*args, **kwargs):
+                    return {self.pack_fn_name}(*args, **kwargs)
+                """)
         return new_src
 
     def _generate_pack_op(self):
+        """Generate the pack operation and attach it to the original function or method"""
+        obj = self.original_fn.__self__ if self.is_method else None
         fn = self.original_fn.pack_fn
-        if isinstance(self.original_fn, types.MethodType):
-            obj = self.original_fn.__self__
-            key = "%d_ID%d" % (id(obj), id(fn))
+        key = f"{id(obj)}_{id(fn)}"
+        if self.is_method:
             setattr(obj, self.pack_fn_name, PackFunc(fn, key, obj))
         else:
-            key = str(id(fn))
-            fn.__globals__[self.pack_fn_name] = PackFunc(fn, key, None)
+            fn.__globals__[self.pack_fn_name] = PackFunc(fn, key, obj)
 
 
 class _SetMixedPrecision:
     """"Set MixedPrecison by the Cell"""
+
     def __init__(self, cell_obj):
         self.mixed_precision_change = False
         self.cell_obj = cell_obj
 
     def __enter__(self):
-        self.mixed_precision_change = PackFunc.expander.set_mixed_precision(self.cell_obj)
+        self.mixed_precision_change = PackFunc.expander.set_mixed_precision(
+            self.cell_obj)
 
     def __exit__(self, *err):
         if self.mixed_precision_change:
@@ -150,7 +159,7 @@ def trace(fn):
 
     Note:
         - Dynamic control flow and other tensor data dependent scenarios are not supported.
-        - dynamic shape operator is not fully supported.
+        - Dynamic shape operator is not fully supported.
 
     Args:
         fn (Function) - The Python function to be compiled into a graph. The return value of the function must be
@@ -166,7 +175,7 @@ def trace(fn):
 
     Examples:
         >>> from mindspore import Tensor, nn
-        >>> from mindspore.common import trace
+        >>> from mindspore.ops._tracefunc import trace
         ...
         >>> class Net(nn.Cell):
         ...     @trace
@@ -181,13 +190,12 @@ def trace(fn):
     @functools.wraps(fn)
     def _trace_wrap(*args, **kwargs):
         args, kwargs = _handle_func_args(fn, *args, **kwargs)
+        obj = None
+
         if args and not isinstance(args[0], Tensor) and hasattr(args[0], fn.__name__):
-            obj = args[0]
-            key = "%d_ID%d" % (id(obj), id(fn))
-            res = PackFunc(fn, key, obj, True)(*args[1:], **kwargs)
-        else:
-            key = str(id(fn))
-            res = PackFunc(fn, key, None, True)(*args, **kwargs)
-        return res
+            obj, args = args[0], args[1:]
+        key = f"{id(obj)}_{id(fn)}"
+
+        return PackFunc(fn, key, obj, True)(*args, **kwargs)
     _trace_wrap.pack_fn = fn
     return _trace_wrap
