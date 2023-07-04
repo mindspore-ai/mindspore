@@ -39,6 +39,7 @@ class MIND_API DeformableConv2d : public BaseOperator {
 
   /// \brief Set strides.
   void set_strides(const std::vector<int64_t> &strides);
+
   /// \brief Get strides.
   ///
   /// \return strides.
@@ -46,6 +47,7 @@ class MIND_API DeformableConv2d : public BaseOperator {
 
   /// \brief Set pads.
   void set_pads(const std::vector<int64_t> &pads);
+
   /// \brief Get pads.
   ///
   /// \return pads.
@@ -53,6 +55,7 @@ class MIND_API DeformableConv2d : public BaseOperator {
 
   /// \brief Set dilations.
   void set_dilations(const std::vector<int64_t> &dilations);
+
   /// \brief Get dilations.
   ///
   /// \return dilations.
@@ -60,13 +63,23 @@ class MIND_API DeformableConv2d : public BaseOperator {
 
   /// \brief Set format.
   void set_data_format(const std::string &data_format);
+
   /// \brief Get format.
   ///
   /// \return format.
   std::string get_data_format() const;
 
+  /// \brief Set number of blocked connection from input channels to output channels.
+  void set_groups(int64_t groups);
+
+  /// \brief Get number of groups.
+  ///
+  /// \return groups.
+  int64_t get_groups() const;
+
   /// \brief Set deformable_groups.
   void set_deformable_groups(int64_t deformable_groups);
+
   /// \brief Get deformable_groups.
   ///
   /// \return deformable_groups.
@@ -74,6 +87,7 @@ class MIND_API DeformableConv2d : public BaseOperator {
 
   /// \brief Set modulated.
   void set_modulated(bool modulated);
+
   /// \brief Get modulated.
   ///
   /// \return modulated.
