@@ -1321,8 +1321,7 @@ void GraphExecutorPy::TerminateDebugger() {
 }
 #endif
 
-std::pair<py::object, bool> GraphExecutorPy::GetPyExecuteOutputFromAddress(const py::object &res,
-                                                                           const BaseRef &value) const {
+std::pair<py::object, bool> GraphExecutorPy::GetPyExecuteOutputFromAddress(const py::object &res) const {
   if (py::isinstance<tensor::Tensor>(res) || IsStubTensor(res)) {
     auto res_tensor = IsStubTensor(res) ? ConvertStubTensor(res) : res.cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(res_tensor);
@@ -1369,7 +1368,7 @@ std::pair<py::object, bool> GraphExecutorPy::GetPyExecuteSequenceOutputFromAddre
       has_real_node_address = true;
     }
   }
-  const auto &[py_res, has_real_output] = GetPyExecuteOutputFromAddress(obj, value);
+  const auto &[py_res, has_real_output] = GetPyExecuteOutputFromAddress(obj);
   if (has_real_output) {
     output = py_res;
     has_real_node_address = true;

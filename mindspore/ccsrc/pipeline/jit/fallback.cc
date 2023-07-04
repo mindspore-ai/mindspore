@@ -72,7 +72,7 @@ std::string ConvertUnicodeStrToRealStr(const std::string &target) {
   sub_target = sub_target + "_";
   auto pos = sub_target.find("_");
   constexpr size_t base_16 = 16;
-  while (pos != sub_target.npos) {
+  while (pos != std::string::npos) {
     auto cur_str = sub_target.substr(0, pos);
     if (cur_str.size() == 0) {
       break;
@@ -103,20 +103,120 @@ std::string ConvertToRealStr(const std::string &target) {
   }
   std::string real_str = "";
   size_t pos = 0;
-  size_t start_pos, end_pos;
-  while ((start_pos = target.find(kPyExecPrefix, pos)) != std::string::npos &&
-         (end_pos = target.find(kPyExecSuffix, start_pos + std::strlen(kPyExecPrefix))) != std::string::npos) {
-    if (start_pos > pos) {
-      real_str += target.substr(pos, start_pos - pos);
+  size_t start_pos = target.find(kPyExecPrefix, pos);
+  if (start_pos != std::string::npos) {
+    size_t end_pos = target.find(kPyExecSuffix, start_pos + std::strlen(kPyExecPrefix));
+
+    while (end_pos != std::string::npos) {
+      if (start_pos > pos) {
+        real_str += target.substr(pos, start_pos - pos);
+      }
+      auto substr = target.substr(start_pos, end_pos - start_pos + std::strlen(kPyExecSuffix));
+      pos = end_pos + std::strlen(kPyExecSuffix);
+      real_str += ConvertUnicodeStrToRealStr(substr);
+      start_pos = target.find(kPyExecPrefix, pos);
+      if (start_pos == std::string::npos) {
+        break;
+      }
+      end_pos = target.find(kPyExecSuffix, start_pos + std::strlen(kPyExecPrefix));
     }
-    auto substr = target.substr(start_pos, end_pos - start_pos + std::strlen(kPyExecSuffix));
-    pos = end_pos + std::strlen(kPyExecSuffix);
-    real_str += ConvertUnicodeStrToRealStr(substr);
   }
   if (pos < target.size()) {
     real_str += target.substr(pos);
   }
   return real_str;
+}
+
+TypePtr HandleBaseTypeForAnnotation(const std::string &dtype_str, const std::string &container_type_str,
+                                    const FormatedVariableTypeFunc &format_type_func, const AnfNodePtr &node,
+                                    const std::string &comment) {
+  if (!dtype_str.empty()) {
+    return nullptr;
+  }
+  TypePtr base_type = nullptr;
+  // Handle dtype.
+  if (container_type_str.front() == '{' && container_type_str.back() == '}') {  // Handle format variable type.
+    if (!format_type_func) {
+      MS_LOG(EXCEPTION) << GetErrorFormatMessage(node, comment);
+    }
+    constexpr auto excluded_size = 2;
+    const auto &variable_base_type = container_type_str.substr(1, container_type_str.size() - excluded_size);
+    // Find variable type.
+    if (!variable_base_type.empty()) {
+      base_type = format_type_func(variable_base_type);
+      if (base_type == nullptr) {  // Not throw exception if not match any variable.
+        return nullptr;
+      }
+    }
+  } else {  // Handle string type.
+    const auto &base_type_str = container_type_str;
+    base_type = GetTypeFromString(base_type_str);
+  }
+  if (base_type == nullptr) {
+    MS_LOG(EXCEPTION) << GetErrorFormatMessage(node, comment);
+  }
+  return base_type;
+}
+
+TypePtr GetDTypeFromDTypeStr(const std::string &dtype_str, const FormatedVariableTypeFunc &format_type_func,
+                             const AnfNodePtr &node, const std::string &comment) {
+  TypePtr dtype = nullptr;
+  if (dtype_str.front() == '{' && dtype_str.back() == '}') {  // Handle format variable dtype.
+    if (!format_type_func) {
+      MS_LOG(EXCEPTION) << GetErrorFormatMessage(node, comment);
+    }
+    constexpr auto excluded_size = 2;
+    const auto &variable_dtype = dtype_str.substr(1, dtype_str.size() - excluded_size);
+    // Find variable dtype.
+    if (!variable_dtype.empty()) {
+      dtype = format_type_func(variable_dtype);
+      if (dtype == nullptr) {  // Not throw exception if not match any variable.
+        return nullptr;
+      }
+    }
+  } else {  // Handle string dtype.
+    dtype = GetTypeFromString(dtype_str);
+  }
+  return dtype;
+}
+
+TypePtr HandleContainerTypeForAnnotation(const std::string &dtype_str, const std::string &container_type_str,
+                                         const FormatedVariableTypeFunc &format_type_func, const AnfNodePtr &node,
+                                         const std::string &comment) {
+  const auto &container_type = GetTypeFromString(container_type_str);
+  if (container_type == nullptr) {
+    MS_LOG(EXCEPTION) << GetErrorFormatMessage(node, comment);
+  }
+  if (!container_type->isa<Tuple>() && !container_type->isa<List>() && !container_type->isa<TensorType>()) {
+    MS_LOG(EXCEPTION) << "JIT type annotation only support tensor/list_/tuple_, but got '" << container_type_str;
+  }
+
+  TypePtr dtype = GetDTypeFromDTypeStr(dtype_str, format_type_func, node, comment);
+  if (dtype == nullptr) {
+    MS_LOG(EXCEPTION) << GetErrorFormatMessage(node, comment);
+  }
+  if (container_type->isa<TensorType>()) {  // Handle tensor type.
+    if (!dtype->isa<Number>()) {
+      MS_LOG(EXCEPTION) << "Cannot get dtype for by input string: '" << dtype_str << "', for '" << container_type_str
+                        << "'\n"
+                        << trace::GetDebugInfo(node->debug_info());
+    }
+    container_type->cast<TensorTypePtr>()->set_element(dtype);
+  } else if (container_type->isa<Tuple>() || container_type->isa<List>()) {  // Handle list_/tuple_ type.
+    // To handle nested sequence later.
+    if (!dtype->isa<Number>() && !dtype->isa<TensorType>()) {
+      MS_LOG(EXCEPTION) << "Cannot get element type for by input string: '" << dtype_str << "', for '"
+                        << container_type_str << "'\n"
+                        << trace::GetDebugInfo(node->debug_info());
+    }
+    if (container_type->isa<Tuple>()) {
+      container_type->cast<TuplePtr>()->set_elements(TypePtrList({dtype}));
+    } else if (container_type->isa<List>()) {
+      container_type->cast<ListPtr>()->set_elements(TypePtrList({dtype}));
+    }
+    return nullptr;  // Supports tuple_[...] / list_[...] later.
+  }
+  return container_type;
 }
 }  // namespace
 
@@ -264,82 +364,12 @@ TypePtr GetJitAnnotationTypeFromComment(const AnfNodePtr &node, const FormatedVa
       MS_LOG(EXCEPTION) << GetErrorFormatMessage(node, comment);
     }
     // Handle base type only.
-    if (dtype_str.empty()) {
-      TypePtr base_type = nullptr;
-      // Handle dtype.
-      if (container_type_str.front() == '{' && container_type_str.back() == '}') {  // Handle format variable type.
-        if (!format_type_func) {
-          MS_LOG(EXCEPTION) << GetErrorFormatMessage(node, comment);
-        }
-        constexpr auto excluded_size = 2;
-        const auto &variable_base_type = container_type_str.substr(1, container_type_str.size() - excluded_size);
-        // Find variable type.
-        if (!variable_base_type.empty()) {
-          base_type = format_type_func(variable_base_type);
-          if (base_type == nullptr) {  // Not throw exception if not match any variable.
-            return nullptr;
-          }
-        }
-      } else {  // Handle string type.
-        const auto &base_type_str = container_type_str;
-        base_type = GetTypeFromString(base_type_str);
-      }
-      if (base_type == nullptr) {
-        MS_LOG(EXCEPTION) << GetErrorFormatMessage(node, comment);
-      }
+    auto base_type = HandleBaseTypeForAnnotation(dtype_str, container_type_str, format_type_func, node, comment);
+    if (base_type != nullptr) {
       return base_type;
     }
     // Handle container type: tensor, list_ and tuple_.
-    const auto &container_type = GetTypeFromString(container_type_str);
-    if (container_type == nullptr) {
-      MS_LOG(EXCEPTION) << GetErrorFormatMessage(node, comment);
-    }
-    if (!container_type->isa<Tuple>() && !container_type->isa<List>() && !container_type->isa<TensorType>()) {
-      MS_LOG(EXCEPTION) << "JIT type annotation only support tensor/list_/tuple_, but got '" << container_type_str;
-    }
-    TypePtr dtype = nullptr;
-    // Handle dtype.
-    if (dtype_str.front() == '{' && dtype_str.back() == '}') {  // Handle format variable dtype.
-      if (!format_type_func) {
-        MS_LOG(EXCEPTION) << GetErrorFormatMessage(node, comment);
-      }
-      constexpr auto excluded_size = 2;
-      const auto &variable_dtype = dtype_str.substr(1, dtype_str.size() - excluded_size);
-      // Find variable dtype.
-      if (!variable_dtype.empty()) {
-        dtype = format_type_func(variable_dtype);
-        if (dtype == nullptr) {  // Not throw exception if not match any variable.
-          return nullptr;
-        }
-      }
-    } else {  // Handle string dtype.
-      dtype = GetTypeFromString(dtype_str);
-    }
-    if (dtype == nullptr) {
-      MS_LOG(EXCEPTION) << GetErrorFormatMessage(node, comment);
-    }
-    if (container_type->isa<TensorType>()) {  // Handle tensor type.
-      if (!dtype->isa<Number>()) {
-        MS_LOG(EXCEPTION) << "Cannot get dtype for by input string: '" << dtype_str << "', for '" << container_type_str
-                          << "'\n"
-                          << trace::GetDebugInfo(node->debug_info());
-      }
-      container_type->cast<TensorTypePtr>()->set_element(dtype);
-    } else if (container_type->isa<Tuple>() || container_type->isa<List>()) {  // Handle list_/tuple_ type.
-      // To handle nested sequence later.
-      if (!dtype->isa<Number>() && !dtype->isa<TensorType>()) {
-        MS_LOG(EXCEPTION) << "Cannot get element type for by input string: '" << dtype_str << "', for '"
-                          << container_type_str << "'\n"
-                          << trace::GetDebugInfo(node->debug_info());
-      }
-      if (container_type->isa<Tuple>()) {
-        container_type->cast<TuplePtr>()->set_elements(TypePtrList({dtype}));
-      } else if (container_type->isa<List>()) {
-        container_type->cast<ListPtr>()->set_elements(TypePtrList({dtype}));
-      }
-      return nullptr;  // Supports tuple_[...] / list_[...] later.
-    }
-    return container_type;
+    return HandleContainerTypeForAnnotation(dtype_str, container_type_str, format_type_func, node, comment);
   }
   return nullptr;
 }
@@ -379,13 +409,21 @@ std::vector<std::string> GetPyExecuteInputFromUnicodeStr(const std::string &scri
   // Get substr from script, substr start with kPyExecPrefix and end with kPyExecSuffix.
   std::vector<std::string> res;
   size_t pos = 0;
-  size_t start_pos, end_pos;
-  while ((start_pos = script.find(kPyExecPrefix, pos)) != string::npos &&
-         (end_pos = script.find(kPyExecSuffix, start_pos + std::strlen(kPyExecPrefix))) != string::npos) {
+  size_t start_pos = script.find(kPyExecPrefix, pos);
+  if (start_pos == string::npos) {
+    return res;
+  }
+  size_t end_pos = script.find(kPyExecSuffix, start_pos + std::strlen(kPyExecPrefix));
+  while (end_pos != string::npos) {
     auto substr = script.substr(start_pos, end_pos - start_pos + std::strlen(kPyExecSuffix));
     pos = end_pos + std::strlen(kPyExecSuffix);
     res.push_back(substr);
     MS_LOG(DEBUG) << "Found input: " << substr;
+    start_pos = script.find(kPyExecPrefix, pos);
+    if (start_pos == string::npos) {
+      return res;
+    }
+    end_pos = script.find(kPyExecSuffix, start_pos + std::strlen(kPyExecPrefix));
   }
   return res;
 }
@@ -505,6 +543,7 @@ bool ContainsSequenceAnyType(const AbstractBasePtr &abs) {
   }
   if (abs->isa<abstract::AbstractSequence>()) {
     auto seq_abs = abs->cast_ptr<abstract::AbstractSequence>();
+    MS_EXCEPTION_IF_NULL(seq_abs);
     if (seq_abs->dynamic_len()) {
       auto element_abs = seq_abs->dynamic_len_element_abs();
       if (ContainsSequenceAnyType(element_abs)) {
@@ -594,7 +633,7 @@ bool EnableFallbackList() {
 
 // Convert some CNode to PyExectue, eg:
 // isinstance(xxx.asnumpy(), np.ndarray)  -- > PyExectue("isinstance(arg1, arg2)", local_keys, local_values)
-AnfNodePtr ConvertCNodeToPyExecuteForPrim(const CNodePtr &cnode, string name) {
+AnfNodePtr ConvertCNodeToPyExecuteForPrim(const CNodePtr &cnode, const string &name) {
   MS_EXCEPTION_IF_NULL(cnode);
   const auto &fg = cnode->func_graph();
   MS_EXCEPTION_IF_NULL(fg);
@@ -726,6 +765,7 @@ bool CheckNeedSymbol(const AbstractBasePtr &abs) {
     need_symbol = CheckIsStr(abs);
   } else if (abs->isa<abstract::AbstractSequence>()) {
     auto abs_list = abs->cast_ptr<abstract::AbstractSequence>();
+    MS_EXCEPTION_IF_NULL(abs_list);
     const auto &elements = abs_list->elements();
     for (auto &element : elements) {
       MS_EXCEPTION_IF_NULL(element);
