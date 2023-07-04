@@ -2037,8 +2037,8 @@ bool MSANFModelParser::SetValueForTopGraphParameter(const FuncGraphPtr &topGraph
     auto parameter_name = parameter->name();
     auto weights_iter = weights.find(parameter_name);
     if (weights_iter == weights.end()) {
-      MS_LOG(ERROR) << "Find initial weight value for " << parameter_name << " failed.";
-      return false;
+      MS_LOG(INFO) << "Find initial weight value for " << parameter_name << " failed.";
+      continue;
     }
     parameter->set_default_param(weights_iter->second);
     fv_param_count++;
