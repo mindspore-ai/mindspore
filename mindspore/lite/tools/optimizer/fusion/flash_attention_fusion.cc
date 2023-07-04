@@ -30,6 +30,7 @@ namespace mindspore::opt {
 const BaseRef FlashAttentionFusion::DefinePattern() const {
   if (!InitVar()) {
     MS_LOG(ERROR) << "initial member failed";
+    return {};
   }
 
   auto is_batchmm_qk = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimBatchMatMul>);

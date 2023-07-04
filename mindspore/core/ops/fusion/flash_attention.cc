@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace ops {
-void FlashAttention::Init() {}
+void FlashAttention::Init() const {}
 MIND_API_OPERATOR_IMPL(FlashAttention, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameFlashAttention, FlashAttention);
 }  // namespace ops
