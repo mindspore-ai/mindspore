@@ -1317,7 +1317,7 @@ def set_context(**kwargs):
                 sized workspace is needed to store intermediate results. The results are deterministic.
               - winograd_nonfused: This algorithm uses the Winograd Transform approach to compute the convolution.
                 A significant workspace may be needed to store intermediate results. The results are deterministic.
-            - conv_wgrwd_algo (str): Specifies convolution filter grad algorithm and the default value is 'normal',
+            - conv_wgrad_algo (str): Specifies convolution filter grad algorithm and the default value is 'normal',
               The value range is as follows:
 
               - normal: Use the heuristic search algorithm.

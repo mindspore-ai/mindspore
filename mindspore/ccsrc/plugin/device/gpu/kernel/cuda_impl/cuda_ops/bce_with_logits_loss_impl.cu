@@ -128,7 +128,7 @@ void CalBCEWithLogitsLoss(const size_t input_size, const T *predict, const T *ta
                                                                               shape_broadcasted);
   } else {
     FillWithoutBroadcastFunctor<T> functor;
-    cuda::elementwise::EltWiseCudaOpsFunc(functor, (uint)(input_size), shape_broadcasted, pos_weight, cuda_stream);
+    cuda::elementwise::EltWiseCudaOpsFunc(functor, (uint)(input_size), shape_broadcasted, weight, cuda_stream);
   }
   MulFunctor<T> functor;
   cuda::elementwise::EltWiseCudaOpsFunc(functor, (uint)(input_size), output, shape_broadcasted, cuda_stream);

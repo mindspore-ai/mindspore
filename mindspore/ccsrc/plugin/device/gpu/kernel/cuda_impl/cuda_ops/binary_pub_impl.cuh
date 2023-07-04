@@ -24,7 +24,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/elementwise/elementswise_pub_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_to_impl.cuh"
 
-constexpr uint kThreadsPerBlock = 512;
+constexpr uint kThreadsPerBlock = 256;
 
 template <typename T, size_t VecSize>
 struct Vec {
