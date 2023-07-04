@@ -9582,16 +9582,9 @@ class ApplyAdamWithAmsgradV2(Primitive):
             var:=var-lr_t*m_t/(\sqrt{\hat v_t}+\epsilon) \\
         \end{array}
 
-    The inputs `var`, `m`, `v`, `vhat`, and `grad` are consistent with implicit type conversion rules,
+    All of the inputs are consistent with implicit type conversion rules,
     which ensure that the data types are the same. If they have different data types, the lower precision data type
     will be converted to the data type with relatively higher precision.
-
-    The inputs `beta1_power`, `beta1`, `beta2`, and `epsilon` are consistent with implicit type conversion rules,
-    which ensure that the data types are the same. If they have different data types, the lower precision data type
-    will be converted to the data type with relatively higher precision.
-
-    There is no implicit type conversion rule between `var` and `beta1_power`. The type conversion rules
-    for `var` and `beta1_power` are independent of each other.
 
     Args:
         use_locking (bool): If ``True`` , updating of the `var`, `m`, and `v` tensors will
@@ -9674,12 +9667,12 @@ class ApplyAdamWithAmsgradV2(Primitive):
         sig.make_sig('m', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('v', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('vhat', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
-        sig.make_sig('beta1_power', dtype=sig.sig_dtype.T1),
-        sig.make_sig('beta2_power', dtype=sig.sig_dtype.T2),
-        sig.make_sig('lr', dtype=sig.sig_dtype.T3),
-        sig.make_sig('beta1', dtype=sig.sig_dtype.T1),
-        sig.make_sig('beta2', dtype=sig.sig_dtype.T1),
-        sig.make_sig('epsilon', dtype=sig.sig_dtype.T1),
+        sig.make_sig('beta1_power', dtype=sig.sig_dtype.T),
+        sig.make_sig('beta2_power', dtype=sig.sig_dtype.T),
+        sig.make_sig('lr', dtype=sig.sig_dtype.T),
+        sig.make_sig('beta1', dtype=sig.sig_dtype.T),
+        sig.make_sig('beta2', dtype=sig.sig_dtype.T),
+        sig.make_sig('epsilon', dtype=sig.sig_dtype.T),
         sig.make_sig('grad', dtype=sig.sig_dtype.T)
     )
 
