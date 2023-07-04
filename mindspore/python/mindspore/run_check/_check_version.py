@@ -535,8 +535,7 @@ def check_version_and_env_config():
             return
         MSContext.get_instance().register_check_env_callback(check_env)
         MSContext.get_instance().register_set_env_callback(set_env)
-        MSContext.get_instance().set_param(ms_ctx_param.device_target,
-                                           MSContext.get_instance().get_param(ms_ctx_param.device_target))
+        MSContext.get_instance().set_device_target_inner(MSContext.get_instance().get_param(ms_ctx_param.device_target))
 
 
 def _set_pb_env():
