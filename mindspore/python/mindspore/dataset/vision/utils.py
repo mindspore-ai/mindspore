@@ -23,7 +23,8 @@ from PIL import Image
 import mindspore
 import mindspore._c_dataengine as cde
 
-if Image.__version__ >= "9.1.0":
+# The following constants have been deprecated by Pillow since version 9.1.0
+if int(Image.__version__.split(".")[0]) > 9 or Image.__version__ >= "9.1.0":
     FLIP_LEFT_RIGHT = Image.Transpose.FLIP_LEFT_RIGHT
     FLIP_TOP_BOTTOM = Image.Transpose.FLIP_TOP_BOTTOM
     PERSPECTIVE = Image.Transform.PERSPECTIVE
