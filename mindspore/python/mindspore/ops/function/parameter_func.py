@@ -47,6 +47,8 @@ def assign(variable, value):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> value = Tensor([2.0], mindspore.float32)
         >>> variable = mindspore.Parameter(Tensor([1.0], mindspore.float32), name="variable")
         >>> ops.assign(variable, value)
@@ -94,6 +96,9 @@ def assign_sub(variable, value):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> variable = mindspore.Parameter(initializer(1, [1], mindspore.int32), name="global_step")
         >>> value = Tensor(np.ones([1]).astype(np.int32) * 100)
         >>> ops.assign_sub(variable, value)
@@ -141,6 +146,9 @@ def assign_add(variable, value):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> variable = mindspore.Parameter(initializer(1, [1], mindspore.int32), name="global_step")
         >>> value = Tensor(np.ones([1]).astype(np.int32) * 100)
         >>> ops.assign_add(variable, value)
