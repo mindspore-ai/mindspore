@@ -1574,7 +1574,24 @@ class AfterOptARewriter : public BaseRewriter {
     constexpr auto kConvertToListString = "list(map(str, __inner_convert_object__))";
     constexpr auto kConvertToListKey = "__inner_convert_object__";
     std::vector<AnfNodePtr> list_str_value_list = {NewValueNode(prim::kPrimMakeTuple)};
-    std::copy(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(list_str_value_list));
+    std::transform(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(list_str_value_list),
+                   [&fg](const AnfNodePtr &node) {
+                     auto abs = node->abstract();
+                     if (abs == nullptr || !abs->isa<abstract::AbstractList>()) {
+                       return node;
+                     }
+                     // Do not handle nested sequence with list element now.
+                     const std::string input_str = "__internal_list_input__";
+                     const std::string func_str = "list";
+                     const std::string script_str = func_str + "(" + input_str + ")";
+                     const auto script_str_val = std::make_shared<StringImm>(script_str);
+                     const auto input_str_val = std::make_shared<StringImm>(input_str);
+                     auto key_str_val = std::make_shared<ValueTuple>(std::vector<ValuePtr>{input_str_val});
+                     auto key_val_node = fg->NewCNode({std::make_shared<ValueNode>(prim::kPrimMakeTuple), node});
+                     AnfNodePtr ret = fallback::CreatePyExecuteCNode(
+                       fg, NewValueNode(script_str_val), NewValueNode(key_str_val), key_val_node, node->debug_info());
+                     return ret;
+                   });
 
     std::vector<AnfNodePtr> list_str_key_list = {NewValueNode(prim::kPrimMakeTuple), NewValueNode(kConvertToListKey)};
     auto list_str_key_node = fg->NewCNode(list_str_key_list);

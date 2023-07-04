@@ -875,3 +875,27 @@ def test_list_inplace_with_all_str_2():
     out = foo()
     assert id(global_tuple_with_list_all_str[0]) == id(out)
     assert global_tuple_with_list_all_str == (['a', 'b', 'c', 'd', 'e'], 1, 2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_list_in_joined_str():
+    """
+    Feature: dynamic length list do not run inplace operation.
+    Description: support list inplace ops.
+    Expectation: No exception.
+    """
+    @jit
+    def foo(x, y, z):
+        if z >= 1:
+            raise TypeError(f"The input is {x}")
+        raise TypeError(f"The input is {y}")
+
+    x = mutable([1, 2, 3])
+    y = mutable([4, 5])
+    z = Tensor([1])
+    with pytest.raises(TypeError) as raise_info:
+        foo(x, y, z)
+    assert "The input is [1, 2, 3]" in str(raise_info.value)
