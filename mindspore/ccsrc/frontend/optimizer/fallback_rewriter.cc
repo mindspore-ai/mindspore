@@ -1594,6 +1594,33 @@ class AfterOptARewriter : public BaseRewriter {
     return joined_result_node;
   }
 
+  AnfNodePtr ConvertPrint(const CNodePtr &cnode) const {
+    const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() >= kCompatible);
+    if (!allow_fallback_runtime) {
+      return nullptr;
+    }
+    const auto &fg = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    if (!CheckInputsHasAnyType(cnode)) {
+      return nullptr;
+    }
+    // Skip the io_monad input
+    auto inputs = cnode->inputs();
+    if (!HasAbstractMonad(inputs.back())) {
+      MS_LOG(EXCEPTION) << "The print node has no monad input:" << cnode->DebugString();
+    }
+    inputs.pop_back();
+    auto no_io_print = fg->NewCNode(inputs);
+    auto pyexecute_node = fallback::ConvertCNodeToPyExecuteForPrim(no_io_print, "print");
+
+    // Add io_monad input
+    auto new_pyexecute_inputs = pyexecute_node->cast<CNodePtr>()->inputs();
+    (void)new_pyexecute_inputs.emplace_back(cnode->inputs().back());
+    auto new_pyexecute_node = fg->NewCNode(new_pyexecute_inputs);
+    MS_LOG(DEBUG) << "Convert: " << cnode->DebugString() << " -> " << new_pyexecute_node->DebugString();
+    return new_pyexecute_node;
+  }
+
   using Converter = AnfNodePtr (ThisClass::*)(const CNodePtr &) const;
   using ConverterMap = std::unordered_map<PrimitivePtr, Converter, PrimitiveHasher, PrimitiveEqual>;
   static inline const ConverterMap converters_{
@@ -1623,7 +1650,8 @@ class AfterOptARewriter : public BaseRewriter {
     {prim::kPrimScalarCast, &ThisClass::ConvertScalarCast},
     {prim::kPrimMakeSlice, &ThisClass::ConvertMakeSlice},
     {prim::kPrimIsInstance, &ThisClass::ConvertIsInstance},
-    {prim::kPrimJoinedStr, &ThisClass::ConvertJoinedStr}};
+    {prim::kPrimJoinedStr, &ThisClass::ConvertJoinedStr},
+    {prim::kPrimPrint, &ThisClass::ConvertPrint}};
 
   // Convert ValueNode<None> to PyExecute("None", ("None"), ("None")).
   AnfNodePtr ConvertNoneToPyExecute(const FuncGraphPtr &func_graph) {
