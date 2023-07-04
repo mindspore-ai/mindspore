@@ -6488,7 +6488,7 @@ def bernoulli(input, p=0.5, seed=None):
             must be in the range `[0, 1]`. Default: ``0.5`` .
         seed (Union[int, None], optional): The seed value for random generating. The value of `seed` must be -1 or a
             positive integer, and -1 means using the current timestamp. Default: ``None`` ,
-            which will be treated as 0.
+            which will be treated as -1.
 
     Returns:
         output (Tensor), with the same shape and type as `input` .
@@ -6519,7 +6519,7 @@ def bernoulli(input, p=0.5, seed=None):
         [0 1 1]
     """
     if seed is None:
-        seed = 0
+        seed = -1
     validator.check_is_int(seed, 'seed', 'bernoulli')
     bernoulli_ = _get_cache_prim(Bernoulli)(seed)
     if not isinstance(p, Tensor):
