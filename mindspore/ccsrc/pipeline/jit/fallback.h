@@ -145,6 +145,9 @@ std::shared_ptr<U> GetPySeqObject(const std::shared_ptr<T> &owner) {
 std::string GetPyObjectPtrStr(const py::object &obj);
 
 bool EnableFallbackList();
+
+AnfNodePtr GenerateOnesOrZerosLikeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
+                                       const std::string &type);
 }  // namespace fallback
 
 namespace raiseutils {

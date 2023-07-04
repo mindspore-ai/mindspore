@@ -16,7 +16,7 @@
 Interfaces for parser module in c++.
 """
 
-from __future__ import  absolute_import
+from __future__ import absolute_import
 from .parser import (Parser, create_instance, is_supported_create_instance_type, generate_scope, get_attr_from_object,
                      get_bprop_method_of_class, get_class_instance_type, get_class_member_namespace_symbol, get_dtype,
                      create_slice_obj, get_obj_id, get_module_namespace, get_obj_type, get_object_key, resolve_symbol,
@@ -27,8 +27,8 @@ from .parser import (Parser, create_instance, is_supported_create_instance_type,
                      is_class_type, check_obj_bool, python_isinstance, ms_isinstance, convert_to_ms_csrtensor,
                      convert_to_ms_cootensor, convert_class_to_function, convert_cell_list_to_sequence, is_cell_list,
                      get_obj_from_sequence, get_type, is_class_member_recursive, merge_global_params, get_global_params,
-                     get_adapter_tensor_attr, get_local_variable, set_local_variable, get_obj_defined_from_obj_type,
-                     is_from_third_party_library, _jit_fallback_generate_list, get_const_abs, get_const_round,
+                     get_adapter_tensor_attr, get_obj_defined_from_obj_type,
+                     is_from_third_party_library, get_const_abs, get_const_round,
                      get_const_len, is_adapter_tensor_class, is_adapter_parameter_class)
 
 __all__ = ['Parser', 'create_instance', 'is_supported_create_instance_type', 'generate_scope', 'get_attr_from_object',
@@ -41,7 +41,7 @@ __all__ = ['Parser', 'create_instance', 'is_supported_create_instance_type', 'ge
            'get_ms_class_name', 'is_class_type', 'check_obj_bool', 'python_isinstance', 'ms_isinstance',
            'convert_to_ms_csrtensor', 'convert_to_ms_cootensor', 'convert_class_to_function',
            'convert_cell_list_to_sequence', 'is_cell_list', 'get_obj_from_sequence', 'get_type',
-           'is_class_member_recursive', 'get_adapter_tensor_attr', 'get_local_variable', 'set_local_variable',
-           'get_obj_defined_from_obj_type', 'is_from_third_party_library', '_jit_fallback_generate_list',
+           'is_class_member_recursive', 'get_adapter_tensor_attr',
+           'get_obj_defined_from_obj_type', 'is_from_third_party_library',
            'get_const_abs', 'get_const_round', 'get_const_len', 'is_adapter_tensor_class',
            'is_adapter_parameter_class',]

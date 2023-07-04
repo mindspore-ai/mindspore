@@ -161,7 +161,6 @@ _modules_from_mindspore = (
 )
 
 _global_params = {}
-_local_value_nodes = {}
 
 
 def _convert_map():
@@ -849,25 +848,6 @@ def get_global_params():
     """Get the global parameter."""
     logger.debug(f'get global_dict: {_global_params}')
     return _global_params
-
-
-def set_local_variable(name, value):
-    """Set the local variable with name and value."""
-    _local_value_nodes[name] = value
-
-
-def get_local_variable(name):
-    """Get the local variable according name."""
-    return _local_value_nodes.get(name)
-
-
-def _jit_fallback_generate_list(key_name, list_value):
-    "Generate list object."
-    list_obj = get_local_variable(key_name)
-    # Need to clear current object, in case the same make_list is called multiple times.
-    list_obj.clear()
-    list_obj.extend(list_value)
-    return list_obj
 
 
 def get_dtype(name: str):
