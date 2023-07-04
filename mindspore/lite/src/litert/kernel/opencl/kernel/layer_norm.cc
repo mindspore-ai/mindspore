@@ -52,7 +52,7 @@ int LayerNormOpenCLKernel::CheckSpecs() {
     normalized_axis_ += input->shape().size();
   }
   if (normalized_axis_ != DIMENSION_3D) {
-    MS_LOG(WARNING) << "UnSupported normalized_axis_ : " << param->normalized_dims_;
+    MS_LOG(WARNING) << "UnSupported normalized_axis_ : " << normalized_axis_;
     return RET_ERROR;
   }
   return RET_OK;

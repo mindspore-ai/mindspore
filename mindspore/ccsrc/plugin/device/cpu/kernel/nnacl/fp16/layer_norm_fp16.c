@@ -66,15 +66,15 @@ void LayerNormGammaAndBetaFp16(float16_t *dst, const float16_t *src, const float
 }
 
 int LayerNormFp16(const float16_t *src_data, const float16_t *gamma_data, const float16_t *beta_data,
-                  float16_t *dst_data, float16_t *out_mean, float16_t *out_variance, LayerNormParameter *param,
-                  size_t task_id) {
+                  float16_t *dst_data, float16_t *out_mean, float16_t *out_variance, const LayerNormComputeParam *param,
+                  int task_id, int thread_num) {
   if (src_data == NULL || dst_data == NULL || gamma_data == NULL || beta_data == NULL) {
     return NNACL_NULL_PTR;
   }
   NNACL_CHECK_ZERO_RETURN_ERR(param->params_inner_size_);
   NNACL_CHECK_ZERO_RETURN_ERR(param->params_outer_size_);
-  NNACL_CHECK_ZERO_RETURN_ERR(param->op_parameter_.thread_num_);
-  int step = UP_DIV(param->norm_outer_size_, param->op_parameter_.thread_num_);
+  NNACL_CHECK_ZERO_RETURN_ERR(thread_num);
+  int step = UP_DIV(param->norm_outer_size_, thread_num);
   int thread_end = MSMIN((task_id + 1) * step, param->norm_outer_size_);
   for (int i = task_id * step; i < thread_end; i++) {
     const float16_t *src_norm = src_data + i * param->norm_inner_size_;

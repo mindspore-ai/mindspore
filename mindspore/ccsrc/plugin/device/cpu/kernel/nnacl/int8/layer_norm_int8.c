@@ -33,15 +33,15 @@ void LayerNormGammaAndBetaInt8(int8_t *dst, const int8_t *src, const float *gamm
  *
  * */
 int LayerNormInt8(const int8_t *src_data, const float *gamma_data, const float *beta_data, int8_t *dst_data,
-                  const LayerNormParameter *param, const LayerNormQuantArg *quant, int task_id) {
+                  const LayerNormComputeParam *param, const LayerNormQuantArg *quant, int task_id, int thread_num) {
   if (src_data == NULL || dst_data == NULL || gamma_data == NULL || beta_data == NULL) {
     return NNACL_NULL_PTR;
   }
   NNACL_CHECK_ZERO_RETURN_ERR(param->params_inner_size_);
   NNACL_CHECK_ZERO_RETURN_ERR(param->params_outer_size_);
 
-  int step = UP_DIV(param->norm_outer_size_, param->op_parameter_.thread_num_);
-  int thread_end = MSMIN((task_id + 1) * step, param->norm_outer_size_);
+  int step = UP_DIV(param->norm_outer_size_, thread_num);
+  int thread_end = NNACL_MIN((task_id + 1) * step, param->norm_outer_size_);
   for (int i = task_id * step; i < thread_end; i++) {
     const int8_t *src_norm = src_data + i * param->norm_inner_size_;
     int8_t *dst_norm = dst_data + i * param->norm_inner_size_;

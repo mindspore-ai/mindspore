@@ -21,6 +21,7 @@
 #include "nnacl/int8/layer_norm_int8.h"
 #include "src/litert/kernel_registry.h"
 #include "include/errorcode.h"
+#include "nnacl/kernel/layer_norm.h"
 
 namespace mindspore::kernel {
 class LayerNormInt8CPUKernel : public LiteKernel {
@@ -45,6 +46,7 @@ class LayerNormInt8CPUKernel : public LiteKernel {
  private:
   LayerNormParameter *param_ = nullptr;
   LayerNormQuantArg *quant_param_ = nullptr;
+  LayerNormComputeParam *compute_ = nullptr;
   int8_t *src_ptr_ = nullptr;
   int8_t *dst_ptr_ = nullptr;
   float *gamma_ptr_ = nullptr;

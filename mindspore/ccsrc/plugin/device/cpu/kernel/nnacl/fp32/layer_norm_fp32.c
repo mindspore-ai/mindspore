@@ -51,16 +51,16 @@ void LayerNormGammaAndBeta(float *dst, const float *src, const float *gamma_data
 }
 
 int LayerNorm(const float *src_data, const float *gamma_data, const float *beta_data, float *dst_data, float *out_mean,
-              float *out_variance, const LayerNormParameter *param, size_t task_id) {
+              float *out_variance, const LayerNormComputeParam *param, int task_id, int thread_num) {
   if (src_data == NULL || dst_data == NULL || gamma_data == NULL || beta_data == NULL) {
     return NNACL_NULL_PTR;
   }
   NNACL_CHECK_NULL_RETURN_ERR(param);
   NNACL_CHECK_ZERO_RETURN_ERR(param->params_inner_size_);
   NNACL_CHECK_ZERO_RETURN_ERR(param->params_outer_size_);
-  int step = UP_DIV(param->norm_outer_size_, param->op_parameter_.thread_num_);
+  int step = UP_DIV(param->norm_outer_size_, thread_num);
   int thread_end = MSMIN(((int)task_id + 1) * step, param->norm_outer_size_);
-  for (int i = (int)task_id * step; i < thread_end; i++) {
+  for (int i = task_id * step; i < thread_end; i++) {
     const float *src_norm = src_data + i * param->norm_inner_size_;
     float *dst_norm = dst_data + i * param->norm_inner_size_;
     float cur_mean = 0.0f;

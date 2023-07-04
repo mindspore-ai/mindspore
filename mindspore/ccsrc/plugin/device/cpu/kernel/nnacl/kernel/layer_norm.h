@@ -14,19 +14,36 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_KERNEL_DEFAULT_KERNEL_BASE_H_
-#define NNACL_KERNEL_DEFAULT_KERNEL_BASE_H_
+#ifndef NNACL_KERNEL_LAYER_NORM_H_
+#define NNACL_KERNEL_LAYER_NORM_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/kernel.h"
 
-int DefaultPrepare3In2Out(KernelBase *self);
-int DefaultPrepare1In1Out(KernelBase *self);
-int DefaultPrepare2In1Out(KernelBase *self);
-int DefaultPrepare1In2Out(KernelBase *self);
-int DefaultPrepare3In1Out(KernelBase *self);
-int DefaultResize(KernelBase *self);
-int DefaultRelease(KernelBase *self);
+typedef struct LayerNormComputeParam {
+  float epsilon_;
+  bool elementwise_affine_;
+  int begin_norm_axis_;
+  int begin_params_axis_;
+  int norm_inner_size_;
+  int norm_outer_size_;
+  int params_inner_size_;
+  int params_outer_size_;
+} LayerNormComputeParam;
 
-#endif  // NNACL_KERNEL_DEFAULT_KERNEL_BASE_H_
+typedef struct LayerNormStruct {
+  KernelBase base_;
+  LayerNormComputeParam compute_;
+  int data_type_;
+  void *src_data_;
+  void *dst_data_;
+  void *gamma_data_;
+  void *beta_data_;
+  void *mean_data_;
+  void *var_data_;
+} LayerNormStruct;
+
+KernelBase *CreateLayerNorm(OpParameter *param, int data_type);
+
+#endif  // NNACL_KERNEL_LAYER_NORM_H_

@@ -20,6 +20,7 @@
 #include <vector>
 #include "coder/opcoders/op_coder.h"
 #include "nnacl/layer_norm_parameter.h"
+#include "nnacl/kernel/layer_norm.h"
 
 namespace mindspore::lite::micro::nnacl {
 class LayerNormFP32Coder : public OperatorCoder {
@@ -35,6 +36,7 @@ class LayerNormFP32Coder : public OperatorCoder {
 
  protected:
   LayerNormParameter *param_;
+  LayerNormComputeParam compute_;
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_LAYERNORM_FP32_CODER_H_
