@@ -6,8 +6,7 @@ mindspore.ops.fold
     将提取出的滑动局部区域块还原成更大的输出Tensor。
 
     .. warning::
-        - 在2.0rc1版本，该算子的输入应为四维Tensor，其shape为 :math:`(N, C, H, W)` 。
-        - 在之后的版本中，其输入则须为三维Tensor，其shape为 :math:`(N, C \times H, W)` 。
+        - 其输入则须为三维Tensor，其shape为 :math:`(N, C \times H, W)` 。
 
     参数：
         - **input** (Tensor) - 三维Tensor，支持的数据类型: float16、float32、float64、complex64和complex128。
@@ -24,5 +23,5 @@ mindspore.ops.fold
         - **TypeError** - 如果 `kernel_size` 、 `stride` 、 `dilation` 、 `kernel_size` 的数据类型不是int、tuple或者list。
         - **ValueError** - 如果 `kernel_size`, `dilation`, `stride` 包含元素的值小于等于0或者元素个数大于 `2` 。
         - **ValueError** - 如果 `padding` 包含元素的值小于零。
-        - **ValueError** - 在2.0rc1版本，如果 `input.shape[2] != kernel_size[0] * kernel_size[1]`。在之后的版本中，如果 `input.shape[1] != kernel_size[0] * kernel_size[1]` 。
-        - **ValueError** - 如在2.0rc1版本，如果 `input.shape[3]` 与计算出的滑块数量不匹配。在之后的版本中，如果 `input.shape[2]` 与计算出的滑块数量不匹配。
+        - **ValueError** - 如果 `input.shape[1] != kernel_size[0] * kernel_size[1]` 。
+        - **ValueError** - 如果 `input.shape[2]` 与计算出的滑块数量不匹配。

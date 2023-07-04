@@ -6653,8 +6653,7 @@ def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
     Combines an array of sliding local blocks into a large containing tensor.
 
     .. warning::
-        - In version 2.0rc1, the input should be a 4-dimensional Tensor whose shape is :math:`(N, C, H, W)` .
-        - In later versions, it must be a 3-dimensional Tensor with shape :math:`(N, C \times H, W)` .
+        - The input must be a 3-dimensional Tensor with shape :math:`(N, C \times H, W)` .
 
     Args:
         input (Tensor): 3-D Tensor, supported dtypes: float16, float32, float64, complex64 and complex128.
@@ -6676,10 +6675,8 @@ def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
         ValueError: If `kernel_size`, `dilation`, `stride` value is not
             greater than zero or elements number more than `2`.
         ValueError: If `padding` value is less than zero or elements number more than `2`.
-        ValueError: In version 2.0rc1, If `input.shape[2] != kernel_size[0] * kernel_size[1]`.
-            In later versions, If `input.shape[1] != kernel_size[0] * kernel_size[1]`
-        ValueError: In version 2.0rc1, If `input.shape[3]` does not match the calculated number of sliding blocks.
-            In later versions, If `input.shape[2]` does not match the calculated number of sliding blocks.
+        ValueError: If `input.shape[1] != kernel_size[0] * kernel_size[1]`
+        ValueError: If `input.shape[2]` does not match the calculated number of sliding blocks.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6750,9 +6747,7 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
     how the sliding blocks are retrieved.
 
     .. warning::
-        - In version 2.0rc1, the output is a 4-dimensional Tensor whose shape
-          is :math:`(N, C, \prod(\text{kernel_size}), L)` .
-        - In later versions, it is a 3-dimensional Tensor whose shape is
+        - The output is a 3-dimensional Tensor whose shape is
           :math:`(N, C \times \prod(\text{kernel_size}), L)` .
 
     .. warning::

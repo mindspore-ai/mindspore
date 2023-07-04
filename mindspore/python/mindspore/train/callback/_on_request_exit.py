@@ -117,7 +117,7 @@ class OnRequestExit(Callback):
             >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss = nn.MAELoss()
-            >>> opt = nn.Momentum(forward_net.trainable_params(), 0.01, 0.9)
+            >>> opt = nn.Momentum(net.trainable_params(), 0.01, 0.9)
             >>> model = ms.Model(net, loss_fn=loss, optimizer=opt)
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
@@ -157,7 +157,7 @@ class OnRequestExit(Callback):
             >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss = nn.MAELoss()
-            >>> opt = nn.Momentum(forward_net.trainable_params(), 0.01, 0.9)
+            >>> opt = nn.Momentum(net.trainable_params(), 0.01, 0.9)
             >>> model = ms.Model(net, loss_fn=loss, optimizer=opt)
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
@@ -195,7 +195,7 @@ class OnRequestExit(Callback):
             >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss = nn.MAELoss()
-            >>> opt = nn.Momentum(forward_net.trainable_params(), 0.01, 0.9)
+            >>> opt = nn.Momentum(net.trainable_params(), 0.01, 0.9)
             >>> model = ms.Model(net, loss_fn=loss, optimizer=opt)
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
@@ -232,7 +232,7 @@ class OnRequestExit(Callback):
             >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss = nn.MAELoss()
-            >>> opt = nn.Momentum(forward_net.trainable_params(), 0.01, 0.9)
+            >>> opt = nn.Momentum(net.trainable_params(), 0.01, 0.9)
             >>> model = ms.Model(net, loss_fn=loss, optimizer=opt)
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
@@ -275,8 +275,8 @@ class OnRequestExit(Callback):
             >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss = nn.MAELoss()
-            >>> opt = nn.Momentum(forward_net.trainable_params(), 0.01, 0.9)
-            >>> model = ms.Model(net, loss_fn=loss, optimizer=opt)
+            >>> opt = nn.Momentum(net.trainable_params(), 0.01, 0.9)
+            >>> model = ms.Model(net, loss_fn=loss, optimizer=opt, eval_network=net)
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
             >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
@@ -319,8 +319,8 @@ class OnRequestExit(Callback):
             >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss = nn.MAELoss()
-            >>> opt = nn.Momentum(forward_net.trainable_params(), 0.01, 0.9)
-            >>> model = ms.Model(net, loss_fn=loss, optimizer=opt)
+            >>> opt = nn.Momentum(net.trainable_params(), 0.01, 0.9)
+            >>> model = ms.Model(net, loss_fn=loss, optimizer=opt, eval_network=net)
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
             >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
@@ -356,8 +356,8 @@ class OnRequestExit(Callback):
             >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> loss = nn.MAELoss()
-            >>> opt = nn.Momentum(forward_net.trainable_params(), 0.01, 0.9)
-            >>> model = ms.Model(net, loss_fn=loss, optimizer=opt)
+            >>> opt = nn.Momentum(net.trainable_params(), 0.01, 0.9)
+            >>> model = ms.Model(net, loss_fn=loss, optimizer=opt, eval_network=net)
             >>>
             >>> # Create the dataset taking MNIST as an example. Refer to
             >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
