@@ -58,7 +58,7 @@ int SequenceConcatCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << " the input tuple size must greater 0";
   }
   std::vector<int64_t> shape_vec_item;
-  std::copy(tuple_shape_.begin() + 1, tuple_shape_.end(), std::back_inserter(shape_vec_item));
+  (void)std::copy(tuple_shape_.begin() + 1, tuple_shape_.end(), std::back_inserter(shape_vec_item));
 
   input_num_ = tuple_shape_[0];
   inputs_shape_.clear();
@@ -96,7 +96,7 @@ bool SequenceConcatCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
 
   size_t element_index_size =
-    std::accumulate(tuple_shape_.begin() + 1, tuple_shape_.end(), 1, std::multiplies<int64_t>());
+    LongToSize(std::accumulate(tuple_shape_.begin() + 1, tuple_shape_.end(), 1, std::multiplies<int64_t>()));
 
   std::vector<T *> input_addr_list;
   for (size_t j = 0; j < input_num_; ++j) {
@@ -120,7 +120,7 @@ bool SequenceConcatCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
       auto copy_size = copy_num * sizeof(T);
       auto offset = copy_num * i;
       auto output_ptr = output_addr + i * output_dim_ + offset_[j];
-      auto ret = memcpy_s(output_ptr, copy_size, input_addr_list[j] + offset, copy_size);
+      auto ret = memcpy_s(reinterpret_cast<void *>(output_ptr), copy_size, input_addr_list[j] + offset, copy_size);
       if (ret != EOK) {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s failed. Error no: " << ret;
       }

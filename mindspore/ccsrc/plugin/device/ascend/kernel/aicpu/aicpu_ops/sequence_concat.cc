@@ -49,8 +49,8 @@ ShapeVector FlatShapeByAxis(const ShapeVector &shape, int axis) {
   return ShapeVector{dim_row, dim_col};
 }
 }  // namespace
-constexpr size_t kSequenceConcatInputNum = 1;
-constexpr size_t kSequenceConcatOutputNum = 1;
+constexpr auto kSequenceConcatInputNum = 1;
+constexpr auto kSequenceConcatOutputNum = 1;
 constexpr auto kDim0 = 0;
 constexpr auto kDim1 = 1;
 
@@ -71,7 +71,7 @@ uint32_t SequenceConcatKernel::ParseKernelParam() {
   output_data_size_ = GetTensorMemSizeByShape(node_def_.outputs(kDim0));
 
   std::vector<int64_t> shape_vec_item;
-  std::copy(tuple_shape.begin() + 1, tuple_shape.end(), std::back_inserter(shape_vec_item));
+  (void)std::copy(tuple_shape.begin() + 1, tuple_shape.end(), std::back_inserter(shape_vec_item));
   input_shapes_.clear();
   for (int64_t i = 0; i < tuple_shape[0]; ++i) {
     input_shapes_.push_back(shape_vec_item);
@@ -105,21 +105,21 @@ uint32_t SequenceConcatKernel::SequenceConcatTask() {
   auto *output_addr = reinterpret_cast<T *>(io_addrs_[kDim1]);
   auto element_num = LongToSize(tuple_shape[0]);
   auto element_size = output_data_size_ / sizeof(T);
-  auto cp_ret = memset_s(output_addr, output_data_size_, 0x0, output_data_size_);
+  auto cp_ret = memset_s(reinterpret_cast<void *>(output_addr), output_data_size_, 0x0, output_data_size_);
   if (cp_ret != EOK) {
     AICPU_LOGE("For 'SequenceConcat',  memset for output error, errorno: %d, size: %d.", cp_ret, output_data_size_);
     return kAicpuKernelStateInvalid;
   }
 
   size_t element_index_size =
-    std::accumulate(tuple_shape.begin() + 1, tuple_shape.end(), 1, std::multiplies<int64_t>());
+    LongToSize(std::accumulate(tuple_shape.begin() + 1, tuple_shape.end(), 1, std::multiplies<int64_t>()));
   std::vector<T *> input_addr_list;
   for (uint64_t j = 0; j < element_num; ++j) {
     auto *tmp_addr = reinterpret_cast<T *>(inputs_addr + j * element_index_size);
     (void)input_addr_list.emplace_back(tmp_addr);
   }
   if (input_flat_shape_list_.empty() || input_flat_shape_list_[0].empty()) {
-    return true;
+    return kAicpuKernelStateInvalid;
   }
   const int64_t per_unit_size = element_size / std::thread::hardware_concurrency();
   auto tasks = [&](size_t start, size_t end) {
@@ -137,7 +137,7 @@ uint32_t SequenceConcatKernel::SequenceConcatTask() {
       auto copy_size = copy_num * sizeof(T);
       auto offset = copy_num * i;
       auto output_ptr = output_addr + i * output_dim_ + offset_[j];
-      auto ret = memcpy_s(output_ptr, copy_size, input_addr_list[j] + offset, copy_size);
+      auto ret = memcpy_s(reinterpret_cast<void *>(output_ptr), copy_size, input_addr_list[j] + offset, copy_size);
       if (ret != EOK) {
         AICPU_LOGE("For 'SequenceConcat', memcpy_s failed. Error no: %d", ret);
       }
