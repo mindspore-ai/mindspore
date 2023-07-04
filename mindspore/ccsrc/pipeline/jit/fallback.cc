@@ -682,15 +682,12 @@ std::string GetTupleOrListString(const AbstractBasePtr &arg, const AnfNodePtr &i
       exception_str << "[";
     }
   }
-  auto cnode = input->cast_ptr<CNode>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  bool not_variable = !has_variable;
   if (has_variable) {
-    not_variable = (arg->BuildValue() != kValueAny) || IsValueNode<prim::DoSignaturePrimitive>(cnode->input(0));
-  }
-  for (size_t index = 0; index < arg_tuple_elements.size(); ++index) {
-    auto &element = arg_tuple_elements[index];
-    if (has_variable) {
+    auto cnode = input->cast_ptr<CNode>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    bool not_variable = (arg->BuildValue() != kValueAny) || IsValueNode<prim::DoSignaturePrimitive>(cnode->input(0));
+    for (size_t index = 0; index < arg_tuple_elements.size(); ++index) {
+      auto &element = arg_tuple_elements[index];
       const auto &inputs = cnode->inputs();
       if (arg_tuple_elements.size() >= cnode->inputs().size()) {
         MS_LOG(EXCEPTION) << "Size of cnode should be greater than arg_tuple_elements, "
@@ -699,11 +696,17 @@ std::string GetTupleOrListString(const AbstractBasePtr &arg, const AnfNodePtr &i
       }
       auto inputs_in_tuple = inputs[index + 1];
       exception_str << GetExceptionString(element, inputs_in_tuple, key_value, need_symbol, need_comma);
-    } else {
-      exception_str << GetExceptionString(element, input, key_value, need_symbol, need_comma);
+      if (index != arg_tuple_elements.size() - 1 && need_comma && not_variable) {
+        exception_str << ", ";
+      }
     }
-    if (index != arg_tuple_elements.size() - 1 && need_comma && not_variable) {
-      exception_str << ", ";
+  } else {
+    for (size_t index = 0; index < arg_tuple_elements.size(); ++index) {
+      auto &element = arg_tuple_elements[index];
+      exception_str << GetExceptionString(element, input, key_value, need_symbol, need_comma);
+      if (index != arg_tuple_elements.size() - 1 && need_comma) {
+        exception_str << ", ";
+      }
     }
   }
   if (arg_tuple_elements.size() > 1 && !IsPrimitiveCNode(input, prim::kPrimJoinedStr)) {

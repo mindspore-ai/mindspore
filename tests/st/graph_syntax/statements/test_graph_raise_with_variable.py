@@ -419,6 +419,27 @@ def test_raise_20():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+def test_raise_21():
+    """
+    Feature: graph raise.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def construct(self, x):
+            raise ValueError("Not expected value, x is {}".format(x))
+
+    with pytest.raises(ValueError) as raise_info_7:
+        x = [1, 3, 5, 7, 9]
+        net = RaiseNet()
+        res = net(x)
+        print("res:", res)
+    assert "[1, 3, 5, 7, 9]" in str(raise_info_7.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_raise_list():
     """
     Feature: graph raise by JIT Fallback.
