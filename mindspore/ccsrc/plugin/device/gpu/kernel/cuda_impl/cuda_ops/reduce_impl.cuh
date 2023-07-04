@@ -31,12 +31,12 @@ typedef enum {
 } ReduceType_t;
 
 template <typename T>
-CUDA_LIB_EXPORT cudaError_t ArrayReduce(const T *input, const std::vector<size_t> &input_reshape,
+CUDA_LIB_EXPORT cudaError_t ArrayReduce(T *input, const std::vector<size_t> &input_reshape,
                                         const bool reduce_first_axis, ReduceType_t type, T *temp, T *output,
                                         cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT cudaError_t ArrayReduceComplex(const T *input, const std::vector<size_t> &input_reshape,
+CUDA_LIB_EXPORT cudaError_t ArrayReduceComplex(T *input, const std::vector<size_t> &input_reshape,
                                                const bool reduce_first_axis, ReduceType_t type, T *temp, T *output,
                                                cudaStream_t cuda_stream);
 
