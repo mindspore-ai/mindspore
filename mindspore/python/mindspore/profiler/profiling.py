@@ -31,28 +31,27 @@ from mindspore.profiler.common.exceptions.exceptions import ProfilerFileNotFound
     ProfilerIOException, ProfilerException, ProfilerRawFileException
 from mindspore.profiler.common.exceptions.exceptions import ProfilerPathErrorException
 from mindspore.profiler.common.exceptions.exceptions import ProfilerDirNotFoundException
-from mindspore.profiler.common.util import get_file_path, fwrite_format
-from mindspore.profiler.common.validator.validate_path import \
-    validate_and_normalize_path
-from mindspore.profiler.parser.aicpu_data_parser import DataPreProcessParser
-from mindspore.profiler.parser.framework_parser import FrameworkParser, GpuFrameWorkParser, DynamicFrameWorkParser
-from mindspore.profiler.parser.hwts_log_parser import HWTSLogParser
+from mindspore.profiler.common.util import get_file_path
+from mindspore.profiler.common.validator.validate_path import validate_and_normalize_path
+from mindspore.profiler.parser.framework_parser import GpuFrameWorkParser, DynamicFrameWorkParser
 from mindspore.profiler.parser.integrator import Integrator, DeviceTarget
 from mindspore.profiler.parser.cpu_gpu_timeline_generator import GpuTimelineGenerator, CpuTimelineGenerator
 from mindspore.profiler.parser.ascend_timeline_generator import AscendTimelineGenerator
 from mindspore.profiler.parser.memory_usage_parser import MemoryUsageParser
 from mindspore.profiler.parser.minddata_parser import MinddataParser
 from mindspore.profiler.parser.minddata_analyzer import MinddataProfilingAnalyzer
-from mindspore.profiler.parser.flops_parser import FlopsParser
 from mindspore.profiler.parser.minddata_pipeline_parser import \
     MinddataPipelineParser
-from mindspore.profiler.parser.optime_parser import OPComputeTimeParser
 from mindspore.profiler.parser.step_trace_parser import GpuStepTraceParser, AscendStepTraceParser
-from mindspore.profiler.parser.hccl_parser import HcclParser
-from mindspore.profiler.parser.op_intermediate_parser import OPIntermediateParser
 from mindspore.profiler.parser.msadvisor_analyzer import Msadvisor
 from mindspore.profiler.parser.profiler_info import ProfilerInfo
 from mindspore.common.api import _pynative_executor
+from mindspore.profiler.parser.ascend_msprof_exporter import AscendMsprofExporter
+from mindspore.profiler.parser.ascend_msprof_generator import AscendMsprofDataGenerator
+from mindspore.profiler.parser.ascend_fpbp_generator import AscendFPBPGenerator
+from mindspore.profiler.parser.ascend_op_generator import AscendOPGenerator
+from mindspore.profiler.parser.ascend_steptrace_generator import AscendStepTraceGenerator
+from mindspore.profiler.parser.ascend_flops_generator import AscendFlopsGenerator
 
 INIT_OP_NAME = 'Default/InitDataSetQueue'
 
@@ -242,6 +241,26 @@ def _parse_host_info(input_file, output_file, is_develop_user=True):
         json.dump(time_line, json_file)
 
 
+def _ascend_graph_msprof_analyse(source_path):
+    """
+    Ascend graph model msprof data analyse.
+
+    Returns:
+        list[obj]: The list is : df_op_summary, df_op_statistic, df_step_trace
+    """
+    df_op_summary = []
+    df_op_statistic = []
+    df_step_trace = []
+    try:
+        msprof_analyser = AscendMsprofDataGenerator(os.path.join(source_path, 'summary'))
+        df_op_summary, df_op_statistic, df_step_trace = msprof_analyser.parse()
+    except ProfilerException as err:
+        logger.warning(err.message)
+    finally:
+        pass
+    return df_op_summary, df_op_statistic, df_step_trace
+
+
 class Profiler:
     r"""
     This class to enable the profiling of MindSpore neural networks.
@@ -367,6 +386,7 @@ class Profiler:
         self._rank_size = 1
         self._rank_id = 0
         self._ascend_profiler = None
+        self._ascend_msprof_exporter = None
         self._timeline_size_limit_byte = 500 * 1024 * 1024  # 500MB
         self._parallel_strategy = True
         _environment_check()
@@ -696,6 +716,7 @@ class Profiler:
 
         if self._device_target == DeviceTarget.ASCEND.value:
             self._ascend_profiler = c_expression.Profiler.get_instance("Ascend")
+            self._ascend_msprof_exporter = AscendMsprofExporter(self._output_path)
         self._get_devid_rankid_and_devtarget()
 
     def _init_profiler_info(self):
@@ -773,6 +794,7 @@ class Profiler:
         # use context interface to open profiling, for the new mindspore version(after 2020.5.21)
         self._ascend_profiler = c_expression.Profiler.get_instance("Ascend")
         self._ascend_profiler.init(self._output_path, int(self._dev_id), self._ascend_profiling_options)
+        self._ascend_msprof_exporter = AscendMsprofExporter(self._output_path)
         base_profiling_container_path = os.path.join(self._output_path, "container")
         container_path = os.path.join(base_profiling_container_path, self._dev_id)
         data_path = os.path.join(container_path, "data")
@@ -894,29 +916,6 @@ class Profiler:
             return bool(self._ascend_job_id)
         return False
 
-    def _ascend_pynative_analyse(self):
-        """Collect and analyse ascend pynative mode performance data."""
-        self._ascend_profiler.finalize()
-        op_intermediate_parser = OPIntermediateParser(self._output_path, self._rank_id)
-        op_intermediate_parser.parser_pynative_op_type()
-        op_intermediate_parser.parser_pynative_op_intermediate_detail()
-
-        job_id = self._get_profiling_job_id()
-        logger.info("Profiling: job id is %s ", job_id)
-        self._check_output_path(output_path=self._output_path)
-        source_path = os.path.join(self._output_path, job_id)
-        MinddataParser.execute(source_path, self._output_path, self._rank_id)
-
-        pipeline_parser = MinddataPipelineParser(self._output_path, self._rank_id, self._output_path)
-        logger.info("Profiling: analyzing the minddata pipeline operator and queue.")
-        pipeline_parser.parse()
-
-        timeline_analyser = AscendTimelineGenerator(self._output_path, self._dev_id, self._rank_id,
-                                                    self._rank_size, context.get_context("mode"))
-        timeline_analyser.init_pynative_timeline()
-        timeline_analyser.write_timeline(self._timeline_size_limit_byte)
-        timeline_analyser.write_timeline_summary()
-
     def _ascend_analyse(self):
         """Collect and analyse ascend performance data."""
         self._rank_size = 1
@@ -933,149 +932,8 @@ class Profiler:
         else:
             logger.info("No need to stop profiler because profiler has been stopped.")
         # export op data before analyse
+        self._ascend_msprof_exporter.export(self._start_time)
         self._ascend_graph_analyse()
-
-    def _ascend_timeline_analyse(self, aicpu_data_parser, optime_parser, source_path):
-        """Analyse timeline info."""
-        try:
-            self._analyse_timeline(aicpu_data_parser, optime_parser, source_path)
-        except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
-            logger.warning('Fail to write timeline data: %s', err)
-        finally:
-            pass
-
-    def _ascend_step_trace_analyse(self, source_path, framework_parser):
-        """Analyse step trace info."""
-        points, is_training_mode_flag = None, False
-        try:
-            if not self._dynamic_status:
-                points, is_training_mode_flag = self._analyse_step_trace(source_path, framework_parser)
-        except ProfilerException as err:
-            logger.warning(err.message)
-        finally:
-            pass
-        return points, is_training_mode_flag
-
-    def _ascend_dynamic_net_analyse(self):
-        """Analyse dynamic shape network info."""
-        if self._profile_communication:
-            logger.warning(
-                "The profile_communication parameter cannot be set on the dynamic shape network.")
-        if self._profile_memory:
-            logger.warning("The profile_memory parameter cannot be set on the dynamic shape network.")
-        logger.warning(
-            "[Profiler]Dynamic Shape network does not support collecting step trace performance data currently.")
-        dynamic_parser = DynamicFrameWorkParser(self._output_path, self._rank_id)
-        dynamic_parser.write_dynamic_shape_data()
-
-    def _ascend_flops_analyse(self, source_path, op_task_dict, is_training_mode_flag):
-        """Get op FLOPs from aicore.data.x.slice.0 file, and compute FLOPS, write output_op_flops_x.txt."""
-        flops_parser = FlopsParser(source_path, self._output_path, op_task_dict, self._dev_id, self._rank_id,
-                                   is_training_mode_flag)
-        logger.info("Profiling: analyzing the operation FLOPs.")
-        flops_parser.execute()
-
-    def _ascend_graph_memory_analyse(self, points):
-        """Analyse memory usage info."""
-        if not self._profile_memory:
-            return
-        if self._profile_memory and context.get_context("mode") == context.PYNATIVE_MODE:
-            logger.warning("[Profiler]The parameter profile_memory is not supported on Ascend "
-                           "PyNative mode currently.")
-        try:
-            logger.info("Profiling: analyzing the memory usage info.")
-            self._analyse_memory_usage(points)
-        except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
-            logger.warning(err.message)
-        finally:
-            pass
-
-    def _ascend_graph_hccl_analyse(self):
-        """Analyse hccl profiler info."""
-        if not self._profile_communication:
-            return
-        if self._profile_communication and context.get_context("mode") == context.PYNATIVE_MODE:
-            logger.warning("[Profiler]The parameter profile_communication is not supported on Ascend "
-                           "PyNative mode currently.")
-        try:
-            logger.info("Profiling: analyzing the hccl profiler info.")
-            self._analyse_hccl_info()
-        except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
-            logger.warning(err.message)
-        finally:
-            pass
-
-    def _ascend_graph_msadvisor_analyse(self, job_id):
-        """Call MSAdvisor function."""
-        logger.info("MSAdvisor starts running.")
-        msadvisor = Msadvisor(job_id, self._rank_id, self._output_path)
-        try:
-            msadvisor.analyse()
-        except FileNotFoundError as err:
-            logger.warning("MSAdvisor: command not found,"
-                           "please check if installed ascend-toolkit and set environment path correctly. %s", err)
-        except OSError as err:
-            logger.warning("Cannot execute binary file: Exec format error. %s", err)
-        except subprocess.CalledProcessError:
-            logger.warning("MSAdvisor running failed, please check MSAdvisor running log.")
-        except (ValueError, ProfilerFileNotFoundException) as err:
-            logger.warning("MSAdvisor running failed. %s", err)
-        finally:
-            pass
-        if context.get_context("mode") == context.PYNATIVE_MODE:
-            logger.warning("Pynative mode does not support MSAdvisor analyzer currently.")
-
-    def _ascend_graph_op_analyse(self, source_path):
-        """
-        Ascend graph model hwts analyse.
-
-        Returns:
-            list[obj]: The list is: framework_parser, aicpu_data_parser, optime_parser, op_task_dict
-        """
-        # parse hwts.log.data.45.dev file, and get task profiling data
-        hwts_output_filename = self._hwts_output_filename_target + self._rank_id + ".txt"
-        hwts_output_filename = os.path.join(self._output_path, hwts_output_filename)
-        source_path = validate_and_normalize_path(source_path)
-        hwts_output_filename = validate_and_normalize_path(hwts_output_filename)
-        hwtslog_parser = HWTSLogParser(source_path, hwts_output_filename, self._dynamic_status)
-        logger.info("Profiling: analyzing hwts data.")
-        hwtslog_parser.execute()
-
-        # parse Framework file, and get the relation of op and tasks
-        framework_parser = FrameworkParser(source_path, self._rank_id, self._output_path)
-        logger.info("Profiling: analyzing framework data.")
-        framework_parser.parse()
-        op_task_dict = framework_parser.to_task_id_full_op_name_dict()
-        if not op_task_dict:
-            raise RuntimeError('Profiling: fail to parse framework files.')
-
-        # get op compute time from hwts data and framework data, write output_op_compute_time.txt
-        opcompute_output_filename = self._opcompute_output_filename_target + self._rank_id + ".txt"
-        opcompute_output_filename = os.path.join(self._output_path, opcompute_output_filename)
-        opcompute_output_filename = validate_and_normalize_path(opcompute_output_filename)
-        optime_parser = OPComputeTimeParser(
-            hwts_output_filename, opcompute_output_filename,
-            op_task_dict, self._output_path, self._rank_id
-        )
-        logger.info("Profiling: analyzing the operation compute time.")
-        optime_parser.execute()
-
-        # parse DATA_PREPROCESS.dev.AICPU file, write output_data_preprocess_aicpu_x.txt
-        output_data_preprocess_aicpu = self._aicpu_op_output_filename_target + self._rank_id + ".txt"
-        output_data_preprocess_aicpu = os.path.join(self._output_path, output_data_preprocess_aicpu)
-        output_data_preprocess_aicpu = validate_and_normalize_path(output_data_preprocess_aicpu)
-        aicpu_data_parser = DataPreProcessParser(source_path, output_data_preprocess_aicpu, op_task_dict)
-        logger.info("Profiling: analyzing the data preprocess data.")
-        aicpu_data_parser.execute()
-
-        # analyse op compute time info
-        try:
-            self._analyser_op_info()
-        except ProfilerException as err:
-            logger.warning(err.message)
-        finally:
-            pass
-        return [framework_parser, aicpu_data_parser, optime_parser, op_task_dict]
 
     def _minddata_analyse(self, source_path):
         """Analyse mindadata for ascend graph model."""
@@ -1104,6 +962,158 @@ class Profiler:
         finally:
             pass
 
+    def _ascend_fpbp_analyse(self, op_summary, steptrace):
+        """
+        Ascned graph model op analyse.
+
+        Returns:
+            dict[obj]: points: the fp bp information
+        """
+        points = None
+        try:
+            dev_id = self._rank_id if self._device_target == DeviceTarget.ASCEND.value else self._dev_id
+            step_trace_point_info_path = os.path.join(self._output_path, f'step_trace_point_info_{dev_id}.json')
+
+            step_trace_point_info_path = validate_and_normalize_path(step_trace_point_info_path)
+
+            fpbp_analyse = AscendFPBPGenerator(op_summary, steptrace)
+            points, _ = fpbp_analyse.parse()
+            fpbp_analyse.write(step_trace_point_info_path)
+        except ProfilerException as err:
+            logger.warning(err.message)
+        finally:
+            pass
+        return points
+
+    def _ascend_op_analyse(self, op_summary, op_statistic):
+        """
+        Ascend graph model hwts analyse.
+
+        Returns:
+            list[obj]: The list is: framework_parser, aicpu_data_parser, optime_parser, op_task_dict
+        """
+        try:
+            dev_id = self._rank_id if self._device_target == DeviceTarget.ASCEND.value else self._dev_id
+
+            op_intermediate_detail_path = os.path.join(self._output_path,
+                                                       f'aicore_intermediate_{dev_id}_detail.csv')
+            op_intermediate_type_path = os.path.join(self._output_path, f'aicore_intermediate_{dev_id}_type.csv')
+            aicpu_intermediate_detail_path = os.path.join(self._output_path, f'aicpu_intermediate_{dev_id}.csv')
+            framework_raw_path = os.path.join(self._output_path, f'framework_raw_{dev_id}.csv')
+
+            op_intermediate_detail_path = validate_and_normalize_path(op_intermediate_detail_path)
+            op_intermediate_type_path = validate_and_normalize_path(op_intermediate_type_path)
+            aicpu_intermediate_detail_path = validate_and_normalize_path(aicpu_intermediate_detail_path)
+            framework_raw_path = validate_and_normalize_path(framework_raw_path)
+
+            op_analyser = AscendOPGenerator(op_summary, op_statistic)
+            op_analyser.parse()
+            op_analyser.write(op_intermediate_detail_path, op_intermediate_type_path,
+                              aicpu_intermediate_detail_path, framework_raw_path)
+        except ProfilerException as err:
+            logger.warning(err.message)
+        finally:
+            pass
+
+    def _ascend_step_trace_analyse(self, steptrace):
+        """Analyse step trace info."""
+        try:
+            if not self._dynamic_status:
+                dev_id = self._rank_id if self._device_target == DeviceTarget.ASCEND.value else self._dev_id
+                step_trace_intermediate_path = os.path.join(self._output_path,
+                                                            f'step_trace_raw_{dev_id}_detail_time.csv')
+
+                step_trace_intermediate_path = validate_and_normalize_path(step_trace_intermediate_path)
+
+                steptrace_analyser = AscendStepTraceGenerator(steptrace)
+                steptrace_analyser.parse()
+                steptrace_analyser.write(step_trace_intermediate_path)
+        except ProfilerException as err:
+            logger.warning(err.message)
+        finally:
+            pass
+
+    def _ascend_timeline_analyse(self, source_path, op_summary, steptrace):
+        """Analyse timeline info."""
+        try:
+            logger.info("Profiling: analyzing the timeline data")
+            timeline_analyser = AscendTimelineGenerator(self._output_path, self._dev_id, self._rank_id, self._rank_size,
+                                                        context.get_context('mode'))
+            timeline_analyser.init_timeline(op_summary, steptrace)
+            timeline_analyser.write_timeline(self._timeline_size_limit_byte)
+            timeline_analyser.write_timeline_summary()
+        except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
+            logger.warning('Fail to write timeline data: %s', err)
+        finally:
+            pass
+
+    def _ascend_dynamic_net_analyse(self, op_summary):
+        """Analyse dynamic shape network info."""
+        if self._profile_communication:
+            logger.warning(
+                "The profile_communication parameter cannot be set on the dynamic shape network.")
+        if self._profile_memory:
+            logger.warning("The profile_memory parameter cannot be set on the dynamic shape network.")
+        logger.warning(
+            "[Profiler]Dynamic Shape network does not support collecting step trace performance data currently.")
+        dynamic_parser = DynamicFrameWorkParser(self._output_path, self._rank_id)
+        dynamic_parser.write_dynamic_shape_data(op_summary)
+
+    def _ascend_flops_analyse(self, op_summary):
+        """Get op FLOPs from op_summary, write output_op_flops_x.csv."""
+        try:
+            dev_id = self._rank_id if self._device_target == DeviceTarget.ASCEND.value else self._dev_id
+
+            flops_path = os.path.join(self._output_path, f'flops_{dev_id}.txt')
+            flops_summary_path = os.path.join(self._output_path, f'flops_summary_{dev_id}.json')
+
+            flops_path = validate_and_normalize_path(flops_path)
+            flops_summary_path = validate_and_normalize_path(flops_summary_path)
+
+            flops_analyser = AscendFlopsGenerator(op_summary)
+            flops_analyser.parse()
+            flops_analyser.write(flops_path, flops_summary_path)
+
+        except ProfilerException as err:
+            logger.warning(err.message)
+        finally:
+            pass
+
+    def _ascend_graph_memory_analyse(self, points):
+        """Analyse memory usage info."""
+        if not self._profile_memory:
+            return
+        if self._profile_memory and context.get_context("mode") == context.PYNATIVE_MODE:
+            logger.warning("[Profiler]The parameter profile_memory is not supported on Ascend "
+                           "PyNative mode currently.")
+        try:
+            logger.info("Profiling: analyzing the memory usage info.")
+            self._analyse_memory_usage(points)
+        except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
+            logger.warning(err.message)
+        finally:
+            pass
+
+    def _ascend_graph_msadvisor_analyse(self, job_id):
+        """Call MSAdvisor function."""
+        logger.info("MSAdvisor starts running.")
+        msadvisor = Msadvisor(job_id, self._rank_id, self._output_path)
+        try:
+            msadvisor.analyse()
+        except FileNotFoundError as err:
+            logger.warning("MSAdvisor: command not found,"
+                           "please check if installed ascend-toolkit and set environment path correctly. %s", err)
+        except OSError as err:
+            logger.warning("Cannot execute binary file: Exec format error. %s", err)
+        except subprocess.CalledProcessError:
+            logger.warning("MSAdvisor running failed, please check MSAdvisor running log.")
+        except (ValueError, ProfilerFileNotFoundException) as err:
+            logger.warning("MSAdvisor running failed. %s", err)
+        finally:
+            pass
+        if context.get_context("mode") == context.PYNATIVE_MODE:
+            logger.warning("Pynative mode does not support MSAdvisor analyzer currently.")
+
     def _ascend_graph_analyse(self):
         """Ascend graph mode analyse."""
         self._ascend_profiler.finalize()
@@ -1115,15 +1125,15 @@ class Profiler:
         source_path = os.path.join(self._output_path, job_id)
         self._minddata_analyse(source_path)
         if self._op_time:
-            framework_parser, aicpu_data_parser, optime_parser, op_task_dict = self._ascend_graph_op_analyse(
-                source_path)
-            points, is_training_mode_flag = self._ascend_step_trace_analyse(source_path, framework_parser)
-            self._ascend_timeline_analyse(aicpu_data_parser, optime_parser, source_path)
+            op_summary, op_statistic, steptrace = _ascend_graph_msprof_analyse(source_path)
+            points = self._ascend_fpbp_analyse(op_summary, steptrace)
+            self._ascend_op_analyse(op_summary, op_statistic)
+            self._ascend_step_trace_analyse(steptrace)
+            self._ascend_timeline_analyse(source_path, op_summary, steptrace)
             if self._dynamic_status:
-                self._ascend_dynamic_net_analyse()
-            self._ascend_flops_analyse(source_path, op_task_dict, is_training_mode_flag)
+                self._ascend_dynamic_net_analyse(op_summary)
+            self._ascend_flops_analyse(op_summary)
             self._ascend_graph_memory_analyse(points)
-            self._ascend_graph_hccl_analyse()
             self._ascend_graph_msadvisor_analyse(job_id)
 
     def _ascend_graph_start(self):
@@ -1275,45 +1285,6 @@ class Profiler:
 
         return point_info, is_training_mode_flag
 
-    def _analyse_timeline(self, aicpu_parser, optime_parser, source_path):
-        """
-        Analyse and parse timeline info.
-
-        Args:
-            aicpu_parser (DataPreProcessParser): The parser instance for AI CPU operator
-                execution time calculation.
-            optime_parser (OPComputeTimeParserParser): The parser instance for AI Core
-                operator execution time calculation.
-        """
-        logger.info("Profiling: analyzing the timeline data.")
-        timeline_analyser = AscendTimelineGenerator(self._output_path, self._dev_id, self._rank_id,
-                                                    self._rank_size, context.get_context("mode"))
-        # Get framework info
-        integrator = Integrator(self._output_path, self._rank_id)
-        aicore_detail_data = integrator.get_aicore_detail_data()
-        aicore_detail_data_size = len(aicore_detail_data)
-        col_names = ['op_name', 'op_type', 'avg_execution_time', 'subgraph',
-                     'full_op_name', 'op_info']
-        framework_info = {
-            'col_name': col_names,
-            'object': aicore_detail_data,
-            'size': aicore_detail_data_size
-        }
-
-        all_reduce_info = integrator.query_for_all_reduce()
-
-        # Get timeline info
-        logger.info('Start writing timeline info...')
-        logger.info('Warm Prompt: It could take a few minutes if you are training '
-                    'with a complex network or more than 10 steps.')
-        # Add info into timeline, such as AI CPU, AllReduce, framework info.
-        aicpu_info = aicpu_parser.query_aicpu_data()
-        min_cycle_counter = min(aicpu_parser.min_cycle_counter, optime_parser.min_cycle_counter)
-        timeline_analyser.init_timeline(all_reduce_info, framework_info, aicpu_info,
-                                        min_cycle_counter, source_path)
-        timeline_analyser.write_timeline(self._timeline_size_limit_byte)
-        timeline_analyser.write_timeline_summary()
-
     def _generate_timeline(self, reduce_op_type):
         """Used for gpu, generate timeline info, write to json format file."""
         try:
@@ -1408,34 +1379,6 @@ class Profiler:
             raise RuntimeError(msg)
 
         return job_id
-
-    def _analyser_op_info(self):
-        """Analyse the operator information."""
-        logger.info("Profiling: analyzing the operation compute time.")
-        integrator = Integrator(self._output_path, self._rank_id)
-        integrator.integrate()
-
-        aicore_type_result = self._query_op_type_info()
-        detail_file_path = os.path.join(
-            self._output_path,
-            'output_op_compute_time_detail_{}.txt'.format(self._rank_id)
-        )
-        fwrite_format(detail_file_path, data_source='title:op compute time')
-        display_names = [
-            'optype_name', 'compute_time(ms, per-step)',
-            'called_times(per-step)', 'percent'
-        ]
-        fwrite_format(detail_file_path, data_source=" ".join(display_names), is_print=True)
-        fwrite_format(detail_file_path, data_source=aicore_type_result, is_print=True)
-
-        op_type_order = [item[0] for item in aicore_type_result]
-        aicore_detail_result = self._query_op_detail_info(op_type_order)
-
-        fwrite_format(detail_file_path, data_source='', is_print=True)
-        fwrite_format(detail_file_path, data_source='Detail:', is_print=True)
-        fwrite_format(detail_file_path, data_source=" ".join(aicore_detail_result.get('col_name_detail')),
-                      is_print=True)
-        fwrite_format(detail_file_path, data_source=aicore_detail_result.get('object'), is_print=True)
 
     def _query_op_type_info(self):
         """
@@ -1572,31 +1515,6 @@ class Profiler:
             logger.warning(f"For '{self.__class__.__name__}', the parameter profile_framework must be one of ['memory',"
                            f" 'time', 'all', None]，but got {self._profile_framework}, it will be set to 'all'.")
             self._profile_framework = "all"
-
-    def _analyse_hccl_info(self):
-        """Analyse hccl info."""
-        hccl_path = os.path.join(self._output_path, "hccl_info_{}".format(self._rank_id))
-        if not os.path.exists(hccl_path):
-            os.makedirs(hccl_path, exist_ok=True)
-            os.chmod(hccl_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
-        logger.info("Start call the interface HCCLParseOP parsing hccl info...")
-        logger.info('Warm Prompt: It could take a few minutes if you are training '
-                    'with a complex network or more than 10 steps.')
-        # Call the interface HCCLParseOP parsing hccl info.
-        try:
-            from hccl_parser.entry import hccl_parse_op
-            hccl_parse_op(self._dev_id, self._output_path, hccl_path, op_type='all')
-        except ImportError as err:
-            logger.critical("%s,please check if the hccl_parser-{version}-py3-none-any.whl is installed."
-                            "The hccl_parser-{version}-py3-none-any.whl package is usually located "
-                            "in the /usr/local/Ascend/tools Directory", err)
-            raise ImportError(err) from err
-
-        logger.info("Parse hccl info successfully.")
-        logger.info("Start analyse hccl info.")
-        hccl_parse = HcclParser(hccl_path, self._dev_id, self._rank_id, self._output_path)
-        hccl_parse.parse()
-        logger.info("Analyse hccl info successfully.")
 
     def _host_info_analyse(self):
         """

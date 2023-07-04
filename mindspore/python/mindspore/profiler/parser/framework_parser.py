@@ -14,27 +14,27 @@
 # ============================================================================
 """The parser for parsing framework files."""
 import csv
+import glob
+import json
 import os
 import re
 import struct
-import json
-from pathlib import Path
-from typing import List
 from collections import defaultdict
 from collections import namedtuple
-import glob
-import numpy as np
+from pathlib import Path
+from typing import List
 
+import numpy as np
 from mindspore import log as logger
-from mindspore.profiler.parser.framework_struct import TASK_DESC_STRUCT, TENSOR_DATA_STRUCT, STEP_INFO_STRUCT
-from mindspore.profiler.parser.framework_enum import VmDataType, VmFormat, FileDataType, MSPROF_DIFFERENCE
-from mindspore.profiler.parser.framework_enum import MSPROF_MIX_DATA_STRING
-from mindspore.profiler.common.struct_type import StructType
-from mindspore.profiler.common.util import combine_stream_task_id
 from mindspore.profiler.common.exceptions.exceptions import ProfilerDirNotFoundException
 from mindspore.profiler.common.exceptions.exceptions import ProfilerFileNotFoundException
 from mindspore.profiler.common.exceptions.exceptions import ProfilerParamValueErrorException
+from mindspore.profiler.common.struct_type import StructType
+from mindspore.profiler.common.util import combine_stream_task_id
 from mindspore.profiler.common.validator.validate_path import validate_and_normalize_path
+from mindspore.profiler.parser.framework_enum import MSPROF_MIX_DATA_STRING
+from mindspore.profiler.parser.framework_enum import VmDataType, VmFormat, FileDataType, MSPROF_DIFFERENCE
+from mindspore.profiler.parser.framework_struct import TASK_DESC_STRUCT, TENSOR_DATA_STRUCT, STEP_INFO_STRUCT
 from mindspore.profiler.parser.profiler_info import ProfilerInfo
 
 FILE_DATA_STRUCT_DICT = {
@@ -764,9 +764,9 @@ class DynamicFrameWorkParser:
         self._dynamic_shape_info = defaultdict(list)
         self._step = 0
 
-    def write_dynamic_shape_data(self):
+    def write_dynamic_shape_data(self, df_op_summary):
         """Analyze dynamic shape data and write to dynamic shape file."""
-        self._get_total_step_num()
+        self._get_total_step_num(df_op_summary)
         output_dynamic_shape_file_name = f'dynamic_shape_info_{self._rank_id}.json'
         for op_name in self._exe_time_and_shape_detail:
             if self._exe_time_and_shape_detail[op_name]['op_exe_occurrences'] == self._step:
@@ -790,38 +790,19 @@ class DynamicFrameWorkParser:
         with os.fdopen(os.open(dynamic_shape_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as fp:
             json.dump(self._dynamic_shape_info, fp)
 
-    def _analyse_op_execute_time(self):
+    def _analyse_op_execute_time(self, op_summary):
         """Obtain the execution time of aicpu operator and aicore operator."""
-        timeline_origin_file_name = f'output_timeline_data_{self._rank_id}.txt'
-        aicpu_file_name = f'aicpu_intermediate_{self._rank_id}.csv'
-        timeline_origin_file_path = os.path.join(self._output_path, timeline_origin_file_name)
-        timeline_origin_file_path = validate_and_normalize_path(timeline_origin_file_path)
-        aicpu_file_path = os.path.join(self._output_path, aicpu_file_name)
+        timeline_info = defaultdict(list)
+        for row in op_summary:
+            key = row['Op Name'].astype(str).split('/')[-1]
+            timeline_info[key].append(row['Task Duration'])
 
-        def read_file(file_path):
-            """Read file data."""
-            with open(file_path, 'r') as fp:
-                file_info = fp.readlines()[1:]
-                return file_info
+        self._all_op_exe_time = timeline_info
 
-        timeline_info = read_file(timeline_origin_file_path)
-        for line_info in timeline_info:
-            line_info = line_info.strip('\n').split(',')
-            op_name = line_info[0].split('/')[-1]
-            op_exe_time = float(line_info[3])
-            self._all_op_exe_time[op_name].append(op_exe_time)
-        if os.path.exists(aicpu_file_path):
-            aicpu_info = read_file(aicpu_file_path)
-            for line_info in aicpu_info:
-                line_info = line_info.strip('\n').split(',')
-                op_name = line_info[1]
-                op_exe_time = float(line_info[3])
-                self._all_op_exe_time[op_name].append(op_exe_time)
-
-    def _get_dynamic_shape_info(self):
+    def _get_dynamic_shape_info(self, op_summary):
         """Get the shape information of AICPU and aicore."""
         framework_file_name = f'framework_raw_{self._rank_id}.csv'
-        self._analyse_op_execute_time()
+        self._analyse_op_execute_time(op_summary)
         framework_file_path = os.path.join(self._output_path, framework_file_name)
         framework_file_path = validate_and_normalize_path(framework_file_path)
         with open(framework_file_path, 'r') as f_obj:
@@ -832,9 +813,9 @@ class DynamicFrameWorkParser:
                 shape_info = ','.join(line_info[7:]).replace('"', '')
                 self._op_shape_info[op_name].append(shape_info)
 
-    def _get_total_step_num(self):
+    def _get_total_step_num(self, op_summary):
         """Get the number of steps."""
-        self._get_dynamic_shape_info()
+        self._get_dynamic_shape_info(op_summary)
         all_exe_occurrences = list()
         for op_name in self._all_op_exe_time:
             op_shape = self._op_shape_info.get(op_name)

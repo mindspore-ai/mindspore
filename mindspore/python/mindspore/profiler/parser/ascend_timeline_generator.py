@@ -15,13 +15,14 @@
 """The integrator for integrating parsed profiling files."""
 import os
 
+import numpy as np
 from mindspore import log as logger
 from mindspore.profiler.common.exceptions.exceptions import ProfilerIOException
-from mindspore.profiler.parser.container import TimelineContainer
-from mindspore.profiler.parser.op_intermediate_parser import OPIntermediateParser
 from mindspore.profiler.parser.base_timeline_generator import BaseTimelineGenerator
-from mindspore.profiler.parser.integrator import DeviceTarget
+from mindspore.profiler.parser.container import TimelineContainer
 from mindspore.profiler.parser.cpu_gpu_timeline_generator import CpuTimelineGenerator
+from mindspore.profiler.parser.integrator import DeviceTarget
+from mindspore.profiler.parser.op_intermediate_parser import OPIntermediateParser
 
 
 class AscendTimelineGenerator(BaseTimelineGenerator):
@@ -39,6 +40,17 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         self._display_filename = self._display_filename.format(rank_id)
         self._timeline_summary_filename = self._timeline_summary_filename.format(rank_id)
 
+        self.step_time_list_df = np.dtype(
+            [('Iteration ID', object), ('Steps', object), ('Iteration Start', float), ('Iteration Time', float)])
+
+        self.aicpu_time_list_dt = np.dtype(
+            [('Op Name', object), ('Stream ID', int), ('Task Start Time', float), ('Task Duration', float),
+             ('pid', int)])
+
+        self.communication_info_dt = np.dtype(
+            [('Op Name', object), ('Stream ID', int), ('Task Start Time', float), ('Task Duration', float),
+             ('pid', int)])
+
     @staticmethod
     def _get_all_reduce_names(communication_info):
         names = []
@@ -49,7 +61,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                 names.append(all_reduce_name)
         return names
 
-    def init_timeline(self, communication_info, framework_info, aicpu_info, min_cycle_counter, source_path):
+    def init_timeline(self, op_summary, steptrace):
         """
         Init timeline metadata, adding all collected info.
 
@@ -60,16 +72,27 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             min_cycle_counter (float): The minimum cycle counter of the timeline.
             source_path (str): The source of file.
         """
-        if min_cycle_counter == float('inf'):
-            min_cycle_counter = 0
 
         logger.info('Initiating timeline...')
-        timeline_list = []
-        timeline_list.extend(self._get_op_timeline(communication_info, source_path))
+
+        timeline_list = op_summary[op_summary['Task Type'] == 'AI_CORE'][
+            ['Op Name', 'Stream ID', 'Task Start Time', 'Task Duration']]
+
+        timeline_list = timeline_list.tolist()
+        min_cycle_counter = timeline_list[0][2]
 
         # Generate step time.
         self._set_step_start_and_end_op_name(timeline_list)
-        step_time_list = self._get_step_time_list(timeline_list)
+
+        step_time_list = np.empty((len(steptrace),), dtype=self.step_time_list_df)
+
+        step_time_list['Iteration ID'] = np.char.add("Model ID: ", np.char.add(steptrace['Model ID'].astype(str),
+                                                                               np.char.add(" Iteration ID: ", steptrace[
+                                                                                   'Iteration ID'].astype(str))))
+        step_time_list['Steps'] = 'Steps'
+        step_time_list['Iteration Start'] = steptrace['Iteration End'] - steptrace['Iteration Time']
+        step_time_list['Iteration Time'] = steptrace['Iteration Time']
+        step_time_list = step_time_list.tolist()
 
         # Add Scope Name.
         default_scope_name_time_list = self._get_scope_name_time_list(timeline_list, "Default")
@@ -77,17 +100,31 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         recompute_scope_name_time_list = self._get_scope_name_time_list(timeline_list, "recompute_Default")
 
         # Add AI CPU data into timeline temp list and sort by start time.
-        aicpu_data = aicpu_info.get('info')
-        if aicpu_data:
-            timeline_list.extend(aicpu_data)
-            self._timeline_summary['op_exe_times'] += aicpu_info.get('op_exe_times', 0)
-            self._timeline_summary['num_of_streams'] += aicpu_info.get('num_of_streams', 0)
-            self._timeline_summary['num_of_ops'] += aicpu_info.get('num_of_ops', 0)
-            self._timeline_summary['total_time'] += aicpu_info.get('total_time', 0)
 
+        aicpu_op = op_summary[op_summary['Task Type'] == 'AI_CPU']
+        if aicpu_op.size:
+            aicpu_time_list = np.empty((len(aicpu_op),), dtype=self.aicpu_time_list_dt)
+            aicpu_time_list['Op Name'] = aicpu_op['Op Name']
+            aicpu_time_list['Stream ID'] = aicpu_op['Stream ID']
+            aicpu_time_list['Task Start Time'] = aicpu_op['Task Start Time']
+            aicpu_time_list['Task Duration'] = aicpu_op['Task Duration'] + aicpu_op['Task Wait Time']
+            aicpu_time_list['pid'] = 9000
+            aicpu_time_list = aicpu_time_list.tolist()
+            timeline_list.extend(aicpu_time_list)
         timeline_list.sort(key=lambda x: float(x[self._start_time_idx]))
 
         # Add AllReduce info to timeline temp list and sort by start time.
+        hccl_op = op_summary[op_summary['Task Type'] == 'HCCL']
+        if hccl_op.size:
+            communication_info = np.empty((len(hccl_op,)), dtype=self.communication_info_dt)
+            communication_info['Op Name'] = hccl_op['Op Name']
+            communication_info['Stream ID'] = hccl_op['Stream ID']
+            communication_info['Task Start Time'] = hccl_op['Task Start Time']
+            communication_info['Task Duration'] = hccl_op['Task Duration']
+            communication_info['pid'] = 10000
+            communication_info = communication_info.tolist()
+        else:
+            communication_info = []
         if communication_info:
             logger.debug('AllReduce info found. Start adding info into timeline...')
             cluster_related_timeline = self._get_cluster_timeline(
@@ -104,24 +141,24 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         timeline_list.sort(key=lambda x: float(x[self._start_time_idx]))
 
         # Init a dict for counting the num of streams.
-        stream_count_dict = {}
         for timeline in timeline_list:
             self._parse_timeline_data(timeline, min_cycle_counter)
-            # Updating the collection of streams.
-            if len(timeline) == 4:
-                self._update_num_of_streams(timeline, stream_count_dict)
 
         # Add format thread meta data.
         self._format_meta_data_list.extend(self._timeline_meta)
         self._timeline_meta = self._format_meta_data_list
-        # Get framework metadata.
-        # The length of list is the number of operators.
-        self._timeline_summary['num_of_ops'] += len(framework_info.get('object'))
-        self._add_framework_info(framework_info.get('object'))
-        logger.info('Finished adding info into timeline...')
 
         # Update timeline summary info
-        self._timeline_summary['num_of_streams'] += len(stream_count_dict.keys())
+        timeline_summary = op_summary[np.isin(op_summary['Task Type'], ['AI_CORE', 'AI_CPU', 'HCCL'])][[
+            'Op Name', 'Stream ID', 'Task Duration']]
+        self._timeline_summary['total_time'] = np.sum(timeline_summary['Task Duration'])
+        self._timeline_summary['num_of_streams'] = int(
+            len(np.unique(timeline_summary['Stream ID'], return_counts=True)[0]))
+        self._timeline_summary['num_of_ops'] = int(len(np.unique(timeline_summary['Op Name'], return_counts=True)[0]))
+        self._timeline_summary['op_exe_times'] = int(len(timeline_summary))
+        self._timeline_summary['max_scope_name_num'] = int(np.max(
+            [len(x) for x in np.char.split(timeline_summary['Op Name'].astype(str), sep='/')]))
+        logger.info('Finished adding info into timeline...')
 
     def init_pynative_timeline(self):
         """Init timeline for pynative model."""
