@@ -99,7 +99,7 @@ std::map<size_t, size_t> GetActionTensors(const std::shared_ptr<device::SwapActi
         (void)fixed_device_address->emplace_back(output_addr.get());
       } else {
         tensor_indexes[real_tensor_id] = {real_parameter_index->size()};
-        real_parameter_index->emplace_back(real_parameter_iter->second);
+        (void)real_parameter_index->emplace_back(real_parameter_iter->second);
         (void)is_real_parameter.insert(real_tensor_id);
       }
     }

@@ -67,7 +67,7 @@ void IOHandle::LoadAio(const std::string &aio_shared_lib_name, const std::string
   }
 }
 
-bool IOHandle::Read(const std::string &file_name, void *data, size_t byte_num) {
+bool IOHandle::Read(const std::string &file_name, void *data, size_t byte_num) const {
   if (aio_ != nullptr && IsAligned(data, byte_num)) {
     return aio_->Read(file_name, data, byte_num);
   }
@@ -89,7 +89,7 @@ bool IOHandle::Write(const std::string &file_name, const void *data, size_t byte
   return file->PWrite(data, byte_num, kFileHeadOffset);
 }
 
-bool IOHandle::ReadAsync(const std::string &file_name, void *data, size_t byte_num, AsyncIOToken *token) {
+bool IOHandle::ReadAsync(const std::string &file_name, void *data, size_t byte_num, AsyncIOToken *token) const {
   if (aio_ != nullptr && IsAligned(data, byte_num)) {
     return aio_->ReadAsync(file_name, data, byte_num, token);
   }
@@ -101,7 +101,7 @@ bool IOHandle::ReadAsync(const std::string &file_name, void *data, size_t byte_n
   return file->PRead(data, byte_num, kFileHeadOffset);
 }
 
-bool IOHandle::WriteAsync(const std::string &file_name, const void *data, size_t byte_num, AsyncIOToken *token) {
+bool IOHandle::WriteAsync(const std::string &file_name, const void *data, size_t byte_num, AsyncIOToken *token) const {
   if (aio_ != nullptr && IsAligned(data, byte_num)) {
     return aio_->WriteAsync(file_name, data, byte_num, token);
   }

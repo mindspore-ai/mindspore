@@ -53,10 +53,10 @@ class BACKEND_EXPORT IOHandle {
   bool DeleteSwapFile(const std::string &file_name) const;
   bool CreateSwapFile(const std::string &file_name) const;
   void LoadAio(const std::string &aio_shared_lib_name, const std::string &instance_func_name);
-  bool Read(const std::string &file_name, void *data, size_t byte_num);
+  bool Read(const std::string &file_name, void *data, size_t byte_num) const;
   bool Write(const std::string &file_name, const void *data, size_t byte_num) const;
-  bool ReadAsync(const std::string &file_name, void *data, size_t byte_num, AsyncIOToken *token);
-  bool WriteAsync(const std::string &file_name, const void *data, size_t byte_num, AsyncIOToken *token);
+  bool ReadAsync(const std::string &file_name, void *data, size_t byte_num, AsyncIOToken *token) const;
+  bool WriteAsync(const std::string &file_name, const void *data, size_t byte_num, AsyncIOToken *token) const;
   bool Wait(AsyncIOToken sync_token) const;
 
  private:

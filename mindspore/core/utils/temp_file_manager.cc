@@ -40,7 +40,7 @@ void TempFileManager::Register(const std::string &file_path) { (void)temp_file_p
 
 void TempFileManager::UnRegister(const std::string &file_path) { (void)temp_file_paths_.erase(file_path); }
 
-void TempFileManager::RemoveFile(const std::string &file_path) {
+void TempFileManager::RemoveFile(const std::string &file_path) const {
   auto fs = system::Env::GetFileSystem();
   MS_EXCEPTION_IF_NULL(fs);
   if (file_path.empty()) {

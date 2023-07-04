@@ -1157,7 +1157,7 @@ AnfNodePtr NewMicroMirrorPrimByMicroMirror(const FuncGraphPtr &func_graph, const
                                         micro_mirror->input(kIndex2)};
   auto new_mirror_node = func_graph->NewCNode(mirror_inputs);
   auto prim = GetCNodePrimitive(new_mirror_node);
-  prim->SetAttrs(prim_origin->attrs());
+  (void)prim->SetAttrs(prim_origin->attrs());
   new_mirror_node->set_attrs(micro_mirror->attrs());
   new_mirror_node->set_primal_attrs(micro_mirror->primal_attrs());
   return new_mirror_node;
