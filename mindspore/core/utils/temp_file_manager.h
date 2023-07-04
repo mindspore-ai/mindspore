@@ -40,7 +40,7 @@ class MS_CORE_API TempFileManager {
   /// \brief delete file.
   ///
   /// \param[in] the file path.
-  void RemoveFile(const std::string &file_path);
+  void RemoveFile(const std::string &file_path) const;
 
   /// \brief delete all temp files
   void CleanTempFiles();
