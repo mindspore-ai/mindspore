@@ -73,8 +73,12 @@ std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector
                (y_shape[LongToSize(y_length + i)] == abstract::Shape::kShapeDimAny)) {
       broadcast_shape.push_back(abstract::Shape::kShapeDimAny);
     } else {
-      MS_EXCEPTION(ValueError) << "For '" << op_name << "', the two input '" << op_x_name << "' and '" << op_y_name
-                               << "' with shape: " << x_shape << " and " << y_shape << " can not broadcast.";
+      MS_EXCEPTION(ValueError) << "For '" << op_name
+                               << "', x.shape and y.shape need to broadcast. The value of x.shape["
+                               << std::to_string(LongToSize(x_length + i)) << "] or y.shape["
+                               << std::to_string(LongToSize(y_length + i))
+                               << "] must be 1 or -1 when they are not the same but got x.shape =" << x_shape
+                               << "and y.shape = " << y_shape;
     }
   }
   return broadcast_shape;
