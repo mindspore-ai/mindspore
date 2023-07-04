@@ -54,12 +54,12 @@ __global__ void CropAndResize(const size_t size, const T *input_image, float *in
     float target_y = 0;
     float target_x = 0;
     if (final_height > 1) {
-      target_y = y1 * (input_height - 1) + pos_y * scale_height;
+      target_y = static_cast<double>(y1 * (input_height - 1)) + pos_y * scale_height;
     } else {
       target_y = 0.5 * (y1 + y2) * (input_height - 1);
     }
     if (final_width > 1) {
-      target_x = x1 * (input_width - 1) + pos_x * scale_width;
+      target_x = static_cast<double>(x1 * (input_width - 1)) + pos_x * scale_width;
     } else {
       target_x = 0.5 * (x1 + x2) * (input_width - 1);
     }
