@@ -211,7 +211,7 @@ def test_train_graph_mode_gpu():
     assert np.allclose(graph_loss, expect_loss, 5e-3, 5e-3)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_train_pynative_mode_gpu():

@@ -414,7 +414,7 @@ def test_pynative_hook_diff_hook_ascend():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_hook_diff_hook()
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pynative_hook_diff_hook_gpu():
