@@ -246,7 +246,7 @@ STATUS FunctionalizeWhile::UpdateExitNodeUser() {
         auto enter_node = BlongToWhichExternalEnter(merge_node);
         CHECK_NULL_RETURN(enter_node);
         int output_idx = PosInInputEnterNodes(enter_node);
-        auto getItemValue = NewValueNode(MakeValue<int>(output_idx));
+        auto getItemValue = NewValueNode(MakeValue<int64_t>(output_idx));
         CHECK_NULL_RETURN(getItemValue);
         std::vector<AnfNodePtr> inputs{tuple_get_item_prim, while_node_, getItemValue};
         CNodePtr get_item_node = fg_->NewCNode(inputs);

@@ -536,7 +536,7 @@ STATUS CaffeModelParser::ConvertTop(const caffe::LayerParameter &layer, const ap
       return RET_NULL_PTR;
     }
     auto tuple_get_item_prim = api::NewValueNode(tuple_get_item_prim_ptr);
-    auto get_item_value = api::NewValueNode(api::MakeValue<int64_t>(i));
+    auto get_item_value = api::NewValueNode(api::MakeValue<int64_t>(static_cast<int64_t>(i)));
     std::vector<api::AnfNodePtr> inputs{tuple_get_item_prim, cnode, get_item_value};
     api::CNodePtr get_item_cnode = res_graph_->NewCNode(inputs);
     get_item_cnode->set_fullname_with_scope(layer.top(i));

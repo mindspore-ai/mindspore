@@ -378,13 +378,8 @@ STATUS DecreaseTransposeAlgo::DoPreInsert(const FuncGraphPtr &func_graph, const 
     abstract = abstract_list.front();
     MS_CHECK_TRUE_RET(abstract != nullptr, lite::RET_NULL_PTR);
   }
-  ShapeVector shape;
-  if (FetchShapeFromAbstract(abstract, &shape) != lite::RET_OK) {
-    MS_LOG(ERROR) << "fetch shape from abstract fauled.";
-    return lite::RET_ERROR;
-  }
-  auto HandleFunc = [this, &shape](const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t index,
-                                   FormatTransNodeType trans_type) -> STATUS {
+  auto HandleFunc = [this](const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t index,
+                           FormatTransNodeType trans_type) -> STATUS {
     STATUS ret = lite::RET_OK;
     auto before_perm = trans_type == kNHWC2NCHW ? kNH2NC : kNC2NH;
     if (IsNeedGenNewInput(func_graph, cnode, index)) {
@@ -406,7 +401,7 @@ STATUS DecreaseTransposeAlgo::DoPreInsert(const FuncGraphPtr &func_graph, const 
       continue;
     }
     if (CheckPrimitiveType(cnode->input(i), prim::kPrimMakeTuple) ||
-        CheckPrimitiveType(cnode->input(i), kPrimMakeTupleV2)) {
+        CheckPrimitiveType(cnode->input(i), prim::kPrimMakeTupleV2)) {
       auto input_make_tuple = cnode->input(i)->cast<CNodePtr>();
       MS_ASSERT(input_make_tuple != nullptr);
       for (size_t j = 1; j < input_make_tuple->size(); ++j) {
@@ -415,6 +410,11 @@ STATUS DecreaseTransposeAlgo::DoPreInsert(const FuncGraphPtr &func_graph, const 
           MS_LOG(ERROR) << "handle pre insert failed.";
           return lite::RET_ERROR;
         }
+      }
+      auto status = node_infer_shape_.InferShape(input_make_tuple);
+      if (status != lite::RET_OK && status != lite::RET_INFER_INVALID) {
+        MS_LOG(ERROR) << "infer shape failed.";
+        return lite::RET_ERROR;
       }
       continue;
     }
@@ -448,6 +448,12 @@ STATUS DecreaseTransposeAlgo::InsertPostTransNode(const FuncGraphPtr &func_graph
           MS_CHECK_TRUE_RET(tuple_get_item != nullptr, lite::RET_ERROR);
           post_node = tuple_get_item;
           func_graph->manager()->Replace(cnode, tuple_get_item);
+        }
+      } else {
+        auto status = node_infer_shape_.InferShape(post_node->cast<CNodePtr>());
+        if (status != lite::RET_OK && status != lite::RET_INFER_INVALID) {
+          MS_LOG(ERROR) << "infer shape failed.";
+          return lite::RET_ERROR;
         }
       }
       if (func_graph->manager()->node_users()[post_node].empty()) {
@@ -510,7 +516,7 @@ int DecreaseTransposeAlgo::InsertPreTransForNonTransInOut(const FuncGraphPtr &fu
                            return insert_pre_trans(pair.first, pair.second, format_trans_type);
                          });
     } else if (CheckPrimitiveType(cnode->input(1), prim::kPrimMakeTuple) ||
-               CheckPrimitiveType(cnode->input(1), kPrimMakeTupleV2)) {
+               CheckPrimitiveType(cnode->input(1), prim::kPrimMakeTupleV2)) {
       auto make_tuple_cnode = cnode->input(1)->cast<CNodePtr>();
       MS_CHECK_TRUE_RET(make_tuple_cnode != nullptr, false);
       for (size_t i = 0; i < make_tuple_cnode->size(); i++) {
@@ -587,7 +593,7 @@ STATUS DecreaseTransposeAlgo::HandleGraphMultiNode(const FuncGraphPtr &func_grap
   }
 
   for (auto &middle_cnode : middle_ops_vec) {
-    if (IsSpecialType(middle_cnode)) {
+    if (CheckPrimitiveType(cnode, prim::kPrimDepend) || CheckPrimitiveType(cnode, prim::kPrimReturn)) {
       continue;
     }
     status = HandleGraphSingleNode(func_graph, trans_info, middle_cnode);
@@ -676,7 +682,6 @@ int DecreaseTransposeAlgo::SetSubGraphOutput(const FuncGraphPtr &sub_graph) {
   MS_ASSERT(return_node != nullptr);
   auto origin_input = return_node->inputs();
   lite::RemoveIfDepend(return_node);
-  lite::RemoveIfMakeTuple(return_node);
   for (size_t i = 1; i < return_node->size(); ++i) {
     if (!CheckPrimitiveType(return_node->input(i), prim::kPrimTranspose)) {
       continue;

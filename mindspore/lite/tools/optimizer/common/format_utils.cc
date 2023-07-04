@@ -279,7 +279,7 @@ bool IsMonadNode(const AnfNodePtr &node) {
 
 bool IsSpecialType(const CNodePtr &cnode) {
   return CheckPrimitiveType(cnode, prim::kPrimTupleGetItem) || CheckPrimitiveType(cnode, prim::kPrimDepend) ||
-         CheckPrimitiveType(cnode, prim::kPrimMakeTuple) || CheckPrimitiveType(cnode, kPrimMakeTupleV2) ||
+         CheckPrimitiveType(cnode, prim::kPrimMakeTuple) || CheckPrimitiveType(cnode, prim::kPrimMakeTupleV2) ||
          CheckPrimitiveType(cnode, prim::kPrimReturn);
 }
 
@@ -328,13 +328,15 @@ int SetAbstractTensorInfo(const AbstractBasePtr &abstract) {
     return RET_ERROR;
   }
   TypeId type = lite::GetAbstractTensorDtype(abstract->cast<abstract::AbstractTensorPtr>());
-
-  auto tensor_info = std::make_shared<tensor::Tensor>(type, shape);
-  if (tensor_info == nullptr) {
-    MS_LOG(ERROR) << "new tensor::Tensor failed";
-    return RET_ERROR;
+  // For kObjectTypeTensorType, the abstract value is TensorList amd does not need to reset.
+  if (type != kObjectTypeTensorType) {
+    auto tensor_info = std::make_shared<tensor::Tensor>(type, shape);
+    if (tensor_info == nullptr) {
+      MS_LOG(ERROR) << "new tensor::Tensor failed";
+      return RET_ERROR;
+    }
+    abstract->set_value(tensor_info);
   }
-  abstract->set_value(tensor_info);
   return RET_OK;
 }
 

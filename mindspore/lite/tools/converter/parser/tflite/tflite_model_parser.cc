@@ -871,7 +871,7 @@ STATUS TfliteModelParser::ConvertOutputTensor(const std::unique_ptr<tflite::SubG
       MSLITE_CHECK_PTR(tuple_get_item_prim_c);
       auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_c);
       MSLITE_CHECK_PTR(tuple_get_item_prim);
-      auto get_item_value = NewValueNode(MakeValue<int>(op_idx));
+      auto get_item_value = NewValueNode(MakeValue<int64_t>(op_idx));
       MSLITE_CHECK_PTR(get_item_value);
       std::vector<AnfNodePtr> inputs{tuple_get_item_prim, dst_cnode, get_item_value};
       CNodePtr get_item_cnode = func_graph->NewCNode(inputs);

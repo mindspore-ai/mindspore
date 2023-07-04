@@ -131,7 +131,7 @@ inline mindspore::Format FormatStringToEnum(const std::string &format) {
 void ExtractInputs(const CNodePtr &cnode, std::vector<TensorPtr> *inputs_holder, std::vector<lite::Tensor *> *inputs) {
   std::vector<TensorPtr> const_inputs;
   size_t const_index = 0;
-  if (opt::LiteTensorExtractor::GetCNodeConstInput(cnode, &const_inputs, converter::kFmkTypeMs, false, false) !=
+  if (opt::LiteTensorExtractor::GetCNodeConstInputs(cnode, converter::kFmkTypeMs, false, false, &const_inputs) !=
       lite::RET_OK) {
     MS_LOG(ERROR) << "get const inputs failed.";
     return;

@@ -115,8 +115,8 @@ int OperatorInfo::CreateMultipleOutputsOfAnfNode(const AnfNodePtr &node, size_t 
     return lite::RET_ERROR;
   }
   for (size_t i = 0; i < output_num; ++i) {
-    auto idx = NewValueNode(SizeToInt(i));
-    auto index = std::make_shared<Int32Imm>(SizeToInt(i));
+    auto idx = NewValueNode(SizeToLong(i));
+    auto index = std::make_shared<Int64Imm>(SizeToLong(i));
     MS_CHECK_TRUE_RET(index != nullptr, lite::RET_ERROR);
     auto abstract_scalar = std::make_shared<abstract::AbstractScalar>(index);
     MS_CHECK_TRUE_RET(abstract_scalar != nullptr, lite::RET_ERROR);

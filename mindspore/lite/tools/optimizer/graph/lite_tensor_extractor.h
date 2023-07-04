@@ -33,10 +33,12 @@ class LiteTensorExtractor {
   static int GetCNodeInputTensors(const CNodePtr &cnode, std::vector<TensorPtr> *inputs, converter::FmkType fmk_type,
                                   bool train_flag, bool copy_data);
   static int GetCNodeOutputTensors(const CNodePtr &cnode, std::vector<TensorPtr> *outputs, bool train_flag);
-  static int GetCNodeConstInput(const CNodePtr &cnode, std::vector<TensorPtr> *const_ms_inputs,
-                                converter::FmkType fmk_type, bool train_flag, bool copy_data);
-  static int GetCNodeVarInput(const CNodePtr &cnode, std::vector<TensorPtr> *var_ms_inputs,
-                              converter::FmkType fmk_type);
+  static int GetCNodeConstInputs(const CNodePtr &cnode, const converter::FmkType &fmk_type, const bool &train_flag,
+                                 const bool &copy_data, std::vector<TensorPtr> *const_ms_inputs);
+  static int GetCNodeConstInput(const CNodePtr &cnode, const size_t &index, const converter::FmkType &fmk_type,
+                                const bool &train_flag, const bool &copy_data, std::vector<TensorPtr> *const_ms_inputs);
+  static int GetCNodeVarInput(const CNodePtr &cnode, const size_t &index, const converter::FmkType &fmk_type,
+                              std::vector<TensorPtr> *var_ms_inputs);
   static int GetCNodeConstInputToAbstract(const CNodePtr &cnode, const AbstractBasePtrList &abs_list,
                                           converter::FmkType fmk_type, bool train_flag);
 };

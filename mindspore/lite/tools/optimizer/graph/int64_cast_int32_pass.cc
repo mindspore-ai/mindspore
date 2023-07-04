@@ -23,6 +23,7 @@
 #include "mindspore/core/ops/framework_ops.h"
 #include "ops/op_utils.h"
 #include "ops/cast.h"
+#include "ops/sequence_len.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "src/tensor.h"
 #include "src/common/log_adapter.h"
@@ -78,7 +79,8 @@ bool Int64CastInt32Pass::Run(const FuncGraphPtr &graph) {
       continue;
     }
     if (CheckPrimitiveType(node, prim::kPrimCast) || CheckPrimitiveType(node, prim::kPrimSplit) ||
-        CheckPrimitiveType(node, prim::kPrimGather) || CheckPrimitiveType(node, prim::kPrimCustom)) {
+        CheckPrimitiveType(node, prim::kPrimGather) || CheckPrimitiveType(node, prim::kPrimCustom) ||
+        CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();

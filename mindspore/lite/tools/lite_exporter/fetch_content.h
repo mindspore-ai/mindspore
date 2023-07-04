@@ -62,9 +62,12 @@ int FetchDataFromCNode(const CNodePtr &cnode, size_t index, DataInfo *data_info)
 int FetchConstData(const CNodePtr &cnode, size_t index, converter::FmkType fmk_type, DataInfo *data_info,
                    bool copy_data);
 
+int FetchDataFromAbstract(const AbstractBasePtr &abstract, DataInfo *data_info);
+
 int RemoveIfDepend(const CNodePtr &cnode);
 
 int RemoveIfMakeTuple(const CNodePtr &cnode);
+
 int GetFlattenInputsIfMakeTuple(const CNodePtr &cnode, std::vector<AnfNodePtr> *inputs, bool *has_make_tuple);
 
 // Notes:The op_parameter allocates memory through malloc, and may need to manually free op_parameter.

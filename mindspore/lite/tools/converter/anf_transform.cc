@@ -708,6 +708,20 @@ int AnfTransform::RunPass(const FuncGraphPtr &old_graph, const std::shared_ptr<C
     return RET_ERROR;
   }
 
+  if (CheckExternalExtension(param)) {
+    MS_LOG(ERROR) << "Unsupported external extension with quantization.";
+    return RET_ERROR;
+  }
+  // QATTransform will infer all subgraphs and should be executed before ControlFlowPass.
+  // After ControlFlowPass, there will be some ops that cannot be handled in the main graph, therefore, The
+  // InferShapePass cannot be executed.
+  auto qat_transform = quant::QATTransform(old_graph, param);
+  status = qat_transform.Transform();
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Do QATTransform failed.";
+    return RET_ERROR;
+  }
+
   status = RunGraphPass(old_graph, param);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Run convert pass failed.";
@@ -753,18 +767,7 @@ STATUS AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, const std
     return RET_ERROR;
   }
 
-  if (CheckExternalExtension(param)) {
-    MS_LOG(ERROR) << "Unsupported external extension with quantization.";
-    return RET_ERROR;
-  }
-  auto qat_transform = quant::QATTransform(old_graph, param);
-  auto status = qat_transform.Transform();
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Do QATTransform failed.";
-    return RET_ERROR;
-  }
-
-  status = DoQuantize(old_graph, param);
+  auto status = DoQuantize(old_graph, param);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Do Quantize failed.";
     return RET_ERROR;

@@ -46,6 +46,7 @@ int GetCNodeCertainInputFormat(const CNodePtr cnode, int index, mindspore::Forma
   }
   if (DetermineCertainVarInputFormat(cnode, index, format) != RET_OK) {
     MS_LOG(ERROR) << "determine certain var-input's  format failed.";
+    cnode->set_inputs(origin_inputs);
     return RET_ERROR;
   }
   cnode->set_inputs(origin_inputs);
@@ -175,6 +176,10 @@ bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
     return false;
   }
   sub_inputs_map_ = {};
+  if (!JudgeAllOpsCanInfer(func_graph)) {
+    MS_LOG(WARNING) << "exist op cannot support infer shape.";
+    return false;
+  }
   manager_ = Manage(func_graph, true);
   if (manager_ == nullptr) {
     MS_LOG(ERROR) << "generate a manager for func_graph failed.";
@@ -202,7 +207,7 @@ bool InferShapePass::JudgeAllOpsCanInfer(const FuncGraphPtr &func_graph) {
     }
     auto cnode = node->cast<CNodePtr>();
     MS_ASSERT(cnode != nullptr);
-    if (IsSpecialType(cnode)) {
+    if (CheckPrimitiveType(cnode, prim::kPrimDepend) || CheckPrimitiveType(cnode, prim::kPrimReturn)) {
       continue;
     }
     if (lite::IsCall(cnode) || lite::IsPartialFusion(node)) {
@@ -293,7 +298,7 @@ STATUS InferShapePass::InferProcess(const FuncGraphPtr &func_graph) {
     }
     auto cnode = node->cast<CNodePtr>();
     MS_ASSERT(cnode != nullptr);
-    if (IsSpecialType(cnode)) {
+    if (CheckPrimitiveType(cnode, prim::kPrimDepend) || CheckPrimitiveType(cnode, prim::kPrimReturn)) {
       continue;
     }
     if (opt::CheckPrimitiveType(node, prim::kPrimIf) || opt::CheckPrimitiveType(node, prim::kPrimWhile)) {
@@ -305,9 +310,7 @@ STATUS InferShapePass::InferProcess(const FuncGraphPtr &func_graph) {
       continue;
     }
     auto status = node_infer_shape_->InferShape(cnode);
-    bool infer_failed = (this->take_infer_invalid_as_failure_ && status == lite::RET_INFER_INVALID);
-    infer_failed |= (status != lite::RET_OK && status != lite::RET_INFER_INVALID);
-    if (infer_failed) {
+    if (status != lite::RET_OK && status != lite::RET_INFER_INVALID) {
       MS_LOG(WARNING) << "node infer shape failed, node is " << node->fullname_with_scope();
       return lite::RET_ERROR;
     }
@@ -429,20 +432,29 @@ STATUS InferShapePass::SetSubGraphAbstract(const CNodePtr &cnode, const FuncGrap
   for (size_t i = 1; i < return_node->size(); ++i) {
     bool true_branch{false};
     auto ret = MergeTwoBranchOfIfOp(cnode, return_node, i, &true_branch);
-    MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "decide to fetch which branch failed.");
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "decide to fetch which branch failed.";
+      return_node->set_inputs(origin_inputs);
+      return RET_ERROR;
+    }
     AbstractBasePtr abstract;
     bool infer_info;
     if (true_branch) {
       abstract = GetCNodeInputAbstract(return_node, i);
       if (JudgeControlFlowCertainOutputHasInferred(return_node, i, &infer_info) != lite::RET_OK) {
         MS_LOG(ERROR) << "determine certain output has inferred failed.";
+        return_node->set_inputs(origin_inputs);
         return lite::RET_ERROR;
       }
     } else {
       abstract = GetCNodeInputAbstract(cnode, i + kInputSizeThree);
       infer_info = true;
     }
-    MS_CHECK_TRUE_MSG(abstract != nullptr, RET_ERROR, "get a nullptr abstract.");
+    if (abstract == nullptr) {
+      MS_LOG(ERROR) << "get a nullptr abstract.";
+      return_node->set_inputs(origin_inputs);
+      return RET_ERROR;
+    }
     abstract_list.emplace_back(abstract->Clone());
     infer_infos.push_back(infer_info);
   }

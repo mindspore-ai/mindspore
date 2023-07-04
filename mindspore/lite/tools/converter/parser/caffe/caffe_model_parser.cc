@@ -659,7 +659,7 @@ STATUS CaffeModelParser::ConvertTop(const caffe::LayerParameter &layer, const CN
     MSLITE_CHECK_PTR(tuple_get_item_prim_c);
     auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_c);
     MSLITE_CHECK_PTR(tuple_get_item_prim);
-    auto get_item_value = NewValueNode(MakeValue<int>(i));
+    auto get_item_value = NewValueNode(MakeValue<int64_t>(i));
     MSLITE_CHECK_PTR(get_item_value);
     std::vector<AnfNodePtr> inputs{tuple_get_item_prim, cnode, get_item_value};
     auto graph = ConvertGraph(res_graph_);
