@@ -59,9 +59,8 @@ class ROIAlignInfer : public abstract::OpInferBase {
     if (IsDynamicRank(feature_shape)) {
       out_c = abstract::Shape::kShapeDimAny;
     } else {
-      constexpr int64_t kFeatureShapeSize = 4;
-      (void)CheckAndConvertUtils::CheckInteger("rank of feature shape", SizeToLong(feature_shape.size()), kEqual,
-                                               kFeatureShapeSize, op_name);
+      (void)CheckAndConvertUtils::CheckInRange("rank of feature shape", SizeToLong(feature_shape.size()), kIncludeBoth,
+                                               {1, 4}, op_name);
       out_c = feature_shape[kInputIndex1];
     }
     if (IsDynamicRank(rois_shape)) {
