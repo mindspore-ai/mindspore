@@ -30,6 +30,7 @@ Container
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.nn.CellDict
     mindspore.nn.CellList
     mindspore.nn.SequentialCell
 
