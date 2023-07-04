@@ -8337,13 +8337,19 @@ def _normalize_axis_index(axis, ndim):
     raise ValueError('For norm, the dim is out of range.')
 
 
-def _moveaxis(x, source, destination):
-    destination = tuple([_normalize_axis_index(ax, x.ndim) for ax in destination])
-    source = tuple([_normalize_axis_index(ax, x.ndim) for ax in source])
-    perm = [n for n in range(x.ndim) if n not in source]
+@_primexpr
+def _get_perm_for_norm(x_ndim, source, destination):
+    destination = tuple([_normalize_axis_index(ax, x_ndim) for ax in destination])
+    source = tuple([_normalize_axis_index(ax, x_ndim) for ax in source])
+    perm = [n for n in range(x_ndim) if n not in source]
     for dest, src in sorted(zip(destination, source)):
         perm.insert(dest, src)
     perm = tuple(perm)
+    return perm
+
+
+def _moveaxis(x, source, destination):
+    perm = _get_perm_for_norm(x.ndim, source, destination)
     return ops.transpose(x, perm)
 
 

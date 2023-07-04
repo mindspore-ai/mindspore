@@ -49,15 +49,21 @@ def _check_dim(dim):
 @_primexpr
 def generate_perm_for_matrix_transpose(input_dim):
     perm = tuple(range(input_dim - 2))
-    perm = perm + (input_dim - 1) + (input_dim - 2)
+    perm = perm + (input_dim - 1, input_dim - 2)
     return perm
 
 
 def _matrix_transpose(a):
     """Transpose last two axes"""
-    dim = P.Rank()(a)
-    _check_dim(dim)
-    perm = generate_perm_for_matrix_transpose(dim)
+    a_shape = _shape(a)
+    if F.is_sequence_value_unknown(a_shape):
+        dim = P.Rank()(a)
+        perm = P.Range()(P.Cast()(0, mindspore.int64), P.Cast()(dim, mindspore.int64), P.Cast()(1, mindspore.int64))
+        perm = P.Concat(axis=-1)((perm[:-2], perm[-1:], perm[-2:-1]))
+    else:
+        dim = P.Rank()(a)
+        _check_dim(dim)
+        perm = generate_perm_for_matrix_transpose(dim)
     return _transpose(a, perm)
 
 
