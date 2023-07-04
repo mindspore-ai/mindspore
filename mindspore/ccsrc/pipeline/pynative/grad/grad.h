@@ -28,6 +28,7 @@
 #include "pipeline/pynative/grad/top_cell.h"
 #include "pipeline/pynative/grad/ms_function_grad.h"
 #include "runtime/pynative/async/async_queue.h"
+#include "runtime/pynative/async/async_hqueue.h"
 #include "pipeline/pynative/grad/bprop_task.h"
 #include "pipeline/jit/resource.h"
 namespace mindspore {
@@ -69,7 +70,7 @@ class GradExecutor {
   explicit GradExecutor(const ForwardExecutorPtr &forward_executor = nullptr)
       : forward_executor_(ForwardExecutorWeakPtr(forward_executor)),
         ms_function_(std::make_shared<MsFunction>()),
-        async_executor_(std::make_shared<AsyncHqueue>("grad_queue", kThreadWaitLevel::kLevelGrad)) {}
+        async_executor_(std::make_shared<AsyncHqueue>("grad_queue")) {}
 
   void Init();
   std::function<void(const py::object &, const py::args &)> InitGraph = [this](auto &&PH1, auto &&PH2) {
