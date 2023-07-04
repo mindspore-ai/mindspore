@@ -45,10 +45,12 @@ class TilingStrategy(metaclass=ABCMeta):
     @classmethod
     @abstractmethod
     def strategy_name(cls):
+        """strategy name"""
         raise NotImplementedError
 
     @classmethod
     def from_strategy_name(cls, stgy_name: str):
+        """from strategy name"""
         stgy_clz = TilingStrategy._strategies.get(stgy_name)
         if stgy_clz is None:
             raise Exception(f"Strategy:{stgy_name} not supported")
@@ -57,7 +59,9 @@ class TilingStrategy(metaclass=ABCMeta):
 
     @abstractmethod
     def tiling(self) -> TilingPara:
+        """tiling"""
         raise NotImplementedError
 
     def gen_tiling_para(self) -> TilingPara:
+        """gen tiling para"""
         return TilingPara(self.Br, self.last_Br, self.Bc, self.last_Bc, self.Tr, self.Tc)

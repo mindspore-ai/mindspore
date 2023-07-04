@@ -31,17 +31,17 @@ class FlashAttentionBwd(FlashAttention):
     `FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness <https://arxiv.org/pdf/2205.14135.pdf>`
     """
 
-    def __init__(self, q, k, v, O, dO, l, m, dim_mask, attn_mask, dropout_mask, alibi_mask,
+    def __init__(self, query, key, value, output, dO, rowsum, rowmax, dim_mask, attn_mask, dropout_mask, alibi_mask,
                  prev_block_num,
                  next_block_num,
                  high_precision,
                  kernel_name,
                  tiling_stgy: TilingStrategy,
                  disable_debug):
-        super().__init__(q, k, v, dim_mask, attn_mask, dropout_mask, alibi_mask, kernel_name,
+        super().__init__(query, key, value, dim_mask, attn_mask, dropout_mask, alibi_mask, kernel_name,
                          tiling_stgy, prev_block_num, next_block_num, high_precision, disable_debug)
 
-        if isinstance(q, dict):
+        if isinstance(query, dict):
             self.dO_shape = dO["shape"]  # [B, Nq, d]
         else:
             self.dO_shape = dO.shape
@@ -353,29 +353,6 @@ class FlashAttentionBwd(FlashAttention):
                 with self.tik_instance.else_scope():
                     self.compute_in_each_kv_block(batch_start_sc, batch_idx, kv_blk_idx, self.last_Bc,
                                                   core_idx_to_tr_info, core_idx)
-
-    def compute_process(self):
-        """The compute process of FlashAttention backward"""
-        self.init()
-
-        core_idx_to_batch_info, core_idx_to_tr_info = self.get_core_bath_info()
-        with self.tik_instance.for_range(begint=0, endt=self.core_num, name="core_index",
-                                         block_num=self.core_num) as core_idx:
-            batch_start_s = self.tik_instance.Scalar("int32", name="batch_start_s")
-            batch_num_s = self.tik_instance.Scalar("int32", name="batch_num_s")
-
-            batch_start_s.set_as(core_idx_to_batch_info[core_idx, 0])
-            batch_num_s.set_as(core_idx_to_batch_info[core_idx, 1])
-
-            self.compute_one_core(batch_start_s, batch_num_s, core_idx_to_tr_info, core_idx)
-
-        self.tik_instance.BuildCCE(
-            kernel_name=self.kernel_name,
-            inputs=self.collect_inputs(),
-            outputs=self.collect_outputs(),
-            config={"dump_cce_code": False, "save_temp_cce_file": True, "enable_const_fold": True},
-            enable_l2=True
-        )
 
     def collect_outputs(self):
         """collect all output gm tensors into output_gm_list,

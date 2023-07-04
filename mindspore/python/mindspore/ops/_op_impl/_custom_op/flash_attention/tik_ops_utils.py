@@ -190,7 +190,7 @@ class TikOpsUtils:
             tmp_ub1 = self.tik_instance.Tensor(FP16, (16, M), name="tmp_ub1", scope=UB)
             self.tik_instance.data_move(tmp_ub1, vec_ub, 0, 1, M // 16, 0, 0)
             times = self.tik_instance.Scalar("int32", name="times", init_value=1)
-            with self.tik_instance.for_range(begint=0, endt=16) as idx:
+            with self.tik_instance.for_range(begint=0, endt=16):
                 with self.tik_instance.if_scope(times <= 8):
                     offset = times * M
                     burst = times * M // 16
@@ -206,7 +206,7 @@ class TikOpsUtils:
             # (M, 16) -> (M, 32) -> (M, 64) -> ... -> (M, N)
             self.tik_instance.data_move(dst_ub, tmp_ub2_transposed, 0, M, 1, 0, N // 16 - 1)
             times.set_as(1)
-            with self.tik_instance.for_range(begint=0, endt=N) as idx:
+            with self.tik_instance.for_range(begint=0, endt=N):
                 offset = times * 16
                 with self.tik_instance.if_scope(offset * 2 <= N):
                     burst = offset // 16
@@ -232,7 +232,7 @@ class TikOpsUtils:
         self.tik_instance.data_move(dst_ub, vec_ub, 0, 1, N // 16, 0, 0)
         times = self.tik_instance.Scalar("int32", name="times", init_value=1)
         # (1, N) -> (2, M) -> (4, N) -> ... -> (M, N)
-        with self.tik_instance.for_range(begint=0, endt=M) as row_idx:
+        with self.tik_instance.for_range(begint=0, endt=M):
             with self.tik_instance.if_scope(times * 2 <= M):
                 burst = times * N // 16
                 offset = times * N
@@ -247,6 +247,7 @@ class TikOpsUtils:
         return dst_ub
 
     def get_K0(self, dtype=None):
+        """get K0"""
         if dtype is None:
             dtype = self.dtype
         try:
@@ -256,6 +257,7 @@ class TikOpsUtils:
         return 32 // dtype_size
 
     def up_align_to_K0(self, n, dtype=None):
+        """byte alignment by dtype"""
         if dtype is None:
             dtype = self.dtype
         try:
@@ -367,7 +369,6 @@ class TikOpsUtils:
         :param N1MN0_to_MN: Whether reorder the result tensor.
         :return: C_ub with tensor with shape of (M, N) if N1MN0_to_MN else (N1, M, N0)
         """
-        K0 = self.get_K0(A_l1.dtype)
         M = self.up_align_to_K0(m)
         N = self.up_align_to_K0(n)
         C_ub = self.tik_instance.Tensor(precision_type, (N // 16, M, 16), name="C_ub", scope=UB)
@@ -437,6 +438,7 @@ class TikOpsUtils:
             self.cont_data_mv_1_bust(dst=dst_tensor[gm_offset + offset], src=tmp_ub, burst=1)
 
     def scale_compute_vector(self, Sij_ub, dim):
+        """scale compute vector"""
         scale_value = dim ** -0.5
         scale = self.tik_instance.Scalar(dtype=FP16)
         scale.set_as(scale_value)
