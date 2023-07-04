@@ -146,6 +146,7 @@ class StubTensor:
     flush_from_cache = _stub_method(Tensor.flush_from_cache)
 
     def stub_sync(self):
+        """sync real tensor."""
         if self.stub:
             val = self.stub.get_value()
             self.tensor = Tensor(val, internal=True)

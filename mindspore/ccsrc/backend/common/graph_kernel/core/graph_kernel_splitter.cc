@@ -368,7 +368,7 @@ class Splitter {
  private:
   void ResetInlinedNodesKernelInfo() const {
     for (const auto &node : inlined_nodes_) {
-      ConvertOpUtils::ConvertAttrToInput(node);
+      (void)ConvertOpUtils::ConvertAttrToInput(node);
       Callback::Instance()->ResetKernelInfo(node);
     }
   }
