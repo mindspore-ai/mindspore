@@ -614,10 +614,9 @@ class SideEffectFinder {
     const auto &value = value_node->value();
     MS_EXCEPTION_IF_NULL(value);
     auto value_tuple = value->cast_ptr<ValueTuple>();
-
+    MS_EXCEPTION_IF_NULL(value_tuple);
     std::vector<FuncGraphPtr> graphs;
     graphs.reserve(value_tuple->size());
-    MS_EXCEPTION_IF_NULL(value_tuple);
     const auto &tuple_elements = value_tuple->value();
     for (size_t i = 0; i < tuple_elements.size(); ++i) {
       const auto &tuple_element = tuple_elements[i];
