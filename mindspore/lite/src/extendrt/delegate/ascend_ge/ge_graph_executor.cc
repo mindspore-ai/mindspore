@@ -203,6 +203,10 @@ void GeGraphExecutor::GetGeGraphOptions(const FuncGraphPtr &anf_graph,
   MS_EXCEPTION_IF_NULL(ge_options_ptr);
   auto &ge_options = *ge_options_ptr;
   ge_options["ge.graph_key"] = anf_graph->ToString();
+  // 0: False, dynamic and static graph compile with cann opp_kernel*.run，GE default for pytorch
+  // 1: True, dynamic and static graph online compiler op
+  // 2: Auto, dynamic compile with cann opp_kernel*.run, static graph online compiler op，GE default for others
+  ge_options["ge.jit_compile"] = "2";
   auto config_it = config_infos_.find(lite::kGeGraphOptionsSection);
   if (config_it != config_infos_.end()) {
     for (auto &item : config_it->second) {

@@ -529,3 +529,41 @@ def test_tensor_set_data_from_numpy():
     tensor.set_data_from_numpy(in_data)
     out_data = tensor.get_data_to_numpy()
     assert (out_data == in_data).all()
+
+
+def test_model_group_invalid_flags_error():
+    with pytest.raises(RuntimeError) as raise_info:
+        _ = mslite.ModelGroup(flags=1001)
+    assert "Parameter flags should be ModelGroupFlag.SHARE_WORKSPACE or" in str(raise_info.value)
+
+
+def test_model_group_add_model_share_workspace_add_model_obj_error():
+    with pytest.raises(RuntimeError) as raise_info:
+        model_group = mslite.ModelGroup(flags=mslite.ModelGroupFlag.SHARE_WORKSPACE)
+        model0 = mslite.Model()
+        model1 = mslite.Model()
+        model_group.add_model([model0, model1])
+    assert "ModelGroup's add model failed." in str(raise_info.value)
+
+
+def test_model_group_add_model_share_weight_add_model_path_error():
+    with pytest.raises(RuntimeError) as raise_info:
+        model_group = mslite.ModelGroup(flags=mslite.ModelGroupFlag.SHARE_WEIGHT)
+        model_group.add_model(["model0_path", "model1_path"])
+    assert "ModelGroup's add model failed." in str(raise_info.value)
+
+
+def test_model_group_add_model_invalid_model_path_with_model_obj_error():
+    with pytest.raises(TypeError) as raise_info:
+        model_group = mslite.ModelGroup(flags=mslite.ModelGroupFlag.SHARE_WEIGHT)
+        model1 = mslite.Model()
+        model_group.add_model(["model_path", model1])
+    assert "models element must be all str or Model" in str(raise_info.value)
+
+
+def test_model_group_add_model_invalid_model_obj_with_model_path_error():
+    with pytest.raises(TypeError) as raise_info:
+        model_group = mslite.ModelGroup(flags=mslite.ModelGroupFlag.SHARE_WEIGHT)
+        model1 = mslite.Model()
+        model_group.add_model([model1, "model_path"])
+    assert "models element must be all str or Model" in str(raise_info.value)
