@@ -107,33 +107,40 @@ class FlashAttention(metaclass=ABCMeta):
 
     @staticmethod
     def get_gm_offset(batch_start, batch_idx, h, w, block_h, block_idx):
+        """get gm offset"""
         gm_offset = (batch_start + batch_idx) * h * w + block_idx * block_h * w
         return gm_offset
 
     @staticmethod
     def get_alibi_gm_offset(batch_start, batch_idx, w, block_w, block_idx):
+        """get alibi gm offset"""
         gm_offset = (batch_start + batch_idx) * w + block_idx * block_w
         return gm_offset
 
     @staticmethod
     def get_drop_mask_gm_offset(batch_start, batch_idx, h, w, block_h, block_h_idx, block_w, block_w_idx):
+        """get drop mask gm offset"""
         gm_offset = (batch_start + batch_idx) * h * w + block_h_idx * (w * block_h) + block_w_idx * block_w
         return gm_offset
 
     @abstractmethod
     def define_custom_inputs(self):
+        """define custom inputs"""
         raise NotImplementedError
 
     @abstractmethod
     def define_outputs(self):
+        """define outputs"""
         raise NotImplementedError
 
     @abstractmethod
     def collect_inputs(self):
+        """collect inputs"""
         raise NotImplementedError
 
     @abstractmethod
     def collect_outputs(self):
+        """collect outputs"""
         raise NotImplementedError
 
     def get_core_bath_info(self):
@@ -197,6 +204,7 @@ class FlashAttention(metaclass=ABCMeta):
         return core_idx_to_batch_info, core_idx_to_tr_info
 
     def get_attn_mask_gm_offset(self, batch_start, batch_idx, h, w, block_h, block_h_idx, block_w, block_w_idx):
+        """get attn mask gm offset"""
         if self.att_mask_shape[0] == 1:
             gm_offset = block_h_idx * (w * block_h) + block_w_idx * block_w
         else:
@@ -239,6 +247,7 @@ class FlashAttention(metaclass=ABCMeta):
                 self.alibi_mask_shape = alibi_mask.shape
 
     def define_inputs_outputs(self):
+        """define inputs outputs"""
         self.define_common_inputs()
 
         self.define_custom_inputs()
@@ -311,3 +320,30 @@ class FlashAttention(metaclass=ABCMeta):
                 self.tik_instance.h_mul(Pij_ub, Pij_ub, dropout_mask_ub_fp32)
             else:
                 self.tik_instance.h_mul(Pij_ub, Pij_ub, dropout_mask_ub)
+
+    @abstractmethod
+    def compute_one_core(self, batch_start_s, batch_num_s, core_idx_to_tr_info, core_idx):
+        raise NotImplementedError
+
+    def compute_process(self):
+        """The compute process of FlashAttention"""
+        self.init()
+
+        core_idx_to_batch_info, core_idx_to_tr_info = self.get_core_bath_info()
+        with self.tik_instance.for_range(begint=0, endt=self.core_num, name="core_index",
+                                         block_num=self.core_num) as core_idx:
+            batch_start_s = self.tik_instance.Scalar("int32", name="batch_start_s")
+            batch_num_s = self.tik_instance.Scalar("int32", name="batch_num_s")
+
+            batch_start_s.set_as(core_idx_to_batch_info[core_idx, 0])
+            batch_num_s.set_as(core_idx_to_batch_info[core_idx, 1])
+
+            self.compute_one_core(batch_start_s, batch_num_s, core_idx_to_tr_info, core_idx)
+
+        self.tik_instance.BuildCCE(
+            kernel_name=self.kernel_name,
+            inputs=self.collect_inputs(),
+            outputs=self.collect_outputs(),
+            config={"dump_cce_code": False, "save_temp_cce_file": True, "enable_const_fold": True},
+            enable_l2=True
+        )
