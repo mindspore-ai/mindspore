@@ -55,6 +55,7 @@ float ActivationGrad::get_alpha() const {
 }
 
 class ActivationGradInfer : public abstract::OpInferBase {
+ public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
     return ElewiseGradInferShape(primitive, input_args);

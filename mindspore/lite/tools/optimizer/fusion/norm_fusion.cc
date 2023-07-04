@@ -274,7 +274,7 @@ bool NormFusion::CheckPattern(const FuncGraphPtr &func_graph, const EquivPtr &eq
   if (gamma_shape != beta_shape) {
     return false;
   }
-  if (lite::JudgeDynamicShape(epsilon_shape)) {
+  if (epsilon_shape.empty() || (epsilon_shape.size() == 1 && epsilon_shape[0] == 1)) {
     MS_CHECK_TRUE_RET(epsilon_tensor->data_c() != nullptr, false);
     auto epsilon_data = reinterpret_cast<float *>(epsilon_tensor->data_c());
     *epsilon = epsilon_data[0];

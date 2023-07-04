@@ -76,8 +76,8 @@ int GatherDCompute(struct KernelBase *self) {
     output_shape[i] = output->shape_[i];
   }
 
-  TypeIdC input_dtype = input->data_type_;
-  TypeIdC index_dtype = gather_d_stru->base.in_[THIRD_INPUT]->data_type_;
+  int input_dtype = input->data_type_;
+  int index_dtype = gather_d_stru->base.in_[THIRD_INPUT]->data_type_;
   int status = NNACL_ERR;
   if (index_dtype == kNumberTypeInt32) {
     if (input_dtype == kNumberTypeFloat32) {

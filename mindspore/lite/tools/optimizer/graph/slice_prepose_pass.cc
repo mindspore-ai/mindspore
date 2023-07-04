@@ -115,7 +115,7 @@ bool IsScalarNode(const AnfNodePtr &nodePtr) {
     auto tensor = utils::cast<tensor::TensorPtr>(utils::cast<ParameterPtr>(nodePtr)->default_param());
     MS_ASSERT(tensor != nullptr);
     auto shape = tensor->shape();
-    if (lite::JudgeDynamicShape(shape)) {
+    if (shape.empty() || (shape.size() == 1 && shape[0] == 1)) {
       return true;
     }
   }

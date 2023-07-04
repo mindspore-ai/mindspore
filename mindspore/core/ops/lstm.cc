@@ -78,13 +78,13 @@ abstract::TupleShapePtr LSTMInferShape(const PrimitivePtr &primitive, const std:
   bool h_is_dynamic = IsDynamic(h_input_shape);
   bool c_is_dynamic = IsDynamic(c_input_shape);
   if (!x_is_dynamic) {
-    (void)CheckAndConvertUtils::CheckInteger("x_shape[2]", x_input_shape[2], kEqual, input_x_size, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("x_shape[2]", x_input_shape[kIndex2], kEqual, input_x_size, prim_name);
   }
   if (!h_is_dynamic && !c_is_dynamic) {
     (void)CheckAndConvertUtils::Check("h_shape", h_input_shape, kEqual, c_input_shape, prim_name);
     (void)CheckAndConvertUtils::CheckInteger("h_shape[0]", h_input_shape[0], kEqual, num_layers * num_directions,
                                              prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("h_shape[2]", h_input_shape[2], kEqual, hidden_size, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("h_shape[2]", h_input_shape[kIndex2], kEqual, hidden_size, prim_name);
   }
   if (!x_is_dynamic && !h_is_dynamic) {
     (void)CheckAndConvertUtils::CheckInteger("h_shape[1]", h_input_shape[1], kEqual, x_input_shape[1], prim_name);
