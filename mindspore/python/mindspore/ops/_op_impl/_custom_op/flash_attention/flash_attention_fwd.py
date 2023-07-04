@@ -32,13 +32,14 @@ class FlashAttentionFwd(FlashAttention):
     `FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness <https://arxiv.org/pdf/2205.14135.pdf>`
     """
 
-    def __init__(self, q, k, v,
+    def __init__(self, query, key, value,
                  dim_mask, attn_mask, dropout_mask, alibi_mask,
                  kernel_name,
                  tiling_stgy: TilingStrategy,
                  prev_block_num=65536,
                  next_block_num=65536, high_precision=False, disable_debug=True):
-        super(FlashAttentionFwd, self).__init__(q, k, v, dim_mask, attn_mask, dropout_mask, alibi_mask, kernel_name,
+        super(FlashAttentionFwd, self).__init__(query, key, value, dim_mask, attn_mask, dropout_mask, alibi_mask,
+                                                kernel_name,
                                                 tiling_stgy, prev_block_num, next_block_num, high_precision,
                                                 disable_debug)
         self.O_gm = None
@@ -47,16 +48,17 @@ class FlashAttentionFwd(FlashAttention):
         self.O_gm_workspace = None
 
     def define_custom_inputs(self):
-        pass
+        """define custom inputs"""
 
     def define_outputs(self):
-        """define output gm tensors"""
-        self.O_gm = self.tik_instance.Tensor(FP16, self.O_shape, name="O_gm", scope=GM)
+        """define outputs"""
+        self.O_gm = self.tik_instance.Tensor(FP16, self.O_shape, name="O_gm", scope=GM, is_atomic_add=True)
         if self.high_precision:
             self.O_gm_workspace = self.tik_instance.Tensor(FP32, self.O_shape, name="O_gm_workspace", scope=GM,
                                                            is_workspace=True)
-        self.l_gm = self.tik_instance.Tensor(self.precision_type, self.l_shape, name="l_gm", scope=GM)
-        self.m_gm = self.tik_instance.Tensor(FP16, self.m_shape, name="m_gm", scope=GM)
+        self.l_gm = self.tik_instance.Tensor(self.precision_type, self.l_shape, name="l_gm", scope=GM,
+                                             is_atomic_add=True)
+        self.m_gm = self.tik_instance.Tensor(FP16, self.m_shape, name="m_gm", scope=GM, is_atomic_add=True)
 
     def softmax_compute(self, Sij_ub, mij_ub, lij_ub, m, n):
         """Refer to Algorithm 2 line12"""
@@ -99,19 +101,14 @@ class FlashAttentionFwd(FlashAttention):
         vec_len_aligned = self.tik_ops_utils.up_align_to_K0(vec_len)
         mi_new_ub = self.tik_instance.Tensor(FP16, (vec_len_aligned,), name="mi_new_ub", scope=UB)
         li_new_ub = self.tik_instance.Tensor(dtype, (vec_len_aligned,), name="li_new_ub", scope=UB)
-        # 1 calculate mi_new = max(mi, mij)
         self.tik_instance.h_max(mi_new_ub, mi_old_ub, mij_ub)
 
-        # 2 calculate li_new = exp(mi-mi_new)*li + exp(mij-mi_new)*lij
-        # 2.1 相减，求指数
         self.tik_instance.h_sub(mi_old_ub, mi_old_ub, mi_new_ub)  # mi-mi_new
         self.tik_instance.h_exp(mi_old_ub, mi_old_ub)  # exp(mi-mi_new)
 
-        # 2.2 相减，求指数
         self.tik_instance.h_sub(mij_ub, mij_ub, mi_new_ub)  # mij-mi_new
         self.tik_instance.h_exp(mij_ub, mij_ub)  # exp(mij-mi_new)
 
-        # 2.3 相乘，相加 exp(m_ij_ub-mi_new)*li + exp(m_ij_ub-mi_new) * lij
         with self.tik_instance.new_stmt_scope(disable_sync=False):
             mul_li_ub = self.tik_instance.Tensor(dtype, (vec_len_aligned,), scope=UB, name="mul_li_ub")
             mul_lij_ub = self.tik_instance.Tensor(dtype, (vec_len_aligned,), scope=UB, name="mul_lij_ub")
@@ -426,9 +423,6 @@ class FlashAttentionFwd(FlashAttention):
 
         lij_ub = self.tik_instance.Tensor(self.precision_type, (q_blk_h_aligned,), scope=UB, name="lij_ub")
         mij_ub = self.tik_instance.Tensor(FP16, (q_blk_h_aligned,), scope=UB, name="mij_ub")
-        Pij_l1_K1MK0_ed = self.tik_instance.Tensor(
-            FP16, (kv_blk_h_aligned // 16, q_blk_h_aligned, 16), name="Pij_l1", scope=L1
-        )
         # QK^T Q shape: (q_blk_h_aligned, self.d), K^T shape: (self.d, kv_blk_h_aligned)
         Sij_ub_MN_ed = self.tik_ops_utils.matmul_compute(Qi_l1_K1MK0_ed, KjT_l1_K1MK0_ed, m=q_blk_height,
                                                          k=self.actual_d, n=kv_blk_height,
@@ -545,31 +539,8 @@ class FlashAttentionFwd(FlashAttention):
         """
         return [self.O_gm, self.l_gm, self.m_gm]
 
-    def compute_process(self):
-        """The compute process of FlashAttention forward"""
-        self.init()
 
-        core_idx_to_batch_info, core_idx_to_tr_info = self.get_core_bath_info()
-        with self.tik_instance.for_range(begint=0, endt=self.core_num, name="core_index",
-                                         block_num=self.core_num) as core_idx:
-            batch_start_s = self.tik_instance.Scalar("int32", name="batch_start_s")
-            batch_num_s = self.tik_instance.Scalar("int32", name="batch_num_s")
-
-            batch_start_s.set_as(core_idx_to_batch_info[core_idx, 0])
-            batch_num_s.set_as(core_idx_to_batch_info[core_idx, 1])
-
-            self.compute_one_core(batch_start_s, batch_num_s, core_idx_to_tr_info, core_idx)
-
-        self.tik_instance.BuildCCE(
-            kernel_name=self.kernel_name,
-            inputs=self.collect_inputs(),
-            outputs=self.collect_outputs(),
-            config={"dump_cce_code": False, "save_temp_cce_file": True, "enable_const_fold": True},
-            enable_l2=True
-        )
-
-
-def flash_attention(q, k, v, dim_mask, attn_mask, dropout_mask, alibi_mask, y, l, m,
+def flash_attention(query, key, value, dim_mask, attn_mask, dropout_mask, alibi_mask, output, rowsum, rowmax,
                     prev_block_num=65536, next_block_num=65536, high_precision=False, tiling_stgy_name='xunfei',
                     kernel_name="flash_attention", disable_debug=True):
     """
@@ -577,17 +548,17 @@ def flash_attention(q, k, v, dim_mask, attn_mask, dropout_mask, alibi_mask, y, l
 
     Parameters
     ----------
-    q : dict. shape and dtype of input, only support float16
-    k : dict. shape and dtype of input, only support float16
-    v: dict. shape and dtype of input, only support float16
+    query : dict. shape and dtype of input, only support float16
+    key : dict. shape and dtype of input, only support float16
+    value: dict. shape and dtype of input, only support float16
     dim_mask: dict. shape and dtype of input, only support int8
     attn_mask: dict. shape and dtype of input, only support float16
     dropout_mask: dict. shape and dtype of input, only support float16
     dropout_mask: dict. shape and dtype of input, only support float16
     alibi_mask: dict. shape and dtype of input, only support float16
-    y: dict. shape and dtype of output, only support float16
-    l: dict. shape and dtype of output, only support float16
-    m: dict. shape and dtype of output, only support float16
+    output: dict. shape and dtype of output, only support float16
+    rowsum: dict. shape and dtype of output, only support float16
+    rowmax: dict. shape and dtype of output, only support float16
     prev_block_num: int. an attribute used to define sparse attention
     next_block_num: int. an attribute used to define sparse attention
     tiling_stgy_name: str. an attribute used to choose the tiling strategy
@@ -598,7 +569,7 @@ def flash_attention(q, k, v, dim_mask, attn_mask, dropout_mask, alibi_mask, y, l
     -------
     tik_instance
     """
-    fa = FlashAttentionFwd(q=q, k=k, v=v, dim_mask=dim_mask, attn_mask=attn_mask,
+    fa = FlashAttentionFwd(query=query, key=key, value=value, dim_mask=dim_mask, attn_mask=attn_mask,
                            dropout_mask=dropout_mask, alibi_mask=alibi_mask, kernel_name=kernel_name,
                            tiling_stgy=TilingStrategy.from_strategy_name(tiling_stgy_name),
                            prev_block_num=prev_block_num, next_block_num=next_block_num,

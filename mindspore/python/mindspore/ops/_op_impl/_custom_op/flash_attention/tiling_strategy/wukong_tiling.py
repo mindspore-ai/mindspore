@@ -37,11 +37,9 @@ class WukongTiling(TilingStrategy):
             self.Tc = self.N // self.Bc
             if self.d <= 80:  # [40, 80]
                 # 内存瓶颈为在ub中对P*V结果[Br, dv]进行cast
-                # ub: 512 * 80 * 6 // 1024 = 240KB
                 self.Br = min(self.Nq, 64)
                 self.Tr = self.Nq // self.Br
             else:
-                # ub: dv = 160， 256 * 160 * 6 // 1024 = 240KB
                 self.Br = min(self.Nq, 64)
                 self.Tr = self.Nq // self.Br
         else:
@@ -50,13 +48,11 @@ class WukongTiling(TilingStrategy):
                 self.Bc = 64
                 self.Tc = 1
                 # 内存瓶颈为在ub中对Q*K的结果[Br, Bc]进行cast
-                # ub: 128 * 256 * 6 // 1024 = 192KB
                 self.Br = 64
                 self.Tr = self.Nq // self.Br
             else:
                 self.Bc = 64
                 self.Tc = self.N // self.Bc
-                # ub: 64 * 512 * 6 // 1024 = 192KB
                 self.Br = 64
                 self.Tr = self.Nq // self.Br
 
