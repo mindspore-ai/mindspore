@@ -19,6 +19,7 @@ from __future__ import absolute_import
 import os
 import sys
 import logging
+import importlib
 from importlib.abc import MetaPathFinder
 
 from mindspore_lite.version import __version__
@@ -60,7 +61,7 @@ class MSLiteMetaPathFinder(MetaPathFinder):
     """class MSLiteMetaPath finder."""
 
     def find_module(self, fullname, path=None):
-        """method mslite find module."""
+        """mslite find module."""
         akg_idx = fullname.find("mindspore_lite.akg")
         if akg_idx != -1:
             rname = fullname[akg_idx + 15:]
@@ -75,12 +76,13 @@ class MSLiteMetaPathLoader:
         self.__rname = rname
 
     def load_module(self, fullname):
+        """mslite load module."""
         if self.__rname in sys.modules:
             sys.modules.pop(self.__rname)
         mslite_add_path()
-        __import__(self.__rname, globals(), locals())
+        importlib.import_module(self.__rname)
         if sys.modules.get(self.__rname) is None:
-            return None
+            raise ImportError("Can not find module: %s " % self.__rname)
         target_module = sys.modules.get(self.__rname)
         sys.modules[fullname] = target_module
         return target_module
