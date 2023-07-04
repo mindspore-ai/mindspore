@@ -137,7 +137,7 @@ class StepLR(LRScheduler):
         >>> # lr = 0.05     if epoch < 30
         >>> # lr = 0.005    if 30 <= epoch < 60
         >>> # lr = 0.0005   if 60 <= epoch < 90
-        >>> scheduler = nn.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
+        >>> scheduler = nn.StepLR(optimizer, step_size=30, gamma=0.1)
         >>> def forward_fn(data, label):
         ...     logits = net(data)
         ...     loss = loss_fn(logits, label)
@@ -200,7 +200,7 @@ class LinearLR(LRScheduler):
 
     Examples:
         >>> import mindspore
-        >>> from mindspore.nn.lr_scheduler import LinearLR
+        >>> from mindspore.nn import LinearLR
         >>> from mindspore import nn
         >>> # Define the network structure of LeNet5. Refer to
         >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py

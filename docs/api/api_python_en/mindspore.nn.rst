@@ -21,6 +21,7 @@ Basic Block
     mindspore.nn.GraphCell
     mindspore.nn.LossBase
     mindspore.nn.Optimizer
+    mindspore.nn.optim_ex.Optimizer
 
 Container
 ---------
@@ -391,7 +392,7 @@ LRScheduler subclass dynamically changes the learning rate by calling the `step`
     net = LeNet5()
     loss_fn = nn.MAELoss()
     optimizer = nn.optim_ex.Adam(net.parameters(), lr=0.1, momentum=0.9)
-    scheduler = nn.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
+    scheduler = nn.StepLR(optimizer, step_size=30, gamma=0.1)
     def forward_fn(data, label):
         logits = net(data)
         loss = loss_fn(logits, label)
@@ -412,8 +413,9 @@ LRScheduler subclass dynamically changes the learning rate by calling the `step`
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.nn.lr_scheduler.LinearLR
-    mindspore.nn.lr_scheduler.StepLR
+    mindspore.nn.StepLR
+    mindspore.nn.LinearLR
+    mindspore.nn.LRScheduler
 
 Image Processing Layer
 ----------------------

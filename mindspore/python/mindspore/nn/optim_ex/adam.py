@@ -156,7 +156,6 @@ class Adam(Optimizer):
 
     def apply_adam(self, params, grads, exp_avgs, exp_avg_sqs, max_exp_avg_sqs, state_steps,
                    amsgrad, beta1, beta2, lr, weight_decay, eps, maximize, grad_centralization):
-        """ Apply adam. """
         grads = self._decay_weight(weight_decay, params, grads)
         grads = self._gradients_centralization(grad_centralization, grads)
 

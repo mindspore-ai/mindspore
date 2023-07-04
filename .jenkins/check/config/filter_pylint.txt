@@ -86,6 +86,8 @@
 "mindspore/mindspore/python/mindspore/_checkparam.py"                                                                    "consider-using-enumerate"
 "mindspore/mindspore/python/mindspore/_extends/parse/standard_method.py"                                                 "consider-using-enumerate"
 "mindspore/mindspore/python/mindspore/ops/function/math_func.py"                                                         "consider-using-enumerate"
+"mindspore/mindspore/python/mindspore/nn/optim_ex/adam.py"                                                               "missing-docstring"
+"mindspore/mindspore/python/mindspore/nn/optim_ex/adamw.py"                                                              "missing-docstring"
 
 # MindData
 "mindspore/mindspore/python/mindspore/dataset/__init__.py"                                                               "redefined-builtin"

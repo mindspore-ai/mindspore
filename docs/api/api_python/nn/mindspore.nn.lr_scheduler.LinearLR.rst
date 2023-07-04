@@ -1,7 +1,7 @@
-mindspore.nn.lr_scheduler.LinearLR
+mindspore.nn.LinearLR
 ====================================
 
-.. py:class:: mindspore.nn.lr_scheduler.LinearLR(optimizer, start_factor=1.0 / 3, end_factor=1.0, total_iters=5, last_epoch=-1, verbose=False)
+.. py:class:: mindspore.nn.LinearLR(optimizer, start_factor=1.0 / 3, end_factor=1.0, total_iters=5, last_epoch=-1, verbose=False)
 
     线性改变用于衰减参数组学习率的乘法因子，直到 `last_epoch` 数达到预定义的阈值 `total_iters`。 `LinearLR` 对于学习率的衰减可能与外部对于学习率的改变同时发生。
 

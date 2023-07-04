@@ -1,7 +1,7 @@
-mindspore.nn.lr_scheduler.LRScheduler
+mindspore.nn.LRScheduler
 ======================================
 
-.. py:class:: mindspore.nn.lr_scheduler.LRScheduler(optimizer, last_epoch=-1, verbose=False)
+.. py:class:: mindspore.nn.LRScheduler(optimizer, last_epoch=-1, verbose=False)
 
     动态学习率的基类。
 

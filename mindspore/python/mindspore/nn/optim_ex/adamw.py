@@ -158,7 +158,6 @@ class AdamW(Optimizer):
 
     def apply_adamw(self, params, grads, exp_avgs, exp_avg_sqs, max_exp_avg_sqs, state_steps,
                     amsgrad, beta1, beta2, lr, weight_decay, eps, maximize, grad_centralization):
-        """ Apply AdamW. """
         grads = self._gradients_centralization(grad_centralization, grads)
         for i, param in enumerate(params):
             grad = grads[i] if not maximize else -grads[i]
