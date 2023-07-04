@@ -280,10 +280,10 @@ std::vector<size_t> ArrayReduceGpuKernelMod::GetNewShape() {
   const size_t input_reshape_dims = input_reshape_.size();
   const size_t identity_dims = (input_reshape_dims + !reduce_first_axis_) / 2;
   std::vector<size_t> input_reshape_transpose;
-  for (size_t i = reduce_first_axis_; i < input_reshape_dims; i += 2) {
+  for (size_t i = reduce_first_axis_; i < input_reshape_dims; i += kIndexStride) {
     input_reshape_transpose.push_back(input_reshape_[i]);
   }
-  for (size_t i = !reduce_first_axis_; i < input_reshape_dims; i += 2) {
+  for (size_t i = !reduce_first_axis_; i < input_reshape_dims; i += kIndexStride) {
     input_reshape_transpose.push_back(input_reshape_[i]);
   }
 
