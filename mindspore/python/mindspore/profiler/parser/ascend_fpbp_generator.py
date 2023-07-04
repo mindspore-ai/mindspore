@@ -36,7 +36,7 @@ class AscendFPBPGenerator:
         is_training_mode_flag = False
 
         steptrace = self.steptrace[self.steptrace['Iteration ID'] == 1]
-        steptrace = steptrace[steptrace['FP Start'] != 0 and steptrace['BP End'] != 0]
+        steptrace = steptrace[(steptrace['FP Start'] != 0) & (steptrace['BP End'] != 0)]
         if steptrace.size:
             is_training_mode_flag = True
             op_summary = self.op_summary[np.argsort(self.op_summary['Task Start Time'])]

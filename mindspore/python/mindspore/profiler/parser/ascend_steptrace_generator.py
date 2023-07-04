@@ -29,17 +29,17 @@ class AscendStepTraceGenerator:
         self.steptrace = steptrace
         self.steptrace_detail = None
 
-        self.steptrace_detail_dt = [('step_num', object), ('start_point', int), ('end_point', int), ('total', int),
-                                    ('fp_point', int),
-                                    ('bp_point', int), ('iteration_interval', int), ('fp_and_bp', int), ('tail', int)]
+        self.steptrace_detail_dt = [('step_num', object), ('start_point', np.int64), ('end_point', np.int64),
+                                    ('total', np.int64), ('fp_point', np.int64), ('bp_point', np.int64),
+                                    ('iteration_interval', np.int64), ('fp_and_bp', np.int64), ('tail', np.int64)]
 
     def parse(self):
         """Analyse the original steptrace data generate steptrace data."""
 
         for name in self.steptrace.dtype.names[9::2]:
-            self.steptrace_detail_dt.append((name, float))
-            self.steptrace_detail_dt.append((f'{name}_start_point', float))
-            self.steptrace_detail_dt.append((f'{name}_end_point', float))
+            self.steptrace_detail_dt.append((name, np.int64))
+            self.steptrace_detail_dt.append((f'{name}_start_point', np.int64))
+            self.steptrace_detail_dt.append((f'{name}_end_point', np.int64))
         self.steptrace_detail_dt = np.dtype(self.steptrace_detail_dt)
         self.steptrace_detail = np.empty((len(self.steptrace),), dtype=self.steptrace_detail_dt)
 
