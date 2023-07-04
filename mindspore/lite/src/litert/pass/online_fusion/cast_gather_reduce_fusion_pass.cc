@@ -18,9 +18,7 @@
 #include <vector>
 #include "src/litert/pass/online_fusion/online_fusion_utils.h"
 #include "src/common/ops/populate/populate_register.h"
-#include "nnacl/split_parameter.h"
 #include "nnacl/reduce_parameter.h"
-#include "nnacl/concat_parameter.h"
 #include "include/model.h"
 
 namespace {
@@ -123,12 +121,13 @@ int CastGatherReduceOnlineFusionPass::CreateCastGatherReduceCustomNode(LiteGraph
 
   void *prim = malloc(fbb.GetSize());
   if (prim == nullptr) {
-    MS_LOG(ERROR) << "malloc primitive failed.";
+    MS_LOG(ERROR) << "malloc CastGatherReduceFusion primitive failed.";
     return RET_ERROR;
   }
   (void)memcpy(prim, fbb.GetBufferPointer(), fbb.GetSize());
   auto online_fusion_prim = flatbuffers::GetRoot<schema::Primitive>(prim);
   if (online_fusion_prim == nullptr) {
+    MS_LOG(ERROR) << "GetRoot CastGatherReduceFusion primitive failed.";
     return RET_ERROR;
   }
   fbb.Clear();
@@ -226,8 +225,8 @@ void CastGatherReduceOnlineFusionPass::DeleteCastGatherReduceOriginNode(SearchSu
       tensors_->at(input_indice).in_nodes_.clear();
       tensors_->at(input_indice).out_nodes_.clear();
     }
-    node_list_.at(node_index)->input_indices_.clear();
     node_list_.at(node_index)->output_indices_.clear();
+    node_list_.at(node_index)->input_indices_.clear();
 
     auto indice_itr = std::find(subgraph_node_indices.begin(), subgraph_node_indices.end(), node_index);
     subgraph_node_indices.erase(indice_itr);
@@ -236,8 +235,8 @@ void CastGatherReduceOnlineFusionPass::DeleteCastGatherReduceOriginNode(SearchSu
     // delete tensors_ tensor info
     auto &input_indices = node_list_.at(node_index)->input_indices_;
     for (auto input_indice : input_indices) {
-      tensors_->at(input_indice).in_nodes_.clear();
       tensors_->at(input_indice).out_nodes_.clear();
+      tensors_->at(input_indice).in_nodes_.clear();
     }
     auto &output_indices = node_list_.at(node_index)->output_indices_;
     for (auto output_indice : output_indices) {

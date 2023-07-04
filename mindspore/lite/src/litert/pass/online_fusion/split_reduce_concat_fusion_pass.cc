@@ -18,8 +18,8 @@
 #include <vector>
 #include "src/common/ops/populate/populate_register.h"
 #include "nnacl/split_parameter.h"
-#include "nnacl/reduce_parameter.h"
 #include "nnacl/concat_parameter.h"
+#include "nnacl/reduce_parameter.h"
 #include "include/model.h"
 
 namespace {
@@ -50,11 +50,11 @@ bool SplitReduceConcatOnlineFusionPass::SatifyReduceConcatParse(SearchSubGraph::
                                                                 std::vector<uint32_t> *positions) {
   // reduce op
   uint32_t reduce_node1_index = in_node;
-  auto &reduce_node1 = node_list_.at(reduce_node1_index);
-  if (GetPrimitiveType(reduce_node1->primitive_, SCHEMA_VERSION::SCHEMA_CUR) != schema::PrimitiveType_ReduceFusion) {
+  auto &reduce_node = node_list_.at(reduce_node1_index);
+  if (GetPrimitiveType(reduce_node->primitive_, SCHEMA_VERSION::SCHEMA_CUR) != schema::PrimitiveType_ReduceFusion) {
     return false;
   }
-  auto *reduce_param = reinterpret_cast<ReduceParameter *>(GetNodeOpParameter(reduce_node1));
+  auto *reduce_param = reinterpret_cast<ReduceParameter *>(GetNodeOpParameter(reduce_node));
   if (reduce_param == nullptr) {
     return false;
   }
@@ -69,7 +69,7 @@ bool SplitReduceConcatOnlineFusionPass::SatifyReduceConcatParse(SearchSubGraph::
   subgraph->nodes_.emplace_back(reduce_node1_index);
 
   // concat op
-  auto next_node = GetNextNodeIndex(reduce_node1);
+  auto next_node = GetNextNodeIndex(reduce_node);
   if (next_node.size() != 1 && next_node.front().size() != 1) {
     return false;
   }
@@ -95,7 +95,7 @@ bool SplitReduceConcatOnlineFusionPass::SatifyReduceConcatParse(SearchSubGraph::
   } else if (subgraph->ends_.at(0) != concat_node1_index) {
     return false;
   }
-  auto reduce_out = reduce_node1->output_indices_.front();
+  auto reduce_out = reduce_node->output_indices_.front();
   const auto &concat_in = concat_node1->input_indices_;
   for (size_t i = 0; i < concat_in.size(); ++i) {
     if (concat_in[i] == reduce_out) {
@@ -227,12 +227,13 @@ int SplitReduceConcatOnlineFusionPass::CreateCustomNode(LiteGraph::Node *node, S
 
   void *prim = malloc(fbb.GetSize());
   if (prim == nullptr) {
-    MS_LOG(ERROR) << "malloc primitive failed.";
+    MS_LOG(ERROR) << "malloc SplitReduceConcatFusion primitive failed.";
     return RET_ERROR;
   }
   (void)memcpy(prim, fbb.GetBufferPointer(), fbb.GetSize());
   auto online_fusion_prim = flatbuffers::GetRoot<schema::Primitive>(prim);
   if (online_fusion_prim == nullptr) {
+    MS_LOG(ERROR) << "GetRoot SplitReduceConcatFusion primitive failed.";
     return RET_ERROR;
   }
   fbb.Clear();
