@@ -230,40 +230,42 @@ void ProfilerAnalyzer::StartStep() {
   step_start_time_ = GetTimeStamp();
 }
 
-void ProfilerAnalyzer::GenerateSummaryData() {
+void ProfilerAnalyzer::ProcessModuleSummaryData() {
   if (data_.empty()) {
     return;
   }
 
-  std::map<ProfilerModule, std::map<uint64_t, ProfilerDataPtr>> ordered_data;
+  // Use multimap as start_time_ may be same.
+  std::map<ProfilerModule, std::multimap<uint64_t, ProfilerDataPtr>> ordered_data;
   for (auto &data : data_) {
     (void)ordered_data[data->module_].emplace(data->start_time_, data);
   }
-
   for (const auto &data_item : ordered_data) {
     ProfilerDataPtr last_data = nullptr;
     for (const auto &[start_time, data] : data_item.second) {
-      // Skip stage and inner event data.
+      // Skip stage data and inner event data.
       if (data->is_stage_ || data->is_inner_event_) {
-        (void)summary_data_[data->module_].emplace_back(data);
         continue;
       }
       // last_data is null or current range is not in last range, add current range and update last_data.
       if (last_data == nullptr || start_time >= last_data->end_time_) {
-        (void)summary_data_[data->module_].emplace_back(data);
+        AnalyzeModuleSummaryData(data);
         last_data = data;
         continue;
       }
       // Current range is in last range, just skip.
       if (data->end_time_ <= last_data->end_time_) {
+        auto old_dur_time = data->dur_time_;
+        data->dur_time_ = 0;
+        AnalyzeModuleSummaryData(data);
+        data->dur_time_ = old_dur_time;
         continue;
       }
       // Process overlapping range of current range, data need deep copy.
       auto data_ptr = std::make_shared<ProfilerData>(*data);
-      data_ptr->op_name_ += "_overlapping";
       data_ptr->start_time_ = last_data->end_time_;
       data_ptr->dur_time_ = data_ptr->end_time_ - data_ptr->start_time_;
-      (void)summary_data_[data_ptr->module_].emplace_back(data_ptr);
+      AnalyzeModuleSummaryData(data);
       last_data = data_ptr;
     }
   }
@@ -274,25 +276,23 @@ void ProfilerAnalyzer::EndStep() {
     return;
   }
 
+#ifdef WITH_BACKEND
   step_time_ = GetTimeStamp() - step_start_time_;
+#endif
 
   std::unique_lock<std::mutex> lock(data_mutex_);
   if (data_.empty()) {
     return;
   }
 
+  // Process module overlapping data.
+  ProcessModuleSummaryData();
+
   // Process data.
   for (auto &data : data_) {
     MS_EXCEPTION_IF_NULL(data);
     SaveJsonData(data);
-  }
-
-  // Process overlapping time ranges.
-  GenerateSummaryData();
-  for (const auto &data_iter : summary_data_) {
-    for (const auto &data : data_iter.second) {
-      AnalyzeSummaryData(data);
-    }
+    AnalyzeSummaryData(data);
   }
 
   AddPythonSummaryData();
@@ -301,6 +301,7 @@ void ProfilerAnalyzer::EndStep() {
   DumpDetailData();
   DumpSummaryData();
 
+#ifdef WITH_BACKEND
   // Reset the saved data.
   step_time_ = 0;
   module_total_time_ = 0;
@@ -308,6 +309,7 @@ void ProfilerAnalyzer::EndStep() {
   summary_data_.clear();
   module_infos_.clear();
   stage_infos_.clear();
+#endif
 }
 
 void ProfilerAnalyzer::SaveJsonData(const ProfilerDataPtr &data) {
@@ -350,7 +352,7 @@ void ProfilerAnalyzer::AnalyzeSummaryData(const ProfilerDataPtr &data) {
   if (data->is_stage_) {
     AnalyzeStageSummaryData(data);
   } else {
-    AnalyzeModuleSummaryData(data);
+    AnalyzeEventSummaryData(data);
   }
 }
 
@@ -370,46 +372,37 @@ void ProfilerAnalyzer::AnalyzeStageSummaryData(const ProfilerDataPtr &data) {
 
 void ProfilerAnalyzer::AnalyzeModuleSummaryData(const ProfilerDataPtr &data) {
   MS_EXCEPTION_IF_NULL(data);
-  if (module_infos_.count(data->module_) > 0) {
-    auto &module_info = module_infos_[data->module_];
-    MS_EXCEPTION_IF_NULL(module_info);
-    MS_EXCEPTION_IF_NULL(module_info->module_statistics_info_);
-    if (!data->is_inner_event_) {
-      module_info->module_statistics_info_->AccumulateTime(data->dur_time_);
-      module_total_time_ += data->dur_time_;
-    }
-    return AnalyzeEventSummaryData(&module_info->event_infos_, data);
+  if (module_infos_.count(data->module_) == 0) {
+    auto module_info_ptr = std::make_shared<ProfilerModuleInfo>();
+    module_info_ptr->module_statistics_info_ =
+      std::make_shared<ProfilerStatisticsInfo>(kProfilerModuleString.at(data->module_));
+    (void)module_infos_.emplace(data->module_, module_info_ptr);
   }
 
-  auto module_info = std::make_shared<ProfilerModuleInfo>();
-  module_info->module_statistics_info_ =
-    std::make_shared<ProfilerStatisticsInfo>(kProfilerModuleString.at(data->module_));
-  if (!data->is_inner_event_) {
-    module_info->module_statistics_info_->AccumulateTime(data->dur_time_);
-    module_total_time_ += data->dur_time_;
-  }
-  (void)module_infos_.emplace(data->module_, module_info);
-  AnalyzeEventSummaryData(&module_info->event_infos_, data);
+  auto &module_info_ptr = module_infos_[data->module_];
+  module_info_ptr->module_statistics_info_->AccumulateTime(data->dur_time_);
+  module_total_time_ += data->dur_time_;
 }
 
-void ProfilerAnalyzer::AnalyzeEventSummaryData(std::map<ProfilerEvent, ProfilerEventInfoPtr> *const event_infos,
-                                               const ProfilerDataPtr &data) {
-  MS_EXCEPTION_IF_NULL(event_infos);
+void ProfilerAnalyzer::AnalyzeEventSummaryData(const ProfilerDataPtr &data) {
   MS_EXCEPTION_IF_NULL(data);
-  if (event_infos->count(data->event_) > 0) {
-    auto &event_info = (*event_infos)[data->event_];
-    MS_EXCEPTION_IF_NULL(event_info);
-    MS_EXCEPTION_IF_NULL(event_info->event_statistics_info_);
-    event_info->event_statistics_info_->AccumulateTime(data->dur_time_);
-    return AnalyzeOpSummaryData(&event_info->op_infos_, data);
+  if (module_infos_.count(data->module_) == 0) {
+    MS_LOG(ERROR) << "Summarize Unknown module : " << data->module_ << ", will skip current data.";
+    return;
   }
 
-  auto event_info = std::make_shared<ProfilerEventInfo>();
-  event_info->event_statistics_info_ =
-    std::make_shared<ProfilerStatisticsInfo>(kProfilerEventString.at(data->event_), data->is_inner_event_);
-  event_info->event_statistics_info_->AccumulateTime(data->dur_time_);
-  (void)event_infos->emplace(data->event_, event_info);
-  AnalyzeOpSummaryData(&event_info->op_infos_, data);
+  auto &module_info_ptr = module_infos_[data->module_];
+  auto event_infos_ptr = &(module_info_ptr->event_infos_);
+  if (event_infos_ptr->count(data->event_) == 0) {
+    auto event_info_ptr = std::make_shared<ProfilerEventInfo>();
+    event_info_ptr->event_statistics_info_ =
+      std::make_shared<ProfilerStatisticsInfo>(kProfilerEventString.at(data->event_), data->is_inner_event_);
+    (void)event_infos_ptr->emplace(data->event_, event_info_ptr);
+  }
+
+  auto &event_info_ptr = (*event_infos_ptr)[data->event_];
+  event_info_ptr->event_statistics_info_->AccumulateTime(data->dur_time_);
+  AnalyzeOpSummaryData(&event_info_ptr->op_infos_, data);
 }
 
 void ProfilerAnalyzer::AnalyzeOpSummaryData(mindspore::HashMap<std::string, ProfilerStatisticsInfoPtr> *const op_infos,

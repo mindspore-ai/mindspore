@@ -262,6 +262,12 @@ class COMMON_EXPORT ProfilerAnalyzer {
   uint64_t GetTimeStamp() const noexcept;
   std::string GetBriefName(const std::string &scope_name) const;
 
+  void set_step_time(uint64_t step_time) { step_time_ = step_time; }
+  void set_profiler_enable(bool profiler_enable) { profiler_enable_ = profiler_enable; }
+  const std::vector<ProfilerDataPtr> &data() const { return data_; }
+  const std::map<ProfilerModule, ProfilerModuleInfoPtr> &module_infos() const { return module_infos_; }
+  const std::map<ProfilerStage, ProfilerStatisticsInfoPtr> &stage_infos() const { return stage_infos_; }
+
  private:
   ProfilerAnalyzer() = default;
   ~ProfilerAnalyzer() = default;
@@ -269,14 +275,13 @@ class COMMON_EXPORT ProfilerAnalyzer {
 
   void Initialize();
 
+  void ProcessModuleSummaryData();
   // Process data.
   void SaveJsonData(const ProfilerDataPtr &data);
-  void GenerateSummaryData();
   void AnalyzeSummaryData(const ProfilerDataPtr &data);
   void AnalyzeStageSummaryData(const ProfilerDataPtr &data);
   void AnalyzeModuleSummaryData(const ProfilerDataPtr &data);
-  void AnalyzeEventSummaryData(std::map<ProfilerEvent, ProfilerEventInfoPtr> *const event_infos,
-                               const ProfilerDataPtr &data);
+  void AnalyzeEventSummaryData(const ProfilerDataPtr &data);
   void AnalyzeOpSummaryData(mindspore::HashMap<std::string, ProfilerStatisticsInfoPtr> *const op_infos,
                             const ProfilerDataPtr &data);
   void AddPythonSummaryData();
