@@ -29,11 +29,6 @@ namespace mindspore {
 namespace device {
 namespace cpu {
 template <typename Key, typename Value>
-CPUHashTable<Key, Value>::CPUHashTable(size_t value_dim) : value_dim_(value_dim), value_size_(0) {
-  (void)Initialize();
-}
-
-template <typename Key, typename Value>
 CPUHashTable<Key, Value>::CPUHashTable(size_t value_dim, const std::string &initializer)
     : value_dim_(value_dim), value_size_(0), initializer_(initializer), default_value_(0) {
   (void)Initialize();
@@ -343,7 +338,7 @@ HashTableExportData CPUHashTable<Key, Value>::ExportSliceFully(size_t begin, siz
   std::advance(begin_iter, begin);
   auto end_iter = values_.begin();
   std::advance(end_iter, end);
-  for (auto iter = begin_iter; iter != end_iter; iter++) {
+  for (auto iter = begin_iter; iter != end_iter; ++iter) {
     auto key = iter->first;
     auto value = iter->second.first;
     auto status = iter->second.second;
@@ -378,10 +373,10 @@ HashTableExportData CPUHashTable<Key, Value>::ExportSliceIncrementally(size_t be
   std::advance(end_iter, end);
 
   // 1. Count export number of all modified elememts.
-  size_t update_elements_size =
+  size_t update_elements_size = LongToSize(
     std::count_if(begin_iter, end_iter, [](typename std::unordered_map<Key, ValueStatusPair>::const_reference item) {
       return item.second.second != Status::kUnchanged;
-    });
+    }));
 
   auto keys = std::make_shared<std::vector<char>>(update_elements_size * sizeof(Key));
   auto keys_data = reinterpret_cast<Key *>(keys->data());
@@ -392,7 +387,7 @@ HashTableExportData CPUHashTable<Key, Value>::ExportSliceIncrementally(size_t be
 
   // 2. Export all modified elememts.
   size_t index = 0;
-  for (auto iter = begin_iter; iter != end_iter; iter++) {
+  for (auto iter = begin_iter; iter != end_iter; ++iter) {
     auto key = iter->first;
     auto value = iter->second.first;
     auto status = iter->second.second;

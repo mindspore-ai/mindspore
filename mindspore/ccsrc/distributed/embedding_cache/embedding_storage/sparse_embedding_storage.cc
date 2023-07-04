@@ -312,8 +312,8 @@ std::vector<std::shared_ptr<std::vector<char>>> SparseEmbeddingStorage<KeyType, 
   if (this->keys_in_storage_ == nullptr) {
     this->keys_in_storage_ = this->storage_->GetAllKeys();
     MS_EXCEPTION_IF_NULL(this->keys_in_storage_);
-    deduplicated_keys_num = std::count_if(this->keys_in_storage_->begin(), this->keys_in_storage_->end(),
-                                          [this](KeyType key) { return !this->cache_->Exists(key); });
+    deduplicated_keys_num = LongToSize(std::count_if(this->keys_in_storage_->begin(), this->keys_in_storage_->end(),
+                                                     [this](KeyType key) { return !this->cache_->Exists(key); }));
     if (deduplicated_keys_num == 0) {
       *last_slice = true;
       this->keys_in_storage_ = nullptr;

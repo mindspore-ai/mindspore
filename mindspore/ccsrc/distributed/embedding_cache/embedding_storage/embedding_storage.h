@@ -23,7 +23,6 @@
 #include "include/backend/distributed/embedding_cache/embedding_storage/abstract_embedding_storage.h"
 #include "distributed/embedding_cache/allocator.h"
 #include "distributed/embedding_cache/cache_strategy/cache.h"
-#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace distributed {

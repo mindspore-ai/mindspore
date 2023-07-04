@@ -23,7 +23,6 @@
 
 #include "distributed/embedding_cache/embedding_storage/embedding_storage.h"
 #include "runtime/device/hash_table.h"
-#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace distributed {

@@ -22,7 +22,6 @@
 
 #include "include/backend/distributed/persistent/storage/storage.h"
 #include "include/backend/device_address.h"
-#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace distributed {

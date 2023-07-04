@@ -52,7 +52,8 @@ TEST_F(TestSparseEmbeddingStorage, DISABLED_test_sparse_embedding_storage) {
     std::make_shared<CPUDeviceAddress>(embedding_table.get(), capacity * embedding_dim * sizeof(float));
   EXPECT_NE(device_address, nullptr);
   UserDataPtr user_data = std::make_shared<UserData>();
-  user_data->set<CPUHashTable<int, float>>(kUserDataData, std::make_shared<CPUHashTable<int, float>>(embedding_dim));
+  user_data->set<CPUHashTable<int, float>>(kUserDataData,
+                                           std::make_shared<CPUHashTable<int, float>>(embedding_dim, 0.0));
   device_address->set_user_data(user_data);
 
   EXPECT_NO_THROW(embed_storage.Initialize(device_address.get()));
@@ -125,7 +126,8 @@ TEST_F(TestSparseEmbeddingStorage, DISABLED_test_sparse_embedding_storage_export
     std::make_shared<CPUDeviceAddress>(embedding_table.get(), capacity * embedding_dim * sizeof(float));
   EXPECT_NE(device_address, nullptr);
   UserDataPtr user_data = std::make_shared<UserData>();
-  user_data->set<CPUHashTable<int, float>>(kUserDataData, std::make_shared<CPUHashTable<int, float>>(embedding_dim));
+  user_data->set<CPUHashTable<int, float>>(kUserDataData,
+                                           std::make_shared<CPUHashTable<int, float>>(embedding_dim, 0.0));
   device_address->set_user_data(user_data);
 
   EXPECT_NO_THROW(embed_storage.Initialize(device_address.get()));

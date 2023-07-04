@@ -163,7 +163,7 @@ class MS_CORE_API MapTensor final : public Tensor {
   /// \param[out] last_slice [bool *] Point a bool variable which indicates whether the slice by export is the last
   /// slice, that is, the export is complete and all slices are exported.
   /// \return The exported data.
-  ExportData ExportSlice(bool incremental, bool *last_slice);
+  ExportData ExportSlice(bool incremental, bool *last_slice) const;
 
   /// \brief Exported MapTensor data from device.
   ///

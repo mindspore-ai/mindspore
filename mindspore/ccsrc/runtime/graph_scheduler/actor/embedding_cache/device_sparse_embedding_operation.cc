@@ -183,7 +183,7 @@ void DeviceSparseEmbeddingOperation::GetRemoteEmbeddingSliceBound(
   MS_EXCEPTION_IF_NULL(remote_embedding_slice_bounds);
   // Sparse mode does not support multiple servers currently, so the id does not need to be split, and the id range is
   // specified from 0 to INTMAX .
-  remote_embedding_slice_bounds->emplace_back(0, INT32_MAX);
+  (void)remote_embedding_slice_bounds->emplace_back(0, INT32_MAX);
 }
 
 void DeviceSparseEmbeddingOperation::BuildEmbeddingCacheLookupKernel() {
