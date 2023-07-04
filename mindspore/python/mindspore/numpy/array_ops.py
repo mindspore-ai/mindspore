@@ -2603,8 +2603,8 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
             array1, ind1 = unique_w_ind(ar1)
             array2, ind2 = unique_w_ind(ar2)
         else:
-            array1 = unique(ar1)
-            array2 = unique(ar2)
+            array1 = F.unique(ar1)[0]
+            array2 = F.unique(ar2)[0]
     else:
         array1 = ar1.ravel()
         array2 = ar2.ravel()

@@ -21,7 +21,6 @@ from mindspore.common import Tensor
 from mindspore.ops import operations as P
 
 from mindspore.numpy.math_ops import _apply_tensor_op
-from mindspore.numpy.array_ops import unique
 from mindspore.numpy.array_creations import zeros, ones, asarray
 from mindspore.numpy.utils import _check_input_tensor, _to_tensor, _isnan
 from mindspore.numpy.utils_const import _raise_type_error, _check_same_type, \
@@ -927,7 +926,7 @@ def setdiff1d(ar1, ar2, assume_unique=False):
     if assume_unique:
         ar1 = ar1.ravel()
     else:
-        ar1 = unique(ar1).sort()[0]
-        ar2 = unique(ar2).sort()[0]
+        ar1 = F.unique(ar1)[0].sort()[0]
+        ar2 = F.unique(ar2)[0].sort()[0]
     mask = in1d(ar1, ar2, invert=True)
     return F.masked_select(ar1, mask)
