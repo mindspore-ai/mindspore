@@ -18,9 +18,9 @@
 namespace ge {
 IMPLEMT_COMMON_INFERFUNC(FlashAttentionInferShape) {
   TensorDesc output_desc = op.GetOutputDescByName("y");
-  output_desc.SetShape(op.GetInputDescByName("x1").GetShape());
-  output_desc.SetDataType(op.GetInputDescByName("x1").GetDataType());
-  output_desc.SetFormat(op.GetInputDescByName("x1").GetFormat());
+  output_desc.SetShape(op.GetInputDescByName("q").GetShape());
+  output_desc.SetDataType(op.GetInputDescByName("q").GetDataType());
+  output_desc.SetFormat(op.GetInputDescByName("q").GetFormat());
   auto ret = op.UpdateOutputDesc("y", output_desc);
   if (ret != GRAPH_SUCCESS) {
     return GRAPH_FAILED;

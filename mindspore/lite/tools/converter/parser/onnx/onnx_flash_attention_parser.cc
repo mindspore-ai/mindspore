@@ -26,8 +26,8 @@ namespace lite {
 PrimitiveCPtr OnnxFlashAttentionParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Custom>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  std::vector<std::string> input_name = {"x1", "x2", "x3", "x4"};
-  std::vector<std::string> output_name = {"output"};
+  std::vector<std::string> input_name = {"q", "k", "v", "attention_mask"};
+  std::vector<std::string> output_name = {"y"};
   prim->AddAttr("input_names", api::MakeValue(input_name));
   prim->AddAttr("output_names", api::MakeValue(output_name));
   prim->set_type("FlashAttention");
