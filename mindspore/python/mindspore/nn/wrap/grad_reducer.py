@@ -389,6 +389,7 @@ class DistributedGradReducer(Cell):
 
     def __init__(self, parameters, mean=None, degree=None, fusion_type=1, group=GlobalComm.WORLD_COMM_GROUP):
         super(DistributedGradReducer, self).__init__(auto_prefix=False)
+        self._check_parallel_mode()
         self.map_ = C.Map()
         self.mean = mean
         if mean is None:
@@ -455,3 +456,10 @@ class DistributedGradReducer(Cell):
                                                self.allreduce), self.allreduce_filter, grads)
         new_grad = self.map_(F.partial(_cast_datatype), datatypes, new_grad)
         return new_grad
+
+    def _check_parallel_mode(self):
+        """check parallel mode"""
+        parallel_mode = context.get_auto_parallel_context('parallel_mode')
+        if context.get_context('mode') == context.GRAPH_MODE and parallel_mode in (
+                context.ParallelMode.SEMI_AUTO_PARALLEL, context.ParallelMode.AUTO_PARALLEL):
+            raise RuntimeError("{} can not use DistributedGradReducer in graph mode".format(parallel_mode))
