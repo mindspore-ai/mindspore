@@ -668,19 +668,29 @@ bool EmbeddingCachePrefetchActor::PartitionIds(const int *ids, size_t ids_num,
   MS_ERROR_IF_NULL(ids);
   MS_ERROR_IF_NULL(slice_ids_list);
 
-  for (size_t i = 0; i < slice_ids_list->size(); i++) {
+  size_t partition_num = slice_ids_list->size();
+  // There is no need to partition ids for one server case.
+  if (partition_num == 1) {
+    std::vector<int> &slice_ids = slice_ids_list->front();
+    slice_ids.resize(ids_num);
+    auto ret = memcpy_s(slice_ids.data(), slice_ids.size() * sizeof(int), ids, ids_num * sizeof(int));
+    if (ret != EOK) {
+      MS_LOG(ERROR) << "Memcpy failed, errno[" << ret << "]";
+      return false;
+    }
+    return true;
+  }
+
+  for (size_t i = 0; i < partition_num; i++) {
     int begin = SizeToInt(remote_embedding_slice_bounds_[i].first);
     int end = SizeToInt(remote_embedding_slice_bounds_[i].second);
 
-    mindspore::HashSet<int> unique_ids;
+    std::vector<int> &slice_ids = slice_ids_list->at(i);
     (void)std::for_each(ids, ids + ids_num, [&](int id) {
       if (id >= begin && id <= end) {
-        (void)unique_ids.insert(id);
+        slice_ids.push_back(id);
       }
     });
-
-    std::vector<int> &slice_ids = slice_ids_list->at(i);
-    (void)std::for_each(unique_ids.begin(), unique_ids.end(), [&](int id) { slice_ids.push_back(id); });
   }
 
   return true;
@@ -700,8 +710,27 @@ bool EmbeddingCachePrefetchActor::PartitionIdsAndEmbeddings(const int *ids, size
     return true;
   }
 
-  size_t embedding_dim = (embeddings_len / ids_num) / sizeof(float);
   size_t partition_num = slice_ids_list->size();
+  // There is no need to partition ids and embeddings for one server case.
+  if (partition_num == 1) {
+    std::vector<int> &slice_ids = slice_ids_list->front();
+    std::vector<float> &slice_embeddings = slice_embeddings_list->front();
+    slice_ids.resize(ids_num);
+    slice_embeddings.resize(embeddings_len / sizeof(float));
+    auto ret = memcpy_s(slice_ids.data(), slice_ids.size() * sizeof(int), ids, ids_num * sizeof(int));
+    if (ret != EOK) {
+      MS_LOG(ERROR) << "Memcpy failed, errno[" << ret << "]";
+      return false;
+    }
+    ret = memcpy_s(slice_embeddings.data(), slice_embeddings.size() * sizeof(float), embeddings, embeddings_len);
+    if (ret != EOK) {
+      MS_LOG(ERROR) << "Memcpy failed, errno[" << ret << "]";
+      return false;
+    }
+    return true;
+  }
+
+  size_t embedding_dim = (embeddings_len / ids_num) / sizeof(float);
   for (size_t i = 0; i < partition_num; i++) {
     int begin = SizeToInt(remote_embedding_slice_bounds_[i].first);
     int end = SizeToInt(remote_embedding_slice_bounds_[i].second);
