@@ -136,6 +136,7 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/deconv2d_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/prelu_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/layernorm_fp32_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp32/ones_like_fp32_coder.cc
         #### nnacl fp32_grad coder
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32_grad/activation_grad_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32_grad/adam_coder.cc
