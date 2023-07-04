@@ -52,6 +52,7 @@ void ParallelThreadPoolManager::Init(bool enable_shared_thread_pool, const std::
 }
 
 void ParallelThreadPoolManager::SetHasIdlePool(std::string runner_id, bool is_idle) {
+  std::unique_lock<std::shared_mutex> l(pool_manager_mutex_);
   has_idle_pool_[runner_id] = is_idle;
 }
 
@@ -70,7 +71,8 @@ int ParallelThreadPoolManager::GetTaskNum(
     }
   }
   std::unique_lock<std::shared_mutex> l(pool_manager_mutex_);
-  if (runner_id.empty() || !enable_shared_thread_pool_[runner_id]) {
+  if (runner_id.empty() || enable_shared_thread_pool_.find(runner_id) == enable_shared_thread_pool_.end() ||
+      !enable_shared_thread_pool_[runner_id]) {
     THREAD_INFO("not enable shared parallel thread pool.");
     return -1;
   }
@@ -106,7 +108,8 @@ void ParallelThreadPoolManager::BindPoolToRunner(
       runner_id = it_id->second.at(kInnerRunnerID);
     }
   }
-  if (!enable_shared_thread_pool_[runner_id]) {
+  if (enable_shared_thread_pool_.find(runner_id) == enable_shared_thread_pool_.end() ||
+      !enable_shared_thread_pool_[runner_id]) {
     THREAD_ERROR("not use parallel thread pool shared.");
     return;
   }
@@ -118,6 +121,14 @@ void ParallelThreadPoolManager::BindPoolToRunner(
   auto item_runner = it_id->second.find(kInnerModelID);
   if (item_runner != it_id->second.end()) {
     model_id = std::atoi(it_id->second.at(kInnerModelID).c_str());
+  }
+  auto runner_id_pools_iter = runner_id_pools_.find(runner_id);
+  if (runner_id_pools_iter == runner_id_pools_.end()) {
+    return;
+  }
+  auto &runner_id_pools = runner_id_pools_iter->second;
+  if (static_cast<size_t>(model_id) >= runner_id_pools.size()) {
+    return;
   }
   runner_id_pools_[runner_id].at(model_id) = parallel_pool;
   auto all_workers = parallel_pool->GetParallelPoolWorkers();
@@ -138,39 +149,87 @@ bool ParallelThreadPoolManager::GetEnableSharedThreadPool(std::string runner_id)
 
 void ParallelThreadPoolManager::ActivatePool(const std::string &runner_id, int model_id) {
   std::shared_lock<std::shared_mutex> l(pool_manager_mutex_);
-  if (!enable_shared_thread_pool_[runner_id]) {
+  if (enable_shared_thread_pool_.find(runner_id) == enable_shared_thread_pool_.end() ||
+      !enable_shared_thread_pool_[runner_id]) {
     return;
   }
-  auto &pool = runner_id_pools_[runner_id][model_id];
+  if (idle_pool_num_.find(runner_id) == idle_pool_num_.end()) {
+    return;
+  }
+  auto runner_id_pools_iter = runner_id_pools_.find(runner_id);
+  if (runner_id_pools_iter == runner_id_pools_.end()) {
+    return;
+  }
   idle_pool_num_[runner_id]--;
-  pool->UseThreadPool(1);
-  auto &workers = pool_workers_[pool];
-  for (auto &worker : workers) {
-    worker->ActivateByOtherPoolTask();
+  auto &runner_id_pools = runner_id_pools_iter->second;
+  if (static_cast<size_t>(model_id) < runner_id_pools.size()) {
+    auto &pool = runner_id_pools_iter->second[model_id];
+    pool->UseThreadPool(1);
+
+    auto pool_workers_iter = pool_workers_.find(pool);
+    if (pool_workers_iter != pool_workers_.end()) {
+      auto &workers = pool_workers_iter->second;
+      for (auto &worker : workers) {
+        worker->ActivateByOtherPoolTask();
+      }
+    }
   }
 }
 
 void ParallelThreadPoolManager::SetFreePool(const std::string &runner_id, int model_id) {
   std::shared_lock<std::shared_mutex> l(pool_manager_mutex_);
-  if (!enable_shared_thread_pool_[runner_id]) {
+  if (enable_shared_thread_pool_.find(runner_id) == enable_shared_thread_pool_.end() ||
+      !enable_shared_thread_pool_[runner_id]) {
     return;
   }
-  auto &pool = runner_id_pools_[runner_id][model_id];
-  pool->UseThreadPool(-1);
-  idle_pool_num_[runner_id]++;
+  auto runner_id_pools_iter = runner_id_pools_.find(runner_id);
+  if (runner_id_pools_iter == runner_id_pools_.end()) {
+    return;
+  }
+  if (idle_pool_num_.find(runner_id) == idle_pool_num_.end()) {
+    return;
+  }
+  auto &runner_id_pools = runner_id_pools_iter->second;
+  if (static_cast<size_t>(model_id) < runner_id_pools.size()) {
+    auto &pool = runner_id_pools_iter->second[model_id];
+    pool->UseThreadPool(-1);
+    idle_pool_num_[runner_id]++;
+  }
 }
 
 ParallelThreadPool *ParallelThreadPoolManager::GetIdleThreadPool(const std::string &runner_id, ParallelTask *task) {
-  if (runner_worker_num_[runner_id] != worker_init_num_[runner_id] || idle_pool_num_[runner_id] <= 0) {
+  std::shared_lock<std::shared_mutex> l(pool_manager_mutex_);
+  auto runner_worker_num_iter = runner_worker_num_.find(runner_id);
+  auto worker_init_num_iter = worker_init_num_.find(runner_id);
+  if (runner_worker_num_iter == runner_worker_num_.end() || worker_init_num_iter == worker_init_num_.end() ||
+      runner_worker_num_iter->second != worker_init_num_iter->second) {
     return nullptr;
   }
-  std::shared_lock<std::shared_mutex> l(pool_manager_mutex_);
-  auto &all_pools = runner_id_pools_[runner_id];
+  auto idle_pool_num_iter = idle_pool_num_.find(runner_id);
+  if (idle_pool_num_iter == idle_pool_num_.end() || idle_pool_num_iter->second <= 0) {
+    return nullptr;
+  }
+
+  auto runner_id_pools_iter = runner_id_pools_.find(runner_id);
+  if (runner_id_pools_iter == runner_id_pools_.end()) {
+    return nullptr;
+  }
+  auto &all_pools = runner_id_pools_iter->second;
   for (int pool_index = all_pools.size() - 1; pool_index >= 0; pool_index--) {
     auto &pool = all_pools[pool_index];
     if (pool->IsIdlePool()) {
-      auto &workers = pool_workers_[pool];
-      for (size_t i = 0; i < workers.size() - remaining_thread_num_[runner_id]; i++) {
+      auto pool_workers_iter = pool_workers_.find(pool);
+      if (pool_workers_iter == pool_workers_.end()) {
+        pool->UseThreadPool(-1);
+        continue;
+      }
+      auto &workers = pool_workers_iter->second;
+      auto remaining_thread_num_iter = remaining_thread_num_.find(runner_id);
+      if (remaining_thread_num_iter == remaining_thread_num_.end()) {
+        pool->UseThreadPool(-1);
+        continue;
+      }
+      for (size_t i = 0; i < workers.size() - remaining_thread_num_iter->second; i++) {
         workers[i]->ActivateByOtherPoolTask(task);
       }
       return pool;
