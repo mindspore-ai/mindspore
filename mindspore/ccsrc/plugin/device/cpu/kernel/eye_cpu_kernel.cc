@@ -56,9 +56,6 @@ bool EyeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs
   S tmp_m = static_cast<S *>(inputs[1]->addr)[0];
   num_n_ = static_cast<int64_t>(tmp_n);
   num_m_ = static_cast<int64_t>(tmp_m);
-  if (num_n_ < 1) {
-    MS_EXCEPTION(ValueError) << "For Eye, n is " << num_n_ << ", but n should be greater than 0.";
-  }
 
   int64_t num_min = (num_n_ > num_m_) ? num_m_ : num_n_;
   auto ouput_ptr = outputs[0]->addr;

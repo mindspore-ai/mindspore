@@ -18,4 +18,4 @@ mindspore.ops.eye
 
     异常：
         - **TypeError** - `m` 或 `n` 不是int。
-        - **ValueError** - `m` 或 `n` 小于1。
+        - **ValueError** - `m` 或 `n` 小于0。

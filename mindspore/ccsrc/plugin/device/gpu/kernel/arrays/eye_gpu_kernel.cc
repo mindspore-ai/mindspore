@@ -54,9 +54,6 @@ int EyeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
   auto out_shape = outputs.at(kIndex0)->GetDeviceShapeAdaptively();
   num_n_ = out_shape[kIndex0];
   num_m_ = out_shape[kIndex1];
-  if (num_n_ < 1) {
-    MS_EXCEPTION(ValueError) << "For Eye, n is " << num_n_ << ", but n should be greater than 0.";
-  }
   return 0;
 }
 
