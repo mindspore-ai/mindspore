@@ -160,6 +160,13 @@ int FullQuantQuantizer::DoParameterNodeQuant(const CNodePtr &cnode, const Parame
       return ret;
     }
   }
+  // support shared weight
+  auto tensor_info = input_node->default_param()->cast<tensor::TensorPtr>();
+  if (tensor_info->quant_params().empty()) {
+    return RET_NO_CHANGE;
+  }
+  auto quant_params = quant::ConvertQuantizationParamToQuantParamT(tensor_info->quant_params().front());
+  weight_quant_params_bak_[input_node->fullname_with_scope()] = quant_params;
   return RET_OK;
 }
 
@@ -223,6 +230,29 @@ int FullQuantQuantizer::QuantNodeCNode(const PrimitivePtr &input_cnode_primitive
   return RET_OK;
 }
 
+int FullQuantQuantizer::QuantValueNode(const CNodePtr &cnode, const AnfNodePtr &input_node, size_t i) {
+  if (init_param_.weight_data_type_ == kTypeUnknown) {
+    MS_LOG(INFO) << "weight parameters do not need to be quantified.";
+    return RET_NO_CHANGE;
+  }
+  auto value_node = input_node->cast<ValueNodePtr>();
+  auto ret = DoValueNodeQuant(cnode, value_node, i);
+  if (ret == RET_NO_CHANGE) {
+    return RET_NO_CHANGE;
+  } else if (ret != RET_OK) {
+    MS_LOG(ERROR) << input_node->fullname_with_scope() << " Do value node quant failed.";
+    return ret;
+  }
+  // support shared weight
+  auto tensor_info = value_node->value()->cast<tensor::TensorPtr>();
+  if (tensor_info->quant_params().empty()) {
+    return RET_NO_CHANGE;
+  }
+  auto quant_params = quant::ConvertQuantizationParamToQuantParamT(tensor_info->quant_params().front());
+  weight_quant_params_bak_[input_node->fullname_with_scope()] = quant_params;
+  return RET_OK;
+}
+
 int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
   auto inputs_diverg_info = calibrator_->GetInputDivergInfo();
@@ -274,33 +304,14 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
         MS_LOG(ERROR) << input_node->fullname_with_scope() << " Do parameter node quant failed.";
         return ret;
       }
-      // support shared weight
-      auto tensor_info = parameter_node->default_param()->cast<tensor::TensorPtr>();
-      if (tensor_info->quant_params().empty()) {
-        continue;
-      }
-      auto quant_params = quant::ConvertQuantizationParamToQuantParamT(tensor_info->quant_params().front());
-      weight_quant_params_bak_[input_node->fullname_with_scope()] = quant_params;
     } else if (input_node->isa<mindspore::ValueNode>()) {
-      if (init_param_.weight_data_type_ == kTypeUnknown) {
-        MS_LOG(INFO) << "weight parameters do not need to be quantified.";
-        continue;
-      }
-      auto value_node = input_node->cast<ValueNodePtr>();
-      ret = DoValueNodeQuant(cnode, value_node, i);
+      ret = QuantValueNode(cnode, input_node, i);
       if (ret == RET_NO_CHANGE) {
         continue;
       } else if (ret != RET_OK) {
-        MS_LOG(ERROR) << input_node->fullname_with_scope() << " Do value node quant failed.";
+        MS_LOG(ERROR) << input_node->fullname_with_scope() << " Do Value node quant failed.";
         return ret;
       }
-      // support shared weight
-      auto tensor_info = value_node->value()->cast<tensor::TensorPtr>();
-      if (tensor_info->quant_params().empty()) {
-        continue;
-      }
-      auto quant_params = quant::ConvertQuantizationParamToQuantParamT(tensor_info->quant_params().front());
-      weight_quant_params_bak_[input_node->fullname_with_scope()] = quant_params;
     } else {
       MS_LOG(ERROR) << input_node->fullname_with_scope() << ":" << input_node->type_name() << " is not support type";
       return RET_ERROR;
