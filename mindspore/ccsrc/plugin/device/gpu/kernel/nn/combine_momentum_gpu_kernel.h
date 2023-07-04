@@ -32,7 +32,7 @@ template <typename T, typename S, typename G>
 class CombineMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   CombineMomentumGpuKernelMod()
-      : element_num_(1), combine_num_(0), input_num_(6), is_null_input_(false), kernel_name_("CombineMomentum") {}
+      : element_num_(1), combine_num_(0), input_num_(0), is_null_input_(false), kernel_name_("CombineMomentum") {}
   ~CombineMomentumGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,

@@ -26,7 +26,7 @@ namespace elementwise {
 // the maximum number of registers that can be used by each thread is 255.
 // So, kThreadsPerBlock = 64 * 1024 / 255 = 256.
 // Refer from https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capabilities
-constexpr uint kThreadsPerBlock = 512;
+constexpr uint kThreadsPerBlock = 256;
 // An empirical parameter
 constexpr uint kWaves = 32;
 constexpr uint kStride = 2;
