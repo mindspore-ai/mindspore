@@ -22,8 +22,13 @@
 #include "mindspore/core/ops/random_ops.h"
 #include "mindspore/core/ops/lite_ops.h"
 #include "mindspore/core/ops/array_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
 #include "ops/resize.h"
 #include "ops/random_normal.h"
+#include "ops/roi_align.h"
+#include "ops/concat.h"
+#include "ops/reshape.h"
+#include "ops/cast.h"
 #include "include/errorcode.h"
 #include "nnacl/op_base.h"
 #include "tools/common/tensor_util.h"
@@ -33,6 +38,31 @@
 namespace mindspore::lite {
 namespace {
 const std::vector<int> kNH2NCPerm = {0, 3, 1, 2};
+const int kInputNum2 = 2;
+const int kInputNum3 = 3;
+const int kInputNum4 = 4;
+
+CNodePtr NewReshapeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, const std::vector<int> &shape) {
+  MS_ASSERT(func_graph != nullptr);
+  MS_ASSERT(input_node != nullptr);
+  auto reshape_prim = std::make_shared<ops::Reshape>();
+  if (reshape_prim == nullptr) {
+    MS_LOG(ERROR) << "create reshape failed.";
+    return nullptr;
+  }
+  auto prim_c = reshape_prim->GetPrim();
+  prim_c->set_attr("shape", MakeValue(shape));
+  ValueNodePtr value_node = NewValueNode(prim_c);
+  MS_CHECK_TRUE_MSG(value_node != nullptr, nullptr, "Create valuenode return nullptr");
+  auto new_parameter = opt::BuildIntVecParameterNode(func_graph, shape, input_node->fullname_with_scope() + "_reshape");
+  MS_CHECK_TRUE_MSG(new_parameter != nullptr, nullptr, "Create parameter return nullptr");
+  new_parameter->set_name(input_node->fullname_with_scope() + "_reshape");
+  std::vector<AnfNodePtr> op_inputs = {value_node, input_node, new_parameter};
+  auto reshape = func_graph->NewCNode(op_inputs);
+  MS_CHECK_TRUE_MSG(reshape != nullptr, nullptr, "Create cnode return nullptr");
+  reshape->set_fullname_with_scope(input_node->fullname_with_scope() + "_reshape");
+  return reshape;
+}
 
 STATUS AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int input_num,
                       const std::string &attr_name) {
@@ -457,6 +487,64 @@ STATUS AdjustGatherD(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   cnode->set_inputs(new_inputs);
   return RET_OK;
 }
+
+STATUS AdjustROIAlign(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
+  if (cnode->inputs().size() != kInputNum4) {
+    MS_LOG(INFO) << "RoiAlign input size is not 3, does not need to adjust.";
+    return RET_OK;
+  }
+  auto rois = cnode->inputs()[kInputNum2];
+  auto batch_indices = cnode->inputs()[kInputNum3];
+  auto abstract = batch_indices->abstract();
+  auto cast_node =
+    opt::GenCastNode(func_graph, batch_indices, cnode->fullname_with_scope() + "_Cast", kNumberTypeFloat32, abstract);
+  if (cast_node == nullptr) {
+    MS_LOG(ERROR) << "Create cast node failed.";
+    return RET_ERROR;
+  }
+  std::string batch_shape = cast_node->Shape()->ToString();
+
+  batch_shape.erase(std::remove(batch_shape.begin(), batch_shape.end(), '('), batch_shape.end());
+  batch_shape.erase(std::remove(batch_shape.begin(), batch_shape.end(), ')'), batch_shape.end());
+
+  int batch_shape_num;
+  try {
+    batch_shape_num = std::stoi(batch_shape);
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Get shape of batch_indices failed. " << e.what();
+    return RET_ERROR;
+  }
+
+  std::vector<int> shape = {batch_shape_num, 1};
+  auto new_reshape_node = NewReshapeNode(func_graph, cast_node, shape);
+  if (new_reshape_node == nullptr) {
+    MS_LOG(ERROR) << "Create reshape node failed.";
+    return RET_ERROR;
+  }
+  auto concat_prim = std::make_shared<ops::Concat>();
+  MS_CHECK_TRUE_MSG(concat_prim != nullptr, RET_ERROR, "Create concat prim failed");
+  auto concat_prim_c = concat_prim->GetPrim();
+  MS_CHECK_TRUE_MSG(concat_prim_c != nullptr, RET_ERROR, "Create concat primc failed");
+  concat_prim->set_axis(1);
+  ValueNodePtr value_node = NewValueNode(concat_prim_c);
+  MS_CHECK_TRUE_MSG(value_node != nullptr, RET_ERROR, "Create value node failed");
+  std::vector<AnfNodePtr> op_inputs = {value_node, new_reshape_node, rois};
+  auto new_concat_node = func_graph->NewCNode(op_inputs);
+  if (new_concat_node == nullptr) {
+    MS_LOG(ERROR) << "Create concat node failed.";
+    return RET_ERROR;
+  }
+  new_concat_node->set_fullname_with_scope(cnode->fullname_with_scope() + "_Concat");
+
+  std::vector<AnfNodePtr> new_inputs;
+  new_inputs.push_back(cnode->inputs()[FIRST_INPUT]);
+  new_inputs.push_back(cnode->inputs()[SECOND_INPUT]);
+  new_inputs.push_back(new_concat_node);
+  cnode->set_inputs(new_inputs);
+  opt::UpdateManager(func_graph);
+  return RET_OK;
+}
 }  // namespace
 
 bool OnnxInputAdjust::Adjust(const FuncGraphPtr &func_graph, const converter::ConverterParameters &flag) {
@@ -502,6 +590,8 @@ bool OnnxInputAdjust::Adjust(const FuncGraphPtr &func_graph, const converter::Co
       status = AdjustGatherD(func_graph, cnode);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimUnsqueeze)) {
       status = AdjustUnsqueeze(&need_update_manager, cnode);
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimROIAlign)) {
+      status = AdjustROIAlign(func_graph, cnode);
     } else {
       continue;
     }

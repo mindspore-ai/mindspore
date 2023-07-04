@@ -119,7 +119,7 @@ int64_t ROIAlign::get_pooled_height() const {
 }
 
 void ROIAlign::set_pooled_width(const int64_t pooled_width) {
-  (void)this->AddAttr(kPooledHeight, api::MakeValue(pooled_width));
+  (void)this->AddAttr(kPooledWidth, api::MakeValue(pooled_width));
 }
 
 int64_t ROIAlign::get_pooled_width() const {
