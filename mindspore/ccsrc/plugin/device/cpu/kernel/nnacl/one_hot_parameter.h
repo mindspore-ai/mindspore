@@ -19,14 +19,8 @@
 #include "nnacl/op_base.h"
 
 typedef struct OneHotParameter {
-  // Primitive parameter
   OpParameter op_parameter_;
   int axis_;
-  // other parameter
-  int depth_;
-  int outer_size_;
-  int inner_size_;
-  bool support_neg_index_;  // if true, support neg index in indices tensor; if false, set off_value on neg index.
 } OneHotParameter;
 
 #endif  // NNACL_ONE_HOT_PARAMETER_H_

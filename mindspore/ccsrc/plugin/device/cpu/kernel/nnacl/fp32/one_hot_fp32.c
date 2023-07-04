@@ -18,7 +18,7 @@
 #include "nnacl/errorcode.h"
 
 int OneHotToFp32(const int32_t *indices, float on_value, float off_value, float *output,
-                 const OneHotParameter *one_hot_param, const int tid, const int thread_num) {
+                 const OneHotStruct *one_hot_param, const int tid, const int thread_num) {
   if (indices == NULL || one_hot_param == NULL || output == NULL) {
     return NNACL_NULL_PTR;
   }

@@ -20,6 +20,7 @@
 #include "nnacl/fp32/one_hot_fp32.h"
 #include "mindspore/lite/src/litert/kernel_registry.h"
 #include "schema/ops_generated.h"
+#include "nnacl/nnacl_manager.h"
 
 namespace mindspore {
 
@@ -61,20 +62,27 @@ void TestOneHotFp32::Prepare(const std::vector<int> &indices_shape, int *indices
   indices_tensor_.set_shape(indices_shape);
   indices_tensor_.set_data(indices_data);
 
+  depth_tensor_.set_data_type(kNumberTypeInt32);
   depth_tensor_.set_data(depth);
+
   off_on_tensor_.set_data_type(kNumberTypeFloat32);
   off_on_tensor_.set_data(off_on_value);
 
+  out_tensor_.set_data_type(kNumberTypeFloat32);
   out_tensor_.set_shape(output_shape);
   out_tensor_.set_data(output_data);
 
   param_ = reinterpret_cast<OneHotParameter *>(malloc(sizeof(OneHotParameter)));
+  param_->op_parameter_.type_ = PrimType_OneHot;
+  param_->op_parameter_.thread_num_ = thread_num;
   param_->axis_ = axis;
   ctx_ = lite::InnerContext();
   ctx_.thread_num_ = thread_num;
   ctx_.Init();
-  creator_ = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  kernel_ = creator_(inputs_, outputs_, reinterpret_cast<OpParameter *>(param_), &ctx_, desc);
+
+  kernel_ = nnacl::NNACLKernelRegistry(&param_->op_parameter_, inputs_, outputs_, &ctx_, desc);
+  ASSERT_NE(kernel_, nullptr);
+
   auto ret = kernel_->Prepare();
   EXPECT_EQ(0, ret);
 }

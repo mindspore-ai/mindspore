@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef NNACL_FP16_ONE_HOT_FP16_H_
-#define NNACL_FP16_ONE_HOT_FP16_H_
+#ifndef NNACL_KERNEL_ONE_HOT_H_
+#define NNACL_KERNEL_ONE_HOT_H_
 
-#include <arm_neon.h>
 #include "nnacl/op_base.h"
-#include "nnacl/one_hot_parameter.h"
-#include "nnacl/kernel/one_hot.h"
+#include "nnacl/tensor_c.h"
+#include "nnacl/kernel.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-int OneHotToFp16(const int *indices, float16_t on_value, float16_t off_value, float16_t *output,
-                 const OneHotStruct *one_hot_param, const int tid, const int thread_num);
-#ifdef __cplusplus
-}
-#endif
+typedef struct OneHotStruct {
+  KernelBase base_;
+  int axis_;
+  int depth_;
+  int outer_size_;
+  int inner_size_;
+  bool support_neg_index_;
+  float on_value_;
+  float off_value_;
+} OneHotStruct;
 
-#endif  //  NNACL_FP16_ONE_HOT_FP16_H_
+KernelBase *CreateOneHot(OpParameter *param, int data_type);
+
+#endif  // NNACL_KERNEL_ONE_HOT_H_

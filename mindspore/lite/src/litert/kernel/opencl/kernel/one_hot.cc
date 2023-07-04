@@ -81,12 +81,12 @@ int OneHotOpenCLKernel::InitWeights() {
   if (in_tensors_.size() == INPUT_TENSOR_SIZE_3) {  // onnx
     off_value_ = static_cast<float *>(in_tensors_[DIMENSION_2D]->data())[0];
     on_value_ = static_cast<float *>(in_tensors_[DIMENSION_2D]->data())[1];
-    param_->support_neg_index_ = true;
+    support_neg_index_ = true;
   }
   if (in_tensors_.size() == INPUT_TENSOR_SIZE_4) {  // tf
     on_value_ = static_cast<float *>(in_tensors_[DIMENSION_2D]->data())[0];
     off_value_ = static_cast<float *>(in_tensors_[DIMENSION_3D]->data())[0];
-    param_->support_neg_index_ = false;
+    support_neg_index_ = false;
   }
   MS_ASSERT(off_value_);
   MS_ASSERT(on_value_);
@@ -122,7 +122,7 @@ int OneHotOpenCLKernel::SetConstArgs() {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx, static_cast<int>(param_->support_neg_index_)) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx, static_cast<int>(support_neg_index_)) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
