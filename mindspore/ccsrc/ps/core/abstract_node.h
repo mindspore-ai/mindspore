@@ -25,7 +25,6 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "include/backend/visible.h"
 #include "include/backend/distributed/ps/constants.h"
 #include "ps/core/communicator/communicator_base.h"
 #include "ps/core/communicator/message.h"
