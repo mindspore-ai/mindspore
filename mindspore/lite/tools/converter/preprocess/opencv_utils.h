@@ -15,6 +15,7 @@
  */
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_OPENCV_UTILS_H_
 #define MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_OPENCV_UTILS_H_
+#ifdef MSLITE_DEPS_OPENCV
 #include <string>
 #include <opencv2/opencv.hpp>
 #include "tools/converter/preprocess/preprocess_param.h"
@@ -32,4 +33,5 @@ int GetMatData(const cv::Mat &mat, void **data, size_t *size);
 }  // namespace preprocess
 }  // namespace lite
 }  // namespace mindspore
+#endif
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_OPENCV_UTILS_H_

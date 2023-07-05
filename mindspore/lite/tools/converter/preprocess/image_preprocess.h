@@ -18,12 +18,15 @@
 
 #include <vector>
 #include <string>
+#ifdef MSLITE_DEPS_OPENCV
 #include <opencv2/opencv.hpp>
+#endif
 #include "tools/converter/preprocess/preprocess_param.h"
 #include "include/api/model.h"
 namespace mindspore {
 namespace lite {
 namespace preprocess {
+#ifdef MSLITE_DEPS_OPENCV
 int ReadImage(const std::string &image_path, cv::Mat *image);
 
 int DecodeBuffer(const unsigned char *buffer, int length, cv::Mat *image);
@@ -36,14 +39,15 @@ int Resize(cv::Mat *image, int width, int height, cv::InterpolationFlags resize_
 
 int CenterCrop(cv::Mat *image, int width, int height);
 
+int ImagePreProcess(const ImagePreProcessParam &image_preprocess_param, cv::Mat *image, void **data, size_t *size);
+#endif
+
 // NOTE:`data` must be use delete[] to free buffer.
 int PreProcess(const DataPreProcessParam &data_pre_process_param, const std::string &input_name, size_t image_index,
                void **data, size_t *size);
 
 int PreProcess(const preprocess::DataPreProcessParam &data_pre_process_param, const std::string &input_name,
                size_t image_index, mindspore::MSTensor *tensor);
-
-int ImagePreProcess(const ImagePreProcessParam &image_preprocess_param, cv::Mat *image, void **data, size_t *size);
 
 }  // namespace preprocess
 }  // namespace lite

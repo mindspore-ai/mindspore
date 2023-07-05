@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#ifdef MSLITE_DEPS_OPENCV
 #include "tools/converter/preprocess/opencv_utils.h"
 #include <vector>
 #include "src/common/log_adapter.h"
@@ -87,3 +87,4 @@ int GetMatData(const cv::Mat &mat, void **data, size_t *size) {
 }  // namespace preprocess
 }  // namespace lite
 }  // namespace mindspore
+#endif

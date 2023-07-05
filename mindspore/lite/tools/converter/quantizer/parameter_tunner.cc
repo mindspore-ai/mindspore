@@ -23,7 +23,9 @@
 #include <algorithm>
 #include "tools/converter/preprocess/cv_calib_data.h"
 #include "tools/converter/preprocess/image_preprocess.h"
+#ifdef MSLITE_DEPS_OPENCV
 #include "tools/converter/preprocess/opencv_utils.h"
+#endif
 #include "tools/converter/quantizer/quantize_util.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
 #include "tools/converter/export_model.h"
@@ -172,6 +174,7 @@ int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph
   return RET_OK;
 }
 
+#ifdef MSLITE_DEPS_OPENCV
 static int PrepareSingleImage(const uint8_t *buf, int len, const std::vector<int64_t> &shape, uint8_t *out_buf,
                               size_t *out_len) {
   cv::Mat mat;
@@ -264,6 +267,7 @@ static int GenerateCvData(mindspore::MSTensor *tensor) {
   }
   return RET_OK;
 }
+#endif
 
 int ParameterOptimizer::OriginModelInference(const FuncGraphPtr &func_graph,
                                              const std::shared_ptr<ConverterPara> &param,
@@ -302,8 +306,10 @@ int ParameterOptimizer::OriginModelInference(const FuncGraphPtr &func_graph,
           ((input.Shape().at(kNHWC_C) == kOneChannel) || (input.Shape().at(kNHWC_C) == kThreeChannels) ||
            (input.Shape().at(kNHWC_C) == kSixChannels)) &&
           (input.DataType() == DataType::kNumberTypeFloat32)) {
+#ifdef MSLITE_DEPS_OPENCV
         ret = GenerateCvData(&input);
       } else {
+#endif
         ret = GenerateRandomData(&input);
       }
     }

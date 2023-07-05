@@ -57,6 +57,7 @@ option(MSLITE_ENABLE_MODEL_OBF "enable model obfuscation" off)
 option(MSLITE_ENABLE_MODEL_PRE_INFERENCE "enable model do pre-inference when Build interface is called" off)
 option(MSLITE_EXPORT_COMPUTE_IR "export graph structure dotfile when debug mode" off)
 option(MSLITE_ENABLE_PACKAGE_WHEEL "enable package python wheel" off)
+option(MSLITE_ENABLE_OPENCV "enable opencv" on)
 
 #Option that can be configured through manually
 option(ENABLE_VERBOSE "" off)
@@ -197,6 +198,9 @@ if(DEFINED ENV{MSLITE_ENABLE_ACL})
 endif()
 if(DEFINED ENV{MSLITE_ENABLE_ACL_QUANT_PARAM})
     set(MSLITE_ENABLE_ACL_QUANT_PARAM $ENV{MSLITE_ENABLE_ACL_QUANT_PARAM})
+endif()
+if(DEFINED ENV{MSLITE_ENABLE_OPENCV})
+    set(MSLITE_ENABLE_OPENCV $ENV{MSLITE_ENABLE_OPENCV})
 endif()
 if(DEFINED ENV{MSLITE_ENABLE_MODEL_ENCRYPTION})
     if((${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND PLATFORM_X86_64) OR (
@@ -542,6 +546,7 @@ message(STATUS "\tMSLITE_ENABLE_MODEL_OBF                    = \t${MSLITE_ENABLE
 message(STATUS "\tMSLITE_ENABLE_MODEL_PRE_INFERENCE          = \t${MSLITE_ENABLE_MODEL_PRE_INFERENCE}")
 message(STATUS "\tMSLITE_EXPORT_COMPUTE_IR                   = \t${MSLITE_EXPORT_COMPUTE_IR}")
 message(STATUS "\tMSLITE_ENABLE_PACKAGE_WHEEL                = \t${MSLITE_ENABLE_PACKAGE_WHEEL}")
+message(STATUS "\tMSLITE_ENABLE_OPENCV                       = \t${MSLITE_ENABLE_OPENCV}")
 
 if((MSLITE_ENABLE_CONVERTER OR MSLITE_ENABLE_TESTCASES) AND (
         NOT MSLITE_ENABLE_MINDRT
@@ -844,7 +849,10 @@ if(NOT APPLE)
 endif()
 
 if(MSLITE_ENABLE_CONVERTER OR MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
-    set(MSLITE_DEPS_OPENCV on)
+    if(MSLITE_ENABLE_OPENCV)
+        set(MSLITE_DEPS_OPENCV on)
+        add_definitions(-DMSLITE_DEPS_OPENCV)
+    endif()
     set(MSLITE_DEPS_EIGEN on)
 endif()
 
