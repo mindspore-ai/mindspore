@@ -194,6 +194,9 @@ def make_tensor(a, dtype=mstype.int64, data_shape=None, dim_size=None):
     if dim_size is not None:
         a = check_range(a, dim_size)
 
+    if isinstance(a, int):
+        return P.ScalarToTensor()(a, dtype)
+
     if isinstance(a, (list, tuple)):
         # Convert all tuple/nested tuples to lists
         a = _deep_list(a, dim_size)
