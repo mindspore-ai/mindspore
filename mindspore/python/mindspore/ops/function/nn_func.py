@@ -5199,7 +5199,7 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     if not isinstance(bias, Tensor):
         raise TypeError(f"For 'conv1d', the 'bias' must be a Tensor, but got {type(bias)}.")
     if bias.shape[0] != out_channel:
-        raise TypeError(f"For 'conv1d',  given weight of size {weight_shape}, expected bias to be 1-dimensional with " \
+        raise ValueError(f"For 'conv1d', given weight of size {weight_shape}, expected bias to be 1-dimensional with " \
                         f"{out_channel} elements, but got bias of size {bias.shape[0]} instead.")
     output = bias_add(squeezed_conv_res, bias)
     return output
@@ -5326,7 +5326,7 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     if not isinstance(bias, Tensor):
         raise TypeError(f"For 'conv2d', the 'bias' must be a Tensor, but got {type(bias)}.")
     if bias.shape[0] != out_channel:
-        raise TypeError(f"For 'conv2d',  Given weight of size {weight_shape}, expected bias to be 1-dimensional with " \
+        raise ValueError(f"For 'conv2d', Given weight of size {weight_shape}, expected bias to be 1-dimensional with " \
                         f"{out_channel} elements, but got bias of size {bias.shape[0]} instead.")
     conv_result = conv(input, weight)
     output = bias_add(conv_result, bias)
