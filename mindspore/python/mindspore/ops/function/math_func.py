@@ -5334,7 +5334,7 @@ def logspace(start, end, steps, base=10, *, dtype=mstype.float32):
         >>> from mindspore import Tensor, ops
         >>> start = Tensor(1, mindspore.float32)
         >>> end = Tensor(10, mindspore.float32)
-        >>> output = ops.logspace(start, end, steps = 10, base = 10, dtype=mstype.float32)
+        >>> output = ops.logspace(start, end, steps = 10, base = 10, dtype=mindspore.float32)
         >>> print(output)
         [1.e+01 1.e+02 1.e+03 1.e+04 1.e+05 1.e+06 1.e+07 1.e+08 1.e+09 1.e+10]
     """
@@ -11453,7 +11453,7 @@ def isposinf(input):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops
+        >>> from mindspore import ops, Tensor
         >>> from mindspore import dtype as mstype
         >>> output = ops.isposinf(Tensor([[-float("inf"), float("inf")], [1, float("inf")]], mstype.float32))
         >>> print(output)
@@ -11481,7 +11481,7 @@ def isneginf(input):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import ops
+        >>> from mindspore import ops, Tensor
         >>> from mindspore import dtype as mstype
         >>> output = ops.isneginf(Tensor([[-float("inf"), float("inf")], [1, -float("inf")]], mstype.float32))
         >>> print(output)

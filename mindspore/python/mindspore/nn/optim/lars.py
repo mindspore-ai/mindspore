@@ -87,7 +87,7 @@ class LARS(Optimizer):
     :math:`\gamma` represents `learning_rate` in `optimizer`, :math:`\eta` represents `coefficient`.
 
     Args:
-        optimizer (Optimizer): MindSpore optimizer for which to wrap and modify gradients.
+        optimizer (:class:`mindspore.nn.Optimizer`): MindSpore optimizer for which to wrap and modify gradients.
         epsilon (float): Term added to the denominator to improve numerical stability. Default: ``1e-05`` .
         coefficient (float): Trust coefficient for calculating the local learning rate. Default: ``0.001`` .
         use_clip (bool): Whether to use clip operation for calculating the local learning rate. Default: ``False`` .

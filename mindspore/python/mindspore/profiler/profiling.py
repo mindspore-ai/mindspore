@@ -523,7 +523,8 @@ class Profiler:
 
         Args:
             offline_path (Union[str, None]): The data path which need to be analysed with offline mode. Offline mode is
-            used in abnormal exit scenario. This parameter should be set to None for online mode. Default: None.
+                used in abnormal exit scenario. This parameter should be set to ``None`` for online mode.
+                Default: ``None``.
         """
         if offline_path:
             _offline_parse(offline_path)

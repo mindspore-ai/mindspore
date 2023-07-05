@@ -463,7 +463,7 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
 
     Args:
         network (Cell): Definition of the network.
-        optimizer (Optimizer): Define the optimizer to update the Parameter.
+        optimizer (:class:`mindspore.nn.Optimizer`): Define the optimizer to update the Parameter.
         loss_fn (Union[None, Cell]): Define the loss function. If None, the `network` should have the loss inside.
             Default: ``None`` .
         level (str): Supports ['O0', 'O1', 'O2', 'O3', 'auto']. Default: ``'O0'`` .

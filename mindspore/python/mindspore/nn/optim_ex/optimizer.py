@@ -31,7 +31,8 @@ __all__ = ['Optimizer']
 
 
 class Optimizer(Cell):
-    r"""Base class for all optimizers.
+    r"""
+    Base class for all optimizers.
 
     .. warning::
         This is an experimental optimizer API that is subject to change.
@@ -74,7 +75,8 @@ class Optimizer(Cell):
         self.lrs = ParameterTuple(self.lrs)
 
     def add_param_group(self, group_id, param_group):
-        r"""Add a param group to the :class:`Optimizer` s `param_groups`.
+        r"""
+        Add a param group to the `Optimizer.param_groups`.
 
         Args:
             group_id(int): Specifies the group index.

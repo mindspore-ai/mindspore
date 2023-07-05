@@ -861,7 +861,7 @@ def chunk(input, chunks, axis=0):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import ops
+        >>> from mindspore import ops, Tensor
         >>> input_x = np.arange(9).astype("float32")
         >>> output = ops.chunk(Tensor(input_x), 3)
         >>> print(output)
@@ -5653,7 +5653,7 @@ def split(tensor, split_size_or_sections, axis=0):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import ops
+        >>> from mindspore import ops, Tensor
         >>> input_x = np.arange(9).astype("float32")
         >>> output = ops.split(Tensor(input_x), 3)
         >>> print(output)
