@@ -21,8 +21,10 @@ from mindspore.ops.operations import _inner_ops as inner
 import mindspore.nn as nn
 import mindspore.context as context
 
+
 def sequence_mask(x, maxlen):
     return C.sequence_mask(Tensor(x.astype(np.int32)), maxlen)
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -36,6 +38,7 @@ def test_sequence_mask_1d():
                                     [True, True, True, False],
                                     [True, False, False, False]]))
     np.testing.assert_array_equal(expected_out.asnumpy(), ms_out.asnumpy())
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
@@ -55,6 +58,7 @@ def test_sequence_mask_2d():
                                      [True, True, False, False, False, False]]]))
     np.testing.assert_array_equal(expected_out.asnumpy(), ms_out.asnumpy())
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -71,6 +75,7 @@ def test_sequence_mask_3d():
 
     np.testing.assert_array_equal(expected_out.asnumpy(), ms_out.asnumpy())
 
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -81,11 +86,12 @@ def test_sequence_mask_maxlen_1():
                   [[0, 1], [0, 1]]])
     maxlen = 1
     ms_out = sequence_mask(a, maxlen)
-    expected_out = Tensor(np.array([[[[False], [True]], [[True], [True,]]],
+    expected_out = Tensor(np.array([[[[False], [True]], [[True], [True]]],
                                     [[[True], [False]], [[True], [True]]],
                                     [[[False], [True]], [[False], [True]]]]))
 
     np.testing.assert_array_equal(expected_out.asnumpy(), ms_out.asnumpy())
+
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
