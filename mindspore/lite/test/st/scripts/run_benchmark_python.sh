@@ -6,6 +6,7 @@ function Run_python_ST() {
   whl_path=$2
   model_path=$3
   in_data_path=$4
+  model_hiai_path=$in_data_path
   cfg_file_list=$5
   target=$6
   suffix=".mindir"
@@ -64,4 +65,14 @@ function Run_python_ST() {
   done
   cat ${result_python_log}
   echo "-----------------------------------------------------------------------------------------"
+
+  python test_inference_cloud_nocofig.py ${model_hiai_path} ${target} >> ${run_python_log}
+  Run_python_st_status=$?
+  if [[ ${Run_python_st_status} != 0 ]];then
+    echo "run python test_inference_cloud_nocofig failed." >> ${result_python_log}
+    cat ${run_python_log}
+    cat ${result_python_log}
+    echo "Run_python_st_status failed"
+    exit 1
+  fi
 }

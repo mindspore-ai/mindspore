@@ -590,8 +590,11 @@ class ModelGroup:
     def __init__(self, flags=ModelGroupFlag.SHARE_WORKSPACE):
         if flags == ModelGroupFlag.SHARE_WORKSPACE:
             flags_inner = _c_lite_wrapper.ModelGroupFlag.kShareWorkspace
-        else:
+        elif flags == ModelGroupFlag.SHARE_WEIGHT:
             flags_inner = _c_lite_wrapper.ModelGroupFlag.kShareWeight
+        else:
+            raise RuntimeError(
+                f"Parameter flags should be ModelGroupFlag.SHARE_WORKSPACE or ModelGroupFlag.SHARE_WEIGHT")
         self._model_group = _c_lite_wrapper.ModelGroupBind(flags_inner)
 
     def add_model(self, models):
