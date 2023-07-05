@@ -217,68 +217,6 @@ if(MSLITE_GPU_BACKEND STREQUAL cuda)
             ${CUDA_RUNTIME_SRC}
             )
 endif()
-if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
-  set(TRAIN_SRC_WITH_MD
-            ${LITE_DIR}/src/train/train_loop.cc
-          )
-endif()
-
-
-file(GLOB CXX_API_EXPRESSION
-  ${LITE_DIR}/src/litert/cxx_api/expression/*.cc
-  )
-
-file(GLOB EXPRESSION_OPS
-  ${LITE_DIR}/src/expression/ops/*.cc
-  )
-
-set(EXPRESSION_SRC
-    ${CXX_API_EXPRESSION}
-    ${LITE_DIR}/src/expression/export.cc
-    ${LITE_DIR}/src/expression/expr.cc
-    ${LITE_DIR}/src/expression/import.cc
-    ${LITE_DIR}/src/expression/net.cc
-    ${LITE_DIR}/src/expression/node.cc
-    ${LITE_DIR}/src/expression/ops.cc
-    ${LITE_DIR}/src/expression/ops_utils.cc
-    ${LITE_DIR}/src/expression/param.cc
-    ${LITE_DIR}/src/expression/sequential.cc
-    ${EXPRESSION_OPS}
-  )
-
-set(TRAIN_SRC
-        ${API_TRAIN_SRC}
-        ${TRAIN_SRC_WITH_MD}
-        ${EXPRESSION_SRC}
-        ${LITE_DIR}/src/common/quant_utils.cc
-        ${LITE_DIR}/src/litert/cxx_api/metrics/accuracy.cc
-        ${LITE_DIR}/src/litert/cxx_api/train/model_build.cc
-        ${LITE_DIR}/src/litert/cxx_api/train/model_build_impl.cc
-        ${LITE_DIR}/src/litert/cxx_api/train/converters.cc
-        ${LITE_DIR}/src/litert/cxx_api/train/train_support.cc
-        ${LITE_DIR}/src/train/train_populate_parameter.cc
-        ${LITE_DIR}/src/train/train_session.cc
-        ${LITE_DIR}/src/train/graph_fusion.cc
-        ${LITE_DIR}/src/train/graph_dropout.cc
-        ${LITE_DIR}/src/train/transfer_session.cc
-        ${LITE_DIR}/src/train/train_utils.cc
-        ${LITE_DIR}/src/train/loss_monitor.cc
-        ${LITE_DIR}/src/train/lr_scheduler.cc
-        ${LITE_DIR}/src/train/accuracy_metrics.cc
-        ${LITE_DIR}/src/train/accuracy_monitor.cc
-        ${LITE_DIR}/src/train/classification_train_accuracy_monitor.cc
-        ${LITE_DIR}/src/train/train_export.cc
-        ${LITE_DIR}/src/train/opt_allocator.cc
-        ${LITE_DIR}/src/common/storage.cc
-        ${TOOLS_DIR}/converter/optimizer.cc
-        ${TOOLS_DIR}/converter/legacy_optimizer/fusion/fusion_pass.cc
-        ${TOOLS_DIR}/converter/legacy_optimizer/fusion/fusion_pattern.cc
-        ${TOOLS_DIR}/common/meta_graph_utils.cc
-        ${TOOLS_DIR}/converter/legacy_optimizer/fusion/matmul_biasadd_fusion_pass.cc
-        ${TOOLS_DIR}/converter/legacy_optimizer/graph/dropout_node_remove_pass.cc
-        ${TOOLS_DIR}/converter/legacy_optimizer/graph/isolated_node_remove_pass.cc
-        ${TOOLS_DIR}/converter/legacy_optimizer/graph/subgraph_node_pass.cc
-        )
 
 if(MSLITE_ENABLE_MINDRT)
     set(LITE_SRC ${LITE_SRC}
