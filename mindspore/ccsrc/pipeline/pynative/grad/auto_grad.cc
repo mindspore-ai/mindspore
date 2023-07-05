@@ -29,6 +29,7 @@
 #include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/nn_ops.h"
 #include "ir/anf.h"
 #include "ir/func_graph_cloner.h"
 #include "frontend/optimizer/ad/dfunctor.h"
@@ -1396,11 +1397,12 @@ AnfNodePtr AutoGradCellImpl::BuildKNodeForTupleGetItem(const AnfNodePtr &input_n
 void AutoGradCellImpl::ConvertValueNodeValueToTensor(const AnfNodePtr &din) {
   MS_EXCEPTION_IF_NULL(din);
   if (din->isa<CNode>()) {
-    if (IsPrimitiveCNode(din, prim::kPrimMakeTuple) || IsPrimitiveCNode(din, prim::kPrimTupleGetItem)) {
+    const auto &cnode = din->cast<CNodePtr>();
+    if (cnode->HasAttr(kIsKNode) || IsPrimitiveCNode(cnode, prim::kPrimBpropCut)) {
       return;
     }
-    const auto &cnode = din->cast<CNodePtr>();
-    if (cnode->HasAttr(kIsKNode)) {
+    if (IsPrimitiveCNode(din, prim::kPrimTupleGetItem)) {
+      ConvertValueNodeValueToTensor(cnode->input(kIndex1));
       return;
     }
     for (size_t i = 1; i < cnode->size(); ++i) {
@@ -1429,12 +1431,26 @@ void AutoGradCellImpl::ConvertValueNodeValueToTensor(const AnfNodePtr &din) {
 }
 
 void AutoGradCellImpl::ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node) const {
-  if (!node->isa<CNode>() || IsPrimitiveCNode(node, prim::kPrimMakeTuple) ||
-      IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
     return;
   }
   auto cnode = node->cast<CNodePtr>();
-  if (std::any_of(cnode->inputs().begin() + 1, cnode->inputs().end(),
+  if (cnode->HasAttr(kIsKNode) || cnode->seen_ != kIndex0 || IsPrimitiveCNode(cnode, prim::kPrimBpropCut) ||
+      !IsPrimitiveCNode(cnode)) {
+    return;
+  }
+  cnode->seen_ = NewSeenGeneration();
+  if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem)) {
+    ConvertMakeTupleInputToDynamicInput(cnode->input(kIndex1));
+    return;
+  }
+  for (size_t i = 1; i < cnode->size(); ++i) {
+    ConvertMakeTupleInputToDynamicInput(cnode->input(i));
+  }
+
+  if (!IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) &&
+      std::any_of(cnode->inputs().begin() + 1, cnode->inputs().end(),
                   [](const AnfNodePtr &node) { return node->abstract()->isa<abstract::AbstractSequence>(); })) {
     AnfNodePtrList plant_inputs;
     std::vector<int64_t> dyn_input_sizes;
