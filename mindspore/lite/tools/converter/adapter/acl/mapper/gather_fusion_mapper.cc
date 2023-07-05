@@ -50,6 +50,10 @@ STATUS GatherMapper::Mapper(const CNodePtr &cnode) {
   value_node->set_abstract(abstract);
   MS_CHECK_TRUE_MSG(value_node != nullptr, lite::RET_ERROR, "New value node failed.");
   cnode->set_input(kNameGatherInputNum - 1, value_node);
+
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_CHECK_TRUE_MSG(prim != nullptr, lite::RET_ERROR, "prim is nullptr.");
+  prim->AddAttr("negative_index_support", MakeValue(true));
   return lite::RET_OK;
 }
 
