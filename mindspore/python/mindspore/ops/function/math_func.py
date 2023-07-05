@@ -6486,9 +6486,8 @@ def bernoulli(input, p=0.5, seed=None):
         p (Union[Tensor, float], optional): Success probability, representing the probability of setting 1 for the
             corresponding position of the current Tensor. It has the same shape as `input`, the value of `p`
             must be in the range `[0, 1]`. Default: ``0.5`` .
-        seed (Union[int, None], optional): The seed value for random generating. The value of `seed` must be -1 or a
-            positive integer, and -1 means using the current timestamp. Default: ``None`` ,
-            which will be treated as -1.
+        seed (Union[int, None], optional): The seed value for random generating. The value of `seed` must be a
+            positive integer. Default: ``None`` , means using the current timestamp.
 
     Returns:
         output (Tensor), with the same shape and type as `input` .
@@ -6498,7 +6497,7 @@ def bernoulli(input, p=0.5, seed=None):
         TypeError: If dtype of `p` is not one of: float32, float64.
         TypeError: If dtype of `seed` is not int or None.
         ValueError: If `p` is not in range [0, 1].
-        ValueError: If `seed` is less than 0 and not -1.
+        ValueError: If `seed` is less than 0.
         ValueError: If `p` is a Tensor but has different shape than `input`.
 
     Supported Platforms:

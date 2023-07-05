@@ -113,3 +113,11 @@ mindspore.train.CheckpointConfig
 
         返回：
             Cell: 需要保存的网络。
+
+    .. py:method:: map_param_inc
+        :property:
+
+        获取是否增量保存MapParameter。
+
+        返回：
+            Bool: 是否增量保存MapParameter。

@@ -6,7 +6,7 @@ mindspore.ops.GetNext
     返回数据集队列中的下一个元素。
 
     .. note::
-        GetNext操作需要联网，且依赖'dataset'接口，例如： :class:`mindspore.dataset.MnistDataset` 。不能单独操作。详见 :class:`mindspore.connect_network_with_dataset` 的源码。
+        GetNext操作需要与network一起使用，且依赖'dataset'接口，例如： :class:`mindspore.dataset.MnistDataset` 。不能单独操作。详见 :class:`mindspore.connect_network_with_dataset` 的源码。
 
     参数：
         - **types** (list[:class:`mindspore.dtype`]) - 输出的数据类型。
