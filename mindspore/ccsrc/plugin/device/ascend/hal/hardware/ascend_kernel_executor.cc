@@ -409,8 +409,8 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
 #endif
 #ifndef ENABLE_SECURITY
   if (ProfilingManager::GetInstance().IsProfilingInitialized()) {
-    ProfilingUtils::RecordLaunchTaskBegin(kernel->fullname_with_scope(), true);
     ProfilingUtils::InitReportNode(kernel);
+    ProfilingUtils::RecordLaunchTaskBegin(kernel->fullname_with_scope(), true);
   }
 #endif
   bool is_dynamic_shape = common::AnfAlgo::IsDynamicShape(kernel);

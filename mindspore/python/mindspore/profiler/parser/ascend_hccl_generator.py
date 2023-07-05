@@ -36,6 +36,45 @@ def find_files(directory, pattern):
     return file_list
 
 
+def calculate_average(data):
+    """Calculate hccl data average"""
+    result = data
+    if isinstance(data, dict):
+        result = {}
+        for key, value in data.items():
+            result[key] = calculate_average(value)
+    elif isinstance(data, list):
+        if all(isinstance(item, (dict, list)) for item in data):
+            if isinstance(data[0], dict):
+                result_dict = {}
+                keys = set()
+                for item in data:
+                    keys.update(item.keys())
+                for key in keys:
+                    values = []
+                    for item in data:
+                        values.append(item.get(key))
+                    result_dict[key] = calculate_average(values)
+                result = result_dict
+            elif isinstance(data[0], list):
+                transposed_list = np.array(data).T.tolist()
+                result = [calculate_average(sub_list) for sub_list in transposed_list]
+    return result
+
+
+def count_average(data):
+    """Count average"""
+    result = data
+    if isinstance(data, list):
+        if all(isinstance(x, (int, float)) for x in data):
+            result = sum(data) / len(data)
+        else:
+            result = [calculate_average(x) for x in data]
+    elif isinstance(data, dict):
+        result = {key: count_average(value) for key, value in data.items()}
+    return result
+
+
 class AscendHCCLGenerator:
     """Generate ascend hccl data from files."""
 
@@ -57,7 +96,7 @@ class AscendHCCLGenerator:
                 raw = self._iteration_analyse(hccl_abstract_data, hccl_detail_data, iteration_id)
                 self.hccl_raw.append(raw)
         self.hccl_raw = sorted(self.hccl_raw, key=lambda x: x[0])
-        # use avg = count_average(calculate_average(self.hccl_raw))
+        self.hccl_raw.append(count_average(calculate_average(self.hccl_raw)))
         self.hccl_raw[-1][0] = '-'
         for _, value in self.hccl_raw[-1][4].items():
             value[0] = '-'
@@ -101,9 +140,12 @@ class AscendHCCLGenerator:
                     src_rank = dst_rank
                 if dst_rank == int('0xffffffff', 16):
                     dst_rank = src_rank
-                link_info = str(src_rank) + '-' + str(dst_rank)
                 transport_type = row.get('args').get('transport type')
-                size = row.get('args').get('size(Byte)')
+                if transport_type == 'LOCAL':
+                    src_rank, dst_rank = dst_rank, src_rank
+                link_info = str(src_rank) + '-' + str(dst_rank)
+                size = row.get('args').get('size(Byte)', 0)
+                size = size if isinstance(size, int) else int(size, 16)
                 target_data.append(
                     tuple([name, pid, tid, ts, te, dur, ph, task_type, link_info, transport_type, size, -1]))
         hccl_data = np.array(target_data, dtype=self.hccl_data_df)
