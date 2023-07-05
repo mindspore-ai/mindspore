@@ -38,8 +38,6 @@ class AdamM : public Node {
   int UnPopulate(const std::unique_ptr<schema::CNodeT> &cnode) override;
 
  private:
-  float weight_decay_;
-  float loss_scale_;
   EXPR *assign1_{nullptr};
   EXPR *assign2_{nullptr};
 };
