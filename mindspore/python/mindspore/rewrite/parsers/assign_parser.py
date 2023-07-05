@@ -14,6 +14,7 @@
 # ============================================================================
 """Parse ast.Assign in construct function to node of SymbolTree."""
 from typing import Union
+import os
 import ast
 import sys
 import inspect
@@ -33,7 +34,6 @@ from mindspore.rewrite.parser_register import reg_parser
 from mindspore.rewrite.api.scoped_value import ScopedValue, ValueType
 from mindspore.rewrite.symbol_tree_builder import SymbolTreeBuilder, FunctionSymbolTreeBuilder
 from mindspore.rewrite.ast_helpers import AstReplacer
-from mindspore.rewrite.common.event import Event
 from ..common import error_str
 
 
@@ -219,8 +219,8 @@ class AssignParser(Parser):
         """
 
         if func_scope != "self":
-            logger.warning("Not support parse operator which is instantiated at runtime now: %s; name: %s", func_scope,
-                           func_name)
+            logger.info("Not support parse operator which is instantiated at runtime now: %s; name: %s", func_scope,
+                        func_name)
         var_dict = stree.get_origin_network().__dict__
         for key, value in var_dict["_cells"].items():
             if key == func_name:
@@ -251,18 +251,7 @@ class AssignParser(Parser):
     def _update_field_in_init(func_scope, func_name, stree: SymbolTree, sub_tree: SymbolTree) -> bool:
         """
         When node is an invoking to sub-network, update value of ast.Assign of corresponding field in `__init__` method.
-
-        Update from:
-
-        .. code-block::
-
-        self.field = getattr(self._handler, "field")
-
-        to:
-
-        .. code-block::
-
-        self.field = SubNetwork(global_vars.get("field_args"))
+        Add the code like: `self.field = SubNetwork(self.field)`
 
         Args:
             func_scope (str): A string represents scope of function symbol.
@@ -278,17 +267,14 @@ class AssignParser(Parser):
             logger.warning("Not support parse operator which is instantiated at runtime now: %s; name: %s", func_scope,
                            func_name)
         init_func_ast = stree.get_init_func_ast()
-        class_name = sub_tree.get_opt_cls_name()
-        setattr(stree.get_origin_network(), func_name, sub_tree.get_origin_network())
+        sub_net_obj = sub_tree.get_origin_network()
+        sub_net_opt_name = sub_tree.get_opt_cls_name()
         # Add .to_float(mindspore.float16) if origin subnet has this attribute
-        if hasattr(sub_tree.get_origin_network(), "to_float_fp16")\
-            and sub_tree.get_origin_network().to_float_fp16:
-            new_code = f"self.{func_name} = {class_name}(getattr(self, '{func_name}')).to_float(mindspore.float16)"
-        else:
-            new_code = f"self.{func_name} = {class_name}(getattr(self, '{func_name}'))"
+        new_code = f"{func_scope}.{func_name} = {sub_net_opt_name}({func_scope}.{func_name})"
+        if hasattr(sub_net_obj, "to_float_fp16") and sub_net_obj.to_float_fp16:
+            new_code = f"{new_code}.to_float(mindspore.float16)"
         new_ast = ast.parse(new_code).body[0]
         init_func_ast.body.append(new_ast)
-        return True
 
     @staticmethod
     def _convert_ast_binop_to_node(ast_node: ast.BinOp, father_ast_node: ast.Assign) -> Node:
@@ -334,6 +320,25 @@ class AssignParser(Parser):
 
         return first_node_inputs
 
+    @staticmethod
+    def _update_cell_container_in_init(stree, container_name, container_idx, subnet_opt_name):
+        """
+        When nn.SequentialCell include sub-symboltree, the new class definition will be used to create object.
+        So the assign code will be got from origin code first, and then be modified to new class name.
+
+        Codes like:
+
+        `self.container = nn.SequentialCell([ReLU(), MyNet()])`
+
+        will be updated by add codes:
+
+        `self.container[1] = MyNetOpt(self.container[1])`
+
+        """
+        new_code = f"{container_name}[{container_idx}] = {subnet_opt_name}({container_name}[{container_idx}])"
+        new_ast = ast.parse(new_code).body[0]
+        stree.get_init_func_ast().body.append(new_ast)
+
     def _cell_container_process(self, ast_node, stree, targets, func, call_args, call_kwargs, op_name, container_obj):
         """ parse cell container object."""
         cell_container = CellContainer(ast_node, targets, func, call_args, call_kwargs, op_name, container_obj)
@@ -344,10 +349,9 @@ class AssignParser(Parser):
             if is_sub_tree:
                 stb = SymbolTreeBuilder(cell)
                 new_stree = stb.build()
-                replacer = AstReplacer(new_stree.get_class_ast())
-                replacer.replace_all(new_stree.get_ori_cls_name(), new_stree.get_opt_cls_name())
                 sub_node = TreeNode.create_tree_node(new_stree, ast_node, targets, func, call_args, call_kwargs,
                                                      type(cell).__name__, cell)
+                AssignParser._update_cell_container_in_init(stree, func, i, new_stree.get_opt_cls_name())
             else:
                 sub_node = Node.create_call_buildin_op(cell, ast_node, targets, func, call_args, call_kwargs,
                                                        type(cell).__name__)
@@ -362,17 +366,28 @@ class AssignParser(Parser):
         return cell_container
 
     def _process_external_function(self, stree, func_name):
-        """Process external function."""
+        """
+        Process external function.
+        Only external function defined in origin_net's file will be saved.
+        """
+        origin_net = stree.get_origin_network()
+        origin_net_source_code_file = inspect.getfile(type(origin_net))
+        if not os.path.exists(origin_net_source_code_file):
+            raise RuntimeError("For MindSpore Rewrite, in assign parser, File ", origin_net_source_code_file,
+                               " not exist")
         for k, m in sys.modules.items():
             if k in ("_ast", "ast"):
                 continue
             if hasattr(m, func_name):
                 func = getattr(m, func_name)
+                func_source_code_file = inspect.getfile(func)
+                if func_source_code_file != origin_net_source_code_file:
+                    return None, None
                 source_code = inspect.getsource(func)
                 ast_root: ast.Module = ast.parse(source_code)
-                stree._external_func_ast.append(ast_root.body[0]) # pylint: disable=protected-access
+                stree.get_external_func_ast().append(ast_root.body[0]) # pylint: disable=protected-access
                 return func, ast_root.body[0]
-            return None, None
+        return None, None
 
     def _process_internal_function(self, stree: SymbolTree, func_name):
         """Process internal function."""
@@ -428,8 +443,7 @@ class AssignParser(Parser):
                                                  func_name)
             else:
                 func, ast_node = self._process_external_function(stree, func_name)
-                node = self._create_func_subtree(func, targets, father_ast_node, ast_node, call_args, call_kwargs,
-                                                 func_name)
+                raise RuntimeError("External function rewrite not supported, fallback to python node.")
             return node
         if isinstance(op, SequentialCell):
             node = self._cell_container_process(father_ast_node, stree, targets, func, call_args, call_kwargs,
@@ -442,42 +456,7 @@ class AssignParser(Parser):
             if is_sub_tree:
                 stb = SymbolTreeBuilder(op)
                 new_stree = stb.build()
-                changed = AssignParser._update_field_in_init(func_scope, func_name, stree, new_stree)
-                if changed:
-                    # class SubSubNet:
-                    #     def __init__(self, global_vars):
-                    #         self._handler = global_vars.get("handler")
-                    #
-                    # class SubNet:
-                    #     def __init__(self, global_vars):
-                    #         self._handler = global_vars.get("handler")
-                    #         self._subsubnet = None
-                    #         if xxx:
-                    #             self._subsubnet = SubSubNet(xxx)
-                    #
-                    # Assuming there are two instance of SubNet A and B. "if xxx" in A is True, and in B is False.
-                    # So self._subsubnet in A is an instance of SubSubNet, and in B is None.
-                    # So After rewrite, A's code:
-                    # class SubNetA:
-                    #     def __init__(self, global_vars):
-                    #         self._handler = global_vars.get("handler")
-                    #         self._subsubnet = SubSubNet(global_vars.get("subsubnet_args"))
-                    # while B's code:
-                    # class SubNetB:
-                    #     def __init__(self, global_vars):
-                    #         self._handler = global_vars.get("handler")
-                    #         self._subsubnet = getattr(self._handler, "_subsubnet")
-                    # So SubNet should use SubNetA as its code when _update_field_in_init return True.
-                    # So SubNet should use SubNetB as its code when _update_field_in_init return False or undefined
-                    # error will occur to "global_vars.get("subsubnet_args")".
-                    stree.on_change(Event.CodeChangeEvent)
-                # Sub-network in main-network is expressed as:
-                # self._subnet = SubNet(global_vars.get("subnet_args"))
-                # when subnet is changed, its class will change, take SubNet1 as new class-name, so code main-network
-                # also need to change:
-                # self._subnet = SubNet1(global_vars.get("subnet_args"))
-                # so a change in sub-network should also be identified as a change in main-network.
-                # so main-network should observe sub-network
+                AssignParser._update_field_in_init(func_scope, func_name, stree, new_stree)
                 replacer = AstReplacer(new_stree.get_class_ast())
                 replacer.replace_all(new_stree.get_ori_cls_name(), new_stree.get_opt_cls_name())
                 return TreeNode.create_tree_node(new_stree, father_ast_node, targets, func, call_args, call_kwargs,

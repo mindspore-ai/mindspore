@@ -205,7 +205,7 @@ class ClassDefParser(Parser):
 
         Args:
             bodies ([]): bodied of init ast.FunctionDef.
-            has_father_class (bool): whether class has father class that is not nn.Cell
+            has_father_class (bool): whether class has father class that is subclass of nn.Cell
 
         Raises:
             RuntimeError: Not support multi-targets in assign.
@@ -235,14 +235,15 @@ class ClassDefParser(Parser):
                     if k in ("_ast", "ast"):
                         continue
                     if hasattr(m, father_class):
-                        cls = getattr(m, father_class)
-                        if not inspect.isclass(cls):
+                        cls_def = getattr(m, father_class)
+                        if not inspect.isclass(cls_def):
                             continue
-                        source_code = inspect.getsource(cls)
+                        source_code = inspect.getsource(cls_def)
                         father_class_ast: ast.Module = ast.parse(source_code)
                         self._father_class_process_init_func_ast(stree, father_class_ast)
                         stree._father_class_ast.append(father_class_ast) # pylint: disable=protected-access
-                        has_father_class = True
+                        if issubclass(cls_def, Cell):
+                            has_father_class = True
                         break
         return has_father_class
 

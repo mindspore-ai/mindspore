@@ -17,7 +17,8 @@
 Define some ast helpers for manipulating python ast.
 """
 
-from .ast_finder import AstFinder, StrChecker, CheckPropertyIsUsed, GetPropertyOfObj
+from .ast_finder import AstFinder, StrChecker, CheckPropertyIsUsed, GetPropertyOfObj, \
+    AstAssignFinder, AstClassFinder, AstFunctionFinder
 from .ast_replacer import AstReplacer
 from .ast_modifier import AstModifier
 from .ast_creator import ast_args_creator, ast_assign_creator, ast_attributer_creator, ast_call_creator, \

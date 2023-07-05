@@ -28,7 +28,8 @@ from mindspore import log as logger
 from mindspore.rewrite.ast_creator_register import ast_creator_registry
 from .node import Node, TreeNode
 from .api.node_type import NodeType
-from .ast_helpers import AstModifier, AstReplacer, StrChecker, AstFinder, CheckPropertyIsUsed
+from .ast_helpers import AstModifier, AstReplacer, StrChecker, AstFinder, CheckPropertyIsUsed, AstClassFinder, \
+    AstFunctionFinder
 from .api.scoped_value import ScopedValue, ValueType
 from .symbol_tree_dumper import SymbolTreeDumper
 from .topological_manager import TopoManager
@@ -159,12 +160,16 @@ class SymbolTree(Observer, Observable):
         self._topo_mgr.reg_observer(self)
 
         self._nodes: {str, Node} = {}
+        # nodes in _tree_nodes may not be used in construct function.
+        # tree nodes in node containers is not saved in _tree_nodes.
+        self._tree_nodes: [Node] = []
         # parameters of forward method
         self._inputs: [Node] = []
         self._ori_cls_name = type(origin_network).__name__
         self._opt_cls_name = ClassNamer.instance().get_name(self._ori_cls_name)
         self._origin_network = origin_network
         self._module_ast: ast.Module = module_ast
+        self._import_asts: Optional[ast.Ast] = []
         self._class_ast: Optional[ast.ClassDef] = None
         self._root_ast: Optional[ast.FunctionDef] = None
         self._init_func_ast: Optional[ast.FunctionDef] = None
@@ -187,58 +192,35 @@ class SymbolTree(Observer, Observable):
         self._saved_file_name = "./network_define.py"
         # used to insert "sys.path.append(xxx)"
         self._net_file_paths = []
+        self._tmp_import_strs = []
+        self._tmp_unmodified_strees: {type, str} = {}
+        self._tmp_replacers = []
 
     def __del__(self):
         for tmp_file in self._tmp_files:
             tmp_file.close()
 
     @staticmethod
-    def _find_consumers_and_providers(nodes: [Node]):
-        """
-        Find consumers and providers for all nodes according to their targets and arguments.
-        """
-        consumers: {ScopedValue: [Node]} = {}
-        providers: {ScopedValue: Node} = {}
-        for node in nodes:
-            for arg in node.get_args():
-                if consumers.get(arg):
-                    consumers[arg].append(node)
-                else:
-                    consumers[arg] = [node]
-            for _, arg in node.get_kwargs():
-                if consumers.get(arg):
-                    consumers[arg].append(node)
-                else:
-                    consumers[arg] = [node]
-            for target in node.get_targets():
-                if providers.get(target) is not None:
-                    raise RuntimeError(f"Target({target}) of node duplicated")
-                providers[target] = node
-        return consumers, providers
-
-    @staticmethod
-    def _find_all_class_in_symboltree(stree: 'SymbolTree', seen_class: {type, str}, allow_class_name: [], replacers):
-        """Find all non-duplicated class name of SymbolTree recursively."""
-        replacer = AstReplacer(stree.get_class_ast())
-        replacers.append(replacer)
-        for node in stree.nodes():
-            if not isinstance(node, TreeNode):
+    def _remove_unused_import(module_ast):
+        """remove unused import in self._module_ast"""
+        str_checker = StrChecker(module_ast)
+        for i in range(len(module_ast.body) - 1, -1, -1):
+            body = module_ast.body[i]
+            if not isinstance(body, (ast.Import, ast.ImportFrom)):
                 continue
-            if node.symbol_tree.get_class_ast() is None:
+            if isinstance(body, ast.Import):
                 continue
-            sub_stree: SymbolTree = node.symbol_tree
-            SymbolTree._find_all_class_in_symboltree(sub_stree, seen_class, allow_class_name, replacers)
-            # all modified ast.ClassDef should export to code
-            if sub_stree._modified:
-                allow_class_name.append(sub_stree._class_ast.name)
+            if isinstance(body, ast.ImportFrom) and body.module == "cell":
+                module_ast.body.remove(body)
                 continue
-            # all un-modified ast.ClassDef only keep one instance
-            seen_cls_name = seen_class.get(type(sub_stree.get_origin_network()))
-            if seen_cls_name is not None:
-                replacer.replace_all(sub_stree._class_ast.name, seen_cls_name)
-            else:
-                seen_class[type(sub_stree.get_origin_network())] = sub_stree.get_class_ast().name
-                allow_class_name.append(sub_stree.get_class_ast().name)
+            for alias in body.names:
+                name = alias.asname if alias.asname else alias.name
+                if not str_checker.check(name):
+                    if len(body.names) == 1:
+                        module_ast.body.remove(body)
+                        i += 1
+                    else:
+                        body.names.remove(alias)
 
     def finish_build(self):
         """Add Event.TopologicalChangeEvent event when build is finished."""
@@ -405,18 +387,26 @@ class SymbolTree(Observer, Observable):
         """Get dict of nodes"""
         return self._nodes
 
+    def is_modified(self):
+        """
+        Check whether symbol tree is modified.
+
+        Symbol tree is considered as modified if operations like insert/replace/erase/set_arg is called after
+        the symbol tree is created.
+        """
+        return self._modified
+
+    def get_import_asts(self):
+        """Get _import_asts"""
+        return self._import_asts
+
+    def get_external_func_ast(self):
+        """Get _external_func_ast"""
+        return self._external_func_ast
+
     def get_father_class_ast(self):
         """Get _father_class_ast"""
         return self._father_class_ast
-
-    def append_net_file_path(self, file_path):
-        """Append a file_path into _net_file_paths"""
-        if file_path not in self._net_file_paths:
-            self._net_file_paths.append(file_path)
-
-    def get_net_file_path(self):
-        """Get _net_file_paths"""
-        return self._net_file_paths
 
     def nodes(self):
         """
@@ -432,6 +422,15 @@ class SymbolTree(Observer, Observable):
             nodes.append(node)
             node = node.get_next()
         return iter(nodes)
+
+    def get_tree_nodes(self):
+        """
+        Get tree nodes inserted into symbol tree, include the nodes later deleted by user.
+        So nodes in _tree_nodes may not be used in construct function.
+        Tree nodes in node containers is not saved in _tree_nodes.
+        This function is used when generating codes from symbol tree.
+        """
+        return self._tree_nodes
 
     def get_node(self, node_name: str) -> Optional[Node]:
         """
@@ -598,6 +597,8 @@ class SymbolTree(Observer, Observable):
         self._handle_custom_obj_in_normalized_args(node)
         self._insert_node(position, node)
         if isinstance(node, TreeNode):
+            # record tree nodes
+            self._tree_nodes.append(node)
             node.symbol_tree.reg_observer(self)
         if self._node_visitor:
             self._node_visitor.append_node(node)
@@ -638,14 +639,7 @@ class SymbolTree(Observer, Observable):
         elif node.get_node_type() == NodeType.Input:
             self._inputs.append(node)
         elif node.get_node_type() == NodeType.Tree:
-            # add father_class_ast into main tree, used when get_code
-            for father_ast in node.symbol_tree.get_father_class_ast():
-                if father_ast not in self._father_class_ast:
-                    self._father_class_ast.append(father_ast)
-            # add subtree's net path into main tree
-            for file_path in node.symbol_tree.get_net_file_path():
-                if file_path not in self._net_file_paths:
-                    self.append_net_file_path(file_path)
+            pass
         return self.append_node(node, False)
 
     def append_input_node(self, ast_node, param_name: str, default: Optional[ScopedValue] = None):
@@ -903,13 +897,102 @@ class SymbolTree(Observer, Observable):
         dump_st = SymbolTreeDumper(self)
         dump_st.dump()
 
-    def update_module_ast(self):
-        for node in self._external_func_ast:
-            self._module_ast.body.append(node)
-        # Put father asts in front of first ClassDef
-        index = [type(body) for body in self._module_ast.body].index(ast.ClassDef)
-        for node in reversed(self._father_class_ast):
-            self._module_ast.body.insert(index, node)
+    def check_body_exist(self, body, code_bodies):
+        """Check whether body already exist in code_bodies"""
+        # Check import ast node exist by saving import code string to self._tmp_import_strs
+        if isinstance(body, (ast.Import, ast.ImportFrom, ast.Expr)):
+            import_str = astunparse.unparse(body)
+            if import_str in self._tmp_import_strs:
+                return True
+            self._tmp_import_strs.append(import_str)
+            return False
+
+        # Check ClassDef ast node exist by using AstClassFinder
+        if isinstance(body, ast.ClassDef):
+            class_finder = AstClassFinder(ast.Module(body=code_bodies))
+            results = class_finder.find_all(body.name)
+            return bool(results)
+
+        # Check FunctionDef ast node exist by using AstFunctionFinder
+        if isinstance(body, ast.FunctionDef):
+            function_finder = AstFunctionFinder(ast.Module(body=code_bodies))
+            results = function_finder.find_all(body.name)
+            return bool(results)
+
+        return False
+
+    def update_class_name_of_unmodified_stree(self, stree, code_bodies) -> str:
+        """
+        For the unmodified symbol tree, only one definition code remains in the generated code.
+        Everywhere else calling this symbol tree will use the class in this definition code.
+        """
+        # all modified ast.ClassDef will be exported to code
+        if stree.is_modified():
+            return False
+        # all un-modified ast.ClassDef only keep one instance
+        first_cls_name = self._tmp_unmodified_strees.get(type(stree.get_origin_network()))
+        if first_cls_name is None:
+            class_ast = stree.get_class_ast()
+            if class_ast:
+                self._tmp_unmodified_strees[type(stree.get_origin_network())] = class_ast.name
+            return False
+        # Un-modified ast.ClassDef already exist in code_bodies,
+        # replace class name to class name of first un-modified ast.ClassDef.
+        replacer = AstReplacer(ast.Module(body=code_bodies))
+        replacer.replace_all(stree.get_class_ast().name, first_cls_name)
+        self._tmp_replacers.append(replacer)
+        return True
+
+    def convert_stree_to_code_bodies(self, stree, code_bodies, insert_pos=0):
+        """
+        Convert nodes in stree to code_bodies
+
+        1. Add import asts into code_bodies
+        2. Add class, function and other type of asts into code_bodies
+        3. Add father class asts into code_bodies
+        4. Add external function asts into code_bodies
+        5. Add subtrees to code_bodies
+        5.1 Add subtrees in construct to code_bodies
+        5.2 Add subtrees in CellContainers to code_bodies
+
+        """
+        # Add import asts into code_bodies
+        for body in stree.get_import_asts():
+            if not self.check_body_exist(body, code_bodies):
+                code_bodies.insert(insert_pos, body)
+                insert_pos += 1
+
+        # Add class, function and other type of asts into code_bodies
+        if stree.get_module_ast():
+            for body in stree.get_module_ast().body:
+                if self.check_body_exist(body, code_bodies):
+                    continue
+                if isinstance(body, (ast.ClassDef, ast.FunctionDef)):
+                    code_bodies.insert(insert_pos, body)
+                else:
+                    code_bodies.append(body)
+
+        # Add father class asts into code_bodies
+        for body in reversed(stree.get_father_class_ast()):
+            if not self.check_body_exist(body, code_bodies):
+                code_bodies.insert(insert_pos, body)
+
+        # Add external function asts into code_bodies
+        for body in stree.get_external_func_ast():
+            if not self.check_body_exist(body, code_bodies):
+                code_bodies.insert(insert_pos, body)
+                insert_pos += 1
+
+        # Add subtrees to code_bodies
+        for node in stree.get_tree_nodes():
+            sub_stree = node.symbol_tree
+            # Ignore TreeNode create by function in the class
+            if isinstance(sub_stree.get_module_ast(), ast.FunctionDef):
+                continue
+            # For the unmodified class, update class name to name of first class
+            if self.update_class_name_of_unmodified_stree(sub_stree, code_bodies):
+                continue
+            self.convert_stree_to_code_bodies(node.symbol_tree, code_bodies, insert_pos)
 
     def get_code(self) -> str:
         """
@@ -918,34 +1001,18 @@ class SymbolTree(Observer, Observable):
         Returns:
             A str represents source code of modified network.
         """
-        self._remove_unused_import()
-        if self._init_func_ast:
-            self._remove_unused_field()
-        self._remove_duplicated_import()
-        self.update_module_ast()
+        self._tmp_import_strs.clear()
+        self._tmp_unmodified_strees.clear()
+        self._tmp_replacers.clear()
+        code_bodies = []
+        self.convert_stree_to_code_bodies(self, code_bodies)
+        gencode_module = ast.Module(body=code_bodies)
+        SymbolTree._remove_unused_import(gencode_module)
         ast.fix_missing_locations(self._module_ast)
-        # Find all ast.ClassDef which can be export to code
-        # Replace duplicated ast.ClassDef reference in main-ClassDef
-        seen_class: {type, str} = {}
-        allow_class_name = [self._class_ast.name]
-        replacers = []
-        SymbolTree._find_all_class_in_symboltree(self, seen_class, allow_class_name, replacers)
-        # Add all non-ClassDef body to gencode_module
-        # Add all ClassDef in allow_class_name to gencode_module
-        # Use gencode_module to generate code
-        bodies = []
-        for body in self._module_ast.body:
-            if not isinstance(body, ast.ClassDef):
-                bodies.append(body)
-                continue
-            if body.name in allow_class_name:
-                bodies.append(body)
-        gencode_module = ast.Module(body=bodies)
-        if_fixer = IfFixer()
-        if_fixer.fix(gencode_module)
+        IfFixer().fix(gencode_module)
         code = astunparse.unparse(gencode_module)
-        # Restore main-ClassDef
-        for replacer in replacers:
+        # Revert the class name to its original state
+        for replacer in self._tmp_replacers:
             replacer.undo_all()
         return code
 
@@ -1000,9 +1067,6 @@ class SymbolTree(Observer, Observable):
             AstModifier.insert_assign_ast_to_function(self._root_ast, node_ast,
                                                       None if position is None else position.node.get_ast(),
                                                       position.before_node)
-            sub_stree: SymbolTree = node.symbol_tree
-            from .symbol_tree_builder import SymbolTreeBuilder
-            SymbolTreeBuilder.merge_module_of_subtree(self, sub_stree)
         else:
             AstModifier.insert_assign_to_function(self._init_func_ast,
                                                   targets=[ScopedValue(ValueType.NamingValue, "self", node.get_name())],
@@ -1013,27 +1077,6 @@ class SymbolTree(Observer, Observable):
                                                       None if position is None else position.node.get_ast(),
                                                       position.before_node)
         setattr(self._origin_network, node.get_name(), node.get_instance())
-
-    def _remove_unused_import(self):
-        """remove unused import in self._module_ast"""
-        str_checker = StrChecker(self._module_ast)
-        for i in range(len(self._module_ast.body) - 1, -1, -1):
-            body = self._module_ast.body[i]
-            if not isinstance(body, (ast.Import, ast.ImportFrom)):
-                continue
-            if isinstance(body, ast.Import):
-                continue
-            if isinstance(body, ast.ImportFrom) and body.module == "cell":
-                self._module_ast.body.remove(body)
-                continue
-            for alias in body.names:
-                name = alias.asname if alias.asname else alias.name
-                if not str_checker.check(name):
-                    if len(body.names) == 1:
-                        self._module_ast.body.remove(body)
-                        i += 1
-                    else:
-                        body.names.remove(alias)
 
     def _replace_container_node(self, old_node, new_nodes):
         cellcontainer = getattr(old_node, "container")
@@ -1069,39 +1112,6 @@ class SymbolTree(Observer, Observable):
                             to_delete_to_delete_keys.append(key)
                     for key in to_delete_to_delete_keys:
                         self._deleted_field.pop(key)
-
-    def _remove_unused_field(self):
-        """remove unused field in __init__ function"""
-        multi_targets = []
-        self._deleted_field = {}
-        for index, body in enumerate(self._init_func_ast.body):
-            if not isinstance(body, ast.Assign):
-                continue
-            targets = body.targets
-            for target in targets:
-                if isinstance(target, ast.Attribute) and isinstance(target.value, ast.Name) \
-                        and target.value.id == "self":
-                    self._deleted_field[target.attr] = index
-                    if len(targets) > 1:
-                        multi_targets.append(index)
-        self._filter_out_to_delete_field(self._deleted_field)
-        for i in range(len(self._init_func_ast.body) - 1, -1, -1):
-            if i in self._deleted_field.values():
-                if i in multi_targets:
-                    raise RuntimeError("Can not erase field ast node in __init__ function because of multi-targets")
-                AstModifier.erase_ast_from_function(self._init_func_ast, self._init_func_ast.body[i])
-        ast.fix_missing_locations(self._init_func_ast)
-
-    def _remove_duplicated_import(self):
-        """Remove duplicated import of 'net'."""
-        imports = []
-        for body in self._module_ast.body:
-            if isinstance(body, (ast.ImportFrom, ast.Import)):
-                import_str = astunparse.unparse(body)
-                if import_str not in imports:
-                    imports.append(import_str)
-                else:
-                    self._module_ast.body.remove(body)
 
     def _get_real_node(self, node_or_name: Union[Node, str]) -> Optional[Node]:
         if isinstance(node_or_name, str):
@@ -1235,7 +1245,6 @@ class SymbolTree(Observer, Observable):
         Returns:
             A class handle.
         """
-        self._update_container()
         file_path = os.getcwd()
         file_path = os.path.join(file_path, "rewritten_network")
         if not os.path.exists(file_path):
@@ -1276,21 +1285,6 @@ class SymbolTree(Observer, Observable):
     def _on_change(self, event: Event):
         self._modified = True
         self.changed(event)
-
-    def _update_container(self):
-        """Update instance of node in container."""
-        for node in self.nodes():
-            index = 0
-            if node.get_node_type() == NodeType.CellContainer:
-                for n in node.node_list:
-                    if not n.valid:
-                        continue
-                    if n.get_node_type() == NodeType.Tree:
-                        obj = n.symbol_tree.get_network()
-                        node.get_instance()[index] = obj
-                    else:
-                        node.get_instance()[index] = n.get_instance()
-                    index += 1
 
     def _cal_difference_set(self, input, other):
         """Calculate different set of two sets."""
