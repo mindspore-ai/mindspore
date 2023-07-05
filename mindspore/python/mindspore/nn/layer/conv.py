@@ -297,6 +297,7 @@ class Conv2d(_Conv):
         stride = twice(stride)
         self._dilation = dilation
         dilation = twice(dilation)
+        Validator.check_positive_int(group, 'group', self.cls_name)
         if not (in_channels % group == 0 and out_channels % group == 0):
             raise ValueError(f"The argument 'group' should be divisible by 'in_channels' " \
                              f"and 'out_channels', but got group:{group}, in_channels:{in_channels}, " \
@@ -465,6 +466,7 @@ class Conv1d(_Conv):
         Validator.check_int(stride, 1, Validator.GE, 'stride', self.cls_name)
         Validator.check_non_negative_int(padding, 'padding', self.cls_name)
         Validator.check_int(dilation, 1, Validator.GE, 'dilation', self.cls_name)
+        Validator.check_positive_int(group, 'group', self.cls_name)
         if not (in_channels % group == 0 and out_channels % group == 0):
             raise ValueError(f"The argument 'group' should be divisible by 'in_channels' " \
                              f"and 'out_channels', but got group:{group}, in_channels:{in_channels}, " \
