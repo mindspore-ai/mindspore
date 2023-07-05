@@ -39,7 +39,7 @@ void GetAllFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *al
   MS_ASSERT(all_func_graphs != nullptr);
   MS_ASSERT(func_graph != nullptr);
   if (all_func_graphs->find(func_graph) == all_func_graphs->end()) {
-    all_func_graphs->insert(func_graph);
+    (void)(all_func_graphs->insert(func_graph));
   } else {
     return;
   }
@@ -74,9 +74,9 @@ bool DeleteDirRecursively(const std::string &dir_name) {
   DIR *dir = opendir(dir_name.c_str());
   dirent *dirent = nullptr;
   std::vector<std::string> file_names{};
-  while ((dirent = readdir(dir)) != 0) {
+  while ((dirent = readdir(dir)) != nullptr) {
     if (strcmp(dirent->d_name, ".") != 0 && strcmp(dirent->d_name, "..") != 0) {
-      file_names.emplace_back(dirent->d_name);
+      (void)(file_names.emplace_back(dirent->d_name));
     }
   }
   for (auto &file_name : file_names) {
@@ -88,12 +88,12 @@ bool DeleteDirRecursively(const std::string &dir_name) {
     }
     auto result = unlink(real_file_path.value().c_str());
     if (result != 0) {
-      closedir(dir);
+      (void)(closedir(dir));
       MS_LOG(ERROR) << "Delete the file(" << real_file_path.value() << ") failed." << mindspore::ErrnoToString(errno);
       return false;
     }
   }
-  closedir(dir);
+  (void)(closedir(dir));
   return true;
 }
 };  // namespace
@@ -912,7 +912,7 @@ bool IrExportBuilder::BuildIsolatedCNode(const AnfNodePtr &node, std::set<AnfNod
     MS_LOG(ERROR) << "Set value to node attr to node proto failed.";
     return false;
   }
-  visited->insert(node);
+  (void)(visited->insert(node));
   return true;
 }
 
@@ -1217,7 +1217,6 @@ std::string IrExportBuilder::GetUniqueNodeName(const AnfNodePtr &node) {
     node_name = node_name + "_" + std::to_string(GetUniqueID());
   }
   node_name_map_[node] = node_name;
-  // node->set_user_data<std::string>(kUniqueCacheName, std::make_shared<std::string>(node_name));
   return node_name;
 }
 

@@ -89,7 +89,7 @@ FuncGraph *CompileCacheContext::GetFrontendGraphByBackendGraph(const FuncGraphPt
 }
 
 void CompileCacheContext::InsertBackendParamGenFromFrontendParam(const AnfNodePtr &node) {
-  backend_param_gen_from_frontend_param_.insert(node);
+  (void)(backend_param_gen_from_frontend_param_.insert(node));
 }
 
 void CompileCacheContext::PushFullnameIoSizeInfo(const std::string &fullname, const CachedIOSizeInfo &io_size) {

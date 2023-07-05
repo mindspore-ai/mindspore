@@ -85,7 +85,7 @@ class COMMON_EXPORT CompileCacheContext {
 
   void InsertBackendParamGenFromFrontendParam(const AnfNodePtr &node);
   bool IsBackendParamGenFromFrontendParam(const AnfNodePtr &node) const {
-    return backend_param_gen_from_frontend_param_.count(node);
+    return backend_param_gen_from_frontend_param_.count(node) != 0;
   }
   bool PsOrClusterMode() const { return ps_or_cluster_mode_; }
   void SetPsOrClusterMode(bool mode) { ps_or_cluster_mode_ = mode; }
