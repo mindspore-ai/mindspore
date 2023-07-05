@@ -98,14 +98,10 @@ void AscendDeprecatedInterface::RunInitGraph(const FuncGraphPtr &anf_graph, cons
   MS_EXCEPTION_IF_NULL(anf_graph);
   transform::RunOptions run_options;
   run_options.name = "init_subgraph." + anf_graph->ToString();
-  if (transform::GetGraphByName(run_options.name) == nullptr) {
-    MS_LOG(WARNING) << "Can not find " << run_options.name
-                    << " sub graph, don't need data init subgraph in INFER mode.";
-    return;
-  }
-  auto graph_runner = transform::GetGraphRunner();
+
+  auto graph_runner = transform::CheckAndGetGraphRunner(run_options);
   if (graph_runner == nullptr) {
-    MS_LOG(EXCEPTION) << "Can not found GraphRunner.";
+    return;
   }
 
   std::vector<transform::GeTensorPtr> ge_outputs;

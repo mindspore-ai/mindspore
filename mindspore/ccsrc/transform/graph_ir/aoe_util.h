@@ -26,7 +26,7 @@ namespace mindspore {
 namespace transform {
 class AoeUtil {
  public:
-  Status AoeOnlineGeGraph(std::shared_ptr<::ge::Session> ge_session, const transform::DfGraphPtr &graph);
+  Status AoeOnlineGeGraph(const std::shared_ptr<::ge::Session> &ge_session, const transform::DfGraphPtr &graph);
   static AoeUtil &GetInstance();
   ~AoeUtil();
   void Initialize();
@@ -42,8 +42,13 @@ class AoeUtil {
   std::set<int32_t> optimized_graphs_id_;
   AoeUtil();
   bool initialize_;
+#ifdef ENABLE_AOE
   Status AoeGeGraph(::ge::Session *ge_session, const transform::DfGraphPtr &graph,
                     const std::map<::ge::AscendString, ::ge::AscendString> &tuningOptions);
+#else
+  Status AoeGeGraph(::ge::Session *ge_session, const transform::DfGraphPtr &graph,
+                    const std::map<::ge::AscendString, ::ge::AscendString> &tuningOptions) const;
+#endif
 };
 }  // namespace transform
 }  // namespace mindspore

@@ -34,7 +34,6 @@ enum ModelStatus {
 };
 
 class RuntimeModel;
-using RuntimeInfo = std::tuple<uint32_t, uint32_t, void *, std::string>;
 class ModelRunner {
  public:
   static ModelRunner &Instance();

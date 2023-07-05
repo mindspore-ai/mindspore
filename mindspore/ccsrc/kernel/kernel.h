@@ -268,10 +268,14 @@ class BACKEND_EXPORT KernelTensor {
     host_data_ = copy_tensor.host_data_;
   }
   KernelTensor &operator=(const KernelTensor &copy_tensor) {
+    if (&copy_tensor == this) {
+      return *this;
+    }
     meta_type_ = copy_tensor.meta_type_;
     meta_ = copy_tensor.meta_;
     data_ = copy_tensor.data_;
     host_data_ = copy_tensor.host_data_;
+    dyn_output_data_ = nullptr;
     return *this;
   }
 
