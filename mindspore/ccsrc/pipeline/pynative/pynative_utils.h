@@ -34,6 +34,8 @@
 #endif
 namespace mindspore {
 namespace pynative {
+bool IsRealOp(const PrimitivePtr &prim);
+bool IsRealOp(const AnfNodePtr &cnode);
 class PyNativeExecutor;
 namespace PyNativeAlgo {
 // Common function

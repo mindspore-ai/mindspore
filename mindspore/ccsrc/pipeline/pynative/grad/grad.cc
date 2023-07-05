@@ -919,7 +919,7 @@ void GradExecutor::DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info,
     op_run_info->op_grad_info->input_value_grad_type[i] =
       PyNativeAlgo::Common::SetValueGradInfo(value, top_cell(), TensorGradType::kConstant);
   }
-  PyNativeAlgo::Common::SetValueGradInfo(op_run_info->real_out, nullptr, TensorGradType::kOpOutput);
+  (void)PyNativeAlgo::Common::SetValueGradInfo(op_run_info->real_out, nullptr, TensorGradType::kOpOutput);
   PyNativeAlgo::PyParser::PrepareOpGradInfo(op_run_info);
   DoOpGrad(op_run_info);
   auto node_info = std::make_shared<DynamicDetectNodeInfo>(

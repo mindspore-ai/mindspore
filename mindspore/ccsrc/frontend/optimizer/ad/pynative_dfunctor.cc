@@ -21,34 +21,10 @@
 #include "mindspore/core/ops/other_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "ir/func_graph_cloner.h"
+#include "pipeline/pynative/pynative_utils.h"
 
 namespace mindspore {
 namespace ad {
-const mindspore::HashSet<std::string> kNotRealOP{
-  kMakeTupleOpName,
-  kMakeListNewOpName,
-  kTupleGetItemOpName,
-  kStopGradientOpName,
-  kUpdateStateOpName,
-  kLoadOPName,
-  kDependOpName,
-  kReturnOpName,
-  kNPUAllocFloatStatusOpName,
-  kNPUGetFloatStatusOpName,
-  kNPUClearFloatStatusOpName,
-  kMirrorOperatorOpName,
-  kSequenceSliceOpName,
-  kSequenceMulOpName,
-};
-
-bool IsRealOp(const AnfNodePtr &node) {
-  const auto prim = GetCNodePrimitive(node);
-  if (prim == nullptr) {
-    return false;
-  }
-  return kNotRealOP.find(prim->name()) == kNotRealOP.end();
-}
-
 tensor::TensorPtr PynativeDFunctor::GenNewTensorInner(const TypePtr &type_elem, const BaseShapePtr &shape_elem) {
   MS_EXCEPTION_IF_NULL(type_elem);
   MS_EXCEPTION_IF_NULL(shape_elem);
@@ -209,7 +185,7 @@ std::vector<AnfNodePtr> PynativeDFunctor::RunOutputReplace(const CNodePtr &forwa
                                                            const FuncGraphPtr &fprop_graph,
                                                            const CNodePtr &cnode_morph) {
   MS_EXCEPTION_IF_NULL(cnode_morph);
-  if (!IsRealOp(cnode_morph)) {
+  if (!pynative::IsRealOp(cnode_morph)) {
     return {};
   }
   // Use manager to get the link relation among nodes.
@@ -258,7 +234,7 @@ std::vector<AnfNodePtr> PynativeDFunctor::RunInputReplace(const FuncGraphPtr &bp
     const auto &input_node = cnode_morph->input(i + 1);
     MS_EXCEPTION_IF_NULL(input_node);
     // Parameter, ValueNode and StopGradient CNode no need to replace.
-    if (input_node->isa<Parameter>() || input_node->isa<ValueNode>() || !IsRealOp(input_node)) {
+    if (input_node->isa<Parameter>() || input_node->isa<ValueNode>() || !pynative::IsRealOp(input_node)) {
       continue;
     }
     // Replace forward input node by its output value.

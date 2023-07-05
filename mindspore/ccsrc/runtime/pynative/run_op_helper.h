@@ -31,5 +31,6 @@ void RunSingleOpGraph(const KernelGraphPtr &graph, const std::vector<tensor::Ten
                       const device::DeviceContext *device_context);
 void RunSingleOpDynamic(const session::BackendOpRunInfoPtr &op_run_info, const OpCompilerInfoPtr &op_compiler_info,
                         vector<device::DeviceAddressPtr> *device_address_list);
+std::vector<tensor::TensorPtr> GetTensorWithoutValueMask(const session::BackendOpRunInfoPtr &op_run_info);
 }  // namespace mindspore::runtime
 #endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_RUN_OP_RUN_OP_HELPER_H_

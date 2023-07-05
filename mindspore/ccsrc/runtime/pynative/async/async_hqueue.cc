@@ -27,9 +27,7 @@ namespace pynative {
 #ifndef LIKELY
 #ifdef _MSC_VER
 #define LIKELY(x) (x)
-#define UNLIKELY(x) (x)
 #else
-#define UNLIKELY(x) __builtin_expect(!!(x), 0)
 #define LIKELY(x) __builtin_expect(!!(x), 1)
 #endif
 #endif
@@ -53,7 +51,13 @@ AsyncHqueue::AsyncHqueue(std::string name) : name_(std::move(name)) {
                                              &AsyncHqueue::ReinitAfterFork);
 }
 
-AsyncHqueue::~AsyncHqueue() { WorkerJoin(); }
+AsyncHqueue::~AsyncHqueue() {
+  try {
+    WorkerJoin();
+  } catch (const std::exception &e) {
+    MS_LOG(INFO) << "WorkerJoin failed, error msg:" << e.what();
+  }
+}
 
 void AsyncHqueue::WorkerLoop() {
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)

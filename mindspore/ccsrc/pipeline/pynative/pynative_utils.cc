@@ -34,6 +34,35 @@
 
 namespace mindspore {
 namespace pynative {
+static const mindspore::HashSet<std::string> kNotRealOP{
+  kMakeTupleOpName,
+  kMakeListNewOpName,
+  kTupleGetItemOpName,
+  kStopGradientOpName,
+  kUpdateStateOpName,
+  kLoadOPName,
+  kDependOpName,
+  kReturnOpName,
+  kNPUAllocFloatStatusOpName,
+  kNPUGetFloatStatusOpName,
+  kNPUClearFloatStatusOpName,
+  kMirrorOperatorOpName,
+  kSequenceSliceOpName,
+  kSequenceMulOpName,
+};
+bool IsRealOp(const PrimitivePtr &prim) {
+  MS_EXCEPTION_IF_NULL(prim);
+  return kNotRealOP.find(prim->name()) == kNotRealOP.end();
+}
+
+bool IsRealOp(const AnfNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  const auto &prim = GetCNodePrimitive(cnode);
+  if (prim == nullptr) {
+    return false;
+  }
+  return IsRealOp(prim);
+}
 namespace PyNativeAlgo {
 namespace {
 std::string GetObjIdFromPython(const py::handle &obj) {

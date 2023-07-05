@@ -844,23 +844,6 @@ std::vector<tensor::TensorPtr> GetAllInputTensor(
   return ret;
 }
 
-std::vector<tensor::TensorPtr> GetTensorWithoutValueMask(const session::BackendOpRunInfoPtr &op_run_info) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  std::vector<tensor::TensorPtr> tensors_without_value_node;
-  const auto &input_tensors = op_run_info->base_op_run_info.input_tensor;
-  const auto &tensors_mask = op_run_info->base_op_run_info.input_mask;
-  if (input_tensors.size() != tensors_mask.size()) {
-    MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors.size() << " should be equal to tensors mask size "
-                      << tensors_mask.size();
-  }
-  for (size_t index = 0; index < tensors_mask.size(); ++index) {
-    if (tensors_mask.at(index) != kValueNodeTensorMask) {
-      (void)tensors_without_value_node.emplace_back(input_tensors.at(index));
-    }
-  }
-  return tensors_without_value_node;
-}
-
 void UpdateOutputShapeForCompileInfo(const std::vector<device::DeviceAddressPtr> &outputs_device_address,
                                      const AbstractBasePtr &out_abstract) {
   if (out_abstract->isa<abstract::AbstractTuple>()) {
@@ -1016,6 +999,23 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
   MS_LOG(DEBUG) << "End";
 }
 }  // namespace
+
+std::vector<tensor::TensorPtr> GetTensorWithoutValueMask(const session::BackendOpRunInfoPtr &op_run_info) {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  std::vector<tensor::TensorPtr> tensors_without_value_node;
+  const auto &input_tensors = op_run_info->base_op_run_info.input_tensor;
+  const auto &tensors_mask = op_run_info->base_op_run_info.input_mask;
+  if (input_tensors.size() != tensors_mask.size()) {
+    MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors.size() << " should be equal to tensors mask size "
+                      << tensors_mask.size();
+  }
+  for (size_t index = 0; index < tensors_mask.size(); ++index) {
+    if (tensors_mask.at(index) != kValueNodeTensorMask) {
+      (void)tensors_without_value_node.emplace_back(input_tensors.at(index));
+    }
+  }
+  return tensors_without_value_node;
+}
 
 // Determine the address of the graph and do not change the address in subsequent executions
 void UpdateDeviceAddress(const KernelGraphPtr &graph, const std::vector<tensor::TensorPtr> &tensors_without_value_mask,

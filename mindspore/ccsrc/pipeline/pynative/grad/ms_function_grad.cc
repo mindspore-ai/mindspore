@@ -29,23 +29,6 @@
 namespace mindspore {
 namespace pynative {
 namespace {
-const mindspore::HashSet<std::string> kNotRealOP{
-  kMakeTupleOpName,
-  kMakeListNewOpName,
-  kTupleGetItemOpName,
-  kStopGradientOpName,
-  kUpdateStateOpName,
-  kLoadOPName,
-  kDependOpName,
-  kReturnOpName,
-  kNPUAllocFloatStatusOpName,
-  kNPUGetFloatStatusOpName,
-  kNPUClearFloatStatusOpName,
-  kMirrorOperatorOpName,
-  kSequenceSliceOpName,
-  kSequenceMulOpName,
-};
-
 const mindspore::HashSet<std::string> kExpanderWhiteList{
   kVmapStackAssignOpName,
   kVmapUnstackAssignOpName,
@@ -139,20 +122,6 @@ void ModifyOutputNode(const FuncGraphPtr &func_graph) {
   // Clear
   func_graph->set_modify_output(true);
   func_graph->ClearUsedForwardNodes();
-}
-
-bool IsRealOp(const PrimitivePtr &prim) {
-  MS_EXCEPTION_IF_NULL(prim);
-  return kNotRealOP.find(prim->name()) == kNotRealOP.end();
-}
-
-bool IsRealOp(const AnfNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  const auto &prim = GetCNodePrimitive(cnode);
-  if (prim == nullptr) {
-    return false;
-  }
-  return IsRealOp(prim);
 }
 
 void GetUsedCNodeInBpropGraph(const CNodePtr &cnode, const mindspore::HashSet<size_t> &unused_inputs,

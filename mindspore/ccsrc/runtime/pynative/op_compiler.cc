@@ -358,6 +358,39 @@ void OpCompiler::BatchBuild(const std::vector<KernelGraphPtr> &graphs, const Dev
   }
 }
 
+#ifdef ENABLE_D
+std::string GetGraphInfoEnableD(const pynative::BaseOpRunInfo &op_info, const PrimitivePtr &op_prim,
+                                const std::string &graph_info) {
+  std::string ascend_special_info = graph_info;
+  auto op_name = op_prim->name();
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice &&
+      transform::AclAdapterManager::GetInstance().CheckAclAdapter(op_name)) {
+    auto acl_info = transform::AclAdapterManager::GetInstance().GetOpInfo(op_name);
+    if (acl_info.output_selector() != nullptr) {
+      auto func = acl_info.output_selector();
+      MS_EXCEPTION_IF_NULL(func);
+      if (op_info.input_tensor.size() == 0) {
+        return ascend_special_info;
+      }
+      auto first_tenspr = op_info.input_tensor[0];
+      MS_EXCEPTION_IF_NULL(first_tenspr);
+      auto first_dtype = first_tenspr->data_type();
+      std::vector<ShapeVector> input_shapes;
+      (void)std::transform(op_info.input_tensor.begin(), op_info.input_tensor.end(), std::back_inserter(input_shapes),
+                           [](const auto &tensor) {
+                             MS_EXCEPTION_IF_NULL(tensor);
+                             return tensor->shape();
+                           });
+      auto format = func(first_dtype, input_shapes);
+      ascend_special_info += format;
+    }
+  }
+  return ascend_special_info;
+}
+#endif
+
 std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_info,
                                              const PrimitivePtr &op_prim) const {
   MS_EXCEPTION_IF_NULL(op_prim);
@@ -432,30 +465,7 @@ std::string OpCompiler::GetSingleOpGraphInfo(const pynative::BaseOpRunInfo &op_i
 
 #ifdef ENABLE_D
   // Ascend special info.
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice &&
-      transform::AclAdapterManager::GetInstance().CheckAclAdapter(op_name)) {
-    auto acl_info = transform::AclAdapterManager::GetInstance().GetOpInfo(op_name);
-    if (acl_info.output_selector() != nullptr) {
-      auto func = acl_info.output_selector();
-      MS_EXCEPTION_IF_NULL(func);
-      if (op_info.input_tensor.size() == 0) {
-        return graph_info;
-      }
-      auto first_tenspr = op_info.input_tensor[0];
-      MS_EXCEPTION_IF_NULL(first_tenspr);
-      auto first_dtype = first_tenspr->data_type();
-      std::vector<ShapeVector> input_shapes;
-      (void)std::transform(op_info.input_tensor.begin(), op_info.input_tensor.end(), std::back_inserter(input_shapes),
-                           [](const auto &tensor) {
-                             MS_EXCEPTION_IF_NULL(tensor);
-                             return tensor->shape();
-                           });
-      auto format = func(first_dtype, input_shapes);
-      graph_info += format;
-    }
-  }
+  graph_info = GetGraphInfoEnableD(op_info, op_prim, graph_info);
 #endif
 
   return graph_info;
