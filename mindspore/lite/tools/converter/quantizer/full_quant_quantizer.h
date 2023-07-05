@@ -116,6 +116,8 @@ class FullQuantQuantizer : public Quantizer {
 
   int QuantWithKL();
 
+  int QuantValueNode(const CNodePtr &cnode, const AnfNodePtr &input_node, size_t i);
+
  private:
   FullQuantInitParam init_param_;
 
