@@ -20,7 +20,6 @@
 #include <memory>
 #include "ir/anf.h"
 #include "ir/primitive.h"
-#include "utils/flags.h"
 #include "utils/hash_map.h"
 
 namespace mindspore {
