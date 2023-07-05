@@ -24,17 +24,13 @@ from mindspore._extends.parallel_compile.akg_compiler.util import get_ascend_com
     get_log_level, update_attr, select_best, print_compile_log, check_tbe_support, get_kernel_meta_parent_dir
 
 
-def _compile_akg_task_default(json_strs, attrs):
+def _compile_akg_task_default(json_strs, attrs, func):
     """
     compile func called in single process
 
     Parameters:
         json_strs: list. List contains multiple kernel infos, suitable for json compile api.
     """
-
-    sys.path.insert(0, get_akg_path())
-    p = __import__("akg", globals(), locals(), ['ms'], 0)
-    func = getattr(p.ms, "compilewithjson")
     os.environ["MS_COMPILER_CACHE_PATH"] = get_kernel_meta_parent_dir(attrs)
 
     for json_str in json_strs:
@@ -150,13 +146,17 @@ class AkgProcess:
         if self.argc == 0:
             raise ValueError("In AKG kernel compiling, the number of kernel json that need to be compiled can "
                              "not be zero.")
-        args = list((arg, attrs) for arg in self.args)
         if self.platform == "ASCEND":
+            args = list((arg, attrs) for arg in self.args)
             create_compile_dirs(get_ascend_compile_dirs(attrs))
             with Pool(processes=self.process_num) as pool:
                 res = pool.starmap_async(_compile_akg_task_ascend, args)
                 res.get(timeout=self.wait_time)
         else:
+            sys.path.insert(0, get_akg_path())
+            p = __import__("akg", globals(), locals(), ['ms'], 0)
+            func = getattr(p.ms, "compilewithjson")
+            args = list((arg, attrs, func) for arg in self.args)
             with Pool(processes=self.process_num) as pool:
                 res = pool.starmap_async(_compile_akg_task_default, args)
                 res.get(timeout=self.wait_time)
