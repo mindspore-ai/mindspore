@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,35 +56,9 @@ int64_t CheckAttrInt64Positive(const std::string &op, const ValuePtr &attr, cons
   return attr_val;
 }
 
-std::vector<int64_t> CheckAttrTuple(const PrimitivePtr &prim, const std::string &attr_name, size_t num_element) {
-  auto attr = prim->GetAttr(attr_name);
-  MS_EXCEPTION_IF_NULL(attr);
-  std::vector<int64_t> result;
-  if (!attr->isa<ValueTuple>()) {
-    MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', the '" << attr_name
-                             << "' should be a tuple[int64], but got: " << attr->ToString() << ".";
-  }
-  std::vector<ValuePtr> attr_vec = attr->cast<ValueTuplePtr>()->value();
-  if (attr_vec.size() != num_element) {
-    MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', the '" << attr_name
-                             << "' should be a tuple[int64] with size " << num_element << ", but its size is "
-                             << attr_vec.size() << ".";
-  }
-  (void)std::transform(attr_vec.begin(), attr_vec.end(), std::back_inserter(result),
-                       [&prim, &attr_name](const ValuePtr &e) -> int64_t {
-                         auto value = GetValue<int64_t>(e);
-                         if (value < 0) {
-                           MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', the element of '" << attr_name
-                                                    << "' should not be negative number, but got " << value << ".";
-                         }
-                         return value;
-                       });
-  return result;
-}
-
 std::vector<int64_t> CheckAttrTupleAndNCDimensions(const PrimitivePtr &primitive, const std::string &attr_name,
                                                    size_t num, uint64_t n_axis, uint64_t c_axis) {
-  std::vector<int64_t> tuple = CheckAttrTuple(primitive, attr_name, num);
+  std::vector<int64_t> tuple = CheckAndConvertUtils::CheckAttrTuple(primitive, attr_name, num);
   if (tuple[n_axis] != 1 || tuple[c_axis] != 1) {
     MS_EXCEPTION(ValueError)
       << "For '" << primitive->name()
@@ -173,7 +147,7 @@ abstract::ShapePtr DeformableOffsetsInferShape(const PrimitivePtr &primitive,
 
   constexpr int64_t offsets_channel_factor = 3;
   constexpr size_t kernel_size_num = 2;
-  std::vector<int64_t> kernel_size = CheckAttrTuple(primitive, kAttrKsize, kernel_size_num);
+  std::vector<int64_t> kernel_size = CheckAndConvertUtils::CheckAttrTuple(primitive, kAttrKsize, kernel_size_num);
   if (offsets_shape[c_axis] != abstract::Shape::kShapeDimAny &&
       offsets_shape[c_axis] != deformable_groups * offsets_channel_factor * kernel_size[0] * kernel_size[1]) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', 'C_in' of input 'offsets' shape must be equal to "
@@ -188,7 +162,7 @@ abstract::ShapePtr DeformableOffsetsInferShape(const PrimitivePtr &primitive,
   }
 
   constexpr size_t pads_num = 4;
-  std::vector<int64_t> pads = CheckAttrTuple(primitive, kPads, pads_num);
+  std::vector<int64_t> pads = CheckAndConvertUtils::CheckAttrTuple(primitive, kPads, pads_num);
   std::vector<int64_t> output_hw;
   DeformableOffsetsPadFunction(&output_hw, kernel_size, strides, dilations, pads, x_shape[h_axis], x_shape[w_axis],
                                h_axis, w_axis);

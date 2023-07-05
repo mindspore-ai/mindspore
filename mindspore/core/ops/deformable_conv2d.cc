@@ -87,7 +87,8 @@ abstract::ShapePtr DeformableConv2dInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
 
   constexpr uint64_t input_size = 3;
-  (void)CheckAndConvertUtils::CheckInteger("input_args size", input_args.size(), kGreaterEqual, input_size, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input_args size", static_cast<int64_t>(input_args.size()), kGreaterEqual,
+                                           input_size, prim_name);
   for (const auto &arg : input_args) {
     MS_EXCEPTION_IF_NULL(arg);
   }
@@ -185,9 +186,17 @@ void DeformableConv2d::Init(const std::vector<int64_t> &strides, const std::vect
   set_pads(pads);
   set_dilations(dilations);
   set_data_format(data_format);
+  set_groups(groups);
   set_deformable_groups(deformable_groups);
   set_modulated(modulated);
 }
+
+void DeformableConv2d::set_groups(int64_t groups) {
+  (void)AddAttr(kAttrGroups,
+                api::MakeValue(CheckAndConvertUtils::CheckInteger(kAttrGroups, groups, kGreaterThan, 0, name())));
+}
+
+int64_t DeformableConv2d::get_groups() const { return GetValue<int64_t>(GetAttr(kAttrGroups)); }
 
 void DeformableConv2d::set_strides(const std::vector<int64_t> &strides) {
   constexpr int64_t strides_num = 4;
