@@ -973,7 +973,6 @@ alashkari,anzhengqi,archer2049,B.L.LAN,baihuawei,bichaoyang,BJ-WANG,Bokai Li,Bri
 - [STABLE] `mindspore.ops.NextAfter` 新增算子原语。
 - [STABLE] `mindspore.ops.Orgqr` 新增算子原语。
 - [STABLE] `mindspore.ops.ReduceStd` 新增算子原语。
-- [STABLE] `mindspore.ops.ResizeNearestNeighborV2` 新增算子原语。
 - [STABLE] `mindspore.ops.RGBToHSV` 新增算子原语。
 - [STABLE] `mindspore.ops.RightShift` 新增算子原语。
 - [STABLE] `mindspore.ops.Roll` 新增算子原语。

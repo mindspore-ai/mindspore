@@ -972,7 +972,6 @@ The original cloud inference integrated through MindSpore training can be change
 - [STABLE] Add operator primitive for `mindspore.ops.NextAfter`.
 - [STABLE] Add operator primitive for `mindspore.ops.Orgqr`.
 - [STABLE] Add operator primitive for `mindspore.ops.ReduceStd`.
-- [STABLE] Add operator primitive for `mindspore.ops.ResizeNearestNeighborV2`.
 - [STABLE] Add operator primitive for `mindspore.ops.RGBToHSV`.
 - [STABLE] Add operator primitive for `mindspore.ops.RightShift`.
 - [STABLE] Add operator primitive for `mindspore.ops.Roll`.
