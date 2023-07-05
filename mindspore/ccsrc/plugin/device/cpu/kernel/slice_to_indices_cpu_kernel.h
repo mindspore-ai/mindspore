@@ -40,15 +40,14 @@ class SliceToIndicesCpuKernelMod : public NativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                     const std::vector<kernel::AddressPtr> &outputs) const;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
-  using SliceToIndicesFunc =
-    std::function<bool(SliceToIndicesCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  using SliceToIndicesFunc = std::function<bool(SliceToIndicesCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                                const std::vector<kernel::AddressPtr> &)>;
 
   static std::vector<std::pair<KernelAttr, SliceToIndicesFunc>> func_list_;
   SliceToIndicesFunc kernel_func_;

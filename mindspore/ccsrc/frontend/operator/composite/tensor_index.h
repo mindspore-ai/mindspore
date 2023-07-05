@@ -46,7 +46,7 @@ class TensorIndex : public MetaFuncGraph {
  protected:
   AnfNodePtr NormalizeSliceInfo(const AnfNodePtr &data_node, const AnfNodePtr &index_node,
                                 const IndexHandleLevel &index_handle_level,
-                                const abstract::AbstractSlicePtr &abs_slice_ptr, bool *empty);
+                                const abstract::AbstractSlicePtr &abs_slice_ptr, bool *empty, bool slice_to_indices);
   AnfNodePtrList NormalizeSlice(const AbstractBasePtrList &slice_info_abs, const AnfNodePtr &shape_node,
                                 const AnfNodePtr &index_node);
   IndexHandleLevel PreHandleIndex(const AbstractBasePtr &data, const abstract::AbstractSlicePtr &abs_slice);
@@ -90,7 +90,7 @@ const int64_t kIndexMax = std::numeric_limits<int64_t>::max();
 class Slice {
  public:
   Slice(const AbstractBasePtr &start_index, const AbstractBasePtr &stop_index, const AbstractBasePtr &step_index,
-        int64_t dim_size) {
+        int64_t dim_size, bool slice_to_indices) {
     CheckSliceType(start_index);
     CheckSliceType(stop_index);
     CheckSliceType(step_index);
@@ -109,11 +109,29 @@ class Slice {
     }
     start_ = NormalizeIndex(start_index, step_, dim_size_);
     stop_ = NormalizeIndex(stop_index, -step_, dim_size_);
+    is_empty_slice_ = (start_ - stop_) * step_ >= 0;
+    if (!slice_to_indices) {
+      bool start_init_by_none = start_index->isa<abstract::AbstractNone>();
+      bool stop_init_by_none = stop_index->isa<abstract::AbstractNone>();
+      int64_t start_default;
+      int64_t stop_default;
+      if (step_ < 0) {
+        start_default = -1;
+        stop_default = -(dim_size_ + 1);
+        stop_ = stop_init_by_none ? stop_default : std::max(stop_default, GetValue<int64_t>(stop_index->BuildValue()));
+      } else {
+        start_default = 0;
+        stop_default = dim_size_;
+        stop_ = stop_init_by_none ? stop_default : std::min(stop_default, GetValue<int64_t>(stop_index->BuildValue()));
+      }
+      start_ = start_init_by_none ? start_default : GetValue<int64_t>(start_index->BuildValue());
+    }
   }
 
   int64_t start() const { return start_; }
   int64_t stop() const { return stop_; }
   int64_t step() const { return step_; }
+  int64_t is_empty_slice() const { return is_empty_slice_; }
 
   static inline int64_t NormalizeIndex(int64_t index, int64_t dim_size) {
     int64_t new_index = index;
@@ -150,6 +168,7 @@ class Slice {
   int64_t stop_ = 0;
   int64_t step_ = 0;
   int64_t dim_size_ = 0;
+  bool is_empty_slice_ = false;
 };
 }  // namespace prim
 }  // namespace mindspore

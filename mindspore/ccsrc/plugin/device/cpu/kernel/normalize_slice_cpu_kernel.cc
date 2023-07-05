@@ -69,17 +69,16 @@ int NormalizeSliceInfoCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 bool NormalizeSliceInfoCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &workspace,
                                                   const std::vector<AddressPtr> &outputs) const {
-  const auto data_shape_addr = reinterpret_cast<int64_t *>(inputs[kIndex0]->addr);
-  const auto init_by_none_addr = reinterpret_cast<int64_t *>(inputs[kIndex1]->addr);
-  const auto start_addr = reinterpret_cast<int64_t *>(inputs[kIndex2]->addr);
-  const auto stop_addr = reinterpret_cast<int64_t *>(inputs[kIndex3]->addr);
-  const auto step_addr = reinterpret_cast<int64_t *>(inputs[kIndex4]->addr);
+  const auto data_shape_addr = static_cast<int64_t *>(inputs[kIndex0]->addr);
+  const auto init_by_none_addr = static_cast<int64_t *>(inputs[kIndex1]->addr);
+  const auto start_addr = static_cast<int64_t *>(inputs[kIndex2]->addr);
+  const auto stop_addr = static_cast<int64_t *>(inputs[kIndex3]->addr);
+  const auto step_addr = static_cast<int64_t *>(inputs[kIndex4]->addr);
 
-  auto output_start_attr = reinterpret_cast<int64_t *>(outputs[kIndex0]->addr);
-  auto output_stop_attr = reinterpret_cast<int64_t *>(outputs[kIndex1]->addr);
-  auto output_step_attr = reinterpret_cast<int64_t *>(outputs[kIndex2]->addr);
+  auto output_start_attr = static_cast<int64_t *>(outputs[kIndex0]->addr);
+  auto output_stop_attr = static_cast<int64_t *>(outputs[kIndex1]->addr);
+  auto output_step_attr = static_cast<int64_t *>(outputs[kIndex2]->addr);
 
   auto output_arg_size = outputs[kIndex0]->size;
   int64_t dim_size = data_shape_addr[0];
@@ -93,13 +92,6 @@ bool NormalizeSliceInfoCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   if (step == 0) {
     MS_LOG(EXCEPTION) << "For 'slice', 'strides' cannot contain 0";
   }
-  if (start_by_none_init) {
-    start = 0;
-  } else if (start < 0) {
-    start = start < -dim_size ? 0 : (dim_size + (start % dim_size)) % dim_size;
-  } else if (start > 0) {
-    start = start < dim_size ? start : dim_size;
-  }
 
   if (stop_by_none_init) {
     stop = dim_size;
@@ -108,9 +100,33 @@ bool NormalizeSliceInfoCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   } else if (stop > 0) {
     stop = stop < dim_size ? stop : dim_size;
   }
-  if ((start - stop) * step >= 0) {
-    step = 1;
+  if (start_by_none_init) {
+    start = 0;
+  } else if (start < 0) {
+    start = start < -dim_size ? 0 : (dim_size + (start % dim_size)) % dim_size;
+  } else if (start > 0) {
+    start = start < dim_size ? start : dim_size;
   }
+
+  if ((start - stop) * step >= 0) {
+    start = 1;
+    stop = 1;
+    step = 1;
+  } else {
+    int64_t start_default;
+    int64_t stop_default;
+    if (step < 0) {
+      start_default = -1;
+      stop_default = -(dim_size + 1);
+      stop = stop_by_none_init ? stop_default : std::max(stop_default, stop_addr[0]);
+    } else {
+      start_default = 0;
+      stop_default = dim_size;
+      stop = stop_by_none_init ? stop_default : std::min(stop_default, stop_addr[0]);
+    }
+    start = start_by_none_init ? start_default : start_addr[0];
+  }
+
   CheckCopy(output_start_attr, output_arg_size, &start, output_arg_size, kernel_name_);
   CheckCopy(output_stop_attr, output_arg_size, &stop, output_arg_size, kernel_name_);
   CheckCopy(output_step_attr, output_arg_size, &step, output_arg_size, kernel_name_);
@@ -120,7 +136,7 @@ bool NormalizeSliceInfoCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
 bool NormalizeSliceInfoCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
                                             const std::vector<AddressPtr> &workspace,
                                             const std::vector<AddressPtr> &outputs) {
-  return kernel_func_(this, inputs, workspace, outputs);
+  return kernel_func_(this, inputs, outputs);
 }
 
 std::vector<std::pair<KernelAttr, NormalizeSliceInfoCpuKernelMod::NormalizeSliceFunc>>

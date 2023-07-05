@@ -98,13 +98,15 @@ AnfNodePtrList TensorIndex::NormalizeSlice(const AbstractBasePtrList &slice_info
 
 AnfNodePtr TensorIndex::NormalizeSliceInfo(const AnfNodePtr &data_node, const AnfNodePtr &index_node,
                                            const IndexHandleLevel &index_handle_level,
-                                           const abstract::AbstractSlicePtr &abs_slice_ptr, bool *empty) {
+                                           const abstract::AbstractSlicePtr &abs_slice_ptr, bool *empty,
+                                           bool slice_to_indices) {
   auto start_abs = abs_slice_ptr->start();
   auto stop_abs = abs_slice_ptr->stop();
   auto step_abs = abs_slice_ptr->step();
   if (index_handle_level == IndexHandleLevel::kHandleByConstFold) {
-    std::shared_ptr<Slice> slice_ptr = std::make_shared<Slice>(start_abs, stop_abs, step_abs, data_shape_[0]);
-    if ((slice_ptr->start() - slice_ptr->stop()) * slice_ptr->step() >= 0) {
+    std::shared_ptr<Slice> slice_ptr =
+      std::make_shared<Slice>(start_abs, stop_abs, step_abs, data_shape_[0], slice_to_indices);
+    if (slice_ptr->is_empty_slice()) {
       *empty = true;
       return data_node;
     }
@@ -124,7 +126,7 @@ void TensorIndexGetitem::GetItemBySlice(const AnfNodePtr &data_node, const AnfNo
   IndexHandleLevel index_handle_level = PreHandleIndex(data, abs_slice_ptr);
   bool is_empty_slice = false;
   AnfNodePtr normalized_slice_node =
-    NormalizeSliceInfo(data_node, index_node, index_handle_level, abs_slice_ptr, &is_empty_slice);
+    NormalizeSliceInfo(data_node, index_node, index_handle_level, abs_slice_ptr, &is_empty_slice, false);
   if (is_empty_slice) {
     ShapeVector empty_slice = data_shape_;
     empty_slice[0] = 0;
@@ -158,13 +160,13 @@ void TensorIndexGetitem::GetItemBySlice(const AnfNodePtr &data_node, const AnfNo
   auto prim = GetValueNode<PrimitivePtr>(strided_slice_vnode);
   const std::vector<std::string> &input_names = {"x", "begin", "end", "strides"};
   const std::vector<std::string> &output_names = {"output"};
-  prim->SetAttrs({{ops::kBeginMask, MakeValue(kZeroAnfValue)},
-                  {ops::kEndMask, MakeValue(kZeroAnfValue)},
-                  {ops::kEllipsisMask, MakeValue(kZeroAnfValue)},
-                  {ops::kNewAxisMask, MakeValue(kZeroAnfValue)},
-                  {ops::kShrinkAxisMask, MakeValue(kZeroAnfValue)},
-                  {kAttrInputNames, MakeValue(input_names)},
-                  {kAttrOutputNames, MakeValue(output_names)}});
+  (void)prim->SetAttrs({{ops::kBeginMask, MakeValue(kZeroAnfValue)},
+                        {ops::kEndMask, MakeValue(kZeroAnfValue)},
+                        {ops::kEllipsisMask, MakeValue(kZeroAnfValue)},
+                        {ops::kNewAxisMask, MakeValue(kZeroAnfValue)},
+                        {ops::kShrinkAxisMask, MakeValue(kZeroAnfValue)},
+                        {kAttrInputNames, MakeValue(input_names)},
+                        {kAttrOutputNames, MakeValue(output_names)}});
   (void)slice_nodes.insert(slice_nodes.begin(), {strided_slice_vnode, data_node});
   res_graph_->set_output(res_graph_->NewCNode(slice_nodes));
 }
@@ -181,7 +183,7 @@ FuncGraphPtr TensorIndexGetitem::GenerateFuncGraph(const AbstractBasePtrList &ar
   AnfNodePtr data_node = res_graph_->add_parameter();
   AnfNodePtr index_node = res_graph_->add_parameter();
   if (args_abs_list[1]->isa<abstract::AbstractSlice>()) {
-    (void)GetItemBySlice(data_node, index_node, args_abs_list[0], dyn_cast<abstract::AbstractSlice>(args_abs_list[1]));
+    GetItemBySlice(data_node, index_node, args_abs_list[0], dyn_cast<abstract::AbstractSlice>(args_abs_list[1]));
   }
   return res_graph_;
 }
@@ -195,7 +197,7 @@ void TensorIndexSetitem::SetItemBySlice(const AnfNodePtr &data_node, const AnfNo
   if (index_handle_level == IndexHandleLevel::kHandleByConstFold) {
     bool is_empty_slice = false;
     AnfNodePtr normalized_slice_node =
-      NormalizeSliceInfo(data_node, index_node, index_handle_level, abs_slice_ptr, &is_empty_slice);
+      NormalizeSliceInfo(data_node, index_node, index_handle_level, abs_slice_ptr, &is_empty_slice, true);
     if (is_empty_slice) {
       auto stub_outputs = AnfNodePtrList(6, NewValueNode(SizeToLong(0)));
       (void)output_nodes.insert(output_nodes.end(), stub_outputs.begin(), stub_outputs.end());
@@ -206,8 +208,14 @@ void TensorIndexSetitem::SetItemBySlice(const AnfNodePtr &data_node, const AnfNo
     int64_t stop = slice_info[kIndex1];
     int64_t step = slice_info[kIndex2];
     std::vector<int64_t> indices;
-    for (int64_t i = start; i < stop; i += step) {
-      (void)indices.emplace_back(i);
+    if (step > 0) {
+      for (int64_t i = start; i < stop; i += step) {
+        (void)indices.emplace_back(i);
+      }
+    } else {
+      for (int64_t i = start; i > stop; i += step) {
+        (void)indices.emplace_back(i);
+      }
     }
     ShapeVector indices_shp({static_cast<int64_t>(indices.size()), 1});
     auto shp_buf_size = sizeof(int64_t) * indices.size();
@@ -268,8 +276,8 @@ FuncGraphPtr TensorIndexSetitem::GenerateFuncGraph(const AbstractBasePtrList &ar
   AnfNodePtr value_node = res_graph_->add_parameter();
 
   if (args_abs_list[1]->isa<abstract::AbstractSlice>()) {
-    (void)SetItemBySlice(data_node, index_node, value_node, args_abs_list[0],
-                         dyn_cast<abstract::AbstractSlice>(args_abs_list[kIndex1]), args_abs_list[kIndex2]);
+    SetItemBySlice(data_node, index_node, value_node, args_abs_list[0],
+                   dyn_cast<abstract::AbstractSlice>(args_abs_list[kIndex1]), args_abs_list[kIndex2]);
   }
 
   return res_graph_;

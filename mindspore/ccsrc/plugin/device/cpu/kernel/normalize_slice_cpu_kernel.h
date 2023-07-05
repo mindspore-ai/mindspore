@@ -40,7 +40,7 @@ class NormalizeSliceInfoCpuKernelMod : public NativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                     const std::vector<kernel::AddressPtr> &outputs) const;
 
  protected:
@@ -48,7 +48,7 @@ class NormalizeSliceInfoCpuKernelMod : public NativeCpuKernelMod {
 
   using NormalizeSliceFunc =
     std::function<bool(NormalizeSliceInfoCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+                       const std::vector<kernel::AddressPtr> &)>;
 
   static std::vector<std::pair<KernelAttr, NormalizeSliceFunc>> func_list_;
   NormalizeSliceFunc kernel_func_;
