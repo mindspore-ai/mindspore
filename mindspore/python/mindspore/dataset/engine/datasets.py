@@ -2963,12 +2963,16 @@ class Pipe:
 
     def master_close(self):
         self.eof.set()
+        self.send_finish_signal_to_worker()
         self.send_finish_signal()
         self.res_queue.cancel_join_thread()
         self.in_queue.cancel_join_thread()
 
     def send_finish_signal(self):
         self.worker_send(None)
+
+    def send_finish_signal_to_worker(self):
+        self.master_send(0, "QUIT")
 
     def worker_send(self, data):
         self.res_queue.put_until(data, timeout=1, exit_signal=self.eof)
@@ -3021,6 +3025,9 @@ def _worker_loop(operations, pipe, seed=get_seed()):
             pipe.worker_close()
             return
         (idx, input_tensors) = result
+        if input_tensors == "QUIT":
+            pipe.worker_close()
+            break
         try:
             output_tensors = operations[idx](*input_tensors)
 
@@ -3028,6 +3035,10 @@ def _worker_loop(operations, pipe, seed=get_seed()):
         except Exception:
             pipe.worker_send(ExceptionHandler(where="in map(or batch) worker and execute Python function"))
             # Do not return
+
+    # release the queue when stop the worker by master
+    del pipe.in_queue
+    del pipe.res_queue
 
 
 def worker_target(operations, seed=get_seed()):
@@ -3084,9 +3095,9 @@ class _MPWorker(multiprocessing.Process):
             if self.is_alive():
                 logger.info(f"Closing worker with PID: {self.pid}")
                 self.pipe.master_close()
-                super().terminate()
-                super().join()
-                super().close()
+                # del the handle which hold by master
+                del self.pipe.in_queue
+                del self.pipe.res_queue
 
         except ValueError:
             # Process has been closed already
@@ -3288,6 +3299,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
             time.sleep(0.1)
 
         _PythonMultiprocessing._terminate_processes(workers)
+        del workers
         os.kill(os.getpid(), signal.SIGTERM)
 
     def launch(self, op_id=-1):
@@ -3345,6 +3357,8 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
 
     def terminate(self):
         self.close_all_workers()
+        if hasattr(self, "warning_ctl"):
+            del self.warning_ctl
         self.abort_watchdog()
 
     def get_pids(self):
@@ -3441,6 +3455,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
             self._abort_watchdog()
         if hasattr(self, 'cleaning_process') and self.cleaning_process is not None:
             _PythonMultiprocessing._terminate_processes([self.cleaning_process])
+            del self.cleaning_process
 
     def is_running(self):
         if hasattr(self, 'workers') and self.workers is not None:
@@ -3451,6 +3466,8 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         if hasattr(self, 'workers') and self.workers is not None:
             for w in self.workers:
                 w.close()
+            # use clear to release the handle which is better than self.workers = None
+            self.workers.clear()
             self.workers = None
             self.pids = None
 
