@@ -483,6 +483,13 @@ void DeviceContextManager::BindDeviceCtx() const {
   }
 }
 
+namespace {
+bool IsNotAscend(const std::string &device_name) {
+  static const std::set<std::string> dev = {kCPUDevice, kGPUDevice};
+  return dev.find(device_name) != dev.end();
+}
+}  // namespace
+
 DeviceContext *DeviceContextManager::GetOrCreateDeviceContext(const DeviceContextKey &device_context_key,
                                                               string jit_level /* ="" */) {
   std::string device_context_key_str = device_context_key.ToString();
@@ -490,8 +497,7 @@ DeviceContext *DeviceContextManager::GetOrCreateDeviceContext(const DeviceContex
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (name == kAscendDevice && ms_context->backend_policy() == "ge" &&
-      (jit_level == kAttrJitLevelO3 || jit_level == "")) {
+  if (!IsNotAscend(name) && ms_context->backend_policy() == "ge" && (jit_level == kAttrJitLevelO3 || jit_level == "")) {
     name = "GE";
     device_context_key_str = "GE_0";
   }

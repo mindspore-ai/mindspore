@@ -99,6 +99,8 @@ uint8_t *MemoryManager::MallocWorkSpaceMem(const AnfNodePtr &node, size_t index,
   return MallocDynamicMem(size, false);
 }
 
+uint8_t *MemoryManager::MallocWorkSpaceMem(size_t size) { return MallocDynamicMem(size, false); }
+
 uint8_t *MemoryManager::MallocMem(MemType type, size_t size, const DeviceAddressPtr &address, uint32_t graph_id) {
   MS_EXCEPTION_IF_NULL(address);
   uint8_t *ptr = nullptr;

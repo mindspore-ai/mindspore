@@ -135,8 +135,11 @@ bool AddDependForAllGather::Run(const FuncGraphPtr &graph) {
     bool is_recompute = cnode->GetAttr(kAttrDuplicated) != nullptr && GetValue<bool>(cnode->GetAttr(kAttrDuplicated));
     if (common::AnfAlgo::GetCNodeName(cnode) == kAllGatherOpName && common::AnfAlgo::HasNodeAttr(kAttrFusion, cnode) &&
         common::AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion) > 0 && !is_recompute) {
-      all_gather_node.push_back(node);
       auto allgather_first_succ = GetFirstNextUsers(graph, node, node_index_map, node_list);
+      if (allgather_first_succ == nullptr) {
+        continue;
+      }
+      all_gather_node.push_back(node);
       allgather_succ_nodes.push_back(allgather_first_succ);
       allgather_second_succ_nodes.push_back(GetFirstNextUsers(graph, allgather_first_succ, node_index_map, node_list));
     }

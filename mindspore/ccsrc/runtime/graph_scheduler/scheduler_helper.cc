@@ -800,7 +800,8 @@ bool CheckExitActorInvalid(const ExitActorPtr &exit_actor) {
 
   return exit_actor->output_data_arrows().empty() && exit_actor->output_partial_arrows().empty() &&
          exit_actor->output_control_arrows().empty() && exit_actor->output_branch_control_arrows().empty() &&
-         exit_actor->output_branch_data_arrows().empty() && exit_actor->output_branch_partial_arrows().empty();
+         exit_actor->output_branch_data_arrows().empty() && exit_actor->output_branch_partial_arrows().empty() &&
+         !exit_actor->input_data_arrow_aids().empty();
 }
 
 // Convert the control actors vector by the control actor set.

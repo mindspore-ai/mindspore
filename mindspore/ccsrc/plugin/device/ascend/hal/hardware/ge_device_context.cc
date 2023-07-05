@@ -33,6 +33,7 @@
 #include "plugin/device/ascend/hal/hardware/ge_utils.h"
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "runtime/config.h"
+#include "pybind_api/gil_scoped_long_running.h"
 
 namespace mindspore {
 namespace device {
@@ -59,6 +60,15 @@ void GeDeviceContext::Initialize() {
 
   MS_EXCEPTION_IF_NULL(device_res_manager_);
   device_res_manager_->Initialize();
+  if (common::IsEnableRefMode()) {
+    MS_EXCEPTION_IF_NULL(GetKernelExecutor(false));
+    GetKernelExecutor(false)->Initialize();
+    // DynamicKernelExecutor and KernenlExecutor should be equal for GE
+    MS_EXCEPTION_IF_CHECK_FAIL(GetKernelExecutor(true) == GetKernelExecutor(false),
+                               "GE dynamic KernelExecutor and KernenlExecutor is not Equal.");
+    MS_EXCEPTION_IF_NULL(GetKernelExecutor(true));
+    GetKernelExecutor(true)->Initialize();
+  }
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -105,7 +115,7 @@ void GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context) {
   GetGeOptions(inst_context, &ge_options);
   {
     // Release GIL before calling into (potentially long-running) C++ code
-    mindspore::ScopedLongRunning long_running;
+    GilReleaseWithCheck gil_release;
     if (::ge::GEInitialize(ge_options) != ::ge::GRAPH_SUCCESS) {
       MS_LOG(EXCEPTION) << "Initialize GE failed!";
     }
@@ -216,6 +226,11 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   MS_EXCEPTION_IF_NULL(ge_options);
 
   (*ge_options)["device_id"] = "0";
+
+  (*ge_options)["ge.exec.formatMode"] = "0";
+  if (common::GetEnv("MS_ENABLE_FORMAT_MODE") == "1") {
+    (*ge_options)["ge.exec.formatMode"] = "1";
+  }
   // set up dump options
   auto dump_env = common::GetEnv(kMindsporeDumpConfig);
   if (!dump_env.empty()) {

@@ -80,9 +80,11 @@ struct DfGraphWrapper {
 
   std::string name_;
   int id_;
+  int times_{};
   DfGraphPtr graph_ptr_;
   OptionMap options_ = {};
   bool is_added_to_ge_session_ = false;
+  std::mutex mutex_;
 };
 
 using DfGraphWrapperPtr = std::shared_ptr<DfGraphWrapper>;

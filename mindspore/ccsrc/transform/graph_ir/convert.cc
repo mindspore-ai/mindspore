@@ -66,6 +66,7 @@ using Variable = ::ge::op::Variable;
 using Constant = ::ge::op::Constant;
 using Assign = ::ge::op::Assign;
 using Data = ::ge::op::Data;
+using RefData = ::ge::op::RefData;
 using std::endl;
 using std::static_pointer_cast;
 
@@ -87,6 +88,7 @@ constexpr auto kTypeMerge = "Merge";
 constexpr auto kTypeIf = "If";
 constexpr auto kTypeVariable = "Variable";
 constexpr auto kParallelGroup = "_parallel_group";
+constexpr auto kTypeRefData = "RefData";
 
 namespace {
 const std::map<TypeId, TypeId> kReduceRaiseMap = {{kNumberTypeInt64, kNumberTypeInt32}};
@@ -278,75 +280,80 @@ bool IsDynamicShapeNode(const AnfNodePtr node) {
 
 void DfGraphConvertor::InitLoopVar(std::vector<::ge::Operator> *init_input) {
   MS_EXCEPTION_IF_NULL(init_input);
-  if (this->training_) {
-    GeTensorDesc desc(GeShape(), ::ge::FORMAT_NCHW, ::ge::DT_INT64);
-    auto var_iter_num = std::make_shared<Variable>("npu_runconfig/iterations_per_loop");
-    auto var_loop_cond = std::make_shared<Variable>("npu_runconfig/loop_cond");
-    auto var_one = std::make_shared<Variable>("npu_runconfig/one");
-    auto var_zero = std::make_shared<Variable>("npu_runconfig/zero");
-    (void)var_iter_num->update_output_desc_y(desc);
-    (void)var_loop_cond->update_output_desc_y(desc);
-    (void)var_one->update_output_desc_y(desc);
-    (void)var_zero->update_output_desc_y(desc);
-    vars_["npu_runconfig/iterations_per_loop"] = var_iter_num;
-    vars_["npu_runconfig/loop_cond"] = var_loop_cond;
-    vars_["npu_runconfig/one"] = var_one;
-    vars_["npu_runconfig/zero"] = var_zero;
-
-    int64_t value = 0;
-    auto const_iter_num = std::make_shared<Constant>("const/npu_runconfig/iterations_per_loop");
-    if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
-      value = ConfigManager::GetInstance().iter_num();
-    } else {
-      MS_LOG(INFO) << "Run with normal(non-sink) mode, the iterator number will always be 1";
-      ConfigManager::GetInstance().ResetIterNum();
-    }
-    value -= 1;  // iteration start from 0, the max iteration number for n loop should be n-1
-    (void)const_iter_num->set_attr_value(GeTensor(desc, reinterpret_cast<uint8_t *>(&value), sizeof(int64_t)));
-
-    auto const_loop_cond = std::make_shared<Constant>("const/npu_runconfig/loop_cond");
-    value = 0;
-    (void)const_loop_cond->set_attr_value(GeTensor(desc, reinterpret_cast<uint8_t *>(&value), sizeof(int64_t)));
-
-    auto const_one = std::make_shared<Constant>("const/npu_runconfig/one");
-    value = 1;
-    (void)const_one->set_attr_value(GeTensor(desc, reinterpret_cast<uint8_t *>(&value), sizeof(int64_t)));
-
-    auto const_zero = std::make_shared<Constant>("const/npu_runconfig/zero");
-    value = 0;
-    (void)const_zero->set_attr_value(GeTensor(desc, reinterpret_cast<uint8_t *>(&value), sizeof(int64_t)));
-
-    (void)const_iter_num->update_output_desc_y(desc);
-    (void)const_loop_cond->update_output_desc_y(desc);
-    (void)const_one->update_output_desc_y(desc);
-    (void)const_zero->update_output_desc_y(desc);
-
-    auto assign_iter_num = std::make_shared<Assign>("assign/npu_runconfig/iterations_per_loop");
-    (void)assign_iter_num->set_input_ref(*var_iter_num).set_input_value(*const_iter_num);
-    auto assign_loop_cond = std::make_shared<Assign>("assign/npu_runconfig/loop_cond");
-    (void)assign_loop_cond->set_input_ref(*var_loop_cond).set_input_value(*const_loop_cond);
-    auto assign_one = std::make_shared<Assign>("assign/npu_runconfig/one");
-    (void)assign_one->set_input_ref(*var_one).set_input_value(*const_one);
-    auto assign_zero = std::make_shared<Assign>("assign/npu_runconfig/zero");
-    (void)assign_zero->set_input_ref(*var_zero).set_input_value(*const_zero);
-
-    init_input->push_back(*var_iter_num);
-    init_input->push_back(*var_loop_cond);
-    init_input->push_back(*var_one);
-    init_input->push_back(*var_zero);
-    init_ops_.push_back(var_iter_num);
-    init_ops_.push_back(var_loop_cond);
-    init_ops_.push_back(var_one);
-    init_ops_.push_back(var_zero);
-    init_ops_.push_back(const_iter_num);
-    init_ops_.push_back(const_loop_cond);
-    init_ops_.push_back(const_one);
-    init_ops_.push_back(const_zero);
-    init_ops_.push_back(assign_iter_num);
-    init_ops_.push_back(assign_loop_cond);
-    init_ops_.push_back(assign_one);
-    init_ops_.push_back(assign_zero);
+  if (!this->training_) {
+    return;
   }
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  int64_t value = 0;
+  if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
+    if (!ms_context->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK)) {
+      return;
+    }
+    value = ConfigManager::GetInstance().iter_num();
+  } else {
+    MS_LOG(INFO) << "Run with normal(non-sink) mode, the iterator number will always be 1";
+    ConfigManager::GetInstance().ResetIterNum();
+  }
+  GeTensorDesc desc(GeShape(), ::ge::FORMAT_NCHW, ::ge::DT_INT64);
+  auto var_iter_num = std::make_shared<Variable>("npu_runconfig/iterations_per_loop");
+  auto var_loop_cond = std::make_shared<Variable>("npu_runconfig/loop_cond");
+  auto var_one = std::make_shared<Variable>("npu_runconfig/one");
+  auto var_zero = std::make_shared<Variable>("npu_runconfig/zero");
+  (void)var_iter_num->update_output_desc_y(desc);
+  (void)var_loop_cond->update_output_desc_y(desc);
+  (void)var_one->update_output_desc_y(desc);
+  (void)var_zero->update_output_desc_y(desc);
+  vars_["npu_runconfig/iterations_per_loop"] = var_iter_num;
+  vars_["npu_runconfig/loop_cond"] = var_loop_cond;
+  vars_["npu_runconfig/one"] = var_one;
+  vars_["npu_runconfig/zero"] = var_zero;
+  auto const_iter_num = std::make_shared<Constant>("const/npu_runconfig/iterations_per_loop");
+  value -= 1;  // iteration start from 0, the max iteration number for n loop should be n-1
+  (void)const_iter_num->set_attr_value(GeTensor(desc, reinterpret_cast<uint8_t *>(&value), sizeof(int64_t)));
+
+  auto const_loop_cond = std::make_shared<Constant>("const/npu_runconfig/loop_cond");
+  value = 0;
+  (void)const_loop_cond->set_attr_value(GeTensor(desc, reinterpret_cast<uint8_t *>(&value), sizeof(int64_t)));
+
+  auto const_one = std::make_shared<Constant>("const/npu_runconfig/one");
+  value = 1;
+  (void)const_one->set_attr_value(GeTensor(desc, reinterpret_cast<uint8_t *>(&value), sizeof(int64_t)));
+
+  auto const_zero = std::make_shared<Constant>("const/npu_runconfig/zero");
+  value = 0;
+  (void)const_zero->set_attr_value(GeTensor(desc, reinterpret_cast<uint8_t *>(&value), sizeof(int64_t)));
+
+  (void)const_iter_num->update_output_desc_y(desc);
+  (void)const_loop_cond->update_output_desc_y(desc);
+  (void)const_one->update_output_desc_y(desc);
+  (void)const_zero->update_output_desc_y(desc);
+
+  auto assign_iter_num = std::make_shared<Assign>("assign/npu_runconfig/iterations_per_loop");
+  (void)assign_iter_num->set_input_ref(*var_iter_num).set_input_value(*const_iter_num);
+  auto assign_loop_cond = std::make_shared<Assign>("assign/npu_runconfig/loop_cond");
+  (void)assign_loop_cond->set_input_ref(*var_loop_cond).set_input_value(*const_loop_cond);
+  auto assign_one = std::make_shared<Assign>("assign/npu_runconfig/one");
+  (void)assign_one->set_input_ref(*var_one).set_input_value(*const_one);
+  auto assign_zero = std::make_shared<Assign>("assign/npu_runconfig/zero");
+  (void)assign_zero->set_input_ref(*var_zero).set_input_value(*const_zero);
+
+  init_input->push_back(*var_iter_num);
+  init_input->push_back(*var_loop_cond);
+  init_input->push_back(*var_one);
+  init_input->push_back(*var_zero);
+  init_ops_.push_back(var_iter_num);
+  init_ops_.push_back(var_loop_cond);
+  init_ops_.push_back(var_one);
+  init_ops_.push_back(var_zero);
+  init_ops_.push_back(const_iter_num);
+  init_ops_.push_back(const_loop_cond);
+  init_ops_.push_back(const_one);
+  init_ops_.push_back(const_zero);
+  init_ops_.push_back(assign_iter_num);
+  init_ops_.push_back(assign_loop_cond);
+  init_ops_.push_back(assign_one);
+  init_ops_.push_back(assign_zero);
 }
 
 void DfGraphConvertor::DrawParamInitSubGraph(const std::string &name, const AnfNodePtr &it) {
@@ -421,6 +428,47 @@ void DfGraphConvertor::SetupParamInitSubGraph(const TensorOrderMap &tensors,
   }
 }
 
+void DfGraphConvertor::SetupParamInitSubGraph() {
+  DfGraphPtr init_graph = std::make_shared<DfGraph>("init");
+  std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph_);
+
+  for (auto &it : nodes) {
+    MS_EXCEPTION_IF_NULL(it);
+    if (it->isa<ValueNode>()) {
+      if (IsValueNode<SymbolicKeyInstance>(it)) {
+        auto symbolic = GetValueNode<SymbolicKeyInstancePtr>(it);
+        auto name = std::static_pointer_cast<Parameter>(symbolic->node())->name();
+        auto iter = vars_.find(name);  // get corresponding variable op
+        if (iter != vars_.end()) {
+          op_cache_[it.get()] = iter->second;
+        }
+      } else if (IsValueNode<RefKey>(it)) {
+        auto refkey = GetValueNode<StringImmPtr>(it);
+        MS_EXCEPTION_IF_NULL(refkey);
+        auto name = refkey->value();
+        auto iter = vars_.find(name);  // get corresponding variable op
+        if (iter != vars_.end()) {
+          op_cache_[it.get()] = iter->second;
+        }
+      }
+    }
+  }
+
+  // set up init sub graph
+
+  bool is_eval_after_train = common::GetEnv("MS_GE_TRAIN") == "1" && phase_prefix_ != "train";
+  std::vector<::ge::Operator> init_input;
+  InitLoopVar(&init_input);
+  if (!init_input.empty() && !is_eval_after_train) {
+    // init sub graph needs no input
+    MS_LOG(INFO) << "Build data init subgraph.";
+    (void)init_graph->SetInputs(init_input);
+    this->init_graph_ = init_graph;
+  } else {
+    this->init_graph_ = nullptr;
+  }
+}
+
 void DfGraphConvertor::SetupBroadcast(const std::shared_ptr<HcomBroadcast> &broadcast,
                                       const std::vector<GeTensorDesc> &broadcast_desc,
                                       const DfGraphPtr &broadcast_graph, std::vector<::ge::Operator> broadcast_input) {
@@ -454,7 +502,9 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
     if (node_itor == params_.end()) {
       MS_LOG(WARNING) << name << " is not in params, and create a new node.";
       ParameterPtr param = std::make_shared<Parameter>(nullptr);
-      name = name + "_temp";
+      if (!common::IsEnableRefMode()) {
+        name = name + "_temp";
+      }
       param->set_name(name);
       (void)ConvertParameter(param);
       node_itor = params_.find(name);
@@ -494,36 +544,52 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
       continue;
     }
 
-    // we need three variable ops for each graph with same name
-    // build init subgraph
-    auto adpt = FindAdapter(kNameParam, training_);
-    if (adpt == nullptr) {
-      continue;
-    }
-    auto param_op = adpt->generate(name + "_data");
-    if (it.second->is_init() == 0) {
-      (void)std::static_pointer_cast<Data>(param_op)->set_attr_index(index++);
-      auto init_var = std::make_shared<Variable>(name);
-      auto assign_op = std::make_shared<Assign>("assign_" + name);
-      (void)init_var->update_output_desc_y(*desc);
-      (void)assign_op->set_input_ref(*init_var).set_input_value(*param_op);
-      init_input.push_back(*init_var);
-      init_ops_.push_back(param_op);
-      init_ops_.push_back(assign_op);
-      init_ops_.push_back(init_var);
-      init_data_names_.push_back(name);
-    }
+    if (common::IsEnableRefMode()) {
+      auto variable = std::make_shared<RefData>(name);
+      (void)variable->update_output_desc_y(*desc);
+      (void)variable->update_input_desc_x(*desc);
+      variable->set_attr_index(ref_datas_.size());
+      ref_datas_.emplace_back(variable);
+      // do not use read variable while variable sink
+      MS_LOG(DEBUG) << "InitParam, op_name = " << name << ", var = " << variable->GetName() << ".";
+      op_itor->second = variable;  // replace parameter with variable
+      vars_[name] = variable;      // prevent the variable operator from being freed
+    } else {
+      // we need three variable ops for each graph with same name
+      // build init subgraph
+      auto adpt = FindAdapter(kNameParam, training_);
+      if (adpt == nullptr) {
+        continue;
+      }
+      auto param_op = adpt->generate(name + "_data");
+      if (it.second->is_init() == 0) {
+        (void)std::static_pointer_cast<Data>(param_op)->set_attr_index(index++);
+        auto init_var = std::make_shared<Variable>(name);
+        auto assign_op = std::make_shared<Assign>("assign_" + name);
+        (void)init_var->update_output_desc_y(*desc);
+        (void)assign_op->set_input_ref(*init_var).set_input_value(*param_op);
+        init_input.push_back(*init_var);
+        init_ops_.push_back(param_op);
+        init_ops_.push_back(assign_op);
+        init_ops_.push_back(init_var);
+        init_data_names_.push_back(name);
+      }
 
-    auto variable = std::make_shared<Variable>(name);
-    (void)variable->update_output_desc_y(*desc);
-    // do not use read variable while variable sink
-    MS_LOG(DEBUG) << "InitParam, op_name = " << name << ", var = " << variable->GetName() << ".";
-    op_itor->second = variable;  // replace parameter with variable
-    vars_[name] = variable;      // prevent the variable operator from being freed
-    DrawParamInitSubGraph(name, node);
+      auto variable = std::make_shared<Variable>(name);
+      (void)variable->update_output_desc_y(*desc);
+      // do not use read variable while variable sink
+      MS_LOG(DEBUG) << "InitParam, op_name = " << name << ", var = " << variable->GetName() << ".";
+      op_itor->second = variable;  // replace parameter with variable
+      vars_[name] = variable;      // prevent the variable operator from being freed
+      DrawParamInitSubGraph(name, node);
+    }
   }
-  InitLoopVar(&init_input);
-  SetupParamInitSubGraph(tensors, &init_input);
+  if (common::IsEnableRefMode()) {
+    SetupParamInitSubGraph();
+  } else {
+    InitLoopVar(&init_input);
+    SetupParamInitSubGraph(tensors, &init_input);
+  }
 }
 
 // convert all parameter need initialize to variable
@@ -711,7 +777,14 @@ DfGraphConvertor &DfGraphConvertor::ConvertAllNode() {
   // Convert all anf node to Operator
   MS_LOG(INFO) << "Convert all node, graph: " << anf_graph_->ToString();
   std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph_, while_cond_node_);
-
+  if (common::IsEnableRefMode()) {
+    for (auto &p : anf_graph_->parameters()) {
+      if (std::find(nodes.begin(), nodes.end(), p) == nodes.end()) {
+        MS_LOG(WARNING) << "Parameter " << p->DebugString() << " cannot found in toposort lists.";
+        nodes.push_back(p);
+      }
+    }
+  }
   for (auto &it : nodes) {
     if (IsSubGraph() && it->isa<Parameter>()) {
       continue;
@@ -1484,6 +1557,85 @@ void DfGraphConvertor::SetGraphInputs(std::vector<Operator> *inputs) {
   }
 }
 
+void DfGraphConvertor::SetGraphInputs(std::vector<Operator> *inputs, std::vector<OperatorPtr> *input_datas) {
+  MS_LOG(WARNING) << "IsNormalGraph=" << IsNormalGraph() << ", dataset_mode"
+                  << ConfigManager::GetInstance().dataset_mode();
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::vector<PrimitivePtr> input_prims;
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
+    input_prims = {prim::kPrimQueueData};
+  } else {
+    input_prims = {prim::kPrimGetNext, prim::kPrimDynamicGetNextV2};
+  }
+  OperatorPtr input = nullptr;
+  auto nodes = GetOrderedCNodes(anf_graph_);
+  for (auto &it : nodes) {
+    if (std::any_of(input_prims.begin(), input_prims.end(),
+                    [&it](const PrimitivePtr &prim) { return IsPrimitiveCNode(it, prim); })) {
+      auto it_op = op_cache_.find(it.get());
+      if (it_op != op_cache_.end()) {
+        input = it_op->second;
+        break;
+      } else {
+        MS_LOG(EXCEPTION) << "Can not find the operator of node: " << it->fullname_with_scope();
+      }
+    }
+  }
+  if (IsNormalGraph() && ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE && input != nullptr) {
+    inputs->push_back(*input);
+    MS_EXCEPTION_IF_NULL(anf_graph_);
+    anf_graph_->set_flag(kGraphFlagHasGetNext, true);
+  }
+
+  auto params = anf_graph_->parameters();
+  MS_LOG(INFO) << "Parameters size " << params.size();
+  int index = 0;
+  for (auto &it : params) {
+    auto name = std::static_pointer_cast<Parameter>(it)->name();
+    //  the parameters which has not been converted to var
+    if (vars_.find(name) == vars_.end()) {
+      if (HasAbstractMonad(it)) {
+        MS_LOG(INFO) << it->DebugString() << " is a monad parameter, skip.";
+        continue;
+      }
+      auto op = Convert(it);
+      MS_EXCEPTION_IF_NULL(op);
+      if (op == nullptr) {
+        MS_LOG(ERROR) << "Convert graph failed!";
+        return;
+      }
+      UpdateDataOpDesc(it, op);
+
+      if (IsNormalGraph()) {
+        MS_LOG(INFO) << "add input " << it->ToString() << ", index " << index;
+        if (auto data = std::dynamic_pointer_cast<Data>(op); data != nullptr) {
+          (void)data->set_attr_index(index++);
+        } else if (auto ref_data = std::dynamic_pointer_cast<RefData>(op); ref_data != nullptr) {
+          (void)ref_data->set_attr_index(index++);
+        } else {
+          MS_LOG(EXCEPTION) << "Op " << name << " is invalid type " << op->GetOpType() << " as graph input.";
+        }
+      }
+      inputs->push_back(*op);
+      input_datas->push_back(op);
+    } else if (vars_[name] != nullptr) {
+      MS_LOG(INFO) << "add var input " << it->ToString() << ", index " << index;
+      auto op = Convert(it);
+      MS_EXCEPTION_IF_NULL(op);
+      if (auto ref_data = std::dynamic_pointer_cast<RefData>(op); ref_data != nullptr) {
+        (void)ref_data->set_attr_index(index++);
+      } else {
+        MS_LOG(EXCEPTION) << "Op " << name << " is invalid type " << op->GetOpType() << " as graph input.";
+      }
+      UpdateConstOpDesc(it, vars_[name]);
+      inputs->push_back(*op);
+      input_datas->push_back(op);
+    }
+  }
+  MS_LOG(INFO) << "Input size " << inputs->size();
+}
+
 void DfGraphConvertor::BuildInitDataGraph(const std::string &name) {
   MS_LOG(INFO) << "Start BuildInitDataGraph.";
 
@@ -1563,7 +1715,12 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
 
   // set graph input according to the order from anf graph
   std::vector<Operator> inputs;
-  SetGraphInputs(&inputs);
+  std::vector<OperatorPtr> input_datas;
+  if (common::IsEnableRefMode()) {
+    SetGraphInputs(&inputs, &input_datas);
+  } else {
+    SetGraphInputs(&inputs);
+  }
 
   // Add const nodes as graph input for some operator work with constant
   MS_LOG(INFO) << "Graph const input size: " << graph_const_inputs_.size();
@@ -1581,8 +1738,22 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
 
   compute_sout_ << "}" << endl;
   // For the graph(e.g. eval_subgraph) whose IterNum is 1, do not set NeedIteration flag.
-  if (ConfigManager::GetInstance().iter_num() > 1) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ConfigManager::GetInstance().iter_num() > 1 && ms_context->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK)) {
     df_graph_->SetNeedIteration(true);
+  }
+  if (common::IsEnableRefMode()) {
+    std::sort(ref_datas_.begin(), ref_datas_.end(), [](const OperatorPtr &left, const OperatorPtr &right) -> bool {
+      auto left_ref = std::dynamic_pointer_cast<::ge::op::RefData>(left);
+      auto right_ref = std::dynamic_pointer_cast<::ge::op::RefData>(right);
+      MS_EXCEPTION_IF_NULL(left_ref);
+      MS_EXCEPTION_IF_NULL(right_ref);
+      return left_ref->get_attr_index() < right_ref->get_attr_index();
+    });
+    auto input_data_list = std::make_shared<InputDataList>();
+    input_data_list->input_datas = input_datas;
+    anf_graph_->set_user_data(input_data_list);
   }
   MS_LOG(INFO) << "End BuildGraph, graph: " << anf_graph_->ToString();
   return *this;
@@ -1730,12 +1901,24 @@ void DfGraphConvertor::TransformConstOp(const CNodePtr &node, const AnfNodePtr &
     if (op_itor->second != nullptr &&
         (op_itor->second->GetOpType() == "Constant" || op_itor->second->GetOpType() == "Const") &&
         vars_.find(name) != vars_.end()) {
-      auto variable = std::make_shared<Variable>(name);
-      auto desc = vars_[name]->GetOutputDesc("y");
-      (void)variable->update_output_desc_y(desc);
-      MS_LOG(DEBUG) << "Trans to variable, var = " << variable->GetName() << ".";
-      op_itor->second = variable;  // replace parameter with variable
-      vars_[name] = variable;
+      if (common::IsEnableRefMode()) {
+        auto variable = std::make_shared<RefData>(name);
+        auto desc = vars_[name]->GetOutputDesc("y");
+        (void)variable->update_output_desc_y(desc);
+        (void)variable->update_input_desc_x(desc);
+        variable->set_attr_index(ref_datas_.size());
+        ref_datas_.emplace_back(variable);
+        MS_LOG(DEBUG) << "Trans to variable, var = " << variable->GetName() << ".";
+        op_itor->second = variable;  // replace parameter with variable
+        vars_[name] = variable;
+      } else {
+        auto variable = std::make_shared<Variable>(name);
+        auto desc = vars_[name]->GetOutputDesc("y");
+        (void)variable->update_output_desc_y(desc);
+        MS_LOG(DEBUG) << "Trans to variable, var = " << variable->GetName() << ".";
+        op_itor->second = variable;  // replace parameter with variable
+        vars_[name] = variable;
+      }
     }
   }
 }
@@ -2364,27 +2547,44 @@ void DfGraphConvertor::ProcessSubgraph(const AnfNodePtr &node, const AnfNodePtr 
   converter.graph_type_ = GraphType::kBranch;
 
   auto &params = anf_graph->parameters();
-  auto &dyn_input = branch_input_handle_cache_[node.get()];
-  auto &inputs = tuple_out_handle_cache_[dyn_input->at(1).get()];
-  for (size_t i = 0; i < params.size(); i++) {
-    auto &param = params[i];
-    if (branch_to_parent_node_map.find(i) != branch_to_parent_node_map.end()) {
-      size_t parent_index = branch_to_parent_node_map[i];
-      auto &parent_handle = inputs->at(parent_index);
-      OperatorPtr op = nullptr;
-      if (parent_handle.op->GetOpType() == kTypeVariable) {
-        auto name = parent_handle.op->GetName();
-        op = std::make_shared<Variable>(name);
-        (void)((static_pointer_cast<Variable>(op))->set_attr_index(parent_index));
-      } else {
+  if (common::IsEnableRefMode()) {
+    for (size_t i = 0; i < params.size(); i++) {
+      auto &param = params[i];
+      if (branch_to_parent_node_map.find(i) != branch_to_parent_node_map.end()) {
+        size_t parent_index = branch_to_parent_node_map[i];
+        OperatorPtr op = nullptr;
         op = std::make_shared<Data>();
         (void)((static_pointer_cast<Data>(op))->set_attr_index(parent_index));
+        converter.op_cache_[param.get()] = op;
+      } else if (!HasAbstractMonad(param)) {
+        MS_LOG(EXCEPTION) << "Branch graph input index to parent node dyn input index error, "
+                          << "branch graph: " << anf_graph->ToString() << "'s " << i << "(st/nd/rd/st)"
+                          << " input can not find the corresponding parent node input index.";
       }
-      converter.op_cache_[param.get()] = op;
-    } else if (!HasAbstractMonad(param)) {
-      MS_LOG(EXCEPTION) << "Branch graph input index to parent node dyn input index error, "
-                        << "branch graph: " << anf_graph->ToString() << "'s " << i << "(st/nd/rd/st)"
-                        << " input can not find the corresponding parent node input index.";
+    }
+  } else {
+    auto &dyn_input = branch_input_handle_cache_[node.get()];
+    auto &inputs = tuple_out_handle_cache_[dyn_input->at(1).get()];
+    for (size_t i = 0; i < params.size(); i++) {
+      auto &param = params[i];
+      if (branch_to_parent_node_map.find(i) != branch_to_parent_node_map.end()) {
+        size_t parent_index = branch_to_parent_node_map[i];
+        auto &parent_handle = inputs->at(parent_index);
+        OperatorPtr op = nullptr;
+        if (parent_handle.op->GetOpType() == kTypeVariable) {
+          auto name = parent_handle.op->GetName();
+          op = std::make_shared<Variable>(name);
+          (void)((static_pointer_cast<Variable>(op))->set_attr_index(parent_index));
+        } else {
+          op = std::make_shared<Data>();
+          (void)((static_pointer_cast<Data>(op))->set_attr_index(parent_index));
+        }
+        converter.op_cache_[param.get()] = op;
+      } else if (!HasAbstractMonad(param)) {
+        MS_LOG(EXCEPTION) << "Branch graph input index to parent node dyn input index error, "
+                          << "branch graph: " << anf_graph->ToString() << "'s " << i << "(st/nd/rd/st)"
+                          << " input can not find the corresponding parent node input index.";
+      }
     }
   }
 
@@ -2760,6 +2960,14 @@ void DfGraphConvertor::ConvertAllReduce(const CNodePtr &node) {
     fusion = kHcclFusionByFusionID;
   } else if (fusion < 0) {
     fusion = kHcclFusionDefault;
+    if (!common::GetEnv("MS_DEV_CELL_REUSE").empty()) {
+      fusion = 0;
+    }
+  }
+
+  if (!common::GetEnv("MS_DEV_CELL_REUSE").empty()) {
+    MS_LOG(ERROR) << "cell split not support fusion id = 1";
+    fusion = 0;
   }
 
   (void)op->SetAttr("fusion_id", fusion_id);

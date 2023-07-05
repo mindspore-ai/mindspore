@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 
 #include "transform/graph_ir/transform_util.h"
 #include "transform/graph_ir/df_graph_manager.h"
@@ -34,9 +35,16 @@ class GraphRunner {
   Status RunGraph(const RunOptions &options, const std::vector<GeTensorPtr> &inputs, std::vector<GeTensorPtr> *outputs);
   Status RunGraphAsync(const RunOptions &options, const std::vector<GeTensorPtr> &inputs,
                        std::vector<GeTensorPtr> *outputs);
+  Status RunGraphWithStreamAsync(const RunOptions &options, void *stream, const std::vector<GeTensor> &inputs,
+                                 std::vector<GeTensor> *outputs);
+  Status CompileGraph(const RunOptions &options, ::ge::CompiledGraphSummaryPtr *graph_summary);
+  Status SetConstMemory(const RunOptions &options, const void *const memory, size_t size);
+  Status UpdateFeatureMemory(const RunOptions &options, const void *const memory, size_t size);
   static std::shared_ptr<::ge::Session> NewSession(const SessionOptions &sess_options);
 
  private:
+  Status GetWrapper(const std::string &name, DfGraphWrapperPtr *wrapper) const;
+
   std::shared_ptr<::ge::Session> sess_;
   transform::GraphRunnerOptions options_;
   DfGraphManager &graph_manager_;

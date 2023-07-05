@@ -219,8 +219,10 @@ void GeKernelExecutor::Initialize() {
   if (initialized_) {
     return;
   }
-  res_manager_ = dynamic_cast<AscendDeviceResManager *>(device_context_->device_res_manager_.get());
+  res_manager_ = device_context_->device_res_manager_.get();
   MS_EXCEPTION_IF_NULL(res_manager_);
+  graph_executor_ = dynamic_cast<GeGraphExecutor *>(device_context_->graph_executor_.get());
+  // not check graph executor, may use in ascend device context
   initialized_ = true;
 }
 
@@ -230,6 +232,7 @@ void GeKernelExecutor::Destroy() {
   }
   AscendGraphOptimization::GetInstance().Reset();
   res_manager_ = nullptr;
+  graph_executor_ = nullptr;
   initialized_ = false;
 }
 
@@ -248,6 +251,10 @@ void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
   profiler::CollectHostInfo("Ascend", "Graph Optimization", "GeOptimizeGraph", 1, 0, 0);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  // GE graph run mode do optimize in ProcessBeforeRun
+  if (kernel_graph->is_graph_run_mode() && common::IsEnableRefMode()) {
+    return;
+  }
   AscendGraphOptimization::GetInstance().OptimizeACLGraph(kernel_graph);
   // select kernel
   const auto &kernels = kernel_graph->execution_order();
@@ -282,6 +289,14 @@ void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
 }
 
 void GeKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
+  if (!nodes.empty() && common::IsEnableRefMode()) {
+    auto kernel_graph = std::dynamic_pointer_cast<KernelGraph>(nodes[0]->func_graph());
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    // Not create kernel when use GE
+    if (!kernel_graph->is_from_single_op() && kernel_graph->is_graph_run_mode()) {
+      return;
+    }
+  }
   // build kernel mod
   MS_LOG(DEBUG) << "Status record: start create kernel.";
   profiler::CollectHostInfo("Ascend", "CreateKernel", "CreateGeKernel", 1, 0, 0);
@@ -309,6 +324,13 @@ void GeKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "GePreprocess", 1, 0, 0);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
+
+  // use GE
+  if (kernel_graph->is_graph_run_mode() && common::IsEnableRefMode()) {
+    MS_EXCEPTION_IF_NULL(graph_executor_);
+    graph_executor_->PreprocessBeforeRun(kernel_graph);
+    return;
+  }
 
   // nop op -> memcpy
   const auto &nodes = kernel_graph->execution_order();

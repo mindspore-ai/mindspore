@@ -96,6 +96,9 @@ Status RunGraph(const std::shared_ptr<GraphRunner> &runner, const RunOptions &op
 Status RunGraphAsync(const std::shared_ptr<GraphRunner> &runner, const RunOptions &options,
                      const std::vector<GeTensorPtr> &inputs, std::vector<GeTensorPtr> *outputs);
 
+Status RunGraphWithStreamAsync(const std::shared_ptr<GraphRunner> &runner, const RunOptions &options, void *stream,
+                               const std::vector<GeTensor> &inputs, std::vector<GeTensor> *outputs);
+
 transform::Status CompileDatasetGraph(const DatasetGraphParam &param, const std::string &phase = "dataset");
 }  // namespace transform
 }  // namespace mindspore

@@ -365,6 +365,12 @@ Status RunGraphAsync(const std::shared_ptr<GraphRunner> &runner, const RunOption
   return runner->RunGraphAsync(options, inputs, outputs);
 }
 
+Status RunGraphWithStreamAsync(const std::shared_ptr<GraphRunner> &runner, const RunOptions &options, void *stream,
+                               const std::vector<GeTensor> &inputs, std::vector<GeTensor> *outputs) {
+  MS_EXCEPTION_IF_NULL(runner);
+  return runner->RunGraphWithStreamAsync(options, stream, inputs, outputs);
+}
+
 transform::Status CompileDatasetGraph(const DatasetGraphParam &param, const std::string &phase) {
   return BuildDatasetGraph(param, phase);
 }

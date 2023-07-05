@@ -263,6 +263,10 @@ void DeviceAddressUtils::CreateKernelOutputDeviceAddress(const DeviceContext *de
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(graph);
 
+  if (graph->memory_managed_by_ge()) {
+    return;
+  }
+
   bool is_pynative_bprop_graph = graph->has_flag(kFlagIsPynativeBpropGraph);
   auto outputs = common::AnfAlgo::GetAllOutput(graph->output());
 
@@ -427,6 +431,11 @@ void DeviceAddressUtils::CreateKernelWorkspaceDeviceAddress(const DeviceContext 
                                                             const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(graph);
+
+  if (graph->memory_managed_by_ge()) {
+    return;
+  }
+
   const std::vector<CNodePtr> &kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
@@ -453,6 +462,11 @@ void DeviceAddressUtils::CreateKernelWorkspaceDeviceAddress(const DeviceContext 
 
 void DeviceAddressUtils::UpdateDeviceAddressForInplaceNode(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
+
+  if (graph->memory_managed_by_ge()) {
+    return;
+  }
+
   // Collect the inplace groups.
   std::map<uint32_t, std::vector<CNodePtr>> inplace_groups;
   const std::vector<CNodePtr> &kernels = graph->execution_order();
@@ -556,6 +570,11 @@ void DeviceAddressUtils::UpdateDeviceAddress(const session::AnfWithOutIndex &cur
 
 void DeviceAddressUtils::UpdateDeviceAddressForRefNode(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
+
+  if (graph->memory_managed_by_ge()) {
+    return;
+  }
+
   AnfAlgo::UpdateGraphValidRefPair(graph);
   for (const auto &ref_pair : graph->GetRefMap()) {
     const auto &out_pair = ref_pair.first;

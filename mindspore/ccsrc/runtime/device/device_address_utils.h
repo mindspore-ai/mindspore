@@ -27,7 +27,7 @@ namespace mindspore {
 using device::DeviceContext;
 namespace runtime {
 // Extract the methods related to DeviceAddress in GraphCompiler to the DeviceAddressUtils class.
-class DeviceAddressUtils {
+class BACKEND_EXPORT DeviceAddressUtils {
  public:
   static void CreateParameterDeviceAddress(const DeviceContext *device_context, const KernelGraphPtr &graph);
   static void CreateDeviceAddressForTensorValue(const DeviceContext *device_context, const ValuePtr &node_value,

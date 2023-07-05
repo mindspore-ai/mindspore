@@ -32,6 +32,10 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
+class GeGraphExecutor;
+class GeKernelExecutor;
+class GeDeviceResManager;
+
 class GeDeviceContext : public DeviceInterface<GeGraphExecutor, GeKernelExecutor, GeDeviceResManager> {
  public:
   explicit GeDeviceContext(const DeviceContextKey &device_context_key)

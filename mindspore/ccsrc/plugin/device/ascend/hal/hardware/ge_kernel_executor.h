@@ -27,6 +27,7 @@
 #include "plugin/device/ascend/hal/device/ascend_kernel_runtime.h"
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
 #include "plugin/device/ascend/hal/hardware/ascend_device_res_manager.h"
+#include "plugin/device/ascend/hal/hardware/ge_graph_executor.h"
 
 namespace mindspore {
 namespace device {
@@ -70,7 +71,9 @@ class GeKernelExecutor : public KernelExecutor {
   bool MemoryCopyAsync(const CNodePtr &node, const vector<AddressPtr> &inputs, const vector<AddressPtr> &outputs) const;
 
   mutable std::set<CNodePtr> nop_op_to_memcpy_;
-  AscendDeviceResManager *res_manager_{nullptr};
+  // Maybe AscendDeviceResManager and GEDeviceResManager now
+  DeviceResManager *res_manager_{nullptr};
+  GeGraphExecutor *graph_executor_{nullptr};
   bool initialized_ = false;
 };
 }  // namespace ascend

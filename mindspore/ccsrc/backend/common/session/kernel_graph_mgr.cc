@@ -44,6 +44,25 @@ constexpr size_t kMaxDepth = 128;
 constexpr size_t kFirstIndex = 1;
 constexpr int64_t kPairIdx1 = 1;
 
+const auto env_ge = common::GetEnv("MS_ENABLE_GE");
+
+bool IsGeReturnNode(const AnfNodePtr &node) {
+  if (env_ge != "1") {
+    return false;
+  }
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode == nullptr) {
+    // parameter and value node is a real kernel too
+    return true;
+  }
+  if (cnode->size() == 0) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Illegal null input of cnode(%s)" << node->DebugString()
+                               << trace::DumpSourceLines(node);
+  }
+  return IsOneOfPrimitive(cnode->input(kAnfPrimitiveIndex), {prim::kPrimReturn});
+}
+
 bool RecursiveCheck(const FuncGraphManagerPtr &manager, const std::pair<AnfNodePtr, int64_t> &kernel, size_t *idx) {
   auto node = kernel.first;
   MS_EXCEPTION_IF_NULL(manager);
@@ -52,7 +71,7 @@ bool RecursiveCheck(const FuncGraphManagerPtr &manager, const std::pair<AnfNodeP
                                     common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimLoad))) {
     return false;
   }
-  if ((AnfUtils::IsRealKernel(node) || AnfAlgo::IsSummaryNode(node)) &&
+  if ((AnfUtils::IsRealKernel(node) || IsGeReturnNode(node) || AnfAlgo::IsSummaryNode(node)) &&
       !common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial)) {
     return true;
   }
@@ -1013,7 +1032,7 @@ void KernelGraphMgr::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph
     if (graph->GetBackendAnfByFrontAnf(anf) != nullptr) {
       (void)cnode_inputs->emplace_back(graph->GetBackendAnfByFrontAnf(anf));
       continue;
-    } else if ((is_depend && input_idx > kRealInputIndexInDepend)) {
+    } else if ((is_depend && input_idx > kRealInputIndexInDepend && env_ge != "1")) {
       cnode_inputs->push_back(NewValueNode(MakeValue(SizeToInt(input_idx))));
       continue;
     } else if (other_graph_cnode->find(anf) != other_graph_cnode->end()) {
