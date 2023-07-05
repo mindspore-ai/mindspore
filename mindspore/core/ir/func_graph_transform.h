@@ -62,6 +62,7 @@ class MS_CORE_API FuncGraphTransform {
     if (this != &t) {
       prim_ = t.prim_;
       func_graph_ = t.func_graph_;
+      primal_cnode_ = t.primal_cnode_;
     }
     return *this;
   }
