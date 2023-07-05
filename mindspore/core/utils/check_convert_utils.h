@@ -303,11 +303,17 @@ class MS_CORE_API CheckAndConvertUtils {
                                             const std::set<TypePtr> &check_list, const std::string &prim_name);
   static TypePtr CheckSubClass(const std::string &type_name, const TypePtr &type,
                                const std::set<TypePtr> &template_types, const std::string &prim_name);
+  static TypePtr CheckSubClassWithMoreInfo(const std::string &type_name, const TypePtr &type,
+                                           const std::string &more_info, const std::set<TypePtr> &template_types,
+                                           const std::string &prim_name);
   static TypePtr CheckScalarOrTensorTypesSame(const std::map<std::string, TypePtr> &args,
                                               const std::set<TypePtr> &valid_values, const std::string &prim_name,
                                               bool allow_mix = false);
   static TypePtr CheckTypeValid(const std::string &arg_name, const TypePtr &arg_type,
                                 const std::set<TypePtr> &valid_type, const std::string &prim_name);
+  static TypePtr CheckTypeValidWithMoreInfo(const std::string &arg_name, const TypePtr &arg_type,
+                                            const std::string &more_info, const std::set<TypePtr> &valid_type,
+                                            const std::string &prim_name);
   static bool ConvertAttrValueToInt(const std::string &op_type, const std::string &attr_name, ValuePtr *const value);
   static bool ConvertAttrValueToString(const std::string &op_type, const std::string &attr_name, ValuePtr *const value);
   static void ConvertAttrValueInExport(const std::string &op_type, const std::string &attr_name, ValuePtr *const value);

@@ -873,6 +873,31 @@ TypePtr CheckAndConvertUtils::CheckSubClass(const std::string &type_name, const 
   MS_EXCEPTION(TypeError) << buffer.str();
 }
 
+TypePtr CheckAndConvertUtils::CheckSubClassWithMoreInfo(const std::string &type_name, const TypePtr &type,
+                                                        const std::string &more_info,
+                                                        const std::set<TypePtr> &template_types,
+                                                        const std::string &prim_name) {
+  if (CheckType(type, template_types)) {
+    return type;
+  }
+  std::ostringstream buffer;
+  buffer << "For primitive[" << prim_name << "], the input argument[" << type_name << "] " << more_info
+         << " must be a type of {";
+  std::set<string> order_set;
+  for (const auto &item : template_types) {
+    (void)order_set.emplace(item->ToString());
+  }
+  for (const auto &item : order_set) {
+    buffer << item;
+    if (item != *(--order_set.end())) {
+      buffer << ", ";
+    }
+  }
+  buffer << "}, but got " << type->ToString();
+  buffer << ".";
+  MS_EXCEPTION(TypeError) << buffer.str();
+}
+
 TypePtr CheckAndConvertUtils::CheckScalarOrTensorTypesSame(const std::map<std::string, TypePtr> &args,
                                                            const std::set<TypePtr> &valid_values,
                                                            const std::string &prim_name, bool allow_mix) {
@@ -936,6 +961,20 @@ TypePtr CheckAndConvertUtils::CheckTypeValid(const std::string &arg_name, const 
     return CheckTensorTypeValid(arg_name, arg_type, valid_type, prim_name);
   }
   return CheckSubClass(arg_name, arg_type, valid_type, prim_name);
+}
+
+TypePtr CheckAndConvertUtils::CheckTypeValidWithMoreInfo(const std::string &arg_name, const TypePtr &arg_type,
+                                                         const std::string &more_info,
+                                                         const std::set<TypePtr> &valid_type,
+                                                         const std::string &prim_name) {
+  if (valid_type.empty()) {
+    MS_EXCEPTION(ArgumentError) << "Trying to use the function to check a empty valid_type!";
+  }
+  MS_EXCEPTION_IF_NULL(arg_type);
+  if (arg_type->isa<TensorType>()) {
+    return CheckTensorTypeValid(arg_name, arg_type, valid_type, prim_name);
+  }
+  return CheckSubClassWithMoreInfo(arg_name, arg_type, more_info, valid_type, prim_name);
 }
 
 bool CheckAndConvertUtils::CheckIrAttrtoOpAttr(const std::string &op_type, const std::string &attr_name,

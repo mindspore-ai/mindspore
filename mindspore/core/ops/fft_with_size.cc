@@ -189,16 +189,16 @@ TypePtr FFTWithSizeInferType(const PrimitivePtr &prim, const std::vector<Abstrac
   if (real) {
     if (!inverse) {
       auto valid_types = get_input_types(kRfftTypes);
-      (void)CheckAndConvertUtils::CheckTypeValid("x in rfft mode", input_type, valid_types, prim_name);
+      (void)CheckAndConvertUtils::CheckTypeValidWithMoreInfo("x", input_type, "in rfft mode", valid_types, prim_name);
       out_type = kRfftTypes.at(input_type);
     } else {
       auto valid_types = get_input_types(kIrfftTypes);
-      (void)CheckAndConvertUtils::CheckTypeValid("x in irfft mode", input_type, valid_types, prim_name);
+      (void)CheckAndConvertUtils::CheckTypeValidWithMoreInfo("x", input_type, "in irfft mode", valid_types, prim_name);
       out_type = kIrfftTypes.at(input_type);
     }
   } else {
     auto valid_types = get_input_types(kFftTypes);
-    (void)CheckAndConvertUtils::CheckTypeValid("x in fft/ifft mode", input_type, valid_types, prim_name);
+    (void)CheckAndConvertUtils::CheckTypeValidWithMoreInfo("x", input_type, "in fft/ifft mode", valid_types, prim_name);
     out_type = kFftTypes.at(input_type);
   }
   return out_type;
