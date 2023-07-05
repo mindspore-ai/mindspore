@@ -202,7 +202,12 @@ void GeGraphExecutor::GetGeGraphOptions(const FuncGraphPtr &anf_graph,
   MS_EXCEPTION_IF_NULL(anf_graph);
   MS_EXCEPTION_IF_NULL(ge_options_ptr);
   auto &ge_options = *ge_options_ptr;
-  ge_options["ge.graph_key"] = anf_graph->ToString();
+  auto ascend_device_info = this->GetAscendDeviceInfo();
+  if (ascend_device_info == nullptr) {
+    MS_LOG(EXCEPTION) << "Failed to get graph session options, can not find ascend device context.";
+  }
+  uint32_t rank_id = ascend_device_info->GetRankID();
+  ge_options["ge.graph_key"] = anf_graph->ToString() + "." + std::to_string(rank_id);
   // 0: False, dynamic and static graph compile with cann opp_kernel*.run，GE default for pytorch
   // 1: True, dynamic and static graph online compiler op
   // 2: Auto, dynamic compile with cann opp_kernel*.run, static graph online compiler op，GE default for others
@@ -214,10 +219,7 @@ void GeGraphExecutor::GetGeGraphOptions(const FuncGraphPtr &anf_graph,
       MS_LOG(INFO) << "Set ge graph option " << item.first << " to " << item.second;
     }
   }
-  auto ascend_device_info = GetAscendDeviceInfo();
-  if (ascend_device_info == nullptr) {
-    MS_LOG(EXCEPTION) << "Failed to get graph session options, can not find ascend device context.";
-  }
+
   auto precision_mode = ascend_device_info->GetPrecisionMode();
   if (!precision_mode.empty()) {
     ge_options["ge.exec.precision_mode"] = TransforPrecisionToAcl(precision_mode);
