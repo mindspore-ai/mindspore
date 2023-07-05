@@ -500,9 +500,6 @@ DeviceContext *DeviceContextManager::GetOrCreateDeviceContext(const DeviceContex
     return device_context_iter->second.get();
   }
 
-  if (ms_context->IsDefaultDeviceTarget()) {
-    MS_LOG(INFO) << "No context.device_target set, use " << name << " as default.";
-  }
   std::shared_ptr<DeviceContext> device_context;
   auto creator_iter = device_context_creators_.find(name);
   if (creator_iter != device_context_creators_.end()) {
