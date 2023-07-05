@@ -45,7 +45,7 @@ static inline bool IsAscendNo910Soc() {
   return true;
 }
 
-static inline std::string TransforPrecisionToAcl(std::string precision_mode) {
+static inline std::string TransforPrecisionToAcl(const std::string &precision_mode) {
   static const std::unordered_map<std::string, std::string> precision_map = {
     {"enforce_fp32", "force_fp32"},
     {"preferred_fp32", "allow_fp32_to_fp16"},
