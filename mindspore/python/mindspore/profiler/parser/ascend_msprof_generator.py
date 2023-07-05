@@ -106,9 +106,10 @@ class AscendMsprofDataGenerator:
             break
 
         hccl_data = self.op_summary[(self.op_summary['Task Type'] == 'HCCL') & (self.op_summary['Iteration ID'] == 1)][
-            'Op Name']
+            'Task ID', 'Stream ID', 'Op Name']
 
         for name in hccl_data:
+            name = f"stream_{name['Stream ID']}_{name['Task ID']}_{name['Op Name']}"
             self.steptrace_dt.append((name, float))
             self.steptrace_dt.append((f'{name} duration', float))
         self.steptrace_dt = np.dtype(self.steptrace_dt)

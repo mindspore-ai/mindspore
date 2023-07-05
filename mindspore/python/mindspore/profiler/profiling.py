@@ -52,6 +52,7 @@ from mindspore.profiler.parser.ascend_fpbp_generator import AscendFPBPGenerator
 from mindspore.profiler.parser.ascend_op_generator import AscendOPGenerator
 from mindspore.profiler.parser.ascend_steptrace_generator import AscendStepTraceGenerator
 from mindspore.profiler.parser.ascend_flops_generator import AscendFlopsGenerator
+from mindspore.profiler.parser.ascend_hccl_generator import AscendHCCLGenerator
 
 INIT_OP_NAME = 'Default/InitDataSetQueue'
 
@@ -1094,6 +1095,29 @@ class Profiler:
         finally:
             pass
 
+    def _ascend_graph_hccl_analyse(self, source_path):
+        """Analyse hccl profiler info."""
+        if not self._profile_communication:
+            return
+        if self._profile_communication and context.get_context("mode") == context.PYNATIVE_MODE:
+            logger.warning("[Profiler]The parameter profile_communication is not supported on Ascend "
+                           "PyNative mode currently.")
+        try:
+            logger.info("Profiling: analyzing the hccl profiler info.")
+            dev_id = self._rank_id if self._device_target == DeviceTarget.ASCEND.value else self._dev_id
+
+            hccl_raw_path = os.path.join(self._output_path, f'hccl_raw_{dev_id}.csv')
+            hccl_raw_path = validate_and_normalize_path(hccl_raw_path)
+
+            hccl_analyse = AscendHCCLGenerator(source_path)
+            hccl_analyse.parse()
+            hccl_analyse.write(hccl_raw_path)
+
+        except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
+            logger.warning(err.message)
+        finally:
+            pass
+
     def _ascend_graph_msadvisor_analyse(self, job_id):
         """Call MSAdvisor function."""
         logger.info("MSAdvisor starts running.")
@@ -1134,6 +1158,7 @@ class Profiler:
                 self._ascend_dynamic_net_analyse(op_summary)
             self._ascend_flops_analyse(op_summary)
             self._ascend_graph_memory_analyse(points)
+            self._ascend_graph_hccl_analyse(source_path)
             self._ascend_graph_msadvisor_analyse(job_id)
 
     def _ascend_graph_start(self):
