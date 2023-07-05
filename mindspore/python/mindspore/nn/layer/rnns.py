@@ -35,7 +35,6 @@ from mindspore.nn.layer.rnn_cells import _rnn_relu_cell, _rnn_tanh_cell, _gru_ce
 __all__ = ['LSTM', 'GRU', 'RNN']
 
 
-@_primexpr
 def _init_state(shape, dtype, is_lstm):
     hx = P.zeros(shape, dtype)
     cx = P.zeros(shape, dtype)
