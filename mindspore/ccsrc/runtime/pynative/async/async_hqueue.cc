@@ -165,11 +165,11 @@ void AsyncHqueue::WorkerJoin() {
 void AsyncHqueue::ReinitAfterFork() {
   MS_LOG(INFO) << "(AsyncHqueue)fork event detected in child process, worker thread will be recreated.";
   if (task_cond_var_ != nullptr) {
-    task_cond_var_.release();
+    (void)task_cond_var_.release();
     task_cond_var_ = std::make_unique<std::condition_variable>();
   }
   if (worker_ != nullptr) {
-    worker_.release();
+    (void)worker_.release();
     worker_ = std::make_unique<std::thread>(&AsyncHqueue::WorkerLoop, this);
   }
 }
