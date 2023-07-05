@@ -22,7 +22,7 @@ from ...operations._sequence_ops import tuple_greater_than, list_greater_than
 
 # greater is a metafuncgraph object which will determine if two objects are greater according to input type
 # using ".register" decorator
-greater = base.MultitypeFuncGraph("greater", True)
+greater = base.MultitypeFuncGraph("greater", True, True)
 
 
 @greater.register("Number", "Number")

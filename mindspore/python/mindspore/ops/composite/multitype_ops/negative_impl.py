@@ -21,7 +21,7 @@ from mindspore.ops import functional as F
 from mindspore.common import CSRTensor, COOTensor
 
 
-negative = base.MultitypeFuncGraph("negative", True)
+negative = base.MultitypeFuncGraph("negative", True, True)
 """
 `negative` is a metafuncgraph object which will give the negative of an object according to its input type
 using ".register" decorator.

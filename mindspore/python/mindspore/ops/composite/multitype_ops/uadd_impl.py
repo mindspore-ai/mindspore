@@ -18,7 +18,7 @@ from mindspore.ops.composite import base
 
 # uadd is a metagraph object which will return operation result regarding input
 # using ".register" decorator
-uadd = base.MultitypeFuncGraph("uadd", True)
+uadd = base.MultitypeFuncGraph("uadd", True, True)
 
 
 @uadd.register("Tensor")

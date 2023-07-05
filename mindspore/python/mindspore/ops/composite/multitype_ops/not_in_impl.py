@@ -22,7 +22,7 @@ from mindspore.ops import functional as F
 from mindspore.ops.composite import base
 from mindspore.ops.operations._sequence_ops import InSequence
 
-not_in_ = base.MultitypeFuncGraph("not_in", True)
+not_in_ = base.MultitypeFuncGraph("not_in", True, True)
 """
 "not_in_" is a multi type func graph object which will determine if a not in b.
 using ".register" decorator

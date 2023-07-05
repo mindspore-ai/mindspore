@@ -22,7 +22,7 @@ from mindspore.common import COOTensor
 from ...operations._sequence_ops import SequenceMul
 
 
-mul = base.MultitypeFuncGraph("mul", True)
+mul = base.MultitypeFuncGraph("mul", True, True)
 """
 `mul` is a metafuncgraph object which will multiply two objects according to input type
 using ".register" decorator.

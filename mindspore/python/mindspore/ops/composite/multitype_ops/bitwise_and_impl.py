@@ -21,7 +21,7 @@ from mindspore.ops.operations import _inner_ops as inner
 
 # bitwise_and is a metagraph object which will generate function according to input type
 # using ".register" decorator
-bitwise_and = base.MultitypeFuncGraph("bitwise_and", True)
+bitwise_and = base.MultitypeFuncGraph("bitwise_and", True, True)
 
 
 @bitwise_and.register("Number", "Number")
