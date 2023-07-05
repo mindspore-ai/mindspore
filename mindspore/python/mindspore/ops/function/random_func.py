@@ -656,6 +656,7 @@ def randperm(n, seed=0, offset=0, dtype=mstype.int64):
 
     Examples:
         >>> from mindspore import ops
+        >>> from mindspore import dtype as mstype
         >>> n = 4
         >>> seed = 0
         >>> offset = 0

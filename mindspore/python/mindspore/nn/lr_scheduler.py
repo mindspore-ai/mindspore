@@ -36,7 +36,7 @@ class LRScheduler():
         This module must be used with optimizers in `nn.optim_ex`.
 
     Args:
-        optimizer (Optimizer): The optimizer instance.
+        optimizer (:class:`mindspore.nn.optim_ex.Optimizer`): The optimizer instance.
         last_epoch (int, optional): The epoch/step number. Default: ``-1``.
         verbose (bool, optional): Whether to print lr information. Default: ``False``.
 
@@ -114,7 +114,7 @@ class StepLR(LRScheduler):
         This module must be used with optimizers in `nn.optim_ex`.
 
     Args:
-        optimizer (Optimizer): Wrapped optimizer.
+        optimizer (:class:`mindspore.nn.optim_ex.Optimizer`): Wrapped optimizer.
         step_size (int): Period of learning rate decay.
         gamma (float, optional): Multiplicative factor of learning rate decay.
             Default: ``0.1``.
@@ -179,7 +179,7 @@ class LinearLR(LRScheduler):
         This module must be used with optimizers in `nn.optim_ex`.
 
     Args:
-        optimizer (Optimizer): Wrapped optimizer.
+        optimizer (:class:`mindspore.nn.optim_ex.Optimizer`): Wrapped optimizer.
         start_factor (float, optional): The number we multiply learning rate in the first epoch.
             The multiplication factor changes towards `end_factor` in the following epochs.
             Default: ``1.0 /3``.

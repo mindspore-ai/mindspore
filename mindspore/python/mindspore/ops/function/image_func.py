@@ -214,7 +214,7 @@ def crop_and_resize(image, boxes, box_indices, crop_size, method="bilinear", ext
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import ops
+        >>> from mindspore import ops, Tensor
         >>> BATCH_SIZE = 1
         >>> NUM_BOXES = 5
         >>> IMAGE_HEIGHT = 256
