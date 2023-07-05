@@ -47,6 +47,9 @@ namespace mindspore {
 namespace pynative {
 namespace autograd {
 namespace {
+constexpr auto kConvertAttrNode = "convert_attr_node";
+constexpr auto kTupleToMakeTuple = "tuple_to_make_tuple";
+constexpr auto kIsKNode = "is_knode";
 enum class SpecialType { kZerosLikeType = 0, kOnesLikeType = 1 };
 const mindspore::HashSet<std::string> kGradBlackList{kMakeTupleOpName,         kMakeListOpName,
                                                      kTupleGetItemOpName,      kStopGradientOpName,
@@ -61,6 +64,7 @@ const mindspore::HashSet<std::string> kMetaFuncGraphOp{
   kMakeDictOpName,
 };
 
+mindspore::HashMap<std::string, std::pair<size_t, ValuePtr>> node_attr_value_;
 mindspore::HashMap<std::string, FuncGraphPtr> pass_grad_graph_;
 mindspore::HashMap<std::string, pipeline::ResourcePtr> ms_function_call_graph_compile_cache_;
 
@@ -436,6 +440,63 @@ void ClearGradMetaData(const ValuePtr &value) {
       ClearGradMetaData(val);
     }
   }
+}
+
+void RevertMakeTupleNode(const FuncGraphPtr &graph, const CNodePtr &cnode, ValuePtrList *input_value,
+                         AnfNodePtrList *cnode_inputs) {
+  if (!cnode->HasAttr(kTupleToMakeTuple)) {
+    return;
+  }
+  AnfNodePtrList new_inputs{cnode->input(kIndex0)};
+  const auto &dyn_input_sizes = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrDynInputSizes);
+  for (size_t i = 0; i < dyn_input_sizes.size(); ++i) {
+    if (dyn_input_sizes[i] >= 0) {
+      // Compress input
+      ValuePtrList new_value;
+      AnfNodePtrList make_tuple{NewValueNode(prim::kPrimMakeTuple)};
+      abstract::AbstractBasePtrList abs_list;
+      for (int64_t j = 0; j < dyn_input_sizes[i]; ++j) {
+        auto input = cnode_inputs->at(i + j + kIndex1);
+        (void)make_tuple.emplace_back(input);
+        (void)abs_list.emplace_back(input->abstract());
+        new_value.emplace_back(input_value->at(i + j));
+      }
+      auto new_cnode = graph->NewCNode(make_tuple);
+      new_cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(abs_list));
+      // Refresh input
+      size_t begin_index = i + kIndex1;
+      cnode_inputs->erase(cnode_inputs->begin() + begin_index,
+                          cnode_inputs->begin() + begin_index + dyn_input_sizes[i]);
+      cnode_inputs->emplace_back(new_cnode);
+      input_value->erase(input_value->begin() + begin_index, input_value->begin() + begin_index + dyn_input_sizes[i]);
+      input_value->emplace_back(std::make_shared<ValueTuple>(new_value));
+      new_inputs.emplace_back(new_cnode);
+    } else {
+      new_inputs.emplace_back(cnode->input(i + kIndex1));
+    }
+  }
+  cnode->set_inputs(new_inputs);
+  cnode->EraseAttr(kTupleToMakeTuple);
+}
+
+void ProcessAttrNode(const FuncGraphPtr &graph, const CNodePtr &cnode, ValuePtrList *input_value,
+                     AnfNodePtrList *cnode_inputs) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (cnode->HasAttr(kConvertAttrNode)) {
+    const auto item = node_attr_value_.find(cnode->ToString());
+    if (item != node_attr_value_.end()) {
+      (void)PyNativeAlgo::Common::SetValueGradInfo(item->second.second, nullptr, TensorGradType::kConstant);
+      auto new_v_node = PyNativeAlgo::Common::CreateValueNodeByValue(item->second.second, nullptr);
+      auto new_inputs = cnode->inputs();
+      new_inputs.insert(new_inputs.begin() + item->second.first + kIndex1, new_v_node);
+      MS_EXCEPTION_IF_NULL(cnode_inputs);
+      cnode_inputs->insert(cnode_inputs->begin() + item->second.first + kIndex1, new_v_node);
+      cnode->set_inputs(new_inputs);
+      MS_EXCEPTION_IF_NULL(input_value);
+      input_value->insert(input_value->begin() + item->second.first, item->second.second);
+    }
+  }
+  RevertMakeTupleNode(graph, cnode, input_value, cnode_inputs);
 }
 }  // namespace
 
@@ -844,6 +905,7 @@ void AutoGradCellImpl::GradGraphByExpander(const GradParamPtr &grad_param) {
     MS_LOG(DEBUG) << "Get cnode " << cnode->DebugString() << ", " << cnode->fullname_with_scope();
     AnfNodePtrList cnode_inputs{std::make_shared<ValueNode>(prim)};
     auto input_value = GetInputArgs(cnode, &cnode_inputs);
+    ProcessAttrNode(ad_param()->tape_, cnode, &input_value, &cnode_inputs);
     if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple) || IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
       (void)BuildKNodeForMakeTuple(cnode);
       continue;
@@ -915,6 +977,7 @@ AnfNodePtr AutoGradCellImpl::GetKnode(const PrimitivePtr &prim, const CNodePtr &
       c_k_node->set_forward(new_v_node, cnode->forward().second);
       ad_param()->tape_->set_used_forward_nodes({c_k_node});
     }
+    c_k_node->AddAttr(kIsKNode, MakeValue(true));
     return c_k_node;
   }
 }
@@ -1145,6 +1208,7 @@ AnfNodePtr AutoGradCellImpl::BuildKNode(const AnfNodePtr &prim, const GradParamP
   }
   auto k_node = ad_param()->tape_->NewCNode(node_list);
   k_node->set_abstract(grad_param->op_grad_info->out_abs);
+  k_node->AddAttr(kIsKNode, MakeValue(true));
   if (from_single_op && grad_param->out_used_in_bporp_graph) {
     auto v_node = PyNativeAlgo::Common::CreateValueNodeByValue(grad_param->op_grad_info->out_value,
                                                                grad_param->op_grad_info->out_abs);
@@ -1323,6 +1387,9 @@ void AutoGradCellImpl::ConvertValueNodeValueToTensor(const AnfNodePtr &din) {
       return;
     }
     const auto &cnode = din->cast<CNodePtr>();
+    if (cnode->HasAttr(kIsKNode)) {
+      return;
+    }
     for (size_t i = 1; i < cnode->size(); ++i) {
       ConvertValueNodeValueToTensor(cnode->input(i));
     }
@@ -1341,7 +1408,7 @@ void AutoGradCellImpl::ConvertValueNodeValueToTensor(const AnfNodePtr &din) {
     } else if (value->isa<ValueList>()) {
       tensor_ptr = opt::CreateTupleTensor(std::make_shared<ValueTuple>(value->cast<ValueListPtr>()->value()));
     } else {
-      MS_LOG(EXCEPTION) << "The value should be a scalar or value tuple " << value->ToString();
+      MS_LOG(EXCEPTION) << "The value should be a scalar or value tuple, but get " << value->ToString();
     }
     valuenode->set_value(tensor_ptr);
     valuenode->set_abstract(PyNativeAlgo::Common::SetAbstractValueToAnyValue(tensor_ptr->ToAbstract()));
@@ -1371,6 +1438,7 @@ void AutoGradCellImpl::ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &nod
     }
     // If there is dynamic input, set the dyn_input_sizes as an attribute and update the inputs.
     if (std::any_of(dyn_input_sizes.begin(), dyn_input_sizes.end(), [](int64_t s) { return s >= 0; })) {
+      cnode->AddAttr(kTupleToMakeTuple, MakeValue(true));
       common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), cnode);
       MS_LOG(DEBUG) << "Change node to dynamic len " << cnode->DebugString();
       cnode->set_inputs(plant_inputs);
@@ -1390,9 +1458,12 @@ CNodePtr AutoGradCellImpl::ConvertConstInputToAttr(const CNodePtr &cnode, const 
   PyNativeAlgo::Common::GetConstInputToAttr(prim, prim->name(), device_target, is_dynamic_shape, &input_to_attr);
   if (input_to_attr.empty()) {
     for (size_t i = 1; i < cnode->size(); ++i) {
-      if (cnode->input(i)->isa<CNode>()) {
-        cnode->set_input(i,
-                         ConvertConstInputToAttr(cnode->input(i)->cast<CNodePtr>(), device_target, is_dynamic_shape));
+      // Avoidig infinite loops
+      if (!cnode->HasAttr(kIsKNode)) {
+        if (cnode->input(i)->isa<CNode>()) {
+          cnode->set_input(i,
+                           ConvertConstInputToAttr(cnode->input(i)->cast<CNodePtr>(), device_target, is_dynamic_shape));
+        }
       }
     }
     return cnode;
@@ -1423,6 +1494,8 @@ CNodePtr AutoGradCellImpl::ConvertConstInputToAttr(const CNodePtr &cnode, const 
           return cnode;
         }
       }
+      cnode->AddAttr(kConvertAttrNode, MakeValue(true));
+      node_attr_value_.emplace(cnode->ToString(), std::make_pair(i, value));
       prim->set_attr(input_names_vec[i], value);
     } else {
       (void)new_inputs.emplace_back(input_node);
@@ -1431,8 +1504,11 @@ CNodePtr AutoGradCellImpl::ConvertConstInputToAttr(const CNodePtr &cnode, const 
   cnode->set_inputs(new_inputs);
   // If cast input is a cast
   for (size_t i = 1; i < cnode->size(); ++i) {
-    if (cnode->input(i)->isa<CNode>()) {
-      cnode->set_input(i, ConvertConstInputToAttr(cnode->input(i)->cast<CNodePtr>(), device_target, is_dynamic_shape));
+    if (!cnode->HasAttr(kIsKNode)) {
+      if (cnode->input(i)->isa<CNode>()) {
+        cnode->set_input(i,
+                         ConvertConstInputToAttr(cnode->input(i)->cast<CNodePtr>(), device_target, is_dynamic_shape));
+      }
     }
   }
   return cnode;
@@ -2113,6 +2189,7 @@ void AutoGradCellImpl::ReplacePrimalParameter(const AnfNodePtrList &weights, boo
 }
 
 void ClearPyNativeAutoGradStaticRes() {
+  node_attr_value_.clear();
   pass_grad_graph_.clear();
   ms_function_call_graph_compile_cache_.clear();
 }

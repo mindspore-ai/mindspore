@@ -273,6 +273,13 @@ int64_t GetIntValue(const NodePtr &node) {
   auto real_node = node->get();
   MS_EXCEPTION_IF_NULL(real_node);
   if (real_node->isa<ValueNode>()) {
+    MS_EXCEPTION_IF_NULL(real_node->abstract());
+    if (real_node->abstract()->isa<abstract::AbstractTensor>()) {
+      auto value_node = real_node->cast<ValueNodePtr>();
+      auto t_vec = CheckAndConvertUtils::CheckTensorIntValue("tensor", value_node->value(), "bprop");
+      MS_EXCEPTION_IF_CHECK_FAIL(t_vec.size() >= kIndex1, "Get single tensor value failed");
+      return t_vec[kIndex0];
+    }
     return AnfUtils::GetIntValue(real_node);
   }
   MS_EXCEPTION_IF_NULL(real_node->abstract());
