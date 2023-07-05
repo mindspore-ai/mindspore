@@ -323,6 +323,7 @@ class FlashAttention(metaclass=ABCMeta):
 
     @abstractmethod
     def compute_one_core(self, batch_start_s, batch_num_s, core_idx_to_tr_info, core_idx):
+        """compute one core"""
         raise NotImplementedError
 
     def compute_process(self):
