@@ -212,6 +212,12 @@ void SingleTbeJsonCreator::GenInputDescJson(const AnfNodePtr &anf_node, size_t r
   auto format = AnfAlgo::GetInputFormat(anf_node, real_input_index);
   format = TbeAdapter::FormatPass(format, ori_shape.size());
   format = (def_format == kOpFormat_NCDHW && !IsOneOf3DFormat(format)) ? kOpFormat_NCDHW : format;
+  if (anf_node->isa<CNode>() && common::AnfAlgo::IsDynamicRankNode(anf_node)) {
+    if (common::AnfAlgo::HasNodeAttr(kAttrSrcFormat, anf_node->cast<CNodePtr>())) {
+      format = common::AnfAlgo::GetNodeAttr<std::string>(anf_node->cast<CNodePtr>(), kAttrSrcFormat);
+    }
+  }
+
   auto d_type = AnfAlgo::GetInputDeviceDataType(anf_node, real_input_index);
   (*input_desc)[kJDtype] = tbe::TypeIdToString(d_type);
   (*input_desc)[kJDataType] = GetJsonValue<std::string>(*input_desc, kJDtype);
