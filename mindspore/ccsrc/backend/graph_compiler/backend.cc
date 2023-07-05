@@ -43,7 +43,7 @@
 #include "runtime/pynative/run_op_helper.h"
 #include "runtime/pynative/graph_adapter.h"
 #include "include/backend/distributed/recovery/recovery_context.h"
-#include "include/common/utils/scoped_long_running.h"
+#include "pybind_api/gil_scoped_long_running.h"
 #ifdef ENABLE_DEBUGGER
 #include "include/backend/debug/debugger/debugger.h"
 #endif
@@ -677,7 +677,7 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
   pynative::GraphAdapter::HandleHeterogeneousTensors(input_tensors, device_contexts);
 
   // Release GIL and run actor DAG.
-  mindspore::ScopedLongRunning long_running;
+  GilReleaseWithCheck release_gil;
   runtime::GraphScheduler::GetInstance().Run(actor_set, input_tensors);
 
   MS_EXCEPTION_IF_NULL(graph_compiler_);
@@ -733,7 +733,7 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
                                                      parameter_index);
     }
 
-    py::gil_scoped_release release;
+    GilReleaseWithCheck gil_release;
     for (const auto &kernel : graph->execution_order()) {
       MS_LOG(DEBUG) << "Split and run op " << kernel->fullname_with_scope();
       InputTensorInfo input_tensor_info;
