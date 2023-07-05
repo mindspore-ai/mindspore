@@ -131,10 +131,18 @@ TypePtr PadV3GradInferType(const PrimitivePtr &prim, const std::vector<AbstractB
     MS_EXCEPTION_IF_NULL(item);
   }
   std::map<std::string, TypePtr> args = {{"x", input_args[0]->BuildType()}};
-  return CheckAndConvertUtils::CheckTensorTypeSame(args,
-                                                   {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kUInt32, kUInt64,
-                                                    kFloat16, kFloat32, kFloat64, kComplex64, kComplex128},
-                                                   prim->name());
+  auto mode = GetValue<string>(prim->GetAttr("mode"));
+  if (mode == kConstant) {
+    return CheckAndConvertUtils::CheckTensorTypeSame(args,
+                                                     {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kUInt32, kUInt64,
+                                                      kFloat16, kFloat32, kFloat64, kComplex64, kComplex128, kBool},
+                                                     prim->name());
+  } else {
+    return CheckAndConvertUtils::CheckTensorTypeSame(args,
+                                                     {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kUInt32, kUInt64,
+                                                      kFloat16, kFloat32, kFloat64, kComplex64, kComplex128},
+                                                     prim->name());
+  }
 }
 }  // namespace
 
