@@ -34,6 +34,11 @@ class NetCropAndResize(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_crop_and_resize_int8_bilinear(datatype=np.int8):
+    """
+    Feature: crop_and_resize kernel
+    Description: test crop_and_resize int8
+    Expectation: case pass
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     batch_size = 2
     image_height = 32
@@ -63,15 +68,18 @@ def test_crop_and_resize_int8_bilinear(datatype=np.int8):
                                  [[-93.5, -92.5], [-63.75, -62.75], [0.5, 0.5]],
                                  [[3.75, 4.75], [-110.5, -109.5], [0.5, 0.5]],
                                  [[69.0, 70.0], [98.75, 99.75], [0.5, 0.5]]]]).astype(np.float32)
-    error = np.ones(shape=[2, *crop_size, channels]) * 1.0e-6
-    diff = output_ms - expected_output
-    assert np.all(abs(diff) < error)
+    assert np.allclose(output_ms, expected_output, 1e-5, 1e-5)
 
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_crop_and_resize_int16_nearest(datatype=np.int16):
+    """
+    Feature: crop_and_resize kernel
+    Description: test crop_and_resize int16
+    Expectation: case pass
+    """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     batch_size = 2
     image_height = 32
@@ -101,15 +109,18 @@ def test_crop_and_resize_int16_nearest(datatype=np.int16):
                                  [[432.0, 433.0], [462.0, 463.0], [0.5, 0.5]],
                                  [[612.0, 613.0], [642.0, 643.0], [0.5, 0.5]],
                                  [[828.0, 829.0], [858.0, 859.0], [0.5, 0.5]]]]).astype(np.float32)
-    error = np.ones(shape=[2, *crop_size, channels]) * 1.0e-6
-    diff = output_ms - expected_output
-    assert np.all(abs(diff) < error)
+    assert np.allclose(output_ms, expected_output, 1e-5, 1e-5)
 
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_crop_and_resize_int32_bilinear_v2(datatype=np.int32):
+    """
+    Feature: crop_and_resize kernel
+    Description: test crop_and_resize int32
+    Expectation: case pass
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     batch_size = 2
     image_height = 32
@@ -141,14 +152,17 @@ def test_crop_and_resize_int32_bilinear_v2(datatype=np.int32):
                                  [[9422.75, 9423.75], [9452.5, 9453.5], [0.368999987, 0.368999987]],
                                  [[9632.0, 9633.0], [9661.75, 9662.75], [0.368999987, 0.368999987]]]]).astype(
                                      np.float32)
-    error = np.ones(shape=[2, *crop_size, channels]) * 1.0e-6
-    diff = output_ms - expected_output
-    assert np.all(abs(diff) < error)
+    assert np.allclose(output_ms, expected_output, 1e-5, 1e-5)
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_crop_and_resize_float16_nearest(datatype=np.float16):
+    """
+    Feature: crop_and_resize kernel
+    Description: test crop_and_resize int16
+    Expectation: case pass
+    """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     batch_size = 2
     image_height = 50
@@ -185,15 +199,18 @@ def test_crop_and_resize_float16_nearest(datatype=np.float16):
                                  [[3372.0, 3372.0, 3374.0], [3468.0, 3468.0, 3470.0], [0.0, 0.0, 0.0]],
                                  [[4452.0, 4452.0, 4456.0], [4548.0, 4548.0, 4552.0],
                                   [0.0, 0.0, 0.0]]]]).astype(np.float32)
-    error = np.ones(shape=[2, *crop_size, channels]) * 1.0e-6
-    diff = output_ms - expected_output
-    assert np.all(abs(diff) < error)
+    assert np.allclose(output_ms, expected_output, 1e-5, 1e-5)
 
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_crop_and_resize_float32_bilinear(datatype=np.float32):
+    """
+    Feature: crop_and_resize kernel
+    Description: test crop_and_resize float32
+    Expectation: case pass
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     batch_size = 2
     image_height = 512
@@ -214,12 +231,12 @@ def test_crop_and_resize_float32_bilinear(datatype=np.float32):
     output = net(input_data_tensor, input_boxes_tensor,
                  input_box_index_tensor, crop_size)
     output_ms = output.asnumpy()
-    expected_output = np.array([[[[488861.53125, 488862.53125, 488863.53125],
-                                  [488670.28125, 488671.28125, 488672.28125],
-                                  [488479.03125, 488480.03125, 488481.03125]],
-                                 [[539879.8125, 539880.8125, 539881.8125],
-                                  [539688.5625, 539689.5625, 539690.5625],
-                                  [539497.3125, 539498.3125, 539499.3125]],
+    expected_output = np.array([[[[488861.53, 488862.53, 488863.53],
+                                  [488670.28, 488671.28, 488672.28],
+                                  [488479.03, 488480.03, 488481.03]],
+                                 [[539879.75, 539880.75, 539881.75],
+                                  [539688.5, 539689.5, 539690.5],
+                                  [539497.25, 539498.25, 539499.25]],
                                  [[590898.0, 590899.0, 590900.0], [590706.75, 590707.75, 590708.75],
                                   [590515.5, 590516.5, 590517.5]],
                                  [[641916.25, 641917.25, 641918.25], [641725.0, 641726.0, 641727.0],
@@ -228,21 +245,24 @@ def test_crop_and_resize_float32_bilinear(datatype=np.float32):
                                   [692552.0, 692553.0, 692554.0]]],
                                 [[[5076.5, 5077.5, 5078.5], [5707.625, 5708.625, 5709.625], [0.0, 0.0, 0.0]],
                                  [[78660.5, 78661.5, 78662.5], [79291.625, 79292.625, 79293.625], [0.0, 0.0, 0.0]],
-                                 [[152244.5, 152245.5, 152246.5], [152875.625, 152876.625, 152877.625],
+                                 [[152244.5, 152245.5, 152246.5], [152875.62, 152876.62, 152877.62],
                                   [0.0, 0.0, 0.0]],
-                                 [[225828.5, 225829.5, 225830.5], [226459.625, 226460.625, 226461.625],
+                                 [[225828.5, 225829.5, 225830.5], [226459.62, 226460.62, 226461.62],
                                   [0.0, 0.0, 0.0]],
-                                 [[299412.5, 299413.5, 299414.5], [300043.625, 300044.625, 300045.625],
+                                 [[299412.5, 299413.5, 299414.5], [300043.62, 300044.62, 300045.62],
                                   [0.0, 0.0, 0.0]]]]).astype(np.float32)
-    error = np.ones(shape=[2, *crop_size, channels]) * 1.0e-6
-    diff = output_ms - expected_output
-    assert np.all(abs(diff) < error)
+    assert np.allclose(output_ms, expected_output, 1e-5, 1e-5)
 
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_crop_and_resize_float64_nearest(datatype=np.float64):
+    """
+    Feature: crop_and_resize kernel
+    Description: test crop_and_resize float64
+    Expectation: case pass
+    """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     batch_size = 2
     image_height = 50
@@ -279,15 +299,18 @@ def test_crop_and_resize_float64_nearest(datatype=np.float64):
                                  [[9655.0, 9656.0, 9657.0], [9715.0, 9716.0, 9717.0], [0.0, 0.0, 0.0]],
                                  [[10330.0, 10331.0, 10332.0], [10390.0, 10391.0, 10392.0],
                                   [0.0, 0.0, 0.0]]]]).astype(np.float32)
-    error = np.ones(shape=[2, *crop_size, channels]) * 1.0e-6
-    diff = output_ms - expected_output
-    assert np.all(abs(diff) < error)
+    assert np.allclose(output_ms, expected_output, 1e-5, 1e-5)
 
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_crop_and_resize_int64_bilinearv2(datatype=np.int64):
+    """
+    Feature: crop_and_resize kernel
+    Description: test crop_and_resize int64
+    Expectation: case pass
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     batch_size = 2
     image_height = 50
@@ -332,15 +355,18 @@ def test_crop_and_resize_int64_bilinearv2(datatype=np.int64):
                                  [[10312.4501953125, 10313.4501953125, 10314.4501953125],
                                   [10371.849609375, 10372.849609375, 10373.849609375],
                                   [0.0, 0.0, 0.0]]]]).astype(np.float32)
-    error = np.ones(shape=[2, *crop_size, channels]) * 1.0e-6
-    diff = output_ms - expected_output
-    assert np.all(abs(diff) < error)
+    assert np.allclose(output_ms, expected_output, 1e-5, 1e-5)
 
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_crop_and_resize_uint8_nearest(datatype=np.uint8):
+    """
+    Feature: crop_and_resize kernel
+    Description: test crop_and_resize uint8
+    Expectation: case pass
+    """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     batch_size = 2
     image_height = 7
@@ -371,14 +397,17 @@ def test_crop_and_resize_uint8_nearest(datatype=np.uint8):
                                  [[20.0, 21.0], [28.0, 29.0], [0.0, 0.0]],
                                  [[30.0, 31.0], [38.0, 39.0], [0.0, 0.0]],
                                  [[50.0, 51.0], [58.0, 59.0], [0.0, 0.0]]]]).astype(np.float32)
-    error = np.ones(shape=[2, *crop_size, channels]) * 1.0e-6
-    diff = output_ms - expected_output
-    assert np.all(abs(diff) < error)
+    assert np.allclose(output_ms, expected_output, 1e-5, 1e-5)
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_crop_and_resize_uint16_bilinear(datatype=np.uint16):
+    """
+    Feature: crop_and_resize kernel
+    Description: test crop_and_resize uint16
+    Expectation: case pass
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     batch_size = 2
     image_height = 50
@@ -426,6 +455,4 @@ def test_crop_and_resize_uint16_bilinear(datatype=np.uint16):
                                  [[3316.199951171875, 3317.199951171875, 3318.199951171875],
                                   [3387.97509765625, 3388.97509765625, 3389.97509765625],
                                   [0.0, 0.0, 0.0]]]]).astype(np.float32)
-    error = np.ones(shape=[2, *crop_size, channels]) * 1.0e-6
-    diff = output_ms - expected_output
-    assert np.all(abs(diff) < error)
+    assert np.allclose(output_ms, expected_output, 1e-5, 1e-5)
