@@ -1555,7 +1555,6 @@ void GradExecutor::ClearRes() {
   top_input_args_info_ = nullptr;
   bprop_cell_list_.clear();
   grad_operation_.clear();
-  async_executor_->Reset();
   already_run_top_cell_.clear();
   cell_id_with_dynamic_detect_nodes_.clear();
   std::stack<InputArgsInfoPtr>().swap(input_args_info_stack_);

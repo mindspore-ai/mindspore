@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_ASYNC_QUEUE_H_
-#define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_ASYNC_QUEUE_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_ASYNC_HQUEUE_H_
+#define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_ASYNC_ASYNC_HQUEUE_H_
 
 #include <queue>
 #include <memory>
@@ -28,28 +28,27 @@
 
 #include "include/backend/visible.h"
 #include "runtime/pynative/async/task.h"
+#include "thread/hqueue.h"
 #ifndef USE_HQUEUE
 #define USE_HQUEUE
 #endif
 
 namespace mindspore {
 namespace pynative {
-enum kThreadWaitLevel : int {
-  kLevelUnknown = 0,
-  kLevelPython,
-  kLevelGrad,
-  kLevelFrontend,
-  kLevelBackend,
-  kLevelDevice,
-};
+/* Thread status */
+constexpr int kThreadBusy = 0;  // busy, the thread is running task
+constexpr int kThreadIdle = 1;  // idle, the thread is waiting
 // Create a new thread to execute the tasks in the queue sequentially.
-class BACKEND_EXPORT AsyncQueue {
+class BACKEND_EXPORT AsyncHqueue {
  public:
-  explicit AsyncQueue(std::string name, kThreadWaitLevel wait_level);
-  virtual ~AsyncQueue();
+  explicit AsyncHqueue(std::string name);
+  virtual ~AsyncHqueue();
+
+  // Init resource
+  void Init();
 
   // Add task to the end of the queue.
-  void Push(const std::shared_ptr<AsyncTask> &task);
+  void Push(AsyncTask *task);
 
   // Wait for all async task finish executing.
   void Wait();
@@ -72,21 +71,21 @@ class BACKEND_EXPORT AsyncQueue {
  protected:
   void WorkerLoop();
   void SetThreadName() const;
-
   std::unique_ptr<std::thread> worker_{nullptr};
   std::mutex task_mutex_;
   std::unique_ptr<std::condition_variable> task_cond_var_{nullptr};
   std::string name_;
-  kThreadWaitLevel wait_level_;
-  inline static std::unordered_map<std::thread::id, kThreadWaitLevel> thread_id_to_wait_level_;
-  inline static std::mutex level_mutex_;
 
  private:
   void ClearTaskWithException();
-
-  std::queue<std::shared_ptr<AsyncTask>> tasks_queque_;
+  HQueue<AsyncTask> tasks_hqueque_;
+  bool init_{false};
+  bool alive_{true};
+  bool stop_{false};
+  std::atomic_int status_{kThreadBusy};
+  size_t spin_count_{0};
 };
-using AsyncQueuePtr = std::shared_ptr<AsyncQueue>;
+using AsyncHqueuePtr = std::shared_ptr<AsyncHqueue>;
 }  // namespace pynative
 }  // namespace mindspore
 
