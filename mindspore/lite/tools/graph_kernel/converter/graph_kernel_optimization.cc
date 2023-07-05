@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@
 #include "tools/graph_kernel/converter/graph_kernel_splitter_lite.h"
 #include "tools/graph_kernel/converter/kernel_builder.h"
 #include "tools/graph_kernel/converter/parameter_to_tensor.h"
+#include "tools/graph_kernel/converter/basic_op_infer_shape.h"
 
 namespace mindspore {
 namespace graphkernel {
@@ -68,6 +69,9 @@ GkPassManagerPtr GraphKernelOptimizer::PreProcess() const {
 
   // Recognize the formats for all CNodes
   pm->Add(std::make_shared<FormatRecognition>(), OptLevel_1);
+
+  // Dynamic infer shape
+  pm->Add(std::make_shared<DynOpInferShape>(), OptLevel_1, is_ascend);
 
   // Convert the const parameters to const tensors
   pm->Add(std::make_shared<ParameterToTensor>(), OptLevel_1, is_cpu);

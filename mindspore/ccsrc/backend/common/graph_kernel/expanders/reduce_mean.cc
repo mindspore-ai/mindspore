@@ -38,6 +38,7 @@ class ReduceMean : public OpDesc {
     const auto &x = inputs_info_[0];
     auto x_shape = x.shape;
     if (x_shape.empty() || IsDynamicRank(x_shape)) {
+      MS_LOG(INFO) << "Skip empty shape or dynamic rank, shape is: " << x_shape;
       return false;
     }
     axis_ = GetAxisList(attrs_["axis"]);
@@ -50,6 +51,7 @@ class ReduceMean : public OpDesc {
     }
     for (const auto &a : axis_) {
       if (x_shape.at(LongToSize(a)) < 0) {
+        MS_LOG(INFO) << "Input shape " << x_shape << " at reduce axis [" << a << "] is dynamic";
         return false;
       }
     }

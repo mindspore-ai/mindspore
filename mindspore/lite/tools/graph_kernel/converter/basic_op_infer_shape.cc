@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,63 @@
 #include "src/litert/infer_manager.h"
 
 namespace mindspore::graphkernel {
+namespace {
+void SetAbstractShape(const abstract::AbstractBasePtr &abs, const BaseShapePtr &shape) {
+  MS_EXCEPTION_IF_NULL(abs);
+  abs->set_shape(shape);
+}
+
+void SetAbstract(const CNodePtr &cnode) {
+  if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem)) {
+    auto input2 = cnode->input(kInputNodeOutputIndexInTupleGetItem);
+    auto item_idx = LongToSize(AnfUtils::GetIntValue(input2));
+    auto abs_tuple = dyn_cast<abstract::AbstractTuple>(AnfUtils::VisitKernel(cnode, item_idx).first->abstract());
+    MS_EXCEPTION_IF_NULL(abs_tuple);
+    cnode->set_abstract(abs_tuple->elements()[item_idx]);
+    return;
+  }
+  if (IsOneOfPrimitiveCNode(cnode, {prim::kPrimDepend, prim::kPrimLoad, prim::kPrimUpdateState})) {
+    cnode->set_abstract(cnode->input(1)->abstract());
+    return;
+  }
+}
+
+BaseShapePtr AllGatherInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  if (input_args.empty()) {
+    return nullptr;
+  }
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(primitive->name(), input_args, 0);
+  MS_EXCEPTION_IF_NULL(shape_ptr);
+  auto x_shape = shape_ptr->shape();
+  auto rank_list = primitive->GetAttr("rank_list");
+  if (rank_list->isa<ValueSequence>()) {
+    auto rank_list_ptr = rank_list->cast<ValueSequencePtr>();
+    MS_EXCEPTION_IF_NULL(rank_list_ptr);
+    auto out_shape = x_shape;
+    if (!out_shape.empty() && out_shape[0] > 0) {
+      out_shape[0] *= SizeToLong(rank_list_ptr->size());
+    }
+    return std::make_shared<abstract::Shape>(out_shape);
+  }
+  return nullptr;
+}
+
+BaseShapePtr ShapeInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  if (input_args.empty()) {
+    return nullptr;
+  }
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(primitive->name(), input_args, 0);
+  MS_EXCEPTION_IF_NULL(shape_ptr);
+  auto x_shape = shape_ptr->shape();
+  int64_t rank = IsDynamicRank(x_shape) ? -1 : SizeToLong(x_shape.size());
+  return std::make_shared<abstract::Shape>(ShapeVector{rank});
+}
+
+using OpInferFunc = std::function<BaseShapePtr(const PrimitivePtr &, const std::vector<AbstractBasePtr> &)>;
+}  // namespace
+
 inline mindspore::Format FormatStringToEnum(const std::string &format) {
   std::unordered_map<std::string, mindspore::Format> format_converter = {{kOpFormat_NHWC, mindspore::NHWC},
                                                                          {kOpFormat_NCHW, mindspore::NCHW}};
@@ -146,20 +203,7 @@ void BasicOpInferShape::InferShapeRealKernel(const CNodePtr &cnode) {
   }
 }
 
-void BasicOpInferShape::InsertAbstract(const CNodePtr &cnode) {
-  if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem)) {
-    auto input2 = cnode->input(kInputNodeOutputIndexInTupleGetItem);
-    auto item_idx = LongToSize(AnfUtils::GetIntValue(input2));
-    auto abs_tuple = dyn_cast<abstract::AbstractTuple>(AnfUtils::VisitKernel(cnode, item_idx).first->abstract());
-    MS_EXCEPTION_IF_NULL(abs_tuple);
-    cnode->set_abstract(abs_tuple->elements()[item_idx]);
-    return;
-  }
-  if (IsOneOfPrimitiveCNode(cnode, {prim::kPrimDepend, prim::kPrimLoad, prim::kPrimUpdateState})) {
-    cnode->set_abstract(cnode->input(1)->abstract());
-    return;
-  }
-}
+void BasicOpInferShape::InsertAbstract(const CNodePtr &cnode) { SetAbstract(cnode); }
 
 void BasicOpInferShape::InferShape(const CNodePtr &cnode) {
   if (AnfUtils::IsRealKernel(cnode)) {
@@ -167,5 +211,96 @@ void BasicOpInferShape::InferShape(const CNodePtr &cnode) {
   } else {
     InsertAbstract(cnode);
   }
+}
+
+bool DynOpInferShape::HasDynamicShapeInput(const FuncGraphPtr &func_graph) const {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  const auto &params = func_graph->parameters();
+  for (const auto &param : params) {
+    if (param == nullptr) {
+      continue;
+    }
+    auto param_shape = param->Shape();
+    if (param_shape != nullptr && param_shape->IsDynamic()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool DynOpInferShape::InferShapeRealKernel(const CNodePtr &cnode) const {
+  auto prim = GetCNodePrimitive(cnode);
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "prim is nullptr for cnode: " << cnode->fullname_with_scope();
+    return false;
+  }
+  // collect op inputs abstract
+  AbstractBasePtrList abs_list;
+  abs_list.reserve(cnode->size());
+  for (size_t i = 1; i < cnode->size(); ++i) {
+    const auto &input = cnode->input(i);
+    if (input == nullptr) {
+      continue;
+    }
+    auto abs = input->abstract();
+    if (abs == nullptr && input->isa<ValueNode>()) {
+      abs = input->cast<ValueNodePtr>()->value()->ToAbstract();
+    }
+    if (abs == nullptr) {
+      MS_LOG(ERROR) << "inputs[" << i << "] has no abstract for cnode: " << cnode->fullname_with_scope();
+      return false;
+    }
+    abs_list.push_back(abs);
+  }
+  // some op has no C++ infer
+  static std::unordered_map<std::string, OpInferFunc> infer_func_map{{"AllGather", AllGatherInferShape}};
+  auto prim_name = prim->name();
+  auto iter = infer_func_map.find(prim_name);
+  if (iter != infer_func_map.end()) {
+    SetAbstractShape(cnode->abstract(), iter->second(prim, abs_list));
+    return true;
+  }
+  // core/ops 'Shape' returns AbstractTuple, which will change the original abstract type
+  if (prim_name == "Shape" && cnode->abstract()->isa<abstract::AbstractTensor>()) {
+    SetAbstractShape(cnode->abstract(), ShapeInferShape(prim, abs_list));
+    return true;
+  }
+  auto found = abstract::GetPrimitiveInferImpl(prim);
+  if (found.has_value() && found.value().IsImplInferShapeAndType()) {
+    auto infer_impl = found.value();
+    SetAbstractShape(cnode->abstract(), infer_impl.InferShape(prim, abs_list));
+    return true;
+  }
+  MS_LOG(ERROR) << "Can not find infer shape function for " << prim_name;
+  return false;
+}
+
+bool DynOpInferShape::InferShape(const CNodePtr &cnode) const {
+  if (AnfUtils::IsRealKernel(cnode)) {
+    if (!InferShapeRealKernel(cnode)) {
+      MS_LOG(ERROR) << "infer shape failed for cnode: " << cnode->fullname_with_scope();
+      return false;
+    }
+  } else {
+    SetAbstract(cnode);
+  }
+  return true;
+}
+
+bool DynOpInferShape::Run(const FuncGraphPtr &func_graph) {
+  if (!HasDynamicShapeInput(func_graph)) {
+    return false;
+  }
+  MS_LOG(INFO) << "Dynamic shape infer for func graph: " << func_graph->ToString();
+  auto nodes = TopoSort(func_graph->output());
+  for (const auto &node : nodes) {
+    if (node->isa<CNode>()) {
+      auto cnode = node->cast<CNodePtr>();
+      if (!InferShape(cnode)) {
+        break;
+      }
+    }
+  }
+  return true;
 }
 }  // namespace mindspore::graphkernel

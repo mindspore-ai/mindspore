@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,10 @@ EdgeRelation GetRelation(const PrimOpPtr &node, const NodePtr &input) {
     return EdgeRelation::INJECTIVE;
   }
   if (IsDynamic(input->shape)) {
+    if (std::all_of(node->inputs().begin(), node->inputs().end(),
+                    [input](const NodePtr &inp) { return inp == input; })) {
+      return EdgeRelation::INJECTIVE;
+    }
     return EdgeRelation::BROADCAST;
   }
   // naively set the edge relation to "broadcast" if the result shape is not equal to the input shape.
