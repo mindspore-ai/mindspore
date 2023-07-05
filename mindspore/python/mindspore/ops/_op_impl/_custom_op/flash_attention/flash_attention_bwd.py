@@ -361,7 +361,8 @@ class FlashAttentionBwd(FlashAttention):
         return [self.dQ_gm, self.dK_gm, self.dV_gm]
 
 
-def flash_attention_grad(Q, K, V, O, dO, l, m, dim_mask, attn_mask, dropout_mask, alibi_mask, dq, dk, dv,
+def flash_attention_grad(Query, Key, Value, Output, dO, rowsum, rowmax, dim_mask, attn_mask, dropout_mask, alibi_mask,
+                         dq, dk, dv,
                          prev_block_num=65536,
                          next_block_num=65536,
                          high_precision=False,
@@ -373,13 +374,13 @@ def flash_attention_grad(Q, K, V, O, dO, l, m, dim_mask, attn_mask, dropout_mask
 
     Parameters
     ----------
-    Q : dict. shape and dtype of input, only support float16
-    K : dict. shape and dtype of input, only support float16
-    V: dict. shape and dtype of input, only support float16
-    O: dict. shape and dtype of input, only support float16
+    Query : dict. shape and dtype of input, only support float16
+    Key : dict. shape and dtype of input, only support float16
+    Value: dict. shape and dtype of input, only support float16
+    Output: dict. shape and dtype of input, only support float16
     dO: dict. shape and dtype of input, only support float16
-    l: dict. shape and dtype of input, only support float16
-    m: dict. shape and dtype of input, only support float16
+    rowsum: dict. shape and dtype of input, only support float16
+    rowmax: dict. shape and dtype of input, only support float16
     dim_mask: dict. shape and dtype of input, only support int8
     dropout_mask: dict. shape and dtype of input, only support float16
     dropout_mask: dict. shape and dtype of input, only support float16
@@ -397,7 +398,7 @@ def flash_attention_grad(Q, K, V, O, dO, l, m, dim_mask, attn_mask, dropout_mask
     -------
     tik_instance
     """
-    fa_grad = FlashAttentionBwd(Q, K, V, O, dO, l, m, dim_mask, attn_mask, dropout_mask,
+    fa_grad = FlashAttentionBwd(Query, Key, Value, Output, dO, rowsum, rowmax, dim_mask, attn_mask, dropout_mask,
                                 alibi_mask, prev_block_num=prev_block_num,
                                 next_block_num=next_block_num,
                                 high_precision=high_precision,
