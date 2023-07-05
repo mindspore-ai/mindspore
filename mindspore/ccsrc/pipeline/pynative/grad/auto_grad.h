@@ -220,7 +220,7 @@ class AutoGradCellImpl {
   ParameterPtr AddParameterNode(const tensor::TensorPtr &tensor, const abstract::AbstractBasePtr &abs);
   AnfNodePtr MapParameter(const ValuePtr &value, const abstract::AbstractBasePtr &abs);
   ParameterPtr ExtractParameter(const tensor::TensorPtr &tensor) const;
-  AnfNodePtrList ExtractParamters(const tensor::TensorPtrList weights);
+  AnfNodePtrList ExtractParamters(const tensor::TensorPtrList weights) const;
   void UpdateSensParameter(const ValuePtr &value);
   AnfNodePtr TraceShape(const FunctionNodePtr &fn, const ValuePtr &out_value, const abstract::AbstractBasePtr &out_abs,
                         const tensor::TensorPtr &input_tensor, const AnfNodePtr &din);
@@ -266,7 +266,7 @@ class AutoGradCellImpl {
   void ConvertValueNodeValueToTensor(const AnfNodePtr &din);
   CNodePtr ConvertConstInputToAttr(const CNodePtr &cnode, const std::string &device_target,
                                    bool is_dynamic_shape = false);
-  void ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node);
+  void ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node) const;
 
   // Last cnode of this Cell, may be a primitive op or cell with user defined bprop.
   AdParamPtr ad_param_{nullptr};

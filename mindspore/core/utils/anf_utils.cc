@@ -47,12 +47,14 @@ class AbstractMutexManager {
   }
 
   void Close() {
+    // cppcheck-suppress unreadVariable
     std::lock_guard<std::recursive_mutex> lock(mu_);
     is_valid_ = false;
     mu_for_nodes_.clear();
   }
 
   void Open() {
+    // cppcheck-suppress unreadVariable
     std::lock_guard<std::recursive_mutex> lock(mu_);
     is_valid_ = true;
   }

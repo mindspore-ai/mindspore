@@ -49,6 +49,7 @@ class MS_CORE_API PrimitiveReadLock {
   }
   ~PrimitiveReadLock() {
     if (shared_mutex_ != nullptr) {
+      // cppcheck-suppress unreadVariable
       shared_mutex_->unlock_shared();
     }
   }
@@ -114,6 +115,7 @@ class MS_CORE_API Primitive : public Named {
   /// \param[in] attr The value of attribute.
   /// \return The primitive to which attribute has been added.
   Primitive &AddAttr(const std::string &name, const ValuePtr &attr) {
+    // cppcheck-suppress unreadVariable
     PrimitiveWriteLock write_lock(shared_mutex_);
     attrs_[name] = attr;
     if (record_evaluate_add_attr_) {
@@ -126,6 +128,7 @@ class MS_CORE_API Primitive : public Named {
   /// \param[in] name The name of attribute to be delete.
   /// \return The primitive to which attribute has been added.
   Primitive &DelAttr(const std::string &name) {
+    // cppcheck-suppress unreadVariable
     PrimitiveWriteLock write_lock(shared_mutex_);
     (void)attrs_.erase(name);
     return *this;
@@ -143,11 +146,13 @@ class MS_CORE_API Primitive : public Named {
   }
   /// \brief Set attribute to the primitive attribute map.
   void set_attr(const std::string &attrName, const ValuePtr &attr) {
+    // cppcheck-suppress unreadVariable
     PrimitiveWriteLock write_lock(shared_mutex_);
     attrs_[attrName] = attr;
   }
   /// \brief Erase attribute to the primitive attribute map.
   void EraseAttr(const std::string &attrName) {
+    // cppcheck-suppress unreadVariable
     PrimitiveWriteLock write_lock(shared_mutex_);
     (void)attrs_.erase(attrName);
   }
@@ -176,6 +181,7 @@ class MS_CORE_API Primitive : public Named {
   ///
   /// \param[in] attrs The attribute map needs to be added in the primitive attribute.
   void set_evaluate_added_attrs(const mindspore::HashMap<std::string, ValuePtr> &attrs) {
+    // cppcheck-suppress unreadVariable
     PrimitiveWriteLock write_lock(shared_mutex_);
     for (auto &attr : attrs) {
       (void)attrs_.insert_or_assign(attr.first, attr.second);

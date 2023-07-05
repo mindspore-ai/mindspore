@@ -96,8 +96,8 @@ ValuePtr CreateNonTensorByAbstract(const abstract::AbstractBasePtr &abs) {
   if (abs->isa<abstract::AbstractSequence>()) {
     const auto &abs_seq = abs->cast<abstract::AbstractSequencePtr>()->elements();
     ValuePtrList value_ptr_list;
-    std::transform(abs_seq.begin(), abs_seq.end(), std::back_inserter(value_ptr_list),
-                   [](const abstract::AbstractBasePtr &elem) { return CreateNonTensorByAbstract(elem); });
+    (void)std::transform(abs_seq.begin(), abs_seq.end(), std::back_inserter(value_ptr_list),
+                         [](const abstract::AbstractBasePtr &elem) { return CreateNonTensorByAbstract(elem); });
     return std::make_shared<ValueTuple>(value_ptr_list);
   }
   if (type_id == kNumberTypeBool) {
@@ -434,10 +434,6 @@ ValueNodePtr Common::CreateValueNodeByValue(const ValuePtr &v, const abstract::A
 
 tensor::TensorPtr Common::CreateFakeTensorWithoutDeviceAddress(const tensor::TensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
-  //  auto t = ObjectPool::GetInstance().GetObj<tensor::Tensor>(ObjType::kTensor);
-  //  t->set_id(tensor->id());
-  //  t->MetaTensor::set_shape(tensor->shape());
-  //  t->set_auto_grad_meta_data(tensor->auto_grad_meta_data());
   auto t = std::make_shared<tensor::Tensor>(*tensor);
   if (tensor->is_parameter()) {
     t->set_param_info(tensor->param_info());

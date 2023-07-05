@@ -71,6 +71,7 @@ void AsyncQueue::WorkerLoop() {
   // Thread init.
   SetThreadName();
   {
+    // cppcheck-suppress unreadVariable
     std::unique_lock<std::mutex> lock(level_mutex_);
     thread_id_to_wait_level_[std::this_thread::get_id()] = wait_level_;
   }
@@ -143,6 +144,7 @@ void AsyncQueue::Wait() {
     return;
   }
   if (current_level_ == kThreadWaitLevel::kLevelUnknown) {
+    // cppcheck-suppress unreadVariable
     std::unique_lock<std::mutex> lock(level_mutex_);
     current_level_ = thread_id_to_wait_level_[std::this_thread::get_id()];
   }
@@ -263,9 +265,12 @@ void AsyncHqueue::WorkerLoop() {
   SetThreadName();
 
   while (alive_) {
+    // cppcheck-suppress unreadVariable
     if (LIKELY(!tasks_hqueque_.Empty())) {
       auto task = tasks_hqueque_.Dequeue();
+      // cppcheck-suppress unreadVariable
       if (LIKELY(task != nullptr)) {
+        // cppcheck-suppress unreadVariable
         if (LIKELY(!stop_)) {
           task->Run();
         }
@@ -312,6 +317,7 @@ void AsyncHqueue::Push(AsyncTask *task) {
     status_.store(kThreadBusy);
   }
   if (spin_count_ == kMaxSpinCount) {
+    // cppcheck-suppress unreadVariable
     std::unique_lock<std::mutex> lock(task_mutex_);
     task_cond_var_->notify_one();
   }
@@ -342,6 +348,7 @@ void AsyncHqueue::WorkerJoin() {
   }
   Wait();
   {
+    // cppcheck-suppress unreadVariable
     std::lock_guard<std::mutex> lock(task_mutex_);
     alive_ = false;
   }

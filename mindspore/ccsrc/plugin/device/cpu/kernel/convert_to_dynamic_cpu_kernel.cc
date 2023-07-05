@@ -62,7 +62,7 @@ int ConvertToDynamicCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 
   outputs_.clear();
   for (const auto &kernel_tensor : inputs) {
-    outputs_.emplace_back(std::make_shared<KernelTensor>(*kernel_tensor));
+    (void)outputs_.emplace_back(std::make_shared<KernelTensor>(*kernel_tensor));
   }
   return static_cast<int>(ret);
 }
