@@ -60,14 +60,17 @@ class AscendStepTraceGenerator:
             self.steptrace_detail[f'{name}_end_point'] = (self.steptrace[name] + self.steptrace[
                 f'{name} duration']) * unit
 
-        avg_values = np.mean(self.steptrace_detail.tolist(), axis=0)
-        avg_row = np.array([tuple(avg_values)], dtype=self.steptrace_detail_dt)
+        if self.steptrace_detail.shape[0] > 1:
+            avg_values = np.mean(self.steptrace_detail.tolist(), axis=0)
+            avg_row = np.array([tuple(avg_values)], dtype=self.steptrace_detail_dt)
+        else:
+            avg_row = self.steptrace_detail[0]
         avg_row['step_num'] = '-'
         self.steptrace_detail = np.append(self.steptrace_detail, avg_row)
 
     def write(self, step_trace_intermediate_file_path):
         """
-        Write the step_trace_raw.csv
+        Write the step_trace_raw.cs
 
         Args:
             step_trace_intermediate_file_path(str): step_trace_raw.csv path.

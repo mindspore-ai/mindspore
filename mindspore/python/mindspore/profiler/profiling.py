@@ -1133,7 +1133,7 @@ class Profiler:
             hccl_raw_path = os.path.join(self._output_path, f'hccl_raw_{dev_id}.csv')
             hccl_raw_path = validate_and_normalize_path(hccl_raw_path)
 
-            hccl_analyse = AscendHCCLGenerator(source_path)
+            hccl_analyse = AscendHCCLGenerator(os.path.join(source_path, 'timeline'))
             hccl_analyse.parse()
             hccl_analyse.write(hccl_raw_path)
 

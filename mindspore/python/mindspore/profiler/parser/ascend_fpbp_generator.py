@@ -34,6 +34,7 @@ class AscendFPBPGenerator:
     def parse(self):
         """Analyse the op_summary and steptrace data generate fpbp data."""
         is_training_mode_flag = False
+        points = None
 
         steptrace = self.steptrace[self.steptrace['Iteration ID'] == 1]
         steptrace = steptrace[(steptrace['FP Start'] != 0) & (steptrace['BP End'] != 0)]

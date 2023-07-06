@@ -19,6 +19,8 @@ import os
 
 import numpy as np
 
+from mindspore import context
+
 
 class AscendMsprofDataGenerator:
     """Generate ascend data from files."""
@@ -28,21 +30,40 @@ class AscendMsprofDataGenerator:
         self.op_summary = None
         self.op_statistic = None
         self.steptrace = None
-        self.op_summary_dt = np.dtype(
-            [('Model Name', object), ('Model ID', int), ('Task ID', int), ('Stream ID', int), ('Infer ID', int),
-             ('Op Name', object), ('Op Type', object), ('Task Type', object), ('Task Start Time', float),
-             ('Task Duration', float), ('Task Wait Time', float), ('Block Dim', float), ('Input Shapes', object),
-             ('Input Data Types', object), ('Input Formats', object), ('Output Shapes', object),
-             ('Output Data Types', object), ('Output Formats', object), ('aicore_time', float), ('total_cycles', float),
-             ('mac_fp16_ratio', float), ('mac_int8_ratio', float), ('vec_fp32_ratio', float), ('vec_fp16_ratio', float),
-             ('vec_int32_ratio', float), ('vec_misc_ratio', float), ('cube_fops', float), ('vector_fops', float),
-             ('Iteration ID', int)])
-        self.op_statistic_dt = np.dtype(
-            [('Model Name', object), ('Op Type', object), ('Core Type', object), ('Count', float),
-             ('Total Time', float), ('Min Time', float), ('Avg Time', float), ('Max Time', float), ('Ratio', float)])
-        self.steptrace_dt = [('Iteration ID', int), ('FP Start', float), ('BP End', float), ('Iteration End', float),
-                             ('Iteration Time', float), ('FP to BP Time', float), ('Iteration Refresh', float),
-                             ('Data Aug Bound', float), ('Model ID', int)]
+        if context.get_context('mode') == context.PYNATIVE_MODE:
+            self.op_summary_dt = np.dtype(
+                [('Model ID', int), ('Task ID', int), ('Stream ID', int), ('Op Name', object), ('Op Type', object),
+                 ('Task Type', object), ('Task Start Time', float), ('Task Duration', float), ('Task Wait Time', float),
+                 ('Block Dim', float), ('Input Shapes', object), ('Input Data Types', object),
+                 ('Input Formats', object), ('Output Shapes', object), ('Output Data Types', object),
+                 ('Output Formats', object), ('aicore_time', float), ('total_cycles', float), ('mac_fp16_ratio', float),
+                 ('mac_int8_ratio', float), ('vec_fp32_ratio', float), ('vec_fp16_ratio', float),
+                 ('vec_int32_ratio', float), ('vec_misc_ratio', float), ('cube_fops', float), ('vector_fops', float),
+                 ('Iteration ID', int)])
+            self.op_statistic_dt = np.dtype(
+                [('Op Type', object), ('Core Type', object), ('Count', float), ('Total Time', float),
+                 ('Min Time', float), ('Avg Time', float), ('Max Time', float), ('Ratio', float)])
+            self.steptrace_dt = np.dtype([('Iteration ID', int), ('FP Start', float), ('BP End', float),
+                                          ('Iteration End', float), ('Iteration Time', float), ('FP to BP Time', float),
+                                          ('Iteration Refresh', float), ('Data Aug Bound', float), ('Model ID', int)])
+
+        else:
+            self.op_summary_dt = np.dtype(
+                [('Model Name', object), ('Model ID', int), ('Task ID', int), ('Stream ID', int), ('Infer ID', int),
+                 ('Op Name', object), ('Op Type', object), ('Task Type', object), ('Task Start Time', float),
+                 ('Task Duration', float), ('Task Wait Time', float), ('Block Dim', float), ('Input Shapes', object),
+                 ('Input Data Types', object), ('Input Formats', object), ('Output Shapes', object),
+                 ('Output Data Types', object), ('Output Formats', object), ('aicore_time', float),
+                 ('total_cycles', float), ('mac_fp16_ratio', float), ('mac_int8_ratio', float),
+                 ('vec_fp32_ratio', float), ('vec_fp16_ratio', float), ('vec_int32_ratio', float),
+                 ('vec_misc_ratio', float), ('cube_fops', float), ('vector_fops', float), ('Iteration ID', int)])
+            self.op_statistic_dt = np.dtype(
+                [('Model Name', object), ('Op Type', object), ('Core Type', object), ('Count', float),
+                 ('Total Time', float), ('Min Time', float), ('Avg Time', float), ('Max Time', float),
+                 ('Ratio', float)])
+            self.steptrace_dt = [('Iteration ID', int), ('FP Start', float), ('BP End', float),
+                                 ('Iteration End', float), ('Iteration Time', float), ('FP to BP Time', float),
+                                 ('Iteration Refresh', float), ('Data Aug Bound', float), ('Model ID', int)]
 
     @staticmethod
     def find_files(directory, pattern):
@@ -105,25 +126,29 @@ class AscendMsprofDataGenerator:
                     steptrace.append(tuple(row))
             break
 
-        hccl_data = self.op_summary[(self.op_summary['Task Type'] == 'HCCL') & (self.op_summary['Iteration ID'] == 1)][
-            'Task ID', 'Stream ID', 'Op Name']
+        if steptrace:
+            hccl_data = \
+                self.op_summary[(self.op_summary['Task Type'] == 'HCCL') & (self.op_summary['Iteration ID'] == 1)][[
+                    'Task ID', 'Stream ID', 'Op Name']]
 
-        for name in hccl_data:
-            name = f"stream_{name['Stream ID']}_{name['Task ID']}_{name['Op Name']}"
-            self.steptrace_dt.append((name, float))
-            self.steptrace_dt.append((f'{name} duration', float))
-        self.steptrace_dt = np.dtype(self.steptrace_dt)
+            for name in hccl_data:
+                name = f"stream_{name['Stream ID']}_{name['Task ID']}_{name['Op Name']}"
+                self.steptrace_dt.append((name, float))
+                self.steptrace_dt.append((f'{name} duration', float))
+            self.steptrace_dt = np.dtype(self.steptrace_dt)
 
-        self.steptrace = np.array(steptrace, dtype=self.steptrace_dt)
-        self.steptrace['FP Start'] = self.steptrace['FP Start'] * 1e-3
-        self.steptrace['BP End'] = self.steptrace['BP End'] * 1e-3
-        self.steptrace['Iteration End'] = self.steptrace['Iteration End'] * 1e-3
-        self.steptrace['Iteration Time'] = self.steptrace['Iteration Time'] * 1e-3
-        self.steptrace['FP to BP Time'] = self.steptrace['FP to BP Time'] * 1e-3
-        self.steptrace['Iteration Refresh'] = self.steptrace['Iteration Refresh'] * 1e-3
-        self.steptrace['Data Aug Bound'] = self.steptrace['Data Aug Bound'] * 1e-3
+            self.steptrace = np.array(steptrace, dtype=self.steptrace_dt)
+            self.steptrace['FP Start'] = self.steptrace['FP Start'] * 1e-3
+            self.steptrace['BP End'] = self.steptrace['BP End'] * 1e-3
+            self.steptrace['Iteration End'] = self.steptrace['Iteration End'] * 1e-3
+            self.steptrace['Iteration Time'] = self.steptrace['Iteration Time'] * 1e-3
+            self.steptrace['FP to BP Time'] = self.steptrace['FP to BP Time'] * 1e-3
+            self.steptrace['Iteration Refresh'] = self.steptrace['Iteration Refresh'] * 1e-3
+            self.steptrace['Data Aug Bound'] = self.steptrace['Data Aug Bound'] * 1e-3
 
-        for name in self.steptrace.dtype.names[9:]:
-            self.steptrace[name] = self.steptrace[name] * 1e-3
+            for name in self.steptrace.dtype.names[9:]:
+                self.steptrace[name] = self.steptrace[name] * 1e-3
+        else:
+            self.steptrace = np.empty((0,), dtype=self.steptrace_dt)
 
         return self.op_summary, self.op_statistic, self.steptrace

@@ -66,11 +66,8 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         Init timeline metadata, adding all collected info.
 
         Args:
-            communication_info (list[list]): The metadata of communication operator.
-            framework_info (dict): The framework metadata.
-            aicpu_info (dict): The metadata of AI CPU operator.
-            min_cycle_counter (float): The minimum cycle counter of the timeline.
-            source_path (str): The source of file.
+            op_summary: op data
+            steptrace: step data
         """
 
         logger.info('Initiating timeline...')
