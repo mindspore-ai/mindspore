@@ -35,7 +35,7 @@
 
 namespace mindspore {
 namespace parallel {
-Shape MatMulBase::GetCommonShape(const Dimensions &mat_a_strategy, const Dimensions &mat_b_strategy) {
+Shape MatMulBase::GetCommonShape(const Dimensions &mat_a_strategy, const Dimensions &mat_b_strategy) const {
   Shape common_shape;
   size_t mat_a_size = mat_a_strategy.size();
   size_t mat_b_size = mat_b_strategy.size();
@@ -406,7 +406,7 @@ Status MatMulBase::InferTensorMap() {
     mat_a_tensor_map.cbegin() + static_cast<different_type>(LAST_INDEX(size) - mat_a_dimension_));
   if (transpose_a_) {
     // swap the last two elements
-    SwapLastTwoElements(&mat_a_tensor_map);
+    (void)SwapLastTwoElements(&mat_a_tensor_map);
   }
 
   // infer mat_b tensor map
@@ -419,7 +419,7 @@ Status MatMulBase::InferTensorMap() {
     mat_b_tensor_map.cbegin() + static_cast<different_type>(LAST_INDEX(size) - mat_b_dimension_));
   if (transpose_b_) {
     // swap the last two elements
-    SwapLastTwoElements(&mat_b_tensor_map);
+    (void)SwapLastTwoElements(&mat_b_tensor_map);
   }
 
   if (forward_reduce_scatter_) {

@@ -29,69 +29,21 @@ Status PadV3Info::GetAttrs() {
     return FAILED;
   }
 
-  // If paddings_contiguous is true, paddings is arranged as [begin0, end0, begin1, end1, ...]
-  // If paddings_contiguous is false, paddings is arranged as [begin0, begin1, ..., end1, end2, ...]
-  bool paddings_contiguous = GetBoolAttr(PADDINGS_CONTIGUOUS);
-  MS_LOG(INFO) << name_ << ": the paddings_contiguous is " << paddings_contiguous;
-
-  if (input_value_.size() != PAD_V3_INPUT_VALUE_SIZE) {
-    MS_LOG(ERROR) << name_ << ": the size of input_value must be " << PAD_V3_INPUT_VALUE_SIZE << ", but got "
-                  << input_value_.size();
+  if (inputs_shape_.empty() || outputs_shape_.empty()) {
+    MS_LOG(ERROR) << name_ << ": the inputs shape or outputs shape is empty";
     return FAILED;
   }
 
-  std::vector<int64_t> paddings;
-  if (input_value_[PADDINGS_INDEX] == nullptr) {
-    if (inputs_shape_.size() < (PAD_V3_INPUT_VALUE_SIZE - 1) || inputs_shape_[PADDINGS_INDEX][0] <= 1) {
-      MS_LOG(ERROR) << name_
-                    << ": the input value for paddings is null, and the inputs_shape[1][0] must be larger than 1, but "
-                       "the inputs_shape is"
-                    << inputs_shape_;
-      return FAILED;
-    }
-    // the paddings is a variable, cannot get its value, and construct the fake paddings
-    paddings = Shape(inputs_shape_[PADDINGS_INDEX][0], 1);
-    MS_LOG(INFO) << name_ << ": the input value for paddings is null, the fake paddings is " << paddings;
-  } else {
-    if (input_value_[PADDINGS_INDEX]->isa<tensor::Tensor>()) {
-      paddings = GetTensorValue(input_value_[PADDINGS_INDEX]);
-    } else {
-      paddings = GetValue<Shape>(input_value_[PADDINGS_INDEX]);
-    }
-  }
-
-  if (paddings.size() % PADDINGS_PAIR_SIZE != 0) {
-    MS_LOG(ERROR) << name_ << ": the size of paddings must be the multiples of 2, but got " << paddings.size();
+  if (inputs_shape_[0].size() != outputs_shape_[0].size()) {
+    MS_LOG(ERROR) << name_ << ": the dims of input and output are not equal";
     return FAILED;
   }
 
-  if (paddings.size() / PADDINGS_PAIR_SIZE > inputs_shape_[0].size()) {
-    MS_LOG(ERROR) << name_
-                  << ": the dim of input must be larger than or equal to padding dim num, but the shape of input is "
-                  << inputs_shape_[0] << ", and the padding dim num is " << (paddings.size() / PADDINGS_PAIR_SIZE);
-    return FAILED;
-  }
-  MS_LOG(INFO) << name_ << ": the paddings is " << paddings;
-
-  // handle the paddings contiguous
-  Shape con_paddings;  // con_paddings arrange the paddings as [begin0, end0, begin1, end1, ...]
-  if (paddings_contiguous) {
-    con_paddings = paddings;
-  } else {
-    for (size_t i = 0; i < (paddings.size() / PADDINGS_PAIR_SIZE); ++i) {
-      con_paddings.push_back(paddings[i]);
-      con_paddings.push_back(paddings[i + paddings.size() / PADDINGS_PAIR_SIZE]);
+  paddings_flag_ = Shape(inputs_shape_[0].size(), 0);
+  for (size_t i = 0; i < inputs_shape_[0].size(); ++i) {
+    if (inputs_shape_[0][i] != outputs_shape_[0][i]) {
+      paddings_flag_[i] = 1;  // means this dimension can not be split
     }
-  }
-  MS_LOG(INFO) << name_ << ": the contiguous paddings is " << con_paddings;
-
-  paddings_flag_ = std::vector<int64_t>(inputs_shape_[0].size(), 0);
-  for (size_t i = inputs_shape_[0].size() - (con_paddings.size() / PADDINGS_PAIR_SIZE), j = 0;
-       i < inputs_shape_[0].size(); ++i) {
-    if (con_paddings[j] != 0 || con_paddings[j + 1] != 0) {
-      paddings_flag_[i] = 1;
-    }
-    j *= PADDINGS_PAIR_SIZE;
   }
 
   MS_LOG(INFO) << name_ << ": the paddings flag is " << paddings_flag_;
@@ -152,7 +104,7 @@ Status PadV3Info::InferTensorMap() {
     input_tensor_map.push_back(dim - i - 1);
   }
 
-  inputs_tensor_map_.push_back(input_tensor_map);   // input
+  inputs_tensor_map_.push_back(input_tensor_map);   // input, ignore paddings
   outputs_tensor_map_.push_back(input_tensor_map);  // output
   return SUCCESS;
 }
