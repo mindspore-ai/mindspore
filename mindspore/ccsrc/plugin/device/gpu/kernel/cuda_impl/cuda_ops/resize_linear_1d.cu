@@ -209,7 +209,6 @@ void ResizeLinear1DGrad(const enum ResizeLinearCoordinateTransformationMode mode
     default:
       break;
   }
-  cudaStreamSynchronize(stream);
   int64_t output_size = batch * channel * in_width;
   AssignToOutput<<<CUDA_BLOCKS(device_id, output_size), CUDA_THREADS(device_id), 0, stream>>>(output_size, grad_work,
                                                                                               grad_input);

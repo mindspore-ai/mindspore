@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <stdint.h>
 #include <math.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <algorithm>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/resize_nearest_neighbor_impl.cuh"
 #include "include/cuda_fp16.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/resize_nearest_neighbor_impl.cuh"
 
 template <typename T>
 __global__ void ResizeNearestNeighbor(const int size, const T *input, const int s1, const int s2, const int s3,
@@ -66,6 +66,11 @@ void CalResizeNearestNeighbor(const int size, const T *input, const int s1, cons
   return;
 }
 
+template CUDA_LIB_EXPORT void CalResizeNearestNeighbor<double>(const int size, const double *input, const int s1,
+                                                               const int s2, const int s3, const int s4, double *output,
+                                                               const int d1, const int d2, const int d3, const int d4,
+                                                               bool align_corners, float h_scale, float w_scale,
+                                                               cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalResizeNearestNeighbor<float>(const int size, const float *input, const int s1,
                                                               const int s2, const int s3, const int s4, float *output,
                                                               const int d1, const int d2, const int d3, const int d4,
@@ -76,6 +81,11 @@ template CUDA_LIB_EXPORT void CalResizeNearestNeighbor<half>(const int size, con
                                                              const int d1, const int d2, const int d3, const int d4,
                                                              bool align_corners, float h_scale, float w_scale,
                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalResizeNearestNeighbor<uint8_t>(const int size, const uint8_t *input, const int s1,
+                                                                const int s2, const int s3, const int s4,
+                                                                uint8_t *output, const int d1, const int d2,
+                                                                const int d3, const int d4, bool align_corners,
+                                                                float h_scale, float w_scale, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalResizeNearestNeighbor<int>(const int size, const int *input, const int s1,
                                                             const int s2, const int s3, const int s4, int *output,
                                                             const int d1, const int d2, const int d3, const int d4,

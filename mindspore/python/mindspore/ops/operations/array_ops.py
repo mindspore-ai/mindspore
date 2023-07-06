@@ -4336,27 +4336,20 @@ class ResizeNearestNeighborV2(Primitive):
             tensors are aligned, preserving the values at the corner pixels. Default: ``False`` .
         half_pixel_centers (bool, optional): Whether half pixel center. If set to ``True`` ,
             `align_corners` should be False. Default: ``False`` .
-        data_format (str, optional): An optional `string` that describes the
-            format of the input `x`. Default: ``NHWC`` .
 
     Inputs:
-        - **x** (Tensor) - 4-D with shape :math:`(batch, height, width, channels)`
-          or :math:`(batch, channels, height, width)` depending on the attr 'data_format'.
+        - **x** (Tensor) - 4-D with shape :math:`(batch, channels, height, width)` .
         - **size** (Tensor) - The new size for the images. A 1-D int32 Tensor
           of 2 elements: [`new_height, new_width`].
 
     Outputs:
         - **y** (Tensor) - The resized images. A 4-D with shape
-          :math:`(batch, new\_height, new\_width, channels)`
-          or :math:`(batch, channels, new\_height, new\_width)`
-          depending on the attr `data_format`. It has the same dtype as `x`.
+          :math:`(batch, channels, new\_height, new\_width)`. It has the same dtype as `x`.
 
     Raises:
         TypeError: If `x` or `size` is not a Tensor.
         TypeError: If the data type  of `size` is not int32.
         TypeError: If `align_corners` or `half_pixel_centers` is not bool.
-        TypeError: If `data_format` is not string.
-        ValueError: If `data_format` not in [`NHWC`, `NCHW`].
         ValueError: If any value of `size` is non positive.
         ValueError: If the dimension of `x` is not 4.
         ValueError: If the dimension of `size` is not 1.
@@ -4370,29 +4363,23 @@ class ResizeNearestNeighborV2(Primitive):
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
         >>> from mindspore import dtype as mstype
-        >>> input_tensor = Tensor(np.ones((1, 4, 4, 1)), mstype.float32)
+        >>> input_tensor = Tensor(np.ones((1, 1, 4, 4)), mstype.float32)
         >>> size = Tensor([2, 2], mstype.int32)
         >>> resize = ops.ResizeNearestNeighborV2()
         >>> output = resize(input_tensor, size)
         >>> print(output)
-        [[[[1.]
-           [1.]]
-          [[1.]
-           [1.]]]]
+        [[[[1. 1.]
+           [1. 1.]]]]
         >>> print(output.shape)
-        (1, 2, 2, 1)
+        (1, 1, 2, 2)
     """
 
     @prim_attr_register
-    def __init__(self, align_corners=False, half_pixel_centers=False, data_format='NHWC'):
+    def __init__(self, align_corners=False, half_pixel_centers=False):
         """Initialize ResizeNearestNeighborV2"""
         self.init_prim_io_names(inputs=['x', 'size'], outputs=['y'])
-
         validator.check_bool(align_corners, 'align_corners', self.name)
         validator.check_bool(half_pixel_centers, 'half_pixel_centers', self.name)
-        validator.check_value_type('data_format', data_format, [str], self.name)
-        self.format = validator.check_string(data_format, ['NHWC', 'NCHW'], 'data_format', self.name)
-        self.add_prim_attr('data_format', self.format)
 
 
 class GatherNd(Primitive):
