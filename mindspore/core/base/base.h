@@ -129,7 +129,7 @@ class MS_CORE_API Base : public std::enable_shared_from_this<Base> {
   /// \return The result of the judgment.
   template <typename T,
             typename std::enable_if<!is_shared_ptr<T>::value && std::is_base_of<Base, T>::value, T>::type * = nullptr>
-  bool isa() const {
+  inline bool isa() const {
     if constexpr (std::is_final<T>::value) {
       return this->IsSameTypeId(T::kTypeId);
     } else {
@@ -141,7 +141,7 @@ class MS_CORE_API Base : public std::enable_shared_from_this<Base> {
   ///
   /// \return If success, a shared_ptr of the given class will be returned. Otherwise a nullptr will be returned.
   template <typename T, typename U = typename std::enable_if<is_shared_ptr<T>::value, typename T::element_type>::type>
-  T cast() {
+  inline T cast() {
     if (isa<U>()) {
       return std::static_pointer_cast<U>(shared_from_this());
     }
@@ -152,7 +152,7 @@ class MS_CORE_API Base : public std::enable_shared_from_this<Base> {
   ///
   /// \return If success, a raw pointer of the given class will be returned. Otherwise a nullptr will be returned.
   template <typename T, typename U = typename std::enable_if<std::is_base_of<Base, T>::value>::type>
-  T *cast_ptr() {
+  inline T *cast_ptr() {
     if (isa<T>()) {
       return static_cast<T *>(this);
     }
