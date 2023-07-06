@@ -139,7 +139,7 @@ Status Angle(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
   size_t once_compute_size = 0;
   RETURN_IF_NOT_OK(CountThreadNums(input_size, block_size, &task_num, &once_compute_size));
 
-  for (int i = 0; i < task_num - 1; i++) {
+  for (size_t i = 0; i < task_num - 1; i++) {
     size_t start = i * once_compute_size;
     size_t end = start + once_compute_size;
     if (once_compute_size % TWO == 1) {
@@ -228,7 +228,7 @@ Status Contrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
 
   // Multi-threaded parallel computing.
   std::vector<std::thread> workers = std::vector<std::thread>(task_num);
-  int work_index = 0;
+  size_t work_index = 0;
   for (; work_index < task_num - 1; work_index++) {
     size_t start = work_index * once_compute_size;
     size_t end = start + once_compute_size;
@@ -239,7 +239,7 @@ Status Contrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
   size_t end = input_size;
   ContrastImpl<T>(input, &out, enhancement_amount_value, start, end);
 
-  for (int j = 0; j < task_num - 1; j++) {
+  for (size_t j = 0; j < task_num - 1; j++) {
     workers[j].join();
   }
 
@@ -669,7 +669,7 @@ Status MelScale(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
   auto out_in = (*output)->GetMutableBuffer();
   size_t t_size = sizeof(T);
 
-  for (int c = 0; c < input_reshape[0]; c++) {
+  for (size_t c = 0; c < input_reshape[0]; c++) {
     Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> matrix_c(
       static_cast<T *>(&*input->begin<T>() + rows * cols * c), cols, rows);
     auto mat_res = matrix_c * matrix_fb_t;
