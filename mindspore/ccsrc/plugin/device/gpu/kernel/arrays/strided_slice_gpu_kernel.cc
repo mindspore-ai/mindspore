@@ -17,6 +17,7 @@
 #include "plugin/device/gpu/kernel/arrays/strided_slice_gpu_kernel.h"
 #include <bitset>
 #include <algorithm>
+#include "kernel/kernel_get_value.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/slice_impl.cuh"
 

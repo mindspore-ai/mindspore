@@ -18,7 +18,7 @@
 #include <limits>
 #include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "kernel/common_utils.h"
+#include "kernel/ops_utils.h"
 #include "mindspore/core/ops/grad/resize_bicubic_grad.h"
 
 namespace mindspore {

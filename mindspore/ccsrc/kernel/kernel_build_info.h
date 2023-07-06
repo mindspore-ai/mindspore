@@ -32,6 +32,7 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr auto kPatternOpaque = "Opaque";
 enum KernelObjectType : int {
   UNKNOWN_TYPE = 0,
   TENSOR,
@@ -176,7 +177,7 @@ class BACKEND_EXPORT KernelBuildInfo {
   // Only valid when output kernel object type is TupleUnfold.
   std::vector<KernelObjectType> output_elements_kernel_object_type_;
   std::vector<nlohmann::json> output_data_desc_;
-  std::string fusion_type_{kernel::kPatternOpaque};
+  std::string fusion_type_{kPatternOpaque};
   Processor processor_{UNKNOWN};
   // Indicates whether buildinfo is valid, the invalid buildinfo needs to select kernel again.
   bool valid_{true};

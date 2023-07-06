@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "kernel/kernel.h"
+#include "kernel/kernel_get_value.h"
+#include "kernel/kash/kernel_pack.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_load.h"
 
 namespace mindspore {

@@ -20,7 +20,7 @@
 #include <unordered_map>
 #include "mindspore/core/ops/grad/resize_linear_1d_grad.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "kernel/common_utils.h"
+#include "kernel/ops_utils.h"
 
 namespace mindspore::kernel {
 constexpr auto kResizeLinear1DGrad = "ResizeLinear1DGrad";

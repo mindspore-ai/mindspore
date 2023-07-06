@@ -13,14 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <map>
 #include <fstream>
 #include <thread>
+#include <vector>
+#include <algorithm>
 #include "nlohmann/json.hpp"
 #include "securec/include/securec.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/convert_utils.h"
 #include "utils/system/sha256.h"
 #include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
+#include "kernel/kash/kernel_pack.h"
+
 namespace mindspore {
 namespace kernel {
 constexpr size_t kWorkspaceSize = 32;
@@ -61,6 +67,9 @@ constexpr auto kTbeMixCubePrefix = "_mix_aic";
 constexpr auto kTbeMixVectorPrefix = "_mix_aiv";
 constexpr auto kCoreTypeMixAIV = "MIX_AIV";
 constexpr auto kCoreTypeMixAIC = "MIX_AIC";
+constexpr auto kFloatType = "float";
+constexpr auto kInitValue = "init_value";
+constexpr auto kModeInArgsFirstField = "_mode_in_args_first_field";
 const std::vector<std::string> kBinaryMagicTypes = {
   "RT_DEV_BINARY_MAGIC_PLAIN",     "RT_DEV_BINARY_MAGIC_PLAIN_AICPU", "RT_DEV_BINARY_MAGIC_PLAIN_AIVEC",
   "RT_DEV_BINARY_MAGIC_ELF",       "RT_DEV_BINARY_MAGIC_ELF_AICPU",   "RT_DEV_BINARY_MAGIC_ELF_AIVEC",

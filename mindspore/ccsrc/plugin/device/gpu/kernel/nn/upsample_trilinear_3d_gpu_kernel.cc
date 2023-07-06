@@ -23,7 +23,7 @@
 #include <utility>
 #include <vector>
 #include "abstract/utils.h"
-#include "kernel/common_utils.h"
+#include "kernel/ops_utils.h"
 #include "mindspore/core/ops/upsample_trilinear_3d.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/upsample_trilinear_3d_impl.cuh"
 

@@ -40,7 +40,7 @@ int UniqueWithPadCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the elements num of input 'pad' must be equal to input 'x' batch size, "
                            "but got the elements num of input 'pad': "
-                        << Vector2Str(pad_shape) << " and input 'x' batch size: " << batch_size_;
+                        << pad_shape << " and input 'x' batch size: " << batch_size_;
     }
   }
   (void)workspace_size_list_.emplace_back(input_size_ * sizeof(int64_t));

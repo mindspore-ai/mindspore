@@ -122,14 +122,14 @@ int SparseApplyMomentumGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape of 'accum' must be the same as the shape of 'var', "
                      "but got the shape of 'accum': "
-                  << Vector2Str(accum_shape) << " and the shape of 'var': " << Vector2Str(var_shape);
+                  << accum_shape << " and the shape of 'var': " << var_shape;
     return KRET_RESIZE_FAILED;
   }
   if (!IsSameShape(var_shape, grad_shape)) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape of 'grad' must be the same as the shape of 'var', "
                      "but got the shape of 'grad': "
-                  << Vector2Str(grad_shape) << " and the shape of 'var': " << Vector2Str(var_shape);
+                  << grad_shape << " and the shape of 'var': " << var_shape;
     return KRET_RESIZE_FAILED;
   }
   if (grad_shape[0] != indices_shape[0]) {
@@ -137,7 +137,7 @@ int SparseApplyMomentumGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
       << "For '" << kernel_name_
       << "', the first element of shape of 'indices' must be the same as the first element of shape of 'grad', "
          "but got the shape of 'indices': "
-      << Vector2Str(indices_shape) << " and the shape of 'grad': " << Vector2Str(grad_shape);
+      << indices_shape << " and the shape of 'grad': " << grad_shape;
     return KRET_RESIZE_FAILED;
   }
 

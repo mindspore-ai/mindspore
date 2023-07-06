@@ -53,6 +53,7 @@ constexpr char kDisableKernelBackoff[] = "MS_DISABLE_KERNEL_BACKOFF";
 namespace {
 constexpr size_t kReturnDataIndex = 1;
 constexpr size_t kSwitchTrueBranchIndex = 2;
+constexpr auto kPatternUnknown = "";
 
 std::string PrintKernelFormatAndType(const std::string &fmt, const TypeId &type, const std::vector<int64_t> &shape) {
   std::ostringstream buffer;
@@ -1036,7 +1037,7 @@ std::string AnfRuntimeAlgorithm::GetFusionType(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   if (build_info == nullptr) {
-    return kernel::kPatternUnknown;
+    return kPatternUnknown;
   }
   return build_info->fusion_type();
 }

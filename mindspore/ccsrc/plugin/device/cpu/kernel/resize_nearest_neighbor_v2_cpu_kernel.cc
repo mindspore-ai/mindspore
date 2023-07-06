@@ -16,7 +16,7 @@
 
 #include "plugin/device/cpu/kernel/resize_nearest_neighbor_v2_cpu_kernel.h"
 #include <string>
-#include "kernel/common_utils.h"
+#include "kernel/ops_utils.h"
 #include "mindspore/core/ops/resize_nearest_neighbor_v2.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/eigen/eigen_common_utils.h"

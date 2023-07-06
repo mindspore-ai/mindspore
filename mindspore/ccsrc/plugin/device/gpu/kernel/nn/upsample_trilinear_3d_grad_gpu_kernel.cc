@@ -21,7 +21,7 @@
 #include <map>
 #include <utility>
 #include "abstract/utils.h"
-#include "kernel/common_utils.h"
+#include "kernel/ops_utils.h"
 #include "mindspore/core/ops/grad/upsample_trilinear_3d_grad.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/upsample_trilinear_3d_grad_impl.cuh"
 #include "plugin/device/gpu/kernel/nn/upsample_trilinear_3d_gpu_kernel.h"

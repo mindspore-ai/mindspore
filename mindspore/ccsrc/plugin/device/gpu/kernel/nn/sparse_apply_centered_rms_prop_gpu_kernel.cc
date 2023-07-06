@@ -115,7 +115,7 @@ int SparseApplyCenteredRMSPropGpuKernelMod::Resize(const BaseOperatorPtr &base_o
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape of 'mg' must be the same as the shape of 'var', "
                      "but got the shape of 'mg': "
-                  << Vector2Str(mg_shape) << " and the shape of 'var': " << Vector2Str(var_shape);
+                  << mg_shape << " and the shape of 'var': " << var_shape;
     return KRET_RESIZE_FAILED;
   }
   if (var_shape.size() != ms_shape.size()) {

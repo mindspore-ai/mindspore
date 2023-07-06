@@ -94,7 +94,7 @@ int ApplyProximalGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr &base
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape of 'delta' must be the same as the shape of 'var', "
                      "but got the shape of 'delta': "
-                  << Vector2Str(delta_shape) << " and the shape of 'var': " << Vector2Str(var_shape);
+                  << delta_shape << " and the shape of 'var': " << var_shape;
     return KRET_RESIZE_FAILED;
   }
 
@@ -102,7 +102,7 @@ int ApplyProximalGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr &base
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape of 'alpha' must be the same as the shape of 'l1', "
                      "but got the shape of 'alpha': "
-                  << Vector2Str(alpha_shape) << " and the shape of 'l1': " << Vector2Str(l1_shape);
+                  << alpha_shape << " and the shape of 'l1': " << l1_shape;
     return KRET_RESIZE_FAILED;
   }
 
@@ -110,14 +110,14 @@ int ApplyProximalGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr &base
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape of 'alpha' must be the same as the shape of 'l2', "
                      "but got the shape of 'alpha': "
-                  << Vector2Str(alpha_shape) << " and the shape of 'l2': " << Vector2Str(l2_shape);
+                  << alpha_shape << " and the shape of 'l2': " << l2_shape;
     return KRET_RESIZE_FAILED;
   }
   if (batch_rank_ < 0 || alpha_shape.size() != static_cast<size_t>(batch_rank_)) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape size of 'alpha' must be equal to 'batch_rank', "
                      "but got the shape of 'alpha': "
-                  << Vector2Str(alpha_shape) << " and 'batch_rank': " << batch_rank_;
+                  << alpha_shape << " and 'batch_rank': " << batch_rank_;
     return KRET_RESIZE_FAILED;
   }
 
@@ -137,7 +137,7 @@ int ApplyProximalGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr &base
     if (var_shape.size() < alpha_shape.size()) {
       MS_LOG(ERROR) << "For '" << kernel_name_
                     << "', the shape size of 'var' must be greater than 'alpha_shape', but got the shape of 'var': "
-                    << Vector2Str(var_shape) << " and 'alpha_shape': " << Vector2Str(alpha_shape);
+                    << var_shape << " and 'alpha_shape': " << alpha_shape;
       return KRET_RESIZE_FAILED;
     }
     std::vector<int64_t> var_batch_shape(var_shape.begin(), var_shape.begin() + batch_rank_);
@@ -145,7 +145,7 @@ int ApplyProximalGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr &base
       MS_LOG(ERROR) << "For '" << kernel_name_
                     << "', the batch shape of 'var' must be the same as the shape of 'alpha', "
                        "but got the batch shape of 'var': "
-                    << Vector2Str(var_batch_shape) << " and the shape of 'alpha': " << Vector2Str(alpha_shape);
+                    << var_batch_shape << " and the shape of 'alpha': " << alpha_shape;
       return KRET_RESIZE_FAILED;
     }
   }

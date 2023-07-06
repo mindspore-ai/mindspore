@@ -26,6 +26,8 @@
 namespace mindspore {
 namespace opt {
 namespace {
+constexpr auto kPatternBroadcast = "Broadcast";
+
 bool CheckNotBoolCast(const CNodePtr &cnode) {
   if (common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimCast) &&
       AnfAlgo::GetOutputDeviceDataType(cnode, 0) == kNumberTypeBool) {
@@ -75,8 +77,7 @@ void EltwiseFusionPass::MatchSingleFusionPattern(const session::KernelGraph &ker
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
-        (AnfAlgo::GetFusionType(cnode) == kernel::kPatternElemWise ||
-         AnfAlgo::GetFusionType(cnode) == kernel::kPatternBroadcast) &&
+        (AnfAlgo::GetFusionType(cnode) == kPatternElemWise || AnfAlgo::GetFusionType(cnode) == kPatternBroadcast) &&
         cnode->inputs().size() == ELTWISE_INPUT_SIZE && CheckNotBoolCast(cnode)) {
       MatchEltwise(cnode, kernel_graph, candidate_fusion);
     }
@@ -95,8 +96,7 @@ bool EltwiseFusionPass::CheckEltWiseOrBroadCastNode(const session::KernelGraph &
   MS_EXCEPTION_IF_NULL(cnode);
   size_t not_updatestate_nums = GetNotUpdateStateUserNums(kernel_graph, node);
   return AnfAlgo::GetKernelType(node) == KernelType::TBE_KERNEL &&
-         (AnfAlgo::GetFusionType(node) == kernel::kPatternElemWise ||
-          AnfAlgo::GetFusionType(node) == kernel::kPatternBroadcast) &&
+         (AnfAlgo::GetFusionType(node) == kPatternElemWise || AnfAlgo::GetFusionType(node) == kPatternBroadcast) &&
          not_updatestate_nums == ELTWISE_USE && cnode->inputs().size() == input_size;
 }
 }  // namespace opt

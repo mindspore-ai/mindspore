@@ -19,7 +19,7 @@
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "kernel/graph_kernel/graph_kernel_json_generator.h"
-#include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 #include "backend/common/graph_kernel/adapter/fake_abstract_shape.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
@@ -248,7 +248,7 @@ class CNodeDecoder {
     builder->SetOutputsDeviceType(output_types_);
     builder->SetProcessor(processor);
     builder->SetKernelType(KernelType::AKG_KERNEL);
-    builder->SetFusionType(kernel::kPatternOpaque);
+    builder->SetFusionType(kPatternOpaque);
     AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), cnode_.get());
   }
 

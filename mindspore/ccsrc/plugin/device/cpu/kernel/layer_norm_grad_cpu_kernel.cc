@@ -93,7 +93,7 @@ int LayerNormGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   }
   if (block_num_ == 0 || block_size_ == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_x' must be at least 1, but got "
-                      << Vector2Str(x_shape);
+                      << x_shape;
   }
   return ret;
 }

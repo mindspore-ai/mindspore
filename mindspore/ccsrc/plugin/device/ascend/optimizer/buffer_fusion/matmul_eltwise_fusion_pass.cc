@@ -24,6 +24,10 @@
 
 namespace mindspore {
 namespace opt {
+namespace {
+constexpr auto kPatternBroadcast = "Broadcast";
+}
+
 void MatmulEltwiseFusionPass::MatchMatmulEltwise(const CNodePtr &cnode, const AnfNodePtr &relu_input,
                                                  FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(cnode);
@@ -49,8 +53,7 @@ void MatmulEltwiseFusionPass::MatchSingleFusionPattern(const session::KernelGrap
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
-        (AnfAlgo::GetFusionType(cnode) == kernel::kPatternElemWise ||
-         AnfAlgo::GetFusionType(cnode) == kernel::kPatternBroadcast) &&
+        (AnfAlgo::GetFusionType(cnode) == kPatternElemWise || AnfAlgo::GetFusionType(cnode) == kPatternBroadcast) &&
         AnfAlgo::GetOutputTensorNum(cnode) == ELTWISE_SINGLE_OUTPUT_SIZE) {
       auto eltwise_input = cnode->input(kIndex1);
       MS_EXCEPTION_IF_NULL(eltwise_input);

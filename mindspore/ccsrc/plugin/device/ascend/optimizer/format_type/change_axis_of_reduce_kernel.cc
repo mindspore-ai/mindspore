@@ -24,7 +24,7 @@
 #include "utils/trace_base.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 
 namespace mindspore::opt {

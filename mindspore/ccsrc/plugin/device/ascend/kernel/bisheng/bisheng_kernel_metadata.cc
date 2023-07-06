@@ -17,7 +17,7 @@
 #include "plugin/device/ascend/kernel/bisheng/bisheng_kernel_metadata.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/oplib/oplib.h"
-#include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 
 namespace mindspore {
 namespace kernel {

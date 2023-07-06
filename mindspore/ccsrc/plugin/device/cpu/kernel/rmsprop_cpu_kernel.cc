@@ -195,7 +195,7 @@ bool RMSPropCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
 int RMSPropCpuKernelMod::CalElements(std::vector<int64_t> var_shape, std::vector<int64_t> lr_shape, int ret) {
   if (batch_rank_ == 0 && lr_shape.size() != 0 && lr_shape.size() != 1) {
     MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "', the shape size of 'lr' must be 0 or 1, but got the shape of 'lr': " << Vector2Str(lr_shape)
+                  << "', the shape size of 'lr' must be 0 or 1, but got the shape of 'lr': " << lr_shape
                   << " and 'batch_rank': " << batch_rank_;
     return KRET_RESIZE_FAILED;
   }
@@ -203,7 +203,7 @@ int RMSPropCpuKernelMod::CalElements(std::vector<int64_t> var_shape, std::vector
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape size of 'lr' must be equal to 'batch_rank', "
                      "but got the shape of 'lr': "
-                  << Vector2Str(lr_shape) << " and 'batch_rank': " << batch_rank_;
+                  << lr_shape << " and 'batch_rank': " << batch_rank_;
     return KRET_RESIZE_FAILED;
   }
 
@@ -242,18 +242,16 @@ int RMSPropCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
       MS_LOG(EXCEPTION)
         << "For " << kernel_name_
         << ", the var shape, mean_gradients shape, mean_square shape, moment shape, and grad shape should "
-        << "be same, but got var shape: " << Vector2Str(var_shape)
-        << " mean_gradients shape: " << Vector2Str(mean_gradients_shape)
-        << " mean_square shape: " << Vector2Str(mean_square_shape) << ", moment shape: " << Vector2Str(moment_shape)
-        << ", grad shape: " << Vector2Str(grad_shape);
+        << "be same, but got var shape: " << var_shape << " mean_gradients shape: " << mean_gradients_shape
+        << " mean_square shape: " << mean_square_shape << ", moment shape: " << moment_shape
+        << ", grad shape: " << grad_shape;
     }
   } else {
     if (!CheckShapesSame(shapes)) {
       MS_LOG(EXCEPTION) << "For " << kernel_name_
                         << ", the var shape, mean_square shape, moment shape, and grad shape should "
-                        << "be same, but got var shape: " << Vector2Str(var_shape)
-                        << " mean_square shape: " << Vector2Str(mean_square_shape)
-                        << ", moment shape: " << Vector2Str(moment_shape) << ", grad shape: " << Vector2Str(grad_shape);
+                        << "be same, but got var shape: " << var_shape << " mean_square shape: " << mean_square_shape
+                        << ", moment shape: " << moment_shape << ", grad shape: " << grad_shape;
     }
   }
   return CalElements(var_shape, lr_shape, ret);

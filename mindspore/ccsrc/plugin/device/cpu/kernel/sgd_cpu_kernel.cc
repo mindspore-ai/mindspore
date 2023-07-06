@@ -85,33 +85,31 @@ int SGDCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
   if (!IsSameShape(parm_shape, grad_shape)) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape of 'parameters' must be the gradient as the shape of 'gradient',"
-                  << " but got the shape of 'parameters': " << Vector2Str(parm_shape)
-                  << " and the shape of 'gradient': " << Vector2Str(grad_shape);
+                  << " but got the shape of 'parameters': " << parm_shape
+                  << " and the shape of 'gradient': " << grad_shape;
     return KRET_RESIZE_FAILED;
   }
   if (!IsSameShape(parm_shape, accum_shape)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shape of 'parameters' must be the same as the shape of 'accum',"
-                  << " but got the shape of 'parameters': " << Vector2Str(parm_shape)
-                  << " and the shape of 'accum': " << Vector2Str(accum_shape);
+                  << " but got the shape of 'parameters': " << parm_shape
+                  << " and the shape of 'accum': " << accum_shape;
     return KRET_RESIZE_FAILED;
   }
   if (!IsSameShape(parm_shape, stat_shape)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shape of 'parameters' must be the same as the shape of 'stat',"
-                  << " but got the shape of 'parameters': " << Vector2Str(parm_shape)
-                  << " and the shape of 'stat': " << Vector2Str(stat_shape);
+                  << " but got the shape of 'parameters': " << parm_shape << " and the shape of 'stat': " << stat_shape;
     return KRET_RESIZE_FAILED;
   }
   auto is_scalar_shape = [](const std::vector<int64_t> &shape) {
     return shape.empty() || (shape.size() == 1 && shape[0] == 1);
   };
   if (!is_scalar_shape(lr_shape)) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'learning rate' should be a scalar. but got shape "
-                  << Vector2Str(lr_shape);
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'learning rate' should be a scalar. but got shape " << lr_shape;
     return KRET_RESIZE_FAILED;
   }
   if (!is_scalar_shape(momentum_shape)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'momentum' should be a scalar. but got shape "
-                  << Vector2Str(momentum_shape);
+                  << momentum_shape;
     return KRET_RESIZE_FAILED;
   }
   return KRET_OK;

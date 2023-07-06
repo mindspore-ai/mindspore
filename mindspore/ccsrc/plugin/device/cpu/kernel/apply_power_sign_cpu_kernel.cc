@@ -134,7 +134,7 @@ int ApplyPowerSignCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape of 'accum' must be the same as the shape of 'var', "
                      "but got the shape of 'accum': "
-                  << Vector2Str(m_shape) << " and the shape of 'var': " << Vector2Str(var_shape);
+                  << m_shape << " and the shape of 'var': " << var_shape;
     return KRET_RESIZE_FAILED;
   }
 
@@ -142,7 +142,7 @@ int ApplyPowerSignCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape of 'grad' must be the same as the shape of 'var', "
                      "but got the shape of 'grad': "
-                  << Vector2Str(grad_shape) << " and the shape of 'var': " << Vector2Str(var_shape);
+                  << grad_shape << " and the shape of 'var': " << var_shape;
     return KRET_RESIZE_FAILED;
   }
 
@@ -150,7 +150,7 @@ int ApplyPowerSignCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape size of 'lr' must be equal to 'batch_rank', "
                      "but got the shape of 'lr': "
-                  << Vector2Str(lr_shape) << " and 'batch_rank': " << batch_rank_;
+                  << lr_shape << " and 'batch_rank': " << batch_rank_;
     return KRET_RESIZE_FAILED;
   }
 

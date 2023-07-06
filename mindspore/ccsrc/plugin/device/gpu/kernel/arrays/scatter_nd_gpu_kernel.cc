@@ -16,6 +16,7 @@
 
 #include "plugin/device/gpu/kernel/arrays/scatter_nd_gpu_kernel.h"
 #include <algorithm>
+#include "kernel/kernel_get_value.h"
 
 namespace mindspore {
 namespace kernel {

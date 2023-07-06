@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <memory>
 #include <utility>
+#include "kernel/kernel_get_value.h"
 #include "mindspore/core/ops/grad/roi_align_grad.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"

@@ -26,6 +26,7 @@
 
 namespace mindspore::opt {
 namespace {
+constexpr auto kPatternOpaque = "Opaque";
 using OutputInfo =
   std::tuple<std::vector<TypeId>, std::vector<ShapeVector>, std::vector<std::string>, std::vector<TypeId>>;
 OutputInfo GetNodeOutputInfo(const AnfNodePtr &node) {
@@ -82,7 +83,7 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const AnfNodePtr &concat, con
   outputs_device_format.emplace_back(*cmp_format);
   outputs_device_type.emplace_back(*cmp_dtype);
 
-  builder.SetFusionType(kernel::kPatternOpaque);
+  builder.SetFusionType(kPatternOpaque);
   builder.SetInputsFormat(inputs_device_format);
   builder.SetOutputsFormat(outputs_device_format);
   builder.SetInputsDeviceType(inputs_device_type);

@@ -83,11 +83,11 @@ int SparseFillEmptyRowsGradCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', it requires 'reverse_index_map' must be a 1-D Tensor and the first dimension length "
                          "must be smalll or equal to the first dimension length of 'values' "
-                      << Vector2Str(reverse_index_map_shape_);
+                      << reverse_index_map_shape_;
   }
   if (grad_values_shape_.size() != kGradValuesSizeNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'grad_values' must be a 1-D Tensor "
-                      << Vector2Str(grad_values_shape_);
+                      << grad_values_shape_;
   }
 
   return KRET_OK;

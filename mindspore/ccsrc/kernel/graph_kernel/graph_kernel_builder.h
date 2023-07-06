@@ -25,6 +25,7 @@
 #include "nlohmann/json.hpp"
 #include "ir/anf.h"
 #include "kernel/kernel.h"
+#include "kernel/kash/kernel_pack.h"
 #include "backend/common/session/kernel_build_client.h"
 #include "kernel/graph_kernel/graph_kernel_json_generator.h"
 

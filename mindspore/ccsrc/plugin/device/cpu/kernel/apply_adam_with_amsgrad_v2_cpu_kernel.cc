@@ -85,9 +85,8 @@ int ApplyAdamWithAmsgradV2CpuKernelMod::Resize(const BaseOperatorPtr &base_opera
   if (!IsSameShape(var_shape, m_shape) || !IsSameShape(var_shape, v_shape) || !IsSameShape(var_shape, vhat_shape) ||
       !IsSameShape(var_shape, grad_shape)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shapes of 'm/v/vhat/grad/var' must be the same, "
-                  << "but get the shapes of 'm': " << Vector2Str(m_shape) << ", 'v': " << Vector2Str(v_shape)
-                  << ", 'vhat': " << Vector2Str(vhat_shape) << ", 'grad': " << Vector2Str(grad_shape)
-                  << " and 'var': " << Vector2Str(var_shape);
+                  << "but get the shapes of 'm': " << m_shape << ", 'v': " << v_shape << ", 'vhat': " << vhat_shape
+                  << ", 'grad': " << grad_shape << " and 'var': " << var_shape;
     return KRET_RESIZE_FAILED;
   }
 
@@ -95,7 +94,7 @@ int ApplyAdamWithAmsgradV2CpuKernelMod::Resize(const BaseOperatorPtr &base_opera
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape size of 'lr' must be equal to 'batch_rank', "
                      "but got the shape of 'lr': "
-                  << Vector2Str(lr_shape) << " and 'batch_rank': " << batch_rank_;
+                  << lr_shape << " and 'batch_rank': " << batch_rank_;
     return KRET_RESIZE_FAILED;
   }
 

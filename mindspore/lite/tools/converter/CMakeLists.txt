@@ -23,11 +23,14 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${CCSRC_DIR}/common/profiler.cc
         ${CCSRC_DIR}/plugin/device/cpu/kernel/cpu_kernel.cc
         ${CCSRC_DIR}/distributed/cluster/dummy_cluster_context.cc
+        ${CCSRC_DIR}/kernel/ops_utils.cc
         ${CCSRC_DIR}/kernel/common_utils.cc
+        ${CCSRC_DIR}/kernel/framework_utils.cc
         ${CCSRC_DIR}/kernel/kash/kernel_pack.cc
         ${CCSRC_DIR}/kernel/kernel_build_info.cc
         ${CCSRC_DIR}/kernel/oplib/oplib.cc
         ${CCSRC_DIR}/kernel/kernel.cc
+        ${CCSRC_DIR}/kernel/kernel_get_value.cc
         ${CCSRC_DIR}/kernel/oplib/super_bar.cc
         ${CCSRC_DIR}/runtime/device/kernel_info.cc
         ${CCSRC_DIR}/runtime/graph_scheduler/actor/actor_common.cc

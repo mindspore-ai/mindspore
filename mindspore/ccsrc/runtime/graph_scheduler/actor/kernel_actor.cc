@@ -23,7 +23,7 @@
 #include "utils/log_adapter.h"
 #include "include/backend/distributed/recovery/recovery_context.h"
 #include "include/backend/distributed/collective/collective_manager.h"
-#include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 
 namespace mindspore {
 namespace runtime {

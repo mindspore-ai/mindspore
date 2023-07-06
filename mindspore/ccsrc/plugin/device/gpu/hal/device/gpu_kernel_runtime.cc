@@ -33,7 +33,7 @@
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #include "utils/ms_utils.h"
 #include "plugin/device/gpu/hal/device/gpu_memory_manager.h"
-#include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 #include "plugin/device/gpu/hal/device/gpu_memory_copy_manager.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "ir/dtype.h"

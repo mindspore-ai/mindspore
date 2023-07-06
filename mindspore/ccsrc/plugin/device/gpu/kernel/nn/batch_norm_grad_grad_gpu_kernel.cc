@@ -17,6 +17,7 @@
 #include "plugin/device/gpu/kernel/nn/batch_norm_grad_grad_gpu_kernel.h"
 
 #include <algorithm>
+#include "kernel/ops_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -104,8 +105,7 @@ int BatchNormGradGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   }
   auto x_shape = inputs[kIndex0]->GetShapeVector();
   if (x_shape.size() != kDim2 && x_shape.size() != kDim4) {
-    MS_EXCEPTION(ValueError) << "For BatchNormGradGrad, x should be a 2-D or 4-D tensor, but got x shape: "
-                             << Vector2Str(x_shape);
+    MS_EXCEPTION(ValueError) << "For BatchNormGradGrad, x should be a 2-D or 4-D tensor, but got x shape: " << x_shape;
   }
   auto dy_shape = inputs[kIndex1]->GetShapeVector();
   auto scale_shape = inputs[kIndex2]->GetShapeVector();
@@ -120,18 +120,15 @@ int BatchNormGradGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                            variance_shape,          dout_dscale_shape, dout_dbias_shape};
   if (!CheckShapesSame(shape_array_1)) {
     MS_LOG(EXCEPTION)
-      << "For BatchNormGradGrad, dy shape and dout_dx shape should be same to x shape, but got x shape: "
-      << Vector2Str(x_shape) << ", dy shape: " << Vector2Str(dy_shape)
-      << ", dout_dx shape: " << Vector2Str(dout_dx_shape);
+      << "For BatchNormGradGrad, dy shape and dout_dx shape should be same to x shape, but got x shape: " << x_shape
+      << ", dy shape: " << dy_shape << ", dout_dx shape: " << dout_dx_shape;
   }
   if (!CheckShapesSame(shape_array_2)) {
     MS_LOG(EXCEPTION) << "For BatchNormGradGrad, scale shape, mean shape, variance shape, dout_dscale shape and "
                          "dout_dbias shape should be "
-                      << Vector2Str(std::vector<int64_t>{c}) << ", but got scale shape: " << Vector2Str(scale_shape)
-                      << ", mean shape: " << Vector2Str(mean_shape)
-                      << ", variance shape: " << Vector2Str(variance_shape)
-                      << ", dout_dsacle shape: " << Vector2Str(dout_dscale_shape)
-                      << ", dout_dbias shape: " << Vector2Str(dout_dbias_shape);
+                      << std::vector<int64_t>{c} << ", but got scale shape: " << scale_shape
+                      << ", mean shape: " << mean_shape << ", variance shape: " << variance_shape
+                      << ", dout_dsacle shape: " << dout_dscale_shape << ", dout_dbias shape: " << dout_dbias_shape;
   }
 
   if (x_shape.size() == kDim2) {

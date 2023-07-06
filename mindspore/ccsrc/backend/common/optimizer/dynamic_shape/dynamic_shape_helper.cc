@@ -29,7 +29,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
 #include "utils/anf_utils.h"
-#include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 #include "utils/ms_context.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindspore/ccsrc/plugin/device/cpu/kernel/pyexecute/py_execute_cpu_kernel.h"

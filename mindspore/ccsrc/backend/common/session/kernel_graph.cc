@@ -25,6 +25,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
 #include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 #include "kernel/kernel_build_info.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"

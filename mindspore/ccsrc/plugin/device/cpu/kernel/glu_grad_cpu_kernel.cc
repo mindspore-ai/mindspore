@@ -56,8 +56,7 @@ void GluGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', x.shape must be euqal to grad.shape except for grad.shape[axis]=x.shape[axis]"
                          "/2,  but got axis="
-                      << axis_value << ", x.shape=" << Vector2Str(x_shape_)
-                      << " and grad.shape=" << Vector2Str(grad_shape_) << ".";
+                      << axis_value << ", x.shape=" << x_shape_ << " and grad.shape=" << grad_shape_ << ".";
   }
 }
 

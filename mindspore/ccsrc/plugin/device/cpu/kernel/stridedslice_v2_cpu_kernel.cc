@@ -23,7 +23,7 @@
 #include <map>
 #include "include/common/thread_pool.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "kernel/common_utils.h"
+#include "kernel/ops_utils.h"
 #include "nnacl/errorcode.h"
 
 namespace mindspore {

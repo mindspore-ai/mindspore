@@ -30,6 +30,10 @@
 
 namespace mindspore {
 namespace session {
+namespace {
+constexpr auto kPatternConvolution = "Convolution";
+}
+
 using device::KernelInfo;
 using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
 using AscendDeviceAddress = device::ascend::AscendDeviceAddress;
@@ -687,9 +691,9 @@ TEST_F(AnfRuntimeAlgorithmTest, GetFusionType) {
   auto d_kernel_info = dynamic_cast<KernelInfo *>(add->kernel_info());
   MS_EXCEPTION_IF_NULL(d_kernel_info);
   KernelBuildInfoBuilder builder;
-  builder.SetFusionType(kernel::kPatternConvolution);
+  builder.SetFusionType(kPatternConvolution);
   d_kernel_info->set_select_kernel_build_info(builder.Build());
-  EXPECT_EQ(AnfAlgo::GetFusionType(add), kernel::kPatternConvolution);
+  EXPECT_EQ(AnfAlgo::GetFusionType(add), kPatternConvolution);
   EXPECT_THROW(AnfAlgo::GetFusionType(nullptr), std::runtime_error);
 }
 
@@ -699,10 +703,10 @@ TEST_F(AnfRuntimeAlgorithmTest, SetSelectKernelBuildInfo) {
   inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto add = kernel_graph->NewCNode(inputs);
   std::shared_ptr<KernelBuildInfoBuilder> builder = std::make_shared<KernelBuildInfoBuilder>();
-  builder->SetFusionType(kernel::kPatternConvolution);
+  builder->SetFusionType(kPatternConvolution);
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), add.get());
   EXPECT_THROW(AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), nullptr), std::runtime_error);
-  EXPECT_EQ(AnfAlgo::GetFusionType(add), kernel::kPatternConvolution);
+  EXPECT_EQ(AnfAlgo::GetFusionType(add), kPatternConvolution);
 }
 
 TEST_F(AnfRuntimeAlgorithmTest, GetKernelMod) {

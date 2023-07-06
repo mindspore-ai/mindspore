@@ -23,7 +23,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "kernel/common_utils.h"
+#include "kernel/ops_utils.h"
 #include "ops/strided_slice.h"
 
 namespace mindspore {

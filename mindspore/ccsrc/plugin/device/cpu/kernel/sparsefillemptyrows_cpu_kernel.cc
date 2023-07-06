@@ -93,19 +93,17 @@ void SparseFillEmptyRowsCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', it requires 'indices' must be a 2-D Tensor and the first dimension length "
                          "must be equal to the first dimension length of 'values' "
-                      << Vector2Str(indices_shape);
+                      << indices_shape;
   }
   if (indices_shape[1] != kIndicesLastDim) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the last dim of the indices must be 2, but got "
                       << indices_shape[1];
   }
   if (values_shape.size() != kValuesSizeNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'dense' must be a 1-D Tensor "
-                      << Vector2Str(values_shape);
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'dense' must be a 1-D Tensor " << values_shape;
   }
   if (dense_shape.size() != kValuesSizeNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'dense' must be a 1-D Tensor "
-                      << Vector2Str(dense_shape);
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'dense' must be a 1-D Tensor " << dense_shape;
   }
 }
 

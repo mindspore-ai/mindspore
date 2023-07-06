@@ -33,7 +33,7 @@
 #include "backend/common/optimizer/common_backend_optimization.h"
 #include "utils/ms_context.h"
 #include "ir/tensor.h"
-#include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 #include "include/backend/debug/profiler/profiling.h"
 #include "include/backend/optimizer/helper.h"
 #include "base/base_ref_utils.h"

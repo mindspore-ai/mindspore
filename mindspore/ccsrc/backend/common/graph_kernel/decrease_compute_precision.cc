@@ -27,10 +27,14 @@
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/graph_kernel/graph_kernel_helper.h"
 #include "backend/common/graph_kernel/core/graph_kernel_utils.h"
-#include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 #include "backend/common/graph_kernel/decrease_compute_precision.h"
 
 namespace mindspore::graphkernel {
+namespace {
+constexpr auto kPatternOpaque = "Opaque";
+}
+
 // Add CastCNode
 CNodePtr AddCastCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const std::string &format,
                       const TypeId &input_type, const TypeId &output_type, const ShapeVector &origin_shape,
@@ -44,7 +48,7 @@ CNodePtr AddCastCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input, c
   builder.SetOutputsFormat({format});
   builder.SetInputsDeviceType({input_type});
   builder.SetOutputsDeviceType({output_type});
-  builder.SetFusionType(kernel::kPatternOpaque);
+  builder.SetFusionType(kPatternOpaque);
   builder.SetProcessor(kernel::Processor::AICORE);
   builder.SetKernelType(KernelType::AKG_KERNEL);
   if (cast->kernel_info() == nullptr) {
@@ -189,7 +193,7 @@ bool DecreaseComputePrecision::Process(const FuncGraphPtr &func_graph) const {
     graph_info_builder.SetOutputsDeviceType(cnode_output_type);
     graph_info_builder.SetProcessor(kernel::GetProcessorFromContext());
     graph_info_builder.SetKernelType(KernelType::AKG_KERNEL);
-    graph_info_builder.SetFusionType(kernel::kPatternOpaque);
+    graph_info_builder.SetFusionType(kPatternOpaque);
     auto info_1 = graph_info_builder.Build();
     AnfAlgo::SetSelectKernelBuildInfo(info_1, cnode1.get());
     if (is_output) {

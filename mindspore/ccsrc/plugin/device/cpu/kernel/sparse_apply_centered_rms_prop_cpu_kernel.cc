@@ -141,20 +141,17 @@ int SparseApplyCenteredRMSPropCpuKernelMod::Resize(const BaseOperatorPtr &base_o
       << grad_shape[0] << " indices_shape[0]: " << indices_size_ << ".";
   }
   if (!lr_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For SparseApplyCenteredRMSProp, lr is not a scalar, got shape: " << Vector2Str(lr_shape)
-                      << ".";
+    MS_LOG(EXCEPTION) << "For SparseApplyCenteredRMSProp, lr is not a scalar, got shape: " << lr_shape << ".";
   }
   if (!rho_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For SparseApplyCenteredRMSProp, rho is not a scalar, got shape: " << Vector2Str(rho_shape)
-                      << ".";
+    MS_LOG(EXCEPTION) << "For SparseApplyCenteredRMSProp, rho is not a scalar, got shape: " << rho_shape << ".";
   }
   if (!momentum_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For SparseApplyCenteredRMSProp, momentum is not a scalar, got shape: "
-                      << Vector2Str(momentum_shape) << ".";
+    MS_LOG(EXCEPTION) << "For SparseApplyCenteredRMSProp, momentum is not a scalar, got shape: " << momentum_shape
+                      << ".";
   }
   if (!epsilon_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For SparseApplyCenteredRMSProp, epsilon is not a scalar, got shape: "
-                      << Vector2Str(epsilon_shape) << ".";
+    MS_LOG(EXCEPTION) << "For SparseApplyCenteredRMSProp, epsilon is not a scalar, got shape: " << epsilon_shape << ".";
   }
   return KRET_OK;
 }

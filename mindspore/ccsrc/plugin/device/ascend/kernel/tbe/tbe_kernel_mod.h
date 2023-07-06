@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include "kernel/kash/kernel_pack.h"
 #include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
 

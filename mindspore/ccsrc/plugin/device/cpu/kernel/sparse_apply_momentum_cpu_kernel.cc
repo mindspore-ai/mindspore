@@ -123,11 +123,10 @@ int SparseApplyMomentumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
       << grad_shape[0] << ", indices.shape[0]: " << indices_size_ << ".";
   }
   if (!lr_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For SparseApplyMomentum, lr is not a scalar, got shape: " << Vector2Str(lr_shape) << ".";
+    MS_LOG(EXCEPTION) << "For SparseApplyMomentum, lr is not a scalar, got shape: " << lr_shape << ".";
   }
   if (!momentum_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For SparseApplyMomentum, momentum is not a scalar, got shape: " << Vector2Str(momentum_shape)
-                      << ".";
+    MS_LOG(EXCEPTION) << "For SparseApplyMomentum, momentum is not a scalar, got shape: " << momentum_shape << ".";
   }
   return static_cast<int>(KRET_OK);
 }

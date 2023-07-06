@@ -76,8 +76,8 @@ int AssignCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   for (size_t i = 0; i < input_x_shape.size(); ++i) {
     if (input_x_shape[i] != input_y_shape[i]) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the 'x' and 'y' must have the same shape, but got the shape of 'x': "
-                        << Vector2Str(input_x_shape) << " and the shape of 'y': " << Vector2Str(input_y_shape);
+                        << "', the 'x' and 'y' must have the same shape, but got the shape of 'x': " << input_x_shape
+                        << " and the shape of 'y': " << input_y_shape;
     }
     batch_size_ *= LongToSize(input_x_shape[i]);
   }

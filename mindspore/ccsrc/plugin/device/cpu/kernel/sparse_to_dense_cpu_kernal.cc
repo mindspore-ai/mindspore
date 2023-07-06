@@ -55,7 +55,7 @@ int SparseToDenseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', it requires 'values' must be a 1-D Tensor and the first dimension length "
                          "must be equal to the first dimension length of 'indices', but got 'values' shape: "
-                      << Vector2Str(values_shape) << " and 'indices' shape: " << Vector2Str(indices_shape);
+                      << values_shape << " and 'indices' shape: " << indices_shape;
   }
   output_shape_ = Convert2SizeT(outputs.at(kIndex0)->GetShapeVector());
   values_size_ = LongToSize(values_shape[0]);

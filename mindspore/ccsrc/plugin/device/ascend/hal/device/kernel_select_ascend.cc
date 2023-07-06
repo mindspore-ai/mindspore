@@ -58,6 +58,7 @@ const OriginTypeConverter kDefaultOriginTypeConverter = [](const TypeId &origin_
 constexpr int kWeightUnInitScore = 1;
 constexpr int kWeightInitScore = 2;
 constexpr int kFeatureMapBaseScore = 10;
+constexpr auto kPatternOpaque = "Opaque";
 constexpr auto kPriChoosenFormat = "pri_format";
 constexpr auto kOriSelectFormat = "ori_select_format";
 constexpr auto kForceFp32Strategy = "force_fp32";
@@ -781,7 +782,7 @@ KernelSelectStatus SelectCustomKernelInfo(const CNodePtr &kernel_node, KernelTyp
   auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
   builder->SetKernelType(*kernel_type);
   builder->SetProcessor(kernel::Processor::AICORE);
-  builder->SetFusionType(kernel::kPatternOpaque);
+  builder->SetFusionType(kPatternOpaque);
   builder->SetOpPattern(kernel::OpPattern::kCommonPattern);
   // set inputs info
   std::vector<TypeId> inputs_device_type;

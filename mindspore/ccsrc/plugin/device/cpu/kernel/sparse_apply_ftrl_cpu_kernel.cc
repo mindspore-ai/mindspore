@@ -164,14 +164,14 @@ int FusedSparseFtrlCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape of 'accum' must be the same as the shape of 'var', "
                      "but got the shape of 'accum': "
-                  << Vector2Str(accum_shape) << " and the shape of 'var': " << Vector2Str(var_shape);
+                  << accum_shape << " and the shape of 'var': " << var_shape;
     return KRET_RESIZE_FAILED;
   }
   if (!IsSameShape(var_shape, linear_shape)) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape of 'linear' must be the same as the shape of 'var', "
                      "but got the shape of 'linear': "
-                  << Vector2Str(linear_shape) << " and the shape of 'var': " << Vector2Str(var_shape);
+                  << linear_shape << " and the shape of 'var': " << var_shape;
     return KRET_RESIZE_FAILED;
   }
   if (var_shape.size() != grad_shape.size()) {
@@ -369,14 +369,14 @@ int SparseApplyFtrlCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape of 'accum' must be the same as the shape of 'var', "
                      "but got the shape of 'accum': "
-                  << Vector2Str(accum_shape) << " and the shape of 'var': " << Vector2Str(var_shape);
+                  << accum_shape << " and the shape of 'var': " << var_shape;
     return KRET_RESIZE_FAILED;
   }
   if (!IsSameShape(var_shape, linear_shape)) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape of 'linear' must be the same as the shape of 'var', "
                      "but got the shape of 'linear': "
-                  << Vector2Str(linear_shape) << " and the shape of 'var': " << Vector2Str(var_shape);
+                  << linear_shape << " and the shape of 'var': " << var_shape;
     return KRET_RESIZE_FAILED;
   }
   if (var_shape.size() != grad_shape.size()) {

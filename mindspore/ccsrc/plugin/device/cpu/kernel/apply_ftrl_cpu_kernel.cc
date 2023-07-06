@@ -87,9 +87,8 @@ int ApplyFtrlCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   if (!IsSameShape(var_shape, acc_shape) || !IsSameShape(var_shape, linear_shape) ||
       !IsSameShape(var_shape, grad_shape)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shapes of 'linear', 'acc', 'grad' and 'var' must be the same, "
-                  << "but get the shapes of 'acc': " << Vector2Str(acc_shape)
-                  << ", 'linear': " << Vector2Str(linear_shape) << ", 'grad': " << Vector2Str(grad_shape)
-                  << " and 'var': " << Vector2Str(var_shape);
+                  << "but get the shapes of 'acc': " << acc_shape << ", 'linear': " << linear_shape
+                  << ", 'grad': " << grad_shape << " and 'var': " << var_shape;
     return KRET_RESIZE_FAILED;
   }
 
@@ -97,7 +96,7 @@ int ApplyFtrlCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape of 'lr' must be the same as the shape of 'l1', "
                      "but got the shape of 'lr': "
-                  << Vector2Str(lr_shape) << " and the shape of 'l1': " << Vector2Str(l1_shape);
+                  << lr_shape << " and the shape of 'l1': " << l1_shape;
     return KRET_RESIZE_FAILED;
   }
 
@@ -105,7 +104,7 @@ int ApplyFtrlCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape of 'lr' must be the same as the shape of 'l2', "
                      "but got the shape of 'lr': "
-                  << Vector2Str(lr_shape) << " and the shape of 'l2': " << Vector2Str(l2_shape);
+                  << lr_shape << " and the shape of 'l2': " << l2_shape;
     return KRET_RESIZE_FAILED;
   }
 
@@ -113,7 +112,7 @@ int ApplyFtrlCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape of 'lr' must be the same as the shape of 'lr_power_shape', "
                      "but got the shape of 'lr': "
-                  << Vector2Str(lr_shape) << " and the shape of 'lr_power_shape': " << Vector2Str(lr_power_shape);
+                  << lr_shape << " and the shape of 'lr_power_shape': " << lr_power_shape;
     return KRET_RESIZE_FAILED;
   }
 
@@ -122,7 +121,7 @@ int ApplyFtrlCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape size of 'lr' must be equal to 'batch_rank', "
                      "but got the shape of 'lr': "
-                  << Vector2Str(lr_shape) << " and 'batch_rank': " << batch_rank_;
+                  << lr_shape << " and 'batch_rank': " << batch_rank_;
     return KRET_RESIZE_FAILED;
   }
 

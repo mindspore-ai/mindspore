@@ -29,7 +29,7 @@
 #include "include/backend/kernel_graph.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/utils.h"
-#include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 #include "kernel/kernel.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"

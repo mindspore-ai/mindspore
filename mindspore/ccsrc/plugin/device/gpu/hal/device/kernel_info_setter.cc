@@ -25,7 +25,7 @@
 #include "mindspore/core/ops/nn_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
-#include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "kernel/kernel.h"
@@ -48,6 +48,7 @@ namespace gpu {
 using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
 using mindspore::kernel::KernelBuildInfo;
 namespace {
+constexpr auto kPatternOpaque = "Opaque";
 static const std::set<std::string> kVmapGPUWhiteList = {kUnsortedSegmentSumOpName,
                                                         kUnsortedSegmentProdOpName,
                                                         kUniqueWithPadOpName,
@@ -458,7 +459,7 @@ void SetGraphKernelInfo(const CNodePtr &kernel_node, const FuncGraphPtr &func_gr
   graph_info_builder.SetOutputsDeviceType(graph_output_type);
   graph_info_builder.SetProcessor(kernel::Processor::CUDA);
   graph_info_builder.SetKernelType(KernelType::AKG_KERNEL);
-  graph_info_builder.SetFusionType(kernel::kPatternOpaque);
+  graph_info_builder.SetFusionType(kPatternOpaque);
   auto graph_selected_info = graph_info_builder.Build();
   MS_EXCEPTION_IF_NULL(graph_selected_info);
   AnfAlgo::SetSelectKernelBuildInfo(graph_selected_info, kernel_node.get());

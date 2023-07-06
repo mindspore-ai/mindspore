@@ -22,7 +22,7 @@
 #include "abstract/utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "kernel/common_utils.h"
+#include "kernel/ops_utils.h"
 #include "runtime/mem.h"
 #include "acl/acl_rt.h"
 #include "runtime/device/kernel_runtime.h"

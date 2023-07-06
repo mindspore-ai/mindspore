@@ -97,7 +97,7 @@ int MeshgridCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
       MS_LOG(ERROR) << "For '" << kernel_name_
                     << "', each output tensor shape should be the combination of all input tensor shape. But get the "
                        "shape of all inputs tensor shape: "
-                    << Vector2Str(output_shape_) << ", and the shape of output: " << Vector2Str(shape);
+                    << output_shape_ << ", and the shape of output: " << shape;
       return static_cast<int>(KRET_RESIZE_FAILED);
     }
   }

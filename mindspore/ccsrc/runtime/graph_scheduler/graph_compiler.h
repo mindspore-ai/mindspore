@@ -30,6 +30,7 @@
 #include "backend/common/session/session_factory.h"
 #include "ir/tensor.h"
 #include "include/backend/visible.h"
+#include "kernel/framework_utils.h"
 
 namespace mindspore {
 using device::DeviceContext;

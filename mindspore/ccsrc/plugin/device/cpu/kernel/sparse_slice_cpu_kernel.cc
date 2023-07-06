@@ -97,16 +97,14 @@ int SparseSliceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
       MS_LOG(ERROR) << "For '" << kernel_name_
                     << "', the shape of 'input_shape' must be the same as the shape of 'input_start', but got the "
                        "shape of 'input_shape': "
-                    << Vector2Str(input_shape_shape)
-                    << " and the shape of 'input_start': " << Vector2Str(input_start_shape);
+                    << input_shape_shape << " and the shape of 'input_start': " << input_start_shape;
       return KRET_RESIZE_FAILED;
     }
     if (!IsSameShape(input_shape_shape, input_size_shape)) {
       MS_LOG(ERROR) << "For '" << kernel_name_
                     << "', the shape of 'input_shape' must be the same as the shape of 'input_size', but got the shape "
                        "of 'input_shape': "
-                    << Vector2Str(input_shape_shape)
-                    << " and the shape of 'input_size': " << Vector2Str(input_size_shape);
+                    << input_shape_shape << " and the shape of 'input_size': " << input_size_shape;
       return KRET_RESIZE_FAILED;
     }
     nnz_ = input_indices_shape[0];

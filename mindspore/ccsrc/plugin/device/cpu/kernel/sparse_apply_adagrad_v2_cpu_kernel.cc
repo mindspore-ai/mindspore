@@ -122,7 +122,7 @@ int SparseApplyAdagradV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operato
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the shape of 'accum' must be the same as the shape of 'var', "
                      "but got the shape of 'accum': "
-                  << Vector2Str(accum_shape) << " and the shape of 'var': " << Vector2Str(var_shape);
+                  << accum_shape << " and the shape of 'var': " << var_shape;
     return KRET_RESIZE_FAILED;
   }
   if (var_shape.size() != grad_shape.size()) {

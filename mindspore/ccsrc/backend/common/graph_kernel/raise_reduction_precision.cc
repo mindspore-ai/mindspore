@@ -27,6 +27,10 @@
 #include "include/backend/kernel_info.h"
 
 namespace mindspore::graphkernel {
+namespace {
+constexpr auto kPatternOpaque = "Opaque";
+}
+
 bool RaiseReductionPrecision::IsFp16ReduceSum(const AnfNodePtr &node) const {
   return IsPrimitiveCNode(node, prim::kPrimReduceSum) && AnfAlgo::GetInputDeviceDataType(node, 0) == kNumberTypeFloat16;
 }
@@ -54,7 +58,7 @@ AnfNodePtr RaiseReductionPrecision::CreateReduceSum(const AnfNodePtr &node, cons
   info_builder.SetOutputsDeviceType({kFloat32->type_id()});
   info_builder.SetProcessor(AnfAlgo::GetProcessor(node));
   info_builder.SetKernelType(KernelType::AKG_KERNEL);
-  info_builder.SetFusionType(kernel::kPatternOpaque);
+  info_builder.SetFusionType(kPatternOpaque);
   AnfAlgo::SetSelectKernelBuildInfo(info_builder.Build(), cnode.get());
   return node;
 }

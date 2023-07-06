@@ -31,6 +31,10 @@
 
 namespace mindspore {
 namespace opt {
+namespace {
+constexpr auto kPatternElemWise = "ElemWise";
+}
+
 using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
 class TestHWTransposeTransdataFusion : public BackendCommon {
  public:
@@ -70,7 +74,7 @@ TEST_F(TestHWTransposeTransdataFusion, test_transpose_transdata_fusion) {
   builder.SetOutputsFormat({"NC1HWC0"});
   builder.SetOutputsDeviceType({kFloat16->type_id()});
   builder.SetKernelType(KernelType::TBE_KERNEL);
-  builder.SetFusionType(kernel::kPatternElemWise);
+  builder.SetFusionType(kPatternElemWise);
   builder.SetProcessor(kernel::Processor::AICORE);
   builder.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR});
   builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});

@@ -16,7 +16,7 @@
 
 #include <string>
 #include <limits>
-#include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 #include "include/backend/optimizer/helper.h"
 #include "runtime/graph_scheduler/actor/embedding_cache/embedding_cache_prefetch_actor.h"
 #include "runtime/graph_scheduler/actor/embedding_cache/device_embedding_operation.h"

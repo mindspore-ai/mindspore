@@ -17,7 +17,7 @@
 #include "plugin/device/gpu/kernel/akg/akg_gpu_kernel_build.h"
 #include <memory>
 #include <string>
-#include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 #include "plugin/device/gpu/kernel/akg/akg_gpu_kernel_mod.h"
 #include "utils/ms_utils.h"
 #include "include/backend/anf_runtime_algorithm.h"

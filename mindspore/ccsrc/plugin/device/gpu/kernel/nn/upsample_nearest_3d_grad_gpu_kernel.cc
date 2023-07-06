@@ -23,7 +23,7 @@
 #include "mindspore/core/abstract/utils.h"
 #include "mindspore/core/ops/grad/upsample_nearest_3d_grad.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/upsample_nearest_3d_grad_impl.cuh"
-#include "kernel/common_utils.h"
+#include "kernel/ops_utils.h"
 
 namespace mindspore {
 namespace kernel {

@@ -98,7 +98,7 @@ int UniqueWithPadGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the shape size of 'input' must be equal to 'batch_rank + 1', "
                            "but got the shape of 'input': "
-                        << Vector2Str(shape) << " and 'batch_rank': " << batch_rank_;
+                        << shape << " and 'batch_rank': " << batch_rank_;
     }
     std::vector<size_t> pad_shape =
       std::vector<size_t>(inputs[1]->GetDeviceShapeAdaptively().begin(), inputs[1]->GetDeviceShapeAdaptively().end());
@@ -108,7 +108,7 @@ int UniqueWithPadGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the elements num of input 'pad' must be equal to input 'x' batch size, "
                            "but got the elements num of input 'pad': "
-                        << Vector2Str(pad_shape) << " and input 'x' batch size: " << batch_size;
+                        << pad_shape << " and input 'x' batch size: " << batch_size;
     }
   }
 

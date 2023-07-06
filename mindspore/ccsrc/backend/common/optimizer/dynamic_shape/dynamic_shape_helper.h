@@ -25,7 +25,7 @@
 #include "include/backend/optimizer/optimizer.h"
 #include "include/backend/optimizer/helper.h"
 #include "runtime/pynative/op_compiler.h"
-#include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 
 namespace mindspore::opt::dynamic_shape {
 bool IsRealCNode(const BaseRef &n);

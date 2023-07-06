@@ -19,6 +19,8 @@
 #include "plugin/device/ascend/hal/device/dump/data_dumper.h"
 #include "plugin/device/ascend/hal/device/dump/kernel_dumper.h"
 #include "mindspore/ccsrc/kernel/kernel.h"
+#include "mindspore/ccsrc/kernel/kernel_get_value.h"
+#include "mindspore/ccsrc/kernel/kash/kernel_pack.h"
 #endif
 
 namespace mindspore {

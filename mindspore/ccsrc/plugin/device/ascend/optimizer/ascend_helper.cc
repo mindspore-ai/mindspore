@@ -31,6 +31,7 @@
 #include "include/backend/kernel_info.h"
 #include "kernel/oplib/oplib.h"
 #include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/kernel_graph.h"
@@ -40,6 +41,7 @@ namespace mindspore {
 namespace opt {
 using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
 namespace {
+constexpr auto kPatternOpaque = "Opaque";
 struct CreateNodeArgs {
   FuncGraphPtr func_graph{nullptr};
   AnfNodePtr node{nullptr};
@@ -612,7 +614,7 @@ CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &
   builder.SetOutputsReshapeType({reshape_type});
   builder.SetInputsDeviceType({input_type});
   builder.SetOutputsDeviceType({output_type});
-  builder.SetFusionType(kernel::kPatternOpaque);
+  builder.SetFusionType(kPatternOpaque);
   builder.SetProcessor(kernel::Processor::AICORE);
   if (kernel::OpLib::FindOp(prim::kPrimCast->name(), kernel::kImplyTBE) != nullptr) {
     builder.SetKernelType(KernelType::TBE_KERNEL);

@@ -19,7 +19,7 @@
 #include <functional>
 #include <unordered_map>
 #include "abstract/utils.h"
-#include "kernel/common_utils.h"
+#include "kernel/ops_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {

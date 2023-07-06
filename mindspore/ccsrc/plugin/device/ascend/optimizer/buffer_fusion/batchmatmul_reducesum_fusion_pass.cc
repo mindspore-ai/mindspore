@@ -26,7 +26,9 @@ namespace mindspore {
 namespace opt {
 namespace {
 constexpr size_t kHWSize = 2;
-}
+constexpr auto kPatternBatchMatmul = "BatchMatmul";
+constexpr auto kPatternCommReduce = "CommReduce";
+}  // namespace
 
 void BatchMatmulReduceSumFusionPass::MatchBatchMatmulReduceSum(const CNodePtr &reduce_sum, const session::KernelGraph &,
                                                                FusedNodeRecord *candidate_fusion) {
@@ -35,7 +37,7 @@ void BatchMatmulReduceSumFusionPass::MatchBatchMatmulReduceSum(const CNodePtr &r
   auto batch_matmul = reduce_sum->input(kIndex1);
   MS_EXCEPTION_IF_NULL(batch_matmul);
   const PrimitiveSet batch_matmul_prims{prim::kPrimBatchMatMul, prim::kPrimBatchMatMulV2};
-  if (!batch_matmul->isa<CNode>() || AnfAlgo::GetFusionType(batch_matmul) != kernel::kPatternBatchMatmul ||
+  if (!batch_matmul->isa<CNode>() || AnfAlgo::GetFusionType(batch_matmul) != kPatternBatchMatmul ||
       !IsOneOfPrimitiveCNode(batch_matmul, batch_matmul_prims)) {
     return;
   }
@@ -85,7 +87,7 @@ void BatchMatmulReduceSumFusionPass::MatchSingleFusionPattern(const session::Ker
     MS_EXCEPTION_IF_NULL(cnode);
 
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
-        AnfAlgo::GetFusionType(cnode) == kernel::kPatternCommReduce &&
+        AnfAlgo::GetFusionType(cnode) == kPatternCommReduce &&
         common::AnfAlgo::GetCNodeName(cnode) == kReduceSumDOpName) {
       MatchBatchMatmulReduceSum(cnode, kernel_graph, candidate_fusion);
     }

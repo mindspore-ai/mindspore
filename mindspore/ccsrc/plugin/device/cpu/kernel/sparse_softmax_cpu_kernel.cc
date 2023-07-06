@@ -149,7 +149,7 @@ int SparseSoftmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
                              << "', it requires 'values' should be a 1-D Tensor and "
                                 "the first dimension length should be equal to the first dimension length of "
                                 "'indices', but got 'values' shape: "
-                             << Vector2Str(values_shape) << " and 'indices' shape: " << Vector2Str(indices_shape);
+                             << values_shape << " and 'indices' shape: " << indices_shape;
   }
   if (shape_shape.size() != kShapeShapeSize || LongToSize(shape_shape[0]) < kShapeMinSize ||
       shape_shape[0] != indices_shape[1]) {
@@ -157,7 +157,7 @@ int SparseSoftmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
                              << "', it requires 'shape' should be 1-D and more than 2 element, the element "
                                 "should be equal to the second dimension length of 'indices', but "
                                 "got 'shape' shape: "
-                             << Vector2Str(shape_shape) << " and 'indices' shape: " << Vector2Str(indices_shape);
+                             << shape_shape << " and 'indices' shape: " << indices_shape;
   }
   return KRET_OK;
 }

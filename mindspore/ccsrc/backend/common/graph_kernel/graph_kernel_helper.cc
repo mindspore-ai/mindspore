@@ -30,7 +30,7 @@
 #include "include/common/utils/python_adapter.h"
 #include "ir/func_graph.h"
 #include "ir/func_graph_cloner.h"
-#include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 #include "kernel/graph_kernel/akg/akg_kernel_json_decoder.h"
 #include "kernel/graph_kernel/graph_kernel_json_generator.h"
 #include "kernel/kernel.h"
@@ -40,6 +40,7 @@
 
 namespace mindspore::graphkernel {
 namespace {
+constexpr auto kPatternOpaque = "Opaque";
 bool IsMakeTupleOut(const AnfNodePtr &out, AnfNodePtrList *real_outs) {
   MS_EXCEPTION_IF_NULL(real_outs);
   if (IsPrimitiveCNode(out, prim::kPrimMakeTuple)) {
@@ -115,7 +116,7 @@ kernel::KernelBuildInfoPtr BuildSelectKernelBuildInfo(const std::vector<std::str
   graph_info_builder.SetOutputsDeviceType(output_types);
   graph_info_builder.SetProcessor(processor);
   graph_info_builder.SetKernelType(KernelType::AKG_KERNEL);
-  graph_info_builder.SetFusionType(kernel::kPatternOpaque);
+  graph_info_builder.SetFusionType(kPatternOpaque);
   return graph_info_builder.Build();
 }
 
@@ -170,7 +171,7 @@ void SetNewKernelInfo(const AnfNodePtr &new_node, const FuncGraphPtr &fg, const 
   graph_info_builder.SetOutputsDeviceType(graph_output_type);
   graph_info_builder.SetProcessor(kernel::GetProcessorFromContext());
   graph_info_builder.SetKernelType(KernelType::AKG_KERNEL);
-  graph_info_builder.SetFusionType(kernel::kPatternOpaque);
+  graph_info_builder.SetFusionType(kPatternOpaque);
   auto graph_selected_info = graph_info_builder.Build();
   AnfAlgo::SetSelectKernelBuildInfo(graph_selected_info, new_node.get());
 }
@@ -396,7 +397,7 @@ CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &
   info_builder.SetOutputsDeviceType(output_types);
   info_builder.SetProcessor(kernel::GetProcessorFromContext());
   info_builder.SetKernelType(KernelType::AKG_KERNEL);
-  info_builder.SetFusionType(kernel::kPatternOpaque);
+  info_builder.SetFusionType(kPatternOpaque);
   auto selected_info = info_builder.Build();
   AnfAlgo::SetSelectKernelBuildInfo(selected_info, cnode.get());
 

@@ -23,6 +23,7 @@
 #include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
 #include "kernel/kernel.h"
 #include "kernel/common_utils.h"
+#include "kernel/framework_utils.h"
 #ifndef ENABLE_SECURITY
 #include "include/backend/debug/data_dump/dump_json_parser.h"
 #endif
