@@ -55,6 +55,7 @@ class ConverterFuncGraph {
   static STATUS Quantize(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph);
   static bool StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param);
   static void ClearBuiltinPass();
+  static STATUS OptimizeForGE(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph);
 };
 }  // namespace lite
 }  // namespace mindspore

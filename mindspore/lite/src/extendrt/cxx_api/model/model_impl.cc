@@ -466,9 +466,6 @@ Status ModelImpl::ConvertGraphOnline(const FuncGraphPtr &func_graph, const std::
     if (device_info == nullptr) {
       continue;
     }
-    if (device_info->GetDeviceType() == DeviceType::kAscend && device_info->GetProvider() == "ge") {
-      return kSuccess;
-    }
   }
   auto value = func_graph->get_attr(lite::kIsOptimized);
   if (value != nullptr) {

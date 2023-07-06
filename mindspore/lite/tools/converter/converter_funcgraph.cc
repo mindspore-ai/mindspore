@@ -63,6 +63,7 @@
 #include "tools/optimizer/format/to_nhwc_format.h"
 #include "tools/optimizer/format/to_nchw_format.h"
 #include "tools/converter/quantizer/quantization_optimizer.h"
+#include "tools/converter/anf_transform_for_ge.h"
 
 namespace mindspore {
 namespace lite {
@@ -311,6 +312,16 @@ void SetInputParameterAbstractName(const FuncGraphPtr &func_graph) {
   }
 }
 
+STATUS ConverterFuncGraph::OptimizeForGE(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {
+  AnfTransformForGe transform;
+  auto status = transform.Transform(func_graph, param);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Transform anf graph for ge failed.";
+    return status;
+  }
+  return RET_OK;
+}
+
 STATUS ConverterFuncGraph::Optimize(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "funcGraph is nullptr";
@@ -341,6 +352,11 @@ STATUS ConverterFuncGraph::Optimize(const std::shared_ptr<ConverterPara> &param,
     }
     return RET_OK;
   }
+
+  if (param->ascendGeOptionCfg.enable_fusion) {
+    return OptimizeForGE(param, func_graph);
+  }
+
   std::vector<std::string> output_names;
   auto status = UnifyFuncGraphForInfer(param, func_graph, &output_names);
   if (status != RET_OK) {

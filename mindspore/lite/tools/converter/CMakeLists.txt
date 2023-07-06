@@ -23,6 +23,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/converter_funcgraph.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/converter_metagraph.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/anf_transform.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/anf_transform_for_ge.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graphdef_transform.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/optimizer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/export_model.cc
