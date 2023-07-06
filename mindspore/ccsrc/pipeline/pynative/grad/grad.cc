@@ -485,8 +485,16 @@ void FreeSpecialOpValue(const std::string &op_name, const FrontendOpRunInfoPtr &
     new_v_list[kIndex1] = PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(new_v_list[kIndex1]);
     *output = std::make_shared<ValueTuple>(new_v_list);
     MS_LOG(DEBUG) << "Clear device address for output[0, 1] of " << op_name;
+  } else if (op_name == kLayerNormOpName) {
+    // 2. LayerNorm is a multi-output node, it's out[0] and out[1] are not used.
+    auto seq_v = (*output)->cast<ValueSequencePtr>();
+    MS_EXCEPTION_IF_NULL(seq_v);
+    ValuePtrList new_v_list{seq_v->value()};
+    new_v_list[kIndex0] = PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(new_v_list[kIndex0]);
+    *output = std::make_shared<ValueTuple>(new_v_list);
+    MS_LOG(DEBUG) << "Clear device address for output[0] of " << op_name;
   } else if (kMulOp.find(op_name) != kMulOp.end()) {
-    // 2. For operators like Mul, the dx ONLY rely on y, and dy ONLY rely on x.
+    // 3. For operators like Mul, the dx ONLY rely on y, and dy ONLY rely on x.
     //    so if y is a valuenode, the dy is useless, we can free x in ahead.
     bool x_is_const_value = PyNativeAlgo::Common::IsConstant(op_run_info->op_grad_info->input_value_grad_type[kIndex0]);
     bool y_is_const_value = PyNativeAlgo::Common::IsConstant(op_run_info->op_grad_info->input_value_grad_type[kIndex1]);

@@ -25,6 +25,7 @@
 #include "mindspore/core/ops/structure_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/other_ops.h"
+#include "include/common/utils/convert_utils_py.h"
 #include "mindspore/core/ops/math_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
@@ -172,6 +173,14 @@ AnfNodePtr BuildSpecialNode(const FuncGraphPtr &tape, const ValuePtr &value, con
   } else {
     MS_LOG(INFO) << "For value " << value->ToString() << ", the type is not tensor or scalar";
     return BuildSpecialNode(tape, GetFakeZeroTensor(), nullptr, type);
+  }
+}
+
+void ClearDeviceAddress(const ValuePtr &value) {
+  std::vector<tensor::TensorPtr> tensors;
+  TensorValueToTensor(value, &tensors);
+  for (auto tensor : tensors) {
+    tensor->set_device_address(nullptr);
   }
 }
 
@@ -626,11 +635,17 @@ bool AutoGradCellImpl::KPynativeOp(const GradParamPtr &grad_param) {
     return true;
   }
 
+  auto cloned_value = grad_param->op_grad_info->out_value;
+  if (grad_param->op_grad_info->out_value->isa<ValueSequence>()) {
+    cloned_value = ShallowCopyTensorValue(grad_param->op_grad_info->out_value);
+    ClearDeviceAddress(cloned_value);
+  }
+
   // construct zeroslike placeholder, if need use in bprop, we replace it in backprogate.
   AnfNodePtr dout = BuildSpecialNode(ad_param()->tape_, GetFakeZeroTensor(), grad_param->op_grad_info->out_abs,
                                      SpecialType::kZerosLikeType);
   auto fn = std::make_shared<FunctionNode>(ad_param()->tape_, dout);
-  auto variable_adjoint = std::make_shared<VariableAdjoint>(fn, grad_param->op_grad_info->out_value);
+  auto variable_adjoint = std::make_shared<VariableAdjoint>(fn, cloned_value);
   // Custom forward cnode no need record in bprop graph, because it is a flag cnode for run python. So just create
   // bprop_cut grad op is ok
   bool is_custom_prim =
