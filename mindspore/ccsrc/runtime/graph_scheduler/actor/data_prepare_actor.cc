@@ -733,7 +733,9 @@ void DataPrepareActor::PrepareDataForControlValueNode(const KernelWithIndex &nod
   size_t index = node_with_index.second;
   auto node_value = node->value();
   if (common::AnfAlgo::IsDynamicSequence(node)) {
-    node_value = AnfAlgo::SequenceToTensor(node_value);
+    auto tensor = AnfAlgo::SequenceToTensor(node_value);
+    parser->AddControlNodeTensor(tensor);
+    node_value = tensor;
     AnfAlgo::UpdateValueNodeShape(node);
   }
   MS_EXCEPTION_IF_NULL(node_value);
@@ -761,7 +763,8 @@ void DataPrepareActor::PrepareDataForControlValueNode(const KernelWithIndex &nod
     return;
   }
 
-  MS_LOG(INFO) << "Prepare device data for control value node: " << node->DebugString() << ", output index: " << index;
+  MS_LOG(INFO) << "Prepare device data for control value node: " << node->DebugString() << ", output index: " << index
+               << " node value:" << node_value->ToString();
   tensor->set_device_address(device_tensor);
   UpdateRefCount(device_tensor.get(), true);
 

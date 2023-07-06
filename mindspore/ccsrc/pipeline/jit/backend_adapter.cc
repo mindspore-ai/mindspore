@@ -98,7 +98,7 @@ void AddMutableNodeForDynamicArg(const AnfNodePtr &node, const FuncGraphPtr &fun
     }
   }
   auto new_cnode = NewCNode(inputs, src_func_graph);
-  manager->Replace(node, new_cnode);
+  (void)manager->Replace(node, new_cnode);
   MS_LOG(INFO) << "Add mutable node for node:" << node->DebugString();
 }
 
@@ -124,7 +124,7 @@ AnfNodePtr TransValueNodeToMakeTuple(const AnfNodePtr &node, size_t index, const
   std::vector<AnfNodePtr> tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
   for (const auto &sub_value : value_sequence->value()) {
     MS_EXCEPTION_IF_NULL(sub_value);
-    tuple_inputs.emplace_back(NewValueNode(sub_value));
+    (void)tuple_inputs.emplace_back(NewValueNode(sub_value));
     tuple_inputs.back()->set_abstract(sub_value->ToAbstract());
   }
 
@@ -145,7 +145,7 @@ AnfNodePtr TransValueNodeToMakeTuple(const AnfNodePtr &node, size_t index, const
   }
   auto new_cnode = NewCNode(tuple_inputs, src_func_graph);
   MS_LOG(INFO) << "Replace value node:" << value_node << " by make tuple:" << new_cnode->DebugString();
-  manager->Replace(value_node, new_cnode);
+  (void)manager->Replace(value_node, new_cnode);
   return new_cnode->input(index + 1);
 }
 
@@ -216,7 +216,7 @@ void AddMutableNodeByNode(const AnfNodePtr &node, const abstract::AbstractBasePt
                 << " start";
   for (size_t i = 0; i < abs_sequence->elements().size(); ++i) {
     MS_EXCEPTION_IF_NULL(abs_sequence->elements()[i]);
-    index_queue->emplace_back(i);
+    (void)index_queue->emplace_back(i);
     AddMutableNodeByNode(node, abs_sequence->elements()[i], index_queue, func_graph);
     index_queue->pop_back();
   }
@@ -290,7 +290,7 @@ void UnifyDynamicLen(const pipeline::ResourcePtr &resource) {
     }
     MS_EXCEPTION_IF_NULL(cnode->input(1));
     cnode->input(1)->set_abstract(cnode->abstract());
-    manager->Replace(cnode, cnode->input(1));
+    (void)manager->Replace(cnode, cnode->input(1));
     MS_LOG(INFO) << "Add mutable node for node:" << cnode->DebugString();
   }
 #ifdef ENABLE_DUMP_IR
@@ -476,7 +476,7 @@ void CheckDynamicLenUnify(const pipeline::ResourcePtr &resource) {
   if (!ProcessFuncGraph(resource->func_graph(), std::make_shared<UnifyDynamicLenFunc>(CheckUnifyDynamicLen))) {
     // 1. Add dynamic len flag for dynamic len tuple.
     MS_LOG(DEBUG) << "Modify dynamic len arg";
-    ProcessFuncGraph(resource->func_graph(), std::make_shared<UnifyDynamicLenFunc>(ModifyDynamicLenArg));
+    (void)ProcessFuncGraph(resource->func_graph(), std::make_shared<UnifyDynamicLenFunc>(ModifyDynamicLenArg));
     MS_LOG(DEBUG) << "Unify dynamic len";
     size_t renormalize_time = 0;
     // 2. Fix abstract of dynamic tuple.
