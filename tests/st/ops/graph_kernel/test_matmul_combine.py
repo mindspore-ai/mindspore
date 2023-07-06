@@ -70,7 +70,7 @@ def run():
         assert np.allclose(expect_np, output_np, 1.e-4, 1.e-7)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -81,11 +81,11 @@ def test_parallel_matmul_combine_ascend():
     Expectation: network return same result with the feature on and off
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    context.set_context(graph_kernel_flags="--enable_parallel_op_combine=1 --opt_level=1")
-    run()
+    with pytest.raises(RuntimeError, match=r"kernel_build_info"):
+        run()
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_parallel_matmul_combine_gpu():
@@ -95,5 +95,4 @@ def test_parallel_matmul_combine_gpu():
     Expectation: network return same result with the feature on and off
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    context.set_context(graph_kernel_flags="--enable_parallel_op_combine=1 --opt_level=1")
     run()

@@ -85,6 +85,7 @@ class ParallelOpCombiner {
  public:
   explicit ParallelOpCombiner(const std::string &op_name, uint64_t min_num_branches, const std::string &layout);
   AnfNodePtr Combine(const AnfNodePtr &root, const FuncGraphPtr &func_graph = nullptr);
+  virtual ~ParallelOpCombiner() = 0;
 
  protected:
   virtual bool IsSupportedOp(const AnfNodePtr n) = 0;
@@ -94,9 +95,9 @@ class ParallelOpCombiner {
   virtual AnfNodePtr MakeCombinedAnfNodePtrFromFollowingOps(const AnfNodePtr &data, const Group &branches,
                                                             size_t depth) = 0;
   virtual void UpdateGroupOutput(const AnfNodePtr &data, const Group &branches, size_t depth) = 0;
-  bool AutoUpdateInfo(const CNodePtr &to_update, size_t out_size = 1);
+  bool AutoUpdateInfo(const CNodePtr &to_update);
 
-  std::map<size_t, AnfNodePtrList> GetUniqueInputs(const Group &branches, size_t depth);
+  std::map<size_t, AnfNodePtrList> GetUniqueInputs(const Group &branches, size_t depth) const;
 
   FuncGraphPtr main_graph_;
   AnfNodePtr combined_;
@@ -119,12 +120,10 @@ class GraphBuilder {
                                size_t split_num);
   static CNodePtr NewConcatNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &input_node, size_t concat_dim,
                                 size_t input_num);
-  static CNodePtr NewElemwiseNoAttrNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &matmul_inputs,
-                                        const AnfNodePtr &orig_node);
+  static CNodePtr NewElemwiseNoAttrNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &matmul_inputs);
   static CNodePtr NewReshapeNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &matmul_inputs,
                                  const AnfNodePtr &orig_node);
-  static CNodePtr NewTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &matmul_inputs,
-                                   const AnfNodePtr &orig_node);
+  static CNodePtr NewTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &matmul_inputs);
 
   static ShapeVector InferReshapeOut(const ShapeVector &orig_reshape_in, const ShapeVector &orig_reshape_out,
                                      const ShapeVector &new_reshape_in);

@@ -53,15 +53,15 @@ CNodePtr NewMatMulNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &mat
   return matmul;
 }
 
-BMNK GetBatchMNKV1(const CNodePtr &matmul) {
-  size_t b, m, n, k = 0;
+BMNK GetBatchMNK(const CNodePtr &matmul) {
+  int64_t b, m, n, k = 0;
   auto shape_a = common::AnfAlgo::GetPrevNodeOutputInferShape(matmul, kIndex0);
   auto shape_b = common::AnfAlgo::GetPrevNodeOutputInferShape(matmul, kIndex1);
   auto [trans_a, trans_b] = GetMatMulTransposeAttr(matmul);
   if (shape_a.size() == kDim3 && shape_b.size() == kDim3 && shape_a[kIndex0] == shape_b[kIndex0]) {
     b = shape_a[kIndex0];
-    shape_a.erase(shape_a.begin());
-    shape_b.erase(shape_b.begin());
+    (void)shape_a.erase(shape_a.begin());
+    (void)shape_b.erase(shape_b.begin());
   } else {
     b = 1;
   }
@@ -72,7 +72,7 @@ BMNK GetBatchMNKV1(const CNodePtr &matmul) {
 }
 }  // namespace
 
-ConcatenatePlan ParallelMatMulConcatenater::Analyse(const Group &branches) {
+ConcatenatePlan ParallelMatMulConcatenater::Analyse(const Group &branches) const {
   ConcatenatePlan target_op_res;
   Branch b0 = branches[kIndex0];
   AnfNodePtr shared_input = b0.GetRootData();
@@ -90,7 +90,7 @@ ConcatenatePlan ParallelMatMulConcatenater::Analyse(const Group &branches) {
 
   auto [trans_a, trans_b] = GetMatMulTransposeAttr(matmul);
   int64_t b, m, n, k;
-  std::tie(b, m, n, k) = GetBatchMNKV1(matmul);
+  std::tie(b, m, n, k) = GetBatchMNK(matmul);
   if (is_a_shared) {
     auto shape_b = common::AnfAlgo::GetPrevNodeOutputInferShape(matmul, kIndex1);
     size_t rank_b = shape_b.size();
@@ -107,9 +107,9 @@ ConcatenatePlan ParallelMatMulConcatenater::Analyse(const Group &branches) {
     auto shape_a = common::AnfAlgo::GetPrevNodeOutputInferShape(matmul, kIndex0);
     size_t rank_a = shape_a.size();
     auto m_idx = trans_a ? rank_a - kIndex1 : rank_a - kIndex2;
-    target_op_res.concat_in_idx = m_idx;
-    target_op_res.split_out_idx = rank_a - kIndex2;
-    int64_t new_m = m * branches.size();
+    target_op_res.concat_in_idx = static_cast<int>(m_idx);
+    target_op_res.split_out_idx = static_cast<int>(rank_a - kIndex2);
+    auto new_m = static_cast<int64_t>(m * branches.size());
     if (rank_a == kDim3) {
       target_op_res.out_shape = ShapeVector({b, new_m, n});
     } else {
@@ -130,7 +130,11 @@ bool ParallelMatMulConcatenater::CanOpsBeCombined(const AnfNodePtr a, const AnfN
 }
 
 bool ParallelMatMulConcatenater::IsSupportedOp(const AnfNodePtr n) {
-  if (n->cast<CNodePtr>() == nullptr || unsupported_ops_.count(GetCNodePrimitive(n)->name())) {
+  if (n == nullptr || n->cast<CNodePtr>() == nullptr) {
+    return false;
+  }
+  auto prim = GetCNodePrimitive(n);
+  if (!prim || unsupported_ops_.count(prim->name())) {
     return false;
   }
   return true;

@@ -83,9 +83,8 @@ GkPassManagerPtr GraphKernelOptimizer::Cluster() const {
   // Expand complex basic kernels to composite kernels
   pm->Add(std::make_shared<GraphKernelExpanderLite>(), OptLevel_1);
 
-  if (GraphKernelFlags::GetInstance().enable_parallel_op_combine || is_ascend) {
-    pm->Add(std::make_shared<GraphKernelOpCombiner>(), OptLevel_2);
-  }
+  // Combine supported parallel ops that with common inputs
+  pm->Add(std::make_shared<GraphKernelOpCombiner>(), GraphKernelFlags::GetInstance().enable_parallel_op_combine);
 
   pm->Add(std::make_shared<ConvTuningExpander>(), OptLevel_1, is_cpu);
 

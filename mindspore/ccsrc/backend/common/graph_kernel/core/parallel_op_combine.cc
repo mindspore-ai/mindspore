@@ -67,9 +67,9 @@ AnfNodeIndexSet BranchGroupFinder::GetConsumers(FuncGraphManagerPtr mng, const A
   auto users = mng->node_users()[producer];
   for (auto it : users) {
     auto user = it.first;
-    if (user->cast<CNodePtr>() && AnfUtils::IsRealKernel(user) && fis_supported_op_(user)) {
+    if (user && user->cast<CNodePtr>() && AnfUtils::IsRealKernel(user) && fis_supported_op_(user)) {
       consumers.add(CNodeIndexPair(it.first, it.second));
-      children_map_[producer].insert(user);
+      (void)children_map_[producer].insert(user);
     }
   }
   return consumers;
@@ -83,8 +83,8 @@ std::vector<Group> BranchGroupFinder::Find(const AnfNodePtr &start_node, const F
   auto cnode = start_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   std::deque<AnfNodePtr> init_consumer;
-  std::transform(graph_kernel_fg->parameters().begin(), graph_kernel_fg->parameters().end(),
-                 std::back_inserter(init_consumer), [](const AnfNodePtr &global_in) { return global_in; });
+  (void)std::transform(graph_kernel_fg->parameters().begin(), graph_kernel_fg->parameters().end(),
+                       std::back_inserter(init_consumer), [](const AnfNodePtr &global_in) { return global_in; });
   for (size_t i = 1; i < cnode->size(); ++i) {
     init_consumer.push_back(cnode->input(i));
   }
@@ -92,33 +92,30 @@ std::vector<Group> BranchGroupFinder::Find(const AnfNodePtr &start_node, const F
     auto new_node = init_consumer.front();
     init_consumer.pop_front();
     auto new_consumer = GetConsumers(mng, new_node);
-    std::transform(new_consumer.begin(), new_consumer.end(), std::back_inserter(init_consumer),
-                   [](const CNodeIndexPair &index_pair) { return index_pair.first; });
+    (void)std::transform(new_consumer.begin(), new_consumer.end(), std::back_inserter(init_consumer),
+                         [](const CNodeIndexPair &index_pair) { return index_pair.first; });
   }
   for (auto it : children_map_) {
     if (it.second.size() > 1) {
-      op_roots_.insert(it.first);
+      (void)op_roots_.insert(it.first);
     }
   }
-
   std::vector<Group> groups;
   for (const auto &root : op_roots_) {
     size_t ngroups = groups.size();
     auto childrens = children_map_.at(root);
     for (auto child : childrens) {
-      auto prim_name = GetCNodePrimitive(child)->name();
+      auto prim = GetCNodePrimitive(child);
+      if (!prim) {
+        continue;
+      }
+      auto prim_name = prim->name();
       // Branch should start with target node that specified by `op_name_`
       if (prim_name != op_name_) {
         continue;
       }
       auto branch = CreateBranch(child);
       branch.SetDataRoot(root);
-      // // position index less than 0 means we didn't find target op in this branch
-      // if (branch.target_op_pos < 0) {
-      //   groups.emplace_back();
-      //   groups.back().push_back(branch);
-      //   continue;
-      // }
       auto it = std::find_if(groups.begin() + ngroups, groups.end(), [this, &branch](const Group &group) {
         MS_EXCEPTION_IF_CHECK_FAIL(!group.empty() && !group[0].ops.empty(), "group empty or group[0] empty");
         auto top_branch = group[0];
@@ -128,7 +125,7 @@ std::vector<Group> BranchGroupFinder::Find(const AnfNodePtr &start_node, const F
       if (it != groups.end()) {
         it->push_back(branch);
       } else {
-        groups.emplace_back();
+        (void)groups.emplace_back();
         groups.back().push_back(branch);
       }
     }
@@ -145,7 +142,7 @@ Branch BranchGroupFinder::CreateBranch(AnfNodePtr lead_op) {
     ops.push_back(node);
     auto prim_name = GetCNodePrimitive(node)->name();
     if (prim_name == op_name_) {
-      root_idx = ops.size();
+      root_idx = static_cast<int>(ops.size());
     }
     it = children_map_.find(node);
   }
@@ -154,6 +151,8 @@ Branch BranchGroupFinder::CreateBranch(AnfNodePtr lead_op) {
 
 ParallelOpCombiner::ParallelOpCombiner(const std::string &op_name, uint64_t min_num_branches, const std::string &layout)
     : op_name_(op_name), min_num_branches_(min_num_branches), layout_(layout) {}
+
+ParallelOpCombiner::~ParallelOpCombiner() {}
 
 AnfNodePtr ParallelOpCombiner::Combine(const AnfNodePtr &root, const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(root);
@@ -184,9 +183,9 @@ void ParallelOpCombiner::CombineBranches(const Group &branches) {
     return branch_a.ops.size() < branch_b.ops.size();
   });
   size_t depth = it->ops.size();
-  int pos;
-  for (pos = 0; pos < static_cast<int>(depth); ++pos) {
-    if (pos == it->target_op_pos) {
+  size_t pos;
+  for (pos = 0; pos < depth; ++pos) {
+    if (static_cast<int>(pos) == it->target_op_pos) {
       continue;
     }
     if (!CheckLevel(branches, pos)) {
@@ -194,7 +193,9 @@ void ParallelOpCombiner::CombineBranches(const Group &branches) {
     }
     combined = MakeCombinedAnfNodePtrFromFollowingOps(combined, branches, pos);
   }
-  UpdateGroupOutput(combined, branches, pos - 1);
+  if (pos > 0) {
+    UpdateGroupOutput(combined, branches, pos - 1);
+  }
   combined_ = combined;
 }
 
@@ -222,22 +223,21 @@ bool ParallelOpCombiner::CheckLevel(const Group &branches, size_t depth) {
   return true;
 }
 
-bool ParallelOpCombiner::AutoUpdateInfo(const CNodePtr &to_update, size_t out_size) {
+bool ParallelOpCombiner::AutoUpdateInfo(const CNodePtr &to_update) {
   if (to_update->size() < 2) {
     MS_LOG(ERROR) << "Cannot auto update for " << to_update->fullname_with_scope() << " with input size "
                   << to_update->size();
     return false;
   }
+#ifndef MSLITE_ENABLE_GRAPH_KERNEL
+  Callback::Instance()->ResetKernelInfo(to_update);
+  return true;
+#endif
   auto rep_input = to_update->input(1);
   // NOTE: We assume the inputs' formats and types are consistent with outputs'.
   std::string input_format = Callback::Instance()->GetTargetFromContext() == kAscendDevice ? "" : kOpFormat_NCHW;
-  TypeId input_type = TypeId::kTypeUnknown;
-  auto UpdateBoth = [&input_type, &input_format](const CNodePtr &cnode) -> bool {
-    if (cnode == nullptr) {
-      return false;
-    }
-    input_type = common::AnfAlgo::GetOutputInferDataType(cnode, 0);
-    if (!cnode->HasAttr(kOutputsFormat)) {
+  auto GetPrevOutFormat = [&input_format](const CNodePtr &cnode) -> bool {
+    if (cnode == nullptr || !cnode->HasAttr(kOutputsFormat)) {
       return false;
     }
     auto prev_of = GetValue<std::vector<std::string>>(cnode->GetAttr(kOutputsFormat));
@@ -248,50 +248,34 @@ bool ParallelOpCombiner::AutoUpdateInfo(const CNodePtr &to_update, size_t out_si
     return false;
   };
   if (AnfUtils::IsRealKernel(rep_input)) {
-    UpdateBoth(rep_input->cast<CNodePtr>());
+    (void)GetPrevOutFormat(rep_input->cast<CNodePtr>());
   }
   if (input_format.empty()) {
     auto it = children_map_.find(rep_input);
     if (it != children_map_.end()) {
       for (auto orig_user : it->second) {
-        if (UpdateBoth(orig_user->cast<CNodePtr>())) {
+        if (GetPrevOutFormat(orig_user->cast<CNodePtr>())) {
           break;
         }
       }
     }
   }
-  if (input_format.empty() && Callback::Instance()->GetTargetFromContext() == kAscendDevice) {
+  if (input_format.empty()) {
+    MS_LOG(WARNING) << "Cannot find prev node's input format, use " << layout_
+                    << " by default and that may cause error.";
     input_format = layout_;
   }
-  if (input_format.empty() ||
-      (Callback::Instance()->GetTargetFromContext() != kAscendDevice && input_type == TypeId::kTypeUnknown)) {
-    MS_LOG(WARNING) << "Cannot auto update input format for node " << to_update->fullname_with_scope();
-    return false;
-  }
-#ifndef MSLITE_ENABLE_GRAPH_KERNEL
-  if (Callback::Instance()->GetTargetFromContext() != kAscendDevice) {
-    to_update->set_kernel_info(std::make_shared<device::KernelInfo>());
-    std::vector<std::string> to_update_in_formats(to_update->size(), input_format);
-    std::vector<TypeId> to_update_in_types(to_update->size(), input_type);
-    std::vector<std::string> to_update_out_formats(out_size, input_format);
-    std::vector<TypeId> to_update_out_types(out_size, input_type);
-    auto graph_sel_info = BuildSelectKernelBuildInfo(to_update_in_formats, to_update_in_types, to_update_out_formats,
-                                                     to_update_out_types, kernel::GetProcessorFromContext());
-    AnfAlgo::SetSelectKernelBuildInfo(graph_sel_info, to_update.get());
-    return true;
-  }
-#endif
   std::vector<std::string> outputs_formats(AnfUtils::GetOutputTensorNum(to_update), input_format);
   to_update->AddAttr(kOutputsFormat, MakeValue(outputs_formats));
   return true;
 }
 
-std::map<size_t, AnfNodePtrList> ParallelOpCombiner::GetUniqueInputs(const Group &branches, size_t depth) {
+std::map<size_t, AnfNodePtrList> ParallelOpCombiner::GetUniqueInputs(const Group &branches, size_t depth) const {
   std::map<size_t, AnfNodePtrList> unique_inputs;
   AnfNodePtrList parent_in_branch;
   if (depth >= 1) {
-    std::transform(branches.begin(), branches.end(), std::back_inserter(parent_in_branch),
-                   [&depth](const Branch &br) { return br.ops[depth - 1]; });
+    (void)std::transform(branches.begin(), branches.end(), std::back_inserter(parent_in_branch),
+                         [&depth](const Branch &br) { return br.ops[depth - 1]; });
   } else {
     Branch b1 = branches[0];
     parent_in_branch.push_back(b1.GetRootData());
@@ -374,8 +358,7 @@ CNodePtr GraphBuilder::NewSplitNode(const FuncGraphPtr &func_graph, const AnfNod
   return split;
 }
 
-CNodePtr GraphBuilder::NewElemwiseNoAttrNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &inputs,
-                                             const AnfNodePtr &orig_node) {
+CNodePtr GraphBuilder::NewElemwiseNoAttrNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &inputs) {
   auto node = func_graph->NewCNode(inputs);
   func_graph->AddNode(node);
   MS_EXCEPTION_IF_NULL(node);
@@ -405,8 +388,7 @@ CNodePtr GraphBuilder::NewReshapeNode(const FuncGraphPtr &func_graph, const AnfN
   return node;
 }
 
-CNodePtr GraphBuilder::NewTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &inputs,
-                                        const AnfNodePtr &orig_node) {
+CNodePtr GraphBuilder::NewTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &inputs) {
   auto node = func_graph->NewCNode(inputs);
   func_graph->AddNode(node);
   MS_EXCEPTION_IF_NULL(node);

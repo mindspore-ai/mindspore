@@ -30,7 +30,7 @@
 #include "backend/common/graph_kernel/core/parallel_op_concatenate.h"
 
 namespace mindspore::graphkernel {
-using BMNK = std::tuple<size_t, size_t, size_t, size_t>;
+using BMNK = std::tuple<int64_t, int64_t, int64_t, int64_t>;
 using MMAttr = std::pair<bool, bool>;
 class ParallelMatMulConcatenater : public ParallelOpConcatenater {
  public:
@@ -44,7 +44,7 @@ class ParallelMatMulConcatenater : public ParallelOpConcatenater {
   bool IsArgCompatible(const AnfNodePtr a, const AnfNodePtr b) override;
 
  private:
-  ConcatenatePlan Analyse(const Group &branches);
+  ConcatenatePlan Analyse(const Group &branches) const;
 };
 
 AnfNodePtr ConcatParallelMatMul(AnfNodePtr root, uint64_t min_num_branches, const std::string &layout,
