@@ -574,8 +574,12 @@ class Profiler:
 
         elif self._device_target and self._device_target == DeviceTarget.ASCEND.value:
             self._ascend_analyse()
-        if self._profile_framework in ["all", "time"]:
-            self._host_info_analyse()
+        if self._profile_framework:
+            if self._device_target != DeviceTarget.CPU.value:
+                self._host_info_analyse()
+            else:
+                logger.warning("The parameter 'profile_framework' is not support for CPU, so there no host_info"
+                               " directory in the output path.")
         logger.info("Profiling: all the data have been analyzed.")
         self._init_profiler_info()
 
