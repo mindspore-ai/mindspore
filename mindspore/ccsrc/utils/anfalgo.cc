@@ -1698,7 +1698,6 @@ bool AnfAlgo::IsHostKernel(const CNodePtr &kernel_node) {
   static const std::map<std::string, std::pair<size_t, size_t>> host_kernel_input_output_num = {
     {prim::kPrimDynamicShape->name(), {1, 1}},
     {prim::kPrimReshape->name(), {2, 1}},
-    {prim::kPrimDynamicBroadcastGradientArgs->name(), {2, 2}},
     {prim::kPrimTensorShape->name(), {1, 1}}};
 
   auto op_name = AnfAlgo::GetCNodeName(kernel_node);

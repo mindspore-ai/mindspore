@@ -41,6 +41,9 @@
 namespace mindspore {
 namespace ops {
 namespace {
+const int kInputNum = 2;
+const size_t one = 1;
+
 int64_t CheckInputsAndGetShape(const AbstractBasePtr &input_arg, const string &prim_name) {
   MS_EXCEPTION_IF_NULL(input_arg);
   if (input_arg->isa<abstract::AbstractTensor>()) {
@@ -66,7 +69,6 @@ abstract::TupleShapePtr Infer(const PrimitivePtr &primitive, const std::vector<A
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
   auto x_shape0 = CheckInputsAndGetShape(input_args[0], prim_name);
   auto y_shape0 = CheckInputsAndGetShape(input_args[1], prim_name);
-
   ShapeVector shape{abstract::Shape::kShapeDimAny};
   ShapeVector max_shape;
   // DynamicBroadcastGradientArgs is a compute depend op
@@ -79,9 +81,104 @@ abstract::TupleShapePtr Infer(const PrimitivePtr &primitive, const std::vector<A
   auto out_shape = std::make_shared<abstract::Shape>(shape, max_shape);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape, out_shape});
 }
-}  // namespace
 
-MIND_API_OPERATOR_IMPL(DynamicBroadcastGradientArgs, BaseOperator);
+void UpdatePreIsOne(std::vector<bool> *prev_is_one, std::vector<bool> current_is_one) {
+  for (size_t i = 0; i < kInputNum; ++i) {
+    (*prev_is_one)[i] = current_is_one[i];
+  }
+}
+
+void AddElementToGradReduceIdx(std::vector<std::vector<int64_t>> *grad_reduce_idx, std::vector<bool> current_is_one,
+                               bool none_is_one, const size_t largest_rank, size_t j) {
+  MS_EXCEPTION_IF_NULL(grad_reduce_idx);
+  for (size_t i = 0; i < kInputNum; ++i) {
+    if (current_is_one[i] && !none_is_one) {
+      (void)(*grad_reduce_idx)[i].emplace_back(SizeToLong(largest_rank - one - j));
+    }
+  }
+}
+
+std::vector<std::vector<int64_t>> GetGradientIndices(const std::vector<std::vector<int64_t>> &reverse_shape,
+                                                     const size_t largest_rank) {
+  std::vector<std::vector<int64_t>> grad_reduce_idx(kInputNum);
+  // indices of j-th component of each input.
+  std::vector<bool> prev_is_one(kInputNum);
+  std::vector<bool> current_is_one(kInputNum);
+  for (size_t i = 0; i < kInputNum; ++i) {
+    prev_is_one[i] = false;
+    current_is_one[i] = false;
+  }
+
+  bool set_one = false;
+  for (size_t j = 0; j < largest_rank; ++j) {
+    int output_dim = -1;
+    bool output_dim_set = false;
+    bool none_is_one = true;
+    // Find which indices are 1.
+    for (size_t i = 0; i < kInputNum; ++i) {
+      if (reverse_shape[i][j] == 1) {
+        current_is_one[i] = true;
+        none_is_one = false;
+      } else {
+        current_is_one[i] = false;
+        if (!output_dim_set || reverse_shape[i][j] == static_cast<int64_t>(output_dim)) {
+          output_dim = LongToInt(reverse_shape[i][j]);
+          output_dim_set = true;
+        } else {
+          MS_LOG(EXCEPTION) << "Input[0] and input[1] Cannot broadcast!";
+        }
+      }
+    }
+    // All dimensions are 1.
+    if (!output_dim_set) {
+      for (size_t i = 0; i < kInputNum; ++i) {
+        (void)grad_reduce_idx[i].emplace_back(SizeToLong(largest_rank - one - j));
+      }
+      continue;
+    } else if (std::equal(current_is_one.begin(), current_is_one.end(), prev_is_one.begin()) && set_one) {
+      AddElementToGradReduceIdx(&grad_reduce_idx, current_is_one, none_is_one, largest_rank, j);
+    } else {
+      AddElementToGradReduceIdx(&grad_reduce_idx, current_is_one, none_is_one, largest_rank, j);
+    }
+    set_one = true;
+    UpdatePreIsOne(&prev_is_one, current_is_one);
+  }
+  return grad_reduce_idx;
+}
+
+std::vector<std::vector<int64_t>> CalculateOutput(const std::vector<std::vector<int64_t>> &x) {
+  std::vector<std::vector<int64_t>> grad_reduce_idx(kInputNum);
+  bool all_equal = true;
+  size_t largest_rank = 0;
+  for (size_t i = 0; i < kInputNum; ++i) {
+    if (x[i] != x[0]) {
+      all_equal = false;
+    }
+    if (x[i].size() > largest_rank) {
+      largest_rank = x[i].size();
+    }
+  }
+  if (all_equal) {
+    return grad_reduce_idx;
+  }
+
+  // Reverse input the shapes
+  std::vector<std::vector<int64_t>> reverse_shape(kInputNum);
+  for (size_t i = 0; i < kInputNum; ++i) {
+    reverse_shape[i] = x[i];
+    std::reverse(reverse_shape[i].begin(), reverse_shape[i].end());
+  }
+
+  // 1-extend and align all vectors.
+  for (size_t i = 0; i < kInputNum; ++i) {
+    if (reverse_shape[i].size() < largest_rank) {
+      reverse_shape[i].resize(largest_rank, 1);
+    }
+  }
+  grad_reduce_idx = GetGradientIndices(reverse_shape, largest_rank);
+  return grad_reduce_idx;
+}
+}  // namespace
 
 class MIND_API DynamicBroadcastGradientArgsInfer : public abstract::OpInferBase {
  public:
@@ -95,9 +192,40 @@ class MIND_API DynamicBroadcastGradientArgsInfer : public abstract::OpInferBase 
     auto output_type = std::make_shared<Tuple>(types);
     return output_type;
   }
+
+  ValuePtr InferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override {
+    MS_EXCEPTION_IF_NULL(prim);
+    if (input_args.empty()) {
+      MS_LOG(ERROR) << "DynamicBroadcastGradientArgs input args dose not exist.";
+      return nullptr;
+    }
+
+    for (const auto &item : input_args) {
+      MS_EXCEPTION_IF_NULL(item);
+    }
+
+    std::vector<std::vector<int64_t>> input_shapes(kInputNum);
+    auto x = input_args[0]->BuildValue();
+    if (x == kValueAny) {
+      MS_LOG(INFO) << "DynamicBroadcastGradientArgs input_0 is ValueAny, will backoff to cpu.";
+      return nullptr;
+    }
+    input_shapes[0] = GetValue<std::vector<int64_t>>(x);
+
+    auto y = input_args[1]->BuildValue();
+    if (y == kValueAny) {
+      MS_LOG(INFO) << "DynamicBroadcastGradientArgs input_1 is ValueAny, will backoff to cpu.";
+      return nullptr;
+    }
+    input_shapes[1] = GetValue<std::vector<int64_t>>(y);
+    auto grad_reduce_idx = CalculateOutput(input_shapes);
+    ValuePtr res = MakeValue(grad_reduce_idx);
+    return res;
+  }
 };
 
+MIND_API_OPERATOR_IMPL(DynamicBroadcastGradientArgs, BaseOperator);
 REGISTER_PRIMITIVE_OP_INFER_IMPL(DynamicBroadcastGradientArgs, prim::kPrimDynamicBroadcastGradientArgs,
-                                 DynamicBroadcastGradientArgsInfer, false);
+                                 DynamicBroadcastGradientArgsInfer, true);
 }  // namespace ops
 }  // namespace mindspore

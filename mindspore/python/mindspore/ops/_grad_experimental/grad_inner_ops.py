@@ -26,7 +26,6 @@ from mindspore.ops.primitive import _primexpr
 from mindspore.ops._grad_experimental.grad_base import bprop_getters, sum_grad_reduce_axis
 import mindspore as ms
 
-dyn_shape_op = P.TensorShape()
 reshape = P.Reshape()
 
 
@@ -230,10 +229,11 @@ def get_bprop_ps_roi_pooling(self):
 @bprop_getters.register(inner.DynamicBroadcastTo)
 def get_bprop_dynamic_broadcast_to(self):
     """Generate bprop for DynamicBroadcastTo"""
+    shape_op = P.Shape()
 
     def bprop(x, shp, out, dout):
-        x_shape = dyn_shape_op(x)
-        broadcast_shape = dyn_shape_op(out)
+        x_shape = shape_op(x)
+        broadcast_shape = shape_op(out)
 
         _, reduction_axes = inner.DynamicBroadcastGradientArgs()(broadcast_shape, x_shape)
         out_type = dout.dtype
