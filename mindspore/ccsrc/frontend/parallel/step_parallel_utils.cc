@@ -80,8 +80,18 @@ bool IsSomePrimitive(const CNodePtr &cnode, const std::string &name) {
 }
 
 bool IsSomePrimitiveList(const CNodePtr &cnode, const std::set<string> &check_list) {
-  return std::any_of(check_list.begin(), check_list.end(),
-                     [cnode](const string &in) { return IsSomePrimitive(cnode, in); });
+  if (!cnode) {
+    return false;
+  }
+  ValueNodePtr anf_node = cnode->input(0)->cast<ValueNodePtr>();
+  if (!anf_node) {
+    return false;
+  }
+  PrimitivePtr prim = anf_node->value()->cast<PrimitivePtr>();
+  if (!prim) {
+    return false;
+  }
+  return std::any_of(check_list.begin(), check_list.end(), [prim](const string &in) { return prim->name() == in; });
 }
 
 bool IsIgnoreSplitTensor(const CNodePtr &node, int64_t index) {
