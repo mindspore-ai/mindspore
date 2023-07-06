@@ -25,6 +25,8 @@
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "include/common/utils/parallel_context.h"
 #include "acl/acl_rt.h"
+#include "plugin/device/ascend/kernel/hccl/hccl_kernel_metadata.h"
+#include "plugin/device/ascend/kernel/hccl/hccl_kernel_build.h"
 
 #ifndef ENABLE_SECURITY
 #include "toolchain/adx_datadump_callback.h"
@@ -55,13 +57,17 @@ namespace mindspore::device::ascend {
 namespace {
 std::pair<KernelType, std::vector<std::shared_ptr<kernel::KernelBuildInfo>>> QueryKernelType(const AnfNodePtr &node) {
   auto kernel_type = transform::AclHelper::GetKernelInfoFromGe(node);
-  if (kernel_type != KernelType::UNKNOWN_KERNEL_TYPE) {
+  if (kernel_type != KernelType::UNKNOWN_KERNEL_TYPE && kernel_type != KernelType::HCCL_KERNEL) {
     return {kernel_type, {}};
   }
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list{};
+  if (kernel_type == KernelType::HCCL_KERNEL) {
+    kernel::HcclMetadataInfo(cnode, &kernel_info_list);
+    return {KernelType::HCCL_KERNEL, kernel_info_list};
+  }
   opt::ConvertAttrAndInputBeforeAicpuKernelSelect(cnode);
   kernel::AicpuMetadataInfo(cnode, &kernel_info_list);
   if (!kernel_info_list.empty()) {
@@ -204,6 +210,8 @@ bool GenerateKernelMod(const std::vector<CNodePtr> &kernels) {
       kernel_mod_ptr = kernel::AicpuOpBuild(kernel);
     } else if (AnfAlgo::GetKernelType(kernel) == KernelType::HOST_KERNEL) {
       kernel_mod_ptr = kernel::HostOpBuild(kernel);
+    } else if (AnfAlgo::GetKernelType(kernel) == KernelType::HCCL_KERNEL) {
+      kernel_mod_ptr = kernel::HcclOpBuild(kernel);
     } else {
       MS_LOG(EXCEPTION) << "The kernel: " << kernel->fullname_with_scope() << " kernel build failed, kernel type: "
                         << kernel::KernelTypeLabel(AnfAlgo::GetKernelType(kernel));
@@ -270,8 +278,7 @@ void GeKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
                                       return item->IsSimilarityKernelBuildInfo(*build_info);
                                     });
       if (!find_valid) {
-        std::string kernel_type_str = (kernel_type == AICPU_KERNEL) ? "AICPU_KERNEL" : "HOST_KERNEL";
-        MS_LOG(EXCEPTION) << "Invalid Kernel Build Info! Kernel type: " << kernel_type_str
+        MS_LOG(EXCEPTION) << "Invalid Kernel Build Info! Kernel type: " << kernel::KernelTypeLabel(kernel_type)
                           << ", node: " << kernel->fullname_with_scope()
                           << KernelSelectDebugString(build_info, kernel_info_list);
       }
