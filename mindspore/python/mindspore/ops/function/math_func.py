@@ -7800,11 +7800,6 @@ def copysign(x, other):
     return P.Select()(less_zero, P.Neg()(pos_tensor), pos_tensor)
 
 
-@_primexpr
-def _check_non_negative_int(arg_value, arg_name, prim_name):
-    validator.check_non_negative_int(arg_value, arg_name, prim_name)
-
-
 def hann_window(window_length, periodic=True, *, dtype=None):
     r"""
     Generates a Hann Window.
@@ -7840,7 +7835,14 @@ def hann_window(window_length, periodic=True, *, dtype=None):
         >>> print(out.asnumpy())
         [0.        0.3454915 0.9045085 0.9045085 0.3454915]
     """
-    _check_non_negative_int(window_length, 'window_length', 'hann_window')
+    if not isinstance(window_length, int):
+        raise TypeError(
+            f"For 'hann_window', 'window_length' must be a non-negative integer, but got {type(window_length)}"
+        )
+    if window_length < 0:
+        raise ValueError(
+            f"For 'hann_window', 'window_length' must be a non-negative integer, but got {window_length}"
+        )
     if window_length <= 1:
         return Tensor(np.ones(window_length))
     if not isinstance(periodic, (bool, np.bool_)):
@@ -9145,7 +9147,14 @@ def kaiser_window(window_length, periodic=True, beta=12.0, *, dtype=None):
         [5.27734413e-05 1.01719688e-01 7.92939834e-01 7.92939834e-01
          1.01719688e-01]
     """
-    _check_non_negative_int(window_length, 'window_length', 'kaiser_window')
+    if not isinstance(window_length, int):
+        raise TypeError(
+            f"For 'kaiser_window', 'window_length' must be a non-negative integer, but got {type(window_length)}"
+        )
+    if window_length < 0:
+        raise ValueError(
+            f"For 'kaiser_window', 'window_length' must be a non-negative integer, but got {window_length}"
+        )
     if window_length <= 1:
         return Tensor(np.ones(window_length))
     if not isinstance(periodic, bool):
