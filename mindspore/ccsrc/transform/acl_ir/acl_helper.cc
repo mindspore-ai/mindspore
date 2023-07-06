@@ -31,6 +31,10 @@
 namespace mindspore {
 namespace transform {
 namespace {
+static const std::set<std::string> kHcomOps = {kHcomOpTypeAllReduce, kHcomOpTypeAllGather, kHcomOpTypeBroadcast,
+                                               kHcomOpTypeSend,      kHcomOpTypeReceive,   kHcomOpTypeReduceScatter,
+                                               kHcomOpTypeAllToAllV};
+
 static const HashMap<GeDataType, TypeId> kGeTypeToMsType = {{GeDataType::DT_BOOL, kNumberTypeBool},
                                                             {GeDataType::DT_INT8, kNumberTypeInt8},
                                                             {GeDataType::DT_INT16, kNumberTypeInt16},
@@ -198,6 +202,10 @@ KernelType AclHelper::GetKernelInfoFromGe(const AnfNodePtr &node) {
   // check whether all inputs are matched
   if (GetKernelInfoByInputs(cnode, info) == UNKNOWN_KERNEL_TYPE) {
     return UNKNOWN_KERNEL_TYPE;
+  }
+  const auto &op_type = info->op_type();
+  if (kHcomOps.find(op_type) != kHcomOps.end()) {
+    return HCCL_KERNEL;
   }
 
   return ACL_KERNEL;

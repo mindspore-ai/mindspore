@@ -935,6 +935,7 @@ constexpr auto kHcomOpTypeBroadcast = "HcomBroadcast";
 constexpr auto kHcomOpTypeSend = "HcomSend";
 constexpr auto kHcomOpTypeReceive = "HcomReceive";
 constexpr auto kHcomOpTypeReduceScatter = "HcomReduceScatter";
+constexpr auto kHcomOpTypeAllToAllV = "HcomAllToAllV";
 constexpr auto kAllGatherOpName = "AllGather";
 constexpr auto kAllReduceOpName = "AllReduce";
 constexpr auto kBroadcastOpName = "Broadcast";
