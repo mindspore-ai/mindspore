@@ -157,12 +157,13 @@ void ReduceConcatOnlineFusionPass::DeleteReduceConcatOriginNode(SearchSubGraph::
 
   for (auto &node_index : subgraph->heads_) {
     // delete tensors_ tensor info
-    auto &output_indices = node_list_.at(node_index)->output_indices_;
-    for (auto output_indice : output_indices) {
-      tensors_->at(output_indice).out_nodes_.clear();
-      tensors_->at(output_indice).out_nodes_.emplace_back(subgraph->heads_.front());
+    auto &out_indices = node_list_.at(node_index)->output_indices_;
+    for (auto out_indice : out_indices) {  // clear out node relate
+      tensors_->at(out_indice).out_nodes_.clear();
+      tensors_->at(out_indice).out_nodes_.emplace_back(subgraph->heads_.front());
     }
 
+    // clear input and out indices
     node_list_.at(node_index)->input_indices_.clear();
     node_list_.at(node_index)->output_indices_.clear();
 
@@ -216,12 +217,12 @@ bool ReduceConcatOnlineFusionPass::SatifyReduceConcatParse(uint32_t in_node, int
     return false;
   }
   if (reduce_param->mode_ != mindspore::schema::ReduceMode_ReduceSum ||
-      reduce_param->keep_dims_ == false) {  // only support reducesum
+      reduce_param->keep_dims_ == false) {  // only support reducesum model and keep_dim is true
     free(reduce_param);
     reduce_param = nullptr;
     return false;
   }
-  free(reduce_param);
+  free(reduce_param);  // free reduce param data
   reduce_param = nullptr;
   return true;
 }
