@@ -28,33 +28,20 @@ class AbcInferSession(ABC):
 
     @property
     def input_infos(self):
+        """property input infos"""
         return self.input_tensor_infos
 
     @property
     def dtype_class(self):
+        """property dtype class"""
         return self.data_type_class
 
     @abstractmethod
     def infer(self, input_data_map: Dict[str, np.ndarray]):
+        """start model infer"""
         raise NotImplementedError
 
     @abstractmethod
     def _create_infer_session(self):
+        """create model infer"""
         raise NotImplementedError
-
-    def _nchw2nhwc(self, data: np.ndarray) -> np.ndarray:
-        shape_dim = 4
-        ret_data = data
-        if len(data.shape) == shape_dim:
-            ret_data = np.transpose(data, (0, 2, 3, 1))
-
-        return ret_data
-
-    def _reshape_nchw2nhwc(self, shape):
-        out_shape = shape
-        nchw_dim_num = 4
-        if len(shape) == nchw_dim_num:
-            out_shape = (
-                out_shape[0], out_shape[2], out_shape[3], out_shape[1]
-            )
-        return out_shape

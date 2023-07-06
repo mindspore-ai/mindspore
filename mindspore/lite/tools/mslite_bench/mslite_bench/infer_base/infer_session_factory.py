@@ -36,7 +36,7 @@ class InferSessionFactory:
         model_session = InferSessionFactory.create_infer_session(model_path,
                                                                  cfg,
                                                                  params_file=param_path)
-        logger.info(f'[MODEL INFER] Create model session success')
+        logger.info('[MODEL INFER] Create model session success')
         return model_session
 
     @classmethod
@@ -86,4 +86,5 @@ class InferSessionFactory:
 
     @staticmethod
     def import_module(module_name, file_path=None):
+        """import module"""
         return importlib.import_module(module_name, package=file_path)

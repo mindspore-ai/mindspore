@@ -19,7 +19,7 @@ class MsliteSession(AbcInferSession, ABC):
                  cfg=None):
         super(MsliteSession, self).__init__(model_file, cfg)
         self.thread_num = cfg.thread_num
-        mslite_model_type = self._set_ms_model_type(model_file)
+        mslite_model_type = self._set_ms_model_type()
         self.model_type = mslite.ModelType(mslite_model_type)
         self.device = cfg.device
         self.thread_affinity_mode = cfg.thread_affinity_mode
@@ -104,10 +104,10 @@ class MsliteSession(AbcInferSession, ABC):
         context.cpu.thread_affinity_mode = self.thread_affinity_mode
         return context
 
-    def _set_ms_model_type(self, model_file):
+    def _set_ms_model_type(self):
         """set mslite model type"""
-        if model_file.endswith('ms'):
+        if self.model_file.endswith('ms'):
             mslite_model_type = 4
         else:
-            mslite_model_type = 0
+            self.mslite_model_type = 0
         return mslite_model_type

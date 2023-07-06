@@ -8,6 +8,7 @@ from functools import wraps
 def singleton(cls):
     """singleton decorator function"""
     instances_ = {}
+
     @wraps(cls)
     def _get_instances(*args, **kwargs):
         if cls not in instances_:

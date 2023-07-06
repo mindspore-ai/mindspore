@@ -41,7 +41,7 @@ class EasyInfer:
         model_session = InferSessionFactory.create_infer_session(model_path,
                                                                  cfg,
                                                                  params_file=param_path)
-        logger.info(f'[MODEL INFER] Create model session success')
+        logger.info('[MODEL INFER] Create model session success')
 
         for _ in range(args.warmup_times):
             outputs = model_session(input_data_map)
@@ -50,9 +50,10 @@ class EasyInfer:
         for _ in range(args.loop_infer_times):
             outputs = model_session(input_data_map)
         end = time.time()
-        logger.info(f'Model Infer {args.loop_infer_times} times, '
-                    f'Avg infer time is '
-                    f'{round((end - start) / args.loop_infer_times * 1000, 3)} ms')
+        if args.loop_infer_times != 0:
+            logger.info(f'Model Infer {args.loop_infer_times} times, '
+                        f'Avg infer time is '
+                        f'{round((end - start) / args.loop_infer_times * 1000, 3)} ms')
         if output_data_dir is not None:
             if args.save_file_type == SaveFileType.NPY.value:
                 np.save(output_data_dir, outputs)
