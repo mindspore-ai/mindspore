@@ -77,21 +77,21 @@ uint32_t SequenceConcatKernel::ParseKernelParam() {
     input_shapes_.push_back(shape_vec_item);
   }
   ::google::protobuf::Map<::std::string, ::aicpuops::AttrValue> attrs = node_def_.attrs();
-  axis_ = attrs["axis"].i();
+  axis_ = static_cast<int>(attrs["axis"].i());
   if (axis_ < 0) {
     axis_ = axis_ + SizeToInt(input_shapes_[0].size());
   }
 
   input_flat_shape_list_.clear();
   for (int64_t i = 0; i < tuple_shape[0]; i++) {
-    auto input_shape_i = input_shapes_[i];
+    std::vector<int64_t> input_shape_i = input_shapes_[i];
     auto flat_shape = FlatShapeByAxis(input_shape_i, axis_);
     (void)input_flat_shape_list_.emplace_back(flat_shape);
   }
 
   output_dim_ = 0;
   offset_.clear();
-  for (int64_t j = 0; j < tuple_shape[0]; ++j) {
+  for (size_t j = 0; j < LongToSize(tuple_shape[0]); ++j) {
     offset_.push_back(output_dim_);
     output_dim_ += LongToSize(input_flat_shape_list_[j][1]);
   }
@@ -121,7 +121,8 @@ uint32_t SequenceConcatKernel::SequenceConcatTask() {
   if (input_flat_shape_list_.empty() || input_flat_shape_list_[0].empty()) {
     return kAicpuKernelStateInvalid;
   }
-  const int64_t per_unit_size = element_size / std::thread::hardware_concurrency();
+  const int64_t per_unit_size =
+    static_cast<int64_t>((element_size)) / static_cast<int64_t>(std::thread::hardware_concurrency());
   auto tasks = [&](size_t start, size_t end) {
     for (size_t pos = start; pos < end; ++pos) {
       if (element_num == 0) {
@@ -143,7 +144,7 @@ uint32_t SequenceConcatKernel::SequenceConcatTask() {
       }
     }
   };
-  ParallelFor(element_size, per_unit_size, tasks);
+  ParallelFor(static_cast<int64_t>(element_size), per_unit_size, tasks);
 
   return kAicpuKernelStateSucess;
 }
@@ -171,7 +172,7 @@ uint32_t SequenceConcatKernel::DoCompute() {
     case aicpuops::DataType::MS_BOOL:
       return SequenceConcatTask<bool>();
     default:
-      AICPU_LOGE("SequenceConcat kernel data type [%s] not support.", input_data_type_);
+      AICPU_LOGE("SequenceConcat kernel data type [%s] not support.", static_cast<int>(input_data_type_));
       return kAicpuKernelStateInvalid;
   }
 }
