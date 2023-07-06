@@ -17,6 +17,7 @@
 #include "transform/graph_ir/op_declare/transform_fusion_ops_declare.h"
 #include <vector>
 #include <string>
+#include "ops/fusion/flash_attention.h"
 
 namespace mindspore::transform {
 // KVCacheMgr
@@ -24,4 +25,11 @@ INPUT_MAP(KVCacheMgr) = {{1, INPUT_DESC(past)}, {2, INPUT_DESC(cur)}, {3, INPUT_
 ATTR_MAP(KVCacheMgr) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(KVCacheMgr) = {{0, OUTPUT_DESC(past)}};
 REG_ADPT_DESC(KVCacheMgr, "KVCacheMgr", ADPT_DESC(KVCacheMgr))
+
+// FlashAttention
+INPUT_MAP(FlashAttention) = {
+  {1, INPUT_DESC(q)}, {2, INPUT_DESC(k)}, {3, INPUT_DESC(v)}, {4, INPUT_DESC(attention_mask)}};
+ATTR_MAP(FlashAttention) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(FlashAttention) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(FlashAttention, ops::kNameFlashAttention, ADPT_DESC(FlashAttention))
 }  // namespace mindspore::transform

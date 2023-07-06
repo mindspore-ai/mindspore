@@ -28,7 +28,7 @@ class MIND_API FlashAttention : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(FlashAttention);
   FlashAttention() : BaseOperator(kNameFlashAttention) { InitIOName({"q", "k", "v", "attention_mask"}, {"y"}); }
-  void Init();
+  void Init() const;
 };
 
 abstract::AbstractBasePtr FlashAttentionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

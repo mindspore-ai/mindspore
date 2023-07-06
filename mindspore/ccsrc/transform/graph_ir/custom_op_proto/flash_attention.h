@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_KV_CACHE_MGR_H_
-#define MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_KV_CACHE_MGR_H_
+#ifndef MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_FLASH_ATTENTION_H_
+#define MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_FLASH_ATTENTION_H_
 
 #include "graph/operator_reg.h"
 #include "graph/operator.h"
 
 namespace ge {
-REG_OP(KVCacheMgr)
-  .INPUT(past, TensorType({DT_FLOAT16}))
-  .INPUT(cur, TensorType({DT_FLOAT16}))
-  .INPUT(index, TensorType({DT_INT32}))
-  .OUTPUT(past, TensorType({DT_FLOAT16}))
-  .OP_END_FACTORY_REG(KVCacheMgr)
+REG_OP(FlashAttention)
+  .INPUT(q, TensorType({DT_FLOAT16, DT_FLOAT, DT_INT32}))
+  .INPUT(k, TensorType({DT_FLOAT16, DT_FLOAT, DT_INT32}))
+  .INPUT(v, TensorType({DT_FLOAT16, DT_FLOAT, DT_INT32}))
+  .INPUT(attention_mask, TensorType({DT_FLOAT16, DT_FLOAT, DT_INT32}))
+  .OUTPUT(y, TensorType({DT_FLOAT16, DT_FLOAT, DT_INT32}))
+  .OP_END_FACTORY_REG(FlashAttention)
 }
-#endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_KV_CACHE_MGR_H_
+#endif  // MINDSPORE_CCSRC_GRAPH_IR_CUSTOM_OP_PROTO_FLASH_ATTENTION_H_
