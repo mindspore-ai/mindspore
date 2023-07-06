@@ -70,22 +70,37 @@ int SliceToIndicesCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   return 0;
 }
 
+static std::vector<int64_t> GetSlicedIndices(int64_t start, int64_t stop, int64_t step) {
+  std::vector<int64_t> indices;
+  if ((start - stop) * step < 0) {
+    if (step > 0) {
+      for (int64_t i = start; i < stop; i += step) {
+        (void)indices.emplace_back(i);
+      }
+    } else {
+      for (int64_t i = start; i > stop; i += step) {
+        (void)indices.emplace_back(i);
+      }
+    }
+  }
+  return indices;
+}
+
 bool SliceToIndicesCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
                                               const std::vector<AddressPtr> &outputs) const {
-  const auto data_shape_addr = reinterpret_cast<int64_t *>(inputs[kIndex0]->addr);
-  const auto init_by_none_addr = reinterpret_cast<int64_t *>(inputs[kIndex1]->addr);
-  const auto start_addr = reinterpret_cast<int64_t *>(inputs[kIndex2]->addr);
-  const auto stop_addr = reinterpret_cast<int64_t *>(inputs[kIndex3]->addr);
-  const auto step_addr = reinterpret_cast<int64_t *>(inputs[kIndex4]->addr);
-  auto indices_attr = reinterpret_cast<int64_t *>(outputs[kIndex0]->addr);
-  auto value_shape_attr = reinterpret_cast<int64_t *>(outputs[kIndex1]->addr);
-  auto output_start_attr = reinterpret_cast<int64_t *>(outputs[kIndex2]->addr);
-  auto output_stop_attr = reinterpret_cast<int64_t *>(outputs[kIndex3]->addr);
-  auto output_step_attr = reinterpret_cast<int64_t *>(outputs[kIndex4]->addr);
+  const auto data_shape_addr = static_cast<int64_t *>(inputs[kIndex0]->addr);
+  const auto init_by_none_addr = static_cast<int64_t *>(inputs[kIndex1]->addr);
+  const auto start_addr = static_cast<int64_t *>(inputs[kIndex2]->addr);
+  const auto stop_addr = static_cast<int64_t *>(inputs[kIndex3]->addr);
+  const auto step_addr = static_cast<int64_t *>(inputs[kIndex4]->addr);
+  auto indices_attr = static_cast<int64_t *>(outputs[kIndex0]->addr);
+  auto value_shape_attr = static_cast<int64_t *>(outputs[kIndex1]->addr);
+  auto output_start_attr = static_cast<int64_t *>(outputs[kIndex2]->addr);
+  auto output_stop_attr = static_cast<int64_t *>(outputs[kIndex3]->addr);
+  auto output_step_attr = static_cast<int64_t *>(outputs[kIndex4]->addr);
   ShapeVector data_shape;
   for (size_t i = 0; i < IntToSize(data_shape_size_); i++) {
-    data_shape.emplace_back(data_shape_addr[i]);
+    (void)data_shape.emplace_back(data_shape_addr[i]);
   }
 
   int64_t dim_size = data_shape_addr[0];
@@ -117,24 +132,23 @@ bool SliceToIndicesCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
     stop = stop < dim_size ? stop : dim_size;
   }
 
-  std::vector<int64_t> indices;
-  if ((start - stop) * step < 0) {
-    for (int64_t i = start; i < stop; i += step) {
-      indices.emplace_back(i);
-    }
-  }
+  std::vector<int64_t> indices = GetSlicedIndices(start, stop, step);
+
   auto value_shape = data_shape;
   value_shape[0] = SizeToLong(indices.size());
   auto indices_size = sizeof(int64_t) * indices.size();
   auto value_shape_size = sizeof(int64_t) * value_shape.size();
   auto output_arg_size = sizeof(int64_t);
+  if (memset_s(indices_attr, sizeof(int64_t), 0, sizeof(int64_t)) != EOK) {
+    MS_LOG(EXCEPTION) << "Failed to call memset_s.";
+  }
   if (indices_size != 0) {
     CheckCopy(indices_attr, indices_size, indices.data(), indices_size, kernel_name_);
-    CheckCopy(value_shape_attr, value_shape_size, value_shape.data(), value_shape_size, kernel_name_);
-    CheckCopy(output_start_attr, output_arg_size, &start, output_arg_size, kernel_name_);
-    CheckCopy(output_stop_attr, output_arg_size, &stop, output_arg_size, kernel_name_);
-    CheckCopy(output_step_attr, output_arg_size, &step, output_arg_size, kernel_name_);
   }
+  CheckCopy(value_shape_attr, value_shape_size, value_shape.data(), value_shape_size, kernel_name_);
+  CheckCopy(output_start_attr, output_arg_size, &start, output_arg_size, kernel_name_);
+  CheckCopy(output_stop_attr, output_arg_size, &stop, output_arg_size, kernel_name_);
+  CheckCopy(output_step_attr, output_arg_size, &step, output_arg_size, kernel_name_);
   outputs_[0]->SetShapeVector(ShapeVector({SizeToLong(indices.size()), 1}));
   outputs_[1]->SetShapeVector({SizeToLong(value_shape.size())});
   outputs_[kIndex2]->SetShapeVector({1});
@@ -145,7 +159,7 @@ bool SliceToIndicesCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
 
 bool SliceToIndicesCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                         const std::vector<AddressPtr> &outputs) {
-  return kernel_func_(this, inputs, workspace, outputs);
+  return kernel_func_(this, inputs, outputs);
 }
 
 std::vector<std::pair<KernelAttr, SliceToIndicesCpuKernelMod::SliceToIndicesFunc>>

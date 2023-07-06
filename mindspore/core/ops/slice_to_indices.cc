@@ -38,7 +38,7 @@ AbstractBasePtr SliceToIndicesInferInner(const PrimitivePtr &primitive,
   (void)std::for_each(input_args.begin(), input_args.end(), [op_name](const AbstractBasePtr &abs) {
     if (abs->isa<abstract::AbstractScalar>()) {
       if (abs->BuildType()->type_id() != kNumberTypeInt64) {
-        MS_EXCEPTION(TypeError) << "The type of input of the MakeSlice operator must be int64 bot got "
+        MS_EXCEPTION(TypeError) << "The type of input of the SliceToindices operator must be int64 bot got "
                                 << abs->ToString();
       }
     }
@@ -71,7 +71,7 @@ class SliceToIndicesInfer : public abstract::OpInferBase {
     return SliceToIndicesInferInner(prim, input_args)->BuildType();
   }
 
-  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const override {
     return SliceToIndicesInferInner(primitive, input_args);
   }
