@@ -890,10 +890,15 @@ void GradExecutor::DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info,
   op_run_info->out_value_id = out_id;
   op_run_info->base_op_run_info.abstract =
     PyNativeAlgo::Common::SetAbstractValueToAnyValue(input_args_info->out_value->ToAbstract());
-  (void)std::transform(input_args_info->input_arg_value_vec.begin(), input_args_info->input_arg_value_vec.end(),
-                       std::back_inserter(op_run_info->op_grad_info->input_abs), [](auto &value) {
-                         return PyNativeAlgo::Common::SetAbstractValueToAnyValue(value->ToAbstract());
-                       });
+  op_run_info->op_grad_info->input_value_grad_type.resize(op_run_info->input_size);
+  for (size_t i = 0; i < op_run_info->input_size; ++i) {
+    const auto &value = input_args_info->input_arg_value_vec[i];
+    (void)op_run_info->op_grad_info->input_abs.emplace_back(
+      PyNativeAlgo::Common::SetAbstractValueToAnyValue(value->ToAbstract()));
+    op_run_info->op_grad_info->input_value_grad_type[i] =
+      PyNativeAlgo::Common::SetValueGradInfo(value, top_cell(), TensorGradType::kConstant);
+  }
+  PyNativeAlgo::Common::SetValueGradInfo(op_run_info->real_out, nullptr, TensorGradType::kOpOutput);
   PyNativeAlgo::PyParser::PrepareOpGradInfo(op_run_info);
   DoOpGrad(op_run_info);
   auto node_info = std::make_shared<DynamicDetectNodeInfo>(

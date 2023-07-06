@@ -261,11 +261,9 @@ AnfNodePtr HandleRealToComplex(const TensorPtr &input, const AbstractBasePtr &ab
 
   MS_EXCEPTION_IF_NULL(input);
   TypePtr input_type = input->Dtype();
-  if (input_type == nullptr || !input_type->isa<TensorType>()) {
+  if (input_type == nullptr) {
     return din;
   }
-  input_type = input_type->cast_ptr<TensorType>()->element();
-  MS_EXCEPTION_IF_NULL(input_type);
   if (input_type->type_id() == kNumberTypeComplex64 || input_type->type_id() == kNumberTypeComplex128) {
     return din;
   }
