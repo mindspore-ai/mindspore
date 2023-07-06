@@ -35,6 +35,39 @@ bool GetDataFromOp(void *dst, size_t len, const ops::Custom *custom_op, std::str
   (void)memcpy(dst, buf.data(), data_size);
   return true;
 }
+
+OpParameter *PopulateSplitReduceConcatFusionParam(const ops::Custom *op) {
+  if (op->get_attr().size() < 1) {
+    return nullptr;
+  }
+  SplitParameter *param = static_cast<SplitParameter *>(malloc(sizeof(SplitParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "malloc SplitParameter failed.";
+    return nullptr;
+  }
+  if (!GetDataFromOp(param, sizeof(SplitParameter), op, "0")) {
+    MS_LOG(ERROR) << "Get SplitParameter value From prim fail.";
+    free(param);
+    return nullptr;
+  }
+
+  auto split_sizes_size = static_cast<size_t>(param->num_split_) * sizeof(int);
+  param->split_sizes_ = reinterpret_cast<int *>(malloc(split_sizes_size));
+  if (param->split_sizes_ == nullptr) {
+    MS_LOG(ERROR) << "malloc split_sizes_ failed.";
+    free(param);
+    return nullptr;
+  }
+  if (!GetDataFromOp(param->split_sizes_, split_sizes_size, op, "1")) {
+    MS_LOG(ERROR) << "Get split value From prim fail.";
+    free(param->split_sizes_);
+    free(param);
+    return nullptr;
+  }
+
+  param->op_parameter_.type_ = PrimType_Inner_SplitReduceConcatFusion;
+  return reinterpret_cast<OpParameter *>(param);
+}
 }  // namespace
 
 OpParameter *PopulateCustomOpParameter(const BaseOperatorPtr &base_operator) {
@@ -68,36 +101,7 @@ OpParameter *PopulateCustomOpParameter(const BaseOperatorPtr &base_operator) {
     param->op_parameter_.type_ = PrimType_Inner_GraphKernel;
     return reinterpret_cast<OpParameter *>(param);
   } else if (type == "SplitReduceConcatFusion") {
-    if (op->get_attr().size() < 1) {
-      return nullptr;
-    }
-    SplitParameter *param = static_cast<SplitParameter *>(malloc(sizeof(SplitParameter)));
-    if (param == nullptr) {
-      MS_LOG(ERROR) << "malloc SplitParameter failed.";
-      return nullptr;
-    }
-    if (!GetDataFromOp(param, sizeof(SplitParameter), op, "0")) {
-      MS_LOG(ERROR) << "Get SplitParameter value From prim fail.";
-      free(param);
-      return nullptr;
-    }
-
-    auto split_sizes_size = static_cast<size_t>(param->num_split_) * sizeof(int);
-    param->split_sizes_ = reinterpret_cast<int *>(malloc(split_sizes_size));
-    if (param->split_sizes_ == nullptr) {
-      MS_LOG(ERROR) << "malloc split_sizes_ failed.";
-      free(param);
-      return nullptr;
-    }
-    if (!GetDataFromOp(param->split_sizes_, split_sizes_size, op, "1")) {
-      MS_LOG(ERROR) << "Get split value From prim fail.";
-      free(param->split_sizes_);
-      free(param);
-      return nullptr;
-    }
-
-    param->op_parameter_.type_ = PrimType_Inner_SplitReduceConcatFusion;
-    return reinterpret_cast<OpParameter *>(param);
+    return PopulateSplitReduceConcatFusionParam(op);
   } else if (type == "EncoderLayer") {
     std::cout << "EncoderLayer populate" << std::endl;
     auto *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
