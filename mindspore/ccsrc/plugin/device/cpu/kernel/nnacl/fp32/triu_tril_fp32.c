@@ -24,7 +24,7 @@ int TriuTrilGetCalculateNum(KernelBase *self, int64_t *mul, int64_t *height, int
     }
   }
 
-  int input_hw_dims = Num2;
+  size_t input_hw_dims = Num2;
   NNACL_CHECK_FALSE(input_tensor->shape_size_ < DIMENSION_2D, NNACL_TRIU_INPUT_DIMS_INVALID);
 
   *mul = 1;

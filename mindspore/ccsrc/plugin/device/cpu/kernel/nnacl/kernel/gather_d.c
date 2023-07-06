@@ -41,7 +41,7 @@ int GatherDResize(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(gather_d);
   GatherParameter *param = (GatherParameter *)gather_d->base.param_;
   NNACL_CHECK_NULL_RETURN_ERR(param);
-  int input_rank = gather_d->base.in_[0]->shape_size_;
+  int input_rank = (int)gather_d->base.in_[0]->shape_size_;
   NNACL_CHECK_FALSE(param->axis_ >= input_rank || param->axis_ < -input_rank, NNACL_GATHER_D_AXIS_INVALID);
 
   if (param->axis_ < 0) {
