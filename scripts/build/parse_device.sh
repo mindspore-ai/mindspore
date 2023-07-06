@@ -45,7 +45,6 @@ parse_device()
         exit 1
       fi
       export CUDA_VERSION="$DEVICE_VERSION"
-      export ENABLE_AKG="on"
       export DEVICE_VERSION=
     elif [[ "X$D" == "Xrocm" ]]; then
       export ENABLE_GPU="on"
@@ -68,7 +67,6 @@ parse_device()
         export ENABLE_ACL="on"
         ENABLE_CPU="on"
         export ENABLE_MPI="on"
-        export ENABLE_AKG="on"
         export ASCEND_VERSION="$DEVICE_VERSION"
       else
         echo "Invalid value ${DEVICE_VERSION} for option -V"
@@ -78,7 +76,6 @@ parse_device()
       export DEVICE_VERSION=
     elif [[ "X$D" == "Xcpu" ]]; then
       export ENABLE_CPU="on"
-      export ENABLE_AKG="on"
       export ENABLE_MPI="on"
     elif [[ "X$D" == "X" ]]; then
       :
