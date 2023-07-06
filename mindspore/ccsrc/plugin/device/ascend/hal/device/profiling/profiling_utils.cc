@@ -456,7 +456,7 @@ uint64_t ProfilingUtils::GetMsprofHashId(const std::string &info) {
     uint64_t hash_id = MsprofGetHashId(hash_info, info.length());
     auto ret = msprof_hash_id_.try_emplace(info, hash_id);
     if (!ret.second) {
-      MS_LOG(WARNING) << "[profiler] note " << info << " hash id already exist";
+      MS_LOG(WARNING) << "note " << info << " hash id already exist";
     }
     return hash_id;
   } else {
@@ -517,10 +517,10 @@ void ProfilingUtils::RecordModelLoad(const rtModel_t rt_model_handle) {
   uint32_t rt_model_id = 0;
   rtError_t rt_model_ret = rtModelGetId(rt_model_handle, &rt_model_id);
   if (rt_model_ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "[profiler] Call rt api rtModelGetId failed, ret: " << rt_model_ret;
+    MS_LOG(ERROR) << "Call rt api rtModelGetId failed, ret: " << rt_model_ret;
     return;
   }
-  MS_LOG(INFO) << "[profiler] RecordModelLoad model_id: " << rt_model_id;
+  MS_LOG(INFO) << "RecordModelLoad model_id: " << rt_model_id;
 
   const uint64_t prof_time = MsprofSysCycleTime();
   MsprofEvent model_load_event_{};
@@ -542,10 +542,10 @@ void ProfilingUtils::RecordModelExecute(const KernelGraphPtr kernel_graph) {
   rtModel_t rt_model_handle = ModelRunner::Instance().GetModelHandle(kernel_graph->graph_id());
   rtError_t rt_model_ret = rtModelGetId(rt_model_handle, &rt_model_id);
   if (rt_model_ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "[profiler] Call rt api rtModelGetId failed, ret: " << rt_model_ret;
+    MS_LOG(ERROR) << "Call rt api rtModelGetId failed, ret: " << rt_model_ret;
     return;
   }
-  MS_LOG(INFO) << "[profiler] RecordModelExecute model_id: " << rt_model_id;
+  MS_LOG(INFO) << "RecordModelExecute model_id: " << rt_model_id;
 
   auto request_id = 0;
 
@@ -576,12 +576,12 @@ void ProfilingUtils::RecordLaunchTaskBegin(const std::string &op_name, const boo
   }
   auto iter = node_addition_info_.find(full_scope_name);
   if (iter == node_addition_info_.end()) {
-    MS_LOG(WARNING) << "[profiler] Do not find op info: " << full_scope_name;
+    MS_LOG(WARNING) << "Do not find op info: " << full_scope_name;
     return;
   }
   ProfNodeAdditionInfo &addition_info = iter->second;
   addition_info.api.beginTime = MsprofSysCycleTime();
-  MS_LOG(DEBUG) << "[profiler] api Launch begin " << full_scope_name << ", " << addition_info.api.beginTime;
+  MS_LOG(DEBUG) << "api Launch begin " << full_scope_name << ", " << addition_info.api.beginTime;
 }
 
 void ProfilingUtils::RegisterProfType() {
@@ -619,7 +619,7 @@ void ProfilingUtils::ReportTask(const std::string &op_name, const bool is_op_nam
   }
   auto iter = node_addition_info_.find(full_scope_name);
   if (iter == node_addition_info_.end()) {
-    MS_LOG(WARNING) << "[profiler] Do not find op info: " << full_scope_name;
+    MS_LOG(WARNING) << "Do not find op info: " << full_scope_name;
     return;
   }
   ProfNodeAdditionInfo &addition_info = iter->second;
@@ -632,7 +632,7 @@ void ProfilingUtils::ReportTask(const std::string &op_name, const bool is_op_nam
   if (compact_ret != MSPROF_ERROR_NONE) {
     MS_LOG(ERROR) << "MsprofReportCompactInfo failed.";
   }
-  MS_LOG(DEBUG) << "[profiler] MsprofReportCompactInfo：op_name: " << op_name
+  MS_LOG(DEBUG) << "MsprofReportCompactInfo：op_name: " << op_name
                 << ", tensors: " << addition_info.tensor_info_wrappers.size();
 
   for (auto &tensor_info_wrapper : addition_info.tensor_info_wrappers) {
@@ -699,7 +699,7 @@ void ProfilingUtils::InitReportNode(const CNodePtr &cnode) {
 
   auto ret = node_addition_info_.try_emplace(cnode->fullname_with_scope(), addition_info);
   if (!ret.second) {
-    MS_LOG(WARNING) << "[profiler] " << cnode->fullname_with_scope() << " node addition already exist";
+    MS_LOG(WARNING) << cnode->fullname_with_scope() << " node addition already exist";
   }
 }
 

@@ -495,6 +495,8 @@ class Profiler:
             >>> from mindspore import Profiler
             >>> from mindspore import nn
             >>> from mindspore import Model
+            >>> from lenet import LeNet5
+            >>> from mnist import create_dataset
             >>> # Profiler init.
             >>> profiler = Profiler()
             >>> # Train Model or eval Model, taking LeNet5 as an example
@@ -597,6 +599,7 @@ class Profiler:
 
         Examples:
             >>> from mindspore.train import Callback
+            >>> from mindspore import Profiler
             >>> class StopAtStep(Callback):
             ...     def __init__(self, start_step, stop_step):
             ...         super(StopAtStep, self).__init__()
@@ -663,6 +666,7 @@ class Profiler:
 
         Examples:
             >>> from mindspore.train import Callback
+            >>> from mindspore import Profiler
             >>> class StopAtEpoch(Callback):
             ...     def __init__(self, start_epoch, stop_epoch):
             ...         super(StopAtEpoch, self).__init__()
