@@ -183,7 +183,7 @@ KernelType AclHelper::GetKernelInfoFromGe(const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
 
-  static const std::set<std::string> excuded_nodes = {prim::kCTCLoss, prim::kGetNext};
+  static const std::set<std::string> excuded_nodes = {prim::kCTCLoss, prim::kGetNext, prim::kPadV3, prim::kPadV3Grad};
   std::string name = GetCNodeFuncName(cnode);
   if (excuded_nodes.count(name) != 0) {
     return KernelType::UNKNOWN_KERNEL_TYPE;
