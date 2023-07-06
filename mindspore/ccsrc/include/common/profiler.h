@@ -116,11 +116,11 @@ class COMMON_EXPORT ProfilerRecorder {
   ~ProfilerRecorder();
 
  private:
-  ProfilerModule module_;
-  ProfilerEvent event_;
-  std::string op_name_;
-  uint64_t start_time_;
-  bool is_inner_event_;
+  ProfilerModule module_{ProfilerModule::kDefault};
+  ProfilerEvent event_{ProfilerEvent::kDefault};
+  std::string op_name_{};
+  uint64_t start_time_{0L};
+  bool is_inner_event_{false};
 };
 
 class COMMON_EXPORT ProfilerStageRecorder {
@@ -134,19 +134,6 @@ class COMMON_EXPORT ProfilerStageRecorder {
 };
 
 struct ProfilerData {
-  ProfilerData(const ProfilerData &other)
-      : is_stage_(other.is_stage_),
-        stage_(other.stage_),
-        module_(other.module_),
-        event_(other.event_),
-        op_name_(other.op_name_),
-        is_inner_event_(other.is_inner_event_),
-        start_time_(other.start_time_),
-        end_time_(other.end_time_),
-        dur_time_(other.dur_time_),
-        tid_(other.tid_),
-        pid_(other.pid_) {}
-
   ProfilerData(ProfilerModule module, ProfilerEvent event, const std::string &op_name, bool is_inner_event,
                uint64_t start_time, uint64_t end_time)
       : is_stage_(false),
@@ -156,11 +143,10 @@ struct ProfilerData {
         op_name_(op_name),
         is_inner_event_(is_inner_event),
         start_time_(start_time),
-        end_time_(end_time) {
-    dur_time_ = end_time - start_time;
-    tid_ = std::this_thread::get_id();
-    pid_ = getpid();
-  }
+        end_time_(end_time),
+        dur_time_(end_time - start_time),
+        tid_(std::this_thread::get_id()),
+        pid_(getpid()) {}
 
   ProfilerData(ProfilerStage stage, uint64_t start_time, uint64_t end_time)
       : is_stage_(true),
@@ -176,17 +162,49 @@ struct ProfilerData {
     pid_ = getpid();
   }
 
-  bool is_stage_;
-  ProfilerStage stage_;
-  ProfilerModule module_;
-  ProfilerEvent event_;
-  std::string op_name_;
-  bool is_inner_event_;
-  uint64_t start_time_;
-  uint64_t end_time_;
-  uint64_t dur_time_;
-  std::thread::id tid_;
-  int32_t pid_;
+  ProfilerData(const ProfilerData &other)
+      : is_stage_(other.is_stage_),
+        stage_(other.stage_),
+        module_(other.module_),
+        event_(other.event_),
+        op_name_(other.op_name_),
+        is_inner_event_(other.is_inner_event_),
+        start_time_(other.start_time_),
+        end_time_(other.end_time_),
+        dur_time_(other.dur_time_),
+        tid_(other.tid_),
+        pid_(other.pid_) {}
+
+  ProfilerData &operator=(const ProfilerData &other) {
+    if (this == &other) {
+      return *this;
+    }
+
+    is_stage_ = other.is_stage_;
+    stage_ = other.stage_;
+    module_ = other.module_;
+    event_ = other.event_;
+    op_name_ = other.op_name_;
+    is_inner_event_ = other.is_inner_event_;
+    start_time_ = other.start_time_;
+    end_time_ = other.end_time_;
+    dur_time_ = other.dur_time_;
+    tid_ = other.tid_;
+    pid_ = other.pid_;
+    return *this;
+  }
+
+  bool is_stage_{false};
+  ProfilerStage stage_{ProfilerStage::kDefault};
+  ProfilerModule module_{ProfilerModule::kDefault};
+  ProfilerEvent event_{ProfilerEvent::kDefault};
+  std::string op_name_{};
+  bool is_inner_event_{false};
+  uint64_t start_time_{0L};
+  uint64_t end_time_{0L};
+  uint64_t dur_time_{0L};
+  std::thread::id tid_{};
+  int32_t pid_{0};
 };
 using ProfilerDataPtr = std::shared_ptr<ProfilerData>;
 
@@ -240,9 +258,9 @@ class COMMON_EXPORT ProfilerAnalyzer {
 
   // The used by ProfilerRecorder to record data.
   bool profiler_enable() const { return profiler_enable_; }
-  void RecordData(const ProfilerDataPtr &data);
-  uint64_t GetTimeStamp();
-  std::string GetBriefName(const std::string &scope_name);
+  void RecordData(const ProfilerDataPtr &data) noexcept;
+  uint64_t GetTimeStamp() const;
+  std::string GetBriefName(const std::string &scope_name) const;
 
  private:
   ProfilerAnalyzer() = default;
@@ -272,7 +290,7 @@ class COMMON_EXPORT ProfilerAnalyzer {
   void DumpEventSummaryData(const std::map<ProfilerEvent, ProfilerEventInfoPtr> &event_infos,
                             std::stringstream &string_stream);
   void DumpOpSummaryData(const mindspore::HashMap<std::string, ProfilerStatisticsInfoPtr> &op_infos,
-                         std::stringstream &string_stream);
+                         std::stringstream &string_stream) const;
 
   // The relevant members of step.
   size_t step_{0};

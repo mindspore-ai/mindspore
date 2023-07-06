@@ -188,14 +188,14 @@ void ProfilerAnalyzer::Clear() {
   stage_infos_.clear();
 }
 
-uint64_t ProfilerAnalyzer::GetTimeStamp() {
+uint64_t ProfilerAnalyzer::GetTimeStamp() const {
   auto now_time = std::chrono::steady_clock::now();
   int64_t us_time_stamp = std::chrono::duration_cast<std::chrono::microseconds>(now_time.time_since_epoch()).count();
   return static_cast<uint64_t>(us_time_stamp);
 }
 
 // For example: ScopeName(XX/XX/ReLU-op1) --> BriefName(ReLU)
-std::string ProfilerAnalyzer::GetBriefName(const std::string &scope_name) {
+std::string ProfilerAnalyzer::GetBriefName(const std::string &scope_name) const {
   auto first_index = scope_name.rfind('/');
   auto second_index = scope_name.rfind("-op");
   if ((first_index != std::string::npos) && (second_index != std::string::npos) &&
@@ -205,7 +205,7 @@ std::string ProfilerAnalyzer::GetBriefName(const std::string &scope_name) {
   return scope_name;
 }
 
-void ProfilerAnalyzer::RecordData(const ProfilerDataPtr &data) {
+void ProfilerAnalyzer::RecordData(const ProfilerDataPtr &data) noexcept {
   MS_EXCEPTION_IF_NULL(data);
   std::unique_lock<std::mutex> lock(data_mutex_);
   (void)data_.emplace_back(data);
@@ -325,7 +325,7 @@ void ProfilerAnalyzer::SaveJsonData(const ProfilerDataPtr &data) {
   json_data[kJsonTs] = data->start_time_;
   json_data[kJsonDur] = data->dur_time_;
 
-  json_infos_.emplace_back(json_data);
+  (void)json_infos_.emplace_back(json_data);
 }
 
 void ProfilerAnalyzer::AddPythonSummaryData() {
@@ -572,7 +572,7 @@ void ProfilerAnalyzer::DumpEventSummaryData(const std::map<ProfilerEvent, Profil
 }
 
 void ProfilerAnalyzer::DumpOpSummaryData(const mindspore::HashMap<std::string, ProfilerStatisticsInfoPtr> &op_infos,
-                                         std::stringstream &string_stream) {
+                                         std::stringstream &string_stream) const {
   if (show_top_num_ == 0) {
     return;
   }
