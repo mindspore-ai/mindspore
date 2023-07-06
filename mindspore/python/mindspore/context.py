@@ -264,8 +264,8 @@ class _Context:
         Args:
             ascend_config (dict):
                 - precision_mode (str): "force_fp16", "allow_fp32_to_fp16", "allow_mix_precision",
-                            "must_keep_origin_dtype", "force_fp32", "force_lowerprecision", "allow_fp32_to_bf16",
-                            "allow_fp32_to_lowprecision", "allow_mix_precision_fp16" and "allow_mix_precision_bf16".
+                            "must_keep_origin_dtype", "force_fp32", "allow_fp32_to_bf16",
+                            "allow_mix_precision_fp16" and "allow_mix_precision_bf16".
                 - jit_compile (bool): ``False`` and ``True``.
                 - atomic_clean_policy (int): ``0`` and ``1``.
                 - op_precision_mode (str): config file path.
@@ -274,8 +274,8 @@ class _Context:
         """
         ascend_cfg_modes = {
             'precision_mode': ["force_fp16", "allow_fp32_to_fp16", "allow_mix_precision", "must_keep_origin_dtype",
-                               "force_fp32", "force_lowerprecision", "allow_fp32_to_bf16",
-                               "allow_fp32_to_lowprecision", "allow_mix_precision_fp16", "allow_mix_precision_bf16"],
+                               "force_fp32", "allow_fp32_to_bf16", "allow_mix_precision_fp16",
+                               "allow_mix_precision_bf16"],
             'jit_compile': [True, False],
             'atomic_clean_policy': [0, 1],
             'matmul_allow_hf32': [True, False],
@@ -1222,12 +1222,8 @@ def set_context(**kwargs):
               - must_keep_origin_dtype: Keep the accuracy of the original drawing.
               - force_fp32: When the input of the matrix calculation operator is float16 and the output supports
                 float16 and float32, output is forced to float32.
-              - force_lowerprecision: When the operator supports both float16 or bfloat16 and float32, select
-                float16 or bfloat16 directly.
               - allow_fp32_to_bf16: When the operator does not support the float32 data type, directly reduce
                 the precision of bfloat16.
-              - allow_fp32_to_lowprecision: When the operator does not support the float32 data type, directly
-                reduce the precision of float16 or bfloat16.
               - allow_mix_precision_fp16: Automatic mixing precision, facing the whole network operator, automatically
                 reduces the precision of some operators to float16 according to the built-in optimization strategy.
               - allow_mix_precision_bf16: Automatic mixing precision, facing the whole network operator, according to
