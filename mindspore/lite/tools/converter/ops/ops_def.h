@@ -52,6 +52,7 @@ ADD_CONVERTER_ONLY_OP(MegatronLinearAllGather);
 ADD_CONVERTER_ONLY_OP(MegatronMakeViewlessTensor);
 ADD_CONVERTER_ONLY_OP(MegatronScaledMaskedSoftmax);
 ADD_CONVERTER_ONLY_OP(Shrink);
+ADD_CONVERTER_ONLY_OP(TfIdfVectorizer);
 }  // namespace lite
 }  // namespace mindspore
 

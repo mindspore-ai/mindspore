@@ -142,4 +142,19 @@ REG_ADPT_DESC(BatchToSpaceNDD, kBatchToSpaceNDDOpName, ADPT_DESC(BatchToSpaceND)
 REG_ADPT_DESC(BatchToSpaceTF, kNameBatchToSpaceTF, ADPT_DESC(BatchToSpaceND))
 REG_ADPT_DESC(kNameBatchToSpaceNdV2, kNameBatchToSpaceNdV2, ADPT_DESC(BatchToSpaceND))
 REG_ADPT_DESC(kNameBatchToSpaceNDD, kBatchToSpaceNDDOpName, ADPT_DESC(BatchToSpaceND))
+
+// TfIdfVectorizer
+INPUT_MAP(TfIdfVectorizer) = {{1, INPUT_DESC(input)}};
+ATTR_MAP(TfIdfVectorizer) = {
+  {"max_gram_length", ATTR_DESC(max_gram_length, AnyTraits<int64_t>())},
+  {"max_skip_count", ATTR_DESC(max_skip_count, AnyTraits<int64_t>())},
+  {"min_gram_length", ATTR_DESC(min_gram_length, AnyTraits<int64_t>())},
+  {"mode", ATTR_DESC(mode, AnyTraits<std::string>())},
+  {"ngram_counts", ATTR_DESC(ngram_counts, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"ngram_indexes", ATTR_DESC(ngram_indexes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"pool_int64s", ATTR_DESC(pool_int64s, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"pool_strings", ATTR_DESC(pool_strings, AnyTraits<std::vector<std::string>>())},
+  {"weights", ATTR_DESC(weights, AnyTraits<std::vector<float>>())}};
+OUTPUT_MAP(TfIdfVectorizer) = {{0, OUTPUT_DESC(output)}};
+REG_ADPT_DESC(TfIdfVectorizer, kNameTfIdfVectorizer, ADPT_DESC(TfIdfVectorizer))
 }  // namespace mindspore::transform

@@ -25,21 +25,25 @@ ATTR_MAP(Ger) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Ger) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Ger, prim::kGer, ADPT_DESC(Ger))
 
+// LogMatrixDeterminant
 INPUT_MAP(LogMatrixDeterminant) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(LogMatrixDeterminant) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(LogMatrixDeterminant) = {{0, OUTPUT_DESC(sign)}, {1, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(LogMatrixDeterminant, prim::kLogMatrixDeterminant, ADPT_DESC(LogMatrixDeterminant))
 
+// MatrixInverse
 INPUT_MAP(MatrixInverse) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(MatrixInverse) = {{"adjoint", ATTR_DESC(adjoint, AnyTraits<bool>())}};
 OUTPUT_MAP(MatrixInverse) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MatrixInverse, prim::kMatrixInverse, ADPT_DESC(MatrixInverse))
 
+// MatrixDeterminant
 INPUT_MAP(MatrixDeterminant) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(MatrixDeterminant) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(MatrixDeterminant) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MatrixDeterminant, prim::kMatrixDeterminant, ADPT_DESC(MatrixDeterminant))
 
+// MatrixSolve
 INPUT_MAP(MatrixSolve) = {{1, INPUT_DESC(matrix)}, {2, INPUT_DESC(rhs)}};
 ATTR_MAP(MatrixSolve) = {{"adjoint", ATTR_DESC(adjoint, AnyTraits<bool>())}};
 OUTPUT_MAP(MatrixSolve) = {{0, OUTPUT_DESC(y)}};
