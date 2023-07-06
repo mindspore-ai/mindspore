@@ -946,10 +946,12 @@ def check_axis_valid(axes, ndim):
 
 
 def max_(*args):
+    """Return the maximum value of the input parameter."""
     return max(*args)
 
 
 def min_(*args):
+    """Return the minimum value of the input parameter."""
     return min(*args)
 
 
