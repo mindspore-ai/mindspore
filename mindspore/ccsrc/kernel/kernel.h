@@ -414,6 +414,8 @@ class BACKEND_EXPORT KernelMod {
   // User data is the extra dat-a required when the kernel is launched, It will be set before launch by runtime.
   virtual void set_input_user_data(UserData *user_data, size_t input_index) {}
   virtual void set_output_user_data(UserData *user_data, size_t output_index) {}
+  // If output of kernel has a user_data, it needs to return true, and the framework will create user_data for it.
+  virtual bool need_user_data() const { return false; }
   const std::vector<AddressPtr> &GetInputsAddr() const { return inputs_addr_; }
   const std::vector<AddressPtr> &GetWorkSpacesAddr() const { return workspaces_addr_; }
   const std::vector<AddressPtr> &GetOutputsAddr() const { return outputs_addr_; }
