@@ -31,6 +31,6 @@ typedef struct ConvolutionSW1x1Struct {
   MatmulStruct *matmul_;
 } ConvolutionSW1x1Struct;
 
-ConvolutionBaseStruct *CreateConvolutionSW1x1(ConvParameter *conv_param);
+ConvolutionBaseStruct *CreateConvolutionSW1x1(ConvParameter *conv_param, bool input_const, bool weight_const);
 #endif
 #endif  // NNACL_KERNEL_CONVOLLUTION_SW_1X1_H_

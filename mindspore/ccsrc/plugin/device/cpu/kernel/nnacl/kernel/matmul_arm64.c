@@ -52,8 +52,8 @@ int MatmulARM64PackMatrixAImplOptPack(void *cdata, int task_id, float l, float r
 int MatmulARM64PackMatrixAImplOpt(MatmulStruct *matmul) {
   int64_t kPackAMinUnitNum = 1 << 13;
   MatMulParameter *param = (MatMulParameter *)(matmul->base_.param_);
-  float *src_ptr =
-    matmul->matrix_a_.has_origin_ ? matmul->matrix_a_.origin_ptr_ : (float *)(matmul->base_.in_[FIRST_INPUT]->data_);
+  float *src_ptr = matmul->matrix_a_.origin_ptr_ != NULL ? matmul->matrix_a_.origin_ptr_
+                                                         : (float *)(matmul->base_.in_[FIRST_INPUT]->data_);
   NNACL_CHECK_TRUE_RET(src_ptr != NULL, NNACL_ERR);
   NNACL_CHECK_TRUE_RET(matmul->matrix_a_.pack_ptr_ != NULL, NNACL_ERR);
 

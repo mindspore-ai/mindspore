@@ -28,6 +28,7 @@ class ConvolutionKernel : public NNACLKernel {
       : NNACLKernel(parameter, inputs, outputs, ctx) {}
   ~ConvolutionKernel() override = default;
   int Prepare() override;
+  int ReSize() override;
 };
 }  // namespace mindspore::nnacl
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_NNACL_CONVOLUTION_H_

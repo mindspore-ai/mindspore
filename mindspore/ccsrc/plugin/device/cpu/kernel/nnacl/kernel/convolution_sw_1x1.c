@@ -68,8 +68,10 @@ int ConvolutionSW1x1Prepare(KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(sw_1x1);
   NNACL_CHECK_NULL_RETURN_ERR(sw_1x1->matmul_);
 
-  sw_1x1->matmul_->a_const_ = IsConst(self->in_[FIRST_INPUT]) && !self->train_session_;
-  sw_1x1->matmul_->b_const_ = IsConst(self->in_[SECOND_INPUT]) && !self->train_session_;
+  sw_1x1->matmul_->matrix_b_.origin_ptr_ = sw_1x1->conv_.origin_weight_;
+  sw_1x1->matmul_->matrix_b_.origin_need_free_ = false;
+  sw_1x1->matmul_->matrix_c_.origin_ptr_ = sw_1x1->conv_.origin_bias_;
+  sw_1x1->matmul_->matrix_c_.origin_need_free_ = false;
 
   sw_1x1->matmul_->infer_shape_ = sw_1x1->conv_.infershape_done_;
 
@@ -90,6 +92,9 @@ int ConvolutionSW1x1Release(KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(sw_1x1);
 
   if (sw_1x1->matmul_ != NULL) {
+    sw_1x1->matmul_->matrix_b_.origin_ptr_ = NULL;
+    sw_1x1->matmul_->matrix_c_.origin_ptr_ = NULL;
+
     (void)sw_1x1->matmul_->base_.Release(&sw_1x1->matmul_->base_);
 
     if (sw_1x1->matmul_->base_.param_ != NULL) {
@@ -105,7 +110,7 @@ int ConvolutionSW1x1Release(KernelBase *self) {
   return NNACL_OK;
 }
 
-ConvolutionBaseStruct *CreateConvolutionSW1x1(ConvParameter *conv_param) {
+ConvolutionBaseStruct *CreateConvolutionSW1x1(ConvParameter *conv_param, bool input_const, bool weight_const) {
   ConvolutionSW1x1Struct *sw_1x1 = (ConvolutionSW1x1Struct *)malloc(sizeof(ConvolutionSW1x1Struct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(sw_1x1);
   memset(sw_1x1, 0, sizeof(ConvolutionSW1x1Struct));
@@ -127,6 +132,8 @@ ConvolutionBaseStruct *CreateConvolutionSW1x1(ConvParameter *conv_param) {
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(matmul);
   matmul->param_ = (OpParameter *)matmul_param;
   ((MatmulStruct *)matmul)->is_sharing_pack_ = false;
+  ((MatmulStruct *)matmul)->a_const_ = input_const;
+  ((MatmulStruct *)matmul)->b_const_ = weight_const;
   sw_1x1->matmul_ = (MatmulStruct *)matmul;
   return (ConvolutionBaseStruct *)sw_1x1;
 }

@@ -23,8 +23,8 @@
 
 typedef struct MatrixInfo {
   bool need_pack_;
-  bool has_packed_;  // only valid for constant, only do once throughout the process.
-  bool has_origin_;  // only valid for constant, only true when failing to infer shape, then false after packed.
+  bool has_packed_;        // only valid for constant, only do once throughout the process.
+  bool origin_need_free_;  // true when failing to infer shape, false in conv1x1 free in convolution delegate
   int pack_size_;
   float *origin_ptr_;  // only valid for constant, which is synchronized with the 'has_origin'.
   float *pack_ptr_;
