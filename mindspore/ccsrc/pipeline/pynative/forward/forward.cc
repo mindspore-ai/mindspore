@@ -388,7 +388,10 @@ void ForwardExecutor::RunOpFrontend(const FrontendOpRunInfoPtr &op_run_info) {
 }
 
 void ForwardExecutor::RunOpBackendSync(const FrontendOpRunInfoPtr &op_run_info) {
-  backend_queue_->Wait();
+  {
+    GilReleaseWithCheck gil_release;
+    backend_queue_->Wait();
+  }
   const auto &backend_op_run_info = CreateBackendOpRunInfo(op_run_info);
   RunOpBackend(op_run_info, backend_op_run_info);
   if (!op_run_info->requires_grad) {
