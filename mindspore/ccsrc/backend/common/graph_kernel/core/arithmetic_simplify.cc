@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -779,20 +779,29 @@ bool ArithmeticSimplify::DoConstantFold(const inner::LiteGraphPtr &litegraph) {
   return changed;
 }
 
-void ReorganizeEmptyGraph(const inner::LiteGraphPtr &litegraph) {
+bool ReorganizeEmptyGraph(const inner::LiteGraphPtr &litegraph) {
   auto &outputs = litegraph->GetOutputs();
   for (size_t i = 0; i < outputs.size(); i++) {
+    MS_EXCEPTION_IF_NULL(outputs[i]);
+    auto out_shape = outputs[i]->shape;
     if (outputs[i]->NodeType() == inner::NType::Tensor) {
+      if (IsDynamic(out_shape)) {
+        return false;
+      }
       inner::GraphBuilder gb;
       auto op_ptr = gb.BroadcastTo(outputs[i], outputs[i]->shape);
       litegraph->SetOutput(i, op_ptr);
     } else if (outputs[i]->NodeType() == inner::NType::Parameter) {
+      if (IsDynamicRank(out_shape) ||
+          std::count_if(out_shape.begin(), out_shape.end(), [](int64_t s) { return s < 0; }) > 1) {
+        return false;
+      }
       inner::GraphBuilder gb;
       auto op_ptr = gb.Reshape(outputs[i], outputs[i]->shape);
       litegraph->SetOutput(i, op_ptr);
     }
   }
-  return;
+  return true;
 }
 
 bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
@@ -818,7 +827,9 @@ bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
       if (!change_anf_graph) {
         continue;
       }
-      ReorganizeEmptyGraph(lg);
+      if (!ReorganizeEmptyGraph(lg)) {
+        continue;
+      }
       auto new_funcgraph = GkUtils::LiteGraph2AnfGraph(lg, Callback::Instance());
       if (new_funcgraph == nullptr) {
         continue;
