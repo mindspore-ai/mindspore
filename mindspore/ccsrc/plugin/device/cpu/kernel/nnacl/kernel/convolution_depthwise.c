@@ -50,6 +50,24 @@ int ConvDwRun(void *cdata, int task_id, float l, float r) {
                 (float *)conv_dw->conv_.bias_data_, conv_param, task_id);
 }
 
+void ConvDwReleaseParam(ConvolutionDepthwiseStruct *conv_dw) {
+  ExecEnv *env = conv_dw->conv_.base_.env_;
+  NNACL_CHECK_NULL_RETURN_VOID(env);
+
+  if (conv_dw->dw_param_.num_pixels_ != NULL) {
+    env->Free(env->allocator_, conv_dw->dw_param_.num_pixels_);
+    conv_dw->dw_param_.num_pixels_ = NULL;
+  }
+  if (conv_dw->dw_param_.out_w_start_ != NULL) {
+    env->Free(env->allocator_, conv_dw->dw_param_.out_w_start_);
+    conv_dw->dw_param_.out_w_start_ = NULL;
+  }
+  if (conv_dw->dw_param_.out_w_end_ != NULL) {
+    env->Free(env->allocator_, conv_dw->dw_param_.out_w_end_);
+    conv_dw->dw_param_.out_w_end_ = NULL;
+  }
+}
+
 void ConvDwPackWeight(ConvolutionBaseStruct *conv) {
   void *origin_data = conv->base_.in_[SECOND_INPUT]->data_;
   NNACL_CHECK_NULL_RETURN_VOID(origin_data);
@@ -84,7 +102,7 @@ int ConvDwInitConvDwCalcInfo(ConvolutionDepthwiseStruct *conv_dw) {
   ConvComputeParam *compute = &conv_dw->conv_.compute_;
   NNACL_CHECK_NULL_RETURN_ERR(compute);
 
-  (void)ConvolutionDepthwiseRelease((KernelBase *)conv_dw);
+  ConvDwReleaseParam(conv_dw);
 
   conv_dw->dw_param_.num_pixels_ = env->Alloc(env->allocator_, compute->kernel_w_ * sizeof(int));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_dw->dw_param_.num_pixels_);
@@ -189,18 +207,8 @@ int ConvolutionDepthwiseResize(KernelBase *self) {
 int ConvolutionDepthwiseRelease(KernelBase *self) {
   ConvolutionDepthwiseStruct *conv_dw = (ConvolutionDepthwiseStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(conv_dw);
-  if (conv_dw->dw_param_.num_pixels_ != NULL) {
-    self->env_->Free(self->env_->allocator_, conv_dw->dw_param_.num_pixels_);
-    conv_dw->dw_param_.num_pixels_ = NULL;
-  }
-  if (conv_dw->dw_param_.out_w_start_ != NULL) {
-    self->env_->Free(self->env_->allocator_, conv_dw->dw_param_.out_w_start_);
-    conv_dw->dw_param_.out_w_start_ = NULL;
-  }
-  if (conv_dw->dw_param_.out_w_end_ != NULL) {
-    self->env_->Free(self->env_->allocator_, conv_dw->dw_param_.out_w_end_);
-    conv_dw->dw_param_.out_w_end_ = NULL;
-  }
+
+  ConvDwReleaseParam(conv_dw);
 
   ConvBaseRelease(&conv_dw->conv_);
   return NNACL_OK;
