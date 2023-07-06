@@ -38,16 +38,7 @@ int ConvolutionKernel::Prepare() {
   conv->infershape_done_ = InferShapeDone();
   conv->is_sharing_pack_ = true;
 
-  int ret = kernel_->Prepare(kernel_);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "NNACL convolution prepare failed. Kernel: " << name() << ", ret: " << ret;
-    return ret;
-  }
-
-  if (!InferShapeDone()) {
-    return RET_OK;
-  }
-  return ReSize();
+  return NNACLKernel::Prepare();
 }
 
 NNACLKernel *NNACLConvolutionOpt(OpParameter *parameter, const std::vector<lite::Tensor *> &in,
