@@ -32,18 +32,15 @@
 #include "mindspore/core/ops/op_utils.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "nnacl/op_base.h"
-#include "ops/call.h"
 #include "ops/depend.h"
 #include "ops/fusion/partial_fusion.h"
 #include "ops/make_tuple.h"
-#include "ops/quant_dtype_cast.h"
 #include "ops/return.h"
 #include "ops/tuple_get_item.h"
 #include "src/common/log_util.h"
 #include "src/common/ops/anf_utils.h"
 #include "src/common/utils.h"
 #include "src/litert/tensor_category.h"
-#include "src/litert/weight_decoder.h"
 #include "tools/common/graph_util.h"
 #include "tools/common/meta_graph_utils.h"
 #include "tools/common/node_util.h"
@@ -258,19 +255,6 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
   return RET_OK;
 }
 
-tensor::TensorPtr AnfExporter::GetInputTensor(const AnfNodePtr &node) {
-  // Only Parameter or ValueNode Node has tensor
-  if (node->isa<Parameter>()) {
-    auto parameter = node->cast<ParameterPtr>();
-    if (parameter->default_param() != nullptr) {
-      return parameter->default_param()->cast<tensor::TensorPtr>();
-    }
-  } else if (node->isa<ValueNode>()) {
-    return node->cast<ValueNodePtr>()->value()->cast<tensor::TensorPtr>();
-  }
-  return nullptr;
-}
-
 int AnfExporter::SetInputQuantParamToTensorT(const std::shared_ptr<mindspore::Primitive> &primitive,
                                              const AnfNodePtr &input_node, mindspore::schema::TensorT *tensor_input) {
   CHECK_NULL_RETURN(primitive);
@@ -322,7 +306,7 @@ int AnfExporter::SetInputQuantParamToTensorT(const std::shared_ptr<mindspore::Pr
       tensor_input->quantParams.emplace_back(std::move(quant_param_ptr));
     }
   } else if (input_node->isa<mindspore::Parameter>() || input_node->isa<mindspore::ValueNode>()) {
-    tensor::TensorPtr input_tensor = GetInputTensor(input_node);
+    tensor::TensorPtr input_tensor = quant::GetNodeTensor(input_node);
     MS_CHECK_TRUE_RET(input_tensor != nullptr, RET_NO_CHANGE);
     auto quantization_params = input_tensor->quant_params();
     if (quantization_params.empty()) {
