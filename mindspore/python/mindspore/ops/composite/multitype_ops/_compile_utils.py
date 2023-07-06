@@ -964,6 +964,15 @@ def _generate_indices_from_tuple_of_tensor(tuple_index, op_name):
     return indices
 
 
+def parse_check_slice_index(index_out, dim_size):
+    """ Parse and check slice index """
+    has_false = False
+    start, stop, step = const_utils.normalize_slice(index_out, dim_size)
+    if F.isconstant(start) and F.isconstant(stop) and F.isconstant(step):
+        has_false = const_utils.check_slice_empty(start, stop, step)
+    return has_false
+
+
 def _generate_indices_from_tuple(data, tuple_index, op_name, fancy_position):
     """Generate an indices tensor from a tuple that contains slice, int, ellipsis, tensor."""
     data_shape = F.shape(data)
@@ -994,8 +1003,7 @@ def _generate_indices_from_tuple(data, tuple_index, op_name, fancy_position):
             tuple_index_new += (tensor_index,)
             tensor_indexes.append(tensor_index)
         elif i in slice_positions:
-            start, stop, step = const_utils.normalize_slice(index, dim_size)
-            if const_utils.check_slice_empty(start, stop, step):
+            if parse_check_slice_index(index, dim_size):
                 return False
             slice_ele_list_index = const_utils.transform_slice_to_ele_list(index, dim_size)
             slice_shapes += (len(slice_ele_list_index),)
@@ -1512,8 +1520,8 @@ def remove_expanded_dims(tuple_index, data_shape, value):
         elif const_utils.is_slice(index_out):
             indices_out += (index_out,)
             not_expanded_dim += (True,)
-            start, stop, step = const_utils.normalize_slice(index_out, data_shape[cur_dim])
-            has_false = has_false or const_utils.check_slice_empty(start, stop, step)
+            has_false = has_false or parse_check_slice_index(
+                index_out, data_shape[cur_dim])
             cur_dim += 1
         elif isinstance(index_out, (Tensor, bool)):  # advanced index
             if idx_advanced == -1:
