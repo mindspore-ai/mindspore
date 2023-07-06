@@ -21,7 +21,6 @@
 #include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/add_fp32.h"
-#include "plugin/device/cpu/kernel/nnacl/errorcode.h"
 #include "include/common/thread_pool.h"
 #include "mindspore/core/ops/sequence_concat.h"
 
@@ -60,7 +59,7 @@ int SequenceConcatCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   std::vector<int64_t> shape_vec_item;
   (void)std::copy(tuple_shape_.begin() + 1, tuple_shape_.end(), std::back_inserter(shape_vec_item));
 
-  input_num_ = tuple_shape_[0];
+  input_num_ = LongToSize(tuple_shape_[0]);
   inputs_shape_.clear();
   for (size_t i = 0; i < input_num_; ++i) {
     inputs_shape_.push_back(shape_vec_item);
@@ -89,8 +88,7 @@ int SequenceConcatCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 }
 
 template <typename T>
-bool SequenceConcatCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &workspace,
+bool SequenceConcatCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                               const std::vector<AddressPtr> &outputs) {
   const auto input_addr = GetDeviceAddress<T>(inputs, 0);
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
