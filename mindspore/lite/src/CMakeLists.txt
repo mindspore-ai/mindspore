@@ -106,7 +106,6 @@ file(GLOB C_API_SRCS
 set(API_SRC ${CXX_API_SRCS} ${C_API_SRCS})
 if(NOT MSLITE_ENABLE_RUNTIME_CONVERT)
     set(API_SRC ${API_SRC} ${CORE_DIR}/utils/status.cc)
-    set(LITE_SRC ${LITE_SRC} ${CMAKE_CURRENT_SOURCE_DIR}/common/config_file.cc)
 endif()
 if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
     file(GLOB CXX_API_TRAIN_SRCS
@@ -128,14 +127,6 @@ endif()
 set(LITE_SRC
         ${LITE_SRC}
         ${API_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/context_util.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/file_utils.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/mmap_utils.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/utils.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/graph_util.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/log.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/prim_util.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/tensor_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/inner_allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/runtime_allocator.cc
@@ -172,16 +163,7 @@ set(LITE_SRC ${LITE_SRC} ${FORMAT_PASS_SRC})
 if(NOT ANDROID_NDK_TOOLCHAIN_INCLUDED)
     set(LITE_SRC
             ${LITE_SRC}
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/dynamic_library_loader.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/litert/kernel/ascend/plugin/ascend_kernel_plugin.cc
-            )
-endif()
-
-if(MSLITE_ENABLE_MODEL_PRE_INFERENCE)
-    set(LITE_SRC
-            ${LITE_SRC}
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/thread_utils.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/random_data_generator.cc
             )
 endif()
 
@@ -194,14 +176,6 @@ set(LITE_SRC
         ${LITE_SRC}
         ${MODEL_LOADER_FRAMEWORK_SRC}
         )
-
-if(MSLITE_ENABLE_MODEL_ENCRYPTION)
-    set(LITE_SRC
-            ${LITE_SRC}
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/decrypt.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/dynamic_library_loader.cc
-            )
-endif()
 
 if(MSLITE_ENABLE_CAPTURE_SIGNALS)
     set(LITE_SRC
@@ -261,13 +235,6 @@ if(MSLITE_ENABLE_RUNTIME_CONVERT)
             ${CMAKE_CURRENT_SOURCE_DIR}/litert/runtime_convert.cc)
 
     set(LITE_SRC ${LITE_SRC} ${RUNTIME_CONVERT_SRC})
-endif()
-
-if(MSLITE_ENABLE_STRING_KERNEL)
-    set(LITE_SRC
-        ${LITE_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/string_util.cc
-        )
 endif()
 
 if(MSLITE_ENABLE_WEIGHT_DECODE)
@@ -349,7 +316,6 @@ set(TRAIN_SRC
         ${API_TRAIN_SRC}
         ${TRAIN_SRC_WITH_MD}
         ${EXPRESSION_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/quant_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/cxx_api/metrics/accuracy.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/cxx_api/train/model_build.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/litert/cxx_api/train/model_build_impl.cc
@@ -372,7 +338,6 @@ set(TRAIN_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/train/optimizer/fusion/gru_fusion_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/optimizer/fusion/matmul_activation_fusion_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/optimizer/fusion/reshape_gather_reshape_fusion_pass.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/storage.cc
         ${TOOLS_DIR}/converter/optimizer.cc
         ${TOOLS_DIR}/converter/legacy_optimizer/fusion/fusion_pass.cc
         ${TOOLS_DIR}/converter/legacy_optimizer/fusion/fusion_pattern.cc
@@ -424,7 +389,7 @@ if(MSLITE_ENABLE_GRAPH_KERNEL)
         ${TOOLS_DIR}/graph_kernel/runtime/*.cc
         ${CCSRC_DIR}/plugin/device/cpu/kernel/akg/akg_kernle_loader.cc
         )
-        set(LITE_SRC ${LITE_SRC} ${GRAPH_KERNEL_SRC})
+    set(LITE_SRC ${LITE_SRC} ${GRAPH_KERNEL_SRC})
 endif()
 
 if(NOT MSLITE_ENABLE_COREML)
@@ -433,15 +398,17 @@ if(NOT MSLITE_ENABLE_COREML)
 endif()
 
 if(MSVC)
-    set(LITE_SRC ${LITE_SRC}
-    ${EXPRESSION_SRC}
-    ${CMAKE_CURRENT_SOURCE_DIR}/common/storage.cc)
+    set(LITE_SRC
+            ${LITE_SRC}
+            ${EXPRESSION_SRC}
+            )
 endif()
 
 add_subdirectory(litert/kernel/cpu)
+add_subdirectory(common)
 
 add_library(lite_src_mid OBJECT ${LITE_SRC})
-add_dependencies(lite_src_mid fbs_src)
+add_dependencies(lite_src_mid lite_src_common_mid fbs_src fbs_inner_src)
 
 if(MSLITE_ENABLE_ACL)
     include_directories(${TOP_DIR}/graphengine/910/inc/external)
@@ -455,6 +422,7 @@ if(MSLITE_ENABLE_ACL)
 endif()
 
 add_library(mindspore-lite SHARED $<TARGET_OBJECTS:lite_src_mid>)
+target_link_libraries(mindspore-lite lite_src_common_mid)
 set_target_properties(mindspore-lite PROPERTIES CLEAN_DIRECT_OUTPUT 1)
 
 if(APPLE)
@@ -490,6 +458,7 @@ if(APPLE)
     add_dependencies(mindspore-lite_static fbs_inner_src)
 else()
     add_library(mindspore-lite_static STATIC $<TARGET_OBJECTS:lite_src_mid>)
+    target_link_libraries(mindspore-lite_static lite_src_common_mid)
 endif()
 set_target_properties(mindspore-lite_static PROPERTIES OUTPUT_NAME "mindspore-lite")
 set_target_properties(mindspore-lite_static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
@@ -565,9 +534,10 @@ endif()
 
 if(SUPPORT_TRAIN)
   add_library(lite_train_src_mid OBJECT ${TRAIN_SRC})
-  add_dependencies(lite_train_src_mid fbs_src fbs_inner_src)
+  add_dependencies(lite_train_src_mid lite_src_train_common_mid fbs_src fbs_inner_src)
 
   add_library(mindspore-lite-train SHARED $<TARGET_OBJECTS:lite_train_src_mid>)
+  target_link_libraries(mindspore-lite-train lite_src_train_common_mid)
   set_target_properties(mindspore-lite-train PROPERTIES OUTPUT_NAME "mindspore-lite-train")
   set_target_properties(mindspore-lite-train PROPERTIES CLEAN_DIRECT_OUTPUT 1)
   if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
@@ -577,6 +547,7 @@ if(SUPPORT_TRAIN)
   endif()
 
   add_library(mindspore-lite-train_static STATIC $<TARGET_OBJECTS:lite_train_src_mid>)
+  target_link_libraries(mindspore-lite-train_static lite_src_train_common_mid)
   set_target_properties(mindspore-lite-train_static PROPERTIES OUTPUT_NAME "mindspore-lite-train")
   set_target_properties(mindspore-lite-train_static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
   if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
