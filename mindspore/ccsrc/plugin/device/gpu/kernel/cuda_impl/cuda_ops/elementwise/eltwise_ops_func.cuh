@@ -31,7 +31,7 @@ DEVICE T Sin(const T val) {
 }
 template <>
 DEVICE float Sin(const float val) {
-  return __sinf(val);
+  return sinf(val);
 }
 template <>
 DEVICE half Sin(const half val) {
@@ -43,7 +43,7 @@ DEVICE T Cos(const T val) {
 }
 template <>
 DEVICE float Cos(const float val) {
-  return __cosf(val);
+  return cosf(val);
 }
 template <>
 DEVICE half Cos(const half val) {
@@ -55,7 +55,7 @@ DEVICE T Tan(const T val) {
 }
 template <>
 DEVICE float Tan(const float val) {
-  return __tanf(val);
+  return tanf(val);
 }
 template <>
 DEVICE half Tan(const half val) {
