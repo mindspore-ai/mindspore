@@ -88,11 +88,10 @@ class ReshapeInfo : public OperatorInfo {
   Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
   Status InferTensorLayout(TensorLayouts *inputs_layout, TensorLayouts *outputs_layout);
-  Status GetAttrs() override;
+  Status GetAttrs() override { return SUCCESS; }
   Strategies GetOutputsStrategy();
 
  private:
-  Status GetParameterInput();
   Status ComputeReplaceOp();
   void InferTensorInfoByLayout();
   void device_number();

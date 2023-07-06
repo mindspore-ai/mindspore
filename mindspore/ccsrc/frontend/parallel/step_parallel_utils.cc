@@ -1072,8 +1072,9 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
       input_shapes = GetRefKeyNodeShape(input, func_graph);
     } else if (input->isa<CNode>() || IsValueNode<Tensor>(input) || input->isa<Parameter>() ||
                ((IsValueNode<ValueList>(input) || IsValueNode<ValueTuple>(input)) && (inputs_size == concat_size))) {
-      if (IsSomePrimitiveList(node, CANDIDATE_DYNAMIC_VALUE_OPS) && IsPrimitiveCNode(input, prim::kPrimMakeTuple)) {
-        MS_LOG(INFO) << "may be dynamic shape, no need to get input's shape";
+      if (IsSomePrimitiveList(node, CANDIDATE_DYNAMIC_VALUE_OPS) &&
+          (IsPrimitiveCNode(input, prim::kPrimMakeTuple) || IsPrimitiveCNode(input, prim::kPrimShape))) {
+        MS_LOG(INFO) << "may be dynamic shape, no need to get input's shape, the node is " << node->ToString();
         continue;
       }
       input_shapes = GetNodeShape(input);
@@ -1240,6 +1241,13 @@ OperatorInfoPtr CreateOperatorInfo(const CNodePtr &cnode) {
     } else if (IsPrimitiveCNode(inputs[index], prim::kPrimMakeTuple)) {
       auto make_tuple_value = GetMakeTupleValue(inputs[index]);
       (void)input_value.emplace_back(make_tuple_value);
+      continue;
+    } else if (IsPrimitiveCNode(inputs[index], prim::kPrimShape)) {
+      auto shape_op_cnode = dyn_cast_ptr<CNode>(inputs[index]);
+      auto dst_shape = GetNodeShape(shape_op_cnode->input(1));
+      (void)input_value.emplace_back(MakeValue(dst_shape[0]));
+      MS_LOG(INFO) << "The prim is " << prim->name() << ", the input index is " << index - 1
+                   << ", is Shape op, dst shape is " << dst_shape;
       continue;
     }
     (void)input_value.emplace_back(nullptr);

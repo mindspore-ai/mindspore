@@ -109,6 +109,23 @@ class PadV3Net3(Cell):
         return out
 
 
+class ReshapeNet(Cell):
+    def __init__(self, weight, strategy1=None, strategy2=None):
+        super().__init__()
+        self.add = P.Add().shard(strategy1)
+        self.weight = Parameter(weight, "w1")
+        self.shape = P.Shape()
+        self.reshape = P.Reshape()
+        self.relu = P.ReLU().shard(strategy2)
+
+    def construct(self, x):
+        out = self.add(x, self.weight)
+        shape = self.shape(out)
+        out = self.reshape(out, shape)
+        out = self.relu(out)
+        return out
+
+
 def test_shape_sub():
     """
     Feature: test dynamic shape
@@ -186,3 +203,23 @@ def test_padv3_concat_tensor_shape_dynamic():
     phase = compile_net(net, input_x)
     validator = ParallelValidator(net, phase)
     assert validator.check_node_inputs_has('PadV3-0', ['Add-0'])
+
+
+def test_reshape_input_is_shape():
+    """
+    Feature: test dynamic shape
+    Description: no redistribution
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((1, 1, 1), (1, 1, 1))
+    strategy2 = ((1, 1, 1),)
+    input_x = Tensor(shape=[32, 16, None], dtype=ms.int32)
+    weight = Tensor(np.ones([32, 16, 1]), dtype=ms.float32)
+    net = ReshapeNet(weight, strategy1, strategy2)
+    net.set_inputs(input_x)
+
+    phase = compile_net(net, input_x)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_node_inputs_has('Reshape-0', ['Add-0'])
+    assert validator.check_node_inputs_has('ReLU-0', ['Reshape-0'])

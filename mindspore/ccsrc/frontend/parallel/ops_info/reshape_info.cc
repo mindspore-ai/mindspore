@@ -79,41 +79,6 @@ Status ReshapeInfo::InferMirrorOps() {
  */
 Status ReshapeInfo::InferForwardCommunication() { return SUCCESS; }
 
-/*
- * get shape input of Reshape Primitive
- * the result is saved in parameter_input_v_
- * not support -1
- */
-Status ReshapeInfo::GetParameterInput() {
-  if (input_value_[1] == nullptr) {
-    MS_LOG(ERROR) << name_ << ": input_value_[1] is nullptr.";
-    return FAILED;
-  }
-  std::vector<ValuePtr> elements;
-  ValueTuplePtr dim_tuple = input_value_[1]->cast<ValueTuplePtr>();
-  if (dim_tuple == nullptr) {
-    MS_LOG(ERROR) << name_ << ": Input_value_[1] must be ValueTuplePtr.";
-    return FAILED;
-  }
-  elements = dim_tuple->value();
-  if (elements.size() != outputs_shape_[0].size()) {
-    MS_LOG(ERROR) << name_ << ": Elements size must be equal to outputs shape[0] size.";
-    return FAILED;
-  }
-
-  for (auto &element : elements) {
-    MS_EXCEPTION_IF_NULL(element);
-    if (element->isa<Int64Imm>()) {
-      int64_t axis = element->cast<Int64ImmPtr>()->value();
-      parameter_input_v_.push_back(axis);
-    } else {
-      MS_LOG(ERROR) << name_ << ": The value of axis must be int32.";
-      return FAILED;
-    }
-  }
-  return SUCCESS;
-}
-
 std::vector<int64_t> ReshapeInfo::GetInputShape(const AnfNodePtr &shape_input_node) {
   MS_EXCEPTION_IF_NULL(shape_input_node);
   Shape origin_dst_shape;
@@ -133,8 +98,13 @@ std::vector<int64_t> ReshapeInfo::GetInputShape(const AnfNodePtr &shape_input_no
       MS_EXCEPTION_IF_NULL(input_value_node);
       origin_dst_shape.push_back(GetValue<int64_t>(input_value_node->value()));
     }
+  } else if (IsPrimitiveCNode(shape_input_node, prim::kPrimShape)) {
+    // dynamic shape: the dst shape is Shape op
+    MS_EXCEPTION_IF_NULL(input_value_[1]);
+    origin_dst_shape = GetValue<std::vector<int64_t>>(input_value_[1]);
+    MS_LOG(INFO) << name_ << ": the input value is Shape op, dst shape is " << origin_dst_shape;
   } else {
-    MS_LOG(EXCEPTION) << name_ << ": input shape must be either Tuple or MakeTuple cnode, but got "
+    MS_LOG(EXCEPTION) << name_ << ": input shape must be either Tuple or MakeTuple cnode or Shape op, but got "
                       << shape_input_node->fullname_with_scope();
   }
   return origin_dst_shape;
@@ -325,11 +295,6 @@ void ReshapeInfo::InferTensorInfoByLayout() {
   inputs_tensor_info_.push_back(tensor_info_in);
   outputs_tensor_info_.push_back(tensor_info_out);
 }
-
-/*
- * compute parameter_input_v_ during this method
- */
-Status ReshapeInfo::GetAttrs() { return GetParameterInput(); }
 
 void ReshapeInfo::device_number() {
   dev_num_ = stage_device_size_;
