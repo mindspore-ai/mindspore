@@ -218,12 +218,18 @@ lite::STATUS GraphKernelOptimize(const FuncGraphPtr &func_graph, const std::shar
 #ifndef Debug
   try {
 #endif
-    if (param != nullptr && !param->graphKernelParam.graph_kernel_flags.empty()) {
-      std::map<std::string, std::string> jit_config;
-      jit_config["graph_kernel_flags"] =
-        graphkernel::UpdateFlags(param->device, param->graphKernelParam.graph_kernel_flags);
-      graphkernel::GraphKernelFlags::SaveJitConfig(jit_config);
+    if (param == nullptr) {
+      return lite::RET_OK;
     }
+    if (param->graphKernelParam.graph_kernel_flags.empty()) {
+      return lite::RET_OK;
+    }
+
+    std::map<std::string, std::string> jit_config;
+    jit_config["graph_kernel_flags"] =
+      graphkernel::UpdateFlags(param->device, param->graphKernelParam.graph_kernel_flags);
+    graphkernel::GraphKernelFlags::SaveJitConfig(jit_config);
+
     if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
       MS_LOG(INFO) << "Run graphkernel optimization begin.";
       graphkernel::GraphKernelOptimizer(param).Run(func_graph);
