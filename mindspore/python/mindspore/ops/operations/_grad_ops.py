@@ -1928,19 +1928,14 @@ class ResizeNearestNeighborV2Grad(Primitive):
         align_corners (bool): Whether the centers of the 4 corner pixels of the input
             and output tensors are aligned. Default: ``False``.
         half_pixel_centers (bool): Default: ``False``.
-        data_format: An optional `string` that describes the format of the input `x` Defaults to `NHWC`.
     """
 
     @prim_attr_register
-    def __init__(self, align_corners=False, half_pixel_centers=False, data_format='NHWC'):
+    def __init__(self, align_corners=False, half_pixel_centers=False):
         """Initialize ResizeNearestNeighborV2Grad"""
         self.init_prim_io_names(inputs=['grads', 'size'], outputs=['y'])
-
         validator.check_value_type('align_corners', align_corners, [bool], self.name)
         validator.check_value_type('half_pixel_centers', half_pixel_centers, [bool], self.name)
-        validator.check_value_type('data_format', data_format, [str], self.name)
-        self.format = validator.check_string(data_format, ['NHWC', 'NCHW'], 'data_format', self.name)
-        self.add_prim_attr('data_format', self.format)
 
 
 class UpsampleNearest3DGrad(Primitive):

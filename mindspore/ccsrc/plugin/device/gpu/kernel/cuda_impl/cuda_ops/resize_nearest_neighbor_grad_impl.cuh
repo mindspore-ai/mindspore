@@ -21,9 +21,9 @@
 #define RESIZENEARESTNEIGHBORGRAD_DIMENSION 4
 
 template <typename T>
-CUDA_LIB_EXPORT void CalResizeNearestNeighborGrad(const int input_size, const T *input, const int s1, const int s2,
-                                                  const int s3, const int s4, T *output, const int d1, const int d2,
-                                                  const int d3, const int d4, bool align_corners, float h_scale,
-                                                  float w_scale, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT void CalResizeNearestNeighborGrad(float *work, const int input_size, const T *input, const int s1,
+                                                  const int s2, const int s3, const int s4, T *output, const int d1,
+                                                  const int d2, const int d3, const int d4, bool align_corners,
+                                                  float h_scale, float w_scale, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_RESIZE_NEAREST_NEIGHBOR_GRAD_IMPL_CUH_

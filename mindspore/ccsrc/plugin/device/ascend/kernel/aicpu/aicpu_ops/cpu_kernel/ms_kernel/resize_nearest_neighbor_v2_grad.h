@@ -36,15 +36,14 @@ class ResizeNearestNeighborV2GradCpuKernel : public CpuKernel {
   template <typename T>
   uint32_t ResizeNearestNeighborV2GradCompute(CpuKernelContext &ctx);
 
-  template <typename T>
-  void InnerCompute(
-    Eigen::Index y, Eigen::Index out_y, Eigen::Index x,
-    Eigen::TensorMap<Eigen::Tensor<T, kValue4, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned> grads_4d,
-    Eigen::TensorMap<Eigen::Tensor<T, kValue4, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned> y_4d);
-  std::unordered_map<char, size_t> dim_idx_map_;
-  std::string data_format = "NHWC";
+  template <typename T, typename S>
+  void RealCompute(T *const grads_4d, S *const y_4d);
+
+  size_t y_size{0};
   bool align_corners;
   bool half_pixel_centers;
+  std::vector<int64_t> grads_shape{};
+  std::vector<int64_t> y_shape{};
   Eigen::Index batch_size;
   Eigen::Index in_height;
   Eigen::Index in_width;
@@ -52,9 +51,6 @@ class ResizeNearestNeighborV2GradCpuKernel : public CpuKernel {
 
   Eigen::Index out_height;
   Eigen::Index out_width;
-
-  float height_scale;
-  float width_scale;
 };
 }  // namespace aicpu
 #endif

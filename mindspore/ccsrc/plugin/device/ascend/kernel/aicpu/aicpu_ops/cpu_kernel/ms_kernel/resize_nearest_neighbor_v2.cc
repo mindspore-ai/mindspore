@@ -20,10 +20,10 @@
 
 #include "cpu_kernel_utils.h"
 #include "cpu_types.h"
-#include "utils/kernel_util.h"
 #include "kernel_log.h"
 #include "securec.h"
 #include "status.h"
+#include "utils/kernel_util.h"
 
 namespace {
 constexpr uint32_t kInputNum = 2;
@@ -34,6 +34,7 @@ constexpr uint32_t kValue0 = 0;
 constexpr uint32_t kIndex0 = 0;
 constexpr uint32_t kIndex1 = 1;
 constexpr uint32_t kIndex2 = 2;
+constexpr uint32_t kIndex3 = 3;
 constexpr uint32_t kNumElements2 = 2;
 constexpr uint32_t kMaxValue = 24;
 const char *kResizeNearestNeighborV2 = "ResizeNearestNeighborV2";
@@ -84,18 +85,18 @@ uint32_t ResizeNearestNeighborV2CpuKernel::ResizeNearestNeighborV2ParamCheck(Cpu
                      half_pixel_centers == true ? "True" : "False", align_corners == true ? "True" : "False");
   KERNEL_CHECK_FALSE(x_dims == kDim4, KERNEL_STATUS_PARAM_INVALID, "x must be 4-dimensional but got %d-dimensional.",
                      x_dims);
-  auto channels = x_shape[3];
+  auto channels = x_shape[kIndex1];
   KERNEL_CHECK_FALSE(channels > kValue0, KERNEL_STATUS_PARAM_INVALID,
                      "image must have at least one channel but got %d channel.", channels);
-  KERNEL_CHECK_FALSE(x_shape[kIndex1] > kValue0 && x_shape[kIndex2] > kValue0, KERNEL_STATUS_PARAM_INVALID,
-                     "x image must be of non-zero size but got height %d, width %d.", x_shape[kIndex1],
-                     x_shape[kIndex2]);
-  KERNEL_CHECK_FALSE(x_shape[kIndex1] < INT32_MAX && x_shape[kIndex2] < INT32_MAX, KERNEL_STATUS_PARAM_INVALID,
+  KERNEL_CHECK_FALSE(x_shape[kIndex2] > kValue0 && x_shape[kIndex3] > kValue0, KERNEL_STATUS_PARAM_INVALID,
+                     "x image must be of non-zero size but got height %d, width %d.", x_shape[kIndex2],
+                     x_shape[kIndex3]);
+  KERNEL_CHECK_FALSE(x_shape[kIndex2] < INT32_MAX && x_shape[kIndex3] < INT32_MAX, KERNEL_STATUS_PARAM_INVALID,
                      "x sizes must be between 0 and max int32 but got but "
                      "got height %d, width %d.",
-                     x_shape[kIndex1], x_shape[kIndex2]);
-  auto in_height = static_cast<int32_t>(x_shape[1]);
-  auto in_width = static_cast<int32_t>(x_shape[2]);
+                     x_shape[kIndex2], x_shape[kIndex3]);
+  auto in_height = static_cast<int32_t>(x_shape[kIndex2]);
+  auto in_width = static_cast<int32_t>(x_shape[kIndex3]);
   KERNEL_CHECK_FALSE(size_dims == kDim1, KERNEL_STATUS_PARAM_INVALID, "size_shape must be 1-dimensional but got %d.",
                      size_dims);
   KERNEL_CHECK_FALSE(size_ptr->NumElements() == kNumElements2, KERNEL_STATUS_PARAM_INVALID,
@@ -126,23 +127,8 @@ uint32_t ResizeNearestNeighborV2CpuKernel::Compute(CpuKernelContext &ctx) {
   DataType data_type = DataType(x->GetDataType());
   uint32_t res = KERNEL_STATUS_OK;
   switch (data_type) {
-    case DT_INT8:
-      res = ResizeNearestNeighborV2Compute<int8_t>(ctx);
-      break;
     case DT_UINT8:
       res = ResizeNearestNeighborV2Compute<uint8_t>(ctx);
-      break;
-    case DT_INT16:
-      res = ResizeNearestNeighborV2Compute<int16_t>(ctx);
-      break;
-    case DT_UINT16:
-      res = ResizeNearestNeighborV2Compute<uint16_t>(ctx);
-      break;
-    case DT_INT32:
-      res = ResizeNearestNeighborV2Compute<int32_t>(ctx);
-      break;
-    case DT_INT64:
-      res = ResizeNearestNeighborV2Compute<int64_t>(ctx);
       break;
     case DT_FLOAT16:
       res = ResizeNearestNeighborV2Compute<Eigen::half>(ctx);
@@ -179,13 +165,8 @@ void ResizeNearestNeighborV2CpuKernel::InnerCompute(
     if (half_pixel_centers) {
       in_x = std::max(static_cast<Eigen::Index>(0), in_x);
     }
-    if (data_format == "NHWC") {
-      std::copy_n(&x_4d(b, in_y, in_x, 0), channels, &y_4d(b, y, x, 0));
-    } else {
-      // data_format = NCHW
-      for (Eigen::Index c = 0; c < channels; ++c) {
-        y_4d(b, c, y, x) = x_4d(b, c, in_y, in_x);
-      }
+    for (Eigen::Index c = 0; c < channels; ++c) {
+      y_4d(b, c, y, x) = x_4d(b, c, in_y, in_x);
     }
   }
 }
@@ -198,23 +179,6 @@ uint32_t ResizeNearestNeighborV2CpuKernel::ResizeNearestNeighborV2Compute(CpuKer
   std::vector<int64_t> y_shape = output_y->GetTensorShape()->GetDimSizes();
   AttrValue *align_corners_ptr = ctx.GetAttr("align_corners");
   AttrValue *half_pixel_centers_ptr = ctx.GetAttr("half_pixel_centers");
-  AttrValue *data_format_ptr = ctx.GetAttr("data_format");
-  if (data_format_ptr != nullptr) {
-    data_format = data_format_ptr->GetString();
-  }
-  if (data_format == "NHWC") {
-    dim_idx_map_ = {
-      {'N', kFormatNHWCIndexN}, {'H', kFormatNHWCIndexH}, {'W', kFormatNHWCIndexW}, {'C', kFormatNHWCIndexC}};
-  } else if (data_format == "NCHW") {
-    dim_idx_map_ = {
-      {'N', kFormatNCHWIndexN}, {'C', kFormatNCHWIndexC}, {'H', kFormatNCHWIndexH}, {'W', kFormatNCHWIndexW}};
-  } else {
-    KERNEL_LOG_ERROR(
-      "For ResizeNearestNeighborV2, data_format only support [NCHW, NHWC], "
-      "but get [%s].",
-      data_format);
-    return KERNEL_STATUS_PARAM_INVALID;
-  }
   align_corners = false;
   half_pixel_centers = false;
   if (align_corners_ptr != nullptr) {
@@ -223,12 +187,14 @@ uint32_t ResizeNearestNeighborV2CpuKernel::ResizeNearestNeighborV2Compute(CpuKer
   if (half_pixel_centers_ptr != nullptr) {
     half_pixel_centers = half_pixel_centers_ptr->GetBool();
   }
-  batch_size = x_shape[dim_idx_map_['N']];
-  in_height = x_shape[dim_idx_map_['H']];
-  in_width = x_shape[dim_idx_map_['W']];
-  channels = x_shape[dim_idx_map_['C']];
-  out_height = y_shape[dim_idx_map_['H']];
-  out_width = y_shape[dim_idx_map_['W']];
+  batch_size = x_shape[kIndex0];
+  channels = x_shape[kIndex1];
+  in_height = x_shape[kIndex2];
+  in_width = x_shape[kIndex3];
+
+  out_height = y_shape[kIndex2];
+  out_width = y_shape[kIndex3];
+
   height_scale = CalculateResizeScale(in_height, out_height, align_corners);
   width_scale = CalculateResizeScale(in_width, out_width, align_corners);
   EigenTensor x_et(input_x, input_x->GetData());
