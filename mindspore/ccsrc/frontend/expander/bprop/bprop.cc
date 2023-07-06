@@ -17,7 +17,6 @@
 
 #include <algorithm>
 #include <queue>
-#include <set>
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "include/common/expander/core/infer.h"
@@ -28,6 +27,11 @@
 namespace mindspore {
 namespace expander {
 namespace bprop {
+class ShapeCalcException : public std::runtime_error {
+ public:
+  using runtime_error::runtime_error;
+};
+
 class PynativeIRBuilder : public BpropIRBuilder {
  public:
   PynativeIRBuilder(const std::string &name, const FuncGraphPtr &fg, const ExpanderInferPtr &infer, UserMap *users,
@@ -61,8 +65,8 @@ class PynativeIRBuilder : public BpropIRBuilder {
 
   NodePtr EmitOp(const PrimitivePtr &prim, const NodePtrList &inputs) const override {
     if (prim->name() == prim::kPrimShapeCalc->name()) {
-      // Manually throw an exception to terminate without critical log.
-      throw std::runtime_error("ShapeCalc is not supported in pynative mode.");
+      // temporary solution, remove this after input parameter's value is set.
+      throw ShapeCalcException("ShapeCalc is not supported in pynative mode.");
     }
     if (prim->name() == prim::kTupleGetItem) {
       // if the getitem's real input is a ValueSequence, just return the real Value of that.
@@ -112,16 +116,23 @@ bool BpropExpander::Run(const CNodePtr &cnode) {
   if (outputs_ != nullptr) {
     outputs_->clear();
   }
+  auto node_name = AnfUtils::GetCNodeName(cnode);
+  if (OpEnvManager::UsePyBprop(node_name)) {
+    MS_LOG(DEBUG) << "Python bprop will be used for op " << node_name;
+    return false;
+  }
   try {
     ret = RunBprop(cnode);
-  } catch (const std::exception &e) {
-    auto node_name = AnfUtils::GetCNodeName(cnode);
-    MS_LOG(DEBUG) << "Bprop \"" << node_name << "\" encounter a problem: [" << e.what() << "]";
-    MS_LOG(INFO) << "Python bprop will be used for \"" << node_name << "\"";
+  } catch (const ShapeCalcException &e) {
+    MS_LOG(INFO) << "Bprop \"" << node_name << "\" encounter a problem: [" << e.what()
+                 << "]. python bprop will be used.";
     if (outputs_ != nullptr) {
       outputs_->clear();
     }
     ret = false;
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Bprop \"" << node_name << "\" encounter a problem: [" << e.what() << "]";
+    throw;
   }
   MS_LOG(DEBUG) << "Finish building bprop for " << cnode->fullname_with_scope();
   return ret;
