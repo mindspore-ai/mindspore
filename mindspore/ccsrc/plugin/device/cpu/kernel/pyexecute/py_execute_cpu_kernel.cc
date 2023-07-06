@@ -170,7 +170,7 @@ void ToRawMemory(const py::object obj, const std::vector<AddressPtr> &outputs, c
     ScalarToRawMemory(obj, outputs[0]);
     return;
   }
-  MS_LOG(EXCEPTION) << "Current not support the PyExecute " << type->ToString() << " to raw memory.";
+  MS_LOG(INFO) << "Current not support the PyExecute " << obj << " to raw memory.";
 }
 
 bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
@@ -198,10 +198,7 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
     const auto &output = fallback::PopPyExecuteOutput();
     const auto &output_type = py::str(output.get_type());
     MS_LOG(DEBUG) << "Python *prebuilt* output type: " << output_type << ", output: " << output;
-    auto prim = GetCNodePrimitive(kernel_node_);
-    if (prim->HasAttr(kAttrCopyData)) {
-      ToRawMemory(output, outputs, kernel_node_->abstract()->BuildType());
-    }
+    ToRawMemory(output, outputs, kernel_node_->abstract()->BuildType());
     AttachPyOutputData(output);
     return true;
   }

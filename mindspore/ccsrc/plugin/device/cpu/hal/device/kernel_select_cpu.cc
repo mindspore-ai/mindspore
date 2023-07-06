@@ -525,7 +525,7 @@ kernel::KernelAttr FillNoneInKernelAttr(const CNodePtr &kernel_node, const std::
   auto output_num = output_types.size();
   if (kernel_attr.GetInputSize() != input_types.size() || kernel_attr.GetOutputSize() != output_types.size()) {
     MS_LOG(DEBUG) << "required input num:" << kernel_attr.GetInputSize() << ", actual input num:" << input_num;
-    MS_LOG(DEBUG) << "required input num:" << kernel_attr.GetOutputSize() << ", actual input num:" << output_num;
+    MS_LOG(DEBUG) << "required output num:" << kernel_attr.GetOutputSize() << ", actual output num:" << output_num;
     return kernel_attr;
   }
   kernel::KernelAttr result;

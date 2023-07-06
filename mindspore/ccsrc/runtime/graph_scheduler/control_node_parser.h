@@ -177,6 +177,7 @@ class ControlNodeParser {
     const KernelWithIndex &front_parameter_with_index);
   // Create tensor for value like scalar or monad U.
   tensor::TensorPtr CreateTensorForValue(const ValuePtr &value);
+  void AddControlNodeTensor(const tensor::TensorPtr &tensor) { control_node_tensors_.emplace_back(tensor); }
 
  private:
   friend class GraphScheduler;
