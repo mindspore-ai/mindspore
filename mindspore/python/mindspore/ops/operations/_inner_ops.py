@@ -1686,6 +1686,7 @@ class PartitionedCall(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, graph, executor_type=""):
+        super(PartitionedCall, self).__init__(self.__class__.__name__)
         self.add_prim_attr("executor_type", executor_type)
         self.graph = graph
 
