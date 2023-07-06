@@ -50,7 +50,7 @@ class MatMulBase : public OperatorInfo {
   Status InferTensorLayout(TensorLayouts *inputs_layout, TensorLayouts *outputs_layout);
   Status GetAttrs() override;
   Status CheckBatchDimensions(const Dimensions &long_strategy, const Dimensions &short_strategy);
-  Shape GetCommonShape(const Dimensions &mat_a_strategy, const Dimensions &mat_b_strategy);
+  Shape GetCommonShape(const Dimensions &mat_a_strategy, const Dimensions &mat_b_strategy) const;
 
   bool candidate_flag_ = false;
   bool transpose_a_ = false;

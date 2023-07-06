@@ -27,18 +27,17 @@ def setup_function():
 
 
 class Net(Cell):
-    def __init__(self, weight, strategy1=None, strategy2=None):
+    def __init__(self, weight, paddings, strategy1=None, strategy2=None):
         super().__init__()
         self.add = P.Add().shard(strategy1)
         self.pad = P.PadV3().shard(strategy2)
         self.weight = Parameter(weight, "w1")
-        self.paddings = Tensor([2, 2])
+        self.paddings = Tensor(paddings)
         self.value = Tensor(0.5)
 
     def construct(self, x, b):
         out = self.add(x, self.weight)
         out = self.pad(out, self.paddings, self.value)
-        out = out + b
         return out
 
 
@@ -56,10 +55,83 @@ def test_pad_v3_parallel():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((2, 4, 1), (2, 4, 1))
     strategy2 = ((2, 4, 1), (1,), ())
-    net = Net(_w, strategy1=strategy1, strategy2=strategy2)
+    net = Net(_w, paddings=[2, 2], strategy1=strategy1, strategy2=strategy2)
     phase = compile_net(net, _x, _b)
     validator = ParallelValidator(net, phase)
     assert validator.check_node_inputs_has('PadV3-0', ['Add-0'])
+
+
+def test_pad_v3_parallel_1():
+    """
+    Feature: test pad v3 parallel
+    Description: shard two dimension
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((2, 1, 4), (2, 1, 4))
+    strategy2 = ((2, 1, 4), (1,), ())
+    net = Net(_w, paddings=[0, 0, 1, 2], strategy1=strategy1, strategy2=strategy2)
+    phase = compile_net(net, _x, _b)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_node_inputs_has('PadV3-0', ['Add-0'])
+
+
+def test_pad_v3_parallel_2():
+    """
+    Feature: test pad v3 parallel
+    Description: shard two dimension
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((1, 2, 4), (1, 2, 4))
+    strategy2 = ((1, 2, 4), (1,), ())
+    net = Net(_w, paddings=[0, 0, 0, 0, 1, 2], strategy1=strategy1, strategy2=strategy2)
+    phase = compile_net(net, _x, _b)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_node_inputs_has('PadV3-0', ['Add-0'])
+
+
+def test_pad_v3_parallel_3():
+    """
+    Feature: test pad v3 parallel
+    Description: shard two dimension
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((2, 4, 1), (2, 4, 1))
+    strategy2 = ((2, 4, 1), (1,), ())
+    net = Net(_w, paddings=[1, 2, 0, 0, 0, 0], strategy1=strategy1, strategy2=strategy2)
+    phase = compile_net(net, _x, _b)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_node_inputs_has('PadV3-0', ['Add-0'])
+
+
+def test_pad_v3_wrong_strategy():
+    """
+    Feature: test pad v3
+    Description:
+    Expectation: compile failed
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((2, 2, 2), (2, 2, 2))
+    strategy2 = ((1, 4, 2), (1,), ())
+    net = Net(_w, paddings=[2, 2, 0, 0, 0, 0], strategy1=strategy1, strategy2=strategy2)
+    with pytest.raises(RuntimeError):
+        compile_net(net, _x, _b)
+
+
+def test_pad_v3_wrong_strategy_2():
+    """
+    Feature: test pad v3
+    Description:
+    Expectation: compile failed
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((2, 2, 2), (2, 2, 2))
+    strategy2 = ((2, 4, 1), (1,), ())
+    net = Net(_w, paddings=[0, 0, 1, 2], strategy1=strategy1, strategy2=strategy2)
+    with pytest.raises(RuntimeError):
+        compile_net(net, _x, _b)
 
 
 def test_pad_v3_shard_last_dim():
@@ -71,7 +143,7 @@ def test_pad_v3_shard_last_dim():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((2, 2, 2), (2, 2, 2))
     strategy2 = ((2, 2, 2), (1,), ())
-    net = Net(_w, strategy1=strategy1, strategy2=strategy2)
+    net = Net(_w, paddings=[2, 2], strategy1=strategy1, strategy2=strategy2)
     with pytest.raises(RuntimeError):
         compile_net(net, _x, _b)
 
@@ -85,7 +157,7 @@ def test_pad_v3_auto_rank0():
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0,
                                       search_mode="sharding_propagation")
     strategy1 = ((2, 4, 1), (2, 4, 1))
-    net = Net(_w, strategy1=strategy1)
+    net = Net(_w, paddings=[2, 2], strategy1=strategy1)
     phase = compile_net(net, _x, _b)
     validator = ParallelValidator(net, phase)
     assert validator.check_node_inputs_has('PadV3-0', ['Add-0'])

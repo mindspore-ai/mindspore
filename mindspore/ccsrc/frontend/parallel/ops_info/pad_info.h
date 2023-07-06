@@ -23,16 +23,12 @@
 
 #include "utils/hash_map.h"
 #include "ir/value.h"
-#include "frontend/parallel/auto_parallel/operator_costmodel.h"
 #include "frontend/parallel/ops_info/operator_info.h"
+#include "frontend/parallel/auto_parallel/operator_costmodel.h"
 #include "frontend/parallel/strategy.h"
 
 namespace mindspore {
 namespace parallel {
-constexpr size_t PAD_V3_INPUT_VALUE_SIZE = 3;
-constexpr size_t PADDINGS_PAIR_SIZE = 2;
-constexpr size_t PADDINGS_INDEX = 1;
-
 class PadV3Info : public OperatorInfo {
  public:
   PadV3Info(const std::string &name, const Shapes &input_shape, const Shapes &output_shape, const PrimitiveAttrs &attrs)
