@@ -79,7 +79,7 @@ std::string ConvertUnicodeStrToRealStr(const std::string &target) {
     }
     if (cur_str.substr(0, std::strlen(kHexPrefix)) == kHexPrefix) {
       try {
-        script_buffer << char(std::stol(cur_str, nullptr, base_16));
+        script_buffer << char(std::stoll(cur_str, nullptr, base_16));
       } catch (std::invalid_argument &) {
         MS_LOG(EXCEPTION) << "Invalid argument";
       } catch (std::out_of_range const &) {
