@@ -33,6 +33,14 @@ bool AddNFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   }
   constexpr size_t output_num = 1;
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
+  for (const auto &input : inputs) {
+    const auto &input_shape = input->GetShapeVector();
+    if (std::any_of(input_shape.cbegin(), input_shape.cend(), [](ShapeValueDType shape) { return (shape == 0); })) {
+      empty_tensor_input_ = true;
+      return true;
+    }
+  }
+  empty_tensor_input_ = false;
   return MatchKernelFunc(base_operator, inputs, outputs);
 }
 

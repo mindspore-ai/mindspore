@@ -65,7 +65,7 @@ void FuncGraph::DoBreakLoop() {
   used_forward_nodes_.clear();
   func_graph_cache_.clear();
   parameters_.clear();
-  paramter_obj_nodes_.clear();
+  parameter_obj_nodes_.clear();
   return_ = nullptr;
   set_dropped(true);
 }

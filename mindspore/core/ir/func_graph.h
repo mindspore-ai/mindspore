@@ -316,8 +316,8 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
                             const std::vector<AnfNodePtr> &specialized_parameter_list,
                             mindspore::HashMap<AnfNodePtr, AnfNodePtr> *repl_nodes) const;
 
-  const std::vector<AnfNodePtr> &paramter_obj_nodes() const { return paramter_obj_nodes_; }
-  void add_parameter_obj_node(const AnfNodePtr &p) { paramter_obj_nodes_.push_back(p); }
+  const std::vector<AnfNodePtr> &parameter_obj_nodes() const { return parameter_obj_nodes_; }
+  void add_parameter_obj_node(const AnfNodePtr &p) { parameter_obj_nodes_.push_back(p); }
 
   mindspore::HashMap<std::string, ValuePtr> attrs_;
   mindspore::HashMap<std::string, FuncGraphTransform> transforms_;
@@ -422,7 +422,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
 
   // Parameters of this function.
   std::vector<AnfNodePtr> parameters_;
-  std::vector<AnfNodePtr> paramter_obj_nodes_;
+  std::vector<AnfNodePtr> parameter_obj_nodes_;
 
   // Whether there is a *args and **kwargs, and count kw_only_args'number.
   bool has_vararg_;

@@ -40,6 +40,9 @@ class AddNFwdGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (empty_tensor_input_) {
+      return true;
+    }
     MS_EXCEPTION_IF_NULL(kernel_func_);
     stream_ptr_ = reinterpret_cast<cudaStream_t>(stream_ptr);
     return kernel_func_(this, inputs, workspace, outputs);
@@ -63,6 +66,7 @@ class AddNFwdGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<
  private:
   size_t num_input_{0};
   cudaStream_t stream_ptr_{nullptr};
+  bool empty_tensor_input_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore
