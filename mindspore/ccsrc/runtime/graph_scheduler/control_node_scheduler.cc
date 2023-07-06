@@ -1079,6 +1079,15 @@ void ControlNodeScheduler::LinkControlArrowForControlActor(ActorSet *const actor
     MS_EXCEPTION_IF_NULL(control_actor);
     if (IsNoInputActor(control_actor)) {
       MS_EXCEPTION_IF_NULL(control_actor->node_);
+      if (parser->IsNeedStackControlNode(control_actor->node_)) {
+        const auto &stack_actor_name = GetActorName(control_actor->node_) + kStackActorNameSuffix;
+        auto actor = FetchActor(stack_actor_name);
+        MS_EXCEPTION_IF_NULL(actor);
+        auto to_actor = dynamic_cast<ControlActor *>(actor);
+        MS_EXCEPTION_IF_NULL(to_actor);
+        SchedulerHelper::AddControlArrow(to_actor, control_actor);
+        continue;
+      }
       const FuncGraphPtr &func_graph = control_actor->node_->func_graph();
       MS_EXCEPTION_IF_NULL(func_graph);
       const auto &actor_name = func_graph->ToString() + kEntranceActorNameSuffix;
@@ -1573,6 +1582,21 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraphInSinkMode(const KernelGrap
     const auto &front_node_with_index = GetFrontNodeByKernelGraph(input_node, graph.get());
     MS_EXCEPTION_IF_NULL(front_node_with_index.first);
     if (front_node_with_index.first->isa<ValueNode>()) {
+      continue;
+    }
+    if (front_node_with_index.first->isa<CNode>() && (from_actor->type() != KernelTransformType::kStackActor)) {
+      // If the input is an internal parameter, the input arrow should be linked to the exit actor of the kernel
+      // graph which the internal parameter belong.
+      MS_LOG(INFO) << "Internal parameter in control flow, backend input:" << input_node->DebugString()
+                   << " front node:" << front_node_with_index.first->DebugString();
+      const auto &from_graph = parser->FetchKernelGraphByFrontNode(front_node_with_index.first);
+      MS_EXCEPTION_IF_NULL(from_graph);
+      auto actor = FetchActor(parser->FetchGroupNameByKernelGraph(from_graph) + kExitActorNameSuffix);
+      MS_EXCEPTION_IF_NULL(actor);
+      auto exit_actor = dynamic_cast<ControlActor *>(actor);
+      size_t from_index = exit_actor->FetchNodePosition(front_node_with_index);
+      SchedulerHelper::AddFormalParameterDeviceTensor(exit_actor, from_index, input_node, graph);
+      SchedulerHelper::AddDataArrow(exit_actor, to_actor, from_index, i);
       continue;
     }
     size_t from_index = from_actor->FetchNodePosition(front_node_with_index);

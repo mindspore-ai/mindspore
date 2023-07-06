@@ -468,6 +468,12 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   device::RunMode RunMode() const { return run_mode_; }
   bool is_graph_run_mode() const { return run_mode_ == device::RunMode::kGraphMode; }
   bool is_loop_count_sink() const { return is_loop_count_sink_; }
+  void set_memory_managed_by_ge(bool memory_managed_by_ge) {
+    if (common::IsEnableRefMode()) {
+      memory_managed_by_ge_ = memory_managed_by_ge;
+    }
+  }
+  bool memory_managed_by_ge() const { return memory_managed_by_ge_; }
   void set_is_loop_count_sink(bool is_loop_count_sink) { is_loop_count_sink_ = is_loop_count_sink; }
   const mindspore::HashMap<AnfNodePtr, AnfNodePtr> &front_backend_anf_map() const { return front_backend_anf_map_; }
 
@@ -603,6 +609,9 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
 
   // Indicate whether the kernels in the graphs acquire Python GIL.
   bool is_need_gil_{false};
+
+  // Memory is managed by GE
+  bool memory_managed_by_ge_{false};
 
   // Indicate whether the kernel graph is constructed from single op in function graph
   bool is_from_single_op_{false};

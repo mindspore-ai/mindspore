@@ -46,6 +46,7 @@ class BACKEND_EXPORT MemoryManager {
   uint8_t *MallocOutputMem(const AnfNodePtr &node, size_t index, MemType type, size_t size,
                            const DeviceAddressPtr &address, bool comm_mem);
   uint8_t *MallocWorkSpaceMem(const AnfNodePtr &node, size_t index, MemType type, size_t size);
+  uint8_t *MallocWorkSpaceMem(size_t size);
   virtual uint8_t *MallocMem(MemType type, size_t size, const DeviceAddressPtr &address, uint32_t graph_id);
   virtual uint8_t *MallocMem(MemType type, size_t size, const DeviceAddressPtr &address) {
     return MallocMem(type, size, address, kInvalidGraphId);

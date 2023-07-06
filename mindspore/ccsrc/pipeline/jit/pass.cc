@@ -58,6 +58,7 @@
 #include "frontend/optimizer/slice_activation_in_recompute.h"
 #include "frontend/optimizer/grouped_pairwise_exchange_alltoall.h"
 #include "frontend/optimizer/comm_op_attrs.h"
+#include "frontend/optimizer/process_send_recv_for_ge.h"
 #include "frontend/optimizer/environ_conversion.h"
 #include "frontend/optimizer/comm_op_reuse_tag.h"
 #include "frontend/optimizer/py_interpret_to_execute.h"
@@ -746,6 +747,12 @@ bool CommOpAddAttrs(const ResourcePtr &resource) {
   return true;
 }
 
+bool ProcessSendRecvForGE(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  opt::ProcessSendRecvForGE(resource->func_graph());
+  return true;
+}
+
 bool AddCommOpReusePass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   opt::AddCommOpReuseTag(resource->func_graph());
@@ -1016,6 +1023,7 @@ std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExec
                                    {"micro_interleaved_order_control", MicroInterLeavedOrderControlPass},
                                    {"reorder_send_recv_between_fp_bp", ReorderSendRecvBetweenFpBpPass},
                                    {"comm_op_add_attrs", CommOpAddAttrs},
+                                   {"process_send_recv_for_ge", ProcessSendRecvForGE},
                                    {"add_comm_op_reuse_tag", AddCommOpReusePass},
                                    {"overlap_opt_shard_in_pipeline", OverlapOptShardInPipelinePass},
                                    {"grouped_pairwise_exchange_alltoall", GroupedPairwiseExchangeAllToAllPass},

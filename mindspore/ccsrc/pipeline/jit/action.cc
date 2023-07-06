@@ -997,18 +997,47 @@ bool HasAbstractFunction(const AbstractBasePtr &abs) {
   return abs->isa<abstract::AbstractFunction>();
 }
 
-bool AcceptableReturnValue(const CNodePtr &cnode, const AnfNodePtr &input0) {
-  if (IsValueNode<FuncGraph>(input0)) {
-    auto fg = GetValueNode<FuncGraphPtr>(input0);
+bool IsCellReuse(const AnfNodePtr &input) {
+  if (IsValueNode<FuncGraph>(input)) {
+    auto fg = GetValueNode<FuncGraphPtr>(input);
     MS_EXCEPTION_IF_NULL(fg);
     auto debug_str = fg->ToString();
     if (fg->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE)) {
       return true;
     }
   }
+  return false;
+}
+
+bool AcceptableReturnValue(const CNodePtr &cnode, const AnfNodePtr &input0) {
+  if (IsCellReuse(input0)) {
+    return true;
+  }
   auto func_graphs = abstract::GetFuncGraphsFromCallNode(cnode);
   auto graph_has_function_output = [](const FuncGraphPtr &fg) { return HasAbstractFunction(fg->output()->abstract()); };
   if (std::all_of(func_graphs.cbegin(), func_graphs.cend(), std::not_fn(graph_has_function_output))) {
+    return true;
+  }
+  return false;
+}
+
+bool HasIncorporateCallNode(const CNodePtr &cnode) {
+  if (!IsValueNode<Primitive>(cnode->input(0))) {  // If cnode is a call node.
+    auto input0 = cnode->input(0);
+    if (IsPrimitiveCNode(input0, prim::kPrimSwitch) || IsPrimitiveCNode(input0, prim::kPrimSwitchLayer) ||
+        IsValueNode<FuncGraph>(input0)) {
+      if (IsCellReuse(input0) && common::IsEnableRefMode()) {
+        MS_LOG(INFO) << "Use cell reuse when MS_ENABLE_GE=1: " << cnode->DebugString();
+        return true;
+      }
+      if (AcceptableReturnValue(cnode, input0)) {
+        return false;
+      }
+    }
+    if (SupportInlinePartial(input0)) {
+      return false;
+    }
+    MS_LOG(INFO) << "Call has indirect call: " << cnode->DebugString();
     return true;
   }
   return false;
@@ -1052,18 +1081,7 @@ bool HasIncorporateCall(const std::vector<AnfNodePtr> &all_nodes) {
       }
       continue;
     }
-    if (!IsValueNode<Primitive>(cnode->input(0))) {  // If cnode is a call node.
-      auto input0 = cnode->input(0);
-      if (IsPrimitiveCNode(input0, prim::kPrimSwitch) || IsPrimitiveCNode(input0, prim::kPrimSwitchLayer) ||
-          IsValueNode<FuncGraph>(input0)) {
-        if (AcceptableReturnValue(cnode, input0)) {
-          continue;
-        }
-      }
-      if (SupportInlinePartial(input0)) {
-        continue;
-      }
-      MS_LOG(INFO) << "Call has indirect call: " << cnode->DebugString();
+    if (HasIncorporateCallNode(cnode)) {
       return true;
     }
   }

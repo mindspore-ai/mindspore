@@ -60,16 +60,20 @@ bool IsGeTrain() {
 
 std::string GetGraphName(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
-  std::string name;
-  if (kg == nullptr) {
-    name = graph->ToString();
+  if (common::IsEnableRefMode()) {
+    return graph->ToString();
   } else {
-    FuncGraphPtr origin_graph = kg->GetFuncGraph();
-    MS_EXCEPTION_IF_NULL(origin_graph);
-    name = origin_graph->ToString();
+    KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(graph);
+    std::string name;
+    if (kg == nullptr) {
+      name = graph->ToString();
+    } else {
+      FuncGraphPtr origin_graph = kg->GetFuncGraph();
+      MS_EXCEPTION_IF_NULL(origin_graph);
+      name = origin_graph->ToString();
+    }
+    return name;
   }
-  return name;
 }
 
 OptionMap GetComputeGraphOptions(const ShapeArray &input_shapes, bool is_dynamic_shape) {
@@ -103,16 +107,22 @@ bool AddDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &
   }
 
   auto graph_name = GetGraphName(anf_graph);
-  KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(anf_graph);
-  if (kg != nullptr) {
-    graph_name = kg->GetFuncGraph()->ToString();
+  if (!common::IsEnableRefMode()) {
+    KernelGraphPtr kg = std::dynamic_pointer_cast<session::KernelGraph>(anf_graph);
+    if (kg != nullptr) {
+      graph_name = kg->GetFuncGraph()->ToString();
+    }
   }
   std::string init_graph = "init_subgraph." + graph_name;
   std::string checkpoint_name = "save." + graph_name;
   const auto options = GetComputeGraphOptions(converter->input_shapes(), converter->dynamic_shape_inputs());
   MS_LOG(INFO) << "Set options of compute graph: " << graph_name << " to " << MapToString(options);
   (void)transform::AddGraph(graph_name, transform::GetComputeGraph(converter), options);
-  (void)transform::AddGraph(init_graph, transform::GetInitGraph(converter));
+  if (common::IsEnableRefMode()) {
+    (void)transform::AddGraph(init_graph, converter->GetInitGraph());
+  } else {
+    (void)transform::AddGraph(init_graph, transform::GetInitGraph(converter));
+  }
   (void)transform::AddGraph(BROADCAST_GRAPH_NAME, transform::GetBroadcastGraph(converter));
 
   transform::Status ret = transform::AddGraph(checkpoint_name, transform::GetSaveCheckpointGraph(converter));

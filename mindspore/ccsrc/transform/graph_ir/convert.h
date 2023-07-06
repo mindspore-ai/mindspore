@@ -54,6 +54,11 @@ enum class GraphType { kNormal, kCond, kBody, kAfter, kBranch };
 enum class DfsVisitFlag { kUnVisited, kVisiting, kVisited };
 constexpr char kGraphFlagHasGetNext[] = "graph_has_getnext";
 
+struct InputDataList {
+  std::vector<OperatorPtr> input_datas;
+  constexpr static char key[] = "RefDataList";
+};
+
 class GeOpConvertor {
  public:
   static std::map<std::string, ValuePtr> GetAttrAndValue(const AnfNodePtr &node, const bool training);
@@ -156,6 +161,7 @@ class DfGraphConvertor {
   void SetupBroadcast(const std::shared_ptr<HcomBroadcast> &broadcast, const std::vector<GeTensorDesc> &broadcast_desc,
                       const DfGraphPtr &broadcast_graph, std::vector<::ge::Operator> broadcast_input);
   void SetupParamInitSubGraph(const TensorOrderMap &tensors, const std::vector<::ge::Operator> *init_input);
+  void SetupParamInitSubGraph();
   void DrawParamInitSubGraph(const std::string &name, const AnfNodePtr &it);
 
   DfGraphPtr GetComputeGraph();
@@ -219,6 +225,7 @@ class DfGraphConvertor {
   void AddGraphConstInput(const OperatorPtr &op);
   AnfNodePtr ParseLoadInput(const CNodePtr &cnode) const;
   void SetGraphInputs(std::vector<Operator> *inputs);
+  void SetGraphInputs(std::vector<Operator> *inputs, std::vector<OperatorPtr> *input_datas);
   void TransformConstOp(const CNodePtr &node, const AnfNodePtr &pred);
   AnfNodePtr GetRealInputNode(const CNodePtr &node, const AnfNodePtr &input);
 
@@ -279,6 +286,7 @@ class DfGraphConvertor {
   mindspore::HashMap<AnfNode *, std::shared_ptr<std::vector<AnfNodePtr>>> branch_input_handle_cache_;
   mindspore::HashMap<std::string, AnfNodePtr> params_;
   mindspore::HashMap<std::string, OperatorPtr> vars_;
+  std::vector<OperatorPtr> ref_datas_;
   std::vector<std::pair<::ge::Operator, std::string>> graph_outputs_;
   std::vector<AnfNodePtr> graph_anf_outputs_;
   std::vector<OperatorPtr> graph_const_inputs_;

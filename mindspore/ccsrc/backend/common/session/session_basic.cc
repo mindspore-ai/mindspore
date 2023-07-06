@@ -1,4 +1,3 @@
-
 /**
  * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
@@ -1578,6 +1577,11 @@ void SessionBasic::DumpGraphs(const std::vector<KernelGraphPtr> &graphs) const {
   }
   for (auto &graph : graphs) {
     MS_EXCEPTION_IF_NULL(graph);
+
+    if (graph->memory_managed_by_ge()) {
+      continue;
+    }
+
     std::string name = "graph_build." + std::to_string(graph->graph_id());
     DumpGraphParams dump_params = {true, static_cast<int>(kWholeStack)};
     (void)mindspore::RDR::RecordAnfGraph(SUBMODULE_ID, name, graph, dump_params, ".ir;.pb");

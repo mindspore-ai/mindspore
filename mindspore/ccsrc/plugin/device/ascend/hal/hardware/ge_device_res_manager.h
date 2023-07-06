@@ -26,6 +26,7 @@
 #include "include/transform/graph_ir/types.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "plugin/device/ascend/hal/device/ascend_kernel_runtime.h"
 
 namespace mindspore {
 namespace device {
@@ -59,13 +60,22 @@ class GeDeviceResManager : public DeviceResManager {
     return true;
   }
 
+  bool BindDeviceToCurrentThread(bool /* force_bind */) const override;
+  void *GetStream() const {
+    MS_EXCEPTION_IF_NULL(runtime_instance_);
+    return runtime_instance_->compute_stream();
+  }
+
   // Relevant function to allocate and free device memory of raw ptr.
   void *AllocateMemory(size_t size) const override;
   void FreeMemory(void *ptr) const override;
 
  private:
+  friend class GeGraphExecutor;
   static void GeSetContextOptions(const std::shared_ptr<MsContext> &ms_context_ptr, transform::SessionOptions *options);
-  std::shared_ptr<MemoryManager> mem_manager_;
+  static void GeSetReuseOptions(const std::string &key, size_t num, transform::SessionOptions *options);
+  std::shared_ptr<MemoryManager> mem_manager_ = nullptr;
+  AscendKernelRuntime *runtime_instance_ = nullptr;
 };
 }  // namespace ascend
 }  // namespace device

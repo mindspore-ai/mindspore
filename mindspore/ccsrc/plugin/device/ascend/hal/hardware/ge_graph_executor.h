@@ -20,12 +20,14 @@
 #include <memory>
 #include <string>
 #include <map>
+#include <set>
 #include "plugin/device/ascend/hal/hardware/ascend_deprecated_interface.h"
 #include "runtime/hardware/device_context.h"
 #include "runtime/device/memory_manager.h"
 #include "utils/ms_context.h"
 #include "include/transform/graph_ir/types.h"
 #include "plugin/device/ascend/hal/hardware/ascend_collective_comm_lib.h"
+#include "plugin/device/ascend/hal/hardware/ge_device_res_manager.h"
 
 namespace mindspore {
 namespace device {
@@ -39,10 +41,25 @@ class GeGraphExecutor : public GraphExecutor {
 
   static FuncGraphPtr BuildDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map,
                                    bool export_air);
+  void PreprocessBeforeRun(const KernelGraphPtr &graph);
 
  private:
+  bool RunGraphRefMode(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs);
   void AllocInputHostMemory(const KernelGraphPtr &kernel_graph) const;
   void AllocOutputHostMemory(const KernelGraphPtr &kernel_graph) const;
+  void AllocConstMemory(const transform::RunOptions &options, size_t memory_size) const;
+  void AllocFeatureMemory(const transform::RunOptions &options, size_t memory_size) const;
+  void AllocParameterMemory(const KernelGraphPtr &kernel_graph, std::set<KernelGraphPtr> *memo = nullptr) const;
+  void BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph);
+  void AllocOutputMemory(const KernelGraphPtr &kernel_graph, const std::vector<ShapeVector> &outputs_shape) const;
+  bool CompileGraph(const KernelGraphPtr &graph, const std::map<string, string> &compile_options);
+  std::vector<GeTensor> GenerateInputGeTensor(const KernelGraphPtr &kernel_graph) const;
+  std::vector<GeTensor> GenerateOutputGeTensor(const KernelGraphPtr &kernel_graph) const;
+  GeDeviceResManager *ResManager() const;
+  void RunInitGraph(const std::string &graph_name);
+
+  std::map<KernelGraphPtr, std::vector<GeTensor>> input_datas_;
+  std::map<KernelGraphPtr, std::map<AnfNodePtr, size_t>> input_datas_index_;
 };
 }  // namespace ascend
 }  // namespace device

@@ -1585,6 +1585,11 @@ void AnfRuntimeAlgorithm::CacheAddrForAtomicClean(const AnfNodePtr &node, kernel
 
 void AnfRuntimeAlgorithm::UpdateGraphValidRefPair(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
+
+  if (graph->memory_managed_by_ge()) {
+    return;
+  }
+
   const auto &origin_ref_map = graph->GetRefMap();
   std::map<AnfWithOutIndex, AnfWithOutIndex> new_ref_map;
   for (const auto &node : graph->execution_order()) {

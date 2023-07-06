@@ -290,7 +290,8 @@ bool IsEnableZeroCopy(bool run_in_pynative) {
                           parallel_mode == parallel::kHybridParallel || parallel_mode == parallel::kDataParallel;
   // If there are auto parallel in graph, the flag should not be set. In parallel, the continue memory in communication
   // ops not support addr change.
-  if (is_parallel_mode) {
+  // force zero copy when use ge
+  if (is_parallel_mode && common::GetEnv("MS_GE_TRAIN") != "1") {
     return false;
   }
   return true;
@@ -348,7 +349,8 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
     manager->AddFuncGraph(graph);
     graph->set_manager(manager);
   }
-  if (MsContext::GetInstance()->backend_policy() == "ge" && device_target == device::DeviceType::kAscend) {
+  if (MsContext::GetInstance()->backend_policy() == "ge" && device_target == device::DeviceType::kAscend &&
+      !common::IsEnableRefMode()) {
     MS_EXCEPTION_IF_NULL(device_context->graph_executor_);
     if (!device_context->graph_executor_->CompileGraph(graph, {})) {
       MS_LOG(EXCEPTION) << "Compile graph failed: " << graph->graph_id();
