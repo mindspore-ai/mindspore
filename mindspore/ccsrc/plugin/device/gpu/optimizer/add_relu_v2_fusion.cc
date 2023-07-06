@@ -15,7 +15,6 @@
  */
 #include "plugin/device/gpu/optimizer/add_relu_v2_fusion.h"
 
-#include <memory>
 #include <vector>
 #include <string>
 
