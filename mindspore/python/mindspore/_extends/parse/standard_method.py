@@ -1730,6 +1730,22 @@ def take(x, indices, axis=None, mode='clip'):
     return res.reshape(shape_out)
 
 
+def ms_type(input, dtype=None):
+    r"""
+    Change the dtype of the Tensor to the `dtype` . Return the type if `dtype` is None.
+    """
+    if dtype is None:
+        return str(input.dtype)
+    return input.astype(dtype)
+
+
+def type_as(input, other):
+    r"""
+    Change the dtype of `input` to the dtype of `other`.
+    """
+    return input.astype(other.dtype)
+
+
 def _infer_out_shape(*shapes):
     """
     Returns shape of output after broadcasting. Raises ValueError if shapes cannot be broadcast.

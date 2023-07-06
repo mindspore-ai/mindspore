@@ -3853,6 +3853,60 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
         self._init_check()
         return tensor_operator_registry.get('to')()(self, dtype)
 
+    def type(self, dtype=None):
+        r"""
+        Change the dtype of the Tensor to the `dtype` . Return the type if `dtype` is ``None`` .
+
+        Args:
+            dtype (mindspore.dtype, optional): The specified dtype of output tensor. Default: ``None``.
+
+        Returns:
+            Tensor or str. If `dtype` is ``None`` , return a str, which describes the dtype of Tensor.
+            If `dtype` is not ``None`` , then return a Tensor, and the dtype of returned Tensor is `dtype` .
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> from mindspore import Tensor
+            >>> x = Tensor([[1.2, 2], [3.4, 4]], dtype=mindspore.float32)
+            >>> print(x.type())
+            Float32
+            >>> print(x.type(dtype=mindspore.int32))
+            [[1 2]
+             [3 4]]
+        """
+        self._init_check()
+        if dtype is None:
+            return str(self.dtype)
+        return self.astype(dtype)
+
+    def type_as(self, other):
+        r"""
+        Change the dtype of the Tensor to the dtype of `other`.
+
+        Args:
+            other (Tensor): The return tensor has the same dtype as `other`.
+
+        Returns:
+            Tensor, has the same dtype as `other`.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> from mindspore import Tensor
+            >>> x = Tensor([[1, 2], [3, 4]], dtype=mindspore.float32)
+            >>> y = Tensor([[1, 2], [3, 4]], dtype=mindspore.int32)
+            >>> x = x.type_as(y)
+            >>> print(x.dtype)
+            Int32
+        """
+        self._init_check()
+        return self.astype(other.dtype)
+
     def bool(self):
         r"""
         Converts input tensor dtype to `bool`.
