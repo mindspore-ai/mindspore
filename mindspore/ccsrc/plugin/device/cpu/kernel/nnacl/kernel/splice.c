@@ -22,7 +22,7 @@
 #include "nnacl/fp16/splice_fp16.h"
 #endif
 
-int splice_compute(struct KernelBase *self) {
+int SpliceCompute(struct KernelBase *self) {
   TensorC *input = self->in_[FIRST_INPUT];
   NNACL_CHECK_NULL_RETURN_ERR(input);
   TensorC *output = self->out_[OUTPUT_INDEX];
@@ -71,7 +71,7 @@ KernelBase *CreateSplice(OpParameter *param, int data_type) {
   splice->base_.Release = DefaultRelease;
   splice->base_.Prepare = DefaultPrepare1In1Out;
   splice->base_.Resize = DefaultResize;
-  splice->base_.Compute = splice_compute;
+  splice->base_.Compute = SpliceCompute;
   return (KernelBase *)splice;
 }
 

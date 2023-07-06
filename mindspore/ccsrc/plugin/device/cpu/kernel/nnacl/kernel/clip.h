@@ -25,6 +25,8 @@ typedef struct ClipStruct {
   KernelBase base_;
   float min_val_;
   float max_val_;
+  int length_;
+  int stride_;
 } ClipStruct;
 
 KernelBase *CreateClip(OpParameter *param, int data_type);

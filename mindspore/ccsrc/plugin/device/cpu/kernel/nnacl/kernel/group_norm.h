@@ -22,6 +22,10 @@
 #include "nnacl/group_norm_parameter.h"
 #include "nnacl/kernel.h"
 
+typedef struct GroupNormStru {
+  KernelBase base;
+} GroupNormStru;
+
 KernelBase *CreateGroupNorm(OpParameter *param, int data_type);
 
 #endif  // NNACL_KERNEL_GROUP_NORM_H_
