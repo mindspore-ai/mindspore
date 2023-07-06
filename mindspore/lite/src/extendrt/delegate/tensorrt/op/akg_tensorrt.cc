@@ -61,12 +61,22 @@ int AkgTensorRT::AddInnerOp(TensorRTContext *ctx) {
   std::string ptx_path_str =
     std::string(reinterpret_cast<const char *>(attr_map["ptx_path"].data()), attr_map["ptx_path"].size());
   params.ptx_path_len = ptx_path_str.length();
-  snprintf(params.ptx_path, LEN_LIMIT, "%s", ptx_path_str.c_str());
+  auto res0 = snprintf_s(params.ptx_path, LEN_LIMIT, LEN_LIMIT - 1, "%s", ptx_path_str.c_str());
+  if (res0 < 0) {
+    MS_LOG(ERROR) << "snprintf_s encountered an encoding error or a runtime-constraint violation.";
+  } else if (res0 >= static_cast<int>(LEN_LIMIT)) {
+    MS_LOG(ERROR) << "snprintf_s output was truncated.";
+  }
 
   std::string kernel_name_str =
     std::string(reinterpret_cast<const char *>(attr_map["kernel_name"].data()), attr_map["kernel_name"].size());
   kernel_name_str += "_kernel0";
-  snprintf(params.kernel_name, LEN_LIMIT, "%s", kernel_name_str.c_str());
+  auto res1 = snprintf_s(params.kernel_name, LEN_LIMIT, LEN_LIMIT - 1, "%s", kernel_name_str.c_str());
+  if (res1 < 0) {
+    MS_LOG(ERROR) << "snprintf_s encountered an encoding error or a runtime-constraint violation.";
+  } else if (res1 >= static_cast<int>(LEN_LIMIT)) {
+    MS_LOG(ERROR) << "snprintf_s output was truncated.";
+  }
   std::string outputs_shape_str(reinterpret_cast<const char *>(attr_map["outputs_shape"].data()),
                                 attr_map["outputs_shape"].size());
 
@@ -206,7 +216,6 @@ bool AkgPlugin::Launch(const void *const *inputs, void *const *outputs, void *wo
 
 int AkgPlugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc,
                        const void *const *inputs, void *const *outputs, void *workspace, cudaStream_t stream) noexcept {
-  // akg_kernel_mod_.LaunchTensorRT(inputs, outputs, workspace, stream);
   (void)Launch(inputs, outputs, workspace, stream);
   return RET_OK;
 }
