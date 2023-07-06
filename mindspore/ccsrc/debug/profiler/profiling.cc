@@ -277,8 +277,11 @@ void CollectHostInfo(const std::string &module_name, const std::string &event, c
   } else if (!profiler_manager->GetProfilingEnableFlag()) {
     return;
   }
-  if (!profiler_manager->EnableCollectHost()) {
+  if (!log_once && !profiler_manager->EnableCollectHost()) {
     MS_LOG(DEBUG) << "Profiler profile_framework is not enabled, no need to record Host info.";
+    log_once = true;
+    return;
+  } else if (!profiler_manager->EnableCollectHost()) {
     return;
   }
   auto output_path = profiler_manager->ProfileDataPath();
@@ -320,6 +323,9 @@ void CollectHostInfo(const std::string &module_name, const std::string &event, c
 }
 #ifdef __linux__
 void WriteHostDataToFile(const HostProfileData &host_profile_data, const std::string &output_path) {
+  if (host_profile_data.memory_usage == 0 && host_profile_data.time_stamp == 0) {
+    return;
+  }
   std::string file_name = "host_info_0.csv";
   std::string rank_id = common::GetEnv("RANK_ID");
   auto context = MsContext::GetInstance();
@@ -370,7 +376,6 @@ void WriteHostDataToFile(const HostProfileData &host_profile_data, const std::st
   }
   csv.WriteToCsv(host_profile_data.memory_usage);
   csv.WriteToCsv(host_profile_data.time_stamp, true);
-  MS_LOG(DEBUG) << "Write file finished. File path is: " << csv_file;
 }
 #endif
 }  // namespace profiler

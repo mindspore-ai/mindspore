@@ -194,29 +194,47 @@ def _extract_timeline_item(row, time_line, ts_map):
         logger.warning("Can not map the start time for item: %s.", row)
 
 
-def _parse_host_info(input_file, output_file, is_develop_user=True):
+def _parse_host_info(input_file, output_timeline_file, output_memory_file, is_develop_user=True):
     r"""
     Parse the host info into timeline file, so as to show on UI.
 
     Args:
         input_file: the original host_info file, in csv format.
-        output_file: the output timeline file, in json format.
+        output_timeline_file: the output timeline file, in json format.
+        output_memory_file: the output memory_usage file, in csv format.
         is_develop_user: some data only shown to develop users, other users no need to analyse it.
     """
     input_file = validate_and_normalize_path(input_file)
     time_line = []
     # ts_map is used to store the start time of each event_stage_tid_pid
     ts_map = {}
+    memory_header = ['tid', 'pid', 'parent_pid', 'module_name', 'event', 'stage', 'level', 'start_end', 'custom_info',
+                     'memory_usage(kB)', 'time_stamp(us)']
+    memory_info = []
     with open(input_file, 'r') as f:
         for row in csv.DictReader(f):
             try:
                 level = row['level']
                 if level == '0' and not is_develop_user:
                     continue
-                _extract_timeline_item(row, time_line, ts_map)
+                if int(row['time_stamp(us)']) > 0:
+                    _extract_timeline_item(row, time_line, ts_map)
+                if int(row['memory_usage(kB)']) > 0:
+                    memory_info.append(row)
             except KeyError as e:
                 logger.error("Error occur when analyse line: %s, Details is: %s", row, e)
                 continue
+    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
+    modes = stat.S_IWUSR | stat.S_IRUSR
+    if memory_info:
+        with os.fdopen(os.open(output_memory_file, flags, modes), 'w') as csv_file:
+            csv_writer = csv.DictWriter(csv_file, fieldnames=memory_header)
+            csv_writer.writeheader()
+            for item in memory_info:
+                csv_writer.writerow(item)
+    else:
+        logger.warning("No memory_usage is record in file: %s", input_file)
+
     if ts_map:
         logger.warning("Only start time is record for these items:")
         for k, v in ts_map.items():
@@ -235,11 +253,12 @@ def _parse_host_info(input_file, output_file, is_develop_user=True):
             unfinished_timeline = {'name': title, 'pid': pid, 'tid': tid, 'ph': 'B', 'ts': int(v)}
             time_line.append(unfinished_timeline)
 
-    timeline_file = validate_and_normalize_path(output_file)
-    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
-    modes = stat.S_IWUSR | stat.S_IRUSR
-    with os.fdopen(os.open(timeline_file, flags, modes), 'w') as json_file:
-        json.dump(time_line, json_file)
+    if time_line:
+        timeline_file = validate_and_normalize_path(output_timeline_file)
+        with os.fdopen(os.open(timeline_file, flags, modes), 'w') as json_file:
+            json.dump(time_line, json_file)
+    else:
+        logger.warning("No valid time_stamp is record in file: %s", input_file)
 
 
 def _ascend_graph_msprof_analyse(source_path):
@@ -1554,11 +1573,13 @@ class Profiler:
             return
         csv_file_name = 'host_info_' + str(self._rank_id) + '.csv'
         json_file_name = 'timeline_' + str(self._rank_id) + '.json'
+        memory_file_name = 'host_memory_' + str(self._rank_id) + '.csv'
         dataset_file_name = 'dataset_' + str(self._rank_id) + '.csv'
         host_info_file = os.path.join(self._output_path, 'host_info', csv_file_name)
         timeline_file = os.path.join(self._output_path, 'host_info', json_file_name)
+        memory_file = os.path.join(self._output_path, 'host_info', memory_file_name)
         dataset_execution_file = os.path.join(self._output_path, 'host_info', dataset_file_name)
-        _parse_host_info(host_info_file, timeline_file)
+        _parse_host_info(host_info_file, timeline_file, memory_file)
         _calculate_dataset_execution_time(host_info_file, dataset_execution_file)
         logger.info("Profile HostInfo finished.")
 
@@ -1580,10 +1601,12 @@ def _offline_parse(offline_path):
             logger.info("Cannot get rank_id from file: %s, skip it", file)
             return
         json_file_name = 'timeline_' + rank_id + '.json'
+        memory_file_name = 'host_memory_' + rank_id + '.csv'
         dataset_file_name = 'dataset_' + rank_id + '.csv'
         host_info_file = os.path.join(host_dir, file)
         timeline_file = os.path.join(host_dir, json_file_name)
+        memory_file = os.path.join(host_dir, memory_file_name)
         dataset_execution_file = os.path.join(host_dir, dataset_file_name)
-        _parse_host_info(host_info_file, timeline_file)
+        _parse_host_info(host_info_file, timeline_file, memory_file)
         _calculate_dataset_execution_time(host_info_file, dataset_execution_file)
     logger.info("Profile HostInfo offline finished.")
