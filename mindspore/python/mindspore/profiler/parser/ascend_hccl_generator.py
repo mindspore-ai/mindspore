@@ -69,7 +69,7 @@ def count_average(data):
         if all(isinstance(x, (int, float)) for x in data):
             result = sum(data) / len(data)
         else:
-            result = [calculate_average(x) for x in data]
+            result = [count_average(x) for x in data]
     elif isinstance(data, dict):
         result = {key: count_average(value) for key, value in data.items()}
     return result
@@ -110,10 +110,13 @@ class AscendHCCLGenerator:
         """
         try:
             with os.fdopen(os.open(hccl_raw_path,
-                                   os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as aicore_detail:
+                                   os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w', newline='') as aicore_detail:
                 writer = csv.writer(aicore_detail)
                 writer.writerow(
                     ['step_num', 'communication_cost', 'wait_cost', 'link_info', 'communication_operator_cost'])
+                for row in self.hccl_raw:
+                    row[3] = json.dumps(row[3])
+                    row[4] = json.dumps(row[4])
                 writer.writerows(self.hccl_raw)
         except (IOError, OSError) as err:
             logging.critical('Errot occurred when write aicore detail file: %s', err)
