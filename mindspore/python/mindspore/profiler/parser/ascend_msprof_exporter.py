@@ -65,6 +65,7 @@ class AscendMsprofExporter:
     def __init__(self, prof_root_dir: str) -> None:
         self._prof_root_dir = prof_root_dir
         self._start_time = 0
+        self._dynamic = False
         self._prof_paths = []
         self._output_path = None
         self._device_path = None
@@ -91,9 +92,10 @@ class AscendMsprofExporter:
             logger.warning(err)
         return int(start_time)
 
-    def export(self, start_time=0):
+    def export(self, start_time=0, dynamic=False):
         """start_time is the time to collect PROF data"""
         self._start_time = start_time
+        self._dynamic = dynamic
         self._init_output_path()
         if not self._output_path:
             raise FileNotFoundError("Do not found valid profiling directory")
@@ -215,7 +217,8 @@ class AscendMsprofExporter:
 
         step_trace_file = get_file_path(summary_path, self._step_trace_mark)
 
-        if not step_trace_file and self._mode == context.GRAPH_MODE:
+        can_not_miss = self._mode == context.GRAPH_MODE and not self._dynamic
+        if not step_trace_file and can_not_miss:
             msg = "Do not found step trace csv file in {}.".format(self._output_path)
             raise FileNotFoundError(msg)
 
