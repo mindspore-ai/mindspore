@@ -957,7 +957,7 @@ class Profiler:
         else:
             logger.info("No need to stop profiler because profiler has been stopped.")
         # export op data before analyse
-        self._ascend_msprof_exporter.export(self._start_time, self._dynamic_status)
+        self._ascend_msprof_exporter.export(self._start_time, support_step_trace=False)
         self._ascend_graph_analyse()
 
     def _minddata_analyse(self, source_path):
