@@ -175,8 +175,12 @@ void EmbeddingCacheTableManager::AllocMemForEmbedding(const device::DeviceContex
 
 void EmbeddingCacheTableManager::GetEmbeddingTableSliceBound() {
   auto worker_num = ps::PSContext::instance()->worker_num();
+  auto server_num = ps::PSContext::instance()->server_num();
   if (worker_num == 0) {
     return;
+  }
+  if (is_sparse_format() && (worker_num > 1 || server_num > 1)) {
+    MS_LOG(EXCEPTION) << "The sparse format can not support multi worker or multi server currently.";
   }
 
   uint32_t rank_id = 0;
@@ -186,10 +190,15 @@ void EmbeddingCacheTableManager::GetEmbeddingTableSliceBound() {
   rank_id = node->rank_id();
 #endif
 
-  auto local_shard_size = FloatToInt(std::ceil(SizeToFloat(vocab_size_) / worker_num));
-  local_embedding_slice_bounds_.first = local_shard_size * UintToInt(rank_id);
-  local_embedding_slice_bounds_.second =
-    std::min(local_embedding_slice_bounds_.first + local_shard_size, SizeToInt(vocab_size_));
+  if (!is_sparse_format()) {
+    auto local_shard_size = FloatToInt(std::ceil(SizeToFloat(vocab_size_) / worker_num));
+    local_embedding_slice_bounds_.first = local_shard_size * UintToInt(rank_id);
+    local_embedding_slice_bounds_.second =
+      std::min(local_embedding_slice_bounds_.first + local_shard_size, SizeToInt(vocab_size_));
+  } else {
+    local_embedding_slice_bounds_.first = 0;
+    local_embedding_slice_bounds_.second = INT_MAX;
+  }
   local_device_cache_bounds_.first = SizeToInt(device_cache_size_) * UintToInt(rank_id);
   local_device_cache_bounds_.second = local_device_cache_bounds_.first + SizeToInt(device_cache_size_);
   MS_LOG(INFO) << "Worker num:" << worker_num << ", rank id:" << rank_id
