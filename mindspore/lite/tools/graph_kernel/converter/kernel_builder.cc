@@ -59,13 +59,14 @@ bool KernelBuilder::Run(const FuncGraphPtr &func_graph) {
   auto manager = Manage(func_graph, true);
   MS_EXCEPTION_IF_NULL(manager);
   ParameterPtr akg_node = nullptr;
-  RETURN_IF_FALSE_WITH_LOG(builder->GenerateAkgKernelNodes(func_graph, &akg_node),
-                           "KernelBuilder generate AkgKernel node failed.");
   for (auto &node : node_list) {
     auto cnode = node->cast<CNodePtr>();
     auto custom_cnode = builder->CreateCustomOp(func_graph, cnode);
     if (custom_cnode == nullptr) {
       MS_LOG(EXCEPTION) << "Create custom op fail for " << cnode->fullname_with_scope();
+    }
+    if (!builder->GenerateAkgKernelNodes(func_graph, custom_cnode, cnode)) {
+      MS_LOG(EXCEPTION) << "Copy kernel.o to tensor data fail for " << cnode->fullname_with_scope();
     }
     manager->Replace(node, custom_cnode);
     if (akg_node != nullptr) {

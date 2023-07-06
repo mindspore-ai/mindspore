@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,55 +24,13 @@
 #include <vector>
 #include "nlohmann/json.hpp"
 #include "kernel/oplib/opinfo.h"
+#include "kernel/graph_kernel/graph_kernel_json_flags.h"
 #include "backend/common/graph_kernel/core/graph_kernel_callback.h"
 #include "include/common/utils/convert_utils.h"
 
 namespace mindspore::graphkernel {
 using kernel::OpAttrPtr;
 using kernel::OpInfoPtr;
-
-// json key
-constexpr auto kJsonKeyOpDesc = "op_desc";
-constexpr auto kJsonKeyAttr = "attr";
-constexpr auto kJsonKeyInputDesc = "input_desc";
-constexpr auto kJsonKeyFormat = "format";
-constexpr auto kJsonKeyInferDataType = "infer_data_type";
-constexpr auto kJsonKeyInferShape = "infer_shape";
-constexpr auto kJsonKeyShape = "shape";
-constexpr auto kJsonKeyDataType = "data_type";
-constexpr auto kJsonKeyDataformat = "data_format";
-constexpr auto kJsonKeyOutputDesc = "output_desc";
-constexpr auto kJsonKeyName = "name";
-constexpr auto kJsonKeyTensorName = "tensor_name";
-constexpr auto kJsonKeyValue = "value";
-constexpr auto kJsonKeyImplPath = "impl_path";
-constexpr auto kJsonKeyProcess = "process";
-constexpr auto kJsonKeyComposite = "composite";
-constexpr auto kJsonKeyId = "id";
-constexpr auto kJsonKeyOp = "op";
-constexpr auto kJsonKeyPtrAddress = "ptr_address";
-constexpr auto kJsonKeyCompositeGraph = "composite_graph";
-constexpr auto kJsonKeyPlatform = "platform";
-constexpr auto kJsonKeyOpFullName = "op_full_name";
-constexpr auto kJsonKeyParallelFusion = "parallel_fusion";
-constexpr auto kJsonKeyFusionType = "fusion_type";
-constexpr auto kJsonKeySubGraph = "sub_graph";
-constexpr auto kJsonKeyCoreNum = "core_num";
-constexpr auto kJsonKeyTypeInfo = "type_info";
-constexpr auto kJsonKeyRecomputeOps = "recompute_ops";
-constexpr auto kJsonKeyBufferStitch = "buffer_stitch";
-constexpr auto kJsonKeyStitchOp = "stitch_op";
-constexpr auto kJsonKeyStitchAtomicOp = "stitch_atomic_op";
-constexpr auto kJsonKeyVersion = "version";
-constexpr auto kJsonKeyTargetInfo = "target_info";
-constexpr auto kJsonKeyComputeCapability = "compute_capability";
-constexpr auto kJsonKeySmCount = "sm_count";
-constexpr auto kJsonKeySystem = "system";
-constexpr auto kJsonKeyArch = "arch";
-constexpr auto kJsonKeyCpuFeature = "feature";
-constexpr auto kJsonKeyCpuType = "cpu";
-constexpr auto kJsonKeyNodeName = "node_name";
-constexpr auto kJsonKeyDynamicInputIndex = "dynamic_input_index";
 
 // dump option
 struct DumpOption {

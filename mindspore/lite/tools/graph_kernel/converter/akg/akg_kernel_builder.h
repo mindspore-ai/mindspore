@@ -29,13 +29,19 @@ class AkgKernelBuilder {
  public:
   virtual bool CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) = 0;
   virtual AnfNodePtr CreateCustomOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode) = 0;
-  virtual bool GenerateAkgKernelNodes(const FuncGraphPtr &func_graph, ParameterPtr *param_ptr) { return true; }
+  virtual bool GenerateAkgKernelNodes(const FuncGraphPtr &func_graph, const AnfNodePtr &custom_node,
+                                      const CNodePtr &old_cnode) {
+    return true;
+  }
 
   static DumpOption json_option() {
     DumpOption dump_json_option;
     dump_json_option.get_target_info = true;
     return dump_json_option;
   }
+
+ protected:
+  std::string dir_path_;
 };
 using AkgKernelBuilderPtr = std::shared_ptr<AkgKernelBuilder>;
 }  // namespace mindspore::graphkernel

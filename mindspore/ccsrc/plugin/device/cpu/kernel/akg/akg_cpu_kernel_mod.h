@@ -14,38 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_CPU_AKG_CPU_KERNEL_MOD_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_CPU_AKG_CPU_KERNEL_MOD_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_AKG_AKG_CPU_KERNEL_MOD_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_AKG_AKG_CPU_KERNEL_MOD_H_
 #include <string>
 #include <vector>
 #include <memory>
-#include <utility>
 #include <unordered_map>
-#include <mutex>
-#include <shared_mutex>
 #include "kernel/kernel.h"
-#include "kernel/common_utils.h"
-#include "kernel/kash/kernel_pack.h"
+#include "plugin/device/cpu/kernel/akg/akg_kernel_loader.h"
+#include "plugin/device/cpu/kernel/akg/akg_cpu_kernel_manager.h"
 #include "plugin/device/cpu/kernel/cpu_kernel_mod.h"
 
 namespace mindspore {
 namespace kernel {
-class AkgCpuKernelManager {
+class AkgCpuKernelManager : public AkgCpuKernelManagerAbs {
  public:
   AkgCpuKernelManager() = default;
-  virtual ~AkgCpuKernelManager();
 
-  void *GetFunction(const std::string &kernel_name);
-  virtual void GetFunctionAndKernelName(const std::string &fn, const std::string &kernel_name, std::string *fn_so,
-                                        std::string *fn_kernel) const;
-
- private:
-  void *SearchFunc(const std::string &kernel_name) const;
-  void *SearchFuncWithSharedLock(const std::string &kernel_name) const;
-
-  // cache the kernel function: kernel_name -> {kernel_func, so_handle}
-  std::unordered_map<std::string, std::pair<void *, void *>> cpu_func_map_;
-  mutable std::shared_mutex mutex_;
+  void *GetFunction(const std::string &kernel_name) override;
+  void GetFunctionAndKernelName(const std::string &fn, const std::string &kernel_name, std::string *fn_so,
+                                std::string *fn_kernel) const override;
+  AkgLibraryLoader object_loader;
 };
 using AkgCpuKernelManagerPtr = std::shared_ptr<AkgCpuKernelManager>;
 class AkgCpuKernelMod : public CpuKernelMod {
@@ -67,4 +56,4 @@ class AkgCpuKernelMod : public CpuKernelMod {
 using AkgCpuKernelModPtr = std::shared_ptr<AkgCpuKernelMod>;
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_CPU_AKG_CPU_KERNEL_MOD_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_AKG_AKG_CPU_KERNEL_MOD_H_

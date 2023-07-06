@@ -89,6 +89,21 @@ AnfNodePtr GpuKernelBuilder::CreateCustomOp(const FuncGraphPtr &func_graph, cons
   custom_attrs["BlockDimY"] = std::vector<uint8_t>(thread_block_info[C4].begin(), thread_block_info[C4].end());
   custom_attrs["BlockDimZ"] = std::vector<uint8_t>(thread_block_info[C5].begin(), thread_block_info[C5].end());
   custom_attrs["ptx_path"] = std::vector<uint8_t>(ptx_path.begin(), ptx_path.end());
+  std::string info_path = dir_path_ + "/" + kernel_name + ".info";
+  std::ifstream ifile(info_path);
+  if (ifile.fail()) {
+    MS_LOG(ERROR) << "Can not find info at: " << json_path;
+    return nullptr;
+  }
+  json json_info;
+  ifile >> json_info;
+  auto process = json_info.at(kJsonKeyProcess).get<string>();
+  custom_attrs[kJsonKeyProcess] = std::vector<uint8_t>(process.begin(), process.end());
+  auto target_info = json_info.at(kJsonKeyTargetInfo);
+  auto compute_capability = target_info.at(kJsonKeyComputeCapability).get<string>();
+  custom_attrs[kJsonKeyComputeCapability] = std::vector<uint8_t>(compute_capability.begin(), compute_capability.end());
+  auto sm_count = target_info.at(kJsonKeySmCount).get<std::string>();
+  custom_attrs[kJsonKeySmCount] = std::vector<uint8_t>(sm_count.begin(), sm_count.end());
   op->set_attr(custom_attrs);
   return custom_cnode;
 }

@@ -36,6 +36,9 @@
 #include "utils/system/env.h"
 #include "backend/common/graph_kernel/graph_kernel_flags.h"
 #include "tools/graph_kernel/converter/akg/utils.h"
+#include "kernel/graph_kernel/graph_kernel_json_flags.h"
+#include "nlohmann/json.hpp"
+using json = nlohmann::json;
 
 namespace mindspore::graphkernel {
 AnfNodePtr CpuKernelBuilder::CreateCustomOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
@@ -51,6 +54,24 @@ AnfNodePtr CpuKernelBuilder::CreateCustomOp(const FuncGraphPtr &func_graph, cons
     std::string dynamic_input_index = GetValue<std::string>(fg->get_attr("dynamic_input_index"));
     custom_attrs["dynamic_input_index"] = std::vector<uint8_t>(dynamic_input_index.begin(), dynamic_input_index.end());
   }
+  auto kernel_file_name = kernel_name.substr(0, kernel_name.find("_kernel"));
+  auto info_path = dir_path_ + "/" + kernel_file_name + ".info";
+  std::ifstream ifile(info_path);
+  if (ifile.fail()) {
+    MS_LOG(ERROR) << "Can not find info at: " << info_path;
+    return nullptr;
+  }
+  json json_info;
+  ifile >> json_info;
+  auto process = json_info.at(kJsonKeyProcess).get<string>();
+  custom_attrs[kJsonKeyProcess] = std::vector<uint8_t>(process.begin(), process.end());
+  auto target_info = json_info.at(kJsonKeyTargetInfo);
+  auto arch = target_info.at(kJsonKeyArch).get<std::string>();
+  custom_attrs[kJsonKeyArch] = std::vector<uint8_t>(arch.begin(), arch.end());
+  auto system = target_info.at(kJsonKeySystem).get<std::string>();
+  custom_attrs[kJsonKeySystem] = std::vector<uint8_t>(system.begin(), system.end());
+  auto feature = target_info.at(kJsonKeyCpuFeature).get<std::string>();
+  custom_attrs[kJsonKeyCpuFeature] = std::vector<uint8_t>(feature.begin(), feature.end());
   std::string input_shape_str = GetCNodeInputShapeStr(cnode);
   std::string output_shape_str = GetCNodeOutputShapeStr(cnode);
   std::string output_format_str = GetCNodeOutputFormatStr(cnode);
@@ -81,38 +102,38 @@ bool CpuKernelBuilder::CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) {
   }
   std::map<AnfNodePtr, std::string> node_info_map;
   std::set<std::string> uniq_info_names;
-  auto dir_path =
+  dir_path_ =
     SaveNodesInfo(node_list, "./akg_kernel_meta", AkgKernelBuilder::json_option(), &node_info_map, &uniq_info_names);
-  if (dir_path.empty()) {
+  if (dir_path_.empty()) {
     return false;
   }
-  ExcludeTunedObj(dir_path, &uniq_info_names, &node_info_map);
-  auto res = CompileJsonsInList(dir_path, std::vector<std::string>(uniq_info_names.begin(), uniq_info_names.end()));
+  ExcludeTunedObj(dir_path_, &uniq_info_names, &node_info_map);
+  auto res = CompileJsonsInList(dir_path_, std::vector<std::string>(uniq_info_names.begin(), uniq_info_names.end()));
   if (res) {
     std::set<std::string> obj_files;
     std::ostringstream objs;
     for (const auto &iter : node_info_map) {
       AnfUtils::SetNodeAttr("kernel_name", MakeValue(iter.second + "_kernel"), iter.first);
       if (obj_files.insert(iter.second).second) {
-        objs << dir_path << "/" << iter.second << ".o ";
+        objs << dir_path_ << "/" << iter.second << ".o ";
       }
     }
-    std::ostringstream cmd_str;
-    cmd_str << "g++ -fPIC -shared -o " << kAkgKernelSo << " " << objs.str();
-    if (std::system(cmd_str.str().c_str()) == 0) {
-      return true;
-    }
+    return true;
   }
   return false;
 }
 
-bool CpuKernelBuilder::GenerateAkgKernelNodes(const FuncGraphPtr &func_graph, ParameterPtr *param_ptr) {
-  auto param_node = CreateAkgKernelParameter(func_graph, kAkgKernelSo);
-  if (param_node != nullptr) {
-    *param_ptr = param_node;
-  } else {
+bool CpuKernelBuilder::GenerateAkgKernelNodes(const FuncGraphPtr &func_graph, const AnfNodePtr &custom_node,
+                                              const CNodePtr &old_cnode) {
+  auto fg = GetCNodeFuncGraph(old_cnode);
+  auto kernel_name = GetValue<std::string>(fg->get_attr("kernel_name")).append(".o");
+  auto real_kernel_name = kernel_name.substr(0, kernel_name.find("_kernel")).append(".o");
+  auto param_node = CreateAkgKernelParameter(func_graph, "./akg_kernel_meta/" + real_kernel_name, real_kernel_name);
+  if (param_node == nullptr) {
     return false;
   }
+  auto manager = Manage(func_graph, true);
+  manager->AddEdge(custom_node, param_node);
   return true;
 }
 }  // namespace mindspore::graphkernel

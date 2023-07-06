@@ -74,9 +74,8 @@ if(MSLITE_ENABLE_GRAPH_KERNEL)
 
     if(AKG_USE_CUDA)
         add_compile_definitions(AKG_USE_CUDA)
-        message(STATUS "Converter support Graph Kernel Cuda backend")
+        message(STATUS "Converter support Graph Kernel CUDA backend")
     endif()
-
     add_compile_definitions(MSLITE_ENABLE_GRAPH_KERNEL)
     file(GLOB_RECURSE GRAPH_KERNEL_SRC
             ${TOOLS_DIR}/graph_kernel/common/*.cc
