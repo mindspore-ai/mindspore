@@ -55,11 +55,11 @@ void Worker::CreateThread() { thread_ = std::make_unique<std::thread>(&Worker::R
 void Worker::ReinitAfterFork() {
   THREAD_INFO("worker %ld recreate thread after fork in child process", worker_id_);
   if (cond_var_ != nullptr) {
-    cond_var_.release();
+    (void)cond_var_.release();
     cond_var_ = std::make_unique<std::condition_variable>();
   }
   if (thread_ != nullptr) {
-    thread_.release();
+    (void)thread_.release();
     CreateThread();
   }
 }

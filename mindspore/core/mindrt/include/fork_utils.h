@@ -19,7 +19,7 @@
 #if !defined(_WIN32) && !defined(BUILD_LITE)
 #include <pthread.h>
 #endif
-#include <stdio.h>
+#include <cstdio>
 #include <vector>
 #include <string>
 #include <functional>
@@ -28,7 +28,7 @@
 
 #ifdef FORK_UTILS_DEBUG
 #define FORK_UTILS_LOG(content, args...) \
-  { printf("[FORK_UTILS] %s|%d: " #content "\r\n", __func__, __LINE__, ##args); }
+  { std::printf("[FORK_UTILS] %s|%d: " #content "\r\n", __func__, __LINE__, ##args); }
 #else
 #define FORK_UTILS_LOG(content, ...)
 #endif
@@ -48,7 +48,7 @@ MS_CORE_API void EmptyFunction();
 
 class MS_CORE_API ForkUtils {
  public:
-  static ForkUtils &GetInstance();
+  static ForkUtils &GetInstance() noexcept;
 
   template <class T>
   void RegisterCallbacks(T *obj, void (T::*before_fork)(), void (T::*parent_atfork)(), void (T::*child_atfork)()) {
@@ -85,14 +85,20 @@ class MS_CORE_API ForkUtils {
   }
 
   template <class T>
-  void DeregCallbacks(T *obj) {
+  void DeregCallbacks(const T *obj) noexcept {
 #if !defined(_WIN32) && !defined(BUILD_LITE)
-    FORK_UTILS_LOG("Deregister fork callback info.");
-    for (auto iter = fork_callbacks_.begin(); iter != fork_callbacks_.end(); iter++) {
-      if (iter->class_obj == obj) {
-        fork_callbacks_.erase(iter);
-        break;
+    try {
+      FORK_UTILS_LOG("Deregister fork callback info.");
+      for (auto iter = fork_callbacks_.begin(); iter != fork_callbacks_.end(); (void)++iter) {
+        if (iter->class_obj == obj) {
+          (void)fork_callbacks_.erase(iter);
+          break;
+        }
       }
+    } catch (const std::exception &e) {
+      FORK_UTILS_LOG("Deregister fork callback info failed: %s", e.what());
+    } catch (...) {
+      FORK_UTILS_LOG("Deregister fork callback info failed: Unknown exception.");
     }
 #endif
   }
@@ -108,7 +114,10 @@ class MS_CORE_API ForkUtils {
 #if !defined(_WIN32) && !defined(BUILD_LITE)
     std::call_once(once_flag_, []() {
       FORK_UTILS_LOG("Register fork callback functions.");
-      pthread_atfork(ForkUtilsBeforeFork, ForkUtilsParentAtFork, ForkUtilsChildAtFork);
+      int ret = pthread_atfork(ForkUtilsBeforeFork, ForkUtilsParentAtFork, ForkUtilsChildAtFork);
+      if (ret != 0) {
+        FORK_UTILS_LOG("pthread_atfork failed, ret = %d", ret)
+      }
     });
 #endif
   }

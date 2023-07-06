@@ -17,7 +17,7 @@
 #include "include/fork_utils.h"
 
 namespace mindspore {
-ForkUtils &ForkUtils::GetInstance() {
+ForkUtils &ForkUtils::GetInstance() noexcept {
   static ForkUtils instance;
   return instance;
 }
