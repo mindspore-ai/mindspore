@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#ifdef ENABLE_NNACL_KERNEL_LIB
 #include "src/litert/kernel/cpu/fp32/deconvolution_depthwise_fp32.h"
 #include "include/errorcode.h"
 
@@ -256,3 +257,4 @@ void DeconvolutionDepthwiseCPUKernel::FreePackedInputOutput() {
   }
 }
 }  // namespace mindspore::kernel
+#endif

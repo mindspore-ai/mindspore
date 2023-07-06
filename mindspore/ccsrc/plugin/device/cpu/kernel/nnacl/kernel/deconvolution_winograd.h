@@ -16,8 +16,8 @@
 #ifndef NNACL_KERNEL_DECONVOLUTION_WINOGRAD_H_
 #define NNACL_KERNEL_DECONVOLUTION_WINOGRAD_H_
 
+#ifdef BUILD_LITE
 #ifndef ENABLE_MCU
-#ifndef _WIN32
 #include <pthread.h>
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"

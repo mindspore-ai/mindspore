@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#ifdef ENABLE_NNACL_KERNEL_LIB
 #include "src/litert/kernel/cpu/fp32/deconvolution_fp32.h"
 #include "src/litert/kernel/cpu/fp32/deconvolution_winograd_fp32.h"
 #include "src/litert/kernel/cpu/fp32/deconvolution_depthwise_fp32.h"
@@ -391,3 +392,4 @@ kernel::LiteKernel *CpuDeConvFp32KernelCreator(const std::vector<lite::Tensor *>
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Conv2dTransposeFusion, CpuDeConvFp32KernelCreator)
 }  // namespace mindspore::kernel
+#endif

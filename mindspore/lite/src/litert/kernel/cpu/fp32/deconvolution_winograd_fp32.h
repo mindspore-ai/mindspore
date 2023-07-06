@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_DECONVOLUTION_WINOGRAD_FP32_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_DECONVOLUTION_WINOGRAD_FP32_H_
 
+#ifdef ENABLE_NNACL_KERNEL_LIB
 #include <float.h>
 #include <vector>
 #include "src/litert/lite_kernel.h"
@@ -65,4 +66,5 @@ class DeConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   bool valid_weight_shape_ = true;
 };
 }  // namespace mindspore::kernel
+#endif
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_DECONVOLUTION_WINOGRAD_FP32_H_

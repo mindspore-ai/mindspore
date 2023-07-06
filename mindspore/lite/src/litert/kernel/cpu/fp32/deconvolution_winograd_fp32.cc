@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#ifdef ENABLE_NNACL_KERNEL_LIB
 #include <algorithm>
 #include "src/litert/kernel/cpu/fp32/deconvolution_winograd_fp32.h"
 
@@ -595,3 +596,4 @@ int DeConvolutionWinogradCPUKernel::Run() {
   return RET_OK;
 }
 }  // namespace mindspore::kernel
+#endif
