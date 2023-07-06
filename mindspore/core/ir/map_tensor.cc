@@ -208,7 +208,7 @@ MapTensor::ExportData MapTensor::Export(bool incremental) const {
   return {key_tensor, value_tensor, status_tensor};
 }
 
-MapTensor::ExportData MapTensor::ExportSlice(bool incremental, bool *last_slice) {
+MapTensor::ExportData MapTensor::ExportSlice(bool incremental, bool *last_slice) const {
   MS_EXCEPTION_IF_NULL(last_slice);
   DeviceSyncPtr device_sync = device_address();
   MS_EXCEPTION_IF_NULL(device_sync);

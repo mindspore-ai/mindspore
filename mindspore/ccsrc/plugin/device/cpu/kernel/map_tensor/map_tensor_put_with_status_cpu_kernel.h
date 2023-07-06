@@ -52,7 +52,7 @@ class MapTensorPutWithStatusCpuKernelMod : public MapTensorCpuKernelMod {
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
 
-  void InitSizeLists(const ShapeVector &keys_shape, const ShapeVector &values_shape);
+  void InitSizeLists(const ShapeVector &keys_shape, const ShapeVector &values_shape, const ShapeVector &statuses_shape);
 
   size_t input_key_type_size_{0};
   size_t input_value_type_size_{0};
@@ -61,16 +61,9 @@ class MapTensorPutWithStatusCpuKernelMod : public MapTensorCpuKernelMod {
     std::function<bool(MapTensorPutWithStatusCpuKernelMod *, const std::vector<AddressPtr> &,
                        const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
 
-  static std::vector<std::pair<KernelAttr, MapTensorPutLaunchFunc>> map_tensor_put_func_list_;
+  static std::vector<std::pair<KernelAttr, MapTensorPutLaunchFunc>> map_tensor_put_with_status_func_list_;
 
   MapTensorPutLaunchFunc kernel_launch_func_;
-
-  // This flag indicates whether the embedding storage capability is enabled, which supports hot data caching and
-  // persistent storage of non-hotspot data for hash table, which is generally used in very large hash table
-  // scenarios.
-  bool enable_embedding_storage_{false};
-  // The global unique parameter key of hash table, used to get the embedding storage instance.
-  int32_t parameter_key_{-1};
 };
 }  // namespace kernel
 }  // namespace mindspore

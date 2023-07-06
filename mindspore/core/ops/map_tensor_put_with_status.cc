@@ -130,7 +130,7 @@ TypePtr MapTensorPutWithStatusInferType(const PrimitivePtr &prim, const std::vec
   return map_tensor_abs->BuildType();
 }
 
-AbstractBasePtr MapTensorPutWithStatusInfer(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
+AbstractBasePtr MapTensorPutWithStatusInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   return MapTensorPutWithStatusInferInner(primitive, input_args);
 }

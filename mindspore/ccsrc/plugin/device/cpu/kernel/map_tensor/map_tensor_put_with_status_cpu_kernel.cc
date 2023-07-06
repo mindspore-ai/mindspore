@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 std::vector<std::pair<KernelAttr, MapTensorPutWithStatusCpuKernelMod::MapTensorPutLaunchFunc>>
-  MapTensorPutWithStatusCpuKernelMod::map_tensor_put_func_list_ = {
+  MapTensorPutWithStatusCpuKernelMod::map_tensor_put_with_status_func_list_ = {
     {KernelAttr()
        .AddInputAttr(kObjectTypeMapTensorType)
        .AddInputAttr(kNumberTypeInt32)
@@ -45,7 +45,8 @@ std::vector<std::pair<KernelAttr, MapTensorPutWithStatusCpuKernelMod::MapTensorP
 std::vector<KernelAttr> MapTensorPutWithStatusCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
   (void)std::transform(
-    map_tensor_put_func_list_.begin(), map_tensor_put_func_list_.end(), std::back_inserter(support_list),
+    map_tensor_put_with_status_func_list_.begin(), map_tensor_put_with_status_func_list_.end(),
+    std::back_inserter(support_list),
     [](const std::pair<KernelAttr, MapTensorPutWithStatusCpuKernelMod::MapTensorPutLaunchFunc> &pair) {
       return pair.first;
     });
@@ -71,16 +72,9 @@ bool MapTensorPutWithStatusCpuKernelMod::Init(const BaseOperatorPtr &base_operat
   }
 
   // Get kernel launch function.
-  kernel_launch_func_ = map_tensor_put_func_list_[index].second;
+  kernel_launch_func_ = map_tensor_put_with_status_func_list_[index].second;
   input_key_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex1).dtype);
   input_value_type_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex2).dtype);
-
-  if (base_operator->HasAttr(kAttrEnableEmbeddingStorage)) {
-    enable_embedding_storage_ = GetValue<bool>(base_operator->GetAttr(kAttrEnableEmbeddingStorage));
-  }
-  if (base_operator->HasAttr(kAttrParameterKey)) {
-    parameter_key_ = GetValue<int32_t>(base_operator->GetAttr(kAttrParameterKey));
-  }
 
   return true;
 }
@@ -95,17 +89,19 @@ int MapTensorPutWithStatusCpuKernelMod::Resize(const BaseOperatorPtr &base_opera
   const auto &keys_shape = inputs.at(kIndex1)->GetShapeVector();
   MS_EXCEPTION_IF_NULL(inputs.at(kIndex2));
   const auto &values_shape = inputs.at(kIndex2)->GetShapeVector();
+  MS_EXCEPTION_IF_NULL(inputs.at(kIndex3));
+  const auto &statuses_shape = inputs.at(kIndex3)->GetShapeVector();
   if (IsDynamic(keys_shape) || IsDynamic(values_shape)) {
     return KRET_UNKNOWN_SHAPE;
   }
 
-  InitSizeLists(keys_shape, values_shape);
+  InitSizeLists(keys_shape, values_shape, statuses_shape);
   return KRET_OK;
 }
 
 template <typename KeyType, typename ValueType>
 bool MapTensorPutWithStatusCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                      const std::vector<AddressPtr> &workspace,
+                                                      const std::vector<AddressPtr> &,
                                                       const std::vector<AddressPtr> &outputs) {
   // Check the inputs and outputs num.
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapTensorPutWithStatusInputNum, kernel_name_);
@@ -114,18 +110,6 @@ bool MapTensorPutWithStatusCpuKernelMod::LaunchKernel(const std::vector<AddressP
   // The real hash table should be accessed by user data.
   if (input_user_data_.empty()) {
     MS_LOG(EXCEPTION) << "The hash table user data is not set yet.";
-  }
-
-  if (enable_embedding_storage_) {
-    auto embedding_storage = embedding_storage_manager.Get(parameter_key_);
-    MS_ERROR_IF_NULL(embedding_storage);
-    if (!embedding_storage->Put({inputs[kIndex1]->addr, inputs[kIndex1]->size},
-                                {inputs[kIndex2]->addr, inputs[kIndex2]->size})) {
-      MS_LOG(ERROR) << "For '" << kernel_name_
-                    << "', Update sparse embedding storage failed, parameter key: " << parameter_key_;
-      return false;
-    }
-    return true;
   }
 
   auto user_data = input_user_data_[kIndex0];
@@ -138,7 +122,8 @@ bool MapTensorPutWithStatusCpuKernelMod::LaunchKernel(const std::vector<AddressP
                                 static_cast<HashTableElementStatus *>(inputs.at(kIndex3)->addr), nullptr);
 }
 
-void MapTensorPutWithStatusCpuKernelMod::InitSizeLists(const ShapeVector &keys_shape, const ShapeVector &values_shape) {
+void MapTensorPutWithStatusCpuKernelMod::InitSizeLists(const ShapeVector &keys_shape, const ShapeVector &values_shape,
+                                                       const ShapeVector &statuses_shape) {
   // Return size 1 as the first input size and the output size for MapTensorPutWithStatus. Real map tensor is assigned
   // by framework.
   input_size_list_.push_back(kSizeOne);
@@ -151,6 +136,7 @@ void MapTensorPutWithStatusCpuKernelMod::InitSizeLists(const ShapeVector &keys_s
   auto values_size = std::accumulate(values_shape.begin(), values_shape.end(), 1, std::multiplies{});
   MS_EXCEPTION_IF_ZERO("values size", values_size);
   input_size_list_.push_back(values_size * input_value_type_size_);
+  input_size_list_.push_back(keys_size * sizeof(HashTableElementStatus));
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MapTensorPutWithStatus, MapTensorPutWithStatusCpuKernelMod);

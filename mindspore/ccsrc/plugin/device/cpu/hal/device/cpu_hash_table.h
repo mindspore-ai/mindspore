@@ -46,7 +46,6 @@ class CPUHashTable : public HashTable<Key, Value> {
   using Status = HashTableElementStatus;
   using ValueStatusPair = std::pair<Value *, Status>;
 
-  explicit CPUHashTable(size_t value_dim);
   CPUHashTable(size_t value_dim, const std::string &initializer);
   CPUHashTable(size_t value_dim, const Value &default_value);
   ~CPUHashTable() override;

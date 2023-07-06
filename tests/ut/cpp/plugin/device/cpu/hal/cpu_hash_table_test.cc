@@ -41,7 +41,7 @@ TEST_F(TestCPUHashTable, test_cpu_hash_table) {
   size_t value_dim = 4;
   size_t key_num = 10;
   size_t erase_key_num = 5;
-  CPUHashTable<Key, Value> hash_table(value_dim);
+  CPUHashTable<Key, Value> hash_table(value_dim, "ones");
 
   // Keys and values to insert.
   std::vector<Key> keys_to_insert(key_num);
@@ -144,7 +144,7 @@ TEST_F(TestCPUHashTable, test_cpu_hash_table_find) {
   size_t value_dim = 4;
   size_t key_num = 10;
   size_t erase_key_num = 5;
-  CPUHashTable<Key, Value> hash_table(value_dim);
+  CPUHashTable<Key, Value> hash_table(value_dim, 0.0);
 
   // Keys and values to insert.
   std::vector<Key> keys_to_insert(key_num);
@@ -279,7 +279,7 @@ TEST_F(TestCPUHashTable, test_cpu_hash_table_export_slice) {
 
   size_t slice_size_in_mb = 1;
   size_t slice_num = (slice_size_in_mb << 20) / (value_dim * sizeof(Value));
-  CPUHashTable<Key, Value> hash_table(value_dim);
+  CPUHashTable<Key, Value> hash_table(value_dim, 0.0);
 
   // Keys and values to insert.
   std::vector<Key> keys_to_insert(key_num);
