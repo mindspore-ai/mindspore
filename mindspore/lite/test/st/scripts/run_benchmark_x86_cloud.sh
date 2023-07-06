@@ -1,6 +1,7 @@
 #!/bin/bash
 source ./scripts/base_functions.sh
 source ./scripts/run_benchmark_python.sh
+echo "Running mslite test script : run_benchmark_x86_cloud.sh"
 
 # Run on x86 java platform:
 function Run_x86_java() {

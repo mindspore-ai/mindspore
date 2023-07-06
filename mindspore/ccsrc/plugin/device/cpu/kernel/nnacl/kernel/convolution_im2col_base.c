@@ -67,6 +67,7 @@ int ConvIm2ColBaseMallocWeightBiasData(ConvolutionBaseStruct *conv) {
 
 int ConvIm2ColBaseUpdateThreadNumProcess(KernelBase *self, int32_t kernel_type, int64_t per_unit_load_num,
                                          int64_t per_unit_store_num, int64_t unit_num) {
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
   ConvolutionIm2ColBaseStruct *conv_im2col = (ConvolutionIm2ColBaseStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(conv_im2col);
 
@@ -79,6 +80,9 @@ int ConvIm2ColBaseUpdateThreadNumProcess(KernelBase *self, int32_t kernel_type, 
 
   int update_thread = UP_DIV(UP_DIV(conv_im2col->conv_.compute_.out_hw_, conv_im2col->row_tile_), ConvMinBlock);
   self->thread_nr_ = NNACL_MIN(self->thread_nr_, update_thread);
+#else
+  self->thread_nr_ = self->thread_nr_ > 0 ? self->thread_nr_ : 1;
+#endif
   return NNACL_OK;
 }
 

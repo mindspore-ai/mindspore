@@ -431,11 +431,11 @@ getNnaclKernelFile "REG_KERNEL_CREATOR\(PrimType_" "mindspore/ccsrc/plugin/devic
 getNnaclKernelFile "REG_KERNEL_CREATOR\(PrimType_" "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/kernel" "kNumberTypeInt8" "kNumberTypeInt8" &
 getNnaclKernelFile "REG_KERNEL_CREATOR\(PrimType_" "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/kernel" "kNumberTypeInt32" "kNumberTypeInt32" &
 getNnaclKernelFile "REG_KERNEL_CREATOR\(PrimType_" "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/kernel" "kNumberTypeInt32" "kNumberTypeBool" &
-getNnaclKernelFile "NNACL_KERNEL\(PrimitiveType_" "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/kernel" "kNumberTypeFloat32" "kNumberTypeFloat32" &
-getNnaclKernelFile "NNACL_KERNEL\(PrimitiveType_" "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/kernel" "kNumberTypeFloat16" "kNumberTypeFloat16" &
-getNnaclKernelFile "NNACL_KERNEL\(PrimitiveType_" "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/kernel" "kNumberTypeInt8" "kNumberTypeInt8" &
-getNnaclKernelFile "NNACL_KERNEL\(PrimitiveType_" "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/kernel" "kNumberTypeInt32" "kNumberTypeInt32" &
-getNnaclKernelFile "NNACL_KERNEL\(PrimitiveType_" "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/kernel" "kNumberTypeInt32" "kNumberTypeBool" &
+getNnaclKernelFile "NNACL_KERNEL\(PrimitiveType_" "mindspore/lite/src/litert/kernel/cpu/nnacl" "kNumberTypeFloat32" "kNumberTypeFloat32" &
+getNnaclKernelFile "NNACL_KERNEL\(PrimitiveType_" "mindspore/lite/src/litert/kernel/cpu/nnacl" "kNumberTypeFloat16" "kNumberTypeFloat16" &
+getNnaclKernelFile "NNACL_KERNEL\(PrimitiveType_" "mindspore/lite/src/litert/kernel/cpu/nnacl" "kNumberTypeInt8" "kNumberTypeInt8" &
+getNnaclKernelFile "NNACL_KERNEL\(PrimitiveType_" "mindspore/lite/src/litert/kernel/cpu/nnacl" "kNumberTypeInt32" "kNumberTypeInt32" &
+getNnaclKernelFile "NNACL_KERNEL\(PrimitiveType_" "mindspore/lite/src/litert/kernel/cpu/nnacl" "kNumberTypeInt32" "kNumberTypeBool" &
 
 wait
 sleep 0.5

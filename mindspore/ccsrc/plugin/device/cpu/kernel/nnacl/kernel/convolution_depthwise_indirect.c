@@ -23,18 +23,14 @@ int ConvDwIndirectMallocIndirectBuffer(ConvolutionDepthwiseIndirectStruct *conv_
   ConvComputeParam *compute = &conv_dw->conv_.compute_;
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(compute);
 
-  // malloc indirect buffer
   conv_dw->step_w_ = compute->dilation_w_ == 1 ? compute->stride_w_ : compute->kernel_w_;
-  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(conv_dw->step_w_, compute->kernel_h_, NNACL_ERR);
   int step_w_2d = conv_dw->step_w_ * compute->kernel_h_;
-  NNACL_CHECK_INT_MUL_NOT_OVERFLOW((compute->out_w_ - 1), step_w_2d, NNACL_ERR);
   conv_dw->step_h_ = (compute->kernel_h_ * compute->kernel_w_) + (compute->out_w_ - 1) * step_w_2d;
-  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(compute->out_h_, conv_dw->step_h_, NNACL_ERR);
   int step_h_2d = compute->out_h_ * conv_dw->step_h_;
-  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(compute->out_n_, step_h_2d, NNACL_ERR);
   int buffer_size = compute->out_n_ * step_h_2d;
-  NNACL_CHECK_MALLOC_SIZE(buffer_size * sizeof(float *));
-  conv_dw->indirect_buffer_ = (float **)(malloc(buffer_size * sizeof(float *)));
+
+  ExecEnv *env = conv_dw->conv_.base_.env_;
+  conv_dw->indirect_buffer_ = (float **)(env->Alloc(env->allocator_, buffer_size * sizeof(float *)));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_dw->indirect_buffer_);
   return NNACL_OK;
 }
@@ -79,7 +75,7 @@ void ConvDwIndirectPackWeight(ConvolutionBaseStruct *conv) {
 
 int ConvDwIndirectMallocWeightBiasData(ConvolutionBaseStruct *conv) {
   ConvolutionDepthwiseIndirectStruct *conv_dw = (ConvolutionDepthwiseIndirectStruct *)conv;
-  NNACL_CHECK_NULL_RETURN_ERR(conv_dw);
+  ExecEnv *env = conv->base_.env_;
 
   int batch_flag = UP_DIV(conv->compute_.out_c_, conv_dw->div_flag_);
   int pack_weight_size = conv_dw->div_flag_ * batch_flag * conv->compute_.kernel_hw_;
@@ -91,13 +87,13 @@ int ConvDwIndirectMallocWeightBiasData(ConvolutionBaseStruct *conv) {
 
   // malloc zero ptr
   NNACL_CHECK_MALLOC_SIZE(batch_flag * conv_dw->div_flag_ * sizeof(float));
-  conv_dw->zero_ptr_ = (float *)malloc(batch_flag * conv_dw->div_flag_ * sizeof(float));
+  conv_dw->zero_ptr_ = (float *)env->Alloc(env->allocator_, batch_flag * conv_dw->div_flag_ * sizeof(float));
   NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv_dw->zero_ptr_);
   memset(conv_dw->zero_ptr_, 0, batch_flag * conv_dw->div_flag_ * sizeof(float));
 
   // malloc bias ptr
   if (conv->bias_data_ == NULL) {
-    conv->bias_data_ = malloc(batch_flag * conv_dw->div_flag_ * sizeof(float));
+    conv->bias_data_ = env->Alloc(env->allocator_, batch_flag * conv_dw->div_flag_ * sizeof(float));
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv->bias_data_);
   }
   memset(conv->bias_data_, 0, batch_flag * conv_dw->div_flag_ * sizeof(float));
@@ -155,9 +151,10 @@ int ConvolutionDepthwiseIndirectResize(KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(conv_dw);
 
   if (conv_dw->indirect_buffer_ != NULL) {
-    free(conv_dw->indirect_buffer_);
+    self->env_->Free(self->env_->allocator_, conv_dw->indirect_buffer_);
     conv_dw->indirect_buffer_ = NULL;
   }
+
   int ret = ConvBasePrepare(&conv_dw->conv_);
   if (ret != NNACL_OK) {
     return ret;
@@ -196,11 +193,11 @@ int ConvolutionDepthwiseIndirectRelease(KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(conv_dw);
 
   if (conv_dw->zero_ptr_ != NULL) {
-    free(conv_dw->zero_ptr_);
+    self->env_->Free(self->env_->allocator_, conv_dw->zero_ptr_);
     conv_dw->zero_ptr_ = NULL;
   }
   if (conv_dw->indirect_buffer_ != NULL) {
-    free(conv_dw->indirect_buffer_);
+    self->env_->Free(self->env_->allocator_, conv_dw->indirect_buffer_);
     conv_dw->indirect_buffer_ = NULL;
   }
   ConvBaseRelease(&conv_dw->conv_);
@@ -211,6 +208,7 @@ KernelBase *CreateConvDwIndirect(ConvParameter *conv_param) {
   ConvolutionDepthwiseIndirectStruct *conv_dw =
     (ConvolutionDepthwiseIndirectStruct *)malloc(sizeof(ConvolutionDepthwiseIndirectStruct));
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(conv_dw);
+  memset(conv_dw, 0, sizeof(ConvolutionDepthwiseIndirectStruct));
 
 #ifdef ENABLE_AVX
   conv_dw->div_flag_ = C8NUM;

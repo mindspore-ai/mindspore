@@ -1,6 +1,7 @@
 #!/bin/bash
 source ./scripts/base_functions.sh
 source ./scripts/run_benchmark_python.sh
+echo "Running mslite test script : run_benchmark_server_inference_tensorrt_cloud.sh"
 
 # Run converter on x86 platform:
 function Run_Converter() {

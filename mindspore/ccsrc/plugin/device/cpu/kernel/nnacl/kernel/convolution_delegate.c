@@ -23,6 +23,7 @@
 #include "nnacl/kernel/convolution_1x1.h"
 #include "nnacl/kernel/convolution_im2col.h"
 #include "nnacl/kernel/convolution_winograd.h"
+#include "nnacl/fp32/conv_winograd_fp32.h"
 #include "nnacl/kernel/convolution_depthwise_sw.h"
 #ifdef ENABLE_AVX
 #include "nnacl/kernel/convolution_sw_1x1.h"

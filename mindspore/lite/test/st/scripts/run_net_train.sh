@@ -1,6 +1,7 @@
 #!/bin/bash
 source ./scripts/base_functions.sh
 version=1.6.1
+echo "Running mslite test script : run_net_train.sh"
 
 # Run Export on x86 platform and create output test files:
 docker_image=mindspore_build:210301

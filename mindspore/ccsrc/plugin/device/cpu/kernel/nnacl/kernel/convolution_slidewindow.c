@@ -108,11 +108,6 @@ int ConvSWMallocWeightBiasData(ConvolutionBaseStruct *conv) {
   int kernel_h = GetHeight(filter_tensor);
   int kernel_w = GetWidth(filter_tensor);
 
-  NNACL_CHECK_FALSE(input_channel <= 0, NNACL_ERR);
-  NNACL_CHECK_FALSE(output_channel <= 0, NNACL_ERR);
-  NNACL_CHECK_FALSE(kernel_h <= 0, NNACL_ERR);
-  NNACL_CHECK_FALSE(kernel_w <= 0, NNACL_ERR);
-
   conv_param->input_channel_ = input_channel;
   conv_param->output_channel_ = output_channel;
   int kernel_plane = kernel_h * kernel_w;
@@ -124,7 +119,8 @@ int ConvSWMallocWeightBiasData(ConvolutionBaseStruct *conv) {
   }
 
   if (conv_sw->conv_.base_.in_size_ == THREE_TENSOR) {
-    conv->bias_data_ = malloc(oc_block_num * conv_sw->oc_tile_ * sizeof(float));
+    int malloc_size = oc_block_num * conv_sw->oc_tile_ * sizeof(float);
+    conv->bias_data_ = conv->base_.env_->Alloc(conv->base_.env_->allocator_, malloc_size);
     NNACL_MALLOC_CHECK_NULL_RETURN_ERR(conv->bias_data_);
     memset(conv->bias_data_, 0, oc_block_num * conv_sw->oc_tile_ * sizeof(float));
   }

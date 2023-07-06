@@ -1,5 +1,6 @@
 #!/bin/bash
 source ./scripts/base_functions.sh
+echo "Running mslite test script : run_benchmark_npu.sh"
 
 # Run converter on x86 platform:
 function Run_Converter() {
