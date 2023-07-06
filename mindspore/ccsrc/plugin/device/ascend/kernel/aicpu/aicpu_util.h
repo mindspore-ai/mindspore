@@ -37,6 +37,7 @@ constexpr auto kCTCLossV2Grad = "CTCLossV2Grad";
 constexpr auto kGetNext = "GetNext";
 constexpr auto kPrint = "Print";
 constexpr auto kPack = "Pack";
+constexpr auto kCumMax = "CumMax";
 constexpr auto kCumSum = "CumSum";
 constexpr auto kCumProd = "CumProd";
 constexpr auto kMeshgrid = "Meshgrid";
@@ -70,6 +71,7 @@ constexpr auto kHistogram = "Histogram";
 constexpr auto kIdentity = "Identity";
 constexpr auto kIdentityN = "IdentityN";
 constexpr auto kIndexPut = "IndexPut";
+constexpr auto kInplaceIndexAdd = "InplaceIndexAdd";
 constexpr auto kConcatOffset = "ConcatOffset";
 constexpr auto kConcatOffsetV1 = "ConcatOffsetV1";
 constexpr auto kRandomChoiceWithMask = "RandomChoiceWithMask";
@@ -151,6 +153,7 @@ constexpr auto kGridSampler3D = "GridSampler3D";
 constexpr auto kGridSampler3DGrad = "GridSampler3DGrad";
 constexpr auto kScatterNdMax = "ScatterNdMax";
 constexpr auto kScatterNdMin = "ScatterNdMin";
+constexpr auto kScatterAddWithAxis = "ScatterAddWithAxis";
 constexpr auto kTril = "Tril";
 constexpr auto kSub = "Sub";
 constexpr auto kDiv = "Div";
@@ -180,6 +183,7 @@ constexpr auto kAddcdiv = "Addcdiv";
 constexpr auto kAddcmul = "Addcmul";
 constexpr auto kAdd = "Add";
 constexpr auto kTriu = "Triu";
+constexpr auto kUniform = "Uniform";
 constexpr auto kUniformCandidateSampler = "UniformCandidateSampler";
 constexpr auto kExpand = "Expand";
 constexpr auto kExpandDims = "ExpandDims";
@@ -256,6 +260,7 @@ const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kGridSampler2DGrad,
                                           kGridSampler3D,
                                           kGridSampler3DGrad,
+                                          kScatterAddWithAxis,
                                           kScatterNdMax,
                                           kScatterNdMin,
                                           kTril,
@@ -266,7 +271,9 @@ const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kNotEqual,
                                           kConjugateTranspose,
                                           kCheckNumerics,
+                                          kCumMax,
                                           kCumSum,
+                                          kInplaceIndexAdd,
                                           kLog1p,
                                           kRsqrt,
                                           kSquare,
@@ -332,6 +339,7 @@ const std::set<std::string> kCpuKernelBaseOps{kDropoutGenMaskOpName,
                                               kReshape,
                                               kFlatten,
                                               kSqueeze,
+                                              kUniform,
                                               kUniformCandidateSampler,
                                               kExpandDims,
                                               kCast};

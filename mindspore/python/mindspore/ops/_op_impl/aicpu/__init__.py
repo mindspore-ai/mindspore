@@ -108,6 +108,7 @@ from .search_sorted import _search_sorted_aicpu
 from .stack import _stack_aicpu
 from .unstack import _unstack_aicpu
 from .unsorted_segment_sum import _unsorted_segment_sum_aicpu
+from .unsorted_segment_prod import _unsorted_segment_prod_aicpu
 from .addcmul import _addcmul_aicpu
 from .uniform_candidate_sampler import _uniform_candidate_sampler_aicpu
 from .log_uniform_candidate_sampler import _log_uniform_candidate_sampler_aicpu
@@ -145,6 +146,7 @@ from .upsample_trilinear_3d import _upsample_trilinear_3d_aicpu
 from .upsample_trilinear_3d_grad import _upsample_trilinear_3d_grad_aicpu
 from .upper_bound import _upper_bound_aicpu
 from .cache_swap_table import _cache_swap_table_aicpu
+from .uniform import _uniform_aicpu
 from .uniform_int import _uniform_int_aicpu
 from .uniform_real import _uniform_real_aicpu
 from .standard_laplace import _standard_laplace_aicpu
@@ -156,6 +158,7 @@ from .fused_sparse_adam import _fused_sparse_adam_aicpu
 from .fused_sparse_lazy_adam import _fused_sparse_lazy_adam_aicpu
 from .fused_sparse_ftrl import _fused_sparse_ftrl_aicpu
 from .sparse_fill_empty_rows_grad import _sparse_fill_empty_rows_grad_aicpu
+from .sparse_reorder import _sparse_reorder_aicpu
 from .sparse_reshape import _sparse_reshape_aicpu
 from .sparse_segment_sqrt_n_grad import _sparse_segment_sqrt_n_grad_aicpu
 from .sparse_segment_sum import _sparse_segment_sum_aicpu
@@ -205,6 +208,7 @@ from .environ_get import _environ_get_aicpu
 from .environ_destroy_all import _environ_destroy_all_aicpu
 from .cross import _cross_aicpu
 from .check_numerics import _check_numerics_aicpu
+from .cummax import _cummax_aicpu
 from .cumsum import _cumsum_aicpu
 from .round import _round_aicpu
 from .stft import _stft_aicpu
@@ -229,6 +233,7 @@ from .scatter_nd_update import _scatter_nd_update_aicpu
 from .scatter_nd_max import _scatter_nd_max_aicpu
 from .conj import _conj_aicpu
 from .scatter_nd_min import _scatter_nd_min_aicpu
+from .scatter_add_with_axis import _scatter_add_with_axis_aicpu
 from .compare_and_bitpack import _compare_and_bitpack_aicpu
 from .addcdiv import _addcdiv_aicpu
 from .unique_consecutive import _unique_consecutive_aicpu
@@ -241,8 +246,8 @@ from .reservoir_replay_buffer import _rrb_push_op_cpu
 from .reservoir_replay_buffer import _rrb_sample_op_cpu
 from .reservoir_replay_buffer import _rrb_destroy_op_cpu
 from .concat_offset import _concat_offset_aicpu
-from .concat_offset_v1 import _concat_offset_v1_aicpu
 from .range import _range_aicpu
+from .range_v2 import _range_v2_aicpu
 from .slice_grad import _slice_grad_aicpu
 from .median import _median_aicpu
 from .median_grad import _median_grad_aicpu
@@ -272,6 +277,7 @@ from .complex import _complex_aicpu
 from .complex_abs import _complex_abs_aicpu
 from .concat import _concat_aicpu
 from .cos import _cos_aicpu
+from .count_nonzero import _count_nonzero_aicpu
 from .csr_sparse_matrix_to_dense import _csr_sparse_matrix_to_dense_aicpu
 from .cumprod import _cumprod_aicpu
 from .exp import _exp_aicpu
@@ -340,6 +346,7 @@ from .hypot import _hypot_aicpu
 from .identity_n import _identity_n_aicpu
 from .index_fill import _index_fill_aicpu
 from .index_put import _index_put_aicpu
+from .inplace_index_add import _inplace_index_add_aicpu
 from .kldivloss import _kldiv_loss_aicpu
 from .kldivlossgrad import _kldiv_loss_grad_aicpu
 from .lcm import _lcm_aicpu
@@ -400,6 +407,9 @@ from .non_deterministic_ints import _non_deterministic_ints_aicpu
 from .pow import _pow_aicpu
 from .real import _real_aicpu
 from .resize_area import _resize_area_aicpu
+from .segment_mean import _segment_mean_aicpu
+from .segment_min import _segment_min_aicpu
+from .segment_prod import _segment_prod_aicpu
 from .segment_sum import _segment_sum_aicpu
 from .set_size import _set_size_aicpu
 from .slice import _slice_aicpu
@@ -411,6 +421,7 @@ from .sparse_tensor_dense_mat_mul import _sparse_tensor_dense_mat_mul_aicpu
 from .trace import _trace_aicpu
 from .tracegrad import _tracegrad_aicpu
 from .tridiagonal_solve import _tridiagonal_solve_aicpu
+from .tridiagonal_matmul import _tridiagonal_matmul_aicpu
 from .truncated_normal import _truncated_normal_aicpu
 from .glu import _glu_aicpu
 from .deformable_offsets import _deformable_offsets_aicpu
