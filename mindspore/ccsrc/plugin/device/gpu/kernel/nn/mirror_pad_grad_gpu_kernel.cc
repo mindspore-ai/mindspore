@@ -44,11 +44,15 @@ bool MirrorPadGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   T *input = GetDeviceAddress<T>(inputs, 0);
   int64_t *paddings = GetDeviceAddress<int64_t>(inputs, 1);
   T *interim = GetDeviceAddress<T>(workspace, 0);
+  T *input_copy = GetDeviceAddress<T>(workspace, 1);
   T *output = GetDeviceAddress<T>(outputs, 0);
 
   size_t dx_size = output_size_ / sizeof(T);
   size_t interim_dy_size = workspace_size_ / sizeof(T);
-  CalMirrorPadGrad(dx_size, interim_dy_size, input, interim, output_shape_[0], output_shape_[kIndex1st],
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(input_copy, input, input_size_list_[0], cudaMemcpyDeviceToDevice,
+                                                     reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                     "For 'MirrorPadGrad', it launch memcopy failed.");
+  CalMirrorPadGrad(dx_size, interim_dy_size, input_copy, interim, output_shape_[0], output_shape_[kIndex1st],
                    output_shape_[kIndex2nd], output_shape_[kIndex3rd], input_shape_[kIndex2nd], input_shape_[kIndex3rd],
                    num_paddings_, paddings, mode_, output, reinterpret_cast<cudaStream_t>(stream_ptr));
   return true;
@@ -92,6 +96,7 @@ void MirrorPadGradGpuKernelMod::CalculateWorkspace(const ShapeVector &input_shap
     workspace_size_ *= input_shape[i + kOutputDimLowerLimit];  // WIDTH, HEIGHT -> Input Size
   }
   workspace_size_list_.push_back(workspace_size_);
+  workspace_size_list_.push_back(input_size_list_[0]);
 }
 
 int MirrorPadGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
