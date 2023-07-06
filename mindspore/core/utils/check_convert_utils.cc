@@ -160,7 +160,8 @@ static std::map<std::string, std::map<std::string, AttrConverterPair>> PrimAttrC
   {"Deconvolution", DataFormatMap},
   {"AvgPoolV2", DataFormatMap},
   {"MaxPoolV3", DataFormatMap},
-  {"FusedBatchNorm", DataFormatMap}};
+  {"FusedBatchNorm", DataFormatMap},
+  {"DeformableConv2d", DataFormatMap}};
 
 bool CheckAndConvertUtils::GetDataFormatEnumValue(const ValuePtr &value, int64_t *enum_value) {
   MS_EXCEPTION_IF_NULL(value);

@@ -72,6 +72,7 @@ ADD_CONVERTER_TBE_OP(AscendAntiQuant)
 ADD_CONVERTER_TBE_OP(Shrink)
 ADD_CONVERTER_TBE_OP(ReduceLogSumExp)
 ADD_CONVERTER_TBE_OP(ReduceLogSum)
+ADD_CONVERTER_TBE_OP(SplitV)
 }  // namespace acl
 }  // namespace lite
 }  // namespace mindspore

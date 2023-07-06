@@ -269,7 +269,7 @@ ATTR_MAP(DeformableConv2D) = {
   {"strides", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"dilations", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-  {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
+  {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
   {"deformable_groups", ATTR_DESC(deformable_groups, AnyTraits<int64_t>())},
   {"modulated", ATTR_DESC(modulated, AnyTraits<bool>())},
 };

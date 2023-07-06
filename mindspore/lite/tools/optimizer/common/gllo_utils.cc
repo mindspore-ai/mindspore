@@ -1060,7 +1060,7 @@ CNodePtr GenCastNode(const FuncGraphPtr &graph, const AnfNodePtr &input_node, co
 }
 
 CNodePtr GenGatherNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, const std::vector<int> &indices,
-                       const std::string &cnode_name) {
+                       const std::string &cnode_name, const std::vector<int> &axis) {
   if (func_graph == nullptr || input_node == nullptr) {
     MS_LOG(ERROR) << "input parameter is nullptr, which is invalid.";
     return nullptr;
@@ -1070,7 +1070,7 @@ CNodePtr GenGatherNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_n
     MS_LOG(ERROR) << "make indices node failed.";
     return nullptr;
   }
-  auto axis_node = BuildIntVecParameterNode(func_graph, {0}, cnode_name + "_axis");
+  auto axis_node = BuildIntVecParameterNode(func_graph, axis, cnode_name + "_axis");
   if (axis_node == nullptr) {
     MS_LOG(ERROR) << "make indices node failed.";
     return nullptr;
@@ -1093,13 +1093,13 @@ CNodePtr GenGatherNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_n
 }
 
 CNodePtr GenConcatNode(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &input_node_vec,
-                       const std::string &cnode_name) {
+                       const std::string &cnode_name, int64_t axis) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "func_graph is nullptr, which is invalid.";
     return nullptr;
   }
   ops::Concat concat_node;
-  concat_node.set_axis(0);
+  concat_node.set_axis(axis);
   auto concat_prim = concat_node.GetPrim();
   MS_CHECK_TRUE_RET(concat_prim != nullptr, nullptr);
   auto cnode = func_graph->NewCNode(concat_prim, input_node_vec);
