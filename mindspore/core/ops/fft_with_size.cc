@@ -83,7 +83,9 @@ const std::unordered_map<TypePtr, TypePtr> kIrfftTypes{{kComplex64, kFloat32}, {
 
 std::set<TypePtr> get_input_types(std::unordered_map<TypePtr, TypePtr> types) {
   std::set<TypePtr> keys;
-  for (const auto &t : types) keys.insert(t.first);
+  for (const auto &t : types) {
+    keys.insert(t.first);
+  }
   return keys;
 }
 

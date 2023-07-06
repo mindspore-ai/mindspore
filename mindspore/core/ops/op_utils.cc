@@ -42,8 +42,7 @@
 namespace mindspore {
 namespace ops {
 std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector<int64_t> y_shape,
-                                       const std::string &op_name, const std::string &op_x_name,
-                                       const std::string &op_y_name) {
+                                       const std::string &op_name, const std::string &, const std::string &) {
   if (x_shape == y_shape) {
     return x_shape;
   }

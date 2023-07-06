@@ -63,8 +63,8 @@ abstract::ShapePtr MatrixPowerInferShape(const PrimitivePtr &primitive,
   if (IsDynamicRank(x_shape)) {
     return std::make_shared<abstract::Shape>(x_shape);
   }
-  (void)CheckAndConvertUtils::CheckInteger("x's rank", x_shape.size(), kGreaterEqual, kMatrixPowerInputMinRank,
-                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("x's rank", static_cast<int64_t>(x_shape.size()), kGreaterEqual,
+                                           kMatrixPowerInputMinRank, prim_name);
   if (!IsDynamic(x_shape) && x_shape.back() != x_shape.end()[kLastSecond]) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", dim[-1] and dim[-2] of x should be the same"
                              << ", but got dim[-1]: " << x_shape.back()
