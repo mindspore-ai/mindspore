@@ -363,12 +363,25 @@ void EliminateAuxOutgoingInput(size_t node_index, const std::shared_ptr<Graph> &
       if (exist_in_outgoing_auxinputs != graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.end()) {
         size_t index_remove_node = LongToSize(std::distance(
           graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.begin(), exist_in_outgoing_auxinputs));
-        (void)graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux_idx.erase(
-          graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux_idx.begin() + index_remove_node);
-        (void)graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.erase(exist_in_outgoing_auxinputs);
+        if (graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux_idx.size() > index_remove_node) {
+          (void)graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux_idx.erase(
+            graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux_idx.begin() + index_remove_node);
+        } else {
+          MS_LOG(DEBUG) << "Trying to erase vector element at index " << index_remove_node << ", out of range!";
+        }
+        if (graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.size() > index_remove_node) {
+          (void)graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.erase(exist_in_outgoing_auxinputs);
+        } else {
+          MS_LOG(DEBUG) << "Trying to erase vector element at index " << index_remove_node << ", out of range!";
+        }
       }
-      outgoing_inputs->at(LongToSize(std::distance(outgoing_inputs->begin(), it))) =
-        graph->nodes[node_index].node_in[0];
+      size_t idx = LongToSize(std::distance(outgoing_inputs->begin(), it));
+      if (outgoing_inputs->size() > idx) {
+        outgoing_inputs->at(idx) = graph->nodes[node_index].node_in[0];
+      } else {
+        MS_LOG(DEBUG) << "Trying to index vector element at index " << idx << ", out of range!";
+      }
+
       for (size_t j = 1; j < graph->nodes[node_index].node_in.size(); j++) {
         exist_in_outgoing_auxinputs = find(graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.begin(),
                                            graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.end(),
@@ -391,7 +404,12 @@ void EliminateAuxOutgoingInput(size_t node_index, const std::shared_ptr<Graph> &
         }
       }
     } else {
-      (void)outgoing_inputs->erase(it);
+      auto idx = LongToSize(std::distance(outgoing_inputs->begin(), it));
+      if (outgoing_inputs->size() > idx) {
+        (void)outgoing_inputs->erase(it);
+      } else {
+        MS_LOG(DEBUG) << "Trying to erase vector element at index " << idx << ", out of range!";
+      }
     }
   }
 }
@@ -408,11 +426,23 @@ void EliminateAuxOutgoingAuxInput(size_t node_index, const std::shared_ptr<Graph
              graph->nodes[graph->nodes[node_index].node_out[i]].node_in.end(), graph->nodes[node_index].node_in[0]);
       if (exist_in_outgoing_inputs != graph->nodes[graph->nodes[node_index].node_out[i]].node_in.end()) {
         index_entree = LongToSize(std::distance(outgoing_auxinputs->begin(), it));
-        (void)outgoing_auxinputs_index->erase(outgoing_auxinputs_index->begin() + index_entree);
-        (void)outgoing_auxinputs->erase(it);
+        if (outgoing_auxinputs_index->size() > index_entree) {
+          (void)outgoing_auxinputs_index->erase(outgoing_auxinputs_index->begin() + index_entree);
+        } else {
+          MS_LOG(DEBUG) << "Trying to erase vector element at index " << index_entree << ", out of range!";
+        }
+        if (outgoing_auxinputs->size() > index_entree) {
+          (void)outgoing_auxinputs->erase(it);
+        } else {
+          MS_LOG(DEBUG) << "Trying to erase vector element at index " << index_entree << ", out of range!";
+        }
       } else {
-        outgoing_auxinputs->at(LongToSize(std::distance(outgoing_auxinputs->begin(), it))) =
-          graph->nodes[node_index].node_in[0];
+        size_t idx = LongToSize(std::distance(outgoing_auxinputs->begin(), it));
+        if (outgoing_auxinputs->size() > idx) {
+          outgoing_auxinputs->at(idx) = graph->nodes[node_index].node_in[0];
+        } else {
+          MS_LOG(DEBUG) << "Trying to index vector element at index " << idx << ", out of range!";
+        }
         index_entree = LongToSize(std::distance(
           outgoing_auxinputs->begin(),
           find(outgoing_auxinputs->begin(), outgoing_auxinputs->end(), graph->nodes[node_index].node_in[0])));
@@ -425,11 +455,23 @@ void EliminateAuxOutgoingAuxInput(size_t node_index, const std::shared_ptr<Graph
           auto iter_j =
             find(outgoing_auxinputs->begin(), outgoing_auxinputs->end(), graph->nodes[node_index].node_in[j]);
           size_t index_remove = LongToSize(std::distance(outgoing_auxinputs->begin(), iter_j));
-          (void)outgoing_auxinputs_index->erase(outgoing_auxinputs_index->begin() + SizeToLong(index_remove));
-          (void)outgoing_auxinputs->erase(iter_j);
+          if (outgoing_auxinputs_index->size() > index_remove) {
+            (void)outgoing_auxinputs_index->erase(outgoing_auxinputs_index->begin() + SizeToLong(index_remove));
+          } else {
+            MS_LOG(DEBUG) << "Trying to erase vector element at index " << index_remove << ", out of range!";
+          }
+          if (outgoing_auxinputs->size() > index_remove) {
+            (void)outgoing_auxinputs->erase(iter_j);
+          } else {
+            MS_LOG(DEBUG) << "Trying to erase vector element at index " << index_remove << ", out of range!";
+          }
         } else {
           outgoing_auxinputs->push_back(graph->nodes[node_index].node_in[j]);
-          outgoing_auxinputs_index->push_back(outgoing_auxinputs_index->at(index_entree));
+          if (outgoing_auxinputs_index->size() > index_entree) {
+            outgoing_auxinputs_index->push_back(outgoing_auxinputs_index->at(index_entree));
+          } else {
+            MS_LOG(DEBUG) << "Trying to index vector element at index " << index_entree << ", out of range!";
+          }
         }
       }
       for (size_t j = 0; j < graph->nodes[node_index].node_in_aux.size(); j++) {
@@ -440,16 +482,32 @@ void EliminateAuxOutgoingAuxInput(size_t node_index, const std::shared_ptr<Graph
           auto iter_aux_j =
             find(outgoing_auxinputs->begin(), outgoing_auxinputs->end(), graph->nodes[node_index].node_in_aux[j]);
           size_t index_remove = LongToSize(std::distance(outgoing_auxinputs->begin(), iter_aux_j));
-          (void)outgoing_auxinputs_index->erase(outgoing_auxinputs_index->begin() + SizeToLong(index_remove));
-          (void)outgoing_auxinputs->erase(iter_aux_j);
+          if (outgoing_auxinputs_index->size() > index_remove) {
+            (void)outgoing_auxinputs_index->erase(outgoing_auxinputs_index->begin() + SizeToLong(index_remove));
+          } else {
+            MS_LOG(DEBUG) << "Trying to erase vector element at index " << index_remove << ", out of range!";
+          }
+          if (outgoing_auxinputs->size() > index_remove) {
+            (void)outgoing_auxinputs->erase(iter_aux_j);
+          } else {
+            MS_LOG(DEBUG) << "Trying to erase vector element at index " << index_remove << ", out of range!";
+          }
         } else {
           outgoing_auxinputs->push_back(graph->nodes[node_index].node_in_aux[j]);
           outgoing_auxinputs_index->push_back(outgoing_auxinputs_index->at(index_entree));
         }
       }
     } else {
-      (void)outgoing_auxinputs_index->erase(outgoing_auxinputs_index->begin() + index_entree);
-      (void)outgoing_auxinputs->erase(it);
+      if (outgoing_auxinputs_index->size() > index_entree) {
+        (void)outgoing_auxinputs_index->erase(outgoing_auxinputs_index->begin() + index_entree);
+      } else {
+        MS_LOG(DEBUG) << "Trying to erase vector element at index " << index_entree << ", out of range!";
+      }
+      if (outgoing_auxinputs->size() > index_entree) {
+        (void)outgoing_auxinputs->erase(it);
+      } else {
+        MS_LOG(DEBUG) << "Trying to erase vector element at index " << index_entree << ", out of range!";
+      }
     }
   }
 }
