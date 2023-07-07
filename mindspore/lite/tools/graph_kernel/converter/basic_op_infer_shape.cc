@@ -282,6 +282,9 @@ bool DynOpInferShape::InferShape(const CNodePtr &cnode) const {
       return false;
     }
   } else {
+    if (IsPrimitiveCNode(cnode, prim::kPrimLoad)) {
+      return true;
+    }
     SetAbstract(cnode);
   }
   return true;
