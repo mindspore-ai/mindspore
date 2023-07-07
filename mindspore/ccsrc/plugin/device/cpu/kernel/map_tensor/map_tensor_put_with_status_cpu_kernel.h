@@ -52,7 +52,7 @@ class MapTensorPutWithStatusCpuKernelMod : public MapTensorCpuKernelMod {
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
 
-  void InitSizeLists(const ShapeVector &keys_shape, const ShapeVector &values_shape, const ShapeVector &statuses_shape);
+  void InitSizeLists(const ShapeVector &keys_shape, const ShapeVector &values_shape);
 
   size_t input_key_type_size_{0};
   size_t input_value_type_size_{0};
