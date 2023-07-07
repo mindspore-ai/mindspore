@@ -13,6 +13,11 @@ mindspore.nn.SoftShrink
         0, & \text{ otherwise }
         \end{cases}
 
+    SoftShrink函数图：
+
+    .. image:: images/Softshrink.png
+        :align: center
+
     参数：
         - **lambd** (float) - Softshrink公式中的 :math:`\lambda` ，必须不小于零。默认值： ``0.5`` 。
 

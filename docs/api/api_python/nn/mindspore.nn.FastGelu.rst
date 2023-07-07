@@ -15,6 +15,11 @@ mindspore.nn.FastGelu
 
     其中 :math:`x_i` 是输入的元素。
 
+    FastGelu函数图：
+
+    .. image:: images/FastGelu.png
+        :align: center
+
     输入：
         - **x** (Tensor) - 用于计算FastGelu的Tensor。数据类型为float16或float32。shape为 :math:`(N,*)` ，其中 :math:`*` 表示任意的附加维度数。
 

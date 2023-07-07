@@ -19,7 +19,10 @@ mindspore.nn.SiLU
 
         \text{sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)},
 
-    关于SiLU的图例见 `SiLU <https://en.wikipedia.org/wiki/Activation_function#/media/File:Swish.svg>`_ 。
+    SiLU函数图：
+
+    .. image:: images/SiLU.png
+        :align: center
 
     输入：
         - **x** (Tensor) - 数据类型为float16或float32的输入。任意维度的Tensor。

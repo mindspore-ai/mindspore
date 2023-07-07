@@ -1,7 +1,7 @@
 mindspore.nn.optim_ex.Optimizer
 ================================
 
-.. py:class:: mindspore.nn.optim_ex.Optimizer(learning_rate, parameters)
+.. py:class:: mindspore.nn.optim_ex.Optimizer(params, defaults)
 
     用于参数更新的优化器基类。
 
@@ -12,7 +12,7 @@ mindspore.nn.optim_ex.Optimizer
         - **params** (Union[list[Parameter], list[dict]]) - 网络参数的列表或指定了参数组的列表。
         - **defaults** (dict)- 一个包含了优化器参数默认值的字典（当参数组未指定参数值时使用此默认值）。
 
-    Raises:
+    异常:
         - **TypeError** - `learning_rate` 不是int、float、Tensor。
         - **TypeError** - `parameters` 的元素不是Parameter或字典。
         - **TypeError** - `weight_decay` 不是float或int。

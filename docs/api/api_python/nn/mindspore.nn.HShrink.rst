@@ -13,6 +13,11 @@ mindspore.nn.HShrink
         0, & \text{ otherwise }
         \end{cases}
 
+    HShrink函数图：
+
+    .. image:: images/HShrink.png
+        :align: center
+
     参数：
         - **lambd** (float) - Hard Shrink公式定义的阈值 :math:`\lambda` 。默认值： ``0.5`` 。
 
