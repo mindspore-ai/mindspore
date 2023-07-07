@@ -401,15 +401,7 @@ NodePtr CalBatchGather(const BpropIRBuilder *ib, const NodePtr &values, const No
 bool IsMutable(const NodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(node->get());
-  ValuePtr value_ptr = nullptr;
-  if (node->isa<ValueNode>()) {
-    value_ptr = node->get<ValueNodePtr>()->value();
-  } else {
-    auto abstract = node->abstract();
-    if (abstract != nullptr) {
-      value_ptr = abstract->BuildValue();
-    }
-  }
+  ValuePtr value_ptr = node->BuildValue();
   if (value_ptr != nullptr &&
       (value_ptr->isa<ValueSequence>() || value_ptr->isa<Scalar>() || value_ptr->isa<tensor::Tensor>())) {
     return false;
@@ -437,7 +429,7 @@ NodePtrList BinopGatherCommon(const BpropIRBuilder *ib) {
   int64_t axis_v = 0;
   MS_EXCEPTION_IF_NULL(axis);
   MS_EXCEPTION_IF_NULL(axis->abstract());
-  auto axis_tmp = axis->abstract()->BuildValue();
+  auto axis_tmp = axis->BuildValue();
   MS_EXCEPTION_IF_NULL(axis_tmp);
   if (axis_tmp->isa<tensor::Tensor>()) {
     axis_v = CheckAndConvertUtils::CheckTensorIntValue("axis value", axis_tmp, "Gather")[0];

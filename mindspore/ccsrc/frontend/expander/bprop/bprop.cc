@@ -109,7 +109,7 @@ class PynativeIRBuilder : public BpropIRBuilder {
   mutable bool need_infer_{true};
 };
 
-bool BpropExpander::Run(const CNodePtr &cnode) {
+bool BpropExpander::Run(const CNodePtr &cnode, const std::vector<ValuePtr> &input_values) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_LOG(DEBUG) << "Begin building bprop for " << cnode->fullname_with_scope();
   bool ret = true;
@@ -122,7 +122,7 @@ bool BpropExpander::Run(const CNodePtr &cnode) {
     return false;
   }
   try {
-    ret = RunBprop(cnode);
+    ret = RunBprop(cnode, input_values);
   } catch (const ShapeCalcException &e) {
     MS_LOG(INFO) << "Bprop \"" << node_name << "\" encounter a problem: [" << e.what()
                  << "]. python bprop will be used.";
@@ -148,12 +148,17 @@ const mindspore::HashSet<size_t> &BpropExpander::GetUnusedInputs(const string &o
   return handle->unused_inputs;
 }
 
-bool BpropExpander::RunBprop(const CNodePtr &cnode) {
+bool BpropExpander::RunBprop(const CNodePtr &cnode, const std::vector<ValuePtr> &input_values) {
   auto name = AnfUtils::GetCNodeName(cnode);
   PynativeIRBuilder ir_builder(name, cnode->func_graph(), std::make_shared<CppInfer>(), users_, cnode->inputs().back());
   input_nodes_.reserve(cnode->size());
   (void)std::transform(cnode->inputs().cbegin() + 1, cnode->inputs().cend(), std::back_inserter(input_nodes_),
                        [&ir_builder](const AnfNodePtr &no) { return std::make_shared<Node>(no, &ir_builder); });
+  if (!input_values.empty()) {
+    for (size_t i = 0; i < input_values.size(); ++i) {
+      input_nodes_[i]->SetValue(input_values[i]);
+    }
+  }
   auto &attrs = GetCNodePrimitive(cnode)->attrs();
   auto handle = BpropIRBuilderFactory::Instance().GetBuilder(name);
   if (handle == nullptr) {

@@ -37,11 +37,11 @@ class BpropExpander {
  public:
   BpropExpander(CNodePtrList *outputs, UserMap *users) : outputs_(outputs), users_(users) {}
   ~BpropExpander() = default;
-  bool Run(const CNodePtr &cnode);
+  bool Run(const CNodePtr &cnode, const std::vector<ValuePtr> &input_values = {});
   static const mindspore::HashSet<size_t> &GetUnusedInputs(const string &op_name);
 
  protected:
-  bool RunBprop(const CNodePtr &cnode);
+  bool RunBprop(const CNodePtr &cnode, const std::vector<ValuePtr> &input_values);
   void PostProcess(const CNodePtr &cnode) const;
   void DumpResult(const std::string &name) const;
   NodePtrList input_nodes_;

@@ -280,10 +280,8 @@ int64_t GetIntValue(const NodePtr &node) {
       MS_EXCEPTION_IF_CHECK_FAIL(t_vec.size() >= kIndex1, "Get single tensor value failed");
       return t_vec[kIndex0];
     }
-    return AnfUtils::GetIntValue(real_node);
   }
-  MS_EXCEPTION_IF_NULL(real_node->abstract());
-  return AnfUtils::GetIntValue(real_node->abstract()->BuildValue());
+  return AnfUtils::GetIntValue(node->BuildValue());
 }
 
 std::vector<int64_t> GetIntList(const ValuePtr &value) {
@@ -299,12 +297,9 @@ std::vector<int64_t> GetIntList(const ValuePtr &value) {
 }
 
 std::vector<int64_t> GetIntList(const NodePtr &node) {
-  if (node->isa<ValueNode>()) {
-    auto value = node->get<ValueNodePtr>()->value();
-    return GetIntList(value);
-  }
-  MS_EXCEPTION_IF_NULL(node->abstract());
-  return GetIntList(node->abstract()->BuildValue());
+  auto value = node->BuildValue();
+  MS_EXCEPTION_IF_NULL(value);
+  return GetIntList(value);
 }
 
 NodePtrList BinopGradCommon(const BpropIRBuilder *ib, const NodePtr &x, const NodePtr &y, const NodePtr &dx,

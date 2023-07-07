@@ -46,6 +46,9 @@ class COMMON_EXPORT Node : public std::enable_shared_from_this<Node> {
 
   AbstractBasePtr abstract();
 
+  void SetValue(const ValuePtr &val) { value_ = val; }
+  ValuePtr BuildValue();
+
   std::vector<int64_t> shape();
   std::vector<std::vector<int64_t>> shapes();
 
@@ -64,6 +67,8 @@ class COMMON_EXPORT Node : public std::enable_shared_from_this<Node> {
   BaseShapePtr shape_{nullptr};
   // cache the output dtype after first query
   TypePtr type_{nullptr};
+  // cache the value of node
+  ValuePtr value_{nullptr};
 };
 using NodePtr = std::shared_ptr<Node>;
 using NodePtrList = std::vector<NodePtr>;
