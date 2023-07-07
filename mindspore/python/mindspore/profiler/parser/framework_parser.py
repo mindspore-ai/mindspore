@@ -794,7 +794,7 @@ class DynamicFrameWorkParser:
         """Obtain the execution time of aicpu operator and aicore operator."""
         timeline_info = defaultdict(list)
         for row in op_summary:
-            key = row['Op Name'].astype(str).split('/')[-1]
+            key = row['Op Name'].split('/')[-1]
             timeline_info[key].append(row['Task Duration'])
 
         self._all_op_exe_time = timeline_info

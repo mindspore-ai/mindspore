@@ -19,8 +19,6 @@ import os
 
 import numpy as np
 
-from mindspore import context
-
 
 class AscendMsprofDataGenerator:
     """Generate ascend data from files."""
@@ -30,40 +28,48 @@ class AscendMsprofDataGenerator:
         self.op_summary = None
         self.op_statistic = None
         self.steptrace = None
-        if context.get_context('mode') == context.PYNATIVE_MODE:
-            self.op_summary_dt = np.dtype(
-                [('Model ID', int), ('Task ID', int), ('Stream ID', int), ('Op Name', object), ('Op Type', object),
-                 ('Task Type', object), ('Task Start Time', float), ('Task Duration', float), ('Task Wait Time', float),
-                 ('Block Dim', float), ('Input Shapes', object), ('Input Data Types', object),
-                 ('Input Formats', object), ('Output Shapes', object), ('Output Data Types', object),
-                 ('Output Formats', object), ('aicore_time', float), ('total_cycles', float), ('mac_fp16_ratio', float),
-                 ('mac_int8_ratio', float), ('vec_fp32_ratio', float), ('vec_fp16_ratio', float),
-                 ('vec_int32_ratio', float), ('vec_misc_ratio', float), ('cube_fops', float), ('vector_fops', float),
-                 ('Iteration ID', int)])
-            self.op_statistic_dt = np.dtype(
-                [('Op Type', object), ('Core Type', object), ('Count', float), ('Total Time', float),
-                 ('Min Time', float), ('Avg Time', float), ('Max Time', float), ('Ratio', float)])
-            self.steptrace_dt = np.dtype([('Iteration ID', int), ('FP Start', float), ('BP End', float),
-                                          ('Iteration End', float), ('Iteration Time', float), ('FP to BP Time', float),
-                                          ('Iteration Refresh', float), ('Data Aug Bound', float), ('Model ID', int)])
 
-        else:
-            self.op_summary_dt = np.dtype(
-                [('Model Name', object), ('Model ID', int), ('Task ID', int), ('Stream ID', int), ('Infer ID', int),
-                 ('Op Name', object), ('Op Type', object), ('Task Type', object), ('Task Start Time', float),
-                 ('Task Duration', float), ('Task Wait Time', float), ('Block Dim', float), ('Input Shapes', object),
-                 ('Input Data Types', object), ('Input Formats', object), ('Output Shapes', object),
-                 ('Output Data Types', object), ('Output Formats', object), ('aicore_time', float),
-                 ('total_cycles', float), ('mac_fp16_ratio', float), ('mac_int8_ratio', float),
-                 ('vec_fp32_ratio', float), ('vec_fp16_ratio', float), ('vec_int32_ratio', float),
-                 ('vec_misc_ratio', float), ('cube_fops', float), ('vector_fops', float), ('Iteration ID', int)])
-            self.op_statistic_dt = np.dtype(
-                [('Model Name', object), ('Op Type', object), ('Core Type', object), ('Count', float),
-                 ('Total Time', float), ('Min Time', float), ('Avg Time', float), ('Max Time', float),
-                 ('Ratio', float)])
-            self.steptrace_dt = [('Iteration ID', int), ('FP Start', float), ('BP End', float),
-                                 ('Iteration End', float), ('Iteration Time', float), ('FP to BP Time', float),
-                                 ('Iteration Refresh', float), ('Data Aug Bound', float), ('Model ID', int)]
+        self.invalid_index = 1000
+        self.op_summary_basis_name = {
+            'Model ID': {'index': self.invalid_index, 'dtype': ('Model ID', int)},
+            'Task ID': {'index': self.invalid_index, 'dtype': ('Task ID', int)},
+            'Stream ID': {'index': self.invalid_index, 'dtype': ('Stream ID', int)},
+            'Op Name': {'index': self.invalid_index, 'dtype': ('Op Name', object)},
+            'OP Type': {'index': self.invalid_index, 'dtype': ('Op Type', object)},
+            'Task Type': {'index': self.invalid_index, 'dtype': ('Task Type', object)},
+            'Task Start Time': {'index': self.invalid_index, 'dtype': ('Task Start Time', float)},
+            'Task Duration(us)': {'index': self.invalid_index, 'dtype': ('Task Duration', float)},
+            'Task Wait Time(us)': {'index': self.invalid_index, 'dtype': ('Task Wait Time', float)},
+            'Input Shapes': {'index': self.invalid_index, 'dtype': ('Input Shapes', object)},
+            'Input Data Types': {'index': self.invalid_index, 'dtype': ('Input Data Types', object)},
+            'Input Formats': {'index': self.invalid_index, 'dtype': ('Input Formats', object)},
+            'Output Shapes': {'index': self.invalid_index, 'dtype': ('Output Shapes', object)},
+            'Output Data Types': {'index': self.invalid_index, 'dtype': ('Output Data Types', object)},
+            'Output Formats': {'index': self.invalid_index, 'dtype': ('Output Formats', object)},
+        }
+        self.op_summary_extend_name = {
+            'vector_fops': {'index': self.invalid_index, 'dtype': ('vector_fops', float)},
+            'cube_fops': {'index': self.invalid_index, 'dtype': ('cube_fops', float)},
+        }
+        self.op_summary_name = None
+
+        self.op_statistic_name = {
+            'OP Type': {'index': self.invalid_index, 'dtype': ('Op Type', object)},
+            'Count': {'index': self.invalid_index, 'dtype': ('Count', int)},
+            'Total Time(us)': {'index': self.invalid_index, 'dtype': ('Total Time', float)},
+        }
+
+        self.steptrace_name = {
+            'Iteration ID': {'index': self.invalid_index, 'dtype': ('Iteration ID', int)},
+            'FP Start': {'index': self.invalid_index, 'dtype': ('FP Start', float)},
+            'BP End': {'index': self.invalid_index, 'dtype': ('BP End', float)},
+            'Iteration End': {'index': self.invalid_index, 'dtype': ('Iteration End', float)},
+            'Iteration Time(us)': {'index': self.invalid_index, 'dtype': ('Iteration Time', float)},
+            'FP to BP Time(us)': {'index': self.invalid_index, 'dtype': ('FP to BP Time', float)},
+            'Iteration Refresh(us)': {'index': self.invalid_index, 'dtype': ('Iteration Refresh', float)},
+            'Data Aug Bound(us)': {'index': self.invalid_index, 'dtype': ('Data Aug Bound', float)},
+            'Model ID': {'index': self.invalid_index, 'dtype': ('Model ID', int)},
+        }
 
     @staticmethod
     def find_files(directory, pattern):
@@ -76,79 +82,107 @@ class AscendMsprofDataGenerator:
                     filename = os.path.join(root, basename)
                     yield filename
 
-    def read_files(self, directory, pattern):
-        """Read files with feature 'pattern' from the directory"""
-
-        dataset = []
-        for file in self.find_files(directory, pattern):
-            with open(file, newline='') as csvfile:
-                reader = csv.reader(csvfile, delimiter=',', quotechar='"')
-                next(reader)
-                for row in reader:
-                    row = ['0' if i == 'N/A' else i for i in row]
-                    dataset.append(tuple(row))
-        return dataset
+    def link_index_with_name(self, header, name_dict):
+        """link index with row name"""
+        for index, value in enumerate(header):
+            if value in name_dict:
+                name_dict[value]['index'] = index
+        for value in name_dict.values():
+            if value['index'] == self.invalid_index:
+                return False
+        return True
 
     def parse(self):
         """read msprof data generate DataFrame data"""
+        self._read_op_summary()
 
+        self._read_op_statistic()
+
+        self._read_steptrace()
+
+        return self.op_summary, self.op_statistic, self.steptrace
+
+    def _read_op_summary(self):
+        """read op summary to memory"""
         op_summary = []
         for file in self.find_files(self.source_path, "op_summary*.csv"):
             with open(file, newline='') as csvfile:
-                step = int(file.split('_')[-1].split('.')[0])
+                iteration = int(file.split('_')[-1].split('.')[0])
                 reader = csv.reader(csvfile, delimiter=',', quotechar='"')
-                next(reader)
+                header = next(reader)
+                self.link_index_with_name(header, self.op_summary_basis_name)
+                extend_flag = self.link_index_with_name(header, self.op_summary_extend_name)
+                if extend_flag:
+                    self.op_summary_name = {**self.op_summary_basis_name, **self.op_summary_extend_name}
+                else:
+                    self.op_summary_name = self.op_summary_basis_name
+                self.op_summary_name['Iteration ID'] = {'index': -1, 'dtype': ('Iteration ID', object)}
                 for row in reader:
-                    row.append(step)
+                    row = [row[index.get('index')] for index in self.op_summary_name.values()]
+                    row[self.op_summary_name['Iteration ID']['index']] = iteration
                     row = ['0' if i == 'N/A' else i for i in row]
                     op_summary.append(tuple(row))
 
-        self.op_summary = np.array(op_summary, dtype=self.op_summary_dt)
+        op_summary_dt = np.dtype([value['dtype'] for value in self.op_summary_name.values()])
+
+        self.op_summary = np.array(op_summary, dtype=op_summary_dt)
         self.op_summary['Task Start Time'] = self.op_summary['Task Start Time'] * 1e-6
         self.op_summary['Task Duration'] = self.op_summary['Task Duration'] * 1e-3
         self.op_summary['Task Wait Time'] = self.op_summary['Task Wait Time'] * 1e-3
-        self.op_summary['aicore_time'] = self.op_summary['aicore_time'] * 1e-3
 
-        op_statistic = self.read_files(self.source_path, 'op_statistic*.csv')
-        self.op_statistic = np.array(op_statistic, dtype=self.op_statistic_dt)
+    def _read_op_statistic(self):
+        """read op statistic to memory"""
+        op_statistic = []
+        for file in self.find_files(self.source_path, "op_statistic*.csv"):
+            with open(file, newline='') as csvfile:
+                reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+                header = next(reader)
+                self.link_index_with_name(header, self.op_statistic_name)
+                for row in reader:
+                    row = [row[index.get('index')] for index in self.op_statistic_name.values()]
+                    row = ['0' if i == 'N/A' else i for i in row]
+                    op_statistic.append(tuple(row))
+
+        op_statistic_dt = np.dtype([value['dtype'] for value in self.op_statistic_name.values()])
+        self.op_statistic = np.array(op_statistic, dtype=op_statistic_dt)
         self.op_statistic['Total Time'] = self.op_statistic['Total Time'] * 1e-3
-        self.op_statistic['Min Time'] = self.op_statistic['Min Time'] * 1e-3
-        self.op_statistic['Avg Time'] = self.op_statistic['Avg Time'] * 1e-3
-        self.op_statistic['Max Time'] = self.op_statistic['Max Time'] * 1e-3
 
+    def _read_steptrace(self):
+        """read steptrace to memory"""
         steptrace = []
         for file in self.find_files(self.source_path, "step_trace*.csv"):
             with open(file, newline='') as csvfile:
                 reader = csv.reader(csvfile, delimiter=',', quotechar='"')
-                next(reader)
+                header = next(reader)
+                self.link_index_with_name(header, self.steptrace_name)
                 for row in reader:
-                    row = ['0' if i == 'N/A' else i for i in row]
-                    steptrace.append(tuple(row))
+                    rows = [row[index.get('index')] for index in self.steptrace_name.values()]
+                    rows.extend(row[9:])
+                    rows = ['0' if i == 'N/A' else i for i in rows]
+                    steptrace.append(tuple(rows))
             break
 
-        if steptrace:
-            hccl_data = \
-                self.op_summary[(self.op_summary['Task Type'] == 'HCCL') & (self.op_summary['Iteration ID'] == 1)][[
-                    'Task ID', 'Stream ID', 'Op Name']]
+        hccl_data = self.op_summary[(self.op_summary['Task Type'] == 'HCCL') & (self.op_summary['Iteration ID'] == 1)][
+            ['Task ID', 'Stream ID', 'Op Name']]
 
-            for name in hccl_data:
-                name = f"stream_{name['Stream ID']}_{name['Task ID']}_{name['Op Name']}"
-                self.steptrace_dt.append((name, float))
-                self.steptrace_dt.append((f'{name} duration', float))
-            self.steptrace_dt = np.dtype(self.steptrace_dt)
+        index = len(self.steptrace_name)
+        for name in hccl_data:
+            name = f"stream_{name['Stream ID']}_{name['Task ID']}_{name['Op Name']}"
+            self.steptrace_name[name] = {'index': index, 'dtype': (name, float)}
+            index += 1
+            self.steptrace_name[f'{name} duration'] = {'index': index, 'dtype': (f'{name} duration', float)}
+            index += 1
 
-            self.steptrace = np.array(steptrace, dtype=self.steptrace_dt)
-            self.steptrace['FP Start'] = self.steptrace['FP Start'] * 1e-3
-            self.steptrace['BP End'] = self.steptrace['BP End'] * 1e-3
-            self.steptrace['Iteration End'] = self.steptrace['Iteration End'] * 1e-3
-            self.steptrace['Iteration Time'] = self.steptrace['Iteration Time'] * 1e-3
-            self.steptrace['FP to BP Time'] = self.steptrace['FP to BP Time'] * 1e-3
-            self.steptrace['Iteration Refresh'] = self.steptrace['Iteration Refresh'] * 1e-3
-            self.steptrace['Data Aug Bound'] = self.steptrace['Data Aug Bound'] * 1e-3
+        steptrace_dt = np.dtype([value['dtype'] for value in self.steptrace_name.values()])
 
-            for name in self.steptrace.dtype.names[9:]:
-                self.steptrace[name] = self.steptrace[name] * 1e-3
-        else:
-            self.steptrace = np.empty((0,), dtype=self.steptrace_dt)
+        self.steptrace = np.array(steptrace, dtype=steptrace_dt)
+        self.steptrace['FP Start'] = self.steptrace['FP Start'] * 1e-3
+        self.steptrace['BP End'] = self.steptrace['BP End'] * 1e-3
+        self.steptrace['Iteration End'] = self.steptrace['Iteration End'] * 1e-3
+        self.steptrace['Iteration Time'] = self.steptrace['Iteration Time'] * 1e-3
+        self.steptrace['FP to BP Time'] = self.steptrace['FP to BP Time'] * 1e-3
+        self.steptrace['Iteration Refresh'] = self.steptrace['Iteration Refresh'] * 1e-3
+        self.steptrace['Data Aug Bound'] = self.steptrace['Data Aug Bound'] * 1e-3
 
-        return self.op_summary, self.op_statistic, self.steptrace
+        for name in self.steptrace.dtype.names[9:]:
+            self.steptrace[name] = self.steptrace[name] * 1e-3

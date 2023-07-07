@@ -41,8 +41,9 @@ class AscendFPBPGenerator:
         if steptrace.size:
             is_training_mode_flag = True
             op_summary = self.op_summary[np.argsort(self.op_summary['Task Start Time'])]
-            fp_index = np.searchsorted(op_summary['Task Start Time'], steptrace['FP Start'])
-            bp_index = np.searchsorted(op_summary['Task Start Time'] + op_summary['Task Duration'], steptrace['BP End'])
+            fp_index = np.searchsorted(op_summary['Task Start Time'], steptrace['FP Start'], side='right') - 1
+            bp_index = np.searchsorted(op_summary['Task Start Time'] + op_summary['Task Duration'], steptrace['BP End'],
+                                       side='left') - 1
             points = defaultdict(dict)
             for i in range(steptrace.size):
                 model_id = f"model_{steptrace[i]['Iteration ID']}"

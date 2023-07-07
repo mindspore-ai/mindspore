@@ -39,17 +39,27 @@ class AscendFlopsGenerator:
 
         self.flops = np.empty((len(self.op_summary)), dtype=self.flops_dt)
 
+        nonzero_duration = self.op_summary['Task Duration'] != 0
         self.flops['op_full_name'] = self.op_summary['Op Name']
         self.flops['MFLOPs(10^6 cube)'] = self.op_summary['cube_fops'] * 1e-6
-        self.flops['GFLOPS(10^9 cube)'] = self.op_summary['cube_fops'] / self.op_summary['Task Duration'] * 1e-6
+        self.flops['GFLOPS(10^9 cube)'] = np.where(nonzero_duration, self.op_summary['cube_fops'] / self.op_summary[
+            'Task Duration'] * 1e-6, 0)
         self.flops['MFLOPs(10^6 vector)'] = self.op_summary['vector_fops'] * 1e-6
         self.flops['GFLOPS(10^9 vector)'] = self.op_summary['vector_fops'] / self.op_summary['Task Duration'] * 1e-6
+        self.flops['GFLOPS(10^9 vector)'] = np.where(nonzero_duration, self.op_summary['vector_fops'] / self.op_summary[
+            'Task Duration'] * 1e-6, 0)
+
+        cube_flops = 0
+        vec_flops = 0
+        if np.sum(self.op_summary['Task Duration']) != 0:
+            cube_flops = round(np.sum(self.flops['GFLOPS(10^9 cube)']) / np.sum(self.op_summary['Task Duration']), 4)
+            vec_flops = round(np.sum(self.flops['GFLOPS(10^9 vector)']) / np.sum(self.op_summary['Task Duration']), 4)
 
         self.flops_summary = {
             'cube_FLOPs': np.sum(self.flops['MFLOPs(10^6 cube)']),
-            'cube_FLOPS': round(np.sum(self.flops['GFLOPS(10^9 cube)']) / np.sum(self.op_summary['Task Duration']), 4),
+            'cube_FLOPS': cube_flops,
             'vec_FLOPs': np.sum(self.flops['MFLOPs(10^6 vector)']),
-            'vec_FLOPS': round(np.sum(self.flops['GFLOPS(10^9 vector)']) / np.sum(self.op_summary['Task Duration']), 4)
+            'vec_FLOPS': vec_flops
         }
 
     def write(self, flops_path, flops_summary_path):
