@@ -19,6 +19,7 @@
 #include <set>
 #include "utils/ms_context.h"
 #include "transform/acl_ir/acl_convert.h"
+#include "transform/acl_ir/acl_allocator.h"
 #include "include/common/debug/common.h"
 #include "utils/file_utils.h"
 
@@ -190,6 +191,7 @@ void AclRunner::AoeDump() {
 
 void AclRunner::Run(void *stream_ptr, bool is_sync) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
+  AclAllocatorRegister::Instance().RegisterAllocator(stream_ptr);
   AoeDump();
 
   MS_LOG(DEBUG) << "Start aclopCompileAndExecute of op_type: " << op_type_;
