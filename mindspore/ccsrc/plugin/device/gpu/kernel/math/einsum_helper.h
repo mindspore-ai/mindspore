@@ -51,7 +51,9 @@ using OpStruct = std::tuple<std::string, std::vector<int64_t>, std::vector<size_
 template <typename T>
 class EinsumHelper {
  public:
-  EinsumHelper() {
+  EinsumHelper() { ResetResource(); }
+
+  void ResetResource() {
     label_perm_idx_ = std::vector<int64_t>(LABEL_NUM, -1);
     element_count_ = std::vector<size_t>(LABEL_NUM, 0);
     ell_idx_ = 0;
