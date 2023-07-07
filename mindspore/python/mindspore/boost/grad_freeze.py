@@ -230,7 +230,7 @@ class GradientFreeze:
         >>> network, optimizer = gradient_freeze_class.freeze_generate(net_with_loss, optimizer)
         >>> inputs = Tensor(np.ones([size, in_features]).astype(np.float32))
         >>> label = Tensor(np.zeros([size, out_features]).astype(np.float32))
-        >>> output = train_network(inputs, label)
+        >>> output = network(inputs, label)
     """
     def __init__(self, param_groups, freeze_type, freeze_p, total_steps):
         self._param_groups = param_groups
