@@ -124,14 +124,16 @@ void ConvGradInputBkwGpuKernelMod::InitSizeLists() {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnGetConvolutionBackwardDataWorkspaceSize(cudnn_handle_, w_desc_, dy_desc_, conv_desc_, padded_descriptor_,
                                                    algo_, &workspace_size_),
-      "cudnnGetConvolutionBackwardDataWorkspaceSize failed");
+      GetConvBwdDataInfo("cudnnGetConvolutionBackwardDataWorkspaceSize failed", w_desc_, dy_desc_, conv_desc_,
+                         padded_descriptor_));
     workspace_size_list_.push_back(padded_size_);
   } else {
     if (!is_null_input_) {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
         cudnnGetConvolutionBackwardDataWorkspaceSize(cudnn_handle_, w_desc_, dy_desc_, conv_desc_, dx_desc_, algo_,
                                                      &workspace_size_),
-        "cudnnGetConvolutionBackwardDataWorkspaceSize failed");
+        GetConvBwdDataInfo("cudnnGetConvolutionBackwardDataWorkspaceSize failed", w_desc_, dy_desc_, conv_desc_,
+                           dx_desc_));
     }
   }
   (void)workspace_size_list_.insert(workspace_size_list_.begin(), workspace_size_);

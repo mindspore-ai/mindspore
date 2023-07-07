@@ -287,14 +287,16 @@ void Conv2dFwdGpuKernelMod::InitSizeLists() {
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnGetConvolutionForwardWorkspaceSize(cudnn_handle_, padded_desc_, filter_desc_, conv_desc_, output_desc_,
                                               conv_algorithm_, &workspace_size_),
-      "cudnnGetConvolutionForwardWorkspaceSize failed");
+      GetConvForwardInfo("cudnnGetConvolutionForwardWorkspaceSize failed", padded_desc_, filter_desc_, conv_desc_,
+                         output_desc_));
     workspace_size_list_.push_back(padded_size_);
   } else {
     if (!is_null_input_) {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
         cudnnGetConvolutionForwardWorkspaceSize(cudnn_handle_, input_desc_, filter_desc_, conv_desc_, output_desc_,
                                                 conv_algorithm_, &workspace_size_),
-        "cudnnGetConvolutionForwardWorkspaceSize failed");
+        GetConvForwardInfo("cudnnGetConvolutionForwardWorkspaceSize failed", input_desc_, filter_desc_, conv_desc_,
+                           output_desc_));
     }
   }
   (void)workspace_size_list_.insert(workspace_size_list_.begin(), workspace_size_);
