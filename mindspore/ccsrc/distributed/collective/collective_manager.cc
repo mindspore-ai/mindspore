@@ -269,7 +269,7 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
     device_ctx_->Initialize();
     return group->Initialize(root_info);
   };
-  MS_LOG(INFO) << "Begin initialize communication group on the device side: " << group_name;
+  MS_LOG(WARNING) << "Begin initialize communication group on the device side: " << group_name;
 
   // Timeout limit 600 seconds to wait finish initializing device communication group.
   const int64_t kTimeToWait = 600;
@@ -278,7 +278,7 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
   if (!ret) {
     MS_LOG(ERROR) << "Failed to create comm group on device side for " << group_name;
   }
-  MS_LOG(INFO) << "End initialize communication group on the device side: " << group_name;
+  MS_LOG(WARNING) << "End initialize communication group on the device side: " << group_name;
   return ret;
 }
 

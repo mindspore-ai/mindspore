@@ -92,7 +92,7 @@ bool MsCollectiveCommLib::AllGatherHostHashName(size_t host_hash_name, std::vect
 
   auto role = common::GetEnv(distributed::kEnvRole);
   bool success = false;
-  // It this is not recovery scenario, retry for 3*80s, which is 4 minutes.
+  // It this is not recovery scenario, retry for 3*200s, which is 10 minutes.
   const size_t interval = 3;
   size_t retry = RecoveryContext::GetInstance()->enable_recovery() ? SIZE_MAX : kMSCollectiveRetryTime;
   while (!success && --retry > 0) {
@@ -158,13 +158,14 @@ bool MsCollectiveCommLib::SendUniqueID(const std::string &group_name, size_t roo
   std::string group_info_key = node_role_prefix + kGroupInfoPrefix + group_name;
 
   bool success = false;
-  // It this is not recovery scenario, retry for 3*80s, which is 4 minutes.
+  // It this is not recovery scenario, retry for 3*200s, which is 10 minutes.
   const size_t interval = 3;
   size_t retry = RecoveryContext::GetInstance()->enable_recovery() ? SIZE_MAX : kMSCollectiveRetryTime;
   while (!success && --retry > 0) {
     success = cgn_->PutMetadata(group_info_key, root_info, root_info_size);
     if (!success) {
-      MS_LOG(WARNING) << "Failed to send unique id for group " << group_name << ". Retry time " << retry;
+      MS_LOG(WARNING) << "Failed to send unique id for group " << group_name << ". Retry time: " << retry << "/"
+                      << kMSCollectiveRetryTime;
       (void)sleep(interval);
     }
   }
@@ -183,7 +184,7 @@ bool MsCollectiveCommLib::QueryUniqueID(const std::string &group_name, size_t ro
   std::string group_info_key = node_role_prefix + kGroupInfoPrefix + group_name;
 
   bool success = false;
-  // It this is not recovery scenario, retry for 3*80s, which is 4 minutes.
+  // It this is not recovery scenario, retry for 3*200s, which is 10 minutes.
   const size_t interval = 3;
   size_t retry = RecoveryContext::GetInstance()->enable_recovery() ? SIZE_MAX : kMSCollectiveRetryTime;
   while (!success && --retry > 0) {
@@ -196,12 +197,18 @@ bool MsCollectiveCommLib::QueryUniqueID(const std::string &group_name, size_t ro
       }
       success = true;
     } else {
-      MS_LOG(WARNING) << "Retry to lookup the unique id for group " << group_name << " from the meta server node...";
+      MS_LOG(WARNING) << "Retry to lookup the unique id for group " << group_name
+                      << " from the meta server node...Retry time: " << retry << "/" << kMSCollectiveRetryTime;
       (void)sleep(interval);
     }
   }
   if (!success) {
-    MS_LOG(EXCEPTION) << "Failed to fetch the unique id of the collective lib from the meta server node.";
+    const auto &group_info = groups_.at(group_name);
+    uint32_t root_rank = group_info->group_ranks().at(0);
+    MS_LOG(EXCEPTION)
+      << "Failed to fetch the unique id of the collective lib from the meta server node. Maybe the root rank process "
+         "of this group has exited or has not executed to QueryUniqueID step. Please check root rank: "
+      << root_rank << "'s log.";
   }
   return true;
 }
