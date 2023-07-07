@@ -716,9 +716,7 @@ void DataConvert::FlattenArgs(const std::vector<ValuePtr> &v_vec, std::vector<Va
     const auto &v = v_vec[i];
     MS_EXCEPTION_IF_NULL(v);
     MS_LOG(DEBUG) << "Get v is " << v->ToString();
-    if (PyNativeAlgo::Common::IsTensor(v)) {
-      (void)flatten_v->emplace_back(v);
-    }
+    (void)flatten_v->emplace_back(v);
   }
   if (has_sens) {
     if (PyNativeAlgo::Common::IsTensor(v_vec[input_size])) {
