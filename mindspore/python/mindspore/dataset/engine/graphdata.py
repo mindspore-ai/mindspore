@@ -1429,6 +1429,10 @@ class ArgoverseDataset(InMemoryGraphDataset):
     loading Motion Forecasting Dataset in argoverse dataset, recommend to visit official website for more detail:
     https://www.argoverse.org/av1.html#download-link.
 
+    Note:
+        - Loading data from untrusted sources can be unsafe.
+          Please see `here <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_pickle.html>`_ .
+
     Args:
         data_dir (str): directory for loading dataset, here contains origin format data and will be loaded in
             `process` method.
