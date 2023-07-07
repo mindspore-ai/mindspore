@@ -19,15 +19,6 @@ set(LITE_SRC
         ${LITE_SRC}
         ${API_SRC}
         ${MOCK_SRC}
-        ${LITE_DIR}/src/common/context_util.cc
-        ${LITE_DIR}/src/common/file_utils.cc
-        ${LITE_DIR}/src/common/mmap_utils.cc
-        ${LITE_DIR}/src/common/utils.cc
-        ${LITE_DIR}/src/common/graph_util.cc
-        ${LITE_DIR}/src/common/log.cc
-        ${LITE_DIR}/src/common/prim_util.cc
-        ${LITE_DIR}/src/common/tensor_util.cc
-        ${LITE_DIR}/src/common/config_infos.cc
         ${LITE_DIR}/src/litert/allocator.cc
         ${LITE_DIR}/src/litert/inner_allocator.cc
         ${LITE_DIR}/src/litert/runtime_allocator.cc
@@ -81,25 +72,6 @@ set(LITE_SRC
         ${MINDIR_KERNEL_SRC}
         )
 
-set(INFER_HELPER_SRC
-        ${INFER_HELPER_SRC}
-        ${LITE_DIR}/src/common/helper/external_tensor/file_helper.cc
-        ${LITE_DIR}/src/common/helper/external_tensor/memory_helper.cc
-        )
-
-set(LITE_SRC
-        ${LITE_SRC}
-        ${INFER_HELPER_SRC}
-        )
-
-if(MSLITE_ENABLE_MODEL_ENCRYPTION)
-    set(LITE_SRC
-            ${LITE_SRC}
-            ${LITE_DIR}/src/common/decrypt.cc
-            ${LITE_DIR}/src/common/dynamic_library_loader.cc
-            )
-endif()
-
 if(MSLITE_ENABLE_BFC_MEMORY)
     set(LITE_SRC
         ${LITE_SRC}
@@ -151,13 +123,6 @@ if(MSLITE_ENABLE_RUNTIME_CONVERT)
             ${LITE_DIR}/src/common/ops/anf_utils.cc
             ${LITE_DIR}/src/litert/runtime_convert.cc)
     set(LITE_SRC ${LITE_SRC} ${RUNTIME_CONVERT_SRC})
-endif()
-
-if(MSLITE_ENABLE_STRING_KERNEL)
-    set(LITE_SRC
-        ${LITE_SRC}
-        ${LITE_DIR}/src/common/string_util.cc
-        )
 endif()
 
 if(ENABLE_RUNTIME_NCX_PASS)
@@ -272,9 +237,11 @@ set(MSLITE_GE_LITERT_SRC
 set(LITE_SRC ${LITE_SRC} ${MSLITE_GE_LITERT_SRC})
 
 add_library(msplugin_infer_lite_src_mid OBJECT ${LITE_SRC})
-add_dependencies(msplugin_infer_lite_src_mid fbs_src)
+add_dependencies(msplugin_infer_lite_src_mid fbs_src fbs_inner_src)
+add_dependencies(msplugin_infer_lite_src_mid lite_src_common_mid)
 
 add_library(msplugin-ge-litert SHARED $<TARGET_OBJECTS:msplugin_infer_lite_src_mid>)
+target_link_libraries(msplugin-ge-litert lite_src_common_mid)
 
 add_dependencies(msplugin-ge-litert mindspore_converter)
 target_link_libraries(msplugin-ge-litert mindspore_converter)

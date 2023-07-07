@@ -38,11 +38,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
         ${MSLITE_EXTEND_NNACL_KERNEL_LIB_SRC}
         ${MSLITE_EXTEND_DEFAULT_KERNEL_LIB_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel/kernel_selector/kernel_selector.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../common/file_utils.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../common/utils.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../common/graph_util.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../common/config_infos.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../common/config_file.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/subgraph_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/numa_adapter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/model_manager.cc
@@ -99,12 +94,16 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
     include(${LITE_DIR}/cmake/ccsrc_extendrt.cmake)
 
     add_library(mindspore-extendrt SHARED ${MSLITE_EXTEND_RUNTIME_SRC} ${MSLITE_EXTEND_CPU_RUNTIME_SRC})
+    add_dependencies(mindspore-extendrt lite_src_common_mid)
+    target_link_libraries(mindspore-extendrt lite_src_common_mid)
     add_dependencies(mindspore-extendrt fbs_src fbs_inner_src)
     add_dependencies(mindspore-extendrt mindspore-infer-anfalgo)
     add_dependencies(mindspore-extendrt mindspore-kernel-graph)
     add_subdirectory(cxx_api)
     add_subdirectory(delegate/graph_executor/litert)
     add_library(mindspore-extendrt_static STATIC ${MSLITE_EXTEND_RUNTIME_SRC})
+    add_dependencies(mindspore-extendrt_static lite_src_common_mid)
+    target_link_libraries(mindspore-extendrt_static lite_src_common_mid)
     add_dependencies(mindspore-extendrt_static fbs_src fbs_inner_src)
     add_dependencies(mindspore-extendrt_static mindspore-infer-anfalgo)
     add_dependencies(mindspore-extendrt_static mindspore-kernel-graph)
