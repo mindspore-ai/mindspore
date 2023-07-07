@@ -126,6 +126,25 @@ class ReshapeNet(Cell):
         return out
 
 
+class NoStrategyNet(Cell):
+    def __init__(self, weight):
+        super().__init__()
+        self.add = P.Add()
+        self.weight = Parameter(weight, "w1")
+        self.transpose = P.Transpose()
+        self.shape = P.Shape()
+        self.reshape = P.Reshape()
+        self.relu = P.ReLU()
+
+    def construct(self, x):
+        out = self.add(x, self.weight)
+        out = self.transpose(out, (0, 2, 1))
+        shape = self.shape(out)
+        out = self.reshape(out, shape)
+        out = self.relu(out)
+        return out
+
+
 def test_shape_sub():
     """
     Feature: test dynamic shape
@@ -222,4 +241,22 @@ def test_reshape_input_is_shape():
     phase = compile_net(net, input_x)
     validator = ParallelValidator(net, phase)
     assert validator.check_node_inputs_has('Reshape-0', ['Add-0'])
+    assert validator.check_node_inputs_has('ReLU-0', ['Reshape-0'])
+
+
+def test_dynamic_shape_gen_batch_parallel_strategy():
+    """
+    Feature: test dynamic shape generate batch parallel strategy, and can not use all devices
+    Description: no redistribution
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    input_x = Tensor(shape=[None, 16, None], dtype=ms.int32)
+    weight = Tensor(np.ones([1, 16, 1]), dtype=ms.float32)
+    net = NoStrategyNet(weight)
+    net.set_inputs(input_x)
+
+    phase = compile_net(net, input_x)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_node_inputs_has('Reshape-0', ['Transpose-0'])
     assert validator.check_node_inputs_has('ReLU-0', ['Reshape-0'])

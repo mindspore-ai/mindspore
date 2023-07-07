@@ -1081,9 +1081,6 @@ std::shared_ptr<Strategies> OperatorInfo::GenerateBatchStrategiesWithCheck() {
       return batch_strategy;
     }
     for (size_t j = 0; j < input_shape.size(); ++j) {
-      if (input_shape[j] <= 0) {
-        return batch_strategy;
-      }
       if (stra[j] == 1) {
         continue;
       }
