@@ -89,7 +89,7 @@ bool EnableBackendCompileCache(const FuncGraphPtr &func_graph, const device::Dev
   if (context.FrontGraph() != func_graph) {
     return false;
   }
-  if (context.PsOrClusterMode()) {
+  if (context.RestrictedScenarios()) {
     return false;
   }
   if (MsContext::GetInstance()->backend_policy() == "ge") {

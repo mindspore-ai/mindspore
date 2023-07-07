@@ -115,6 +115,6 @@ void CompileCacheContext::Clear() {
   fullname_io_size.clear();
   front_graph_to_backend_graph_cache_path_.clear();
   backend_param_gen_from_frontend_param_.clear();
-  ps_or_cluster_mode_ = false;
+  restricted_scenarios_ = false;
 }
 }  // namespace mindspore
