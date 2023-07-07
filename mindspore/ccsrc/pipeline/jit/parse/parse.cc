@@ -1509,7 +1509,6 @@ void Parser::ParseArgsInCall(const FunctionBlockPtr &block, const py::list &args
       args_context->need_unpack = true;
     } else {
       MS_LOG(DEBUG) << "args[" << i << "]: " << py::str(args[i]);
-      const auto &function_ast_node = args[i];
       AnfNodePtr node = ParseExprNode(block, args[i]);
       node = HandleInterpret(block, node, args[i]);
       auto internal = node->interpret_internal_type();

@@ -1306,7 +1306,6 @@ EvalResultPtr InterpretGetAttrNode(const AbstractBasePtrList &args_abs_list, con
   // Check "getattr(x, name[, default])". The input x may be obj.attr, name may be string or other node.
   constexpr auto get_attr_expr = "getattr";
   auto getattr_pos = expr.find(get_attr_expr);
-
   // Only has point
   if (point_pos != std::string::npos && getattr_pos == std::string::npos) {
     constexpr auto internal_getattr_owner_str = "__internal_getattr_owner__";
