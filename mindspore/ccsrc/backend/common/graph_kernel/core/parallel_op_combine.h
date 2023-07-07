@@ -85,7 +85,7 @@ class ParallelOpCombiner {
  public:
   explicit ParallelOpCombiner(const std::string &op_name, uint64_t min_num_branches, const std::string &layout);
   AnfNodePtr Combine(const AnfNodePtr &root, const FuncGraphPtr &func_graph = nullptr);
-  virtual ~ParallelOpCombiner() = 0;
+  virtual ~ParallelOpCombiner() = default;
 
  protected:
   virtual bool IsSupportedOp(const AnfNodePtr n) = 0;

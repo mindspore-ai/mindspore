@@ -81,8 +81,7 @@ def test_parallel_matmul_combine_ascend():
     Expectation: network return same result with the feature on and off
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    with pytest.raises(RuntimeError, match=r"kernel_build_info"):
-        run()
+    run()
 
 
 @pytest.mark.level0

@@ -23,7 +23,7 @@ bool GraphKernelOpCombiner::Run(const FuncGraphPtr &func_graph) {
   auto nodes = TopoSort(func_graph->get_return());
   auto changed = false;
   for (auto node : nodes) {
-    if (node == nullptr || node->cast<CNodePtr>() == nullptr || !AnfUtils::IsRealKernel(node)) {
+    if (node->cast<CNodePtr>() == nullptr || !AnfUtils::IsRealKernel(node)) {
       continue;
     }
     auto node_name = node->fullname_with_scope();

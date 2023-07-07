@@ -112,7 +112,8 @@ PassManagerPtr GraphKernelOptimizer::Cluster() const {
   pm->Add(std::make_shared<GraphKernelExpanderWithPy>(), OptLevel_1);
 
   // Combine supported parallel ops that with common inputs
-  pm->Add(std::make_shared<GraphKernelOpCombiner>(), GraphKernelFlags::GetInstance().enable_parallel_op_combine);
+  pm->Add(std::make_shared<GraphKernelOpCombiner>(),
+          GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_parallel_op_combine));
 
   // Cluster basic kernels and composite kernels
   pm->Add(std::make_shared<GraphKernelCluster>(), OptLevel_1);

@@ -38,7 +38,7 @@ struct ConcatenatePlan {
 class ParallelOpConcatenater : public ParallelOpCombiner {
  public:
   explicit ParallelOpConcatenater(const std::string &op_name, uint64_t min_num_branches, const std::string &layout);
-  virtual ~ParallelOpConcatenater() = 0;
+  virtual ~ParallelOpConcatenater() = default;
 
  protected:
   virtual bool IsSupportedOp(const AnfNodePtr n) = 0;

@@ -152,8 +152,6 @@ Branch BranchGroupFinder::CreateBranch(AnfNodePtr lead_op) {
 ParallelOpCombiner::ParallelOpCombiner(const std::string &op_name, uint64_t min_num_branches, const std::string &layout)
     : op_name_(op_name), min_num_branches_(min_num_branches), layout_(layout) {}
 
-ParallelOpCombiner::~ParallelOpCombiner() {}
-
 AnfNodePtr ParallelOpCombiner::Combine(const AnfNodePtr &root, const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(root);
   if (func_graph) {
@@ -231,8 +229,7 @@ bool ParallelOpCombiner::AutoUpdateInfo(const CNodePtr &to_update) {
   }
 #ifndef MSLITE_ENABLE_GRAPH_KERNEL
   Callback::Instance()->ResetKernelInfo(to_update);
-  return true;
-#endif
+#else
   auto rep_input = to_update->input(1);
   // NOTE: We assume the inputs' formats and types are consistent with outputs'.
   std::string input_format = Callback::Instance()->GetTargetFromContext() == kAscendDevice ? "" : kOpFormat_NCHW;
@@ -240,7 +237,7 @@ bool ParallelOpCombiner::AutoUpdateInfo(const CNodePtr &to_update) {
     if (cnode == nullptr || !cnode->HasAttr(kOutputsFormat)) {
       return false;
     }
-    auto prev_of = GetValue<std::vector<std::string>>(cnode->GetAttr(kOutputsFormat));
+    auto prev_of = GetValue<std::vector<std::string> >(cnode->GetAttr(kOutputsFormat));
     if (prev_of.size() > 0) {
       input_format = prev_of[0];
       return true;
@@ -267,6 +264,7 @@ bool ParallelOpCombiner::AutoUpdateInfo(const CNodePtr &to_update) {
   }
   std::vector<std::string> outputs_formats(AnfUtils::GetOutputTensorNum(to_update), input_format);
   to_update->AddAttr(kOutputsFormat, MakeValue(outputs_formats));
+#endif
   return true;
 }
 
@@ -314,7 +312,7 @@ CNodePtr GraphBuilder::NewConcatNode(const FuncGraphPtr &func_graph, const AnfNo
   func_graph->AddNode(concat);
   std::vector<TypeId> dtypes = {common::AnfAlgo::GetOutputInferDataType(input_node[0], 0)};
   auto shape = common::AnfAlgo::GetOutputInferShape(input_node[0], 0);
-  shape[concat_dim] *= input_num;
+  shape[concat_dim] *= SizeToLong(input_num);
   std::vector<ShapeVector> shapes(1, shape);
   common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, concat.get());
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(static_cast<int64_t>(concat_dim)), concat);
@@ -350,7 +348,7 @@ CNodePtr GraphBuilder::NewSplitNode(const FuncGraphPtr &func_graph, const AnfNod
   auto dtype = common::AnfAlgo::GetOutputInferDataType(input_node, 0);
   std::vector<TypeId> dtypes(split_num, dtype);
   auto shape = common::AnfAlgo::GetOutputInferShape(input_node, 0);
-  shape[split_dim] /= split_num;
+  shape[split_dim] /= SizeToLong(split_num);
   std::vector<ShapeVector> shapes(split_num, shape);
   common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split.get());
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<int64_t>(split_dim), split);
