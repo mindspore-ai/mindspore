@@ -354,7 +354,7 @@ STATUS ConverterFuncGraph::Optimize(const std::shared_ptr<ConverterPara> &param,
   }
 
   if (param->ascendGeOptionCfg.enable_fusion) {
-    return OptimizeForGE(param, func_graph);
+    return RET_OK;
   }
 
   std::vector<std::string> output_names;

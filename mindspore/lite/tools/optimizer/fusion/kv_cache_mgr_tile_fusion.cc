@@ -62,11 +62,11 @@ CNodePtr KVCacheMgrTileFusion::CreateKVCacheMgrNode(const FuncGraphPtr &func_gra
 
   auto input_2_past_node = utils::cast<AnfNodePtr>((*equiv)[input_2_key_past_]);
   MS_ASSERT(input_2_past_node != nullptr);
+
   auto input_1_cur_node = utils::cast<AnfNodePtr>((*equiv)[input_1_key_]);
   MS_ASSERT(input_1_cur_node != nullptr);
   auto input_0_concat_node = utils::cast<AnfNodePtr>((*equiv)[input_0_concat_]);
   MS_ASSERT(input_0_concat_node != nullptr);
-
   auto kv_cache_cnode =
     func_graph->NewCNode(kv_cache_prim_c, {input_2_past_node, input_1_cur_node, input_0_concat_node});
   kv_cache_cnode->set_abstract(input_2_past_node->abstract()->Clone());
