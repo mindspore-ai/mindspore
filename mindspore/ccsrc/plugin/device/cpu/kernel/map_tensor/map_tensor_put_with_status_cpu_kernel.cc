@@ -90,12 +90,11 @@ int MapTensorPutWithStatusCpuKernelMod::Resize(const BaseOperatorPtr &base_opera
   MS_EXCEPTION_IF_NULL(inputs.at(kIndex2));
   const auto &values_shape = inputs.at(kIndex2)->GetShapeVector();
   MS_EXCEPTION_IF_NULL(inputs.at(kIndex3));
-  const auto &statuses_shape = inputs.at(kIndex3)->GetShapeVector();
   if (IsDynamic(keys_shape) || IsDynamic(values_shape)) {
     return KRET_UNKNOWN_SHAPE;
   }
 
-  InitSizeLists(keys_shape, values_shape, statuses_shape);
+  InitSizeLists(keys_shape, values_shape);
   return KRET_OK;
 }
 
@@ -122,8 +121,7 @@ bool MapTensorPutWithStatusCpuKernelMod::LaunchKernel(const std::vector<AddressP
                                 static_cast<HashTableElementStatus *>(inputs.at(kIndex3)->addr), nullptr);
 }
 
-void MapTensorPutWithStatusCpuKernelMod::InitSizeLists(const ShapeVector &keys_shape, const ShapeVector &values_shape,
-                                                       const ShapeVector &statuses_shape) {
+void MapTensorPutWithStatusCpuKernelMod::InitSizeLists(const ShapeVector &keys_shape, const ShapeVector &values_shape) {
   // Return size 1 as the first input size and the output size for MapTensorPutWithStatus. Real map tensor is assigned
   // by framework.
   input_size_list_.push_back(kSizeOne);
