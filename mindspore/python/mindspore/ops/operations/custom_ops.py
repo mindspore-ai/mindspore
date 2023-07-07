@@ -117,7 +117,7 @@ def _compile_aot(file):
             v_major, v_mid, v_minor = _get_cuda_bare_metal_version()
             if v_major >= 11:
                 cmd += ["-gencode", "arch=compute_80,code=sm_80", "--expt-extended-lambda"]
-            elif v_major == 10 and not(v_mid >= 1 and v_minor >= 168):
+            elif v_major == 10 and not (v_mid >= 1 and v_minor >= 168):
                 logger.warning("The current version of nvcc, V{}.{}.{},  might have unfixed issues with std string, "
                                "which will lead to errors in aot custom op with attrs."
                                "The version higher than V10.1.168 is recommended".format(v_major, v_mid, v_minor))
@@ -444,6 +444,7 @@ class Custom(ops.PrimitiveWithInfer):
     tbe_path_checked = []  # Save paths for tbe functions which is safe to be imported as module.
     tbe_path_failed = []  # Save paths for tbe functions which fail to be imported as module.
     op_path_in_cache = []  # Save paths for op functions created in the cached.
+    custom_aot_warning = True  # Flag to enable warnings about custom aot path white list
 
     def __init__(self, func, out_shape=None, out_dtype=None, func_type="hybrid", bprop=None, reg_info=None):
         ops.PrimitiveWithInfer.__init__(self, "Custom")
@@ -607,6 +608,18 @@ class Custom(ops.PrimitiveWithInfer):
                     "{}, 'func' should be like 'file_name:func_name', but got {}".format(
                         self.log_prefix, self.func))
             file_path = os.path.abspath(file_name_list[0])
+            if os.environ.get('MS_CUSTOM_AOT_WHITE_LIST') is None:
+                if Custom.custom_aot_warning:
+                    logger.warning("{}, no white list is set and it might cause problems. "
+                                   "Set the legal path of the file in MS_CUSTOM_AOT_WHITE_LIST"
+                                   .format(self.log_prefix))
+                    Custom.custom_aot_warning = False
+            else:
+                legal_path = os.path.abspath(os.environ.get('MS_CUSTOM_AOT_WHITE_LIST'))
+                if legal_path not in file_path:
+                    raise TypeError(
+                        "{}, the legal path for the file is {}, but the file is {}".format(
+                            self.log_prefix, legal_path, file_path))
             if not file_path.endswith("so"):
                 file_path = _compile_aot(file_path)
                 self.func = file_path + ":" + file_name_list[1]

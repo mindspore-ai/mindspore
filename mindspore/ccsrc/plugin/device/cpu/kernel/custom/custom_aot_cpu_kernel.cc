@@ -53,6 +53,26 @@ bool CustomAOTCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     }
     file_path_ = real_path.value();
     func_name_ = exec_info.substr(pos + 1);
+
+    constexpr auto kWhiteList = "MS_CUSTOM_AOT_WHITE_LIST";
+    const char *value = std::getenv(kWhiteList);
+    if (value == nullptr) {
+      MS_LOG(WARNING) << "For '" << kernel_name_ << "' on CPU, no white list is set and it might cause problems. "
+                      << "Set the legal path of the file in MS_CUSTOM_AOT_WHITE_LIST";
+    } else {
+      auto white_list = FileUtils::GetRealPath(value);
+      if (!white_list.has_value()) {
+        MS_LOG(EXCEPTION) << "Illegal white list path set in MS_CUSTOM_AOT_WHITE_LIST: " << std::string(value);
+      }
+      constexpr auto kKernelMeta = "akg_kernel_meta";
+      if (file_path_.find(white_list.value()) == std::string::npos &&
+          file_path_.find(kKernelMeta) == std::string::npos) {
+        MS_LOG(EXCEPTION)
+          << "For '" << kernel_name_
+          << "' on CPU, the file is not place in the legal path file defined by MS_CUSTOM_AOT_WHITE_LIST: "
+          << white_list.value() << ". The file path is: " << file_path_;
+      }
+    }
   } else {
     MS_LOG(EXCEPTION)
       << "For '" << kernel_name_ << "' on CPU, user defined function path '" << exec_info
