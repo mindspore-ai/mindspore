@@ -606,6 +606,7 @@ def to_bytes(array, encoding='utf8'):
     Examples:
         >>> import numpy as np
         >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.text as text
         >>>
         >>> data = np.array([["1", "2", "3"]], dtype=np.str_)
         >>> dataset = ds.NumpySlicesDataset(data, column_names=["text"])
@@ -633,6 +634,7 @@ def to_str(array, encoding='utf8'):
     Examples:
         >>> import numpy as np
         >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.text as text
         >>>
         >>> data = np.array([["1", "2", "3"]], dtype=np.bytes_)
         >>> dataset = ds.NumpySlicesDataset(data, column_names=["text"])

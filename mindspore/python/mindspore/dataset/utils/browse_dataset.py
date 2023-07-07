@@ -69,7 +69,7 @@ def imshow_det_bbox(image, bboxes, labels, segm=None, class_names=None, score_th
     Examples:
         >>> import numpy as np
         >>> import mindspore.dataset as ds
-        >>> from mindspore.dataset.utils.browse_dataset import imshow_det_bbox
+        >>> from mindspore.dataset.utils import imshow_det_bbox
         >>>
         >>> # Read Detection dataset, such as VOC2012.
         >>> voc_dataset_dir = "/path/to/voc_dataset_directory"

@@ -40,7 +40,7 @@ def rearrange_inputs(func):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.nn import rearrange_inputs
+        >>> from mindspore.train import rearrange_inputs
         >>> class RearrangeInputsExample:
         ...     def __init__(self):
         ...         self._indexes = None

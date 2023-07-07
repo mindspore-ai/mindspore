@@ -25,6 +25,7 @@ and use Lookup to find the index of tokens in Vocab.
 
 Examples:
     >>> import mindspore.dataset as ds
+    >>> import mindspore.dataset.text as text
     >>>
     >>> # Create a dataset for text sentences saved as line data in a file
     >>> text_file_list = ["/path/to/text_file_dataset_file"] # contains 1 or multiple text files
@@ -113,6 +114,8 @@ class AddToken(TextTensorOperation):
 
     Examples:
         >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.text as text
+        >>>
         >>> dataset = ds.NumpySlicesDataset(data={"text": [['a', 'b', 'c', 'd', 'e']]})
         >>> # Data before
         >>> # |           text            |
@@ -286,6 +289,7 @@ class JiebaTokenizer(TextTensorOperation):
 
         Examples:
             >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.text as text
             >>> from mindspore.dataset.text import JiebaMode
             >>>
             >>> jieba_hmm_file = "/path/to/jieba/hmm/file"

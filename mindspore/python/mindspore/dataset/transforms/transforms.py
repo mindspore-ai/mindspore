@@ -222,6 +222,8 @@ class Compose(CompoundOperation):
     Examples:
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.transforms as transforms
+        >>> import mindspore.dataset.vision as vision
+        >>>
         >>> # create a dataset that reads all files in dataset_dir with 8 threads
         >>> image_folder_dataset_dir = "/path/to/image_folder_dataset_directory"
         >>> image_folder_dataset = ds.ImageFolderDataset(image_folder_dataset_dir, num_parallel_workers=8)
@@ -669,6 +671,7 @@ class RandomApply(CompoundOperation):
     Examples:
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.transforms as transforms
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> transforms_list = [vision.RandomHorizontalFlip(0.5),
@@ -723,6 +726,7 @@ class RandomChoice(CompoundOperation):
     Examples:
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.transforms as transforms
+        >>> import mindspore.dataset.vision as vision
         >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> transforms_list = [vision.RandomHorizontalFlip(0.5),

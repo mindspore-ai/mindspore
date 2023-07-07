@@ -32,6 +32,7 @@ The Python implementation is mainly based on PIL.
 
 Examples:
     >>> import mindspore.dataset as ds
+    >>> import mindspore.dataset.vision as vision
     >>> from mindspore.dataset.vision import Border, Inter
     >>> image_folder_dataset_dir = "/path/to/image_folder_dataset_directory"
     >>> # create a dataset that reads all files in dataset_dir with 8 threads
@@ -800,16 +801,16 @@ class ConvertColor(ImageTensorOperation):
     Examples:
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
-        >>> import mindspore.dataset.vision.utils as mode
+        >>> import mindspore.dataset.vision.ConvertMode as ConvertMode
         >>>
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>>
         >>> # Convert RGB images to GRAY images
-        >>> convert_op = vision.ConvertColor(mode.ConvertMode.COLOR_RGB2GRAY)
+        >>> convert_op = vision.ConvertColor(ConvertMode.COLOR_RGB2GRAY)
         >>> image_folder_dataset = image_folder_dataset.map(operations=convert_op,
         ...                                                 input_columns=["image"])
         >>> # Convert RGB images to BGR images
-        >>> convert_op = vision.ConvertColor(mode.ConvertMode.COLOR_RGB2BGR)
+        >>> convert_op = vision.ConvertColor(ConvertMode.COLOR_RGB2BGR)
         >>> image_folder_dataset = image_folder_dataset.map(operations=convert_op,
         ...                                                 input_columns=["image"])
 
@@ -4738,7 +4739,7 @@ class TrivialAugmentWide(ImageTensorOperation):
     Examples:
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
-        >>> from mindspore.dataset.vision import AutoAugmentPolicy, Inter
+        >>> from mindspore.dataset.vision import Inter
         >>>
         >>> transforms_list = [vision.Decode(), vision.TrivialAugmentWide(num_magnitude_bins=31,
         ...                                                               interpolation=Inter.NEAREST,

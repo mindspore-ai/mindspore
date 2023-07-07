@@ -162,11 +162,11 @@ class GraphData:
         Returns:
             numpy.ndarray, array of nodes.
 
-        Examples:
-            >>> nodes = graph_data.get_all_nodes(node_type=1)
-
         Raises:
             TypeError: If `node_type` is not integer.
+
+        Examples:
+            >>> nodes = graph_data.get_all_nodes(node_type=1)
         """
         if self._working_mode == 'server':
             raise Exception("This method is not supported when working mode is server.")
@@ -183,11 +183,11 @@ class GraphData:
         Returns:
             numpy.ndarray, array of edges.
 
-        Examples:
-            >>> edges = graph_data.get_all_edges(edge_type=0)
-
         Raises:
             TypeError: If `edge_type` is not integer.
+
+        Examples:
+            >>> edges = graph_data.get_all_edges(edge_type=0)
         """
         if self._working_mode == 'server':
             raise Exception("This method is not supported when working mode is server.")
@@ -204,15 +204,15 @@ class GraphData:
         Returns:
             numpy.ndarray, array of nodes.
 
+        Raises:
+            TypeError: If `edge_list` is not list or ndarray.
+
         Examples:
             >>> from mindspore.dataset import GraphData
             >>>
             >>> g = GraphData("/path/to/testdata", 1)
             >>> edges = g.get_all_edges(0)
             >>> nodes = g.get_nodes_from_edges(edges)
-
-        Raises:
-            TypeError: If `edge_list` is not list or ndarray.
         """
         if self._working_mode == 'server':
             raise Exception("This method is not supported when working mode is server.")
@@ -229,11 +229,11 @@ class GraphData:
         Returns:
             numpy.ndarray, array of edges ID.
 
-        Examples:
-            >>> edges = graph_data.get_edges_from_nodes(node_list=[(101, 201), (103, 207)])
-
         Raises:
             TypeError: If `edge_list` is not list or ndarray.
+
+        Examples:
+            >>> edges = graph_data.get_edges_from_nodes(node_list=[(101, 201), (103, 207)])
         """
         if self._working_mode == 'server':
             raise Exception("This method is not supported when working mode is server.")
@@ -343,6 +343,10 @@ class GraphData:
             As if CSR format is specified, two numpy.ndarrays will return.
             The first one is offset table, the second one is neighbors.
 
+        Raises:
+            TypeError: If `node_list` is not list or ndarray.
+            TypeError: If `neighbor_type` is not integer.
+
         Examples:
             >>> from mindspore.dataset.engine import OutputFormat
             >>> nodes = graph_data.get_all_nodes(node_type=1)
@@ -351,10 +355,6 @@ class GraphData:
             ...                                              output_format=OutputFormat.COO)
             >>> offset_table, neighbors_csr = graph_data.get_all_neighbors(node_list=nodes, neighbor_type=2,
             ...                                                            output_format=OutputFormat.CSR)
-
-        Raises:
-            TypeError: If `node_list` is not list or ndarray.
-            TypeError: If `neighbor_type` is not integer.
         """
         if self._working_mode == 'server':
             raise Exception("This method is not supported when working mode is server.")
@@ -392,15 +392,15 @@ class GraphData:
         Returns:
             numpy.ndarray, array of neighbors.
 
-        Examples:
-            >>> nodes = graph_data.get_all_nodes(node_type=1)
-            >>> neighbors = graph_data.get_sampled_neighbors(node_list=nodes, neighbor_nums=[2, 2],
-            ...                                              neighbor_types=[2, 1])
-
         Raises:
             TypeError: If `node_list` is not list or ndarray.
             TypeError: If `neighbor_nums` is not list or ndarray.
             TypeError: If `neighbor_types` is not list or ndarray.
+
+        Examples:
+            >>> nodes = graph_data.get_all_nodes(node_type=1)
+            >>> neighbors = graph_data.get_sampled_neighbors(node_list=nodes, neighbor_nums=[2, 2],
+            ...                                              neighbor_types=[2, 1])
         """
         if not isinstance(strategy, SamplingStrategy):
             raise TypeError("Wrong input type for strategy, should be enum of 'SamplingStrategy'.")
@@ -422,15 +422,15 @@ class GraphData:
         Returns:
             numpy.ndarray, array of neighbors.
 
-        Examples:
-            >>> nodes = graph_data.get_all_nodes(node_type=1)
-            >>> neg_neighbors = graph_data.get_neg_sampled_neighbors(node_list=nodes, neg_neighbor_num=5,
-            ...                                                      neg_neighbor_type=2)
-
         Raises:
             TypeError: If `node_list` is not list or ndarray.
             TypeError: If `neg_neighbor_num` is not integer.
             TypeError: If `neg_neighbor_type` is not integer.
+
+        Examples:
+            >>> nodes = graph_data.get_all_nodes(node_type=1)
+            >>> neg_neighbors = graph_data.get_neg_sampled_neighbors(node_list=nodes, neg_neighbor_num=5,
+            ...                                                      neg_neighbor_type=2)
         """
         if self._working_mode == 'server':
             raise Exception("This method is not supported when working mode is server.")
@@ -449,13 +449,13 @@ class GraphData:
         Returns:
             numpy.ndarray, array of features.
 
-        Examples:
-            >>> nodes = graph_data.get_all_nodes(node_type=1)
-            >>> features = graph_data.get_node_feature(node_list=nodes, feature_types=[2, 3])
-
         Raises:
             TypeError: If `node_list` is not list or ndarray.
             TypeError: If `feature_types` is not list or ndarray.
+
+        Examples:
+            >>> nodes = graph_data.get_all_nodes(node_type=1)
+            >>> features = graph_data.get_node_feature(node_list=nodes, feature_types=[2, 3])
         """
         if self._working_mode == 'server':
             raise Exception("This method is not supported when working mode is server.")
@@ -478,13 +478,13 @@ class GraphData:
         Returns:
             numpy.ndarray, array of features.
 
-        Examples:
-            >>> edges = graph_data.get_all_edges(edge_type=0)
-            >>> features = graph_data.get_edge_feature(edge_list=edges, feature_types=[1])
-
         Raises:
             TypeError: If `edge_list` is not list or ndarray.
             TypeError: If `feature_types` is not list or ndarray.
+
+        Examples:
+            >>> edges = graph_data.get_all_edges(edge_type=0)
+            >>> features = graph_data.get_edge_feature(edge_list=edges, feature_types=[1])
         """
         if self._working_mode == 'server':
             raise Exception("This method is not supported when working mode is server.")
@@ -530,13 +530,13 @@ class GraphData:
         Returns:
             numpy.ndarray, array of nodes.
 
-        Examples:
-            >>> nodes = graph_data.get_all_nodes(node_type=1)
-            >>> walks = graph_data.random_walk(target_nodes=nodes, meta_path=[2, 1, 2])
-
         Raises:
             TypeError: If `target_nodes` is not list or ndarray.
             TypeError: If `meta_path` is not list or ndarray.
+
+        Examples:
+            >>> nodes = graph_data.get_all_nodes(node_type=1)
+            >>> walks = graph_data.random_walk(target_nodes=nodes, meta_path=[2, 1, 2])
         """
         if self._working_mode == 'server':
             raise Exception("This method is not supported when working mode is server.")
@@ -699,11 +699,11 @@ class Graph(GraphData):
         Returns:
             numpy.ndarray, array of nodes.
 
-        Examples:
-            >>> nodes = graph.get_all_nodes(node_type="0")
-
         Raises:
             TypeError: If `node_type` is not string.
+
+        Examples:
+            >>> nodes = graph.get_all_nodes(node_type="0")
         """
         if self._working_mode == 'server':
             raise Exception("This method is not supported when working mode is server.")
@@ -726,11 +726,11 @@ class Graph(GraphData):
         Returns:
             numpy.ndarray, array of edges.
 
-        Examples:
-            >>> edges = graph.get_all_edges(edge_type="0")
-
         Raises:
             TypeError: If `edge_type` is not string.
+
+        Examples:
+            >>> edges = graph.get_all_edges(edge_type="0")
         """
         if self._working_mode == 'server':
             raise Exception("This method is not supported when working mode is server.")
@@ -845,6 +845,10 @@ class Graph(GraphData):
             As if CSR format is specified, two numpy.ndarrays will return.
             The first one is offset table, the second one is neighbors
 
+        Raises:
+            TypeError: If `node_list` is not list or ndarray.
+            TypeError: If `neighbor_type` is not string.
+
         Examples:
             >>> from mindspore.dataset.engine import OutputFormat
             >>> nodes = graph.get_all_nodes(node_type="0")
@@ -853,10 +857,6 @@ class Graph(GraphData):
             ...                                         output_format=OutputFormat.COO)
             >>> offset_table, neighbors_csr = graph.get_all_neighbors(node_list=nodes, neighbor_type="0",
             ...                                                       output_format=OutputFormat.CSR)
-
-        Raises:
-            TypeError: If `node_list` is not list or ndarray.
-            TypeError: If `neighbor_type` is not string.
         """
         if self._working_mode == 'server':
             raise Exception("This method is not supported when working mode is server.")
@@ -898,15 +898,15 @@ class Graph(GraphData):
         Returns:
             numpy.ndarray, array of neighbors.
 
-        Examples:
-            >>> nodes = graph.get_all_nodes(node_type="0")
-            >>> neighbors = graph.get_sampled_neighbors(node_list=nodes, neighbor_nums=[2, 2],
-            ...                                         neighbor_types=["0", "0"])
-
         Raises:
             TypeError: If `node_list` is not list or ndarray.
             TypeError: If `neighbor_nums` is not list or ndarray.
             TypeError: If `neighbor_types` is not list or ndarray.
+
+        Examples:
+            >>> nodes = graph.get_all_nodes(node_type="0")
+            >>> neighbors = graph.get_sampled_neighbors(node_list=nodes, neighbor_nums=[2, 2],
+            ...                                         neighbor_types=["0", "0"])
         """
         if not isinstance(strategy, SamplingStrategy):
             raise TypeError("Wrong input type for strategy, should be enum of 'SamplingStrategy'.")
@@ -935,15 +935,15 @@ class Graph(GraphData):
         Returns:
             numpy.ndarray, array of neighbors.
 
-        Examples:
-            >>> nodes = graph.get_all_nodes(node_type="0")
-            >>> neg_neighbors = graph.get_neg_sampled_neighbors(node_list=nodes, neg_neighbor_num=3,
-            ...                                                 neg_neighbor_type="0")
-
         Raises:
             TypeError: If `node_list` is not list or ndarray.
             TypeError: If `neg_neighbor_num` is not integer.
             TypeError: If `neg_neighbor_type` is not string.
+
+        Examples:
+            >>> nodes = graph.get_all_nodes(node_type="0")
+            >>> neg_neighbors = graph.get_neg_sampled_neighbors(node_list=nodes, neg_neighbor_num=3,
+            ...                                                 neg_neighbor_type="0")
         """
         if self._working_mode == 'server':
             raise Exception("This method is not supported when working mode is server.")
@@ -966,13 +966,13 @@ class Graph(GraphData):
         Returns:
             numpy.ndarray, array of features.
 
-        Examples:
-            >>> nodes = graph.get_all_nodes(node_type="0")
-            >>> features = graph.get_node_feature(node_list=nodes, feature_types=["node_feature_1"])
-
         Raises:
             TypeError: If `node_list` is not list or ndarray.
             TypeError: If `feature_types` is not list or ndarray.
+
+        Examples:
+            >>> nodes = graph.get_all_nodes(node_type="0")
+            >>> features = graph.get_node_feature(node_list=nodes, feature_types=["node_feature_1"])
         """
         if self._working_mode == 'server':
             raise Exception("This method is not supported when working mode is server.")
@@ -1002,13 +1002,13 @@ class Graph(GraphData):
         Returns:
             numpy.ndarray, array of features.
 
-        Examples:
-            >>> edges = graph.get_all_edges(edge_type="0")
-            >>> features = graph.get_edge_feature(edge_list=edges, feature_types=["edge_feature_1"])
-
         Raises:
             TypeError: If `edge_list` is not list or ndarray.
             TypeError: If `feature_types` is not list or ndarray.
+
+        Examples:
+            >>> edges = graph.get_all_edges(edge_type="0")
+            >>> features = graph.get_edge_feature(edge_list=edges, feature_types=["edge_feature_1"])
         """
         if self._working_mode == 'server':
             raise Exception("This method is not supported when working mode is server.")
@@ -1037,11 +1037,11 @@ class Graph(GraphData):
         Returns:
             numpy.ndarray, array of features.
 
-        Examples:
-            >>> features = graph.get_graph_feature(feature_types=['graph_feature_1'])
-
         Raises:
             TypeError: If `feature_types` is not list or ndarray.
+
+        Examples:
+            >>> features = graph.get_graph_feature(feature_types=['graph_feature_1'])
         """
         if self._working_mode in ['server']:
             raise Exception("This method is not supported when working mode is server.")
