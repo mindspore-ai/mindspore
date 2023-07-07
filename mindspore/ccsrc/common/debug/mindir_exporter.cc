@@ -327,8 +327,8 @@ bool IrExportBuilder::BuildModel(const FuncGraphPtr &func_graph) {
 
   auto &context = CompileCacheContext::GetInstance();
   const auto &child_graphs = context.GetChileGraphs();
-  std::transform(child_graphs.begin(), child_graphs.end(), std::back_inserter(todo_),
-                 [](const FuncGraphPtr &g) { return g; });
+  (void)(std::transform(child_graphs.begin(), child_graphs.end(), std::back_inserter(todo_),
+                        [](const FuncGraphPtr &g) { return g; }));
   while (!todo_.empty()) {
     FuncGraphPtr fg = todo_.back();
     todo_.pop_back();
@@ -1975,7 +1975,11 @@ bool MindIRExporter::ChangeParaDataFile(const std::string &file) {
     return false;
   }
   char front_info[OFFSET]{0};
-  front_info[0] = common::IsLittleByteOrder();
+  if (common::IsLittleByteOrder()) {
+    front_info[0] = '1';
+  } else {
+    front_info[0] = '0';
+  }
   (void)data_fs_->write(front_info, OFFSET);
   return true;
 }

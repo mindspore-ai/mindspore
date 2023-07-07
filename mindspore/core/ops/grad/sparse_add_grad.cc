@@ -15,11 +15,10 @@
  */
 
 #include "ops/grad/sparse_add_grad.h"
-#include <map>
 #include <memory>
+#include <vector>
 #include <set>
 #include <string>
-#include <vector>
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
 #include "abstract/ops/primitive_infer_map.h"
