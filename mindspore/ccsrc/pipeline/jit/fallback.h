@@ -70,8 +70,7 @@ bool ContainsSequenceAnyType(const AbstractBasePtr &abs);
 std::string ConvertRealStrToUnicodeStr(const std::string &target, size_t index);
 py::object GeneratePyObj(const abstract::AbstractBasePtr &abs);
 void AttachListObjToAbs(const AbstractBasePtr &abs, const py::object &obj);
-
-AnfNodePtr ConvertCNodeToPyExecuteForPrim(const CNodePtr &cnode, string name);
+AnfNodePtr ConvertCNodeToPyExecuteForPrim(const CNodePtr &cnode, const string &name);
 
 template <typename T>
 bool HasRealType(const std::shared_ptr<T> &owner) {
