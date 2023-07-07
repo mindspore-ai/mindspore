@@ -31,28 +31,6 @@
 
 namespace mindspore {
 namespace parallel {
-float RangeInfo::GetRangeAttr(const std::string &arg) {
-  auto iter = attrs_.find(arg);
-  if (iter == attrs_.end()) {
-    MS_LOG(EXCEPTION) << name_ << ": Can not find the attr for " << arg;
-  }
-
-  MS_EXCEPTION_IF_NULL(iter->second);
-  if (!iter->second->isa<FP32Imm>()) {
-    MS_LOG(EXCEPTION) << name_ << ": The type of attr is not float, the attr is " << arg;
-  }
-
-  return iter->second->cast<FP32ImmPtr>()->value();
-}
-
-Status RangeInfo::GetAttrs() {
-  start_ = GetRangeAttr(START);
-  limit_ = GetRangeAttr(LIMIT);
-  delta_ = GetRangeAttr(DELTA);
-  MS_LOG(INFO) << name_ << ": The start is " << start_ << ", the limit is " << limit_ << ", the delta is " << delta_;
-  return SUCCESS;
-}
-
 Status RangeInfo::CheckStrategy(const StrategyPtr &strategy) {
   MS_EXCEPTION_IF_NULL(strategy);
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
@@ -63,9 +41,7 @@ Status RangeInfo::CheckStrategy(const StrategyPtr &strategy) {
 }
 
 Status RangeInfo::InferDevMatrixShape() {
-  Strategies stra = strategy_->GetInputDim();
-  dev_matrix_shape_ = stra[0];
-  split_num_ = stra[0][0];
+  dev_matrix_shape_ = {};
   return SUCCESS;
 }
 
@@ -74,9 +50,11 @@ Status RangeInfo::InferMirrorOps() { return SUCCESS; }
 Status RangeInfo::InferForwardCommunication() { return SUCCESS; }
 
 Status RangeInfo::InferTensorMap() {
-  TensorMap input_tensor_map = {0}, output_tensor_map = {0};
+  TensorMap input_tensor_map = {}, output_tensor_map = {MAP_NONE};
 
-  inputs_tensor_map_.push_back(input_tensor_map);
+  inputs_tensor_map_.push_back(input_tensor_map);  // start
+  inputs_tensor_map_.push_back(input_tensor_map);  // limit
+  inputs_tensor_map_.push_back(input_tensor_map);  // delta
   outputs_tensor_map_.push_back(output_tensor_map);
   return SUCCESS;
 }
