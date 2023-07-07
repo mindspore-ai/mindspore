@@ -3683,9 +3683,7 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
         >>> target = mindspore.Tensor(np.random.randn(3, 5), mindspore.float32)
         >>> output = ops.cross_entropy(inputs, target)
     """
-    _check_is_tensor('input', input, "cross_entropy_loss")
-    _check_is_tensor('target', target, "cross_entropy_loss")
-    _check_is_tensor('weight', weight, "cross_entropy_loss")
+    _check_cross_entropy_inputs(input, target, weight)
     check_int_const(ignore_index, 'ignore_index', "cross_entropy_loss")
     check_non_negative_float_const(label_smoothing, 'label_smoothing', "cross_entropy_loss")
     check_string_const(reduction, ['none', 'mean', 'sum'], 'reduction', "cross_entropy_loss")
@@ -3693,6 +3691,18 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
         return _cross_entropy(input, target, 0 if input.ndim == 1 else 1, weight, reduction, label_smoothing)
     _log_softmax = _get_cache_prim(P.LogSoftmax)(0 if input.ndim == 1 else 1)
     return nll_loss(_log_softmax(input), target, weight, ignore_index, reduction, label_smoothing)
+
+
+def _check_cross_entropy_inputs(input, target, weight):
+    _check_is_tensor('input', input, "cross_entropy_loss")
+    _check_is_tensor('target', target, "cross_entropy_loss")
+    _check_is_tensor('weight', weight, "cross_entropy_loss")
+    if input.dtype not in [mstype.float32, mstype.float16]:
+        raise TypeError(f"For 'cross_entropy', 'input' must be float16 or float32, but got {input.dtype}.")
+    if weight is not None and weight.dtype not in [mstype.float32, mstype.float16]:
+        raise TypeError(f"For 'cross_entropy', 'weight' must be float16 or float32, but got {weight.dtype}.")
+    if target.dtype not in [mstype.float32, mstype.float16, mstype.int32]:
+        raise TypeError(f"For 'cross_entropy', 'target' must be float16 or float32 or int32, but got {target.dtype}.")
 
 
 def _cross_entropy(inputs, target, target_dim, weight=None, reduction='mean', label_smoothing=0.0):
