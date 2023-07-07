@@ -14,6 +14,11 @@ mindspore.nn.Hardtanh
 
     线性区域范围 :math:`[-1, 1]` 可以使用 `min_val` 和 `max_val` 进行调整。
 
+    Hardtanh函数图：
+
+    .. image:: images/Hardtanh.png
+        :align: center
+
     .. note::
         在Ascend硬件上，float16数据类型场景下会有偶现的精度误差较大的问题。
 

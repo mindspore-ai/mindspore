@@ -15,7 +15,10 @@ mindspore.nn.GELU
 
     其中 :math:`P` 是标准高斯分布的累积分布函数， :math:`x_i` 是输入的元素。
 
-    GELU相关图参见 `GELU <https://en.wikipedia.org/wiki/Activation_function#/media/File:Activation_gelu.png>`_  。
+    GELU函数图：
+
+    .. image:: images/GELU.png
+        :align: center
 
     参数：
         - **approximate** (bool) - 是否启用approximation，默认值： ``True`` 。如果approximate的值为 ``True`` ，则高斯误差线性激活函数为：

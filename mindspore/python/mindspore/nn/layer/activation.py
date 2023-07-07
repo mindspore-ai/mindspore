@@ -72,7 +72,10 @@ class CELU(Cell):
 
         \text{CELU}(x) = \max(0,x) + \min(0, \alpha * (\exp(x/\alpha) - 1))
 
-    The picture about CELU looks like this `CELU <https://arxiv.org/abs/1704.07483>`_.
+    CELU Activation Function Graph:
+
+    .. image:: images/CELU.png
+        :align: center
 
     Args:
         alpha (float): The :math:`\alpha` value for the Celu formulation. Default: ``1.0`` .
@@ -445,6 +448,11 @@ class ReLU6(Cell):
 
     The input is a Tensor of any valid shape.
 
+    ReLU6 Activation Function Graph:
+
+    .. image:: images/ReLU6.png
+        :align: center
+
     Inputs:
         - **x** (Tensor) - The input of ReLU6 with data type of float16 or float32.
 
@@ -619,6 +627,11 @@ class SeLU(Cell):
     r"""
     Activation function SeLU (Scaled exponential Linear Unit).
 
+    SeLU Activation Function Graph:
+
+    .. image:: images/SeLU.png
+        :align: center
+
     Refer to :func:`mindspore.ops.selu` for more details.
 
     Supported Platforms:
@@ -661,8 +674,10 @@ class SiLU(Cell):
 
         \text{sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)},
 
-    The picture about SiLU looks like this
-    `SiLU <https://en.wikipedia.org/wiki/Activation_function#/media/File:Swish.svg>`_ .
+    SiLU Activation Function Graph:
+
+    .. image:: images/SiLU.png
+        :align: center
 
     Inputs:
         - **x** (Tensor) - Input with the data type float16 or float32.
@@ -802,6 +817,11 @@ class Hardtanh(Cell):
 
     Linear region range :math:`[-1, 1]` can be adjusted using `min_val` and `max_val`.
 
+    Hardtanh Activation Function Graph:
+
+    .. image:: images/Hardtanh.png
+        :align: center
+
     Note:
         On Ascend, data type of float16 might lead to accidental accuracy problem.
 
@@ -865,8 +885,10 @@ class GELU(Cell):
     where :math:`P` is the cumulative distribution function
     of standard Gaussian distribution and :math:`x_i` is the element of the input.
 
-    The picture about GELU looks like this `GELU <https://en.wikipedia.org/wiki/
-    Activation_function#/media/File:Activation_gelu.png>`_.
+    GELU Activation Function Graph:
+
+    .. image:: images/GELU.png
+        :align: center
 
     Args:
         approximate (bool): Whether to enable approximation. Default: ``True`` .
@@ -944,6 +966,11 @@ class FastGelu(Cell):
                            \exp(0.851 * (x_i - \left| x_i \right|))
 
     where :math:`x_i` is the element of the input.
+
+    FastGelu Activation Function Graph:
+
+    .. image:: images/FastGelu.png
+        :align: center
 
     Inputs:
         - **x** (Tensor) - The input of FastGelu with data type of float16 or float32.
@@ -1036,6 +1063,11 @@ class Softsign(Cell):
     r"""
     Softsign activation function.
 
+    Softsign Activation Function Graph:
+
+    .. image:: images/Softsign.png
+        :align: center
+
     Refer to :func:`mindspore.ops.softsign` for more details.
 
     Supported Platforms:
@@ -1079,8 +1111,10 @@ class PReLU(Cell):
     Parameter :math:`w` has dimensionality of the argument channel. If called without argument
     channel, a single parameter :math:`w` will be shared across all channels.
 
-    The picture about PReLU looks like this `PReLU <https://en.wikipedia.org/wiki/
-    Activation_function#/media/File:Activation_prelu.svg>`_.
+    PReLU Activation Function Graph:
+
+    .. image:: images/PReLU.png
+        :align: center
 
     Args:
         channel (int): The elements number of parameter :math:`w`.
@@ -1163,6 +1197,11 @@ class HSwish(Cell):
 
     .. math::
         \text{hswish}(x_{i}) = x_{i} * \frac{ReLU6(x_{i} + 3)}{6},
+
+    HSwish Activation Function Graph:
+
+    .. image:: images/HSwish.png
+        :align: center
 
     Inputs:
         - **x** (Tensor) - The input of HSwish, data type must be float16 or float32.
@@ -1345,6 +1384,11 @@ class SoftShrink(Cell):
         0, & \text{ otherwise }
         \end{cases}
 
+    SoftShrink Activation Function Graph:
+
+    .. image:: images/Softshrink.png
+        :align: center
+
     Args:
         lambd (float): the :math:`\lambda` must be no less than zero for the SoftShrink formulation.
             Default: ``0.5`` .
@@ -1399,6 +1443,11 @@ class HShrink(Cell):
         x, & \text{ if } x < -\lambda \\
         0, & \text{ otherwise }
         \end{cases}
+
+    HShrink Activation Function Graph:
+
+    .. image:: images/HShrink.png
+        :align: center
 
     Args:
         lambd (float): The threshold :math:`\lambda` defined by the Hard Shrink formula. Default: ``0.5`` .

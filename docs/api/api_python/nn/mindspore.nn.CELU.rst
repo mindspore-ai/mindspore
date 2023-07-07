@@ -12,6 +12,11 @@ mindspore.nn.CELU
 
     更多详情，请查看： `CELU <https://arxiv.org/abs/1704.07483>`_ 。
 
+    CELU函数图：
+
+    .. image:: images/CELU.png
+        :align: center
+
     参数：
         - **alpha** (float) - CELU公式中的 :math:`\alpha` 值。默认值： ``1.0`` 。
 

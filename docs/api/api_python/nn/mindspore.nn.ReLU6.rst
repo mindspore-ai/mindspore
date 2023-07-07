@@ -12,6 +12,11 @@ mindspore.nn.ReLU6
 
     input是具有任何有效形状的张量。
 
+    ReLU6函数图：
+
+    .. image:: images/ReLU6.png
+        :align: center
+
     输入：
         - **x** (Tensor) - ReLU6的输入，其数据类型为float16或float32。
 
