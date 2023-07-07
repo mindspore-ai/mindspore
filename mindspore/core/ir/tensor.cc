@@ -872,6 +872,8 @@ void Tensor::ExecuteLazyTask() const {
 DeviceSyncPtr Tensor::device_address() const {
   if (address_future_ != nullptr) {
     device_sync_ = address_future_->Get();
+    device_sync_->set_original_ref_count(SIZE_MAX);
+    device_sync_->ResetRefCount();
   }
   return device_sync_;
 }
@@ -986,9 +988,7 @@ std::string Tensor::ToStringRepr() const {
 
 void Tensor::data_sync(bool need_wait) const {
   if (need_wait) {
-    if (address_future_ != nullptr) {
-      device_sync_ = address_future_->Get();
-    }
+    device_sync_ = device_address();
     ExecuteLazyTask();
     Wait();
   }
