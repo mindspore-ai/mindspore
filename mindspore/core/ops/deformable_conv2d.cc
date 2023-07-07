@@ -86,7 +86,7 @@ abstract::ShapePtr DeformableConv2dInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
 
-  constexpr uint64_t input_size = 3;
+  constexpr int64_t input_size = 3;
   (void)CheckAndConvertUtils::CheckInteger("input_args size", static_cast<int64_t>(input_args.size()), kGreaterEqual,
                                            input_size, prim_name);
   for (const auto &arg : input_args) {
