@@ -188,7 +188,7 @@ void ProfilerAnalyzer::Clear() {
   stage_infos_.clear();
 }
 
-uint64_t ProfilerAnalyzer::GetTimeStamp() const {
+uint64_t ProfilerAnalyzer::GetTimeStamp() const noexcept {
   auto now_time = std::chrono::steady_clock::now();
   int64_t us_time_stamp = std::chrono::duration_cast<std::chrono::microseconds>(now_time.time_since_epoch()).count();
   return static_cast<uint64_t>(us_time_stamp);
@@ -427,7 +427,7 @@ void ProfilerAnalyzer::AnalyzeOpSummaryData(mindspore::HashMap<std::string, Prof
   (void)op_infos->emplace(data->op_name_, op_info);
 }
 
-void ProfilerAnalyzer::DumpJsonData() {
+void ProfilerAnalyzer::DumpJsonData() const {
   ChangeFileMode(json_file_name_, S_IWUSR);
   std::ofstream ofs(json_file_name_, std::ofstream::app);
   if (!ofs.is_open()) {
@@ -438,7 +438,7 @@ void ProfilerAnalyzer::DumpJsonData() {
   ChangeFileMode(json_file_name_, S_IRUSR);
 }
 
-void ProfilerAnalyzer::DumpDetailData() {
+void ProfilerAnalyzer::DumpDetailData() const {
   ChangeFileMode(detail_info_file_name_, S_IWUSR);
   std::ofstream ofs(detail_info_file_name_, std::ofstream::app);
   if (!ofs.is_open()) {
@@ -460,7 +460,7 @@ void ProfilerAnalyzer::DumpDetailData() {
   ChangeFileMode(detail_info_file_name_, S_IRUSR);
 }
 
-void ProfilerAnalyzer::DumpSummaryData() {
+void ProfilerAnalyzer::DumpSummaryData() const {
   // Fill the summary info.
   std::stringstream string_stream;
   string_stream << "[Step:" << step_ << ", step_time:" << step_time_ << "us, module_total_time:" << module_total_time_
@@ -479,7 +479,7 @@ void ProfilerAnalyzer::DumpSummaryData() {
   ChangeFileMode(summary_info_file_name_, S_IRUSR);
 }
 
-void ProfilerAnalyzer::DumpStageSummaryData(std::stringstream &string_stream) {
+void ProfilerAnalyzer::DumpStageSummaryData(std::stringstream &string_stream) const {
   // Order module info by total time.
   std::multimap<uint64_t, ProfilerStatisticsInfo *, std::greater_equal<uint64_t>> order_stage_infos;
   for (auto &stage_info : stage_infos_) {
@@ -504,7 +504,7 @@ void ProfilerAnalyzer::DumpStageSummaryData(std::stringstream &string_stream) {
   string_stream << "\n";
 }
 
-void ProfilerAnalyzer::DumpModuleSummaryData(std::stringstream &string_stream) {
+void ProfilerAnalyzer::DumpModuleSummaryData(std::stringstream &string_stream) const {
   // Order module info by total time.
   std::multimap<uint64_t, ProfilerModuleInfo *, std::greater_equal<uint64_t>> order_module_infos;
   for (auto &module_info : module_infos_) {
@@ -531,7 +531,7 @@ void ProfilerAnalyzer::DumpModuleSummaryData(std::stringstream &string_stream) {
 }
 
 void ProfilerAnalyzer::DumpEventSummaryData(const std::map<ProfilerEvent, ProfilerEventInfoPtr> &event_infos,
-                                            std::stringstream &string_stream) {
+                                            std::stringstream &string_stream) const {
   // Order event info by total time.
   std::multimap<uint64_t, ProfilerEventInfo *, std::greater_equal<uint64_t>> order_event_infos;
   std::multimap<uint64_t, ProfilerEventInfo *, std::greater_equal<uint64_t>> order_inner_event_infos;
