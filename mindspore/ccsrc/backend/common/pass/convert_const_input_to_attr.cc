@@ -30,6 +30,9 @@ const AnfNodePtr ConvertConstInputToAttr::Process(const FuncGraphPtr &, const An
   auto name = common::AnfAlgo::GetCNodeName(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  if (cnode->HasAttr(kAttrConvertAttrNode)) {
+    return node;
+  }
   std::string primitive_target;
   if (common::AnfAlgo::HasNodeAttr(kAttrPrimitiveTarget, cnode)) {
     primitive_target = common::AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrPrimitiveTarget);

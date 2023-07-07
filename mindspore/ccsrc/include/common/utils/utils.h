@@ -955,6 +955,7 @@ constexpr auto kAttrBins = "bins";
 constexpr auto kAttrMin = "min";
 constexpr auto kAttrMax = "max";
 constexpr auto kAttrCopyData = "need_copy";
+constexpr auto kAttrConvertAttrNode = "convert_attr_node";
 constexpr auto kAttrNeedCast = "need_cast";
 constexpr auto kAttrIsAiCpuKernel = "is_AICPU_kernel";
 constexpr auto kIsBackendCast = "is_backend_cast";
