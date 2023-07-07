@@ -50,40 +50,21 @@ class OnRequestExit(Callback):
         ValueError: If the 'sig' is not an int or the 'sig' is signal.SIGKILL.
 
     Examples:
-        >>> import numpy as np
+        >>> from mindspore import nn
+        >>> from mindspore.train import Model, TimeMonitor
         >>> import mindspore as ms
-        >>> from mindspore import dataset as ds
-        >>> from mindspore import nn, RunContext
-        >>> from mindspore.train.callback import _InternalCallbackParam
         >>>
-        >>> # Define the forward net
-        >>> class ForwardNet(nn.Cell):
-        ...     def __init__(self, num_class=10, channel=1):
-        ...         super(ForwardNet, self).__init__()
-        ...         self.param = ms.Parameter(1.0)
-        ...         self.relu = ms.ops.ReLU()
-        ...
-        ...     def construct(self, x):
-        ...         return self.relu(x + self.param)
-        >>>
-        >>> forward_net = ForwardNet()
-        >>> loss = nn.MAELoss()
-        >>> opt = nn.Momentum(forward_net.trainable_params(), 0.01, 0.9)
-        >>> model = ms.Model(forward_net, loss_fn=loss, optimizer=opt)
-        >>>
-        >>> # Create dataset
-        >>> def generator_multi_column():
-        ...    i = 0
-        ...    while i < 1000:
-        ...        i += 1
-        ...        yield np.ones((1, 32, 32)).astype(np.float32) * 0.01, np.array(1).astype(np.int32)
-        >>> dataset = ds.GeneratorDataset(source=generator_multi_column, column_names=["data", "label"])
-        >>> dataset = dataset.batch(32, drop_remainder=True)
-        >>>
+        >>> # Define the network structure of LeNet5. Refer to
+        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> net = LeNet5()
+        >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
+        >>> optim = nn.Momentum(net.trainable_params(), 0.01, 0.9)
+        >>> model = Model(net, loss_fn=loss, optimizer=optim)
+        >>> # Create the dataset taking MNIST as an example. Refer to
+        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        >>> dataset = create_dataset()
         >>> on_request_exit = ms.train.OnRequestExit(file_name='LeNet5')
         >>> model.train(10, dataset, callbacks=on_request_exit)
-        >>> # The user send the signal SIGTERM to the training process,
-        >>> # the process would save the checkpoint and mindir, and then exit the training process.
     """
 
     def __init__(self, save_ckpt=True, save_mindir=True, file_name='Net', directory='./', sig=signal.SIGTERM):
@@ -108,31 +89,6 @@ class OnRequestExit(Callback):
         Args:
             run_context (RunContext): Context information of the model.
                 For more details, please refer to :class:`mindspore.train.RunContext`.
-
-        Examples:
-            >>> import mindspore as ms
-            >>> from mindspore import nn, RunContext
-            >>>
-            >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
-            >>> net = LeNet5()
-            >>> loss = nn.MAELoss()
-            >>> opt = nn.Momentum(net.trainable_params(), 0.01, 0.9)
-            >>> model = ms.Model(net, loss_fn=loss, optimizer=opt)
-            >>>
-            >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
-            >>> dataset = create_dataset()
-            >>>
-            >>> on_request_exit = ms.train.OnRequestExit(file_name='LeNet5')
-            >>> cb_params = {}
-            >>> cb_params["cur_epoch_num"] = 4
-            >>> cb_params["epoch_num"] = 4
-            >>> cb_params["cur_step_num"] = 2
-            >>> cb_params["batch_num"] = 2
-            >>> run_context = RunContext(cb_params)
-            >>> on_request_exit.on_train_begin(run_context)
-            >>> model.train(10, dataset, callbacks=on_request_exit)
         """
         signal.signal(self.sig, self._handle_signal)
         if self.save_ckpt and os.path.isfile(f"{self.train_file_path}.ckpt"):
@@ -148,31 +104,6 @@ class OnRequestExit(Callback):
         Args:
             run_context (RunContext): Include some information of the model.
                 For more details, please refer to :class:`mindspore.train.RunContext`.
-
-        Examples:
-            >>> import mindspore as ms
-            >>> from mindspore import nn, RunContext
-            >>>
-            >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
-            >>> net = LeNet5()
-            >>> loss = nn.MAELoss()
-            >>> opt = nn.Momentum(net.trainable_params(), 0.01, 0.9)
-            >>> model = ms.Model(net, loss_fn=loss, optimizer=opt)
-            >>>
-            >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
-            >>> dataset = create_dataset()
-            >>>
-            >>> on_request_exit = ms.train.OnRequestExit(file_name='LeNet5')
-            >>> cb_params = {}
-            >>> cb_params["cur_epoch_num"] = 4
-            >>> cb_params["epoch_num"] = 4
-            >>> cb_params["cur_step_num"] = 2
-            >>> cb_params["batch_num"] = 2
-            >>> run_context = RunContext(cb_params)
-            >>> on_request_exit.on_train_step_end(run_context)
-            >>> model.train(10, dataset, callbacks=on_request_exit)
         """
         if self.exit:
             run_context.request_stop()
@@ -186,31 +117,6 @@ class OnRequestExit(Callback):
         Args:
             run_context (RunContext): Include some information of the model.
                 For more details, please refer to :class:`mindspore.train.RunContext`.
-
-        Examples:
-            >>> import mindspore as ms
-            >>> from mindspore import nn, RunContext
-            >>>
-            >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
-            >>> net = LeNet5()
-            >>> loss = nn.MAELoss()
-            >>> opt = nn.Momentum(net.trainable_params(), 0.01, 0.9)
-            >>> model = ms.Model(net, loss_fn=loss, optimizer=opt)
-            >>>
-            >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
-            >>> dataset = create_dataset()
-            >>>
-            >>> on_request_exit = ms.train.OnRequestExit(file_name='LeNet5')
-            >>> cb_params = {}
-            >>> cb_params["cur_epoch_num"] = 4
-            >>> cb_params["epoch_num"] = 4
-            >>> cb_params["cur_step_num"] = 2
-            >>> cb_params["batch_num"] = 2
-            >>> run_context = RunContext(cb_params)
-            >>> on_request_exit.on_train_epoch_end(run_context)
-            >>> model.train(10, dataset, callbacks=on_request_exit)
         """
         if self.exit:
             run_context.request_stop()
@@ -223,31 +129,6 @@ class OnRequestExit(Callback):
         Args:
             run_context (RunContext): Include some information of the model.
                 For more details, please refer to :class:`mindspore.train.RunContext`.
-
-        Examples:
-            >>> import mindspore as ms
-            >>> from mindspore import nn, RunContext
-            >>>
-            >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
-            >>> net = LeNet5()
-            >>> loss = nn.MAELoss()
-            >>> opt = nn.Momentum(net.trainable_params(), 0.01, 0.9)
-            >>> model = ms.Model(net, loss_fn=loss, optimizer=opt)
-            >>>
-            >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
-            >>> dataset = create_dataset()
-            >>>
-            >>> on_request_exit = ms.train.OnRequestExit(file_name='LeNet5')
-            >>> cb_params = {}
-            >>> cb_params["cur_epoch_num"] = 4
-            >>> cb_params["epoch_num"] = 4
-            >>> cb_params["cur_step_num"] = 2
-            >>> cb_params["batch_num"] = 2
-            >>> run_context = RunContext(cb_params)
-            >>> on_request_exit.on_train_end(run_context)
-            >>> model.train(10, dataset, callbacks=on_request_exit)
         """
         if not self.exit:
             return
@@ -266,31 +147,6 @@ class OnRequestExit(Callback):
         Args:
             run_context (RunContext): Context information of the model.
                 For more details, please refer to :class:`mindspore.train.RunContext`.
-
-        Examples:
-            >>> import mindspore as ms
-            >>> from mindspore import nn, RunContext
-            >>>
-            >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
-            >>> net = LeNet5()
-            >>> loss = nn.MAELoss()
-            >>> opt = nn.Momentum(net.trainable_params(), 0.01, 0.9)
-            >>> model = ms.Model(net, loss_fn=loss, optimizer=opt, eval_network=net)
-            >>>
-            >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
-            >>> dataset = create_dataset()
-            >>>
-            >>> on_request_exit = ms.train.OnRequestExit(file_name='LeNet5')
-            >>> cb_params = {}
-            >>> cb_params["cur_epoch_num"] = 4
-            >>> cb_params["epoch_num"] = 4
-            >>> cb_params["cur_step_num"] = 2
-            >>> cb_params["batch_num"] = 2
-            >>> run_context = RunContext(cb_params)
-            >>> on_request_exit.on_eval_begin(run_context)
-            >>> model.train(10, dataset, callbacks=on_request_exit)
         """
         signal.signal(self.sig, self._handle_signal)
         if not self.save_ckpt:
@@ -310,31 +166,6 @@ class OnRequestExit(Callback):
         Args:
             run_context (RunContext): Include some information of the model.
                 For more details, please refer to :class:`mindspore.train.RunContext`.
-
-        Examples:
-            >>> import mindspore as ms
-            >>> from mindspore import nn, RunContext
-            >>>
-            >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
-            >>> net = LeNet5()
-            >>> loss = nn.MAELoss()
-            >>> opt = nn.Momentum(net.trainable_params(), 0.01, 0.9)
-            >>> model = ms.Model(net, loss_fn=loss, optimizer=opt, eval_network=net)
-            >>>
-            >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
-            >>> dataset = create_dataset()
-            >>>
-            >>> on_request_exit = ms.train.OnRequestExit(file_name='LeNet5')
-            >>> cb_params = {}
-            >>> cb_params["cur_epoch_num"] = 4
-            >>> cb_params["epoch_num"] = 4
-            >>> cb_params["cur_step_num"] = 2
-            >>> cb_params["batch_num"] = 2
-            >>> run_context = RunContext(cb_params)
-            >>> on_request_exit.on_eval_step_end(run_context)
-            >>> model.train(10, dataset, callbacks=on_request_exit)
         """
         if self.exit:
             run_context.request_stop()
@@ -347,31 +178,6 @@ class OnRequestExit(Callback):
         Args:
             run_context (RunContext): Include some information of the model.
                 For more details, please refer to :class:`mindspore.train.RunContext`.
-
-        Examples:
-            >>> import mindspore as ms
-            >>> from mindspore import nn, RunContext
-            >>>
-            >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
-            >>> net = LeNet5()
-            >>> loss = nn.MAELoss()
-            >>> opt = nn.Momentum(net.trainable_params(), 0.01, 0.9)
-            >>> model = ms.Model(net, loss_fn=loss, optimizer=opt, eval_network=net)
-            >>>
-            >>> # Create the dataset taking MNIST as an example. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
-            >>> dataset = create_dataset()
-            >>>
-            >>> on_request_exit = ms.train.OnRequestExit(file_name='LeNet5')
-            >>> cb_params = {}
-            >>> cb_params["cur_epoch_num"] = 4
-            >>> cb_params["epoch_num"] = 4
-            >>> cb_params["cur_step_num"] = 2
-            >>> cb_params["batch_num"] = 2
-            >>> run_context = RunContext(cb_params)
-            >>> on_request_exit.on_eval_end(run_context)
-            >>> model.train(10, dataset, callbacks=on_request_exit)
         """
         if not self.exit:
             return
