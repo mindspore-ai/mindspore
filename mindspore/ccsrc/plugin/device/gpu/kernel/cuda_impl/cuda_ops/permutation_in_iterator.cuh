@@ -20,31 +20,32 @@
 #include <iostream>
 #include <iterator>
 
-
-template <typename T, typename IndexIteratorT, typename OffsetT = ptrdiff_t>
+template <typename ValueType,            ///< The value type of this iterator
+          typename IndexIteratorT,       ///< Iterator for mapping objects of InputIterator
+          typename InputIteratorT,       ///< The type of the wrapped input iterator
+          typename OffsetT = ptrdiff_t>  ///< The difference type of this iterator (Default: ptrdiff_t)
 class PermutationInputIterator {
  public:
   // Required iterator traits
-  typedef PermutationInputIterator self_type;         ///< My own type
-  typedef OffsetT difference_type;                    ///< Type to express the result of
-                                                      ///< subtracting one iterator from another
-  typedef T value_type;                               ///< The type of the element the iterator can point to
-  typedef T *pointer;                                 ///< The type of a pointer to an element the
-                                                      ///< iterator can point to
-  typedef T reference;                                ///< The type of a reference to an element the
-                                                      ///< iterator can point to
+  typedef PermutationInputIterator self_type;  ///< My own type
+  typedef OffsetT difference_type;             ///< Type to express the result of subtracting one iterator from another
+
+  typedef ValueType value_type;                ///< The type of the element the iterator can point to
+  typedef ValueType *pointer;                  ///< The type of a pointer to an element the iterator can point to
+  typedef ValueType reference;                 ///< The type of a reference to an element the iterator can point to
 
   typedef std::random_access_iterator_tag iterator_category;  ///< The iterator category
 
  private:
-  const T *in;
+  InputIteratorT input_itr;
   IndexIteratorT index_itr;
 
  public:
   /// Constructor
   __host__ __device__ __forceinline__
-  PermutationInputIterator(const T *in, IndexIteratorT index_itr)
-      : in(in), index_itr(index_itr) {}
+  PermutationInputIterator(InputIteratorT input_itr,  ///< Input iterator to wrap
+                           IndexIteratorT index_itr)  ///< Conversion iterator to warp
+      : input_itr(input_itr), index_itr(index_itr) {}
 
   /// Postfix increment
   __host__ __device__ __forceinline__ self_type operator++(int) {
@@ -60,12 +61,12 @@ class PermutationInputIterator {
   }
 
   /// Indirection
-  __host__ __device__ __forceinline__ reference operator*() const { return in[*index_itr]; }
+  __host__ __device__ __forceinline__ reference operator*() const { return input_itr[*index_itr]; }
 
   /// Addition
   template <typename Distance>
   __host__ __device__ __forceinline__ self_type operator+(Distance n) const {
-    self_type retval(in, index_itr + n);
+    self_type retval(input_itr, index_itr + n);
     return retval;
   }
 
@@ -79,7 +80,7 @@ class PermutationInputIterator {
   /// Subtraction
   template <typename Distance>
   __host__ __device__ __forceinline__ self_type operator-(Distance n) const {
-    self_type retval(in, index_itr - n);
+    self_type retval(input_itr, index_itr - n);
     return retval;
   }
 
@@ -98,15 +99,15 @@ class PermutationInputIterator {
   /// Array subscript
   template <typename Distance>
   __host__ __device__ __forceinline__ reference operator[](Distance n) const {
-    return in[index_itr[n]];
+    return input_itr[index_itr[n]];
   }
 
   /// Structure dereference
-  __host__ __device__ __forceinline__ pointer operator->() { return in + *index_itr; }
+  __host__ __device__ __forceinline__ pointer operator->() { return input_itr + *index_itr; }
 
   /// Equal to
   __host__ __device__ __forceinline__ bool operator==(const self_type &rhs) {
-    return (index_itr == rhs.index_itr && in == rhs.in);
+    return (index_itr == rhs.index_itr && input_itr == rhs.input_itr);
   }
 
   /// Not equal to
@@ -116,5 +117,4 @@ class PermutationInputIterator {
   friend std::ostream &operator<<(std::ostream &os, const self_type &itr) { return os; }
 };
 
-
-#endif  // TENSORFLOW_CORE_UTIL_PERMUTATION_INPUT_ITERATOR_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_PERMUTATION_IN_ITERATOR_CUH_
