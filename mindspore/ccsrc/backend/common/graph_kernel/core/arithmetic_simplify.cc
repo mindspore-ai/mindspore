@@ -792,8 +792,7 @@ bool ReorganizeEmptyGraph(const inner::LiteGraphPtr &litegraph) {
       auto op_ptr = gb.BroadcastTo(outputs[i], outputs[i]->shape);
       litegraph->SetOutput(i, op_ptr);
     } else if (outputs[i]->NodeType() == inner::NType::Parameter) {
-      if (IsDynamicRank(out_shape) ||
-          std::count_if(out_shape.begin(), out_shape.end(), [](int64_t s) { return s < 0; }) > 1) {
+      if (IsDynamic(out_shape)) {
         return false;
       }
       inner::GraphBuilder gb;
