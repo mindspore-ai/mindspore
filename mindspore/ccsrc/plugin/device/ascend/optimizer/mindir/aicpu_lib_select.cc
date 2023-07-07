@@ -138,6 +138,7 @@ static const std::unordered_set<std::string> kMigrateAicpuKernelOps = {
   mindspore::kMaxUnpool2DGradOpName,
   mindspore::kMaxUnpool3DOpName,
   mindspore::kMaxUnpool3DGradOpName,
+  mindspore::kMaskedFillOpName,
   mindspore::kMaskedScatterOpName,
   mindspore::kDivNoNanOpName,
   mindspore::kRealOpName,
