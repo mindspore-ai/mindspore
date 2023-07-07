@@ -2626,6 +2626,7 @@ class BatchInfo(cde.CBatchInfo):
             >>> # Create a dataset where its batch size is dynamic
             >>> # Define a callable batch size function and let batch size increase 1 each time.
             >>> import mindspore.dataset as ds
+            >>> from mindspore.dataset import BatchInfo
             >>> dataset = ds.GeneratorDataset([i for i in range(10)], "column1")
             >>> def add_one(BatchInfo):
             ...     return BatchInfo.get_batch_num() + 1
@@ -2641,6 +2642,7 @@ class BatchInfo(cde.CBatchInfo):
             >>> # Create a dataset where its batch size is dynamic
             >>> # Define a callable batch size function and let batch size increase 1 each epoch.
             >>> import mindspore.dataset as ds
+            >>> from mindspore.dataset import BatchInfo
             >>> dataset = ds.GeneratorDataset([i for i in range(10)], "column1")
             >>> def add_one_by_epoch(BatchInfo):
             ...     return BatchInfo.get_epoch_num() + 1

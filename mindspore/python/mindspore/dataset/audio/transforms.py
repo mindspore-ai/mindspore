@@ -90,10 +90,11 @@ class AllpassBiquad(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
         >>>
         >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
-        >>> transforms = [audio.AllpassBiquad(44100, 200.0)]
+        >>> transforms = [ds.audio.AllpassBiquad(44100, 200.0)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
 
     Tutorial Examples:
@@ -150,6 +151,8 @@ class AmplitudeToDB(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>> from mindspore.dataset.audio import ScaleType
         >>>
         >>> waveform = np.random.random([1, 400 // 2 + 1, 30])
@@ -190,6 +193,8 @@ class Angle(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([[1.43, 5.434], [23.54, 89.38]])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -241,6 +246,8 @@ class BandBiquad(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -306,6 +313,8 @@ class BandpassBiquad(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -366,6 +375,8 @@ class BandrejectBiquad(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03],[9.246826171875e-03, 1.0894775390625e-02]])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -424,6 +435,8 @@ class BassBiquad(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -474,6 +487,7 @@ class Biquad(TensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
         >>> biquad_op = audio.Biquad(0.01, 0.02, 0.13, 1, 0.12, 0.3)
@@ -519,6 +533,8 @@ class ComplexNorm(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.random.random([2, 4, 2])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -583,6 +599,8 @@ class ComputeDeltas(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>> from mindspore.dataset.audio import BorderType
         >>>
         >>> waveform = np.random.random([1, 400 // 2 + 1, 30])
@@ -631,6 +649,8 @@ class Contrast(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -668,6 +688,8 @@ class DBToAmplitude(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -709,6 +731,8 @@ class DCShift(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([0.60, 0.97, -1.04, -1.26, 0.97, 0.91, 0.48, 0.93])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -749,6 +773,8 @@ class DeemphBiquad(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -802,6 +828,8 @@ class DetectPitchFrequency(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([[0.716064e-03, 5.347656e-03, 6.246826e-03, 2.089477e-02, 7.138305e-02],
         ...                      [4.156616e-02, 1.394653e-02, 3.550292e-02, 0.614379e-02, 3.840209e-02]])
@@ -857,6 +885,8 @@ class Dither(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([[1, 2, 3], [4, 5, 6]])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -903,6 +933,8 @@ class EqualizerBiquad(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -962,6 +994,8 @@ class Fade(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>> from mindspore.dataset.audio import FadeShape
         >>>
         >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03, 9.246826171875e-03, 1.0894775390625e-02]])
@@ -1008,6 +1042,8 @@ class Filtfilt(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
         >>> a_coeffs = [0.1, 0.2, 0.3]
@@ -1082,6 +1118,8 @@ class Flanger(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -1146,6 +1184,8 @@ class FrequencyMasking(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.random.random([1, 3, 2])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -1189,6 +1229,8 @@ class Gain(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -1257,6 +1299,8 @@ class GriffinLim(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.random.random([201, 6])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -1312,6 +1356,8 @@ class HighpassBiquad(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -1380,6 +1426,8 @@ class InverseMelScale(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.random.randn(2, 2, 3, 2)
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -1462,6 +1510,8 @@ class InverseSpectrogram(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([[[0.8236, 0.2049, 0.3335], [0.5933, 0.9911, 0.2482],
         ...                      [0.3007, 0.9054, 0.7598], [0.5394, 0.2842, 0.5634], [0.6363, 0.2226, 0.2288]]])
@@ -1620,6 +1670,8 @@ class LFilter(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
         >>> a_coeffs = [0.1, 0.2, 0.3]
@@ -1678,6 +1730,8 @@ class LowpassBiquad(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([[0.8236, 0.2049, 0.3335], [0.5933, 0.9911, 0.2482],
         ...                      [0.3007, 0.9054, 0.7598], [0.5394, 0.2842, 0.5634], [0.6363, 0.2226, 0.2288]])
@@ -1716,6 +1770,8 @@ class Magphase(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.random.random([2, 4, 2])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -1756,6 +1812,8 @@ class MaskAlongAxis(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.random.random([1, 20, 20])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -1805,6 +1863,8 @@ class MaskAlongAxisIID(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform= np.random.random([1, 20, 20])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -1869,6 +1929,8 @@ class MelScale(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([[0.8236, 0.2049, 0.3335], [0.5933, 0.9911, 0.2482],
         ...                      [0.3007, 0.9054, 0.7598], [0.5394, 0.2842, 0.5634], [0.6363, 0.2226, 0.2288]])
@@ -1964,6 +2026,8 @@ class MelSpectrogram(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> from mindspore.dataset.audio import WindowType, BorderType, NormType, MelType
         >>>
@@ -2053,6 +2117,8 @@ class MFCC(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([[0.8236, 0.2049, 0.3335], [0.5933, 0.9911, 0.2482],
         ...                      [0.3007, 0.9054, 0.7598], [0.5394, 0.2842, 0.5634], [0.6363, 0.2226, 0.2288]])
@@ -2120,6 +2186,8 @@ class MuLawDecoding(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.random.random([1, 3, 4])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -2156,6 +2224,8 @@ class MuLawEncoding(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.random.random([1, 3, 4])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -2200,6 +2270,8 @@ class Overdrive(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float32)
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -2260,6 +2332,8 @@ class Phaser(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float32)
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -2307,6 +2381,8 @@ class PhaseVocoder(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.random.random([2, 44, 10, 2])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -2434,6 +2510,8 @@ class Resample(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>> from mindspore.dataset.audio import ResampleMethod
         >>>
         >>> waveform = np.random.random([1, 30])
@@ -2484,6 +2562,8 @@ class RiaaBiquad(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float64)
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -2529,6 +2609,8 @@ class SlidingWindowCmn(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([[[1, 2, 3], [4, 5, 6]]], dtype=np.float64)
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -2593,6 +2675,8 @@ class SpectralCentroid(TensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.random.random([5, 10, 20])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -2664,6 +2748,8 @@ class Spectrogram(TensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.random.random([5, 10, 20])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -2729,6 +2815,8 @@ class TimeMasking(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.random.random([4, 3, 2])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -2785,6 +2873,8 @@ class TimeStretch(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.random.random([44, 10, 2])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -2843,6 +2933,8 @@ class TrebleBiquad(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float64)
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -2947,6 +3039,8 @@ class Vad(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>>
         >>> waveform = np.random.random([2, 1000])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
@@ -3019,6 +3113,8 @@ class Vol(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore.dataset as ds
+        >>> import mindspore.dataset.audio as audio
         >>> from mindspore.dataset.audio import GainType
         >>>
         >>> waveform = np.random.random([20, 30])

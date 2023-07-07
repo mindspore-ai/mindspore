@@ -35,8 +35,8 @@ class DSCallback:
             calls. Default: ``1``, will be called at each step.
 
     Examples:
+        >>> import mindspore.dataset as ds
         >>> from mindspore.dataset import DSCallback
-        >>> from mindspore.dataset.transforms import transforms
         >>>
         >>> class PrintInfo(DSCallback):
         ...     def ds_begin(self, ds_run_context):
@@ -170,10 +170,10 @@ class WaitedDSCallback(Callback, DSCallback):
        step_size (int, optional): The number of rows in each step, usually set equal to the batch size. Default: ``1``.
 
     Examples:
-        >>> import mindspore.nn as nn
         >>> import mindspore as ms
-        >>> from mindspore.dataset import WaitedDSCallback
         >>> import mindspore.dataset as ds
+        >>> import mindspore.nn as nn
+        >>> from mindspore.dataset import WaitedDSCallback
         >>>
         >>> ms.set_context(mode=ms.GRAPH_MODE, device_target="CPU")
         >>>
@@ -229,7 +229,7 @@ class WaitedDSCallback(Callback, DSCallback):
         >>> data = data.map(operations=(lambda x: x), callbacks=my_cb1)
         >>>
         >>> net = Net()
-        >>> model = ms.Model(net)
+        >>> model = ms.train.Model(net)
         >>>
         >>> # add the data and network callback objects to the model training callback list
         >>> model.train(2, data, dataset_sink_mode=False, callbacks=[my_cb2, my_cb1])
