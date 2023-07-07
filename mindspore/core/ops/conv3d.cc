@@ -211,13 +211,23 @@ inline bool Conv3DCheckShape(const std::string &op, const ShapeVector &shape) {
   }
   return true;
 }
+
+inline void Conv3dInferCheck(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  for (auto item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  const int64_t input_num = 2;
+  (void)CheckAndConvertUtils::CheckInteger("Conv3d infer check", SizeToLong(input_args.size()), kGreaterEqual,
+                                           input_num, primitive->name());
+}
 }  // namespace
 
 class Conv3DInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) const override {
-    MS_EXCEPTION_IF_NULL(primitive);
+    Conv3dInferCheck(primitive, input_args);
     auto prim_name = primitive->name();
     auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex0]->BuildShape());
     auto w_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kIndex1]->BuildShape());
@@ -296,6 +306,7 @@ class Conv3DInfer : public abstract::OpInferBase {
   }
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
+    Conv3dInferCheck(primitive, input_args);
     auto prim_name = primitive->name();
     const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
     auto x_dtype = input_args[0]->BuildType();
