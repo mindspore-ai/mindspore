@@ -98,7 +98,7 @@ static const std::unordered_set<std::string> g_blacklist = {"SparseGatherV2",
                                                             "SparseDenseCwiseDiv",
                                                             "RaggedTensorToSparse"};
 bool CanExpand(const std::string &name) {
-  if (common::GetEnv("MS_DEV_DISABLE_EXPANDER_BPROP") == name) {
+  if (OpEnvManager::UsePyBprop(name)) {
     return false;
   }
   if (g_blacklist.count(name) != 0) {

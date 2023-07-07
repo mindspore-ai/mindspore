@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_FRONTEND_EXPANDER_BPROP_BPROP_H_
 
 #include <map>
+#include <set>
 #include <vector>
 #include <utility>
 #include <string>
@@ -51,6 +52,32 @@ class BpropExpander {
 
 bool ExpandBpropInGraphMode(const BpropHandle *handle, const PrimitivePtr &prim, const FuncGraphPtr &graph);
 
+class OpEnvManager {
+ public:
+  static bool UsePyBprop(const std::string &name) {
+    static const auto op_set = GetEnvSet();
+    return op_set.count(name) != 0;
+  }
+
+ private:
+  static std::set<std::string> GetEnvSet() {
+    auto env = common::GetEnv("MS_DEV_USE_PY_BPROP");
+    if (env.empty()) {
+      return {};
+    }
+    std::set<std::string> op_set;
+    std::stringstream ss(env);
+    std::string token;
+    std::ostringstream oss;
+    while (std::getline(ss, token, ',')) {
+      if (op_set.insert(token).second) {
+        oss << "\"" << token << "\",";
+      }
+    }
+    MS_LOG(INFO) << "Env \"MS_DEV_USE_PY_BPROP\" set ops: " << oss.str();
+    return op_set;
+  }
+};
 #ifdef _MSC_VER
 class WinBpropRegister {
  public:

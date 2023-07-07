@@ -56,8 +56,7 @@ void CppInfer::InferAnfnode(const AnfNodePtr &anfnode) const {
     if (found.has_value() && found.value().IsImplInferShapeAndType()) {
       infer_impl = found.value();
     } else {
-      // manually throw an exception to avoid the critical log.
-      throw std::runtime_error("The infer function of [" + prim->name() + "] is not defined.");
+      MS_LOG(EXCEPTION) << "The infer function of [" << prim->name() << "] is not defined.";
     }
   }
   cnode->set_abstract(infer_impl.InferShapeAndType(nullptr, prim, abs_list));
