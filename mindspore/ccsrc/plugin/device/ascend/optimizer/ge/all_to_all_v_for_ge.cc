@@ -139,27 +139,6 @@ std::vector<ShapeVector> GetAllToAllvOutputShapes(const CNodePtr &all_to_all_v) 
   return output_shapes;
 }
 
-AnfNodePtr CreateShapeVectorNode(const ShapeVector &value) {
-  auto value_node = NewValueNode(value);
-  ShapeVector value_node_shape = {SizeToLong(value.size())};
-  common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeInt64}, {value_node_shape}, value_node.get());
-  return value_node;
-}
-
-CNodePtr CreateReshapeNode(const FuncGraphPtr &graph, const AnfNodePtr &input_node, const ShapeVector &shape) {
-  MS_EXCEPTION_IF_NULL(input_node);
-
-  auto shape_node = CreateShapeVectorNode(shape);
-  AnfNodePtrList reshape_inputs = {NewValueNode(std::make_shared<Primitive>(kReshapeOpName)), input_node, shape_node};
-  auto reshape_node = NewCNode(reshape_inputs, graph);
-  MS_EXCEPTION_IF_NULL(reshape_node);
-  common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), reshape_node);
-  common::AnfAlgo::SetNodeAttr(kAttrShape, MakeValue(shape), reshape_node);
-  auto data_type = common::AnfAlgo::GetOutputInferDataType(input_node, kIndex0);
-  common::AnfAlgo::SetOutputInferTypeAndShape({data_type}, {shape}, reshape_node.get());
-  return reshape_node;
-}
-
 AnfNodePtrList CreateFlattenReshapeNodes(const FuncGraphPtr &graph, const AnfNodePtrList &input_nodes) {
   AnfNodePtrList flatten_reshape_nodes;
   (void)std::transform(input_nodes.begin(), input_nodes.end(), std::back_inserter(flatten_reshape_nodes),
@@ -168,7 +147,7 @@ AnfNodePtrList CreateFlattenReshapeNodes(const FuncGraphPtr &graph, const AnfNod
                          auto input_shape = common::AnfAlgo::GetOutputInferShape(input_node, kIndex0);
                          auto input_shape_size = SizeToLong(SizeOf(input_shape));
                          ShapeVector shape = {input_shape_size};
-                         return CreateReshapeNode(graph, input_node, shape);
+                         return mindspore::common::CreateReshapeNode(graph, input_node, shape);
                        });
   return flatten_reshape_nodes;
 }
@@ -211,10 +190,10 @@ CNodePtr CreateAllToAllvForGENode(const FuncGraphPtr &graph, const AnfNodePtr &i
 
   AnfNodePtrList atav_inputs = {NewValueNode(std::make_shared<Primitive>(kAllToAllvOpName)),
                                 input_node,
-                                CreateShapeVectorNode(send_mem_range.counts),
-                                CreateShapeVectorNode(send_mem_range.displs),
-                                CreateShapeVectorNode(recv_mem_range.counts),
-                                CreateShapeVectorNode(recv_mem_range.displs)};
+                                mindspore::common::CreateShapeVectorNode(send_mem_range.counts),
+                                mindspore::common::CreateShapeVectorNode(send_mem_range.displs),
+                                mindspore::common::CreateShapeVectorNode(recv_mem_range.counts),
+                                mindspore::common::CreateShapeVectorNode(recv_mem_range.displs)};
   auto atav_node = NewCNode(atav_inputs, graph);
   MS_EXCEPTION_IF_NULL(atav_node);
 
@@ -271,7 +250,8 @@ AnfNodePtrList CreateReshapeNodes(const FuncGraphPtr &graph, const AnfNodePtrLis
 
   AnfNodePtrList reshape_nodes;
   for (size_t i = 0; i < input_nodes.size(); ++i) {
-    (void)reshape_nodes.emplace_back(CreateReshapeNode(graph, input_nodes[i], origin_output_shapes[i]));
+    (void)reshape_nodes.emplace_back(
+      mindspore::common::CreateReshapeNode(graph, input_nodes[i], origin_output_shapes[i]));
   }
   return reshape_nodes;
 }

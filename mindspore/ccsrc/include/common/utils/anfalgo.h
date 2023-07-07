@@ -309,6 +309,28 @@ class COMMON_EXPORT AnfAlgo {
   // Fetch the sub abstract from the top abstract by the index.
   static abstract::AbstractBasePtr FetchAbstractByIndex(const AbstractBasePtr &abstract, size_t index);
 };
+
+inline AnfNodePtr CreateShapeVectorNode(const ShapeVector &value) {
+  auto value_node = NewValueNode(value);
+  ShapeVector value_node_shape = {SizeToLong(value.size())};
+  common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeInt64}, {value_node_shape}, value_node.get());
+  return value_node;
+}
+
+inline CNodePtr CreateReshapeNode(const FuncGraphPtr &graph, const AnfNodePtr &input_node, const ShapeVector &shape) {
+  MS_EXCEPTION_IF_NULL(input_node);
+
+  auto shape_node = CreateShapeVectorNode(shape);
+  AnfNodePtrList reshape_inputs = {NewValueNode(std::make_shared<Primitive>(kReshapeOpName)), input_node, shape_node};
+  auto reshape_node = NewCNode(reshape_inputs, graph);
+  MS_EXCEPTION_IF_NULL(reshape_node);
+  common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), reshape_node);
+  common::AnfAlgo::SetNodeAttr(kAttrShape, MakeValue(shape), reshape_node);
+  auto data_type = common::AnfAlgo::GetOutputInferDataType(input_node, kIndex0);
+  common::AnfAlgo::SetOutputInferTypeAndShape({data_type}, {shape}, reshape_node.get());
+
+  return reshape_node;
+}
 }  // namespace common
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_ANFALGO_H

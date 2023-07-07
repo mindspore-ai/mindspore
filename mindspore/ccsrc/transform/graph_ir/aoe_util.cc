@@ -119,7 +119,8 @@ Status AoeUtil::AoeGeGraph(::ge::Session *, const transform::DfGraphPtr &,
 }
 #endif
 
-Status AoeUtil::AoeOnlineGeGraph(const std::shared_ptr<::ge::Session> &ge_session, const transform::DfGraphPtr &graph) {
+Status AoeUtil::AoeOnlineGeGraph(const std::shared_ptr<::ge::Session> &ge_session,
+                                 const transform::DfGraphPtr &graph) const {
   MS_LOG(DEBUG) << "AoeOnlineGeGraph start.";
   if (ge_session == nullptr) {
     MS_LOG(ERROR) << "sess is null";

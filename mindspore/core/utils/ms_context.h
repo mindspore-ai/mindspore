@@ -201,7 +201,7 @@ class MS_CORE_API MsContext {
   void SetDeviceTargetFromInner(const std::string &device_target);
   void SetDeviceTargetFromUser(const std::string &device_target);
   bool IsDefaultDeviceTarget() const;
-  bool IsSupportDevice(const std::string &device) { return InitFuncMap().find(device) != InitFuncMap().end(); }
+  bool IsSupportDevice(const std::string &device) const { return InitFuncMap().find(device) != InitFuncMap().end(); }
 
   void RegisterSetEnv(const EnvFunc &func);
   void RegisterCheckEnv(const EnvFunc &func);

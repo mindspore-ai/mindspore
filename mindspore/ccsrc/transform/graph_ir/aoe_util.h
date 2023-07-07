@@ -26,7 +26,7 @@ namespace mindspore {
 namespace transform {
 class AoeUtil {
  public:
-  Status AoeOnlineGeGraph(const std::shared_ptr<::ge::Session> &ge_session, const transform::DfGraphPtr &graph);
+  Status AoeOnlineGeGraph(const std::shared_ptr<::ge::Session> &ge_session, const transform::DfGraphPtr &graph) const;
   static AoeUtil &GetInstance();
   ~AoeUtil();
   void Initialize();
