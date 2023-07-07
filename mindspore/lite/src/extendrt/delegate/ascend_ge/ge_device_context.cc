@@ -393,6 +393,10 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   if (ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
     (*ge_options)["ge.socVersion"] = "Ascend310P3";
   }
+  // 0: False, dynamic and static graph compile with cann opp_kernel*.run，GE default for pytorch
+  // 1: True, dynamic and static graph online compiler op
+  // 2: Auto, dynamic compile with cann opp_kernel*.run, static graph online compiler op，GE default for others
+  (*ge_options)["ge.jit_compile"] = "2";
 }
 
 void GeDeviceContext::SetHcclOptions(const std::shared_ptr<Context> &context,
