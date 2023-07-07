@@ -261,8 +261,6 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<SoftmaxGradExtFusionV3>());
   ir_fusion_pm->AddPass(std::make_shared<ConfusionMulGradFusion>());
   ir_fusion_pm->AddPass(std::make_shared<ConfusionSoftmaxGradRule>());
-  ir_fusion_pm->AddPass(std::make_shared<ReshapeTransposeFusion>());
-  ir_fusion_pm->AddPass(std::make_shared<TransposeReshapeFusion>());
   ir_fusion_pm->AddPass(std::make_shared<Conv2dBackpropFilterMul>());
   ir_fusion_pm->AddPass(std::make_shared<DeformableOffsetsFusion>());
   ir_fusion_pm->AddPass(std::make_shared<DeformableOffsetsGradFusion>());
