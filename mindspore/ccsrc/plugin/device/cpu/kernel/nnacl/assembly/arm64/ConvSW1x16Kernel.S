@@ -25,7 +25,7 @@
 // x0: dst, x1: src, x2: weight, x3: bias, x4: kernel_h, x5: kernel_w, x6: act_flag, x7: out_step,
 // x10: ic_algin, x11: in_kw_step, x12: in_kh_step, x13: in_sw_step, x14: kw_remainder, x15: write_mode
 asm_function SWConv1x16Kernel
-    // registers v18 ~ v15 must be preserved by a callee across subroutine calls, according to
+    // registers v8 ~ v15 must be preserved by a callee across subroutine calls, according to
     // https://github.com/ARM-software/abi-aa/blob/master/aapcs64/aapcs64.rst#simd-and-floating-point-registers
     // x19 ~ x29 should be also preserved
     // whereas our coding style do not permit such amount of parameters

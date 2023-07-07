@@ -86,7 +86,7 @@ void SWConv5x16Kernel(float *dst, const float *src, const float *weight, const f
 #define ROW_NUM_LIST const int ow_block_num[2] = {5, 5};
 #define KERNEL_LIST                                                                        \
   const SWConvKernel kernel[2][5] = {                                                      \
-    {SWConv1x8Kernel, SWConv2x8Kernel, SWConv3x8Kernel, SWConv5x8Kernel, SWConv5x8Kernel}, \
+    {SWConv1x8Kernel, SWConv2x8Kernel, SWConv3x8Kernel, SWConv4x8Kernel, SWConv5x8Kernel}, \
     {SWConv1x16Kernel, SWConv2x16Kernel, SWConv3x16Kernel, SWConv4x16Kernel, SWConv5x16Kernel}};
 #define COMPUTE_CORE                                                                                              \
   kernel[oc_block - 1][ow_block - 1](dst_oc + ow * out_w_step, src_w, weight, bias, kernel_h, kernel_w, act_type, \
