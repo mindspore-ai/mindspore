@@ -109,8 +109,7 @@ bool SequenceUnstackCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &
 }
 
 template <typename T>
-bool SequenceUnstackCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &workspace,
+bool SequenceUnstackCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                                const std::vector<AddressPtr> &outputs) {
   const auto input = GetDeviceAddress<T>(inputs, 0);
   auto *outputs_host = reinterpret_cast<T *>(outputs[0]->addr);
