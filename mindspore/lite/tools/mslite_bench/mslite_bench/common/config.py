@@ -31,7 +31,6 @@ class MsliteConfig(ModelConfig):
     """mslite config"""
     thread_affinity_mode: int = 2
 
-    # for ascend api: '' for acl, 'ge' for GE api
     ascend_provider: str = ''
 
 

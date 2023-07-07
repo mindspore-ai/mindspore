@@ -204,7 +204,7 @@ class CrossFrameworkAccSummary:
                 else:
                     value = 0.0
             else:
-                value = dot_sum / (np.sqrt(dst_sum) * np.sqrt(src_sum))
+                value = dot_sum / (np.sqrt(dst_sum) * np.sqrt(src_sum) + abs_eps)
 
             cosine_similarity[key] = f'{round(value * 100, 3)}%'
 
@@ -232,21 +232,19 @@ class CrossFrameworkAccSummary:
             if feat_b is None:
                 raise ValueError(f'Model Inference feature '
                                  f'is not consistent in tensor: {key}')
-            tolerance = absolute_tolerance + relative_tolerance * abs(feat_a)
             diff = abs(feat_a - feat_b)
-            gt_tolerance_index = diff > tolerance
+            gt_tolerance_index = diff > (absolute_tolerance + relative_tolerance * abs(feat_a))
             lt_tolerance_index = np.logical_and(gt_tolerance_index, abs(feat_a) > absolute_tolerance)
             gt_tolerance_index = np.logical_and(gt_tolerance_index, abs(feat_a) < absolute_tolerance)
             gt_tolerance_index = np.logical_and(gt_tolerance_index, diff > relative_tolerance)
             gt_error = diff[gt_tolerance_index]
-            lt_error = diff / (abs(feat_a) + absolute_tolerance)
+            lt_error = diff / (abs(feat_a) + absolute_tolerance + cls.absolute_tolerance())
             lt_error = lt_error[lt_tolerance_index]
-            total_error = np.sum(gt_error) + np.sum(lt_error)
-            total_size = gt_error.size + lt_error.size
-            if total_size == 0:
+            if gt_error.size + lt_error.size == 0:
                 mean_error = 0.0
             else:
-                mean_error = total_error / (gt_error.size + lt_error.size + 1)
+                mean_error = (np.sum(gt_error) + np.sum(lt_error)) / \
+                             (gt_error.size + lt_error.size + 1 + cls.absolute_tolerance())
             mean_error_info[key] = f'{round(mean_error * 100, 3)}%'
 
         return mean_error_info

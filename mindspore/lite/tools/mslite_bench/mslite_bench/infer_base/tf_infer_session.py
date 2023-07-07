@@ -66,7 +66,7 @@ class TFSession(AbcInferSession, ABC):
         tf.import_graph_def(graph_def, name='')
         default_graph = tf.get_default_graph()
         for key, shape in self.input_tensor_shapes.items():
-            tensor_name = key + ':0'
+            tensor_name = f'{key}:0'
             input_tensor = default_graph.get_tensor_by_name(tensor_name)
             self.logger.info(f'input tensor info {input_tensor}')
             input_tensor.set_shape(shape)

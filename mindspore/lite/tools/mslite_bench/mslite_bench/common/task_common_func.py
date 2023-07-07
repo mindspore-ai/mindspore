@@ -118,7 +118,7 @@ class CommonFunc:
     def get_tensor_shapes(tensor_shapes: str) -> Dict[str, Tuple[int]]:
         """parse tensor shapes string into dict"""
         if tensor_shapes is None:
-            return None
+            return {}
 
         input_tensor_shape = {}
         shape_list = tensor_shapes.split(';')
