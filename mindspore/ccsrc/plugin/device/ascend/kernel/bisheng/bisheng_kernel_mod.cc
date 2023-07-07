@@ -113,10 +113,10 @@ void BiShengKernelMod::DoTiling(std::vector<void *> *workspace_addrs) {
   // Create bisheng_kernel_args
   BiShengKernelArgs bisheng_args;
   for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(cnode); ++i) {
-    bisheng_args.input_shapes.emplace_back(AnfAlgo::GetInputDeviceShape(cnode, i));
+    (void)bisheng_args.input_shapes.emplace_back(AnfAlgo::GetInputDeviceShape(cnode, i));
   }
   for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(cnode); ++i) {
-    bisheng_args.output_shapes.emplace_back(AnfAlgo::GetOutputDeviceShape(cnode, i));
+    (void)bisheng_args.output_shapes.emplace_back(AnfAlgo::GetOutputDeviceShape(cnode, i));
   }
 
   std::vector<uint8_t> tiling_data;
