@@ -131,7 +131,7 @@ class Slice {
   int64_t start() const { return start_; }
   int64_t stop() const { return stop_; }
   int64_t step() const { return step_; }
-  int64_t is_empty_slice() const { return is_empty_slice_; }
+  bool is_empty_slice() const { return is_empty_slice_; }
 
   static inline int64_t NormalizeIndex(int64_t index, int64_t dim_size) {
     int64_t new_index = index;

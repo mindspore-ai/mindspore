@@ -113,7 +113,7 @@ bool SliceToIndicesCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   int64_t stop = stop_addr[0];
   int64_t step = step_by_none_init ? 1 : step_addr[0];
   if (step == 0) {
-    MS_LOG(EXCEPTION) << "For 'slice', 'strides' cannot contain 0";
+    MS_LOG(EXCEPTION) << "For 'SliceToIndices', 'strides' cannot contain 0";
   }
 
   if (start_by_none_init) {
