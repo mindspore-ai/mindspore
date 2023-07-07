@@ -41,7 +41,7 @@ using ps::core::NodeCommand;
 constexpr uint32_t kWaitDuration = 5;
 
 // The retry number for MsCollectiveCommLib initializing.
-constexpr uint32_t kMSCollectiveRetryTime = 80;
+constexpr uint32_t kMSCollectiveRetryTime = 200;
 
 // The collective communication library for MindSpore self developed communication framework.
 class MsCollectiveCommLib : public CollectiveCommunicationLib {
