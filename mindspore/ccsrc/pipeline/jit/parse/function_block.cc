@@ -463,7 +463,7 @@ AnfNodePtr FunctionBlock::MakeResolve(const NameSpacePtr &name_space, const Symb
 
 AnfNodePtr FunctionBlock::DoResolve(const AnfNodePtr &node, const std::shared_ptr<NameSpace> &name_space,
                                     const std::shared_ptr<Symbol> &resolve_symbol) {
-  static auto boost_parse = common::GetEnv("MS_DEV_BOOST_PARSE");
+  static const auto boost_parse = common::GetEnv("MS_DEV_BOOST_PARSE");
   if (Parser::defer_resolve() || (boost_parse != "2" && boost_parse != "3")) {
     return node;
   }
