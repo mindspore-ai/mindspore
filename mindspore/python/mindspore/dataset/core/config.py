@@ -947,7 +947,7 @@ def set_debug_mode(debug_mode_flag: bool, debug_hook_list: list = None):
     """
     if not isinstance(debug_mode_flag, bool):
         raise TypeError("debug_mode_flag isn't of type boolean.")
-    if not debug_hook_list:
+    if debug_hook_list is None:
         debug_hook_list = [PrintMetaDataHook()]
     if not isinstance(debug_hook_list, list):
         raise TypeError("debug_hook_list is not a list.")
