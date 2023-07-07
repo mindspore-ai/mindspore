@@ -906,6 +906,7 @@ class CutMixBatch(ImageTensorOperation):
     Examples:
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
+        >>> import mindspore.dataset.transforms as transforms
         >>> from mindspore.dataset.vision import ImageBatchFormat
         >>>
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
@@ -1592,6 +1593,7 @@ class MixUp(PyTensorOperation):
     Examples:
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
+        >>> import mindspore.dataset.transforms as transforms
         >>>
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> # first decode the image
@@ -1670,6 +1672,7 @@ class MixUpBatch(ImageTensorOperation):
     Examples:
         >>> import mindspore.dataset as ds
         >>> import mindspore.dataset.vision as vision
+        >>> import mindspore.dataset.transforms as transforms
         >>>
         >>> image_folder_dataset = ds.ImageFolderDataset("/path/to/image_folder_dataset_directory")
         >>> onehot_op = transforms.OneHot(num_classes=10)
