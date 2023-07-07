@@ -386,7 +386,7 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
   // BatchParallelInfo operator
   operator_info->ComputeBatchSplitFlagList();
   if ((ParallelContext::GetInstance()->strategy_search_mode() != kRecursiveProgramming)) {
-    GenerateStrategiesByOperatorInfoPtr(operator_info);
+    (void)GenerateStrategiesByOperatorInfoPtr(operator_info);
   }
 
   bool use_sp_and_dataset = ((ParallelContext::GetInstance()->strategy_search_mode() == kShardingPropagation) ||
@@ -1013,8 +1013,8 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
     }
     // 如果是双递归的话枚举reshape和前向算子的策略
     if (ParallelContext::GetInstance()->strategy_search_mode() == kRecursiveProgramming) {
-      GenerateStrategiesByOperatorInfoPtr(operator_info);
-      GenerateStrategiesByOperatorInfoPtr(pre_operator_info);
+      (void)GenerateStrategiesByOperatorInfoPtr(operator_info);
+      (void)GenerateStrategiesByOperatorInfoPtr(pre_operator_info);
     }
     if (is_prev_param) {
       auto reshape_info1 = std::dynamic_pointer_cast<ReshapeInfo>(operator_info);
@@ -1041,7 +1041,7 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
       for (auto &op_index : next_ops_index) {
         // 如果是双递归的话枚举reshape的后向算子的策略
         if (ParallelContext::GetInstance()->strategy_search_mode() == kRecursiveProgramming) {
-          GenerateStrategiesByOperatorInfoPtr(op_index.first);
+          (void)GenerateStrategiesByOperatorInfoPtr(op_index.first);
         }
         auto op_cost = op_index.first->strategy_cost();
         (void)next_costs_index.emplace_back(std::make_pair(op_cost, op_index.second));

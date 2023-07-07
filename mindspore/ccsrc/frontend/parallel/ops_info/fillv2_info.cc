@@ -60,7 +60,7 @@ Status FillV2Info::InferTensorMap() {
     tensor_map.push_back(SizeToLong(size - i - 1));
   }
   inputs_tensor_map_.push_back(tensor_map);
-  inputs_tensor_map_.emplace_back(TensorMap());
+  (void)inputs_tensor_map_.emplace_back(TensorMap());
   outputs_tensor_map_.push_back(tensor_map);
   return SUCCESS;
 }
@@ -151,8 +151,8 @@ void FillV2Info::ResetInputsShape() {
     is_parameter_[0] = false;
     return;
   } else if (input_value_shape->isa<ValueTuple>()) {
-    inputs_shape_.insert(inputs_shape_.begin(), GetValue<Shape>(input_value_shape));
-    is_parameter_.insert(is_parameter_.begin(), false);
+    (void)inputs_shape_.insert(inputs_shape_.begin(), GetValue<Shape>(input_value_shape));
+    (void)is_parameter_.insert(is_parameter_.begin(), false);
     return;
   }
   MS_LOG(EXCEPTION) << name_ << ": The type of input 'shape' must be Tensor or Tuple, but got "

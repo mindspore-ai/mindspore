@@ -230,7 +230,7 @@ Dimensions PrepareBatchMatMulOutputStrategy(const std::vector<std::shared_ptr<Op
   size_t idx_j = (transpose_b) ? ops[incoming_op_index]->inputs_shape()[1].size() - 2
                                : ops[incoming_op_index]->inputs_shape()[1].size() - 1;
 
-  for (size_t idx = 0; idx < ops[incoming_op_index]->inputs_shape()[0].size() - 2; ++idx) {
+  for (size_t idx = 0; idx < ops[incoming_op_index]->inputs_shape()[0].size() - SIZE_TWO; ++idx) {
     s.push_back(strategy->GetInputDim()[0][idx]);
   }
 
