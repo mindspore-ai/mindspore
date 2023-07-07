@@ -17,6 +17,8 @@
 #include <algorithm>
 #include <utility>
 #include <map>
+#include <string>
+#include <unordered_set>
 #include "utils/check_convert_utils.h"
 #include "ops/split_combination_ops.h"
 #include "graph/operator_factory_impl.h"
@@ -25,7 +27,11 @@
 
 namespace mindspore {
 namespace transform {
+enum class CustomOpType { kAkg, kTbe };
+
 ge::graphStatus CustomAkgOpInferFunc(ge::Operator &op);
+
+ge::graphStatus CustomTbeOpInferFunc(ge::Operator &op);
 
 // check a Custom node is an akg kernel, it should be called in the case of node is a Custom node.
 bool IsAkgOp(const AnfNodePtr &node) {
@@ -37,7 +43,15 @@ bool IsAkgOp(const AnfNodePtr &node) {
   return (type != nullptr && GetValue<std::string>(type) == "GraphKernel");
 }
 
-void RegisterAkgOp(const PrimitivePtr &prim, const std::string &op_type) {
+bool IsTbeOp(const PrimitivePtr &prim) {
+  if (prim == nullptr) {
+    return false;
+  }
+  auto func_type = prim->GetAttr("func_type");
+  return (func_type != nullptr && GetValue<std::string>(func_type) == "tbe");
+}
+
+void RegisterCustomOp(const PrimitivePtr &prim, const std::string &op_type, const CustomOpType &type) {
   if (ge::OperatorFactoryImpl::IsExistOp(op_type)) {
     return;
   }
@@ -48,22 +62,30 @@ void RegisterAkgOp(const PrimitivePtr &prim, const std::string &op_type) {
   auto output_names_v = prim->GetAttr("output_names");
   MS_EXCEPTION_IF_NULL(output_names_v);
   auto output_names = GetValue<std::vector<std::string>>(output_names_v);
-  // Register op create function, which describes how to create a custom akg op
-  (void)ge::OperatorFactoryImpl::RegisterOperatorCreator(op_type,
-                                                         [op_type, input_names, output_names](const std::string &name) {
-                                                           auto op = ge::CustomOperator(name, op_type);
-                                                           for (const auto &in_name : input_names) {
-                                                             op.CustomInputRegister(in_name);
-                                                           }
-                                                           for (const auto &out_name : output_names) {
-                                                             op.CustomOutputRegister(out_name);
-                                                           }
-                                                           op.CustomRequiredAttrRegister("info_path");
-                                                           op.CustomInferFuncRegister(CustomAkgOpInferFunc);
-                                                           return op;
-                                                         });
+  // Register op create function, which describes how to create a custom op
+  (void)ge::OperatorFactoryImpl::RegisterOperatorCreator(
+    op_type, [op_type, input_names, output_names, type](const std::string &name) {
+      auto op = ge::CustomOperator(name, op_type);
+      for (const auto &in_name : input_names) {
+        op.CustomInputRegister(in_name);
+      }
+      for (const auto &out_name : output_names) {
+        op.CustomOutputRegister(out_name);
+      }
+      if (type == CustomOpType::kAkg) {
+        op.CustomRequiredAttrRegister("info_path");
+        op.CustomInferFuncRegister(CustomAkgOpInferFunc);
+      } else if (type == CustomOpType::kTbe) {
+        op.CustomInferFuncRegister(CustomTbeOpInferFunc);
+      }
+      return op;
+    });
   // Register op infer shape function
-  (void)ge::OperatorFactoryImpl::RegisterInferShapeFunc(op_type, CustomAkgOpInferFunc);
+  if (type == CustomOpType::kAkg) {
+    (void)ge::OperatorFactoryImpl::RegisterInferShapeFunc(op_type, CustomAkgOpInferFunc);
+  } else if (type == CustomOpType::kTbe) {
+    (void)ge::OperatorFactoryImpl::RegisterInferShapeFunc(op_type, CustomTbeOpInferFunc);
+  }
 }
 
 bool OpAdapterImpl::IsCustomOp(const OperatorPtr &op) const {
@@ -128,6 +150,14 @@ Status OpAdapterImpl::GenerateCustomOpOutputMap(const CusOperatorPtr &op, const 
 
 std::string OpAdapterImpl::GetCustomOpType(const PrimitivePtr &prim) const {
   MS_EXCEPTION_IF_NULL(prim);
+  if (IsTbeOp(prim)) {
+    auto func_name = prim->GetAttr("func_name");
+    if (func_name == nullptr) {
+      MS_LOG(ERROR) << "Custom tbe op has no 'func_name' attr.";
+      return "";
+    }
+    return GetValue<std::string>(func_name);
+  }
   auto value = prim->GetAttr("reg_op_name");
   if (value == nullptr) {
     MS_LOG(ERROR) << "Custom op has no reg_op_name attr.";
@@ -163,7 +193,10 @@ OperatorPtr OpAdapterImpl::GenerateCustomOp(const AnfNodePtr anf) {
   if (IsAkgOp(anf)) {
     op->CustomRequiredAttrRegister("info_path");
     op->CustomInferFuncRegister(CustomAkgOpInferFunc);
-    RegisterAkgOp(prim, op_type);
+    RegisterCustomOp(prim, op_type, CustomOpType::kAkg);
+  } else if (IsTbeOp(prim)) {
+    op->CustomInferFuncRegister(CustomTbeOpInferFunc);
+    RegisterCustomOp(prim, op_type, CustomOpType::kTbe);
   } else {
     MS_LOG(INFO) << "For custom operators, users need to define and implement the Infershape function by themselves.";
   }
@@ -698,7 +731,11 @@ int OpAdapterImpl::SetCustomOpAttr(const CusOperatorPtr &op, const PrimitivePtr 
   MS_EXCEPTION_IF_NULL(op);
 
   ValueType value_type = SINGLE_VALUE;
+  static std::unordered_set<std::string> excluded_attr{"IsFeatureMapInputList", "IsFeatureMapOutput"};
   for (auto item : prim->attrs()) {
+    if (excluded_attr.find(item.first) != excluded_attr.end()) {
+      continue;
+    }
     if (item.second->isa<Int32Imm>()) {
       (void)op->SetAttr(item.first, GetValue<int32_t>(item.second));
     } else if (item.second->isa<Int64Imm>()) {
@@ -721,6 +758,8 @@ int OpAdapterImpl::SetCustomOpAttr(const CusOperatorPtr &op, const PrimitivePtr 
         (void)op->SetAttr(item.first, GetValue<const std::vector<std::string>>(item.second));
       } else if ((*val_seq)[0]->isa<FP32Imm>()) {
         (void)op->SetAttr(item.first, GetValue<const std::vector<float>>(item.second));
+      } else if ((*val_seq)[0]->isa<Int32Imm>()) {
+        (void)op->SetAttr(item.first, GetValue<const std::vector<int32_t>>(item.second));
       } else if ((*val_seq)[0]->isa<Int64Imm>()) {
         (void)op->SetAttr(item.first, GetValue<const std::vector<int64_t>>(item.second));
       } else if ((*val_seq)[0]->isa<BoolImm>()) {

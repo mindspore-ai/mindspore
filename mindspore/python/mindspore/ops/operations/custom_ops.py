@@ -759,10 +759,11 @@ class Custom(ops.PrimitiveWithInfer):
 
     def _update_reg_attrs(self, reg_info):
         """Update op attrs in reg_info."""
+        output_name_list = []
         for _, item in enumerate(reg_info.get("outputs", [])):
-            output_name_list = []
             if isinstance(item, dict) and item.get("name"):
                 output_name_list.append(item.get("name"))
+        if output_name_list:
             self.add_prim_attr("output_names", output_name_list)
 
         if isinstance(reg_info.get("op_name"), str):
