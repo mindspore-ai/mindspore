@@ -76,14 +76,14 @@ abstract::AbstractBasePtr GetnextInferShapeInner(const PrimitivePtr &primitive) 
 MIND_API_OPERATOR_IMPL(GetNext, BaseOperator);
 AbstractBasePtr GetNextInferInner(const PrimitivePtr &primitive) { return GetnextInferShapeInner(primitive); }
 
-abstract::BaseShapePtr GetnextInferShape(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+abstract::BaseShapePtr GetnextInferShape(const PrimitivePtr &prim) {
   auto abs = GetNextInferInner(prim);
   auto shape = abs->BuildShape();
   MS_EXCEPTION_IF_NULL(shape);
   return shape;
 }
 
-TypePtr GetnextInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr GetnextInferType(const PrimitivePtr &prim) {
   auto abs = GetNextInferInner(prim);
   auto type = abs->BuildType();
   MS_EXCEPTION_IF_NULL(type);
@@ -98,13 +98,12 @@ AbstractBasePtr GetNextInfer(const abstract::AnalysisEnginePtr &, const Primitiv
 // AG means auto generated
 class MIND_API AGGetnextInfer : public abstract::OpInferBase {
  public:
-  BaseShapePtr InferShape(const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) const override {
-    return GetnextInferShape(primitive, input_args);
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &) const override {
+    return GetnextInferShape(primitive);
   }
 
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return GetnextInferType(primitive, input_args);
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &) const override {
+    return GetnextInferType(primitive);
   }
 
   AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
