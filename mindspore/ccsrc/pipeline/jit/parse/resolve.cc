@@ -822,8 +822,11 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object 
       } else {
         // Exist two parameter object which name is the same.
         if (std::find(param_obj_ids.begin(), param_obj_ids.end(), obj_id) == param_obj_ids.end()) {
-          MS_LOG(EXCEPTION) << "The parameter " << param_node->DebugString() << " , its name '" << param_name
-                            << "' already exists. Please set a unique name for the parameter.";
+          MS_LOG(EXCEPTION)
+            << "The parameter " << param_node->DebugString() << " , its name '" << param_name
+            << "' already exists. Please set a unique name for the parameter."
+            << "\nFor more details with the name of parameter, please refer to "
+            << "https://mindspore.cn/search?inputValue=Please%20set%20a%20unique%20name%20for%20the%20parameter";
         }
         para_node = param_node;
         MS_LOG(DEBUG) << "Found existing parameter for " << func_graph->ToString()

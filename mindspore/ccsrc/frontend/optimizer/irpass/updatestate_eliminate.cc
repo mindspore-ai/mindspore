@@ -825,9 +825,6 @@ bool UpdatestateDependEliminater::operator()(const FuncGraphPtr &func_graph, con
     if (node == nullptr || !all_nodes.contains(node) || filter(node)) {
       continue;
     }
-    if (filter(node)) {
-      continue;
-    }
     auto new_node = EliminateUpdateStateWithDepend(node->cast<CNodePtr>());
     if (new_node != nullptr) {
       (void)manager->Replace(node, new_node);
@@ -861,9 +858,6 @@ bool UpdatestateAssignEliminater::operator()(const FuncGraphPtr &func_graph, con
   std::vector<AnfNodePtr> todo = TopoSort(func_graph->get_return(), SuccDeeperSimple);
   for (auto &node : todo) {
     if (node == nullptr || !all_nodes.contains(node) || filter(node)) {
-      continue;
-    }
-    if (filter(node)) {
       continue;
     }
     auto new_node = EliminateUpdateStateForAssign(node->cast<CNodePtr>());
@@ -901,9 +895,6 @@ bool UpdatestateLoadsEliminater::operator()(const FuncGraphPtr &func_graph, cons
   std::vector<AnfNodePtr> todo = TopoSort(func_graph->get_return(), SuccDeeperSimple);
   for (auto &node : todo) {
     if (node == nullptr || !all_nodes.contains(node) || filter(node)) {
-      continue;
-    }
-    if (filter(node)) {
       continue;
     }
     std::vector<CNodePtr> update_states;
