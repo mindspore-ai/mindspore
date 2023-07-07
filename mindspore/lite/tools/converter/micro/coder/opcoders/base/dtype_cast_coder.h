@@ -21,6 +21,7 @@
 #include <memory>
 #include "coder/opcoders/op_coder.h"
 #include "nnacl/int8/quant_dtype_cast_int8.h"
+#include "coder/opcoders/serializers/serializer.h"
 
 namespace mindspore::lite::micro {
 class DTypeCastCoder final : public OperatorCoder {
@@ -36,6 +37,9 @@ class DTypeCastCoder final : public OperatorCoder {
   int DoCode(CoderContext *const context) override;
 
  private:
+  int CastToFloat32(CoderContext *const context, TypeId input_data_type, TypeId output_data_type, const int data_num);
+  int CastToFloat16(CoderContext *const context, TypeId input_data_type, TypeId output_data_type, const int data_num);
+  int CastToOtherType(CoderContext *const context, TypeId input_data_type, TypeId output_data_type, const int data_num);
   uint32_t stride_{0};
   uint32_t data_num_{0};
 };
