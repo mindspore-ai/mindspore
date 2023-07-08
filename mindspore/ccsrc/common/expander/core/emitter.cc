@@ -37,16 +37,7 @@ namespace {
 std::pair<bool, std::vector<int64_t>> GetIntList(const NodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(node->get());
-  ValuePtr value_ptr = nullptr;
-  if (node->isa<ValueNode>()) {
-    value_ptr = node->get<ValueNodePtr>()->value();
-    MS_EXCEPTION_IF_NULL(value_ptr);
-  } else {
-    auto abstract = node->get()->abstract();
-    if (abstract != nullptr) {
-      value_ptr = abstract->BuildValue();
-    }
-  }
+  ValuePtr value_ptr = node->BuildValue();
   if (value_ptr != nullptr) {
     if (value_ptr->isa<ValueSequence>() || value_ptr->isa<Scalar>()) {
       return std::make_pair(true, CheckAndConvertUtils::CheckIntOrTupleInt("value", value_ptr, "GetIntList"));

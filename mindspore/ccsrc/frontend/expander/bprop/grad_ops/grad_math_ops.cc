@@ -1587,7 +1587,7 @@ REG_BPROP_BUILDER("Lerp").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
     sub_w = ib->Tensor(1.0 - val, dout_type);
     mul_w = ib->Tensor(val, dout_type);
   } else if (weight->isa<Parameter>()) {
-    auto v = weight->get()->abstract()->BuildValue();
+    auto v = weight->BuildValue();
     MS_EXCEPTION_IF_NULL(v);
     if (v->isa<Scalar>()) {
       auto val = GetValue<float>(v);

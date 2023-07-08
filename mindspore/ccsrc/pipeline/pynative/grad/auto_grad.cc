@@ -663,7 +663,7 @@ bool AutoGradCellImpl::KPynativeOp(const GradParamPtr &grad_param) {
   // Gradient outputs
   std::vector<CNodePtr> outputs;
   if (!is_custom_prim) {
-    auto ret = BpropExpander(&outputs, &ad_param()->users_).Run(input_node);
+    auto ret = BpropExpander(&outputs, &ad_param()->users_).Run(input_node, grad_param->op_grad_info->input_value);
     // cppcheck-suppress unreadVariable
     if (MS_UNLIKELY(!ret || outputs.empty())) {
       MS_LOG(DEBUG) << "Expander has no bprop of this prim: " << prim->name();

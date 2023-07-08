@@ -28,6 +28,18 @@ Node::Node(const AnfNodePtr &node, const Emitter *emitter) : anf_node_(node), em
 
 AbstractBasePtr Node::abstract() { return emitter()->infer()->GetAbstract(shared_from_this()); }
 
+ValuePtr Node::BuildValue() {
+  if (value_ == nullptr) {
+    if (anf_node_->isa<ValueNode>()) {
+      value_ = anf_node_->cast<ValueNodePtr>()->value();
+      MS_EXCEPTION_IF_NULL(value_);
+    } else {
+      value_ = abstract()->BuildValue();
+    }
+  }
+  return value_;
+}
+
 std::vector<int64_t> Node::shape() {
   if (shape_ == nullptr) {
     shape_ = emitter()->infer()->GetShape(shared_from_this());
