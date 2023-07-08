@@ -105,14 +105,14 @@ std::pair<bool, TensorPtr> CreateInOutKernelTensor(const AbstractBasePtr &abs_ba
     if (kernel_tensor == nullptr) {
       return std::pair<bool, TensorPtr>(false, nullptr);
     }
-    inputs->emplace_back(kernel_tensor);
+    (void)inputs->emplace_back(kernel_tensor);
   }
 
   auto [kernel_tensor, tensor] = CreateKernelTensor4Output(abs_base);
   if (kernel_tensor == nullptr) {
     return std::pair<bool, TensorPtr>(false, nullptr);
   }
-  outputs->emplace_back(kernel_tensor);
+  (void)outputs->emplace_back(kernel_tensor);
 
   return std::pair<bool, TensorPtr>(true, tensor);
 }
@@ -162,10 +162,10 @@ ValuePtr OpEvaluator::ComputeValue(const PrimitivePtr &prim, const AbstractBaseP
   }
 
   std::vector<AddressPtr> addr_in, addr_ws, addr_out;
-  std::transform(inputs.begin(), inputs.end(), std::back_inserter(addr_in),
-                 [](const auto &kernel_tensor) { return kernel_tensor->GetData(); });
-  std::transform(outputs.begin(), outputs.end(), std::back_inserter(addr_out),
-                 [](const auto &kernel_tensor) { return kernel_tensor->GetData(); });
+  (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(addr_in),
+                       [](const auto &kernel_tensor) { return kernel_tensor->GetData(); });
+  (void)std::transform(outputs.begin(), outputs.end(), std::back_inserter(addr_out),
+                       [](const auto &kernel_tensor) { return kernel_tensor->GetData(); });
 
   if (!cpu_kernel_mod->Launch(addr_in, addr_ws, addr_out, nullptr)) {
     MS_LOG(ERROR) << "Launch cpu kernel module for primitive " << prim->name() << " failed";
