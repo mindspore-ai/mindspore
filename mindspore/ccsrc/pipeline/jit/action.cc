@@ -428,12 +428,12 @@ bool CombineLikeGraphs(const ResourcePtr &resource) {
     auto base_graph = cloned_fg_iter->second;
     MS_LOG(DEBUG) << "Basegraph:" << base_graph->ToString();
 
-    if (fg->paramter_obj_nodes().empty() || graphs.size() <= 1 || fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE) ||
+    if (fg->parameter_obj_nodes().empty() || graphs.size() <= 1 || fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE) ||
         fg->stage() != -1) {
       continue;
     }
     auto &cloned_nodes = cloner.cloned_nodes();
-    for (auto &fv : fg->paramter_obj_nodes()) {
+    for (auto &fv : fg->parameter_obj_nodes()) {
       TraceGuard guard(std::make_shared<TraceCombileLikeGraphs>(fv->debug_info()));
       auto param = base_graph->add_parameter();
       MS_EXCEPTION_IF_NULL(resource->manager());
@@ -449,10 +449,10 @@ bool CombineLikeGraphs(const ResourcePtr &resource) {
         repl_n->set_input(IntToSize(n.second), param);
       }
     }
-    MS_LOG(DEBUG) << "Fg0 paramter_obj_nodes size :" << fg->paramter_obj_nodes().size();
+    MS_LOG(DEBUG) << "Fg0 parameter_obj_nodes size :" << fg->parameter_obj_nodes().size();
 
     for (auto &g : graphs) {
-      auto &fvs = g->paramter_obj_nodes();
+      auto &fvs = g->parameter_obj_nodes();
       std::vector<AnfNodePtr> new_node_inputs;
       new_node_inputs.push_back(NewValueNode(base_graph));
       for (auto &p : g->parameters()) {
@@ -481,7 +481,7 @@ void GetTrainableParameters(const FuncGraphPtr &fg, std::vector<AnfNodePtr> *par
   auto used_fgs = fg->func_graphs_used_total();
   std::set<const AnfNode *> memo;
   for (auto &g : used_fgs) {
-    for (auto &item : g->paramter_obj_nodes()) {
+    for (auto &item : g->parameter_obj_nodes()) {
       MS_LOG(DEBUG) << fg->ToString() << " has_default: " << item->cast<ParameterPtr>()->has_default()
                     << " parameter: " << item->cast<ParameterPtr>()->ToString();
       if (item->cast<ParameterPtr>()->has_default() && memo.emplace(item.get()).second) {
@@ -591,8 +591,8 @@ bool GraphReusingAction(const ResourcePtr &resource) {
   for (const auto &[cell_key, graphs] : obj_map) {
     MS_LOG(DEBUG) << "Start to handle the reusable graph: " << cell_key << ", size: " << graphs.size();
     const auto &fg = graphs[0];
-    // fg->paramter_obj_nodes().empty() have been handled by combine like.
-    if (!fg->paramter_obj_nodes().empty()) {
+    // fg->parameter_obj_nodes().empty() have been handled by combine like.
+    if (!fg->parameter_obj_nodes().empty()) {
       MS_LOG(DEBUG) << "Finish handling the reusable graph: " << cell_key;
       continue;
     }
