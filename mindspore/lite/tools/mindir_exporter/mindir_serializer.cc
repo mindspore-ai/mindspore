@@ -29,7 +29,6 @@
 #include "tools/common/graph_util.h"
 #include "mindspore/core/utils/file_utils.h"
 #include "mindspore/core/ir/quantization_param.h"
-#include "mindspore/lite/tools/converter/quantizer/quant_param_holder.h"
 #include "mindspore/lite/tools/converter/quantizer/quant_params.h"
 #include "mindspore/lite/tools/converter/quantizer/quantize_util.h"
 
@@ -217,6 +216,39 @@ int MindIRSerializer::Save(const std::shared_ptr<ConverterPara> &param, const Fu
   return RET_OK;
 }
 
+int MindIRSerializer::ConvertInputQuantHolderToQuantizationParam(const CNodePtr &cnode,
+                                                                 const QuantParamHolderPtr &quant_params_holder) {
+  auto input_quant_params = quant_params_holder->get_input_quant_params();
+  for (unsigned int index = 0; index < input_quant_params.size(); index++) {
+    if (index + quant::kPrimOffset >= cnode->size()) {
+      MS_LOG(DEBUG) << cnode->fullname_with_scope() << " quant_params index out of range, index: " << index
+                    << " but cnode size: " << cnode->size();
+      continue;
+    }
+    auto input = cnode->input(index + quant::kPrimOffset);
+    if (input->isa<mindspore::Parameter>()) {
+      auto ret = ConvertParameterNode(cnode, input->cast<ParameterPtr>(), index);
+      if (ret == RET_NO_CHANGE) {
+        continue;
+      } else if (ret != RET_OK) {
+        MS_LOG(ERROR) << input->fullname_with_scope() << " converter parameter node quant param failed.";
+        return ret;
+      }
+    } else if (input->isa<mindspore::ValueNode>()) {
+      auto ret = ConvertValueNode(cnode, input->cast<ValueNodePtr>(), index);
+      if (ret == RET_NO_CHANGE) {
+        continue;
+      } else if (ret != RET_OK) {
+        MS_LOG(ERROR) << input->fullname_with_scope() << " converter value node quant param failed.";
+        return ret;
+      }
+    } else {
+      MS_LOG(DEBUG) << input->fullname_with_scope() << " Not supported to convert quant param.";
+    }
+  }
+  return RET_OK;
+}
+
 int MindIRSerializer::ConvertQuantHolderToQuantizationParam(const FuncGraphPtr &func_graph) {
   std::set<FuncGraphPtr> all_func_graphs = {};
   GetAllFuncGraph(func_graph, &all_func_graphs);
@@ -248,36 +280,10 @@ int MindIRSerializer::ConvertQuantHolderToQuantizationParam(const FuncGraphPtr &
       auto quant_type = MakeValue(static_cast<int>(quant_params_holder->quant_type()));
       MS_CHECK_TRUE_MSG(quant_type != nullptr, RET_ERROR, "quant_type is nullptr.");
       primitive->AddAttr(quant::kQuantType, quant_type);
-      auto input_quant_params = quant_params_holder->get_input_quant_params();
-      int ret = 0;
-      for (unsigned int index = 0; index < input_quant_params.size(); index++) {
-        if (index + quant::kPrimOffset >= cnode->size()) {
-          MS_LOG(DEBUG) << cnode->fullname_with_scope() << " quant_params index out of range, index: " << index
-                        << " but cnode size: " << cnode->size();
-          continue;
-        }
-        auto input = cnode->input(index + quant::kPrimOffset);
-        if (input->isa<mindspore::Parameter>()) {
-          ret = ConvertParameterNode(cnode, input->cast<ParameterPtr>(), index);
-          if (ret == RET_NO_CHANGE) {
-            continue;
-          } else if (ret != RET_OK) {
-            MS_LOG(ERROR) << input->fullname_with_scope() << " converter parameter node quant param failed.";
-            return ret;
-          }
-        } else if (input->isa<mindspore::ValueNode>()) {
-          ret = ConvertValueNode(cnode, input->cast<ValueNodePtr>(), index);
-          if (ret == RET_NO_CHANGE) {
-            continue;
-          } else if (ret != RET_OK) {
-            MS_LOG(ERROR) << input->fullname_with_scope() << " converter value node quant param failed.";
-            return ret;
-          }
-        } else {
-          MS_LOG(DEBUG) << input->fullname_with_scope() << " Not supported to convert quant param.";
-        }
+      auto ret = ConvertInputQuantHolderToQuantizationParam(cnode, quant_params_holder);
+      if (ret != RET_OK) {
+        return ret;
       }
-
       auto output_quant_params = quant_params_holder->get_output_quant_params();
       std::vector<ValuePtr> quantization_param_list;
       for (unsigned int index = 0; index < output_quant_params.size(); index++) {
