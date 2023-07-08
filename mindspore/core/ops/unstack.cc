@@ -47,7 +47,7 @@ bool IsDynamicOutputs(const std::vector<int64_t> &x_shape, const PrimitivePtr &p
     return true;
   }
   auto rank = x_shape.size();
-  CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(rank), kGreaterEqual, 1, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(rank), kGreaterEqual, 1, primitive->name());
   auto axis = GetUnstackAxis(x_shape, primitive);
   return x_shape[axis] == -1;
 }
@@ -76,7 +76,7 @@ BaseShapePtr UnstackInferShape(const std::vector<int64_t> &x_shape, size_t axis)
 AbstractBasePtr UnstackInferInner(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kUnstackInputsNum, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kUnstackInputsNum, prim_name);
   auto type = input_args[kInputIndex0]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", type, common_valid_types_with_complex_and_bool,
                                                    prim_name);

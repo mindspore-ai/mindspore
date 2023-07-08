@@ -18,13 +18,7 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_MAX_POOL_GRAD_WITH_ARGMAX_V2_CPU_KERNEL_H_
 
 #include <map>
-#include <algorithm>
 #include <functional>
-#include <numeric>
-#include <memory>
-#include <limits>
-#include <string>
-#include <unordered_map>
 #include <vector>
 #include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"

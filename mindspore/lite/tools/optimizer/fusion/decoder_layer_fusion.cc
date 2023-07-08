@@ -386,23 +386,11 @@ STATUS DecoderLayerFusion::CheckPattern(const FuncGraphPtr &func_graph, const Eq
     auto layrn3_prim = ops::GetOperator<ops::LayerNormFusion>(layrn3_input);
     if (layrn3_prim->GetAttr(ops::kEpsilon) != nullptr) *eps3 = layrn3_prim->get_epsilon();
   } else {
-    if (GetEps(equiv, eps1_, eps1) != RET_OK) {
-      MS_LOG(ERROR) << "not found eps1";
-      return RET_ERROR;
-    }
-    if (GetEps(equiv, eps2_, eps2) != RET_OK) {
-      MS_LOG(ERROR) << "not found eps2";
-      return RET_ERROR;
-    }
-    if (GetEps(equiv, eps3_, eps3) != RET_OK) {
-      MS_LOG(ERROR) << "not found eps3";
-      return RET_ERROR;
-    }
+    MS_CHECK_TRUE_MSG(GetEps(equiv, eps1_, eps1) == RET_OK, RET_ERROR, "not found eps1");
+    MS_CHECK_TRUE_MSG(GetEps(equiv, eps2_, eps2) == RET_OK, RET_ERROR, "not found eps2");
+    MS_CHECK_TRUE_MSG(GetEps(equiv, eps3_, eps3) == RET_OK, RET_ERROR, "not found eps3");
     if (is_layernorm_) {
-      if (GetEps(equiv, eps4_, eps4) != RET_OK) {
-        MS_LOG(ERROR) << "not found eps4";
-        return RET_ERROR;
-      }
+      MS_CHECK_TRUE_MSG(GetEps(equiv, eps4_, eps4) == RET_OK, RET_ERROR, "not found eps4");
     }
   }
   if (!is_position_bias_) {
