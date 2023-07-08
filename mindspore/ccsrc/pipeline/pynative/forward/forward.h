@@ -66,7 +66,7 @@ class ForwardExecutor {
   void ClearRes();
   void set_lazy_build(bool lazy_build) { lazy_build_ = lazy_build; }
   bool EnablePipeline(const std::string &op_name) const;
-  inline bool enable_async() const { return enable_async_; }
+  bool enable_async() const;
   inline const std::string &device_target() const { return device_target_; }
   const MindrtBackendMap &mindrt_backend() const { return mindrt_backends_; }
   inline bool IsFirstCell() const { return forward_cell_stack_.empty(); }

@@ -43,6 +43,7 @@ namespace {
 const std::set<std::string> kVmOperators = {"InsertGradientOf", "StopGradient", "HookBackward", "CellBackwardHook"};
 constexpr char kBegin[] = "Begin";
 constexpr char kEnd[] = "End";
+constexpr auto kOpNameCustom = "Custom";
 enum class RunOpArgsEnum : size_t { PY_PRIM = 0, PY_NAME, PY_INPUTS, PY_ARGS_NUM };
 
 // Shallow Copy Value and change shape
@@ -318,13 +319,17 @@ void ForwardExecutor::Init() {
                                              &ForwardExecutor::ReinitAfterFork);
 }
 
-bool ForwardExecutor::EnablePipeline(const std::string &op_name) const {
+bool ForwardExecutor::enable_async() const {
 #if defined(ENABLE_TEST) || defined(__APPLE__)
   return false;
 #else
-  return !IsVmOp(op_name) && op_name != "Custom" && !ScopedFallbackRunning::on() && enable_async() &&
-         MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode;
+  return enable_async_;
 #endif
+}
+
+bool ForwardExecutor::EnablePipeline(const std::string &op_name) const {
+  return enable_async() && !IsVmOp(op_name) && op_name != kOpNameCustom && !ScopedFallbackRunning::on() &&
+         MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode;
 }
 
 void ForwardExecutor::DispatchFrontendTask(const FrontendOpRunInfoPtr &op_run_info) {
@@ -678,8 +683,12 @@ void ForwardExecutor::ProcessBeforeEndGraph(const py::object &obj, bool is_cell)
 
 void ForwardExecutor::ProcessAfterEndGraph(const py::object &obj, bool is_cell) const {
   if (IsFirstCell()) {
+#if defined(__APPLE__)
+    ClearNodeAbsMap();
+#else
     auto forward_task = std::make_shared<FrontendTask>([this](...) { ClearNodeAbsMap(); }, nullptr);
     frontend_queue_->Push(forward_task);
+#endif
   }
   PrintPyObjInfo(obj, kEnd, is_cell);
 }

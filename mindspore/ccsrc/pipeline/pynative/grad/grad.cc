@@ -1592,15 +1592,23 @@ void GradExecutor::ClearRes() {
 
 void GradExecutor::AsyncClearTopCell() {
   for (const auto &need_gc_top_cell : need_gc_top_cell_list_) {
-    auto task = [need_gc_top_cell]() { need_gc_top_cell->Clear(); };
-    async_executor_->Push(new (std::nothrow) BpropTask(std::move(task)));
+    if (forward()->enable_async()) {
+      auto task = [need_gc_top_cell]() { need_gc_top_cell->Clear(); };
+      async_executor_->Push(new (std::nothrow) BpropTask(std::move(task)));
+    } else {
+      need_gc_top_cell->Clear();
+    }
   }
   need_gc_top_cell_list_.clear();
 }
 
 void GradExecutor::AsyncClearAutoGradCell(const TopCellInfoPtr &top_cell) {
-  auto task = [top_cell] { top_cell->set_auto_grad_cell_ptr(nullptr); };
-  async_executor_->Push(new (std::nothrow) BpropTask(std::move(task)));
+  if (forward()->enable_async()) {
+    auto task = [top_cell] { top_cell->set_auto_grad_cell_ptr(nullptr); };
+    async_executor_->Push(new (std::nothrow) BpropTask(std::move(task)));
+  } else {
+    top_cell->set_auto_grad_cell_ptr(nullptr);
+  }
 }
 
 AnfNodePtr GradExecutor::GetInput(const ValuePtr &v, const string &obj_id) const {
