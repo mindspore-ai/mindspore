@@ -521,7 +521,7 @@ std::vector<DShape> ConstantOfShapeOp::InferShape(const NodePtrList &inputs, con
     return {res};
   } else if (value->isa<tensor::Tensor>()) {
     auto tvalue = value->cast<tensor::TensorPtr>();
-    if (tvalue->data_type_c() == TypeId::kNumberTypeInt32) {
+    if (tvalue->data_type_c() == static_cast<int>(TypeId::kNumberTypeInt32)) {
       int *data = static_cast<int *>(tvalue->data_c());
       for (size_t elem = 0; elem < tvalue->DataSize(); elem++) {
         res.push_back(IntToLong(*(data + elem)));

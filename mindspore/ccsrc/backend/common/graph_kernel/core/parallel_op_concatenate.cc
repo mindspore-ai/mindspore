@@ -30,8 +30,6 @@ ParallelOpConcatenater::ParallelOpConcatenater(const std::string &op_name, uint6
                                                const std::string &layout)
     : ParallelOpCombiner(op_name, min_num_branches, layout) {}
 
-ParallelOpConcatenater::~ParallelOpConcatenater() {}
-
 bool ParallelOpConcatenater::IsArgCompatible(const AnfNodePtr a, const AnfNodePtr b) {
   auto cnode_a = a->cast<CNodePtr>();
   auto cnode_b = b->cast<CNodePtr>();
@@ -133,21 +131,21 @@ ConcatenatePlan ParallelOpConcatenater::GetElemWiseFollowingPlan(const Group &br
       break;
     }
   }
-  auto UpdateIdx = [](ShapeVector &base_shape, ShapeVector &new_shape, size_t base_idx) {
+  auto UpdateIdx = [](ShapeVector &base_shape, ShapeVector &new_shape, int base_idx) -> int {
     if (new_shape.empty()) {
       return base_idx;
     }
     auto rank_diff = static_cast<int>(base_shape.size()) - static_cast<int>(new_shape.size());
-    if (rank_diff > static_cast<int>(base_idx)) {
+    if (rank_diff > base_idx) {
       return base_idx;
     }
     return base_idx - rank_diff;
   };
-  ew_plan.concat_in_idx = static_cast<int>(UpdateIdx(last_plan.in_shape, ew_plan.in_shape, last_plan.concat_in_idx));
+  ew_plan.concat_in_idx = UpdateIdx(last_plan.in_shape, ew_plan.in_shape, last_plan.concat_in_idx);
   Branch b0 = branches[0];
   auto op = b0.ops[depth];
   ew_plan.out_shape = cb->GetOutputInferShape(op, 0);
-  ew_plan.split_out_idx = static_cast<int>(UpdateIdx(last_plan.out_shape, ew_plan.out_shape, last_plan.split_out_idx));
+  ew_plan.split_out_idx = UpdateIdx(last_plan.out_shape, ew_plan.out_shape, last_plan.split_out_idx);
   MS_LOG(DEBUG) << "EW plan: " << ew_plan.concat_in_idx << ", " << ew_plan.split_out_idx << ", " << ew_plan.out_shape;
   return ew_plan;
 }

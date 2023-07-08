@@ -95,9 +95,9 @@ ConcatenatePlan ParallelMatMulConcatenater::Analyse(const Group &branches) const
     auto shape_b = common::AnfAlgo::GetPrevNodeOutputInferShape(matmul, kIndex1);
     size_t rank_b = shape_b.size();
     auto n_idx = trans_b ? rank_b - kIndex2 : rank_b - kIndex1;
-    target_op_res.concat_in_idx = n_idx;
-    target_op_res.split_out_idx = rank_b - kIndex1;
-    int64_t new_n = n * branches.size();
+    target_op_res.concat_in_idx = SizeToInt(n_idx);
+    target_op_res.split_out_idx = SizeToInt(rank_b - kIndex1);
+    int64_t new_n = n * SizeToLong(branches.size());
     if (rank_b == kDim3) {
       target_op_res.out_shape = ShapeVector({b, m, new_n});
     } else {
@@ -107,9 +107,9 @@ ConcatenatePlan ParallelMatMulConcatenater::Analyse(const Group &branches) const
     auto shape_a = common::AnfAlgo::GetPrevNodeOutputInferShape(matmul, kIndex0);
     size_t rank_a = shape_a.size();
     auto m_idx = trans_a ? rank_a - kIndex1 : rank_a - kIndex2;
-    target_op_res.concat_in_idx = static_cast<int>(m_idx);
-    target_op_res.split_out_idx = static_cast<int>(rank_a - kIndex2);
-    auto new_m = static_cast<int64_t>(m * branches.size());
+    target_op_res.concat_in_idx = SizeToInt(m_idx);
+    target_op_res.split_out_idx = SizeToInt(rank_a - kIndex2);
+    auto new_m = m * SizeToLong(branches.size());
     if (rank_a == kDim3) {
       target_op_res.out_shape = ShapeVector({b, new_m, n});
     } else {
@@ -134,7 +134,7 @@ bool ParallelMatMulConcatenater::IsSupportedOp(const AnfNodePtr n) {
     return false;
   }
   auto prim = GetCNodePrimitive(n);
-  if (!prim || unsupported_ops_.count(prim->name())) {
+  if (prim == nullptr || unsupported_ops_.count(prim->name())) {
     return false;
   }
   return true;

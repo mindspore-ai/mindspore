@@ -94,9 +94,9 @@ class BACKEND_EXPORT GraphKernelFlags {
   unsigned int parallel_ops_level{OpLevel_0};
 
   /**
-   * Enable parallel op combination, default is true.
+   * Enable parallel op combination, default is false.
    */
-  bool enable_parallel_op_combine{true};
+  bool enable_parallel_op_combine{false};
 
   /**
    * Enable horizontal fusion in graph kernel fusion strategy, default is false.
