@@ -36,7 +36,6 @@ class UsePastEmbedding : public MultiplePatternProcessPass {
  private:
   VectorRef DefinePatternEncoderEmbedding() const;
   VectorRef DefinePatternQueryEmbedding() const;
-  //  VectorRef DefinePatternEncoder() const;
   mutable VarPtr is_gather2_{nullptr};
   mutable VarPtr is_gather_query_{nullptr};
   mutable VarPtr position_ids_{nullptr};

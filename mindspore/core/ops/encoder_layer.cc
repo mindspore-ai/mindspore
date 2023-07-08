@@ -116,7 +116,7 @@ int64_t EncoderLayer::get_expert_offset_id() const {
 
 float EncoderLayer::get_capacity_factor() const {
   auto value_ptr = this->GetAttr(kCapacityFactor);
-  return GetValue<int64_t>(value_ptr);
+  return GetValue<float>(value_ptr);
 }
 
 bool EncoderLayer::get_position_bias() const {
