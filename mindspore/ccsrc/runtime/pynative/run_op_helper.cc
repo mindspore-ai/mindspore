@@ -546,12 +546,11 @@ kernel::AddressPtrList MallocInputMemoryForDeviceAddress(const std::vector<devic
       continue;
     }
     if (device_address->GetPtr() == nullptr) {
-      if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
-        MS_LOG(EXCEPTION) << "Allocate device memory failed!";
-      }
+      (void)ret.emplace_back(std::make_shared<kernel::Address>(nullptr, 0));
+    } else {
+      (void)ret.emplace_back(
+        std::make_shared<kernel::Address>(device_address->GetMutablePtr(), device_address->GetSize()));
     }
-    (void)ret.emplace_back(
-      std::make_shared<kernel::Address>(device_address->GetMutablePtr(), device_address->GetSize()));
   }
   return ret;
 }
