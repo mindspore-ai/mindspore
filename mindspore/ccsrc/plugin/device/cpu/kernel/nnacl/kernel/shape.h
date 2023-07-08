@@ -23,6 +23,7 @@
 
 typedef struct ShapeStruct {
   KernelBase base_;
+  int shape_size_;
 } ShapeStruct;
 
 KernelBase *CreateShape(OpParameter *param, int data_type);

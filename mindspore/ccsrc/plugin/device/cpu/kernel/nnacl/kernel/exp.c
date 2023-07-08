@@ -27,8 +27,7 @@
 
 int ExpRunImpl(void *cdata, int task_id, float l, float r) {
   ExpStruct *exp = (ExpStruct *)cdata;
-  NNACL_CHECK_NULL_RETURN_ERR(exp);
-  return exp->exp_compute_(exp->base_.in_[0]->data_, exp->base_.out_[0]->data_, exp, task_id);
+  return exp->Exp(exp->base_.in_[FIRST_INPUT]->data_, exp->base_.out_[OUTPUT_INDEX]->data_, exp, task_id);
 }
 
 int ExpResize(struct KernelBase *self) {
@@ -73,10 +72,10 @@ KernelBase *CreateExp(OpParameter *param, int data_type) {
   exp->base_.Resize = ExpResize;
   exp->base_.Release = DefaultRelease;
   exp->base_.Compute = ExpCompute;
-  exp->exp_compute_ = ExpFusionFp32;
+  exp->Exp = ExpFusionFp32;
 #ifdef ENABLE_FP16
   if (data_type == kNumberTypeFloat16) {
-    exp->exp_compute_ = ExpFusionFp16;
+    exp->Exp = ExpFusionFp16;
   }
 #endif
   return (KernelBase *)exp;

@@ -93,7 +93,7 @@ int ConvIm2ColAVX512RunImpl(struct ConvolutionBaseStruct *conv, int task_id) {
   return NNACL_OK;
 }
 
-int convolution_im2col_avx512_compute(KernelBase *self) {
+int ConvolutionIm2colAvx512Compute(KernelBase *self) {
   ConvolutionIm2ColBaseStruct *conv_im2col = (ConvolutionIm2ColBaseStruct *)self;
   NNACL_CHECK_NULL_RETURN_ERR(conv_im2col);
 
@@ -139,7 +139,7 @@ ConvolutionBaseStruct *CreateConvIm2ColAVX512(ConvParameter *conv_param) {
   conv_im2col->conv_.run_impl_ = ConvIm2ColAVX512RunImpl;
   conv_im2col->conv_.pack_weight_ = ConvIm2ColBasePackWeight;
 
-  conv_im2col->conv_.base_.Compute = convolution_im2col_avx512_compute;
+  conv_im2col->conv_.base_.Compute = ConvolutionIm2colAvx512Compute;
   conv_im2col->conv_.base_.Prepare = ConvolutionIm2colBasePrepare;
   conv_im2col->conv_.base_.Resize = ConvolutionIm2colBaseResize;
   conv_im2col->conv_.base_.Release = ConvolutionIm2colBaseRelease;

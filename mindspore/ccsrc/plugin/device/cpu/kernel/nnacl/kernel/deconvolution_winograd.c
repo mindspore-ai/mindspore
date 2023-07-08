@@ -93,6 +93,12 @@ int DeConvWinogradInitParameter(DeConvWinogradStruct *deconv) {
   DeConvParam *param = &deconv->param_;
   ConvComputeParam *compute = &deconv->conv_.compute_;
 
+  int thread_num = deconv->conv_.base_.thread_nr_;
+  NNACL_CHECK_ZERO_RETURN_ERR(thread_num);
+
+  param->input_plane_ = compute->in_hw_;
+  param->output_plane_ = compute->out_hw_;
+
   param->in_tile_w_count_ = UP_DIV(compute->in_w_, WINOGRAD_DEFAULT_UNIT);
   NNACL_CHECK_ZERO_RETURN_ERR(param->in_tile_w_count_);
   param->in_tile_h_count_ = UP_DIV(compute->in_h_, WINOGRAD_DEFAULT_UNIT);
@@ -126,23 +132,23 @@ int DeConvWinogradInitParameter(DeConvWinogradStruct *deconv) {
         param->a_buffer_[unit->winograd_.kh_].buf_init_ = true;
         size = unit->winograd_.kh_ * unit->winograd_.kw_ * WINOGRAD_DEFAULT_TILE * param->ic_up_;
 
-        param->a_buffer_[unit->winograd_.kh_].middle_buffer_ = malloc(param->thread_num_ * size * sizeof(float));
+        param->a_buffer_[unit->winograd_.kh_].middle_buffer_ = malloc(thread_num * size * sizeof(float));
         NNACL_MALLOC_CHECK_NULL_RETURN_ERR(param->a_buffer_[unit->winograd_.kh_].middle_buffer_);
 
-        param->a_buffer_[unit->winograd_.kh_].dest_buffer_ = malloc(param->thread_num_ * size * sizeof(float));
+        param->a_buffer_[unit->winograd_.kh_].dest_buffer_ = malloc(thread_num * size * sizeof(float));
         NNACL_MALLOC_CHECK_NULL_RETURN_ERR(param->a_buffer_[unit->winograd_.kh_].dest_buffer_);
       }
 
       size = unit->winograd_.kh_ * unit->winograd_.kw_ * param->oc_up_ * WINOGRAD_DEFAULT_TILE;
-      unit->winograd_.b_buffer_ = malloc(deconv->conv_.base_.thread_nr_ * size * sizeof(float));
+      unit->winograd_.b_buffer_ = malloc(thread_num * size * sizeof(float));
       NNACL_MALLOC_CHECK_NULL_RETURN_ERR(unit->winograd_.b_buffer_);
 
       size = unit->winograd_.kh_ * unit->winograd_.kw_ * param->oc_div_ * WINOGRAD_DEFAULT_TILE * compute->tile_num_;
-      unit->tmp_buffer_ = malloc(deconv->conv_.base_.thread_nr_ * size * sizeof(float));
+      unit->tmp_buffer_ = malloc(thread_num * size * sizeof(float));
       NNACL_MALLOC_CHECK_NULL_RETURN_ERR(unit->tmp_buffer_);
     } else {
       size = param->oc_div_ * unit->w_size_ * unit->h_size_ * WINOGRAD_DEFAULT_TILE * compute->tile_num_;
-      unit->tmp_buffer_ = malloc(deconv->conv_.base_.thread_nr_ * size * sizeof(float));
+      unit->tmp_buffer_ = malloc(thread_num * size * sizeof(float));
       NNACL_MALLOC_CHECK_NULL_RETURN_ERR(unit->tmp_buffer_);
     }
   }
@@ -214,6 +220,7 @@ int DeConvWinogradInitComputeParam(DeConvWinogradStruct *deconv) {
   ConvComputeParam *compute = &deconv->conv_.compute_;
   DeConvParam *param = &deconv->param_;
 
+  param->kernel_plane_ = compute->kernel_hw_;
   param->ic_div_ = UP_DIV(compute->in_c_, compute->tile_num_);
   param->oc_div_ = UP_DIV(compute->out_c_, compute->tile_num_);
   param->ic_up_ = param->ic_div_ * compute->tile_num_;

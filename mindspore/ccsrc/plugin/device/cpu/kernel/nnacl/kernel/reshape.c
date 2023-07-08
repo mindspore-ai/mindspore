@@ -34,7 +34,7 @@ int ParallelReshape(void *param, int task_id, float l, float r) {
   return NNACL_OK;
 }
 
-int reshape_resize(struct KernelBase *self) {
+int ReshapeResize(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(self);
   ReshapeStruct *reshape = (ReshapeStruct *)self;
   reshape->total_size_ = GetSize(self->in_[0]);
@@ -54,7 +54,7 @@ int reshape_resize(struct KernelBase *self) {
   return NNACL_OK;
 }
 
-int reshape_compute(struct KernelBase *self) {
+int ReshapeCompute(struct KernelBase *self) {
   return self->env_->ParallelLaunch(self->env_->thread_pool_, ParallelReshape, self, self->thread_nr_);
 }
 
@@ -63,8 +63,8 @@ KernelBase *CreateReshape(OpParameter *param, int data_type) {
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(reshape);
   reshape->base_.Release = DefaultRelease;
   reshape->base_.Prepare = DefaultPrepare1In1Out;
-  reshape->base_.Resize = reshape_resize;
-  reshape->base_.Compute = reshape_compute;
+  reshape->base_.Resize = ReshapeResize;
+  reshape->base_.Compute = ReshapeCompute;
   return (KernelBase *)reshape;
 }
 

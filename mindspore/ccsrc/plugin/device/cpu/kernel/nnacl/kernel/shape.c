@@ -17,16 +17,18 @@
 #include "nnacl/kernel/shape.h"
 #include "nnacl/kernel/default_kernel_base.h"
 
-int shape_compute(struct KernelBase *self) {
-  TensorC *in = self->in_[FIRST_INPUT];
-  NNACL_CHECK_NULL_RETURN_ERR(in);
-  TensorC *out = self->out_[OUTPUT_INDEX];
-  NNACL_CHECK_NULL_RETURN_ERR(out);
-  NNACL_CHECK_NULL_RETURN_ERR(out->data_);
+int ShapeCompute(struct KernelBase *self) {
+  ShapeStruct *shape = (ShapeStruct *)self;
+  memcpy(self->out_[OUTPUT_INDEX]->data_, self->in_[FIRST_INPUT]->shape_, shape->shape_size_);
+  return NNACL_OK;
+}
 
-  for (size_t i = 0; i < in->shape_size_; i++) {
-    ((int *)out->data_)[i] = in->shape_[i];
-  }
+int ShapeResize(KernelBase *self) {
+  NNACL_CHECK_NULL_RETURN_ERR(self->in_[FIRST_INPUT]);
+  NNACL_CHECK_NULL_RETURN_ERR(self->out_[OUTPUT_INDEX]);
+  ShapeStruct *shape = (ShapeStruct *)self;
+  NNACL_CHECK_NULL_RETURN_ERR(shape);
+  shape->shape_size_ = self->in_[FIRST_INPUT]->shape_size_ * sizeof(int);
   return NNACL_OK;
 }
 
@@ -35,8 +37,8 @@ KernelBase *CreateShape(OpParameter *param, int data_type) {
   NNACL_MALLOC_CHECK_NULL_RETURN_NULL(shape);
   shape->base_.Release = DefaultRelease;
   shape->base_.Prepare = DefaultPrepare1In1Out;
-  shape->base_.Resize = DefaultResize;
-  shape->base_.Compute = shape_compute;
+  shape->base_.Resize = ShapeResize;
+  shape->base_.Compute = ShapeCompute;
   return (KernelBase *)shape;
 }
 

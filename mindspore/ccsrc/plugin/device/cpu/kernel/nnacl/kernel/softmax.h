@@ -29,6 +29,7 @@ typedef struct SoftmaxStruct {
   int out_plane_size_;
   void *sum_data_;
   TypeIdC data_type_;
+  int unit_;
 } SoftmaxStruct;
 
 int InitSoftmaxParam(SoftmaxStruct *softmax);

@@ -129,7 +129,7 @@ int activation_fp16_run(ActivationStruct *activation, int task_id, int count, in
   return NNACL_DISABLE_FP16;
 }
 
-int activation_do_compute(void *cdata, int task_id, float l, float r) {
+int ActivationImpl(void *cdata, int task_id, float l, float r) {
   ActivationStruct *activation = (ActivationStruct *)cdata;
 
   int ele_num = GetElementNum(activation->base.in_[0]);
@@ -155,7 +155,7 @@ int activation_do_compute(void *cdata, int task_id, float l, float r) {
 }
 
 int ActivationCompute(struct KernelBase *self) {
-  return self->env_->ParallelLaunch(self->env_->thread_pool_, activation_do_compute, self, self->thread_nr_);
+  return self->env_->ParallelLaunch(self->env_->thread_pool_, ActivationImpl, self, self->thread_nr_);
 }
 
 KernelBase *CreateActivation(OpParameter *param, int data_type) {

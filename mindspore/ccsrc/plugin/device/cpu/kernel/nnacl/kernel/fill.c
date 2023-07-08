@@ -40,7 +40,7 @@ int FillResize(struct KernelBase *self) {
   return NNACL_OK;
 }
 
-int fill_do_compute(void *cdata, int task_id, float l, float r) {
+int FillImpl(void *cdata, int task_id, float l, float r) {
   FillStruct *fill = (FillStruct *)cdata;
   NNACL_CHECK_NULL_RETURN_ERR(fill);
   NNACL_CHECK_INT_MUL_NOT_OVERFLOW(task_id, fill->thread_sz_stride_, NNACL_ERR);
@@ -78,7 +78,7 @@ int FillCompute(struct KernelBase *self) {
   fill->out_ptr_ = (void *)fill->base_.out_[OUTPUT_INDEX]->data_;
   NNACL_CHECK_NULL_RETURN_ERR(fill->out_ptr_);
 
-  return self->env_->ParallelLaunch(self->env_->thread_pool_, fill_do_compute, fill, fill->base_.thread_nr_);
+  return self->env_->ParallelLaunch(self->env_->thread_pool_, FillImpl, fill, fill->base_.thread_nr_);
 }
 
 KernelBase *CreateFill(OpParameter *param, int data_type) {

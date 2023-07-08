@@ -131,11 +131,7 @@ int ConvBaseInitConvWeightBias(ConvolutionBaseStruct *conv) {
   }
 
   if (conv->base_.in_size_ == THREE_TENSOR) {
-    TensorC *bias_tensor = conv->base_.in_[THIRD_INPUT];
-    NNACL_CHECK_NULL_RETURN_ERR(bias_tensor);
-    NNACL_CHECK_NULL_RETURN_ERR(bias_tensor->data_);
-    NNACL_CHECK_FALSE(GetSize(bias_tensor) == 0, NNACL_INPUT_TENSOR_ERROR);
-    memcpy(conv->bias_data_, bias_tensor->data_, GetSize(bias_tensor));
+    memcpy(conv->bias_data_, conv->origin_bias_, GetSize(conv->base_.in_[THIRD_INPUT]));
   }
 
   if (!conv->base_.train_session_) {

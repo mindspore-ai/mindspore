@@ -43,38 +43,37 @@ int ClipResize(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(clip);
   clip->base_.thread_nr_ = clip->base_.UpdateThread(
     TC_PTYPE(PrimType_Clip), 1, 1, GetElementNum(clip->base_.out_[FIRST_INPUT]), clip->base_.thread_nr_);
+
+  clip->length_ = GetElementNum(clip->base_.in_[FIRST_INPUT]);
+  clip->stride_ = UP_DIV(clip->length_, clip->base_.thread_nr_);
+  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(clip->stride_, clip->base_.thread_nr_, NNACL_ERR);
   return NNACL_OK;
 }
 
-int clip_do_compute(void *cdata, int task_id, float l, float r) {
+int ClipImpl(void *cdata, int task_id, float l, float r) {
   ClipStruct *clip = (ClipStruct *)cdata;
-  NNACL_CHECK_NULL_RETURN_ERR(clip);
+  void *in = clip->base_.in_[FIRST_INPUT]->data_;
+  void *out = clip->base_.out_[FIRST_INPUT]->data_;
 
-  int length = GetElementNum(clip->base_.in_[FIRST_INPUT]);
-  int stride = UP_DIV(length, clip->base_.thread_nr_);
-  NNACL_CHECK_INT_MUL_NOT_OVERFLOW(stride, task_id, NNACL_ERR);
-  int count = MSMIN(stride, length - stride * task_id);
+  int stride = clip->stride_ * task_id;
+  int count = NNACL_MIN(clip->stride_, clip->length_ - stride);
   if (count <= 0) {
     return NNACL_OK;
   }
 
-  int ret = NNACL_OK;
   switch (clip->base_.in_[FIRST_INPUT]->data_type_) {
     case kNumberTypeFloat:
     case kNumberTypeFloat32: {
-      ret = Fp32Clip((float *)clip->base_.in_[FIRST_INPUT]->data_ + stride * task_id, count,
-                     (float *)clip->base_.out_[FIRST_INPUT]->data_ + stride * task_id, clip->min_val_, clip->max_val_);
+      return Fp32Clip((float *)in + stride, count, (float *)out + stride, clip->min_val_, clip->max_val_);
     } break;
     case kNumberTypeInt:
     case kNumberTypeInt32: {
-      ret = Int32Clip((int *)clip->base_.in_[FIRST_INPUT]->data_ + stride * task_id, count,
-                      (int *)clip->base_.out_[FIRST_INPUT]->data_ + stride * task_id, (int)clip->min_val_,
-                      (int)clip->max_val_);
+      return Int32Clip((int *)in + stride, count, (int *)out + stride, (int)clip->min_val_, (int)clip->max_val_);
     } break;
     default:
       return NNACL_CLIP_DATA_TYPE_INVALID;
   }
-  return ret;
+  return NNACL_OK;
 }
 
 int ClipCompute(struct KernelBase *self) {
@@ -103,7 +102,7 @@ int ClipCompute(struct KernelBase *self) {
     return NNACL_CLIP_MINMAX_VALUE_INVALID;
   }
 
-  return self->env_->ParallelLaunch(self->env_->thread_pool_, clip_do_compute, clip, clip->base_.thread_nr_);
+  return self->env_->ParallelLaunch(self->env_->thread_pool_, ClipImpl, clip, clip->base_.thread_nr_);
 }
 
 KernelBase *CreateClip(OpParameter *param, int data_type) {
