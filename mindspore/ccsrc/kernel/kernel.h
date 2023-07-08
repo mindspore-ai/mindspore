@@ -280,6 +280,8 @@ class BACKEND_EXPORT KernelMod {
                   stream_ptr);
   }
   int32_t task_id() const { return task_id_; }
+  bool use_kernel_tensor() const { return use_kernel_tensor_; }
+  void set_use_kernel_tensor(bool use_kernel_tensor) { use_kernel_tensor_ = use_kernel_tensor; }
 
  protected:
   virtual bool Init(const BaseOperatorPtr &op, const std::vector<KernelTensorPtr> &inputs,
@@ -316,6 +318,7 @@ class BACKEND_EXPORT KernelMod {
   BaseOperatorPtr op_;
   std::vector<KernelTensorPtr> inputs_;
   std::vector<KernelTensorPtr> outputs_;
+  bool use_kernel_tensor_{false};
 };
 using KernelModPtr = std::shared_ptr<KernelMod>;
 
