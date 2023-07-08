@@ -287,7 +287,7 @@ bool AscendGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<
   device::KernelAdjust::GetInstance().LoadDeviceLoopCtrlParameters(kernel_graph);
 
 #ifndef ENABLE_SECURITY
-  if (ProfilingManager::GetInstance().IsProfilingInitialized()) {
+  if (ProfilingManager::GetInstance().IsProfilingStart()) {
     ProfilingUtils::RecordModelExecute(kernel_graph);
   }
 #endif
@@ -304,7 +304,7 @@ bool AscendGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<
   MS_LOG(INFO) << "Status record: end launch graph. graph id: " << kernel_graph->graph_id();
 
 #ifndef ENABLE_SECURITY
-  if (ProfilingManager::GetInstance().IsProfilingInitialized()) {
+  if (ProfilingManager::GetInstance().IsProfilingStart()) {
     ProfilingUtils::RecordModelExecute(kernel_graph);
   }
 #endif

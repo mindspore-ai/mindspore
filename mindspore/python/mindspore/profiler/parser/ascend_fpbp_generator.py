@@ -62,6 +62,8 @@ class AscendFPBPGenerator:
         Args:
             step_trace_point_info_path(str): step_trace_point_info.json path.
         """
+        if not self.points:
+            return
         try:
             with os.fdopen(os.open(step_trace_point_info_path,
                                    os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as json_file:
