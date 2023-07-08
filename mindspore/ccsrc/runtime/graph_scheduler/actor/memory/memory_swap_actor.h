@@ -52,7 +52,8 @@ class MemorySwapActor : public AbstractActor {
 
  private:
   void AllocDeviceContinuousMem(const std::vector<DeviceTensor *> &device_tensors);
-  static void Swap(device::StorageType to, const std::vector<DeviceTensor *> &device_tensors);
+  static void Swap(OpContext<mindspore::runtime::DeviceTensor> *const context, device::StorageType to,
+                   const std::vector<DeviceTensor *> &device_tensors);
   void UpdateDeviceTensors(OpContext<DeviceTensor> *context);
   std::vector<DeviceTensor *> GetDeviceTensors(const std::vector<size_t> &indexes);
 

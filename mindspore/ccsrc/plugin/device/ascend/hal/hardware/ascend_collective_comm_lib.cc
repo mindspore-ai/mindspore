@@ -178,6 +178,12 @@ bool AscendCollectiveCommLib::DestroyCommunicationGroup(const std::string &group
 bool AscendCollectiveCommLib::CreateDeviceCommunicationGroup(const std::string &group_name,
                                                              const std::vector<uint32_t> &group_ranks) {
   HCCL_GROUP_CHECK_EMPTY(group_name);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+    MS_LOG(ERROR) << "Creating custom communication group is not allowed in PyNative mode.";
+    return false;
+  }
   auto rank_size = group_ranks.size();
   HCCL_RUN_CHECK(std::string("create communicate group"), group_name,
                  hccl::HcclAdapter::GetInstance().HcclCreateGroup(group_name, UlongToUint(rank_size),
