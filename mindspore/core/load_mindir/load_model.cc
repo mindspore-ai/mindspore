@@ -2132,24 +2132,24 @@ bool MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto, const std::
   if (name_to_node) {
     anfnode_build_map_ = *name_to_node;
   }
-  auto build_params_attrs = [this](const FuncGraphPtr &output_graph, const mind_ir::GraphProto &import_proto) {
-    MS_EXCEPTION_IF_NULL(output_graph);
-    if (!import_proto.has_name()) {
+  auto build_params_attrs = [this](const FuncGraphPtr &graph, const mind_ir::GraphProto &proto) {
+    MS_EXCEPTION_IF_NULL(graph);
+    if (!proto.has_name()) {
       MS_LOG(ERROR) << "KernelGraph under converting has not name!";
       return false;
     }
-    GraphDebugInfoPtr debug_info_ptr = output_graph->debug_info();
+    GraphDebugInfoPtr debug_info_ptr = graph->debug_info();
     MS_EXCEPTION_IF_NULL(debug_info_ptr);
-    debug_info_ptr->set_name(import_proto.name());
+    debug_info_ptr->set_name(proto.name());
 
-    if (!BuildAttrForFuncGraph(output_graph, import_proto)) {
+    if (!BuildAttrForFuncGraph(graph, proto)) {
       MS_LOG(ERROR) << "Build attribute for graph fail!";
     }
-    if (!ImportParametersForGraph(output_graph, import_proto)) {
+    if (!ImportParametersForGraph(graph, proto)) {
       MS_LOG(ERROR) << "Import parameters for graph fail!";
       return false;
     }
-    if (!ImportMapParametersForGraph(output_graph, import_proto)) {
+    if (!ImportMapParametersForGraph(graph, proto)) {
       MS_LOG(ERROR) << "Import map parameters for graph failed!";
       return false;
     }
@@ -2164,10 +2164,7 @@ bool MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto, const std::
   const mind_ir::GraphProto &graph_build = model_proto.graph();
   const auto &root = FindGraphByName(graphs, graph_build.name());
   MS_EXCEPTION_IF_NULL(root);
-
-  if (graph_build.has_name()) {
-    anfnode_build_map_[graph_build.name()] = NewValueNodeWithAbstract(root);
-  }
+  anfnode_build_map_[graph_build.name()] = NewValueNodeWithAbstract(root);
   top_graph_ = root;
   if (!build_params_attrs(root, graph_build)) {
     MS_LOG(ERROR) << "Build funcgraph params and attrs failed.";
@@ -2217,7 +2214,6 @@ bool MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto, const std::
   }
   // Release resource
   anfnode_build_map_.clear();
-
   return true;
 }
 
@@ -2729,7 +2725,10 @@ bool MindIRLoader::LoadMindIR(const std::string &file_name, const std::vector<Fu
   }
   MSANFModelParser model_parser;
   InitModelParser(&model_parser, this);
-  model_parser.Parse(model_proto, graphs, name_to_node);
+  if (!model_parser.Parse(model_proto, graphs, name_to_node)) {
+    MS_LOG(ERROR) << "Parse model failed!";
+    return false;
+  }
   return true;
 }
 

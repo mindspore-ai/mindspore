@@ -490,10 +490,7 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
   int index = 0;
   std::vector<Operator> init_input;
   auto manager = Manage(anf_graph_, true);
-  if (manager == nullptr) {
-    MS_LOG(ERROR) << "manager is nullptr.";
-    return;
-  }
+  MS_EXCEPTION_IF_NULL(manager);
   const auto &node_users = manager->node_users();
   for (auto it : tensors) {
     std::string name = it.first;

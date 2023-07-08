@@ -28,7 +28,7 @@ bool CompileCacheEnable() {
 }
 
 CompileCacheContext &CompileCacheContext::GetInstance() noexcept {
-  static CompileCacheContext instance;
+  static CompileCacheContext instance{};
   return instance;
 }
 
