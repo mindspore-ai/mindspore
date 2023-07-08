@@ -909,6 +909,7 @@ Tensor &Tensor::AssignValue(const Tensor &tensor) {
     }
     if (!is_parameter_) {
       id_ = tensor.id_;
+      auto_grad_meta_data_ = tensor.auto_grad_meta_data_;
     }
     event_ = tensor.event_;
     need_wait_ = tensor.need_wait_;

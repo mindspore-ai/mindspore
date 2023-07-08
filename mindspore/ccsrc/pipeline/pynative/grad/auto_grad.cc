@@ -1430,7 +1430,7 @@ void AutoGradCellImpl::ConvertValueNodeValueToTensor(const AnfNodePtr &din) {
   }
 }
 
-void AutoGradCellImpl::ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node) const {
+void AutoGradCellImpl::ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     return;
@@ -1471,6 +1471,9 @@ void AutoGradCellImpl::ConvertMakeTupleInputToDynamicInput(const AnfNodePtr &nod
       common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), cnode);
       MS_LOG(DEBUG) << "Change node to dynamic len " << cnode->DebugString();
       cnode->set_inputs(plant_inputs);
+      for (size_t i = 1; i < plant_inputs.size(); ++i) {
+        AddUser(plant_inputs[i], cnode, i);
+      }
     }
   }
 }
