@@ -62,6 +62,9 @@ abstract::ShapePtr EyeInferShape(const PrimitivePtr &primitive, const std::vecto
   auto m_ptr = input_args[1]->BuildValue();
   auto n_v = GetValue<int64_t>(n_ptr);
   auto m_v = GetValue<int64_t>(m_ptr);
+  auto prim_name = primitive->name();
+  CheckAndConvertUtils::Check("n", n_v, kGreaterEqual, 0, prim_name);
+  CheckAndConvertUtils::Check("m", m_v, kGreaterEqual, 0, prim_name);
   std::vector<int64_t> state_shape = {n_v, m_v};
   return std::make_shared<abstract::Shape>(state_shape);
 }
@@ -120,8 +123,8 @@ ValuePtr EyeInferValue(const PrimitivePtr &prim, const std::vector<AbstractBaseP
   EyeCheck(input_args);
   auto num_n_ = GetValue<int64_t>(n_pt);
   auto num_m_ = GetValue<int64_t>(m_pt);
-  CheckAndConvertUtils::Check("n", num_n_, kGreaterEqual, 1, prim_name);
-  CheckAndConvertUtils::Check("m", num_m_, kGreaterEqual, 1, prim_name);
+  CheckAndConvertUtils::Check("n", num_n_, kGreaterEqual, 0, prim_name);
+  CheckAndConvertUtils::Check("m", num_m_, kGreaterEqual, 0, prim_name);
   auto type_id = dtype_value_->cast<TypePtr>()->type_id();
   auto shape = EyeInferShape(prim, input_args);
   auto result_tensor = std::make_shared<tensor::Tensor>(type_id, shape->shape());

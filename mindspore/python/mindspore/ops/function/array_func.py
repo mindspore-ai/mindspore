@@ -324,7 +324,7 @@ def eye(n, m=None, dtype=None):
 
     Raises:
         TypeError: If `m` or `n` is not an int.
-        ValueError: If `m` or `n` is less than 1.
+        ValueError: If `m` or `n` is less than 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
