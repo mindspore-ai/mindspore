@@ -30,6 +30,7 @@ namespace kernel {
 class AkgCpuKernelManager : public AkgCpuKernelManagerAbs {
  public:
   AkgCpuKernelManager() = default;
+  ~AkgCpuKernelManager() = default;
 
   void *GetFunction(const std::string &kernel_name) override;
   void GetFunctionAndKernelName(const std::string &fn, const std::string &kernel_name, std::string *fn_so,

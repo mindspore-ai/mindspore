@@ -167,8 +167,7 @@ int AkgKernel::Prepare() {
   }
   auto akg_lib_tensor = in_tensors_.at(in_tensors_.size() - 1);
   auto akg_lib_ptr = akg_lib_tensor->data();
-  auto akg_lib_size = akg_lib_tensor->Size();
-  if (!object_loader.LoadAkgLib(akg_lib_ptr, akg_lib_size)) {
+  if (!object_loader.LoadAkgLib(akg_lib_ptr)) {
     MS_LOG(ERROR) << "Load object from tensor failed. Kernel name is  [" << kernel_name_ << "]";
     return RET_ERROR;
   }
