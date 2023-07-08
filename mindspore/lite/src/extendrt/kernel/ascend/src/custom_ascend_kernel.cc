@@ -165,8 +165,7 @@ int CustomAscendKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   }
 
   if (KernelMod::Resize(base_operator, inputs, outputs) != KRET_OK) {
-    MS_LOG(ERROR) << "Invalid inputs or output shapes.";
-    return lite::RET_ERROR;
+    MS_LOG(WARNING) << "Invalid inputs or output shapes.";
   }
 
   if (inputs.size() < 1) {
