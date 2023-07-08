@@ -85,6 +85,54 @@ class AscendHCCLGenerator:
             [('name', object), ('pid', int), ('tid', int), ('ts', float), ('te', float), ('dur', float), ('ph', object),
              ('task_type', object), ('link_info', object), ('transport_type', object), ('size', int), ('tag', object)])
 
+    @staticmethod
+    def _cost_analyse(iteration):
+        """analyse communication cost and wait cost"""
+        communication_cost = np.sum(iteration[iteration['name'] != 'Notify_Wait']['dur'])
+        wait_cost = np.sum(iteration[iteration['name'] == 'Notify_Wait']['dur'])
+        return communication_cost, wait_cost
+
+    @staticmethod
+    def _rdma_analyse(groupby_transport):
+        """rdma analyse"""
+        thread_groups, _, _, _ = np.unique(groupby_transport['tid'])
+        thread_information = []
+        for thread_index in thread_groups:
+            groupby_thread = groupby_transport[groupby_transport['tid'] == thread_index]
+            rdma_communication_time = 0
+            rdma_communication_size = 0
+            rdma_communication_wait_time = 0
+            start_index = 0
+            end_index = groupby_thread.size - 1
+            while start_index < end_index:
+                first_task_type = groupby_thread[start_index]['task_type']
+                if first_task_type == 'RDMASend':
+                    second_index = start_index + 1
+                    third_index = start_index + 2
+                    second_task_type = groupby_thread[second_index]['task_type']
+                    third_task_type = groupby_thread[third_index]['task_type']
+                    if second_task_type == 'RDMASend' and third_task_type == 'Notify Wait':
+                        rdma_send_cost = groupby_thread[start_index]['dur']
+                        notify_record_cost = groupby_thread[second_index]['dur']
+                        notify_wait_cost = groupby_thread[third_index]['dur']
+                        rdma_communication_time += rdma_send_cost + notify_record_cost + notify_wait_cost
+                        rdma_communication_wait_time += notify_wait_cost
+                        rdma_communication_size += groupby_thread[start_index]['size'] + groupby_thread[second_index][
+                            'size']
+                        start_index += 2
+                start_index += 1
+            rdma_communication_wait_time = rdma_communication_wait_time / 1e3
+            rdma_communication_size = rdma_communication_size / 1e3
+            rdma_communication_time = rdma_communication_time / 1e3
+            rdma_bandwidth = rdma_communication_size / (rdma_communication_time / 1e3) \
+                if rdma_communication_size else 0
+            thread_information.append(
+                [rdma_communication_time, rdma_communication_size, rdma_bandwidth, rdma_communication_wait_time])
+        if len(thread_information) > 1:
+            thread_information = np.sum(thread_information, axis=0).tolist()
+
+        return thread_information
+
     def parse(self):
         """Analyse the original hccl data generator hccl data."""
         file_list = find_files(self.root_path, "hccl_*.json")
@@ -110,8 +158,8 @@ class AscendHCCLGenerator:
         """
         try:
             with os.fdopen(os.open(hccl_raw_path,
-                                   os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w', newline='') as aicore_detail:
-                writer = csv.writer(aicore_detail)
+                                   os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w', newline='') as hccl_row:
+                writer = csv.writer(hccl_row)
                 writer.writerow(
                     ['step_num', 'communication_cost', 'wait_cost', 'link_info', 'communication_operator_cost'])
                 for row in self.hccl_raw:
@@ -170,15 +218,7 @@ class AscendHCCLGenerator:
         communication_operator_cost = self._communication_operator_cost_analyse(hccl_detail_data, iteration)
         return [iteration, communication_cost, wait_cost, link_info, communication_operator_cost]
 
-    @staticmethod
-    def _cost_analyse(iteration):
-        """analyse communication cost and wait cost"""
-        communication_cost = np.sum(iteration[iteration['name'] != 'Notify_Wait']['dur'])
-        wait_cost = np.sum(iteration[iteration['name'] == 'Notify_Wait']['dur'])
-        return communication_cost, wait_cost
-
-    @staticmethod
-    def _link_info_analyse(hccl_detail_data):
+    def _link_info_analyse(self, hccl_detail_data):
         """analyse link info data"""
         groupby_iteration = hccl_detail_data[hccl_detail_data['task_type'] != 'Notify Record']
         link_info_groups = np.unique(groupby_iteration['link_info'])
@@ -199,12 +239,11 @@ class AscendHCCLGenerator:
                         if sdma_communication_time != 0 else 0
                     transport_information['SDMA'] = [sdma_communication_time, sdma_communication_size, sdma_bandwidth]
                 elif transport_index == 'RDMA':
-                    transport_information['RDMA'] = []
+                    transport_information['RDMA'] = self._rdma_analyse(groupby_transport)
             link_info_information[link_info_index] = transport_information
         return link_info_information
 
-    @staticmethod
-    def _communication_operator_cost_analyse(hccl_detail_data, iteration_index):
+    def _communication_operator_cost_analyse(self, hccl_detail_data, iteration_index):
         """analyse communication operator cost"""
         groupby_iteration = hccl_detail_data[hccl_detail_data['task_type'] != 'Notify Record']
         tag_groups = np.unique(groupby_iteration['tag'])
@@ -230,7 +269,7 @@ class AscendHCCLGenerator:
                         transport_information['SDMA'] = [sdma_communication_time, sdma_communication_size,
                                                          sdma_bandwidth]
                     elif transport_index == 'RDMA':
-                        transport_information['RDMA'] = []
+                        transport_information['RDMA'] = self._rdma_analyse(groupby_transport)
                     link_info_information[link_info_index] = transport_information
                 communication_cost = np.sum(groupby_tag[groupby_tag['name'] != 'Notify_Wait']['dur'])
                 wait_cost = np.sum(groupby_tag[groupby_tag['name'] == 'Notify_Wait']['dur'])

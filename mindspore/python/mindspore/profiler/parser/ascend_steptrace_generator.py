@@ -35,7 +35,8 @@ class AscendStepTraceGenerator:
 
     def parse(self):
         """Analyse the original steptrace data generate steptrace data."""
-
+        if not isinstance(self.steptrace, np.ndarray) or self.steptrace.shape[0] == 0:
+            return
         for name in self.steptrace.dtype.names[9::2]:
             self.steptrace_detail_dt.append((name, np.int64))
             self.steptrace_detail_dt.append((f'{name}_start_point', np.int64))
@@ -76,6 +77,8 @@ class AscendStepTraceGenerator:
             step_trace_intermediate_file_path(str): step_trace_raw.csv path.
 
         """
+        if not isinstance(self.steptrace_detail, np.ndarray):
+            return
         try:
             with os.fdopen(os.open(step_trace_intermediate_file_path,
                                    os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as st:

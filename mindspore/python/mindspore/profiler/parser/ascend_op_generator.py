@@ -142,7 +142,10 @@ class AscendOPGenerator:
         op_detail = np.empty((len(groups),), dtype=self.op_detail_dt)
         op_detail['full_op_name'] = groups
         op_detail['task_type'] = op_summary[index]['Task Type']
-        op_detail['task_duration'] = np.bincount(inverse, weights=op_summary['Task Duration']) / np.bincount(inverse)
+        nonzero_duration = np.bincount(inverse) != 0
+        op_detail['task_duration'] = np.where(nonzero_duration,
+                                              np.bincount(inverse, weights=op_summary['Task Duration']) / np.bincount(
+                                                  inverse), 0)
         op_detail['execution_frequency'] = counts
 
         return op_detail
@@ -162,7 +165,8 @@ class AscendOPGenerator:
         op_type['op_type'] = groups
         op_type['total_time'] = np.bincount(inverse, weights=op_statistic['Total Time'])
         op_type['execution_frequency'] = np.bincount(inverse, weights=op_statistic['Count'])
-        op_type['percent'] = op_type['total_time'] / np.sum(op_statistic['Total Time'])
+        op_type['percent'] = op_type['total_time'] / np.sum(op_statistic['Total Time']) if np.sum(
+            op_statistic['Total Time']) != 0 else 0
 
         return op_type
 
@@ -178,7 +182,7 @@ class AscendOPGenerator:
 
         aicpu_detail = np.empty((len(op_summary),), dtype=self.aicpu_detail_dt)
 
-        aicpu_detail['serial_number'] = [i for i in range(1, len(op_summary) + 1)]
+        aicpu_detail['serial_number'] = [i for i in range(1, op_summary.shape[0] + 1)]
         aicpu_detail['op_type'] = op_summary['Op Type']
         aicpu_detail['total_time'] = op_summary['Task Duration'] + op_summary['Task Wait Time']
         aicpu_detail['dispatch_time'] = op_summary['Task Wait Time']
