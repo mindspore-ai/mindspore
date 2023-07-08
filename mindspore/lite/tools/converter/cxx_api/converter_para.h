@@ -45,7 +45,8 @@ struct GraphKernelCfg {
 };
 
 struct AscendGeOptionCfg {
-  bool enable_fusion;
+  std::string provider;
+  std::string enable_custom_op;
 };
 
 struct ConverterPara {

@@ -34,7 +34,7 @@ class MIND_API KVCacheMgr : public BaseOperator {
   /// \brief Method to init the op's attributes.
   ///
   /// \param[in] shifts
-  void Init();
+  void Init() const;
 };
 }  // namespace mindspore::ops
 

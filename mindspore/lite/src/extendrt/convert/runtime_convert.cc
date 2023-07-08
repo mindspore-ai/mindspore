@@ -169,10 +169,6 @@ int RuntimeConvert(const mindspore::api::FuncGraphPtr &graph, const std::shared_
   auto device_list = context->MutableDeviceInfo();
   for (auto &device : device_list) {
     if (device->GetDeviceType() == mindspore::kAscend) {
-      if (device->GetProvider() == kAscendProviderGe) {
-        param->ascendGeOptionCfg.enable_fusion = true;
-        continue;
-      }
       param->aclModelOptionCfgParam.offline = false;
       param->device = "Ascend310";
       param->no_fusion = false;
@@ -181,6 +177,11 @@ int RuntimeConvert(const mindspore::api::FuncGraphPtr &graph, const std::shared_
         mindspore::lite::ConfigFileParser config_parser;
         config_parser.SetParamByConfigfile(param, ascend_map);
       }
+      if (device->GetProvider() == kAscendProviderGe) {
+        param->ascendGeOptionCfg.provider = kAscendProviderGe;
+        continue;
+      }
+
       auto ascend_info = device->Cast<mindspore::AscendDeviceInfo>();
       SetParamByAscendInfo(param, ascend_info);
 
