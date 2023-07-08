@@ -16,6 +16,7 @@
 
 #include "runtime/pynative/async/async_queue.h"
 
+#include <utility>
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
 #include "include/common/utils/signal_util.h"
 #endif
@@ -39,7 +40,13 @@ AsyncQueue::AsyncQueue(std::string name, kThreadWaitLevel wait_level)
                                              &AsyncQueue::ReinitAfterFork);
 }
 
-AsyncQueue::~AsyncQueue() { WorkerJoin(); }
+AsyncQueue::~AsyncQueue() {
+  try {
+    WorkerJoin();
+  } catch (const std::exception &e) {
+    MS_LOG(INFO) << "WorkerJoin failed, error msg:" << e.what();
+  }
+}
 
 void AsyncQueue::SetThreadName() const {
 // Set thread name for gdb debug

@@ -845,30 +845,13 @@ void MindRTBackend::CompileSingleOpGraphs(
   pynative::OpCompiler::GetInstance().BatchBuild(graphs, device_context);
 }
 
-std::vector<tensor::TensorPtr> GetTensorWithoutValueMask(const session::BackendOpRunInfoPtr &op_run_info) {
-  MS_EXCEPTION_IF_NULL(op_run_info);
-  std::vector<tensor::TensorPtr> tensors_without_value_node;
-  const auto &input_tensors = op_run_info->base_op_run_info.input_tensor;
-  const auto &tensors_mask = op_run_info->base_op_run_info.input_mask;
-  if (input_tensors.size() != tensors_mask.size()) {
-    MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors.size() << " should be equal to tensors mask size "
-                      << tensors_mask.size();
-  }
-  for (size_t index = 0; index < tensors_mask.size(); ++index) {
-    if (tensors_mask.at(index) != kValueNodeTensorMask) {
-      (void)tensors_without_value_node.emplace_back(input_tensors.at(index));
-    }
-  }
-  return tensors_without_value_node;
-}
-
 void MindRTBackend::OpRunCallback(const std::shared_ptr<pynative::OpTaskContext> &context) {
   MS_LOG(DEBUG) << "OpRunCallback start";
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto infer_flag = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, context->is_pynative_infer());
-  runtime::RunSingleOpGraph(context->graph(), GetTensorWithoutValueMask(context->op_run_info()),
+  runtime::RunSingleOpGraph(context->graph(), runtime::GetTensorWithoutValueMask(context->op_run_info()),
                             context->device_context());
 
   if (!context->op_run_info()->is_infer) {
@@ -955,7 +938,8 @@ void MindRTBackend::DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs,
   const auto &graph = op_compiler_info->graph_;
   MS_EXCEPTION_IF_NULL(graph);
 
-  runtime::UpdateDeviceAddress(graph, GetTensorWithoutValueMask(op_run_info), op_compiler_info->device_context_);
+  runtime::UpdateDeviceAddress(graph, runtime::GetTensorWithoutValueMask(op_run_info),
+                               op_compiler_info->device_context_);
   // Create output tensor
   UpdateOutput(op_run_info, op_compiler_info->graph_output_nodes_, outputs);
 
@@ -1045,7 +1029,7 @@ void MindRTBackend::RunOpImpl(bool single_op_cache_hit, const OpCompilerInfoPtr 
   if (!single_op_cache_hit) {
     CompileSingleOpGraph(graph, device_context);
   }
-  const auto &tensors_without_value_mask = GetTensorWithoutValueMask(op_run_info);
+  const auto &tensors_without_value_mask = runtime::GetTensorWithoutValueMask(op_run_info);
   runtime::UpdateDeviceAddress(graph, tensors_without_value_mask, device_context);
 
   runtime::RunSingleOpGraph(graph, tensors_without_value_mask, device_context);

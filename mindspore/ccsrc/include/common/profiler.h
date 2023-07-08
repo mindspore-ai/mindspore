@@ -129,8 +129,8 @@ class COMMON_EXPORT ProfilerStageRecorder {
   ~ProfilerStageRecorder();
 
  private:
-  ProfilerStage stage_;
-  uint64_t start_time_;
+  ProfilerStage stage_{ProfilerStage::kDefault};
+  uint64_t start_time_{0};
 };
 
 struct ProfilerData {

@@ -467,20 +467,21 @@ void RevertMakeTupleNode(const FuncGraphPtr &graph, const CNodePtr &cnode, Value
         auto input = cnode_inputs->at(i + j + kIndex1);
         (void)make_tuple.emplace_back(input);
         (void)abs_list.emplace_back(input->abstract());
-        new_value.emplace_back(input_value->at(i + j));
+        (void)new_value.emplace_back(input_value->at(i + j));
       }
       auto new_cnode = graph->NewCNode(make_tuple);
       new_cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(abs_list));
       // Refresh input
       size_t begin_index = i + kIndex1;
-      cnode_inputs->erase(cnode_inputs->begin() + begin_index,
-                          cnode_inputs->begin() + begin_index + dyn_input_sizes[i]);
-      cnode_inputs->emplace_back(new_cnode);
-      input_value->erase(input_value->begin() + begin_index, input_value->begin() + begin_index + dyn_input_sizes[i]);
-      input_value->emplace_back(std::make_shared<ValueTuple>(new_value));
-      new_inputs.emplace_back(new_cnode);
+      (void)cnode_inputs->erase(cnode_inputs->begin() + begin_index,
+                                cnode_inputs->begin() + begin_index + dyn_input_sizes[i]);
+      (void)cnode_inputs->emplace_back(new_cnode);
+      (void)input_value->erase(input_value->begin() + begin_index,
+                               input_value->begin() + begin_index + dyn_input_sizes[i]);
+      (void)input_value->emplace_back(std::make_shared<ValueTuple>(new_value));
+      (void)new_inputs.emplace_back(new_cnode);
     } else {
-      new_inputs.emplace_back(cnode->input(i + kIndex1));
+      (void)new_inputs.emplace_back(cnode->input(i + kIndex1));
     }
   }
   cnode->set_inputs(new_inputs);
@@ -496,12 +497,12 @@ void ProcessAttrNode(const FuncGraphPtr &graph, const CNodePtr &cnode, ValuePtrL
       (void)PyNativeAlgo::Common::SetValueGradInfo(item->second.second, nullptr, TensorGradType::kConstant);
       auto new_v_node = PyNativeAlgo::Common::CreateValueNodeByValue(item->second.second, nullptr);
       auto new_inputs = cnode->inputs();
-      new_inputs.insert(new_inputs.begin() + item->second.first + kIndex1, new_v_node);
+      (void)new_inputs.insert(new_inputs.begin() + item->second.first + kIndex1, new_v_node);
       MS_EXCEPTION_IF_NULL(cnode_inputs);
-      cnode_inputs->insert(cnode_inputs->begin() + item->second.first + kIndex1, new_v_node);
+      (void)cnode_inputs->insert(cnode_inputs->begin() + item->second.first + kIndex1, new_v_node);
       cnode->set_inputs(new_inputs);
       MS_EXCEPTION_IF_NULL(input_value);
-      input_value->insert(input_value->begin() + item->second.first, item->second.second);
+      (void)input_value->insert(input_value->begin() + item->second.first, item->second.second);
     }
   }
   RevertMakeTupleNode(graph, cnode, input_value, cnode_inputs);
@@ -1524,7 +1525,7 @@ CNodePtr AutoGradCellImpl::ConvertConstInputToAttr(const CNodePtr &cnode, const 
         }
       }
       cnode->AddAttr(kConvertAttrNode, MakeValue(true));
-      node_attr_value_.emplace(cnode->ToString(), std::make_pair(i, value));
+      (void)node_attr_value_.emplace(cnode->ToString(), std::make_pair(i, value));
       prim->set_attr(input_names_vec[i], value);
     } else {
       (void)new_inputs.emplace_back(input_node);
