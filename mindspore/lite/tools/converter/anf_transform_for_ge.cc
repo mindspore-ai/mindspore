@@ -38,8 +38,7 @@
 #include "tools/common/string_util.h"
 #include "src/common/common.h"
 #include "tools/optimizer/fusion/kv_cache_mgr_one_branch_fusion.h"
-#include "tools/optimizer/fusion/kv_cache_mgr_other_branch_fusion.h"
-#include "tools/optimizer/fusion/kv_cache_mgr_tile_fusion.h"
+#include "tools/optimizer/fusion/kv_cache_mgr_concat_fusion.h"
 
 namespace mindspore::lite {
 AnfTransformForGe::AnfTransformForGe() = default;
@@ -54,8 +53,7 @@ int AnfTransformForGe::RunGeFusionPass(const FuncGraphPtr &old_graph, const std:
 
   std::vector<opt::PassPtr> fusions{
     std::make_shared<opt::KVCacheMgrOneBranchFusion>(),
-    std::make_shared<opt::KVCacheMgrOtherBranchFusion>(),
-    std::make_shared<opt::KVCacheMgrTileFusion>(),
+    std::make_shared<opt::KVCacheMgrConcatFusion>(),
   };
   for (size_t index = 0; index < fusions.size(); index++) {
     auto pass_ptr = fusions.at(index);

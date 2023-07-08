@@ -34,10 +34,11 @@ class KVCacheMgrOneBranchFusion : public LitePatternProcessPass {
   bool InitVar() const;
   CNodePtr CreateConcatNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &equiv) const;
   tensor::TensorPtr ConstData(int32_t padding_length) const;
-  bool OutputIsMulAdd(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
 
  protected:
   mutable VarPtr input_0_batch_valid_length_ = nullptr;
+  mutable VarPtr input_1_key_ = nullptr;
+  mutable VarPtr input_2_key_past_ = nullptr;
 };
 }  // namespace opt
 }  // namespace mindspore
