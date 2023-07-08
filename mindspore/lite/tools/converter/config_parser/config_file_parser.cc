@@ -241,6 +241,10 @@ void ConfigFileParser::SetParamByConfigfile(const std::shared_ptr<mindspore::Con
     param->aclModelOptionCfgParam.dump_model_name = ascend_string;
   }
 
+  if (!(ascend_string = FindInAscendMap(kEnableCustomOp, ascend_map)).empty()) {
+    param->ascendGeOptionCfg.enable_custom_op = ascend_string;
+  }
+
   auto it = ascend_map.find("input_shape");
   if (it != ascend_map.end()) {
     param->aclModelOptionCfgParam.input_shape = RemoveInputShapeBrackets(it->second);

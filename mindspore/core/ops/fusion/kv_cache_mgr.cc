@@ -23,7 +23,7 @@
 #include "mindspore/core/ops/lite_ops.h"
 
 namespace mindspore::ops {
-void KVCacheMgr::Init() {}
+void KVCacheMgr::Init() const {}
 
 MIND_API_OPERATOR_IMPL(KVCacheMgr, BaseOperator);
 

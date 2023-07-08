@@ -313,11 +313,17 @@ void SetInputParameterAbstractName(const FuncGraphPtr &func_graph) {
 }
 
 STATUS ConverterFuncGraph::OptimizeForGE(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {
-  AnfTransformForGe transform;
-  auto status = transform.Transform(func_graph, param);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Transform anf graph for ge failed.";
-    return status;
+  if (param->ascendGeOptionCfg.enable_custom_op == "None" || param->ascendGeOptionCfg.enable_custom_op.empty()) {
+    MS_LOG(INFO) << "custom op fusion not used.";
+    return RET_OK;
+  }
+  if (param->ascendGeOptionCfg.enable_custom_op == "All") {
+    AnfTransformForGe transform;
+    auto status = transform.Transform(func_graph, param);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Transform anf graph for ge failed.";
+      return status;
+    }
   }
   return RET_OK;
 }
@@ -353,8 +359,8 @@ STATUS ConverterFuncGraph::Optimize(const std::shared_ptr<ConverterPara> &param,
     return RET_OK;
   }
 
-  if (param->ascendGeOptionCfg.enable_fusion) {
-    return RET_OK;
+  if (param->ascendGeOptionCfg.provider == "ge") {
+    return OptimizeForGE(param, func_graph);
   }
 
   std::vector<std::string> output_names;
