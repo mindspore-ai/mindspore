@@ -52,13 +52,37 @@ struct BinaryFunc<ElwiseOpType::kAsinhGrad, In0_t, In1_t, Out_t> {
 };
 REGISTER_BINARY_OP_CUDA_FUNC_FLOAT_TYPE(ElwiseOpType::kAsinhGrad);
 REGISTER_BINARY_OP_CUDA_FUNC_COMPLEX_TYPE(ElwiseOpType::kAsinhGrad);
+
 template <typename In0_t, typename In1_t, typename Out_t>
 struct BinaryFunc<ElwiseOpType::kAcoshGrad, In0_t, In1_t, Out_t> {
   DEVICE_HOST BinaryFunc() {}
   DEVICE Out_t operator()(const In0_t input, const In1_t dout) const {
-    return dout / cuda::elwise::Conj<Out_t>(cuda::elwise::Sinh<Out_t>(input));
+    float inputf = static_cast<float>(input);
+    Out_t sinhy = static_cast<Out_t>(sinhf(inputf));
+    return dout / sinhy;
   }
 };
+
+template <>
+struct BinaryFunc<ElwiseOpType::kAcoshGrad, double, double, double> {
+  DEVICE_HOST BinaryFunc() {}
+  DEVICE double operator()(const double input, const double dout) const {
+    double inputf = static_cast<double>(input);
+    double sinhy = static_cast<double>(sinhf(inputf));
+    return dout / sinhy;
+  }
+};
+
+template <typename In0_t, typename In1_t, typename Out_t>
+struct BinaryFunc<ElwiseOpType::kAcoshGrad, Complex<In0_t>, Complex<In1_t>, Complex<Out_t>> {
+  DEVICE_HOST BinaryFunc() {}
+  DEVICE Complex<Out_t> operator()(const Complex<In0_t> input, const Complex<In1_t> dout) const {
+    Complex<Out_t> sinhy = sinh(input);
+    sinhy = Complex<Out_t>(sinhy.real(), -sinhy.imag());
+    return dout / sinhy;
+  }
+};
+
 REGISTER_BINARY_OP_CUDA_FUNC_FLOAT_TYPE(ElwiseOpType::kAcoshGrad);
 REGISTER_BINARY_OP_CUDA_FUNC_COMPLEX_TYPE(ElwiseOpType::kAcoshGrad);
 template <typename In0_t, typename In1_t, typename Out_t>
@@ -68,6 +92,7 @@ struct BinaryFunc<ElwiseOpType::kTanhGrad, In0_t, In1_t, Out_t> {
     return dout * (Out_t(1.0) - input * input);
   }
 };
+
 REGISTER_BINARY_OP_CUDA_FUNC_FLOAT_TYPE(ElwiseOpType::kTanhGrad);
 REGISTER_BINARY_OP_CUDA_FUNC_COMPLEX_TYPE(ElwiseOpType::kTanhGrad);
 template <typename In0_t, typename In1_t, typename Out_t>
