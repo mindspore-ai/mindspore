@@ -27,6 +27,7 @@
 #include "extendrt/kernel/ascend/options/acl_model_options.h"
 #include "include/api/types.h"
 #include "include/errorcode.h"
+#include "extendrt/kernel/ascend/profiling/profiling.h"
 
 namespace mindspore::kernel {
 namespace acl {
@@ -54,8 +55,10 @@ class ModelInfer {
   bool init_flag_;
   std::string device_type_;
   aclrtContext context_;
+  aclrtStream stream_;
   AclModelOptionsPtr options_;
   ModelProcess model_process_;
+  Profiling profiling_;
   std::shared_ptr<AclEnvGuard> acl_env_;
 };
 

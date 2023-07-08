@@ -11,6 +11,7 @@ file(GLOB_RECURSE ASCEND_SRC ${CMAKE_CURRENT_SOURCE_DIR}
         "src/*.cc"
         "api/*.cc"
         "model/*.cc"
+        "profiling/*.cc"
         )
 set(ASCEND_SRC ${ASCEND_SRC} ${TOP_DIR}/mindspore/lite/src/litert/kernel/ascend/src/acl_mem_manager.cc)
 
