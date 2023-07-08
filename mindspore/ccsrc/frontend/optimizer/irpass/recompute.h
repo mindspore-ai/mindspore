@@ -40,70 +40,7 @@ bool HasBpropGetter(const OptimizerPtr &opt, const AnfNodePtr &k_fg_caller);
 
 AnfNodePtr GetBpropCaller(const FuncGraphManagerPtr &manager, const AnfNodePtr &bprop_getter);
 
-bool AddRecomputePrimitive(const FuncGraphPtr &root, const opt::OptimizerPtr &opt);
-
-class AddRecomputePrimal : public AnfVisitor {
- public:
-  AnfNodePtr operator()(const OptimizerPtr &opt, const AnfNodePtr &node) override {
-    Reset();
-    AnfVisitor::Match(prim::kPrimTupleGetItem, {IsCNode, IsVNode})(node);
-
-    if (!is_match_) {
-      return nullptr;
-    }
-
-    if (!HasBpropGetter(opt, k_fg_caller_)) {
-      return nullptr;
-    }
-
-    auto fg = node->func_graph();
-    MS_EXCEPTION_IF_NULL(fg);
-    // Replace the forward result of k graph with the original primal graph.
-    std::vector<AnfNodePtr> inputs{NewValueNode(primal_fg_)};
-    (void)inputs.insert(inputs.cend(), k_fg_caller_->inputs().begin() + 1, k_fg_caller_->inputs().end());
-    auto new_primal_fg_caller = fg->NewCNodeInOrder(inputs);
-    k_fg_caller_->set_user_data("primal_fg_caller", new_primal_fg_caller);
-    return new_primal_fg_caller;
-  }
-
-  void Visit(const CNodePtr &cnode) override {
-    if (!EnableGraphReuse()) {
-      return;
-    }
-    auto called_fg = GetValueNode<FuncGraphPtr>(cnode->input(0));
-    if (called_fg == nullptr || !called_fg->has_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH)) {
-      return;
-    }
-    auto iter = called_fg->transforms().find("primal");
-    if (iter == called_fg->transforms().end()) {
-      return;
-    }
-    auto primal_fg = iter->second.func_graph();
-    if (primal_fg != nullptr && primal_fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE)) {
-      primal_fg_ = primal_fg;
-      k_fg_caller_ = cnode;
-    }
-  }
-
-  void Visit(const ValueNodePtr &vnode) override {
-    auto idx = GetValueNode<Int64ImmPtr>(vnode);
-    // The k_fg_caller return a tuple of forward result and bprop.
-    if (idx != nullptr && k_fg_caller_ != nullptr && idx->value() == 0) {
-      is_match_ = true;
-    }
-  }
-
-  void Reset() {
-    primal_fg_ = nullptr;
-    k_fg_caller_ = nullptr;
-    is_match_ = false;
-  }
-
- private:
-  FuncGraphPtr primal_fg_{nullptr};
-  CNodePtr k_fg_caller_{nullptr};
-  bool is_match_{false};
-};
+bool AddRecomputeNodes(const FuncGraphPtr &root, const opt::OptimizerPtr &opt);
 
 class RemoveNotRecomputeNode : public AnfVisitor {
  public:
@@ -163,7 +100,7 @@ class RemoveNotRecomputeNode : public AnfVisitor {
 
     primal_fg_->set_output(primal_fg_->NewCNode(new_primal_fg_outputs));
     auto primal_fg_caller = k_fg_caller->user_data<CNode>("primal_fg_caller");
-    UpdateForwardResult(manager, fg, primal_fg_caller);
+    UpdateForwardResult(manager, primal_fg_caller);
     // Add new arguments to k graph caller.
     return CreateNewKGraphCaller(fg, k_fg_caller, primal_fg_caller, not_recompute_count);
   }
@@ -183,7 +120,7 @@ class RemoveNotRecomputeNode : public AnfVisitor {
     }
 
     auto primal_fg_caller = k_fg_caller->user_data<CNode>("primal_fg_caller");
-    UpdateForwardResult(manager, fg, primal_fg_caller);
+    UpdateForwardResult(manager, primal_fg_caller);
     return CreateNewKGraphCaller(fg, k_fg_caller, primal_fg_caller, not_recompute_count);
   }
 
@@ -192,17 +129,23 @@ class RemoveNotRecomputeNode : public AnfVisitor {
     std::vector<AnfNodePtr> new_k_fg_caller_inputs;
     (void)new_k_fg_caller_inputs.insert(new_k_fg_caller_inputs.cend(), k_fg_caller->inputs().begin(),
                                         k_fg_caller->inputs().end());
+    auto primal_fg_caller_fg = primal_fg_caller->func_graph();
     for (int64_t i = 1; i <= not_recompute_count; ++i) {
-      auto extra_forward_result =
-        fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), primal_fg_caller, NewValueNode(i)});
+      auto extra_forward_result = primal_fg_caller_fg->NewCNodeInOrder(
+        {NewValueNode(prim::kPrimTupleGetItem), primal_fg_caller, NewValueNode(i)});
       (void)new_k_fg_caller_inputs.emplace_back(extra_forward_result);
     }
-    return fg->NewCNodeInOrder(new_k_fg_caller_inputs);
+    auto new_k_fg_caller = fg->NewCNodeInOrder(new_k_fg_caller_inputs);
+    if (k_fg_caller->HasAttr(kAddedRecomputeDependAttr)) {
+      new_k_fg_caller->AddAttr(kAddedRecomputeDependAttr, MakeValue(true));
+    }
+    return new_k_fg_caller;
   }
 
-  static void UpdateForwardResult(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg,
-                                  const AnfNodePtr &primal_fg_caller) {
+  static void UpdateForwardResult(const FuncGraphManagerPtr &manager, const AnfNodePtr &primal_fg_caller) {
     MS_EXCEPTION_IF_NULL(primal_fg_caller);
+    auto fg = primal_fg_caller->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
     auto forward_result = fg->NewCNodeInOrder(
       {NewValueNode(prim::kPrimTupleGetItem), primal_fg_caller, NewValueNode(static_cast<int64_t>(0))});
     (void)manager->Replace(primal_fg_caller, forward_result);
@@ -266,79 +209,6 @@ class RemoveNotRecomputeNode : public AnfVisitor {
  private:
   FuncGraphPtr k_fg_{nullptr};
   FuncGraphPtr primal_fg_{nullptr};
-};
-
-class AddRecomputeDepend : public AnfVisitor {
- public:
-  AnfNodePtr operator()(const OptimizerPtr &opt, const AnfNodePtr &node) override {
-    Reset();
-    AnfVisitor::Match(prim::kPrimTupleGetItem, {IsCNode, IsVNode})(node);
-
-    if (!is_match_) {
-      return nullptr;
-    }
-    MS_EXCEPTION_IF_NULL(opt);
-    auto manager = opt->manager();
-    MS_EXCEPTION_IF_NULL(manager);
-
-    auto bprop_caller = dyn_cast<CNode>(GetBpropCaller(manager, node));
-    if (bprop_caller == nullptr) {
-      return nullptr;
-    }
-    auto fg = node->func_graph();
-    MS_EXCEPTION_IF_NULL(fg);
-    // Add depend to make sure the forward nodes of k graph are executed after the gradient from last bprop is ready.
-    auto bprop_caller_fg = bprop_caller->func_graph();
-    std::vector<AnfNodePtr> new_k_fg_caller_inputs{k_fg_caller_->input(0)};
-    auto dout = bprop_caller->input(1);
-    (void)std::transform(k_fg_caller_->inputs().begin() + 1, k_fg_caller_->inputs().end(),
-                         std::back_inserter(new_k_fg_caller_inputs),
-                         [&fg, &bprop_caller_fg, &dout](const AnfNodePtr &node) -> AnfNodePtr {
-                           auto ret_node = node;
-                           if (bprop_caller_fg != fg) {
-                             if (HasAbstractUMonad(node)) {
-                               ret_node = NewValueNode(kUMonad);
-                             } else if (HasAbstractIOMonad(node)) {
-                               ret_node = NewValueNode(kIOMonad);
-                             }
-                           }
-                           return bprop_caller_fg->NewCNodeInOrder({NewValueNode(prim::kPrimDepend), ret_node, dout});
-                         });
-    auto new_k_fg_caller = bprop_caller_fg->NewCNodeInOrder(new_k_fg_caller_inputs);
-    auto new_tuple_getitem = bprop_caller_fg->NewCNodeInOrder(
-      {NewValueNode(prim::kPrimTupleGetItem), new_k_fg_caller, NewValueNode(static_cast<int64_t>(1))});
-    // Add attr in case of repeatedly handling.
-    new_k_fg_caller->AddAttr(kAddedRecomputeDependAttr, MakeValue(true));
-    return new_tuple_getitem;
-  }
-
-  void Visit(const CNodePtr &cnode) override {
-    if (!EnableGraphReuse()) {
-      return;
-    }
-    auto call_fg = GetValueNode<FuncGraphPtr>(cnode->input(0));
-    if (call_fg == nullptr || !call_fg->has_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH) ||
-        cnode->HasAttr(kAddedRecomputeDependAttr)) {
-      return;
-    }
-    k_fg_caller_ = cnode;
-  }
-
-  void Visit(const ValueNodePtr &vnode) override {
-    auto idx = GetValueNode<Int64ImmPtr>(vnode);
-    if (idx != nullptr && k_fg_caller_ != nullptr && idx->value() == 1) {
-      is_match_ = true;
-    }
-  }
-
-  void Reset() {
-    k_fg_caller_ = nullptr;
-    is_match_ = false;
-  }
-
- private:
-  CNodePtr k_fg_caller_{nullptr};
-  bool is_match_{false};
 };
 }  // namespace irpass
 }  // namespace opt
