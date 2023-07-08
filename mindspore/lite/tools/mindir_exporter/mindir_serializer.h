@@ -28,6 +28,7 @@
 #include "proto/mind_ir.pb.h"
 #include "mindspore/core/utils/system/env.h"
 #include "tools/converter/cxx_api/converter_para.h"
+#include "mindspore/lite/tools/converter/quantizer/quant_param_holder.h"
 
 namespace mindspore::lite {
 class MindIRSerializer {
@@ -54,6 +55,7 @@ class MindIRSerializer {
                       const std::shared_ptr<ConverterPara> &param);
   int ConvertQuantHolderToQuantizationParam(const FuncGraphPtr &func_graph);
   int ConvertParameterNode(const CNodePtr &cnode, const ParameterPtr &parameter_ptr, size_t index);
+  int ConvertInputQuantHolderToQuantizationParam(const CNodePtr &cnode, const QuantParamHolderPtr &quant_params_holder);
   int ConvertValueNode(const CNodePtr &cnode, const ValueNodePtr &value_node_ptr, size_t index);
   std::shared_ptr<mindspore::QuantizationParam> ConvertQuantParamTToQuantizationParam(
     std::vector<schema::QuantParamT> quant_param);
