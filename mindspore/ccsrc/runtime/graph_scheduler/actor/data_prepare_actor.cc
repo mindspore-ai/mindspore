@@ -763,8 +763,7 @@ void DataPrepareActor::PrepareDataForControlValueNode(const KernelWithIndex &nod
     return;
   }
 
-  MS_LOG(INFO) << "Prepare device data for control value node: " << node->DebugString() << ", output index: " << index
-               << " node value:" << node_value->ToString();
+  MS_LOG(INFO) << "Prepare device data for control value node: " << node->DebugString() << ", output index: " << index;
   tensor->set_device_address(device_tensor);
   UpdateRefCount(device_tensor.get(), true);
 
