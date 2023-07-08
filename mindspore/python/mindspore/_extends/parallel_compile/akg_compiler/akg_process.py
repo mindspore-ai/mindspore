@@ -153,7 +153,7 @@ class AkgProcess:
                 res = pool.starmap_async(_compile_akg_task_ascend, args)
                 res.get(timeout=self.wait_time)
         else:
-            sys.path.insert(0, get_akg_path())
+            sys.path.append(get_akg_path())
             p = __import__("akg", globals(), locals(), ['ms'], 0)
             func = getattr(p.ms, "compilewithjson")
             args = list((arg, attrs, func) for arg in self.args)
