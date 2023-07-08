@@ -339,7 +339,8 @@ REG_BPROP_BUILDER("TopK").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
     NodePtr ind_2d = ib->Reshape(indices, re0);
     auto res = ib->ShapeCalc(g_topk_2, {input_x, ind_2d});
     auto in_shape_1d = res[0];
-    auto range_flatten_index = ib->Range(ib->Tensor(0, kInt64), res[1], res[2]);
+    ShapeVector a = {};
+    auto range_flatten_index = ib->Range(ib->Tensor(0, kInt64), ib->Reshape(res[1], a), ib->Reshape(res[2], a));
     auto ind = ib->Reshape(ind_2d + ib->Reshape(range_flatten_index, {-1, 1}), {-1, 1});
     auto out_grad = ib->ScatterNd(ind, ib->Reshape(dout0, {-1}), in_shape_1d);
     out_grad = ib->Reshape(out_grad, ib->Shape(input_x));
