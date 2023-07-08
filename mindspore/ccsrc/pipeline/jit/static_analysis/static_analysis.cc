@@ -1142,6 +1142,21 @@ EvaluatorPtr AnalysisEngine::HandleNestedRecursion(const std::vector<EvaluatorPt
   return latest_entry;
 }
 
+FuncGraphPtr GetFuncGraphFromBranchNode(const AnfNodePtr &branch_node) {
+  MS_EXCEPTION_IF_NULL(branch_node);
+  auto fg = GetValueNode<FuncGraphPtr>(branch_node);
+  if (fg != nullptr) {
+    return fg;
+  }
+  if (IsPrimitiveCNode(branch_node, prim::kPrimPartial)) {
+    fg = GetValueNode<FuncGraphPtr>(branch_node->cast<CNodePtr>()->input(kPartialGraphIndex));
+  }
+  if (fg != nullptr) {
+    return fg;
+  }
+  MS_LOG(INTERNAL_EXCEPTION) << "Unexpected branch node: " << branch_node->DebugString();
+}
+
 std::string JoinBranchesFailedInfo(const AbstractBasePtr &abs, const AbstractBasePtr &last_out_abs,
                                    const AnfNodePtr &node, const std::string &error_info) {
   constexpr int recursive_level = 2;
@@ -1156,14 +1171,12 @@ std::string JoinBranchesFailedInfo(const AbstractBasePtr &abs, const AbstractBas
     auto cnode = node->cast_ptr<CNode>()->input(0);
     if (IsPrimitiveCNode(cnode, prim::kPrimSwitch)) {
       // {prim::kPrimSwitch, cond, true_branch, false_branch}
-      constexpr int true_index = 2;
-      constexpr int false_index = 3;
       const auto &inputs = cnode->cast_ptr<CNode>()->inputs();
-      auto true_out = GetValueNode<FuncGraphPtr>(inputs.at(true_index))->get_return();
-      auto false_out = GetValueNode<FuncGraphPtr>(inputs.at(false_index))->get_return();
-      buffer << ", true branch: " << inputs.at(true_index)->ToString() << "\n"
+      auto true_out = GetFuncGraphFromBranchNode(inputs[kSwitchTrueBranchIndex])->get_return();
+      auto false_out = GetFuncGraphFromBranchNode(inputs[kSwitchFalseBranchIndex])->get_return();
+      buffer << ", true branch: " << inputs.at(kSwitchTrueBranchIndex)->ToString() << "\n"
              << trace::GetDebugInfo(true_out->debug_info())
-             << "\n, false branch: " << inputs.at(false_index)->ToString() << "\n"
+             << "\n, false branch: " << inputs.at(kSwitchFalseBranchIndex)->ToString() << "\n"
              << trace::GetDebugInfo(false_out->debug_info());
     } else if (IsPrimitiveCNode(cnode, prim::kPrimSwitchLayer)) {
       // {prim::kPrimSwitchLayer, X, {prim::kPrimMakeTuple, branch1, branch2, ...}}
@@ -1183,6 +1196,12 @@ std::string JoinBranchesFailedInfo(const AbstractBasePtr &abs, const AbstractBas
   }
   buffer << "\n";
   return buffer.str();
+}
+
+void SetUseFlagsForJoinedAny(const AbstractBasePtrList &out_abs_list) {
+  for (const auto &abs : out_abs_list) {
+    SetSequenceElementsUseFlagsRecursively(abs, true);
+  }
 }
 
 EvalResultPtr AnalysisEngine::ProcessEvalResults(const AbstractBasePtrList &out_abs_list, const AnfNodePtr &node) {
@@ -1222,6 +1241,7 @@ EvalResultPtr AnalysisEngine::ProcessEvalResults(const AbstractBasePtrList &out_
       auto joined_any = std::make_shared<AbstractJoinedAny>();
       joined_any->set_exception(AbstractJoinedAny::ExceptionType::kTypeError);
       joined_any->set_message(info);
+      SetUseFlagsForJoinedAny(out_abs_list);
       return std::make_shared<EvalResult>(joined_any, std::make_shared<AttrValueMap>());
     } catch (const py::value_error &ex) {
       auto error_info = ExtractLoggingInfo(ex.what());
@@ -1230,6 +1250,7 @@ EvalResultPtr AnalysisEngine::ProcessEvalResults(const AbstractBasePtrList &out_
       auto joined_any = std::make_shared<AbstractJoinedAny>();
       joined_any->set_exception(AbstractJoinedAny::ExceptionType::kValueError);
       joined_any->set_message(info);
+      SetUseFlagsForJoinedAny(out_abs_list);
       return std::make_shared<EvalResult>(joined_any, std::make_shared<AttrValueMap>());
     } catch (const std::exception &ex) {
       auto error_info = ExtractLoggingInfo(ex.what());
@@ -1238,6 +1259,7 @@ EvalResultPtr AnalysisEngine::ProcessEvalResults(const AbstractBasePtrList &out_
       auto joined_any = std::make_shared<AbstractJoinedAny>();
       joined_any->set_exception(AbstractJoinedAny::ExceptionType::kDefault);
       joined_any->set_message(info);
+      SetUseFlagsForJoinedAny(out_abs_list);
       return std::make_shared<EvalResult>(joined_any, std::make_shared<AttrValueMap>());
     }
     MS_EXCEPTION_IF_NULL(joined_abs);
