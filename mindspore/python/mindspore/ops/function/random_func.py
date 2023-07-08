@@ -1249,9 +1249,34 @@ def multinomial(input, num_samples, replacement=True, seed=None):
     Returns a tensor sampled from the multinomial probability distribution located in the corresponding
     row of the input tensor.
 
+    The polynomial distribution is a probability distribution that generalizes the binomial distribution formula to
+    multiple states. In the polynomial distribution, each event has a fixed probability, and the sum of these
+    probabilities is 1. The purpose of the `mindspore.ops.multinomial` interface is to perform `num_samples` sampling
+    on the input `input`, and the output tensor is the index of the input tensor for each sampling.
+    The values in `input` represent the probability of selecting the corresponding index for each sampling.
+
+    Here is an extreme example for better understanding. Suppose we have an input probability tensor with
+    values `Tensor([90 / 100, 10 / 100, 0], mindspore.float32)`, which means we can sample three indices,
+    namely index 0, index 1, and index 2, with probabilities of 90%, 10%, and 0%, respectively. We perform n samplings,
+    and the resulting sequence is the calculation result of the polynomial distribution, with a length equal to the
+    number of samplings.
+
+    In case 1 of the sample code, we perform two non-replacement samplings (`replacement` is `False`).
+    The calculation result is most likely `[0, 1]`, and less likely `[1, 0]`. Since the probability of selecting
+    index 0 is 90% for each sampling, the first result is most likely to be index 0. Since the probability of selecting
+    index 2 is 0, index 2 cannot appear in the sampling result. Therefore, the second result must be index 1,
+    and the resulting sequence is `[0, 1]`.
+
+    In case 2 of the sample code, we perform 10 replacement samplings (`replacement` is `True`).
+    As expected, about 90% of the sampling results are index 0.
+
+    In case 3 of the sample code, we extend the input to 2 dimensions, and the sampling results
+    in each dimension also match our sampling expectations.
+
     Note:
         The rows of input do not need to sum to one (in which case we use the values as weights),
-        but must be non-negative, finite and have a non-zero sum.
+        but must be non-negative, finite and have a non-zero sum. When using values as weights, it can be understood as
+        normalizing the input along the last dimension.
 
     Args:
         input (Tensor): The input tensor containing probabilities, must be 1 or 2 dimensions, with
@@ -1278,27 +1303,35 @@ def multinomial(input, num_samples, replacement=True, seed=None):
         >>> from mindspore import Tensor, ops
         >>> from mindspore import dtype as mstype
         >>> # case 1: The output is random, and the length of the output is the same as num_sample.
-        >>> input = Tensor([0, 9, 4, 0], mindspore.float32)
-        >>> output = ops.multinomial(input, 2)
-        >>> # print(output)
-        >>> # [1 2] or [2 1]
-        >>> # the case where the result is [2 1] in multiple times.
-        >>> # This is because the value corresponding to the index 1 is larger than the value of the index 2.
-        >>> print(len(output))
+        >>> # replacement is False.
+        >>> input1 = Tensor([90 / 100, 10 / 100, 0], mindspore.float32)
+        >>> input2 = Tensor([90, 10, 0], mindspore.float32)
+        >>> # input1 and input2 have the same meaning.
+        >>> output1 = ops.multinomial(input1, 2, replacement=False)
+        >>> output2 = ops.multinomial(input2, 2, replacement=False)
+        >>> # print(output1)
+        >>> # [0 1]
+        >>> # print(output2)
+        >>> # [0 1]
+        >>> print(len(output1))
+        2
+        >>> print(len(output2))
         2
         >>> # case 2: The output is random, and the length of the output is the same as num_sample.
-        >>> # replacement is False(Default).
-        >>> # If the extracted value is 0, the index value of 1 will be returned.
-        >>> input = Tensor([0, 9, 4, 0], mstype.float32)
-        >>> output = ops.multinomial(input, 4)
-        >>> print(output)
-        [1 1 2 1]
-        >>> # case 3: The output is random, num_sample == x_length = 4, and replacement is True,
-        >>> # Can extract the same elements。
-        >>> input = Tensor([0, 9, 4, 0], mstype.float32)
-        >>> output = ops.multinomial(input, 4, True)
-        >>> print(output)
-        [1 1 2 2]
+        >>> # replacement is True.
+        >>> output3 = ops.multinomial(input1, 10)
+        >>> # print(output3)
+        >>> # [0 0 1 0 0 0 0 0 0 0]
+        >>> print(len(output3))
+        10
+        >>> # case 3: The output is random, and the length of the output is the same as num_sample.
+        >>> # replacement is True.
+        >>> # rank is 2
+        >>> input4 = Tensor([[90, 10, 0], [10, 90, 0]], mstype.float32)
+        >>> output4 = ops.multinomial(input4, 10)
+        >>> # print(output4)
+        >>> # [[0 0 0 0 0 0 0 0 1 0]
+        >>> #  [1 1 1 1 1 0 1 1 1 1]]
     """
     shape = _get_cache_prim(P.Shape)()
     reshape = _get_cache_prim(P.Reshape)()
