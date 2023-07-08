@@ -101,10 +101,13 @@ void MemorySwapActor::AllocDeviceContinuousMem(const std::vector<DeviceTensor *>
   }
 }
 
-void MemorySwapActor::Swap(device::StorageType to, const std::vector<DeviceTensor *> &device_tensors) {
+void MemorySwapActor::Swap(OpContext<mindspore::runtime::DeviceTensor> *const context, device::StorageType to,
+                           const std::vector<DeviceTensor *> &device_tensors) {
   for (const auto &device_tensor : device_tensors) {
     MS_EXCEPTION_IF_NULL(device_tensor);
-    (void)device_tensor->MoveTo(to, false, kDefaultStreamIndex);
+    if (!device_tensor->MoveTo(to, false, kDefaultStreamIndex)) {
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR(*context, "Swap tensor failed.");
+    }
   }
 }
 
@@ -125,7 +128,7 @@ void MemorySwapActor::Run(OpContext<mindspore::runtime::DeviceTensor> *const con
     if (action_type == device::SwapActionType::kAllocHBM) {
       AllocDeviceContinuousMem(device_tensors);
     } else if (action_type != device::SwapActionType::kUnDefined) {
-      Swap(swap_to_map[action_type], device_tensors);
+      Swap(context, swap_to_map[action_type], device_tensors);
     } else {
       MS_LOG(WARNING) << "Unknown swap action type, skip.";
     }
