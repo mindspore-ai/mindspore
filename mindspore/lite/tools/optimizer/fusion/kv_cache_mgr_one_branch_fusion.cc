@@ -43,7 +43,7 @@ const BaseRef KVCacheMgrOneBranchFusion::DefinePattern() const {
     MS_LOG(ERROR) << "initial member failed.";
     return {};
   }
-  // main branch
+
   auto is_reshape = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimReshape>);
   MS_CHECK_TRUE_RET(is_reshape != nullptr, {});
   VectorRef reshape_ref({is_reshape, input_0_batch_valid_length_, std::make_shared<Var>()});
@@ -60,7 +60,15 @@ const BaseRef KVCacheMgrOneBranchFusion::DefinePattern() const {
   MS_CHECK_TRUE_RET(is_expandims != nullptr, {});
   VectorRef expandims_ref({is_expandims, cast_ref, std::make_shared<Var>()});
 
-  return expandims_ref;
+  auto is_mul = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMul>);
+  MS_CHECK_TRUE_RET(is_mul != nullptr, {});
+  VectorRef mul_ref({is_mul, input_1_key_, expandims_ref});
+
+  auto is_add = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAdd>);
+  MS_CHECK_TRUE_RET(is_add != nullptr, {});
+  VectorRef add_ref({is_add, input_2_key_past_, mul_ref});
+
+  return add_ref;
 }
 
 tensor::TensorPtr KVCacheMgrOneBranchFusion::ConstData(int32_t padding_length) const {
@@ -71,37 +79,6 @@ tensor::TensorPtr KVCacheMgrOneBranchFusion::ConstData(int32_t padding_length) c
     *(val + i) = 0;
   }
   return const_data;
-}
-
-bool KVCacheMgrOneBranchFusion::OutputIsMulAdd(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const {
-  auto manager = func_graph->manager();
-  MS_ASSERT(manager != nullptr);
-  auto node_user = manager->node_users()[node];
-  const size_t mini_size = 2;
-  if (node_user.size() < mini_size) {
-    return false;
-  }
-  for (auto &user : node_user) {
-    auto mul_node = user.first;
-    if (!utils::isa<CNode>(mul_node)) {
-      return false;
-    }
-    if (!CheckPrimitiveType(mul_node, prim::kPrimMul)) {
-      return false;
-    }
-    auto mul_node_user = manager->node_users()[mul_node];
-    if (mul_node_user.size() > 1) {
-      return false;
-    }
-    auto add_node = mul_node_user.front().first;
-    if (!utils::isa<CNode>(add_node)) {
-      return false;
-    }
-    if (!CheckPrimitiveType(add_node, prim::kPrimAdd)) {
-      return false;
-    }
-  }
-  return true;
 }
 
 CNodePtr KVCacheMgrOneBranchFusion::CreateConcatNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
@@ -159,6 +136,10 @@ CNodePtr KVCacheMgrOneBranchFusion::CreateConcatNode(const FuncGraphPtr &func_gr
 bool KVCacheMgrOneBranchFusion::InitVar() const {
   input_0_batch_valid_length_ = std::make_shared<Var>();
   MS_CHECK_TRUE_RET(input_0_batch_valid_length_ != nullptr, false);
+  input_1_key_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(input_1_key_ != nullptr, false);
+  input_2_key_past_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(input_2_key_past_ != nullptr, false);
   return true;
 }
 
@@ -174,16 +155,26 @@ const AnfNodePtr KVCacheMgrOneBranchFusion::Process(const FuncGraphPtr &func_gra
     return nullptr;
   }
 
-  if (!OutputIsMulAdd(func_graph, node)) {
-    MS_LOG(INFO) << "Not is KVCache Pattern.";
-    return nullptr;
-  }
-
   auto cnode = CreateConcatNode(func_graph, node, equiv);
   if (cnode == nullptr) {
     MS_LOG(DEBUG) << "new concat node failed.";
     return nullptr;
   }
-  return cnode;
+
+  auto kv_cache_prim = std::make_shared<ops::KVCacheMgr>();
+  MS_CHECK_TRUE_RET(kv_cache_prim != nullptr, nullptr);
+  auto kv_cache_prim_c = kv_cache_prim->GetPrim();
+  MS_CHECK_TRUE_RET(kv_cache_prim_c != nullptr, nullptr);
+
+  auto input_2_past_node = utils::cast<AnfNodePtr>((*equiv)[input_2_key_past_]);
+  MS_ASSERT(input_2_past_node != nullptr);
+
+  auto input_1_cur_node = utils::cast<AnfNodePtr>((*equiv)[input_1_key_]);
+  MS_ASSERT(input_1_cur_node != nullptr);
+
+  auto kv_cache_cnode = func_graph->NewCNode(kv_cache_prim_c, {input_2_past_node, input_1_cur_node, cnode});
+  kv_cache_cnode->set_abstract(input_2_past_node->abstract()->Clone());
+
+  return kv_cache_cnode;
 }
 }  // namespace mindspore::opt
