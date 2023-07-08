@@ -259,7 +259,7 @@ class COMMON_EXPORT ProfilerAnalyzer {
   // The used by ProfilerRecorder to record data.
   bool profiler_enable() const { return profiler_enable_; }
   void RecordData(const ProfilerDataPtr &data) noexcept;
-  uint64_t GetTimeStamp() const;
+  uint64_t GetTimeStamp() const noexcept;
   std::string GetBriefName(const std::string &scope_name) const;
 
  private:
@@ -282,13 +282,13 @@ class COMMON_EXPORT ProfilerAnalyzer {
   void AddPythonSummaryData();
 
   // Dump data.
-  void DumpJsonData();
-  void DumpDetailData();
-  void DumpSummaryData();
-  void DumpStageSummaryData(std::stringstream &string_stream);
-  void DumpModuleSummaryData(std::stringstream &string_stream);
+  void DumpJsonData() const;
+  void DumpDetailData() const;
+  void DumpSummaryData() const;
+  void DumpStageSummaryData(std::stringstream &string_stream) const;
+  void DumpModuleSummaryData(std::stringstream &string_stream) const;
   void DumpEventSummaryData(const std::map<ProfilerEvent, ProfilerEventInfoPtr> &event_infos,
-                            std::stringstream &string_stream);
+                            std::stringstream &string_stream) const;
   void DumpOpSummaryData(const mindspore::HashMap<std::string, ProfilerStatisticsInfoPtr> &op_infos,
                          std::stringstream &string_stream) const;
 
