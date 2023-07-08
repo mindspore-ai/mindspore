@@ -9,7 +9,7 @@
     https://www.argoverse.org/av1.html#download-link。
 
     .. note::
-        从不受信任的来源加载数据可能会不安全，请参阅 `这里 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/dataset/cache.html>`_ 。
+        从不受信任的来源加载数据可能会不安全，请参阅 `这里 <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_pickle.html>`_ 。
 
     参数：
         - **data_dir** (str) - 加载数据集的目录，这里包含原始格式的数据，并将在 `process` 方法中被加载。
