@@ -351,7 +351,6 @@ Operator CreateReduceScatterOp(const std::string &reduce_op, const std::string &
 Operator CreateAllGatherOp(const std::string &group);
 Operator CreateCastOp(TypePtr type);
 Operator CreateDivOp(float scale);
-Operator CreateMiniStepAllGatherOp(const std::string &group);
 void AddCNodePrimAttr(const CNodePtr &comm_node, const std::string &attr_name, const ValuePtr &attr_val);
 int32_t AddCommOpFusionType(const CNodePtr &comm_node, const AnfNodePtr &param_node);
 Operator CreateMicroStepAllGatherOp(const std::string &group);

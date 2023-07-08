@@ -497,33 +497,6 @@ Operator CreateAllGatherOp(const std::string &group) {
   return op;
 }
 
-Operator CreateMiniStepAllGatherOp(const std::string &group) {
-  int64_t grad_accumulation_step = ParallelContext::GetInstance()->grad_accumulation_step();
-  bool mean_flag = ParallelContext::GetInstance()->gradients_mean();
-
-  OperatorName operator_name = MINI_STEP_ALL_GATHER;
-  // group
-  ValuePtr attr0_value = MakeValue(group);
-  Attr attr0 = std::make_pair(GROUP, attr0_value);
-  // grad_accumulation_step
-  ValuePtr attr1_value = MakeValue(grad_accumulation_step);
-  Attr attr1 = std::make_pair(GRAD_ACCUMULATION_STEP, attr1_value);
-  // mean_flag
-  ValuePtr attr2_value = MakeValue(mean_flag);
-  Attr attr2 = std::make_pair(MEAN_FLAG, attr2_value);
-  OperatorAttrs operator_attrs;
-  operator_attrs.push_back(attr0);
-  operator_attrs.push_back(attr1);
-  operator_attrs.push_back(attr2);
-
-  OperatorParams operator_param;
-  OperatorArgs operator_arg = std::make_pair(operator_attrs, operator_param);
-
-  Operator op = std::make_pair(operator_name, operator_arg);
-  MS_LOG(INFO) << "Create MINI_STEP_ALL_GATHER success, the group is " << group;
-  return op;
-}
-
 Operator CreateMicroStepAllGatherOp(const std::string &group) {
   bool mean_flag = ParallelContext::GetInstance()->gradients_mean();
   OperatorName operator_name = MICRO_STEP_ALL_GATHER;
@@ -588,13 +561,7 @@ OperatorVector CreateMirrorOps(const std::string &group_name, size_t dev_num) {
   operator_attrs.push_back(attr2);
 
   OperatorName operator_name;
-  if (grad_accumulation_step > 1) {
-    operator_name = MIRROR_MINI_STEP_OPERATOR;
-    ValuePtr attr3_value = MakeValue(grad_accumulation_step);
-    Attr attr3 = std::make_pair(GRAD_ACCUMULATION_STEP, attr3_value);
-    operator_attrs.push_back(attr3);
-    MS_LOG(INFO) << "The grad accumulation step is " << grad_accumulation_step << ", use mini step mirror";
-  } else if (split_stage_num > 1) {
+  if (grad_accumulation_step > 1 || split_stage_num > 1) {
     operator_name = MIRROR_MICRO_STEP_OPERATOR;
   } else {
     operator_name = MIRROR_OPERATOR;

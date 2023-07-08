@@ -53,7 +53,7 @@ class PipelineTransformer {
   virtual ~PipelineTransformer() = default;
   void Coloring();
   void LabelGenMaskFusion();
-  void MainGraph();
+  bool MainGraph();
   void LabelMicroBatch();
   void BroadCastColoring();
   void CutGraph();
