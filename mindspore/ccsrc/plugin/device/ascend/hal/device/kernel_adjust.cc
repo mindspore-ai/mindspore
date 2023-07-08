@@ -434,13 +434,13 @@ void KernelAdjust::InsertEosDoneSend(const std::shared_ptr<session::KernelGraph>
 
 void KernelAdjust::ProcessLoopSink(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
-  profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "AscendPreprocess_ProcessLoopSink", 0, 0, 0);
   device::ascend::AscendStreamMng &resource_manager = device::ascend::AscendStreamMng::GetInstance();
   resource_manager.ResetResource();
   if (!NeedLoopSink()) {
     InsertEndGraphTaskSink(kernel_graph_ptr);
     return;
   }
+  profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "AscendPreprocess_ProcessLoopSink", 0, 0, 0);
   if (kernel_graph_ptr->is_dynamic_shape()) {
     MS_LOG(INFO) << "KernelGraph:" << kernel_graph_ptr->graph_id() << " is dynamic shape, skip ProcessLoopSink";
     return;
