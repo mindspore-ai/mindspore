@@ -102,7 +102,10 @@ void *AkgCpuKernelManager::GetFunction(const std::string &kernel_name) {
     return nullptr;
   }
   auto akg_mmap = mmap(NULL, sb.st_size, PROT_READ, MAP_SHARED, akg_fd, 0);
-  if (!object_loader.LoadAkgLib(akg_mmap, sb.st_size)) {
+  if (akg_mmap == nullptr) {
+    MS_LOG(ERROR) << "mmap " << (*realfile) << " failed.";
+  }
+  if (!object_loader.LoadAkgLib(akg_mmap)) {
     MS_LOG(ERROR) << "parse " << (*realfile) << " failed.";
     return nullptr;
   }
@@ -111,8 +114,8 @@ void *AkgCpuKernelManager::GetFunction(const std::string &kernel_name) {
     MS_LOG(ERROR) << "Undefined symbol " << kernel_name << " in " << (*realfile);
     return nullptr;
   }
-  close(akg_fd);
-  munmap(akg_mmap, sb.st_size);
+  (void)close(akg_fd);
+  (void)munmap(akg_mmap, sb.st_size);
   cpu_func_map_[kernel_name] = std::make_pair(launch_func, nullptr);
   return launch_func;
 }

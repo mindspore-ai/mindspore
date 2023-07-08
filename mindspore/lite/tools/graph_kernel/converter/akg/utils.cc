@@ -175,13 +175,13 @@ ParameterPtr CreateAkgKernelParameter(const FuncGraphPtr &func_graph, const std:
     MS_LOG(ERROR) << "mmap " << path << " failed.";
     return nullptr;
   }
-  close(akg_fd);
+  (void)close(akg_fd);
   auto tensor_info = lite::CreateTensorInfo(akg_mmap, sb.st_size, {sb.st_size}, kNumberTypeUInt8);
   if (tensor_info == nullptr) {
     MS_LOG(ERROR) << "Create tensor info failed";
     return nullptr;
   }
-  munmap(akg_mmap, sb.st_size);
+  (void)munmap(akg_mmap, sb.st_size);
   auto status = lite::InitParameterFromTensorInfo(param_node, tensor_info);
   if (status != lite::RET_OK) {
     MS_LOG(ERROR) << "init parameter from tensor info failed";
