@@ -381,14 +381,6 @@ void HandleNoUsedParameter(const FuncGraphPtr &root) {
     return;
   }
 
-  // in grad accumulation mode, if use dynamic lr, it has some parameters in optimizer which no used for first graph,
-  // but used for second graph(such as global_step), so can not change their shapes
-  int64_t grad_accumulation_step = ParallelContext::GetInstance()->grad_accumulation_step();
-  if (grad_accumulation_step > 1) {
-    MS_LOG(INFO) << "In grad accumulation mode, do not handle no used parameters";
-    return;
-  }
-
   auto dev_num = g_device_manager->stage_device_num();
   auto parameters = root->parameters();
   if (parameters.empty()) {
@@ -627,59 +619,6 @@ void AutoParallelPostProcess(const FuncGraphPtr &root) {
       continue;
     }
     SliceParameterObj(param_ptr, layout);
-  }
-}
-
-static void InsertFullySplitParamGradAccu(const std::pair<AnfNodePtr, int> &node_user,
-                                          const FuncGraphManagerPtr &manager, const AnfNodePtr &accu_parameter) {
-  auto cnode = node_user.first->cast<CNodePtr>();
-  auto prim = GetCNodePrimitive(cnode);
-  if (prim == nullptr) {
-    MS_LOG(WARNING) << cnode->DebugString() << " can not insert fully split param grad accumulation node";
-    return;
-  }
-  OperatorAttrs attrs;
-  auto py_instance = CreateOpInstance(attrs, "_VirtualAdd", "grad_accu");
-  auto value_node = NewValueNode(py_instance);
-  std::vector<AnfNodePtr> virtual_node_input = {value_node, cnode->input(IntToSize(node_user.second)), accu_parameter};
-  auto graph = cnode->func_graph();
-  auto virtual_node = graph->NewCNode(virtual_node_input);
-  manager->SetEdge(cnode, node_user.second, virtual_node);
-}
-
-void HandleFullySplitParameters(const FuncGraphPtr &root) {
-  int64_t grad_accumulation_step = ParallelContext::GetInstance()->grad_accumulation_step();
-  if ((grad_accumulation_step <= 1) || root->has_flag(kAccumulation)) {
-    return;
-  }
-
-  auto parameters = root->parameters();
-  auto node_users_map = root->manager()->node_users();
-  for (auto &parameter : parameters) {
-    auto param_ptr = parameter->cast<ParameterPtr>();
-    MS_EXCEPTION_IF_NULL(param_ptr);
-
-    if (!IsFullySplitParameter(param_ptr)) {
-      continue;
-    }
-
-    auto accu_parameter = FindGradAccuParameter(parameters, param_ptr->name());
-    if (!accu_parameter) {
-      continue;  // some parameters no need to handle, such as itself or lr
-    }
-
-    auto node_users = node_users_map[parameter];
-    for (auto &user : node_users) {
-      auto node = user.first;
-      auto cnode = node->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(cnode);
-      if (!cnode->in_forward_flag()) {
-        continue;
-      }
-      InsertFullySplitParamGradAccu(user, root->manager(), accu_parameter);
-      MS_LOG(INFO) << "Insert full split assign add node for " << param_ptr->name();
-      break;  // only need to insert once, if the parameter has many users
-    }
   }
 }
 

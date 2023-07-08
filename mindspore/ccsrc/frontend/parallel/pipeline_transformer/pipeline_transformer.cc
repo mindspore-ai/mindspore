@@ -104,10 +104,10 @@ static void SeparateParamBorder(const std::vector<AnfNodePtr> &nodes, bool send,
   }
 }
 
-void PipelineTransformer::MainGraph() {
+bool PipelineTransformer::MainGraph() {
   if (!is_train_) {
     main_graph_ = root_;
-    return;
+    return true;
   }
   bool find_main_graph = false;
   for (auto &fg : manager_->func_graphs()) {
@@ -125,12 +125,13 @@ void PipelineTransformer::MainGraph() {
     }
   }
   if (!find_main_graph) {
-    MS_LOG(EXCEPTION) << "Can't find main graph, possible reason is can't find virtual dataset.";
+    MS_LOG(WARNING) << "Can't find main graph, possible reason is can't find virtual dataset.";
+    return false;
   }
   const auto &cell_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
   enable_share_cell_ = cell_reuse_env == "1" || cell_reuse_env == "2";
   if (!enable_share_cell_) {
-    return;
+    return true;
   }
   auto value_nodes = main_graph_->value_nodes();
   for (auto value_pair = value_nodes.cbegin(); value_pair != value_nodes.cend(); ++value_pair) {
@@ -139,7 +140,6 @@ void PipelineTransformer::MainGraph() {
       continue;
     }
     shared_cell_ = GetValueNode<FuncGraphPtr>(node);
-    MS_LOG(INFO) << "The lazy inline cell is " << shared_cell_->ToString();
     auto node_users = manager_->node_users()[node];
     for (auto &node_user : node_users) {
       auto user = node_user.first;
@@ -147,11 +147,13 @@ void PipelineTransformer::MainGraph() {
         shared_cell_users_.push_back(user);
       }
     }
-    return;
+    return true;
   }
   if (shared_cell_ == nullptr) {
-    MS_LOG(EXCEPTION) << "Can't find share graph, but the environment MS_DEV_CELL_REUSE is set.";
+    MS_LOG(WARNING) << "Can't find share graph, but the environment MS_DEV_CELL_REUSE is set.";
+    return false;
   }
+  return true;
 }
 
 ValuePtr PipelineTransformer::SetMicroBatch(const AnfNodePtr &node, int64_t micro_size, size_t batch_axis) const {

@@ -158,11 +158,13 @@
 #include "plugin/device/ascend/optimizer/ir_fission/lamb_fission.h"
 #include "plugin/device/ascend/optimizer/enhancer/concat_outputs_for_all_gather.h"
 #include "plugin/device/ascend/optimizer/enhancer/insert_depend_for_all_gather.h"
+#include "plugin/device/ascend/optimizer/enhancer/insert_depend_for_grad_comm.h"
 #include "plugin/device/ascend/optimizer/enhancer/split_inputs_for_reduce_scatter.h"
 #include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_rnn.h"
 #include "plugin/device/ascend/optimizer/enhancer/add_placeholder_for_dynamic_gru.h"
 #include "plugin/device/ascend/optimizer/enhancer/add_attr_for_3d_graph.h"
 #include "plugin/device/ascend/optimizer/enhancer/split_n_optimizer.h"
+#include "plugin/device/ascend/optimizer/enhancer/eliminate_maketuple_getitem.h"
 #include "plugin/device/ascend/optimizer/mindir/space_batch_nd_attr_update.h"
 #include "plugin/device/ascend/optimizer/mindir/aicpu_lib_select.h"
 #include "plugin/device/ascend/optimizer/mindir/dropout_unify_mindir.h"
@@ -567,7 +569,7 @@ void AscendAfterInlineOptimization(const std::shared_ptr<session::KernelGraph> &
   static const auto graph_reuse_env = common::GetEnv("MS_DEV_CELL_REUSE");
   static const auto graph_reuse = (graph_reuse_env == "1" || graph_reuse_env == "2");
   if (graph_reuse) {
-    after_inline_pm->AddPass(std::make_shared<OptimizeGradientsAllReduceOverlap>());
+    after_inline_pm->AddPass(std::make_shared<EliminateMaketupleGetitem>());
     after_inline_pm->AddPass(std::make_shared<AllReduceFusion>());
     after_inline_pm->AddPass(std::make_shared<AdjustDependForParallelOptimizerRecomputeAllGather>());
     after_inline_pm->AddPass(std::make_shared<AllGatherFusion>());
@@ -577,6 +579,7 @@ void AscendAfterInlineOptimization(const std::shared_ptr<session::KernelGraph> &
     after_inline_pm->AddPass(std::make_shared<SplitInputsForReduceScatter>());
     after_inline_pm->AddPass(std::make_shared<BroadcastFusion>());
     after_inline_pm->AddPass(std::make_shared<InsertTensorMoveForCascade>());
+    after_inline_pm->AddPass(std::make_shared<InsertDependForGradComm>());
     after_inline_pm->AddPass(std::make_shared<GradientsAllReduceDependLastSend>());
   }
   after_inline_pm->AddPass(std::make_shared<MergeTransData>());
@@ -731,6 +734,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
     other_pm->AddPass(std::make_shared<SplitInputsForReduceScatter>());
     other_pm->AddPass(std::make_shared<BroadcastFusion>());
     other_pm->AddPass(std::make_shared<InsertTensorMoveForCascade>());
+    other_pm->AddPass(std::make_shared<InsertDependForGradComm>());
     other_pm->AddPass(std::make_shared<GradientsAllReduceDependLastSend>());
   }
   other_pm->AddPass(std::make_shared<ParameterTransOpFusion>());

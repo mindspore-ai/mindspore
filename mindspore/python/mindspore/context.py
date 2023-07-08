@@ -628,6 +628,7 @@ class _Context:
             valid_option = {"recompute_comm_overlap": ms_ctx_param.recompute_comm_overlap,
                             "matmul_grad_comm_overlap": ms_ctx_param.matmul_grad_comm_overlap,
                             "enable_task_opt": ms_ctx_param.enable_task_opt,
+                            "enable_grad_comm_opt": ms_ctx_param.enable_grad_comm_opt,
                             "interleaved_matmul_comm": ms_ctx_param.interleaved_matmul_comm,
                             "interleaved_layernorm_comm": ms_ctx_param.interleaved_layernorm_comm}
             with open(speedup_config_real_path, 'r') as f:

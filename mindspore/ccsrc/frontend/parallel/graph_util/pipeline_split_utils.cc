@@ -117,7 +117,7 @@ static AnfNodePtr GetCallBackwardEndNext(const AnfNodePtr &node) {
   return node->user_data<AnfNode>(CALL_BACKWARD_END_NEXT);
 }
 
-static bool IsValidNode(const AnfNodePtr &node, const AnfNodePtr &return_node, const NodeUsersMap &node_user_map) {
+bool IsValidNode(const AnfNodePtr &node, const AnfNodePtr &return_node, const NodeUsersMap &node_user_map) {
   if (node == return_node) {
     return true;
   }
@@ -801,21 +801,6 @@ void LabelNeedGrad(const FuncGraphManagerPtr &manager, const FuncGraphPtr &root)
     }
     BroadCastNeedGrad(parameter, &node_user_map, root);
   }
-}
-
-void InsertVirtualPipelineEndNode(const CNodePtr &cnode, const FuncGraphManagerPtr &manager, size_t index) {
-  auto pre_cnode = cnode->input(index)->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(pre_cnode);
-  auto graph = cnode->func_graph();
-  MS_EXCEPTION_IF_NULL(graph);
-  OperatorAttrs attrs_;
-  auto op = CreateOpInstance(attrs_, "_VirtualPipelineEnd", "end_node");
-  auto value_node = NewValueNode(op);
-  auto virtual_end = graph->NewCNode({value_node, pre_cnode});
-  virtual_end->set_abstract(pre_cnode->abstract());
-  virtual_end->AddPrimalAttr(PIPELINE_END, pre_cnode->GetPrimalAttr(MICRO));
-  virtual_end->AddPrimalAttr(MICRO, pre_cnode->GetPrimalAttr(MICRO));
-  manager->SetEdge(cnode, SizeToInt(index), virtual_end);
 }
 
 void LastStageEndNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphManagerPtr &manager,
