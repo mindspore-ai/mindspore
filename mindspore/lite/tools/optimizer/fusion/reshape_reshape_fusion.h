@@ -19,22 +19,25 @@
 
 #include <string>
 #include <memory>
-#include "tools/optimizer/common/pattern_process_pass_extends.h"
+#include <unordered_map>
+#include "tools/optimizer/common/multiple_pattern_process_pass.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace opt {
-class ReshapeReshapeFusion : public LitePatternProcessPass {
+class ReshapeReshapeFusion : public MultiplePatternProcessPass {
  public:
   explicit ReshapeReshapeFusion(bool multigraph = true, const std::string &name = "ReshapeReshapeFusion")
-      : LitePatternProcessPass(name, multigraph) {}
+      : MultiplePatternProcessPass(name, multigraph) {}
   ~ReshapeReshapeFusion() override = default;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
-  const BaseRef DefinePattern() const override;
+  AnfNodePtr Process(const std::string &pattern_name, const FuncGraphPtr &, const AnfNodePtr &,
+                     const EquivPtr &) const override;
+  std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
 
  private:
-  mutable VarPtr reshape_input_{nullptr};
-  mutable VarPtr reshape_shape_{nullptr};
+  VectorRef DefinePreReshapePattern() const;
+  VectorRef DefinePostReshapePattern() const;
+  VectorRef DefineReshapeReshapePattern() const;
 };
 }  // namespace opt
 }  // namespace mindspore
