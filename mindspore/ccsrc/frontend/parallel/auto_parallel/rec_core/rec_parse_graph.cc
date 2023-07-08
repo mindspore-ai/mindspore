@@ -190,21 +190,22 @@ Graph::NodeType MakeNewOperator(const std::vector<std::shared_ptr<OperatorInfo>>
     NewOp.apply.op_type = DictOpType.at(op_type);
   }
 
-  if (ops[iter_ops]->outputs_shape().size() == 0) {
+  if (ops[iter_ops]->outputs_shape().size() == SIZE_ZERO) {
     MS_LOG(EXCEPTION) << ops[iter_ops]->name() << " outputs shape is empty.";
   }
 
-  if (ops[iter_ops]->outputs_shape()[0].size() == 4) {
+  if (ops[iter_ops]->outputs_shape()[0].size() == SIZE_FOUR) {
     NewOp.tensor_parm = MakeTensor(ops[iter_ops]->outputs_shape()[0][0], ops[iter_ops]->outputs_shape()[0][1],
-                                   ops[iter_ops]->outputs_shape()[0][2], ops[iter_ops]->outputs_shape()[0][3]);
-  } else if (ops[iter_ops]->outputs_shape()[0].size() == 3) {
+                                   ops[iter_ops]->outputs_shape()[INDEX_ZERO][INDEX_TWO],
+                                   ops[iter_ops]->outputs_shape()[INDEX_ZERO][INDEX_THREE]);
+  } else if (ops[iter_ops]->outputs_shape()[0].size() == SIZE_THREE) {
     NewOp.tensor_parm = MakeTensor(1, ops[iter_ops]->outputs_shape()[0][0], ops[iter_ops]->outputs_shape()[0][1],
-                                   ops[iter_ops]->outputs_shape()[0][2]);
-  } else if (ops[iter_ops]->outputs_shape()[0].size() == 2) {
+                                   ops[iter_ops]->outputs_shape()[INDEX_ZERO][INDEX_TWO]);
+  } else if (ops[iter_ops]->outputs_shape()[0].size() == SIZE_TWO) {
     NewOp.tensor_parm = MakeTensor(1, 1, ops[iter_ops]->outputs_shape()[0][0], ops[iter_ops]->outputs_shape()[0][1]);
-  } else if (ops[iter_ops]->outputs_shape()[0].size() == 1) {
+  } else if (ops[iter_ops]->outputs_shape()[0].size() == SIZE_ONE) {
     NewOp.tensor_parm = MakeTensor(1, 1, 1, ops[iter_ops]->outputs_shape()[0][0]);
-  } else if (ops[iter_ops]->outputs_shape()[0].size() == 0) {
+  } else if (ops[iter_ops]->outputs_shape()[0].size() == SIZE_ZERO) {
     NewOp.tensor_parm = MakeTensor(1, 1, 1, 1);
   } else {
     MS_LOG(ERROR) << ops[iter_ops]->name() << ": output tensor shape is unexpected.";
@@ -225,19 +226,22 @@ OperatorRec CompleteOperatorInputs(const std::vector<std::shared_ptr<OperatorInf
   }
 
   for (size_t iter_input_tensors = 0; iter_input_tensors < input_tensor_size; iter_input_tensors++) {
-    if (ops[iter_ops]->inputs_shape()[iter_input_tensors].size() == 4) {
-      NewTensor.apply.arguments[iter_input_tensors] = MakeTensor(
-        ops[iter_ops]->inputs_shape()[iter_input_tensors][0], ops[iter_ops]->inputs_shape()[iter_input_tensors][1],
-        ops[iter_ops]->inputs_shape()[iter_input_tensors][2], ops[iter_ops]->inputs_shape()[iter_input_tensors][3]);
-    } else if (ops[iter_ops]->inputs_shape()[iter_input_tensors].size() == 3) {
-      NewTensor.apply.arguments[iter_input_tensors] = MakeTensor(
-        1, ops[iter_ops]->inputs_shape()[iter_input_tensors][0], ops[iter_ops]->inputs_shape()[iter_input_tensors][1],
-        ops[iter_ops]->inputs_shape()[iter_input_tensors][2]);
-    } else if (ops[iter_ops]->inputs_shape()[iter_input_tensors].size() == 2) {
-      NewTensor.apply.arguments[iter_input_tensors] = Complete2DInputs(ops, iter_ops, iter_input_tensors, NewTensor);
-    } else if (ops[iter_ops]->inputs_shape()[iter_input_tensors].size() == 1) {
+    if (ops[iter_ops]->inputs_shape()[iter_input_tensors].size() == SIZE_FOUR) {
       NewTensor.apply.arguments[iter_input_tensors] =
-        MakeTensor(1, 1, 1, ops[iter_ops]->inputs_shape()[iter_input_tensors][0]);
+        MakeTensor(ops[iter_ops]->inputs_shape()[iter_input_tensors][INDEX_ZERO],
+                   ops[iter_ops]->inputs_shape()[iter_input_tensors][INDEX_ONE],
+                   ops[iter_ops]->inputs_shape()[iter_input_tensors][INDEX_TWO],
+                   ops[iter_ops]->inputs_shape()[iter_input_tensors][INDEX_THREE]);
+    } else if (ops[iter_ops]->inputs_shape()[iter_input_tensors].size() == SIZE_THREE) {
+      NewTensor.apply.arguments[iter_input_tensors] =
+        MakeTensor(1, ops[iter_ops]->inputs_shape()[iter_input_tensors][INDEX_ZERO],
+                   ops[iter_ops]->inputs_shape()[iter_input_tensors][INDEX_ONE],
+                   ops[iter_ops]->inputs_shape()[iter_input_tensors][INDEX_TWO]);
+    } else if (ops[iter_ops]->inputs_shape()[iter_input_tensors].size() == SIZE_TWO) {
+      NewTensor.apply.arguments[iter_input_tensors] = Complete2DInputs(ops, iter_ops, iter_input_tensors, NewTensor);
+    } else if (ops[iter_ops]->inputs_shape()[iter_input_tensors].size() == SIZE_ONE) {
+      NewTensor.apply.arguments[iter_input_tensors] =
+        MakeTensor(1, 1, 1, ops[iter_ops]->inputs_shape()[iter_input_tensors][INDEX_ZERO]);
     } else if (ops[iter_ops]->inputs_shape()[iter_input_tensors].size() == 0) {
       NewTensor.apply.arguments[iter_input_tensors] = MakeTensor(1, 1, 1, 1);
     } else {
