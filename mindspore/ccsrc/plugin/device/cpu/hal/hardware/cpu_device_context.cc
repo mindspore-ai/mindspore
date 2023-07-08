@@ -92,12 +92,14 @@ void CPUDeviceContext::Initialize() {
   json_parser.CopyDumpJsonToDir(rank_id);
   json_parser.CopyMSCfgJsonToDir(rank_id);
 #endif
+#ifdef __linux__
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->IsDefaultDeviceTarget() && ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice) {
     MS_LOG(WARNING)
       << "No device_target set, set CPU as default. You can call mindspore.set_context(device_target=\"XXX\")";
   }
+#endif  // __linux__
   initialized_ = true;
 }
 
