@@ -88,6 +88,8 @@ class EinsumGradGpuKernelMod : public NativeGpuKernelMod {
     if (ret != KRET_OK) {
       return ret;
     }
+    ResetResource();
+    func_helper_.ResetResource();
 
     size_t input_num = inputs.size();
     for (size_t idx = 0; idx < input_num - 1; ++idx) {
@@ -96,7 +98,7 @@ class EinsumGradGpuKernelMod : public NativeGpuKernelMod {
         MS_LOG(ERROR) << "For " << node_name_ << ", input types should be the same, but it does not.";
         return KRET_RESIZE_FAILED;
       }
-      auto in_shape = inputs[idx]->GetDeviceShapeAdaptively();
+      auto in_shape = inputs[idx]->GetShapeVector();
       input_shapes_.push_back(in_shape);
     }
 
