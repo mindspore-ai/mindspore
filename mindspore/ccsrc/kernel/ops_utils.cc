@@ -26,13 +26,13 @@ constexpr auto kStridedSliceMaxDims = 8;
 
 std::vector<bool> Dec2Bin(const int64_t &mask) {
   auto mask_str = std::bitset<kStridedSliceMaxDims>(mask).to_string();
-  int64_t dim_idx = 0;
+  size_t dim_idx = 0;
   std::vector<bool> result(kStridedSliceMaxDims, false);
-  for (int64_t i = mask_str.size() - 1; i >= 0; i--) {
-    if (mask_str[i] == '1') {
+  for (auto iter = mask_str.rbegin(); iter != mask_str.rend(); ++iter) {
+    if (*iter == '1') {
       result[dim_idx] = true;
     }
-    dim_idx++;
+    ++dim_idx;
   }
   return result;
 }
