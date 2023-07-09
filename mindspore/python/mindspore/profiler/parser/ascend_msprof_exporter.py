@@ -61,7 +61,7 @@ class AscendMsprofExporter:
     _ascend_mark = "Ascend"
     _hiai_msprof_tail = "Ascend/latest/tools/profiler/bin"
 
-    def __init__(self, prof_root_dir: str, time_out=300) -> None:
+    def __init__(self, prof_root_dir: str, time_out=3000) -> None:
         self._prof_root_dir = prof_root_dir
         self._start_time = 0
         self._support_step_trace = True
@@ -91,7 +91,7 @@ class AscendMsprofExporter:
             logger.warning(err)
         return int(start_time)
 
-    def export(self, start_time=0, time_out=300, support_step_trace=True):
+    def export(self, start_time=0, time_out=3000, support_step_trace=True):
         """start_time is the time to collect PROF data"""
         self._start_time = start_time
         self._time_out = time_out
