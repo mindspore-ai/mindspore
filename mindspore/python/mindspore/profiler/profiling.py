@@ -1031,10 +1031,13 @@ class Profiler:
             aicpu_intermediate_detail_path = validate_and_normalize_path(aicpu_intermediate_detail_path)
             framework_raw_path = validate_and_normalize_path(framework_raw_path)
 
+            output_timeline_data_path = os.path.join(self._output_path, f'output_timeline_data_{dev_id}.txt')
+            output_timeline_data_path = validate_and_normalize_path(output_timeline_data_path)
+
             op_analyser = AscendOPGenerator(op_summary, op_statistic)
             op_analyser.parse()
             op_analyser.write(op_intermediate_detail_path, op_intermediate_type_path,
-                              aicpu_intermediate_detail_path, framework_raw_path)
+                              aicpu_intermediate_detail_path, framework_raw_path, output_timeline_data_path)
         except ProfilerException as err:
             logger.warning(err.message)
         finally:

@@ -33,6 +33,7 @@ class AscendOPGenerator:
         self.op_type = None
         self.aicpu_detail = None
         self.framework_raw = None
+        self.output_timeline_data = None
 
         self.op_detail_dt = np.dtype(
             [('full_op_name', object), ('task_duration', float), ('execution_frequency', int), ('task_type', object)])
@@ -66,8 +67,11 @@ class AscendOPGenerator:
         # framwork_raw
         self.framework_raw = self._parse_framework_raw(self.op_summary)
 
+        self.output_timeline_data = self.op_summary[self.op_summary['Task Type'] == 'AI_CORE'][
+            ['Op Name', 'Stream ID', 'Task Start Time', 'Task Duration']]
+
     def write(self, aicore_intermediate_detail_path, aicore_intermediate_type_path, aicpu_intermediate_detail_path,
-              framework_raw_path):
+              framework_raw_path, output_timeline_data_path):
         """
         Write the op_intermediate_detail.csv op_intermediate_type.csv aicpu_intermediate.csv and framework_raw.csv.
 
@@ -76,6 +80,7 @@ class AscendOPGenerator:
             aicore_intermediate_type_path(str): op_intermediate_type.csv path.
             aicpu_intermediate_detail_path(str): aicpu_intermediate.csv path.
             framework_raw_path: framework_raw.csv path
+            output_timeline_data_path : output_timeline_data.txt path
         """
         # aicore intermediation detail
         try:
@@ -128,6 +133,19 @@ class AscendOPGenerator:
             raise ProfilerIOException()
         if os.path.exists(framework_raw_path):
             os.chmod(framework_raw_path, stat.ST_MODE | stat.S_IWRITE)
+
+        # output_timeline_data
+        try:
+            with os.fdopen(os.open(output_timeline_data_path,
+                                   os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as output_timeline_data:
+                writer = csv.writer(output_timeline_data)
+                writer.writerow(['op_name', 'stream_id', 'start_time(us)', 'duration(ms)'])
+                writer.writerows(self.output_timeline_data.tolist())
+        except (IOError, OSError) as err:
+            logging.critical('Errot occurred when write output timeline data file: %s', err)
+            raise ProfilerIOException()
+        if os.path.exists(aicpu_intermediate_detail_path):
+            os.chmod(aicpu_intermediate_detail_path, stat.ST_MODE | stat.S_IWRITE)
 
     def _parse_op_detail(self, op_summary):
         """
