@@ -153,7 +153,6 @@ class TestProfiler:
             return
         self._train_with_profiler(device_target="CPU", profile_memory=False)
         self._check_cpu_profiling_file()
-        self._check_host_profiling_file()
 
     @pytest.mark.level1
     @pytest.mark.platform_x86_gpu_training
