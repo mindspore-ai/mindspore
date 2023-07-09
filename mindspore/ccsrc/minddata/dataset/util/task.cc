@@ -163,13 +163,16 @@ Status Task::Join(WaitFlag blocking) {
         // join() will not come back. We need some timeout version of join such that if the thread
         // doesn't come back in a reasonable of time, we will send the interrupt again.
         uint32_t wait_times = 0;
+        const uint32_t kLogInterval = 5;
         while (thrd_.wait_for(std::chrono::seconds(1)) != std::future_status::ready) {
           // We can't tell which conditional_variable this thread is waiting on. So we may need
           // to interrupt everything one more time.
           std::stringstream ss;
           ss << get_id();
-          MS_LOG(WARNING) << "Task: " << my_name_ << " Thread ID " << ss.str()
-                          << " is not responding. Interrupt it again.";
+          if (wait_times % kLogInterval == 0) {
+            MS_LOG(WARNING) << "Task: " << my_name_ << " Thread ID " << ss.str()
+                            << " is not finished and cannot be joined. Try to interrupt again.";
+          }
           interrupt_svc->InterruptAll();
           wait_times++;
 #ifdef WITH_BACKEND
