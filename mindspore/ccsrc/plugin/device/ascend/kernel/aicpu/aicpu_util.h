@@ -66,6 +66,7 @@ constexpr auto kStridedSliceV2Grad = "StridedSliceV2Grad";
 constexpr auto kEditDistance = "EditDistance";
 constexpr auto kGatherD = "GatherD";
 constexpr auto kGather = "Gather";
+constexpr auto kReverseSequence = "ReverseSequence";
 constexpr auto kHistogram = "Histogram";
 constexpr auto kIdentity = "Identity";
 constexpr auto kIdentityN = "IdentityN";
@@ -242,6 +243,7 @@ const std::set<std::string> kCpuKernelOps{kIdentity,
                                           kSparseSegmentSum,
                                           kAdaptiveMaxPool2D,
                                           kResizeBilinear,
+                                          kReverseSequence,
                                           kRandpermV2,
                                           kResizeBilinearGrad,
                                           kTensorScatterElements,
