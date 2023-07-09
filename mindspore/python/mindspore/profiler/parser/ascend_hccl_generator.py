@@ -184,9 +184,9 @@ class AscendHCCLGenerator:
                 dur = row.get('dur')
                 te = ts + dur
                 ph = row.get('ph')
-                task_type = row.get('args').get('task type')
-                src_rank = row.get('args').get('src rank')
-                dst_rank = row.get('args').get('dst rank')
+                task_type = row.get('args', {}).get('task type', '')
+                src_rank = row.get('args', {}).get('src rank', 0)
+                dst_rank = row.get('args', {}).get('dst rank', 0)
                 if src_rank == int('0xffffffff', 16):
                     src_rank = dst_rank
                 if dst_rank == int('0xffffffff', 16):
