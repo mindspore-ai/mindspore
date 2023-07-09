@@ -111,11 +111,11 @@ def _calculate_dataset_item(row, execution_time_map, ts_map):
         ts = ts_map[event_stage_tid_pid]
         dur = ts_end - ts
         if title not in execution_time_map:
-            execution_time_map[title] = ExecutionCalculator(event=event, stage=stage,
-                                                            custom_info=custom_info)
+            execution_time_map[title] = ExecutionCalculator(event=event, stage=stage, custom_info=custom_info)
         execution_time_map[title].count += 1
-        execution_time_map[title].average_execution += \
-            (dur - execution_time_map[title].average_execution) / execution_time_map[title].count
+        if execution_time_map[title].count != 0:
+            execution_time_map[title].average_execution += \
+                (dur - execution_time_map[title].average_execution) / execution_time_map[title].count
         del ts_map[event_stage_tid_pid]
     elif start_end == '0':
         ts = int(row['time_stamp(us)'])
@@ -225,10 +225,8 @@ def _parse_host_info(input_file, output_timeline_file, output_memory_file, is_de
             except KeyError as e:
                 logger.error("Error occur when analyse line: %s, Details is: %s", row, e)
                 continue
-    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
-    modes = stat.S_IWUSR | stat.S_IRUSR
     if memory_info:
-        with os.fdopen(os.open(output_memory_file, flags, modes), 'w') as csv_file:
+        with os.fdopen(os.open(output_memory_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as csv_file:
             csv_writer = csv.DictWriter(csv_file, fieldnames=memory_header)
             csv_writer.writeheader()
             for item in memory_info:
@@ -256,7 +254,7 @@ def _parse_host_info(input_file, output_timeline_file, output_memory_file, is_de
 
     if time_line:
         timeline_file = validate_and_normalize_path(output_timeline_file)
-        with os.fdopen(os.open(timeline_file, flags, modes), 'w') as json_file:
+        with os.fdopen(os.open(timeline_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as json_file:
             json.dump(time_line, json_file)
     else:
         logger.warning("No valid time_stamp is record in file: %s", input_file)
@@ -1616,13 +1614,10 @@ def _offline_parse(offline_path):
         if not rank_id.isdigit():
             logger.info("Cannot get rank_id from file: %s, skip it", file)
             return
-        json_file_name = 'timeline_' + rank_id + '.json'
-        memory_file_name = 'host_memory_' + rank_id + '.csv'
-        dataset_file_name = 'dataset_' + rank_id + '.csv'
         host_info_file = os.path.join(host_dir, file)
-        timeline_file = os.path.join(host_dir, json_file_name)
-        memory_file = os.path.join(host_dir, memory_file_name)
-        dataset_execution_file = os.path.join(host_dir, dataset_file_name)
+        timeline_file = os.path.join(host_dir, f'timeline_{rank_id}.json')
+        memory_file = os.path.join(host_dir, f'host_memory_{rank_id}.csv')
+        dataset_execution_file = os.path.join(host_dir, f'dataset_{rank_id}.csv')
         _parse_host_info(host_info_file, timeline_file, memory_file)
         _calculate_dataset_execution_time(host_info_file, dataset_execution_file)
     logger.info("Profile HostInfo offline finished.")

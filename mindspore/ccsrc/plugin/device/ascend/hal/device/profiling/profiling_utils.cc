@@ -700,7 +700,7 @@ void ProfilingUtils::InitReportNode(const CNodePtr &cnode) {
 
   auto ret = node_addition_info_.try_emplace(cnode->fullname_with_scope(), addition_info);
   if (!ret.second) {
-    MS_LOG(WARNING) << cnode->fullname_with_scope() << " node addition already exist";
+    MS_LOG(DEBUG) << cnode->fullname_with_scope() << " node addition already exist";
   }
 }
 
