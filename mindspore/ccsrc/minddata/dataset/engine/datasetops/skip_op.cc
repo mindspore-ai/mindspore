@@ -47,10 +47,13 @@ Status SkipOp::operator()() { RETURN_STATUS_UNEXPECTED("[Internal ERROR] SkipOp 
 
 Status SkipOp::GetNextRow(TensorRow *row) {
   RETURN_UNEXPECTED_IF_NULL(row);
+  RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "GetFromPreviousOp"));
   bool eoe_received = false;
   while (skip_count_ < max_skips_) {
     RETURN_IF_NOT_OK(child_[0]->GetNextRow(row));
     if (row->eof()) {
+      RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "GetFromPreviousOp",
+                                        {{"Flag", TensorRow(TensorRow::kFlagEOF).FlagName()}}));
       return Status::OK();
     }
     if (row->eoe() && !once_only_) {
@@ -70,6 +73,7 @@ Status SkipOp::GetNextRow(TensorRow *row) {
       skip_count_ = 0;
     }
   }
+  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "GetFromPreviousOp", {{"Flag", row->FlagName()}}));
   return Status::OK();
 }
 

@@ -159,6 +159,7 @@ bool ConcatOp::IgnoreSample() {
 
 Status ConcatOp::GetNextRow(TensorRow *row) {
   RETURN_UNEXPECTED_IF_NULL(row);
+  RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "GetFromPreviousOp"));
   bool is_not_mappable_or_second_ne_zero = true;
 
   if (!children_flag_and_nums_.empty()) {
@@ -177,35 +178,29 @@ Status ConcatOp::GetNextRow(TensorRow *row) {
     if (IgnoreSample()) {
       RETURN_IF_NOT_OK(GetNextRow(row));
     }
-
-    return Status::OK();
-  }
-  if (row->eoe()) {
+  } else if (row->eoe()) {
     // if last child, send out eoe and reset epoch
     if (cur_child_ == child_.size() - 1) {
       // reset
       cur_child_ = 0;
       verified_ = false;
       UpdateRepeatAndEpochCounter();
-      return Status::OK();
+    } else {
+      if (!is_not_mappable_or_second_ne_zero) {
+        sample_number_ += children_flag_and_nums_[cur_child_].second;
+      }
+      cur_child_++;
+      verified_ = false;
+      RETURN_IF_NOT_OK(GetNextRow(row));
     }
-    if (!is_not_mappable_or_second_ne_zero) {
-      sample_number_ += children_flag_and_nums_[cur_child_].second;
-    }
-    cur_child_++;
-    verified_ = false;
-    RETURN_IF_NOT_OK(GetNextRow(row));
-    return Status::OK();
-  }
-  if (row->eof()) {
+  } else if (row->eof()) {
     CHECK_FAIL_RETURN_UNEXPECTED(cur_child_ == 0, "[Internal ERROR] Received an unexpected EOF.");
     for (size_t i = cur_child_ + 1; i < child_.size(); i++) {
       RETURN_IF_NOT_OK(child_[i]->GetNextRow(row));
       CHECK_FAIL_RETURN_UNEXPECTED(row->eof(), "[Internal ERROR] Row must be an EOF.");
     }
-    return Status::OK();
   }
-
+  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "GetFromPreviousOp", {{"Flag", row->FlagName()}}));
   return Status::OK();
 }
 
