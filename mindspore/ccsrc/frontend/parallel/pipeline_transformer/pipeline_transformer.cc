@@ -139,6 +139,7 @@ void PipelineTransformer::MainGraph() {
       continue;
     }
     shared_cell_ = GetValueNode<FuncGraphPtr>(node);
+    MS_LOG(INFO) << "The lazy inline cell is " << shared_cell_->ToString();
     auto node_users = manager_->node_users()[node];
     for (auto &node_user : node_users) {
       auto user = node_user.first;
@@ -151,7 +152,6 @@ void PipelineTransformer::MainGraph() {
   if (shared_cell_ == nullptr) {
     MS_LOG(EXCEPTION) << "Can't find share graph, but the environment MS_DEV_CELL_REUSE is set.";
   }
-  return;
 }
 
 ValuePtr PipelineTransformer::SetMicroBatch(const AnfNodePtr &node, int64_t micro_size, size_t batch_axis) const {
