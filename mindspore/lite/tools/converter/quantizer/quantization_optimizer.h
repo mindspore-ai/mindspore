@@ -37,6 +37,8 @@ class QuantizationOptimizer {
  private:
   int DoSingleGraphQuantize(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param);
 
+  int PrepareQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
+
   const std::shared_ptr<ConverterPara> &param_;
 };
 }  // namespace mindspore::lite::quant
