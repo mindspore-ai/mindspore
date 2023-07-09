@@ -21,7 +21,7 @@ from ...operations._sequence_ops import tuple_greater_equal, list_greater_equal
 
 # greater_equal is a metagraph object which will determine if two objects are greater_equal according to input type
 # using ".register" decorator
-greater_equal = base.MultitypeFuncGraph("greater_equal", True)
+greater_equal = base.MultitypeFuncGraph("greater_equal", True, True)
 
 
 @greater_equal.register("Number", "Number")

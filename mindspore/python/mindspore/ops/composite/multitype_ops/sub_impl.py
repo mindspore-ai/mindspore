@@ -22,7 +22,7 @@ from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 
 
-sub = base.MultitypeFuncGraph("sub", True)
+sub = base.MultitypeFuncGraph("sub", True, True)
 """
 `sub` is a metafuncgraph object which will compute the subtraction of two objects
 using ".register" decorator.

@@ -131,7 +131,7 @@ void RegCompositeOpsGroup(const py::module *m) {
 
   // Reg MultitypeFuncGraph
   (void)py::class_<MultitypeFuncGraph, MetaFuncGraph, std::shared_ptr<MultitypeFuncGraph>>(*m, "MultitypeFuncGraph_")
-    .def(py::init<const std::string &>())
+    .def(py::init<const std::string &, bool>())
     .def("register_fn", &MultitypeFuncGraph::PyRegister)
     .def("set_doc_url_", &MultitypeFuncGraph::set_doc_url);
 

@@ -88,6 +88,8 @@
 "mindspore/mindspore/python/mindspore/ops/function/math_func.py"                                                         "consider-using-enumerate"
 "mindspore/mindspore/python/mindspore/nn/optim_ex/adam.py"                                                               "missing-docstring"
 "mindspore/mindspore/python/mindspore/nn/optim_ex/adamw.py"                                                              "missing-docstring"
+"mindspore/mindspore/python/mindspore/ops/composite/multitype_ops/bitwise_and_impl.py"                                   "too-many-function-args"
+"mindspore/mindspore/python/mindspore/ops/composite/multitype_ops/bitwise_or_impl.py"                                    "too-many-function-args"
 
 # MindData
 "mindspore/mindspore/python/mindspore/dataset/__init__.py"                                                               "redefined-builtin"

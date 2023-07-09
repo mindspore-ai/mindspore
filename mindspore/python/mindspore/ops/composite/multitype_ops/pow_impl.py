@@ -21,7 +21,7 @@ from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 
 
-pow_ = base.MultitypeFuncGraph("pow", True)
+pow_ = base.MultitypeFuncGraph("pow", True, True)
 """
 `pow` is a metafuncgraph object which will compute the pow of two objects
 using ".register" decorator.

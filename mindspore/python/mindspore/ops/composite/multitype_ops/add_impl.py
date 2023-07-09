@@ -24,7 +24,7 @@ from mindspore.common import CSRTensor, COOTensor
 from ...operations._sequence_ops import SequenceAdd
 
 
-add = base.MultitypeFuncGraph('add', True)
+add = base.MultitypeFuncGraph('add', True, True)
 """`add` is a metafuncgraph object which will add two objects according to input type using ".register" decorator."""
 
 

@@ -24,7 +24,7 @@ from mindspore.ops.operations import _sequence_ops as _seq
 
 # less is a metafuncgraph object which will determine if two objects are less according to input type
 # using ".register" decorator
-less = base.MultitypeFuncGraph("less", True)
+less = base.MultitypeFuncGraph("less", True, True)
 
 
 @less.register("Number", "Number")

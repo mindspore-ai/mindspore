@@ -32,7 +32,8 @@
 namespace mindspore {
 // namespace to support composite operators definition
 namespace prim {
-MultitypeFuncGraph::MultitypeFuncGraph(const std::string &name) : MetaFuncGraph(name) {
+MultitypeFuncGraph::MultitypeFuncGraph(const std::string &name, bool need_raise)
+    : MetaFuncGraph(name), need_raise_(need_raise) {
   fn_cache_.clear();
   // def multitype(*args:ref):
   signatures_ = std::vector<Signature>({{"args", SignatureEnumRW::kRWRef, SignatureEnumKind::kKindVarPositional}});
@@ -190,7 +191,7 @@ const std::string MultitypeFuncGraph::PrintMatchFailLog(const TypeListMap<py::fu
     }
   }
   if (has_any && match_max_idx >= types_list.size()) {
-    MS_LOG(INTERNAL_EXCEPTION)
+    MS_LOG(EXCEPTION)
       << "In the inputs of operation '" << name_
       << "', there are unsupported syntax in graph mode. Those codes would be fallen back to python interpreter, "
       << "which is not supported for operation '" << name_ << "'.";
@@ -259,7 +260,8 @@ FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
   }
 
   const auto allow_fallback_runtime = (MsContext::GetInstance()->GetJitSyntaxLevel() == kLax);
-  if (allow_fallback_runtime) {
+  bool has_dic = std::any_of(types.begin(), types.end(), [](const TypePtr &type) { return type->isa<Dictionary>(); });
+  if (allow_fallback_runtime && (!need_raise_ || !has_dic)) {
     FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
     AnfNodePtrList node_inputs{};
     for (auto type : types) {
