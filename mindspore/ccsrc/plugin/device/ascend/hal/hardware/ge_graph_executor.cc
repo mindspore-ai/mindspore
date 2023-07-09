@@ -264,8 +264,8 @@ struct GraphSummary {
     (void)graph_summary->GetEventNum(event_num);
     std::vector<::ge::Shape> ge_shapes;
     (void)graph_summary->GetOutputShapes(ge_shapes);
-    std::transform(ge_shapes.begin(), ge_shapes.end(), std::back_inserter(output_shapes),
-                   [](const ::ge::Shape &ge_shape) -> ShapeVector { return ge_shape.GetDims(); });
+    (void)std::transform(ge_shapes.begin(), ge_shapes.end(), std::back_inserter(output_shapes),
+                         [](const ::ge::Shape &ge_shape) -> ShapeVector { return ge_shape.GetDims(); });
   }
 
   std::string ToString() const {
@@ -297,7 +297,6 @@ std::map<std::string, ParameterPtr> FilterAllParameters(const KernelGraphPtr &ke
   std::map<std::string, ParameterPtr> ret;
   std::vector<AnfNodePtr> todo = kernel_graph->inputs();
   (void)todo.insert(todo.end(), kernel_graph->child_graph_result().begin(), kernel_graph->child_graph_result().end());
-  // auto todo = TopoSort(kernel_graph->get_return());
   for (const auto &node : todo) {
     MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<Parameter>()) {
@@ -306,7 +305,7 @@ std::map<std::string, ParameterPtr> FilterAllParameters(const KernelGraphPtr &ke
     auto parameter = node->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(parameter);
     std::string name = parameter->name();
-    ret.emplace(name, parameter);
+    (void)ret.emplace(name, parameter);
   }
   return ret;
 }
@@ -318,9 +317,9 @@ void SetKernelInfo(const AnfNodePtr &node) {
   std::vector<TypeId> output_infer_types;
   std::vector<std::string> output_formats;
   for (size_t i = 0; i < output_with_indexs.size(); ++i) {
-    output_infer_types.emplace_back(
+    (void)output_infer_types.emplace_back(
       common::AnfAlgo::GetOutputInferDataType(output_with_indexs[i].first, output_with_indexs[i].second));
-    output_formats.emplace_back(kOpFormat_DEFAULT);
+    (void)output_formats.emplace_back(kOpFormat_DEFAULT);
   }
   std::shared_ptr<device::KernelInfo> kernel_info =
     std::dynamic_pointer_cast<device::KernelInfo>(node->kernel_info_ptr());
@@ -452,7 +451,7 @@ void GeGraphExecutor::AllocParameterMemory(const KernelGraphPtr &kernel_graph, s
     return;
   }
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  memo->insert(kernel_graph);
+  (void)memo->insert(kernel_graph);
   auto parameters = FilterAllParameters(kernel_graph);
   for (auto iter : parameters) {
     auto parameter = utils::cast<ParameterPtr>(iter.second);
@@ -524,13 +523,16 @@ void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph)
     MS_EXCEPTION_IF_NULL(ge_tensor_desc);
     GeTensor ge_tensor(*ge_tensor_desc);
     if (output_addr->GetMutablePtr() != nullptr) {
-      ge_tensor.SetData(reinterpret_cast<uint8_t *>(output_addr->GetMutablePtr()), output_addr->GetSize(),
-                        [](void *) {});
+      if (ge_tensor.SetData(reinterpret_cast<uint8_t *>(output_addr->GetMutablePtr()), output_addr->GetSize(),
+                            [](void *) {}) != ::ge::GRAPH_SUCCESS) {
+        MS_LOG(EXCEPTION) << "SetData failed, ge input data " << ge_inputs.size() << " name: " << name
+                          << " size: " << output_addr->GetSize();
+      }
       MS_LOG(INFO) << "ge input data " << ge_inputs.size() << " name: " << name << " size: " << output_addr->GetSize();
     } else {
-      input_datas_index_[kernel_graph].emplace(node, ge_inputs.size());
+      (void)input_datas_index_[kernel_graph].emplace(node, ge_inputs.size());
     }
-    ge_inputs.emplace_back(std::move(ge_tensor));
+    (void)ge_inputs.emplace_back(std::move(ge_tensor));
   }
   while (cur_inputs_index < cur_inputs.size() && HasAbstractMonad(cur_inputs.at(cur_inputs_index))) {
     cur_inputs_index++;
@@ -543,8 +545,7 @@ void GeGraphExecutor::BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph)
   MS_LOG(INFO) << "BuildInputDataGeTensor finish.";
 }
 
-void GeGraphExecutor::AllocOutputMemory(const KernelGraphPtr &kernel_graph,
-                                        const std::vector<ShapeVector> &outputs_shape) const {
+void GeGraphExecutor::AllocOutputMemory(const KernelGraphPtr &kernel_graph) const {
   MS_LOG(INFO) << "Start AllocOutputMemory.";
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto ms_context = MsContext::GetInstance();
@@ -626,7 +627,7 @@ bool GeGraphExecutor::CompileGraph(const KernelGraphPtr &graph,
   AllocFeatureMemory(run_options, summary.feature_memory_size);
   AllocParameterMemory(graph);
   BuildInputDataGeTensor(graph);
-  AllocOutputMemory(graph, summary.output_shapes);
+  AllocOutputMemory(graph);
   EnableGraphInputZeroCopy(graph);
   EnableGraphOutputZeroCopy(graph);
   graph->set_run_mode(RunMode::kGraphMode);
@@ -698,7 +699,7 @@ void SetOutputs(const std::vector<KernelWithIndex> &graph_outputs,
   }
 }
 
-bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs) {
+bool GeGraphExecutor::RunGraphRefMode(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_name = GetGraphName(graph);
   MS_LOG(INFO) << "GE run graph " << graph_name << " start.";
@@ -879,8 +880,10 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
         MS_LOG(EXCEPTION) << kv.first->DebugString() << ", index: " << kv.second << " is greater than "
                           << ge_inputs.size();
       }
-      ge_inputs[kv.second].SetData(reinterpret_cast<uint8_t *>(output_addr->GetMutablePtr()), output_addr->GetSize(),
-                                   [](void *) {});
+      if (ge_inputs[kv.second].SetData(reinterpret_cast<uint8_t *>(output_addr->GetMutablePtr()),
+                                       output_addr->GetSize(), [](void *) {}) != ::ge::GRAPH_SUCCESS) {
+        MS_LOG(EXCEPTION) << "SetData failed, " << kv.first->DebugString() << ", index: " << kv.second;
+      }
     }
   }
   for (size_t i = 0; i < ge_inputs.size(); ++i) {
@@ -913,14 +916,16 @@ std::vector<GeTensor> GeGraphExecutor::GenerateOutputGeTensor(const KernelGraphP
       MS_LOG(EXCEPTION) << "Input " << output_node->fullname_with_scope() << ", index: " << index
                         << " address is nullptr, kernel graph: " << kernel_graph->ToString();
     }
-    ge_tensor.SetData(reinterpret_cast<uint8_t *>(output_device_addr->GetMutablePtr()), output_device_addr->GetSize(),
-                      [](void *) {});
-    ge_outputs.emplace_back(std::move(ge_tensor));
+    if (ge_tensor.SetData(reinterpret_cast<uint8_t *>(output_device_addr->GetMutablePtr()),
+                          output_device_addr->GetSize(), [](void *) {}) != ::ge::GRAPH_SUCCESS) {
+      MS_LOG(EXCEPTION) << "SetData failed, Input " << output_node->fullname_with_scope() << ", index: " << index;
+    }
+    (void)ge_outputs.emplace_back(std::move(ge_tensor));
   }
   return ge_outputs;
 }
 
-void GeGraphExecutor::RunInitGraph(const std::string &graph_name) {
+void GeGraphExecutor::RunInitGraph(const std::string &graph_name) const {
   transform::RunOptions run_options;
   run_options.name = "init_subgraph." + graph_name;
   if (transform::GetGraphByName(run_options.name) == nullptr) {

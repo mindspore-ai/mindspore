@@ -545,8 +545,8 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
       auto variable = std::make_shared<RefData>(name);
       (void)variable->update_output_desc_y(*desc);
       (void)variable->update_input_desc_x(*desc);
-      variable->set_attr_index(ref_datas_.size());
-      ref_datas_.emplace_back(variable);
+      (void)variable->set_attr_index(ref_datas_.size());
+      (void)ref_datas_.emplace_back(variable);
       // do not use read variable while variable sink
       MS_LOG(DEBUG) << "InitParam, op_name = " << name << ", var = " << variable->GetName() << ".";
       op_itor->second = variable;  // replace parameter with variable
@@ -1903,8 +1903,8 @@ void DfGraphConvertor::TransformConstOp(const CNodePtr &node, const AnfNodePtr &
         auto desc = vars_[name]->GetOutputDesc("y");
         (void)variable->update_output_desc_y(desc);
         (void)variable->update_input_desc_x(desc);
-        variable->set_attr_index(ref_datas_.size());
-        ref_datas_.emplace_back(variable);
+        (void)variable->set_attr_index(ref_datas_.size());
+        (void)ref_datas_.emplace_back(variable);
         MS_LOG(DEBUG) << "Trans to variable, var = " << variable->GetName() << ".";
         op_itor->second = variable;  // replace parameter with variable
         vars_[name] = variable;
