@@ -197,22 +197,25 @@ int FullQuantQuantizer::QuantNodeGraphInput(const PrimitivePtr &primitive, const
   return RET_OK;
 }
 
-int FullQuantQuantizer::QuantNodeCNode(const PrimitivePtr &input_cnode_primitive, const AnfNodePtr &input_node,
+int FullQuantQuantizer::QuantNodeCNode(const CNodePtr &cnode, const AnfNodePtr &input_node,
                                        const std::unique_ptr<DataDistribution> &info) {
-  if (!input_cnode_primitive->HasAttr(quant::kQuantParam) ||
-      input_cnode_primitive->GetAttr(quant::kQuantParam) == nullptr) {
-    auto quant_params = GetQuantParam(input_node, info);
-    if (quant_params.empty()) {
-      MS_LOG(INFO) << input_node->fullname_with_scope() << " quant param not exist.";
-      return RET_NO_CHANGE;
-    }
-    auto quantization_ptr = quant::ConvertQuantParamTToQuantizationParam(quant_params);
-    if (quantization_ptr != nullptr) {
-      std::vector<ValuePtr> quantization_list = {quantization_ptr};
-      input_cnode_primitive->AddAttr(quant::kQuantParam, std::make_shared<ValueList>(quantization_list));
-    }
-  } else {
+  auto input_cnode = input_node->cast<mindspore::CNodePtr>();
+  MS_CHECK_TRUE_MSG(input_cnode != nullptr, RET_NULL_PTR, "input_cnode is nullptr.");
+  auto input_cnode_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
+  CHECK_NULL_RETURN(input_cnode_primitive);
+  if (input_cnode_primitive->HasAttr(quant::kQuantParam)) {
     MS_LOG(INFO) << input_node->fullname_with_scope() << " quant param already exist.";
+    return RET_NO_CHANGE;
+  }
+  auto quant_params = GetQuantParam(input_node, info);
+  if (quant_params.empty()) {
+    MS_LOG(INFO) << input_node->fullname_with_scope() << " quant param not exist.";
+    return RET_NO_CHANGE;
+  }
+  auto quantization_ptr = quant::ConvertQuantParamTToQuantizationParam(quant_params);
+  if (quantization_ptr != nullptr) {
+    std::vector<ValuePtr> quantization_list = {quantization_ptr};
+    input_cnode_primitive->AddAttr(quant::kQuantParam, std::make_shared<ValueList>(quantization_list));
   }
   return RET_OK;
 }
@@ -241,16 +244,8 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
         return RET_ERROR;
       }
     } else if (input_node->isa<mindspore::CNode>()) {
-      auto input_cnode = input_node->cast<mindspore::CNodePtr>();
-      MS_CHECK_TRUE_MSG(input_cnode != nullptr, RET_NULL_PTR, "input_cnode is nullptr.");
-      auto input_cnode_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
-      if (input_cnode_primitive == nullptr) {
-        MS_LOG(WARNING) << "input: " << i << " " << input_cnode->fullname_with_scope() << ": "
-                        << " Primitive is null";
-        continue;
-      }
       auto &info = (*inputs_diverg_info)[op_name][i - 1];
-      ret = QuantNodeCNode(input_cnode_primitive, input_node, info);
+      ret = QuantNodeCNode(cnode, input_node, info);
       if (ret != RET_NO_CHANGE && ret != RET_OK) {
         MS_LOG(ERROR) << input_node->fullname_with_scope() << " Do cnode quant failed.";
         return RET_ERROR;
@@ -597,7 +592,14 @@ int FullQuantQuantizer::DoInference(CollectType collect_type) {
                                           const std::vector<mindspore::MSTensor> &beforeOutputs,
                                           const MSCallBackParam &callParam) -> bool {
       auto diverg_info_map = calibrator_->GetInputDivergInfo();
-      auto ret = calibrator_->CollectDataDistribution(callParam.node_name, beforeInputs, diverg_info_map, collect_type);
+      // restore node name
+      auto node_names = SplitStringToVector(callParam.node_name, "_fusion");
+      MS_CHECK_TRUE_MSG(!node_names.empty(), false, "node_names is empty.");
+      if (node_names.empty()) {
+        MS_LOG(WARNING) << "node_names is empty, callParam.node_name: " << callParam.node_name;
+        return true;
+      }
+      auto ret = calibrator_->CollectDataDistribution(node_names.at(0), beforeInputs, diverg_info_map, collect_type);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "CollectDataDistribution failed.";
         return false;
@@ -609,7 +611,12 @@ int FullQuantQuantizer::DoInference(CollectType collect_type) {
                                          const std::vector<mindspore::MSTensor> &afterOutputs,
                                          const MSCallBackParam &callParam) -> bool {
       auto diverg_info_map = calibrator_->GetOutputDivergInfo();
-      auto ret = calibrator_->CollectDataDistribution(callParam.node_name, afterOutputs, diverg_info_map, collect_type);
+      auto node_names = SplitStringToVector(callParam.node_name, "_fusion");
+      if (node_names.empty()) {
+        MS_LOG(WARNING) << "node_names is empty, callParam.node_name: " << callParam.node_name;
+        return true;
+      }
+      auto ret = calibrator_->CollectDataDistribution(node_names.at(0), afterOutputs, diverg_info_map, collect_type);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "CollectDataDistribution failed.";
         return false;

@@ -37,6 +37,7 @@
 #include "tools/optimizer/fusion/quant_dtype_cast_fusion.h"
 #include "include/backend/optimizer/graph_optimizer.h"
 #include "tools/optimizer/graph/infershape_pass.h"
+#include "tools/converter/quantizer/split_shared_bias.h"
 
 namespace mindspore::lite::quant {
 int QuantizationOptimizer::DoFullQuant(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
@@ -216,7 +217,7 @@ int ConvertValueNodeToParameter(const FuncGraphPtr &func_graph) {
   return RET_OK;
 }
 
-int PrepareQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
+int QuantizationOptimizer::PrepareQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
   if (!param->train_model && param->save_type == kMindIR) {
     auto status = ConvertValueNodeToParameter(old_graph);
     if (status != RET_OK) {
@@ -240,8 +241,16 @@ int PrepareQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<Convert
     CLEStrategy cle_strategy(old_graph);
     auto status = cle_strategy.Run();
     if (status != RET_OK) {
-      MS_LOG(ERROR) << "do pre process failed!";
+      MS_LOG(ERROR) << "do cle_strategy failed!";
       return status;
+    }
+  }
+
+  if (param->commonQuantParam.quant_type == quant::QUANT_ALL && param->fullQuantParam.bias_correction) {
+    SplitSharedBias split_shared_bias(old_graph, param);
+    if (split_shared_bias.Run() != RET_OK) {
+      MS_LOG(ERROR) << "split shared bias node failed!";
+      return RET_ERROR;
     }
   }
   return RET_OK;

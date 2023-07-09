@@ -79,7 +79,7 @@ class FullQuantQuantizer : public Quantizer {
   int QuantNodeGraphInput(const PrimitivePtr &primitive, const AnfNodePtr &input_node,
                           const std::unique_ptr<DataDistribution> &info);
 
-  int QuantNodeCNode(const PrimitivePtr &input_cnode_primitive, const AnfNodePtr &input_node,
+  int QuantNodeCNode(const CNodePtr &cnode, const AnfNodePtr &input_node,
                      const std::unique_ptr<DataDistribution> &info);
 
   std::vector<schema::QuantParamT> GetQuantParam(const AnfNodePtr &input_node,
