@@ -49,7 +49,6 @@ namespace mindspore {
 namespace pynative {
 namespace autograd {
 namespace {
-constexpr auto kConvertAttrNode = "convert_attr_node";
 constexpr auto kTupleToMakeTuple = "tuple_to_make_tuple";
 constexpr auto kIsKNode = "is_knode";
 enum class SpecialType { kZerosLikeType = 0, kOnesLikeType = 1 };
@@ -491,7 +490,7 @@ void RevertMakeTupleNode(const FuncGraphPtr &graph, const CNodePtr &cnode, Value
 void ProcessAttrNode(const FuncGraphPtr &graph, const CNodePtr &cnode, ValuePtrList *input_value,
                      AnfNodePtrList *cnode_inputs) {
   MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->HasAttr(kConvertAttrNode)) {
+  if (cnode->HasAttr(kAttrConvertAttrNode)) {
     const auto item = node_attr_value_.find(cnode->ToString());
     if (item != node_attr_value_.end()) {
       (void)PyNativeAlgo::Common::SetValueGradInfo(item->second.second, nullptr, TensorGradType::kConstant);
@@ -679,8 +678,8 @@ bool AutoGradCellImpl::KPynativeOp(const GradParamPtr &grad_param) {
     variable_adjoint->set_is_fake_bprop(true);
     variable_adjoint->set_fake_prim_name(prim->name());
   }
-  UpdateNextEdges(variable_adjoint, outputs, grad_param->op_grad_info->input_value, grad_param->op_grad_info->input_abs,
-                  grad_param->use_dynamic_shape_process);
+  UpdateNextEdges(variable_adjoint, outputs, grad_param->op_grad_info->input_value,
+                  grad_param->op_grad_info->input_abs);
   MS_LOG(DEBUG) << "Finish update next edges, "
                 << "prim is: " << prim->name() << " variable is: " << variable_adjoint->ToString();
   (void)ad_param()->variable_adjoint_set_.insert(variable_adjoint);
@@ -726,8 +725,8 @@ bool AutoGradCellImpl::KPynativeWithFProp(const GradParamPtr &grad_param) {
     din->set_abstract(grad_param->op_grad_info->input_abs[i]);
     (void)outputs.emplace_back(din);
   }
-  UpdateNextEdges(variable_adjoint, outputs, grad_param->op_grad_info->input_value, grad_param->op_grad_info->input_abs,
-                  grad_param->use_dynamic_shape_process);
+  UpdateNextEdges(variable_adjoint, outputs, grad_param->op_grad_info->input_value,
+                  grad_param->op_grad_info->input_abs);
   (void)ad_param()->variable_adjoint_set_.insert(variable_adjoint);
   (void)ad_param()->anfnode_to_variable_adjoint_.insert(std::make_pair(grad_param->cnode, variable_adjoint));
   SetGradMetaData(grad_param->op_grad_info->out_value, variable_adjoint);
@@ -971,7 +970,7 @@ void AutoGradCellImpl::GradGraphByExpander(const GradParamPtr &grad_param) {
     for (size_t i = 1; i < cnode->size(); ++i) {
       (void)input_abs.emplace_back(cnode->input(i)->abstract());
     }
-    UpdateNextEdges(variable_adjoint, outputs, input_value, input_abs, grad_param->use_dynamic_shape_process);
+    UpdateNextEdges(variable_adjoint, outputs, input_value, input_abs);
     SetGradMetaData(out, variable_adjoint);
     (void)ad_param()->anfnode_to_variable_adjoint_.insert(std::make_pair(node, variable_adjoint));
     (void)ad_param()->variable_adjoint_set_.insert(variable_adjoint);
@@ -1335,7 +1334,7 @@ AnfNodePtr AutoGradCellImpl::BuildKNodeForMakeTuple(const AnfNodePtr &input_node
     (void)make_tuple_dout.emplace_back(d);
     AddUser(dout, d, 1);
   }
-  UpdateNextEdges(variable_adjoint, make_tuple_dout, input_value, input_abs, false);
+  UpdateNextEdges(variable_adjoint, make_tuple_dout, input_value, input_abs);
   (void)ad_param()->anfnode_to_variable_adjoint_.insert(std::make_pair(input_node, variable_adjoint));
   (void)ad_param()->variable_adjoint_set_.insert(variable_adjoint);
   return k_node;
@@ -1388,7 +1387,7 @@ AnfNodePtr AutoGradCellImpl::BuildKNodeForTupleGetItem(const AnfNodePtr &input_n
                      SpecialType::kZerosLikeType)
       ->cast<CNodePtr>();
   UpdateNextEdges(variable_adjoint, {tuple_getitem_dout_value, index_dout_value}, {v_tuple, index_value},
-                  {tuple_item_cnode->input(kIndex1)->abstract(), tuple_item_cnode->input(kIndex2)->abstract()}, false);
+                  {tuple_item_cnode->input(kIndex1)->abstract(), tuple_item_cnode->input(kIndex2)->abstract()});
   AddUser(dout, tuple_getitem_dout_value, index_value_int + 1);
   (void)ad_param()->anfnode_to_variable_adjoint_.insert(std::make_pair(input_node, variable_adjoint));
   (void)ad_param()->variable_adjoint_set_.insert(variable_adjoint);
@@ -1527,7 +1526,7 @@ CNodePtr AutoGradCellImpl::ConvertConstInputToAttr(const CNodePtr &cnode, const 
           return cnode;
         }
       }
-      cnode->AddAttr(kConvertAttrNode, MakeValue(true));
+      cnode->AddAttr(kAttrConvertAttrNode, MakeValue(true));
       (void)node_attr_value_.emplace(cnode->ToString(), std::make_pair(i, value));
       prim->set_attr(input_names_vec[i], value);
     } else {
@@ -1548,8 +1547,7 @@ CNodePtr AutoGradCellImpl::ConvertConstInputToAttr(const CNodePtr &cnode, const 
 }
 
 void AutoGradCellImpl::UpdateNextEdges(const VariableAdjointPtr &variable, const std::vector<CNodePtr> &dins,
-                                       const ValuePtrList &input_value, const abstract::AbstractBasePtrList &abs,
-                                       bool use_dynamic_shape_process) {
+                                       const ValuePtrList &input_value, const abstract::AbstractBasePtrList &abs) {
   size_t input_size = input_value.size();
   if (dins.size() != input_size) {
     MS_LOG(EXCEPTION) << "The size of dins " << dins.size() << " is not same as input_value " << input_size;
@@ -1562,10 +1560,8 @@ void AutoGradCellImpl::UpdateNextEdges(const VariableAdjointPtr &variable, const
                   << din->DebugString();
 #ifndef ENABLE_TEST
     // VM no need run pass
-    if (use_dynamic_shape_process) {
-      ConvertValueNodeValueToTensor(din);
-      din = ConvertConstInputToAttr(din, device_target_);
-    }
+    ConvertValueNodeValueToTensor(din);
+    din = ConvertConstInputToAttr(din, device_target_);
 #endif
     UpdateNextEdge(fn, din, input_value[i], abs[i]);
   }

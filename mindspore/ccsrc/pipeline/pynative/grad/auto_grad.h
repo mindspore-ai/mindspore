@@ -209,8 +209,7 @@ class AutoGradCellImpl {
                                     const VariableAdjointPtr &variable_adjoint, bool is_custom_prim);
   // Back propagate for one node;
   void UpdateNextEdges(const VariableAdjointPtr &variable, const std::vector<CNodePtr> &dins,
-                       const ValuePtrList &input_value, const abstract::AbstractBasePtrList &abs,
-                       bool use_dynamic_shape_process);
+                       const ValuePtrList &input_value, const abstract::AbstractBasePtrList &abs);
   void UpdateNextEdge(const FunctionNodePtr &fn, const AnfNodePtr &din, const ValuePtr &input_arg,
                       const AbstractBasePtr &abs);
 
