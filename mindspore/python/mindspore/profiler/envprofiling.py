@@ -122,10 +122,10 @@ def parse_pubilc_args(options):
             "The 'output_path' parameter of the environment variable MS_PROFILE_OPTIONS only supports absolute path, "
             f"it will be set to '{absolute_path}'.")
         options["output_path"] = absolute_path
-    if options.get("output_path") not in ["memory", "time", "all", None]:
+    if options.get("profile_framework") not in ["memory", "time", "all", None]:
         logger.warning(
             "The 'profile_framework' parameter of the environment variable MS_PROFILE_OPTIONS must be one of ['memory',"
-            " 'time', 'all', null], it will be set to 'all'.")
+            " 'time', 'all', null], but got %s, it will be set to 'all'.", options.get("profile_framework"))
         options['profile_framework'] = "all"
     return options
 
