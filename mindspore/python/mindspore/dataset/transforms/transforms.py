@@ -273,17 +273,16 @@ class Compose(CompoundOperation):
         if all(hasattr(transform, "random") and not transform.random for transform in self.transforms):
             self.random = False
 
+    # pylint: disable=missing-docstring
     @staticmethod
     def decompose(operations):
-        """
-        Remove all compose operation from the given list of operations.
-
-        Args:
-            operations (list): list of transforms.
-
-        Returns:
-            list of operations without compose operations.
-        """
+        # Remove all compose operation from the given list of operations.
+        #
+        # Args:
+        #    operations (list): list of transforms.
+        #
+        # Returns:
+        #    list of operations without compose operations.
         new_operations = []
         for op in operations:
             if isinstance(op, Compose):
@@ -292,17 +291,16 @@ class Compose(CompoundOperation):
                 new_operations.append(op)
         return new_operations
 
+    # pylint: disable=missing-docstring
     @staticmethod
     def reduce(operations):
-        """
-        Wraps adjacent Python operations in a Compose to allow mixing of Python and C++ operations.
-
-        Args:
-            operations (list): list of tensor operations.
-
-        Returns:
-            list, the reduced list of operations.
-        """
+        # Wraps adjacent Python operations in a Compose to allow mixing of Python and C++ operations.
+        #
+        # Args:
+        #    operations (list): list of tensor operations.
+        #
+        # Returns:
+        #    list, the reduced list of operations.
         new_ops, start_ind, end_ind = [], 0, 0
         for i, op in enumerate(operations):
             if op.implementation == Implementation.C and not isinstance(op, FuncWrapper):
