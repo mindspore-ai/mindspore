@@ -21,6 +21,7 @@ import glob
 import subprocess
 import csv
 from enum import Enum
+import numpy as np
 
 from mindspore import log as logger, context
 from mindspore.context import get_auto_parallel_context
@@ -427,6 +428,8 @@ class Profiler:
         self._msprof_enable = os.getenv("PROFILER_SAMPLECONFIG")
         if self._msprof_enable:
             return
+        self._start_time = int(time.time() * 1000000)
+        logger.info("Profiling: start time: %d", self._start_time)
         if kwargs.get("env_enable"):
             self._profiler_init(kwargs)
             return
@@ -578,7 +581,7 @@ class Profiler:
             self._host_info_analyse()
         logger.info("Profiling: all the data have been analyzed.")
         self._init_profiler_info()
-
+        self._is_support_step_info_collect()
         parallel_mode = get_auto_parallel_context("parallel_mode")
         stage_num = get_auto_parallel_context("pipeline_stages")
 
@@ -1187,6 +1190,8 @@ class Profiler:
             self._ascend_graph_memory_analyse(points)
             self._ascend_graph_hccl_analyse(source_path)
             self._ascend_graph_msadvisor_analyse(job_id)
+            graph_ids = np.unique(op_summary['Model ID']).tolist()
+            ProfilerInfo.set_graph_ids(graph_ids)
 
     def _ascend_graph_start(self):
         """Ascend graph mode start profiling."""

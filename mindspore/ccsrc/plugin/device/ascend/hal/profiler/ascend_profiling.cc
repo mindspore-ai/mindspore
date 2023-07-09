@@ -95,6 +95,20 @@ void AscendProfiler::Init(const std::string &profiling_path, uint32_t device_id,
     MS_LOG(EXCEPTION) << "Failed to call aclprofInit function.";
   }
 
+  uint32_t device_list[1] = {device_id_};
+  uint32_t device_num = 1;
+  uint64_t mask = GetOptionsMask();
+  aclprofAicoreMetrics aic_metrics = GetAicMetrics();
+  acl_config_ = aclprofCreateConfig(device_list, device_num, aic_metrics, nullptr, GetOptionsMask());
+  if (acl_config_ == nullptr) {
+    MS_LOG(EXCEPTION) << "Failed to call aclprofCreateConfig function.";
+  }
+  aclRet = aclprofStart(acl_config_);
+  if (aclRet != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Failed to call aclprofStart function.";
+  }
+  MS_LOG(INFO) << "Start profiling, options mask is " << mask << " aic_metrics is " << aic_metrics;
+
   init_flag_ = true;
 }
 
@@ -147,19 +161,8 @@ aclprofAicoreMetrics AscendProfiler::GetAicMetrics() const {
 }
 
 void AscendProfiler::Start() {
-  uint32_t device_list[1] = {device_id_};
-  uint32_t device_num = 1;
-  uint64_t mask = GetOptionsMask();
-  aclprofAicoreMetrics aic_metrics = GetAicMetrics();
-  acl_config_ = aclprofCreateConfig(device_list, device_num, aic_metrics, nullptr, GetOptionsMask());
-  if (acl_config_ == nullptr) {
-    MS_LOG(EXCEPTION) << "Failed to call aclprofCreateConfig function.";
-  }
-  aclError aclRet = aclprofStart(acl_config_);
-  if (aclRet != ACL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Failed to call aclprofStart function.";
-  }
-  MS_LOG(INFO) << "Start profiling, options mask is " << mask << " aic_metrics is " << aic_metrics;
+  MS_LOG(INFO) << "Begin to profiling.";
+  (void)ProfilingManager::GetInstance().SetStepStart(true);
 
   MemoryProfiling::GetInstance().StartMemoryProfiling();
 
@@ -170,6 +173,8 @@ void AscendProfiler::Start() {
 
 void AscendProfiler::Stop() {
   MS_LOG(INFO) << "Begin to stop profiling.";
+  (void)ProfilingManager::GetInstance().SetStepStart(false);
+
   if (acl_config_ == nullptr) {
     MS_LOG(EXCEPTION)
       << "Failed to stop profiling because of null aReportDatacl config.Please make sure call Profiler.Start function "

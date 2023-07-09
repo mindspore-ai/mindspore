@@ -59,7 +59,8 @@ class ProfilingManager {
   bool IsMsprofiling();
   bool InitProfiling(const std::string &profiling_path, uint32_t device_id);
   bool IsProfilingInitialized() const { return cur_state_ >= kProfilingInit; }
-  inline bool IsProfilingStart() const { return cur_state_ >= kProfilingStart; }
+  inline bool IsProfilingStart() const { return cur_state_ == kProfilingStart && step_start_; }
+  inline void SetStepStart(const bool start) { step_start_ = start; }
   Status PluginInit() const;
   void PluginUnInit() const;
   Status CallMsprofReport(NotNull<ReporterData *> reporter_data) const;
@@ -84,6 +85,7 @@ class ProfilingManager {
   ProfilingState cur_state_;
   std::string profiling_path_;
   bool msprof_enable_{false};
+  bool step_start_{false};
 };
 
 Status ProfCommandHandle(ProfCommandHandleType type);

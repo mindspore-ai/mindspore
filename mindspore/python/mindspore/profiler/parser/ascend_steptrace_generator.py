@@ -35,7 +35,7 @@ class AscendStepTraceGenerator:
 
     def parse(self):
         """Analyse the original steptrace data generate steptrace data."""
-        if not isinstance(self.steptrace, np.ndarray) or self.steptrace.shape[0] == 0:
+        if not isinstance(self.steptrace, np.ndarray) or self.steptrace.shape[0] == 0 or not self.steptrace:
             return
         for name in self.steptrace.dtype.names[9::2]:
             self.steptrace_detail_dt.append((name, np.int64))
