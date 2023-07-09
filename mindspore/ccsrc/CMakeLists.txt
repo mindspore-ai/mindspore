@@ -626,8 +626,6 @@ if(NOT ENABLE_TESTCASES AND NOT (ENABLE_D OR ENABLE_CPU OR ENABLE_GPU))
     list(APPEND EXPRESSION_STUB_SOURCE ${CMAKE_SOURCE_DIR}/tests/ut/cpp/stub/ps/ps_core_stub.cc)
     list(APPEND EXPRESSION_STUB_SOURCE
             ${CMAKE_SOURCE_DIR}/tests/ut/cpp/stub/profiling/parallel_strategy_profiling_stub.cc)
-    list(APPEND EXPRESSION_STUB_SOURCE
-            ${CMAKE_SOURCE_DIR}/tests/ut/cpp/stub/profiling/profiling_stub.cc)
 
     add_library(expression_ STATIC ${EXPRESSION_STUB_SOURCE})
     target_link_libraries(_c_expression PUBLIC expression_)
