@@ -42,6 +42,7 @@ void EpochCtrlOp::Print(std::ostream &out, bool show_all) const {
 
 Status EpochCtrlOp::GetNextRow(TensorRow *row) {
   RETURN_UNEXPECTED_IF_NULL(row);
+  RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "GetFromPreviousOp"));
   if (child_.empty()) {
     RETURN_STATUS_UNEXPECTED("[Internal ERROR] EpochCtrlOp can't be the leaf node(first operator) of pipeline.");
   }
@@ -54,7 +55,7 @@ Status EpochCtrlOp::GetNextRow(TensorRow *row) {
   if (row->eoe()) {
     RETURN_IF_NOT_OK(EoeReceived(0));
   }
-
+  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "GetFromPreviousOp", {{"Flag", row->FlagName()}}));
   return Status::OK();
 }
 

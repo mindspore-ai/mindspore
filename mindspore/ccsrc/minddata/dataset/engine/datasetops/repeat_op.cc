@@ -59,6 +59,7 @@ void RepeatOp::Print(std::ostream &out, bool show_all) const {
 // this function will retry to pop the connector again and will get the non-EOE row if any.
 Status RepeatOp::GetNextRow(TensorRow *row) {
   RETURN_UNEXPECTED_IF_NULL(row);
+  RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "GetFromPreviousOp"));
   if (child_.empty()) {
     RETURN_STATUS_UNEXPECTED("[Internal ERROR] Pipeline init failed, RepeatOp can't be the first op in pipeline.");
   }
@@ -68,6 +69,7 @@ Status RepeatOp::GetNextRow(TensorRow *row) {
   while (row->eoe()) {
     RETURN_IF_NOT_OK(EoeReceived(0));
     if (state_ == OpState::kDeOpIdle) {
+      RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "GetFromPreviousOp", {{"Flag", row->FlagName()}}));
       return Status::OK();
     }
     RETURN_IF_NOT_OK(child_[0]->GetNextRow(row));
@@ -76,6 +78,7 @@ Status RepeatOp::GetNextRow(TensorRow *row) {
   if (row->eof()) {
     RETURN_IF_NOT_OK(EofReceived(0));
   }
+  RETURN_IF_NOT_OK(CollectOpInfoEnd(this->NameWithID(), "GetFromPreviousOp", {{"Flag", row->FlagName()}}));
   return Status::OK();
 }
 
