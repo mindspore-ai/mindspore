@@ -16,11 +16,10 @@
 import os
 from subprocess import CalledProcessError, TimeoutExpired
 from subprocess import Popen, PIPE
-from typing import List
+from typing import List, Optional
 import json
 from json.decoder import JSONDecodeError
 import csv
-import mindspore as ms
 from mindspore import log as logger, context
 from mindspore.communication import get_rank
 from mindspore.profiler.common.util import get_file_path
@@ -62,16 +61,16 @@ class AscendMsprofExporter:
     _ascend_mark = "Ascend"
     _hiai_msprof_tail = "Ascend/latest/tools/profiler/bin"
 
-    def __init__(self, prof_root_dir: str) -> None:
+    def __init__(self, prof_root_dir: str, time_out=300) -> None:
         self._prof_root_dir = prof_root_dir
         self._start_time = 0
-        self._dynamic = False
+        self._support_step_trace = True
         self._prof_paths = []
         self._output_path = None
         self._device_path = None
         self._model_ids = []
         self._iter_ids = []
-        self._mode = ms.get_context("mode")
+        self._time_out = time_out
         self._check_msprof_env()
 
     @staticmethod
@@ -92,17 +91,18 @@ class AscendMsprofExporter:
             logger.warning(err)
         return int(start_time)
 
-    def export(self, start_time=0, dynamic=False):
+    def export(self, start_time=0, time_out=300, support_step_trace=True):
         """start_time is the time to collect PROF data"""
         self._start_time = start_time
-        self._dynamic = dynamic
+        self._time_out = time_out
+        self._support_step_trace = support_step_trace
         self._init_output_path()
         if not self._output_path:
             raise FileNotFoundError("Do not found valid profiling directory")
         trace_file = self._get_device_trace_file(self._output_path, self._device_path)
-        if trace_file and self._mode == context.GRAPH_MODE:
+        if trace_file:
             self._export_whole_prof(self._output_path, trace_file)
-            self._check_export_files(self._device_path, trace_file)
+        self._check_export_files(self._device_path, trace_file)
 
     def get_job_dir(self):
         """Return matched PROF directory path. Call this function after exporting profiling data."""
@@ -115,7 +115,7 @@ class AscendMsprofExporter:
         except (FileNotFoundError, PermissionError, CalledProcessError) as exc:
             raise RuntimeError(exc)
         try:
-            outs, errs = proc.communicate(timeout=300)
+            outs, errs = proc.communicate(timeout=self._time_out)
         except TimeoutExpired:
             proc.kill()
             msg = "The possible cause is that too much data is collected " \
@@ -127,14 +127,9 @@ class AscendMsprofExporter:
             raise RuntimeError(errs)
         return outs
 
-    def _export_helper(self, **kwargs):
+    def _export_helper(self, output, model_id=None, iter_id=None):
         """msprof export helper"""
-        export_cmd = [self._msprof_cmd, "--export=on"]
-        output = kwargs.get("output")
-        model_id = kwargs.get("model_id")
-        iter_id = kwargs.get("iter_id")
-        if output:
-            export_cmd.append("--output={}".format(output))
+        export_cmd = [self._msprof_cmd, "--export=on", "--output={}".format(output)]
         if model_id:
             export_cmd.append("--model-id={}".format(model_id))
         if iter_id:
@@ -156,18 +151,13 @@ class AscendMsprofExporter:
                     self._model_ids.append(int(row[model_idx]))
                     self._iter_ids.append(int(row[iter_idx]))
 
-    def _check_export_files(self, device_path: str, trace_file: str):
+    def _check_export_files(self, device_path: str, trace_file: Optional[str]):
         """Check the existence of op_summary & op_statistic files."""
         summary_path = os.path.join(device_path, self._summary_dir)
-
         if not os.path.isdir(summary_path):
             raise RuntimeError("Path {} is not a existing directory.".format(summary_path))
 
         sumary_filess = os.listdir(summary_path)
-
-        dev_id = ms.get_context("device_id")
-        self._get_model_iter_ids(trace_file)
-
         op_summary = set()
         op_statistic = set()
 
@@ -178,18 +168,28 @@ class AscendMsprofExporter:
                 op_statistic.add(summary_file)
 
         if not op_summary:
-            raise RuntimeError("No op_summary file is exported!")
+            raise RuntimeError("The op_summary file was not found, " \
+                               "perhaps the original data was not collected.")
         if not op_statistic:
-            raise RuntimeError("No op_statistic file is exported!")
+            raise RuntimeError("The op_statistics file was not found, " \
+                               "perhaps the original data was not collected.")
+
+        if not trace_file:
+            return
+
+        dev_id = context.get_context("device_id")
+        self._get_model_iter_ids(trace_file)
 
         for model_id, iter_id in zip(self._model_ids, self._iter_ids):
             tag = "_{}_{}_{}.csv".format(dev_id, model_id, iter_id)
             op_sum_file = self._op_summary_mark + tag
             op_sta_file = self._op_statistic_mark + tag
             if op_sum_file not in op_summary:
-                logger.warning("The file {} can not be found!".format(op_sum_file))
+                logger.warning("[Profiler]The file {} was not found, " \
+                               "perhaps the original data was not collected.".format(op_sum_file))
             if op_sta_file not in op_statistic:
-                logger.warning("The file {} can not be found!".format(op_sta_file))
+                logger.warning("[Profiler]The file {} was not found, " \
+                               "perhaps the original data was not collected.".format(op_sta_file))
 
         logger.info("Finish checking files.")
 
@@ -198,8 +198,7 @@ class AscendMsprofExporter:
         self._get_model_iter_ids(trace_file)
 
         for model_id, iter_id in zip(self._model_ids, self._iter_ids):
-            single_kwargs = {"output": prof, "model_id": model_id, "iter_id": iter_id}
-            self._export_helper(**single_kwargs)
+            self._export_helper(prof, model_id, iter_id)
 
     def _get_device_trace_file(self, prof_path: str, device_path: str):
         """search the step trace csv file under device directory"""
@@ -207,8 +206,7 @@ class AscendMsprofExporter:
         summary_path = os.path.join(device_path, self._summary_dir)
 
         if not os.path.exists(summary_path):
-            default_kwargs = {"output": prof_path}
-            self._export_helper(**default_kwargs)
+            self._export_helper(output=prof_path)
 
         if not os.path.isdir(summary_path):
             msg = "Path {} is not a existing directory. Make sure there is " \
@@ -217,8 +215,7 @@ class AscendMsprofExporter:
 
         step_trace_file = get_file_path(summary_path, self._step_trace_mark)
 
-        can_not_miss = self._mode == context.GRAPH_MODE and not self._dynamic
-        if not step_trace_file and can_not_miss:
+        if not step_trace_file and self._support_step_trace:
             msg = "Do not found step trace csv file in {}.".format(self._output_path)
             raise FileNotFoundError(msg)
 
@@ -230,7 +227,7 @@ class AscendMsprofExporter:
         outs = self._run_cmd(msprof_cmd, raise_error=False)
         if outs != self._null_info:
             return
-        logger.warning("The msprof command was not found. Searching from environment variables...")
+        logger.warning("[Profiler]The msprof command was not found. Searching from environment variables...")
         self._search_and_add()
 
     def _search_and_add(self):
@@ -272,7 +269,7 @@ class AscendMsprofExporter:
         self._prof_paths = []
 
         if not os.path.isdir(self._prof_root_dir):
-            msg = "Path {} is not a existing directory.".format(self._prof_root_dir)
+            msg = "Path {} is not an existing directory.".format(self._prof_root_dir)
             raise RuntimeError(msg)
 
         for loc_root, loc_dirs, _ in os.walk(self._prof_root_dir):
@@ -311,12 +308,12 @@ class AscendMsprofExporter:
         # search by rank id
         find_device_path = None
         rank_id = None
-        device_id = ms.get_context("device_id")
+        device_id = context.get_context("device_id")
 
         try:
             rank_id = get_rank()
         except RuntimeError:
-            logger.warning("Do not get rank_id in the environment variable, use device_id instead.")
+            logger.warning("[Profiler]Do not get rank_id in the environment variable, use device_id instead.")
 
         for dev_path in device_paths:
             if not os.path.isdir(dev_path):
@@ -350,7 +347,7 @@ class AscendMsprofExporter:
         except (JSONDecodeError, FileNotFoundError, TypeError, PermissionError) as err:
             logger.warning(err)
         if info_dict.get(self._rank_id_mark) is None:
-            msg = "There is no rank_id key in file {}".format(info_file)
+            msg = "[Profiler]There is no rank_id key in file {}".format(info_file)
             logger.warning(msg)
         else:
             rank_id = info_dict.get(self._rank_id_mark)
