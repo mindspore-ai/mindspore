@@ -1947,6 +1947,49 @@ ValuePtr AbstractDictionary::RealBuildValue() const {
   return std::make_shared<ValueDictionary>(key_values);
 }
 
+AbstractBasePtr AbstractDictionary::Join(const AbstractBasePtr &other) {
+  if (other->isa<AbstractNegligible>()) {
+    return shared_from_base<AbstractBase>();
+  }
+  auto other_dict = other->cast<AbstractDictionaryPtr>();
+  if (other_dict == nullptr) {
+    AbstractTypeJoinLogging(shared_from_base<AbstractBase>(), other);
+  }
+  if (elements().size() != other_dict->elements().size()) {
+    MS_LOG(EXCEPTION)
+      << "Join failed as dict don't have the same size. spec1: " << ::mindspore::ToString(elements())
+      << ", spec2: " << ::mindspore::ToString(other_dict->elements())
+      << ".\nFor more details, please refer to https://www.mindspore.cn/search?inputValue=Type%20Join%20Failed\n";
+  }
+
+  auto JoinElement = [](const AbstractBasePtr &abs1, const AbstractBasePtr &abs2) -> AbstractBasePtr {
+    MS_EXCEPTION_IF_NULL(abs1);
+    auto joined_res = abs1->Join(abs2);
+    MS_EXCEPTION_IF_NULL(joined_res);
+    return joined_res;
+  };
+
+  std::vector<AbstractElementPair> joined_key_values;
+  bool changes = false;
+  for (std::size_t i = 0; i < elements().size(); i++) {
+    auto key_value = elements()[i];
+    auto other_key_value = other_dict->elements()[i];
+    auto joined_key = JoinElement(elements()[i].first, other_dict->elements()[i].first);
+    if (joined_key != elements()[i].first) {
+      changes = true;
+    }
+    auto joined_value = JoinElement(elements()[i].second, other_dict->elements()[i].second);
+    if (joined_value != elements()[i].second) {
+      changes = true;
+    }
+    (void)joined_key_values.emplace_back(joined_key, joined_value);
+  }
+  if (!changes) {
+    return shared_from_base<AbstractBase>();
+  }
+  return std::make_shared<AbstractDictionary>(joined_key_values);
+}
+
 AbstractJTagged::AbstractJTagged(const AbstractBasePtr &element) : element_(element) {}
 
 TypePtr AbstractJTagged::BuildType() const {

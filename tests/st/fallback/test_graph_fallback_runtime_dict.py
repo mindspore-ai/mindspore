@@ -907,3 +907,55 @@ def test_return_dict_with_empty_shape_tensor():
 
     out = dict_net()
     assert out['a'].shape == ()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_return_dict_in_if_else():
+    """
+    Feature: Support dict return.
+    Description: The if and else branch return dict.
+    Expectation: No exception.
+    """
+
+    @ms.jit
+    def dict_net(x, key):
+        if key > 0:
+            y = {"abc": x, "number": [1, 2, 3]}
+        else:
+            y = {"cba": x, "number": [3, 2, 1]}
+        return y
+
+    x = [{1: [Tensor([1]), {0: Tensor([1, 2, 3])}]}, {2: Tensor([2])}]
+    out = dict_net(x, Tensor(-1))
+    assert out == {"cba": x, "number": [3, 2, 1]}
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_return_different_size_dict_in_if_else():
+    """
+    Feature: Support dict return.
+    Description: The if and else branch return dict of different size.
+    Expectation: Throw an exception.
+    """
+
+    @ms.jit
+    def dict_net(x, key):
+        if key < 0:
+            y = {Tensor([True]): x, "number": [1, 2, 3]}
+        else:
+            y = {}
+        return y
+
+    x = [{1: [Tensor([1]), {0: Tensor([1, 2, 3])}]}, {2: Tensor([2])}]
+    try:
+        dict_net(x, Tensor(-1))
+    except TypeError as e:
+        assert "Cannot join the return values of different branches, perhaps you need to make them equal." in str(e)

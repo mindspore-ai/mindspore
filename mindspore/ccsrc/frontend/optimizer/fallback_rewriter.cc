@@ -1938,7 +1938,7 @@ class AfterOptARewriter : public BaseRewriter {
       iter_value->set_debug_info(value_node->debug_info());
       (void)value_list.emplace_back(iter_value);
     }
-    auto value_tuple_node = root_graph_->NewCNode(value_list);
+    auto value_tuple_node = fg->NewCNode(value_list);
     return value_tuple_node;
   }
 

@@ -1162,6 +1162,8 @@ class MS_CORE_API AbstractDictionary final : public AbstractBase {
 
   std::size_t hash() const override;
 
+  AbstractBasePtr Join(const AbstractBasePtr &other) override;
+
   /// \brief Get the size of key values.
   ///
   /// \return A size_t.
