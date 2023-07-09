@@ -1688,7 +1688,7 @@ class Model:
         return train_network.parameter_layout_dict
 
 
-    def infer_predict_layout(self, *predict_data):
+    def infer_predict_layout(self, *predict_data, skip_backend_compile=False):
         """
         Generate parameter layout for the predict network in 'AUTO_PARALLEL' or 'SEMI_AUTO_PARALLEL' mode.
 
@@ -1701,6 +1701,9 @@ class Model:
             predict_data (Union[Tensor, list[Tensor], tuple[Tensor]], optional):
                 The predict data, can be a single tensor,
                 a list of tensor, or a tuple of tensor.
+            skip_backend_compile (bool): Only run the frontend compile process,
+                skip the compile process on the device side. Set this flag to True may
+                lead to recompiling process can not hit cache.
 
         Returns:
             Dict, Parameter layout dictionary used for load distributed checkpoint.
@@ -1736,7 +1739,14 @@ class Model:
         predict_net = self._predict_network
         # Unlike the cases in build_train_network() and build_eval_network(), 'multi_subgraphs' is not set
         predict_net = self._check_network_mode(predict_net, False)
-        predict_net.compile(*predict_data)
+        if skip_backend_compile:
+            origin_phase = predict_net.phase
+            predict_net.phase = "export." + predict_net.phase
+            predict_net.compile(*predict_data)
+            # set phase back to prevent from hitting incomplete compile cache
+            predict_net.phase = origin_phase
+        else:
+            predict_net.compile(*predict_data)
         return predict_net.parameter_layout_dict
 
     def _flush_from_cache(self, cb_params):
