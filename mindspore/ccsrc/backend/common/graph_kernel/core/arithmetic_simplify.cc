@@ -496,6 +496,7 @@ class TransposePatternTree : public PatternTree {
 
   std::shared_ptr<ParaMap> UpdateParameters(const inner::NodePtr &origin_root,
                                             const std::shared_ptr<ParaMap> &para_to_ref) const override {
+    MS_EXCEPTION_IF_NULL(para_to_ref);
     inner::GraphBuilder gb("");
     auto out_shape = origin_root->shape;
     auto out_shape_tensornode = gb.Tensor(out_shape);
@@ -560,8 +561,11 @@ class ReshapePatternTree : public PatternTree {
   std::shared_ptr<ParaMap> UpdateParameters(const inner::NodePtr &origin_root,
                                             const std::shared_ptr<ParaMap> &para_to_ref) const override {
     MS_EXCEPTION_IF_NULL(para_to_ref);
+    inner::GraphBuilder gb("");
+    auto out_shape = origin_root->shape;
+    auto out_shape_tensornode = gb.Tensor(out_shape);
+    (*para_to_ref)['C'] = out_shape_tensornode;
     (void)para_to_ref->erase('B');
-    (void)origin_root;
     return para_to_ref;
   }
 
