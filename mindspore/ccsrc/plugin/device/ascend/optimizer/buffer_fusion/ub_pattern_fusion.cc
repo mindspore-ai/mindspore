@@ -46,7 +46,6 @@
 #include "kernel/kernel.h"
 #include "kernel/kernel_build_info.h"
 #include "kernel/kernel_fusion.h"
-#include "mindapi/base/type_id.h"
 #include "utils/anf_utils.h"
 #include "utils/compact_set.h"
 #include "utils/convert_utils_base.h"
