@@ -208,10 +208,6 @@ void GeGraphExecutor::GetGeGraphOptions(const FuncGraphPtr &anf_graph,
   }
   uint32_t rank_id = ascend_device_info->GetRankID();
   ge_options["ge.graph_key"] = anf_graph->ToString() + "." + std::to_string(rank_id);
-  // 0: False, dynamic and static graph compile with cann opp_kernel*.run，GE default for pytorch
-  // 1: True, dynamic and static graph online compiler op
-  // 2: Auto, dynamic compile with cann opp_kernel*.run, static graph online compiler op，GE default for others
-  ge_options["ge.jit_compile"] = "2";
   auto config_it = config_infos_.find(lite::kGeGraphOptionsSection);
   if (config_it != config_infos_.end()) {
     for (auto &item : config_it->second) {
@@ -277,6 +273,9 @@ bool GeGraphExecutor::AddGraph(const transform::DfGraphPtr &graph, const std::ma
     return false;
   }
   auto graph_id = GetNextGraphIdx();
+  for (auto &option : options) {
+    MS_LOG(INFO) << "GE Graph " << graph_id << " option " << option.first << " = " << option.second;
+  }
   auto ge_status = ge_session_->AddGraph(static_cast<uint32_t>(graph_id), *(graph), options);
   if (ge_status != ge::GRAPH_SUCCESS) {
     MS_LOG(ERROR) << "Call GE AddGraph Failed: " << ge::GEGetErrorMsg();
@@ -649,6 +648,10 @@ std::shared_ptr<ge::Session> GeSessionManager::CreateGeSession(
     ge_session = s_it->second.ge_session.lock();
   }
   if (ge_session == nullptr) {
+    for (auto &option : session_options) {
+      MS_LOG(INFO) << "GE Session (lite session id " << session_id << ") option " << option.first << " = "
+                   << option.second;
+    }
     ge_session = std::make_shared<ge::Session>(session_options);
     if (ge_session == nullptr) {
       MS_LOG(ERROR) << "Failed to create ge session";
