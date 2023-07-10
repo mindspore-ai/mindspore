@@ -140,8 +140,8 @@ class AscendHCCLGenerator:
         for hccl_file in file_list:
             iteration_id = int(hccl_file.split('_')[-1].split(('.'))[0])
             with open(hccl_file) as f:
-                hccl_abstract_data, hccl_detail_data = self._original_data_analyse(json.load(f))
-                raw = self._iteration_analyse(hccl_abstract_data, hccl_detail_data, iteration_id)
+                _, hccl_detail_data = self._original_data_analyse(json.load(f))
+                raw = self._iteration_analyse(hccl_detail_data, iteration_id)
                 self.hccl_raw.append(raw)
         self.hccl_raw = sorted(self.hccl_raw, key=lambda x: x[0])
         self.hccl_raw.append(count_average(calculate_average(self.hccl_raw)))
@@ -158,7 +158,8 @@ class AscendHCCLGenerator:
         """
         try:
             with os.fdopen(os.open(hccl_raw_path,
-                                   os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w', newline='') as hccl_row:
+                                   os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR), 'w',
+                           newline='') as hccl_row:
                 writer = csv.writer(hccl_row)
                 writer.writerow(
                     ['step_num', 'communication_cost', 'wait_cost', 'link_info', 'communication_operator_cost'])
@@ -170,7 +171,7 @@ class AscendHCCLGenerator:
             logging.critical('Errot occurred when write aicore detail file: %s', err)
             raise ProfilerIOException()
         if os.path.exists(hccl_raw_path):
-            os.chmod(hccl_raw_path, stat.ST_MODE | stat.S_IWRITE)
+            os.chmod(hccl_raw_path, stat.S_IREAD | stat.S_IWRITE)
 
     def _original_data_analyse(self, original_data):
         """analyse original data"""
@@ -191,11 +192,11 @@ class AscendHCCLGenerator:
                     src_rank = dst_rank
                 if dst_rank == int('0xffffffff', 16):
                     dst_rank = src_rank
-                transport_type = row.get('args').get('transport type')
+                transport_type = row.get('args', {}).get('transport type', '')
                 if transport_type == 'LOCAL':
                     src_rank, dst_rank = dst_rank, src_rank
                 link_info = str(src_rank) + '-' + str(dst_rank)
-                size = row.get('args').get('size(Byte)', 0)
+                size = row.get('args', {}).get('size(Byte)', 0)
                 size = size if isinstance(size, int) else int(size, 16)
                 target_data.append(
                     tuple([name, pid, tid, ts, te, dur, ph, task_type, link_info, transport_type, size, -1]))
@@ -211,9 +212,9 @@ class AscendHCCLGenerator:
         hccl_detail_data['tag'] = [x[-1] for x in np.char.split(hccl_abstract_data[tag]['name'].astype(str), sep='/')]
         return hccl_abstract_data, hccl_detail_data
 
-    def _iteration_analyse(self, hccl_abstract_data, hccl_detail_data, iteration):
+    def _iteration_analyse(self, hccl_detail_data, iteration):
         """analyse data by iteration """
-        communication_cost, wait_cost = self._cost_analyse(hccl_abstract_data)
+        communication_cost, wait_cost = self._cost_analyse(hccl_detail_data)
         link_info = self._link_info_analyse(hccl_detail_data)
         communication_operator_cost = self._communication_operator_cost_analyse(hccl_detail_data, iteration)
         return [iteration, communication_cost, wait_cost, link_info, communication_operator_cost]

@@ -81,7 +81,7 @@ class AscendStepTraceGenerator:
             return
         try:
             with os.fdopen(os.open(step_trace_intermediate_file_path,
-                                   os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660), 'w') as st:
+                                   os.O_WRONLY | os.O_CREAT | os.O_TRUNC, stat.S_IWUSR | stat.S_IRUSR), 'w') as st:
                 writer = csv.writer(st)
                 writer.writerow(self.steptrace_detail.dtype.names)
                 writer.writerows(self.steptrace_detail.tolist())
@@ -89,4 +89,4 @@ class AscendStepTraceGenerator:
             logging.critical('Errot occurred when write step trace file: %s', err)
             raise ProfilerIOException()
         if os.path.exists(step_trace_intermediate_file_path):
-            os.chmod(step_trace_intermediate_file_path, stat.ST_MODE | stat.S_IWRITE)
+            os.chmod(step_trace_intermediate_file_path, stat.S_IREAD | stat.S_IWRITE)
