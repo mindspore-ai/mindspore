@@ -217,7 +217,7 @@ Status MatMul::CheckStrategy(const StrategyPtr &strategy) {
         (mat_a_strategy.at(SECOND_FROM_END(mat_a_size)) != mat_b_strategy.at(SECOND_FROM_END(mat_b_size)))) {
       // for example: mat_a_strategy:[2,4,16,8], mat_b_strategy:[4,16,32], [16] in the example
       MS_LOG(ERROR) << name_ << ": Can not do this operator in the strategy: " << StrategyToString(stra)
-                    << ". The transpose a is: " << transpose_a_ << ", and transpose_b is " << transpose_b_
+                    << ". The transpose_a is: " << transpose_a_ << ", and transpose_b is " << transpose_b_
                     << ", the shard num of first input's row is " << mat_a_strategy.at(SECOND_FROM_END(mat_a_size))
                     << ", but the shard num of second input's row is "
                     << mat_b_strategy.at(SECOND_FROM_END(mat_b_size));
@@ -225,7 +225,7 @@ Status MatMul::CheckStrategy(const StrategyPtr &strategy) {
     } else if (transpose_b_ && (mat_a_strategy.at(SECOND_FROM_END(mat_a_size)) != mat_b_strategy.back())) {
       // for example: mat_a_strategy:[2,4,16,8], mat_b_strategy:[4,32,16], [16] in the example
       MS_LOG(ERROR) << name_ << ": Can not do this operator in the strategy: " << StrategyToString(stra)
-                    << ". The transpose a is: " << transpose_a_ << ", and transpose_b is " << transpose_b_
+                    << ". The transpose_a is: " << transpose_a_ << ", and transpose_b is " << transpose_b_
                     << ", the shard num of first input's row is " << mat_a_strategy.at(SECOND_FROM_END(mat_a_size))
                     << ", but the shard num of second input's column is " << mat_b_strategy.back();
       return FAILED;
@@ -234,7 +234,7 @@ Status MatMul::CheckStrategy(const StrategyPtr &strategy) {
     if (!transpose_b_ && (mat_a_strategy.back() != mat_b_strategy.at(SECOND_FROM_END(mat_b_size)))) {
       // for example: mat_a_strategy:[2,4,8,16], mat_b_strategy:[4,16,32], [16] in the example
       MS_LOG(ERROR) << name_ << ": Can not do this operator in the strategy: " << StrategyToString(stra)
-                    << ". The transpose a is: " << transpose_a_ << ", and transpose_b is " << transpose_b_
+                    << ". The transpose_a is: " << transpose_a_ << ", and transpose_b is " << transpose_b_
                     << ", the shard num of first input's column is " << mat_a_strategy.back()
                     << ", but the shard num of second input's row is "
                     << mat_b_strategy.at(SECOND_FROM_END(mat_b_size));
@@ -242,7 +242,7 @@ Status MatMul::CheckStrategy(const StrategyPtr &strategy) {
     } else if (transpose_b_ && (mat_a_strategy.back() != mat_b_strategy.back())) {
       // for example: mat_a_strategy:[2,4,8,16], mat_b_strategy:[4,32,16], [16] in the example
       MS_LOG(ERROR) << name_ << ": Can not do this operator in the strategy: " << StrategyToString(stra)
-                    << ". The transpose a is: " << transpose_a_ << ", and transpose_b is " << transpose_b_
+                    << ". The transpose_a is: " << transpose_a_ << ", and transpose_b is " << transpose_b_
                     << ", the shard num of first input's column is " << mat_a_strategy.back()
                     << ", but the shard num of second input's column is " << mat_b_strategy.back();
       return FAILED;
