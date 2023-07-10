@@ -169,7 +169,7 @@ int NNACLKernel::InitKernel(const TypeId &data_type, const lite::InnerContext *c
   UpdateTensorC();
   kernel_ = CreateKernel(op_parameter_, in_, in_size_, out_, out_size_, data_type, exec_env_);
   if (kernel_ == nullptr) {
-    MS_LOG(ERROR) << "NNACL create kernel failed. Kernel: " << name();
+    MS_LOG(WARNING) << "NNACL create kernel failed. Kernel: " << name();
     return RET_ERROR;
   }
   kernel_->UpdateThread = DefaultUpdateThreadNumPass;
