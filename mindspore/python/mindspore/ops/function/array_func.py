@@ -3497,7 +3497,9 @@ def gather(input_params, input_indices, axis, batch_dims=0):
         input_params (Tensor): The original Tensor. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
         input_indices (Tensor): Index tensor to be sliced, the shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
             Specifies the indices of elements of the original Tensor. The data type can be int32 or int64.
-        axis (int): Specifies the dimension index to gather indices. It must be greater than or equal to `batch_dims`.
+        axis (Union(int, Tensor[int])): Specifies the dimension index to gather indices.
+                                        It must be greater than or equal to `batch_dims`.
+                                        When `axis` is a Tensor, the size must be 1.
         batch_dims (int): Specifies the number of batch dimensions. It must be less than or euqal to the rank
                           of `input_indices`. Default: ``0`` .
 
@@ -3506,9 +3508,10 @@ def gather(input_params, input_indices, axis, batch_dims=0):
         :math:`input\_params.shape[:axis] + input\_indices.shape[batch\_dims:] + input\_params.shape[axis + 1:]`.
 
     Raises:
-        TypeError: If `axis` is not an int.
-        TypeError: If `input_params` is not a tensor.
-        TypeError: If `input_indices` is not a tensor of type int.
+        TypeError:  If `axis` is not an int or Tensor.
+        ValueError: If `axis` is a Tensor and its size is not 1.
+        TypeError:  If `input_params` is not a tensor.
+        TypeError:  If `input_indices` is not a tensor of type int.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
