@@ -257,7 +257,8 @@ Status BatchOp::ConvertRowsToTensor(const std::unique_ptr<TensorQTable> *tensor_
           for (auto key_val : old_dict) {
             CHECK_FAIL_RETURN_UNEXPECTED(new_dict.contains(key_val.first),
                                          "Python dictionary keys do not match when creating a batch: " +
-                                           key_val.first.cast<std::string>() + " was not found in previous rows.");
+                                           py::str(key_val.first).cast<std::string>() +
+                                           " was not found in previous rows.");
             py::list li = new_dict[key_val.first];
             li.append(key_val.second);
           }
@@ -272,8 +273,8 @@ Status BatchOp::ConvertRowsToTensor(const std::unique_ptr<TensorQTable> *tensor_
           py::array arr = py::array(li);
           CHECK_FAIL_RETURN_UNEXPECTED(
             arr.dtype() != py::dtype("object_"),
-            std::string("Batch operation: failed to create a NumPy array with primitive types for the dictionary ") +
-              "objects in column " + std::to_string(column_index) + ", key: '" + item.first.cast<std::string>() +
+            "Batch: failed to create a NumPy array with primitive types for the dictionary objects in column " +
+              std::to_string(column_index) + ", key: '" + py::str(item.first).cast<std::string>() +
               "'.\nIf you want a customized array, define a custom 'per_batch_map' function.");
           np_dict[item.first] = arr;
         }
