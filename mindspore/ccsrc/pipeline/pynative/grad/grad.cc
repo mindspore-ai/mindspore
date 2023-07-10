@@ -1169,8 +1169,8 @@ void GradExecutor::GetGradGraph(const autograd::GradAttr &grad_attr, const std::
   if (grad_attr.has_sens && top_input_args_info_->input_arg_value_vec.back()->isa<ValueSequence>()) {
     ProcessTupleSens(bprop_graph, top_input_args_info_);
   }
-  PyNativeAlgo::Common::DumpGraphIR("launch_bprop_graph.ir", bprop_graph);
   top_cell()->SaveForwardOutputTensorInfoInBpropGraph(resource->func_graph());
+  PyNativeAlgo::Common::DumpGraphIR("launch_bprop_graph.ir", bprop_graph);
   resource->SetBackendAsync([]() { return compile::CreateBackend(); });
   MS_LOG(DEBUG) << "Start task emit action";
   (void)TaskEmitAction(resource);
