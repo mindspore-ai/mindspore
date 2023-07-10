@@ -212,33 +212,6 @@ int InsertQuantNodeManager::InsertDynamicQuantNode(const FuncGraphPtr &graph,
       MS_LOG(INFO) << "node:" << op_name << " type:" << type << " will not quantify.";
       continue;
     }
-    if (opt::CheckPrimitiveType(cnode, prim::kPrimMatMulFusion)) {
-      auto input_node = cnode->input(2);
-      MS_CHECK_TRUE_MSG(input_node != nullptr, RET_NULL_PTR, "matmul 2nd input nullptr.");
-      bool is_activation = IsGraphInput(input_node) || input_node->isa<mindspore::CNode>();
-      if (is_activation) {
-        MS_LOG(WARNING) << "dynamic cnode name: " << cnode->fullname_with_scope() << ", B matrix is activation";
-      } else if (input_node->isa<mindspore::Parameter>()) {
-        MS_LOG(INFO) << "dynamic cnode name: " << cnode->fullname_with_scope() << ", B matrix is parameter";
-        auto tensor_info = input_node->cast<ParameterPtr>()->default_param()->cast<tensor::TensorPtr>();
-        MS_CHECK_TRUE_MSG(tensor_info != nullptr, RET_NULL_PTR, "tensor_info nullptr.");
-        auto shape = tensor_info->shape();
-        for (size_t i = 0; i < shape.size(); i++) {
-          MS_LOG(INFO) << shape[i];
-        }
-      } else if (input_node->isa<mindspore::ValueNode>()) {
-        MS_LOG(INFO) << "dynamic cnode name: " << cnode->fullname_with_scope() << ", B matrix is valudenode";
-        auto tensor_info = input_node->cast<ValueNodePtr>()->value()->cast<tensor::TensorPtr>();
-        MS_CHECK_TRUE_MSG(tensor_info != nullptr, RET_NULL_PTR, "tensor_info nullptr.");
-        auto shape = tensor_info->shape();
-        for (size_t i = 0; i < shape.size(); i++) {
-          MS_LOG(INFO) << shape[i];
-        }
-      } else {
-        MS_LOG(WARNING) << "dynamic cnode name: " << cnode->fullname_with_scope()
-                        << " 2nd input type: " << input_node->type_name() << " is not supported.";
-      }
-    }
     ret = NewDynamicQuantNode(graph, cnode, activation_channel);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "node:" << op_name << " new dynamic quant node failed.";
