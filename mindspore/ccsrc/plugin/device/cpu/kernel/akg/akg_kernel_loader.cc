@@ -34,22 +34,22 @@ namespace kernel {
 static const std::vector<std::string> rodata_section_list = {".rodata", ".rodata.cst4", ".rodata.cst8", ".rodata.cst16",
                                                              ".rodata.cst32"};
 constexpr const size_t got_table_item_size = 8;
-bool AkgLibraryLoader::LoadAkgLib(void *data, size_t file_size) {
-  obj_.base = static_cast<uint8_t *>(data);
+bool AkgLibraryLoader::LoadAkgLib(const void *data) {
+  obj_.base = static_cast<const uint8_t *>(data);
   return ParseObj();
 }
 
-uint64_t AkgLibraryLoader::PageAlign(uint64_t n) { return (n + (page_size_ - 1)) & ~(page_size_ - 1); }
+size_t AkgLibraryLoader::PageAlign(size_t n) const { return (n + (page_size_ - 1)) & ~(page_size_ - 1); }
 
-const Elf64_Shdr *AkgLibraryLoader::LookupSection(const std::string &name) {
+const Elf64_Shdr *AkgLibraryLoader::LookupSection(const std::string &name) const {
   size_t name_len = name.size();
   /* number of entries in the section table is encoded in the ELF header */
   for (Elf64_Half i = 0; i < obj_.hdr->e_shnum; i++) {
     const char *section_name = shstrtab_ + sections_[i].sh_name;
     size_t section_name_len = strlen(section_name);
-    if (name_len == section_name_len && !strcmp(name.data(), section_name)) {
+    if (name_len == section_name_len && strcmp(name.data(), section_name) == 0) {
       /* ignore section with 0 size */
-      if (sections_[i].sh_size) {
+      if (sections_[i].sh_size != 0) {
         return sections_ + i;
       }
     }
@@ -57,17 +57,17 @@ const Elf64_Shdr *AkgLibraryLoader::LookupSection(const std::string &name) {
   return nullptr;
 }
 
-void *AkgLibraryLoader::LookupFunction(const std::string &name) {
+void *AkgLibraryLoader::LookupFunction(const std::string &name) const {
   size_t name_len = name.size();
   /* loop through all the symbols_ in the symbol table and
    * find the offset of the function from the
    * beginning of the .text section */
-  for (int i = 0; i < num_symbols_; i++) {
+  for (size_t i = 0; i < num_symbols_; i++) {
     /* consider only function symbols_ */
     if (ELF64_ST_TYPE(symbols_[i].st_info) == STT_FUNC) {
       const char *function_name = strtab_ + symbols_[i].st_name;
       size_t function_name_len = strlen(function_name);
-      if (name_len == function_name_len && !strcmp(name.data(), function_name)) {
+      if (name_len == function_name_len && strcmp(name.data(), function_name) == 0) {
         return text_runtime_base_ + symbols_[i].st_value;
       }
     }
@@ -123,11 +123,11 @@ bool AkgLibraryLoader::ParseObj(void) {
   /* find the .data or .rodata.xxx section in the section table */
   size_t const_section_size = 0;
   std::vector<uint64_t> page_align_list;
-  page_align_list.emplace_back(PageAlign(data_vec[0]));
+  (void)page_align_list.emplace_back(PageAlign(data_vec[0]));
   for (auto &item : rodata_section_list) {
     auto section_vec = ParseSection(item);
     const_section_size += PageAlign(section_vec[0]);
-    page_align_list.emplace_back(PageAlign(section_vec[0]));
+    (void)page_align_list.emplace_back(PageAlign(section_vec[0]));
     section_info_map_[item] = section_vec;
   }
   CountDynmaicSymbols();
@@ -143,10 +143,16 @@ bool AkgLibraryLoader::ParseObj(void) {
     return false;
   }
   /*  will come after .data */
-  memcpy(text_runtime_base_, obj_.base + text_vec[1], text_vec[0]);
+  if (text_vec[0] != 0 && memcpy_s(text_runtime_base_, text_vec[0], obj_.base + text_vec[1], text_vec[0]) != EOK) {
+    MS_LOG(ERROR) << "memcpy .text section failed, section size:" << text_vec[0];
+    return false;
+  }
   /* .data will come right after .text */
   data_runtime_base_ = text_runtime_base_ + PageAlign(text_vec[0]);
-  memcpy(data_runtime_base_, obj_.base + data_vec[1], data_vec[0]);
+  if (data_vec[0] != 0 && memcpy_s(data_runtime_base_, data_vec[0], obj_.base + data_vec[1], data_vec[0]) != EOK) {
+    MS_LOG(ERROR) << "memcpy .data section failed, section size:" << data_vec[0];
+    return false;
+  }
   /* .rodata.xxx will come right after .data */
   auto rodata_runtime_base = data_runtime_base_ + PageAlign(data_vec[0]);
   uint8_t *current_rodata_runtime_base = rodata_runtime_base;
@@ -154,7 +160,11 @@ bool AkgLibraryLoader::ParseObj(void) {
     section_runtime_base_map_[rodata_section_list[idx]] = current_rodata_runtime_base + page_align_list[idx];
     auto section_size = section_info_map_[rodata_section_list[idx]][0];
     auto section_offset = section_info_map_[rodata_section_list[idx]][1];
-    memcpy(current_rodata_runtime_base, obj_.base + section_offset, section_size);
+    if (section_size != 0 &&
+        memcpy_s(current_rodata_runtime_base, section_size, obj_.base + section_offset, section_size) != EOK) {
+      MS_LOG(ERROR) << "memcpy " << rodata_section_list[idx] << "section failed, section size:" << section_size;
+      return false;
+    }
   }
   /* jumptable_ will come at last */
   jumptable_ = static_cast<ext_jump *>(static_cast<void *>(current_rodata_runtime_base + page_align_list.back()));
@@ -165,22 +175,22 @@ bool AkgLibraryLoader::ParseObj(void) {
     return ret;
   }
   /* make the .text copy readonly and executable */
-  if (mprotect(text_runtime_base_, PageAlign(text_vec[0]), PROT_READ | PROT_EXEC)) {
+  if (mprotect(text_runtime_base_, PageAlign(text_vec[0]), PROT_READ | PROT_EXEC) != 0) {
     MS_LOG(ERROR) << "Failed to make .text executable";
     return false;
   }
   /* make the .rodata.xxx copy readonly */
-  if (mprotect(rodata_runtime_base, current_rodata_runtime_base - rodata_runtime_base, PROT_READ)) {
+  if (mprotect(rodata_runtime_base, current_rodata_runtime_base - rodata_runtime_base, PROT_READ) != 0) {
     MS_LOG(ERROR) << "Failed to make .rodata readonly";
     return false;
   }
   /* make the jumptable readonly and executable */
-  if (mprotect(jumptable_, PageAlign(sizeof(ext_jump) * num_ext_symbols_), PROT_READ | PROT_EXEC)) {
+  if (mprotect(jumptable_, PageAlign(sizeof(ext_jump) * num_ext_symbols_), PROT_READ | PROT_EXEC) != 0) {
     MS_LOG(ERROR) << "Failed to make the jumptable executable";
     return false;
   }
   /* make the gottable readonly */
-  if (mprotect(got_table_, PageAlign(got_table_size_), PROT_READ)) {
+  if (mprotect(got_table_, PageAlign(got_table_size_), PROT_READ) != 0) {
     MS_LOG(ERROR) << "Failed to make the jumptable executable";
     return false;
   }
@@ -188,7 +198,7 @@ bool AkgLibraryLoader::ParseObj(void) {
 }
 
 void *AkgLibraryLoader::LookupExtFunction(const std::string &name) {
-  void *lib_handle_ = dlopen(nullptr, RTLD_LAZY | RTLD_DEEPBIND);
+  lib_handle_ = dlopen(nullptr, RTLD_LAZY | RTLD_DEEPBIND);
   if (lib_handle_ == nullptr) {
     MS_LOG(ERROR) << "dlopen handler is nullptr.";
     return nullptr;
@@ -202,12 +212,12 @@ void AkgLibraryLoader::CountDynmaicSymbols() {
     MS_LOG(INFO) << "cannot find .rela.text, no need to do relocation.";
     return;
   }
-  int num_relocations = rela_text_hdr->sh_size / rela_text_hdr->sh_entsize;
+  size_t num_relocations = rela_text_hdr->sh_size / rela_text_hdr->sh_entsize;
   const Elf64_Rela *relocations =
     static_cast<const Elf64_Rela *>(static_cast<const void *>(obj_.base + rela_text_hdr->sh_offset));
-  for (int i = 0; i < num_relocations; i++) {
-    int symbol_idx = ELF64_R_SYM(relocations[i].r_info);
-    int type = ELF64_R_TYPE(relocations[i].r_info);
+  for (size_t i = 0; i < num_relocations; i++) {
+    auto symbol_idx = ELF64_R_SYM(relocations[i].r_info);
+    auto type = ELF64_R_TYPE(relocations[i].r_info);
     if (symbols_[symbol_idx].st_shndx == SHN_UNDEF) {
       /* external symbol reference */
       num_ext_symbols_++;
@@ -225,10 +235,10 @@ uint8_t *AkgLibraryLoader::SectionRuntimeBase(const Elf64_Shdr *section) {
   const char *section_name = shstrtab_ + section->sh_name;
   size_t section_name_len = strlen(section_name);
   std::string section_name_str = std::string(section_name);
-  if (strlen(".text") == section_name_len && !strcmp(".text", section_name)) {
+  if (strlen(".text") == section_name_len && strcmp(".text", section_name) == 0) {
     return text_runtime_base_;
   }
-  if (strlen(".data") == section_name_len && !strcmp(".data", section_name)) {
+  if (strlen(".data") == section_name_len && strcmp(".data", section_name) == 0) {
     return data_runtime_base_;
   }
   if (section_runtime_base_map_.find(section_name_str) != section_runtime_base_map_.end()) {
@@ -238,7 +248,7 @@ uint8_t *AkgLibraryLoader::SectionRuntimeBase(const Elf64_Shdr *section) {
   return nullptr;
 }
 
-void *AkgLibraryLoader::RelocateExtSymbols(int symbol_idx, int jump_table_idx) {
+void *AkgLibraryLoader::RelocateExtSymbols(size_t symbol_idx, size_t jump_table_idx) {
   /* genergate instructions for external symbol/function by name and return jumptable instr address */
   auto addr = LookupExtFunction(strtab_ + symbols_[symbol_idx].st_name);
   if (addr == nullptr) {
@@ -306,8 +316,8 @@ bool AkgLibraryLoader::DoTextRelocations() {
   size_t got_table_offset = 0;
   size_t jump_table_idx = 0;
   for (int i = 0; i < num_relocations; i++) {
-    int symbol_idx = ELF64_R_SYM(relocations[i].r_info);
-    int type = ELF64_R_TYPE(relocations[i].r_info);
+    auto symbol_idx = ELF64_R_SYM(relocations[i].r_info);
+    auto type = ELF64_R_TYPE(relocations[i].r_info);
     /* where to patch .text */
     void *patch_offset = text_runtime_base_ + relocations[i].r_offset;
     /* symbol address with respect to which the relocation is performed */
@@ -345,14 +355,14 @@ bool AkgLibraryLoader::DoTextRelocations() {
         auto immhi = (distance >> ((1 << 2) - 1)) & ((1 << 17) - 1);
         /* patch the adrp instruction */
         *(static_cast<uint32_t *>(patch_offset)) |= ((immhi << immhi_shift) | (immlo << immlo_shift));
-        *(static_cast<uint64_t *>(static_cast<uint64_t *>(static_cast<void *>(got_table_)) + got_table_offset)) =
+        *(static_cast<uint64_t *>(static_cast<void *>(got_table_ + got_table_offset))) =
           reinterpret_cast<uint64_t>(symbol_address);
         break;
       }
       case R_AARCH64_LD64_GOT_LO12_NC: {
         /* Patch the ldr instruction */
         constexpr const uint64_t page_offset_shift = 10;
-        auto page_offset = reinterpret_cast<uint64_t>(got_table_ + got_table_offset) & (page_size_ - 1);
+        auto page_offset = reinterpret_cast<int64_t>(got_table_ + got_table_offset) & (page_size_ - 1);
         *(static_cast<uint32_t *>(patch_offset)) |= (page_offset << page_offset_shift);
         got_table_offset += got_table_item_size;
         break;
@@ -371,7 +381,7 @@ bool AkgLibraryLoader::DoTextRelocations() {
         /* 64 bit signed PC relative offset to GOT , which follows G + GOT + A - P */
         *(static_cast<uint32_t *>(patch_offset)) =
           got_table_ + got_table_offset + relocations[i].r_addend - static_cast<uint8_t *>(patch_offset);
-        *(static_cast<uint64_t *>(static_cast<uint64_t *>(static_cast<void *>(got_table_)) + got_table_offset)) =
+        *(static_cast<uint64_t *>(static_cast<void *>(got_table_ + got_table_offset))) =
           reinterpret_cast<uint64_t>(symbol_address);
         got_table_offset += got_table_item_size;
         break;
@@ -395,10 +405,10 @@ bool AkgLibraryLoader::DoTextRelocations() {
 
 AkgLibraryLoader::~AkgLibraryLoader() {
   if (lib_handle_) {
-    dlclose(lib_handle_);
+    (void)dlclose(lib_handle_);
   }
   if (text_runtime_base_ != nullptr) {
-    munmap(text_runtime_base_, mmap_size_);
+    (void)munmap(text_runtime_base_, mmap_size_);
   }
 }
 }  // namespace kernel
