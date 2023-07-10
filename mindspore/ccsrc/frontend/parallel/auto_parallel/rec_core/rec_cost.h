@@ -22,10 +22,11 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <algorithm>
 
 #include "frontend/parallel/auto_parallel/rec_core/rec_graph.h"
 #include "frontend/parallel/auto_parallel/rec_core/rec_strategy.h"
-#include "frontend/parallel/costmodel_context.h"
+#include "frontend/parallel/ops_info/operator_info.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
@@ -34,7 +35,20 @@ namespace parallel {
 #define DOUBLE_LOWEST (std::numeric_limits<double>::lowest)()
 #define DOUBLE_MIN (std::numeric_limits<double>::min)()
 
+constexpr size_t BMM_COEF = 1;
 constexpr size_t REDIS_COEF = 16;
+constexpr double EXPERT_COEF = 1.5;
+constexpr size_t REPLICATE_BELOW = 1000;
+constexpr bool ONLY_REDIST_WITH_SAME_SHAPE = true;
+constexpr size_t NUMBER_ASCEND_CORES = 32;
+constexpr size_t NDIMS = 4;
+constexpr float FL_TWO = 2.0;
+
+bool SameShape(const Shape4D &shape1, const Shape4D &shape2);
+
+double minSize(const double &cost_if_cut_i, const double &cost_if_cut_j, const double &cost_if_cut_k);
+double costOfDistributing(const TensorParam &t);
+double minNodeSize(const Graph::NodeType &node);
 
 double CostRedis(const Graph::NodeType &node,
                  const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
@@ -55,7 +69,7 @@ class CostMatMul {
 
  private:
   double StrConcatDimI(int64_t a, int64_t b) {
-    cost_in_i_ = (static_cast<double>(a) * static_cast<double>(b)) / 2.0;
+    cost_in_i_ = (static_cast<double>(a) * static_cast<double>(b)) / FL_TWO;
     const auto matmul_mem_coef = CostModelContext::GetInstance()->rp_matmul_mem_coef();
     cost_in_i_ = cost_in_i_ * matmul_mem_coef;
 
@@ -63,15 +77,22 @@ class CostMatMul {
   }
 
   double StrConcatDimJ(int64_t a, int64_t b) {
-    cost_in_j_ = (static_cast<double>(a) * static_cast<double>(b)) / 2.0;
+    cost_in_j_ = (static_cast<double>(a) * static_cast<double>(b)) / FL_TWO;
 
     return cost_in_j_;
   }
 
   double StrReduceDimK(int64_t a, int64_t b) {
-    cost_in_k_ = (static_cast<double>(a) * static_cast<double>(b)) / 2.0;
+    cost_in_k_ = (static_cast<double>(a) * static_cast<double>(b)) / FL_TWO;
 
     return cost_in_k_;
+  }
+
+  double StrRecom(const double &cost_if_cut_i, const double &cost_if_cut_j, const double &cost_if_cut_k) {
+    double min_size = minSize(cost_if_cut_i, cost_if_cut_j, cost_if_cut_k);
+    cost_in_r_ = min_size * min_size / REPLICATE_BELOW;
+
+    return cost_in_r_;
   }
 
   StrategyRec ChoseStr(const std::vector<double> &cost_op, StrategyRec str) const;
@@ -81,7 +102,24 @@ class CostMatMul {
   double cost_in_j_ = 0;
 
   double cost_in_k_ = 0;
+
+  double cost_in_r_ = 0;
 };  // class CostMatMul is used to compute the cost of MatMul operator.
+
+// class CostBatchMatMul is used to compute the cost of MatMul operator.
+class CostBatchMatMul {
+ public:
+  StrategyRec GetOptimalStr(const Graph::NodeType &node,
+                            const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
+                            const Graph &graph, const bool isTraining);
+  double GetMaxCostIn(const Graph::NodeType &node);
+
+ private:
+  enum Axis { B, X, I, J, K, R };
+  size_t getBatchDimsSize(const OperatorRec &op);
+  double cost(Axis a, const Graph::NodeType &node);
+  StrategyRec ChoseStr(const std::vector<double> &cost_op, StrategyRec str) const;
+};  // class CostBatchMatMul is used to compute the cost of MatMul operator.
 
 // class CostConvolution is used to compute the cost of Conv operator.
 class CostConvolution {
@@ -94,43 +132,43 @@ class CostConvolution {
 
  private:
   double StrDimB(int64_t TensorFilter) {
-    cost_in_b_ = static_cast<double>((TensorFilter) / 2.0);
+    cost_in_b_ = static_cast<double>((TensorFilter) / FL_TWO);
 
     return cost_in_b_;
   }
 
   double StrDimI(int64_t TensorIn, int64_t TensorFilter) {
-    cost_in_i_ = static_cast<double>((TensorIn + TensorFilter) / 2.0);
+    cost_in_i_ = static_cast<double>((TensorIn + TensorFilter) / FL_TWO);
 
     return cost_in_i_;
   }
 
   double StrDimJ(int64_t TensorIn, int64_t TensorFilter) {
-    cost_in_j_ = static_cast<double>((TensorIn + TensorFilter) / 2.0);
+    cost_in_j_ = static_cast<double>((TensorIn + TensorFilter) / FL_TWO);
 
     return cost_in_j_;
   }
 
   double StrDimK(int64_t TensorIn) {
-    cost_in_k_ = static_cast<double>((TensorIn) / 2.0);
+    cost_in_k_ = static_cast<double>((TensorIn) / FL_TWO);
 
     return cost_in_k_;
   }
 
   double StrDimDI(int64_t TensorIn, int64_t TensorOut) {
-    cost_in_di_ = static_cast<double>((TensorIn + TensorOut) / 2.0);
+    cost_in_di_ = static_cast<double>((TensorIn + TensorOut) / FL_TWO);
 
     return cost_in_di_;
   }
 
   double StrDimDJ(int64_t TensorIn, int64_t TensorOut) {
-    cost_in_dj_ = static_cast<double>((TensorIn + TensorOut) / 2.0);
+    cost_in_dj_ = static_cast<double>((TensorIn + TensorOut) / FL_TWO);
 
     return cost_in_dj_;
   }
 
   double StrDimQ(int64_t TensorOut) {
-    cost_in_q_ = static_cast<double>((TensorOut) / 2.0);
+    cost_in_q_ = static_cast<double>((TensorOut) / FL_TWO);
 
     return cost_in_q_;
   }

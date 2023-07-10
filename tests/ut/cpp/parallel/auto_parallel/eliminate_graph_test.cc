@@ -66,7 +66,7 @@ TEST_F(TestEliminate, TestEliminateAux) {
   std::shared_ptr<std::vector<std::vector<size_t>>> eli_list = std::make_shared<std::vector<std::vector<size_t>>>();
   for (size_t node_index = 0; node_index < graph->nodes.size(); node_index++) {
     auto type = graph->nodes[node_index].apply.op_type;
-    if (ElementWiseOpType.find(type) != ElementWiseOpType.end()) {
+    if (EliminateOpType.find(type) != EliminateOpType.end()) {
       Eliminate_Aux(node_index, graph, eli_list);
     }
   }

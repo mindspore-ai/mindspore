@@ -39,6 +39,11 @@ double GetWeights(const Graph::NodeType &node) {
     auto cost_ptr = std::make_shared<CostMatMul>();
 
     return cost_ptr->GetMaxCostIn(op);
+  } else if (op.op_type == OperatorType::kRecBatchMatMul) {
+    // For BatchMatMul
+    auto cost_ptr = std::make_shared<CostBatchMatMul>();
+
+    return cost_ptr->GetMaxCostIn(node);
   } else if (op.op_type == OperatorType::kRecConvolution) {
     // For Convolution
     auto cost_ptr = std::make_shared<CostConvolution>();
@@ -79,7 +84,7 @@ double GetWeights(const Graph::NodeType &node) {
     return cost_ptr->GetMinCostIn();
   } else if (op.op_type == OperatorType::kRecBatchNorm || op.op_type == OperatorType::kRecOneHot ||
              op.op_type == OperatorType::kRecPReLU || op.op_type == OperatorType::kRecUnsortedSegmentOp ||
-             op.op_type == OperatorType::kRecSoftmax ||
+             op.op_type == OperatorType::kRecSoftmax || op.op_type == OperatorType::kRecBatchParallel ||
              op.op_type == OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits ||
              op.op_type == OperatorType::kRecSoftmaxCrossEntropyWithLogits) {
     // For BatchParallel op
@@ -88,6 +93,9 @@ double GetWeights(const Graph::NodeType &node) {
     return cost_ptr->GetMaxCostIn();
   } else if (op.op_type == OperatorType::kRecUnknownType) {
     // For Unknown type
+    return 0.0;
+  } else if (op.op_type == OperatorType::kRecStandAlone) {
+    // For StandAlone type
     return 0.0;
   } else {
     MS_LOG(EXCEPTION) << "Failure: GetOperatorWeight failed.";
@@ -140,6 +148,11 @@ StrategyRec PartitionNode(const Graph::NodeType &node,
     auto cost_ptr = std::make_shared<CostMatMul>();
 
     return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph, isTraining);
+  } else if (node.apply.op_type == OperatorType::kRecBatchMatMul) {
+    // For BatchMatMul
+    auto cost_ptr = std::make_shared<CostBatchMatMul>();
+
+    return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph, isTraining);
   } else if (node.apply.op_type == OperatorType::kRecConvolution) {
     // For Convolution
     auto cost_ptr = std::make_shared<CostConvolution>();
@@ -181,7 +194,7 @@ StrategyRec PartitionNode(const Graph::NodeType &node,
   } else if (node.apply.op_type == OperatorType::kRecBatchNorm || node.apply.op_type == OperatorType::kRecOneHot ||
              node.apply.op_type == OperatorType::kRecPReLU || node.apply.op_type == kRecSoftmax ||
              node.apply.op_type == OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits ||
-             node.apply.op_type == kRecUnsortedSegmentOp) {
+             node.apply.op_type == kRecUnsortedSegmentOp || node.apply.op_type == OperatorType::kRecBatchParallel) {
     // For BatchParallel type
     auto cost_ptr = std::make_shared<CostBatchParallel>();
     return cost_ptr->GetOptimalStr(node);
@@ -191,6 +204,10 @@ StrategyRec PartitionNode(const Graph::NodeType &node,
     return cost_ptr->GetOptimalStr(node);
   } else if (node.apply.op_type == OperatorType::kRecUnknownType) {
     // For Unknown type
+    StrategyRec default_strategy;
+    return default_strategy;
+  } else if (node.apply.op_type == OperatorType::kRecStandAlone) {
+    // For stand_alone type
     StrategyRec default_strategy;
     return default_strategy;
   } else {
@@ -230,7 +247,7 @@ Graph::NodeType ChangeStrategy(Graph::NodeType Node, size_t n_cut) {
   return Node;
 }
 
-size_t GetStratNumber(const Graph::NodeType &Node) { return Node.apply.strs.size(); }
+size_t GetStratNumber(const Graph::NodeType Node) { return Node.apply.strs.size(); }
 
 void PartitionPipelineStages(double device_memory, const std::shared_ptr<Graph> &graph) {
   if (!ENABLE_PIPE_ALGO) {
