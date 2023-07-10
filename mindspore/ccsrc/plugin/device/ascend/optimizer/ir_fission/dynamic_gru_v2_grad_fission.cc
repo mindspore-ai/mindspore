@@ -59,11 +59,17 @@ std::map<std::string, size_t> hidden_grad_input_index = {
 std::map<std::string, size_t> hidden_grad_output_index = {
   {"dh_prev", kIndex0}, {"dgate_h", kIndex1}, {"dnt_x", kIndex2}};
 
-static CNodePtr CastNodeToSpecificDType(const FuncGraphPtr &func_graph, const AnfNodePtr &node, TypeId dtype) {
+AnfNodePtr CastNodeToSpecificDType(const FuncGraphPtr &func_graph, const AnfNodePtr &node, TypeId dtype) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
 
   auto shape = common::AnfAlgo::GetOutputInferShape(node, 0);
+  auto src_dtype = common::AnfAlgo::GetOutputInferDataType(node, 0);
+  if (src_dtype == dtype) {
+    MS_LOG(DEBUG) << node->fullname_with_scope() << " input data type " << src_dtype << " no need to insert cast to "
+                  << dtype;
+    return node;
+  }
   std::vector<AnfNodePtr> cast_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name()))};
   (void)cast_inputs.emplace_back(node);
   auto cast_cnode = NewCNode(cast_inputs, func_graph);
@@ -72,6 +78,8 @@ static CNodePtr CastNodeToSpecificDType(const FuncGraphPtr &func_graph, const An
   }
   common::AnfAlgo::SetOutputInferTypeAndShape({dtype}, {shape}, cast_cnode.get());
   common::AnfAlgo::SetNodeAttr(kAttrDstType, TypeIdToType(dtype), cast_cnode);
+  common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), cast_cnode);
+  MS_LOG(DEBUG) << "Insert " << cast_cnode->fullname_with_scope() << " from " << src_dtype << " to " << dtype;
   return cast_cnode;
 }
 }  // namespace
@@ -323,7 +331,7 @@ AnfNodePtr DynamicGRUV2GradFission::AddDwhMatmulNode(const FuncGraphPtr &func_gr
   std::vector<AnfNodePtr> matmul_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimBatchMatMul->name()))};
   (void)matmul_inputs.emplace_back(cast_node);
 
-  CNodePtr dgate_h_cast_node;
+  AnfNodePtr dgate_h_cast_node;
   if (t_size == 1) {
     std::vector<AnfNodePtr> dgate_h_outputs;
     CreateMultipleOutputsOfAnfNode(func_graph, dgate_h, kGRUV2HiddenGradCellOutputNum, &dgate_h_outputs);
