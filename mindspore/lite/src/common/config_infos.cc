@@ -16,6 +16,7 @@
 
 #include "src/common/config_infos.h"
 #include <vector>
+#include <algorithm>
 #include "src/common/log_adapter.h"
 #include "src/common/common.h"
 #include "src/common/utils.h"
