@@ -26,20 +26,20 @@ namespace mindspore {
 namespace kernel {
 class AkgLibraryLoader {
  public:
-  bool LoadAkgLib(void *data, size_t file_size);
-  void *LookupFunction(const std::string &name);
+  bool LoadAkgLib(const void *data);
+  void *LookupFunction(const std::string &name) const;
   ~AkgLibraryLoader();
 
  private:
-  const Elf64_Shdr *LookupSection(const std::string &name);
+  const Elf64_Shdr *LookupSection(const std::string &name) const;
   bool ParseObj();
   void *LookupExtFunction(const std::string &name);
   void CountDynmaicSymbols();
   uint8_t *SectionRuntimeBase(const Elf64_Shdr *section);
   bool DoTextRelocations();
-  void *RelocateExtSymbols(int symbol_idx, int jump_table_idx);
+  void *RelocateExtSymbols(size_t symbol_idx, size_t jump_table_idx);
   std::vector<uint64_t> ParseSection(std::string section_name, bool is_mandatory = false);
-  uint64_t PageAlign(uint64_t n);
+  uint64_t PageAlign(uint64_t n) const;
   using objhdr = union {
     const Elf64_Ehdr *hdr;
     const uint8_t *base;
@@ -51,10 +51,10 @@ class AkgLibraryLoader {
   /* symbols table pointer */
   const Elf64_Sym *symbols_;
   /* number of entries in the symbols table */
-  int num_symbols_;
+  size_t num_symbols_;
   /* string table pointer */
   const char *strtab_ = nullptr;
-  uint64_t page_size_;
+  size_t page_size_;
   /* runtime base address of the imported code */
   uint8_t *text_runtime_base_ = nullptr;
   /* runtime base of the .data section */
@@ -63,7 +63,7 @@ class AkgLibraryLoader {
   std::map<const std::string, std::vector<uint64_t>> section_info_map_;
   std::map<const std::string, uint8_t *> section_runtime_base_map_;
   /* number of external symbols in the symbol table */
-  int num_ext_symbols_ = 0;
+  size_t num_ext_symbols_ = 0;
   void *lib_handle_ = nullptr;
   size_t mmap_size_ = 0;
   struct ext_jump {
