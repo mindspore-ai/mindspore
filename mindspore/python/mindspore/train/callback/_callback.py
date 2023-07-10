@@ -23,6 +23,7 @@ from mindspore import log as logger
 from mindspore.train.summary.summary_record import _cache_summary_tensor_data
 from mindspore.common.parameter import Parameter
 from mindspore.train.serialization import load_param_into_net
+from mindspore.common import dtype as mstype
 
 CUR_NET = None
 
