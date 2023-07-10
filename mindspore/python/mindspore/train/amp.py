@@ -540,7 +540,7 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
     if loss_fn:
         network = _add_loss_network(network, loss_fn, config["cast_model_type"])
 
-    loss_scale = 1.0
+    loss_scale = None
     if config["loss_scale_manager"] is not None:
         loss_scale_manager = config["loss_scale_manager"]
         loss_scale = loss_scale_manager.get_loss_scale()
