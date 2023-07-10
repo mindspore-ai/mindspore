@@ -48,10 +48,10 @@ class MS_API AclModelOptions {
   std::string GetInputShape() const { return input_shape_; }
   void SetInitOptionsMap(std::map<std::string, std::string> init_options) { init_options_map_ = init_options; }
   void SetBuildOptionsMap(std::map<std::string, std::string> build_options) { build_options_map_ = build_options; }
-  void SetAoeGlobalOptionsMap(std::map<std::string, std::string> global_options) {
+  void SetAoeGlobalOptionsMap(const std::map<std::string, std::string> &global_options) {
     aoe_global_options_map_ = global_options;
   }
-  void SetAoeTuningOptionsMap(std::map<std::string, std::string> tuning_options) {
+  void SetAoeTuningOptionsMap(const std::map<std::string, std::string> &tuning_options) {
     aoe_tuning_options_map_ = tuning_options;
   }
   std::map<std::string, std::string> GetAoeGlobalOptionsMap() const { return aoe_global_options_map_; }
