@@ -38,6 +38,7 @@
 #include "ops/gather.h"
 #include "ops/op_utils.h"
 #include "src/common/utils.h"
+#include "src/common/file_utils.h"
 #include "src/litert/cxx_api/tensor/tensor_impl.h"
 #include "ir/anf.h"
 #include "tools/converter/export_model.h"
@@ -227,11 +228,16 @@ std::string NodePrimitiveType(const CNodePtr &cnode) {
 Status LargeModelBuildModel(const schema::MetaGraphT &meta_graph, const std::shared_ptr<ConverterPara> &param,
                             const std::shared_ptr<mindspore::Model> &model, const std::shared_ptr<Context> &context,
                             size_t *size) {
-  if (param->mixedBitWeightQuantParam.workspace.empty()) {
+  if (param->commonQuantParam.workspace.empty()) {
     MS_LOG(ERROR) << "The model is larger than 2G, mixedBitWeightQuant config needs to set workspace to save tmp model";
     return kLiteError;
   }
-  std::string tmp_save_file_path = param->mixedBitWeightQuantParam.workspace + "/tmp.ms";
+  std::string tmp_save_file_path = param->commonQuantParam.workspace + "/tmp.ms";
+  tmp_save_file_path = lite::RealPath(tmp_save_file_path.c_str());
+  if (tmp_save_file_path.empty()) {
+    MS_LOG(ERROR) << param->commonQuantParam.workspace << " is invalid path. Please check it again.";
+    return kLiteError;
+  }
   unsigned char encKey[kEncMaxLen] = {0};
   size_t keyLen = 0;
   auto status = MetaGraphSerializer::Save(meta_graph, tmp_save_file_path, size, encKey, keyLen, param->encrypt_mode);

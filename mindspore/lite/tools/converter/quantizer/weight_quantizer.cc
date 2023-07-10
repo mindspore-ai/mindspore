@@ -286,8 +286,8 @@ int WeightQuantizer::DoCompression(const CNodePtr &cnode, const ParameterPtr &pa
 }
 
 int WeightQuantizer::DoMixBitQuant(const CNodePtr &cnode, const ParameterPtr &parameter, int idx,
-                                   tensor::TensorPtr tensor_info, int preferred_dim, WeightQuantType weight_quant_type,
-                                   bool symmetric) {
+                                   const tensor::TensorPtr &tensor_info, int preferred_dim,
+                                   WeightQuantType weight_quant_type, bool symmetric) {
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   CHECK_NULL_RETURN(primitive);
   auto mixed_bit_quantization = MixedBitWeightQuantization(mixed_bit_init_scale_);
@@ -342,11 +342,11 @@ int WeightQuantizer::InsertAscendDequantNode(const FuncGraphPtr &func_graph, con
     auto axis = GetPreferredDim(cnode, idx - kPrimOffset, ConvertShapeVectorToInt32(tensor_info->shape_c()));
     int status;
     if (type_id == kNumberTypeFloat32) {
-      status =
-        quant_manager.InsertAscendAntiQuantNode(func_graph, cnode, idx, kNumberTypeInt8, kNumberTypeFloat32, axis);
+      status = quant_manager.InsertAscendAntiQuantNode(func_graph, cnode, idx, kNumberTypeInt8, kNumberTypeFloat32,
+                                                       axis, param_->ascendQuantParam.ascend_backend);
     } else {
-      status =
-        quant_manager.InsertAscendAntiQuantNode(func_graph, cnode, idx, kNumberTypeInt8, kNumberTypeFloat16, axis);
+      status = quant_manager.InsertAscendAntiQuantNode(func_graph, cnode, idx, kNumberTypeInt8, kNumberTypeFloat16,
+                                                       axis, param_->ascendQuantParam.ascend_backend);
     }
     if (status != RET_OK) {
       MS_LOG(ERROR) << tensor_name << " insert weight quant node failed.";
