@@ -14,20 +14,79 @@
  * limitations under the License.
  */
 
-#ifdef MSLITE_ENABLE_GRAPH_KERNEL
-#include <fstream>
 #include <string>
 #include <vector>
+#ifdef MSLITE_ENABLE_GRAPH_KERNEL
+#include <fstream>
 #include <memory>
 #include <unordered_map>
 #include "nlohmann/json.hpp"
 #include "transform/graph_ir/transform_util.h"
 #include "backend/common/graph_kernel/model/op_register.h"
 #endif
+#include "utils/log_adapter.h"
 #include "graph/operator.h"
 
 namespace mindspore {
 namespace transform {
+namespace {
+bool InferOffline(const ge::Operator &op, std::vector<ge::TensorDesc> *outputs_info) {
+  if (outputs_info == nullptr) {
+    return false;
+  }
+
+  // output_shapes
+  std::vector<std::vector<int64_t>> output_shapes;
+  if (op.GetAttr("output_shapes", output_shapes) != ge::GRAPH_SUCCESS) {
+    return false;
+  }
+
+  // output_formats
+  std::vector<int32_t> output_formats;
+  if (op.GetAttr("output_formats", output_formats) != ge::GRAPH_SUCCESS ||
+      output_formats.size() != output_shapes.size()) {
+    return false;
+  }
+
+  // output_types
+  std::vector<int32_t> output_types;
+  if (op.GetAttr("output_types", output_types) != ge::GRAPH_SUCCESS || output_types.size() != output_shapes.size()) {
+    return false;
+  }
+
+  for (size_t i = 0; i < output_shapes.size(); ++i) {
+    (void)outputs_info->emplace_back(ge::Shape(output_shapes[i]), static_cast<ge::Format>(output_formats[i]),
+                                     static_cast<ge::DataType>(output_types[i]));
+  }
+  return true;
+}
+
+std::string GetCustomOpName(const ge::Operator &op) {
+  std::string res;
+  ge::AscendString op_name;
+  if (op.GetName(op_name) != ge::GRAPH_SUCCESS) {
+    return res;
+  }
+  return op_name.GetString();
+}
+
+std::string GetCustomOpType(const ge::Operator &op) {
+  std::string res;
+  ge::AscendString op_type;
+  if (op.GetOpType(op_type) != ge::GRAPH_SUCCESS) {
+    return res;
+  }
+  return op_type.GetString();
+}
+
+std::string GetCustomOpKey(const ge::Operator &op) {
+  auto op_name = GetCustomOpName(op);
+  auto op_type = GetCustomOpType(op);
+  auto op_key = op_name + "(" + op_type + ")";
+  return op_key;
+}
+}  // namespace
+
 #ifdef MSLITE_ENABLE_GRAPH_KERNEL
 using mindspore::graphkernel::inner::DAttrs;
 using mindspore::graphkernel::inner::Node;
@@ -171,37 +230,6 @@ bool InferOnline(const ge::Operator &op, const nlohmann::json &js, std::vector<g
   return true;
 }
 
-bool InferOffline(const ge::Operator &op, std::vector<ge::TensorDesc> *outputs_info) {
-  if (outputs_info == nullptr) {
-    return false;
-  }
-
-  // output_shapes
-  std::vector<std::vector<int64_t>> output_shapes;
-  if (op.GetAttr("output_shapes", output_shapes) != ge::GRAPH_SUCCESS) {
-    return false;
-  }
-
-  // output_formats
-  std::vector<int32_t> output_formats;
-  if (op.GetAttr("output_formats", output_formats) != ge::GRAPH_SUCCESS ||
-      output_formats.size() != output_shapes.size()) {
-    return false;
-  }
-
-  // output_types
-  std::vector<int32_t> output_types;
-  if (op.GetAttr("output_types", output_types) != ge::GRAPH_SUCCESS || output_types.size() != output_shapes.size()) {
-    return false;
-  }
-
-  for (size_t i = 0; i < output_shapes.size(); ++i) {
-    (void)outputs_info->emplace_back(ge::Shape(output_shapes[i]), static_cast<ge::Format>(output_formats[i]),
-                                     static_cast<ge::DataType>(output_types[i]));
-  }
-  return true;
-}
-
 bool InputsInfoNotChanged(const ge::Operator &op, const nlohmann::json &js) {
   std::vector<nlohmann::json> input_desc = js["input_desc"];
   for (size_t i = 0; i < input_desc.size(); ++i) {
@@ -242,30 +270,10 @@ bool Infer(const ge::Operator &op, const std::string &op_key, const std::string 
   MS_LOG(INFO) << "Infer shape online for op " << op_key;
   return InferOnline(op, js, outputs_info);
 }
-
-std::string GetCustomAkgOpName(const ge::Operator &op) {
-  std::string res;
-  ge::AscendString op_name;
-  if (op.GetName(op_name) != ge::GRAPH_SUCCESS) {
-    return res;
-  }
-  return op_name.GetString();
-}
-
-std::string GetCustomAkgOpType(const ge::Operator &op) {
-  std::string res;
-  ge::AscendString op_type;
-  if (op.GetOpType(op_type) != ge::GRAPH_SUCCESS) {
-    return res;
-  }
-  return op_type.GetString();
-}
 }  // namespace
 
 ge::graphStatus CustomAkgOpInferFunc(ge::Operator &op) {
-  auto op_name = GetCustomAkgOpName(op);
-  auto op_type = GetCustomAkgOpType(op);
-  auto op_key = op_name + "(" + op_type + ")";
+  auto op_key = GetCustomOpKey(op);
   MS_LOG(INFO) << "Start infer shape for op " << op_key;
 
   // get akg info path of current op
@@ -299,5 +307,28 @@ ge::graphStatus CustomAkgOpInferFunc(ge::Operator &op) {
 #else
 ge::graphStatus CustomAkgOpInferFunc(ge::Operator &) { return ge::GRAPH_SUCCESS; }
 #endif
+
+ge::graphStatus CustomTbeOpInferFunc(ge::Operator &op) {
+  auto op_key = GetCustomOpKey(op);
+  MS_LOG(INFO) << "Start infer shape for op " << op_key;
+  std::vector<ge::TensorDesc> outputs_info;
+  if (!InferOffline(op, &outputs_info)) {
+    MS_LOG(ERROR) << "Failed infer shape for op " << op_key;
+    return ge::GRAPH_FAILED;
+  }
+  // update output desc
+  std::vector<std::string> output_names;
+  if (op.GetAttr("output_names", output_names) != ge::GRAPH_SUCCESS || output_names.size() != outputs_info.size()) {
+    MS_LOG(ERROR) << "For op " << op_key
+                  << ", attr 'output_names' size is not equal to outputs_info size: " << output_names.size() << " vs "
+                  << outputs_info.size();
+    return ge::GRAPH_FAILED;
+  }
+  for (size_t i = 0; i < outputs_info.size(); ++i) {
+    (void)op.UpdateOutputDesc(output_names[i], outputs_info[i]);
+  }
+  MS_LOG(INFO) << "End infer shape for op " << op_key;
+  return ge::GRAPH_SUCCESS;
+}
 }  // namespace transform
 }  // namespace mindspore
