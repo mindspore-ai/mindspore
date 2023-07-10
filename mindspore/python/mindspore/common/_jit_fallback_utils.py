@@ -16,8 +16,6 @@
 # ============================================================================
 """common _jit_fallback_utils."""
 
-import mindspore.ops as ops
-
 
 _local_value_nodes = {}
 
@@ -45,12 +43,6 @@ def dict_setitem(dic, key, val):
     """Set an element to dict."""
     dic.__setitem__(key, val)
     return dic
-
-
-def set_attr(class_obj, attr_name, target_obj):
-    """Set attr for object and return the object for jit fallback."""
-    setattr(class_obj, attr_name, target_obj)
-    return target_obj
 
 
 def list_inplace_append(list_obj, target_obj):
@@ -111,13 +103,3 @@ def list_inplace_clear(list_obj):
         list_obj = []
     list_obj.clear()
     return list_obj
-
-
-def ones_like(x):
-    """Implement `oneslike`."""
-    return ops.composite.ones_like(x)
-
-
-def zeros_like(x):
-    """Implement `zeroslike`."""
-    return ops.composite.zeros_like(x)
