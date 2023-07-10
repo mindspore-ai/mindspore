@@ -240,9 +240,10 @@ void ConfigFileParser::SetParamByConfigfile(const std::shared_ptr<mindspore::Con
   if (!(ascend_string = FindInAscendMap(kDumpModelNameKey, ascend_map)).empty()) {
     param->aclModelOptionCfgParam.dump_model_name = ascend_string;
   }
-
-  if (!(ascend_string = FindInAscendMap(kEnableCustomOp, ascend_map)).empty()) {
-    param->ascendGeOptionCfg.enable_custom_op = ascend_string;
+  if (!(ascend_string = FindInAscendMap(kPluginCustomOps, ascend_map)).empty()) {
+    param->ascendGeOptionCfg.plugin_custom_ops = ascend_string;
+  } else if (!(ascend_string = FindInAscendMap(kEnableCustomOp, ascend_map)).empty()) {
+    param->ascendGeOptionCfg.plugin_custom_ops = ascend_string;
   }
 
   auto it = ascend_map.find("input_shape");
