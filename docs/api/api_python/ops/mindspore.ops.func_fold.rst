@@ -5,8 +5,23 @@ mindspore.ops.fold
 
     将提取出的滑动局部区域块还原成更大的输出Tensor。
 
+    考虑一个batch的输入Tensor，其shape为 :math:`(N, C \times \prod(\text{kernel_size}), L)` ，
+    其中 :math:`C \times \prod(\text{kernel_size})` 为每个滑块内值的总数量(一个滑块有 :math:`\prod(\text{kernel_size})` 个空间位置，
+    每个位置都包含一个 `C` 通道的向量)，共有 :math:`L` 个这样的滑块：
+
+    .. math::
+        L = \prod_d \left\lfloor\frac{\text{output_size}[d] + 2 \times \text{padding}[d] %
+            - \text{dilations}[d] \times (\text{kernel_size}[d] - 1) - 1}{\text{strides}[d]} + 1\right\rfloor,
+
+    其中, :math:`d` 遍历所有的空间维度。
+
+    因此，在最后一个维度(列维度)上 `output` 包含特定块内的所有值。
+
+    `dilation`， `padding` 和 `stride` 决定了滑块如何被取出。
+
     .. warning::
-        - 其输入则须为三维Tensor，其shape为 :math:`(N, C \times H, W)` 。
+        - 输入是三维Tensor，其shape为 :math:`(N, C \times \prod(\text{kernel_size}), L)` 。
+        - 输出是四维Tensor，其shape为 :math:`(N, C, output_size[0], output_size[1], ...)` 。
 
     参数：
         - **input** (Tensor) - 三维Tensor，支持的数据类型: float16、float32、float64、complex64和complex128。

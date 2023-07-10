@@ -6652,8 +6652,26 @@ def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
     r"""
     Combines an array of sliding local blocks into a large containing tensor.
 
+    Consider a batched input tensor of shape :math:`(N, C \times \prod(\text{kernel_size}), L)` ,
+    where :math:`N` is the batch dimension, :math:`C \times \prod(\text{kernel_size})` is the
+    total number of values within each block (a block has :math:`\prod(\text{kernel_size})` spatial
+    locations each containing a `C`-channeled vector), and :math:`L` is the total number of such blocks:
+
+    .. math::
+        L = \prod_d \left\lfloor\frac{\text{output_size}[d] + 2 \times \text{padding}[d] %
+            - \text{dilations}[d] \times (\text{kernel_size}[d] - 1) - 1}{\text{strides}[d]} + 1\right\rfloor,
+
+    where :math:`d` is over all spatial dimensions.
+
+    Therefore, `output_size` is the spatial shape of the large containing tensor of the sliding local blocks.
+
+    The `dilation`, `padding` and `stride` arguments specify how the sliding blocks are retrieved.
+
     .. warning::
-        - The input must be a 3-dimensional Tensor with shape :math:`(N, C \times H, W)` .
+        - The input must be a 3-dimensional Tensor with shape
+          :math:`(N, C \times \prod(\text{kernel_size}), L)` .
+        - The output must be a 4-dimensional Tensor with shape
+          :math:`(N, C, output_size[0], output_size[1], ...)` .
 
     Args:
         input (Tensor): 3-D Tensor, supported dtypes: float16, float32, float64, complex64 and complex128.
@@ -6668,7 +6686,7 @@ def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
             for height and width. If type is int, it means that height equal with width. Default: ``1`` .
 
     Returns:
-        A Tensor, with same type as `input`.
+        A Tensor, with same type as `input` . And its shape is as described above.
 
     Raises:
         TypeError: If `kernel_size`, `dilation`, `padding`, `stride` data type is not int, tuple or list.
