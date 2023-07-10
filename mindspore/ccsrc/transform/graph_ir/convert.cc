@@ -2957,13 +2957,10 @@ void DfGraphConvertor::ConvertAllReduce(const CNodePtr &node) {
     fusion = kHcclFusionByFusionID;
   } else if (fusion < 0) {
     fusion = kHcclFusionDefault;
-    if (!common::GetEnv("MS_DEV_CELL_REUSE").empty()) {
-      fusion = 0;
-    }
   }
 
   if (!common::GetEnv("MS_DEV_CELL_REUSE").empty()) {
-    MS_LOG(ERROR) << "cell split not support fusion id = 1";
+    MS_LOG(INFO) << "cell reuse not support all fusion";
     fusion = 0;
   }
 
