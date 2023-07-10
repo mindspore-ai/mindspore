@@ -64,8 +64,9 @@ TEST(ModelCApiTest, BuildFromBufferTwice) {
   ASSERT_EQ(status, kMSStatusSuccess);
 
   // 3. Build the model twice. Expect specific error code: kMSStatusLiteModelRebuild.
-  status = MSModelBuildFromFile(model, model_file.c_str(), kMSModelTypeMindIR, context);
+  status = MSModelBuild(model, model_buffer, model_size, kMSModelTypeMindIR, context);
   ASSERT_EQ(status, kMSStatusLiteModelRebuild);
+  delete model_buffer;
 
   MSModelDestroy(&model);
 }
@@ -108,10 +109,37 @@ TEST(ModelCApiTest, BuildFromBufferAndFileTwice) {
 
   auto status = MSModelBuild(model, model_buffer, model_size, kMSModelTypeMindIR, context);
   ASSERT_EQ(status, kMSStatusSuccess);
+  delete model_buffer;
 
   // 3. Build the model twice. Expect specific error code: kMSStatusLiteModelRebuild.
   status = MSModelBuildFromFile(model, model_file.c_str(), kMSModelTypeMindIR, context);
   ASSERT_EQ(status, kMSStatusLiteModelRebuild);
+
+  MSModelDestroy(&model);
+}
+
+TEST(ModelCApiTest, BuildFromFileAndBufferTwice) {
+  MSContextHandle context;
+  const std::string model_file = "./ml_face_isface.ms";
+
+  // 1. Create CPU context.
+  CreateCpuContext(&context);
+
+  // 2. Build the model once. Expect returning success.
+  auto model = MSModelCreate();
+  ASSERT_NE(model, nullptr);
+
+  auto status = MSModelBuildFromFile(model, model_file.c_str(), kMSModelTypeMindIR, context);
+  ASSERT_EQ(status, kMSStatusSuccess);
+
+  // 3. Build the model twice. Expect specific error code: kMSStatusLiteModelRebuild.
+  size_t model_size = 0;
+  char *model_buffer = mindspore::lite::ReadFile(model_file.c_str(), &model_size);
+  ASSERT_NE(model_buffer, nullptr);
+
+  status = MSModelBuild(model, model_buffer, model_size, kMSModelTypeMindIR, context);
+  ASSERT_EQ(status, kMSStatusLiteModelRebuild);
+  delete model_buffer;
 
   MSModelDestroy(&model);
 }
