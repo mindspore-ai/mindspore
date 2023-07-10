@@ -22,7 +22,8 @@ namespace mindspore {
 bool CompileCacheEnable() {
   auto enable = mindspore::MsContext::GetInstance()->get_param<bool>(mindspore::MS_CTX_ENABLE_COMPILE_CACHE);
   if (!enable) {
-    enable = !mindspore::common::GetEnv(mindspore::kCompilerCacheEnable).empty();
+    const auto &env_enable = mindspore::common::GetEnv(mindspore::kCompilerCacheEnable);
+    enable = !env_enable.empty() && env_enable == "1";
   }
   return enable;
 }

@@ -1471,6 +1471,8 @@ constexpr auto kLabelNum = "label_num";
 constexpr auto kParameterUniqueNameToName = "param_unique_name_to_name";
 constexpr auto kRefInOutMap = "ref_in_out_map";
 constexpr auto kRetryIntervalSeconds = 500;
+constexpr auto kSummaryNodes = "summary_nodes";
+constexpr auto kSummaryNodeExist = "summary_node_exist";
 
 COMMON_EXPORT bool IsOneOfCustomAkgType(const std::string &name);
 COMMON_EXPORT bool IsOneOfOperator(const std::string &name);
