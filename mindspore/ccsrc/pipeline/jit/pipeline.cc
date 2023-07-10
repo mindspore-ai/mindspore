@@ -1536,6 +1536,12 @@ py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &ph
   BaseRef value;
   for (int64_t i = 0; i < vm_loop; i++) {
     value = (*run)(execute_info->arg_list);
+    bool need_recovery = distributed::recovery::RecoveryContext::GetInstance()->enable_recovery() &&
+                         distributed::recovery::RecoveryContext::GetInstance()->need_reset();
+    if (need_recovery) {
+      // In recovery scenario, the output value could be empty, do not transform return data.
+      return py::none();
+    }
     res = BaseRefToPyData(value, output_abs);
     // If crossing the graph, may not get PyExecuteOutputUserData in the parent graph.
     // Get PyExecuteOutputUserData by device_address bound AnfNode which is in sub graph.
