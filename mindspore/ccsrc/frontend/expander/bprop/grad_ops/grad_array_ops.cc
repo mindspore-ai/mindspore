@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include <vector>
 #include <algorithm>
 #include <numeric>
-#include "ir/functor.h"
+#include <vector>
 #include "frontend/expander/bprop/bprop_irbuilder.h"
 #include "frontend/expander/bprop/grad_ops/common_utils.h"
 #include "include/common/utils/utils.h"
+#include "ir/functor.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore::expander::bprop {
@@ -369,7 +369,7 @@ class ResizeNearestNeighborV2ShapeCalc : public ShapeCalcFunctor {
   std::vector<int64_t> Infer(const ShapeArray &, const HashSet<size_t> &) const override { return {2}; }
 
  protected:
-  bool is_nchw_{false};
+  bool is_nchw_{true};
 };
 REG_FUNCTOR("ShapeCalc_ResizeNearestNeighborV2", ResizeNearestNeighborV2ShapeCalc);
 
@@ -1680,19 +1680,15 @@ REG_BPROP_BUILDER("IdentityN").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("ResizeNearestNeighborV2").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
   auto align_corners = GetValue<bool>(ib->GetAttr("align_corners"));
   auto half_pixel_centers = GetValue<bool>(ib->GetAttr("half_pixel_centers"));
-  auto data_format = GetValue<std::string>(ib->GetAttr("format"));
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex3);
-
-  bool is_nchw = (data_format == "NCHW");
-  auto grad_in_size = ib->ShapeCalc(std::make_shared<ResizeNearestNeighborV2ShapeCalc>(is_nchw), {x})[0];
+  auto grad_in_size = ib->ShapeCalc(std::make_shared<ResizeNearestNeighborV2ShapeCalc>(true), {x})[0];
   if (grad_in_size->isa<ValueNode>()) {
     grad_in_size = ib->Tensor(GetIntList(grad_in_size), kInt64);
   }
-  auto dx = ib->Emit("ResizeNearestNeighborV2Grad", {dout, grad_in_size},
-                     {{"align_corners", MakeValue(align_corners)},
-                      {"half_pixel_centers", MakeValue(half_pixel_centers)},
-                      {"format", MakeValue(data_format)}});
+  auto dx =
+    ib->Emit("ResizeNearestNeighborV2Grad", {dout, grad_in_size},
+             {{"align_corners", MakeValue(align_corners)}, {"half_pixel_centers", MakeValue(half_pixel_centers)}});
   return {dx, ib->OutZeros(grad_in_size)};
 });
 

@@ -2312,12 +2312,12 @@ def interpolate(input,
             t2 = Tensor([1], mstype.int32)
             size = F.concat([t1, t2])
             x = x.unsqueeze(-1)
-            x = _get_cache_prim(P.ResizeNearestNeighborV2)(data_format="NCHW")(
+            x = _get_cache_prim(P.ResizeNearestNeighborV2)()(
                 x, size)
             x = P.Squeeze(-1)(x)
         elif size is not None and x_rank == 4:
             size = seq.TupleToTensor()(size[:2], mstype.int32)
-            x = _get_cache_prim(P.ResizeNearestNeighborV2)(data_format="NCHW")(
+            x = _get_cache_prim(P.ResizeNearestNeighborV2)()(
                 x, size)
         else:
             x = _get_cache_prim(P.UpsampleNearest3D)()(x, size, scale_factor)
@@ -2363,7 +2363,6 @@ def interpolate(input,
             # For impl of nearest 3D use 4D.
             x = x.unsqueeze(-1)
             resize = _get_cache_prim(P.ResizeNearestNeighborV2)(
-                data_format="NCHW",
                 align_corners=False,
                 half_pixel_centers=True)
             x = resize(x, size)
@@ -2376,7 +2375,6 @@ def interpolate(input,
             else:
                 size = seq.ListToTensor()(size, mstype.int32)
             resize = _get_cache_prim(P.ResizeNearestNeighborV2)(
-                data_format="NCHW",
                 align_corners=False,
                 half_pixel_centers=True)
             x = resize(x, size)

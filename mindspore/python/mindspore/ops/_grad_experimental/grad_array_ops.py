@@ -344,14 +344,11 @@ def get_bprop_resize_nearest_neighbor_v2(self):
     """Generate bprop for ResizeNearestNeighborV2"""
     align_corners = self.align_corners
     half_pixel_centers = self.half_pixel_centers
-    data_format = self.data_format
-    grad_op = G.ResizeNearestNeighborV2Grad(align_corners, half_pixel_centers, data_format)
+    grad_op = G.ResizeNearestNeighborV2Grad(align_corners, half_pixel_centers)
 
     def bprop(x, size, output, dout):
         x_shape = P.Shape()(x)
-        grad_in_size = x_shape[1:3]
-        if data_format == 'NCHW':
-            grad_in_size = x_shape[2:4]
+        grad_in_size = x_shape[2:4]
 
         if F.is_sequence_value_unknown(P.Shape()(x)):
             dx = grad_op(dout, grad_in_size)

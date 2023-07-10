@@ -17,15 +17,10 @@
 #include "ops/resize_nearest_neighbor_v2.h"
 
 #include <map>
-#include <memory>
-#include <set>
-#include <string>
-#include <vector>
 
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
 #include "abstract/ops/op_infer.h"
-#include "abstract/ops/primitive_infer_map.h"
 #include "abstract/utils.h"
 #include "base/base.h"
 #include "ir/dtype/number.h"
@@ -33,12 +28,10 @@
 #include "ir/primitive.h"
 #include "ir/value.h"
 #include "mindapi/base/format.h"
-#include "mindapi/base/shape_vector.h"
-#include "mindapi/base/shared_ptr.h"
 #include "mindapi/ir/value.h"
 #include "mindapi/src/helper.h"
-#include "mindspore/core/ops/image_ops.h"
-#include "ops/op_name.h"
+#include "ops/image_ops.h"
+#include "ops/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
@@ -48,15 +41,11 @@
 namespace mindspore {
 namespace ops {
 namespace {
-#define IsSameType(source_type, cmp_type) (cmp_type->equal(source_type))
-#define IsNoneOrAnyValue(value_ptr) ((value_ptr->isa<None>()) || (value_ptr->isa<ValueAny>()))
-
 abstract::ShapePtr ResizeNearestNeighborV2InferShape(const PrimitivePtr &primitive,
                                                      const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto size_ptr = input_args[kInputIndex1]->BuildValue();
   int64_t long_kdim1 = static_cast<int64_t>(kDim1);
   int64_t long_kdim2 = static_cast<int64_t>(kDim2);
   int64_t long_kdim4 = static_cast<int64_t>(kDim4);
@@ -73,50 +62,31 @@ abstract::ShapePtr ResizeNearestNeighborV2InferShape(const PrimitivePtr &primiti
     MS_EXCEPTION(ValueError) << "For '" << prim_name << ". If half_pixel_centers is True, align_corners must be False.";
   }
 
-  auto data_format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr(kFormat));
-  std::map<char, size_t> dim_idx_map;
-  mindspore::Format format_enum = static_cast<mindspore::Format>(data_format);
-  if (format_enum == Format::NCHW) {
-    dim_idx_map = {{'N', kInputIndex0}, {'C', kInputIndex1}, {'H', kInputIndex2}, {'W', kInputIndex3}};
-  } else if (format_enum == Format::NHWC) {
-    dim_idx_map = {{'N', kInputIndex0}, {'H', kInputIndex1}, {'W', kInputIndex2}, {'C', kInputIndex3}};
-  } else {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the attr of 'data_format' only support [" << kFormatNCHW
-                             << ", " << kFormatNHWC << "]. But get '" << data_format << "'.";
-  }
-
-  ShapeVector y_shape(long_kdim4);
-  if (IsDynamicRank(x_shape)) {
-    y_shape[dim_idx_map['N']] = abstract::Shape::kShapeDimAny;
-    y_shape[dim_idx_map['C']] = abstract::Shape::kShapeDimAny;
-  } else {
+  ShapeVector y_shape(long_kdim4, abstract::Shape::kShapeDimAny);
+  if (!IsDynamicRank(x_shape)) {
     (void)CheckAndConvertUtils::CheckInteger("dimension of x", SizeToLong(x_shape.size()), kEqual, long_kdim4,
                                              prim_name);
-    y_shape[dim_idx_map['N']] = x_shape[dim_idx_map['N']];
-    y_shape[dim_idx_map['C']] = x_shape[dim_idx_map['C']];
+    y_shape[kInputIndex0] = x_shape[kInputIndex0];
+    y_shape[kInputIndex1] = x_shape[kInputIndex1];
   }
 
-  bool is_compile = IsNoneOrAnyValue(size_ptr);
-  if (is_compile) {
-    y_shape[dim_idx_map['H']] = abstract::Shape::kShapeDimAny;
-    y_shape[dim_idx_map['W']] = abstract::Shape::kShapeDimAny;
-  } else {
-    MS_EXCEPTION_IF_NULL(size_ptr);
-    auto size_value = CheckAndConvertUtils::CheckTensorIntValue("input size", size_ptr, prim_name);
+  auto size_value = GetShapeValue(primitive, input_args[kInputIndex1]);
+  if (!IsDynamic(size_value)) {
     if (size_value.size() != static_cast<size_t>(long_kdim2)) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the elements number of 'size' should be 2, but get "
                                << size_value.size() << " number.";
     }
     (void)CheckAndConvertUtils::CheckPositiveVector("size", size_value, prim_name);
-    y_shape[dim_idx_map['H']] = size_value.front();
-    y_shape[dim_idx_map['W']] = size_value.back();
+    y_shape[kInputIndex2] = size_value.front();
+    y_shape[kInputIndex3] = size_value.back();
   }
+
   return std::make_shared<abstract::Shape>(y_shape);
 }
 
 TypePtr ResizeNearestNeighborV2InferType(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
-  std::set<TypePtr> support_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kFloat16, kFloat32, kFloat64};
+  std::set<TypePtr> support_types = {kUInt8, kFloat16, kFloat32, kFloat64};
   auto start_type = CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[kInputIndex0]->BuildType(),
                                                                support_types, primitive->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("size", input_args[kInputIndex1]->BuildType(), {kInt32, kInt64},

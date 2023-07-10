@@ -40,8 +40,6 @@ class ResizeNearestNeighborV2CpuKernel : public CpuKernel {
     Eigen::TensorMap<Eigen::Tensor<T, kValue4, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned> x_4d,
     Eigen::TensorMap<Eigen::Tensor<T, kValue4, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned> y_4d);
 
-  std::string data_format = "NHWC";
-  std::unordered_map<char, size_t> dim_idx_map_;
   bool align_corners;
   bool half_pixel_centers;
   Eigen::Index batch_size;
