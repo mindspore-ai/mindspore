@@ -166,6 +166,12 @@ void DfGraphManager::DeleteGeSession() noexcept {
   if (sess_ptr_ == nullptr) {
     MS_LOG(INFO) << "Ge Session is not exist";
   } else {
+    for (const auto &graph_id : graphs_) {
+      MS_LOG(INFO) << "Remove graph, graph id: " << graph_id;
+      if (sess_ptr_->RemoveGraph(static_cast<uint32_t>(graph_id.second->id_)) != ::ge::GRAPH_SUCCESS) {
+        MS_LOG(WARNING) << "Remove graph failed, graph id: " << graph_id;
+      }
+    }
     sess_ptr_ = nullptr;
     saved_graphs_.clear();
     MS_LOG(INFO) << "Delete Ge Session success";
