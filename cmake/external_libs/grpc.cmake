@@ -31,6 +31,13 @@ else()
 endif()
 message("grpc using absl_DIR : " ${_FINDPACKAGE_ABSL_CONFIG_DIR})
 
+if(EXISTS ${c-ares_ROOT}/lib64)
+    set(_FINDPACKAGE_CARES_CONFIG_DIR "${c-ares_ROOT}/lib64/cmake/c-ares")
+else()
+    set(_FINDPACKAGE_CARES_CONFIG_DIR "${c-ares_ROOT}/lib/cmake/c-ares")
+endif()
+message("grpc using c-ares_DIR : " ${_FINDPACKAGE_CARES_CONFIG_DIR})
+
 if(EXISTS ${re2_ROOT}/lib64)
     set(_FINDPACKAGE_RE2_CONFIG_DIR "${re2_ROOT}/lib64/cmake/re2")
 else()
@@ -69,7 +76,7 @@ mindspore_add_pkg(grpc
         -DgRPC_ABSL_PROVIDER:STRING=package
         -Dabsl_DIR:PATH=${_FINDPACKAGE_ABSL_CONFIG_DIR}
         -DgRPC_CARES_PROVIDER:STRING=package
-        -Dc-ares_DIR:PATH=${c-ares_ROOT}/lib/cmake/c-ares
+        -Dc-ares_DIR:PATH=${_FINDPACKAGE_CARES_CONFIG_DIR}
         -DgRPC_SSL_PROVIDER:STRING=package
         ${_CMAKE_ARGS_OPENSSL_ROOT_DIR}
         -DgRPC_RE2_PROVIDER:STRING=package
