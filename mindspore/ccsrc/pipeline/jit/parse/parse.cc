@@ -501,6 +501,16 @@ FuncGraphPtr Parser::ParseFuncGraph() {
     MS_LOG(ERROR) << "Parse function error, code is " << errcode();
     return nullptr;
   }
+  for (auto &func_block_item : func_block_list_) {
+    MS_EXCEPTION_IF_NULL(func_block_item);
+    MS_EXCEPTION_IF_NULL(func_block_item->func_graph());
+    if (!func_block_item->isolated_nodes().empty()) {
+      // Find unused variables.
+      func_block_item->FindIsolatedNodes();
+      // Attach all isolated nodes.
+      func_block_item->AttachIsolatedNodesBeforeReturn();
+    }
+  }
   RemoveUnnecessaryPhis();
   MS_EXCEPTION_IF_NULL(fn_block);
   CheckFuncReturn(fn_block->func_graph());
