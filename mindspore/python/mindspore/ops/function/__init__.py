@@ -502,6 +502,7 @@ from .nn_func import (
     softmax,
     softmin,
     softshrink,
+    softplus,
     pdist,
     pad,
     prelu,

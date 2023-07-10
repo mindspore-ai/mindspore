@@ -2750,6 +2750,50 @@ def soft_shrink(input, lambd=0.5):
     return soft_shrink_op(input)
 
 
+def softplus(input, beta=1, threshold=20): # pylint:disable=redefined-outer-name
+    r"""
+    Applies softplus function to `input` element-wise.
+
+    The softplus function is shown as follows, x is the element of `input` :
+
+    .. math::
+
+        \text{output} = \frac{1}{beta}\log(1 + \exp(\text{beta * x}))
+
+    When :math:`input * beta > threshold`, the implementation converts to the linear function
+    to ensure numerical stability.
+
+    Args:
+        input (Tensor) - Tensor of any dimension, with float16, float32 or float64(CPU, GPU) data type.
+        beta (int, optional) - The :math:`\beta` value in softplus function. Default: ``1`` .
+        threshold (int, optional) - When :math:`input * beta > threshold`, converting softplus to a linear function.
+            Default: ``20`` .
+
+    Returns:
+        Tensor, with the same type and shape as the `input` .
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+        TypeError: If the dtype of `input` is not float16, float32 or float64.
+
+    Supported Platforms:
+        ``Ascend``  ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> input = Tensor(np.array([0.1, 0.2, 30, 25]), mindspore.float32)
+        >>> output = ops.softplus(input)
+        >>> print(output)
+        [0.7443967 0.79813886 30. 25.]
+    """
+    softplus_op = _get_cache_prim(P.Softplus)()
+    scaling_input = beta * input
+    op_output = (1 / beta) * softplus_op(scaling_input)
+    return ops.select(input * beta > threshold, input, op_output)
+
+
 def silu(x):
     r"""
     Computes Sigmoid Linear Unit of input element-wise. The SiLU function is defined as:
@@ -7273,6 +7317,7 @@ __all__ = [
     'softsign',
     'softshrink',
     'soft_shrink',
+    'softplus',
     'selu',
     'silu',
     'soft_margin_loss',
