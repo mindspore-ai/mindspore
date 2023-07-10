@@ -313,11 +313,11 @@ void SetInputParameterAbstractName(const FuncGraphPtr &func_graph) {
 }
 
 STATUS ConverterFuncGraph::OptimizeForGE(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {
-  if (param->ascendGeOptionCfg.enable_custom_op == "None" || param->ascendGeOptionCfg.enable_custom_op.empty()) {
+  if (param->ascendGeOptionCfg.plugin_custom_ops == "None" || param->ascendGeOptionCfg.plugin_custom_ops.empty()) {
     MS_LOG(INFO) << "custom op fusion not used.";
     return RET_OK;
   }
-  if (param->ascendGeOptionCfg.enable_custom_op == "All") {
+  if (param->ascendGeOptionCfg.plugin_custom_ops == "All") {
     AnfTransformForGe transform;
     auto status = transform.Transform(func_graph, param);
     if (status != RET_OK) {
