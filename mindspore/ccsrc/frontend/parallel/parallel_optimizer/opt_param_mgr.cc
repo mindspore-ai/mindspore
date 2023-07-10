@@ -88,19 +88,6 @@ class OptParamMgrImpl : public OptParamMgr {
     return static_cast<float>(shape_size) * type_size / DIVISOR_K;
   }
 
-  bool StageSharedParam(const AnfNodePtr &parameter) const {
-    MS_EXCEPTION_IF_NULL(root_);
-    FuncGraphManagerPtr manager = root_->manager();
-    auto user_set = manager->node_users()[parameter];
-    for (auto &param_pair : user_set) {
-      CNodePtr cnode = param_pair.first->cast<CNodePtr>();
-      if (cnode->HasPrimalAttr(PIPELINE_PARAM)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   int64_t GetThresholdFromUsrInput() const {
     return ParallelContext::GetInstance()->get_parallel_optimizer_threshold();
   }
@@ -108,12 +95,6 @@ class OptParamMgrImpl : public OptParamMgr {
   bool SplitParam(const AnfNodePtr &parameter) const {
     if (!ParallelContext::GetInstance()->enable_parallel_optimizer()) {
       MS_LOG(INFO) << "Parallel optimizer: feature is not enabled. Skipped.";
-      return false;
-    }
-
-    if (StageSharedParam(parameter)) {
-      MS_LOG(INFO) << "Parallel optimizer: " << parameter->ToString()
-                   << " is stage-shared in pipeline parallel. Skipped.";
       return false;
     }
 
