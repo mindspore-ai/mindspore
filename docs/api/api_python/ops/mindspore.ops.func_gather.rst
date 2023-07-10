@@ -18,13 +18,14 @@ mindspore.ops.gather
     参数：
         - **input_params** (Tensor) - 原始Tensor，shape为 :math:`(x_1, x_2, ..., x_R)` 。
         - **input_indices** (Tensor) - 要切片的索引Tensor，shape为 :math:`(y_1, y_2, ..., y_S)` 。指定原始Tensor中要切片的索引。数据类型必须是int32或int64。
-        - **axis** (int) - 指定要切片的维度索引。它必须要大于或等于 `batch_dims`。
+        - **axis** (Union(int, Tensor[int])) - 指定要切片的维度索引。它必须要大于或等于 `batch_dims`。若 `axis` 为Tensor，其size必须为1。
         - **batch_dims** (int) - 指定batch维的数量。它必须要小于或等于 `input_indices` 的rank。默认值： ``0`` 。
 
     返回：
         Tensor，shape为 :math:`input\_params.shape[:axis] + input\_indices.shape[batch\_dims:] + input\_params.shape[axis + 1:]` 。
 
     异常：
-        - **TypeError** - `axis` 不是int。
-        - **TypeError** - `input_params` 不是Tensor。
-        - **TypeError** - `input_indices` 不是int类型的Tensor。
+        - **TypeError**  - `axis` 不是int或Tensor。
+        - **ValueError** - `axis` 为Tensor时，size不为1。
+        - **TypeError**  - `input_params` 不是Tensor。
+        - **TypeError**  - `input_indices` 不是int类型的Tensor。

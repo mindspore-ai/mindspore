@@ -124,7 +124,7 @@ abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::ve
     if (axis_value_ptr->isa<tensor::Tensor>()) {
       auto axis_vec = CheckAndConvertUtils::CheckTensorIntValue("axis", axis_value_ptr, op_name);
       if (axis_vec.size() != 1) {
-        MS_LOG(EXCEPTION) << " The input number of Gather axis must be int, but got " << axis_vec;
+        MS_EXCEPTION(ValueError) << " The input size of Gather axis must be 1, but got " << axis_vec.size();
       }
       axis_val = axis_vec[0];
     } else {
