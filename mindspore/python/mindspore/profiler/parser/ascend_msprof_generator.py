@@ -157,7 +157,10 @@ class AscendMsprofDataGenerator:
                 self.link_index_with_name(header, self.steptrace_name)
                 for row in reader:
                     rows = [row[index.get('index')] for index in self.steptrace_name.values()]
-                    rows.extend(row[9:])
+                    if row[9:]:
+                        rows.extend(row[9:])
+                    else:
+                        rows.extend([0 for _ in range(len(header) - 9)])
                     rows = ['0' if i == 'N/A' else i for i in rows]
                     steptrace.append(tuple(rows))
             break
