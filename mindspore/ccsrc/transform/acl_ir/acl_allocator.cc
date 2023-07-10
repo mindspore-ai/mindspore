@@ -67,11 +67,11 @@ AclAllocatorRegister::AclAllocatorRegister() {
 
   allocator_desc_ = aclrtAllocatorCreateDesc();
   MS_EXCEPTION_IF_NULL(allocator_desc_);
-  aclrtAllocatorSetObjToDesc(allocator_desc_, allocator_obj_);
-  aclrtAllocatorSetAllocFuncToDesc(allocator_desc_, AclAllocator::AllocFunc);
-  aclrtAllocatorSetFreeFuncToDesc(allocator_desc_, AclAllocator::FreeFunc);
-  aclrtAllocatorSetAllocAdviseFuncToDesc(allocator_desc_, AclAllocator::AllocAdviseFunc);
-  aclrtAllocatorSetGetAddrFromBlockFuncToDesc(allocator_desc_, AclAllocator::GetAddrFromBlock);
+  (void)aclrtAllocatorSetObjToDesc(allocator_desc_, allocator_obj_);
+  (void)aclrtAllocatorSetAllocFuncToDesc(allocator_desc_, AclAllocator::AllocFunc);
+  (void)aclrtAllocatorSetFreeFuncToDesc(allocator_desc_, AclAllocator::FreeFunc);
+  (void)aclrtAllocatorSetAllocAdviseFuncToDesc(allocator_desc_, AclAllocator::AllocAdviseFunc);
+  (void)aclrtAllocatorSetGetAddrFromBlockFuncToDesc(allocator_desc_, AclAllocator::GetAddrFromBlock);
 }
 
 AclAllocatorRegister::~AclAllocatorRegister() {
@@ -80,9 +80,9 @@ AclAllocatorRegister::~AclAllocatorRegister() {
     delete allocator_obj_;
     allocator_obj_ = nullptr;
   }
-  aclrtAllocatorDestroyDesc(allocator_desc_);
+  (void)aclrtAllocatorDestroyDesc(allocator_desc_);
   for (auto stream : streams_) {
-    aclrtAllocatorUnregister(stream);
+    (void)aclrtAllocatorUnregister(stream);
   }
 }
 
@@ -92,8 +92,8 @@ AclAllocatorRegister &AclAllocatorRegister::Instance() {
 }
 
 void AclAllocatorRegister::RegisterAllocator(void *stream) {
-  aclrtAllocatorRegister(stream, allocator_desc_);
-  streams_.insert(stream);
+  (void)aclrtAllocatorRegister(stream, allocator_desc_);
+  (void)streams_.insert(stream);
 }
 }  // namespace transform
 }  // namespace mindspore
