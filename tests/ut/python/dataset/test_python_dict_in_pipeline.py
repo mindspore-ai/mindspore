@@ -33,12 +33,12 @@ def index_generator(ds_size):
 
 def dict_generator(ds_size):
     for i in range(ds_size):
-        if i == 118: # used in a test to verify proper error is raised
+        if i == 118:  # used in a test to verify proper error is raised
             yield {'integer': i, 'boolean': True, 'string': "MY_EMPTY_STR", "tuple": (1, 2, 3),
-                   "np": np.array([i, i + 100], dtype=np.int32)}
+                   1: np.array([i, i + 100], dtype=np.int32)}
         else:
             yield {'integer': i, 'boolean': True, 'string': "MY_EMPTY_STR", "tuple": (1, 2, 3),
-                   "np": np.array([i, i + 100, i + 1000], dtype=np.int32)}
+                   1: np.array([i, i + 100, i + 1000], dtype=np.int32)}
 
 
 def simple_pyfunc(x):
@@ -46,7 +46,7 @@ def simple_pyfunc(x):
 
 
 def build_dict(x):
-    return {"integer": x, "a": x**2, "b": 1}
+    return {"integer": x, "a": x ** 2, "b": 1}
 
 
 def remove_dict(x):
@@ -72,6 +72,7 @@ def modify_dict_batch(col1, batch_info):
         new_dict["integer"] = np.power(new_dict["integer"], 2)
         new_dict["boolean"] = 1
         return new_dict
+
     new_dicts = [convert(x) for x in col1]
     return (new_dicts,)
 
@@ -220,10 +221,10 @@ def test_dict_generator_batch_1():
             assert d["renamed_col1"]["string"].dtype.type == np.str_
             assert isinstance(d["renamed_col1"]["tuple"], np.ndarray)
             assert d["renamed_col1"]["tuple"].dtype == int
-            assert isinstance(d["renamed_col1"]["np"], np.ndarray)
-            assert d["renamed_col1"]["np"].dtype == np.int32
-            assert d["renamed_col1"]["np"].shape == (2, 3)
-            np.testing.assert_array_equal(d["renamed_col1"]["np"],
+            assert isinstance(d["renamed_col1"][1], np.ndarray)
+            assert d["renamed_col1"][1].dtype == np.int32
+            assert d["renamed_col1"][1].shape == (2, 3)
+            np.testing.assert_array_equal(d["renamed_col1"][1],
                                           np.array([[2 * i, 100 + 2 * i, 1000 + 2 * i],
                                                     [2 * i + 1, 100 + 2 * i + 1, 1000 + 2 * i + 1]],
                                                    dtype=np.int32))
@@ -292,19 +293,19 @@ def test_dict_generator_batch_3():
 
 
 def wrong_batch1(col1, col2, batch_info):
-    return {"a": 1}, col2 # 1 dict vs list of dicts
+    return {"a": 1}, col2  # 1 dict vs list of dicts
 
 
 def wrong_batch2(col1, col2, batch_info):
-    return {"a": 1}, {"a"} # 1 dict vs 1 set
+    return {"a": 1}, {"a"}  # 1 dict vs 1 set
 
 
 def wrong_batch3(col1, col2, batch_info):
-    return {"a": 1}, [1] # 1 dict vs a list (not a numpy array)
+    return {"a": 1}, [1]  # 1 dict vs a list (not a numpy array)
 
 
 def wrong_batch4(col1, col2, batch_info):
-    return {"a": 1}, [np.array([1]), np.array([1])] # 1 dict vs list (not a numpy array)
+    return {"a": 1}, [np.array([1]), np.array([1])]  # 1 dict vs list (not a numpy array)
 
 
 def wrong_batch5(col1, col2, batch_info):
@@ -338,7 +339,7 @@ def test_dict_generator_batch_4(wrong_dict_batch):
 
 
 def correct_batch1(col1, col2, batch_info):
-    return {"a": 1}, {"a": 2} # 1 dict vs 1 dict
+    return {"a": 1}, {"a": 2}  # 1 dict vs 1 dict
 
 
 def correct_batch2(col1, col2, batch_info):
@@ -346,7 +347,7 @@ def correct_batch2(col1, col2, batch_info):
 
 
 def correct_batch3(col1, col2, batch_info):
-    return {"a": 1}, np.array([1, 2, 3]) # 1 dict vs 1 np
+    return {"a": 1}, np.array([1, 2, 3])  # 1 dict vs 1 np
 
 
 def correct_batch4(col1, col2, batch_info):
@@ -394,7 +395,7 @@ def test_dict_generator_batch_6():
     with pytest.raises(RuntimeError) as error_info:
         for _ in data1.create_dict_iterator(num_epochs=2, output_numpy=True):
             pass
-    assert "Batch operation: failed to create a NumPy array with primitive types" in str(error_info.value)
+    assert "Batch: failed to create a NumPy array with primitive types" in str(error_info.value)
 
 
 @pytest.mark.parametrize("batch_size", [5, 12])
@@ -442,18 +443,18 @@ def test_dict_generator_batch_8(batch_size):
             assert d["renamed_col1"]["boolean"].dtype == np.bool_
             assert isinstance(d["renamed_col1"]["string"], np.ndarray)
             assert d["renamed_col1"]["string"].dtype.type == np.str_
-            if min(batch_size, dataset_size - i * batch_size) == 1: # last batch has 1 row
+            if min(batch_size, dataset_size - i * batch_size) == 1:  # last batch has 1 row
                 assert isinstance(d["renamed_col1"]["tuple"], tuple)
                 assert isinstance(d["renamed_col1"]["tuple"][0], np.ndarray)
                 assert d["renamed_col1"]["tuple"][0].dtype == int
             else:
                 assert isinstance(d["renamed_col1"]["tuple"], np.ndarray)
                 assert d["renamed_col1"]["tuple"].dtype == int
-            assert isinstance(d["renamed_col1"]["np"], np.ndarray)
-            assert d["renamed_col1"]["np"].dtype == np.int32
-            assert d["renamed_col1"]["np"].shape[-1] == 3 # other dimensions are different for last batch
+            assert isinstance(d["renamed_col1"][1], np.ndarray)
+            assert d["renamed_col1"][1].dtype == np.int32
+            assert d["renamed_col1"][1].shape[-1] == 3  # other dimensions are different for last batch
             np.testing.assert_array_equal(
-                d["renamed_col1"]["np"],
+                d["renamed_col1"][1],
                 np.array([[batch_size * i + j, 100 + batch_size * i + j, 1000 + batch_size * i + j]
                           for j in range(min((i + 1) * batch_size, dataset_size) - i * batch_size)],
                          dtype=np.int32).squeeze())
@@ -476,7 +477,7 @@ def test_dict_advanced_pyfunc_dict():
 
     def my_delay_f(x1, x2, x3):
         gc.collect()
-        sleep(0.01) # sleep for 0.01s
+        sleep(0.01)  # sleep for 0.01s
         return (x1, x2, x3)
 
     data1 = ds.GeneratorDataset(index_generator(dataset_size), ["data1"])
@@ -502,7 +503,7 @@ def test_dict_advanced_pyfunc_dict():
     for d in data4.create_dict_iterator(num_epochs=1, output_numpy=True):
         gc.collect()
         count += 1
-        assert len(d) == 3 # 3 columns
+        assert len(d) == 3  # 3 columns
         assert isinstance(d["data1new"], dict)
         np.testing.assert_array_equal(d["data1new"]["b"], np.array([[1, 1], [1, 1]]))
     assert count == 10
@@ -558,7 +559,7 @@ def test_dict_generator_mixed(my_iterator, output_numpy):
                 assert isinstance(data[1], Tensor)
                 assert isinstance(data[2], Tensor)
                 assert isinstance(data[3], Tensor)
-        else: # dict iterator
+        else:  # dict iterator
             if output_numpy:
                 assert isinstance(data["col1"], dict)
                 assert isinstance(data["col1"]["integer"], np.ndarray)
@@ -596,6 +597,7 @@ def test_dict_generator_nested_dicts(output_numpy):
     """
     logger.info("test_dict_generator_nested_dicts -- Generator(nested_dicts)")
     dataset_size = 5
+
     def nested_dict_generator(ds_size):
         for i in range(ds_size):
             yield {"integer": i, "dict": {"a": 0, "b": 1, "tuple": (1, 2, 3)}}
