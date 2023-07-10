@@ -132,6 +132,56 @@ static bool IsValidNode(const AnfNodePtr &node, const AnfNodePtr &return_node, c
                      });
 }
 
+// judge if the graph call specified grad nodes, the specified grad nodes is in grad_graph
+// search if call specified grad nodes according to dfs
+static bool CallGradNodes(const FuncGraphPtr &graph, const FuncGraphPtr &grad_graph,
+                          std::set<FuncGraphPtr> *const visit) {
+  if (visit->find(graph) != visit->end()) {
+    return false;
+  }
+  if (graph == grad_graph) {
+    return true;
+  }
+  (void)(visit->insert(graph));
+  const auto &cnodes = graph->GetOrderedCnodes();
+  for (const auto &cnode : cnodes) {
+    const auto &abs = cnode->input(0)->abstract();
+    if (!abs || !abs->isa<abstract::AbstractFunction>()) {
+      continue;
+    }
+    const auto &abs_func = abs->cast<abstract::AbstractFunctionPtr>();
+    if (!abs_func->isa<abstract::FuncGraphAbstractClosure>()) {
+      continue;
+    }
+    const auto &abs_func_graph = abs->cast<abstract::FuncGraphAbstractClosurePtr>();
+    auto fg = abs_func_graph->func_graph();
+    if (fg && fg == grad_graph) {
+      return true;
+    }
+    if (CallGradNodes(fg, grad_graph, visit)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+static FuncGraphPtr FindGradGraph(const FuncGraphPtr &root) {
+  const auto &nodes = DeepScopedGraphSearch(root->get_return());
+  for (const auto &node : nodes) {
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    const auto &cnode = node->cast<CNodePtr>();
+    if (cnode->HasPrimalAttr(PARAMETER_START_SHARE_CELL) && cnode->HasPrimalAttr(kPrimalAttrForwardNodeName)) {
+      const auto &grad_graph = cnode->func_graph();
+      MS_LOG(INFO) << "The specified grad nodes is in graph " << grad_graph->ToString();
+      return grad_graph;
+    }
+  }
+  MS_LOG(EXCEPTION) << "Stage0: The grad graph has not been found in lazy inline mode.";
+  return nullptr;
+}
+
 static void SetParameterStartForCellShare(const FuncGraphPtr &root) {
   MS_EXCEPTION_IF_NULL(root);
   auto share_cell = EnableShareCell();
@@ -141,38 +191,34 @@ static void SetParameterStartForCellShare(const FuncGraphPtr &root) {
   if (!IsFirstStage()) {
     return;
   }
-  FuncGraphPtr grad_main_graph;
-  auto nodes = DeepScopedGraphSearch(root->get_return());
-  for (auto &node : nodes) {
-    if (!node->isa<CNode>()) {
-      continue;
-    }
-    auto cnode = node->cast<CNodePtr>();
-    if (cnode->HasPrimalAttr(PARAMETER_START_SHARE_CELL) && cnode->HasPrimalAttr(kPrimalAttrForwardNodeName)) {
-      grad_main_graph = cnode->func_graph();
-      break;
-    }
-  }
+  FuncGraphPtr grad_graph = FindGradGraph(root);
+  MS_EXCEPTION_IF_NULL(grad_graph);
   const auto &manager = root->manager();
   auto node_user_map = manager->node_users();
   auto all_nodes = root->GetOrderedCnodes();
+  std::set<FuncGraphPtr> call_grad_nodes;
+  bool has_find = false;
   for (auto &node : all_nodes) {
     // if cnode is a call_backward node
     if (!IsPrimitiveCNode(node->input(0), prim::kPrimTupleGetItem)) {
       continue;
     }
     const auto &abs = node->input(0)->abstract();
-    if (abs == nullptr || !abs->isa<abstract::AbstractFunction>()) {
+    if (!abs || !abs->isa<abstract::AbstractFunction>()) {
       continue;
     }
     const auto &abs_func = abs->cast<abstract::AbstractFunctionPtr>();
     if (!abs_func->isa<abstract::FuncGraphAbstractClosure>()) {
       continue;
     }
+    std::set<FuncGraphPtr> visit;
     const auto &abs_func_graph = abs->cast<abstract::FuncGraphAbstractClosurePtr>();
     auto fg = abs_func_graph->func_graph();
-    if (fg == nullptr || fg != grad_main_graph) {
+    if (!fg || (call_grad_nodes.find(fg) == call_grad_nodes.end() && !CallGradNodes(fg, grad_graph, &visit))) {
       continue;
+    }
+    if (call_grad_nodes.find(fg) == call_grad_nodes.end()) {
+      (void)(call_grad_nodes.insert(fg));
     }
     auto micro = GetReceiveMicro(node);
     MS_EXCEPTION_IF_NULL(micro);
@@ -190,8 +236,14 @@ static void SetParameterStartForCellShare(const FuncGraphPtr &root) {
       }
       node->set_user_data<AnfNode>(CALL_BACKWARD_END_NEXT, next);
     }
+    has_find = true;
     node->AddPrimalAttr(MICRO, micro);
     node->AddPrimalAttr(PARAMETER_START, micro);
+  }
+  if (!has_find) {
+    MS_LOG(EXCEPTION) << "Stage0: The backward end flag has not been marked in lazy inline mode.";
+  } else {
+    MS_LOG(INFO) << "Stage0: The backward end flag has been marked in lazy inline mode.";
   }
 }
 
