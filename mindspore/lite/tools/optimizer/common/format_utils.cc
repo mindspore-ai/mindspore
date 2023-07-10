@@ -79,6 +79,7 @@
 
 namespace mindspore {
 namespace opt {
+// treat the weight of deformableConv2d as an input instead of a const because of the ops infershape only support nchw.
 static const std::unordered_map<std::string, std::vector<size_t>> NHWCOpMap = {
   {ops::kNameAdam, {10}},
   {ops::kNameApplyMomentum, {4}},
@@ -94,7 +95,7 @@ static const std::unordered_map<std::string, std::vector<size_t>> NHWCOpMap = {
   {ops::kNameConv2DFusion, {1}},
   {ops::kNameConv2dTransposeFusion, {1}},
   {ops::kNameDepthToSpace, {1}},
-  {ops::kNameDeformableConv2d, {1}},
+  {ops::kNameDeformableConv2d, {1, 2}},
   {ops::kNameFusedBatchNorm, {1}},
   {ops::kNameInstanceNorm, {1}},
   {ops::kNameGridSampler2D, {1}},
@@ -112,6 +113,7 @@ static const std::unordered_map<std::string, std::vector<size_t>> NHWCOpMap = {
 
 static const std::unordered_map<std::string, std::vector<size_t>> NCHWOpMap = {};
 
+// treat the weight of deformableConv2d as an input instead of a const because of the ops infershape only support nchw.
 static const std::unordered_map<std::string, std::vector<size_t>> ToNCHWOpMap = {
   {ops::kNameAdam, {10}},
   {ops::kNameApplyMomentum, {4}},
@@ -127,7 +129,7 @@ static const std::unordered_map<std::string, std::vector<size_t>> ToNCHWOpMap = 
   {ops::kNameConv2DFusion, {1}},
   {ops::kNameConv2dTransposeFusion, {1}},
   {ops::kNameDepthToSpace, {1}},
-  {ops::kNameDeformableConv2d, {1}},
+  {ops::kNameDeformableConv2d, {1, 2}},
   {ops::kNameFusedBatchNorm, {1}},
   {ops::kNameGridSampler2D, {1}},
   {ops::kNameInstanceNorm, {1}},

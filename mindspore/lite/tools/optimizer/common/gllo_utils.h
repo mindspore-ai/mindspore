@@ -134,10 +134,10 @@ CNodePtr GenCastNode(const FuncGraphPtr &graph, const AnfNodePtr &input_node, co
                      const TypeId dst_type, const AbstractBasePtr &abstract);
 
 CNodePtr GenGatherNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, const std::vector<int> &indices,
-                       const std::string &cnode_name);
+                       const std::string &cnode_name, const std::vector<int> &axis = {0});
 
 CNodePtr GenConcatNode(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &input_node_vec,
-                       const std::string &cnode_name);
+                       const std::string &cnode_name, int64_t axis = 0);
 
 CNodePtr GenTupleGetItemNode(const FuncGraphPtr &func_graph, const CNodePtr &input, size_t index);
 

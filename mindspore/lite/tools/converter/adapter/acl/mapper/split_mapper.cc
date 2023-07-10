@@ -28,10 +28,16 @@ STATUS SplitMapper::Mapper(const CNodePtr &cnode) {
   CHECK_NULL_RETURN(func_graph);
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   CHECK_NULL_RETURN(prim);
-
   auto split_num_val = prim->GetAttr(ops::kOutputNum);
   CHECK_NULL_RETURN(split_num_val);
   prim->AddAttr("num_split", split_num_val);
+  if (cnode->size() == opt::kInputSizeThree) {
+    auto dst_prim = std::make_shared<acl::SplitV>();
+    if (MoveAttrMap(cnode, dst_prim) != RET_OK) {
+      MS_LOG(ERROR) << "Split mapper failed.";
+      return RET_ERROR;
+    }
+  }
   int status = AddIntAttrToInput(func_graph, cnode, prim, ops::kAxis, false);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Add axis constant value to input failed.";
