@@ -155,7 +155,7 @@ void ListToRawMemory(const py::list &obj, const std::vector<AddressPtr> &outputs
     }
   }
 }
-void ToRawMemory(const py::object obj, const std::vector<AddressPtr> &outputs, const TypePtr &type) {
+void ToRawMemory(const py::object obj, const std::vector<AddressPtr> &outputs) {
   if (py::isinstance<tensor::Tensor>(obj)) {
     TensorToRawMemory(obj.cast<tensor::TensorPtr>(), outputs[0]);
     return;
@@ -198,7 +198,7 @@ bool PyExecuteCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
     const auto &output = fallback::PopPyExecuteOutput();
     const auto &output_type = py::str(output.get_type());
     MS_LOG(DEBUG) << "Python *prebuilt* output type: " << output_type << ", output: " << output;
-    ToRawMemory(output, outputs, kernel_node_->abstract()->BuildType());
+    ToRawMemory(output, outputs);
     AttachPyOutputData(output);
     return true;
   }
