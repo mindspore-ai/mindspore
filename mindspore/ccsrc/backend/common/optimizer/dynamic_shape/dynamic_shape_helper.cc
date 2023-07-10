@@ -150,11 +150,6 @@ tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
   MS_EXCEPTION_IF_NULL(input_node_with_index.first);
   auto depended_value = CreateTensorMem(input_node_with_index);
   MS_EXCEPTION_IF_NULL(depended_value);
-  if (IsPrimitiveCNode(input_node_with_index.first, prim::kPrimPyExecute)) {
-    MS_LOG(DEBUG) << "The input node is " << input_node_with_index.first->ToString()
-                  << ", use user data instead of address.";
-    return depended_value;
-  }
   // First use the data of args.
   if (args != nullptr) {
     auto input_device_address = reinterpret_cast<std::vector<device::DeviceAddress *> *>(args);
@@ -162,6 +157,17 @@ tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
     if (i < input_device_address->size() && input_device_address->at(i) != nullptr) {
       uint64_t start_time = 0;
       PROFILER_START(start_time);
+      auto addr = reinterpret_cast<device::DeviceAddress *>(input_device_address->at(i));
+      MS_EXCEPTION_IF_NULL(addr);
+      auto node_idx = addr->node_index();
+      auto user_data = addr->user_data();
+      if (user_data != nullptr && user_data->has(kernel::PyExecuteOutputUserData::key)) {
+        auto addr_node = node_idx.first.lock();
+        MS_EXCEPTION_IF_NULL(addr_node);
+        auto out_addr = AnfAlgo::GetMutableOutputAddr(addr_node, node_idx.second, skip_nop_node);
+        depended_value->set_device_address(out_addr, false);
+        return depended_value;
+      }
       depended_value->data_sync_directly(input_device_address->at(i));
       PROFILER_END(start_time, runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelInferDataSync,
                    node->fullname_with_scope(), true);
@@ -181,6 +187,12 @@ tensor::TensorPtr GetDependValueTensor(const AnfNodePtr &node, size_t i,
     depended_value->set_device_address(output_addr, false);
     uint64_t start_time = 0;
     PROFILER_START(start_time);
+    // PyExecute using the data of user_data instead of address, so don't need to sync data form device./
+    if (IsPrimitiveCNode(input_node_with_index.first, prim::kPrimPyExecute)) {
+      MS_LOG(DEBUG) << "The input node is " << input_node_with_index.first->ToString()
+                    << ", use user data instead of address.";
+      return depended_value;
+    }
     depended_value->data_sync();
     PROFILER_END(start_time, runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kKernelInferDataSync,
                  node->fullname_with_scope(), true);
@@ -333,7 +345,15 @@ abstract::AbstractBasePtr MakeNewAbstract(const AnfNodePtr &input, const tensor:
     MS_EXCEPTION_IF_NULL(new_abs);
     new_abs->set_user_data<kernel::PyExecuteOutputUserData>(output_data);
   }
-
+  auto depend_addr = depended_value->device_address();
+  if (depend_addr != nullptr) {
+    MS_LOG(DEBUG) << "Input node : " << input->DebugString() << ",use user_data instead of device address";
+    auto user_data = depend_addr->user_data();
+    if (user_data != nullptr) {
+      new_abs->set_user_data<kernel::PyExecuteOutputUserData>(
+        user_data->get<kernel::PyExecuteOutputUserData>(kernel::PyExecuteOutputUserData::key));
+    }
+  }
   return new_abs;
 }
 

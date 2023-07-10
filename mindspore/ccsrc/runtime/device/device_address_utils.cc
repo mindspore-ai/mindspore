@@ -304,6 +304,9 @@ void DeviceAddressUtils::CreateKernelOutputDeviceAddress(const DeviceContext *de
       }
       auto device_address = real_device_context->device_res_manager_->CreateDeviceAddress(
         nullptr, address_size, output_format, output_type, trans::GetRuntimePaddingShape(kernel, i), user_data);
+      if (user_data != nullptr) {
+        device_address->SetNodeIndex(kernel, i);
+      }
       if (is_from_persistent_mem) {
         device_address->set_from_persistent_mem(true);
       }
