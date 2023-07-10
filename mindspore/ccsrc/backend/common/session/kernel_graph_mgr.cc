@@ -582,6 +582,9 @@ void SaveNodesKernelInfoAndParamsName(const KernelGraphPtr &kg, const std::vecto
   nlohmann::json param_unique_name_to_name;
   for (const auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
+    if (node->kernel_info() == nullptr && !node->isa<Parameter>()) {
+      continue;
+    }
     const auto &name = GetAnfUniqueCacheName(node);
     if (node->isa<Parameter>()) {
       auto param = node->cast<ParameterPtr>();
@@ -1171,6 +1174,7 @@ void KernelGraphMgr::CacheKernelGraph(const KernelGraphPtr &kg) {
   if (!kg) {
     MS_LOG(EXCEPTION) << "The backend graph to be cached is null";
   }
+  MS_LOG(INFO) << "Begin to cache kernel graph " << kg->ToString();
   std::set<KernelGraphPtr> visit;
   std::set<KernelGraphPtr> child_graphs;
   GetAllChildGraph(kg, &visit, &child_graphs);
@@ -1215,6 +1219,7 @@ void KernelGraphMgr::CacheKernelGraph(const KernelGraphPtr &kg) {
     return;
   }
   context.Clear();
+  MS_LOG(INFO) << "Cache kernel graph " << kg->ToString() << " success.";
 }
 
 std::vector<AnfNodePtr> KernelGraphMgr::CreateCallSwitchInputs(const CNodePtr &cnode, KernelGraph *graph) const {
