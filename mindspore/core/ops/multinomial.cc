@@ -116,15 +116,24 @@ TypePtr MultinomialInferType(const PrimitivePtr &prim, const std::vector<Abstrac
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   auto x_type = input_args[0]->BuildType();
+  MS_EXCEPTION_IF_NULL(x_type);
   auto num_samples_type = input_args[1]->BuildType();
+  MS_EXCEPTION_IF_NULL(num_samples_type);
   const std::set valid_types_1 = {kFloat16, kFloat32, kFloat64, kInt8,   kInt16, kInt32,
                                   kInt64,   kUInt8,   kUInt16,  kUInt32, kUInt64};
   const std::set valid_types_2 = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types_1, prim_name);
   (void)CheckAndConvertUtils::CheckTypeValid("num_samples", num_samples_type, valid_types_2, prim_name);
-  auto dtype = GetValue<TypePtr>(prim->GetAttr("dtype"));
   const std::set valid_types_3 = {kInt32, kInt64};
-  auto out_type = CheckAndConvertUtils::CheckTypeValid("dtype", dtype->cast<TypePtr>(), valid_types_3, prim->name());
+  auto dtype_attr = prim->GetAttr("dtype");
+  MS_EXCEPTION_IF_NULL(dtype_attr);
+  if (!dtype_attr->isa<Type>()) {
+    TypeId type_id = static_cast<TypeId>(GetValue<int64_t>(dtype_attr));
+    auto out_type = CheckAndConvertUtils::CheckTypeValid("dtype", TypeIdToType(type_id), valid_types_3, prim->name());
+    return out_type;
+  }
+  auto out_type =
+    CheckAndConvertUtils::CheckTypeValid("dtype", dtype_attr->cast<TypePtr>(), valid_types_3, prim->name());
   return out_type;
 }
 }  // namespace

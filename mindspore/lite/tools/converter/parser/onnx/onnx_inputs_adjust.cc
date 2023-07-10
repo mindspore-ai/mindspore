@@ -29,6 +29,7 @@
 #include "ops/concat.h"
 #include "ops/reshape.h"
 #include "ops/cast.h"
+#include "ops/multinomial.h"
 #include "include/errorcode.h"
 #include "nnacl/op_base.h"
 #include "tools/common/tensor_util.h"
@@ -38,31 +39,7 @@
 namespace mindspore::lite {
 namespace {
 const std::vector<int> kNH2NCPerm = {0, 3, 1, 2};
-const int kInputNum2 = 2;
-const int kInputNum3 = 3;
-const int kInputNum4 = 4;
-
-CNodePtr NewReshapeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, const std::vector<int> &shape) {
-  MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(input_node != nullptr);
-  auto reshape_prim = std::make_shared<ops::Reshape>();
-  if (reshape_prim == nullptr) {
-    MS_LOG(ERROR) << "create reshape failed.";
-    return nullptr;
-  }
-  auto prim_c = reshape_prim->GetPrim();
-  prim_c->set_attr("shape", MakeValue(shape));
-  ValueNodePtr value_node = NewValueNode(prim_c);
-  MS_CHECK_TRUE_MSG(value_node != nullptr, nullptr, "Create valuenode return nullptr");
-  auto new_parameter = opt::BuildIntVecParameterNode(func_graph, shape, input_node->fullname_with_scope() + "_reshape");
-  MS_CHECK_TRUE_MSG(new_parameter != nullptr, nullptr, "Create parameter return nullptr");
-  new_parameter->set_name(input_node->fullname_with_scope() + "_reshape");
-  std::vector<AnfNodePtr> op_inputs = {value_node, input_node, new_parameter};
-  auto reshape = func_graph->NewCNode(op_inputs);
-  MS_CHECK_TRUE_MSG(reshape != nullptr, nullptr, "Create cnode return nullptr");
-  reshape->set_fullname_with_scope(input_node->fullname_with_scope() + "_reshape");
-  return reshape;
-}
+constexpr int kInputNum4 = 4;
 
 STATUS AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int input_num,
                       const std::string &attr_name) {
@@ -494,8 +471,8 @@ STATUS AdjustROIAlign(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
     MS_LOG(INFO) << "RoiAlign input size is not 3, does not need to adjust.";
     return RET_OK;
   }
-  auto rois = cnode->inputs()[kInputNum2];
-  auto batch_indices = cnode->inputs()[kInputNum3];
+  auto rois = cnode->inputs()[THIRD_INPUT];
+  auto batch_indices = cnode->inputs()[FOURTH_INPUT];
   auto abstract = batch_indices->abstract();
   auto cast_node =
     opt::GenCastNode(func_graph, batch_indices, cnode->fullname_with_scope() + "_Cast", kNumberTypeFloat32, abstract);
@@ -517,7 +494,7 @@ STATUS AdjustROIAlign(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   }
 
   std::vector<int> shape = {batch_shape_num, 1};
-  auto new_reshape_node = NewReshapeNode(func_graph, cast_node, shape);
+  auto new_reshape_node = opt::GenReshapeNode(func_graph, cast_node, shape, cnode->fullname_with_scope() + "_Reshape");
   if (new_reshape_node == nullptr) {
     MS_LOG(ERROR) << "Create reshape node failed.";
     return RET_ERROR;
@@ -542,6 +519,32 @@ STATUS AdjustROIAlign(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   new_inputs.push_back(cnode->inputs()[SECOND_INPUT]);
   new_inputs.push_back(new_concat_node);
   cnode->set_inputs(new_inputs);
+  opt::UpdateManager(func_graph);
+  return RET_OK;
+}
+
+STATUS AdjustMultinomial(const FuncGraphPtr &func_graph, const CNodePtr &cnode, bool *need_update_manager) {
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
+  auto multinomial_node = ops::GetOperator<ops::Multinomial>(cnode->input(0));
+  MS_CHECK_TRUE_RET(multinomial_node != nullptr, RET_ERROR);
+
+  auto prim = multinomial_node->GetPrim();
+  MS_CHECK_TRUE_RET(prim != nullptr, RET_ERROR);
+
+  MS_CHECK_TRUE_RET(prim->GetAttr("sample_size") != nullptr, RET_ERROR);
+  int64_t sample_size = GetValue<int64_t>(prim->GetAttr("sample_size"));
+  auto num_samples_val = static_cast<int32_t>(sample_size);
+
+  auto sample_parameter_ptr =
+    mindspore::opt::BuildIntValueParameterNode(func_graph, num_samples_val, "num_samples", true);
+  MS_CHECK_TRUE_RET(sample_parameter_ptr != nullptr, RET_ERROR);
+
+  std::vector<AnfNodePtr> new_inputs;
+  new_inputs.push_back(cnode->inputs()[FIRST_INPUT]);
+  new_inputs.push_back(cnode->inputs()[SECOND_INPUT]);
+  new_inputs.push_back(static_cast<AnfNodePtr>(sample_parameter_ptr));
+  cnode->set_inputs(new_inputs);
+  *need_update_manager = true;
   opt::UpdateManager(func_graph);
   return RET_OK;
 }
@@ -592,6 +595,8 @@ bool OnnxInputAdjust::Adjust(const FuncGraphPtr &func_graph, const converter::Co
       status = AdjustUnsqueeze(&need_update_manager, cnode);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimROIAlign)) {
       status = AdjustROIAlign(func_graph, cnode);
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimMultinomial)) {
+      status = AdjustMultinomial(func_graph, cnode, &need_update_manager);
     } else {
       continue;
     }

@@ -33,6 +33,7 @@
 #include "ops/cast.h"
 #include "ops/gather.h"
 #include "ops/concat.h"
+#include "ops/reshape.h"
 #include "ops/tuple_get_item.h"
 #include "tools/common/tensor_util.h"
 #include "frontend/operator/ops.h"
@@ -1057,6 +1058,28 @@ CNodePtr GenCastNode(const FuncGraphPtr &graph, const AnfNodePtr &input_node, co
   manager->AddEdge(cast_cnode, input_node);
   manager->AddEdge(cast_cnode, param_node);
   return cast_cnode;
+}
+
+CNodePtr GenReshapeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, const std::vector<int> &shape,
+                        const std::string &cnode_name) {
+  MS_CHECK_TRUE_RET(func_graph != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(input_node != nullptr, nullptr);
+  auto reshape_prim = std::make_shared<ops::Reshape>();
+  if (reshape_prim == nullptr) {
+    MS_LOG(ERROR) << "create reshape failed.";
+    return nullptr;
+  }
+  auto prim_c = reshape_prim->GetPrim();
+  prim_c->set_attr("shape", MakeValue(shape));
+  ValueNodePtr value_node = NewValueNode(prim_c);
+  MS_CHECK_TRUE_MSG(value_node != nullptr, nullptr, "Create value_node return nullptr");
+  auto new_shape_node = opt::BuildIntVecParameterNode(func_graph, shape, cnode_name + "_shape");
+  MS_CHECK_TRUE_MSG(new_shape_node != nullptr, nullptr, "Create shape parameter return nullptr");
+  std::vector<AnfNodePtr> op_inputs = {value_node, input_node, new_shape_node};
+  auto reshape_cnode = func_graph->NewCNode(op_inputs);
+  MS_CHECK_TRUE_MSG(reshape_cnode != nullptr, nullptr, "Create cnode return nullptr");
+  reshape_cnode->set_fullname_with_scope(cnode_name);
+  return reshape_cnode;
 }
 
 CNodePtr GenGatherNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, const std::vector<int> &indices,
