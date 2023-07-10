@@ -451,6 +451,8 @@ void ClearGradMetaData(const ValuePtr &value) {
 
 void RevertMakeTupleNode(const FuncGraphPtr &graph, const CNodePtr &cnode, ValuePtrList *input_value,
                          AnfNodePtrList *cnode_inputs) {
+  MS_EXCEPTION_IF_NULL(cnode_inputs);
+  MS_EXCEPTION_IF_NULL(input_value);
   if (!cnode->HasAttr(kTupleToMakeTuple)) {
     return;
   }
@@ -459,26 +461,35 @@ void RevertMakeTupleNode(const FuncGraphPtr &graph, const CNodePtr &cnode, Value
   for (size_t i = 0; i < dyn_input_sizes.size(); ++i) {
     if (dyn_input_sizes[i] >= 0) {
       // Compress input
-      ValuePtrList new_value;
-      AnfNodePtrList make_tuple{NewValueNode(prim::kPrimMakeTuple)};
+      AnfNodePtrList cnode_tuple_inputs{NewValueNode(prim::kPrimMakeTuple)};
+      AnfNodePtrList knode_inputs{NewValueNode(prim::kPrimMakeTuple)};
+      ValuePtrList value_tuple;
       abstract::AbstractBasePtrList abs_list;
       for (int64_t j = 0; j < dyn_input_sizes[i]; ++j) {
-        auto input = cnode_inputs->at(i + j + kIndex1);
-        (void)make_tuple.emplace_back(input);
+        auto input = cnode->input(i + j + kIndex1);
+        (void)cnode_tuple_inputs.emplace_back(input);
+        (void)knode_inputs.emplace_back(cnode_inputs->at(i + j + kIndex1));
+        (void)value_tuple.emplace_back(input_value->at(i + j));
         (void)abs_list.emplace_back(input->abstract());
-        (void)new_value.emplace_back(input_value->at(i + j));
       }
-      auto new_cnode = graph->NewCNode(make_tuple);
-      new_cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(abs_list));
-      // Refresh input
+      // Update knode inputs to make tuple inputs
+      auto cnode_tuple = graph->NewCNode(cnode_tuple_inputs);
+      auto abs = std::make_shared<abstract::AbstractTuple>(abs_list);
+      cnode_tuple->set_abstract(abs);
+      (void)new_inputs.emplace_back(cnode_tuple);
+
+      // Update knode inputs
+      auto knode_input = graph->NewCNode(knode_inputs);
+      knode_input->set_abstract(abs);
       size_t begin_index = i + kIndex1;
       (void)cnode_inputs->erase(cnode_inputs->begin() + begin_index,
                                 cnode_inputs->begin() + begin_index + dyn_input_sizes[i]);
-      (void)cnode_inputs->emplace_back(new_cnode);
+      (void)cnode_inputs->emplace_back(knode_input);
+
+      // Update input value
       (void)input_value->erase(input_value->begin() + begin_index,
                                input_value->begin() + begin_index + dyn_input_sizes[i]);
-      (void)input_value->emplace_back(std::make_shared<ValueTuple>(new_value));
-      (void)new_inputs.emplace_back(new_cnode);
+      (void)input_value->emplace_back(std::make_shared<ValueTuple>(value_tuple));
     } else {
       (void)new_inputs.emplace_back(cnode->input(i + kIndex1));
     }
@@ -502,6 +513,7 @@ void ProcessAttrNode(const FuncGraphPtr &graph, const CNodePtr &cnode, ValuePtrL
       cnode->set_inputs(new_inputs);
       MS_EXCEPTION_IF_NULL(input_value);
       (void)input_value->insert(input_value->begin() + item->second.first, item->second.second);
+      node_attr_value_.erase(item);
     }
   }
   RevertMakeTupleNode(graph, cnode, input_value, cnode_inputs);
@@ -1412,10 +1424,10 @@ void AutoGradCellImpl::ConvertValueNodeValueToTensor(const AnfNodePtr &din) {
     const auto &valuenode = din->cast<ValueNodePtr>();
     const auto &value = valuenode->value();
     MS_EXCEPTION_IF_NULL(value);
-    if (value->isa<tensor::Tensor>() || value->isa<Number>() || value->isa<None>()) {
+    if (PyNativeAlgo::Common::IsTensor(value, true) || value->isa<Number>() || value->isa<None>()) {
       return;
     }
-    tensor::TensorPtr tensor_ptr;
+    tensor::TensorPtr tensor_ptr = nullptr;
     if (value->isa<Scalar>()) {
       tensor_ptr = ScalarToTensor(value->cast<ScalarPtr>());
     } else if (value->isa<ValueTuple>()) {
@@ -1425,6 +1437,7 @@ void AutoGradCellImpl::ConvertValueNodeValueToTensor(const AnfNodePtr &din) {
     } else {
       MS_LOG(EXCEPTION) << "The value should be a scalar or value tuple, but get " << value->ToString();
     }
+    MS_EXCEPTION_IF_NULL(tensor_ptr);
     valuenode->set_value(tensor_ptr);
     valuenode->set_abstract(PyNativeAlgo::Common::SetAbstractValueToAnyValue(tensor_ptr->ToAbstract()));
   }
