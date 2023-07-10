@@ -44,19 +44,19 @@ class GeGraphExecutor : public GraphExecutor {
   void PreprocessBeforeRun(const KernelGraphPtr &graph);
 
  private:
-  bool RunGraphRefMode(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs);
+  bool RunGraphRefMode(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs) const;
   void AllocInputHostMemory(const KernelGraphPtr &kernel_graph) const;
   void AllocOutputHostMemory(const KernelGraphPtr &kernel_graph) const;
   void AllocConstMemory(const transform::RunOptions &options, size_t memory_size) const;
   void AllocFeatureMemory(const transform::RunOptions &options, size_t memory_size) const;
   void AllocParameterMemory(const KernelGraphPtr &kernel_graph, std::set<KernelGraphPtr> *memo = nullptr) const;
   void BuildInputDataGeTensor(const KernelGraphPtr &kernel_graph);
-  void AllocOutputMemory(const KernelGraphPtr &kernel_graph, const std::vector<ShapeVector> &outputs_shape) const;
+  void AllocOutputMemory(const KernelGraphPtr &kernel_graph) const;
   bool CompileGraph(const KernelGraphPtr &graph, const std::map<string, string> &compile_options);
   std::vector<GeTensor> GenerateInputGeTensor(const KernelGraphPtr &kernel_graph) const;
   std::vector<GeTensor> GenerateOutputGeTensor(const KernelGraphPtr &kernel_graph) const;
   GeDeviceResManager *ResManager() const;
-  void RunInitGraph(const std::string &graph_name);
+  void RunInitGraph(const std::string &graph_name) const;
 
   std::map<KernelGraphPtr, std::vector<GeTensor>> input_datas_;
   std::map<KernelGraphPtr, std::map<AnfNodePtr, size_t>> input_datas_index_;
