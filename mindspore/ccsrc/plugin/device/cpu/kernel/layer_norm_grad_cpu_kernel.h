@@ -47,7 +47,7 @@ class LayerNormGradCpuKernelMod : public NativeCpuKernelMod {
   KernelFunc kernel_func_{};
   static std::vector<std::pair<KernelAttr, KernelFunc>> func_list_;
 
-  float eps_{1e-12};
+  float eps_{1e-7};
   size_t block_num_{1};
   size_t block_size_{1};
   size_t param_num_{1};

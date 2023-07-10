@@ -133,20 +133,24 @@ void LayerNormCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
         continue;
       }
       size_t i = c * thread_num + start;
-      float sum = 0.0f;
-      float square_sum = 0.0f;
+      double sum = 0.0;
+      double square_sum = 0.0;
       for (size_t j = i * block_size_; j < (i + 1) * block_size_; ++j) {
-        sum += static_cast<float>(x[j]);
-        square_sum += static_cast<float>(x[j] * x[j]);
+        auto x_j = static_cast<double>(x[j]);
+        sum += x_j;
+        square_sum += x_j * x_j;
       }
-      float block_mean = sum / block_size_;
-      float block_var = square_sum / block_size_ - block_mean * block_mean;
+      double block_mean = sum / block_size_;
+      float block_var = static_cast<float>(square_sum / block_size_ - block_mean * block_mean);
+      if (block_var < 0) {
+        block_var = 0;
+      }
       for (size_t j = i * block_size_; j < (i + 1) * block_size_; ++j) {
         auto param_shift = j % param_num_;
         y[j] = (x[j] - static_cast<T>(block_mean)) / static_cast<T>(std::sqrt(block_var + eps_)) * gamma[param_shift] +
                beta[param_shift];
       }
-      mean[i] = block_mean;
+      mean[i] = static_cast<float>(block_mean);
       var[i] = block_var;
     }
   };
