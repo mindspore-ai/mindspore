@@ -22,12 +22,14 @@
 #include <utility>
 #include <vector>
 #include <list>
+#include <map>
 
 #include "frontend/parallel/auto_parallel/rec_core/rec_graph.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 
 namespace mindspore {
 namespace parallel {
+static std::map<std::string, Dimensions> param_strategy_;
 class RecStrategyPropagator {
  public:
   typedef std::list<size_t> prop_list_t;
@@ -52,14 +54,16 @@ class RecStrategyPropagator {
 
   void AjustToNoTraining();
 
-  Dimensions GetInputStrategy(size_t i_op, size_t incoming_op_index);
-
   void ApplyStrategy(size_t i_op, const Strategies &s);
 
   size_t GenerateEliminatedOperatorStrategyForward(size_t min_devices = 1);
   size_t GenerateEliminatedOperatorStrategyBackward(size_t min_devices = 1);
   size_t GenerateRemainingOperatorStrategy();
   size_t ModifyParamSharingOpsStrategy();
+
+  std::map<std::string, std::vector<std::pair<size_t, size_t>>> GetParamUsers();
+  void SetParamStrategy();
+  size_t ApplyParamStrategy();
 
  public:
   RecStrategyPropagator(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
@@ -77,8 +81,14 @@ class RecStrategyPropagator {
 
   void GenerateNoStraList();
 
+  void GenerateStrategyV1();
   void GenerateStrategyV3();
 };
+
+Dimensions GetInputStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                            const std::shared_ptr<std::vector<size_t>> &index_list, size_t i_op,
+                            size_t incoming_op_index);
+
 void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                       const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list,
                       const std::vector<std::vector<std::string>> &input_tensor_names,
@@ -88,6 +98,12 @@ Dimensions PrepareMatMulStrategy(const std::shared_ptr<Graph> &graph, const size
                                  bool transpose_b, size_t iter_op_inputs);
 Strategies PrepareMatMul(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                          const size_t iter_graph, const size_t iter_ops);
+Dimensions PrepareBatchMatMulStrategy(const std::shared_ptr<Graph> &graph, const size_t iter_graph,
+                                      const bool transpose_a, const bool transpose_b, const size_t iter_op_inputs,
+                                      const size_t dim_num);
+Strategies PrepareBatchMatMul(const std::shared_ptr<Graph> &graph,
+                              const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_graph,
+                              const size_t iter_ops);
 Strategies PrepareBiasAdd(const std::shared_ptr<Dimensions> &s);
 Strategies PrepareStridedSlice(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                                Dimensions basic_stra);
@@ -122,10 +138,11 @@ Strategies MakeFullBatchStrategy(const std::shared_ptr<Graph> &graph,
 void SetBackToRawStrategy(const std::shared_ptr<OperatorInfo> &op);
 Strategies PrepareStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                            const size_t iter_graph, const size_t iter_ops);
+bool HasStrategy(std::shared_ptr<OperatorInfo> op);
 size_t FindIndexOfOperatorIncoming(const std::vector<std::vector<std::string>> &input_tensor_names, size_t iter_ops);
-size_t FindIndexOfOperatorOutgoing(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                   const std::vector<std::vector<std::string>> &input_tensor_names, size_t iter_ops,
-                                   size_t *iter_op_inputs);
+std::pair<size_t, size_t> FindIndexOfOperatorOutgoing(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                      const std::vector<std::vector<std::string>> &input_tensor_names,
+                                                      size_t iter_ops);
 
 Dimensions CopyIncomingOperatorOutputStrategy(const std::shared_ptr<Graph> &graph,
                                               const std::vector<std::shared_ptr<OperatorInfo>> &ops,
@@ -137,8 +154,8 @@ Dimensions PrepareTransposeOutputStrategy(const std::vector<std::shared_ptr<Oper
                                           const size_t incoming_op_index);
 Dimensions PrepareExpandDimsOutputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                            const size_t incoming_op_index);
-Dimensions PrepareIncompingArithmeticOpeartorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                                           const size_t incoming_op_index);
+Dimensions PrepareIncomingArithmeticOpeartorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                          const size_t incoming_op_index);
 Dimensions PrepareIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                                 const size_t incoming_op_index);
 Dimensions GetAxisList(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const int64_t iter_ops);

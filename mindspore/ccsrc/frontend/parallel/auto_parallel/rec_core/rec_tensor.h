@@ -29,6 +29,13 @@ struct Shape4D {
   int64_t shape_c = 1;
   int64_t shape_h = 1;
   int64_t shape_w = 1;
+
+  bool operator==(const Shape4D sh) const {
+    if (shape_n == sh.shape_n && shape_c == sh.shape_c && shape_h == sh.shape_h && shape_w == sh.shape_w) {
+      return true;
+    }
+    return false;
+  }
 };
 
 struct TensorParam {
