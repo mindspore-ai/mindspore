@@ -87,8 +87,8 @@ class COMMON_EXPORT CompileCacheContext {
   bool IsBackendParamGenFromFrontendParam(const AnfNodePtr &node) const {
     return backend_param_gen_from_frontend_param_.count(node) != 0;
   }
-  bool PsOrClusterMode() const { return ps_or_cluster_mode_; }
-  void SetPsOrClusterMode(bool mode) { ps_or_cluster_mode_ = mode; }
+  bool RestrictedScenarios() const { return restricted_scenarios_; }
+  void SetRestrictedScenarios(bool restricted_scenarios) { restricted_scenarios_ = restricted_scenarios; }
   void Clear();
 
  private:
@@ -109,7 +109,7 @@ class COMMON_EXPORT CompileCacheContext {
   std::map<std::string, CachedIOSizeInfo> fullname_io_size;
   // param is a backend node but we can find its correspond frontend param.
   mindspore::HashSet<AnfNodePtr> backend_param_gen_from_frontend_param_;
-  bool ps_or_cluster_mode_{false};
+  bool restricted_scenarios_{false};
 };
 }  // namespace mindspore
 
