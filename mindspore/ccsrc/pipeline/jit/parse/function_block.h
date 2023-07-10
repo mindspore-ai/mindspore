@@ -168,6 +168,9 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
     }
   }
 
+  // Isolated nodes.
+  OrderedSet<AnfNodePtr> isolated_nodes() const { return isolated_nodes_; }
+
  private:
   // Block graph
   FuncGraphPtr func_graph_;
