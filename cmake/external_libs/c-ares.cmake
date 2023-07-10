@@ -1,13 +1,13 @@
 if(ENABLE_GITEE)
-    set(REQ_URL "https://gitee.com/mirrors/c-ares/repository/archive/cares-1_15_0.tar.gz")
-    set(SHA256 "7deb7872cbd876c29036d5f37e30c4cbc3cc068d59d8b749ef85bb0736649f04")
+    set(REQ_URL "https://gitee.com/mirrors/c-ares/repository/archive/cares-1_19_1.tar.gz")
+    set(SHA256 "9eadec0b34015941abdf3eb6aead694c8d96a192a792131186a7e0a86f2ad6d9")
 else()
-    set(REQ_URL "https://github.com/c-ares/c-ares/releases/download/cares-1_15_0/c-ares-1.15.0.tar.gz")
-    set(SHA256 "6cdb97871f2930530c97deb7cf5c8fa4be5a0b02c7cea6e7c7667672a39d6852")
+    set(REQ_URL "https://github.com/c-ares/c-ares/releases/download/cares-1_19_1/c-ares-1.19.1.tar.gz")
+    set(SHA256 "321700399b72ed0e037d0074c629e7741f6b2ec2dda92956abe3e9671d3e268e")
 endif()
 
 mindspore_add_pkg(c-ares
-        VER 1.15.0
+        VER 1_19_1
         LIBS cares
         URL ${REQ_URL}
         SHA256 ${SHA256}
@@ -15,9 +15,7 @@ mindspore_add_pkg(c-ares
         -DCARES_SHARED:BOOL=OFF
         -DCARES_STATIC:BOOL=ON
         -DCARES_STATIC_PIC:BOOL=ON
-        -DHAVE_LIBNSL:BOOL=OFF
-        PATCHES ${TOP_DIR}/third_party/patch/c-ares/CVE-2021-3672.patch
-        PATCHES ${TOP_DIR}/third_party/patch/c-ares/CVE-2022-4904.patch)
+        -DHAVE_LIBNSL:BOOL=OFF)
 
 include_directories(${c-ares_INC})
 add_library(mindspore::cares ALIAS c-ares::cares)
