@@ -2088,10 +2088,6 @@ void ClearResPart1() {
   runtime::GraphScheduler::GetInstance().Clear();
   runtime::ProfilerAnalyzer::GetInstance().Clear();
 
-  MS_LOG(INFO) << "Start clear kernel runtime...";
-  device::KernelRuntimeManager::Instance().ClearRuntimeResource();
-  MS_LOG(INFO) << "End clear kernel runtime.";
-
   MS_LOG(INFO) << "Start Finalize StreamSynchronizer...";
   device::StreamSynchronizer::GetInstance()->Finalize();
   MS_LOG(INFO) << "End Finalize StreamSynchronizer...";
@@ -2132,6 +2128,10 @@ void ClearResPart2() {
   ConfigManager::GetInstance().ResetIterNum();
   MS_LOG(INFO) << "End clear ConfigManager.";
 #endif
+  MS_LOG(INFO) << "Start clear kernel runtime...";
+  device::KernelRuntimeManager::Instance().ClearRuntimeResource();
+  MS_LOG(INFO) << "End clear kernel runtime.";
+
   MS_LOG(INFO) << "Start clear device context...";
   device::DeviceContextManager::GetInstance().ClearDeviceContexts();
   MS_LOG(INFO) << "End clear device context.";

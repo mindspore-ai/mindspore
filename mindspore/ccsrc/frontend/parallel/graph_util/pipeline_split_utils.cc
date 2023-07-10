@@ -999,7 +999,8 @@ void Reorder(const FuncGraphPtr &root) {
     if (!node->isa<CNode>()) {
       continue;
     }
-    if (IsSomePrimitive(node->cast<CNodePtr>(), kNPUClearFloatStatusOpName)) {
+    if (IsSomePrimitive(node->cast<CNodePtr>(), kNPUClearFloatStatusOpName) ||
+        IsSomePrimitive(node->cast<CNodePtr>(), kNPUClearFloatStatusV2OpName)) {
       InsertDepend(node, forward_end.front(), manager, root);
       break;
     }

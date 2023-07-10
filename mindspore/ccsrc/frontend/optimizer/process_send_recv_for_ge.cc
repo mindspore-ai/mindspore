@@ -137,6 +137,25 @@ void ProcessRecv(const FuncGraphPtr &graph, const CNodePtr &node) {
   manager->AddFuncGraph(fg);
   manager->Replace(node, call);
 }
+
+void ProcessClearFloatStatus(const FuncGraphPtr &graph, const CNodePtr &node) {
+  auto manager = graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+
+  auto value_node = NewValueNode(MakeValue<int32_t>(1));
+  MS_EXCEPTION_IF_NULL(value_node);
+  MS_EXCEPTION_IF_NULL(value_node->value());
+  value_node->set_abstract(value_node->value()->ToAbstract());
+  auto value_abs = std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(1));
+  MS_EXCEPTION_IF_NULL(value_abs);
+  auto depend = graph->NewCNode({NewValueNode(prim::kPrimDepend), value_node, node});
+  MS_EXCEPTION_IF_NULL(depend);
+  depend->set_abstract(value_abs);
+  auto tensor_move = graph->NewCNode({NewValueNode(prim::kPrimTensorMove), depend});
+  MS_EXCEPTION_IF_NULL(tensor_move);
+  tensor_move->set_abstract(value_abs);
+  manager->Replace(node, tensor_move);
+}
 }  // namespace
 void ProcessSendRecvForGE(const FuncGraphPtr &graph) {
   static const bool is_enable_ge = (common::GetEnv("MS_ENABLE_GE") == "1");
@@ -161,6 +180,8 @@ void ProcessSendRecvForGE(const FuncGraphPtr &graph) {
       ProcessSend(graph, node->cast<CNodePtr>());
     } else if (IsPrimitiveCNode(node, prim::kPrimReceive)) {
       ProcessRecv(graph, node->cast<CNodePtr>());
+    } else if (IsPrimitiveCNode(node, prim::kPrimNPUClearFloatStatusV2)) {
+      ProcessClearFloatStatus(graph, node->cast<CNodePtr>());
     } else if (IsCommOps(node)) {
       auto cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
