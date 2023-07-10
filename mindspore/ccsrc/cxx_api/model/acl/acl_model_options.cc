@@ -190,7 +190,7 @@ std::string AclModelOptions::GenAoeOptions(std::vector<std::string> *aoe_modes) 
   aoe_options.insert(aoe_tuning_options_map_.begin(), aoe_tuning_options_map_.end());
   if (aoe_options.find("job_type") != aoe_options.end()) {
     aoe_modes->clear();
-    aoe_modes->emplace_back(aoe_options.at("job_type"));
+    (void)aoe_modes->emplace_back(aoe_options.at("job_type"));
   }
   if (aoe_modes->empty()) {
     MS_LOG(ERROR) << "Aoe mode are invalid "
