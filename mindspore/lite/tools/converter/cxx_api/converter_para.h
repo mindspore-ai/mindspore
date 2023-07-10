@@ -46,7 +46,7 @@ struct GraphKernelCfg {
 
 struct AscendGeOptionCfg {
   std::string provider;
-  std::string enable_custom_op;
+  std::string plugin_custom_ops;
 };
 
 struct ConverterPara {
