@@ -133,7 +133,7 @@ def minimize(func, x0, args=(), method=None, jac=None, hess=None, hessp=None, bo
     Examples:
         >>> import numpy as onp
         >>> from mindspore.scipy.optimize import minimize
-        >>> from mindspore.common import Tensor
+        >>> from mindspore import Tensor
         >>> x0 = Tensor(onp.zeros(2).astype(onp.float32))
         >>> def func(p):
         ...     x, y = p

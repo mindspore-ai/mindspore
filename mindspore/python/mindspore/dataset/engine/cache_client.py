@@ -41,14 +41,14 @@ class DatasetCache:
             Default: ``None`` , use default value 20.
 
     Examples:
-            >>> import mindspore.dataset as ds
-            >>>
-            >>> # Create a cache instance, in which session_id is generated from command line `cache_admin -g`
-            >>> # In the following code, suppose the session_id is 780643335
-            >>> some_cache = ds.DatasetCache(session_id=780643335, size=0)
-            >>>
-            >>> dataset_dir = "/path/to/image_folder_dataset_directory"
-            >>> ds1 = ds.ImageFolderDataset(dataset_dir, cache=some_cache)
+        >>> import mindspore.dataset as ds
+        >>>
+        >>> # Create a cache instance, in which session_id is generated from command line `cache_admin -g`
+        >>> # In the following code, suppose the session_id is 780643335
+        >>> some_cache = ds.DatasetCache(session_id=780643335, size=0)
+        >>>
+        >>> dataset_dir = "/path/to/image_folder_dataset_directory"
+        >>> ds1 = ds.ImageFolderDataset(dataset_dir, cache=some_cache)
     """
 
     def __init__(self, session_id, size=0, spilling=False, hostname=None, port=None, num_connections=None,
