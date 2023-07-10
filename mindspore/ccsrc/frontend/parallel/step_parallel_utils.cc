@@ -903,7 +903,7 @@ bool IsSplittableOperator(const std::string &op_name) {
      SCATTER_SUB, POPULATION_COUNT, IDENTITY, BESSELI0, BESSELI1, BESSELJ0, BESSELJ1, CUM_MAX, CUM_MIN, HYPOT, IGAMMA,
      IGAMMAC, LEFT_SHIFT, RIGHT_SHIFT, NEXT_AFTER, ZETA, REVERSEV2, LGAMMA, TRUNC, BETAINC, GCD, CHOLESKY, CONV3D,
      MAXPOOL_3D,  AVGPOOL_3D, FAKE_QUANT_PER_LAYER, FAKE_QUANT_PER_CHANNEL, MIN_MAX_UPDATE_PER_LAYER,
-     MIN_MAX_UPDATE_PER_CHANNEL};
+     MIN_MAX_UPDATE_PER_CHANNEL, FILLV2};
   // clang-format on
 
   auto iter = splittable_op.find(op_name);
@@ -1187,8 +1187,8 @@ OperatorInfoPtr CreateOperatorInfo(const CNodePtr &cnode) {
   auto &inputs = cnode->inputs();
   std::vector<ValuePtr> input_value;
   for (size_t index = 1; index < inputs.size(); ++index) {
-    if (inputs[index]->isa<ValueNode>()) {
-      input_value.push_back(GetValueNode(inputs[index]));
+    if (inputs[index]->isa<ValueNode>() || inputs[index]->isa<tensor::Tensor>()) {
+      (void)input_value.emplace_back(GetValueNode(inputs[index]));
       continue;
     }
     (void)input_value.emplace_back(nullptr);
