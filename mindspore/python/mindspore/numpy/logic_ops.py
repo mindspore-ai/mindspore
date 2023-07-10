@@ -483,6 +483,7 @@ def isclose(a, b, rtol=1e-05, atol=1e-08, equal_nan=False):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> a = np.array([0,1,2,float('inf'),float('inf'),float('nan')])
         >>> b = np.array([0,1,-2,float('-inf'),float('inf'),float('nan')])
         >>> print(np.isclose(a, b))
@@ -521,6 +522,7 @@ def in1d(ar1, ar2, invert=False):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> test = np.array([0, 1, 2, 5, 0])
         >>> states = [0, 2]
         >>> mask = np.in1d(test, states)
@@ -566,6 +568,7 @@ def isin(element, test_elements, invert=False):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> element = 2*np.arange(4).reshape((2, 2))
         >>> test_elements = [1, 2, 4, 8]
         >>> mask = np.isin(element, test_elements)

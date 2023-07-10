@@ -61,7 +61,7 @@ class SolveTriangular(Primitive):
                  [1  1  1  1]       [2]
 
         >>> import numpy as onp
-        >>> from mindspore.common import Tensor
+        >>> from mindspore import Tensor
         >>> import mindspore.numpy as mnp
         >>> from mindspore.scipy.ops import SolveTriangular
         >>> a = Tensor(onp.array([[3, 0, 0, 0], [2, 1, 0, 0], [1, 0, 1, 0], [1, 1, 1, 1]], onp.float64))

@@ -4398,6 +4398,7 @@ def interp(x, xp, fp, left=None, right=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> xp = [1, 2, 3]
         >>> fp = [3, 2, 0]
         >>> print(np.interp([0, 1, 1.5, 2.72, 3.14], xp, fp))

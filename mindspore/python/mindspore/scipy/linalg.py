@@ -60,7 +60,7 @@ def block_diag(*arrs):
 
     Examples:
         >>> import numpy as onp
-        >>> from mindspore.common import Tensor
+        >>> from mindspore import Tensor
         >>> from mindspore.scipy.linalg import block_diag
         >>> A = Tensor(onp.array([[1, 0], [0, 1]]))
         >>> B = Tensor(onp.array([[3, 4, 5], [6, 7, 8]]))
@@ -124,7 +124,7 @@ def inv(a, overwrite_a=False, check_finite=True):
 
     Examples:
         >>> import numpy as onp
-        >>> from mindspore.common import Tensor
+        >>> from mindspore import Tensor
         >>> import mindspore.numpy as mnp
         >>> from mindspore.scipy.linalg import inv
         >>> a = Tensor(onp.array([[1., 2.], [3., 4.]]))
@@ -190,7 +190,7 @@ def cho_factor(a, lower=False, overwrite_a=False, check_finite=True):
 
     Examples:
         >>> import numpy as onp
-        >>> from mindspore.common import Tensor
+        >>> from mindspore import Tensor
         >>> from mindspore.scipy.linalg import cho_factor
         >>> a = Tensor(onp.array([[9, 3, 1, 5], [3, 7, 5, 1], [1, 5, 9, 2], [5, 1, 2, 6]]).astype(onp.float32))
         >>> c, low = cho_factor(a)
@@ -251,7 +251,7 @@ def cholesky(a, lower=False, overwrite_a=False, check_finite=True):
 
     Examples:
         >>> import numpy as onp
-        >>> from mindspore.common import Tensor
+        >>> from mindspore import Tensor
         >>> from mindspore.scipy.linalg import cholesky
         >>> a = Tensor(onp.array([[1, 2],[2, 5]]).astype(onp.float32))
         >>> L = cholesky(a, lower=True)
@@ -416,7 +416,7 @@ def eigh(a, b=None, lower=True, eigvals_only=False, overwrite_a=False,
     Examples:
         >>> import numpy as onp
         >>> import mindspore.numpy as mnp
-        >>> from mindspore.common import Tensor, dtype
+        >>> from mindspore import Tensor, dtype
         >>> from mindspore.scipy.linalg import eigh
         >>> a = Tensor([[6, 3, 1, 5], [3, 0, 5, 1], [1, 5, 6, 2], [5, 1, 2, 2]], dtype.float64)
         >>> w, v = eigh(a)
@@ -507,7 +507,7 @@ def lu_factor(a, overwrite_a=False, check_finite=True):
 
     Examples:
         >>> import numpy as onp
-        >>> from mindspore.common import Tensor
+        >>> from mindspore import Tensor
         >>> from mindspore.scipy.linalg import lu_factor
         >>> a = Tensor(onp.array([[2, 5, 8, 7], [5, 2, 2, 8], [7, 5, 6, 6], [5, 4, 4, 8]]).astype(onp.float64))
         >>> lu, piv = lu_factor(a)
@@ -578,7 +578,7 @@ def lu(a, permute_l=False, overwrite_a=False, check_finite=True):
 
     Examples:
         >>> import numpy as onp
-        >>> from mindspore.common import Tensor
+        >>> from mindspore import Tensor
         >>> from mindspore.scipy.linalg import lu
         >>> a = Tensor(onp.array([[2, 5, 8, 7], [5, 2, 2, 8], [7, 5, 6, 6], [5, 4, 4, 8]]).astype(onp.float64))
         >>> p, l, u = lu(a)
@@ -656,7 +656,7 @@ def lu_solve(lu_and_piv, b, trans=0, overwrite_b=False, check_finite=True):
 
     Examples:
         >>> import numpy as onp
-        >>> from mindspore.common import Tensor
+        >>> from mindspore import Tensor
         >>> from mindspore.scipy.linalg import lu_factor, lu_solve
         >>> a = Tensor(onp.array([[2, 5, 8, 7], [5, 2, 2, 8], [7, 5, 6, 6], [5, 4, 4, 8]]).astype(onp.float64))
         >>> b = Tensor(onp.array([1, 1, 1, 1]).astype(onp.float64))
@@ -747,7 +747,7 @@ def det(a, overwrite_a=False, check_finite=True):
 
     Examples:
         >>> import numpy as onp
-        >>> from mindspore.common import Tensor
+        >>> from mindspore import Tensor
         >>> from mindspore.scipy.linalg import det
         >>> a = Tensor(onp.array([[0, 2, 3], [4, 5, 6], [7, 8, 9]])).astype(onp.float64)
         >>> print(det(a))
