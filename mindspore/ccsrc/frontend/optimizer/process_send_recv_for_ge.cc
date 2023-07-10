@@ -27,7 +27,7 @@
 
 namespace mindspore::opt {
 namespace {
-AnfNodePtr last_call = nullptr;
+AnfNodePtr last_need_depend = nullptr;
 bool IsSendRecvOps(const AnfNodePtr &node) {
   static const PrimitiveSet kSendRecvOpsPrim = {prim::kPrimSend, prim::kPrimReceive};
   return IsOneOfPrimitiveCNode(node, kSendRecvOpsPrim);
@@ -96,8 +96,8 @@ void ProcessSend(const FuncGraphPtr &graph, const CNodePtr &node) {
   std::vector<AnfNodePtr> call_params;
   call_params.push_back(NewValueNode(fg));
   for (size_t i = 1; i < node->inputs().size(); i++) {
-    if (last_call != nullptr) {
-      auto new_depend = fg->NewCNode({NewValueNode(prim::kPrimDepend), node->input(i), last_call});
+    if (last_need_depend != nullptr) {
+      auto new_depend = fg->NewCNode({NewValueNode(prim::kPrimDepend), node->input(i), last_need_depend});
       new_depend->set_abstract(node->input(i)->abstract());
       call_params.push_back(new_depend);
     } else {
@@ -106,13 +106,13 @@ void ProcessSend(const FuncGraphPtr &graph, const CNodePtr &node) {
   }
   auto call = graph->NewCNode(call_params);
   call->set_abstract(value_abs);
-  last_call = call;
+  last_need_depend = call;
 
   manager->AddFuncGraph(fg);
   manager->Replace(node, call);
 }
 
-void ProcessComm(const FuncGraphPtr &graph, const CNodePtr &node) {
+void ProcessRecv(const FuncGraphPtr &graph, const CNodePtr &node) {
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
 
@@ -122,8 +122,8 @@ void ProcessComm(const FuncGraphPtr &graph, const CNodePtr &node) {
   std::vector<AnfNodePtr> call_params;
   call_params.push_back(NewValueNode(fg));
   for (size_t i = 1; i < node->inputs().size(); i++) {
-    if (last_call != nullptr) {
-      auto new_depend = fg->NewCNode({NewValueNode(prim::kPrimDepend), node->input(i), last_call});
+    if (last_need_depend != nullptr) {
+      auto new_depend = fg->NewCNode({NewValueNode(prim::kPrimDepend), node->input(i), last_need_depend});
       new_depend->set_abstract(node->input(i)->abstract());
       call_params.push_back(new_depend);
     } else {
@@ -132,7 +132,7 @@ void ProcessComm(const FuncGraphPtr &graph, const CNodePtr &node) {
   }
   auto call = graph->NewCNode(call_params);
   call->set_abstract(node->abstract());
-  last_call = call;
+  last_need_depend = call;
 
   manager->AddFuncGraph(fg);
   manager->Replace(node, call);
@@ -159,24 +159,34 @@ void ProcessSendRecvForGE(const FuncGraphPtr &graph) {
     }
     if (IsPrimitiveCNode(node, prim::kPrimSend)) {
       ProcessSend(graph, node->cast<CNodePtr>());
+    } else if (IsPrimitiveCNode(node, prim::kPrimReceive)) {
+      ProcessRecv(graph, node->cast<CNodePtr>());
     } else if (IsCommOps(node)) {
-      ProcessComm(graph, node->cast<CNodePtr>());
+      auto cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      if (last_need_depend != nullptr && cnode->inputs().size() > 1) {
+        auto before_input = node->cast<CNodePtr>()->input(1);
+        auto new_depend = graph->NewCNode({NewValueNode(prim::kPrimDepend), before_input, last_need_depend});
+        new_depend->set_abstract(before_input->abstract());
+        node->cast<CNodePtr>()->set_input(1, new_depend);
+      }
+      last_need_depend = node;
     } else if (IsValueNode<FuncGraph>(node->cast<CNodePtr>()->input(0))) {
       auto cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
-      if (last_call != nullptr) {
+      if (last_need_depend != nullptr) {
         for (size_t i = 1; i < cnode->inputs().size(); i++) {
           auto before_input = node->cast<CNodePtr>()->input(i);
           if (!utils::isa<CNodePtr>(before_input)) {
             // Prevents cutting out a subgraph with only a Depend node.
             continue;
           }
-          auto new_depend = graph->NewCNode({NewValueNode(prim::kPrimDepend), before_input, last_call});
+          auto new_depend = graph->NewCNode({NewValueNode(prim::kPrimDepend), before_input, last_need_depend});
           new_depend->set_abstract(before_input->abstract());
           node->cast<CNodePtr>()->set_input(i, new_depend);
         }
       }
-      last_call = node;
+      last_need_depend = node;
     }
   }
 }
