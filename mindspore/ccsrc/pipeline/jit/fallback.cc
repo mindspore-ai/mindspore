@@ -666,7 +666,7 @@ AnfNodePtr ConvertCNodeToPyExecuteForPrim(const CNodePtr &cnode, const string &n
 
 AnfNodePtr GenerateOnesOrZerosLikeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
                                        const std::string &type) {
-  auto str_value = std::make_shared<StringImm>("__import__('mindspore').common._jit_fallback_utils." + type + "(key)");
+  auto str_value = std::make_shared<StringImm>("__import__('mindspore').common._utils." + type + "(key)");
   auto script_node = NewValueNode(str_value);
 
   std::vector<ValuePtr> key_value{std::make_shared<StringImm>("key")};
