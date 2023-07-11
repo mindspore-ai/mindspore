@@ -404,6 +404,13 @@ void GeGraphExecutor::AllocOutputHostMemory(const KernelGraphPtr &kernel_graph) 
     if (common::AnfAlgo::IsNopNode(output_node)) {
       auto [real_node, real_idx] = common::AnfAlgo::GetPrevNodeOutput(output_node, i, true);
       if (real_node != output_node || real_idx != i) {
+        // set output addr size if the input node is output.
+        const auto &inputs = kernel_graph->inputs();
+        if (std::any_of(inputs.begin(), inputs.end(),
+                        [&real_node](const AnfNodePtr &input_node) { return real_node == input_node; })) {
+          auto real_node_addr = AnfAlgo::GetMutableOutputAddr(real_node, real_idx);
+          output_device_addr->SetSize(real_node_addr->GetSize());
+        }
         AnfAlgo::SetOutputAddr(output_device_addr, real_idx, real_node.get());
       }
     }
