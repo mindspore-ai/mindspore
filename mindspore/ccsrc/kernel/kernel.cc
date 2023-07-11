@@ -319,6 +319,7 @@ int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<Ke
     size_t type_size = GetTypeByte(TypeIdToType(input->GetDtype()));
     auto shape = input->GetShapeVector();
     if (!IsValidShape(shape)) {
+      MS_LOG(DEBUG) << "input " << idx << " is not valid shape:" << shape << " for op:" << kernel_name_;
       // early stop if any input shape contains -1/-2, which means input shape is dynamic
       return KRET_UNKNOWN_SHAPE;
     } else {
