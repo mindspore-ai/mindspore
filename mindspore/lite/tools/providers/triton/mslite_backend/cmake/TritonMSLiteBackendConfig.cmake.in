@@ -1,0 +1,13 @@
+include(CMakeFindDependencyMacro)
+
+get_filename_component(
+  TRITONBLSBACKEND_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH
+)
+
+list(APPEND CMAKE_MODULE_PATH ${TRITONBLSBACKEND_CMAKE_DIR})
+
+if(NOT TARGET TritonBLSBackend::triton-mslite-backend)
+  include("${TRITONBLSBACKEND_CMAKE_DIR}/TritonMSLiteBackendTargets.cmake")
+endif()
+
+set(TRITONMSLiteBACKEND_LIBRARIES TritonMSLiteBackend::triton-mslite-backend)
