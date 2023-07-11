@@ -203,11 +203,11 @@ void MaximumGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
       for (size_t i = start; i < end; i++) {
         if (x_addr[i] > y_addr[i]) {
           dx_addr[i] = dout_addr[i];
-        } else if (x_addr[i] == y_addr[i]) {
+        } else if (x_addr[i] < y_addr[i]) {
+          dy_addr[i] = dout_addr[i];
+        } else {
           dx_addr[i] = dout_addr[i] / 2;
           dy_addr[i] = dout_addr[i] / 2;
-        } else {
-          dy_addr[i] = dout_addr[i];
         }
       }
     };
