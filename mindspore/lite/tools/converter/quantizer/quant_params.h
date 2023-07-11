@@ -95,6 +95,14 @@ enum TargetDevice {
   ASCEND,
 };
 
+enum AscendBackend {
+  ASCEND_ALL,  // no special backend
+  ASCEND310,
+  ASCEND710,
+  ASCEND910A,
+  ASCEND910B,
+};
+
 enum DebugMode {
   FAST,
   DETAIL,
@@ -143,6 +151,7 @@ struct CommonQuantParam {
   std::set<std::string> skip_quant_node;
   int thread_num = 4;
   bool enable_encode = true;
+  std::string workspace;  // support for model larger than 2G
 };
 
 struct WeightQuantParam {
@@ -158,7 +167,6 @@ struct MixedBitWeightQuantParam {
   bool auto_tune = false;
   bool use_cv_data = false;
   int max_iterations = kMinIterations;
-  std::string workspace;  // only for model larger than 2G
 };
 
 struct FullQuantParam {
@@ -174,6 +182,7 @@ struct TransformQuantParam {
 
 struct AscendQuantParam {
   AscendQuantMode mode = NONE;
+  AscendBackend ascend_backend = ASCEND_ALL;
 };
 
 struct DynamicQuantParam {

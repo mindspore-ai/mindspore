@@ -31,12 +31,14 @@
 #include "tools/common/node_util.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/quantizer/fse_decoder.h"
+#include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "ops/fse_decode.h"
 #include "ops/op_name.h"
 #include "ops/cast.h"
 #include "ops/fusion/mul_fusion.h"
 #include "ops/fusion/add_fusion.h"
 #include "ops/fusion/mat_mul_fusion.h"
+#include "ops/array_ops.h"
 #include "ir/dtype.h"
 
 namespace mindspore::lite::quant {
@@ -681,23 +683,20 @@ int InsertQuantNodeManager::InsertQuantDtypeCastFlyNode(const FuncGraphPtr &func
 }
 
 int InsertQuantNodeManager::InsertAscendAntiQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
-                                                      size_t input_index, TypeId src_dtype, TypeId dst_dtype,
-                                                      int axis) {
+                                                      size_t input_index, TypeId src_dtype, TypeId dst_dtype, int axis,
+                                                      AscendBackend ascend_backend) {
   auto primitive = GetValueNode<std::shared_ptr<mindspore::Primitive>>(cnode->input(kPrimIndex));
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive_c is nullptr: " << cnode->fullname_with_scope();
-    return RET_ERROR;
-  }
+  CHECK_NULL_RETURN(primitive);
   auto input_node = cnode->input(input_index);
   auto manager = func_graph->manager();
   CHECK_NULL_RETURN(manager);
-  auto node_map = manager->node_users();
-  auto node_user = node_map[input_node];
   if (!input_node->isa<mindspore::Parameter>()) {
     MS_LOG(ERROR) << cnode->fullname_with_scope() << " input " << input_index << " is not parameter node.";
     return RET_ERROR;
   }
 
+  // parameter+cast+add+mul+matmul
+  // parameter+gather+cast+add+mul
   auto input_quant_params = quant::GetInputNodeQuantParam(cnode, input_index);
   if (input_quant_params.empty()) {
     MS_LOG(ERROR) << cnode->fullname_with_scope() << " index: " << input_index << " quant param is empty.";
@@ -705,7 +704,21 @@ int InsertQuantNodeManager::InsertAscendAntiQuantNode(const FuncGraphPtr &func_g
   }
 
   // Insert cast node
-  auto cast_cnode = NewCastNode(func_graph, input_node, dst_dtype);
+  CNodePtr cast_cnode = nullptr;
+  if (ascend_backend == ASCEND910B) {
+    if (opt::CheckPrimitiveType(cnode, prim::kPrimGather)) {
+      cast_cnode = NewAscendAntiQuantCNode(func_graph, cnode, dst_dtype);
+    } else {
+      cast_cnode = NewAscendAntiQuantCNode(func_graph, input_node, dst_dtype);
+    }
+  } else {
+    if (opt::CheckPrimitiveType(cnode, prim::kPrimGather)) {
+      cast_cnode = NewCastNode(func_graph, cnode, dst_dtype);
+    } else {
+      cast_cnode = NewCastNode(func_graph, input_node, dst_dtype);
+    }
+  }
+
   CHECK_NULL_RETURN(cast_cnode);
   ParameterPtr scales_node;
   ParameterPtr zps_node;
@@ -757,6 +770,13 @@ int InsertQuantNodeManager::InsertAscendAntiQuantNode(const FuncGraphPtr &func_g
 
   auto mul_cnode = NewMulNode(func_graph, add_cnode, scales_node);
   CHECK_NULL_RETURN(mul_cnode);
+  auto node_map = manager->node_users();
+  AnfNodeIndexSet node_user;
+  if (opt::CheckPrimitiveType(cnode, prim::kPrimGather)) {
+    node_user = node_map[cnode];
+  } else {
+    node_user = node_map[input_node];
+  }
   for (const auto &user : node_user) {
     manager->SetEdge(user.first, user.second, mul_cnode);
   }
@@ -917,8 +937,37 @@ CNodePtr InsertQuantNodeManager::NewCastNode(const FuncGraphPtr &func_graph, con
   std::vector<AnfNodePtr> cast_op_inputs = {NewValueNode(prim), input_node, dtype_node};
   auto cast_cnode = func_graph->NewCNode(cast_op_inputs);
   cast_cnode->set_fullname_with_scope(input_node->fullname_with_scope() + "-Cast");
-  cast_cnode->set_abstract(input_node->abstract());
+  cast_cnode->set_abstract(input_node->abstract()->Clone());
+  auto ret = UpdateDataType(cast_cnode, TypeId(dst_type));
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << cast_cnode->fullname_with_scope() << " set dst_type " << dst_type << " failed.";
+    return nullptr;
+  }
   return cast_cnode;
+}
+
+CNodePtr InsertQuantNodeManager::NewAscendAntiQuantCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node,
+                                                         int dst_type) {
+  auto dst_prim = std::make_shared<acl::AscendAntiQuant>();
+  if (dst_prim == nullptr) {
+    return nullptr;
+  }
+  dst_prim->AddAttr("scale", MakeValue(1.0f));
+  dst_prim->AddAttr("offset", MakeValue(0.0f));
+  MS_LOG(INFO) << "dst_type:" << dst_type;
+  TypePtr type_ptr = TypeIdToType(TypeId(dst_type));
+  dst_prim->AddAttr(ops::kOutputDType, type_ptr);
+  std::vector<AnfNodePtr> cast_op_inputs = {NewValueNode(dst_prim), input_node};
+  auto anti_cnode = func_graph->NewCNode(cast_op_inputs);
+  anti_cnode->set_fullname_with_scope(input_node->fullname_with_scope() + "-AntiQuant");
+  anti_cnode->set_abstract(input_node->abstract()->Clone());
+  anti_cnode->abstract()->set_type(type_ptr);
+  auto ret = UpdateDataType(anti_cnode, TypeId(dst_type));
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << anti_cnode->fullname_with_scope() << " set dst_type " << dst_type << " failed.";
+    return nullptr;
+  }
+  return anti_cnode;
 }
 
 CNodePtr InsertQuantNodeManager::NewMulNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_1,
@@ -931,7 +980,7 @@ CNodePtr InsertQuantNodeManager::NewMulNode(const FuncGraphPtr &func_graph, cons
   std::vector<AnfNodePtr> op_inputs = {NewValueNode(prim), input_1, input_2};
   auto cnode = func_graph->NewCNode(op_inputs);
   cnode->set_fullname_with_scope(input_1->fullname_with_scope() + "-Mul");
-  cnode->set_abstract(input_1->abstract());
+  cnode->set_abstract(input_1->abstract()->Clone());
   return cnode;
 }
 
@@ -945,7 +994,7 @@ CNodePtr InsertQuantNodeManager::NewAddNode(const FuncGraphPtr &func_graph, cons
   std::vector<AnfNodePtr> op_inputs = {NewValueNode(prim), input_1, input_2};
   auto cnode = func_graph->NewCNode(op_inputs);
   cnode->set_fullname_with_scope(input_1->fullname_with_scope() + "-Add");
-  cnode->set_abstract(input_1->abstract());
+  cnode->set_abstract(input_1->abstract()->Clone());
   return cnode;
 }
 
