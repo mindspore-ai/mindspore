@@ -40,6 +40,8 @@ class CoderGraph {
 
   void SetAllTensors(const std::vector<Tensor *> &all_tensors);
 
+  int RemoveCast();
+
   int InitInputs();
   void InitOutputs();
 

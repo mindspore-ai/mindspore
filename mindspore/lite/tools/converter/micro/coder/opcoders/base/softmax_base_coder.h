@@ -35,6 +35,8 @@ class SoftmaxBaseCoder : public OperatorCoder {
  protected:
   int Init();
 
+  int MallocTmpBuffer();
+
   int ReSize();
 
   SoftmaxParameter *softmax_param_{nullptr};
@@ -47,6 +49,7 @@ class SoftmaxBaseCoder : public OperatorCoder {
   int n_dim_;
   int element_size_;
   int input_shape_[DIMENSION_5D];
+  int sum_data_size_;
 };
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_BASE_SOFTMAX_BASE_CODER_H_

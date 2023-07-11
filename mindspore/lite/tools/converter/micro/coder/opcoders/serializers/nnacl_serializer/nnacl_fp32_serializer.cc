@@ -159,6 +159,11 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const StridedSlice
                  strided_slice_parameter.newAxisMask_, strided_slice_parameter.shrinkAxisMask_);
 }
 
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const SliceStruct &param) {
+  CodeBaseStruct("SliceStruct", name, "{}", param.data_type_size_, ToString(param.begin_), ToString(param.size_),
+                 ToString(param.shape_), ToString(param.end_), param.param_length_);
+}
+
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const ArithmeticWrapperInfo &arithmetic_wrapper_info) {
   CodeBaseStruct("ArithmeticWrapperInfo", name, arithmetic_wrapper_info.offset0_, arithmetic_wrapper_info.stride0_,
                  arithmetic_wrapper_info.offset1_, arithmetic_wrapper_info.stride1_,

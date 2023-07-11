@@ -339,6 +339,9 @@ int CoderSession::CreateOpCoders() {
 
 int CoderSession::InitCodeGraph() {
   MS_CHECK_RET_CODE(coder_graph_->ConvertTensors(enable_fp16_), "convert tensors failed");
+  if (!Configurator::GetInstance()->keep_original_weight()) {
+    MS_CHECK_RET_CODE(coder_graph_->RemoveCast(), "Remove cast failed");
+  }
   MS_CHECK_RET_CODE(coder_graph_->InitGraphInOutTensors(), "init graph inputs and outputs failed");
   return RET_OK;
 }
