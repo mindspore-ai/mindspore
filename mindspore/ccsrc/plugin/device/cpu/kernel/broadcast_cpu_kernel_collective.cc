@@ -50,7 +50,7 @@ bool BroadcastCPUKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   root_rank_ = LongToUint(GetValue<std::int64_t>(prim->GetAttr("root_rank")));
   input_dtype_ = inputs[0]->GetDtype();
 #else
-  MS_LOG(EXCEPTION) << "The CPU kernel allgather is only supported on linux platform.";
+  MS_LOG(EXCEPTION) << "The CPU kernel broadcast is only supported on linux platform.";
 #endif
   return true;
 }
