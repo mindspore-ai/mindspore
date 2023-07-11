@@ -92,7 +92,7 @@ void SetConv2dPadList(const PrimitivePtr &primitive, const std::vector<int64_t> 
   if (is_valid_pad_attr()) {
     pad_list = GetValue<ShapeVector>(attr_pad_list_prt);
   } else if (pad_mode == VALID) {
-    std::fill(pad_list.begin(), pad_list.end(), 0);
+    pad_list.assign(pad_list.size(), 0);
   } else if (pad_mode == SAME) {
     pad_list = CalcPadListForSameMode(dout_shape_norm, x_size_v, kernel_size, stride, dilation);
   } else if (pad_mode == PAD) {
