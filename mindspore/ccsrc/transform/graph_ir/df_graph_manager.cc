@@ -116,6 +116,13 @@ DfGraphWrapperPtr DfGraphManager::GetGraphByName(const std::string &name) {
 
 void DfGraphManager::ClearGraph() noexcept {
   std::lock_guard<std::mutex> lg(lock_);
+  for (const auto &graph_id : graphs_) {
+    MS_LOG(INFO) << "Remove graph, graph name: " << graph_id.first << ", graph id: " << graph_id.second->id_;
+    if (sess_ptr_ != nullptr &&
+        sess_ptr_->RemoveGraph(static_cast<uint32_t>(graph_id.second->id_)) != ::ge::GRAPH_SUCCESS) {
+      MS_LOG(WARNING) << "Remove graph, graph name: " << graph_id.first << ", graph id: " << graph_id.second->id_;
+    }
+  }
   graphs_.clear();
   anf_graphs_.clear();
   MS_LOG(INFO) << "Remove all graphs in GraphManager";
@@ -167,9 +174,9 @@ void DfGraphManager::DeleteGeSession() noexcept {
     MS_LOG(INFO) << "Ge Session is not exist";
   } else {
     for (const auto &graph_id : graphs_) {
-      MS_LOG(INFO) << "Remove graph, graph id: " << graph_id;
+      MS_LOG(INFO) << "Remove graph, graph name: " << graph_id.first << ", graph id: " << graph_id.second->id_;
       if (sess_ptr_->RemoveGraph(static_cast<uint32_t>(graph_id.second->id_)) != ::ge::GRAPH_SUCCESS) {
-        MS_LOG(WARNING) << "Remove graph failed, graph id: " << graph_id;
+        MS_LOG(WARNING) << "Remove graph, graph name: " << graph_id.first << ", graph id: " << graph_id.second->id_;
       }
     }
     sess_ptr_ = nullptr;
