@@ -210,33 +210,23 @@ void SetDynParams(const std::shared_ptr<mindspore::ConverterPara> &param,
 void ConfigFileParser::SetParamByConfigfile(const std::shared_ptr<mindspore::ConverterPara> &param,
                                             const std::map<std::string, std::string> &ascend_map) {
   std::string ascend_string = "";
-  if (!(ascend_string = FindInAscendMap("input_format", ascend_map)).empty()) {
-    param->aclModelOptionCfgParam.input_format = ascend_string;
-  }
-  if (!(ascend_string = FindInAscendMap("precision_mode", ascend_map)).empty()) {
-    param->aclModelOptionCfgParam.precision_mode = ascend_string;
-  }
-  if (!(ascend_string = FindInAscendMap("op_select_impl_mode", ascend_map)).empty()) {
-    param->aclModelOptionCfgParam.op_select_impl_mode = ascend_string;
-  }
-  if (!(ascend_string = FindInAscendMap("fusion_switch_config_file_path", ascend_map)).empty()) {
-    param->aclModelOptionCfgParam.fusion_switch_config_file_path = ascend_string;
-  }
-  if (!(ascend_string = FindInAscendMap("buffer_optimize", ascend_map)).empty()) {
-    param->aclModelOptionCfgParam.buffer_optimize = ascend_string;
-  }
-  if (!(ascend_string = FindInAscendMap("insert_op_config_file_path", ascend_map)).empty()) {
-    param->aclModelOptionCfgParam.insert_op_config_file_path = ascend_string;
-  }
-  if (!(ascend_string = FindInAscendMap("om_file_path", ascend_map)).empty()) {
-    param->aclModelOptionCfgParam.om_file_path = ascend_string;
-  }
-  if (!(ascend_string = FindInAscendMap("aoe_mode", ascend_map)).empty()) {
-    param->aclModelOptionCfgParam.aoe_mode = ascend_string;
-  }
-  if (!(ascend_string = FindInAscendMap(kDumpModelNameKey, ascend_map)).empty()) {
-    param->aclModelOptionCfgParam.dump_model_name = ascend_string;
-  }
+  auto set_option = [&ascend_map](const std::string &key, std::string *option) {
+    auto it = ascend_map.find(key);
+    if (it != ascend_map.end() && !it->second.empty()) {
+      *option = it->second;
+    }
+  };
+  set_option("input_format", &param->aclModelOptionCfgParam.input_format);
+  set_option("precision_mode", &param->aclModelOptionCfgParam.precision_mode);
+  set_option("op_select_impl_mode", &param->aclModelOptionCfgParam.op_select_impl_mode);
+  set_option("fusion_switch_config_file_path", &param->aclModelOptionCfgParam.fusion_switch_config_file_path);
+  set_option("buffer_optimize", &param->aclModelOptionCfgParam.buffer_optimize);
+  set_option("insert_op_config_file_path", &param->aclModelOptionCfgParam.insert_op_config_file_path);
+  set_option("om_file_path", &param->aclModelOptionCfgParam.om_file_path);
+  set_option("aoe_mode", &param->aclModelOptionCfgParam.aoe_mode);
+  set_option(kDumpModelNameKey, &param->aclModelOptionCfgParam.dump_model_name);
+  set_option("provider", &param->provider);
+
   if (!(ascend_string = FindInAscendMap(kPluginCustomOps, ascend_map)).empty()) {
     param->ascendGeOptionCfg.plugin_custom_ops = ascend_string;
   } else if (!(ascend_string = FindInAscendMap(kEnableCustomOp, ascend_map)).empty()) {

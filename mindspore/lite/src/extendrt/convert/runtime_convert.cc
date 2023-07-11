@@ -22,10 +22,6 @@
 #include "tools/converter/cxx_api/converter_para.h"
 #include "tools/converter/config_parser/config_file_parser.h"
 
-namespace {
-constexpr auto kAscendProviderGe = "ge";
-}
-
 static int ParseShapeStrToShapeMap(const std::string &input_shape_str,
                                    std::vector<std::vector<int64_t>> *input_shapes) {
   std::vector<int64_t> shape;
@@ -177,8 +173,8 @@ int RuntimeConvert(const mindspore::api::FuncGraphPtr &graph, const std::shared_
         mindspore::lite::ConfigFileParser config_parser;
         config_parser.SetParamByConfigfile(param, ascend_map);
       }
-      if (device->GetProvider() == kAscendProviderGe) {
-        param->provider = kAscendProviderGe;
+      if (device->GetProvider() == mindspore::lite::kAscendProviderGe) {
+        param->provider = mindspore::lite::kAscendProviderGe;
         continue;
       }
 
