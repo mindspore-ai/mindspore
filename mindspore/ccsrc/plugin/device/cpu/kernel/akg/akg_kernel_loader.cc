@@ -143,10 +143,16 @@ bool AkgLibraryLoader::ParseObj(void) {
     return false;
   }
   /*  will come after .data */
-  memcpy_s(text_runtime_base_, text_vec[0], obj_.base + text_vec[1], text_vec[0]);
+  if (text_vec[0] != 0 && memcpy_s(text_runtime_base_, text_vec[0], obj_.base + text_vec[1], text_vec[0]) != EOK) {
+    MS_LOG(ERROR) << "memcpy .text section failed, section size:" << text_vec[0];
+    return false;
+  }
   /* .data will come right after .text */
   data_runtime_base_ = text_runtime_base_ + PageAlign(text_vec[0]);
-  memcpy_s(data_runtime_base_, data_vec[0], obj_.base + data_vec[1], data_vec[0]);
+  if (data_vec[0] != 0 && memcpy_s(data_runtime_base_, data_vec[0], obj_.base + data_vec[1], data_vec[0]) != EOK) {
+    MS_LOG(ERROR) << "memcpy .data section failed, section size:" << data_vec[0];
+    return false;
+  }
   /* .rodata.xxx will come right after .data */
   auto rodata_runtime_base = data_runtime_base_ + PageAlign(data_vec[0]);
   uint8_t *current_rodata_runtime_base = rodata_runtime_base;
@@ -154,7 +160,11 @@ bool AkgLibraryLoader::ParseObj(void) {
     section_runtime_base_map_[rodata_section_list[idx]] = current_rodata_runtime_base + page_align_list[idx];
     auto section_size = section_info_map_[rodata_section_list[idx]][0];
     auto section_offset = section_info_map_[rodata_section_list[idx]][1];
-    memcpy_s(current_rodata_runtime_base, section_size, obj_.base + section_offset, section_size);
+    if (section_size != 0 &&
+        memcpy_s(current_rodata_runtime_base, section_size, obj_.base + section_offset, section_size) != EOK) {
+      MS_LOG(ERROR) << "memcpy " << rodata_section_list[idx] << "section failed, section size:" << section_size;
+      return false;
+    }
   }
   /* jumptable_ will come at last */
   jumptable_ = static_cast<ext_jump *>(static_cast<void *>(current_rodata_runtime_base + page_align_list.back()));
