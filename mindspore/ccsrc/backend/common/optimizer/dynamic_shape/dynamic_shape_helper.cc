@@ -504,6 +504,7 @@ AnfNodePtr GenInitNode(const AnfNodePtr &node) {
     if (args == nullptr) {
       args = std::make_shared<kernel::KernelArgs>();
     }
+    MS_LOG(DEBUG) << "resize for cnode:" << cnode->fullname_with_scope();
     if (kernel_mod->Resize(args->inputs, args->outputs, args->depend_tensor_map) ==
         static_cast<int>(kernel::KRET_RESIZE_FAILED)) {
       MS_LOG(EXCEPTION) << "Node " << cnode->fullname_with_scope() << " Resize failed.";
@@ -521,6 +522,7 @@ void InferOp(const CNodePtr &cnode, void *args) {
   MS_EXCEPTION_IF_NULL(kernel_mod);
 
   kernel::KernelArgs kernel_args;
+  MS_LOG(DEBUG) << "infer shape for node:" << cnode->fullname_with_scope();
   InferShape(cnode, &kernel_args.depend_tensor_map, args);
   auto kernel_type = AnfAlgo::GetKernelType(cnode);
   if (auto kernel_mod_type = kernel_mod->GetKernelModType();

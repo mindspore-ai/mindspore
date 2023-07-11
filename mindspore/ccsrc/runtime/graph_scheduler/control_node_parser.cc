@@ -2336,6 +2336,7 @@ void CollectEffectiveOutputByGraph(const KernelGraphPtr &graph, DeviceContext *c
                   << " add front output node:" << backend_to_front.second.first->DebugString()
                   << " index:" << backend_to_front.second.second
                   << " backend node:" << backend_to_front.first.first->DebugString()
+                  << " full name:" << backend_to_front.first.first->fullname_with_scope()
                   << " index:" << backend_to_front.first.second;
     (*outputs)[backend_to_front.second] = {backend_to_front.first, device_context};
   }

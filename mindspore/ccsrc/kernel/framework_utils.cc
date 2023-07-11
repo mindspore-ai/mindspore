@@ -57,9 +57,6 @@ abstract::AbstractBasePtr GetChildAbstract(const abstract::AbstractBasePtr &cur_
   if (cur_abstract->isa<abstract::AbstractTuple>()) {
     auto abs_tuple = cur_abstract->Clone()->cast<abstract::AbstractTuplePtr>();
     MS_EXCEPTION_IF_NULL(abs_tuple);
-    if (abs_tuple->dynamic_len()) {
-      return abs_tuple;
-    }
     auto abs_element = abs_tuple->elements();
     MS_EXCEPTION_IF_CHECK_FAIL((idx < abs_element.size()), "Index is out of range, idx:" + std::to_string(idx) +
                                                              " size:" + std::to_string(abs_element.size()) +
@@ -148,8 +145,9 @@ inline InOutKernelTensors AbstractInOutFromCNode(const CNodePtr &cnode) {
     }
     auto device_shape_adaptively = AnfAlgo::GetInputDeviceShapeAdaptively(cnode, input_idx);
     auto format_str = AnfAlgo::GetInputFormat(cnode, input_idx);
-    auto input_tensor = CreateKernelTensor(prev_abstract, real_input_type, output_idx, device_shape_adaptively,
-                                           format_str, !prev_node_has_getitem);
+    auto input_tensor =
+      CreateKernelTensor(prev_abstract, real_input_type, output_idx, device_shape_adaptively, format_str,
+                         ((!prev_node_has_getitem) || common::AnfAlgo::IsDynamicSequence(prev_node)));
     input_tensors.push_back(input_tensor);
   }
 
@@ -172,23 +170,9 @@ inline InOutKernelTensors AbstractInOutFromCNode(const CNodePtr &cnode) {
     }
     auto device_shape_adaptively = AnfAlgo::GetOutputDeviceShapeAdaptively(cnode, output_idx);
     auto format_str = AnfAlgo::GetOutputFormat(cnode, output_idx);
-    // In empty tuple scenario, the dynamic len tag will be lost after infer shape, resulting in the inability
-    // to create a kernel tensor for it. the dynamic len tag needs to be added back and deleted after create
-    // kernel tensor.
-    bool change_dynamic_len = false;
-    if (common::AnfAlgo::IsDynamicSequence(cnode) && cur_abstract->isa<abstract::AbstractSequence>()) {
-      auto seq_abs = cur_abstract->cast<abstract::AbstractSequencePtr>();
-      MS_EXCEPTION_IF_NULL(seq_abs);
-      if (seq_abs->elements().size() == 0 && (!seq_abs->dynamic_len())) {
-        change_dynamic_len = true;
-        seq_abs->set_dynamic_len(true);
-      }
-    }
-    auto output_tensor = CreateKernelTensor(cur_abstract, real_output_type, output_idx, device_shape_adaptively,
-                                            format_str, is_real_tuple_output);
-    if (change_dynamic_len) {
-      cur_abstract->cast<abstract::AbstractSequencePtr>()->set_dynamic_len(false);
-    }
+    auto output_tensor =
+      CreateKernelTensor(cur_abstract, real_output_type, output_idx, device_shape_adaptively, format_str,
+                         is_real_tuple_output || common::AnfAlgo::IsDynamicSequence(cnode));
     output_tensors.push_back(output_tensor);
   }
   return std::make_pair(input_tensors, output_tensors);
