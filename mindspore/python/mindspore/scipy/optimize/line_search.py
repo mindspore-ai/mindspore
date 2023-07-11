@@ -332,7 +332,7 @@ def line_search(f, xk, pk, jac=None, gfk=None, old_fval=None, old_old_fval=None,
     Examples:
         >>> import numpy as onp
         >>> from mindspore.scipy.optimize import line_search
-        >>> from mindspore.common import Tensor
+        >>> from mindspore import Tensor
         >>> x0 = Tensor(onp.ones(2).astype(onp.float32))
         >>> p0 = Tensor(onp.array([-1, -1]).astype(onp.float32))
         >>> def func(x):

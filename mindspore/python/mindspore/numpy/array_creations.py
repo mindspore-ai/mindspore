@@ -827,6 +827,7 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.geomspace(1, 256, num=9)
         >>> print(output)
         [  1.   2.   4.   8.  16.  32.  64. 128. 256.]
@@ -1611,8 +1612,8 @@ class MGridClass(NdGrid):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.numpy import mgrid
-        >>> output = mgrid[0:5, 0:5]
+        >>> import mindspore.numpy as np
+        >>> output = np.mgrid[0:5, 0:5]
         >>> print(output)
         [[[0 0 0 0 0]
         [1 1 1 1 1]
@@ -1657,8 +1658,8 @@ class OGridClass(NdGrid):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.numpy import ogrid
-        >>> output = ogrid[0:5,0:5]
+        >>> import mindspore.numpy as np
+        >>> output = np.ogrid[0:5,0:5]
         >>> print(output)
         [Tensor(shape=[5, 1], dtype=Int32, value=
         [[0],

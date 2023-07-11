@@ -45,7 +45,7 @@ def matrix_set_diag(input_x, diagonal, k=0, alignment="RIGHT_LEFT"):
 
     Examples:
         >>> import numpy as onp
-        >>> from mindspore.common import Tensor
+        >>> from mindspore import Tensor
         >>> from mindspore.scipy.ops_wrapper import matrix_set_diag
         >>> input_x = Tensor(
         >>>     onp.array([[[7, 7, 7, 7],[7, 7, 7, 7], [7, 7, 7, 7]],

@@ -133,6 +133,7 @@ class BoostTrainOneStepCell(TrainOneStepCell):
 
     Examples:
         >>> from mindspore import boost
+        >>> from mindspore import nn
         >>> # Define the network structure of LeNet5. Refer to
         >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
@@ -143,7 +144,7 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         >>> train_net = boost.BoostTrainOneStepCell(loss_net, optim)
         >>>
         >>> #2) Using user-defined WithLossCell
-        >>> class MyWithLossCell(Cell):
+        >>> class MyWithLossCell(nn.Cell):
         ...    def __init__(self, backbone, loss_fn):
         ...        super(MyWithLossCell, self).__init__(auto_prefix=False)
         ...        self._backbone = backbone
