@@ -40,13 +40,17 @@ bool ModelInfer::Init() {
     MS_LOG(ERROR) << "Acl options is nullptr.";
     return false;
   }
-  std::string acl_init_option = !options_->dump_path.empty()
-                                  ? options_->dump_path
-                                  : (!options_->profiling_path.empty() ? options_->profiling_path : std::string());
+  std::string acl_init_option = !options_->dump_path.empty() ? options_->dump_path : std::string();
   acl_env_ = AclEnvGuard::GetAclEnv(acl_init_option);
   if (acl_env_ == nullptr) {
     MS_LOG(ERROR) << "Acl init failed.";
     return false;
+  }
+  if (!options_->profiling_path.empty()) {
+    if (!profiling_.Init(options_->profiling_path, options_->device_id)) {
+      MS_LOG(ERROR) << "Profiling init failed";
+      return false;
+    }
   }
   std::lock_guard<std::mutex> lock(g_context_mutex);
   int32_t device_id = options_->device_id;
@@ -73,7 +77,11 @@ bool ModelInfer::Init() {
   bool is_device = (run_mode == ACL_DEVICE);
   model_process_.SetIsDevice(is_device);
   MS_LOG(INFO) << "Get run mode success is device input/output " << is_device;
-
+  ret = aclrtCreateStream(&stream_);
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "Acl create stream failed";
+    return false;
+  }
   MS_LOG(INFO) << "Init model success, device id " << device_id;
   init_flag_ = true;
   return true;
@@ -92,7 +100,19 @@ bool ModelInfer::Finalize() {
   if (!model_process_.UnLoad()) {
     MS_LOG(ERROR) << "Unload model inner failed.";
   }
+  if (profiling_.IsProfilingOpen()) {
+    if (!profiling_.StopProfiling(stream_)) {
+      MS_LOG(ERROR) << "Stop profiling failed";
+    }
+  }
   std::lock_guard<std::mutex> lock(g_context_mutex);
+  if (stream_ != nullptr) {
+    rt_ret = aclrtDestroyStream(stream_);
+    if (rt_ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Destroy stream failed";
+    }
+    stream_ = nullptr;
+  }
   if (context_ != nullptr) {
     rt_ret = aclrtDestroyContext(context_);
     if (rt_ret != ACL_ERROR_NONE) {
@@ -117,6 +137,13 @@ bool ModelInfer::Load(const void *om_data, size_t om_data_size) {
     MS_LOG(ERROR) << "Set the ascend device context failed, ret = " << rt_ret;
     return false;
   }
+  if (profiling_.IsProfilingOpen()) {
+    MS_LOG(INFO) << "Ascend profiling is open";
+    if (!profiling_.StartProfiling(stream_)) {
+      MS_LOG(ERROR) << "Start profiling failed";
+      return false;
+    }
+  }
   if (!model_process_.Load(om_data, om_data_size)) {
     MS_LOG(ERROR) << "Load model model failed.";
     return false;
@@ -130,7 +157,12 @@ bool ModelInfer::Inference(const std::vector<KernelTensorPtr> &inputs, const std
     MS_LOG(ERROR) << "Set the ascend device context failed, ret = " << rt_ret;
     return false;
   }
-  return model_process_.PredictFromHost(inputs, outputs);
+  auto ret = model_process_.PredictFromHost(inputs, outputs);
+  if (!ret) {
+    MS_LOG(ERROR) << "Model predict failed";
+    return ret;
+  }
+  return true;
 }
 
 std::vector<Format> ModelInfer::GetInputFormat() { return model_process_.GetInputFormat(); }
