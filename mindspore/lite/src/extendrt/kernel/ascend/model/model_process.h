@@ -93,6 +93,7 @@ class ModelProcess {
   bool IsDynamicDims();
   bool ResetDynamicOutputTensor(const std::vector<KernelTensorPtr> &outputs);
   bool ResizeDynamicInputShape(const std::vector<ShapeVector> &new_shapes);
+  bool ResizeDynamicInputShapeRange(const std::vector<ShapeVector> &new_shapes);
   bool ResizeDynamicBatchAndImageSize(const std::vector<ShapeVector> &new_shapes);
   void FreeResource(std::vector<AclTensorInfo> acl_tensor_info);
 
@@ -116,6 +117,7 @@ class ModelProcess {
   bool is_dynamic_output_ = false;
   bool is_dynamic_input_ = false;
   bool is_dynamic_resize_input_ = false;
+  bool is_dynamic_shape_range_ = false;
   aclmdlIODims *dynamic_dims_ = nullptr;
   void *weight_ptr_ = nullptr;
   bool is_sharing_workspace_ = false;
