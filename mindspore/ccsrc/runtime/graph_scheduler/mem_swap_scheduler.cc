@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -202,7 +202,8 @@ void MemSwapScheduler::GetRealParameters(const KernelGraphPtr &graph, const Cont
   real_parameters_[graph->graph_id()].swap(real_parameters);
 }
 
-void MemSwapScheduler::AddSwappableRootParameter(const mindspore::runtime::GraphCompilerInfo &graph_compiler_info) {
+void MemSwapScheduler::AddSwappableRootParameter(
+  const mindspore::runtime::GraphCompilerInfo &graph_compiler_info) const {
   DeviceContext *device_context = nullptr;
   std::shared_ptr<device::SwapManager> swap_manager = nullptr;
   for (const auto &context : graph_compiler_info.device_contexts_) {
@@ -238,7 +239,7 @@ void MemSwapScheduler::AddSwappableRootParameter(const mindspore::runtime::Graph
 
 void MemSwapScheduler::AddSwappableTensors(const mindspore::device::DeviceContext *device_context,
                                            const std::shared_ptr<device::SwapStrategy> &strategy,
-                                           const KernelGraphPtr &graph) {
+                                           const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(device_context);
   const auto &swap_manager = device_context->device_res_manager_->swap_manager();
   MS_EXCEPTION_IF_NULL(swap_manager);
