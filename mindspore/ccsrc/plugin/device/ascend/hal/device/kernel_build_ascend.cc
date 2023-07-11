@@ -487,7 +487,10 @@ void InsertAtomicOps(const std::vector<CNodePtr> &kernels, CleanOpsMap *clean_op
   // fusion
   MS_EXCEPTION_IF_NULL(clean_ops);
   static const auto enable_fusion_clear = (common::GetEnv("ENV_FUSION_CLEAR") == "1");
-  if (enable_fusion_clear) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  const bool pynative_mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode;
+  if (enable_fusion_clear && !pynative_mode) {
     ProcessAtomicFusion(kernels, clean_ops);
     return;
   }
