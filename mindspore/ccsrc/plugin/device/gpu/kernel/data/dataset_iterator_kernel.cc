@@ -134,7 +134,7 @@ bool DatasetIteratorKernelMod::ReadDevice(std::vector<DataQueueItem> *data) {
     }
     if (ret == device::DataQueueStatus::TIMEOUT) {
       time_cost += (time(nullptr) - start_time);
-      if (time_cost < op_timeout) {
+      if (op_timeout == 0 || time_cost < op_timeout) {
         if (time_cost > log_interval) {
           MS_LOG(INFO) << "The op_timeout is: " << std::to_string(op_timeout) << ", continue waiting for data...";
           log_interval += log_interval_step;
