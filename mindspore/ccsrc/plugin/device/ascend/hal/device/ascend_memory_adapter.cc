@@ -22,6 +22,7 @@
 #include "acl/acl_rt.h"
 #include "utils/ms_context.h"
 #include "utils/convert_utils_base.h"
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -32,8 +33,6 @@ constexpr double kReservedMemoryRatio = 0.0625;     // 1/16
 constexpr size_t kPerHugePageMemorySize = 2097152;  // 2mb
 constexpr size_t kExtraReservedMemory = 10485760;   // 10mb
 constexpr double kHalfRatio = 0.5;
-// The Ascend max available device memory is 32GB.
-constexpr float kAscendMaxDeviceMemory = 32;
 constexpr uint64_t kOverflowAddrSize = 512;
 constexpr char kGlobalOverflowWorkspace[] = "GLOBAL_OVERFLOW_WORKSPACE";
 
@@ -216,6 +215,10 @@ size_t AscendMemAdapter::GetDeviceMemSizeFromContext() const {
   MS_EXCEPTION_IF_NULL(context);
   size_t size_from_context;
   auto max_device_memory = context->get_param<float>(MS_CTX_MAX_DEVICE_MEMORY);
+  auto soc_version = device::ascend::GetSocVersion();
+  const static std::set<std::string> kAscend910BVersions = {"Ascend910B1", "Ascend910B2", "Ascend910B3", "Ascend910B4"};
+  const float kAscendMaxDeviceMemory =
+    kAscend910BVersions.find(soc_version) != kAscend910BVersions.end() ? 64.0f : 32.0f;
   if (max_device_memory <= kAscendMaxDeviceMemory) {
     MS_LOG(INFO) << "context max_device_memory:" << max_device_memory;
     size_from_context = FloatToSize(max_device_memory * kGBToByte);
