@@ -16,6 +16,18 @@
 import math
 import pytest
 import mindspore as ms
+from mindspore.ops import composite as C
+
+
+class GradNet(ms.nn.Cell):
+    def __init__(self, network, get_all=False, get_by_list=False):
+        super().__init__()
+        self.network = network
+        self.grad = C.GradOperation(get_all, get_by_list)
+
+    def construct(self, *inputs):
+        grads = self.grad(self.network)(*inputs)
+        return grads
 
 
 @pytest.mark.level0
@@ -126,6 +138,29 @@ def test_builtin_bool():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+def test_builtin_scalar_grad():
+    """
+    Feature: Return scalar.
+    Description: Test scalar grad.
+    Expectation: No exception.
+    """
+    class Net(ms.nn.Cell):
+        def construct(self, x):
+            out = int(x), float(x), bool(x)
+            return out
+
+    x = ms.Tensor(1)
+    net = Net()
+    grad = GradNet(net)
+    out_grad = grad(x)
+    assert out_grad == 0
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_scalar_in_tuple_output():
     """
     Feature: Return scalar.
@@ -185,7 +220,6 @@ def test_int_asnumpy_calculation():
     assert out == 6
 
 
-@pytest.mark.skip(reason="No support by now.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -316,7 +350,6 @@ def test_float_condition():
     assert out == 3
 
 
-@pytest.mark.skip(reason="No support by now.")
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
@@ -338,6 +371,27 @@ def test_tensor_condition():
     out = func(x)
     print(f'out: {out}')
     assert out == 10
+
+
+@pytest.mark.skip(reason="No support by now.")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_bool_asnumpy():
+    """
+    Feature: Return scalar.
+    Description: Support scalar calculation.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def func(x):
+        return bool(x.asnumpy())
+
+    x = ms.Tensor(5)
+    out = func(x)
+    assert out is True
 
 
 @pytest.mark.skip(reason="No support by now.")
