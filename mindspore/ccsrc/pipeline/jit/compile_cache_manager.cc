@@ -172,9 +172,11 @@ std::pair<FuncGraphPtr, LayoutMap> LoadFuncGraphFromMindIR(const py::dict &weigh
   context.SetFrontGraph(fg);
   context.InsertBackendGraphCachePath(fg, GetBackendCompileCachePathWithoutExtension(idx));
 #if defined(__linux__) && defined(WITH_BACKEND)
-  // compile cache does not support PS or cluster.
-  if (ps::PSContext::instance()->is_ps_mode() || distributed::cluster::ClusterContext::instance()->initialized()) {
-    context.SetPsOrClusterMode(true);
+  // compile cache does not support host collective or graph kernel.
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (common::UseHostCollective() || ms_context->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL)) {
+    context.SetRestrictedScenarios(true);
   }
 #endif
   return std::make_pair(fg, mindir_loader.layout_map());
@@ -196,9 +198,11 @@ bool ExportFuncGraphToMindIR(const FuncGraphPtr &fg, const FuncGraphPtr &layout_
   context.SetFrontGraph(fg);
   context.InsertBackendGraphCachePath(fg, GetBackendCompileCachePathWithoutExtension(idx));
 #if defined(__linux__) && defined(WITH_BACKEND)
-  // compile cache does not support PS or cluster.
-  if (ps::PSContext::instance()->is_ps_mode() || distributed::cluster::ClusterContext::instance()->initialized()) {
-    context.SetPsOrClusterMode(true);
+  // compile cache does not support host collective or graph kernel.
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (common::UseHostCollective() || ms_context->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL)) {
+    context.SetRestrictedScenarios(true);
   }
 #endif
   MindIRExporter mindir_exporter;
