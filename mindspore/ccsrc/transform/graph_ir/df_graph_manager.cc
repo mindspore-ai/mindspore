@@ -71,7 +71,10 @@ Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph
   }
 
   int id = GenerateId();
-  DfGraphWrapperPtr wrap_ptr = std::make_shared<DfGraphWrapper>(name, id, graph_ptr, options);
+  OptionMap new_options = options;
+  new_options.insert_or_assign("ge.graph_key", std::to_string(id));
+
+  DfGraphWrapperPtr wrap_ptr = std::make_shared<DfGraphWrapper>(name, id, graph_ptr, new_options);
   auto ret = graphs_.emplace(name, wrap_ptr);
   if (!ret.second) {
     MS_LOG(WARNING) << "The graph name:{ " << name << " }is already exists! The old graph will be overwritten!!";

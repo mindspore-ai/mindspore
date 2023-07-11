@@ -1360,7 +1360,7 @@ class Dataset:
         return dataset
 
     @check_device_send
-    def device_que(self, send_epoch_end=True, create_data_info_queue=False):
+    def device_que(self, send_epoch_end=True, create_data_info_queue=False, queue_name=""):
         """
         Return a transferred Dataset that transfers data through a device.
 
@@ -1369,6 +1369,8 @@ class Dataset:
                 Default: ``True``.
             create_data_info_queue (bool, optional): Whether to create queue which stores
                 types and shapes of data or not. Default: ``False``.
+            queue_name (str, optional): Name of queue which connects dataset processing and model
+                computing. Default: ``""``.
 
         Note:
             If device is Ascend, features of data will be transferred one by one. The limitation
@@ -1387,7 +1389,7 @@ class Dataset:
             >>> time.sleep(0.1)
             >>> data.stop_send()
         """
-        return TransferDataset(self, send_epoch_end, create_data_info_queue)
+        return TransferDataset(self, send_epoch_end, create_data_info_queue, queue_name)
 
     @check_save
     def save(self, file_name, num_files=1, file_type='mindrecord'):
@@ -4078,9 +4080,14 @@ class TransferDataset(Dataset):
         RuntimeError: If dataset is unknown.
     """
 
-    def __init__(self, input_dataset, send_epoch_end=True, create_data_info_queue=False):
+    def __init__(self, input_dataset, send_epoch_end=True, create_data_info_queue=False, queue_name=""):
         super().__init__(children=input_dataset)
-        self.queue_name = str(uuid.uuid1())
+        if queue_name == "":
+            self.queue_name = str(uuid.uuid1())
+            logger.info(f"queue_name is newly generated. value is {self.queue_name}")
+        else:
+            self.queue_name = queue_name
+            logger.info(f"queue_name is read from compile cache. value is {self.queue_name}")
         self.device_type = context.get_context("device_target") if context else "CPU"
         self.device_id = context.get_context("device_id") if context else 0
 

@@ -1563,6 +1563,13 @@ class _CellGraphExecutor:
         """
         self._graph_executor.set_queue_name(queue_name)
 
+    def get_queue_name(self):
+        """
+        Get cached queue name for the graph loaded from compile cache.
+        :return: cached queue name
+        """
+        return self._graph_executor.get_queue_name()
+
     @staticmethod
     def _set_dataset_mode(obj):
         """set dataset mode."""

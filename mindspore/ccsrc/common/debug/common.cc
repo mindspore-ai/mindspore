@@ -374,6 +374,16 @@ std::string Common::GetCompilerCachePath() {
   return compile_cache_dir;
 }
 
+std::string Common::GetAndCreateCompilerCacheDir() {
+  std::string ms_compiler_cache_enable = common::GetEnv(kCompilerCacheEnable);
+  if (ms_compiler_cache_enable.empty() || ms_compiler_cache_enable == "0") {
+    return "";
+  }
+  std::string compiler_cache_path = GetCompilerCachePath();
+  (void)FileUtils::CreateNotExistDirs(compiler_cache_path, true);
+  return compiler_cache_path;
+}
+
 std::string Common::GetKernelMetaTempDir() {
   auto cache_path = GetUserDefineCachePath();
   std::string rank_id_str = common::GetEnv(kRankID);

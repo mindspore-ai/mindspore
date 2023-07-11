@@ -37,6 +37,7 @@ constexpr char kRoleServer[] = "server_";
 constexpr char kRolePServer[] = "pserver_";
 constexpr char kRolePScheduler[] = "pscheduler_";
 constexpr char kGroupCkptFileName[] = "group.ckpt";
+constexpr char kQueueNameCacheFileName[] = "shared_name_cache";
 
 struct CachedIOSizeInfo {
   std::string json_name;
