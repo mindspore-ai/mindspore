@@ -44,7 +44,7 @@ def _linear_sum_assignment(cost_matrix, maximize, dimension_limit=Tensor(sys.max
      Examples:
         >>> import mindspore as ms
         >>> import numpy as np
-        >>> from mindspore.common import Tensor
+        >>> from mindspore import Tensor
         >>> from mindspore.scipy.optimize.linear_sum_assignment import _linear_sum_assignment as lsap
         >>> cost_matrix = Tensor(np.array([[2, 3, 3], [3, 2, 3], [3, 3, 2]])).astype("float64")
         >>> dimension_limit = Tensor(2)

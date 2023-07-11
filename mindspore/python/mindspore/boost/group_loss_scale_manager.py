@@ -87,10 +87,11 @@ class GroupLossScaleManager(Cell):
         >>> loss_scale_manager.loss_scale_groups = [param_group1, param_group2]
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
-        >>> boost_config_dict = {"boost": {"mode": "manual", "less_bn": False, "grad_freeze": False, "adasum": False, \
-        >>>                      "grad_accumulation": False, "dim_reduce": False, "loss_scale_group": True}}
-        >>> model = ms.Model(net, loss_fn=loss, optimizer=optim, metrics=None, loss_scale_manager=loss_scale_manager, \
-        >>>               boost_level="O1", boost_config_dict=boost_config_dict)
+        >>> boost_config_dict = {"boost": {"mode": "manual", "less_bn": False, "grad_freeze": False, "adasum": False,
+        ...                      "grad_accumulation": False, "dim_reduce": False, "loss_scale_group": True}}
+        >>> model = ms.train.Model(net, loss_fn=loss, optimizer=optim, metrics=None,
+        ...                        loss_scale_manager=loss_scale_manager,
+        ...                        boost_level="O1", boost_config_dict=boost_config_dict)
         >>> # Create the dataset taking MNIST as an example. Refer to
         >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
         >>> dataset = create_dataset()

@@ -615,7 +615,7 @@ mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自�
 
       from mindspore import ops
 
-      grad_all = ops.composite.GradOperation(get_all=True)
+      grad_all = ops.GradOperation(get_all=True)
       print(grad_all(forward)(x, w1, b1, w2, b2, w3, b3))
 
   运行结果如下：
@@ -637,10 +637,10 @@ mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自�
 
   .. code-block:: python
 
-      from mindspore import jit, set_context, GRAPH_MODE
+      from mindspore import jit, set_context, GRAPH_MODE, ops
 
       set_context(mode=GRAPH_MODE)
-      grad_all = ops.composite.GradOperation(get_all=True)
+      grad_all = ops.GradOperation(get_all=True)
       print(grad_all(jit(forward))(x, w1, b1, w2, b2, w3, b3))
 
   运行结果如下：
