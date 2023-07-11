@@ -2416,7 +2416,7 @@ def bool_func(*data):
         tensor_shape_len = len(tensor_shape)
         if tensor_shape_len == 0 or (tensor_shape_len == 1 and tensor_shape[0] == 1):
             return F.scalar_cast(data, mstype.bool_)
-        const_utils.raise_value_error("The truth value of an array with more than one element is ambiguous.")
+        raise ValueError("The truth value of an array with more than one element is ambiguous.")
     if not F.isconstant(data):
         if hasattr(data, "__bool__"):
             return data.__bool__()
@@ -2424,7 +2424,7 @@ def bool_func(*data):
             return len(data) != 0
         return F.scalar_cast(data, mstype.bool_)
     if isinstance(data, (CSRTensor, COOTensor, RowTensorInner)):
-        const_utils.raise_type_error("bool() does not support sparse tensor input.")
+        raise TypeError("bool() does not support sparse tensor input.")
     return cast_to_bool(data)
 
 
