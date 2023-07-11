@@ -1661,7 +1661,9 @@ ParameterMap NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_
         continue;
       }
       auto actual_param = actual_param_node->cast<ParameterPtr>();
-      (void)param_names.emplace_back(std::make_pair(actual_param->name(), actual_param));
+      if (!only_trainable_params || ParameterRequireGrad(actual_param)) {
+        (void)param_names.emplace_back(std::make_pair(actual_param->name(), actual_param));
+      }
     } else if (input->isa<CNode>()) {
       CNodePtr cnode = input->cast<CNodePtr>();
       if (!IsValueNode<Primitive>(cnode->input(0))) {
