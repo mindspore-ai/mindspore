@@ -33,11 +33,7 @@ uint32_t CastTask(std::vector<uintptr_t> &ioAddrs, size_t &input_size) {
     for (size_t i = 0; i < input_size; i++) {
       auto *input_addr = reinterpret_cast<T *>(ioAddrs[0]);
       auto *output_addr = reinterpret_cast<S *>(ioAddrs[1]);
-      if constexpr (std::is_same_v<S, bool>) {
-        output_addr[i] = (std::real(input_addr[i]) != 0.0) || (std::imag(input_addr[i]) != 0.0);
-      } else {
-        output_addr[i] = static_cast<S>(std::real(input_addr[i]));
-      }
+      output_addr[i] = static_cast<S>(std::real(input_addr[i]));
     }
     return kAicpuKernelStateSucess;
   } else {
