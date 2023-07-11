@@ -200,11 +200,11 @@ class SamplerFn:
 
         if multi_process and get_enable_shared_mem():
             _check_shm_usage(num_worker, queue_size, max_rowsize)
-        count = multiprocessing.Value('i', 0)
+        self.count = multiprocessing.Value('i', 0)
         for _ in range(num_worker):
             if multi_process is True:
                 try:
-                    worker = _GeneratorWorkerMp(dataset, self.eof, max_rowsize, queue_size, self.ppid, count)
+                    worker = _GeneratorWorkerMp(dataset, self.eof, max_rowsize, queue_size, self.ppid, self.count)
                 except Exception:
                     raise RuntimeError("Init multiprocessing.Queue() failed, This might be caused by insufficient shm, "
                                        "and the recommended shm size is at least 5 GB.")
@@ -352,10 +352,11 @@ class SamplerFn:
                     try:
                         # del the queue first
                         del w.res_queue
-                        w.join()
                     except Exception:  # pylint: disable=W0703
                         # Block all errors when join
                         continue
+            self.workers.clear()
+            self.workers = None
             self._abort_watchdog()
 
     def _abort_watchdog(self):
@@ -363,6 +364,9 @@ class SamplerFn:
             self.eot.set()
         if hasattr(self, 'cleaning_process') and self.cleaning_process is not None:
             _PythonMultiprocessing._terminate_processes([self.cleaning_process])  # pylint: disable=W0212
+            del self.cleaning_process
+        if hasattr(self, 'count'):
+            del self.count
 
     @classmethod
     def _finalize_join(cls, twr, eot):
@@ -421,6 +425,8 @@ def _generator_worker_loop(dataset, idx_queue, result_queue, eof, is_multiproces
             idx = idx_queue.get(timeout=1)
         except queue.Empty:
             if _main_process_already_exit(eof, is_multiprocessing, idx_queue, result_queue, ppid) is True:
+                del idx_queue
+                del result_queue
                 return
             # If end-of-file (eof) is not set, continue to get data from idx_queue
             continue
@@ -429,11 +435,12 @@ def _generator_worker_loop(dataset, idx_queue, result_queue, eof, is_multiproces
             # Upon receiving None, worker process should check if eof is set.
             if not eof.is_set():
                 raise Exception("")
+            del idx_queue
+            del result_queue
             return
         if eof.is_set():
-            if is_multiprocessing:
-                idx_queue.cancel_join_thread()
-                result_queue.cancel_join_thread()
+            del idx_queue
+            del result_queue
             return
         # Fetch data, any exception from __getitem__ will terminate worker and timeout master process
         try:
@@ -446,6 +453,8 @@ def _generator_worker_loop(dataset, idx_queue, result_queue, eof, is_multiproces
                 result_queue.put(result, timeout=5)
             except queue.Full:
                 if _main_process_already_exit(eof, is_multiprocessing, idx_queue, result_queue, ppid) is True:
+                    del idx_queue
+                    del result_queue
                     return
                 # If eof is not set, continue to put data to result_queue
                 continue

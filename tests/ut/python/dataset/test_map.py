@@ -15,8 +15,12 @@
 """
 Test Map op in Dataset
 """
+import os
 import random
+import subprocess
+import time
 import numpy as np
+import psutil
 import pytest
 
 import mindspore.dataset as ds
@@ -468,6 +472,47 @@ def test_map_multiprocessing_without_thread():
             break
 
 
+def test_map_multiprocessing_with_fixed_handle():
+    """
+    Feature: Map op
+    Description: map with multiprocessing and don't leak pipe handle which is used by queue
+    Expectation: success
+    """
+
+    dataset = ds.GeneratorDataset(FakeData(), ["input_ids", "input_mask"])
+    def long_running_op(col1, col2):
+        data1 = np.ones([3, 65, 65], dtype=np.float64)
+        data2 = np.ones([3, 60, 60], dtype=np.float64)
+        return data1, data2
+
+    dataset = dataset.map(operations=long_running_op, input_columns=["input_ids", "input_mask"],
+                          python_multiprocessing=True, num_parallel_workers=2, max_rowsize=10)
+    assert dataset.get_dataset_size() == 791
+
+    fds = 0
+    for i in range(5):
+        count = 0
+        for item in dataset.create_tuple_iterator(output_numpy=True, num_epochs=1):
+            print("count: {}, type: {}, shape: {}".format(count, item[0].dtype, item[0].shape))
+            assert item[0].dtype == np.float64
+            assert item[0].shape == (3, 65, 65)
+            assert len(item) == 2
+            count += 1
+        assert count == 791
+
+        # wait for the fds handle to be released automatic
+        time.sleep(1)
+
+        i += 1
+        if i == 1:
+            fds = psutil.Process(os.getpid()).num_fds()
+            lsof = subprocess.getoutput("lsof -p " + str(os.getpid()) + " | wc -l")
+        elif i > 1:
+            assert fds == psutil.Process(os.getpid()).num_fds()
+            new_lsof = subprocess.getoutput("lsof -p " + str(os.getpid()) + " | wc -l")
+            assert lsof == new_lsof
+
+
 if __name__ == '__main__':
     test_map_c_transform_exception()
     test_map_py_transform_exception()
@@ -480,3 +525,4 @@ if __name__ == '__main__':
     test_map_with_deprecated_parameter()
     test_map_just_exchange_columns()
     test_map_multiprocessing_without_thread()
+    test_map_multiprocessing_with_fixed_handle()
