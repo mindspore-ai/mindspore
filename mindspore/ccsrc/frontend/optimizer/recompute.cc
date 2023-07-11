@@ -102,9 +102,17 @@ void InsertRecomputedNodes(const FuncGraphPtr &graph) {
     std::vector<AnfNodePtr> first_target_inputs =
       GetFirstTargetInputs(origin_nodes_topological, max_recomputed_sub_graph, origin_recomputed_nodes, target_nodes);
     mindspore::HashMap<CNodePtr, CNodePtr> origin_to_recomputed_nodes;
+    mindspore::HashMap<CNodePtr, CNodePtr> origin_to_new_target_nodes;
     // Begin duplicate origin recomputed nodes with each target node.
     DuplicateRecomputedNodes(graph, target_nodes, origin_recomputed_nodes, first_target_inputs,
-                             &origin_to_recomputed_nodes);
+                             &origin_to_new_target_nodes, &origin_to_recomputed_nodes);
+    // Update the topological nodes.
+    for (size_t i = 0; i < origin_nodes_topological.size(); ++i) {
+      auto iter = origin_to_new_target_nodes.find(origin_nodes_topological[i]);
+      if (iter != origin_to_new_target_nodes.end()) {
+        origin_nodes_topological[i] = iter->second;
+      }
+    }
   }
   // Set need cse attr for doing cse after recompute.
   for (const auto &node : orders) {

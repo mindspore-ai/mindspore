@@ -77,6 +77,7 @@ COMMON_EXPORT std::vector<AnfNodePtr> GetFirstTargetInputs(const std::vector<CNo
 COMMON_EXPORT void DuplicateRecomputedNodes(const FuncGraphPtr &graph, const mindspore::HashSet<CNodePtr> &target_nodes,
                                             const mindspore::HashSet<CNodePtr> &origin_recomputed_nodes,
                                             const std::vector<AnfNodePtr> &first_target_inputs,
+                                            mindspore::HashMap<CNodePtr, CNodePtr> *origin_to_new_target_nodes,
                                             mindspore::HashMap<CNodePtr, CNodePtr> *origin_to_recomputed_nodes);
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_RECOMPUTE_HELPER_H

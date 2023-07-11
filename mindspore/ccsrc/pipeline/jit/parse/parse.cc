@@ -616,7 +616,9 @@ FunctionBlockPtr Parser::ParseDefFunction(const py::object &node, const Function
   auto function_name = py::cast<std::string>(python_adapter::GetPyObjAttr(node, "name"));
   MS_LOG(DEBUG) << "The function name is " << function_name;
   // Replace the construct function name with the cell name
+  bool is_construct_function = false;
   if (function_name == cell_construct) {
+    is_construct_function = true;
     auto find = scope->name().rfind(cell_scope_name_split_reserve);
     if (find != std::string::npos) {
       function_name = scope->name().substr(find + 1);
@@ -640,7 +642,7 @@ FunctionBlockPtr Parser::ParseDefFunction(const py::object &node, const Function
   }
   bool set_flag = UpdateFuncGraphFlags(ast_->function(), current_fg);
   if (!ast_->obj().is(ast_->function())) {
-    set_flag = set_flag && UpdateFuncGraphFlags(ast_->obj(), current_fg);
+    set_flag = set_flag && UpdateFuncGraphFlags(ast_->obj(), current_fg, is_construct_function);
   }
 
   if (!set_flag) {
@@ -3526,7 +3528,7 @@ void SetMixedPrecisionFlag(const py::object &obj, const FuncGraphPtr &func_graph
   }
 }
 
-bool UpdateFuncGraphFlags(const py::object &obj, const FuncGraphPtr &func_graph) {
+bool UpdateFuncGraphFlags(const py::object &obj, const FuncGraphPtr &func_graph, bool is_construct_function) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "FuncGraph is null";
     return false;
@@ -3548,6 +3550,9 @@ bool UpdateFuncGraphFlags(const py::object &obj, const FuncGraphPtr &func_graph)
     if (py::isinstance<py::bool_>(item.second)) {
       auto value = py::cast<bool>(item.second);
       MS_LOG(DEBUG) << "Flag name: " << name << ". Value: " << value;
+      if (!is_construct_function && name == FUNC_GRAPH_OUTPUT_NO_RECOMPUTE) {
+        continue;
+      }
       func_graph->set_flag(name, value);
     } else if (py::isinstance<py::str>(item.second)) {
       auto value = py::cast<std::string>(item.second);
