@@ -595,6 +595,15 @@ FuncGraphPtr DFunctor::KUserDefined(const FuncGraphPtr &primal) {
   return nullptr;
 }
 
+bool StopGradientForScalar(const CNodePtr &cnode) {
+  auto grad_for_scalar = MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR);
+  if (grad_for_scalar) {
+    return false;
+  }
+  auto abs = cnode->abstract();
+  return abs != nullptr && abs->isa<abstract::AbstractScalar>();
+}
+
 // Construct representation graph for {CNode, Index} of Primitive.
 AnfNodePtr DFunctor::MapPrimitiveToK(const CNodePtr &primitive_user, size_t index) {
   auto primal = primitive_user->input(index);
@@ -606,7 +615,8 @@ AnfNodePtr DFunctor::MapPrimitiveToK(const CNodePtr &primitive_user, size_t inde
   auto value_node = primal->cast<ValueNodePtr>();
   auto prim = GetValueNode<PrimitivePtr>(value_node);
   if ((prim->Hash() == prim::kPrimStopGradient->Hash() && prim->name() == prim::kPrimStopGradient->name()) ||
-      (prim->Hash() == prim::kPrimUpdateState->Hash() && prim->name() == prim::kPrimUpdateState->name())) {
+      (prim->Hash() == prim::kPrimUpdateState->Hash() && prim->name() == prim::kPrimUpdateState->name()) ||
+      StopGradientForScalar(primitive_user)) {
     MS_LOG(DEBUG) << "Should stop gradient for " << prim->ToString();
     need_cut_ = true;
   }
@@ -838,7 +848,7 @@ void DFunctor::BroadCastStopFlag() {
       if (cnode != nullptr && !cnode->stop_gradient()) {
         // Cut off the cnode only when it's not referred any more
         if (cnode->IsApply(prim::kPrimStopGradient) || cnode->IsApply(prim::kPrimUpdateState) ||
-            AllReferencesStopped(cnode)) {
+            AllReferencesStopped(cnode) || StopGradientForScalar(cnode)) {
           MS_LOG(DEBUG) << "Set stop gradient flag for " << cnode->ToString() << ".";
           cnode->set_stop_gradient(true);
           // The stop set changed, more cut required
