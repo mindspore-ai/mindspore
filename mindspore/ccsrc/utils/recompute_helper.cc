@@ -246,11 +246,42 @@ void GetNewFirstTargetInputs(const std::vector<AnfNodePtr> &recompute_input_bord
   }
 }
 
+bool HasTargetOrRecomputeInputs(const mindspore::HashSet<CNodePtr> &recomputed_origin_nodes,
+                                const mindspore::HashSet<CNodePtr> &target_nodes, const CNodePtr &node,
+                                mindspore::HashMap<AnfNodePtr, bool> *has_target_or_recompute_inputs_map) {
+  auto iter = has_target_or_recompute_inputs_map->find(node);
+  if (iter != has_target_or_recompute_inputs_map->end()) {
+    return iter->second;
+  }
+  if (recomputed_origin_nodes.find(node) != recomputed_origin_nodes.end()) {
+    (void)has_target_or_recompute_inputs_map->emplace(node, true);
+    return true;
+  }
+  if (target_nodes.find(node) != target_nodes.end()) {
+    (void)has_target_or_recompute_inputs_map->emplace(node, true);
+    return true;
+  }
+
+  if (IsBpropNode(node)) {
+    for (auto &input : node->inputs()) {
+      if (input->isa<CNode>() &&
+          HasTargetOrRecomputeInputs(recomputed_origin_nodes, target_nodes, input->cast<CNodePtr>(),
+                                     has_target_or_recompute_inputs_map)) {
+        (void)has_target_or_recompute_inputs_map->emplace(node, true);
+        return true;
+      }
+    }
+  }
+  (void)has_target_or_recompute_inputs_map->emplace(node, false);
+  return false;
+}
+
 std::vector<AnfNodePtr> GetFirstTargetInputs(const std::vector<CNodePtr> &origin_nodes_topological,
                                              const mindspore::HashSet<CNodePtr> &max_recomputed_sub_graph,
                                              const mindspore::HashSet<CNodePtr> &recomputed_origin_nodes,
                                              const mindspore::HashSet<CNodePtr> &target_nodes) {
   std::vector<AnfNodePtr> first_target_inputs;
+  mindspore::HashMap<AnfNodePtr, bool> has_grad_inputs_map;
   auto filt_func = [&](const AnfNodePtr &anode) {
     if (!anode->isa<CNode>() || !anode->cast<CNodePtr>()->HasPrimalAttr(kPrimalAttrForwardUniqueId)) {
       return true;
@@ -285,11 +316,7 @@ std::vector<AnfNodePtr> GetFirstTargetInputs(const std::vector<CNodePtr> &origin
         continue;
       }
       auto input_cnode = input->cast<CNodePtr>();
-      if (!IsBpropNode(input_cnode)) {
-        continue;
-      }
-      if (target_nodes.find(input_cnode) != target_nodes.end() ||
-          recomputed_origin_nodes.find(input_cnode) != recomputed_origin_nodes.end()) {
+      if (HasTargetOrRecomputeInputs(recomputed_origin_nodes, target_nodes, input_cnode, &has_grad_inputs_map)) {
         continue;
       }
 
@@ -536,6 +563,7 @@ CNodePtr NewRecomputedNode(const FuncGraphPtr &graph, const CNodePtr &origin_nod
 void DuplicateRecomputedNodes(const FuncGraphPtr &graph, const mindspore::HashSet<CNodePtr> &target_nodes,
                               const mindspore::HashSet<CNodePtr> &origin_recomputed_nodes,
                               const std::vector<AnfNodePtr> &first_target_inputs,
+                              mindspore::HashMap<CNodePtr, CNodePtr> *origin_to_new_target_nodes,
                               mindspore::HashMap<CNodePtr, CNodePtr> *origin_to_recomputed_nodes) {
   MS_EXCEPTION_IF_NULL(graph);
   auto mng = graph->manager();
@@ -543,10 +571,8 @@ void DuplicateRecomputedNodes(const FuncGraphPtr &graph, const mindspore::HashSe
   for (const auto &target_node : target_nodes) {
     MS_EXCEPTION_IF_NULL(target_node);
     MS_LOG(DEBUG) << "Rebuild a new target_node " << target_node->DebugString() << " with the new recomputed input";
-    auto target_cnode = target_node->cast_ptr<CNode>();
-    MS_EXCEPTION_IF_NULL(target_cnode);
     std::vector<AnfNodePtr> new_target_inputs;
-    for (const auto &input : target_cnode->inputs()) {
+    for (const auto &input : target_node->inputs()) {
       MS_EXCEPTION_IF_NULL(input);
       if (!input->isa<CNode>()) {
         (void)new_target_inputs.emplace_back(input);
@@ -565,6 +591,7 @@ void DuplicateRecomputedNodes(const FuncGraphPtr &graph, const mindspore::HashSe
     new_target_node->AddAttr("target_grad", MakeValue(true));
     new_target_node->set_scope(target_node->scope());
     (void)mng->Replace(target_node, new_target_node);
+    (void)origin_to_new_target_nodes->emplace(target_node, new_target_node);
   }
 }
 }  // namespace mindspore
