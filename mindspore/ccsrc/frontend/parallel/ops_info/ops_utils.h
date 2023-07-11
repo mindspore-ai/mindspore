@@ -295,6 +295,7 @@ constexpr char POOLED_HEIGHT[] = "pooled_height";
 constexpr char POOLED_WIDTH[] = "pooled_width";
 constexpr char SPATIAL_SCALE[] = "spatial_scale";
 constexpr char SAMPLE_NUM[] = "sample_num";
+constexpr char CONSTANT[] = "constant";
 constexpr char ROI_END_MODE[] = "roi_end_mode";
 constexpr char REDUCTION[] = "reduction";
 constexpr char MEAN[] = "mean";
@@ -576,6 +577,7 @@ constexpr char SPLITV[] = "SplitV";
 constexpr char GAMMA[] = "Gamma";
 constexpr char KLDIV_LOSS[] = "KLDivLoss";
 constexpr char LIN_SPACE[] = "LinSpace";
+constexpr char PAD_V3[] = "PadV3";
 constexpr char SORT[] = "SORT";
 constexpr char FILLV2[] = "FillV2";
 
