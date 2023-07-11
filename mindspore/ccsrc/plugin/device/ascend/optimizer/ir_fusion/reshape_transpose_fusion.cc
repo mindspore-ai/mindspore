@@ -32,7 +32,9 @@ bool CheckShapeDimInfo(const ShapeVector &shape) {
   if (shape.empty()) {
     return false;
   }
-  constexpr int64_t kMaxShapeSize = 2147483648;  // 2G
+  // when shape_size exceeds 335544320 trigger confusion_transpose_d error
+  // error shape [16, 1, 4096, 5120] ([moe_capacity_factor, bs, seq_length, hidden_size])
+  constexpr int64_t kMaxShapeSize = 335544320;
   size_t shape_size = SizeOf(shape);
   if (shape_size >= kMaxShapeSize) {
     MS_LOG(DEBUG) << "Shape total size is greater equal than 2G, skip fusion.";
