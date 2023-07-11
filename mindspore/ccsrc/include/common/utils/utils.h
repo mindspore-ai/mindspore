@@ -1233,6 +1233,11 @@ constexpr auto kAttrDtypes = "dtypes";
 constexpr auto kAttrValuesInt = "values_int";
 constexpr auto kAttrValuesFloat = "values_float";
 constexpr auto kAttrRecomputeSubGraph = "recompute_sub_graph";
+constexpr auto kAttrExpandDimsMask = "expand_dims_mask";
+constexpr auto kAttrTupleIndexTypes = "tuple_index_types";
+constexpr auto kAttrTupleIndexAxis = "tuple_index_axis";
+constexpr auto kAttrInitByNone = "init_by_none";
+constexpr auto kAttrExpandDimsCnt = "expand_dims_cnt";
 
 // FuncGraph Flags
 constexpr auto kFlagIsPynativeBpropGraph = "is_pynative_bprop_graph";
