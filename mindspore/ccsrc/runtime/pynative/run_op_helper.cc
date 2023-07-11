@@ -531,6 +531,7 @@ void ResizeNodeInput(const CNodePtr &kernel, const kernel::KernelArgs &args) {
   MS_EXCEPTION_IF_NULL(kernel);
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
+  kernel_mod->set_use_kernel_tensor(true);
   if (kernel_mod->Resize(args.inputs, args.outputs, args.depend_tensor_map) ==
       static_cast<int>(kernel::KRET_RESIZE_FAILED)) {
     MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Resize failed.";
