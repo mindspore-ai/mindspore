@@ -7,7 +7,9 @@ add_library(preprocess_mid OBJECT
         )
 add_dependencies(preprocess_mid fbs_src)
 add_dependencies(preprocess_mid fbs_inner_src)
+if(MSLITE_DEPS_OPENCV)
 target_link_libraries(preprocess_mid
         mindspore::opencv_core
         mindspore::opencv_imgcodecs
         mindspore::opencv_imgproc)
+endif()

@@ -18,7 +18,9 @@
 #include <string>
 #include <vector>
 #include <map>
+#ifdef MSLITE_DEPS_OPENCV
 #include <opencv2/opencv.hpp>
+#endif
 namespace mindspore {
 namespace lite {
 namespace preprocess {
@@ -27,12 +29,16 @@ enum ImageToFormat { RGB, GRAY, BGR, IMAGE_TO_FORMAT_MAX };
 
 struct ImagePreProcessParam {
   ImageToFormat image_to_format = IMAGE_TO_FORMAT_MAX;
+#ifdef MSLITE_DEPS_OPENCV
   cv::ColorConversionCodes image_to_format_code = cv::COLOR_COLORCVT_MAX;
+#endif
   std::vector<double> normalize_mean;
   std::vector<double> normalize_std;
   int resize_width = -1;
   int resize_height = -1;
+#ifdef MSLITE_DEPS_OPENCV
   cv::InterpolationFlags resize_method = cv::INTER_MAX;
+#endif
   int center_crop_width = -1;
   int center_crop_height = -1;
 };

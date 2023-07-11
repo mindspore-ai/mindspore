@@ -20,7 +20,9 @@
 #include <map>
 #include <vector>
 #include <algorithm>
+#ifdef MSLITE_DEPS_OPENCV
 #include "tools/converter/preprocess/opencv_utils.h"
+#endif
 #include "src/common/log_adapter.h"
 #include "mindspore/lite/tools/common/string_util.h"
 #include "include/errorcode.h"
@@ -81,11 +83,13 @@ int PreprocessParser::ParsePreprocess(const DataPreProcessString &data_pre_proce
       MS_LOG(ERROR) << "image preprocess parse failed.";
       return ret;
     }
+#ifdef MSLITE_DEPS_OPENCV
     if (data_pre_process->image_pre_process.image_to_format == preprocess::RGB ||
         data_pre_process->image_pre_process.image_to_format == preprocess::GRAY) {
       data_pre_process->image_pre_process.image_to_format_code =
         preprocess::ConvertColorConversionCodes(data_pre_process->image_pre_process.image_to_format);
     }
+#endif
   }
   if (!data_pre_process_str.calibrate_path.empty() && !data_pre_process_str.calibrate_size.empty()) {
     ret = ParseImagePreProcess(data_pre_process_str, &data_pre_process->image_pre_process);
@@ -256,6 +260,7 @@ int PreprocessParser::ParseImageResize(const DataPreProcessString &data_pre_proc
     }
   }
 
+#ifdef MSLITE_DEPS_OPENCV
   if (!data_pre_process_str.resize_method.empty()) {
     image_pre_process->resize_method = preprocess::ConvertResizeMethod(data_pre_process_str.resize_method);
     if (image_pre_process->resize_method == cv::INTER_MAX) {
@@ -263,6 +268,7 @@ int PreprocessParser::ParseImageResize(const DataPreProcessString &data_pre_proc
       return RET_INPUT_PARAM_INVALID;
     }
   }
+#endif
   return RET_OK;
 }
 

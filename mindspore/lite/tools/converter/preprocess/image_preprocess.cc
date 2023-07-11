@@ -22,6 +22,7 @@
 namespace mindspore {
 namespace lite {
 namespace preprocess {
+#ifdef MSLITE_DEPS_OPENCV
 int ReadImage(const std::string &image_path, cv::Mat *image) {
   if (image == nullptr) {
     MS_LOG(ERROR) << "image is nullptr.";
@@ -168,44 +169,6 @@ int PreProcess(const preprocess::DataPreProcessParam &data_pre_process_param, co
   return RET_OK;
 }
 
-int PreProcess(const DataPreProcessParam &data_pre_process_param, const std::string &input_name, size_t image_index,
-               void **data, size_t *size) {
-  if (data == nullptr || size == nullptr) {
-    MS_LOG(ERROR) << "data or size is nullptr.";
-    return RET_NULL_PTR;
-  }
-
-  if (data_pre_process_param.calibrate_path_vector.find(input_name) ==
-      data_pre_process_param.calibrate_path_vector.end()) {
-    MS_LOG(ERROR) << "Cant find input:" << input_name;
-    return RET_INPUT_PARAM_INVALID;
-  }
-  auto data_path = data_pre_process_param.calibrate_path_vector.at(input_name).at(image_index);
-  if (data_pre_process_param.input_type == IMAGE) {
-    cv::Mat mat;
-    auto ret = ReadImage(data_path, &mat);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Read image failed.";
-      return ret;
-    }
-    ret = ImagePreProcess(data_pre_process_param.image_pre_process, &mat, data, size);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Image Preprocess failed.";
-      return ret;
-    }
-  } else if (data_pre_process_param.input_type == BIN) {
-    *data = ReadFile(data_path.c_str(), size);
-    if (*data == nullptr || *size == 0) {
-      MS_LOG(ERROR) << "ReadFile return nullptr";
-      return RET_NULL_PTR;
-    }
-  } else {
-    MS_LOG(ERROR) << "INPUT ILLEGAL: input_type must be IMAGE|BIN.";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
 int ImagePreProcess(const ImagePreProcessParam &image_preprocess_param, cv::Mat *image, void **data, size_t *size) {
   if (image == nullptr || data == nullptr || size == nullptr) {
     MS_LOG(ERROR) << "data or size is nullptr.";
@@ -249,6 +212,49 @@ int ImagePreProcess(const ImagePreProcessParam &image_preprocess_param, cv::Mat 
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Get mat data failed.";
     return ret;
+  }
+  return RET_OK;
+}
+#endif
+
+int PreProcess(const DataPreProcessParam &data_pre_process_param, const std::string &input_name, size_t image_index,
+               void **data, size_t *size) {
+  if (data == nullptr || size == nullptr) {
+    MS_LOG(ERROR) << "data or size is nullptr.";
+    return RET_NULL_PTR;
+  }
+
+  if (data_pre_process_param.calibrate_path_vector.find(input_name) ==
+      data_pre_process_param.calibrate_path_vector.end()) {
+    MS_LOG(ERROR) << "Cant find input:" << input_name;
+    return RET_INPUT_PARAM_INVALID;
+  }
+  auto data_path = data_pre_process_param.calibrate_path_vector.at(input_name).at(image_index);
+#ifndef MSLITE_DEPS_OPENCV
+  if (data_pre_process_param.input_type == BIN) {
+#else
+  if (data_pre_process_param.input_type == IMAGE) {
+    cv::Mat mat;
+    auto ret = ReadImage(data_path, &mat);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Read image failed.";
+      return ret;
+    }
+    ret = ImagePreProcess(data_pre_process_param.image_pre_process, &mat, data, size);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Image Preprocess failed.";
+      return ret;
+    }
+  } else if (data_pre_process_param.input_type == BIN) {
+#endif
+    *data = ReadFile(data_path.c_str(), size);
+    if (*data == nullptr || *size == 0) {
+      MS_LOG(ERROR) << "ReadFile return nullptr";
+      return RET_NULL_PTR;
+    }
+  } else {
+    MS_LOG(ERROR) << "INPUT ILLEGAL: input_type must be IMAGE|BIN.";
+    return RET_ERROR;
   }
   return RET_OK;
 }
