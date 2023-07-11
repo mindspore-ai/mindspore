@@ -36,7 +36,7 @@ class AkgKernel : public LiteKernel {
     params_ = static_cast<void *>(reinterpret_cast<CustomParameter *>(op_parameter_)->attr_data[0]);
     ExtractKernelAttr();
   }
-
+  virtual ~AkgKernel();
   int Prepare() override;
   int Run() override;
   int ReSize() override;
@@ -60,6 +60,7 @@ class AkgKernel : public LiteKernel {
   void *cached_runtimeargs_ = nullptr;
   std::vector<size_t> dynamic_input_index_;
   std::vector<std::vector<int>> origin_inputs_shape_;
+  void *lib_handle_ = nullptr;
   AkgLibraryLoader object_loader;
   std::string process;
   std::string arch;

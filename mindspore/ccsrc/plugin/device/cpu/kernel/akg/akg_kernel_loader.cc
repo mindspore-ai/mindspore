@@ -75,7 +75,7 @@ void *AkgLibraryLoader::LookupFunction(const std::string &name) const {
   return nullptr;
 }
 
-std::vector<uint64_t> AkgLibraryLoader::ParseSection(std::string section_name, bool is_mandatory) {
+std::vector<uint64_t> AkgLibraryLoader::ParseSection(std::string section_name, bool is_mandatory) const {
   const Elf64_Shdr *section_hdr = LookupSection(section_name);
   uint64_t section_size = 0;
   uint64_t section_offset = 0;
@@ -112,7 +112,7 @@ bool AkgLibraryLoader::ParseObj(void) {
     return false;
   }
   strtab_ = static_cast<const char *>(static_cast<const void *>(obj_.base + strtab_hdr->sh_offset));
-  page_size_ = sysconf(_SC_PAGESIZE);
+  page_size_ = static_cast<size_t>(sysconf(static_cast<int>(_SC_PAGESIZE)));
   /* find the .text entry in the section table */
   auto text_vec = ParseSection(".text", true);
   if (text_vec.empty()) {
@@ -180,7 +180,8 @@ bool AkgLibraryLoader::ParseObj(void) {
     return false;
   }
   /* make the .rodata.xxx copy readonly */
-  if (mprotect(rodata_runtime_base, current_rodata_runtime_base - rodata_runtime_base, PROT_READ) != 0) {
+  if (mprotect(rodata_runtime_base, static_cast<size_t>(current_rodata_runtime_base - rodata_runtime_base),
+               PROT_READ) != 0) {
     MS_LOG(ERROR) << "Failed to make .rodata readonly";
     return false;
   }
@@ -301,7 +302,7 @@ void *AkgLibraryLoader::RelocateExtSymbols(size_t symbol_idx, size_t jump_table_
   MS_LOG(ERROR) << "Akg kernel loader only support aarch64 and x86_64.";
   return nullptr;
 #endif
-  return static_cast<void *>(&jumptable_[jump_table_idx].instr);
+  return static_cast<void *>(&(jumptable_[jump_table_idx].instr));
 }
 
 bool AkgLibraryLoader::DoTextRelocations() {
@@ -310,12 +311,12 @@ bool AkgLibraryLoader::DoTextRelocations() {
     /* no need to do relocation. */
     return true;
   }
-  int num_relocations = rela_text_hdr->sh_size / rela_text_hdr->sh_entsize;
+  size_t num_relocations = rela_text_hdr->sh_size / rela_text_hdr->sh_entsize;
   const Elf64_Rela *relocations =
     static_cast<const Elf64_Rela *>(static_cast<const void *>(obj_.base + rela_text_hdr->sh_offset));
   size_t got_table_offset = 0;
   size_t jump_table_idx = 0;
-  for (int i = 0; i < num_relocations; i++) {
+  for (size_t i = 0; i < num_relocations; i++) {
     auto symbol_idx = ELF64_R_SYM(relocations[i].r_info);
     auto type = ELF64_R_TYPE(relocations[i].r_info);
     /* where to patch .text */
@@ -354,24 +355,26 @@ bool AkgLibraryLoader::DoTextRelocations() {
         /* high 18 bits in distance */
         auto immhi = (distance >> ((1 << 2) - 1)) & ((1 << 17) - 1);
         /* patch the adrp instruction */
-        *(static_cast<uint32_t *>(patch_offset)) |= ((immhi << immhi_shift) | (immlo << immlo_shift));
+        *(static_cast<uint32_t *>(patch_offset)) |=
+          (static_cast<uint32_t>(immhi << immhi_shift) | static_cast<uint32_t>(immlo << immlo_shift));
         *(static_cast<uint64_t *>(static_cast<void *>(got_table_ + got_table_offset))) =
           reinterpret_cast<uint64_t>(symbol_address);
         break;
       }
       case R_AARCH64_LD64_GOT_LO12_NC: {
         /* Patch the ldr instruction */
-        constexpr const uint64_t page_offset_shift = 10;
-        auto page_offset = reinterpret_cast<int64_t>(got_table_ + got_table_offset) & (page_size_ - 1);
-        *(static_cast<uint32_t *>(patch_offset)) |= (page_offset << page_offset_shift);
+        constexpr const uint32_t page_offset_shift = 10;
+        auto page_offset = reinterpret_cast<uint64_t>(got_table_ + got_table_offset) & (page_size_ - 1);
+        *(static_cast<uint32_t *>(patch_offset)) |= static_cast<uint32_t>(page_offset << page_offset_shift);
         got_table_offset += got_table_item_size;
         break;
       }
       case R_AARCH64_CALL26: {
         /* This can jump to +/-128MB. We are able to this because jumptable is close to .text */
-        constexpr const int aarch64_call_addr_shift = 2;
+        constexpr const uint32_t aarch64_call_addr_shift = 2;
         *(static_cast<uint32_t *>(patch_offset)) ^=
-          ((static_cast<uint8_t *>(symbol_address) + relocations[i].r_addend - static_cast<uint8_t *>(patch_offset)) >>
+          (static_cast<uint32_t>((static_cast<uint8_t *>(symbol_address) + relocations[i].r_addend -
+                                  static_cast<uint8_t *>(patch_offset))) >>
            aarch64_call_addr_shift);
         break;
       }
@@ -389,8 +392,8 @@ bool AkgLibraryLoader::DoTextRelocations() {
         /*  For .rodata.xxx symbols */
       case R_X86_64_PLT32: {
         /*  Change 'call 0000' into 'call &jumptable' for external symbols */
-        *(static_cast<uint32_t *>(patch_offset)) =
-          static_cast<uint8_t *>(symbol_address) + relocations[i].r_addend - static_cast<uint8_t *>(patch_offset);
+        *(static_cast<uint32_t *>(patch_offset)) = static_cast<uint32_t>(
+          static_cast<uint8_t *>(symbol_address) + relocations[i].r_addend - static_cast<uint8_t *>(patch_offset));
         break;
       }
       default: {
