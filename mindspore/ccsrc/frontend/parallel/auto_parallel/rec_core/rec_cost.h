@@ -25,6 +25,7 @@
 
 #include "frontend/parallel/auto_parallel/rec_core/rec_graph.h"
 #include "frontend/parallel/auto_parallel/rec_core/rec_strategy.h"
+#include "frontend/parallel/costmodel_context.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
@@ -33,7 +34,6 @@ namespace parallel {
 #define DOUBLE_LOWEST (std::numeric_limits<double>::lowest)()
 #define DOUBLE_MIN (std::numeric_limits<double>::min)()
 
-constexpr double MATMUL_MEM_COEF = 0.25;
 constexpr size_t REDIS_COEF = 16;
 
 double CostRedis(const Graph::NodeType &node,
@@ -56,7 +56,8 @@ class CostMatMul {
  private:
   double StrConcatDimI(int64_t a, int64_t b) {
     cost_in_i_ = (static_cast<double>(a) * static_cast<double>(b)) / 2.0;
-    cost_in_i_ = cost_in_i_ * MATMUL_MEM_COEF;
+    const auto matmul_mem_coef = CostModelContext::GetInstance()->rp_matmul_mem_coef();
+    cost_in_i_ = cost_in_i_ * matmul_mem_coef;
 
     return cost_in_i_;
   }

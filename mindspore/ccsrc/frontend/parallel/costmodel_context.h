@@ -44,6 +44,7 @@ constexpr size_t DEFAULT_TENSOR_SLICE_ALIGNMENT_SIZE = 16;
 #define DEFAULT_TRIANGLE_STAR_STRATEGY_OVERWRITE true;
 #define DEFAULT_DP_ALGO_ENABLE_APPROX false
 constexpr float DEFAULT_DP_ALGO_APPROX_EPSILON = 0.1;
+constexpr float DEFAULT_RP_MATMUL_MEM_COEF = 0.25;
 #define DEFAULT_DP_ALGO_SINGLE_LOOP false
 constexpr int64_t TRAINING_PHASE = 0;
 
@@ -146,6 +147,9 @@ class CostModelContext {
   void set_dp_algo_approxi_epsilon(double epsilon);
   double dp_algo_approxi_epsilon() const { return dp_algo_approxi_epsilon_; }
 
+  void set_rp_matmul_mem_coef(double coef);
+  double rp_matmul_mem_coef() const { return rp_matmul_mem_coef_; }
+
   void set_dp_algo_enable_approxi(bool approxi);
   bool dp_algo_enable_approxi() const { return dp_algo_enable_approxi_; }
 
@@ -192,6 +196,9 @@ class CostModelContext {
 
   // When APPROXIMATION is enabled in the DP algorithm, the 'epsilon' value used in the APPROXIMATION.
   double dp_algo_approxi_epsilon_;
+
+  // In RP algorithm, the coef value can adjust the balance between data parallel and model parallel.
+  double rp_matmul_mem_coef_;
 
   // Whether to generate a single suite of OperatorInfo for a loop.
   bool dp_algo_single_loop_;
