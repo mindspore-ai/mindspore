@@ -150,8 +150,8 @@ std::vector<TaskInfoPtr> TensorCopySlices::GenTask(const std::vector<AddressPtr>
 
   stream_id_ = stream_id;
   std::shared_ptr<MemcpyAsyncTaskInfo> task_info_ptr1 =
-    std::make_shared<MemcpyAsyncTaskInfo>(unique_name_, stream_id, outputs[0]->addr, outputs[0]->size, inputs[0]->addr,
-                                          inputs[0]->size, ACL_MEMCPY_DEVICE_TO_DEVICE, NeedDump());
+    std::make_shared<MemcpyAsyncTaskInfo>(unique_name_ + "_1", stream_id, outputs[0]->addr, outputs[0]->size,
+                                          inputs[0]->addr, inputs[0]->size, ACL_MEMCPY_DEVICE_TO_DEVICE, NeedDump());
   std::shared_ptr<MemcpyAsyncTaskInfo> task_info_ptr2 = std::make_shared<MemcpyAsyncTaskInfo>(
     unique_name_, stream_id, VoidPointerOffset(outputs[0]->addr, offset_), copy_size_, inputs[1]->addr, copy_size_,
     ACL_MEMCPY_DEVICE_TO_DEVICE, NeedDump());

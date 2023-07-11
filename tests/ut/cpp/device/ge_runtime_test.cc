@@ -452,13 +452,13 @@ TEST_F(TestAscendGeRuntime, test_model_runner_success) {
                              {reinterpret_cast<rtLabel_t>(1), reinterpret_cast<rtLabel_t>(1)},
                              {reinterpret_cast<rtEvent_t>(1)});
   std::shared_ptr<TaskInfo> tbe_task_info = std::make_shared<TbeTaskInfo>(
-    "op_name", 0, "stub_func", 1, std::vector<uint8_t>(100, 2), 100, std::vector<uint8_t>{5, 6},
+    "tbe", 0, "stub_func", 1, std::vector<uint8_t>(100, 2), 100, std::vector<uint8_t>{5, 6},
     reinterpret_cast<void *>(7), 8, std::vector<uint8_t>{9, 10},
     std::vector<void *>{reinterpret_cast<void *>(11), reinterpret_cast<void *>(12)},
     std::vector<void *>{reinterpret_cast<void *>(13), reinterpret_cast<void *>(14)},
     std::vector<void *>{reinterpret_cast<void *>(15), reinterpret_cast<void *>(16)}, true);
   std::shared_ptr<TaskInfo> aicpu_task_info = std::make_shared<AicpuTaskInfo>(
-    "op_name", 0, "so_name", "kernel_name", "node_def", "", std::vector<void *>{reinterpret_cast<void *>(1)},
+    "aicpu", 0, "so_name", "kernel_name", "node_def", "", std::vector<void *>{reinterpret_cast<void *>(1)},
     std::vector<void *>{reinterpret_cast<void *>(1)}, true);
   auto davice_model = std::make_shared<DavinciModel>(
     std::vector<std::shared_ptr<TaskInfo>>{tbe_task_info, aicpu_task_info}, std::vector<uint32_t>{},
