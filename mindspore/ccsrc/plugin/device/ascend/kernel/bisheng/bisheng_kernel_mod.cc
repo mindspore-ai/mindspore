@@ -175,24 +175,11 @@ std::vector<TaskInfoPtr> BiShengKernelMod::GenTask(const std::vector<AddressPtr>
   std::vector<void *> output_data_addrs;
   std::vector<void *> workspace_addrs;
 
-  // pack all addresses into a vector.
-  (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(input_data_addrs),
-                       [](const AddressPtr &input) -> void * {
-                         MS_EXCEPTION_IF_NULL(input);
-                         return input->addr;
-                       });
-  (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(output_data_addrs),
-                       [](const AddressPtr &output) -> void * {
-                         MS_EXCEPTION_IF_NULL(output);
-                         return output->addr;
-                       });
-  if (!workspaces.empty()) {
-    (void)std::transform(std::begin(workspaces), std::end(workspaces), std::back_inserter(workspace_addrs),
-                         [](const AddressPtr &workspace) -> void * {
-                           MS_EXCEPTION_IF_NULL(workspace);
-                           return workspace->addr;
-                         });
-  }
+  // get raw addresses
+  GetRawAddress(inputs, &input_data_addrs);
+  GetRawAddress(outputs, &output_data_addrs);
+  GetRawAddress(workspaces, &workspace_addrs);
+
   DoTiling(&workspace_addrs);
 
   stream_id_ = stream_id;

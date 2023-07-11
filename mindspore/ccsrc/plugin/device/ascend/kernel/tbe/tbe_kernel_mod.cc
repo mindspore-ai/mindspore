@@ -71,23 +71,9 @@ bool TbeKernelMod::Launch(const std::vector<mindspore::kernel::AddressPtr> &inpu
 
   // pack all addresses into a vector.
   std::vector<void *> runtimeargs;
-  (void)std::transform(std::begin(real_inputs), std::end(real_inputs), std::back_inserter(runtimeargs),
-                       [](const AddressPtr &input) -> void * {
-                         MS_EXCEPTION_IF_NULL(input);
-                         return input->addr;
-                       });
-  (void)std::transform(std::begin(real_outputs), std::end(real_outputs), std::back_inserter(runtimeargs),
-                       [](const AddressPtr &output) -> void * {
-                         MS_EXCEPTION_IF_NULL(output);
-                         return output->addr;
-                       });
-  if (!workspace.empty()) {
-    (void)std::transform(std::begin(workspace), std::end(workspace), std::back_inserter(runtimeargs),
-                         [](const AddressPtr &addr) -> void * {
-                           MS_EXCEPTION_IF_NULL(addr);
-                           return addr->addr;
-                         });
-  }
+  GetRawAddress(real_inputs, &runtimeargs);
+  GetRawAddress(real_outputs, &runtimeargs);
+  GetRawAddress(workspace, &runtimeargs);
 
   AddressPtr overflow_address_ptr = GetOverflowAddress();
   if (overflow_address_ptr != nullptr) {
@@ -100,6 +86,7 @@ bool TbeKernelMod::Launch(const std::vector<mindspore::kernel::AddressPtr> &inpu
   const void *stubFunc = reinterpret_cast<void *>(func_stub);
   auto argsSize = static_cast<uint32_t>(UlongToUint(sizeof(void *)) * runtimeargs.size());
   auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
+  (void)lock;  // just make cpp-check quiet, this statement will be optimized by compiler
   auto ret = rtKernelLaunch(stubFunc, blockdim, runtimeargs.data(), argsSize, l2ctrl, stream_ptr);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Call runtime rtKernelLaunch error.";
