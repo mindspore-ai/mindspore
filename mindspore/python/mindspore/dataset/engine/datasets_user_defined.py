@@ -135,7 +135,7 @@ def _convert_row(row):
     # convert single item to np.array
     prim_type = (int, float, str, bytes, np.ndarray, Tensor)
     if isinstance(row, prim_type):
-        if isinstance(row, Tensor):      # mindspore.Tensor
+        if isinstance(row, Tensor):  # mindspore.Tensor
             item = row.asnumpy()
         else:
             item = np.array(row, copy=False)
@@ -152,7 +152,7 @@ def _convert_row(row):
     idx = 0
     for x in row:
         idx += 1
-        if isinstance(x, Tensor):      # mindspore.Tensor
+        if isinstance(x, Tensor):  # mindspore.Tensor
             value.append(x.asnumpy())
         elif isinstance(x, dict):
             value.append(x)
@@ -261,21 +261,7 @@ class SamplerFn:
                     cost_time = int(time.time()) - start_time
                     if cost_time / self.check_interval >= wait_count:
                         wait_count += 1
-                        logger.warning("It has been waiting for " + str(cost_time) + "s because the multi "
-                                       "thread/process of the generator generates data had been hung by gil lock. "
-                                       "Check whether the source of generator has an infinite loop operation or the "
-                                       "output data is too large. You can also set the timeout interval by "
-                                       "ds.config.set_multiprocessing_timeout_interval to adjust the output "
-                                       "frequency of this log.")
-                        pid = self.workers[i % self.num_worker].pid
-                        logger.warning("Generator subprocess ID {} is stuck.".format(pid))
-                        install_status, _ = subprocess.getstatusoutput("py-spy --version")
-                        if install_status == 0:
-                            stack = subprocess.getoutput("py-spy dump -p {} -l".format(pid))
-                            logger.warning("Generator subprocess stack:\n{}".format(stack))
-                        else:
-                            logger.warning("Please `pip install py-spy` to get the stacks of the stuck process.")
-
+                        self._log_stuck_warning(self.workers[i % self.num_worker], cost_time)
                 result = self.workers[i % self.num_worker].get()
                 if isinstance(result, ExceptionHandler):
                     result.reraise()
@@ -291,6 +277,42 @@ class SamplerFn:
             if idx_cursor < len(indices):
                 idx_cursor = _fill_worker_indices(self.workers, indices, idx_cursor)
             yield _convert_row(result)
+
+    def _log_stuck_warning(self, worker, waiting_time):
+        """
+        Log warning of the stuck worker, containing the worker ID, waiting time and
+        the current stack (if py-spy installed).
+
+        Args:
+            worker (Union[threading.Thread, multiprocessing.Process]): The worker instance.
+            waiting_time (int): The waiting time for getting data from the worker.
+        """
+        if self.multi_process:
+            stuck_worker_id = worker.pid
+            worker_type = "process"
+            stuck_pid = stuck_worker_id
+        else:
+            if hasattr(worker, "native_id"):
+                # only supported since Python 3.8
+                stuck_worker_id = worker.native_id
+            else:
+                stuck_worker_id = worker.ident
+            worker_type = "thread"
+            stuck_pid = os.getpid()  # get the process ID of the stuck thread
+        warning_message = "Has been waiting for data from Generator worker {0} ID '{1}' " \
+                          "for more than {2} seconds. Please check if the user defined " \
+                          "dataset of GeneratorDataset has a dead loop, or is processing " \
+                          "too slowly. ".format(worker_type, stuck_worker_id, waiting_time)
+        install_status, _ = subprocess.getstatusoutput("py-spy --version")
+        if install_status == 0:
+            stack = subprocess.getoutput("py-spy dump -p {}".format(stuck_pid))
+            warning_message += "Below is the stack of this worker:\n{0}\n".format(stack)
+        else:
+            warning_message += "You can install py-spy via `pip install py-spy`, then " \
+                               "stop and rerun your script to get the current stack. "
+        warning_message += "If it is not a problem, you can adjust the printing frequency of this log via " \
+                           "the `mindspore.dataset.config.set_multiprocessing_timeout_interval` interface."
+        logger.warning(warning_message)
 
     def _launch_cleanup_worker(self, multi_process):
         """
@@ -439,7 +461,8 @@ class _GeneratorWorkerMt(threading.Thread):
     def __init__(self, dataset, eof):
         self.idx_queue = queue.Queue(16)
         self.res_queue = queue.Queue(16)
-        super().__init__(target=_generator_worker_loop, args=(dataset, self.idx_queue, self.res_queue, eof, False))
+        super().__init__(target=_generator_worker_loop, args=(dataset, self.idx_queue, self.res_queue, eof, False),
+                         name="GeneratorWorkerThread")
 
     def put(self, item):
         """
@@ -476,7 +499,8 @@ class _GeneratorWorkerMp(multiprocessing.Process):
             self.res_queue = multiprocessing.Queue(queue_size)
         self.idx_queue._joincancelled = True  # pylint: disable=W0212
         self.res_queue._joincancelled = True  # pylint: disable=W0212
-        super().__init__(target=_generator_worker_loop, args=(dataset, self.idx_queue, self.res_queue, eof, True, ppid))
+        super().__init__(target=_generator_worker_loop, args=(dataset, self.idx_queue, self.res_queue, eof, True, ppid),
+                         name="GeneratorWorkerProcess")
 
     def put(self, item):
         """
