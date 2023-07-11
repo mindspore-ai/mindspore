@@ -47,8 +47,8 @@ class History(Callback):
         >>> model = Model(network=net, optimizer=opt, loss_fn=crit, metrics={"recall"})
         >>> model.train(2, train_dataset, callbacks=[history_cb])
         >>> print(history_cb.epoch)
-        >>> print(history_cb.history)
         {'epoch': [1, 2]}
+        >>> print(history_cb.history)
         {'net_output': [1.607877, 1.6033841]}
     """
     def __init__(self):
