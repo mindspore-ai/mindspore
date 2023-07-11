@@ -134,6 +134,9 @@ int QuantParamParser::ParseCommonQuant(const CommonQuantString &common_quant_str
   if (!common_quant->debug_info_save_path.empty()) {
     common_quant->is_debug = true;
   }
+
+  // this is required only for model larger than 2G
+  common_quant->workspace = common_quant_string.workspace;
   return RET_OK;
 }
 
@@ -170,9 +173,6 @@ int QuantParamParser::ParseMixedBitWeightQuant(const MixedBitWeightQuantString &
     MS_LOG(ERROR) << "INPUT ILLEGAL: auto_tune should be true or false.";
     return RET_INPUT_PARAM_INVALID;
   }
-
-  // this is required only for model larger than 2G
-  mixed_bit_weight_quant->workspace = mixed_bit_weight_quant_string.workspace;
   return RET_OK;
 }
 
@@ -327,6 +327,20 @@ int QuantParamParser::ParseAscendQuant(const AscendQuantString &ascend_quant_str
       return RET_OK;
     } else {
       MS_LOG(ERROR) << "INPUT ILLEGAL: AscendQuantMode must be ACL|GE.";
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
+  if (!ascend_quant_string.ascend_backend.empty()) {
+    if (ascend_quant_string.ascend_backend == "ASCEND310") {
+      ascend_quant->ascend_backend = quant::ASCEND310;
+    } else if (ascend_quant_string.ascend_backend == "ASCEND710") {
+      ascend_quant->ascend_backend = quant::ASCEND710;
+    } else if (ascend_quant_string.ascend_backend == "ASCEND910A") {
+      ascend_quant->ascend_backend = quant::ASCEND910A;
+    } else if (ascend_quant_string.ascend_backend == "ASCEND910B") {
+      ascend_quant->ascend_backend = quant::ASCEND910B;
+    } else {
+      MS_LOG(ERROR) << "INPUT ILLEGAL: AscendBackend must be ASCEND310|ASCEND710|ASCEND910A|ASCEND910B.";
       return RET_INPUT_PARAM_INVALID;
     }
   }

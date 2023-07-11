@@ -425,6 +425,7 @@ int ConfigFileParser::ParseCommonQuantString(const std::map<std::string, std::ma
       {"skip_quant_node", common_quant_string_.skip_quant_node},
       {"debug_info_save_path", common_quant_string_.debug_info_save_path},
       {"enable_encode", common_quant_string_.enable_encode},
+      {"workspace", common_quant_string_.workspace},
     };
     return SetMapData(map, parse_map, kCommonQuantParam);
   }
@@ -435,9 +436,10 @@ int ConfigFileParser::ParseMixedBitQuantString(const std::map<std::string, std::
   if (maps.find(kMixedBitWeightQuantParam) != maps.end()) {
     const auto &map = maps.at(kMixedBitWeightQuantParam);
     std::map<std::string, std::string &> parse_map{
-      {"init_scale", mixed_bit_quant_string_.init_scale},   {"auto_tune", mixed_bit_quant_string_.auto_tune},
-      {"use_cv_data", mixed_bit_quant_string_.use_cv_data}, {"max_iterations", mixed_bit_quant_string_.max_iterations},
-      {"workspace", mixed_bit_quant_string_.workspace},
+      {"init_scale", mixed_bit_quant_string_.init_scale},
+      {"auto_tune", mixed_bit_quant_string_.auto_tune},
+      {"use_cv_data", mixed_bit_quant_string_.use_cv_data},
+      {"max_iterations", mixed_bit_quant_string_.max_iterations},
     };
     return SetMapData(map, parse_map, kMixedBitWeightQuantParam);
   }
@@ -573,6 +575,7 @@ int ConfigFileParser::ParseAscendQuantString(const std::map<std::string, std::ma
     const auto &map = maps.at(kAscendQuantParam);
     std::map<std::string, std::string &> parse_map{
       {"mode", ascend_quant_string_.mode},
+      {"ascend_backend", ascend_quant_string_.ascend_backend},
     };
     return SetMapData(map, parse_map, kAscendQuantParam);
   }
