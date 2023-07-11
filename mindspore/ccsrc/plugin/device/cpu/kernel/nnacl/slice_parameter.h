@@ -28,19 +28,8 @@ typedef struct SliceQuantArg {
 } SliceQuantArg;
 
 typedef struct SliceParameter {
-  // primitive parameter
   OpParameter op_parameter_;
-
-  // shape correlative
-  int32_t shape_[DIMENSION_8D];
-  int32_t begin_[DIMENSION_8D];
-  int32_t end_[DIMENSION_8D];
-  int32_t size_[DIMENSION_8D];
   int32_t axis_[DIMENSION_8D];
-
-  // other parameter
-  SliceQuantArg quant_arg_;
-  int32_t param_length_;
 } SliceParameter;
 
 #endif  // NNACL_SLICE_PARAMETER_H_

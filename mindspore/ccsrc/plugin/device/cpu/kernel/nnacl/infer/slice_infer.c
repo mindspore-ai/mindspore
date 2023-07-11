@@ -33,31 +33,31 @@ static bool CheckInputsDataType(const TensorC *const *inputs, size_t inputs_size
   return true;
 }
 
-int InitBeginAndSizeParam(const TensorC *const *inputs, SliceParameter *param) {
+int InitBeginAndSizeParam(const TensorC *const *inputs, int *begin, int *size, int param_length) {
   /* init begin parameter */
   int slice_begin_size = GetElementNum(inputs[1]);
   int *begin_ptr = (int *)(inputs[1]->data_);
-  if (slice_begin_size != param->param_length_ || begin_ptr == NULL) {
+  if (slice_begin_size != param_length || begin_ptr == NULL) {
     return NNACL_INFER_INVALID;
   }
   if (slice_begin_size > MAX_AXIS_SIZE) {
     return NNACL_ERR;
   }
   for (int i = 0; i < slice_begin_size; i++) {
-    param->begin_[i] = begin_ptr[i];
+    begin[i] = begin_ptr[i];
   }
 
   /* init size parameter */
   int slice_size_size = GetElementNum(inputs[2]);
   int *size_ptr = (int *)(inputs[2]->data_);
-  if (slice_size_size != param->param_length_ || size_ptr == NULL) {
+  if (slice_size_size != param_length || size_ptr == NULL) {
     return NNACL_INFER_INVALID;
   }
   if (slice_size_size > MAX_AXIS_SIZE) {
     return NNACL_ERR;
   }
   for (int i = 0; i < slice_size_size; i++) {
-    param->size_[i] = size_ptr[i];
+    size[i] = size_ptr[i];
   }
   return NNACL_OK;
 }
@@ -84,28 +84,27 @@ int SliceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
     return NNACL_INPUT_TENSOR_ERROR;
   }
   SliceParameter *param = (SliceParameter *)parameter;
-  param->param_length_ = (int)(input->shape_size_);
+  int param_length = (int)(input->shape_size_);
   output->shape_size_ = input->shape_size_;
+  int begin[MAX_SHAPE_SIZE];
+  int size[MAX_SHAPE_SIZE];
 
-  ret = InitBeginAndSizeParam(inputs, param);
+  ret = InitBeginAndSizeParam(inputs, begin, size, param_length);
   if (ret != NNACL_OK) {
     return ret;
   }
 
-  /* infer output shape information */
-  int begin[MAX_SHAPE_SIZE];
-  int size[MAX_SHAPE_SIZE];
-  for (int32_t i = 0; i < param->param_length_; ++i) {
+  for (int32_t i = 0; i < param_length; ++i) {
     if (param->axis_[i] < 0) {
       NNACL_CHECK_INT_ADD_NOT_OVERFLOW(param->axis_[i], (int)input->shape_size_, NNACL_PARAM_INVALID);
       param->axis_[i] += (int)input->shape_size_;
     }
-    NNACL_CHECK_TRUE_RET(param->axis_[i] >= 0 && param->axis_[i] < param->param_length_, NNACL_PARAM_INVALID);
-    begin[param->axis_[i]] = param->begin_[i];
-    size[param->axis_[i]] = param->size_[i];
+    NNACL_CHECK_TRUE_RET(param->axis_[i] >= 0 && param->axis_[i] < param_length, NNACL_PARAM_INVALID);
+    begin[param->axis_[i]] = begin[i];
+    size[param->axis_[i]] = size[i];
   }
 
-  for (int32_t i = 0; i < param->param_length_; ++i) {
+  for (int32_t i = 0; i < param_length; ++i) {
     if (size[i] < 0 && size[i] != -1) {
       return NNACL_PARAM_INVALID;
     }

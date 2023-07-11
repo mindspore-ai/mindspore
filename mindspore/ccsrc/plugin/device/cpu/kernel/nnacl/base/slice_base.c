@@ -15,7 +15,23 @@
  */
 #include "nnacl/base/slice_base.h"
 #include <string.h>
-void PadSliceParameterTo8D(SliceParameter *param) {
+
+void InitSliceStruct(SliceStruct *slice, TensorC *in_tensor, TensorC *begin_tensor, TensorC *size_tensor) {
+  slice->param_length_ = in_tensor->shape_size_;
+
+  int32_t *begin = (int32_t *)begin_tensor->data_;
+  int32_t *size = (int32_t *)size_tensor->data_;
+
+  for (int i = 0; i < slice->param_length_; ++i) {
+    slice->shape_[i] = in_tensor->shape_[i];
+    slice->begin_[i] = begin[i];
+    slice->size_[i] = size[i] < 0 ? slice->shape_[i] - slice->begin_[i] : size[i];
+    slice->end_[i] = slice->begin_[i] + slice->size_[i];
+  }
+  return;
+}
+
+void PadSliceParameterTo8D(SliceStruct *param) {
   int32_t begin[DIMENSION_8D];
   int32_t end[DIMENSION_8D];
   int32_t slice_size[DIMENSION_8D];
@@ -43,7 +59,7 @@ void PadSliceParameterTo8D(SliceParameter *param) {
   param->param_length_ = DIMENSION_8D;
 }
 
-void DoSlice(const void *input, void *output, const SliceParameter *param, int thread_id, int data_size) {
+void DoSlice(const void *input, void *output, const SliceStruct *param, int thread_id, int thread_num, int data_size) {
   int8_t *int8_in = (int8_t *)input;
   int8_t *int8_out = (int8_t *)output;
 
@@ -52,8 +68,7 @@ void DoSlice(const void *input, void *output, const SliceParameter *param, int t
   for (int i = 6; i >= 0; --i) {
     out_stride[i] = out_stride[i + 1] * param->size_[i + 1];
   }
-  NNACL_CHECK_ZERO_RETURN(param->op_parameter_.thread_num_);
-  int count_per_thread = UP_DIV(param->size_[5], param->op_parameter_.thread_num_);
+  int count_per_thread = UP_DIV(param->size_[5], thread_num);
   int thread_begin = thread_id * count_per_thread;
   int thread_end = MSMIN(param->size_[5], thread_begin + count_per_thread);
   int copy_size = param->size_[7] * data_size;
@@ -101,7 +116,7 @@ static bool WhetherCopyByAxis(const int32_t *begin, const int32_t *end, const in
   return true;
 }
 
-void DoSliceNoParallel(const void *input, void *output, const SliceParameter *param, int data_size) {
+void DoSliceNoParallel(const void *input, void *output, const SliceStruct *param, int data_size) {
   int8_t *int8_in = (int8_t *)input;
   int8_t *int8_out = (int8_t *)output;
 

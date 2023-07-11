@@ -55,6 +55,7 @@
 #include "nnacl/kernel/tril.h"
 #include "nnacl/kernel/triu.h"
 #include "nnacl/kernel/transpose.h"
+#include "nnacl/kernel/slice.h"
 #include "nnacl/kernel/unique.h"
 #ifdef ENABLE_FP16
 #include "nnacl/kernel/f16/arithmetic_f16.h"
@@ -122,6 +123,7 @@ void InitVSKernelF16(KernelCreator **creators) {
   creators[PrimType_Splice][REGIST_DT(kNumberTypeFloat16)] = CreateSplice;
   creators[PrimType_Sin][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_Size][REGIST_DT(kNumberTypeFloat16)] = CreateSize;
+  creators[PrimType_SliceFusion][REGIST_DT(kNumberTypeFloat16)] = CreateSlice;
   creators[PrimType_Square][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_Sqrt][REGIST_DT(kNumberTypeFloat16)] = CreateArithmeticSelf;
   creators[PrimType_TileFusion][REGIST_DT(kNumberTypeFloat16)] = CreateTile;
@@ -270,6 +272,8 @@ void InitVSKernelR(KernelCreator **creators) {
   creators[PrimType_Sin][REGIST_DT(kNumberTypeFloat32)] = CreateArithmeticSelf;
   creators[PrimType_Size][REGIST_DT(kNumberTypeInt32)] = CreateSize;
   creators[PrimType_Size][REGIST_DT(kNumberTypeFloat32)] = CreateSize;
+  creators[PrimType_SliceFusion][REGIST_DT(kNumberTypeInt32)] = CreateSlice;
+  creators[PrimType_SliceFusion][REGIST_DT(kNumberTypeFloat32)] = CreateSlice;
   creators[PrimType_SubFusion][REGIST_DT(kNumberTypeFloat32)] = CreateArithmetic;
   creators[PrimType_SubFusion][REGIST_DT(kNumberTypeInt32)] = CreateArithmetic;
   creators[PrimType_Squeeze][REGIST_DT(kNumberTypeFloat32)] = CreateReshape;

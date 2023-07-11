@@ -19,6 +19,6 @@
 
 int SliceInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   SliceArgs *args = (SliceArgs *)(cdata);
-  int ret = SliceInt8(args->input_data_, args->output_data_, args->param_, task_id);
-  return ret;
+  return SliceInt8(args->input_data_, args->output_data_, args->slice_struct_, args->quant_args_, task_id,
+                   args->thread_num_);
 }

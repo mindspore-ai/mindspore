@@ -21,12 +21,13 @@
 #include "nnacl/op_base.h"
 #include "nnacl/slice_parameter.h"
 #include "nnacl/int8/fixed_point.h"
+#include "nnacl/kernel/slice.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-int SliceInt8NoParallel(const int8_t *input, int8_t *output, SliceParameter *param, const QuantMulArg *multiplier);
-int SliceInt8(const int8_t *input, int8_t *output, const SliceParameter *param, int thread_id);
+int SliceInt8(const int8_t *input, int8_t *output, const SliceStruct *param, const SliceQuantArg *quant_arg,
+              int thread_id, int thread_num);
 #ifdef __cplusplus
 }
 #endif
