@@ -274,7 +274,15 @@ FormatType TransformOp::GetFormatType(const std::string &fmt) {
 void TransformOp::SetInput(const NodePtr &node, const NodePtr &input_node) { node->SetInputs({input_node}); }
 
 bool TransformOpCreator::IsTransOp(const NodePtr &node) const {
-  return node->NodeType() == NType::Primitive && node->As<PrimOp>()->op() == op_name_;
+  if (node->NodeType() == NType::Primitive) {
+    if (node->As<PrimOp>()->op() == op_name_) {
+      if (op_name_ == "Reshape") {
+        return node->format == node->input(0)->format;
+      }
+      return true;
+    }
+  }
+  return false;
 }
 
 class TransposeHandle : public TransformOp {

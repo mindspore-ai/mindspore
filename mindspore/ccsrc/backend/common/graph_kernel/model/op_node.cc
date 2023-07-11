@@ -433,7 +433,7 @@ DFormat ElemwiseOp::InferFormat(const NodePtrList &inputs, const DAttrs &) {
       // special format
       return cur_format;
     }
-    if (cur_format != first_format && inp->tensor_size() != 1) {
+    if (cur_format != kOpFormat_DEFAULT && inp->tensor_size() != 1) {
       return cur_format;
     }
   }
