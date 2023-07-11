@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <utility>
 #include "utils/hash_map.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include "runtime/graph_scheduler/actor/control_flow/control_actor.h"
@@ -37,6 +38,9 @@ class GatherActor : public ControlActor {
 
   const mindspore::HashMap<FuncGraph *, std::vector<AID>> &output_data_with_branch_id_arrows() const {
     return output_data_with_branch_id_arrows_;
+  }
+  const mindspore::HashMap<FuncGraph *, std::vector<std::pair<std::vector<size_t>, bool>>> &dynamic_len_index() const {
+    return dynamic_len_index_;
   }
 
  protected:
@@ -57,6 +61,10 @@ class GatherActor : public ControlActor {
 
   // There will be multiple output branches for gather actor according the funcgraph in partial.
   mindspore::HashMap<FuncGraph *, std::vector<AID>> output_data_with_branch_id_arrows_;
+  // The real index of actor output, the bool value means if the output is a dynamic len.
+  // eg. argument: (A, (B1, B2), C)  parameter: (a, b, c) the vector would be {<{0}, false>, <{1, 2}, true>,
+  // <{3}, false>}
+  mindspore::HashMap<FuncGraph *, std::vector<std::pair<std::vector<size_t>, bool>>> dynamic_len_index_;
 };
 
 using GatherActorPtr = std::shared_ptr<GatherActor>;

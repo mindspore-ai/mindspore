@@ -351,7 +351,8 @@ void CreateDeviceTensorForValueNode(const KernelWithIndex &front_node_with_index
 
   const auto &node_value = front_node->cast<ValueNodePtr>()->value();
   MS_EXCEPTION_IF_NULL(node_value);
-  if (node_value->isa<FuncGraph>() || node_value->isa<Primitive>()) {
+  if (node_value->isa<FuncGraph>() || node_value->isa<Primitive>() ||
+      (node_value->isa<ValueSequence>() && node_value->cast<ValueSequencePtr>()->size() == 0)) {
     return;
   }
 
@@ -410,6 +411,14 @@ void CreateDeviceTensorForFrontNode(const KernelWithIndex &front_node_with_index
   MS_EXCEPTION_IF_NULL(kernel_info);
   const auto &builder = kernel_info->GetMutableSelectKernelBuildInfo();
   MS_EXCEPTION_IF_NULL(builder);
+
+  if (node->isa<ValueNode>()) {
+    const auto &node_value = node->cast<ValueNodePtr>()->value();
+    MS_EXCEPTION_IF_NULL(node_value);
+    if (node_value->isa<ValueSequence>() && node_value->cast<ValueSequencePtr>()->size() == 0) {
+      return;
+    }
+  }
 
   if (builder->GetAllOutputFormats().size() > front_node_with_index.second) {
     builder->SetOutputFormat(kOpFormat_DEFAULT, front_node_with_index.second);
@@ -1026,7 +1035,164 @@ void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, cons
   ParseControlNodeParameter(control_nodes);
 
   ParseFirstControlNodeAndKernelGraphForFuncGraph(control_nodes);
+
+  ParseDynamicLenFormalParameter(control_nodes);
   MS_LOG(DEBUG) << "Control node parse end.";
+}
+
+namespace {
+void GetArgumentIndexForDynamicLenParameter(const abstract::AbstractBasePtr &argument_abs, size_t argument_index,
+                                            const abstract::AbstractBasePtr &parameter_abs,
+                                            mindspore::HashMap<size_t, size_t> *indexes) {
+  if (argument_abs == nullptr || parameter_abs == nullptr) {
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(indexes);
+  if ((!argument_abs->isa<abstract::AbstractSequence>()) || (!parameter_abs->isa<abstract::AbstractSequence>())) {
+    return;
+  }
+  const auto &arg_seq_abs = argument_abs->cast<abstract::AbstractSequencePtr>();
+  const auto &para_seq_abs = parameter_abs->cast<abstract::AbstractSequencePtr>();
+  MS_EXCEPTION_IF_NULL(arg_seq_abs);
+  MS_EXCEPTION_IF_NULL(para_seq_abs);
+  if (arg_seq_abs->dynamic_len() && para_seq_abs->dynamic_len()) {
+    return;
+  }
+  if ((!arg_seq_abs->dynamic_len()) && para_seq_abs->dynamic_len()) {
+    (*indexes)[argument_index] = arg_seq_abs->size();
+    return;
+  }
+  if (arg_seq_abs->dynamic_len() || para_seq_abs->dynamic_len() || arg_seq_abs->size() != para_seq_abs->size()) {
+    MS_LOG(EXCEPTION) << "Invalid dynamic len flag for argument abstract:" << arg_seq_abs->ToString()
+                      << " parameter abstract:" << para_seq_abs->ToString();
+  }
+  size_t start_index = argument_index;
+  for (size_t i = 0; i < arg_seq_abs->size(); ++i) {
+    GetArgumentIndexForDynamicLenParameter(arg_seq_abs->elements()[i], start_index, para_seq_abs->elements()[i],
+                                           indexes);
+    start_index += common::AnfAlgo::GetOutputNumByAbstract(arg_seq_abs->elements()[i]);
+  }
+}
+}  // namespace
+
+void ControlNodeParser::ParseDynamicLenFormalParameterByCallNode(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  const auto &cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  const auto &func_graphs = abstract::GetFuncGraphsFromCallNode(cnode);
+  if (func_graphs.empty()) {
+    MS_LOG(EXCEPTION) << "Get func_graph from abstract failed.";
+  }
+  mindspore::HashMap<size_t, size_t> sequence_indexes;
+  for (auto func_graph : func_graphs) {
+    MS_EXCEPTION_IF_NULL(func_graph);
+    // Check the consistency of return outputs and call outputs.
+    MS_EXCEPTION_IF_NULL(func_graph->return_node());
+    mindspore::HashMap<size_t, size_t> return_sequence_indexes;
+    GetArgumentIndexForDynamicLenParameter(func_graph->return_node()->abstract(), 0, node->abstract(),
+                                           &return_sequence_indexes);
+    if (!return_sequence_indexes.empty()) {
+      return_to_call_with_dynamic_sequence_index_[func_graph->return_node()][node] = return_sequence_indexes;
+    }
+    // Check the consistency of arguments and parameters.
+    size_t args_num = cnode->inputs().size() - 1;
+    size_t para_num = func_graph->parameters().size();
+    MS_LOG(DEBUG) << "for call node:" << cnode->DebugString() << " arg size:" << args_num << " para size:" << para_num;
+    if (args_num > para_num) {
+      MS_LOG(EXCEPTION) << "Invalid args num:" << args_num << " for funcgraph:" << func_graph->ToString()
+                        << " parameters num:" << func_graph->parameters().size();
+    }
+    size_t start_index = 1;
+    for (size_t i = 0; i < para_num - args_num; ++i) {
+      MS_EXCEPTION_IF_NULL((func_graph->parameters())[i]);
+      const auto &abs = (func_graph->parameters())[i]->abstract();
+      MS_EXCEPTION_IF_NULL(abs);
+      start_index += common::AnfAlgo::GetOutputNumByAbstract(abs);
+    }
+    for (size_t i = 0; i < args_num; ++i) {
+      MS_EXCEPTION_IF_NULL(cnode->input(i));
+      MS_EXCEPTION_IF_NULL((func_graph->parameters())[i + para_num - args_num]);
+      MS_LOG(DEBUG) << "Check formal parameter:" << cnode->input(i + 1)->DebugString()
+                    << " real node:" << (func_graph->parameters())[i + para_num - args_num]->DebugString();
+      GetArgumentIndexForDynamicLenParameter(cnode->input(i + 1)->abstract(), start_index,
+                                             (func_graph->parameters())[i + para_num - args_num]->abstract(),
+                                             &sequence_indexes);
+      start_index += common::AnfAlgo::GetOutputNumByAbstract(cnode->input(i + 1)->abstract());
+    }
+    if (!sequence_indexes.empty()) {
+      control_node_to_funcgraph_with_dynamic_sequence_index_[node][func_graph.get()] = sequence_indexes;
+    }
+  }
+}
+
+void ControlNodeParser::ParseDynamicLenFormalParameterByPartial(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  const auto &cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  size_t input_num = cnode->inputs().size();
+  if (input_num <= kPartialFuncGraphPos || cnode->input(kPartialFuncGraphPos) == nullptr ||
+      (!cnode->input(kPartialFuncGraphPos)->isa<ValueNode>())) {
+    MS_LOG(EXCEPTION) << "Invalid partial node:" << node->DebugString();
+  }
+  const auto &func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kPartialFuncGraphPos));
+  MS_EXCEPTION_IF_NULL(func_graph);
+  if (func_graph->parameters().size() < input_num - kPartialInputStartPos) {
+    MS_LOG(EXCEPTION) << "Invalid args num:" << input_num - kPartialInputStartPos
+                      << " in partial node:" << cnode->DebugString() << " for fungraph:" << func_graph->ToString()
+                      << " parameter num:" << func_graph->parameters().size();
+  }
+  size_t start_index = 1;
+  mindspore::HashMap<size_t, size_t> sequence_indexes;
+  for (size_t i = kPartialInputStartPos; i < input_num; ++i) {
+    MS_EXCEPTION_IF_NULL(cnode->input(i));
+    MS_EXCEPTION_IF_NULL(func_graph->parameters()[i - kPartialInputStartPos]);
+    GetArgumentIndexForDynamicLenParameter(cnode->input(i)->abstract(), start_index,
+                                           func_graph->parameters()[i - kPartialInputStartPos]->abstract(),
+                                           &sequence_indexes);
+    start_index += common::AnfAlgo::GetOutputNumByAbstract(cnode->input(i)->abstract());
+  }
+  if (!sequence_indexes.empty()) {
+    mindspore::HashMap<size_t, size_t> new_sequence_indexes;
+    for (const auto &index_pair : sequence_indexes) {
+      new_sequence_indexes[index_pair.first + 1] = index_pair.second;
+    }
+    control_node_to_funcgraph_with_dynamic_sequence_index_[node][func_graph.get()] = new_sequence_indexes;
+  }
+}
+
+void ControlNodeParser::ParseDynamicLenFormalParameter(const std::vector<AnfNodePtr> &control_nodes) {
+  for (const auto &node : control_nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (common::AnfAlgo::IsCallNode(node)) {
+      ParseDynamicLenFormalParameterByCallNode(node);
+    } else if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial)) {
+      ParseDynamicLenFormalParameterByPartial(node);
+    }
+  }
+  for (const auto &node_to_func_with_index : control_node_to_funcgraph_with_dynamic_sequence_index_) {
+    const auto &node = node_to_func_with_index.first;
+    MS_EXCEPTION_IF_NULL(node);
+    for (const auto &func_with_index : node_to_func_with_index.second) {
+      const auto &func_graph = func_with_index.first;
+      MS_EXCEPTION_IF_NULL(func_graph);
+      for (const auto &indexes : func_with_index.second) {
+        MS_LOG(DEBUG) << "Node:" << node->DebugString() << " func_graph:" << func_graph->ToString()
+                      << " start index:" << indexes.first << " size:" << indexes.second;
+      }
+    }
+  }
+  for (const auto &node_to_call_with_index : return_to_call_with_dynamic_sequence_index_) {
+    const auto &node = node_to_call_with_index.first;
+    MS_EXCEPTION_IF_NULL(node);
+    for (const auto &call_with_index : node_to_call_with_index.second) {
+      const auto &call = call_with_index.first;
+      MS_EXCEPTION_IF_NULL(call);
+      for (const auto &indexes : call_with_index.second) {
+        MS_LOG(DEBUG) << "Node:" << node->DebugString() << " call node:" << call->DebugString()
+                      << " start index:" << indexes.first << " size:" << indexes.second;
+      }
+    }
+  }
 }
 
 // Fetch all the funcgraph recursively that the call node will call.
@@ -1444,6 +1610,30 @@ void ControlNodeParser::ParseDeviceContextForPartialNode(const std::vector<AnfNo
   }
 }
 
+void CollectDeviceContextByDynamicLen(const CNodePtr &cnode, const FuncGraphPtr &func_graph,
+                                      const std::vector<const DeviceContext *> &parameter_contexts,
+                                      std::vector<const DeviceContext *> *arg_context) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(arg_context);
+  size_t para_num = func_graph->parameters().size();
+  size_t arg_num = cnode->inputs().size() - 1;
+  if (arg_num > para_num) {
+    MS_LOG(EXCEPTION) << "Invalid arg size:" << arg_num << " parameter size:" << para_num
+                      << "for call node:" << cnode->DebugString() << " funcgraph:" << func_graph->ToString();
+  }
+  if (para_num != parameter_contexts.size()) {
+    MS_LOG(EXCEPTION) << "Invalid parameter context size:" << parameter_contexts.size()
+                      << " parameter size:" << para_num;
+  }
+  for (size_t i = para_num - arg_num; i < para_num; ++i) {
+    size_t output_num = common::AnfAlgo::GetOutputNumByAbstract(cnode->input(i + 1)->abstract());
+    for (size_t j = 0; j < output_num; ++j) {
+      arg_context->emplace_back(parameter_contexts[j]);
+    }
+  }
+}
+
 void ControlNodeParser::ParseDeviceContextForCallNode(const std::vector<AnfNodePtr> &control_nodes) {
   for (const auto &control_node : control_nodes) {
     MS_EXCEPTION_IF_NULL(control_node);
@@ -1479,8 +1669,11 @@ void ControlNodeParser::ParseDeviceContextForCallNode(const std::vector<AnfNodeP
     }
 
     if (call_input_num > iter->second.size()) {
-      MS_LOG(EXCEPTION) << "Invalid input size:" << call_input_num << " context size:" << iter->second.size()
-                        << "for funcgraph" << func_graph->ToString() << " for call node:" << cnode->DebugString();
+      MS_LOG(INFO) << "Call input size:" << call_input_num << " context size:" << iter->second.size() << "for funcgraph"
+                   << func_graph->ToString() << " for call node:" << cnode->DebugString();
+      CollectDeviceContextByDynamicLen(cnode, func_graph, iter->second, &device_contexts);
+      control_node_to_device_contexts_[control_node] = device_contexts;
+      continue;
     }
 
     // Fetch the device contexts for the real parameters on the call node.
@@ -1558,12 +1751,13 @@ void ControlNodeParser::ParseDeviceContextForReturnNode(const DeviceContext *def
         // the output, the output type of the funcgraph called by it should have been determined, if not, an exception
         // will be thrown.
         if (call_device_contexts.empty() || call_device_contexts.size() <= output_node.second) {
-          MS_LOG(EXCEPTION) << "Cannot find device context for call node:" << output_node.first->DebugString()
-                            << " device contexts size:" << call_device_contexts.size()
-                            << " index:" << output_node.second;
+          MS_LOG(WARNING) << "Cannot find device context for call node:" << output_node.first->DebugString()
+                          << " device contexts size:" << call_device_contexts.size() << " index:" << output_node.second;
+          (void)return_device_contexts.emplace_back(default_context);
+        } else {
+          MS_EXCEPTION_IF_NULL(call_device_contexts[output_node.second]);
+          (void)return_device_contexts.emplace_back(call_device_contexts[output_node.second]);
         }
-        MS_EXCEPTION_IF_NULL(call_device_contexts[output_node.second]);
-        (void)return_device_contexts.emplace_back(call_device_contexts[output_node.second]);
       } else if (common::AnfAlgo::CheckPrimitiveType(output_node.first, prim::kPrimPartial) ||
                  common::AnfAlgo::CheckPrimitiveType(output_node.first, prim::kPrimSwitch)) {
         (void)return_device_contexts.emplace_back(default_context);
@@ -1929,6 +2123,8 @@ void ControlNodeParser::CreateBranchIDForCallNode(const std::vector<AnfNodePtr> 
     // Root funcgraph does not need to create a gather actor.
     if (common::AnfAlgo::IsCallNode(control_node)) {
       call_node_to_branch_id_[control_node] = ++branch_id;
+      MS_LOG(DEBUG) << "control node:" << control_node->DebugString()
+                    << " branch id:" << call_node_to_branch_id_[control_node];
     }
   }
 }

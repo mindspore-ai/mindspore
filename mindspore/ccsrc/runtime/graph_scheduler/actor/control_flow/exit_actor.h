@@ -49,6 +49,10 @@ class ExitActor : public ControlActor {
     return output_branch_partial_arrows_;
   }
   const std::vector<bool> &is_need_copy_device_tensors() const { return is_need_copy_device_tensors_; }
+  const mindspore::HashMap<int, std::vector<std::pair<std::vector<size_t>, bool>>> &output_branch_dynamic_len_index()
+    const {
+    return output_branch_dynamic_len_index_;
+  }
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
 
  protected:
@@ -62,16 +66,19 @@ class ExitActor : public ControlActor {
   friend class SchedulerHelper;
 
   void CopyDeviceAddress(OpContext<DeviceTensor> *const context);
+  void MergeDynamiclenDeviceAddress(OpContext<DeviceTensor> *const context);
 
   // Exit actor will send to different actors according to different callers, so the output data, control,
   // and partial arrows will have branch.
   mindspore::HashMap<int, std::vector<DataArrowPtr>> output_branch_data_arrows_;
   mindspore::HashMap<int, std::vector<AID>> output_branch_control_arrows_;
   mindspore::HashMap<int, std::vector<DataArrowPtr>> output_branch_partial_arrows_;
+  // The real index of actor output, the first int means the output branch id and the bool value means if the
+  // output is a dynamic len.
+  // eg. argument: (A, (B1, B2), C)  parameter: (a, b, c)
+  //     the vector would be {<{0}, false>, <{1, 2}, true>,<{3},false>}
+  mindspore::HashMap<int, std::vector<std::pair<std::vector<size_t>, bool>>> output_branch_dynamic_len_index_;
 
-  // The exit actor needs to create a new device address and take out the ptr from the device tensor come from
-  // the kernel actor. These new created device tensors are stored in the created device tensors.
-  std::vector<DeviceTensorPtr> created_device_tensors_;
   // In exit actor, we need to copy a new device tensor for the output of the kernel actor, but parameter is not
   // needed. This mark is used to record whether it need to be copied.
   std::vector<bool> is_need_copy_device_tensors_;

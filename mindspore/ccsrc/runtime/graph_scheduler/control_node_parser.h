@@ -91,6 +91,10 @@ using CallNodeToFuncGraph = mindspore::HashMap<AnfNodePtr, std::set<FuncGraphPtr
 using KernelGraphToDeviceContext = mindspore::HashMap<KernelGraphPtr, DeviceContext *>;
 using GroupNameToCommuNodes =
   mindspore::HashMap<std::string, std::pair<std::vector<CNodePtr>, std::vector<KernelGraphPtr>>>;
+using ReturnDynamicLenArgIndex =
+  mindspore::HashMap<AnfNodePtr, mindspore::HashMap<AnfNodePtr, mindspore::HashMap<size_t, size_t>>>;
+using ControlNodeDynamicLenArgIndex =
+  mindspore::HashMap<AnfNodePtr, mindspore::HashMap<FuncGraph *, mindspore::HashMap<size_t, size_t>>>;
 // In the control flow, heterogeneous kernel graphs need to be reconnected in the same group, and the kernel graph
 // group info is used to store the inputs and outputs of the group.
 // Need stack indicates whether a stack actor needs to be created for the group.
@@ -258,6 +262,9 @@ class ControlNodeParser {
   // When the parameter is directly used as the condition of the switch, there will be no back-end node, and a device
   // tensor needs to be created for it.
   void CreateDeviceTensorForRootGraphParameter(DeviceContext *const default_context);
+  void ParseDynamicLenFormalParameter(const std::vector<AnfNodePtr> &control_nodes);
+  void ParseDynamicLenFormalParameterByCallNode(const AnfNodePtr &node);
+  void ParseDynamicLenFormalParameterByPartial(const AnfNodePtr &node);
   // In control flow, funcgraph will be cut into multiple kernel graphs for execution, and this relationship is recorded
   // in this map.
   FuncGraphToKernelGraphGroup func_graph_to_kernel_graph_groups_;
@@ -325,6 +332,9 @@ class ControlNodeParser {
   mindspore::HashMap<KernelGraphPtr, KernelGraphGroupInfoPtr> kernel_graphs_to_group_info_;
   // Scalar value will be convert to tensor in control flow, these tensors are placed in the vector.
   std::vector<tensor::TensorPtr> control_node_tensors_;
+  // The index of the argument that needs to be converted into a dynamic len sequence.
+  ReturnDynamicLenArgIndex return_to_call_with_dynamic_sequence_index_;
+  ControlNodeDynamicLenArgIndex control_node_to_funcgraph_with_dynamic_sequence_index_;
   // Is control flow enable.
   bool is_inited_;
 

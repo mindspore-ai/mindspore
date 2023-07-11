@@ -187,10 +187,6 @@ void ValueTupleToValue(const ValuePtr &value, std::vector<ValuePtr> *const value
   if (value->isa<ValueSequence>()) {
     auto value_tuple = value->cast<ValueSequencePtr>();
     MS_EXCEPTION_IF_NULL(value_tuple);
-    if (value_tuple->size() == 0) {
-      (void)values->emplace_back(std::make_shared<tensor::Tensor>());
-      return;
-    }
     for (size_t i = 0; i < value_tuple->size(); ++i) {
       ValuePtr element = value_tuple->value()[i];
       MS_EXCEPTION_IF_NULL(element);
@@ -743,9 +739,8 @@ void DataPrepareActor::PrepareDataForControlValueNode(const KernelWithIndex &nod
   ValueTupleToValue(node_value, &values);
 
   if (node_with_index.second >= values.size()) {
-    std::string error_info =
-      "Invalid index:" + std::to_string(node_with_index.second) + " for value node:" + node->DebugString();
-    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    MS_LOG(INFO) << "Invalid index:" << node_with_index.second << " for node:" << node->DebugString();
+    return;
   }
   const auto &value = values[index];
   MS_EXCEPTION_IF_NULL(value);
@@ -954,7 +949,8 @@ void DataPrepareActor::PrepareDeviceTensorStoreForControlNode(const ControlNodeP
 
   for (const auto &value_node_with_context : control_node_parser->front_value_nodes()) {
     MS_EXCEPTION_IF_NULL(value_node_with_context.first.first);
-    if (AnfAlgo::OutputAddrExist(value_node_with_context.first.first, 0)) {
+    if (value_node_with_context.first.first->kernel_info() != nullptr &&
+        AnfAlgo::OutputAddrExist(value_node_with_context.first.first, 0)) {
       PrepareDataForControlValueNode(value_node_with_context.first, value_node_with_context.second, context,
                                      control_node_parser);
     }

@@ -468,6 +468,22 @@ void DumpGatherActor(const GatherActor *actor, std::ofstream &ofs) {
   ofs << "\t\tbranch id:" << actor->branch_id() << '\n';
   DumpControlActor(actor, ofs);
 
+  ofs << "\t\toutput index:" << '\n';
+  const auto &dynamic_len_index = actor->dynamic_len_index();
+  for (const auto &func_to_index : dynamic_len_index) {
+    const auto &func_graph = func_to_index.first;
+    MS_EXCEPTION_IF_NULL(func_graph);
+    ofs << "\t\t\tfunc_graph:" << func_graph->ToString() << '\n';
+    const auto &index_list = func_to_index.second;
+    for (size_t i = 0; i < index_list.size(); ++i) {
+      ofs << "\t\t\t\treal index:" << i << "  is dynamic len:" << index_list[i].second << " relative index:";
+      for (const auto &index : index_list[i].first) {
+        ofs << index << " ";
+      }
+      ofs << '\n';
+    }
+  }
+
   const auto &output_data_with_branch_id_arrows = actor->output_data_with_branch_id_arrows();
   if (output_data_with_branch_id_arrows.size() > 0) {
     ofs << "\t\toutput_data_with_branch_id_arrows:" << output_data_with_branch_id_arrows.size() << "\n ";
@@ -498,6 +514,21 @@ void DumpExitActor(const ExitActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
   ofs << "\tactor_name:" << actor->GetAID().Name() << '\n';
   DumpControlActor(actor, ofs);
+
+  ofs << "\t\toutput index:" << '\n';
+  const auto &dynamic_len_index = actor->output_branch_dynamic_len_index();
+  for (const auto &func_to_index : dynamic_len_index) {
+    const auto &branch_id = func_to_index.first;
+    ofs << "\t\t\tbranch_id:" << branch_id << '\n';
+    const auto &index_list = func_to_index.second;
+    for (size_t i = 0; i < index_list.size(); ++i) {
+      ofs << "\t\t\t\treal index:" << i << "  is dynamic len:" << index_list[i].second << " relative index:";
+      for (const auto &index : index_list[i].first) {
+        ofs << index << " ";
+      }
+      ofs << '\n';
+    }
+  }
 
   const auto &output_branch_data_arrows = actor->output_branch_data_arrows();
   if (output_branch_data_arrows.size() > 0) {
