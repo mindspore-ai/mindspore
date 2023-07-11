@@ -326,6 +326,7 @@ void Eliminate_Aux(size_t node_index, const std::shared_ptr<Graph> &graph,
   }
   eli_list->push_back(eli);
 
+  // Iterate over all input operators of the current node
   for (size_t i = 0; i < graph->nodes[node_index].node_in.size(); i++) {
     auto *incoming_outputs = &graph->nodes[graph->nodes[node_index].node_in[i]].node_out;
     auto it = find(incoming_outputs->begin(), incoming_outputs->end(), node_index);
@@ -340,6 +341,7 @@ void Eliminate_Aux(size_t node_index, const std::shared_ptr<Graph> &graph,
     }
   }
 
+  // Iterate over all aux_input operators of the current node
   for (size_t i = 0; i < graph->nodes[node_index].node_in_aux.size(); i++) {
     auto *aux_incoming_outputs = &graph->nodes[graph->nodes[node_index].node_in_aux[i]].node_out;
     auto it = find(aux_incoming_outputs->begin(), aux_incoming_outputs->end(), node_index);
@@ -353,14 +355,20 @@ void Eliminate_Aux(size_t node_index, const std::shared_ptr<Graph> &graph,
       }
     }
   }
+
+  // Iterate over all output operators of the current node
   Eliminate_Aux_Outgoing(node_index, graph);
 }
 
 void EliminateAuxOutgoingInput(size_t node_index, const std::shared_ptr<Graph> &graph, size_t i) {
   auto *outgoing_inputs = &graph->nodes[graph->nodes[node_index].node_out[i]].node_in;
+  // Check if the current node is the input operator of the current node's output operator
   auto it = find(outgoing_inputs->begin(), outgoing_inputs->end(), node_index);
   if (it != outgoing_inputs->end()) {
     if (graph->nodes[node_index].node_in.size() > 0) {
+      // If the current node has input operator, then add input[0] of the current node to the input of the current
+      // node's output operator (if input[0] is also in the aux_input of the current node's output operator, then remove
+      // it from the aux_input and keep it only in the input)
       auto exist_in_outgoing_auxinputs =
         find(graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.begin(),
              graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.end(), graph->nodes[node_index].node_in[0]);
@@ -385,7 +393,7 @@ void EliminateAuxOutgoingInput(size_t node_index, const std::shared_ptr<Graph> &
       } else {
         MS_LOG(DEBUG) << "Trying to index vector element at index " << idx << ", out of range!";
       }
-
+      // Then add the other input operators of the current node to the aux_input of the current node's output operator
       for (size_t j = 1; j < graph->nodes[node_index].node_in.size(); j++) {
         exist_in_outgoing_auxinputs = find(graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.begin(),
                                            graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.end(),
@@ -396,6 +404,8 @@ void EliminateAuxOutgoingInput(size_t node_index, const std::shared_ptr<Graph> &
           graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.push_back(graph->nodes[node_index].node_in[j]);
         }
       }
+      // Then add all the operators in the aux_input of the current node to the aux_input of the output operator of the
+      // current node
       for (size_t j = 0; j < graph->nodes[node_index].node_in_aux.size(); j++) {
         exist_in_outgoing_auxinputs = find(graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.begin(),
                                            graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux.end(),
@@ -421,10 +431,15 @@ void EliminateAuxOutgoingInput(size_t node_index, const std::shared_ptr<Graph> &
 void EliminateAuxOutgoingAuxInput(size_t node_index, const std::shared_ptr<Graph> &graph, size_t i) {
   auto *outgoing_auxinputs = &graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux;
   auto *outgoing_auxinputs_index = &graph->nodes[graph->nodes[node_index].node_out[i]].node_in_aux_idx;
+  // Check if the current node is the aux_input operator of the current node's output operator
   auto it = find(outgoing_auxinputs->begin(), outgoing_auxinputs->end(), node_index);
   size_t index_entree = LongToSize(std::distance(outgoing_auxinputs->begin(), it));
   if (it != outgoing_auxinputs->end()) {
     if (graph->nodes[node_index].node_in.size() > 0) {
+      // If the current node has input operator, and if the input[0] of the current node is in
+      // the input of the output operator of the current node, then delete it
+      // from the aux_input of the output of the current node, otherwise add the input[0]
+      // to the auxinput of the output of the current node
       auto exist_in_outgoing_inputs =
         find(graph->nodes[graph->nodes[node_index].node_out[i]].node_in.begin(),
              graph->nodes[graph->nodes[node_index].node_out[i]].node_in.end(), graph->nodes[node_index].node_in[0]);
@@ -451,25 +466,13 @@ void EliminateAuxOutgoingAuxInput(size_t node_index, const std::shared_ptr<Graph
           outgoing_auxinputs->begin(),
           find(outgoing_auxinputs->begin(), outgoing_auxinputs->end(), graph->nodes[node_index].node_in[0])));
       }
+      // Determine whether the other input operator of the current node is in the input of the output operator,
+      // and if not, add it to the aux_input of the output operator
       for (size_t j = 1; j < graph->nodes[node_index].node_in.size(); j++) {
         exist_in_outgoing_inputs =
           find(graph->nodes[graph->nodes[node_index].node_out[i]].node_in.begin(),
                graph->nodes[graph->nodes[node_index].node_out[i]].node_in.end(), graph->nodes[node_index].node_in[j]);
-        if (exist_in_outgoing_inputs != graph->nodes[graph->nodes[node_index].node_out[i]].node_in.end()) {
-          auto iter_j =
-            find(outgoing_auxinputs->begin(), outgoing_auxinputs->end(), graph->nodes[node_index].node_in[j]);
-          size_t index_remove = LongToSize(std::distance(outgoing_auxinputs->begin(), iter_j));
-          if (outgoing_auxinputs_index->size() > index_remove) {
-            (void)outgoing_auxinputs_index->erase(outgoing_auxinputs_index->begin() + SizeToLong(index_remove));
-          } else {
-            MS_LOG(DEBUG) << "Trying to erase vector element at index " << index_remove << ", out of range!";
-          }
-          if (outgoing_auxinputs->size() > index_remove) {
-            (void)outgoing_auxinputs->erase(iter_j);
-          } else {
-            MS_LOG(DEBUG) << "Trying to erase vector element at index " << index_remove << ", out of range!";
-          }
-        } else {
+        if (exist_in_outgoing_inputs == graph->nodes[graph->nodes[node_index].node_out[i]].node_in.end()) {
           outgoing_auxinputs->push_back(graph->nodes[node_index].node_in[j]);
           if (outgoing_auxinputs_index->size() > index_entree) {
             outgoing_auxinputs_index->push_back(outgoing_auxinputs_index->at(index_entree));
@@ -478,25 +481,13 @@ void EliminateAuxOutgoingAuxInput(size_t node_index, const std::shared_ptr<Graph
           }
         }
       }
+      // Determine if the aux_input operator of the current node is in the input of the output operator,
+      // and if not, add it to the aux_input of the output operator
       for (size_t j = 0; j < graph->nodes[node_index].node_in_aux.size(); j++) {
         exist_in_outgoing_inputs = find(graph->nodes[graph->nodes[node_index].node_out[i]].node_in.begin(),
                                         graph->nodes[graph->nodes[node_index].node_out[i]].node_in.end(),
                                         graph->nodes[node_index].node_in_aux[j]);
-        if (exist_in_outgoing_inputs != graph->nodes[graph->nodes[node_index].node_out[i]].node_in.end()) {
-          auto iter_aux_j =
-            find(outgoing_auxinputs->begin(), outgoing_auxinputs->end(), graph->nodes[node_index].node_in_aux[j]);
-          size_t index_remove = LongToSize(std::distance(outgoing_auxinputs->begin(), iter_aux_j));
-          if (outgoing_auxinputs_index->size() > index_remove) {
-            (void)outgoing_auxinputs_index->erase(outgoing_auxinputs_index->begin() + SizeToLong(index_remove));
-          } else {
-            MS_LOG(DEBUG) << "Trying to erase vector element at index " << index_remove << ", out of range!";
-          }
-          if (outgoing_auxinputs->size() > index_remove) {
-            (void)outgoing_auxinputs->erase(iter_aux_j);
-          } else {
-            MS_LOG(DEBUG) << "Trying to erase vector element at index " << index_remove << ", out of range!";
-          }
-        } else {
+        if (exist_in_outgoing_inputs == graph->nodes[graph->nodes[node_index].node_out[i]].node_in.end()) {
           outgoing_auxinputs->push_back(graph->nodes[node_index].node_in_aux[j]);
           outgoing_auxinputs_index->push_back(outgoing_auxinputs_index->at(index_entree));
         }
@@ -518,7 +509,9 @@ void EliminateAuxOutgoingAuxInput(size_t node_index, const std::shared_ptr<Graph
 
 void Eliminate_Aux_Outgoing(size_t node_index, const std::shared_ptr<Graph> &graph) {
   for (size_t i = 0; i < graph->nodes[node_index].node_out.size(); i++) {
+    // Handle the output operator connected to the current node via main edge
     EliminateAuxOutgoingInput(node_index, graph, i);
+    // Handle the output operator connected to the current node via auxiliary edge
     EliminateAuxOutgoingAuxInput(node_index, graph, i);
   }
 }
