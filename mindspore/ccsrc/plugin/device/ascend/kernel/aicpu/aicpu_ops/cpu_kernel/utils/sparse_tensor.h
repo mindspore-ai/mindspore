@@ -407,6 +407,75 @@ class SparseTensor {
     return KERNEL_STATUS_OK;
   }
 
+  template <typename IndiceT, typename ValueT>
+  uint32_t GetIndicesAndValues(Tensor *y_indices, Tensor *y_values) {
+    auto dims = y_indices->GetTensorShape()->GetDimSize(0);
+    auto elements = order_.size();
+    auto ix_t = ix_->matrix<IndiceT>();
+    auto vals_t = vals_->vec<ValueT>();
+    auto indices = reinterpret_cast<IndiceT *>(y_indices->GetData());
+    auto values = reinterpret_cast<ValueT *>(y_values->GetData());
+    for (int64_t n = 0; n < dims; ++n) {
+      *(values + n) = vals_t(n);
+      for (std::size_t di = 0; di < elements; ++di) {
+        if (ix_t(n, di) < 0 || ix_t(n, di) >= shape_[di]) {
+          KERNEL_LOG_ERROR("indices is out of bounds, index=%lld.", n);
+          return KERNEL_STATUS_PARAM_INVALID;
+        }
+        *(indices + n * elements + di) = ix_t(n, di);
+      }
+    }
+    return KERNEL_STATUS_OK;
+  }
+
+  inline std::vector<int64_t> Shape() { return shape_; }
+
+  inline std::vector<int64_t> Order() { return order_; }
+
+  template <typename IndiceT, typename ValueT>
+  inline uint32_t Reorder() {
+    auto ix_t = ix_->matrix<IndiceT>();
+    auto vals_t = vals_->vec<ValueT>();
+    int64_t dim_size =
+      (ix_->GetTensor()->GetTensorShape()->GetDims() == 0) ? 1 : ix_->GetTensor()->GetTensorShape()->GetDimSize(0);
+    std::vector<int64_t> reorder(dim_size);
+    std::iota(reorder.begin(), reorder.end(), 0);
+
+    // Sort to get order of indices
+    switch (order_.size()) {
+#define CASE_SORT(ORDER_SIZE)                                      \
+  case ORDER_SIZE: {                                               \
+    FixedDimComparator<(ORDER_SIZE)> sorter(ix_t, order_, shape_); \
+    std::sort(reorder.begin(), reorder.end(), sorter);             \
+    break;                                                         \
+  };
+      CASE_SORT(0);
+      CASE_SORT(1);
+      CASE_SORT(2);
+      CASE_SORT(3);
+      CASE_SORT(4);
+      CASE_SORT(5);
+#undef CASE_SORT
+      default: {
+        DimComparator sorter(ix_t, order_, shape_);
+        std::sort(reorder.begin(), reorder.end(), sorter);
+      }
+    }
+    std::vector<size_t> permutation(reorder.size());
+    for (std::size_t n = 0; n < reorder.size(); ++n) {
+      permutation[reorder[n]] = n;
+    }
+    for (std::size_t n = 0; n + 1 < permutation.size(); ++n) {
+      while (n != permutation[n]) {
+        std::size_t r = permutation[n];
+        std::swap_ranges(&(ix_t(n, 0)), &(ix_t(n + 1, 0)), &(ix_t(r, 0)));
+        std::swap(vals_t(n), vals_t(r));
+        std::swap(permutation[n], permutation[r]);
+      }
+    }
+    return KERNEL_STATUS_OK;
+  }
+
  private:
   std::shared_ptr<EigenTensor> ix_;
   std::shared_ptr<EigenTensor> vals_;
