@@ -27,6 +27,12 @@ namespace ops {
 namespace {
 std::vector<int64_t> GetInferShape(const PrimitivePtr &prim, const std::vector<int64_t> &input_shape,
                                    const std::vector<int64_t> &multiples_v) {
+  if (multiples_v.size() < input_shape.size()) {
+    MS_EXCEPTION(ValueError)
+      << "For '" << prim->name()
+      << "', 'multiples' length cannot be smaller than 'input_x' dimension length, but got 'multiples' length:"
+      << multiples_v.size() << ", 'input_x' dimension length: " << input_shape.size() << ".";
+  }
   int64_t len_sub = SizeToLong(multiples_v.size() - input_shape.size());
   std::vector<int64_t> infer_shape = input_shape;
   std::vector<int64_t> multiples_w;
@@ -38,12 +44,6 @@ std::vector<int64_t> GetInferShape(const PrimitivePtr &prim, const std::vector<i
       (void)infer_shape.insert(infer_shape.begin(), 1);
     }
     multiples_w = multiples_v;
-  }
-  if (len_sub < 0) {
-    MS_EXCEPTION(ValueError)
-      << "For '" << prim->name()
-      << "', 'multiples' length cannot be smaller than 'input_x' dimension length, but got 'multiples' length:"
-      << multiples_v.size() << ", 'input_x' dimension length: " << input_shape.size() << ".";
   }
   for (size_t i = 0; i < multiples_w.size(); i++) {
     if (infer_shape[i] == abstract::Shape::kShapeDimAny) {
