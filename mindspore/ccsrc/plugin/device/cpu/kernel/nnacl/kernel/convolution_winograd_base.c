@@ -275,7 +275,6 @@ int ConvolutionWinogradBaseResize(KernelBase *self) {
     return ret;
   }
 
-  winograd->conv_.out_format_ = self->out_[OUTPUT_INDEX]->format_;
   ConvWinoBaseUpdateParam((ConvParameter *)self->param_, winograd);
   return NNACL_OK;
 }
