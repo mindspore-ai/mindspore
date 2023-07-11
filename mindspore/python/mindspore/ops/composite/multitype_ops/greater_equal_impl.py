@@ -101,3 +101,11 @@ def _greater_equal_list(x, y):
        bool, if x >= y return true in python logic, x < y return false.
    """
     return list_greater_equal()(x, y)
+
+
+@greater_equal.register_default()
+def default_greater_equal(x, y):
+    """
+    Default function for greater equal.
+   """
+    return x >= y

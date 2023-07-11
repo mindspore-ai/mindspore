@@ -48,3 +48,11 @@ def _tensor_bitwise_xor_scalar(x, y):
 def _scalar_bitwise_xor_tensor(x, y):
     """Returns x ^ y where x and y are all tensors."""
     return F.bitwise_xor(x, y)
+
+
+@bitwise_xor.register_default()
+def default_bitwsie_xor(x, y):
+    """
+    Default function for bitwise_xor.
+   """
+    return x ^ y

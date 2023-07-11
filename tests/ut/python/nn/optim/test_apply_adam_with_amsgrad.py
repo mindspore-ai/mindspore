@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test apply_adam_with_amsgrad """
+import os
 import pytest
 import numpy as np
 
@@ -158,6 +159,7 @@ def test_sparse_apply_adam_with_amsgrad():
     optimizer = Adam(net.trainable_params(), learning_rate=0.1, loss_scale=1024.0, weight_decay=0.9, use_amsgrad=True)
     train_network = TrainOneStepCell(net, optimizer)
 
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '0'
     with pytest.raises(Exception):
         context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
         _cell_graph_executor.compile(train_network, indices, label)
@@ -171,3 +173,4 @@ def test_sparse_apply_adam_with_amsgrad():
         context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
         _cell_graph_executor.compile(train_network, indices, label)
     context.set_context(mode=context.GRAPH_MODE)
+    os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'

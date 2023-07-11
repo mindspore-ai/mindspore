@@ -71,3 +71,11 @@ def _negative_cootensor(x):
        COOTensor, negative value of x by element-wise.
    """
     return COOTensor(x.indices, F.neg_tensor(x.values), x.shape)
+
+
+@negative.register_default()
+def default_negative(x):
+    """
+    Default function for negative.
+   """
+    return -x

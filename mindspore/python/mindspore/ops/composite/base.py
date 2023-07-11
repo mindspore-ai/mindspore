@@ -738,11 +738,14 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
         """Initialize MultitypeFuncGraph."""
         MultitypeFuncGraph_.__init__(self, name)
         self.entries = list()
+        self.default_func = None
         if read_value:
             self.set_signatures((
                 sig.make_sig('args', sig.sig_rw.RW_READ, sig.sig_kind.KIND_VAR_POSITIONAL),))
 
     def __call__(self, *args):
+        if callable(self.default_func):
+            return self.default_func(*args)
         for arg in args:
             if isinstance(arg, np.ndarray):
                 raise TypeError("For 'MultitypeFuncGraph', the input can not be numpy.ndarray")
@@ -784,6 +787,17 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
             types = tuple(map(convert_type, type_names))
             self.register_fn(type_names, fn)
             self.entries.append((types, fn))
+            return fn
+
+        return deco
+
+    def register_default(self):
+        """
+        Register a default function for jit fallback.
+        """
+
+        def deco(fn):
+            self.default_func = fn
             return fn
 
         return deco

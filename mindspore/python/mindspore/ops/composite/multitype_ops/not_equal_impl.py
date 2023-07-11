@@ -282,3 +282,11 @@ def _none_not_equal_list(x, y):
        bool, return true.
    """
     return True
+
+
+@not_equal.register_default()
+def default_not_equal(x, y):
+    """
+    Default function for not equal.
+   """
+    return x != y

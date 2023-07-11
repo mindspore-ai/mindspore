@@ -30,6 +30,7 @@
 #include "include/common/fallback.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/convert_utils_py.h"
+#include "frontend/operator/composite/multitype_funcgraph.h"
 
 namespace mindspore {
 namespace parse {
@@ -394,6 +395,10 @@ ValuePtr ConvertMetaFuncGraph(const py::object &obj, bool use_signature = false)
   if (meta == nullptr) {
     MS_LOG(ERROR) << "Resolve MetaFuncGraph error, get ptr is null";
     return nullptr;
+  }
+  auto multi = meta->cast<prim::MultitypeFuncGraphPtr>();
+  if (multi != nullptr) {
+    multi->set_meta_obj(obj);
   }
   if (use_signature) {
     return std::make_shared<prim::DoSignaturePrimitive>(meta->name(), meta);

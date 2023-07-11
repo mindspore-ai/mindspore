@@ -392,3 +392,11 @@ def _map_tensor_getitem(map_tensor, key_tensor):
         Tensor, value tensor according the key tensor.
     """
     return _map_tensor_ops.MapTensorGet(True)(map_tensor, key_tensor)
+
+
+@getitem.register_default()
+def default_getitem(x, y):
+    """
+    Default function for getitem.
+   """
+    return x[y]

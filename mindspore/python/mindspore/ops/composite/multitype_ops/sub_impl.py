@@ -108,3 +108,11 @@ def _cootensor_sub_tensor(x, y):
     """Returns x - y where x is a COO tensor and y is a tensor."""
     check_equal(x.shape, y.shape, "input1 (shape={}) and input2(shape={}) should be the same shape.")
     return F.tensor_scatter_add(-y, x.indices, x.values)
+
+
+@sub.register_default()
+def default_sub(x, y):
+    """
+    Default function for sub.
+   """
+    return x - y

@@ -29,3 +29,11 @@ right_shift.set_need_raise()
 def _right_shift_scalar(x, y):
     """Returns x >> y where x and y are all scalars."""
     return inner.bit_right_shift(x, y)
+
+
+@right_shift.register_default()
+def default_right_shift(x, y):
+    """
+    Default function for right shift.
+   """
+    return x >> y

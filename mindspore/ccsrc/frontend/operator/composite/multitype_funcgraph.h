@@ -31,6 +31,7 @@
 #include "utils/misc.h"
 #include "ir/dtype.h"
 #include "ir/meta_func_graph.h"
+#include "pipeline/jit/ps/parse/parse_base.h"
 
 namespace mindspore {
 namespace prim {
@@ -48,6 +49,7 @@ class MultitypeFuncGraph : public MetaFuncGraph {
 
   void set_doc_url(const std::string &doc_url) { doc_url_ = doc_url; }
   void set_need_raise() { need_raise_ = true; }
+  void set_meta_obj(const py::object &obj) { meta_obj_ = obj; }
   FuncGraphPtr GenerateFromTypes(const TypePtrList &types) override;
   size_t GetPyFnCacheSize() const { return fn_cache_py_.size(); }
   const TypeListMap<py::function> &GetPyFunctions() const { return fn_cache_py_; }
@@ -59,6 +61,7 @@ class MultitypeFuncGraph : public MetaFuncGraph {
   TypeListMap<specialize_fn> fn_cache_;
   TypeListMap<py::function> fn_cache_py_;
   std::string doc_url_;
+  py::object meta_obj_ = py::none();
   bool need_raise_ = false;
 };
 using MultitypeFuncGraphPtr = std::shared_ptr<MultitypeFuncGraph>;

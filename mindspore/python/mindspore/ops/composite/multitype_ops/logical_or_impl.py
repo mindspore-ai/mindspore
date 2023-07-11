@@ -53,3 +53,11 @@ def _logical_or_tensor(x, y):
        Tensor, Return logical operation or result of x and y.
    """
     return F.logical_or(x, y)
+
+
+@logical_or.register_default()
+def default_logical_or(x, y):
+    """
+    Default function for logical or.
+   """
+    return x or y

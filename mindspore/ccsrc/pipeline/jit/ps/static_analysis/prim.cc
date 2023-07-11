@@ -2544,8 +2544,14 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     }
 
     ValuePtr converted_val = nullptr;
+    bool converted = false;
     // converted_val could be a InterpretedObject.
-    bool converted = parse::ConvertData(obj, &converted_val, true);
+    if (node->has_user_data("__keep_metafg_obj_flag__")) {
+      converted_val = std::make_shared<parse::InterpretedObject>(obj);
+      converted = true;
+    } else {
+      converted = parse::ConvertData(obj, &converted_val, true);
+    }
     if (!converted) {
       MS_LOG(INTERNAL_EXCEPTION) << "Convert the python object failed";
     }
@@ -3049,7 +3055,6 @@ class PartialEvaluator : public Evaluator {
     if (args_conf_list.size() == 0) {
       MS_LOG(INTERNAL_EXCEPTION) << "Args size should be greater than 0";
     }
-
     MS_EXCEPTION_IF_NULL(out_conf);
     MS_EXCEPTION_IF_NULL(out_conf->node());
     MS_EXCEPTION_IF_NULL(args_conf_list[0]);
@@ -3058,6 +3063,9 @@ class PartialEvaluator : public Evaluator {
     auto arg0_value = arg0_eval_result->abstract();
     MS_EXCEPTION_IF_NULL(arg0_value);
     AbstractBasePtrList args_abs_list{arg0_value};
+    auto cnode = out_conf->node()->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+
     // Func in hypermap(partial(Func, arg0), arg1, arg2) may become Poly Node.
     if (arg0_value->isa<AbstractProblem>()) {
       MS_EXCEPTION_IF_NULL(arg0_value->GetValueTrack());
@@ -3090,8 +3098,6 @@ class PartialEvaluator : public Evaluator {
                          });
     AbstractBasePtrList args(args_abs_list.begin() + 1, args_abs_list.end());
 
-    auto cnode = out_conf->node()->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
     if (cnode->size() != (args_conf_list.size() + 1)) {
       MS_LOG(INTERNAL_EXCEPTION) << "Out_conf node: " << cnode->DebugString()
                                  << ", args_conf_list: " << mindspore::ToString(args_conf_list);
