@@ -93,7 +93,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         if not step_time_list:
             iteration_time = op_summary[-1]['Task Start Time'] - op_summary[0]['Task Start Time'] + op_summary[-1][
                 'Task Duration'] + op_summary[-1]['Task Wait Time']
-            step_time_list = [[1, 'Steps', op_summary[0]['Task Start Time'], iteration_time]]
+            step_time_list = [['1', 'Steps', op_summary[0]['Task Start Time'], iteration_time]]
 
         # Add Scope Name.
         default_scope_name_time_list = self._get_scope_name_time_list(timeline_list, "Default")
