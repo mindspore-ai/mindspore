@@ -13,7 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 import copy
+import os
+import subprocess
 import time
+import psutil
 
 import pytest
 import numpy as np
@@ -2335,6 +2338,52 @@ def test_generator_with_next_and_dataset_size_when_iter():
     assert count == 50
 
 
+class FakeData:
+    def __init__(self):
+        self.input_ids = np.ones((128, 128), dtype=np.int32)
+        self.input_mask = np.ones((100, 100), dtype=np.int32)
+
+    def __getitem__(self, index):
+        return self.input_ids, self.input_mask
+
+    def __len__(self):
+        return 791
+
+
+def test_generator_multiprocessing_with_fixed_handle():
+    """
+    Feature: generator op
+    Description: generator with multiprocessing and don't leak pipe handle which is used by queue
+    Expectation: success
+    """
+
+    dataset = ds.GeneratorDataset(FakeData(), ["input_ids", "input_mask"], num_parallel_workers=2)
+    assert dataset.get_dataset_size() == 791
+
+    fds = 0
+    for i in range(5):
+        count = 0
+        for item in dataset.create_tuple_iterator(output_numpy=True, num_epochs=1):
+            print("count: {}, type: {}, shape: {}".format(count, item[0].dtype, item[0].shape))
+            assert item[0].dtype == np.int32
+            assert item[0].shape == (128, 128)
+            assert len(item) == 2
+            count += 1
+        assert count == 791
+
+        # wait for the fds handle to be released automatic
+        time.sleep(1)
+
+        i += 1
+        if i == 1:
+            fds = psutil.Process(os.getpid()).num_fds()
+            lsof = subprocess.getoutput("lsof -p " + str(os.getpid()) + " | wc -l")
+        elif i > 1:
+            assert fds >= psutil.Process(os.getpid()).num_fds()
+            new_lsof = subprocess.getoutput("lsof -p " + str(os.getpid()) + " | wc -l")
+            assert lsof >= new_lsof
+
+
 if __name__ == "__main__":
     test_generator_0()
     test_generator_1()
@@ -2393,3 +2442,4 @@ if __name__ == "__main__":
     test_generator_split_with_getitem()
     test_generator_split_with_next()
     test_generator_with_next_and_dataset_size_when_iter()
+    test_generator_multiprocessing_with_fixed_handle()
