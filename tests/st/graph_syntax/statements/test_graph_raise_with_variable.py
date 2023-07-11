@@ -21,6 +21,7 @@ import mindspore.nn as nn
 import mindspore.ops.operations as P
 from mindspore import Tensor, context, jit
 from mindspore import dtype as mstype
+from mindspore.ops.operations._inner_ops import TopTypeof
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -1251,3 +1252,45 @@ def test_assert_tensor_join_assert():
         output = net(x, y)
         print("output:", output)
     assert "The output is 5, y is 3." in str(err)
+
+
+def judge_tuple_index_dim_check_error(index_dim, data_dim, x):
+    if index_dim > data_dim:
+        raise IndexError(f"The dim of index cannot be greater than indexed data, but got "
+                         f"dim of index:{index_dim}, dim of data:{data_dim}, {x}")
+
+
+def judge_tuple_index_dim(data, tuple_index, x):
+    data_dim = data.ndim
+    index_dim = 0
+    for index in tuple_index:
+        if isinstance(TopTypeof()(index), mstype.TensorType) and index.dtype == mstype.bool_:
+            index_dim += index.ndim
+        else:
+            index_dim += 1
+    judge_tuple_index_dim_check_error(index_dim, data_dim, x)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_raise_in_sub_func_graph_with_isolate_node():
+    """
+    Feature: graph raise.
+    Description: Test raise isolate node in sub graph.
+    Expectation: No exception.
+    """
+    @ms.jit
+    def bool_index(data_input, index_input, x):
+        tuple_index = (0, index_input)
+        judge_tuple_index_dim(data_input, tuple_index, x)
+        return data_input
+
+    with pytest.raises(IndexError) as err:
+        index = Tensor([[0, 1], [0, 1]], dtype=ms.bool_)
+        data = Tensor([[0, 1], [2, 3]])
+        output = bool_index(data, index, Tensor([1]))
+        print(output)
+    assert "The dim of index cannot be greater than indexed data" in str(err)
