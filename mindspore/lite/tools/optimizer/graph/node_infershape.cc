@@ -44,7 +44,7 @@ namespace opt {
 static const std::unordered_set<schema::PrimitiveType> kNNACLToOpsInfer = {
   schema::PrimitiveType_Abs,          schema::PrimitiveType_Activation,   schema::PrimitiveType_ActivationGrad,
   schema::PrimitiveType_ArgMaxFusion, schema::PrimitiveType_ArgMinFusion, schema::PrimitiveType_Resize,
-  schema::PrimitiveType_Square,
+  schema::PrimitiveType_Square,       schema::PrimitiveType_Sqrt,         schema::PrimitiveType_Rsqrt,
 };
 
 namespace {
