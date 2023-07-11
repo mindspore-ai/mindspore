@@ -494,6 +494,9 @@ void DumpOperator(const AnfNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
     } else {
       auto input = op->cast<CNodePtr>();
       auto fg = input->func_graph();
+      if (fg == nullptr) {
+        MS_LOG(EXCEPTION) << "Get func graph nullptr, node " << node->DebugString();
+      }
       gsub->buffer << "$(@" << fg->ToString() << ":" << input->ToString() << ")";
     }
     if (!func_str.empty()) {

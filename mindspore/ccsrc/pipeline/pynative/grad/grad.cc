@@ -1305,6 +1305,7 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr, co
     bprop_graph = BpropGraphFinalOpt(bprop_graph, top_cell()->has_control_flow());
   }
   if (top_input_args_info_->is_high_order_top_cell) {
+    MS_LOG(DEBUG) << "Get high grad";
     top_cell()->resource()->set_optimize_graph(BasicClone(bprop_graph));
     PyNativeAlgo::Common::ReplaceCNodeWithValueNode(bprop_graph);
   } else {
@@ -1424,12 +1425,14 @@ void GradExecutor::MakeNestedCnode(bool has_custom_bprop, const std::vector<Valu
     return;
   }
   MS_LOG(DEBUG) << "Do high grad";
+  // first_grad_fg maybe modified in auto grad, and first_grad_fg can be used multiple times
   auto first_grad_fg = cur_run_bprop_graph;
   if (has_custom_bprop) {
     first_grad_fg = curr_g();
     MS_LOG(DEBUG) << "Bprop nested";
   }
   MS_EXCEPTION_IF_NULL(first_grad_fg);
+  PyNativeAlgo::Common::DumpGraphIR("first_grad_fg.ir", first_grad_fg);
   ValuePtrList weights_args;
   const std::string &cur_top_cell_id = top_cell()->obj_id_with_grad_order();
   bool use_dynamic_shape_process = top_cell()->use_dynamic_shape_process() || top_cell()->vm_compile();

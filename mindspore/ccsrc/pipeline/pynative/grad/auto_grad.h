@@ -261,7 +261,7 @@ class AutoGradCellImpl {
   AnfNodePtr BuildKNodeForMakeTuple(const AnfNodePtr &input_node);
   AnfNodePtr BuildKNodeForTupleGetItem(const AnfNodePtr &input_node);
 
-  // Convert
+  // Convert pass
   void ConvertValueNodeValueToTensor(const AnfNodePtr &din);
   CNodePtr ConvertConstInputToAttr(const CNodePtr &cnode, const std::string &device_target,
                                    bool is_dynamic_shape = false);
