@@ -321,7 +321,7 @@ void CostGraph::ProcessDiffStraParams(const std::map<OperatorInfoPtr, StrategyPt
       auto consistency = CheckVisitedEdgeConsistency(*it);
       if (!consistency) {
         curr_identity_op->ClearStrategyCost();
-        curr_identity_op->GenerateStrategies(0);
+        (void)curr_identity_op->GenerateStrategies(0);
         if ((*it)->InitEdgeCost() != SUCCESS) {
           MS_LOG(EXCEPTION) << "Edge cost initialization failed.";
         }
@@ -349,7 +349,7 @@ void CostGraph::ProcessDiffStraParams(const std::map<OperatorInfoPtr, StrategyPt
   }
 }
 
-void CostGraph::ParamPropagation(const OperatorInfoPtr &curr_op, std::shared_ptr<Edge> edge,
+void CostGraph::ParamPropagation(const OperatorInfoPtr &curr_op, const std::shared_ptr<Edge> edge,
                                  const std::map<OperatorInfoPtr, StrategyPtr, OpsPtrCompare> &configured_ops) {
   const auto &next_op = edge->next_operator();
   MS_LOG(INFO) << "params propagation at " << curr_op->name() << "->" << next_op->name();
@@ -366,7 +366,7 @@ void CostGraph::ParamPropagation(const OperatorInfoPtr &curr_op, std::shared_ptr
     return;
   }
   next_op->ClearStrategyCost();
-  next_op->GenerateStrategies(0);
+  (void)next_op->GenerateStrategies(0);
   if (edge->InitEdgeCost() != SUCCESS) {
     MS_LOG(EXCEPTION) << "Edge cost initialization failed.";
   }
