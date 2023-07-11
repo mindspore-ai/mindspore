@@ -87,14 +87,14 @@ REG_BPROP_BUILDER("_MirrorOperator").SetUnusedInputs({i0, i1}).SetBody([](const 
   if (ib->GetAttr("parameter") != nullptr) {
     (void)attrs.insert({"parameter", ib->GetAttr("parameter")});
   }
+
   auto dx = ib->Emit(kAllReduceOpName, {dout}, attrs);
   auto ins_name = ib->GetInstanceName();
   auto primitive = GetCNodePrimitive(dx->get());
   primitive->set_instance_name("grad_mirror" + ins_name);
   if (mean_flag) {
-    auto float_one = ib->Emit("scalar_cast", {ib->Value(1.0), ib->EmitValue(ib->GetDtype(dx))});
-    auto num = ib->Emit("scalar_cast", {ib->Value(dev_num), ib->EmitValue(ib->GetDtype(dx))});
-    dx = ib->Mul(dx, ib->Cast(float_one / num, ib->GetDtype(dx)));
+    auto dev_num_r = ib->Tensor(1.0 / dev_num);
+    dx = ib->Mul(dx, ib->Cast(dev_num_r, ib->GetDtype(dx)));
   }
   return {dx};
 });
