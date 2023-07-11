@@ -630,9 +630,6 @@ class Profiler:
         if self._msprof_enable:
             return
 
-        self._start_time = int(time.time() * 1000000)
-        logger.info("Profiling: start time: %d", self._start_time)
-
         if not self._has_started:
             if not self._has_started_twice:
                 self._has_started = True
