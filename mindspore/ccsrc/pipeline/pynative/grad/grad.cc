@@ -428,7 +428,7 @@ void ProcessTupleSens(const FuncGraphPtr &bprop_graph, const InputArgsInfoPtr &i
   AnfNodePtrList make_tuple{NewValueNode(prim::kPrimMakeTuple)};
   AnfNodePtrList new_param;
   PlantTupleSens(bprop_graph, abs_seq, &make_tuple, &new_param);
-  bprop_params.insert(it, new_param.begin(), new_param.end());
+  (void)bprop_params.insert(it, new_param.begin(), new_param.end());
   bprop_graph->set_parameters(bprop_params);
   auto make_tuple_sens = bprop_graph->NewCNode(make_tuple);
   make_tuple_sens->set_abstract(sens_abstract);
