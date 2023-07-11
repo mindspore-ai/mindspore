@@ -107,8 +107,11 @@ bool LoadableDeviceAddress::MoveToHost(bool async, size_t stream_id) const {
   std::lock_guard<std::recursive_mutex> lock(ptr_mutex_);
   if (storage_info_.host_ptr_ == nullptr || storage_info_.host_ptr_mutable_) {
     storage_info_.host_ptr_ = swap_manager->AllocHostMemory(GetFileAlignSize());
+    if (storage_info_.host_ptr_ == nullptr) {
+      MS_LOG(WARNING) << "Allocating host memory failed, size: " << size_;
+      return false;
+    }
   }
-  MS_EXCEPTION_IF_NULL(storage_info_.host_ptr_);
   if (status_ == DeviceAddressStatus::kInFile) {
     if (!CopyFileToHost(storage_info_.host_ptr_, storage_info_.file_name_, size_, async)) {
       MS_LOG(WARNING) << "Copy data from file to host failed.";
@@ -155,8 +158,11 @@ bool LoadableDeviceAddress::MoveToDevice(bool async, size_t stream_id) const {
   }
   if (ptr_ == nullptr) {
     ptr_ = swap_manager->AllocDeviceMemory(size_);
+    if (ptr_ == nullptr) {
+      MS_LOG(WARNING) << "Allocating device memory failed, size: " << size_;
+      return false;
+    }
   }
-  MS_EXCEPTION_IF_NULL(ptr_);
   if (!CopyHostToDevice(ptr_, storage_info_.host_ptr_, size_, async, stream_id)) {
     MS_LOG(WARNING) << "Copy data from host to device failed.";
     return false;
