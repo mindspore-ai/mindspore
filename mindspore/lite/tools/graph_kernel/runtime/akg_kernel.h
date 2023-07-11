@@ -22,7 +22,6 @@
 #include "src/litert/lite_kernel.h"
 #include "nnacl/custom_parameter.h"
 #include "src/common/dynamic_library_loader.h"
-#include "plugin/device/cpu/kernel/akg/akg_kernel_loader.h"
 
 namespace mindspore::kernel {
 using AkgParallelLambda = int (*)(int task_id, int num_task, void *cdata);
@@ -36,7 +35,7 @@ class AkgKernel : public LiteKernel {
     params_ = static_cast<void *>(reinterpret_cast<CustomParameter *>(op_parameter_)->attr_data[0]);
     ExtractKernelAttr();
   }
-
+  virtual ~AkgKernel();
   int Prepare() override;
   int Run() override;
   int ReSize() override;
@@ -60,7 +59,7 @@ class AkgKernel : public LiteKernel {
   void *cached_runtimeargs_ = nullptr;
   std::vector<size_t> dynamic_input_index_;
   std::vector<std::vector<int>> origin_inputs_shape_;
-  AkgLibraryLoader object_loader;
+  void *lib_handle_ = nullptr;
   std::string process;
   std::string arch;
   std::string system;

@@ -23,7 +23,6 @@
 #include <thread>
 #include <algorithm>
 #include <memory>
-#include <utility>
 #include "nlohmann/json.hpp"
 #include "kernel/framework_utils.h"
 #include "include/common/thread_pool.h"
@@ -55,11 +54,19 @@ struct AkgCallBack {
 
 AkgCpuKernelManagerPtr AkgCpuKernelMod::kernel_manager_ = std::make_shared<AkgCpuKernelManager>();
 
+AkgCpuKernelManager::~AkgCpuKernelManager() {
+  for (auto &cpu_func_pair : cpu_func_map_) {
+    if (cpu_func_pair.second.second != nullptr) {
+      (void)dlclose(cpu_func_pair.second.second);
+    }
+  }
+}
+
 void AkgCpuKernelManager::GetFunctionAndKernelName(const std::string &fn, const std::string &kernel_name,
                                                    std::string *fn_so, std::string *fn_kernel) const {
   KernelMeta *bin_map = KernelMeta::GetInstance();
   auto dso_path = bin_map->kernel_meta_path();
-  (void)dso_path.append(fn + ".o");
+  (void)dso_path.append(fn + ".so");
   *fn_so = dso_path;
   *fn_kernel = kernel_name;
 }
@@ -91,32 +98,22 @@ void *AkgCpuKernelManager::GetFunction(const std::string &kernel_name) {
     MS_LOG(ERROR) << "Invalid file path " << fn_so << " kernel: " << kernel_name;
     return nullptr;
   }
-  auto akg_fd = open((*realfile).c_str(), O_RDONLY);
-  struct stat sb;
-  if (akg_fd < 0) {
-    MS_LOG(ERROR) << "open " << (*realfile) << " failed.";
+  auto file_path = realfile.value();
+  if (file_path.empty()) {
+    MS_LOG(ERROR) << "Invalid file path " << fn_so << " kernel: " << kernel_name;
     return nullptr;
   }
-  if (fstat(akg_fd, &sb) == -1) {
-    MS_LOG(ERROR) << "fstat " << (*realfile) << " failed.";
+  auto handle = dlopen(file_path.c_str(), RTLD_LAZY | RTLD_LOCAL);
+  if (handle == nullptr) {
+    MS_LOG(ERROR) << "Load " << fn_so << " failed. kernel: " << kernel_name;
     return nullptr;
   }
-  auto akg_mmap = mmap(NULL, sb.st_size, PROT_READ, MAP_SHARED, akg_fd, 0);
-  if (akg_mmap == nullptr) {
-    MS_LOG(ERROR) << "mmap " << (*realfile) << " failed.";
-  }
-  if (!object_loader.LoadAkgLib(akg_mmap)) {
-    MS_LOG(ERROR) << "parse " << (*realfile) << " failed.";
-    return nullptr;
-  }
-  auto launch_func = object_loader.LookupFunction(kernel_name);
+  auto launch_func = dlsym(handle, fn_kernel.c_str());
   if (launch_func == nullptr) {
-    MS_LOG(ERROR) << "Undefined symbol " << kernel_name << " in " << (*realfile);
+    MS_LOG(ERROR) << "Undefined symbol " << fn_kernel << " in " << fn_so;
     return nullptr;
   }
-  (void)close(akg_fd);
-  (void)munmap(akg_mmap, sb.st_size);
-  cpu_func_map_[kernel_name] = std::make_pair(launch_func, nullptr);
+  cpu_func_map_[kernel_name] = std::make_pair(launch_func, handle);
   return launch_func;
 }
 
