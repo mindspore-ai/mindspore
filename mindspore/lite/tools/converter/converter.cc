@@ -442,6 +442,7 @@ int ConverterImpl::InitConfigParam(const std::shared_ptr<ConverterPara> &param,
 int ConverterImpl::ParseParam(lite::ConfigFileParser *config_parser, const std::shared_ptr<ConverterPara> &param,
                               const std::map<int, std::map<std::string, std::string>> *model_param_infos,
                               const std::map<std::string, std::map<std::string, std::string>> maps) {
+  param->config_infos = maps;
   auto ret = RET_OK;
   if (model_param_infos->empty()) {
     ret =

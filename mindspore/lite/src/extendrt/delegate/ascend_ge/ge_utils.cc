@@ -108,4 +108,22 @@ Status GeUtils::AdaptGraph(const FuncGraphPtr &func_graph) {
   }
   return kSuccess;
 }
+
+std::shared_ptr<AscendDeviceInfo> GeUtils::GetAscendDeviceInfo(const std::shared_ptr<mindspore::Context> &context) {
+  if (context == nullptr) {
+    MS_LOG(ERROR) << "Context cannot be nullptr";
+    return nullptr;
+  }
+  auto device_list = context->MutableDeviceInfo();
+  auto itr =
+    std::find_if(device_list.begin(), device_list.end(), [](const std::shared_ptr<DeviceInfoContext> &device_info) {
+      return device_info->GetDeviceType() == DeviceType::kAscend;
+    });
+  if (itr == device_list.end()) {
+    MS_LOG(ERROR) << "Can not find ascend device context.";
+    return nullptr;
+  }
+  auto ascend_device_info = (*itr)->Cast<AscendDeviceInfo>();
+  return ascend_device_info;
+}
 }  // namespace mindspore

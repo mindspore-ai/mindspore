@@ -21,13 +21,20 @@
 #include "utils/log_adapter.h"
 #include "extendrt/delegate/plugin/ascend_ge_executor_plugin.h"
 #include "extendrt/delegate/ascend_ge/ge_device_context.h"
+#include "extendrt/delegate/ascend_ge/ge_graph_executor.h"
 
 namespace mindspore {
 class AscendGeExecutorPluginImpl : public lite::AscendGeExecutorPluginImplBase {
  public:
   AscendGeExecutorPluginImpl() = default;
   ~AscendGeExecutorPluginImpl() = default;
-  Status AdaptGraph(FuncGraphPtr graph) const;
+  Status AdaptGraph(FuncGraphPtr graph) const override;
+  bool AoeTuning(const FuncGraphPtr &graph, const std::shared_ptr<mindspore::Context> &context,
+                 const ConfigInfos &config_infos) override;
+
+ private:
+  std::shared_ptr<GeGraphExecutor> InitGeGraphExecutor(const std::shared_ptr<mindspore::Context> &context,
+                                                       const ConfigInfos &config_infos);
 };
 
 extern "C" MS_API AscendGeExecutorPluginImpl *CreateAscendGeExecutorPluginImpl();

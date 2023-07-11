@@ -178,7 +178,7 @@ int RuntimeConvert(const mindspore::api::FuncGraphPtr &graph, const std::shared_
         config_parser.SetParamByConfigfile(param, ascend_map);
       }
       if (device->GetProvider() == kAscendProviderGe) {
-        param->ascendGeOptionCfg.provider = kAscendProviderGe;
+        param->provider = kAscendProviderGe;
         continue;
       }
 

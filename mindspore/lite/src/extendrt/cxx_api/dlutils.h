@@ -139,6 +139,32 @@ inline Status DLSoOpen(const std::string &dl_path, const std::string &func_name,
   return kSuccess;
 }
 
+inline Status DLSoSym(const std::string &dl_path, void *handle, const std::string &func_name, void **function) {
+  if (handle == nullptr) {
+    MS_LOG(WARNING) << "Input parameter handle cannot be nullptr";
+    return Status(kMEFailed, "Input parameter handle cannot be nullptr");
+  }
+  if (func_name.empty()) {
+    MS_LOG(WARNING) << "Input parameter func_name cannot be empty";
+    return Status(kMEFailed, "Input parameter func_name cannot be empty");
+  }
+  if (function == nullptr) {
+    MS_LOG(WARNING) << "Input parameter function cannot be nullptr";
+    return Status(kMEFailed, "Input parameter function cannot be nullptr");
+  }
+  auto get_dl_error = []() -> std::string {
+    auto error = dlerror();
+    return error == nullptr ? "" : error;
+  };
+  *function = dlsym(handle, func_name.c_str());
+  if (*function == nullptr) {
+    auto error = get_dl_error();
+    MS_LOG(WARNING) << "Could not find " + func_name + " in " + dl_path + ", error: " << error;
+    return Status(kMEFailed, "Could not find " + func_name + " in " + dl_path + ", error: " + error);
+  }
+  return kSuccess;
+}
+
 inline void DLSoClose(void *handle) {
   if (handle != nullptr) {
     (void)dlclose(handle);

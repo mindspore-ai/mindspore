@@ -280,13 +280,9 @@ Status GeDeviceContext::InitGe(const std::shared_ptr<MsContext> &inst_context, c
 
   std::map<std::string, std::string> ge_options;
   GetGeOptions(inst_context, context, &ge_options, config_info);
-  {
-    // Release GIL before calling into (potentially long-running) C++ code
-    mindspore::ScopedLongRunning long_running;
-    if (ge::GEInitialize(ge_options) != ge::GRAPH_SUCCESS) {
-      MS_LOG(ERROR) << "Initialize GE failed: " << ge::GEGetErrorMsg();
-      return kLiteError;
-    }
+  if (ge::GEInitialize(ge_options) != ge::GRAPH_SUCCESS) {
+    MS_LOG(ERROR) << "Initialize GE failed: " << ge::GEGetErrorMsg();
+    return kLiteError;
   }
   inst_context->increase_param<uint32_t>(MS_CTX_GE_REF);
   MS_LOG(INFO) << "Init ge successful, ge reference = " << inst_context->get_param<uint32_t>(MS_CTX_GE_REF) << ".";

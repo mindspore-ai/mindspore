@@ -45,16 +45,16 @@ bool AscendGeExecutorPlugin::Register() {
   if (is_registered_) {
     return true;
   }
-  auto ret = DLSoPath({"libmindspore-lite.so", "_c_lite"}, kAscendGePluginSoName, &plugin_path_);
+  auto ret = DLSoPath({"libmindspore-lite.so", "_c_lite", "tools/converter/lib"}, kAscendGePluginSoName, &plugin_path_);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Get real path of " << kAscendGePluginSoName << " failed.";
     return false;
   }
-  MS_LOG(INFO) << "Find tensorrt plugin so success, path = " << plugin_path_;
+  MS_LOG(INFO) << "Find ascend ge plugin so success, path = " << plugin_path_;
   void *function = nullptr;
   ret = DLSoOpen(plugin_path_, kFunCreateAscendGePluginImpl, &handle_, &function);
   if (ret != kSuccess) {
-    MS_LOG(ERROR) << "DLSoOpen failed, so path: " << plugin_path_;
+    MS_LOG(ERROR) << "DLSoOpen failed, so path: " << plugin_path_ << ", err: " << ret.ToString();
     return false;
   }
   auto create_plugin_impl_func = reinterpret_cast<AscendGeExecutorPluginImplBase *(*)(void)>(function);
@@ -81,6 +81,20 @@ void AscendGeExecutorPlugin::AdaptGraph(FuncGraphPtr graph) {
     return;
   }
   (void)ge_plugin_impl_->AdaptGraph(graph);
+#endif
+}
+
+bool AscendGeExecutorPlugin::AoeTuning(const FuncGraphPtr &graph, const std::shared_ptr<mindspore::Context> &context,
+                                       const ConfigInfos &config_infos) {
+#if !defined(_WIN32)
+  if (!is_registered_ || ge_plugin_impl_ == nullptr) {
+    MS_LOG(ERROR) << "The Ascend ge executor is not registered.";
+    return false;
+  }
+  return ge_plugin_impl_->AoeTuning(graph, context, config_infos);
+#else
+  MS_LOG(ERROR) << "Not Support Windows";
+  return false;
 #endif
 }
 }  // namespace mindspore::lite

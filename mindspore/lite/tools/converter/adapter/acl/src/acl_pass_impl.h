@@ -70,9 +70,6 @@ class AclPassImpl {
   /* build func graph */
   STATUS SetGraphInputShape(const FuncGraphPtr &func_graph);
   STATUS SetAclModelOptions(const FuncGraphPtr &func_graph);
-  std::shared_ptr<mindspore::Context> CreateModelContext();
-  void SetAclModelInitOptions(const std::shared_ptr<AscendDeviceInfo> &ascend_info);
-  void SetAclModelBuildOptions(const std::shared_ptr<AscendDeviceInfo> &ascend_info);
   STATUS MapperForOrgMindIR(const FuncGraphPtr &func_graph);
 
  private:

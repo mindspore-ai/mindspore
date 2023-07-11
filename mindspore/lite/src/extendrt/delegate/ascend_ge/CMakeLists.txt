@@ -18,12 +18,12 @@ endif()
 #link_directories(${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 
 file(GLOB GE_EXECUTOR_SRC
-        ${CCSRC_DIR}/runtime/device/ms_device_shape_transfer.cc
-        ${CCSRC_DIR}/utils/config_manager.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/*.cc
-        ${TOP_DIR}/mindspore/lite/tools/converter/adapter/acl/mapper/*.cc
-        ${TOP_DIR}/mindspore/lite/tools/converter/adapter/acl/common/utils.cc
-        )
+    ${CCSRC_DIR}/runtime/device/ms_device_shape_transfer.cc
+    ${CCSRC_DIR}/utils/config_manager.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/*.cc
+    ${TOP_DIR}/mindspore/lite/tools/converter/adapter/acl/mapper/*.cc
+    ${TOP_DIR}/mindspore/lite/tools/converter/adapter/acl/common/utils.cc
+    )
 list(APPEND GE_EXECUTOR_SRC $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
 
 
@@ -44,7 +44,7 @@ find_library(libaicpu_engine_common libaicpu_engine_common.so ${ASCEND_CANN_RUNT
 find_library(ge_runner libge_runner.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 
 target_link_libraries(ascend_ge_plugin ${ge_graph} ${ge_compiler} ${acl_retr} ${acl_cblas} ${acl_dvpp}
-                      ${acl_runtime} ${libplatform} ${libcompress} ${libopskernel} ${libaicore_utils}
-                      ${libaicpu_engine_common} ${acl} ${ge_runner} mindspore_converter mindspore_core)
+    ${acl_runtime} ${libplatform} ${libcompress} ${libopskernel} ${libaicore_utils}
+    ${libaicpu_engine_common} ${acl} ${ge_runner} mindspore_converter mindspore_core)
 
 target_link_libraries(ascend_ge_plugin mindspore-extendrt)
