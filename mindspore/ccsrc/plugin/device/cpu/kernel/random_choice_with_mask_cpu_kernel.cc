@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/random_choice_with_mask_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "mindspore/core/ops/random_choice_with_mask.h"
+#include "kernel/philox_random.h"
 
 namespace mindspore {
 namespace kernel {
@@ -94,8 +95,10 @@ bool RandomChoiceWithMaskCpuKernelMod::Init(const BaseOperatorPtr &base_operator
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), output_num, kernel_name_);
 
   auto random_choice_with_mask_ptr = std::dynamic_pointer_cast<ops::RandomChoiceWithMask>(base_operator);
-  seed_ = random_choice_with_mask_ptr->get_seed();
-  seed2_ = random_choice_with_mask_ptr->get_seed2();
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  uint64_t init_seed = random::GetSeed(seed, seed2);
+  rng_.seed(init_seed);
   count_ = random_choice_with_mask_ptr->get_count();
   return true;
 }
@@ -145,7 +148,6 @@ bool RandomChoiceWithMaskCpuKernelMod::Launch(const std::vector<kernel::AddressP
     auto *output_coordinate = reinterpret_cast<int32_t *>(outputs[0]->addr) + b * count_ * input_dim_size_;
     auto *mask = reinterpret_cast<bool *>(outputs[1]->addr) + b * count_;
 
-    size_t seedc = seed2_ != 0 ? seed2_ : (seed_ != 0 ? seed_ : generator_());
     int32_t non_zero_num = 0;
     for (int32_t i = 0; i < input_total_count_; i++) {
       if (input[i] != 0) {
@@ -167,7 +169,7 @@ bool RandomChoiceWithMaskCpuKernelMod::Launch(const std::vector<kernel::AddressP
 
     std::vector<int32_t> all_nums(non_zero_num);
     std::iota(begin(all_nums), end(all_nums), 0);
-    shuffle(all_nums.begin(), all_nums.end(), std::default_random_engine(seedc));
+    shuffle(all_nums.begin(), all_nums.end(), rng_);
 
     for (int32_t i = 0; i < output_non_zero_length; i++) {
       int32_t mean = all_nums[i];

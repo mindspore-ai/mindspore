@@ -6,6 +6,7 @@ file(GLOB_RECURSE KERNEL_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "ops_utils.cc"
     "common_utils.cc"
     "framework_utils.cc"
+    "philox_random.cc"
     "kash/*.cc"
     "oplib/*.cc"
     "environ_manager.cc"

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,6 +69,8 @@ class RandomShuffleGpuKernelMod : public NativeGpuKernelMod {
   int64_t inner_size_{1};
   size_t shuffle_size_{1};
   size_t batch_rank_{0};
+  uint64_t seed_{0};
+  uint64_t seed_offset_{0};
   bool is_null_input_{false};
   void *cuda_stream_{nullptr};
   std::vector<int64_t> input_shape_;

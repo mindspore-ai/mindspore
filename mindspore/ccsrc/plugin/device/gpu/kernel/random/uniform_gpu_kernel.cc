@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,9 @@ bool UniformGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   kernel_func_ = func_list_[index].second;
   from_ = GetValue<float>(base_operator->GetAttr("from"));
   to_ = GetValue<float>(base_operator->GetAttr("to"));
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
+  uint64_t offset = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("offset")));
+  seed_ = random::GetSeed(seed, offset);
   return true;
 }
 
@@ -54,8 +57,10 @@ bool UniformGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
                                        const std::vector<AddressPtr> &outputs) {
   T *x = GetDeviceAddress<T>(inputs, kIndex0);
   T *y = GetDeviceAddress<T>(outputs, kIndex0);
-  auto status = CalUniform(x, y, from_, to_, input_size_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = CalUniform(x, y, from_, to_, seed_, seed_offset_, input_size_, device_id_,
+                           reinterpret_cast<cudaStream_t>(cuda_stream_));
   CHECK_CUDA_STATUS(status, kernel_name_);
+  seed_offset_ += 1;
   return true;
 }
 

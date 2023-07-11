@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include <map>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
+#include "kernel/philox_random.h"
 
 namespace mindspore {
 namespace kernel {
@@ -72,9 +73,8 @@ class ParameterizedTruncatedNormalGpuKernelMod : public NativeGpuKernelMod,
   bool scalar_max_;
   void *cuda_stream_{nullptr};
   uint32_t device_id_{0};
-  int64_t seed_{0};
-  int64_t seed2_{0};
-  int64_t final_seed_{0};
+  uint64_t seed_{0};
+  uint64_t seed_offset_{0};
   int64_t unit_output_size_;
   int64_t output_elements_;
   int64_t stdevs_elements_;

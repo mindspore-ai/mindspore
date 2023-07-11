@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 #include <algorithm>
 #include "plugin/device/gpu/kernel/nn/dropout_gpu_kernel.h"
 #include "mindspore/core/ops/dropout.h"
+#include "kernel/philox_random.h"
 
 namespace mindspore {
 namespace kernel {
@@ -40,6 +41,9 @@ bool DropoutFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
                       << "', it does not support this kernel data type: " << kernel_attr;
   }
   kernel_func_ = func_list_[index].second;
+  uint64_t seed0 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("Seed0")));
+  uint64_t seed1 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("Seed1")));
+  seed_ = random::GetSeed(seed0, seed1);
   return true;
 }
 
@@ -71,20 +75,9 @@ int DropoutFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
       only_use_second_output_ = GetValue<bool>(base_operator->GetAttr(kAttrOnlyUseSecondOutput));
     }
   }
-  int64_t seed = GetValue<int64_t>(base_operator->GetAttr("Seed0"));
-  if (seed == 0) {
-    seed = GetValue<int64_t>(base_operator->GetAttr("Seed1"));
-    if (seed == 0) {
-      seed = time(NULL);
-    }
-  }
-  seed_ = static_cast<uint64_t>(seed);
   if (!states_init_ && !use_fused_dropout_) {
     CHECK_CURAND_RET_WITH_EXCEPT(curandCreateGenerator(&mask_generator_, CURAND_RNG_PSEUDO_DEFAULT),
                                  "Failed to create generator");
-    CHECK_CURAND_RET_WITH_EXCEPT(curandSetPseudoRandomGeneratorSeed(mask_generator_, seed_),
-                                 "Failed to SetPseudoRandomGeneratorSeed");
-    MS_EXCEPTION_IF_NULL(mask_generator_);
     states_init_ = true;
   }
   return 0;
@@ -150,6 +143,8 @@ bool DropoutFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
 
   float *mask_f = GetDeviceAddress<float>(workspace, 0);
 
+  CHECK_CURAND_RET_WITH_EXCEPT(curandSetPseudoRandomGeneratorSeed(mask_generator_, seed_ + seed_offset_),
+                               "Failed to SetPseudoRandomGeneratorSeed");
   CHECK_CURAND_RET_WITH_EXCEPT(curandSetStream(mask_generator_, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "Failed to set stream for generator");
   // curandGen only support float or double for mask.
@@ -158,6 +153,8 @@ bool DropoutFwdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   status =
     DropoutForward(input, mask, output, mask_f, num_count_, keep_prob_, reinterpret_cast<cudaStream_t>(stream_ptr));
   CHECK_CUDA_STATUS(status, kernel_name_);
+  seed_offset_ += 1;
+
   return true;
 }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Huawei Technologies Co., Ltd. 2022. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ void BernoulliCpuKernelMod::InitMSPhiloxRandom(int64_t seed_, int64_t offset_) {
     seed_ = SizeToUlong(New64());
     offset_ = SizeToUlong(New64());
   }
-  generator_ = random::MSPhiloxRandom(seed_, offset_);
+  generator_ = random::PhiloxRandom(seed_, offset_);
 }
 
 float BernoulliCpuKernelMod::RandFloat() {
@@ -73,7 +73,7 @@ float BernoulliCpuKernelMod::RandFloat() {
 }
 
 uint32_t BernoulliCpuKernelMod::GenerateSingle() {
-  if (used_result_index_ == random::MSPhiloxRandom::kResultElementCount) {
+  if (used_result_index_ == random::PhiloxRandom::kResultElementCount) {
     unused_results_ = generator_();
     used_result_index_ = 0;
   }

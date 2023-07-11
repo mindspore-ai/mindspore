@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/random_op_impl.cuh"
 #include "include/curand.h"
 #include "utils/ms_context.h"
+#include "kernel/philox_random.h"
 
 namespace mindspore {
 namespace kernel {
@@ -74,15 +75,14 @@ class RandomOpGpuKernelMod : public NativeGpuKernelMod {
   static std::map<std::string, std::vector<std::pair<KernelAttr, RandomOpGpuKernelMod::OpFunc>>> kernel_attr_map_;
   RandomOptype random_op_type_{RANDOM_OP_INVALID_TYPE};
   size_t input_num_{0};
-  int seed_{0};
-  int seed2_{0};
+  uint64_t seed_{0};
+  uint64_t seed_offset_{0};
   OpFunc kernel_func_;
   curandGenerator_t mask_generator_{nullptr};
   bool states_init_{false};
   bool use_curand_{false};
   void *cuda_stream_{nullptr};
   std::string kernel_type_;
-  int seed_offset_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

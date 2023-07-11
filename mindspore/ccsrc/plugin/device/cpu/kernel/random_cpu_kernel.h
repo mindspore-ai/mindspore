@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 #include <utility>
 #include <vector>
 #include <string>
+#include <random>
 #include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "mindspore/core/ops/random_ops.h"
@@ -30,7 +31,6 @@ namespace kernel {
 constexpr auto kStandardNormal = "StandardNormal";
 constexpr auto kUniformInt = "UniformInt";
 constexpr auto kUniformReal = "UniformReal";
-constexpr auto kUnknown = "Unknown";
 enum RandomOptype { RANDOM_OP_NORMAL = 0, RANDOM_OP_UNIFORM_INT, RANDOM_OP_UNIFORM_REAL, RANDOM_OP_INVALID_TYPE = 255 };
 
 const std::map<std::string, RandomOptype> kRandomOpTypeMap = {
@@ -52,13 +52,11 @@ class RandomCpuKernelMod : public NativeCpuKernelMod {
 
   std::vector<KernelAttr> GetOpSupport() override;
 
-  uint64_t seed_offset_{0};
-
  private:
   RandomOptype random_op_type_{RANDOM_OP_INVALID_TYPE};
-  int seed_{0};
-  int seed2_{0};
   std::string kernel_type_;
+  std::mt19937 mtrng_;
+  std::default_random_engine dfrng_;
 };
 }  // namespace kernel
 }  // namespace mindspore

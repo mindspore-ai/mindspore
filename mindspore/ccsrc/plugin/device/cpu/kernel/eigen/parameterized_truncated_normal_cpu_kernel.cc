@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 #include "plugin/device/cpu/kernel/eigen/eigen_common_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "kernel/common_utils.h"
+#include "kernel/philox_random.h"
 #include "mindspore/core/ops/parameterized_truncated_normal.h"
 
 namespace mindspore {
@@ -52,8 +53,10 @@ bool ParameterizedTruncatedNormalCpuKernelMod::Init(const BaseOperatorPtr &base_
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
   auto kernel_ptr = std::dynamic_pointer_cast<ops::ParameterizedTruncatedNormal>(base_operator);
   MS_EXCEPTION_IF_NULL(kernel_ptr);
-  seed_ = kernel_ptr->get_seed();
-  seed2_ = kernel_ptr->get_seed2();
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  uint64_t init_seed = random::GetSeed(seed, seed2);
+  rng_.seed(init_seed);
   input_type_ = inputs[kInput0]->GetDtype();
   input_means_type_ = inputs[kInput1]->GetDtype();
   input_stdevs_type_ = inputs[kInput2]->GetDtype();
@@ -102,19 +105,6 @@ bool ParameterizedTruncatedNormalCpuKernelMod::LaunchKernel(const std::vector<Ad
   auto stdevs = reinterpret_cast<T *>(inputs[kInput2]->addr);
   auto minvals = reinterpret_cast<T *>(inputs[kInput3]->addr);
   auto maxvals = reinterpret_cast<T *>(inputs[kInput4]->addr);
-
-  // setup seed
-  int64_t final_seed = 0;
-  if (seed_ > 0) {
-    final_seed = seed_;
-  } else if (seed2_ > 0) {
-    final_seed = seed2_;
-  } else {
-    std::random_device r;
-    final_seed = static_cast<int64_t>(r());
-  }
-  // setup random engine
-  rng.seed(LongToUlong(final_seed));
 
   std::vector<T *> params = {means, stdevs, minvals, maxvals};
 
@@ -191,7 +181,7 @@ void ParameterizedTruncatedNormalCpuKernelMod::GenerateCase1(const int64_t size,
   int sample_num = 0;
   while (sample_num < size) {
     for (int iter = 0; iter <= kMaxIterations;) {
-      T normal_sample = static_cast<T>(normal_dist(rng));
+      T normal_sample = static_cast<T>(normal_dist(rng_));
       if ((normal_sample >= norm_min) && (normal_sample <= norm_max)) {
         *output = normal_sample * stddev + mean;
         if (stddev <= static_cast<T>(0)) {
@@ -224,10 +214,10 @@ void ParameterizedTruncatedNormalCpuKernelMod::GenerateCase2(const int64_t size,
   const T plus_Factor = (norm_min < T(0)) ? T(0) : norm_min * norm_min;
   while (sample_num < size) {
     for (int iter = 0; iter <= kMaxIterations;) {
-      T uniform_sample = T(unifrom_dist(rng));
+      T uniform_sample = T(unifrom_dist(rng_));
       T z = uniform_sample * diff + norm_min;
       T g = (plus_Factor - z * z) / T(2.0);
-      bool accept = static_cast<T>(unifrom_dist(rng)) <= exp(g);
+      bool accept = static_cast<T>(unifrom_dist(rng_)) <= exp(g);
       if (accept || iter + 1 >= kMaxIterations) {
         if (!accept) {
           *output_ptr = output;
@@ -260,11 +250,11 @@ void ParameterizedTruncatedNormalCpuKernelMod::GenerateCase3(const int64_t size,
   const T alpha = (norm_min + sqrt((norm_min * norm_min) + T(4))) / T(2);
   while (sample_num < size) {
     for (int iter = 0; iter <= kMaxIterations;) {
-      T uniform_sample = T(unifrom_dist(rng));
+      T uniform_sample = T(unifrom_dist(rng_));
       T z = -log(uniform_sample) / alpha + norm_min;
       const T x = norm_min < alpha ? alpha - z : norm_min - alpha;
       const T g = exp(-x * x / T(2.0));
-      const T u = T(unifrom_dist(rng));
+      const T u = T(unifrom_dist(rng_));
       bool accept = (u <= g && z < norm_max);
       if (accept || iter + 1 >= kMaxIterations) {
         if (!accept) {

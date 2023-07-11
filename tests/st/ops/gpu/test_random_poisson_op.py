@@ -42,7 +42,7 @@ def test_random_poisson_op_case1():
     rate_type_list = [mindspore.int32, mindspore.int64, mindspore.float16, mindspore.float32, mindspore.float64]
     for rate_type in rate_type_list:
         rate = Tensor(np.array([5, 10]), rate_type)
-        expect_result = Tensor(np.array([[[6, 15], [3, 14], [3, 10], [2, 9]]]), rate_type)
+        expect_result = Tensor(np.array([[[7, 8], [4, 10], [2, 14], [5, 13]]]), rate_type)
 
         context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
         output = random_poisson_test(shape, rate)
@@ -70,12 +70,12 @@ def test_random_poisson_op_case2():
     rate_type_list = [mindspore.int32, mindspore.int64, mindspore.float16, mindspore.float32, mindspore.float64]
     for rate_type in rate_type_list:
         rate = Tensor(np.array([5, 10, 15]), rate_type)
-        expect_result = Tensor(np.array([[[[6, 15, 18],
-                                           [5, 12, 13],
-                                           [2, 9, 17]],
-                                          [[1, 7, 15],
-                                           [3, 6, 19],
-                                           [6, 7, 11]]]]), rate_type)
+        expect_result = Tensor(np.array([[[[7, 8, 12],
+                                           [5, 6, 20],
+                                           [5, 13, 17]],
+                                          [[5, 12, 21],
+                                           [6, 4, 10],
+                                           [10, 11, 4]]]]), rate_type)
 
         context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
         output = random_poisson_test(shape, rate)

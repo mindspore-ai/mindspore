@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/math/multinomial_gpu_kernel.h"
+#include "kernel/philox_random.h"
 
 namespace mindspore {
 namespace kernel {
@@ -31,8 +32,9 @@ bool MultinomialGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
 
   auto kernel_ptr = std::dynamic_pointer_cast<ops::Multinomial>(base_operator);
   MS_EXCEPTION_IF_NULL(kernel_ptr);
-  seed_ = static_cast<int>(kernel_ptr->get_seed());
-  seed2_ = static_cast<int>(kernel_ptr->get_seed2());
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  seed_ = random::GetSeed(seed, seed2);
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -85,23 +87,11 @@ void MultinomialGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   }
   cudaError_t status = cudaErrorNotReady;
   auto stream = reinterpret_cast<cudaStream_t>(stream_ptr);
-  if (!rand_state_init_) {
-    int rng_seed = 0;
-    std::random_device rd;
-    if (seed2_ != 0) {
-      rng_seed = seed2_;
-    } else if (seed_ != 0) {
-      rng_seed = seed_;
-    } else {
-      rng_seed = static_cast<int>(rd());
-    }
-    status = InitRandState(rng_seed, distributions_, rand_state_, stream);
-    CHECK_CUDA_STATUS(status, "InitRandState called by " + kernel_name_);
-    rand_state_init_ = true;
-  }
-
+  status = InitRandState(seed_, seed_offset_, distributions_, rand_state_, stream);
+  CHECK_CUDA_STATUS(status, "InitRandState called by " + kernel_name_);
   status = Multinomial(distributions_, categories_, probs_addr, rand_state_, num_sample_addr, output_addr, stream);
   CHECK_CUDA_STATUS(status, kernel_name_);
+  seed_offset_ += 1;
 }
 
 std::vector<std::pair<KernelAttr, MultinomialGpuKernelMod::LaunchFunc>> MultinomialGpuKernelMod::func_list_ = {

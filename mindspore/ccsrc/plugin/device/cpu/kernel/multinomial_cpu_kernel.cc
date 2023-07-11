@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
+#include "kernel/philox_random.h"
 
 namespace mindspore {
 namespace kernel {
@@ -63,19 +64,10 @@ bool MultinomialCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   output_dtype_ = outputs[0]->GetDtype();
   input0_dtype_ = inputs[0]->GetDtype();
   input1_dtype_ = inputs[1]->GetDtype();
-  auto kernel_ptr = std::make_shared<ops::Multinomial>(base_operator->GetPrim());
-  seed_ = kernel_ptr->get_seed();
-  seed2_ = kernel_ptr->get_seed2();
-  int64_t RNG_seed = 0;
-  if (seed2_ != 0) {
-    RNG_seed = seed2_;
-  } else if (seed_ != 0) {
-    RNG_seed = seed_;
-  } else {
-    std::random_device rd;
-    RNG_seed = static_cast<int64_t>(rd());
-  }
-  rng_.seed(LongToUlong(RNG_seed));
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  uint64_t init_seed = random::GetSeed(seed, seed2);
+  rng_.seed(init_seed);
   return true;
 }
 

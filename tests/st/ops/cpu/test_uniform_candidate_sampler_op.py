@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2023 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -71,16 +71,16 @@ def uniform_candidate_sampler_hit(x, num_true, num_sampled, unique, range_max, s
     return out1, out2, out3
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_uniform_candidate_sampler_unique_1_true():
     """
-    Feature: UniformCandidateSampler gpu kernel
+    Feature: UniformCandidateSampler cpu kernel
     Description: test the correctness of shape and result
     Expectation: success.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     ms1, ms2, ms3 = uniform_candidate_sampler(np.array([[1], [3], [4], [6], [3]]),
                                               1, 3, True, 4)
     expected_1 = (3,)
@@ -90,16 +90,17 @@ def test_uniform_candidate_sampler_unique_1_true():
     np.testing.assert_array_equal(ms2, expected_2)
     np.testing.assert_array_equal(ms3, expected_3)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_uniform_candidate_sampler_not_unique_1_true():
     """
-    Feature: UniformCandidateSampler gpu kernel
+    Feature: UniformCandidateSampler cpu kernel
     Description: test the correctness of shape and result
     Expectation: success.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     ms1, ms2, ms3 = uniform_candidate_sampler(np.array([[1], [3], [4], [6], [3]]),
                                               1, 3, False, 4)
     expected_1 = (3,)
@@ -109,16 +110,17 @@ def test_uniform_candidate_sampler_not_unique_1_true():
     np.testing.assert_array_equal(ms2, expected_2)
     np.testing.assert_array_equal(ms3, expected_3)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_uniform_candidate_sampler_unique_2_true():
     """
-    Feature: UniformCandidateSampler gpu kernel
+    Feature: UniformCandidateSampler cpu kernel
     Description: test the correctness of shape and result
     Expectation: success.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     ms1, ms2, ms3 = uniform_candidate_sampler(np.array([[1, 2], [3, 2], [4, 2],
                                                         [6, 2], [3, 2]]),
                                               2, 3, True, 4)
@@ -129,16 +131,17 @@ def test_uniform_candidate_sampler_unique_2_true():
     np.testing.assert_array_equal(ms2, expected_2)
     np.testing.assert_array_equal(ms3, expected_3)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_uniform_candidate_sampler_not_unique_2_true():
     """
-    Feature: UniformCandidateSampler gpu kernel
+    Feature: UniformCandidateSampler cpu kernel
     Description: test the correctness of shape and result
     Expectation: success.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     ms1, ms2, ms3 = uniform_candidate_sampler(np.array([[1, 2], [3, 2],
                                                         [4, 2], [6, 2],
                                                         [3, 2]]),
@@ -150,16 +153,17 @@ def test_uniform_candidate_sampler_not_unique_2_true():
     np.testing.assert_array_equal(ms2, expected_2)
     np.testing.assert_array_equal(ms3, expected_3)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_uniform_candidate_sampler_large():
     """
-    Feature: UniformCandidateSampler gpu kernel
+    Feature: UniformCandidateSampler cpu kernel
     Description: test the correctness of shape and result
     Expectation: success.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     ms1, ms2, ms3 = uniform_candidate_sampler(np.array([[12221, 41414],
                                                         [3312, 5125152],
                                                         [3312454, 51252],
@@ -174,16 +178,16 @@ def test_uniform_candidate_sampler_large():
     np.testing.assert_array_equal(ms3, expected_3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_uniform_candidate_sampler_large_random():
     """
-    Feature: UniformCandidateSampler gpu kernel
+    Feature: UniformCandidateSampler cpu kernel
     Description: test the correctness of shape and result
     Expectation: success.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     ms1, ms2, ms3 = uniform_candidate_sampler(np.arange(2142).reshape(34, 63),
                                               63, 10, False, 12)
     expected_1 = (10,)
@@ -193,16 +197,17 @@ def test_uniform_candidate_sampler_large_random():
     np.testing.assert_array_equal(ms2, expected_2)
     np.testing.assert_array_equal(ms3, expected_3)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_uniform_candidate_sampler_large_random_int64_input():
     """
-    Feature: UniformCandidateSampler gpu kernel
+    Feature: UniformCandidateSampler cpu kernel
     Description: test the correctness of shape and result
     Expectation: success.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     ms1, ms2, ms3 = uniform_candidate_sampler_int64(np.arange(2142).reshape(34, 63),
                                                     63, 10, False, 12)
     expected_1 = (10,)
@@ -212,31 +217,32 @@ def test_uniform_candidate_sampler_large_random_int64_input():
     np.testing.assert_array_equal(ms2, expected_2)
     np.testing.assert_array_equal(ms3, expected_3)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_uniform_candidate_sampler_unique_1_true_hit():
     """
-    Feature: UniformCandidateSampler gpu kernel
+    Feature: UniformCandidateSampler cpu kernel
     Description: test the correctness of shape and result
     Expectation: success.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     ms1, _, _ = uniform_candidate_sampler_hit(np.array([[1]]), 1, 3, True, 4, 1, False)
     expected_1 = np.array([0, 2, 3])
     np.testing.assert_array_equal(ms1.asnumpy(), expected_1)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_uniform_candidate_sampler_unique_1_true_no_hit():
     """
-    Feature: UniformCandidateSampler gpu kernel
+    Feature: UniformCandidateSampler cpu kernel
     Description: test the correctness of shape and result
     Expectation: success.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     ms1, _, _ = uniform_candidate_sampler_hit(np.array([[1]]), 1, 3, True, 4, 1, True)
     expected_1 = np.array([0, 2, 3])
     np.testing.assert_array_equal(ms1.asnumpy(), expected_1)

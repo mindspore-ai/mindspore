@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@
 #include <iostream>
 #include <functional>
 #include <random>
+#include <limits>
 
 #include "mindspore/core/ops/uniform.h"
 #include "kernel/common_utils.h"
@@ -50,12 +51,12 @@ uint64_t UniformCpuKernelMod::New64() const {
   return distrib(rng);
 }
 
-void UniformCpuKernelMod::InitMSPhiloxRandom(int64_t seed_, int64_t offset_) {
-  if (seed_ == 0 && offset_ == 0) {
-    seed_ = SizeToLong(New64());
-    offset_ = SizeToLong(New64());
+void UniformCpuKernelMod::InitPhiloxRandom(int64_t seed, int64_t offset) {
+  if (seed == 0 && offset == 0) {
+    seed = SizeToLong(New64());
+    offset = SizeToLong(New64());
   }
-  generator_ = random::MSPhiloxRandom(seed_, offset_);
+  generator_ = random::PhiloxRandom(seed, offset);
 }
 
 float UniformCpuKernelMod::RandFloat() {
@@ -73,7 +74,7 @@ float UniformCpuKernelMod::RandFloat() {
 }
 
 uint32_t UniformCpuKernelMod::GenerateSingle() {
-  if (used_result_index_ == random::MSPhiloxRandom::kResultElementCount) {
+  if (used_result_index_ == random::PhiloxRandom::kResultElementCount) {
     unused_results_ = generator_();
     used_result_index_ = 0;
   }
@@ -93,8 +94,9 @@ bool UniformCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   }
   from_ = op->get_from();
   to_ = op->get_to();
-  seed_ = op->get_seed();
-  offset_ = op->get_offset();
+  int64_t seed = op->get_seed();
+  int64_t offset = op->get_offset();
+  InitPhiloxRandom(seed, offset);
   if (from_ > to_) {
     MS_LOG(ERROR) << "For Uniform, 'minval' must <= 'maxval', but got 'minval'=" << from_ << " ,'maxval'=" << to_;
   }
@@ -118,8 +120,6 @@ bool UniformCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
                                        const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUniformInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUniformOutputsNum, kernel_name_);
-
-  InitMSPhiloxRandom(seed_, offset_);
 
   auto y = reinterpret_cast<T *>(outputs[0]->addr);
   for (int64_t i = 0; i < input_elements_; i++) {

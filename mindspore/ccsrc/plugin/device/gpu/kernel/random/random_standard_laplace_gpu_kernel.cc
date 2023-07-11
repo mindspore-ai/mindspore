@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,9 +48,9 @@ bool StandardLaplaceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
   unit_input_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
   unit_output_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).dtype);
 
-  auto kernel_ptr = std::make_shared<ops::StandardLaplace>(base_operator->GetPrim());
-  seed_ = static_cast<int64_t>(kernel_ptr->get_seed());
-  seed2_ = static_cast<int64_t>(kernel_ptr->get_seed2());
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  seed_ = random::GetSeed(seed, seed2);
   return true;
 }
 
@@ -96,9 +96,10 @@ bool StandardLaplaceGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   curandState *devStates = nullptr;
   void *workspace_addr = GetDeviceAddress<void *>(workspace, 0);
   devStates = reinterpret_cast<curandState *>(workspace_addr);
-  auto status =
-    StandardLaplace(seed_, seed2_, devStates, output, output_elements_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  auto status = StandardLaplace(seed_, seed_offset_, devStates, output, output_elements_,
+                                reinterpret_cast<cudaStream_t>(cuda_stream_));
   CHECK_CUDA_STATUS(status, kernel_name_);
+  seed_offset_ += 1;
   return true;
 }
 

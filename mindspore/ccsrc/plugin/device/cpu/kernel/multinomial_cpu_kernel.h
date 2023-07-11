@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,8 +61,6 @@ class MultinomialCpuKernelMod : public NativeCpuKernelMod {
     std::function<bool(MultinomialCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
   ShapeVector input_shape_;
-  int64_t seed_{0};
-  int64_t seed2_{0};
   std::default_random_engine rng_;
   TypeId input0_dtype_{kTypeUnknown};
   TypeId input1_dtype_{kTypeUnknown};

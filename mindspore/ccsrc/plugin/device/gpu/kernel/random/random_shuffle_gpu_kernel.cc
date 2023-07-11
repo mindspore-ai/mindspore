@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
 #include "ir/anf.h"
 #include "utils/log_adapter.h"
 #include "kernel/common_utils.h"
+#include "kernel/philox_random.h"
 #include "include/cuda_fp16.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/random_shuffle_impl.cuh"
@@ -45,16 +46,9 @@ bool RandomShuffleGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   kernel_name_ = base_operator->name();
   auto kernel_ptr = std::make_shared<ops::RandomShuffle>(base_operator->GetPrim());
   batch_rank_ = LongToSize(kernel_ptr->get_batch_rank());
-  auto seed = kernel_ptr->get_seed();
-  auto seed2 = kernel_ptr->get_seed2();
-  if (seed == 0 && seed2 == 0) {
-    std::random_device rd;
-    std::mt19937_64 gen(rd());
-    seed = gen();
-  } else {
-    seed = (seed == 0) ? seed2 : seed;
-  }
-  generator_.seed(seed);
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  seed_ = random::GetSeed(seed, seed2);
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -104,6 +98,7 @@ int RandomShuffleGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 }
 
 std::vector<int> RandomShuffleGpuKernelMod::GetShuffleIndex() {
+  generator_.seed(seed_ + seed_offset_);
   std::vector<int> perm(shuffle_size_);
   int n = 0;
   std::generate(perm.begin(), perm.end(), [&n] { return n++; });
@@ -154,6 +149,7 @@ bool RandomShuffleGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
       CHECK_CUDA_STATUS(status, kernel_name_);
     }
   }
+  seed_offset_ += 1;
 
   return true;
 }

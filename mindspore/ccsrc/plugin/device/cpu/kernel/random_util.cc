@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,22 +40,23 @@ void GuardedPhiloxRandom::Init(uint64_t seed, uint64_t seed2) {
     seed2 = New64();
   }
   mutex_lock lock(mu_);
-  generator_ = random::MSPhiloxRandom(seed, seed2);
+  generator_ = random::PhiloxRandom(seed, seed2);
   initialized_ = true;
 }
 
-void GuardedPhiloxRandom::Init(const random::MSPhiloxRandom::ResType &counter, const random::MSPhiloxRandom::Key &key) {
+void GuardedPhiloxRandom::Init(const random::PhiloxRandom::ResultType &counter, const random::PhiloxRandom::Key &key) {
   mutex_lock lock(mu_);
-  generator_ = random::MSPhiloxRandom(counter, key);
+  generator_ = random::PhiloxRandom(counter, key);
   initialized_ = true;
 }
 
-random::MSPhiloxRandom GuardedPhiloxRandom::ReserveSamples128(uint64_t samples) {
+random::PhiloxRandom GuardedPhiloxRandom::ReserveSamples128(uint64_t samples) {
   mutex_lock lock(mu_);
   auto local = generator_;
   generator_.Skip(samples);
   return local;
 }
+
 double Uint64ToDouble(uint32_t x0, uint32_t x1) {
   const uint64_t ex = static_cast<uint64_t>(kFp64ExpBias);
   const uint32_t m_hi = x0 & 0xfffffu;

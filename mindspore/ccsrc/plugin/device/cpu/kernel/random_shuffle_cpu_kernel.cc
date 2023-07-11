@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 #include <functional>
 #include <complex>
 #include "mindspore/core/ops/random_shuffle.h"
+#include "kernel/philox_random.h"
 
 namespace mindspore {
 namespace kernel {
@@ -36,16 +37,10 @@ bool RandomShuffleCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   auto kernel_ptr = std::dynamic_pointer_cast<ops::RandomShuffle>(base_operator);
-  auto seed = kernel_ptr->get_seed();
-  auto seed2 = kernel_ptr->get_seed2();
-  if (seed == 0 && seed2 == 0) {
-    std::random_device rd;
-    std::mt19937_64 gen(rd());
-    seed = gen();
-  } else {
-    seed = (seed == 0) ? seed2 : seed;
-  }
-  generator_.seed(seed);
+  uint64_t seed = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed")));
+  uint64_t seed2 = static_cast<uint64_t>(GetValue<int64_t>(base_operator->GetAttr("seed2")));
+  uint64_t init_seed = random::GetSeed(seed, seed2);
+  rng_.seed(init_seed);
   batch_rank_ = LongToSize(kernel_ptr->get_batch_rank());
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -104,7 +99,7 @@ bool RandomShuffleCpuKernelMod::ScalarShuffleWithBatchRank(const std::vector<ker
       std::vector<size_t> perm(shuffle_size_);
       int n = 0;
       std::generate(perm.begin(), perm.end(), [&n] { return n++; });
-      std::shuffle(perm.begin(), perm.end(), generator_);
+      std::shuffle(perm.begin(), perm.end(), rng_);
       size_t offset = i * shuffle_size_ * inner_size_;
       for (size_t j = 0; j < perm.size(); j++) {
         output[offset + j] = input[offset + perm[j]];
@@ -147,7 +142,7 @@ bool RandomShuffleCpuKernelMod::TensorShuffleWithBatchRank(const std::vector<ker
       std::vector<size_t> perm(shuffle_size_);
       int n = 0;
       std::generate(perm.begin(), perm.end(), [&n] { return n++; });
-      std::shuffle(perm.begin(), perm.end(), generator_);
+      std::shuffle(perm.begin(), perm.end(), rng_);
       size_t offset = k * shuffle_size_ * copy_size;
       for (size_t i = 0; i < shuffle_size_; i++) {
         size_t output_offset = offset + i * copy_size;
@@ -181,7 +176,7 @@ bool RandomShuffleCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
   std::vector<size_t> perm(shuffle_size_);
   int n = 0;
   std::generate(perm.begin(), perm.end(), [&n] { return n++; });
-  std::shuffle(perm.begin(), perm.end(), generator_);
+  std::shuffle(perm.begin(), perm.end(), rng_);
 
   bool ret = true;
   if (batch_rank_ == 0) {

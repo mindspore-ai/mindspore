@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,8 +78,8 @@ __device__ __forceinline__ half nanOutput(half num) {
 
 template <typename T>
 __global__ void __launch_bounds__(1024)
-  Generate(int64_t seed, int64_t batch_size, int64_t samples_per_batch, T *mean, T *stdevs, T *min, T *max, T *output,
-           bool scalar_mean, bool scalar_stdevs, bool scalar_min, bool scalar_max) {
+  Generate(uint64_t seed, uint64_t seed_offset, int64_t batch_size, int64_t samples_per_batch, T *mean, T *stdevs,
+           T *min, T *max, T *output, bool scalar_mean, bool scalar_stdevs, bool scalar_min, bool scalar_max) {
   // set bounds
   const T kStdDevsInsideBoundsToUseRandnSampler = T(1.7);
 
@@ -87,7 +87,7 @@ __global__ void __launch_bounds__(1024)
        index += blockDim.x * gridDim.x) {
     // use philox generator to generate random numbers
     curandStatePhilox4_32_10_t state;
-    curand_init(seed, index, 0, &state);
+    curand_init(seed, index, seed_offset, &state);
 
     // set values
     const int batch_id = index / samples_per_batch;
@@ -242,25 +242,25 @@ __device__ void GenarateCase3(curandStatePhilox4_32_10_t *state, int index, T st
 }
 
 template <typename T>
-cudaError_t ParameterizedTruncatedNormal(int64_t seed, int64_t batch_size, int64_t samples_per_batch, T *mean,
-                                         T *stdevs, T *min, T *max, T *output, bool scalar_mean, bool scalar_stdevs,
-                                         bool scalar_min, bool scalar_max, const uint32_t &device_id,
-                                         cudaStream_t cuda_stream) {
+cudaError_t ParameterizedTruncatedNormal(uint64_t seed, uint64_t seed_offset, int64_t batch_size,
+                                         int64_t samples_per_batch, T *mean, T *stdevs, T *min, T *max, T *output,
+                                         bool scalar_mean, bool scalar_stdevs, bool scalar_min, bool scalar_max,
+                                         const uint32_t &device_id, cudaStream_t cuda_stream) {
   Generate<<<CUDA_BLOCKS(device_id, batch_size * samples_per_batch), CUDA_THREADS(device_id), device_id, cuda_stream>>>(
-    seed, batch_size, samples_per_batch, mean, stdevs, min, max, output, scalar_mean, scalar_stdevs, scalar_min,
-    scalar_max);
+    seed, seed_offset, batch_size, samples_per_batch, mean, stdevs, min, max, output, scalar_mean, scalar_stdevs,
+    scalar_min, scalar_max);
   return GetCudaStatus();
 }
 
 template CUDA_LIB_EXPORT cudaError_t ParameterizedTruncatedNormal<half>(
-  int64_t seed, int64_t batch_size, int64_t samples_per_batch, half *mean, half *stdevs, half *min, half *max,
-  half *output, bool scalar_mean, bool scalar_stdevs, bool scalar_min, bool scalar_max, const uint32_t &device_id,
-  cudaStream_t cuda_stream);
+  uint64_t seed, uint64_t seed_offset, int64_t batch_size, int64_t samples_per_batch, half *mean, half *stdevs,
+  half *min, half *max, half *output, bool scalar_mean, bool scalar_stdevs, bool scalar_min, bool scalar_max,
+  const uint32_t &device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t ParameterizedTruncatedNormal<float>(
-  int64_t seed, int64_t batch_size, int64_t samples_per_batch, float *mean, float *stdevs, float *min, float *max,
-  float *output, bool scalar_mean, bool scalar_stdevs, bool scalar_min, bool scalar_max, const uint32_t &device_id,
-  cudaStream_t cuda_stream);
+  uint64_t seed, uint64_t seed_offset, int64_t batch_size, int64_t samples_per_batch, float *mean, float *stdevs,
+  float *min, float *max, float *output, bool scalar_mean, bool scalar_stdevs, bool scalar_min, bool scalar_max,
+  const uint32_t &device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT cudaError_t ParameterizedTruncatedNormal<double>(
-  int64_t seed, int64_t batch_size, int64_t samples_per_batch, double *mean, double *stdevs, double *min, double *max,
-  double *output, bool scalar_mean, bool scalar_stdevs, bool scalar_min, bool scalar_max, const uint32_t &device_id,
-  cudaStream_t cuda_stream);
+  uint64_t seed, uint64_t seed_offset, int64_t batch_size, int64_t samples_per_batch, double *mean, double *stdevs,
+  double *min, double *max, double *output, bool scalar_mean, bool scalar_stdevs, bool scalar_min, bool scalar_max,
+  const uint32_t &device_id, cudaStream_t cuda_stream);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
 #include <map>
 #include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/device/cpu/kernel/random_util.h"
+#include "kernel/philox_random.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
@@ -82,10 +82,10 @@ class SampleDistortedBoundingBoxV2CPUKernelMod : public NativeCpuKernelMod {
   bool use_image_if_no_bounding_boxes_{false};
   TypeId dtype_{kTypeUnknown};
 
-  random::MSPhiloxRandom generator_;
-  using ResType = random::Array<uint32_t, random::MSPhiloxRandom::kResultElementCount>;
+  random::PhiloxRandom generator_;
+  using ResType = random::Array<uint32_t, random::PhiloxRandom::kResultElementCount>;
   ResType unused_results_;
-  size_t used_result_index_ = random::MSPhiloxRandom::kResultElementCount;
+  size_t used_result_index_ = random::PhiloxRandom::kResultElementCount;
 
   float RandFloat();
   uint32_t Uniform(uint32_t n);

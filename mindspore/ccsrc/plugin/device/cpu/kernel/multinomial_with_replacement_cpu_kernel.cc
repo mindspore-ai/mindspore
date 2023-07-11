@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,12 +49,12 @@ uint64_t MultinomialWithReplacementCpuKernelMod::New64() const {
   return (rng)();
 }
 
-void MultinomialWithReplacementCpuKernelMod::InitMSPhiloxRandom(int64_t seed_, int64_t offset_) {
-  if (seed_ == 0 && offset_ == 0) {
-    seed_ = static_cast<int64_t>(New64());
-    offset_ = static_cast<int64_t>(New64());
+void MultinomialWithReplacementCpuKernelMod::InitPhiloxRandom(int64_t seed, int64_t offset) {
+  if (seed == 0 && offset == 0) {
+    seed = static_cast<int64_t>(New64());
+    offset = static_cast<int64_t>(New64());
   }
-  generator_ = random::MSPhiloxRandom(seed_, offset_);
+  generator_ = random::PhiloxRandom(seed, offset);
 }
 
 float MultinomialWithReplacementCpuKernelMod::RandFloat() {
@@ -69,7 +69,7 @@ float MultinomialWithReplacementCpuKernelMod::RandFloat() {
 }
 
 uint32_t MultinomialWithReplacementCpuKernelMod::GenerateSingle() {
-  if (used_result_index_ == random::MSPhiloxRandom::kResultElementCount) {
+  if (used_result_index_ == random::PhiloxRandom::kResultElementCount) {
     unused_results_ = generator_();
     used_result_index_ = 0;
   }
@@ -117,9 +117,18 @@ bool MultinomialWithReplacementCpuKernelMod::LaunchKernel(const std::vector<kern
                              << numsamples_ << ".";
   }
   auto x = reinterpret_cast<T *>(inputs[0]->addr);
-  auto seed_ = *reinterpret_cast<int64_t *>(inputs[1]->addr);
-  auto offset_ = *reinterpret_cast<int64_t *>(inputs[2]->addr);
-  InitMSPhiloxRandom(seed_, offset_);
+  auto seed = *reinterpret_cast<int64_t *>(inputs[1]->addr);
+  auto offset = *reinterpret_cast<int64_t *>(inputs[2]->addr);
+  if (init_state_) {
+    init_seed_ = seed;
+    init_offset_ = offset;
+    InitPhiloxRandom(init_seed_, init_offset_);
+    init_state_ = false;
+  } else if (!init_state_ && (seed != init_seed_ || offset != init_offset_)) {
+    init_seed_ = seed;
+    init_offset_ = offset;
+    InitPhiloxRandom(init_seed_, init_offset_);
+  }
 
   int64_t num_row_ = 1;
   size_t num_shape = 2;

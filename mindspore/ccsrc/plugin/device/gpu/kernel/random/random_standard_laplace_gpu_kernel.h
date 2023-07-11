@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2022-2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/random_op_impl.cuh"
+#include "kernel/philox_random.h"
 
 namespace mindspore {
 namespace kernel {
@@ -79,8 +80,8 @@ class StandardLaplaceGpuKernelMod : public NativeGpuKernelMod {
   size_t unit_output_size_{1};
   size_t output_elements_;
   SLFunc kernel_func_{};
-  int64_t seed_{0};
-  int64_t seed2_{0};
+  uint64_t seed_{0};
+  uint64_t seed_offset_{0};
   bool is_null_input_{false};
   void *cuda_stream_{nullptr};
   static std::vector<std::pair<KernelAttr, SLFunc>> func_list_;
