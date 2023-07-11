@@ -230,3 +230,13 @@ if [[ $backend == "all" || $backend == "plugin_custom_ops" ]]; then
       exit 1
     fi
 fi
+
+# test tritonserver
+if [[ $backend == "all" || $backend == "tritonserver" ]]; then
+  sh $cur_path/scripts/test_triton.sh -r $release_path -m $models_path -l $level
+  test_triton=$?
+  if [[ test_triton -ne 0 ]]; then
+    echo "Run tritonserver failed"
+    exit 1
+  fi
+fi

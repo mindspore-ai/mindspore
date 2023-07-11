@@ -108,6 +108,10 @@ endfunction()
 
 
 function(__find_pkg_then_add_target pkg_name pkg_exe lib_path)
+    set(options)
+    set(oneValueArgs PATH)
+    set(multiValueArgs SUFFIXES_PATH NAMES)
+    cmake_parse_arguments(LIB "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     unset(${pkg_name}_LIBS)
 
@@ -126,7 +130,7 @@ function(__find_pkg_then_add_target pkg_name pkg_exe lib_path)
         message("found ${${pkg_exe}_EXE}")
     endif()
 
-    foreach(_LIB_NAME ${ARGN})
+    foreach(_LIB_NAME ${LIB_NAMES})
         set(_LIB_SEARCH_NAME ${_LIB_NAME})
         if(MSVC AND ${pkg_name}_Debug)
             set(_LIB_SEARCH_NAME ${_LIB_SEARCH_NAME}d)
@@ -139,10 +143,10 @@ function(__find_pkg_then_add_target pkg_name pkg_exe lib_path)
         set(${_LIB_NAME}_LIB ${_LIB_NAME}_LIB-NOTFOUND)
         if(APPLE)
             find_library(${_LIB_NAME}_LIB ${_LIB_SEARCH_NAME} PATHS ${${pkg_name}_BASE_DIR}/${lib_path}
-                    NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
+                    PATH_SUFFIXES ${LIB_SUFFIXES_PATH} NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
         else()
             find_library(${_LIB_NAME}_LIB ${_LIB_SEARCH_NAME} PATHS ${${pkg_name}_BASE_DIR}/${lib_path}
-                    NO_DEFAULT_PATH)
+                    PATH_SUFFIXES ${LIB_SUFFIXES_PATH} NO_DEFAULT_PATH)
         endif()
         if(NOT ${_LIB_NAME}_LIB)
             message("not find ${_LIB_SEARCH_NAME} in path: ${${pkg_name}_BASE_DIR}/${lib_path}")
@@ -218,10 +222,12 @@ set(MS_FIND_NO_DEFAULT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_EN
 function(mindspore_add_pkg pkg_name)
 
     set(options)
-    set(oneValueArgs URL SHA256 GIT_REPOSITORY GIT_TAG VER EXE DIR HEAD_ONLY CMAKE_PATH RELEASE LIB_PATH CUSTOM_CMAKE)
+    set(oneValueArgs URL SHA256 GIT_REPOSITORY GIT_TAG VER EXE DIR HEAD_ONLY CMAKE_PATH RELEASE
+            LIB_PATH CUSTOM_CMAKE)
     set(multiValueArgs
             CMAKE_OPTION LIBS PRE_CONFIGURE_COMMAND CONFIGURE_COMMAND BUILD_OPTION INSTALL_INCS
-            INSTALL_LIBS PATCHES SUBMODULES SOURCEMODULES ONLY_MAKE ONLY_MAKE_INCS ONLY_MAKE_LIBS)
+            INSTALL_LIBS PATCHES SUBMODULES SOURCEMODULES ONLY_MAKE ONLY_MAKE_INCS ONLY_MAKE_LIBS
+            LIB_SUFFIXES_PATH)
     cmake_parse_arguments(PKG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if(NOT PKG_LIB_PATH)
@@ -266,7 +272,9 @@ function(mindspore_add_pkg pkg_name)
         add_library(${pkg_name} INTERFACE)
         target_include_directories(${pkg_name} INTERFACE ${${pkg_name}_INC})
         if(${PKG_RELEASE})
-            __find_pkg_then_add_target(${pkg_name} ${PKG_EXE} ${PKG_LIB_PATH} ${PKG_LIBS})
+            __find_pkg_then_add_target(${pkg_name} ${PKG_EXE} ${PKG_LIB_PATH}
+                    SUFFIXES_PATH ${PKG_LIB_SUFFIXES_PATH}
+                    NAMES ${PKG_LIBS})
         endif()
         return()
     endif()
@@ -275,7 +283,9 @@ function(mindspore_add_pkg pkg_name)
     set(${__FIND_PKG_NAME}_ROOT ${${pkg_name}_BASE_DIR} PARENT_SCOPE)
 
     if(PKG_LIBS)
-        __find_pkg_then_add_target(${pkg_name} ${PKG_EXE} ${PKG_LIB_PATH} ${PKG_LIBS})
+        __find_pkg_then_add_target(${pkg_name} ${PKG_EXE} ${PKG_LIB_PATH}
+                SUFFIXES_PATH ${PKG_LIB_SUFFIXES_PATH}
+                NAMES ${PKG_LIBS})
         if(${pkg_name}_LIBS)
             set(${pkg_name}_INC ${${pkg_name}_BASE_DIR}/include PARENT_SCOPE)
             message("Found libs: ${${pkg_name}_LIBS}")
@@ -446,7 +456,9 @@ function(mindspore_add_pkg pkg_name)
     endif()
 
     if(PKG_LIBS)
-        __find_pkg_then_add_target(${pkg_name} ${PKG_EXE} ${PKG_LIB_PATH} ${PKG_LIBS})
+        __find_pkg_then_add_target(${pkg_name} ${PKG_EXE} ${PKG_LIB_PATH}
+                SUFFIXES_PATH ${PKG_LIB_SUFFIXES_PATH}
+                NAMES ${PKG_LIBS})
         set(${pkg_name}_INC ${${pkg_name}_BASE_DIR}/include PARENT_SCOPE)
         if(NOT ${pkg_name}_LIBS)
             message(FATAL_ERROR "Can not find pkg: ${pkg_name}")
