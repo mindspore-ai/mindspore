@@ -170,6 +170,18 @@ bool BpropExpander::RunBprop(const CNodePtr &cnode, const std::vector<ValuePtr> 
     MS_LOG(DEBUG) << "The output nodes of bprop function [" << name << "] is empty.";
     return false;
   }
+  for (auto &node : output_nodes_) {
+    // A Value node gradient will loss the trace context in pynative, so emit a node. A example is Eye.
+    if (node->isa<ValueNode>()) {
+      auto abs = node->abstract();
+      MS_EXCEPTION_IF_NULL(abs);
+      if (abs->isa<abstract::AbstractScalar>()) {
+        node = ir_builder.OutZeros(ir_builder.Tensor(0, abs->BuildType()));
+      } else {
+        node = ir_builder.OutZeros(node);
+      }
+    }
+  }
   PostProcess(cnode);
   DumpResult(name);
   return true;
