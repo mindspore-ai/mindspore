@@ -51,6 +51,7 @@ class GeGraphExecutor : public LiteGraphExecutor {
   std::vector<tensor::Tensor> GetInputInfos(uint32_t graph_id) override;
   std::vector<tensor::Tensor> GetOutputInfos(uint32_t graph_id) override;
   bool Init();
+  bool AoeTuning(const FuncGraphPtr &graph);
 
  private:
   const std::shared_ptr<mindspore::Context> context_;
@@ -81,9 +82,15 @@ class GeGraphExecutor : public LiteGraphExecutor {
   bool RunGeGraphAsync(uint32_t graph_id, const std::vector<::ge::Tensor> &inputs, std::vector<::ge::Tensor> *outputs);
   bool RunDataFlowGraphAsync(uint32_t graph_id, const std::vector<::ge::Tensor> &inputs,
                              std::vector<::ge::Tensor> *outputs);
+  bool AoeTuningGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options, uint32_t *graph_id);
+
   std::map<uint32_t, std::vector<tensor::Tensor>> graph_inputs_;
   std::map<uint32_t, std::vector<tensor::Tensor>> graph_outputs_;
   std::map<uint32_t, std::vector<tensor::TensorPtr>> original_graph_outputs_;
+
+  transform::DfGraphPtr CompileGraphCommon(const FuncGraphPtr &graph, const std::map<string, string> &compile_options,
+                                           std::map<std::string, std::string> *ge_options_ptr);
+  bool UpdateGraphInputs(const FuncGraphPtr &graph);
 };
 
 struct GeSessionContext {

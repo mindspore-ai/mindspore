@@ -64,6 +64,7 @@
 #include "tools/optimizer/format/to_nchw_format.h"
 #include "tools/converter/quantizer/quantization_optimizer.h"
 #include "tools/converter/anf_transform_for_ge.h"
+#include "src/extendrt/delegate/plugin/ascend_ge_executor_plugin.h"
 
 namespace mindspore {
 namespace lite {
@@ -315,7 +316,6 @@ void SetInputParameterAbstractName(const FuncGraphPtr &func_graph) {
 STATUS ConverterFuncGraph::OptimizeForGE(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {
   if (param->ascendGeOptionCfg.plugin_custom_ops == "None" || param->ascendGeOptionCfg.plugin_custom_ops.empty()) {
     MS_LOG(INFO) << "custom op fusion not used.";
-    return RET_OK;
   }
   if (param->ascendGeOptionCfg.plugin_custom_ops == "All") {
     AnfTransformForGe transform;
@@ -324,6 +324,47 @@ STATUS ConverterFuncGraph::OptimizeForGE(const std::shared_ptr<ConverterPara> &p
       MS_LOG(ERROR) << "Transform anf graph for ge failed.";
       return status;
     }
+  }
+  auto ret = RunGeAoeOptimize(param, func_graph);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Failed to Run GE Aoe Optimize";
+    return ret;
+  }
+  return RET_OK;
+}
+
+STATUS ConverterFuncGraph::RunGeAoeOptimize(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {
+  bool run_aoe = !param->aclModelOptionCfgParam.aoe_mode.empty();
+  if (!run_aoe) {
+    auto sec_it = param->config_infos.find(kAoeGlobalOptionsSection);
+    if (sec_it != param->config_infos.end()) {
+      auto &options = sec_it->second;
+      auto option_it = options.find("job_type");
+      if (option_it != options.end()) {
+        run_aoe = true;
+      }
+    }
+  }
+  if (!run_aoe) {
+    MS_LOG(INFO) << "Aoe tuning option is not found in config";
+    return RET_OK;
+  }
+  if (param->device.find("Ascend") == std::string::npos) {
+    MS_LOG(ERROR) << "Converter optimize should be ascend_oriented when provider is ge";
+    return RET_ERROR;
+  }
+  if (!AscendGeExecutorPlugin::GetInstance().Register()) {
+    MS_LOG(ERROR) << "Failed to register ge pass plugin";
+    return RET_ERROR;
+  }
+  auto context = param->aclModelOptionCfgParam.AsModelContext(param->provider);
+  if (context == nullptr) {
+    MS_LOG(ERROR) << "Failed to converter ascend options to Model Context";
+    return RET_ERROR;
+  }
+  if (!AscendGeExecutorPlugin::GetInstance().AoeTuning(func_graph, context, param->config_infos)) {
+    MS_LOG(ERROR) << "Failed to call AoeTuning";
+    return RET_ERROR;
   }
   return RET_OK;
 }
@@ -359,10 +400,9 @@ STATUS ConverterFuncGraph::Optimize(const std::shared_ptr<ConverterPara> &param,
     return RET_OK;
   }
 
-  if (param->ascendGeOptionCfg.provider == "ge") {
+  if (param->provider == "ge") {
     return OptimizeForGE(param, func_graph);
   }
-
   std::vector<std::string> output_names;
   auto status = UnifyFuncGraphForInfer(param, func_graph, &output_names);
   if (status != RET_OK) {

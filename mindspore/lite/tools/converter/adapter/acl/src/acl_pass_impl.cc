@@ -782,62 +782,10 @@ STATUS AclPassImpl::ConvertGraphToOm(const FuncGraphPtr &func_graph, Buffer *om_
   return lite::RET_OK;
 }
 
-void AclPassImpl::SetAclModelInitOptions(const std::shared_ptr<AscendDeviceInfo> &ascend_info) {
-  if (!user_options_cfg_.fusion_switch_config_file_path.empty()) {
-    ascend_info->SetFusionSwitchConfigPath(user_options_cfg_.fusion_switch_config_file_path);
-  }
-  if (!user_options_cfg_.op_select_impl_mode.empty()) {
-    ascend_info->SetOpSelectImplMode(user_options_cfg_.op_select_impl_mode);
-  }
-  if (!user_options_cfg_.buffer_optimize.empty()) {
-    ascend_info->SetBufferOptimizeMode(user_options_cfg_.buffer_optimize);
-  }
-}
-
-void AclPassImpl::SetAclModelBuildOptions(const std::shared_ptr<AscendDeviceInfo> &ascend_info) {
-  if (user_options_cfg_.output_type != DataType::kInvalidType) {
-    ascend_info->SetOutputType(user_options_cfg_.output_type);
-  }
-  if (user_options_cfg_.input_shape_map.size() > 0) {
-    ascend_info->SetInputShapeMap(user_options_cfg_.input_shape_map);
-  }
-  if (user_options_cfg_.dynamic_batch_size.size() > 0) {
-    ascend_info->SetDynamicBatchSize(user_options_cfg_.dynamic_batch_size);
-  }
-  if (!user_options_cfg_.dynamic_image_size.empty()) {
-    ascend_info->SetDynamicImageSize(user_options_cfg_.dynamic_image_size);
-  }
-  if (!user_options_cfg_.input_format.empty()) {
-    ascend_info->SetInputFormat(user_options_cfg_.input_format);
-  }
-  if (!user_options_cfg_.input_shape.empty()) {
-    ascend_info->SetInputShape(user_options_cfg_.input_shape);
-  }
-  if (!user_options_cfg_.precision_mode.empty()) {
-    ascend_info->SetPrecisionMode(user_options_cfg_.precision_mode);
-  }
-  if (!user_options_cfg_.insert_op_config_file_path.empty()) {
-    ascend_info->SetInsertOpConfigPath(user_options_cfg_.insert_op_config_file_path);
-  }
-}
-
-std::shared_ptr<mindspore::Context> AclPassImpl::CreateModelContext() {
-  auto model_context = std::make_shared<mindspore::Context>();
-  MS_CHECK_TRUE_MSG(model_context != nullptr, nullptr, "model_context is nullptr.");
-  auto ascend_info = std::make_shared<AscendDeviceInfo>();
-  MS_CHECK_TRUE_MSG(ascend_info != nullptr, nullptr, "ascend_info is nullptr.");
-  ascend_info->SetDeviceID(user_options_cfg_.device_id);
-  SetAclModelInitOptions(ascend_info);
-  SetAclModelBuildOptions(ascend_info);
-
-  model_context->MutableDeviceInfo().emplace_back(ascend_info);
-  return model_context;
-}
-
 STATUS AclPassImpl::SetAclModelOptions(const FuncGraphPtr &func_graph) {
   MS_LOG(INFO) << "Set acl model options start.";
   MS_CHECK_TRUE_MSG(func_graph != nullptr, lite::RET_ERROR, "func_graph is nullptr.");
-  auto model_context = CreateModelContext();
+  auto model_context = user_options_cfg_.AsModelContext();
   CHECK_NULL_RETURN(model_context);
   options_ = std::make_shared<AclModelOptions>(model_context);
   CHECK_NULL_RETURN(options_);

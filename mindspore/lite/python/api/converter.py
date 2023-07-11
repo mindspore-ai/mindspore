@@ -528,6 +528,31 @@ class Converter:
             raise ValueError(f"optimize must be 'none', 'general', 'gpu_oriented' or 'ascend_oriented'.")
 
     @property
+    def provider(self):
+        """
+        Get the provider of the target device.
+
+        Returns:
+            str, the provider of the target device.
+        """
+        return self._converter.get_provider()
+
+    @provider.setter
+    def provider(self, provider):
+        """
+        Set the provider of the target device， We can specify `optimize` as ``ascend_oriented``,
+        specify `provider` as ``ge``, and set option `aoe_mode` in the `config_file` to enable AOE API tuning.
+
+        Args:
+            provider (str): Set the provider of the target device.
+
+        Raises:
+            TypeError: `provider` is not a str.
+        """
+        check_isinstance("provider", provider, str)
+        return self._converter.set_provider(provider)
+
+    @property
     def output_data_type(self):
         """
         Get the data type of the quantization model output Tensor.

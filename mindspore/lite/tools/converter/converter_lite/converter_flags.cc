@@ -104,6 +104,10 @@ Flags::Flags() {
 #endif
   AddFlag(&Flags::optimizeStr, "optimize", "The type of optimization. none | general | gpu_oriented | ascend_oriented",
           "general");
+  AddFlag(&Flags::provider, "provider",
+          "The runtime provider of target device. Currently, it can be default empty string or ge when optimize is "
+          "ascend_oriented.",
+          "");
   AddFlag(&Flags::optimizeTransformerStr, "optimizeTransformer", "Enable Fast-Transformer fusion true|false", "false");
 }
 
@@ -295,6 +299,23 @@ int Flags::InitOptimize() {
   return RET_OK;
 }
 
+int Flags::InitProvider() {
+  if (this->provider.empty()) {
+    return RET_OK;
+  }
+  if (this->provider == "ge") {
+    if (this->optimizeStr != "ascend_oriented") {
+      std::cerr << "INPUT ILLEGAL: optimize should be ascend_oriented when provider is ge" << std::endl;
+      return RET_INPUT_PARAM_INVALID;
+    }
+  } else {
+    std::cerr << "INPUT ILLEGAL: provider should be default empty string or ge  when optimize is ascend_oriented"
+              << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
+  return RET_OK;
+}
+
 int Flags::InitEncrypt() {
   if (this->encryptionStr == "true") {
     this->encryption = true;
@@ -430,6 +451,11 @@ int Flags::Init(int argc, const char **argv) {
     return RET_INPUT_PARAM_INVALID;
   }
 
+  ret = InitProvider();
+  if (ret != RET_OK) {
+    std::cerr << "Init provider failed" << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
   return RET_OK;
 }
 }  // namespace mindspore::converter

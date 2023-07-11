@@ -30,6 +30,7 @@ namespace mindspore {
 class GeUtils {
  public:
   static Status AdaptGraph(const FuncGraphPtr &func_graph);
+  static std::shared_ptr<AscendDeviceInfo> GetAscendDeviceInfo(const std::shared_ptr<mindspore::Context> &context);
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_ASCEND_GE_GE_UTILS_H_

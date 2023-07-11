@@ -20,7 +20,9 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <memory>
 #include "include/api/data_type.h"
+#include "include/api/context.h"
 
 namespace mindspore {
 namespace lite {
@@ -39,6 +41,7 @@ struct AclModelOptionCfg {
   std::string buffer_optimize;
   std::string insert_op_config_file_path;
   std::string dynamic_image_size;
+  std::string dynamic_dims;
   std::string om_file_path;
   std::string aoe_mode;
   std::string profiling_path;
@@ -47,6 +50,10 @@ struct AclModelOptionCfg {
   std::string custom_opp_path;
   std::map<std::string, std::string> init_options_map;
   std::map<std::string, std::string> build_options_map;
+  std::map<std::string, std::string> aoe_global_options_map;
+  std::map<std::string, std::string> aoe_tuning_options_map;
+
+  std::shared_ptr<mindspore::Context> AsModelContext(const std::string &provider = "") const;
 };
 
 constexpr auto kOutputShapes = "outputs_shape";

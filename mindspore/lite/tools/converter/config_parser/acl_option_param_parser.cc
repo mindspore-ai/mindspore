@@ -73,7 +73,7 @@ STATUS AclOptionParamParser::ParseCommon(const AclOptionCfgString &acl_option_st
                 << ", Buffer_optimize: " << acl_option_string.buffer_optimize
                 << ", Insert_op_config_file_path: " << acl_option_string.insert_op_config_file_path
                 << ", Dynamic image size: " << acl_option_string.dynamic_image_size
-                << ", Aoe mode: " << acl_option_string.aoe_mode;
+                << ", Dynamic dims: " << acl_option_string.dynamic_dims << ", Aoe mode: " << acl_option_string.aoe_mode;
   acl_option_cfg->input_format = acl_option_string.input_format;
   acl_option_cfg->input_shape = acl_option_string.input_shape;
   acl_option_cfg->precision_mode = acl_option_string.precision_mode;
@@ -82,6 +82,7 @@ STATUS AclOptionParamParser::ParseCommon(const AclOptionCfgString &acl_option_st
   acl_option_cfg->buffer_optimize = acl_option_string.buffer_optimize;
   acl_option_cfg->insert_op_config_file_path = acl_option_string.insert_op_config_file_path;
   acl_option_cfg->dynamic_image_size = acl_option_string.dynamic_image_size;
+  acl_option_cfg->dynamic_dims = acl_option_string.dynamic_dims;
   acl_option_cfg->aoe_mode = acl_option_string.aoe_mode;
   acl_option_cfg->custom_opp_path = acl_option_string.custom_opp_path;
   acl_option_cfg->init_options_map = acl_option_string.init_options_map;

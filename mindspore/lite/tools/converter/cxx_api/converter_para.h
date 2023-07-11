@@ -49,6 +49,8 @@ struct AscendGeOptionCfg {
   std::string plugin_custom_ops;
 };
 
+using ConfigInfos = std::map<std::string, std::map<std::string, std::string>>;
+
 struct ConverterPara {
   converter::FmkType fmk_type;
   std::string model_file;
@@ -98,11 +100,14 @@ struct ConverterPara {
   ParallelSplitConfig parallel_split_config;
   AscendGeOptionCfg ascendGeOptionCfg;
   std::string device;
+  std::string provider;
   CpuOptionCfg cpuOptionCfgParam;
   lite::quant::TransformQuantParam transformQuantParam;
   lite::quant::AscendQuantParam ascendQuantParam;
   lite::quant::DynamicQuantParam dynamicQuantParam;
   GraphKernelCfg graphKernelParam;
+  // configs parse from config_file
+  ConfigInfos config_infos;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_CXX_API_CONVERTER_PARA_H_
