@@ -309,9 +309,6 @@ class Primitive(Primitive_):
 
     def __call__(self, *args):
         should_elim, output = self.check_elim(*args)
-        for arg in args:
-            if isinstance(arg, Parameter) and arg.has_init:
-                arg.init_data()
         if should_elim:
             return output
         return _run_op(self, self.name, args)
@@ -904,6 +901,9 @@ class _RunOpHook:
 def _run_op(obj, op_name, args):
     """Single op execution function supported by ge in PyNative mode."""
     if not _RunOpHook.current:
+        for arg in args:
+            if isinstance(arg, Parameter) and arg.has_init:
+                arg.init_data()
         stub = _pynative_executor.run_op_async(obj, op_name, args)
         return _convert_stub(stub)
     return _RunOpHook.current.hook(obj, args)

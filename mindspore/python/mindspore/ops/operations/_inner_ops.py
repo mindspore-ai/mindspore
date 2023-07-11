@@ -1758,9 +1758,6 @@ class CellBackwardHook(PrimitiveWithInfer):
     def __call__(self, args):
         if not isinstance(args, tuple):
             args = (args,)
-        for arg in args:
-            if isinstance(arg, Parameter) and arg.has_init:
-                arg.init_data()
         return _run_op(self, self.name, args)
 
     def infer_shape(self, *inputs_shape):

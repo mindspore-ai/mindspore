@@ -133,14 +133,6 @@ abstract::AbstractBasePtr ClassType::ToAbstract() {
   return ret_val;
 }
 
-namespace {
-std::string GetPyObjId(const py::object &obj) {
-  py::object out = python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_MOD_GET_OBJ_ID, obj);
-  if (py::isinstance<py::none>(out)) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Get pyobj failed";
-  }
-  return out.cast<std::string>();
-}
 using tensor::MapTensorPtr;
 // Get parameter value from a python parameter object.
 // If it is a map parameter, return the map tensor value in it,
@@ -157,6 +149,15 @@ ValuePtr GetParameterValue(const py::object &param_obj) {
     return map_tensor;
   }
   return py::cast<tensor::MetaTensorPtr>(param_obj);
+}
+
+namespace {
+std::string GetPyObjId(const py::object &obj) {
+  py::object out = python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_MOD_GET_OBJ_ID, obj);
+  if (py::isinstance<py::none>(out)) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Get pyobj failed";
+  }
+  return out.cast<std::string>();
 }
 
 void BroadenCNodeAbstract(const FuncGraphPtr &func_graph) {
