@@ -318,7 +318,8 @@ transform::TensorOrderMap GeGraphExecutor::GetParams(const FuncGraphPtr &anf_gra
 }
 
 bool GeGraphExecutor::UpdateGraphInputs(const FuncGraphPtr &graph) {
-  std::vector<ShapeVector> input_shapes = GeDynamicUtils::GetGraphInputShapes(context_, config_infos_);
+  std::string input_shape_str;
+  auto input_shapes = GeDynamicUtils::GetGraphInputShapes(context_, config_infos_, &input_shape_str);
   if (input_shapes.empty()) {
     MS_LOG(INFO) << "Not found input shape in AscendDeviceInfo or config file";
     return true;
@@ -337,13 +338,19 @@ bool GeGraphExecutor::UpdateGraphInputs(const FuncGraphPtr &graph) {
       MS_LOG(WARNING) << "Cast input to Parameter failed";
       return false;
     }
+    auto it = std::find_if(input_shapes.begin(), input_shapes.end(),
+                           [&para](const auto &item) { return item.first == para->name(); });
+    if (it == input_shapes.end()) {
+      MS_LOG(ERROR) << "Failed to find input " << para->name() << " in input_shape " << input_shape_str;
+      return false;
+    }
     auto abstract = para->abstract();
     if (abstract == nullptr) {
       MS_LOG(WARNING) << "Get input abstract failed";
       return false;
     }
-    MS_LOG(INFO) << "Update shape of input " << i << " to " << input_shape;
-    abstract->set_shape(std::make_shared<abstract::Shape>(input_shape));
+    MS_LOG(INFO) << "Update shape of input " << i << " to " << it->second;
+    abstract->set_shape(std::make_shared<abstract::Shape>(it->second));
   }
   return true;
 }
@@ -451,7 +458,8 @@ bool GeGraphExecutor::AoeTuning(const FuncGraphPtr &anf_graph) {
     MS_LOG(ERROR) << "Input param graph is nullptr.";
     return false;
   }
-  auto input_shapes_configs = GeDynamicUtils::GetGraphOneRealShapes(context_, config_infos_);
+  std::string input_shape_str;
+  auto input_shapes_configs = GeDynamicUtils::GetGraphOneRealShapes(context_, config_infos_, &input_shape_str);
   std::vector<tensor::TensorPtr> inputs;
   std::vector<std::string> input_names;
   FuncGraphUtils::GetFuncGraphInputsInfo(anf_graph, &inputs, &input_names);
@@ -464,8 +472,15 @@ bool GeGraphExecutor::AoeTuning(const FuncGraphPtr &anf_graph) {
   std::vector<::ge::Tensor> ge_inputs;
   for (size_t i = 0; i < inputs.size(); i++) {
     auto &input = inputs[i];
+    auto input_name = input_names[i];
     if (!input_shapes_configs.empty()) {
-      input = std::make_shared<tensor::Tensor>(input->data_type(), input_shapes_configs[i]);
+      auto it = std::find_if(input_shapes_configs.begin(), input_shapes_configs.end(),
+                             [&input_name](const auto &item) { return input_name == item.first; });
+      if (it == input_shapes_configs.end()) {
+        MS_LOG(ERROR) << "Cannot find input " << input_name << " in input_shape " << input_shape_str;
+        return false;
+      }
+      input = std::make_shared<tensor::Tensor>(input->data_type(), it->second);
     } else if (GeDynamicUtils::IsDynamicInputShapes({input->shape_c()})) {
       MS_LOG(ERROR) << "Input " << i << " is dynamic shape " << input->shape_c()
                     << ", but there is no input shape specified in AscendDeviceInfo or config file";
