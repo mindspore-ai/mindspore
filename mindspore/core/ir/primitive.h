@@ -166,6 +166,7 @@ class MS_CORE_API Primitive : public Named {
   /// \param[in] attrName Primitive attribute name.
   /// \return The value of attribute in primitive attribute map, if the map is not
   ValuePtr GetAttr(const std::string &attrName) const {
+    PrimitiveReadLock read_lock(shared_mutex_);
     auto iter = attrs_.find(attrName);
     return iter == attrs_.cend() ? nullptr : iter->second;
   }
