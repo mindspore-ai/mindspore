@@ -153,6 +153,12 @@ MatmulBaseInt8CPUKernel::~MatmulBaseInt8CPUKernel() {
   FreeQuantParam();
 
   FreeTmpBuffer();
+
+  // bias_ptr_ malloc memory initially only once, not belonging to FreeTmpBuffer()
+  if (bias_ptr_ != nullptr) {
+    free(bias_ptr_);
+    bias_ptr_ = nullptr;
+  }
 }
 
 void MatmulBaseInt8CPUKernel::FreeQuantParam() {
