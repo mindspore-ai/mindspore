@@ -4379,9 +4379,11 @@ def ge(x, y):
     return _greater_equal(x, y)
 
 
-def equal(input, other):
+def eq(input, other):
     r"""
     Computes the equivalence between two tensors element-wise.
+
+    The second argument can be a number or a tensor whose shape is broadcastable with the first argument and vise versa.
 
     .. math::
 
@@ -4392,16 +4394,14 @@ def equal(input, other):
 
     Note:
         - `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
-        - The inputs must be two tensors or one tensor and one scalar.
-        - When the inputs are two tensors, the shapes of them could be broadcast.
-        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
+        - The shapes of the inputs can be broadcasted to each other.
 
     Args:
         input (Union[Tensor, Number]): The first input is a number or
             a tensor whose data type is number.
-        other (Union[Tensor, Number]): The second input is a number
-            when the first input is a tensor or a tensor whose data type is number.
-            The data type is the same as the first input.
+        other (Union[Tensor, Number]): The second input is a number when the first input is a tensor.
+            The data type is the same as the first input. If the first input is a number,
+            the second input should be a tensor.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
@@ -4414,16 +4414,66 @@ def equal(input, other):
 
     Examples:
         >>> import mindspore
-        >>> import numpy as np
         >>> from mindspore import Tensor, ops
         >>> # case 1: The shape of two inputs are different
-        >>> x = Tensor(np.array([1, 2, 3]), mindspore.float32)
+        >>> x = Tensor([1, 2, 3], mindspore.float32)
+        >>> output = ops.eq(x, 2.0)
+        >>> print(output)
+        [False True False]
+        >>> # case 2: The shape of two inputs are the same
+        >>> x = Tensor([1, 2, 3], mindspore.int32)
+        >>> y = Tensor([1, 2, 4], mindspore.int32)
+        >>> output = ops.eq(x, y)
+        >>> print(output)
+        [ True  True False]
+    """
+    return equal_(input, other)
+
+
+def equal(input, other):
+    r"""
+    Computes the equivalence between two tensors element-wise.
+
+    The second argument can be a number or a tensor whose shape is broadcastable with the first argument and vise versa.
+
+    .. math::
+
+        out_{i} =\begin{cases}
+            & \text{True,    if } input_{i} = other_{i} \\
+            & \text{False,   if } input_{i} \ne other_{i}
+            \end{cases}
+
+    Note:
+        - `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
+        - The shapes of the inputs can be broadcasted to each other.
+
+    Args:
+        input (Union[Tensor, Number]): The first input is a number or
+            a tensor whose data type is number.query.dtye
+        other (Union[Tensor, Number]): The second input is a number when the first input is a tensor.
+            The data type is the same as the first input. If the first input is a number,
+            the second input should be a tensor.
+
+    Returns:
+        Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
+
+    Raises:
+        TypeError: If neither `input` nor `other` is a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
+        >>> # case 1: The shape of two inputs are different
+        >>> x = Tensor([1, 2, 3], mindspore.float32)
         >>> output = ops.equal(x, 2.0)
         >>> print(output)
         [False True False]
         >>> # case 2: The shape of two inputs are the same
-        >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
-        >>> y = Tensor(np.array([1, 2, 4]), mindspore.int32)
+        >>> x = Tensor([1, 2, 3], mindspore.int32)
+        >>> y = Tensor([1, 2, 4], mindspore.int32)
         >>> output = ops.equal(x, y)
         >>> print(output)
         [ True  True False]
@@ -4467,15 +4517,14 @@ def ne(x, y):
 
     Examples:
         >>> import mindspore
-        >>> import numpy as np
         >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([1, 2, 3]), mindspore.float32)
+        >>> x = Tensor([1, 2, 3], mindspore.float32)
         >>> output = ops.ne(x, 2.0)
         >>> print(output)
         [ True False  True]
         >>>
-        >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
-        >>> y = Tensor(np.array([1, 2, 4]), mindspore.int32)
+        >>> x = Tensor([1, 2, 3], mindspore.int32)
+        >>> y = Tensor([1, 2, 4], mindspore.int32)
         >>> output = ops.ne(x, y)
         >>> print(output)
         [False False  True]
@@ -13472,6 +13521,7 @@ __all__ = [
     'exp',
     'tensor_expm1',
     'expm1',
+    'eq',
     'equal',
     'not_equal',
     'ne',

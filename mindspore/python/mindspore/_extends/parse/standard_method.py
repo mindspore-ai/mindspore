@@ -4226,6 +4226,13 @@ def div(input, value, *, rounding_mode=None):
     return F.div(input, value, rounding_mode=rounding_mode)
 
 
+def eq(input, other):
+    r"""
+    Computes the equivalence between the tensor `input` and the given input tensor `other` element-wise.
+    """
+    return F.equal(input, other)
+
+
 def equal(x, y):
     r"""
     Computes the equivalence between the tensor `x` and the given input tensor `y` element-wise.

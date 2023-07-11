@@ -1,7 +1,7 @@
-mindspore.ops.equal
-====================
+mindspore.ops.eq
+================
 
-.. py:function:: mindspore.ops.equal(input, other)
+.. py:function:: mindspore.ops.eq(input, other)
 
     逐元素比较两个输入Tensor是否相等。
 

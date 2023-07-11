@@ -242,6 +242,7 @@ from .math_func import (
     exp,
     tensor_expm1,
     expm1,
+    eq,
     equal,
     not_equal,
     ne,
