@@ -101,7 +101,7 @@ std::shared_ptr<T> ParserAttr(const std::string &str, const mindspore::HashMap<s
     } else if (str[i] == ']') {
       // rules
       std::vector<P> vec;
-      while (rules.top() != "[") {
+      while (!rules.empty() && rules.top() != "[") {
         rules.pop();
         vec.push_back(value.top());
         value.pop();
@@ -1286,6 +1286,7 @@ bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const mind
     case FORM_PARSE_SCALAR: {
       if (ref_attr_name.find("value0") != std::string::npos) {
         ValuePtr res = ObtainCNodeAttrInSingleScalarForm(attr_proto);
+        MS_EXCEPTION_IF_NULL(res);
         const std::string &op_type = prim->name();
         if (is_kernel_graph_) {
           (void)prim->AddAttr(attr_name, res);
@@ -1668,6 +1669,7 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
     case FORM_PARSE_SCALAR: {
       if (ref_attr_name.find("value0") != std::string::npos) {
         auto res = ObtainCNodeAttrInSingleScalarForm(attr_proto);
+        MS_EXCEPTION_IF_NULL(res);
         new_value_node = NewValueNode(res);
         new_value_node->set_abstract(res->ToAbstract());
         anfnode_build_map_[value_node_name] = new_value_node;
