@@ -219,7 +219,7 @@ class AllGather(PrimitiveWithInfer):
                     is larger than the group's rank size.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         .. note::
@@ -580,7 +580,7 @@ class Broadcast(PrimitiveWithInfer):
         TypeError: If root_rank is not an integer or group is not a string.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         .. note::
