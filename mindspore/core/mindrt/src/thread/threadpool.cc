@@ -272,9 +272,6 @@ ThreadPool::~ThreadPool() {
     task_queue->Clean();
   }
   task_queues_.clear();
-#if !defined(_WIN32) && !defined(BUILD_LITE)
-  ForkUtils::GetInstance().DeregCallbacks(this);
-#endif
   THREAD_INFO("destruct success");
 }
 
