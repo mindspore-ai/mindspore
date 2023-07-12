@@ -3681,26 +3681,16 @@ def cross_entropy(input, target, weight=None, ignore_index=-100, reduction='mean
         >>> target = mindspore.Tensor(np.random.randn(3, 5), mindspore.float32)
         >>> output = ops.cross_entropy(inputs, target)
     """
-    _check_cross_entropy_inputs(input, target, weight)
-    check_int_const(ignore_index, 'ignore_index', "cross_entropy_loss")
-    check_non_negative_float_const(label_smoothing, 'label_smoothing', "cross_entropy_loss")
-    check_string_const(reduction, ['none', 'mean', 'sum'], 'reduction', "cross_entropy_loss")
-    if target.dtype in [mstype.float32, mstype.float16]:
-        return _cross_entropy(input, target, 0 if input.ndim == 1 else 1, weight, reduction, label_smoothing)
-    _log_softmax = _get_cache_prim(P.LogSoftmax)(0 if input.ndim == 1 else 1)
-    return nll_loss(_log_softmax(input), target, weight, ignore_index, reduction, label_smoothing)
-
-
-def _check_cross_entropy_inputs(input, target, weight):
     _check_is_tensor('input', input, "cross_entropy_loss")
     _check_is_tensor('target', target, "cross_entropy_loss")
     _check_is_tensor('weight', weight, "cross_entropy_loss")
-    if input.dtype not in [mstype.float32, mstype.float16]:
-        raise TypeError(f"For 'cross_entropy', 'input' must be float16 or float32, but got {input.dtype}.")
-    if weight is not None and weight.dtype not in [mstype.float32, mstype.float16]:
-        raise TypeError(f"For 'cross_entropy', 'weight' must be float16 or float32, but got {weight.dtype}.")
-    if target.dtype not in [mstype.float32, mstype.float16, mstype.int32]:
-        raise TypeError(f"For 'cross_entropy', 'target' must be float16 or float32 or int32, but got {target.dtype}.")
+    check_int_const(ignore_index, 'ignore_index', "cross_entropy_loss")
+    check_non_negative_float_const(label_smoothing, 'label_smoothing', "cross_entropy_loss")
+    check_string_const(reduction, ['none', 'mean', 'sum'], 'reduction', "cross_entropy_loss")
+    class_dim = 0 if input.ndim == 1 else 1
+    if target.dtype in [mstype.float32, mstype.float16]:
+        return _cross_entropy(input, target, class_dim, weight, reduction, label_smoothing)
+    return nll_loss(_innner_log_softmax(input, class_dim), target, weight, ignore_index, reduction, label_smoothing)
 
 
 def _cross_entropy(inputs, target, target_dim, weight=None, reduction='mean', label_smoothing=0.0):
@@ -3786,17 +3776,7 @@ def nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', l
     """
     ndim = inputs.ndim
     if ndim == 2:
-        if label_smoothing == 0.0 and not is_ascend_backend():
-            if weight is None:
-                weight = inputs[0] * 0 + 1
-            _nll_loss_op = _get_cache_prim(P.NLLLoss)(reduction, ignore_index)
-            ret = _nll_loss_op(inputs, target, weight)[0]
-            if reduction == 'none':
-                n = inputs.shape[0]
-                out_size = (n,) + inputs.shape[2:]
-                ret = ret.view(out_size)
-        else:
-            ret = _nll_loss(inputs, target, -1, weight, ignore_index, reduction, label_smoothing)
+        ret = _nll_loss(inputs, target, -1, weight, ignore_index, reduction, label_smoothing)
     elif ndim == 4:
         ret = _nll_loss(inputs, target, 1, weight, ignore_index, reduction, label_smoothing)
     elif ndim == 1:
