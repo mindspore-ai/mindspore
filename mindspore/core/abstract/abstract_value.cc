@@ -2554,7 +2554,7 @@ std::string AbstractCOOTensor::ToString() const {
   std::ostringstream buffer;
   auto indices_ = GetAbsPtrAt<abstract::AbstractTensorPtr>(kIndicesIdx);
   auto values_ = GetAbsPtrAt<abstract::AbstractTensorPtr>(kValuesIdx);
-  auto shape_ = GetAbsPtrAt<abstract::AbstractTensorPtr>(size() - 1);
+  auto shape_ = GetAbsPtrAt<abstract::AbstractTuplePtr>(size() - 1);
   MS_EXCEPTION_IF_NULL(indices_);
   MS_EXCEPTION_IF_NULL(values_);
   MS_EXCEPTION_IF_NULL(shape_);
@@ -2614,7 +2614,7 @@ std::string AbstractCSRTensor::ToString() const {
   auto indptr_ = GetAbsPtrAt<abstract::AbstractTensorPtr>(kIndptrIdx);
   auto indices_ = GetAbsPtrAt<abstract::AbstractTensorPtr>(kIndicesIdx);
   auto values_ = GetAbsPtrAt<abstract::AbstractTensorPtr>(kValuesIdx);
-  auto shape_ = GetAbsPtrAt<abstract::AbstractTensorPtr>(size() - 1);
+  auto shape_ = GetAbsPtrAt<abstract::AbstractTuplePtr>(size() - 1);
   MS_EXCEPTION_IF_NULL(indptr_);
   MS_EXCEPTION_IF_NULL(indices_);
   MS_EXCEPTION_IF_NULL(values_);
