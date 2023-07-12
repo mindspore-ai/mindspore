@@ -1975,8 +1975,6 @@ AbstractBasePtr AbstractDictionary::Join(const AbstractBasePtr &other) {
   std::vector<AbstractElementPair> joined_key_values;
   bool changes = false;
   for (std::size_t i = 0; i < elements().size(); i++) {
-    auto key_value = elements()[i];
-    auto other_key_value = other_dict->elements()[i];
     auto joined_key = JoinElement(elements()[i].first, other_dict->elements()[i].first);
     if (joined_key != elements()[i].first) {
       changes = true;
