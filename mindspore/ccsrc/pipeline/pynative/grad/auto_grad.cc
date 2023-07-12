@@ -1445,7 +1445,7 @@ void AutoGradCellImpl::ConvertValueNodeValueToTensor(const AnfNodePtr &din) {
     }
     MS_EXCEPTION_IF_NULL(tensor_ptr);
     valuenode->set_value(tensor_ptr);
-    valuenode->set_abstract(PyNativeAlgo::Common::SetAbstractValueToAnyValue(tensor_ptr->ToAbstract()));
+    valuenode->set_abstract(tensor_ptr->ToAbstract());
   }
 }
 
