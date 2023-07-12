@@ -33,6 +33,7 @@
 #include "pipeline/jit/pass.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/static_analysis/async_eval_result.h"
+#include "pipeline/jit/compile_cache_manager.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "frontend/optimizer/ad/prim_bprop_optimizer.h"
@@ -704,6 +705,8 @@ void GraphExecutorPy::ClearRes() {
   MS_LOG(INFO) << "Clean executor resource!";
   executor_ = nullptr;
 }
+
+std::string GraphExecutorPy::get_queue_name() { return CompileCacheManager::GetCachedSharedName(); }
 
 GraphExecutorPy::~GraphExecutorPy() {
   MS_LOG(INFO) << "Release Executor!";

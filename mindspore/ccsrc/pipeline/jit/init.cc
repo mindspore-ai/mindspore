@@ -213,6 +213,8 @@ PYBIND11_MODULE(_c_expression, m) {
          py::arg("kernel_build_server_dir") = py::str(""), "Set kernel build server directory path.")
     .def("set_queue_name", &GraphExecutorPy::set_queue_name, py::arg("queue_name") = py::str(""),
          "Set queue name for the graph loaded from compile cache.")
+    .def("get_queue_name", &GraphExecutorPy::get_queue_name,
+         "Get cached queue name for the graph loaded from compile cache.")
     .def("set_enable_tuple_broaden", &GraphExecutorPy::set_enable_tuple_broaden,
          py::arg("enable_tuple_broaden") = py::bool_(false), "Set tuple broaden enable.")
     .def("set_compile_cache_dep_files", &GraphExecutorPy::set_compile_cache_dep_files,

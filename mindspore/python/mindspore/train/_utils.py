@@ -66,7 +66,9 @@ def _exec_datagraph(exec_dataset, dataset_size, phase='dataset', create_data_inf
     # transform data format
     dataset_types, dataset_shapes = _get_types_and_shapes(exec_dataset)
     send_epoch_end = bool(dataset_size == -1)
-    exec_dataset = exec_dataset.device_que(send_epoch_end=send_epoch_end, create_data_info_queue=create_data_info_queue)
+    queue_name = _cell_graph_executor.get_queue_name()
+    exec_dataset = exec_dataset.device_que(send_epoch_end=send_epoch_end,
+                                           create_data_info_queue=create_data_info_queue, queue_name=queue_name)
     _cell_graph_executor.init_dataset(exec_dataset.queue_name,
                                       dataset_size,
                                       batch_size,

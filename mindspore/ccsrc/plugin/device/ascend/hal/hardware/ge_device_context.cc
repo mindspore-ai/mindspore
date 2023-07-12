@@ -22,6 +22,7 @@
 #include "include/transform/graph_ir/types.h"
 #include "include/transform/graph_ir/utils.h"
 #include "include/common/utils/utils.h"
+#include "include/common/debug/common.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/scoped_long_running.h"
 #include "include/backend/debug/data_dump/dump_json_parser.h"
@@ -295,6 +296,12 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   if (!env_aicpu_flag.empty()) {
     (*ge_options)["ge.aicpuFlag"] = env_aicpu_flag;
     MS_LOG(INFO) << "Use AICPU, make sure aicpu lib is set in OPTION_EXEC_EXTERN_PLUGIN_PATH.";
+  }
+
+  auto env_compiler_cache_dir = Common::GetAndCreateCompilerCacheDir();
+  if (!env_compiler_cache_dir.empty()) {
+    (*ge_options)["ge.graph_compiler_cache_dir"] = env_compiler_cache_dir;
+    MS_LOG(INFO) << "Use MS front compile cache path, GE graph compile cache path:" << env_compiler_cache_dir;
   }
 
   auto env_op_precision = common::GetEnv("MS_GE_OP_PRECISION");

@@ -119,6 +119,11 @@ std::string GetDepFilesHashPath() {
 
 std::string GetGroupCkptSavePath() { return GetGraphCacheDir() + "/" + kGroupCkptFileName; }
 
+std::string GetQueueNameCachePath() {
+  std::string queue_name_cache_path = GetGraphCacheDir() + "/" + GetRole() + kQueueNameCacheFileName;
+  return queue_name_cache_path;
+}
+
 std::string GetCompileDepFilesHash(const py::list &dep_files) {
   MS_LOG(DEBUG) << "Dependency files size: " << dep_files.size();
   std::vector<std::string> dep_files_path;
@@ -229,6 +234,19 @@ bool ExportDepFilesHash(const std::string &compile_cache_dep_files_hash) {
   return true;
 }
 
+bool ExportSharedName(const string &shared_name) {
+  const string &queue_name_cached_file_path = GetQueueNameCachePath();
+  std::ofstream fout(queue_name_cached_file_path);
+  if (!fout) {
+    MS_LOG(WARNING) << "Open the queue name cached file " << queue_name_cached_file_path << " failed."
+                    << ErrnoToString(errno);
+    return false;
+  }
+  fout << shared_name;
+  fout.close();
+  return true;
+}
+
 bool CreateParallelGroupsByCkptFile() {
   static const std::string group_ckpt_save_path = GetGroupCkptSavePath();
   auto realpath = Common::CreatePrefixPath(group_ckpt_save_path, true);
@@ -245,11 +263,44 @@ bool CreateParallelGroupsByCkptFile() {
   }
   return parallel::CreateGroupsByCkptFile(group_ckpt_save_path);
 }
+
+std::string GetSharedName(const FuncGraphPtr &fg) {
+  auto cnodes = fg->GetOrderedCnodes();
+  std::string cached_queue_name("");
+  for (const auto &cnode : cnodes) {
+    auto prim = GetValuePtr<Primitive>(cnode->input(0));
+    if (prim != nullptr && prim->HasAttr("shared_name")) {
+      StringImmPtr queue_name_ptr = std::dynamic_pointer_cast<StringImm>(prim->GetAttr("shared_name"));
+      cached_queue_name = queue_name_ptr->value();
+      break;
+    }
+  }
+  return cached_queue_name;
+}
 }  // namespace
+
+std::string CompileCacheManager::GetCachedSharedName() {
+  std::string queue_name("");
+  std::string queue_name_cache_path = GetQueueNameCachePath();
+  std::ifstream fin(queue_name_cache_path);
+  if (!fin) {
+    MS_LOG(WARNING) << "Open the queue name cache file " << queue_name_cache_path << " failed.";
+    return queue_name;
+  }
+  fin >> queue_name;
+  fin.close();
+  return queue_name;
+}
 
 void CompileCacheManager::CacheFuncGraph(const FuncGraphPtr &fg, const FuncGraphPtr &layout_fg) {
   if (fg == nullptr) {
     MS_LOG(ERROR) << "The func_graph to be cached is null.";
+    return;
+  }
+
+  std::string shared_name = GetSharedName(fg);
+  if (!ExportSharedName(shared_name)) {
+    MS_LOG(ERROR) << "Failed to cache shared_name: " << shared_name;
     return;
   }
 

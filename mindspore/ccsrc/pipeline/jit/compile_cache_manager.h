@@ -36,6 +36,8 @@ class CompileCacheManager {
 
   ~CompileCacheManager() = default;
 
+  // Get cached shared name
+  static std::string GetCachedSharedName();
   // Get the hash of dependent files when compiling graph.
   void InitCompileCacheHash(const py::list &compile_cache_dep_files);
   // Init group checkpoint file path for parallel mode.

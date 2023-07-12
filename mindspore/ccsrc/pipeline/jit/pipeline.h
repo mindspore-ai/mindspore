@@ -130,6 +130,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   void CleanCompileRes(const ResourcePtr &resource);
   static void ClearRes();
   void set_queue_name(const std::string &queue_name) { queue_name_ = queue_name; }
+  std::string get_queue_name();
   void set_enable_tuple_broaden(bool enable_tuple_broaden) { enable_tuple_broaden_ = enable_tuple_broaden; }
   void set_compile_cache_dep_files(const py::list &compile_cache_dep_files) {
     compile_cache_dep_files_ = compile_cache_dep_files;

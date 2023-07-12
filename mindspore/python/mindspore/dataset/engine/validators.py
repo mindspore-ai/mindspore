@@ -1572,9 +1572,10 @@ def check_device_send(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [send_epoch_end, create_data_info_queue], _ = parse_user_args(method, *args, **kwargs)
+        [send_epoch_end, create_data_info_queue, queue_name], _ = parse_user_args(method, *args, **kwargs)
         type_check(send_epoch_end, (bool,), "send_epoch_end")
         type_check(create_data_info_queue, (bool,), "create_data_info_queue")
+        type_check(queue_name, (str,), "queue_name")
 
         return method(self, *args, **kwargs)
 
