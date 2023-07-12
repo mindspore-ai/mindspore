@@ -20,6 +20,7 @@
 #include <memory>
 #include <map>
 #include <mutex>
+#include <string>
 #include "plugin/device/ascend/hal/device/ge_runtime/task/task.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task/label_manager.h"
 
@@ -31,6 +32,8 @@ class LabelGotoTask : public TaskRepeater<LabelGotoTaskInfo> {
   ~LabelGotoTask() override;
 
   void Distribute() override;
+
+  std::string task_name() const override { return task_info_->op_name(); }
 
  private:
   std::shared_ptr<LabelGotoTaskInfo> task_info_;

@@ -643,6 +643,13 @@ void AscendKernelRuntime::LaunchDataDump(GraphId graph_id) {
   }
   MS_LOG(INFO) << "Start Launch Dump Data";
   auto runtime_info_map = ModelRunner::Instance().GetRuntimeInfoMap(graph_id);
+  for (auto iter = runtime_info_map.begin(); iter != runtime_info_map.end();) {
+    if (std::get<kTupleArgs>(*iter->second) == nullptr) {
+      iter = runtime_info_map.erase(iter);
+    } else {
+      ++iter;
+    }
+  }
   auto end_graph_info_map = ModelRunner::Instance().GetEndGraphInfoMap(graph_id);
   if (auto dumper_iter = graph_data_dumper_.find(graph_id); dumper_iter != graph_data_dumper_.end()) {
     auto &data_dumper = dumper_iter->second;
@@ -713,32 +720,39 @@ CNodePtr AscendKernelRuntime::GetErrorNodeName(uint32_t streamid, uint32_t taski
   return nullptr;
 }
 
-std::string AscendKernelRuntime::GetDumpPath() {
-  uint32_t rank_id = 0;
+std::string AscendKernelRuntime::GetDumpPath(const std::string &suffix) {
+  std::string rank_id_str;
   auto inst = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(inst);
   if (inst->parallel_mode() != parallel::kStandalone) {
+    uint32_t rank_id = 0;
     if (!CommManager::GetInstance().GetRankID(kHcclWorldGroup, &rank_id)) {
       MS_LOG(WARNING) << "Get rank id failed, now using the default value 0.";
+    }
+    rank_id_str = std::to_string(rank_id);
+  } else {
+    rank_id_str = common::GetEnv(kRankID);
+    if (rank_id_str.empty()) {
+      MS_LOG(WARNING) << "Environment variable 'RANK_ID' is empty, using the default value: 0";
+      rank_id_str = "0";
     }
   }
 
   auto ms_om_path = common::GetEnv("MS_OM_PATH");
   std::string path;
-  const auto kSuffix = "/node_dump";
   if (ms_om_path.empty()) {
-    MS_LOG(WARNING) << "The environment variable 'MS_OM_PATH' is not set, the files of node dump will save to the "
-                    << "process local path, as ./rank_id/node_dump/...";
-    path = "./rank_" + std::to_string(rank_id) + kSuffix;
+    MS_LOG(WARNING) << "The environment variable 'MS_OM_PATH' is not set, the files will save to the process local "
+                    << "path, as ./rank_id/" + suffix + "/...";
+    path = "./rank_" + rank_id_str + "/" + suffix;
   } else {
-    path = ms_om_path + "/rank_" + std::to_string(rank_id) + kSuffix;
+    path = ms_om_path + "/rank_" + rank_id_str + "/" + suffix;
   }
   return path;
 }
 
 #ifndef ENABLE_SECURITY
 void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph & /* graph */) {
-  const std::string path = GetDumpPath();
+  const std::string path = GetDumpPath("node_dump");
   if (access(path.c_str(), F_OK) == 0) {
     if (!DeleteDumpDir(path)) {
       MS_LOG(ERROR) << "Delete dump directory " << path << " failed";
@@ -776,6 +790,82 @@ void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph & /* 
     E2eDump::DumpInputData(node, false, path, &full_scope_name);
     E2eDump::DumpOutputData(node, false, path, &full_scope_name);
   }
+}
+
+void AscendKernelRuntime::DumpDebugInfoFile(const session::KernelGraph &graph) {
+  auto file = GetDumpPath("exec_order") + "/" + graph.ToString() + ".csv";
+  auto realpath = Common::CreatePrefixPath(file, true);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed. path=" << file;
+    return;
+  }
+  file = realpath.value();
+  std::ofstream ofs(file, std::ios::ate);  // raii object, no need to close
+  if (!ofs.is_open()) {
+    MS_LOG(ERROR) << "Open file [" << file << "] failed!";
+    return;
+  }
+  const auto &runtime_info_map = ModelRunner::Instance().GetRuntimeInfoMap(graph.graph_id());
+
+  ofs << "Index, Op Name, Stream ID (MindSpore), Stream ID (Runtime), Task ID (Runtime), Event ID (MindSpore), "
+      << "Label ID (MindSpore), Active Stream ID (MindSpore), Group Name" << std::endl;
+  for (size_t i = 0; i < graph.execution_order().size(); ++i) {
+    CNodePtr cur_cnode_ptr = graph.execution_order()[i];
+    MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
+    ofs << i << ", ";
+    ofs << cur_cnode_ptr->UniqueName() << ", ";
+    ofs << AnfAlgo::GetStreamId(cur_cnode_ptr) << ", ";
+    if (auto iter = runtime_info_map.find(cur_cnode_ptr->UniqueName()); iter != runtime_info_map.end()) {
+      ofs << std::get<kTupleStreamId>(*iter->second) << ", " << std::get<kTupleTaskId>(*iter->second) << ", ";
+    } else if (cur_cnode_ptr->UniqueName().find(kEndGraph) != std::string::npos) {
+      iter = runtime_info_map.find(kEndGraph);
+      if (iter != runtime_info_map.end()) {
+        ofs << std::get<kTupleStreamId>(*iter->second) << ", " << std::get<kTupleTaskId>(*iter->second) << ", ";
+      } else {
+        ofs << "NOT FOUND, NOT FOUND, ";
+      }
+    } else {
+      ofs << "NOT FOUND, NOT FOUND, ";
+    }
+    if (common::AnfAlgo::HasNodeAttr(kAttrEventId, cur_cnode_ptr)) {
+      ofs << common::AnfAlgo::GetNodeAttr<uint32_t>(cur_cnode_ptr, kAttrEventId) << ", ";
+    } else {
+      ofs << ", ";
+    }
+    if (common::AnfAlgo::HasNodeAttr(kAttrLabelIndex, cur_cnode_ptr)) {
+      ofs << common::AnfAlgo::GetNodeAttr<uint32_t>(cur_cnode_ptr, kAttrLabelIndex) << ", ";
+    } else if (common::AnfAlgo::HasNodeAttr(kAttrLabelSwitchList, cur_cnode_ptr)) {
+      auto label_list = common::AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(cur_cnode_ptr, kAttrLabelSwitchList);
+      std::string label_str = "\"";
+      for (size_t j = 0; j < label_list.size(); ++j) {
+        label_str += std::to_string(label_list[j]) + (j + 1 < label_list.size() ? ", " : "\", ");
+      }
+      ofs << label_str;
+    } else {
+      ofs << ", ";
+    }
+
+    std::string active_stream_str;
+    if (common::AnfAlgo::HasNodeAttr(kAttrActiveStreamList, cur_cnode_ptr)) {
+      auto stream_list = common::AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(cur_cnode_ptr, kAttrActiveStreamList);
+      active_stream_str = "\"";
+      for (size_t j = 0; j < stream_list.size(); ++j) {
+        active_stream_str += std::to_string(stream_list[j]) + (j + 1 < stream_list.size() ? ", " : "\", ");
+      }
+      ofs << active_stream_str;
+    } else {
+      ofs << ", ";
+    }
+
+    if (AnfAlgo::GetKernelType(cur_cnode_ptr) == HCCL_KERNEL &&
+        common::AnfAlgo::HasNodeAttr(kAttrGroup, cur_cnode_ptr)) {
+      ofs << common::AnfAlgo::GetNodeAttr<std::string>(cur_cnode_ptr, kAttrGroup) << ", ";
+    } else {
+      ofs << ", ";
+    }
+    ofs << std::endl;
+  }
+  MS_LOG(ERROR) << "Execute order has saved at " << file;
 }
 #endif
 
@@ -1093,6 +1183,7 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph &graph) {
     }
 #ifndef ENABLE_SECURITY
     DumpTaskExceptionInfo(graph);
+    DumpDebugInfoFile(graph);
 #endif
 #ifdef WITH_BACKEND
     // Run task error, we should call TdtHostDestroy to release tdt to avoid DataQueueOp hostPush hung
