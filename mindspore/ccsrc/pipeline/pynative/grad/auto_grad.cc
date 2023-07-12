@@ -65,7 +65,7 @@ const mindspore::HashSet<std::string> kMetaFuncGraphOp{
   kMakeDictOpName,
 };
 
-mindspore::HashMap<std::string, std::pair<size_t, ValuePtr>> node_attr_value_;
+mindspore::HashMap<std::string, std::vector<std::pair<size_t, ValuePtr>>> node_attr_value_;
 mindspore::HashMap<std::string, FuncGraphPtr> pass_grad_graph_;
 mindspore::HashMap<std::string, pipeline::ResourcePtr> ms_function_call_graph_compile_cache_;
 
@@ -290,7 +290,6 @@ void SetMsFunctionCallGraph(const CNodePtr &cnode, const FuncGraphPtr &call_grap
   common::AnfAlgo::SetNodeAttr(kAttrMsFunctionCallNode, MakeValue(true), cnode);
   // kFlagMsFunctionCallGraph is set true to avoid compilig call_graph whe compiling the main graph
   call_graph->set_flag(kFlagMsFunctionCallGraph, true);
-  call_graph->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
   pipeline::ResourcePtr resource;
   const auto it = ms_function_call_graph_compile_cache_.find(cache_key);
   bool need_compile = (it == ms_function_call_graph_compile_cache_.end());
@@ -504,15 +503,17 @@ void ProcessAttrNode(const FuncGraphPtr &graph, const CNodePtr &cnode, ValuePtrL
   if (cnode->HasAttr(kAttrConvertAttrNode)) {
     const auto item = node_attr_value_.find(cnode->ToString());
     if (item != node_attr_value_.end()) {
-      (void)PyNativeAlgo::Common::SetValueGradInfo(item->second.second, nullptr, TensorGradType::kConstant);
-      auto new_v_node = PyNativeAlgo::Common::CreateValueNodeByValue(item->second.second, nullptr);
-      auto new_inputs = cnode->inputs();
-      (void)new_inputs.insert(new_inputs.begin() + item->second.first + kIndex1, new_v_node);
-      MS_EXCEPTION_IF_NULL(cnode_inputs);
-      (void)cnode_inputs->insert(cnode_inputs->begin() + item->second.first + kIndex1, new_v_node);
-      cnode->set_inputs(new_inputs);
-      MS_EXCEPTION_IF_NULL(input_value);
-      (void)input_value->insert(input_value->begin() + item->second.first, item->second.second);
+      for (const auto &t : item->second) {
+        (void)PyNativeAlgo::Common::SetValueGradInfo(t.second, nullptr, TensorGradType::kConstant);
+        auto new_v_node = PyNativeAlgo::Common::CreateValueNodeByValue(t.second, nullptr);
+        auto new_inputs = cnode->inputs();
+        (void)new_inputs.insert(new_inputs.begin() + t.first + kIndex1, new_v_node);
+        MS_EXCEPTION_IF_NULL(cnode_inputs);
+        (void)cnode_inputs->insert(cnode_inputs->begin() + t.first + kIndex1, new_v_node);
+        cnode->set_inputs(new_inputs);
+        MS_EXCEPTION_IF_NULL(input_value);
+        (void)input_value->insert(input_value->begin() + t.first, t.second);
+      }
       node_attr_value_.erase(item);
     }
   }
@@ -766,6 +767,7 @@ CNodePtr AutoGradCellImpl::GetBPropCNode(const GradParamPtr &grad_param, const A
   bprop_cnode->set_abstract(bprop_graph->output()->abstract());
   if (is_ms_function_dynamic_shape) {
     SetMsFunctionCallGraph(bprop_cnode, bprop_graph, grad_param->graph_cache_key, grad_param->is_control_flow);
+    ad_param()->tape_->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
   }
   // For replacing parameter and dout.
   for (size_t i = 1; i < bprop_inputs.size(); ++i) {
@@ -1540,7 +1542,8 @@ CNodePtr AutoGradCellImpl::ConvertConstInputToAttr(const CNodePtr &cnode, const 
         }
       }
       cnode->AddAttr(kAttrConvertAttrNode, MakeValue(true));
-      (void)node_attr_value_.emplace(cnode->ToString(), std::make_pair(i, value));
+      auto &pair = node_attr_value_[cnode->ToString()];
+      (void)pair.emplace_back(std::make_pair(i, value));
       prim->set_attr(input_names_vec[i], value);
     } else {
       (void)new_inputs.emplace_back(input_node);
@@ -1573,8 +1576,8 @@ void AutoGradCellImpl::UpdateNextEdges(const VariableAdjointPtr &variable, const
                   << din->DebugString();
 #ifndef ENABLE_TEST
     // VM no need run pass
-    ConvertValueNodeValueToTensor(din);
     din = ConvertConstInputToAttr(din, device_target_);
+    ConvertValueNodeValueToTensor(din);
 #endif
     UpdateNextEdge(fn, din, input_value[i], abs[i]);
   }
@@ -2142,7 +2145,12 @@ void AutoGradCellImpl::Replace(const AnfNodePtr &old_node, const AnfNodePtr &new
     }
     size_t index = pair_node.second;
     if (index >= cnode->size()) {
-      MS_LOG(EXCEPTION) << "exception for index:" << index << "greater than cnode size:" << cnode->size();
+      // After convert attr cnode input will less
+      if (cnode->HasAttr(kAttrConvertAttrNode)) {
+        index -= node_attr_value_[cnode->ToString()].size();
+      } else {
+        MS_LOG(EXCEPTION) << "exception for index: " << index << "greater than cnode size: " << cnode->size();
+      }
     }
     cnode->set_input(index, new_node);
     if (need_update && IsPrimitiveCNode(new_node, prim::kPrimTupleGetItem)) {
