@@ -959,7 +959,8 @@ class Profiler:
         else:
             logger.info("No need to stop profiler because profiler has been stopped.")
         # export op data before analyse
-        self._ascend_msprof_exporter.export(self._start_time, support_step_trace=False)
+        if self._op_time:
+            self._ascend_msprof_exporter.export(self._start_time, support_step_trace=False)
         self._ascend_graph_analyse()
 
     def _minddata_analyse(self, source_path):
@@ -1232,7 +1233,7 @@ class Profiler:
         """Whether iteration related information needs to be parsed."""
         profiler_info = ProfilerInfo.get_profiler_info()
         graph_ids = profiler_info.get("graph_ids")
-        if len(graph_ids) > 1:
+        if graph_ids and len(graph_ids) > 1:
             analyse_step_trace = False
             logger.warning(
                 "[Profiler]Current model has multiple sub graphs, the segmentation of steps may be inaccurate.")
