@@ -583,8 +583,7 @@ void GeGraphExecutor::BuildOutputDataGeTensor(const KernelGraphPtr &kernel_graph
   MS_LOG(INFO) << "BuildOutputDataGeTensor finish.";
 }
 
-void GeGraphExecutor::AllocOutputMemory(const KernelGraphPtr &kernel_graph,
-                                        const std::vector<ShapeVector> &outputs_shape) const {
+void GeGraphExecutor::AllocOutputMemory(const KernelGraphPtr &kernel_graph, const std::vector<ShapeVector> &) const {
   MS_LOG(INFO) << "Start AllocOutputMemory.";
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto ms_context = MsContext::GetInstance();
@@ -918,8 +917,8 @@ std::vector<GeTensor> GeGraphExecutor::GenerateInputGeTensor(const KernelGraphPt
       MS_LOG(EXCEPTION) << kv.first->DebugString() << ", index: " << kv.second << " is greater than "
                         << ge_inputs.size();
     }
-    ge_inputs[kv.second].SetData(reinterpret_cast<uint8_t *>(output_addr->GetMutablePtr()), output_addr->GetSize(),
-                                 [](void *) {});
+    (void)ge_inputs[kv.second].SetData(reinterpret_cast<uint8_t *>(output_addr->GetMutablePtr()),
+                                       output_addr->GetSize(), [](void *) {});
   }
   for (size_t i = 0; i < ge_inputs.size(); ++i) {
     MS_LOG(INFO) << "Input " << i << " size " << ge_inputs[i].GetSize() << ", graph: " << kernel_graph->graph_id();
