@@ -90,29 +90,15 @@ Status AmplitudeToDB(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
   return Status::OK();
 }
 
-template <typename T>
-void AngleImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> out, size_t start, size_t end) {
-  T o;
-  T x;
-  T y;
-  auto itr_start = input->begin<T>();
-  itr_start += start;
-  auto itr_end = input->begin<T>();
-  itr_end += end;
-  auto itr_out = out->begin<T>();
-  size_t offset = start / TWO;
-  itr_out += offset;
-
-  // calculate norm, using: .pow(2.).sum(-1).pow(0.5 * power)
-  for (auto itr = itr_start; itr != itr_end; itr++) {
-    x = static_cast<T>(*itr);
-    itr++;
-    y = static_cast<T>(*itr);
-    o = std::atan2(y, x);
-    *itr_out = o;
-    itr_out++;
-  }
-}
+/// \brief Use custom thread pools.
+/// \param task: Lambda functions to be processed.
+/// \param input_size: Size of the input.
+/// \param block_size: Customized size for each thread processing.
+/// \param task_num: The final calculated number of threads.
+/// \param once_compute_size: The final calculated size for each thread processing.
+/// \return Status code.
+Status AudioParallelLaunch(const std::function<void(size_t, size_t, size_t)> &task, size_t input_size, float block_size,
+                           size_t *task_num, size_t *once_compute_size);
 
 /// \brief Compute the thread nums.
 /// \param input_size: Size of the input.
@@ -137,28 +123,38 @@ Status Angle(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
   float block_size = 30000;
   size_t task_num = 0;
   size_t once_compute_size = 0;
-  RETURN_IF_NOT_OK(CountThreadNums(input_size, block_size, &task_num, &once_compute_size));
+  auto task = [&input, &out, &once_compute_size, &task_num, &input_size](size_t start, size_t end, size_t num) {
+    T o;
+    T x;
+    T y;
 
-  for (size_t i = 0; i < task_num - 1; i++) {
-    size_t start = i * once_compute_size;
-    size_t end = start + once_compute_size;
     if (once_compute_size % TWO == 1) {
-      start -= i;
-      end -= (i + 1);
+      start -= num;
+      end -= (num + 1);
     }
-    threads.push_back(std::thread(AngleImpl<T>, input, out, start, end));
-  }
+    if ((task_num - num) == 1) {
+      end = input_size;
+    }
 
-  size_t start = (task_num - 1) * once_compute_size;
-  if (once_compute_size % TWO == 1) {
-    start -= (task_num - 1);
-  }
-  size_t end = input_size;
-  AngleImpl<T>(input, out, start, end);
+    auto itr_start = input->begin<T>();
+    itr_start += start;
+    auto itr_end = input->begin<T>();
+    itr_end += end;
+    auto itr_out = out->begin<T>();
+    size_t offset = start / TWO;
+    itr_out += offset;
 
-  for (auto &thread : threads) {
-    thread.join();
-  }
+    // calculate norm, using: .pow(2.).sum(-1).pow(0.5 * power)
+    for (auto itr = itr_start; itr != itr_end; itr++) {
+      x = *itr;
+      itr++;
+      y = *itr;
+      o = std::atan2(y, x);
+      *itr_out = o;
+      itr_out++;
+    }
+  };
+  AudioParallelLaunch(task, input_size, block_size, &task_num, &once_compute_size);
   *output = out;
   return Status::OK();
 }
@@ -188,25 +184,6 @@ Status Biquad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   return LFilter(input, output, a_coeffs, b_coeffs, true);
 }
 
-template <typename T>
-void ContrastImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out, T enhancement_amount_value,
-                  size_t start, size_t end) {
-  auto itr_out = (*out)->begin<T>();
-  itr_out += start;
-  auto tmp_start = input->begin<T>();
-  tmp_start += start;
-  auto tmp_end = input->begin<T>();
-  tmp_end += end;
-
-  for (auto itr_in = tmp_start; itr_in != tmp_end; itr_in++) {
-    // PI / 2 is half of the constant PI
-    T temp1 = static_cast<T>(*itr_in) * (PI / TWO);
-    T temp2 = enhancement_amount_value * std::sin(temp1 * 4);
-    *itr_out = std::sin(temp1 + temp2);
-    itr_out++;
-  }
-}
-
 /// \brief Apply contrast effect.
 /// \param input/output: Tensor of shape <..., time>.
 /// \param enhancement_amount: controls the amount of the enhancement.
@@ -224,25 +201,28 @@ Status Contrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
   size_t once_compute_size = 0;
   float block_size = 6000;
   size_t input_size = input->Size();
-  RETURN_IF_NOT_OK(CountThreadNums(input_size, block_size, &task_num, &once_compute_size));
 
-  // Multi-threaded parallel computing.
-  std::vector<std::thread> workers = std::vector<std::thread>(task_num);
-  size_t work_index = 0;
-  for (; work_index < task_num - 1; work_index++) {
-    size_t start = work_index * once_compute_size;
-    size_t end = start + once_compute_size;
-    workers[work_index] = std::thread(ContrastImpl<T>, input, &out, enhancement_amount_value, start, end);
-  }
+  auto task = [&input, &out, &task_num, &input_size, &enhancement_amount_value](size_t start, size_t end, size_t num) {
+    if ((task_num - num) == 1) {
+      end = input_size;
+    }
 
-  size_t start = work_index * once_compute_size;
-  size_t end = input_size;
-  ContrastImpl<T>(input, &out, enhancement_amount_value, start, end);
+    auto itr_out = out->begin<T>();
+    itr_out += start;
+    auto tmp_start = input->begin<T>();
+    tmp_start += start;
+    auto tmp_end = input->begin<T>();
+    tmp_end += end;
 
-  for (size_t j = 0; j < task_num - 1; j++) {
-    workers[j].join();
-  }
-
+    for (auto itr_in = tmp_start; itr_in != tmp_end; itr_in++) {
+      // PI / 2 is half of the constant PI
+      T temp1 = (*itr_in) * (PI / TWO);
+      T temp2 = enhancement_amount_value * std::sin(temp1 * 4);
+      *itr_out = std::sin(temp1 + temp2);
+      itr_out++;
+    }
+  };
+  AudioParallelLaunch(task, input_size, block_size, &task_num, &once_compute_size);
   *output = out;
   return Status::OK();
 }
