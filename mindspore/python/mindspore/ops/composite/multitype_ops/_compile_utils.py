@@ -286,7 +286,7 @@ def _scalar_to_tensor(input_x):
 @_primexpr
 def _check_scalar_tensor_args(args):
     """For the item, check that the index of the scalar tensor is set."""
-    if args != (None,) and args != ():
+    if args not in ((None,), ()):
         const_utils.raise_value_error("For item, the index of scalar Tensor should not be set.")
 
 

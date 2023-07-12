@@ -446,6 +446,8 @@ BuiltInTypeMap &GetMethodMap() {
        {"eigvals", std::string("eigvals")},                                // eigvals()
        {"geqrf", std::string("geqrf")},                                    // geqrf()
        {"histc", std::string("histc")},                                    // histc()
+       {"type", std::string("ms_type")},                                   // astype()
+       {"type_as", std::string("type_as")},                                // astype()
        {"dim", prim::kPrimRank},                                           // P.Rank()
        {"index_add", std::string("index_add")},                            // index_add()
        {"greater", std::string("greater")},                                // greater()

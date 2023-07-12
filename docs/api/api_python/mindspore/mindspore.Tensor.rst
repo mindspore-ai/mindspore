@@ -321,6 +321,8 @@ mindspore.Tensor
     mindspore.Tensor.triu
     mindspore.Tensor.true_divide
     mindspore.Tensor.trunc
+    mindspore.Tensor.type
+    mindspore.Tensor.type_as
     mindspore.Tensor.unbind
     mindspore.Tensor.unfold
     mindspore.Tensor.unique_consecutive
