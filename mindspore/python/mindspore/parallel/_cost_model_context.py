@@ -452,6 +452,31 @@ class _CostModelContext:
             raise ValueError("Context handle is none in context!!!")
         return self._context_handle.get_costmodel_allreduce_fusion_allreduce_bandwidth()
 
+    def set_rp_matmul_mem_coef(self, coef):
+        """
+        Set the matmul memory coef which is used in the RP algorithm.
+
+        Args:
+            coef (int): The coefficient of memory cost in RP.
+
+        Raises:
+            ValueError: If context handle is none.
+        """
+        if self._context_handle is None:
+            raise ValueError("Context handle is none in context!!!")
+        self._context_handle.set_rp_matmul_mem_coef(coef)
+
+    def get_rp_matmul_mem_coef(self):
+        """
+        Get the matmul memory coef which is used in the RP algorithm.
+
+        Raises:
+            ValueError: If context handle is none.
+        """
+        if self._context_handle is None:
+            raise ValueError("Context handle is none in context!!!")
+        return self._context_handle.rp_matmul_mem_coef()
+
     def set_costmodel_allreduce_fusion_computation_time_parameter(self, computation_time_parameter):
         """
         Set costmodel allreduce fusion computation time parameter.
@@ -656,3 +681,20 @@ def _get_algo_single_loop():
     Get the flag of whether or not generating a single suite of OperatorInfos in for-loop.
     """
     return cost_model_context().get_dp_algo_single_loop()
+
+
+def _set_rp_matmul_mem_coef(coef):
+    """
+    Set the matmul memory coef which is used in the RP algorithm.
+
+    Args:
+        coef (int): The coefficient of memory cost in RP.
+    """
+    cost_model_context().set_rp_matmul_mem_coef(coef)
+
+
+def _get_rp_matmul_mem_coef(self):
+    """
+    Get the matmul memory coef which is used in the RP algorithm.
+    """
+    return cost_model_context().get_rp_matmul_mem_coef()

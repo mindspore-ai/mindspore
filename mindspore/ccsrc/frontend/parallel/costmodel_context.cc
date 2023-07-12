@@ -57,6 +57,7 @@ void CostModelContext::ResetCostModel() {
   costmodel_allreduce_fusion_computation_time_parameter_ =
     DEFAULT_COST_MODEL_ALLREDUCE_FUSION_COMPUTATION_TIME_PARAMETER;
   dp_algo_single_loop_ = DEFAULT_DP_ALGO_SINGLE_LOOP;
+  rp_matmul_mem_coef_ = DEFAULT_RP_MATMUL_MEM_COEF;
 }
 
 void CostModelContext::ResetAlgoParameters() {
@@ -89,6 +90,7 @@ void CostModelContext::PrintCostModel() {
   MS_LOG(INFO) << "tensor_slice_align_size: " << tensor_slice_alignment_size_ << ".";
   MS_LOG(INFO) << "fully_use_device: " << fully_use_device_ << ".";
   MS_LOG(INFO) << "elementwise_stra_follow: " << elementwise_stra_follow_ << ".";
+  MS_LOG(INFO) << "rp_matmul_mem_coef: " << rp_matmul_mem_coef_ << ".";
 }
 
 void CostModelContext::set_costmodel_context_for_device(const std::string &device_target) {
@@ -102,6 +104,13 @@ void CostModelContext::set_dp_algo_approxi_epsilon(double epsilon) {
     MS_LOG(EXCEPTION) << "'epsilon' must be in (0, 1]";
   }
   dp_algo_approxi_epsilon_ = epsilon;
+}
+
+void CostModelContext::set_rp_matmul_mem_coef(double coef) {
+  if (coef <= 0) {
+    MS_LOG(EXCEPTION) << "'coef' must be positive";
+  }
+  rp_matmul_mem_coef_ = coef;
 }
 
 void CostModelContext::set_dp_algo_enable_approxi(bool approxi) {

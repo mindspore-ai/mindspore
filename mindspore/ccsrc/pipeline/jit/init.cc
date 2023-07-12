@@ -452,6 +452,10 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set the epsilon which is used in the approximation of DP algorithm.")
     .def("get_dp_algo_approxi_epsilon", &CostModelContext::dp_algo_approxi_epsilon,
          "Get the epsilon which is used in the approximation of DP algorithm.")
+    .def("set_rp_matmul_mem_coef", &CostModelContext::set_rp_matmul_mem_coef,
+         "Set the matmul memory coef which is used in the RP algorithm.")
+    .def("get_rp_matmul_mem_coef", &CostModelContext::rp_matmul_mem_coef,
+         "Get the matmul memory coef which is used in the RP algorithm.")
     .def("set_dp_algo_single_loop", &CostModelContext::set_dp_algo_single_loop,
          "Set the flag of generating a single suite of OperatorInfos in for-loop.")
     .def("get_dp_algo_single_loop", &CostModelContext::dp_algo_single_loop,
