@@ -537,8 +537,8 @@ void ResizeNodeInput(const CNodePtr &kernel, const kernel::KernelArgs &args) {
   }
 }
 
-kernel::AddressPtrList MallocInputMemoryForDeviceAddress(const std::vector<device::DeviceAddressPtr> &device_addressess,
-                                                         const device::DeviceContext *device_context) {
+kernel::AddressPtrList MallocInputMemoryForDeviceAddress(
+  const std::vector<device::DeviceAddressPtr> &device_addressess) {
   kernel::AddressPtrList ret;
   for (auto &device_address : device_addressess) {
     if (!device_address) {
@@ -914,7 +914,7 @@ void LaunchKernelsDynamic(const pynative::OpCompilerInfoPtr &op_compiler_info,
     ResizeNodeInput(kernel, args);
 
     // Malloc input tensor memory
-    auto inputs = MallocInputMemoryForDeviceAddress(execute_kernel.inputs_device_address_, device_context);
+    auto inputs = MallocInputMemoryForDeviceAddress(execute_kernel.inputs_device_address_);
 
     // Malloc workspace memory
     std::vector<device::DeviceAddressPtr> workspace_device_address;
