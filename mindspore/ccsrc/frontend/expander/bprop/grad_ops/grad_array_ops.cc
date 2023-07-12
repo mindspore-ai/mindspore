@@ -1494,6 +1494,14 @@ REG_BPROP_BUILDER("Fill").SetUnusedInputs({i0, i1, i2, i3, i4}).SetBody(BODYFUNC
   return {ib->OutZeros(dtype), ib->OutZeros(dims), ib->OutZeros(x)};
 });
 
+REG_BPROP_BUILDER("MatrixBandPart").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
+  auto lower = ib->GetInput(kIndex1);
+  auto upper = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto part = ib->Emit("MatrixBandPart", {dout, lower, upper});
+  return {part, ib->OutZeros(lower), ib->OutZeros(upper)};
+});
+
 REG_BPROP_BUILDER("MatrixDiagV3").SetUnusedInputs({i0, i2, i3, i4, i5}).SetBody(BODYFUNC(ib) {
   auto k = ib->GetInput(kIndex1);
   auto num_rows = ib->GetInput(kIndex2);
