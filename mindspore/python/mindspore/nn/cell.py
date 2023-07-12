@@ -44,9 +44,8 @@ from mindspore.ops.operations import _inner_ops as inner
 from mindspore.parallel.shard import Shard
 from mindspore._check_jit_forbidden_api import jit_forbidden_register
 from mindspore.common._decorator import deprecated
-from mindspore._checkparam import is_pack_tensor
 from mindspore._c_expression import PackExpander
-from mindspore.ops._tracefunc import _convert_tensor, _SetMixedPrecision
+from mindspore.ops._tracefunc import _convert_tensor, _SetMixedPrecision, PackFunc
 
 
 def _check_args(args):
@@ -627,7 +626,7 @@ class Cell(Cell_):
             args = bound_arguments.args
             kwargs = bound_arguments.kwargs
 
-        if args and is_pack_tensor(args[0]):
+        if PackFunc.is_tracing():
             return self._run_tracefunc(*args, **kwargs)
 
         self.check_names_and_refresh_name()
